@@ -866,6 +866,18 @@ export function createStore(options: StoreOptions): Store {
    */
   const pendingConstraints: { address: readonly string[]; registration: ConstraintRegistration }[] = []
 
+  /**
+   * `C23` · `§2.11` items 2–3 — THE PLACEHOLDER ROOTS.  A `listen`/`constrain` at an address whose
+   * root the store does not yet carry attaches to a carrier that stands *"without having a distinct
+   * parent"* (`C14`), and `C24`'s boot order REQUIRES the registration to precede the data
+   * (*"event listeners are added before the store is loaded from file"*) — so the seam brings the
+   * entry's own link into being and holds the registration against its own address.  That entry
+   * holds NO STATE yet: a write at the address is the only thing that MINTS a root (`C14`), so until
+   * one lands the address does NOT resolve and the listener is UNATTACHED — `C23`'s *"waiting for an
+   * address that is currently unreachable"*.  A name leaves this set when a write is planned at it.
+   */
+  const unmintedRoots = new Set<string>()
+
   /** §2.12 item 4 · `DD-14` — the declared UNLOADED state of each graph. */
   let fileLoaded = true
   let secureLoaded = true
@@ -1128,6 +1140,9 @@ export function createStore(options: StoreOptions): Store {
       entry = { name: address[0] as string, node: emptyNode(tier), constraints: [], peers: [] }
       registry.push(entry)
     }
+    // `C14` — a WRITE at the address is what mints a root, so a placeholder root left by a
+    // registration (`§2.11` item 2) stops being a placeholder the moment a write is planned at it.
+    unmintedRoots.delete(entry.name)
     const kindAtRoot = propertyKindAtRoot(entry.node, address[0] as string)
     if (address.length === 1) {
       const atRootTier = rootPool(entry).find((candidate) => candidate.tier === tier)
@@ -1390,9 +1405,28 @@ export function createStore(options: StoreOptions): Store {
   ): PhaseOutcome {
     const messages: StoreMessage[] = []
     const evaluated = evaluatedSet(register, address, secure)
+    /** `§2.10` item 10 (iii) — the LAST repair the store invoked: token 20's closing sentence names
+     *  *"the repair and the constraint it broke"*, so its `position` and its `pass` are read from
+     *  the pass that took it. */
+    const lastRepair = (): { readonly position: number; readonly pass: number } => {
+      let latest: { position: number; pass: number } = { position: 0, pass: 1 }
+      for (const [position, at] of repairedAt) {
+        if (at >= latest.pass) latest = { position, pass: at }
+      }
+      return latest
+    }
     const repairedOnce = new Set<number>()
-    /** `R15` item 3 — the registrations that answered `{ok:true}` in the PREVIOUS pass. */
-    let satisfiedBefore = new Set<number>()
+    /** `§2.10` item 9 — the LAST pass in which a position's repair RAN: the store's own closing
+     *  sentence for token 20 names the repair, and this is where its pass is read. */
+    const repairedAt = new Map<number, number>()
+    /**
+     * `R15` item 3 · `§2.10` item 11 — THE ANTECEDENT'S RECORD: for every position of `S` that has
+     * answered `{ok:true}`, THE PASS IN WHICH IT DID.  A `{ok:false, message}` from a position this
+     * map carries (and whose recorded pass is STRICTLY EARLIER than the pass at hand) is the
+     * loop-breaker of token 20, never token 12's arm — *"a registration answered `{ok:true}` in an
+     * EARLIER pass of the SAME write and answers `{ok:false, message}` in a LATER pass"*.
+     */
+    const satisfiedAt = new Map<number, number>()
     let repaired = false
     let payload = initial
     for (let pass = 1; pass <= evaluated.length + 1; pass += 1) {
@@ -1402,7 +1436,6 @@ export function createStore(options: StoreOptions): Store {
       if ('refusal' in planned) return { refusal: planned.refusal, repaired, messages, payload }
       const plan = planned.plan
       const target = applyPlan(plan, tier)
-      const satisfied = new Set<number>()
       let restart = false
       for (let position = 0; position < evaluated.length; position += 1) {
         const item = evaluated[position] as { address: readonly string[]; registration: ConstraintRegistration }
@@ -1430,24 +1463,28 @@ export function createStore(options: StoreOptions): Store {
         harvest(messages, evaluation.notes, draft)
         const answered = (answer ?? {}) as Record<string, unknown>
         if (answered['ok'] === true) {
-          satisfied.add(position)
+          satisfiedAt.set(position, pass)
           continue
         }
         if (answered['ok'] === false) {
           const moduleMessage = typeof answered['message'] === 'string' ? (answered['message'] as string) : ''
           messages.push({ source: 'constraint', pass, position, step: STEP_MARK, address, text: moduleMessage })
-          if (satisfiedBefore.has(position)) {
-            // `R15` item 3 — the loop-breaker: the registration answered `{ok:true}` in an EARLIER
-            // pass of THIS write and refuses after a repair changed the state, so the write fails
-            // instead of looping.  The broken constraint's verbatim stands IMMEDIATELY before the
-            // store's own closing sentence (§2.14 item 5 · §2.10 item 11).
+          const heldIn = satisfiedAt.get(position)
+          if (heldIn !== undefined && heldIn < pass) {
+            // `R15` item 3 · `§2.10` item 11 — THE LOOP-BREAKER.  The registration answered
+            // `{ok:true}` in an EARLIER pass of THIS write and refuses now, after a repair changed
+            // the state: the write FAILS instead of looping, and the arm is token 20 (never token
+            // 12, whose arm is a registration that was never satisfied).  The broken constraint's
+            // verbatim stands IMMEDIATELY BEFORE the store's own closing sentence, which is the
+            // list's LAST entry and therefore the refusal's primary sentence (`§2.14` item 5).
+            const repair = lastRepair()
             return {
               refusal: storeRefusal(
                 'repair-broke-constraint',
                 'H-CONSTRAINT',
                 address[address.length - 1] ?? null,
                 address,
-                'the repair changed the state and a constraint that HELD no longer holds; the write fails to break the loop (R15 item 3)',
+                `the store invoked the repair registered at position ${String(repair.position)} in pass ${String(repair.pass)}; the registration at position ${String(position)} held in pass ${String(heldIn)} and no longer holds, and the write fails rather than looping (R15 item 3)`,
                 messages,
               ),
               repaired,
@@ -1476,6 +1513,7 @@ export function createStore(options: StoreOptions): Store {
             }
           }
           repairedOnce.add(position)
+          repairedAt.set(position, pass)
           const repairEvaluation: ConstraintEvaluation = {
             address,
             current,
@@ -1515,7 +1553,12 @@ export function createStore(options: StoreOptions): Store {
           payload = { plan: 'value', value: repairedValue as StoreValue, transparent: false }
           repaired = true
           restart = true
-          break
+          // `§2.10` item 8 — *"a NEW pass BEGINNING AT `r_0`"*: the pass is marked for RESTART, and
+          // after its remaining registrations are walked the phase begins again at the first
+          // registration of `S`, so every registration (the already-satisfied included) is
+          // RE-EVALUATED against the repaired state while `item 9`'s bound keeps the pass count at
+          // `≤ |S| + 1`.
+          continue
         }
         return {
           refusal: storeRefusal('constraint-failed', 'H-CONSTRAINT', address[address.length - 1] ?? null, address, 'the constraint answered outside C13’s three arms (§2.10 item 5)', messages),
@@ -1525,9 +1568,9 @@ export function createStore(options: StoreOptions): Store {
         }
       }
       if (!restart) return { refusal: null, repaired, messages, payload }
-      // A pass that repaired and RESTARTED: what held in this pass is the state a later pass is
-      // re-checked against (`R15` item 3).
-      satisfiedBefore = satisfied
+      // A pass that repaired and RESTARTED: the next pass begins at `r_0` and re-evaluates the WHOLE
+      // set against the repaired state (`§2.10` item 8), where every position this write has already
+      // satisfied is re-checked against the state the repair left (`item 11`'s antecedent).
     }
     return { refusal: null, repaired, messages, payload }
   }
@@ -1689,10 +1732,47 @@ export function createStore(options: StoreOptions): Store {
 
   /* ── the event surface (§2.11) ─────────────────────────────────────────────── */
 
+  /**
+   * `§2.3` item 2's INTERMEDIATE walk — the path to the IMMEDIATE PARENT `P` of an address.
+   * `walkTo` consumes EVERY segment, so it fails on a final segment that is a `literals` key (the
+   * `C-ANCHOR` arm's own member test); `P` is reached by the FIRST `n − 1` segments only, which is
+   * exactly `§2.3` item 2's `i < n` rule (`M-PROP` then decides the final segment).  An arm that
+   * fails — an absent anchor, a tombstone, or a literal standing where a node must be — answers
+   * `null`.
+   */
+  function parentTo(entry: RegisterEntry, address: readonly string[]): InternalNode | null {
+    let current = entry.node
+    for (let index = 1; index <= address.length - 2; index += 1) {
+      const segment = address[index] as string
+      if (Object.prototype.hasOwnProperty.call(current.literals, segment)) return null
+      const selected = selectInstance(instancesAt(current, segment), undefined)
+      if (selected === undefined || selected.tombstone) return null
+      current = selected
+    }
+    return current
+  }
+
+  /**
+   * `C23` · `§2.11` item 2 — *"`attached` is TRUE iff an unqualified read at that address would
+   * answer a transcription"*, and `item 3` names the target: *"the node an UNQUALIFIED read at the
+   * address would select"*.  So the test is the READ's own resolution and NOT the full walk: `P` is
+   * reached through the INTERMEDIATE segments and the FINAL segment then resolves iff `M-PROP`
+   * finds something at it — a `parent` anchor carrying a non-tombstone instance (a NODE LOCATION),
+   * or a `literals` member (a LITERAL PROPERTY, `A-9`'s own arm).  An ABSENT property (nor a
+   * tombstone-suppressed address, nor an unresolvable `P`) does NOT attach: an unqualified read
+   * answers `'absent-address'` there and there is no node to be the target.
+   */
   function resolves(address: readonly string[], secure: boolean): boolean {
-    const walk = walkTo(register, address, undefined, secure)
-    if (walk.failed || walk.node === null) return false
-    return !walk.node.tombstone
+    void secure
+    const entry = findEntry(register, address[0] as string)
+    if (entry === undefined) return false
+    if (address.length === 1) return !unmintedRoots.has(entry.name) && !entry.node.tombstone
+    const parent = parentTo(entry, address)
+    if (parent === null) return false
+    const segment = address[address.length - 1] as string
+    if (Object.prototype.hasOwnProperty.call(parent.literals, segment)) return true
+    const chosen = selectInstance(instancesAt(parent, segment), undefined)
+    return chosen !== undefined && !chosen.tombstone
   }
 
   function evaluateAttachment(): void {
@@ -1774,6 +1854,10 @@ export function createStore(options: StoreOptions): Store {
       const existing = findEntry(register, name)
       if (existing === undefined) register.push({ name, node, constraints: [], peers: [] })
       else existing.node = node
+      // `C24` · `§2.12` item 1 — the load is the OTHER event that mints data, so a root a
+      // registration held as a placeholder is no longer one: *"event listeners are added before the
+      // store is loaded from file.  This lets them trigger when the data is fully loaded."*
+      unmintedRoots.delete(name)
     }
     evaluateAttachment()
     fireListeners(null)
@@ -1795,6 +1879,7 @@ export function createStore(options: StoreOptions): Store {
     // (`C23`'s unattached state).
     if (findEntry(register, target[0] as string) === undefined) {
       register.push({ name: target[0] as string, node: emptyNode('mem'), constraints: [], peers: [] })
+      unmintedRoots.add(target[0] as string)
     }
     const listener: InternalListener = { address: target, body: body as ListenerBody, attached: false }
     listeners.push(listener)
@@ -1817,6 +1902,7 @@ export function createStore(options: StoreOptions): Store {
     // the carrier, `§2.10` item 2).
     if (findEntry(register, target[0] as string) === undefined) {
       register.push({ name: target[0] as string, node: emptyNode('mem'), constraints: [], peers: [] })
+      unmintedRoots.add(target[0] as string)
     }
     // `§2.10` item 2 — the seam attaches to the CARRIER at the address: the register entry at a
     // 1-segment address, else the LINK's own registration list.  A registration MINTS NO PATH (the
