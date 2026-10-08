@@ -483,11 +483,14 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
      *  *"of which `6` legal + `3` refused"*; the tier-pair figure lives at `§4.4` and `§4.5`
      *  carries the `file` tier's bound mutation classes).
      *
-     *  `(parent, child)` cells — THE ONE READING THIS CONTRACT DECLARES (`store-model.md` §2.2 item 3:
+     *  `(child, parent)` cells — THE ONE READING THIS CONTRACT DECLARES (`store-model.md` §2.2 item 3:
      *  *"For every parent-side anchor's link, `rank(child node's tier) ≤ rank(parent node's tier)`"*,
      *  *"A write whose tier OUT-RANKS the parent instance's tier is REFUSED"*, with the `9 = 3 × 3`
-     *  figure at `census.md` §4.4 and the `file` tier's bound mutation classes at `§4.5`). **THE RANK
-     *  CONSTANTS ARE THE CLAUSE'S OWN, PRINTED: `rank(file)=3 > rank(mem)=2 > rank(temp)=1`** — `file`
+     *  figure at `census.md` §4.4 and the `file` tier's bound mutation classes at `§4.5`). **THE
+     *  TUPLE ORDER IS THE CLAUSE'S OWN SENTENCE ORDER — CHILD FIRST, PARENT SECOND** (`rank(child)`
+     *  is written before `rank(parent)`), so a cell `(mem, file)` reads *"a `mem` CHILD under a `file`
+     *  PARENT"* and drives `rank(mem)=2 ≤ rank(file)=3`: LEGAL. **THE RANK CONSTANTS ARE THE
+     *  CLAUSE'S OWN, PRINTED: `rank(file)=3 > rank(mem)=2 > rank(temp)=1`** — `file`
      *  is the MOST persistent, which `§2.5` item 4's purge set (`purge(file) = {mem, temp}`, i.e. `2`
      *  at `census.md` §4.4 with `purge(temp) = 0 · purge(mem) = 1`) confirms from the other side: a
      *  more-persistent write purges MORE lower instances. So `rank(child) ≤ rank(parent)` refuses
@@ -497,15 +500,16 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
      *    REFUSED (`'persistence-inversion'` at `F-TIER`, token 11) — `3`:
      *            `(file,mem)` · `(file,temp)` · `(mem,temp)`
      *
-     *  `(mem,file)` is LEGAL and not refused: a `file` CHILD under a `mem` PARENT does NOT out-rank
-     *  it (`rank(file)=3 > rank(mem)=2` is the PARENT-side direction — the child is allowed to be no
-     *  MORE persistent than the parent, and `file` out-ranking `mem` is the REFUSED direction), and
+     *  `(mem,file)` is LEGAL and not refused: a `mem` CHILD under a `file` PARENT does NOT out-rank
+     *  it (`rank(mem)=2 ≤ rank(file)=3` — the child is allowed to be no MORE persistent than the
+     *  parent; `rank(file)=3 > rank(mem)=2` is the OTHER direction, the one that is REFUSED), and
      *  §2.5 item 7's `A2` refuses
      *  a CONTAINER at a NODE LOCATION — so every cell below drives its child member through `A5`/`A6`
-     *  (a PROPERTY address of the root: the container LANDS) and never through `A2`. The legal pairs
-     *  are driven at `mem`/`temp` and the refused ones at `mem`, so no cell needs a writable path;
-     *  every cell supplies the fixture's explicit `PAR-11` filesystem double (`memoryFs`, `store()`'s
-     *  own), so `PAR-11`'s *"absent ⇒ the real `node:fs`"* arm is NOT what this row exercises. */
+     *  (a PROPERTY address of the root: the container LANDS) and never through `A2`. Each cell drives
+     *  the tiers its own pair names (the `file` cells included), and every cell supplies the fixture's
+     *  explicit `PAR-11` filesystem double (`memoryFs`, `store()`'s own), so no cell reaches a real
+     *  writable path and `PAR-11`'s *"absent ⇒ the real `node:fs`"* arm is NOT what this row
+     *  exercises. */
     const legalPairs: readonly (readonly [string, string])[] = [
       ['file', 'file'], ['mem', 'file'], ['mem', 'mem'], ['temp', 'file'], ['temp', 'mem'], ['temp', 'temp'],
     ]
@@ -513,31 +517,37 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
       ['file', 'mem'], ['file', 'temp'], ['mem', 'temp'],
     ]
     /** THE RANK, READ OFF THE CLAUSE'S OWN PRINTED CONSTANTS: `§2.2` item 3 prints
-     *  *"`rank(file)=3 > rank(mem)=2 > rank(temp)=1`"* — `file` is the MOST persistent — so the rank
-     *  of a tier is `3 − TIERS_RANKED.indexOf(tier)` over `['file','mem','temp']` (`file` 3 > `mem` 2 >
+     *  *"`rank(file)=3 > rank(mem)=2 > rank(temp)=1`"* — `file` is the MOST persistent — so the map
+     *  below is the clause's own constant mapping, spelled tier by tier (`file` 3 > `mem` 2 >
      *  `temp` 1), and `§2.2` item 3's `rank(child) ≤ rank(parent)` is the assertion below. **THE
-     *  EARLIER FORM OF THIS HELPER USED `indexOf(tier)+1`, WHICH IS THE INVERTED CONSTANT** (`rank(file)=1`),
-     *  contradicting the clause it cites while leaving this row's legal/refused LISTS — which are the
-     *  clause's — untouched: a defect of the HELPER, corrected here, and the module's own comparison
-     *  is the item that remains to be corrected. */
-    const rank = (tier: string): number => {
-      const index = TIERS_RANKED.indexOf(tier)
-      return index < 0 ? Number.NEGATIVE_INFINITY : TIERS_RANKED.length - index
-    }
+     *  EARLIER FORM OF THIS HELPER USED `indexOf(tier)+1`, WHICH IS THE INVERTED CONSTANT**
+     *  (`rank(file)=1`), contradicting the clause it cites while leaving this row's legal/refused
+     *  LISTS — which are the clause's — untouched: a defect of the HELPER, corrected here. **THE
+     *  TUPLE ORDER IS THE ONE THING THE LISTS DO NOT SPELL OUT, AND IT IS THE CLAUSE'S OWN: child
+     *  FIRST, parent SECOND** — every call site below destructures `[child, parent]` and passes the
+     *  child's tier to `rank()` first, so a cell `(mem, file)` evaluates `2 ≤ 3` and is LEGAL, and the
+     *  drive writes the PARENT instance at the parent tuple member's tier (a root write: the
+     *  invariant is vacuous there, `§2.2` item 3) and the CHILD at the child member's tier. An
+     *  earlier form of these loops destructured `[parent, child]`, i.e. fed the tuple's PARENT slot
+     *  (`file` in `(mem, file)`) to `rank(child)` as `3` and its CHILD slot to `rank(parent)` as `2`,
+     *  reading the clause's own LEGAL cell backwards (`3 ≤ 2`) and failing at this pre-check before
+     *  the module was ever touched. */
+    const TIER_RANK_LOCAL: Readonly<Record<string, number | undefined>> = { file: 3, mem: 2, temp: 1 }
+    const rank = (tier: string): number => TIER_RANK_LOCAL[tier] ?? Number.NEGATIVE_INFINITY
     expect(TIERS_RANKED, '§2.2 item 2 — the ranked tiers, in the declared order').toEqual(['file', 'mem', 'temp'])
     expect(legalPairs.length + refusedPairs.length, 'census.md §4.4 — the persistence pairs for the invariant: `9 = 3 × 3` ✓').toBe(9)
     expect(legalPairs.length, 'census.md §4.4 — of which `6` legal').toBe(6)
     expect(refusedPairs.length, 'census.md §4.4 — and `3` refused').toBe(3)
-    for (const [parent, child] of legalPairs) {
+    for (const [child, parent] of legalPairs) {
       expect(
         rank(child) <= rank(parent),
-        `§2.2 item 3 — \`(${parent}, ${child})\` is LEGAL: rank(child)=${rank(child)} ≤ rank(parent)=${rank(parent)}, so the write does not out-rank its parent instance`,
+        `§2.2 item 3 — \`(${child}, ${parent})\` is LEGAL: rank(child)=${rank(child)} ≤ rank(parent)=${rank(parent)}, so the write does not out-rank its parent instance`,
       ).toBe(true)
     }
-    for (const [parent, child] of refusedPairs) {
-      expect(rank(child) > rank(parent), `§2.2 item 3 — \`(${parent}, ${child})\` is REFUSED: the child would out-rank its parent`).toBe(true)
+    for (const [child, parent] of refusedPairs) {
+      expect(rank(child) > rank(parent), `§2.2 item 3 — \`(${child}, ${parent})\` is REFUSED: the child would out-rank its parent`).toBe(true)
     }
-    for (const [parent, child] of legalPairs) {
+    for (const [child, parent] of legalPairs) {
       const f = store()
       /** The CHILD member is driven through a PROPERTY address (`A6`'s add: a CONTAINER at an
        *  ABSENT PROPERTY) — never at `ROOT` itself, where `A2`'s node-location refusal would fire
@@ -545,10 +555,10 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
       expect(expectCommitted(writeOn(f, 'generic', ROOT, parent, { value: { seed: 1 } }))['status'], `§2.2 item 3 — the ROOT write at \`${parent}\` is legal (no parent ⇒ the invariant is vacuous)`).toBe('committed')
       expect(
         expectCommitted(writeOn(f, 'generic', CHILD, child, { value: { page: 2 } }))['status'],
-        `§2.2 item 3 — \`(${parent}, ${child})\`: rank(child) ≤ rank(parent), so the write LANDS`,
+        `§2.2 item 3 — \`(${child}, ${parent})\`: rank(child) ≤ rank(parent), so the write LANDS`,
       ).toBe('committed')
     }
-    for (const [parent, child] of refusedPairs) {
+    for (const [child, parent] of refusedPairs) {
       const f = store()
       call(f, 'write', ROOT, parent, { value: { seed: 1 } })
       expectRefusal(writeOn(f, 'generic', CHILD, child, { value: { page: 2 } }), { reason: 'persistence-inversion', step: 'F-TIER' })
