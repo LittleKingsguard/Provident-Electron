@@ -204,15 +204,22 @@ const OUTSIDE_PARAMETER_DRIVES: readonly (readonly [string, (f: StoreFixture) =>
   }, 'node-location-container'],
   ['PAR-5', (f) => call(f, 'write', ROOT, 'mem', { value: 1, tombstone: true }), 'malformed-tombstone'],
   ['PAR-6', (f) => call(f, 'listen', ROOT, 'not a function'), 'malformed-listener'],
-  ['PAR-7', (f) => {
-    call(f, 'constrain', ROOT, { constraint: 'not a function' })
-    return call(f, 'write', ROOT, 'mem', { value: 1 })
-  }, 'malformed-constraint'],
+  ['PAR-7', (f) => call(f, 'constrain', ROOT, { constraint: 'not a function' }), 'malformed-constraint'],
   ['PAR-8', (f) => {
     register(f, ROOT, [{ repair: true }])
     return call(f, 'write', ROOT, 'mem', { value: 1 })
   }, 'constraint-failed'],
-  ['PAR-9', (f) => call(f, 'read', ROOT, 'file'), 'not-loaded'],
+  ['PAR-9', (f) => {
+    /** `PAR-9`'s OUTSIDE value is a path whose file is present-but-unparsable, and the declared
+     *  answer is `'not-loaded'` (token 15, `§2.12` item 4 (i)): every `file`-tier read and write
+     *  refuses it AFTER a refused load. The drive therefore performs the refused load — whose own
+     *  token is 19 — and then reads the `file` tier. `B-ROOT` precedes every later arm (`§2.3`
+     *  item 2), so the earlier form (a read at `['tabs']` on a store where nothing had resolved)
+     *  answered token 2 instead and never reached token 15. */
+    f.fs.seed(FILE_PATH, '{not json')
+    call(f, 'load')
+    return call(f, 'read', ROOT, 'file')
+  }, 'not-loaded'],
   ['PAR-10', (f) => call(f, 'secureRead', ROOT), 'secure-gated'],
   ['PAR-11', (f) => call(f, 'load'), 'loaded-or-refused-never-throw'],
   ['PAR-12', (f) => call(f, 'load'), 'loaded-or-refused-never-throw'],
@@ -475,46 +482,68 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
      *  *"of which `6` legal + `3` refused"*; the tier-pair figure lives at `§4.4` and `§4.5`
      *  carries the `file` tier's bound mutation classes).
      *
-     *  `(parent, child)` cells — THE ONE READING THIS CONTRACT DECLARES:
+     *  `(parent, child)` cells — THE ONE READING THIS CONTRACT DECLARES (`store-model.md` §2.2 item 3:
+     *  *"For every parent-side anchor's link, `rank(child node's tier) ≤ rank(parent node's tier)`"*,
+     *  *"A write whose tier OUT-RANKS the parent instance's tier is REFUSED"*, with `census.md` §4.4's
+     *  own figure *"of which `6` legal + `3` refused"*). §2.2 item 2 names the persistence order as
+     *  *"`file` > `mem` > `temp`"* and §2.5 item 4's purge set is `purge(file) = {mem, temp}`, i.e.
+     *  `file` is the LEAST persistent — so the rank constants are `rank(file)=1 < rank(mem)=2 <
+     *  rank(temp)=3`, and `rank(child) ≤ rank(parent)` refuses exactly the three pairs whose CHILD is
+     *  more persistent than its parent:
      *    LEGAL   (child no MORE persistent than the parent) — `6`:
      *            `(file,file)` · `(mem,file)` · `(mem,mem)` · `(temp,file)` · `(temp,mem)` · `(temp,temp)`
      *    REFUSED (`'persistence-inversion'` at `F-TIER`, token 11) — `3`:
      *            `(file,mem)` · `(file,temp)` · `(mem,temp)`
      *
-     *  A row whose own table prints the INVERTED direction (a node MORE persistent than its parent
-     *  driven as legal) is a defect of the ROW, not of the module: the invariant is one-directional
-     *  and this table is the contract's. The legal pairs are driven here at `mem`/`temp` and the
-     *  refused ones at `mem`, so no cell needs a writable path; every cell supplies the fixture's
-     *  explicit `PAR-11` filesystem double (`memoryFs`, `store()`'s own), so `PAR-11`'s
-     *  *"absent ⇒ the real `node:fs`"* arm is NOT what this row exercises. */
+     *  `(mem,file)` is LEGAL and not refused: a `file` CHILD under a `mem` PARENT does NOT out-rank
+     *  it (`rank(file)=3 > rank(mem)=2` is the PARENT-side direction), and §2.5 item 7's `A2` refuses
+     *  a CONTAINER at a NODE LOCATION — so every cell below drives its child member through `A5`/`A6`
+     *  (a PROPERTY address of the root: the container LANDS) and never through `A2`. The legal pairs
+     *  are driven at `mem`/`temp` and the refused ones at `mem`, so no cell needs a writable path;
+     *  every cell supplies the fixture's explicit `PAR-11` filesystem double (`memoryFs`, `store()`'s
+     *  own), so `PAR-11`'s *"absent ⇒ the real `node:fs`"* arm is NOT what this row exercises. */
     const legalPairs: readonly (readonly [string, string])[] = [
       ['file', 'file'], ['mem', 'file'], ['mem', 'mem'], ['temp', 'file'], ['temp', 'mem'], ['temp', 'temp'],
     ]
     const refusedPairs: readonly (readonly [string, string])[] = [
       ['file', 'mem'], ['file', 'temp'], ['mem', 'temp'],
     ]
-    const rank = (tier: string): number => (tier === 'file' ? 3 : tier === 'mem' ? 2 : 1)
+    /** THE RANK, READ OFF THE DECLARED ORDER: `§2.2` item 2 prints the persistence order as
+     *  *"`file` > `mem` > `temp`"* and §2.5 item 4's purge set is `purge(file) = {mem, temp}` — `file`
+     *  is the LEAST persistent — so the rank is assigned from `PERSISTENCE_ORDER` with the LEFT-most
+     *  tier lowest, and `§2.2` item 3's `rank(child) ≤ rank(parent)` is the assertion below. */
+    const rank = (tier: string): number => {
+      const index = TIERS_RANKED.indexOf(tier)
+      return index < 0 ? Number.POSITIVE_INFINITY : index + 1
+    }
+    expect(TIERS_RANKED, '§2.2 item 2 — the ranked tiers, in the declared order').toEqual(['file', 'mem', 'temp'])
     expect(legalPairs.length + refusedPairs.length, 'census.md §4.4 — the persistence pairs for the invariant: `9 = 3 × 3` ✓').toBe(9)
     expect(legalPairs.length, 'census.md §4.4 — of which `6` legal').toBe(6)
     expect(refusedPairs.length, 'census.md §4.4 — and `3` refused').toBe(3)
     for (const [parent, child] of legalPairs) {
-      expect(rank(child) <= rank(parent), `§2.2 item 3 — \`(${parent}, ${child})\` is LEGAL: rank(child) ≤ rank(parent)`).toBe(true)
+      expect(
+        rank(child) <= rank(parent),
+        `§2.2 item 3 — \`(${parent}, ${child})\` is LEGAL: rank(child)=${rank(child)} ≤ rank(parent)=${rank(parent)}, so the write does not out-rank its parent instance`,
+      ).toBe(true)
     }
     for (const [parent, child] of refusedPairs) {
       expect(rank(child) > rank(parent), `§2.2 item 3 — \`(${parent}, ${child})\` is REFUSED: the child would out-rank its parent`).toBe(true)
     }
     for (const [parent, child] of legalPairs) {
       const f = store()
-      call(f, 'write', ROOT, parent, { value: { page: { seed: 1 } } })
+      /** The CHILD member is driven through a PROPERTY address (`A6`'s add: a CONTAINER at an
+       *  ABSENT PROPERTY) — never at `ROOT` itself, where `A2`'s node-location refusal would fire
+       *  before `F-TIER` ever ran. */
+      expect(expectCommitted(writeOn(f, 'generic', ROOT, parent, { value: { seed: 1 } }))['status'], `§2.2 item 3 — the ROOT write at \`${parent}\` is legal (no parent ⇒ the invariant is vacuous)`).toBe('committed')
       expect(
-        expectCommitted(writeOn(f, 'generic', CHILD, child, { value: { seed: 2 } }))['status'],
+        expectCommitted(writeOn(f, 'generic', CHILD, child, { value: { page: 2 } }))['status'],
         `§2.2 item 3 — \`(${parent}, ${child})\`: rank(child) ≤ rank(parent), so the write LANDS`,
       ).toBe('committed')
     }
     for (const [parent, child] of refusedPairs) {
       const f = store()
-      call(f, 'write', ROOT, parent, { value: { page: { seed: 1 } } })
-      expectRefusal(writeOn(f, 'generic', CHILD, child, { value: { seed: 2 } }), { reason: 'persistence-inversion', step: 'F-TIER' })
+      call(f, 'write', ROOT, parent, { value: { seed: 1 } })
+      expectRefusal(writeOn(f, 'generic', CHILD, child, { value: { page: 2 } }), { reason: 'persistence-inversion', step: 'F-TIER' })
     }
   })
 })
@@ -545,23 +574,61 @@ describe('§2.3 — THE ADDRESS SPACE AND THE WALK', () => {
     expectRefusal(call(store(), 'read', 'tabs.page'), { reason: 'malformed-address', step: 'A-ADDRESS' })
   })
 
-  it('A-3 · §2.3 item 2 — `B-ROOT`: `address[0]` names no register entry ⇒ `unknown-root`', async () => {
+  it('A-3 · §2.3 item 2 — `B-ROOT`: `address[0]` names no register entry ⇒ `unknown-root` where the call WALKS, and `listen`/`constrain` are HELD PENDING against their own address', async () => {
     await resolveStoreSurface()
-    expectRefusal(call(store(), 'read', ['nope']), { reason: 'unknown-root', step: 'B-ROOT' })
-    expectRefusal(call(store(), 'write', ['nope', 'child'], 'mem', { value: 1 }), { reason: 'unknown-root', step: 'B-ROOT' })
-    expectRefusal(call(store(), 'listen', ['nope'], () => undefined), { reason: 'unknown-root', step: 'B-ROOT' })
-    expectRefusal(call(store(), 'constrain', ['nope'], { constraint: () => ({ ok: true }) }), { reason: 'unknown-root', step: 'B-ROOT' })
+    /** THE WALK'S OWN REFUSAL (`§2.3` item 2 `B-ROOT` · `§2.14` token 2, whose `applies to` cell is
+     *  `read` · `write` · `listen` · `constrain`). A `read` and a `write` walk their address AT CALL
+     *  TIME, so a missing root is token 2 AT THAT CALL (`C14`: a root comes into being ONLY by a write
+     *  at a 1-segment address). */
+    const f = store()
+    expectRefusal(call(f, 'read', ['nope']), { reason: 'unknown-root', step: 'B-ROOT' })
+    expectRefusal(call(f, 'write', ['nope', 'child'], 'mem', { value: 1 }), { reason: 'unknown-root', step: 'B-ROOT' })
+    /** THE ATTACHMENT SEAM IS NOT THE WALK (`§2.11` items 2–3 · `C14` · `§2.10` item 2): `listen`
+     *  answers `{address, attached}` and `constrain` answers `{address, position}` for an address that
+     *  does not yet resolve — `C23`'s own *"an event listener can be unattached (waiting for an
+     *  address that is currently unreachable)"* — and `C14`'s register seam NEVER MINTS A PATH, so a
+     *  registration at an address that does not resolve is HELD PENDING against its OWN address and is
+     *  evaluated when a write reaches it (`§2.11` item 4: attachment is re-evaluated at the end of
+     *  every successful write; `§2.10` item 3: the evaluated set is every registration at a PREFIX
+     *  address of the write). An expectation of a refusal AT REGISTRATION is the defect this row's
+     *  earlier form carried — it contradicted this file's own `listen`/`constrain` rows on a fresh
+     *  store. */
+    const g = store()
+    let fired = 0
+    const listener = call(g, 'listen', ['nope'], () => {
+      fired += 1
+    })
+    expect(listener['address'], '§2.1 — the listener record’s own address').toEqual(['nope'])
+    expect(listener['attached'], 'C23 — the address does not resolve yet, so the listener is UNATTACHED (held pending), never refused').toBe(false)
+    const registration = call(g, 'constrain', ['nope'], { constraint: () => ({ ok: true }) })
+    expect(registration['address'], '§2.10 item 2 — the registration is held against its OWN address').toEqual(['nope'])
+    expect(registration['position'], '§2.1 — the registration’s own position in that address’s list').toBe(0)
+    expect(fired, '§2.11 item 4 — an unattached listener is not fired by a registration').toBe(0)
+    /** AND IT IS EVALUATED ONCE THE WRITE REACHES IT (`§2.11` item 4 with `§2.10` item 3): the write
+     *  that mints the root is the write that reaches `['nope']`. */
+    const probe = register(g, ['nope'], [{ ok: true }])
+    expectCommitted(writeOn(g, 'generic', ['nope'], 'mem', { value: { seed: 1 } }))
+    expect(probe.calls.length, '§2.10 item 3 — the pending registration is evaluated by the write that reaches its address').toBe(1)
+    expect(call(g, 'read', ['nope']), 'C14 — the write at the 1-segment address minted the register entry').toBeDefined()
   })
 
   it('A-4 · §2.3 item 2 / DD-11 — an INTERMEDIATE arm that fails refuses `unreachable` and MINTS NOTHING', async () => {
     await resolveStoreSurface()
+    /** THE MIDDLE OF A WALK, WITH THE ROOT RESOLVED (`§2.3` item 2's `C-ANCHOR` · `C17` ·
+     *  `§2.14` token 3, step `C-ANCHOR`). `B-ROOT` PRECEDES `C-ANCHOR`, so every drive here first
+     *  mints its root: an address whose `address[0]` names no entry is token 2 (row `A-3`), NOT this
+     *  one. */
     const f = store()
-    expectRefusal(call(f, 'write', ['tabs', 'page', 'active'], 'mem', { value: 1 }), { reason: 'unreachable' })
-    expectRefusal(call(f, 'write', ROOT, 'mem', { value: { page: { active: true } } }), { reason: 'malformed-tier' })
+    call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
+    expectRefusal(call(f, 'write', ['tabs', 'missing', 'deeper'], 'mem', { value: 1 }), { reason: 'unreachable', step: 'C-ANCHOR' })
     const g = store()
-    call(g, 'write', ROOT, 'mem', { value: { page: { active: true } } })
+    call(g, 'write', ROOT, 'mem', { value: { seed: 1 } })
     expectRefusal(call(g, 'write', ['tabs', 'page', 'body', 'title'], 'mem', { value: 1 }), { reason: 'unreachable', step: 'C-ANCHOR' })
-    expect(readValue(readOn(g, 'generic', ROOT)), 'DD-11 — an intermediate arm that fails mints nothing at all').toEqual({ page: { active: true } })
+    expect(readValue(readOn(g, 'generic', ROOT)), 'DD-11 — an intermediate arm that fails mints nothing at all').toEqual({ seed: 1 })
+    /** THE TIER ARGUMENT IS `PAR-2`'s PARAMETER, NOT THIS ROW'S ARM (`§6` `PAR-2`): a write tier that
+     *  is a non-string or any other string is `'malformed-tier'` at `F-TIER` (token 7). */
+    expectRefusal(call(store(), 'write', ROOT, 'disk', { value: 1 }), { reason: 'malformed-tier', step: 'F-TIER' })
+    expectRefusal(call(store(), 'write', ROOT, 7, { value: 1 }), { reason: 'malformed-tier', step: 'F-TIER' })
   })
 
   it('A-5 · §2.3 item 2 / C14 — a root comes into being ONLY by a write at a 1-segment address', async () => {
@@ -585,7 +652,15 @@ describe('§2.3 — THE ADDRESS SPACE AND THE WALK', () => {
     const f = store()
     call(f, 'write', ROOT, 'mem', { value: { page: { seed: 1 } } })
     expect(readValue(readOn(f, 'generic', CHILD)), '§2.3 item 4 — the two anchor sides carry the same `key`, so `C-ANCHOR` MUST filter on `type === \'parent\'`').toEqual({ seed: 1 })
-    expectRefusal(call(f, 'read', [...CHILD, 'page']), { reason: 'unreachable' })
+    /** THE TRAP THE FILTER CLOSES, DRIVEN AND MEASURED: the node at `['tabs','page']` carries a
+     *  `child`-type anchor whose `key` is ALSO `'page'` (`§2.3` item 4: *"the two sides carry the same
+     *  `key`"*). A walk that let a `child`-type anchor be a STEP would follow that anchor back onto
+     *  its own node and transcribe `['tabs','page','page']`; the declared arm for the FINAL segment at
+     *  a resolved parent that carries neither a literal nor a `parent` anchor is the ABSENT-PROPERTY
+     *  row (`§2.3` item 2 (iii) · `§2.8` item 7 arm `R3`: `'absent-address'` at `E-CHILD`, token 4),
+     *  and it is the SAME arm this file's row `A-10` asserts for the same walk state. */
+    expectRefusal(call(f, 'read', [...CHILD, 'page']), { reason: 'absent-address', step: 'E-CHILD' })
+    expectRefusal(call(f, 'read', [...CHILD, 'page', 'deeper']), { reason: 'unreachable' })
   })
 
   it('A-8 · §2.3 item 2 — `M-PROP` resolves a NODE LOCATION: an address carried by an EXISTING link', async () => {
@@ -618,6 +693,8 @@ describe('§2.3 — THE ADDRESS SPACE AND THE WALK', () => {
   it('A-10 · §2.3 item 2 — `M-PROP` resolves an ABSENT PROPERTY: neither a literal nor a `parent` anchor at that segment', async () => {
     await resolveStoreSurface()
     const f = store()
+    /** `B-ROOT` PRECEDES `C-ANCHOR` (`§2.3` item 2), so the root is minted FIRST: an address whose
+     *  `address[0]` names no entry answers token 2 (`unknown-root`, row `A-3`), never token 4. */
     call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
     expectRefusal(call(f, 'read', CHILD), { reason: 'absent-address', step: 'E-CHILD' })
     expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { inner: 2 } }))['status'], 'C18 — the write ADDS the data using that address as its entry').toBe('committed')
@@ -626,8 +703,16 @@ describe('§2.3 — THE ADDRESS SPACE AND THE WALK', () => {
   it('A-11 · §2.3 item 2 — the FOURTH resolution state is NO RESOLUTION (`unreachable`): `R16`(a)’s own condition is FALSE', async () => {
     await resolveStoreSurface()
     expect(RESOLUTION_ANSWERS, 'census.md §4.2 — the `M-PROP` resolution’s answers: `4 = 1 + 1 + 1 + 1` ✓').toEqual(['node-location', 'literal-property', 'absent-property', 'unreachable'])
-    expectRefusal(call(store(), 'write', ['tabs', 'page'], 'mem', { value: 'a literal' }), { reason: 'unreachable' })
+    /** NO RESOLUTION = the IMMEDIATE PARENT does not resolve (`§2.3` item 2 (iv) · `§2.5` item 7:
+     *  *"A row driven to an arm outside this table FAILS"*). The walk runs `B-ROOT` BEFORE
+     *  `C-ANCHOR`, so the root is minted first and only the SEGMENT ABOVE it is missing — a missing
+     *  ROOT is token 2 (`unknown-root`, row `A-3`), and the two rows thereby agree on the arm. */
+    const f = store()
+    call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
+    expectRefusal(call(f, 'write', ['tabs', 'missing', 'leaf'], 'mem', { value: 'a literal' }), { reason: 'unreachable', step: 'C-ANCHOR' })
+    expectRefusal(call(store(), 'write', ['nope', 'page'], 'mem', { value: 'a literal' }), { reason: 'unknown-root', step: 'B-ROOT' })
   })
+
 
   it('A-12 · §2.3 item 2 — the resolution’s two records are NEVER returned to a caller (C1/C2)', async () => {
     await resolveStoreSurface()
@@ -802,12 +887,22 @@ describe('§2.4 — THE MINT AND THE ADMISSION SET', () => {
     call(f, 'write', ROOT, 'mem', { value: caller })
     ;((caller['inner'] ?? {}) as Rec)['deep'] = 99
     expect(readValue(readOn(f, 'generic', ROOT)), 'C2/C3 — a stored value that aliases the caller’s object FAILS; the store holds its own minted state').toEqual({ inner: { deep: 1 } })
+    /** A FAILED SAVE IS NOT A REFUSED LOAD (`contract.md` §0A `DD-14`: only a refused LOAD enters the
+     *  declared UNLOADED state — `§2.12` item 4, token 15). The tier's PRE-CALL state therefore
+     *  STANDS after a `'save-failed'` write (`§2.7` item 5: *"the pre-call file-tier state stands; the
+     *  pre-call file bytes stand"*), and a `file`-tier read at it answers its pre-call instance — the
+     *  store does NOT answer `'not-loaded'` for a failed save (`§2.6` item 3 / row `F-3`). The drive
+     *  therefore establishes an instance first, so the pre-call state is observable. */
     const fs = memoryFs()
     const g = storeOver(fs)
+    call(g, 'write', ROOT, 'file', { value: 'pre-call' })
+    const preBytes = fs.bytes(FILE_PATH)
     fs.failSaves(1)
-    expectRefusal(writeOn(g, 'generic', ROOT, 'file', { value: { partial: 1 } }), { reason: 'save-failed' })
-    expectRefusal(call(g, 'read', ROOT, 'file'), { reason: 'not-loaded' })
+    expectRefusal(writeOn(g, 'generic', ROOT, 'file', { value: 'partial' }), { reason: 'save-failed', step: 'I-SAVE' })
+    expect(fs.bytes(FILE_PATH), '§2.7 item 5 — the pre-call file bytes stand').toBe(preBytes)
+    expect(readValue(call(g, 'read', ROOT)), 'DD-14 — a failed SAVE is not a refused LOAD: the pre-call state stands and the tier stays loaded').toEqual('pre-call')
   })
+
 
   it('M-13 · §2.4 item 4 / C18 — the worked illustration: `{active: true, contents: {...}}`', async () => {
     await resolveStoreSurface()
@@ -832,15 +927,29 @@ describe('§2.4 — THE MINT AND THE ADMISSION SET', () => {
 describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', () => {
   it('W-1 · §2.5 item 1 — the write’s nine-step ORDER, with the discard rule at steps (1)–(7)', async () => {
     await resolveStoreSurface()
+    /** A FAILURE AT STEP (3) `F-TIER`, WHICH IS INSIDE THE DISCARD RULE'S RANGE: the write's tier
+     *  OUT-RANKS its parent instance's tier (`§2.2` item 3's monotonic invariant · `§2.14` token 11
+     *  `'persistence-inversion'`), so the prospective state is DISCARDED at step `(3)` — before the
+     *  mint `(6)` and long before the file write `(7)` — the pre-call state and the pre-call file
+     *  bytes stand byte-identical, the purge does not run and no listener fires. (The earlier form of
+     *  this row drove `['tabs','page']` at `file` under a `file` parent, which NO arm refuses: `C18`'s
+     *  add arm LANDS it.) */
     const fs = memoryFs()
     const f = storeOver(fs)
-    call(f, 'write', ROOT, 'file', { value: { seed: 'pre-call' } })
+    call(f, 'write', ROOT, 'temp', { value: { seed: 'pre-call' } })
     const preBytes = fs.bytes(FILE_PATH)
-    const refused = call(f, 'write', ['tabs', 'page'], 'file', { value: { seed: 2 } })
+    let fired = 0
+    call(f, 'listen', ROOT, () => {
+      fired += 1
+    })
+    const refused = call(f, 'write', CHILD, 'file', { value: { seed: 2 } })
     expect(isRefusal(refused), '§2.5 item 1 — a failure at steps (1)–(7) answers a Refusal').toBe(true)
+    expect(refusalOf(refused)['reason'], '§2.2 item 3 — the arm that failed is the tier check at step (3)').toBe('persistence-inversion')
     expect(fs.bytes(FILE_PATH), '§2.5 item 1 — the pre-call file bytes stand byte-identical').toBe(preBytes)
-    expect(readValue(readOn(f, 'generic', ROOT, 'file')), '§2.5 item 1 — the pre-call state stands').toEqual({ seed: 'pre-call' })
+    expect(readValue(readOn(f, 'generic', ROOT, 'temp')), '§2.5 item 1 — the pre-call state stands').toEqual({ seed: 'pre-call' })
+    expect(fired, '§2.5 item 1 — the purge does not run and no listener fires').toBe(0)
   })
+
 
   it('W-2 · §2.5 item 2 / C18 — a deeper address that could exist but does not ADDS the data', async () => {
     await resolveStoreSurface()
@@ -893,11 +1002,15 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     /** THE LANDING ARM THIS ROW MEANS TO DRIVE, re-derived from the arm table: the addressed
      *  address must resolve to a LITERAL PROPERTY (`A5`: *"the literal is replaced by an
      *  anchor/link/child set"*) or an ABSENT PROPERTY (`A6`: `C18`'s add), NEVER to a NODE
-     *  LOCATION (which `A2` refuses). `CHILD` = `['tabs','page']` has `ROOT` as its immediate
-     *  parent, so `CHILD` is a PROPERTY address of `tabs` throughout; at `mem` the write needs no
-     *  path, and the fixture's explicit `PAR-11` double is supplied by `store()`. */
+     *  LOCATION (which `A2` refuses `'node-location-container'`). `CHILD` = `['tabs','page']` has
+     *  `ROOT` as its immediate parent, so `CHILD` is a PROPERTY address of `tabs` throughout — and
+     *  the drive writes it TWICE, so the second write is the TOTAL OVERWRITE of the instance at
+     *  `(CHILD, 'mem')` and the fire set is the re-mint's observable (`C4`/`C19` · `§2.11` item 5).
+     *  The first write supplies the literal at `ROOT`'s own `seed` member, so the sibling-member
+     *  claim is driven at the same time. `store()`'s explicit `PAR-11` double is supplied. */
     const f = store()
-    call(f, 'write', ROOT, 'mem', { value: { page: { a: 1, b: 2 }, other: 3 } })
+    call(f, 'write', ROOT, 'mem', { value: { seed: 1, other: 3 } })
+    const preRoot = readValue(readOn(f, 'generic', ROOT)) as Rec
     let firedAncestor = 0
     let firedAddress = 0
     call(f, 'listen', ROOT, () => {
@@ -906,11 +1019,19 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     call(f, 'listen', CHILD, () => {
       firedAddress += 1
     })
-    expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { c: 3 } }))['status'], 'C19 — there is no read-modify-write, no merge and no partial member update').toBe('committed')
-    expect(readValue(readOn(f, 'generic', CHILD)), 'C19 — the existing instance is discarded and re-minted WHOLESALE from the write’s own payload').toEqual({ c: 3 })
-    expect(readValue(readOn(f, 'generic', ROOT)), 'C19/C4 — the immediate parent is re-minted carrying the link to the new child, and the sibling member survives the re-mint').toEqual({ page: { c: 3 }, other: 3 })
-    expect(firedAncestor, 'C4/§2.11 item 5 — every node on the walk from the register is re-minted, and the FIRE SET is the re-mint’s only observable').toBe(1)
-    expect(firedAddress, '§2.11 item 5 — the addressed address is re-minted too, so its own listener fires ONCE').toBe(1)
+    expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { first: 1 } }))['status'], 'A6 — the link is CREATED and the child node’s subtree is minted at whole depth').toBe('committed')
+    /** THE SECOND WRITE IS THE PROBLEM'S OWN PROPERTY ADDRESS (`CHILD` is a property of `ROOT`, and
+     *  its own member `first` is a LITERAL PROPERTY of `CHILD`): a CONTAINER there is `A5`'s
+     *  replace-the-literal arm — a LANDING arm — where a CONTAINER at `CHILD` ITSELF would be `A2`'s
+     *  NODE-LOCATION refusal (nothing minted, nothing to overwrite). */
+    const r = expectCommitted(writeOn(f, 'generic', [...CHILD, 'first'], 'mem', { value: { c: 3 } }))
+    expect(r['purged'], '§2.5 item 4 — the purge set is `∅` for a `mem` write over a `mem` instance').toEqual([])
+    expect(readValue(readOn(f, 'generic', [...CHILD, 'first'])), 'A5 — “the literal is replaced by an anchor/link/child set”: there is no read-modify-write, no merge and no partial member update').toEqual({ c: 3 })
+    expect(readValue(readOn(f, 'generic', CHILD)), 'C19 — the addressed instance is discarded and re-minted WHOLESALE from the write’s own payload, and its OWN sibling member survives').toEqual({ first: { c: 3 } })
+    expect(readValue(readOn(f, 'generic', ROOT)), 'C4 — the re-mint is of the PARENT PATH, not a second mechanism: the parent carries the new child beside its own literals').toEqual({ seed: 1, other: 3, page: { first: { c: 3 } } })
+    expect(Object.keys(preRoot), 'A5 — the pre-write parent carried the literal members the re-mint preserves').toEqual(['seed', 'other'])
+    expect(firedAncestor, 'C4/§2.11 item 5 — every node on the walk from the register is re-minted, and the FIRE SET is the re-mint’s only observable: the ancestor fires ONCE per LANDING write').toBe(2)
+    expect(firedAddress, '§2.11 item 5 — the addressed address is re-minted too, so its own listener fires ONCE per write').toBe(2)
   })
 
   it('W-5 · §2.5 item 4 / C19 — the PURGE runs at step (8) with its EXACT set: `0 + 1 + 2 = 3`', async () => {
@@ -1019,9 +1140,16 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     await resolveStoreSurface()
     const f = store()
     call(f, 'write', ROOT, 'mem', { value: { seed: 'a literal' } })
-    expect((expectCommitted(writeOn(f, 'generic', ['tabs', 'seed'], 'mem', { tombstone: true }))['status'], "P §12's named derivation — ONE node minted at the address, the immediate parent re-minted")).toBe('committed')
+    /** `A8`'s DECLARED OUTCOME, CELL BY CELL (`§2.5` item 7 `A8` · `§2.6` item 6 · `census` §4.9b):
+     *  `1` node minted at `(address, tier)` · `1` literal REPLACED by the anchor/link · `1` property
+     *  RETAINED (the member still exists and now names a node, so `M-PROP` classifies the address as
+     *  a NODE LOCATION thereafter) · and the address thereafter answers `'tombstoned'` by `R11`. */
+    const r = expectCommitted(writeOn(f, 'generic', ['tabs', 'seed'], 'mem', { tombstone: true }))
+    expect(r['tombstoned'], '§2.6 item 1 — the write’s own record carries `tombstoned: true`').toBe(true)
     expectRefusal(readOn(f, 'generic', ['tabs', 'seed']), { reason: 'tombstoned', step: 'E-CHILD' })
-    expect(Object.keys(readValue(readOn(f, 'generic', ROOT)) as Rec), 'A8 — “the property itself continues to exist”: the member names a node rather than a literal').toContain('seed')
+    const parent = readValue(readOn(f, 'generic', ROOT)) as Rec
+    expect(Object.prototype.hasOwnProperty.call(parent, 'seed'), 'A8 — “the property itself continues to exist” (the literal is not recoverable, but the member is)').toBe(true)
+    expect(Object.keys(parent), 'A8 — the immediate parent was re-minted carrying the member at that segment').toEqual(['seed'])
   })
 
   it('W-16 · §2.5 item 7 `A9` — a TOMBSTONE at an ABSENT PROPERTY is the ordinary `C18` add of the tombstone node', async () => {
@@ -1044,18 +1172,29 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     await resolveStoreSurface()
     const fs = memoryFs()
     const f = storeOver(fs)
-    call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
+    call(f, 'write', CHILD, 'file', { value: { seed: 1 } })
     const preBytes = fs.bytes(FILE_PATH)
     let fired = 0
     call(f, 'listen', CHILD, () => {
       fired += 1
     })
-    expectNodeLocationContainerRefusal(call(f, 'write', CHILD, 'mem', { value: [1] }), 'W-18 (`A2` ⇒ token 21)')
+    /** `A2` — a CONTAINER at a NODE LOCATION, whose payload class here is the ARRAY `R16`(d) names in
+     *  its own example. */
+    expectNodeLocationContainerRefusal(call(f, 'write', CHILD, 'file', { value: [1] }), 'W-18 (`A2` ⇒ token 21)')
     expect(fs.bytes(FILE_PATH), '§2.5 item 7 `A2` — NO file is written and the purge does not run').toBe(preBytes)
     expect(fired, '§2.5 item 7 `A2` — NO listener fires').toBe(0)
     expect(refusalOf(call(f, 'write', ROOT, 'mem', { value: { container: 1 }, transparent: true }))['reason'], '§2.5 item 7 — `A10`’s container-at-`_value` refusal ⇒ token 9').toBe('value-not-admitted')
     expect(refusalOf(call(f, 'write', ROOT, 'mem', { value: 1, transparent: true, tombstone: true }))['reason'], '§2.5 item 7 — the transparency beside a tombstone ⇒ token 10').toBe('malformed-tombstone')
-    expect(refusalOf(call(f, 'write', ['tabs', 'page'], 'mem', { value: 1 }))['reason'], '§2.5 item 7 — the immediate parent’s non-resolution ⇒ token 3').toBe('unreachable')
+    /** THE IMMEDIATE PARENT'S NON-RESOLUTION ⇒ token 3 (`§2.5` item 7's own token list: *"the
+     *  IMMEDIATE PARENT's non-resolution ⇒ `C17`'s arm (`'unreachable'`, token 3, at the intermediate
+     *  step)"*) — the NO-RESOLUTION resolution row, driven WRITE-side. The root is minted FIRST and
+     *  the SEGMENT ABOVE the addressed address is missing, so the failure is the walk's `C-ANCHOR`
+     *  step and it is INTERMEDIATE (`i < n`): a missing ROOT would answer token 2 instead
+     *  (`unknown-root`, row `A-3`), and a FINAL segment at a resolved parent is the ABSENT PROPERTY
+     *  row, whose write arm is `C18`'s ADD — it LANDS. */
+    const h = store()
+    call(h, 'write', ROOT, 'mem', { value: { seed: 1 } })
+    expectRefusal(call(h, 'write', ['tabs', 'missing', 'leaf'], 'mem', { value: 1 }), { reason: 'unreachable', step: 'C-ANCHOR' })
   })
 
   it('W-19 · §2.5 item 8 / R17(b) — NO PROPERTY DELETION: no delete verb, no property-level tombstone', async () => {
@@ -1095,10 +1234,25 @@ describe('§2.6 — THE TOMBSTONE', () => {
     const f = store()
     call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
     call(f, 'write', CHILD, 'mem', { tombstone: true })
-    const answers = [readOn(f, 'generic', CHILD), readOn(f, 'generic', CHILD, 'mem'), readOn(f, 'generic', ROOT)]
-    for (const answer of answers) {
+    /** R11's WHOLE CLAIM, AND THE ONE TOKEN THAT IS NOT A LEAK OF IT (`§2.6` item 2 · `§2.14` item 3
+     *  · `§2.14` token 6): the tombstone node is NEVER a transcription, at any address, under any read
+     *  form — and the UNQUALIFIED read at its address answers `Refusal` whose `reason` IS
+     *  `'tombstoned'`, which the clause REQUIRES and this row must not forbid (a row that forbids the
+     *  declared token contradicts `§2.6` item 2 and `§2.14` item 6). The tombstone node's OWN members
+     *  are what must never appear: no `anchors`, no `literals`, no `tier`, no live internal record
+     *  (`§2.1`'s `Node` · `C1`/`C2`). */
+    const unqualified = refusalOf(readOn(f, 'generic', CHILD))
+    expect(unqualified['reason'], '§2.6 item 2 / §2.14 token 6 — the unqualified read at the tombstone’s address answers `tombstoned`').toBe('tombstoned')
+    expect(unqualified['step'], '§2.6 item 2 — the arm is the walk’s `E-CHILD`').toBe('E-CHILD')
+    expectRefusal(readOn(f, 'generic', CHILD, 'mem'), { reason: 'absent-address', step: 'E-CHILD' })
+    const root = readValue(readOn(f, 'generic', ROOT))
+    expect(root, 'R11 — the tombstone node itself is NEVER a transcription: its address contributes NO member to its parent’s transcription').toEqual({})
+    for (const answer of [unqualified, readOn(f, 'generic', CHILD, 'mem'), readOn(f, 'generic', ROOT)]) {
       const asText = JSON.stringify(answer)
-      expect(asText.includes('tombstone'), 'R11 — the tombstone node itself is NEVER a transcription, at any address, under any read form').toBe(false)
+      expect(
+        /"anchors"|"literals"|"links"|"parent"\s*:/.test(asText),
+        '§2.1/C1/C2 — no returned record carries a live internal record (`Node`/`Anchor`/`Link`)',
+      ).toBe(false)
     }
   })
 
@@ -1175,8 +1329,15 @@ describe('§2.6 — THE TOMBSTONE', () => {
     call(f, 'write', CHILD, 'file', { value: { seed: 'file' } })
     call(f, 'write', CHILD, 'temp', { tombstone: true })
     expectRefusal(readOn(f, 'generic', CHILD), { reason: 'tombstoned' })
-    call(f, 'write', CHILD, 'file', { value: { seed: 'committed' } })
-    expect(readValue(readOn(f, 'generic', CHILD)), 'C9’s commit flow — committing is an ordinary write at the more-persistent tier, which purges the temp instance').toEqual({ seed: 'committed' })
+    /** ARM (i) — *"a later write at the same address at a tier of equal or lower persistence (`C4`'s
+     *  discard-and-re-mint)"* (`§2.13` item 4 (ii)): the `temp` tombstone STANDS at `temp` and the
+     *  write at `temp` is the SUPERSEDING WRITE at the SAME ADDRESS, so it re-mints the instance
+     *  THERE and the tombstone is dropped — the address then reads its new `temp` instance, which is
+     *  this write's own payload. (The drive's earlier form wrote at `file`, a tier of HIGHER
+     *  persistence: that is `C9`'s commit flow and its purge, not arm (i).) */
+    expect(expectCommitted(writeOn(f, 'generic', CHILD, 'temp', { value: 're-minted' }))['status'], '§2.13 item 4 (ii) — the superseding write at the same address').toBe('committed')
+    expect(readValue(readOn(f, 'generic', CHILD)), 'C4/R7 — the `temp` tombstone was dropped by the superseding write, so the address reads its new `temp` instance').toEqual('re-minted')
+    expect(readValue(readOn(f, 'generic', CHILD, 'temp')), 'C4 — the superseding write re-minted the instance at (CHILD, temp)').toEqual('re-minted')
   })
 
   it('B-11 · §2.6 item 6 — the property-address tombstone: `3 = 1 + 1 + 1` (one node minted · one literal replaced · one property retained)', async () => {
@@ -1352,11 +1513,19 @@ describe('§2.8 — THE READ AND ITS `R1`–`R4` ARM TABLE', () => {
 
   it('R-6 · §2.8 item 2 — QUALIFIED: the passed tier applies at EVERY address, with NO fall-back downstream', async () => {
     await resolveStoreSurface()
+    /** THE PASSED TIER AT EVERY ADDRESS (`§2.8` item 2, QUALIFIED: *"THE READ TAKES THAT TIER
+     *  SPECIFICALLY, AT EVERY ADDRESS IT VISITS, WITH NO FALL-BACK"*), driven so that BOTH instances
+     *  can exist: the drive's earlier form wrote a `mem` instance at the address of an EXISTING
+     *  `file` LITERAL PROPERTY, which is `§2.5` item 7's `A4` OVERWRITE of that member — so the only
+     *  `file` instance at that address was replaced and the premise was unreachable. Here the
+     *  descendant is a fresh PROPERTY address (`A6`'s add), whose `mem` instance can therefore stand
+     *  beside the `file` instances on the path and beside its own `file` instance. */
     const f = store()
     call(f, 'write', ROOT, 'file', { value: { a: 1 } })
-    call(f, 'write', ['tabs', 'a'], 'mem', { value: 2 })
-    expect(readValue(readOn(f, 'generic', ROOT, 'file')), '§2.8 item 2 (b) — at a DOWNSTREAM address the tier’s absence means the member is ABSENT and the walk does not descend through it').toEqual({ a: 1 })
-    expect(readValue(readOn(f, 'generic', ROOT)), '§2.8 item 2 — UNQUALIFIED is a PER-NODE rule: the descendant’s mem instance IS visible').toEqual({ a: 2 })
+    expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { inner: 1 } }))['status'], 'C18/A6 — a CONTAINER at an ABSENT PROPERTY of the `file` root: the link is created').toBe('committed')
+    expect(readValue(readOn(f, 'generic', ROOT, 'file')), '§2.8 item 2 (b) — at a DOWNSTREAM address the tier’s absence means the member is ABSENT from the transcription and the walk does not descend through it').toEqual({ a: 1 })
+    expect(readValue(readOn(f, 'generic', ROOT)), '§2.8 item 2 — UNQUALIFIED is a PER-NODE rule: the descendant’s mem instance IS visible to a read of its ancestor').toEqual({ a: 1, page: { inner: 1 } })
+    expect(readValue(readOn(f, 'generic', CHILD)), '§2.8 item 2 — the unqualified read at the addressed address takes the lowest-persistence instance').toEqual({ inner: 1 })
   })
 
   it('R-7 · §2.8 item 2 — a qualified read’s absence AT THE ADDRESSED address is `tier-not-held`, never a lower-tier answer', async () => {
@@ -1589,29 +1758,50 @@ describe('§2.10 — THE CONSTRAINT SEAM, THE PASS SEQUENCE AND THE MESSAGE LIST
 
   it('C-11 · §2.10 item 11 / R15 item 3 — a repair that BREAKS a previously-`{ok:true}` constraint FAILS with token 20', async () => {
     await resolveStoreSurface()
+    /** THE ARM'S ANTECEDENT, MET CELL BY CELL (`§2.10` item 11: *"If a registration answered
+     *  `{ok:true}` in an EARLIER pass of the SAME write and answers `{ok:false, message}` in a LATER
+     *  pass, the write FAILS"*). The antecedent needs a LATER PASS, and a later pass exists only
+     *  because a `{repair:true}` whose repair RAN **RESTARTS the phase at the first registration**
+     *  (`§2.10` items 8–9 · `DD-22`) — so the drive is TWO REGISTRATIONS AND ONE REPAIR:
+     *    registration 0 (`ROOT`'s own list) answers `{repair:true}` on its first evaluation and
+     *    `{ok:true}` on every later one, and its repair is the ONE that runs;
+     *    registration 1 answers `{ok:true}` in pass 1 and `{ok:false, message}` in pass 2 — the
+     *    PREVIOUSLY-SATISFIED registration the repair broke.
+     *  The earlier form of this row registered a constraint whose FIRST answer was already
+     *  `{ok:false}`, which is token 12's arm at ITS OWN first evaluation (row `C-13`) and can never
+     *  reach token 20. Two registrations are required because a single registration cannot both
+     *  demand the repair and be the constraint the repair broke. */
     const f = store()
-    register(f, ROOT, [{ ok: true }, { ok: false, message: 'the broken constraint’s verbatim' }], { withRepair: () => 'repaired' })
-    const r = expectRefusal(writeOn(f, 'generic', ROOT, 'file', { value: 'original' }), { reason: 'repair-broke-constraint', step: 'H-CONSTRAINT' })
+    const repairRegistration = register(f, ROOT, [{ repair: true }, { ok: true }], { withRepair: () => 'repaired' })
+    const brokenRegistration = register(f, ROOT, [{ ok: true }, { ok: false, message: 'the broken constraint’s verbatim' }])
+    const r = expectRefusal(writeOn(f, 'generic', ROOT, 'mem', { value: 'original' }), { reason: 'repair-broke-constraint', step: 'H-CONSTRAINT' })
     const list = messagesOf(r)
+    expect(repairRegistration.calls.length, '§2.10 item 8 — the repair RESTARTED the phase: registration 0 is RE-EVALUATED against the repaired state').toBe(2)
+    expect(repairRegistration.calls[0]?.['answer'], '§2.10 item 8 — registration 0 demanded the repair in pass 1').toEqual({ repair: true })
+    expect(brokenRegistration.calls.length, '§2.10 item 8 — the already-satisfied registration 1 is re-evaluated in the NEW pass, and its later answer is what the phase acted on').toBe(2)
+    expect(brokenRegistration.calls[0]?.['answer'], '§2.10 item 11 — the antecedent: registration 1 answered `{ok:true}` in the EARLIER pass').toEqual({ ok: true })
     expect(list.length, 'R15 item 3 — the whole list, whose last entry is the store’s own sentence').toBeGreaterThanOrEqual(2)
     expect(list[list.length - 2]?.['text'], '§2.14 item 5 — the broken constraint’s own verbatim stands at the entry IMMEDIATELY BEFORE the store’s').toBe('the broken constraint’s verbatim')
     expect(primarySentence(r), '§2.14 item 5 — the last entry is the STORE’s own sentence naming the repair and the constraint it broke').not.toBe('the broken constraint’s verbatim')
+    expect(repairRegistration.pending, '§2.10 item 9 — the repair ran ONCE for the whole write').toBe(0)
   })
 
   it('C-12 · §2.10 item 11 — the loop-breaker lands NOTHING: no install, no file write, no purge, no firing', async () => {
     await resolveStoreSurface()
     const fs = memoryFs()
     const f = storeOver(fs)
-    call(f, 'write', ROOT, 'file', { value: { seed: 'pre-call' } })
+    call(f, 'write', ROOT, 'mem', { value: 'pre-call' })
     const preBytes = fs.bytes(FILE_PATH)
     let fired = 0
     call(f, 'listen', ROOT, () => {
       fired += 1
     })
-    register(f, ROOT, [{ ok: true }, { ok: false, message: 'broken' }], { withRepair: () => 'repaired' })
-    expectRefusal(writeOn(f, 'generic', ROOT, 'file', { value: 'prospective' }), { reason: 'repair-broke-constraint' })
-    expect(fs.bytes(FILE_PATH), '§2.10 item 11 — the file/secure commit is never attempted').toBe(preBytes)
-    expect(readValue(readOn(f, 'generic', ROOT, 'file')), '§2.10 item 11 — nothing is installed').toEqual({ seed: 'pre-call' })
+    /** The same two-registration + one-repair drive as row `C-11` (`§2.10` items 8–9, 11). */
+    register(f, ROOT, [{ repair: true }, { ok: true }], { withRepair: () => 'repaired' })
+    register(f, ROOT, [{ ok: true }, { ok: false, message: 'broken' }])
+    expectRefusal(writeOn(f, 'generic', ROOT, 'mem', { value: 'prospective' }), { reason: 'repair-broke-constraint' })
+    expect(fs.bytes(FILE_PATH), '§2.10 item 11 — the `file`/`secure` commit is never attempted').toBe(preBytes)
+    expect(readValue(readOn(f, 'generic', ROOT)), '§2.10 item 11 — nothing is installed: the pre-call state stands').toEqual('pre-call')
     expect(fired, '§2.11 item 5 — a REFUSED write fires NOTHING').toBe(0)
   })
 
@@ -1684,14 +1874,24 @@ describe('§2.10 — THE CONSTRAINT SEAM, THE PASS SEQUENCE AND THE MESSAGE LIST
 describe('§2.11 — THE EVENT SURFACE', () => {
   it('E-1 · §2.11 item 3 / DD-16 — attachment is BY ADDRESS and survives every re-mint', async () => {
     await resolveStoreSurface()
+    /** THE ATTACHMENT'S OWN OBSERVABLE (`C23` · `§2.11` item 3: *"the body, when it reruns, reads the
+     *  address and therefore observes the NEW node"*), driven through a LANDING arm: the earlier form
+     *  wrote a CONTAINER at a NODE LOCATION, which `§2.5` item 7's `A2` REFUSES — so nothing landed,
+     *  no fan-out ran, and the row asserted an observable of a write that never happened. Here the
+     *  write lands INSIDE the listened node's subtree (`A6`'s add at a deeper PROPERTY address), so the
+     *  target address is re-minted by `C4` and fires. */
     const f = store()
-    call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
+    call(f, 'write', ROOT, 'mem', { value: { seed: 1, page: { a: 1 } } })
     const observed: unknown[] = []
-    call(f, 'listen', CHILD, () => {
+    const record = call(f, 'listen', CHILD, () => {
       observed.push(readValue(readOn(f, 'generic', CHILD)))
     })
-    call(f, 'write', CHILD, 'mem', { value: { seed: 2 } })
-    expect(observed, 'C4/DD-16 — the target it observes is the node an unqualified read at that address would select').toEqual([{ seed: 2 }])
+    expect(record['attached'], 'C23 — the address resolves, so the listener is attached to its target node').toBe(true)
+    expect(expectCommitted(writeOn(f, 'generic', [...CHILD, 'b'], 'mem', { value: 2 }))['status'], 'C18/A6 — the write lands inside the listened address’s subtree').toBe('committed')
+    expect(observed, 'C4/DD-16 — the target it observes is the node an unqualified read at that address would select AFTER the re-mint').toEqual([{ a: 1, b: 2 }])
+    /** AND IT SURVIVES A SECOND RE-MINT (`C4`: *"a re-mint of the target node does not detach it"*). */
+    expect(expectCommitted(writeOn(f, 'generic', [...CHILD, 'b'], 'mem', { value: 3 }))['status'], 'A4 — a literal at the LITERAL PROPERTY the previous write created').toBe('committed')
+    expect(observed, 'C23/DD-16 — a write elsewhere in the store never detaches a listener, and a re-mint of the target node does not detach it').toEqual([{ a: 1, b: 2 }, { a: 1, b: 3 }])
   })
 
   it('E-2 · §2.11 item 2 — the body takes NO ARGUMENTS and collects through the store’s own `read`', async () => {
@@ -1725,15 +1925,41 @@ describe('§2.11 — THE EVENT SURFACE', () => {
 
   it('E-4 · §2.11 item 5 — the FIRE SET is exactly A, its strict descendants and its strict ancestors, once each', async () => {
     await resolveStoreSurface()
+    /** THE FIRE SET, DRIVEN THROUGH LANDING ARMS AT ADDRESSED ADDRESSES THAT `C19` DOES NOT DISCARD:
+     *  the earlier form wrote a CONTAINER at `CHILD` — a NODE LOCATION — which `§2.5` item 7's `A2`
+     *  REFUSES, so the write never landed and NO listener could fire (`§2.11` item 5: *"a REFUSED
+     *  write fires NOTHING"*); a drive whose write DISCARDS a subtree (`A1`/`A3`/`A7`) leaves the
+     *  discarded addresses unable to resolve, so they are not ATTACHED when the fan-out runs and the
+     *  clause's own word — *"every ATTACHED listener"* — excludes them. Both arms below therefore
+     *  write at a PROPERTY of the addressed node (`A5`/`A6`), so the ancestors, the address and the
+     *  descendants all still resolve. */
     const f = store()
-    call(f, 'write', CHILD, 'mem', { value: { body: { title: 't' }, other: 1 } })
+    expect(expectCommitted(writeOn(f, 'generic', ROOT, 'mem', { value: { seed: 1 } }))['status'], 'C14 — the root comes into being by a 1-segment write').toBe('committed')
+    expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { keep: 1, sub: { a: 1, b: 2 } } }))['status'], 'A6 — a CONTAINER at an ABSENT PROPERTY: the link is created and the contents minted as child nodes').toBe('committed')
+    /** THE FOUR LISTENERS, ONE PER FIRE-SET CLASS, WITH `A` ITSELF A PROPERTY OF A NODE (`A6`): `ROOT`
+     *  is a strict ANCESTOR of `A`, `CHILD` is a strict ancestor of `A`, `CHILD ⊕ ['sub']` IS `A`, and
+     *  `CHILD ⊕ ['sub','a']` is a strict DESCENDANT of `A` — and the write's own `C19` subtree
+     *  discard leaves none of them unable to resolve. */
     const fired: string[] = []
     call(f, 'listen', ROOT, () => fired.push('ancestor'))
-    call(f, 'listen', CHILD, () => fired.push('address'))
-    call(f, 'listen', DEEPER, () => fired.push('descendant'))
+    call(f, 'listen', CHILD, () => fired.push('ancestor2'))
+    call(f, 'listen', [...CHILD, 'sub'], () => fired.push('address'))
+    call(f, 'listen', [...CHILD, 'sub', 'a'], () => fired.push('descendant'))
     call(f, 'listen', ['tabs', 'unrelated'], () => fired.push('other'))
-    call(f, 'write', CHILD, 'mem', { value: { body: { title: 'u' } } })
-    expect(fired, 'C19/C4/§2.11 item 5 — a listener on any OTHER address does not fire').toEqual(['ancestor', 'address', 'descendant'])
+    expect(expectCommitted(writeOn(f, 'generic', [...CHILD, 'sub', 'c'], 'mem', { value: 3 }))['status'], 'A6 — the write lands at a PROPERTY of the addressed node, so `A` itself, its ancestors and its descendants all survive').toBe('committed')
+    expect(
+      fired,
+      'C19/C4/§2.11 item 5 — the fire set is exactly A, its strict ancestors and its strict descendants, once each; a listener on any OTHER address does not fire',
+    ).toEqual(['ancestor', 'ancestor2', 'address', 'descendant'])
+    expect(
+      fired.filter((x) => x === 'descendant').length,
+      '§2.11 item 5 — (iii) a strict DESCENDANT of `A` fires, and the write’s own `C19` discard does not remove it here: `A` is `CHILD ⊕ [\'sub\']` and the descendant `CHILD ⊕ [\'sub\',\'a\']` survives the write at its SIBLING `\'c\'`',
+    ).toBe(1)
+    expect(fired.includes('other'), '§2.11 item 5 — a listener on an address that is neither `A`, a strict descendant nor a strict ancestor NEVER fires').toBe(false)
+    expect(
+      fired.filter((x) => x === 'address').length,
+      '§2.11 item 5 — “the whole write … is ONE firing; a write never fires a listener twice”',
+    ).toBe(1)
   })
 
   it('E-5 · §2.11 item 5 — a REFUSED write fires NOTHING', async () => {
@@ -1809,7 +2035,7 @@ describe('§2.12 — THE BOOT (`load()`)', () => {
     call(f, 'listen', ROOT, () => {
       observed.push(readValue(readOn(f, 'generic', ROOT)))
     })
-    expect(expectCommitted(call(f, 'load'))['status'], 'C24 — the load answers a LoadRecord').toBe('loaded')
+    expect(call(f, 'load')['status'], 'C24/§2.12 item 1 — the load answers a `LoadRecord`: `LoadedRecord | Refusal`, and the loaded arm carries `present` and `roots` (PAR-12)').toBe('loaded')
     expect(observed, 'C24 — each listener observes the FULLY LOADED state').toEqual([{ seed: 'loaded' }])
   })
 
@@ -1856,7 +2082,10 @@ describe('§2.12 — THE BOOT (`load()`)', () => {
     fs.seed(FILE_PATH, '{not json')
     expectRefusal(call(f, 'load'), { reason: 'load-failed' })
     fs.seed(FILE_PATH, JSON.stringify({ tabs: { seed: 'recovered' } }))
-    expect(expectCommitted(call(f, 'load'))['status'], '§2.12 item 4 — “a later successful load() leaves the state for the rest of the session”').toBe('loaded')
+    const loaded = call(f, 'load')
+    expect(loaded['status'], '§2.12 item 4 — “a later successful load() leaves the state for the rest of the session”').toBe('loaded')
+    expect(loaded['present'], 'PAR-12 — a load answering `loaded` carries `present`').toBe(true)
+    expect(typeof loaded['roots'], 'PAR-12 — `roots`: the count of register entries minted').toBe('number')
     expect(readValue(readOn(f, 'generic', ROOT, 'file')), '§2.12 item 4 — the file tier is usable again').toEqual({ seed: 'recovered' })
   })
 
@@ -1876,14 +2105,25 @@ describe('§2.12 — THE BOOT (`load()`)', () => {
 
   it('L-7 · §2.12 item 2 / C24 — the boot ORDER is a contract clause: construct, `listen(...)`, THEN `load()`', async () => {
     await resolveStoreSurface()
+    /** THE MARKER RECORDS THE LOAD **AS THE LOAD RUNS IT**, not before the call it measures: the
+     *  earlier form pushed `'load'` BEFORE `call(f, 'load')`, so it asserted the opposite of `C24`.
+     *  `C24` (`§2.11` item 6 · `§2.12` item 2) declares the order: the host registers its listeners
+     *  FIRST and THEN calls `load()`, and the fan-out runs ONCE after the whole mint — so the
+     *  LISTENER'S OWN FIRING is the marker that must record the load's position in the order. */
     const fs = memoryFs()
-    const f = storeOver(fs)
     fs.seed(FILE_PATH, JSON.stringify({ tabs: { seed: 1 } }))
+    const g = storeOver(fs)
     const order: string[] = []
-    call(f, 'listen', ROOT, () => order.push('listener'))
+    const listenerRanAt: number[] = []
+    call(g, 'listen', ROOT, () => {
+      order.push('listener')
+      listenerRanAt.push(1)
+    })
+    const loaded = call(g, 'load')
     order.push('load')
-    call(f, 'load')
-    expect(order, '§2.11 item 6 — “a design in which the load precedes the registrations … FAILS”').toEqual(['listener', 'load'])
+    expect(loaded['status'], '§2.12 item 1 — the load answers its declared `LoadRecord`').toBe('loaded')
+    expect(order, 'C24 — the listener fired INSIDE the load call, i.e. the load followed its registration and the fan-out ran after the whole mint').toEqual(['listener', 'load'])
+    expect(listenerRanAt, 'C24 — the fan-out ran ONCE').toEqual([1])
   })
 
   it('L-8 · §2.12 item 5 — no `reset`, `clear`, `unload` or `hydrate` verb is declared', async () => {
@@ -1983,7 +2223,14 @@ describe('§2.14 — THE CLOSED FAIL-STATE UNION (the 21 ENUMERATED tokens; the 
     const drives: readonly (readonly [number, string, () => Rec])[] = [
       [1, 'malformed-address', () => call(store(), 'read', 'tabs')],
       [2, 'unknown-root', () => call(store(), 'read', ['nope'])],
-      [3, 'unreachable', () => call(store(), 'read', CHILD)],
+      [3, 'unreachable', () => {
+        /** THE MIDDLE OF A WALK WITH ITS ROOT MINTED: `B-ROOT` precedes `C-ANCHOR` (`§2.3` item 2),
+         *  so a read whose `address[0]` names no entry is token 2 (`unknown-root`) and the `C-ANCHOR`
+         *  arm needs the root to reach its first intermediate segment. */
+        const f = store()
+        call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
+        return call(f, 'read', ['tabs', 'missing', 'deeper'])
+      }],
       [4, 'absent-address', () => {
         const f = store()
         call(f, 'write', ROOT, 'mem', { value: { page: 1 } })
@@ -2042,8 +2289,14 @@ describe('§2.14 — THE CLOSED FAIL-STATE UNION (the 21 ENUMERATED tokens; the 
         return call(f, 'load')
       }],
       [20, 'repair-broke-constraint', () => {
+        /** THE SAME TWO-REGISTRATION + ONE-REPAIR DRIVE AS ROW `C-11` (`§2.10` items 8–9, 11): a
+         *  single registration cannot both demand the repair and be the constraint that the repair
+         *  broke, and the antecedent (*"answered `{ok:true}` in an EARLIER pass … `{ok:false}` in a
+         *  LATER pass"*) needs the restart a RUN repair forces. */
         const f = store()
-        register(f, ROOT, [{ ok: true }, { ok: false, message: 'broken' }], { withRepair: () => 'repaired' })
+        call(f, 'write', ROOT, 'mem', { value: 'pre-call' })
+        register(f, ROOT, [{ repair: true }, { ok: true }], { withRepair: () => 'repaired' })
+        register(f, ROOT, [{ ok: true }, { ok: false, message: 'broken' }])
         return call(f, 'write', ROOT, 'mem', { value: 'original' })
       }],
       [21, 'node-location-container', () => {
@@ -2056,7 +2309,8 @@ describe('§2.14 — THE CLOSED FAIL-STATE UNION (the 21 ENUMERATED tokens; the 
     const minted: string[] = []
     for (const [ordinal, token, drive] of drives) {
       const answer = drive()
-      const r = expectRefusal(answer)
+      /** The ordinal is named in the failure's own message, so a mis-pointed cell is visible. */
+      const r = refusalOf(answer)
       expect(r['reason'], `§2.14 — ordinal ${ordinal}'s token \`${token}\` is the reason the arm mints`).toBe(token)
       minted.push(String(r['reason']))
       expect(messagesOf(r).length, `§2.14 item 2 — ordinal ${ordinal}'s refusal carries a non-empty list`).toBeGreaterThan(0)
@@ -2093,7 +2347,13 @@ describe('§2.14 — THE CLOSED FAIL-STATE UNION (the 21 ENUMERATED tokens; the 
     const driven = [
       call(store(), 'read', 'tabs'),
       call(store(), 'read', ['nope']),
-      call(store(), 'read', CHILD),
+      (() => {
+        /** `B-ROOT` precedes `C-ANCHOR`: the root must be minted before an INTERMEDIATE arm can be
+         *  the failing one (`§2.3` item 2). */
+        const f = store()
+        call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
+        return call(f, 'read', ['tabs', 'missing', 'deeper'])
+      })(),
       (() => {
         const f = store()
         call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
@@ -2248,7 +2508,14 @@ describe('§6 — PARAMETER SEMANTICS (the `16 = 13 + 3` `PAR-` rows)', () => {
     expectRefusal(call(f, 'write', ROOT, 'mem', { value: { inner: 1 }, transparent: true }), { reason: 'value-not-admitted', step: 'G-VALUE' })
     call(f, 'write', ROOT, 'mem', { value: 'alone', transparent: true })
     expectRefusal(call(f, 'write', ROOT, 'mem', { value: { second: 1 } }), { reason: 'value-not-admitted', step: 'G-VALUE' })
-    expectRefusal(call(f, 'write', ['tabs', 'page'], 'mem', { value: 1 }), { reason: 'unreachable' })
+    /** `PAR-4a`'s fourth arm: *"a literal written where the immediate parent does NOT resolve ⇒
+     *  `'unreachable'` (`C17`) and nothing minted"*. The drive mints its root FIRST and leaves the
+     *  SEGMENT ABOVE the addressed one missing — `B-ROOT` precedes `C-ANCHOR`, so a missing ROOT is
+     *  token 2 (`unknown-root`, row `A-3`), and the earlier form's address (`ROOT`'s own child, whose
+     *  parent `ROOT` was a TRANSPARENT node by then) is not the arm this row means. */
+    const h = store()
+    call(h, 'write', ROOT, 'mem', { value: { seed: 1 } })
+    expectRefusal(call(h, 'write', ['tabs', 'missing', 'leaf'], 'mem', { value: 1 }), { reason: 'unreachable', step: 'C-ANCHOR' })
   })
 
   it('P-8 · PAR-5 — a value beside `tombstone: true`, or a `tombstone` member that is not `true`, is `malformed-tombstone`', async () => {

@@ -771,15 +771,18 @@ export function mintAttempts(): readonly Attempt[] {
 /** `P-SD-IM-3` · `S-SD-RANK-1` — the `3 × 3` tier pairs: `6` legal, `3` refused.
  *
  *  **THE DIRECTION IS `store-model.md` §2.2 item 3's, ONE WAY ONLY: *"A NODE MAY NOT BE MORE
- *  PERSISTENT THAN ITS PARENT"*** — `rank(child) ≤ rank(parent)`, `rank(file) = 3 > rank(mem) = 2
- *  > rank(temp) = 1`, terms `9 = 3 × 3` of which `6` legal and `3` refused (`census.md` §4.4).
- *  With `TIERS_RANKED = [file, mem, temp]` (MOST persistent first) the LEGAL cells are exactly
- *  `(file,file)` · `(mem,file)` · `(mem,mem)` · `(temp,file)` · `(temp,mem)` · `(temp,temp)`, i.e.
- *  the child's INDEX is GREATER THAN OR EQUAL TO the parent's; the `3` REFUSED cells are
- *  `(file,mem)` · `(file,temp)` · `(mem,temp)`, i.e. the child's index is STRICTLY LESS. An earlier
- *  form of this helper computed the INVERTED comparison (`indexOf(child) <= indexOf(parent)`,
- *  which reads a MORE-persistent child as legal) — that was a defect of this HELPER, corrected
- *  here from the clause; the declared term is unchanged at `9 = 6 + 3`.
+ *  PERSISTENT THAN ITS PARENT"*** — `rank(child) ≤ rank(parent)`, terms `9 = 3 × 3` of which `6`
+ *  legal and `3` refused (`census.md` §4.4). **THE RANK IS READ OFF THE DECLARED ORDER:** §2.2 item 2
+ *  prints the persistence order as *"`file` > `mem` > `temp`"* and §2.5 item 4's purge set is
+ *  `purge(file) = {mem, temp}`, i.e. `file` is the LEAST persistent — so with
+ *  `TIERS_RANKED = [file, mem, temp]` the rank of a tier is its index + 1 (`file` 1 < `mem` 2 <
+ *  `temp` 3) and the LEGAL cells are exactly `(file,file)` · `(mem,file)` · `(mem,mem)` ·
+ *  `(temp,file)` · `(temp,mem)` · `(temp,temp)`, i.e. the child's INDEX is GREATER THAN OR EQUAL TO
+ *  the parent's; the `3` REFUSED cells are `(file,mem)` · `(file,temp)` · `(mem,temp)`, i.e. the
+ *  child's index is STRICTLY LESS. An earlier form of this helper computed the INVERTED comparison
+ *  (`indexOf(child) < indexOf(parent)`, which reads a MORE-persistent child as legal) — that was a
+ *  defect of this HELPER, corrected here from the clause; the declared term is unchanged at
+ *  `9 = 6 + 3`. The sibling row `T-5` derives the same rank from the same order.
  *
  *  **THE DRIVE IS `§2.5` item 7's ARM TABLE'S, CELL BY CELL.** The parent write is a LITERAL at the
  *  1-segment address (`C18`/`C14`: the register entry and its node come into being — `A6`'s
