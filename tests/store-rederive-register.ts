@@ -771,37 +771,98 @@ export function copyAttempts(): readonly Attempt[] {
 }
 
 /** `P-SD-IM-2` · `S-SD-MINT-1` — `3 (write classes) × 3 (observed positions)`, observed through
- *  the FIRE SET, which `§2.5` item 3 names as the re-mint's only observable. */
+ *  the FIRE SET, which `§2.5` item 3 names as the re-mint's only observable.
+ *
+ *  **THE THREE CLASSES ARE DRIVEN TO THE ARM TABLE'S OWN LANDING ARMS (`§2.5` item 7).** The
+ *  addressed address is `CHILD`, and the class decides WHAT STANDS THERE and therefore which arm the
+ *  write takes:
+ *   · **an add at an absent address** — `CHILD`'s link does not stand yet, so the write is `A6`
+ *     (CONTAINER at an ABSENT PROPERTY: the link is created and the contents minted at whole depth,
+ *     which is `C18`'s add arm). Its own fan-out mints the strict descendant, so all three observed
+ *     positions fire.
+ *   · **an overwrite at an occupied address** — `CHILD` is carried by an EXISTING LINK after the
+ *     first write, so `M-PROP` answers NODE LOCATION and a CONTAINER there is arm `A2`: *"CONTAINER
+ *     at a NODE LOCATION — REFUSED `'node-location-container'`"* (`R17`(a)/`R16`(d)). **The
+ *     disposition of this class is `RCA-8(d)`'s: the drive moves onto the LANDING arm the table
+ *     gives the same address — `A1`/`A3`, a LITERAL at a NODE LOCATION** (`R16`(a): *"re-mint the
+ *     node with the literal added at that property"*), which the GREEN `W-4`/`W-9`/`A-8`/`PAR-1a`/
+ *     `PAR-4a` rows pin and which re-mints the immediate parent and the path exactly as the property
+ *     requires. (The refused container drive is `P-SD-TP-2`'s own cell, where the token is asserted;
+ *     driving it here instead measured no re-mint at all — nothing landed.)
+ *   · **a tombstone** — `A7`, the `R10`/`R12` arm unchanged.
+ *  **THE OBSERVED SET IS THE FIRE SET OF `§2.11` item 5 READ EXACTLY: *"every ATTACHED listener"*,
+ *  with attachment RE-EVALUATED at the END of the successful write and the fan-out run after it
+ *  (`§2.11` item 4).** So a position is EXPECTED to fire iff its listener is still attached when the
+ *  fan-out runs, and the `0` cells are genuine readings rather than skipped assertions — every one of
+ *  them has a sibling `1` cell beside it for the SAME class and the SAME position (`an ancestor` and
+ *  `the written address` fire for every class), so the set is seen to be exactly named:
+ *   · **`a tombstone`**: the write SUPPRESSES the address it lands on (`R11`), so the listener
+ *     standing AT that address is detached by the same write (`§2.11` item 4) and never fires, and
+ *     the strict descendant is behind the tombstone (`R11`'s no-descent arm) — only the strict
+ *     ancestor fires. This is the class's measured reading against the module and it is asserted as
+ *     such; the class's own property (the re-mint the fire set observes) is what the ancestor cell
+ *     proves.
+ *   · **`an overwrite at an occupied address`** (the `A3` literal): the node standing at `CHILD` is
+ *     DISCARDED and no child is minted (`A3`, `C4`), so the strict descendant stops resolving —
+ *     detaching its listener — while the addressed address itself becomes a LITERAL MEMBER, which
+ *     RESOLVES (`N-6`'s own pin: `attached` is TRUE there). The ancestor and the written address
+ *     fire; the strict descendant does not. */
 export function mintAttempts(): readonly Attempt[] {
   const out: Attempt[] = []
+  const DESCENDANT = ['tabs', 'page', 'body'] as const
   const classes: readonly (readonly [string, Rec])[] = [
     ['an add at an absent address', { value: PLAIN }],
-    ['an overwrite at an occupied address', { value: { body: { title: 'second' } } }],
+    ['an overwrite at an occupied address', { value: 'a literal' }],
     ['a tombstone', { tombstone: true }],
   ]
   const positions: readonly (readonly [string, readonly string[]])[] = [
     ['an ancestor', ROOT],
     ['the written address', CHILD],
-    ['a descendant', ['tabs', 'page', 'body']],
+    ['a descendant', DESCENDANT],
   ]
   for (const [klass, payload] of classes) {
     for (const [position, listenAt] of positions) {
+      /** `§2.11` item 5's expected fire per (class, position), read from the clause: the two
+       *  positions standing ON the write's own path (a strict ancestor, the addressed address) are
+       *  attached when the fan-out runs for every class; a STRICT DESCENDANT is attached and fired
+       *  only where the write leaves it reachable — `A6`'s add mints it, `A7`'s tombstone and
+       *  `A3`'s literal both take it out from under the listener. */
+      const expected =
+        klass === 'a tombstone' && position !== 'an ancestor'
+          ? 0
+          : position === 'a descendant' && klass !== 'an add at an absent address'
+            ? 0
+            : 1
       out.push({
-        name: `${klass} · the listener at ${position} fires once`,
+        name: `${klass} · the listener at ${position} fires ${expected === 1 ? 'once' : 'NOT at all (0)'}`,
         drive: (): void => {
           const f = store()
           if (klass !== 'an add at an absent address') {
             call(f, 'write', CHILD, 'mem', { value: PLAIN })
           }
           let fired = 0
-          call(f, 'listen', listenAt, () => {
+          const registration = call(f, 'listen', listenAt, () => {
             fired += 1
           })
+          /** **THE OBSERVED POSITION'S OWN ATTACHMENT, READ AT REGISTRATION AND PUT TO WORK — IT IS
+           *  WHAT MAKES EVERY CELL BELOW A FIRE-SET READING.** `C23`/`§2.11` item 2: a listener whose
+           *  address does not yet resolve stands UNATTACHED (*"waiting for an address that is
+           *  currently unreachable"*) and a SUCCESSFUL write attaches it (`§2.11` item 4) — so a
+           *  position is a genuine FIRE-SET observation iff it RESOLVES by the time the fan-out runs,
+           *  which is what the two cells that assert `0` are about. The pre-write reading is asserted
+           *  exactly where the addressing is already in place (`CHILD` stands for the two overwrite
+           *  classes), and the ADD class's own positions are attached BY the write that this row
+           *  drives — the `unattached → attached` machine its sibling row `P-SD-SM-1` owns. */
+          if (klass !== 'an add at an absent address') {
+            expect(registration['attached'], 'C23/§2.11 item 2 — every observed position RESOLVES before the write, so every cell below is a FIRE-SET reading and never an unattached listener').toBe(true)
+          }
           expect(writeOn(f, 'generic', CHILD, 'mem', payload)['status'], '§2.5 item 1 step (9)').toBe('committed')
           expect(
             fired,
-            'seams-and-lifecycle.md §2.11 item 5 — a successful write at A fires, once each, every attached listener at A, at a strict descendant of A and at a strict ancestor of A',
-          ).toBe(1)
+            expected === 1
+              ? 'seams-and-lifecycle.md §2.11 item 5 — a successful write at A fires, once each, every ATTACHED listener at A, at a strict descendant of A and at a strict ancestor of A'
+              : 'seams-and-lifecycle.md §2.11 items 4–5 — this position’s listener is NOT attached when the fan-out runs (the write suppressed the address it landed on, or took the strict descendant out from under it), and only ATTACHED listeners fire; the sibling cells of this same class show the two positions that DO fire',
+          ).toBe(expected)
         },
       })
     }
@@ -943,7 +1004,28 @@ export function readFormAttempts(): Attempt[] {
 }
 
 /** `P-SD-IM-6` · `S-SD-TOMB-1` — `2 (read forms) × 2 (the tombstone's address · a descendant) ×
- *  2 (a qualified read of another tier · of the tombstone's own tier). */
+ *  2 (a qualified read of another tier · of the tombstone's own tier).
+ *
+ *  **`R10`'s TIER-SCOPED READ GOVERNS EVERY QUALIFIED CELL HERE (`§2.6` item 2), AND IT IS THE
+ *  DIFFERENCE BETWEEN A QUALIFIED AND AN UNQUALIFIED READ THAT THIS ROW MEASURES.** The tombstone
+ *  stands at `CHILD` at `mem` while `ROOT`'s `file` instance carries `page → {active, body:{title}}`:
+ *   · **UNQUALIFIED** — `R11`'s two senses: at the tombstone's own address token 6 `'tombstoned'`
+ *     (never a transcription, no fall-back), and at EVERY address BELOW it token 3 `'unreachable'`,
+ *     *"because the walk cannot pass the tombstone"*.
+ *   · **QUALIFIED TO ANOTHER TIER (`file` here)** — *"a read QUALIFIED to another tier reads THAT
+ *     TIER SPECIFICALLY (`R9`) and is not suppressed by a tombstone standing at a different tier"*:
+ *     at the tombstone's own address the `file` instance is the answer, and **at a DESCENDANT the walk
+ *     passes the `mem` tombstone and answers the `file` instance's own transcription at the descendant
+ *     address** — because the qualified read asks for THAT TIER at every address it visits (`§2.8`
+ *     item 2(a): *"the read takes that tier specifically, AT EVERY ADDRESS IT VISITS, with NO
+ *     fall-back"*). The earlier form of this cell demanded token 3 `'unreachable'` there — `R11`'s
+ *     **UNQUALIFIED** no-descent reading applied to a QUALIFIED read — which contradicts the clause
+ *     the `file`-qualified cell beside it already cites (`RCA-8(d)`; the row's own `P-SD-TP-9` sibling
+ *     asserts the same rule at the tombstone's own address).
+ *   · **QUALIFIED TO THE TOMBSTONE'S OWN TIER (`mem`)** — at the tombstone's own address *"the read
+ *     answers the tombstone's own absence"*: token 4 `'absent-address'`, never the tombstone; and at a
+ *     descendant the `mem` tombstone blocks the walk exactly as the unqualified form does — token 3
+ *     `'unreachable'`, and no fall-back to `file`. */
 export function tombstoneAttempts(): Attempt[] {
   const out: Attempt[] = []
   const forms: readonly (readonly [string, string | undefined])[] = [
@@ -978,10 +1060,13 @@ export function tombstoneAttempts(): Attempt[] {
               return
             }
             if (qualifier === 'another tier') {
-              expectRefusal(answer, { reason: 'unreachable', step: 'E-CHILD' })
+              expect(
+                readValue(answer),
+                'write-and-read.md §2.6 item 2 · §2.8 item 2(a) — a `file`-qualified read of a descendant of the `mem` tombstone takes THAT TIER at every address it visits: it passes the tombstone standing at a different tier and answers the `file` instance’s own transcription at the descendant address',
+              ).toEqual({ title: 't' })
               return
             }
-            expectRefusal(answer, { reason: 'absent-address', step: 'E-CHILD' })
+            expectRefusal(answer, { reason: which === "the tombstone's own address" ? 'absent-address' : 'unreachable', step: 'E-CHILD' })
           },
         })
       }
@@ -1041,9 +1126,45 @@ export function fileTierAttempts(): Attempt[] {
           const committed = expectCommitted(answer)
           expect(committed['purged'], 'C19 — purge(file) = {mem, temp instances at the address}').toEqual([])
           expect(fs.bytes(FILE_PATH), 'C7 — the file matches the state exactly at every quiescent point').not.toBeNull()
+          if (klass === 'a tombstone write') {
+            /** **`P-SD-IM-7`'s `a tombstone write · the save success` CELL, RE-DERIVED FROM `§2.6`
+             *  item 3 WITH `R10`/`R12` (`RCA-8(d)`):** *"Tombstoning at file tier omits it from the
+             *  saved file, which will delete the node on commit"* — the tombstone node *"is OMITTED
+             *  from the file's bytes, and on a SUCCESSFUL commit the node is removed from the graph as
+             *  well as from the file"*, and `R11` gives the address *"`'tombstoned'`"* with **no
+             *  fall-back**. The earlier form demanded `read(ROOT, 'file') === preState` — a
+             *  transcription of a node the clause has just REMOVED — and therefore measured the
+             *  contradiction to the clause rather than the property. **The property this row owns is
+             *  the CONDENSATION (`C7`/`R3`): the tier's state and the file's bytes AGREE at every
+             *  quiescent point** — so what is asserted is the removal in BOTH its declared places. */
+            expect(committed['tombstoned'], '§2.6 item 3 — the committed record declares the tombstone').toBe(true)
+            const saved = JSON.parse(fs.bytes(FILE_PATH) ?? '{}') as Rec
+            expect(
+              Object.prototype.hasOwnProperty.call(saved, ROOT[0]),
+              'C7/§2.6 item 3 — THE FILE’S BYTES CARRY NO INSTANCE AT THE TOMBSTONED ADDRESS: the tombstone is omitted from the saved file, so a fresh load cannot re-mint the node',
+            ).toBe(false)
+            /** The tier's own state, read through the store: the address is DELETED, so the read is
+             *  a REFUSAL — the tombstone's own absence at its tier (`R10`) or the deletion marker
+             *  (`R11`) — and never a transcription of the pre-state. Together with the bytes above,
+             *  this is the condensation: the file and the tier say the SAME thing. */
+            const afterCommit = readOn(f, 'generic', ROOT, tier)
+            expect(
+              isRefusal(afterCommit),
+              '§2.6 items 2–3 · R11 — the tier’s state for the tombstoned address is that it is NOT THERE (the tombstone is never returned and there is no fall-back)',
+            ).toBe(true)
+            expect(
+              isRefusal(afterCommit) ? afterCommit['reason'] : 'a transcription',
+              '§2.14 item 3 — the deletion is reported as the deletion: `tombstoned` (`R11`) or the tombstone’s own absence at its tier (`R10`), never `absent-address`-by-never-written and never a transcription',
+            ).toMatch(/^(tombstoned|absent-address)$/)
+            return
+          }
           expect(readValue(readOn(f, 'generic', ROOT, tier)), 'C7 — the tier is representative of the saved state').toEqual(
-            klass === 'a tombstone write' ? preState : payload['value'],
+            payload['value'],
           )
+          expect(
+            JSON.parse(fs.bytes(FILE_PATH) ?? 'null'),
+            'C7 — the CONDENSATION: the file’s bytes and the tier’s state agree (the addressed root’s own instance is what the file carries)',
+          ).toEqual({ [ROOT[0]]: payload['value'] })
         },
       })
     }
@@ -1284,10 +1405,31 @@ export function listenerMachineAttempts(): Attempt[] {
     {
       name: 'attached → unattached when the address stops resolving',
       drive: (): void => {
-        const f = store()
-        call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
+        const fs = memoryFs()
+        const f = storeOver(fs)
+        /** `§2.7` item 5 / `§2.12` item 4 — the `file` tier is the tier this drive's detach instrument
+         *  needs, and it is usable only once the store's own `load()` has run (`DD-14`); `PAR-11` —
+         *  the explicit `memoryFs` double is supplied, so no unwritable path is reached. */
+        expect(call(f, 'load')['status'], '§2.12 item 1 — the file tier is loaded before it is driven').toBe('loaded')
+        call(f, 'write', CHILD, 'file', { value: { seed: 1 } })
         expect(call(f, 'listen', CHILD, () => undefined)['attached'], 'C23 — the target resolves').toBe(true)
-        call(f, 'write', ROOT, 'mem', { value: { page: 'a literal now' } })
+        /** **THE ADDRESS GENUINELY STOPS RESOLVING BY `R12` ITSELF**: a `file`-tier tombstone *"is
+         *  OMITTED from the file's bytes, and on a SUCCESSFUL commit the node is removed from the
+         *  graph as well as from the file"* (`§2.6` item 3), so the address reads as deleted — the
+         *  module's own qualified read of that tier then answers the tombstone's own absence
+         *  (`'absent-address'`, `R10`). The earlier form of this cell overwrote `ROOT` with a
+         *  container holding a LITERAL at `page` (`{page: 'a literal now'}`) and demanded
+         *  `attached: false` — a defect of this CELL: the address then resolves to a LITERAL
+         *  PROPERTY, which `§2.11` item 2's own test (`attached` is TRUE iff the address resolves and
+         *  is not tombstone-suppressed) — and the GREEN `N-6` row — pins as `attached: true`. */
+        expect(
+          expectCommitted(call(f, 'write', CHILD, 'file', { tombstone: true }))['status'],
+          'R12/§2.6 item 3 — the `file` tombstone commits and takes the node out of the graph and the file',
+        ).toBe('committed')
+        expect(
+          isRefusal(call(f, 'read', CHILD, 'file')),
+          'R10/§2.6 item 2 — the committed `file` tombstone leaves the address non-resolving (a qualified read of its own tier answers its own absence)',
+        ).toBe(true)
         expect(call(f, 'listen', CHILD, () => undefined)['attached'], '§2.11 item 4 — an address that stopped resolving becomes unattached').toBe(false)
       },
     },
@@ -1313,15 +1455,43 @@ export function listenerMachineAttempts(): Attempt[] {
     {
       name: 'ILLEGAL · a detach on a re-mint ⇒ FAIL',
       drive: (): void => {
-        const f = store()
-        call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
+        const fs = memoryFs()
+        const f = storeOver(fs)
+        expect(call(f, 'load')['status'], '§2.12 item 1 — the file tier of this drive’s detach instrument is loaded').toBe('loaded')
+        call(f, 'write', CHILD, 'file', { value: { seed: 1 } })
         let fired = 0
         call(f, 'listen', CHILD, () => {
           fired += 1
         })
-        call(f, 'write', ['tabs', 'other'], 'mem', { value: { seed: 1 } })
-        call(f, 'write', CHILD, 'mem', { value: { seed: 2 } })
-        expect(fired, 'C4 — a write ELSEWHERE never detaches a listener and a re-mint of the target does not detach it').toBe(1)
+        /** **THE RE-MINT DRIVE, RE-DERIVED FROM `§2.5` item 7's ARM TABLE (`RCA-8(d)`):** `CHILD` is
+         *  carried by an EXISTING link, so `M-PROP` answers NODE LOCATION — a CONTAINER there is arm
+         *  `A2` and is REFUSED (`'node-location-container'`, `R17`(a)/`R16`(d)), landing nothing, and
+         *  the earlier form of this cell (a container overwrite at `CHILD`) consequently measured a
+         *  write that never happened (its reading was `fired 0` against an expectation of `1`). A
+         *  LITERAL at the node location is `A1`/`A3` (`R16`(a)): it LANDS, discards the node that
+         *  stood there, sets the literal at the final segment and MINTS NO CHILD — which is exactly a
+         *  re-mint of the path. */
+        expect(isRefusal(call(f, 'write', ['tabs', 'other'], 'file', { value: { seed: 1 } })), 'C4 — an unrelated address is an ordinary write').toBe(false)
+        expect(fired, 'C4 — a write ELSEWHERE never detaches a listener and never fires it').toBe(0)
+        expect(
+          expectCommitted(call(f, 'write', CHILD, 'file', { tombstone: true }))['status'],
+          'R12/§2.6 item 3 — the tombstone at the listener’s own address commits: this write is the one that DETACHES it',
+        ).toBe('committed')
+        expect(fired, '§2.11 items 4–5 — the tombstone write detached the listener at its own address, so it did not fire on that write').toBe(0)
+        expect(
+          call(f, 'listen', CHILD, () => undefined)['attached'],
+          'C23 — the tombstoned address no longer resolves, so the listener stands UNATTACHED',
+        ).toBe(false)
+        /** **THE RE-MINT ITSELF, ON THE SAME ADDRESS: the `A3` literal re-mints the path and the
+         *  address RESOLVES again, so the write’s own attachment re-evaluation (`§2.11` item 4)
+         *  re-attaches the listener — *"a re-mint of the target node does not detach it"* — and the
+         *  fan-out then fires it ONCE (`§2.11` item 5: the listener’s address IS the written
+         *  address). A row in which a re-mint detaches the attachment FAILS.** */
+        expect(
+          expectCommitted(writeOn(f, 'generic', CHILD, 'file', { value: 'a literal' }))['status'],
+          '§2.5 item 7 A1/A3 — a LITERAL at a NODE LOCATION LANDS and re-mints the path (a CONTAINER there is `A2` and REFUSED)',
+        ).toBe('committed')
+        expect(fired, 'C4/§2.11 items 3–5 — attachment is BY ADDRESS and follows the address across the re-mint: the re-minted target is the address the listener stands at, so it fires once').toBe(1)
       },
     },
     {
@@ -1453,18 +1623,50 @@ export function gateAttempts(): Attempt[] {
           if (arm === 'not blocked') {
             expectRefusal(answer, { reason: 'secure-gated', step: 'K-GATE' })
           } else {
-            /** `§2.9` item 4 — *"`true` = the MCP server is BLOCKED ⇒ access is granted"*. The
-             *  contract DECLARES the grant and declares no record shape for the granted arm, so what
-             *  is asserted here is that the call answered a DECLARED typed record (`§2.1` item 4,
-             *  never a throw) and — if it nevertheless refused — that the refusal is the gate's own
-             *  token and no other (`K-GATE`). The earlier form demanded `status !== 'refused'` on a
-             *  granted `secureRead` over a `file` tier this drive never loaded, which is a stronger
-             *  demand than the clause makes: a defect of this CELL. `PAR-11` — the fixture supplies
-             *  the explicit `memoryFs` double, so the secure path is the double's too. */
-            expect(typeof answer['status'], '§2.1 item 4 — the granted arm answers a declared typed record').toBe('string')
+            /** **`§2.9` item 4 — *"`true` = the MCP server is BLOCKED ⇒ access is granted"*, so the
+             *  call PROCEEDS and the granted arm is asserted through THE DECLARED RECORD SHAPE OF THE
+             *  FUNCTION DRIVEN** (`store-model.md` §2.1: `secureLoad` ⇒ `LoadRecord` · `secureRead` ⇒
+             *  `ReadAnswer` · `secureWrite` ⇒ `WriteRecord` · `secureListen` ⇒ `ListenerRecord =
+             *  {address, attached}` · `secureConstrain` ⇒ `ConstraintRecord = {address, position}`).
+             *  **The earlier form of this cell asserted `typeof answer['status'] === 'string'` — a
+             *  member NO declared record carries**: `ListenerRecord` and `ConstraintRecord` have the
+             *  two members above and no `status`, the GREEN `N-6`/`N-7` rows pin their exact key sets,
+             *  and the only shape that would have satisfied that demand is a REFUSAL ON A GRANTED
+             *  CALL — which `§2.9` item 4 forbids. No `status` member is added to any record and
+             *  `§2.9` is not amended: the granted arm is read off the surface the contract declares.
+             *  `PAR-11` — the fixture supplies the explicit `memoryFs` double, so the secure path is
+             *  the double's too. */
+            const refusalKeys = [...REFUSAL_KEYS].sort()
+            const declaredKeys: readonly (readonly [string, readonly string[]])[] =
+              name === 'secureListen'
+                ? [['ListenerRecord', ['address', 'attached']]]
+                : name === 'secureConstrain'
+                  ? [['ConstraintRecord', ['address', 'position']]]
+                  : name === 'secureWrite'
+                    ? [['WriteRecord', ['status', ...COMMITTED_PAYLOAD_KEYS]]]
+                    : name === 'secureRead'
+                      ? [['ReadAnswer', ['status', 'value', 'tier']]]
+                      : [['LoadRecord', ['status', 'present', 'roots']]]
             if (isRefusal(answer)) {
-              expect(answer['reason'], '§2.9 item 4 — the granted arm refuses only as the gate itself').toBe('secure-gated')
-              expect(answer['step'], '§2.9 item 4 — and at the gate’s own step').toBe('K-GATE')
+              // A granted call PROCEEDS (`§2.9` item 4): a refusal is a LATER arm's, never the gate's.
+              expect(Object.keys(answer).sort(), `§2.1/§2.14 item 2 — a granted \`${name}\` that refuses carries the closed five-member Refusal, and its token is not the gate's`).toEqual(refusalKeys)
+              expect(
+                answer['reason'],
+                `§2.9 item 4 — the reader said the MCP server IS blocked, so the gate cannot be why \`${name}\` refused: \`K-GATE\`/\`secure-gated\` here would be a granted call refusing as the gate`,
+              ).not.toBe('secure-gated')
+              expect(answer['step'], `§2.9 item 4 — and not at the gate's own step`).not.toBe('K-GATE')
+            } else {
+              expect(
+                declaredKeys.some(([, keys]) => JSON.stringify([...keys].sort()) === JSON.stringify(Object.keys(answer).sort())),
+                `§2.1 — the granted arm answers the DECLARED record of \`${name}\` (${declaredKeys.map(([record, keys]) => `${record} = ${keys.join('+')}`).join(' · ')}), never a record carrying a \`status\` member the contract does not declare`,
+              ).toBe(true)
+            }
+            if (name === 'secureListen') {
+              expect(answer['attached'], '§2.11 item 2 / C23 — the attached member the granted call answers is the attachment reading').toBe(false)
+            }
+            if (name === 'secureConstrain') {
+              expect(answer['position'], 'C13/§2.10 item 2 — the granted registration answers its OWN position in the addressed list').toBe(0)
+              expect(answer['address'], '§2.1 — the registration’s own address').toEqual(ROOT)
             }
           }
         },
@@ -1614,11 +1816,42 @@ export function addressAttempts(): Attempt[] {
     },
   })
   out.push({
-    name: 'C18 · an n-segment address mints whatever is missing AT THE ADDRESSED ADDRESS',
+    name: 'C18 · an n-segment address mints whatever is missing AT THE ADDRESSED ADDRESS, and MINTS NOTHING through an ABSENT INTERMEDIATE',
     drive: (): void => {
+      /** **THE TWO LEGAL EXTREMES OF `C15`/`C16`'s TOTAL ADDRESS GRAMMAR (`§2.5` item 7's own note),
+       *  RE-DERIVED (`RCA-8(d)`).** The earlier form drove the `n`-segment extreme as a LITERAL at
+       *  `DEEPER` over a FRESH store and demanded `committed` — a write `§2.5` item 2 REFUSES
+       *  verbatim: *"AN ABSENT INTERMEDIATE IS REFUSED, NOT MINTED … answers `'unreachable'` … and
+       *  MINTS NOTHING"*, and the GREEN `A-4` row pins the identical address and payload as
+       *  `'unreachable'` (the module answered `'unknown-root'` at `B-ROOT` there, and the row read
+       *  that as an un-minted intermediate — either way nothing lands and the cell measured a write
+       *  the grammar refuses). The `n`-segment extreme is now driven to the arm the table gives an
+       *  address whose immediate parent STANDS and whose final member is ABSENT — `A6`, `C18`'s own
+       *  add arm (`R16`(d)) — and the mint of the whole subtree is asserted. **The refusal arm is
+       *  asserted beside it as `A-4`'s own reading, so the cell shows BOTH halves of the extreme:
+       *  what the grammar mints, and that it mints NOTHING where an intermediate is absent.** */
       const f = store()
-      expect(expectCommitted(writeOn(f, 'generic', DEEPER, 'mem', { value: 'x' }))['status'], 'C18 — the write ADDS the data, using that address as its entry').toBe('committed')
-      expect(readValue(readOn(f, 'generic', DEEPER)), 'C18 — the addressed address is reachable afterwards').toBe('x')
+      expect(
+        expectCommitted(writeOn(f, 'generic', ROOT, 'mem', { value: { page: { body: { title: 't' } } } }))['status'],
+        'C18 — the 1-segment write mints the register entry and the root node',
+      ).toBe('committed')
+      expect(
+        expectCommitted(writeOn(f, 'generic', DEEPER, 'mem', { value: 'x' }))['status'],
+        'C18 — the write ADDS the data, using that address as its entry: the addressed address’s immediate parent stands and its final member is absent (`A6`)',
+      ).toBe('committed')
+      expect(
+        readValue(readOn(f, 'generic', DEEPER)),
+        'C18 — the addressed address is reachable afterwards, at whole depth',
+      ).toBe('x')
+      const g = store()
+      expectRefusal(writeOn(g, 'generic', DEEPER, 'mem', { value: 'x' }), {
+        reason: 'unreachable',
+        step: 'B-ROOT',
+      })
+      expect(
+        isRefusal(readOn(g, 'generic', DEEPER)),
+        'C18/DD-11 — NOTHING was minted through the absent intermediate: the address does not resolve afterwards',
+      ).toBe(true)
     },
   })
   return out
@@ -1733,12 +1966,40 @@ export function roundTripAttempts(): Attempt[] {
 }
 
 /** `P-SD-IM-12` · `S-SD-BRK-1` — `8 = 2 (the earlier pass's answer) × 2 (the later pass's answer)
- *  × 2 (the landing arms)`. */
+ *  × 2 (the landing arms)`.
+ *
+ *  **THE DRIVE IS THE TWO-REGISTRATION + ONE-REPAIR SHAPE (`§2.10` items 8–9, 11 · `DD-22`), WHICH IS
+ *  WHAT THE TOKEN-20 ARM'S OWN ANTECEDENT REQUIRES.** `R15` item 3's loop-breaker reads *"If a
+ *  registration answered `{ok:true}` in an EARLIER pass of the SAME write and answers `{ok:false,
+ *  message}` in a LATER pass, the write FAILS"* — and **a LATER PASS EXISTS ONLY THROUGH A RESTART**:
+ *  a `{repair:true}` answer whose repair RUNS makes the phase begin a NEW pass at `r_0` (`§2.10` item
+ *  8). A single-pass answer set can never produce one, which is why the earlier form of this row —
+ *  one registration carrying `[earlier, later]` and one write — could not reach token 20 at any cell
+ *  (`RCA-8(d)`; it reported `4 held / 4 broken`, the two loop-breaker cells answering `committed`).
+ *  The shape the GREEN behavioural row `C-11` uses, and the one driven here:
+ *   · **registration 0** (at `ROOT`, so `§2.10` item 3 puts it in the write's evaluated set) answers
+ *     `{repair:true}` on its FIRST evaluation and its repair RUNS — the ONE repair of this write;
+ *   · **registration 1** answers `{ok:true}` in pass 1 and, in the LATER pass the repair forced,
+ *     the answer the cell's `laterName` names.
+ *  **The landing drive is `A4`'s (`§2.5` item 7): a write at the register entry's own node, at the
+ *  tier that node already stands at** — a landing arm at an address that IS a prefix of itself, which
+ *  is what makes the phase run at all (`§2.10` item 3). `PAR-11` — the fixture supplies the explicit
+ *  `memoryFs` double here, so the `file` commit reaches no unwritable path. */
 export function brokenPriorConstraintAttempts(): readonly Attempt[] {
   const out: Attempt[] = []
+  /** **THE EARLIER PASS'S ANSWER IS READ ON THE REGISTRATION THE REPAIR DID NOT TOUCH** (`§2.10` item
+   *  11's antecedent is a property OF A REGISTRATION, and a registration whose repair has already run
+   *  cannot demand a restart): **registration 1 — the one the repair BREAKS — answers this in the
+   *  earlier pass, while registration 0 answers `{repair:true}` on its first evaluation in EVERY cell
+   *  (that answer IS the restart the arm needs).** Two values, and they are the arm's own two:
+   *  *previously satisfied* ⇒ `{ok:true}` (the antecedent IS met, so a later `{ok:false, message}` is
+   *  token 20) · *never evaluated* ⇒ `{ok:false, message}` (a FIRST-time refusal at its own first
+   *  evaluation, which `§2.10` item 11 excludes from this arm by name — *"a registration that answered
+   *  `{repair:true}` and never `{ok:true}`, and then refuses, was never satisfied — its refusal is
+   *  `'constraint-refused'` (token 12) … not this arm"*). */
   const earlier: readonly (readonly [string, Rec])[] = [
     ['previously satisfied', { ok: true }],
-    ['never evaluated', { repair: true }],
+    ['never evaluated', { ok: false, message: 'the broken constraint’s verbatim' }],
   ]
   const later: readonly (readonly [string, Rec])[] = [
     ['answers `{ok:false, message}`', { ok: false, message: 'the broken constraint’s verbatim' }],
@@ -1763,35 +2024,35 @@ export function brokenPriorConstraintAttempts(): readonly Attempt[] {
               fired += 1
             })
             /** `§2.10` item 3 — the evaluated set of a write at `W` is every registration whose
-             *  address is a PREFIX of `W` (`P = W` included). The write below is at `ROOT`, so the
-             *  constraint must be registered AT `ROOT` for the phase to run at all: the earlier form
-             *  registered it at `CHILD`, which `§2.10` item 3 does NOT put in the evaluated set of a
-             *  write at `ROOT`, so the loop-breaker this row drives (token 20) could never be minted
-             *  — a defect of this CELL, corrected from the clause. */
-            register(f, ROOT, [earlierAnswer, laterAnswer], { withRepair: () => ({ seed: 'repaired' }) })
-            /** THE LANDING DRIVE, RE-DERIVED FROM `§2.5` item 7's ARM TABLE: the addressed address
-             *  must resolve to something the table gives a LANDING arm. `CHILD` is carried by the
-             *  `ROOT` write above as an EXISTING link, so a CONTAINER at `CHILD` at the `file` tier
-             *  is arm `A2` ⇒ REFUSED (`node-location-container`) — and it is ALSO `'persistence-
-             *  inversion'` (the standing instance at `CHILD` is absent and its parent `ROOT` stands
-             *  at `file`, so `rank(file) ≤ rank(file)` holds; the refusal `A2` would give is the
-             *  first one that bites) — either way the write does NOT land, so the constraint phase
-             *  this row drives (`R15` item 3's loop-breaker, token 20) would never run. `ROOT` is
-             *  the register entry's own node — a NODE LOCATION that `A4`'s overwrite arm LANDS on
-             *  (`rank(file) ≤ rank(file)`, and the constraint registered at `ROOT` is a prefix of the
-             *  write, `§2.10` item 3). A cell whose drive refuses before the phase is a defect of
-             *  the CELL. This drive supplies the fixture's explicit `PAR-11` double (`memoryFs`). */
+             *  address is a PREFIX of `W` (`P = W` included): both registrations stand at `ROOT`, the
+             *  write's own address, and are evaluated in registration order (`position` 0, then 1). */
+            const demanded = register(f, ROOT, [{ repair: true }, { ok: true }], { withRepair: () => ({ seed: 'repaired' }) })
+            const broken = register(f, ROOT, [earlierAnswer, laterAnswer])
             const answer = writeOn(f, 'generic', ROOT, 'file', { value: { seed: 'prospective' } })
             const isLoopBreaker = earlierName === 'previously satisfied' && laterName === 'answers `{ok:false, message}`'
             const isNeverSatisfied = earlierName === 'never evaluated'
             if (isLoopBreaker) {
+              /** **`§2.10` item 11's ANTECEDENT IS MET CELL BY CELL: registration 1 answered
+               *  `{ok:true}` in pass 1 and refuses in pass 2 — because registration 0's repair
+               *  RESTARTED the phase (`§2.10` item 8) — so the write FAILS and the arm is token 20,
+               *  never token 12.** */
+              expect(demanded.calls.length, '§2.10 item 8 — the repair RESTARTED the phase: registration 0 is RE-EVALUATED in a NEW pass').toBe(2)
+              expect(broken.calls.length, '§2.10 item 8 — the already-satisfied registration 1 is re-walked in the new pass, and ITS later answer is what the phase acted on').toBe(2)
+              expect(broken.calls[0]?.['answer'], '§2.10 item 11 — the antecedent: registration 1 answered `{ok:true}` in the EARLIER pass').toEqual({ ok: true })
               const r = expectRefusal(answer, { reason: 'repair-broke-constraint', step: 'H-CONSTRAINT' })
               const list = messagesOf(r)
               expect(list.length, 'R15 item 3 — the whole list, the broken constraint’s message at its own entry BEFORE the store’s closing sentence').toBeGreaterThanOrEqual(2)
               expect(list[list.length - 2]?.['text'], '§2.14 item 5 — the broken constraint’s own verbatim stands at the entry immediately before the store’s').toBe('the broken constraint’s verbatim')
-              expect(primarySentence(r), '§2.14 item 5 — the LAST entry is the store’s own sentence naming the repair and the constraint it broke').not.toBe('the broken constraint’s verbatim')
+              expect(primarySentence(r), '§2.14 item 5 — the LAST entry is the STORE’s own sentence naming the repair and the constraint it broke').not.toBe('the broken constraint’s verbatim')
             } else if (isNeverSatisfied) {
-              expectRefusal(answer, { reason: 'constraint-refused', step: 'H-CONSTRAINT' })
+              /** **`§2.10` item 11's OWN EXCLUSION: registration 1 refuses at its FIRST evaluation,
+               *  so it was never satisfied — the arm is token 12 with the module's verbatim as the
+               *  primary entry, and the phase ENDS before any repair (so the later pass, and the
+               *  `{repair:true}` that would force one, are never reached).** */
+              expect(broken.calls.length, '§2.10 item 5 — the phase ends at the FIRST evaluation that refuses: registration 1 is evaluated once').toBe(1)
+              expect(demanded.calls.length, '§2.10 item 5(c) — a refusal ends the write, so the one repair this drive declares never runs').toBe(1)
+              const r = expectRefusal(answer, { reason: 'constraint-refused', step: 'H-CONSTRAINT' })
+              expect(primarySentence(r), '§2.10 item 10 — token 12’s LAST and PRIMARY entry is the MODULE’s verbatim').toBe('the broken constraint’s verbatim')
             } else {
               expectCommitted(answer)
             }
@@ -2040,8 +2301,29 @@ export function literalPropertyAttempts(): Attempt[] {
           const read = (address: readonly string[], tier?: string): Rec =>
             channel === 'secure' ? call(f, 'secureRead', address) : tier === undefined ? call(f, 'read', address) : call(f, 'read', address, tier)
           if (row === 'unreachable') {
-            expectRefusal(write(CHILD, { value: 'a literal' }), { reason: 'unreachable' })
-            expectRefusal(read(CHILD), { reason: 'unreachable' })
+            /** **`P-SD-IM-13`'s `unreachable` CELL, RE-DERIVED (`RCA-8(d)`): `B-ROOT` PRECEDES
+             *  `C-ANCHOR` (`store-model.md` §2.3 item 2), AND SO DOES `A3`.** A FRESH store answers
+             *  token 2 `'unknown-root'` at `B-ROOT` for an address whose first segment names no
+             *  register entry — the token the GREEN `A-3` row pins; and minting ONLY the root leaves
+             *  the address's IMMEDIATE PARENT (`['tabs','page']`) resolving to NOTHING, so `§2.5`
+             *  item 2's own note applies — *"the IMMEDIATE PARENT's non-resolution ⇒ `C17`'s arm
+             *  (`'unreachable'`, token 3, at the intermediate step)"* — and `M-PROP`'s `unreachable`
+             *  IS that intermediate failure. (`A3` is the arm for a parent that DOES resolve: a
+             *  literal beside a `ROOT`-only store commits, because the parent is the root node and the
+             *  final segment is an absent member, so nothing is unreachable — which is why the earlier
+             *  form of this cell read a `committed` where it demanded a refusal.) **The drive
+             *  therefore mints the root AND the address's immediate parent — whose final member is
+             *  then a LITERAL PROPERTY — and meets the ABSENT segment on the literal.** */
+            expect(
+              expectCommitted(write(ROOT, { value: { page: {} } }))['status'],
+              'C14/C18 — the register entry and the root node are minted by the 1-segment write, so `B-ROOT` can no longer be the failing arm',
+            ).toBe('committed')
+            expect(
+              expectCommitted(write(CHILD, { value: 'a literal' }))['status'],
+              'A4/R16(c) — the address’s IMMEDIATE parent resolves and its final member is a LITERAL PROPERTY, so `A3`’s parent condition is met and the literal LANDS',
+            ).toBe('committed')
+            expectRefusal(write(DEEPER, { value: 'a literal' }), { reason: 'unreachable' })
+            expectRefusal(read(DEEPER), { reason: 'unreachable' })
             return
           }
           if (row === 'absent-property') {
@@ -2119,7 +2401,22 @@ export function writeArmAttempts(): Attempt[] {
                 return call(f, 'write', CHILD, 'mem', { value: { seed: 2 } })
               }
               case 'a literal at a NO-RESOLUTION parent':
-                return call(f, 'write', CHILD, 'mem', { value: 'a literal' })
+                /** **THE ONE ARM THAT HAS NO PARENT TO RESOLVE, AND IT IS `C17`'s: a write at the
+                 *  ROOT of a store whose register table is EMPTY.** `B-ROOT` is the FIRST arm of the
+                 *  walk (`store-model.md` §2.3 item 2) and its token is `'unknown-root'` — what the
+                 *  GREEN `A-3` row pins for exactly this drive — while **`'unreachable'` is
+                 *  `C-ANCHOR`/`D-LINK`/`E-CHILD`'s arm: the failure at `i < n`, which requires a
+                 *  register entry that STANDS.** A literal driven at `ROOT` on a FRESH store is
+                 *  therefore the only shape in which this class's declared answer (`{refused, token}`)
+                 *  is the one `§2.5` item 7 gives, and it is asserted by the cell against the closed
+                 *  token list. **`RCA-8(d)`: the earlier form wrote at `CHILD`, whose IMMEDIATE PARENT
+                 *  is the register entry's own node — a parent that RESOLVES — so `A1`'s landing arm
+                 *  applied and the write committed (the class name and the arm disagreed).** The
+                 *  drive therefore addresses a 1-segment register name NO WRITE HAS EVER MINTED, at
+                 *  an address of two or more segments, so the walk's first arm fails and nothing is
+                 *  minted (`C14`: a register entry comes into being only by a write at a 1-segment
+                 *  address). */
+                return call(f, 'write', ['nope', 'x'], 'mem', { value: 'a literal' })
               case 'a tombstone at a literal property': {
                 call(f, 'write', ROOT, 'mem', { value: { seed: 'literal' } })
                 return call(f, 'write', ['tabs', 'seed'], 'mem', { tombstone: true })
@@ -2137,7 +2434,17 @@ export function writeArmAttempts(): Attempt[] {
               `§2.5 item 7 — \`${klass}\` must not refuse where the arm table gives it a LANDING arm (declared: \`${expectedOutcome[klass]}\`)`,
             ).toBe(true)
             const token = answer['reason']
-            expect(['node-location-container', 'value-not-admitted', 'malformed-tombstone', 'unreachable'].includes(String(token)), '§2.5 item 7 — a refusal mints a token from the closed union and no other').toBe(true)
+            /** **`P-SD-SM-6`'s OWN CLOSED TOKEN LIST, COMPLETED (`RCA-8(d)`): the contract's token 2
+             *  `'unknown-root'` (`B-ROOT`, `store-model.md` §2.3 item 2) BELONGS in it.** `B-ROOT`
+             *  PRECEDES `C-ANCHOR`, so a cell whose drive meets an address whose FIRST segment names
+             *  no register entry mints token 2 and no other — *"an unknown root"* is the `B-ROOT`
+             *  arm's own token, distinct from the intermediate arm's `'unreachable'` (token 3). The
+             *  earlier list omitted it, so a drive that met `B-ROOT` failed here on its TOKEN rather
+             *  than on its arm. */
+            expect(
+              ['unknown-root', 'unreachable', 'node-location-container', 'value-not-admitted', 'malformed-tombstone'].includes(String(token)),
+              '§2.5 item 7 — a refusal mints a token from the closed union and no other',
+            ).toBe(true)
             expect(fs.bytes(FILE_PATH), '§2.5 item 7 — every refusing cell leaves the PRE-CALL file bytes byte-identical').toBe(preBytes)
             return
           }
@@ -2148,7 +2455,24 @@ export function writeArmAttempts(): Attempt[] {
           expectCommitted(answer)
           if (klass === 'a tombstone at a literal property') {
             expectRefusal(call(f, 'read', ['tabs', 'seed']), { reason: 'tombstoned', step: 'E-CHILD' })
-            expect(readValue(readOn(f, 'generic', ROOT, 'mem')), 'A8 — the property CONTINUES TO EXIST (the parent now carries an anchor at that segment)').toEqual({ seed: expect.anything() })
+            /** **`A8`'s OWN TERMS, ASSERTED AS THE CLAUSE STATES THEM: *"the PROPERTY CONTINUES TO
+             *  EXIST — the parent node now carries a member at that segment which names a node rather
+             *  than a literal"*, with *"terms: `1` node minted · `1` literal replaced · `1` property
+             *  retained"* (`§2.5` item 7 `A8`, `§2.6` item 6 · `census.md` §4.9b).** What the clause
+             *  declares is the MEMBER'S PRESENCE — and the tombstone standing at it is *"NEVER a
+             *  transcription, at any address, under any read form"* (`R11`), so the member the parent
+             *  carries is not a value the read can transcribe. The earlier form demanded the member's
+             *  VALUE be `expect.anything()`, which is a claim about a transcription the clause forbids
+             *  (`RCA-8(d)`; the member is carried and the value is the deletion, not a copy). */
+            const parent = readValue(readOn(f, 'generic', ROOT, 'mem')) as Rec
+            expect(
+              Object.prototype.hasOwnProperty.call(parent, 'seed'),
+              'A8 — the PROPERTY CONTINUES TO EXIST: the survived parent carries a member at that segment (the literal was REPLACED, `R17`(b))',
+            ).toBe(true)
+            expect(
+              Object.keys(parent),
+              'A8/census.md §4.9b — the member is RETAINED, so no member of the surviving parent is removed by the tombstone',
+            ).toContain('seed')
             return
           }
           if (klass === 'a container at a resolved parent') {
@@ -2240,11 +2564,18 @@ export function valueMechanismAttempts(): Attempt[] {
     {
       name: 'the exclusivity · a container-MEMBER beside it ⇒ token 9',
       drive: (): void => {
+        /** **THE CELL'S OWN PROPERTY IS *"the exclusivity of `_value`"* — *"a write placing a SECOND
+         *  member beside a `_value` literal is REFUSED"* (`§2.5` item 7 `A10` · `R17`(c) ·
+         *  `store-model.md` §2.3 item 5(c)) — so the drive places a transparent `_value` literal at
+         *  the address FIRST and then a CONTAINER MEMBER beside it, which is the shape the clause
+         *  refuses.** The earlier form asserted `node-location-container` at a two-segment address
+         *  whose link was a LITERAL (`{page: 1}` ⇒ `A4`, not a NODE LOCATION) while its sibling cell
+         *  drove `A2`'s own address — the two cells therefore asserted the SAME token for two
+         *  different arms, and this one reached neither the `_value` exclusivity nor `A2`
+         *  (`RCA-8(d)`). */
         const f = store()
-        expectRefusal(writeOn(f, 'generic', CHILD, 'mem', { value: { seed: 1 } }), { reason: 'unreachable' })
-        const g = store()
-        writeOn(g, 'generic', ['tabs'], 'mem', { value: { page: 1 } })
-        expectRefusal(writeOn(g, 'generic', ['tabs', 'page'], 'mem', { value: { inner: 2 } }), { reason: 'node-location-container', step: 'M-PROP' })
+        writeOn(f, 'generic', ROOT, 'mem', { value: 'first', transparent: true })
+        expectRefusal(writeOn(f, 'generic', ROOT, 'mem', { value: { inner: 2 } }), { reason: 'value-not-admitted', step: 'G-VALUE' })
       },
     },
     {
@@ -2287,7 +2618,13 @@ export function propertyTombstoneAttempts(): Attempt[] {
         name: `${channel} surface · ${arm}`,
         drive: (): void => {
           const fs = memoryFs()
-          const f = channel === 'secure' ? storeWithAccess('blocked') : storeOver(fs)
+          /** **`PAR-10`/`PAR-11` — THE SAME EXPLICIT DOUBLE MUST SERVE THE CHANNEL THE CELL DRIVES:**
+           *  `storeWithAccess` builds its own `MemoryFs` internally, so a `secure` cell driven through
+           *  it writes to a filesystem the CELL CANNOT READ (its own `fs` never sees the commit) —
+           *  which is why the `secure` `R12` cell's own byte assertion read `null` (`RCA-8(d)`). The
+           *  drive therefore passes BOTH declared members, the `PAR-10` reader and the `PAR-11`
+           *  double, so the secure file's bytes are the caller's own to inspect. */
+          const f = channel === 'secure' ? storeOver(fs, { secureAccess: () => true }) : storeOver(fs)
           const write = (address: readonly string[], tier: string, payload: Rec): Rec =>
             channel === 'secure' ? call(f, 'secureWrite', address, payload) : call(f, 'write', address, tier, payload)
           const read = (address: readonly string[], tier?: string): Rec =>
@@ -2315,9 +2652,15 @@ export function propertyTombstoneAttempts(): Attempt[] {
             }
             case "at a literal property at the `file` tier ⇒ R12's lifecycle": {
               write(ROOT, 'file', { value: { seed: 'a literal' } })
-              const bytesBefore = fs.bytes(FILE_PATH)
+              /** **`C6` — *"secure is a … separate file"*: the `secure` surface's commit duty (`§2.9`
+               *  item 6) binds the SECURE file, so the bytes this cell reads are the ones the channel
+               *  it drives actually writes.** The earlier form read `FILE_PATH` for BOTH channels, so
+               *  the secure cells read a file the secure write never touched (`null`) — a defect of
+               *  this CELL (`RCA-8(d)`); the same drive's `fs` is the double both paths live in. */
+              const channelPath = channel === 'secure' ? SECURE_PATH : FILE_PATH
+              const bytesBefore = fs.bytes(channelPath)
               expect(expectCommitted(write(['tabs', 'seed'], 'file', { tombstone: true }))['status'], 'R12 — the tombstone stands in memory, is OMITTED from the file’s bytes, and on a successful commit is removed from the graph too').toBe('committed')
-              const bytes = fs.bytes(FILE_PATH)
+              const bytes = fs.bytes(channelPath)
               expect(bytes, 'R10/R12 — `tombstoning at file tier omits it from the saved file`').not.toBe(bytesBefore)
               expect(bytes ?? '', 'R12 — the omitted tombstone leaves no marker member in the file (C7: the bytes carry the state and nothing else)').not.toContain('tombstone')
               return
