@@ -62,3 +62,26 @@
 3. **IT MOVES NO EXISTING BYTE, CITATION OR COUNT.** No spec, tracker, decision row, digest, seal or ledger count is edited, superseded, re-frozen or re-opened by this filing. **Every filed artifact named in the header stands byte-for-byte as it was filed**, including its authority blocks, its registers, its DONE rows and its frozen pins (`sha256:29772ac7…` span digest; the file pins `0664c52f…` / `5c0c1a97…`).
 4. **THE GATE'S READ-ONLY INPUTS.** The gate's step-1/step-2 evidence base is the eight-group read-only constraint inventory at `archive/gate1/store-constraint-inventory/` (**`A-store-core.md`** · **`B1-node-graph-proposal.md`** · **`B2-store-core-graph.md`** · **`C-ownership-plan.md`** · **`D-tiers-persist-secure.md`** · **`E-consumers.md`** · **`F-foundation-modules-exclusion.md`** · **`G-landed-code.md`**), each classifying the corpus's own clauses against C1..C24 as `CONFORMS` / `CONTRADICTS` / `INVENTED` / `SILENT-ON-Cn`. **Those files are provenance (the `archive/` tree is gitignored by this repo's convention); the gate-1 record is the citable synthesis.**
 5. **NO CODE TASK IS DELEGABLE FROM THIS FILE**, and no red set may be authored under it: **the spec gate after gate 1 is the architect's approval point** (`AGENTS.md` item 10a).
+
+---
+
+## §4 — THE ARCHITECT'S SECOND SET OF RULINGS, verbatim (`R1`..`R4`, added 2026-10-08 while gate 1 was running)
+
+**§1, §2 AND §3 STAND BYTE-FOR-BYTE (`RCA-8(d)` ANNOTATE-BESIDE).** The clauses below are **appended**, not merged: they are the architect's own words, transcribed verbatim and unedited, in the order received, lettered **`R1`..`R4`** by this filing for citation only. **This filing asserts nothing about them either**; which of the gate's open semantics each one closes, and which of the corpus's clauses each one strikes, is **the gate's finding** — the place it is recorded is the gate-1 record's Semantics block and findings, never this transcription.
+
+### §4.1 — the general-purpose ruling
+
+- **R1** — "Importantly: This is a *general purpose tool*. It will be used in multiple downstream use cases and forked projects. DO NOT add additional constraints meant to restrict this to provided example scenarios like the tab management."
+
+### §4.2 — the named instances of previously hallucinated constraints
+
+- **R2** — "`Secure` needs to be able to store arbitrary data, potentially at runtime. DO NOT construct an address or value whitelist"
+- **R3** — "The current state of the `file` tier must *always* be representative of the current saved state, and roll back on failure to save."
+- **R4** — "Constraints are an extensible tool - modules must be able to add additional constraints and repair functions. DO NOT add built-in constraint functions"
+
+### §4.3 — what §4 does and does not do
+
+1. **IT ADDS NO MECHANISM.** `R1`..`R4` are prohibitions and one state duty, stated in the architect's own words; the filing neither softens nor widens them.
+2. **IT MOVES NO EXISTING BYTE, CITATION, DIGEST OR COUNT** — the same bound §3 item 3 states, re-stated here because §4 lands after it.
+3. **THE GATE'S TWO EARLIER RETURNS STAND AS FILED** (`archive/gate1/store-constraint-review/1-validity.md` · `2-critique.md` · `3-architecture.md`): `R1`..`R4` were not available to them, and none of their findings is withdrawn or re-scored by this filing.
+4. **THE SPEC GATE REMAINS THE ARCHITECT'S APPROVAL POINT** (`AGENTS.md` item 10a): a ruling is not a contract, and no red set may be authored from this file.
