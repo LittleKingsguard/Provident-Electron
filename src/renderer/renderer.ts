@@ -420,16 +420,55 @@ const TABS_CONSTRAINT: GraphConstraint = {
         const at = post.indexOf(written)
         if (at >= 0) referentIndex = at
       }
-      const index = referentIndex === null ? 0 : ((referentIndex % post.length) + post.length) % post.length
-      const survivor = post[index]
+      // ── **THE REFERENT'S OWN INDEX IS APPLIED TO A SEQUENCE THAT STILL CARRIES THE REMOVED
+      //    ENTRY** — read off the PRE-removal sequence (`§2.4` item 5) it must be APPLIED to a
+      //    sequence read the same way, or the two halves describe different sequences and the
+      //    index names the wrong entry.
+      //    **THE AS-FILED FORM, KEPT VISIBLE BECAUSE IT IS THE DEFECT THIS LINE INVERTS:** the
+      //    referent index was read off `pre` and then applied to `post` —
+      //      `const survivor = post[((referentIndex % post.length) + post.length) % post.length]`
+      //    — while on the `remove` arm `post` is the LIVE post-state sequence, which NO LONGER
+      //    CARRIES the removed id. On `order [A,B,C]` with `B` active the referent index is `1`
+      //    (`pre.indexOf('B')`), and `post[1]` is therefore `B` ITSELF — so the arm named the very
+      //    id the evaluation had just removed, the guard below SUPPRESSED the write, and the
+      //    state stayed ZERO-ACTIVE (`RM-1`, MEASURED: `{committed, repaired: [], cleared:[B]}`
+      //    with `actives []` where `['C']` is required; `RM-2`: the landing entry left inactive
+      //    and unseated).
+      //    **THE FIX IS THE READING, NOT A SECOND FILTER:** every CANDIDATE for the repair is
+      //    named once — the referent's own sequence MINUS THIS EVALUATION'S OWN REMOVALS — and
+      //    BOTH the survivor set and the guard are derived from that ONE `candidates` reading, so
+      //    the two cannot disagree. On the `remove` arm the sequence is `pre` (it carries the
+      //    removed entry's seat, which is what the index was read off); on the caller-WRITE arm
+      //    there is no removal to exclude and the sequence stays `post` EXACTLY as before, so the
+      //    write arm's referent — the caller's own written reference, already resolved to a
+      //    position in `post` — is unmoved. `post[index]` and `candidates[index]` agree by
+      //    construction wherever the sequence is `post`.
+      //    **WHY THE INDEX'S BOUND IS THE CANDIDATE SEQUENCE'S OWN LENGTH:** a referent index is a
+      //    POSITION IN THE PRE-REMOVAL SEQUENCE (`§2.4` item 5), so the wrap that resolves it must
+      //    be taken over the length of the sequence it is APPLIED to — one bound for both arms,
+      //    exactly as there is one candidate reading for both. Reading the bound off `post` was
+      //    the SECOND half of the same defect: on `order ['landing','A']` with `A` active the
+      //    referent index is `1` and the candidate sequence is `['landing']`, so a `post`-bounded
+      //    wrap answers `1` and the arm reads PAST its own last candidate, names nothing and
+      //    leaves the state zero-active (`RM-2`). BOTH lengths are non-zero (`post.length === 0`
+      //    returned above, and `post ⊆ pre` makes the candidate sequence non-empty whenever
+      //    `post` is).
+      const candidates = (removed !== null && pre.includes(removed) ? pre : post).filter(
+        (tabId) => !removals.includes(tabId),
+      )
+      const index = referentIndex === null ? 0 : ((referentIndex % candidates.length) + candidates.length) % candidates.length
+      const survivor = candidates[index] ?? null
       // ── A SURVIVOR WHOSE ENTRY THIS EVALUATION REMOVED IS NEVER WRITTEN (`H-1`): the removed
       //    member still OCCUPIES its key in the matched record with an `undefined` value (the
       //    machinery builds the record from the root's CURRENT anchors), so a write there reads
       //    as a CHANGED value to the store's own repair diff, which RE-LANDS it — MINTS the
       //    severed leaf back and NAMES the closed id in `repaired[]`. The survivor's own seat is
-      //    a MEMBERSHIP question, and the caller's `order` rewrite is where it is settled: when
-      //    the referent's own index names the removed entry, the repair REFRAINS.
-      if (survivor !== undefined && !removals.includes(survivor)) writeTabsEntryActive(record, survivor, true)
+      //    a MEMBERSHIP question, and the caller's `order` rewrite is where it is settled. **THE
+      //    GUARD IS NOW THE SAME DERIVED READING AS THE SURVIVOR SET AND NOT A SECOND FILTER:**
+      //    `candidates` already excludes this evaluation's own removals, so the guard holds by
+      //    construction and the two can no longer disagree — which is exactly how the as-filed
+      //    pair failed (a `post`-derived survivor beside a `removals`-derived guard).
+      if (survivor !== null && !removals.includes(survivor)) writeTabsEntryActive(record, survivor, true)
       return true
     }
     // THE SURPLUS ARM (`§3.2` F-T2-2): deactivate EVERY ACTIVE ENTRY EXCEPT THE REFERENT —
