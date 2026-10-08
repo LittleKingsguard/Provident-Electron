@@ -437,30 +437,41 @@ export interface StoreFixture {
 export interface StoreOptionsLike {
   readonly file?: { readonly path: string }
   readonly secure?: { readonly path: string }
-  readonly fs?: FsSurfaceLike
+  /** `PAR-11` — the caller's OWN double, or an EXPLICIT `undefined` to declare the member ABSENT. */
+  readonly fs?: FsSurfaceLike | undefined
   readonly secureAccess?: () => boolean
 }
 
 export type AccessArm = 'blocked' | 'not-blocked' | 'throw' | 'non-boolean' | 'absent'
 export type Channel = 'generic' | 'secure'
 
-function build(options: StoreOptionsLike, arm: AccessArm, fs: MemoryFs, readings: number[]): StoreFixture {
+function build(options: StoreOptionsLike, arm: AccessArm, supplied: MemoryFs | undefined): StoreFixture {
   const s = requireSurface()
   /** `PAR-11`'s DRIVES, STATED ONCE FOR THE WHOLE FIXTURE: a `file`-tier drive takes ONE of two
-   *  shapes. (a) It supplies an EXPLICIT filesystem double — either `memoryFs` (supplied here, in
-   *  the fixture's own options, so every row that needs the bytes or a forced save failure has them
-   *  and no row reaches an unwritable path) or the caller's own complete surface passed through
-   *  `options.fs`, which this spread lets the caller override. (b) It supplies NO `fs` and its own
-   *  WRITABLE path under `os.tmpdir()` — the shape the absent-`fs` arm needs, since
-   *  `parameter-semantics.md` §6 `PAR-11` declares *"absent ⇒ the real `node:fs`"*; such drives live
-   *  in `store-rederive.test.ts` (`P-13`/`P-13b`/`P-13c`), where the temp path is created and
-   *  cleaned by the drive. Nothing here weakens an assertion for an unwritable path: the supplied
-   *  double IS the filesystem the module is declared to use when one is supplied. */
+   *  shapes, and the OPTIONS are the drive's OWN. (a) It supplies an EXPLICIT filesystem double —
+   *  either the caller's own complete surface passed through `options.fs` (which this fixture passes
+   *  straight through) or, for the fixture's own `store()`/`storeOver()`, the `MemoryFs` this module
+   *  injects as `options.fs`. (b) It supplies NO `fs` at all and its own WRITABLE path under
+   *  `os.tmpdir()` — the shape the absent-`fs` arm needs, since `parameter-semantics.md` §6 `PAR-11`
+   *  declares *"absent ⇒ the real `node:fs`"*; such drives live in `store-rederive.test.ts`
+   *  (`P-13`/`P-13b`/`P-13c`), where the temp path is created and cleaned by the drive. **`build`'s
+   *  third parameter IS that distinction:** `store()` omits it (arm (b): the caller's options carry no
+   *  `fs` and none is fabricated), while `storeOver()`/`storeWithAccess()` pass a `MemoryFs`. Nothing
+   *  here weakens an assertion for an unwritable path: the supplied double IS the filesystem the
+   *  module is declared to use when one is supplied. */
+  const fs = supplied ?? memoryFs()
+  const readings: number[] = []
+  /** The two PATHS keep the fixture's own defaults (every row that names no path writes to the
+   *  doubles' `FILE_PATH`/`SECURE_PATH`), and the caller's options override them — but **`fs` is
+   *  NEVER defaulted here**: it is added below only when the fixture supplied a double, so a caller's
+   *  absent-`fs` drive (arm (b)) really hands the module no member. */
   const opts: Rec = {
     file: { path: FILE_PATH },
     secure: { path: SECURE_PATH },
-    fs: fs.surface,
     ...options,
+  }
+  if (supplied !== undefined && !Object.prototype.hasOwnProperty.call(options, 'fs')) {
+    opts['fs'] = supplied.surface
   }
   if (arm !== 'absent') {
     opts['secureAccess'] =
@@ -492,22 +503,34 @@ function build(options: StoreOptionsLike, arm: AccessArm, fs: MemoryFs, readings
 }
 
 /** Builds a store through the DECLARED factory with a `PAR-10` reader (default BLOCKED: `true`
- *  grants access) and a caller-side `PAR-11` double. Throws the contract's own absence reason
- *  while the module is absent. */
+ *  grants access) and this fixture's own `PAR-11` double, so every row that needs the bytes or a
+ *  forced save failure has them. Throws the contract's own absence reason while the module is
+ *  absent. **A row that needs `PAR-11`'s ABSENT arm takes `storeWithoutFs` below**, which is the only
+ *  entry that fabricates no double. */
 export function store(options: StoreOptionsLike = {}): StoreFixture {
-  return build(options, 'blocked', memoryFs(), [])
+  return build(options, 'blocked', memoryFs())
+}
+
+/** **`PAR-11`'s ABSENT ARM (`parameter-semantics.md` §6: *"absent ⇒ the real `node:fs`"*): the SAME
+ *  fixture with NO `fs` FABRICATED.** The options handed to `createStore` carry no `fs` member at all
+ *  (unless the CALLER named one), so the module must reach the real `node:fs` — and the drive must
+ *  therefore own a WRITABLE path under `os.tmpdir()`. The earlier form of this fixture spread its own
+ *  `memoryFs` over every drive, so this arm was never reachable — a defect of the FIXTURE, corrected
+ *  here from `PAR-11`. */
+export function storeWithoutFs(options: StoreOptionsLike = {}): StoreFixture {
+  return build(options, 'blocked', undefined)
 }
 
 /** A store whose `PAR-10` reader is the named arm; `absent` OMITS the member (
  *  fail-closed: absent, a throw, or a non-boolean ⇒ NOT blocked ⇒ `'secure-gated'`). */
 export function storeWithAccess(arm: AccessArm): StoreFixture {
-  return build({}, arm, memoryFs(), [])
+  return build({}, arm, memoryFs())
 }
 
 /** A store over the caller's own `PAR-11` double, so a row can force save failures and read the
  *  file's bytes (`C7`/`R3`). */
 export function storeOver(fs: MemoryFs, options: StoreOptionsLike = {}): StoreFixture {
-  return build(options, 'blocked', fs, [])
+  return build(options, 'blocked', fs)
 }
 
 /** Calls a declared function by name on a store (the surface is a member table of FUNCTIONS,
@@ -583,8 +606,21 @@ export interface ConstraintCall {
 }
 export interface ConstraintProbe {
   readonly calls: ConstraintCall[]
-  /** The answers still QUEUED after the driven sequence is exhausted (the last answer repeats). */
+  /** **A SNAPSHOT TAKEN AT RETURN (`register`'s own `answers.length - index`), NOT A LIVE READING:**
+   *  nothing has been evaluated when `register` returns (`constrain` only ATTACHES the registration,
+   *  `§2.10` item 2), so this figure is `answers.length` at that instant and never 0 — a row that
+   *  expects it to reach 0 is asserting a value this fixture cannot produce. Read
+   *  `consume()`/`pending()` below for the LIVE reading. */
   readonly pending: number
+  /** **THE LIVE READINGS, ADDED BECAUSE THE SNAPSHOT ABOVE CANNOT MEET ITS OWN ASSERTION:** the
+   *  answers CONSUMED so far, i.e. the number of times this registration was EVALUATED (`§2.10`
+   *  items 3 and 8 — one call per evaluation, the last answer repeating once the queue is exhausted),
+   *  and the answers still unconsumed behind it. A row that asks *"how many times was this
+   *  registration evaluated in the whole write"* — `§2.10` item 9's *"AT MOST ONCE PER WRITE"* is the
+   *  repair's bound, and item 8's restart is the reason the count is a READ at return — takes it from
+   *  `consume()`. */
+  readonly consume: () => number
+  readonly remaining: () => number
 }
 
 export interface RegistrationLike {
@@ -617,7 +653,12 @@ export function register(
   const registration: RegistrationLike = { constraint }
   if (opts.withRepair !== undefined) registration.repair = opts.withRepair
   call(fixture, 'constrain', address, registration)
-  return { calls, pending: Math.max(0, answers.length - index) }
+  return {
+    calls,
+    pending: Math.max(0, answers.length - index),
+    consume: () => index,
+    remaining: () => Math.max(0, answers.length - index),
+  }
 }
 
 /* ──────────────────────────── THE ATTEMPT BUILDERS (§5.5.1) ─────────────────────────────── */

@@ -126,6 +126,7 @@ import {
   runRegister,
   store,
   storeOver,
+  storeWithoutFs,
   storeWithAccess,
   writeOn,
   type Rec,
@@ -484,19 +485,22 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
      *
      *  `(parent, child)` cells — THE ONE READING THIS CONTRACT DECLARES (`store-model.md` §2.2 item 3:
      *  *"For every parent-side anchor's link, `rank(child node's tier) ≤ rank(parent node's tier)`"*,
-     *  *"A write whose tier OUT-RANKS the parent instance's tier is REFUSED"*, with `census.md` §4.4's
-     *  own figure *"of which `6` legal + `3` refused"*). §2.2 item 2 names the persistence order as
-     *  *"`file` > `mem` > `temp`"* and §2.5 item 4's purge set is `purge(file) = {mem, temp}`, i.e.
-     *  `file` is the LEAST persistent — so the rank constants are `rank(file)=1 < rank(mem)=2 <
-     *  rank(temp)=3`, and `rank(child) ≤ rank(parent)` refuses exactly the three pairs whose CHILD is
-     *  more persistent than its parent:
+     *  *"A write whose tier OUT-RANKS the parent instance's tier is REFUSED"*, with the `9 = 3 × 3`
+     *  figure at `census.md` §4.4 and the `file` tier's bound mutation classes at `§4.5`). **THE RANK
+     *  CONSTANTS ARE THE CLAUSE'S OWN, PRINTED: `rank(file)=3 > rank(mem)=2 > rank(temp)=1`** — `file`
+     *  is the MOST persistent, which `§2.5` item 4's purge set (`purge(file) = {mem, temp}`, i.e. `2`
+     *  at `census.md` §4.4 with `purge(temp) = 0 · purge(mem) = 1`) confirms from the other side: a
+     *  more-persistent write purges MORE lower instances. So `rank(child) ≤ rank(parent)` refuses
+     *  exactly the three pairs whose CHILD out-ranks its parent:
      *    LEGAL   (child no MORE persistent than the parent) — `6`:
      *            `(file,file)` · `(mem,file)` · `(mem,mem)` · `(temp,file)` · `(temp,mem)` · `(temp,temp)`
      *    REFUSED (`'persistence-inversion'` at `F-TIER`, token 11) — `3`:
      *            `(file,mem)` · `(file,temp)` · `(mem,temp)`
      *
      *  `(mem,file)` is LEGAL and not refused: a `file` CHILD under a `mem` PARENT does NOT out-rank
-     *  it (`rank(file)=3 > rank(mem)=2` is the PARENT-side direction), and §2.5 item 7's `A2` refuses
+     *  it (`rank(file)=3 > rank(mem)=2` is the PARENT-side direction — the child is allowed to be no
+     *  MORE persistent than the parent, and `file` out-ranking `mem` is the REFUSED direction), and
+     *  §2.5 item 7's `A2` refuses
      *  a CONTAINER at a NODE LOCATION — so every cell below drives its child member through `A5`/`A6`
      *  (a PROPERTY address of the root: the container LANDS) and never through `A2`. The legal pairs
      *  are driven at `mem`/`temp` and the refused ones at `mem`, so no cell needs a writable path;
@@ -508,13 +512,17 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
     const refusedPairs: readonly (readonly [string, string])[] = [
       ['file', 'mem'], ['file', 'temp'], ['mem', 'temp'],
     ]
-    /** THE RANK, READ OFF THE DECLARED ORDER: `§2.2` item 2 prints the persistence order as
-     *  *"`file` > `mem` > `temp`"* and §2.5 item 4's purge set is `purge(file) = {mem, temp}` — `file`
-     *  is the LEAST persistent — so the rank is assigned from `PERSISTENCE_ORDER` with the LEFT-most
-     *  tier lowest, and `§2.2` item 3's `rank(child) ≤ rank(parent)` is the assertion below. */
+    /** THE RANK, READ OFF THE CLAUSE'S OWN PRINTED CONSTANTS: `§2.2` item 3 prints
+     *  *"`rank(file)=3 > rank(mem)=2 > rank(temp)=1`"* — `file` is the MOST persistent — so the rank
+     *  of a tier is `3 − TIERS_RANKED.indexOf(tier)` over `['file','mem','temp']` (`file` 3 > `mem` 2 >
+     *  `temp` 1), and `§2.2` item 3's `rank(child) ≤ rank(parent)` is the assertion below. **THE
+     *  EARLIER FORM OF THIS HELPER USED `indexOf(tier)+1`, WHICH IS THE INVERTED CONSTANT** (`rank(file)=1`),
+     *  contradicting the clause it cites while leaving this row's legal/refused LISTS — which are the
+     *  clause's — untouched: a defect of the HELPER, corrected here, and the module's own comparison
+     *  is the item that remains to be corrected. */
     const rank = (tier: string): number => {
       const index = TIERS_RANKED.indexOf(tier)
-      return index < 0 ? Number.POSITIVE_INFINITY : index + 1
+      return index < 0 ? Number.NEGATIVE_INFINITY : TIERS_RANKED.length - index
     }
     expect(TIERS_RANKED, '§2.2 item 2 — the ranked tiers, in the declared order').toEqual(['file', 'mem', 'temp'])
     expect(legalPairs.length + refusedPairs.length, 'census.md §4.4 — the persistence pairs for the invariant: `9 = 3 × 3` ✓').toBe(9)
@@ -1783,7 +1791,22 @@ describe('§2.10 — THE CONSTRAINT SEAM, THE PASS SEQUENCE AND THE MESSAGE LIST
     expect(list.length, 'R15 item 3 — the whole list, whose last entry is the store’s own sentence').toBeGreaterThanOrEqual(2)
     expect(list[list.length - 2]?.['text'], '§2.14 item 5 — the broken constraint’s own verbatim stands at the entry IMMEDIATELY BEFORE the store’s').toBe('the broken constraint’s verbatim')
     expect(primarySentence(r), '§2.14 item 5 — the last entry is the STORE’s own sentence naming the repair and the constraint it broke').not.toBe('the broken constraint’s verbatim')
-    expect(repairRegistration.pending, '§2.10 item 9 — the repair ran ONCE for the whole write').toBe(0)
+    /** **`§2.10` item 9's BOUND, READ AS THE LIVE EVALUATION COUNT** — *"the repair ran ONCE for the
+     *  whole write"*: the ONE `{repair:true}` pass 1 saw is not a second repair, so registration 0 is
+     *  never asked again (the two assertions above ARE that count: `calls.length` is exactly `2`, one
+     *  per pass). **`register`'s `pending` is a SNAPSHOT TAKEN AT RETURN and cannot carry this claim:**
+     *  `constrain` only ATTACHES the registration (`§2.10` item 2), so at return nothing has been
+     *  evaluated and `pending` is `answers.length` — `2` here, and `0` only if `register` itself had
+     *  evaluated twice. The LIVE reading is `consume()`, and the two must ACCOUNT for the whole queue
+     *  (`consumed + pending = declared`, `1 + 1 = 2`), which is what makes the one-run bound visible
+     *  without weakening the token-20 assertions above. */
+    expect(repairRegistration.pending, '§2.10 item 2 — the snapshot at return: nothing is evaluated when `constrain` only ATTACHES the registration, so it equals the DECLARED answer count').toBe(2)
+    expect(repairRegistration.consume(), '§2.10 items 8–9 — the LIVE evaluation count of registration 0 (one per pass), read AFTER the phase ran').toBe(2)
+    expect(repairRegistration.remaining(), '§2.10 item 9 — NO THIRD EVALUATION: a second `{repair:true}` would have restarted the phase a third time, and the queue still holds its last answer unconsumed').toBe(0)
+    expect(
+      repairRegistration.consume() + repairRegistration.remaining(),
+      'the queue ACCOUNTS for every declared answer: consumed + remaining = declared (`2 + 0 = 2`)',
+    ).toBe(2)
   })
 
   it('C-12 · §2.10 item 11 — the loop-breaker lands NOTHING: no install, no file write, no purge, no firing', async () => {
@@ -1923,38 +1946,55 @@ describe('§2.11 — THE EVENT SURFACE', () => {
     expect(readValue(readOn(f, 'generic', ROOT, 'file')), 'DD-18 — NO rollback follows: the write landed before the fan-out').toEqual({ seed: 'landed' })
   })
 
-  it('E-4 · §2.11 item 5 — the FIRE SET is exactly A, its strict descendants and its strict ancestors, once each', async () => {
+  it('E-4 · §2.11 item 5 — the FIRE SET is exactly A, its strict ancestors and its strict descendants, once each: a SIBLING and an unrelated address never fire', async () => {
     await resolveStoreSurface()
-    /** THE FIRE SET, DRIVEN THROUGH LANDING ARMS AT ADDRESSED ADDRESSES THAT `C19` DOES NOT DISCARD:
-     *  the earlier form wrote a CONTAINER at `CHILD` — a NODE LOCATION — which `§2.5` item 7's `A2`
-     *  REFUSES, so the write never landed and NO listener could fire (`§2.11` item 5: *"a REFUSED
-     *  write fires NOTHING"*); a drive whose write DISCARDS a subtree (`A1`/`A3`/`A7`) leaves the
-     *  discarded addresses unable to resolve, so they are not ATTACHED when the fan-out runs and the
-     *  clause's own word — *"every ATTACHED listener"* — excludes them. Both arms below therefore
-     *  write at a PROPERTY of the addressed node (`A5`/`A6`), so the ancestors, the address and the
-     *  descendants all still resolve. */
+    /** **THE FOUR POSITIONS ARE `A` ITSELF, A STRICT ANCESTOR, A STRICT DESCENDANT AND A SIBLING —
+     *  read off the clause's own three classes** (`seams-and-lifecycle.md` §2.11 item 5: *"every
+     *  ATTACHED listener whose address is (i) `A` itself, (ii) a strict DESCENDANT of `A` … or (iii) a
+     *  strict ANCESTOR of `A`. Listeners on any OTHER address do not fire"*, terms `3 = 1 + 1 + 1` at
+     *  `census.md` §4.8). **A SIBLING IS AN "OTHER ADDRESS":** a listener at `A ⊕ ['a']` and a write at
+     *  `A ⊕ ['c']` share the prefix `A` and are NEITHER ancestor nor descendant of one another, so the
+     *  clause FORBIDS the firing — the earlier form of this row attached its `descendant` listener at
+     *  exactly that sibling (`['tabs','page','sub','a']` against a write at `['tabs','page','sub','c']`)
+     *  and asserted a fire the fan-out's own rule excludes, a defect of the ROW corrected here. The
+     *  strict DESCENDANT is now the write's OWN address `A ⊕ ['c']` (a strict prefix of it is `A`), and
+     *  the sibling stays in the row as the NEGATIVE.
+     *
+     *  THE DRIVE LANDS THROUGH `A5`/`A6` AT A PROPERTY ADDRESS (an ABSENT member `'c'` of `A`), NOT at
+     *  a NODE LOCATION: a CONTAINER at a node location is `§2.5` item 7's arm `A2`, REFUSED
+     *  `'node-location-container'` before any fan-out (`§2.11` item 5: *"a REFUSED write fires
+     *  NOTHING"*). The write does not discard a subtree, so every listener below stays ATTACHED
+     *  (the clause fires only *"every ATTACHED listener"*). */
     const f = store()
     expect(expectCommitted(writeOn(f, 'generic', ROOT, 'mem', { value: { seed: 1 } }))['status'], 'C14 — the root comes into being by a 1-segment write').toBe('committed')
     expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { keep: 1, sub: { a: 1, b: 2 } } }))['status'], 'A6 — a CONTAINER at an ABSENT PROPERTY: the link is created and the contents minted as child nodes').toBe('committed')
-    /** THE FOUR LISTENERS, ONE PER FIRE-SET CLASS, WITH `A` ITSELF A PROPERTY OF A NODE (`A6`): `ROOT`
-     *  is a strict ANCESTOR of `A`, `CHILD` is a strict ancestor of `A`, `CHILD ⊕ ['sub']` IS `A`, and
-     *  `CHILD ⊕ ['sub','a']` is a strict DESCENDANT of `A` — and the write's own `C19` subtree
-     *  discard leaves none of them unable to resolve. */
+    /** THE FIVE LISTENERS, ONE PER POSITION: `ROOT` and `CHILD` are strict ANCESTORS of `A`, `A` is
+     *  `CHILD ⊕ ['sub']` ITSELF, the DESCENDANT is the strict descendant `A ⊕ ['c']` — the write's own
+     *  address, whose strict prefix `A` makes it class (ii) — the `sibling` is `A ⊕ ['a']`, which
+     *  RESOLVES (a `literals` member of `A`, so it is ATTACHED before the call) and must NOT fire, and
+     *  `other` is an address unrelated to the write's path. */
+    const A: readonly string[] = [...CHILD, 'sub']
     const fired: string[] = []
     call(f, 'listen', ROOT, () => fired.push('ancestor'))
     call(f, 'listen', CHILD, () => fired.push('ancestor2'))
-    call(f, 'listen', [...CHILD, 'sub'], () => fired.push('address'))
-    call(f, 'listen', [...CHILD, 'sub', 'a'], () => fired.push('descendant'))
+    call(f, 'listen', A, () => fired.push('address'))
+    call(f, 'listen', [...A, 'c'], () => fired.push('descendant'))
+    const sibling = call(f, 'listen', [...A, 'a'], () => fired.push('sibling'))
     call(f, 'listen', ['tabs', 'unrelated'], () => fired.push('other'))
-    expect(expectCommitted(writeOn(f, 'generic', [...CHILD, 'sub', 'c'], 'mem', { value: 3 }))['status'], 'A6 — the write lands at a PROPERTY of the addressed node, so `A` itself, its ancestors and its descendants all survive').toBe('committed')
+    expect(sibling['attached'], 'C23/§2.11 item 2 — the SIBLING listener’s address RESOLVES before the call (`a` is a `literals` member of `A`), so it IS attached and the negative below is a genuine fire-set reading, not an unattached listener').toBe(true)
+    expect(expectCommitted(writeOn(f, 'generic', [...A, 'c'], 'mem', { value: 3 }))['status'], 'A6 — the write lands at an ABSENT PROPERTY `c` of `A`, so no subtree is discarded and every listener stays attached').toBe('committed')
     expect(
       fired,
-      'C19/C4/§2.11 item 5 — the fire set is exactly A, its strict ancestors and its strict descendants, once each; a listener on any OTHER address does not fire',
+      'C19/C4/§2.11 item 5 — the fire set is exactly A, its strict ancestors and its strict descendants, once each; a listener on any OTHER address (a SIBLING included) does not fire',
     ).toEqual(['ancestor', 'ancestor2', 'address', 'descendant'])
     expect(
       fired.filter((x) => x === 'descendant').length,
-      '§2.11 item 5 — (iii) a strict DESCENDANT of `A` fires, and the write’s own `C19` discard does not remove it here: `A` is `CHILD ⊕ [\'sub\']` and the descendant `CHILD ⊕ [\'sub\',\'a\']` survives the write at its SIBLING `\'c\'`',
+      '§2.11 item 5 — (ii) a strict DESCENDANT of `A` fires: the listener sits at `A ⊕ [\'c\']`, whose strict prefix `A` the write addressed',
     ).toBe(1)
+    expect(
+      fired.includes('sibling'),
+      '§2.11 item 5 — *"Listeners on any OTHER address do not fire"*: `A ⊕ [\'a\']` shares the prefix `A` with the write at `A ⊕ [\'c\']` and is NEITHER an ancestor NOR a descendant of it, so the SIBLING never fires',
+    ).toBe(false)
     expect(fired.includes('other'), '§2.11 item 5 — a listener on an address that is neither `A`, a strict descendant nor a strict ancestor NEVER fires').toBe(false)
     expect(
       fired.filter((x) => x === 'address').length,
@@ -2597,21 +2637,32 @@ describe('§6 — PARAMETER SEMANTICS (the `16 = 13 + 3` `PAR-` rows)', () => {
 
   it('P-13b · PAR-11 — ABSENT `fs` ⇒ the real `node:fs`: a `file`-tier drive with NO `fs` commits and loads through this drive’s OWN writable path', async () => {
     await resolveStoreSurface()
-    /** `PAR-11`'s FIRST declared arm, VERBATIM: *"absent ⇒ the real `node:fs`"*. THIS DRIVE OWNS ITS
-     *  PATH (a drive-created file under `os.tmpdir()`, removed in `afterAll`) and supplies NO `fs`,
-     *  so the module must use the real filesystem for BOTH the commit and the load; the assertion
-     *  reads the bytes through the REAL `node:fs` module, which is the only way to tell the declared
-     *  arm from a store that keeps its `file` tier in memory. */
+    /** `PAR-11`'s FIRST declared arm, VERBATIM: *"absent ⇒ the real `node:fs`"*. **`storeWithoutFs` IS
+     *  THE ONLY FIXTURE ENTRY THAT FABRICATES NO DOUBLE:** the options it hands `createStore` carry no
+     *  `fs` member at all, so the module faces the real filesystem for BOTH the commit and the load;
+     *  the ordinary `store()` supplies this register's own `memoryFs` (and must, since the rows that
+     *  read the bytes or force a save failure need it). The earlier form of this row used `store()`,
+     *  whose fixture injected its double UNCONDITIONALLY, so THIS ARM WAS NEVER DRIVEN — a defect of
+     *  the FIXTURE, not of the row. THIS DRIVE OWNS ITS PATH (a drive-created file under `os.tmpdir()`,
+     *  removed in `afterAll`) and the assertion reads the bytes through the REAL `node:fs` module,
+     *  which is the only way to tell the declared arm from a store that keeps its `file` tier in
+     *  memory. */
     const path = tempPath('absent-fs.json')
-    const f = store({ file: { path } })
+    expect(existsSync(path), 'PAR-11 — the path this drive owns starts ABSENT: nothing but the module’s own real-`node:fs` write can create it').toBe(false)
+    const f = storeWithoutFs({ file: { path } })
     expect(expectCommitted(writeOn(f, 'generic', ROOT, 'file', { value: { seed: { deep: 1 } } }))['status'], 'R3/C7 — the absent-`fs` commit lands').toBe('committed')
     expect(existsSync(path), 'PAR-11 — “absent ⇒ the real `node:fs`”: the JSON file EXISTS on the real path after the commit').toBe(true)
     expect(
       JSON.parse(readFileSync(path, 'utf8')) as unknown,
       'C7 — the real file’s bytes are the state, keyed by register-entry name',
     ).toEqual({ tabs: { seed: { deep: 1 } } })
-    const second = store({ file: { path } })
-    expect(expectCommitted(call(second, 'load'))['status'], 'PAR-11 — the load arm reaches the same real path').toBe('loaded')
+    const second = storeWithoutFs({ file: { path } })
+    /** `PAR-12`/`§2.12` item 1 — the LOAD is its OWN arm (`'loaded' | 'refused'`), never a `committed`
+     *  record, so the load's own status and its `present`/`roots` figure are what this drive asserts. */
+    const reloaded = call(second, 'load')
+    expect(reloaded['status'], 'PAR-11 — the load arm reaches the same real path').toBe('loaded')
+    expect(reloaded['present'], 'PAR-11 — the real file the commit just wrote is PRESENT to the real `node:fs`').toBe(true)
+    expect(reloaded['roots'], 'PAR-11 — the load re-mints exactly the one register entry the bytes carry').toBe(1)
     expect(readValue(readOn(second, 'generic', ROOT, 'file')), '§2.12 item 1 — the load re-mints the file instances from the real bytes').toEqual({ seed: { deep: 1 } })
   })
 
