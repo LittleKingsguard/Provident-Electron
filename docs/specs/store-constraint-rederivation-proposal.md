@@ -130,3 +130,17 @@
 **WHY IT IS FILED HERE RATHER THAN ADJUDICATED.** It is a **new constraint on the store**, so it is the architect's to state (he has) and the successor contract's to derive (it may not); it **interacts with `C19`/`C20`/`C21`/`R7`/`R9`** — the purge rule, the lower-tier write rule, the per-address lowest-persistence assembly and `temp`'s automatic rollback — and **the interactions are set out as readings for the architect in the same pass as this filing**, not taken here.
 
 **WHAT THIS §7 DOES NOT DO.** It admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R9`.
+
+---
+
+## §8 — THE TOMBSTONE READ SEMANTICS, THE FILE-TIER LIFECYCLE, AND THE ADMISSION DISPOSITION (`R11`·`R12`, added 2026-10-08; §1–§7 STAND BYTE-FOR-BYTE)
+
+**`RCA-8(d)` ANNOTATE-BESIDE.** The architect's own words and selection, verbatim:
+
+- **`R11` — WHAT A READ ANSWERS AT A TOMBSTONE.** *"The tombstone is invisible to the read - a `temp` tombstone hides the `mem` node *and* doesn't return on the read, because it represents deleted data. The read does not propagate through the tombstone"*
+- **`R12` — THE FILE-TIER TOMBSTONE'S LIFECYCLE.** *"Tombstone in memory → node removed on successful commit, rolled back on failure"* (the architect's selection among the readings offered: the tombstone stands in memory; a successful commit removes the node from the graph as well as from the file; a failed save rolls the tombstone back and leaves the node intact — `R3`/`R8`: the operation does not land).
+- **THE ADMISSION DISPOSITION.** *"Hold admission — author the contract first and admit the row at its spec gate"* (the architect's selection): **no unit row is admitted by this filing**; the successor **contract is authored under this proposal's authority**, and **the row is admitted at its own spec gate**, which remains **the architect's approval point** (`AGENTS.md` item 10a; `RCA-8(f)`: the architect admits rows).
+
+**WHAT `R11` SETTLES:** a **tombstone is never returned as data** — it does not appear in a transcription — **it hides the tombstoned node, and the read does not propagate through it**: there is **no fall-through to a lower-persistence copy of the same address** and **no descent through the tombstone into its subtree**, because the tombstone **represents deleted data**. **`R10`'s tier-scoped read stands beside this**: a read scoped to the tombstoned node's own tier still reads it (the `mem`-scoped read of `R10`'s own example), which is how a consumer inspects the retained state behind a soft delete.
+
+**WHAT THESE §§ DO NOT DO.** They admit no unit, re-open no `DONE` row, re-freeze no artifact, move no ledger count, and soften nothing in `C1`..`C24` or `R1`..`R10`.
