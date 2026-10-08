@@ -462,6 +462,74 @@ function admitsValue(value: unknown, seen: Set<unknown> = new Set<unknown>()): b
 
 /* ─────────────────────────── THE MINT (§2.4 item 3 · `C3`/`C11`) ─────────────────────────── */
 
+/**
+ * **THE FILE'S OWN DECODER — the save's three condensation arms read back in** (`§2.7` item 3 ·
+ * `§0A` `DD-13`, *"the file holds the STATE and the LOAD re-mints the transparency from the reserved
+ * key"*). **The file's bytes are NOT the caller's payload**: the save's `DD-13` writes a TRANSPARENT
+ * node as the explicit object `{"_value": <the literal>}` at a node position (*"where the transparent
+ * node stands AT A NODE POSITION (a member's child, or the ROOT of a saved tree) the bytes carry
+ * `{"_value": <the literal>}` EXPLICITLY"*), and an array element as a list-shaped parent's child
+ * whose condensed form is that same object. So the load mints from the condensation and NOT through
+ * the caller-facing payload path — where `mintMember`'s reservation (`R16`(e)) DROPS a `_value` key,
+ * which is exactly what a caller's payload must not be able to spell.
+ *
+ * **The three arms are `DD-13`'s own:**
+ * - **VALUE** — an object whose OWN members are `{_value: <admitted literal>}` alone re-mints the
+ *   TRANSPARENT node of `A10`: the reserved literal and no anchors. **A `_value` object whose value is
+ *   NOT a literal is not a node this contract can mint** (the reservation is a literal's), so it is
+ *   refused as a file that does not carry a condensation.
+ * - **ARRAY** — every element is itself a condensation, so `[{"_value": true}, …]` re-mints the
+ *   transparent child nodes `R16`(e)'s round trip names, and the read condenses them LIST-WISE.
+ * - **OBJECT** — the ordinary recursion (`C3`), a literal member as a `literals` entry and a container
+ *   member as a `parent` anchor + child node, keyed by the member's name.
+ *
+ * WHAT THE EARLIER FORM DID: `runLoad` minted the parsed file through `mintInto`, the CALLER-facing
+ * mint, so every `_value` member was silently dropped by the reservation and every transparent node
+ * came back EMPTY — the register's `P-SD-TP-5` round trip lost its state and its bytes at the first
+ * save → load (`{"tabs":{"_value":"Foo"}}` loaded as `{}`, and an array of transparent children
+ * loaded as an object of empty objects).
+ */
+function mintsFileState(node: InternalNode, state: StoreValue, tier: Tier): boolean {
+  node.literals = {}
+  node.anchors = []
+  node.tombstone = false
+  if (isLiteralValue(state)) {
+    node.literals[RESERVED_VALUE_MEMBER] = state
+    return true
+  }
+  if (state === null || typeof state !== 'object') return false
+  if (Array.isArray(state)) {
+    for (let index = 0; index < state.length; index += 1) {
+      const element = emptyNode(tier)
+      if (!mintsFileState(element, state[index] as StoreValue, tier)) return false
+      node.anchors.push({ parent: node, links: [element], type: 'parent', key: String(index), order: node.anchors.length })
+    }
+    return true
+  }
+  const members = state as Record<string, StoreValue>
+  const keys = Object.keys(members)
+  if (keys.length === 1 && keys[0] === RESERVED_VALUE_MEMBER) {
+    const reserved = members[RESERVED_VALUE_MEMBER] as StoreValue
+    if (!isLiteralValue(reserved)) return false
+    node.literals[RESERVED_VALUE_MEMBER] = reserved
+    return true
+  }
+  for (const key of keys) {
+    if (key === '') return false
+    const member = members[key] as StoreValue
+    if (member === undefined) return false
+    if (isLiteralValue(member)) {
+      node.literals[key] = member
+      continue
+    }
+    if (member === null || typeof member !== 'object') return false
+    const child = emptyNode(tier)
+    if (!mintsFileState(child, member, tier)) return false
+    node.anchors.push({ parent: node, links: [child], type: 'parent', key, order: node.anchors.length })
+  }
+  return true
+}
+
 /** `§2.4` item 3 — a LITERAL member is a `literals` entry; a CONTAINER member an anchor + child. */
 function mintMember(node: InternalNode, key: string, value: StoreValue, tier: Tier): void {
   if (key === RESERVED_VALUE_MEMBER) return
@@ -671,41 +739,63 @@ interface WalkResult {
   segment: string | null
   /** The arm failed on a TOMBSTONE, so an unqualified read answers `'tombstoned'` (`R11`). */
   suppressed: boolean
+  /**
+   * A TOMBSTONE instance STANDS at `segment` **at the tier a QUALIFIED read passed** — the instance
+   * pool holds no non-tombstone entry for that tier, so the read's walk has no node to stand on. The
+   * read answers the tombstone's own absence (`'absent-address'`, `R10`) rather than `'unreachable'`.
+   */
+  tombstoneAtTier: boolean
 }
 
-/** `§2.3` item 2 — the walk from the register, with the walk's five steps and their failures. */
+/** `§2.3` item 2 — the walk from the register, with the walk's five steps and their failures.
+ *
+ *  **`skipTombstones` IS THE QUALIFIED READ'S OWN ARM** (`§2.8` item 2): a read qualified to tier `T`
+ *  takes `T` *"specifically, at every address it visits, WITH NO FALL-BACK"* — so an instance of a
+ *  DIFFERENT tier standing at an intermediate segment, tombstoned or not, is not the tier this read
+ *  visits. Where that other-tier instance is a TOMBSTONE, the qualified read is not suppressed by it
+ *  (`§2.6` item 2: *"a read QUALIFIED to another tier reads THAT TIER SPECIFICALLY … and is not
+ *  suppressed by a tombstone standing at a different tier"*), so the walk must be able to pass it —
+ *  while a tombstone standing AT THE PASSED TIER still blocks it and is reported for token 4. An
+ *  UNQUALIFIED read passes `false` (a tombstone hides every instance below it, `R11`), and the WRITE
+ *  path passes `false` too: a tombstone node is a node at the segment, and the write arms own that
+ *  address (`A7`/`A8`/`A9`). */
 function walkTo(
   registry: readonly RegisterEntry[],
   address: Address,
   tier: Tier | undefined,
   secure: boolean,
+  skipTombstones = false,
 ): WalkResult {
   void secure
   const entry = findEntry(registry, address[0] as string)
   if (entry === undefined) {
-    return { entry: null, node: null, failed: true, step: 'B-ROOT', segment: address[0] ?? null, suppressed: false }
+    return { entry: null, node: null, failed: true, step: 'B-ROOT', segment: address[0] ?? null, suppressed: false, tombstoneAtTier: false }
   }
   if (address.length === 1) {
-    return { entry, node: entry.node, failed: false, step: 'E-CHILD', segment: null, suppressed: false }
+    return { entry, node: entry.node, failed: false, step: 'E-CHILD', segment: null, suppressed: false, tombstoneAtTier: false }
   }
   let current = entry.node
   for (let index = 1; index < address.length; index += 1) {
     const segment = address[index] as string
     if (Object.prototype.hasOwnProperty.call(current.literals, segment)) {
       // `C11` — a LITERAL member is not a node: no walk step may pass through it (`C-ANCHOR`).
-      return { entry, node: null, failed: true, step: 'C-ANCHOR', segment, suppressed: false }
+      return { entry, node: null, failed: true, step: 'C-ANCHOR', segment, suppressed: false, tombstoneAtTier: false }
     }
-    const selected = selectInstance(instancesAt(current, segment), tier)
-    if (selected === undefined) {
-      // `C17` — an INTERMEDIATE arm failed (`C-ANCHOR`/`D-LINK`/`E-CHILD`).
-      return { entry, node: null, failed: true, step: index <= 2 ? 'C-ANCHOR' : 'E-CHILD', segment, suppressed: false }
+    const pool = instancesAt(current, segment)
+    const selected = selectInstance(pool, tier)
+    if (selected === undefined || (skipTombstones && selected.tombstone)) {
+      // `C17` — an INTERMEDIATE arm failed (`C-ANCHOR`/`D-LINK`/`E-CHILD`).  A QUALIFIED read whose
+      // tier is held at this segment ONLY by a tombstone answers the tombstone's own absence (`R10`).
+      const tombstoneAtTier =
+        tier !== undefined && pool.some((candidate) => candidate.tier === tier && candidate.tombstone)
+      return { entry, node: null, failed: true, step: index <= 2 ? 'C-ANCHOR' : 'E-CHILD', segment, suppressed: false, tombstoneAtTier }
     }
     if (selected.tombstone) {
-      return { entry, node: null, failed: true, step: 'E-CHILD', segment, suppressed: true }
+      return { entry, node: null, failed: true, step: 'E-CHILD', segment, suppressed: true, tombstoneAtTier: tier !== undefined }
     }
     current = selected
   }
-  return { entry, node: current, failed: false, step: 'E-CHILD', segment: null, suppressed: false }
+  return { entry, node: current, failed: false, step: 'E-CHILD', segment: null, suppressed: false, tombstoneAtTier: false }
 }
 
 /**
@@ -955,8 +1045,16 @@ export function createStore(options: StoreOptions): Store {
     // its `J-LOAD` is the state the failing load left, and minting nothing is the only arm open.
     if (entry === undefined && readTier === 'file' && !fileLoaded) return notLoaded(target)
     if (target.length >= 2) {
-      const parentWalk = walkTo(register, target.slice(0, target.length - 1), readTier, secure)
+      const parentWalk = walkTo(register, target.slice(0, target.length - 1), readTier, secure, readTier !== undefined)
       if (target.length < 1 || parentWalk.failed || parentWalk.node === null) {
+        // `§2.6` item 2 · `R10` — a QUALIFIED read (the tier argument is present) whose passed tier
+        // is held at the failing segment ONLY by a tombstone answers the tombstone's own absence
+        // (token 4). Every OTHER failing parent walk keeps `'unreachable'`: an UNQUALIFIED read is
+        // blocked by a tombstone and answers `'unreachable'` at its first unreachable segment
+        // (`R11`'s no-descent rule).
+        if (readTier !== undefined && parentWalk.tombstoneAtTier) {
+          return storeRefusal('absent-address', 'E-CHILD', parentWalk.segment, target, 'a qualified read of the tombstone’s own tier answers its own absence (R10)')
+        }
         return unreachable(parentWalk.step, parentWalk.segment, target)
       }
       const parent = parentWalk.node
@@ -978,7 +1076,23 @@ export function createStore(options: StoreOptions): Store {
       }
       return { status: 'read', value: transcribeNode(selected, readTier), tier: secure ? 'file' : selected.tier }
     }
-    if (entry === undefined) return unknownRoot(target)
+    if (entry === undefined) {
+      /**
+       * **THE QUALIFIED FORM'S ABSENCE IS `'tier-not-held'`, NOT `'unknown-root'`** (`§2.8` item 2,
+       * verbatim: *"If a specific tier is passed, read that tier specifically … an address that tier
+       * does not hold is `C17`'s verbose error, never a lower-tier answer"*; `§2.8` item 2 (a): *"at
+       * the ADDRESSED address, the tier's absence is a `Refusal` with `reason: 'tier-not-held'` (step
+       * `F-TIER`)"*). **What a QUALIFIED read asks is WHICH INSTANCE, and where the addressed address
+       * holds NO instance the answer is that tier's own absence** — the caller passed a tier and the
+       * tier holds nothing, which is exactly token 5's fact; `'unknown-root'` (token 2) names the
+       * different fact that the walk's `B-ROOT` arm failed for a caller who asked for the ADDRESS.
+       * **The UNQUALIFIED form keeps token 2 unchanged** (`§2.8` item 7's *"the `'unknown-root'` arm
+       * … stands BYTE-FOR-BYTE"* arm; `C14`: a root comes into being only by a write at a 1-segment
+       * address, so an unqualified read of a name nothing was written at is `unknown-root`).
+       */
+      if (readTier !== undefined) return tierNotHeld(target)
+      return unknownRoot(target)
+    }
     // A 1-SEGMENT address: the entry's own name IS the final segment (`C14`), so a literal member
     // keyed by it answers exactly as `R1` does at any depth.
     if (Object.prototype.hasOwnProperty.call(entry.node.literals, target[0] as string)) {
@@ -1064,32 +1178,10 @@ export function createStore(options: StoreOptions): Store {
   }
 
   /**
-   * `C18` + `§2.4` item 3 — mint whatever is missing BETWEEN the register and the addressed address
-   * (`DD-11`'s whole-subtree arm).  The minted intermediates carry no literals (`C11`) and are minted
-   * at the STANDING parent's own tier, which keeps `R9`'s monotonic invariant satisfied along the path.
-   */
-  function ensurePath(registry: RegisterEntry[], address: string[]): boolean {
-    if (address.length < 2) return true
-    const entry = findEntry(registry, address[0] as string)
-    if (entry === undefined) return false
-    let current = entry.node
-    for (let index = 1; index < address.length - 1; index += 1) {
-      const segment = address[index] as string
-      if (Object.prototype.hasOwnProperty.call(current.literals, segment)) return false
-      const selected = lowestOf(instancesAt(current, segment))
-      if (selected !== undefined) {
-        if (selected.tombstone) return false
-        current = selected
-        continue
-      }
-      return false
-    }
-    return true
-  }
-
-  /**
-   * `C18` + `DD-11`'s whole-subtree arm — mint the missing INTERMEDIATES a CONTAINER/Tombstone
-   * write needs, at the STANDING parent's own tier (`R9`'s invariant holds along the path).
+   * `C18` + `DD-11`'s whole-subtree arm — mint the missing INTERMEDIATES a write needs, at the
+   * STANDING parent's own tier (`R9`'s invariant holds along the path).  The mint STOPS at a member
+   * that already STANDS and is not a node (a literal member, or a tombstone): that is `DD-11`'s
+   * intermediate arm, which mints nothing and is answered `'unreachable'` by the walk below.
    */
   function mintPath(registry: RegisterEntry[], address: string[]): void {
     if (address.length < 3) return
@@ -1146,20 +1238,40 @@ export function createStore(options: StoreOptions): Store {
     const kindAtRoot = propertyKindAtRoot(entry.node, address[0] as string)
     if (address.length === 1) {
       const atRootTier = rootPool(entry).find((candidate) => candidate.tier === tier)
+      /**
+       * **`A2` DOES NOT REACH A 1-SEGMENT ADDRESS, and the reason is `R16`(d)'s own definition of the
+       * arm.** `R16`(d) names the anti-pattern as *"passing an array/list/dict to a node location
+       * (ex. an address that resolves to being contained in an EXISTING LINK, ex. 'window.tabs.doc1')"*
+       * — an address whose FINAL SEGMENT is a PROPERTY of its parent, carried by that parent's
+       * `parent`-type anchor. At a 1-segment address the register entry's own node IS the addressed
+       * node (`C14`: the entry's name is the segment, its child is the node); the node is NOT a
+       * property of any parent, no link carries it, and `R16`(d)'s alternative remedy — *"the user
+       * should create a WRAPPER NODE"* — is already the shape the write has. What such a write is,
+       * is the ordinary TOTAL OVERWRITE that `C19`/`§2.5` item 3 declares: *"an existing instance at
+       * `(address, tier)` is discarded and re-minted (there is no read-modify-write, no merge and no
+       * partial member update), and every node in the addressed instance's descendant tree is
+       * discarded with it."* The arm is therefore NOT selected here, and the caller's container is
+       * minted as the root instance's new member set.
+       *
+       * WHAT THE EARLIER FORM DID, so the correction is auditable: it read `propertyKindAtRoot`'s
+       * `kindAtRoot === 'node-location'` (a root whose instance carries any member at all — literals
+       * or anchors) as `A2`'s condition and refused the write `'node-location-container'` BEFORE any
+       * mint, so a second write at a 1-segment address never landed. That contradicted `C19`'s
+       * overwrite clause, `§2.5` item 2's `C18` add arm at a 1-segment address (`C14`'s entry is
+       * created there) and the register's `P-SD-IM-2` drive (`an overwrite at an occupied address`,
+       * whose three observed positions all require the write to land).
+       */
       if (
         payload.plan === 'value' &&
         !isLiteralValue(payload.value) &&
         !payload.transparent &&
         kindAtRoot === 'node-location' &&
-        atRootTier !== undefined
+        atRootTier !== undefined &&
+        carriesReservedLiteral(atRootTier)
       ) {
-        if (carriesReservedLiteral(atRootTier)) return { refusal: secondMemberRefusal(address) }
-        // `§2.5` item 7 `A2` · `R17`(a) — a CONTAINER at a NODE LOCATION is REFUSED before any mint:
-        // NOTHING minted, NO file written, the purge not run, no listener fired.  The cell that
-        // reaches this arm is the one whose instance at the write's OWN tier stands there (an
-        // instance at ANOTHER tier is `C20`'s coexisting lower-tier write, which proceeds as if
-        // empty and mints fresh).
-        return { refusal: nodeLocationRefusal(address, address[0] as string) }
+        // `R17`(c) · `P §12` — a CONTAINER placed BESIDE a `_value` literal would put a second member
+        // in a node whose `_value` is exclusive: token 9, decided at the plan's own value arm.
+        return { refusal: secondMemberRefusal(address) }
       }
       if (
         payload.plan === 'value' &&
@@ -1173,7 +1285,23 @@ export function createStore(options: StoreOptions): Store {
       }
       return { plan: { entry, parent: entry.node, segment: address[0] as string, kind: kindAtRoot, payload, root: true } }
     }
-    const parentStoodBefore = ensurePath(registry, address)
+    /**
+     * **`DD-11` GOVERNS THIS ARM, AND THE WRITE'S LITERAL PAYLOAD DOES NOT WIDEN IT** (`§2.5` item 2's
+     * own second bullet, verbatim: *"AN ABSENT INTERMEDIATE IS REFUSED, NOT MINTED (`§0A` `DD-11`): a
+     * failure at `i < n` answers `'unreachable'` (step `C-ANCHOR`/`D-LINK`/`E-CHILD`) and mints
+     * nothing"*). So the intermediates are minted ONLY for the payload classes whose arm says the mint
+     * creates them — a CONTAINER (`C18`'s add arm: *"the mint therefore creates whatever is missing AT
+     * THE ADDRESSED ADDRESS — the child node, and the `parent` anchor and link that reach it on the
+     * parent node"*) and a TOMBSTONE — while a LITERAL payload at a deeper address whose immediate
+     * parent does not stand refuses `'unreachable'`.
+     *
+     * The distinction is the contract's and it is exact: `C18`'s sentence names the member the write
+     * ADDS (`link has no landingPage child`), and item 2's second bullet refuses the ADDRESS a walk
+     * cannot reach. A literal at a deeper address needs its parent to stand already, because
+     * `R16`(a)/`A1`/`A4` place a literal as an entry of the IMMEDIATE PARENT's own `literals` — the
+     * parent is the node the mint would have to produce, and item 2's bullet is what forbids producing
+     * it for a path a walk has not reached.
+     */
     if (mintsSubtree) mintPath(registry, address)
     const parentWalk = walkTo(registry, address.slice(0, address.length - 1), tier, secure)
     if (parentWalk.failed || parentWalk.node === null) {
@@ -1188,11 +1316,6 @@ export function createStore(options: StoreOptions): Store {
       return {
         refusal: storeRefusal('persistence-inversion', 'F-TIER', segment, address, 'the write’s tier out-ranks the parent instance’s tier (R9’s invariant)'),
       }
-    }
-    if (payload.plan === 'value' && isLiteralValue(payload.value) && !parentStoodBefore) {
-      // `DD-11` — a literal write mints ONLY the node at the addressed address, so its immediate
-      // parent must ALREADY stand: a write that would need a minted intermediate is `'unreachable'`.
-      return { refusal: unreachable('C-ANCHOR', segment, address) }
     }
     const atSegment = instancesAt(parent, segment)
     const kind = propertyKind(parent, segment)
@@ -1839,18 +1962,25 @@ export function createStore(options: StoreOptions): Store {
       return storeRefusal('load-failed', 'J-LOAD', null, [], 'the file does not carry a condensation of the register (C7)')
     }
     const names = Object.keys(parsed as Record<string, unknown>)
+    const decoded: { name: string; node: InternalNode }[] = []
     for (const name of names) {
       const raw = (parsed as Record<string, StoreValue>)[name] as StoreValue
-      if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+      if (raw === null || typeof raw !== 'object') {
         if (!secure) fileLoaded = false
         else secureLoaded = false
         return storeRefusal('load-failed', 'J-LOAD', null, [], 'a file member is not a tree condensation (C7)')
       }
+      // `DD-13`'s three arms — the condensation is decoded, never handed to the caller-facing mint.
+      const node = emptyNode('file')
+      if (!mintsFileState(node, raw, 'file')) {
+        if (!secure) fileLoaded = false
+        else secureLoaded = false
+        return storeRefusal('load-failed', 'J-LOAD', null, [], 'a file member is not a tree condensation (C7)')
+      }
+      decoded.push({ name, node })
     }
     // `§2.12` item 1 — the whole mint runs FIRST; the fan-out is strictly after it (`C24`).
-    for (const name of names) {
-      const node = emptyNode('file')
-      mintInto(node, (parsed as Record<string, StoreValue>)[name] as StoreValue, 'file')
+    for (const { name, node } of decoded) {
       const existing = findEntry(register, name)
       if (existing === undefined) register.push({ name, node, constraints: [], peers: [] })
       else existing.node = node
