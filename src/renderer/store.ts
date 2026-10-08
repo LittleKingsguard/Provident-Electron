@@ -740,62 +740,85 @@ interface WalkResult {
   /** The arm failed on a TOMBSTONE, so an unqualified read answers `'tombstoned'` (`R11`). */
   suppressed: boolean
   /**
-   * A TOMBSTONE instance STANDS at `segment` **at the tier a QUALIFIED read passed** — the instance
-   * pool holds no non-tombstone entry for that tier, so the read's walk has no node to stand on. The
-   * read answers the tombstone's own absence (`'absent-address'`, `R10`) rather than `'unreachable'`.
+   * **A TOMBSTONE STANDS AT THE TIER A QUALIFIED READ PASSED — AT A SEGMENT THE WALK CROSSED.** The
+   * walk consumed a segment whose instance pool at the passed tier holds a NON-TOMBSTONE node beside
+   * at least one tombstone. `§2.8` item 2 (a) takes that tier's own node at every address it visits,
+   * so the walk's node stands; `§2.3` item 2's terminal arm (`M-PROP`) then reads the FINAL segment
+   * against that node. (The walk's own SAME-TIER tombstone arm never reaches here: it fails the walk
+   * outright, `C17`.)
    */
-  tombstoneAtTier: boolean
+  crossedTombstone: boolean
 }
 
 /** `§2.3` item 2 — the walk from the register, with the walk's five steps and their failures.
  *
- *  **`skipTombstones` IS THE QUALIFIED READ'S OWN ARM** (`§2.8` item 2): a read qualified to tier `T`
- *  takes `T` *"specifically, at every address it visits, WITH NO FALL-BACK"* — so an instance of a
- *  DIFFERENT tier standing at an intermediate segment, tombstoned or not, is not the tier this read
- *  visits. Where that other-tier instance is a TOMBSTONE, the qualified read is not suppressed by it
- *  (`§2.6` item 2: *"a read QUALIFIED to another tier reads THAT TIER SPECIFICALLY … and is not
- *  suppressed by a tombstone standing at a different tier"*), so the walk must be able to pass it —
- *  while a tombstone standing AT THE PASSED TIER still blocks it and is reported for token 4. An
- *  UNQUALIFIED read passes `false` (a tombstone hides every instance below it, `R11`), and the WRITE
- *  path passes `false` too: a tombstone node is a node at the segment, and the write arms own that
- *  address (`A7`/`A8`/`A9`). */
+ *  **A TOMBSTONE SUPPRESSES THE WALK AT ITS OWN TIER AND NOT AT ANOTHER** (`§2.8` item 2 · `§2.6`
+ *  item 2). A read qualified to tier `T` takes `T` *"specifically, at every address it visits, WITH
+ *  NO FALL-BACK"*, so an instance of a DIFFERENT tier standing at an intermediate segment — tombstoned
+ *  or not — is not the tier this read visits: the walk takes `T`'s own node there and continues. Where
+ *  the instance `T` selects IS a tombstone, `§2.8` item 2 (a) makes the address unreachable for `T`:
+ *  the walk fails at that segment (`C17`), which is the arm the caller answers token 3 for, and the
+ *  UNQUALIFIED read's own `'tombstoned'` arm hangs on the very same failure (`suppressed`, `R11`). An
+ *  UNQUALIFIED read (`tier === undefined`) selects the LOWEST-persistence instance and is therefore
+ *  blocked by any tombstone standing at the address; the WRITE path is UNQUALIFIED too: a tombstone
+ *  node is a node at the segment, and the write arms own that address (`A7`/`A8`/`A9`). */
 function walkTo(
   registry: readonly RegisterEntry[],
   address: Address,
   tier: Tier | undefined,
   secure: boolean,
-  skipTombstones = false,
 ): WalkResult {
   void secure
   const entry = findEntry(registry, address[0] as string)
   if (entry === undefined) {
-    return { entry: null, node: null, failed: true, step: 'B-ROOT', segment: address[0] ?? null, suppressed: false, tombstoneAtTier: false }
+    return { entry: null, node: null, failed: true, step: 'B-ROOT', segment: address[0] ?? null, suppressed: false, crossedTombstone: false }
   }
   if (address.length === 1) {
-    return { entry, node: entry.node, failed: false, step: 'E-CHILD', segment: null, suppressed: false, tombstoneAtTier: false }
+    return { entry, node: entry.node, failed: false, step: 'E-CHILD', segment: null, suppressed: false, crossedTombstone: false }
   }
+  /**
+   * **`§2.8` item 2 (a) — THE QUALIFIED READ'S OWN TIER BOUNDS THE WALK, WHERE ANOTHER TIER'S
+   * TOMBSTONE DOES NOT.** A tombstone standing at the PASSED tier fails the walk at ITS OWN SEGMENT
+   * (`C17`: *"a failure at an INTERMEDIATE segment (`i < n`) is `'unreachable'`"*) and raises
+   * `suppressed`, so an UNQUALIFIED read — whose selection lands on it — answers `'tombstoned'`
+   * (`R11`); a tombstone standing at a DIFFERENT tier is NOT a failure of this walk at all
+   * (`§2.6` item 2: the qualified read *"is not suppressed by a tombstone standing at a different
+   * tier"*): `selectInstance` takes the PASSED tier's own node there and the walk continues through
+   * to the terminal address — recording the crossing so the terminal arm can answer the descendant
+   * case below.
+   */
   let current = entry.node
+  let crossedTombstone = false
   for (let index = 1; index < address.length; index += 1) {
     const segment = address[index] as string
     if (Object.prototype.hasOwnProperty.call(current.literals, segment)) {
       // `C11` — a LITERAL member is not a node: no walk step may pass through it (`C-ANCHOR`).
-      return { entry, node: null, failed: true, step: 'C-ANCHOR', segment, suppressed: false, tombstoneAtTier: false }
+      return { entry, node: null, failed: true, step: 'C-ANCHOR', segment, suppressed: false, crossedTombstone }
     }
     const pool = instancesAt(current, segment)
     const selected = selectInstance(pool, tier)
-    if (selected === undefined || (skipTombstones && selected.tombstone)) {
-      // `C17` — an INTERMEDIATE arm failed (`C-ANCHOR`/`D-LINK`/`E-CHILD`).  A QUALIFIED read whose
-      // tier is held at this segment ONLY by a tombstone answers the tombstone's own absence (`R10`).
-      const tombstoneAtTier =
-        tier !== undefined && pool.some((candidate) => candidate.tier === tier && candidate.tombstone)
-      return { entry, node: null, failed: true, step: index <= 2 ? 'C-ANCHOR' : 'E-CHILD', segment, suppressed: false, tombstoneAtTier }
+    if (selected === undefined) {
+      // `C17` — an INTERMEDIATE arm failed (`C-ANCHOR`/`D-LINK`/`E-CHILD`): the tier a QUALIFIED read
+      // visits holds no instance at this segment (a tombstone at ANOTHER tier is no failure of this
+      // walk, `§2.6` item 2 — it is not the tier this read visits).
+      return { entry, node: null, failed: true, step: index <= 2 ? 'C-ANCHOR' : 'E-CHILD', segment, suppressed: false, crossedTombstone }
     }
     if (selected.tombstone) {
-      return { entry, node: null, failed: true, step: 'E-CHILD', segment, suppressed: true, tombstoneAtTier: tier !== undefined }
+      // The walk's own selection landed on a TOMBSTONE. `R11`'s `suppressed` is what an UNQUALIFIED
+      // read answers at this segment (`'tombstoned'`, never returned); for a QUALIFIED read the
+      // tombstone standing at the PASSED tier means the passed tier's own node is DELETED at this
+      // segment — an intermediate-segment failure answering token 3 (`C17`), never token 4.
+      return { entry, node: null, failed: true, step: 'E-CHILD', segment, suppressed: true, crossedTombstone }
+    }
+    if (pool.some((candidate) => candidate.tombstone)) {
+      // A TOMBSTONE STANDS AT A DIFFERENT TIER at a segment this walk CONSUMED. `§2.6` item 2 does
+      // not suppress the qualified read, so the walk stands on the passed tier's own node and records
+      // the crossing: a DESCENDANT of that tombstone resolves against the tier that was walked.
+      crossedTombstone = true
     }
     current = selected
   }
-  return { entry, node: current, failed: false, step: 'E-CHILD', segment: null, suppressed: false, tombstoneAtTier: false }
+  return { entry, node: current, failed: false, step: 'E-CHILD', segment: null, suppressed: false, crossedTombstone }
 }
 
 /**
@@ -1045,16 +1068,20 @@ export function createStore(options: StoreOptions): Store {
     // its `J-LOAD` is the state the failing load left, and minting nothing is the only arm open.
     if (entry === undefined && readTier === 'file' && !fileLoaded) return notLoaded(target)
     if (target.length >= 2) {
-      const parentWalk = walkTo(register, target.slice(0, target.length - 1), readTier, secure, readTier !== undefined)
+      const parentWalk = walkTo(register, target.slice(0, target.length - 1), readTier, secure)
       if (target.length < 1 || parentWalk.failed || parentWalk.node === null) {
-        // `§2.6` item 2 · `R10` — a QUALIFIED read (the tier argument is present) whose passed tier
-        // is held at the failing segment ONLY by a tombstone answers the tombstone's own absence
-        // (token 4). Every OTHER failing parent walk keeps `'unreachable'`: an UNQUALIFIED read is
-        // blocked by a tombstone and answers `'unreachable'` at its first unreachable segment
-        // (`R11`'s no-descent rule).
-        if (readTier !== undefined && parentWalk.tombstoneAtTier) {
-          return storeRefusal('absent-address', 'E-CHILD', parentWalk.segment, target, 'a qualified read of the tombstone’s own tier answers its own absence (R10)')
-        }
+        /**
+         * **THE FAILING SEGMENT HERE IS ALWAYS AN INTERMEDIATE ONE OF THE TARGET — `i < n` — SO
+         * TOKEN 3 ANSWERS IT** (`§2.3` item 2: *"a failure at an INTERMEDIATE segment (`i < n`) is
+         * `'unreachable'`"*). The parent walk stops at the IMMEDIATE PARENT of the addressed address
+         * (`i = n − 1` at most), so a QUALIFIED read whose passed tier is deleted at a segment ABOVE
+         * the addressed address cannot reach its terminal address at all: `R11`'s *"no descent"* is
+         * token 3 for the unqualified form and `C17`'s intermediate failure is token 3 for the
+         * qualified one alike. **`'absent-address'` IS THE TOMBSTONE'S OWN-ADDRESS ARM and it belongs
+         * to the TERMINAL address** (`§2.6` item 2 · `R10`: *"a read qualified to the TOMBSTONE's own
+         * tier answers the tombstone's own absence"*, where the tombstone stands AT the addressed
+         * address) — answered at the `selected.tombstone` check below, NOT here.
+         */
         return unreachable(parentWalk.step, parentWalk.segment, target)
       }
       const parent = parentWalk.node
@@ -1068,10 +1095,26 @@ export function createStore(options: StoreOptions): Store {
         return storeRefusal('absent-address', 'E-CHILD', segment, target, 'the addressed node does not exist; the read mints nothing (DD-11)')
       }
       if (selected.tombstone) {
-        // `R11`/`R10` — the tombstone is NEVER returned: the address reads as deleted, and a
-        // qualified read of the tombstone's own tier answers its own absence with no fall-back.
-        return readTier === undefined
-          ? storeRefusal('tombstoned', 'E-CHILD', segment, target, 'the address is tombstone-suppressed; the tombstone is never returned (R11)')
+        /**
+         * **`R11`/`R10` — THE TOMBSTONE IS NEVER RETURNED: THE ADDRESS READS AS DELETED, and the form
+         * decides which token says so.**
+         *  · **UNQUALIFIED — token 6 `'tombstoned'`** (`§2.6` item 2: *"the unqualified read at the
+         *    tombstone's address answers `Refusal` with `reason: 'tombstoned'`"*).
+         *  · **QUALIFIED TO THE TOMBSTONE'S OWN TIER — token 4 `'absent-address'`** at the tombstone's
+         *    OWN address (`§2.6` item 2: *"a read qualified to the TOMBSTONE's own tier answers the
+         *    tombstone's own absence"*; pinned green by `B-6`).
+         *  · **A DESCENDANT OF THE TOMBSTONE — token 3 `'unreachable'`**, whatever the form:
+         *    `C17`'s *"a failure at an INTERMEDIATE segment (`i < n`) is `'unreachable'`"* (`B-5` pins
+         *    the unqualified arm and the register's `P-SD-IM-6` the qualified one). This arm is
+         *    reached when the walk CROSSED a tombstone standing at another tier (`crossedTombstone`):
+         *    the addressed address's own tier instance is deleted, so nothing below the crossed
+         *    tombstone is reachable and token 3 — never the tombstone's own absence — is the answer.
+         */
+        if (readTier === undefined) {
+          return storeRefusal('tombstoned', 'E-CHILD', segment, target, 'the address is tombstone-suppressed; the tombstone is never returned (R11)')
+        }
+        return parentWalk.crossedTombstone
+          ? storeRefusal('unreachable', 'E-CHILD', segment, target, 'an intermediate arm failed: a tombstone stands above the addressed address, which the passed tier cannot descend through (C17)')
           : storeRefusal('absent-address', 'E-CHILD', segment, target, 'a qualified read of the tombstone’s own tier answers its own absence (R10)')
       }
       return { status: 'read', value: transcribeNode(selected, readTier), tier: secure ? 'file' : selected.tier }
