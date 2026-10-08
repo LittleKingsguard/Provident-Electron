@@ -2318,10 +2318,58 @@ export function registerRows(): readonly RegisterRow[] {
             const closeReceipts = wiredClose(store, 'B', ['A', 'C']).receipts
             const repairNames = closeReceipts.flatMap((r) => (r['repaired'] as string[] | undefined) ?? [])
             expect(repairNames.join(' '), '§3.2 F-T2-1 / §5.5.1 — the repair’s own naming, read over the close’s two receipts').toContain('file.tabs.C')
+            //    ── **THE EVENT TERM IS RE-GRAINED `2026-10-11` TO THE SAME AGGREGATE (`§3.4`
+            //       item 4’s `2` caller operations `+` `1` repair operation `= 3`; `RCA-8(d)`; the
+            //       sibling `P-TR-TP-3` drive counts the term the same way). THE AS-FILED ASSERTION
+            //       IS KEPT VISIBLE IN-LINE, WITH ITS CAUSE:**
+            //         expect(
+            //           closeReceipts[1]?.['events'],
+            //           '§3.4 item 4 — the repair emits its own event BESIDE the caller’s, on the
+            //            receipt of the evaluation that landed it',
+            //         ).toBeGreaterThanOrEqual(2)
+            //       — the event term read off THE `order`-REWRITE RECEIPT ALONE. **MEASURED UNDER
+            //       THE REFERENT FIX: `closeReceipts[1].events` = `1`** — the rewrite’s evaluation
+            //       sees the ONE active the remove-triggered evaluation just landed and repairs
+            //       NOTHING, so its receipt carries the caller’s OWN single affected reference and
+            //       NO repair event. **IT WAS GREEN ONLY BECAUSE THE BARE `remove` COULD NOT LAND
+            //       THE REPAIR:** the zero-active state survived the `remove`, and the REWRITE then
+            //       emitted the caller’s event BESIDE the repair’s (`1 + 2` over the receipts). **SO
+            //       THE AS-FILED READING HARDENED A MEASUREMENT OF THE DEFECTIVE PATH INTO THE
+            //       TERM.** **THE OPERATIVE READING COUNTS THE CLOSE’S OWN EVENT TERM OVER BOTH
+            //       RECEIPTS WITHOUT COLLAPSING THE TWO OPERATIONS:** each of the close’s two caller
+            //       operations must report its OWN affected reference (≥ `1` each — a single
+            //       collapsed number could hide a missing evaluation), and the close’s total over
+            //       both receipts is EXACTLY `3` = the `2` caller operations’ references `+` the
+            //       repair’s own event, since `§3.4` item 4 binds the `+1` to the CLOSE, never to
+            //       the receipt that happens to report it. UNDER THE FIX: `2 + 1 = 3`; at the
+            //       defective bytes the split was `1 + 2 = 3` — the aggregate is UNMOVED, which is
+            //       exactly why it can be adopted. **KEPT BITE: A CLOSE THAT LANDS NO REPAIR
+            //       ANYWHERE REDDENS (total `2`); SO DOES ONE THAT LANDS TWO (total `4`); and the
+            //       per-receipt arm reddens a close whose second operation never evaluated at all.
+            //       THE `file.tabs.C` NAMING ARM BELOW IS RE-READ AS AN EXACT TOKEN, so a missing
+            //       name — or a DOUBLE-LANDED repair — still reddens.**
+            const perReceiptEvents = closeReceipts.map((r) => Number(r['events'] ?? -1))
+            const closeEvents = perReceiptEvents.reduce((a, b) => a + b, 0)
+            const cRepairs = repairNames.filter((n) => n === 'file.tabs.C').length
+            process.stdout.write(
+              `\n── T2 \`P-TR-IM-3\` STATE (1) RECEIPT READING — THE CLOSE’S EVENT TERM, OVER ITS TWO RECEIPTS ──\n` +
+              `  DRIVE: remove('${S.entry('B')}') then the \`order\` rewrite ['A','C'] — the close’s TWO caller operations\n` +
+              `  EVENTS:  remove ${perReceiptEvents[0]} · rewrite ${perReceiptEvents[1]} — the close’s own total ${closeEvents} (§3.4 item 4’s \`2\` + \`1\`)\n` +
+              `  REPAIRS: remove ${JSON.stringify(closeReceipts[0]?.['repaired'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['repaired'])} — \`file.tabs.C\` repairs over the close: ${cRepairs}\n` +
+              `────────────────────────────────────────────────────────────────\n`,
+            )
             expect(
-              closeReceipts[1]?.['events'],
-              '§3.4 item 4 — the repair emits its own event BESIDE the caller’s, on the receipt of the evaluation that landed it',
-            ).toBeGreaterThanOrEqual(2)
+              perReceiptEvents.every((n) => n >= 1),
+              `§2.4 item 4 / §3.4 item 4 — EACH of the close’s two caller operations reports its OWN affected reference (≥ \`1\`); a collapsed single number could hide a MISSING EVALUATION on one of them. MEASURED: remove ${perReceiptEvents[0]} · rewrite ${perReceiptEvents[1]}`,
+            ).toBe(true)
+            expect(
+              closeEvents,
+              `§3.4 item 4 — the close’s event term over BOTH receipts is EXACTLY \`3\`: the \`2\` caller operations’ affected references PLUS the repair’s own \`cause:repair\` event (\`2 + 1\`; under the referent fix the repair lands on the REMOVE-triggered evaluation, so the split is \`2 + 1\`, against \`1 + 2\` at the defective bytes — the aggregate is UNMOVED because \`§3.4\` item 4 binds the \`+1\` to the CLOSE). A CLOSE THAT LANDS NO REPAIR ANYWHERE REDDENS THIS ATTEMPT AT \`2\`; ONE THAT LANDS TWO REDDENS AT \`4\`. MEASURED: remove ${perReceiptEvents[0]} · rewrite ${perReceiptEvents[1]} · total ${closeEvents}`,
+            ).toBe(3)
+            expect(
+              cRepairs,
+              `§3.2 F-T2-1 / §5.5.1 — the repair’s own naming, as an EXACT TOKEN over the close’s two receipts: EXACTLY ONE repair names \`file.tabs.C\` (\`§3.4\` item 4 binds it to the close, not to the receipt that reports it). ZERO REDDENS THIS ATTEMPT (no repair anywhere); TWO REDDEN IT TOO. MEASURED: remove ${JSON.stringify(closeReceipts[0]?.['repaired'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['repaired'])}`,
+            ).toBe(1)
           } },
         { name: '(2) state reading — zero-active, the referent LAST ([A,B,C], C closed) → THE WRAP to A', drive: (): void => {
             const s = surface as TabsSurface
@@ -2393,12 +2441,58 @@ export function registerRows(): readonly RegisterRow[] {
             //       READ OFF THE CLOSE’S OWN SECOND CALLER OPERATION — the `order` rewrite
             //       `wiredClose` already made — MEASURED `repaired = ['file.tabs.B']`.**
             const closeReceipts = wiredClose(store, 'A', ['B']).receipts
+            //    ── **THE REPAIR-NAMING TERM IS RE-GRAINED `2026-10-11` (`RCA-8(d)`; `§3.4` item 4’s
+            //       `2 + 1 = 3`, the `+1` bound to the CLOSE). THE AS-FILED ASSERTIONS ARE KEPT
+            //       VISIBLE IN-LINE, WITH THEIR CAUSE:**
+            //         const rewrite = closeReceipts[1] ?? {}
+            //         expect(rewrite['status'], '§3.2 — the write stands with its repair in the same
+            //           committed write').toBe('committed')
+            //         expect(
+            //           ((rewrite['repaired'] as string[] | undefined) ?? []).join(' '),
+            //           '§3.2 F-T2-1 — the two-member repair is reported on the receipt of the
+            //            evaluation that landed it',
+            //         ).toContain('file.tabs.B')
+            //       — the repair read off THE `order`-REWRITE RECEIPT ALONE. **MEASURED UNDER THE
+            //       REFERENT FIX: the rewrite’s `repaired` is `''` — EMPTY** (the rewrite’s
+            //       evaluation sees the one active the remove-triggered evaluation just landed and
+            //       repairs NOTHING), so the as-filed assertion reddens against the very fix this
+            //       row’s own state (1) demands. **IT WAS GREEN ONLY BECAUSE THE BARE `remove` COULD
+            //       NOT LAND THE REPAIR** (it names the id it just removed — `H-1`’s `removals`
+            //       guard suppresses the write), so the zero-active state survived the `remove` and
+            //       the REWRITE repaired — a MEASUREMENT OF THE DEFECTIVE PATH hardened into the
+            //       term. **THE OPERATIVE READING IS THE AGGREGATE OVER THE CLOSE’S TWO RECEIPTS,
+            //       AND IT KEEPS THE BITE:** EXACTLY ONE repair over the close names `file.tabs.B`
+            //       (zero = no repair anywhere, two = a double-landed repair), and that repair rides
+            //       a `committed` write whichever receipt reports it — `§3.2`’s same-committed-write
+            //       demand read at the close’s grain. **THE `rewrite['status']` ASSERTION BELOW IS
+            //       UNMOVED: the rewrite itself still stands committed.** **MEASURED UNDER THE FIX:
+            //       `remove.repaired = ['file.tabs.B']`, `rewrite.repaired = []` — `1 + 0 = 1`;
+            //       at the defective bytes: `[] + ['file.tabs.B']` — `0 + 1 = 1`.**
+            const perReceiptRepairs = closeReceipts.map((r) => (r['repaired'] as string[] | undefined) ?? [])
+            const repairNames = perReceiptRepairs.flat()
+            const bRepairs = repairNames.filter((n) => n === 'file.tabs.B')
+            const landingReceipts = closeReceipts.filter((_r, i) => perReceiptRepairs[i]?.includes('file.tabs.B') === true)
             const rewrite = closeReceipts[1] ?? {}
+            process.stdout.write(
+              `\n── T2 \`P-TR-IM-3\` STATE (3) RECEIPT READING — THE TWO-MEMBER REPAIR, OVER THE CLOSE’S TWO RECEIPTS ──\n` +
+              `  DRIVE: remove('${S.entry('A')}') then the \`order\` rewrite ['B'] — the close’s TWO caller operations\n` +
+              `  REPAIRS: remove ${JSON.stringify(closeReceipts[0]?.['repaired'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['repaired'])} — \`file.tabs.B\` repairs over the close: ${bRepairs.length} (§3.4 item 4’s \`+1\`)\n` +
+              `  STATUS:  remove ${JSON.stringify(closeReceipts[0]?.['status'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['status'])} · the receipt that lands the repair rides a committed write: ${String(landingReceipts.every((r) => r['status'] === 'committed'))}\n` +
+              `────────────────────────────────────────────────────────────────\n`,
+            )
             expect(rewrite['status'], '§3.2 — the write stands with its repair in the same committed write').toBe('committed')
             expect(
-              ((rewrite['repaired'] as string[] | undefined) ?? []).join(' '),
-              '§3.2 F-T2-1 — the two-member repair is reported on the receipt of the evaluation that landed it',
+              bRepairs.length,
+              `§3.2 F-T2-1 / §3.4 item 4 — EXACTLY ONE repair over the close’s TWO receipts names the seat \`file.tabs.B\` (the \`+1\` is bound to the CLOSE, not to the receipt that reports it): ZERO reddens this attempt (no repair anywhere), TWO redden it too (a double-landed repair). MEASURED: remove ${JSON.stringify(closeReceipts[0]?.['repaired'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['repaired'])}`,
+            ).toBe(1)
+            expect(
+              repairNames.join(' '),
+              `§3.2 F-T2-1 — the two-member repair is reported, counted over the close’s two receipts (the evaluation that lands it emits the repair in the SAME committed write). MEASURED: remove ${JSON.stringify(closeReceipts[0]?.['repaired'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['repaired'])}`,
             ).toContain('file.tabs.B')
+            expect(
+              landingReceipts.every((r) => r['status'] === 'committed'),
+              `§3.2 — the repair rides a COMMITTED write, whichever of the close’s receipts reports it (MEASURED statuses: remove ${JSON.stringify(closeReceipts[0]?.['status'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['status'])})`,
+            ).toBe(true)
           } },
         { name: '(4) state reading — the close-last-tab arm: the landing entry activated as a REPAIR, its seat written in the same committed write', drive: (): void => {
             const s = surface as TabsSurface
@@ -2849,12 +2943,58 @@ export function registerRows(): readonly RegisterRow[] {
             const repairNames = closeReceipts.flatMap((r) => (r['repaired'] as string[] | undefined) ?? [])
             expect(
               repairNames.join(' '),
-              '§3.2 F-T2-1 — the repair’s own naming on the close’s own receipt (the `order`-rewrite evaluation that lands it)',
+              '§3.2 F-T2-1 — the repair’s own naming, read over the close’s two receipts (whichever of them the evaluation lands the repair on: §3.4 item 4 binds the repair to the CLOSE, and at the referent fix it is the REMOVE-triggered evaluation that reports it)',
             ).toContain('file.tabs.B')
+            //    ── **THE AFFECTED-REFERENCE COUNT IS RE-GRAINED `2026-10-11` TO THE SAME AGGREGATE
+            //       (`§3.4` item 4’s `2` caller operations `+` `1` repair operation `= 3`; `RCA-8(d)`;
+            //       the sibling `P-TR-TP-3` drive counts the events term the same way). THE AS-FILED
+            //       ASSERTION IS KEPT VISIBLE IN-LINE, WITH ITS CAUSE:**
+            //         expect(
+            //           closeReceipts[1]?.['events'],
+            //           '§3.4 item 4 — the affected-reference count, on the receipt of the evaluation
+            //            that landed the repair',
+            //         ).toBeGreaterThanOrEqual(2)
+            //       — the affected-reference count read off THE `order`-REWRITE RECEIPT ALONE.
+            //       **MEASURED UNDER THE REFERENT FIX: `closeReceipts[1].events` = `1`** (the
+            //       rewrite’s evaluation sees the ONE active the remove-triggered evaluation just
+            //       landed and repairs NOTHING, so its write touches the `order` reference alone).
+            //       **IT WAS GREEN ONLY BECAUSE THE BARE `remove` COULD NOT LAND THE REPAIR** (it
+            //       names the id it just removed — `H-1`’s `removals` guard suppresses the write), so
+            //       the zero-active state survived the `remove` and the REWRITE’s write carried the
+            //       caller’s own reference BESIDE the repair’s (`1 + 2` over the receipts) — a
+            //       MEASUREMENT OF THE DEFECTIVE PATH hardened into the term. **THE OPERATIVE
+            //       READING COUNTS THE CLOSE’S OWN AFFECTED-REFERENCE TERM OVER BOTH RECEIPTS,
+            //       WITHOUT COLLAPSING THE TWO OPERATIONS:** each caller operation reports its own
+            //       affected reference (≥ `1` each), and the close’s total is EXACTLY `3` = the `2`
+            //       caller operations’ references `+` the repair’s own `cause:repair` event, because
+            //       `§3.4` item 4 binds the `+1` to the CLOSE, never to the receipt that reports it.
+            //       UNDER THE FIX `2 + 1 = 3`; at the defective bytes `1 + 2 = 3` — UNMOVED, which is
+            //       why it can be adopted BEFORE the fix lands. **KEPT BITE: a close that lands NO
+            //       repair anywhere reddens at `2`; one that lands TWO reddens at `4`; a missing
+            //       evaluation on either caller operation reddens the per-receipt arm; and the exact
+            //       token count below reddens a missing or DOUBLE-LANDED `file.tabs.B` repair.**
+            const perReceiptEvents = closeReceipts.map((r) => Number(r['events'] ?? -1))
+            const closeEvents = perReceiptEvents.reduce((a, b) => a + b, 0)
+            const bRepairs = repairNames.filter((n) => n === 'file.tabs.B').length
+            process.stdout.write(
+              `\n── T2 \`P-TR-SM-1\` (d) EVALUATED — THE CLOSE’S AFFECTED-REFERENCE TERM, OVER ITS TWO RECEIPTS ──\n` +
+              `  DRIVE:   remove('${S.entry('A')}') then the \`order\` rewrite ['B'] — the close’s TWO caller operations\n` +
+              `  EVENTS:  remove ${perReceiptEvents[0]} · rewrite ${perReceiptEvents[1]} — the close’s own total ${closeEvents} (§3.4 item 4’s \`2\` + \`1\`)\n` +
+              `  REPAIRS: remove ${JSON.stringify(closeReceipts[0]?.['repaired'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['repaired'])} — \`file.tabs.B\` repairs over the close: ${bRepairs}\n` +
+              `────────────────────────────────────────────────────────────────\n`,
+            )
             expect(
-              closeReceipts[1]?.['events'],
-              '§3.4 item 4 — the affected-reference count, on the receipt of the evaluation that landed the repair',
-            ).toBeGreaterThanOrEqual(2)
+              perReceiptEvents.every((n) => n >= 1),
+              `§2.4 item 4 / §3.4 item 4 — EACH of the close’s two caller operations reports its OWN affected reference (≥ \`1\`); a collapsed single number could hide a MISSING EVALUATION. MEASURED: remove ${perReceiptEvents[0]} · rewrite ${perReceiptEvents[1]}`,
+            ).toBe(true)
+            expect(
+              closeEvents,
+              `§3.4 item 4 — the close’s affected-reference term over BOTH receipts: EXACTLY \`3\` = the \`2\` caller operations’ references PLUS the repair’s own \`cause:repair\` event (\`2 + 1\` under the referent fix — the repair lands on the REMOVE-triggered evaluation; \`1 + 2\` at the defective bytes — the aggregate is UNMOVED because §3.4 item 4 binds the \`+1\` to the CLOSE). A CLOSE THAT LANDS NO REPAIR ANYWHERE REDDENS AT \`2\`; ONE THAT LANDS TWO REDDENS AT \`4\`. MEASURED: remove ${perReceiptEvents[0]} · rewrite ${perReceiptEvents[1]} · total ${closeEvents}`,
+            ).toBe(3)
+            expect(
+              bRepairs,
+              `§3.2 F-T2-1 — EXACTLY ONE repair over the close’s two receipts names \`file.tabs.B\` (zero reddens: no repair anywhere; two redden: a double-landed repair). MEASURED: remove ${JSON.stringify(closeReceipts[0]?.['repaired'])} · rewrite ${JSON.stringify(closeReceipts[1]?.['repaired'])}`,
+            ).toBe(1)
           } },
         { name: '(e) REPAIRED — the next-surviving entry active, exactly one active', drive: (): void => {
             const s = surface as TabsSurface
@@ -3532,6 +3672,40 @@ export function registerRows(): readonly RegisterRow[] {
             //    under the fix: `['file.tabs.C'] + []` ⇒ `1 + 0 = 1`.** **NOTHING IN THIS ROW
             //    MOVES — its id, type `P-TP`, strategy id `S-TR-COST-1` and term `8` are
             //    UNMOVED, and the drive below already counts the aggregate.**
+            //
+            //    ── **`2026-10-11` NOTE EXTENDED (`RCA-8(d)`): THE THREE REGISTER ASSERTIONS THAT
+            //    STILL PINNED THE OLD SPLIT TO THE REWRITE RECEIPT ARE NOW RE-GRAINED, AND THEIR
+            //    MEASURED UNDER-FIX READINGS ARE RECORDED HERE BY NAME.** This row’s own count was
+            //    ALREADY the aggregate (`repairs` over both receipts = `1`) and is UNMOVED; the
+            //    three that newly reddened under the referent fix were:
+            //      · **`P-TR-IM-3` state (1) receipt reading — `closeReceipts[1]['events'] >= 2`:
+            //        MEASURED UNDER THE FIX `1`** (the rewrite’s evaluation sees the one active the
+            //        remove-triggered evaluation just landed and repairs NOTHING). RE-GRAINED to the
+            //        close’s own event term over BOTH receipts: per-receipt `>= 1` each (the two
+            //        caller operations stay distinguishable) and a total of EXACTLY `3` — `2 + 1`,
+            //        which is `1 + 2` at the defective bytes, so the aggregate is UNMOVED.
+            //      · **`P-TR-IM-3` state (3) receipt reading — the rewrite’s `repaired` must contain
+            //        `file.tabs.B`: MEASURED UNDER THE FIX `''` (EMPTY).** RE-GRAINED to the
+            //        aggregate over the close’s two receipts: EXACTLY ONE repair names
+            //        `file.tabs.B`, riding a `committed` write — `1 + 0` under the fix, `0 + 1` at
+            //        the defective bytes.
+            //      · **`P-TR-SM-1` (d) EVALUATED — `closeReceipts[1]['events'] >= 2` (the
+            //        affected-reference count): MEASURED UNDER THE FIX `1`.** RE-GRAINED the same
+            //        way: per-receipt `>= 1` each and a close total of EXACTLY `3` = `2` caller
+            //        operations’ affected references `+` the repair’s own event, plus an EXACT
+            //        `file.tabs.B` repair token count of `1`.
+            //    **EACH AS-FILED FORM IS KEPT VISIBLE IN-LINE AT ITS OWN ATTEMPT, WITH ITS CAUSE
+            //    QUOTED** — all three were green ONLY because the bare `remove`’s evaluation could
+            //    not land the repair (`H-1`’s `removals` guard), so the zero-active state survived
+            //    the `remove` and the REWRITE repaired: a MEASUREMENT OF THE DEFECTIVE PATH
+            //    hardened into the terms. **`§3.4` item 4’s own as-filed sentence above is kept
+            //    visible and is UNCHANGED: *“MEASURED, the `remove`’s own evaluation lands
+            //    `repaired: []` and the `order` rewrite’s lands the repair — counted together, the
+            //    close’s repair term is exactly `1`.”* THE AGGREGATE TERM IS STILL `1`; WHAT MOVED
+            //    IS ONLY WHICH RECEIPT REPORTS IT.** Under the fix, this row’s own drive measures
+            //    `remove.repaired = ['file.tabs.C']` and `rewrite.repaired = []` — `1 + 0 = 1`,
+            //    matching the `1 + 2 → 2 + 1 = 3` events aggregate of the re-grained attempts. NO
+            //    id, type, strategy id, term or property line in this register moved.
             void (PER_TAB_LEAVES as readonly string[]) // the as-filed four-leaf set stays visible
             const receipts = wiredClose(store, 'B', ['A', 'C']).receipts
             const callerOps = 2
