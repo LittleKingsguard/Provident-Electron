@@ -515,6 +515,10 @@ function transparentLiteral(node: InternalNode): StoreValue | undefined {
   return undefined
 }
 
+/** `R17`(c) — the node carries the reserved `_value` member at all (alone or otherwise). */
+const carriesReservedLiteral = (node: InternalNode): boolean =>
+  Object.prototype.hasOwnProperty.call(node.literals, RESERVED_VALUE_MEMBER)
+
 const lowestOf = (options: readonly InternalNode[]): InternalNode | undefined => {
   let best: InternalNode | undefined
   for (const candidate of options) {
@@ -548,13 +552,35 @@ function isListShaped(node: InternalNode, tier: Tier | undefined): boolean {
  * QUALIFIED form, applied at every address it visits, with NO fall-back.
  */
 function transcribeNode(node: InternalNode, tier: Tier | undefined = undefined): StoreValue {
-  const direct = transparentLiteral(node)
-  if (direct !== undefined && tier === undefined) return deepCopy(direct)
+  // `DD-13`'s THIRD ARM, decided FIRST because a transparent node answers a LITERAL and never a
+  // transcription: `isListShaped`'s "no literals" test already excludes it from the array arm.
+  const reserved = node.literals[RESERVED_VALUE_MEMBER]
+  if (carriesReservedLiteral(node)) {
+    if (Object.keys(node.literals).length === 1 && tier === undefined) {
+      // `R2` — UNQUALIFIED answers the literal ALONE (`C21`'s own single-member transcription,
+      // condensed by `DD-13`'s value arm); a primitive is its own copy (`C2`).
+      return deepCopy(reserved as StoreValue)
+    }
+    // `R2` QUALIFIED — the read asks WHICH INSTANCE, so it answers the node's transcription.
+    const carried: Record<string, StoreValue> = {}
+    for (const key of Object.keys(node.literals)) {
+      const value = node.literals[key]
+      if (value === undefined) continue
+      Object.defineProperty(carried, key, { value: deepCopy(value), enumerable: true, writable: true, configurable: true })
+    }
+    return carried
+  }
   if (isListShaped(node, tier)) {
     const list: StoreValue[] = []
     for (const anchor of node.anchors) {
       const child = selectLink(anchor, tier)
-      const element = child === undefined ? undefined : transparentLiteral(child)
+      if (child === undefined) {
+        // `§2.8` item 2 (b) — QUALIFIED: the tier is absent downstream, so the member is ABSENT.
+        if (tier !== undefined) continue
+        list.push(null)
+        continue
+      }
+      const element = transparentLiteral(child)
       list.push(element === undefined ? null : deepCopy(element))
     }
     return list
@@ -567,6 +593,8 @@ function transcribeNode(node: InternalNode, tier: Tier | undefined = undefined):
   }
   for (const anchor of node.anchors) {
     const child = selectLink(anchor, tier)
+    // `§2.8` item 2 (b) — a QUALIFIED read's downstream absence means the member is ABSENT from the
+    // transcription and the walk does not descend through it (NO fall-back to a lower tier).
     if (child === undefined) continue
     if (child.tombstone) {
       // `R11` — the tombstone is never a transcription, yet the PROPERTY continues to exist
@@ -680,6 +708,17 @@ function walkTo(
   return { entry, node: current, failed: false, step: 'E-CHILD', segment: null, suppressed: false }
 }
 
+/**
+ * `§2.3` item 2 — what the final segment names where `P` is the REGISTER (`C14`): the entry's own
+ * node IS the addressed node, so a node standing there (a TRANSPARENT node included) makes the final
+ * segment a NODE LOCATION, and only a literal MEMBER keyed by the segment is a LITERAL PROPERTY.
+ */
+function propertyKindAtRoot(node: InternalNode, segment: string): PropertyKind {
+  if (carriesReservedLiteral(node)) return 'node-location'
+  if (Object.prototype.hasOwnProperty.call(node.literals, segment)) return 'literal-property'
+  return 'absent-property'
+}
+
 /** `§2.3` item 2 — what the final segment names at `P`: a node location, a literal, or neither. */
 function propertyKind(parent: InternalNode, segment: string): PropertyKind {
   if (Object.prototype.hasOwnProperty.call(parent.literals, segment)) return 'literal-property'
@@ -748,7 +787,16 @@ const storeRefusal = (
 
 /* ─────────────────────────── THE `PAR-11` RESOLUTION ─────────────────────────── */
 
-/** `PAR-11` — a COMPLETE surface is adopted; ABSENT or PARTIAL falls back to the real `node:fs`. */
+/**
+ * `PAR-11` — a COMPLETE surface is adopted; ABSENT or PARTIAL falls back to the real `node:fs`
+ * (*"absent ⇒ the real `node:fs`"*).  A PARTIAL surface is NEVER adopted, so the real module is what
+ * serves a partial drive.
+ *
+ * The real module is reached through `process.getBuiltinModule('fs')` — Node's own runtime door to
+ * a builtin, reached WITHOUT a static `import 'node:fs'`, which a `--platform=browser` bundle of
+ * this file could not resolve.  In such a realm the guard is false and the INERT surface below
+ * serves every file-tier call as a RETURNED typed record rather than a throw (§2.1 item 4).
+ */
 function resolveFs(supplied: FsSurface | undefined): FsSurface {
   const required: readonly (keyof FsSurface)[] = [
     'readFileSync',
@@ -766,12 +814,17 @@ function resolveFs(supplied: FsSurface | undefined): FsSurface {
     if (required.every((member) => typeof candidates[member] === 'function')) return supplied
   }
   try {
-    const requireFn = (0, eval)('typeof require === "function" ? require : undefined') as
-      | ((id: string) => unknown)
-      | undefined
-    if (typeof requireFn === 'function') {
-      const mod = requireFn('node:fs') as { default?: FsSurface } & FsSurface
-      return (mod.default ?? mod) as FsSurface
+    const host = (globalThis as { process?: unknown }).process
+    if (typeof host === 'object' && host !== null) {
+      const loader = host as { getBuiltinModule?: (specifier: string) => unknown }
+      const load = loader.getBuiltinModule
+      if (typeof load === 'function') {
+        const mod = load.call(host, 'fs') as ({ default?: FsSurface } & FsSurface) | undefined
+        if (mod !== undefined && mod !== null) {
+          const surface = (mod.default ?? mod) as unknown as Record<string, unknown>
+          if (required.every((member) => typeof surface[member] === 'function')) return mod as FsSurface
+        }
+      }
     }
   } catch {
     /* fall through to the inert surface below */
@@ -799,14 +852,19 @@ function resolveFs(supplied: FsSurface | undefined): FsSurface {
 /** §1.2 item 1 · §2.1 — `createStore(options)`, the ONE factory the surface declares. */
 export function createStore(options: StoreOptions): Store {
   const fs = resolveFs(options.fs)
-  const hostFs = options.fs === undefined
   const filePath = options.file.path
   const securePath = options.secure.path
 
   const register: RegisterEntry[] = []
   const listeners: InternalListener[] = []
-  /** A store built without a `PAR-11` surface keeps its file tier in memory (see `commit`). */
-  const memory = new Map<string, string>()
+  /**
+   * `§2.10` item 2 — the registrations whose carrier does not stand yet.  The seam attaches a
+   * registration to the LINK at its address (or to the register entry at a 1-segment address), and a
+   * registration is NOT a write: it MINTS NO PATH (`C14`: a root comes into being only by a write at
+   * a 1-segment address).  A registration at an address that does not resolve therefore stands here,
+   * carrying its own address, until a write at that address materializes the carrier.
+   */
+  const pendingConstraints: { address: readonly string[]; registration: ConstraintRegistration }[] = []
 
   /** §2.12 item 4 · `DD-14` — the declared UNLOADED state of each graph. */
   let fileLoaded = true
@@ -879,13 +937,14 @@ export function createStore(options: StoreOptions): Store {
       if (tier === 'file' && !fileLoaded) return notLoaded(target)
     }
     const readTier = secure ? undefined : (tier as Tier | undefined)
-    if (readTier === 'file' && !fileLoaded) return notLoaded(target)
     const entry = findEntry(register, target[0] as string)
-    if (entry === undefined) return unknownRoot(target)
+    // `§2.12` item 4 (token 15) and `§2.3` item 2's `B-ROOT` (token 2) are BOTH state duties of the
+    // address's own root: the UNLOADED state is answered FIRST where the root is not registered —
+    // its `J-LOAD` is the state the failing load left, and minting nothing is the only arm open.
+    if (entry === undefined && readTier === 'file' && !fileLoaded) return notLoaded(target)
     if (target.length >= 2) {
       const parentWalk = walkTo(register, target.slice(0, target.length - 1), readTier, secure)
-      if (parentWalk.failed || parentWalk.node === null) {
-        // `R11`'s NO-DESCENT sense: every address BELOW a tombstone is unreachable.
+      if (target.length < 1 || parentWalk.failed || parentWalk.node === null) {
         return unreachable(parentWalk.step, parentWalk.segment, target)
       }
       const parent = parentWalk.node
@@ -907,6 +966,7 @@ export function createStore(options: StoreOptions): Store {
       }
       return { status: 'read', value: transcribeNode(selected, readTier), tier: secure ? 'file' : selected.tier }
     }
+    if (entry === undefined) return unknownRoot(target)
     // A 1-SEGMENT address: the entry's own name IS the final segment (`C14`), so a literal member
     // keyed by it answers exactly as `R1` does at any depth.
     if (Object.prototype.hasOwnProperty.call(entry.node.literals, target[0] as string)) {
@@ -938,11 +998,6 @@ export function createStore(options: StoreOptions): Store {
     readonly payload: PlannedPayload
     /** `C14`/`C18` — a 1-SEGMENT write, whose target is the REGISTER ENTRY's own root instance. */
     readonly root: boolean
-    /**
-     * Whether `parent` IS the register entry's own root node (`root` false): its anchor must ride the
-     * entry's own link list (`C14`), NOT the node's `anchors` — those are its CHILD members.
-     */
-    readonly atRoot: boolean
   }
 
   const nodeLocationRefusal = (address: readonly string[], segment: string): Refusal =>
@@ -1053,31 +1108,57 @@ export function createStore(options: StoreOptions): Store {
     secure: boolean,
   ): { plan: Plan } | { refusal: Refusal } {
     if (!secure && tier === 'file' && !fileLoaded) return { refusal: notLoaded(address) }
+    const mintsSubtree = payload.plan === 'tombstone' || (payload.plan === 'value' && !isLiteralValue(payload.value))
     let entry = findEntry(registry, address[0] as string)
     if (entry === undefined) {
       const mints = payload.plan === 'tombstone' || (payload.plan === 'value' && !isLiteralValue(payload.value))
-      if (address.length > 1 && !mints) {
-        // `DD-11` — an absent intermediate is REFUSED, not minted: a LITERAL's immediate parent must
-        // already resolve to a node (`R16`(a)'s own condition), and only a CONTAINER write carries
-        // `C18`'s whole-subtree arm.
+      if (!secure && !mints && address.length > 1) {
+        if (address.length === 2) {
+          // `§2.3` item 2's `B-ROOT` arm — the register carries no entry named by `address[0]` and
+          // the write is aimed AT that name's own property (`i = n − 1 = 1`): token 2 answers it.
+          return { refusal: unknownRoot(address) }
+        }
+        // `§2.3` item 2's INTERMEDIATE arm — a failure at `i < n` with `i ≥ 2` is `'unreachable'`
+        // (token 3): the register carries no entry at all, so the address cannot be walked to.
         return { refusal: unreachable('B-ROOT', address[0] ?? null, address) }
       }
       // `C18`/`C14` — a write at an address that COULD exist ADDS the data, using it as its entry,
-      // and the register entry comes into being with it (`DD-11`'s whole-subtree arm).
+      // and the register entry comes into being with it (`DD-11`'s whole-subtree arm: a CONTAINER or
+      // a TOMBSTONE carries it, while a bare literal at a deeper address does not).
       entry = { name: address[0] as string, node: emptyNode(tier), constraints: [], peers: [] }
       registry.push(entry)
     }
-    const kindAtRoot = propertyKind(entry.node, address[0] as string)
+    const kindAtRoot = propertyKindAtRoot(entry.node, address[0] as string)
     if (address.length === 1) {
-      if (payload.plan === 'value' && !isLiteralValue(payload.value) && !payload.transparent && kindAtRoot === 'node-location') {
-        const standing = lowestOf(instancesAt(entry.node, address[0] as string))
-        if (standing !== undefined && transparentLiteral(standing) !== undefined) return { refusal: secondMemberRefusal(address) }
+      const atRootTier = rootPool(entry).find((candidate) => candidate.tier === tier)
+      if (
+        payload.plan === 'value' &&
+        !isLiteralValue(payload.value) &&
+        !payload.transparent &&
+        kindAtRoot === 'node-location' &&
+        atRootTier !== undefined
+      ) {
+        if (carriesReservedLiteral(atRootTier)) return { refusal: secondMemberRefusal(address) }
+        // `§2.5` item 7 `A2` · `R17`(a) — a CONTAINER at a NODE LOCATION is REFUSED before any mint:
+        // NOTHING minted, NO file written, the purge not run, no listener fired.  The cell that
+        // reaches this arm is the one whose instance at the write's OWN tier stands there (an
+        // instance at ANOTHER tier is `C20`'s coexisting lower-tier write, which proceeds as if
+        // empty and mints fresh).
         return { refusal: nodeLocationRefusal(address, address[0] as string) }
       }
-      return { plan: { entry, parent: entry.node, segment: address[0] as string, kind: kindAtRoot, payload, root: true, atRoot: false } }
+      if (
+        payload.plan === 'value' &&
+        payload.transparent &&
+        atRootTier !== undefined &&
+        Object.keys(atRootTier.literals).length > 0
+      ) {
+        // `R17`(c) — a transparency over a node that already carries a member would place `_value`
+        // BESIDE it: the exclusivity refuses the write (token 9).
+        return { refusal: secondMemberRefusal(address) }
+      }
+      return { plan: { entry, parent: entry.node, segment: address[0] as string, kind: kindAtRoot, payload, root: true } }
     }
     const parentStoodBefore = ensurePath(registry, address)
-    const mintsSubtree = payload.plan === 'tombstone' || (payload.plan === 'value' && !isLiteralValue(payload.value))
     if (mintsSubtree) mintPath(registry, address)
     const parentWalk = walkTo(registry, address.slice(0, address.length - 1), tier, secure)
     if (parentWalk.failed || parentWalk.node === null) {
@@ -1086,43 +1167,40 @@ export function createStore(options: StoreOptions): Store {
     }
     const parent = parentWalk.node
     const segment = address[address.length - 1] as string
+    if (!secure && TIER_RANK[tier] > TIER_RANK[parent.tier]) {
+      // `R9`'s invariant (`§2.2` item 3) — a node may not be MORE persistent than its parent
+      // instance, so a write whose tier out-ranks the parent's is REFUSED at `F-TIER` (token 11).
+      return {
+        refusal: storeRefusal('persistence-inversion', 'F-TIER', segment, address, 'the write’s tier out-ranks the parent instance’s tier (R9’s invariant)'),
+      }
+    }
     if (payload.plan === 'value' && isLiteralValue(payload.value) && !parentStoodBefore) {
       // `DD-11` — a literal write mints ONLY the node at the addressed address, so its immediate
       // parent must ALREADY stand: a write that would need a minted intermediate is `'unreachable'`.
       return { refusal: unreachable('C-ANCHOR', segment, address) }
     }
-    if (!secure && TIER_RANK[tier] > TIER_RANK[parent.tier]) {
-      // `R9`'s invariant — a node may not be MORE persistent than its parent.
-      return {
-        refusal: storeRefusal('persistence-inversion', 'F-TIER', segment, address, 'the write’s tier out-ranks the parent instance’s tier (R9’s invariant)'),
-      }
-    }
-    void 0
+    const atSegment = instancesAt(parent, segment)
     const kind = propertyKind(parent, segment)
-    if (kind === 'node-location' && !secure) {
-      const standing = lowestOf(instancesAt(parent, segment))
-      if (standing !== undefined && TIER_RANK[tier] > TIER_RANK[standing.tier]) {
-        return {
-          refusal: storeRefusal('persistence-inversion', 'F-TIER', segment, address, 'the write’s tier out-ranks the standing instance of the addressed address (R9/C20)'),
-        }
-      }
-    }
-    const standingAtTier = instancesAt(parent, segment).find((candidate) => candidate.tier === tier)
+    const standingAtTier = atSegment.find((candidate) => candidate.tier === tier)
     if (
       payload.plan === 'value' &&
       !isLiteralValue(payload.value) &&
       !payload.transparent &&
       kind === 'node-location' &&
-      standingAtTier === undefined
+      standingAtTier !== undefined
     ) {
-      const standing = lowestOf(instancesAt(parent, segment))
-      if (standing !== undefined && transparentLiteral(standing) !== undefined) return { refusal: secondMemberRefusal(address) }
-      // `§2.5` item 7 `A2` · `R17`(a) — NOTHING minted, NO file written, the purge not run.
+      if (carriesReservedLiteral(standingAtTier)) return { refusal: secondMemberRefusal(address) }
+      // `§2.5` item 7 `A2` · `R17`(a) — a CONTAINER at a NODE LOCATION is REFUSED where the write
+      // would OVERWRITE an instance at its own tier: NOTHING minted, NO file written, the purge does
+      // not run.  Where the write's own tier holds no instance, `C20`'s coexisting lower-tier write
+      // proceeds as if empty and mints FRESH.
       return { refusal: nodeLocationRefusal(address, segment) }
     }
-    // `atRoot` is the ROOT-INSTANCE case only (`C14`): at a deeper address the entry's own node is
-    // the address's FIRST segment, and the write's anchor is that node's own CHILD member.
-    return { plan: { entry, parent, segment, kind, payload, root: false, atRoot: false } }
+    if (payload.plan === 'value' && payload.transparent && kind === 'node-location') {
+      const standing = standingAtTier ?? lowestOf(atSegment)
+      if (standing !== undefined && Object.keys(standing.literals).length > 0) return { refusal: secondMemberRefusal(address) }
+    }
+    return { plan: { entry, parent, segment, kind, payload, root: false } }
   }
 
   /** The instance the write TARGETS: the same-tier instance where one stands, else a FRESH one. */
@@ -1199,15 +1277,19 @@ export function createStore(options: StoreOptions): Store {
       applyPayloadTo(target, plan, tier)
       return target
     }
-    // `A1`/`A4` — a literal overwrites an EXISTING literal member in place; where the final segment
-    // is ABSENT, `C18`'s add arm mints the node AT THE ADDRESS (so an absent property can carry a
-    // TOMBSTONE, `A9`, and a tombstone at a LITERAL property converts it, `A8`).
+    // `A1`/`A4`/`A3`/`A10` — a literal (or the TRANSPARENT mode) is an entry of the IMMEDIATE
+    // PARENT's own `literals` table, so the member's child node is DISCARDED (`C19`'s overwrite at
+    // `(address, tier)`) and NO child node is minted.  Where the final segment is ABSENT, `C18`'s add
+    // arm mints the node AT THE ADDRESS instead — which is how a TOMBSTONE lands at an absent
+    // property (`A9`) and how a tombstone at a LITERAL property converts it (`A8`, a minted node
+    // carrying NO literals, so the payload's own arm decides for the tombstone and this arm does not).
     const literalArm = plan.payload.plan === 'value' && (isLiteralValue(plan.payload.value) || plan.payload.transparent)
     if (literalArm) {
-      // `A1`/`A3`/`A4`/`A10` — the immediate parent is RE-MINTED: any child the address carried is
-      // discarded, and the member becomes an entry of that parent's own `literals` table; NO child
-      // node is minted and NO property is deleted (`R17`(b): the member is overwritten).
-      parent.anchors = parent.anchors.filter((anchor) => anchor.key !== segment)
+      // `C19` — the overwrite is TOTAL AT `(address, tier)`: only the instances at the WRITE'S OWN
+      // tier are discarded; an instance at another tier COEXISTS at the address (`C20`).
+      parent.anchors = parent.anchors.filter(
+        (anchor) => anchor.key !== segment || !anchor.links.some((child) => child.tier === tier),
+      )
       parent.anchors.forEach((anchor, index) => {
         anchor.order = index
       })
@@ -1220,20 +1302,17 @@ export function createStore(options: StoreOptions): Store {
     }
     const { node: target, created } = targetInstance(plan, tier)
     if (created) {
-      if (plan.atRoot) {
-        // `C14` — the ENTRY's own link list (`peers`) holds the address's instances; each variant
-        // carries the same `key` (the root's name) and the dense `order`.  It is NEVER the node's
-        // `anchors`: those are the root's own CHILD members.
-        plan.entry.peers.push({ parent: plan.entry.node, links: [target], type: 'parent', key: segment, order: plan.entry.peers.length })
-      } else {
-        parent.anchors = parent.anchors.filter((anchor) => anchor.key !== segment)
-        parent.anchors.forEach((anchor, index) => {
-          anchor.order = index
-        })
-        // `R17`(b) — no property deletion: a replaced LITERAL is OVERWRITTEN by the anchor set.
-        delete parent.literals[segment]
-        parent.anchors.push({ parent, links: [target], type: 'parent', key: segment, order: parent.anchors.length })
-      }
+      // `C19`'s overwrite at `(address, tier)`: the instance the address carried at THAT tier is
+      // discarded with its anchor, while an instance at another tier coexists in its own anchor.
+      parent.anchors = parent.anchors.filter(
+        (anchor) => anchor.key !== segment || !anchor.links.some((child) => child.tier === tier),
+      )
+      parent.anchors.forEach((anchor, index) => {
+        anchor.order = index
+      })
+      // `R17`(b) — no property deletion: a replaced LITERAL is OVERWRITTEN by the anchor set.
+      delete parent.literals[segment]
+      parent.anchors.push({ parent, links: [target], type: 'parent', key: segment, order: parent.anchors.length })
     }
     applyPayloadTo(target, plan, tier)
     return target
@@ -1257,8 +1336,20 @@ export function createStore(options: StoreOptions): Store {
         continue
       }
       const walk = walkTo(registry, prefix, undefined, secure)
-      if (walk.failed || walk.node === null) continue
+      if (walk.failed || walk.node === null) {
+        for (const pending of pendingConstraints) {
+          if (pending.address.length !== prefix.length) continue
+          if (!pending.address.every((segment, index) => segment === prefix[index])) continue
+          evaluated.push({ address: prefix, registration: pending.registration })
+        }
+        continue
+      }
       for (const registration of walk.node.constraints) evaluated.push({ address: prefix, registration })
+      for (const pending of pendingConstraints) {
+        if (pending.address.length !== prefix.length) continue
+        if (!pending.address.every((segment, index) => segment === prefix[index])) continue
+        evaluated.push({ address: prefix, registration: pending.registration })
+      }
     }
     return evaluated
   }
@@ -1300,7 +1391,8 @@ export function createStore(options: StoreOptions): Store {
     const messages: StoreMessage[] = []
     const evaluated = evaluatedSet(register, address, secure)
     const repairedOnce = new Set<number>()
-    const satisfied = new Set<number>()
+    /** `R15` item 3 — the registrations that answered `{ok:true}` in the PREVIOUS pass. */
+    let satisfiedBefore = new Set<number>()
     let repaired = false
     let payload = initial
     for (let pass = 1; pass <= evaluated.length + 1; pass += 1) {
@@ -1310,6 +1402,7 @@ export function createStore(options: StoreOptions): Store {
       if ('refusal' in planned) return { refusal: planned.refusal, repaired, messages, payload }
       const plan = planned.plan
       const target = applyPlan(plan, tier)
+      const satisfied = new Set<number>()
       let restart = false
       for (let position = 0; position < evaluated.length; position += 1) {
         const item = evaluated[position] as { address: readonly string[]; registration: ConstraintRegistration }
@@ -1343,9 +1436,11 @@ export function createStore(options: StoreOptions): Store {
         if (answered['ok'] === false) {
           const moduleMessage = typeof answered['message'] === 'string' ? (answered['message'] as string) : ''
           messages.push({ source: 'constraint', pass, position, step: STEP_MARK, address, text: moduleMessage })
-          if (satisfied.has(position)) {
-            // `R15` item 3 — the loop-breaker: the broken constraint's verbatim stands IMMEDIATELY
-            // before the store's own closing sentence (§2.14 item 5 · §2.10 item 11).
+          if (satisfiedBefore.has(position)) {
+            // `R15` item 3 — the loop-breaker: the registration answered `{ok:true}` in an EARLIER
+            // pass of THIS write and refuses after a repair changed the state, so the write fails
+            // instead of looping.  The broken constraint's verbatim stands IMMEDIATELY before the
+            // store's own closing sentence (§2.14 item 5 · §2.10 item 11).
             return {
               refusal: storeRefusal(
                 'repair-broke-constraint',
@@ -1430,6 +1525,9 @@ export function createStore(options: StoreOptions): Store {
         }
       }
       if (!restart) return { refusal: null, repaired, messages, payload }
+      // A pass that repaired and RESTARTED: what held in this pass is the state a later pass is
+      // re-checked against (`R15` item 3).
+      satisfiedBefore = satisfied
     }
     return { refusal: null, repaired, messages, payload }
   }
@@ -1448,14 +1546,6 @@ export function createStore(options: StoreOptions): Store {
 
   /** `§2.7` item 4 — an ATOMIC REPLACE: a replacement beside the path, renamed onto it. */
   function commit(path: string): Refusal | null {
-    if (hostFs) {
-      try {
-        memory.set(path, condensation())
-      } catch {
-        return storeRefusal('save-failed', 'I-SAVE', null, [], 'the file could not be committed to exactly match the state (C7/R3/R8)')
-      }
-      return null
-    }
     const temporary = `${path}.store-tmp`
     const separator = path.lastIndexOf('/')
     const directory = separator > 0 ? path.slice(0, separator) : ''
@@ -1571,6 +1661,8 @@ export function createStore(options: StoreOptions): Store {
       if (planTier === 'file' || secure) {
         const failure = commit(secure ? securePath : filePath)
         if (failure !== null) {
+          // `R3`/`§2.7` item 5 — the operation does not land: the pre-call state and the pre-call
+          // file bytes stand, and the state a read then answers is the state that was SAVED.
           restore()
           return failure
         }
@@ -1643,12 +1735,11 @@ export function createStore(options: StoreOptions): Store {
     else secureLoaded = true
     let text: string
     try {
-      const present = hostFs ? memory.has(path) : fs.existsSync(path)
-      if (!present) {
+      if (!fs.existsSync(path)) {
         // A MISSING file is NOT a failure (`§2.12` item 4); NOTHING resolves, so NOTHING fires.
         return { status: 'loaded', present: false, roots: 0 }
       }
-      text = hostFs ? (memory.get(path) as string) : fs.readFileSync(path, 'utf8')
+      text = fs.readFileSync(path, 'utf8')
     } catch {
       if (!secure) fileLoaded = false
       else secureLoaded = false
@@ -1698,10 +1789,10 @@ export function createStore(options: StoreOptions): Store {
     if (typeof body !== 'function') {
       return storeRefusal('malformed-listener', 'L-REGISTRATION', null, target, '`body` is not a function; nothing is registered (PAR-6)')
     }
-    // `B-ROOT` — the root must exist (`C14`): a root comes into being ONLY by a write at a
-    // 1-segment address.  The listener's TARGET need not resolve (`C23`'s unattached state), but the
-    // address's own root must be registered — UNLESS the listener is registered at the root itself,
-    // which is how `C24`'s boot order registers before the load.
+    // `B-ROOT` — the root is brought into being here where the store does not yet carry it: the
+    // address's OWN root is a placeholder for the data a later write or `load()` mints (`C24`'s boot
+    // order registers its listeners before the load), and the listener's TARGET need not resolve
+    // (`C23`'s unattached state).
     if (findEntry(register, target[0] as string) === undefined) {
       register.push({ name: target[0] as string, node: emptyNode('mem'), constraints: [], peers: [] })
     }
@@ -1722,15 +1813,33 @@ export function createStore(options: StoreOptions): Store {
       return storeRefusal('malformed-constraint', 'L-REGISTRATION', null, target, 'the registration’s `constraint` — or a present `repair` — is not a function (PAR-7/PAR-8)')
     }
     // The carrier: the LINK at the address, or the REGISTER ENTRY at a 1-segment address (`C14`).
-    // `B-ROOT` — the root must exist; only a write mints a register entry.  The address's own node
-    // is MINTED where it does not yet stand (`§2.10` item 2: the seam attaches to the carrier).
+    // `B-ROOT` — an absent root is brought into being by the registration itself (the seam attaches to
+    // the carrier, `§2.10` item 2).
     if (findEntry(register, target[0] as string) === undefined) {
       register.push({ name: target[0] as string, node: emptyNode('mem'), constraints: [], peers: [] })
     }
-    mintPath(register, [...target, '__carrier__'])
+    // `§2.10` item 2 — the seam attaches to the CARRIER at the address: the register entry at a
+    // 1-segment address, else the LINK's own registration list.  A registration MINTS NO PATH (the
+    // carrier must resolve, `C13`), so a registration at a deeper address is answered `'unknown-root'`
+    // where the address does not resolve.
     const walk = walkTo(register, target, undefined, false)
     if (walk.failed || walk.node === null) {
-      return storeRefusal('unknown-root', 'B-ROOT', walk.segment ?? target[0] ?? null, target, 'the address does not resolve, so the registration has no carrier (C13/C14)')
+      // The carrier does not stand yet: the registration is held against its OWN address until a
+      // write at that address materializes the link it attaches to (`§2.10` item 2's carrier).
+      const pending: { constraint: ConstraintFn; repair?: RepairFn } = { constraint: constraint as ConstraintFn }
+      if (repair !== undefined) pending.repair = repair as RepairFn
+      const at = pendingConstraints.findIndex(
+        (candidate) =>
+          candidate.address.length === target.length &&
+          candidate.address.every((segment, index) => segment === target[index]) &&
+          candidate.registration.constraint === constraint,
+      )
+      if (at >= 0) {
+        pendingConstraints[at] = { address: [...target], registration: pending }
+        return { address: target, position: at }
+      }
+      pendingConstraints.push({ address: [...target], registration: pending })
+      return { address: target, position: pendingConstraints.length - 1 }
     }
     const owner: ConstraintRegistration[] = target.length === 1 ? (walk.entry as RegisterEntry).constraints : walk.node.constraints
     const created: { constraint: ConstraintFn; repair?: RepairFn } = { constraint: constraint as ConstraintFn }
