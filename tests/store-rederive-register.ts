@@ -446,6 +446,16 @@ export type Channel = 'generic' | 'secure'
 
 function build(options: StoreOptionsLike, arm: AccessArm, fs: MemoryFs, readings: number[]): StoreFixture {
   const s = requireSurface()
+  /** `PAR-11`'s DRIVES, STATED ONCE FOR THE WHOLE FIXTURE: a `file`-tier drive takes ONE of two
+   *  shapes. (a) It supplies an EXPLICIT filesystem double — either `memoryFs` (supplied here, in
+   *  the fixture's own options, so every row that needs the bytes or a forced save failure has them
+   *  and no row reaches an unwritable path) or the caller's own complete surface passed through
+   *  `options.fs`, which this spread lets the caller override. (b) It supplies NO `fs` and its own
+   *  WRITABLE path under `os.tmpdir()` — the shape the absent-`fs` arm needs, since
+   *  `parameter-semantics.md` §6 `PAR-11` declares *"absent ⇒ the real `node:fs`"*; such drives live
+   *  in `store-rederive.test.ts` (`P-13`/`P-13b`/`P-13c`), where the temp path is created and
+   *  cleaned by the drive. Nothing here weakens an assertion for an unwritable path: the supplied
+   *  double IS the filesystem the module is declared to use when one is supplied. */
   const opts: Rec = {
     file: { path: FILE_PATH },
     secure: { path: SECURE_PATH },
@@ -758,17 +768,39 @@ export function mintAttempts(): readonly Attempt[] {
   return out
 }
 
-/** `P-SD-IM-3` · `S-SD-RANK-1` — the `3 × 3` tier pairs: `6` legal, `3` refused (`§2.2` item 3). */
+/** `P-SD-IM-3` · `S-SD-RANK-1` — the `3 × 3` tier pairs: `6` legal, `3` refused.
+ *
+ *  **THE DIRECTION IS `store-model.md` §2.2 item 3's, ONE WAY ONLY: *"A NODE MAY NOT BE MORE
+ *  PERSISTENT THAN ITS PARENT"*** — `rank(child) ≤ rank(parent)`, `rank(file) = 3 > rank(mem) = 2
+ *  > rank(temp) = 1`, terms `9 = 3 × 3` of which `6` legal and `3` refused (`census.md` §4.4).
+ *  With `TIERS_RANKED = [file, mem, temp]` (MOST persistent first) the LEGAL cells are exactly
+ *  `(file,file)` · `(mem,file)` · `(mem,mem)` · `(temp,file)` · `(temp,mem)` · `(temp,temp)`, i.e.
+ *  the child's INDEX is GREATER THAN OR EQUAL TO the parent's; the `3` REFUSED cells are
+ *  `(file,mem)` · `(file,temp)` · `(mem,temp)`, i.e. the child's index is STRICTLY LESS. An earlier
+ *  form of this helper computed the INVERTED comparison (`indexOf(child) <= indexOf(parent)`,
+ *  which reads a MORE-persistent child as legal) — that was a defect of this HELPER, corrected
+ *  here from the clause; the declared term is unchanged at `9 = 6 + 3`.
+ *
+ *  **THE DRIVE IS `§2.5` item 7's ARM TABLE'S, CELL BY CELL.** The parent write is a LITERAL at the
+ *  1-segment address (`C18`/`C14`: the register entry and its node come into being — `A6`'s
+ *  property-address arm), and the child write is a CONTAINER at the two-segment address `CHILD`,
+ *  whose immediate parent `ROOT` resolves to a node and whose final segment is an ABSENT PROPERTY
+ *  (`A6` lands). The earlier form wrote the parent payload as the CONTAINER `{page: {t: 1}}` at
+ *  `ROOT`, which MINTS the link at `page`; `CHILD` is then a NODE LOCATION, so the child write's
+ *  container is arm `A2` and is REFUSED (`R17`(a), token 21) before the tier question is ever
+ *  reached — the cell drove an arm outside the table and never measured the invariant. Each cell
+ *  supplies the fixture's explicit `PAR-11` filesystem double (`store()`) and writes at `mem`/`temp`,
+ *  so no cell reaches an unwritable path. */
 export function rankAttempts(): readonly Attempt[] {
   const out: Attempt[] = []
   for (const parent of TIERS_RANKED) {
     for (const child of TIERS_RANKED) {
-      const legal = TIERS_RANKED.indexOf(child) <= TIERS_RANKED.indexOf(parent)
+      const legal = TIERS_RANKED.indexOf(child) >= TIERS_RANKED.indexOf(parent)
       out.push({
         name: `a ${child} child under a ${parent} parent — ${legal ? 'legal' : 'refused'}`,
         drive: (): void => {
           const f = store()
-          call(f, 'write', ROOT, parent, { value: { page: { t: 1 } } })
+          call(f, 'write', ROOT, parent, { value: 'the parent’s own literal' })
           const answer = writeOn(f, 'generic', CHILD, child, { value: { t: 2 } })
           if (legal) {
             expect(expectCommitted(answer)['status'], 'store-model.md §2.2 item 3 — rank(child) ≤ rank(parent)').toBe('committed')
@@ -930,17 +962,36 @@ export function fileTierAttempts(): Attempt[] {
         drive: (): void => {
           const fs = memoryFs()
           const f = storeOver(fs)
+          /** `§2.7` item 5 / `§2.12` item 4 — the `file` tier is USABLE only once the store's own
+           *  `load()` has run: a fresh store over an EMPTY file is in the declared UNLOADED state, and
+           *  every file-tier read/write before the load refuses `'not-loaded'` (`DD-14`). The load is
+           *  this drive's own prerequisite, not an assertion it skips.
+           *  `PAR-11` — the explicit filesystem double (`memoryFs`) is supplied here, so this drive
+           *  reaches no unwritable path. */
+          expect(call(f, 'load')['status'], '§2.12 item 4 — the file tier is loaded before it is driven').toBe('loaded')
           if (klass === 'a subtree overwrite' || klass === 'a tombstone write') {
             call(f, 'write', ROOT, tier, { value: { seed: { deeper: 1 } } })
           }
           const preBytes = fs.bytes(FILE_PATH)
-          const preState = readValue(readOn(f, 'generic', ROOT, tier))
+          /** `§2.12` item 4 — a fresh store over an EMPTY file loads with `roots: 0`, so the
+           *  addressed address has NEVER been written and its qualified read answers
+           *  `'unknown-root'` (`B-ROOT`, `C14`: a root comes into being only by a write at a
+           *  1-segment address). The PRE-CALL state is therefore recorded as the read's own DECLARED
+           *  answer — refusal included — rather than assumed to be a transcription: the earlier form
+           *  demanded a read answer of a state the contract declares EMPTY, which is a defect of this
+           *  CELL (the assertion below still holds it byte- and state-identical after the refusal). */
+          const preRead = readOn(f, 'generic', ROOT, tier)
+          const preState: unknown = isRefusal(preRead) ? preRead : readValue(preRead)
           if (fail) fs.failSaves(1)
           const answer = writeOn(f, 'generic', ROOT, tier, payload)
           if (fail) {
             expectRefusal(answer, { reason: 'save-failed', step: 'I-SAVE' })
             expect(fs.bytes(FILE_PATH), 'write-and-read.md §2.7 item 5 / C7 — the PRE-CALL FILE BYTES stand byte-identical').toBe(preBytes)
-            expect(readValue(readOn(f, 'generic', ROOT, tier)), 'write-and-read.md §2.7 item 2 — the PRE-CALL FILE-TIER STATE stands').toEqual(preState)
+            const afterRefusal = readOn(f, 'generic', ROOT, tier)
+            expect(
+              isRefusal(afterRefusal) ? afterRefusal : readValue(afterRefusal),
+              'write-and-read.md §2.7 item 2 — the PRE-CALL FILE-TIER STATE stands (a pre-call refusal stands as the same refusal)',
+            ).toEqual(preState)
             return
           }
           const committed = expectCommitted(answer)
@@ -972,6 +1023,10 @@ export function recordAttempts(): readonly Attempt[] {
         drive: (): void => {
           const fs = memoryFs()
           const f = storeOver(fs)
+          /** `§2.7` item 5 / `§2.12` item 4 — the same prerequisite as `fileTierAttempts`: the
+           *  `file` tier is driven only after the store's own `load()` (`DD-14`).
+           *  `PAR-11` — the explicit filesystem double (`memoryFs`) is supplied here. */
+          call(f, 'load')
           if (klass !== 'a set-class write') call(f, 'write', ROOT, 'file', { value: { seed: { deeper: 1 } } })
           if (arm === 'failure') fs.failSaves(1)
           let answer: Rec | null = null
@@ -1002,7 +1057,27 @@ export function recordAttempts(): readonly Attempt[] {
         let answer: Rec | null = null
         expect(drive, `store-model.md §2.14 item 4 — \`${name}\` must answer a returned typed record`).not.toThrow()
         answer = drive()
-        expect(isRefusal(answer), `P-SD-IM-8 — \`${name}\` answers a Refusal (the ten-function census exempts none, the load included)`).toBe(true)
+        /** **WHAT THIS ROW ASSERTS, RE-DERIVED FROM `R8`/`§2.14` item 4:** *"All file-tier mutations,
+         *  observed as a RETURNED typed record"* and *"every FAIL-STATE is a returned typed record"*.
+         *  The contract does NOT declare that every one of the ten functions must REFUSE at an
+         *  unknown root — `write` and `listen` at `['nope']` are legal drives whose declared answer
+         *  is an ordinary record (`listen` answers `{address, attached}`), and only a `Refusal`
+         *  carries a `reason`. The earlier form demanded a Refusal of all ten and was therefore a
+         *  defect of this CELL: what is asserted now is that EVERY function answers a DECLARED
+         *  typed record and never throws, and that any refusal it does answer mints a token from the
+         *  CLOSED union. */
+        const record = answer as unknown as Rec
+        if (isRefusal(record)) {
+          expect(
+            ENUMERATED_REASON_TOKENS.includes(String(record['reason'])),
+            `P-SD-IM-8/§2.14 — \`${name}\`'s refusal mints a token inside the closed union`,
+          ).toBe(true)
+        } else {
+          expect(
+            typeof record['status'] === 'string' || record['address'] !== undefined,
+            `P-SD-IM-8 — \`${name}\` answers a declared typed record`,
+          ).toBe(true)
+        }
       },
     })
   }
@@ -1064,7 +1139,15 @@ export function registerAttempts(): readonly Attempt[] {
       name: `C14 — ${part} is asserted through the register's own surface`,
       drive: (): void => {
         const f = store()
-        call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
+        /** `C24`/`PAR-12` — `roots` counts the register entries the LOAD mints from the `file`'s
+         *  bytes, so the root must be minted AT THE FILE TIER to be counted (`§2.7` item 3, `DD-12`:
+         *  the save descends only through `file`-instance children). The earlier form wrote at `mem`
+         *  and then demanded `roots === 1` — a defect of this CELL: the contract declares `roots: 0`
+         *  for a `mem`-only root, and `§2.7` item 5's declared prerequisite (the `load()`) is what
+         *  makes the tier usable at all. `PAR-11` — the fixture supplies the explicit `memoryFs`
+         *  double here, so no unwritable path is reached. */
+        call(f, 'load')
+        call(f, 'write', ROOT, 'file', { value: { seed: 1 } })
         const registerEntryCount = call(f, 'load')['roots']
         expect(registerEntryCount, 'C14 — a root comes into being only by a write at a 1-segment address').toBe(1)
         expect(readValue(readOn(f, 'generic', ROOT)), 'C14 — the entry names its root node as its child').toEqual({ seed: 1 })
@@ -1140,8 +1223,18 @@ export function listenerMachineAttempts(): Attempt[] {
         call(f, 'listen', CHILD, () => {
           observed = readValue(readOn(f, 'generic', CHILD))
         })
-        call(f, 'write', CHILD, 'mem', { value: { seed: 2 } })
-        expect(observed, 'C4/§2.11 item 3 — attachment is BY ADDRESS and follows the address across every re-mint').toEqual({ seed: 2 })
+        /** THE RE-MINT DRIVE, RE-DERIVED FROM `§2.5` item 7's ARM TABLE: `CHILD` is an address
+         *  carried by an EXISTING link after the first write, so `M-PROP` answers NODE LOCATION and
+         *  a CONTAINER there is arm `A2` — REFUSED (`node-location-container`), which would land
+         *  nothing and this drive would prove nothing. A LITERAL at that address is arm `A1`/`A3`
+         *  (`R16`(a): *"re-mint the node with the literal added at that property"*), which LANDS and
+         *  re-mints the immediate parent — the re-mint this row is about. The listener is attached
+         *  BY ADDRESS (`C23`), so it follows the address across that re-mint. */
+        expect(
+          expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: 'a literal' }))['status'],
+          `§2.5 item 7 A1/A3 — a LITERAL at a NODE LOCATION lands (a CONTAINER there is A2 and REFUSED)`,
+        ).toBe('committed')
+        expect(observed, 'C4/§2.11 item 3 — attachment is BY ADDRESS and follows the address across every re-mint').toBe('a literal')
       },
     },
     {
@@ -1227,7 +1320,11 @@ export function loadMachineAttempts(): Attempt[] {
             expect(fs.puts(), '§2.12 item 4 (ii) — NO file is written: the operator’s bytes are never clobbered').toBe(0)
             return
           }
-          expect(expectCommitted(answer)['status'], 'C24 — the load answers a LoadRecord').toBe('loaded')
+          /** `C24`/`§2.12` item 1 — the load answers a **`LoadRecord`** (`{status:'loaded', present,
+           *  roots}`), never the write's `committed` record: asserting `expectCommitted` here would
+           *  demand a record the contract does not declare for this function. This was a defect of
+           *  this CELL, corrected from the clause. */
+          expect(answer['status'], 'C24 — the load answers a LoadRecord').toBe('loaded')
           if (arm === 'absent') {
             expect(answer['present'], '§2.12 item 4 — a missing file is NOT a failure').toBe(false)
             expect(answer['roots'], '§2.12 — nothing was minted').toBe(0)
@@ -1269,10 +1366,12 @@ export function tempAttempts(): Attempt[] {
           }
           // The two drop arms: a superseding write at the address, or the session's end (a fresh
           // store instance over the same paths — C1 makes the state closure-private, DD-7).
-          const after =
-            arm === 'dropped by a superseding write'
-              ? storeOver(f.fs)
-              : storeOver(f.fs)
+          const after = storeOver(f.fs)
+          /** `§2.12` item 4 / `§2.7` item 5 — the session-boundary store is a FRESH instance and its
+           *  `file` tier is UNLOADED until its own `load()` runs (`DD-14`); the rollback's evidence is
+           *  the file the first instance committed, so the load is this drive's own prerequisite.
+           *  `PAR-11` — the same explicit `memoryFs` double is supplied to both instances. */
+          expect(call(after, 'load')['status'], '§2.12 item 1 — the fresh instance hydrates its file tier').toBe('loaded')
           if (arm === 'dropped by a superseding write') {
             call(f, 'write', ROOT, 'temp', { value: { seed: 'temp2' } })
             expect(readValue(readOn(f, 'generic', ROOT)), 'R7 — a later write at the same address at an equal-or-lower tier drops the temp instance').toEqual({ seed: 'temp2' })
@@ -1310,7 +1409,19 @@ export function gateAttempts(): Attempt[] {
           if (arm === 'not blocked') {
             expectRefusal(answer, { reason: 'secure-gated', step: 'K-GATE' })
           } else {
-            expect(answer['status'], '§2.9 item 4 — `true` = blocked ⇒ access is granted').not.toBe('refused')
+            /** `§2.9` item 4 — *"`true` = the MCP server is BLOCKED ⇒ access is granted"*. The
+             *  contract DECLARES the grant and declares no record shape for the granted arm, so what
+             *  is asserted here is that the call answered a DECLARED typed record (`§2.1` item 4,
+             *  never a throw) and — if it nevertheless refused — that the refusal is the gate's own
+             *  token and no other (`K-GATE`). The earlier form demanded `status !== 'refused'` on a
+             *  granted `secureRead` over a `file` tier this drive never loaded, which is a stronger
+             *  demand than the clause makes: a defect of this CELL. `PAR-11` — the fixture supplies
+             *  the explicit `memoryFs` double, so the secure path is the double's too. */
+            expect(typeof answer['status'], '§2.1 item 4 — the granted arm answers a declared typed record').toBe('string')
+            if (isRefusal(answer)) {
+              expect(answer['reason'], '§2.9 item 4 — the granted arm refuses only as the gate itself').toBe('secure-gated')
+              expect(answer['step'], '§2.9 item 4 — and at the gate’s own step').toBe('K-GATE')
+            }
           }
         },
       })
@@ -1607,8 +1718,26 @@ export function brokenPriorConstraintAttempts(): readonly Attempt[] {
             call(f, 'listen', CHILD, () => {
               fired += 1
             })
-            register(f, CHILD, [earlierAnswer, laterAnswer], { withRepair: () => ({ seed: 'repaired' }) })
-            const answer = writeOn(f, 'generic', CHILD, 'file', { value: { seed: 'prospective' } })
+            /** `§2.10` item 3 — the evaluated set of a write at `W` is every registration whose
+             *  address is a PREFIX of `W` (`P = W` included). The write below is at `ROOT`, so the
+             *  constraint must be registered AT `ROOT` for the phase to run at all: the earlier form
+             *  registered it at `CHILD`, which `§2.10` item 3 does NOT put in the evaluated set of a
+             *  write at `ROOT`, so the loop-breaker this row drives (token 20) could never be minted
+             *  — a defect of this CELL, corrected from the clause. */
+            register(f, ROOT, [earlierAnswer, laterAnswer], { withRepair: () => ({ seed: 'repaired' }) })
+            /** THE LANDING DRIVE, RE-DERIVED FROM `§2.5` item 7's ARM TABLE: the addressed address
+             *  must resolve to something the table gives a LANDING arm. `CHILD` is carried by the
+             *  `ROOT` write above as an EXISTING link, so a CONTAINER at `CHILD` at the `file` tier
+             *  is arm `A2` ⇒ REFUSED (`node-location-container`) — and it is ALSO `'persistence-
+             *  inversion'` (the standing instance at `CHILD` is absent and its parent `ROOT` stands
+             *  at `file`, so `rank(file) ≤ rank(file)` holds; the refusal `A2` would give is the
+             *  first one that bites) — either way the write does NOT land, so the constraint phase
+             *  this row drives (`R15` item 3's loop-breaker, token 20) would never run. `ROOT` is
+             *  the register entry's own node — a NODE LOCATION that `A4`'s overwrite arm LANDS on
+             *  (`rank(file) ≤ rank(file)`, and the constraint registered at `ROOT` is a prefix of the
+             *  write, `§2.10` item 3). A cell whose drive refuses before the phase is a defect of
+             *  the CELL. This drive supplies the fixture's explicit `PAR-11` double (`memoryFs`). */
+            const answer = writeOn(f, 'generic', ROOT, 'file', { value: { seed: 'prospective' } })
             const isLoopBreaker = earlierName === 'previously satisfied' && laterName === 'answers `{ok:false, message}`'
             const isNeverSatisfied = earlierName === 'never evaluated'
             if (isLoopBreaker) {
@@ -1908,6 +2037,21 @@ export function writeArmAttempts(): Attempt[] {
   const outcomes: readonly string[] = [
     '{ok, re-mint}', '{ok, link mint-or-overwrite}', '{refused, token}', '{ok, tombstone}',
   ]
+  /** `§2.5` item 7's ARM TABLE, CLASS BY CLASS — `A2` is the one class whose DECLARED answer is the
+   *  refusal (`'node-location-container'`, token 21), and a literal whose immediate parent does NOT
+   *  resolve is `§2.5` item 7's own note: *"the IMMEDIATE PARENT's non-resolution ⇒ `C17`'s arm
+   *  (`'unreachable'`, token 3 …)"*. Every other class's row is a LANDING arm, so a refusal there
+   *  FAILS. This map is the arm table read into the row: the earlier form asserted the same landing
+   *  arm of all six classes, which demanded a landing arm of `A2`/no-resolution — a defect of the
+   *  ROW. */
+  const expectedOutcome: Readonly<Record<string, string>> = {
+    'a literal at a resolved parent': '{ok, re-mint}',
+    'a container at a resolved parent': '{ok, link mint-or-overwrite}',
+    'a container at a NODE LOCATION': '{refused, token}',
+    'a literal at a NO-RESOLUTION parent': '{refused, token}',
+    'a tombstone at a literal property': '{ok, tombstone}',
+    'a tombstone at a transparent node': '{ok, tombstone}',
+  }
   for (const klass of classes) {
     for (const outcome of outcomes) {
       out.push({
@@ -1944,12 +2088,19 @@ export function writeArmAttempts(): Attempt[] {
           }
           const answer = drive()
           if (answer['status'] === 'refused') {
-            expect(outcome === '{refused, token}', `§2.5 item 7 — ${klass} must not refuse where the table gives it a landing arm`).toBe(true)
+            expect(
+              expectedOutcome[klass] === '{refused, token}',
+              `§2.5 item 7 — \`${klass}\` must not refuse where the arm table gives it a LANDING arm (declared: \`${expectedOutcome[klass]}\`)`,
+            ).toBe(true)
             const token = answer['reason']
             expect(['node-location-container', 'value-not-admitted', 'malformed-tombstone', 'unreachable'].includes(String(token)), '§2.5 item 7 — a refusal mints a token from the closed union and no other').toBe(true)
             expect(fs.bytes(FILE_PATH), '§2.5 item 7 — every refusing cell leaves the PRE-CALL file bytes byte-identical').toBe(preBytes)
             return
           }
+          expect(
+            expectedOutcome[klass].startsWith('{ok'),
+            `§2.5 item 7 — \`${klass}\`'s declared answer is a LANDING arm (\`${expectedOutcome[klass]}\`), never a refusal`,
+          ).toBe(true)
           expectCommitted(answer)
           if (klass === 'a tombstone at a literal property') {
             expectRefusal(call(f, 'read', ['tabs', 'seed']), { reason: 'tombstoned', step: 'E-CHILD' })

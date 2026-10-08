@@ -63,7 +63,11 @@
  * ============================================================================
  */
 
+import { afterAll } from 'vitest'
 import { describe, expect, it } from 'vitest'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 import {
   ADMITTED_CLASSES,
@@ -133,6 +137,52 @@ import {
 const ROOT: readonly string[] = ['tabs']
 const CHILD: readonly string[] = ['tabs', 'page']
 const DEEPER: readonly string[] = ['tabs', 'page', 'body']
+
+/* ───────────── THE `A2` CELLS: ONE HELPER, SO EVERY CONTAINER-AT-A-NODE-LOCATION CELL
+ *               ASSERTS THE SAME SEVEN CLAIMS (`write-and-read.md` §2.5 item 7 arm `A2` ·
+ *               `R17`(a) · `R16`(d) · `store-model.md` §2.14 item 6) ─────────────
+ * `A2`'s row is TYPED and TOTAL (`§2.5` item 7: *"A row driven to an arm outside this table
+ * FAILS"*): a CONTAINER (a plain object or an array) written at an address whose final segment is
+ * carried by an EXISTING link (`M-PROP` ⇒ NODE LOCATION) is REFUSED `'node-location-container'`
+ * (token 21) at `step: 'M-PROP'` — a RETURNED `Refusal`, never a throw — and **NOTHING IS MINTED,
+ * NO FILE IS WRITTEN, THE PURGE DOES NOT RUN AND NO LISTENER FIRES** (`§2.5` item 1's steps-`(1)`–
+ * `(7)` discard rule), **and the message list's LAST entry carries the WRAPPER-NODE GUIDANCE**
+ * (`R16`(d): *"the user should create a wrapper node"*). A cell whose drive lands a container at a
+ * node location asserts an arm OUTSIDE the table and is a defect of the CELL. */
+function expectNodeLocationContainerRefusal(answer: Rec, cell: string): Rec {
+  const r = expectRefusal(answer, { reason: 'node-location-container', step: 'M-PROP' })
+  expect(
+    primarySentence(r),
+    `${cell} — R16(d)/PAR-13: the refusal's PRIMARY SENTENCE (the list's LAST entry's \`text\`) carries the WRAPPER-NODE GUIDANCE ("the user should create a wrapper node")`,
+  ).toMatch(/wrapper/i)
+  return r
+}
+
+/* ───────────── `PAR-11`'s DRIVES: A `file`-TIER DRIVE SUPPLIES EITHER AN EXPLICIT
+ *               FILESYSTEM DOUBLE OR ITS OWN WRITABLE TEMPORARY PATH ─────────────
+ * `parameter-semantics.md` §6 `PAR-11` declares *"absent ⇒ the real `node:fs`"*. A drive that
+ * supplies no `fs` therefore hands the module the REAL filesystem, so such a drive MUST own its
+ * path: it takes one under `os.tmpdir()`, created here and removed in `afterAll`. A drive that
+ * supplies an explicit double (the fixture's `memoryFs`, or the caller's own complete surface)
+ * needs no path of its own. NO assertion is weakened for an unwritable path: the module is
+ * expected to use the real `node:fs` exactly as `PAR-11` declares. */
+const TEMP_DIRS: string[] = []
+
+/** `PAR-11` — a drive-owned writable directory under `os.tmpdir()`, removed in `afterAll`. */
+function tempDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'store-rederive-par11-'))
+  TEMP_DIRS.push(dir)
+  return dir
+}
+
+/** `PAR-11` — a drive-owned writable FILE path under `os.tmpdir()`. */
+function tempPath(name: string): string {
+  return join(tempDir(), name)
+}
+
+afterAll(() => {
+  for (const dir of TEMP_DIRS) rmSync(dir, { recursive: true, force: true })
+})
 
 /** `store-model.md` §2.1 — the declared surface of `createStore(options)`, BY NAME. */
 const DECLARED_FUNCTIONS: readonly string[] = [...GENERIC_FUNCTIONS, ...SECURE_FUNCTIONS]
@@ -416,21 +466,56 @@ describe('§2.2 — THE TIERS, THE ORDER AND THE MONOTONIC INVARIANT', () => {
     expect(fs.bytes('/store/secure.json'), 'C6 — the secure graph’s OWN file carries the state').not.toBeNull()
   })
 
-  it('T-5 · §2.2 item 3 / census §4.5 — the nine tier pairs: six legal and three refused, each driven', async () => {
+  it('T-5 · §2.2 item 3 / census §4.4 — the nine tier pairs: six legal and three refused, each driven to its DECLARED answer', async () => {
     await resolveStoreSurface()
-    const legal: string[] = []
-    const refused: string[] = []
-    for (const parent of TIERS_RANKED) {
-      for (const child of TIERS_RANKED) {
-        const f = store()
-        call(f, 'write', ROOT, parent, { value: { page: { seed: 1 } } })
-        const answer = writeOn(f, 'generic', CHILD, child, { value: { seed: 2 } })
-        if (isRefusal(answer)) refused.push(`${parent}>${child}`)
-        else legal.push(`${parent}>${child}`)
-      }
+    /** THE DECLARED CLASSIFICATION, cell by cell, FROM THE CLAUSE AND NOT FROM THE BUILD
+     *  (`store-model.md` §2.2 item 3: *"A NODE MAY NOT BE MORE PERSISTENT THAN ITS PARENT"* —
+     *  `rank(child) ≤ rank(parent)` with `rank(file)=3 > rank(mem)=2 > rank(temp)=1`, terms
+     *  `9 = 3 × 3`, of which `6` legal and `3` refused — `census.md` §4.4, whose own words are
+     *  *"of which `6` legal + `3` refused"*; the tier-pair figure lives at `§4.4` and `§4.5`
+     *  carries the `file` tier's bound mutation classes).
+     *
+     *  `(parent, child)` cells — THE ONE READING THIS CONTRACT DECLARES:
+     *    LEGAL   (child no MORE persistent than the parent) — `6`:
+     *            `(file,file)` · `(mem,file)` · `(mem,mem)` · `(temp,file)` · `(temp,mem)` · `(temp,temp)`
+     *    REFUSED (`'persistence-inversion'` at `F-TIER`, token 11) — `3`:
+     *            `(file,mem)` · `(file,temp)` · `(mem,temp)`
+     *
+     *  A row whose own table prints the INVERTED direction (a node MORE persistent than its parent
+     *  driven as legal) is a defect of the ROW, not of the module: the invariant is one-directional
+     *  and this table is the contract's. The legal pairs are driven here at `mem`/`temp` and the
+     *  refused ones at `mem`, so no cell needs a writable path; every cell supplies the fixture's
+     *  explicit `PAR-11` filesystem double (`memoryFs`, `store()`'s own), so `PAR-11`'s
+     *  *"absent ⇒ the real `node:fs`"* arm is NOT what this row exercises. */
+    const legalPairs: readonly (readonly [string, string])[] = [
+      ['file', 'file'], ['mem', 'file'], ['mem', 'mem'], ['temp', 'file'], ['temp', 'mem'], ['temp', 'temp'],
+    ]
+    const refusedPairs: readonly (readonly [string, string])[] = [
+      ['file', 'mem'], ['file', 'temp'], ['mem', 'temp'],
+    ]
+    const rank = (tier: string): number => (tier === 'file' ? 3 : tier === 'mem' ? 2 : 1)
+    expect(legalPairs.length + refusedPairs.length, 'census.md §4.4 — the persistence pairs for the invariant: `9 = 3 × 3` ✓').toBe(9)
+    expect(legalPairs.length, 'census.md §4.4 — of which `6` legal').toBe(6)
+    expect(refusedPairs.length, 'census.md §4.4 — and `3` refused').toBe(3)
+    for (const [parent, child] of legalPairs) {
+      expect(rank(child) <= rank(parent), `§2.2 item 3 — \`(${parent}, ${child})\` is LEGAL: rank(child) ≤ rank(parent)`).toBe(true)
     }
-    expect(legal.length, 'census.md §4.5 — of the `9 = 3 × 3` pairs, `6` are legal').toBe(6)
-    expect(refused.length, 'census.md §4.5 — and `3` are refused (`file>mem`, `file>temp`, `mem>temp` in child-over-parent order)').toBe(3)
+    for (const [parent, child] of refusedPairs) {
+      expect(rank(child) > rank(parent), `§2.2 item 3 — \`(${parent}, ${child})\` is REFUSED: the child would out-rank its parent`).toBe(true)
+    }
+    for (const [parent, child] of legalPairs) {
+      const f = store()
+      call(f, 'write', ROOT, parent, { value: { page: { seed: 1 } } })
+      expect(
+        expectCommitted(writeOn(f, 'generic', CHILD, child, { value: { seed: 2 } }))['status'],
+        `§2.2 item 3 — \`(${parent}, ${child})\`: rank(child) ≤ rank(parent), so the write LANDS`,
+      ).toBe('committed')
+    }
+    for (const [parent, child] of refusedPairs) {
+      const f = store()
+      call(f, 'write', ROOT, parent, { value: { page: { seed: 1 } } })
+      expectRefusal(writeOn(f, 'generic', CHILD, child, { value: { seed: 2 } }), { reason: 'persistence-inversion', step: 'F-TIER' })
+    }
   })
 })
 
@@ -505,10 +590,22 @@ describe('§2.3 — THE ADDRESS SPACE AND THE WALK', () => {
 
   it('A-8 · §2.3 item 2 — `M-PROP` resolves a NODE LOCATION: an address carried by an EXISTING link', async () => {
     await resolveStoreSurface()
-    const f = store()
+    const fs = memoryFs()
+    const f = storeOver(fs)
     call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
     expect(readValue(readOn(f, 'generic', CHILD)), '§2.3 item 2 (i) — “an address that resolves to being contained in an existing link”').toEqual({ seed: 1 })
-    expectRefusal(writeOn(f, 'generic', CHILD, 'mem', { value: { seed: 2 } }), { reason: 'node-location-container', step: 'M-PROP' })
+    /** The `A2` cell: a CONTAINER at that NODE LOCATION. The fixture's EXPLICIT `PAR-11` double is
+     *  supplied, so the no-file-written half is asserted on its bytes. */
+    const preBytes = fs.bytes(FILE_PATH)
+    let fired = 0
+    call(f, 'listen', CHILD, () => {
+      fired += 1
+    })
+    const r = expectNodeLocationContainerRefusal(writeOn(f, 'generic', CHILD, 'mem', { value: { seed: 2 } }), 'A-8')
+    expect(fs.bytes(FILE_PATH), 'A2 — NO FILE IS WRITTEN (the pre-call bytes stand byte-identical)').toBe(preBytes)
+    expect(fired, 'A2 — the purge does not run and no listener fires').toBe(0)
+    expect('purged' in r, 'A2 — the closed `Refusal` carries no `purged` member').toBe(false)
+    expect(readValue(readOn(f, 'generic', CHILD)), 'A2 — nothing is minted: the pre-call state stands').toEqual({ seed: 1 })
   })
 
   it('A-9 · §2.3 item 2 — `M-PROP` resolves a LITERAL PROPERTY: the final segment stands in the parent’s `literals`', async () => {
@@ -762,17 +859,58 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     expect(readValue(readOn(f, 'generic', ROOT, 'file')), 'C20/C21 — the instances coexist at the address; the duplicate ban forbids two at the SAME tier').toEqual({ seed: 'file', only: 'file' })
   })
 
-  it('W-4 · §2.5 item 3 / C19+C4 — the overwrite is TOTAL at (address, tier) and the PATH is re-minted', async () => {
+  it('W-4 · §2.5 item 7 `A2` / R17(a) · R16(d) — a CONTAINER at a NODE LOCATION is REFUSED with NOTHING minted, NO file written, NO purge and NO listener', async () => {
     await resolveStoreSurface()
+    /** THE ARM TABLE'S `A2` ROW (`§2.5` item 7), re-derived by this row's author because the
+     *  earlier form of this cell drove a CONTAINER at `CHILD` — an address carried by an EXISTING
+     *  link (`C18`'s mint at the first write leaves a `parent` anchor + link at `page`) — and
+     *  asserted a `committed` overwrite. `M-PROP` answers NODE LOCATION for that address, so the
+     *  arm is `A2` and its declared answer is the TYPED REFUSAL: *"a row driven to an arm outside
+     *  this table FAILS"*. `C19`'s overwrite (`§2.5` item 3) governs only the arms that LAND
+     *  (`A1`, `A4`, `A5`, `A6`, `A7`, `A9`); it is not a competing arm. This cell supplies the
+     *  fixture's EXPLICIT `PAR-11` double (`memoryFs`) so the bytes can be read either side. */
+    const fs = memoryFs()
+    const f = storeOver(fs)
+    call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
+    const preState = readValue(readOn(f, 'generic', CHILD))
+    const preBytes = fs.bytes(FILE_PATH)
+    let fired = 0
+    call(f, 'listen', ROOT, () => {
+      fired += 1
+    })
+    call(f, 'listen', CHILD, () => {
+      fired += 1
+    })
+    const r = expectNodeLocationContainerRefusal(writeOn(f, 'generic', CHILD, 'mem', { value: { c: 3 } }), 'W-4')
+    expect(fs.bytes(FILE_PATH), 'A2/R17(a) — NO FILE IS WRITTEN: the pre-call file bytes stand byte-identical').toBe(preBytes)
+    expect(fired, 'A2/R17(a) — the purge does not run and NO listener fires').toBe(0)
+    expect('purged' in r, 'A2/R17(a) — the answer is the closed `Refusal`: the purge is not even recorded').toBe(false)
+    expect(readValue(readOn(f, 'generic', CHILD)), 'A2 — NOTHING IS MINTED: the pre-call state stands, and the caller’s container is never partially placed').toEqual(preState)
+  })
+
+  it('W-4a · §2.5 item 3 / C19+C4 — the overwrite IS TOTAL at (address, tier) and the PATH is re-minted: the landing drive, at a PROPERTY address (`A5`/`A6`)', async () => {
+    await resolveStoreSurface()
+    /** THE LANDING ARM THIS ROW MEANS TO DRIVE, re-derived from the arm table: the addressed
+     *  address must resolve to a LITERAL PROPERTY (`A5`: *"the literal is replaced by an
+     *  anchor/link/child set"*) or an ABSENT PROPERTY (`A6`: `C18`'s add), NEVER to a NODE
+     *  LOCATION (which `A2` refuses). `CHILD` = `['tabs','page']` has `ROOT` as its immediate
+     *  parent, so `CHILD` is a PROPERTY address of `tabs` throughout; at `mem` the write needs no
+     *  path, and the fixture's explicit `PAR-11` double is supplied by `store()`. */
     const f = store()
     call(f, 'write', ROOT, 'mem', { value: { page: { a: 1, b: 2 }, other: 3 } })
     let firedAncestor = 0
+    let firedAddress = 0
     call(f, 'listen', ROOT, () => {
       firedAncestor += 1
     })
+    call(f, 'listen', CHILD, () => {
+      firedAddress += 1
+    })
     expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { c: 3 } }))['status'], 'C19 — there is no read-modify-write, no merge and no partial member update').toBe('committed')
-    expect(readValue(readOn(f, 'generic', CHILD)), 'C19 — the existing instance is discarded and re-minted').toEqual({ c: 3 })
-    expect(firedAncestor, 'C4/§2.11 item 5 — every node on the walk is re-minted too, and the fire set is the observable').toBe(1)
+    expect(readValue(readOn(f, 'generic', CHILD)), 'C19 — the existing instance is discarded and re-minted WHOLESALE from the write’s own payload').toEqual({ c: 3 })
+    expect(readValue(readOn(f, 'generic', ROOT)), 'C19/C4 — the immediate parent is re-minted carrying the link to the new child, and the sibling member survives the re-mint').toEqual({ page: { c: 3 }, other: 3 })
+    expect(firedAncestor, 'C4/§2.11 item 5 — every node on the walk from the register is re-minted, and the FIRE SET is the re-mint’s only observable').toBe(1)
+    expect(firedAddress, '§2.11 item 5 — the addressed address is re-minted too, so its own listener fires ONCE').toBe(1)
   })
 
   it('W-5 · §2.5 item 4 / C19 — the PURGE runs at step (8) with its EXACT set: `0 + 1 + 2 = 3`', async () => {
@@ -819,23 +957,22 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     expect(readValue(readOn(f, 'generic', ['tabs', 'page', 'leaf'])), 'R16(a) — the literal’s own address is a first-class read address').toBe(true)
   })
 
-  it('W-9 · §2.5 item 7 `A2` / R17(a) — a CONTAINER at a NODE LOCATION is REFUSED `node-location-container`', async () => {
+  it('W-9 · §2.5 item 7 `A2` / R17(a) · R16(d) — a CONTAINER at a NODE LOCATION is REFUSED `node-location-container`, with NOTHING minted, NO file, NO purge and NO listener', async () => {
     await resolveStoreSurface()
     const fs = memoryFs()
     const f = storeOver(fs)
     call(f, 'write', CHILD, 'file', { value: { seed: 1 } })
     const preBytes = fs.bytes(FILE_PATH)
+    const preState = readValue(readOn(f, 'generic', CHILD, 'file'))
     let fired = 0
     call(f, 'listen', CHILD, () => {
       fired += 1
     })
-    const r = expectRefusal(writeOn(f, 'generic', CHILD, 'file', { value: { seed: 2 } }), {
-      reason: 'node-location-container',
-      step: 'M-PROP',
-    })
-    expect(primarySentence(r), 'R16(d) — the refusal must carry the WRAPPER-NODE GUIDANCE ("the user should create a wrapper node")').toMatch(/wrapper/i)
+    const r = expectNodeLocationContainerRefusal(writeOn(f, 'generic', CHILD, 'file', { value: { seed: 2 } }), 'W-9')
     expect(fs.bytes(FILE_PATH), 'R17(a) — NOTHING minted, NO file written: the pre-call bytes stand byte-identical').toBe(preBytes)
     expect(fired, 'R17(a) — the purge does not run and no listener fires').toBe(0)
+    expect('purged' in r, 'R17(a) — the closed `Refusal` carries no `purged` member').toBe(false)
+    expect(readValue(readOn(f, 'generic', CHILD, 'file')), 'R17(a) — the pre-call state stands: the caller’s container is never partially placed').toEqual(preState)
   })
 
   it('W-10 · §2.5 item 7 `A3` — a LITERAL at a node location whose child stood there answers the literal (the link is emptied)', async () => {
@@ -905,9 +1042,17 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
 
   it('W-18 · §2.5 item 7 — the CLOSED token set per arm: `A2`⇒21 · `A10`⇒9 · transparency+tombstone⇒10 · no-resolution⇒3', async () => {
     await resolveStoreSurface()
-    const f = store()
+    const fs = memoryFs()
+    const f = storeOver(fs)
     call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
-    expect(refusalOf(call(f, 'write', CHILD, 'mem', { value: [1] }))['reason'], '§2.5 item 7 — `A2` ⇒ token 21').toBe('node-location-container')
+    const preBytes = fs.bytes(FILE_PATH)
+    let fired = 0
+    call(f, 'listen', CHILD, () => {
+      fired += 1
+    })
+    expectNodeLocationContainerRefusal(call(f, 'write', CHILD, 'mem', { value: [1] }), 'W-18 (`A2` ⇒ token 21)')
+    expect(fs.bytes(FILE_PATH), '§2.5 item 7 `A2` — NO file is written and the purge does not run').toBe(preBytes)
+    expect(fired, '§2.5 item 7 `A2` — NO listener fires').toBe(0)
     expect(refusalOf(call(f, 'write', ROOT, 'mem', { value: { container: 1 }, transparent: true }))['reason'], '§2.5 item 7 — `A10`’s container-at-`_value` refusal ⇒ token 9').toBe('value-not-admitted')
     expect(refusalOf(call(f, 'write', ROOT, 'mem', { value: 1, transparent: true, tombstone: true }))['reason'], '§2.5 item 7 — the transparency beside a tombstone ⇒ token 10').toBe('malformed-tombstone')
     expect(refusalOf(call(f, 'write', ['tabs', 'page'], 'mem', { value: 1 }))['reason'], '§2.5 item 7 — the immediate parent’s non-resolution ⇒ token 3').toBe('unreachable')
@@ -1920,6 +2065,24 @@ describe('§2.14 — THE CLOSED FAIL-STATE UNION (the 21 ENUMERATED tokens; the 
     for (const token of minted) {
       expect(ENUMERATED_REASON_TOKENS.includes(token), `§2.14 — a row that mints a token outside the union FAILS (${token})`).toBe(true)
     }
+    /** THE `A2` CELL'S EXTRA CLAIMS (`§2.14` item 6 · `PAR-13` · `R16`(d)): ordinal 21's refusal is
+     *  a RETURNED typed record at `step: 'M-PROP'` whose LAST entry carries the WRAPPER-NODE
+     *  GUIDANCE, and whose cell leaves nothing minted. The fixture's EXPLICIT `PAR-11` double is
+     *  supplied here (`storeOver(memoryFs)`), so the no-file-written half is asserted on its bytes. */
+    const fs21 = memoryFs()
+    const f21 = storeOver(fs21)
+    call(f21, 'write', CHILD, 'mem', { value: { seed: 1 } })
+    const preBytes21 = fs21.bytes(FILE_PATH)
+    let fired21 = 0
+    call(f21, 'listen', CHILD, () => {
+      fired21 += 1
+    })
+    const r21 = expectNodeLocationContainerRefusal(call(f21, 'write', CHILD, 'mem', { value: { seed: 2 } }), 'U-3[21]')
+    expect(r21['segment'], '§2.14 item 6 — the refusal names the failing segment (the write’s last segment)').toBe('page')
+    expect(fs21.bytes(FILE_PATH), '§2.14 item 6 — NO file is written (the pre-call bytes stand byte-identical)').toBe(preBytes21)
+    expect(fired21, '§2.14 item 6 — the purge does not run and no listener fires').toBe(0)
+    expect('purged' in r21, '§2.14 item 6 — the closed `Refusal` carries no `purged` member').toBe(false)
+    expect(readValue(readOn(f21, 'generic', CHILD)), '§2.14 item 6 — nothing is minted').toEqual({ seed: 1 })
   })
 
   it('U-4 · §2.14 item 1 — the read’s applicable set is `8 = 6 + 2`', async () => {
@@ -2011,6 +2174,19 @@ describe('§6 — PARAMETER SEMANTICS (the `16 = 13 + 3` `PAR-` rows)', () => {
         expect(['loaded', 'refused'].includes(String(value['status'])), `${row} — the declared answer is one of the declared records`).toBe(true)
       } else {
         expect(value['reason'], `${row} — the declared answer`).toBe(declared)
+        if (declared === 'node-location-container') {
+          /** EVERY `A2` cell of this table — `PAR-1a` (the resolution's input) and `PAR-4a` (the
+           *  value's address-class) — carries the SAME seven claims as `§2.5` item 7's `A2` row and
+           *  `PAR-13`'s re-grained arm: *"a `'node-location-container'` refusal whose LAST entry's
+           *  `text` does NOT carry the wrapper-node guidance ⇒ FAILS"* (`R16`(d): *"the user should
+           *  create a wrapper node"*). This drive supplies the fixture's explicit `PAR-11` double
+           *  through `store()`, so nothing reaches an unwritable path. */
+          expectRefusal(value, { reason: 'node-location-container', step: 'M-PROP' })
+          expect(
+            primarySentence(value),
+            `${row} — the refusal's PRIMARY SENTENCE carries the WRAPPER-NODE GUIDANCE (PAR-13 / R16(d))`,
+          ).toMatch(/wrapper/i)
+        }
       }
     }
   })
@@ -2052,9 +2228,23 @@ describe('§6 — PARAMETER SEMANTICS (the `16 = 13 + 3` `PAR-` rows)', () => {
 
   it('P-7 · PAR-4a / PAR-14 — a CONTAINER at a NODE LOCATION · at `_value` · a second member beside `_value` · a literal with no resolution', async () => {
     await resolveStoreSurface()
-    const f = store()
+    const fs = memoryFs()
+    const f = storeOver(fs)
     call(f, 'write', CHILD, 'mem', { value: { seed: 1 } })
-    expectRefusal(call(f, 'write', CHILD, 'mem', { value: [1] }), { reason: 'node-location-container', step: 'M-PROP' })
+    /** `PAR-4a` — *"a CONTAINER passed to a NODE LOCATION ⇒ `'node-location-container'` (token 21)
+     *  with the wrapper-node guidance, NOTHING minted, no file written (`R17`(a)) — the container is
+     *  ADMITTED and MISPLACED, which is why it is not token 9"*. The fixture's EXPLICIT `PAR-11`
+     *  double is supplied, so the bytes stand as the evidence. */
+    const preBytes = fs.bytes(FILE_PATH)
+    let fired = 0
+    call(f, 'listen', CHILD, () => {
+      fired += 1
+    })
+    const r = expectNodeLocationContainerRefusal(call(f, 'write', CHILD, 'mem', { value: [1] }), 'P-7 (`PAR-4a`)')
+    expect(fs.bytes(FILE_PATH), 'PAR-4a — NO file written (the pre-call bytes stand byte-identical)').toBe(preBytes)
+    expect(fired, 'PAR-4a — the purge does not run and no listener fires').toBe(0)
+    expect('purged' in r, 'PAR-4a — the closed `Refusal` carries no `purged` member').toBe(false)
+    expect(readValue(readOn(f, 'generic', CHILD)), 'PAR-4a — nothing is minted').toEqual({ seed: 1 })
     expectRefusal(call(f, 'write', ROOT, 'mem', { value: { inner: 1 }, transparent: true }), { reason: 'value-not-admitted', step: 'G-VALUE' })
     call(f, 'write', ROOT, 'mem', { value: 'alone', transparent: true })
     expectRefusal(call(f, 'write', ROOT, 'mem', { value: { second: 1 } }), { reason: 'value-not-admitted', step: 'G-VALUE' })
@@ -2109,14 +2299,107 @@ describe('§6 — PARAMETER SEMANTICS (the `16 = 13 + 3` `PAR-` rows)', () => {
     expectRefusal(call(f, 'write', ROOT, 'file', { value: 1 }), { reason: 'save-failed', step: 'I-SAVE' })
   })
 
-  it('P-13 · PAR-11 — a PARTIAL `fs` surface is NOT adopted: the real module is used and NEITHER arm throws', async () => {
+  it('P-13 · PAR-11 — a PARTIAL `fs` surface is NOT adopted: the real module is used and NEITHER arm throws, over this drive’s OWN writable path', async () => {
     await resolveStoreSurface()
+    /** `PAR-11` — *"a PARTIAL surface is NOT adopted — the real module is used and NEITHER arm
+     *  throws"*. THIS DRIVE OWNS ITS PATH: `file.path` is a drive-created path under `os.tmpdir()`
+     *  and NO `fs` is supplied, so the module faces the declared *"absent ⇒ the real `node:fs`"*
+     *  arm and must reach the REAL filesystem (the seed made through `node:fs` is what proves it —
+     *  the `partial` surface below, whose `readFileSync` answers `'{}'`, would report `roots: 0`). */
+    const path = tempPath('partial-surface.json')
+    writeFileSync(path, JSON.stringify({ tabs: { seed: 'real' } }))
     const partial = { readFileSync: () => '{}' } as unknown as StoreFixture['fs']['surface']
-    let answer: Rec | null = null
+    let loadAnswer: Rec | null = null
     expect(() => {
-      answer = call(store({ fs: partial }), 'load')
-    }, 'PAR-11 — a partial surface is NOT adopted and neither arm throws').not.toThrow()
-    expect(['loaded', 'refused'].includes(String((answer as unknown as Rec)['status'])), 'PAR-11 — the load answers a declared record either way').toBe(true)
+      loadAnswer = call(store({ file: { path }, fs: partial }), 'load')
+    }, 'PAR-11 — the LOAD arm: a partial surface is NOT adopted and the arm does not throw').not.toThrow()
+    const loaded = loadAnswer as unknown as Rec
+    expect(['loaded', 'refused'].includes(String(loaded['status'])), 'PAR-11 — the load answers a declared record either way').toBe(true)
+    expect(loaded['status'], 'PAR-11 — the real `node:fs` reads the seeded file: a partial surface that WAS adopted would answer `readFileSync → \'{}\'`').toBe('loaded')
+    expect(loaded['present'], 'PAR-11 — the real module reports the file present (`PAR-12`)').toBe(true)
+    expect(loaded['roots'], 'PAR-11 — the real module mints the seeded register entry (a partial surface adopting `readFileSync` would mint none)').toBe(1)
+    let writeAnswer: Rec | null = null
+    expect(() => {
+      writeAnswer = call(store({ file: { path }, fs: partial }), 'write', ROOT, 'file', { value: { seed: 2 } })
+    }, 'PAR-11 — the WRITE/COMMIT arm: the same partial surface is not adopted and the arm does not throw').not.toThrow()
+    expect(
+      expectCommitted(writeAnswer as unknown as Rec)['status'],
+      'PAR-11 — the commit reaches the real module too (the partial surface has no `writeFileSync` to offer)',
+    ).toBe('committed')
+  })
+
+  it('P-13b · PAR-11 — ABSENT `fs` ⇒ the real `node:fs`: a `file`-tier drive with NO `fs` commits and loads through this drive’s OWN writable path', async () => {
+    await resolveStoreSurface()
+    /** `PAR-11`'s FIRST declared arm, VERBATIM: *"absent ⇒ the real `node:fs`"*. THIS DRIVE OWNS ITS
+     *  PATH (a drive-created file under `os.tmpdir()`, removed in `afterAll`) and supplies NO `fs`,
+     *  so the module must use the real filesystem for BOTH the commit and the load; the assertion
+     *  reads the bytes through the REAL `node:fs` module, which is the only way to tell the declared
+     *  arm from a store that keeps its `file` tier in memory. */
+    const path = tempPath('absent-fs.json')
+    const f = store({ file: { path } })
+    expect(expectCommitted(writeOn(f, 'generic', ROOT, 'file', { value: { seed: { deep: 1 } } }))['status'], 'R3/C7 — the absent-`fs` commit lands').toBe('committed')
+    expect(existsSync(path), 'PAR-11 — “absent ⇒ the real `node:fs`”: the JSON file EXISTS on the real path after the commit').toBe(true)
+    expect(
+      JSON.parse(readFileSync(path, 'utf8')) as unknown,
+      'C7 — the real file’s bytes are the state, keyed by register-entry name',
+    ).toEqual({ tabs: { seed: { deep: 1 } } })
+    const second = store({ file: { path } })
+    expect(expectCommitted(call(second, 'load'))['status'], 'PAR-11 — the load arm reaches the same real path').toBe('loaded')
+    expect(readValue(readOn(second, 'generic', ROOT, 'file')), '§2.12 item 1 — the load re-mints the file instances from the real bytes').toEqual({ seed: { deep: 1 } })
+  })
+
+  it('P-13c · PAR-11 — a COMPLETE surface IS adopted: the caller’s own double serves the commit, over this drive’s OWN writable path', async () => {
+    await resolveStoreSurface()
+    /** `PAR-11`'s declared IN domain: *"a COMPLETE surface — all NINE members present and
+     *  callable"*, supplied by the caller. THIS DRIVE OWNS ITS PATH (under `os.tmpdir()`) so that a
+     *  module which fell back to the real `node:fs` would still be distinguishable: the real path
+     *  stays ABSENT while the caller’s double holds the bytes. */
+    const path = tempPath('complete-surface.json')
+    const calls: string[] = []
+    const double = memoryFs()
+    const recording: StoreFixture['fs']['surface'] = {
+      readFileSync: (p, encoding) => {
+        calls.push('readFileSync')
+        return double.surface.readFileSync(p, encoding)
+      },
+      existsSync: (p) => {
+        calls.push('existsSync')
+        return double.surface.existsSync(p)
+      },
+      mkdirSync: (p, opts) => {
+        calls.push('mkdirSync')
+        double.surface.mkdirSync(p, opts)
+      },
+      writeFileSync: (p, data) => {
+        calls.push('writeFileSync')
+        double.surface.writeFileSync(p, data)
+      },
+      openSync: (p, flags) => {
+        calls.push('openSync')
+        return double.surface.openSync(p, flags)
+      },
+      closeSync: (fd) => {
+        calls.push('closeSync')
+        double.surface.closeSync(fd)
+      },
+      fsyncSync: (fd) => {
+        calls.push('fsyncSync')
+        double.surface.fsyncSync(fd)
+      },
+      renameSync: (from, to) => {
+        calls.push('renameSync')
+        double.surface.renameSync(from, to)
+      },
+      rmSync: (p, opts) => {
+        calls.push('rmSync')
+        double.surface.rmSync(p, opts)
+      },
+    }
+    const f = store({ file: { path }, fs: recording })
+    expect(expectCommitted(writeOn(f, 'generic', ROOT, 'file', { value: { seed: 'double' } }))['status'], 'PAR-11 — a complete surface is ADOPTED and the commit lands').toBe('committed')
+    expect(calls.includes('writeFileSync'), 'PAR-11 — the commit called the CALLER’S own surface').toBe(true)
+    expect(double.bytes(path), 'C7 — the caller’s double holds the state (the double is the filesystem the store used)').not.toBeNull()
+    expect(existsSync(path), 'PAR-11 — the real path was NOT written: the supplied complete surface is the one adopted').toBe(false)
   })
 
   it('P-14 · PAR-13 — a refusal carries no fifth member, its token is inside the union, and its list is non-empty', async () => {
