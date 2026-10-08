@@ -99,3 +99,20 @@
 - **THE READ'S CASE SET (pair 2) — `"Elaborate"`, AND IT REMAINS OPEN.** The architect asked for the readings and their consequences to be set out before he rules; that elaboration was delivered to him by the supervisor in the same pass, and **no reading is taken here**.
 
 **WHAT THIS §5 DOES NOT DO.** It does not soften `C1`..`C24`, does not widen `R1`..`R4`, admits no unit, moves no ledger count and re-freezes no artifact; it records the architect's own answers and the one question he left open.
+
+---
+
+## §6 — THE ARCHITECT'S RULING ON THE READ, AND THE MONOTONIC-PERSISTENCE INVARIANT (`R9`, added 2026-10-08; §1–§5 STAND BYTE-FOR-BYTE)
+
+**`RCA-8(d)` ANNOTATE-BESIDE.** This closes the gate's fifth bubbled question (**architect-against-architect pair 2**). It is the architect's own words, verbatim and unedited:
+
+- **`R9` — THE READ'S CASE SET AND THE PERSISTENCE ORDER.** *"If a specific tier is passed, read that tier specifically. Otherwise, read the lowest-persistence node at the targeted address and all downstream addresses when assembling. Note: a node cannot have a higher persistence than its parent (ex. 'window.tabs.landingPage' cannot be in `file` if 'window' is in `mem`)"*
+
+**WHAT IT SETTLES, stated so nothing is re-derived from it:**
+1. **A TIER-QUALIFIED READ HAS NO FALLBACK.** A read carrying a tier reads **that tier specifically**; an address that tier does not hold is `C17`'s verbose error, never a lower-tier answer.
+2. **AN UNQUALIFIED READ ASSEMBLES PER NODE.** It takes **the lowest-persistence node at the addressed address and at every downstream address** — so a `temp` (or `mem`) instance of a *descendant* is visible to a read of its ancestor. **This is the rule `C9`'s test-before-commit purpose needs, and `R7`'s automatic rollback falls out of it unchanged.**
+3. **THE PERSISTENCE ORDER IS NOW STATED, AND IT IS MONOTONIC.** `file` > `mem` > `temp` (with `secure` **outside** every ordering — `C6`'s separate graph, separate functions, separate file), and **a node may not be more persistent than its parent** — the invariant the corpus carried as *"a node cannot have higher persistence than its parent"* and which `C19`/`C20`/`C21` presuppose. **The successor contract MUST carry it as a clause of its own**, not as a premise.
+4. **NO `parts` MEMBER IS CREATED BY THIS RULING.** The round-3 merged-read arm's provenance list is **not** part of the answer; the successor contract's read shape is `C21`'s object alone, with the tier mix implicit in the per-node rule above **and the tier-qualified read available as the way to ask about one tier deliberately**. *(Recorded as the successor's DECLARED DEFAULT, reversible by the architect at its spec gate.)*
+5. **IT CONFIRMS THE CONSUMED CORPUS CLAUSE AND SUPERSEDES NOTHING ELSE.** The monotonic rule matches the operative contract's already-ruled invariant; **the `C15`/`B-1` supersession stands as §5 `R6` recorded it**, and no other clause moves.
+
+**WHAT THIS §6 DOES NOT DO.** It admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R8`.
