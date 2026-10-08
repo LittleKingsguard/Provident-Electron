@@ -116,3 +116,17 @@
 5. **IT CONFIRMS THE CONSUMED CORPUS CLAUSE AND SUPERSEDES NOTHING ELSE.** The monotonic rule matches the operative contract's already-ruled invariant; **the `C15`/`B-1` supersession stands as §5 `R6` recorded it**, and no other clause moves.
 
 **WHAT THIS §6 DOES NOT DO.** It admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R8`.
+
+---
+
+## §7 — THE TOMBSTONE ADDITION (`R10`, added 2026-10-08; §1–§6 STAND BYTE-FOR-BYTE)
+
+**`RCA-8(d)` ANNOTATE-BESIDE.** The architect's own words again, verbatim and unedited:
+
+- **`R10` — TOMBSTONING NODES ON WRITE.** *"Addition: Write needs to be able to tombstone nodes, ex. tombstoning a `mem` node on a write to `temp` prevents it from being read until the temp node is cleared, unless the read is scoped to `mem`. This can be used to soft-delete nodes. Tombstoning at file tier omits it from the saved file, which will delete the node on commit."*
+
+**WHAT IT ADDS, IN THE ARCHITECT'S OWN TERMS — no more and no less:** a **write may tombstone** a node, i.e. carry a deletion marker as part of that write; the tombstone's effect is **suppression of reads of the tombstoned node while the carrying node stands** (`temp` tombstones a `mem` node ⇒ that `mem` node is unreadable until the `temp` node is cleared), **except that a read scoped to the tombstoned node's own tier still reads it** (the `mem`-scoped read in his example); it is the instrument for **soft-delete**; and **a tombstone carried at the `file` tier omits the node from the saved file, deleting it on commit.**
+
+**WHY IT IS FILED HERE RATHER THAN ADJUDICATED.** It is a **new constraint on the store**, so it is the architect's to state (he has) and the successor contract's to derive (it may not); it **interacts with `C19`/`C20`/`C21`/`R7`/`R9`** — the purge rule, the lower-tier write rule, the per-address lowest-persistence assembly and `temp`'s automatic rollback — and **the interactions are set out as readings for the architect in the same pass as this filing**, not taken here.
+
+**WHAT THIS §7 DOES NOT DO.** It admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R9`.
