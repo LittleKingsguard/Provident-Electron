@@ -1186,6 +1186,199 @@ export function shippedBootSeamDrive(): BootSeamReading {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+ * THE GATE-5 RE-MEASUREMENT — **THE NON-MEMBER ACTIVE WRITE** (`2026-10-11`).
+ *
+ * WHAT WAS MEASURED, AND WHY THIS INSTRUMENT EXISTS. The decisive re-measurement of gate 5
+ * separated its readings into INSTRUMENT ARTIFACTS and ONE REAL, REPRODUCIBLE HOST DEFECT the
+ * unit's own suite carried no row for: a caller write that makes an entry active whose id is
+ * **NOT a member of `file.tabs.order`** is NEVER REPAIRED, so the record survives the committed
+ * write carrying TWO actives.
+ *
+ * THE MECHANISM, AT `src/renderer/renderer.ts`'s BYTES (cited here as the OBSERVATION the rows
+ * below are falsified against, NEVER as the source of their expectations):
+ *   · `:269-270` — the constraint's own count is taken over `order`'s MEMBERS
+ *     (`const activeMembers = (order as readonly unknown[]).filter(...)`), so an entry whose
+ *     value reads active but whose id is not in `order` is INVISIBLE to the count: with
+ *     `order ['A']` and the caller's own write to `file.tabs.B`, the count answers `1`, the
+ *     member answers `true`, and NO repair lands;
+ *   · `:329` and `:377` — the SURPLUS arm's own active enumeration (`post.filter(...)`, the
+ *     deactivation loop) is taken over `order` too, so on an already-surplus record the
+ *     referent lookup `active.includes(written)` misses the written NON-member, the arm falls
+ *     back to `active[0]`, and the repair deactivates MEMBERS while the non-member stays
+ *     active — a post-state that is neither the referent rule nor a coherent repair.
+ *
+ * THE CLAUSES THE DEFECT BREACHES (read at the bytes in `docs/specs/store-tabs-record.md`):
+ * `§1.1` item 3 (the exactly-one-active invariant WHILE ANY TABS EXIST), `§3.1` `M-2`(b),
+ * `§3.2` `F-T2-2` (the write-triggered arm and its referent = the CALLER'S OWN WRITTEN
+ * REFERENCE), `§3.4` item 1, and `§5.5.1` `P-TR-IM-3`.
+ *
+ * **SPEC-SILENT-OWED, MARKED IN-LINE AS THE INSTRUCTION REQUIRES — THE NON-MEMBER-ADMISSION
+ * QUESTION IS NOT INVENTED HERE.** The contract pins the INVARIANT (`§1.1` item 3 read with
+ * `§3.2` `F-T2-2`'s referent rule) and pins NOTHING about whether a caller may write an
+ * active entry whose id is not in `order` at all, nor which of the three admissible answers
+ * (REFUSE the write · NORMALIZE the record to one active · REPAIR to the referent) the store
+ * owes. THE CLAUSE THAT WOULD HAVE TO DECLARE IT is `§3.2`'s own arm family — a new
+ * `F-T2-7`-class arm ("the caller's write of an ACTIVE entry whose id is not a member of
+ * `order`") read with `§3.1` `M-3`'s membership clause (`file.tabs.order` is THE membership
+ * list) and `§6` `PAR-2`/`PAR-4` (the id sequence's and the tab id's own declared domains,
+ * neither of which excludes a non-member). This instrument therefore reports the MEASURED
+ * state of all three questions and asserts only the invariant and the referent rule.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** THE PRE-STATE SEED FOR THE NON-MEMBER ARMS: a hand-off that lands ARBITRARY per-tab values
+ *  (`hydrate` MINTS and NEVER evaluates the constraint table — `§3.3` item 2), so a record with
+ *  `≥2` actives, or with a non-member entry active BESIDE a member, is a real landed pre-state
+ *  and never a transient the store repaired on the way in. This is `shippedSeedEntryState`'s
+ *  general form (that helper lands the scalar `id === activeId` mark only, which cannot express
+ *  "every member of `order` is active"); it SUPERSEDES NOTHING and the earlier helper stands as
+ *  filed. */
+export function shippedSeedEntries(
+  store: Rec,
+  order: readonly string[],
+  entries: Readonly<Record<string, unknown>>,
+): void {
+  const hydrate = store['hydrate'] as ((rows: readonly Rec[]) => void) | undefined
+  if (typeof hydrate !== 'function') {
+    throw new Error('T2 GATE-5 RE-MEASUREMENT (honest class): the frozen store carries no `hydrate` seam (§2.5), so a wired pre-state cannot be landed')
+  }
+  const rows: Rec[] = [{ name: DECLARED_SPELLINGS.order, value: [...order] }]
+  for (const id of order) rows.push({ name: DECLARED_SPELLINGS.entry(id), value: entries[id] ?? false })
+  hydrate.call(store, rows)
+}
+
+/** ONE ARM OF THE NON-MEMBER DRIVE, MEASURED — the state reading (the actives each way) and the
+ *  receipt reading (the repair's own naming), on ONE store built exactly as the shipped
+ *  constructor builds one (`shippedConstruction`). */
+export interface NonMemberWriteArm {
+  readonly arm: string
+  /** the id the caller WROTE (the `§3.2` `F-T2-2` referent on a write-triggered evaluation). */
+  readonly target: string
+  /** whether the written id is a member of `file.tabs.order` (the two arms' own separator). */
+  readonly targetIsMember: boolean
+  readonly orderBefore: unknown
+  readonly orderAfter: unknown
+  /** the actives the shipped accessor COUNTS: over `order`'s members (the scoped reading). */
+  readonly activesOverOrder: readonly string[]
+  /** the actives the RECORD carries: over `order`'s members AND the written non-member. */
+  readonly activesOverRecord: readonly string[]
+  readonly receiptStatus: unknown
+  readonly receiptRepaired: unknown
+  readonly receiptEvents: unknown
+  readonly receiptReason: unknown
+  readonly targetReadsActive: boolean
+}
+
+/** ONE ARM, PRINTED WITH ITS TERMS (`EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-PRINTS`): the constraint's
+ *  received `order`, the actives each reading sees, the written target and its receipt. The
+ *  string is the row's own failure message, so a broken attempt prints what it measured. */
+export function nonMemberArmLine(arm: NonMemberWriteArm | null | undefined): string {
+  if (arm === null || arm === undefined) return 'ARM ABSENT — the shipped store could not be built for this arm'
+  return [
+    `${arm.arm}`,
+    `order ${JSON.stringify(arm.orderBefore)} → ${JSON.stringify(arm.orderAfter)}`,
+    `actives over \`order\` ${JSON.stringify(arm.activesOverOrder)}`,
+    `actives over the RECORD ${JSON.stringify(arm.activesOverRecord)}`,
+    `written \`${arm.target}\` (member of \`order\`: ${String(arm.targetIsMember)}) reads active: ${String(arm.targetReadsActive)}`,
+    `receipt {status: ${JSON.stringify(arm.receiptStatus)}, repaired: ${JSON.stringify(arm.receiptRepaired)}, events: ${JSON.stringify(arm.receiptEvents)}, reason: ${JSON.stringify(arm.receiptReason)}}`,
+  ].join(' · ')
+}
+
+export interface NonMemberWriteReading {
+  readonly reason: string | null
+  /** (D1–D4, scalar arm) POSITIVE CONTROL — the SAME write to a MEMBER id. */
+  readonly memberScalarControl: NonMemberWriteArm | null
+  /** (D1–D4, object arm) POSITIVE CONTROL — the SAME write to a MEMBER id. */
+  readonly memberObjectControl: NonMemberWriteArm | null
+  /** (D5/D9, scalar arm) THE RED — `order ['A']`, `A` active, the caller writes NON-member `B`. */
+  readonly nonMemberScalar: NonMemberWriteArm | null
+  /** (D5/D9, object arm) THE RED — the same drive, the OBJECT-valued write. */
+  readonly nonMemberObject: NonMemberWriteArm | null
+  /** (D6 control) POSITIVE CONTROL — a SURPLUS record (`order ['A','B','C']` ALL active) whose
+   *  write targets a MEMBER. */
+  readonly surplusMemberControl: NonMemberWriteArm | null
+  /** (D6) THE RED — the same surplus record, the write targets NON-member `D`. */
+  readonly surplusNonMember: NonMemberWriteArm | null
+}
+
+/** THE PRINTED TABLE, ALL SIX ARMS (`§4.1` item 2 — a red row names what it measured). */
+export function nonMemberWriteLines(reading: NonMemberWriteReading): string {
+  if (reading.reason !== null) return `UNREACHABLE — ${reading.reason}`
+  return [
+    reading.memberScalarControl, reading.memberObjectControl,
+    reading.nonMemberScalar, reading.nonMemberObject,
+    reading.surplusMemberControl, reading.surplusNonMember,
+  ].map((arm) => `  ${nonMemberArmLine(arm)}`).join('\n')
+}
+
+/** ONE ARM DRIVEN: a fresh store built EXACTLY as `buildWiredGraphStore` builds one, the pre-state
+ *  landed through `hydrate` (never evaluated), then the caller's own write to `target`. */
+function nonMemberWriteArm(
+  member: Rec,
+  arm: string,
+  order: readonly string[],
+  seeds: Readonly<Record<string, unknown>>,
+  target: string,
+  value: unknown,
+): NonMemberWriteArm {
+  const store = shippedConstruction(member)
+  shippedSeedEntries(store, order, seeds)
+  const orderBefore = valueOf(store, DECLARED_SPELLINGS.order)
+  const receipt = callSeam(store['commit'] as (...args: never[]) => unknown, DECLARED_SPELLINGS.entry(target), value)
+  const recordIds = order.includes(target) ? [...order] : [...order, target]
+  return {
+    arm,
+    target,
+    targetIsMember: order.includes(target),
+    orderBefore,
+    orderAfter: valueOf(store, DECLARED_SPELLINGS.order),
+    activesOverOrder: order.filter((id) => entryActiveOf(store, id)),
+    activesOverRecord: recordIds.filter((id) => entryActiveOf(store, id)),
+    receiptStatus: receipt['status'],
+    receiptRepaired: receipt['repaired'],
+    receiptEvents: receipt['events'],
+    receiptReason: receipt['reason'],
+    targetReadsActive: entryActiveOf(store, target),
+  }
+}
+
+/** **THE NON-MEMBER ACTIVE WRITE, DRIVEN ON THE SHIPPED CONSTRUCTION — SIX ARMS** (`2026-10-11`).
+ *  ONE FRESH STORE PER ARM, each built by `shippedConstruction(wiredTabsConstraintMember())`: the
+ *  SHIPPED six-root declaration set (`renderer.ts:43-50` → `:615`'s
+ *  `options?.declarations ?? FILE_TIER_ROOT_NAMES`), the SHIPPED member at the ONE construction
+ *  call — so no arm inherits a caller's declarations and the readings are attributable to
+ *  `src/**`. The two MEMBER-targeted arms and the surplus record's member-targeted arm are the
+ *  POSITIVE CONTROLS: they must stay GREEN (`§3.2` `F-T2-2` repairs a member-targeted write).
+ *  The two NON-member arms and the surplus record's non-member arm are the RED. */
+export function shippedNonMemberWriteDrive(): NonMemberWriteReading {
+  const blank: NonMemberWriteReading = {
+    reason: 'unreachable',
+    memberScalarControl: null, memberObjectControl: null,
+    nonMemberScalar: null, nonMemberObject: null,
+    surplusMemberControl: null, surplusNonMember: null,
+  }
+  const member = wiredTabsConstraintMember()
+  if (member === null) return { ...blank, reason: wiringMemberReason ?? 'the wiring supplies no constraint member' }
+  try {
+    return {
+      reason: null,
+      // (D1–D4) THE POSITIVE CONTROLS — `order ['A','B']` with `B` active, the caller writing `A`,
+      // which IS a member: the write-triggered `≥2` arm repairs to ONE active. BOTH value arms.
+      memberScalarControl: nonMemberWriteArm(member, 'CONTROL · MEMBER target · scalar write', ['A', 'B'], { A: false, B: true }, 'A', true),
+      memberObjectControl: nonMemberWriteArm(member, 'CONTROL · MEMBER target · object write', ['A', 'B'], { A: false, B: true }, 'A', { target: 'target-A', active: true, error: null, label: 'label-A' }),
+      // (D5/D9) THE RED — `order ['A']` with `A` active, the caller writing NON-member `B`.
+      nonMemberScalar: nonMemberWriteArm(member, 'NON-MEMBER target · scalar write', ['A'], { A: true }, 'B', true),
+      nonMemberObject: nonMemberWriteArm(member, 'NON-MEMBER target · object write', ['A'], { A: true }, 'B', { target: 'target-B', active: true, error: null, label: 'label-B' }),
+      // (D6) THE SURPLUS RECORD — `order ['A','B','C']` ALL active, landed un-evaluated; the member
+      // control writes `B`, the red writes NON-member `D`. BOTH on the SAME pre-state shape.
+      surplusMemberControl: nonMemberWriteArm(member, 'CONTROL · SURPLUS record · MEMBER target', ['A', 'B', 'C'], { A: true, B: true, C: true }, 'B', { target: 'target-B', active: true, error: null, label: 'label-B' }),
+      surplusNonMember: nonMemberWriteArm(member, 'SURPLUS record · NON-MEMBER target', ['A', 'B', 'C'], { A: true, B: true, C: true }, 'D', { target: 'target-D', active: true, error: null, label: 'label-D' }),
+    }
+  } catch (e) {
+    return { ...blank, reason: `the shipped construction could not be driven: ${e instanceof Error ? e.message : String(e)}` }
+  }
+}
+
 /** `F-4`/`T2-C-15` — THE EXPORTED MINT SEAM DRIVEN BEHAVIOURALLY (`mintTabId(holder, tabId)`, the
  *  SHIPPED signature). A duplicate id, a dotted id, a malformed id and the reserved spelling each
  *  answer a DECLARED refusal; a fresh id answers a successful mint (the positive control). */
@@ -2006,12 +2199,40 @@ export function registerRows(): readonly RegisterRow[] {
             expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
           } },
         { name: '(6) state reading — surplus-active, WRITE-triggered (a second active = true): the referent kept, the other deactivated', drive: (): void => {
+            // ── **AS FILED, KEPT VISIBLE AND STILL DRIVEN (`RCA-8(d)`): the fixture store, the
+            //    caller's write of MEMBER `B` in `order ['A','B']` with `A` active, asserting
+            //    `activesOf(store, ['A','B']) === ['B']`. Under the arms below THIS HALF IS THE
+            //    ARM'S OWN POSITIVE CONTROL: the written id IS a member of `order`.**
             const s = surface as TabsSurface
             const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             seedWiringState(store, ['A', 'B'], 'A')
             callStore(store, 'commit', S.entry('B'), true)
             expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-2 — the caller’s OWN written reference is the referent').toEqual(['B'])
+            // ── **RE-GRAINED `2026-10-11` (THE GATE-5 RE-MEASUREMENT; `§1.1` item 3 read with
+            //    `§3.2` F-T2-2; `P-TR-IM-3`'s state (6)): THE SAME ARM AT A **NON-MEMBER** TARGET,
+            //    ON THE SHIPPED CONSTRUCTION (`shippedConstruction`).** THE ROW ID, ITS TYPE, ITS
+            //    STRATEGY ID `S-TR-CON-1` AND ITS TERM `16` ARE **UNMOVED**; the arm's BITE grows:
+            //    with `order ['A']` carrying ONE active `A` and the caller writing `file.tabs.B`
+            //    — an id that is **NOT a member of `order`** — the RECORD must still carry EXACTLY
+            //    ONE active (`§1.1` item 3: *"exactly one tab carries `active === true` while any
+            //    tabs exist"*), the count being taken on the call's POST-STATE (`§3.2` F-T2-2).
+            //    **THE NON-MEMBER-ADMISSION QUESTION IS `SPEC-SILENT-OWED` AND IS NOT INVENTED
+            //    HERE** (the clause that would have to declare it is `§3.2`'s own arm family, a new
+            //    `F-T2-7`-class arm, read with `§3.1` `M-3` and `§6` `PAR-2`/`PAR-4`): this arm
+            //    asserts the INVARIANT and reports everything else it measures, including the
+            //    receipt, through `nonMemberArmLine`.**
+            const nonMember = shippedNonMemberWriteDrive()
+            expect(
+              nonMember.reason,
+              '§2.2 item 1 — the shipped construction and its ONE member are reachable; an ABSENT seam is this attempt’s own FAILURE, never a pass',
+            ).toBeNull()
+            const arms = [nonMember.nonMemberScalar, nonMember.nonMemberObject]
+            const violations = arms.filter((arm) => arm === null || arm.activesOverRecord.length !== 1)
+            expect(
+              violations.map((arm) => nonMemberArmLine(arm)),
+              '§1.1 item 3 / §3.2 F-T2-2 — THE INVARIANT ACROSS A NON-MEMBER WRITE: a caller write that makes a NON-member entry active must still leave the record with EXACTLY ONE active. MEASURED (both value arms): the shipped count is taken over `order`’s MEMBERS, so the non-member’s own active value is invisible, the member answers `true`, NO repair lands and the record carries TWO actives. THE POSITIVE CONTROL IS THE AS-FILED HALF ABOVE (a MEMBER-targeted write DOES repair to one active)',
+            ).toEqual([])
           } },
         { name: '(6) receipt reading — the surplus deactivation is reported', drive: (): void => {
             const s = surface as TabsSurface
