@@ -156,3 +156,17 @@
 - **`R14` — Q-2, `REPLACE` AGAINST `AR-15`.** *"REPLACE governs — AR-15's per-clause table is vacuous"*: traceability lives in the successor's `§0` ruling ledger and `§8` cross-references; no `KEPT`/`RE-DERIVED`/`DELETED` clause table is owed.
 
 **WHAT THIS §9 DOES NOT DO.** It admits no unit, starts no cycle, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R12`.
+
+---
+
+## §10 — THE CONSTRAINT-EVALUATION AND REPAIR RULING (`R15`, added 2026-10-08; §1–§9 STAND BYTE-FOR-BYTE)
+
+**`RCA-8(d)` ANNOTATE-BESIDE.** The architect's own words, verbatim and unedited, ruling the successor contract's declared default `DD-3` and, with it, `DD-2`:
+
+- **`R15` — REPEAT CONSTRAINTS, DO NOT REPEAT REPAIRS.** *"DD-3: Repeat constraints, don't repeat repairs. If a repair breaks a prior constraint, fail instead to prevent loops. Track with a message list that constraints and repairs write to and can be returned to verbosely document failure or change."*
+
+**WHAT IT PINS, IN HIS OWN TERMS:** **(1) constraints are evaluated REPEATEDLY** — a constraint is re-run when a repair has changed the state, so a repaired write is re-checked against the constraint set; **(2) a repair runs AT MOST ONCE per write** — no repair is repeated; **(3) if a repair breaks a constraint that was previously satisfied, the write FAILS** — the loop is broken by failing rather than by repairing again; **(4) a MESSAGE LIST is the channel** — constraints and repairs write to it, and it **can be returned** so that a failure or a change is documented verbosely.
+
+**WHAT IT SUPERSEDES IN THE HELD SUCCESSOR CONTRACT (`docs/specs/store-rederive.md`, `§0A`):** `DD-3`'s as-filed reading (*"no constraint is evaluated twice … one ordered pass"*, a repaired write landing without re-checking) and `DD-2`'s single `message` member are **superseded as declarations by this ruling** — **the as-filed cells stand visible and the ruling is the operative reading**; the amendment is the contract's own author's to land, together with the register rows and the fail-state arm the ruling forces.
+
+**WHAT THIS §10 DOES NOT DO.** It starts no cycle, admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R14`.
