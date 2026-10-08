@@ -186,3 +186,19 @@
 **WHAT IT PINS, IN HIS OWN TERMS:** a **literal** written at an address whose **immediate parent resolves to a node** is added **at that property of the re-minted parent node**; a **read** at an address that **is a literal property** returns **only that property**; a write at such an address either **edits the literal** (when the written value is a literal) or **replaces it with an anchor/link/child set** (when the value is an array or object); passing an **array/list/dict to a NODE LOCATION** — an address that resolves to something already carried by an existing link — is an **ANTI-PATTERN** (the user is to create a **wrapper node**), whereas passing it to a **PROPERTY ADDRESS** **creates/overwrites the link and adds the contents as nodes**; and a node is made **TRANSPARENT ON READ** by assigning a literal to its **reserved `_value` property**, so a list of literals round-trips as that list.
 
 **WHAT THIS §11 DOES NOT DO.** It starts no cycle, admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R15`. **The held successor contract's amendment to it is its own author's**, and the open readings this clarification leaves are set out for the architect in the same pass.
+
+---
+
+## §12 — THE WRITE/READ ARMS RULED (`R17`, added 2026-10-08; §1–§11 STAND BYTE-FOR-BYTE)
+
+**`RCA-8(d)` ANNOTATE-BESIDE.** The architect's own selections, verbatim, closing the three forks `R16` left:
+
+- **`R17`(a) — THE ANTI-PATTERN'S ENFORCEMENT.** *"Refuse with a typed reason (`'node-location-container'`)"* — an array/list/dict passed to a **node location** (an address that resolves to something already carried by an existing link) is **REFUSED** with that typed reason: **nothing is minted, no file is written**, and — under `R15` — the message list carries the store's sentence and the wrapper-node guidance.
+- **`R17`(b) — NO PROPERTY DELETION.** *"No property deletion — only whole-node tombstones exist"* — a **literal property can be overwritten but never removed**: there is **no delete verb for a literal member**; the whole-node tombstone (`R10`–`R12`) is the only deletion instrument, and clearing a literal therefore means tombstoning or overwriting the **node** that carries it.
+- **`R17`(c) — `_value` IS EXCLUSIVE.** *"Exclusive — `_value` is alone in its node"* — a **transparent node carries exactly one literal and nothing else**: an object/array written to `_value`, or any second member (literal or anchor) written alongside it, is **REFUSED**, so **no member can be retained while being unreadable** through an unqualified read.
+
+**TWO CARRIED AS `DECLARED-DEFAULT` (the supervisor's carriage, stated to the architect in the same pass, unobjected, reversible at the contract's spec gate):** a write of an **object/array to `_value`** is refused `'value-not-admitted'` (a transparent node holds a literal or nothing); and a **tombstone written at a transparent node** deletes it exactly as any other node tombstone does.
+
+**A DERIVATION THE CONTRACT'S AUTHOR OWES, NOTED SO IT IS NOT MIS-FILED AS A NEW QUESTION:** `R17`(b) removes *property deletion*, not the tombstone's reach at a property address — a tombstone written where a **literal property** stands converts that property into a **node** (the tombstone mints one node at the address), which then **reads as deleted** by `R11`, while the property itself continues to exist. The successor contract's author derives this from `C18`/`R10`/`R11`/`R17`(b); it is not a new ruling.
+
+**WHAT THIS §12 DOES NOT DO.** It starts no cycle, admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R16`.
