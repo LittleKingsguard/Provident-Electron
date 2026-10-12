@@ -1021,7 +1021,17 @@ export function readFormAttempts(): Attempt[] {
  *     fall-back"*). The earlier form of this cell demanded token 3 `'unreachable'` there — `R11`'s
  *     **UNQUALIFIED** no-descent reading applied to a QUALIFIED read — which contradicts the clause
  *     the `file`-qualified cell beside it already cites (`RCA-8(d)`; the row's own `P-SD-TP-9` sibling
- *     asserts the same rule at the tombstone's own address).
+ *     asserts the same rule at the tombstone's own address). **RE-DERIVED 2026-10-11 (THE TESTWRITER,
+ *     ON THE ARCHITECT'S ACTIVE RULING: `(D2)`/`(D4)`): the DESCENDANT-qualified cell's assertion is
+ *     now the DECLARED TRANSPARENT-NODE form — this row's own cited clause, `§5.5.1` row 26
+ *     (`P-SD-TP-8`), spells the transparent node's SCOPED form as `{_value: <literal>}`.** Under
+ *     `(D2)` the addressed address `DEEPER` is `title`, a **TRANSPARENT child node** of `body` (its
+ *     value is a literal, so it is minted as its own child node readable through the reserved
+ *     `_value`), and `§2.8` item 7 arm `R2`'s QUALIFIED arm returns **the node** — `{_value: 't'}` —
+ *     while the UNSCOPED arm at that same address returns **the literal alone** (`(D4)`'s split, the
+ *     row's `unqualified` cells). **The cell's own claim is untouched: the `file`-scoped read is
+ *     UNAFFECTED by the `mem` tombstone — the `file` instance stands at every address the qualified
+ *     read visits, so nothing in this row is suppressed by the tombstone or propagated from it.**
  *   · **QUALIFIED TO THE TOMBSTONE'S OWN TIER (`mem`)** — at the tombstone's own address *"the read
  *     answers the tombstone's own absence"*: token 4 `'absent-address'`, never the tombstone; and at a
  *     descendant the `mem` tombstone blocks the walk exactly as the unqualified form does — token 3
@@ -1062,8 +1072,8 @@ export function tombstoneAttempts(): Attempt[] {
             if (qualifier === 'another tier') {
               expect(
                 readValue(answer),
-                'write-and-read.md §2.6 item 2 · §2.8 item 2(a) — a `file`-qualified read of a descendant of the `mem` tombstone takes THAT TIER at every address it visits: it passes the tombstone standing at a different tier and answers the `file` instance’s own transcription at the descendant address',
-              ).toEqual({ title: 't' })
+                'write-and-read.md §2.6 item 2 · §2.8 item 2(a) / item 7 `R2` / (D4) — a `file`-qualified read of a descendant of the `mem` tombstone takes THAT TIER at every address it visits: it passes the tombstone standing at a different tier, and — D4’s split — the ADDRESSED address here is `title`, a TRANSPARENT child node of `body`, so the QUALIFIED arm answers the NODE `{_value: <the literal>}` (the transcription of §5.5.1 row 26 `P-SD-TP-8`), while the UNSCOPED read at this same address answers the literal ALONE (the cell beside this one)',
+              ).toEqual({ _value: 't' })
               return
             }
             expectRefusal(answer, { reason: which === "the tombstone's own address" ? 'absent-address' : 'unreachable', step: 'E-CHILD' })

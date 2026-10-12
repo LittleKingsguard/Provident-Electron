@@ -1262,10 +1262,28 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
       '`(D2)`/`(D4)` — and the tier-qualified read at that same address returns the NODE: the reserved `_value` is what carries the literal',
     ).toEqual({ _value: 2 })
     expect(readValue(readOn(f, 'generic', ROOT)), '`C4` — the re-mint is of the PARENT PATH, not a second mechanism: the parent carries the new child beside its own surviving literal').toEqual({ other: 3, seed: { inner: { deep: 2 } } })
-    expect(Object.keys(preRoot), '`A5` — the pre-write parent carried the literal members the re-mint preserves').toEqual(['other', 'seed'])
+    /** **RE-DERIVED 2026-10-11 (THE TESTWRITER, ON THE ARCHITECT'S ACTIVE RULING: `(D2)`/`(D3)`).**
+     *  THE EARLIER FORM OF THIS CELL ASSERTED `['other','seed']`, WHICH REQUIRED `other` TO BE A
+     *  LITERAL MEMBER OF THE ROOT'S OWN `literals` TABLE — `§0A` `DD-13`'s *"A DICT member is a
+     *  LITERAL ON THE NODE ITSELF"* reading, which `(D3)` SUPERSEDES. **UNDER `(D2)` THE DRIVE'S
+     *  OWN `{other: 3}` MINTS `other`'s CONTENTS AS A LINKED ANCHOR SET: its value is a literal, so
+     *  `other` is a TRANSPARENT CHILD NODE carrying `_value` reached by an ANCHOR, NOT an entry of
+     *  the root's `literals` table.** `seed` — written directly at its property address, `A4`/`R16`(c)
+     *  first half — IS the root's own literal. **`§2.4` item 7's `C21` transcription emits a node's
+     *  own `literals` BEFORE its `parent` anchors**, so the pre-write root reads `['seed','other']`;
+     *  the re-minted root reads `['other','seed']` (`seed` has by then become an anchored member at
+     *  anchor `order` `0` while `other` is anchor `order` `1`), and the cell beside this one pins
+     *  that second order. **BOTH are the same key SET — `R17`(b)'s *"no property deletion"*: no member
+     *  is added and none is removed by the re-mint** — and the CONVERSE was already measured: an
+     *  implementation that kept each surviving member's kind in the parent's own `literals` table
+     *  reddens `W-19` and `W-20`, so that reading is not available. */
+    expect(
+      Object.keys(preRoot),
+      '`§2.4` item 7 `C21` / `(D2)` — the transcription emits the node’s LITERALS first and its ANCHORS after: `seed` is the root’s own literal (`A4`), while `other` is an ANCHORED transparent child node (its value is a literal), so the pre-write key order is literal-then-anchor',
+    ).toEqual(['seed', 'other'])
     expect(
       Object.keys(readValue(readOn(f, 'generic', ROOT)) as Rec),
-      '`R17`(b) — NO PROPERTY DELETION: the member at the final segment is the SAME key set afterwards, the literal having been OVERWRITTEN (replaced by the anchor/link/child set), never removed',
+      '`R17`(b) — NO PROPERTY DELETION: the SAME key SET survives the re-mint, `other` represented as its transparent child node reached by an anchor (not as a literal on the parent) — the literal at the final segment having been OVERWRITTEN (replaced by the anchor/link/child set), never removed',
     ).toEqual(['other', 'seed'])
     expect(firedAncestor, '`C4`/`§2.11` item 5 — the FIRE SET is the re-mint’s only observable: the ancestor fires ONCE per LANDING write').toBe(1)
     expect(firedAddress, '`§2.11` item 5 — the addressed address is re-minted too, so its own listener fires ONCE').toBe(1)

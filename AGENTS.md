@@ -98,6 +98,29 @@ f. **Commits are scoped, not bulk.** One commit per gate boundary with a
    message naming the unit and the gate; unrelated units do not share a
    commit merely because they were finished near each other.
 
+g. **As-filed bytes are retained in the ARCHIVE, not in the corpus.** A
+   superseded cell, clause or block is preserved **byte-exactly** in
+   `archive/<topic>/<date>-<name>.md` — a copy, cited by path — and the live
+   document carries the standing text plus a **one-line pointer** to that
+   copy. It does **not** carry the superseded bytes beside the standing text.
+   Items `(b)` and `(e)` bind the move exactly as they bind any other archive
+   move: commit before it, and confirm the copy exists (and is committed, if
+   it matters) before any further edit. **What is required is retention *and*
+   retrievability — never retention *in place*.** A document that grows without
+   bound by carrying every superseded state beside its successor is a review
+   finding; so is an archive move that leaves no pointer, or a pointer whose
+   target does not resolve. *(Added 2026-10-08 at the architect's instruction;
+   record: Agent Harness `docs/specs/rca-gate-output-volume.md` §8.)*
+
+   **Note on the citation — a retirement.** The practice this item authorises
+   has been cited corpus-wide as **`RCA-8(d) ANNOTATE-BESIDE`**. `(d)` is
+   *"append means append"* and says nothing about retention, and
+   `ANNOTATE-BESIDE` is not a requirement of this file (it appears here zero
+   times). Its only textual seed is item 2(c)'s *"a mis-sum is corrected by
+   annotating beside the as-filed form"*, scoped to mis-summed PBT attempt
+   totals. **The `RCA-8(d) ANNOTATE-BESIDE` spelling is RETIRED — a citation
+   to it is now a finding** (Agent Harness `docs/defects.md` `DEF-2026-10-08`).
+
 3. **TDD, always (imported, subagents.md workflow)**: every source-code task
    is red → green → verify, in order: (a) write tests with the states /
    fail-states (red); (b) run them and report the failing set; (c) implement
