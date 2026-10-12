@@ -446,3 +446,12 @@ later pass reads them without opening the record.** **None is re-fired** — eac
 while (a) the adopted package cannot construct a store — `docs/defects.md` `STOREROOM-PUBLISHED-ADDON-VERSION-MISMATCH`, a
 sibling-owned release condition — and (b) `P-9`'s `because` clause is EMPTY** (the collision block's `X-1`, which no role pass
 may fill; `RCA-8(f)`: the architect admits ROWS and grants clauses).
+
+**⟶ DELTA, `2026-10-11` — THE GATE-1 AMENDMENT'S TWO DEFERRALS, PARKED WITH THEIR REVISIT CONDITIONS (an ANCHORED APPEND; `RCA-8(f)`: STILL NO UNIT ADMITTED, NO LEDGER ROW ADDED, NO COUNT MOVED).**
+
+| id | the deferral (the architect's own selection) | positive revisit condition |
+| --- | --- | --- |
+| **`Q-7`(c)** | **ADMIT NOTHING YET** — no fraction is admitted as a ledger row; the gate re-runs once the remaining semantics settle | **when the open-semantics list is empty** (`O-0`, `O-1`, `O-3`, `O-4`, `O-5` — `5` terms, printed at `docs/specs/storeroom-binding-review.md` §2A) **and** the successor mechanism `R-1` is named at `F1`'s spec gate |
+| **`Q-8`(c)** | **THE SCOPE OF *"the store changes"* IS LEFT UNRULED** — deliberately deferred, **never to be re-fired as a question**; nothing can be priced until it is ruled | **at `F3` (`U-STORE-REDERIVE-SUCCESSOR`)'s contract landing** — the fraction whose contract prices the core — or earlier if the architect rules it |
+
+**THE SIX ANSWERS THAT DID LAND** (`Q-1`–`Q-6`) are `docs/decisions.md` rows: `STOREROOM-BINDING-R18` · `STOREROOM-REALM-IS-MAIN-SIDE-BEHIND-PRELOAD-IPC` · `C5-AMENDED-BY-DATED-RULING` · `STOREROOM-SEAM-REPLACEMENT-MODE` · `STOREROOM-ROLLBACK-WINDOW-IS-CONTRACT-TEXT` · `STOREROOM-ABI-REBUILD-ON-INSTALL`. **Their residual conditions `R-1`…`R-5` are carried at `docs/specs/storeroom-binding-review.md` §2A; `R-3` (the package's unconstructibility) is `docs/defects.md` `STOREROOM-PUBLISHED-ADDON-VERSION-MISMATCH` + `docs/HANDOFF.md` Round 10.**
