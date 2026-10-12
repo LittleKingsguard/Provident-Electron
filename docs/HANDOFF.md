@@ -406,3 +406,51 @@ filed as a handoff item per AGENTS.md item 7:
 > above is the upstream-facing restatement.** **`docs/defects.md` therefore currently
 > holds NO open package row.** *(The 0.5.1-move paragraph is otherwise unchanged: that
 > pass added no row, and neither did this one — it corrected the one row that existed.)*
+---
+
+## Round 10 (NEW SURFACE) — `provident-storeroom`, the native Rust store — the published addon cannot construct a store
+
+**⟶ DATED `2026-10-11` (the `U-STOREROOM-BINDING` gate-1 close; `RCA-8(d)`: this is an APPEND —
+no pre-existing byte of this file was rewritten, moved or deleted).** **Rounds 1–9 above concern
+`provident-ssr`. THIS ROUND CONCERNS A DIFFERENT PACKAGE** — `provident-storeroom` (npmjs.com, 0.1.1,
+AGPL-3.0, published 2026-10-10) and its platform artefact — whose source repo is the ADJACENT
+`../Provident-Storeroom` (the sibling project), **not** `../Preempt-Providence`. The handoff target is
+therefore the sibling repository. Row: `docs/defects.md` `STOREROOM-PUBLISHED-ADDON-VERSION-MISMATCH`.
+Evidence: `docs/specs/storeroom-binding-review.md` §2/§3; `archive/gate1/2026-10-11-U-STOREROOM-BINDING-gate1-step1-validity.md` (`BF-1`);
+`archive/gate1/2026-10-11-U-STOREROOM-BINDING-gate1-step2-critique.md` (`C-09`).
+
+**Observed symptom.** `npm install provident-storeroom` (0.1.1, `linux-x64-gnu`) succeeds and
+`import('provident-storeroom')` exposes exactly the eight declared verbs (`storeCreate`, `read`,
+`readLiteral`, `write`, `delete`, `rollback`, `listen`, `unlisten`) — **but every
+`storeCreate(...)` call throws** the declared failure form:
+
+```
+{ status: 'FilePathUnreachable',
+  message: "'@auspicion/provident-storeroom-js-linux-x64-gnu' is not reachable at construction, the path must exist or the application must be able to write it" }
+```
+
+No store can be constructed on any covered target, from a published install or from the sibling's own
+checkout, so no verb can be exercised at all.
+
+**Reproduction.** (1) `npm install provident-storeroom` in an empty project; (2) run
+`import('provident-storeroom').then(m => m.storeCreate({journalLength: 32, listeners: [], filePath: '/tmp/x.json'}))`;
+(3) observe the throw. Control: `require('@auspicion/provident-storeroom-js-linux-x64-gnu').version()`
+answers `"0.1.0"`, while that platform package's own manifest and the wrapper's both declare `0.1.1`.
+The sibling checkout's own built addon answers `"0.1.0"` too. `provident-storeroom@0.1.0` also fails
+(rung one misses; a tarball carries no module-relative addon).
+
+**Suspected root cause.** The addon's self-reported version was not bumped with the wrapper's. Rung one
+loads the platform package and then compares `candidate.version()` **exact-string** against the
+package's own manifest version (`index.mjs:136` `packageVersion()`; the comparison at `:226-232`); the
+shipped artefact answers `"0.1.0"` (`bindings/js/Cargo.toml` `version = "0.1.0"`, read at
+`bindings/js/src/facade.rs:1414` via `env!("CARGO_PKG_VERSION")`) while `bindings/js/package.json`
+declares `0.1.1` — so the mismatch arm fires, and by the package's own design rung two is **not**
+reached after a mismatch (no fallback).
+
+**Proposed fix shape (upstream-owned).** A release in which the artefact's `version()` equals the
+wrapper manifest's version — bump the crate's version constant and re-run the publish workflow so the
+five platform packages' binaries report the wrapper's version, or declare the artefact's own version in
+the manifest. The sibling's own spec already records the condition and owns the remedy
+(`Provident-Storeroom/docs/specs/storeroom-publish/release.md:161-166`, its `Q3-1` duty); this round is
+the consumer-side record that the condition **blocks adoption in this repo**. **THIS PROJECT DOES NOT
+PATCH THE PACKAGE** (`AGENTS.md` item 7).

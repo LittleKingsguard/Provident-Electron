@@ -407,3 +407,42 @@ are `archive/pending/2026-10-11-sweep-blocker.md`.** **Nothing in this rewrite d
 open: every such row is restated in `§1`, `§2`, `§3`, `§4` or `§5`, and its retired stub names the section that now carries it.**
 **`RCA-8(f)`: THIS PASS ADMITS NO UNIT, ADDS NO LEDGER ROW AND MOVES NO COUNT — the ledger stays `33 DONE / 0 open` UNITS = `33`,
 `35` live rows.**
+
+---
+
+## ⟶ PARKED — THE `U-STOREROOM-BINDING` GATE-1 SET (`15` items), DATED `2026-10-11`
+
+**(`RCA-8(d)`: an APPEND — not one pre-existing byte of this file was rewritten, moved or deleted. `RCA-8(f)`: THIS PASS ADMITS NO UNIT, ADDS NO LEDGER ROW AND MOVES NO COUNT.**)**
+**The proposal** (the architect's instruction of 2026-10-11): replace the custom store code with an import of the published
+`provident-storeroom` package, with `secure` becoming a separate store rather than a tier and constraints/repairs becoming a
+write-returns-an-op-id-then-roll-back discipline. **THE GATE-1 VERDICT IS `BLOCKED-ON-SEMANTICS`**, by the forcing rule (the
+adoption dossier carries `2` `undefined-until-answered` rows and `6` open-semantics entries), with the open list attached and
+escalated to the architect in that pass. **The record:** `docs/specs/storeroom-binding-review.md`; its archival appendix
+(finding tables, question texts, the `K`-key): `archive/gate1/2026-10-11-U-STOREROOM-BINDING-gate1-record-appendix.md`;
+its step reports: `archive/gate1/2026-10-11-U-STOREROOM-BINDING-gate1-step{1-validity,2-critique,3-architecture}.md`.
+**The dossier:** `docs/specs/storeroom-binding-adoption-dossier.md` (`sha256:7d79b22af5854abb6e21acf60900c41d93461f37c81f6d40d4a898a403d9d3ae`, `45,251` bytes).
+**The pack's `15` PARKED items are §9(c) of the record; their ids and their positive revisit conditions are printed here so a
+later pass reads them without opening the record.** **None is re-fired** — each is a revisit condition, never a question.
+
+| id | subject (one clause) | positive revisit condition |
+| --- | --- | --- |
+| **`P-01`** | clause/row retirement and the register rows at risk (`P-SD-TP-5`'s byte duty, `P-SD-TP-3`'s address term, `P-SD-SM-1`'s `attached`, the message-list rows, the gate drive set) | when `F3`'s contract lands (it carries those rows) |
+| **`P-02`** | the stale frozen field 3 and the re-freeze path | at `F3`'s freeze ruling (`D-D`) |
+| **`P-03`** | the synchronous surface's replacement (`C24`'s boot order, the no-argument listener bodies) | when `Q-2` rules |
+| **`P-04`** | the listener handle vocabulary and the `attached` predicate | at `F4`'s spec gate |
+| **`P-05`** | `readLiteral`/`delete` and the tombstone versus a second deletion authority | at `F4`'s spec gate |
+| **`P-06`** | the file format, the value crossing and the eight orphan status tokens | at `F4`'s spec gate |
+| **`P-07`** | the tombstone lifecycle versus the adopted removal verb | at `F4`'s spec gate |
+| **`P-08`** | the tier-4 clone discipline and *"live state equals durable state"* under a rollback that writes no file | when `Q-5` rules |
+| **`P-09`** | the persisted-file arithmetic (`2 → 3`, or a moved format) and the third writer class | at `F4`'s contract |
+| **`P-10`** | where the once-per-call gate reading lives and what proves its fail-closed default | when `Q-3` rules |
+| **`P-11`** | the single-gate site's successor and the `10 = 5 × 2` drive census | when `Q-3` rules |
+| **`P-12`** | the isolation census's lost positive control | at `F4`'s contract |
+| **`P-13`** | the address-domain widening and its translation (or an amendment to `PAR-1`) | at `F4`'s spec gate |
+| **`P-14`** | whether the realm question is **already answered and adverse** (`HO-4`), making this a main-side unit rather than an open question | with `Q-2` |
+| **`P-15`** | the runtime-dependency scope change's row in `docs/decisions.md` | when `Q-7` admits a fraction |
+
+**STANDING CONSTRAINT CARRIED WITH THE PACK (§1(4) of this file's own remit):** **no pass may start `F4` (`U-STOREROOM-BINDING`)
+while (a) the adopted package cannot construct a store — `docs/defects.md` `STOREROOM-PUBLISHED-ADDON-VERSION-MISMATCH`, a
+sibling-owned release condition — and (b) `P-9`'s `because` clause is EMPTY** (the collision block's `X-1`, which no role pass
+may fill; `RCA-8(f)`: the architect admits ROWS and grants clauses).
