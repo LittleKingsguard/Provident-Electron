@@ -29,6 +29,7 @@
 ## §2. THE SEMANTICS BLOCK (STEP 0, mandatory under the rule)
 
 **(b) `O-0`'s *"unconstructible"* cell: SUPERSEDED — `archive/gate1/2026-10-12-U-STOREROOM-BINDING-gate1-record-appendix-c.md` §2B(1).**
+**CLOSED AT `0.1.3` ON THE PROBE ITEM, AND `R-3` STAYS DISCHARGED — `§2C`.**
 
 **STEP-0 RUN: `YES`.** The unit's contract vocabulary — every name, parameter and token of the adopted surface — originates **outside this project**: the published package `provident-storeroom@0.1.1` (AGPL-3.0) and the sibling repository `Provident-Storeroom`'s own contracts. The **zero-row exemption is neither available nor claimed** (dossier `:3`).
 
@@ -105,7 +106,7 @@ Moved byte-exactly to `archive/gate1/2026-10-11-U-STOREROOM-BINDING-gate1-record
 
 **SUPERSEDED — `K-0` SATISFIED (`archive/gate1/2026-10-12-U-STOREROOM-BINDING-gate1-record-appendix-c.md` §2B(1)).**
 
-**Standing of this section.** These are **prospective plan steps, not contract claims**: no fraction is admitted, no path is reserved, no row is authored, and every block is **reconciled to a landed contract and dated once that contract lands** — until then each block states the *shape* the plan will take so a fresh supervisor need not re-derive the gate's structure. **No fraction may start against an unconstructible package** (`K-0`), and **no fraction's red set may be authored before its typed `§5.5.1` register exists** (`AGENTS.md` item 11). **This record authors none of the artifacts named below.**
+**`K-0` SATISFIED AT `0.1.3` (`§2C`), AND THIS BLOCK DOES NOT REST ON THE WITHDRAWN ASSERTION — the correction is recorded at `§2C`(3).** **Standing of this section.** These are **prospective plan steps, not contract claims**: no fraction is admitted, no path is reserved, no row is authored, and every block is **reconciled to a landed contract and dated once that contract lands** — until then each block states the *shape* the plan will take so a fresh supervisor need not re-derive the gate's structure. **No fraction may start against an unconstructible package** (`K-0`), and **no fraction's red set may be authored before its typed `§5.5.1` register exists** (`AGENTS.md` item 11). **This record authors none of the artifacts named below.**
 
 **`F1` — `U-STORE-CONSTRAINT-PRESERVATION` (first, contract authorable today).** *What will be built:* the constraint/repair discipline carried forward as its own contract — the seam, the registration record, the pass-sequence, the repair-once bound, the loop-breaker token, the message list with its appender doors and its two returned sites, and the value-admission set at its new home; plus the disposition of the landed `T2` region (`renderer.ts:87-154`) as re-authored or deleted. *Order:* `F1` ∥ `F2` first; `F3` after both. *Verified how:* the red set it authors will be the constraint/message-list rows moved out of the in-flight set (`tests/store-rederive.test.ts`, rows `C-1`…`C-18`), carried as **its own** set with **its own** register — typed `§5.x` rows, declared totals printed **with their terms**, caps `≤100`/row and `≤400` total, stop-after-5, executed deterministically with **no new dependency**; layers `[T]`+`[H]`-dominant, `[U]` only if the `T2` region is re-authored; legs = the trio plus the test-layer leg. *Reconciliation:* the block is reconciled to `F1`'s contract (path, register, red-set ids and diff scope) and dated on the day the contract lands.
 
@@ -194,3 +195,9 @@ Moved byte-exactly to `archive/gate1/2026-10-12-U-STOREROOM-BINDING-gate1-record
 ## §2B. THE RETRY'S OUTCOME — THE GATE-1 RECORD AMENDED (dated 2026-10-12) — MOVED BYTE-EXACTLY TO AN ARCHIVAL PASS
 
 Moved byte-exactly to `archive/gate1/2026-10-12-U-STOREROOM-BINDING-gate1-record-appendix-c.md` §2B — the enumeration and its five items, moved by the third `RCA-8(g)` remedy (ii) archival pass because the live record stood `841` bytes over the `40 KB` ceiling (`RCA-13`); this record's eight `§2B`(n) citations spell that path. The retry's canonical record is `docs/handoffs/2026-10-12-consumer-verification-of-storeroom-0.1.2.md`; the tracker's own account is `docs/next-steps.md`'s `` ⟶ THE RETRY AGAINST `provident-storeroom@0.1.2` `` section; every `§2B` cell below is that as-filed spelling.
+
+---
+
+## §2C. THE THIRD RETRY'S AMENDMENT — ITS DETAIL BLOCKS MOVED BYTE-EXACTLY TO THE FOURTH ARCHIVAL PASS
+
+Moved byte-exactly to `archive/gate1/2026-10-13-U-STOREROOM-BINDING-gate1-record-appendix-d.md` `§2D` — the digest with its four named items, moved by the fifth `RCA-8(g)` remedy (ii) archival pass because the live record stood `1,298` bytes over the `40 KB` ceiling (`RCA-13`); the items are named in the appendix, and `§2C`(1)–(4) of that same file are the fourth pass's detail blocks.
