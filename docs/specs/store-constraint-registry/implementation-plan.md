@@ -13,7 +13,7 @@
 
 ### §P.2 The pre-flight — what must exist before the first red row is
 
-1. **THE CONTRACT DIRECTORY IS FILED AND THE ARCHITECT'S SPEC GATE IS CLEARED** (`AGENTS.md` items 9–10a: the spec gate is the one approval the chain waits for) — **and the two CONDITION CELLS the contract carries are the architect's at that gate: `C-1` (the spelling) and `C-3` (the edge's authorability)** (`docs/specs/store-constraint-registry/contract.md §0.2` items 6–7). **A `C-3` reading of *ordered after `F3`* changes this schedule's phase 1 owner and nothing else**; a `C-1` confirmation changes no rule at all (`docs/specs/store-constraint-registry/contract.md §0.2` item 6).
+1. **THE CONTRACT DIRECTORY IS FILED AND THE ARCHITECT'S SPEC GATE IS CLEARED** (`AGENTS.md` items 9–10a: the spec gate is the one approval the chain waits for) — **and the contract's condition cells are ALL SETTLED at that gate: `C-1` (the spelling) and `C-3` (the edge's authorability) RULED by the architect on `2026-10-13`, `C-2` and `C-4` discharged by the contract's first pass, and `C-5` (the edge's funnel existence, observable only once `F3` lands) recorded with its owner and its blocker** (`docs/specs/store-constraint-registry/contract.md §0.2` items 5–9). **`C-3` is ruled ALONGSIDE `F3`'s landing, so this schedule's phase 1 stands as written: the RED SET is authored NOW from the contract directory alone and targets the module path**; **`C-1`'s settlement changes no rule at all** (`docs/specs/store-constraint-registry/contract.md §0.2` item 6).
 2. **THE TYPED REGISTER EXISTS, IS TYPED AND IS UN-RUN** (`docs/specs/store-constraint-registry/property-register.md §5.5.1`: `19` rows, `246` attempts, `≤100`/row, `≤400` total, stop-after-5) — **authored BEFORE the red set, which is `AGENTS.md` item 11's own requirement.**
 3. **THE PARAMETER ROWS EXIST — one per declared parameter** (`docs/specs/store-constraint-registry/parameter-semantics.md §6`: `20` rows) — a missing row is a gate-2 finding (`AGENTS.md` item 5's spec discipline, applied at this gate).
 4. **THE DEPENDENCY IS DECLARED AND NOT ACTIVATED** (`docs/specs/store-constraint-registry/registers.md §2.4` item 1(c)) — **so nothing in the pre-flight requires a package module, an install, a lockfile change or a network step.**
@@ -41,6 +41,6 @@
 
 ### §P.6 What this plan does NOT decide, stated so no reader over-reads it
 
-1. **It decides no `C-1` and no `C-3` reading** — both are the architect's at the spec gate (`§P.2` item 1).
+1. **It decides no `C-1` and no `C-3` reading of its own** — both were RULED by the architect at the spec gate on `2026-10-13`, and this plan only POINTS at those rulings (`§P.2` item 1; `docs/specs/store-constraint-registry/contract.md §0.2` items 6–7).
 2. **It orders no byte of `src/**` and no freeze.** The contract's edit scope is `docs/specs/store-constraint-registry/contract.md §0.2` item 5; this part points at it.
 3. **It asserts no measurement.** Every figure it names is the contract's own or the landed register's own, cited by path.

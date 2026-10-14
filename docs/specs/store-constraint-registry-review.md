@@ -18,7 +18,7 @@
 
 **Input set (the gate's evidence — cited, never restated):** `archive/gate1/2026-10-13-U-STORE-CONSTRAINT-PRESERVATION-step1-validity.md` (verdict `VALID-WITH-CONDITIONS`; must-fix set; STEP-0 **YES**; `NO-SPLIT`) · `…-step2-critique.md` (`25` findings, `14` HIGH / `13` MEDIUM / `2` LOW; STEP-0 **TRIGGERED → `BLOCKED-ON-SEMANTICS`**) · `…-step3-architecture.md` (the new fraction; ordering preserved; eight ranked open semantics; nine-column row; STEP-0 satisfied by an inheritance rationale **with its falsifier named**).
 
-**VERDICT TOKEN: `BLOCKED-ON-SEMANTICS`.**
+**VERDICT TOKEN: `BLOCKED-ON-SEMANTICS`.** **⟶ RE-DECIDED `2026-10-13`: the standing token is `APPROVE-WITH-CONDITIONS`** (`⟦ CLOSING RULINGS AND VERDICT 2026-10-13 ⟧` `(e)`); the as-filed token above stands byte-for-byte — see the reconciliation line at this record's `:136` site.
 
 **What this record IS:** the assembled gate — the verdict and its forcing rule, the STEP-0 Semantics block of the fraction actually named, the `D-GP-SAD-5` `decomposition` row dispositioned **on this record**, the capped architect question set, and the property-intent carriage. **What it is NOT:** it files **no spec, no code, no test, no register, no red set**, admits **no unit row**, moves **no ledger count**, re-freezes **no artifact**, patches **no package**, fills **no collision-block `because` clause**, and edits **no file other than itself**. Steps 1–3 are the authority for their own content.
 
@@ -65,7 +65,7 @@
 
 **THE ARCHITECT-ANSWER SLOTS: `UNANSWERED`, with the question ids.** **`UK-10` · `UK-2`+`UK-3` · `UK-2`(change) · `UK-6`+`UK-7` · `UK-1` · `UK-8` · `UK-5` · `UK-9`** — **all eight slots stand EMPTY as of this record**, and no pass of this gate may fill them.
 
-**EFFECT ON THE VERDICT.** The `1` `undefined-until-answered` row (`X-5`) and the `8` open entries are **the whole** reason the token is `BLOCKED-ON-SEMANTICS`; the escalation is **in this pass** (the list is attached at §4), **never deferred to the spec filing**.
+**EFFECT ON THE VERDICT.** The `1` `undefined-until-answered` row (`X-5`) and the `8` open entries are **the whole** reason the token is `BLOCKED-ON-SEMANTICS`; the escalation is **in this pass** (the list is attached at §4), **never deferred to the spec filing**. **⟶ SUPERSEDED `2026-10-13`, AND RECONCILED WITH THE CLOSING VERDICT:** this clause is what the token rested on at filing; the architect's `2026-10-13` rulings closed it — the `X-5`-class row was re-filed as the unit dossier's own `X-8` under the dossier's `D-2`/`D-1` rulings, whose two `undefined-until-answered` rows are answered and both `D` questions settled, and §4's eight entries were ANSWERED — so the verdict token was then re-decided **`APPROVE-WITH-CONDITIONS`** by the four final rulings (`⟦ CLOSING RULINGS AND VERDICT 2026-10-13 ⟧` `(a)`/`(e)`, above), **`X-8` being carried there as the condition `C-1`, not re-fired**; no count above is the live one — see the reconciliation at this record's `:136` site.**
 
 ---
 
@@ -134,6 +134,8 @@
 **(b) THE ELABORATION'S PATH IS `docs/specs/store-constraint-registry-uk9-f3-elaboration.md`** — declared; it does not exist yet [measured: no `store-constraint-registry*` file but this record] — so `UK-9` answers nothing.
 
 **(c) THE VERDICT IS UNCHANGED AND STILL `BLOCKED-ON-SEMANTICS` — ON NEW COUNTS.** `UK-9` is open; the unit's own dossier — **`docs/specs/u-store-constraint-registry-adoption-dossier.md`, MINTED BY THIS PASS** — carries **two** `undefined-until-answered` rows (`A-1` · `A-3`) with four open rows (`D-1`–`D-3` + `X-8`). §1's two counts are superseded, by those rows and by the answer set. **No delegable token is substituted.**
+
+**(c′) ⟶ SUPERSEDED `2026-10-13` — THE COUNTS PRINTED ABOVE ARE THE AS-FILED STEP-0 DELTA PASS, AND THE DOSSIER HAS SINCE BEEN REPAIRED IN PLACE.** The standing terms are **`8 = 5` `defined` `+ 3` `not-adopted-in-this-layer`** (`A-1` by `D-2`; `A-2` · `A-3` · `A-4` by `D-1`), **`0` `undefined-until-answered`, `0` overflow**; rows `D-1` … `D-3` read **ANSWERED**, and the one live condition is **`C-1`** (the spelling), with **`C-4`** carrying the unreconciled `X-6`. **The superseded sentence above STANDS BYTE-FOR-BYTE as what the gate said at that pass; it is not deleted and is not the standing count.** Authority for the terms: this record's **`⟦ CLOSING RULINGS AND VERDICT 2026-10-13 ⟧`** `(b)`/`(e)`; the dossier's own terms: its **`§1` row census** and the **`⟦ RECONCILED ⟧`** note at its `:3`, with its as-filed cells retained byte-exactly at `archive/gate1/2026-10-13-U-STORE-CONSTRAINT-REGISTRY-dossier-status-cells-as-filed.md` (`RCA-8(g)`; pointer added by the `2026-10-13` reconciliation pass, which did not edit that file).
 
 **(d) FALSIFIED — THE STEP-0 INHERITANCE AT §2.** §2 named its own falsifier: *"If the architect rules `UK-10` toward the recorded `op`/`journalLength` replacement … the trigger then re-fires … and no inheritance may be read into this record."* **He so ruled; §2's inheritance is VOID, the trigger re-fires, and the dossier above is minted.** Only `UK-6`+`UK-7` was not falsified — it rules the preservation era's own mechanism (the pre-call snapshot restore) — so that ruling and `UK-10`'s Replacement reading stand in tension: filed as dossier `D-1`, **not** smoothed here.
 
