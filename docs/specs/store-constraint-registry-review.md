@@ -115,3 +115,26 @@
 ## §6. WHAT THE GATE DID NOT DO
 
 **No spec, no register, no red set, no code, no ledger row, no unit admitted.** `RCA-8(f)` is the architect's: this pass **admits nothing and moves no count**. **Measured against the trackers, not asserted:** the ledger stands at **`33 DONE / 2 open` UNITS = `35`** (`33 + 2 = 35`) with **`37` live rows** = `35` unit rows + the `1` non-unit fork row `F4` + the `1` wave-`H` queue row that is not a unit row (`35 + 1 + 1 = 37`) — the same figures the `T2` admission block and the `2026-10-11` spec-directory-split block carry, and **the `OPEN` set remains `T1` · `T2`**. **This fraction has no row in that ledger and this pass adds none**; the `decomposition` row's `proposed fraction` cell names a fraction, which is a *recommendation* and not an admission. **No file other than this record was written, no tracker was touched** (`docs/next-steps.md`, `docs/decisions.md`, `docs/pending.md`, `docs/defects.md`, `docs/HANDOFF.md` are a separate role's), **no `docs/specs/store-rederive/**` byte, no test or source byte and no package byte was touched, no artifact was re-frozen, and no collision-block `because` clause was filled.** **`RCA-8(d)` was not engaged — no append to an existing file was made, and the retired `ANNOTATE-BESIDE` spelling appears nowhere in this record.**
+
+## ⟦ ARCHITECT ANSWERS 2026-10-13 ⟧ — DELTA (`RCA-13`: delta only; §1–§6 STAND AS FILED, cited not restated)
+
+**(a) THE EIGHT ANSWERS, VERBATIM, AGAINST THEIR QUESTION IDS** — source: the architect's `2026-10-13` selections, read with `docs/decisions.md:24` (D1) · `:25` (D1–D3); his selection on every row but `UK-9`.
+
+| q-id | the answer |
+| --- | --- |
+| `UK-10` | *"Replacement — the registries carry the op/rollback discipline"* |
+| `UK-9` | *"Elaborate F3"* — **no option chosen**: **OPEN-PENDING-ELABORATION** |
+| `UK-2`+`UK-3` | the caller's unique-name spelling over the function identity; no store-minted id |
+| `UK-2`(change) | each write/commit — the landed evaluation point |
+| `UK-6`+`UK-7` | a state consequence — the pre-call snapshot restore, refusal before anything lands |
+| `UK-1` | the caller supplies it; duplicates replace in place; no new token |
+| `UK-8` | removal on reversal, plus a declared resident bound |
+| `UK-5` | two registries, one per graph |
+
+**(b) THE ELABORATION'S PATH IS `docs/specs/store-constraint-registry-uk9-f3-elaboration.md`** — declared; it does not exist yet [measured: no `store-constraint-registry*` file but this record] — so `UK-9` answers nothing.
+
+**(c) THE VERDICT IS UNCHANGED AND STILL `BLOCKED-ON-SEMANTICS` — ON NEW COUNTS.** `UK-9` is open; the unit's own dossier — **`docs/specs/u-store-constraint-registry-adoption-dossier.md`, MINTED BY THIS PASS** — carries **two** `undefined-until-answered` rows (`A-1` · `A-3`) with four open rows (`D-1`–`D-3` + `X-8`). §1's two counts are superseded, by those rows and by the answer set. **No delegable token is substituted.**
+
+**(d) FALSIFIED — THE STEP-0 INHERITANCE AT §2.** §2 named its own falsifier: *"If the architect rules `UK-10` toward the recorded `op`/`journalLength` replacement … the trigger then re-fires … and no inheritance may be read into this record."* **He so ruled; §2's inheritance is VOID, the trigger re-fires, and the dossier above is minted.** Only `UK-6`+`UK-7` was not falsified — it rules the preservation era's own mechanism (the pre-call snapshot restore) — so that ruling and `UK-10`'s Replacement reading stand in tension: filed as dossier `D-1`, **not** smoothed here.
+
+**NO LEDGER MOVE** (`RCA-8(f)`): no unit admitted, no count moved — `33 DONE / 2 open` UNITS `= 35`, `37` live rows; no pre-existing byte above was rewritten, moved or deleted.
