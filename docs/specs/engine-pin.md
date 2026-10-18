@@ -64,16 +64,16 @@ blocking reshape **`H-r7`** (the amended verification layer: `ShimElement.remove
 as a scoped harness completion + a red-first `HOST-OP-REJECT`-shaped prop guard) with
 `H-r5` (no browser-emulation expansion) and `H-r10` (the divergence-harness precondition);
 architect amendment **A-d2** ("Update for provident version"); the decisions ledger row
-`docs/decisions.md:55` `DECIDED: ENGINE-PIN-0.5` and `docs/decisions.md:57`
+`docs/decisions/ACTIVE-store-and-package-binding.md:42` `DECIDED: ENGINE-PIN-0.5` and `docs/decisions/ACTIVE-store-and-package-binding.md:44`
 `DECIDED: SHIM-COMPLETION-CARVE-OUT`; the amended unit plan's **`U0`** row
 (`docs/next-steps.md` — **the row MOVED out of `## OPEN` on 2026-09-27: it is now that file's
 `U-ENGINE-PIN` DONE record** ("`## DONE — U-ENGINE-PIN`"), whose `## OPEN` table keeps only a
 provenance row naming the move; **re-resolved by the DONE pass**, previously re-resolved
 2026-09-27 by the unit's documentation review from the pre-review `:104`, which itself was
 re-resolved earlier from the pre-amendment `:60`);
-the `HOST-OP-REJECT` precedent (`docs/decisions.md:42`) and
-`R13-HOST-FIX` (`docs/decisions.md:39`); the `UI-RENDERED-WITH-PROVIDENT` constraint
-(`docs/decisions.md:53`, `AGENTS.md:23-34`); the engine recon's `removeAttribute` /
+the `HOST-OP-REJECT` precedent (`docs/decisions/ACTIVE-store-and-package-binding.md:29`) and
+`R13-HOST-FIX` (`docs/decisions/ACTIVE-store-and-package-binding.md:26`); the `UI-RENDERED-WITH-PROVIDENT` constraint
+(`docs/decisions/ACTIVE-store-and-package-binding.md:40`, `AGENTS.md:23-34`); the engine recon's `removeAttribute` /
 boolean-attribute findings, adjudicated in the gate record's
 "Amendment corrections to the engine recon" block. The unit is a **host-side**
 retarget + harness completion + a host guard: **no package edit, no upstream edit, no
@@ -155,7 +155,7 @@ retarget + harness completion + a host guard: **no package edit, no upstream edi
 >
 > | Ruling (architect, verbatim-in-substance) | What it changes | Anchors |
 > | --- | --- | --- |
-> | **A. "The `value`-slot clear inside the EXISTING `ShimElement.removeAttribute` is AUTHORISED and REQUIRED."** It is the same species as the method's existing `id` special case, and it is what makes the `PF-2`/`PF-4` rows' observable true. **Completion of the one admitted method, NOT a new shim member**: `H-r7`'s "only `removeAttribute`" ruling (`docs/decisions.md:57`, read) STANDS and the §0 six-prohibition block still holds — **no new member, no new DOM capability, no vocabulary, no content, no default, no store, no MCP surface.** The prior text's boundary ("an actively-cleared slot is a NEW contract question") is OVERRULED. | **§2.2.1 (NEW: the `value` special case)** · §2.2 items 4/7 · §2.4a.1 items 3/4 (SUPERSEDED diagnosis + OVERRULED boundary) · §2.4a.1 items 1/5 (the required behaviour + the observable) · §3.2 (the value-state rows) · §5.1 item 3 | **§2.2.1 (NEW, re-read this pass)** · §2.2 item 4 · §2.4a.1 · §3.2 (the `value` rows) · §5.1 item 3 |
+> | **A. "The `value`-slot clear inside the EXISTING `ShimElement.removeAttribute` is AUTHORISED and REQUIRED."** It is the same species as the method's existing `id` special case, and it is what makes the `PF-2`/`PF-4` rows' observable true. **Completion of the one admitted method, NOT a new shim member**: `H-r7`'s "only `removeAttribute`" ruling (`docs/decisions/ACTIVE-store-and-package-binding.md:44`, read) STANDS and the §0 six-prohibition block still holds — **no new member, no new DOM capability, no vocabulary, no content, no default, no store, no MCP surface.** The prior text's boundary ("an actively-cleared slot is a NEW contract question") is OVERRULED. | **§2.2.1 (NEW: the `value` special case)** · §2.2 items 4/7 · §2.4a.1 items 3/4 (SUPERSEDED diagnosis + OVERRULED boundary) · §2.4a.1 items 1/5 (the required behaviour + the observable) · §3.2 (the value-state rows) · §5.1 item 3 | **§2.2.1 (NEW, re-read this pass)** · §2.2 item 4 · §2.4a.1 · §3.2 (the `value` rows) · §5.1 item 3 |
 > | **B. "§2.2 / §2.2.1 must carry the contract"**, in the same table shape as the `id` row `§3.2` already has: form-control `value` slot written **and** attribute serialized ⇒ `removeAttribute('value')` clears **BOTH** ⇒ `el.value === ''` **AND** `getAttribute('value') === null` **AND** `outerHTML` no longer contains `value="7"`; untouched slot (the `''` default) ⇒ idempotent no-op, no throw; a **NON**-form-control tag ⇒ the existing store-only behaviour, i.e. scoped **exactly as narrowly as the adapter's `VALUE_FORMS` path** (read: `dist/core/adapters.js:19-25` + `:315-318`). | **§2.2.1 (the state table + the scope statement)** · §3.2 (two rows) · §5.1 item 3 | **§2.2.1 (NEW)** · §3.2 (the `value` row) |
 > | **C. The honest semantics note (recorded, NOT over-claimed).** The real DOM does **not** clear a *dirty* input's `.value` on `removeAttribute('value')`; this shim is a synthetic harness and its rule is stated as **the shim's own contract** (a removal makes the serialized form and the readable value agree), **NOT** as a claim about `HTMLElement`. | **§2.2.1 item 4 (one sentence, so no later pass reads it as browser behaviour)** | **§2.2.1 item 4 (NEW)** |
 > | **D. The `PF-2`/`PF-4` observables are PINNED, not "recorded-not-pinned".** The rows assert `el.value !== '7'`, `el.value === ''` and the serialized attribute absent; the clause now pins `el.value === ''` as the observable. | §2.4a `PF-2`/`PF-4` cells · §2.4a.1 item 5 (observable table) — the hedge is removed **where it now conflicts**, and kept for `PF-3`'s `String(null)` form, which this ruling does not touch | §2.4a `PF-2`/`PF-4` · §2.4a.1 item 2 |
@@ -366,15 +366,15 @@ Three coupled changes, one unit, one install:
   to intercept handler-originated writes. **REJECTED OPTION, recorded** (ruling 1b):
   the engine is off-limits (`AGENTS.md` goal 1 + item 7) and a wrapper would put host
   code inside a render path this unit does not own, breaking `H-r5`'s no-expansion
-  rule and the `R13-HOST-FIX` precedent (`docs/decisions.md:39`) without buying a
+  rule and the `R13-HOST-FIX` precedent (`docs/decisions/ACTIVE-store-and-package-binding.md:26`) without buying a
   falsifiable row. The honest alternative is the **stated boundary** (§2.3).
 - **Any other shim member.** `hasAttribute` is **NOT added** (ruling in §2.2); `closest`,
   `querySelector(All)`, `dispatchEvent`, pointer/capture, `matchMedia`, `activeElement`/
   focus walk, `getComputedStyle`, `setProperty` and any render-count seam stay forbidden
-  (`H-r5`, `S-d3`, `docs/decisions.md:57`).
+  (`H-r5`, `S-d3`, `docs/decisions/ACTIVE-store-and-package-binding.md:44`).
 - **Any edit to `node_modules/provident-ssr/` or to the upstream tree**
   (`AGENTS.md` goal 1 + item 7). A behavioural difference found after the retarget is a
-  **host-side fix** (`docs/decisions.md:39` `R13-HOST-FIX` precedent) or an
+  **host-side fix** (`docs/decisions/ACTIVE-store-and-package-binding.md:26` `R13-HOST-FIX` precedent) or an
   `U-ENGINE-DRIFT` measurement — never a package patch.
 - **Any claim about `bodyRuns` / `BARE-TEXT-EMIT`** (`H-r11`), and any new
   `docs/defects.md` / `docs/HANDOFF.md` row (the amendment's "NOT FILED — and why" block,
@@ -414,7 +414,7 @@ Three coupled changes, one unit, one install:
 - The only **declarative dependency** edit of this unit is the version in that one
   dependency line. No `scripts` entry, `exports`, `files`, `engines` or `type` changes
   (`package.json:6` `"type": "module"` is untouched — the package stays ESM-only,
-  `docs/decisions.md:30`). The `devDependencies` **values** moved with the installer and
+  `docs/decisions/ACTIVE-store-and-package-binding.md:17`). The `devDependencies` **values** moved with the installer and
   are accepted; **no `devDependencies` KEY was added or removed** (`package.json:25-31`
   still carries exactly `@types/node`, `electron`, `esbuild`, `typescript`, `vitest` —
   read this session — so §5.5's "no PBT harness" statement stands).
@@ -455,7 +455,7 @@ Semantics (all of these are acceptance rows in §4):
    and silently mask a real-DOM difference; the **same slot/store split** is what the
    `value` special case closes (§2.2.1), there against the adapter's form-control property
    write (`dist/core/adapters.js:203-208`, read). That is the exact hazard
-   `SHIM-COMPLETION-CARVE-OUT` names (`docs/decisions.md:57`).
+   `SHIM-COMPLETION-CARVE-OUT` names (`docs/decisions/ACTIVE-store-and-package-binding.md:44`).
 2. **Idempotent, never throws.** Removing an absent key is a no-op; a non-string `k`
    stringifies through the object-key coercion (`this.attrs[String(k)]`) and is a no-op
    when absent. No `TypeError`, ever — the engine reaches this method from a `setProp`
@@ -676,7 +676,7 @@ completion makes it safe (§2.2 item 7, §3.7).
 - **Never throws.** The shape rejections keep the `{status:'rejected'}` shape matching the
   existing F1/F5/F6/F10 rejections (`src/renderer/runtime.ts:383-414`).
 - **Shape rejection is total, never partial**: one malformed element in a 3-mutation batch
-  rejects the batch (the `HOST-OP-REJECT` shape, `docs/decisions.md:42`); the host never
+  rejects the batch (the `HOST-OP-REJECT` shape, `docs/decisions/ACTIVE-store-and-package-binding.md:29`); the host never
   half-applies. **Value-shaped writes are never batch-rejected** — a 3-element batch whose
   middle element is a nullish `props.<key>` write applies all three (§3.4 PA-rows).
 - **The BATCH ITSELF is part of the shape class (amendment block 7, item B)**: a `mutation`
@@ -1070,7 +1070,7 @@ fixture *"addresses pane nodes by their **authored `props.id`** because that is 
 `SecurePanels` itself uses"*):
 
 - **Supported vocabulary: the ENGINE nodeId** — the same id vocabulary as `Runtime`'s
-  `docs/decisions.md:24` authority and the id `n.id` the pane graph's own supervisor registers
+  `docs/decisions/ACTIVE-store-and-package-binding.md:11` authority and the id `n.id` the pane graph's own supervisor registers
   (`src/renderer/secure-panels.ts:244-247`, read). An authored `props.id` passed here is an
   **unresolved id** and yields outcome (iii) — measured, `PF-1`/`F-2`
   (`docs/specs/engine-pin-greens.md` §2.8's `PF-1` row and its finding `F-2` — read; `F-2` is
@@ -1404,7 +1404,7 @@ only shape-malformed rows expect `rejected`.
 | **R-7** | `tests/dom-shim-remove-attribute.test.ts` | `css.<key> undefined removal is clean on the pre-existing engine path` | build a graph directly (`translateLegacy` → `Supervisor` → `DomAdapter` → `renderProducingProcess`) with a node whose `css:{ id:'k', role:'x' }`; apply `state-slice` with **`targetProp:'css.role'`** (the engine-effective namespace — **not** `'css:role'`, which `Node.applySlice` does not match and which is therefore inert; defect fix, §2.3), `value: undefined`, through the **engine** (not the host predicate); assert no throw and `getAttribute('role') === null`; plus the control that a **defined** `css.role:'v'` still applies | **THROWS `TypeError`** (`el.removeAttribute` absent) — the row was **not assertable** until the completion landed; it is the row that proves the completion covers the **pre-existing call sites** too | PASSES (landed: `tests/dom-shim-remove-attribute.test.ts:125-206`, read) |
 | **R-8** | `tests/dom-shim-remove-attribute.test.ts` | `removeAttribute clears a present attribute` | `el.setAttribute('title','t')`; `el.removeAttribute('title')`; `getAttribute('title') === null`; `outerHTML` has no `title=`; a sibling attribute survives | THROWS `TypeError` pre-completion; PASSES post-completion (green at the pre-install pin — the method is the unit's own) | PASSES |
 | **R-9** | same file | `removeAttribute of an absent attribute is idempotent, never throws` | two calls on an absent key; `outerHTML` identical before/after; no throw | THROWS pre-completion; PASSES post-completion | PASSES |
-| **R-10** | same file | `removeAttribute('id') clears BOTH the id slot and the attribute store` | `el.setAttribute('id','x')`; `el.removeAttribute('id')`; `getAttribute('id') === null` **and** `outerHTML` does not contain `id="x"`; `attrs['id']` undefined; and a control that removes a non-`id` key while the `id` slot survives; plus the overwrite path (`setAttribute('id','x')` then `'y'`) | THROWS pre-completion; PASSES post-completion. **This row is the `id`-slot guard the carve-out names** (`docs/decisions.md:57`) | PASSES |
+| **R-10** | same file | `removeAttribute('id') clears BOTH the id slot and the attribute store` | `el.setAttribute('id','x')`; `el.removeAttribute('id')`; `getAttribute('id') === null` **and** `outerHTML` does not contain `id="x"`; `attrs['id']` undefined; and a control that removes a non-`id` key while the `id` slot survives; plus the overwrite path (`setAttribute('id','x')` then `'y'`) | THROWS pre-completion; PASSES post-completion. **This row is the `id`-slot guard the carve-out names** (`docs/decisions/ACTIVE-store-and-package-binding.md:44`) | PASSES |
 | **R-11** *(REWRITTEN — ruling 1 + defect (a))* | `tests/host-guard.test.ts` | `css.<key>: undefined is APPLIED as an attribute removal; a defined css.<key> still applies` | `PA-5` (`css.role`, `undefined` ⇒ `applied`, `role` absent from the DOM/SSR) + `P1` (`css.role:'v'` ⇒ `applied` with `role="v"` rendered) — **the target must be spelled `css.role`**, the engine-effective namespace | **FAILS AS ASSERTION** (throw on the undefined half) | **APPLIED + removal** — **the landed `R-11` row asserts it** (`tests/host-guard.test.ts:284-313`, read: the `css.<key>` undefined removal is `applied`; the "landed test still asserts `rejected`" hedge is superseded) |
 | **R-12** *(NARROWED — ruling 1)* | `tests/host-guard.test.ts` | `shape-malformed mutations are rejected, never thrown` | `M1..M8` as a table (`it.each`), each asserting `{status:'rejected'}` (or, for `M8`, the pane batch being skipped whole) and **no throw**; **no nullish-value row belongs in this table any more** | **FAILS AS ASSERTION for M2/M3 only** (the new shape rejects); M1/M4..M7 passed on the pre-change tree (existing guards, `src/renderer/runtime.ts:383-414`) | PASSES. *(The M-rows are host-side only; the retarget is irrelevant to them. **The reject half of the old R-12 — the value-shaped rows — is SUPERSEDED BY ruling 1 and replaced by the §3.4 PA-rows.**)* |
 | **M9** *(NEW 2026-09-27 — amendment block 7, item B; §2.4b item 3)* | `tests/host-guard-panes.test.ts` (+ the `Runtime` half in `tests/host-guard.test.ts`) | `M9 — a NON-ARRAY mutation is refused with a status, never thrown (the container half of M8)` | `M9` as §3.6 defines it. **`Runtime` half (landed):** `expect(() => runtime.applyCommand({kind:'state-slice', node:<resolved>, mutation: {} as never})).not.toThrow()` and `.status === 'rejected'` (`src/renderer/runtime.ts:409-414`, read). **Pane half (the requirement this row adds):** `expect(() => panels.applyPaneMutation(<engine nodeId>, {} as never)).not.toThrow()` and the result **`toEqual({status:'rejected', applied:false})`** — **no `TypeError`, nothing applied, the node's last-known render unchanged**. **Attribution:** the row is the SEAM's (it is the only public surface that takes a caller-supplied `mutation`); `syncConfig`'s own call site always builds an array (§2.4) | *(REWRITTEN 2026-09-27 — `B-LANDED`)* **Landed status CORRECTED 2026-09-27 (block 7's `B-LANDED` follow-up, read this pass): the pane half HAS landed** — the predicate tests `Array.isArray` first (`src/renderer/secure-panels.ts:81-89`, read: `:82`) and the seam derives `applied` (`:334`, read), so the call **no longer throws** and the landed harness row drives a **fixed six-shape** table (`{}`, `undefined`, a string, a number, `null`, a `Symbol.iterator`-throwing Proxy) asserting `{status:'rejected', applied:false}`, no throw and an unchanged render (`tests/host-guard-panes.test.ts:578-640`, read, fixed order); the three `applied`-semantics rows carry outcomes (i)/(ii)/(iii) (`:642-714`, read). **What this row still does NOT carry:** its own green measurement — the ledger (§4.3) owns that. *(Pre-status text: "**FAILS as written today on the pane half** — the landed predicate has no `Array.isArray` test, so the call **throws `TypeError: mutation is not iterable`** (`src/renderer/secure-panels.ts:72-79`, read)" — SUPERSEDED as a status statement only.)* | **`{status:'rejected', applied:false}`, no throw** (the amended contract) — **LANDED** |
@@ -1467,7 +1467,7 @@ const BASE = {
   `findTagByAttr(html,'data-node-id', nodeId)` helper, whose contract is "the first tag
   carrying that attribute", so two nodes with the same attribute set cannot be confused.
 - **Mutation-driven rows** (`R-6`, `R-7`, `R-11`, and the pane rows `PF-1..PF-8`) must
-  reach the node by `nodeId` (the authoritative vocabulary, `docs/decisions.md:24`), not
+  reach the node by `nodeId` (the authoritative vocabulary, `docs/decisions/ACTIVE-store-and-package-binding.md:11`), not
   by `cssId` — **and that now holds for the pane rows too (AMENDED 2026-09-27, amendment
   block 7, item F(2); see §2.4b item 4).** *(SUPERSEDED: "**except the pane fixture, which
   addresses pane nodes by their **authored `props.id`** because that is the vocabulary
@@ -1884,14 +1884,14 @@ Any of these **kills or reshapes** the unit; none of them may be worked around s
    `tests/gemma4-blind-battery.test.ts:194-195,215`, `tests/runtime-host.test.ts:188,367`,
    `tests/path-fork-cycle.test.ts:28,93` — the pinned equalities named by the amended unit
    plan — **these `tests/**` anchors are quoted from that plan's `U1` row and were NOT
-   re-read by this pass**). Then the unit is **re-scoped as a HOST fix** (`docs/decisions.md:39`
+   re-read by this pass**). Then the unit is **re-scoped as a HOST fix** (`docs/decisions/ACTIVE-store-and-package-binding.md:26`
    `R13-HOST-FIX` precedent) and lands in `U-ENGINE-DRIFT`; the package is **never**
    patched (`AGENTS.md` item 7).
 3. **A shim member other than `removeAttribute` is required** (the red run throws
    `hasAttribute`/`getComputedStyle`/`activeElement`/`closest`/…). Then **stop** and
    return to the architect: `H-r7`'s admission test requires **both** a named call site
    **and** a forbidden-category check, and `hasAttribute` is admitted only on a named red
-   call site (`docs/decisions.md:57`). An implementer may not add a second member.
+   call site (`docs/decisions/ACTIVE-store-and-package-binding.md:44`). An implementer may not add a second member.
 4. **An existing test fails because of the retarget.** That is **`U-ENGINE-DRIFT`'s**
    business, not a silent test edit here: record it, do not edit the test in this unit,
    and let U1 own the reconciliation (the unit plan's "no silent test edits").
@@ -2337,7 +2337,7 @@ TestWriter and Implementer can act without inference. **Nothing here is `DONE`.*
 | **AF-6** | The pass's open question: whether the (pre-amendment) guard's restriction — removing the engine's `props.X: undefined` removal capability — needed to be documented as a capability loss | open question | **REMOVED — there is no capability loss to rule on** (ruling 1c). §2.3 states this explicitly; `A-8` (§3a) is recorded as **RESOLVED BY ruling 1**; the pre-amendment "documented, ruled capability restriction" expectation is **SUPERSEDED** and must not be carried forward. |
 | **AF-7** | The absent-`value` case was not reconciled with what the engine does with it (absent key vs explicit `undefined` under the layer merge) | host-spec drift | **FOLDED IN AND STATED ONCE.** §3.4 `PA-4`: an **absent** `value` key and an explicit `undefined` are **the same removal** — `applyPropSlice` builds `{props:{[key]: undefined}}` (`dist/core/node.js:1521`, read), the merge copies the key (`:961-963`, read), and the diff emits the value-`undefined` set op (`dist/core/render.js:32-41`, read). The **third** form, explicit `null`, is an attribute removal on the **attribute** paths (`PA-2`) but is **stringified** on a `VALUE_FORMS` tag (`dist/core/adapters.js:315-318`, read) — that boundary is stated in `PA-2` and `PF-3`, so a later pass does not generalise "nullish ⇒ removal" across both. The pane fixture carries the absent-key form as **`PF-4`** and the `null` form as **`PF-3`**. |
 | **AF-8** | *(pass's eighth finding — its substance is the reachability/last-known-value class)* — see the pass's own record owed by the doc review | host-spec drift | **CARRIED via ruling 2.** The last-known-value observation survives **only** for the **shape** path (`PF-5`); the nullish rows assert the **removal** instead (§2.4, `R-13`). |
-| **AF-9** | `ALL_TOOLS === 21` is a **count freeze** the later, already-adopted `provident.focus` unit (`U-FOCUS-TOOL`, `docs/decisions.md:61`) will change — and the built artifact's own string census counted **23** tool names (`docs/specs/engine-pin-greens.md` §3a's `F-6`/`F-1` rows) | host-spec drift (numeric claim) | **FOLDED IN — the re-parameterisation rule is recorded HERE, in this unit's contract text:** **when `provident.focus` lands, the count assertion is replaced by SET-equality against the pinned name list — `ALL_TOOLS` gains `provident.focus` and the set comparison becomes the assertion — IN THE SAME COMMIT AS THE TOOL**, together with the `RpcMethod` census (**21 → 22 in the landed census** — CORRECTED 2026-09-27, amendment block 7 item H; `docs/decisions.md:61`'s `ALL_TOOLS` 21 → 22 is right, but its `RpcMethod` **19 → 20** is stale) and the default-gate subset (7 → 8). The carrying rows are `tests/engine-pin-version.test.ts:102-124` (the pinned 21-name list, whose size is asserted at `:127`) and the tool→group `PINNED` map at `:138-160` (read) — **the map is the load-bearing half and any bare count is the disposable half.** **So that red is not misread as a `U-ENGINE-PIN` regression**: the unit **states** the freeze is time-bounded (`§0` prohibition 5, `R-15`, §7.10), and a later pass seeing `R-15` red **must check whether `U-FOCUS-TOOL` landed first** before filing anything against this unit. **The `21`-vs-`23` census discrepancy is NOT resolved here** — the source constant is 21 (`src/main/mcp-server.ts:281-303`, read) and the built-artifact count of 23 is a **greens-layer string census (reported)**, not re-verified in this pass; it is a **doc/measurement item for the doc review**, not a contract change. |
+| **AF-9** | `ALL_TOOLS === 21` is a **count freeze** the later, already-adopted `provident.focus` unit (`U-FOCUS-TOOL`, `docs/decisions/ACTIVE-mcp-engine-and-process.md:4`) will change — and the built artifact's own string census counted **23** tool names (`docs/specs/engine-pin-greens.md` §3a's `F-6`/`F-1` rows) | host-spec drift (numeric claim) | **FOLDED IN — the re-parameterisation rule is recorded HERE, in this unit's contract text:** **when `provident.focus` lands, the count assertion is replaced by SET-equality against the pinned name list — `ALL_TOOLS` gains `provident.focus` and the set comparison becomes the assertion — IN THE SAME COMMIT AS THE TOOL**, together with the `RpcMethod` census (**21 → 22 in the landed census** — CORRECTED 2026-09-27, amendment block 7 item H; `docs/decisions/ACTIVE-mcp-engine-and-process.md:4`'s `ALL_TOOLS` 21 → 22 is right, but its `RpcMethod` **19 → 20** is stale) and the default-gate subset (7 → 8). The carrying rows are `tests/engine-pin-version.test.ts:102-124` (the pinned 21-name list, whose size is asserted at `docs/decisions/ACTIVE-engine-pin-and-divergence.md:20`) and the tool→group `PINNED` map at `docs/decisions/ACTIVE-engine-pin-and-divergence.md:31-160` (read) — **the map is the load-bearing half and any bare count is the disposable half.** **So that red is not misread as a `U-ENGINE-PIN` regression**: the unit **states** the freeze is time-bounded (`§0` prohibition 5, `R-15`, §7.10), and a later pass seeing `R-15` red **must check whether `U-FOCUS-TOOL` landed first** before filing anything against this unit. **The `21`-vs-`23` census discrepancy is NOT resolved here** — the source constant is 21 (`src/main/mcp-server.ts:281-303`, read) and the built-artifact count of 23 is a **greens-layer string census (reported)**, not re-verified in this pass; it is a **doc/measurement item for the doc review**, not a contract change. |
 | **AF-10** | The `H-02`/`R-13` false-green: the pane predicate was **unreachable** (`syncConfig` private, both shipped writes defined, no test reference) | host-spec drift (unstated surface requirement) | **FOLDED IN AS THE PANE-FIXTURE RULING.** §2.4a defines the fixture, the justified injection point and the `PF-1..PF-8` rows; `R-13` is **no longer "not executable"** (§4.1); `P-SM-3`/`S-TAB-PANE-1` carries it in the register (§5.5); `A-10`'s reachability enumeration stays open for the other host paths. |
 | **AF-11** | §5.1 said "the **four** new test files" while §5.2 listed **six**; and the spec's status lines still described the halves as unlanded | host-spec drift | **CORRECTED IN PLACE** (§5.1 item 6 + its supersession note; §4's test-file-status block; §5.2's table; §Layer declaration item 1; §7.2). The post-amendment count is **seven test files + one fixture** (§5.1, §5.2) — the third count, stated so no later pass quotes the wrong one. |
 
@@ -2352,7 +2352,7 @@ census is 21** — `src/shared/types.ts:259-280` (read this pass) lists 21 union
 `validate`, `teardown`, the seven `code.*`, `journal`, the `module.*` trio) and
 `tests/engine-pin-version.test.ts:174-197` (read) asserts exactly that: the exhaustive
 `RPC_METHOD_CENSUS` record plus `expect(Object.keys(RPC_METHOD_CENSUS).length).toBe(21)`. **The
-future `provident.focus` move is therefore `21 → 22`**, and `docs/decisions.md:61`'s
+future `provident.focus` move is therefore `21 → 22`**, and `docs/decisions/ACTIVE-mcp-engine-and-process.md:4`'s
 `RpcMethod 19 → 20` (a tracker row, **not** edited here) carries the same stale pair — the
 supervisor's reconciliation pass owns it (§8's cross-file note). **The `AF-9` row above is
 rewritten in place; nothing about the `ALL_TOOLS` half changes** (`ALL_TOOLS` = 21 names,

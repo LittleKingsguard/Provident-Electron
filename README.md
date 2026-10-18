@@ -41,7 +41,7 @@ Requires Node ≥ 18 for install tooling. **The `electron` devDependency is
 `^44.4.5` (Electron 44 installed) — CORRECTED 2026-09-27.** This line read
 "Electron is pinned to ^33 so it installs on Node 18" until the engine-pin
 install moved it (`package.json:27`); that was a **MAJOR** jump against this
-repo's own `ELECTRON-PIN` row (`docs/decisions.md:29`, `^33`), it was
+repo's own `ELECTRON-PIN` row (`docs/decisions/ACTIVE-store-and-package-binding.md:16`, `^33`), it was
 **not** covered by `U-ENGINE-PIN`'s red set, and a fork should **choose its own
 Electron pin deliberately rather than copy `^44`** — the risk is recorded in
 `docs/decisions.md` `ENGINE-PIN-DEVDEP-JUMP-ACCEPTED` + `docs/pending.md`'s

@@ -1171,7 +1171,7 @@ is green for the same built tree, (b) `npm run divergence` is green for that tre
 real-DOM reorder row reads element **identity/order**, not attribute presence, so it does **not**
 depend on the extractor, but it **does** depend on the leg. **If not taken, no §3 row is weakened.**
 **A node-suite green is never a real-DOM green** (`REAL-DOM-UI-GATE-LEG`'s "the shim is DEMOTED to
-pre-filter — not retired" clause, `docs/decisions.md:65`, read).
+pre-filter — not retired" clause, `docs/decisions/ACTIVE-mcp-engine-and-process.md:8`, read).
 
 ### 5.3 The DONE row's shape
 
@@ -1662,8 +1662,8 @@ elsewhere or another unit's — listed so no later pass routes it here.
 | `H-r5` / `S-d3` (no shim expansion) | `H-r5`, `S-d3` | **INHERITED-ONLY** — the shim is untouched. **⟶ RECONCILED 2026-09-27 (the `§5.5` re-derivation): the property layer changes none of this** — no shim member is expanded, `tests/owned-list-host.test.ts` carries the register rows (`§5.5.1`) **inside the existing node suite**, and no new leg, file or script is added | §1, §4.4 `S-2`, `§5.5.1` (the legs/integration note) |
 | `RK-10` (`C-16`: contracts reverse-engineered from ONE consumer) | amendment §6 | **CARRIED** — §7 items 2/7/8 are this unit's answer: the rename, the seven recorded contract decisions, and the **THREE** deliberately-unruled seeds (`A-5`, `A-9`, `A-12` — `A-12` added by the 2026-09-27 reconciliation) | §7 items 7–8 |
 | `H-r10`'s attribute-presence extractor | `H-r10` | **NOT THIS UNIT** (`U-DIVERGENCE-EXT`) — a **named precondition** of the optional attribute-shaped `[U]` variant | §5.2 |
-| `REAL-DOM-UI-GATE-LEG` (the shim is demoted to pre-filter) | `docs/decisions.md:65` | **CARRIED** — a node-suite green is never a real-DOM green | Layer declaration, §5.2 |
-| `UI-RENDERED-WITH-PROVIDENT` / `SHELL-CHROME-CARVE-OUT-FUNCTIONAL` (a mechanism authors no content) | `docs/decisions.md:53` / `:54`, both read | **CARRIED** — prohibition 2 is this unit's compliance row | §2.2, §7 item 4 |
+| `REAL-DOM-UI-GATE-LEG` (the shim is demoted to pre-filter) | `docs/decisions/ACTIVE-mcp-engine-and-process.md:8` | **CARRIED** — a node-suite green is never a real-DOM green | Layer declaration, §5.2 |
+| `UI-RENDERED-WITH-PROVIDENT` / `SHELL-CHROME-CARVE-OUT-FUNCTIONAL` (a mechanism authors no content) | `docs/decisions/ACTIVE-store-and-package-binding.md:40` / `docs/decisions/ACTIVE-store-and-package-binding.md:41`, both read | **CARRIED** — prohibition 2 is this unit's compliance row | §2.2, §7 item 4 |
 | Row **D2** (`docs/next-steps.md` `## OPEN`) | that file's `## OPEN` table (**cited by row id, never by line**) | **OWED**: its spec cell reads `docs/specs/listhost.md` (**OWED — not filed**) — **this filing discharges that cell** (the row itself stays `BLOCKED`, and its leg cell's *"a real-DOM identity row (**optional**) → `ui`"* is §5.2) | this file |
 | `docs/specs/listhost.md`'s entry in amendment §8's owed-spec list | amendment §8 | **DISCHARGED by this filing** | this file |
 | **`H-r4`'s required explicit PBT decision for this unit** | `H-r4` (as `H-r20` re-scoped it to twenty units), `docs/specs/engine-pin.md` §5.5 (the executed-register precedent) | **RECONCILED 2026-09-27 — the as-filed form was **`ZERO-ROW-EXEMPTION (recorded, justified)`**, which is **SUPERSEDED** by the architect's gate-11 ruling for code-bearing units**: the decision is now a **typed register of `7` rows, all executed deterministically**, and the `H-r4` *"this repo has no PBT harness — do not imply one"* clause **survives intact** (no `fast-check`, no property runner, no `devDependencies` change). The register row `P-LH-TP-1` is `YES (bounded)` — the one place where the enumeration is smaller than the property text, marked so rather than implied. | `§5.5` (the two SUPERSEDED banners + `§5.5.1`) |
@@ -1681,7 +1681,7 @@ elsewhere or another unit's — listed so no later pass routes it here.
 this pass** (`src/main/security.ts:134`; `src/shared/types.ts:259-281`;
 `src/renderer/renderer.ts:12`; `src/main/mcp-server.ts:281-303`; `src/shared/dom-shim.ts` (143 lines,
 `:1-3`/`:89-96`); `package.json:10`/`:19`/`:26-31`; `tests/engine-pin-version.test.ts:174-197`;
-`docs/decisions.md:53`/`:54`/`:65`). **`docs/next-steps.md` is cited by row id only** — that file's
+`docs/decisions/ACTIVE-store-and-package-binding.md:40`/`docs/decisions/ACTIVE-store-and-package-binding.md:41`/`docs/decisions/ACTIVE-mcp-engine-and-process.md:8`). **`docs/next-steps.md` is cited by row id only** — that file's
 own convention forbids line citations. **One anchor the sibling spec found stale is re-stated here
 for the same reason:** `docs/decisions.md` is **406 lines** today, its ledger is split into labelled
 appended blocks (`:104`, `:124`, `:139`, `:155`, `:172`, `:189`, `:209`) plus `## HISTORICAL`

@@ -611,7 +611,7 @@ into an assembled-app or IPC claim (Layer declaration anchor 2), and it does **n
 | **F-2** | A measurement claims a layer that cannot carry it | §3.2 `INVALID` class 5 | Row `INVALID`; if repeated, STOP and report |
 | **F-3** | An existing test, harness or `src/**` file was edited to make a leg pass | Diff shows it; the leg's numbers change between runs | **Review finding** — `S-d10`'s silent test edit; revert, re-take |
 | **F-4** | The record is incomplete over §3.1's 9 columns | Any blank cell; any un-reconciled tally | The record is **not** a DONE deliverable |
-| **F-5** | A package defect is filed as a host fix, or a host finding is filed in `docs/defects.md` | Wrong file for the class (`docs/defects.md` is the **package**-gap catalogue — `docs/defects.md:3-9`, read; the `R13-HOST-FIX` precedent, `docs/decisions.md:39`) | **Review finding**; re-route |
+| **F-5** | A package defect is filed as a host fix, or a host finding is filed in `docs/defects.md` | Wrong file for the class (`docs/defects.md` is the **package**-gap catalogue — `docs/defects.md:3-9`, read; the `R13-HOST-FIX` precedent, `docs/decisions/ACTIVE-store-and-package-binding.md:26`) | **Review finding**; re-route |
 | **F-6** | This unit re-opens a pin-unit landed decision | The record cites a ruling and contradicts it | **Review finding** (ruling 1's checkpoint discipline) |
 | **F-7** | `node_modules/provident-ssr/**` or `../Preempt-Providence/**` was modified | Any write under those paths | **Process violation** (`AGENTS.md` goal 1 + item 7); the tree must be restored and the measurement retaken |
 | **F-8** | The `N = 9` divergence pin was changed | `scripts/electron-divergence.mjs`'s diff | **Review finding** — that pin is `ci-divergence-leg.md` §5's + `U-DIVERGENCE-EXT`'s |
@@ -787,7 +787,7 @@ pass) must carry, in this order:
 
 | Delta class | Route | Gate |
 | --- | --- | --- |
-| **Host-owned** (this repo's `src/**` mis-reports or mishandles a moved value) | a host fix + a regression row, recorded in this spec's **§3a** and in `docs/decisions.md` | `R13-HOST-FIX` precedent (`docs/decisions.md:39`, read: it **explicitly refuses** a `defects.md`/`HANDOFF.md` row for a host finding) + an architect ruling if it changes behaviour |
+| **Host-owned** (this repo's `src/**` mis-reports or mishandles a moved value) | a host fix + a regression row, recorded in this spec's **§3a** and in `docs/decisions.md` | `R13-HOST-FIX` precedent (`docs/decisions/ACTIVE-store-and-package-binding.md:26`, read: it **explicitly refuses** a `defects.md`/`HANDOFF.md` row for a host finding) + an architect ruling if it changes behaviour |
 | **Package-owned** (a `provident-ssr` behaviour contradicting the upstream specs, or a requirement gap) | a `docs/defects.md` row (**symptom · repro · suspected root cause · proposed fix shape**) → `docs/HANDOFF.md` | `AGENTS.md` item 7; **the package is NEVER patched** |
 | **Contract-owned** (the claim is the pin unit's and it moved) | **not this unit's to amend** — report to the architect; the pin unit's owning unit amends its own claim | `AGENTS.md` item 8's gate discipline |
 | **Instrument/harness-owned** (the leg itself changed) | `U-DIVERGENCE-EXT` / `U-REALDOM-BOOT` | ruling 1: those waves are re-adjudicated at this unit's checkpoint |

@@ -13,7 +13,7 @@ gitignored convention expects beside the record — the `E4` cycle's `P-1`
 unit does not repeat that (§7 `P-1`; owner: the supervisor's commit pass).**
 **`A-d4` AND EVERY LANDED CONTRACT ARE CITED AND NOT RE-OPENED.** The landed sibling contracts
 (`gsession.md`, `zones.md`, `census.md`, `relocate.md`, `container.md`, `gutter.md`, `listhost.md`,
-`projection.md`) are cited. So is `MENU-CATALOG-CONTRACT` (`SCH-5`, `docs/decisions.md:75`,
+`projection.md`) are cited. So is `MENU-CATALOG-CONTRACT` (`SCH-5`, `docs/decisions/ACTIVE-mcp-engine-and-process.md:18`,
 `docs/pending.md:105`, the amended gate record
 `docs/specs/provident-electron-shell-chrome-handoff-review.md:288`).
 
@@ -77,7 +77,7 @@ then be approved as filed.**
 
 **NOT TAKEN, and no later pass should take them as owed:** `[U]` (the three-part refusal stands) and
 `[D]` (not claimed). **The picker's rendering is not a blocker** — `UI-RENDERED-WITH-PROVIDENT` plus
-`SHELL-CHROME-CARVE-OUT-FUNCTIONAL` (`docs/decisions.md:71`) already rule a mechanism out of that
+`SHELL-CHROME-CARVE-OUT-FUNCTIONAL` (`docs/decisions/ACTIVE-mcp-engine-and-process.md:14`) already rule a mechanism out of that
 constraint's object, and step 3's prohibition audit finds all six prohibitions PASS (the last two
 conditionally).
 
@@ -114,7 +114,7 @@ scope/behaviour fork.** Applied honestly: **Q1 and Q2 are genuine architect-owne
 changes a public symbol/shape or a consumer-visible behaviour) — **but neither is a BLOCKER, because
 each has a recorded working default with an architect-reversible alternative**, which is exactly the
 `E5-B-3` precedent: *"`FILEABLE` AS A RECORDED WORKING DEFAULT … it does NOT gate the filing"*
-(`docs/decisions.md:23`, whose sibling form is `docs/specs/gutter-ui.md` `§7a.1`). **So my step-4
+(`docs/decisions/ACTIVE-store-and-package-binding.md:10`, whose sibling form is `docs/specs/gutter-ui.md` `§7a.1`). **So my step-4
 position is: AGREE that both questions are owed to the architect; DISAGREE that either blocks the
 filing.** Record both; file on the defaults; let the architect reverse by dated annotation.
 
@@ -145,18 +145,18 @@ spec can cite it.** `src/main/**` · `src/renderer/**` · `src/preload/**` · th
 `src/main/**` question is not a prohibition-5 question and does resolve by derivation: **prohibition 5
 bounds UNIT ADOPTION — a (C)-admissible unit's own contract may not itself require a new MCP surface —
 and a unit whose contract *requires* a new tool is still not adoptable as a unit; it never forbade this
-repo adding a tool** (`PROHIBITION-5-IS-AN-ADOPTION-BOUND`, `docs/decisions.md:83`). Two independent
+repo adding a tool** (`PROHIBITION-5-IS-AN-ADOPTION-BOUND`, `docs/decisions/ACTIVE-mcp-engine-and-process.md:26`). Two independent
 grounds therefore deny `src/main/**`: **(i)** the proposal's own acceptance pins *the builder imports
 neither `electron` nor `fs`*, and shipping a menu surface under `src/main/**` would need one of them;
 **(ii)** admission clause **(C)** admits a *reusable shell-chrome mechanism* and `S-d8`'s test is a
-mechanism-vs-UI-element test (`docs/decisions.md:71`) — an Electron-shell menu **integration** is not
+mechanism-vs-UI-element test (`docs/decisions/ACTIVE-mcp-engine-and-process.md:14`) — an Electron-shell menu **integration** is not
 a mechanism, it is the shell's chrome work, which is the fork's. **A later pass asserting an edit
 under `src/main/**` is a finding.**
 
 ## §6 GATE 11 ASSESSMENT
 
 **The register binds: `AGENTS.md` item 11 + `PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`
-(`docs/decisions.md:88`) — `U-MENULIB` is code-bearing, the zero-row exemption is UNAVAILABLE, and the
+(`docs/decisions/ACTIVE-mcp-engine-and-process.md:31`) — `U-MENULIB` is code-bearing, the zero-row exemption is UNAVAILABLE, and the
 register must exist BEFORE the red set.**
 
 **Step 3's 11-row sketch (`P-ML-IM-1`…`IM-7`, `P-ML-SM-1`/`SM-2`, `P-ML-TP-1`/`TP-2`) — assessed

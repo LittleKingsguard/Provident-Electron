@@ -129,3 +129,20 @@ not ship in a fork (see `docs/FORKER.md` §1/§5).
 **CURRENT WORK / HANDOVER STATE:** a fresh supervisor picks up the spec gate's approval of `docs/specs/store-constraint-registry/`; the package reviews have **closed no unit and moved no count** (`33 DONE / 3 open` UNITS = `36`).
 
 **STRUCTURAL FINDING (`2026-10-13`):** the sixteen requirements these reviews score (**`R1`–`R16`**) have **no filed home in this repo** — they are the architect's directive plus this project's rulings, compressed per round by the supervisor, and no contract part or tracker carries them as a numbered set, so **a fresh pass cannot re-run the check without re-deriving the list**. **RECOMMENDED (not created): file the numbered list where the unit's own record can cite it.**
+
+## ⟶ THE TRACKER ARCHIVAL PASS AND THE TWO SPLITS (`2026-10-13`; an ANCHORED APPEND — `RCA-8(g)`: superseded bytes move OUT, never retained beside the standing text)
+
+**WHAT THE ARCHITECT RULED AND WHAT WAS EXECUTED, ONCE.** Four trackers stood over the `131,072`-byte per-path ceiling: `docs/next-steps.md` `1,667,899` · `docs/decisions.md` `646,880` · `docs/defects.md` `219,294` · `docs/pending.md` `132,159`. He ruled **an archival pass with citation repair** first, then — when the pass proved that the residual overage in two files *was the live rows* — **a split**. Both are now DONE and committed:
+
+| Tracker | Before | After | Remedy taken |
+| --- | --- | --- | --- |
+| `docs/next-steps.md` | `1,667,899` | **`52,000`** | `RCA-8(g)` archival: two historical regions to `archive/next-steps/2026-10-13-next-steps-history-region-{A,B}*.md`, each with a pointer and its line mapping |
+| `docs/pending.md` | `132,159` | **`108,144`** | `RCA-8(g)` archival: the `§6` retired stub table to `archive/pending/2026-10-13-pending-retired-stub-table-region-lines-197-398.md` |
+| `docs/defects.md` | `219,294` | **`103,170`** | **SPLIT**: the live `## OPEN` table stays; every historical section moved whole to the new `docs/defects-history.md` (`110,455`) |
+| `docs/decisions.md` | `646,880` | **`83,898`** | **SPLIT**: the ACTIVE row mass (`529,144` bytes, 7 shards) moved to `docs/decisions/ACTIVE-*.md` (each ≤ `109,386`); this file keeps its header, its index, `## SPECULATIVE / IN GATE` and the `## AMENDMENTS` notes |
+
+**EVERY PATH IS NOW UNDER THE CEILING, and every moved region was verified BYTE-IDENTICAL at the move (`cmp`/`diff` on the extracted range), with `RCA-8(g)` pointers carrying each range’s line mapping.** **The citation repair ran in the same pass and is reported honestly: 236 citations were re-pointed mechanically for the `decisions.md` split, 18 for the `next-steps.md` archival, and the pass CAUGHT AND FIXED ITS OWN DEFECT — the lineage-aware rewriter attributed 16 bare shorthand citations (`:N` after a citation to a NON-`.md` path such as `.ts`/`.json`) to `decisions.md`, gluing a shard path onto a source path; all 16 were re-mapped back from their own shard offsets and re-verified.** Three `docs/pending.md` citations into a kept region were also corrected after the shift arithmetic (`−202`) proved to be `−200` in the file as measured.
+
+**THE LEDGER IS UNMOVED BY THIS PASS (`RCA-8(f)`): `33 DONE / 3 open` UNITS = `36` · `38` live rows · open set `T1` · `T2` · `U-STORE-CONSTRAINT-REGISTRY`.** **No unit was admitted, no row was added, no count moved.**
+
+**CURRENT WORK / HANDOVER STATE:** `U-STORE-CONSTRAINT-REGISTRY` stands at its **spec gate, FILED and NOT APPROVED** — the architect has HELD the red set (`> Hold — do not start the red set yet`, `2026-10-13`); one condition is open, **`C-5`** (owner: `F3`’s funnel landing; it blocks the unit’s *green* only). The contract is `docs/specs/store-constraint-registry/` (`contract.md` + 7 parts). **A FRESH SUPERVISOR PICKS UP: the architect’s spec-gate approval, then `role_test_writer` RED from the contract alone.** The package side is reviewed through `0.4.0` (`MEETS-IN-PART`; `docs/HANDOFF.md` Round 11, owed delivery to the sibling repo is the architect’s own act), and the owed admissions `F3`/`F1` remain the architect’s.

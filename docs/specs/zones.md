@@ -109,7 +109,7 @@ ruling's words** and states the ruling in `§0A` (`A-4` below, `§0A` note 1).
 | **8** | **No new MCP surface, no store, no persistence, no CSP change, no shim change.** `ALL_TOOLS` stays **21**, `RpcMethod` stays **21**, `MUTATING_METHODS` stays **7**, `VALID_GROUPS` keeps its five members; **`src/shared/dom-shim.ts` gains no member** (`H-r5`). | §2.2 (P-4/P-5), §5.1 |
 | **9** | **`A-d2` (the engine pin) is SPENT and is NOT this unit's dependency** — `provident-ssr` is at `^0.5.1` and `U-ENGINE-PIN`/`U-ENGINE-DRIFT` are `DONE`; this module imports **no** engine surface at all. | §1 item 7 |
 | **10** | **`A-d3`/`S-d9` (the node-local interaction rule) and the adopted `U-GSESSION` session are NOT this unit's dependency.** `U-ZONES` is a **pure arithmetic module**: it installs no listener, owns no element, opens no gesture, and takes no event source. **No dependency edge exists** (`U-GUTTER` composes the session; **this unit does not**). | §1 item 7, §7 item 8 |
-| **11** | **`A-d7`'s static-UI reading and `A-d8`'s `ui` leg**: **`AGENTS.md:23-34` and `docs/decisions.md:53` are UNCHANGED**, and **a mechanism is outside that constraint because it is not a UI element**. This unit authors **no text, no control, no affordance, no class, no token value and no styling** — **every string it emits is an argument it was handed** (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`). | §2.2 (P-2), §7 item 5 |
+| **11** | **`A-d7`'s static-UI reading and `A-d8`'s `ui` leg**: **`AGENTS.md:23-34` and `docs/decisions/ACTIVE-store-and-package-binding.md:40` are UNCHANGED**, and **a mechanism is outside that constraint because it is not a UI element**. This unit authors **no text, no control, no affordance, no class, no token value and no styling** — **every string it emits is an argument it was handed** (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`). | §2.2 (P-2), §7 item 5 |
 | **12** | **The go-ahead for wave E does not exist yet, and within wave E this unit lands FIRST.** **This unit is `BLOCKED` on that go-ahead and on its own red set** (its `## OPEN` row `E1` stays `BLOCKED` until both hold). **No unit of wave E precedes it, so it has no ordering precondition.** | this status block, §4.5, §7 item 1 |
 
 ### 0A. The dated ruling notes — **the clauses the ledger leaves open, RULED here (2026-09-27)**
@@ -1136,7 +1136,7 @@ NO such row**: every claim in this file is arithmetic over arguments.
    `emptyToken` may be `'0px'`.**
 5. **The mechanism is outside the UI constraint BECAUSE IT IS NOT A UI ELEMENT**
    (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`): it authors no text, no control, no affordance, no class, no
-   token value and no styling. **`AGENTS.md:23-34` and `docs/decisions.md:53` are UNCHANGED by this
+   token value and no styling. **`AGENTS.md:23-34` and `docs/decisions/ACTIVE-store-and-package-binding.md:40` are UNCHANGED by this
    unit, and this unit needs no exception to them** — **the moment a later pass makes this module
    stamp a literal, a default or a label, it becomes a UI element authored outside the provident graph
    and a review finding.**

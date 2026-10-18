@@ -1249,7 +1249,7 @@ that tree; (c) the observation route is the landed leg's **preferred measurement
 provident **handler body** loaded through the **EXISTING** `provident.load`/`code.load`, reading
 `getBoundingClientRect`/`getComputedStyle` in the real renderer and **writing the value into graph
 content** so it returns over the **existing** `get_rendered_html` (`REAL-DOM-UI-GATE-LEG`'s
-preferred channel, `docs/decisions.md:65`, read); and (d) the leg's fallbacks
+preferred channel, `docs/decisions/ACTIVE-mcp-engine-and-process.md:8`, read); and (d) the leg's fallbacks
 (`webContents.executeJavaScript`, CDP) are **leg-only and may never become MCP tools**. **If the row is
 not taken, no §3 row is weakened** — and **no row may claim a rendered-geometry property**: the
 measurement is **one value**, exactly as `U-REALDOM-BOOT`'s `R2` row words it (`width > 0 && height >
@@ -1946,7 +1946,7 @@ proposal** (§7 item 5, the `U5` row below).
 | **The `'0px'`-family literal prohibition** | amendment §1.1 (`U-ZONES`) | **NOT THIS UNIT** — but the **same prohibition-3 discipline** applies here (no built-in token) | §2.2 (prohibition 3), `M-8` |
 | **`H-r8`'s six-prohibition block** | `S-d8`, `H-r8` | **DISCHARGED** as a six-row assertion table | §2.2 |
 | **The amendment's "no new MCP surface" / no-store / no-CSP-change rows** | amendment §"Adopted units' security / equivalence obligations" | **DISCHARGED** as the five-seam negative + prohibition 4 | §2.2, `A-16` |
-| **`REAL-DOM-UI-GATE-LEG`** (the third leg; the shim demoted to pre-filter; the preferred measurement channel) | `docs/decisions.md:65`, read | **CARRIED** — the optional `[U]` row uses the leg's **existing** channel and makes **no** app-green claim | §5.2, §7 item 6 |
+| **`REAL-DOM-UI-GATE-LEG`** (the third leg; the shim demoted to pre-filter; the preferred measurement channel) | `docs/decisions/ACTIVE-mcp-engine-and-process.md:8`, read | **CARRIED** — the optional `[U]` row uses the leg's **existing** channel and makes **no** app-green claim | §5.2, §7 item 6 |
 | **`U-REALDOM-BOOT`'s honest limits (`R4`/`§1.13`)** | amendment §1.13 | **CARRIED verbatim-in-substance** as §7 item 6 | §5.2, §7 item 6 |
 | **`H-r19`'s hermeticity truth** (isolation YES, headlessness NO, declared with an actionable failure) | `H-r19` | **NOT THIS UNIT's deliverable**, but **binding if the `[U]` row is taken**: no `DISPLAY` ⇒ a prerequisite error naming the fix, never a silent skip | §5.2 |
 | **`H-r5` / `S-d3`** (no shim expansion) | `H-r5`, `S-d3`, `H-r7` | **INHERITED-ONLY** — and for this unit it is **stricter**: the shim may not gain `setProperty` | §1, §4.4 `S-2`, `A-17`, §7 item 10 |
@@ -1978,7 +1978,7 @@ silently reconcile).** Each was read in this pass:
 | --- | --- |
 | `package.json:23` = the `provident-ssr` pin (`docs/decisions.md` note 2 at `:322`, and several spec/queue cells) | **STALE.** `:23` is `@modelcontextprotocol/sdk`; **`"provident-ssr": "^0.5.1"` is at `:24`**. `docs/decisions.md`'s own note 2 cites the stale anchor **in the same sentence** that corrects its substance |
 | `package.json:25-31` / `:25-31` = the `devDependencies` block (`docs/decisions.md` note 2 at `:334`; the `ENGINE-PIN-DEVDEP-JUMP-ACCEPTED` row at `:101`) | **STALE as a range.** `"devDependencies"` opens at **`:26`**; the **five** keys run **`:27`-`:31`**; `:32-34` is the installer-owned `allowScripts` block |
-| `package.json:18` = the `divergence` script, and "`battery:17`/`divergence:18`" (amendment §1.11; `REAL-DOM-UI-GATE-LEG` at `docs/decisions.md:65`) | **VERIFIED for `:18`**; the same sentence's **`ui` leg is at `:19`** — this spec cites **`:19`** for `npm run ui` and does not repeat the pair's `:17`/`:18` shorthand without the read anchor |
+| `package.json:18` = the `divergence` script, and "`battery:17`/`divergence:18`" (amendment §1.11; `REAL-DOM-UI-GATE-LEG` at `docs/decisions/ACTIVE-mcp-engine-and-process.md:8`) | **VERIFIED for `docs/decisions/ACTIVE-store-and-package-binding.md:5`**; the same sentence's **`ui` leg is at `docs/decisions/ACTIVE-store-and-package-binding.md:6`** — this spec cites **`docs/decisions/ACTIVE-store-and-package-binding.md:6`** for `npm run ui` and does not repeat the pair's `docs/decisions/ACTIVE-store-and-package-binding.md:4`/`docs/decisions/ACTIVE-store-and-package-binding.md:5` shorthand without the read anchor |
 | `src/decisions`-style anchors for `MUTATING_METHODS` (the amendment's prohibition-5 family) | **STALE.** The set is at **`src/renderer/renderer.ts:12`**, not in `src/main/mcp-server.ts` — seven members, read |
 | `src/shared/types.ts:259-280` (`RpcMethod`, **21** members) | **VERIFIED in substance** — the union is `:259-281`, **21** members; `RpcRequest` begins at `:282` |
 | `src/main/mcp-server.ts:281-303` (`ALL_TOOLS`, **21** names) | **VERIFIED** — declared `:281`, 21 names `:282-302`, closed `:303` |
@@ -1988,7 +1988,7 @@ silently reconcile).** Each was read in this pass:
 above was **read in this pass** (`src/main/security.ts:134`; `src/shared/types.ts:259-281`;
 `src/renderer/renderer.ts:12`; `src/main/mcp-server.ts:281-303`; `src/shared/dom-shim.ts` — 143
 lines, `:9`; `package.json:10`, `:19`, `:24`, `:26-31`; `tests/engine-pin-version.test.ts:174-197`;
-`docs/decisions.md:53`, `:54`, `:65`, `:101`, `:294`, `:322`, `:334`). **`docs/next-steps.md` is
+`docs/decisions/ACTIVE-store-and-package-binding.md:40`, `docs/decisions/ACTIVE-store-and-package-binding.md:41`, `docs/decisions/ACTIVE-mcp-engine-and-process.md:8`, `docs/decisions/ACTIVE-mcp-engine-and-process.md:44`, `docs/decisions/ACTIVE-projection-and-store-facility.md:17`, `docs/decisions/ACTIVE-data-ownership-and-tiers.md:15`, `docs/decisions/ACTIVE-data-ownership-and-tiers.md:27`). **`docs/next-steps.md` is
 cited by row id only** — that file's own convention forbids line citations.
 
 **Citation hygiene — the RULING-PACK pass (2026-09-27), stated separately so the two passes stay

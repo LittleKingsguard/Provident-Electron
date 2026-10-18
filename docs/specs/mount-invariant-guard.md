@@ -400,7 +400,7 @@ literals**: the observed attribute name `data-node-id`, the six `MountViolationC
 | # | Prohibition | This unit's binding assertion | Pinned by |
 | --- | --- | --- | --- |
 | **1** | **No consumer vocabulary** as a symbol, closed union member, default or documented constant | The module contains **no** `region`/`Region`/`pane`/`tab`/`zone`/`ShellRegionName`/`ShellRegionSpec`/`ShellRegions` occurrence **at all** (source-level static row), and its only string-union is the six-member `MountViolationCode` whose members are contract diagnostics, not consumer values. Consumer values cross as **opaque strings** (`data-node-id` values are never enumerated). | static source row over the module file |
-| **2** | **No app UI content** authored | The module creates **no** element, authors **no** text, **no** class, **no** style, **no** affordance, and emits **nothing** into any tree. It is a **reader**. *(This is what makes it a mechanism and not a UI element — `SHELL-CHROME-CARVE-OUT-FUNCTIONAL`, `docs/decisions.md:54`.)* | static row: zero `createElement`/`document`/`body`/`textContent` writes |
+| **2** | **No app UI content** authored | The module creates **no** element, authors **no** text, **no** class, **no** style, **no** affordance, and emits **nothing** into any tree. It is a **reader**. *(This is what makes it a mechanism and not a UI element — `SHELL-CHROME-CARVE-OUT-FUNCTIONAL`, `docs/decisions/ACTIVE-store-and-package-binding.md:41`.)* | static row: zero `createElement`/`document`/`body`/`textContent` writes |
 | **3** | **No policy defaults** | There is no default expectation, no "assume 1", no default mount, no fallback rootNodeId. An omitted `expect.rootNodeId` means **cardinality-only**, and the result reports `expectedRootNodeId` **absent** — a row asserts that absence. | §3.1 rows + a row asserting the field is omitted |
 | **4** | **No UI-config store or persistence** | Zero store, zero persistence, zero module-level mutable state, zero file/`localStorage`/IPC. The module holds **no state between calls** — a row probes twice with the same arguments and asserts byte-identical results + no retained reference. | static row + an idempotence row (§3.3) |
 | **5** | **No new MCP surface** — the **five-seam negative** | No tool, no resource, no group, no `VALID_GROUPS` member (`src/main/security.ts:134`), no `RpcMethod` member (`src/shared/types.ts:259-281`, read: **21** members), no `MUTATING_METHODS` entry (`src/renderer/renderer.ts:12`), **and no IPC method at all**. `ALL_TOOLS` **stays 21**. | `tests/engine-pin-version.test.ts:174-197`'s census row (read: 21 keys, asserted 21) **must still pass unchanged**; plus a static import row |
@@ -482,7 +482,7 @@ into a test; **none is a measurement this pass took.**
 
 | id | Fail-state | Trigger (exact) | Required behaviour | Layer |
 | --- | --- | --- | --- | --- |
-| **F-1** | **Two or more engine-emitted roots in one mount** — the defect class this unit exists for | Any re-derivation sequence whose mount holds ≥ 2 `data-node-id` direct children | `ok === false`; `violation.code === 'multiple-roots'`; `count === 2` (or N); `nodeIds` lists **every** child in document order; `assertMountInvariant` **throws** with the `multiple-roots` prefix. **RULE 3: this row is the HOST-FIX branch** — the finding lands in this spec's §3a (a host finding is **not** a `docs/defects.md` row: the `R13-HOST-FIX` precedent, `docs/decisions.md:39`, read) **⟶ AND IT HAS FIRED (2026-09-27, the red-set pass): the defect class is INSTANTIATED in this tree, not hypothetical — §3a `RED-1` carries the verbatim two-root observation, and the `M-3`/`M-14` raw rows are its evidence. `F-1`'s own `twoRootState()` row (a **caller-supplied** second root) stays a distinct row: it pins the PROBE's report on a two-root mount, while `RED-1` pins the ENGINE's production of one via a load.** | `[T]`/`[H]` |
+| **F-1** | **Two or more engine-emitted roots in one mount** — the defect class this unit exists for | Any re-derivation sequence whose mount holds ≥ 2 `data-node-id` direct children | `ok === false`; `violation.code === 'multiple-roots'`; `count === 2` (or N); `nodeIds` lists **every** child in document order; `assertMountInvariant` **throws** with the `multiple-roots` prefix. **RULE 3: this row is the HOST-FIX branch** — the finding lands in this spec's §3a (a host finding is **not** a `docs/defects.md` row: the `R13-HOST-FIX` precedent, `docs/decisions/ACTIVE-store-and-package-binding.md:26`, read) **⟶ AND IT HAS FIRED (2026-09-27, the red-set pass): the defect class is INSTANTIATED in this tree, not hypothetical — §3a `RED-1` carries the verbatim two-root observation, and the `M-3`/`M-14` raw rows are its evidence. `F-1`'s own `twoRootState()` row (a **caller-supplied** second root) stays a distinct row: it pins the PROBE's report on a two-root mount, while `RED-1` pins the ENGINE's production of one via a load.** | `[T]`/`[H]` |
 | **F-2** | **Zero engine-emitted roots** | A mount with no `data-node-id` direct children — e.g. a mount never bootstrapped, or an empty fresh mount before `bootstrap()` | `ok === false`; `violation.code === 'no-root'`; `count === 0`; `roots` empty. **Not** an exception, and **not** reported as `ok` | `[T]` |
 | **F-3** | **Root identity mismatch** | Exactly one root whose `nodeId` ≠ `expect.rootNodeId` (e.g. a **stale** expectation captured before a reload whose envelope has a different root) | `ok === false`; `violation.code === 'root-identity-mismatch'`; `count === 1`; `expectedRootNodeId === expect.rootNodeId`; `nodeIds[0]` is the **observed** root | `[T]`/`[H]` |
 | **F-4** | **Mount reference mismatch** | `probeMountInvariant(mountB, { mount: mountA })` where `mountA !== mountB` | `ok === false`; `violation.code === 'mount-reference-mismatch'`. **This is the row that makes "one stable mount" checkable** — it is a violation of the caller's own claim, not of the tree | `[T]` |
@@ -521,7 +521,7 @@ observed outcome is the unit's decisive fact and must be quoted verbatim:**
   re-derivation into one mount. **That is rule 3's HOST-fix branch**, and the fix is in
   `src/renderer/runtime.ts` (the `tearDownGraph()`/diff-removal path, `:777-795` read), **not**
   in the probe. The finding is recorded in **§3a** of this spec — **never** in `docs/defects.md`
-  (the `R13-HOST-FIX` precedent, `docs/decisions.md:39`, read).
+  (the `R13-HOST-FIX` precedent, `docs/decisions/ACTIVE-store-and-package-binding.md:26`, read).
 
 **The red must be reported with the raw observed `count`, the raw `nodeIds`, and the mount's child
 count — never as a summary.** A red run reported as *"the probe does not exist yet"* **without** the
@@ -800,7 +800,7 @@ finding, and the DONE row must say which of (b)/(c) governs.**
 10. **This unit is not a `docs/defects.md` row**, and a host finding it produces is not one either:
     the amendment's adjudicated residual disagreement #1 (read) is explicit that the mount
     invariant is a **target hardening unit**, and the `R13-HOST-FIX` precedent
-    (`docs/decisions.md:39`, read) **refuses** a `defects.md`/`HANDOFF.md` row for a host finding.
+    (`docs/decisions/ACTIVE-store-and-package-binding.md:26`, read) **refuses** a `defects.md`/`HANDOFF.md` row for a host finding.
 11. **The probe's contract is deliberately a RESULT OBJECT plus a thin ASSERT.** An implementation
     that only throws cannot produce the evidence rule 3 requires; an implementation that only
     returns cannot be used as a regression assertion. **Both are required, and the split is a
@@ -842,7 +842,7 @@ finding, and the DONE row must say which of (b)/(c) governs.**
 16. **⟶ ADDED (2026-09-27). The host finding is NOT a `docs/defects.md` row** — restated here as the
     standing consequence, because the fix is now owed and a later pass might be tempted to file it as
     a defect: §4.4 `S-1` and §4.1 both require the finding to land **in §3a**, and the `R13-HOST-FIX`
-    precedent (`docs/decisions.md:39`) refuses a `defects.md`/`HANDOFF.md` row for a **host** finding.
+    precedent (`docs/decisions/ACTIVE-store-and-package-binding.md:26`) refuses a `defects.md`/`HANDOFF.md` row for a **host** finding.
     **What is owed instead is the fix in `src/renderer/runtime.ts` + its regression rows (§5.1 row 3,
     §3a `RED-5`).** **⟶ THE OWED SET HAS LANDED (2026-09-27, the adversarial + blind-verification
     pass; the sentence above is kept as the state it described): the fix is `reconcileMount()`
@@ -950,7 +950,7 @@ the unit now has a **red set** (§4.6) but **no green**, and RCA-3's adversarial
 green**. **The red run is NOT the adversarial pass**, and the finding recorded immediately below is
 **not** one of §3a's seed-set dispositions — it is the **red run's own measurement**, recorded here
 because §4.4 `S-1`/§4.1 require a host finding to land **in §3a** and **not** as a
-`docs/defects.md` row (the `R13-HOST-FIX` precedent, `docs/decisions.md:39`). **The seed set below is
+`docs/defects.md` row (the `R13-HOST-FIX` precedent, `docs/decisions/ACTIVE-store-and-package-binding.md:26`). **The seed set below is
 untouched by the amendment and remains the pass's work list**; its `A-1`/`A-6`/`A-7` rows are now
 **known-live** rather than hypothetical, which is why this section still matters. **⟶ THE PASS HAS
 SINCE RUN (2026-09-27, the adversarial + blind-verification pass): the two `OWED` status lines above are

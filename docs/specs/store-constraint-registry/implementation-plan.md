@@ -19,7 +19,7 @@
 2. **THE TYPED REGISTER EXISTS, IS TYPED AND IS UN-RUN** (`docs/specs/store-constraint-registry/property-register.md §5.5.1`: `19` rows, `246` attempts, `≤100`/row, `≤400` total, stop-after-5) — **authored BEFORE the red set, which is `AGENTS.md` item 11's own requirement.**
 3. **THE PARAMETER ROWS EXIST — one per declared parameter** (`docs/specs/store-constraint-registry/parameter-semantics.md §6`: `20` rows) — a missing row is a gate-2 finding (`AGENTS.md` item 5's spec discipline, applied at this gate).
 4. **THE DEPENDENCY IS DECLARED AND NOT ACTIVATED** (`docs/specs/store-constraint-registry/registers.md §2.4` item 1(c)) — **so nothing in the pre-flight requires a package module, an install, a lockfile change or a network step.**
-5. **NOTHING IN THE PRE-FLIGHT MOVES A FREEZE** (`docs/specs/store-constraint-registry/registers.md §2.5` item 6; `A2 docs/decisions.md:22` · `:28`).
+5. **NOTHING IN THE PRE-FLIGHT MOVES A FREEZE** (`docs/specs/store-constraint-registry/registers.md §2.5` item 6; `A2 docs/decisions/ACTIVE-store-and-package-binding.md:9` · `docs/decisions/ACTIVE-store-and-package-binding.md:15`).
 
 ### §P.3 The phases — what it does, its owner, and why it is in that position
 

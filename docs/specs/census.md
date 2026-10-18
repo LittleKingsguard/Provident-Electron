@@ -105,7 +105,7 @@ format template.
 | **8** | **No new MCP surface, no store, no persistence, no CSP change, no shim change.** `ALL_TOOLS` stays **21**, `RpcMethod` stays **21**, `MUTATING_METHODS` stays **7**, `VALID_GROUPS` keeps its five members; **`src/shared/dom-shim.ts` gains no member** (`H-r5`). | §2.2 (P-4/P-5), §5.1 |
 | **9** | **`A-d2` (the engine pin) is SPENT and is NOT this unit's dependency** — this module imports **no** engine surface at all, and its only import is its own predecessor (`§3.4 R-1`). | §1 item 8, `§3.4 R-1` |
 | **10** | **`A-d3`/`S-d9` (the node-local interaction rule) and the adopted `U-GSESSION` session are NOT this unit's dependency.** This unit is a **pure `src/shared/` mechanism**: it installs no listener, owns no element, opens no gesture and takes no event source. **It does not compose the session** — `U-GUTTER` does. | §1 item 8, §7 item 8 |
-| **11** | **`A-d7`'s static-UI reading and `A-d8`'s `ui` leg**: **`AGENTS.md:23-34` and `docs/decisions.md:53` are UNCHANGED**, and **a mechanism is outside that constraint because it is not a UI element** (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`). This unit authors **no text, no control, no affordance, no class, no token value, no CSS and no DOM**. | §2.2 (P-2/P-3), §7 item 5 |
+| **11** | **`A-d7`'s static-UI reading and `A-d8`'s `ui` leg**: **`AGENTS.md:23-34` and `docs/decisions/ACTIVE-store-and-package-binding.md:40` are UNCHANGED**, and **a mechanism is outside that constraint because it is not a UI element** (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`). This unit authors **no text, no control, no affordance, no class, no token value, no CSS and no DOM**. | §2.2 (P-2/P-3), §7 item 5 |
 | **12** | **The red set IS AUTHORISED** by the wave-E go-ahead plus the architect ruling (`§0A` ruling note 11), WAS AUTHORED, RUN and REPORTED (`tests/census.test.ts`, `67` rows green), the unit went green, gates 4–7 ran and it is `DONE`. **Its ordering precondition is DISCHARGED**: `U-ZONES` (row `E1`) is `DONE`. | CURRENT STATE block, §4.5, §7 item 1 |
 
 ### 0A. The dated ruling notes — the clauses the ledger leaves open, RULED here (2026-09-27)
@@ -1451,7 +1451,7 @@ files.
    bounded vocabulary token (`R-3`'s implementer wording hazard).**
 5. **The mechanism is outside the UI constraint BECAUSE IT IS NOT A UI ELEMENT**
    (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`): it authors no text, no control, no affordance, no class, no
-   token value and no styling. **`AGENTS.md:23-34` and `docs/decisions.md:53` are UNCHANGED by this
+   token value and no styling. **`AGENTS.md:23-34` and `docs/decisions/ACTIVE-store-and-package-binding.md:40` are UNCHANGED by this
    unit, and this unit needs no exception to them** — **the moment a later pass makes this module stamp
    a literal, a default or a label, it becomes a UI element authored outside the provident graph and a
    review finding.**
