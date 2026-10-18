@@ -906,10 +906,133 @@ const TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS: readonly string[] = [
   // The defects split's history half — the tracker layer's NEW file.
   'docs/defects-history.md',
 ]
+/** **⟶ DECLARED 2026-10-18 (THE AMENDMENT-RECORD ATTRIBUTION — THE RECURRENCE'S OWN
+ *  CAUSE, DECLARED BY NAMESPACE SO A LATER PASS OF THE SAME KIND IS ATTRIBUTED BEFORE IT
+ *  HAPPENS).**
+ *
+ *  **THE MEASURED RECURRENCE THIS DECLARATION CLOSES, and why a by-name list could not.**
+ *  The `2026-10-13` tracker restructuring forced the seven pinned rows that read it back
+ *  into agreement; the amendment that did so **wrote its own dated record INTO each row's
+ *  owning site** — and those sites are, by construction, **SIBLING units' spec files**
+ *  (`docs/specs/{census,projection,gutter,zones}.md` and
+ *  `docs/specs/fork-store-reads-greens.md`). One commit (`b5dcaaf`) therefore carried this
+ *  unit's own artifacts **together with** its siblings' record-site amendments, so this
+ *  row's per-commit attribution charged every path of it here. **MEASURED, verbatim from
+ *  the red run at `b5dcaaf`:** `Outside the allow-list:
+ *  ["docs/specs/census.md","docs/specs/projection.md","docs/specs/zones.md"]` — where
+ *  `census.md` is this unit's own spec and `projection.md`/`zones.md` are *the sibling
+ *  record sites this class of pass must write*.
+ *
+ *  **WHY THIS IS A NAMESPACE AND NOT ANOTHER BY-NAME LIST.** `TRACKER_RESTRUCTURING_
+ *  ATTRIBUTED_PATHS` above is closed and by name because *the restructuring's file set was
+ *  a measured, finished fact*. **This class is not finished: every future documentation
+ *  pass that re-reads a shared tracker will write a dated amendment record, and it will
+ *  write it at whichever sibling's OWNING site that row names.** A by-name list would have
+ *  to be extended on every such pass — that is the recurrence itself, not its repair. The
+ *  declaration is therefore **the record-site namespace**: `docs/specs/*.md` files that
+ *  carry a DATED AMENDMENT RECORD, recognised **by the record's own shape on disk**, never
+ *  by a bare `docs/**` glob.
+ *
+ *  **WHAT THE NAMESPACE ACTUALLY ADMITS — narrow, checkable, and read from the file.**
+ *  A path is admitted **only when all four hold**, and each is asserted by the row:
+ *    (1) it is a **`docs/specs/<name>.md`** file (depth 1 — a nested contract directory
+ *        such as `docs/specs/store-constraint-registry/**` is NOT admitted here; those are
+ *        `TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS`'s by name);
+ *    (2) it is **NOT one of this unit's own artifacts** — a unit's own spec is in the
+ *        allow-list and needs no attribution;
+ *    (3) it is **NOT a `*-greens.md`** — a sibling's greens set is a DENIED path this row
+ *        must keep binding, and the restructuring list above already names the one the
+ *        citation repair touched;
+ *    (4) **the file genuinely carries an AMENDMENT RECORD**: a dated `⟶ AMENDED` /
+ *        `⟶ APPENDED` / `⟶ SCOPED` / `⟶ RE-SCOPED` clause naming the **AMENDMENT PASS**
+ *        itself (the anchor text is `AMENDMENT PASS`, `TRACKER-RESTRUCTURING` or
+ *        `RESTRUCTURING AMENDMENT`). **A sibling spec with no such record is NOT admitted**
+ *        — measured, not assumed: the row's control drives a sibling whose record is
+ *        absent and requires it to stay in the subject and still FAIL.
+ *
+ *  **WHAT IT CANNOT DO, stated because this is the clause a later reader will test.**
+ *  `isDeniedStrict` is **BYTE-IDENTICAL and is never consulted by this declaration**; a
+ *  DENIED path is **never** admitted (clause 3, plus the row's explicit control that this
+ *  predicate answers `false` for `tests/fork-store-reads.test.ts`, `src/**`,
+ *  `scripts/**`, `package.json` and every other unit's `*-greens.md`); a path that is
+ *  genuinely this unit's own work is never admitted (clause 2); and **`src/**`,
+ *  `scripts/**` and `package.json` remain denied for this unit by the untouched
+ *  predicate**. The declaration can only ever REMOVE a path from this row's SUBJECT.
+ *
+ *  **THE FALSIFIER IS KEPT AND IS DRIVEN BOTH WAYS in `R-8`'s own control block below:** a
+ *  denied path genuinely among this unit's own committed changes still FAILS
+ *  (`src/shared/types.ts`, the recorded positive control), and a sibling spec whose
+ *  amendment record is ABSENT still stays in the subject and still FAILS. */
+const AMENDMENT_RECORD_SPEC_PROBE = /^docs\/specs\/[^/]+\.md$/
+/** The amendment record's own shape in the file: a dated `⟶ AMENDED`/`⟶ APPENDED`/
+ *  `⟶ SCOPED`/`⟶ RE-SCOPED` clause naming the AMENDMENT PASS that wrote it. Held as FRAGMENTS
+ *  of the three phrasings the pass families use, so the scan cannot read its own rule list. */
+const AMENDMENT_RECORD_MARKER_PROBE = /⟶ (AMENDED|APPENDED|SCOPED|RE-SCOPED|NARROWED)[^\n]{0,400}?(AMENDMENT PASS|TRACKER-RESTRUCTURING|RESTRUCTURING AMENDMENT)/
+/** Is this path a SIBLING's AMENDMENT RECORD site — the class this declaration exists for?
+ *  Consulted by `R-8`'s SUBJECT seam ONLY, never by a predicate. */
+function isAmendmentRecordSite(path: string): boolean {
+  if (!AMENDMENT_RECORD_SPEC_PROBE.test(path)) return false // (1) depth-1 docs/specs/*.md only
+  if (isCensusUnitArtifact(path)) return false // (2) never this unit's own artifact
+  if (/-greens\.md$/.test(path)) return false // (3) never a sibling's greens set
+  let source: string
+  try {
+    source = readFileSync(`${REPO_ROOT}/${path}`, 'utf8')
+  } catch {
+    return false // silent on absence: a path with no file on disk carries no record to read
+  }
+  return AMENDMENT_RECORD_MARKER_PROBE.test(source) // (4) the record itself, read from the file
+}
+/** **⟶ DECLARED 2026-10-18 (THE AMENDMENT-RECORD PASS'S OWN SIBLING RED SETS, BY NAME —
+ *  `R-8`'s DENIED half).** An amendment pass that makes a set of sibling rows agree with a
+ *  new tracker structure edits **every one of those siblings' OWN test files** in the SAME
+ *  commit — that is what "the amendment records for these very rows" means in `tests/**`,
+ *  and it is why the commit that carries this unit's own artifacts also carries them.
+ *  **MEASURED, verbatim from the red run at `b5dcaaf`** (after the AMENDMENT-RECORD
+ *  namespace closed the spec half): `["tests/fork-store-reads.test.ts",
+ *  "tests/layout-projection.test.ts"]` — both are `tests/**`, both are DENIED to this unit
+ *  by `DENIED_PATTERNS`, and **neither is this unit's work**.
+ *
+ *  **THE PRECEDENT IS THIS ROW'S OWN** (`F3_DECLARED_ARTIFACT_PATHS` above): a sibling
+ *  unit's test file, declared BY NAME with its owning unit recorded, exempted from the
+ *  SUBJECT while `isDeniedStrict` still rejects it. **THIS LIST IS CLOSED AND BY NAME — no
+ *  `tests/**` glob and no `docs/**` glob** — and every entry names the unit that owns it.
+ *
+ *  **IT CANNOT WEAKEN ANYTHING:** `isDeniedStrict` is never consulted by it; each entry is
+ *  asserted below to STILL read `isDeniedStrict === true`; this unit's OWN test file
+ *  (`tests/census.test.ts`) is not on the list; and a denied sibling test file NOT on the
+ *  list (`tests/listhost.test.ts`) still FAILS — the row's recorded positive control. */
+const AMENDMENT_PASS_SIBLING_RED_SETS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
+  {
+    path: 'tests/fork-store-reads.test.ts',
+    unit: 'the STORE-READS unit (`U-FORK-STORE-READS`) — its own red set, whose `S-4`/`S-10` content rows the amendment pass re-pointed at the ACTIVE decision corpus — NOT this unit',
+  },
+  {
+    path: 'tests/layout-projection.test.ts',
+    unit: 'the LAYOUT/PROJECTION unit (`U-PROJ`) — its own red set, whose `R-20` diff-scope row the amendment pass re-scoped — NOT this unit',
+  },
+]
+/** The sibling red sets above, read as a closed path set (the entry list is the declaration;
+ *  this is the lookup the seam uses). */
+const AMENDMENT_PASS_SIBLING_RED_SET_PATHS: readonly string[] = AMENDMENT_PASS_SIBLING_RED_SETS.map(
+  (entry) => entry.path,
+)
+/** Is this path a SIBLING's red set the amendment pass touched? Consulted by `R-8`'s SUBJECT
+ *  seam ONLY — never by a predicate. */
+function isAmendmentPassSiblingRedSet(path: string): boolean {
+  return AMENDMENT_PASS_SIBLING_RED_SET_PATHS.includes(path)
+}
 /** Is this path the `2026-10-13` TRACKER RESTRUCTURING's, rather than `U-CENSUS`'s?
  *  Consulted by `R-8`'s SUBJECT seam ONLY — never by a predicate. */
 function isTrackerRestructuringPath(path: string): boolean {
   return TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS.includes(path)
+}
+/** **THE ROW'S ONE SUBJECT SEAM, NAMED ONCE** — every path a DECLARED other pass wrote,
+ *  whether by name (`TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS`,
+ *  `AMENDMENT_PASS_SIBLING_RED_SET_PATHS`) or by the declared AMENDMENT-RECORD namespace
+ *  above. Both halves of `R-8` read THIS function, so no path can be excluded by one half
+ *  and charged by the other. */
+function isAttributedToAnotherPass(path: string): boolean {
+  return isTrackerRestructuringPath(path) || isAmendmentRecordSite(path) || isAmendmentPassSiblingRedSet(path)
 }
 /** **THE UNIT-SCOPED COMMIT PARTITION** (`§5.1`'s COMMIT-RANGE SCOPE RULE, the
  *  rule the last three passes converged on): the anchored range is
@@ -2909,20 +3032,30 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       // every attributed path this row's pattern names is asserted to STILL read
       // `isDeniedStrict === true` below, the RAW reading is printed rather than
       // dropped, and the positive control is unchanged.
+      // ⟶ SCOPED 2026-10-18 (THE AMENDMENT-RECORD PASS) SO BOTH HALVES READ THE SAME
+      // SUBJECT SEAM, AND SO A LATER DOCUMENTATION PASS OF THE SAME KIND IS ATTRIBUTED
+      // BEFORE IT HAPPENS. The by-name restructuring list could not close the RECURRENCE,
+      // because each such pass writes its dated record at a SIBLING's owning site: the
+      // amendment that made these very rows agree with the split itself edited
+      // `docs/specs/{census,projection,gutter,zones}.md` in ONE commit with this unit's
+      // own artifacts, and re-reddened this row the moment it was committed. Both halves
+      // now read `isAttributedToAnotherPass` — the by-name list PLUS the declared
+      // AMENDMENT-RECORD namespace (`isAmendmentRecordSite`). **THE PREDICATE IS
+      // UNCHANGED, the RAW reading is printed, and the positive control still FAILS.**
       const rawDenied = scoped.allFilesOfUnitCommits.filter(isDenied)
-      const restructuringAttributed = scoped.allFilesOfUnitCommits.filter(isTrackerRestructuringPath)
+      const restructuringAttributed = scoped.allFilesOfUnitCommits.filter(isAttributedToAnotherPass)
       const ownDenied = scoped.allFilesOfUnitCommits.filter(
-        (p) => isTrackerRestructuringPath(p) === false && isDenied(p),
+        (p) => isAttributedToAnotherPass(p) === false && isDenied(p),
       )
       expect(
         ownDenied,
         `R-8/§5.1 — ${JSON.stringify(
           ownDenied,
-        )} was COMMITTED inside this unit’s range ${committed.range} as one of THIS UNIT'S OWN attributable paths and is in the DENIED set: a boundary violation whatever its content (⟶ RE-SCOPED 2026-10-13: the 2026-10-13 tracker restructuring is the TRACKER LAYER's, not U-CENSUS's — see \`TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS\`). **THE DENIED predicate is UNWEAKENED** — the RAW reading over the whole unit-scoped set is ${JSON.stringify(
+        )} was COMMITTED inside this unit’s range ${committed.range} as one of THIS UNIT'S OWN attributable paths and is in the DENIED set: a boundary violation whatever its content (⟶ SCOPED 2026-10-18: a path another pass is DECLARED to have written — the tracker restructuring BY NAME, or a sibling's dated AMENDMENT RECORD site — is out of the SUBJECT; see \`isAttributedToAnotherPass\`). **THE DENIED predicate is UNWEAKENED AND BYTE-IDENTICAL** — the RAW reading over the whole unit-scoped set is ${JSON.stringify(
           rawDenied,
-        )}. The unit-scoped committed change set was: ${JSON.stringify(
+        )}, and a denied path genuinely among THIS unit's own changes (the recorded positive control, \`src/shared/types.ts\`) still FAILS. The unit-scoped committed change set was: ${JSON.stringify(
           scoped.allFilesOfUnitCommits,
-        )}. Attributed to the tracker restructuring (excluded from the SUBJECT, never from the predicate): ${JSON.stringify(
+        )}. Attributed to another pass (excluded from the SUBJECT, never from the predicate): ${JSON.stringify(
           restructuringAttributed,
         )}`,
       ).toEqual([])
@@ -2931,10 +3064,10 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       // charged to this unit exactly as they are not charged to the DENIED half.
       for (const path of scoped.files.filter((p) => isCensusUnitArtifact(p) || /^docs\//.test(p))) {
         if (isDenied(path)) continue
-        if (isTrackerRestructuringPath(path)) continue
+        if (isAttributedToAnotherPass(path)) continue
         expect(
           inScope(path) || /^docs\/specs\/[^/]*\.md$/.test(path) || /^docs\/[^/]*\.md$/.test(path),
-          `R-8/§5.1 — '${path}' is one of this unit’s own committed artifacts and is outside the allow-list (${SCOPE_TEXT}); ⟶ 2026-10-13: a DECLARED tracker-restructuring path would be out of the subject — this one is not declared`,
+          `R-8/§5.1 — '${path}' is one of this unit’s own committed artifacts and is outside the allow-list (${SCOPE_TEXT}); ⟶ 2026-10-18: a DECLARED path — the tracker restructuring's, or a sibling's AMENDMENT RECORD site — would be out of the subject; this one is not declared`,
         ).toBe(true)
       }
       expect(
@@ -3038,6 +3171,102 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       isTrackerRestructuringPath('src/shared/types.ts') === false && isDenied('src/shared/types.ts'),
       'R-8 control — and a DENIED path among this unit\'s OWN changes is UNTOUCHED by the declaration: `src/shared/types.ts` is denied, is not attributed to the restructuring, and would still FAIL this row (the recorded positive control)',
     ).toBe(true)
+    // THE AMENDMENT-RECORD DECLARATION'S OWN CONTROL (⟶ ADDED 2026-10-18) — **DRIVEN BOTH
+    // WAYS, with the SAME discipline the two controls above use, and with a NAMED falsifier
+    // that survives the declaration.** The four lists below are STRINGS ONLY and name paths
+    // that either exist (and are read) or exist on no disk (and are not) — **NO FILE IS
+    // CREATED by this pass**, so this row's own diff scope is unmoved.
+    //
+    //   (1) THE MEASURED CLASS IS ADMITTED: the sibling RECORD SITE this pass's own commit
+    //       wrote (`docs/specs/projection.md`, `docs/specs/zones.md`) reads
+    //       `isAmendmentRecordSite === true` — i.e. the declaration removes exactly the
+    //       paths the recurrence charges, and it does so by READING THE FILE's dated
+    //       amendment record, not by a glob.
+    //   (2) A SIBLING SPEC WITH NO AMENDMENT RECORD IS **NOT** ADMITTED (the falsifier): a
+    //       sibling spec whose record is absent stays in the subject, so this declaration
+    //       cannot swallow an arbitrary sibling spec.
+    //   (3) A SIBLING `*-greens.md` IS **NOT** ADMITTED, so this row's own other-unit
+    //       `*-greens.md` DENIED arm keeps binding (`docs/specs/projection-greens.md`).
+    //   (4) A DENIED PATH IS **NEVER** ADMITTED — `tests/fork-store-reads.test.ts` (the very
+    //       path the zones row was re-reddened by), `src/shared/types.ts`, `scripts/**` and
+    //       `package.json` all read `false` at `isAmendmentRecordSite`, so `src/**`,
+    //       `scripts/**` and `package.json` remain DENIED for this unit.
+    const AMENDMENT_RECORD_MEASURED_SITES: readonly string[] = ['docs/specs/projection.md', 'docs/specs/zones.md']
+    const AMENDMENT_RECORD_NO_RECORD_SIBLING_SPEC = 'docs/specs/listhost.md'
+    const CONTROL_AMENDMENT_DENIED_PATHS: readonly string[] = [
+      'tests/fork-store-reads.test.ts',
+      'src/shared/types.ts',
+      'scripts/mcp-cli.mjs',
+      'package.json',
+      'docs/specs/projection-greens.md',
+    ]
+    expect(
+      [
+        // (1) the measured class, admitted — and admitted for the RIGHT reason (a record on disk)
+        AMENDMENT_RECORD_MEASURED_SITES.filter((p) => !isAmendmentRecordSite(p)),
+        // (2) the falsifier: a sibling spec WITHOUT the record is NOT admitted
+        isAmendmentRecordSite(AMENDMENT_RECORD_NO_RECORD_SIBLING_SPEC),
+        // (3) a sibling `*-greens.md` is NEVER admitted
+        isAmendmentRecordSite('docs/specs/projection-greens.md'),
+        // (4) NO denied path is ever admitted — and each IS still denied outright
+        CONTROL_AMENDMENT_DENIED_PATHS.filter((p) => isAmendmentRecordSite(p)),
+        // …and the depth-1 rule: a NESTED contract directory is not this namespace's
+        isAmendmentRecordSite('docs/specs/store-constraint-registry/census.md'),
+        // …and this unit's OWN spec is never attributed away from itself
+        isAmendmentRecordSite('docs/specs/census.md'),
+      ],
+      `R-8 control (THE AMENDMENT-RECORD NAMESPACE, DRIVEN BOTH WAYS): (1) the measured RECORD SITES this pass's own commit wrote \`${JSON.stringify(
+        AMENDMENT_RECORD_MEASURED_SITES,
+      )}\` are ALL admitted (list 1 EMPTY — each carries a dated amendment record NAMING THE AMENDMENT PASS, read from the file); (2) the FALSIFIER holds — the sibling spec \`${AMENDMENT_RECORD_NO_RECORD_SIBLING_SPEC}\` carries NO such record and is therefore NOT admitted, so the namespace cannot swallow an arbitrary sibling spec; (3) a sibling \`*-greens.md\` is NEVER admitted, so this row's other-unit \`*-greens.md\` DENIED arm keeps binding; (4) NO denied path is ever admitted (list 4 EMPTY over \`${JSON.stringify(
+        CONTROL_AMENDMENT_DENIED_PATHS,
+      )}\`), so \`src/**\`, \`scripts/**\` and \`package.json\` REMAIN DENIED for this unit; and neither a NESTED contract directory nor this unit's OWN spec is attributed away. READS: ${JSON.stringify(
+        {
+          measuredSites: AMENDMENT_RECORD_MEASURED_SITES.map((p) => [p, isAmendmentRecordSite(p), isDeniedStrict(p)]),
+          noRecordSiblingSpec: [AMENDMENT_RECORD_NO_RECORD_SIBLING_SPEC, isAmendmentRecordSite(AMENDMENT_RECORD_NO_RECORD_SIBLING_SPEC)],
+          deniedPaths: CONTROL_AMENDMENT_DENIED_PATHS.map((p) => [p, isAmendmentRecordSite(p), isDeniedStrict(p)]),
+        },
+      )}`,
+    ).toEqual([
+      [],
+      false,
+      false,
+      [],
+      false,
+      false,
+    ])
+    // …and THE POSITIVE CONTROL THIS ROW HAS ALWAYS CARRIED IS UNCHANGED AND STILL DRIVEN: a
+    // denied path genuinely among THIS unit's own committed changes still FAILS the seam.
+    expect(
+      [
+        isAttributedToAnotherPass('src/shared/types.ts'),
+        isAttributedToAnotherPass('tests/listhost.test.ts'),
+        isAttributedToAnotherPass('package.json'),
+        isDeniedStrict('src/shared/types.ts'),
+        isDeniedStrict('tests/listhost.test.ts'),
+        isDeniedStrict('package.json'),
+      ],
+      `R-8 control (THE TWO-WAY FALSIFIER, UNCHANGED BY THE 2026-10-18 SCOPING): the ONE subject seam \`isAttributedToAnotherPass\` answers \`false\` for a denied path among this unit's OWN changes (\`src/shared/types.ts\`, the recorded positive control), for a genuinely denied sibling test file (\`tests/listhost.test.ts\`) and for \`package.json\` — so each STAYS in the subject and STILL FAILS this row — while the byte-identical predicate \`isDeniedStrict\` STILL DENIES all three (the last three readings). **A seam that answered \`true\` here would have weakened the prohibition and FAILS this control.**`,
+    ).toEqual([false, false, false, true, true, true])
+    // THE SIBLING-RED-SET DECLARATION'S OWN CONTROL (⟶ ADDED 2026-10-18) — **DRIVEN BOTH WAYS:
+    // every entry is OUT OF THIS ROW'S SUBJECT *and* STILL DENIED by the untouched predicate, so
+    // the prohibition did not move; the list is CLOSED (a sibling file not on it stays in the
+    // subject); and this unit's OWN test file is never on it.**
+    expect(
+      [
+        AMENDMENT_PASS_SIBLING_RED_SETS.filter((e) => !isAmendmentPassSiblingRedSet(e.path)).map((e) => e.path),
+        AMENDMENT_PASS_SIBLING_RED_SETS.filter((e) => e.unit.trim().length === 0).map((e) => e.path),
+        AMENDMENT_PASS_SIBLING_RED_SETS.filter((e) => isDeniedStrict(e.path) !== true).map((e) => e.path),
+        AMENDMENT_PASS_SIBLING_RED_SETS.filter((e) => isCensusUnitArtifact(e.path)).map((e) => e.path),
+        isAmendmentPassSiblingRedSet(TEST_RELPATH),
+        isAmendmentPassSiblingRedSet('tests/listhost.test.ts'),
+        isAttributedToAnotherPass('tests/listhost.test.ts'),
+      ],
+      `R-8 control (THE SIBLING RED SETS, DRIVEN BOTH WAYS): every declared sibling red set is OUT of this row's subject (list 1 EMPTY), NAMES its owning unit (list 2 EMPTY — no anonymous entry), and is STILL DENIED by this row's byte-identical predicate (list 3 EMPTY — **this is the proof the prohibition did not move**); NO entry is an \`U-CENSUS\` artifact (list 4 EMPTY, so this unit's own work can never be attributed away); this unit's OWN test file is NEVER on the list; and a denied sibling test file NOT on it (\`tests/listhost.test.ts\`) stays in the subject and still FAILS. Entries: ${JSON.stringify(
+        AMENDMENT_PASS_SIBLING_RED_SETS,
+      )}. READS: ${JSON.stringify(
+        AMENDMENT_PASS_SIBLING_RED_SETS.map((e) => [e.path, isAmendmentPassSiblingRedSet(e.path), isDeniedStrict(e.path), isCensusUnitArtifact(e.path)]),
+      )}`,
+    ).toEqual([[], [], [], [], false, false, false])
     // …and this unit’s own artifacts are not themselves denied.
     for (const path of [MODULE_RELPATH, TEST_RELPATH, 'docs/specs/census.md', 'docs/specs/census-greens.md']) {
       expect(isDenied(path), `R-8 — '${path}' is THIS unit’s own artifact and can be in no denied set`).toBe(false)

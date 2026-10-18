@@ -2891,6 +2891,76 @@ const TRACKER_RESTRUCTURING_ARTIFACTS: ReadonlyArray<{ readonly path: string; re
 const TRACKER_RESTRUCTURING_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
   TRACKER_RESTRUCTURING_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
 )
+/** **⟶ DECLARED 2026-10-18 (THE AMENDMENT-RECORD ATTRIBUTION — THE RECURRENCE'S OWN CAUSE,
+ *  DECLARED BY NAMESPACE SO A LATER PASS OF THE SAME KIND IS ATTRIBUTED BEFORE IT HAPPENS).**
+ *
+ *  **THE MEASURED RECURRENCE THIS DECLARATION CLOSES, and why the eighth registry's by-name
+ *  list could not.** The `2026-10-13` tracker restructuring forced the seven pinned rows
+ *  that read it back into agreement; the bounded amendment that did so **wrote its own dated
+ *  record INTO each row's OWNING SITE** — and those sites are, by construction, **SIBLING
+ *  units' spec files** (`docs/specs/{census,projection,gutter,zones}.md` and
+ *  `docs/specs/fork-store-reads-greens.md`). One commit (`b5dcaaf`) therefore carried this
+ *  unit's own spec and test file **together with** its siblings' record-site amendments, so
+ *  the row's per-commit attribution charged every path of it to `E3`. **MEASURED, verbatim
+ *  from the red run at `b5dcaaf`:** `Outside the allow-list:
+ *  ["docs/specs/census.md","docs/specs/projection.md","docs/specs/zones.md"]` — `gutter.md`
+ *  is this unit's own spec (allow-listed), and the other three are *the sibling record sites
+ *  this class of pass must write*.
+ *
+ *  **WHY THIS IS A NAMESPACE AND NOT A NINTH BY-NAME REGISTRY.**
+ *  `TRACKER_RESTRUCTURING_ARTIFACTS` above is closed and by name because *the
+ *  restructuring's file set was a measured, FINISHED fact*. **This class is not finished:
+ *  every future documentation pass that re-reads a shared tracker writes a dated amendment
+ *  record, at whichever sibling's OWNING site that row names.** A by-name list would have to
+ *  be extended on every such pass — that is the recurrence itself, not its repair. The
+ *  declaration is therefore **the record-site namespace**: `docs/specs/<name>.md` files that
+ *  carry a DATED AMENDMENT RECORD, recognised **by the record's own shape on disk**, never by
+ *  a bare `docs/**` glob.
+ *
+ *  **WHAT THE NAMESPACE ACTUALLY ADMITS — narrow, checkable, read from the file.** A path is
+ *  admitted **only when all four hold**, and each is driven by `R-12`'s control (o):
+ *    (1) it is a **`docs/specs/<name>.md`** file (depth 1 — a nested contract directory is
+ *        NOT admitted here; those are `TRACKER_RESTRUCTURING_ARTIFACTS`'s by name);
+ *    (2) it is **NOT one of `E3`'s five own artifacts** — a unit's own spec is allow-listed
+ *        and needs no attribution;
+ *    (3) it is **NOT a `*-greens.md`** — a sibling's greens set is a DENIED path this row must
+ *        keep binding;
+ *    (4) **the file genuinely carries an AMENDMENT RECORD**: a dated `⟶ AMENDED` /
+ *        `⟶ APPENDED` / `⟶ SCOPED` / `⟶ RE-SCOPED` / `⟶ NARROWED` clause naming the
+ *        **AMENDMENT PASS** itself. **A sibling spec with NO such record is NOT admitted** —
+ *        measured, not assumed (`docs/specs/listhost.md` is the falsifier the control drives).
+ *
+ *  **WHAT IT CANNOT DO.** `isDeniedPath` is **BYTE-IDENTICAL and is never consulted by this
+ *  declaration**; a DENIED path is **never** admitted (clause 3, plus control (o)'s explicit
+ *  reading that it answers `false` for `tests/fork-store-reads.test.ts`, `src/**`, `scripts/**`,
+ *  `package.json` and every sibling `*-greens.md`); a path that is genuinely `E3`'s own work is
+ *  never admitted (clause 2); **`src/**`, `scripts/**` and `package.json` remain DENIED for this
+ *  unit by the untouched predicate**; and an UNDECLARED path outside the allow-list still FAILS
+ *  (control (m)'s synthetic path). The declaration can only ever REMOVE a path from `E3`'s
+ *  SUBJECT. **The DENIED half's positive control is unchanged: a denied path among `E3`'s own
+ *  changes still FAILS.** */
+const AMENDMENT_RECORD_SPEC_PROBE = /^docs\/specs\/[^/]+\.md$/
+/** The amendment record's own shape in the file, held as FRAGMENTS of the phrasings the pass
+ *  families use so a scan cannot read its own rule list. */
+const AMENDMENT_RECORD_MARKER_PROBE = /⟶ (AMENDED|APPENDED|SCOPED|RE-SCOPED|NARROWED)[^\n]{0,400}?(AMENDMENT PASS|TRACKER-RESTRUCTURING|RESTRUCTURING AMENDMENT)/
+/** Is this path a SIBLING's AMENDMENT RECORD site — the class this declaration exists for?
+ *  Consulted by `declaredOtherUnitNameOf` ONLY, never by a predicate. */
+function isAmendmentRecordSite(path: string): boolean {
+  if (!AMENDMENT_RECORD_SPEC_PROBE.test(path)) return false // (1) depth-1 docs/specs/*.md only
+  if (isE3OwnArtifact(path)) return false // (2) never one of E3's own five artifacts
+  if (/-greens\.md$/.test(path)) return false // (3) never a sibling's greens set
+  let source: string
+  try {
+    source = readFileSync(`${REPO_ROOT}/${path}`, 'utf8')
+  } catch {
+    return false // silent on absence: a path with no file on disk carries no record to read
+  }
+  return AMENDMENT_RECORD_MARKER_PROBE.test(source) // (4) the record itself, read from the file
+}
+/** The declaring-unit string this namespace reports for an admitted record site — NAMED rather
+ *  than anonymous, because `R-12`'s accounting rule fails an anonymous declaration. */
+const AMENDMENT_RECORD_DECLARING_UNIT =
+  'the AMENDMENT-RECORD PASS (2026-10-18, the bounded TestWriter pass the 2026-10-13 tracker restructuring forced): its dated amendment record is written at the OWNING SITE of each row it amended, and those sites are SIBLING units\' spec files — NOT this unit'
 /** **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE DECLARATION FILTER, NAMED ONCE AND SHARED BY
  *  BOTH OF `R-12`'s ALLOW-LIST HALVES.**
  *
@@ -2969,6 +3039,17 @@ function declaredOtherUnitNameOf(path: string): string | null {
   // cannot excuse a DENIED path and can only ever REMOVE a path from `E3`'s subject.
   const trackerRestructuring = TRACKER_RESTRUCTURING_BY_PATH[path]
   if (typeof trackerRestructuring === 'string' && trackerRestructuring.length > 0) return trackerRestructuring
+  // **⟶ ADDED 2026-10-18 (THE AMENDMENT-RECORD ATTRIBUTION).** The NINTH consultation point, in
+  // the SAME `typeof … === 'string'` form as the eight above — and the first one that is a
+  // NAMESPACE rather than a closed list, for the reason recorded at the declaration: every
+  // future documentation pass writes its dated amendment record at a SIBLING's owning site, so a
+  // by-name list would have to be extended on every such pass. It answers `true` ONLY for a
+  // depth-1 `docs/specs/*.md` that is NOT `E3`'s own, is NOT a `*-greens.md`, and whose FILE
+  // actually carries a dated amendment record naming the pass (four clauses, all driven by
+  // control (o)). It is consulted by NO predicate — `isDeniedPath` is untouched and still answers
+  // for every path it named before — so it cannot excuse a DENIED path and can only ever REMOVE a
+  // path from `E3`'s subject.
+  if (isAmendmentRecordSite(path)) return AMENDMENT_RECORD_DECLARING_UNIT
   return null
 }
 function isDeclaredOtherUnitPath(path: string): boolean {
@@ -6658,6 +6739,88 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         E3_UNIT_DIRTY_ARTIFACTS,
       )}${E3_UNIT_DIRTY_ARTIFACTS.length === 0 ? ' — EMPTY ⇒ the arm evaluated its denied check over an EMPTY E3-own unit-artifact subject and is therefore VACUOUSLY GREEN on this reading (stated, not hidden; NOT skipped)' : ' — NON-EMPTY ⇒ the arm evaluated its denied check over a REAL E3-own subject'}**`,
     ).toEqual([true, true, true])
+    // (o) **⟶ ADDED 2026-10-18 (THE AMENDMENT-RECORD ATTRIBUTION) — THE NAMESPACE DECLARATION
+    //     DRIVEN IN ALL FOUR DIRECTIONS, with a NAMED FALSIFIER that survives it.** The four
+    //     lists below are STRINGS ONLY; no file is created, moved or edited by this control, so
+    //     this row's own diff scope is unmoved.
+    //
+    //       (a) THE MEASURED CLASS IS ADMITTED — the sibling RECORD SITE the amendment commit
+    //           wrote (`docs/specs/projection.md`, `docs/specs/zones.md`) reads
+    //           `isAmendmentRecordSite === true` AND carries a NAMED declaring unit, and it is
+    //           EXCLUDED from `E3`'s subject by the row's own declaration filter — which is the
+    //           exclusion the arm relies on;
+    //       (b) THE FALSIFIER — a sibling spec whose amendment record is ABSENT is NOT admitted
+    //           **by this namespace**. Note the reading carefully: `docs/specs/listhost.md` is a
+    //           real sibling spec that `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` already
+    //           declares (`H2a`/`U-STORE-MODULES-BYTES`), so it is out of `E3`'s subject — but for
+    //           THAT declaration's reason, NOT for this one. The falsifier therefore drives the
+    //           NAMESPACE predicate directly, which is where the falsifiability lives;
+    //       (c) A DENIED PATH IS NEVER ADMITTED — `tests/fork-store-reads.test.ts` (the exact
+    //           path this class of pass re-reddened the sibling rows with), `tests/listhost.test.ts`,
+    //           `src/shared/types.ts`, `scripts/mcp-cli.mjs` and `package.json` all read `false` at
+    //           the namespace, and each STILL reads `isDeniedPath === true` — so **`src/**`,
+    //           `scripts/**` and `package.json` REMAIN DENIED for `E3`**. (`docs/specs/
+    //           projection-greens.md` is measured as NOT denied by this row's predicate — a
+    //           sibling's `*-greens.md` is admitted to `E3`'s allow-list here — so it is reported
+    //           as that measured reading rather than asserted into a denial it does not have.)
+    //       (d) `E3`'S OWN FIVE ARTIFACTS ARE NEVER ATTRIBUTED AWAY, and neither is a NESTED
+    //           contract directory (`docs/specs/store-constraint-registry/census.md`, which is
+    //           the eighth registry's by name and NOT this namespace's).
+    const AMENDMENT_RECORD_MEASURED_SITES: readonly string[] = ['docs/specs/projection.md', 'docs/specs/zones.md']
+    const CONTROL_AMENDMENT_RECORD_ABSENT_SPEC = 'docs/specs/listhost.md'
+    const CONTROL_AMENDMENT_DENIED_PATHS: readonly string[] = [
+      'tests/fork-store-reads.test.ts',
+      'tests/listhost.test.ts',
+      'src/shared/types.ts',
+      'scripts/mcp-cli.mjs',
+      'package.json',
+    ]
+    expect(
+      [
+        // (a) the measured class is admitted, NAMED, and excluded from the arm's subject
+        AMENDMENT_RECORD_MEASURED_SITES.filter((p) => !isAmendmentRecordSite(p)),
+        AMENDMENT_RECORD_MEASURED_SITES.filter((p) => {
+          const owner = declaredOtherUnitNameOf(p)
+          return typeof owner !== 'string' || owner.trim().length === 0
+        }),
+        AMENDMENT_RECORD_MEASURED_SITES.filter((p) => !isDeclaredOtherUnitPath(p)),
+        // (b) the falsifier: the namespace itself does NOT admit a spec with no record
+        isAmendmentRecordSite(CONTROL_AMENDMENT_RECORD_ABSENT_SPEC),
+        // (c) no denied path is ever admitted — and each STILL reads denied outright
+        CONTROL_AMENDMENT_DENIED_PATHS.filter((p) => isAmendmentRecordSite(p)),
+        CONTROL_AMENDMENT_DENIED_PATHS.filter((p) => isDeniedPath(p) !== true),
+        // (d) E3's own five artifacts and a NESTED contract directory are never attributed away
+        [TEST_RELPATH, MODULE_RELPATH, 'docs/specs/gutter.md'].filter((p) => isAmendmentRecordSite(p)),
+        isAmendmentRecordSite('docs/specs/store-constraint-registry/census.md'),
+        // …and the DENIED half's own positive control is UNCHANGED: a denied path among E3's own
+        // changes is still `E3`'s subject and would still FAIL.
+        [isDeclaredOtherUnitPath('src/shared/gutter-hack.ts'), isDeniedPath('src/shared/gutter-hack.ts')],
+        // …and the measured allow-list reading of a sibling `*-greens.md` is REPORTED, not assumed
+        isDeniedPath('docs/specs/projection-greens.md'),
+      ],
+      `R-12 §3.4 — CONTROL (o, THE AMENDMENT-RECORD NAMESPACE DRIVEN IN ALL FOUR DIRECTIONS): (a) the measured RECORD SITES \`${JSON.stringify(
+        AMENDMENT_RECORD_MEASURED_SITES,
+      )}\` are ALL admitted (list 1 EMPTY), each NAMES its declaring pass (list 2 EMPTY — the same named-unit rule control (l) enforces on the DENIED half) and each is EXCLUDED from the arm's subject (list 3 EMPTY) — **the exact exclusion that FAILED with \`Outside the allow-list: ["docs/specs/census.md","docs/specs/projection.md","docs/specs/zones.md"]\` before this declaration**; (b) THE FALSIFIER HOLDS at the NAMESPACE: the sibling spec \`${CONTROL_AMENDMENT_RECORD_ABSENT_SPEC}\` carries NO dated amendment record, so \`isAmendmentRecordSite\` does NOT admit it — the namespace cannot swallow an arbitrary sibling spec (it is out of the subject only through the SEPARATE \`H2a\` declaration, which is that registry's job and is reported here rather than conflated); (c) NO denied path is ever admitted (list 5 EMPTY over \`${JSON.stringify(
+        CONTROL_AMENDMENT_DENIED_PATHS,
+      )}\`) AND every one of them STILL reads \`isDeniedPath === true\` (list 6 EMPTY) — **so \`src/**\`, \`scripts/**\` and \`package.json\` REMAIN DENIED for \`E3\` and the prohibition did not move**; (d) \`E3\`'s OWN three canonical artifacts are NEVER attributed away and neither is a NESTED contract directory; the DENIED half's recorded POSITIVE CONTROL is UNCHANGED — \`src/shared/gutter-hack.ts\` is not declared by another pass and IS still denied, so a denied path among \`E3\`'s own changes still FAILS; and the last reading REPORTS this row's measured allow-list treatment of a sibling \`*-greens.md\` (\`false\`, i.e. admitted here) instead of asserting a denial it does not have. READS: ${JSON.stringify(
+        {
+          measuredSites: AMENDMENT_RECORD_MEASURED_SITES.map((p) => [p, isAmendmentRecordSite(p), declaredOtherUnitNameOf(p) !== null, isDeniedPath(p)]),
+          recordAbsentSpec: [CONTROL_AMENDMENT_RECORD_ABSENT_SPEC, isAmendmentRecordSite(CONTROL_AMENDMENT_RECORD_ABSENT_SPEC)],
+          deniedPaths: CONTROL_AMENDMENT_DENIED_PATHS.map((p) => [p, isAmendmentRecordSite(p), isDeniedPath(p)]),
+        },
+      )}`,
+    ).toEqual([
+      [],
+      [],
+      [],
+      false,
+      [],
+      [],
+      [],
+      false,
+      [false, true],
+      false,
+    ])
   })
 
   it('R-13 §3.4 — THE SINGLE-WRITER / WRITE-COUNT ROW, A PAIR: the runtime record and `stats().sinkCalls` AGREE with both positive controls, and exactly ONE sink call site in the module', async () => {
