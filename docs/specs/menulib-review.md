@@ -135,7 +135,7 @@ all** (it is a filing duty on the spec, `G-5`).
 (new, from this gate's conditions). **No `src/**` edit. No config change. No `package.json` change.
 No new dependency** (`AGENTS.md` item 11d forbids one for the register layer anyway). The new module
 is **imported by no `src/**` file**, exactly as `relocate.ts` and `container.ts` landed
-(`docs/next-steps.md:2015`/`:2018`), so the build's output set is unmoved and the script-key census
+(`archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:1997`/`:2018`), so the build's output set is unmoved and the script-key census
 that `tests/ui-leg-contract.test.ts`'s `L-1` pins must not move — which is why `package.json` is in
 the DENIED set and why the add-a-leg temptation is refused.
 
@@ -176,7 +176,7 @@ domain. A domain that is *never validated* must be declared as such in the regis
 `id` rows read as validation rows.
 
 **The term/cap/seed form the filing MUST print** (the landed form: `container.md` `§5.5.1`,
-`§5.5.3`; `docs/next-steps.md:2018`): the **row count**; the **declared total printed as the sum of
+`§5.5.3`; `archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:2000`): the **row count**; the **declared total printed as the sum of
 its own per-row terms** (a total that is not the sum of its terms, or a total quoted without its
 terms, is a review finding — `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`); the **subtotals by class**
 (`IM` / `SM` / `TP`); the **caps** `≤100` per row · `≤400` total · **stop-after-5-consecutive-failures**;
@@ -190,8 +190,8 @@ is **no reason to merge or drop a discernible property**. **No new dependency, n
 | | Finding | Owner |
 | --- | --- | --- |
 | **P-1** | **THE STEPS 1 AND 2 ARTIFACTS ARE NOT YET FILED AS A RECORD.** This file is their filing home and the two provenance copies are written in the same pass; **a gate whose step-1/2 reports exist only in a session is the exact `E4` `P-1` defect** (`docs/specs/relocate-review.md` §5.9), and it is caught here only because this unit's step 4 filed them. | **The supervisor** (it owns gate boundaries and `RCA-8(a)` commits) — with the step-4 author as the filing hand |
-| **P-2** | **THE `E7` LEDGER ROW IS MISSING ITS `Blocked on` CELL** — measured at `docs/next-steps.md:2020`: seven cells against the sibling rows' eight, and the `BLOCKED → then U-GSESSION → spec → TestWriter red` chain sits in the cell a reader would read as `Blocked on`, so **`SCH-5` is silently read as the blocker and the dependency is unreadable**. | **The next filing pass** (a cell repair, `RCA-8(d)`-safe: annotate beside, never rewrite) |
-| **P-3** | **THE ROW'S STATUS CHAIN IS STALE IN A SECOND WAY:** it reads `BLOCKED` while its own named dependency (`U-GSESSION`, `E6`) is `DONE` and the tracker says `E7` is **free** (`docs/next-steps.md:405`). The row and the queue block disagree; a fresh reader can start from the wrong state. | **The next filing pass**, in the same edit as `P-2` |
+| **P-2** | **THE `E7` LEDGER ROW IS MISSING ITS `Blocked on` CELL** — measured at `archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:2002`: seven cells against the sibling rows' eight, and the `BLOCKED → then U-GSESSION → spec → TestWriter red` chain sits in the cell a reader would read as `Blocked on`, so **`SCH-5` is silently read as the blocker and the dependency is unreadable**. | **The next filing pass** (a cell repair, `RCA-8(d)`-safe: annotate beside, never rewrite) |
+| **P-3** | **THE ROW'S STATUS CHAIN IS STALE IN A SECOND WAY:** it reads `BLOCKED` while its own named dependency (`U-GSESSION`, `E6`) is `DONE` and the tracker says `E7` is **free** (`archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:387`). The row and the queue block disagree; a fresh reader can start from the wrong state. | **The next filing pass**, in the same edit as `P-2` |
 | **P-4** | **NO LEG WAS RUN THIS PASS AND THIS PASS HOLDS NO SHELL** — recorded so no later pass quotes any figure here as a measurement of its own (`RCA-12`). Every figure in this record is an input or a citation. | **The supervisor**, at gate 9 (its measurement is the only one that counts) |
 | **P-5** | **THE `§7.1` PREDICATE'S EVIDENCE IS A FILING DUTY WITH NO ARCHITECT ANSWER OWED** (`Q3`) — it must not be re-typed as an architect question in the next pass, which would manufacture a blocker out of a template row. | **The spec writer** (`role_spec_writer`), enforced by **this record's `G-7`** |
 

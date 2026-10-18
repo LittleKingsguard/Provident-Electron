@@ -47,7 +47,7 @@ and the correction changes the routing class:** the row **EXISTS** —
 | --- | --- |
 | The fork's defect catalogue | `../Astrographer/docs/defects.md:37` — row `FOUNDATION-NO-CONFIG-FILE-PERSISTENCE`, **MED**, classified *"FOUNDATION / handoff"* |
 | The fork's handoff document | `../Astrographer/docs/HANDOFF.md:49` — *"**FOUNDATION-OWNED**: catalogued in `docs/defects.md`, handed off here, **NEVER patched from this repo** (`AGENTS.md` item 7)"* |
-| The fork's work queue | `../Astrographer/docs/next-steps.md:32` |
+| The fork's work queue | `../Astrographer/archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:14` |
 | The fork's breakdown doc | `../Astrographer/docs/specs/ui-feature-set-breakdown-2026-09-29.md:271-284` |
 
 **So: the ask's `docs/defects.md` and `docs/HANDOFF.md` are the FORK'S files, and "foundation-owned" names the
@@ -102,7 +102,7 @@ routed it host-side. The verdict-word divergence is vocabulary, not evidence.
 | 15 | The standing clauses say what this record says they say | **VERIFIED, NO DRIFT** | `S-d4` `docs/specs/provident-electron-shell-chrome-handoff-review.md:180` *"this repo **must not acquire a UI-config store**"* · `S-d8` prohibition 4 `:184` *"**a UI-config store or any persistence of its own** (persisted state is supplied *to* the mechanism)"* · `S-d13` `:190` *"**Persistence stays consumer-side: this repo owns no UI-config store** (… the fork's `UI-CONFIG-CARRIER` is the carrier)"* · `H-r16` `:244` *"… it must gain a store, and **that is a new gate that must not be smuggled in**"* · `H-r14` `:242` (the misreading class) · `docs/decisions.md:73`/`:84`/`:86` |
 | 16 | Ten landed contracts carry the boundary as a NEGATIVE, testable row | **VERIFIED — all ten; one anchor is off by two in the sibling report** | `docs/specs/theme.md:923` (`I-4`) + `:953` (`R-3`) · `theme-control.md:629` + `:1031` (`P-TC-IM-5`, built to FAIL) · `focus-model.md:1220` (`R-3`; the sibling's `:1188` sits on the adjacent `I-2` row at `:1186` — substance unchanged) · `focus-tool.md:944` (`P-FT-4`) · `overlay.md:905` + `:937` + `:1957` · `gsession.md:677` · `gutter-ui.md:2503` · `relocate.md:1394` · `container.md:968` · `menulib.md:1159` |
 | 17 | The `ui` leg witnesses exactly two store file names | **VERIFIED — and a third file would be UNOBSERVED, not red** | `scripts/electron-ui.mjs:652` fixed two-name literal **(⟶ POST-FILING ANCHOR CORRECTION 2026-09-29, THE GATE-7/8 REPAIR PASS, FINDING `F4`, LOW: the as-written `:652` is KEPT VISIBLE and the precise anchor is `:651-652` — the array is DECLARED at `:651` and its two-name literal stands at `:652`. Measured by that pass's own file read of `scripts/electron-ui.mjs` on 2026-09-29; `RCA-12`: no suite, no leg, no Electron boot and no battery ran in that pass.)**; fixtures `tests/ui-leg-seam.test.ts:422-423,462`; `tests/ui-leg-contract.test.ts:3822-3823`; §0 prohibition table at `docs/specs/ci-ui-leg.md:214` (*"HOLDS — asserted"*) |
-| 18 | The ledger is closed | **VERIFIED — `21 DONE / 0 open`** | `docs/next-steps.md:13`, `:769`, `:2420`; `docs/guide/README.md:56-57` |
+| 18 | The ledger is closed | **VERIFIED — `21 DONE / 0 open`** | `docs/next-steps.md:13`, `archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:751`, `archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:2402`; `docs/guide/README.md:56-57` |
 
 **Incidental staleness FOUND and REPORTED, not fixed here (out of this disposition's scope; annotate beside, never
 silently rewrite — `RCA-8(d)`):** `docs/specs/gutter-ui.md:2504` and `docs/specs/ci-ui-leg.md:215` still quote the
@@ -110,7 +110,7 @@ silently rewrite — `RCA-8(d)`):** `docs/specs/gutter-ui.md:2504` and `docs/spe
 `docs/decisions.md:84` records the `21 → 22` move); and `docs/defects.md:33` cites the `R13-HOST-FIX` precedent at
 `docs/decisions.md:39`, where the row now sits at **`:58`** (`:39` is `GSESSION-THE-DISPOSAL-GOVERNS-A-MID-CALL-BEGIN`).
 
-**UNVERIFIED, and marked so:** the tail of `../Astrographer/docs/HANDOFF.md:49` and of `docs/next-steps.md:32` were
+**UNVERIFIED, and marked so:** the tail of `../Astrographer/docs/HANDOFF.md:49` and of `archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:14` were
 truncated at 2 000 chars by the read tool, so the ask's exact remedy phrasing could **not** be checked against the
 fork's filed fix shape; its substance **is** corroborated in full at
 `../Astrographer/docs/specs/ui-feature-set-breakdown-2026-09-29.md:276-284`.
@@ -280,11 +280,11 @@ GATES 7/8, and GATE 10's tracker-cell duty — and nothing else.**
 | --- | --- | --- |
 | **1** | **RUN — this record.** Note item 8's own scope clause (*"applies to changes to the MCP contract — not to fixes inside a documented contract's shape"*): this proposal is neither, so the record is a courtesy to the fork channel as much as a gate | `AGENTS.md` item 8 |
 | **2** spec | **NOT TRIGGERED** — no contract to file; triggered ONLY if a unit is granted, which then owes an `H-r8` six-row `§0 Contract-prohibitions` block | `H-r4`/`H-r8` |
-| **3** TDD | **NOT TRIGGERED** — no source-code task; a docs-only pass may not edit `src/**` (`docs/next-steps.md:1534`) | `AGENTS.md` item 3 |
+| **3** TDD | **NOT TRIGGERED** — no source-code task; a docs-only pass may not edit `src/**` (`archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:1516`) | `AGENTS.md` item 3 |
 | **4** adversarial + PBT audit | **NOT TRIGGERED** — mandatory per completed **code** unit | items 7 RCA-3, 11(e) |
 | **5** blind greens | **NOT TRIGGERED** — ships no behaviour | item 10/RCA-4 |
 | **6** live battery | **`DOES NOT TRIGGER` — AND THE DETERMINATION IS RECORDED, NOT ASSUMED.** The mechanical predicate triggers iff limb A or limb B holds; **a documentation record is a NAMED NON-TRIGGERING change**, and *"no report"* is the only admissible exemption form (a zero-row report is INVALID) | `docs/specs/user-flow-audit.md:47-67` |
-| **7 + 8** proofreader + doc review | **FOLDED INTO THE SAME PASS** — the repo's own close-outs fold them and date both records to that pass; record at `archive/reviews/<date>-foundation-no-config-file-persistence-doc-review.md` (gitignored provenance), fixing stale cells **in the same pass** (§2's two found drifts are the live candidates) | `AGENTS.md` item 10d/RCA-6; `docs/next-steps.md:21,55,83,117` |
+| **7 + 8** proofreader + doc review | **FOLDED INTO THE SAME PASS** — the repo's own close-outs fold them and date both records to that pass; record at `archive/reviews/<date>-foundation-no-config-file-persistence-doc-review.md` (gitignored provenance), fixing stale cells **in the same pass** (§2's two found drifts are the live candidates) | `AGENTS.md` item 10d/RCA-6; `archive/next-steps/2026-10-13-next-steps-history-region-A-lines-19-2678.md:3,55,83,117` |
 | **9** trio | **NOT REQUIRED** — the trigger is *"after any feature or test change"*; a documentation pass runs no leg and **no claim may quote a figure as its own measurement** | `AGENTS.md` item 4 |
 | **10** tracker / ledger | **NO LEDGER MOVE** (no unit, no count, no arithmetic). Its substance is the tracker-cell duty, discharged by §5's edits 1–3 | `docs/next-steps.md:13` |
 | **11** PBT register | **THE ZERO-ROW EXEMPTION APPLIES — EXPLICIT, RECORDED, JUSTIFIED, NEVER SILENT:** the deliverable is **DOC-ONLY** (a class item 11(g) names), there is **no code-bearing surface**, and the ruling is cited **by row name** (`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`) | `AGENTS.md` item 11(g) |
