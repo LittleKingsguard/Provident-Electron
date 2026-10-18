@@ -111,10 +111,9 @@ ACTIVE at `docs/decisions.md` `TEST-MARKER-MUST-BE-THE-ASSERTION`.**)*
 
 **⟶ THE `S3` POST-DONE AMENDMENT CYCLE'S EFFECT ON THE THREE REPAIRED ROWS, STATED ONE LINE EACH, DATED `2026-10-11` (`RCA-8(d)`: the as-filed rows and the three dated lines beneath them STAND BYTE-FOR-BYTE — nothing here is rewritten, no status word or owner clause moves, and this note only says what the amendment cycle DID and DID NOT do to them; `RCA-8(f)`: no row is added, moved, closed or re-opened).** **THE CYCLE: the architect answered the unit's two residual questions, a NEW behavioural clause landed (`docs/specs/secure-store-discipline.md` `§2.6`, the write lock: while a write is in flight, reads are locked out until the commit lands, so the record's advance lands AT the commit — the successful `renameSync`), and the host was moved at ONE production site, `src/main/security-store.ts` (`f444426`, mechanism `(h-i)`; digest `a98273b8…` → `8ed09c97…`; the `KB-10` kick-back was resolved as outcome (a) — the test was malformed — at `00af604`, with the verification figures at `810835a`).** **ROW BY ROW — AND THE HONEST ANSWER IS THE SAME FOR ALL THREE:** **(1) `SECURITY-STORE-RECORD-ADVANCES-PAST-A-REFUSED-PERSIST` — NOT SUPERSEDED, AND NEWLY RE-REFERENCED IN ONE RESPECT ONLY.** The rollback this row was repaired by is precisely what `§2.6` RE-ORDERS IN TIME (the advance now lands at the commit rather than after `persist()` returned) — so the row's REPAIR reading is strengthened by the clause, **not** replaced by it, and the row stays REPAIRED with its owner clause unmoved. **(2) `SECURITY-STORE-UNREPRESENTABLE-SETTING-PERSISTS-AS-NULL` — NOT REFERENCED, NOT SUPERSEDED.** `§2.6` is an ORDER clause and touches neither the JSON-representability admission nor this row's refusal reading; its value-preservation repair and its digest cite stand as landed (`a98273b8…` is now the `PRE_LOCK` control in the pin's chain, kept awake and asserted distinct). **(3) `SECURITY-STORE-COMMITTED-RECEIPT-ON-A-DROPPED-VALUE` — NOT REFERENCED, NOT SUPERSEDED.** Its `committed`-receipt prohibition is orthogonal to the lock: **`§2.6` introduces no new receipt form and no union member** (the closed two-form receipt and the store's `16`-member union are UNMOVED), so no cell of this row's repair reading is affected. **NOTHING IS OWED UPSTREAM BY ANY OF THE THREE (each is HOST-owned, each states no `docs/HANDOFF.md` round and no upstream issue) — and that half is UNMOVED by this cycle as well.** **The authoritative record of the cycle is `docs/next-steps.md`'s `## DONE — U-SECURE-STORE-DISCIPLINE` foot: the `⟶ AMENDMENT BLOCK — THE POST-DONE AMENDMENT CYCLE CLOSED` block beside the earlier `S3 POST-DONE AMENDMENT BLOCK`.**: `SECURITY-STORE-SILENT-KEY-DROP` (the unknown-key class — `S2`'s subject, owner and reading unchanged) and `STORE-BRIDGE-EMPTY-PROJECTION-COMMITS` (the `main.ts` handler's empty-projection write — unchanged).** **NO UPSTREAM ROUND AND NO `docs/HANDOFF.md` ISSUE IS OWED FOR ANY OF THE FIVE ROWS — `provident-ssr` is not involved at any point (each row's own filing sentence says so) — and NO LEDGER COUNT MOVES IN THIS LINE (`RCA-8(f)`).**
 
-## CLOSED — POINTER ONLY: the canonical section sits below the `## NOT FILED …` block
+## CLOSED — POINTER ONLY: the canonical section is ARCHIVED (`RCA-8(g)`, `2026-10-13`)
 
-**The canonical `## CLOSED (not reproducible at 0.5.1)` section is further down this file** (below
-`## NOT FILED BY THE 2026-09-27 ENGINE-PIN AMENDMENT …`) and carries: the section's convention, the
+**The canonical `## CLOSED (not reproducible at 0.5.1)` section was moved OUT of this file on `2026-10-13` and is retained BYTE-EXACTLY at `archive/defects/2026-10-13-defects-closed-not-reproducible-region-lines-183-281.md`** — an old `docs/defects.md:<L>` citation with `183 ≤ L ≤ 281` resolves there at `:<L − 182>`. It carries: the section's convention, the
 row's as-filed text, its own **"RE-VERIFIED STILL OPEN against `provident-ssr` 0.5.1"** clause
 retained verbatim with the supersession note, the **corrected root cause**, the measured reality,
 the **disposition + the flip note** and the tracker routing. **Read that section, not this pointer.**
@@ -122,7 +121,7 @@ the **disposition + the flip note** and the tracker routing. **Read that section
 that ever lived in `## OPEN`, and two copies would let a later pass read one row twice — the row
 table lives in exactly ONE place.)*
 
-**The section's convention is stated once, in the canonical section below** — not repeated here, so
+**The section's convention is stated once, in the canonical section — now in the archive named by the pointer above** — not repeated here, so
 the two copies cannot drift apart. **In one line:** a row lands here only when a **re-measurement at
 the installed pin** shows the filed claim is **not reproducible** (the defect was **delivered by the
 engine**, not fixed here), the old text is **annotated, never deleted**, and **no upstream issue, no
@@ -180,105 +179,7 @@ has therefore moved to this file's `## CLOSED (not reproducible at 0.5.1)` secti
 was added** (consistent with the paragraph above) and **no upstream issue is owed** beyond the
 optional dead-code cleanup the CLOSED row records.
 
-## CLOSED (not reproducible at 0.5.1) — as-filed text retained, nothing owed upstream
-
-**Convention:** this section holds rows that were filed in this file and are **no longer
-reproducible at the current pin** — the defect was **delivered by the engine** rather than fixed
-here. Distinct from `## FIXED (in this repo)` (HOST-owned, fixed in this tree) and from
-`## RESOLVED BY UPSTREAM` (an upstream release fixed the filed defect). A row lands here only with
-a **re-measurement at the installed pin** naming the route that makes the claim unreachable; the
-old text is **annotated, never deleted**, and its own proposed fix shape is checked against the
-current engine behaviour. **No upstream issue, no `docs/HANDOFF.md` round and no host change is
-owed** for a row in this section — at most an **optional upstream dead-code cleanup**, recorded in
-the row as residue.
-
-| ID | Defect (as filed) | Observed symptom / repro (as filed) | Suspected root cause (as filed) | Proposed fix shape (as filed, upstream-owned) |
-| --- | --- | --- | --- | --- |
-| **UNDO-REDO-DESTROY-STATUS** *(filed 2026-08-26 by the journal-endpoint adversarial pass; **moved here from `## OPEN` on 2026-09-27** by `U-ENGINE-DRIFT`'s measurement pass — `docs/specs/engine-drift-measurements.md` `M-31`, `DRIFTED`)* | `Supervisor.undo()` of a `destroy` entry (a G14 PINNED NO-OP) reports `status:'applied'` with an empty `scheduledDirtied` and an unchanged graph — a silent false-success. | `apply({kind:'destroy', node})` then `undo()` → the report is `{status:'applied', scheduledDirtied:[]}` and the render is unchanged. An MCP host surfaces `status:'applied'` verbatim, so an agent cannot tell a real undo from a no-op — exactly the "no-op must never be silent" trap (docs/FORKER.md §4 J4). Repro: `tests/journal-endpoint.test.ts` J-adversarial destroy-undo. | `supervisor.js:1477-1479` — the destroy branch does nothing (no inverse, no dirtied ids) then falls through to `return this.report('applied', dirtied)` (:1577). The G14 pinned-no-op contract says destroy-undo is a no-op, but the report says `applied`. **(Those are 0.2.1-era dist lines: at `0.5.1` the branch sits at `:1549-1551` and the fall-through at `:1649` — see the annotation below.)** | `undo()` should return `status:'no-op'` for a `destroy` entry (matching the G14 pinned-no-op contract), or expose a `destroyed` hint so a host can distinguish a no-op from a real inverse. **⟶ THIS SHAPE IS NOW THE ENGINE'S BEHAVIOUR at `0.5.1` (`status:"no-op"`), which is why the row is closed.** |
-
-**The row's own "RE-VERIFIED STILL OPEN against `provident-ssr` 0.5.1" clause — retained verbatim
-(it moved here with the row) and SUPERSEDED in place, so the wrong reading stays auditable.**
-
-> **RE-VERIFIED STILL OPEN against `provident-ssr` 0.5.1 (2026-09-27, the engine-pin
-> amendment's `H-r12` obligation).** The version move does **NOT** resolve this row.
-> The destroy-undo branch is **still an empty no-op** in 0.5.1 and it **still falls
-> through to `report('applied', …)`** — so the false-success reporting shape survives
-> the upgrade unchanged (evidence attributed to the engine recon, which read the 0.5.1
-> dist; the branch's corrected 0.5.1 line numbers are recorded in `docs/HANDOFF.md`
-> Round 9 and differ from the 0.2.1-era lines cited above). **One honest qualification:**
-> the **upstream repo classifies the no-op itself as contract-correct** (its own
-> adversarial pass recorded destroy-undo as a probe PASS), while the **`applied` status
-> is unaddressed** upstream — i.e. the two repos do **not** disagree about the branch,
-> only about whether the reporting shape is a defect. That is why this row **stays OPEN
-> here** rather than being closed as a false positive. `tests/journal-endpoint.test.ts`'s
-> J-adversarial comment stays accurate. **Revisit condition:** the upstream returns
-> `status:'no-op'` (or a `destroyed` hint) for a destroy entry.
->
-> **⟶ SUPERSEDED (2026-09-27, `M-31`) — the clause above is CORRECTED, not deleted.** The
-> **`applied` half was wrong**, and so was the *"still falls through"* mechanism: measured at the
-> **installed `provident-ssr@0.5.1`**, `undo()` of a `destroy` entry reports
-> **`status:"no-op"`** (empty `scheduledDirtied`, `baseBoundary:false`, the target list identical
-> before and after — `docs/specs/engine-drift-measurements.md` `M-31`, verdict **`DRIFTED`**). The
-> engine's **resolve guard** returns first (`dist/core/supervisor.js:1536-1538`), because `destroy`
-> deleted the node (`:1066`) — so the `destroy` branch (`:1549-1551`) **and** the
-> `return this.report('applied', dirtied)` fall-through (`:1649`) are **unreachable for a destroy
-> entry**, and the **silent-`applied` false-success is not reproducible at `0.5.1` by any route**.
-> The **behaviour** half of the as-filed claim (no-op, empty `scheduledDirtied`, unchanged graph)
-> holds; its **reported status does not**. The row's **own proposed fix shape** (*"`undo()` should
-> return `status:'no-op'` for a `destroy` entry"*) **is now the engine's behaviour** — disposition
-> **`CLOSED as delivered-by-the-resolve-guard`** (this section's annotation below carries the
-> corrected root cause, the residue, the flip note and the tracker routing).
-
-**The annotation — the corrected root cause, the residue, and the tracker routing (2026-09-27,
-`M-31`).** The as-filed row is retained verbatim above and is read **together with** this note.
-
-- **Measured reality (installed `provident-ssr@0.5.1`, on the PERMITTED route only):** `destroy
-  verdict {"status":"applied","dirtied":["node-7"]}` · **`undo-of-destroy status "no-op"`** ·
-  `scheduledDirtied []` · `baseBoundary false` · the graph unchanged (`target-list-length [7,7]`,
-  the target list identical before and after) — taken through the **host `Runtime` path** (the
-  `Runtime.journal` reading, which the host copies through verbatim;
-  `docs/specs/engine-drift-measurements.md` `M-31`). **The status is `no-op`; the as-filed claim
-  says `applied`.** The **behaviour** half of the claim holds; the **reported status does not.**
-  **One correction-pass qualification, so nothing here rests on a forbidden reading:** the record's
-  *engine-direct* half (`supervisor.undo()` reached through the private `Runtime.supervisor`) is
-  **STRUCK by the record's own correction pass as `INVALID` for the §3.2 class-4 private-surface
-  reason** — its value **agreed** (`no-op`, recorded as an observation) but it is **not evidence**,
-  and **the `DRIFTED` verdict rests on the permitted reading alone.** **This row therefore cites no
-  engine-direct value.**
-- **Corrected root cause (a READ of the installed dist file, not a call through it):** `undo()` pops the
-  `destroy` entry and then the **resolve guard returns first** —
-  `node_modules/provident-ssr/dist/core/supervisor.js:1536-1538`:
-  `const resolved = !node.destroyed && this.nodes.get(node.id) === node ? node : (this.nodes.get(node.id) ?? null); if (!resolved) return this.report('no-op', new Set())`.
-  A `destroy` **deletes** the node (`:1066` — `this.nodes.delete(target.id)`), `node.destroyed` is
-  true and the map entry is gone, so `resolved` is `null` and the guard returns. **The `destroy`
-  branch (`:1549-1551`) and the `return this.report('applied', dirtied)` fall-through (`:1649`) are
-  therefore UNREACHABLE for a destroy entry** — the as-filed mechanism (*"still falls through to
-  `report('applied', …)`"*) cannot fire. The adjacent upstream source agrees
-  (`../Preempt-Providence/src/core/supervisor.ts:1597-1598` guard vs `:1608-1609` branch, `:1696`
-  fall-through).
-- **Disposition: `CLOSED as delivered-by-the-resolve-guard` (recommended and APPLIED).** The row's
-  own proposed fix shape **is the engine's behaviour**, so the defect is discharged by the engine and
-  nothing is owed upstream beyond dead code. **NOT taken:** keeping the row `OPEN` re-worded as a
-  dead-code cleanup. **FLIP NOTE (so the architect can reverse this cheaply):** if the live-work form
-  is preferred, the alternate honest disposition is **`OPEN — upstream dead-code cleanup only`**, and
-  the change is confined to this row's disposition heading — the measured reality, the corrected root
-  cause, the residue and the `docs/HANDOFF.md` Round 9 wording all stand either way. **No assertion
-  was edited to match the measurement** (`docs/specs/engine-drift.md` §6 stop condition 7 did not
-  fire).
-- **THE ONLY LIVE RESIDUE — (i) dead code, (ii) a stale in-tree comment (routed, NOT edited):**
-  **(i)** the now-**dead** `destroy` branch at `dist/core/supervisor.js:1549-1551` and the
-  **unreachable** `return this.report('applied', dirtied)` at `:1649` — an upstream tidy-up, optional,
-  with **no behavioural defect attached**; **(ii) `tests/journal-endpoint.test.ts:116-118` carries a
-  comment that repeats the stale claim** (*"the engine currently reports 'applied' with an empty
-  scheduledDirtied for a destroy-undo"*) — **it is a TEST file, it was NOT edited by this pass, and
-  its assertions (`toHaveProperty('status')` etc.) are correct and unchanged.** **NOTE routed here so
-  it is not lost:** the comment's wording is stale, its **assertion is not**, so a later test-side
-  pass may re-word the comment with the `M-31` reference — **no assertion may be weakened or
-  strengthened to do it**, and nothing is owed by this pass.
-- **Tracker routing (all landed this pass):** `docs/pending.md` `UPSTREAM-UNDO-REDO-DESTROY-STATUS`
-  (corrected) · `docs/HANDOFF.md` Round 9 (corrected — the upstream-facing copy) ·
-  `docs/specs/engine-drift.md` §3.3.5 `M-31` + §8 (restatement corrected, no normative clause
-  amended) · `docs/decisions.md` `UNDO-REDO-DESTROY-STATUS-CLOSED-AT-0.5.1` (the decision).
+**⟶ ARCHIVED `2026-10-13` (`RCA-8(g)`): the `## CLOSED (not reproducible at 0.5.1)` section that stood at this point — the pre-archival file's lines `183`–`281` (`9,771` bytes, `99` lines, VERIFIED byte-identical at the move), the section convention, the `UNDO-REDO-DESTROY-STATUS` row, its retained-and-superseded `RE-VERIFIED STILL OPEN` blockquote and its full `M-31` annotation, the row's disposition `CLOSED as delivered-by-the-resolve-guard` — is retained BYTE-EXACTLY at `archive/defects/2026-10-13-defects-closed-not-reproducible-region-lines-183-281.md`. **AN OLD `docs/defects.md:<L>` CITATION WITH `183 ≤ L ≤ 281` RESOLVES THERE AT `:<L − 182>`.** The `## CLOSED — POINTER ONLY` block above it was re-pointed in the same pass.**
 
 ## RESOLVED BY UPSTREAM (provident-ssr 0.2.1, 2026-08-26)
 
