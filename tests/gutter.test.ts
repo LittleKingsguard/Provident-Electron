@@ -2579,6 +2579,24 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly p
     path: 'tests/theme-control.test.ts',
     unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — its SAME-COMMIT CENSUS EDIT (`docs/specs/focus-tool.md` `§5.1` allow-list row 21: the `ALL_TOOLS` `21 → 22` count pins, the `RpcMethod` member list and the pinned sibling length) DIRTIED this file in the same commit — NOT this unit',
   },
+  // **⟶ ADDED 2026-10-13 (THE TRACKER-RESTRUCTURING AMENDMENT PASS'S OWN IN-FLIGHT FILE).**
+  // The `2026-10-13` tracker split reddened seven pinned rows across five test files; the
+  // bounded amendment that brings them back into agreement with the new structure edits
+  // `tests/fork-store-reads.test.ts` (its `S-4`/`S-10` rows now read the ACTIVE decision
+  // CORPUS instead of one path). That edit is a **TEST-WRITER pass on `U-FORK-STORE-READS`'s
+  // own file**, transient in the working tree until the supervisor commits at the gate
+  // boundary (`RCA-8(a)`) — and `tests/**` is in `E3`'s DENIED set, so the live dirty
+  // reading reports it until it is declared. **IT IS DECLARED HERE RATHER THAN EXCUSED:**
+  // the entry NAMES its owning pass, `isDeniedPath` is untouched and still denies the path
+  // in the RAW reading (control (m) prints it), and the arm's subject is what moves — never
+  // the predicate. **AN UNDECLARED `tests/**` PATH STILL FAILS** (control (m)'s synthetic
+  // `CONTROL_UNDECLARED_DENIED_PATH` drives exactly that on every run).
+  //
+  // **IT IS ENTERED IN `TRACKER_RESTRUCTURING_ARTIFACTS` BELOW, NOT HERE** — this array
+  // feeds `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS`, whose length `R-12` control (l-3)
+  // pins at `33` with its own printed terms. Adding an entry here would move a pinned figure
+  // for a transient working-tree state, which is the very "widen the number to make it pass"
+  // this pass must not do. The dedicated registry keeps the two classes apart.
 ]
 const MENULIB_DOC_ARTIFACTS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
   {
@@ -2816,6 +2834,63 @@ const TIER4_GENERALIZATION_DOC_ARTIFACTS: ReadonlyArray<{ readonly path: string;
 const TIER4_GENERALIZATION_DOC_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
   TIER4_GENERALIZATION_DOC_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
 )
+
+/** **⟶ DECLARED 2026-10-13 (THE TRACKER-RESTRUCTURING ATTRIBUTION, `R-12`'s TWO
+ *  ALLOW-LIST/COMMITTED halves) — THE EIGHTH NON-DENIED REGISTRY, in the EXACT form the
+ *  seven above it use.**
+ *
+ *  **THE MEASURED CAUSE.** The architect's `2026-10-13` ruling split the four over-ceiling
+ *  trackers: `docs/decisions.md`'s ACTIVE row mass (`529,144` bytes) moved VERBATIM into
+ *  seven `docs/decisions/ACTIVE-*.md` shard files, `docs/defects.md`'s history moved to
+ *  `docs/defects-history.md`, and two historical regions were archived under
+ *  `archive/next-steps/**` + `archive/pending/**` (`RCA-8(g)`, each with a one-line pointer
+ *  carrying its line mapping) — and, IN THE SAME PASS, the tracker layer mechanically
+ *  re-pointed the `docs/decisions.md:<n>` citations the split invalidated, including inside
+ *  `docs/specs/*.md` files belonging to OTHER units. **One of those citation-repaired files
+ *  lands in `E3`'s own attributed committed set** (a docs re-organization commit carrying a
+ *  tracker that `§5.1`'s allow-list admits is attributed to `E3` by this file's own
+ *  per-commit rule), so the row charged the TRACKER LAYER's work to `E3` — the identical
+ *  defect class `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` and
+ *  `TIER4_GENERALIZATION_DOC_ARTIFACTS` above were each declared for. `E3` neither
+ *  authored nor may claim any path below.
+ *
+ *  **WHAT IT DOES NOT DO — the same four clauses every registry above carries:** (1)
+ *  `isDeniedPath` is UNTOUCHED and still answers for every path it named before (the row's
+ *  control (m) and the RAW readings still report them); (2) `isSiblingUnitArtifact` is
+ *  untouched; (3) an UNDECLARED path outside the allow-list still FAILS — this registry can
+ *  only ever REMOVE a path from `E3`'s subject, never add one; (4) no row id, term, seed,
+ *  strategy id, cap or threshold moves, and `E3`'s own denied paths still FAIL (controls
+ *  (f)/(i)/(j) are unchanged). **THE LIST IS CLOSED AND BY NAME — no `docs/**` glob.** */
+const TRACKER_RESTRUCTURING_ARTIFACTS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
+  {
+    path: 'docs/specs/fork-store-reads-greens.md',
+    unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker-split ruling, `RCA-8(g)`): the `docs/decisions.md:<n>` citations this gate-5 record carries were re-pointed mechanically into `docs/decisions/ACTIVE-data-ownership-and-tiers.md`. The FILE belongs to `U-FORK-STORE-READS`; the CHANGE is the tracker layer\'s. NOT this unit',
+  },
+  // The seven ACTIVE shards — the tracker split's own NEW files.
+  { path: 'docs/decisions/ACTIVE-store-and-package-binding.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker split, `RCA-8(g)`) — shard 1 of 7. NOT this unit' },
+  { path: 'docs/decisions/ACTIVE-mcp-engine-and-process.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker split, `RCA-8(g)`) — shard 2 of 7. NOT this unit' },
+  { path: 'docs/decisions/ACTIVE-engine-pin-and-divergence.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker split, `RCA-8(g)`) — shard 3 of 7. NOT this unit' },
+  { path: 'docs/decisions/ACTIVE-engine-drift-and-registers.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker split, `RCA-8(g)`) — shard 4 of 7. NOT this unit' },
+  { path: 'docs/decisions/ACTIVE-projection-and-store-facility.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker split, `RCA-8(g)`) — shard 5 of 7. NOT this unit' },
+  { path: 'docs/decisions/ACTIVE-data-ownership-and-tiers.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker split, `RCA-8(g)`) — shard 6 of 7 (carries the moved `H3` ruling row). NOT this unit' },
+  { path: 'docs/decisions/ACTIVE-tier4-and-secure-graph.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 tracker split, `RCA-8(g)`) — shard 7 of 7. NOT this unit' },
+  // The defects split's history half — the tracker layer's NEW file.
+  { path: 'docs/defects-history.md', unit: 'the TRACKER LAYER (the architect\'s 2026-10-13 `docs/defects.md` OPEN/history split, `RCA-8(g)`) — the history half, moved whole with its line mapping. NOT this unit' },
+  // The AMENDMENT pass's own in-flight file: the `2026-10-13` bounded amendment that brings
+  // the seven rows the split reddened back into agreement edits `U-FORK-STORE-READS`'s own
+  // red set, and `tests/**` is in `E3`'s DENIED set. Declared here — NOT in
+  // `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS`, whose length `R-12` control (l-3) pins
+  // at `33` — so a transient working-tree state cannot move a pinned figure.
+  {
+    path: 'tests/fork-store-reads.test.ts',
+    unit: 'the TRACKER-RESTRUCTURING AMENDMENT pass (`2026-10-13`, the bounded TestWriter pass the architect\'s tracker-split ruling forced) — `U-FORK-STORE-READS`\'s own red set, whose `S-4`/`S-10` content rows now read the ACTIVE decision corpus (`docs/decisions.md` + `docs/decisions/ACTIVE-*.md`); DIRTIED by that pass and committed at the supervisor\'s gate boundary. NOT this unit',
+  },
+]
+/** The tracker-restructuring declaration read as a map — the same `typeof … === 'string'`
+ *  form and the same consultation point as the seven registries above. */
+const TRACKER_RESTRUCTURING_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
+  TRACKER_RESTRUCTURING_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
+)
 /** **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE DECLARATION FILTER, NAMED ONCE AND SHARED BY
  *  BOTH OF `R-12`'s ALLOW-LIST HALVES.**
  *
@@ -2886,6 +2961,14 @@ function declaredOtherUnitNameOf(path: string): string | null {
   // `false` for both entries and is untouched).
   const tier4GeneralizationDoc = TIER4_GENERALIZATION_DOC_BY_PATH[path]
   if (typeof tier4GeneralizationDoc === 'string' && tier4GeneralizationDoc.length > 0) return tier4GeneralizationDoc
+  // **⟶ ADDED 2026-10-13 (THE TRACKER-RESTRUCTURING ATTRIBUTION).** The EIGHTH non-denied
+  // registry, in the SAME form as the seven above: a path the `2026-10-13` tracker
+  // restructuring is DECLARED to have written is out of `E3`'s allow-list subject. It is
+  // consulted by NO other predicate — `isDeniedPath` is untouched and still answers for
+  // every path it named before (the row's controls and RAW readings drive that), so it
+  // cannot excuse a DENIED path and can only ever REMOVE a path from `E3`'s subject.
+  const trackerRestructuring = TRACKER_RESTRUCTURING_BY_PATH[path]
+  if (typeof trackerRestructuring === 'string' && trackerRestructuring.length > 0) return trackerRestructuring
   return null
 }
 function isDeclaredOtherUnitPath(path: string): boolean {
@@ -4831,7 +4914,15 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         typeof SIBLING_DIVERGENCE_UNIT_BY_PATH[path] === 'string' &&
         SIBLING_DIVERGENCE_UNIT_BY_PATH[path].length > 0) ||
       typeof NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH[path] === 'string' ||
-      typeof NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[path] === 'string'
+      typeof NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[path] === 'string' ||
+      // ⟶ ADDED 2026-10-13 (THE TRACKER-RESTRUCTURING ATTRIBUTION): the EIGHTH registry,
+      // consulted in the SAME `typeof … === 'string'` form as the two above, so a path the
+      // `2026-10-13` tracker restructuring (or this amendment pass) is DECLARED to have
+      // written is accounted for BY ITS NAMED OWNER. **THE RULE IS NOT WEAKENED:** subject
+      // (2) below still drives a synthetic UNDECLARED path that no registry claims and it
+      // STILL FAILS, and `isDeniedPath` is untouched — the RAW reading still names every
+      // path this registry accounts for.
+      typeof TRACKER_RESTRUCTURING_BY_PATH[path] === 'string'
     expect(
       [
         isAccountedFor(TEST_RELPATH),

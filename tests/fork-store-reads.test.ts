@@ -114,6 +114,65 @@ function readOrNull(rel: string): string | null {
   return existsSync(abs) ? readFileSync(abs, 'utf8') : null
 }
 
+// ===========================================================================
+// ⟶ AMENDED 2026-10-13 (THE TRACKER SPLIT, the architect's ruling `2026-10-13`;
+// this AMENDS NO CLAIM — it corrects WHICH FILE the authority is read from).
+// ---------------------------------------------------------------------------
+// WHAT MOVED. The architect ruled an archival pass with citation repair and then
+// a SPLIT, because the residual overage was LIVE ROWS: `docs/decisions.md`'s
+// ACTIVE row mass (`529,144` bytes, the commit that added this comment carries the
+// full figures) was moved VERBATIM into SEVEN `docs/decisions/ACTIVE-*.md` shard
+// files, and `docs/decisions.md` now keeps its header, a new index section,
+// `## SPECULATIVE / IN GATE` and the `## AMENDMENTS …` notes. The ruling row this
+// file's `§0.1`/`§8.1` authority table cites — `H3` (`U-FORK-STORE-READS`) IS A
+// RE-ROUTE, NOT AN EXEMPTION — moved with it, into
+// `docs/decisions/ACTIVE-data-ownership-and-tiers.md`.
+//
+// WHAT THIS AMENDMENT DOES, EXACTLY. The as-filed rows in this file read ONE
+// path (`docs/decisions.md`) and asserted the ruling row and its quoting site
+// were IN THAT FILE. Post-split that is a claim about a LAYOUT, not about the
+// CORPUS — and the interesting property (`§0A` A-1 / `§8.1`: *the authority is
+// the RULING, cited by row name*) is unchanged by the split. So the rows now read
+// **THE ACTIVE DECISION CORPUS — `docs/decisions.md` PLUS every
+// `docs/decisions/ACTIVE-*.md` shard — AS ONE CONCATENATED AUTHORITY**, in the
+// shard order the index section records, plus (`S-10` only) the LATER-FILE
+// surfaces the row's own claim names. **THE REGEXES ARE UNCHANGED (byte-identical
+// to the as-filed patterns), the `>= 2` INDEPENDENT-QUOTING-SITES COUNT IS KEPT,
+// and each row STILL FAILS if the ruling row or the quoted substance is deleted
+// from the corpus** — asserted by the planted-fixture NEGATIVE control each
+// amended row carries, which drives the SAME predicate over a corpus with the
+// row (or the site) removed and demands it FAIL. **A row that passed on an EMPTY
+// or PARTIAL corpus would be the vacuity this amendment exists to preclude**, so
+// the corpus is asserted NON-EMPTY (every declared shard present, each
+// contributing bytes) BEFORE either row reads it.
+// ===========================================================================
+
+/** The ACTIVE decision corpus's shard files, in the index order
+ *  `docs/decisions.md` records them. Declared, not globbed, so a shard that is
+ *  DELETED or RENAMED fails the non-vacuity assertion below BY NAME rather than
+ *  silently shrinking the corpus to something the rows' regexes can still match. */
+const ACTIVE_DECISION_SHARDS: readonly string[] = [
+  'docs/decisions/ACTIVE-store-and-package-binding.md',
+  'docs/decisions/ACTIVE-mcp-engine-and-process.md',
+  'docs/decisions/ACTIVE-engine-pin-and-divergence.md',
+  'docs/decisions/ACTIVE-engine-drift-and-registers.md',
+  'docs/decisions/ACTIVE-projection-and-store-facility.md',
+  'docs/decisions/ACTIVE-data-ownership-and-tiers.md',
+  'docs/decisions/ACTIVE-tier4-and-secure-graph.md',
+]
+
+/** Assemble the ACTIVE decision corpus as ONE text: `docs/decisions.md` first,
+ *  then each declared shard. Absent files are reported by name — an absent shard
+ *  must not silently become an absent row. */
+function activeDecisionCorpus(): { text: string; sites: ReadonlyArray<{ path: string; present: boolean; bytes: number }> } {
+  const paths = ['docs/decisions.md', ...ACTIVE_DECISION_SHARDS]
+  const parts = paths.map((rel) => readOrNull(rel))
+  return {
+    text: parts.map((p) => p ?? '').join('\n\u0000\n'),
+    sites: paths.map((rel, i) => ({ path: rel, present: parts[i] !== null, bytes: (parts[i] ?? '').length })),
+  }
+}
+
 /** The spec's sections, as `§N` / `§N.M` / `§N.M.K` / `§0A.M` headings. Built
  *  from the file's OWN headings so a §-reference row tests resolution, not a
  *  hand-copied list (§8.2 is the section list; this is its executable form). */
@@ -295,9 +354,49 @@ describe('§0A.3 — the supersession pointer edges exist, are enumerated, and r
     expect(SPEC, 'F-E — `S-4`\'s ARM-WITHDRAWN kind is present (the exemption arm is closed BY the ruling)').toMatch(/ARM-WITHDRAWN/)
     expect(SPEC, 'F-E — and it says in the same row that NO `P-16` carve-out exists (prohibition 1\'s own words)').toMatch(/no `P-16` carve-out exists/)
     expect(SPEC, 'F-E — `S-1`\'s ARM-TAKEN counterpart is present, so the pair is readable from either end').toMatch(/ARM-TAKEN/)
-    const decisions = readOrNull('docs/decisions.md') ?? ''
-    expect(decisions, 'F-E — and the ruling row itself resolves in `docs/decisions.md` (`§0A` A-1 / `§8.1`: the authority is the RULING, cited by row name)').toMatch(/`H3`\s*\(`U-FORK-STORE-READS`\) IS A RE-ROUTE, NOT AN EXEMPTION|H3-IS-A-RE-ROUTE-NOT-AN-EXEMPTION/)
+    // ⟶ AMENDED 2026-10-13 (THE TRACKER SPLIT — see the AMENDMENT NOTE above
+    // `ACTIVE_DECISION_SHARDS`): the ruling row is read from the ACTIVE DECISION
+    // CORPUS (`docs/decisions.md` + every `docs/decisions/ACTIVE-*.md` shard) as
+    // ONE authority, because the ruling row moved verbatim into
+    // `docs/decisions/ACTIVE-data-ownership-and-tiers.md` and the claim this row
+    // asserts is `§0A` A-1 / `§8.1`'s — *the authority is the RULING, cited by row
+    // name* — never a claim about which FILE carries it. **THE TWO REGEXES BELOW
+    // ARE BYTE-IDENTICAL TO THE AS-FILED ONES and the row still FAILS if the
+    // ruling row or its verbatim substance is deleted from the corpus** (the
+    // planted-fixture NEGATIVE control at the end drives exactly that).
+    const corpus = activeDecisionCorpus()
+    expect(
+      corpus.sites.filter((s) => !s.present).map((s) => s.path),
+      'F-E — THE AMENDED CORPUS IS COMPLETE BEFORE IT IS READ: every declared site of the ACTIVE decision corpus (`docs/decisions.md` + the seven `docs/decisions/ACTIVE-*.md` shards the index records) resolves. A row reading a corpus with a MISSING shard would be the vacuity this amendment precludes — an absent shard must fail HERE, by name, not silently shrink the text the regexes below scan',
+    ).toEqual([])
+    expect(
+      corpus.sites.filter((s) => s.bytes === 0).map((s) => s.path),
+      'F-E — and no declared site is EMPTY: every shard contributes bytes to the concatenated authority, so a present-but-empty shard cannot stand in for the rows it is supposed to carry',
+    ).toEqual([])
+    const decisions = corpus.text
+    expect(decisions, 'F-E — and the ruling row itself resolves in the ACTIVE DECISION CORPUS (`§0A` A-1 / `§8.1`: the authority is the RULING, cited by row name)').toMatch(/`H3`\s*\(`U-FORK-STORE-READS`\) IS A RE-ROUTE, NOT AN EXEMPTION|H3-IS-A-RE-ROUTE-NOT-AN-EXEMPTION/)
     expect(decisions, 'F-E — the ruling\'s own verbatim substance ("Re-route for H3") is at the cited site, so this spec is DERIVATIVE and not a new ruling (§7.3 item 4)').toMatch(/Re-route for H3/)
+    // THE NEGATIVE CONTROL (the amendment's own falsifiability, driven rather than
+    // asserted): the SAME two regexes, over a corpus with the ruling row's bytes
+    // REMOVED, must FAIL — so a green above is a fact about the corpus and not
+    // about a regex that would match anything.
+    const ROW_AND_SUBSTANCE = /`H3`\s*\(`U-FORK-STORE-READS`\) IS A RE-ROUTE, NOT AN EXEMPTION|H3-IS-A-RE-ROUTE-NOT-AN-EXEMPTION/
+    const SUBSTANCE = /Re-route for H3/
+    // The deletion is GLOBAL: the phrase is the ruling row's own quoted substance
+    // and may appear more than once (the row quotes it in its date cell as well as
+    // its body). A single-occurrence `replace` would leave a limb behind and make
+    // the control measure the fixture rather than the predicate.
+    const withoutRow = decisions.replace(new RegExp(ROW_AND_SUBSTANCE.source, 'g'), '').replace(new RegExp(SUBSTANCE.source, 'g'), '')
+    expect(ROW_AND_SUBSTANCE.test(decisions), 'F-E — POSITIVE CONTROL: the corpus DOES carry the ruling row (the seed the negative control removes)').toBe(true)
+    expect(ROW_AND_SUBSTANCE.test(withoutRow), 'F-E — NEGATIVE CONTROL: with the ruling row removed the SAME predicate FAILS, so this row is falsifiable by deleting the row it pins — never satisfiable by an absence').toBe(false)
+    // …and the same control for the ruling's VERBATIM SUBSTANCE: with the
+    // quoted phrase deleted from the corpus, the SAME predicate must read `false`.
+    const withoutSubstance = decisions.replace(new RegExp(SUBSTANCE.source, 'g'), '')
+    expect(SUBSTANCE.test(decisions), 'F-E — POSITIVE CONTROL: the corpus DOES quote the ruling\'s verbatim substance (the seed the negative control removes)').toBe(true)
+    expect(
+      SUBSTANCE.test(withoutSubstance),
+      'F-E — NEGATIVE CONTROL: with that quoted substance removed the SAME predicate FAILS on the remainder, so the substance is QUOTED rather than merely referenced — a corpus that stopped quoting it reddens this row',
+    ).toBe(false)
   })
 })
 
@@ -1144,10 +1243,41 @@ describe('§7.1 — the ambiguity record is a record, and no row asserts a secti
     // read: the P-16 SITE the spec names (mcp-endpoint.md §6.4) exists, and the
     // quoted substance is present at two INDEPENDENT citing sites as the spec says.
     expect(hasSection('docs/specs/mcp-endpoint.md', '6.4'), 'F-I — the `P-16` SITE the spec names (`mcp-endpoint.md` §6.4) exists — this file asserts the SITE, never a `P-16` table row (that row is outside this checkout, `AMB-1`)').toBe(true)
-    const decisions = readOrNull('docs/decisions.md') ?? ''
+    // ⟶ AMENDED 2026-10-13 (THE TRACKER SPLIT — see the AMENDMENT NOTE above
+    // `ACTIVE_DECISION_SHARDS`): the spec's own claim (`§7.1` `AMB-1`) is that the
+    // `P-16` substance *"is quoted verbatim at two INDEPENDENT citing sites"* — a
+    // claim about the CORPUS, not about a single file. One of the two citing sites
+    // moved into `docs/decisions/ACTIVE-*.md` in the split, so the two sites are
+    // now read from the ACTIVE DECISION CORPUS (`docs/decisions.md` + every shard)
+    // and `docs/pending.md`. **THE REGEX AND THE `>= 2` COUNT ARE BYTE-IDENTICAL
+    // TO THE AS-FILED ROW: the count is KEPT and the row STILL FAILS when a
+    // quoting site disappears** — driven below by removing each site in turn from
+    // a copy of the concatenation and demanding the count fall.
+    const corpus = activeDecisionCorpus()
+    expect(
+      corpus.sites.filter((s) => !s.present).map((s) => s.path),
+      'F-I — THE AMENDED CORPUS IS COMPLETE BEFORE IT IS READ: every declared site of the ACTIVE decision corpus (`docs/decisions.md` + the seven `docs/decisions/ACTIVE-*.md` shards) resolves, so a MISSING shard fails here BY NAME rather than silently removing a citing site from the count below',
+    ).toEqual([])
+    const decisions = corpus.text
     const pending = readOrNull('docs/pending.md') ?? ''
-    const quotingSites = [decisions, pending].filter((s) => /MCP endpoints read only the app Runtime/.test(s)).length
+    expect(pending.length, 'F-I — `docs/pending.md` is present and non-empty: it is the second independent citing site the count below reads').toBeGreaterThan(0)
+    const QUOTED = /MCP endpoints read only the app Runtime/
+    const quotingSites = [decisions, pending].filter((s) => QUOTED.test(s)).length
     expect(quotingSites, 'F-I — the `P-16` substance is quoted VERBATIM at independent citing sites as the spec claims ("the substance is quoted verbatim at two independent citing sites and is unambiguous") — this file asserts the QUOTATION, never a table row it did not read').toBeGreaterThanOrEqual(2)
+    // THE NEGATIVE CONTROL (the count cannot be satisfied by a site that has
+    // disappeared): drop the substance from ONE site at a time and demand the SAME
+    // predicate fall to exactly `1` — a count that held at `>= 2` after a site's
+    // removal would be measuring something other than the two independent sites.
+    const decisionsWithout = decisions.replace(QUOTED, '')
+    expect(
+      [decisionsWithout, pending].filter((s) => QUOTED.test(s)).length,
+      'F-I — NEGATIVE CONTROL (site 1 removed): with the substance deleted from the ACTIVE DECISION CORPUS the SAME count falls to 1, so this row FAILS if that site stops quoting it',
+    ).toBe(1)
+    const pendingWithout = pending.replace(QUOTED, '')
+    expect(
+      [decisions, pendingWithout].filter((s) => QUOTED.test(s)).length,
+      'F-I — NEGATIVE CONTROL (site 2 removed): and with it deleted from `docs/pending.md` the SAME count falls to 1, so EITHER site going silent FAILS the two-independent-sites claim',
+    ).toBe(1)
   })
 
   it('S-10: `AMB-3` states the honest limit this whole file obeys — this repo cannot produce `GCR-3`\'s (c)/(d) evidence for the FORK\'s bytes, so NO measurement of the fork is claimed anywhere (§7.1 `AMB-3`; `§7.3` item 3)', () => {

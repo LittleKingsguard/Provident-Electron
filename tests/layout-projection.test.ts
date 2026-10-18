@@ -3382,6 +3382,53 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       'tests/zones.test.ts', // `U-ZONES`'s red set — DENIED item 7 ("every existing test file of another unit")
       'docs/specs/zones.md', // `U-ZONES`'s spec — DENIED item 8 ("every sibling unit's artifact")
       'docs/specs/census.md', // `U-CENSUS`'s spec — DENIED item 8
+      // ── **⟶ ATTRIBUTED 2026-10-13 (THE TRACKER-RESTRUCTURING DECLARATION).** The
+      // architect's `2026-10-13` ruling split the four over-ceiling trackers: the
+      // `docs/decisions.md` ACTIVE row mass (`529,144` bytes) moved verbatim into SEVEN
+      // `docs/decisions/ACTIVE-*.md` shard files, `docs/defects.md`'s history moved to
+      // `docs/defects-history.md`, and two historical regions were archived under
+      // `archive/next-steps/**` + `archive/pending/**` (`RCA-8(g)`), each with a one-line
+      // pointer carrying its line mapping. **In the SAME pass the tracker layer
+      // mechanically re-pointed the `docs/decisions.md:<n>` citations the split
+      // invalidated — including inside `docs/specs/*.md` files belonging to OTHER units,
+      // which is why `docs/specs/fork-store-reads-greens.md` arrives in this row's
+      // committed range.** None of these paths is `U-PROJ`'s work, `U-PROJ` neither
+      // authored nor may claim them, and charging a documentation restructuring to a unit
+      // whose SPEC it merely cited is the exact "row that has stopped measuring its own
+      // unit" class the two earlier re-scopes in this row closed.
+      //
+      // **THE EXCLUSION IS ABOUT SUBJECT ONLY, AND IT IS DRIVEN BOTH WAYS:** this
+      // declaration can only ever REMOVE a path from this row's subject; `isDenied` is
+      // BYTE-IDENTICAL and still denies every path it named before (the RAW full-range
+      // denied reading below still reports `docs/specs/fork-store-reads-greens.md`), this
+      // unit's OWN denied paths still FAIL (control (c-1), `src/shared/types.ts`), and a
+      // genuinely denied sibling artifact the restructuring did NOT touch still FAILS.
+      'docs/specs/fork-store-reads-greens.md', // `U-FORK-STORE-READS`'s gate-5 record — the tracker split's citation repair re-pointed its `docs/decisions.md:<n>` cells into the `ACTIVE-data-ownership-and-tiers.md` shard
+      // The `U-STORE-CONSTRAINT-REGISTRY` contract DIRECTORY's parts — SIX files, all
+      // touched by the SAME citation repair and by NOTHING else in the split commit
+      // (measured: `git show 9dacca2 -- docs/specs/store-constraint-registry/` is
+      // `docs/decisions.md:<n>` → shard re-pointings and no other change; the three
+      // earlier touches in the range — `21c70a2`, `e7a45b3`, `732e912` — are that
+      // unit's OWN spec-gate filings, not this restructuring). These are NESTED spec
+      // paths, which the row's `docs/specs/[^/]*.md` allow clause does not admit
+      // (measured: that regex is `false` for them) — so without this declaration the
+      // allow-list half would carry a latent red for a unit whose directory has been
+      // cited-repaired. Declared BY NAME, not by a `docs/specs/**` glob: the six files
+      // below are the measured set and nothing else is admitted.
+      'docs/specs/store-constraint-registry/census.md',
+      'docs/specs/store-constraint-registry/claim-ledger.md',
+      'docs/specs/store-constraint-registry/contract.md',
+      'docs/specs/store-constraint-registry/implementation-plan.md',
+      'docs/specs/store-constraint-registry/lifecycle.md',
+      'docs/specs/store-constraint-registry/registers.md',
+      'docs/decisions/ACTIVE-store-and-package-binding.md', // the tracker split's own NEW file (shard 1 of 7)
+      'docs/decisions/ACTIVE-mcp-engine-and-process.md', // the tracker split's own NEW file (shard 2 of 7)
+      'docs/decisions/ACTIVE-engine-pin-and-divergence.md', // the tracker split's own NEW file (shard 3 of 7)
+      'docs/decisions/ACTIVE-engine-drift-and-registers.md', // the tracker split's own NEW file (shard 4 of 7)
+      'docs/decisions/ACTIVE-projection-and-store-facility.md', // the tracker split's own NEW file (shard 5 of 7)
+      'docs/decisions/ACTIVE-data-ownership-and-tiers.md', // the tracker split's own NEW file (shard 6 of 7 — carries the moved `H3` ruling row)
+      'docs/decisions/ACTIVE-tier4-and-secure-graph.md', // the tracker split's own NEW file (shard 7 of 7)
+      'docs/defects-history.md', // the `docs/defects.md` split's history half — the tracker layer's NEW file
     ]
     /** **THE DECLARATION WITH ITS AUTHORITY, ONE ROW PER PATH** — the single source both the
      *  driven control (s-1) and the RAW-reading report read, so a path cannot be excluded in the
@@ -3407,6 +3454,29 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       { path: 'docs/specs/zones.md', owner: 'U-ZONES', authority: '`docs/specs/gutter-ui.md` §5.1 DENIED item 8' },
       { path: 'docs/specs/census.md', owner: 'U-CENSUS', authority: '`docs/specs/gutter-ui.md` §5.1 DENIED item 8' },
       { path: 'docs/specs/gutter-ui-review.md', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 5 / the `gutter-ui` pattern (the closed gate-1 record; not in the measured committed set today)' },
+      // ── **⟶ ATTRIBUTED 2026-10-13 (THE TRACKER-RESTRUCTURING DECLARATION, `R-20`'s
+      // subject seam).** One row per path, each citing the pass that wrote it — the same
+      // discipline every entry above follows, so a path cannot be excluded in the report
+      // and unclaimed in the predicate. **THE AUTHORITY IS THE TRACKER LAYER'S, NOT A
+      // SIBLING SPEC'S:** the architect's `2026-10-13` ruling, read with `docs/specs/gutter.md`
+      // `§5.1`'s commit-range scope rule (*"must NOT read … a sibling unit's artifact as
+      // this unit's diff"*) and `§3.4 R-4` (*a later unit's legitimate use of a sibling's
+      // contract is not a violation of it*). */
+      { path: 'docs/specs/fork-store-reads-greens.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker restructuring, `RCA-8(g)`) — NOT `U-FORK-STORE-READS` submitting work and NOT `U-PROJ`', authority: 'the architect\'s 2026-10-13 tracker-split ruling, citation-repair clause: the `docs/decisions.md:<n>` citations this gate-5 record carries were re-pointed mechanically into `docs/decisions/ACTIVE-data-ownership-and-tiers.md` when the ACTIVE row mass moved' },
+      { path: 'docs/specs/store-constraint-registry/census.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`) — the FILE belongs to `U-STORE-CONSTRAINT-REGISTRY`', authority: 'the architect\'s 2026-10-13 ruling, citation-repair clause (measured: the split commit\'s only change to this directory is `docs/decisions.md:<n>` → shard re-pointing)' },
+      { path: 'docs/specs/store-constraint-registry/claim-ledger.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`) — the FILE belongs to `U-STORE-CONSTRAINT-REGISTRY`', authority: 'the architect\'s 2026-10-13 ruling, citation-repair clause' },
+      { path: 'docs/specs/store-constraint-registry/contract.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`) — the FILE belongs to `U-STORE-CONSTRAINT-REGISTRY`', authority: 'the architect\'s 2026-10-13 ruling, citation-repair clause' },
+      { path: 'docs/specs/store-constraint-registry/implementation-plan.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`) — the FILE belongs to `U-STORE-CONSTRAINT-REGISTRY`', authority: 'the architect\'s 2026-10-13 ruling, citation-repair clause' },
+      { path: 'docs/specs/store-constraint-registry/lifecycle.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`) — the FILE belongs to `U-STORE-CONSTRAINT-REGISTRY`', authority: 'the architect\'s 2026-10-13 ruling, citation-repair clause' },
+      { path: 'docs/specs/store-constraint-registry/registers.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`) — the FILE belongs to `U-STORE-CONSTRAINT-REGISTRY`', authority: 'the architect\'s 2026-10-13 ruling, citation-repair clause' },
+      { path: 'docs/decisions/ACTIVE-store-and-package-binding.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — shard 1 of the seven the `docs/decisions.md` ACTIVE row mass was moved into VERBATIM' },
+      { path: 'docs/decisions/ACTIVE-mcp-engine-and-process.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — shard 2 of seven' },
+      { path: 'docs/decisions/ACTIVE-engine-pin-and-divergence.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — shard 3 of seven' },
+      { path: 'docs/decisions/ACTIVE-engine-drift-and-registers.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — shard 4 of seven' },
+      { path: 'docs/decisions/ACTIVE-projection-and-store-facility.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — shard 5 of seven' },
+      { path: 'docs/decisions/ACTIVE-data-ownership-and-tiers.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — shard 6 of seven (carries the moved `H3`/`U-FORK-STORE-READS` ruling row)' },
+      { path: 'docs/decisions/ACTIVE-tier4-and-secure-graph.md', owner: 'the TRACKER LAYER (the 2026-10-13 tracker split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — shard 7 of seven' },
+      { path: 'docs/defects-history.md', owner: 'the TRACKER LAYER (the 2026-10-13 `docs/defects.md` OPEN/history split, `RCA-8(g)`)', authority: 'the architect\'s 2026-10-13 ruling — the history half of the defects split, moved whole with its line mapping' },
     ]
     expect(
       SIBLING_UNIT_ARTIFACT_PATHS_WITH_AUTHORITY.filter(
@@ -3517,14 +3587,32 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     // an automatic FAIL — while this unit touching `src/main/**`, the shim, the
     // shared types, the build surface, `scripts/**` or a sibling's *artifact it may
     // not own* still FAILS.
+    // ── THE THIRD SUBJECT RE-SCOPE (⟶ 2026-10-13, THE TRACKER-RESTRUCTURING
+    // DECLARATION — the same seam the DENIED half above reads, applied to the
+    // allow-list half so the two halves agree on whose change set this is, exactly
+    // as `tests/gutter.test.ts` `R-12` was scoped 2026-09-27 for the same reason).
+    // **THE MEASURED CAUSE:** the `2026-10-13` tracker split created
+    // `docs/decisions/ACTIVE-*.md` and `docs/defects-history.md` and re-pointed the
+    // `docs/decisions.md:<n>` citations the split invalidated — including inside
+    // `docs/specs/fork-store-reads-greens.md`. None of those paths is `U-PROJ`'s
+    // work, and the ruled allow-list neither names them nor could: it names THIS
+    // unit's artifacts plus the trackers as they stood when the ruling was made.
+    // **The claim the row states is unchanged — "the unit's change set stays inside
+    // the RULED allow-list" — and what moves is whose change set is read**, which is
+    // `docs/specs/gutter.md` `§5.1`'s commit-range scope rule applied rather than
+    // bent. `isSiblingUnitArtifactOfThisRow` can only ever REMOVE a path, this
+    // unit's own out-of-scope path still FAILS, and the DENIED predicate is
+    // untouched (asserted above and by control (c-1) below).
     for (const path of committed) {
       if (isDenied(path)) continue
+      if (isSiblingUnitArtifactOfThisRow(path)) continue
       if (!isUnitArtifact(path) && !/^docs\//.test(path)) continue
       expect(
         inScope(path) || /^docs\/specs\/[^/]*\.md$/.test(path) || /^docs\/[^/]*\.md$/.test(path),
-        `R-20/§5.1 (ADV-PJ-12; the O-12 ruling): '${path}' was COMMITTED inside this unit's range ${range} and is not in the RULED allow-list (${SCOPE_TEXT}) nor a docs tracker/spec annotation — the committed change set was: ${JSON.stringify(
-          committed,
-        )}`,
+        `R-20/§5.1 (ADV-PJ-12; the O-12 ruling; ⟶ the allow-list half RE-SCOPED 2026-10-13 to read the SAME declaration filter the DENIED half already uses, so the ` +
+          `2026-10-13 tracker restructuring's own new files and its citation repair are not charged to this unit): '${path}' was COMMITTED inside this unit's ` +
+          `range ${range} as one of THIS UNIT'S OWN attributable paths and is not in the RULED allow-list (${SCOPE_TEXT}) nor a docs tracker/spec annotation — ` +
+          `a DECLARED sibling/tracker-layer path would be out of the subject; this one is not declared. The committed change set was: ${JSON.stringify(committed)}`,
       ).toBe(true)
     }
     const CANONICAL: readonly string[] = [

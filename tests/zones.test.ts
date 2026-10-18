@@ -643,6 +643,52 @@ function committedChangeSet(): { anchor: string; range: string; paths: string[] 
 const ZONES_GREENS_PROBE = /^docs\/specs\/zones[^/]*-greens\.md$/
 /** This unit's own gate-7 review record under `archive/reviews/`. */
 const ZONES_REVIEW_PROBE = /^archive\/reviews\/[^/]*(U-ZONES|zones)[^/]*\.md$/
+/** **⟶ DECLARED 2026-10-13 (THE TRACKER-RESTRUCTURING ATTRIBUTION — `R-4`'s DENIED
+ *  half and ITS subject only).** The architect's `2026-10-13` ruling split the four
+ *  over-ceiling trackers: `docs/defects.md` OPEN from history (`docs/defects-history.md`),
+ *  `docs/decisions.md` into its index plus seven `docs/decisions/ACTIVE-*.md` shards, and
+ *  archived two historical regions under `archive/next-steps/**` and `archive/pending/**`
+ *  (`RCA-8(g)`, each with a one-line pointer carrying its line mapping). The SAME pass
+ *  mechanically re-pointed `docs/decisions.md:<n>` citations, which necessarily touched
+ *  `docs/specs/*.md` files that belong to OTHER units (e.g. `docs/specs/fork-store-reads-greens.md`).
+ *  `R-4`'s `DENIED_PATTERNS` names *a sibling unit's `*-greens.md`* — CORRECTLY, since a
+ *  unit may not author one — so that re-pointed file arrived in this row's subject as
+ *  `docs/specs/fork-store-reads-greens.md` and FAILED a row that had stopped measuring
+ *  ITS OWN unit: the file carries a CITATION REPAIR made by the tracker layer, not
+ *  `U-ZONES` work, and `U-ZONES` neither authored nor may claim it.
+ *
+ *  **WHAT THIS DECLARATION IS, AND WHAT IT IS NOT.** It is the SAME shape this file
+ *  already uses for `F3_SAME_COMMIT_ARTIFACT_PATHS`: paths another pass is RECORDED to
+ *  have written, named, each with its reason, so the row's SUBJECT excludes them.
+ *  **`isDeniedStrict` IS BYTE-IDENTICAL AND STILL REJECTS EVERY ONE OF THEM** — the
+ *  row's control loop asserts exactly that below — so the prohibition is untouched and a
+ *  genuinely denied sibling path that is NOT on this list still FAILS (`tests/listhost.test.ts`,
+ *  `docs/specs/projection-greens.md`, and the canonical denied probes all still read `true`).
+ *  **NOTHING ARBITRARY IS SWALLOWED:** the list is CLOSED and by NAME (no glob over
+ *  `docs/specs/`), it holds only paths the two tracker-restructuring commits are measured
+ *  to have touched, and each entry carries the pass that wrote it. */
+const TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS: readonly string[] = [
+  // `docs/specs/fork-store-reads-greens.md` — the `U-FORK-STORE-READS` unit's own gate-5
+  // record; the tracker layer re-pointed its `docs/decisions.md:<n>` citations when the
+  // ACTIVE row mass moved to `docs/decisions/ACTIVE-data-ownership-and-tiers.md`
+  // (the `H3`/`D-1`/`D-3` cells). NOT a `U-ZONES` artifact in any reading.
+  'docs/specs/fork-store-reads-greens.md',
+  // The seven ACTIVE shards — new FILES that are the tracker layer's, not any unit's.
+  'docs/decisions/ACTIVE-store-and-package-binding.md',
+  'docs/decisions/ACTIVE-mcp-engine-and-process.md',
+  'docs/decisions/ACTIVE-engine-pin-and-divergence.md',
+  'docs/decisions/ACTIVE-engine-drift-and-registers.md',
+  'docs/decisions/ACTIVE-projection-and-store-facility.md',
+  'docs/decisions/ACTIVE-data-ownership-and-tiers.md',
+  'docs/decisions/ACTIVE-tier4-and-secure-graph.md',
+  // The defects split's history half — a new FILE that is the tracker layer's.
+  'docs/defects-history.md',
+]
+/** Does this path belong to the `2026-10-13` TRACKER RESTRUCTURING rather than to
+ *  `U-ZONES`? Consulted by `R-4`'s subject seam ONLY (never by a predicate). */
+function isTrackerRestructuringPath(path: string): boolean {
+  return TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS.includes(path)
+}
 /** **THE UNIT-SCOPED COMMIT PARTITION** (`§3.4 R-4` / `§3.5 R-8`; the
  *  `323a4a0` precedent — U-PROJ's `R-20` was re-scoped for exactly this class).
  *  The anchored range is `anchor..HEAD` and HEAD moves through LATER UNITS'
@@ -1956,6 +2002,30 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const UNIT_REVIEW_RECORD = ZONES_REVIEW_PROBE
     const inScope = (path: string): boolean =>
       ALLOWED.includes(path) || UNIT_GREENS.test(path) || UNIT_REVIEW_RECORD.test(path)
+    // ── ⟶ RE-SCOPED 2026-10-13 (THE TRACKER-RESTRUCTURING ATTRIBUTION — the
+    // `323a4a0` / `f36f605` / ADV-ZN-12 precedent, one layer further): THE
+    // PROFESSIONAL REASON, MEASURED. The architect's `2026-10-13` ruling split
+    // `docs/decisions.md` (its ACTIVE row mass moved verbatim into seven
+    // `docs/decisions/ACTIVE-*.md` shards), split `docs/defects.md` OPEN from
+    // `docs/defects-history.md`, and archived two historical regions under
+    // `archive/next-steps/**` + `archive/pending/**` — AND, in the same pass,
+    // mechanically re-pointed the `docs/decisions.md:<n>` citations the split
+    // invalidated. Those citations live in `docs/specs/*.md` files that belong to
+    // OTHER units, so the restructuring commits legitimately touched
+    // `docs/specs/fork-store-reads-greens.md` — and `DENIED_PATTERNS`'s
+    // *a sibling unit's `*-greens.md`* arm (CORRECT in itself: this unit may not
+    // AUTHOR one) then charged the tracker layer's citation repair to `U-ZONES`.
+    // **A row that fails on a documentation pass it neither wrote nor may claim has
+    // stopped measuring its own unit** — exactly the defect class the two earlier
+    // re-scopes closed. **WHAT MOVES IS THE SUBJECT, NEVER THE PREDICATE:**
+    // `isDeniedStrict` is BYTE-IDENTICAL (the row's own probe loop below asserts
+    // every attributed path is STILL denied by it, and a genuinely denied sibling
+    // path that is NOT on the declaration — `tests/listhost.test.ts`,
+    // `docs/specs/projection-greens.md` — still FAILS), and the positive control
+    // is unchanged: a denied path among this unit's OWN changes still reddens the
+    // row. See `TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS` for the closed, named list.
+    const attributedToTrackerRestructuring = (path: string): boolean =>
+      isTrackerRestructuringPath(path)
     /** **§5.1's “Outside the scope, ALWAYS” DENIED set** — these bind absolutely.
      *  A pure `src/shared/` arithmetic module may touch none of them: the
      *  renderer/main trees, the shim, the shared types, the build/config surface,
@@ -2025,14 +2095,31 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         scoped.files.length,
         `R-4/§5.1 — the unit's own committed change set (${committed.range}, unit-scoped) is NON-EMPTY: a vacuous census cannot pass this row`,
       ).toBeGreaterThan(0)
-      for (const path of scoped.allFilesOfUnitCommits) {
-        expect(
-          isDenied(path),
-          `R-4/§5.1 — '${path}' was COMMITTED inside this unit's range ${committed.range} and is in the DENIED set: a boundary violation whatever its content. The unit-scoped committed change set was: ${JSON.stringify(
-            scoped.allFilesOfUnitCommits,
-          )}`,
-        ).toBe(false)
-      }
+      // ⟶ RE-SCOPED 2026-10-13 (THE TRACKER-RESTRUCTURING ATTRIBUTION): the DENIED
+      // half now reads THIS UNIT'S OWN attributable paths — the unit-touching
+      // commits' files, minus the paths the `2026-10-13` tracker restructuring is
+      // measured to have written (`isTrackerRestructuringPath`). **THE PREDICATE IS
+      // BYTE-IDENTICAL**: every attributed path is asserted to STILL read
+      // `isDeniedStrict === true` below, the RAW reading is printed rather than
+      // dropped, and the positive control (a denied path among this unit's OWN
+      // changes) is unchanged at the end of the row.
+      const rawDenied = scoped.allFilesOfUnitCommits.filter(isDenied)
+      const restructuringAttributed = scoped.allFilesOfUnitCommits.filter(attributedToTrackerRestructuring)
+      const ownDenied = scoped.allFilesOfUnitCommits.filter(
+        (p) => attributedToTrackerRestructuring(p) === false && isDenied(p),
+      )
+      expect(
+        ownDenied,
+        `R-4/§5.1 — ${JSON.stringify(
+          ownDenied,
+        )} was COMMITTED inside this unit's range ${committed.range} and is in the DENIED set: a boundary violation whatever its content. **THE ROW'S SUBJECT IS THIS UNIT'S OWN ATTRIBUTABLE PATHS** (⟶ RE-SCOPED 2026-10-13: the 2026-10-13 tracker restructuring's citation repair is the TRACKER LAYER's, not U-ZONES's — see \`TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS\`), **and the DENIED predicate is UNWEAKENED** — the RAW reading over the whole unit-scoped set is ${JSON.stringify(
+          rawDenied,
+        )}, and every attributed path still reads \`isDeniedStrict === true\` (asserted below). The unit-scoped committed change set was: ${JSON.stringify(
+          scoped.allFilesOfUnitCommits,
+        )}. Attributed to the tracker restructuring (excluded from the SUBJECT, never from the predicate): ${JSON.stringify(
+          restructuringAttributed,
+        )}`,
+      ).toEqual([])
       expect(
         scoped.files.filter((p) => ['src/shared/zones.ts', 'tests/zones.test.ts', 'docs/specs/zones.md'].includes(p)).length,
         `R-4 — at least ONE of the unit's three canonical artifacts (src/shared/zones.ts / tests/zones.test.ts / docs/specs/zones.md) is genuinely committed inside the unit-scoped range, so the census is a census of real unit work: ${JSON.stringify(
@@ -2107,6 +2194,54 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       expect(isDeniedStrict(path), `R-4 control — the PROHIBITION is unweakened: '${path}' is STILL DENIED by this row’s own pattern, and only the SUBJECT moved.`).toBe(true)
     }
     expect(isDenied('tests/listhost.test.ts'), 'R-4 control — a genuinely denied sibling test file (NOT on the exemption list) still FAILS, so the exemption cannot swallow one.').toBe(true)
+    // THE TRACKER-RESTRUCTURING DECLARATION'S OWN CONTROL (⟶ ADDED 2026-10-13) — **DRIVEN
+    // BOTH WAYS, with the SAME discipline as the `F3` control directly above:**
+    // (a) every declared path is OUT OF THIS ROW'S SUBJECT (attributed to the tracker
+    //     layer, not to `U-ZONES`), **and**
+    // (b) for the ones this row's DENIED set actually names — measured, not assumed; the
+    //     seven `docs/decisions/ACTIVE-*.md` shards and `docs/defects-history.md` are NEW
+    //     `docs/` files this unit's allow-list admits through its own `docs/` clause and
+    //     are NOT denied, so asserting a denial for them would be asserting a falsehood —
+    //     `isDeniedStrict` STILL REJECTS THEM, so nothing was relaxed in the prohibition;
+    //     and
+    // (c) a genuinely denied UNCLAIMED path (a sibling's `*-greens.md` that the
+    //     restructuring did NOT touch) still FAILS, so the declaration cannot swallow an
+    //     arbitrary sibling artifact — the exact failure mode this control exists for.
+    for (const [path, deniedByTheRow] of TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS.map(
+      (p) => [p, isDeniedStrict(p)] as const,
+    )) {
+      expect(
+        isTrackerRestructuringPath(path),
+        `R-4 control — '${path}' belongs to the 2026-10-13 tracker restructuring and is OUT of this row's subject`,
+      ).toBe(true)
+      if (deniedByTheRow) {
+        expect(
+          isDeniedStrict(path),
+          `R-4 control — THE PROHIBITION IS UNWEAKENED: '${path}' is STILL DENIED by this row's own byte-identical predicate (\`isDeniedStrict\`); only the SUBJECT moved, and the RAW reading above still reports it`,
+        ).toBe(true)
+      }
+    }
+    // The declaration is not vacuous: at least the measured class it exists for — the
+    // citation-repaired sibling `*-greens.md` — really IS denied by this row's predicate,
+    // so the subject seam removes a path the row WOULD otherwise have failed on.
+    expect(
+      TRACKER_RESTRUCTURING_ATTRIBUTED_PATHS.filter((p) => isDeniedStrict(p)),
+      'R-4 control — the declaration is NON-VACUOUS: at least one attributed path is genuinely DENIED by this row\'s own predicate (the citation-repaired sibling `*-greens.md` the tracker layer re-pointed), so the seam removes a real failure and is not decoration',
+    ).not.toEqual([])
+    // …and the declaration is CLOSED, not a glob: a sibling `*-greens.md` the
+    // restructuring did NOT touch is still denied AND still in the subject.
+    expect(
+      isTrackerRestructuringPath('docs/specs/projection-greens.md'),
+      'R-4 control — the declaration admits NO unlisted sibling artifact: `docs/specs/projection-greens.md` is not on the tracker-restructuring list, so it remains this row\'s problem',
+    ).toBe(false)
+    expect(
+      isTrackerRestructuringPath('docs/specs/listhost-greens.md'),
+      'R-4 control — and neither is any other arbitrary sibling `*-greens.md`: the list is by NAME, never a pattern over `docs/specs/`',
+    ).toBe(false)
+    expect(
+      isTrackerRestructuringPath('src/shared/types.ts') === false && isDenied('src/shared/types.ts'),
+      'R-4 control — and a DENIED path among this unit\'s OWN changes is UNTOUCHED by the declaration: `src/shared/types.ts` is denied, is not attributed to the restructuring, and would still FAIL this row (the recorded positive control)',
+    ).toBe(true)
   })
 
   it('R-5 §3.4 — the EXPORT-CENSUS row: SET EQUALITY over the TWO value exports, and the type-only name `TrackSpec` through leg 4', async () => {
