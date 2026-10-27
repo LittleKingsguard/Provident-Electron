@@ -8,6 +8,10 @@ for any sentence of the `1.0.0` text; nothing in this document re-narrates it. T
 release **closed nine of the rows that document listed as open**, so this is a REGENERATION and
 not an amendment: a reader who acts on the `1.0.0` text would re-file closed work.
 
+**⟶ `2026-10-28` — THE OPEN SET MOVED AT `provident-storeroom@1.1.0`, AND A REGENERATED ISSUE DOCUMENT IS OWED. This `1.0.1` text is NOT regenerated (`RCA-8(d)`: an append — no byte below moves), so read the blocks that follow THROUGH this block, and read `docs/defects.md`'s `2026-10-28` block as the current catalogue.** **FIVE CLOSED** — three by code (`DEF-Y` the judgement's throw now logs and undoes; `DEF-AA` the restore lands and the true sentence is picked; `DEF-Z` the restore is tier-exact) and **two by measurement** (`STOREROOM-PUBLISHED-ADDON-VERSION-MISMATCH` and `STOREROOM-FILE-PROBE-FALSE-PASS` — the owed `0.1.x` re-measurement, DISCHARGED). **THREE NARROWED** (`DEF-X` — two of seven hosts now judge, **five do not**; `DEF-AB`; and the version contract, re-titled `STOREROOM-VERSION-CONTRACT-1.0.1-AND-1.1.0`, which now names **eleven breaking items shipping in NO tarball**). **TWO WORSENED** (`DEF-AC` — a shipped guide denying the existence of its own tarball; `DEF-AD` — cost, no demand attached). **THREE NEW** (`DEF-AE` — **a write that reports refusal lands its own value**; `DEF-AH` — `read`-only, unproven; `DEF-AI` — the `log` omits its declared `seq`). **ALL NINE `1.0.1` CLOSURES STILL HOLD.**
+
+**⟶ AND THE VERSION-NUMBER ROW IS WITHDRAWN, DATED `2026-10-28` — the architect's ruling, verbatim: *"Stop complaining about the version number."*** **Version numbers are the package's to choose.** A package may ship any number of behaviour changes under a patch, a minor or a major, and **a consumer's remedy is a pin, not an issue**; this consumer records its pin and files **no semver finding**. **So row `1` of the table below and its block in section 2 are WITHDRAWN** (see the note on the row itself): the release note's own semver argument, the eleven breaking items, and the absence of a shipped changelog are **the package's business and not findings of this document** — **do not open an upstream issue on any of them, and do not read the renumber as owed.** **Everything else below stands unchanged, and none of it rests on a number.**
+
 ## What this document is for, and who acts on it
 
 The issue-handoff assembly required by `AGENTS.md` item 7. Its subject is
@@ -74,7 +78,7 @@ section 2 only.
 
 | # | Id | One line | Reachability | Versions measured | Demand or observation |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `STOREROOM-1.0.1-VERSION-CONTRACT` | Four behaviour changes shipped under a patch bump, against the package's OWN recorded standard | `published` — a `^1.0.0` range resolves to it | `1.0.0` → `1.0.1` (`observed` + `read` + `declared`) | **DEMAND** — renumber to `1.1.0`/`2.0.0` as your own record says, or declare all four changes breaking |
+| 1 | `STOREROOM-1.0.1-VERSION-CONTRACT` — **WITHDRAWN `2026-10-28`** | Four behaviour changes shipped under a patch bump, against the package's OWN recorded standard | `published` — a `^1.0.0` range resolves to it | `1.0.0` → `1.0.1` (`observed` + `read` + `declared`) | **DEMAND** — renumber to `1.1.0`/`2.0.0` as your own record says, or declare all four changes breaking |
 | 2 | `DEF-X` | A reversal inside an open commit is unjudged and its violating effect STANDS | `published` | `1.0.1` (`observed`) | **DEMAND** — judge every reversal's terminal state, or refuse an in-commit reversal |
 | 3 | `DEF-Y` | A body that throws AT THE JUDGEMENT refuses with `log: []` and NO UNDO | `published` | `1.0.1` (`observed`) | **DEMAND** — carry the attempt's log and undo, or declare that the reversal stands |
 | 4 | `DEF-AA` | The restore can fail and the message still claims it succeeded — `200` of `200` at 200 pairs | `published` | `1.0.1` (`observed`) | **DEMAND** — select the sentence from the RESTORE's outcome, and refuse an impossible restore |
@@ -117,7 +121,7 @@ belongs at the TERMINAL STATE, never per unwinding step — a per-step check is 
 consulted inside a kernel-driven pass while the floor still reached `5`, so `R8` stands. What
 section 2 lists below is the RESIDUE of that success, not a reversal of it.
 
-### 2.1 `STOREROOM-1.0.1-VERSION-CONTRACT` — the release is not a lawful patch by the package's own recorded standard
+### 2.1 `STOREROOM-1.0.1-VERSION-CONTRACT` — **WITHDRAWN `2026-10-28`: NOT A FINDING** (the head-of-body clause governs; version numbers are the package's to choose, and this consumer pins rather than files)
 
 **(a)** `1.0.1` ships four changes a consumer can feel, under a number that promises none. **The
 version-number verdict is OURS** (`derived` from the two records below); **the four changes are
@@ -150,7 +154,7 @@ forbids and record whether it answers a record or throws; then read the quoted r
 own scale-free intent rather than by its own recorded standard.
 
 **(f)** Fix shape — **upstream-owned, DECLARATIVE (a release decision, not a code fix)**: renumber
-to `1.1.0`/`2.0.0` as the record itself says, or declare the four changes in the release note; and
+to `1.1.0`/`2.0.0` as the record itself says, or declare the four changes in the release note; **⟶ THIS DEMAND IS WITHDRAWN `2026-10-28** — version numbers are the package's to choose and this consumer files no semver finding (see the head-of-body clause); and
 pin the standard in a CHECK rather than in prose, so the next release cannot restate it and
 depart from it in the same number.
 
