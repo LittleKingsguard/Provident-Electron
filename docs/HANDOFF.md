@@ -410,23 +410,32 @@ whose fix shape — *restore on this path* — already asks for it, and the rule
 introduced (§1.1) is that a lawful listener's write must survive. It is recorded so the
 maintainer fixing this row knows the arm to re-run, and so no later round files it as new.
 
-### 2.2 `DEF-AO` — measured against the stated contract: the client must not get the log until it is SEALED and DROPPED
+### 2.2 `DEF-AO` — WITHDRAWN. The seal and the drop both precede the return, and nothing appends after it.
 
-**The contract, in this order: (1) the log is SEALED** — no further frame of the commit may write it;
-**(2) it is DROPPED from the package's record** — the package holds no handle that could later mutate
-what the client holds; **only then is it the client's.**
+**We filed this as a defect three times and were wrong three times, and the correction is a premise we
+had inverted: THE CONSTRAINT BODY IS NOT THE CLIENT.** The client is the **original caller of the package
+edit surface**. A body is a frame the client's own code runs in — **a client that wires a constraint to
+fish the log out of it can do so, and that is the client reading its own in-flight commit.**
 
-**What `1.5.0` does.** A refusal caught inside a still-open commit reads **`3` entries at capture and
-`4` after the commit closed**, with **entry `1`'s message rewritten in place** and a `commit` entry
-appended. **Exposure preceded the seal: the client is holding the living list.**
+**So the deciding question is not "can a body see the log before the seal" but "can a message be
+appended after the final return to the client", and that is measured.**
 
-**Scope, which is why it hid.** A refusal **thrown to the caller** is stable, and a `delete`'s
-`receipt.commit` report is stable. **Only the caught-inside-a-commit handle is live.**
+**Measured.** A body caught an inner refusal and carried its handle out to client scope. **At the moment
+of the top-level return the log already carried four entries — `constraint-check` · `constraint-check` ·
+`outcome` · `commit`, the seal entry included.** After the return, across five further writes, a
+constraint add and remove, a `listen`, a `delete`, a `read`, a `gc` and a 60 ms timer, it was
+**byte-identical**. The arm where the refusal is **thrown to the client** is stable from receipt onward.
+**No append occurs after the return, in either arm.**
 
-**Fix shape.** The caught handle is a **copy sealed at capture**, or the log is withheld until the
-commit settles — and the package drops its own reference **before** the client can hold it.
+**What is left is a documentation nicety, not a defect.** While the call is open, a wired body holds the
+commit's **live** list and watches entry `0`'s message be rewritten in place as the pass progresses. **A
+body that wants to keep what it read must copy it.** One sentence would do it.
 
-**Evidence.** `observed`, `/tmp/probe-storeroom-150/out/ao-150.txt` AO.3.
+**Evidence.** `observed`, `/tmp/probe-storeroom-150/out/ao-post-return.txt` and `ao-post-return2.txt`.
+**An honest note on our own numbers:** a first run of this probe reported the log as *not*
+byte-identical after the return; the cause was our script, which ran a **second** inner-refusal arm and
+re-assigned the handle while comparing against a snapshot of the first. The clean run above is the
+measurement.
 ### 2.3 `DEF-X` — three hosts do not judge, and the guide declares two of them
 
 **SYMPTOM / REPRO** (`observed`, `b-defx7-150.txt`, measured **identically at `1.4.0`** —
