@@ -266,3 +266,181 @@ file's rows. **No as-filed byte is lost.**
 ## The five `1.2.0` state cells — moved `2026-10-28` (`RCA-8(g)`)
 
 `docs/defects.md` carried a `⟶ STATE AT `1.2.0`` clause for each of `DEF-X`, `DEF-AC`, `DEF-AD`, `DEF-AH` and `DEF-AI`. The `1.3.0` review superseded all five, so **5,828 bytes** moved to **`archive/defects/2026-10-28-1.2.0-state-cells-as-filed.md`** (byte-exact, `cmp`-verified by the supervisor's shell seat) and the live document now carries the `1.3.0` disposition block as the standing state of each row, plus a one-line pointer at the move. **No row was closed or narrowed by the move itself, and no count moved (`RCA-8(f)`).**
+
+## `provident-storeroom@1.4.0` — THE REVIEW'S MEASUREMENTS (filed `2026-10-29`)
+
+**PROVENANCE: TWO PROBE RUNS of the INSTALLED `provident-storeroom@1.4.0`** (`unpackedSize` `1,386,344`, `21` files, `addon.version()` = `1.4.0`) — `/tmp/probe-storeroom-140/out/` and the re-entrancy arms in `/tmp/probe-storeroom-141/out/` — plus a supervisor reading of the raw output. **Everything below is `observed` on those bytes**; the live dispositions and the demands stand in `docs/defects.md`'s `2026-10-29` `1.4.0` block, which cites this section by path. Nothing here is re-derived.
+
+### S1 — THE ASK MATRIX (pair at `["d"]` and pair at `[]`; `1.3.0` → `1.4.0`)
+
+| act | pair `["d"]` | pair `[]` | what the pair at `["d"]` is handed |
+| --- | --- | --- | --- |
+| write `["d"]` = 9 | `1 → 1` | `1 → 1` | `addr ["d"]`, `value "9"`, `opKind "write"`, `tier "mem"` |
+| write `["d","x"]` = 9 | **`0 → 1`** | `1 → 1` | `addr ["d","x"]`, `value "9"` — **the ACT's address, not its own** |
+| write `["d","x","y"]` = 9 | **`0 → 1`** | `1 → 1` | `addr ["d","x","y"]`, `value "9"` |
+| write sibling `["e"]` = 9 | `0 → 0` | `1 → 1` | — |
+| write sibling-by-prefix `["d2"]` = 9 | `0 → 0` | `1 → 1` | — |
+| write at an **ancestor** of the pair | `0 → 0` | n/a | — |
+| **delete a descendant** `["d","x","y"]` | **`0 → 1`** | `1 → 1` | `tier null`, `value "undefined"`, `opKind "delete"` |
+| **delete the pair's own address** `["d"]` | **`0 → 1`** | `1 → 1` | as above |
+| reversal landing at `["d"]` | `1 → 1` | `1 → 1` | **`addr ["d"]`, the RESTORED object `"{x: {y: 1}}"` — its OWN address** |
+| reversal landing at `["d","x"]` | `1 → 1` | `1 → 1` | `addr ["d"]`, `value "{x: {y: 1}}"` |
+| reversal landing at sibling `["e"]` | `0 → 0` | `1 → 1` | — |
+| idempotent write `["d","x","y"]` = 1 over 1 | `1` | `1` | `op.before === op.after`, still asked; likewise over its own address |
+| two pairs (`["d"]` and `["d","x"]`), one write `["d","x"]` | both `1` | — | `record.watched: [["d","x"],["d"]]` |
+
+**THE ACT-vs-REVERSAL ASYMMETRY, stated once:** an act hands a widened pair **the act's** address and value; a reversal hands it **its own** address and the restored object. The shipped guide's sentence states the first and not the second (`DEF-AS`).
+
+### S1b — THE UPGRADE BREAK, BUILT AND SHOWN WITH BOTH INSTALLS
+
+```
+pair no-neon at ["settings"], refuses a theme of "neon"
+(a) write ["settings"] = {...} (the act it was authored for)   -> RETURNED op=op-20 (both installs)
+(b) consumer writes the LEAF ["settings","theme"] = "neon"
+      1.3.0: RETURNED                    read ["settings"] = {"density":"compact","theme":"neon"}
+      1.4.0: THROWN ConstraintPassRefused, message "a theme of neon is not one this store admits",
+             log [{seq:1,kind:"constraint-check",id:"no-neon"},{seq:2,kind:"outcome",state:"KC-3"}]
+             read ["settings"] = {"density":"compact","theme":"slate"}
+root-pair variant, write ["ledger","status"] = "BLOCKED"
+      1.4.0: THROWN ConstraintPassRefused "the root guard refuses BLOCKED"   read ["ledger"] = {"open":1}
+body shaped to read ctx.value.theme, met by a DESCENDANT act (ctx.value is the act's value, a string)
+      pair ["settings"] -> RETURNED op=op-25, read ["settings"] = {"theme":"neon"}
+      pair []           -> RETURNED op=op-27, read ["settings"] = {"theme":"neon"}
+```
+The last two are the asymmetry measured as a consumer consequence: a body authored against the object at its own address receives the act's primitive instead, so the very pair that refuses the object shape silently admits it.
+
+### S2 — THE `delete` TABLE
+
+| probe | `1.3.0` | `1.4.0` |
+| --- | --- | --- |
+| pair at the deleted address, asked during the delete | `0` | **`1`** |
+| pair invocations over the whole life (registration + asks) | `1` | **`2`** |
+| a delete **refused** by a pair | not constructible | **`ConstraintPassRefused`**, address restored |
+| reversal raised inside the delete's CONSTRAINT pass (host 6) | `0` judges | **`1` judge**, refusal, `a` = `7` |
+| reversal raised inside the delete's LISTENER delivery (host 5) | `0` judges | `0` judges, `a` = `5` (declared window) |
+| the delete receipt's `commit` member | absent | present, `enumerable:false`, `writable:false`, `configurable:true` |
+| `Object.keys(receipt)` | `["address","tiers","triggered","op"]` | unchanged (`4`) |
+| `D-3` arm (a delete that removes nothing, tier `file`) | — | `{address, tiers:[], triggered:[], op:null, commit:null, discarded:[]}` — `commit` **present** and `null` |
+| spread copy carries `commit` | — | `false` |
+| a pair at a CHILD of the deleted PARENT, delete the parent | `0` | `0` (ancestor act, not asked) |
+| a pair at the PARENT, delete a child | `0` | **`1`** |
+
+### THE FOUR `DEF-AP` ARMS (different subjects only; the same-subject arm is conceded and unsupported)
+
+```
+AP.1  raise[a] then raise[c] : outer write b=1 -> THROWN ConstraintPassRefused
+      asks at [a]: 1   asks at [c]: 0   read a: 7   read c: 1   read b: ABSENT
+AP.2  raise[c] then raise[a] : outer write b=1 -> THROWN ConstraintPassRefused
+      asks at [a]: 1   asks at [c]: 0   read a: 7   read c: 1   read b: ABSENT
+AP.3  violation at [c], lawful raise FIRST : asks at [a]: 1  asks at [c]: 1
+      read a: 7   read c: 9   message "'c' was refused by a constraint pass, ..."
+AP.4  violation at [c], violating raise FIRST: asks at [a]: 1  asks at [c]: 1
+      read a: 7   read c: 9   same message
+```
+`1.3.0` contrast: the write **returned normally** with the earlier violation standing (`read a: VALUE 5`). At `1.4.0` **every order refuses and the whole commit is restored** — and where a refusal ends the check before the second address (`asks at [c]: 0`) the restore is still **whole** (`c` → `1`). Nothing survives unjudged. `a` → `7` on all four arms.
+
+### THE `DEF-AH` SIX ARMS
+
+| arm | `1.3.0` | `1.4.0` |
+| --- | --- | --- |
+| AH.1 one raise in the delete's delivery | `discarded: []`, `a` = `5` | `discarded: []`, `a` = `5` |
+| AH.2 **two raises**, same window | **`[{opId:"op-29", addresses:[]}]`** — empty, but honest that something happened | **`[]`** — a silent all-clear, `a` = `5` |
+| AH.3 the `D-3` arm (a delete that removes nothing) | — | `tiers: []`, `commit: null`, value intact at `mem` |
+| AH.4 one raise, a pair standing at the raised address | `[{opId:"op-15", addresses:[["a"]]}]`, `1` judge | same shape, `1` judge |
+| AH.5 two raises, pairs at BOTH raised addresses | `[]`, `a` = `5` | `[]`, `a` = `5` |
+| AH.6 two raises, a pair at only the FIRST | `[]`, `a` = `5` | `[]`, `a` = `5` |
+
+The shipped sentence the `[]` now contradicts: *"`record.discarded.length === 0` means this act's delivery discarded nothing"* (`README.guide.md` `§12.6`). **Both raises' effects stand in every two-raise arm, and the witness reports nothing at all.**
+
+### THE `DEF-AO` MUTATION TRANSCRIPT (the `1.3.0` row was `read`-only; this is the arm)
+
+```
+AO.3  outer write k=42: RETURNED op=op-13
+      the caught inner refusal .log.length AT CAPTURE: 3
+      the SAME object      .log.length AFTER the commit closed: 4
+      the log MUTATED after close?: true
+      entry 1 AT CAPTURE: "the evaluation of body-writer"
+      entry 1 NOW       : "the constraint body-writer passed at k"
+      entry 4 NOW       : "every constraint registered at k passed; the commit stands"
+AO.1/AO.2  a TOP-LEVEL refusal, and a delete's `receipt.commit.attempt` report, are STABLE across later work
+```
+So the mutation is confined to a refusal a body CATCHES, and it changes an entry's **text**, not only its length.
+
+### THE `DEF-AK` BEFORE / AFTER
+
+```
+1.3.0  outer message: "... a constraint body's throwable crosses as this refusal"   marker-AK: 0 occurrences
+1.4.0  outer message: "... the value the constraint body threw does NOT cross as this refusal: the form the
+                        throwable took stands in the `outcome` entry of this refusal's `log`, which is where a
+                        throwable's own message crosses"
+       log[0] (kind outcome): "the constraint marker-thrower threw; the attempt is closed — the value it threw
+                        was an object whose own `message` member is the string \"marker-AK\""
+       marker-AK crosses now: YES (in that entry, never in `message` or `status`)
+       a body-RETHROWN package refusal: the full inner refusal under Symbol(provident-storeroom.inner-refusal),
+                        its status AND message AND log also quoted in the outer `message`
+```
+`read`: the contradiction the row named is closed; the throwable's own **identity** (its shape, its own members) stays outside the refusal.
+
+### THE RE-ENTRANCY ARMS, THE `exit 134`, AND THE MESSAGE-LENGTH SERIES
+
+| arm (pair at `["a"]`) | body act | body invocations | outcome |
+| --- | --- | --- | --- |
+| R1 | writes a **FIXED** descendant `["a","x"]` | `2` (registration + pass) | bounded: `ConstraintBodyThrew`, nested act refused *"a constraint attempt is already open at a/x; it is disposed of by its own K-3 and by no other act"* |
+| R1s | same, with `a` seeded so the descendant act is admissible | `2` | bounded, same message |
+| R1sb | seeded, top-level act **below** the pair (`["a","z"]=1`) | `4` | refused, `a/z` absent |
+| R2 | **deletes** `["a","x"]` | `2` | bounded, same class |
+| R5var | writes a **FRESH** descendant `["a","x",<n>]` each time | `201` at a probe cap of `200`; **unbounded** with the cap removed | **`FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory`**, exit `134` (`SIGABRT`), core dumped, ~`1.6` s, **no `{status, message, log}` ever delivered** |
+| R5var-uncapped (package-only) | as above | — | the same abort; **the bound was the PROBE'S, not the package's** |
+| root pair `[]` whose body writes `["a"]` | — | — | an ordinary unrelated write `["b"]=1` is **refused and rolled back** (`b` absent; `1.3.0` returned with `b` = `1`) |
+
+`1.3.0` contrast: **every** descendant arm was `1` invocation — the pair was asked `0` times for an act below it, so no re-entry was possible at all. **The hazard is created by `D-56`.**
+
+```
+R5var — the abort, verbatim (last lines)
+  [1863607:0x2ae8a000]  1629 ms: Mark-Compact 1032.9 (1162.2) -> 1032.1 (1161.7) MB, pooled: 1 MB,
+                       4.56 / 0.00 ms  allocation failure; scavenge might not succeed
+  FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+  timeout: the monitored command dumped core        (exit 134, core dumped)
+```
+
+```
+R7 — the crossed-refusal message amplification, one chain, at a probe cap of 40
+  body invocations: 41 (the PROBE's cap fired — not a package bound)
+  first host throwable seen by the body: {"n":41,"ctor":"RangeError","isRangeError":true,
+                                           "message":"Invalid string length"}
+  log entry lengths (chars):
+    12 12 154 608 1068 1544 2052 2624 3324 4280 5748 8240 12780 21416 38244 71456 137436
+    268952 531540 1056272 2105292 4202888 8397636 16786688 33564348 67119224 134228532 268446704
+  addConstraint then THREW a lawful refusal: ConstraintBodyThrew, messageLen 22003, logEntries 40
+  the entry naming the host error: "the constraint r7-fresh-descendant threw; the attempt is closed — the value
+                                    it threw was an object whose own `message` member is the string
+                                    \"Invalid string length\""
+  children of a.x that SURVIVED the failing act: 1 of 42
+```
+`read`: `constraints.mjs:1275-1278` embeds the inner message with `JSON.stringify`, so each level re-escapes the previous — **~2× per level**. **A lawful refusal at depth ~40; a dead process at ~200.**
+
+### THE `DEF-AD` THREE-INSTALL NUMBERS (observation; nothing asked)
+
+| measure | `1.2.0` | `1.3.0` | `1.4.0` |
+| --- | --- | --- | --- |
+| native reads, `200` permitted at-rest reversals | `140,300` | not re-measured | `140,300` (`701.5`/reversal, `3.5075`/address) |
+| native reads, `200` refused reversals | `200,800` | not re-measured | `200,800` (`1,004`/reversal) |
+| `readLiteral` calls | `0` | — | `0` |
+| heap per pair | `4,915` B | basis of the delta | `4,953` B (`+14`) |
+| unpacked tarball | `1,149,852` (`20` files) | `1,290,716` (`21`) | `1,386,344` (`21`, `+95,628`) |
+
+**No read-count regression between `1.2.0` and `1.4.0`.**
+
+## THE TWO WRONG `DEF-W` CELLS AS FILED (`2026-10-29`)
+
+**These are the two cells the `1.3.0` review recorded as holding, `observed` on an arm that measures the delete-DELIVERY window (host 5) and not the kernel-repair pass. The harness's own verdict line at `1.3.0` and `1.4.0` is `==> DEF-W: BROKEN`; the pair IS asked inside a pass (`1`), and the outer write is refused.** `RCA-8(g)`: the cells are preserved here **byte-exactly**; their live sites in `docs/defects.md` carry one-line pointers naming `archive/defects/2026-10-28-DEF-W-cells-as-filed-wrong.md` as their `RCA-8(g)` home. **That archive copy is OWED to a shell-capable seat** (the pass that wrote this has neither shell nor `archive/**` in its edit set), so this section is the retrieval surface until it lands.
+
+*(1) the closure index's `DEF-W` cell, as filed:*
+
+| `DEF-W` | **CLOSED AS ASKED** — the reversal is judged **AT THE TERMINAL STATE IT LEAVES, ONCE, never per unwinding step**, and a reversal inside a kernel-driven pass is **NOT** judged (so `R8` holds — four adversarial arms, the judge never consulted). **ITS RESIDUALS ARE NEW ROWS (`DEF-X`, `DEF-Y`, `DEF-Z`, `DEF-AA`, `DEF-AB`), NOT THIS ROW'S CONTINUATION** |
+
+*(2) the regression table's `DEF-W` row, as filed:*
+
+| `DEF-W` | HOLDS | the terminal-state judgement holds; **its *"a reversal inside a kernel-driven pass is not judged"* half is STILL TRUE (`observed`: `0`)**, and `R8` holds across four adversarial arms |
+
+**THE CORRECTION, one sentence:** the residual **stopped reproducing at `1.3.0`** — `in-pass (repair-body) reversal — judge asks: 0` at `1.2.0`, `1` at `1.3.0`, `1` at `1.4.0` (`i-regressions-{120,130,140}.txt`) — so **the package was owed a closure credit and this catalogue withheld it for one review cycle.**
