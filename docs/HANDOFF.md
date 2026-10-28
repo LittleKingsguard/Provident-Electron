@@ -1,825 +1,871 @@
-# Provident-Electron → `provident-storeroom`: the open issues at `1.4.0`
+# Provident-Electron → `provident-storeroom`: the open issues at `1.5.0`
 
-**ROUND 14. Regenerated `2026-10-29` against the installed `provident-storeroom@1.4.0`**
-(`1,386,344` unpacked bytes, `21` files, `addon.version()` = `1.4.0`, `observed`).
+**ROUND 15. Regenerated `2026-10-29` against the PUBLISHED `provident-storeroom@1.5.0`** —
+`latest`, `modified 2026-10-28T21:20:37.094Z`, `unpackedSize 1,520,345` over the **same `21`
+files** (`observed`, `/tmp/probe-storeroom-150/out/docs-h-150.txt` `H0`: `file count: 21`,
+`sum of file bytes: 1520345`). `1.4.0` was `1,386,344` — so this release is **`+134,001` bytes
+of text and not one new file**. `addon.version()` answers `1.5.0` and the platform package
+reads `1.5.0` (`observed`, `i-regressions-150.txt` `I13`).
 
-**`1.4.0` is the first release of this package whose structural changes we would not
-trade back — and one of them repaired a defect this consumer had never filed.** So this
-round leads with what the release got right (§1), and only then files demands (§3). A
-maintainer reading only the demand list would conclude that a release which widened a
-constraint pass correctly, gave `delete` a real attempt and closed the false-pass filed at
-`1.3.0` is a release under siege. It is not. Eight rows remain open; six of them are about
-**words** as much as behaviour, and **none is a claim that the store ends in a state the
-package cannot justify** — the two that do move the store (a silent undo and a live
-message log) are about the answer, not about the state.
+**`R8` HOLDS — AND IT IS SAID FIRST, BEFORE ANY DEFECT.** Six adversarial arms
+(`observed`, `c-r8-150.txt`): **`0` tier-null judge invocations inside the kernel's
+unwinding on every arm, and the per-op floor reached on all six.** `C1`–`C4` each read the
+pre-attempt value `5` back at `["a"]` after the refusal; `C5` and `C6` read `1` back at
+`["a","x"]` on the two arms the `1.4.0` widening newly makes possible (a root judge-at-
+tier-null pair, and an ancestor one, over a refused **descendant** write). Six arms rather
+than Round 14's four. **A release this large could have broken this invariant silently, and
+did not; the maintainer should read that before reading anything below.**
 
-**Where this document and `docs/defects.md` disagree, that catalogue governs.** It holds
-the long form of every row below, its four-part filing, and its dated dispositions. This
-document is a **digest for the maintainer**, not a copy: it does not restate the
-catalogue row-for-row, and where the catalogue carries the detail it points at the file
-by path. Decision rows are cited **by name**, never by line — that ledger is appended-to
-and its line anchors drift.
+**THE SURFACE KEEPS ITS COUNT, AND LOSES EXACTLY ONE DECLARATION.** `14` own string members,
+**name-for-name and arity-for-arity, empty diff** (`observed`, `surface-150.txt` against
+`surface-140.txt`); `StoreStatus` `20` members + `(string & {})` (`read`,
+`index.d.ts:316-337`); `LogEntry.state`'s domain `KC-1`…`KC-9`; the `{status, message, log}`
+form unchanged; **`journalMark` still a native export** (`observed`, `surface2-150.txt` `G`:
+`native journalMark: function` — and still not a namespace member, `ns.journalMark:
+undefined`); `register/2` still registers and still delivers (`observed`, `surface2-150.txt`
+`D`). Two instance Symbols are new (`bump-mark`, `register-body`, `8 → 10`,
+`surface-{140,150}.txt`), both non-enumerable and outside the census. **The one declaration
+that left is `LogEntry.seq`** — §1.3, and it is the only breaking delta in this release.
+
+**Six rows carry a demand (§2) and two are observations with no demand (§3).** Round 14
+carried eight demands; **two of them are closed at `1.5.0` and one has narrowed to half of
+itself.** That is the direction this consumer wants to keep reporting.
+
+**Where this document and `docs/defects.md` disagree, that catalogue governs.** It holds the
+long form of every row, its four-part filing and its dated dispositions; the `1.5.0` block
+dated `2026-10-29` is the authority for every row state digested here. This document is a
+**digest for the maintainer**, not a copy: it does not restate the catalogue row for row, and
+where the catalogue carries the detail it points at the file by path. Decision rows are cited
+**by name**, never by line — that ledger is appended-to and its line anchors drift.
 
 ---
 
 ## 0. What this document is, and what it is not
 
-**The round.** Round 14, `2026-10-29`, against `provident-storeroom@1.4.0`. Round 13 was
-against `1.3.0` and its as-filed bytes are preserved **byte-exactly** at
+**The round.** Round 15, `2026-10-29`, against `provident-storeroom@1.5.0`. Round 14 was
+against `1.4.0` and its as-filed bytes are preserved **byte-exactly** at
 
-> **`archive/handoffs/2026-10-29-HANDOFF-round-13-as-filed.md`**
+> **`archive/handoffs/2026-10-29-HANDOFF-round-14-as-filed.md`**
 
-(`56,410` bytes, `724` lines; the copy was `cmp`-verified against the Round-13 file as
-filed, before this round opened; `RCA-8(b)` and `RCA-8(g)` are the two items that required
-it). That copy is the authority for any sentence of the Round-13 text. **Nothing here
-re-narrates it**, and this file is a whole-file regeneration rather than an amendment —
-which is legitimate only because the as-filed bytes are already in the archive and the
-archive path resolves.
+(`53,288` bytes, `825` lines, `cmp`-verified against the as-filed file before this round
+opened; `RCA-8(b)` and `RCA-8(g)` are the two items that required the copy). **That path is
+the authority for any sentence of the Round-14 text.** This file is a **whole-file
+regeneration**, which is legitimate here for one reason only: the as-filed bytes are already
+in the archive, the archive path resolves, and the live document does not carry superseded
+text beside its successor.
 
-**The four earlier regenerations are preserved the same way**, under
-`archive/handoffs/`: `2026-10-14-HANDOFF-as-filed-before-regeneration.md`,
-`2026-10-27-HANDOFF-as-filed-before-1.0.1-regeneration.md`,
-`2026-10-28-HANDOFF-as-filed-before-1.2.0-regeneration.md`,
-`2026-10-28-HANDOFF-as-filed-before-1.3.0-regeneration.md`.
+**The earlier regenerations are preserved the same way** under `archive/handoffs/`, from
+`2026-10-14-HANDOFF-as-filed-before-regeneration.md` through
+`2026-10-29-HANDOFF-round-13-as-filed.md`.
 
-**The labels, which are binding on every sentence below.** No sentence here rests on a
-commit message, and **no commit subject is offered as evidence of anything**.
+**The `1.3.0` review block** — the record that carries the `1.3.0` measurements themselves,
+which no later block re-runs — stands **byte-exactly** at
 
-- **`observed`** — a probe was executed and its output is quoted, with the output path
-  named. Never inferred, never rounded up from a reading.
+> **`archive/defects/2026-10-29-1.3.0-review-as-filed.md`**
+
+and is **superseded as a statement of any row's current state**, which the `1.4.0` and
+`1.5.0` blocks carry against installed bytes.
+
+**The labels, which are binding on every sentence below.** No sentence here rests on a commit
+message, and **no commit subject is offered as evidence of anything**.
+
+- **`observed`** — a probe was executed and its output is quoted, with the output path named.
+  Never inferred, never rounded up from a reading of code.
 - **`read`** — a citation to code, a declaration or a shipped byte, given as `path:line`.
   Evidence of what the bytes **say**, never of what they **do**.
-- **`declared`** — a shipped document or a commit states it. **Never evidence of
-  behaviour.** Three of this round's rows exist precisely because a shipped document says
-  something the bytes do not do, and one of them (`DEF-AC`) exists because a shipped
-  document still denies that a release the consumer installed **is** a release.
+- **`declared`** — a shipped document or a commit states it. **Never evidence of behaviour.**
+  Three of this round's rows exist precisely because a shipped document says something the
+  bytes do not do, and one (`DEF-AC`) exists because a shipped document still denies a cut
+  release that a consumer can install.
 
 **Where the probe transcripts live.** Every figure and every quoted transcript stands in
+**`docs/defects-history.md`** — the transcript archive for this catalogue — and, per row,
+under the `/tmp/probe-storeroom-150/out/*` paths named in §5. The `1.4.0` comparison re-ran
+**the same scripts** from `/tmp/probe-storeroom-150b/` (`package.json` version `1.4.0`,
+`observed`); its outputs carry the `-140` suffix in the same directory.
 
-> **`docs/defects-history.md` → `## provident-storeroom@1.4.0` — THE REVIEW'S MEASUREMENTS
-> (filed `2026-10-29`)**
+**What this document is not.** It is not a patch list against a checkout, it reports no fix this
+project applied, and it asks for nothing inside `../Provident-Storeroom`, `node_modules/**` or
+any published artifact: this project **catalogues; it does not patch the package** (`AGENTS.md`
+item 7). A fix that landed is recorded as a **CLOSURE** — with the release that landed it and
+the code path that closes it — so that it is never re-filed.
 
-and, per row, under the `/tmp/probe-storeroom-140/out/*` paths named in §6 (with
-`/tmp/probe-storeroom-142/out/*` for `DEF-AR`). The catalogue's dated `2026-10-29` `1.4.0`
-block in `docs/defects.md` is the authority for every row state this document digests.
+**How the demands are ordered.** By **what each costs a consumer**: a row that can hand a
+consumer a value in a state the package calls unsafe comes before a row that hands it a wrong
+sentence about a right answer. Hence `DEF-AR` first, and `DEF-AC` — only words — last.
 
-**What this document is not.** It is not a patch list against a checkout, it reports no
-fix that this project applied, and it asks for nothing inside `../Provident-Storeroom`,
-`node_modules/**` or any published artifact. This project **catalogues; it does not patch
-the package** (`AGENTS.md` item 7). A fix that landed is recorded as a **CLOSURE**, with
-the release that landed it and the code path that closes it, so that it is not re-filed.
-
-**How the demands are ordered.** By **what each costs a consumer**, not by what each
-costs the package and not by file order: a row that can hand a consumer a wrong answer
-with no report comes before a row that hands a consumer a bad sentence about a right
-answer. That ordering is why `DEF-AR` leads and why `DEF-AC`, which is only words, still
-sits above two rows that touch behaviour. A maintainer who would rather fix in dependency
-order will find §3.4 and §3.6 are the cheapest pair in the list and should simply be done
-first — §2's closing note says so in one paragraph.
+**One correction of address.** Round 14 said the guide declares its two unjudged windows at
+`README.guide.md:1521-1523`. **At `1.5.0` the guide was re-cut and those sentences stand at
+`README.guide.md:1920-1927`** (`read`, §12.6b, headed *"The two known fail-states, and how you
+leave them"*). The `1.4.0` anchor is cited nowhere below.
 
 ---
 
-## 1. What `1.4.0` got right, and one credit we owe twice over
+## 1. What `1.5.0` got right
 
-### 1.1 `DEF-AP` — CLOSED. Two raises are now both asked, and the commit is restored whole
+**This section is not a courtesy paragraph.** Two of the rows this consumer filed and then
+watched for two rounds are **closed**, one is closed by an edit this consumer would not have
+dared propose, and the invariant we care about most held on a release that touched `134,001`
+bytes of text. A maintainer reading only §2 would conclude that a release which repaired a
+false declaration, gave a listener's throw its own identity, kept `R8` through two new arms
+and **dropped a member rather than keep it lying** is a release under siege. It is not.
 
-**`observed`, four arms, `/tmp/probe-storeroom-140/out/ap*`, transcript in
-`docs/defects-history.md` (`THE FOUR DEF-AP ARMS`).**
+### 1.1 `DEF-AN` — CLOSED. A listener's lawful write now survives the caller's later refusal
 
-The `1.3.0` behaviour, re-stated because it is the measure of the repair: a raise that
-came **first** — before the raise that carried the violating subject — left the write
-**returning normally with the violation standing** (`read a: 5`). The overwritten raise's
-watch had been taken after the violation already stood, so every address it moved went
-unjudged while the surviving watch passed.
+**`observed`, `an-150.txt`; the `1.4.0` arm is `an-140.txt`.**
 
-At `1.4.0`, on the same harness:
+The `1.4.0` behaviour, re-stated because it is the measure of the repair: a listener wrote a
+**lawful** `["g"] = 1` inside its delivery; the *caller's own* write was then refused for an
+unrelated reason; and the lawful write was **undone with the commit** — `read g` answered
+`ABSENT`. The declaration the package added for it said every edit the commit made is undone,
+which was **true as written and false as meant**: the listener's act was lawful, judged, and
+taken anyway.
 
-| arm | order of the two raises | asks at `[a]` | asks at `[c]` | outcome | `read a` | `read c` |
-| --- | --- | --- | --- | --- | --- | --- |
-| `AP.1` | `a` then `c` | `1` | `0` | `ConstraintPassRefused` | `7` | `1` |
-| `AP.2` | `c` then `a` | `1` | `0` | `ConstraintPassRefused` | `7` | `1` |
-| `AP.3` | violation at `c`, **lawful** raise first | `1` | `1` | `ConstraintPassRefused` | `7` | `9` |
-| `AP.4` | violation at `c`, **violating** raise first | `1` | `1` | `ConstraintPassRefused` | `7` | `9` |
-
-**Every order is refused.** Where a refusal ends the check before the second address
-(`asks at [c]: 0`) the restore is still **whole** — `c` returns to `1`, the value the
-pre-attempt state held, not the value the overwritten raise had moved it to. `a` returns
-to `7` on all four arms. **Nothing survives unjudged on a differing-subject chain.**
-
-**One scope sentence, and the document asks nothing on it.** The four arms use
-**different subjects only**. A **same-subject double reversal is unsupported usage**:
-the maintainer's ruling of `2026-10-28` — *"Double-reversing the same request is
-unsupported because there's no reason to do that"* — is accepted in full, and **this
-document asks nothing on it**. The sentence exists so that a later reader does not
-mistake the four-arm table for a claim about a chain that reverses one op twice.
-
-### 1.2 `DEF-W`'s residual closed at `1.3.0` — and this consumer recorded it wrong
-
-**This paragraph is owed and is not compressible.** `DEF-W`'s residual clause read *"a
-reversal inside a kernel-driven pass is not judged"*. **One harness, three installs, the
-same arm** (`/tmp/probe-storeroom-140/out/i-regressions-{120,130,140}.txt`) measured the
-judge asks as:
-
-| install | in-pass (repair-body) reversal — judge asks | the harness's own verdict line |
-| --- | --- | --- |
-| `1.2.0` | **`0`** | `==> DEF-W: HOLDS` |
-| `1.3.0` | **`1`** | `==> DEF-W: BROKEN` |
-| `1.4.0` | **`1`** | `==> DEF-W: BROKEN` |
-
-**The residual stopped reproducing at `1.3.0`.** The pair **is** asked inside a kernel
-pass and the outer write is refused. The `1.3.0` review nevertheless recorded
-`HOLDS — STILL TRUE (observed: 0)`, in two cells — the `DEF-W` row of the regression
-table and the `DEF-W` cell of the closure index — **and both are wrong**.
-
-**The `0` was not a lie; it was a misfiled arm.** It came from a harness arm measuring the
-**`delete`-delivery window** (host 5, a declared window, §3.8), not the kernel-repair pass.
-A window that is declared not to judge was read as evidence that a pass does not judge.
-
-**So, plainly: the package was owed a closure credit at `1.3.0` and this catalogue
-withheld it for one review cycle**, while the same release's guide and behaviour had
-already made the row's residual false. The two wrong cells are corrected beside
-themselves in `docs/defects.md` (each replaced by a one-line pointer, the as-filed bytes
-kept) and stand **byte-exactly** at
-
-> **`archive/defects/2026-10-28-DEF-W-cells-as-filed-wrong.md`**
-
-with a retrieval copy in `docs/defects-history.md` → `## THE TWO WRONG DEF-W CELLS AS
-FILED (2026-10-29)`. **A consumer that files a defect owes the same diligence to its
-closures.** We record the debt here so that it is not absorbed silently into a later
-round's count.
-
-### 1.3 The `DELETE` change is real, and it is welcome
-
-**`observed`, `/tmp/probe-storeroom-140/out/s2*`; `read` for the declarations.**
-`1.3.0` invoked a pair **once** over a `delete`'s whole life, and **`0`** times for the
-delete itself — a `delete` could not be refused at all. At `1.4.0`:
-
-- **the pair is invoked twice** where `1.3.0` invoked it once — a `delete` now **opens an
-  attempt, runs its own constraint pass**, and is judged by it;
-- **an in-pass reversal is judged and undone** — host 6, which did not exist as a judging
-  host at `1.3.0`, now returns `1` judge invocation and a refusal, with `a` back at `7`;
-- **a `delete` can now be refused** — `ConstraintPassRefused` with the address restored
-  (`a` = `7`), a shape the `1.3.0` probe recorded as `NOT PRESENT` because the artifact
-  could not construct it;
-- **the delivery fires after the judgement**, so a listener sees a **judged** state
-  (`§7.8`, `README.guide.md:780-797`; `kernel-commit.mjs:257`; `constraints.mjs:912`);
-- **a receipt carries a non-enumerable `commit: CommitRecord | null`** — `null` where
-  nothing was removed, and the member **present** on the `D-3` arm
-  (`{address, tiers: [], triggered: [], op: null, commit: null, discarded: []}`) —
-  **while `Object.keys(receipt)` is unchanged at four members**
-  (`["address","tiers","triggered","op"]`), the native surface is identical (`14` own
-  string members, no new export, `journalMark` present), and `StoreStatus` still carries
-  `20` members plus `(string & {})`.
-- **`discarded`'s documentation keeps the delivery window** while withdrawing its old
-  premise (`read`, `index.d.ts`) — which is the right half to keep, and which makes §3.3 a
-  defect in the value the member carries rather than in the sentence that introduces it.
-
-That is a verb made structural without a surface break, and no consumer of ours had to
-change a line to keep working. **A delete that can be refused, whose refusal is a
-judgement and not a bookkeeping note, is the change this consumer's `DEF-X` row has been
-asking for since it was filed, and we had stopped expecting it.**
-
-### 1.4 The widening closed a real gap, and the release's own notes declare the rule
-
-**The gap, `observed` on both installs, `/tmp/probe-storeroom-140/out/s1b*` — and it is a
-defect this consumer never filed.** At `1.3.0` a pair registered at `["settings"]` was
-**not asked** for a write at `["settings","theme"]` (`ASKS=0`): the consumer wrote the
-leaf `"neon"`, the write **returned** (`op=op-21`), and `read ["settings"]` read
-`{"density":"compact","theme":"neon"}` — **the violating effect stood**, inside the very
-object the pair existed to police. At `1.4.0` the same write is refused:
+At `1.5.0`, the same arm:
 
 ```
-pair no-neon at ["settings"], refuses a theme of "neon"
-(a) write ["settings"] = {...}  (the act it was authored for)   -> RETURNED op=op-20
-(b) consumer writes the LEAF ["settings","theme"] = "neon"
-      1.3.0: RETURNED                          read ["settings"] = {"density":"compact","theme":"neon"}
-      1.4.0: THROWN ConstraintPassRefused,
-             message "a theme of neon is not one this store admits",
-             log [{seq:1,kind:"constraint-check",id:"no-neon"},{seq:2,kind:"outcome",state:"KC-3"}]
-             read ["settings"] = {"density":"compact","theme":"slate"}
-root-pair variant, write ["ledger","status"] = "BLOCKED"
-      1.4.0: THROWN ConstraintPassRefused "the root guard refuses BLOCKED"   read ["ledger"] = {"open":1}
+the in-listener lawful write g=1:   RETURNED op=op-4
+the outer write b=1:                REFUSAL  ConstraintPassRefused
+read g  (1 => survived, ABSENT => undone):  VALUE 1
+read a:                             VALUE 7
 ```
 
-**The rule is declared, and in the release's own headline item.** `declared`,
-**`RELEASE-NOTES.md:66`**: *"the membership rule reads once: your pair is asked when THE
-ACT'S ADDRESS IS AT OR BELOW YOUR PAIR'S ADDRESS"* — and the pair *"is handed the ACT's
-`address`, `tier` and `value`"*. **Say it plainly, because the previous round's successor
-filing claimed otherwise: the rule IS declared, and the claim that it was undeclared was
-this consumer's error and has been withdrawn** (`DEF-AS`, §5). What remains is not an
-absence of declaration; it is that the **guide keeps the superseded rule standing beside
-the current one** — that is `DEF-AT`, §3.6, and it is the same failure one layer down.
+**The lawful write survives**, and it survives because the restore baseline moved: it is now the
+**LAST VALIDATED MARK** rather than the commit's opening mark. **And the refusal says so in its
+own message**, verbatim from the same run: *"the baseline this verdict measured is the
+pre-reversal standing, which is the state the LAST VALIDATED MARK holds: the position the commit
+cached at its opening, moved forward by every constraint sweep that has passed since"*. A rule a
+consumer can read out of the answer it was handed is the standard this project asks for, and this
+release met it.
 
-### 1.5 `R8` still holds, including two arms the widening newly makes possible
+**What does not move, said so the credit is not read as larger than it is:** no sentence in
+any refusal names `g` (`observed`, `an-150.txt`: `any sentence naming 'g'?: []`). The
+consumer's remedy is still to read its own addresses back. What changed is that the read now
+answers the value the consumer wrote.
 
-**`observed`, `/tmp/probe-storeroom-140/out/c-r8*`:** `0` **tier-null judge invocations
-inside the kernel's unwinding, the floor reached on every arm** — now including **two new
-arms over a refused descendant write** (a root/ancestor judge-at-tier-null pair watching
-an act below it that the store then refused). The unwinding consults no pair. That is
-`R8`, on the release that made a pair reachable in more places than it has ever been
-reachable, which is exactly the release on which it was most worth re-measuring.
+### 1.2 `DEF-AK` — CLOSED. A listener's throw crosses to the original caller with its identity
 
-**All fifteen other earlier closures hold** (`observed`, the same regression harness), and
-**no closure was broken by `1.4.0`**. The dated closure index in `docs/defects.md` is the
-list of them; §5 below lists only the states a reader might otherwise re-file from.
+**`observed`, `g-defak-150.txt`, `p-d71-150.txt`; `i-regressions-150.txt` `I9` re-confirms it
+from the regression harness.**
+
+Two halves, both closed:
+
+1. **A constraint body's own `Error` crosses as its `message`.** `g-defak-150.txt` `G3`: the
+   body throws `new Error('marker-AK')`, the caller receives `ConstraintBodyThrew`, and
+   `marker-AK` is present — carried where the declaration says it will be, in the `outcome`
+   entry of the crossed refusal's `log` (*"the value it threw was an object whose own
+   `message` member is the string \"marker-AK\""*). A body that throws an **inner refusal**
+   uncaught gets the stronger treatment (`G4`): the inner refusal crosses **beside** the
+   crossed one under `Symbol.for('provident-storeroom.inner-refusal')`, with its own log, and
+   the crossed sentence says exactly that in its own words.
+2. **A listener's throw now crosses to the original caller with IDENTITY PRESERVED.** The
+   `1.4.0` behaviour swallowed it. At `1.5.0` (`p-d71-150.txt`):
+
+   ```
+   ARM (i)  the listener body throws its own Error("L-OWN-ERROR")
+            the caller's write answer:  THREW Error  msg="L-OWN-ERROR"  own=["stack","message"]
+            identity preserved (thrown === the listener's own Error)?  true
+            read a (1 => the write LANDED):  VALUE 1
+   ARM (D-73 depth)  a throw two delivery windows down:
+            identity preserved at the original caller?  true
+   ```
+
+   `thrown === the listener's own Error` is `true`, and `true` again across **two** delivery
+   windows. The caller can key its own diagnostics on a value it minted itself. That is a
+   surface a host can build an error policy on.
+
+**The asymmetry between the two — a body's throw crosses converted, a listener's throw
+crosses as itself — is DECLARED as the design**, and the hazard it creates is declared too.
+**`README.guide.md:762`**, verbatim: *"THE WRITE'S DATA LANDED AND ITS ANSWER DID NOT — SO A
+BLIND RETRY RE-APPLIES A WRITE THAT ALREADY SUCCEEDED"*. **This paragraph is credited
+explicitly**: it states the consequence in the consumer's own terms (`try { write } catch {
+retry }` runs the write twice), it says what to write instead, and it does not pretend the
+asymmetry is uniform. **It is the kind of declaration this consumer asks for**, and it is
+worth more than a fix here would be, because a host that reads it will not build the bug.
+
+### 1.3 `DEF-AI` — CLOSED BY SUBTRACTION. `LogEntry.seq` is gone, and that is a BREAKING delta
+
+**`observed`, `d-seq-150.txt`, `ef-decl-150.txt`; `read`, `index.d.ts` (`- readonly seq:
+number;` removed from `LogEntry`, `D-65`: *"Drop it"*).**
+
+The row was filed at `1.3.0` and narrowed at `1.4.0`: the log entry carried an ordinal that
+could disagree with the journal's own. At `1.5.0` the member **no longer exists**:
+
+```
+every log[] entry's seq: [{seq: undefined, kind: "constraint-check", id: "no-five"}]
+JUDGEMENT-TIME THROW:    [{seq: undefined, kind: "constraint-check", id: "thrower"}]
+REFUSED WRITE, FAILING REPAIR: 3 entries, all seq: undefined
+```
+
+The position is the array index. **The declared member list is five** (`ef-decl-150.txt`
+`E0`: `kind` · `id` · `message` · `opId` · `state`), and the key is **absent** from an entry
+the write path built (`E1`: `keys=["kind","id","opId","message","state"]`) while a crossed
+body-throw entry prints it as `undefined` (`g-defak-150.txt` `G4`: `"seq": undefined`) — the
+same value either way, with one shape difference we note and do not file.
+
+**State the consumer-visible consequence honestly: THIS IS A BREAKING DELTA FOR ANY CONSUMER
+THAT READS `.seq`, AND IT SHIPPED IN A MINOR.** A `1.4.0` consumer that numbered its own
+diagnostics from `log[i].seq`, keyed a map by it, or asserted `typeof entry.seq === 'number'`
+will see `undefined` at `1.5.0` with no other signal. **We are not complaining about the
+version number** — that is ruled (`VERSION-NUMBERS-ARE-THE-PACKAGE'S-TO-CHOOSE`, §4) — and we
+file nothing on it. We are telling the maintainer what a `1.4.0` consumer will hit on the
+morning it upgrades, because a change list that said *"the member is gone"* would save every
+one of them an afternoon, and `RELEASE-NOTES.md`'s `1.3.0` section still points the other way
+(`observed`, `docs-h-150.txt` `H1`: *"`1.3.0`: `seq` is the commit log's ordinal (DEF-AI): 1
+line(s)"*).
+
+**The closure itself is the right call, and we say so:** a field that could not be made to
+mean one thing at every host was not made to mean one thing — it was deleted, and the index
+it duplicated is exact. `DEF-AB`'s `seq` half closes with it, which is why §4 lists that half
+as closed rather than withdrawn.
+
+### 1.4 `DEF-AR`'s message no longer pre-empts the refusal — half of the row, and the log half
+
+**`observed`, `p-defar-150{a,b,c}.txt`, `n28-150.txt`; the `1.4.0` comparison is
+`p-defar-140a.txt`, `n28-140.txt` in the same directory.**
+
+At `1.4.0` the top of this row read: on a **lawful, terminating** edit chain that stops at the
+caller's own depth limit `N`, the composed refusal message exceeded the host's string limit
+and the caller received **no refusal at all** — `RangeError: Invalid string length` from the
+package's own `JSON.stringify`, raised inside the caller's `write` frame. At `1.5.0`, `N = 28`
+answers:
+
+```
+answer: ConstraintBodyThrew   messageChars: 307   logEntries: 29
+longestLogEntryChars: 268446684
+stateAfter: ABSENT · VALUE 1 · ABSENT
+```
+
+**A refusal is delivered where none was.** That is real, and it is the half that mattered
+most, because a host error with no package record inside a caller's frame is the one failure
+mode this consumer cannot defend against. The log half is filed in §2.1 with the numbers.
+
+**And the exact sense in which the message is bounded is worth one sentence**, because a
+maintainer will otherwise over-read the credit: at `N = 26` the same harness reads a
+`268,446,999`-char message, so below the host's ceiling the composition still grows with depth
+and **no length policy is applied**. What changed is that the ceiling no longer decides the
+outcome: the caller gets the package's own `307`-char sentence instead of a host exception.
+
+### 1.5 `D-67` measured: the listeners widened with the pass, and `triggered` names the act
+
+**`observed`, `p-d67-150.txt`.**
+
+A listener standing at `["d"]` is delivered for a write **at** `["d","x"]` and for a `delete`
+at `["d","x"]`, and the record's `triggered` list names **the act's** address rather than the
+listener's:
+
+```
+(ii)  a write at the DESCENDANT ["d","x"] = 5
+      LISTENER deliveries: 1 ["[\"d\", \"x\"]"]     PAIR asks: 1 addr ["d","x"] tier "mem"
+(iii) a DELETE at the descendant ["d","x"]
+      LISTENER deliveries: 1 ["[\"d\", \"x\"]"]     PAIR asks: 1 addr ["d","x"] tier null
+```
+
+**There is no listener/pass asymmetry left for an act at or below the pair's address**: the
+two widenings arrived together, and `D-67`'s question is answered by measurement rather than
+by a reading of a declaration. A listener at `["d"]` is no longer the narrower of the two
+observers, which removes an asymmetry this consumer had written into its own notes as a thing
+to test around.
+
+### 1.6 `R8` holds — six arms, `0` tier-null invocations, the floor reached on all six
+
+**`observed`, `c-r8-150.txt`** — restated from the head of this document, because this belongs in
+the credit and not only in the summary.
+
+| arm | what it plants | tier-null invocations | the read-back |
+| --- | --- | --- | --- |
+| `C1` | a judge-at-tier-null pair at the reversal path, plus a refused write | `0` | `read a` = `5` |
+| `C2` | the two-address arm | `0` | `read a` = `5`, `read b` = `5` |
+| `C3` | a **failing repair** | `0` | `read a` = `5` |
+| `C4` | a plain refused write | `0` | `read a` = `5` |
+| `C5` | a **root** judge-at-tier-null pair over a refused **descendant** write | `0` | `read ["a","x"]` = `1` |
+| `C6` | an **ancestor** judge-at-tier-null pair over the same refused descendant | `0` | `read ["a","x"]` = `1` |
+
+**The unwinding consults no pair.** That is `R8`, measured on the release that made a pair
+reachable in more places than it has ever been reachable — the release on which it was most
+worth re-measuring. `C5` and `C6` are the arms the widening created: a pair standing **above**
+the act that was refused, which at `1.3.0` could not have been asked at all.
+
+### 1.7 NOT A FINDING — `D-72`'s unbounded delivery windows, and we want to be seen not filing it
+
+**`observed`, `p-d72bc-150.txt`.** A listener standing at `["r"]` that writes a **fresh child
+address** on every delivery reaches **`9` windows from one ordinary write** (`["r", "k0"]` …
+`["r", "k8"]`), while the same listener at the child address it names reaches `1` and stops.
+**That listener makes an unconditional edit to its own sub-properties**, which is the caller's
+own loop and the caller's to prevent — the ruling this catalogue recorded when `DEF-AQ` was
+withdrawn (`THE-CALLER-PREVENTS-ITS-OWN-LOOPS`, §4). **We accept the ruling and ask nothing
+here.** The arm is quoted so a later maintainer reading this file knows the window was
+measured, ruled, and closed by us rather than missed.
 
 ---
 
-## 2. The two structural changes, stated so the maintainer knows what we understand
+## 2. The six open demands, ordered by severity
 
-Two sentences of our own, then the consequence we draw. **Both changes are correct.** §3
-asks for fixes only where **the shipped behaviour and the shipped words disagree**, or
-where **a report is unusable** — never against either change's design.
+Six rows, **all upstream-owned and published-reachable**, and each owes an upstream issue.
+Two are documentation rows (`DEF-AT`, `DEF-AC`); four are behaviour or declaration rows. The
+long form of each is in `docs/defects.md`'s `2026-10-29` `1.5.0` block; the four-part filing
+below is the digest. **Nothing here contradicts a ruling in §4**, and a demand that would
+have is not filed (see §6's closing note).
 
-**(1) Membership is now prefix, and the pair is handed the act's own coordinates.**
-A pair at `P` is consulted for every act whose address `A` has `P` as a prefix
-(**`P ⊆ A`** — an act at or below the pair's address), not only for acts whose address
-**is** `P`. The pair receives **the act's** `address`, `tier` and `value`, not its own
-address and not the object that sits at its own address (`D-56`; the guide's shipped
-sentence at `README.guide.md:759`; `declared` at `RELEASE-NOTES.md:66`; `observed` in the
-ask matrix, `/tmp/probe-storeroom-140/out/s1-matrix*`: `write ["d","x"]` moves a pair at
-`["d"]` from `0` asks to `1`, and the pair is handed `addr ["d","x"]`, `value "9"`).
-Siblings are
-**not** asked: `["e"]` and `["d2"]` stay at `0`, and an act at an **ancestor** of the pair
-stays at `0`. **A reversal is the asymmetric half:** it hands the pair its **own**
-address and the restored object — `reversal landing at ["d","x"]` shows the pair at
-`["d"]` receiving `addr ["d"]`, `value "{x: {y: 1}}"`. The guide declares the first half
-and not the second (`DEF-AS`'s residue, withdrawn as a defect; recorded for `DEF-AT`'s
-migration note).
+### 2.0 · ★ `DEF-AU` — A REFUSED WRITE'S OWN VALUE NOW STANDS, AND NO SENTENCE NAMES IT
 
-**(2) `delete` is an editing verb with its own attempt, its own pass, and a delivery
-after the judgement.** A `delete` opens an attempt, runs its own constraint pass, and
-fires its listener **after** that judgement, so **a listener sees a judged state** and
-**a refused delete fires no listener at all** (`D-55` item 3; `§7.8`). The receipt carries
-its own `commit` record. **Our conclusion: this is the right shape** — a verb that
-changes the store is judged like the verbs that change the store, and an observer that
-is told about a removal is told after the removal was judged rather than before.
+**THIS ROW WAS FILED AFTER §2 BELOW WAS DRAFTED, AND IT OUTRANKS EVERY ROW IN IT. It is the
+cost of the `DEF-AN` fix, and it is a regression against `1.4.0`.**
 
-**What we draw from both.** Seven of the eight open rows (§3) are about what the package
-**says** — its message, its witness, its documents, its guide — and the eighth, `DEF-AN`,
-is about what its refusal **omits** while the state itself follows the rule. **The store's
-state is right far more often than its sentences are.** A maintainer fixing the words will
-close the majority of this round's list, and we say so before we file.
+**Symptom.** A caller writes `b = 1`. A listener fires during that commit and raises a
+reversal of ANOTHER address. A pair refuses the reversal, so the caller's write is refused
+with `ConstraintPassRefused`. **`read b` answers `VALUE 1` — the refused act's own value is
+still in the store.** At `1.4.0` the same arm answers `ABSENT(AddressNotFound)`: the
+refusal took its own write with it.
 
-**Both changes land on work this project has not yet done, and that is the last thing we
-owe the maintainer in this section.** `U-STORE-CONSTRAINT-REGISTRY` is **HELD at its spec
-gate** (§7), so **this consumer has not yet authored a constraint body under the widened
-rule** — no registered pair of ours reads a value at a descendant act today. That makes the
-migration note `DEF-AT` asks for cheap for us and expensive for anyone who shipped at
-`1.3.0`, which is exactly the asymmetry a shipped document should not leave to chance.
+**Worse, the same-address arm.** A reversal that lands on **the enclosing write's own
+address** leaves `read ["b","x"]` = **`VALUE 1`** at `1.5.0`, where `1.4.0` answers
+**`VALUE 7`** — the value that stood before the attempt. **Both arms of the safe-state
+property broke between the two releases.**
 
-**If only one pass is available, here is the order we would choose.** Fix the **words**
-first: `DEF-AC`'s two standing sentences and `DEF-AT`'s two superseded clauses are one
-editing pass and they remove two of the eight rows outright, with no behaviour change and
-no risk to a passing test. Then `DEF-AH`, whose all-clear is a one-line fix in the witness.
-Then the two **questions**, `DEF-AK` and `DEF-X`, which need one sentence each and no code.
-**`DEF-AR` is the exception to that order**: it is the only row a hostile — or merely
-careless — chain can turn into a dead process, so if the choice is made by risk rather than
-by cost, it goes first and everything else waits. `DEF-AO` needs nothing new: its
-disposition is already the maintainer's ruling, and what is missing is only the disclosure
-clause that ruling names.
+**Root cause, in the engine's own words.** The refusal's message now names the baseline:
+*"…the baseline this verdict measured is the pre-reversal standing, which is the state the
+LAST VALIDATED MARK holds: the position the commit cached at its opening, **moved forward by
+every constraint sweep that has passed since**."* **That forward-moving mark is exactly what
+closed `DEF-AN`** — a listener's lawful write survives a later refusal — **and it equally
+makes the refused act's OWN pre-refusal write part of the baseline, where the restore can no
+longer reach it.** The mark cannot tell a listener's validated write from the caller's not-yet-refused one.
+
+**Evidence.** `observed`, `/tmp/probe-storeroom-150/out/p-safestate-150.txt` ARM 1 and ARM 2,
+against `/tmp/probe-storeroom-150b/out/p-safestate-140.txt` run from the SAME script.
+
+**No sentence names it.** `does any sentence name the write that stands (`b`)?` → **NO**, and
+the refusal carries no `discarded` member at all.
+
+**Fix shape.** Either the baseline must exclude the enclosing act's own unvalidated writes
+(so a refusal still restores them while preserving a listener's validated ones), **or** the
+refusal must name every address it knowingly leaves standing — with the safe-state rule
+restated to say which of the two it now promises. **A consumer cannot tell from the answer
+whether its refused write is in the store.**
+
+**Cost to a consumer.** Every host that treats a refusal as "nothing changed" is now wrong.
+`Provident-Electron`'s own store layer reads a refusal as a failed act and re-plans against
+the previous state; on this release the store may already hold part of the failed act.
+
+### 2.1 `DEF-AR` — the message stopped exploding; the LOG is still a function of depth, and on this path the refused value stands
+
+**SYMPTOM / REPRO** (`observed`, `p-defar-150{a,b,c}.txt`, `n28-150.txt`; the `1.4.0`
+comparison `p-defar-140a.txt` in the same directory). A constraint body edits a descendant of
+its own address and **stops at its own explicit depth limit `N` — no loop; every chain
+terminates lawfully on the caller's own limit**. The refusal the caller holds carries a `log`
+whose longest entry is a function of the chain's depth, with no bound anywhere in it, and at
+the top of the range the refused **state** is left standing:
+
+| `N` | `messageChars` | `logEntries` | `longestLogEntryChars` | `stateAfter` |
+| --- | --- | --- | --- | --- |
+| `20` | `4,203,189` | `22` | `4,202,872` | `ABSENT · ABSENT · ABSENT` |
+| `24` | `67,119,521` | `26` | `67,119,204` | `ABSENT · ABSENT · ABSENT` |
+| `26` | `268,446,999` | `28` | `268,446,682` | `ABSENT · ABSENT · ABSENT` |
+| `28` | **`307`** | `29` | **`268,446,684`** | **`ABSENT · VALUE 1 · ABSENT`** |
+
+**Two facts in that table are the row.** First, **the log entry is not capped**: at `N = 28`
+the caller holds a refusal whose message is the package's own `307`-char generated sentence
+while its `log` carries an entry of **`268,446,684`** characters. Second, **at `N = 28` the
+refused state STOOD**: the same three-address read-back that answers `ABSENT · ABSENT ·
+ABSENT` at `N = 26` answers `ABSENT · VALUE 1 · ABSENT` at `N = 28`. **A `ConstraintBodyThrew`
+that leaves a value standing breaks the safe-state rule the refusal class exists to keep** —
+a consumer that catches this refusal, believes it, and re-reads its own addresses will find
+one of them holding the value the package has just told it was not there.
+
+**The `1.4.0` series, for the shape of the repair** (`observed`, `p-defar-140a.txt`): `N = 2` →
+`934` chars, `8` → `4,594`, `12` → `21,725`, `16` → `269,257`, `stateAfter` clean on every one.
+**The doubling is unchanged; what changed is what happens at the host's ceiling.** We state that
+as a result and **not** as a mechanism: this document does not claim to know which frame the
+`307`-char fallback comes from, because we did not measure it (§4.2's discipline).
+
+**ROOT CAUSE** (`read`). The crossed sentence is composed from the inner refusal's own
+message, quoted with `JSON.stringify`, so each nesting level re-escapes the whole of the
+previous level: `constraints.mjs:1281` (`… ITSELF a refusal, ${JSON.stringify(innerStatus)}
+with the message ${JSON.stringify(innerSaid)} …`), and the judgement arm's `:2904` composes
+identically. The log's per-level entry carries the throwable's form, one level per entry:
+`kernel-foundations.mjs:260` (`throwableForm`), with its own `JSON.stringify(message)` at
+`:282`. **Nothing in either composition is bounded while it is being built**, so the only
+ceiling in the system is the host's — which is why at `N = 28` the report and the state come
+apart.
+
+**EVIDENCE.** `observed`, paths above. **Exact scope, unmoved:** a refusal thrown to the caller is
+stable — `ao-150.txt` `AO.1` reads the same bytes before and after later work — so the growth is
+visible only because the caller **holds** the refusal. **The unbounded chain is not this row**:
+that is the caller's own loop (`DEF-AQ`, withdrawn, §4).
+
+**FIX SHAPE — as filed, and half of it is now done.** Compose a crossed refusal's message from
+a **SUMMARY** of the inner refusal — its `status`, the address it refused, and a bounded
+excerpt of its sentence — never from the inner message verbatim; **and cap the composed length
+while it is being built**, so that no host `JSON.stringify` is what finally decides. **And the
+half still missing: bound the LOG ENTRY as the refusal message is now bounded at the ceiling,
+and restore on this path.** A report is not a transcript, and a `log` is not a place to put a
+chain.
+
+**WHAT IT COSTS A CONSUMER.** Our host cannot read a deep refusal's log, and at `N = 28` it
+cannot trust the state either. The failure arrives exactly on the chains we deliberately
+bounded ourselves — the ones a careful consumer builds — and it arrives as a **silent
+disagreement between what the refusal says and what the store holds**, which is worse than the
+`1.4.0` host error, because a host error at least tells you not to trust anything.
+
+**ONE SCOPE NOTE, measured this round and filed on no row of its own.** The `p-safestate` arm
+drives the *ordinary* refusal path — a listener reverses another address, the caller's own
+write is refused — and reads back the caller's own value: `read b` = **`VALUE 1`**, where the
+`1.4.0` arm read `ABSENT(AddressNotFound)`; the second arm reads `VALUE 1` where `1.4.0` read
+`VALUE 7` (`observed`, `p-safestate-150.txt` `ARM 1`/`ARM 2` against `p-safestate-140.txt`).
+The same run asks whether any sentence names the write that stands, and answers **`NO`**. So
+the boundary the `1.5.0` baseline change moved is **wider than the `N = 28` cell** above, and
+this consumer is **not filing a seventh demand** for it: the row it belongs to is this one,
+whose fix shape — *restore on this path* — already asks for it, and the rule the same edit
+introduced (§1.1) is that a lawful listener's write must survive. It is recorded so the
+maintainer fixing this row knows the arm to re-run, and so no later round files it as new.
+
+### 2.2 `DEF-AO` — the client is handed a mid-commit message log, and it changes under the client
+
+**SYMPTOM / REPRO** (`observed`, `ao-150.txt` `AO.3`, identical at `1.4.0`; `last-150.txt`
+re-drives it). A constraint body catches an inner refused write, snapshots `.log`, and answers
+`true` so the enclosing commit continues. **The captured log then changes:**
+
+```
+OUTER write k=42:                                  RETURNED op=op-13
+the caught inner refusal .log.length AT CAPTURE:   3
+the SAME object .log.length AFTER the commit:      4
+the log MUTATED after close?:                      true
+entry 1 AT CAPTURE:  "the evaluation of body-writer"
+entry 1 NOW:         "the constraint body-writer passed at k"
+entry 4 NOW:         "every constraint registered at k passed; the commit stands"
+```
+
+**The mutation changes an entry's TEXT, not only its length** — so a consumer that logged the
+entry at capture has logged a sentence the package later contradicts, and a host that shows
+its own diagnostics beside the package's report will show two different accounts of one
+attempt.
+
+**ROOT CAUSE.** The refusal object handed into a body mid-commit carries a **live reference** to
+the attempt's own message log rather than a snapshot of it. The attempt is still open, so later
+frames of the same commit keep writing into the array the client holds — the array **is** the
+commit's log.
+
+**EVIDENCE.** `observed`, paths above; `AO.1` and `AO.2` are the stable controls (a refusal
+thrown to the caller, and a `delete`'s `receipt.commit` report, both read the same bytes across
+later work). **The label is `observed`, not `read`**: an arm has driven it.
+
+**FIX SHAPE — and it is the disposition, not a preference.** The maintainer's ruling: *"the
+client should not be getting a mid-commit message log."* So either **the body receives a
+SNAPSHOT taken at the instant the refusal crosses**, or **the log is WITHHELD until the commit
+settles** — and whichever is chosen **must be stated in the member's declaration**, because a
+consumer decides its error handling on the declaration. Either way, **the member a body
+receives must not be writable by a later frame of the same commit.**
+
+**WHAT IT COSTS A CONSUMER — and this is why it hid for two rounds.** The scope, `observed`:
+**a refusal thrown to the caller is stable, and a `delete`'s receipt report is stable; the live
+handle exists only inside a commit that is still open** — that is, only for the one kind of
+refusal a defensive body catches. **A consumer that catches, inspects and re-raises is reading
+a document that is still being written.**
+
+**Our practice until this settles, stated as our practice and not as advice to the package.** A
+body that catches a refusal and means to keep its log **copies the entries at capture** — a fresh
+object per entry and `String()` on each message — rather than holding the array it was handed. We
+do that today. A host that does not will find its diagnostics disagreeing with the package's
+final report about the same attempt, with no way to tell which sentence was current when it
+decided.
+
+### 2.3 `DEF-X` — three hosts do not judge, and the guide declares two of them
+
+**SYMPTOM / REPRO** (`observed`, `b-defx7-150.txt`, measured **identically at `1.4.0`** —
+`b-defx7-140.txt`, same bytes). Seven hosts, each driven with a pair that refuses, so that a
+judged host must answer a refusal and an unjudged one leaves the refused `5` standing:
+
+| host | what it is | judged? | effect stands? |
+| --- | --- | --- | --- |
+| `1` | a `TOP-LEVEL` reversal (the control) | **YES (`1`)** | no — `7` held |
+| `2` | a reversal inside a `write`'s own commit (a listener body) | **YES (`1`)** | no — `7` held |
+| `3` | a reversal **from a repair body** | **YES (`1`)** | no — `7` held |
+| `4` | a reversal from a **registration's evaluation** | `NO (0)` | **YES** — the refused `5` stands |
+| `5` | a reversal from a **`delete`'s listener delivery** | `NO (0)` | **YES** — the refused `5` stands |
+| `6` | a reversal from a **`delete`'s CONSTRAINT pass** | `NO (0)` | **YES** — the refused `5` stands |
+| `7` | a **reentrant** reversal-then-nested-write | **YES (`1`)** | no — `7` held |
+
+**`4` hosts judge (`1`, `2`, `3`, `7`); `3` do not (`4`, `5`, `6`).** The shipped guide declares
+**exactly two** unjudged windows as *"known and NOT defects"* (`read`,
+`README.guide.md:1920-1927` — §12.6b: *"Two windows in the constraint machinery are known and
+are NOT defects"*, item `1` a `delete`'s **listener delivery**, item `2` a **registration's own
+evaluation**). **Hosts `4` and `5` are therefore declared, and this consumer files nothing on
+them.** **Host `6` — a `delete`'s constraint pass — is declared nowhere, runs a pass, and is
+not judged.**
+
+**ROOT CAUSE** (`read` + `observed`). A reversal is judged where a commitment is closed around
+it; the declared windows are windows in which **no pass runs at all**, which is what makes
+their unjudged state a design rather than a gap. **Host `6` does run a pass** — `§7.8` of the
+same document says so (`read`, `README.guide.md:1008-1013`: *"FROM 2026-10-29 A `delete` RUNS A
+CONSTRAINT PASS OF ITS OWN … the three editing verbs — `write`, `delete`, `rollback` — all ask
+the pairs"*) — and a raise contained by it is consumed by a window that is not the raiser's.
+**So host `6` has the property the two declared windows were defined to exclude.**
+
+**EVIDENCE.** `observed` at both installs (`b-defx7-{140,150}.txt`); the same harness prints
+host `6` as `judged? NO (0) | effect stands? YES` at **both**, byte-identical. **The fix shape
+is one of two sentences and no code:** judge host `6`, or declare it. A declared window with
+two exits is a design decision this consumer accepts (§4.3); an undeclared one is the thing we
+cannot write a policy on.
+
+**WHAT IT COSTS A CONSUMER.** A host must know whether an intervention raised inside a
+`delete`'s own pass is inside or outside the machinery, because that determines whether it must
+verify the state itself afterwards. Today it must assume the worst for host `6` and may rely on
+the declaration for `4` and `5`. **One sentence in the guide closes this row.**
+
+**And a correction we owe, which §4.2 records in full:** this consumer's `1.4.0` cell said host
+`6` **judged** and that *"zero unjudged hosts remain"*. **Our own output said `NO` at the time
+and says `NO` again at `1.5.0`.** The cell was wrong and is withdrawn; the row is unchanged.
+
+### 2.4 `DEF-AH` — the discard witness is count-dependent: one raise is reported, two are not
+
+**SYMPTOM / REPRO** (`observed`, `ah-150.txt`, six arms; the `1.4.0` arms `ah-140.txt`). The
+`discarded` witness on a `delete` record is the only place a consumer is told that an
+intervention was discarded. It reports **nothing** for two raises while the effects stand:
+
+```
+AH.4  ONE raise, a pair standing at the raised address
+        .discarded: [{opId: "op-15", addresses: [["a"]]}]     judge asks (tier-null): 1
+AH.5  TWO raises, a pair standing at BOTH raised addresses
+        .discarded: []                                       read a: VALUE 5
+AH.6  TWO raises, a pair standing at only the FIRST raised address
+        .discarded: []                                       read a: VALUE 5
+```
+
+**Two things are true at once, and the row is the second.** First, `AH.4` is **better than
+`1.3.0`**: the witness now names a **non-empty** address list — `[["a"]]` — where `1.3.0`
+reported `addresses: []`. Second, **at two raises the witness reports `[]` at both `1.4.0` and
+`1.5.0`** (`ah-140.txt` lines `37`/`45`, `ah-150.txt` `AH.5`/`AH.6`, byte-identical), while the
+`5` the raises moved **stands** unjudged in the store. **The defect is COUNT-DEPENDENCE, not
+silence**: one discarded raise is reported, two are not, and a consumer cannot tell an empty
+witness from a clean one.
+
+**ROOT CAUSE.** The witness is assembled from a single slot rather than accumulated across the
+delivery window: the address list is written where one raise lands and is not carried for the
+second. **We cite no line for it.** The catalogue's row records the mechanism as the shape
+observed and this round did not re-derive it by reading — §4.2's discipline, and the reason
+`DEF-W` cost the package a cycle.
+
+**EVIDENCE.** `observed`, paths above. **This row is also where this consumer's own filing was
+too strong**, and §4.2 says so: it was filed as *"the witness reports nothing discarded"*, and
+the witness is not silent — it is count-dependent. The correction narrows the demand and does
+not weaken it.
+
+**FIX SHAPE.** Report **every** discarded raise, at any count. A witness that answers
+differently for `1` and `2` raises is worse than one that always answers `[]`, because the
+consumer has been taught to trust the non-empty case.
+
+**WHAT IT COSTS A CONSUMER.** After a `delete` whose delivery carried two raises, we cannot
+tell from the receipt that anything was discarded or refused — so a host that reports store
+hygiene to its own user must read every address it might care about and diff it, which is the
+cost the witness exists to remove.
+
+### 2.5 `DEF-AT` — the false clauses MOVED, they did not leave
+
+**SYMPTOM / REPRO** (`observed` + `read`). At `1.4.0` this row named two sites; **the guide was
+re-cut at `1.5.0` and both claims are still standing, at new line numbers.** **The failure is
+retention in place, not absence** — the harder one to notice, because the current rule is also
+declared, a few lines away:
+
+- **`README.guide.md:1044-1046`** — *"**A pair at an ANCESTOR address is not asked by the
+  delete's pass** — the pass keeps the write's exact-address rule and not the trigger set's
+  prefix widening"*. **Contradicted by its own document at `:1055`** — *"so the delete's pass
+  asks the pairs standing at the deleted address AND the pairs standing at every ANCESTOR of
+  it"* — and by `D-56`'s prefix set, and by measurement (`observed`, `p-d67-150.txt` third
+  line): a pair at `["d"]` **is** asked for a `delete` at `["d","x"]` (`PAIR asks: 1`,
+  `tier null`).
+- **`README.guide.md:1979`** — *"**YOUR `delete`'S OWN PASS IS STILL A MEASUREMENT AND NOT A
+  BEHAVIOUR**"*, and, further into the same clause, *"IT NEVER CALLS THE KERNEL … no `K-3`
+  runs a pass … the pair standing at the deleted address is asked exactly as often as its
+  registration asked it, and NOT ONCE FOR THE DELETE"*. **Falsified by `§7.8` of the same
+  document** (`:1008-1013`: a `delete` **is** an editing verb and **does** ask the pairs) and
+  by measurement (`observed`, `b-defx7-150.txt` `B6`: the delete's own pass runs and the pair
+  is invoked inside it).
+
+**The current rule is declared, and we say so before we ask for anything** (`read`): `:985`
+(*"THE MEMBERSHIP RULE, STATED ONCE: your pair is asked when THE ACT'S ADDRESS IS AT OR BELOW
+YOUR PAIR'S ADDRESS"*), `:987` (`D-66`'s touched-set completion), `:989` (`D-66` read
+symmetrically for a write's replaced value), `:1008` (the `delete`'s own pass) and `:1055`
+(`D-56` verbatim). **Nothing needs inventing. Two superseded passages need moving out of the
+reading position, with a one-line pointer where they stood.**
+
+**FIX SHAPE.** Correct both clauses; **move the superseded bytes out with a one-line pointer**
+(`RCA-8(g)`'s own discipline, which this consumer applies to its own documents) and leave the
+standing sentence alone. **And a MIGRATION NOTE is still owed**, and it is the item with a cost
+attached: a body authored at `1.3.0` to read the object **at its own address**
+(`ctx.value.theme`) **now misreads at a descendant act and passes silently**, because a pair
+standing at an ancestor is handed the **act's** `value` — absence, for a `delete` — and not the
+object at its own address (`read`, `:985`'s closing sentences: *"a pair standing at an ancestor
+is handed the value that landed AT THE ACT'S ADDRESS … not the object at its own"*). A body
+that judges the wrong value and answers `true` is a **silent** loss of the constraint, and no
+test of ours catches it, because no body of ours has been authored under the widened rule yet
+(`U-STORE-CONSTRAINT-REGISTRY` is HELD, §6).
+
+**WHAT IT COSTS A CONSUMER.** A guide is what a consumer's own engineer reads at 2 a.m. Two
+sections of this one tell that engineer the opposite of the shipped behaviour, and the migration
+note that would have caught the silent misread is not in it. **This is the cheapest row in the
+list and the one with the largest blast radius on a consumer's correctness**: an editing pass,
+no behaviour change, no test risk.
+
+### 2.6 `DEF-AC` — the shipped change list still denies a cut release
+
+**SYMPTOM / REPRO** (`observed` + `declared`, `docs-h-150.txt` `H1`/`H3`). The tarball carries
+`RELEASE-NOTES.md` (`88,745` bytes, inside the `files` allowlist), and it carries its own
+denial **standing in place**:
+
+- **`RELEASE-NOTES.md:212`** — *"**NOTHING IN THIS SECTION IS CUT, NO TAG NAMES IT, NO VERSION
+  BUMP IS PROPOSED, AND THE ELEVEN VERSION SITES STAY AT …**"*
+- **`RELEASE-NOTES.md:216`** — an annotation affirming that **what that paragraph says about
+  the cut survives**: *"UNMOVED: 'NOTHING IN THIS SECTION IS CUT, NO TAG NAMES IT' — `git tag
+  --list` carries no `v1.3.0`, the registry carries no `1.3.0`, and a consumer cannot install
+  any of this"*.
+
+**Both are false inside the tarball that carries them.** `1.3.0`, `1.4.0` and `1.5.0` are all
+published — `1.4.0` was **installed from the registry to measure it** (`observed`,
+`/tmp/probe-storeroom-150b/node_modules/provident-storeroom/package.json`: `"version":
+"1.4.0"`), and `RELEASE-NOTES.md` itself was read out of the `1.5.0` tarball. A consumer
+reading the change list of the release it just installed is told that the release before it
+does not exist.
+
+**ROOT CAUSE.** A cut-state sentence is a document's claim about a fact decided **after** the
+document is sealed into the tarball, so every release ships a document whose cut-state clauses
+are true of the moment they were written and false of the moment they ship. **The package's own
+record has ruled the class** (`D-57`, *"Drop the cut-state."*), and the guide's `:74` clause
+moves its eleven figures to `1.5.0` — **so the rule is known and the change list's two clauses
+were not regenerated with it.**
+
+**EVIDENCE.** `observed`, `docs-h-150.txt` `H3` (both lines quoted at their own bytes) and `H1`
+(`RELEASE-NOTES.md — does it name 1.3.0?: YES`; the `1.3.0` section's own `seq` line). The
+catalogue's row is `docs/defects.md`, `DEF-AC`, unchanged at this release.
+
+**FIX SHAPE.** **Regenerate the affected sections, or remove them.** This consumer does not ask
+for a cut-state to be *stated* — the ruling says it is not a document's to state — it asks that
+a **denial** of an installable release not ship inside that release's own tarball.
+
+**WHAT IT COSTS A CONSUMER.** This catalogue cites documents as `declared` evidence, and a
+`declared` line that denies observable fact teaches every consumer of that document to discount
+the rest of it. That cost is not hypothetical: it is why every row in this file is labelled
+`observed` first and `declared` last.
 
 ---
 
-## 3. The open demands, ordered by severity
+## 3. The two observations — **NO DEMAND**
 
-Eight rows, ordered by what they cost a consumer rather than by file order. **All eight are
-upstream-owned and published-reachable, and each owes an upstream issue**; `DEF-AC` (3.4)
-and `DEF-AT` (3.6) are documentation rows, the rest are behaviour or declaration rows. The
-long form of each is in `docs/defects.md`'s `2026-10-29` `1.4.0` block; the four-part filing
-below is the digest.
+**Nothing is asked on either row. No fix shape, no upstream issue, no round item.** They are
+recorded so the numbers are on the record once, in one place, and so that no later pass
+re-derives them as a finding. `DEF-AD` is a characteristic of the model; `DEF-AM` is a declared
+shape with a declared cost. This consumer has accepted both.
 
-### 3.1 `DEF-AR` — a crossed refusal's report doubles per level, and at depth 28 the caller gets no refusal at all
+**`DEF-AD` — the read cost of the constraint machinery** (`observed`, `h-defad-150.txt`):
 
-**SYMPTOM / REPRO** (`observed`, `/tmp/probe-storeroom-142/out/*`; length series in
-`docs/defects-history.md`, `## provident-storeroom@1.4.0 — THE REVIEW'S MEASUREMENTS`).
-A constraint body edits a descendant of its own address and **stops at its own explicit
-depth limit `N` — no loop, every chain terminating lawfully on its own limit**. The
-refusal the caller holds then carries a `message` whose length is a function of the
-chain's depth, with no bound anywhere in it:
-
-| `N` | refusal `message` length (chars) |
-| --- | --- |
-| `2` | `471` |
-| `10` | `6,055` |
-| `12` | `13,086` |
-| `16` | `137,742` |
-| `20` | `2,105,598` |
-| `27` | `268,447,010` |
-| `28` | **no refusal at all** |
-
-At `N = 28` the caller gets **`RangeError: Invalid string length`**, thrown from the
-package's own `JSON.stringify` (`kernel-foundations.mjs:282`, inside `throwableForm`)
-**inside the caller's `write` frame** (`index.mjs:397`). **No `{status, message, log}` is
-delivered**, and the refused value is **left standing** (`read ["a","x","top"]` = the
-refused value) — so **the safe-state rule is broken by the host error itself**.
-
-**ROOT CAUSE** (`read`). `constraints.mjs:1275-1278` composes a crossed refusal's message
-from `JSON.stringify(innerSaid)` — the inner refusal's sentence, **verbatim and quoted**.
-Each level therefore re-escapes the whole of the previous level, so the composed length
-**compounds with depth** instead of summarising it; the catalogue's own entry-length
-series shows a **per-level ratio of `1.96–1.99`** (`observed`,
-`/tmp/probe-storeroom-141/out/r7*`). **Nothing in the composition is bounded while it is
-being built**, which is why the bound is finally supplied by a host implementation limit
-and by an exception, rather than by the package.
-
-**EVIDENCE.** `observed`, path above; the same class measured to a probe cap of `40` in
-`/tmp/probe-storeroom-141/out/r7*`, where the body's first host throwable was
-`{"ctor":"RangeError","isRangeError":true,"message":"Invalid string length"}` and a
-lawful refusal at depth `~40` carried a `22003`-char message and `40` log entries; the
-catalogue's own line is `docs/defects.md`, `DEF-AR`. **Exact scope: a refusal thrown to
-the caller is stable** (`observed`: message and log deltas `0` after later work); the
-growth is visible only because the caller **holds** the refusal.
-
-**The growth is in the log as well as in the sentence** (`observed`, the same `r7` arm):
-across a chain the probe capped at `40`, the log entries read
-
-```
-12 12 154 608 1068 1544 2052 2624 3324 4280 5748 8240 12780 21416 38244 71456 137436 …
-```
-
-chars — the same compounding, one level per entry — while **`1` of the `42` children
-written under `a.x` survived the failing act**. So a deep chain does not only produce an
-unreadable report: by the time the host error fires, the store is also carrying a
-partly-applied act that no refusal ever named.
-
-**FIX SHAPE.** Compose from a **SUMMARY** of the inner refusal — its `status`, the
-address it refused, and a bounded excerpt of its sentence — **never from the inner
-message verbatim**; and **cap the composed length while it is being built**, so that no
-host `JSON.stringify` is ever what finally decides the question. **A report is not a
-transcript.**
-
-**WHAT IT COSTS A CONSUMER.** Our host cannot rely on receiving a refusal from a deep
-edit. The failure mode is not a wrong state we can read back; it is **an exception of the
-host platform's own making, carrying no package record, over a store that still holds the
-refused value** — and it arrives exactly on the chains we deliberately bound ourselves.
-We are the consumer that *did* bound the recursion, which is why this is a package
-question and not the withdrawn `DEF-AQ` (§5).
-
-### 3.2 `DEF-AO` — the client is handed a mid-commit message log, and it changes under the client
-
-**SYMPTOM / REPRO** (`observed`, identical at `1.3.0` and `1.4.0`,
-`/tmp/probe-storeroom-140/out/ao-{130,140}.txt`). A constraint body catches an inner
-refused write, snapshots `.log`, and answers `true` so that the outer commit continues.
-The captured log then changes:
-
-```
-AO.3  outer write k=42: RETURNED op=op-13
-      the caught inner refusal .log.length AT CAPTURE: 3
-      the SAME object      .log.length AFTER the commit closed: 4
-      the log MUTATED after close?: true
-      entry 1 AT CAPTURE: "the evaluation of body-writer"
-      entry 1 NOW       : "the constraint body-writer passed at k"
-      entry 4 NOW       : "every constraint registered at k passed; the commit stands"
-AO.1/AO.2  a TOP-LEVEL refusal, and a delete's receipt.commit.attempt report, are STABLE
-```
-
-**The mutation changes an entry's text, not only its length** — so a consumer that logged
-the entry at capture has logged a sentence the package later contradicts.
-
-**ROOT CAUSE.** The refusal object handed into a body mid-commit carries a **live
-reference** to the attempt's own message log rather than a snapshot of it. The attempt is
-still open, so later frames of the same commit keep writing into the array the client is
-holding.
-
-**EVIDENCE.** `observed`, paths above; the catalogue's row is `docs/defects.md`, `DEF-AO`
-(the label moved from `read` to `observed` when the arm above first drove it).
-
-**FIX SHAPE — and it is the disposition, not a preference.** The maintainer's ruling:
-*"AO - the client should not be getting a mid-commit message log."* So either **the body
-receives a SNAPSHOT taken at the instant the refusal crosses**, or **the log is WITHHELD
-until the commit settles** — and **whichever is chosen must be stated in the member's
-declaration**, because a consumer decides its error handling on the declaration. Either
-way, **the member a body receives must not be writable by a later frame of the same
-commit.**
-
-**WHAT IT COSTS A CONSUMER.** It explains why this hid for two rounds. **The scope,
-`observed`: a refusal thrown to the caller is stable, and a `delete`'s `receipt.commit`
-log is stable; the live handle exists only inside a commit that is still open** — that
-is, only for the one kind of refusal a defensive body catches. A consumer that catches,
-inspects and re-raises is reading a document that is still being written.
-
-**What a consumer must do until this settles, stated as our practice and not as advice to
-the package.** A body that catches a refusal and means to keep its log must **copy the
-entries at capture** — a fresh object per entry, and `String()` on each message — rather
-than hold the array it was handed. We do that today; a host that does not will find its
-own diagnostics disagreeing with the package's final report about the same attempt, and
-will have no way to tell which sentence was current when it decided.
-
-### 3.3 `DEF-AH` — the discard witness reports "nothing discarded" when two raises were discarded
-
-**SYMPTOM / REPRO** (`observed`, `/tmp/probe-storeroom-140/out/ah*`, six arms). Two
-reversals raised in a `delete`'s delivery used to report
-`discarded: [{opId: "op-29", addresses: []}]` — honest that something happened, silent
-about what. They now report **`discarded: []`**:
-
-| arm | `1.3.0` | `1.4.0` |
-| --- | --- | --- |
-| one raise in the delivery | `[]`, `a` = `5` | `[]`, `a` = `5` |
-| **two raises, same window** | `[{opId:"op-29", addresses:[]}]` | **`[]`** |
-| two raises, pairs at both raised addresses | `[]` | `[]` |
-| two raises, a pair at only the first | `[]` | `[]` |
-
-**Both raises' effects stand in every two-raise arm** and the witness reports **nothing
-at all**. The shipped sentence it contradicts is `declared`, `README.guide.md` `§12.6`:
-*"`record.discarded.length === 0` means this act's delivery discarded nothing"*.
-
-**ROOT CAUSE** (`read`). The pending-slot bookkeeping that carries a discard into the
-receipt is drained **empty** on the two-raise path: the slot holds one entry, the second
-raise displaces the first, and what reaches the receipt is an empty list rather than a
-list naming the raise that was thrown away. The single slot is the mechanism; the empty
-report is the consequence.
-
-**EVIDENCE.** `observed`, arms above and the catalogue's `DEF-AH` row. At `1.3.0` the
-nested-write path already produced a discard whose `addresses` was **empty**
-(`{opId:"op-29", addresses:[]}`); `1.4.0` removes the **entry** as well, so the report
-becomes an all-clear.
-
-**FIX SHAPE.** **Report the raise it discarded — an op id is enough; the address list may
-stay empty.** An ambiguous empty case is worse than a verbose one: `[]` reads as "nothing
-was discarded" in the one API whose contract says exactly that.
-
-**WHAT IT COSTS A CONSUMER.** This is the only **worsening** of the round, and it moves in
-the wrong direction on a member a consumer audits by. A host that verifies "did the
-delete's delivery silently drop my listener's intervention?" now receives a **false
-all-clear** in exactly the case where an intervention was dropped. We would rather be
-told `[{opId:"op-29", addresses:[]}]` and have to look up the op than be told nothing and
-believe it.
-
-### 3.4 `DEF-AC` — the shipped change list still denies a release that exists
-
-**SYMPTOM / REPRO** (`observed` for the install; `declared` for the sentences;
-`/tmp/probe-storeroom-140/out/docs-h*`). The generated guards are now fixed: **both
-`README.md` and the guide declare `1.4.0`**, and the guide's cut-state line now reads
-`NOT STATED … (D-57)` — the guard no longer asserts a cut state the tarball is not.
-**But `RELEASE-NOTES.md` still carries hand-written standing sentences that are FALSE
-inside a `1.4.0` tarball**, and they are quoted here rather than paraphrased:
-
-> *"NOTHING IN THIS SECTION IS CUT, NO TAG NAMES IT — `git tag --list` carries no v1.3.0,
-> the registry carries no 1.3.0, and a consumer cannot install any of this"*
-
-> *"1.3.0 IS THE PREPARED VERSION … it is NOT A RELEASE … no consumer can install any of
-> this until the architect cuts the tag"*
-
-**`1.3.0` IS published.** It was installed, and measured, to produce this round's
-comparisons: `latest = 1.3.0`, `21` files, `addon.version()` = `1.3.0`, and the `1.4.0`
-review's own `1.3.0`-contrast arms could not exist otherwise.
-
-**ROOT CAUSE.** The cut-state guard was extended to the generated lines and **not to the
-hand-written prose around them**. Two instruments — a generated line and a maintained
-sentence — describe one fact, and only one of them is regenerated at publish.
-
-**EVIDENCE.** `observed` for `addon.version()` and the install; `declared` for both
-quotes, `RELEASE-NOTES.md`'s cut-state section; catalogue row `docs/defects.md`, `DEF-AC`
-(narrowed, not closed — the residue is the worse half, because the generated half now
-looks fixed).
-
-**FIX SHAPE.** **Regenerate those sentences, or remove them.** A generated line saying
-`NOT STATED` beside hand-written sentences asserting a cut state **is the same failure one
-layer down** — and it is worse than leaving both hand-written, because a reader who sees
-the guard pass believes the file has been checked. **What to put in their place:** one
-generated sentence naming the version the reader is holding, one generated sentence per
-release that exists but is not cut, and **nothing hand-written about tags** — then the guard
-and the prose have one source and cannot drift apart.
-
-**WHAT IT COSTS A CONSUMER.** A consumer's first act with a package is to read whether it
-exists. Our own round needed an install to overrule a shipped sentence, and a maintainer
-reading their own release notes would reasonably conclude that nothing since `1.2.0` has
-shipped — including the two structural changes §2 describes.
-
-### 3.5 `DEF-AN` — a successful write is undone, and no sentence says so
-
-**SYMPTOM / REPRO** (`observed`, `/tmp/probe-storeroom-140/out/an*`). A listener writes a
-lawful `["g"] = 1` — **its own commit, which `RETURNED`** — and then raises a reversal that
-a pair refuses. The outer write is refused, and **`read g` → `ABSENT`**. The engine
-restores **by journal position**, so work that **succeeded** goes with the refusal that
-came after it. **`"g"` appears in `0` sentences of the refusal's report**: nothing the
-caller receives names the address that was taken away.
-
-**ROOT CAUSE** (`read`). `constraints.mjs:1998-2000` targets the **outermost opening's**
-mark, not the failed attempt's, so a nested call that legitimately landed inside the same
-commit is rolled back with it — and the refusal names only the address whose pair
-refused.
-
-**EVIDENCE.** `observed`, path above. **And the rule the release added for this is right
-in its first sentence and falsified by its second** (`declared`, the `1.4.0` rule text):
-
-> *"every edit the commit made is undone, including writes that succeeded before the
-> refusal"*
-
-> *"an edit in a DIFFERENT commit is not touched — a listener body's own write opens its
-> own commit … so it is not undone by yours."*
-
-The first sentence describes what we measured. The second is contradicted by the
-measurement above: a listener body's own write **opened its own commit, returned, and was
-undone anyway**. The distinction the second sentence draws is not the one the engine
-makes; the engine's distinction is **journal position within the outermost opening**, and
-a listener's write sits inside it.
-
-**FIX SHAPE.** **Correct the second sentence** to state the restore's real extent — the
-outermost opening's mark, whatever committed after it — **and name in the refusal what it
-took**: the addresses the restore moved that the refused act did not itself write. A
-consumer can survive an undo it is told about; it cannot survive one it is not.
-
-**WHAT IT COSTS A CONSUMER.** The ruling this consumer already accepts is
-`A-THROW-MUST-MEAN-NOTHING-LANDED`, and it is honoured — nothing of the refused act's own
-effect stands. What is **not** honoured is the consumer's ability to know what else went
-with it. Our host treats a returned write as durable; a returned write inside a later-
-refused commit is not, and the answer is silent about it.
-
-### 3.6 `DEF-AT` — the guide keeps superseded rules standing in place, so two sections tell a reader the opposite of the shipped behaviour
-
-**SYMPTOM / REPRO** (`read` for the bytes; `observed` for the behaviour each falsifies;
-`/tmp/probe-storeroom-140/out/docs-h*` and `s1-matrix*`).
-
-1. **`README.guide.md:814-816`** — *"a pair at an ANCESTOR address is not asked by the
-   delete's pass"* — is the **pre-`D-56`** rule. The shipped behaviour is the opposite:
-   an ancestor pair is asked (`observed`, `ASKS=1`), and the guide's own `:759` states the
-   prefix rule that requires it.
-2. **`README.guide.md:1574`** — *"NO SHAPE AT THIS VERSION ADMITS ONE"*, about a raise
-   inside a `delete`'s pass — is the **pre-`D-55`** state, contradicted by the same
-   document's `§7.8` (`:780-797`), by `kernel-commit.mjs:257` and by
-   `constraints.mjs:912`, and falsified by measurement (pair invocations during the
-   delete: `0 → 1`).
-
-**ROOT CAUSE.** Two sections written about different releases now ship together. The
-widening and the `delete` change moved the behaviour; **neither superseded clause was
-regenerated or retired**, and neither cross-references the clause that replaced it.
-
-**EVIDENCE.** `read` for all four line anchors; `observed` for both falsifying arms;
-catalogue row `docs/defects.md`, `DEF-AT`. **The current rule IS declared** — at
-`README.guide.md:759` and in `RELEASE-NOTES.md:66` — **so the failure is retention, not
-absence**, which is why this row is a documentation demand and not a behaviour one.
-
-**FIX SHAPE.** **Move the superseded bytes out to the archive with a one-line pointer,
-and keep the standing sentence alone** (this project's own `RCA-8(g)` practice: retention
-**and** retrievability, never retention in place). And **add a migration note**, because
-the widening has a consumer-side consequence the documents do not state: **a body
-authored to read the object at the pair's own address (`ctx.value.theme`) now misreads at
-a descendant act and passes silently** (`observed`, `s1b`: a pair shaped that way returns
-`op=op-25` and the leaf `"neon"` lands — the pair that exists to refuse the object shape
-admits it, because it is handed the act's primitive).
-
-**WHAT IT COSTS A CONSUMER.** A reader who follows `:814-816` or `:1574` will write a
-constraint that does not fire, or conclude that the shape they need does not exist. And a
-reader who keeps their `1.3.0` body will find it **passing when it should refuse** — the
-worst consumer outcome there is, because nothing reports it. **The cost is asymmetric on
-purpose, and it is worth naming:** a body that refuses too much is loud and gets fixed in a
-day, while a body that refuses too little is silent for as long as nobody writes the act
-that would have been caught. Every consumer who shipped a pair at `1.3.0` is now in the
-silent half, and only the guide can tell them so.
-
-### 3.7 `DEF-AK` — narrow: only the throwable's identity stays outside the refusal
-
-**SYMPTOM / REPRO** (`observed`, `/tmp/probe-storeroom-140/out/` AK arms; transcript in
-`docs/defects-history.md`, `### THE DEF-AK BEFORE / AFTER`).
-
-```
-1.3.0  outer message: "... a constraint body's throwable crosses as this refusal"
-       marker-AK: 0 occurrences
-1.4.0  outer message: "... the value the constraint body threw does NOT cross as this
-                      refusal: the form the throwable took stands in the `outcome` entry
-                      of this refusal's `log`, which is where a throwable's own message
-                      crosses"
-       log[0] (kind outcome): "the constraint marker-thrower threw; the attempt is closed —
-                      the value it threw was an object whose own `message` member is the
-                      string \"marker-AK\""
-       marker-AK crosses now: YES (in that entry, never in `message` or `status`)
-       a body-RETHROWN package refusal: the full inner refusal under
-                      Symbol(provident-storeroom.inner-refusal), its status AND message
-                      AND log also quoted in the outer `message`
-```
-
-**ROOT CAUSE.** Not a contradiction any more: the message that claimed a conveyance the
-bytes denied **has been rewritten to state the limit correctly**, and a body's own
-`Error` now crosses as its **`message`** in an `outcome` log entry. What does not cross is
-the throwable's **identity** — its constructor, its own members, its shape.
-
-**EVIDENCE.** `observed` and `read`, transcript above; catalogue row `docs/defects.md`,
-`DEF-AK`.
-
-**FIX SHAPE.** **None proposed.** The contradiction the row named is **CLOSED**, and this
-round asks **one question** rather than filing a demand: **should the throwable's identity
-cross, or is the message-only crossing the intended ceiling?** If the answer is "intended",
-the row narrows to a recorded limit and no further pass files it.
-
-**WHAT IT COSTS A CONSUMER.** Little, now. A host that discriminates error classes by
-`instanceof` gets a message and no class, so it must match on text — a cost we can absorb
-and would rather not build policy on. The question is asked because the declaration is the
-place to settle it, not because a state is wrong.
-
-### 3.8 `DEF-X` — we are proposing to close it
-
-**SYMPTOM / REPRO** (`observed`, `/tmp/probe-storeroom-140/out/b-defx7*` and `s2*`). Seven
-hosts, each a place a reversal can be raised. At `1.4.0`:
-
-| host | what it is | judge invocations |
-| --- | --- | --- |
-| `1` | a top-level reversal | `1` |
-| `2` | a reversal inside a `write`'s own commit | `1` |
-| `3` | a reversal from a repair body | `1` (effect gone, `7` held) |
-| `4` | a registration's evaluation | `0` — **the guide's declared window** |
-| `5` | a `delete`'s listener delivery | `0` — **the guide's declared window** |
-| **`6`** | **a `delete`'s constraint pass — NEW at `1.4.0`** | **`1`** |
-| `7` | a reentrant reversal-then-write | `1` (`7` held) |
-
-**Five hosts judge. Hosts `4` and `5` are the guide's two declared windows, now named at
-`README.guide.md:1521-1523`, and they are defined by the delivery, not by the verb.** Host
-`6` did not merely change its answer: at `1.3.0` the probe could build **no** constraint
-pass on a `delete`'s behalf (`NOT PRESENT`), so the `1.3.0` measurement of host 6 was a
-measurement of a shape the artifact did not admit — **a doubt about our own row**, which
-this release resolved by making the shape exist and judging it.
-
-**Zero unjudged hosts remain.** Every host that runs a pass now drains its own restart
-request and judges; the only two that do not judge run **no pass**, and the guide says so
-in its own name.
-
-**And nothing is asked on the two declared windows.** Hosts `4` and `5` are declared,
-named and measured as not judging; **this document attaches no demand to either of them**,
-and a later round that files on one is filing against a ruled state, not against a defect.
-
-**ROOT CAUSE.** None outstanding. The `1.3.0` residue was a host count, and the count is
-now explained rather than merely reduced.
-
-**EVIDENCE.** `observed`, rows above; catalogue row `docs/defects.md`, `DEF-X`, whose
-`1.3.0` state — one host unjudged on the `1.2.0` measurement, its reachability at `1.3.0`
-unproven either way — this release retires.
-
-**FIX SHAPE — one question, and it closes the row.** **After `D-55` a `delete` runs its own
-pass: is the delivery's placement OUTSIDE that pass still intended, or is a raise inside a
-`delete`'s delivery meant to be judged now?** The delivery follows the judgement; the
-question is whether the judgement now reaches what the delivery does. **On an answer of
-"intended", this row CLOSES as designed behaviour** — not as a defect withdrawn, but as a
-window declared, named and honoured — and this consumer will record it as such in the
-round that follows.
-
-**WHAT IT COSTS A CONSUMER.** One sentence of policy, and we can write it either way. What
-we cannot write is a policy on an undeclared window: a host must know whether an
-intervention from a listener's delivery is inside or outside the machinery, because that
-determines whether it must do its own verification. `1.4.0` has made this cheap to settle.
-
----
-
-## 4. The two observations — **explicitly NO DEMAND**
-
-**Nothing is asked on either row. There is no fix shape, no upstream issue and no
-round item. They are recorded so that the numbers are on the record once, in one place,
-and so that no later pass re-derives them as a finding.** `DEF-AM` is declared in the
-shipped declarations; `DEF-AD` is a characteristic of the model rather than a claim about
-it; and this consumer has accepted both costs.
-
-**`DEF-AD` — the read cost of the constraint machinery** (`observed`,
-`/tmp/probe-storeroom-140/out/h-defad*`):
-
-| measure | `1.2.0` | `1.4.0` |
+| measure | `1.4.0` | `1.5.0` |
 | --- | --- | --- |
 | native reads, `200` permitted at-rest reversals | `140,300` | `140,300` (`701.5` each, `3.5` per address) |
 | native reads, `200` refused reversals | `200,800` | `200,800` (`1,004` each) |
-| `readLiteral` calls | `0` | `0` |
-| heap per registered pair | `4,915` B | `4,953` B (`+14`) |
-| unpacked tarball | `1,149,852` | `1,386,344` (`21` files) |
+| `readLiteral` calls · `write` calls (the compensating restores) | `0` · `0` | `0` · `0` |
+| `journalMark` calls (the per-opening cache) | `200` | `200` |
+| heap, `200` pairs + `200` writes + `200` reversals | `992,328` B | `940,728` B (**`4,704` B/pair**) |
+| unpacked tarball | `1,386,344` B | `1,520,345` B, `21` files |
 
-**No read-count regression between `1.2.0` and `1.4.0`.** The cost is characteristic of the
-model, not of a regression, and no narrowing suggestion is filed as a demand.
+**No read-count regression between `1.4.0` and `1.5.0`** — the read figures are identical to the
+byte — and the heap delta per pair *fell* (`4,962 → 4,704` B). The cost is characteristic of the
+model, not of a regression. The narrowing suggestion recorded in the catalogue (watch only the
+addresses the reversal's own record names) **remains a suggestion and is not a demand.**
 
-**`DEF-AM` — the witness's `addresses` length is correct and the member is
-non-enumerable** (`observed`, `/tmp/probe-storeroom-140/out/i-defam*`): `addresses.length`
-is **`1`** at `1`, `3` and `25` registered pairs (it was the whole registry — `200`
-addresses, `1,721` bytes — at `1.2.0`), and the member is `{writable:false,
-enumerable:false, configurable:true}`, so it is **lost by spread, by `Object.assign`, by
-`JSON.stringify` and by `structuredClone`**. The `1.4.0` receipt's new `commit` member
-**uses the same device** (`enumerable:false`, `Object.keys` unchanged at four) — stated
-here because a consumer that serialises a receipt should know it drops both members, and
-because that consistency is a deliberate choice rather than two accidents.
+**`DEF-AM` — the witness's `addresses` length is correct and the member is non-enumerable**
+(`observed`, `i-defam-150.txt`): `addresses.length` stays **`1`** at `1`, `3` and `25` registered
+pairs (it was the whole registry — `200` addresses — at `1.2.0`); the member is `{writable:
+false, enumerable: false, configurable: true}`, so it is **lost by spread, by `Object.assign`,
+by `JSON.stringify` and by `structuredClone`**; `Object.keys(record)` reads the four declared
+members while `getOwnPropertyNames` reads six. **The newer Symbol channels use the same
+device** — `commit` on a `delete` receipt, and `bump-mark` / `register-body` on the instance — so
+a consumer that serialises a record should know it drops them, and should know that this
+consistency is a deliberate choice rather than a series of accidents.
 
 ---
 
-## 5. Closed, withdrawn and never to be re-filed — read this before re-reading an older round
+## 4. Closed, withdrawn, and our own errors — read this before re-reading an older round
 
-**This table is here to save the maintainer's time.** Every row below has been filed, and
-its state has moved. Re-reading an older round and re-filing from it is the single most
-expensive failure available to this process, and it has happened once (`DEF-W`, §1.2).
+**This section is here to save the maintainer's time.** Every row below has been filed, and its
+state has moved. Re-reading an older round and re-filing from it is the single most expensive
+failure available to this process, and this consumer has done it — five entries in §4.2.
+**Nothing in §2 contradicts anything in this section**, and a demand that would have is not
+filed.
 
-| row | state | where it stands |
+### 4.1 The states
+
+| row | state | the one thing to know |
 | --- | --- | --- |
-| `DEF-AP` | **CLOSED at `1.4.0`** | §1.1; four arms, different subjects only; the same-subject double reversal is **unsupported usage** and nothing is asked on it |
-| `DEF-W` | **residual CLOSED at `1.3.0`** | §1.2; **credit owed, and our error**; the wrong cells stand at `archive/defects/2026-10-28-DEF-W-cells-as-filed-wrong.md` |
-| `DEF-AQ` | **WITHDRAWN `2026-10-29`** | a caller that makes **unconditional edits to its own sub-properties** is responsible for its own infinite loop; **the package owes no depth guard**. The observation **stands and is not retracted**: no cap, the host dies of heap exhaustion, `exit 134`, `SIGABRT`, no `{status, message, log}` delivered — **the prevention is the caller's** |
-| `DEF-AS` | **WITHDRAWN `2026-10-29`** | the widened pass is **correct** and the `1.3.0` exact-address pass **was the defect**; the claim that the rule was undeclared was ours and is withdrawn (§1.4). What survives is the guide's retention of the old rule, filed as `DEF-AT` (§3.6) |
+| `DEF-AN` | **CLOSED at `1.5.0`** | §1.1; a listener's lawful write **survives** the caller's later refusal and the refusal says so; the clause that was false is now true |
+| `DEF-AK` | **CLOSED at `1.5.0`** | §1.2; a body's throwable crosses in the `log` entry the declaration names, and a **listener's** throw reaches the original caller with **identity preserved**; only a throwable's identity *inside* a `ConstraintBodyThrew` stays outside, by declaration |
+| `DEF-AI` | **CLOSED at `1.5.0`, by subtraction** | §1.3; `LogEntry.seq` is **gone** (`D-65`, *"Drop it"*), the position is the index; a **breaking** delta for a consumer that reads `.seq` |
+| `DEF-AP` | **CLOSED at `1.4.0`** | both raises are asked and the commit is restored whole, in every order; **different subjects only** — a same-subject double reversal is unsupported usage and nothing is asked on it |
+| `DEF-W` | **residual CLOSED at `1.3.0`** | §4.2; **this consumer withheld the credit for a cycle and recorded `0` for it**; the terminal-state judgement holds and a reversal inside a kernel pass **is** judged (`observed`, `i-regressions-150.txt` `I2`: judge asks `1`, outer write refused) |
+| `DEF-AQ` | **WITHDRAWN `2026-10-29`** | a caller that makes **unconditional edits to its own sub-properties** is responsible for its own loop; the package owes no depth guard. The observation **stands and is not retracted**: no cap, the host dies of heap exhaustion (`exit 134`, `SIGABRT`), no `{status, message, log}` delivered — **the prevention is the caller's** (§1.7) |
+| `DEF-AS` | **WITHDRAWN `2026-10-29`** | the widened act pass is **correct**; the `1.3.0` **exact-address pass was the defect**. The claim that the rule was undeclared was **ours and is withdrawn** — `RELEASE-NOTES.md` states it verbatim. What survives is the guide's retention of the old rule, filed as `DEF-AT` (§2.5) |
 | `DEF-R` | **WITHDRAWN — not reproduced at either version** | the reorder never reproduced, at the version that filed it or any other; `1.0.1` then minted `registrationSeq` and sorted by it, so the ask was met by a defect that was not real |
-| `DEF-T` | **RE-SCOPED** | the filed "two spellings" claim did not reproduce and is withdrawn; what stands is four observed spellings across the fourteen members — a diagnostic, not a demand |
-| `DEF-V` | **NARROWED to a diagnostic wish, no demand** | the refusal is correct by the package's own record; what survives is a preference about its message, recorded as a wish and filed as nothing |
-| `DEF-O` | **WITHDRAWN** | a mis-filing by this catalogue: the constraint-register reader is **not** a substitute for a commit register, because **the package was right not to publish one** (see the `COMMIT-REGISTER-…` ruling below) |
-| `DEF-I`, parameter half | **WITHDRAWN** | the op id **is** the lawful reversal parameter (ruling `OPID-IS-THE-LAWFUL-REVERSAL-PARAMETER`); only the unjudged-window half was ever live, and it is `DEF-X` (§3.8) |
+| `DEF-O` | **WITHDRAWN** | a mis-filing by this catalogue: the constraint-register reader is **not** a substitute for a commit register, because **the package was right not to publish one** (`COMMIT-REGISTER-IS-A-MIDFLIGHT-JS-THREAD-STRUCTURE-EMPTY-AT-REST`) |
+| `DEF-T` | **RE-SCOPED** | the filed *"one refusal, two spellings"* claim did not reproduce and is withdrawn; what stands is four observed spellings across the fourteen members — a diagnostic, not a demand |
+| `DEF-V` | **NARROWED to a diagnostic wish, no demand** | the refusal is correct by the package's own record; what survives is a preference about its message, filed as nothing |
+| `DEF-I`, parameter half | **WITHDRAWN** | the op id **is** the lawful reversal parameter (`OPID-IS-THE-LAWFUL-REVERSAL-PARAMETER`); only the unjudged-window half was ever live, and it is `DEF-X` (§2.3) |
+| `DEF-AB`, spelling half | **CLOSED at `1.2.0`** | one renderer for both sentences, measured across three address families; its `seq` half is `DEF-AI`'s and closes with it (§1.3) |
 
-**And the standing rulings this consumer has accepted, stated so that no later pass
-re-argues them.** Each is a decision row in
-`docs/decisions/ACTIVE-store-and-package-binding.md`, cited by name:
+**Read the table's shape, not only its rows.** The top three closed **this round**; the next two
+closed earlier and are listed because a reader can still re-file from them; the rest are
+withdrawals and narrowings, which are the states most often mistaken for open rows. **Thirteen
+further closures hold** and are not restated here — the dated closure index in `docs/defects.md`
+carries them, and `i-regressions-150.txt` re-confirms **`13` `HOLDS`** over the fourteen
+regression rows. **No closure was broken by `1.5.0`:** the one `BROKEN` line in that harness is
+its expected-broken marker for `DEF-W`'s residual, which stopped reproducing at `1.3.0` — the
+credit §4.2 says was withheld.
+
+### 4.2 OUR OWN ERRORS — the filings the maintainer should discount
+
+**The maintainer is entitled to know which earlier filings to distrust, and this subsection
+exists for no other purpose.** Five self-corrections are on this catalogue's record. **Four are
+named below; the fifth is the older one.**
+
+| our error | what we said | what was true |
+| --- | --- | --- |
+| **`DEF-W`** | the residual *"a reversal inside a kernel pass is not judged"* **held** at `1.3.0` — a closure credit **withheld for one review cycle** | the residual **stopped reproducing at `1.3.0`**: the pair **is** asked inside the pass and the write is refused (`observed`, `i-regressions-{120,130,140,150}.txt`: judge asks `0` / `1` / `1` / `1`). **The `0` came from an arm measuring the delete-DELIVERY window (host `5`), not the kernel's repair pass** — a mechanism read as a result |
+| **`DEF-AS`** | a **fix** was filed as a **break**, and its rule as **undeclared** | the widened pass is **correct** and `1.3.0`'s exact-address pass **was the defect**; the rule **is** declared (`RELEASE-NOTES.md:66`, `declared`). Withdrawn as a defect; the documentation residue is `DEF-AT` |
+| **`DEF-AH`** | *"the discard witness reports nothing discarded"* — **overstated** | the witness is **count-dependent**: one raise at a pair's address **is** reported (`[{opId: "op-15", addresses: [["a"]]}]`), two are not (§2.4). The demand survives, narrowed |
+| **`DEF-X`'s `1.4.0` cell** | host `6` **now exists and judges**, and *"zero unjudged hosts remain"* | **our own output said `NO (0)` at `1.4.0` and says `NO (0)` at `1.5.0`** — the two cells are byte-identical (`b-defx7-{140,150}.txt`). **The fifth self-correction**; the cell is withdrawn, the row is unchanged |
+| **the fifth, older** | the `STOREROOM-FILE-PROBE-FALSE-PASS` row was called **fixed** at `1.1.0` | it was **already absent at `1.0.1`** — the row was **STALE, not fixed**, and the earlier *"now unconditional"* wording was wrong |
+
+**Say the pattern once, because it is the reason for this whole subsection: THREE of those five
+self-corrections were a MECHANISM read as a RESULT.** `DEF-W`'s `0` was an arm measuring one
+window reported as the kernel's pass; `DEF-AS`'s break was a widening's *design* read as a
+*fault*; `DEF-X`'s host `6` was a shape in the source read as a judge firing. The two that were
+not were an overstatement (`DEF-AH`) and a staleness (`STOREROOM-FILE-PROBE-…`).
+
+**And the discipline this consumer has therefore pinned, binding on this document as much as on
+any row in it: a disposition is written from the OUTPUT LINE IT CITES.** Not from the mechanism
+the source suggests, not from the shape a declaration implies, and never from a commit subject.
+Where this round could not do that — §1.4 and §2.1's `307`-char fallback, §2.4's mechanism —
+**this document says so and files the result alone.** That is cheaper than a sixth
+self-correction, and it is the only reason a maintainer should keep reading these rounds.
+
+### 4.3 The standing rulings, accepted and not to be re-argued
+
+**Each is a decision row in `docs/decisions/ACTIVE-store-and-package-binding.md`, cited by
+name.** They are listed because a later round that re-argues one is repeating work this one has
+already recorded as settled.
 
 1. **The op id is the correct reversal parameter** — `OPID-IS-THE-LAWFUL-REVERSAL-PARAMETER`.
-2. **There is no public commit register, and none is asked for** — the register is a
-   **mid-flight, JS-thread structure, empty at rest**
-   (`COMMIT-REGISTER-IS-A-MIDFLIGHT-JS-THREAD-STRUCTURE-EMPTY-AT-REST`). A consumer that
-   wants durability reads the store, not a register.
-3. **The instance-lifetime retention model is correct**
-   (`INSTANCE-LIFETIME-IS-THE-RETENTION-BOUND`): a constraint's lifetime is the store
-   instance's, so the instance's own collection **is** the deletion site and **is** the
-   bound. **No cap, no deletion site and no declared figure is asked for.**
-4. **No version number is a defect** (`VERSION-NUMBERS-ARE-THE-PACKAGE'S-TO-CHOOSE`): a
-   package may ship any number of behaviour changes under any number; a consumer's
-   remedy is a pin, not an issue. This document grades no arithmetic and names no bump.
+2. **There is no public commit register, and none is asked for** — the register is a mid-flight,
+   JS-thread structure, **empty at rest**
+   (`COMMIT-REGISTER-IS-A-MIDFLIGHT-JS-THREAD-STRUCTURE-EMPTY-AT-REST`). A consumer that wants
+   durability reads the store, not a register.
+3. **The instance-lifetime retention model is correct** (`INSTANCE-LIFETIME-IS-THE-RETENTION-
+   BOUND`): a constraint's lifetime is the store instance's, so the instance's own collection
+   **is** the deletion site and **is** the bound. **No cap, no deletion site and no declared
+   figure is asked for.**
+4. **No version number is a defect** (`VERSION-NUMBERS-ARE-THE-PACKAGE'S-TO-CHOOSE`): a package
+   may ship any number of behaviour changes under any number; a consumer's remedy is a **pin**,
+   not an issue. §1.3 states a breaking delta and **files nothing on the number**.
 5. **Execution is sequential** — a listener's or constraint's own write enters through the
    package surface and restarts constraint checking so that prior constraints still pass;
-   single-threaded JS makes it sequential, **so two raises are never in flight at once and
-   no race exists**. Any wording in an older round that implied concurrency was this
-   consumer's, not the artifact's.
-6. **A restart request exists so that prior constraints still pass** — and it belongs to
-   the window that raised it. That is the mechanism behind §3.8, not a defect in itself.
+   single-threaded JS makes it sequential, **so no race exists**. Any wording in an older round
+   that implied concurrency was this consumer's, not the artifact's.
+6. **The subtree widening is correct** — `D-56`/`D-66`: a pair is asked when the act changes the
+   value at its address. `1.3.0`'s exact-address pass **was** the defect (`DEF-AS`, withdrawn),
+   and §2.5 asks only that the guide stop carrying the superseded rule.
+7. **A caller prevents its own loops** (`THE-CALLER-PREVENTS-ITS-OWN-LOOPS`): an
+   **unconditional** edit to a sub-property of the address a body watches is the caller's
+   construct, and the package owes no depth guard for it (`DEF-AQ`, withdrawn; §1.7's `D-72` arm
+   is the same ruling measured).
+8. **The client does not get a mid-commit message log** — the maintainer's own disposition, and
+   §2.2 measures the package against it. **The demand stands; the ruling is not re-argued.**
 
-**Nothing in §3 contradicts any line above**, and a demand that would have is not filed:
-see §7's closing note.
-
-**This list is complete for the states a reader can re-file from.** Rows closed before
-`1.0.1` are **not** listed here — the dated closure index in `docs/defects.md` carries
-them — and a row that appears in neither this table nor that index is a row this consumer
-has never filed. **The `1.2.0`–`1.3.0` closure set is deliberately absent from the table
-above**: `DEF-AE`, `DEF-AI`, `DEF-AJ`, `DEF-AL`, `DEF-AB`'s `seq` half, and the two
-`STOREROOM-*` rows closed on measurement. None of them can be re-filed from an older round
-without contradicting a shipped declaration that now exists, so they are pointed at rather
-than restated; a reader who needs their reasons wants the closure index, not this digest.
+**Nothing in §2 asks for a bound on a retained structure, a register, a version grade, a
+concurrency guarantee, or the un-widening of a pass.** Every one of the six is either a
+sentence, a length or a count.
 
 ---
 
-## 6. Reproduction index
+## 5. Reproduction index
 
-**The transcripts live in `docs/defects-history.md` → `## provident-storeroom@1.4.0` — THE
-REVIEW'S MEASUREMENTS (filed `2026-10-29`)**, which is the retrieval surface for every
-figure quoted here. The probe output directories are named per row; `1.4.0` was unpacked
-at `1,386,344` bytes over `21` files, and `addon.version()` answered `1.4.0`.
+**The transcripts live in `docs/defects-history.md`**, the retrieval surface for every figure
+quoted here. The probe output directories are named per row; the `1.5.0` install is
+`/tmp/probe-storeroom-150/` (`1,520,345` bytes, `21` files, `addon.version()` = `1.5.0`), and
+every `-140` output in the same directory came from the **same scripts** run against
+`/tmp/probe-storeroom-150b/` (`1.4.0`, installed from the registry).
 
 | row | probe / output path | what to look for |
 | --- | --- | --- |
-| `DEF-AR` (§3.1) | `/tmp/probe-storeroom-142/out/*`; cap-firing series `/tmp/probe-storeroom-141/out/r7*` | the length series per `N`, then the `RangeError` at `N = 28` and `read ["a","x","top"]` |
-| `DEF-AO` (§3.2) | `/tmp/probe-storeroom-140/out/ao-{130,140}.txt` | `log.length` `3 → 4`, and entry 1's rewritten text |
-| `DEF-AH` (§3.3) | `/tmp/probe-storeroom-140/out/ah*` | the six arms; `AH.2`'s `[]` against `1.3.0`'s `[{opId:"op-29", addresses:[]}]` |
-| `DEF-AC` (§3.4) | `/tmp/probe-storeroom-140/out/docs-h*` | `README.md`'s version, the guide's `NOT STATED … (D-57)` line, and the two `RELEASE-NOTES.md` sentences |
-| `DEF-AN` (§3.5) | `/tmp/probe-storeroom-140/out/an*` | the listener's `["g"]=1` returning, then `read g` → `ABSENT` |
-| `DEF-AT` (§3.6) | `/tmp/probe-storeroom-140/out/docs-h*`, `s1-matrix*`, `s1b*` | the four line anchors; ancestor-pair `ASKS=1`; the `ctx.value.theme` body passing silently |
-| `DEF-AK` (§3.7) | `/tmp/probe-storeroom-140/out/` (AK arms) | the before/after message pair and `log[0]`'s `outcome` entry |
-| `DEF-X` (§3.8) | `/tmp/probe-storeroom-140/out/b-defx7*`, `s2*` | the seven hosts; the `delete`-pass arm going `NOT PRESENT → 1` |
-| `DEF-AP` (§1.1) | `/tmp/probe-storeroom-140/out/ap*` | the four arms, their ask counts, and the whole restore |
-| `DEF-W` (§1.2) | `/tmp/probe-storeroom-140/out/i-regressions-{120,130,140}.txt` | the three `==> DEF-W:` verdict lines and the ask counts `0` / `1` / `1` |
-| `R8` (§1.5) | `/tmp/probe-storeroom-140/out/c-r8*` | `0` tier-null invocations, floor reached, the two new descendant-refusal arms |
-| `DEF-AD` / `DEF-AM` (§4) | `/tmp/probe-storeroom-140/out/h-defad*`, `i-defam*` | the read counts, the heap per pair, the `addresses.length` at `1` / `3` / `25` pairs |
-| matrix + declarations (§2) | `/tmp/probe-storeroom-140/out/s1-matrix*`, `s1c*`, `docs-h*` | the ask matrix, the `index.d.ts` diff, and the `1.4.0` surface |
+| `R8` (§1.6) | `/tmp/probe-storeroom-150/out/c-r8-150.txt` | six arms `C1`–`C6`; `TIER-NULL invocations … : 0` and the read-back on each |
+| `DEF-AN` (§1.1) | `…/out/an-{140,150}.txt` | `read g` → `ABSENT` at `1.4.0`, `VALUE 1` at `1.5.0`, and the sentence naming the LAST VALIDATED MARK |
+| `DEF-AK` (§1.2) | `…/out/g-defak-150.txt`, `…/out/p-d71-150.txt` | `G3`'s `marker-AK`, `G4`'s inner-refusal Symbol, `ARM (i)`'s `identity preserved?: true`, the two-window arm |
+| `DEF-AI` (§1.3) | `…/out/d-seq-150.txt`, `…/out/ef-decl-150.txt`, `…/out/index.d.ts-{140,150}.txt` | `seq: undefined` on every entry; the five declared members; the removed `- readonly seq: number;` |
+| `DEF-AR` (§2.1) | `…/out/p-defar-150{a,b,c}.txt`, `…/out/n28-150.txt`; comparison `…/out/p-defar-140a.txt` | the length series per `N`; `307` chars against `268,446,684`; `stateAfter` at `N = 26` versus `N = 28` |
+| `DEF-AO` (§2.2) | `…/out/ao-150.txt` (`AO.3`), `…/out/last-150.txt` | `log.length` `3 → 4`, and entry `1`'s rewritten text |
+| `DEF-X` (§2.3) | `…/out/b-defx7-{140,150}.txt` | the seven-host table; host `6`'s `judged? NO (0)`, `effect stands? YES` at both |
+| `DEF-AH` (§2.4) | `…/out/ah-{140,150}.txt` | `AH.4`'s `[{opId: "op-15", addresses: [["a"]]}]` against `AH.5`/`AH.6`'s `[]` |
+| `DEF-AT` (§2.5) | `…/out/s1c-150.txt`, `…/out/p-d67-150.txt`, `…/out/docs-h-150.txt` (`H4`) | the ancestor pair's `PAIR asks: 1`; the guide's anchors `1044`, `1055`, `1979`, `985`, `1008` |
+| `DEF-AC` (§2.6) | `…/out/docs-h-150.txt` (`H1`, `H2`, `H3`), `…/out/i-regressions-150.txt` (`I13`) | `RELEASE-NOTES.md:212`/`:216`; `README.md`'s `1.5.0`; `addon.version()` = `1.5.0` against a `1.4.0` install |
+| `D-67` (§1.5) | `…/out/p-d67-150.txt` | the five acts; `LISTENER deliveries: 1` on the descendant write and the descendant delete |
+| `D-72` (§1.7) | `…/out/p-d72bc-150.txt` | `windows reached: 9` for a fresh child per delivery |
+| `DEF-AP` / `DEF-W` (§4.1) | `…/out/ap-150.txt`, `…/out/i-regressions-150.txt` (`I2`) | the four arms; `in-pass … judge asks: 1` with the outer write refused |
+| `DEF-AD` / `DEF-AM` (§3) | `…/out/h-defad-150.txt`, `…/out/i-defam-150.txt` | the read counts, the `940,728`-byte heap delta, `addresses.length` at `1`/`3`/`25` |
+| surface + declarations (§0, §1.3) | `…/out/surface-{140,150}.txt`, `…/out/surface2-150.txt`, `…/out/index.d.ts-{140,150}.txt` | the `14` members and their arities, the `8 → 10` symbols, `native journalMark: function`, `register/2` |
+| the safe-state scope note (§2.1) | `…/out/p-safestate-{140,150}.txt` | `read b` → `ABSENT` at `1.4.0`, `VALUE 1` at `1.5.0`; `does any sentence name the write that stands?: NO` |
 
-**Comparison installs.** Every `1.3.0`-contrast arm in §1 and §3 was produced on the same
-harness against an installed `1.3.0` (`/tmp/probe-storeroom-130/`) and, where a three-
-install series is quoted, against `1.2.0` as well.
+**Everything above is reproducible without this project's harness**: every arm drives the package
+through **published members only** (`write`, `read`, `delete`, `rollback`, `listen`,
+`addConstraint`), and **no row depends on this project's host code or on the Electron shell**.
 
-**A maintainer can re-run any row above without this project's harness.** Each row names
-the install it was taken on, and the act sequence is printed verbatim in the history
-file's transcript; every arm drives the package through published members (`write`
-`delete` `rollback` `addConstraint` `listen`), so **no row depends on this project's host
-code or on the Electron shell**. That is a property of the probe design, not a claim about
-the package: a row that could only be reproduced through a consumer's own layer would not
-be filed as an upstream defect.
+**One methodological note, because it is why the figures can be trusted twice.** The `1.4.0`
+comparison was not re-derived from last round's notes: **the same scripts were run against a
+second install** (`/tmp/probe-storeroom-150b/`). Byte-identical `-140`/`-150` outputs (`b-defx7`,
+`ah`'s two-raise arms) are a row **UNCHANGED**; a difference (`an`, `p-safestate`, `p-defar`,
+`h-defad`'s heap, `i-regressions`' `seq` line) **is** the row.
 
 ---
 
-## 7. What we owe, and when
+## 6. What we owe
 
-**This round's ledger of work, printed with its terms:** **`1` closure** (`DEF-AP`) +
-**`1` closure credit we owed** (`DEF-W`, and the accompanying self-correction) + **`4`
-narrowings** (`DEF-X`, `DEF-AK`, `DEF-AC`, `DEF-AN`) + **`1` worsening** (`DEF-AH`) +
-**`1` confirmation** (`DEF-AO`, whose label moves from `read` to `observed` now that an arm
-has driven it) + **`2` withdrawals** (`DEF-AQ`, `DEF-AS`) + **`2` observations** (`DEF-AD`,
-`DEF-AM`, both no-demand) — **every term above is a row this document names**, and the long
-form of each is in `docs/defects.md`.
+**This round's ledger of work, printed with its terms:** **`2` closures** (`DEF-AN`, `DEF-AK`)
++ **`1` narrowing** (`DEF-AR`, to its log half) + **`1` narrowing against our own filing**
+(`DEF-AH`, count-dependent rather than silent) + **`4` unchanged** (`DEF-AO`, `DEF-X`,
+`DEF-AT`, `DEF-AC`) + **`1` self-correction** (`DEF-X`'s `1.4.0` cell — the fifth) + **`1`
+declared surface delta** (`LogEntry.seq` removed, `DEF-AI` closed by subtraction) =
+**`10` dispositions** `(2 + 1 + 1 + 4 + 1 + 1 = 10 ✓)`. **Every term above is a row this
+document names**, and the long form of each is in `docs/defects.md`.
 
-**The ledger of units is unmoved: `33 DONE / 3 open` units = `36`**, with `41` live rows in this consumer's count — the same figure
-`docs/defects.md`'s `2026-10-29` tally prints — of which **EIGHT carry a demand** (§3),
-**TWO are observations with no demand** (§4), and the rest are closed or withdrawn
-records kept so no later round re-files them (§5). **`U-STORE-CONSTRAINT-REGISTRY` remains HELD at its spec gate with
-`C-5` open**, and **no unit was admitted for any row in this document** — a defect filed
-upstream is not work admitted here, and this round admits nothing.
+**The ledger of units is unmoved: `33 DONE / 3 open` units = `36`**, with **`41` live rows** in
+this consumer's count — the same figure `docs/defects.md`'s `2026-10-29` tally prints — of which
+**SEVEN carry a demand** (§2, `DEF-AU` first), **two are observations with no demand** (§3), and the rest are
+closed or withdrawn records kept so no later round re-files them (§4). **`U-STORE-CONSTRAINT-
+REGISTRY` remains HELD at its spec gate with `C-5` open**, and **no unit was admitted for any
+row in this document** — a defect filed upstream is not work admitted here, and this round
+admits nothing.
 
-**What the maintainer can expect from us, in order:** an upstream issue per row in §3,
-each carrying the four-part filing and the reproduction path; the `DEF-AO` and `DEF-X`
-questions asked as questions and not as demands; the two observations of §4 recorded once
-and not re-filed; and, when a release answers any row above, a **closure recorded with the
-release that landed it and the code path that closes it** — including, where we owe it, a
-public correction of our own catalogue.
+**What the maintainer can expect from us:** an upstream issue per row in §2, each carrying its
+four-part filing and reproduction path; the `DEF-X` host-`6` question asked as a **question**; the
+§3 observations recorded once and not re-filed; and, when a release answers a row, a **closure
+with the release and the code path that closes it** — including a public correction of our own
+catalogue where we owe one, which this round paid in full (§4.2).
 
-**One note on what this round did not do.** Two demands were considered and **not filed**,
-because each would have contradicted a ruling in §5: a request for a **bound or eviction
-on the retained constraint registry** (contradicts ruling `3`, the instance-lifetime model)
-and a request for a **readable commit register** (contradicts ruling `2`). Both remain
-observations at most, and neither is re-argued here.
+**If only one pass is available, here is the order we would choose.** The **words** first:
+`DEF-AT`'s two superseded clauses with the migration note, and `DEF-AC`'s two standing
+sentences, are one editing pass with no behaviour change and no test risk, and together they
+remove one row outright and shrink another. Then `DEF-X`'s one sentence (judge host `6`, or
+declare it). Then `DEF-AH`'s witness, which is a count and not a mechanism. **`DEF-AR` is the
+exception to that order**: it is the only row where a refusal and the store disagree about what
+the store holds, so if the choice is made by risk rather than by cost it goes first and
+everything else waits. `DEF-AO` needs nothing new — its disposition is already the maintainer's
+ruling, and what is missing is the disclosure clause that ruling names.
 
-**And three things this document will not do, so that no later round expects them of us.**
-It will not re-file a row in §5; it will not grade a version number (ruling `4`); and it
-will not ask for a bound on a structure whose lifetime is the instance's (ruling `3`). A
-future round that does any of the three is repeating work this one has already recorded as
-settled — and the one time this process did exactly that, it cost the package a closure
-credit it had earned (§1.2).
+**One note on what this round did not do.** Three candidate demands were considered and **not
+filed**, because each would have contradicted a ruling in §4.3: a request for a **bound or an
+eviction on the retained constraint registry** (ruling `3`), a request for a **readable commit
+register** (ruling `2`), and a demand for a **depth guard on an unbounded edit chain**, which
+was withdrawn at `1.4.0` and is **not revived** even though §1.7 measures the window again
+(ruling `7`). All three remain observations at most. §2.1's scope note is the fourth thing we
+chose not to file, and it says so at its own bytes.
+
+**And three things this document will not do.** It will not re-file a row in §4; it will not
+grade a version number (§1.3 states a breaking delta and asks for nothing on its number); and it
+will not ask for a bound on a structure whose lifetime is the instance's. A future round that
+does any of the three repeats work this one has recorded as settled — and the times this process
+did exactly that cost the package credit it had earned (§4.2).
