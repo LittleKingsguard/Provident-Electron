@@ -307,55 +307,56 @@ long form of each is in `docs/defects.md`'s `2026-10-29` `1.5.0` block; the four
 below is the digest. **Nothing here contradicts a ruling in §4**, and a demand that would
 have is not filed (see §6's closing note).
 
-### 2.0 · ★ `DEF-AU` — A LISTENER'S REFUSED ACT REFUSES THE CALLER'S WRITE. THE ORDERING IS THE DEFECT, AND THE STANDING VALUE IS ITS SYMPTOM.
+### 2.0 · ★ `DEF-AU` — A LISTENER'S OWN REFUSED ACT IS REPORTED AS THE CALLER'S REFUSAL, WHILE THE CALLER'S WRITE STANDS
 
-**This row outranks every row below it. It was filed as a safe-state leak; the maintainer's ruling
-re-orders it, and the ruling is right about what the sequence is supposed to be.**
+**This row outranks every row below it. It was filed three times in one day and the first two readings
+were this consumer's errors, so the corrections are stated before the demand.**
 
-**THE ORDERING, STATED AS THE RULE IT MUST BE.** A **constraint pair** is a predicate over the state
-an act **would** leave. It runs **before the act is admitted**, it **may refuse**, and a refusal means
-the act did not happen — that is its whole function. A **listener** is a notification that the act
-**has been admitted**. It therefore runs **after** admission, on a state the pass that admitted it
-**can no longer refuse**, and it refuses nothing: it observes, and if it acts, it acts on its own
-authority in its own commit. **COROLLARY, IN THE MAINTAINER'S OWN WORDS: listeners do not run unless
-the original write has already passed all constraints, and therefore that write cannot be refused by
-them.** A listener's act may itself be judged and refused — **that refusal belongs to the listener's
-own act, never to the write that woke it.**
+**THE MECHANISM, AS THE MAINTAINER STATED IT.** *"Listeners don't fire in a commit. They enter at the
+package entrance and open a new commit."* A **constraint pair** is a predicate over the state an act
+**would** leave: it runs **before admission**, it **may refuse**, and its refusal means the act did not
+happen. A **listener** is a notification that the act **has been admitted**: its body is delivered
+**outside** the caller's commit, and **every act it performs enters at the package entrance and opens
+its own commit**, re-running the constraint checking. **So a pass that refuses a listener's act refuses
+the listener's act. It cannot un-admit the caller's write.**
 
-**WHAT `1.5.0` DOES INSTEAD — `observed`.** A caller writes `b = 1`. A listener fires **in that
-commit** and raises a reversal of **another** address. A pair refuses the reversal. **The caller's write
-is refused with `ConstraintPassRefused`** — the listener's refused act has become the caller's
-refusal. The listener ran inside the window where the caller's write was still refusable, and its
-re-outcome was charged to the caller.
+**SYMPTOM — `observed`.** The caller writes `b = 1`; its pass **passes**. A listener is delivered, raises
+a reversal of `a`, a pair **refuses** it and the reversal is **undone** (`read a` → `VALUE 7`). **And the
+caller's answer IS that refusal** — `ConstraintPassRefused`, quoting `'a'` and the `no-five` pair —
+**while `read b` answers `VALUE 1`.** **The store says the write stands and the answer says it was
+refused.** The same-address arm agrees: a listener reversing the enclosing write's own address leaves
+`["b","x"]` = `VALUE 1` where `1.4.0` answers `VALUE 7`, **and `VALUE 1` is the correct state, because
+that write was admitted.**
 
-**And the symptom that led us to file this row.** `read b` then answers **`VALUE 1`**: the refused
-write's own value stands. At `1.4.0` the same arm answers `ABSENT(AddressNotFound)` — there, the
-refusal reached back and took the caller's write **and the listener's lawful write with it**, which is
-what this consumer filed as `DEF-AN` and what `1.5.0` "fixed" by moving the restore baseline forward
-to the last validated mark. **Under the ordering above, neither behaviour should be reachable at all:**
-the caller's write was admitted before the listener ran, so there is nothing to refuse and nothing to
-restore. **`DEF-AN`'s closure and `DEF-AU` are therefore ONE defect seen at two ends — the listener
-runs while the write can still be refused — and the baseline change treated the symptom rather than
-the cause.** Same-address arm: a reversal on **the enclosing write's own address** leaves
-`read ["b","x"]` = **`VALUE 1`** where `1.4.0` answers **`VALUE 7`.
+**THE ANSWER IS WRONG IN BOTH DIRECTIONS:** it implies the caller's act did not happen when it did, and
+it names an address the caller never wrote as though the caller had written it. The refusal carries **no
+`discarded` member at all**, and **no sentence says `a` belongs to another act.**
 
-**No sentence names the address left standing** (`does any sentence name the write that stands (b)?`
-→ **NO**), and the refusal carries **no `discarded` member at all**.
+**IT FALSIFIES A SENTENCE THE SAME RELEASE SHIPS.** `D-71` says *"a listener is independent of the
+caller's commit, and the caller learns nothing of its outcome."* **The caller learns a refusal that is
+not its own** — so it learns that the listener failed **and** receives a false verdict on its own act.
 
-**Evidence.** `observed`, `/tmp/probe-storeroom-150/out/p-safestate-150.txt` ARM 1 and ARM 2, against
-`/tmp/probe-storeroom-150b/out/p-safestate-140.txt` from the SAME script.
+**Evidence.** `observed`, `/tmp/probe-storeroom-150/out/p-safestate-150.txt` ARM 1/2 and
+`p-d71-150.txt` ARM (iii), against `/tmp/probe-storeroom-150b/out/p-safestate-140.txt` from the SAME
+script.
 
-**Fix shape — the structural one, not the baseline one.** **Seal the caller's commit before the
-listener delivery runs**, so no pass that can still refuse the caller's write is open while a listener
-acts; a listener's own act then opens its own commit, and **its refusal is answered to the listener's
-act and never to the caller's**. If that is not achievable, the alternative is to keep the current
-window **and name every address the refusal knowingly leaves standing**, restating the promise — but
-that leaves the caller unable to tell, from its own answer, whether its refused write is in the store.
+**Fix shape — two routes, either lawful.** **(a)** Route the listener's own refusal to the listener's
+body, or to a log the caller reads **as a log and never as its own answer**, so the caller's answer
+reports its own admitted act. **(b)** If the caller must learn of it, give it a member that says exactly
+that, and **never** `ConstraintPassRefused` about an address it did not write. **What must not persist
+is an answer reading `refused` while the store reads `admitted`.**
 
-**What this costs a consumer.** Every host that reads a refusal as "nothing changed" and re-plans
-against the previous state is wrong on this release, because a listener's failure can refuse a write
-the caller had every right to consider admitted, and part of that write can still be in the store.
+**Two corrections of ours, recorded so the maintainer knows what to distrust.** We first filed this as a
+**safe-state leak** ("a refused write's own value stands") and then as an **ordering violation** ("the
+listener ran while the write could still be refused"). **The store was right in both arms and the
+ordering was right too** — both readings took the answer as the truth about the store. **And `DEF-AN`
+stays CLOSED: with the listener's write in its own commit, `1.4.0`'s restore reaching past the caller's
+opening mark and taking the listener's separate commit WAS the defect, and `1.5.0` fixed it correctly.
+There is no safe-state regression on either arm.**
 
+**What this costs a consumer.** A host that treats a refusal as "my act did not happen" is wrong on this
+release: the store may hold the write, and the refusal names somebody else's address. `Provident-Electron`
+reads a refusal as a failed act and re-plans against the previous state.
 ### 2.1 `DEF-AR` — the message stopped exploding; the LOG is still a function of depth, and on this path the refused value stands
 
 **SYMPTOM / REPRO** (`observed`, `p-defar-150{a,b,c}.txt`, `n28-150.txt`; the `1.4.0`
