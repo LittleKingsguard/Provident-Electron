@@ -307,56 +307,37 @@ long form of each is in `docs/defects.md`'s `2026-10-29` `1.5.0` block; the four
 below is the digest. **Nothing here contradicts a ruling in §4**, and a demand that would
 have is not filed (see §6's closing note).
 
-### 2.0 · ★ `DEF-AU` — A LISTENER'S OWN REFUSED ACT IS REPORTED AS THE CALLER'S REFUSAL, WHILE THE CALLER'S WRITE STANDS
+### 2.0 · ★ `DEF-AU` — DOCUMENTATION: THE THROW IS THE DELIBERATE LOGGING CHANNEL, AND THE SHIPPED SENTENCE DENIES IT
 
-**This row outranks every row below it. It was filed three times in one day and the first two readings
-were this consumer's errors, so the corrections are stated before the demand.**
+**The behaviour is CORRECT and this row no longer asks for a change to it.** A listener's refused act
+happens in the listener's **own** commit — a listener is not fired inside a commit; it is delivered,
+it enters at the package entrance, and it opens its own — so **the caller is the only party positioned
+to log the violation, and the throw is the channel that exposes it.** `read b` and `read ["b","x"]`
+return the **admitted** values in both arms, which is the right state.
 
-**THE MECHANISM, AS THE MAINTAINER STATED IT.** *"Listeners don't fire in a commit. They enter at the
-package entrance and open a new commit."* A **constraint pair** is a predicate over the state an act
-**would** leave: it runs **before admission**, it **may refuse**, and its refusal means the act did not
-happen. A **listener** is a notification that the act **has been admitted**: its body is delivered
-**outside** the caller's commit, and **every act it performs enters at the package entrance and opens
-its own commit**, re-running the constraint checking. **So a pass that refuses a listener's act refuses
-the listener's act. It cannot un-admit the caller's write.**
+**What survives is a shipped contradiction, of the same class as `DEF-AT`.**
 
-**SYMPTOM — `observed`.** The caller writes `b = 1`; its pass **passes**. A listener is delivered, raises
-a reversal of `a`, a pair **refuses** it and the reversal is **undone** (`read a` → `VALUE 7`). **And the
-caller's answer IS that refusal** — `ConstraintPassRefused`, quoting `'a'` and the `no-five` pair —
-**while `read b` answers `VALUE 1`.** **The store says the write stands and the answer says it was
-refused.** The same-address arm agrees: a listener reversing the enclosing write's own address leaves
-`["b","x"]` = `VALUE 1` where `1.4.0` answers `VALUE 7`, **and `VALUE 1` is the correct state, because
-that write was admitted.**
-
-**THE ANSWER IS WRONG IN BOTH DIRECTIONS:** it implies the caller's act did not happen when it did, and
-it names an address the caller never wrote as though the caller had written it. The refusal carries **no
-`discarded` member at all**, and **no sentence says `a` belongs to another act.**
-
-**IT FALSIFIES A SENTENCE THE SAME RELEASE SHIPS.** `D-71` says *"a listener is independent of the
-caller's commit, and the caller learns nothing of its outcome."* **The caller learns a refusal that is
-not its own** — so it learns that the listener failed **and** receives a false verdict on its own act.
+1. **`D-71` is false as written.** It says *"a listener is independent of the caller's commit, and the
+   caller learns nothing of its outcome."* **The caller learns the listener's outcome** — that is the
+   point of the channel. **Correct the sentence to describe it.**
+2. **Nothing tells the caller that its own act stands when the throw arrives.** The throw's `status` is
+   `ConstraintPassRefused`, indistinguishable from a refusal of the caller's *own* act — so a consumer
+   reading only the answer concludes its write did not happen, while the store says it did. **State the
+   rule plainly, and if the caller is meant to tell the two apart, say how.**
 
 **Evidence.** `observed`, `/tmp/probe-storeroom-150/out/p-safestate-150.txt` ARM 1/2 and
 `p-d71-150.txt` ARM (iii), against `/tmp/probe-storeroom-150b/out/p-safestate-140.txt` from the SAME
 script.
 
-**Fix shape — two routes, either lawful.** **(a)** Route the listener's own refusal to the listener's
-body, or to a log the caller reads **as a log and never as its own answer**, so the caller's answer
-reports its own admitted act. **(b)** If the caller must learn of it, give it a member that says exactly
-that, and **never** `ConstraintPassRefused` about an address it did not write. **What must not persist
-is an answer reading `refused` while the store reads `admitted`.**
+**A note on this consumer's own record, because the maintainer should know what to distrust.** This
+row was filed three times in one day: first as a **safe-state leak** ("a refused write's own value
+stands"), then as an **ordering violation** ("the listener ran while the write could still be refused"),
+and only now as **documentation**. **The store was right every time and the ordering was right too** —
+each earlier reading took the answer as the truth about the store. **The discipline is now pinned: when
+an answer and the store disagree, one of them is the defect and it is not automatically the store.**
 
-**Two corrections of ours, recorded so the maintainer knows what to distrust.** We first filed this as a
-**safe-state leak** ("a refused write's own value stands") and then as an **ordering violation** ("the
-listener ran while the write could still be refused"). **The store was right in both arms and the
-ordering was right too** — both readings took the answer as the truth about the store. **And `DEF-AN`
-stays CLOSED: with the listener's write in its own commit, `1.4.0`'s restore reaching past the caller's
-opening mark and taking the listener's separate commit WAS the defect, and `1.5.0` fixed it correctly.
-There is no safe-state regression on either arm.**
-
-**What this costs a consumer.** A host that treats a refusal as "my act did not happen" is wrong on this
-release: the store may hold the write, and the refusal names somebody else's address. `Provident-Electron`
-reads a refusal as a failed act and re-plans against the previous state.
+**Cost if left.** A host reads a refusal as "my act did not happen" and re-plans against a state that is
+not the state. `Provident-Electron`'s own store layer does exactly this.
 ### 2.1 `DEF-AR` — the message stopped exploding; the LOG is still a function of depth, and on this path the refused value stands
 
 **SYMPTOM / REPRO** (`observed`, `p-defar-150{a,b,c}.txt`, `n28-150.txt`; the `1.4.0`
@@ -429,56 +410,23 @@ whose fix shape — *restore on this path* — already asks for it, and the rule
 introduced (§1.1) is that a lawful listener's write must survive. It is recorded so the
 maintainer fixing this row knows the arm to re-run, and so no later round files it as new.
 
-### 2.2 `DEF-AO` — the client is handed a mid-commit message log, and it changes under the client
+### 2.2 `DEF-AO` — measured against the stated contract: the client must not get the log until it is SEALED and DROPPED
 
-**SYMPTOM / REPRO** (`observed`, `ao-150.txt` `AO.3`, identical at `1.4.0`; `last-150.txt`
-re-drives it). A constraint body catches an inner refused write, snapshots `.log`, and answers
-`true` so the enclosing commit continues. **The captured log then changes:**
+**The contract, in this order: (1) the log is SEALED** — no further frame of the commit may write it;
+**(2) it is DROPPED from the package's record** — the package holds no handle that could later mutate
+what the client holds; **only then is it the client's.**
 
-```
-OUTER write k=42:                                  RETURNED op=op-13
-the caught inner refusal .log.length AT CAPTURE:   3
-the SAME object .log.length AFTER the commit:      4
-the log MUTATED after close?:                      true
-entry 1 AT CAPTURE:  "the evaluation of body-writer"
-entry 1 NOW:         "the constraint body-writer passed at k"
-entry 4 NOW:         "every constraint registered at k passed; the commit stands"
-```
+**What `1.5.0` does.** A refusal caught inside a still-open commit reads **`3` entries at capture and
+`4` after the commit closed**, with **entry `1`'s message rewritten in place** and a `commit` entry
+appended. **Exposure preceded the seal: the client is holding the living list.**
 
-**The mutation changes an entry's TEXT, not only its length** — so a consumer that logged the
-entry at capture has logged a sentence the package later contradicts, and a host that shows
-its own diagnostics beside the package's report will show two different accounts of one
-attempt.
+**Scope, which is why it hid.** A refusal **thrown to the caller** is stable, and a `delete`'s
+`receipt.commit` report is stable. **Only the caught-inside-a-commit handle is live.**
 
-**ROOT CAUSE.** The refusal object handed into a body mid-commit carries a **live reference** to
-the attempt's own message log rather than a snapshot of it. The attempt is still open, so later
-frames of the same commit keep writing into the array the client holds — the array **is** the
-commit's log.
+**Fix shape.** The caught handle is a **copy sealed at capture**, or the log is withheld until the
+commit settles — and the package drops its own reference **before** the client can hold it.
 
-**EVIDENCE.** `observed`, paths above; `AO.1` and `AO.2` are the stable controls (a refusal
-thrown to the caller, and a `delete`'s `receipt.commit` report, both read the same bytes across
-later work). **The label is `observed`, not `read`**: an arm has driven it.
-
-**FIX SHAPE — and it is the disposition, not a preference.** The maintainer's ruling: *"the
-client should not be getting a mid-commit message log."* So either **the body receives a
-SNAPSHOT taken at the instant the refusal crosses**, or **the log is WITHHELD until the commit
-settles** — and whichever is chosen **must be stated in the member's declaration**, because a
-consumer decides its error handling on the declaration. Either way, **the member a body
-receives must not be writable by a later frame of the same commit.**
-
-**WHAT IT COSTS A CONSUMER — and this is why it hid for two rounds.** The scope, `observed`:
-**a refusal thrown to the caller is stable, and a `delete`'s receipt report is stable; the live
-handle exists only inside a commit that is still open** — that is, only for the one kind of
-refusal a defensive body catches. **A consumer that catches, inspects and re-raises is reading
-a document that is still being written.**
-
-**Our practice until this settles, stated as our practice and not as advice to the package.** A
-body that catches a refusal and means to keep its log **copies the entries at capture** — a fresh
-object per entry and `String()` on each message — rather than holding the array it was handed. We
-do that today. A host that does not will find its diagnostics disagreeing with the package's
-final report about the same attempt, with no way to tell which sentence was current when it
-decided.
-
+**Evidence.** `observed`, `/tmp/probe-storeroom-150/out/ao-150.txt` AO.3.
 ### 2.3 `DEF-X` — three hosts do not judge, and the guide declares two of them
 
 **SYMPTOM / REPRO** (`observed`, `b-defx7-150.txt`, measured **identically at `1.4.0`** —
