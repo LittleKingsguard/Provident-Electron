@@ -28,6 +28,7 @@
 | any Y-1 answer | no `schemaVersion` row appears, and no `mem.*`/`temp.*`/`secure.*` name appears (L1 §3; D-13) |
 
 - **What Y-1 answers is a copy**: a caller that mutates its answer moves neither the record nor the next answer (`guide §10`; sibling §2).
+- **The stated limit here, as in §4**: the handler is `main.ts`'s and is unimportable in a node test, so the battery drives the rows it mints and L1's e2e `S-2`/`S-4` drive the body on a booted app; the `[]` column above is asserted through `state()` (`interface.md` §4; `examiner.md` §2).
 
 ## 3. `STORE_FILE_PUT` is one whole-map commit
 
@@ -43,6 +44,7 @@
 
 - **`A-6`, and it is the landed semantics rather than a new one:** the crossing's `value` is the whole graph's stable translation (`src/renderer/store-core-graph.ts:1070`), so the projection of its `file.*` keys *is* the record; a caller that sends one row leaves one row standing. This unit changes the writer, not the crossing (D-22; L1 §3).
 - **A commit is one store write**, so a committed Y-2 is one op, one cursor and one receipt, and its answer carries no ordinal because the channel's answer is a bridge shape this unit does not move (`interface.md` §3 `ASM-L2-4`).
+- **The stated limit here, as in §2**: the projection filter, the `'malformed-payload'` refusal and the receipt's crossing are `main.ts`'s body, which no node test can import; the battery drives the commit it issues and the status it answers, and L1's e2e `S-8`/`S-9` drive the body on a booted app (`interface.md` §4; `examiner.md` §2).
 
 ## 4. The module surface keeps every member and every answer
 
@@ -60,6 +62,7 @@
 
 - **Composition is `main.ts`'s and validation is not**: a record's own members are the landed one's, so `quarantined` is composed per process and never migrated (L1 §1; D-22).
 - **The in-process answer now equals the post-restart answer**: a member whose value is `undefined` is absent from the served row, because the record the store holds is the rows' JSON image (`ASM-L2-2`; `persistence.md` §3).
+- **The stated limit of this table, so no reader takes silence for coverage**: these nine cells are `main.ts`'s behaviours and `main.ts` imports `electron` at module scope, so no node-suite row can construct its surface. L1's e2e `S-12` drives them on a booted app, `RET-1` scans the file for the machinery they would have to use, and the L2 battery drives **the one act they issue** — the whole-map commit — through the declared surface (L1 §8 S-12; `examiner.md` §2).
 
 ## 5. The Q-5 migration writes once, through the same verb
 
@@ -71,12 +74,15 @@
 | the migration's composition | carries **no** `schemaVersion`, and the `provident-modules.json` read and its post-boot removal are unmoved (L1 §3) |
 
 - **The inherited hazard is named and not repaired here**: the legacy registry is removed whether or not the commit committed, exactly as landed; a store refusal therefore loses the legacy records it had read. It is owed to the parked module-registry pass (D-22), and this unit moves the write without changing that order (L1 §3; `A-7`).
+- **The stated limit here is §4's**: the four cells above are unimportable in a node test, so L1's e2e `S-10`/`S-12` carry them and the L2 battery drives the commit they issue (L1 §8; `examiner.md` §2).
 
 ## 6. Boot parity is proven by a second construction, never by a substring
 
 | Drive | Expected |
 |---|---|
 | surface A: `set({token:'t', groups:['graph','data'], maxJournalLength:41})`, then `commit([{name:'file.tabs.order', value:['a']}, {name:'file.modules.m1', value:{…}}, {name:'file.settings.theme.token', value:'dark'}])` | both acts commit (L1 §5) |
+| the same A, `read().enabled` | `['read','dispatch','graph','data']` — `set` **adds** the named groups to the record and removes only what `disable` names, which is the sibling's landed merge and is unmoved here (sibling §5; D-21) |
+| surface A again: `set({disable:['read','dispatch']})`, then `read().enabled` | `['graph','data']`, so the parity figures below are reachable from a declared drive rather than assumed (sibling §5) |
 | surface B: a fresh `createSettingsSurface` over the **same** `userDataDir` | `read()` serves `token:'t'`, `enabled:['graph','data']`, `maxJournalLength:41`; `state().rows` deep-equals A's three rows; `legacy:'recorded'`; `unrepresentable:[]` (L1 §5; `interface.md` §2 `ASM-L2-1`) |
 | the same B, `read().exclusion` | `'mcp-enabled'` — the **declared initial**, not A's last value: the pair is `mem` and is never persisted (sibling §7; D-17) |
 | the same B, `state()` | `rows` in A's committed order, whole (L1 §5) |
@@ -114,9 +120,11 @@ The arm runs at construction **iff no record stands at `['operator-app-state']`*
 | `RET-5` | the written-name census over a settled profile | the two written names and the seeded retired names declared beside them; no third written name (L1 §6; D-13) |
 | `ISO-7` | a committed rows map carrying `file.modules.<id>` (the whole-map commit the three module members issue), then `read()` and the instance's file bytes; plus the module tool names, `RpcMethod` members and bridge routes read as data | the security record at `['operator-settings']` is unchanged, the exclusion pair is unmoved, and the app-state record is the only one that moved; no `provident.module.*` tool, `RpcMethod` member or bridge route names either the record's address or the exclusion address (L1 §7; D-18) |
 
+- **`ISO-7`'s "address-shaped argument", defined here because the L1 artifact leaves it open**: a member of a module tool's `inputSchema` or of the bridge's `module` block named `address`, `addresses`, `tier` or `storePath`, or any member whose declared type is an array of strings standing where a store path would stand. The definition is this file's and no reader may take the row's own test for the document's (`A-8`; D-18).
+
 - **`ISO-7`'s live limb drives the instance's declared surface, and its message says so**: `main.ts` imports `electron` at module scope and no node-suite row can construct its module surface, so the three members themselves are driven by L1's e2e `S-12` on a booted app and by a source read here — the row never passing silently on the half it cannot reach (`examiner.md` §2; L1 §8 S-12).
 - **`RET-1`'s own limit, stated in the row**: a path composed at run time is invisible to a byte scan; what the row can see is that no literal and no write verb stands where the carrier stood (D-18; sibling `behaviour.md` §9 `ISO-6`).
 
 ## 9. Assumptions
 
-Every assumption behind these rows is `interface.md` §7's table (`A-1`…`A-3`, `ASM-L2-1`, `ASM-L2-3`…`ASM-L2-6`) plus this file's `A-6`, `A-7` and `ASM-L2-2`, each with the alternative it rejected; `A-6` is §3's whole-map rule (rejected: merging a crossing into the rows that stand, which invents a write the retired channel never performed) and `A-7` is §5's inherited migration order (rejected: withholding the legacy removal until the commit committed, which repairs a parked consumer's order inside the checkpoint — D-22).
+Every assumption behind these rows is `interface.md` §7's table (`A-1`…`A-3`, `ASM-L2-1`, `ASM-L2-2`, `ASM-L2-3`…`ASM-L2-6`) plus this file's `A-6`, `A-7` and `A-8`, each with the alternative it rejected: `A-6` is §3's whole-map rule (rejected: merging a crossing into the rows that stand, which invents a write the retired channel never performed), `A-7` is §5's inherited migration order (rejected: withholding the legacy removal until the commit committed, which repairs a parked consumer's order inside the checkpoint — D-22), and `A-8` is §8's definition of an address-shaped argument (rejected: leaving it to each row's own test, which makes a row's reading authoritative over the document — D-18).
