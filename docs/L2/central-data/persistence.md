@@ -1,8 +1,8 @@
 # L2 — `central-data`: the persistence
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 1
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2
 - **Status:** DESIGN — the store's own on-disk shape as this unit constrains it, and nothing else (D-13)
-- **Inputs:** `docs/L2/central-data/interface.md`, `behaviour.md`; L1 rev 2 §4; `docs/L1/central-data-census-exception.md` §5; D-5, D-12, D-13, D-15; the package's shipped declaration, README and guide at this head (read, never edited — D-5)
+- **Inputs:** `docs/L2/central-data/interface.md`, `behaviour.md`; L1 rev 2 §4; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7; D-5, D-12, D-13, D-15; the package's shipped declaration, README and guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
 - **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide; it is read here and never edited (D-5)
 
@@ -95,6 +95,14 @@
 
 | id | Symptom | Reproduction | Suspected root cause | Proposed fix shape |
 |---|---|---|---|---|
-| **P-1** | a boot over bytes that are not the store's image has **no declared answer**, so L1 S-12's recovery arm cannot be stated as a behaviour by any consumer | place non-image bytes at the `filePath` and call `storeCreate` | the shipped guide's boot clauses declare the creation, reachability and constraint-list arms and no parse-failure arm, and the declaration carries no such status for a boot; whether the store has an undeclared arm is unmeasured here | declare the boot's parse-failure arm — its status and whether the bytes are left untouched — in the native contract and in the guide's §9.1 |
+| **P-1** | a boot over bytes that are not the store's image has **no declared answer**: a foreign, unparsable image boots **cold** and its bytes stand **untouched** until the next `file`-tier save — **symptom measured at `57c5825`** — so a consumer can state the recovery arm while the package declares neither it nor a parse-failure arm; the finding **survives as a declaration gap** | place non-image bytes at the `filePath`, call `storeCreate`, then `list`/`read` (the cold tier answers, the bytes are byte-identical) and one `write` (the bytes are replaced) | the shipped guide's boot clauses declare the creation, reachability and constraint-list arms and no parse-failure arm, and the declaration carries no such status for a boot; that the boot is cold is measured, why it carries no declared arm is not | declare the boot's parse-failure arm — its status and whether the bytes are left untouched — in the native contract and in the guide's §9.1 |
 | **P-2** | the writer's mechanism is undeclared, so no consumer can state that the store's own file is torn-write-free | read `guide §9.1-§9.4`: durability, rollback and residue are declared; stage → fsync → rename is not | durability is declared as an outcome ("the last successful save's bytes") rather than as a mechanism | declare the mechanism, or explicitly disclaim atomicity, beside §9.2 |
 | **P-3** | `register` cannot be called on its own: the package publishes no route by which a consumer restricted to `register` alone can observe a change, so `central-data`'s declared sixth export has no call site (L1 rev 2 §2, ASM-5) | `store.register('h', fn)` under a handle never passed to `listen` | the listener route is declared as `listen` **+** `register`, with `unlisten` as its withdrawal, and `register` alone names no watched address | declare `register`'s arm on an unlistened handle, or publish the pair as the one counted surface it is |
+
+- **All three stand, and the measurement moves none of them.** P-1's symptom is now measured — the boot is cold and the bytes
+  survive until the next `file`-tier save — which is what lets `behaviour.md` §9 state the recovery arm as a behaviour; the
+  finding is unchanged in kind, because what the package owes is the **declaration** and the tree supplies only the observed
+  arm (D-5). P-2 is unmoved: the mechanism is undeclared whether or not the outcome holds. These are this unit's D-5 filings for
+  its own record; the package side is filed once, upstream-owned, in `docs/L1/central-data-census-exception.md` §7, and no
+  clause of this document patches or proxies a package behaviour (D-5). **P-3 is also the reason this unit's map row reads
+  `endpoints: 15` and not L1 rev 2 §2's 16** — the five exports called, and `register` off the called set (exception §1; D-14).

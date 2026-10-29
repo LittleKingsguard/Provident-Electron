@@ -6,11 +6,12 @@
 // in-memory linked transport: the listing is `tools/list` and the answer is the tool's own result —
 // never a hand-poked handler map, never a mock of the subject.
 //
-// THE RED THIS FILE IS FILED WITH, and it is the declared one: `src/main/data/index.ts` does not
-// exist, so the `dataSurface` this file must supply (§5's `McpServerOptions.dataSurface`) cannot be
-// constructed; and today `src/main/security.ts` carries no `'data'` group and `McpServerOptions`
-// carries no `dataSurface` member (the census move docs/L1/central-data-census-exception.md E-1
-// owes — no census row of it is executed here).
+// THE CONTRACT AT THIS HEAD: `src/main/data/index.ts` exists and answers; the sixth group `'data'`
+// stands in BOTH live `VALID_GROUPS` copies and the five `provident.data.*` names are rows of
+// `TOOL_GROUPS` (`docs/L1/central-data-census-exception.md` §2 E-1, §4: 27 tools, 27 union members,
+// six groups, the default-grant subset unmoved at 8, thirteen names with `data` enabled). This file
+// executes no census row of its own: it reads the listing the gate drives and the answers the five
+// registrations return.
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -109,6 +110,13 @@ describe('central-data · the group, the gate and the registration surface', () 
       const names = await listed(client)
       expect(names.length, 'interface §4 — with `data` enabled the listed set is thirteen').toBe(13)
       expect(names).toEqual([...DEFAULT_EIGHT, ...DATA_TOOL_NAMES].sort())
+      // interface §4 — the group is TOOLS ONLY: `ALL_RESOURCES` stays at its three (two fixed
+      // URIs + one template), with no `mcp://provident/data/…` mirror, so the resource seam is
+      // unmoved by the sixth group (ASM-10).
+      const listedUris = (await client.listResources()).resources.map((resource) => resource.uri)
+      const templateUris = (await client.listResourceTemplates()).resourceTemplates.map((template) => template.uriTemplate)
+      expect([...listedUris, ...templateUris].sort(), 'the resource seam gains no member with the sixth group enabled (ASM-10)').toEqual(['mcp://provident/app', 'mcp://provident/node/{nodeId}', 'mcp://provident/targets'])
+      expect([...listedUris, ...templateUris].some((uri) => uri.includes('/data')), 'and no `data` mirror stands on the resource seam').toBe(false)
 
       const absent = await call(client, 'provident.data.read', { path: ['alpha'] })
       expect(absent.answer).toEqual({ status: 'absent', path: ['alpha'] })

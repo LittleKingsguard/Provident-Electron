@@ -1825,10 +1825,15 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'the token\'s home ✗ `src/shared/**` (`src/shared/types.ts` stays byte-identical)',
+          label: 'the token\'s home ✗ `src/shared/**` (`src/shared/types.ts` carries NO tier4 token)',
           run: () => {
             expect(sourceOrEmpty(SHARED_TYPES_SRC)).not.toContain(TIER4_CLOSED)
-            expect(sha256Of(SHARED_TYPES_SRC), 'the shared type is UNMOVED (`§1.3` item 5)').toBe('29af4efaf16a5cadf1ac22b63afda063495ce63ec95b56f1f6e397da1d8189c6')
+            // ⟶ RE-POINTED (the `central-data` E-1 census row): the `RpcMethod` union moves
+            // `22 → 27` with the five `data.*` routes (`docs/L1/central-data-census-exception.md`
+            // §2 E-1, §4), so the shared type's bytes move BY DECLARATION and the pin follows the
+            // artifact. The cell's claim is UNMOVED in kind: no `tier4-closed` token reaches
+            // `src/shared/**`.
+            expect(sha256Of(SHARED_TYPES_SRC), 'the shared type carries NO tier4 token (its pin follows the declared `RpcMethod` census move `22 → 27`)').toBe('f51c61d1ba42f99057602ae8e6ca2484e208568ba4664c315aaa4950f7763644')
           },
         },
         {

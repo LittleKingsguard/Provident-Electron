@@ -1,13 +1,11 @@
 // tests/integration/central-data/profile-file.test.ts — THE L2 BATTERY for `central-data`, part 3:
 // persistence and the profile's bytes.
 //
-// Row 11 of the interface's battery table plus the written-name and restart clauses of
-// docs/L2/central-data/persistence.md §1/§5/§6 and behaviour.md §3/§9. The one name this module
-// writes is `<profileDir>/provident-profile.json`, so every fixture seeds, scans and removes that
-// exact path — no guess, no second name tolerated.
-//
-// THE RED THIS FILE IS FILED WITH: `src/main/data/index.ts` does not exist, so the import fails and
-// every row collects as an import error — the intended licence for implementation (D-1 §4).
+// THE CONTRACT: row 11 of the interface's battery table plus the written-name and restart clauses
+// of docs/L2/central-data/persistence.md §1/§5/§6 and behaviour.md §3/§9 — including §9's TWO
+// unreachability arms, which this file drives as two separate rows: a name that CANNOT be
+// occupied refuses on all five tools, and an ABSENT directory stays the cold tier until a write
+// is where the construction can refuse (ASM-L2-7).
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -85,6 +83,25 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     }
     expect(statSync(blocked).isFile(), 'the blocked path is untouched').toBe(true)
     expect(existsSync(join(blocked, PROFILE_FILE)), 'no instance, no file, no byte').toBe(false)
+  })
+
+  it('an ABSENT, writable profileDir → the cold tier on read/list/delete/journal, and the first write is where the construction refuses, creating nothing', () => {
+    // `behaviour.md` §9 / ASM-L2-7 — THE OTHER UNREACHABILITY ARM, and it is NOT the arm above:
+    // the profile's name does not stand and nothing forbids it, so the reading answers the cold
+    // tier, and the WRITE is the act the construction can refuse. A row that read this as the
+    // refusal arm (§5) would drop the cold reading; a row that read the refusal arm as the cold
+    // tier would serve `absent` for a name no store can ever stand under (D-13).
+    const absentDir = join(profileDir, 'not-yet')
+    const s = createDataSurface({ profileDir: absentDir })
+    expect(s.list({}), 'list answers the cold tier, not a refusal').toEqual(coldList)
+    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'absent', path: ['alpha'] })
+    expect(s.read({ path: [] })).toEqual({ status: 'read', kind: 'branch', path: [], value: {} })
+    expect(s.delete({ path: ['alpha'] }), 'the empty receipt §6 declares, reached without a store').toEqual({ status: 'committed', path: ['alpha'], removed: false, tiers: [], cursor: null })
+    expect(widened(s.journal({})).status, 'journal is not "empty" where a store may yet stand — but it is not refused either: the name is merely absent').toBe('read')
+    const built = widened(s.write({ path: ['alpha'], value: 'x' }))
+    expect({ status: built.status, reason: built.reason }, 'the construction refuses at the first write, and the refusal is the reading\'s ledger').toEqual({ status: 'refused', reason: 'store-unreachable' })
+    expect(existsSync(absentDir), 'no instance, no file, no byte — the module does not create the directory either').toBe(false)
+    expect(readdirSync(profileDir), 'and the parent holds nothing new').toEqual([])
   })
 
   it('a file-tier delete stays deleted across a fresh surface → read {absent} and list count 0 after re-entry', () => {

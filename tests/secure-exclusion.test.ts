@@ -45,7 +45,9 @@
  * store's own `secure.*` refusal and the two MEASURED file byte-pins
  * (`P-EX-IM-2` cells (i)/(j)/(k)), the union count at `16`, the
  * transport-agnostic 401 arm's position, the uncounted/moved census members
- * (`ALL_TOOLS` 22 · `RpcMethod` 22 · `MUTATING_METHODS` 7 · `VALID_GROUPS` 5),
+ * (`ALL_TOOLS` 27 · `RpcMethod` 27 · `MUTATING_METHODS` 7 · `VALID_GROUPS` 6 — the
+ * last two of those moves are the declared census exception's own rows,
+ * `docs/L1/central-data-census-exception.md` §4),
  * the pane graph's isolation for the LANDED node set, and the four forbidden
  * paths' current bytes (the boundary holds at red — a future byte-move reddens
  * `P-EX-IM-2` cell (k)-(l) and `FS-EX-15`).
@@ -709,8 +711,19 @@ const DIFF_SCOPE_PATHS: readonly string[] = [SECURITY_TS_SRC, MCP_SERVER_SRC, MA
  *  named one block above and stays visible in this file's lineage prose and in the unit's
  *  own register-harness chain, and the operative figure here is `39bfa51a…` — the same
  *  figure the unit's own register harness now asserts at FULL 64-hex (`D-x`; its
- *  `SECURITY_STORE_PIN`, whose dead-stale form gate 4 measured).** */
-const SECURITY_STORE_PIN = '39bfa51a578a1c56acc188199caf190957e1a52d770c5471a530c55c98410295'
+ *  `SECURITY_STORE_PIN`, whose dead-stale form gate 4 measured).**
+ *
+ *  **⟶ SIXTH RE-POINT, CAUSE IN ONE LINE: `central-data`'s E-1 CENSUS ROW LANDED AND MOVED THE
+ *  STORE'S BYTES.** `docs/L1/central-data-census-exception.md` §2 (E-1, second live copy)
+ *  moves `src/main/security-store.ts:87`'s `VALID_GROUPS` five → six, adding `'data'`, under
+ *  the same one-shot that moved `src/main/security.ts` and the two censuses; the file is one
+ *  of the declared 40 sites of L1 rev 2 §8 (class C-2) and the exception is the authority for
+ *  the edit. The digest the FIFTH re-point made operative — `39bfa51a…` — is kept awake as
+ *  `SECURITY_STORE_PIN_PRE_CENTRAL_DATA` below and asserted distinct, and the operative figure
+ *  is now `7a85e021…`. NOTHING ELSE moves: no clause, no term, no declared total, no cap and
+ *  no strategy id; the two register cells that read this constant — `P-EX-IM-2` (j)/(l) — redden
+ *  with it and clear with it, ONE cause.** */
+const SECURITY_STORE_PIN = '7a85e0215c9ba4edb2d9cf80536deafec0363f95b28f8f73abcacc6bdbca3b09'
 /* **⟶ AMENDMENT SET (2026-10-11; `RCA-8(a)` gate: `S1`'s pin re-grained to the `S3`
  * `U-SECURE-STORE-DISCIPLINE` landing — commits `460fb66` + `0d36c46`), `RCA-8(d)`
  * ANNOTATE-BESIDE: the as-filed clause above (and its digest) STANDS BYTE-FOR-BYTE
@@ -857,6 +870,14 @@ const SECURITY_STORE_PIN_PRE_LOCK = 'a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22
  *  moved it (the leaf consult at the store's two gates), so the four historical figures
  *  cannot be conflated with one another or with the operative pin. */
 const SECURITY_STORE_PIN_PRE_HOLDER = '8ed09c97358b0eaab81b60d665519498552cd6f20bb748afceaff030494f0419'
+/** The FIFTH RE-POINT's value — the bytes AFTER the `S2` gate-4 repair (`D-i`…`D-iv`) — kept as
+ *  a labelled PRE-`E-1` constant so the SIXTH re-point's delta from it is a MEASURED term (see
+ *  the lineage block above). NAMED `PRE_CENTRAL_DATA` for its own CAUSE: `central-data`'s E-1
+ *  census row (`docs/L1/central-data-census-exception.md` §2) adds `'data'` to this file's
+ *  SECOND LIVE COPY of `VALID_GROUPS` at `:87`, so the store's bytes move by declaration and
+ *  the pin follows the artifact. The five historical figures can still not be conflated with
+ *  one another or with the operative pin. */
+const SECURITY_STORE_PIN_PRE_CENTRAL_DATA = '39bfa51a578a1c56acc188199caf190957e1a52d770c5471a530c55c98410295'
 
 function basenameOf(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1)
@@ -4732,10 +4753,19 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
      * `tier4OpenState()` consult at the store's two gates. */
     expect(SECURITY_STORE_PIN_PRE_HOLDER,
       'FS-EX-15 (FOURTH RE-POINT) — the THIRD re-point\u2019s pin (`8ed09c97\u2026`, `f444426`, the `§2.6` write-lock amendment) is a distinct 64-hex measurement, kept visible so the chain stays auditable').toMatch(/^[0-9a-f]{64}$/)
-    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
-      'FS-EX-15 (FOURTH RE-POINT) — the FIVE pinned digests (as-filed `c7359530\u2026`, first re-point `99618ac2\u2026`, second re-point `a98273b8\u2026`, third re-point `8ed09c97\u2026`, operative `fd242633\u2026`) are FIVE DISTINCT 64-hex measurements: no two equal, so no re-point in this chain was a silent no-op').toHaveLength(new Set([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT]).size)
-    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
-      'FS-EX-15 (FOURTH RE-POINT) — the chain has FIVE distinct values (not four and not one)').toHaveLength(5)
+    /* ⟶ SIXTH RE-POINT (E-1, `docs/L1/central-data-census-exception.md` §2): the FIFTH re-point's
+     * digest is ADDED to the same controls — one more historical constant, one more 64-hex
+     * reading, and the distinctness asserted over the WHOLE chain (now SIX values) — so the sixth
+     * re-point is a measured delta exactly as the first five were. NOTHING above or below is
+     * weakened: the byte-moved POSITIVE CONTROL answers NONE of the SIX pinned digests. CAUSE, ONE
+     * LINE: `central-data`'s E-1 census row adds `'data'` to this file's second live
+     * `VALID_GROUPS`. */
+    expect(SECURITY_STORE_PIN_PRE_CENTRAL_DATA,
+      'FS-EX-15 (SIXTH RE-POINT) — the FIFTH re-point\u2019s pin (`39bfa51a\u2026`, the `S2` gate-4 repair set) is a distinct 64-hex measurement, kept visible so the chain stays auditable').toMatch(/^[0-9a-f]{64}$/)
+    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_CENTRAL_DATA, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
+      'FS-EX-15 (SIXTH RE-POINT) — the SIX pinned digests (as-filed `c7359530\u2026`, first re-point `99618ac2\u2026`, second re-point `a98273b8\u2026`, third re-point `8ed09c97\u2026`, fourth re-point `fd242633\u2026`, fifth re-point `39bfa51a\u2026`, operative `7a85e021\u2026`) are SIX DISTINCT 64-hex measurements: no two equal, so no re-point in this chain was a silent no-op').toHaveLength(new Set([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_CENTRAL_DATA, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT]).size)
+    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_CENTRAL_DATA, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
+      'FS-EX-15 (SIXTH RE-POINT) — the chain has SIX distinct values (not five and not one)').toHaveLength(6)
     // (`string`-widened deliberately: the constants are literal types, and the comparison
     //  is the POINT of this control — `tsc --strict` would otherwise refuse it as TS2367.)
     expect((SECURITY_STORE_PIN_PRE_AMENDMENT as string) === (SECURITY_STORE_PIN as string),
@@ -4758,6 +4788,10 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
       'FS-EX-15 (FOURTH RE-POINT) — and DISTINCT from the first re-point\u2019s `99618ac2\u2026`').toBe(false)
     expect((SECURITY_STORE_PIN_PRE_HOLDER as string) === (SECURITY_STORE_PIN_PRE_AMENDMENT as string),
       'FS-EX-15 (FOURTH RE-POINT) — and DISTINCT from the as-filed `c7359530\u2026`, so the whole five-value chain is auditable and no ancestor is a no-op').toBe(false)
+    expect((SECURITY_STORE_PIN_PRE_CENTRAL_DATA as string) === (SECURITY_STORE_PIN as string),
+      'FS-EX-15 (SIXTH RE-POINT) — the E-1 census row MOVED the pin: the fifth re-point\u2019s digest `39bfa51a\u2026` differs from the operative `7a85e021\u2026`').toBe(false)
+    expect((SECURITY_STORE_PIN_PRE_CENTRAL_DATA as string) === (SECURITY_STORE_PIN_PRE_HOLDER as string),
+      'FS-EX-15 (SIXTH RE-POINT) — and it is DISTINCT from the fourth re-point\u2019s `8ed09c97\u2026` too, so no two consecutive re-points in this chain collapsed onto one value').toBe(false)
     const storeMutatedPath = join(baseDir, 'security-store.byte-moved.control.ts')
     await writeFile(storeMutatedPath, sourceOf(SECURITY_STORE_SRC) + '\n', 'utf8')
     expect(sha256Of(storeMutatedPath),
@@ -4770,6 +4804,8 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
       'CONTROL (THIRD RE-POINT) — and NOT the second re-point\u2019s `a98273b8\u2026` either: the whole FOUR-value chain is answered by the ONE-BYTE-MOVED copy with a value that matches none of them').not.toBe(SECURITY_STORE_PIN_PRE_LOCK)
     expect(sha256Of(storeMutatedPath),
       'CONTROL (FOURTH RE-POINT) — and NOT the third re-point\u2019s `8ed09c97\u2026` either: the whole FIVE-value chain is answered by the ONE-BYTE-MOVED copy with a value that matches none of them').not.toBe(SECURITY_STORE_PIN_PRE_HOLDER)
+    expect(sha256Of(storeMutatedPath),
+      'CONTROL (SIXTH RE-POINT) — and NOT the fifth re-point\u2019s `39bfa51a\u2026` either: the whole SIX-value chain is answered by the ONE-BYTE-MOVED copy with a value that matches none of them').not.toBe(SECURITY_STORE_PIN_PRE_CENTRAL_DATA)
     expect(sha256Of(storeMutatedPath).length, 'CONTROL — the moved copy still answers a well-formed 64-char digest').toBe(64)
     // THE ATTRIBUTION ANNOTATION, asserted so the two figures cannot be conflated:
     const g3Spec = sourceOrEmpty(fileURLToPath(new URL('./../docs/specs/store-security.md', new URL('./', import.meta.url))))
@@ -4987,15 +5023,15 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     expect(/exclusion/.test(settingsBlock), 'PAR-13(b) — `SecuritySettings` itself is NOT widened (the widening is an INTERSECTION at the two named declaration sites). RED-honest: the member does not exist anywhere yet, so the DENIED half reads clean and the widening half reddens.').toBe(false)
   })
 
-  it('the UNMOVED SET: `ALL_TOOLS` 22 · `RpcMethod` 22 · `MUTATING_METHODS` 7 · `VALID_GROUPS` 5 · the default group set · the `scripts` key set · the persisted-file set · the union 16 (I-EX-11)', () => {
+  it('the UNMOVED SET: `ALL_TOOLS` 27 · `RpcMethod` 27 · `MUTATING_METHODS` 7 · `VALID_GROUPS` 6 · the default group set · the `scripts` key set · the persisted-file set · the union 16 (I-EX-11)', () => {
     const mcpSrc = sourceOf(MCP_SERVER_SRC)
     const allToolsBlock = /static readonly ALL_TOOLS: string\[\] = \[([\s\S]*?)\n  \]/.exec(mcpSrc)?.[1] ?? ''
     const allTools = [...allToolsBlock.matchAll(/'([^']+)'/g)].map((m) => m[1])
-    expect(allTools.length, "§0 ruling 11 — `ALL_TOOLS` stays `22` (counted by MEMBER ENUMERATION of the declared names, never by counting the lines a member list spans — a line-counting method miscounts the opening bracket line as a member and yields `23`, which is NOT the live figure)").toBe(22)
+    expect(allTools.length, "§0 ruling 11 — `ALL_TOOLS` reads `27` at this head (counted by MEMBER ENUMERATION of the declared names, never by counting the lines a member list spans — a line-counting method miscounts the opening bracket line as a member and yields `28`, which is NOT the live figure; the move `22 → 27` is the declared census exception's own row)").toBe(27)
     const sharedTypes = sourceOrEmpty(fileURLToPath(new URL('./../src/shared/types.ts', new URL('./', import.meta.url))))
     const rpcBlock = /export type RpcMethod\s*=([\s\S]*?)\n\n/.exec(sharedTypes)?.[1] ?? ''
     const rpc = [...new Set([...rpcBlock.matchAll(/'([a-zA-Z._]+)'/g)].map((m) => m[1]))]
-    expect(rpc.length, "§0 ruling 11 — `RpcMethod`'s distinct members number `22`").toBe(22)
+    expect(rpc.length, "§0 ruling 11 — `RpcMethod`'s distinct members number `27` at this head (the five `data.*` routes are the declared census exception's own row)").toBe(27)
     const rendererSrc = sourceOrEmpty(fileURLToPath(new URL('./../src/renderer/renderer.ts', new URL('./', import.meta.url))))
     const mutBlock = /MUTATING_METHODS\s*[=:][^[]*\[([\s\S]*?)\]/.exec(rendererSrc)?.[1] ?? ''
     const mut = [...new Set([...mutBlock.matchAll(/'([a-zA-Z._]+)'/g)].map((m) => m[1]))]
@@ -5003,8 +5039,8 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     const secSrc = sourceOf(SECURITY_TS_SRC)
     const groupsBlock = /const TOOL_GROUPS: Record<string, ToolGroup> = \{([\s\S]*?)\n\}/.exec(secSrc)?.[1] ?? ''
     const groups = [...new Set([...groupsBlock.matchAll(/:\s*'([a-z]+)'/g)].map((m) => m[1]))]
-    expect(groups.length, '§0 ruling 11 / I-EX-11 — `VALID_GROUPS` stays `5` (`read` · `dispatch` · `graph` · `code` · `module`); no sixth group, no `VALID_GROUPS` member added').toBe(5)
-    expect(groups.sort(), 'the five members, enumerated').toEqual(['code', 'dispatch', 'graph', 'module', 'read'])
+    expect(groups.length, '§0 ruling 11 / I-EX-11 — `VALID_GROUPS` reads `6` at this head (`read` · `dispatch` · `graph` · `code` · `module` · `data`); the sixth member is the declared census exception\'s own row, and no OTHER group is added').toBe(6)
+    expect(groups.sort(), 'the six members, enumerated').toEqual(['code', 'data', 'dispatch', 'graph', 'module', 'read'])
     // the default enabled-group set:
     const def = /export function defaultSecurityConfig\(\)[^{]*\{[\s\S]*?enabled:\s*\[([^\]]*)\]/.exec(secSrc)?.[1] ?? ''
     expect([...def.matchAll(/'([a-z]+)'/g)].map((m) => m[1]), '§3.5 SEAM-4 — the default enabled-group set stays `{read, dispatch}`; the override does not flip a security default').toEqual(['read', 'dispatch'])

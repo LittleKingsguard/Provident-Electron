@@ -2138,19 +2138,19 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const siblingPinned = readArrayLiteral('tests/engine-pin-version.test.ts', /const\s+PINNED_TOOL_SET\s*=\s*\[/)
     expect(
       siblingPinned.length,
-      'R-6/§4.4 S-8 — the sibling name-complete row (`tests/engine-pin-version.test.ts` R-15) pins the 22 tool NAMES (`N-17`: `provident.focus` joins it in the SAME COMMIT); this row cites it rather than re-authoring it',
-    ).toBe(22)
+      'R-6/§4.4 S-8 — the sibling name-complete row (`tests/engine-pin-version.test.ts` R-15) pins the 27 tool NAMES (`N-17`: `provident.focus` joins it in the SAME COMMIT, and the five `provident.data.*` names join it under the declared census exception); this row cites it rather than re-authoring it',
+    ).toBe(27)
     expect(
       toolsLive.sort(),
-      `R-6/§2.2 P-5 — the LIVE \`ALL_TOOLS\` set equals the pinned 22-NAME set (a tool ADDED or REMOVED fails by name, not by count): ${JSON.stringify(
+      `R-6/§2.2 P-5 — the LIVE \`ALL_TOOLS\` set equals the pinned 27-NAME set (a tool ADDED or REMOVED fails by name, not by count): ${JSON.stringify(
         toolsLive,
       )}`,
     ).toEqual([...siblingPinned].sort())
     const groupsLive = readArrayLiteral('src/main/security.ts', /const\s+VALID_GROUPS[^=]*=\s*new\s+Set\(\s*\[/)
     expect(
       groupsLive.sort(),
-      'R-6/§2.2 P-5 — the LIVE `VALID_GROUPS` keeps its FIVE named members',
-    ).toEqual(['code', 'dispatch', 'graph', 'module', 'read'])
+      'R-6/§2.2 P-5 — the LIVE `VALID_GROUPS` keeps its SIX named members',
+    ).toEqual(['code', 'data', 'dispatch', 'graph', 'module', 'read'])
     const mutatingLive = readArrayLiteral('src/renderer/renderer.ts', /const\s+MUTATING_METHODS\s*=\s*new\s+Set\(\s*\[/)
     expect(
       mutatingLive.sort(),
@@ -2159,12 +2159,12 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const rpcLive = readUnionMembers('src/shared/types.ts', /export\s+type\s+RpcMethod\s*=/)
     expect(
       rpcLive.length,
-      'R-6/§2.2 P-5 / `N-17` — the LIVE `RpcMethod` union is name-complete in this census (22 members, `focus` included in the SAME COMMIT)',
-    ).toBe(22)
+      'R-6/§2.2 P-5 / `N-17` — the LIVE `RpcMethod` union is name-complete in this census (27 members, `focus` included in the SAME COMMIT and the five `data.*` routes under the declared census exception)',
+    ).toBe(27)
     expect(
       new Set(rpcLive).size,
       'R-6 / `N-17` — the RpcMethod census is a SET (distinct members), so the count above is not a bag',
-    ).toBe(22)
+    ).toBe(27)
   })
 
   it('R-7 §3.4 — THE GEOMETRY ROW: no geometry-observation call and no geometry-shaped claim, in the module or in this file', () => {

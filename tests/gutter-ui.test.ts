@@ -374,9 +374,13 @@ const DEMO_RELPATH = 'src/shared/demo-envelope.ts'
 
 // ===========================================================================
 // `§3.4 R-11`’S NAME-COMPLETE PINNED SURFACE (`§2.2` P-7, `§3.3 I-12;` the same
-// `21`-name set `tests/engine-pin-version.test.ts`’s `PINNED_TOOL_SET` asserts BY
+// name set `tests/engine-pin-version.test.ts`’s `PINNED_TOOL_SET` asserts BY
 // SET EQUALITY). The names are carried here so `R-11`’s green branch can ask
 // whether THE MODULE ADDS ONE — a bare count would answer the wrong question.
+// ⟶ SWEPT to the operative figures at this head: `ALL_TOOLS` `27` (`22 → 27`) and
+// `VALID_GROUPS` `6` (`5 → 6`), both moved by the declared census exception
+// (`docs/L1/central-data-census-exception.md` §4) and neither by THIS unit. A pin
+// left at `21`/`22`/`5` would read a surface that no longer stands.
 // ===========================================================================
 const ENGINE_PIN_RELPATH = 'tests/engine-pin-version.test.ts'
 const DEFAULT_GATE_RELPATH = 'src/main/security.ts'
@@ -406,8 +410,16 @@ const PINNED_TOOL_NAMES: readonly string[] = [
   // move TOGETHER in the tool-census commit: this row's own positive control below reads the
   // engine pin's `PINNED_TOOL_SET`, so a list left at `21` would read a pin that had grown.
   'provident.focus',
+  // The sixth group's five names (`docs/L1/central-data-census-exception.md` §4): they join
+  // this list in the SAME COMMIT as the census move, so the module's own bytes are asked about
+  // every name the listing carries.
+  'provident.data.read',
+  'provident.data.write',
+  'provident.data.delete',
+  'provident.data.list',
+  'provident.data.journal',
 ]
-const PINNED_GROUP_NAMES: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module']
+const PINNED_GROUP_NAMES: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module', 'data']
 /** The registration-site vocabulary: a module carrying ANY of these has added a
  *  pinned-surface member or a registration site (`§2.2` P-7, `§3.3 I-12`). */
 const REGISTRATION_SITE_TOKENS: readonly string[] = [
@@ -2378,7 +2390,7 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
     ).toEqual([])
   })
 
-  it('R-11 §3.4 — THE NO-NEW-SURFACE ROW: `ALL_TOOLS` (22) · `RpcMethod` (22) · `MUTATING_METHODS` (7) · `VALID_GROUPS` (5) are UNCHANGED', () => {
+  it('R-11 §3.4 — THE NO-NEW-SURFACE ROW: `ALL_TOOLS` (27) · `RpcMethod` (27) · `MUTATING_METHODS` (7) · `VALID_GROUPS` (6) are UNCHANGED', () => {
     const enginePin = readRel(ENGINE_PIN_RELPATH)
     expect(
       enginePin.length,
@@ -2414,12 +2426,12 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
       moduleBytes().length,
       `R-11 §3.4 (GREEN BRANCH — module PRESENT) — \`${MODULE_RELPATH}\` EXISTS, so this branch governs; the green-branch claims below are read over ITS OWN bytes, which is why the scan is asserted NON-EMPTY first (a scan over \`''\` would pass vacuously)`,
     ).toBeGreaterThan(0)
-    // (i) NOT ONE member of the name-complete pin is added: none of the `22` tool names
+    // (i) NOT ONE member of the name-complete pin is added: none of the `27` tool names
     //     appears in this module's bytes, and the module exports no tool descriptor.
     const toolNamesAdded = hitsOf(moduleBytes(), PINNED_TOOL_NAMES)
     expect(
       toolNamesAdded,
-      `R-11 §3.4 (GREEN BRANCH)/§2.2 P-7 — the module adds NO \`ALL_TOOLS\` member: NOT ONE of the \`22\` pinned tool names (§3.4 R-11's name-complete set, \`tests/engine-pin-version.test.ts\`'s \`PINNED_TOOL_SET\`, read BY NAME and never by a bare count) appears in ITS OWN bytes. Hits: ${JSON.stringify(
+      `R-11 §3.4 (GREEN BRANCH)/§2.2 P-7 — the module adds NO \`ALL_TOOLS\` member: NOT ONE of the \`27\` pinned tool names (§3.4 R-11's name-complete set, \`tests/engine-pin-version.test.ts\`'s \`PINNED_TOOL_SET\`, read BY NAME and never by a bare count) appears in ITS OWN bytes. Hits: ${JSON.stringify(
         toolNamesAdded,
       )}`,
     ).toEqual([])
@@ -2453,7 +2465,7 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
     ].sort()
     expect(
       groupMembers,
-      `R-11 §3.4 (GREEN BRANCH) — and the \`VALID_GROUPS\` domain is still exactly the \`5\` pinned names (\`read\`/\`dispatch\`/\`graph\`/\`code\`/\`module\`), read BY NAME and never by a bare count: a SIXTH group name anywhere in the surface files FAILS this row. Read: ${JSON.stringify(
+      `R-11 §3.4 (GREEN BRANCH) — and the \`VALID_GROUPS\` domain is still exactly the \`6\` pinned names (\`read\`/\`dispatch\`/\`graph\`/\`code\`/\`module\`/\`data\`), read BY NAME and never by a bare count: a SEVENTH group name anywhere in the surface files FAILS this row. Read: ${JSON.stringify(
         groupMembers,
       )}`,
     ).toEqual([...PINNED_GROUP_NAMES].sort())

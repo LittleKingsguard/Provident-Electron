@@ -13,8 +13,11 @@
 // AMENDED (AF-9, §3b / §7.10 / `docs/decisions.md:61`): R-15 is asserted by SET
 // EQUALITY against a named 21-tool list, never by a bare count. `ALL_TOOLS === 21`
 // is a COUNT FREEZE this unit RECORDS, not a claim it defends — the later
-// `U-FOCUS-TOOL` unit (`provident.focus`) changes it to 22, and its census edit
-// must read as THAT unit's own edit rather than a regression here.
+// `U-FOCUS-TOOL` unit (`provident.focus`) changed it to 22, and its census edit
+// read as THAT unit's own edit rather than a regression here. ⟶ The operative
+// figure at this head is `27`, moved `22 → 27` by `central-data`'s declared census
+// exception (`docs/L1/central-data-census-exception.md` §4), which adds the five
+// `provident.data.*` names in the SAME COMMIT as their registration and gate rows.
 //
 // TDD: the retarget has landed (`package.json:23` = `^0.5.1`, installed `0.5.1`),
 // so R-14 PASSES on this tree; R-15/R-14b and the static rows PASS and must stay
@@ -84,11 +87,11 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
 
   it('R-15 no new MCP surface was added by the retarget — asserted by SET equality, not by count', () => {
     // States (§0 prohibitions 1 + 5; AF-9 re-parameterisation):
-    //   S1 the tool SET equals the fixed 21-name set (a name ADDED fails, a name
+    //   S1 the tool SET equals the fixed 27-name set (a name ADDED fails, a name
     //      REMOVED fails — set equality, never a bare count)
     //   S2 no duplicates in the set
-    //   S3 no new VALID_GROUPS member: every tool still resolves to one of the
-    //      five known groups through the exported `groupForTool`
+    //   S3 no new group name beyond the six the tree carries: every tool still
+    //      resolves to one of the six known groups through the exported `groupForTool`
     //   S4 the group membership table is unchanged
     //
     // AF-9 COUNT FREEZE (spec §3b, §7.10, `docs/decisions.md:61`): the `21` in
@@ -126,15 +129,22 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
       // row's SET EQUALITY (the load-bearing half) is satisfied by the name and not by a
       // quietly bumped count.
       'provident.focus',
+      // The sixth group's five names (`docs/L1/central-data-census-exception.md` §4: the
+      // `ALL_TOOLS` census `22 → 27`, moved by `central-data`'s own E-1 row in the SAME COMMIT).
+      'provident.data.read',
+      'provident.data.write',
+      'provident.data.delete',
+      'provident.data.list',
+      'provident.data.journal',
     ]
     // S1 — SET equality against the named list (the load-bearing half, AF-9).
     expect([...ProvidentMcpServer.ALL_TOOLS].sort()).toEqual([...PINNED_TOOL_SET].sort())
-    expect(new Set(PINNED_TOOL_SET).size, 'the pinned list itself must not carry a duplicate').toBe(22)
+    expect(new Set(PINNED_TOOL_SET).size, 'the pinned list itself must not carry a duplicate').toBe(27)
     // S2 — no duplicate tool name in the live set.
     expect(new Set(ProvidentMcpServer.ALL_TOOLS).size, 'no duplicate tool name').toBe(ProvidentMcpServer.ALL_TOOLS.length)
 
     // S3 — every tool resolves to a known group.
-    const KNOWN_GROUPS: ToolGroup[] = ['read', 'dispatch', 'graph', 'code', 'module']
+    const KNOWN_GROUPS: ToolGroup[] = ['read', 'dispatch', 'graph', 'code', 'module', 'data']
     for (const tool of ProvidentMcpServer.ALL_TOOLS) {
       const group = groupForTool(tool)
       expect(KNOWN_GROUPS, `tool ${tool} must resolve to a known group`).toContain(group as ToolGroup)
@@ -166,6 +176,13 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
       // focus tool resolves through the EXISTING `dispatch` group — the group gate's own data
       // row, NEVER a focus-specific branch in the gate.
       'provident.focus': 'dispatch',
+      // The sixth group's own five rows (`docs/L1/central-data-census-exception.md` §2 E-1):
+      // each `provident.data.*` name is an EXACT row of the group table, not a prefix rule.
+      'provident.data.read': 'data',
+      'provident.data.write': 'data',
+      'provident.data.delete': 'data',
+      'provident.data.list': 'data',
+      'provident.data.journal': 'data',
     }
     // The two halves must describe the SAME set — otherwise set equality above
     // would be satisfied by a map that silently lacks a tool.
@@ -205,8 +222,15 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
       // `docs/specs/focus-tool.md` `§5.1` row 6: the union's census moves `21 → 22` in the
       // SAME COMMIT as the tool's census edit (`§5.2` item 4 (iii) `N-2`).
       focus: true,
+      // The sixth group's five bridge routes (`docs/L1/central-data-census-exception.md` §4:
+      // the union's census `22 → 27`, in the SAME COMMIT as the tool census edit).
+      'data.read': true,
+      'data.write': true,
+      'data.delete': true,
+      'data.list': true,
+      'data.journal': true,
     }
-    expect(Object.keys(RPC_METHOD_CENSUS).length).toBe(22)
+    expect(Object.keys(RPC_METHOD_CENSUS).length).toBe(27)
     expect(Object.keys(RPC_METHOD_CENSUS)).toContain('module.install')
   })
 

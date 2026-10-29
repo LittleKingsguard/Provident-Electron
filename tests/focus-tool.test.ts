@@ -68,15 +68,18 @@ const TEST_REL = 'tests/focus-tool.test.ts'
 const SPEC_REL = 'archive/gate-corpus-2026-10-29/specs/focus-tool.md'
 const RENDERER_REL = 'src/renderer/renderer.ts'
 
-/** The `RpcMethod` union's 22 declared members, `'focus'` INCLUDED (`§5.2` item 4 `E-b`).
+/** The `RpcMethod` union's 27 declared members, `'focus'` INCLUDED (`§5.2` item 4 `E-b`).
  *  This record is EXHAUSTIVE over the union: a member added to it is a `tsc` error here and
- *  at the additive `npm run typecheck:tests` leg — THE TYPE WALL (`§5.U` site 5). */
+ *  at the additive `npm run typecheck:tests` leg — THE TYPE WALL (`§5.U` site 5). The five
+ *  `data.*` members are the sixth group's bridge routes
+ *  (`docs/L1/central-data-census-exception.md` §4: `RpcMethod` 22 → 27; D-11). */
 const RPC_METHOD_CENSUS: Record<RpcMethod, true> = {
   dispatch: true, renderedHtml: true, markdown: true, listTargets: true, nodeState: true,
   load: true, op: true, export: true, validate: true, teardown: true,
   'code.get': true, 'code.set': true, 'code.create': true, 'code.delete': true,
   'code.validate': true, 'code.load': true, 'code.loadBatch': true, journal: true,
   'module.install': true, 'module.update': true, 'module.list': true, focus: true,
+  'data.read': true, 'data.write': true, 'data.delete': true, 'data.list': true, 'data.journal': true,
 }
 
 /** The default gate's registered subset (`§5.2` item 4 `C-c`: `7 → 8`). */
@@ -425,8 +428,8 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
     }
   })
 
-  it('I-7 `VALID_GROUPS` stays FIVE and `MUTATING_METHODS` gains NO member', () => {
-    expect(liveValidGroups().sort(), 'I-7 / `E-c` — name-set-equal to its FIVE members.').toEqual([...EXPECTED_GROUPS].sort())
+  it('I-7 `VALID_GROUPS` holds its SIX members and `MUTATING_METHODS` gains NO member', () => {
+    expect(liveValidGroups().sort(), 'I-7 / `E-c` — name-set-equal to its SIX members.').toEqual([...EXPECTED_GROUPS].sort())
     expect(liveMutatingMethods().sort(), 'I-7 / `E-d` — name-set-equal to its SEVEN members, NO EIGHTH.').toEqual([...EXPECTED_MUTATING].sort())
     expect(liveMutatingMethods(), "I-7 — 'focus' must be ABSENT (a later addition is a CONTRACT VIOLATION).").not.toContain(METHOD)
   })
@@ -523,11 +526,11 @@ describe('§3.4 R-1..R-10 — the static rows', () => {
 
   it('R-4 THE NAME-SET EQUALITY ROWS — `ALL_TOOLS` and `RpcMethod` (SET equality, never a bare count)', () => {
     const tools = liveAllTools()
-    expect(tools, 'R-4 / E-a — NAME-SET-EQUAL to its 22 members INCLUDING `provident.focus`.').toContain(TOOL_NAME)
+    expect(tools, 'R-4 / E-a — NAME-SET-EQUAL to its 27 members INCLUDING `provident.focus`.').toContain(TOOL_NAME)
     expect([...tools].sort(), `R-4 / E-a — set equality against the names. Measured: ${JSON.stringify([...tools].sort())}`).toEqual([...EXPECTED_ALL_TOOLS].sort())
     expect(new Set(tools).size, 'R-4 — no duplicate (the check beside the equality).').toBe(tools.length)
     expect(liveRpcMethods(), `R-4 / E-b — the union carries '${METHOD}' (the name, not a count).`).toContain(METHOD)
-    expect(Object.keys(RPC_METHOD_CENSUS).sort(), 'R-4 / E-b — this record is exhaustive over the 22 declared members.').toEqual([...liveRpcMethods(), METHOD].sort().filter((v, i, a) => a.indexOf(v) === i))
+    expect(Object.keys(RPC_METHOD_CENSUS).sort(), 'R-4 / E-b — this record is exhaustive over the 27 declared members.').toEqual([...liveRpcMethods(), METHOD].sort().filter((v, i, a) => a.indexOf(v) === i))
   })
 
   it("R-5 THE SHAPE ROW — the three required members always present, `refused` IFF the outcome carries one, no fifth member", async () => {
@@ -710,15 +713,15 @@ describe("§2.1 item 5 / §3.2 F-5 — the shape row's three declared drives", (
 // 10. THE CENSUS (`§5.2` item 4) — COUNTS DISTINGUISHED FROM NAME-SET EQUALITIES
 // ===========================================================================
 describe('§5.2 item 4 — the census as a list: counts (duplicate checks) beside name-set equalities', () => {
-  it('C-a/E-a `ALL_TOOLS`: the COUNT 22 beside the name-set equality', () => {
+  it('C-a/E-a `ALL_TOOLS`: the COUNT 27 beside the name-set equality', () => {
     const live = ProvidentMcpServer.ALL_TOOLS
     expect([...live].sort(), 'E-a — the load-bearing half: name-set equality including `provident.focus`.').toEqual([...EXPECTED_ALL_TOOLS].sort())
-    expect(live.length, 'C-a — the count, retained ONLY as a duplicate check.').toBe(22)
+    expect(live.length, 'C-a — the count, retained ONLY as a duplicate check.').toBe(27)
     expect(live, 'E-a — the NAME, not the count, is what pins the invariant.').toContain(TOOL_NAME)
   })
 
-  it("C-b/E-b `RpcMethod`: the COUNT 22 beside the union's name-set equality (the TYPE WALL)", () => {
-    expect(Object.keys(RPC_METHOD_CENSUS).length, 'C-b — the count, beside the name-set equality.').toBe(22)
+  it("C-b/E-b `RpcMethod`: the COUNT 27 beside the union's name-set equality (the TYPE WALL)", () => {
+    expect(Object.keys(RPC_METHOD_CENSUS).length, 'C-b — the count, beside the name-set equality.').toBe(27)
     expect(Object.keys(RPC_METHOD_CENSUS), "E-b — 'focus' IS a member of the exhaustive record.").toContain(METHOD)
     expect(liveRpcMethods(), `E-b — the union in the source carries '${METHOD}' (name, not count).`).toContain(METHOD)
   })

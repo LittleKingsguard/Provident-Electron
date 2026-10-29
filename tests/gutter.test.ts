@@ -4459,18 +4459,18 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       change.paths.filter((p) => p === 'src/shared/dom-shim.ts'),
       'R-6 §3.4 — the change set does not touch `src/shared/dom-shim.ts` (no member added, no member needed)',
     ).toEqual([])
-    const tools = readNamesFromDeclaration('src/main/mcp-server.ts', /ALL_TOOLS\s*(?::[^=]*)?=\s*\[/, 22)
+    const tools = readNamesFromDeclaration('src/main/mcp-server.ts', /ALL_TOOLS\s*(?::[^=]*)?=\s*\[/, 27)
     expect(
       tools.length,
-      `R-6 §3.4 / \`N-16\` — the five-seam negative’s first limb: \`ALL_TOOLS\` is the pinned 22-NAME set (\`provident.focus\` joins it in the SAME COMMIT), asserted BY SET EQUALITY AGAINST THE NAMES where a name-complete row exists and NEVER by a bare count (S-7). Read: ${JSON.stringify(
+      `R-6 §3.4 / \`N-16\` — the five-seam negative’s first limb: \`ALL_TOOLS\` is the pinned 27-NAME set (\`provident.focus\` joins it in the SAME COMMIT, the five \`provident.data.*\` names under the declared census exception), asserted BY SET EQUALITY AGAINST THE NAMES where a name-complete row exists and NEVER by a bare count (S-7). Read: ${JSON.stringify(
         tools,
       )}`,
-    ).toBe(22)
+    ).toBe(27)
     const rpc = readUnionMembers('src/shared/types.ts', /export type RpcMethod\s*=/)
     expect(
       rpc.length,
-      `R-6 §3.4 / \`N-16\` — \`RpcMethod\` is 22 union members by NAME (\`focus\` joins it in the SAME COMMIT) (S-7). Read: ${JSON.stringify(rpc)}`,
-    ).toBe(22)
+      `R-6 §3.4 / \`N-16\` — \`RpcMethod\` is 27 union members by NAME (\`focus\` joins it in the SAME COMMIT, the five \`data.*\` routes under the declared census exception) (S-7). Read: ${JSON.stringify(rpc)}`,
+    ).toBe(27)
     const mutating = readNamesFromDeclaration('src/renderer/renderer.ts', /MUTATING_METHODS\s*=\s*new Set\(\[/, 7)
     expect(
       mutating,
@@ -4478,13 +4478,13 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         mutating,
       )}`,
     ).toEqual(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'])
-    const groups = readNamesFromDeclaration('src/main/security-store.ts', /VALID_GROUPS\s*=\s*new Set\(\[/, 5)
+    const groups = readNamesFromDeclaration('src/main/security-store.ts', /VALID_GROUPS\s*=\s*new Set\(\[/, 6)
     expect(
       groups,
-      `R-6 §3.4 — \`VALID_GROUPS\` is still the 5 named members, asserted by SET EQUALITY AGAINST THE NAMES (S-7). Read: ${JSON.stringify(
+      `R-6 §3.4 — \`VALID_GROUPS\` is still the 6 named members, asserted by SET EQUALITY AGAINST THE NAMES (S-7). Read: ${JSON.stringify(
         groups,
       )}`,
-    ).toEqual(['read', 'dispatch', 'graph', 'code', 'module'])
+    ).toEqual(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
     // **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).** The as-filed reading is
     // kept visible above and superseded: `'R-6 §3.4 / R-12 §3.4 — the companion claim: at the time
     // this unit's red set runs, `src/shared/gutter.ts` is imported by NO `src/**` file (an

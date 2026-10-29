@@ -1,13 +1,14 @@
 # L3 — `central-data`: the signatures
 
-- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Ceiling:** 150 lines, class max (D-1)
-- **Inputs:** `docs/L2/central-data/interface.md` §1-§8, `behaviour.md` §1-§10, `persistence.md` §1-§9 (rev 2); `strata/decisions.md` D-11/D-12/D-13/D-14; `node_modules/provident-storeroom/index.d.ts` and `README.guide.md`, read and never edited (D-5)
-- **Status:** DESIGN — stubs only. Every line below is a declaration and never a body; §1 is `interface.md` §2's surface restated so the unit battery can import it before any implementation exists (D-1 §4)
-- **Companion:** `design.md` carries the structure, the operations' pseudocode and the twelve guardrails
+- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Ceiling:** 150 lines, class max (D-1)
+- **Inputs:** `docs/L2/central-data/interface.md` §1-§8, `behaviour.md` §1-§10 (**§5 and §9 as revised: two unreachability arms, `ASM-L2-7`**), `persistence.md` §1-§9 (rev 2); `strata/decisions.md` D-11/D-12/D-13/D-14; `node_modules/provident-storeroom/index.d.ts` and `README.guide.md`, read and never edited (D-5)
+- **Status:** DESIGN — stubs only. Every line below is a declaration and never a body; §1 is `interface.md` §2's surface restated so the unit battery can import it before any implementation exists, and **rev 2 moves nothing in §1** (D-1 §4)
+- **Rev 1 → rev 2, stated in as many words:** `StorePort.open()` is **replaced** by `StorePort.probe()`, a new `ProfileReading` type and a `readProfile` function appear beside it, `mapper.probeOutcome` is **renamed** `readOutcome`, and `mapper.unreachableLedger()` is added — because the reading of `design.md` §2 must answer *whether the profile's one name can be occupied at all* before any store instance, which `open()`'s cold/ready/unreachable triple could not express (`behaviour.md` §5, §9; `ASM-L2-7`; D-11, D-13)
+- **Companion:** `design.md` carries the structure, the reachability reading, the operations' pseudocode, the twelve guardrails and this design's two assumptions (ASM-L3-U1/U2)
 
 ## 1. The declared surface — `src/main/data/index.ts`
 
-`index.ts` exports exactly this and nothing else to `src/main/mcp-server.ts`, and no line here is new — it is `interface.md` §2, restated as a stub (`interface.md` §2; D-11, D-14):
+`index.ts` exports exactly this and nothing else to `src/main/mcp-server.ts`, and no line here is new or moved at rev 2 — it is `interface.md` §2, restated as a stub (`interface.md` §2; D-11, D-14):
 
 ```ts
 export type DataPath = readonly (string | number)[]
@@ -71,15 +72,20 @@ export function pathText(path: DataPath): string               // the sort key: 
 // ---- store.ts ----
 export const PROFILE_FILE_NAME = 'provident-profile.json'      // persistence.md §1; D-13
 export type ProfileStore = ReturnType<typeof createProfileStore>   // no package type spelled (D-5)
+export type ProfileReading =                                   // design.md §2: THE reading, one word
+  | { kind: 'occupied' } | { kind: 'absent' }                  // can be occupied: the name stands / does not yet
+  | { kind: 'unreachable'; ledger: DataLedger }                // cannot be occupied: all five answer the ledger
+export function readProfile(profileDir: string): ProfileReading    // probes only: creates nothing, throws nothing
 export type StorePort = {
-  open(): { kind: 'ready'; store: ProfileStore } | { kind: 'cold' } | { kind: 'unreachable'; ledger: DataLedger }
+  probe(): ProfileReading                                     // taken first, at the top of every operation (§2)
   construct(): { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger }
 }
 export function createStorePort(options: DataSurfaceOptions): StorePort
 
 // ---- mapper.ts ----
-export function probeOutcome(caught: unknown): { kind: 'branch' } | { kind: 'absent' } | { kind: 'ledger'; ledger: DataLedger }
+export function readOutcome(caught: unknown): { kind: 'branch' } | { kind: 'absent' } | { kind: 'ledger'; ledger: DataLedger }
 export function refusalLedger(caught: unknown, path?: DataPath): DataLedger
+export function unreachableLedger(): DataLedger                // the reading's refusal: no store, no storeStatus
 export function sentence(reason: DataRefusalReason): string     // the fixed module sentences (interface.md §3)
 
 // ---- journal.ts ----
@@ -95,7 +101,7 @@ export function createJournal(length: unknown): ChangeJournal
 export function createDataSurface(options: DataSurfaceOptions): DataSurface
 ```
 
-`probeOutcome` classifies a caught probe refusal and the operation composes the answer: `branch` means the caller then reads the branch, `absent` means the absent answer or the empty receipt, `ledger` means the mapped refusal (`design.md` §3; `guide §4`).
+`readOutcome` (rev 1's `probeOutcome`) classifies a caught **store read** refusal and the operation composes the answer: `branch` means the caller then reads the branch, `absent` means the absent answer or the empty receipt, `ledger` means the mapped refusal (`design.md` §3; `guide §4`). The name moves because `probe` now means the reachability reading, which is not a store call and has no store status. `readProfile` is the reading itself: `store.ts` owns it, `createStorePort` memoises the result and the one instance, and `unreachableLedger()` is the single ledger all five operations return on the `unreachable` arm (`design.md` §2; `behaviour.md` §9).
 
 ## 3. The store-status mapping — the eleven reason words are closed
 
@@ -112,7 +118,8 @@ Each store status this module can meet, and the one word it answers with (`inter
 | `ContainerKindConflict`, `WriteParentNotLink` | `write` | `container-kind-conflict` |
 | `ValueRefusedAtBoundary`, `ValueNotAdmitted` | `write` — the package's walk, before any verb | `value-not-admitted` (`guide §10`) |
 | `FileCommitFailed` | `write`, `delete` — the store's rollback has already run | `write-failed` (`guide §9.4`) |
-| `FilePathUnreachable`, `ConstructionArgumentMissing` | `storeCreate` | `store-unreachable` (`guide §8.2`) |
+| `FilePathUnreachable`, `ConstructionArgumentMissing` | `construct()`, after a reading that did not refuse | `store-unreachable` (`guide §8.2`) |
+| no store status at all — the reading's `unreachable` arm | `probe()`, before any instance: `ENOTDIR`/`EACCES`/`ELOOP` at the name, a directory or dangling symlink at it, or an unwritable parent | `store-unreachable`, `storeStatus` absent, the fixed module sentence (`unreachableLedger()`; `design.md` §2) |
 | `TierNotFound`, `OutOfDomainTier`, `ParentAnchorMonotonicityViolation`, `JournalOpUnknown`, `RollbackCompacted`, `ConstraintListInvalid`, `ConstraintBodyThrew`, `ConstraintRefusedAtRegistration`, `ConstraintPassRefused`, and any escape-arm string | any verb | `store-refused`, carrying the status verbatim in `storeStatus` |
 | a thrown value carrying no string `status` (the declared class-test `TypeError`, `guide §8.3`) | any verb | `store-refused`, with `storeStatus` absent and a fixed module sentence |
 
@@ -120,7 +127,7 @@ Every arm carries `message`: the store's own generated sentence where the store 
 
 ## 4. Every answer an operation can return
 
-The battery's rows are written against this closed set (`interface.md` §2, §3; `behaviour.md` §1-§6; D-11):
+The battery's rows are written against this closed set, and every operation's refusal set carries `store-unreachable` because the reading of `design.md` §2 precedes every store (`interface.md` §2, §3; `behaviour.md` §1-§6, §9; D-11):
 
 | Operation | The answer statuses, and nothing else |
 |---|---|
@@ -128,14 +135,14 @@ The battery's rows are written against this closed set (`interface.md` §2, §3;
 | `write` | `committed` with the minted `cursor`; ledgers: `malformed-arguments`, `root-not-writable`, `volatile-path`, `store-unreachable`, `parent-absent`, `container-kind-conflict`, `value-not-admitted`, `write-failed`, `address-malformed`, `store-refused` |
 | `delete` | `committed` with `removed:true` and a cursor, or `removed:false` with `tiers:[]` and `cursor:null`; ledgers: `malformed-arguments`, `root-not-writable`, `volatile-path`, `store-unreachable`, `address-malformed`, `write-failed`, `store-refused` |
 | `list` | `read` with `prefix`, `paths`, `count`; ledgers: `malformed-arguments`, `address-malformed`, `store-unreachable`, `store-refused` |
-| `journal` | `read` with `from`, `through`, `floor`, `entries`, `count`; ledgers: `malformed-arguments`, `cursor-unknown` |
+| `journal` | `read` with `from`, `through`, `floor`, `entries`, `count`; ledgers: `malformed-arguments`, `cursor-unknown`, `store-unreachable` (`behaviour.md` §9) |
 
 ## 5. Assumptions this design makes, each with the alternative it rejected
 
 | id | Assumption | Rejected alternative |
 |---|---|---|
 | ASM-L3-1 | `list` and `journal` never answer `volatile-path`: `list.prefix` is not narrowed, and `list` answers whatever rows stand — none, since nothing volatile was ever written (D-13) | refusing a volatile `prefix`, which narrows a tool `interface.md` §1 declares as answering rows, i.e. an L2 change made at L3 |
-| ASM-L3-2 | the store is built at the first `write`, and at the first `read`/`list`/`delete` whose profile name is occupied; an absent directory therefore answers the cold tier for those three and `store-unreachable` for `write` (`behaviour.md` §9 read through §1) | constructing on every operation, so a read-only profile pays the exclusive file create (`guide §9.1`) against `persistence.md` §1's no-filesystem-act |
+| ASM-L3-2 | the reading precedes every store instance and answers `unreachable` for all five tools where the profile's one name cannot be occupied, while an absent name stays the cold tier until a `write` constructs (`behaviour.md` §5, §9; `design.md` §2, §6 ASM-L3-U1/U2) | constructing on every operation, so a read-only profile pays the exclusive file create (`guide §9.1`, against `persistence.md` §1's no-filesystem-act) and `journal` would answer a window where the profile can never be built |
 | ASM-L3-3 | the seam gains one optional `filePath` on `ProfileStoreOptions`, and `src/main/data/` imports `createProfileStore` and never the package (D-5) | a second import of `provident-storeroom` under `src/main/data/`, which breaks the seam's declared purpose and its pinned census (`src/main/storeroom.ts:5-8,45-53`) |
 | ASM-L3-4 | `journalLength` is honoured only where it is a positive safe integer; otherwise the seam's `DEFAULT_JOURNAL_LENGTH` stands (`src/main/storeroom.ts:53`; D-12) | passing a hostile figure through, which makes construction throw and turns every `write` into `store-unreachable` |
 | ASM-L3-5 | a thrown value with no string `status` answers `store-refused` with `storeStatus` absent (`guide §8.3`) | a twelfth reason word for the status-less class test, which widens `interface.md` §2's closed vocabulary |

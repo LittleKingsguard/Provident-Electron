@@ -1,10 +1,12 @@
 {
   "unit": "central-data-management",
-  "layer": "L2",
+  "layer": "L3",
   "stage": "design",
   "artifacts": [
     "module-map",
-    "e2e-design-rev2"
+    "e2e-design-rev2",
+    "l2-integration-battery",
+    "l3-unit-battery"
   ],
   "assumptions": [
     {
@@ -14,7 +16,14 @@
       "status": "open"
     }
   ],
-  "streaks": {},
+  "streaks": {
+    "l2-integration-battery": 1,
+    "l3-unit-battery": 1
+  },
   "rebuildEligible": false,
-  "updated": "2026-10-29T03:04:43.806Z"
+  "updated": "2026-10-29T03:29:23.925Z",
+  "lastFailure": {
+    "artifact": "l3-unit-battery",
+    "reason": "red"
+  }
 }

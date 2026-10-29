@@ -309,8 +309,12 @@ export const EXPECTED_ALL_TOOLS: string[] = [
   'provident.load', 'provident.op', 'provident.export', 'provident.validate', 'provident.teardown',
   'provident.journal', 'provident.code.set', 'provident.code.create', 'provident.code.delete',
   'provident.code.load', 'provident.code.loadBatch', 'module.install', 'module.update', 'module.list',
+  // The sixth group's five names, moved here by the declared census exception
+  // (`docs/L1/central-data-census-exception.md` §4: `ALL_TOOLS` 22 → 27).
+  'provident.data.read', 'provident.data.write', 'provident.data.delete', 'provident.data.list',
+  'provident.data.journal',
 ]
-export const EXPECTED_GROUPS: string[] = ['read', 'dispatch', 'graph', 'code', 'module']
+export const EXPECTED_GROUPS: string[] = ['read', 'dispatch', 'graph', 'code', 'module', 'data']
 export const EXPECTED_MUTATING: string[] = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal']
 /** THE CONTRACT'S DECLARED SURFACE, READ AS ITS OWN TWO CLASSES (`§2.1` item 5; `§0A` note 4;
  *  the supervisor's consolidation adjudication, conflict 2).
@@ -1235,20 +1239,20 @@ export const REGISTER: readonly RegisterRow[] = [
     controls: [{ label: 'control: a name that is NOT in the set is rejected by the same read', run: () => { expect(liveAllTools()).not.toContain('provident.focus_missing_control') } }],
     drives: [
       { label: '(1) membership of `provident.focus` in the name set', run: () => expect(liveAllTools(), 'RT-1 — the name is in the listing.').toContain(TOOL_NAME) },
-      { label: '(2) the set size as a duplicate check', run: () => expect(liveAllTools().length, 'RT-1 — 22 members.').toBe(22) },
+      { label: '(2) the set size as a duplicate check', run: () => expect(liveAllTools().length, 'RT-1 — 27 members.').toBe(27) },
       { label: '(3) the absence of a duplicate entry', run: () => expect(new Set(liveAllTools()).size, 'RT-1 — no duplicate.').toBe(liveAllTools().length) },
-      { label: '(4) the absence of a second new name', run: () => expect([...liveAllTools()].sort(), 'RT-1 — name-set equality against the 22 declared names.').toEqual([...EXPECTED_ALL_TOOLS].sort()) },
+      { label: '(4) the absence of a second new name', run: () => expect([...liveAllTools()].sort(), 'RT-1 — name-set equality against the 27 declared names.').toEqual([...EXPECTED_ALL_TOOLS].sort()) },
     ],
   },
   {
     id: "P-FT-RT-2", type: "P-IM", domain: "THE ROUTE — the registration and the DEFAULT-GATE placement", strategyId: "S-FT-GATE-1", term: 3, bound: "enumerated",
-    // the resolved name, the default state, and that no sixth group exists
-    assertions: ["the resolved group name", "the default state of `dispatch`", "that no sixth group name exists", "no per-call registration branch on the route"],
+    // the resolved name, the default state, and that no seventh group exists
+    assertions: ["the resolved group name", "the default state of `dispatch`", "that no seventh group name exists", "no per-call registration branch on the route"],
     controls: [{ label: 'control: an unknown tool name resolves to `null`, so the group read can fail', run: () => expect(groupForTool('provident.nonexistent_control')).toBe(null) }],
     drives: [
       { label: '(1) the group-name lookup for `focus`', run: () => expect(groupForTool(TOOL_NAME), 'RT-2 — the tool resolves to the EXISTING `dispatch` group.').toBe('dispatch') },
       { label: '(2) the ON-by-default reading of `dispatch`', run: () => expect(newServer(recorder([{}]).backend).getGateConfig().enabled, 'RT-2 — `dispatch` is ON by default, so no human grant is required.').toContain('dispatch') },
-      { label: '(3) the `VALID_GROUPS` five-member name-set equality', run: () => expect(liveValidGroups().sort(), 'RT-2 — name-set-equal to its five members, NO SIXTH.').toEqual([...EXPECTED_GROUPS].sort()) },
+      { label: '(3) the `VALID_GROUPS` six-member name-set equality', run: () => expect(liveValidGroups().sort(), 'RT-2 — name-set-equal to its six members, NO SEVENTH.').toEqual([...EXPECTED_GROUPS].sort()) },
     ],
   },
   {

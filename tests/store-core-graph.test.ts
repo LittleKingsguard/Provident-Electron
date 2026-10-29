@@ -985,7 +985,7 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     expect(mutating, 'I-11 — `MUTATING_METHODS` is UNMOVED by this unit\u2019s diff').toEqual(
       ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'],
     )
-    expect(groups, 'I-11 — `VALID_GROUPS` is UNMOVED, read as a SET against the NAMES').toEqual(['read', 'dispatch', 'graph', 'code', 'module'])
+    expect(groups, 'I-11 — `VALID_GROUPS` is UNMOVED, read as a SET against the NAMES (six members: the sixth group `data` is the declared census exception\u2019s own row, never this unit\u2019s)').toEqual(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
     const mcpBytes = read('src/main/mcp-server.ts')
     expect(mcpBytes, 'I-11 — `ALL_TOOLS` exists and is the frozen list (its own members are read by set equality against HEAD\u2019s bytes)').toContain('ALL_TOOLS')
     expect(mcpBytes, 'I-11 — `ALL_TOOLS` is byte-identical to HEAD: this unit adds no tool').toBe(headBytes('src/main/mcp-server.ts'))

@@ -175,16 +175,25 @@ export const MEASURED_FROZEN_PINS: Readonly<Record<string, string>> = {
  *  `D-iv`; `§5.1` item 1's allowed-edit-set item (1) names this very file). **THE AS-FILED FOURTH
  *  TERM (`8ed09c97…`) AND THE FIFTH (`fd242633…`) STAY AWAKE AND NAMED — the fifth is the term
  *  this re-point moves FROM — and the chain keeps its declared FIVE terms, distinct, with the
- *  operative one at its head position (the D-x row asserts exactly that shape).** No row, term,
- *  strategy id, cap or declared total moves with it. */
+ *  operative one at its head position (the D-x row asserts exactly that shape).**
+ *
+ *  ⟶ RE-POINTED AGAIN (THE `central-data` E-1 CENSUS ROW — `RCA-8(a)`: ONE CAUSE, ONE LINE).
+ *  `docs/L1/central-data-census-exception.md` §2's E-1 row moves `src/main/security-store.ts:87`'s
+ *  second live `VALID_GROUPS` five → six (it gains `'data'`), so the module's bytes move
+ *  `39bfa51a578a…` → **`7a85e0215c9b…`** by declaration, exactly as the annotation above predicts
+ *  ("a byte-pin that refused to follow an authorized move would be an instrument demanding an
+ *  unauthorized rollback"). **THE FIFTH TERM (`39bfa51a…`) STAYS AWAKE AND NAMED IN THIS NOTE — it
+ *  is the term this re-point moves FROM — and the chain keeps its declared FIVE terms, distinct,
+ *  with the operative one at its head position.** No row, term, strategy id, cap or declared total
+ *  moves with it. */
 export const SECURITY_STORE_PIN_CHAIN: readonly string[] = [
   'c7359530', // as filed
   '99618ac2', // S3's green
   'a98273b8', // ADV-1
   '8ed09c97', // the §2.6 write-lock amendment (kept awake)
-  '39bfa51a', // ⟶ the gate-4 REPAIR landing (D-i…D-iv); it moved FROM fd242633 (the A-1 static-holder landing, kept awake in the note above)
+  '7a85e021', // ⟶ the central-data E-1 census landing (VALID_GROUPS five → six); it moved FROM 39bfa51a (the gate-4 repair landing, kept awake in the note above)
 ]
-export const SECURITY_STORE_PIN = '39bfa51a578a1c56acc188199caf190957e1a52d770c5471a530c55c98410295'
+export const SECURITY_STORE_PIN = '7a85e0215c9ba4edb2d9cf80536deafec0363f95b28f8f73abcacc6bdbca3b09'
 
 // ---- THE REGISTER'S DECLARED NUMBERS (`§5.5.1`) -----------------------------------------
 export const REGISTER_ROW_CAP = 100

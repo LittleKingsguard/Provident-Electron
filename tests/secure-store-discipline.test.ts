@@ -613,8 +613,12 @@ function probe(store: SecurityStore): Record<string, unknown> {
   assertNoThrow(() => store.set({ token: 'PRE', groups: ['read'], maxJournalLength: 100 }), 'probe write')
   return asRecord(store.get())
 }
-/** The five landed VALID_GROUPS, from §2.2 item 3. */
-const VALID_GROUPS: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module']
+/** The six landed `VALID_GROUPS`, from §2.2 item 3 — `read`, `dispatch`, `graph`, `code`,
+ *  `module`, and `data` (the sixth group, moved `5 → 6` by `central-data`'s declared census
+ *  exception, `docs/L1/central-data-census-exception.md` §2/§4). The model is the store's own
+ *  admission rule, so it must carry the live member: a five-member model would filter a
+ *  `data` patch out of THIS battery's expectation while the store admits it. */
+const VALID_GROUPS: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module', 'data']
 
 /** The store's own add/remove + coercion rules, applied to the PRE-write record
  *  — the "expected post-state" for an ADMITTED patch (§2.2 item 3). */
@@ -2194,10 +2198,20 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       // `D-19`'s four-step order preserved, and the GET handler reads the holder EXACTLY ONCE per
       // turn with BOTH additive members deriving from that ONE reading. `src/main/preload.ts` and
       // `src/shared/types.ts` are UNMOVED and keep their pins (the as-filed pins above STAND).
+      //
+      // **⟶ RE-POINTED AGAIN, CAUSE IN ONE LINE — `central-data`'s E-1 CENSUS ROW, TWO FILES.**
+      // `docs/L1/central-data-census-exception.md` §2 declares two edits to these carriers:
+      // E-1 moves `src/shared/types.ts`'s `RpcMethod` union `22 → 27` (the five `data.*` routes),
+      // and E-3 adds ONE composition line to `src/main/main.ts` (`dataSurface: createDataSurface(…)`
+      // plus its import). Both are declared changes, so both pins follow their artifacts —
+      // `29af4efa…` → **`f51c61d1…`** and `d447a523…` → **`dacb9f28…`** — and `src/main/preload.ts`,
+      // which neither row names, keeps its pin UNMOVED. The cell's claim is unchanged in kind: no
+      // byte of a carrier moves UNDER THIS UNIT's diff; a LATER declared unit's own licensed move
+      // re-points the figure rather than failing the row.
       const deniedPaths: Array<{ label: string; rel: string[]; pin: string }> = [
-        { label: 'src/main/main.ts', rel: ['main', 'main.ts'], pin: 'd447a523578b117c9ab6c1723f46ad9823f4de36dd6c3656bc6d674f717cc9f4' },
+        { label: 'src/main/main.ts', rel: ['main', 'main.ts'], pin: 'dacb9f2834301476903aa9d7b925abb5c9b8a977960e59862b8c8e9aa49c03fd' },
         { label: 'src/main/preload.ts', rel: ['main', 'preload.ts'], pin: 'fa4a142f6362c55bf8a4b7a800574231e7212b4dc1b056eb1eda3168030545ac' },
-        { label: 'src/shared/types.ts', rel: ['shared', 'types.ts'], pin: '29af4efaf16a5cadf1ac22b63afda063495ce63ec95b56f1f6e397da1d8189c6' },
+        { label: 'src/shared/types.ts', rel: ['shared', 'types.ts'], pin: 'f51c61d1ba42f99057602ae8e6ca2484e208568ba4664c315aaa4950f7763644' },
       ]
       for (const entry of deniedPaths) {
         const bytes = await readFile(SRC(...entry.rel))

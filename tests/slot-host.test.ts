@@ -2994,9 +2994,10 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     // BEHAVIOURALLY through the exported `applyPatch`, which accepts exactly the
     // live members.
     // =======================================================================
-    const PINNED_GROUPS: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module']
-    expect([...PINNED_GROUPS].sort(), 'S-5: the pinned group set of §1/§2.2 is the five the spec names').toEqual([
+    const PINNED_GROUPS: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module', 'data']
+    expect([...PINNED_GROUPS].sort(), 'S-5: the pinned group set of §1/§2.2 is the six the spec names').toEqual([
       'code',
+      'data',
       'dispatch',
       'graph',
       'module',
@@ -3011,7 +3012,7 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     const liveGroups = (groupsDecl?.[1].match(/'[^']*'|"[^"]*"/g) ?? []).map((s) => s.slice(1, -1)).sort()
     expect(
       liveGroups,
-      "S-5 / §2.2 prohibition 5 / §1's five-seam negative: the LIVE `VALID_GROUPS` set (src/main/security.ts) is EXACTLY the pinned five — a NEW group member FAILS this row",
+      "S-5 / §2.2 prohibition 5 / §1's five-seam negative: the LIVE `VALID_GROUPS` set (src/main/security.ts) is EXACTLY the pinned six — a NEW group member FAILS this row",
     ).toEqual([...PINNED_GROUPS].sort())
     const security = (await import(/* @vite-ignore */ ['..', 'src', 'main', 'security.js'].join('/'))) as {
       applyPatch: (
@@ -3026,8 +3027,9 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     }
     const probed = security.applyPatch({ token: null, enabled: [] }, { groups: ['no-such-group-probe'] })
     expect(probed.enabled, 'S-5: a group OUTSIDE the live set is REJECTED — the probe above is not vacuous').toEqual([])
-    // The tool seam: `ALL_TOOLS` reads 22 (`N-18`: `provident.focus` joins the
-    // live listing in the SAME COMMIT — this site's own edit bar names the sibling
+    // The tool seam: `ALL_TOOLS` reads 27 (`N-18`: `provident.focus` joins the
+    // live listing in the SAME COMMIT, and the five `provident.data.*` names join it
+    // under the declared census exception — this site's own edit bar names the sibling
     // census file as one it may not edit, which is why the obligation lands here),
     // and every tool still resolves into the pinned group domain (a new tool bound
     // to a NEW group fails both halves).
@@ -3039,7 +3041,7 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     }
     const allTools = mcp.ProvidentMcpServer.ALL_TOOLS
     expect(Array.isArray(allTools), 'S-5: the LIVE `ALL_TOOLS` list is reachable').toBe(true)
-    expect(allTools.length, 'S-5 / §2.2 prohibition 5 / `N-18`: `ALL_TOOLS` reads 22 — the live listing, read from its OWN live module').toBe(22)
+    expect(allTools.length, 'S-5 / §2.2 prohibition 5 / `N-18`: `ALL_TOOLS` reads 27 — the live listing, read from its OWN live module').toBe(27)
     for (const tool of allTools) {
       const group = security.groupForTool(tool)
       expect(
@@ -3075,8 +3077,8 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     }
     expect(
       (memberLines.join('\n').match(/'[^']*'/g) ?? []).length,
-      'S-5 / §2.2 prohibition 5 / `N-18`: `RpcMethod` reads 22 — no new IPC method beyond `focus`, read from its OWN live module',
-    ).toBe(22)
+      'S-5 / §2.2 prohibition 5 / `N-18`: `RpcMethod` reads 27 — no new IPC method beyond `focus` and the five `data.*` routes, read from its OWN live module',
+    ).toBe(27)
     // …and the sibling census that pins the same five seams must still exist and
     // run in the same suite (`§2.2` prohibition 5 names it; this unit may not
     // edit it, `§5.1`). Its PASSING is that file's own business — this row asserts
