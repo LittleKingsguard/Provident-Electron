@@ -16,7 +16,7 @@
 | channels | none registered here: `main.ts` keeps the three `ipcMain.handle` sites and delegates each body to a verb | exception §2 E-3; D-18 |
 | rendered element | none, and no MCP drive — `provident.dispatch`, `get_rendered_html` and `get_markdown` are unmoved | D-18; L1 §4 |
 | group set | **none held**: the six names are `operator-settings`' second live copy and this module never spells one | D-11, D-15; interface §5 |
-| the two strings | `TIER4_CLOSED` and `TIER4_CLOSED_MESSAGE` are **imported from their landed home**, never re-spelled | `src/main/security-store.ts:10-16` carried; D-16; ASM-6 |
+| the two strings | `TIER4_CLOSED` and `TIER4_CLOSED_MESSAGE` are **imported from their landed home**, never re-spelled | the deleted `src/main/security-store.ts:10-16` carried; D-16; ASM-6 |
 
 ## 2. `read()` — the carrier, and one reading feeding both additive members
 
@@ -38,7 +38,7 @@ read():
 
 ```
 set(patch):
-  values  ← read each declared position ONCE off the patch            · src/main/security-store.ts:341-354 carried
+  values  ← read each declared position ONCE off the patch            · the deleted security-store.ts:341-354 carried
   current ← settings.read()                                            · the merge base is the durable row
   enabled ← current.enabled, then each `groups` name not already held appended in the caller's order,
             then each `disable` name removed                           · behaviour §10; interface §5
@@ -127,5 +127,5 @@ onDelivery(address):
 | ASM-3 | `attach` subscribes **then** patches, and a second `attach` replaces the sink without a second subscription | patch-then-subscribe, which drops a commit landing between the two acts (D-17; guide §6.1) |
 | ASM-4 | the surface **writes** the holder on the committed `mem` write and at `attach`, and reads it nowhere | deleting the write, which would leave `src/main/tier4-state.ts` with no producer at all after E-1 retires the store's two consult sites (exception §2 E-3; L1 §3 `ASM-4`) |
 | ASM-5 | the re-patch's `disable` set is the surface's own last-applied list | re-deriving the six names here to pass "everything not granted", which re-creates the second live copy C-1 exists to consolidate (D-15; `src/main/security.ts:182-188`) |
-| ASM-6 | `TIER4_CLOSED`/`TIER4_CLOSED_MESSAGE` are imported from `mcp-server.js` and `ExclusionState` re-exported from `security.js` | minting the sentence or the two tokens here, which gives one refusal — and one closed pair — two spellings (PAR-13; `src/main/security-store.ts:10-16`) |
+| ASM-6 | `TIER4_CLOSED`/`TIER4_CLOSED_MESSAGE` are imported from `mcp-server.js` and `ExclusionState` re-exported from `security.js` | minting the sentence or the two tokens here, which gives one refusal — and one closed pair — two spellings (PAR-13; the deleted `src/main/security-store.ts:10-16`) |
 | ASM-7 | `patchOf` **omits** `token` while the record's token is `null`, so the group patch always reaches the gate and a cleared token is not propagated | passing `token: record.token` unconditionally, which the gate rejects **whole** and answers with the configuration unchanged, dropping the boot patch and every later group patch on the first-run profile (`src/main/security.ts:176-179`); or adding a clear member to `SettingsGateSink`, which E-2/E-3 licence and the exception's §6 does not (interface §5; exception §2 E-2, E-3, §6) |

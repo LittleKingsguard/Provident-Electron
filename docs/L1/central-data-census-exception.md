@@ -58,7 +58,7 @@ writer moves exactly that set and records both lists: the rows it moved, and the
 | Class | Rows | Where |
 |---|---|---|
 | C-1 · the tool and route census at 22 | 16 sites / 14 files | `tests/engine-pin-version.test.ts:102-132,183-210` (**compile-red**, `Record<RpcMethod, true>`), `tests/focus-tool.test.ts:74` (**compile-red**), `:526,530,623,713,721`; `tests/focus-tool-register.ts:306,1238,1240`; `tests/theme-control.test.ts:1083,1351,1357`; `census` `R-7`; `zones` `R-6`; `gesture-session` `R-6(c)`/`F-9(b)`; `gutter`; `gutter-ui` `R-11`; `slot-host` `S-5`; `layout-projection` `R-21`; `secure-exclusion` `I-EX-11` |
-| C-2 · `VALID_GROUPS` at five, or "no sixth group" | 14 sites / 13 files | `focus-tool` `:428`; `focus-tool-register` `:1251`; `census`; `zones`; `gesture-session`; `gutter`; `gutter-ui`; `slot-host`; `store-core-graph` `I-11`; `secure-exclusion` `:1600,1655,5006-5007`; `secure-store-discipline` `:616-623` |
+| C-2 · `VALID_GROUPS` at five, or "no sixth group" | 14 sites / 13 files | `focus-tool` `:428`; `focus-tool-register` `:1251`; `census`; `zones`; `gesture-session`; `gutter`; `gutter-ui`; `slot-host`; `store-core-graph` `I-11`; `secure-exclusion` `:1600,1655,5006-5007`; `secure-store-discipline` `:616-623` (**retired whole with its file** by the sibling unit's E-5, `docs/L1/security-store-storeroom-exception.md` §9 — listed as a row that read the number, and no longer resolvable) |
 | C-3 · the persisted set at exactly two named files | 10 sites / 6 files | `store-persist` `S-3`/`SC-1`; `store-security` `F-7`/`F-10`/`I-2`/`I-3`; `store-compliance-live.mjs` `SC-B-01`/`SC-B-03`/`SC-B-09`; `secure-exclusion-live.mjs` `U-6`; `store-tabs-record-live.mjs:93,122`; `secure-exclusion.test.ts:4990` (title only) |
 
 **Green by predicate, swept only for a stale figure:** the default-grant subset (8 names, unmoved), the seven
@@ -79,7 +79,7 @@ writer moves exactly that set and records both lists: the rows it moved, and the
 **E-4 — the byte-image pins, licensed by this rev-2 clause.** Four frozen-digest cells in three files read none of the
 moved numbers and reddened only because E-1/E-3 moved the bytes they image: `tests/secure-exclusion.test.ts`'s
 `SECURITY_STORE_PIN` and its `FS-EX-15` chain, `tests/tier4-arbitrary-storage-register.ts`'s pin chain,
-`tests/secure-store-discipline.test.ts`'s two `P-O3-TP-1` digests. Their re-point is **the same class as E-2's move** —
+`tests/secure-store-discipline.test.ts`'s two `P-O3-TP-1` digests (both retired whole with that file by the sibling unit's E-5, `docs/L1/security-store-storeroom-exception.md` §9, so no term of this licence survives on it). Their re-point is **the same class as E-2's move** —
 a pin whose referent moved with this unit's own census — and is licensed on the register's own declared convention,
 with the superseded digest kept awake and asserted distinct wherever the register already does that. A pin's exact
 64-hex equality is never relaxed (D-11, D-15; measured by the L2 examiner at `d52cd13`).

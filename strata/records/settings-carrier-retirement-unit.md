@@ -28,8 +28,10 @@
 - **Owed to the tree, not to the package:** `src/main/preload.ts:72` declares `store.put`'s `reason` as the closed pair
   `'malformed-payload' | 'write-failed'` while the runtime answer now carries the store's own status verbatim; the widening
   belongs to the unit that next touches the bridge, and `preload.ts` is byte-identical after this unit (sibling §8).
-- **Owed to L1, recorded and not patched at L2:** L1 §8 `S-1` reads *"exactly one `provident-settings.json` literal, in the
-  instance"* while L1 §4's second import arm and E-2 require that literal in `src/main/operator-settings/index.ts` — the
-  re-grain this unit drives is `RET-2`: one occurrence, in the instance module, read by one `readFileSync`, written by none.
+- **Re-grained, no longer owed to L1:** L1 §8 `S-1` permits **exactly one** `provident-settings.json` occurrence in
+  `src/**` — the import arm's own name, in the instance — which is precisely what L1 §4's second import arm and E-2
+  require of `src/main/operator-settings/index.ts`, so no conflict stands: the re-grain this unit drives is `RET-2`, one
+  occurrence in the instance module, read by one `readFileSync` and written by none (sibling `persistence.md` §8). The
+  earlier reading of `S-1` as a literal ban is retired.
 - **Owed by L0:** a second blind walkthrough run — run 1 came back `DOC-GAP` with its three findings fixed in place
   (`strata/records/settings-carrier-retirement-walkthrough.md`).

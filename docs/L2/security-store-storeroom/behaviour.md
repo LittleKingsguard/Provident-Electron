@@ -22,8 +22,8 @@
 | `write({ token: 't' })` on a first-ever profile | `{ status:'committed', cursor:<an integer>, opId:<the store's own non-empty string> }` (L1 §3; `guide §9.2`; `interface.md` §2) |
 | then `write({ token: 't2' })` | committed with **`cursor` exactly one greater** than the previous commit's, `opId` different; `read()` serves `'t2'`; `enabled` unchanged (D-17; `ASM-L2-7`) |
 | `write({ enabled: ['data','bogus','read','dispatch','module','graph','code'] })` | committed with **exactly `['data','read','dispatch','module','graph','code']`** — the patch's own order, first occurrence first, a non-group string dropped (D-11, D-15; `A-5`) |
-| `write({ maxJournalLength: 12 })` then `write({ maxJournalLength: null })` | committed, then committed with the cap absent (`src/main/security-store.ts:365-377` carried; `interface.md` §2) |
-| `write({ maxJournalLength: Number.NaN })` then `write({ maxJournalLength: Number.POSITIVE_INFINITY })` | the `NaN` write **commits** and clears the cap — the landed clear arm; the `Infinity` write is **refused** `ValueRefusedAtBoundary` and nothing lands — the landed refuse arm (`src/main/security-store.ts:365-377`; `interface.md` §2, §3) |
+| `write({ maxJournalLength: 12 })` then `write({ maxJournalLength: null })` | committed, then committed with the cap absent (the deleted `src/main/security-store.ts:365-377` carried; `interface.md` §2) |
+| `write({ maxJournalLength: Number.NaN })` then `write({ maxJournalLength: Number.POSITIVE_INFINITY })` | the `NaN` write **commits** and clears the cap — the landed clear arm; the `Infinity` write is **refused** `ValueRefusedAtBoundary` and nothing lands — the landed refuse arm (the deleted `src/main/security-store.ts:365-377`; `interface.md` §2, §3) |
 | any committed write | no `.tmp`, no lock, no sidecar and no second name appears beside the file (D-13; `persistence.md` §5) |
 
 - **One transition is one commit**: one write, one op, one cursor and one receipt, because the four `file` members are written as one value at one address (L1 §3; `guide §4` arm `W-4`). **The order row discriminates**: the patch is served in its own order, so an implementation that re-sorts into `VALID_GROUPS` order fails it even though it would pass a patch already written in that order (`A-5`).
@@ -36,10 +36,10 @@ The import runs at construction **iff the instance's own file carries no record 
 |---|---|
 | absent | the first-run default; no file written; the import is attempted again at the next boot and answers the same (L1 §5; D-19) |
 | `{token:'tok',enabled:['graph','read','graph','bogus'],maxJournalLength:12,'x-mine':{'a':1}}` | `token:'tok'`, **`enabled:['graph','read']`** (the seed's own order, deduplicated), the cap `12`, and `entries` carrying `x-mine` verbatim — **the operator's token, grants, cap and an arbitrary entry all survive** (D-19; L1 §5; `A-5`) |
-| unparsable bytes | the first-run default, nothing thrown, the seed's bytes byte-identical (L1 §5; `src/main/security-store.ts:114-120`) |
+| unparsable bytes | the first-run default, nothing thrown, the seed's bytes byte-identical (L1 §5; the deleted `src/main/security-store.ts:114-120`) |
 | a non-object (`[1,2,3]`, a string, a number, a boolean) | the same: the first-run default, no throw, the bytes untouched (L1 §5) |
 | a directory at that path, or an unreadable file | the same: the first-run default, no throw (L1 §5) |
-| `{token:'tok', entries:[1,2]}` | the token imported and **`entries` absent** — the one declared non-verbatim arm, the raw value not preserved (L1 §5; `src/main/security-store.ts:101-111`) |
+| `{token:'tok', entries:[1,2]}` | the token imported and **`entries` absent** — the one declared non-verbatim arm, the raw value not preserved (L1 §5; the deleted `src/main/security-store.ts:101-111`) |
 | any of the above, after three committed writes | `provident-security.json` is byte-identical to its seed: **the old name is retired, not written** (D-19; `persistence.md` §1) |
 
 ## 4. A refusal is a value, and it leaves the previous bytes

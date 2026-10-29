@@ -15,15 +15,20 @@ built; the quarantined runner read the real tree instead, which is a deviation t
 | 2 | `DOC-GAP` | 5 drifts under the first fix (the README's `failStreak`, a "Six npm legs" bullet beside the corrected eight, the devDependency range, ASM-3's stale row count, an L1 row without its path) and 3 gaps: no home for a non-package finding, no state verb list, no map shape | 5 fixed, 3 closed in the same pass |
 | 3 | `STALE` | 3 falsified claims: the "eight script keys" cite over a 13-key range; D-8's proposed arms (48/2/21) unreconciled with the executed split (55/15/21); `README.md` at 61 lines against D-3's 60 | fixed, with the arm reconciliation recorded in `archive.md` §3 |
 
-**State at this record: not green.** The third run's residual claims are fixed and independently
-re-measured (`wc -l README.md` = 60, `package.json:8-22` = 13 keys, the arms reconciled), but a fourth
-blind run is the gate and is **owed** before this unit is recommended as ready (D-10, D-11). What the
-runs did establish: every one of the five steps was answerable from a citable section by the third run,
-and the corpus linted clean at exit 0 throughout.
+**State at this record: not green.** **Four runs are recorded in this file** — the three in §1's table and run 4
+below — and **five further runs stand in the three units' own walkthrough records**
+(`central-data-management` 2, `security-store-storeroom` 2, `settings-carrier-retirement` 1). The third run's residual
+claims are fixed and independently re-measured (`wc -l README.md` = 60, `package.json:8-22` = 13 keys, the arms
+reconciled) and run 4's four falsified claims are fixed below, but a fifth run of this file is the gate and is **owed**
+before this unit is recommended as ready (D-10, D-11). What the runs did establish: every one of the five steps was
+answerable from a citable section by the third run, and the corpus linted clean at exit 0 throughout.
 
-**Carried as loop state, not as gaps:** the module map carries 20 rows (filed by the central-data pass), so module write scope is unchecked and
-`strata-lint` reports it INFO (`platform.md` §4); that is D-7's first act for the next unit, not a defect
-in this corpus.
+**Carried as loop state, and now discharged rather than owed:** the module map is filed with **20 rows**
+(`strata/modules.json`, filed by the central-data pass), so `strata-lint` checks module write scope against it instead
+of reporting a missing map as INFO — D-7's first act for the next unit is done, not outstanding (`platform.md` §4,
+`modules.md` §3). The instruments at this head are `brief.md` §6's readings, not an older pass's:
+`2 failed / 3,175 passed / 2 skipped` of `3,179` over `112` test files, with `typecheck`, `typecheck:tests` and
+`build` clean.
 
 ## Run 4 — `STALE` (not green)
 

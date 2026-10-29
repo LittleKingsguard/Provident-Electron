@@ -31,13 +31,13 @@
 
 | helper | what it does | cite |
 |---|---|---|
-| `VALID_GROUPS` | the group set's **second live copy**, six members — `read`·`dispatch`·`graph`·`code`·`module`·`data` — re-homed here with the file, read at the **two** filter sites: the patch's `enabled` and the import's `enabled` | D-11, D-15; exception §2 E-1; `src/main/security-store.ts:87,122,339` |
+| `VALID_GROUPS` | the group set's **second live copy**, six members — `read`·`dispatch`·`graph`·`code`·`module`·`data` — re-homed here with the file, read at the **two** filter sites: the patch's `enabled` and the import's `enabled` | D-11, D-15; exception §2 E-1; the deleted `src/main/security-store.ts:87,122,339` |
 | `FIRST_RUN` | `{token:null, enabled:['read','dispatch']}`, no cap, no `entries` — the answer over no file and over every import failure arm | L1 §5; behaviour §1, §3 |
 | `SAFE_PAIR` | `{exclusion:'mcp-enabled', tier4:false}` — what a boot, a crash, a torn record and a corrupt file all resolve to, because the pair is `mem` | interface §1 `ASM-L2-2`; `src/main/main.ts:109-113` |
-| `detach(value)` · `newMap()` | the copy discipline both ways: arrays as real arrays, maps built with `Object.create(null)` so an entry named `__proto__` lands as an **own data property** and survives to the bytes and across a re-read; cycle-safe, each member read once | guide §10, §10.1; `src/main/security-store.ts:131-141,243-260` |
-| `admitGroups(list)` | first occurrence first, in the caller's own order, a non-group string dropped, never re-sorted into `VALID_GROUPS` order | interface §2 `A-5`; `src/main/security-store.ts:122,339` |
+| `detach(value)` · `newMap()` | the copy discipline both ways: arrays as real arrays, maps built with `Object.create(null)` so an entry named `__proto__` lands as an **own data property** and survives to the bytes and across a re-read; cycle-safe, each member read once | guide §10, §10.1; the deleted `src/main/security-store.ts:131-141,243-260` |
+| `admitGroups(list)` | first occurrence first, in the caller's own order, a non-group string dropped, never re-sorted into `VALID_GROUPS` order | interface §2 `A-5`; the deleted `src/main/security-store.ts:122,339` |
 | `toStored(record)` | the value that crosses: a **cleared member is written as its absence**, because the walk refuses `null`/`undefined` anywhere in a value | guide §10.1; persistence §4 |
-| `fromStored(value)` | the read-back mapping: no `token` → `null`, no `maxJournalLength` → `undefined`, no `entries` → absent; a member failing its rule falls to its first-run value | interface §2; `src/main/security-store.ts:112-142` as behaviour |
+| `fromStored(value)` | the read-back mapping: no `token` → `null`, no `maxJournalLength` → `undefined`, no `entries` → absent; a member failing its rule falls to its first-run value | interface §2; the deleted `src/main/security-store.ts:112-142` as behaviour |
 | `importOnce(dir)` | the six-arm boot import of §7, reading `<dir>/provident-security.json` **once** and writing nothing | D-19; interface §2.1 |
 | `receiptOf(record)` | `{status:'committed', cursor:<op.seq>, opId:<op.opId>}` — the store's own ordinals **verbatim**, no offset and no renumbering | interface §2 `ASM-L2-7`; guide §6.4 |
 | `refusalOf(caught, address)` | the store's `status`, `message` and `address` **verbatim**; a caught value carrying no string `status` → `reason:'UnattributedFailure'` with its own message, contained | interface §3; guide §8, §8.3 |
@@ -72,13 +72,13 @@ read():
 
 - **`AddressNotFound` and `TierNotFound` are read arms, never refusals**, and **any other read failure resolves to the same defaults and throws nothing**: a read moves nothing and a refusal has no channel on this surface, so neither appears in the value (interface §2; guide §4, §5.2; L1 §3).
 - **The overlay answers only while the record address carries nothing**, so a profile whose operator never writes re-imports at every boot and answers the same record (persistence §3; behaviour §3).
-- **Two reads, one synchronous turn, no `await` between them**, so the record and the pair a carrier sees in one answer are never two states of one act; and the answer is detached at every depth by construction, because `fromStored` builds fresh containers and `newMap` gives the `entries` map a null prototype (guide §5.1, §10; ASM-1; `src/main/security-store.ts:231-260`).
+- **Two reads, one synchronous turn, no `await` between them**, so the record and the pair a carrier sees in one answer are never two states of one act; and the answer is detached at every depth by construction, because `fromStored` builds fresh containers and `newMap` gives the `entries` map a null prototype (guide §5.1, §10; ASM-1; the deleted `src/main/security-store.ts:231-260`).
 
 ## 6. `write()` — one admission, one call, one receipt
 
 ```
 write(patch):
-  values ← read each declared member ONCE off the patch, inside one try/catch   · src/main/security-store.ts:341-354
+  values ← read each declared member ONCE off the patch, inside one try/catch   · the deleted security-store.ts:341-354
   if the patch is not a plain object, or names both tiers → refused(ValueRefusedAtBoundary, null)   · ASM-2
   case durable:
       candidate ← toStored(current projection with token/enabled/cap/entries from values)
@@ -93,7 +93,7 @@ write(patch):
 ```
 
 - **Two admission layers, each with its own subject and no duplication**: this module admits the **member domains** (a `token` that is a string or `null`, an `enabled` array, a finite cap or `null`, an `entries` plain object, one of the two literals); the **package's walk** admits the **value**, so a cycle, a function, a symbol, a lone surrogate, a non-finite number, a `-0` or a node past the two ceilings answer `ValueRefusedAtBoundary` from the store and cross verbatim (guide §10.2, §10.3; interface §3; ASM-5).
-- **`maxJournalLength`'s clear arm is `null`**, and the durable member is a `> 0` floored number or absent — `NaN` and a non-positive value clear it, `±Infinity` refuse the patch (interface §2; behaviour §2; `src/main/security-store.ts:365-377` carried).
+- **`maxJournalLength`'s clear arm is `null`**, and the durable member is a `> 0` floored number or absent — `NaN` and a non-positive value clear it, `±Infinity` refuse the patch (interface §2; behaviour §2; the deleted `src/main/security-store.ts:365-377` carried).
 - **`enabled` is served in the caller's own order**, first occurrence first — the order row discriminates against a re-sort (interface §2 `A-5`; behaviour §2).
 - **A refusal leaves the record and the bytes exactly as they stood, mints no cursor and delivers nothing**, and its `reason` is the store's own status **verbatim under the open escape arm** — never narrowed to a spelling this surface does not name, and a sentence is authored here only for a refusal this module makes itself (interface §3; guide §9.4, §8.1; behaviour §5; ASM-6).
 
@@ -111,9 +111,9 @@ importOnce(dir):
   return { …record, entries: map carries a name ? map : nothing }
 ```
 
-- **Six arms, each answering without a throw**: absent, an object, unparsable bytes, a non-object, a directory or an unreadable file, and `entries` not a plain object — the last the one declared non-verbatim arm (interface §2.1; behaviour §3; `src/main/security-store.ts:112-142`).
+- **Six arms, each answering without a throw**: absent, an object, unparsable bytes, a non-object, a directory or an unreadable file, and `entries` not a plain object — the last the one declared non-verbatim arm (interface §2.1; behaviour §3; the deleted `src/main/security-store.ts:112-142`).
 - **The marker is the absence of a record at the record address**, so there is no version member, no second written name and no repair of the retired file; **the retired name is read at most once per profile and never written, renamed, repaired or deleted**, its bytes standing as seeded (persistence §3; guide §9.1; D-19; L1 §5).
-- **Ingested values cross as data and not as an admission**: a `JSON.parse`d value is representable by construction, so no per-entry admission runs at boot (`src/main/security-store.ts:108`; guide §10.4).
+- **Ingested values cross as data and not as an admission**: a `JSON.parse`d value is representable by construction, so no per-entry admission runs at boot (the deleted `src/main/security-store.ts:108`; guide §10.4).
 
 ## 8. The listener registry — one handle per subscription, per address
 

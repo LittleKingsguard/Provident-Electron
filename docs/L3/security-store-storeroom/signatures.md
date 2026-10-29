@@ -60,7 +60,7 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
 ```
 
 - **Six package exports are called** — `storeCreate`, `read`, `write`, `listen`, `register`, `unlisten` — and `readLiteral`, `delete`, `rollback` and the four constraint members are **not** (interface §2; D-12's posture unmoved; guide §3.1).
-- **`N = 12`**, matching the map row: 6 called + 4 value names exposed (the factory and its three verbs) (interface §2; `strata/modules.json:64`; D-14). The cap follows from the row and is never declared here (`platform.md` §4).
+- **`N = 12`**, matching the map row: 6 package exports called + 6 value names exposed (the factory, its three verbs, and the app-state pair `readAppState`/`writeAppState` the retirement added — `docs/L1/settings-carrier-retirement.md` §2, §3 E-2) — 6 + 6 = **12** (interface §2; `strata/modules.json:63`; D-14). The cap follows from the row and is never declared here (`platform.md` §4).
 - **`write`'s fourth position is never supplied**, so the class-test `TypeError` arm is unreachable and the refusal vocabulary is the store's alone (interface §2; guide §3.3).
 - **`subscribe` answers its own withdrawal** rather than exporting a fourth verb, so the module's own surface is four value names and no more (interface §2; `interface.md` §7 `A-4`).
 - **`unlisten` is the withdrawal and `removeListener` is never called**: it is a seventh export, so calling it would move `N` and the map's row, which is L1's to re-declare and not this layer's — and the module binds **one handle per address**, so `unlisten` is the arm the package silences (interface §2; `design.md` §8 `ASM-7`; guide §6.2; P-6).
@@ -102,7 +102,7 @@ export interface SettingsSurface {
 export function createSettingsSurface(options: { userDataDir: string; journalLength?: number }): SettingsSurface
 ```
 
-- **`N = 12` and `19`**: three bridge routes with both sides counted (6) + five value names exposed to `main.ts` + four value names consumed from `operator-settings` (interface §5; `strata/modules.json:72`; D-14).
+- **`N = 12` and `19`**: `operator-settings` is 6 package exports called + 6 value names exposed (**12**); the surface is three bridge routes with both sides counted (**6**) + seven value names exposed to `main.ts` (the factory, `read`, `set`, `transition`, `attach`, and the retirement's `state`/`commit`) + six value names consumed from `operator-settings` (`createOperatorSettings`, `read`, `write`, `subscribe`, `readAppState`, `writeAppState`) — 6 + 7 + 6 = **19** (interface §5; `strata/modules.json:63,71`; `docs/L1/settings-carrier-retirement.md` §2, §3 E-3; D-14).
 - **`main.ts` is the only caller of `createSettingsSurface` in `src/**`**, and the instance's single construction lives inside this module (interface §5 `ASM-L2-8`; D-18).
 - **The transition's answer carries no receipt member**; `write` is declared on `set` alone, exactly as the bridge declares it (interface §5.1 `ASM-L2-4`; `src/main/preload.ts:63-64`).
 - **`SettingsGateSink` is structural**, so `ProvidentMcpServer` satisfies it without a second declaration, and the surface names no `ToolGroup` (interface §5; D-18).
