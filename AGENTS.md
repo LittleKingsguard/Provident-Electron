@@ -2,7 +2,7 @@
 
 **The authoritative corpus is `strata/`. Read `strata/brief.md` first.** This file is a pointer: it
 carries the two goals and the non-negotiables and no workflow rule — the procedure lives in
-`strata/decisions.md` and the seven procedure files beside it (D-3).
+`strata/decisions.md` and the six procedure files beside it (D-3).
 
 ## The two goals
 

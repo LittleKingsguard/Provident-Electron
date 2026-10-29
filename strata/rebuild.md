@@ -5,8 +5,8 @@ Procedure for a rebuilt artifact (D-1). Ceiling: 40 lines.
 ## 1. Eligibility
 
 **Repeat failure** means the same artifact id fails the same test class on **3 consecutive repair
-passes**. The count lives in `strata-state` as the per-artifact `failStreak` and is never counted by
-eye, because an undefined "repeat" is the prose trigger that rots first (D-1). Below threshold the
+passes**. The count lives in `strata-state` as the per-artifact `streaks` entry and is never counted by
+ eye, because an undefined "repeat" is the prose trigger that rots first (D-1). Below threshold the
 recommendation is rejected; the streak alone is also not enough, and the examiner still judges
 whether the code is worth salvaging. An adjudication request from a lower layer counts as one failure
 (D-1 §5): asking is not a pause and is not free.

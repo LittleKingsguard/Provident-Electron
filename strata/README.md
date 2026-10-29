@@ -16,8 +16,9 @@ only document set the layers read, and every file here has a ceiling.
 | `modules.md` | module isolation, `modules.json`, the harness cap | 40 |
 | `platform.md` | measured deployment and checkout constraints | 60 |
 | `archive.md` | where the gate corpus went, and how its citations resolve | — |
-| `modules.json` | the module map (L1-owned; filed with the first unit) | — |
-| `.strata/units/*.json` | state per unit: layer, stage, artifacts, assumptions, failStreak | 40 |
+| `modules.json` | the module map — L1-owned, absent until the first unit files it (`platform.md` §4 gives its shape) | — |
+| `.strata/units/*.json` | state per unit, script-written: layer, stage, artifacts, assumptions, per-artifact `streaks` (`platform.md` §4 gives the full shape) | 40 |
+| `records/<unit>-<pass>.md` | a review record (walkthrough, sweep): the scenario set or row table, replaced per run | 40 |
 | `.strata/returns/*.json` | layer returns, as collected envelopes | — |
 | `records/<unit>-walkthrough.md` | the L0 walkthrough record, replaced per run | 40 |
 
@@ -36,9 +37,12 @@ this tree restates a preset persona — personas point, procedures rule.
 
 ## State, not prose
 
-`strata-state` owns progress. A unit's layer, stage, artifacts, assumptions and per-artifact
-`failStreak` live in `.strata/units/<unit>.json`, overwritten at every transition; no document
-records where a unit stands. This is what keeps the corpus from re-growing.
+`strata-state` owns progress: `init`, `enter --layer`, `artifact --id`, `assume --id --text --alternative`,
+`pass`, `fail [--reason] [--from]`, `rebuild`, `close`, `show`. A unit's layer, stage, artifacts, assumptions and per-artifact
+`streaks` live in `.strata/units/<unit>.json`, overwritten at every transition; no document records
+where a unit stands, and the shape is `platform.md` §4's list. This is what keeps the corpus from
+re-growing. A review task (an examiner's measurement, a walkthrough) may leave a return in
+`.strata/returns/` with no unit state row, because it decides nothing about a unit's progress.
 
 ## Checking this tree
 

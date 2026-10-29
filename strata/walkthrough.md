@@ -47,4 +47,5 @@ still reaches the user, carrying a loop recommendation and never presented as re
 ## 6. Record
 
 L0 writes the report to `strata/records/<unit>-walkthrough.md`, ≤ 40 lines, replaced on every run
-(git holds the history), and archived with the unit when it closes (D-2).
+(git holds the history), and archived with the unit when it closes (D-2). The scenario set lives in
+that same record, above the report — a step without its goal/expected pair is not a scenario.

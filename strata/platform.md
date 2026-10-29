@@ -25,13 +25,12 @@ Ceiling: 60 lines.
 
 ## 3. This checkout
 
-- Node `v24.20.0`; the bundle set is esbuild, the suite is vitest, the app is Electron `^44.4.5`,
-  TypeScript `^5.5.0` (`package.json:18-24`, `node --version`).
-- Six npm legs: `test`, `typecheck`, `typecheck:tests`, `build`, plus `battery`, `divergence`, `ui`,
-  and the `mcp` CLI shim (`package.json:8-22`). `battery` and `divergence` build first; `ui` needs a
-  `DISPLAY` and cannot run in a headless seat.
-- The 2026-10-29 readings are `brief.md` §6's: `3 failed / 3,109 passed / 2 skipped` of `3,114`
-  over `91` files, and three clean legs. A later pass re-measures rather than quoting this row.
+- The 2026-10-29 readings after the archive sweep are `brief.md` §6's: `2 failed / 3,095 passed /
+  2 skipped` of `3,099` over `91` files, and three clean legs (`typecheck`, `typecheck:tests`,
+  `build`). A later pass re-measures rather than quoting this row.
+- **Eight** npm script keys: `test`, `typecheck`, `typecheck:tests`, `build`, `battery`, `divergence`,
+  `ui`, `mcp` (`package.json:8-22`); the last three build first, and `ui` needs a `DISPLAY`. Node `v24.20.0`;
+  devDependencies are Electron `^44.4.5`, esbuild `^0.28.2`, TypeScript `^5.5.0`, vitest `^5.0.1`, `@types/node` `^26.6.2` (`package.json:28-34`).
 - The repository is the sole workspace: this repo's `src/`, `tests/`, `scripts/` and `strata/`. The
   packages it consumes are read-only for every layer (D-5).
 
@@ -49,3 +48,9 @@ Ceiling: 60 lines.
   `--changed <a,b>` when a unit's diff is being scope-checked (D-1).
 - A missing `strata/modules.json` is reported as INFO and leaves diff scope unchecked; L1 files it
   with the first unit's map (D-7, `modules.md` §3).
+- **The map's shape** is `{"modules":[{"name":"store","paths":["src/store","tests/unit/store"],
+  "endpoints":7}]}`: `endpoints` counts the module's declared surface — tools, routes, or a package's
+  exported functions — and the cap follows from it (`50 + 10×N`); L1 declares the surface, never the
+  cap (D-1, `modules.md` §4).
+- **Unit state** (`strata-state`'s output) is `unit`, `layer`, `stage`, `artifacts`, `assumptions`
+  (`{id, text, alternative, status}`), `streaks` (artifact id → failures), `rebuildEligible`, `updated`.

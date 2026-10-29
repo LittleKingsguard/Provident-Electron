@@ -52,9 +52,9 @@ replaced, never annotated; the as-filed copy is cited by path under the archive 
 | Layer | Responsibility | Owns (writes) | Exit condition |
 |---|---|---|---|
 | L0 | user interface: brief, decisions, exit walkthrough, reporting | `strata/brief.md`, `strata/decisions.md` | walkthrough green, then the user accepts |
-| L1 | e2e technical design: module map, module interactions, e2e battery | `docs/L1/`, `tests/e2e/`, `modules.json` | e2e battery green, adversarially reviewed |
+| L1 | e2e technical design: module map, module interactions, e2e battery | `docs/L1/`, `tests/e2e/`, `strata/modules.json` — the first two created on first write | e2e battery green, adversarially reviewed |
 | L2 | integration design: each module's I/O surface and behaviour | `docs/L2/<module>/`, `tests/integration/<module>/` | integration battery green |
-| L3 | module design: structure, signatures, pseudocode, guardrail notes | `docs/L3/<module>/`, `tests/unit/<module>/`, signature stubs | unit battery green |
+| L3 | module design: structure, signatures, pseudocode, guardrail notes | `docs/L3/<module>/` (the design and its `signatures.md` stubs), `tests/unit/<module>/` | unit battery green |
 | L4 | line implementation, one shot | source files of its module | unit battery green, or fail early |
 
 A lower layer may read upward artifacts and never writes them (D-3). At and below L3 an agent is
@@ -116,7 +116,7 @@ correction paragraph or history (D-1).
   at bootstrap. Rejected alternative: a fresh harness before the map, which sets its own scope.
 - `ASM-3` — the four legs of §6 stay the floor of verification, and strata's per-layer batteries add
   to them rather than replace them. Rejected alternative: replacing the vitest suite with L1/L2/L3
-  batteries, which discards 3,114 existing rows and their coverage.
+  batteries, which discards the 3,099 existing rows and their coverage.
 
 ## 9. Non-goals at rev 1
 

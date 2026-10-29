@@ -4,6 +4,8 @@ The only record of user intent for this project under the strata workflow. Appen
 is never edited, reworded or annotated, and a later decision supersedes an earlier one by naming it.
 One section per decision, ≤ 40 lines each. **Source** is the user's own words or the exact option
 they chose; a row with no user source is not a decision and belongs in `brief.md` as an `ASM-n`.
+A **corrigendum** row is sourced by the user-sourced row it corrects plus the measurement that
+compelled it, and it carries that row's authority — it may not change what the user decided.
 
 ---
 
