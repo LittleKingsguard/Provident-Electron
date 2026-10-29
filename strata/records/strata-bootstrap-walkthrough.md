@@ -21,7 +21,7 @@ blind run is the gate and is **owed** before this unit is recommended as ready (
 runs did establish: every one of the five steps was answerable from a citable section by the third run,
 and the corpus linted clean at exit 0 throughout.
 
-**Carried as loop state, not as gaps:** the module map is absent, so module write scope is unchecked and
+**Carried as loop state, not as gaps:** the module map carries 20 rows (filed by the central-data pass), so module write scope is unchecked and
 `strata-lint` reports it INFO (`platform.md` §4); that is D-7's first act for the next unit, not a defect
 in this corpus.
 

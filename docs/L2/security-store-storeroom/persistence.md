@@ -23,9 +23,9 @@
 
 ## 3. The retired name is read at most once
 
-- The object is `<userDataDir>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the five boot arms move as **behaviour**, not as bytes (D-19; L1 §5; `src/main/security-store.ts:112-142`).
+- The object is `<userDataDir>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the five boot arms move as **behaviour**, not as bytes (D-19; L1 §5; `src/main/operator-settings/index.ts (the import arm; `security-store.ts` is deleted)`).
 - **The import runs iff the instance's own file carries no record at `['operator-settings']`**, so it needs no marker, no version member and no second written name: after the first committed write the new file carries the record and the import does not run again (D-19; `guide §9.1`).
-- **The absent arm writes nothing**, so a profile whose operator never writes reaches the same first-run default at every boot — exactly the landed store's behaviour (`src/main/security-store.ts:206`; L1 §5).
+- **The absent arm writes nothing**, so a profile whose operator never writes reaches the same first-run default at every boot — exactly the landed store's behaviour (`src/main/operator-settings/index.ts (the import arm; `security-store.ts` is deleted)`; L1 §5).
 - **The import never writes the retired name**, never renames it and never repairs it: its bytes stand as seeded, which is the row `behaviour.md` §3 states (D-19).
 
 ## 4. The row shape: the store's image and no header

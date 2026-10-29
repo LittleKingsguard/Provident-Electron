@@ -60,7 +60,7 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
 ```
 
 - **Six package exports are called** — `storeCreate`, `read`, `write`, `listen`, `register`, `unlisten` — and `readLiteral`, `delete`, `rollback` and the four constraint members are **not** (interface §2; D-12's posture unmoved; guide §3.1).
-- **`N = 10`**, matching the map row: 6 called + 4 value names exposed (the factory and its three verbs) (interface §2; `strata/modules.json:64`; D-14). The cap follows from the row and is never declared here (`platform.md` §4).
+- **`N = 12`**, matching the map row: 6 called + 4 value names exposed (the factory and its three verbs) (interface §2; `strata/modules.json:64`; D-14). The cap follows from the row and is never declared here (`platform.md` §4).
 - **`write`'s fourth position is never supplied**, so the class-test `TypeError` arm is unreachable and the refusal vocabulary is the store's alone (interface §2; guide §3.3).
 - **`subscribe` answers its own withdrawal** rather than exporting a fourth verb, so the module's own surface is four value names and no more (interface §2; `interface.md` §7 `A-4`).
 - **`unlisten` is the withdrawal and `removeListener` is never called**: it is a seventh export, so calling it would move `N` and the map's row, which is L1's to re-declare and not this layer's — and the module binds **one handle per address**, so `unlisten` is the arm the package silences (interface §2; `design.md` §8 `ASM-7`; guide §6.2; P-6).

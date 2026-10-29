@@ -47,7 +47,7 @@ export interface OperatorSettings {
 - **`writeAppState` answers the sibling's own receipt type** — committed with the store's `cursor`/`opId` verbatim, or refused with the store's `reason`, `message` and `address` verbatim (sibling §3; L1 §3 ASM-2). No second receipt vocabulary exists (D-16).
 - **`writeAppState` never throws**, for any argument: every caught value is contained and answered as a refusal (sibling §2; L1 §3).
 - **`readAppState` moves nothing and serves detached rows**, at every depth (`guide §10`; sibling §2). `storage:'unreachable'` is served when the store's construction refused, so no vertex of this module reads `FilePathUnreachable` as a throw (sibling §2.1; `guide §8.2`).
-- **`legacy` is a boot-time diagnosis served for the process's life and never written** (L1 §4 ASM-4): `'absent'`, `'imported'`, `'corrupt'` are §4's three arms, and **`'recorded'` is the fourth case L1 §4 does not name** — a record stood at the address, so no import arm applied (`ASM-L2-1`).
+- **`legacy` is a boot-time diagnosis served for the process's life and never written** (L1 §4 ASM-4): `'absent'`, `'imported'`, `'corrupt'` are §4's three arms, and **`'recorded'` is the arm L1 §4 now names as `recorded`** — a record stood at the address, so no import arm applied (`ASM-L2-1`).
 - **`N = 12`**: the sibling's 10 (6 package exports called + 4 value names) plus these two (L1 §2; `platform.md` §4). Types move no figure (`A-3`).
 
 ## 3. `src/main/settings-surface/index.ts` — the declared delta
