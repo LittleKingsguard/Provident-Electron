@@ -96,7 +96,9 @@
   sits at the registration boundary, ahead of the adapter (`src/main/mcp-server.ts:94-108,830-831`; D-11).
 - No profile byte moves and no store is constructed at that turn (D-11).
 - `exclusion-closed` is the server's channel token and not a reason word of this module's vocabulary; `tier4-closed` is the
-  tier-4 reader's inverse token and does not appear on this surface (`src/main/security-store.ts:53,197`; L1 rev 2 §4).
+  tier-4 reader's inverse token — the token is declared at `src/main/mcp-server.ts:42-57` and minted by the settings
+  surface at `src/main/settings-surface/index.ts:75-77,132`, where the reader that answers it lives now that
+  `src/main/security-store.ts` is deleted — and it does not appear on this surface (D-16; L1 rev 2 §4).
 - The registry toggle that also runs at the transition is the landed gate's business and this module adds no second mechanism
   (`src/main/mcp-server.ts:649-660`; D-11).
 

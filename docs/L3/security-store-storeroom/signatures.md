@@ -102,7 +102,7 @@ export interface SettingsSurface {
 export function createSettingsSurface(options: { userDataDir: string; journalLength?: number }): SettingsSurface
 ```
 
-- **`N = 15`**: three bridge routes with both sides counted (6) + five value names exposed to `main.ts` + four value names consumed from `operator-settings` (interface §5; `strata/modules.json:72`; D-14).
+- **`N = 12` and `19`**: three bridge routes with both sides counted (6) + five value names exposed to `main.ts` + four value names consumed from `operator-settings` (interface §5; `strata/modules.json:72`; D-14).
 - **`main.ts` is the only caller of `createSettingsSurface` in `src/**`**, and the instance's single construction lives inside this module (interface §5 `ASM-L2-8`; D-18).
 - **The transition's answer carries no receipt member**; `write` is declared on `set` alone, exactly as the bridge declares it (interface §5.1 `ASM-L2-4`; `src/main/preload.ts:63-64`).
 - **`SettingsGateSink` is structural**, so `ProvidentMcpServer` satisfies it without a second declaration, and the surface names no `ToolGroup` (interface §5; D-18).

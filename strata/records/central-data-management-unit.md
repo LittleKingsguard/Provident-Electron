@@ -1,0 +1,33 @@
+# record — `central-data-management`: package findings, and the unit's own owed items (D-5)
+
+- **Unit:** `central-data-management` · **Layer:** L0 at this record · **Branch:** `strata` (D-6) · **Ceiling:** 40 lines (D-1)
+- **What this file is:** the unit's **closure record** for D-5 — the findings its passes surfaced, in their owner's terms,
+  and what the unit itself still owes. It is not a queue: nothing here asks any layer of this tree for work, and the
+  package is never modified (D-5). Recovered from `docs/L1/central-data-census-exception.md` §7/§5,
+  `docs/L2/central-data/behaviour.md` §6/§9, `docs/L2/central-data/persistence.md` §9 and `docs/L3/central-data/design.md` §3.
+
+## 1. Package findings — `provident-storeroom ^1.6.1`, upstream-owned, never patched (D-5)
+
+| id | Symptom | Reproduction | Suspected root cause | Proposed fix shape |
+|---|---|---|---|---|
+| **CD-F1** | `delete` at an address where **no row stands** throws `AddressNotFound` instead of answering the empty removal a caller's receipt would carry; `tiers: []` is reachable only where the address stands at another tier (measured at `57c5825`) | call `delete` at an absent address, at both the whole-target and the `file`-tier spellings | the delete arm reads an absent target as a malformed address rather than a no-op | answer `{tiers: []}`, append nothing, throw nothing |
+| **CD-F2** | the **boot over non-image bytes** has no declared arm: a foreign, unparsable image boots **cold** with its bytes untouched until the next `file`-tier save, so a consumer can state the recovery while the package declares neither it nor a parse-failure arm (symptom measured at `57c5825`) | place non-image bytes at the `filePath`, call `storeCreate`, then `list`/`read` (cold tier answers, bytes byte-identical) and one `write` (bytes replaced) | `guide §9.1` declares the creation, reachability and constraint-list arms and no parse-failure arm, and the declaration carries no such boot status | declare the boot's parse-failure arm — its status and whether the bytes are left untouched — in the native contract and in `guide §9.1` |
+
+- **Neither finding is a demand on this tree**, and neither was promoted past what was measured: CD-F1 is answered inside
+  the module without entering the throwing arm (`design.md` §3 `G7`), and CD-F2 leaves the recovery *statable* by the
+  consumer and undeclared by the package (`persistence.md` §9 `P-1`).
+
+## 2. What this unit owes, and where each item went
+
+- **Owed to the test writer of this layer:** E-2's re-grain set — `C-1`..`C-3` of `docs/L1/central-data-management.md` §8 —
+  moved by one predicate (*a site is in the set iff it reads one of the moved numbers*), recording both the rows it moved
+  and the sites the predicate left green (exception §2/§3; D-10).
+- **Owed and unlanded at this head:** the five `provident.data.*` bridge routes have **no answer site** — the renderer's
+  method switch has no `data.*` arm and `main.ts` registers no IPC handler for them — so `interface.md` §5's answer is
+  design and not a measurement (`docs/L2/central-data/interface.md` §5).
+- **Discharged, not owed:** the parked `ASM-11` retirement half (the one-time import and the retirement of
+  `provident-settings.json`'s write site) was delivered by `settings-carrier-retirement` (D-22), which owns that record.
+- **Owed by L0 before the unit is recommended ready:** a further blind walkthrough run — runs 1 and 2 are not green, so
+  the unit stays at L0 with its walkthrough red (D-10, D-11; `strata/records/central-data-management-walkthrough.md`).
+- **This file discharges** exception §7's last bullet: both findings and the L2 examiner's readings now stand here rather
+  than as a pointer in `docs/L1/`.

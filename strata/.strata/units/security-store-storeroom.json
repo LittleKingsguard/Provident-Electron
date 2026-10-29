@@ -3,14 +3,15 @@
   "layer": "L0",
   "stage": "design",
   "artifacts": [
-    "security-store-instance"
+    "security-store-instance",
+    "unit-record"
   ],
   "assumptions": [],
   "streaks": {
     "walkthrough-record": 2
   },
   "rebuildEligible": false,
-  "updated": "2026-10-29T21:26:32.733Z",
+  "updated": "2026-10-29T21:34:45.029Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

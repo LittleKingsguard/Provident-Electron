@@ -1,7 +1,7 @@
 # L2 — `central-data`: the interface
 
 - **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Status:** DESIGN — `docs/L1/central-data-management.md` rev 2 and its census exception rev 2 are the inputs; the integration battery is filed against this file and stands red until `src/main/data/` exists (D-1 §4)
-- **Inputs:** L1 rev 2 §3/§4/§8; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7 (E-1, E-2, E-3; N = 15); D-5, D-11, D-12, D-13, D-14, D-15; `strata/modules.json:64-73` (`endpoints: 15`); `strata/platform.md` §4; the tree at `57c5825`
+- **Inputs:** L1 rev 2 §3/§4/§8; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7 (E-1, E-2, E-3; N = 15); D-5, D-11, D-12, D-13, D-14, D-15; `strata/modules.json:73-83` (`endpoints: 15`); `strata/platform.md` §4; the tree at `57c5825`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide, and `the declaration` is its `index.d.ts`; both are read and never edited (D-5)
 
 ## 0. Scope
@@ -71,7 +71,7 @@ export const DATA_TOOL_NAMES: readonly DataToolName[]
 export function createDataSurface(options: DataSurfaceOptions): DataSurface
 ```
 
-- **The declared surface is `N = 15`**: 5 tools + 5 routes + 5 `provident-storeroom` exports called — `storeCreate`, `read`, `readLiteral`, `write`, `delete` — so the harness cap is `50 + 10×15 = 200`; `register` has no call site and is **not** on the called set (`strata/modules.json:72`; exception §1; D-14, `platform.md` §4).
+- **The declared surface is `N = 15`**: 5 tools + 5 routes + 5 `provident-storeroom` exports called — `storeCreate`, `read`, `readLiteral`, `write`, `delete` — so the harness cap is `50 + 10×15 = 200`; `register` has no call site and is **not** on the called set (`strata/modules.json:82`; exception §1; D-14, `platform.md` §4).
 - The answer types stay in `src/main/data/`: no renderer sees them, so `src/shared/types.ts` gains the five union strings and nothing else (D-15's E-1 row). `journalLength` defaults to the seam's `DEFAULT_JOURNAL_LENGTH` (`4096`) and bounds this module's own change window (`src/main/storeroom.ts:53`; D-12).
 
 ## 3. The receipt vocabulary — closed, and a value
@@ -92,16 +92,17 @@ Every answer is one of the statuses `committed`, `read`, `absent`, `refused`; no
 
 ## 4. The group's posture
 
-- `ToolGroup` gains `'data'`; the five names are added to `TOOL_GROUPS` as exact rows (the prefix rule covers `module:` only); `VALID_GROUPS` becomes six in **both** live copies (`src/main/security.ts:3,5-42,151` and `src/main/security-store.ts:87,122,339`) — a census move and no behaviour (D-11, D-15, exception §2).
+- `ToolGroup` gains `'data'`; the five names are added to `TOOL_GROUPS` as exact rows (the prefix rule covers `module:` only); `VALID_GROUPS` becomes six in **both** live copies (`src/main/security.ts:3,5-50,159` and `src/main/operator-settings/index.ts:112,178`, which is where the second copy re-homed when `src/main/security-store.ts` was deleted — D-16) — a census move and no behaviour (D-11, D-15, exception §2).
 - **OFF by default**: `defaultSecurityConfig()` stays `['read','dispatch']`, eight names, so a fresh profile lists no `data` tool at all; a disabled group's tools are **absent from `tools/list`, not present-and-refusing**, because registration is driven by `allowedToolNames()`, so an unregistered tool cannot answer anything (`src/main/security.ts:86-88`; `src/main/mcp-server.ts:603-615,832-1040`; D-11).
 - With `data` enabled the listed set is **13**; `ALL_TOOLS` 22 → 27; `ALL_RESOURCES` stays 3 — the group is tools only, with no `mcp://provident/data/…` mirror (L1 rev 2 §3; D-11).
 
 ## 5. The five bridge routes, answered in main
 
-- `RpcMethod` gains `data.read`, `data.write`, `data.delete`, `data.list`, `data.journal` — 22 → 27 — and each is answered **in main** by the `DataSurface` operation of the same name: one answer site for both the tool call and the route (`src/shared/types.ts:259-281`; D-11, D-15).
+- `RpcMethod` gains `data.read`, `data.write`, `data.delete`, `data.list`, `data.journal` — 22 → 27 — and each is answered **in main** by the `DataSurface` operation of the same name: one answer site for both the tool call and the route (`src/shared/types.ts:259-286`; D-11, D-15).
+- **The group's posture does not reach a route, and the tree has yet to carry the answer.** A `data.*` route answers while `data` is OFF as well: the group governs which MCP tool names are registered and therefore absent from `tools/list`, and it says nothing about the bridge's own vocabulary — the rejected alternative, gating the routes by the group too, would make a route the renderer's contract declares vanish whenever an operator narrows a grant, which is a power no clause of D-11 gives an MCP group (D-11; ASM-9). **Unlanded at this head, so the clause above is design and is not measured:** no answer site for the five routes exists — the renderer's method switch has no `data.*` arm and its default throws `unknown method` (`src/renderer/renderer.ts:961-1033`), and `src/main/main.ts:277-393` registers no IPC handler for them (D-11, D-15).
 - No renderer method-switch arm is added, so `MUTATING_METHODS` stays at its seven, and `window.provident` gains no member: the routes are vocabulary and record, not a new bridge surface (`src/renderer/renderer.ts:829`; `src/main/preload.ts:42-75`; D-11, L1 rev 2 §4 ASM-9).
 - The registrations obtain their adapter through **one new optional option, `McpServerOptions.dataSurface?: DataSurface`**, exactly as the `module.*` handlers receive `moduleStore` (`src/main/mcp-server.ts:392-404,813-820`; D-11).
-- That option is supplied by the composition site's existing one-line options pass — `new ProvidentMcpServer({ …, dataSurface: createDataSurface({ profileDir: app.getPath('userData') }) })` at `src/main/main.ts:284` — and **that line is licensed by the census exception's E-3**: one import line plus that one options member, written by `central-data`'s L4 in the same one shot, with no other line of `main.ts` moving, and it is not a census row (`docs/L1/central-data-census-exception.md` §2 E-3; D-11, D-13).
+- That option is supplied by the composition site's existing one-line options pass — `new ProvidentMcpServer({ …, dataSurface: createDataSurface({ profileDir: app.getPath('userData') }) })` at `src/main/main.ts:257` — and **that line is licensed by the census exception's E-3**: one import line plus that one options member, written by `central-data`'s L4 in the same one shot, with no other line of `main.ts` moving, and it is not a census row (`docs/L1/central-data-census-exception.md` §2 E-3; D-11, D-13).
 - Until it lands, a server constructed without a surface registers **no** `data` tool even with the group enabled: the five names are enumerated in `ALL_TOOLS` and unregistered, which is the count-moved-without-its-row finding D-11 forbids. The live composition must supply the surface (D-11).
 
 ## 6. The discipline: a refusal is a value, and the previous bytes stay
@@ -121,7 +122,7 @@ This module renders nothing and changes no rendered surface: its five tools answ
 | ASM-L2-1 | `data.write` takes exactly one path/value pair (D-11's atomic receipt) | a pair set committing per pair, which makes "a refusal leaves the previous bytes intact" false from pair 2 onward |
 | ASM-L2-2 | `list` answers the paths that hold a **row**, sorted by the path's JSON text (D-11) | every node path including branches, which no caller can act on and which `read` already derives |
 | ASM-L2-3 | the journal window is this process's own (4096), and a foreign cursor answers `cursor-unknown` | a cursor persisted beside the store's file, which would be a second written name (D-13) |
-| ASM-L2-4 | the surface reaches the server through `McpServerOptions.dataSurface` and the one `main.ts:284` composition line, which exception E-3 licences (§5) | leaving the option unsupplied, which leaves five counted names registering nothing (D-11); or constructing the store inside `mcp-server.ts` from a path it derives, which would put the profile's directory in a module that has no profile (D-13) |
+| ASM-L2-4 | the surface reaches the server through `McpServerOptions.dataSurface` and the one `main.ts:257` composition line, which exception E-3 licences (§5) | leaving the option unsupplied, which leaves five counted names registering nothing (D-11); or constructing the store inside `mcp-server.ts` from a path it derives, which would put the profile's directory in a module that has no profile (D-13) |
 | ASM-L2-5 | the window bounds are two optional members of the one `DataLedger`, present on the `cursor-unknown` arm alone (§3) | a refined union arm (`DataLedger & { reason: 'cursor-unknown' }`), which makes the ledger two shapes and a reason-wide handler inexpressible |
 
 ## The integration battery's surface

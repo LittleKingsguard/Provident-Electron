@@ -7,7 +7,9 @@
     "e2e-design-rev2",
     "l2-integration-battery",
     "l3-unit-battery",
-    "central-data-module"
+    "central-data-module",
+    "carrier-regrain",
+    "unit-record"
   ],
   "assumptions": [
     {
@@ -21,7 +23,7 @@
     "walkthrough-record": 2
   },
   "rebuildEligible": false,
-  "updated": "2026-10-29T21:26:32.746Z",
+  "updated": "2026-10-29T21:34:45.016Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

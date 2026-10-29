@@ -14,7 +14,7 @@
 D-11 puts the tool census in the same unit that registers the tools, and D-15 fixes where that move happens: the live
 tree only, never the archived corpus. The five `provident.data.*` tools are registered from `src/main/mcp-server.ts`
 and gated from `src/main/security.ts`, and both files are claimed by the `mcp-surface` row of the map — not by
-`central-data` (`strata/modules.json:3-32,64-73`; D-11, D-15). This unit therefore cannot execute D-11 without
+`central-data` (`strata/modules.json:3-32,73-83`; D-11, D-15). This unit therefore cannot execute D-11 without
 touching another module's paths, and `modules.md` §1 forbids a module agent doing that silently.
 
 **Decision.** One **declared cross-module exception**, enumerated by path in §2, with a named writer per row in §3
@@ -22,13 +22,13 @@ and a closed set of moved numbers in §4. It licences writes on the stated paths
 not renew, and it moves no module's declared surface other than the census it names (D-4's precedent for a swept
 pass, D-11, D-15).
 
-**The map's one row moves, and only its count.** `central-data`'s N is **15**, not L1 rev 2 §2's 16: the sixth
-`provident-storeroom` export the earlier count carried, `register`, has no call site — the package publishes no route
-by which a caller restricted to `register` observes a change — so the surface consumed is 5 tools + 5 bridge routes
-answered + 5 exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`), measured by this unit's L2
-examiner at `57c5825` and corrected here (`strata/modules.json:72`; D-14, `strata/platform.md` §4). L1 rev 2 §2's
-figure is read through this clause. The cap follows: `50 + 10×15 = 200`. `mcp-surface` keeps `30` — 22 tools + 3
-resources + the five `data` tools it registers and gates (D-11).
+**The map's one row moves, and only its count.** `central-data`'s N is **15**, not the 16 an earlier count carried:
+the sixth `provident-storeroom` export that count named, `register`, has no call site — the package publishes no
+route by which a caller restricted to `register` observes a change — so the surface consumed is 5 tools + 5 bridge
+routes answered + 5 exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`), measured by this unit's
+L2 examiner at `57c5825` and corrected here (`strata/modules.json:82`; D-14, `strata/platform.md` §4). The cap
+follows: `50 + 10×15 = 200`, and L1 §2 now reads this figure. `mcp-surface` keeps `30` — 22 tools + 3 resources + the
+five `data` tools it registers and gates (D-11).
 
 ## 2. The exception, by path (E-1 census · E-2 rows · E-3 composition)
 
@@ -40,16 +40,15 @@ reader takes it for one (D-11, D-13).
 | Path (owning row) | The rows that move | Writer |
 |---|---|---|
 | `src/main/security.ts` (`mcp-surface`) | `ToolGroup` gains `'data'`; `TOOL_GROUPS` gains the five `provident.data.*` → `'data'`; `VALID_GROUPS` five → six (D-11, D-15) | `central-data`'s L4, one shot |
-| `src/main/security-store.ts` (`operator-settings`) | `VALID_GROUPS` at `:87` gains `'data'`; `:122` and `:339` read that same constant and move with it — no second edit (D-15's second live copy) | `central-data`'s L4, one shot |
+| `src/main/operator-settings/index.ts` (`operator-settings`) | `VALID_GROUPS` at `:112` gains `'data'`; `:178` reads that same constant and moves with it — no second edit (D-15's second live copy, which the rebuild re-homed here when `src/main/security-store.ts` was deleted, D-16) | `central-data`'s L4, one shot |
 | `src/main/mcp-server.ts` (`mcp-surface`) | `ALL_TOOLS` 22 → 27 with the five names; five registrations calling the module's own adapter, each inside the landed per-invocation wrapper (`exclusionTurn`, D-11) | `central-data`'s L4, one shot |
 | `src/shared/types.ts` (`ipc-contract`) | `RpcMethod` 22 → 27 with `data.read`/`data.write`/`data.delete`/`data.list`/`data.journal`; `MUTATING_METHODS` untouched at seven (D-11; L1 rev 2 §4 ASM-9) | `central-data`'s L4, one shot |
 
 **E-3 — composition: one line, and it is not a census.** `src/main/main.ts` (`app-shell`): one import line and the one
 options member on the server's options pass — `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })`
-— which reads `:288` at this head, the census's own two citation lines having moved it off `:284`. Without it the
-five names stand in `ALL_TOOLS` and register nothing, which is D-11's own finding read backwards; the surface
-constructs no store and touches no file until a tool is called, so the boot's own behaviour is unmoved (D-11, D-13;
-`docs/L2/central-data/interface.md` §5). Writer: `central-data`'s L4, one shot.
+— which reads `:257` at this head. Without it the five names stand in `ALL_TOOLS` and register nothing, which is D-11's
+own finding read backwards; the surface constructs no store and touches no file until a tool is called, so the boot's
+own behaviour is unmoved (D-11, D-13; `docs/L2/central-data/interface.md` §5). Writer: `central-data`'s L4, one shot.
 
 **E-2 — rows, the §8 set, moved by this unit's L2 test writer.** L1 rev 2 §8 names 40 sites in 24 files — 5 `src/`
 statements (they are E-1 above) and 35 test or battery rows, 2 of them compile-reds under `typecheck:tests` — and
@@ -124,7 +123,7 @@ same finding read backwards.
   increment that owns the join, and until then C-3's rows move only if the store's file actually reddens them —
   which the §8 predicate decides, not this artifact (D-13, D-1).
 - **Parked: nothing else.** The five tools, their five routes, the store's file, the read-only journal and the sixth
-  group are claimed paths in `strata/modules.json:64-73` (D-11, D-12).
+  group are claimed paths in `strata/modules.json:73-83` (D-11, D-12).
 
 ## 6. How the exception is checked
 

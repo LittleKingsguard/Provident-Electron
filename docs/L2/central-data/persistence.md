@@ -9,11 +9,11 @@
 ## 1. The one new written name
 
 - **`<userData>/provident-profile.json`** — the profile store's file. The **directory** arrives from the module's caller (`DataSurfaceOptions.profileDir`) and the **name** is this module's own choice, so no other module spells it (`src/main/main.ts:115-119`; D-13).
-- This unit adds **exactly one** written name. The other two the app writes at steady state are not this module's: `provident-security.json` (`operator-settings`, unmoved) and `<userData>/provident-settings.json` (`app-shell`'s tier-1 carrier, still written because its retirement is parked — exception §5; D-13).
+- This unit adds **exactly one** written name. The other written name at steady state is not this module's: `<userData>/provident-operator-settings.json`, the instance's own file (`operator-settings`, D-16, D-19). `provident-security.json` is a **seed** since the rebuild — read at most once and never written — and `<userData>/provident-settings.json` is a seed too since the carrier retirement (D-19, D-22; exception §5, discharged by `settings-carrier-retirement`; D-13).
 - D-13's consequence follows and is not absorbed: the compliance battery's Family-B reading "exactly two persisted files" stops being a true standing pin the moment this file exists, and its rows are re-grained by this unit's test writer in the unit that adds the file — moved, never deleted (`D-13`, `D-15`).
 - This module's own filesystem acts are **the existence probe and nothing else**: it creates no `.tmp`, no lock, no sidecar, no copy, no journal file and no directory of its own (D-13).
 - The store's construction is what creates the file (an exclusive zero-length file at a provided, absent path), which is why construction is deferred to the first write: a profile that is only read costs no filesystem act (`guide §9.1`; D-13).
-- `<userData>/provident-settings.json` is **not read, not written and not retired by this module** — that half of L1's ASM-11 is parked to the increment that owns the app-shell crossing (`docs/L1/central-data-census-exception.md` §5; D-13).
+- `<userData>/provident-settings.json` is **not read, not written and not retired by this module** — L1's ASM-11 half was parked to the increment that owns the app-shell crossing and has since been delivered by `settings-carrier-retirement`, which is read through `docs/L1/settings-carrier-retirement.md` §4 (D-22, D-19; exception §5; D-13).
 
 ## 2. The key space
 
@@ -76,12 +76,12 @@
 
 ## 7. What this module does not touch
 
-- `provident-security.json` — `operator-settings`' file, unmoved and never read or written here (`strata/modules.json:45-62`; D-13).
+- `provident-security.json` — `operator-settings`' **retired seed**, never a written name since the rebuild: read at most once at a first boot, its bytes left standing, and never read or written here (`strata/modules.json:44-64`; D-13, D-19).
 - `<userData>/provident-settings.json` — neither read, written nor retired (exception §5; D-13).
 - No second store and no second `filePath`: one store per surface, constructed at most once and kept for the process's life
   (`guide §3.2`; D-13).
 - No file of the renderer's: the producing process's store (`src/renderer/store.ts`) is another module's and is read, written
-  and persisted nowhere by this one (`strata/modules.json:155-161`; D-13).
+  and persisted nowhere by this one (`strata/modules.json:163-171`; D-13).
 
 ## 8. Migrations: none standing
 
@@ -97,7 +97,7 @@
 |---|---|---|---|---|
 | **P-1** | a boot over bytes that are not the store's image has **no declared answer**: a foreign, unparsable image boots **cold** and its bytes stand **untouched** until the next `file`-tier save — **symptom measured at `57c5825`** — so a consumer can state the recovery arm while the package declares neither it nor a parse-failure arm; the finding **survives as a declaration gap** | place non-image bytes at the `filePath`, call `storeCreate`, then `list`/`read` (the cold tier answers, the bytes are byte-identical) and one `write` (the bytes are replaced) | the shipped guide's boot clauses declare the creation, reachability and constraint-list arms and no parse-failure arm, and the declaration carries no such status for a boot; that the boot is cold is measured, why it carries no declared arm is not | declare the boot's parse-failure arm — its status and whether the bytes are left untouched — in the native contract and in the guide's §9.1 |
 | **P-2** | the writer's mechanism is undeclared, so no consumer can state that the store's own file is torn-write-free | read `guide §9.1-§9.4`: durability, rollback and residue are declared; stage → fsync → rename is not | durability is declared as an outcome ("the last successful save's bytes") rather than as a mechanism | declare the mechanism, or explicitly disclaim atomicity, beside §9.2 |
-| **P-3** | `register` cannot be called on its own: the package publishes no route by which a consumer restricted to `register` alone can observe a change, so `central-data`'s declared sixth export has no call site (L1 rev 2 §2, ASM-5) | `store.register('h', fn)` under a handle never passed to `listen` | the listener route is declared as `listen` **+** `register`, with `unlisten` as its withdrawal, and `register` alone names no watched address | declare `register`'s arm on an unlistened handle, or publish the pair as the one counted surface it is |
+| **P-3** | `register` cannot be called on its own: the package publishes no route by which a consumer restricted to `register` alone can observe a change, so `central-data`'s declared sixth export has no call site (ASM-5; exception §1) | `store.register('h', fn)` under a handle never passed to `listen` | the listener route is declared as `listen` **+** `register`, with `unlisten` as its withdrawal, and `register` alone names no watched address | declare `register`'s arm on an unlistened handle, or publish the pair as the one counted surface it is |
 
 - **All three stand, and the measurement moves none of them.** P-1's symptom is now measured — the boot is cold and the bytes
   survive until the next `file`-tier save — which is what lets `behaviour.md` §9 state the recovery arm as a behaviour; the
@@ -105,4 +105,5 @@
   arm (D-5). P-2 is unmoved: the mechanism is undeclared whether or not the outcome holds. These are this unit's D-5 filings for
   its own record; the package side is filed once, upstream-owned, in `docs/L1/central-data-census-exception.md` §7, and no
   clause of this document patches or proxies a package behaviour (D-5). **P-3 is also the reason this unit's map row reads
-  `endpoints: 15` and not L1 rev 2 §2's 16** — the five exports called, and `register` off the called set (exception §1; D-14).
+  `endpoints: 15` and not the 16 an earlier count carried** — the five exports called, and `register` off the called set
+  (exception §1; D-14).

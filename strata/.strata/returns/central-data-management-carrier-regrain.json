@@ -1,0 +1,22 @@
+{
+  "unit": "central-data-management",
+  "from": "L1",
+  "to": "L0",
+  "verdict": "PASS",
+  "artifact": "carrier-regrain",
+  "citations": [
+    "docs/L1/central-data-management.md sections 2, 3, 4, 5 (S-9), 7 (ASM-5), 8 (C-1, C-2)",
+    "docs/L1/central-data-census-exception.md sections 1, 2 (E-1, E-3), 5, 7",
+    "docs/L2/central-data/interface.md sections 2, 4, 5, 8 (ASM-L2-4)",
+    "docs/L2/central-data/persistence.md sections 1, 7, 9",
+    "docs/L2/central-data/behaviour.md section 8",
+    "strata/brief.md section 2",
+    "strata/modules.json lines 73-83 (central-data, endpoints 15)",
+    "strata/decisions.md D-11, D-13, D-16, D-19, D-22",
+    "strata/records/central-data-management-unit.md",
+    "strata/records/security-store-storeroom-unit.md",
+    "strata/records/settings-carrier-retirement-unit.md",
+    "strata/records/central-data-management-walkthrough.md run 2"
+  ],
+  "notes": "Re-grain only: no src/, tests/, package.json or archive/ path touched (D-2). Unit state and the four legs are not run in this seat; the transitions and commands are named in the return."
+}
