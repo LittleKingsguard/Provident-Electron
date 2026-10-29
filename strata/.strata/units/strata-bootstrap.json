@@ -1,0 +1,35 @@
+{
+  "unit": "strata-bootstrap",
+  "layer": "L0",
+  "stage": "design",
+  "artifacts": [
+    "brief",
+    "decisions",
+    "procedures",
+    "platform",
+    "archive-index"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-1",
+      "text": "the existing src/{main,renderer,shared} tree and flat tests/*.test.ts suite are adopted as substrate; L1 files the module map that claims or replaces them",
+      "alternative": "re-laying out src/ and tests/ into per-module folders before the map exists, which designs the modules from L0",
+      "status": "open"
+    },
+    {
+      "id": "ASM-2",
+      "text": "the gate-era .mjs drivers enter the L1 module map as existing harness code and are not re-authored at bootstrap",
+      "alternative": "authoring a fresh harness before the map, which sets its own scope",
+      "status": "open"
+    },
+    {
+      "id": "ASM-3",
+      "text": "the four legs of brief.md 6 remain the floor of verification and per-layer batteries add to them",
+      "alternative": "replacing the vitest suite with strata batteries, discarding 3,114 existing rows",
+      "status": "open"
+    }
+  ],
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-10-29T02:35:48.007Z"
+}

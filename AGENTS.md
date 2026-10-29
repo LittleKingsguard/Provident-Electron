@@ -1,380 +1,57 @@
-# Provident-Electron — Agent Configuration
+# Provident-Electron — agent notes
 
-Context management and process guidelines for agents working in this
-repository. This is a PORT of the process rules from the upstream
-Preempt-Providence repo (`AGENTS.md`, `docs/subagents.md`) adapted to this
-project's two distinct goals:
+**The authoritative corpus is `strata/`. Read `strata/brief.md` first.** This file is a pointer: it
+carries the two goals and the non-negotiables and no workflow rule — the procedure lives in
+`strata/decisions.md` and the seven procedure files beside it (D-3).
 
-1. **Implementation test of the `provident-ssr` npm package.** The original
-   source + documentation live in the ADJACENT `Preempt-Providence` folder
-   (not a dependency of this repo — read it at
-   `../Preempt-Providence/`). Agents MUST NOT make direct changes to the
-   package code (`node_modules/provident-ssr/` or the upstream folder).
-   Any defect or requirement gap discovered during implementation is
-   CATALOGUED in `docs/defects.md` and handed off as an issue to the
-   original project (see `docs/HANDOFF.md`).
-2. **Prebuild baseline for Electron apps using the provident-ssr framework.**
-   Full synthetic-event access + rendered-HTML visibility for MCP endpoints
-   (agentic use + debugging exposure). This implements the upstream's parked
-   "Phase C" (cross-process MCP/Electron endpoint) as a consumer.
+## The two goals
 
-## Project-wide constraint (UI rendering)
+1. **Implementation test of `provident-ssr`** and of the sibling `provident-storeroom`. Upstream source
+   and docs live in the adjacent `../Preempt-Providence/` checkout, which is not a dependency of this
+   repo. **Neither package is ever modified**: a defect or requirement gap is recorded with symptom,
+   reproduction, suspected root cause and proposed fix shape, upstream-owned, in the record of the unit
+   that surfaced it and archived with that unit (`strata/decisions.md` D-5).
+2. **Prebuild baseline for Electron apps on that framework** — synthetic-event access plus
+   rendered-HTML visibility as MCP endpoints, for agentic use and debugging exposure.
 
-**All UI elements that are not directly part of the Electron shell itself
-(e.g. pre-existing menu/settings dropdowns, panels, dialogs, controls) MUST be
-rendered with the provident framework** — authored as provident-ssr data
-(envelope nodes / handler bodies / hooks / component bindings) and driven
-through the producing graph, NOT as hand-written HTML/DOM in the renderer.
-The Electron shell's own chrome (the window frame, the native menu bar, the
-preload bridge, the MCP server) is the only exception. Rationale: the shell's
-whole purpose is full synthetic-event access + rendered-HTML visibility for
-MCP endpoints — a UI element rendered outside the provident graph is invisible
-to `provident.dispatch`/`get_rendered_html`/`get_markdown` and defeats the
-agentic/debugging surface. A UI element added outside the framework is a
-review finding.
+## Non-negotiables
 
-## Context budget rules (imported from upstream)
+- **UI authority.** Every element outside the Electron shell's own chrome is provident data — envelope
+  nodes, handler bodies, hooks, component bindings — driven through the producing graph, never
+  hand-written DOM; an element rendered outside it is invisible to `provident.dispatch`,
+  `get_rendered_html` and `get_markdown`. Source: the charter's own section, retained in
+  `archive/gate-corpus-2026-10-29/AGENTS.md:22-34` (§ "Project-wide constraint (UI rendering)").
+- **A node-suite green is envelope-green, never app-green** — `npm test` runs under a layout-less DOM
+  shim, with no window, no IPC and no transport (`strata/brief.md` §6).
+- **Four legs before any change is reported**: `npm test`, `npm run typecheck`,
+  `npm run typecheck:tests`, `npm run build` (`strata/brief.md` §6).
+- **No layer judges its own design**: examiners diagnose and never patch, and L4 owns implementation
+  only (`strata/examiner.md`, `strata/rebuild.md`).
 
-1. **75% threshold**: past 75% of available context, stop starting new work
-   and switch to preparing handover documents so a fresh sub-agent can
-   continue.
-2. **50% task threshold**: a task estimated to take >50% of context is
-   delegated to sub-agents, never done inline.
-   **RCA-5 (2026-08-23): a multi-unit deliverable must be delegated PER UNIT, not
-   inlined as one pass.** Context budget pressure was the primary cause of the
-   B/C/D miss — the three units + R13 were implemented inline in a single pass
-   instead of delegated as separate TestWriter-red → Implementer-green →
-   adversarial → blind-greens cycles. Treat "delegate this multi-unit deliverable"
-   as a hard gate: if the deliverable spans 2+ spec'd units, split it before
-   starting, and never let a unit's red→green→adversarial→greens sequence share
-   one inline run with a sibling unit's.
-3. **Handover must include a documentation-staleness review**: before any
-   handover is reported complete, reconcile the active trackers
-   (`docs/next-steps.md`, `docs/pending.md`, `docs/defects.md`,
-   `docs/decisions.md`, `docs/HANDOFF.md`) and the relevant
-   `docs/specs/*.md` against the ACTUAL repo/build state — every DONE row
-   that is now implemented, every OPEN item that changed status, every
-   method/behavior named in a spec that drifted from the code, and every
-   version/test-count claimed. Fix stale entries in the same pass so a fresh
-   sub-agent inherits an accurate picture, and note the staleness pass in the
-   handover doc itself. A handover that repeats an out-of-date DONE/OPEN
-   status or a wrong method name is a review finding.
+## Where things are
 
-## Process requirements
+| Path | What it holds |
+|---|---|
+| `strata/` | the live corpus: brief, decisions, six procedures, platform facts, unit state |
+| `docs/L1/`, `docs/L2/<module>/`, `docs/L3/<module>/` | layer design scopes, written by their layers only |
+| `src/main/`, `src/renderer/`, `src/shared/` | the app: MCP server + IPC bridge, producing process, shared modules |
+| `tests/`, `scripts/`, `demo/` | the suite, the Electron legs and MCP CLI, the live pane-drag demo |
+| `archive/gate-corpus-2026-10-29/` | the retired gate corpus; `docs/<x>` resolves here as `<x>` |
 
-**RCA-8 (2026-09-27): COMMIT ATOMICITY — every gate leaves a commit, and no
-pass may destroy unrecoverable work.** The wave-C pass lost ~996 uncommitted
-lines of `docs/specs/ci-ui-leg.md` when a doc agent's intended *append* was
-executed as a whole-file *replace*; the base survived only because it happened
-to be tracked, and everything the cycle had added after that commit was
-rebuilt from session notes rather than recovered. **Rules, binding on every
-agent and on the orchestrator:**
+## Current state
 
-a. **Commit at every gate boundary, not at the end of a unit.** A unit's work
-   is committed **at least** once per gate that changed files (spec → red →
-   green → adversarial/doc-review → DONE). A working tree carrying more than
-   **one** unit's uncommitted work is itself a review finding.
-b. **Commit before a destructive-capable operation.** Immediately before any
-   whole-file rewrite, bulk regeneration, archival move, or a delegated pass
-   whose prompt authorizes a file-replacing write, the current state MUST
-   already be committed — or, if it cannot be (an untracked artifact), the
-   agent must copy it aside first and say where.
-c. **Whole-file `write` on an existing file over ~200 lines is FORBIDDEN**
-   unless the file is committed in the same pass. Use bounded `edit`s, or
-   append, or `write` a NEW file. A doc/spec file that is long, actively
-   appended-to, and uncommitted is the exact artifact this rule exists for.
-d. **Append means append.** A pass that intends to add a block to a document
-   must use an anchored `edit` on the file's last line (or verify afterwards
-   that the pre-existing bytes are still present) — never a `write`. If a pass
-   discovers it has truncated a file, it must **stop**, state the fact in the
-   file itself and to the orchestrator, and restore from version control
-   before any other edit.
-e. **Unrecoverable-loss check, per pass.** A pass that edits a tracked
-   document asserts the edited file still exists in `HEAD`, and the
-   orchestrator verifies `git status` at each checkpoint. An untracked
-   document that matters (a spec, a greens set, a tracker) must be committed
-   **before** further passes edit it.
-f. **Commits are scoped, not bulk.** One commit per gate boundary with a
-   message naming the unit and the gate; unrelated units do not share a
-   commit merely because they were finished near each other.
+Branch `strata` carries the bootstrap and `main` is frozen until the user grants merge permission
+(`strata/decisions.md` D-6). The standing work is a central data management system over
+`provident-storeroom` — imported and inert (`src/main/storeroom.ts`), implementation pending, no design
+admitted before L1 files the module map (D-7). Where work stands is state, not prose:
+`strata/.strata/units/*.json`.
 
-g. **As-filed bytes are retained in the ARCHIVE, not in the corpus.** A
-   superseded cell, clause or block is preserved **byte-exactly** in
-   `archive/<topic>/<date>-<name>.md` — a copy, cited by path — and the live
-   document carries the standing text plus a **one-line pointer** to that
-   copy. It does **not** carry the superseded bytes beside the standing text.
-   Items `(b)` and `(e)` bind the move exactly as they bind any other archive
-   move: commit before it, and confirm the copy exists (and is committed, if
-   it matters) before any further edit. **What is required is retention *and*
-   retrievability — never retention *in place*.** A document that grows without
-   bound by carrying every superseded state beside its successor is a review
-   finding; so is an archive move that leaves no pointer, or a pointer whose
-   target does not resolve. *(Added 2026-10-08 at the architect's instruction;
-   record: Agent Harness `docs/specs/rca-gate-output-volume.md` §8.)*
+## Commands
 
-   **Note on the citation — a retirement.** The practice this item authorises
-   has been cited corpus-wide as **`RCA-8(d) ANNOTATE-BESIDE`**. `(d)` is
-   *"append means append"* and says nothing about retention, and
-   `ANNOTATE-BESIDE` is not a requirement of this file (it appears here zero
-   times). Its only textual seed is item 2(c)'s *"a mis-sum is corrected by
-   annotating beside the as-filed form"*, scoped to mis-summed PBT attempt
-   totals. **The `RCA-8(d) ANNOTATE-BESIDE` spelling is RETIRED — a citation
-   to it is now a finding** (Agent Harness `docs/defects.md` `DEF-2026-10-08`).
-
-3. **TDD, always (imported, subagents.md workflow)**: every source-code task
-   is red → green → verify, in order: (a) write tests with the states /
-   fail-states (red); (b) run them and report the failing set; (c) implement
-   the least code that makes them green; (d) re-run the validation (item 5).
-   A change that adds no test is itself a review finding. Delegation prompts
-   must never be "implement X and add tests".
-   **RCA-1 (2026-08-23): do NOT invert the order.** Writing the implementation
-   first and the tests after is a process violation even if the final suite is
-   green — the red set must be RUN and REPORTED per unit BEFORE implementation.
-   Record the red set explicitly in the next-steps DONE row for that unit (e.g.
-   "TestWriter red: N failing (method does not exist)" → "Implementer green: N
-   pass"). An entry that claims green without a recorded red run for the unit is
-   a review finding.
-   **RCA-2 (2026-08-23): a multi-unit deliverable is split PER UNIT.** Do not
-   implement Units B, C, D (+R13) as one inline run. Each unit is its own
-   red→green→adversarial→verify cycle, delegated to sub-agents per item 2/9, and
-   each lands as its own DONE row with its own red/green + adversarial + greens
-   set. A single pass that implements several spec'd units together and writes
-   all their tests at the end repeats the miss.
-4. **Validation after features/tests**: after any feature or test change run
-   the trio before reporting complete:
-   ```
-   npm test           # vitest — full suite
-   npm run typecheck  # tsc --noEmit
-   npm run build      # esbuild bundles (main cjs + preload cjs + renderer esm)
-   ```
-   (This project has no demo-smoke; the upstream's trio is test + typecheck +
-   demo:smoke. The build is this project's third leg.)
-   **⟶ AN ADDITIVE FOURTH LEG LANDED 2026-09-27 (the test-layer leg; it closes
-   `docs/pending.md` §H's standing gap):** the trio above is UNCHANGED, and beside
-   it there is now `npm run typecheck:tests` (`tsc -p tsconfig.tests.json`), which
-   compiles the whole `tests/**/*.ts` tree under the SAME strictness a unit's own
-   leg 4 uses (`--noEmit --strict --target ES2022 --lib ES2022,DOM,DOM.Iterable
-   --module ESNext --moduleResolution bundler --types node,vitest/globals`) —
-   necessary because `tsconfig.json` includes `src/**/*.ts` and excludes `tests`,
-   so the trio's second leg NEVER READS A TEST FILE. It is ADDITIVE in both
-   directions: `npm run typecheck` keeps its `src/**`-only behaviour, and every
-   DONE row written before this leg keeps its "typecheck clean" claim as written.
-   From here on, a unit that cites typecheck as evidence about its OWN test file
-   must cite this leg (or its own leg 4). **Process hazard, recorded because it
-   has already bitten once:** `tests/ui-leg-contract.test.ts`'s `L-1` pins the
-   `scripts` KEY SET (the landed keys plus exactly `ui`), so ANY further script
-   key — including this one — reddens that row until a TestWriter extends the
-   landed set; a config change cannot satisfy it.
-5. **Specs + decision records**: behavior contracts live in `docs/specs/*.md`
-   (this repo's contract = the MCP endpoint spec, `docs/specs/mcp-endpoint.md`).
-   Design decisions are recorded in `docs/decisions.md` as `DECIDED:` /
-   `ACTIVE` / `SUPERSEDED` rows. Keep both in sync with the implementation.
-6. **Document-archival loop (imported from upstream Preempt-Providence
-   AGENTS.md item 6, adapted)**: the git-visible `docs/` tree is for ACTIVE
-   development work + the CURRENT contract/spec state. After EACH significant
-   change (and as a MANDATORY per-unit step after the greens — see item 10b),
-   run a cleanup pass: (a) merge the new/changed information into the core docs —
-   `docs/specs/mcp-endpoint.md`, `docs/defects.md` (active defect/finding list —
-   open on top, fixed rows below, superseded rows archived), `docs/decisions.md`
-   (ACTIVE/SUPERSEDED status, pinned contracts with their sources),
-   `docs/pending.md` (parked/upstream constraints + speculative items),
-   `docs/next-steps.md` (work queue); (b) archive obsolete documentation, stale
-   test data, findings reports, feedback reviews, and historical review records
-   into the GITIGNORED `archive/` dir (`archive/<topic>/<date>-<name>.md` — see
-   `archive/README.md`); (c) repoint or remove every reference to an archived
-   file — never leave a citation pointing at a moved file; never archive a
-   still-cited file without repointing it. The `archive/` dir is excluded from
-   builds and tests. **Active trackers (maintained every pass):**
-   `docs/defects.md`, `docs/decisions.md`, `docs/pending.md`, `docs/next-steps.md`
-   — a change that fixes a defect, lands a decision, parks an item, or launches
-   a speculative proposal MUST update these trackers in the same pass.
-7. **Defect-catalogue + handoff rule (this project's core duty)**: ANY defect
-   or requirement gap discovered in the `provident-ssr` package — a behavior
-   that contradicts `../Preempt-Providence/docs/specs/*.md`, a missing
-   convenience an MCP/Electron host needs, a documentation gap — is recorded
-   in `docs/defects.md` with: the observed symptom, the reproduction, the
-   suspected root cause, and a proposed fix shape (upstream-owned). The
-   finished catalogue is written to `docs/HANDOFF.md` (the issue-handoff
-   document) before a pass is reported complete. DO NOT fix the package.
-   **Adversarial-loop carve-out:** the post-completion adversarial sub-agent
-   hunts edge cases / unauthorized access / malformed inputs. If it finds a
-   genuine defect in the PACKAGE code (`node_modules/provident-ssr/` or the
-   upstream `../Preempt-Providence/` source — NOT this repo's host code), that
-   is still a handoff item: record it in `docs/defects.md` + `docs/HANDOFF.md`
-   exactly as any engine defect, and NEVER patch the package. Host-side
-   findings (this repo's `src/`) are fixed here, not handed off.
-   **RCA-3 (2026-08-23): the adversarial pass is MANDATORY per completed unit,
-   not optional.** After each unit's green, a read-only adversarial sub-agent
-   (edge cases / unauthorized access / malformed inputs) must run before the
-   unit is reported done; its findings are recorded in the unit's spec
-   (`docs/specs/*.md` §3a/§3b "Adversarial findings") and each host finding is
-   fixed here + regression-tested. A unit DONE row that cites no adversarial
-   pass (or whose findings are unrecorded) is a review finding. This closes the
-   battery gap where Units B/C/D were merged without a structured adversarial
-   pass.
-
-## Process gates for sub-agents (imported, adapted)
-
-8. **Proposal review — three-agent gate (imported)**: a user/design proposal
-   that changes THIS repo's contract goes through three sequential read-only
-   reviews first (validity → critique → change-analysis), then lands as
-   `docs/specs/<proposal>-review.md` before any code. Steps 1 and 2 are
-   independent; step 3 requires both outputs. This applies to changes to the
-   MCP contract — not to fixes inside a documented contract's shape.
-9. **Delegation gate (imported)**: a code unit is only delegable once (a) its
-   `docs/specs/*.md` contract exists, (b) a TestWriter unit has run and
-   reported the red set. Reviewer sub-agents are read-only.
-10a. **AUTONOMY AFTER SPEC APPROVAL — THE ONLY TWO RETURN POINTS (`2026-09-27`, the
-    architect's ruling: *"stop asking me for permission to advance to greens or
-    post-greens docs review; after spec is approved, return to the user only on final
-    unit close-out, or if a blocker requires a user decision"*).** Once a unit's
-   **spec gate is approved** (the contract is FILED and the architect has approved it,
-   or the architect has given a blanket go-ahead for the unit), the orchestrator
-   **PROCEEDS WITHOUT FURTHER PERMISSION** through the whole remaining chain —
-   `TestWriter red → Implementer green → adversarial + PBT audit (gate 4) → blind
-   greens (gate 5) → live/UI battery (gate 6) → proofreader (gate 7) → per-unit
-   documentation review (gate 8) → trio (gate 9) → DONE row + ledger move (gate 10)` —
-   **including every repair/remand cycle those gates force** (a red that exposes a
-   contract defect, an adversarial finding, a doc-review drift, a doc sweep, a cell
-   re-grain): the orchestrator amends the contract, re-runs the red, re-delegates the
-   Implementer and re-runs the affected gates **on its own authority**, committing at
-   each gate boundary (`RCA-8(a)`). **THE ORCHESTRATOR RETURNS TO THE USER ONLY
-   WHEN:** **(1) the unit reaches FINAL CLOSE-OUT** (its DONE row is written, its
-   trackers are reconciled, the trio is green and the ledger moved), reported
-   outcome-first as a completion summary; **or (2) a BLOCKER REQUIRES A USER
-   DECISION** — a genuine architect/design question the contract cannot answer, a
-   scope change, an admission of a new unit, a budget/priority fork, an irreversible
-   action needing consent, or a contradiction that no pass may resolve on its own
-   (e.g. an unsatisfiable clause pair, a frozen-contract change, a fork-facing
-   compatibility break). **A blocker report must be concrete and minimal:** what is
-   blocked, the evidence (measurements/commits), the two or three options with a
-   recommendation, and what each blocks. **NEVER ASK** for permission to advance a
-   gate, to fix a defect the gate found, to re-grain a register, to sweep stale doc
-   cells, to re-run the red/trio, or to write the DONE row; **never ask twice about
-   the same decision** — once an architect ruling is recorded (`docs/decisions.md`),
-   it is settled and is applied without further confirmation. **This item supersedes
-   the older `PAUSE and get the user's go-ahead` steps at every gate AFTER the spec
-   gate** (the spec gate itself still needs the architect's approval — that is the
-   one approval the chain waits for); the gate-supervisor instructions' pause clause
-   is read as applying to the SPEC gate only.
-10. **Blind-test → subagent review loop (imported, upstream AGENTS.md item 10;
-    RCA-4 2026-08-23)**: after a feature/behavior change ships, its
-    documentation + test claims are verified by agents who did NOT write them:
-    a. A **writer** produces the green-scenario artifact from the DOCUMENTATION
-       ONLY (`docs/specs/*.md` + the `*-greens.md` set; NO implementation
-       reading). It runs the scenarios against the live modules/host and records
-       pass/fail. A failure is a doc/spec drift OR an un-hardened regression —
-       never a pass.
-    b. A **proofreader** audits the docs against code+specs and fixes doc
-       inconsistencies (spec refs, section numbers, claims vs behavior,
-       version/test-count staleness).
-    c. Findings merge into the active trackers and the trio must be green before
-    the loop is complete. A unit whose `*-greens.md` set was authored by the
-    same agent who implemented it, WITHOUT a blind re-run, is a review
-    finding — the batteries B/C/D miss (self-verified greens, no fresh-agent
-    run) is the exact anti-pattern this rule closes.
-    d. **Documentation review (imported from the upstream archival loop —
-       runs AFTER the greens, before the unit is reported done)**: a read-only
-       **documentation reviewer** reconciles the unit's docs against the ACTUAL
-       repo/build state immediately after the greens ship. It is the
-       item-6 archival loop applied AS A GATE, not an afterthought:
-       - reconcile every method/behavior named in the unit's spec
-         (`docs/specs/<unit>.md`) + its `*-greens.md` against the code — names,
-         signatures, return shapes, throw patterns, census/numeric claims;
-       - reconcile the active trackers (`docs/next-steps.md`,
-         `docs/pending.md`, `docs/decisions.md`, `docs/defects.md`,
-         `docs/HANDOFF.md`) against the build — every DONE row now implemented,
-         every OPEN item that changed status, every version/test-count claim;
-       - reconcile cross-references + section numbers (no citation pointing at
-         a moved/renumbered section); archive obsolete docs into `archive/` and
-         repoint every reference;
-       - fix stale entries in the SAME pass (a doc claim that drifted from the
-         code is a review finding if left for the next agent). The full
-         review record is appended to `archive/reviews/<date>-<unit>-doc-review.md`.
-    **RCA-6 (2026-08-23): a documentation review is MANDATORY after the greens,
-    not optional.** A unit DONE row that cites no documentation-review pass (or
-    whose spec/trackers drifted uncaught into the next pass) is a review
-    finding. The twentieth-pass design-compliance review surfaced stale
-    test-counts, phantom return fields, and renumbered sections across every
-    spec — exactly the drift this step prevents when run per-unit instead of
-    batched.
-
-11. **Gate 11 — THE TYPED PROPERTY REGISTER IS MANDATORY FOR EVERY CODE-BEARING
-    UNIT (`2026-09-27`, the architect's ruling at the `U-LISTHOST` spec gate; the
-    ACTIVE row is `docs/decisions.md`'s **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`**,
-    cited by ROW NAME — that ledger is appended-to and its line anchors drift; the
-    follow-ups live in `docs/pending.md` §G).** **A code-bearing unit's spec MUST
-    carry its typed `§5.x` Property register BEFORE its red set is authored** — a
-    TestWriter may not be delegated a red set under the zero-row exemption. What
-    the register is, exactly:
-    a. **Typed rows only** — `P-IM` (invariant) · `P-SM` (state-machine) · `P-TP`
-       (totality). **Never** an `F-` row, and **never** a `§6`/`FS-n` citation used
-       as a register row. Authored by the spec writer (`role_spec_writer`).
-    b. **A property layer the TestWriter EXECUTES** — deterministic, either by
-       exhaustive/finite enumeration or by a **pinned-seed** generator; each row
-       reports its **strategy id + held/broken**; the caps are **≤100 attempts per
-       row · ≤400 attempts total · stop-after-5-consecutive-failures**, and an
-       un-run register row is reported as a **FAILURE**, never as a pass.
-    c. **The attempt total is printed WITH its per-row terms**
-       (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`): a total that is not the sum
-       of its own terms, or a total quoted without its terms, is a review finding,
-       and a mis-sum is corrected by **annotating beside the as-filed form**,
-       never by silently rewriting it.
-    d. **NO new dependency** — no `fast-check`, no property runner, no fourth leg.
-       The executed layer is plain deterministic vitest tables plus, where a draw
-       is genuinely needed, a hand-rolled pinned-seed generator (the in-repo
-       precedent is `docs/specs/engine-pin.md` `§5.5`, which executed 7 of its 8
-       rows with no new devDependency).
-    e. **A read-only PBT audit by the adversarial pass** (gate 4) — over-strength,
-       under-assertion and evasion checks, each dispositioned in the unit's
-       `§3a`/`§3b` with one of the six recorded dispositions, never a bare `OWED`.
-    f. **A DONE row lacking register / executed property layer / PBT audit is a
-       review finding.** The register exists to *identify the testable elements of
-       the designed process and ensure they can be tested thoroughly*, so its row
-       count is an **OUTCOME, not a budget**: the `≤8` threshold is a
-       **component-breakdown SIGNAL**, never a ceiling and never a reason to drop,
-       merge or leave unenumerated a discernible property
-       (`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`).
-    g. **THE ZERO-ROW EXEMPTION IS AN EXPLICIT, RECORDED, JUSTIFIED EXCEPTION —
-       never a silent default.** It survives only for genuinely invariant-free /
-       doc-only / config-only / non-JS units, stated as such in the spec; it is
-       **not available to a code-bearing unit**, and a recorded exemption the
-       spec's own text refutes (a stated quantification its fixed tables cannot
-       prove) is remanded for re-derivation. A spec that carries the exemption
-       block keeps it **visible** under a dated SUPERSEDED banner (the sibling
-       units' `§5.5.0`), with the current register at `§5.5.1`.
-    Reference shapes: `docs/specs/listhost.md` `§5.5.1` (the landed pilot) and
-    `docs/specs/projection.md` `§5.5.1`; the ruling's own provenance is the
-    `U-LISTHOST` gate record in `docs/next-steps.md`.
-
-## Roles (imported, adapted)
-
-| Role | Tool set | Guardrails |
-| --- | --- | --- |
-| Architect (me / user) | read/edit | owns decisions; makes design calls |
-| Reviewer | explore/general, read-only | never edits; returns findings; a code change with no test is a finding |
-| TestWriter | write/bash | writes tests FIRST (red) from specs; never implements alongside |
-| Implementer | read/edit/bash | runs only after TestWriter reports red; least code to go green; re-runs trio |
-| Adversarial reviewer | explore/general, read-only | hunts edge cases / unauthorized access / malformed inputs AFTER each unit's green; records findings in the spec; host findings fixed here, package findings → defects.md/HANDOFF.md |
-| Blind-test writer | write/bash | produces the green-scenario artifact from `docs/specs/*.md` + `*-greens.md` ONLY (no implementation read); runs scenarios against the live module/host |
-| Proofreader | read/general, read-only | audits docs against code+specs; fixes doc/spec/version/test-count staleness |
-| Documentation reviewer | explore/general, read-only | AFTER the greens: reconciles the unit's spec + `*-greens.md` + active trackers against the actual build (names/signatures/return shapes/census claims/cross-refs/section numbers/test-counts); fixes stale entries in the SAME pass; record to `archive/reviews/<date>-<unit>-doc-review.md` |
-
-Inputs always read from `docs/specs/*.md` + the upstream docs
-(`../Preempt-Providence/docs/`) unless stated. Artifacts commit in the repo.
-
-## RCA lessons (2026-08-23 — the battery B/C/D process miss + the design-compliance drift)
-
-The battery pass (Units B/C/D/R13) was implemented inline and tested after
-(red/green order inverted), merged without an adversarial pass, and its greens
-were self-verified rather than blind-run. The RCA is `docs/specs/process-rca-battery.md`.
-The guards above (RCA-1..RCA-5) encode its lessons directly; the
-`docs/skills/process-guardrails.md` skill consolidates them for fresh sub-agents.
-
-**RCA-6 (2026-08-23 — the design-compliance drift)**: the twentieth-pass
-compliance review surfaced stale test-counts, phantom return fields, and
-renumbered sections across every spec — because the documentation review was
-batched (run once, late) rather than per-unit after the greens. RCA-6 makes
-the documentation review a MANDATORY per-unit gate (item 10d), importing the
-upstream Preempt-Providence archival loop's cleanup-pass discipline: the
-doc review is the archival loop applied AS A GATE, not an afterthought.
+```sh
+npm install && npm run build      # main, preload, standalone, battery host, renderer
+npm test && npm run typecheck && npm run typecheck:tests
+npm start                         # build + launch; --mcp-transport=http|stdio, default http :3787
+npm run mcp -- --help             # the local MCP CLI, against the battery host or a running app
+npm run battery | npm run divergence | npm run ui   # the Electron legs; ui needs a DISPLAY
+```

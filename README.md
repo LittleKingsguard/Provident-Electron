@@ -1,234 +1,60 @@
 # Provident-Electron
 
-Prebuilt Electron shell for apps using the Provident SSR framework
-([`provident-ssr`](https://www.npmjs.com/package/provident-ssr)) — with full
-**synthetic-event access** and **rendered-HTML visibility** exposed as MCP
-endpoints for agentic use and debugging exposure.
+A prebuilt Electron shell for apps built on the Provident SSR framework
+([`provident-ssr`](https://www.npmjs.com/package/provident-ssr)): **full synthetic-event access** and
+**rendered-HTML visibility**, exposed as MCP endpoints for agentic use and debugging exposure.
 
-This repository has two intended goals:
+Its two goals: it is the **implementation test** of `provident-ssr` and of `provident-storeroom`
+(neither package is ever modified; findings are recorded and handed off), and it is a **prebuild
+baseline** a fork inherits for the MCP surface, the gate, both transports and the renderer bridge.
 
-1. **Implementation test of the `provident-ssr` npm package.** The original
-   source + documentation live in the adjacent `Preempt-Providence` folder.
-   This project never modifies the package. Any defect or requirement gap
-   discovered is catalogued in [`docs/defects.md`](docs/defects.md) and handed
-   off as an issue to the original project
-   ([`docs/HANDOFF.md`](docs/HANDOFF.md)).
-2. **Prebuild baseline for Electron apps using the provident-ssr framework** —
-   full synthetic-event access + rendered-HTML visibility for MCP endpoints
-   (agentic use + debugging exposure).
-
-## Read this first — the project brief
-
-The top-level brief set answers what this app is for and what it can do, in four short
-documents: [](docs/brief/README.md) (the index and the one-page
-overview, including **what this app is not**), [](docs/brief/use-cases.md)
-(who drives it and how), [](docs/brief/features.md) (the feature set by
-area, each capability with its code cite and its state), and
-[](docs/brief/limits-and-state.md) (what is verified at which
-layer, what is red at this head, and what is owed). Read the brief before the architecture
-below if you are new here.
+**Read `strata/brief.md` next** — the authoritative brief: what the app is, the layers, the current
+unit, and the instruments with their measured readings. `strata/decisions.md` records who decided what
+and why; `AGENTS.md` carries the non-negotiables agents work under. `strata/` replaces the older
+documentation corpus, retired but preserved at `archive/gate-corpus-2026-10-29/`.
 
 ## Architecture
 
 ```
-MCP client (agent/IDE)
-   │  stdio  OR  Streamable HTTP (http://127.0.0.1:3787/mcp)
-   ▼
+MCP client (agent / IDE) ── stdio ──┬── Streamable HTTP (http://127.0.0.1:3787/mcp)
+                                    ▼
 Electron MAIN process — MCP server (@modelcontextprotocol/sdk) + IPC bridge
    │  IPC: provident:invoke / provident:reply / provident:ready
    ▼
-Electron RENDERER — the provident-ssr producing process (Supervisor graph +
-DomAdapter render + SSRFragmentAdapter mirror)
+Electron RENDERER — the provident-ssr producing process
+   (Supervisor graph + DomAdapter render + SSRFragmentAdapter mirror)
 ```
 
-The graph is authoritative: a synthetic event mutates the graph (Phase A/B
-`Supervisor.dispatchEvent` + flush), then the host re-renders both the live DOM
-and the SSR fragment — the HTML is a view, never a live surface (the upstream
-Phase B contract).
+The graph is authoritative: a synthetic event mutates the graph, then the host re-emits both the live
+DOM and the SSR fragment. The HTML is a view, never a live surface.
 
-## Setup & run
-
-Requires Node ≥ 18 for install tooling. **The `electron` devDependency is
-`^44.4.5` (Electron 44 installed) — CORRECTED 2026-09-27.** This line read
-"Electron is pinned to ^33 so it installs on Node 18" until the engine-pin
-install moved it (`package.json:27`); that was a **MAJOR** jump against this
-repo's own `ELECTRON-PIN` row (`docs/decisions/ACTIVE-store-and-package-binding.md:16`, `^33`), it was
-**not** covered by `U-ENGINE-PIN`'s red set, and a fork should **choose its own
-Electron pin deliberately rather than copy `^44`** — the risk is recorded in
-`docs/decisions.md` `ENGINE-PIN-DEVDEP-JUMP-ACCEPTED` + `docs/pending.md`'s
-devDependency scope-change row. The whole Electron-44 stack is exercised by
-`npm run divergence` (Electron 44.4.5, `R13 RESULT: 9 checks, 0 failures`) —
-and, since 2026-09-27, by `npm run ui` too (a real renderer boot; see
-**Harness legs** below).
+## Setup and run
 
 ```sh
-npm install
-npm run build          # main (cjs) + preload (cjs) + renderer (esm) + html
-npm test               # vitest (runtime unit tests)
-npm run typecheck      # tsc --noEmit
-
-npm start              # build + launch with the HTTP MCP server
-npm start -- --mcp-transport=http --mcp-port=3787   # HTTP (default)
-npm start -- --mcp-transport=stdio                  # stdio
+npm install && npm run build   # main (cjs), preload (cjs), standalone, battery host, renderer (esm)
+npm test && npm run typecheck && npm run typecheck:tests
+npm start                                       # build + launch, HTTP MCP on :3787
+npm start -- --mcp-transport=stdio              # stdio instead
+npm run mcp -- --help                           # the local MCP CLI
+npm run battery | npm run divergence | npm run ui  # the Electron legs; ui needs a DISPLAY
 ```
 
-Transports are also selectable via `PROVIDENT_MCP_TRANSPORT` /
-`PROVIDENT_MCP_PORT`.
+Transports are also selectable with `PROVIDENT_MCP_TRANSPORT` / `PROVIDENT_MCP_PORT`.
 
-### Harness legs (outside the trio)
+## The MCP surface
 
-Three legs sit beside `npm test` / `npm run typecheck` / `npm run build`, each
-running its own `npm run build` first:
+**22 tools** in five groups: `read` holds six tools and the three resources, `dispatch` holds
+`provident.dispatch` and `provident.focus`, `graph` holds the six graph verbs, `code` holds seven
+code-tree verbs, `module` holds three. The default grant is `['read','dispatch']`, so **8 tools
+register** until the operator enables more — a disabled group's tools are absent from `tools/list`
+rather than present-and-refusing.
 
-**Verified counts (2026-09-27, after the `G-4` fix pass that closed the `U-REALDOM-BOOT` adversarial
-pass's last open routed item):** the suite is **`58` files / `872` passed / `2` skipped / `0` failed**;
-the `ui` leg's declared rows are **`77/77`** (`tests/ui-leg-contract.test.ts` **`66`** = `59` clause rows
-+ `7` rebuilt falsifiable rows whose falsifiability is shown by a **`15`-mutation out-of-tree matrix**;
-`tests/ui-leg-seam.test.ts` **`11`**); `npm run divergence` → **`R13 RESULT: 9 checks, 0 failures`**
-(`N = 9`); `npm run battery` → **`184 checks / 0 failures`**; `npm run ui` → exit **`0`**, **`11/11`**
-assertions green, one measurement **`427x22`**, **`retries=0`**. **⟶ UPDATED (2026-09-27, the
-`U-MOUNTGUARD` per-unit documentation review): the suite is now `59` files / `916` passed / `2` skipped /
-`0` failed** — the new file is `tests/mount-invariant-guard.test.ts` (**`44` rows**, the wave-D unit's
-cross-envelope mount cardinality/identity probe + the `reconcileMount()` host fix; see
-`docs/specs/mount-invariant-guard.md`). **The `ui` leg's `77/77` and every other leg figure above are
-UNMOVED** (`divergence` `9/0` with `N = 9` intact, `battery` `184/0`, `ui` exit `0` with `11/11`,
-`427x22`, `retries=0`). **Earlier records that read `863` passed
-/ `68/68`, or `872` / `77/77`, are the earlier passes' own dated measurements — annotated in
-`docs/next-steps.md`, `docs/decisions.md`, `docs/pending.md` and `docs/FORKER.md`, never deleted**;
-`M-46` stays `UNMEASURABLE`.
-
-**⟶ MEASURED THIS PASS (`2026-10-29`), THE DATED READING BESIDE THE DATED READING — the `59` files /
-`916` passed / `2` skipped / `0` failed figure above is `2026-09-27`'s reading and stands as that
-date's measurement.** At this head the vitest suite is **`91` files loaded, `3,114` collected / `3,109`
-passed / `3` failed / `2` skipped**, and it is **NOT GREEN**: the three red rows are
-`tests/store-core-graph.test.ts` `§5.1`, `tests/store-tabs-record.test.ts` `§4.2` item 7 and
-`tests/store-tabs-record.test.ts` `§4.2` item 8. The three leg figures above (`divergence` `9/0`,
-`battery` `184/0`, `ui` `11/11`) were **not re-measured by this pass** and this line does not move them.
-
-| Leg | What it is | What it is **not** |
-| --- | --- | --- |
-| `npm run battery` | the DOM-shim battery host (`dist/main/battery-host.mjs`) over stdio MCP — envelope/shim-layer corroboration | **not** a browser and **not** a real-DOM carrier |
-| `npm run divergence` | the identity leg on the same built tree (`R13 RESULT: 9 checks, 0 failures`, `N = 9` pinned) | **structural-surfaces-only** evidence, **never IPC-layer** (the `LIVE-OP-REJECT` lesson) |
-| `npm run ui` | **added 2026-09-27 · unit `U-REALDOM-BOOT`, `DONE` 2026-09-27** on every leg its spec declares (`docs/specs/ci-ui-leg.md`; record: `docs/next-steps.md`'s `## DONE — U-REALDOM-BOOT`): boots the **real Electron renderer** twice under fresh scratch temp profiles, driven over stdio MCP, and takes **ONE** real measurement (`427x22` at `fontSize="16px"`), read back through the existing `provident.get_rendered_html`; its declared rows are **live-green** (`11/11 assertions green, mapped onto the five declared rows R0-R4`) and both live-battery findings are **closed**; **requires a `DISPLAY`** (no display ⇒ an actionable `PREREQUISITE ERROR`, exit **3**, never a skip) and treats a red `divergence` as `PRECONDITION-FAILED` (**exit 2, no measurement** — *a `ui` green is never stronger than a `divergence` red*) | **not** the packaged app · **no** rendered-geometry proof · **no** IPC proof · **no** attribute row · the shim's `UNSUPPORTED` record is **not** a verdict on the shim · and it does **not** move `M-46` off `UNMEASURABLE` |
-
-`npm run ui` retries a failed **bootstrap** (bounded: `4` attempts per boot,
-fixed `250/500/1000 ms` backoff, `30 000 ms` per-attempt handshake timeout —
-operator-lowerable only, via `PROVIDENT_UI_BOOT_ATTEMPTS` / `PROVIDENT_UI_BOOT_TIMEOUT_MS`),
-records every attempt, labels a retried green, and **exits `1` on exhaustion** —
-never a pass. *(Its green's honest limits are printed by the leg itself as `R4`.)*
-
-## MCP tools
-
-| Tool | Purpose |
-| --- | --- |
-| `provident.dispatch` | Dispatch a synthetic event (`click`/`input`/…) on a node — target by authored css.id (e.g. `inc`, `echo-input`), nodeId, or wire. Uses the engine's shared `Supervisor.dispatchAndReport` (flush-before-response; `dirtied = apply().dirtied ∪ pass-2 keys`); returns `{results, dirtied, renderedHtml, ssrHtml}`. `requestId` is engine-owned idempotency (opt-in bounded dedup — a duplicate echoes the first report). |
-| `provident.get_rendered_html` | The live DOM innerHTML + the SSR fragment re-emitted from the same graph + a node/compile census. Every element carries `data-node-id="<nodeId>"` (opt-in render option) so an agent can trace each element back to its graph node. |
-| `provident.list_targets` | Every live node with its nodeId, authored css.id / props.id, type, content, state, in-tree flag, and handlers — the addressable vocabulary. |
-| `provident.get_node_state` | A node's pass-2 resolved compiled states + the graph census. |
-
-The demo app (the legacy envelope in `src/shared/demo-envelope.ts`) renders a
-counter (`inc` / `dec` / `reset` buttons) and an echo input (`echo-input` →
-`echo-out`) — drive them with `provident.dispatch` and observe with
-`provident.get_rendered_html`.
-
-### Local CLI toolset (`npm run mcp`)
-
-`scripts/mcp-cli.mjs` drives **the MCP endpoints** for development + dynamic
-testing (**21 tools today** — `provident.dispatch`, the four `read` tools,
-`code.get`/`code.validate`, the six `graph` tools incl. `journal`, the five
-`code.*` writers and the three `module.*` tools; `ALL_TOOLS` becomes **22** when
-`provident.focus` lands — see `docs/specs/mcp-endpoint.md` §3/§3.8. An earlier
-version of this line said "all 15", which was stale: **CORRECTED 2026-09-27**.
-The **`read` group is 6** tools — `get_rendered_html`, `get_markdown`,
-`list_targets`, `get_node_state`, `code.get`, `code.validate` — so the
-**default-gate registered subset is 7** (those 6 + `dispatch`), not 6;
-**CORRECTED 2026-09-27** by the `U-ENGINE-PIN` doc review against
-`src/main/security.ts:5-38`).
-
-**⟶ MEASURED THIS PASS (`2026-10-29`) — the `21` / *"`ALL_TOOLS` becomes `22` when `provident.focus`
-lands"* reading above is that earlier pass's reading and STANDS as such; it is no longer this head's
-state.** `provident.focus` **has landed**: the live `ALL_TOOLS` reads **`22`**
-(`src/main/mcp-server.ts:576-599`, `focus` at `:578`), so the group tally above is **`22` today** and
-the **default-gate registered subset is `8`** (the `6` `read` tools + `dispatch` + `focus`), not the
-`7` above. The `src/main/security.ts:5-38` citation above is **`stale — the line moved`**:
-`TOOL_GROUPS` is now `src/main/security.ts:5-42`.
-Two targets:
-
-- **battery** (default) — spawns `dist/main/battery-host.mjs` (a real Runtime
-  under the DOM shim, all tool groups pre-enabled) over stdio: a throwaway,
-  deterministic host for CI-style probing.
-- **http** — connects to a **running** app at `http://127.0.0.1:<port>/mcp`
-  (the real Electron app, or a standalone server). This is the live
-  development target.
-
-```sh
-npm run mcp -- --help                       # usage
-npm run mcp -- html                         # read the rendered HTML (battery)
-npm run mcp -- dispatch inc click           # dispatch a click on #inc
-npm run mcp -- targets                      # list dispatch targets
-npm run mcp -- node-state counter           # a node's resolved state
-npm run mcp -- export legacy                # export the graph
-npm run mcp -- teardown                     # reset to root-only
-npm run mcp -- code-get template.root.hooks # read the envelope
-npm run mcp -- run steps.json               # run a sequence against ONE host
-
-# against a running app (e.g. `npm start -- --mcp-transport=http --mcp-port=3787`):
-npm run mcp -- --target http --port 3787 html
-npm run mcp -- --target http --port 3787 dispatch inc click
-```
-
-`run <steps.json>` executes an array of `{cmd, args}` steps against **one
-persistent host**, so a `dispatch` can see a prior `load` — the dynamic-testing
-mode. Each step's result prints; the last step's result is the exit value.
-`args` is the raw tool-arguments object (targets/values passed verbatim).
-
-### Example agent flow
-
-```text
-provident.get_rendered_html
-  → renderedHtml contains <button data-node-id="node-6" id="inc" class="btn">…</button>
-
-provident.dispatch { target: { kind: "cssId", cssId: "inc" }, event: "click" }
-  → { results: [undefined], dirtied: ["node-5","node-3","node-1"], renderedHtml: "…>1<…", ssrHtml: "…>1<…" }
-
-provident.dispatch { target: { kind: "nodeId", nodeId: "node-6" }, event: "click", requestId: "my-op-1" }
-  → { … }  // engine dedup: a repeated requestId echoes the first report, no re-fire
-```
-
-## Contract & docs
-
-- `docs/specs/mcp-endpoint.md` — this repo's behavior contract (the MCP
-  endpoint surface; implements the upstream's Phase C as a consumer).
-- `docs/defects.md` — the implementation-test catalogue (REQ-GAP-1..8 resolved
-  by provident-ssr 0.1.1/0.1.2; REQ-GAP-9..12 published in 0.1.3; **no open
-  package row today** — the last one, `UNDO-REDO-DESTROY-STATUS`, is CLOSED as
-  not reproducible at `0.5.1`, and `LIVE-OP-REJECT` is a HOST-owned row in that
-  file's `## FIXED (in this repo)` section) → `docs/HANDOFF.md` (the issue
-  handoff to the upstream project; **no round is open**).
-- **`demo/pane-drag-demo/`** — the LIVE store-integrated panes demo (2026-10-03): a real Electron window driving the landed `createPaneDrag` + gutter-resize compositions against the real store (`createGraphStore`) — the pane-drag-by-handle-into-a-minimized-zone (ghost at reduced opacity, full display on commit), the gutter temp/reset/file lifecycle, the minimized-zone clauses (hidden-empty + expand button, tab-strip-with-panes, store-size placement with temporary expansion), the tab pane (read/display/modify via a store listener) and full tab management (focus/open/close with the exactly-one-active constraint + repair arms). `node demo/pane-drag-demo/run-live.mjs` runs the dependency-free CDP driver (PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR + TAB-MANAGEMENT LIVE TESTS: ALL GREEN **50/50**). It is the fork's H-r6 consumption reference. The build/debug sessions' findings + missing-test audit (D-1..D-21, T-1..T-18): `docs/specs/live-demo-retrospective.md`; the consumer wire-shape contract (incl. the tab strip + the synchronous-event rule): `docs/FORKER.md` §4's STORE-BACKED DRAG + GUTTER FEATURES block.
-- `docs/decisions.md` / `docs/pending.md` / `docs/next-steps.md` — the process
-  trackers (imported from the upstream `AGENTS.md` document-archival loop).
-  **`docs/next-steps.md` is the work queue AND the handover surface:** its
-  `⟶ HANDOVER — for a fresh supervisor (2026-09-27)` block is the entry point
-  (current state, the exact next wave-D action, the gate order, the RCA-8
-  commit-atomicity rules), and its `## DONE — <unit>` records are the completed
-  units' authoritative records (`U-MOUNTGUARD`, wave D, joined them 2026-09-27 —
-  counts `4 DONE / 16 open`; the wave-D go-ahead WAS GIVEN 2026-09-27).
-- `AGENTS.md` — the process rules for agents working in this repo.
-
-## 0.1.x adoption notes
-
-Provident-Electron consumes the shared multi-host surfaces the upstream landed
-across 0.1.1/0.1.2/0.1.3 (`docs/specs/handoffs-review.md`,
-`docs/specs/handoffs-review-2.md`): `Supervisor.dispatchAndReport` (engine
-`{results, dirtied}` + opt-in `requestId` dedup), the public `flush()`, the
-opt-in `data-node-id` render option (the one scoped lift of the no-render-change
-pin), the exported canonical re-emit loop `renderProducingProcess` with the
-`renderOptions` threading (REQ-GAP-8), and the Round-4 surfaces — the public
-`createLinkHub()` + the corrected A1 recipe, the self-evicting sweep
-(REQ-GAP-11), and the destroy-cascade flag (REQ-GAP-12). All filed gaps
-(REQ-GAP-1..12) are resolved upstream; none remain open.
+A drive is `provident.dispatch` (target by css.id, nodeId or wire; answers `{results, dirtied,
+renderedHtml, ssrHtml}`); an observation is `provident.get_rendered_html`, `get_markdown`,
+`list_targets` or `get_node_state`, and every emitted element carries `data-node-id` back to its node.
+The demo envelope renders a counter, an echo input, a gutter card, two theme buttons and two tab
+terminals; `demo/pane-drag-demo/` is the live store-integrated panes demo.
 
 ## License
 
-AGPL-3.0 (matching the `provident-ssr` package license).
+AGPL-3.0, matching the `provident-ssr` package license.
