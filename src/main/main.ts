@@ -19,6 +19,10 @@ import { SecurityGate, type ExclusionState, type ToolGroup } from './security.js
 // at its gates. `main` is a READER only: the holder's ONE writer is the transition in
 // `mcp-server.ts` (`F-11`: `main` supplies STATE, never takes the DECISION).
 import { tier4OpenState } from './tier4-state.js'
+// central-data (`docs/L1/central-data-census-exception.md` §2 E-3) — the module's surface enters the
+// composition here, and nothing else of this file moves: it constructs no store and touches no file
+// until a `data.*` tool is called (D-11, D-13).
+import { createDataSurface } from './data/index.js'
 
 // The main process is bundled as CJS (Electron runs it reliably that way), so
 // `__dirname` is available.
@@ -281,7 +285,7 @@ async function main(): Promise<void> {
   syncModuleRouter(moduleRouter, moduleSurface)
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
-  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter })
+  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface: createDataSurface({ profileDir: app.getPath('userData') }) })
   // `§0A` item 1 (the `A-1` ruling) — NO RE-POINT IS OWED HERE ANY MORE. The landed `R-2` re-point
   // existed because the store consulted a reader `main` had to keep aimed at the LIVE server
   // (`mcp-server.ts`'s `get gate()`). The store now reads the STATIC HOLDER, and the server's own

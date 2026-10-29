@@ -279,6 +279,11 @@ export type RpcMethod =
   | 'module.update'
   | 'module.list'
   | 'focus'
+  | 'data.read'
+  | 'data.write'
+  | 'data.delete'
+  | 'data.list'
+  | 'data.journal'
 
 export interface RpcRequest {
   id: number

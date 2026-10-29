@@ -28,6 +28,9 @@ import { SecurityGate, exclusionAllowsWork, type ToolGroup, moduleToolAllowed } 
 import { setTier4OpenState } from './tier4-state.js'
 import type { ModuleStore } from './module-store.js'
 import type { CapabilityRouter } from '../renderer/extensions.js'
+// central-data — the module's OWN surface, supplied at the composition site. The server never
+// constructs it: the profile's directory is not a server's to derive (`interface.md` §5; D-13).
+import type { DataSurface } from './data/index.js'
 
 const TOOL_PREFIX = 'provident.'
 
@@ -401,6 +404,12 @@ export interface McpServerOptions {
   /** U9 — the CapabilityRouter whose dynamic `module:<name>.<tool>` tools are
    *  registered + invoked (with the invocation two-gate, F1). */
   router?: CapabilityRouter
+  /** central-data (`docs/L1/central-data-census-exception.md` §2 E-1) — the module's OWN data
+   *  surface, which the five `provident.data.*` registrations drive. Supplied by the composition
+   *  site's one options pass (`interface.md` §5; E-3). A server constructed WITHOUT it registers
+   *  no `data` tool, even with the group enabled: the five names are enumerated in `ALL_TOOLS` and
+   *  would otherwise register nothing (D-11). */
+  dataSurface?: DataSurface
 }
 
 export interface SecuritySnapshot { token: string | null; enabled: ToolGroup[] }
@@ -412,6 +421,7 @@ export class ProvidentMcpServer {
   private readonly port: number
   private readonly moduleStore: ModuleStore | null
   private readonly router: CapabilityRouter | null
+  private readonly dataSurface: DataSurface | null
   private httpServer: ReturnType<typeof createServer> | null = null
   private readonly httpServers = new Set<McpServer>()
   private _gate: SecurityGate
@@ -435,6 +445,7 @@ export class ProvidentMcpServer {
     this._gate = opts.gate ?? new SecurityGate()
     this.moduleStore = opts.moduleStore ?? null
     this.router = opts.router ?? null
+    this.dataSurface = opts.dataSurface ?? null
     // `§2.2` item 3 — THE ACCEPTOR'S EPOCH SOURCE IS BOUND TO THE **LIVE** GATE HERE (`PAR-5`
     // forbids any caller-supplied epoch; the stamp therefore comes from the gate this server
     // holds, read through `this`, never from an argument). The backend holds the READER, not a
@@ -545,7 +556,7 @@ export class ProvidentMcpServer {
     const liveGate = (): SecurityGate => this._gate
     const toAdd = this.allowedToolNames().filter((n) => !this.registered.has(n))
     if (toAdd.length > 0) {
-      ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered, this.moduleStore, this.router, liveGate)
+      ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered, this.moduleStore, this.router, this.dataSurface, liveGate)
     }
     const resToAdd = ProvidentMcpServer.ALL_RESOURCES.filter(
       (r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate}`) && !this.resources.has(r.uri ?? r.uriTemplate!),
@@ -596,6 +607,11 @@ export class ProvidentMcpServer {
     'module.install',
     'module.update',
     'module.list',
+    'provident.data.read',
+    'provident.data.write',
+    'provident.data.delete',
+    'provident.data.list',
+    'provident.data.journal',
   ]
 
   /** The subset of ALL_TOOLS whose group the current gate allows — the tools
@@ -802,7 +818,7 @@ export class ProvidentMcpServer {
     // transition REPLACES `this._gate`, and a captured instance would freeze the enforcement at
     // its registration-time value.
     const liveGate = (): SecurityGate => this._gate
-    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered, this.moduleStore, this.router, liveGate)
+    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered, this.moduleStore, this.router, this.dataSurface, liveGate)
     // R3 — register the gated read-group resources in the SAME server build
     // (serves BOTH the stdio long-lived server and the per-POST HTTP server).
     const allowedResources = ProvidentMcpServer.ALL_RESOURCES.filter((r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate!}`))
@@ -817,6 +833,7 @@ export class ProvidentMcpServer {
     registered: Map<string, RegisteredTool>,
     moduleStore: ModuleStore | null,
     router: CapabilityRouter | null,
+    dataSurface: DataSurface | null,
     liveGate: () => SecurityGate,
   ): void {
     // `§2.2` item 2(a) — THE INVOCATION TURN, applied at the ONE REGISTRATION BOUNDARY so it is
@@ -1037,6 +1054,84 @@ export class ProvidentMcpServer {
           }).passthrough(),
         ),
       }, guarded(async (args: unknown) => focusHandler(args, backend) as never)))
+    }
+
+    // central-data (`docs/L1/central-data-census-exception.md` §2 E-1; `docs/L2/central-data/
+    // interface.md` §1, §4) — THE FIVE `provident.data.*` TOOLS, the sixth group's registrations.
+    // EACH ONE DRIVES THE MODULE'S OWN SURFACE AND NOTHING ELSE: the adapter is the `DataSurface`
+    // operation of the same name, so a tool call and its bridge route are ONE answer site (D-11).
+    // THE SCHEMA DECLARES THE DECLARED MEMBERS AND PASSES EVERY OTHER ONE THROUGH: an omitted
+    // `arguments` is the SAME CALL as `{}` and a member the caller did not supply is never invented
+    // — which is what lets the adapter refuse a malformed call BY NAME instead of the schema
+    // stripping it before the adapter sees it (`interface.md` §1). EACH HANDLER SITS INSIDE THE SAME
+    // `guarded` WRAPPER as every other tool, so while the exclusion tier is open the call answers
+    // the invocation-turn refusal VALUE before the adapter is entered and no profile byte moves
+    // (`behaviour.md` §8; `interface.md` §4). NO SURFACE SUPPLIED MEANS NO `data` TOOL REGISTERED,
+    // even with the group enabled (D-11).
+    const dataTools: Array<{
+      name: string
+      title: string
+      description: string
+      members: Record<string, z.ZodTypeAny>
+      run: (surface: DataSurface, args: unknown) => unknown
+    }> = [
+      {
+        name: 'provident.data.read',
+        title: 'Read the profile data register',
+        description:
+          'Read one address of the app\'s durable data profile. A literal standing at the address answers kind:"row" with the value; a container answers kind:"branch" with its assembled value; an address holding nothing answers status:"absent". The addresses are the register\'s own key space: an array of string keys and non-negative indices, and [] names the whole register.',
+        members: { path: z.unknown().optional().describe('The address to read: a dense array of string keys and non-negative indices; [] reads the whole register') },
+        run: (surface, args) => surface.read(args),
+      },
+      {
+        name: 'provident.data.write',
+        title: 'Write one row into the profile data register',
+        description:
+          'Write exactly ONE path/value pair at the durable file tier and answer status:"committed" with the change\'s cursor. A nested write does not create its parent, and a container of another kind standing at the address is refused rather than converted. A refused call answers status:"refused" with its reason word and leaves the previous bytes exactly as they stood.',
+        members: {
+          path: z.unknown().optional().describe('The address to write: a dense array of string keys and non-negative indices; [] is never writable'),
+          value: z.unknown().optional().describe('The value to store: the admitted JSON tree (strings, finite numbers, booleans, dense arrays, plain objects)'),
+        },
+        run: (surface, args) => surface.write(args),
+      },
+      {
+        name: 'provident.data.delete',
+        title: 'Delete one row from the profile data register',
+        description:
+          'Delete ONE row at the address and answer status:"committed" with removed, the tiers the row stood at, and the change\'s cursor. An address where no row stands answers removed:false, tiers:[] and cursor:null — nothing beneath the address is touched, and no refusal is served for an absence.',
+        members: { path: z.unknown().optional().describe('The address of the row to delete: a dense array of string keys and non-negative indices; [] is never writable') },
+        run: (surface, args) => surface.delete(args),
+      },
+      {
+        name: 'provident.data.list',
+        title: 'List the row paths of the profile data register',
+        description:
+          'List the addresses that hold a row, sorted by their JSON text, with count. An omitted prefix lists the whole profile; a supplied one narrows to the row paths beneath it. A branch is never reported as a row.',
+        members: { prefix: z.unknown().optional().describe('The address to list beneath: a dense array of string keys and non-negative indices; omit it for the whole profile') },
+        run: (surface, args) => surface.list(args),
+      },
+      {
+        name: 'provident.data.journal',
+        title: 'Read the change window of the profile data register',
+        description:
+          'Read this process\'s committed change window, oldest first, each entry { cursor, kind, path, changedTo } — no value is carried. from echoes the cursor asked for; floor and through bound the window, and a cursor outside it answers reason:"cursor-unknown" carrying both so a caller re-anchors. Nothing on this surface reverses a change.',
+        members: { cursor: z.unknown().optional().describe('The cursor to read after: a non-negative integer; omit it for the whole retained window') },
+        run: (surface, args) => surface.journal(args),
+      },
+    ]
+    const surface = dataSurface
+    if (surface !== null) {
+      for (const { name, title, description, members, run } of dataTools) {
+        if (!allowed.includes(name)) continue
+        registered.set(name, server.registerTool(name, {
+          title,
+          description,
+          inputSchema: z.preprocess(
+            (carried) => (carried ?? {}),
+            z.object(members).passthrough(),
+          ),
+        }, guarded(async (args: unknown) => text(run(surface, args)))))
+      }
     }
   }
 

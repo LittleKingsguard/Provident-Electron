@@ -84,7 +84,7 @@ export interface SecurityStore {
   writeEntry(name: string, value: unknown): Tier4WriteAnswer
 }
 
-const VALID_GROUPS = new Set(['read', 'dispatch', 'graph', 'code', 'module'])
+const VALID_GROUPS = new Set(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
 
 /** `§2.2` item 4 arm 3 — THE FOUR DECLARED NAMES of the persisted record. Every OTHER top-level
  *  member the file carries is INGESTED INTO `entries` UNDER ITS OWN NAME, VERBATIM — PRESERVED,

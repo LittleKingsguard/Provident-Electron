@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto'
 
-export type ToolGroup = 'read' | 'dispatch' | 'graph' | 'code' | 'module'
+export type ToolGroup = 'read' | 'dispatch' | 'graph' | 'code' | 'module' | 'data'
 
 const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.get_rendered_html': 'read',
@@ -32,6 +32,13 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
   'module.list': 'module',
   'module.disable': 'module',
   'module.enable': 'module',
+  // central-data (`docs/L1/central-data-census-exception.md` §2 E-1) — the sixth group, `data`
+  // (OFF by default). Five EXACT rows: the prefix rule covers `module:` names only.
+  'provident.data.read': 'data',
+  'provident.data.write': 'data',
+  'provident.data.delete': 'data',
+  'provident.data.list': 'data',
+  'provident.data.journal': 'data',
   // R1 (mcp-resources-review.md) — the read-group resources. Keyed by
   // `resource:<uri>` so `toolAllowed` gates them with the `read` group. A
   // resource is registered ONLY when its group is allowed (never always-
@@ -148,7 +155,7 @@ export function authorized(
   return false
 }
 
-const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module'])
+const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
 
 /** F3/F4 — a token/groups/disable field of the wrong shape ⇒ the whole patch
  *  is REJECTED (config unchanged, never throws). */

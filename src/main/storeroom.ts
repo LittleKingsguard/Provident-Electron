@@ -59,17 +59,26 @@ export interface ProfileStoreOptions {
   constraints?: StoreConfig['constraints']
   /** Listener handles declared at construction. Defaults to none. */
   listeners?: StoreConfig['listeners']
+  /** The file the `file` tier is backed by, where one is declared. ABSENT is in domain and leaves
+   *  the register at `mem`: a store's register tier is FIXED at creation and never moves, so a store
+   *  built without a `filePath` can never reach the `file` tier (`guide §3.1`, `§9.1`). It is passed
+   *  through only where a string is supplied — supplied and absent are not the same call. */
+  filePath?: string
 }
 
 /**
- * Construct a storeroom store for this app. No file tier is opened, nothing is persisted, and no
- * listener or constraint is registered unless the caller passes one — the defaults are the empty
- * set, which is what a fresh profile store is.
+ * Construct a storeroom store for this app. No file tier is opened unless the caller supplies a
+ * `filePath`, nothing is persisted without one, and no listener or constraint is registered unless
+ * the caller passes one — the defaults are the empty set, which is what a fresh profile store is.
  */
 export function createProfileStore(opts: ProfileStoreOptions = {}): StoreInstance {
-  return storeCreate({
+  const config: StoreConfig = {
     journalLength: opts.journalLength ?? DEFAULT_JOURNAL_LENGTH,
     listeners: opts.listeners ?? [],
     constraints: opts.constraints ?? [],
-  })
+  }
+  // A SUPPLIED `filePath` is passed through and an absent one is left out, because the two are not
+  // the same call: an absent `filePath` leaves the register at `mem`, and a supplied, absent path is
+  // created exclusively at construction (`guide §3.3`, `§9.1`; `persistence.md` §1).
+  return storeCreate(opts.filePath === undefined ? config : { ...config, filePath: opts.filePath })
 }
