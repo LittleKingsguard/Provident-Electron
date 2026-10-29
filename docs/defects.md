@@ -15,7 +15,7 @@ reproduction → suspected root cause → proposed fix shape (upstream-owned).
 > **⟶ COUNT NOTE, added 2026-09-27 (the `G-4` fix pass — status only; no defect row changes).** No row of
 > this file carries a test-count or row-count claim, so nothing here drifted: the wave-C figures quoted
 > elsewhere (`58 files / 863 passed / 2 skipped / 0 failed`, the unit's set `68/68`) are **dated
-> measurements of the passes that produced them.** The **live** figures are **`58 files / 872 passed /
+> measurements of the passes that produced them.** The **live** figures at this head, MEASURED 2026-10-29 by the supervisor's shell and SUPERSEDING the reading that follows: **`91 files / 3,114 collected / 3,109 passed / 3 failed / 2 skipped`**, the three red rows being `store-core-graph` `§5.1` and `store-tabs-record` `§4.2` items 7 and 8. **The 2026-09-27 reading was **`58 files / 872 passed /
 > 2 skipped / 0 failed`** and the `U-REALDOM-BOOT` unit's set **`77/77`** (`66` contract + `11` seam) after
 > the **`G-4` fix pass** closed the unit's adversarial pass's **last open routed item**. The `ui` leg's three
 > CLOSED host rows below (`UI-LEG-LEFTOVER-PROFILES`, `UI-LEG-TIMEOUT-CLASS-RACE`,

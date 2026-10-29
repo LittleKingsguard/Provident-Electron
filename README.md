@@ -17,6 +17,17 @@ This repository has two intended goals:
    full synthetic-event access + rendered-HTML visibility for MCP endpoints
    (agentic use + debugging exposure).
 
+## Read this first — the project brief
+
+The top-level brief set answers what this app is for and what it can do, in four short
+documents: [](docs/brief/README.md) (the index and the one-page
+overview, including **what this app is not**), [](docs/brief/use-cases.md)
+(who drives it and how), [](docs/brief/features.md) (the feature set by
+area, each capability with its code cite and its state), and
+[](docs/brief/limits-and-state.md) (what is verified at which
+layer, what is red at this head, and what is owed). Read the brief before the architecture
+below if you are new here.
+
 ## Architecture
 
 ```
