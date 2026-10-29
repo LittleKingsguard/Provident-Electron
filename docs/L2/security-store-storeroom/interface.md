@@ -111,7 +111,7 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
 ```
 
 - **`createSettingsSurface` constructs the instance and holds the one reference** — the operator path's single reference, no MCP-stack member holding one (D-18; L1 §4). It serves the boot read and writes nothing (L1 §5).
-- **`attach` is the composition's second act and the only gate edge**: it re-patches the live gate from the record, applies the boot terminal `'mcp-enabled'`, and points the instance's one subscription at the sink — so **every later re-patch happens inside the listener**, never at a call site (D-17; L1 §4). `src/main/tier4-state.ts`'s holder is written from that same listener and at `attach`, and this module is its sole writer (L1 §3 ASM-4; A-3).
+- **`attach` is the composition's second act and the only gate edge**: it re-patches the live gate from the record, applies the boot terminal `'mcp-enabled'`, and points the instance's one subscription at the sink — so **every later re-patch happens inside the listener**, never at a call site (D-17; L1 §4). `src/main/tier4-state.ts`'s holder is written from that same listener and at `attach`, and this module is its sole writer (L1 §3 ASM-4; A-1).
 - **The three manual-UI channels answer the landed shapes**: `IPC_SECURITY_GET` → `SettingsReadAnswer` (`src/main/main.ts:427-443`); `IPC_SECURITY_SET` → `SettingsSetAnswer` (`:444-463`); `IPC_SECURITY_EXCLUSION` → `SettingsTransitionAnswer` (`:472-483`), whose `reason` stays closed at `'malformed-state'` and whose store refusal rides the `write` member rather than a second token.
 - **`set` maps the landed patch to the record** — `groups` added, `disable` removed, deduplicated and filtered through the six-member set by the **instance** (so the second live copy of the group set stays in E-1's file, D-15) — then one `write` (L1 §3).
 - **`N = 11`**: 3 bridge routes with **both sides counted** (`IPC_SECURITY_GET`/`SET`/`EXCLUSION` × `get`/`set`/`setExclusion`) + 5 value names (the factory, `read`, `set`, `transition`, `attach`), matching `strata/modules.json:67`; the cap that follows is 160 (D-14, `platform.md` §4, A-4).
@@ -128,19 +128,19 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
 
 ## 7. What this document does not fix
 
-- No structure, no private helper, no file under either subtree: `docs/L3/<module>/` owns those (D-1 §3).
-- No MCP surface, no resource, no `RpcMethod` member, no rendered element (D-18); the five routes' own answer shapes are `central-data`'s (`docs/L2/central-data/interface.md` §5), and this unit settles only that the group does not gate them (§6).
+- No structure, no private helper, no file under either subtree: `docs/L3/<module>/` owns those (D-1 §3). No MCP surface, no resource, no `RpcMethod` member, no rendered element (D-18); the five routes' own answer shapes are `central-data`'s (`docs/L2/central-data/interface.md` §5), and this unit settles only that the group does not gate them (§6).
 
 ## 8. Assumptions, each with the alternative it rejected
 
 | id | Assumption | Rejected alternative |
 |---|---|---|
-| `A-1` | the bridge census is **seven** top-level `window.provident` members at `0eca66b` (`ready`, `onRequest`, `sendReply`, `notify`, `security`, `module`, `store`), so L1 §6's `ISO-4` "six" is a stale figure | reading six, which no reader can produce from `src/main/preload.ts:43-74`; recorded for the closing L1 revision (D-18) |
+| `A-1` | this unit corrects **two** L1 figures: `ISO-4`'s bridge census is **seven**, not six (`ready`, `onRequest`, `sendReply`, `notify`, `security`, `module`, `store`), and `src/main/tier4-state.ts`'s writer is `settings-surface` while the map claims that path for `operator-settings` | reading six, which no reader can produce from `src/main/preload.ts:43-74`, or a second flag home — the defect the leaf exists to close (L1 §3 ASM-4); both recorded for the closing L1 revision (D-18) |
 | `A-2` | the five `data.*` routes answer while the group is off (§6) | the gated arm, which needs a second group table and a second enforcement path (D-18) |
-| `A-3` | `settings-surface` writes `src/main/tier4-state.ts`'s holder while the map claims that path for `operator-settings` | a second flag home, the defect the leaf exists to close (L1 §3 ASM-4); the claim is recorded for the closing L1 revision |
 | `A-4` | `N` counts the names a module **exposes** — its factory export plus its product's verbs — and types move no figure, so `unsubscribe` riding `subscribe`'s answer keeps `N` at 10 | counting module-level exports alone (1 and 1, which measures nothing), or counting the three receipt type names, which sets a cap off type aliases (D-14) |
-| `A-5` | a patch naming members of both tiers is outside the domain and **no row asserts it** | a mixed patch answered as two writes, which is two receipts or a landed-then-refused tear (L1 §3) |
-| `A-6` | a subscriber whose body throws is **withdrawn**: the write answers its receipt and the next delivery does not reach it | keeping it registered and catching on every delivery, which leaves a body that fails on every change and whose failure nobody can attribute (`guide §6.5a`) |
+| `ASM-L2-1` | the instance's two tiers stand at **two addresses** — `['operator-settings']` and `['operator-exclusion']` — and the module subscribes to both | one address as L1 §3 files it, where a `file`-tier write purges the `mem` shadow at its key and a settings commit silently resets the operator's exclusion pair (`guide §5.1`) |
+| `ASM-L2-2` | the exclusion pair and the tier-4 reading are `mem` rows that boot to the safe pair and are never persisted | a `file` row, which persists the gate's own state and lets a crash or a hand-edited file boot the app open (L1 §3 ASM-2) |
+| `ASM-L2-5` | a patch naming members of both tiers is outside the domain and **no row asserts it** | a mixed patch answered as two writes, which is two receipts or a landed-then-refused tear (L1 §3) |
+| `ASM-L2-6` | every subscriber's throw is **contained inside the module's own listener body** — the write still answers its receipt — and a throwing subscriber is then **withdrawn** | letting the throw cross (the package's own hazard, `guide §6.5a`), or keeping the subscriber registered and catching on every delivery, which leaves a body that fails on every change and whose failure nobody can attribute |
 
 ## 9. The integration battery's surface
 

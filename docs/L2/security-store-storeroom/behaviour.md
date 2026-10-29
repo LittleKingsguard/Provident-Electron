@@ -72,7 +72,7 @@ The import runs at construction **iff the instance's own file carries no record 
 | Drive | Expected |
 |---|---|
 | `subscribe(() => { throw new Error('boom') })`; then `write({ token: 'y' })` | the write still answers `{status:'committed', cursor, opId}` and `read()` serves `'y'`: the module contains every subscriber's throw inside its own listener body (`guide §6.5a`; ASM-L2-6) |
-| the same subscriber, then a second `write({ token: 'z' })` | nothing is delivered to it: a throwing subscriber is **withdrawn**, and no later write pays its cost (A-6; `guide §6.3`) |
+| the same subscriber, then a second `write({ token: 'z' })` | nothing is delivered to it: a throwing subscriber is **withdrawn**, and no later write pays its cost (`ASM-L2-6`; `guide §6.3`) |
 | `write` with no subscriber registered | the same receipt, and no delivery is attempted (`guide §6.3` item 1) |
 | a second subscriber that does not throw, beside the throwing one | it is delivered on the same write: one subscriber's withdrawal is not the window's failure (`guide §6.5`) |
 
@@ -120,4 +120,4 @@ Each row is stated as **nothing resolves** and driven over a live surface, never
 
 ## 11. Assumptions
 
-Every assumption behind these rows is `interface.md` §8's table (`ASM-L2-1`, `ASM-L2-2`, `ASM-L2-5`, `ASM-L2-6`, A-1..A-6), each with the alternative it rejected; no row here depends on one this file does not name (`interface.md` §8; exception §1).
+Every assumption behind these rows is `interface.md` §8's table (`A-1`, `A-2`, `A-4`, `ASM-L2-1`, `ASM-L2-2`, `ASM-L2-5`, `ASM-L2-6`), each with the alternative it rejected; no row here depends on one this file does not name (`interface.md` §8; exception §1).
