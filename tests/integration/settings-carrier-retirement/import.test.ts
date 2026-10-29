@@ -35,6 +35,9 @@ import {
 
 const OPERATOR_FILE = 'provident-operator-settings.json'
 const RETIRED_FILE = 'provident-settings.json'
+/** The SIBLING unit's retired name — this unit adds no reader and no writer of it, and `IMP-10`
+ *  seeds it only to show the two import arms are independent (persistence.md §4, §7). */
+const RETIRED_SECURITY_FILE = 'provident-security.json'
 
 /** `interface.md` §2, transcribed: the row, the four-word diagnosis and the four-member answer. */
 interface AppStateRow { name: string; value: unknown }
@@ -233,5 +236,31 @@ describe('settings-carrier-retirement · the second import-once arm, its six arm
     expect(thirdAnswer.legacy, 'a record now stands at the app-state address, so no import arm applies and the fourth word answers it (interface.md §2 ASM-L2-1)').toBe('recorded')
     expect(thirdAnswer.rows, 'and the third construction serves the COMMITTED rows, not the retired file’s: the record outranks the seed it superseded').toEqual([{ name: 'file.layout.dock', value: 'left' }])
     expect(sha256(at), 'the retired seed still stands exactly as seeded through all three constructions').toBe(before)
+  })
+
+  it('IMP-10 · the two import-once arms are INDEPENDENT: one construction over a profile seeded with BOTH retired files imports both, and one seeded with NEITHER imports neither (persistence.md §4; L1 §4)', () => {
+    // BOTH SEEDS, ONE CONSTRUCTION. The arms have different addresses and different absence markers,
+    // so neither can satisfy or suppress the other (persistence.md §4; D-19).
+    const both = profile()
+    seed(both, '{"schemaVersion":"1","file.tabs.order":["a","b"]}')
+    const securityAt = join(both, RETIRED_SECURITY_FILE)
+    writeFileSync(securityAt, JSON.stringify({ token: 'seeded-token', enabled: ['read', 'graph'], maxJournalLength: 41 }))
+    const securityBefore = sha256(securityAt)
+
+    const settings = instance(both)
+    const answer = settings.readAppState()
+    expect(answer.legacy, 'the app-state arm ran over its own seed: a valid retired carrier is an import, not a corruption (behaviour.md §7)').toBe('imported')
+    expect(answer.rows, 'and it imported that file’s rows, verbatim and in its own order').toEqual([{ name: 'file.tabs.order', value: ['a', 'b'] }])
+    const record = settings.read()
+    expect({ token: record.token, enabled: record.enabled, maxJournalLength: record.maxJournalLength }, 'and the SECURITY arm ran in the SAME construction: both retired records landed from one boot, each through its own arm (persistence.md §4)').toEqual({ token: 'seeded-token', enabled: ['read', 'graph'], maxJournalLength: 41 })
+    expect(sha256(securityAt), 'neither arm wrote a byte: the security seed’s digest is its own').toBe(securityBefore)
+
+    // NEITHER SEED, THE SAME ONE CONSTRUCTION SITE.
+    const neither = profile()
+    const cold = instance(neither)
+    expect(cold.readAppState(), 'a profile seeded with no retired file imports neither: the app-state arm answers `absent` over a standing store (behaviour.md §7; L1 §8 S-4)').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'standing' })
+    const firstRun = cold.read()
+    expect({ token: firstRun.token, enabled: firstRun.enabled }, 'and the security arm answers its first-run row, so neither arm was satisfied by the other’s file (sibling §1)').toEqual({ token: null, enabled: ['read', 'dispatch'] })
+    expect(readdirSync(neither), 'and no retired name was created by either arm').toEqual([OPERATOR_FILE])
   })
 })

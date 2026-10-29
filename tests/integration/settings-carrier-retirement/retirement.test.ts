@@ -167,14 +167,17 @@ describe('settings-carrier-retirement · the retirement’s absences, the census
     // instance's shape carries none (L1 §3/§4; D-13).
     expect(main.includes('schemaVersion'), 'the retired record’s `schemaVersion` stamp retires with its record, and no member of this unit composes one (L1 §3; D-13)').toBe(false)
 
-    // THE SIX FS VERBS the stage-and-rename writer used. `rmSync` STAYS for the Q-5 removal and
-    // `existsSync` stays for the legacy registry probe (L1 §3), so neither may be asserted absent —
-    // this row asserts exactly the six that went.
+    // THE SIX FS VERBS the stage-and-rename writer used. `rmSync` STAYS for the Q-5 removal, so it may
+    // not be asserted absent; the record's reader took `readFileSync` AND `existsSync` with it (L1 §3
+    // `:7`), and the Q-5 legacy-registry probe goes too — `createModuleStore(...).list()` answers a
+    // missing file as an empty registry with no throw, so the probe discriminated nothing (L3
+    // `design.md` §4 `:6`/`:7`, §6 `ASM-6`; `src/main/module-store.ts` `load`).
     for (const verb of ['writeFileSync', 'renameSync', 'fsyncSync', 'openSync', 'closeSync', 'mkdirSync']) {
       expect(main.includes(verb), `\`${verb}\` was the retired writer's machinery and has no successor in src/main/main.ts (L1 §3; persistence.md §5)`).toBe(false)
     }
     expect(main.includes('rmSync'), 'the Q-5 legacy-registry removal keeps its `rmSync` (L1 §3)').toBe(true)
-    expect(main.includes('existsSync'), 'and the legacy registry probe keeps its `existsSync` (L1 §3)').toBe(true)
+    expect(/readFileSync\s*\(/.test(main), 'the carrier\'s own reader goes with the writer, and main.ts reads no file of its own (L1 §3 `:7`; persistence.md §5)').toBe(false)
+    expect(main.includes('existsSync'), 'and the legacy registry\'s existence probe retires with it: `createModuleStore(...).list()` already answers a missing file as an empty registry, so the probe discriminated nothing and keeping it would leave a reader named in `:7`\'s removal row standing (L3 design.md §4, §6 ASM-6)').toBe(false)
 
     // THE LIMIT, STATED: a path assembled at run time from pieces never appears as a literal, so a byte
     // scan cannot see one. What this row CAN see — and what it asserts — is that no literal spelling of

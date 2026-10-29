@@ -5,10 +5,11 @@
 // THE CONTRACT: docs/L2/settings-carrier-retirement/interface.md §1 (the address and the whole-record
 // act), §2 (the four declared members and the two new verbs), §4 (Y-2's whole-map replacement), §6
 // (the refusal vocabulary, including a malformed argument refused as a value) and §7 (`A-2`, `A-3`,
-// `ASM-L2-6`); behaviour.md §3 (`A-6` and the whole-map commit) and §4 (the JSON image, `ASM-L2-2`);
+// `ASM-L2-6`); behaviour.md §1 cell 4 (the refused construction, answered as a read), §2 (the served
+// answer is a copy), §3 (`A-6` and the whole-map commit) and §4 (the JSON image, `ASM-L2-2`);
 // persistence.md §2 (what construction and the boot write), §3 (the record's shape and the prototype
-// discipline), §5 (what a `file`-tier commit guarantees, and what a refusal leaves) and §6 (why the
-// three addresses do not touch).
+// discipline), §4 (the diagnosis is boot-time and the arm never runs twice), §5 (what a `file`-tier
+// commit guarantees, and what a refusal leaves) and §6 (why the three addresses do not touch).
 //
 // THIS FILE STANDS RED UNTIL THE IMPLEMENTATION EXISTS (`examiner.md` §3, D-1): `readAppState` and
 // `writeAppState` are not in `src/main/operator-settings/index.ts` at this head, so every row below
@@ -27,7 +28,7 @@
 // WHERE EACH ANSWER COMES FROM. Every assertion below is an answer read through the declared shape or
 // a byte on the disk — never an internal call and never a source shape (`examiner.md` §2). A refusal
 // where a row needs the committed arm is a NAMED failure carrying the receipt that was answered.
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -120,7 +121,20 @@ describe('settings-carrier-retirement · the third durable address, through the 
       { name: 'file.settings.theme.token', value: 'dark' },
     ])
     expect(served.map((row) => row.name), 'the names are carried verbatim, one map member each, and no path segment is interpreted (persistence.md §3)').toEqual(['file.tabs.order', 'file.settings.theme.token'])
-    expect(settings.readAppState().legacy, 'a record now stands at the address, so no import arm applies and the diagnosis says so (interface.md §2 ASM-L2-1)').toBe('recorded')
+    // THE BOOT-TIME RULE IS THE DECLARATION, AND IT IS NOT SOFTENED HERE. `interface.md` §2 declares
+    // `legacy` "a boot-time diagnosis served for the process's life", and `persistence.md` §4 makes
+    // the marker the absence of a record at the address, so the import arm never runs again after the
+    // first committed write. THIS instance booted `absent`; the commit that followed cannot re-diagnose
+    // the boot, so `absent` is the answer this process serves for its whole life. `'recorded'` is the
+    // answer of a FRESH CONSTRUCTION over a profile whose record stands, which `IMP-9` drives — a
+    // same-process change of answer here would be an undeclared per-read derivation, and this row
+    // exists to fail an implementation that invents one (interface.md §2; persistence.md §4;
+    // examiners' F-1).
+    expect(settings.readAppState().legacy, 'the diagnosis was fixed at construction: this process booted over a profile with no record and no retired file, so it answers `absent` for the process’s life — even after a commit lands (interface.md §2; persistence.md §4)').toBe('absent')
+    expect(settings.readAppState().rows, 'and the commit is served beside that unmoved diagnosis: the rows move, the boot diagnosis does not').toEqual([
+      { name: 'file.tabs.order', value: ['a', 'b'] },
+      { name: 'file.settings.theme.token', value: 'dark' },
+    ])
   })
 
   it('AS-3 · a commit is a WHOLE-MAP replacement: a second `writeAppState` carrying one row leaves exactly that row (interface.md §4; behaviour.md §3 A-6)', () => {
@@ -237,5 +251,85 @@ describe('settings-carrier-retirement · the third durable address, through the 
     } finally {
       rmSync(other, { recursive: true, force: true })
     }
+  })
+
+  it('AS-11 · over a store the package cannot construct the read answers `{rows:[], legacy:\'absent\', unrepresentable:[], storage:\'unreachable\'}` and every commit answers `FilePathUnreachable` with nothing thrown (behaviour.md §1 cell 4; interface.md §2 ASM-L2-3, §6)', () => {
+    // A DIRECTORY OCCUPYING THE INSTANCE'S OWN NAME is what makes the construction refuse: the store
+    // cannot stand, so no record is ever read and no import arm ever runs (guide §8.2;
+    // sibling interface.md §2.1).
+    mkdirSync(filePath(OPERATOR_FILE))
+    const settings = instance(userDataDir)
+
+    expect(settings.readAppState(), 'the refused construction is served as a READ MEMBER and never as a throw, and the diagnosis is `absent` — no record was read and no import arm ran, so nothing else can be claimed (interface.md §2 ASM-L2-3)').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'unreachable' })
+    expect(settings.read().token, 'and the sibling’s own read is unmoved by this unit’s second read: its first-run row (sibling §2.1)').toBeNull()
+
+    // THE CONSTRUCTION'S REFUSAL IS ANSWERED FIRST, BEFORE ANY ADMISSION of the argument: a
+    // well-formed list, an empty list and an argument that over a STANDING store is refused as a
+    // value (`AS-6`) all answer the same store status here — one act, one spelling (interface.md §2,
+    // §6; behaviour.md §3).
+    const drives: Array<{ why: string; rows: unknown }> = [
+      { why: 'a well-formed rows list', rows: [{ name: 'file.tabs.order', value: ['a'] }] },
+      { why: 'an empty rows list', rows: [] },
+      { why: 'a `rows` that is not an array — refused as a value over a standing store (`AS-6`), and as the construction’s refusal here', rows: null },
+    ]
+    for (const drive of drives) {
+      const receipt = refused(settings.writeAppState(drive.rows as readonly AppStateRow[]))
+      expect(receipt.reason, `no instance stands, so every commit answers the store’s own status verbatim, whatever it was handed: ${drive.why} (interface.md §6; behaviour.md §3)`).toBe('FilePathUnreachable')
+      expect(typeof receipt.message, `and a sentence rides it, never a throw: ${drive.why}`).toBe('string')
+    }
+
+    expect(settings.readAppState(), 'and nothing moved: the record is still unreachable and the answer is still the empty one').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'unreachable' })
+    expect(readdirSync(userDataDir), 'nothing was created beside the occupied name: no file, no `.tmp`, no sidecar (persistence.md §5)').toEqual([OPERATOR_FILE])
+  })
+
+  it('AS-12 · what `readAppState` answers is a COPY at every depth: mutating a served row’s array or object value, the served list itself or `unrepresentable` moves neither the record nor the next answer (behaviour.md §2; persistence.md §3; guide §10)', () => {
+    const settings = instance(userDataDir)
+    const written: AppStateRow[] = [
+      { name: 'file.tabs.order', value: ['a', 'b'] },
+      { name: 'file.modules.m', value: { name: 'm', version: '1', flags: { pinned: true } } },
+    ]
+    committed(settings.writeAppState(written))
+
+    const first = settings.readAppState()
+    expect(first.rows, 'the committed rows are served whole and in order').toEqual(written)
+
+    // THE MUTATION, MADE THROUGH THE SERVED ANSWER ALONE — the only handle a caller has.
+    ;(first.rows[0].value as string[]).push('mutated')
+    ;((first.rows[1].value as { flags: { pinned: boolean } }).flags).pinned = false
+    ;(first.rows[1].value as Record<string, unknown>).injected = 'mutated'
+    first.rows.push({ name: 'file.injected', value: 1 })
+    first.rows.reverse()
+    first.unrepresentable.push('file.injected')
+
+    const second = settings.readAppState()
+    expect(second.rows, 'a served container is the answer’s own, so nothing a caller does to it reaches the record: the array value is unmoved (behaviour.md §2; `guide §10`)').toEqual(written)
+    expect(second.unrepresentable, 'and the named rows are a fresh list per answer, never a served constant (persistence.md §3)').toEqual([])
+    expect(second.rows[0] === first.rows[1], 'no row object is shared between two answers either: every depth is rebuilt').toBe(false)
+
+    const rebooted = instance(userDataDir)
+    expect(rebooted.readAppState().rows, 'and the durable record is unmoved too, which is the half a same-process answer cannot prove: a second construction serves the committed rows (persistence.md §3)').toEqual(written)
+  })
+
+  it('AS-13 · an entry named `__proto__` lands as an OWN data property of a served row’s value, survives to the instance file’s bytes and survives a re-read, and no prototype is polluted (persistence.md §3; guide §10)', () => {
+    const settings = instance(userDataDir)
+    // A COMPUTED KEY, so the literal carries `__proto__` as an OWN DATA PROPERTY rather than setting
+    // the object's prototype — the shape a `file.*` row's value would carry if the operator's own
+    // JSON had spelled it (persistence.md §3).
+    const value: Record<string, unknown> = { ['__proto__']: { polluted: true }, kept: 1 }
+    committed(settings.writeAppState([{ name: 'file.settings.proto', value }]))
+
+    const served = settings.readAppState().rows[0].value as Record<string, unknown>
+    expect(Object.prototype.hasOwnProperty.call(served, '__proto__'), 'the entry is an OWN property of the served value, not the value’s prototype (persistence.md §3)').toBe(true)
+    expect(Object.getOwnPropertyDescriptor(served, '__proto__')?.value, 'carrying the value that was written').toEqual({ polluted: true })
+    expect(Object.getPrototypeOf(served) === null || Object.getPrototypeOf(served) === Object.prototype, 'and the served value’s prototype is a terminal one — a null-prototype map or `Object.prototype`, never the entry’s own value').toBe(true)
+    expect(served.kept, 'and the sibling member crossed beside it').toBe(1)
+    expect(({} as { polluted?: boolean }).polluted, 'no prototype was polluted on the way through').toBeUndefined()
+
+    expect(readFileSync(filePath(OPERATOR_FILE), 'utf8').includes('"__proto__"'), 'the name survives to the instance file’s bytes as a member of the imaged record, not as a prototype edge (persistence.md §3)').toBe(true)
+
+    const rebooted = instance(userDataDir)
+    const reServed = rebooted.readAppState().rows[0].value as Record<string, unknown>
+    expect(Object.prototype.hasOwnProperty.call(reServed, '__proto__'), 'and it survives the re-read: the record is the rows’ JSON image and the image preserved the name (persistence.md §3)').toBe(true)
+    expect(Object.getOwnPropertyDescriptor(reServed, '__proto__')?.value, 'under the same own-property reading, with its value intact').toEqual({ polluted: true })
   })
 })

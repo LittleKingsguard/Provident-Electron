@@ -23,7 +23,7 @@
 // BOOT PARITY IS A RECORD, NEVER A TOKEN SCAN (behaviour.md §6): every limb below reads a
 // CONSTRUCTED surface over the same profile directory, so what it asserts is what the next process
 // would serve.
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -39,6 +39,9 @@ import {
 } from '../../../src/main/settings-surface'
 
 const OPERATOR_FILE = 'provident-operator-settings.json'
+/** The RETIRED carrier, the battery's own SEED: `SUR-7` writes it and no module may write it
+ *  (persistence.md §1, §4). A literal here ON PURPOSE, so the row can prove nothing re-reads it. */
+const RETIRED_FILE = 'provident-settings.json'
 
 /** `interface.md` §3, transcribed: the row alias, the diagnosis alias, the four-member answer, and the
  *  committed arm that carries NO ordinal (`ASM-L2-4`). */
@@ -226,5 +229,27 @@ describe('settings-carrier-retirement · the two delegating verbs, the channel a
     expect(settings.state().rows, 'the previous rows stand: a refusal leaves the record as it stood (interface.md §6)').toEqual([{ name: 'file.tabs.order', value: ['a', 'b'] }])
     expect(readFileSync(join(userDataDir, OPERATOR_FILE)).equals(before), 'and the bytes are byte-identical (guide §9.4; persistence.md §5)').toBe(true)
     expect(readdirSync(userDataDir), 'and nothing appeared beside the one instance file').toEqual([OPERATOR_FILE])
+  })
+
+  it('SUR-7 · a second `state()` in one process answers the same rows and reads no file: a byte-different seed written AFTER the first answer leaves the second one unmoved (behaviour.md §1 cell 3; L1 §4)', () => {
+    const FIRST_SEED = '{"schemaVersion":"1","file.tabs.order":["a","b"]}'
+    writeFileSync(join(userDataDir, RETIRED_FILE), FIRST_SEED)
+    const settings = surface(userDataDir)
+
+    const first = settings.state()
+    expect(first.legacy, 'the import ran at construction, so the first answer names the arm that ran (behaviour.md §7)').toBe('imported')
+    expect(first.rows, 'and carries its rows').toEqual([{ name: 'file.tabs.order', value: ['a', 'b'] }])
+
+    // THE LIVE FORM OF "NO FILE IS READ TWICE": a byte-different seed, written after the first answer,
+    // whose own row would appear in any answer that re-read the file. Nothing re-reads it, so the
+    // second answer cannot move — and the seed below is left byte-identical, so the row also proves
+    // the second answer wrote nothing over it (behaviour.md §1; persistence.md §2, §4).
+    const SECOND_SEED = '{"schemaVersion":"1","file.layout.dock":"left","file.tabs.order":["z"]}'
+    writeFileSync(join(userDataDir, RETIRED_FILE), SECOND_SEED)
+
+    const second = settings.state()
+    expect(second, 'the same four members twice in one process: the import ran at most once, at construction, and a second `state()` serves the held answer (behaviour.md §1 cell 3)').toEqual(first)
+    expect(second.rows.some((row) => row.name === 'file.layout.dock'), 'the second seed’s own row never appears — the live proof that no file was re-read after construction (behaviour.md §1)').toBe(false)
+    expect(readFileSync(join(userDataDir, RETIRED_FILE), 'utf8'), 'and the second seed stands exactly as written: neither answer wrote a byte of the retired file (persistence.md §2, §4)').toBe(SECOND_SEED)
   })
 })
