@@ -111,7 +111,12 @@ describe('security-store-storeroom · the instance through its declared surface'
     expect(record.maxJournalLength, 'the cap survives').toBe(12)
     expect(record.entries, 'and a foreign key lands in `entries` verbatim').toEqual({ 'x-mine': { a: 1 } })
     expect(bytesOf(LEGACY_FILE).toString('utf8'), 'the retired name is read once and never written').toBe(seed)
-    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'the import commits, so the new name carries the record').toBeGreaterThan(0)
+    // THE IMPORT DOES NOT PERSIST — `interface.md` §2.1: "the boot is read-only: the construction,
+    // the boot read, the import and `attach` write no byte". The imported record lives in the
+    // instance's memory until the operator's first committed write, which is why the import
+    // re-runs at every boot over a profile nobody has written to yet (`behaviour.md` §3, row 1;
+    // `persistence.md` §3). This row asserted the opposite until the L3 examiner's `L2-T1`.
+    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'the import writes no byte: the mark of a landed import is the record it serves, not a byte on disk (interface.md §2.1)').toBe(0)
   })
 
   it('the import’s absent arm serves the default and writes no byte', () => {

@@ -110,10 +110,15 @@ describe('security-store-storeroom · the surface module, its channels and the l
   it('a refused write leaves the live gate unpatched: the re-patch is the subscription’s, not the call site’s (interface.md §5)', () => {
     const { surface, server } = composed()
     const before = [...server.getGateConfig().enabled].sort()
-    const answer = surface.set({ maxJournalLength: Number.NaN })
+    // THE REFUSING MEMBER IS `Infinity`, NOT `NaN`: interface.md §2 carries the landed clear/refuse
+    // split, where `NaN` and a non-positive cap CLEAR the cap and commit, and only `±Infinity`
+    // refuses the patch (`src/main/security-store.ts:365-377`). A `NaN` here would assert a refusal
+    // the document does not declare — the over-fit this row was corrected for.
+    const answer = surface.set({ maxJournalLength: Number.POSITIVE_INFINITY })
     if (answer.write.status !== 'refused') throw new Error(`the row needs the refused arm to read its reason word; it answered ${JSON.stringify(answer.write)}`)
-    expect(answer.write.reason, 'a non-finite cap is a value the crossing refuses (guide §10.2)').toBe('ValueRefusedAtBoundary')
+    expect(answer.write.reason, 'a non-finite cap refuses the patch before any store verb (guide §10.2; interface.md §2)').toBe('ValueRefusedAtBoundary')
     expect([...server.getGateConfig().enabled].sort(), 'no commit, no delivery, so no re-patch').toEqual(before)
+    expect(surface.read().maxJournalLength, 'and the cap stands where it stood').toBeUndefined()
   })
 
   it('the transition channel answers `applied` and `state` and NO receipt member, because the bridge declares none on that route (interface.md §5.1, ASM-L2-4)', () => {
@@ -135,7 +140,7 @@ describe('security-store-storeroom · the surface module, its channels and the l
   it('a malformed transition is refused as a value: `malformed-state`, never a throw, and the gate is unmoved', () => {
     const { surface, server } = composed()
     const answer = surface.transition('nonsense')
-    expect(answer.applied).toBe(false)
+    if (answer.applied !== false) throw new Error(`the row needs the unapplied arm; it answered ${JSON.stringify(answer)}`)
     expect(answer.reason).toBe('malformed-state')
     expect(answer.state).toBe('mcp-enabled')
     expect(server.exclusionSnapshot(), 'a malformed request is not a transition').toBeNull()

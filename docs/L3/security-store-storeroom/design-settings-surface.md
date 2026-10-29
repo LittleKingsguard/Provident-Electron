@@ -1,6 +1,6 @@
 # L3 — `src/main/settings-surface/`: the surface
 
-- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Artifact:** `security-store-storeroom-l3-design`
+- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Artifact:** `security-store-storeroom-l3-design`
 - **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for one owner; the declared surface is `signatures.md` §3, the contract is `docs/L2/security-store-storeroom/interface.md` §5/§5.1 and `behaviour.md` §9/§10 (rev 2)
 - **Charter:** D-17 the surface is a separate module, seeing the instance through read, write and listeners alone · D-18 one operator-only reference, tested by absence · D-14 its `N` counts both sides
 - **Ceiling:** 150 lines, class max (D-1) · `guide §n` is `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
@@ -77,12 +77,14 @@ attach(sink):
   off   ← settings.subscribe(onDelivery)                    · subscribe FIRST: no change can fall between the acts
   record ← settings.read()
   setTier4OpenState(record.exclusion is 'mcp-disabled')      · exception §2 E-3: this module is the holder's sole writer
-  sink.applyGatePatch({ token: record.token, groups: record.enabled })
+  sink.applyGatePatch(patchOf(record))                       · §5, ASM-7: `token` crosses only while a string stands
   appliedGroups ← [...record.enabled]                        · what the gate now holds, §6
   sink.applyExclusion(record.exclusion)                      · the boot terminal 'mcp-enabled'; a self-transition is lawful
 ```
 
 - **`attach` is where the boot terminal lands**: before it the gate is untouched, after it the gate's groups equal the record's and its exclusion is the pair the instance booted to; the landed order — construction, boot read, flip, `mcp.start()`, window — survives in kind (interface §5; L1 §7 C-3; behaviour §10).
+- **`patchOf(record)` is the one composer of the sink's patch, and it carries `token` only while a non-empty string stands** (ASM-7): the gate admits that member as a non-empty string wherever it is **present** and rejects the **whole patch** — groups included — for any other value, so a `token:null` would leave `attach`'s boot patch and every later group patch silently unapplied on exactly the first-run profile, whose default token is `null` (`src/main/security.ts:176-179`, `:94-96`; interface §2; behaviour §1; exception §2 E-2, E-3, §6).
+- **The outcome is the gate's groups equal the record's after `attach` and after each committed write**, and the one thing this sink cannot carry is a **cleared** token: the declared patch has no member that expresses a clear and E-2/E-3 licence none, so the gate keeps the token it stood with while its groups still land (interface §5; behaviour §10; exception §2 E-2, E-3, §6; ASM-7).
 - **Subscribe before the first patch**, so a commit landing between the two acts is delivered rather than lost (D-17; guide §6.1).
 - **One subscription per surface**: a second `attach` replaces the sink and registers no second listener, so the instance keeps the one subscription D-17 declares (D-17; interface §5; ASM-3).
 - **`src/main/tier4-state.ts`'s holder is written here and on every delivery**, from the same reading that answers the carrier, so it is the gate's projection of the instance's row and no second home — the one cross-module write this unit licences, on a path that stays `operator-settings`' and is never claimed twice (exception §2 E-3; L1 §3 `ASM-4`; `modules.md` §3; ASM-4).
@@ -96,7 +98,7 @@ onDelivery(address):
   if no sink stands → return
   if the address names EXCLUSION_ADDRESS → sink.applyExclusion(record.exclusion); return   · the transition's own path
   removed ← appliedGroups minus record.enabled                     · the gate's apply ADDS groups and removes `disable`
-  sink.applyGatePatch({ token: record.token, groups: record.enabled, disable: removed })
+  sink.applyGatePatch({ ...patchOf(record), disable: removed })   · §5, ASM-7: the token never blocks the removal set
   appliedGroups ← [...record.enabled]
 ```
 
@@ -114,6 +116,7 @@ onDelivery(address):
 - **No second instance, no second `filePath`, no second `userDataDir`-derived name**: one instance per surface, for the process's life (persistence §8; D-16; D-18).
 - **No `node:fs`, no `electron`, no `ipcMain`, no `provident-storeroom` import**: the instance is the only seam, and the three channel bodies are delegated to, never registered here (interface §5; exception §2 E-3; D-18).
 - **Nothing names a `ToolGroup`**: the sink is structural, so `ProvidentMcpServer` satisfies it as it stands and this module adds no group spelling (interface §5; D-15).
+- **The sink is called through `patchOf` and never with an inline patch**, and `SettingsGateSink` is never widened with a member that clears the token or reads the gate's: the declared three members are the whole seam (interface §5; exception §2 E-2, E-3, §6; ASM-7).
 
 ## 8. Assumptions made here that L2 left open, with the alternative each rejected
 
@@ -125,3 +128,4 @@ onDelivery(address):
 | ASM-4 | the surface **writes** the holder on the committed `mem` write and at `attach`, and reads it nowhere | deleting the write, which would leave `src/main/tier4-state.ts` with no producer at all after E-1 retires the store's two consult sites (exception §2 E-3; L1 §3 `ASM-4`) |
 | ASM-5 | the re-patch's `disable` set is the surface's own last-applied list | re-deriving the six names here to pass "everything not granted", which re-creates the second live copy C-1 exists to consolidate (D-15; `src/main/security.ts:182-188`) |
 | ASM-6 | `TIER4_CLOSED`/`TIER4_CLOSED_MESSAGE` are imported from `mcp-server.js` and `ExclusionState` re-exported from `security.js` | minting the sentence or the two tokens here, which gives one refusal — and one closed pair — two spellings (PAR-13; `src/main/security-store.ts:10-16`) |
+| ASM-7 | `patchOf` **omits** `token` while the record's token is `null`, so the group patch always reaches the gate and a cleared token is not propagated | passing `token: record.token` unconditionally, which the gate rejects **whole** and answers with the configuration unchanged, dropping the boot patch and every later group patch on the first-run profile (`src/main/security.ts:176-179`); or adding a clear member to `SettingsGateSink`, which E-2/E-3 licence and the exception's §6 does not (interface §5; exception §2 E-2, E-3, §6) |

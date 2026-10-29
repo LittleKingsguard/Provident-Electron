@@ -1,6 +1,6 @@
 # L3 — `src/main/operator-settings/`: the instance
 
-- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Artifact:** `security-store-storeroom-l3-design`
+- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Artifact:** `security-store-storeroom-l3-design`
 - **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for one owner; the declared surface is `signatures.md` §2, the contract is `docs/L2/security-store-storeroom/interface.md` §1-§3 and `behaviour.md` §1-§8 (rev 2)
 - **Charter:** D-16 rebuilt wholesale and MCP-isolated · D-17 the state machine under the operator's surface · D-18 one operator-only reference · D-19 import once, then own a new shape · D-13 its own on-disk shape
 - **Ceiling:** 150 lines, class max (D-1) · `guide §n` is `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
@@ -93,7 +93,7 @@ write(patch):
 ```
 
 - **Two admission layers, each with its own subject and no duplication**: this module admits the **member domains** (a `token` that is a string or `null`, an `enabled` array, a finite cap or `null`, an `entries` plain object, one of the two literals); the **package's walk** admits the **value**, so a cycle, a function, a symbol, a lone surrogate, a non-finite number, a `-0` or a node past the two ceilings answer `ValueRefusedAtBoundary` from the store and cross verbatim (guide §10.2, §10.3; interface §3; ASM-5).
-- **`maxJournalLength`'s clear arm is `null`**, and the durable member is a `> 0` floored number or absent — `NaN` and a non-positive value clear it, `Infinity`/`-Infinity` refuse the patch (interface §2; `src/main/security-store.ts:365-377` carried).
+- **`maxJournalLength`'s clear arm is `null`**, and the durable member is a `> 0` floored number or absent — `NaN` and a non-positive value clear it, `±Infinity` refuse the patch (interface §2; behaviour §2; `src/main/security-store.ts:365-377` carried).
 - **`enabled` is served in the caller's own order**, first occurrence first — the order row discriminates against a re-sort (interface §2 `A-5`; behaviour §2).
 - **A refusal leaves the record and the bytes exactly as they stood, mints no cursor and delivers nothing**, and its `reason` is the store's own status **verbatim under the open escape arm** — never narrowed to a spelling this surface does not name, and a sentence is authored here only for a refusal this module makes itself (interface §3; guide §9.4, §8.1; behaviour §5; ASM-6).
 
@@ -115,22 +115,21 @@ importOnce(dir):
 - **The marker is the absence of a record at the record address**, so there is no version member, no second written name and no repair of the retired file; **the retired name is read at most once per profile and never written, renamed, repaired or deleted**, its bytes standing as seeded (persistence §3; guide §9.1; D-19; L1 §5).
 - **Ingested values cross as data and not as an admission**: a `JSON.parse`d value is representable by construction, so no per-entry admission runs at boot (`src/main/security-store.ts:108`; guide §10.4).
 
-## 8. The listener registry — one handle per subscription
+## 8. The listener registry — one handle per subscription, per address
 
 ```
 subscribe(listener):
-  if no instance stands → return () => {}                                  · interface §2; ASM-4
-  handle ← 'operator-settings:' + (++n)                                    · guide §6.1: the caller spells it
-  try store.listen(handle, [RECORD_ADDRESS, EXCLUSION_ADDRESS]) catch → return () => {}   · guide §6.1
-  store.register(handle, address => {                                      · guide §6.2: one handle, one body
-      try listener(detach(address)) catch → withdraw(handle)                · ASM-L2-6; guide §6.5a
-  })
-  return () => withdraw(handle)                                            · guide §6.2, §6.3
+  if no instance stands → answer a withdrawal that withdraws nothing        · interface §2; ASM-4
+  handles ← one per address: handleFor(address, seq++) = 'operator-settings:' + seq + '@' + key   · guide §6.1
+  for each address a: listen(handles[a], [a]) and register(handles[a], address => {   · §6.1 ONE address; §6.2
+      try listener(detach(address)) catch → withdraw both }) catch → withdraw both   · ASM-L2-6; guide §6.5a
+  return () => withdraw both                                                 · guide §6.2: one unlisten each
 ```
 
-- **One handle per subscription, not one handle per listener set**: a second `register` on one handle replaces the first, so two subscriptions must be two handles for one withdrawal to withdraw one, and the withdrawal is `unlisten` — a plain no-op success over a handle already withdrawn (guide §6.2; behaviour §5).
-- **The delivery's one argument is the address, never the value**, so a subscriber learns *that* an address moved and reads the record for what moved; the subscription names both addresses, so each act is delivered with the address it touched (guide §6.4; exception §8 item 2; behaviour §5).
-- **A throw is contained inside this module's own listener body and the subscriber is withdrawn**: the write still answers its receipt, because a listener's throw would otherwise take the answer away after the data landed (guide §6.5a; `ASM-L2-6`; behaviour §6).
+- **One handle per subscription PER ADDRESS — two handles, and never one handle whose set names both** (ASM-7): a second `register` on one handle replaces the first, so two subscriptions are two handle pairs, and the withdrawal is `unlisten` **over a one-address handle**, which is the arm the package silences correctly — a plain no-op success over a handle already withdrawn, so calling the answered withdrawal twice is harmless (guide §6.2; behaviour §5; P-6).
+- **P-6 — `unlisten` does not withdraw a handle bound at TWO addresses; upstream-owned, never patched here (D-5).** *Symptom:* a handle whose `listen` set names two addresses keeps firing for one of them after `unlisten(handle)`, while a one-address handle is silenced. *Reproduction:* `listen('h', [['operator-settings'],['operator-exclusion']])`, `register('h', fn)`, `unlisten('h')`, then a write at each address — `fn` still fires for one; reproduced at this head by this unit's L3 test writer on `provident-storeroom ^1.6.1`, where `removeListener('h')` and `listen('h', [])` both silence it. *Suspected root cause:* the withdrawal is keyed per store-side entry while the registry entry is removed only where the identity stands nowhere (guide §6.2), so one surviving entry keeps the handle live. *Proposed fix shape:* make `unlisten` withdraw every store-side entry the identity holds, or declare the one-entry-per-call reading at its own line (guide §6.2, §6.3). **This design depends on P-6 outright**: ASM-7's two one-address handles are the whole of the withdrawal, and a handle whose set names both addresses is a defect at L4 (D-5; ASM-7).
+- **The delivery's one argument is the address, never the value**, so a subscriber learns *that* an address moved and reads the record for what moved; one handle stands at each address, so the touched address's own handle is the one delivered and each act is still one delivery (guide §6.3, §6.4; exception §8 item 2; behaviour §5).
+- **A throw is contained inside this module's own listener body and the subscriber is withdrawn WHOLE — both its handles**: the write still answers its receipt, because a listener's throw would otherwise take the answer away after the data landed (guide §6.5a; `ASM-L2-6`; behaviour §6).
 
 ## 9. Guardrails for L4
 
@@ -148,3 +147,4 @@ subscribe(listener):
 | ASM-4 | with no instance standing, `read`/`write`/`subscribe` answer `FIRST_RUN`/`FilePathUnreachable`/a no-op withdrawal and never throw | a construction that throws, which puts a refusal across a boundary L1 §3 forbids |
 | ASM-5 | the module admits **member domains** and lets the **store's walk** admit the value | re-implementing the representability walk here as the displaced file did, which is a second admission rule to keep in step with the package's (interface §3; guide §10.2) |
 | ASM-6 | the module authors the sentence only for a refusal it makes itself | re-spelling a store refusal's generated sentence, which gives one refusal two spellings |
+| ASM-7 | `subscribe` binds **one handle per address** — two `listen` calls, a one-address set each, and one `unlisten` per handle at withdrawal — and no handle carries a two-address set | one handle naming both addresses and withdrawn with `unlisten` alone, which leaves a live delivery after `off()` (P-6); or the assignment arm `listen(handle, [])` before `unlisten`, which is inside the census but leans on P-6's own entry-removal half and leaves the registry entry standing until the second call lands (guide §6.1 rule 3, §6.2) |

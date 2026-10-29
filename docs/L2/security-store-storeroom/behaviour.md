@@ -23,6 +23,7 @@
 | then `write({ token: 't2' })` | committed with **`cursor` exactly one greater** than the previous commit's, `opId` different; `read()` serves `'t2'`; `enabled` unchanged (D-17; `ASM-L2-7`) |
 | `write({ enabled: ['data','bogus','read','dispatch','module','graph','code'] })` | committed with **exactly `['data','read','dispatch','module','graph','code']`** — the patch's own order, first occurrence first, a non-group string dropped (D-11, D-15; `A-5`) |
 | `write({ maxJournalLength: 12 })` then `write({ maxJournalLength: null })` | committed, then committed with the cap absent (`src/main/security-store.ts:365-377` carried; `interface.md` §2) |
+| `write({ maxJournalLength: Number.NaN })` then `write({ maxJournalLength: Number.POSITIVE_INFINITY })` | the `NaN` write **commits** and clears the cap — the landed clear arm; the `Infinity` write is **refused** `ValueRefusedAtBoundary` and nothing lands — the landed refuse arm (`src/main/security-store.ts:365-377`; `interface.md` §2, §3) |
 | any committed write | no `.tmp`, no lock, no sidecar and no second name appears beside the file (D-13; `persistence.md` §5) |
 
 - **One transition is one commit**: one write, one op, one cursor and one receipt, because the four `file` members are written as one value at one address (L1 §3; `guide §4` arm `W-4`). **The order row discriminates**: the patch is served in its own order, so an implementation that re-sorts into `VALID_GROUPS` order fails it even though it would pass a patch already written in that order (`A-5`).
@@ -120,6 +121,7 @@ Each row is stated as **nothing resolves** and driven over a live surface, over 
 | any file outside `src/main/settings-surface/` | the **composition site is `main.ts` and no other file**: it is the only caller of `createSettingsSurface` in `src/**`, and the instance's single construction lives inside `settings-surface/` (`interface.md` §5 `ASM-L2-8`; D-18) |
 
 - **`attach` is where the boot terminal lands**: before it the gate is untouched, after it the gate's groups equal the record's and its exclusion is the boot `'mcp-enabled'`, and the landed order — construction, boot read, flip, `mcp.start()`, window — survives unchanged in kind (L1 §4; L1 §7 C-3).
+- **The holder's reader, named as a limit rather than left to be discovered**: after E-1 retires the store's two consult sites and E-3 moves the carrier, `src/main/tier4-state.ts`'s holder is **written by this module and read by nothing in `src/**` at this head**, so the projection is written and unread. The write stands because E-3 licences it by name and the contract declares the surface its sole producer (L1 §3 ASM-4; exception §2 E-3); the missing reader is **owed to the unit that next gives the enforcement path a use for it**, and it is recorded here because it is a claim about the enforcement path and not a defect in the write (D-18).
 
 ## 11. Assumptions
 
