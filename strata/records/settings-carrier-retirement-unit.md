@@ -33,5 +33,5 @@
   require of `src/main/operator-settings/index.ts`, so no conflict stands: the re-grain this unit drives is `RET-2`, one
   occurrence in the instance module, read by one `readFileSync` and written by none (sibling `persistence.md` §8). The
   earlier reading of `S-1` as a literal ban is retired.
-- **Owed by L0:** a second blind walkthrough run — run 1 came back `DOC-GAP` with its three findings fixed in place
+- Discharged: run 2 came back `PASS` and the unit is closed with its three findings fixed in place
   (`strata/records/settings-carrier-retirement-walkthrough.md`).

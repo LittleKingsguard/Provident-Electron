@@ -172,7 +172,7 @@ that owns the row. Comments that cite `docs/…` stay as written and resolve thr
 user's D-4 selection ("Repoint or retire those assertions in the same pass, recorded"), executed
 against the L1 examiner's disposition table.
 
-**Decision:** 15 test rows are retired, across six files, because their **subject** is the corpus
+**Decision:** 15 test rows are retired, across seven files, because their **subject** is the corpus
 that D-2 archived and no repoint can satisfy them:
 
 | Rows | Why retirement and not repoint |

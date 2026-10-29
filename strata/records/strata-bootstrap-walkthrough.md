@@ -16,7 +16,7 @@ built; the quarantined runner read the real tree instead, which is a deviation t
 | 3 | `STALE` | 3 falsified claims: the "eight script keys" cite over a 13-key range; D-8's proposed arms (48/2/21) unreconciled with the executed split (55/15/21); `README.md` at 61 lines against D-3's 60 | fixed, with the arm reconciliation recorded in `archive.md` §3 |
 
 **State at this record: not green.** **Four runs are recorded in this file** — the three in §1's table and run 4
-below — and **five further runs stand in the three units' own walkthrough records**
+below — and **six further runs stand in the three units' own walkthrough records**
 (`central-data-management` 2, `security-store-storeroom` 2, `settings-carrier-retirement` 1). The third run's residual
 claims are fixed and independently re-measured (`wc -l README.md` = 60, `package.json:8-22` = 13 keys, the arms
 reconciled) and run 4's four falsified claims are fixed below, but a fifth run of this file is the gate and is **owed**

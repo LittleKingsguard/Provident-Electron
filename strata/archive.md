@@ -56,7 +56,7 @@ a module-scope read are counted. Three arms, executed in one pass:
 | Arm | Executed | The rule |
 |---|---|---|
 | `REPOINT` | **55 literals in 20 files** | a filesystem read whose referent moved: the literal becomes `archive/gate-corpus-2026-10-29/<x>`, and the assertion itself is unchanged |
-| `RETIRE` | **15 rows in 6 files** | the row's subject was the corpus: the diff-scope and amendment-namespace controls, the held-contract byte pins, and the archived contract's citation-resolution set (D-9) |
+| `RETIRE` | **15 rows in 7 files** | the row's subject was the corpus: the diff-scope and amendment-namespace controls, the held-contract byte pins, and the archived contract's citation-resolution set (D-9) |
 | `LEAVE` | untouched | absence probes (true before and after), comments, scope declarations, and every line that reads git history — a rewritten path there would make a row vacuously green |
 
 **How this split relates to D-8's table:** D-8 filed the examiner's *proposed* arms over the 71

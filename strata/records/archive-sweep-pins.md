@@ -15,7 +15,7 @@ classes a grep misses are counted: a path constant dereferenced by many rows (15
 | Arm | Executed | Notes |
 |---|---|---|
 | `REPOINT` | **55 literals in 20 files** | every one a filesystem read whose referent moved under `archive/gate-corpus-2026-10-29/`; the assertion is unchanged |
-| `RETIRE` | **15 rows in 6 files** | listed below; each row's subject is the corpus itself |
+| `RETIRE` | **15 rows in 7 files** | listed below; each row's subject is the corpus itself |
 | `LEAVE` | **21 sites untouched** | absence probes (true before and after), comments, scope declarations, and every line reading git history |
 
 ## The 15 retired rows

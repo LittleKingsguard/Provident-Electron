@@ -57,4 +57,4 @@ Ceiling: 60 lines.
   N is the surface the module's row names) — and the cap follows from it (`50 + 10×N`); L1 declares the
   surface, never the cap (D-1, `modules.md` §4).
 - **Unit state** (`strata-state`'s output) is `unit`, `layer`, `stage`, `artifacts`, `assumptions`
-  (`{id, text, alternative, status}`), `streaks` (artifact id → failures), `rebuildEligible`, `updated`.
+  (`{id, text, alternative, status}`), `streaks` (artifact id → failures), `rebuildEligible`, `lastFailure` (when a failure stands), and `updated`.

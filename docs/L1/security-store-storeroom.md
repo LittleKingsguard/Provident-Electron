@@ -73,7 +73,7 @@
 
 ## 5. The import-once path (D-19)
 
-**Read once, at the first boot after the rebuild, then never again once a record stands.** The object is `<userData>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the five boot arms of `ingest()` move as **behaviour**, not as bytes (the deleted `src/main/security-store.ts:112-142`).
+**Read at every boot while no record stands, then never again, then never again once a record stands.** The object is `<userData>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the six boot arms, printed as five rows because `unparsable` and `non-object` share one of `ingest()` move as **behaviour**, not as bytes (the deleted `src/main/security-store.ts:112-142`).
 
 | Arm | What the import does | Cite |
 |---|---|---|
@@ -84,7 +84,7 @@
 | `entries` not a plain object | treated as absent, the raw value not preserved — the one declared non-verbatim arm | the deleted `src/main/security-store.ts:101-111` |
 
 - **The import's own red set is this unit's**: a token, granted groups, the cap and arbitrary entries all survive the crossing, `enabled` is deduplicated through the six-member group set, and a refused or absent import leaves a first-run default rather than a silent capability change on upgrade (D-19).
-- **The new shape owns a new name.** The instance's file is **`<userData>/provident-operator-settings.json`**, chosen here; `provident-security.json` is **retired — read at most once and never written again**, its bytes left standing (D-19, D-16; ASM-6). **The store's construction creates the new file** (a provided, absent path is created exclusively, zero-length and empty — guide §9.1), so the persisted set gains a name at construction and not at the first write, and the rows reading it are re-grained, not deleted (D-13; §7 C-4).
+- **The new shape owns a new name.** The instance's file is **`<userData>/provident-operator-settings.json`**, chosen here; `provident-security.json` is **retired — read at every boot until a record stands and never written again**, its bytes left standing (D-19, D-16; ASM-6). **The store's construction creates the new file** (a provided, absent path is created exclusively, zero-length and empty — guide §9.1), so the persisted set gains a name at construction and not at the first write, and the rows reading it are re-grained, not deleted (D-13; §7 C-4).
 - **`<userData>/provident-settings.json` is neither read, written nor retired here**: it is `app-shell`'s tier-1 crossing and stays parked where the sibling unit parked it (`docs/L1/central-data-census-exception.md` §5; D-13; ASM-5).
 
 ## 6. The isolation invariant, as named absence rows (D-18)
