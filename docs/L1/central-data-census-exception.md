@@ -124,31 +124,28 @@ same finding read backwards.
   increment that owns the join, and until then C-3's rows move only if the store's file actually reddens them —
   which the §8 predicate decides, not this artifact (D-13, D-1).
 - **Parked: nothing else.** The five tools, their five routes, the store's file, the read-only journal and the sixth
-  group are this unit's own surface and are claimed paths in `strata/modules.json:64-73` (D-11, D-12).
+  group are claimed paths in `strata/modules.json:64-73` (D-11, D-12).
 
 ## 6. How the exception is checked
 
-`strata-lint` run with `--changed` naming exactly the **five** licensed paths — the four E-1 files and E-3's
-`src/main/main.ts` — plus the E-2 rows and this unit's own claimed paths (`src/main/storeroom.ts`,
-`src/main/data/`, `tests/integration/central-data/`, `tests/unit/central-data/`): a written path outside that list is
-a finding against this unit (D-1, `platform.md` §4). The check runs over **module** paths: `docs/L1/`,
-`docs/L2/central-data/` and `docs/L3/central-data/` are layer write scopes that no module row may claim, so naming
-them in `--changed` fails diff scope by the map's own shape and is not a work finding (L1 rev 2 §2; `modules.md` §1).
-The lens the lint cannot supply is the one that matters here — that E-1 changed a census and not a behaviour, and that
-E-3 moved one line and not a boot — so the module's examiner reads the five files as code, not as a list (D-1,
-`examiner.md` §1).
+`strata-lint` with `--changed` naming exactly the five licensed paths (E-1's four and E-3's `src/main/main.ts`) plus
+E-2's rows and this unit's claimed paths is the check: a written path outside that list is a finding (D-1,
+`platform.md` §4). It reads **module** paths only, so naming `docs/L1/`, `docs/L2/central-data/` or
+`docs/L3/central-data/` in it fails diff scope by the map's own shape and is not a work finding (`modules.md` §1).
+What it cannot supply is the lens that matters — that E-1 moved a census and not a behaviour, and E-3 one line and not
+a boot — so the examiner reads the five files as code, not as a list (D-1, `examiner.md` §1).
 
 ## 7. Findings this pass surfaced, and where they go
 
-- **`provident-storeroom`: `delete` at an address where no row stands throws `AddressNotFound`** rather than
-  answering the empty removal a caller's own receipt would carry; reproduced by this unit's L2 examiner at `57c5825`
-  at both the whole-target and the `file`-tier spellings, and `tiers: []` is reachable only where the address stands
-  at another tier (suspected root cause: the delete arm treats an absent target as a malformed address rather than
-  as a no-op; proposed fix shape: answer `{tiers: []}`, no journal entry, and no throw). Upstream-owned, never
-  patched, filed in this unit's record and archived with it (D-5).
+- **`provident-storeroom`: `delete` at an address where no row stands throws `AddressNotFound`** instead of answering
+  the empty removal a caller's receipt would carry; reproduced by the L2 examiner at `57c5825` at both the
+  whole-target and `file`-tier spellings, `tiers: []` reachable only where the address stands at another tier
+  (suspected root cause: the delete arm reads an absent target as a malformed address rather than a no-op; fix shape:
+  answer `{tiers: []}`, append nothing, throw nothing). Upstream-owned, never patched, filed in this unit's record
+  (D-5).
 - **`provident-storeroom`: the boot over non-image bytes has no declared arm.** Measured: a foreign, unparsable
   image boots cold with its bytes untouched until the next `file`-tier save, so the consumer can state the recovery
   but the package does not declare it (requirement gap, same disposition) (D-5).
-- **Owed to the unit's record under `strata/records/`** — both findings above, the L2 examiner's reading, and the
-  parked ASM-11 half (§5). L1's write scope is `docs/L1/`, so the record is owed by the layer that owns it and is
-  named here rather than written here (D-1 §3, D-5).
+- **Owed to the unit's record under `strata/records/`** — both findings, the L2 examiner's readings and the parked
+  ASM-11 half (§5). L1's write scope is `docs/L1/`, so the record is named here and owed by the layer that owns it
+  (D-1 §3, D-5).
