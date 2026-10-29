@@ -14,9 +14,10 @@
 //   * a STRUCTURAL half over `src/main/main.ts` — the seam's position, its
 //     source of the override and its ordering (§4.1/§4.2 `ADD-1`/`ADD-2`/
 //     `ADD-3`) — which is RED today (the seam does not exist); and
-//   * a BEHAVIOURAL half over the landed stores (`createSecurityStore` /
-//     `createModuleStore`, both of which already take a `path`), which PASSES
-//     today and is the guard that the seam may not weaken what it sits above.
+//   * a BEHAVIOURAL half over the landed stores (`createOperatorSettings`, whose
+//     instance owns the operator record under the `userDataDir` it is handed, and
+//     `createModuleStore`, which takes a `path`), which PASSES today and is the
+//     guard that the seam may not weaken what it sits above.
 // Where a row's two halves differ in state, the halves are SEPARATE `it` rows
 // so the red set stays honest (a green guard is reported, never dressed as a
 // red).
@@ -34,7 +35,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { createSecurityStore } from '../src/main/security-store.js'
+import { createOperatorSettings } from '../src/main/operator-settings/index.js'
 import { createModuleStore, type ModuleRecord } from '../src/main/module-store.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -42,14 +43,23 @@ const MAIN_PATH = join(ROOT, 'src', 'main', 'main.ts')
 const LEG_PATH = join(ROOT, 'scripts', 'electron-ui.mjs')
 
 const MAIN_SRC = readFileSync(MAIN_PATH, 'utf8')
+const OPERATOR_SETTINGS_PATH = join(ROOT, 'src', 'main', 'operator-settings', 'index.ts')
+const OPERATOR_SETTINGS_SRC = readFileSync(OPERATOR_SETTINGS_PATH, 'utf8')
 const LEG_SRC: string | null = existsSync(LEG_PATH) ? readFileSync(LEG_PATH, 'utf8') : null
 const LEG_ABSENT =
   'scripts/electron-ui.mjs does not exist — spec §2 item 1 ("NEW — the leg itself … does not exist") / §7 item 1'
 
-/** §4.2 `ADD-1` — the two store paths AS LANDED (`src/main/main.ts:49-51`,
- *  `:57-59`). `SEAM-1`'s additive half is that these survive the seam. */
-const DEFAULT_SECURITY_STORE_PATH = "join(app.getPath('userData'), 'provident-security.json')"
+/** §4.2 `ADD-1` — the composition's carrier AS LANDED (`src/main/main.ts:108`), the expression the
+ *  seam must sit above and the landed `app.getPath('userData')` derivation the absent case keeps.
+ *  The surface module owns the persisted-file names (§2 C-4), so this file spells no
+ *  `provident-*.json` literal for the operator record. */
+const SETTINGS_CARRIER = "createSettingsSurface({ userDataDir: app.getPath('userData') })"
 const DEFAULT_MODULES_STORE_PATH = "join(app.getPath('userData'), 'provident-modules.json')"
+
+/** §2 C-1 — the group set's SECOND LIVE COPY: six members, re-homed with the file at
+ *  `src/main/operator-settings/index.ts:77` (the other live copy, `src/main/security.ts:159`, does
+ *  not move). The seam may not touch that vocabulary, and neither copy may gain or lose a name. */
+const GROUP_VOCABULARY = /const VALID_GROUPS: ReadonlySet<string> = new Set\(\[([^\]]*)\]\)/
 
 /** §4.2 `ADD-2` — the override is "a `--`-prefixed argument alongside the
  *  existing `--mcp-transport=` / `--mcp-port=` flags". The SPELLING is the
@@ -65,19 +75,19 @@ const OVERRIDE_ARGV_SCAN = /(startsWith\(\s*['"]--[a-z0-9-]*user-?data|argv[^\n]
 /** §4.2 `ADD-3` — the pinned API route. */
 const SETPATH = /app\.setPath\(\s*['"]userData['"]/
 
-/** §4.2 `ADD-1` — the seam sits INSIDE `main()` and ABOVE the store reads. */
+/** §4.2 `ADD-1` — the seam sits INSIDE `main()` and ABOVE the carrier's construction. */
 const MAIN_FN_AT = MAIN_SRC.search(/async function main\s*\(/)
-const SECURITY_STORE_AT = MAIN_SRC.search(/createSecurityStore\s*\(/)
+const SETTINGS_CARRIER_AT = MAIN_SRC.search(/createSettingsSurface\s*\(\s*\{/)
 const MODULES_STORE_AT = MAIN_SRC.search(/createModuleStore\s*\(/)
 
 /** Where the override is APPLIED, if anywhere (`-1` = no seam). `ADD-2` admits
  *  two routes, so this is a disjunction: (a) `app.setPath('userData', …)`, or
- *  (b) the store paths no longer being the landed literal default expressions
- *  (the override is then carried into the `join(...)` itself). */
+ *  (b) the settings carrier no longer carrying the landed derivation expression
+ *  (the override is then carried into the carrier's own `userDataDir`). */
 function seamApplyAt(src: string): number {
   const setPath = src.search(SETPATH)
   if (setPath !== -1) return setPath
-  if (!src.includes(DEFAULT_SECURITY_STORE_PATH)) return src.search(/createSecurityStore\s*\(/)
+  if (!src.includes(SETTINGS_CARRIER)) return src.search(/createSettingsSurface\s*\(\s*\{/)
   return -1
 }
 const SEAM_AT = seamApplyAt(MAIN_SRC)
@@ -91,17 +101,18 @@ function freshDir(tag: string): string {
 describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main/main.ts)', () => {
   // -------------------------------------------------------------------------
   // `SEAM-1` — Absent ⇒ today's behaviour. GUARD HALF (passes today).
-  // States: S1 both landed store-path derivations still present (§4.2 ADD-1);
+  // States: S1 both landed derivations still present — the settings carrier on its
+  //   `app.getPath('userData')` expression, and the module-store path (§4.2 ADD-1);
   //   S2 the argv-scan idiom the seam must reuse is unchanged (§4.2 ADD-2);
-  //   S3 first-run defaults unchanged: a missing store file yields
-  //   `['read','dispatch']` / token null (behavioural, via the landed store).
+  //   S3 first-run defaults unchanged: a missing record yields
+  //   `['read','dispatch']` / token null (behavioural, via the landed instance).
   // Pass condition (§3.5): "the store path and the first-run defaults are
   //   **unchanged** when the override is absent". Fail state: any observable
   //   difference ⇒ the seam is not additive ⇒ review finding, revert it.
   // -------------------------------------------------------------------------
   it('SEAM-1a (§3.5 SEAM-1, ADD-4) — absent ⇒ the landed path derivation and first-run defaults are unchanged (guard, passes today)', () => {
-    expect(MAIN_SRC, '§4.2 ADD-1: the landed security-store path derivation must survive the seam').toContain(
-      DEFAULT_SECURITY_STORE_PATH,
+    expect(MAIN_SRC, '§4.2 ADD-1: the landed settings carrier, on its `app.getPath(\'userData\')` derivation, must survive the seam').toContain(
+      SETTINGS_CARRIER,
     )
     expect(MAIN_SRC, '§4.2 ADD-1: the landed module-store path derivation must survive the seam').toContain(
       DEFAULT_MODULES_STORE_PATH,
@@ -109,13 +120,14 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
     expect(MAIN_SRC, '§4.2 ADD-2: the argv-scan idiom the override reuses must be intact').toMatch(/function transportFromArgs\s*\(/)
     expect(MAIN_SRC, '§4.2 ADD-2: the argv-scan idiom the override reuses must be intact').toMatch(/function portFromArgs\s*\(/)
 
-    // S3 — behavioural: the first-run default is the landed `read`+`dispatch`.
+    // S3 — behavioural: the first-run default is the landed `read`+`dispatch`, read through the
+    // instance's own declared surface (`createOperatorSettings({ userDataDir })` + `read()`).
     const dir = freshDir('defaults')
     try {
-      const store = createSecurityStore({ path: join(dir, 'provident-security.json') })
-      const cfg = store.get()
-      expect(cfg.enabled, '§3.5 SEAM-1/SEAM-4: the first-run default is `read`+`dispatch`').toEqual(['read', 'dispatch'])
-      expect(cfg.token, '§3.5 SEAM-1: first-run token default is null').toBeNull()
+      const settings = createOperatorSettings({ userDataDir: dir })
+      const record = settings.read()
+      expect(record.enabled, '§3.5 SEAM-1/SEAM-4: the first-run default is `read`+`dispatch`').toEqual(['read', 'dispatch'])
+      expect(record.token, '§3.5 SEAM-1: first-run token default is null').toBeNull()
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
@@ -139,15 +151,15 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
       '§4.2 ADD-2: the override must be found by an argv scan (the `startsWith(...)` idiom), not read from elsewhere',
     ).toMatch(OVERRIDE_ARGV_SCAN)
     expect(MAIN_SRC, '§4.2 ADD-4 (§3.5 SEAM-1): the absent case keeps the landed default root').toContain(
-      DEFAULT_SECURITY_STORE_PATH,
+      SETTINGS_CARRIER,
     )
   })
 
   // -------------------------------------------------------------------------
-  // `SEAM-2` — Present ⇒ the override applies BEFORE the store reads.
+  // `SEAM-2` — Present ⇒ the override applies BEFORE the carrier is constructed.
   // States: S1 the override application exists at all (ADD-3); S2 it sits
   //   INSIDE `main()` (ADD-1: "the seam sits above line 49 in `main()`");
-  //   S3 it precedes `createSecurityStore(...)`; S4 it precedes
+  //   S3 it precedes `createSettingsSurface(...)`; S4 it precedes
   //   `createModuleStore(...)` (§3.5: "BOTH stores are created against the
   //   overridden path").
   // Fail-states (§3.5 SEAM-2): a store created against the default path ⇒
@@ -160,15 +172,15 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
   it('SEAM-2a (§3.5 SEAM-2, ADD-1/ADD-3) — the override applies inside main() and BEFORE both stores are created (RED today)', () => {
     expect(SEAM_AT, SEAM_APPLIED).toBeGreaterThanOrEqual(0)
     expect(MAIN_FN_AT, 'src/main/main.ts must still declare `async function main()` (ADD-1)').toBeGreaterThanOrEqual(0)
-    expect(SECURITY_STORE_AT, 'src/main/main.ts must still construct the security store (ADD-1)').toBeGreaterThanOrEqual(0)
+    expect(SETTINGS_CARRIER_AT, 'src/main/main.ts must still construct the settings carrier (ADD-1)').toBeGreaterThanOrEqual(0)
     expect(MODULES_STORE_AT, 'src/main/main.ts must still construct the module store (ADD-1)').toBeGreaterThanOrEqual(0)
     expect(
       SEAM_AT > MAIN_FN_AT,
       '§4.2 ADD-1: "the seam sits above line 49 in `main()`" — the override must be applied inside `main()`, not at module scope',
     ).toBe(true)
     expect(
-      SEAM_AT < SECURITY_STORE_AT,
-      '§4.2 ADD-1: the override is honoured BEFORE `createSecurityStore(...)`',
+      SEAM_AT < SETTINGS_CARRIER_AT,
+      '§4.2 ADD-1: the override is honoured BEFORE `createSettingsSurface(...)` — the carrier the operator record is built behind',
     ).toBe(true)
     expect(
       SEAM_AT < MODULES_STORE_AT,
@@ -177,25 +189,25 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
   })
 
   // -------------------------------------------------------------------------
-  // `SEAM-2`'s BEHAVIOURAL HALF. GUARD (passes today): the landed stores
-  // already honour the `path` they are handed, which is what makes the seam's
-  // override effective. States: S1 the security store writes under the given
-  //   path; S2 a sentinel "default profile" directory gains NO such file;
-  //   S3 the module store reads/writes under the given path only.
+  // `SEAM-2`'s BEHAVIOURAL HALF. GUARD (passes today): the landed module store
+  // already honours the `path` it is handed, which is what makes the seam's
+  // override effective. States: S1 the module store reads/writes under the given
+  //   path only; S2 a sentinel "default profile" directory gains NO such file.
+  //
+  // RETIRED HALF (E-1; C-4): S1's security-store clause drove
+  //   `createSecurityStore({ path })` and `store.set({ token })` and asserted
+  //   that a `provident-security.json` was WRITTEN under the override. That
+  //   store, its five-member API and that write no longer exist anywhere: the
+  //   retired name is READ at most once by the instance's import-once path and
+  //   never written (`src/main/operator-settings/index.ts:81`, `:167`), and the
+  //   record's own name is the added `provident-operator-settings.json`. The
+  //   row is not re-pointed; the module half is the same claim over the store
+  //   that still stands.
   // -------------------------------------------------------------------------
   it('SEAM-2b (§3.5 SEAM-2) — a store handed the override path writes there and leaves the default profile alone (guard, passes today)', () => {
     const override = freshDir('override')
     const defaultProfile = freshDir('default')
     try {
-      const secPath = join(override, 'provident-security.json')
-      const store = createSecurityStore({ path: secPath })
-      store.set({ token: 'scratch-only' })
-      expect(existsSync(secPath), '§3.5 SEAM-2: the store file lands under the OVERRIDE').toBe(true)
-      expect(
-        existsSync(join(defaultProfile, 'provident-security.json')),
-        '§3.5 SEAM-2: "the default profile gains **no** such file"',
-      ).toBe(false)
-
       const modPath = join(override, 'provident-modules.json')
       const modStore = createModuleStore({ path: modPath })
       modStore.put({ name: 'probe', version: '0.0.1', source: 'return 1' } as unknown as ModuleRecord)
@@ -227,73 +239,82 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
       '§3.5 SEAM-3: two boots with two different overrides must be independent — the override is resolved inside `main()` for THIS process, never at module scope',
     ).toBe(true)
     expect(
-      MAIN_SRC.slice(scanAt, SECURITY_STORE_AT),
+      MAIN_SRC.slice(scanAt, SETTINGS_CARRIER_AT),
       '§4.2 ADD-2: the override is read from the process\'s own argv',
     ).toMatch(/process\.argv|argv/)
   })
 
   // -------------------------------------------------------------------------
-  // `SEAM-3`'s BEHAVIOURAL HALF. GUARD (passes today): two stores at two paths
-  // neither see nor write each other's file. States: S1 both files exist
-  //   independently; S2 neither boot's state leaks into the other.
+  // `SEAM-3`'s BEHAVIOURAL HALF — RETIRED WHOLE (E-1).
+  //
+  // The row was "two overridden stores neither see nor write each other's file":
+  // it constructed two `createSecurityStore({ path })` instances, wrote
+  // `{ token, groups }` through `set()`, read them back through `get()`, and
+  // parsed the two `provident-security.json` files off disk. Its subject is
+  // E-1's five-member API (`createSecurityStore` / `SecurityStore` / `set` /
+  // `get`) together with the retired name AS A WRITE TARGET and the old on-disk
+  // record shape — every one of those is gone from the composition, and the
+  // behaviour they guarded (two boots' records not crossing) has no site left to
+  // drive: the instance's own file is the added `provident-operator-settings.json`,
+  // its own address space is private to `src/main/operator-settings/index.ts`, and
+  // per-boot isolation is now observed at the leg (`R0`(c)'s before/after witness,
+  // rows `SEAM-R0(c)-a`/`-b` below). Per the closed rule this row retires rather
+  // than being re-pointed at the new module.
   // -------------------------------------------------------------------------
-  it('SEAM-3b (§3.5 SEAM-3) — two overridden stores neither see nor write each other\'s file (guard, passes today)', () => {
-    const dirA = freshDir('a')
-    const dirB = freshDir('b')
-    try {
-      const pathA = join(dirA, 'provident-security.json')
-      const pathB = join(dirB, 'provident-security.json')
-      const a = createSecurityStore({ path: pathA })
-      a.set({ token: 'A-token', groups: ['code'] })
-      const b = createSecurityStore({ path: pathB })
-      expect(b.get().token, '§3.5 SEAM-3: boot B must not see boot A\'s store').toBeNull()
-      expect(b.get().enabled, '§3.5 SEAM-3: boot B keeps its own defaults').toEqual(['read', 'dispatch'])
-      // the store persists on the first `set` (it is lazy on a missing file), so
-      // B's own file is materialised by B's OWN write — never by A's.
-      b.set({})
-      expect(a.get().token, '§3.5 SEAM-3: boot A still holds its own state').toBe('A-token')
-      expect(a.get().enabled).toContain('code')
-      expect(existsSync(pathA) && existsSync(pathB), '§3.5 SEAM-3: "both files exist independently"').toBe(true)
-
-      // S2 — neither file carries the other's state.
-      const onA = JSON.parse(readFileSync(pathA, 'utf8')) as { token: string | null }
-      const onB = JSON.parse(readFileSync(pathB, 'utf8')) as { token: string | null }
-      expect(onA.token).toBe('A-token')
-      expect(onB.token).toBeNull()
-    } finally {
-      rmSync(dirA, { recursive: true, force: true })
-      rmSync(dirB, { recursive: true, force: true })
-    }
-  })
 
   // -------------------------------------------------------------------------
   // `SEAM-4` — the override does not flip a security default. GUARD HALF
   // (passes today). States: S1 the *default* enabled-group set is `read` +
   //   `dispatch` and does NOT include `code`; S2 `main.ts` constructs the
-  //   security store with NO `enabled`/`groups` argument, i.e. the seam widens
+  //   settings carrier with NO `enabled`/`groups` argument, i.e. the seam widens
   //   nothing; S3 `code` is still a VALID group (opt-in only).
   // Pass condition (§3.5): "the defaults are identical in both boots; `code` is
   //   ON only where the leg opted in". Fail state: a widened default ⇒
   //   PROCESS VIOLATION (§0 prohibition 3; §4.3's rejected alternative).
+  //
+  // S3's RETIRED DRIVE (E-1): the row used to prove the vocabulary by
+  //   `store.set({ groups: ['code'] })` on the deleted security store. That verb
+  //   is gone and is NOT re-pointed at the new module; the same claim — `code` is
+  //   a valid, opt-in group and never a default — is read at the vocabulary's
+  //   LANDED home instead (`src/main/operator-settings/index.ts:77`, six members;
+  //   §2 C-1).
   // -------------------------------------------------------------------------
   it('SEAM-4a (§3.5 SEAM-4, ADD-4) — the default enabled-group set is untouched and the seam widens nothing (guard, passes today)', () => {
     const dir = freshDir('widening')
     try {
-      const store = createSecurityStore({ path: join(dir, 'provident-security.json') })
-      expect(store.get().enabled, '§3.5 SEAM-4/§0 prohibition 3: the default is `read`+`dispatch`, never widened').toEqual([
+      const settings = createOperatorSettings({ userDataDir: dir })
+      const record = settings.read()
+      expect(record.enabled, '§3.5 SEAM-4/§0 prohibition 3: the default is `read`+`dispatch`, never widened').toEqual([
         'read',
         'dispatch',
       ])
-      expect(store.get().enabled, '§3.5 SEAM-4: `code` is OFF unless the operator/leg opts in').not.toContain('code')
-      // S3 — `code` remains a valid, opt-in group (§3.2's eval gate).
-      expect(store.set({ groups: ['code'] }).enabled, '§3.2: `code` stays opt-in, not default').toContain('code')
+      expect(record.enabled, '§3.5 SEAM-4: `code` is OFF unless the operator/leg opts in').not.toContain('code')
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
 
+    // S3 — `code` remains a valid, opt-in group (§3.2's eval gate), read at the
+    // group set's second live copy (§2 C-1) rather than driven through the retired
+    // store's `set()`.
+    const vocabulary = GROUP_VOCABULARY.exec(OPERATOR_SETTINGS_SRC)
     expect(
-      /createSecurityStore\(\{[^}]*?(enabled|groups)\s*:/.test(MAIN_SRC),
-      '§4.3 (rejected alternative)/§0 prohibition 3: the app must NOT construct its security store with a flipped/extended default group set',
+      vocabulary,
+      '§2 C-1: the group set\'s second live copy lives in `src/main/operator-settings/index.ts:77`',
+    ).not.toBeNull()
+    const groups = [...(vocabulary as RegExpExecArray)[1].matchAll(/'([a-z0-9]+)'/g)].map((m) => m[1])
+    expect(groups, '§3.2: `code` stays opt-in, not default').toContain('code')
+    expect(groups.slice().sort(), '§2 C-1: still SIX members — the re-homed copy lost none and gained none').toEqual([
+      'code',
+      'data',
+      'dispatch',
+      'graph',
+      'module',
+      'read',
+    ])
+
+    expect(
+      /createSettingsSurface\(\{[^}]*?(enabled|groups)\s*:/.test(MAIN_SRC),
+      '§4.3 (rejected alternative)/§0 prohibition 3: the app must NOT construct its settings carrier with a flipped/extended default group set',
     ).toBe(false)
     expect(
       /(enabled|groups)\s*:\s*\[[^\]]*['"]code['"]/.test(MAIN_SRC),
@@ -301,7 +322,7 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
     ).toBe(false)
     expect(
       /VALID_GROUPS/.test(MAIN_SRC),
-      '§0 prohibition 5/§4.2 ADD-6: `src/main/security-store.ts` owns `VALID_GROUPS`; the one seam may not touch that vocabulary',
+      '§0 prohibition 5/§4.2 ADD-6: `src/main/operator-settings/index.ts:77` owns `VALID_GROUPS`; the one seam may not touch that vocabulary',
     ).toBe(false)
   })
 
@@ -360,12 +381,12 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
     // S2 — the seam honours what the leg passes (§3.5 SEAM-2 / ADD-3).
     expect(SEAM_AT, SEAM_APPLIED).toBeGreaterThanOrEqual(0)
     expect(
-      SEAM_AT < SECURITY_STORE_AT,
-      '§3.0 R0(c)/§4.2 ADD-1: without the seam above the store reads, a boot cannot resolve its store under its own profile',
+      SEAM_AT < SETTINGS_CARRIER_AT,
+      '§3.0 R0(c)/§4.2 ADD-1: without the seam above the carrier\'s construction, a boot cannot resolve its record under its own profile',
     ).toBe(true)
     expect(
-      MAIN_SRC.includes(DEFAULT_SECURITY_STORE_PATH),
-      '§4.2 ADD-1/ADD-4: the default derivation must remain the absent-case fallback (the seam adds, never replaces)',
+      MAIN_SRC.includes(SETTINGS_CARRIER),
+      '§4.2 ADD-1/ADD-4: the default derivation (`app.getPath(\'userData\')`, carried by `createSettingsSurface`) must remain the absent-case fallback (the seam adds, never replaces)',
     ).toBe(true)
   })
 })

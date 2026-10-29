@@ -93,6 +93,15 @@ const DECLARED_RESERVED_NAMESPACES: readonly string[] = ['window', 'tabs', 'layo
 const DECLARED_SETTINGS_FILE = 'provident-settings.json'
 const DECLARED_SECURITY_FILE = 'provident-security.json'
 const DECLARED_LEGACY_FILE = 'provident-modules.json'
+/* ── ⟶ THE `C-4` RE-GRAIN'S TWO FIGURES (`2026-10-11`; `docs/L1/security-store-storeroom-exception.md`
+ *  §2 E-2/E-3, `docs/L3/security-store-storeroom/signatures.md` §2). `src/main/security-store.ts` is
+ *  DELETED (`E-1`): the operator's security record now lives in ONE `provident-storeroom` instance inside
+ *  `src/main/operator-settings/index.ts`, which owns BOTH file names as constants and makes exactly ONE
+ *  `fs` call — a `readFileSync` of the RETIRED name, read at most once and NEVER written, renamed,
+ *  repaired or deleted, because the bytes are the package's. `main.ts` spells neither name (`C-4`), so the
+ *  figure the rows below read for them is that module, and the retired name stays visible AS RETIRED. ── */
+const OPERATOR_SETTINGS_MODULE = 'main/operator-settings/index.ts'
+const DECLARED_OPERATOR_SETTINGS_FILE = 'provident-operator-settings.json'
 /** §2.11 item 4 — the preload bridge's declared TOP-LEVEL member set, and the `store` sub-namespace's. */
 const DECLARED_TOP_LEVEL_BRIDGE_MEMBERS: readonly string[] = ['ready', 'onRequest', 'sendReply', 'notify', 'security', 'module', 'store']
 const DECLARED_STORE_SUB_MEMBERS: readonly string[] = ['get', 'put', 'onFileChanged']
@@ -369,7 +378,7 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
     type: 'P-IM',
     property: 'THE EXACTLY-TWO FILES CENSUS, WITH THE WITNESS-GAP PIN',
     strategy: 'S-PS-FILES-1',
-    term: '4 attempts = (1) post-migration boot: the legacy provident-modules.json does not exist at userData; (2) the settings file exists and validates as the declared schema; (3) the security file exists (and is untouched); (4) the write-site census: main\'s write/rename sites reference exactly the two declared paths',
+    term: '4 attempts = (1) post-migration boot: the legacy provident-modules.json does not exist at userData; (2) the settings file exists and validates as the declared schema; (3) the RETIRED security file\'s model writes nothing of its own — the operator store\'s module binds RETIRED_NAME to \'provident-security.json\', reads it EXACTLY ONCE and writes never (the deleted security-store.ts\'s plain writeFileSync is the RETIRED model, cited not re-pointed) — AND the write it must not bequeath is measured on the tier-1 channel\'s OWN write site (mkdirSync → .tmp → fsync → renameSync → dir-fsync, never a plain writeFileSync; a channel degrading to one FAILS); (4) the write-site census: main\'s write/rename sites reference exactly the two declared paths',
     attempts: [
       {
         label: 'IM-2 A1 — post-migration boot: the legacy provident-modules.json is gone after the one-boot window',
@@ -396,14 +405,15 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
         },
       },
       {
-        label: 'IM-2 A3 — the security file exists (and is untouched by this unit\'s diff)',
-        run: async (): Promise<Probe> => {
-          const main = readSrcSafe('main/main.ts')
-          const sec = readSrcSafe('main/security-store.ts')
-          return main !== null && sec !== null && main.includes(DECLARED_SECURITY_FILE) && sec.includes('writeFileSync')
-            ? HOLD(`the tier-4 file (${DECLARED_SECURITY_FILE}) and its write site exist (U-STORE-SECURITY's, unchanged)`)
-            : BREAK('the security file write site is not observed')
-        },
+        label: 'IM-2 A3 — the RETIRED model writes nothing of its own, and the tier-1 channel\'s own write site is the atomic shape, never a plain writeFileSync',
+        run: async (): Promise<Probe> =>
+          // ⟶ RE-GRAIN (`C-4`, `E-1`). This attempt read `src/main/security-store.ts` and `main.ts`'s
+          // `provident-security.json` for a `writeFileSync`; the file is DELETED, the name RETIRED (read
+          // at most once, never written) and `main.ts` no longer spells it. THE CLAIM IS UNMOVED and its
+          // SUBJECT STILL STANDS: the tier-1 channel may NOT copy the retired store's plain write. So the
+          // model is CITED AS RETIRED (the module that replaced it writes nothing at all) and the bite is
+          // taken on the channel's own write site, which is where a copy would land.
+          ALL(retiredStoreModelProbe(), tier1WriteSiteProbe()),
       },
       {
         label: 'IM-2 A4 — the write-site census: main\'s write/rename sites reference exactly the two declared paths',
@@ -825,11 +835,19 @@ function hydratedStoreDrive(): Probe {
     : BREAK(`tier-1 resolve does not answer the hydrated value after hydrate (cold found=${cold.found}; post-hydrate found=${after.found}) — the handed-off record is NOT consumed by the store`)
 }
 
-/** Write/rename constructs across the main-side tree that carry a `provident-*.json` literal. */
+/** Write/rename constructs across the main-side tree that carry a `provident-*.json` literal.
+ *  ⟶ `C-4` — the scan list is EXTENDED by the module that now carries the operator store's own
+ *  persisted literal (`main/operator-settings/index.ts`): a write/rename/rm/unlink construct spelled
+ *  beside THAT name is a third persisted filename exactly as it is beside the tier-1 carrier's. */
 function thirdLiteralWrites(): string[] {
   const found: string[] = []
   const op = /(writeFileSync|appendFileSync|renameSync|rmSync|unlinkSync)\s*\(/g
-  for (const rel of ['main/main.ts', 'main/preload.ts', 'main/module-store.ts', 'main/security-store.ts', 'main/mcp-server.ts', 'main/store-channels.ts']) {
+  // ⟶ `C-4` RE-GRAIN (`security-store-storeroom` `E-5`): `main/security-store.ts` LEFT this scan list
+  // with the file it named — `E-1` deleted it, and an absent path contributed nothing but a vacuous
+  // member to a census whose subject is "which files carry a `provident-*.json` literal". The module
+  // that now carries the operator store's own persisted literal is `OPERATOR_SETTINGS_MODULE`
+  // (`main/operator-settings/index.ts`, the retired file's successor), which sits in the list below.
+  for (const rel of ['main/main.ts', 'main/preload.ts', 'main/module-store.ts', 'main/mcp-server.ts', 'main/store-channels.ts', OPERATOR_SETTINGS_MODULE]) {
     const t = readSrcSafe(rel)
     if (t === null) continue
     op.lastIndex = 0
@@ -841,6 +859,85 @@ function thirdLiteralWrites(): string[] {
     }
   }
   return found
+}
+
+/* ───────────────────── THE `C-4` CENSUS OF THE OPERATOR STORE'S MODULE (`E-1`/`C-4`) ───────────────────── */
+
+const escapeLiteral = (literal: string): string => literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/** `const <symbol> = '<literal>'` — the ONE binding a persisted name has in the module that owns it. */
+function nameBinding(text: string, symbol: string, literal: string): boolean {
+  return new RegExp(`const\\s+${symbol}\\s*=\\s*'${escapeLiteral(literal)}'`).test(text)
+}
+
+/** The name is JOINED onto the userData directory — the consolidated-location rule (§2.7 items 1/2)
+ *  read where `C-4` moved it. A name joined onto any other directory, or unbound, FAILS. */
+function joinedUnderUserData(text: string, symbol: string): boolean {
+  return new RegExp(`join\\(\\s*(?:options\\.)?userDataDir\\s*,\\s*${symbol}\\s*\\)`).test(text)
+}
+
+/** THE RETIRED MODEL'S OWN WRITE CENSUS (`E-1`; persistence §2/§3/§5). `src/main/operator-settings/
+ *  index.ts` is the RETIRED `security-store.ts`'s successor and it writes NOTHING: the retired
+ *  `provident-security.json` is bound to `RETIRED_NAME`, read by exactly ONE `readFileSync` (the
+ *  import-once path) and never written, renamed, repaired or deleted; the instance's own bytes belong
+ *  to `provident-storeroom`. The name must have ONE home in `src/**` — a re-pointer anywhere else
+ *  (a second reader, a writer, a repair) FAILS. */
+function retiredStoreModelProbe(): Probe {
+  const model = readSrcSafe(OPERATOR_SETTINGS_MODULE)
+  if (model === null) {
+    return BREAK(`the operator store's module (${OPERATOR_SETTINGS_MODULE}) is unreadable — the RETIRED '${DECLARED_SECURITY_FILE}' has no observable model at all (the retired security-store.ts is DELETED, E-1)`)
+  }
+  const homes = scanSrcFor(DECLARED_SECURITY_FILE)
+  if (homes.length !== 1 || homes[0] !== OPERATOR_SETTINGS_MODULE) {
+    return BREAK(`the RETIRED name '${DECLARED_SECURITY_FILE}' must live in ONE module (${OPERATOR_SETTINGS_MODULE}) and nowhere else — measured ${JSON.stringify(homes)}; a second home is a re-pointer, and the retired file is RETIRED, never re-pointed`)
+  }
+  if (!nameBinding(model, 'RETIRED_NAME', DECLARED_SECURITY_FILE)) {
+    return BREAK(`'${DECLARED_SECURITY_FILE}' is not bound to the constant RETIRED_NAME in ${OPERATOR_SETTINGS_MODULE} — the retired name is spelled ad hoc, not declared as the one retired name`)
+  }
+  const readers = (model.match(/readFileSync\s*\(/g) ?? []).length
+  const writers = (model.match(/\b(?:writeFileSync|appendFileSync|renameSync|rmSync|unlinkSync)\s*\(/g) ?? []).length
+  if (readers !== 1) return BREAK(`the operator store's module makes ${readers} readFileSync calls — the retired name is read EXACTLY ONCE (the import-once path); the module's ONE fs call is that read`)
+  if (writers !== 0) return BREAK(`the operator store's module makes ${writers} write/rename/rm/unlink calls — it writes NOTHING: the retired file is never written, renamed, repaired or deleted and the instance's bytes are provident-storeroom's`)
+  return HOLD(`the RETIRED '${DECLARED_SECURITY_FILE}' has ONE home, ONE reader and NO writer: ${OPERATOR_SETTINGS_MODULE} binds RETIRED_NAME to it, reads it once through the import-once path and writes nothing itself (its only fs call is that readFileSync)`)
+}
+
+/** THE INSTANCE'S OWN PERSISTED NAME, CREATED AT CONSTRUCTION (`C-4`): `FILE_NAME =
+ *  'provident-operator-settings.json'` is bound in the same module and handed to the store as
+ *  `filePath` joined onto the userData directory — one instance, one name, no second `filePath`. */
+function instanceFileNameProbe(): Probe {
+  const model = readSrcSafe(OPERATOR_SETTINGS_MODULE)
+  if (model === null) return BREAK(`the operator store's module (${OPERATOR_SETTINGS_MODULE}) is unreadable — the instance's own persisted name cannot be observed`)
+  if (!nameBinding(model, 'FILE_NAME', DECLARED_OPERATOR_SETTINGS_FILE)) {
+    return BREAK(`'${DECLARED_OPERATOR_SETTINGS_FILE}' is not bound to the constant FILE_NAME in ${OPERATOR_SETTINGS_MODULE} — the instance's own name is not declared where C-4 puts it`)
+  }
+  if (!/filePath:\s*join\(\s*options\.userDataDir\s*,\s*FILE_NAME\s*\)/.test(model)) {
+    return BREAK(`the instance's own name is not joined onto the userData directory at CONSTRUCTION (no \`filePath: join(options.userDataDir, FILE_NAME)\` in ${OPERATOR_SETTINGS_MODULE}) — the second persisted file has no declared creation site`)
+  }
+  return HOLD(`the instance's own '${DECLARED_OPERATOR_SETTINGS_FILE}' is created at construction under <userData> (filePath: join(options.userDataDir, FILE_NAME)) and no second filePath is supplied`)
+}
+
+/** THE TIER-1 CHANNEL'S OWN WRITE SITE — THE ANTI-PATTERN'S LIVE BITE (`§2.6` item 1). The retired
+ *  store's plain `writeFileSync` is the exactly-named pattern the channel must NOT copy, so the bite
+ *  is taken HERE, on the channel: the atomic `mkdirSync` → `.tmp` → `fsync` → `renameSync` →
+ *  directory-`fsync` sequence, EVERY write landing on a `{path}.tmp` staging path (never on the real
+ *  path), and the real path moving only at the rename. A channel that DEGRADES to a plain
+ *  `writeFileSync(<the real path>)` FAILS this probe on the write-target census alone (the target
+ *  carries no `.tmp`), and a channel that loses the staging sequence FAILS on the ordered token scan. */
+function tier1WriteSiteProbe(): Probe {
+  return y2Probe('the tier-1 channel write site', (y2) => {
+    const plainTargets: string[] = []
+    for (const w of y2.matchAll(/writeFileSync\s*\(([^,)]*)/g)) {
+      const target = (w[1] ?? '').trim()
+      if (!target.includes('.tmp')) plainTargets.push(target)
+    }
+    return ALL(
+      atomicSequenceProbeIn(y2),
+      tmpTargetOnly(y2),
+      plainTargets.length === 0
+        ? HOLD('every writeFileSync in the tier-1 channel targets a {path}.tmp staging path; the record lands on the real path ONLY at renameSync')
+        : BREAK(`the tier-1 channel writes its record with a PLAIN writeFileSync whose target is not a {path}.tmp staging path: ${JSON.stringify(plainTargets)} — that is the DELETED security-store.ts's non-atomic write, the exactly-named anti-pattern this channel must NOT copy (§2.6 item 1); the record may land only via fsync → renameSync`),
+    )
+  })
 }
 
 /* ═════════════════════════════ THE TESTS — authored in §4.2's order ═════════════════════════════ */
@@ -1096,7 +1193,7 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       assertProbe(ALL(
         main.includes(DECLARED_SETTINGS_FILE)
           ? HOLD('the settings write site exists')
-          : BREAK(`the settings write site is absent — today the persisted set is {${DECLARED_SECURITY_FILE}, ${DECLARED_LEGACY_FILE}} (main.ts:71-81, [H]), i.e. the declared member ${DECLARED_SETTINGS_FILE} is MISSING from the census (I-2 reddens)`),
+          : BREAK(`the settings write site is absent — the pre-landing persisted set was the RETIRED {${DECLARED_SECURITY_FILE} (RETIRED under C-4: read at most once, never written), ${DECLARED_LEGACY_FILE}} (main.ts:71-81, [H]), i.e. the declared member ${DECLARED_SETTINGS_FILE} is MISSING from the census (I-2 reddens)`),
         thirdLiteralWrites().length === 0
           ? HOLD('no main-side write construct writes the legacy file — writer class 1\'s direct legacy-store write is migrated (the removal may DECLARE the name at §2.8 step (4); it never WRITES it)')
           : BREAK(`a write construct still names a legacy/third provident-*.json literal: ${thirdLiteralWrites().join(', ')} — the legacy file would still be written directly, i.e. a second writer class reddens the two-writer falsifier`),
@@ -1180,10 +1277,15 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       assertProbe(ALL(
         (readSrcSafe('main/main.ts') ?? '').includes(DECLARED_SETTINGS_FILE)
           ? HOLD('the settings file is a declared persistence path')
-          : BREAK(`'${DECLARED_SETTINGS_FILE}' is absent from main.ts — the file-surface is not yet the store's crossing (today only {${DECLARED_SECURITY_FILE}, ${DECLARED_LEGACY_FILE}} persist, main.ts:71-81)`),
-        (readSrcSafe('main/main.ts') ?? '').includes(DECLARED_SECURITY_FILE) && (readSrcSafe('main/security-store.ts') ?? '').includes('writeFileSync')
-          ? HOLD(`the tier-4 file (${DECLARED_SECURITY_FILE}) persists at its own site (the security store's, unchanged)`)
-          : BREAK('the security file write site is not observed'),
+          : BREAK(`'${DECLARED_SETTINGS_FILE}' is absent from main.ts — the file-surface is not yet the store's crossing (the pre-landing census was the RETIRED {${DECLARED_SECURITY_FILE}, ${DECLARED_LEGACY_FILE}} (main.ts:71-81, [H]); the retired name is RETIRED — read at most once, never written — and is cited here, never re-pointed)`),
+        // ⟶ RE-GRAIN (`C-4`, `E-1`). The second limb read `main.ts` for `provident-security.json` and
+        // `security-store.ts` for `writeFileSync`; BOTH ARE NOW FALSE BY RULING — the file is DELETED and
+        // `main.ts` spells no `provident-*.json` literal for the operator store. THE CLAIM IS UNMOVED: the
+        // persisted set is EXACTLY the declared two — the tier-1 carrier above, and the operator store's
+        // OWN instance file — while the retired name has exactly ONE reader and NO writer. The figures are
+        // read where `C-4` moved them: `src/main/operator-settings/index.ts`, which binds BOTH names.
+        retiredStoreModelProbe(),
+        instanceFileNameProbe(),
         thirdLiteralWrites().length === 0
           ? HOLD('no write/rename construct carries a third provident-*.json literal')
           : BREAK(`a third persisted filename is written: ${thirdLiteralWrites().join(', ')}`),
@@ -1315,14 +1417,25 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
     it('SC-1: tier 1\'s carrier is <userData>/provident-settings.json; the consolidated-location rule (§2.7 items 1/2)', async () => {
       const main = readSrcSafe('main/main.ts') ?? ''
       const settingsUnderUserData = main.includes(DECLARED_SETTINGS_FILE) && /getPath\('userData'\)[\s\S]{0,200}provident-settings\.json|join\(app\.getPath\('userData'\),\s*'provident-settings\.json'/.test(main)
-      const securityUnderUserData = /getPath\('userData'\)[\s\S]{0,200}provident-security\.json/.test(main)
+      // ⟶ RE-GRAIN (`C-4`, `E-1`). DIAGNOSIS: this row reddened on its SECOND limb alone — a
+      // `/getPath\('userData'\)[\s\S]{0,200}provident-security\.json/` scan of `main.ts`, whose literal has
+      // been REMOVED from that file by `C-4` (the composition reads the boot record through the surface's
+      // `read()` and spells no `provident-*.json` literal for the operator store). THE CLAIM IS UNMOVED
+      // and the CARRIER'S OWN LITERAL IS UNMOVED (limb 1 above, untouched): what moved is the OTHER
+      // persisted name. Both operator-store names live in ONE module now — the RETIRED
+      // `provident-security.json` (read at most once, NEVER written) and the instance's own
+      // `provident-operator-settings.json` (created at construction) — and BOTH must be joined onto the
+      // userData directory there, or the consolidated-location rule has a persisted file outside it.
+      const operatorModule = readSrcSafe(OPERATOR_SETTINGS_MODULE) ?? ''
+      const retiredUnderUserData = nameBinding(operatorModule, 'RETIRED_NAME', DECLARED_SECURITY_FILE) && joinedUnderUserData(operatorModule, 'RETIRED_NAME')
+      const instanceUnderUserData = nameBinding(operatorModule, 'FILE_NAME', DECLARED_OPERATOR_SETTINGS_FILE) && joinedUnderUserData(operatorModule, 'FILE_NAME')
       assertProbe(ALL(
         settingsUnderUserData
           ? HOLD(`'${DECLARED_SETTINGS_FILE}' is declared under userData`)
           : BREAK(`'${DECLARED_SETTINGS_FILE}' is NOT declared under <userData> — the settings file is not the store's crossing (SC-1 reddens on the absent carrier)`),
-        securityUnderUserData
-          ? HOLD('every persisted file lives under <userData> (the consolidated-location rule holds for the landed files)')
-          : BREAK('the consolidated-location rule is not observed for the security file'),
+        retiredUnderUserData && instanceUnderUserData
+          ? HOLD(`every persisted file lives under <userData> (the consolidated-location rule holds for the landed files): the RETIRED '${DECLARED_SECURITY_FILE}' is joined there for its one read and the instance's own '${DECLARED_OPERATOR_SETTINGS_FILE}' is joined there at construction, in ${OPERATOR_SETTINGS_MODULE}`)
+          : BREAK(`the consolidated-location rule is not observed for the operator store's file names — measured in ${OPERATOR_SETTINGS_MODULE}: retired ${DECLARED_SECURITY_FILE} bound-and-joined ${retiredUnderUserData}, instance ${DECLARED_OPERATOR_SETTINGS_FILE} bound-and-joined ${instanceUnderUserData} (both must hold; a name bound elsewhere or joined onto a directory that is not <userData> persists OUTSIDE the consolidated location)`),
       ), 'SC-1 carrier + consolidation')
     })
 

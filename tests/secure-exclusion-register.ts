@@ -151,7 +151,21 @@ export const SECURE_PANELS_SRC = SRC('renderer/secure-panels.ts')
 export const STORE_CHANNELS_SRC = SRC('main/store-channels.ts')
 export const STORE_CORE_SRC = SRC('renderer/store-core-graph.ts')
 export const STORE_REFS_SRC = SRC('renderer/store-graph-references.ts')
-export const SECURITY_STORE_SRC = SRC('main/security-store.ts')
+/* **⟶ RETIRED 2026-10-29 BY `U-SECURE-STOREROOM`'S `E-1` (`strata` branch, commit
+ * `5790656`): `SECURITY_STORE_SRC` = `src/main/security-store.ts` IS DELETED — disregarded,
+ * not carried, no shim and no dual write — so this module holds NO export that names it.**
+ * `RCA-8(d)` ANNOTATE-BESIDE: the as-filed line is recorded HERE, in prose, rather than
+ * re-pointed, and the path set it belonged to is re-grained BESIDE it: the unit's moving
+ * files were `security.ts` · `mcp-server.ts` · `main.ts` · `preload.ts` · `secure-panels.ts`
+ * (+ the retired store module in the forbidden list) and are now those five PLUS the two
+ * directories the composition moved into (`operator-settings/` and `settings-surface/`). */
+/** `src/main/operator-settings/index.ts` — THE INSTANCE (`D-16`, `D-17`): the security record
+ *  and its own `provident-storeroom` file, and the group set's SECOND LIVE COPY at `:77`. */
+export const OPERATOR_SETTINGS_SRC = SRC('main/operator-settings/index.ts')
+/** `src/main/settings-surface/index.ts` — THE SURFACE (`D-17`, `D-18`): the operator path's one
+ *  reference to the instance, the construction and the boot read `main.ts` delegates to, and
+ *  the home of the three re-exported receipt types (`C-2`, `C-3`). */
+export const SETTINGS_SURFACE_SRC = SRC('main/settings-surface/index.ts')
 /** `<repo>/docs/` — the repo-root `docs/` tree, resolved from the constant this
  *  module already documents as **the repo root**.
  *
@@ -190,12 +204,19 @@ export function oldOverResolvedSurfaceArtifactPath(): string {
 }
 export const TEST_FILE = TEST('secure-exclusion.test.ts')
 
-/** `§1.3` item 1 — THE FOUR FORBIDDEN PATHS, named so the list is checkable. */
+/** `§1.3` item 1 — THE THREE FORBIDDEN PATHS, named so the list is checkable.
+ *
+ *  **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`): THE LIST MOVED `4 -> 3`.** The
+ *  as-filed fourth entry — `{ label: 'the tier-4 store module', path: SECURITY_STORE_SRC }` —
+ *  RETIRED with the file it named (`src/main/security-store.ts` is deleted, disregarded, never
+ *  re-pointed), so `FORBIDDEN_PATHS` carries exactly the three paths whose subject stands: the
+ *  two frozen RENDERER modules and the frozen SURFACE ARTIFACT. The as-filed count and entry are
+ *  recorded here, never silently. This is a RETIREMENT, not a re-grain: no seventh path is
+ *  invented and no deleted byte is re-hashed. */
 export const FORBIDDEN_PATHS: readonly { label: string; path: string }[] = [
   { label: 'the store module (frozen field-1..7 content)', path: STORE_CORE_SRC },
   { label: 'the references module', path: STORE_REFS_SRC },
   { label: 'the frozen SURFACE ARTIFACT', path: SURFACE_ARTIFACT },
-  { label: 'the tier-4 store module', path: SECURITY_STORE_SRC },
 ]
 
 // ---- THE REGISTER'S OWN CONSTANTS (`§5.5` items 1/2, `§5.5.3`) --------------------------

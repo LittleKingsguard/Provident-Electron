@@ -398,14 +398,21 @@ async function drive(client) {
 const IDENTITY_KIND = 'demo'
 const EXTENSION_KIND = 'props-falsy-toggle'
 
-/** A-1.2 — THE SCRATCH SECURITY STORE THE CHANNEL NEEDS. `provident.load` lives in
- *  the `graph` group, which is OFF by default (`src/main/security-store.ts`), so a
- *  scratch profile is seeded with the SAME group set the `ui` leg's own scratch
- *  store already uses (`docs/specs/ci-ui-leg.md` §3.2: `read` + `dispatch` + the
- *  `graph` group the load tool lives in + `code`). This is an OPERATOR-EQUIVALENT
- *  action on a THROWAWAY file inside the leg's own fresh scratch profile — it
- *  changes NO default, persists nothing, and never touches the operator's profile
- *  (the block's §0 prohibition 3/4 and A-6.6 stay satisfied). */
+/** A-1.2 — THE SCRATCH SECURITY RECORD THE CHANNEL NEEDS. `provident.load` lives in
+ *  the `graph` group, which the INSTANCE'S FIRST-RUN DEFAULT does not carry — an absent
+ *  record answers `read`+`dispatch` and no `graph` (`docs/L2/security-store-storeroom/
+ *  behaviour.md` §1) — so a scratch profile is seeded with the SAME group set the `ui`
+ *  leg's own scratch record already uses (`docs/specs/ci-ui-leg.md` §3.2: `read` +
+ *  `dispatch` + the `graph` group the load tool lives in + `code`). **THE SEEDED NAME IS
+ *  THE RETIRED `provident-security.json` AND IT MUST STAY IT (C-4, `security-store-storeroom`):**
+ *  the operator record now lives in the instance's own `provident-operator-settings.json`,
+ *  whose bytes are the STORE's own image and which no leg may hand-write, while the retired
+ *  name is READ ONCE at the first boot by the instance's import-once path — so the seed is
+ *  exactly what makes the boot serve these groups, and the instance never writes, renames
+ *  or repairs that name. This is an OPERATOR-EQUIVALENT action on a THROWAWAY file inside
+ *  the leg's own fresh scratch profile — it changes NO default, persists nothing, and never
+ *  touches the operator's profile (the block's §0 prohibition 3/4 and A-6.6 stay
+ *  satisfied). */
 const SCRATCH_GROUPS = ['read', 'dispatch', 'graph', 'code']
 function driveProfile() {
   const profile = makeFreshProfile('provident-r13-drive')
@@ -629,9 +636,11 @@ async function main() {
   // profile, byte-for-byte as before. F-1: the profile is CREATED here (profile
   // only, no child) and the ONE child that uses it is spawned on the next line.
   // `driveProfile` (below) is that same PROFILE-ONLY creator PLUS the scratch
-  // security-store seed the channel needs: `provident.load` lives in the `graph`
-  // group, which is OFF by default, so the profile this leg drives the app under
-  // carries the seeded store (A-1.2) — never a default, never the operator's.
+  // record seed the channel needs: `provident.load` lives in the `graph` group,
+  // which the instance's FIRST-RUN DEFAULT does not carry (`read`+`dispatch`, no
+  // `graph`), so the profile this leg drives the app under carries the seeded
+  // retired-name record the boot imports once (A-1.2) — never a default, never the
+  // operator's, and the instance never writes that name back.
   const profileA = makeFreshProfile('provident-r13-app')
 
   console.log('\n--- real Electron (real DOM) ---')

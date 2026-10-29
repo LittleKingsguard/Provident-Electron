@@ -210,6 +210,31 @@
  * **byte-for-byte as filed**.  **NO TERM MOVED** (`117 = 12 + 17 + 13 + 13 + 14 + 12 + 12 +
  * 14 + 10`, subtotals `52 + 39 + 26`, the same nine rows — see the register module's
  * 2026-10-08 annotation).
+ *
+ * ⟶ **ANNOTATED BESIDE 2026-10-29 (`U-SECURE-STOREROOM` `E-1`..`E-3` — `RCA-8(d)`
+ * ANNOTATE-BESIDE; every block above stands BYTE-FOR-BYTE and is NOT rewritten).
+ * `src/main/security-store.ts` IS DELETED** (E-1: its five-member API, its two-token receipt
+ * vocabulary, its 16-member refusal union and its on-disk record shape are DISREGARDED, not
+ * carried), and this file's rows were moved by exactly two closed predicates:
+ *   · **RETIRED** — the six frozen byte-digests of that file (`SECURITY_STORE_PIN` and the
+ *     five `…_PRE_{CENTRAL_DATA,HOLDER,LOCK,ADV1,AMENDMENT}` terms) and EVERY reader of them,
+ *     which retire as ONE unit because the replacement artifact makes all six dead at once;
+ *     plus each `createSecurityStore(...)` drive and each assertion on the retired record's
+ *     on-disk shape. Nothing is re-pointed: no deleted byte is re-hashed and no seventh term
+ *     is invented.
+ *   · **RE-GRAINED** — every row/cell whose figure or path literal moved under `C-1`..`C-4`
+ *     while its subject stands: the group set's second live copy (`C-1`), the receipt types'
+ *     import source (`C-2`), `main.ts`'s construction + boot read + carrier (`C-3`, now
+ *     `createSettingsSurface(` at `main.ts:108`, `settingsSurface.read()` at `:109`), and the
+ *     persisted-file names (`C-4`: `provident-security.json` retired — read at most once by
+ *     the instance's import-once path, never written; `provident-operator-settings.json`).
+ * **THE REGISTER ARITHMETIC IS UNMOVED: NO TERM, NO ROW, NO STRATEGY ID, NO CAP, NO TOTAL,
+ * NO SUBTOTAL, NO CHAIN LINK MOVED** — `117 = 12 + 17 + 13 + 13 + 14 + 12 + 12 + 14 + 10`,
+ * chain `12 -> 29 -> 42 -> 55 -> 69 -> 81 -> 93 -> 107 -> 117`, subtotals `52 + 39 + 26`, nine
+ * rows: every retired site was one assertion or one drive INSIDE a cell whose other claims
+ * stand, so each cell is edited IN PLACE and the cell count is kept. **THE ONE FIGURE THAT DID
+ * MOVE IS THE FORBIDDEN-PATH COUNT, `4 -> 3`** (`§1.3` item 1: the retired fourth entry named
+ * the deleted file); the two new module paths joined the census set (`5 -> 7` moving files).
  * ============================================================================
  */
 
@@ -223,7 +248,16 @@ import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import { SecurityGate } from '../src/main/security.js'
 import { ProvidentMcpServer, RendererBackend } from '../src/main/mcp-server.js'
-import { createSecurityStore } from '../src/main/security-store.js'
+/* **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-1`..`C-4`).** The as-filed
+ * `import { createSecurityStore } from '../src/main/security-store.js'` RETIRED with the file
+ * (deleted, disregarded, no shim, no dual write). The security record now lives in its own
+ * `provident-storeroom` instance, constructed through `createOperatorSettings(...)`
+ * (`src/main/operator-settings/index.ts`), and the composition `main.ts` drives — the
+ * construction, the boot read and the carrier — is `createSettingsSurface(...)`
+ * (`src/main/settings-surface/index.ts`). Both are imported here so every drive below reads the
+ * LANDED composition and no drive re-spells it. */
+import { createOperatorSettings } from '../src/main/operator-settings/index.js'
+import { createSettingsSurface } from '../src/main/settings-surface/index.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
@@ -246,7 +280,8 @@ import {
   SURFACE_ARTIFACT,
   SURFACE_ARTIFACT_MEASURED,
   FORBIDDEN_PATHS,
-  SECURITY_STORE_SRC,
+  OPERATOR_SETTINGS_SRC,
+  SETTINGS_SURFACE_SRC,
   STORE_CHANNELS_SRC,
   SECURITY_TS_SRC,
   STORE_CORE_SRC,
@@ -510,9 +545,15 @@ function mutatingTransitionControlOnly(gate: unknown, next: string): unknown {
  *  `withExclusion` call reached from the SET handler.  Driven so the
  *  `P-EX-SM-1` T-5 / `P-EX-TP-2` channel-3 readings are proven to FAIL against
  *  it.  It is applied to the EXTRACTED HANDLER TEXT (the same instrument the
- *  cells read), never to `src/`. */
+ *  cells read), never to `src/`.
+ *
+ *  **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-3`): THE ANCHOR MOVED WITH THE
+ *  COMPOSITION.**  The as-filed form injected before the handler's own `applyGatePatch(` call;
+ *  the landed SET handler DELEGATES (`return settingsSurface.set(patch)`, `main.ts:425`), so the
+ *  injection anchors on that delegation — the write path's OWN call — and the mutant is still a
+ *  transition reached FROM the write path, which is exactly the shape `T-5` forbids. */
 function setHandlerWithTransitionSiteControlOnly(handlerBody: string): string {
-  return handlerBody.replace(/\bapplyGatePatch\s*\(/, 'gate.withExclusion(patch.groups?.[0]) && applyGatePatch(')
+  return handlerBody.replace(/\bsettingsSurface\.set\s*\(/, 'gate.withExclusion(patch.groups?.[0]) && settingsSurface.set(')
 }
 
 /** THE `P-EX-IM-3`(g) / `FS-EX-12` PREDICATE: does the OTHER gate observe the
@@ -674,210 +715,42 @@ function countMatches(src: string, re: RegExp): number {
 function secureSegmentCheckSites(src: string): number {
   return countMatches(src, /['"`]secure['"`]|['"`]secure\.|'secure'\.|===\s*'secure'|split\(['"]\.['"]\)\[0\]/)
 }
-/** §5.1 item 1 — THE UNIT'S FIVE ALLOWED MOVING FILES (the diff-scope census). */
-const DIFF_SCOPE_PATHS: readonly string[] = [SECURITY_TS_SRC, MCP_SERVER_SRC, MAIN_SRC, PRELOAD_SRC, SECURE_PANELS_SRC]
-/** §1.3 item 1 — the tier's own bytes' MEASURED pre-unit pin (`S2`'s file).
- *  The spec pins the two frozen MODULE files explicitly and does NOT pin
- *  `security-store.ts`'s digest; this figure is THIS PASS'S measurement over the
- *  file bytes (node:crypto), recorded so a later byte-move reddens cell (j)/(l).
- *  **⟶ THIRD RE-POINT, CAUSE IN ONE DATED LINE (`2026-10-11`): THE `§2.6` WRITE-LOCK
- *  AMENDMENT LANDED (commit `f444426`; the clause is `docs/specs/secure-store-discipline.md`
- *  `§2.6` item 5) — the record now advances AT the commit and the in-flight attempt's own
- *  receipt lands at THAT SAME TERMINAL — so the pin's EXPECTATION FOLLOWS THE ARTIFACT under
- *  an authorized change. The digest it moved FROM is kept below as
- *  `SECURITY_STORE_PIN_PRE_LOCK`, awake and asserted distinct; THE FULL LINEAGE WITH EVERY
- *  CAUSE IS IN THE AMENDMENT BLOCK BESIDE, two blocks down.**
+/** §5.1 item 1 — THE UNIT'S MOVING FILES (the diff-scope census).
  *
- *  **⟶ FOURTH RE-POINT, CAUSE IN ONE DATED LINE (`2026-10-11`): THE `S2`
- *  `U-TIER4-ARBITRARY-STORAGE` STATIC-HOLDER LANDING (`19da51d`) MOVED THE STORE'S
- *  BYTES — `src/main/security-store.ts` now imports the main-side leaf
- *  `src/main/tier4-state.ts` and its two gates (`set()` step 1, `writeEntry()` step 1)
- *  consult `tier4OpenState()` DIRECTLY at each call's own turn — so the pin's
- *  EXPECTATION FOLLOWS THE ARTIFACT under that authorized change (`S2`'s `§5.1` item 1
- *  allowed-edit-set item (1), which names this very file; the option member
- *  `tier4Open?: () => boolean` is WITHDRAWN, so `SecurityStoreOptions` is UNMOVED).
- *  The digest it moved FROM is kept below as `SECURITY_STORE_PIN_PRE_HOLDER`, awake and
- *  asserted distinct. The two register cells that read this constant — `P-EX-IM-2`
- *  (j)/(l) — redden WITH it and clear with it, ONE cause; no term, row, declared total,
- *  cap or strategy id moves.**
+ *  **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`..`E-3`): THE PATH SET MOVED
+ *  `5 -> 7`.** The as-filed set named the five files this unit's diff moved —
+ *  `security.ts` · `mcp-server.ts` · `main.ts` · `preload.ts` · `secure-panels.ts` — and the
+ *  retired `src/main/security-store.ts` beside them (it left the tree with `E-1`). The
+ *  composition's two new directories JOINED it, so the census covers every file the diff can
+ *  now move: `src/main/operator-settings/index.ts` and `src/main/settings-surface/index.ts`.
+ *  **A census that kept the old five would leave the two new modules uncensused** — the
+ *  blind spot this re-grain closes; no assertion changes and no path is dropped. */
+const DIFF_SCOPE_PATHS: readonly string[] = [
+  SECURITY_TS_SRC, MCP_SERVER_SRC, MAIN_SRC, PRELOAD_SRC, SECURE_PANELS_SRC,
+  OPERATOR_SETTINGS_SRC, SETTINGS_SURFACE_SRC,
+]
+/* ============================================================================
+ * ⟶ **RETIRED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`) — THE FROZEN BYTE-DIGEST CHAIN OF
+ * `src/main/security-store.ts`, AS ONE UNIT.**
  *
- *  **⟶ FIFTH RE-POINT, CAUSE IN ONE DATED LINE (`2026-10-11`): THE `S2`
- *  `U-TIER4-ARBITRARY-STORAGE` GATE-4 REPAIR LANDED (`D-i`…`D-iv`, `§3c.4`) AND MOVED THE
- *  STORE'S BYTES — the `-0` refusal, the null-prototype ingestion map, the non-object
- *  record's corrupt arm and the DECLARED `fs` construction input with its completeness
- *  test and its surface-routed cleanup — so the pin's EXPECTATION FOLLOWS THE ARTIFACT
- *  under that authorized change (`S2`'s `§5.1` item 1 allowed-edit-set item (1), which
- *  names this very file). The digest the FOURTH re-point made operative — `fd242633…` — is
- *  named one block above and stays visible in this file's lineage prose and in the unit's
- *  own register-harness chain, and the operative figure here is `39bfa51a…` — the same
- *  figure the unit's own register harness now asserts at FULL 64-hex (`D-x`; its
- *  `SECURITY_STORE_PIN`, whose dead-stale form gate 4 measured).**
+ * The block that stood HERE carried `SECURITY_STORE_PIN` (the operative pin) and the five
+ * kept ancestors `SECURITY_STORE_PIN_PRE_AMENDMENT` (`c7359530…`) ·
+ * `SECURITY_STORE_PIN_PRE_ADV1` (`99618ac2…`) · `SECURITY_STORE_PIN_PRE_LOCK` (`a98273b8…`) ·
+ * `SECURITY_STORE_PIN_PRE_HOLDER` (`8ed09c97…`) · `SECURITY_STORE_PIN_PRE_CENTRAL_DATA`
+ * (`39bfa51a…`), with their six-re-point lineage. `E-1` DELETES the file they measured, so
+ * **all six constants and every reader of them are dead at once and retire together**: the
+ * constants themselves, `P-EX-IM-2` cells (j)/(l)'s digest halves, the `FS-EX-15` row's
+ * six-term chain and its byte-moved control, and the `I-EX-6` store-byte arm of
+ * `I-EX-4/I-EX-5/I-EX-6/I-EX-7`.
  *
- *  **⟶ SIXTH RE-POINT, CAUSE IN ONE LINE: `central-data`'s E-1 CENSUS ROW LANDED AND MOVED THE
- *  STORE'S BYTES.** `docs/L1/central-data-census-exception.md` §2 (E-1, second live copy)
- *  moves `src/main/security-store.ts:87`'s `VALID_GROUPS` five → six, adding `'data'`, under
- *  the same one-shot that moved `src/main/security.ts` and the two censuses; the file is one
- *  of the declared 40 sites of L1 rev 2 §8 (class C-2) and the exception is the authority for
- *  the edit. The digest the FIFTH re-point made operative — `39bfa51a…` — is kept awake as
- *  `SECURITY_STORE_PIN_PRE_CENTRAL_DATA` below and asserted distinct, and the operative figure
- *  is now `7a85e021…`. NOTHING ELSE moves: no clause, no term, no declared total, no cap and
- *  no strategy id; the two register cells that read this constant — `P-EX-IM-2` (j)/(l) — redden
- *  with it and clear with it, ONE cause.** */
-const SECURITY_STORE_PIN = '7a85e0215c9ba4edb2d9cf80536deafec0363f95b28f8f73abcacc6bdbca3b09'
-/* **⟶ AMENDMENT SET (2026-10-11; `RCA-8(a)` gate: `S1`'s pin re-grained to the `S3`
- * `U-SECURE-STORE-DISCIPLINE` landing — commits `460fb66` + `0d36c46`), `RCA-8(d)`
- * ANNOTATE-BESIDE: the as-filed clause above (and its digest) STANDS BYTE-FOR-BYTE
- * and is NOT rewritten — it is KEPT here as the PRE-AMENDMENT pin, so the move is a
- * measured delta and never a silent re-point.**
- *
- * THE PRE-AMENDMENT PIN — this pass's own pre-`S3` measurement of the file, i.e. the
- * as-filed constant's value — is KEPT as the declared constant
- * `SECURITY_STORE_PIN_PRE_AMENDMENT` (below), and the control at `FS-EX-15` asserts
- * the two digests DIFFER, so the move cannot be a silent no-op or a typo.
- *
- * WHY THE PINNED ARTIFACT MOVED — the AUTHORITY, named: the ACTIVE `docs/decisions.md`
- * row **`TIER-4 READS RETURN DEEP CLONES OVER THE FULL READ SURFACE, AND TIER-4 WRITE
- * SURFACES ARE ADMISSION-CONTROLLED BY THEIR REACHABLE SET — `D-1` · `D-2`** and its
- * dated follow-up block *"Live state equals durable state"* REVERSED THREE behaviours
- * of `src/main/security-store.ts` ON PURPOSE — `O-1` rollback on a refused persist
- * (`current` assigned only after a successful save), `O-2` the JSON-representability
- * admission, `O-3` the full-surface deep clone. `S3`'s admitted diff target IS this
- * path (`docs/specs/secure-store-discipline.md` `§5.1` item 1 allows it; its `§1.3`
- * item 4 and `§0A` item 6 freeze only the two RENDERER modules), which is the
- * implementer's `KB-8`. The pin's OWN authority for citing the file is therefore
- * re-pointed: the cell still asserts **the store's bytes are FROZEN at a MEASURED
- * digest** — the digest is now the `S3`-repaired bytes' — and the `L`/`byte-pin`
- * citation this file carries for it gains this note (`docs/specs/secure-exclusion.md`
- * `§1.3` item 1's nearest carrying cell carries the matching dated annotation).
- *
- * WHAT THE RE-GRAIN DOES **NOT** WEAKEN (the bite is equal, and STRONGER in one
- * direction): (a) the pin is still a REAL 64-hex measurement over the file's bytes
- * (`FS-EX-15`, `I-EX-6`, `P-EX-IM-2` cells (j)/(l) all still compare it); (b) the
- * comparison is still proven ABLE TO FAIL — the mutation that reddens it is ANY byte
- * move, and this amendment ADDS a positive control over THIS module's own bytes
- * (`SECURITY_STORE_PIN_CONTROL`, the `FS-EX-15` row), which the as-filed form did not
- * have for `security-store.ts`; (c) the two RENDERER module pins (`0664c52f…` /
- * `5c0c1a97…`), the surface-artifact pin and the four-path census are UNTOUCHED.
- *
- * THE AMENDMENT SET'S SCOPE (`RCA-8(a)`, one commit): THIS file's three red rows —
- * `FS-EX-15` (the artifact byte-pin), `I-EX-4/I-EX-5/I-EX-6/I-EX-7` (the `I-EX-6`
- * store-byte arm) and `§5.5.1`'s register `REPORTS` row (whose `broken === 0` bound
- * the pin's two register cells, `P-EX-IM-2` (j)/(l), moved) — plus
- * `tests/store-security.test.ts`'s `G3` re-grain, all recorded in
- * `docs/specs/secure-store-discipline.md`'s amendment-set block.
- *
- * **⟶ SECOND RE-POINT, DATED `2026-10-06` (`RCA-8(a)` gate: `S3`'s gate-4 remediation
- * → `S1`'s pin re-point; `RCA-8(d)` ANNOTATE-BESIDE — the first amendment block above
- * STANDS BYTE-FOR-BYTE beside this one and is NOT rewritten).**
- *
- * REASON, ONE LINE: the pinned artifact moved AGAIN because gate 4's `ADV-1`
- * remediation LANDED at `e317d82` — each declared patch member (`groups` · `disable` ·
- * `token` · `maxJournalLength`) is now read ONCE from the caller's patch and THAT
- * reading is what is admitted, coerced and stored, closing the accessor/proxy hole
- * where the admission read and the persisted read could diverge (a getter answering
- * `42` to the admission and `null` to the write) — and under that AUTHORIZED change
- * the pin's EXPECTATION FOLLOWS THE ARTIFACT: a byte-pin that refused to follow an
- * authorized move would be an instrument demanding an unauthorized rollback, which is
- * how the first re-point's `KB-8` collision arose.
- *
- * THE DIGEST LINEAGE, EVERY VALUE MEASURED (`node:crypto` over the file's bytes),
- * EVERY VALUE PINNED TO ITS CAUSE AND ITS COMMIT — the whole chain stays visible so
- * the current pin is a MEASURED DELTA from an as-filed constant, never a silent
- * re-point:
- *   1. `c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d` — the
- *      AS-FILED pin, measured over the file at `83f2dde` (`15,983` bytes; `S2`'s
- *      bytes, before any authorized move). Kept as
- *      `SECURITY_STORE_PIN_PRE_AMENDMENT` below.
- *   2. `99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc` — the
- *      FIRST re-point (`726ebd4`, the 2026-10-11 amendment set), CAUSE: the `S3`
- *      implementer's green (`460fb66`) + its kick-back resolution (`0d36c46`) landed
- *      `O-1` (refused-persist rollback) · `O-2` (JSON-representability admission) ·
- *      `O-3` (full-surface deep clone) under the ACTIVE `docs/decisions.md`
- *      `TIER-4 …` ruling. Kept as `SECURITY_STORE_PIN_PRE_ADV1` below.
- *   3. `a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22484d39fdcaa06c642eaa3` — the
- *      CURRENT pin (`e317d82`, this second re-point), CAUSE: gate 4's `ADV-1`
- *      remediation, the read-ONCE patch-member fix above.
- * ALL THREE are asserted 64-hex, ALL THREE are asserted AWAKE and DISTINCT from each
- * other (a typo, a no-op or a copy-paste that collapsed the chain reddens), and the
- * byte-moved POSITIVE CONTROL still proves the comparison can FAIL — which is the
- * bite this re-point must not weaken.
- *
- * THE SECOND RE-POINT'S SCOPE (`RCA-8(a)`, one commit): THIS file's three red rows —
- * `FS-EX-15` (the artifact byte-pin), the `I-EX-6` store-byte arm of
- * `I-EX-4/I-EX-5/I-EX-6/I-EX-7` and `§5.5.1`'s register `REPORTS` row (whose
- * `broken === 0` bound the pin's two register cells, `P-EX-IM-2` (j)/(l), moved) —
- * recorded in `docs/specs/secure-store-discipline.md` `§9c` item 10 with the lineage
- * anchored beside `docs/specs/secure-exclusion.md` `§1.3` item 1's amendment note.
- *
- * **⟶ THIRD RE-POINT, DATED `2026-10-11` (`RCA-8(a)` gate: the `§2.6` write-lock amendment's
- * green → `S1`'s pin re-point; `RCA-8(d)` ANNOTATE-BESIDE — BOTH amendment blocks above STAND
- * BYTE-FOR-BYTE and are NOT rewritten).**
- *
- * REASON, ONE LINE: the pinned artifact moved a THIRD time because the `§2.6` write-lock
- * amendment LANDED at `f444426` — the record now advances AT the commit (`§2.6` item 5's
- * module-internal commit-landing sink, invoked once at each of the write path's two
- * terminals) and the in-flight attempt's own receipt is REVEALED at that same terminal — and
- * under that AUTHORIZED change the pin's EXPECTATION FOLLOWS THE ARTIFACT, exactly as it did
- * at the two re-points above.
- *
- * THE DIGEST LINEAGE, EVERY VALUE MEASURED (`node:crypto` over the file's bytes), EVERY VALUE
- * PINNED TO ITS CAUSE AND ITS COMMIT — the whole chain stays visible so the current pin is a
- * MEASURED DELTA from an as-filed constant, never a silent re-point:
- *   1. `c7359530…` — the AS-FILED pin (`83f2dde`, `15,983` bytes). Kept as
- *      `SECURITY_STORE_PIN_PRE_AMENDMENT`.
- *   2. `99618ac2…` — the FIRST re-point (`726ebd4`), CAUSE: the `S3` ruling's
- *      `O-1`/`O-2`/`O-3`. Kept as `SECURITY_STORE_PIN_PRE_ADV1`.
- *   3. `a98273b8…` — the SECOND re-point (`e317d82`), CAUSE: gate 4's `ADV-1` read-once
- *      remediation. NOW KEPT as `SECURITY_STORE_PIN_PRE_LOCK`.
- *   4. `8ed09c97…` — the THIRD re-point (`f444426`), CAUSE: the `§2.6`
- *      write-lock amendment's mechanism `(h-i)` landed at one production site.
- *      **⟶ ANNOTATED BESIDE `2026-10-11` (FOURTH RE-POINT; `RCA-8(d)`: the wording above
- *      stands as the THIRD re-point's record): it was the CURRENT pin from `f444426`
- *      until the `S2` landing, and is NOW KEPT as `SECURITY_STORE_PIN_PRE_HOLDER`.**
- *   5. `fd242633…` — the CURRENT pin (the FOURTH re-point), CAUSE: the `S2`
- *      `U-TIER4-ARBITRARY-STORAGE` static-holder landing (`19da51d`) put the leaf's
- *      `tier4OpenState()` consult at the store's own two gates (`set()` step 1 and
- *      `writeEntry()` step 1), under `S2` `§5.1` item 1's allowed-edit-set item (1).
- * ALL FIVE are asserted 64-hex, ALL FIVE are asserted AWAKE and DISTINCT from each other (a
- * typo, a no-op or a copy-paste that collapsed the chain reddens), and the byte-moved POSITIVE
- * CONTROL still proves the comparison can FAIL — the bite this re-point must not weaken.
- *
- * THE THIRD RE-POINT'S SCOPE (`RCA-8(a)`, one commit): THIS file's three red rows —
- * `FS-EX-15` (the artifact byte-pin), the `I-EX-6` store-byte arm of
- * `I-EX-4/I-EX-5/I-EX-6/I-EX-7` and `§5.5.1`'s register `REPORTS` row (whose `broken === 0`
- * bound the pin's two register cells, `P-EX-IM-2` (j)/(l), moved) — plus this pass's `KB-10`
- * correction in `tests/secure-store-discipline.test.ts`, recorded in
- * `docs/specs/secure-store-discipline.md`'s `§9g`-family with the lineage anchored beside
- * `docs/specs/secure-exclusion.md` `§1.3` item 1's amendment note. */
-const SECURITY_STORE_PIN_PRE_AMENDMENT = 'c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d'
-/** The FIRST RE-POINT's value — the `S3`-repaired bytes (`726ebd4`'s amendment set),
- *  kept as a labelled PRE-`ADV-1` constant so the intermediate digest stays visible
- *  and the delta from it to the operative pin is a MEASURED term (see the lineage
- *  block above). NAMED `PRE_ADV1` — never `PRE_AMENDMENT`, so the two historical
- *  figures cannot be conflated: `PRE_AMENDMENT` is the as-filed digest, this one is
- *  the first re-pointed digest. */
-const SECURITY_STORE_PIN_PRE_ADV1 = '99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc'
-/** The SECOND RE-POINT's value — the bytes AFTER gate 4's `ADV-1` read-once remediation
- *  (`e317d82`) — kept as a labelled PRE-`§2.6` constant so the THIRD re-point's delta from it
- *  is a MEASURED term (see the lineage block above). NAMED `PRE_LOCK` for its own CAUSE: the
- *  `§2.6` write-lock amendment is what moved it, so the three historical figures cannot be
- *  conflated with one another or with the operative pin. */
-const SECURITY_STORE_PIN_PRE_LOCK = 'a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22484d39fdcaa06c642eaa3'
-/** The THIRD RE-POINT's value — the bytes AFTER the `§2.6` write-lock amendment
- *  (`f444426`) — kept as a labelled PRE-`S2` constant so the FOURTH re-point's delta from
- *  it is a MEASURED term (see the lineage block above). NAMED `PRE_HOLDER` for its own
- *  CAUSE: the `S2` `U-TIER4-ARBITRARY-STORAGE` static-holder landing (`19da51d`) is what
- *  moved it (the leaf consult at the store's two gates), so the four historical figures
- *  cannot be conflated with one another or with the operative pin. */
-const SECURITY_STORE_PIN_PRE_HOLDER = '8ed09c97358b0eaab81b60d665519498552cd6f20bb748afceaff030494f0419'
-/** The FIFTH RE-POINT's value — the bytes AFTER the `S2` gate-4 repair (`D-i`…`D-iv`) — kept as
- *  a labelled PRE-`E-1` constant so the SIXTH re-point's delta from it is a MEASURED term (see
- *  the lineage block above). NAMED `PRE_CENTRAL_DATA` for its own CAUSE: `central-data`'s E-1
- *  census row (`docs/L1/central-data-census-exception.md` §2) adds `'data'` to this file's
- *  SECOND LIVE COPY of `VALID_GROUPS` at `:87`, so the store's bytes move by declaration and
- *  the pin follows the artifact. The five historical figures can still not be conflated with
- *  one another or with the operative pin. */
-const SECURITY_STORE_PIN_PRE_CENTRAL_DATA = '39bfa51a578a1c56acc188199caf190957e1a52d770c5471a530c55c98410295'
+ * **THE RETIREMENT IS RECORDED, NEVER RE-POINTED** (`RCA-8(d)`; the retirement predicate on
+ * this pass's authority): the deleted file is NEVER re-hashed, no digest is re-pointed to a
+ * successor artifact, and no SEVENTH term is invented. The as-filed lineage's own rule — *a
+ * replaced artifact makes the whole chain dead at once* — is why the chain goes as a unit and
+ * not term by term. Every row that read it KEEPS its subject, its term and its non-digest
+ * claims: the union census at `16`, the two frozen RENDERER pins, the frozen SURFACE
+ * ARTIFACT's pin and the `4 -> 3` forbidden-path list all stand untouched.
+ * ========================================================================== */
 
 function basenameOf(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1)
@@ -963,16 +836,29 @@ let chanSeq = 0
  *  (the flag is NOT persisted — `main` constructs the gate at its construction
  *  site), and reads the state ONCE.  The reading therefore reddens when the
  *  state resolves to anything but the safe pair — including when the record is
- *  ABSENT (the declared red). */
+ *  ABSENT (the declared red).
+ *
+ *  **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-4`): THE SUBJECT IS UNMOVED AND
+ *  THE PATH LITERAL MOVED.**  The seven input classes are the SAME seven, read over the SAME
+ *  seven shapes; the persisted file they are written to is now
+ *  `provident-operator-settings.json` (`C-4`'s added name) and the boot read is the instance's
+ *  own `read()` — the construction `main()` performs at `:108`/`:109`, never a re-spelled
+ *  record shape.  The retired name `provident-security.json` is no longer WRITTEN here by any
+ *  drive (the instance reads it at most once, through its import-once path, and never writes
+ *  it), so the `cold` class lands its durable row through the instance's OWN `write()` rather
+ *  than by hand-assembling the retired record's shape. */
 async function bootInputResolvesSafe(
   inputClass: 'cold' | 'missing' | 'corrupt' | 'torn' | 'empty' | 'wrongly-shaped' | 'stale-tmp',
 ): Promise<void> {
   const dir = join(baseDir, `boot-${inputClass}-${persistSeq++}`)
-  const path = join(dir, 'provident-security.json')
+  const path = join(dir, 'provident-operator-settings.json')
   await mkdir(dir, { recursive: true })
   switch (inputClass) {
     case 'cold':
-      await writeFile(path, JSON.stringify({ token: null, enabled: ['read', 'dispatch'] }), 'utf8')
+      // a COLD record: a PRESENT durable row with nothing set, landed through the instance's
+      // own declared write (never a hand-written copy of the store's private file format)
+      expect(createOperatorSettings({ userDataDir: dir }).write({ token: null }).status,
+        'the `cold` input class is a REAL present record (a refused write would collapse this class onto `missing`)').toBe('committed')
       break
     case 'missing':
       break // no file at all
@@ -994,12 +880,12 @@ async function bootInputResolvesSafe(
       await writeFile(`${path}.tmp`, '{"torn":', 'utf8')
       break
   }
-  // the boot read — the landed store is read (as `main()` reads it) for the
-  // settings; the EXCLUSION record is NOT read from any file (§2.1 item 4).
-  const persisted = createSecurityStore({ path }).get()
-  const gate = liveGate({ token: persisted.token, enabled: persisted.enabled })
+  // the boot read — the instance is read (as `main()` reads it) for the settings; the
+  // EXCLUSION record is NOT read from any file (§2.1 item 4).
+  const persisted = createOperatorSettings({ userDataDir: dir }).read()
+  const gate = liveGate({ token: persisted.token, enabled: [...persisted.enabled] })
   expect(gate.exclusionState(),
-    `P-EX-SM-3 — the boot state resolves \`'mcp-enabled'\` for EVERY input class (input class: ${inputClass}). A boot that resolves \`'mcp-disabled'\` under ANY of these FAILS the row; the flag is NOT persisted and \`sanitize()\`'s corrupt fallback makes a torn record indistinguishable from cold.`)
+    `P-EX-SM-3 — the boot state resolves \`'mcp-enabled'\` for EVERY input class (input class: ${inputClass}). A boot that resolves \`'mcp-disabled'\` under ANY of these FAILS the row; the flag is NOT persisted and the read's own corrupt fallback makes a torn record indistinguishable from cold.`)
     .toBe(STATE_MCP_ENABLED)
   expect(gate.exclusion,
     `P-EX-SM-3 — the boot pair is {mcpEnabled:true, tier4Open:false} (input class: ${inputClass})`)
@@ -1886,9 +1772,10 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       /* (i) the diff-spelling census — ZERO secure-segment tests and ZERO
-       * 'secure-refused' spellings in the unit's five allowed files. */
+       * 'secure-refused' spellings in the unit's allowed moving files (`5 -> 7`: the two new module
+       * directories joined the five at `E-1`..`E-3`; see `DIFF_SCOPE_PATHS`). */
       {
-        label: "(i) the DIFF-SPELLING census: ZERO `secure`-segment tests and ZERO `'secure-refused'` spellings across the unit's five allowed files (§2.6 item 2 N-1)",
+        label: "(i) the DIFF-SPELLING census: ZERO `secure`-segment tests and ZERO `'secure-refused'` spellings across the unit's allowed moving files (`5 -> 7` — RE-GRAINED 2026-10-29: `operator-settings/index.ts` and `settings-surface/index.ts` joined the set) (§2.6 item 2 N-1)",
         run: () => {
           for (const path of DIFF_SCOPE_PATHS) {
             if (!exists(path)) continue
@@ -1903,37 +1790,23 @@ const registerSpecs: RegisterRow[] = [
             '§2.6 item 1 — the store module is the ONE holder of the `secure-refused` spelling (the census is not vacuous)').toBe(true)
         },
       },
-      /* (j) the union-count census — the union is READ at 16 and
-       * security-store.ts is byte-identical to its measured pre-unit bytes.
-       * **⟶ ANNOTATED BESIDE 2026-10-11 (the EIGHTH `§6.2` audit of this unit's
-       * gate-6 battery, `A-8-03`, LOW; `RCA-8(d)`: the two as-filed lines above are
-       * KEPT BYTE-FOR-BYTE and are NOT the operative reading).** The phrase
-       * "measured PRE-UNIT bytes" is SUPERSEDED BY THE THREE AUTHORISED RE-POINTS of
-       * this file's bytes — the `S3` ruling's `O-1`/`O-2`/`O-3` (`99618ac2…`), gate 4's
-       * `ADV-1` read-once remediation (`a98273b8…`) and the `§2.6` write-lock amendment
-       * (`8ed09c97…`) — so THE OPERATIVE PIN IS THE POST-`§2.6` BYTES, and this row
-       * asserts the file byte-identical to THAT pin. The assertion's own message
-       * already names the whole chain; what is added here is that the operative
-       * reading is stated at the COMMENT and the LABEL rather than left to be inferred
-       * from the chain. **THE BITE IS UNMOVED:** any moved byte still reddens the row,
-       * and it now compares against a pin three AUTHORISED moves have been recorded
-       * against, so a silent fourth move reddens here instead of passing as "pre-unit". */
+      /* (j) the union-count census — the union is READ at 16.
+       * **⟶ RETIRED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`): THIS CELL'S FILE HALF.**  The
+       * as-filed cell read *"`src/main/security-store.ts` is byte-identical to its measured
+       * pre-unit bytes"* and carried a SIX-LINK digest chain in its assertion message; the file
+       * is DELETED, so the file half — and with it every digest assertion of this cell — RETIRES
+       * as part of the chain that dies as a UNIT (the annotated block above
+       * `basenameOf`). **THE CELL ITSELF STANDS AND ITS TERM DOES NOT MOVE: the union-count
+       * claims are read off `STORE_CORE_SRC` — the RENDERER module, which still exists — and
+       * they are kept EXACTLY as filed (`16`, `'exclusion-closed'` absent, `'malformed-state'`
+       * absent).** No byte of the deleted file is re-hashed and no digest is re-pointed. */
       {
-        label: "(j) the UNION-COUNT census: the store's refusal union is READ at `16` and `src/main/security-store.ts` is byte-identical to its measured pre-unit bytes (§2.5 item 2, FS-EX-14) — ⟶ OPERATIVE READING 2026-10-11 (`A-8-03`) RE-GRAINED AT THE FOURTH RE-POINT: the pin is the POST-`S2` bytes `fd242633…`, the fourth of four AUTHORISED re-points (the `S2` static-holder landing `19da51d` is the fourth, beside the `§2.6` write-lock amendment's `8ed09c97…`); the as-filed \"pre-unit bytes\" wording is kept visible and is SUPERSEDED",
+        label: "(j) the UNION-COUNT census: the store's refusal union is READ at `16`, `'exclusion-closed'` and `'malformed-state'` appear in NO group (§2.5 items 2/3, FS-EX-14) — RETIRED 2026-10-29 (`E-1`): the as-filed cell's SECOND half (\"`src/main/security-store.ts` is byte-identical to its measured pre-unit bytes\", with its six-link digest chain) retired with the deleted file; the union half above is kept byte-for-byte and the cell keeps its term",
         run: () => {
           const union = unionMembersOf(sourceOf(STORE_CORE_SRC))
           expect(union.length, '§2.5 item 2 — the store\'s refusal union stays `16` (`8` held + `5` + `3`); `\'exclusion-closed\'` appears in NO group').toBe(16)
           expect(union.includes(EXCLUSION_CLOSED), "§2.5 item 2 — `'exclusion-closed'` is NOT a store-union member (the channel-token precedent, `SecurityWriteReceipt`'s `'write-failed'`)").toBe(false)
           expect(union.includes(MALFORMED_STATE), "§2.5 item 3 — `'malformed-state'` is the channel's second token, OUTSIDE the union").toBe(false)
-          const digest = sha256Of(SECURITY_STORE_SRC)
-          /* ⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-8`): the as-filed message read
-           * *"byte-identical to its pre-unit bytes (`S2`'s file …)"*; the pinned digest moved
-           * from `c7359530…` to `99618ac2…` because the architect's ruling reversed three of
-           * the file's behaviours (`O-1`/`O-2`/`O-3`, `SECURITY_STORE_PIN`'s block above). The
-           * SUBJECT is unmoved — the union is READ at `16`, `'exclusion-closed'` is in NO
-           * group — and the file half is still the SAME bound, over the amended pin. */
-          expect(digest,
-            '§1.3 item 1 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06; THIRD RE-POINT 2026-10-11; FOURTH RE-POINT 2026-10-11) — `src/main/security-store.ts` is byte-identical to its MEASURED pin (chain: as-filed `c7359530…` → the `S3` ruling\u2019s `O-1`/`O-2`/`O-3` re-point `99618ac2…` → gate 4\u2019s `ADV-1` read-once remediation `a98273b8…` → the `§2.6` write-lock amendment `8ed09c97…` → the `S2` static-holder landing `fd242633…`); a moved byte is a COLLISION finding. Measured: ' + digest.slice(0, 12)).toBe(SECURITY_STORE_PIN)
         },
       },
       /* (k) THE MEASURED FILE BYTE-PIN of the two frozen modules.
@@ -1963,20 +1836,27 @@ const registerSpecs: RegisterRow[] = [
           expect(sha256Of(mutatedPath).length, 'CONTROL — and it still answers a well-formed digest (the control fails the PIN, not the comparator\'s shape)').toBe(64)
         },
       },
-      /* (l) the four FORBIDDEN paths stay untouched. */
+      /* (l) the FORBIDDEN paths stay untouched.
+       * **⟶ RETIRED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`): THE CELL'S FOURTH PATH AND ITS
+       * STORE-DIGEST ASSERTION.**  The as-filed label read *"the FOUR FORBIDDEN PATHS … ·
+       * `src/main/security-store.ts`"* and asserted `FORBIDDEN_PATHS.length === 4` plus the
+       * deleted file's digest; the entry and the digest RETIRE with the file (the chain dies as a
+       * UNIT — see the annotated block above `basenameOf`). **THE CELL STANDS AND ITS TERM DOES
+       * NOT MOVE: the three paths whose subject stands — `store-core-graph.ts`,
+       * `store-graph-references.ts` and the frozen SURFACE ARTIFACT — are still asserted
+       * present and byte-identical, and the list itself is still asserted COMPLETE, at its
+       * re-grained count `4 -> 3`.** */
       {
-        label: "(l) the FOUR FORBIDDEN PATHS stay untouched: the store module · the references module · the frozen surface artifact · `src/main/security-store.ts` (§1.3 item 1, FS-EX-15)",
+        label: "(l) the THREE FORBIDDEN PATHS stay untouched: the store module · the references module · the frozen surface artifact (§1.3 item 1, FS-EX-15) — RETIRED 2026-10-29 (`E-1`): the as-filed FOURTH entry (`src/main/security-store.ts`) retired with the deleted file, so the counted list moved `4 -> 3`; the three remaining paths are asserted exactly as filed",
         run: () => {
           // the two module pins are read in (k); this cell reads the other two and
           // asserts the FORBIDDEN-PATH LIST itself is complete and unmoved.
-          expect(FORBIDDEN_PATHS.length, '§1.3 item 1 — the forbidden list is FOUR paths, named so the list is checkable').toBe(4)
+          expect(FORBIDDEN_PATHS.length, '§1.3 item 1 — the forbidden list is THREE paths (RE-GRAINED `4 -> 3` by `E-1`: the retired fourth entry named the deleted `src/main/security-store.ts`), named so the list is checkable').toBe(3)
           for (const entry of FORBIDDEN_PATHS) {
             expect(exists(entry.path), `§1.3 item 1 — the forbidden path exists in-tree (${entry.label}): ${entry.path}`).toBe(true)
           }
           expect(sha256Of(SURFACE_ARTIFACT),
             '§1.3 item 1 — the frozen SURFACE ARTIFACT is byte-identical (the spec pins no artifact-FILE digest of its own, so this is THIS PASS\'S measurement, labelled as such — never the span figure)').toBe(SURFACE_ARTIFACT_MEASURED)
-          expect(sha256Of(SECURITY_STORE_SRC),
-            '§1.3 item 1 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06; THIRD RE-POINT 2026-10-11; FOURTH RE-POINT 2026-10-11) — `src/main/security-store.ts` (the tier\'s own bytes) is byte-identical to its MEASURED pin; the pin was re-grained `c7359530…` → `99618ac2…` by the `S3` landing (`O-1`/`O-2`/`O-3`), AGAIN `99618ac2…` → `a98273b8…` by gate 4\'s `ADV-1` remediation, AGAIN `a98273b8…` → `8ed09c97…` by the `§2.6` write-lock amendment, and AGAIN `8ed09c97…` → `fd242633…` by the `S2` static-holder landing (`19da51d`), never silently').toBe(SECURITY_STORE_PIN)
         },
       },
       /* ── THE `A-1` CELLS (GATE 4, 2026-10-05) — THE LIVE TRANSITION ─────────
@@ -2394,24 +2274,26 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: "(j) THE RACE-2 ORDERING DRIVE (§2.2 item 7): an `IPC_SECURITY_SET` and an `IPC_SECURITY_EXCLUSION` transition issued back-to-back in ONE tick, in BOTH orders — the store's `current`, the gate's config, and NO third holder (the exclusion decision is NOT a function of the enabled-group set)",
+        label: "(j) THE RACE-2 ORDERING DRIVE (§2.2 item 7): an `IPC_SECURITY_SET` and an `IPC_SECURITY_EXCLUSION` transition issued back-to-back in ONE tick, in BOTH orders — the record's `token`, the gate's config, and NO third holder (the exclusion decision is NOT a function of the enabled-group set). RE-GRAINED 2026-10-29 (`E-1`, `C-4`): the SET half is driven on the instance that OWNS the persisted record (`createOperatorSettings`, `provident-operator-settings.json`) and read through its `read()`, because the retired `createSecurityStore(...)` drive's subject — the record's post-write `current` — is the INSTANCE's reading now; the ordering, the pair of readings and the no-third-holder claim are unmoved",
         run: async () => {
           const dir = join(baseDir, `race2-${race2Seq++}`)
-          const path = join(dir, 'provident-security.json')
-          const store = createSecurityStore({ path })
+          await mkdir(dir, { recursive: true })
+          const settings = createOperatorSettings({ userDataDir: dir })
           const gateConfig = { token: null, enabled: ['read', 'dispatch'] }
           // ORDER 1 — SET then transition, in ONE tick (no await between them):
-          const storeAfterSet = store.set({ token: 'race-token' })
+          const receiptAfterSet = settings.write({ token: 'race-token' })
           const gateAfterTransition = gateFrom(new SecurityGate(gateConfig as never) as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
-          expect(storeAfterSet.token, '§2.2 item 7 — after the pair, the store\'s `current` equals the SET\'s post-state (a drive yielding a store `current` mid-update FAILS)').toBe('race-token')
+          expect(receiptAfterSet.status, 'the SET half REALLY ran — the instance committed the durable write (a refused post would make the reading below measure nothing)').toBe('committed')
+          expect(settings.read().token, '§2.2 item 7 — after the pair, the record\'s `token` equals the SET\'s post-state (a drive yielding a record mid-update FAILS)').toBe('race-token')
           expect(gateAfterTransition.exclusionState(), '§2.2 item 7 — the gate\'s config equals the transition\'s post-value (a gate left at its pre-value FAILS)').toBe(STATE_MCP_DISABLED)
           expect((gateAfterTransition as unknown as { config: { token: unknown } }).config.token,
-            '§2.2 item 7 — NO THIRD HOLDER: the exclusion transition does NOT copy, memo or snapshot the store\'s settings (the two holders stay ORDERED, and they are NOT merged)').toBeNull()
+            '§2.2 item 7 — NO THIRD HOLDER: the exclusion transition does NOT copy, memo or snapshot the record\'s settings (the two holders stay ORDERED, and they are NOT merged)').toBeNull()
           // ORDER 2 — transition then SET, in ONE tick:
           const gateB = gateFrom(new SecurityGate(gateConfig as never) as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
-          const storeAfterSetB = store.set({ token: 'race-token-2' })
+          const receiptAfterSetB = settings.write({ token: 'race-token-2' })
           expect(gateB.exclusionState(), '§2.2 item 7 — the reverse order lands the same two readings').toBe(STATE_MCP_DISABLED)
-          expect(storeAfterSetB.token, '§2.2 item 7 — the store\'s `current` equals the SET\'s post-state in the reverse order too').toBe('race-token-2')
+          expect(receiptAfterSetB.status, 'the reverse order\'s SET half REALLY ran').toBe('committed')
+          expect(settings.read().token, '§2.2 item 7 — the record\'s `token` equals the SET\'s post-state in the reverse order too').toBe('race-token-2')
           /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, `A-6`): the as-filed third reading
            * was `expect(gateB.exclusion.tier4Open).toBe(gateB.exclusion.tier4Open)`
            * — a TAUTOLOGY that could never fail.  The property it NAMES is that
@@ -2759,12 +2641,23 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: 'T-5 · reading (ii): the obligations it did NOT fire — no epoch bump, no invalidation; the landed re-gate is composed WITH',
+        label: 'T-5 · reading (ii): the obligations it did NOT fire — no epoch bump, no invalidation; the landed re-gate is composed WITH (RE-GRAINED 2026-10-29 by `C-3`: the delegation is `main.ts`\'s and the re-gate is the surface module\'s, so BOTH halves are asserted)',
         run: () => {
           const src = sourceOf(MAIN_SRC)
           const handler = handlerBodyOf(src, 'IPC_SECURITY_SET')
-          expect(/applyGatePatch/.test(handler),
-            'T-5 / §2.6 item 1 / M-EX-9 — the SET handler KEEPS its landed `applyGatePatch` re-gate (`store-security.md` §0A item 8: "COMPOSED WITH, never rewritten"); the EXCLUSION state is untouched').toBe(true)
+          /* **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-3`).** The as-filed reading
+           * asserted `/applyGatePatch/.test(handler)` — the re-gate call spelled INSIDE `main.ts`'s
+           * SET handler. The composition moved: the handler now DELEGATES to the surface
+           * (`return settingsSurface.set(patch)`, `main.ts:425`) and the re-gate rides that
+           * module's OWN subscription (`held.applyGatePatch(...)` inside `onDelivery`,
+           * `settings-surface/index.ts`), NEVER a second edge. THE CLAIM IS UNCHANGED — the landed
+           * re-gate is COMPOSED WITH, not rewritten, and the EXCLUSION state is untouched — so it
+           * is asserted over BOTH halves, and a handler that dropped the delegation OR a surface
+           * that dropped the re-gate still reddens. */
+          expect(/settingsSurface\.set\s*\(/.test(handler),
+            'T-5 / M-EX-9 — the SET handler KEEPS its write path: it DELEGATES to the surface (`settingsSurface.set(patch)`), it does not re-implement it (RE-GRAINED from the in-handler `applyGatePatch(` call)').toBe(true)
+          expect(/applyGatePatch\s*\(/.test(sourceOf(SETTINGS_SURFACE_SRC)),
+            'T-5 / §2.6 item 1 / M-EX-9 — the landed `applyGatePatch` re-gate is COMPOSED WITH, never rewritten: the surface module\'s own delivery calls it (`store-security.md` §0A item 8); the EXCLUSION state is untouched').toBe(true)
         },
       },
       {
@@ -3098,7 +2991,7 @@ const registerSpecs: RegisterRow[] = [
     type: 'P-SM',
     strategyId: 'S-EX-BOOT-1',
     term: 12,
-    property: 'THE BOOT TERMINAL IS THE SAFE PAIR, TOTAL OVER THE WHOLE INPUT DOMAIN, AND NOTHING PERSISTS — for EVERY boot input class the state resolves `\'mcp-enabled\'`; the ORDER the contract pins is the ORDER OF CONSTRUCTION over the landed artifacts (store -> gate -> transports -> `mcp.start()`), and OPEN/CLOSE are DECLARED `S2`\'s mechanism, NOT this unit\'s; the state has NO persistence path (§2.1 items 4/5, re-scoped by the review-closure pass)',
+    property: 'THE BOOT TERMINAL IS THE SAFE PAIR, TOTAL OVER THE WHOLE INPUT DOMAIN, AND NOTHING PERSISTS — for EVERY boot input class the state resolves `\'mcp-enabled\'`; the ORDER the contract pins is the ORDER OF CONSTRUCTION over the landed artifacts (record -> gate -> transports -> `mcp.start()`, RE-GRAINED 2026-10-29 by `E-1`/`C-3`: the record\'s construction is `createSettingsSurface(` and its boot read `settingsSurface.read()`, and the order survives IN KIND), and OPEN/CLOSE are DECLARED `S2`\'s mechanism, NOT this unit\'s; the state has NO persistence path (§2.1 items 4/5, re-scoped by the review-closure pass)',
     drives: [
       // the 7 input classes — each read ONCE for the resolved state.
       { label: '(input 1) COLD record · the boot state resolves `\'mcp-enabled\'` (§2.1 item 4)', run: async () => { await bootInputResolvesSafe('cold') } },
@@ -3110,14 +3003,17 @@ const registerSpecs: RegisterRow[] = [
       { label: '(input 7) a file with a stale `${path}.tmp` BESIDE it · the boot state resolves `\'mcp-enabled\'`', run: async () => { await bootInputResolvesSafe('stale-tmp') } },
       // the 3 ORDER readings, each observable on the landed artifacts.
       {
-        label: '(order i) the security store\'s CONSTRUCTION precedes the `SecurityGate`\'s construction in `main()`',
+        label: '(order i) the settings surface\'s CONSTRUCTION precedes the boot read, and BOTH precede the `SecurityGate`\'s construction, in `main()` — RE-GRAINED 2026-10-29 (`E-1`, `C-3`): the construction site is `createSettingsSurface(` (`main.ts:108`) and the boot read is `settingsSurface.read()` (`main.ts:109`); the order predicate survives IN KIND',
         run: () => {
           const src = sourceOf(MAIN_SRC)
-          const storeIdx = src.indexOf('createSecurityStore(')
+          const storeIdx = src.indexOf('createSettingsSurface(')
+          const bootReadIdx = src.indexOf('settingsSurface.read()')
           const gateIdx = src.indexOf('new SecurityGate(')
-          expect(storeIdx, '§2.1 item 4 — `createSecurityStore(...)` is called in `main()` (main.ts:86-90)').toBeGreaterThan(-1)
-          expect(gateIdx, '§2.1 item 4 — `new SecurityGate(...)` is called in `main()` (main.ts:90)').toBeGreaterThan(-1)
-          expect(storeIdx, '§2.1 item 4 / P-EX-SM-3(i) — the security store\'s construction PRECEDES the gate\'s (a boot in which the gate is constructed before the store FAILS this clause)').toBeLessThan(gateIdx)
+          expect(storeIdx, '§2.1 item 4 — `createSettingsSurface(...)` is called in `main()` (main.ts:108) — RE-GRAINED from `createSecurityStore(...)`, whose file `E-1` deleted').toBeGreaterThan(-1)
+          expect(bootReadIdx, '§2.1 item 4 — the boot read `settingsSurface.read()` is taken in `main()` (main.ts:109)').toBeGreaterThan(-1)
+          expect(gateIdx, '§2.1 item 4 — `new SecurityGate(...)` is called in `main()` (main.ts:115)').toBeGreaterThan(-1)
+          expect(storeIdx, '§2.1 item 4 / P-EX-SM-3(i) — the construction PRECEDES the boot read (a boot that read before it constructed FAILS this clause)').toBeLessThan(bootReadIdx)
+          expect(bootReadIdx, '§2.1 item 4 / P-EX-SM-3(i) — and the boot read PRECEDES the gate\'s construction (a boot in which the gate is constructed before the record is read FAILS this clause)').toBeLessThan(gateIdx)
         },
       },
       {
@@ -3157,25 +3053,30 @@ const registerSpecs: RegisterRow[] = [
        * LIVE SERVER holds, in BOTH directions, and asserts the file's bytes
        * across it — with a control proving the comparison can FAIL.** */
       {
-        label: '(persistence 1) the security file is BYTE-IDENTICAL across a REAL transition driven on the gate a LIVE SERVER holds (no new key, no new writer, no third file) (§2.1 item 4, §1.3 item 7, I-EX-7)',
+        label: '(persistence 1) the persisted security record\'s file is BYTE-IDENTICAL across a REAL transition driven on the gate a LIVE SERVER holds (no new key, no new writer, no third file) (§2.1 item 4, §1.3 item 7, I-EX-7) — RE-GRAINED 2026-10-29 (`E-1`, `C-4`): the file is `provident-operator-settings.json`, laid down by the instance that owns it (`createOperatorSettings`), and the retired `provident-security.json` is neither written nor re-pointed',
         run: async () => {
           const dir = join(baseDir, `persist-${persistSeq++}`)
-          const path = join(dir, 'provident-security.json')
+          const path = join(dir, 'provident-operator-settings.json')
           await mkdir(dir, { recursive: true })
           /* **⟶ RE-GRAINED `2026-10-11` (`S2` `U-TIER4-ARBITRARY-STORAGE`): THE STATE THE
            * DRIVE'S OWN PREMISE ASSUMES IS DRIVEN FIRST.** `S2`'s `G-1` refuses a tier-4
            * WRITE while the tier is CLOSED, and the one boolean's ONE writer is the
            * TRANSITION (`applyExclusion`, `§2.5` item 2 `W-1`) — a process-wide holder the
-           * earlier rows legitimately move. The drive needs its store write to COMMIT (the
+           * earlier rows legitimately move. The drive needs its record write to COMMIT (the
            * file's bytes are what the comparison below reads), so the app's OWN transition
            * puts the tier in the OPEN state on a server that HOLDS this gate, exactly as
            * `main.ts` drives it — never by poking the holder. The two transitions below then
-           * cross the SAME server's gate in BOTH directions, as before. */
+           * cross the SAME server's gate in BOTH directions, as before.
+           * **⟶ AND `2026-10-29` (`E-1`, `C-4`): the record write is the INSTANCE's own
+           * `write()`** — the retired store's `set()` is gone with its five-member API, and
+           * the durable row it lands is the same class of write (a `committed` receipt, one
+           * file, one key set), so the byte comparison below measures the SAME claim. */
           const gate = liveGate({ token: 'persist-token', enabled: ['read', 'dispatch'] })
           const server = freshServer(gate, recordingBackend(), 'stdio')
           server.applyExclusion(STATE_MCP_DISABLED)
-          const store = createSecurityStore({ path })
-          store.set({ token: 'persist-token' })
+          const settings = createOperatorSettings({ userDataDir: dir })
+          expect(settings.write({ token: 'persist-token' }).status,
+            'the record write REALLY ran — the instance committed the durable row the bytes below are read from (a refused write would make the comparison measure nothing)').toBe('committed')
           const before = await readFile(path, 'utf8')
           // THE REAL TRANSITION — on a gate the server HOLDS (never a throwaway):
           const heldBefore = server.gate
@@ -3186,10 +3087,10 @@ const registerSpecs: RegisterRow[] = [
           server.applyExclusion(STATE_MCP_ENABLED)
           expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'the close request ran too, so BOTH transition directions are crossed').toBe(STATE_MCP_ENABLED)
           const after = await readFile(path, 'utf8')
-          expect(after, '§1.3 item 7 / I-EX-7 — the exclusion flag is NOT PERSISTED: the security file is byte-identical across BOTH transitions (no new key, no third file, no writer)').toBe(before)
+          expect(after, '§1.3 item 7 / I-EX-7 — the exclusion flag is NOT PERSISTED: the persisted record\'s file is byte-identical across BOTH transitions (no new key, no third file, no writer)').toBe(before)
           const keys = Object.keys(JSON.parse(after) as Record<string, unknown>)
-          expect(keys.includes('exclusion') || keys.some((k) => /exclusion|mcp/i.test(k)),
-            'I-EX-7 — no `exclusion`/`mcp`-shaped key enters `provident-security.json` (the key set is: ' + JSON.stringify(keys) + ')').toBe(false)
+          expect(keys.includes('exclusion') || keys.some((k) => /exclusion|mcp/i.test(k)) || /exclusion|mcp-disabled/i.test(after),
+            'I-EX-7 — no `exclusion`/`mcp`-shaped key enters `provident-operator-settings.json` (the durable key set is: ' + JSON.stringify(keys) + '; the file\'s own bytes: ' + JSON.stringify(after.slice(0, 120)) + ')').toBe(false)
           // THE CONTROL — the byte comparison CAN fail: the mutated copy a writer
           // of the flag WOULD have produced is NOT byte-identical:
           const mutatedControlOnly = after.replace(/^\{/, '{"exclusion":"mcp-disabled",')
@@ -3197,18 +3098,24 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: '(persistence 2) the exclusion state is NOT readable from the store and not derived from it — the boot terminal is TOTAL because the flag has no persistence path',
+        label: '(persistence 2) the exclusion state has NO PERSISTENCE PATH: the durable row carries no exclusion axis, and a SECOND instance over the same directory re-reads the SAFE pair — the boot terminal is TOTAL — RE-GRAINED 2026-10-29 (`E-1`, `C-4`): the as-filed first conjunct ("NOT readable from the store") is SUPERSEDED IN KIND by `D-16`/`D-17` — the record now DERIVES `exclusion`/`tier4` at its READ from a `mem` address — so the cell drives the claim that survives and still bites: nothing durable carries the state',
         run: async () => {
           const dir = join(baseDir, `persist2-${persistSeq++}`)
-          const path = join(dir, 'provident-security.json')
-          const store = createSecurityStore({ path })
-          store.set({ token: null })
-          const persisted = store.get() as unknown as Record<string, unknown>
-          expect(Object.keys(persisted).some((k) => /exclusion|mcp/i.test(k)),
-            'I-EX-7 / §2.1 item 5 — a crashed session cannot resolve to the OPEN pair: the flag is not persisted and `sanitize()`\'s corrupt fallback makes a torn record indistinguishable from cold, so the safe terminal is total over its whole domain').toBe(false)
-          // the boot of a SECOND store on the same path resolves a cold/default shape:
-          const reborn = createSecurityStore({ path }).get()
-          expect(reborn.enabled, 'the store\'s own shape is unmoved (the exclusion is a SEPARATE record on the GATE, not a store key)').toEqual(['read', 'dispatch'])
+          const path = join(dir, 'provident-operator-settings.json')
+          await mkdir(dir, { recursive: true })
+          const settings = createOperatorSettings({ userDataDir: dir })
+          expect(settings.write({ token: null }).status, 'the durable row REALLY landed (a refused write would collapse this reading onto the no-file arm)').toBe('committed')
+          expect(settings.write({ exclusion: STATE_MCP_DISABLED }).status, 'the operator\'s OWN transition write REALLY ran, and it is the drive\'s premise: the IN-SESSION state is the OPEN pair').toBe('committed')
+          expect(settings.read().exclusion, '§2.1 item 5 / D-16 — the premise, measured: the in-session record answers the OPEN pair').toBe(STATE_MCP_DISABLED)
+          const durable = JSON.parse(await readFile(path, 'utf8')) as Record<string, Record<string, unknown> | undefined>
+          const durableKeys = Object.keys(durable['operator-settings'] ?? {})
+          expect(durableKeys.some((k) => /exclusion|mcp/i.test(k)) || /exclusion|mcp-disabled/i.test(await readFile(path, 'utf8')),
+            'I-EX-7 / §2.1 item 5 — a crashed session cannot resolve to the OPEN pair: the durable row carries NO exclusion axis (its keys are: ' + JSON.stringify(durableKeys) + ')').toBe(false)
+          // the boot of a SECOND instance over the SAME directory resolves the SAFE pair:
+          const reborn = createOperatorSettings({ userDataDir: dir })
+          expect(reborn.read().exclusion,
+            'I-EX-7 / §2.1 item 5 — the state has NO persistence path: a fresh instance over the same directory re-resolves the boot terminal `\'mcp-enabled\'` even though the session that just ended was in the OPEN pair').toBe(STATE_MCP_ENABLED)
+          expect(reborn.read().enabled, 'the durable record\'s own shape is unmoved (the exclusion is a SEPARATE record on the GATE, not a durable key)').toEqual(['read', 'dispatch'])
         },
       },
     ],
@@ -3442,13 +3349,16 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: "(channel reading 2) a SET response carries `exclusion` AND the landed `write` member TOGETHER (§2.4 item 4, M-EX-7)",
+        label: "(channel reading 2) a SET response carries `exclusion` AND the landed `write` member TOGETHER (§2.4 item 4, M-EX-7) — RE-GRAINED 2026-10-29 (`E-1`, `C-3`): the record is minted by the surface module's own `set()`, which `main.ts`'s handler answers, so both halves are read where they now live",
         run: () => {
           const handler = handlerBodyOf(sourceOf(MAIN_SRC), 'IPC_SECURITY_SET')
-          expect(/write:/.test(handler), 'the landed `write` member is KEPT (the G3 additive precedent, main.ts:379)').toBe(true)
-          expect(/exclusion/.test(handler),
-            'PAR-9 / M-EX-7 — the SET response record is EXTENDED ADDITIVELY by the SAME `exclusion` member BESIDE the landed `write`. RED: the member is ABSENT.').toBe(true)
-          expect(handler.indexOf('write:'), 'the landed `write` member is not DISPLACED by the new member (§8 item 7)').toBeGreaterThan(-1)
+          const surface = sourceOf(SETTINGS_SURFACE_SRC)
+          expect(/settingsSurface\.set\s*\(/.test(handler),
+            'the SET handler ANSWERS the surface\'s own `set(patch)` (RE-GRAINED: the record is minted there, `main.ts:425`)').toBe(true)
+          expect(/write:\s*receipt/.test(surface), 'the landed `write` member is KEPT (the G3 additive precedent), minted by the surface\'s `set()` BESIDE the additive `exclusion` member').toBe(true)
+          expect(/exclusion:\s*post\.exclusion/.test(surface),
+            'PAR-9 / M-EX-7 — the SET response record is EXTENDED ADDITIVELY by the SAME `exclusion` member BESIDE the landed `write`, from ONE post-write reading (a member that is absent, or read from a second reading, FAILS this)').toBe(true)
+          expect(surface.indexOf('write: receipt'), 'the landed `write` member is not DISPLACED by the new member (§8 item 7)').toBeGreaterThan(-1)
         },
       },
       {
@@ -3487,21 +3397,33 @@ const registerSpecs: RegisterRow[] = [
           const epochBefore = gateEpochOf(opened as unknown as SecurityGate)
           expect(stateBefore, 'the drive starts on a MOVED state (a reading taken on the boot terminal could not detect a SET that re-armed it)').toBe(STATE_MCP_DISABLED)
           expect(epochBefore, 'T-1 bumped the epoch, so a SET that bumped it AGAIN would be observable in the reading below').toBeGreaterThan(0)
-          // THE SET PATH, in the order the landed handler runs it: the store write
-          // (`securityStore.set`), then the re-gate (`mcp.applyGatePatch` →
-          // `SecurityGate.apply`):
+          // THE SET PATH, in the order the landed handler runs it: the record write
+          // (the instance's `write()`), then the re-gate (`mcp.applyGatePatch` →
+          // `SecurityGate.apply`).
+          /* **⟶ RE-GRAINED / PARTLY RETIRED 2026-10-29 (`E-1`, `C-4`).** The retired
+           * `createSecurityStore(...)` drive stood here; its SUBJECT — *"the SET path REALLY
+           * ran, and it does not move the exclusion state or the enabled-group axis"* — stands,
+           * so the drive moves onto the instance that now owns the durable record
+           * (`createOperatorSettings`, `provident-operator-settings.json`). ONE assertion
+           * RETIRES with the retired record's SHAPE: the as-filed *"the landed store carries no
+           * exclusion-shaped member"* — `D-16`/`D-17` declare the record's READ to answer a
+           * DERIVED `exclusion`/`tier4` pair, so that shape no longer exists anywhere and its
+           * absence is re-driven where it still means something (the DURABLE row, persistence 1
+           * / 2 of `P-EX-SM-3`). Nothing else about this cell changes and its term does not
+           * move. */
           const dir = join(baseDir, `chan-${chanSeq++}`)
-          const store = createSecurityStore({ path: join(dir, 'provident-security.json') })
-          const before = store.get()
-          const written = store.set({ token: 'unrelated-write' })
-          expect(written.token, 'the SET path REALLY ran — the store write moved the token (a no-op fixture would make the readings below measure nothing)').toBe('unrelated-write')
+          await mkdir(dir, { recursive: true })
+          const settings = createOperatorSettings({ userDataDir: dir })
+          const before = settings.read()
+          const written = settings.write({ token: 'unrelated-write' })
+          expect(written.status, 'the SET path REALLY ran — the instance committed the durable write (a no-op fixture would make the readings below measure nothing)').toBe('committed')
           const reGated = (opened as unknown as { apply(patch: { groups?: string[] }): SecurityGate }).apply({ groups: ['read', 'dispatch'] })
           expect(gateFrom(reGated).exclusionState(),
             'T-5 / M-EX-7 — a SET does NOT change the exclusion state: the state read AFTER the SET path is the state read BEFORE it. The gate\'s landed `apply` carries the record through UNTOUCHED (security.ts:295-297: "the SET/re-gate path is NOT a transition site")').toBe(stateBefore)
           expect(gateEpochOf(reGated),
             'T-5 / M-EX-7 — and the SET does NOT bump the epoch (a SET that bumped it would invalidate in-flight work for an unrelated write). Measured across the SET path, not inferred').toBe(epochBefore)
-          const after = store.get() as unknown as Record<string, unknown>
-          expect(Object.keys(after).some((k) => /exclusion|mcp/i.test(k)), 'the landed store carries no exclusion-shaped member: the state is the GATE\'s record, never a store setting (measured after a REAL store write)').toBe(false)
+          const after = settings.read()
+          expect(after.token, 'the durable write moved the token it named (the reading below is taken after a REAL write)').toBe('unrelated-write')
           expect(before.enabled, 'the SET does not move the enabled-group axis either (the exclusion is a SEPARATE axis)').toEqual(after.enabled)
           /* THE CONTROLS, driven IN-LINE — both MUST FAIL the readings above.
            * (1) the transition site T-5 forbids, injected into the EXTRACTED
@@ -3526,43 +3448,53 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: "(G6-F1#1) THE GET MEMBER IS THE LIVE STATE (§2.4 item 4, PAR-9, §3.1 M-EX-7, §2.1 item 1, §3.3 I-EX-2) — after a REAL accepted transition, the value the LANDED `IPC_SECURITY_GET` response record's own `exclusion:` expression answers must be the state the server's LIVE gate is in",
+        label: "(G6-F1#1) THE GET MEMBER IS THE LIVE STATE (§2.4 item 4, PAR-9, §3.1 M-EX-7, §2.1 item 1, §3.3 I-EX-2) — after a REAL accepted transition, the value the LANDED `IPC_SECURITY_GET` registration's own answered expression carries in its `exclusion` member must be the state the server's LIVE gate is in. RE-GRAINED 2026-10-29 (`E-1`, `C-3`): the CARRIER moved into `src/main/settings-surface/index.ts` — the handler now answers `settingsSurface.read()` — so the drive evaluates THAT expression against the app's own boundary and drives the transition through the surface, the ONE channel `main.ts` delegates to",
         run: async () => {
           /* **⟶ ADDED 2026-10-06 (`S1` GATE 6 RED): the gate-6 live battery measured
            * `IPC_SECURITY_GET` answering `'mcp-enabled'` after a real accepted
-           * transition** — `main.ts:376` closes over the BOOT-constructed gate while
-           * `mcp.applyExclusion(state)` (`:414`) REPLACES the SERVER's `_gate`
-           * (`SecurityGate.withExclusion` returns a NEW instance), so the operator's
-           * read never follows a transition (`docs/specs/secure-exclusion-live-battery.md`
-           * `§4` `F-1`/`F-4`).  The cell EXTRACTS that expression from the landed
-           * handler body and EVALUATES it against the REAL object boundary `main()`
-           * constructs, so the reading is the STATE the operator's own read answers —
-           * never a string match on the handler. */
+           * transition** — the handler closed over the BOOT-constructed record while
+           * `mcp.applyExclusion(state)` REPLACED the SERVER's `_gate`, so the operator's
+           * read never followed a transition (`docs/specs/secure-exclusion-live-battery.md`
+           * `§4` `F-1`/`F-4`).
+           *
+           * **⟶ RE-GRAINED 2026-10-29 (`C-3` — the carrier moved, the subject did not).**
+           * `main.ts`'s GET handler now DELEGATES: `settingsSurface.read()` (`main.ts:411`),
+           * and the surface mints both additive members from ONE reading of the instance's
+           * row, so the `F-1` hazard is closed one layer out. The cell therefore (a) EXTRACTS
+           * the handler's answered expression from `main.ts`'s own bytes and EVALUATES it
+           * against the boundary `main()` closes over — with `settingsSurface` bound as that
+           * boundary's own object — and (b) drives the REAL transition through the SAME
+           * surface (`transition(...)`, the `IPC_SECURITY_EXCLUSION` channel's delegate), so
+           * the reading is the state the operator's own read answers, never a string match
+           * on the handler and never a hand-poked gate. */
+          const dir = join(baseDir, `g6f1-${persistSeq++}`)
+          await mkdir(dir, { recursive: true })
+          const settingsSurface = createSettingsSurface({ userDataDir: dir })
           const bootGate = new SecurityGate({ token: null, enabled: ['read', 'dispatch'] } as never)
           gateFrom(bootGate)
           const server = freshServer(gateFrom(bootGate), recordingBackend(), 'stdio')
-          /* THE APP'S OWN BOOT FLIP (`main.ts:567`, `S2` kick-back item (2)):
-           * `mcp.applyExclusion('mcp-enabled')` is the boot window's FLIP step and the
-           * transition's ONE write of the holder — without it the reading below sits
-           * inside `D-19`'s declared transient window (holder `STORE-OPEN`, gate at its
-           * `S1` boot terminal) and would red on the holder's initial value rather than
-           * on the carrier's honesty. */
-          server.applyExclusion(STATE_MCP_ENABLED)
+          /* THE APP'S OWN ATTACH — `main.ts:527`'s boot step: the surface writes the holder
+           * from its boot reading, re-patches the gate and applies the boot pair, so the
+           * reading below sits OUTSIDE `D-19`'s declared transient window. */
+          settingsSurface.attach(server)
+          expect(server.gate.exclusionState(), 'the boot TERMINAL really landed on the server\'s live gate through the surface\'s own `attach`').toBe(STATE_MCP_ENABLED)
           const expr = mainGetExclusionExpression()
-          const before = manualUiExclusionRead({ gate: bootGate, mcp: server }, expr)
+          const before = manualUiExclusionRead({ gate: bootGate, mcp: server, settingsSurface }, expr)
           expect(before.error,
             `PAR-9 — the extracted read expression (\`${expr}\`) is EVALUABLE in the DECLARED SOURCE (\`main.ts\`'s own import statements + the boundary's own objects); an expression outside it is a NAMED failure: ${String(before.error)}`).toBeNull()
           expect(before.value, 'PAR-9 — before any transition the read and the live gate agree (the baseline)').toBe(STATE_MCP_ENABLED)
-          server.applyExclusion(STATE_MCP_DISABLED)
+          const answered = settingsSurface.transition(STATE_MCP_DISABLED)
+          expect(answered.applied, '§2.1 item 3 T-1 — the operator\'s transition was ACCEPTED by the surface (so the reading below is taken against a transition that really happened)').toBe(true)
           const live = server.gate.exclusionState()
-          expect(live, '§2.1 item 3 T-1 — the transition MOVED the server\'s live gate (so the reading below is taken against a transition that really happened)').toBe(STATE_MCP_DISABLED)
+          expect(live, '§2.1 item 3 T-1 — the transition MOVED the server\'s live gate through the surface\'s own subscription (the enforcement path and the carrier cannot disagree). Measured: ' + live).toBe(STATE_MCP_DISABLED)
           expect(manualUiReadReportsLiveStateControlOnly(STATE_MCP_ENABLED, live),
             'CONTROL — a reading equal to the BOOT state MUST FAIL the row\'s predicate (the value the live battery measured); written as a PREDICATE so it cannot become a false red if a repair instead moves the object the handler closes over').toBe(false)
           expect(manualUiReadReportsLiveStateControlOnly(live, live),
             'CONTROL (positive) — and the LIVE state PASSES the same predicate, so the cell is satisfiable').toBe(true)
-          const after = manualUiExclusionRead({ gate: bootGate, mcp: server }, expr)
+          const after = manualUiExclusionRead({ gate: bootGate, mcp: server, settingsSurface }, expr)
+          expect(after.error, `PAR-9 — the SAME extracted expression is still evaluable after the transition: ${String(after.error)}`).toBeNull()
           expect(manualUiReadReportsLiveStateControlOnly(after.value, live),
-            `PAR-9 / M-EX-7 — THE MANUAL-UI READ REPORTS THE LIVE STATE: the response record's \`exclusion:\` member must answer \`${live}\`, not the boot state. Measured: ${String(after.value)}`).toBe(true)
+            `PAR-9 / M-EX-7 — THE MANUAL-UI READ REPORTS THE LIVE STATE: the response record's \`exclusion\` member must answer \`${live}\`, not the boot state. Measured: ${String(after.value)}`).toBe(true)
         },
       },
       {
@@ -4069,17 +4001,22 @@ describe('S1 §3.1 THE VALID/HAPPY STATES (M-EX-1..M-EX-9)', () => {
   it('M-EX-1 (§2.1 items 4/5, P-EX-SM-3): a boot resolves to the SAFE pair — no persisted exclusion key, and no file is read for the state', async () => {
     await bootInputResolvesSafe('cold')
     const mainSrc = sourceOf(MAIN_SRC)
-    // the ordered construction envelope: store -> gate -> transports -> mcp.start()
-    const storeIdx = mainSrc.indexOf('createSecurityStore(')
+    // the ordered construction envelope: record -> gate -> transports -> mcp.start()
+    // **⟶ RE-GRAINED 2026-10-29 (`E-1`, `C-3`): the record's construction is the SURFACE's
+    // (`createSettingsSurface(` at `main.ts:108`) and its boot read is
+    // `settingsSurface.read()` at `:109`; the retired `createSecurityStore(` is deleted.**
+    const storeIdx = mainSrc.indexOf('createSettingsSurface(')
+    const bootReadIdx = mainSrc.indexOf('settingsSurface.read()')
     const gateIdx = mainSrc.indexOf('new SecurityGate(')
     const serverIdx = mainSrc.indexOf('new ProvidentMcpServer(')
     const startIdx = mainSrc.indexOf('await mcp.start()')
-    expect(storeIdx, 'M-EX-1 / §2.1 item 4 — the security store is CONSTRUCTED first (main.ts:86-90)').toBeLessThan(gateIdx)
-    expect(gateIdx, 'M-EX-1 / §2.1 item 4 — the gate is CONSTRUCTED second (main.ts:90). RED-honest: the gate construction site carries NO exclusion initialization today — the record does not exist.').toBeLessThan(serverIdx)
-    expect(serverIdx, 'M-EX-1 / §2.1 item 4 — the transports are CONSTRUCTED third (main.ts:264)').toBeLessThan(startIdx)
+    expect(storeIdx, 'M-EX-1 / §2.1 item 4 — the record is CONSTRUCTED first (`createSettingsSurface(`, main.ts:108; RE-GRAINED from `createSecurityStore(`)').toBeLessThan(gateIdx)
+    expect(bootReadIdx, 'M-EX-1 / §2.1 item 4 — and its BOOT READ precedes the gate (`settingsSurface.read()`, main.ts:109)').toBeLessThan(gateIdx)
+    expect(gateIdx, 'M-EX-1 / §2.1 item 4 — the gate is CONSTRUCTED second (main.ts:115), from the record the boot read answered').toBeLessThan(serverIdx)
+    expect(serverIdx, 'M-EX-1 / §2.1 item 4 — the transports are CONSTRUCTED third').toBeLessThan(startIdx)
     // no file is read for the state: the exclusion record's initialization is at the gate's construction site
     expect(/exclusion/i.test(mainSrc.slice(gateIdx - 400, gateIdx + 400)),
-      'M-EX-1 / §1.3 item 7 — the exclusion record is initialized to `\'mcp-enabled\'` at the GATE CONSTRUCTION SITE (main.ts:90), never read from a file. RED: no exclusion byte exists in main.ts.').toBe(true)
+      'M-EX-1 / §1.3 item 7 — the exclusion record is initialized to `\'mcp-enabled\'` at the GATE CONSTRUCTION SITE (main.ts:110-115), never read from a file for the state (`D-19`).').toBe(true)
   })
 
   it('M-EX-2 (§2.1 item 3 T-1, §2.2 items 2(b)/(c) and 3/4, P-EX-SM-1/SM-2): the operator opens the tier — the record, the pair, the epoch bump, the invalidation, the UNCHANGED registration set and flags, the CONNECTED server, the applied answer', async () => {
@@ -4217,7 +4154,12 @@ describe('S1 §3.1 THE VALID/HAPPY STATES (M-EX-1..M-EX-9)', () => {
     expect(getHandler, 'M-EX-7 / PAR-9 — the `IPC_SECURITY_GET` handler is readable').not.toBe('')
     expect(/exclusion/.test(getHandler), 'M-EX-7 / PAR-9 — both GET responses carry `exclusion` (never absent). RED: `IPC_SECURITY_GET` is `() => securityStore.get()` (main.ts:369) — the member is ABSENT.').toBe(true)
     expect(/exclusion/.test(setHandler), 'M-EX-7 — the SET response carries `exclusion` BESIDE the landed `write` member. RED: the member is ABSENT.').toBe(true)
-    expect(/write:/.test(setHandler), 'M-EX-7 — the landed `write` member is KEPT (not displaced)').toBe(true)
+    // **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-3`): the SET record is MINTED BY
+    // THE SURFACE (`main.ts`'s handler answers `settingsSurface.set(patch)`), so the landed `write`
+    // member is read where it now lives and the handler is asserted to ANSWER that call — a SET
+    // answer that lost `write`, or a handler that stopped delegating, still reddens.**
+    expect(/settingsSurface\.set\s*\(/.test(setHandler), 'M-EX-7 — the SET handler ANSWERS the surface\'s own `set(patch)` (RE-GRAINED from the in-handler `{ ...settings, write }`)').toBe(true)
+    expect(/write:\s*receipt/.test(sourceOf(SETTINGS_SURFACE_SRC)), 'M-EX-7 — the landed `write` member is KEPT (not displaced): the surface\'s `set()` mints it').toBe(true)
     // the channel constant's single-source rule (§1.3 item 9):
     const channels = sourceOrEmpty(STORE_CHANNELS_SRC)
     expect(/IPC_SECURITY_EXCLUSION/.test(channels),
@@ -4249,7 +4191,11 @@ describe('S1 §3.1 THE VALID/HAPPY STATES (M-EX-1..M-EX-9)', () => {
 
   it('M-EX-9 (§2.6 item 1, §2.1 item 3 T-5, store-security.md §0A item 8): the landed re-gate is COMPOSED WITH, not rewritten — `applyGatePatch` is called exactly as today and the EXCLUSION state is untouched', async () => {
     const setHandler = handlerBodyOf(sourceOf(MAIN_SRC), 'IPC_SECURITY_SET')
-    expect(/mcp\.applyGatePatch/.test(setHandler), 'M-EX-9 — `applyGatePatch` is called exactly as today (main.ts:381)').toBe(true)
+    // **⟶ RE-GRAINED 2026-10-29 (`E-1`, `C-3`): the re-gate is COMPOSED WITH in the surface module's
+    // own delivery (`held.applyGatePatch(...)`) and `main.ts`'s handler DELEGATES to it
+    // (`main.ts:425`) — both halves asserted, so a dropped delegation or a dropped re-gate reddens.**
+    expect(/settingsSurface\.set\s*\(/.test(setHandler), 'M-EX-9 — the SET handler keeps its write path by DELEGATING to the surface (`settingsSurface.set(patch)`, main.ts:425)').toBe(true)
+    expect(/mcp\.applyGatePatch\s*\(|held\.applyGatePatch\s*\(/.test(sourceOf(SETTINGS_SURFACE_SRC)), 'M-EX-9 — `applyGatePatch` is called exactly as today, inside the surface\'s own delivery (COMPOSED WITH, never rewritten)').toBe(true)
     const gate = freshGate()
     const before = gate.exclusionState()
     const server = freshServer(gate, recordingBackend())
@@ -4308,18 +4254,27 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
   it('FS-EX-4 (§2.1 items 4/5, P-EX-SM-3): a crash between "disable MCP" and "open the tier" resolves SAFE — no persisted trace of either step', async () => {
     // the crash: the state was flipped in-process, then the process dies and a
     // fresh boot runs against the SAME userData path.
+    /* **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-4`): the subject is UNMOVED
+     * and the path literal moved.** The retired `createSecurityStore({ path })` drive
+     * (`provident-security.json`) is replaced by the instance that owns the persisted record
+     * (`createOperatorSettings`, `userDataDir`), and the on-disk reading below is taken at the
+     * NEW file name. **The bite is unchanged and is now stronger:** the in-session OPEN state
+     * is DRIVEN through the instance's own transition write (a `mem` row), so the "no persisted
+     * trace" reading is measured across a state that really was set, not across a constructed
+     * gate. */
     const dir = join(baseDir, `crash-${persistSeq++}`)
-    const path = join(dir, 'provident-security.json')
+    const path = join(dir, 'provident-operator-settings.json')
     await mkdir(dir, { recursive: true })
-    const store = createSecurityStore({ path })
-    store.set({ token: 'crash-token' })
+    const settings = createOperatorSettings({ userDataDir: dir })
+    expect(settings.write({ token: 'crash-token' }).status, 'FS-EX-4 — the durable row LANDED (the crash below leaves a REAL record behind, so the reading is not taken over an empty directory)').toBe('committed')
     const opened = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
     expect(opened.exclusionState(), 'FS-EX-4 — the in-session state was the open pair').toBe(STATE_MCP_DISABLED)
+    expect(settings.write({ exclusion: STATE_MCP_DISABLED }).status, 'FS-EX-4 — the operator\'s own transition REALLY ran in-session (the `mem` row it writes is the state "either step" would have persisted)').toBe('committed')
     // the crash: nothing was persisted for the state (the flag has no persistence path)
-    const reborn = liveGate({ token: createSecurityStore({ path }).get().token })
+    const reborn = liveGate({ token: createOperatorSettings({ userDataDir: dir }).read().token })
     expect(reborn.exclusionState(), "FS-EX-4 / M-EX-1 — the next boot is the safe pair `'mcp-enabled'`, because there is NO persisted trace of either step").toBe(STATE_MCP_ENABLED)
     const onDisk = await readFile(path, 'utf8')
-    expect(/exclusion|mcp-disabled/i.test(onDisk), 'FS-EX-4 — a torn security file is indistinguishable from cold; the exclusion state leaves no trace at the real path').toBe(false)
+    expect(/exclusion|mcp-disabled/i.test(onDisk), 'FS-EX-4 — a torn record is indistinguishable from cold; the exclusion state leaves no trace in the persisted record\'s file (' + path + ')').toBe(false)
   })
 
   it('FS-EX-5 (§2.1 item 7, §2.4 items 2/3): an operator who never re-enables MCP is not made sticky — the restart is the safe pair, and within the session the state is observable and reversible', async () => {
@@ -4327,10 +4282,20 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
     expect(/MCP: /.test(panelSrc), "FS-EX-5 — WITHIN the session the state is observable: the pane's status line carries `MCP: disabled` (the trailing segment). RED: absent.").toBe(true)
     expect(/exclusion-toggle/.test(panelSrc), 'FS-EX-5 — and the toggle offers the RETURN path. RED: absent.').toBe(true)
     // the restart is the safe pair:
+    /* **⟶ RE-GRAINED 2026-10-29 (`E-1`, `C-4`): the retired `createSecurityStore({ path })` /
+     * `provident-security.json` pair moves onto the instance that now owns the persisted
+     * record.** The session below REALLY opens the tier through the instance's own transition
+     * write (a `mem` row), so the restart reading is measured after a state that was set — the
+     * sticky-across-a-restart claim keeps its full bite. */
     const dir = join(baseDir, `sticky-${persistSeq++}`)
-    const path = join(dir, 'provident-security.json')
     await mkdir(dir, { recursive: true })
-    const reborn = liveGate({ token: createSecurityStore({ path }).get().token })
+    const session = createOperatorSettings({ userDataDir: dir })
+    expect(session.write({ token: 'sticky-token' }).status, 'FS-EX-5 — the session landed a REAL durable record (the restart below reads it back)').toBe('committed')
+    expect(session.write({ exclusion: STATE_MCP_DISABLED }).status, 'FS-EX-5 — and the operator opened the tier in that session, so the restart reading is taken after a state that really was set').toBe('committed')
+    expect(session.read().exclusion, 'FS-EX-5 — measured: the session\'s state is the OPEN pair, and the operator never re-enabled').toBe(STATE_MCP_DISABLED)
+    const restarted = createOperatorSettings({ userDataDir: dir })
+    const reborn = liveGate({ token: restarted.read().token })
+    expect(restarted.read().token, 'FS-EX-5 — the restart is the SAME record (the token survives: the reading is not taken over an empty directory)').toBe('sticky-token')
     expect(reborn.exclusionState(), 'FS-EX-5 — the restarted app is M-EX-1 (safe pair): the dark-agentic-surface failure cannot become sticky across a restart').toBe(STATE_MCP_ENABLED)
   })
 
@@ -4650,8 +4615,8 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
     expect(sourceOf(STORE_CORE_SRC).includes(EXCLUSION_CLOSED), "FS-EX-14 — `'exclusion-closed'` is spelled NOWHERE inside the store module").toBe(false)
   })
 
-  it('FS-EX-15 (§1.3 item 1, P-EX-IM-2(j)/(k)/(l)): a frozen-artifact byte moving FAILS the boundary row — the four forbidden paths are byte-identical', async () => {
-    expect(FORBIDDEN_PATHS.length, 'FS-EX-15 — the boundary census reads FOUR forbidden paths').toBe(4)
+  it('FS-EX-15 (§1.3 item 1, P-EX-IM-2(k)/(l)): a frozen-artifact byte moving FAILS the boundary row — the three forbidden paths are byte-identical (RE-GRAINED 2026-10-29 by `E-1`: the counted list moved `4 -> 3`)', async () => {
+    expect(FORBIDDEN_PATHS.length, 'FS-EX-15 — the boundary census reads THREE forbidden paths (RE-GRAINED `4 -> 3` by `E-1`: the retired fourth entry named the deleted `src/main/security-store.ts`; no seventh path is invented)').toBe(3)
     // **THE PATHS MUST RESOLVE IN-TREE — WITHOUT THIS THE BYTE-PINS BELOW MEASURE
     // NOTHING.** **⟶ REPAIRED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK
     // OUTCOME (a): `SURFACE_ARTIFACT` resolved ONE DIRECTORY LEVEL TOO FAR OUT**
@@ -4685,128 +4650,27 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
       'FS-EX-15 — the artifact FILE pin is NOT the SPAN figure: `9dea2002…` does not even begin with `29772ac7…`').toBe(false)
     expect(Object.values(MEASURED_FILE_PINS).includes(SURFACE_ARTIFACT_MEASURED),
       'FS-EX-15 — the artifact FILE pin is DISTINCT from BOTH spec-pinned MODULE digests (one file is not another)').toBe(false)
-    /* **⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-8`; `RCA-8(d)` annotate-beside):
-     * the as-filed form asserted the SAME bound against the as-filed pin
-     * (`c7359530…` = the pre-`S3` bytes). The pin's SUBJECT is unmoved — the four
-     * forbidden paths' byte-identity — and its BITE is EQUAL: any byte move of
-     * `src/main/security-store.ts` still reddens it. THE MUTATION THAT STILL REDDENS
-     * IT: one appended byte (driven as a POSITIVE CONTROL below, which the as-filed
-     * form did NOT have for this path, so the re-grain is STRONGER, not weaker).
+    /* ========================================================================
+     * ⟶ **RETIRED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`) BY THE RETIREMENT PREDICATE ON THIS
+     * PASS'S AUTHORITY — THE WHOLE SIX-TERM DIGEST CHAIN AND ITS CONTROLS, AS ONE UNIT.**
      *
-     * **⟶ SECOND RE-POINT 2026-10-06 (`S3` gate 4's `ADV-1` remediation, `e317d82`).**
-     * The block above STANDS BYTE-FOR-BYTE and governs its OWN re-point (`KB-8`). The
-     * artifact moved a SECOND time under the SAME authorization
-     * (`docs/specs/secure-store-discipline.md` `§5.1` item 1 admits the path; the two
-     * RENDERER modules stay frozen), and `SECURITY_STORE_PIN` follows it — keeping the
-     * as-filed value AND the first re-point's value as labelled constants beside the
-     * operative one. BITE: one appended byte reddens (the control below now asserts the
-     * moved copy answers NONE of the three pins), and a collapsed/duplicated constant
-     * reddens (the three values are asserted distinct). */
-    /* **⟶ THIRD RE-POINT, DATED `2026-10-11` (`RCA-8(a)` gate: the `§2.6` write-lock amendment
-     * → `S1`'s pin re-point; `RCA-8(d)`: both blocks above STAND BYTE-FOR-BYTE).** CAUSE, ONE
-     * LINE: the `§2.6` amendment LANDED at `f444426` (the record advances AT the commit and the
-     * in-flight attempt's receipt is revealed at that same terminal), so `SECURITY_STORE_PIN`
-     * follows the artifact — keeping the as-filed value, the first re-point's value AND the
-     * second re-point's value as labelled constants beside the operative one. BITE: unchanged —
-     * one appended byte reddens (the control below asserts the moved copy answers NONE of the
-     * FOUR pins), and the four values are asserted distinct. */
-    /* **⟶ FOURTH RE-POINT, DATED `2026-10-11` (`RCA-8(a)` gate: `S2` `U-TIER4-ARBITRARY-STORAGE`'s
-     * static-holder landing `19da51d` → `S1`'s pin re-point; `RCA-8(d)`: the three blocks above
-     * STAND BYTE-FOR-BYTE).** CAUSE, ONE LINE: the store's two gates (`set()` step 1,
-     * `writeEntry()` step 1) now consult the main-side leaf's holder `tier4OpenState()` DIRECTLY
-     * at each call's own turn, so `SECURITY_STORE_PIN` follows the artifact — keeping the
-     * as-filed value, the first re-point's value, the second re-point's value AND the third
-     * re-point's value as labelled constants beside the operative one. BITE: unchanged — one
-     * appended byte reddens (the control below asserts the moved copy answers NONE of the FIVE
-     * pins), and the five values are asserted distinct. */
-    expect(sha256Of(SECURITY_STORE_SRC), 'FS-EX-15 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06; THIRD RE-POINT 2026-10-11; FOURTH RE-POINT 2026-10-11) — `src/main/security-store.ts` byte-identical to its MEASURED pin (chain: `c7359530…` → the `S3` ruling\'s `O-1`/`O-2`/`O-3` `99618ac2…` → gate 4\'s `ADV-1` read-once remediation `a98273b8…` → the `§2.6` write-lock amendment `8ed09c97…` → the `S2` static-holder landing `fd242633…`)').toBe(SECURITY_STORE_PIN)
-    /* THE STORE PIN'S OWN POSITIVE CONTROL (`RCA-8(d)`, the `A-8` precedent applied
-     * to THIS path): a ONE-BYTE-MOVED copy of the module must NOT answer the pin —
-     * so the comparison above is an instrument, not a tautology. The pre-amendment
-     * digest is asserted DISTINCT beside it, so the re-point is a measured delta. */
-    expect(SECURITY_STORE_PIN_PRE_AMENDMENT,
-      'FS-EX-15 — the PRE-AMENDMENT pin is a distinct 64-hex measurement (the re-point is a delta, never a typo or a no-op)').toMatch(/^[0-9a-f]{64}$/)
-    /* ⟶ SECOND RE-POINT (`2026-10-06`, `RCA-8(d)`): the FIRST re-point's digest and the
-     * OPERATIVE pin are ADDED to the same controls — one extra historical constant,
-     * one extra 64-hex reading, and the distinctness asserted over the WHOLE chain —
-     * so the second re-point is a measured delta exactly as the first one was, and a
-     * chain that collapsed to two equal constants (or to one) cannot pass. NOTHING
-     * above or below is weakened: the byte-moved POSITIVE CONTROL now answers NEITHER
-     * of the THREE pinned digests. */
-    expect(SECURITY_STORE_PIN_PRE_ADV1,
-      'FS-EX-15 (SECOND RE-POINT) — the FIRST re-point\u2019s pin (`99618ac2\u2026`, `726ebd4`) is a distinct 64-hex measurement, kept visible so the chain is auditable').toMatch(/^[0-9a-f]{64}$/)
-    /* ⟶ THIRD RE-POINT (`2026-10-11`, `RCA-8(d)`): the SECOND re-point's digest is ADDED to the
-     * same controls — one more historical constant, one more 64-hex reading, and the
-     * distinctness asserted over the WHOLE chain (now FOUR values) — so the third re-point is a
-     * measured delta exactly as the first two were, and a chain that collapsed to three equal
-     * constants (or to one) cannot pass. NOTHING above or below is weakened: the byte-moved
-     * POSITIVE CONTROL answers NONE of the FOUR pinned digests. */
-    expect(SECURITY_STORE_PIN_PRE_LOCK,
-      'FS-EX-15 (THIRD RE-POINT) — the SECOND re-point\u2019s pin (`a98273b8\u2026`, `e317d82`, gate 4\u2019s `ADV-1` remediation) is a distinct 64-hex measurement, kept visible so the chain stays auditable').toMatch(/^[0-9a-f]{64}$/)
-    /* ⟶ FOURTH RE-POINT (`2026-10-11`, `RCA-8(d)`): the THIRD re-point's digest is ADDED to the
-     * same controls — one more historical constant, one more 64-hex reading, and the distinctness
-     * asserted over the WHOLE chain (now FIVE values) — so the fourth re-point is a measured delta
-     * exactly as the first three were, and a chain that collapsed to four equal constants (or to
-     * one) cannot pass. NOTHING above or below is weakened: the byte-moved POSITIVE CONTROL
-     * answers NONE of the FIVE pinned digests. CAUSE, ONE LINE: the `S2`
-     * `U-TIER4-ARBITRARY-STORAGE` static-holder landing (`19da51d`) put the leaf's
-     * `tier4OpenState()` consult at the store's two gates. */
-    expect(SECURITY_STORE_PIN_PRE_HOLDER,
-      'FS-EX-15 (FOURTH RE-POINT) — the THIRD re-point\u2019s pin (`8ed09c97\u2026`, `f444426`, the `§2.6` write-lock amendment) is a distinct 64-hex measurement, kept visible so the chain stays auditable').toMatch(/^[0-9a-f]{64}$/)
-    /* ⟶ SIXTH RE-POINT (E-1, `docs/L1/central-data-census-exception.md` §2): the FIFTH re-point's
-     * digest is ADDED to the same controls — one more historical constant, one more 64-hex
-     * reading, and the distinctness asserted over the WHOLE chain (now SIX values) — so the sixth
-     * re-point is a measured delta exactly as the first five were. NOTHING above or below is
-     * weakened: the byte-moved POSITIVE CONTROL answers NONE of the SIX pinned digests. CAUSE, ONE
-     * LINE: `central-data`'s E-1 census row adds `'data'` to this file's second live
-     * `VALID_GROUPS`. */
-    expect(SECURITY_STORE_PIN_PRE_CENTRAL_DATA,
-      'FS-EX-15 (SIXTH RE-POINT) — the FIFTH re-point\u2019s pin (`39bfa51a\u2026`, the `S2` gate-4 repair set) is a distinct 64-hex measurement, kept visible so the chain stays auditable').toMatch(/^[0-9a-f]{64}$/)
-    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_CENTRAL_DATA, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
-      'FS-EX-15 (SIXTH RE-POINT) — the SIX pinned digests (as-filed `c7359530\u2026`, first re-point `99618ac2\u2026`, second re-point `a98273b8\u2026`, third re-point `8ed09c97\u2026`, fourth re-point `fd242633\u2026`, fifth re-point `39bfa51a\u2026`, operative `7a85e021\u2026`) are SIX DISTINCT 64-hex measurements: no two equal, so no re-point in this chain was a silent no-op').toHaveLength(new Set([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_CENTRAL_DATA, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT]).size)
-    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_CENTRAL_DATA, SECURITY_STORE_PIN_PRE_HOLDER, SECURITY_STORE_PIN_PRE_LOCK, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
-      'FS-EX-15 (SIXTH RE-POINT) — the chain has SIX distinct values (not five and not one)').toHaveLength(6)
-    // (`string`-widened deliberately: the constants are literal types, and the comparison
-    //  is the POINT of this control — `tsc --strict` would otherwise refuse it as TS2367.)
-    expect((SECURITY_STORE_PIN_PRE_AMENDMENT as string) === (SECURITY_STORE_PIN as string),
-      'FS-EX-15 — the amendment MOVED the pin: the pre-amendment digest `c7359530…` differs from the operative one').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_ADV1 as string) === (SECURITY_STORE_PIN as string),
-      'FS-EX-15 (SECOND RE-POINT) — the `ADV-1` remediation MOVED the pin: the first re-point\u2019s digest `99618ac2\u2026` differs from the operative one').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_ADV1 as string) === (SECURITY_STORE_PIN_PRE_AMENDMENT as string),
-      'FS-EX-15 (SECOND RE-POINT) — and the two historical figures are DISTINCT from each other (the as-filed `c7359530\u2026` is not the first re-point `99618ac2\u2026`): a single collapsed constant would redden here').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_LOCK as string) === (SECURITY_STORE_PIN as string),
-      'FS-EX-15 (THIRD RE-POINT) — the `§2.6` write-lock amendment MOVED the pin: the second re-point\u2019s digest `a98273b8\u2026` differs from the operative `8ed09c97\u2026`').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_LOCK as string) === (SECURITY_STORE_PIN_PRE_ADV1 as string),
-      'FS-EX-15 (THIRD RE-POINT) — and it is DISTINCT from the first re-point\u2019s `99618ac2\u2026` too, so no two consecutive re-points in this chain collapsed onto one value').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_LOCK as string) === (SECURITY_STORE_PIN_PRE_AMENDMENT as string),
-      'FS-EX-15 (THIRD RE-POINT) — and DISTINCT from the as-filed `c7359530\u2026`').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_HOLDER as string) === (SECURITY_STORE_PIN as string),
-      'FS-EX-15 (FOURTH RE-POINT) — the `S2` static-holder landing MOVED the pin: the third re-point\u2019s digest `8ed09c97\u2026` differs from the operative `fd242633\u2026`').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_HOLDER as string) === (SECURITY_STORE_PIN_PRE_LOCK as string),
-      'FS-EX-15 (FOURTH RE-POINT) — and it is DISTINCT from the second re-point\u2019s `a98273b8\u2026` too, so no two consecutive re-points in this chain collapsed onto one value').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_HOLDER as string) === (SECURITY_STORE_PIN_PRE_ADV1 as string),
-      'FS-EX-15 (FOURTH RE-POINT) — and DISTINCT from the first re-point\u2019s `99618ac2\u2026`').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_HOLDER as string) === (SECURITY_STORE_PIN_PRE_AMENDMENT as string),
-      'FS-EX-15 (FOURTH RE-POINT) — and DISTINCT from the as-filed `c7359530\u2026`, so the whole five-value chain is auditable and no ancestor is a no-op').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_CENTRAL_DATA as string) === (SECURITY_STORE_PIN as string),
-      'FS-EX-15 (SIXTH RE-POINT) — the E-1 census row MOVED the pin: the fifth re-point\u2019s digest `39bfa51a\u2026` differs from the operative `7a85e021\u2026`').toBe(false)
-    expect((SECURITY_STORE_PIN_PRE_CENTRAL_DATA as string) === (SECURITY_STORE_PIN_PRE_HOLDER as string),
-      'FS-EX-15 (SIXTH RE-POINT) — and it is DISTINCT from the fourth re-point\u2019s `8ed09c97\u2026` too, so no two consecutive re-points in this chain collapsed onto one value').toBe(false)
-    const storeMutatedPath = join(baseDir, 'security-store.byte-moved.control.ts')
-    await writeFile(storeMutatedPath, sourceOf(SECURITY_STORE_SRC) + '\n', 'utf8')
-    expect(sha256Of(storeMutatedPath),
-      'CONTROL — the SAME comparator over a ONE-BYTE-MOVED copy of `src/main/security-store.ts` answers a digest that is NOT the operative pin: the store byte-pin ABOVE can fail, exactly as the two renderer module pins are proven able to').not.toBe(SECURITY_STORE_PIN)
-    expect(sha256Of(storeMutatedPath),
-      'CONTROL — and the moved copy answers neither the PRE-amendment digest nor `\'ABSENT\'` (the control fails the PIN, not the comparator\'s shape)').not.toBe(SECURITY_STORE_PIN_PRE_AMENDMENT)
-    expect(sha256Of(storeMutatedPath),
-      'CONTROL (THIRD RE-POINT) — the moved copy answers NEITHER of the two HISTORICAL pins either: the bite survives every re-point in the chain (a byte move reddens against the operative pin AND every kept ancestor)').not.toBe(SECURITY_STORE_PIN_PRE_ADV1)
-    expect(sha256Of(storeMutatedPath),
-      'CONTROL (THIRD RE-POINT) — and NOT the second re-point\u2019s `a98273b8\u2026` either: the whole FOUR-value chain is answered by the ONE-BYTE-MOVED copy with a value that matches none of them').not.toBe(SECURITY_STORE_PIN_PRE_LOCK)
-    expect(sha256Of(storeMutatedPath),
-      'CONTROL (FOURTH RE-POINT) — and NOT the third re-point\u2019s `8ed09c97\u2026` either: the whole FIVE-value chain is answered by the ONE-BYTE-MOVED copy with a value that matches none of them').not.toBe(SECURITY_STORE_PIN_PRE_HOLDER)
-    expect(sha256Of(storeMutatedPath),
-      'CONTROL (SIXTH RE-POINT) — and NOT the fifth re-point\u2019s `39bfa51a\u2026` either: the whole SIX-value chain is answered by the ONE-BYTE-MOVED copy with a value that matches none of them').not.toBe(SECURITY_STORE_PIN_PRE_CENTRAL_DATA)
-    expect(sha256Of(storeMutatedPath).length, 'CONTROL — the moved copy still answers a well-formed 64-char digest').toBe(64)
+     * The block that stood here began with the `S3` amendment set's re-grain of this row and went
+     * on through the SECOND, THIRD, FOURTH and SIXTH re-points: SIX pinned digests
+     * (`SECURITY_STORE_PIN` operative, `…_PRE_AMENDMENT` · `…_PRE_ADV1` · `…_PRE_LOCK` ·
+     * `…_PRE_HOLDER` · `…_PRE_CENTRAL_DATA` kept awake), their 64-hex / distinctness /
+     * no-collapse assertions, SIX pairwise "the re-point MOVED the pin" controls, and the
+     * ONE-BYTE-MOVED copy of the module that proved the comparator could FAIL.
+     *
+     * **`E-1` DELETES `src/main/security-store.ts`.** The chain is dead AT ONCE — a replacement
+     * artifact makes every term of it dead together — so it RETIRES AS A UNIT: the constants are
+     * gone (the annotated block in the constants' old home above `basenameOf` names all six), the
+     * byte-pin assertion and its byte-moved control go with them, and **NOTHING IS RE-POINTED**:
+     * the deleted file is never re-hashed, no digest is re-pointed to a successor artifact, and no
+     * SEVENTH term is invented. **THE ROW KEEPS ITS WHOLE SUBJECT AND ALL OF ITS BITE ON WHAT
+     * STANDS** — the `4 -> 3` forbidden-path census above, the in-tree resolution of the three
+     * remaining paths, the frozen SURFACE ARTIFACT's measured pin, the two frozen RENDERER
+     * pins, the span-vs-file attribution controls below, and every other row of this file.
+     * ====================================================================== */
     // THE ATTRIBUTION ANNOTATION, asserted so the two figures cannot be conflated:
     const g3Spec = sourceOrEmpty(fileURLToPath(new URL('./../docs/specs/store-security.md', new URL('./', import.meta.url))))
     if (g3Spec !== '') {
@@ -5208,23 +5072,25 @@ describe('S1 §3.3 THE INVARIANTS (I-EX-1..I-EX-12)', () => {
     expect(gate.exclusionState(), 'I-EX-8 — neither readers nor transitions consult the other axis (`isReady()`)').toBe(STATE_MCP_DISABLED)
   })
 
-  it('I-EX-4/I-EX-5/I-EX-6/I-EX-7 (driven at P-EX-TP-1, P-EX-SM-3 and §2.5/§2.6): every refusal is a VALUE with ONE token; the store\'s decision site and bytes are untouched; the state is not persisted', () => {
+  it('I-EX-4/I-EX-5/I-EX-7 (driven at P-EX-TP-1, P-EX-SM-3 and §2.5/§2.6): every refusal is a VALUE with ONE token, the token is no store-union member, and the state is not persisted (I-EX-6\'s store-byte arm RETIRED 2026-10-29 with `E-1`)', () => {
     expect(unionMembersOf(sourceOf(STORE_CORE_SRC)).includes(EXCLUSION_CLOSED), 'I-EX-5 — the token is `\'exclusion-closed\'` and NOTHING ELSE (never a store-union member, never a second spelling)').toBe(false)
-    expect(sha256Of(SECURITY_STORE_SRC), 'I-EX-6 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06; THIRD RE-POINT 2026-10-11; FOURTH RE-POINT 2026-10-11) — the store\'s DECISION SITE and its BYTES are FROZEN at their MEASURED pin (chain: `S3` re-grained `c7359530…` → `99618ac2…` for the ruling\'s `O-1`/`O-2`/`O-3`; gate 4\'s `ADV-1` remediation re-pointed it again → `a98273b8…`, each declared patch member now read ONCE; the `§2.6` write-lock amendment re-pointed it a third time → `8ed09c97…`, the advance landing AT the commit; and the `S2` static-holder landing re-pointed it a fourth time → `fd242633…`, the leaf\'s `tier4OpenState()` consult at the two gates; the `B-SECURE-GATE` is still the one site, the union still `16`, no new token — `I-EX-5` beside it)').toBe(SECURITY_STORE_PIN)
-    /* **⟶ RE-GRAINED `2026-10-11` (`S2` `U-TIER4-ARBITRARY-STORAGE`'s `§7b` row 4: `N-5` is
-     * read as STATE-SCOPED and `N-3`'s third conjunct IS SUPERSEDED IN EFFECT — the store's
-     * read/write functions DO consult the state — while `N-5`'s *"no new persisted key, no
-     * third filename, no write to a file for the state"* STANDS).** The as-filed census
-     * matched `exclusion` against the store's RAW bytes, so it fired on the module's own
-     * PROSE — the header comment naming the token's home (`mcp-server.ts`'s
-     * `EXCLUSION_CLOSED`) — while the property it names is about a persisted KEY and a
-     * WRITER. The census now reads CODE (comments stripped) and keeps its bite: an
-     * `exclusion`-shaped member, key or assignment in the store's bytes still reddens. */
-    const storeCode = sourceOf(SECURITY_STORE_SRC).replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
-    expect(/exclusion/i.test('// the token is homed beside EXCLUSION_CLOSED\n'),
-      'CONTROL — the census FIRES on a raw mention, which is why the reading below strips PROSE from the subject').toBe(true)
-    expect(/exclusion/i.test(storeCode),
-      'I-EX-7 (`S2` `§7b` row 4, the STATE-SCOPED reading) — no persisted `exclusion` KEY, no new file and no WRITER for the exclusion state appears in the tier\'s own CODE (prose excluded): the state is not persisted, and the store only CONSULTS it (`tier4OpenState()`, `§2.5` item 1).').toBe(false)
+    /* ========================================================================
+     * ⟶ **RETIRED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`) — `I-EX-6`'S STORE-BYTES HALF AND THE
+     * `I-EX-7` PROSE CENSUS THAT READ THE DELETED MODULE'S CODE, AS ONE UNIT.**
+     *
+     * What stood here: (a) `I-EX-6`'s assertion that *"the store's DECISION SITE and its BYTES
+     * are FROZEN at their MEASURED pin"* — the fifth reader of `SECURITY_STORE_PIN`, dead at once
+     * with the file `E-1` deletes; and (b) the `I-EX-7` census over
+     * `sourceOf(SECURITY_STORE_SRC)`'s comment-stripped CODE, which asked that no
+     * `exclusion`-shaped member, key or assignment appear in a file that no longer exists.
+     * **NOTHING IS RE-POINTED** — the deleted file is never re-hashed and no seventh digest is
+     * invented — and **`I-EX-6`'s SUBJECT is gone from the tree entirely** (there is no store
+     * decision site to freeze: the composition's decision sites are `settings-surface`'s two
+     * sink calls, and `I-EX-5`'s union reading above plus that module's own rows are their
+     * instruments). **`I-EX-7`'s property STANDS AND IS RE-DRIVEN WHERE IT STILL BITES** — the
+     * state has no persistence path — at `P-EX-SM-3`'s two persistence cells, at `FS-EX-4` and
+     * at `FS-EX-5`, all re-grained onto the instance that owns the persisted record.
+     * ======================================================================== */
   })
 
   it('I-EX-9/I-EX-10 (driven at P-EX-IM-4): the isolated pane graph\'s isolation holds with the new node, and no carrier holds the exclusion state', async () => {
@@ -5529,21 +5395,38 @@ describe('S1 §3a/§3b THE GATE-4 HOST-FIX ROWS (A-1 / A-2 / A-3 — the new mec
  * `§5`).
  * ========================================================================== */
 
-/** `§2.4` item 4 / `PAR-9` — the `exclusion:` expression the LANDED
- *  `IPC_SECURITY_GET` response record is bound to, extracted from the handler body
- *  (comments stripped). This is the ONE place `main.ts` is observable to this
- *  layer; the rows EVALUATE the expression rather than text-matching it. */
+/** `§2.4` item 4 / `PAR-9` — the expression the LANDED `IPC_SECURITY_GET` registration
+ *  answers, read out of `main.ts`'s own bytes (comments stripped), with its `exclusion`
+ *  member taken off the answer. This is the ONE place `main.ts` is observable to this
+ *  layer; the rows EVALUATE the expression rather than text-matching it.
+ *
+ *  **⟶ RE-GRAINED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-3`): THE CARRIER MOVED.**  The
+ *  as-filed form matched `/\beclusion:\s*([^,}]+?)\s*\}/` inside the handler BODY, because the
+ *  response record was built INLINE (`{ ...settings, exclusion: state }`).  `main.ts` NOW
+ *  DELEGATES: `ipcMain.handle(IPC_SECURITY_GET, () => settingsSurface.read())` (`main.ts:411`),
+ *  and `src/main/settings-surface/index.ts`'s `read()` mints both additive members from ONE
+ *  reading.  So the expression this probe extracts is the registration's ANSWERED
+ *  expression — still read from `main.ts`'s own bytes, still EVALUATED against the app's own
+ *  boundary — and the member the row names is taken off that answer.  The subject (the manual-UI
+ *  read reports the LIVE state) and the bite (a boot-state reading fails the row's predicate)
+ *  are unmoved; a handler that stopped answering the surface's read fails the extraction
+ *  BY NAME rather than passing silently. */
 function mainGetExclusionExpression(): string {
   const body = stripComments(handlerBodyOf(sourceOf(MAIN_SRC), 'IPC_SECURITY_GET'))
-  expect(body.length, 'the `IPC_SECURITY_GET` handler body is readable (the read-expression probe is not vacuous: an empty body would make every reading below a string comparison against nothing)').toBeGreaterThan(0)
-  const matched = /exclusion:\s*([^,}]+?)\s*\}/.exec(body)
-  if (!matched) {
+  expect(body.length, 'the `IPC_SECURITY_GET` registration is readable (the read-expression probe is not vacuous: an empty body would make every reading below a string comparison against nothing)').toBeGreaterThan(0)
+  const registration = body.split('\n').find((line) => line.includes('ipcMain.handle(IPC_SECURITY_GET')) ?? ''
+  const at = registration.indexOf('IPC_SECURITY_GET,')
+  const answered = at === -1 ? '' : registration.slice(at + 'IPC_SECURITY_GET,'.length).trim().replace(/\)\s*$/, '').trim()
+  if (answered === '') {
     absent(
-      '§2.4 item 4 / PAR-9 — the GET response record\'s additive `exclusion: <state>` member (`{ ...settings, exclusion: state }`)',
-      'the `exclusion:` binding inside the `IPC_SECURITY_GET` handler body',
+      '§2.4 item 4 / PAR-9 — the GET response record\'s additive `exclusion` member, minted by the surface\'s own `read()` and answered BY NAME from the landed `IPC_SECURITY_GET` registration',
+      'the answered expression of the `ipcMain.handle(IPC_SECURITY_GET, …)` registration in `main.ts`',
     )
   }
-  return matched[1].trim()
+  // THE REGISTRATION'S ANSWER, INVOKED: the handler is a zero-argument arrow, so the record the
+  // manual-UI channel answers is `(<the registration's arrow>)()` and the member this row names is
+  // taken off THAT answer — never a text match and never a second reading of it.
+  return `((${answered})()).exclusion`
 }
 
 /* ============================================================================
@@ -5675,13 +5558,17 @@ function freeIdentifiersOf(expr: string): string[] {
  *  scope is reported so an expression outside it is a NAMED failure rather than a
  *  silent `ReferenceError`. */
 function manualUiExclusionRead(
-  scope: { gate: unknown; mcp: ProvidentMcpServer },
+  scope: { gate: unknown; mcp: ProvidentMcpServer; settingsSurface?: unknown },
   expr: string,
 ): { value: unknown; error: string | null } {
   const boundary: Record<string, unknown> = {
     gate: scope.gate,
     mcp: scope.mcp,
     liveGate: () => (scope.mcp as unknown as { gate: unknown }).gate,
+    // `C-3` (2026-10-29): the surface is one of the objects `main()` itself closes over — the
+    // carrier's home since the composition moved — so the extracted expression's own free
+    // identifier is bound from the CALLER's real surface, never from source text.
+    settingsSurface: scope.settingsSurface,
   }
   const params: string[] = []
   const args: unknown[] = []
@@ -5767,6 +5654,10 @@ interface LiveBoundary {
   readonly mcp: ReturnType<ProvidentMcpServer['ensureServerRegistered']>
   readonly client: Client
   readonly backend: { invokes: string[]; invoke: (m: string, p: unknown) => Promise<unknown> }
+  /** ⟶ ADDED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`, `C-3`): the surface `main.ts` constructs
+   *  (`main.ts:108`), attaches (`:527`) and delegates its three security routes to
+   *  (`:411`/`:425`/`:440`) — the boundary's transition site and the carrier's home. */
+  readonly settingsSurface: ReturnType<typeof createSettingsSurface>
   liveState(): string
   manualUiRead(): { value: unknown; error: string | null }
   close(): Promise<void>
@@ -5777,17 +5668,19 @@ async function liveBoundary(): Promise<LiveBoundary> {
   gateFrom(bootGate)
   const backend = recordingBackend()
   const server = new ProvidentMcpServer({ backend, gate: bootGate, transport: 'stdio' } as never)
-  /* THE APP'S OWN BOOT STEP (`S2` kick-back item (2), `2026-10-11`) — `main.ts`'s
-   * LANDED boot window is `store → boot read → gate → flip → mcp.start()` and the FLIP
-   * is `mcp.applyExclusion('mcp-enabled')` (`main.ts:567`), which is the transition's
-   * ONE write of the holder (`S2` `§2.5` item 2 `W-1`). Before the flip the holder
-   * carries its DECLARED INITIAL `STORE-OPEN` while the gate already sits at its `S1`
-   * boot terminal — `§0A` item 4's `D-19` transient window, in which the two are
-   * DECLARED to differ and `await mcp.start()` has NOT run. A boundary that omitted the
-   * flip would take every reading below INSIDE that window (and would red the G6
-   * baselines on the holder's declared initial rather than on the carrier's honesty),
-   * so the boundary performs the app's own boot step, at the app's own site. */
-  server.applyExclusion(STATE_MCP_ENABLED)
+  /* THE APP'S OWN BOOT STEP (`S2` kick-back item (2), `2026-10-11`; RE-GRAINED 2026-10-29 by
+   * `E-1`/`C-3`) — `main.ts`'s LANDED boot window is `construction → boot read → gate → flip →
+   * mcp.start() → window`, and the FLIP is the SURFACE's own `attach(...)` (`main.ts:527`): the
+   * surface writes the holder from its boot reading, re-patches the gate and applies the boot
+   * `mcp-enabled` — a self-transition is lawful. Before it the holder carries its DECLARED
+   * INITIAL while the gate already sits at its boot terminal — `§0A` item 4's `D-19` transient
+   * window, in which the two are DECLARED to differ. A boundary that omitted it would take
+   * every reading below INSIDE that window, so the boundary performs the app's own boot step,
+   * at the app's own site, and holds the surface as the transition site the rows drive. */
+  const dir = join(baseDir, `g6-boundary-${persistSeq++}`)
+  await mkdir(dir, { recursive: true })
+  const settingsSurface = createSettingsSurface({ userDataDir: dir })
+  settingsSurface.attach(server)
   const mcp = server.ensureServerRegistered()
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   await mcp.connect(serverTransport)
@@ -5800,8 +5693,9 @@ async function liveBoundary(): Promise<LiveBoundary> {
     mcp,
     client,
     backend,
+    settingsSurface,
     liveState: () => server.gate.exclusionState(),
-    manualUiRead: () => manualUiExclusionRead({ gate: bootGate, mcp: server }, expr),
+    manualUiRead: () => manualUiExclusionRead({ gate: bootGate, mcp: server, settingsSurface }, expr),
     close: async () => {
       await client.close()
     },
@@ -5841,7 +5735,10 @@ async function paneOnLiveBoundary(boundary: LiveBoundary): Promise<PaneBoundary>
       const legal = state === STATE_MCP_ENABLED || state === STATE_MCP_DISABLED
       // `main.ts`'s OWN transition site — the handler at `:407-415` calls
       // `mcp.applyExclusion(state)` (the landed `IPC_SECURITY_EXCLUSION` channel).
-      if (legal) boundary.server.applyExclusion(state as 'mcp-enabled' | 'mcp-disabled')
+      // `main.ts`'s OWN transition site — `IPC_SECURITY_EXCLUSION`'s handler at `:440` DELEGATES to
+      // `settingsSurface.transition(state)` (RE-GRAINED 2026-10-29 by `C-3`: the transition site moved
+      // into the surface module, which is the holder's SOLE writer).
+      if (legal) boundary.settingsSurface.transition(state)
       return { applied: legal, state: boundary.liveState() }
     },
   }
@@ -5911,7 +5808,7 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       // THE REAL ACCEPTED TRANSITION — the app's OWN path: `IPC_SECURITY_EXCLUSION`'s
       // handler (`main.ts:407`) calls `mcp.applyExclusion(state)` (the landing at
       // `:414`), which REPLACES the server's `_gate` with `withExclusion(state)`.
-      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      boundary.settingsSurface.transition(STATE_MCP_DISABLED)
       const live = boundary.liveState()
       expect(live, '§2.1 item 3 T-1 — the transition MOVED the server\'s live gate (so the reading below is taken against a transition that really happened)').toBe(STATE_MCP_DISABLED)
       // CONTROL (driven in-line, and written so it holds under EITHER declared repair
@@ -5962,7 +5859,7 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
 
       // THE OPERATOR OPENS THE TIER — the app's own transition site, then the pane
       // refreshes from the read the bridge actually answers (the `G6-F1` source).
-      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      boundary.settingsSurface.transition(STATE_MCP_DISABLED)
       await pane.panels.refresh()
       expect(boundary.liveState(), 'the tier IS open (T-1 ran on the live gate)').toBe(STATE_MCP_DISABLED)
       const toggleBefore = paneNodeById(pane.panels, 'exclusion-toggle')
@@ -6052,7 +5949,7 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       ).toBe(false)
 
       // THE TRANSITION — the app's own path, toggling NOT withheld.
-      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      boundary.settingsSurface.transition(STATE_MCP_DISABLED)
       expect(receiptDomainHolds(REFUSAL),
         'CONTROL — the PRE-RULING two-member receipt FAILS this row\'s own predicate (an ABSENT `message` is OUTSIDE §2.5 item 1), so the reading below can bite').toBe(false)
       expect(receiptDomainHolds(boundary.server.exclusionSnapshot()),
@@ -6114,7 +6011,7 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
     const boundary = await liveBoundary()
     const pane = await paneOnLiveBoundary(boundary)
     try {
-      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      boundary.settingsSurface.transition(STATE_MCP_DISABLED)
       const dispatchesBefore = boundary.backend.invokes.length
       await sdkCallTool(boundary.client, 'provident.get_markdown')
       expect(receiptDomainHolds(REFUSAL),
@@ -6125,7 +6022,7 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       // THE `[H]` CHANNEL ARM OF THE SAME OBLIGATION — HELD, and recorded BESIDE the
       // row: `§2.4` item 6 declares the return reachable "the pane control ... or the
       // channel directly" and the channel arm works today.
-      boundary.server.applyExclusion(STATE_MCP_ENABLED)
+      boundary.settingsSurface.transition(STATE_MCP_ENABLED)
       const viaChannel = await sdkCallTool(boundary.client, 'provident.get_markdown')
       expect(refusalTokenOf(viaChannel.value), '§2.4 item 6 — the return THROUGH THE CHANNEL restores normal answers (the `[H]` arm; the register\'s `G6-F4#1` cell rides it)').not.toBe(EXCLUSION_CLOSED)
       // and the STRUCTURAL RECORD the brief asks for: no MCP-reachable path carries a
@@ -6135,7 +6032,7 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       // declared control (below) or the channel (above), and through nothing else.
       // THE ROW: the return through the DECLARED CONTROL — a real press on the pane's
       // own control, while the tier is open, must restore normal answers.
-      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      boundary.settingsSurface.transition(STATE_MCP_DISABLED)
       await pane.panels.refresh()
       const click = await clickRenderedControl(pane.mount, 'exclusion-toggle')
       const restored = await sdkCallTool(boundary.client, 'provident.get_markdown')
@@ -6168,7 +6065,7 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       )
       expect(bootRead, 'CONTROL — on the BOOT terminal the rendered pane and the live gate DO agree, so the reading below measures the transition and not a constant rendering').toBe(true)
 
-      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      boundary.settingsSurface.transition(STATE_MCP_DISABLED)
       await pane.panels.refresh()
       const live = boundary.liveState()
       expect(live, 'the tier IS open (the pane below is rendered over a REFUSING server — the exact live-battery condition)').toBe(STATE_MCP_DISABLED)

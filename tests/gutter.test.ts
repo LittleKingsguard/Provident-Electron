@@ -4478,7 +4478,12 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         mutating,
       )}`,
     ).toEqual(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'])
-    const groups = readNamesFromDeclaration('src/main/security-store.ts', /VALID_GROUPS\s*=\s*new Set\(\[/, 6)
+    // ⟶ C-1 RE-GRAIN (`security-store-storeroom` E-5, exception §4 C-1): the group set's SECOND LIVE
+    // COPY moved with the file it lived in — `VALID_GROUPS` is declared at
+    // `src/main/operator-settings/index.ts` now, still SIX members, and the declaration carries an
+    // explicit `ReadonlySet<string>` annotation, so the reader's own open-delimiter pattern moves with
+    // it. `src/main/security.ts:159` (the FIRST copy) does not move, and this row was never reading it.
+    const groups = readNamesFromDeclaration('src/main/operator-settings/index.ts', /VALID_GROUPS\s*(?::[^=]*)?=\s*new Set\(\[/, 6)
     expect(
       groups,
       `R-6 §3.4 — \`VALID_GROUPS\` is still the 6 named members, asserted by SET EQUALITY AGAINST THE NAMES (S-7). Read: ${JSON.stringify(

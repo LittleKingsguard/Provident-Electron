@@ -4,7 +4,7 @@
 //   FAMILY A — THE ARBITRARY-STORAGE REQUIREMENT (tier 4 / `secure` holds arbitrary
 //              runtime data).
 //   FAMILY B — THE CONSTRAINTS ON THE STORAGE METHOD (a separate persistent file from
-//              the main file store; exactly two persisted files; the write's atomic
+//              the main file store; the DECLARED persisted-file set; the write's observable
 //              shape; no lower-tier alias).
 //   FAMILY C — THE ACCESS CONTROLS (no MCP or nonsecure path mirrors tier-4 data).
 //   FAMILY D — THE ARCHITECT'S CLONE/WRITE RULING: every tier-4 READ returns a CLONE (D-1)
@@ -12,16 +12,17 @@
 //              The ruling is the ACTIVE docs/decisions.md row
 //              `DATA-REQUESTS-RETURN-CLONES-AND-RUNTIME-WRITES-IFF-MCP-BLOCKED`; the write path
 //              it constrains is `IPC_SECURITY_SET` (src/main/main.ts:385-404 — the manual-UI
-//              channel `D-SCOPE` names as NOT an MCP method) and the read path is the store
-//              module's own get()/set(patch) return (src/main/security-store.ts).
-//              THE INSTRUMENT TABLE FOR THIS FAMILY IS PRINTED BY THE DRIVER ITSELF (the
-//              INSTRUMENT_TABLE constant, before SC-D-01) because the BOUNDARY is the point:
-//              the REFERENCE half is [B]-only (an in-process module probe — the value the module
-//              hands back IN THE CALLING PROCESS), and a [CDP]-only probe CANNOT observe it,
-//              because the live bridge's value has already been structured-cloned across the IPC
-//              boundary. The CONSEQUENCE half is [CDP]+[G] and is labelled as such wherever it
-//              is quoted. Family D measures the WRITE PATH's conditionality, not the MCP call
-//              path (S1 owns the call path's rows).
+//              channel `D-SCOPE` names as NOT an MCP method).
+//              **RE-READ 2026-10-29 (the `security-store-storeroom` rebuild): the D-1 REFERENCE
+//              half — the store module's own get()/set(patch) return — is RETIRED with that module
+//              (exception §2 `E-1`), so the rows that measured it (`SC-D-01`, `SC-D-02a`, `SC-D-11`)
+//              and the `[B]` in-process probe are GONE and nothing re-points them.** THE INSTRUMENT
+//              TABLE FOR THIS FAMILY IS STILL PRINTED BY THE DRIVER ITSELF (the INSTRUMENT_TABLE
+//              constant) because the BOUNDARY is the point: the surviving instruments are `[CDP]`
+//              and `[G]`, the CONSEQUENCE half is labelled as such wherever it is quoted, and a
+//              `[CDP]` probe CANNOT observe the reference half at all — the live bridge's value has
+//              already been structured-cloned across the IPC boundary. Family D measures the WRITE
+//              PATH's conditionality, not the MCP call path (S1 owns the call path's rows).
 //
 // Run:  npm run build && node tests/store-compliance-live.mjs
 //
@@ -38,9 +39,12 @@
 //      docs/specs/data-ownership-model-plan.md §1.1 store 4 ·
 //      docs/pending.md §R `P-R3` (the un-admitted S2 scope ruling).
 //   B: docs/specs/store-security.md (CURRENT STATE item 3, §2.1 item 1, §2.2 items 2/5,
-//      §2.3 item 1, §3.x fail rows, §2.6) · docs/specs/store-persist.md (the
-//      EXACTLY-TWO persisted-files pin, the atomic write `${path}.tmp` + fsync +
-//      renameSync + dir-fsync, the boot order, VERSION-FROM-FIRST-WRITE) ·
+//      §2.3 item 1, §3.x fail rows, §2.6) · **docs/L2/security-store-storeroom/persistence.md
+//      (the DECLARED persisted-file set after C-4: the instance's own name added, the retired
+//      name read at most once and never written) and interface.md §1/§2.1/§3 (the record's one
+//      address, the construction's exclusive create, the refusal vocabulary)** — read THROUGH
+//      docs/specs/store-persist.md (`VERSION-FROM-FIRST-WRITE`, the boot order), whose
+//      EXACTLY-TWO persisted-files pin this unit supersedes ·
 //      docs/specs/store-core-graph.md (§2.5 items 1/2) · the frozen artifact
 //      docs/specs/store-core-module-store-core-graph-surface.md (operative digest
 //      29772ac7…; the seam is hydrate(rows)) · docs/FORKER.md §4 (ii)/(iv) ·
@@ -159,9 +163,11 @@
 // PRECEDENCE control inside `SC-C-01`. Six controls in total, five of them id-labelled:**
 //   CONTROL-CENSUS     a THIRD `.json` file is seeded into the live scratch profile → the
 //                      persisted-file census row's predicate must REFUSE it.
-//   CONTROL-TMP        a residual `provident-security.json.tmp` is seeded at the real path
-//                      → the no-`.tmp`-residue row's predicate must REFUSE it.
-//   CONTROL-TORN       a TORN security file (the literal bytes `'{"token:'` — no closing
+//   CONTROL-TMP        a residual `<the instance's own file>.tmp` is seeded at the real path
+//                      → the no-`.tmp`-residue row's predicate must REFUSE it. **RE-GRAINED UNDER
+//                      C-4: the real path is `provident-operator-settings.json` (old figure:
+//                      the retired `provident-security.json`).**
+//   CONTROL-TORN       TORN bytes at the real path (the literal `'{"token:'` — no closing
 //                      brace) is written at the real path → the SAME predicate must REFUSE
 //                      it on its `realPathParses` term, and the seeded bytes are RESTORED
 //                      afterwards (asserted byte-identical). Added by the `§6.2` audit's
@@ -216,6 +222,34 @@
 //   `A3-03` (MED) was the record's `get()`-reading count (`GET_READINGS` is THREE, not four) and
 //              `A3-08`/`A3-09` are RECORD-side (`2c53a76` named in no `.md`; each `§3` `instrument`
 //              cell now LEADS with its literal command line) — none of the three moved this file.
+// ⟶ **REBUILD PASS, 2026-10-29 — unit `security-store-storeroom`, exception §2 `E-1`/`E-2`/`E-3`, C-4.**
+// The old security store is DISREGARDED, NOT CARRIED (`E-1`, `D-16`): the record now lives in a
+// `provident-storeroom` instance of its own (`src/main/operator-settings/`), the operator path reaches it
+// only through `src/main/settings-surface/`, and the persisted file is
+// `provident-operator-settings.json` (created at construction) while `provident-security.json` is RETIRED —
+// read at most once by the import-once path, never written, its bytes standing. This driver's rows were
+// sorted into the three dispositions and nothing else; no predicate was loosened and no row was added:
+//   · **RETIRED, WITH THE MODULE THEY MEASURED** (each named, none re-pointed): `SC-D-01`, `SC-D-02a` and
+//     `SC-D-11` (the in-process `[B]` module probe, which imported the deleted module BY SOURCE PATH and
+//     cannot run at all), `SC-E-01`, `SC-E-03`, `SC-E-04`, `SC-E-06`, `SC-E-07`, `SC-E-08` (their instrument
+//     was that same probe: the module's own `get()`/`set(patch)`/`lastWriteReceipt()` returns, its
+//     `write-failed` receipt vocabulary and its advance-before-persist discipline), `SC-E-05` (its subject
+//     was the deleted `persist()`'s failure site — a directory at the retired path now refuses the
+//     instance's CONSTRUCTION instead, `FilePathUnreachable`, which is a different behaviour), `SC-E-09`
+//     (its lock censuses read the deleted module's bytes), `SC-G-01` (a source census of the deleted
+//     module's own `set()` type — its subject is the five-member API) and `SC-A-05` (its second half
+//     asserted the deleted `sanitize()`'s DISCARDS-FOREIGN-KEYS behaviour, which the rebuild replaces by
+//     design: the import carries a foreign top-level name into `entries` verbatim). The Family-D and
+//     Family-E verdict blocks are re-derived from the arms that still exist.
+//   · **RE-GRAINED UNDER C-4 — figures and path literals moved, claims kept:** `SECURITY_FILE` moved
+//     (`provident-security.json` → `provident-operator-settings.json`; the retired name is now
+//     `RETIRED_SECURITY_FILE` and is what `seedProfile` seeds, because that is exactly what the boot's
+//     import-once path reads once), `DECLARED_PERSISTED_JSON` moved from two names to the declared three,
+//     every record reading moved from the file's top-level key set to the record at its declared address
+//     `['operator-settings']` (`readPersistedRecord`), and `SC-B-05`'s STATIC MECHANISM WITNESS term was
+//     dropped with the source it censused (`SC-B-05` survives, its live terms untouched).
+//   · **UNTOUCHED:** the tier-1 channel rows, the MCP-surface rows, the exclusion-transition rows
+//     (`SC-D-05`…`SC-D-08`, `SC-D-10`) and every control that does not read the moved figures.
 import { createHash } from 'node:crypto'
 import { execSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
@@ -236,21 +270,37 @@ const mainCjs = join(root, 'dist', 'main', 'main.cjs')
 const TOKEN = 'compliance-live-token-9b1f7c33'
 const GROUPS = ['read', 'dispatch', 'graph', 'code', 'module']
 const JOURNAL = 41
-/** The tier's DECLARED members (`SecuritySettings`, src/shared/types.ts) — the top-level
- *  key set the security file may carry. `schemaVersion` is tier 1's single reserved member
- *  and belongs to `provident-settings.json`, never here (store-security.md §2.2 item 4 /
- *  §0A item 7); `exclusion` and `write` are the two ADDITIVE channel members and are
- *  channel-only (store-security.md §2.3 item 2) — their presence in the FILE is a finding. */
+/** The tier's DECLARED members — the key set the persisted RECORD may carry. Under the rebuild
+ *  (`security-store-storeroom`, C-4) the record is ONE value at `['operator-settings']` in the
+ *  instance's own file, so these are the RECORD's members and not the file's top-level keys
+ *  (`docs/L2/security-store-storeroom/interface.md` §1). `schemaVersion` is tier 1's single
+ *  reserved member and belongs to `provident-settings.json`, never here (store-security.md §2.2
+ *  item 4 / §0A item 7); `exclusion` and `write` are the two ADDITIVE channel members and are
+ *  channel-only (store-security.md §2.3 item 2) — their presence in the RECORD is a finding. */
 const DECLARED_SECURITY_KEYS = ['token', 'enabled', 'maxJournalLength']
 const FORBIDDEN_SECURITY_KEYS = ['exclusion', 'write', 'schemaVersion']
-/** The EXACTLY-TWO persisted-file pin (docs/specs/store-persist.md; docs/FORKER.md §4
- *  (ii)/(iv); the `G2` DONE row). The census reads `*.json` entries only: Chromium writes
- *  its own bookkeeping into `userData` lazily (`Cache/`, `Code Cache/`, `GPUCache/`,
- *  `DIPS`, `Trust Tokens`, `blob_storage/`, `declarative_performance_observer.db`,
- *  `Local Storage`, `Shared Dictionary`, `Dictionaries`, `Dawn*Cache`) — the S1 driver's
- *  own comment names this class, and those are the RUNTIME's, not the store's. */
-const DECLARED_PERSISTED_JSON = ['provident-security.json', 'provident-settings.json']
-const SECURITY_FILE = 'provident-security.json'
+/** **THE PERSISTED-FILE SET, RE-GRAINED UNDER C-4 (`2026-10-29`): it is no longer "exactly two".**
+ *  `provident-operator-settings.json` is the INSTANCE'S OWN file — created at its construction,
+ *  zero-length and empty, and the only writer of it is the instance's one `write` — and the retired
+ *  `provident-security.json` STANDS BESIDE IT as the profile's seed: read at most once by the
+ *  import-once path, never written, its bytes left exactly as seeded. `provident-settings.json` is
+ *  tier 1's. **Old figure `['provident-security.json','provident-settings.json']`; the claim the
+ *  census keeps is UNCHANGED — an entry OUTSIDE the declared set is a finding** (`docs/L2/
+ *  security-store-storeroom/persistence.md` §1 names this re-grain as owed by this pass). The census
+ *  reads `*.json` entries only: Chromium writes its own bookkeeping into `userData` lazily (`Cache/`,
+ *  `Code Cache/`, `GPUCache/`, `DIPS`, `Trust Tokens`, `blob_storage/`,
+ *  `declarative_performance_observer.db`, `Local Storage`, `Shared Dictionary`, `Dictionaries`,
+ *  `Dawn*Cache`) — the S1 driver's own comment names this class, and those are the RUNTIME's, not
+ *  the store's. */
+const DECLARED_PERSISTED_JSON = ['provident-operator-settings.json', 'provident-security.json', 'provident-settings.json']
+/** **THE RECORD'S FILE, RE-GRAINED UNDER C-4** (old figure: `'provident-security.json'`). Every
+ *  reading of "the security file's bytes" in this battery reads THIS file — the instance's own —
+ *  and reads the RECORD at its address inside it (`readPersistedRecord` below); the retired name is
+ *  `RETIRED_SECURITY_FILE`. */
+const SECURITY_FILE = 'provident-operator-settings.json'
+/** The RETIRED name (E-1, D-19): seeded by `seedProfile` so the boot's import-once path has a record
+ *  to read, and never written, renamed or repaired by anything. */
+const RETIRED_SECURITY_FILE = 'provident-security.json'
 const SETTINGS_FILE = 'provident-settings.json'
 const THIRD_FILE = 'third-party-store.json'
 const TMP_RESIDUAL = `${SECURITY_FILE}.tmp`
@@ -356,18 +406,17 @@ function removeWithVerify(dir) {
 /** A fresh scratch profile under the OS temp dir, seeded with a REAL tier-4 record BEFORE
  *  the boot (so the boot read — not a write — is what ingests it; that ordering is what
  *  makes the seeded-third-party-key row measurable). `extra` adds foreign keys to the
- *  seeded file. */
-/** `securityAsDirectory` (FAMILY E, `SC-E-05`): when TRUE the tier-4 path is created as a DIRECTORY
- *  instead of being seeded with a record — the ONE state that makes the app's OWN persist fail at the
- *  rename, constructed by this driver on a scratch profile and never by a `src/**` byte. The default
- *  (`false`) reproduces the as-filed seed exactly, so every pre-existing caller is unchanged. */
-function seedProfile(tag, extra = null, securityAsDirectory = false) {
+ *  seeded record. **THE SEED GOES TO THE RETIRED NAME, AND THAT IS DELIBERATE (C-4):** the
+ *  instance's own `provident-operator-settings.json` is the STORE'S image and no test may
+ *  hand-write it, while `provident-security.json` is exactly what the boot's import-once path
+ *  reads ONCE (`docs/L2/security-store-storeroom/persistence.md` §3) — so a seeded record here
+ *  is what makes the boot serve it, and nothing writes the retired name afterwards. */
+function seedProfile(tag, extra = null) {
   const profile = mkdtempSync(join(tmpdir(), `sc-live-${tag}-`))
   PROFILES.push(profile)
   const record = { token: TOKEN, enabled: GROUPS, maxJournalLength: JOURNAL }
   if (extra !== null) Object.assign(record, extra)
-  if (securityAsDirectory === true) mkdirSync(join(profile, SECURITY_FILE))
-  else writeFileSync(join(profile, SECURITY_FILE), JSON.stringify(record, null, 2))
+  writeFileSync(join(profile, RETIRED_SECURITY_FILE), JSON.stringify(record, null, 2))
   // THE TIER-1 FILE IS SEEDED TOO, and for two measured reasons (MEASURED at this HEAD, both
   // recorded in the record's §5): (1) `file.settings.theme.token` — the VERY NAME the
   // architect's `D-CLAUSE-2` cites as the one a tier-4 write must never clear — is only
@@ -385,8 +434,8 @@ function seedProfile(tag, extra = null, securityAsDirectory = false) {
   return profile
 }
 
-async function bootApp(tag, { seedExtra = null, extraArgs = [], securityAsDirectory = false } = {}) {
-  const profile = seedProfile(tag, seedExtra, securityAsDirectory)
+async function bootApp(tag, { seedExtra = null, extraArgs = [] } = {}) {
+  const profile = seedProfile(tag, seedExtra)
   const spawned = spawnElectron([...extraArgs, `--provident-user-data=${profile}`])
   const child = spawned.child
   let stderr = ''
@@ -566,9 +615,13 @@ function countInCode(src, token) {
 
 // ── the named predicates ───────────────────────────────────────────────────────────────
 /** THE PERSISTED-FILE CENSUS — NAMED TERMS: `jsonNames` (every `*.json` entry in the
- *  profile), `undeclaredJsonNames` (the ones OUTSIDE the EXACTLY-TWO pin), `securityPresent`,
+ *  profile), `undeclaredJsonNames` (the ones OUTSIDE the DECLARED persisted set), `securityPresent`,
  *  `settingsPresent`. The predicate is `undeclaredJsonNames.length === 0` AND the security
- *  file present. `settingsPresent` is REPORTED but not asserted — **and the reason is NOT
+ *  file present. **RE-GRAINED UNDER C-4 (`2026-10-29`): the declared set now carries the
+ *  instance's own `provident-operator-settings.json` (created at construction) beside the
+ *  seeded retired `provident-security.json` and tier 1's `provident-settings.json`; the
+ *  property the census asserts is UNCHANGED — the ABSENCE of a name outside the declared set.**
+ *  `settingsPresent` is REPORTED but not asserted — **and the reason is NOT
  *  "absent on a settled cold boot": this driver's `seedProfile` WRITES the tier-1 file before
  *  every boot, and the run's own reading is `settingsPresent=true` (the `§6.2` audit's `B-F17`,
  *  disposed `FIXED`; the earlier comment said "MEASURED: absent on a settled cold boot", which
@@ -619,6 +672,23 @@ function setEquality(actual, declared) {
     missing: d.filter((m) => !a.includes(m)),
     extra: a.filter((m) => !d.includes(m)),
   }
+}
+
+/** **THE RECORD, READ AT ITS DECLARED ADDRESS (C-4, the `security-store-storeroom` rebuild).**
+ *  The persisted file's bytes are the STORE'S OWN image — one value at `['operator-settings']`,
+ *  written whole, at `provident-operator-settings.json` (`docs/L2/security-store-storeroom/
+ *  interface.md` §1; `guide §4` arm `W-4`) — so every reading of "the record the file carries"
+ *  goes through here and never through the file's top-level key set. `null` for an absent,
+ *  zero-length (the construction's exclusive create with no write behind it), unparsable or
+ *  record-less file, so a non-vacuity term reading `null` reddens instead of throwing. */
+const SETTINGS_RECORD_KEY = 'operator-settings'
+function recordInValue(value) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return null
+  const record = value[SETTINGS_RECORD_KEY]
+  return record !== null && typeof record === 'object' && !Array.isArray(record) ? record : null
+}
+function readPersistedRecord(profile) {
+  try { return recordInValue(JSON.parse(readOrNull(join(profile, SECURITY_FILE)))) } catch { return null }
 }
 
 /** THE TIER-4 CARRIER SCANNER — five NAMED NEEDLES, each a falsifiable byte-shape:
@@ -941,9 +1011,9 @@ const secAfterUnknownRaw = readOrNull(secPathA)
 const secAfterUnknownSha = sha256(secPathA)
 const unknownKeyInFile = secAfterUnknownRaw !== null && /myNewField/.test(secAfterUnknownRaw)
 const unknownKeyInGet = unknownWrite !== null && typeof unknownWrite === 'object' && Object.prototype.hasOwnProperty.call(unknownWrite, 'myNewField')
-check('SC-A-04 (Family A, arm b)', 'REQUIREMENT ARM (b): a live tier-4 write carrying a caller-named key is STORED and readable back — MEASURED: it is SILENTLY DROPPED (the receipt says `committed`, no diagnostic is answered, and the key is absent from BOTH the file BYTES and the live get())', ((!unknownKeyInFile && !unknownKeyInGet) ? 'FAIL' : 'PASS'),
-  `NAMED TERMS: the ARM is MET iff the caller's key persists. unknownKeyInFile=${unknownKeyInFile}, unknownKeyInGet=${unknownKeyInGet}, receiptOfTheDroppingWrite=${JSON.stringify(unknownWrite?.write)} (a 'committed' receipt on a write that persisted NOTHING), fileBytesComparedToTheWriteBeforeIt=${secBeforeRaw === secAfterUnknownRaw ? 'BYTE-IDENTICAL' : 'DIFFER'}, fileKeysAfter=${JSON.stringify(readOrNull(secPathA) === null ? null : Object.keys(JSON.parse(readOrNull(secPathA))).sort())}, sha256 ${secBeforeSha.slice(0, 16)}… → ${secAfterUnknownSha.slice(0, 16)}…`,
-  'the gate-1 record\'s §1 row: "An unknown key is a SILENT DROP — committed receipt, nothing persisted, no diagnostic" (its finding `G-2`: "The unknown-key contract is an UNDOCUMENTED silent drop"). The two named terms are read from the FILE BYTES (the persisted truth) and from the LIVE `get()` — EITHER carrying the key would be the requirement MET. Both are measured absent, so the arm is unmet; the row is written in the requirement direction so a Family A pass cannot be manufactured from a correctly-silent drop')
+check('SC-A-04 (Family A, arm b)', 'REQUIREMENT ARM (b): a live tier-4 write carrying a caller-named key is STORED and readable back — MEASURED: it is SILENTLY DROPPED (the receipt says `committed`, no diagnostic is answered, and the key is absent from BOTH the persisted record\'s BYTES and the live get())', ((!unknownKeyInFile && !unknownKeyInGet) ? 'FAIL' : 'PASS'),
+  `NAMED TERMS: the ARM is MET iff the caller's key persists. unknownKeyInFile=${unknownKeyInFile}, unknownKeyInGet=${unknownKeyInGet}, receiptOfTheDroppingWrite=${JSON.stringify(unknownWrite?.write)} (a 'committed' receipt on a write that persisted NOTHING), fileBytesComparedToTheWriteBeforeIt=${secBeforeRaw === secAfterUnknownRaw ? 'BYTE-IDENTICAL' : 'DIFFER'}, recordKeysAfter=${JSON.stringify((readPersistedRecord(bootA.profile) ?? null) === null ? null : Object.keys(readPersistedRecord(bootA.profile)).sort())}, sha256 ${secBeforeSha.slice(0, 16)}… → ${secAfterUnknownSha.slice(0, 16)}…`,
+  'the gate-1 record\'s §1 row: "An unknown key is a SILENT DROP — committed receipt, nothing persisted, no diagnostic" (its finding `G-2`: "The unknown-key contract is an UNDOCUMENTED silent drop"). The two named terms are read from the persisted BYTES (the record, at its declared address inside the instance\'s own file — C-4) and from the LIVE `get()` — EITHER carrying the key would be the requirement MET. Both are measured absent, so the arm is unmet; the row is written in the requirement direction so a Family A pass cannot be manufactured from a correctly-silent drop')
 
 // ── FAMILY B, arm (a) — the persisted-file census, with CONTROL-CENSUS ────────────────
 /** Bounded settle: the profile listing must be IDENTICAL on N consecutive reads no earlier
@@ -986,9 +1056,9 @@ const censusRestored = persistedCensus(settledRestored.list)
  *  own SUBJECT claims *"the SETTLED scratch profile"*, so the honest fix is the term rather than a
  *  declared limit: an unsettled window now reads `FAIL`, and `settled=`/`age` stay PRINTED beside
  *  the verdict so an unsettled run is attributable to its instrument window rather than to the store. */
-check('SC-B-01 (Family B, arm a)', 'the settled scratch profile carries NO THIRD `.json` — the persisted set is exactly `{provident-security.json, provident-settings.json}`, read on a SETTLED listing (`settled === true` is now a VERDICT term: `S6-03`)', settledA.settled === true && censusA.ok ? 'PASS' : 'FAIL',
-  `NAMED TERMS: jsonNames=${JSON.stringify(censusA.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusA.undeclaredJsonNames)}, securityPresent=${censusA.securityPresent}, settingsPresent=${censusA.settingsPresent}, settled=${settledA.settled} after ${settledA.polls} poll(s) at age ${settledA.ageMs} ms (3 identical reads, ≥12 s floor); the RUNTIME's own lazily-written entries reported: ${JSON.stringify(settledA.added)}`,
-  'the EXACTLY-TWO pin (docs/specs/store-persist.md; docs/FORKER.md §4 (ii)/(iv); the `G2` DONE row) and `store-security.md` §1.2 item 2 ("a third persisted filename is a finding"). `settingsPresent` is REPORTED, not asserted — **on a profile THIS battery seeds the tier-1 file is written BEFORE the boot by `seedProfile`, so the run reads `settingsPresent=true` (`B-F17`: the as-filed reason "absent on a settled cold boot" was FALSE of these profiles and was quotable as a measurement).** On an unseeded profile the tier-1 file is created lazily at the first `file.*` crossing; either way the assertable property is the ABSENCE of a third name')
+check('SC-B-01 (Family B, arm a)', 'the settled scratch profile carries NO `.json` OUTSIDE the DECLARED persisted set — `{provident-operator-settings.json, provident-security.json, provident-settings.json}` after C-4 (the instance\'s own file, the seeded retired name, tier 1\'s), read on a SETTLED listing (`settled === true` is now a VERDICT term: `S6-03`)', settledA.settled === true && censusA.ok ? 'PASS' : 'FAIL',
+  `NAMED TERMS: declaredSet=${JSON.stringify(DECLARED_PERSISTED_JSON)}, jsonNames=${JSON.stringify(censusA.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusA.undeclaredJsonNames)}, securityPresent=${censusA.securityPresent}, settingsPresent=${censusA.settingsPresent}, settled=${settledA.settled} after ${settledA.polls} poll(s) at age ${settledA.ageMs} ms (3 identical reads, ≥12 s floor); the RUNTIME's own lazily-written entries reported: ${JSON.stringify(settledA.added)}`,
+  '**RE-GRAINED UNDER C-4 — the FIGURE moved, the CLAIM did not.** The EXACTLY-TWO persisted-file pin of `docs/specs/store-persist.md` / `docs/FORKER.md` §4 (ii)/(iv) / the `G2` DONE row is no longer a true standing pin: this unit adds one written name (`provident-operator-settings.json`, created at construction) and retires another (`provident-security.json`: read at most once, never written, bytes standing), as `docs/L2/security-store-storeroom/persistence.md` §1 declares and names as owed by this pass. What survives is `store-security.md` §1.2 item 2 read through the declared set — **a `.json` name outside it is a finding** — and the CONTROL below drives exactly that. `settingsPresent` is REPORTED, not asserted — **on a profile THIS battery seeds the tier-1 file is written BEFORE the boot by `seedProfile`, so the run reads `settingsPresent=true` (`B-F17`: the as-filed reason "absent on a settled cold boot" was FALSE of these profiles and was quotable as a measurement).**')
 check('SC-B-02 (CONTROL-CENSUS)', 'CONTROL: with a THIRD `.json` seeded into the LIVE profile the SAME predicate REFUSES it, and after the seed is removed it passes again — so SC-B-01 is not a predicate that cannot fail', (censusControl.ok === false && censusControl.undeclaredJsonNames.length === 1 && censusRestored.ok === true) ? 'PASS' : 'FAIL',
   `NAMED TERMS: with ${THIRD_FILE} seeded — jsonNames=${JSON.stringify(censusControl.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusControl.undeclaredJsonNames)}, predicate=${censusControl.ok}; after removal — undeclaredJsonNames=${JSON.stringify(censusRestored.undeclaredJsonNames)}, predicate=${censusRestored.ok}`,
   'a live control, not a synthetic list: the wrong state is created in the very directory the row reads. A deletion of the census term reddens SC-B-01; a census that could not see a third file reddens SC-B-02')
@@ -1017,31 +1087,38 @@ const settingsFileObserved = settingsPresentBefore === true && settingsPresentAf
 const securityChanged = secShaBeforeWrite !== secShaAfterWrite
 check('SC-B-03 (Family B, arm b)', 'the security file REALLY moves on a live operator write, and the settings file does NOT move across the same window — the two persisted files are independent', (securityChanged && settingsFileObserved && settingsUnchanged) ? 'PASS' : 'FAIL',
   `NAMED TERMS: securitySha ${secShaBeforeWrite.slice(0, 16)}… → ${secShaAfterWrite.slice(0, 16)}… (changed=${securityChanged}), securityBytes ${secBytesBeforeWrite?.length} → ${secBytesAfterWrite?.length}, settings PRESENCE before=${settingsPresentBefore} after=${settingsPresentAfter} (settingsFileObserved=${settingsFileObserved} — the NON-VACUITY term added by A-F4), settingsSha ${settingsShaBefore === null ? 'ABSENT' : settingsShaBefore.slice(0, 16) + '…'} → ${settingsShaAfter === null ? 'ABSENT' : settingsShaAfter.slice(0, 16) + '…'} (unchanged=${settingsUnchanged}), the write's own receipt=${JSON.stringify(operatorWrite?.write)}`,
-  'store-security.md §2.2 item 5 (THE SINGLE-WRITER DISCIPLINE: the security store\'s persist is the ONLY writer of `provident-security.json`; the tier-1 channel is the only writer of `provident-settings.json`) and §1.2 item 2 (ONE of the exactly-two). Both halves are asserted: a security write that moved NOTHING would mean the atomic writer never ran, and a security write that ALSO rewrote the settings file would mean the two files are not independent')
+  '**RE-GRAINED UNDER C-4 (`2026-10-29`, the `security-store-storeroom` rebuild) — the TERM LIST IS UNCHANGED (`securityChanged`, `settingsFileObserved`, `settingsUnchanged`) and only the FIGURES moved:** the security file read is now the instance\'s own `provident-operator-settings.json`, whose one writer is the instance\'s single `write` at `[\'operator-settings\']` (`docs/L2/security-store-storeroom/interface.md` §1, §2.1), and the retired `provident-security.json` is written by NOTHING — its bytes stand as seeded (D-19). store-security.md §2.2 item 5 (THE SINGLE-WRITER DISCIPLINE) and §1.2 item 2 are read through that re-grain: one file\'s writer is the instance, the other\'s is the tier-1 channel, and the retired name has no writer at all. Both halves are asserted: a security write that moved NOTHING would mean the store\'s own save never ran, and a security write that ALSO rewrote the settings file would mean the two files are not independent')
 
-// ── FAMILY B, arm (c) — the SECURITY file's top-level key set is the tier's own ────────
-const secParsed = JSON.parse(readOrNull(secPathA))
-const secKeySet = Object.keys(secParsed).sort()
+// ── FAMILY B, arm (c) — the persisted RECORD's key set is the tier's own ────────────────
+/** **RE-GRAINED UNDER C-4:** the row reads the RECORD at its declared address inside the instance's
+ *  file (`readPersistedRecord`), because the file's top-level shape is the STORE'S own image and not
+ *  a record the app flattens. The claim — the persisted record's exact key set EQUALS the tier's
+ *  DECLARED members, with no `exclusion`/`write`/`schemaVersion` key — is unchanged. */
+const secParsed = readPersistedRecord(bootA.profile)
+const secKeySet = secParsed === null ? [] : Object.keys(secParsed).sort()
 const undeclaredSecKeys = secKeySet.filter((k) => !DECLARED_SECURITY_KEYS.includes(k))
 const forbiddenSecKeys = secKeySet.filter((k) => FORBIDDEN_SECURITY_KEYS.includes(k))
-const enabledIsGroupSet = Array.isArray(secParsed.enabled) && secParsed.enabled.every((g) => GROUPS.includes(g))
+const enabledIsGroupSet = secParsed !== null && Array.isArray(secParsed.enabled) && secParsed.enabled.every((g) => GROUPS.includes(g))
 /** THE SET-EQUALITY TERM (the `§6.2` audit's `B-F6`, disposed `FIXED`). The row claims *"the file's
  *  EXACT top-level key set is the tier's DECLARED members"*, and the as-filed predicate was
  *  `undeclaredSecKeys.length === 0 && forbiddenSecKeys.length === 0 && enabledIsGroupSet` — a `⊆`
  *  test: **delete `token` from the persisted file and NOTHING reddened** (no row asserted the file
  *  carries its declared members at all). The term is now equality, with the MISSING members named. */
 const secKeySetEquality = setEquality(secKeySet, DECLARED_SECURITY_KEYS)
-check('SC-B-04 (Family B, arm c) — THE TIER-SHAPE HALF', 'the SECURITY file\'s exact top-level key set after a live write EQUALS the tier\'s DECLARED members — every declared member PRESENT, nothing outside the set, NO `exclusion`/gate key, NO `write` receipt member and NO tier-1 `schemaVersion`', (secKeySetEquality.equal && undeclaredSecKeys.length === 0 && forbiddenSecKeys.length === 0 && enabledIsGroupSet) ? 'PASS' : 'FAIL',
-  `NAMED TERMS: topLevelKeys=${JSON.stringify(secKeySet)}, declaredMembers=${JSON.stringify(DECLARED_SECURITY_KEYS)}, SET-EQUALITY missing=${JSON.stringify(secKeySetEquality.missing)} extra=${JSON.stringify(secKeySetEquality.extra)} equal=${secKeySetEquality.equal} (the §6.2 audit's B-F6 term: a DELETED declared member reddens this row, which a ⊆ test did not), undeclaredKeys=${JSON.stringify(undeclaredSecKeys)}, forbiddenChannelOrSchemaKeys=${JSON.stringify(forbiddenSecKeys)}, enabled is a group set over VALID_GROUPS=${enabledIsGroupSet} (${JSON.stringify(secParsed.enabled)}), the file's own bytes=${JSON.stringify(secBytesAfterWrite)}`,
-  'THIS ROW MEASURES THE TIER-SHAPE HALF, NOT THE S1 `U-6`/`D-19` ROW: S1 measures that one security write creates no third file and no gate key on its own profile; this measures the tier\'s DECLARED MEMBER SET against the file\'s exact key set, with `exclusion` (the widened GET record\'s additive member, §2.3 item 2 / PAR-13), `write` (the SET receipt\'s additive member) and tier 1\'s reserved `schemaVersion` all named as FORBIDDEN HERE — each is a channel/schema token that belongs on the wire or in `provident-settings.json`, never in tier 4\'s file. **THE CLAIM IS "EXACT", SO THE PREDICATE IS SET-EQUALITY (§4d rule 3) — the `B-F6` repair — and this row\'s DECLARED LIMIT is stated WITH ITS OWNER: the file\'s reserved `schemaVersion` stamp (`store-persist.md`\'s `VERSION-FROM-FIRST-WRITE`) is cited by the contract read and is NOT MEASURED by any row of this battery, because every profile this battery boots is seeded with a tier-1 file already carrying `schemaVersion`. OWNER: the `G2` `U-STORE-PERSIST` contract owner**')
+check('SC-B-04 (Family B, arm c) — THE TIER-SHAPE HALF', 'the persisted RECORD\'s exact key set after a live write EQUALS the tier\'s DECLARED members — every declared member PRESENT, nothing outside the set, NO `exclusion`/gate key, NO `write` receipt member and NO tier-1 `schemaVersion` (the record read AT ITS OWN ADDRESS `[\'operator-settings\']` in `provident-operator-settings.json`, C-4)', (secKeySetEquality.equal && undeclaredSecKeys.length === 0 && forbiddenSecKeys.length === 0 && enabledIsGroupSet) ? 'PASS' : 'FAIL',
+  `NAMED TERMS: recordKeys=${JSON.stringify(secKeySet)}, declaredMembers=${JSON.stringify(DECLARED_SECURITY_KEYS)}, SET-EQUALITY missing=${JSON.stringify(secKeySetEquality.missing)} extra=${JSON.stringify(secKeySetEquality.extra)} equal=${secKeySetEquality.equal} (the §6.2 audit's B-F6 term: a DELETED declared member reddens this row, which a ⊆ test did not), undeclaredKeys=${JSON.stringify(undeclaredSecKeys)}, forbiddenChannelOrSchemaKeys=${JSON.stringify(forbiddenSecKeys)}, enabled is a group set over VALID_GROUPS=${enabledIsGroupSet} (${JSON.stringify(secParsed?.enabled)}), the file's own bytes=${JSON.stringify(secBytesAfterWrite)}`,
+  'THIS ROW MEASURES THE TIER-SHAPE HALF, NOT THE S1 `U-6`/`D-19` ROW: S1 measures that one security write creates no third file and no gate key on its own profile; this measures the tier\'s DECLARED MEMBER SET against the persisted RECORD\'s exact key set, with `exclusion` (the widened GET record\'s additive member, §2.3 item 2 / PAR-13), `write` (the SET receipt\'s additive member) and tier 1\'s reserved `schemaVersion` all named as FORBIDDEN HERE — each is a channel/schema token that belongs on the wire or in `provident-settings.json`, never in the record. **THE CLAIM IS "EXACT", SO THE PREDICATE IS SET-EQUALITY (§4d rule 3) — the `B-F6` repair — and this row\'s DECLARED LIMIT is stated WITH ITS OWNER: the file\'s reserved `schemaVersion` stamp (`store-persist.md`\'s `VERSION-FROM-FIRST-WRITE`) is cited by the contract read and is NOT MEASURED by any row of this battery, because every profile this battery boots is seeded with a tier-1 file already carrying `schemaVersion`. OWNER: the `G2` `U-STORE-PERSIST` contract owner. **RE-GRAINED UNDER C-4:** the reading moved from the file\'s top-level key set to the record at `[\'operator-settings\']`, and the key-set CLAIM is unchanged**')
 
 // ── FAMILY B, arm (d) — the atomic shape, with CONTROL-TMP and CONTROL-TORN ─────────────
-/** The landed writer's SOURCE, read once here and reused at `SC-G-01`/`SC-G-02` below: `SC-B-05`
- *  reports the DECLARED atomic mechanism statically (the `§6.2` audit's `B-F9`), and the same
- *  bytes are the `[G]` census Phase 4 asserts. */
-const securityStorePath = join(root, 'src', 'main', 'security-store.ts')
-const securityStoreShaA = sha256(securityStorePath)
-const securityStoreSrcA = readFileSync(securityStorePath, 'utf8')
+/** **RE-GRAINED UNDER C-4:** the "real path" whose residue and parseability this arm reads is the
+ *  instance's own `provident-operator-settings.json` (`SECURITY_FILE`), and the STATIC MECHANISM
+ *  WITNESS is DROPPED with the module it censused — the five-step `mkdirSync`/`.tmp`/fsync/`renameSync`
+ *  writer belonged to the deleted store (`E-1`, `D-16`) and its source is gone. What remains is the
+ *  live claim, and the rebuild declares it in its own words: **nothing is created beside the file —
+ *  no `.tmp`, no lock, no sidecar and no second written name, at construction or at any later write**
+ *  (`docs/L2/security-store-storeroom/interface.md` §2.1; `behaviour.md` §2's last row; `persistence.md`
+ *  §5). The mechanism itself is the package's own declared save and is NOT witnessed by any live term
+ *  here — that limit is stated at the row rather than papered over. */
 const residueA = tmpResidueCensus(bootA.profile)
 // CONTROL-TMP: seed a residual at the REAL path and re-run the SAME predicate.
 writeFileSync(join(bootA.profile, TMP_RESIDUAL), JSON.stringify({ token: 'TORN-OR-RESIDUAL' }))
@@ -1062,9 +1139,9 @@ writeFileSync(join(bootA.profile, SECURITY_FILE), secBytesBeforeTorn)
 const secShaAfterTornRestore = sha256(join(bootA.profile, SECURITY_FILE))
 const residueTornRestored = tmpResidueCensus(bootA.profile)
 const tornRestoreByteIdentical = secShaBeforeTorn === secShaAfterTornRestore
-check('SC-B-05 (Family B, arm d)', 'the write leaves NO residual `${path}.tmp` at the real path and the real path always PARSES after a real write — the OBSERVABLE shape of the atomic replace on the live profile (the MECHANISM itself is witnessed statically, not by this row)', residueA.ok ? 'PASS' : 'FAIL',
-  `NAMED TERMS: residuals=${JSON.stringify(residueA.residuals)}, realPathParses=${residueA.realPathParses}, realPathKeys=${JSON.stringify(residueA.realPathKeys)}, tornOrUnparsable=${residueA.tornOrUnparsable}; STATIC MECHANISM WITNESS (the §6.2 audit's B-F9 — the claim is about the DECLARED ATOMIC mechanism, and a plain non-atomic \`writeFileSync\` would satisfy BOTH live terms): security-store.ts declares mkdirSync=${/mkdirSync\(/.test(securityStoreSrcA)}, the \`\${path}.tmp\` stage=${/\$\{path\}\.tmp|\.tmp'/.test(securityStoreSrcA)}, fsync=${/fsyncSync|fsync\(/.test(securityStoreSrcA)}, renameSync=${/renameSync\(/.test(securityStoreSrcA)} (sha256 ${securityStoreShaA.slice(0, 16)}…)`,
-  'store-security.md §2.2 items 1/3/6: `mkdirSync` → write `${path}.tmp` → fsync → `renameSync` → dir-fsync, and "a successful persist leaves NO `${path}.tmp`"; "a torn file at the real path is IMPOSSIBLE by construction". A torn file does not parse, so `realPathParses` is the torn-file term and it is read from the real path\'s OWN bytes — and since the §6.2 audit\'s A-F10, BOTH halves of this predicate are driven toward failure by a live control. **WHAT THIS ROW DOES NOT PROVE, STATED AT THE ROW (the second audit\'s `B-F9`): residue + parseability are CONSISTENT WITH a non-atomic overwrite, so the DECLARED five-step mechanism is witnessed by the STATIC terms beside them (the landed source\'s `mkdirSync`/`.tmp`/fsync/`renameSync`) and by the `[T]`-layer suite — NOT by any live term here. OWNER of a live mechanism witness: the `G2` `U-STORE-PERSIST` contract owner**')
+check('SC-B-05 (Family B, arm d)', 'the write leaves NO residual `${path}.tmp` at the real path and the real path always PARSES after a real write — the OBSERVABLE shape of the store\'s save on the live profile (the MECHANISM itself is the package\'s own declared save and is witnessed by no live term here)', residueA.ok ? 'PASS' : 'FAIL',
+  `NAMED TERMS: residuals=${JSON.stringify(residueA.residuals)}, realPathParses=${residueA.realPathParses}, realPathKeys=${JSON.stringify(residueA.realPathKeys)}, tornOrUnparsable=${residueA.tornOrUnparsable}; the real path read is <profile>/${SECURITY_FILE} (the instance's own file, C-4). **THE STATIC MECHANISM WITNESS IS RETIRED WITH THE STORE MODULE (E-1, D-16): the four source terms it printed — mkdirSync, the ${path}.tmp stage, fsync and renameSync, read out of the deleted module's bytes — no longer have a file to read, so the mechanism half is NOT witnessed by any live term here.**`,
+  '**RE-GRAINED UNDER C-4 and the retired term DROPPED, its claim kept:** the rebuild declares that **nothing is created beside the file — no `.tmp`, no lock, no sidecar and no second written name, at construction or at any later write** (`docs/L2/security-store-storeroom/interface.md` §2.1; `behaviour.md` §2). A torn file does not parse, so `realPathParses` is the torn-file term and it is read from the real path\'s OWN bytes — and since the §6.2 audit\'s A-F10, BOTH halves of this predicate are driven toward failure by a live control. **WHAT THIS ROW DOES NOT PROVE, STATED AT THE ROW (the second audit\'s `B-F9`) and now WIDER than before: residue + parseability are CONSISTENT WITH a non-atomic overwrite, and the writer is the package\'s native save, so NO live term here witnesses the mechanism — that half is the package\'s own contract (read, never edited, `D-5`) and the `[T]`-layer suite, NOT this battery. OWNER of a live mechanism witness: the package\'s own battery**')
 check('SC-B-06 (CONTROL-TMP + CONTROL-TORN)', 'CONTROL: with a residual `.tmp` seeded at the real path the SAME predicate REFUSES it, and with deliberately TORN bytes at the real path the SAME predicate REFUSES that too — and after each is removed/restored it passes again, so neither half of SC-B-05 is a predicate that cannot fail', (residueControl.ok === false && residueControl.residuals.length === 1 && residueRestored.ok === true && residueTornControl.ok === false && residueTornControl.realPathParses === false && residueTornControl.tornOrUnparsable === true && tornRestoreByteIdentical === true && residueTornRestored.ok === true) ? 'PASS' : 'FAIL',
   `NAMED TERMS: with ${TMP_RESIDUAL} seeded — residuals=${JSON.stringify(residueControl.residuals)}, predicate=${residueControl.ok}; after removal — residuals=${JSON.stringify(residueRestored.residuals)}, predicate=${residueRestored.ok}; with TORN bytes ('{"token:') at the real path — realPathParses=${JSON.stringify(residueTornControl.realPathParses)}, tornOrUnparsable=${JSON.stringify(residueTornControl.tornOrUnparsable)}, realPathKeys=${JSON.stringify(residueTornControl.realPathKeys)}, predicate=${JSON.stringify(residueTornControl.ok)}; after the exact prior bytes were restored — sha256 byte-identical=${tornRestoreByteIdentical} (${secShaBeforeTorn.slice(0, 16)}… → ${secShaAfterTornRestore.slice(0, 16)}…), predicate=${JSON.stringify(residueTornRestored.ok)}`,
   'the wrong states are created at the very path the row reads; a `.tmp`-residue regression reddens SC-B-05\'s residue term, a torn-write regression reddens its parse term, and this control proves the reader can SEE both. The TORN fixture is the `§6.2` audit\'s A-F10 fix: a term no control drives is a term no reader can trust')
@@ -1364,9 +1441,9 @@ const secKeySetEqualityPost = setEquality(secKeySetPost, DECLARED_SECURITY_KEYS)
 const forbiddenSecKeysPost = secKeySetPost.filter((k) => FORBIDDEN_SECURITY_KEYS.includes(k))
 const secShapePostHolds = secKeySetEqualityPost.equal && forbiddenSecKeysPost.length === 0
 const censusPostHolds = censusPost.ok === true && residuePost.residuals.length === 0 && secShapePostHolds
-check('SC-B-09 (Family B, arm a) — THE CENSUS AND THE TIER KEY SET RE-MEASURED AFTER THE FAMILY C PHASE', 'the SAME exactly-two-`.json` predicate (no third name, the security file present), the SAME no-`.tmp` term AND the SAME tier-shape key set (`SC-B-04`\'s set-equality, no `exclusion`/`write`/`schemaVersion` key) STILL hold after the operator write, both live controls and both exclusion transitions — read on a SETTLED listing (`settled === true` is now a VERDICT term: `S6-03`), because the pre-write readings are not the only readings', settledPost.settled === true && censusPostHolds ? 'PASS' : 'FAIL',
-  `NAMED TERMS: post-phase settled listing=${JSON.stringify(settledPost.list.filter((n) => n.endsWith('.json') || n.endsWith('.tmp')))}, settled=${settledPost.settled} after ${settledPost.polls} poll(s); jsonNames=${JSON.stringify(censusPost.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusPost.undeclaredJsonNames)}, securityPresent=${censusPost.securityPresent}, settingsPresent=${censusPost.settingsPresent}, predicate=${censusPost.ok}; residual .tmp entries after the whole phase=${JSON.stringify(residuePost.residuals)}; **THE TIER-SHAPE RE-MEASUREMENT (the A3-06 term): topLevelKeys AFTER the whole phase=${JSON.stringify(secKeySetPost)} vs declaredMembers=${JSON.stringify(DECLARED_SECURITY_KEYS)} (SET-EQUALITY missing=${JSON.stringify(secKeySetEqualityPost.missing)} extra=${JSON.stringify(secKeySetEqualityPost.extra)} equal=${secKeySetEqualityPost.equal}), forbiddenChannelOrSchemaKeys=${JSON.stringify(forbiddenSecKeysPost)}, secShapePostHolds=${secShapePostHolds} — an 'exclusion' key landing during either setExclusion transition reddens THIS row, which the as-filed bytes could not do (the key set was read once, before both transitions)**; the PRE-WRITE readings this re-asserts are SC-B-01's (jsonNames=${JSON.stringify(censusA.jsonNames)}, predicate=${censusA.ok}) and SC-B-04's (topLevelKeys=${JSON.stringify(secKeySet)}, equal=${secKeySetEquality.equal}, forbidden=${JSON.stringify(forbiddenSecKeys)}); the PRE-phase file's OWN bytes=${JSON.stringify(secBytesAfterWrite)}`,
-  'the EXACTLY-TWO pin re-read at the END of the run rather than only at its start (docs/specs/store-persist.md; `store-security.md` §1.2 item 2; `docs/FORKER.md` §4 (ii)/(iv)). This row adds no new property: it makes `SC-B-01`\'s claim non-vacuous AFTER every live write and transition this battery itself performed, which is the §6.2 audit\'s A-F12 remedy — a phase that ends with a third file or a leftover `.tmp` would otherwise have been unmeasured. **AND SINCE THE THIRD AUDIT\'S `A3-06` THE SAME RE-MEASUREMENT COVERS `SC-B-04`\'s TIER-SHAPE CLAIM: the key set was read ONCE before both `setExclusion` transitions, so an `exclusion` key landing there reddened nothing; the set-equality predicate is now re-run on the END-of-run profile and is a term of this row.**')
+check('SC-B-09 (Family B, arm a) — THE CENSUS AND THE RECORD KEY SET RE-MEASURED AFTER THE FAMILY C PHASE', 'the SAME declared-persisted-set predicate (no `.json` name outside the declared three, the INSTANCE\'s own file present — C-4), the SAME no-`.tmp` term AND the SAME tier-shape key set (`SC-B-04`\'s set-equality on the persisted record at its own address, no `exclusion`/`write`/`schemaVersion` key) STILL hold after the operator write, both live controls and both exclusion transitions — read on a SETTLED listing (`settled === true` is now a VERDICT term: `S6-03`), because the pre-write readings are not the only readings', settledPost.settled === true && censusPostHolds ? 'PASS' : 'FAIL',
+  `NAMED TERMS: post-phase settled listing=${JSON.stringify(settledPost.list.filter((n) => n.endsWith('.json') || n.endsWith('.tmp')))}, settled=${settledPost.settled} after ${settledPost.polls} poll(s); jsonNames=${JSON.stringify(censusPost.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusPost.undeclaredJsonNames)}, securityPresent=${censusPost.securityPresent}, settingsPresent=${censusPost.settingsPresent}, predicate=${censusPost.ok}; residual .tmp entries after the whole phase=${JSON.stringify(residuePost.residuals)}; **THE TIER-SHAPE RE-MEASUREMENT (the A3-06 term, RE-GRAINED UNDER C-4 to the record at its own address): recordKeys AFTER the whole phase=${JSON.stringify(secKeySetPost)} vs declaredMembers=${JSON.stringify(DECLARED_SECURITY_KEYS)} (SET-EQUALITY missing=${JSON.stringify(secKeySetEqualityPost.missing)} extra=${JSON.stringify(secKeySetEqualityPost.extra)} equal=${secKeySetEqualityPost.equal}), forbiddenChannelOrSchemaKeys=${JSON.stringify(forbiddenSecKeysPost)}, secShapePostHolds=${secShapePostHolds} — an 'exclusion' key landing during either setExclusion transition reddens THIS row, which the as-filed bytes could not do (the key set was read once, before both transitions)**; the PRE-WRITE readings this re-asserts are SC-B-01's (jsonNames=${JSON.stringify(censusA.jsonNames)}, predicate=${censusA.ok}) and SC-B-04's (recordKeys=${JSON.stringify(secKeySet)}, equal=${secKeySetEquality.equal}, forbidden=${JSON.stringify(forbiddenSecKeys)}); the PRE-phase file's OWN bytes=${JSON.stringify(secBytesAfterWrite)}`,
+  '**RE-GRAINED UNDER C-4:** the declared-persisted-set pin re-read at the END of the run rather than only at its start (the EXACTLY-TWO pin of `docs/specs/store-persist.md` / `docs/FORKER.md` §4 (ii)/(iv) is superseded by this unit, which adds one written name and retires another — `docs/L2/security-store-storeroom/persistence.md` §1; `store-security.md` §1.2 item 2 read through the declared set). This row adds no new property: it makes `SC-B-01`\'s claim non-vacuous AFTER every live write and transition this battery itself performed, which is the §6.2 audit\'s A-F12 remedy — a phase that ends with a third file or a leftover `.tmp` would otherwise have been unmeasured. **AND SINCE THE THIRD AUDIT\'S `A3-06` THE SAME RE-MEASUREMENT COVERS `SC-B-04`\'s TIER-SHAPE CLAIM: the key set was read ONCE before both `setExclusion` transitions, so an `exclusion` key landing there reddened nothing; the set-equality predicate is now re-run on the END-of-run profile and is a term of this row.**')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
 // FAMILY D — THE ARCHITECT'S CLONE/WRITE RULING (2026-10-11), MEASURED RATHER THAN ASSUMED
@@ -1376,13 +1453,15 @@ check('SC-B-09 (Family B, arm a) — THE CENSUS AND THE TIER KEY SET RE-MEASURED
  *  data, they return clones to prevent external read/mutation by reference. Writes at runtime are permitted iff
  *  the MCP is blocked"*. Its TWO clauses are the two arms of this family:
  *
- *    **D-1 — EVERY TIER-4 READ RETURNS A CLONE, NEVER A REFERENCE TO THE ORIGINAL.** The decisive site is the
- *    MODULE'S OWN `get()`/`set(patch)` return (`src/main/security-store.ts`), because that is the value every
- *    downstream holder receives. `window.provident.security.get()` crosses an IPC boundary that ALREADY
- *    SERIALIZES (a structured clone), so a mutation of the RENDERER-side copy CANNOT reach `main` even when
- *    `main` hands out a live reference — **a bridge-only probe therefore cannot observe the reference half and
- *    must not be presented as though it did.** Both halves are measured, and EACH INSTRUMENT NAMES ITS OWN
- *    BOUNDARY in the instrument table this driver prints at this family.
+ *    **D-1 — EVERY TIER-4 READ RETURNS A CLONE, NEVER A REFERENCE TO THE ORIGINAL.** Two halves used to be
+ *    measured: the REFERENCE half at the store module's own `get()`/`set(patch)` return, and the CONSEQUENCE
+ *    half over the live bridge. **THE REFERENCE HALF IS RETIRED WITH THE STORE MODULE (`2026-10-29`, `E-1`,
+ *    `D-16`): its instrument imported the deleted module by source path and cannot run, so the rows that
+ *    measured it (`SC-D-01`, `SC-D-02a`, `SC-D-11`) are gone and NOTHING re-points them.** What stands is the
+ *    consequence half, and it says in its own subject that `window.provident.security.get()` crosses an IPC
+ *    boundary that ALREADY SERIALIZES (a structured clone), so a mutation of the RENDERER-side copy CANNOT
+ *    reach `main` even when `main` hands out a live reference — **a bridge-only probe therefore cannot observe
+ *    the reference half and must not be presented as though it did.**
  *
  *    **D-2 — RUNTIME TIER-4 WRITES ARE PERMITTED IFF THE MCP SERVER IS BLOCKED.** The gate under measurement is
  *    the write path `IPC_SECURITY_SET` (`L` `src/main/main.ts:385-404`), driven through the manual-UI channel
@@ -1404,235 +1483,21 @@ check('SC-B-09 (Family B, arm a) — THE CENSUS AND THE TIER KEY SET RE-MEASURED
  *  **THE FOUR RULES THIS FAMILY OBEYS** (the §6.2 audits' six repairs to control-less predicates are the reason
  *  each is named here): (1) EVERY absence-asserting arm carries a NON-VACUITY term (the write really landed,
  *  the read really answered, the fixture really moves the file); (2) EVERY predicate has a term that REDDENS
- *  UNDER DELETION, and the deletion test is RUN — the [B] probe executes it in-process over the SAME detector
- *  it drives, and the live arms carry their reddening terms in their own printed evidence; (3) a CONTROL that
- *  CAN ACTUALLY REFUSE is asserted for each half — a SHARED-OBJECT subject that really does hand out a live
- *  reference (so the detector is shown to FIRE on a reference), and a REPLACED-FILE subject (so the module's own
- *  second read is shown to be able to MOVE); (4) a MANUAL row is a WITHHELD claim, never a PASS. */
+ *  UNDER DELETION, and the live arms carry their reddening terms in their own printed evidence; (3) a CONTROL
+ *  that CAN ACTUALLY REFUSE stands beside each half — `SC-D-10`'s admissible-tier write instrument for the write
+ *  path, and `SC-D-03`'s OUT-OF-BAND record replacement, which drives the "unmoved" term against a record this
+ *  driver really changed; (4) a MANUAL row is a WITHHELD claim, never a PASS. **THE IN-PROCESS DELETION TEST OF
+ *  RULE (2) WAS THE RETIRED `[B]` PROBE'S AND LEFT WITH IT (`E-1`, `D-16`); no live arm here executes one, which
+ *  is stated rather than papered over.** */
 
-/** **THE `[B]` INSTRUMENT — AN IN-PROCESS MODULE PROBE. DECLARED WITH ITS BOUNDARY, because the boundary is
- *  what this family's first row is ABOUT.** The probe is a scratch `.mjs` written INTO THE OS TEMP DIR under a
- *  clean `mkdtemp` (never the repo, never a `src/**` byte, never the operator's profile) and run by this
- *  driver's OWN `node` binary as a CHILD PROCESS. It imports the app's OWN module at its SOURCE path
- *  (`src/main/security-store.ts`, the same file `npm run build` bundles into `dist/main/main.cjs`) as an ESM
- *  module — Node 24 resolves the module's own `import type { … } from '../shared/types.js'` by TYPE-STRIPPING
- *  (a type-only import, erased), MEASURED at this HEAD.
- *
- *  **WHAT `[B]` CAN OBSERVE:** the EXACT object identity the module's `get()`/`set(patch)` hand back IN THE
- *  PROCESS THAT CALLED THEM — i.e. THE REFERENCE HALF of D-1, which NO live instrument can reach: over CDP the
- *  value has already crossed an IPC boundary and been structured-cloned, so a renderer-side mutation cannot
- *  reach `main` whatever `main` returns.
- *  **WHAT `[B]` CANNOT OBSERVE:** the live app. It boots no Electron process, reads no MCP surface and cannot
- *  see whether the LIVE bridge serializes anything; it is an IN-PROCESS reading of the same module bytes, and
- *  the app's own boot read constructs its store from THAT module. **A `[B]` PASS IS NOT AN APP-GREEN
- *  (`RCA-12`): it is the reference half only, and the consequence half is `SC-D-03`'s live reading.** */
-const MODULE_PROBE_DIR = mkdtempSync(join(tmpdir(), 'sc-live-D-'))
-registerCleanup(() => { try { removeWithVerify(MODULE_PROBE_DIR) } catch { /* gone */ } })
-const SECURITY_STORE_MODULE = join(root, 'src', 'main', 'security-store.ts')
-const MODULE_PROBE_PATH = join(MODULE_PROBE_DIR, 'module-probe.mjs')
-const MODULE_PROBE_STORE = join(MODULE_PROBE_DIR, 'probe-security.json')
-/** THE DELETION TEST'S OWN FIXTURE, declared where the detector it drives is defined: the FIVE mutations the
- *  probe applies to whatever a subject returns, and the detector term EACH ONE moves ALONE. `subject` is the
- *  function under test (a store read, a store write's return, the SHARED-OBJECT control or the REPLACED-FILE
- *  control), so the SAME detector is driven against a subject that really does return a live reference — which
- *  is what makes "the detector did not fire" a READING rather than an unfalsifiable claim. */
-/** FIVE mutations, FOUR DISTINCT TERMS: `delete-token` and `overwrite-token` are two TRANSITIONS of the SAME
- *  member and are mapped to the ONE term `b.token !== a.token` — a presence change moves the value too, and
- *  splitting the term into two spellings would not make the deletion test stronger (the same deletion disables
- *  both). The row states this rather than claiming five independent terms. */
-const MODULE_PROBE_MUTATIONS = [
-  { key: 'add-member', reddens: 'b.hasExtra !== a.hasExtra' },
-  { key: 'change-maxjournal', reddens: 'b.mjl !== a.mjl' },
-  { key: 'delete-token', reddens: 'b.token !== a.token' },
-  { key: 'overwrite-token', reddens: 'b.token !== a.token' },
-  { key: 'splice-enabled', reddens: 'b.enabled !== a.enabled' },
-]
-/** TWO DECLARED COUNTS, NAMED APART: the REFERENCE-HALF ROUNDS (the two reads whose returns are mutated) and
- *  the DELETION TEST'S MUTATIONS (one per member transition). Conflating them is what made the first form of
- *  SC-D-02a's verdict read MANUAL on a complete probe (MEASURED: `2 of 5`). */
-const D1_ROUND_COUNT = 2
-const D1_REFERENCE_MUTATION_COUNT = 5
-const MODULE_PROBE_OUT = join(MODULE_PROBE_DIR, 'module-probe-out.json')
-const MODULE_PROBE_SRC = [
-  "import { createHash } from 'node:crypto'",
-  "import { readFileSync, writeFileSync } from 'node:fs'",
-  'const MODULE = ' + JSON.stringify(SECURITY_STORE_MODULE),
-  'const STORE_PATH = ' + JSON.stringify(MODULE_PROBE_STORE),
-  'const OUT_PATH = ' + JSON.stringify(MODULE_PROBE_OUT),
-  'const SEED = ' + JSON.stringify({ token: TOKEN, enabled: GROUPS, maxJournalLength: JOURNAL }),
-  'const OUT = { module: MODULE, storePath: STORE_PATH, sha256: createHash("sha256").update(readFileSync(MODULE)).digest("hex"), fixture: null, rounds: [], setReturn: null, persistedAfterMutation: null, control: null, replacedFileControl: null, deletionAudit: [], errors: [] }',
-  'const snap = (o) => ({',
-  '  keys: Object.keys(o).sort(),',
-  '  token: Object.prototype.hasOwnProperty.call(o, "token") ? o.token : "<ABSENT>",',
-  '  enabled: Array.isArray(o.enabled) ? [...o.enabled].length + ":" + [...o.enabled].join("|") : "<NOT-AN-ARRAY>",',
-  '  mjl: o.maxJournalLength === undefined ? "<ABSENT>" : o.maxJournalLength,',
-  '  hasExtra: Object.prototype.hasOwnProperty.call(o, "dProbeExtra"),',
-  '})',
-  'const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)',
-  '/** THE DETECTOR — TRUE IFF THE SUBJECT HANDED OUT A LIVE REFERENCE. Six disjuncts, ONE PER MUTATION, so',
-  ' *  DELETING a term leaves that mutation undetectable; the deletionAudit at the end RUNS that deletion on',
-  ' *  these very bytes. */',
-  'const detectorFires = (b, a) => (b.hasExtra !== a.hasExtra) || (b.mjl !== a.mjl) || (b.token !== a.token)',
-  '  || (b.enabled !== a.enabled)',
-  'const MUTATE = (held) => {',
-  '  held.dProbeExtra = "MODULE-PROBE-MUTATION"',
-  '  held.maxJournalLength = 999',
-  '  held.enabled.push("dProbeInjectedGroup")',
-  '  delete held.token',
-  '  held.enabled.splice(0, 1)',
-  '  held.token = "MODULE-PROBE-HIJACK"',
-  '}',
-  'try {',
-  '  const mod = await import(MODULE)',
-  '  writeFileSync(STORE_PATH, JSON.stringify(SEED, null, 2))',
-  '  /** ROUND 1 — THE get() HALF: a FRESH store on the seeded record, then ONE round of mutation. */',
-  '  const s1 = mod.createSecurityStore({ path: STORE_PATH })',
-  '  const g0 = s1.get()',
-  '  OUT.fixture = { seededBytes: readFileSync(STORE_PATH, "utf8"), firstRead: snap(g0), loadedTheSeed: g0.token === SEED.token && g0.maxJournalLength === SEED.maxJournalLength && Array.isArray(g0.enabled) && g0.enabled.length === SEED.enabled.length }',
-  '  const before1 = snap(g0)',
-  '  MUTATE(g0)',
-  '  const secondRead1 = s1.get()',
-  '  const after1 = snap(secondRead1)',
-  '  OUT.rounds.push({ label: "store.get()", before: before1, mutated: snap(g0), after: after1, secondReadMoved: detectorFires(before1, after1), sameObjectReturned: g0 === secondRead1 })',
-  '  /** ROUND 2 — THE set(patch) RETURN: the SAME seeded record on a FRESH store. */',
-  '  writeFileSync(STORE_PATH, JSON.stringify(SEED, null, 2))',
-  '  const s2 = mod.createSecurityStore({ path: STORE_PATH })',
-  '  const ret0 = s2.set({ maxJournalLength: SEED.maxJournalLength + 3 })',
-  '  OUT.setReturn = { receipt: s2.lastWriteReceipt(), loadedTheSeed: ret0.token === SEED.token, keys: Object.keys(ret0).sort() }',
-  '  /** THE WRITE REALLY LANDED — the non-vacuity term for the whole "the return is detached" reading, read',
-  '   *  from the FILE this probe owns. */',
-  '  const fileAfterSet = JSON.parse(readFileSync(STORE_PATH, "utf8"))',
-  '  OUT.setReturn.fileAfterSetMoved = fileAfterSet.maxJournalLength === SEED.maxJournalLength + 3',
-  '  OUT.setReturn.fileAfterSet = fileAfterSet',
-  '  const before2 = snap(ret0)',
-  '  MUTATE(ret0)',
-  '  const secondRead2 = s2.get()',
-  '  const after2 = snap(secondRead2)',
-  '  OUT.rounds.push({ label: "store.set(patch) return", before: before2, mutated: snap(ret0), after: after2, secondReadMoved: detectorFires(before2, after2), sameObjectReturned: ret0 === secondRead2 })',
-  '  OUT.persistedAfterMutation = JSON.parse(readFileSync(STORE_PATH, "utf8"))',
-  '  /** THE FIRST CONTROL — A SHARED OBJECT: ONE live object handed to two readers, i.e. a subject that',
-  '   *  really does return a reference. If the detector cannot fire HERE it can never fire. */',
-  '  const shared = { token: "shared-subject", enabled: ["read"], maxJournalLength: 7 }',
-  '  const cb = snap(shared)',
-  '  MUTATE(shared)',
-  '  const ca = snap(shared)',
-  '  OUT.control = { label: "the SAME detector against a SHARED object (a subject that really returns a live reference)", before: cb, mutated: ca, secondReadMoved: detectorFires(cb, ca) }',
-  '  /** THE SECOND CONTROL — THE RECORD REPLACED OUT OF BAND: a FRESH store is constructed on a record this',
-  '   *  probe REWRITES beside the live one, so the "second read moved" term is shown to be able to move. */',
-  '  const replaced = { token: "REPLACED-FILE-CONTROL-TOKEN", enabled: ["read"], maxJournalLength: 3 }',
-  '  writeFileSync(STORE_PATH, JSON.stringify(replaced, null, 2))',
-  '  const s3 = mod.createSecurityStore({ path: STORE_PATH })',
-  '  const tb = before2',
-  '  const ta = snap(s3.get())',
-  '  OUT.replacedFileControl = { label: "the module read across a FILE replaced out of band (the detector MUST see the change)", before: tb, after: ta, secondReadMoved: detectorFires(tb, ta) }',
-  '  /** THE DELETION TEST, RUN — not described: every mutation\'s own disjunct is DELETED from the detector\'s',
-  '   *  SOURCE TEXT (read from this probe file, the bytes that ran), the SAME mutation is re-evaluated on the',
-  '   *  SHARED-OBJECT subject, and the reddening term\'s disappearance is recorded. */',
-  '  const selfSrc = readFileSync(new URL(import.meta.url), "utf8")',
-  '  /** THE PREDICATE\'S SOURCE IS ALL OF ITS LINES, NOT THE FIRST ONE: the detector is written across two',
-  '   *  lines, and reading only the first made TWO of the five terms read `termIsInTheDetector: false` while the',
-  '   *  file plainly carries them (MEASURED — the third finding this instrument produced about itself). */',
-  '  const srcLines = selfSrc.split("\\n")',
-  '  const predStart = srcLines.findIndex((l) => l.includes("const detectorFires = (b, a) =>"))',
-  '  const predLine = predStart < 0 ? "" : [srcLines[predStart], srcLines[predStart + 1] || ""].join(" ")',
-  '  /** EACH MUTATION IS APPLIED TO ITS OWN SHARED OBJECT AND COMPARED WITH ITS OWN BASELINE, so a mutation\'s',
-  '   *  term is the ONLY one its own round can move: a composite subject (every mutation at once) leaves',
-  '   *  every term true for every mutation, which is the defect the first form of this audit had. */',
-  '  /** FIVE MUTATIONS, FOUR TERMS: `delete-token` and `overwrite-token` are two TRANSITIONS of the SAME',
-  '   *  member, and a presence change moves the value term too — so they are mapped to that ONE term and the',
-  '   *  row states it, rather than splitting a term into two spellings that the same deletion would disable. */',
-  '  const MUTATIONS = [',
-  '    { key: "add-member", term: "b.hasExtra !== a.hasExtra", apply: (o) => { o.dProbeExtra = "MODULE-PROBE-MUTATION" } },',
-  '    { key: "change-maxjournal", term: "b.mjl !== a.mjl", apply: (o) => { o.maxJournalLength = 999 } },',
-  '    { key: "delete-token", term: "b.token !== a.token", apply: (o) => { delete o.token } },',
-  '    { key: "overwrite-token", term: "b.token !== a.token", apply: (o) => { o.token = "MODULE-PROBE-HIJACK" } },',
-  '    { key: "splice-enabled", term: "b.enabled !== a.enabled", apply: (o) => { o.enabled.splice(0, 1) } },',
-  '  ]',
-  '  const TERMS = [...new Set(MUTATIONS.map((m) => m.term))]',
-  '  for (const T of TERMS) {',
-  '    const mapped = MUTATIONS.filter((m) => m.term === T)',
-  '    const present = predLine.includes(T)',
-  '    const stripped = predLine.split(T).join("false")',
-  '    let detector = null',
-  '    let throwsWithout = null',
-  '    try {',
-  '      detector = new Function("b", "a", "return " + stripped.replace("const detectorFires = (b, a) =>", ""))',
-  '    } catch (e) { throwsWithout = String(e) }',
-  '    for (const M of mapped) {',
-  '      const subject = { token: "shared-subject", enabled: ["read"], maxJournalLength: 7 }',
-  '      const bObj = snap(subject)',
-  '      M.apply(subject)',
-  '      const aObj = snap(subject)',
-  '      const wholeDetectorFires = detectorFires(bObj, aObj)',
-  '      let firesWithout = null',
-  '      try { firesWithout = detector === null ? null : detector(bObj, aObj) === true } catch (e) { throwsWithout = String(e) }',
-  '      OUT.deletionAudit.push({',
-  '        mutation: M.key,',
-  '        term: T,',
-  '        termIsInTheDetector: present,',
-  '        theWholeDetectorFiresOnThisMutationAlone: wholeDetectorFires,',
-  '        detectorStillFiresAfterDeletingTheTerm: firesWithout,',
-  '        throwsWithout,',
-  '        reddensUnderDeletion: present === true && wholeDetectorFires === true && (firesWithout === false || throwsWithout !== null),',
-  '      })',
-  '    }',
-  '  }',
-  '} catch (e) { OUT.errors.push(String(e && e.stack ? e.stack : e)) }',
-  'writeFileSync(OUT_PATH, JSON.stringify(OUT, null, 2))',
-  'process.stdout.write("PROBE-OK")',
-].join('\n')
-writeFileSync(MODULE_PROBE_PATH, MODULE_PROBE_SRC)
-/** **THE PROBE'S OWN FAILURE IS REPORTED, NOT SWALLOWED** (`execSync` throws on a non-zero exit OR on a
- *  signal): the child's status, stdout, stderr and thrown message are ALL carried into the row, because a
- *  probe that dies must read as an INSTRUMENT state with its cause visible rather than as a quiet `MANUAL`. */
-const moduleProbePrewrite = { dir: MODULE_PROBE_DIR, listing: (() => { try { return readdirSync(MODULE_PROBE_DIR) } catch (e) { return 'UNREADABLE: ' + String(e) } })(), probeExists: exists(MODULE_PROBE_PATH), probeBytes: (() => { try { return statSync(MODULE_PROBE_PATH).size } catch (e) { return -1 } })() }
-const moduleProbeRun = (() => {
-  try {
-    return { ok: true, stdout: execSync(`${JSON.stringify(process.execPath)} ${JSON.stringify(MODULE_PROBE_PATH)}`, { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] }), exitCode: 0 }
-  } catch (e) {
-    return {
-      ok: false,
-      stdout: String(e?.stdout ?? ''),
-      stderr: String(e?.stderr ?? ''),
-      signal: e?.signal ?? null,
-      exitCode: e?.status === undefined ? 'THREW-WITHOUT-STATUS' : e.status,
-      error: String(e?.message ?? e),
-    }
-  }
-})()
-/** THE PROBE'S OWN BYTES ARE CHECKED IN: the probe's sha256 and the module's are printed by SC-D-02a, so a
- *  reader can tell WHICH bytes produced the reading (the campaign's SHA-pin discipline, applied to [B]). */
-const moduleProbeSha = sha256Text(MODULE_PROBE_SRC)
-/** THE PROBE WRITES ITS RESULT TO A FILE **AND** PRINTS A TOKEN, and BOTH are terms: a child that threw before
- *  `writeFileSync` leaves no result file (an INSTRUMENT state), while a result file without the token would be
- *  a stale artifact from an earlier run. The first draft of this probe emitted JSON on stdout and one of its
- *  readings contradicted a focused re-run of the SAME module — so the result is now a FILE READ, the probe
- *  names its own fixture check (`loadedTheSeed`), and a contradicting reading is reported as a FAIL with its
- *  measurement rather than absorbed. */
-const moduleProbeOut = (() => {
-  try { return JSON.parse(readOrNull(MODULE_PROBE_OUT)) } catch { return null }
-})()
-const moduleProbeTokenOk = moduleProbeRun.ok && moduleProbeRun.stdout.includes('PROBE-OK')
-const moduleProbe = moduleProbeOut
-const moduleProbeReadable = moduleProbeTokenOk && moduleProbe !== null && typeof moduleProbe === 'object' && moduleProbeOut !== null
-const moduleProbeErrs = moduleProbeReadable && Array.isArray(moduleProbe.errors) ? moduleProbe.errors : []
-const moduleProbeFixtureLoaded = moduleProbeReadable && moduleProbe.fixture?.loadedTheSeed === true
-const moduleProbeMutationRows = moduleProbeReadable && Array.isArray(moduleProbe.rounds) ? moduleProbe.rounds : []
-const moduleProbeFired = moduleProbeMutationRows.filter((r) => r.secondReadMoved === true)
-const moduleProbeHeld = moduleProbeMutationRows.filter((r) => r.secondReadMoved !== true)
-const moduleProbeControl = moduleProbeReadable ? moduleProbe.control : null
-const moduleProbeControlFires = moduleProbeControl?.secondReadMoved === true
-const moduleProbeReplacedControl = moduleProbeReadable ? moduleProbe.replacedFileControl : null
-const moduleProbeReplacedControlFires = moduleProbeReplacedControl?.secondReadMoved === true
-const moduleDeletionAudit = moduleProbeReadable && Array.isArray(moduleProbe.deletionAudit) ? moduleProbe.deletionAudit : []
-const moduleDeletionReddens = moduleDeletionAudit.filter((r) => r.reddensUnderDeletion === true)
 /** THE INSTRUMENT TABLE — PRINTED AT THIS FAMILY (and at its verdict block), so a reader can see WHAT EACH
- *  INSTRUMENT CAN AND CANNOT OBSERVE without reading this driver. It is the honest boundary statement the two
- *  clauses need: the REFERENCE half is [B]-only; the CONSEQUENCE half is [CDP]/[G]-only. */
+ *  INSTRUMENT CAN AND CANNOT OBSERVE without reading this driver. **THE `[B]` ROW IS RETIRED WITH THE STORE
+ *  MODULE (`2026-10-29`, `E-1`, `D-16`): the in-process probe that imported it by source path cannot run, so
+ *  this family's surviving instruments are `[CDP]` and `[G]` and the REFERENCE half has NO instrument at this
+ *  head — which is exactly what the two rows below say in their own `cannotObserve` cells.** */
 const INSTRUMENT_TABLE = [
-  { tag: '[B]', what: 'an IN-PROCESS module probe (a scratch .mjs under mkdtemp, run by this driver\'s own node, importing src/main/security-store.ts by SOURCE path)', canObserve: 'the EXACT object identity the module\'s get()/set(patch) hand back IN THE CALLING PROCESS — the REFERENCE HALF of D-1, unreachable from any live instrument', cannotObserve: 'the live app: it boots no Electron process, reads no MCP surface, and cannot see whether the live bridge serializes anything', familyDLayer: 'SC-D-02a / SC-D-11 (the reference half and its two controls)' },
-  { tag: '[CDP]', what: 'Chrome DevTools Protocol Runtime.evaluate against the app\'s OWN renderer realm', canObserve: 'what the RENDERER receives from window.provident.security.get()/set(), and whether the LIVE tier-4 file moves', cannotObserve: 'the reference half: the value has ALREADY crossed an IPC boundary and been STRUCTURED-CLONED, so a renderer-side mutation cannot reach main whatever main returns', familyDLayer: 'SC-D-03 (the consequence half), SC-D-05…SC-D-08 (the write gate in each MCP state)' },
-  { tag: '[G]', what: 'file BYTES and sha256 over the scratch profiles', canObserve: 'the persisted tier-4 file\'s exact bytes before and after every probe, and an OUT-OF-BAND file replacement used as SC-D-03\'s second control', cannotObserve: 'any in-memory object identity', familyDLayer: 'SC-D-01 (the seeded fixture), SC-D-03, SC-D-05…SC-D-07' },
+  { tag: '[CDP]', what: 'Chrome DevTools Protocol Runtime.evaluate against the app\'s OWN renderer realm', canObserve: 'what the RENDERER receives from window.provident.security.get()/set(), and whether the LIVE tier-4 file moves', cannotObserve: 'the reference half: the value has ALREADY crossed an IPC boundary and been STRUCTURED-CLONED, so a renderer-side mutation cannot reach main whatever main returns', familyDLayer: 'SC-D-03 (the consequence half), SC-D-04 (the write\'s return), SC-D-05…SC-D-08 (the write gate in each MCP state)' },
+  { tag: '[G]', what: 'file BYTES and sha256 over the scratch profiles', canObserve: 'the persisted record\'s exact bytes before and after every probe, and an OUT-OF-BAND record replacement used as SC-D-03\'s second control', cannotObserve: 'any in-memory object identity', familyDLayer: 'SC-D-03, SC-D-05…SC-D-07' },
 ]
 
 // ── THE ROW-KIND DECLARATION, DEFINED HERE BECAUSE FAMILY D'S VERDICT BLOCK USES IT ────────────────────
@@ -1644,19 +1509,14 @@ const ROW_KINDS = {
   'SC-PRE-01': 'INSTRUMENT', 'SC-PRE-02': 'INSTRUMENT',
   'SC-CH-01': 'CHANNEL', 'SC-CH-02': 'CHANNEL',
   'SC-A-01': 'ARM', 'SC-A-02': 'ARM', 'SC-A-03': 'CONTROL', 'SC-A-04': 'ARM',
-  'SC-A-05': 'ARM', 'SC-A-06': 'CHANNEL-CENSUS',
+  'SC-A-06': 'CHANNEL-CENSUS',
   'SC-B-01': 'ARM', 'SC-B-02': 'CONTROL', 'SC-B-03': 'ARM', 'SC-B-04': 'ARM', 'SC-B-05': 'ARM',
   'SC-B-06': 'CONTROL', 'SC-B-07': 'ARM', 'SC-B-08': 'CONTROL', 'SC-B-09': 'ARM',
   'SC-C-01': 'ARM', 'SC-C-02': 'ARM', 'SC-C-03': 'ARM', 'SC-C-04': 'CONTROL', 'SC-C-05': 'ARM',
-  'SC-D-01': 'FIXTURE',
-  'SC-D-02a': 'STATIC-CENSUS', 'SC-D-11': 'CONTROL',
   'SC-D-03': 'ARM', 'SC-D-04': 'ARM',
   'SC-D-05': 'ARM', 'SC-D-06': 'ARM', 'SC-D-07': 'ARM', 'SC-D-08': 'ARM', 'SC-D-10': 'CONTROL',
-  'SC-E-01': 'ARM', 'SC-E-02': 'ARM', 'SC-E-03': 'CONTROL',
-  'SC-E-04': 'ARM', 'SC-E-05': 'ARM', 'SC-E-06': 'CONTROL',
-  'SC-E-07': 'ARM', 'SC-E-08': 'CONTROL',
-  'SC-E-09': 'CONDITION',
-  'SC-G-01': 'STATIC-CENSUS', 'SC-G-02': 'STATIC-CENSUS', 'SC-CLEAN-01': 'INSTRUMENT-CLEANUP',
+  'SC-E-02': 'ARM',
+  'SC-G-02': 'STATIC-CENSUS', 'SC-CLEAN-01': 'INSTRUMENT-CLEANUP',
 }
 const rowKind = (c) => ROW_KINDS[c.id.split(' ')[0]] ?? 'UNDECLARED'
 
@@ -1668,43 +1528,18 @@ const rowKind = (c) => ROW_KINDS[c.id.split(' ')[0]] ?? 'UNDECLARED'
 const familyRows = (fam) => CHECKS.filter((c) => new RegExp(`^SC-${fam}-`).test(c.id))
 const verdictSplit = (set) => ['PASS', 'FAIL', 'MANUAL', 'PARKED'].map((v) => `${set.filter((c) => c.verdict === v).length} ${v}`).join(' / ')
 
-// ── FAMILY D, D-1 — THE MODULE-LAYER REFERENCE HALF ([B]) ──────────────────────────────
-const dSeedBytes = readOrNull(secPathA)
-const dSeedSha = dSeedBytes === null ? null : sha256(secPathA)
-const dSeedRecord = (() => { try { return JSON.parse(dSeedBytes) } catch { return null } })()
-/** **THE ASSERTED SHAPE IS THE THREE DECLARED MEMBERS AND THE SEEDED IDENTITY — NOT THE SEEDED CAP.** The
- *  live profile\'s `maxJournalLength` is NOT `JOURNAL` at this point in the run BY DESIGN: `SC-B-03` drives a
- *  real operator write (`JOURNAL + 3`, 44) on this very profile BEFORE Family D, and the cap is a MEASURED
- *  reading of the live file rather than a constant. The first draft asserted `JOURNAL` here and read FAIL on a
- *  CORRECT profile — the instrument defect, filed and fixed in this pass rather than explained away. */
-const dSeedShapeOk = dSeedRecord !== null && dSeedRecord.token === TOKEN
-  && Array.isArray(dSeedRecord.enabled) && dSeedRecord.enabled.length === GROUPS.length
-  && typeof dSeedRecord.maxJournalLength === 'number'
-const scD01Verdict = dSeedShapeOk ? 'PASS' : (dSeedRecord === null ? 'MANUAL' : 'FAIL')
-check('SC-D-01 (Family D, fixture)', 'FIXTURE: the profile this family measures carries the three declared tier-4 members with the seeded token and group set, read FROM THE PROFILE — and the module probe\'s OWN fixture check (`loadedTheSeed`) is a term of SC-D-02a', scD01Verdict,
-  `NAMED TERMS: securityPath=${join(bootA.profile, SECURITY_FILE)}, sha256=${String(dSeedSha).slice(0, 16)}…, bytes=${JSON.stringify(dSeedBytes)}, parsed=${JSON.stringify(dSeedRecord)}, the shape asserted (token===TOKEN, enabled.length===${GROUPS.length}, maxJournalLength is a number — the live value, NOT the seed\'s ${JOURNAL}, because SC-B-03\'s operator write already ran on this profile)=${dSeedShapeOk}; THE MODULE PROBE\'S OWN FIXTURE READ (the [B] subject\'s): ${JSON.stringify(moduleProbe?.fixture ?? null)}, loadedTheSeed=${moduleProbeFixtureLoaded}`,
-  'the fixture every Family D reading stands on: a probe against a DEFAULT-shaped store would not measure the object the live app actually ingests — MEASURED, the first draft of this probe read the module\'s DEFAULT record because its seed write did not precede the store construction, and that defect is why the probe now asserts `loadedTheSeed` itself. A MISSING fixture reads MANUAL (no fixture, no reading) rather than FAIL — the §6.2 audits\' rule that a broken instrument is never charged as a defect')
-
-/** **THE FOUR-STATE MAPPING, WITH THE DELETION TEST AS AN INSTRUMENT PRECONDITION:** a mutation whose term
- *  does NOT redden under its own deletion is a mutation that never carried the reading — the exact defect
- *  class this battery was repaired for six times — so that state reads `MANUAL` (an INSTRUMENT fault), never
- *  `PASS`. A fired round is the requirement reading and reads `FAIL` whatever the instrument's state. */
-const moduleDeletionAuditComplete = moduleDeletionAudit.length === D1_REFERENCE_MUTATION_COUNT
-  && moduleDeletionReddens.length === D1_REFERENCE_MUTATION_COUNT
-const scD02aVerdict = (!moduleProbeReadable || moduleProbeErrs.length > 0 || !moduleProbeFixtureLoaded) ? 'MANUAL'
-  : (moduleProbeMutationRows.length !== D1_ROUND_COUNT) ? 'MANUAL'
-    : (moduleProbeFired.length > 0 ? 'FAIL' : (moduleDeletionAuditComplete ? 'PASS' : 'MANUAL'))
-check('SC-D-02a (Family D, D-1) — THE REFERENCE HALF, AT THE MODULE LAYER [B]', 'D-1 REQUIREMENT ARM (reference half): NO tier-4 read hands out a LIVE REFERENCE to the original — each of the FIVE mutations applied to what the module\'s get() or its set(patch) returned is INVISIBLE to a SECOND read, and the persisted bytes are unmoved too', scD02aVerdict,
-  `NAMED TERMS: probe=${MODULE_PROBE_PATH} + its own file result ${MODULE_PROBE_OUT} (a scratch dir under mkdtemp — the repo, the operator's profile and every src/** byte are untouched), probeSha256=${moduleProbeSha.slice(0, 16)}…, module=${moduleProbe?.module ?? SECURITY_STORE_MODULE}, moduleSha256=${String(moduleProbe?.sha256 ?? '').slice(0, 16)}…, executable=${JSON.stringify(process.execPath)}, probeDirListingBeforeTheRun=${JSON.stringify(moduleProbePrewrite)} (the file the run is ABOUT to execute — a probe deleted before its own execution is the measured ENOENT cause), probeExitCode=${moduleProbeRun.exitCode}, probeStdoutToken=${JSON.stringify(String(moduleProbeRun.stdout).trim().slice(0, 40))}, probeSignal=${JSON.stringify(moduleProbeRun.signal ?? null)}, probeStderr=${JSON.stringify(String(moduleProbeRun.stderr ?? '').slice(-400))}, probeThrownError=${JSON.stringify(String(moduleProbeRun.error ?? ''))}, probeErrors=${JSON.stringify(moduleProbeErrs)}; THE PROBE'S OWN FIXTURE READ=${JSON.stringify(moduleProbe?.fixture ?? null)} (loadedTheSeed=${moduleProbeFixtureLoaded} — the non-vacuity term: a probe on the module's DEFAULT record would measure the wrong object AND was the first draft's measured defect); THE ROUNDS (${moduleProbeMutationRows.length} of ${D1_ROUND_COUNT} declared): ${JSON.stringify(moduleProbeMutationRows)}; rounds whose SECOND READ MOVED (a live reference was handed out): ${JSON.stringify(moduleProbeFired.map((r) => r.label))} — EMPTY is the D-1 reading; rounds where it did NOT move: ${JSON.stringify(moduleProbeHeld.map((r) => r.label))}; THE set() RETURN'S OWN REPORT=${JSON.stringify(moduleProbe?.setReturn ?? null)}; THE PERSISTED RECORD AFTER THE MUTATION ROUNDS=${JSON.stringify(moduleProbe?.persistedAfterMutation ?? null)}; THE DELETION TEST, RUN OVER THESE VERY BYTES: ${JSON.stringify(moduleDeletionAudit)} => ${moduleDeletionReddens.length} of ${moduleDeletionAudit.length} mutations REDDEN under the deletion of their own term; THE REDDENING TERM PER MUTATION, PRINTED (the fixture that drives each is the mutation itself, applied to the SHARED-OBJECT subject): ${JSON.stringify(MODULE_PROBE_MUTATIONS.map((m) => m.key + '→' + m.reddens))}`,
-  'THE ARCHITECT\'S D-1 CLAUSE, MEASURED AT ITS DECISIVE SITE: the module\'s own return is the value every downstream holder receives, and a live reference there would let any holder read or mutate tier-4 state by holding the returned object. **THE INSTRUMENT BOUNDARY IS THE POINT OF THIS ROW: a bridge-only probe (SC-D-03) CANNOT observe this half at all** — the value has already been structured-cloned across IPC, so the renderer\'s copy could not reach main even on a reference-returning store. The SHARED-OBJECT control (SC-D-11) drives the SAME detector against a subject that really does return a live reference, and the REPLACED-FILE control drives it across a record replaced out of band, so neither "the detector did not fire" nor "the second read equals the first" is unfalsifiable')
-
-const scD02bVerdict = (!moduleProbeReadable) ? 'MANUAL'
-  : (!moduleProbeControlFires || !moduleProbeReplacedControlFires) ? 'FAIL' : (moduleDeletionAuditComplete && moduleProbeControlFires ? 'PASS' : 'MANUAL')
-check('SC-D-11 (Family D, D-1) — THE SHARED-OBJECT + REPLACED-FILE SUBJECT PAIR', 'CONTROL: the SAME detector FIRES on a subject that really does hand out a live reference (one shared object handed to two readers), AND the SAME module read MOVES when the record is replaced out of band — so SC-D-02a is neither a detector that cannot fire nor a read that can never change', scD02bVerdict,
-  `NAMED TERMS: CONTROL-1 (SHARED OBJECT — the same detector, a subject that really returns a reference): ${JSON.stringify(moduleProbeControl)}, fires=${moduleProbeControlFires}. CONTROL-2 (REPLACED FILE — the same module read across a record replaced out of band): ${JSON.stringify(moduleProbeReplacedControl)}, fires=${moduleProbeReplacedControlFires}. A control that CANNOT REFUSE is the defect class this battery was repaired for six times, so BOTH directions are driven: the first proves the detector fires on a REFERENCE, the second proves a module read is a READING rather than a constant`,
-  'the falsifiability of SC-D-02a in both directions. **CONTROL-1 is deliberately the WRONG implementation of the same function** (a subject returning the SAME object on every call), so a detector that failed to fire there would make every "clone" reading above vacuous. **CONTROL-2 drives the second-read term itself**: if the module\'s read could not see a record replaced out of band, "the second read is unchanged" would be unfalsifiable')
-
-
+// ── FAMILY D, D-1 — THE LIVE HALF, AND THE BASELINE ITS CONTROL READS ───────────────────
+/** **THE REFERENCE-HALF ROWS ARE RETIRED (`2026-10-29`, the `security-store-storeroom` rebuild): `SC-D-01`
+ *  (whose own subject named the module probe\'s fixture check `loadedTheSeed` as a term), `SC-D-02a` (the
+ *  module\'s own `get()`/`set(patch)` return identity) and `SC-D-11` (that probe\'s two controls). THE
+ *  MODULE THEY MEASURED IS DELETED (`E-1`, `D-16`) and their instrument imported it BY SOURCE PATH, so it
+ *  cannot run at all: the reference half retires AS A UNIT and is NOT re-pointed, because no app module is
+ *  left whose in-process return any instrument could hold. The LIVE consequence arm (`SC-D-03`) and the
+ *  write-return arm (`SC-D-04`) stand, and each declares in its own subject that IPC serialization means it
+ *  cannot witness the reference half — which is why they are CONSEQUENCE checks. The reading below survives
+ *  because `SC-D-03`\'s out-of-band control needs a baseline: the record the profile\'s own persisted file
+ *  carries, read AT ITS DECLARED ADDRESS (`['operator-settings']`, the store\'s own image — C-4). */
+const dSeedRecord = readPersistedRecord(bootA.profile)
 // ── FAMILY D, D-1 — THE CONSEQUENCE HALF, LIVE ([CDP] + [G]) ───────────────────────────
 /** **THE INSTRUMENT BOUNDARY, STATED IN THE ROW ITSELF: THIS HALF CANNOT WITNESS THE REFERENCE HALF.**
  *  `window.provident.security.get()` crosses an IPC boundary that ALREADY SERIALIZES, so the object the
@@ -1741,13 +1576,17 @@ const d1FileUnmoved = d1FileShaBefore === d1FileShaAfter
  *  ON is never written to. */
 const D1_CONTROL_PROFILE = seedProfile('D1-CTL')
 const D1_CONTROL_RECORD = { token: TOKEN, enabled: GROUPS, maxJournalLength: JOURNAL + 500 }
-writeFileSync(join(D1_CONTROL_PROFILE, SECURITY_FILE), JSON.stringify(D1_CONTROL_RECORD, null, 2))
+/** **RE-GRAINED UNDER C-4:** the "tier-4 file" whose record this control REPLACES is the instance's own
+ *  file, and a record there is ONE value at `['operator-settings']` — so the replacement is written in the
+ *  store's own shape and read back through the same accessor every other reading uses. The bytes are written
+ *  on a SEPARATE scratch profile this driver seeded and owns, never on the profile the app is running on. */
+writeFileSync(join(D1_CONTROL_PROFILE, SECURITY_FILE), JSON.stringify({ [SETTINGS_RECORD_KEY]: D1_CONTROL_RECORD }, null, 2))
 const D1_CONTROL_READBACK = (() => {
   try { return { ok: true, bytes: readFileSync(join(D1_CONTROL_PROFILE, SECURITY_FILE), 'utf8') } }
   catch (e) { return { ok: false, error: String(e?.message ?? e) } }
 })()
-const d1ControlReadbackFires = D1_CONTROL_READBACK.ok && JSON.stringify(JSON.parse(D1_CONTROL_READBACK.bytes)) === JSON.stringify(D1_CONTROL_RECORD)
-const d1ControlBaselineFires = JSON.stringify(dSeedRecord) !== JSON.stringify(D1_CONTROL_RECORD)
+const d1ControlReadbackFires = D1_CONTROL_READBACK.ok && JSON.stringify(readPersistedRecord(D1_CONTROL_PROFILE)) === JSON.stringify(D1_CONTROL_RECORD)
+const d1ControlBaselineFires = dSeedRecord !== null && JSON.stringify(dSeedRecord) !== JSON.stringify(D1_CONTROL_RECORD)
 /** **THE CONTROL'S PROFILE IS REMOVED HERE, IN THE RUN, AND THE REMOVAL IS A TERM OF ITS OWN ROW** — the
  *  end-of-run cleanup row (`SC-CLEAN-01`) sweeps every profile this run CREATED, and this control creates one;
  *  leaving it to the final drain is what the drain is for, but a control profile that survives the run is a
@@ -1765,16 +1604,18 @@ const D1_LIVE_DELETION_AUDIT = [
 const scD03Verdict = (!d1HeldIsSeeded || !d1SetReturnIsSeeded) ? 'MANUAL'
   : (!d1ControlReadbackFires || !d1ControlBaselineFires) ? 'FAIL'
     : (d1LiveUnmoved && d1FileUnmoved) ? 'PASS' : 'FAIL'
-check('SC-D-03 (Family D, D-1) — THE CONSEQUENCE HALF, LIVE [CDP]+[G]', 'D-1 REQUIREMENT ARM (consequence half): mutating what the LIVE bridge read returned changes NOTHING — a FRESH read and the persisted tier-4 file\'s bytes both equal their pre-mutation readings. **THIS ARM CANNOT WITNESS THE REFERENCE HALF: IPC serialization means it holds REGARDLESS of what main returns (SC-D-02a is the decisive reading); it is a CONSEQUENCE check**', scD03Verdict,
-  `NAMED TERMS: the record TAKEN FROM THE LIVE BRIDGE and HELD in the page realm=${JSON.stringify(d1LiveHeld)}; the pre-mutation FRESH read=${JSON.stringify(d1LiveBefore)}; THE MUTATION APPLIED TO THE RETURNED OBJECT=${JSON.stringify(d1LiveMutation)} (a member added, maxJournalLength→999, enabled pushed AND spliced, token deleted); the post-mutation FRESH read=${JSON.stringify(d1LiveAfter)}; liveUnmoved=${d1LiveUnmoved}; the tier-4 FILE: sha256 ${d1FileShaBefore.slice(0, 16)}… → ${d1FileShaAfter.slice(0, 16)}…, bytes ${JSON.stringify(d1FileBefore)} → ${JSON.stringify(d1FileAfter)}, fileUnmoved=${d1FileUnmoved}; NON-VACUITY: the mutation really ran (${JSON.stringify(d1LiveMutation)}), the fresh read really answered (token=${JSON.stringify(d1LiveAfter?.token)}), the file was really read twice, and the POSITIVE PRECONDITION d1HeldIsSeeded=${d1HeldIsSeeded} / d1SetReturnIsSeeded=${d1SetReturnIsSeeded} (a broken instrument reads MANUAL, never PASS and never an accidental FAIL); CONTROL-OUT-OF-BAND-FILE (the second control for this half): profile=${D1_CONTROL_PROFILE}, its tier-4 file REWRITTEN by this driver with maxJournalLength=${JOURNAL + 500} → readback=${JSON.stringify(D1_CONTROL_READBACK).slice(0, 200)}, readbackFires=${d1ControlReadbackFires}, baselineDiffersFromMutated=${d1ControlBaselineFires}, the control's OWN profile removed in-run=${d1ControlProfileRemoved}; THE DELETION AUDIT=${JSON.stringify(D1_LIVE_DELETION_AUDIT)}`,
+check('SC-D-03 (Family D, D-1) — THE CONSEQUENCE HALF, LIVE [CDP]+[G]', 'D-1 REQUIREMENT ARM (consequence half): mutating what the LIVE bridge read returned changes NOTHING — a FRESH read and the persisted record\'s bytes both equal their pre-mutation readings. **THIS ARM CANNOT WITNESS THE REFERENCE HALF AT ALL: IPC serialization means it holds REGARDLESS of what main returns, and the reference half\'s own rows are retired with the store module (`E-1`, `D-16`); it is a CONSEQUENCE check, and no reading of it may stand in for that half**', scD03Verdict,
+  `NAMED TERMS: the record TAKEN FROM THE LIVE BRIDGE and HELD in the page realm=${JSON.stringify(d1LiveHeld)}; the pre-mutation FRESH read=${JSON.stringify(d1LiveBefore)}; THE MUTATION APPLIED TO THE RETURNED OBJECT=${JSON.stringify(d1LiveMutation)} (a member added, maxJournalLength→999, enabled pushed AND spliced, token deleted); the post-mutation FRESH read=${JSON.stringify(d1LiveAfter)}; liveUnmoved=${d1LiveUnmoved}; the tier-4 FILE: sha256 ${d1FileShaBefore.slice(0, 16)}… → ${d1FileShaAfter.slice(0, 16)}…, bytes ${JSON.stringify(d1FileBefore)} → ${JSON.stringify(d1FileAfter)}, fileUnmoved=${d1FileUnmoved}; NON-VACUITY: the mutation really ran (${JSON.stringify(d1LiveMutation)}), the fresh read really answered (token=${JSON.stringify(d1LiveAfter?.token)}), the file was really read twice, and the POSITIVE PRECONDITION d1HeldIsSeeded=${d1HeldIsSeeded} / d1SetReturnIsSeeded=${d1SetReturnIsSeeded} (a broken instrument reads MANUAL, never PASS and never an accidental FAIL); CONTROL-OUT-OF-BAND-FILE (the second control for this half): profile=${D1_CONTROL_PROFILE}, the record in its tier-4 file REWRITTEN by this driver with maxJournalLength=${JOURNAL + 500} → readback=${JSON.stringify(D1_CONTROL_READBACK).slice(0, 200)}, readbackFires=${d1ControlReadbackFires}, baselineDiffersFromMutated=${d1ControlBaselineFires}, the control's OWN profile removed in-run=${d1ControlProfileRemoved}; THE DELETION AUDIT=${JSON.stringify(D1_LIVE_DELETION_AUDIT)}`,
   'the LIVE consequence of the D-1 clause: an external party holding the object a secure read returned must not be able to read or mutate tier-4 state through it. **THE ROW STATES ITS OWN INSTRUMENT LIMIT IN ITS SUBJECT** — the IPC boundary serializes, so this arm holds even for a reference-returning store, and a battery that presented it as the reference witness would be over-reading its own instrument. The OUT-OF-BAND control writes a SEPARATE scratch profile\'s tier-4 file (never a profile the app is running on) and re-reads it through a fresh read, so the "unchanged" terms demonstrably CAN move; d1ControlReadbackFires and d1ControlBaselineFires are terms of the verdict, so a dead control reads FAIL rather than PASS')
 
 // ── FAMILY D, D-1 — THE set(patch) RETURN (a read-shaped return of tier-4 data) ────────
 /** **THE LIVE ARM IS A REAL MUTATION-RESISTANCE TEST, NOT A TAUTOLOGY.** The response the page realm holds is
  *  the object the caller RECEIVED; it is mutated in the page, and then BOTH the persisted bytes AND a FRESH
- *  read must equal their pre-mutation readings. The non-vacuity term is the write itself: the row records the
- *  module probe's own file read after the same shape of write (`setReturn.fileAfterSetMoved`), so a `set()`
- *  that silently did nothing cannot make a "nothing changed" reading vacuous. */
+ *  read must equal their pre-mutation readings. **THE NON-VACUITY TERM MOVED AT THE REBUILD (`2026-10-29`):**
+ *  it used to be the module probe's own file read after the same shape of write; that probe is retired with
+ *  the store module (`E-1`, `D-16`), so the term is now the LIVE precondition `d1SetReturnIsSeeded` — the
+ *  response this row mutates answered a committed receipt carrying the seeded token — and a `set()` that
+ *  silently did nothing reads `MANUAL`, never a vacuous "nothing changed". */
 const setReturnLive = await cdp.evaluate('window.__d1SetReturn')
 const setReturnFileBefore = readOrNull(secPathA)
 const setReturnShaBefore = setReturnFileBefore === null ? null : sha256(secPathA)
@@ -1794,15 +1635,20 @@ const setReturnFileAfter = readOrNull(secPathA)
 const setReturnShaAfter = setReturnFileAfter === null ? null : sha256(secPathA)
 const setReturnLiveUnmoved = JSON.stringify(setReturnReadAfter) === JSON.stringify(setReturnReadBefore)
 const setReturnFileUnmoved = setReturnShaBefore !== null && setReturnShaBefore === setReturnShaAfter
-const setReturnModuleRow = moduleProbeMutationRows.find((r) => r.label === 'store.set(patch) return') ?? null
-const setReturnFileWriteLanded = moduleProbe?.setReturn?.fileAfterSetMoved === true
+/** **THE TERM LIST MOVED, THE CLAIM DID NOT (`2026-10-29`, the `security-store-storeroom` rebuild).**
+ *  The retired `[B]` terms (`setReturnModuleRow`, `setReturnFileWriteLanded` and every module-probe round)
+ *  are DROPPED with the store module (`E-1`, `D-16`); the NON-VACUITY term the module probe used to carry —
+ *  "the same shape of write really landed" — is now the LIVE precondition `d1SetReturnIsSeeded`, whose
+ *  receipt came from the write whose response this row mutates: a `set` that answered no committed receipt
+ *  carrying the seeded token reddens NOTHING here and reads `MANUAL` instead. OLD TERMS:
+ *  `setReturnModuleRow.secondReadMoved !== true`, `moduleProbeFired.length === 0`, `setReturnFileWriteLanded`;
+ *  NEW TERM: `d1SetReturnIsSeeded`. KEPT, unchanged: `setReturnLiveUnmoved`, `setReturnFileUnmoved`. */
 const scD04Verdict = (setReturnLive === null || typeof setReturnLive !== 'object' || setReturnFileBefore === null) ? 'MANUAL'
-  : (setReturnModuleRow === null) ? 'MANUAL'
-    : (setReturnModuleRow.secondReadMoved !== true && moduleProbeFired.length === 0
-      && setReturnLiveUnmoved && setReturnFileUnmoved && setReturnFileWriteLanded) ? 'PASS' : 'FAIL'
-check('SC-D-04 (Family D, D-1) — THE set(patch) RETURN', 'D-1 ARM ON THE WRITE\'S RETURN: the ruling says DATA REQUESTS, and set(patch) answers a READ-SHAPED return of tier-4 data — measured on BOTH layers: the module\'s own return is detached ([B], the reference half) and the LIVE response really is mutated in the page, with BOTH a fresh read AND the persisted bytes unmoved afterwards', scD04Verdict,
-  `NAMED TERMS: the LIVE set() response held in the page realm=${JSON.stringify(setReturnLive)}; THE MUTATION APPLIED TO IT=${JSON.stringify(setReturnMutation)}; the FRESH read BEFORE=${JSON.stringify(setReturnReadBefore)} and AFTER=${JSON.stringify(setReturnReadAfter)}, liveUnmoved=${setReturnLiveUnmoved}; the tier-4 FILE sha256 ${String(setReturnShaBefore).slice(0, 16)}… → ${String(setReturnShaAfter).slice(0, 16)}…, fileUnmoved=${setReturnFileUnmoved}; THE NON-VACUITY TERM (the same shape of write, measured at the module layer): the probe\'s own set() report=${JSON.stringify(moduleProbe?.setReturn ?? null)} (fileAfterSetMoved=${setReturnFileWriteLanded}); THE MODULE-LAYER READING OF THE SAME RETURN (the reference half, [B]): ${JSON.stringify(setReturnModuleRow)}; every module-probe round that MOVED its second read=${JSON.stringify(moduleProbeFired.map((r) => r.label))} (EMPTY is the reading); THE BINDING, STATED: D-1 DOES bind this return — it is a read-shaped return of tier-4 data — and the measurement is that NEITHER layer hands out the original`,
-  'the ruling\'s own words are "data requests", and a write\'s return IS a read of the post-state. Both layers are named because they answer DIFFERENT questions: [B] answers "is the object the module handed back the original?" and [CDP] answers "can the live caller corrupt tier-4 state through the response it received?" — and the live half alone would be satisfied by the IPC serialization whatever the module does. The non-vacuity terms are the persisted value AND the module-layer file read: a set() that silently did nothing would make every "no mutation" reading vacuous. **The cap is NOT asserted against the seed: SC-B-03\'s operator write already ran on this profile, so the row asserts the pre-mutation readings EQUAL the post-mutation readings rather than a constant the run does not control**')
+  : (!d1SetReturnIsSeeded) ? 'MANUAL'
+    : (setReturnLiveUnmoved && setReturnFileUnmoved) ? 'PASS' : 'FAIL'
+check('SC-D-04 (Family D, D-1) — THE set(patch) RETURN', 'D-1 ARM ON THE WRITE\'S RETURN: the ruling says DATA REQUESTS, and set(patch) answers a READ-SHAPED return of tier-4 data — the LIVE response is really mutated in the page, and BOTH a fresh read AND the persisted record\'s bytes are unmoved afterwards (the module-layer reference half is retired with the store module, so this is a CONSEQUENCE arm and says so)', scD04Verdict,
+  `NAMED TERMS: the LIVE set() response held in the page realm=${JSON.stringify(setReturnLive)}; THE MUTATION APPLIED TO IT=${JSON.stringify(setReturnMutation)}; the FRESH read BEFORE=${JSON.stringify(setReturnReadBefore)} and AFTER=${JSON.stringify(setReturnReadAfter)}, liveUnmoved=${setReturnLiveUnmoved}; the tier-4 FILE sha256 ${String(setReturnShaBefore).slice(0, 16)}… → ${String(setReturnShaAfter).slice(0, 16)}…, fileUnmoved=${setReturnFileUnmoved}; THE NON-VACUITY TERM (the same write, read on the LIVE channel): the set() response held above answered a committed receipt carrying the seeded token = ${JSON.stringify(d1SetReturnIsSeeded)} (its receipt=${JSON.stringify(d1SetReturnHeld?.write ?? null)}); **THE MODULE-LAYER TERMS ARE RETIRED WITH THE STORE MODULE** (the probe's own set() report, its round list and its reference-half row — E-1, D-16); THE BINDING, STATED: D-1 DOES bind this return — it is a read-shaped return of tier-4 data — and the measurement here is the LIVE one: the caller's mutation reaches neither a fresh read nor the persisted record's bytes`,
+  'the ruling\'s own words are "data requests", and a write\'s return IS a read of the post-state. **THIS IS NOW A CONSEQUENCE ARM ALONE, AND IT SAYS SO:** `[CDP]` answers "can the live caller corrupt tier-4 state through the response it received?", and it would hold whatever a reference-returning store did, because the IPC boundary serializes. The reference half belonged to the `[B]` module probe and is RETIRED with the store module (`E-1`, `D-16`). The non-vacuity term is the persisted value AND the committed receipt the held response came from: a set() that silently did nothing would make every "no mutation" reading vacuous. **The cap is NOT asserted against the seed: SC-B-03\'s operator write already ran on this profile, so the row asserts the pre-mutation readings EQUAL the post-mutation readings rather than a constant the run does not control**')
 
 // ── FAMILY D, D-2 — THE WRITE GATE'S STATES, DRIVEN ────────────────────────────────────
 /** THE GATE STATE IS READ FROM THE APP IN EVERY STATE (never assigned by this driver): `exclusion` rides the
@@ -1823,9 +1669,7 @@ const d2Write = async (value) => cdp.evaluate(`window.provident.security.set({ m
 const d2UnknownWrite = async () => cdp.evaluate("window.provident.security.set({ dUnknownRuntimeMember: 'D2-UNKNOWN-MEMBER' })")
 const d2FileRead = () => {
   const raw = readOrNull(secPathA)
-  let parsed = null
-  try { parsed = JSON.parse(raw) } catch { parsed = null }
-  return { raw, parsed, sha: exists(secPathA) ? sha256(secPathA) : null }
+  return { raw, parsed: readPersistedRecord(bootA.profile), sha: exists(secPathA) ? sha256(secPathA) : null }
 }
 
 const d2StateEnabled = await d2ReadState()
@@ -1969,32 +1813,31 @@ check('SC-D-10 (Family D, D-2) — THE ADMISSIBLE-TIER WRITE-INSTRUMENT PROBE', 
 // ── FAMILY D — THE FAMILY VERDICTS, DERIVED FROM THE ARMS ABOVE ────────────────────────
 /** THE FAMILY-D ROWS ARE BUCKETED THROUGH THE DRIVER'S DECLARED PER-ID KIND TABLE (never read off prose),
  *  and the two verdicts below are DERIVED FROM THE ARMS rather than restated:
- *    D-1 = COMPLIANT iff NO module round moved its second read, the deletion test reddens on EVERY mutation,
- *          BOTH controls fire, and every D-1 row PASSES. **The reference half carries this verdict: the live
- *          consequence arm is a term too, but it CANNOT be the only one — it would hold on a
- *          reference-returning store (IPC serialization).**
+ *    D-1 = COMPLIANT iff EVERY surviving D-1 arm PASSES and none reads MANUAL. **The arms are the LIVE
+ *          consequence pair (`SC-D-03`, `SC-D-04`); the reference half is RETIRED with the store module and
+ *          this verdict does NOT claim it** — re-read 2026-10-29, the rebuild pass.
  *    D-2 = COMPLIANT iff every READABLE requirement arm PASSES, with the admissible-tier control PASSING and
  *          no MANUAL arm among them; a MANUAL arm is a WITHHELD claim and cannot manufacture a COMPLIANT read. */
 const familyDRows = familyRows('D')
 const dRowsByKind = (kind) => familyDRows.filter((c) => rowKind(c) === kind)
 const dById = (re) => CHECKS.filter((c) => re.test(c.id))
-const d1ReferenceArms = dById(/^SC-D-02a/)
-const d1ControlArms = dById(/^SC-D-11/)
 const d1LiveArms = dById(/^SC-D-03/)
 const d1SetReturnArms = dById(/^SC-D-04/)
 const d2ArmsResolved = dById(/^SC-D-0[567]/)
 const d2RaceRow = dById(/^SC-D-08/)
 const d2ControlRow = dById(/^SC-D-10/)
-const d1TermsForCompliant = moduleProbeFired.length === 0
-  && moduleProbeMutationRows.length === D1_ROUND_COUNT
-  && moduleProbeControlFires && moduleProbeReplacedControlFires
-  && moduleDeletionAudit.length === D1_REFERENCE_MUTATION_COUNT
-  && moduleDeletionReddens.length === D1_REFERENCE_MUTATION_COUNT
-  && [...d1ReferenceArms, ...d1ControlArms, ...d1LiveArms, ...d1SetReturnArms].every((c) => c.verdict === 'PASS')
-const d1InstrumentBroken = !moduleProbeReadable || moduleProbeMutationRows.length !== D1_ROUND_COUNT
-  || moduleDeletionReddens.length !== D1_REFERENCE_MUTATION_COUNT
-const d1Verdict = (moduleProbeFired.length > 0) ? 'NON-COMPLIANT'
-  : (d1InstrumentBroken ? 'PARTIAL' : (d1TermsForCompliant ? 'COMPLIANT' : 'PARTIAL'))
+/** **REBUILT BY THIS PASS (`2026-10-29`, the `security-store-storeroom` rebuild).** The `[B]` derivations
+ *  (`d1ReferenceArms`/`d1ControlArms`, the module rounds, the deletion test and the controls-fire pair) name
+ *  readings that NO LONGER EXIST: those rows are retired with the store module (`E-1`, `D-16`) and their probe
+ *  imported it by source path. The verdict is derived from the arms that stand — `SC-D-03` and `SC-D-04` — and
+ *  the boundary is said out loud instead of being bought back with a retired arm: **a COMPLIANT here means "no
+ *  LIVE consequence of a tier-4 read corrupts state", never "the module hands back clones", which nothing in
+ *  this battery measures at this head.** */
+const d1ArmsResolved = [...d1LiveArms, ...d1SetReturnArms]
+const d1ArmFails = d1ArmsResolved.filter((c) => c.verdict === 'FAIL')
+const d1ArmManuals = d1ArmsResolved.filter((c) => c.verdict === 'MANUAL')
+const d1Verdict = (d1ArmsResolved.length === 0 || d1ArmManuals.length > 0) ? 'PARTIAL'
+  : (d1ArmFails.length > 0 ? 'NON-COMPLIANT' : 'COMPLIANT')
 const d2ArmFails = d2ArmsResolved.filter((c) => c.verdict === 'FAIL')
 const d2ArmManuals = d2ArmsResolved.filter((c) => c.verdict === 'MANUAL')
 const d2ControlOk = d2ControlRow.length > 0 && d2ControlRow.every((c) => c.verdict === 'PASS')
@@ -2002,16 +1845,12 @@ const d2Verdict = (d2ArmsResolved.length === 0) ? 'PARTIAL'
   : (!d2ControlOk ? 'PARTIAL' : (d2ArmFails.length > 0 ? 'NON-COMPLIANT' : (d2ArmManuals.length > 0 ? 'PARTIAL' : 'COMPLIANT')))
 console.log('\n  FAMILY D — THE ARCHITECT\'S CLONE/WRITE RULING, DERIVED FROM THE ARMS (never restated):')
 console.log('    D-1 (every tier-4 READ returns a CLONE, never a reference) = ' + d1Verdict)
-console.log('      ARMS: reference half [B] ' + JSON.stringify(d1ReferenceArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · controls ' + JSON.stringify(d1ControlArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · consequence half [CDP] ' + JSON.stringify(d1LiveArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · the set(patch) return ' + JSON.stringify(d1SetReturnArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
-console.log('      TERMS: rounds whose SECOND READ MOVED (a live reference was handed out) = ' + JSON.stringify(moduleProbeFired.map((r) => r.label))
-  + '; rounds measured = ' + moduleProbeMutationRows.length + ' of ' + D1_ROUND_COUNT + ' declared ROUNDS (the two reads whose returns are mutated; the five MUTATIONS are the deletion test below, a separate declared count)'
-  + '; deletion test = ' + moduleDeletionReddens.length + ' of ' + moduleDeletionAudit.length + ' mutations redden under the deletion of their own term'
-  + '; controls fire = ' + JSON.stringify({ sharedObject: moduleProbeControlFires, replacedFile: moduleProbeReplacedControlFires })
-  + '; d1TermsForCompliant = ' + d1TermsForCompliant + ', d1InstrumentBroken = ' + d1InstrumentBroken)
-console.log('      WHY THIS VERDICT: a fired round would read NON-COMPLIANT whether or not the live half held, because the live half CANNOT witness the reference half (IPC serialization) — the reference half carries the verdict and the live half carries the consequence. An INCOMPLETE deletion test reads PARTIAL: a mutation whose own term does not redden is an INSTRUMENT fault, and an instrument fault is never a PASS.')
+console.log('      ARMS: consequence half [CDP] ' + JSON.stringify(d1LiveArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · the set(patch) return ' + JSON.stringify(d1SetReturnArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + '; armFails = ' + JSON.stringify(d1ArmFails.map((c) => c.id.split(' ')[0])) + ', armManuals = ' + JSON.stringify(d1ArmManuals.map((c) => c.id.split(' ')[0])))
+console.log('      TERMS: liveUnmoved = ' + d1LiveUnmoved + ' (the held record\'s mutation is invisible to a FRESH read), fileUnmoved = ' + d1FileUnmoved + ' (the persisted record\'s bytes are unmoved), setReturnLiveUnmoved = ' + setReturnLiveUnmoved + ', setReturnFileUnmoved = ' + setReturnFileUnmoved
+  + '; the out-of-band control fires = ' + JSON.stringify({ readback: d1ControlReadbackFires, baselineDiffers: d1ControlBaselineFires }))
+console.log('      WHY THIS VERDICT: the reference half — "is the object the module handed back the original?" — is RETIRED WITH THE STORE MODULE (E-1, D-16) and is NOT re-pointed: the two arms above are CONSEQUENCE checks, they would hold on a reference-returning store because the IPC boundary serializes, and no reading of them may stand in for that half. What they DO measure is that a caller holding what a read or a write\'s answer returned cannot reach tier-4 state through it — neither a fresh read nor the persisted record moves.')
 console.log('    D-2 (runtime tier-4 writes permitted IFF the MCP server is blocked) = ' + d2Verdict)
 console.log('      ARMS: ' + JSON.stringify(d2ArmsResolved.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
   + ' · the transition race (a WITHHELD claim) ' + JSON.stringify(d2RaceRow.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
@@ -2053,52 +1892,47 @@ console.log('    THE RULING\'S OWN SCOPE SETTLEMENT: docs/pending.md §R P-R3\'s
  *        terminal is what `SC-E-04` drives, and the boot-ingestion read is covered by `SC-E-01`'s
  *        load-path observation.**
  *
- *  **THE THREE OBLIGATIONS, EACH A ROW SET:**
+ *  **RE-READ 2026-10-29 (the `security-store-storeroom` rebuild) — THE MAPPING ABOVE IS KEPT AS FILED AND IS
+ *  NO LONGER THE OPERATIVE ROW SET:** `SC-E-01`, `SC-E-03`, `SC-E-04`, `SC-E-05`, `SC-E-06`, `SC-E-07`,
+ *  `SC-E-08` and `SC-E-09` are RETIRED (`E-1`, `D-16`) — their instrument imported the deleted store module
+ *  by source path, or their subject was a composition site `E-1`/`E-3` removed — and the ONE arm that stands
+ *  is `SC-E-02`, the live bridge arm of `E-1`. Answer (2)'s live half is therefore the only obligation still
+ *  measured at this head; answers (3) and (4) have NO row and this pass does not manufacture one, which is
+ *  said here rather than left for a reader to infer from a missing id.
+ *
+ *  **THE THREE OBLIGATIONS, EACH A ROW SET (as filed; the row sets are read through the re-read above):**
  *    **`E-1` — JSON-SAFETY (answer 2):** an unrepresentable value must not be committed, must not be
  *      reported `committed`, and must not silently corrupt the tier.
  *    **`E-2` — COMMIT ⟺ PERSISTED (answer 4):** a write is not fully committed until it saves to file.
  *    **`E-3` — FULL-SURFACE CLONE (answers 2/3):** no carve-out; every value-returning member of the
  *      tier's own surface must hand back a DETACHED value.
  *
- *  **INSTRUMENT BOUNDARIES, DECLARED AT THIS FAMILY (the Family-D discipline, applied again):**
- *    `[B]` — the SAME in-process module probe shape Family D uses (a scratch `.mjs` under `mkdtemp`,
- *    run by this driver's own `node`, importing `src/main/security-store.ts` by SOURCE path). It sees
- *    the EXACT value and identity the module hands back in the calling process. It boots no Electron.
+ *  **INSTRUMENT BOUNDARIES, DECLARED AT THIS FAMILY — RE-WRITTEN BY THE REBUILD PASS (`2026-10-29`):
+ *  the `[B]` module probe this family used is RETIRED WITH THE STORE MODULE (`E-1`, `D-16`) and its arms
+ *  (`SC-E-01`, `SC-E-03`, `SC-E-04`, `SC-E-06`, `SC-E-07`, `SC-E-08`) retire with it, AS DO the live
+ *  `SC-E-05` (built on the deleted persist's failure site) and `SC-E-09` (whose lock census censused the
+ *  deleted module's bytes). What is declared here is therefore the instrument of the ONE arm that stands:**
  *    `[CDP]` — `Runtime.evaluate` against the app's OWN renderer realm. **A `[CDP]` probe CANNOT
  *    witness `E-1`'s or `E-3`'s decisive half:** the value has already been structured-cloned across
- *    the IPC boundary. It therefore measures the CONSEQUENCE (`E-1`'s bridge arm) or reads `MANUAL`.
- *    `[G]` — the file's exact bytes and sha256 over scratch profiles.
+ *    the IPC boundary, so it measures the CONSEQUENCE (`E-1`'s live bridge arm, `SC-E-02`) only.
+ *    `[G]` — the record's exact bytes and sha256 over scratch profiles, read at the record's own
+ *    address inside the instance's file (C-4).
  *  **AND THE `[CDP]` ARM DECLARES WHAT `structuredClone` CANNOT CARRY:** `BigInt`, `Map`, `Set`,
  *  `Date`, `undefined`, `Infinity`, `NaN`, cyclical and nested structures DO cross the IPC boundary;
  *  a **`function`** and a **`Symbol`** CANNOT be transported at all (a `DataCloneError` at the
- *  bridge), so this family does NOT pretend to test them over the bridge — they are `[B]`-only, and
- *  the row says so rather than reporting a `PASS` for a probe that could never run. */
+ *  bridge), so this family does NOT pretend to test them over the bridge — they were `[B]`-only, and
+ *  with that instrument retired they are measured by NO ROW of this battery, which the row says at
+ *  its own subject rather than reporting a `PASS` for a probe that could never run. */
 
-/** **THE `[B]` FAMILY-E PROBE.** A SECOND scratch module probe (the Family-D probe is neither
- *  extended nor re-run by this family — its readings stand as filed). Its own declared fixture check
- *  (`seedLoaded`) is a term of `SC-E-01`, and its OWN failure is reported with its exit code, stdout,
- *  stderr and thrown message rather than being swallowed. **IT WRITES EVERY READING IT TAKES** — the
- *  receipt, the in-memory read afterwards, AND the file's bytes — because `E-1`'s and `E-2`'s whole
- *  question is what those THREE say to each other. */
-const E_PROBE_DIR = mkdtempSync(join(tmpdir(), 'sc-live-E-'))
-registerCleanup(() => { try { removeWithVerify(E_PROBE_DIR) } catch { /* gone */ } })
-const E_PROBE_SCRATCH = join(E_PROBE_DIR, 'scratch')
-const E_PROBE_PATH = join(E_PROBE_DIR, 'family-e-probe.mjs')
-const E_PROBE_OUT = join(E_PROBE_DIR, 'family-e-probe-out.json')
-/** **THE FAMILY-E PROBE'S OWN SEED — A REDUCED GROUP SET, AND THE REDUCTION IS A NON-VACUITY TERM:**
- *  the array member (\`groups\`) can only MOVE if a group it names is NOT already enabled, and boot A's
- *  seeded record carries all FIVE — so on THAT record every \`groups\` probe would read a vacuous
- *  "nothing moved". The two-group record below is the one that lets the array axis register a LANDING
- *  (\`["graph"]\` really enters the record) and a FILTERING (an unrepresentable ELEMENT really vanishes). */
-const E_SEED_RECORD = { token: TOKEN, enabled: ['read', 'dispatch'], maxJournalLength: JOURNAL }
-const E_CONTROL_WRITE = { token: 'E2-CONTROL-TOKEN', maxJournalLength: 88 }
-/** ══ THE CONTRACT-DECLARED DOMAIN TABLE — ONE DEFINITION, IN THE DRIVER'S OWN SCOPE, INTERPOLATED
- *  INTO THE PROBE (`2026-10-11`, the SEVENTH round's `S3` re-measure). ══
+/** ══ THE CONTRACT-DECLARED DOMAIN TABLE — ONE DEFINITION, IN THE DRIVER'S OWN SCOPE, READ BY THE
+ *  SURVIVING ARM (`2026-10-11`, the SEVENTH round's `S3` re-measure; re-read `2026-10-29`). ══
  *
- *  **WHY IT IS OUT HERE RATHER THAN INSIDE THE PROBE:** the driver's own readings must be checked
- *  against the SAME table the probe charges with (`eProbeContractTableAgrees` in `SC-E-01`), so the
- *  table has ONE definition and is passed in; and `SC-E-02`'s bridge rows classify their probes with it
- *  too. A second, hand-copied table would be a drift risk the row could not see.
+ *  **WHY IT IS OUT HERE RATHER THAN INSIDE A PROBE:** the table has ONE definition in the driver's own
+ *  scope, and the surviving arm classifies its probes with THAT definition (`declaredStatusOf`, read by
+ *  `SC-E-02`'s `b1b_theBridgeCarriesTheContractTable`). A second, hand-copied table would be a drift risk
+ *  the row could not see. **THE MODULE-LAYER TWIN THAT USED TO READ THE SAME TABLE IS RETIRED WITH THE
+ *  STORE MODULE (`2026-10-29`, `E-1`, `D-16`): the live arm is the table's only reader at this head, and
+ *  the table therefore stays as the classifier the surviving row's non-vacuity term reads.**
  *
  *  **WHAT IT ENCODES, AND WHY THE ROWS NEEDED IT AT ALL:** `SC-E-01`'s `t2` and `SC-E-02`'s `b2` as
  *  filed charged a `committed` receipt for EVERY value that does not survive a JSON round trip —
@@ -2119,10 +1953,11 @@ const E_CONTROL_WRITE = { token: 'E2-CONTROL-TOKEN', maxJournalLength: 88 }
  *  refuses the whole patch. That is why `poisoned`/`plainObject`/`safeString`/`safeNumber`/`safeArray`
  *  are ADMITTED on `groups` and REFUSED on the scalar members.
  *
- *  **THE TABLE IS ALSO A TERM:** the probe re-derives the classification from it and the driver
- *  compares the two (`contractTableAgrees`, `b1b_theBridgeCarriesTheContractTable`); a probe whose
- *  readings carried no classification, or whose table disagreed, reads `MANUAL` — never a PASS. Every
- *  classification is auditable at this one site, with its clause. */
+ *  **THE TABLE IS ALSO A TERM:** the surviving arm re-derives the classification from it and the driver
+ *  compares the two (`b1b_theBridgeCarriesTheContractTable`); an arm whose readings carried no
+ *  classification, or whose table disagreed, reads `MANUAL` — never a PASS. Every classification is
+ *  auditable at this one site, with its clause. **THE MODULE-LAYER `contractTableAgrees` HALF IS RETIRED
+ *  WITH ITS ROW (`2026-10-29`, `E-1`, `D-16`); the table itself stands because the live arm reads it.** */
 const CONTRACT_DECLARED_STATUS = [
   { value: 'BigInt', clause: '§2.2 item 3 / §6 PAR-2-3-4', refused: 'all', admitted: null, reason: 'no arm admits a bigint at any depth' },
   { value: 'cyclic', clause: '§2.2 item 3 / §6 PAR-2-3-4', refused: 'all', admitted: null, reason: 'the cycle guard: not representable on any member or element' },
@@ -2148,568 +1983,7 @@ const declaredStatusOf = (valueId, member) => {
   const refused = c.refused === 'all' ? true : c.refused.split(',').includes(member)
   return { declaredRefused: refused, clause: c.clause, reason: c.reason }
 }
-const E_PROBE_SRC = `import { createHash } from "node:crypto"
-import { readFileSync, writeFileSync, mkdirSync, chmodSync, statSync, rmSync } from "node:fs"
-import { join } from "node:path"
-const MODULE = ${JSON.stringify(SECURITY_STORE_MODULE)}
-const SCRATCH = ${JSON.stringify(E_PROBE_SCRATCH)}
-const OUT_PATH = ${JSON.stringify(E_PROBE_OUT)}
-const SEED = ${JSON.stringify(E_SEED_RECORD)}
-const CONTROL_WRITE = ${JSON.stringify(E_CONTROL_WRITE)}
-const OUT = { module: MODULE, moduleSha256: createHash("sha256").update(readFileSync(MODULE)).digest("hex"), scratch: SCRATCH, seed: SEED, values: [], probes: [], unwritable: [], surface: [], controls: [], deletion: [], observations: [], errors: [], contractTable: [], reGrain: {}, refusalReasonTokens: [] }
-/** THE TAGGED ENCODER — JSON-safe, VALUE-PRESERVING, and CYCLE-SAFE, so every reading below survives
- *  being written to this probe's own result file. It is the INSTRUMENT, not the subject: the subject
- *  is always the module's own value. */
-const enc = (v) => {
-  if (v === undefined) return "<undefined>"
-  if (v === null) return "<null>"
-  const t = typeof v
-  if (t === "bigint") return "<bigint:" + v.toString() + ">"
-  if (t === "function") return "<function>"
-  if (t === "symbol") return "<symbol:" + String(v) + ">"
-  if (t === "string") return "<string:" + v + ">"
-  if (t === "boolean") return "<boolean:" + String(v) + ">"
-  if (t === "number") return Number.isNaN(v) ? "<NaN>" : (v === Infinity ? "<Infinity>" : (v === -Infinity ? "<-Infinity>" : "<number:" + String(v) + ">"))
-  if (v instanceof Map) return "<map:" + [...v.entries()].map((e) => enc(e[0]) + "=" + enc(e[1])).join("|") + ">"
-  if (v instanceof Set) return "<set:" + [...v].map(enc).join("|") + ">"
-  if (v instanceof Date) return "<date:" + v.toISOString() + ">"
-  const seen = new WeakSet()
-  const walk = (o) => {
-    if (o === null || typeof o !== "object") return enc(o)
-    if (seen.has(o)) return "<cycle>"
-    seen.add(o)
-    if (Array.isArray(o)) return "<array:" + o.map(walk).join("|") + ">"
-    return "<obj:" + Object.keys(o).sort().map((k) => k + "=" + walk(o[k])).join("|") + ">"
-  }
-  return walk(v)
-}
-/** **THE PREDICATE \`E-1\` READS: DOES THIS VALUE SURVIVE A JSON ROUND TRIP AS THE SAME VALUE IN THE
- *  SAME MEMBER?** TWO conjuncts, and BOTH are named because the deletion test deletes the second:
- *  (i) the round trip neither THROWS nor DROPS THE MEMBER; (ii) the VALUE that comes back is the
- *  value that went in. \`Infinity\`, \`NaN\` and a \`Date\` pass (i) and fail (ii) — the round trip SUCCEEDS
- *  and the value is not preserved — which is exactly the case this row exists to separate from a
- *  value that cannot be serialized at all. */
-const survives = (v) => {
-  try {
-    const rec = { m: v }
-    const s = JSON.stringify(rec)
-    if (s === undefined) return false
-    const back = JSON.parse(s)
-    if (!Object.prototype.hasOwnProperty.call(back, "m")) return false
-    return enc(back.m) === enc(v)
-  } catch (e) { return false }
-}
-/** THE DELETION TEST'S OWN DELETED FORM: conjunct (ii) REMOVED. Evaluated over the SAME readings
- *  below, so "the term is load-bearing" is a READING rather than a claim. */
-const survivesDeleted = (v) => {
-  try {
-    const rec = { m: v }
-    const s = JSON.stringify(rec)
-    if (s === undefined) return false
-    const back = JSON.parse(s)
-    return Object.prototype.hasOwnProperty.call(back, "m")
-  } catch (e) { return false }
-}
-/** ══ THE CONTRACT-DECLARED DOMAIN BOUNDARY — ADDED BY THE SEVENTH ROUND (\`2026-10-11\`, the \`S3\`
- *  RE-MEASURE), BECAUSE THE REQUIREMENT DIRECTION OF \`t2\`/\`b2\` CONFLICTED WITH THE LANDED CONTRACT. ══
- *
- *  **WHAT WAS OVER-STRICT, IN ONE LINE:** \`t1\`/\`t3\` and \`b1\`/\`b3\` are the architect-s OWN words (*"any
- *  value the tier cannot persist as JSON must not be accepted"*; the record and the file must not
- *  disagree), but \`t2\`/\`b2\` carried **THIS BATTERY-S OWN STRICTER CRITERION** — *"no \`committed\`
- *  receipt for any value that does not survive a JSON round trip"* — which charges the receipt for
- *  values the LANDED CONTRACT **EXPLICITLY DECLARES ADMITTED**.
- *
- *  **THE CLAUSES CONSULTED (the contract-s own bytes, not this driver-s prose):**
- *   - \`docs/specs/secure-store-discipline.md\` **\`§2.2\` item 3** — *"an unrepresentable value is
- *     admissible ONLY as a DECLARED CLEAR of its own member — i.e. \`null\` for \`token\`/
- *     \`maxJournalLength\` and **nothing else** … \`undefined\` as a member value is the **absent**
- *     marker (the landed semantics: the member keeps its current value — **the write is admitted**);
- *     … \`0\`/negatives/\`NaN\` on \`maxJournalLength\` are **declared-domain values the sanitize
- *     documents as a clear** (**admitted, and they clear** — note \`NaN\` is unrepresentable but
- *     sits in the documented clear arm, **which is exactly why it needs this rule rather than the
- *     predicate alone**); **\`Infinity\`/\`-Infinity\`/\`BigInt\`/a \`function\`/a \`Symbol\`/\`Map\`/\`Set\`/
- *     \`Date\`/a cyclic object — on ANY declared member, and at ANY depth inside an array — REFUSE the
- *     patch.**"*
- *   - **\`§6\` \`PAR-2\`** (\`patch.token\`): OUTSIDE = *"a non-string of any other kind … (**ADMISSION
- *     REFUSAL, whole patch, record unmoved**)"*; \`undefined\` = *"the absent marker: keep the current
- *     value"*.
- *   - **\`§6\` \`PAR-3\`** (\`patch.maxJournalLength\`): IN = *"a finite positive \`number\` (floored) · **\`0\`/
- *     \`-0\`/a negative number/\`NaN\`** (the declared CLEAR, documented as else-cleared) · \`null\` (the
- *     declared clear) · \`undefined\` (absent: keep the current value)"*; OUTSIDE = *"\`Infinity\`/
- *     \`-Infinity\` (**ADMISSION REFUSAL** — the measured divergence-s own fixture) · a non-number …"*.
- *   - **\`§6\` \`PAR-4\`/\`PAR-5\`** (\`patch.groups\`/\`patch.disable\`): *"an array carrying a **non-string**
- *     element (**dropped by the documented filter**, admitted) · an array carrying a **non-representable**
- *     element (\`BigInt(7)\`, a function, a nested cycle — **ADMISSION REFUSAL, whole patch**)"*.
- *   - **\`§5.6.1\` register row 8** (\`P-O2-TP-1\`): attempt (7) = *"\`maxJournalLength: 0 | -3 | NaN | null\` ⇒
- *     the declared CLEAR (\`undefined\`)"*; and **\`§3.1\` \`M-6\`**: *"\`set({token: undefined})\` (the absent
- *     marker) | admitted; \`committed\`; the record-s \`token\` keeps its current value"*.
- *
- *  **THE RULING-S TEST, APPLIED — the architect-s answer (2):** *"the store has to be JSON-safe anyway
- *  because it needs to store to file"*, so **a coercion that yields a JSON-SAFE state with no
- *  in-memory-versus-on-disk divergence IS compliant; a value that would be COMMITTED while diverging
- *  from the file (the old \`Infinity\` case) is NOT.** \`NaN\` clears to \`undefined\` in memory AND in the
- *  file (\`t3\`/\`b3\` read \`inMemoryEqualsFile=true\`); \`undefined\` is a keep-current marker whose write is
- *  a no-op that lands identically in both. **Neither diverges, so neither is chargeable.**
- *
- *  **SO THE CHARGE IS RE-GRAINED, AND IT IS REGRAINED AS A DECLARED, EXHAUSTIVE TABLE RATHER THAN A
- *  SHRUNK LIST** — every probe value × every member position is CLASSIFIED here, against the clauses
- *  above, so that a value the contract DECLARES \`admitted\` can no longer be charged as if it were
- *  refused, AND a value the contract DECLARES \`refused\` can no longer escape the charge. **The table
- *  is a TERM: the probe-s own per-position classification is compared against the driver-s, and a
- *  disagreement reads \`MANUAL\`.** */
-const DECLARED_REFUSAL_MEMBERS = new Set(["token", "maxJournalLength"])
-/** THE TABLE COMES IN FROM THE DRIVER — ONE DEFINITION, ONE PLACE TO AUDIT (\`CONTRACT_DECLARED_STATUS\`
- *  in this driver-s own scope, with every clause cited); the probe re-derives the per-position reading
- *  from it, and \`SC-E-01\` compares that reading against the driver-s OWN re-derivation. */
-const CONTRACT_DECLARED_STATUS = ${JSON.stringify(CONTRACT_DECLARED_STATUS)}
-/** THE PER-POSITION CLASSIFICATION — \`refused\` iff the contract declares the position a REFUSAL;
- *  \`admitted\` otherwise, with the clause that admits it. */
-const CONTRACT_STATUS_BY_VALUE = new Map(CONTRACT_DECLARED_STATUS.map((c) => [c.value, c]))
-const declaredStatusOf = (valueId, member) => {
-  const c = CONTRACT_STATUS_BY_VALUE.get(valueId)
-  if (!c) return { declaredRefused: false, clause: "<NO-CONTRACT-ROW: THE TABLE IS INCOMPLETE>", reason: "" }
-  const refused = c.refused === "all" ? true : c.refused.split(",").includes(member)
-  return { declaredRefused: refused, clause: c.clause, reason: c.reason }
-}
-/** **THE RE-GRAINED CHARGE, IN THE PREDICATE ITSELF (not in the prose): a \`committed\` receipt is
- *  charged IFF the contract declares the value REFUSED at that position.** The \`survives\` conjunct is
- *  kept IN the predicate — an unrepresentable value the contract DECLARES ADMITTED is exempt only
- *  because the contract admits it, never because the round-trip term was dropped. */
-const chargeable = (valueId, member, survives) => survives === false && declaredStatusOf(valueId, member).declaredRefused === true
-const committedReceiptViolatesTheContract = (p) => {
-  const landed = p.outcome === "COMMITS" || p.outcome === "DROPS" || p.outcome === "DROPS-BY-FILTER"
-  if (landed) return false
-  return p.receiptClaimsCommitted === true && chargeable(p.value, p.member, p.survives)
-}
-/** THE VALUE TABLE. \`survives\` IS A PINNED LITERAL PER VALUE — the control that can refuse: if the
- *  predicate disagreed with the table on ANY value, \`SC-E-03\` would redden. The POISONED value is
- *  pinned TRUE and is carried for a DIFFERENT reason: JSON.parse really does revive an own
- *  \`__proto__\` property, so it IS representable — the hazard it tests is PROTOTYPE POLLUTION, and the
- *  row that carries it says so rather than folding it into the representability count. */
-const VALUES = [
-  { id: "BigInt", survives: false, make: () => BigInt(7) },
-  { id: "cyclic", survives: false, make: () => { const o = { a: 1 }; o.self = o; return o } },
-  { id: "function", survives: false, make: () => function f() {} },
-  { id: "Symbol", survives: false, make: () => Symbol("s") },
-  { id: "Map", survives: false, make: () => new Map([["k", "v"]]) },
-  { id: "Set", survives: false, make: () => new Set([1, 2]) },
-  { id: "Date", survives: false, make: () => new Date(0) },
-  { id: "undefined", survives: false, make: () => undefined },
-  { id: "NaN", survives: false, make: () => NaN },
-  { id: "Infinity", survives: false, make: () => Infinity },
-  { id: "-Infinity", survives: false, make: () => -Infinity },
-  { id: "poisoned", survives: true, make: () => JSON.parse('{"__proto__":{"polluted":true}}') },
-  { id: "plainObject", survives: true, make: () => ({ x: 1 }) },
-  { id: "safeString", survives: true, make: () => "SAFE-VALUE" },
-  { id: "safeNumber", survives: true, make: () => 42 },
-  { id: "safeArray", survives: true, make: () => ["graph"] },
-]
-try {
-  mkdirSync(SCRATCH, { recursive: true })
-  const mod = await import(MODULE)
-  let seq = 0
-  const freshStore = (sub) => {
-    const p = join(SCRATCH, sub + "-" + (seq++) + ".json")
-    writeFileSync(p, JSON.stringify(SEED, null, 2))
-    return { path: p, store: mod.createSecurityStore({ path: p }) }
-  }
-  const memberOf = (o, member) => (member === "groups" ? (o === null || o === undefined ? "<NO-READ>" : o.enabled) : (o === null || o === undefined ? "<NO-READ>" : o[member]))
-  const shaOf = (p) => createHash("sha256").update(readFileSync(p)).digest("hex")
-  const fileMemberEnc = (p, member) => {
-    let parsed = null
-    try { parsed = JSON.parse(readFileSync(p, "utf8")) } catch (e) { return "<UNREADABLE-OR-UNPARSABLE>" }
-    return enc(memberOf(parsed, member))
-  }
-  /** THE PROBE'S OWN FIXTURE CHECK — a reading against the DEFAULT record would measure the wrong
-   *  object. */
-  const fixtureStore = freshStore("fixture")
-  const fixtureRead = fixtureStore.store.get()
-  OUT.seedLoaded = fixtureRead.token === SEED.token && Array.isArray(fixtureRead.enabled) && fixtureRead.enabled.length === SEED.enabled.length && fixtureRead.maxJournalLength === SEED.maxJournalLength
-  OUT.fixtureRead = enc(fixtureRead)
-  for (const V of VALUES) {
-    const value = V.make()
-    const measured = survives(value)
-    const measuredDeleted = survivesDeleted(value)
-    OUT.values.push({ id: V.id, enc: enc(value), pinnedSurvives: V.survives, measuredSurvives: measured, agreesWithThePinnedLiteral: V.survives === measured, survivesWithoutTheValuePreservationTerm: measuredDeleted, termIsLoadBearing: V.survives === false && measuredDeleted === true })
-    for (const member of ["token", "maxJournalLength", "groups"]) {
-      /** THE ARRAY MEMBER IS DRIVEN ON ITS OWN AXIS: an element-add list, so the value under test is
-       *  the ELEMENT and the reading is whether the element LANDED — a scalar-comparison rule would
-       *  have misclassified every array reading. A scalar value is wrapped (\`[value]\`) so the same
-       *  table drives all three members. */
-      const payload = member === "groups" ? [value] : value
-      const { path, store } = freshStore("probe")
-      const before = store.get()
-      const shaBefore = shaOf(path)
-      let receipt = null
-      let after = null
-      let threw = null
-      try {
-        const patch = {}
-        patch[member] = payload
-        store.set(patch)
-        receipt = store.lastWriteReceipt()
-        after = store.get()
-      } catch (e) { threw = String(e && e.message) }
-      const memberBefore = enc(memberOf(before, member))
-      const memberAfter = enc(memberOf(after, member))
-      const fileMember = fileMemberEnc(path, member)
-      const moved = memberAfter !== memberBefore
-      const elementRequested = member === "groups"
-      const elementLanded = member === "groups" && Array.isArray(after && after.enabled) && after.enabled.map(enc).includes(enc(value))
-      const outcome = threw !== null ? "THROWS"
-        : (member === "groups"
-          ? (elementLanded ? "COMMITS" : (moved ? "DROPS-BY-FILTER" : "IGNORES"))
-          : (moved ? (memberAfter === enc(payload) ? "COMMITS" : "DROPS") : "IGNORES"))
-      OUT.probes.push({
-        value: V.id, member, payload: enc(payload), threw, receipt,
-        memberBefore, memberAfter, fileMember,
-        outcome, moved, elementRequested, elementLanded,
-        survives: V.survives,
-        inMemoryEqualsFile: memberAfter === fileMember,
-        shaMoved: shaBefore !== shaOf(path),
-        receiptClaimsCommitted: receipt !== null && receipt.status === "committed",
-        /** THE CONTRACT-S OWN PER-POSITION READING, carried ON the reading so the charge is auditable
-         *  per probe rather than re-derived by the reader. */
-        declaredRefused: declaredStatusOf(V.id, member).declaredRefused,
-        declaredClause: declaredStatusOf(V.id, member).clause,
-        declaredReason: declaredStatusOf(V.id, member).reason,
-        commitsAValueThatDoesNotSurvive: outcome === "COMMITS" && V.survives === false,
-        silentlyDiscardsTheRequestedValue: (V.survives === false || member === "groups") && !elementLanded && outcome !== "THROWS" && V.survives === false,
-        /** \`t1\`-s charge, RE-GRAINED to the contract-declared boundary: a value the contract DECLARES
-         *  REFUSED is committed into the record. */
-        commitsAValueTheContractDeclaresRefused: outcome === "COMMITS" && chargeable(V.id, member, V.survives),
-        /** The AS-FILED criterion, kept as a RAW reading (not a verdict term). */
-        answersCommittedForAnUnrepresentableValue: V.survives === false && receipt !== null && receipt.status === "committed",
-        /** \`t2\`-s charge, RE-GRAINED: a \`committed\` receipt on a value the contract DECLARES REFUSED. */
-        committedReceiptForADeclaredRefusal: receipt !== null && receipt.status === "committed" && chargeable(V.id, member, V.survives),
-        /** \`t2b\`-s charge, NEW in this pass and NOT a re-grain: the refusal-s reason token must be the
-         *  declared one (S2.1 item 7 / S2.3 item 6). */
-        refusalReasonTokenIsNotTheDeclaredOne: receipt !== null && receipt.status === "refused" && receipt.reason !== "write-failed",
-      })
-    }
-  }
-  OUT.prototypePolluted = Object.prototype.polluted === true
-  /** THE NON-OBJECT PATCH IS A SEPARATE, DECLARED OBSERVATION AND NOT AN \`E-1\` TERM: a \`null\` patch is
-   *  OUTSIDE \`set()\`'s DECLARED domain, so totality over the declared domain is not violated — but
-   *  the reading is taken and printed rather than left for a later reader to rediscover. */
-  for (const bad of [null, undefined, 5, "str"]) {
-    const { store } = freshStore("patch")
-    let threw = null
-    let receipt = null
-    try { store.set(bad); receipt = store.lastWriteReceipt() } catch (e) { threw = String(e && e.message) }
-    OUT.observations.push({ id: "patch-not-an-object", patch: String(bad), threw, receipt })
-  }
-  /** ══ E-2 — THE DECISIVE INSTRUMENT IS A STORE THAT CANNOT SAVE. Three INDEPENDENT failure sites
-   *  (the parent is a regular file; the parent directory is not writable; the target path IS a
-   *  directory), each driven with a REAL \`set(patch)\`, each read THREE ways: the receipt, the
-   *  in-memory read afterwards, and the file's bytes. */
-  writeFileSync(join(SCRATCH, "blocker"), "a regular file, deliberately not a directory")
-  mkdirSync(join(SCRATCH, "ro"))
-  chmodSync(join(SCRATCH, "ro"), 0o500)
-  mkdirSync(join(SCRATCH, "dir-target.json"))
-  const UNWRITABLE = [
-    { label: "parent-is-a-regular-FILE", path: join(SCRATCH, "blocker", "store.json") },
-    { label: "parent-directory-NOT-WRITABLE-0500", path: join(SCRATCH, "ro", "store.json") },
-    { label: "target-path-IS-A-DIRECTORY", path: join(SCRATCH, "dir-target.json") },
-  ]
-  for (const U of UNWRITABLE) {
-    let store = null
-    let ctorThrew = null
-    try { store = mod.createSecurityStore({ path: U.path }) } catch (e) { ctorThrew = String(e && e.message) }
-    let receipt = null
-    let after = null
-    let threw = null
-    try { store.set({ token: CONTROL_WRITE.token, maxJournalLength: CONTROL_WRITE.maxJournalLength }); receipt = store.lastWriteReceipt(); after = store.get() } catch (e) { threw = String(e && e.message) }
-    const readFile = (p) => { try { return readFileSync(p, "utf8") } catch (e) { return "UNREADABLE:" + e.code } }
-    const beforeBytes = readFile(U.path)
-    const isDir = (() => { try { return statSync(U.path).isDirectory() } catch (e) { return false } })()
-    const afterBytes = readFile(U.path)
-    const inMemoryAdvanced = after !== null && after.token === CONTROL_WRITE.token && after.maxJournalLength === CONTROL_WRITE.maxJournalLength
-    const fileCarriesTheCommittedRecord = (() => { try { const p = JSON.parse(afterBytes); return p.token === CONTROL_WRITE.token && p.maxJournalLength === CONTROL_WRITE.maxJournalLength } catch (e) { return false } })()
-    OUT.unwritable.push({
-      label: U.label, path: U.path, ctorThrew, threw, receipt, inMemoryAfter: after === null ? "<NO-READ>" : enc(after),
-      inMemoryAdvanced, isDirectory: isDir, beforeBytes: String(beforeBytes).slice(0, 120), afterBytes: String(afterBytes).slice(0, 120),
-      bytesUnmoved: beforeBytes === afterBytes, fileCarriesTheCommittedRecord,
-      receiptClaimsFullCommitment: receipt !== null && receipt.status === "committed",
-      advancesTheRecordWithoutTheFile: inMemoryAdvanced === true && fileCarriesTheCommittedRecord === false,
-    })
-  }
-  /** THE WRITABLE-PATH CONTROL (\`SC-E-06\`): the SAME shape of write on a path that CAN be written. */
-  const writablePath = join(SCRATCH, "writable.json")
-  writeFileSync(writablePath, JSON.stringify(SEED, null, 2))
-  const writableStore = mod.createSecurityStore({ path: writablePath })
-  const writableReturn = writableStore.set({ token: CONTROL_WRITE.token, maxJournalLength: CONTROL_WRITE.maxJournalLength })
-  const writableReceipt = writableStore.lastWriteReceipt()
-  const writableParsed = (() => { try { return JSON.parse(readFileSync(writablePath, "utf8")) } catch (e) { return null } })()
-  OUT.controls.push({
-    id: "writable-path",
-    receipt: writableReceipt,
-    inMemoryAdvanced: writableReturn.token === CONTROL_WRITE.token,
-    landedInTheFile: writableParsed !== null && writableParsed.token === CONTROL_WRITE.token && writableParsed.maxJournalLength === CONTROL_WRITE.maxJournalLength,
-    fileBytes: JSON.stringify(writableParsed),
-    receiptClaimsCommitted: writableReceipt !== null && writableReceipt.status === "committed",
-  })
-  /** ══ E-3 — THE FULL-SURFACE CLONE. \`get()\`, \`set(patch)\`'s RETURN and \`lastWriteReceipt()\` are
-   *  EVERY value-returning member the module's own surface carries (\`Object.keys\` is CENSUSED here,
-   *  not assumed, and the census is printed). For each: hold the returned value, MUTATE it, re-read,
-   *  and record whether the mutation was VISIBLE. A member that hands out the same object twice is
-   *  NOT compliant under "full access". */
-  const surfPath = join(SCRATCH, "surface.json")
-  writeFileSync(surfPath, JSON.stringify(SEED, null, 2))
-  const surf = mod.createSecurityStore({ path: surfPath })
-  OUT.surfaceCensus = Object.keys(surf).sort()
-  const MUTATE = (held) => {
-    try { held.dProbeExtra = "E3-MUTATION" } catch (e) { /* frozen */ }
-    try { held.maxJournalLength = 999 } catch (e) { /* frozen */ }
-    try { if (Array.isArray(held.enabled)) held.enabled.push("eProbeGroup") } catch (e) { /* frozen */ }
-    try { delete held.token } catch (e) { /* frozen */ }
-  }
-  const MUTATE_RECEIPT = (held) => {
-    try { held.status = "MUTATED-BY-HOLDER" } catch (e) { /* frozen */ }
-    try { held.injected = "E3-RECEIPT-MUTATION" } catch (e) { /* frozen */ }
-  }
-  const gA = surf.get()
-  const gB = surf.get()
-  const gBase = enc(surf.get())
-  MUTATE(gA)
-  const gVisible = enc(surf.get()) !== gBase
-  OUT.surface.push({ member: "get()", sameObjectReturnedTwice: gA === gB, mutationVisibleOnTheNextRead: gVisible, readingAfterTheMutation: enc(surf.get()), term: "get().mutationVisibleOnTheNextRead", fixture: "the five-member MUTATE applied to what get() returned" })
-  const retHeld = surf.set({ maxJournalLength: SEED.maxJournalLength + 1 })
-  const retFresh = surf.get()
-  const retBase = enc(surf.get())
-  MUTATE(retHeld)
-  const retVisible = enc(surf.get()) !== retBase
-  OUT.surface.push({ member: "set(patch) return", sameObjectReturnedTwice: retHeld === retFresh, mutationVisibleOnTheNextRead: retVisible, readingAfterTheMutation: enc(surf.get()), term: "setReturn.mutationVisibleOnTheNextRead", fixture: "the five-member MUTATE applied to what set(patch) returned" })
-  const r1 = surf.lastWriteReceipt()
-  const r2 = surf.lastWriteReceipt()
-  const rBase = enc(r1)
-  MUTATE_RECEIPT(r1)
-  const r3 = surf.lastWriteReceipt()
-  const rVisible = enc(r3) !== rBase
-  OUT.surface.push({ member: "lastWriteReceipt()", sameObjectReturnedTwice: r1 === r2, mutationVisibleOnTheNextRead: rVisible, readingBefore: rBase, readingAfterTheMutation: enc(r3), term: "lastWriteReceipt().sameObjectReturnedTwice", fixture: "the receipt's own status overwritten and an injected member added by the HOLDER" })
-  /** THE DETECTOR'S TWO DIRECTIONS. The SAME detector is driven against a subject that CLONES (it must
-   *  NOT fire) and against a subject that hands out ONE SHARED OBJECT (it MUST fire). A detector that
-   *  fired on both, or on neither, would make every reading above vacuous. */
-  const cloneSubject = (() => { let last = null; return { set: () => { last = { status: "committed" }; return { status: "committed" } }, lastWriteReceipt: () => (last === null ? null : { status: last.status }) } })()
-  const cs = cloneSubject.set()
-  const csBase = enc(cloneSubject.lastWriteReceipt())
-  MUTATE_RECEIPT(cs)
-  const csVisible = enc(cloneSubject.lastWriteReceipt()) !== csBase
-  const sharedSubject = (() => { const one = { status: "committed" }; return { set: () => one, lastWriteReceipt: () => one } })()
-  const ss = sharedSubject.set()
-  const ssBase = enc(sharedSubject.lastWriteReceipt())
-  MUTATE_RECEIPT(ss)
-  const ssVisible = enc(sharedSubject.lastWriteReceipt()) !== ssBase
-  OUT.controls.push({ id: "clone-subject", mutationVisible: csVisible, expected: false, holds: csVisible === false })
-  OUT.controls.push({ id: "shared-object-subject", mutationVisible: ssVisible, sameObjectReturnedTwice: ss === sharedSubject.lastWriteReceipt(), expected: true, holds: ssVisible === true })
-  /** THE JSON-SAFE WRITE OF THE SAME SHAPE (\`SC-E-03\`'s first half) — at BOTH members and on the SAME
-   *  shape of store, so a refusal or an absence above is attributable to REPRESENTABILITY and not to a
-   *  dead instrument. */
-  const safePath = join(SCRATCH, "json-safe.json")
-  writeFileSync(safePath, JSON.stringify(SEED, null, 2))
-  const safeStore = mod.createSecurityStore({ path: safePath })
-  const safeReturn = safeStore.set({ token: "JSON-SAFE-TOKEN", maxJournalLength: 42, groups: ["graph"] })
-  const safeReceipt = safeStore.lastWriteReceipt()
-  const safeParsed = (() => { try { return JSON.parse(readFileSync(safePath, "utf8")) } catch (e) { return null } })()
-  OUT.controls.push({
-    id: "json-safe-write-commits-and-lands",
-    receipt: safeReceipt,
-    returned: enc(safeReturn),
-    landedInTheFile: safeParsed !== null && safeParsed.token === "JSON-SAFE-TOKEN" && safeParsed.maxJournalLength === 42 && Array.isArray(safeParsed.enabled) && safeParsed.enabled.includes("graph"),
-    fileBytes: JSON.stringify(safeParsed),
-    receiptClaimsCommitted: safeReceipt !== null && safeReceipt.status === "committed",
-  })
-  /** ══ THE DELETION TEST, RUN OVER THE SAME READINGS (\`§4d\` rule 6). Each term is expressed as a
-   *  function of the readings, then DELETED, and re-evaluated: a term whose deletion leaves the row
-   *  GREEN is not load-bearing, and a term whose deletion leaves it RED is not the term that carried
-   *  it. No term is described; every one is evaluated twice. */
-  const P = OUT.probes
-  const U = OUT.unwritable
-  const S = OUT.surface
-  const t1 = (probes) => probes.every((p) => !p.commitsAValueTheContractDeclaresRefused)
-  /** **\`t2\` IS RE-GRAINED AT ITS OWN BYTES, AND THE RE-GRAIN IS THE PREDICATE — not a note beside it:**
-   *  \`committedReceiptViolatesTheContract\` is defined ONCE, above, as
-   *  \`receiptClaimsCommitted && survives === false && declaredStatusOf(value, member).declaredRefused\`,
-   *  and it carries BOTH sides (the declared-refusal receipt AND the wrong reason token). */
-  const t2 = (probes) => probes.every((p) => !committedReceiptViolatesTheContract(p))
-  const t3 = (probes) => probes.every((p) => p.inMemoryEqualsFile === true)
-  const t4 = (rows) => rows.every((r) => r.advancesTheRecordWithoutTheFile === false)
-  const t5 = (rows) => rows.every((r) => r.mutationVisibleOnTheNextRead === false)
-  /** THE DELETION MADE MECHANICAL: each row's OWN verdict function, evaluated TWICE over the SAME
-   *  readings — once as filed and once with the term under test REPLACED BY \`true\`, i.e. DELETED. A term
-   *  whose deletion leaves the row's VERDICT where it was is still load-bearing if it is the only thing
-   *  that catches a reading, so the count of readings it alone accounts for is printed BESIDE it: "the
-   *  row still reads FAIL without me" and "nothing else in the row sees these readings" are two different
-   *  statements and both are measured here rather than argued. */
-  const verdictE01 = (a, b, c) => ((a && b && c) ? "PASS" : "FAIL")
-  const verdictE04 = (a, b, c) => (b ? "FAIL" : ((a && c) ? "PASS" : "FAIL"))
-  const verdictE07 = (a) => (a ? "PASS" : "FAIL")
-  const e2Receipts = U.every((r) => r.receiptClaimsFullCommitment === false)
-  const e2Bytes = U.every((r) => r.bytesUnmoved === true)
-  /** THE DELETED FORM OF \`E-1\`'s PREDICATE: the VALUE-PRESERVATION conjunct REMOVED, re-evaluated per
-   *  value over the SAME probe readings — so "the term is load-bearing" is a reading, twice taken. */
-  const deletedSurvivesById = new Map(OUT.values.map((v) => [v.id, v.survivesWithoutTheValuePreservationTerm]))
-  const t1Deleted = (probes) => probes.every((p) => !(p.outcome === "COMMITS" && deletedSurvivesById.get(p.value) === false))
-  /** **THE RE-GRAIN-S OWN DELETION FORM: the \`declaredRefused\` conjunct REMOVED from the charge, over
-   *  the SAME readings.** If the landed bytes make this form read the SAME as the re-grained charge,
-   *  then the re-grain is the only thing that changed the count — and if they differ, the re-grain is
-   *  load-bearing rather than cosmetic. Printed in \`OUT.reGrain\`. */
-  const chargedWithTheDeclaredDomainDeleted = (p) => p.receiptClaimsCommitted === true && p.survives === false && p.outcome !== "COMMITS" && p.outcome !== "DROPS" && p.outcome !== "DROPS-BY-FILTER"
-  const t2DeletedCharged = (probes) => probes.every((p) => !chargedWithTheDeclaredDomainDeleted(p))
-  const e1VerdictOf = (a, b, c) => verdictE01(a, b, c)
-  OUT.deletion.push({
-    row: "SC-E-01", term: "t1_noUnrepresentableValueIsCommitted",
-    termHolds: t1(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(true, t2(P), t3(P)),
-    theDeletedPredicateChangesAReading: t1(P) !== t1Deleted(P),
-    readingTheDeletionLoses: t1Deleted(P) === true ? "the Infinity reading stops being classified as COMMITTED (in the record and NOT in the file) — the row could then no longer tell an ACCEPTED unrepresentable value from a DROPPED one" : "none",
-    fixtureThatReddensIt: "Infinity as maxJournalLength (in-memory Infinity, file null) — the pre-S3 fixture; on the landed bytes Infinity REFUSES, so this charge is empty BY MEASUREMENT and its non-vacuity is carried by the DECLARED-REFUSED set itself (the contract declares positions refused across 10 of the 16 values)",
-    readingsTheTermAccountsFor: P.filter((p) => p.commitsAValueTheContractDeclaresRefused).length,
-  })
-  OUT.deletion.push({
-    row: "SC-E-01", term: "t2_noCommittedReceiptForAContractDeclaredRefusal",
-    termHolds: t2(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(t1(P), true, t3(P)),
-    theDeletedPredicateChangesAReading: true,
-    readingTheDeletionLoses: "every reading where a CONTRACT-DECLARED-REFUSED value answered a committed receipt without entering the record — the readings the AS-FILED form of this term charged (kept printed as t2AsFiled), plus the refusals whose reason token is not the declared one",
-    fixtureThatReddensIt: "any value the CONTRACT DECLARES REFUSED driven on a position the contract refuses; the DELETED-CHARGED form (this charge with its declaredRefused conjunct removed) is re-evaluated below (OUT.reGrain.theRegrainIsLoadBearing) so the re-grain is a measurement",
-    readingsTheTermAccountsFor: P.filter((p) => committedReceiptViolatesTheContract(p)).length,
-  })
-  OUT.deletion.push({
-    row: "SC-E-01", term: "t2b_theRefusalReasonTokenIsTheDeclaredOne",
-    termHolds: P.every((p) => !p.refusalReasonTokenIsNotTheDeclaredOne),
-    rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(t1(P), t2(P), t3(P)),
-    theDeletedPredicateChangesAReading: P.some((p) => p.refusalReasonTokenIsNotTheDeclaredOne),
-    readingTheDeletionLoses: "a refusal whose reason is not EXACTLY write-failed — the clause \u00a72.1 item 7 / \u00a72.3 item 6 declares and the as-filed t2 never charged",
-    fixtureThatReddensIt: "any admission refusal returning a second reason token",
-    readingsTheTermAccountsFor: P.filter((p) => p.refusalReasonTokenIsNotTheDeclaredOne).length,
-  })
-  OUT.deletion.push({
-    row: "SC-E-01", term: "t3_noInMemoryVersusFileDivergence",
-    termHolds: t3(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(t1(P), t2(P), true),
-    theDeletedPredicateChangesAReading: true,
-    readingTheDeletionLoses: "the record/manifest disagreement itself — a tree that DROPPED Infinity instead of committing it would stop being distinguishable from one that corrupted the record",
-    fixtureThatReddensIt: "Infinity as maxJournalLength",
-    readingsTheTermAccountsFor: P.filter((p) => p.inMemoryEqualsFile === false).length,
-  })
-  OUT.deletion.push({
-    row: "SC-E-04", term: "t4_theRecordDoesNotAdvancePastARefusedPersist",
-    termHolds: t4(U), rowVerdictAsFiled: verdictE04(t4(U), e2Receipts, e2Bytes), rowVerdictWithThisTermDeleted: verdictE04(true, e2Receipts, e2Bytes),
-    theDeletedPredicateChangesAReading: true,
-    readingTheDeletionLoses: "the ONLY term that separates an HONEST RECEIPT from an HONEST TIER: with it deleted the row reads PASS on a store that answers refused and advances its own record anyway",
-    fixtureThatReddensIt: "a store constructed on a path that cannot be written, driven with a real set(patch) — three independent failure sites",
-    readingsTheTermAccountsFor: U.filter((r) => r.advancesTheRecordWithoutTheFile).length,
-  })
-  OUT.deletion.push({
-    row: "SC-E-07", term: "t5_everyValueReturningMemberIsDetached",
-    termHolds: t5(S), rowVerdictAsFiled: verdictE07(t5(S)), rowVerdictWithThisTermDeleted: verdictE07(true),
-    theDeletedPredicateChangesAReading: true,
-    readingTheDeletionLoses: "the receipt member's shared-reference return: the row reads PASS with lastWriteReceipt() handing the SAME object to every caller",
-    fixtureThatReddensIt: "the CLONE-SUBJECT control is the deletion made executable for the detector (a subject with the clone discipline REMOVED must stay silent); the SHARED-OBJECT subject proves the detector FIRES on a reference",
-    readingsTheTermAccountsFor: S.filter((r) => r.mutationVisibleOnTheNextRead).length,
-  })
-  /** ══ THE RE-GRAIN-S OWN MEASUREMENT (the SEVENTH round) — each count printed WITH the readings it is
-   *  made of, so "the charge was over-strict" is a MEASUREMENT and not an assertion. ══ */
-  OUT.contractTable = CONTRACT_DECLARED_STATUS
-  OUT.reGrain = {
-    theAsFiledCharge: {
-      term: "the as-filed t2/b2 criterion: a committed receipt for ANY value that does not survive a JSON round trip",
-      readings: P.filter((p) => p.answersCommittedForAnUnrepresentableValue).length,
-      readingsNamed: P.filter((p) => p.answersCommittedForAnUnrepresentableValue).map((p) => p.value + "/" + p.member),
-      holds: P.every((p) => !p.answersCommittedForAnUnrepresentableValue),
-    },
-    theRegrainedCharge: {
-      term: "the re-grained t2/b2 criterion: a committed receipt for a value the CONTRACT DECLARES REFUSED at that position, plus a refusal whose reason token is not the declared one",
-      readings: P.filter((p) => committedReceiptViolatesTheContract(p)).length,
-      readingsNamed: P.filter((p) => committedReceiptViolatesTheContract(p)).map((p) => p.value + "/" + p.member),
-      holds: P.every((p) => !committedReceiptViolatesTheContract(p)),
-    },
-    theRegrainIsLoadBearing: {
-      term: "the re-grained charge with its DECLARED-REFUSED conjunct DELETED, over the SAME readings",
-      readings: P.filter((p) => chargedWithTheDeclaredDomainDeleted(p)).length,
-      readingsNamed: P.filter((p) => chargedWithTheDeclaredDomainDeleted(p)).map((p) => p.value + "/" + p.member),
-      holds: t2DeletedCharged(P),
-      changesACountVersusTheRegrainedForm: t2DeletedCharged(P) !== P.every((p) => !committedReceiptViolatesTheContract(p)),
-    },
-    theExemptedReadings: {
-      term: "unrepresentable values the CONTRACT DECLARES ADMITTED at that position (\u00a72.2 item 3 / \u00a76 PAR-2, PAR-3 / \u00a73.1 M-6 / \u00a75.6.1 row 8 attempt (7)) — exempt from the charge, NOT from the round-trip predicate",
-      readings: P.filter((p) => p.survives === false && p.declaredRefused === false).length,
-      readingsNamed: P.filter((p) => p.survives === false && p.declaredRefused === false).map((p) => p.value + "/" + p.member + " [" + p.declaredClause + "]"),
-      everyOneDivergesFromTheFile: P.filter((p) => p.survives === false && p.declaredRefused === false).some((p) => p.inMemoryEqualsFile !== true),
-    },
-    theDeclaredRefusedPositions: {
-      term: "value/member positions the contract DECLARES REFUSED (the charge-s scope — a shrinking scope would be visible HERE)",
-      readings: P.filter((p) => p.declaredRefused === true).length,
-      readingsNamed: [...new Set(P.filter((p) => p.declaredRefused === true).map((p) => p.value + "/" + p.member))],
-      everyOneWasRefused: P.filter((p) => p.declaredRefused === true).every((p) => p.receipt !== null && p.receipt.status === "refused"),
-    },
-  }
-  OUT.refusalReasonTokens = [...new Set(P.filter((p) => p.receipt !== null && p.receipt.status === "refused").map((p) => String(p.receipt.reason)))]
-} catch (e) { OUT.errors.push(String(e && e.stack ? e.stack : e)) }
-writeFileSync(OUT_PATH, JSON.stringify(OUT, null, 2))
-process.stdout.write("E-PROBE-OK")
-`
-writeFileSync(E_PROBE_PATH, E_PROBE_SRC)
-const eProbeRun = (() => {
-  try {
-    return { ok: true, stdout: execSync(`${JSON.stringify(process.execPath)} ${JSON.stringify(E_PROBE_PATH)}`, { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] }), exitCode: 0 }
-  } catch (e) {
-    return { ok: false, stdout: String(e?.stdout ?? ''), stderr: String(e?.stderr ?? ''), signal: e?.signal ?? null, exitCode: e?.status === undefined ? 'THREW-WITHOUT-STATUS' : e.status, error: String(e?.message ?? e) }
-  }
-})()
-const eProbeSha = sha256Text(E_PROBE_SRC)
-const eProbeOut = (() => { try { return JSON.parse(readOrNull(E_PROBE_OUT)) } catch { return null } })()
-const eProbeTokenOk = eProbeRun.ok && eProbeRun.stdout.includes('E-PROBE-OK')
-const eProbeReadable = eProbeTokenOk && eProbeOut !== null && typeof eProbeOut === 'object'
-const eProbeErrs = eProbeReadable && Array.isArray(eProbeOut.errors) ? eProbeOut.errors : []
-const eProbes = eProbeReadable && Array.isArray(eProbeOut.probes) ? eProbeOut.probes : []
-const eUnwritable = eProbeReadable && Array.isArray(eProbeOut.unwritable) ? eProbeOut.unwritable : []
-const eSurface = eProbeReadable && Array.isArray(eProbeOut.surface) ? eProbeOut.surface : []
-const eControls = eProbeReadable && Array.isArray(eProbeOut.controls) ? eProbeOut.controls : []
-const eValues = eProbeReadable && Array.isArray(eProbeOut.values) ? eProbeOut.values : []
-const eDeletion = eProbeReadable && Array.isArray(eProbeOut.deletion) ? eProbeOut.deletion : []
-const eControlOf = (id) => eControls.find((c) => c.id === id) ?? null
-const E_UNREPRESENTABLE_COUNT = 12
-const E_MEMBER_COUNT = 3
-const E_PROBE_ROW_COUNT = E_UNREPRESENTABLE_COUNT * E_MEMBER_COUNT
 
-// ── FAMILY E, E-1 — THE MODULE-LAYER JSON-SAFETY READING ([B]) ──────────────────────────
-const eValueTableAgrees = eValues.length === 16 && eValues.every((v) => v.agreesWithThePinnedLiteral === true)
-const eProbeFixtureLoaded = eProbeReadable && eProbeOut.seedLoaded === true
-const eProbeInstrumentOk = eProbeReadable && eProbeErrs.length === 0 && eProbeFixtureLoaded
-  && eProbes.length === 48 && eValues.length === 16 && eUnwritable.length === 3 && eSurface.length === 3
-const eUnrepProbes = eProbes.filter((p) => p.survives === false)
-const eCommittedUnrep = eUnrepProbes.filter((p) => p.commitsAValueThatDoesNotSurvive === true)
-const eCommittedReceiptOnUnrep = eUnrepProbes.filter((p) => p.answersCommittedForAnUnrepresentableValue === true)
-const eCommittedOnADeclaredRefusal = eProbes.filter((p) => p.committedReceiptForADeclaredRefusal === true)
-const eCommittedDeclaredRefusalInRecord = eProbes.filter((p) => p.commitsAValueTheContractDeclaresRefused === true)
-const eWrongReasonToken = eProbes.filter((p) => p.refusalReasonTokenIsNotTheDeclaredOne === true)
-const eDivergentProbes = eProbes.filter((p) => p.inMemoryEqualsFile !== true)
-const eExemptedProbes = eUnrepProbes.filter((p) => p.declaredRefused === false)
-const eDeclaredRefusedProbes = eProbes.filter((p) => p.declaredRefused === true)
-const eProbeReGrain = eProbeReadable && eProbeOut.reGrain ? eProbeOut.reGrain : {}
-const eProbeContractTable = eProbeReadable && Array.isArray(eProbeOut.contractTable) ? eProbeOut.contractTable : []
-/** THE NON-VACUITY OF THE CONTRACT TABLE (the module-layer twin of \`b1b\`): the classification the probe
- *  applied must be PRESENT on every reading and must be the SAME table the driver declares. A probe
- *  whose readings carried no classification would make the re-grained charge silently empty — so it
- *  reads \`MANUAL\`, never a PASS. */
-const eProbeContractTableAgrees = eProbes.length > 0 && eProbes.every((p) => typeof p.declaredRefused === 'boolean' && typeof p.declaredClause === 'string' && p.declaredClause.length > 0)
-  && eProbeContractTable.length === CONTRACT_DECLARED_STATUS.length
-  && eProbes.every((p) => p.declaredRefused === declaredStatusOf(p.value, p.member).declaredRefused)
-  && eDeclaredRefusedProbes.length > 0 && eExemptedProbes.length > 0
-/** **\`t2\` IS RE-GRAINED AT ITS OWN BYTES** — the as-filed criterion is kept PRINTED as \`t2AsFiled\`
- *  (not a term of the verdict) so the move is visible at the machine layer. */
-const e1Terms = {
-  t1_noUnrepresentableValueIsCommitted: eCommittedDeclaredRefusalInRecord.length === 0,
-  t2_noCommittedReceiptForAContractDeclaredRefusal: eCommittedOnADeclaredRefusal.length === 0,
-  t2b_theRefusalReasonTokenIsTheDeclaredOne: eWrongReasonToken.length === 0,
-  t3_noInMemoryVersusFileDivergence: eDivergentProbes.length === 0,
-  t2AsFiled_noCommittedReceiptForAnyUnsurvivableValue: eCommittedReceiptOnUnrep.length === 0,
-}
-const e1RequirementTerms = [e1Terms.t1_noUnrepresentableValueIsCommitted, e1Terms.t2_noCommittedReceiptForAContractDeclaredRefusal, e1Terms.t2b_theRefusalReasonTokenIsTheDeclaredOne, e1Terms.t3_noInMemoryVersusFileDivergence]
-const e1AllTermsHold = e1RequirementTerms.every((v) => v === true)
-const e1Verdict = (!eProbeInstrumentOk || !eProbeContractTableAgrees) ? 'MANUAL' : (e1AllTermsHold ? 'PASS' : 'FAIL')
-check('SC-E-01 (Family E, E-1) — JSON-SAFETY: AN UNREPRESENTABLE VALUE, DRIVEN AT THE MODULE [B]', 'E-1 REQUIREMENT ARM: a value the CONTRACT DECLARES REFUSED (`§2.2` item 3 / `§6` PAR-2…PAR-5), driven at the module, is NOT committed into the tier\'s record, is NOT answered with a `committed` receipt, does not leave the in-memory record disagreeing with the file, and its refusal carries the declared reason token — measured over 16 values × the store\'s THREE patch members (48 probes), EVERY POSITION CLASSIFIED AGAINST THE CONTRACT\'S DECLARED DOMAIN, each read THREE ways (the receipt, the in-memory read afterwards, the file\'s bytes)', e1Verdict,
-  `NAMED TERMS — EACH ONE A PREDICATE TERM, EACH WITH ITS FIXTURE: ${JSON.stringify(e1Terms)}. THE PROBE: ${E_PROBE_PATH} + its file result ${E_PROBE_OUT} (a scratch dir under mkdtemp — the repo, the operator's profile and every src/** byte untouched), probeSha256=${eProbeSha.slice(0, 16)}…, module=${eProbeOut?.module ?? SECURITY_STORE_MODULE}, moduleSha256=${String(eProbeOut?.moduleSha256 ?? '').slice(0, 16)}…, exitCode=${eProbeRun.exitCode}, stdoutToken=${JSON.stringify(String(eProbeRun.stdout).trim().slice(0, 20))}, stderr=${JSON.stringify(String(eProbeRun.stderr ?? '').slice(-300))}, thrown=${JSON.stringify(String(eProbeRun.error ?? ''))}, probeErrors=${JSON.stringify(eProbeErrs)}, probeInstrumentOk=${eProbeInstrumentOk} (its terms: readable=${eProbeReadable}, the probe's OWN fixture check seedLoaded=${eProbeFixtureLoaded} — a probe against the module's DEFAULT record would measure the wrong object —, 48 probes=${eProbes.length}, 16 value-table rows=${eValues.length}, 3 unwritable paths=${eUnwritable.length}, 3 surface members=${eSurface.length}); THE VALUE TABLE, WITH ITS PINNED LITERALS AND THE PREDICATE'S OWN READING (the control that can refuse): ${JSON.stringify(eValues)}; **THE 48 PROBES, EVERY ONE READ THREE WAYS: ${JSON.stringify(eProbes)}**; THE FIVE READINGS THAT CARRY THE VERDICT: (i) probes whose value does NOT survive a JSON round trip = ${eUnrepProbes.length} of ${eProbes.length}; (ii) of those, probes where a value the CONTRACT DECLARES REFUSED is IN THE RECORD — \`t1\`'s fixture — ${JSON.stringify(eCommittedDeclaredRefusalInRecord.map((p) => p.value + '/' + p.member + ' → memberAfter=' + p.memberAfter + ', file=' + p.fileMember))}; (iii) probes answered \`committed\` for a value the CONTRACT DECLARES REFUSED — \`t2\`'s fixture = ${eCommittedOnADeclaredRefusal.length} ${JSON.stringify(eCommittedOnADeclaredRefusal.map((p) => p.value + '/' + p.member))}; (iii-a) \`t2b\`'s fixture — refusals whose reason token is NOT the declared one = ${eWrongReasonToken.length} ${JSON.stringify(eWrongReasonToken.map((p) => p.value + '/' + p.member + ' → ' + JSON.stringify(p.receipt)))}; (iii-b) **THE RE-GRAIN'S OWN COUNT, KEPT BESIDE IT:** the AS-FILED criterion (a \`committed\` receipt for ANY value that does not survive a round trip) charges **${eCommittedReceiptOnUnrep.length}** reading(s) ${JSON.stringify(eCommittedReceiptOnUnrep.map((p) => p.value + '/' + p.member))} — and every one of them is a reading the CONTRACT DECLARES ADMITTED, which is why the criterion was re-grained; (iv) probes whose in-memory member DISAGREES with the file — \`t3\`'s fixture = ${JSON.stringify(eDivergentProbes.map((p) => p.value + '/' + p.member + ' in-memory=' + p.memberAfter + ' file=' + p.fileMember))}; (v) prototype pollution after the whole table = ${JSON.stringify(eProbeOut?.prototypePolluted ?? null)} (the POISONED value is PINNED as SURVIVABLE — JSON.parse really does revive an own __proto__ — so it is carried for the POLLUTION reading and NOT folded into the representability count); THE NON-OBJECT-PATCH OBSERVATION (declared OUTSIDE the declared domain, recorded not charged): ${JSON.stringify(eProbeOut?.observations ?? [])}; **THE CONTRACT-DECLARED DOMAIN TABLE THIS ROW'S RE-GRAINED CHARGE READS (the record's §7 carries the same table with its clauses; the probe re-derives it independently and the two are compared): ${JSON.stringify(eProbeContractTable)}; contractTableAgrees=${eProbeContractTableAgrees} (its terms: every probe reading carries a \`declaredRefused\` boolean and a non-empty \`declaredClause\`; the probe's own table has the DECLARED row count; every reading's classification equals the driver's re-derivation of the same table; at least one position is declared REFUSED and at least one is declared ADMITTED, so a table that had collapsed to all-refused or all-admitted would read MANUAL rather than PASS); THE RE-GRAIN, MEASURED — the as-filed charge = ${JSON.stringify(eProbeReGrain.theAsFiledCharge ?? null)}; the re-grained charge = ${JSON.stringify(eProbeReGrain.theRegrainedCharge ?? null)}; the re-grain's OWN DELETION FORM (its \`declaredRefused\` conjunct removed, on the same readings) = ${JSON.stringify(eProbeReGrain.theRegrainIsLoadBearing ?? null)}; the EXEMPTED readings (unrepresentable, declared admitted) = ${JSON.stringify(eProbeReGrain.theExemptedReadings ?? null)}; the DECLARED-REFUSED positions (the charge's scope) = ${JSON.stringify(eProbeReGrain.theDeclaredRefusedPositions ?? null)}; the distinct refusal reason tokens the whole table produced = ${JSON.stringify(eProbeOut?.refusalReasonTokens ?? null)}**; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-01'))}`,
-  'THE ARCHITECT\'S ANSWER (2), MEASURED AT ITS DECISIVE SITE: *"The clone discipline is a DEEP copy — and the store has to be JSON-safe anyway because it needs to store to file. … any value the tier cannot persist as JSON must not be accepted."* **THE BOUNDARY IS THE POINT OF THIS ROW: the module\'s own record is the object every downstream holder and the persist path both receive, so a value that cannot survive `JSON.stringify`/`parse` at THAT site cannot be caught anywhere downstream.** `t1` is the answer\'s own term ("must not be accepted"); `t2` is the SAME term READ AT THE RECEIPT, **re-grained `2026-10-11` to the LANDED CONTRACT\'s declared boundary** (the as-filed form charged every unsurvivable value\'s `committed` receipt, which the contract\'s `§2.2` item 3 / `§6` PAR-2/PAR-3 declare for two ADMITTED positions); `t2b` is the refusal\'s own shape (`§2.1` item 7 / `§2.3` item 6: the reason is EXACTLY `write-failed`); `t3` is the consequence the same answer names (the record and the file must not disagree). The terms are named SEPARATELY, so a reader can see WHICH ONE the tree fails and by how much. **THE 11 UNREPRESENTABLE VALUES ARE NOT ALL THE SAME KIND and the row does not flatten them:** `BigInt`/`cyclic`/`function`/`Symbol` cannot be SERIALIZED at all (a `stringify` that would THROW), while `NaN`/`Infinity`/`Date`/`undefined` serialize SUCCESSFULLY and are NOT the same value on the way back — the second kind is the dangerous one, because nothing throws and the file silently carries a different value. **AND THE CONTRACT SPLITS THE SECOND KIND AGAIN, WHICH IS THE RE-GRAIN: `Infinity` is DECLARED REFUSED (`§6` PAR-3\'s OUTSIDE column), while `NaN` (the declared clear arm) and `undefined` (the absent marker) are DECLARED ADMITTED and are exempt from the charge — NOT from the round-trip predicate, which still classifies them as unsurvivable.**')
 
 // ── FAMILY E, E-1 — THE BRIDGE ARM ([CDP] + [G]), WITH ITS DECLARED BOUNDARY ─────────────
 /** **WHAT THIS ARM CAN WITNESS AND WHAT IT CANNOT.** `structuredClone` transports a `BigInt`, a `Map`,
@@ -2750,7 +2024,10 @@ for (const B of E_BRIDGE_PROBES) {
     } catch (e) { return { ok: false, threw: String(e) } }
   })()`)
   await sleep(300)
-  const fileParsed = (() => { try { return JSON.parse(readOrNull(secPathA)) } catch { return null } })()
+  /** **RE-GRAINED UNDER C-4:** the member is read off the persisted RECORD at its declared address in
+   *  the instance's own file (`readPersistedRecord`) — the file's top-level shape is the store's image and
+   *  not the record — and the term compares the LIVE read-back to THAT. */
+  const fileParsed = readPersistedRecord(bootA.profile)
   const fileMember = fileParsed === null ? '<UNREADABLE-OR-UNPARSABLE>' : (B.member === 'groups' ? JSON.stringify(fileParsed.enabled) : (fileParsed[B.memberExpr] === undefined ? '<undefined>' : (fileParsed[B.memberExpr] === null ? '<null>' : (typeof fileParsed[B.memberExpr] === 'string' ? '<string:' + fileParsed[B.memberExpr] + '>' : (typeof fileParsed[B.memberExpr] === 'number' ? (Object.is(fileParsed[B.memberExpr], -0) ? '<number:0>' : '<number:' + String(fileParsed[B.memberExpr]) + '>') : JSON.stringify(fileParsed[B.memberExpr]))))))
   const shaAfter = sha256(secPathA)
   eBridgeRows.push({
@@ -2765,7 +2042,12 @@ for (const B of E_BRIDGE_PROBES) {
     declaredClause: declaredStatusOf(B.id, B.member).clause,
     declaredReason: declaredStatusOf(B.id, B.member).reason,
     committedReceiptForADeclaredRefusal: r.ok === true && r.write !== null && r.write.status === 'committed' && B.survives === false && declaredStatusOf(B.id, B.member).declaredRefused === true,
-    refusalReasonTokenIsNotTheDeclaredOne: r.ok === true && r.write !== null && r.write.status === 'refused' && r.write.reason !== 'write-failed',
+    /** **RE-GRAINED UNDER C-4 (`2026-10-29`):** `'write-failed'` is a RETIRED write-outcome token (it does
+     *  not survive the rebuild — `docs/L2/security-store-storeroom/interface.md` §3), and the refusal a value
+     *  outside the member domain gets is the instance's own declared `ValueRefusedAtBoundary`: an
+     *  out-of-domain value is refused BEFORE any store verb, so that is the ONE lawful token at this position
+     *  and the term is `reason !== 'ValueRefusedAtBoundary'` — strictly, with NO retired token admitted. */
+    refusalReasonTokenIsNotTheDeclaredOne: r.ok === true && r.write !== null && r.write.status === 'refused' && r.write.reason !== 'ValueRefusedAtBoundary',
   })
 }
 const eBridgeInstrumentOk = eBridgeRows.length === E_BRIDGE_PROBES.length && eBridgeRows.every((r) => r.ok === true)
@@ -2793,108 +2075,29 @@ const e2BridgeReadings = { exemptedReadings: eBridgeUnrep.filter((r) => r.declar
 const e1BridgeVerdict = (!eBridgeInstrumentOk || eBridgeTransportWitnessed.length !== E_BRIDGE_PROBES.length || e2BridgeTerms.b1b_theBridgeCarriesTheContractTable !== true) ? 'MANUAL' : (e2BridgeRequirementTerms.every((v) => v === true) ? 'PASS' : 'FAIL')
 check('SC-E-02 (Family E, E-1) — THE SAME OBLIGATION THROUGH THE LIVE BRIDGE ([CDP] + [G])', 'E-1 REQUIREMENT ARM (live consequence half): the values an IPC boundary CAN carry are driven through `window.provident.security.set`, and for each the receipt, the live read-back AND the file\'s bytes are read — with the two values `structuredClone` CANNOT carry named as NOT TESTED HERE rather than reported as a reading; and with each probe classified against the CONTRACT\'S DECLARED DOMAIN (`§2.2` item 3 / `§6` PAR-2…PAR-5) before its receipt is charged', e1BridgeVerdict,
   `NAMED TERMS: ${JSON.stringify(e2BridgeTerms)} — **\`b2AsFiled_*\` IS NOT A TERM OF THE VERDICT: it is the AS-FILED criterion, kept PRINTED so the re-grain is visible at the machine layer** (the verdict is carried by \`b1\`/\`b2\`/\`b2b\`/\`b3\`; \`b1b\` is the contract-table non-vacuity term, and a bridge whose rows carried no declared classification would read \`MANUAL\`). **THE RE-GRAIN'S OWN READINGS AT THIS LAYER: readings EXEMPTED because the CONTRACT DECLARES THEM ADMITTED = ${JSON.stringify(e2BridgeReadings.exemptedReadings)} (each with its clause); the positions the contract DECLARES REFUSED = ${JSON.stringify(e2BridgeReadings.refusedPositions)}; the readings the AS-FILED criterion charged = ${JSON.stringify(e2BridgeReadings.asFiledCharge)}.** **THE DECLARED INSTRUMENT BOUNDARY, DEMONSTRATED IN THE PAGE RATHER THAN ASSERTED: ${JSON.stringify(eBridgeTransportBoundary)} — a \`function\` and a \`Symbol\` CANNOT cross the bridge, so \`function\`/\`Symbol\` are [B]-ONLY and this arm does not pretend to have measured them.** ${eBridgeRows.length} probe(s), every one required to have TRANSPORTED its payload before its reading is given weight (transported=${JSON.stringify(eBridgeTransportWitnessed.map((r) => r.id))} of ${E_BRIDGE_PROBES.length}; a payload the bridge quietly dropped would otherwise have produced a vacuous "nothing landed" reading); THE ROWS: ${JSON.stringify(eBridgeRows.map(({ src, expectPayloadEnc, ...rest }) => rest))} (**READ THE PER-MEMBER FIELDS, NOT afterRecord: the CDP WIRE turns Infinity into null because JSON has no infinity, so afterRecord shows maxJournalLength:null on the very row whose afterMember — encoded IN THE PAGE by the probe's own encoder — reads <Infinity>. The page-side reading is the one that carries the value and the one the terms read.**); the JSON-safe control through the bridge: ${JSON.stringify(eBridgeSafeRow)}; the tier-4 file's bytes BEFORE the arm=${JSON.stringify(String(eBridgeFileBeforeBytes).slice(0, 300))} at sha256 ${eBridgeFileBeforeSha.slice(0, 16)}…, AFTER the arm=${JSON.stringify(String(readOrNull(secPathA)).slice(0, 300))} at sha256 ${sha256(secPathA).slice(0, 16)}…`,
-  'the architect\'s answer (2) as it reaches the OPERATOR, and the same three terms as `SC-E-01` read one layer out. **IT IS A CONSEQUENCE CHECK AND IS LABELLED AS ONE:** the value has already been structured-cloned by the time the renderer holds it, so an in-memory/file disagreement here is a disagreement the LIVE APP really has (the file is main\'s own persist), but a DETACHED return at the module layer cannot be witnessed from this side (that is `SC-E-01`/`SC-E-07`). The transport term is the non-vacuity term: **the reading is only taken when the payload demonstrably crossed**, so a bridge that silently discarded a `Map` cannot masquerade as "the tier refused it".')
+  'the architect\'s answer (2) as it reaches the OPERATOR, and (before the rebuild) the same three terms as the module-layer row read one layer in. **IT IS A CONSEQUENCE CHECK AND IS LABELLED AS ONE:** the value has already been structured-cloned by the time the renderer holds it, so an in-memory/file disagreement here is a disagreement the LIVE APP really has (the file is main\'s own persist), but a DETACHED return at the module layer cannot be witnessed from this side (that is `SC-E-01`/`SC-E-07`). The transport term is the non-vacuity term: **the reading is only taken when the payload demonstrably crossed**, so a bridge that silently discarded a `Map` cannot masquerade as "the tier refused it".')
 
-// ── FAMILY E, E-1/E-2 — THE CONTROLS THAT CAN REFUSE ────────────────────────────────────
-const eJsonSafeControl = eControlOf('json-safe-write-commits-and-lands')
-const eWritableControl = eControlOf('writable-path')
-const eJsonSafeControlHolds = eJsonSafeControl !== null && eJsonSafeControl.receiptClaimsCommitted === true && eJsonSafeControl.landedInTheFile === true
-const e3ControlVerdict = (!eProbeInstrumentOk) ? 'MANUAL'
-  : (eJsonSafeControlHolds && eValueTableAgrees && eBridgeSafeRow !== null && eBridgeSafeRow.transportWitnessed === true && eBridgeSafeRow.receiptClaimsCommitted === true && eBridgeSafeRow.inMemoryEqualsFile === true) ? 'PASS' : 'FAIL'
-check('SC-E-03 (Family E, E-1) — CONTROL-JSON-SAFE + CONTROL-TABLE', 'CONTROL: a JSON-SAFE write of the SAME shape COMMITS and LANDS — at the module layer AND through the live bridge — so a refusal or an absence in `SC-E-01`/`SC-E-02` is attributable to representability rather than to a dead instrument; AND the survivability predicate\'s own classification equals its PINNED LITERAL table on all 16 values, so the predicate can REFUSE', e3ControlVerdict,
-  `NAMED TERMS: module-layer JSON-safe write (token + maxJournalLength + groups, all representable) → ${JSON.stringify(eJsonSafeControl)}; bridge JSON-safe write → ${JSON.stringify(eBridgeSafeRow)}; THE TABLE CONTROL: ${eValues.length} value(s) compared with their PINNED literal, agreements=${eValues.filter((v) => v.agreesWithThePinnedLiteral === true).length}, tableAgrees=${eValueTableAgrees} (a predicate that called \`Infinity\` survivable, or that called \`safeString\` unsurvivable, reddens THIS term rather than silently moving every reading above); the deletion-run forms of the predicate's second conjunct: ${JSON.stringify(eValues.map((v) => v.id + '→survives=' + v.measuredSurvives + ',withoutTheValuePreservationConjunct=' + v.survivesWithoutTheValuePreservationTerm))}`,
-  'the non-vacuity requirement of every absence-asserting arm (`§4d` rule 1), and the falsifiability requirement (`§4d` rule 6) taken one step further: **the value table is a PINNED LITERAL per value, so the predicate\'s own disagreements are a reading rather than an internal consistency check.** The JSON-safe write is the SAME SHAPE (a token, a cap and a group) as every dropped probe, on the SAME construction path — only the VALUE\'s representability differs, which is exactly the variable the row is about.')
-
-// ── FAMILY E, E-2 — COMMIT ⟺ PERSISTED, AT THE MODULE LAYER ([B] + [G]) ──────────────────
-const e2Unwritable = eUnwritable
-const e2ReceiptsHonest = e2Unwritable.length === 3 && e2Unwritable.every((r) => r.receiptClaimsFullCommitment === false && r.receipt !== null)
-const e2NoInMemoryAdvance = e2Unwritable.length === 3 && e2Unwritable.every((r) => r.advancesTheRecordWithoutTheFile === false)
-const e2BytesUnmoved = e2Unwritable.length === 3 && e2Unwritable.every((r) => r.bytesUnmoved === true)
-const eWritableControlHolds = eWritableControl !== null && eWritableControl.receiptClaimsCommitted === true && eWritableControl.landedInTheFile === true
-
-// ── FAMILY E, E-3 — THE FULL-SURFACE CLONE, AT THE MODULE LAYER ([B]) ────────────────────
-const e3SurfaceCensus = eProbeOut?.surfaceCensus ?? []
-const e3Member = (name) => eSurface.find((r) => r.member === name) ?? null
-const e3Get = e3Member('get()')
-const e3SetReturn = e3Member('set(patch) return')
-const e3Receipt = e3Member('lastWriteReceipt()')
-const e3CensusComplete = Array.isArray(e3SurfaceCensus) && e3SurfaceCensus.length === 3
-  && ['get', 'lastWriteReceipt', 'set'].every((m) => e3SurfaceCensus.includes(m))
-const e3MembersMeasured = [e3Get, e3SetReturn, e3Receipt].filter((r) => r !== null).length
-const e3HandsOutTheSameObject = eSurface.filter((r) => r.sameObjectReturnedTwice === true)
-const e3MutationVisible = eSurface.filter((r) => r.mutationVisibleOnTheNextRead === true)
-const e3CloneControl = eControlOf('clone-subject')
-const e3SharedControl = eControlOf('shared-object-subject')
-const e3ControlsHold = e3CloneControl?.holds === true && e3SharedControl?.holds === true
-const e3Verdict = (!eProbeInstrumentOk || !e3CensusComplete || e3MembersMeasured !== 3) ? 'MANUAL'
-  : (e3MutationVisible.length === 0 ? (e3ControlsHold ? 'PASS' : 'MANUAL') : 'FAIL')
-check('SC-E-07 (Family E, E-3) — THE FULL-SURFACE CLONE: EVERY VALUE-RETURNING MEMBER ([B])', 'E-3 REQUIREMENT ARM (the architect\'s answers 2/3, "the read-surface set is the FULL access surface — no carve-out"): EVERY value-returning member of the tier\'s own surface hands back a DETACHED value — censed from `Object.keys` rather than assumed, mutated after the return, and re-read', e3Verdict,
-  `NAMED TERMS: THE SURFACE CENSUS (read from the module's own object, not assumed) = ${JSON.stringify(e3SurfaceCensus)} (the census term reddens if a member is added or removed — the row asserts the THREE members and set-equality); PER-MEMBER READINGS: ${JSON.stringify(eSurface.map(({ fixture, ...rest }) => rest))}; members that HAND BACK THE SAME OBJECT TWICE = ${JSON.stringify(e3HandsOutTheSameObject.map((r) => r.member))}; members whose returned value, MUTATED BY THE HOLDER, WAS VISIBLE ON THE NEXT READ = ${JSON.stringify(e3MutationVisible.map((r) => r.member))}; THE CONTROLS (both directions) = ${JSON.stringify([e3CloneControl, e3SharedControl])}, controlsHold=${e3ControlsHold} — the CLONE subject is the deletion made executable (a subject with the clone discipline REMOVED for the receipt member answers mutationVisible=false) and the SHARED-OBJECT subject proves the detector FIRES on a reference; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-07'))}`,
-  'THE ARCHITECT\'S ANSWERS (2) AND (3), AT THEIR DECISIVE SITE. **`SC-D-02a` MEASURED TWO OF THESE THREE MEMBERS AND READ PASS; THE CENSUS IS THE POINT OF THIS ROW: "the read-surface set is the FULL access surface — no carve-out" makes the third member, `lastWriteReceipt()`, IN SCOPE, and it is the one that is not detached.** The row names the member per reading rather than reporting a single boolean, so the FAIL cannot be read as "the clone discipline is absent" when two of the three members honour it. **THE DEEP-COPY REQUIREMENT IS MEASURED WHERE THE RECORD HAS DEPTH TO MEASURE:** this tier\'s record is `{token: string|null, enabled: string[], maxJournalLength: number|undefined}` — the only mutable member is the array, and the row asserts the array is a FRESH array (`enabledSameIdentity=false`), so "detached" here IS depth-complete for this shape rather than a shallow copy that happens to look detached.')
-
-// ── FAMILY E, E-3 — THE CLONE DETECTOR'S TWO DIRECTIONS, AND E-2's WRITABLE CONTROL ─────
-const e6ControlVerdict = (!eProbeInstrumentOk) ? 'MANUAL' : (eWritableControlHolds ? 'PASS' : 'FAIL')
-const e8ControlVerdict = (!eProbeInstrumentOk || e3MembersMeasured !== 3) ? 'MANUAL' : (e3ControlsHold ? 'PASS' : 'FAIL')
-check('SC-E-06 (Family E, E-2) — CONTROL-WRITABLE-PATH', 'CONTROL: the SAME write on a path that CAN be written COMMITS and LANDS (so `SC-E-04`\'s refusal terms are about the path and not about a dead instrument), AND the SAME clone detector does NOT fire on a subject that returns a fresh copy while it DOES fire on a subject that hands out ONE shared object (so `SC-E-07` is neither a detector that can never fire nor one that fires on everything)', e6ControlVerdict,
-  `NAMED TERMS: writable-path control → ${JSON.stringify(eWritableControl)} (receipt committed=${eWritableControl?.receiptClaimsCommitted}, landedInTheFile=${eWritableControl?.landedInTheFile}); the clone-detector pair → cloneSubject=${JSON.stringify(e3CloneControl)} (must NOT fire), sharedObjectSubject=${JSON.stringify(e3SharedControl)} (must fire), bothHold=${e3ControlsHold}; **THE EXISTING WRITABLE-PATH EVIDENCE THIS CONTROL CITES RATHER THAN DUPLICATES: \`SC-B-03\` (the operator\'s own live write through the app\'s bridge, which moved the tier-4 file\'s sha256) and \`SC-E-03\` (the JSON-safe write, same shape, both layers)**`,
-  'the falsifiability of `SC-E-04` and `SC-E-07` in both directions (`§4d` rules 3 and 6). **THE CLONE-DETECTOR HALF IS THE SECOND CONTROL THE `§6.2` AUDITS\' RULE 3 REQUIRES AND THE ONE THE FAMILY-D SET COULD NOT CARRY: a detector that only ever fires proves nothing, so the SAME detector is driven against a clone-returning subject and must stay silent there.** The writable-path half makes "the receipt says refused" attributable to the PATH rather than to the store refusing every write.')
-
-check('SC-E-08 (Family E, E-3) — CONTROL-CLONE-DETECTOR: BOTH DIRECTIONS', 'CONTROL: the SAME clone detector does NOT fire on a subject that returns a FRESH COPY while it DOES fire on a subject that hands out ONE SHARED OBJECT — so SC-E-07 is neither a detector that can never fire nor one that fires on everything', e8ControlVerdict,
-  `NAMED TERMS: the detector is the SAME function whose readings are the SC-E-07 row (sameObjectReturnedTwice and mutationVisibleOnTheNextRead); clone-subject = ${JSON.stringify(e3CloneControl)} (a subject returning a fresh copy on every call \u2014 the detector MUST stay silent, and if it fired here every "detached" reading above would be vacuous); shared-object-subject = ${JSON.stringify(e3SharedControl)} (one object handed to two readers \u2014 the detector MUST fire); bothHold=${e3ControlsHold}, membersMeasured=${e3MembersMeasured} of 3. **THE DECLARED LIMIT: the clone subject is a DELIBERATELY WRONG IMPLEMENTATION OF THE SAME FUNCTION (the receipt member with the clone discipline removed), which is what makes the deletion EXECUTABLE rather than described.**`,
-  'the second control \u00a74d rule 3 requires, and the one the Family-D control set could not carry: SC-D-11 drives the detector against a shared object, but NOTHING in that set drives it against a subject that CLONES \u2014 so "the detector did not fire" was falsifiable in ONE direction only. SC-E-08 closes the other direction, for the SAME detector, over the SAME readings SC-E-07 reports.')
-
-// ── FAMILY E, E-2 — THE MODULE-LAYER ROW, WHICH THE TWO CONTROLS ABOVE GUARD ────────────
-const e4Verdict = (!eProbeInstrumentOk) ? 'MANUAL'
-  : ((e2ReceiptsHonest && !e2NoInMemoryAdvance) ? 'FAIL' : (e2ReceiptsHonest && e2NoInMemoryAdvance && e2BytesUnmoved ? 'PASS' : 'FAIL'))
-check('SC-E-04 (Family E, E-2) — COMMIT ⟺ PERSISTED: A STORE THAT CANNOT SAVE, DRIVEN WITH A REAL WRITE [B] + [G]', 'E-2 REQUIREMENT ARM: on a path that CANNOT be written, a real `set(patch)` must not claim full commitment AND must not leave the tier\'s own record advanced while the file is not (the architect\'s answer (4): "a write is NOT treated as fully committed until it successfully saves to file") — measured at THREE independent failure sites, each read three ways', e4Verdict,
-  `NAMED TERMS (each one a predicate term): ${JSON.stringify({ r1_theReceiptDoesNotClaimFullCommitment: e2ReceiptsHonest, r2_theRecordDoesNotAdvancePastARefusedPersist: e2NoInMemoryAdvance, r3_theFileIsUnmoved: e2BytesUnmoved })}. **THE THREE FAILURE SITES, EACH DRIVEN WITH A REAL set({token, maxJournalLength}) AND EACH READ THREE WAYS: ${JSON.stringify(e2Unwritable)}**; **THE MEASURED READING IN ONE LINE: the receipt is HONEST — \`{"status":"refused","reason":"write-failed"}\` at all three sites, so \`r1\` HOLDS — but the RECORD ADVANCES at all three while the file carries nothing, so \`r2\` REDDENS: the tier\'s own in-memory read afterwards SHOWS THE CHANGE THE FILE DOES NOT HAVE.** THE WRITABLE CONTROL (cited, not duplicated): ${JSON.stringify(eWritableControl)}; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-04'))}`,
-  'THE ARCHITECT\'S ANSWER (4), WHOSE DECISIVE INSTRUMENT IS A STORE THAT CANNOT SAVE — the one instrument that separates "the receipt is honest" from "the tier treated the write as committed". **`src/main/security-store.ts:138-139` ASSIGNS \`current\` BEFORE \`persist()\` RUNS, so a refused persist leaves the record advanced — and `docs/specs/store-security.md` `§2.1` item 2 DOCUMENTS that discipline ("the in-memory config still applies for this process lifetime"). The row does not dispute that the receipt is honest; it measures the OTHER half of answer (4), which the landed documentation predates.** `r2`\'s fixture is a path that cannot be written (three independent sites), and its deletion test is run: with `r2` removed the row reads green on the SAME readings, so the term is load-bearing. **A `MANUAL` here would be an instrument fault: the probe\'s own fixture check and its 3-site completeness are terms of the instrument gate.**')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
-// PHASE 3 — BOOT B: the seeded third-party arbitrary key, BEFORE the boot
+// PHASE 3 — BOOT B: the tier-1 file-store bridge namespace census
 // ══════════════════════════════════════════════════════════════════════════════════════
+/** **RE-WORDED BY THE REBUILD PASS (`2026-10-29`):** this boot was spawned to carry a SEEDED
+ *  THIRD-PARTY ARBITRARY KEY for the row that measured what the deleted store's boot ingestion did
+ *  with it; that row (`SC-A-05`) is RETIRED with the store module (`E-1`, `D-16`) — the rebuild
+ *  replaces the discard with a declared PRESERVATION into `entries`, so re-pointing the row would
+ *  reverse its own claim — and the seed went with it. The boot stays because `SC-A-06` reads the
+ *  THIRD page-reachable bridge namespace (`provident.store.*`) on a live app, and a second boot is
+ *  what keeps that reading independent of boot A's state. */
 await teardown(bootA)
 cdp.close()
 
-const SEEDED_FOREIGN = { thirdPartyBlob: { arbitrary: 'SEEDED-THIRD-PARTY-DATUM' }, extra: 'SEEDED-EXTRA' }
-const bootB = await bootApp('B', { seedExtra: SEEDED_FOREIGN, extraArgs: ['--mcp-transport=stdio', '--remote-debugging-port=0'] })
+const bootB = await bootApp('B', { extraArgs: ['--mcp-transport=stdio', '--remote-debugging-port=0'] })
 const portB = await devtoolsPort(bootB)
 const cdpB = await Cdp.attach(portB)
 registerCleanup(() => cdpB.close())
 const bootBFirst = await firstRead(bootB.client, 'provident.get_markdown', {})
 await sleep(500)
 const secBPath = join(bootB.profile, SECURITY_FILE)
-const afterBootBytes = readOrNull(secBPath)
-const afterBootParsed = JSON.parse(afterBootBytes)
-const keyInFileAfterBoot = Object.prototype.hasOwnProperty.call(afterBootParsed, 'thirdPartyBlob')
-const liveGetB = await cdpB.evaluate('window.provident.security.get()')
-const keyInLiveGetAfterBoot = liveGetB !== null && typeof liveGetB === 'object'
-  && (Object.prototype.hasOwnProperty.call(liveGetB, 'thirdPartyBlob') || Object.prototype.hasOwnProperty.call(liveGetB, 'extra'))
-const writeB = await cdpB.evaluate(`window.provident.security.set({ maxJournalLength: ${JOURNAL} })`)
-await sleep(400)
-const afterWriteParsed = JSON.parse(readOrNull(secBPath))
-const keyInFileAfterWrite = Object.prototype.hasOwnProperty.call(afterWriteParsed, 'thirdPartyBlob')
-/** `A-F7` (disposed `FIXED`): without a POSITIVE precondition, a THROWN `get()` (the CDP error
- *  shape `{__cdpError}` or `undefined`) makes `keyInLiveGetAfterBoot` false and the row read FAIL
- *  for a broken instrument — i.e. the row could not separate "the store dropped the seed" from "I
- *  never read". The identity check `SC-CH-01` uses on boot A is therefore applied HERE, and if it
- *  does not hold, the absence terms below are given NO weight and the row is reported as an
- *  INSTRUMENT-BROKEN reading (its FAIL is then a statement about the probe, not about the store). */
-const liveGetIdentityOk = liveGetB !== null && typeof liveGetB === 'object' && liveGetB.token === TOKEN
-const bootBInstrumentOk = bootBFirst.ok && !bootBFirst.isError && liveGetIdentityOk
-/** `B-F4` (disposed `FIXED`) — **A FAILED PRECONDITION NOW READS `MANUAL`, NOT `PASS`.** The
- *  as-filed verdict was `(bootBInstrumentOk && !keyInLiveGetAfterBoot && keyInFileAfterWrite ===
- *  false) ? 'FAIL' : 'PASS'`, i.e. a FAIL **iff** the instrument was healthy: **a thrown live
- *  `get()` or an unanswered boot produced `PASS`** — and the code comment above, `§4b`'s `A-F7`
- *  disposition and the record's `§4` all claimed the row reports "an INSTRUMENT-BROKEN reading".
- *  It did not. The four-state mapping is explicit here: a broken instrument is `MANUAL` **with its
- *  reason** (never `PASS`, and never a silent `FAIL` — a FAIL would charge the store for the
- *  probe's own death), and the requirement reading is taken only when the precondition holds. */
-const absenceTermsHold = !keyInLiveGetAfterBoot && keyInFileAfterWrite === false
-const scA05Verdict = !bootBInstrumentOk ? 'MANUAL' : (absenceTermsHold ? 'FAIL' : 'PASS')
-check('SC-A-05 (Family A, arm c)', 'REQUIREMENT ARM (c): a profile whose security file carries THIRD-PARTY arbitrary keys survives a real boot INTO THE LIVE STORE — MEASURED: the live store NEVER reports them and the FIRST live write DISCARDS them from the file', scA05Verdict,
-  `NAMED TERMS: the ARM is MET iff the seeded keys are readable through the live store after the boot. POSITIVE PRECONDITION (added by the §6.2 audit's A-F7): the live get() answers the seeded token (liveGetIdentityOk=${liveGetIdentityOk}, token=${JSON.stringify(liveGetB?.token)}) and the boot's MCP surface answered (bootBFirst.ok=${bootBFirst.ok}, isError=${bootBFirst.isError === true}) → bootBInstrumentOk=${bootBInstrumentOk}${bootBInstrumentOk ? '' : ' — THE INSTRUMENT IS BROKEN: the absence terms below carry NO weight and this row is reported as MANUAL, NOT as a PASS and NOT as a FAIL (the §6.2 audit\'s B-F4: the as-filed predicate read PASS on a failed precondition)'}; seeded keys=${JSON.stringify(Object.keys(SEEDED_FOREIGN))}; keyInFileAfterBoot=${keyInFileAfterBoot} (a boot read does not rewrite the file, so the BYTES still carry them — keys after boot=${JSON.stringify(Object.keys(afterBootParsed).sort())}), keyInLiveGetAfterBoot=${keyInLiveGetAfterBoot} (live get()=${JSON.stringify(liveGetB)}), firstWriteReceipt=${JSON.stringify(writeB?.write)}, keyInFileAfterWrite=${keyInFileAfterWrite} (keys after write=${JSON.stringify(Object.keys(afterWriteParsed).sort())})`,
-  'the gate-1 record\'s §1 row: "`sanitize()` reconstructs the same closed shape on load, so an unknown key already in the file is DISCARDED and gone at the next write" — and the landed boot read does not itself rewrite the file, so the seed SURVIVES in the BYTES until the first write. Both halves are measured, which is why the file is read BEFORE the boot: the seed must exist before the boot ingestion, or the row would measure a write rather than an ingestion. Written in the requirement direction, so "the silent discard works as designed" cannot be read as a Family A pass. ITS PRECONDITION IS NOW ASSERTED (A-F7): the identity read must answer the seeded token before the absence terms are given weight, so a THROWN read can no longer masquerade as "the store dropped it" — **and a failed precondition reports `MANUAL` with its reason (`B-F4`), so the row can no longer read `PASS` on a broken instrument**')
 
 // ── FAMILY A, arm (a-iii) — THE TIER-1 FILE-STORE BRIDGE NAMESPACE (`A-F1`) ────────────
 /** THE ARM THE §6.2 AUDIT'S `A-F1` FOUND MISSING, AND THE REASON IT BLOCKED A GREEN GATE 6.
@@ -3026,183 +2229,42 @@ const scA06NameTerm = nameHonoured
   ? 'MEASURED, the name parameter IS honoured: the landed row is keyed by the NAME the caller passed'
   : 'MEASURED, the name parameter is INERT: the landed row is keyed by the VALUE\'s own spelling (file.settings.theme.token), i.e. the main-side handler projects the crossing\'s translation by the value\'s keys and never reads row.name'
 check('SC-A-06 (Family A, arm a-iii — CHANNEL CENSUS) — THE TIER-1 FILE-STORE BRIDGE NAMESPACE', 'CHANNEL-CENSUS ARM: the third page-reachable bridge namespace (`provident.store.put/get`) accepts NO arbitrary tier-4 NAME — a `secure.`-keyed name and a `secure.`-keyed value member both fail to land in `provident-settings.json`\'s bytes or in the live `get()`, and the tier-4 file is untouched by this channel', scA06Verdict,
-  `NAMED TERMS (the predicate in full — rules 1 and 3 of §4d): ${scA06TermNames} => storeBridgeNoLeak=${storeBridgeNoLeak}. live store.get() ANSWERED AT EVERY READING (the B-F1 widening, its count reconciled by A3-03): PRE-PROBE baseline (B0) rows=${JSON.stringify(getB0.rows)}; after (i) rows=${JSON.stringify(getB1.rows)}, after (ii) rows=${JSON.stringify(getB2.rows)}, after (iii) rows=${JSON.stringify(getB3.rows)} (the final reading, ${storeBridgeReadable ? storeBridgeRows.length : JSON.stringify(liveRowsB)} row(s)); settings bytes BEFORE the probe=${JSON.stringify(settingsBytesB0)}; after (i) put with a secure.-keyed NAME and a secure.-keyed VALUE member: receipt=${JSON.stringify(putSecureName)} => ${JSON.stringify(settingsBytesB1)}; after (ii) put with a file.-looking NAME carrying a secure.-keyed VALUE member: receipt=${JSON.stringify(putFileLookingName)} => ${JSON.stringify(settingsBytesB2)}; after (iii) put with the NAME file.settings.namedprobe and the VALUE key file.settings.theme.token: receipt=${JSON.stringify(putNameHonour)} => ${JSON.stringify(settingsBytesB3)}. THE PUT-RECEIPT PRECONDITION (the A3-04 term, so a DEAD write instrument reads MANUAL rather than being charged as a LEAK — §4d rule 2): putReceiptStatuses=${JSON.stringify(putReceiptStatuses.map((r) => ({ label: r.label, status: r.status })))}, putReceiptStatusesNotCommitted=${JSON.stringify(putReceiptStatusesNotCommitted.map((r) => r.label))}, putReceiptsOk=${putReceiptsOk}, scA06InstrumentOk=${scA06InstrumentOk}, putReceiptsWithAnEmptyProjectionButACommittedReceipt=${JSON.stringify(putReceiptStatuses.filter((r) => r.status === 'committed' && (nameHonoured || valueKeyLanded)).map((r) => r.label))} (a committed receipt on a probe that landed nothing IS the leak-predicate reading — the filter dropped it; a THROWN or receipt-less probe is the instrument state). LEAK TERMS, EACH READING ITS OWN TERM: secureKeyInSettingsBytesPerReading=${JSON.stringify(secureKeyInSettingsBytesPerReading)}, secureKeyInSettingsBytes=${secureKeyInSettingsBytes} (no secure.-keyed member appears in tier 1's bytes at ANY of the four readings — the as-filed claim, now true of its predicate instead of only of its prose); secureNameInStoreGetPerReading=${JSON.stringify(secureNameInStoreGetPerReading)}, secureNameInStoreGet=${secureNameInStoreGet} (no row ANY of the four live get() readings reports is secure.-named); securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge} (the tier-4 file's sha256 ${secShaBBefore.slice(0, 16)} ... ${secShaBAfter.slice(0, 16)}: this channel cannot reach tier 4's file). THE NAME-PARAMETER DISCRIMINATOR (iii): nameHonoured=${nameHonoured}, valueKeyLanded=${valueKeyLanded} - ${scA06NameTerm}. **NOTHING LANDED IS ALSO A NON-VACUITY QUESTION (B-F2): this row's own positive evidence is that the channel MOVES bytes and lands a name at all, so \`nameHonoured || valueKeyLanded\` is a TERM — a dead or refusing put() moves nothing and no longer reads PASS**`,
+  `NAMED TERMS (the predicate in full — rules 1 and 3 of §4d): ${scA06TermNames} => storeBridgeNoLeak=${storeBridgeNoLeak}. **RE-GRAINED UNDER C-4: the "tier-4 file" whose sha this row holds unmoved is the INSTANCE'S OWN \`provident-operator-settings.json\` (old figure: the retired \`provident-security.json\`), and at this boot it is the file the construction created — so a channel that wrote the record would move it. THE CLAIM IS UNCHANGED.** live store.get() ANSWERED AT EVERY READING (the B-F1 widening, its count reconciled by A3-03): PRE-PROBE baseline (B0) rows=${JSON.stringify(getB0.rows)}; after (i) rows=${JSON.stringify(getB1.rows)}, after (ii) rows=${JSON.stringify(getB2.rows)}, after (iii) rows=${JSON.stringify(getB3.rows)} (the final reading, ${storeBridgeReadable ? storeBridgeRows.length : JSON.stringify(liveRowsB)} row(s)); settings bytes BEFORE the probe=${JSON.stringify(settingsBytesB0)}; after (i) put with a secure.-keyed NAME and a secure.-keyed VALUE member: receipt=${JSON.stringify(putSecureName)} => ${JSON.stringify(settingsBytesB1)}; after (ii) put with a file.-looking NAME carrying a secure.-keyed VALUE member: receipt=${JSON.stringify(putFileLookingName)} => ${JSON.stringify(settingsBytesB2)}; after (iii) put with the NAME file.settings.namedprobe and the VALUE key file.settings.theme.token: receipt=${JSON.stringify(putNameHonour)} => ${JSON.stringify(settingsBytesB3)}. THE PUT-RECEIPT PRECONDITION (the A3-04 term, so a DEAD write instrument reads MANUAL rather than being charged as a LEAK — §4d rule 2): putReceiptStatuses=${JSON.stringify(putReceiptStatuses.map((r) => ({ label: r.label, status: r.status })))}, putReceiptStatusesNotCommitted=${JSON.stringify(putReceiptStatusesNotCommitted.map((r) => r.label))}, putReceiptsOk=${putReceiptsOk}, scA06InstrumentOk=${scA06InstrumentOk}, putReceiptsWithAnEmptyProjectionButACommittedReceipt=${JSON.stringify(putReceiptStatuses.filter((r) => r.status === 'committed' && (nameHonoured || valueKeyLanded)).map((r) => r.label))} (a committed receipt on a probe that landed nothing IS the leak-predicate reading — the filter dropped it; a THROWN or receipt-less probe is the instrument state). LEAK TERMS, EACH READING ITS OWN TERM: secureKeyInSettingsBytesPerReading=${JSON.stringify(secureKeyInSettingsBytesPerReading)}, secureKeyInSettingsBytes=${secureKeyInSettingsBytes} (no secure.-keyed member appears in tier 1's bytes at ANY of the four readings — the as-filed claim, now true of its predicate instead of only of its prose); secureNameInStoreGetPerReading=${JSON.stringify(secureNameInStoreGetPerReading)}, secureNameInStoreGet=${secureNameInStoreGet} (no row ANY of the four live get() readings reports is secure.-named); securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge} (the tier-4 file's sha256 ${secShaBBefore.slice(0, 16)} ... ${secShaBAfter.slice(0, 16)}: this channel cannot reach tier 4's file). THE NAME-PARAMETER DISCRIMINATOR (iii): nameHonoured=${nameHonoured}, valueKeyLanded=${valueKeyLanded} - ${scA06NameTerm}. **NOTHING LANDED IS ALSO A NON-VACUITY QUESTION (B-F2): this row's own positive evidence is that the channel MOVES bytes and lands a name at all, so \`nameHonoured || valueKeyLanded\` is a TERM — a dead or refusing put() moves nothing and no longer reads PASS**`,
   'the §6.2 audit\'s `A-F1` (HIGH, gate-6-blocking): the driver censused `window.provident.security` and the generic store surface, then asserted "NO live channel accepts an arbitrary tier-4 name" — while `src/main/preload.ts:61-65,123-129` exposes `provident.store.put(row)`/`get()`, wired through `STORE_FILE_PUT` to `src/main/main.ts:315-336`, whose own comment declares "the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the file". THIS ROW IS THAT CLAIM, DRIVEN. `docs/decisions.md` `SECURE-TIER-IS-A-FILESTORE-PEER` clause (2) (`D-CLAUSE-2`) forbids a lower-tier alias, and `data-ownership-model-plan.md` §3.8 forbids a tier-4 value reaching a nonsecure reader — a `secure.`-keyed member landing in tier 1\'s file would violate BOTH and would be a Family C leak. MEASURED at this HEAD: it does not land, and the channel cannot move the tier-4 file. A FAIL here is a NEW HIGH live defect and must be filed, not explained. **ITS INSTRUMENT WINDOW IS NOW WHOLE (the SECOND audit\'s `B-F1`/`B-F2`): every byte reading AND every `get()` reading is a predicate term, and the name/value discriminator is the row\'s non-vacuity term. **AND ITS INSTRUMENT STATE IS NOW SEPARATED FROM ITS LEAK READING (the THIRD audit\'s `A3-04`): the non-vacuity term\'s failure used to read `FAIL`, i.e. a dead/refusing `store.put` was charged as a LEAK — against `§4d` rule 2 — so the three put receipts are now a NAMED PRECONDITION (`putReceiptsOk`) and a broken write instrument reads `MANUAL`. A receipted write that lands nothing is STILL the leak-predicate reading (`FAIL`), which is the direction this row exists for.**')
 
-// ══════════════════════════════════════════════════════════════════════════════════════
-// PHASE 3b — BOOT E: E-2's LIVE ARM (a profile whose tier-4 path cannot be written)
-// ══════════════════════════════════════════════════════════════════════════════════════
-/** **THE LIVE ARM THE PASS INSTRUCTIONS ASK FOR, TAKEN WITHOUT TOUCHING A SINGLE `src/**` BYTE: the
- *  scratch profile is SEEDED so that `<profile>/provident-security.json` is a DIRECTORY before the
- *  boot.** That is a real operator-visible state (a profile whose tier-4 path was clobbered by
- *  anything), it is created by the DRIVER and not by the app, and it makes the app's OWN persist fail
- *  at the same site `SC-E-04` drives in process — the rename onto the real path. **IF THE APP CANNOT
- *  BOOT IN THAT STATE THE ARM IS `MANUAL` WITH ITS REASON AND ITS stderr, NEVER A SILENT PASS: a boot
- *  refusal is itself a reading worth recording.** The three readings the arm takes are the receipt,
- *  the LIVE read-back and the on-disk state. */
-let eBootError = null
-let bootE = null
-let e5 = { booted: false }
-try {
-  bootE = await bootApp('E', { securityAsDirectory: true, extraArgs: ['--mcp-transport=stdio', '--remote-debugging-port=0'] })
-  const portE = await devtoolsPort(bootE)
-  const cdpE = await Cdp.attach(portE)
-  registerCleanup(() => cdpE.close())
-  const secPathE = join(bootE.profile, SECURITY_FILE)
-  const eBefore = { isDirectory: (() => { try { return statSync(secPathE).isDirectory() } catch { return false } })(), listing: readdirSync(bootE.profile).filter((n) => n === SECURITY_FILE) }
-  const eGetBefore = await cdpE.evaluate('window.provident.security.get()')
-  const eMcpBefore = await rawCall(bootE.client, 'provident.get_markdown', {})
-  const eWrite = await cdpE.evaluate(`(async function(){
-    try {
-      var before = await window.provident.security.get();
-      var answer = await window.provident.security.set({ token: 'E2-LIVE-OPERATOR-WRITE', maxJournalLength: 55 });
-      var after = await window.provident.security.get();
-      return { ok: true, before: before, answer: answer, after: after, receipt: answer && answer.write ? answer.write : null };
-    } catch (e) { return { ok: false, threw: String(e) } }
-  })()`)
-  await sleep(600)
-  const eAfter = { isDirectory: (() => { try { return statSync(secPathE).isDirectory() } catch { return false } })(), listing: readdirSync(bootE.profile).filter((n) => n.startsWith(SECURITY_FILE)) , readRaw: (() => { try { return readFileSync(secPathE, 'utf8') } catch (e) { return 'UNREADABLE:' + e.code } })() }
-  const eResidualTmp = readdirSync(bootE.profile).filter((n) => n === TMP_RESIDUAL)
-  const eGetAfter = await cdpE.evaluate('window.provident.security.get()')
-  const eMcpAfter = await rawCall(bootE.client, 'provident.get_markdown', {})
-  const e5RecordAdvanced = eGetAfter !== null && typeof eGetAfter === 'object' && eGetAfter.token === 'E2-LIVE-OPERATOR-WRITE' && eGetAfter.maxJournalLength === 55
-  const e5FileCarriesTheRecord = eAfter.readRaw === 'E2-LIVE-OPERATOR-WRITE' ? true : /E2-LIVE-OPERATOR-WRITE/.test(String(eAfter.readRaw))
-  e5 = {
-    booted: true, profile: bootE.profile, securityPathIsADirectoryBeforeTheBoot: eBefore.isDirectory,
-    securityPathIsADirectoryAfterTheWrite: eAfter.isDirectory, residualTmpEntries: eResidualTmp,
-    getBefore: eGetBefore, write: eWrite, receipt: eWrite?.receipt ?? null,
-    getAfter: eGetAfter, fileRawAfter: String(eAfter.readRaw).slice(0, 200),
-    recordAdvancedPastARefusedPersist: e5RecordAdvanced === true && e5FileCarriesTheRecord === false,
-    receiptClaimsFullCommitment: eWrite?.receipt?.status === 'committed',
-    receiptIsRefused: eWrite?.receipt?.status === 'refused',
-    mcpBefore: { ok: eMcpBefore.ok, isError: eMcpBefore.isError === true, text: scannable(eMcpBefore.text ?? eMcpBefore.error).slice(0, 200) },
-    mcpAfter: { ok: eMcpAfter.ok, isError: eMcpAfter.isError === true, text: scannable(eMcpAfter.text ?? eMcpAfter.error).slice(0, 200) },
-  }
-} catch (e) {
-  eBootError = String(e?.message ?? e)
-}
-const e5InstrumentOk = e5.booted === true && e5.write?.ok === true && typeof e5.getBefore === 'object' && e5.getBefore !== null
-const e5Verdict = !e5InstrumentOk ? 'MANUAL'
-  : (e5.receiptClaimsFullCommitment === true || e5.recordAdvancedPastARefusedPersist === true) ? 'FAIL' : 'PASS'
-check('SC-E-05 (Family E, E-2) — COMMIT ⟺ PERSISTED: THE LIVE ARM, ON A PROFILE THAT CANNOT SAVE ([CDP]+[G])', 'E-2 REQUIREMENT ARM (live): with `<profile>/provident-security.json` seeded as a DIRECTORY before the boot, a REAL operator write through the app\'s own bridge is driven and read three ways — the receipt, the live read-back and the on-disk state', e5Verdict,
-  `NAMED TERMS: ${JSON.stringify({ theReceiptDoesNotClaimFullCommitment: e5.receiptClaimsFullCommitment === false, theRecordDoesNotAdvancePastARefusedPersist: e5.recordAdvancedPastARefusedPersist === false, theOnDiskStateStillCarriesNothing: e5.fileRawAfter !== undefined })}. **THE ARM: ${JSON.stringify(e5)}**${eBootError === null ? '' : ` **THE APP COULD NOT BE BOOTED INTO THAT STATE, SO THIS ARM IS MANUAL WITH ITS REASON (never a silent PASS): bootError=${JSON.stringify(eBootError)}, stderrTail=${JSON.stringify(String(bootE?.stderrText?.() ?? '').slice(-400))}**`}`,
-  'THE ARCHITECT\'S ANSWER (4) AS THE OPERATOR MEETS IT. The instrument is the app itself, unmodified: the only thing this driver changes is the SHAPE of the path the app was told to persist to, which is exactly the state `SC-E-04` constructs in process. **A boot refusal would have been a reading (and the arm would then read MANUAL with its stderr recorded), so this arm can never PASS by failing to run.** `residualTmpEntries` is taken beside the reading because `persist()` removes `${path}.tmp` on a caught failure: a residue there is a second, independent statement about the same failed write.')
 
-// ── FAMILY E, E-4 — THE NAMED `CONDITION` (the architect's answers 1 and 3) ──────────────
-/** **THE CONDITION, NAMED AND MEASURED — NOT A RE-SCORING OF THE FAMILY-D ARMS AND NOT A NEW RUNTIME
- *  PREDICATE.** The architect's answer (1) makes `D-2` **STRUCTURAL**: the tier's write surfaces stay
- *  non-MCP-reachable and the enforcement lives at the exclusion gate's invocation turn. The TWO
- *  READINGS the Family-D arms can be asserted under are therefore DIFFERENT CLAIMS, and the record
- *  keeps BOTH visible rather than silently picking one:
- *
- *    **READING A — A LOCK-STATE RULE AT THE STORE'S OWN SITE:** the tier's own write site must refuse
- *    while the tier is CLOSED. This is what `SC-D-05`/`SC-D-07` measure, and it is what they FIND
- *    ABSENT (the write answers `committed` and moves the file's sha256 in the FORBIDDEN state, again
- *    after the return, and in the one legal state too) — so under READING A the arms are `FAIL` and
- *    MUST NOT BE DROPPED.
- *
- *    **READING B — STRUCTURAL NON-REACHABILITY:** the legal pairs are read as `{MCP-ENABLED,
- *    TIER-4-CLOSED}` / `{MCP-DISABLED, TIER-4-OPEN}` where "CLOSED" is a property of the WRITE
- *    SURFACE's reachability from the MCP transports and not of a predicate consulted at the store's
- *    own site. Under READING B the arms' premise ("the store should consult the MCP state") is not
- *    what the ruling requires — and the arms' measured fact is UNMOVED: the write surface admits a
- *    write while the tier is CLOSED, which is a statement about SCOPE (`P-R6`, a GATE-SCOPE finding),
- *    never about a leak.
- *
- *  **WHAT EACH ARM ASSERTS, NAMED: `SC-D-05`/`SC-D-07` assert READING A** (their predicate is "the
- *  write must be REFUSED while MCP is enabled", which only has content under A). **`SC-E-09` asserts
- *  the FACTS that decide between the readings**, and none of them is a runtime predicate over MCP
- *  state: the tier's own surface carries no lock/unlock/MCP member at all (so READING A has no site
- *  in the module), and the write surface is not reachable from the MCP tool set. **BOTH READINGS STAY
- *  VISIBLE; NEITHER ARM IS DROPPED AND NO ARM'S VERDICT MOVES.** */
-const E_LOCK_TOKENS = ['unlocked', 'unlock', 'locked', 'mcpBlocked', 'mcp-blocked', 'exclusionState', 'exclusion', 'tier4Open', 'tier4Closed', 'isOpen', 'isBlocked']
-const eLockCensusOver = (src) => E_LOCK_TOKENS.filter((t) => countInCode(src, t).code > 0)
-const eLockTokensInTheStoreModule = eLockCensusOver(securityStoreSrcA)
-const E_LOCK_CONTROL_SRC = 'export interface S { set(patch: unknown): void }\nfunction gate(){ return this.mcpBlocked === true }\nclass K { unlocked = false; exclusionState = "mcp-enabled"; isOpen(){ return !this.unlocked } }\n'
-const eLockControlHits = eLockCensusOver(E_LOCK_CONTROL_SRC)
-const mcpServerSrcForE = readFileSync(join(root, 'src', 'main', 'mcp-server.ts'), 'utf8')
-const eWriteSurfaceTokensInTheMcpServer = ['IPC_SECURITY_SET', 'security.set', 'securityStore.set'].filter((t) => countInCode(mcpServerSrcForE, t).code > 0)
-const eFamilyDFailsStillPresent = CHECKS.filter((c) => /^SC-D-0[57]/.test(c.id) && c.verdict === 'FAIL')
-const eLockStateReadingMeasuredFalse = d2ReceiptEnabled?.status === 'committed' && d2ReceiptReturn?.status === 'committed'
-const e5ReceiptHonest = e5.booted === true ? e5.receiptIsRefused === true : false
-const e9Terms = {
-  c1_theTiersOwnSurfaceCarriesNoLockUnlockOrMcpState: eLockTokensInTheStoreModule.length === 0 && e3CensusComplete,
-  c2_theWriteSurfaceIsNotReachableFromTheMcpToolSet: toolSetIsLanded === true && eWriteSurfaceTokensInTheMcpServer.length === 0,
-  c3_theLockStateReadingIsMeasuredAbsent: eLockStateReadingMeasuredFalse === true,
-  c4_theFamilyDFailsAreStillMeasuredAndNotDropped: eFamilyDFailsStillPresent.length === 2,
-  c5_theCensusControlCanRefuse: eLockControlHits.length >= 3,
-}
-const e9Verdict = (!eProbeInstrumentOk || !e3CensusComplete) ? 'MANUAL' : (Object.values(e9Terms).every((v) => v === true) ? 'PASS' : 'FAIL')
-check('SC-E-09 (Family E, E-4) — `CONDITION-1`: THE LOCK/ACCESS CONDITION, BOTH READINGS KEPT VISIBLE', 'CONDITION (NOT a requirement arm and NOT a new runtime predicate over MCP state): the TWO readings the Family-D write arms can be asserted under are BOTH carried — READING A (a lock-state rule at the store\'s own site) and READING B (structural non-reachability of the write surface) — with the FACTS that decide between them measured, the Family-D FAILs still counted, and the module\'s own surface shown to carry NO lock/unlock/MCP member for READING A to live in', e9Verdict,
-  `NAMED TERMS (each one a predicate term, each with its fixture): ${JSON.stringify(e9Terms)}. **READING A (a lock-state rule at the store's own site) is what \`SC-D-05\`/\`SC-D-07\` ASSERT — both are still present and still read FAIL, and neither is dropped: ${JSON.stringify(eFamilyDFailsStillPresent.map((c) => c.id.split(' ')[0] + ':' + c.verdict + ' ' + JSON.stringify(c.observation).slice(0, 120)))}.** **READING B (structural non-reachability) is what the architect's answer (1) states, and its facts are these: the tier module's CODE carries NO lock/unlock/MCP/state member — census over ${E_LOCK_TOKENS.length} tokens in \`src/main/security-store.ts\` (sha256 ${securityStoreShaA.slice(0, 16)}…, code-only, comments stripped) → ${JSON.stringify(eLockTokensInTheStoreModule)}; the live surface census is ${JSON.stringify(e3SurfaceCensus)}; the MCP server's own bytes carry none of ${JSON.stringify(['IPC_SECURITY_SET', 'security.set', 'securityStore.set'])} → ${JSON.stringify(eWriteSurfaceTokensInTheMcpServer)}; the live tool set is SET-EQUAL to the landed \`ALL_TOOLS\` (toolSetIsLanded=${toolSetIsLanded}).** THE \`c5\` CONTROL (the census can refuse): the SAME census over a SYNTHETIC source that really does carry such members → ${JSON.stringify(eLockControlHits)} (a census that could not find them would make \`c1\` unfalsifiable). **THE CONDITION IN ONE LINE: the write surface admits a write while the tier is CLOSED — the legal pairs are \`{MCP-ENABLED, TIER-4-CLOSED}\` / \`{MCP-DISABLED, TIER-4-OPEN}\`, and the enforcement must be STRUCTURAL (the write surface is non-MCP-reachable and the unlock is only reachable while the MCP is blocked) — so under READING A the arms FAIL as measured and under READING B the same measurement is a GATE-SCOPE finding named \`P-R6\`; THIS ROW DOES NOT CHOOSE BETWEEN THEM AND DOES NOT DROP EITHER.**`,
-  'The architect\'s answers (1) and (3), carried as a CONDITION rather than dissolved into the arms (`§4d` rule 6: a term must be IN its predicate — this row\'s terms are the structural facts, and the arms\' verdicts are read from the arms themselves). **NO RUNTIME PREDICATE OVER MCP STATE IS INVENTED AND NO ARM IS RE-SCOPED:** `SC-D-05`/`SC-D-07` keep their verdicts and their wording (READING A), and this row adds the measurement that gives the structural reading (B) its content. **THE DECLARED LIMIT: "the unlock is only reachable while the MCP is blocked" is NOT measured by this battery at any layer — the unlock path is the operator\'s pane/`setExclusion` channel, whose reachability this battery does not census; that limit is stated here rather than implied away.**')
 
-// ── FAMILY E — THE FAMILY VERDICTS, DERIVED FROM THE ARMS ABOVE ──────────────────────────
-const eProbeErrCount = eProbeErrs.length
-const eCommittedReceiptCount = eCommittedReceiptOnUnrep.length + eBridgeCommittedReceipts.length
-/** The AS-FILED counts stay PRINTED; the DERIVED verdict reads the RE-GRAINED terms, because a family
- *  verdict may not be carried by a criterion the LANDED CONTRACT contradicts (`2026-10-11`). */
-const eAsFiledChargeCount = eCommittedReceiptOnUnrep.length + eBridgeCommittedReceipts.length
-const eRegrainedChargeCount = eCommittedOnADeclaredRefusal.length + eBridgeDeclaredRefusalCommitted.length + eWrongReasonToken.length + eBridgeWrongReasonToken.length
-const e1VerdictDerived = (!eProbeInstrumentOk || !eBridgeInstrumentOk || !eProbeContractTableAgrees || e2BridgeTerms.b1b_theBridgeCarriesTheContractTable !== true) ? 'PARTIAL'
-  : (eCommittedDeclaredRefusalInRecord.length + eBridgeCommitted.length > 0 ? 'NON-COMPLIANT'
-    : ((e1AllTermsHold && e2BridgeRequirementTerms.every((v) => v === true) && eJsonSafeControlHolds) ? 'COMPLIANT' : 'PARTIAL'))
-const e2VerdictDerived = (!eProbeInstrumentOk) ? 'PARTIAL'
-  : (e5Verdict === 'MANUAL') ? 'PARTIAL'
-    : ((!e2NoInMemoryAdvance || e5.recordAdvancedPastARefusedPersist === true || e5.receiptClaimsFullCommitment === true) ? 'NON-COMPLIANT'
-      : ((e2ReceiptsHonest && e2BytesUnmoved && eWritableControlHolds) ? 'COMPLIANT' : 'PARTIAL'))
-const e3VerdictDerived = (!eProbeInstrumentOk || !e3CensusComplete) ? 'PARTIAL'
-  : (e3MutationVisible.length > 0 ? 'NON-COMPLIANT' : (e3ControlsHold ? 'COMPLIANT' : 'PARTIAL'))
-console.log('\n  FAMILY E — THE ARCHITECT\'S FIVE ANSWERS, DERIVED FROM THE ARMS (never restated):')
+// ── FAMILY E — THE FAMILY VERDICT, DERIVED FROM THE SURVIVING ARM ─────────────────────────
+/** **REBUILT BY THIS PASS (`2026-10-29`, the `security-store-storeroom` rebuild): the module-layer arms of
+ *  E-1/E-2/E-3 are RETIRED with the store module (`E-1`, `D-16`) — their instrument imported the DELETED
+ *  module by SOURCE path, so it cannot run at all — and the live arm built on a path that cannot be
+ *  written (`SC-E-05`) is retired with the composition site `E-1` removed. A family verdict may not be
+ *  carried by an arm that no longer exists, so the verdict below is derived from the ONE arm that measures
+ *  the LIVE channel alone: `SC-E-02`. Nothing is re-derived from a retired reading and no retired row is
+ *  re-scored.** */
+const e1ArmsLive = dById(/^SC-E-02/)
+const e1ArmFails = e1ArmsLive.filter((c) => c.verdict === 'FAIL')
+const e1ArmManuals = e1ArmsLive.filter((c) => c.verdict === 'MANUAL')
+const e1VerdictDerived = (e1ArmsLive.length === 0 || e1ArmManuals.length > 0) ? 'PARTIAL'
+  : (e1ArmFails.length > 0 ? 'NON-COMPLIANT' : 'COMPLIANT')
+console.log('\n  FAMILY E — THE ARCHITECT\'S ANSWERS, DERIVED FROM THE ARMS THAT STILL EXIST (never restated):')
 console.log('    E-1 (JSON-SAFETY: an unrepresentable value must not be committed) = ' + e1VerdictDerived)
-console.log('      ARMS: module [B] ' + JSON.stringify(dById(/^SC-E-01/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · bridge [CDP]+[G] ' + JSON.stringify(dById(/^SC-E-02/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · CONTROL ' + JSON.stringify(dById(/^SC-E-03/).map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
-console.log('      TERMS: unrepresentable values driven = ' + eUnrepProbes.length + ' of ' + eProbes.length + ' probe(s) (16 values x 3 members); values declared REFUSED and found IN the record = '
-  + JSON.stringify(eCommittedDeclaredRefusalInRecord.map((p) => p.value + '/' + p.member)) + '; probes answering `committed` for a CONTRACT-DECLARED-REFUSED value = ' + eCommittedOnADeclaredRefusal.length
-  + ' (module) + ' + eBridgeDeclaredRefusalCommitted.length + ' (bridge); refusals whose reason token is not `write-failed` = ' + (eWrongReasonToken.length + eBridgeWrongReasonToken.length)
-  + '; THE RE-GRAINED CHARGE TOTAL = ' + eRegrainedChargeCount + '; THE AS-FILED CHARGE, KEPT PRINTED BUT NOT CARRYING THE VERDICT = ' + eAsFiledChargeCount
-  + ' (' + eCommittedReceiptOnUnrep.length + ' module + ' + eBridgeCommittedReceipts.length + ' bridge, all of them positions the CONTRACT DECLARES ADMITTED); in-memory/file disagreements = ' + JSON.stringify([...eDivergentProbes, ...eBridgeDivergent].map((p) => p.value + '/' + p.member))
-  + '; contractTableAgrees = ' + eProbeContractTableAgrees + ' (module) / ' + e2BridgeTerms.b1b_theBridgeCarriesTheContractTable + ' (bridge); module probe errors = ' + eProbeErrCount)
-console.log('      WHY THIS VERDICT: the re-grained charge covers ' + JSON.stringify([...new Set([...eDeclaredRefusedProbes.map((p) => p.value + '/' + p.member), ...eBridgeRows.filter((r) => r.declaredRefused === true).map((r) => r.id + '/' + r.member)])])
-  + ' — every one of them is REFUSED with the ONE declared token (`' + JSON.stringify([...new Set([...(eProbeOut?.refusalReasonTokens ?? []), ...eBridgeRows.filter((r) => r.write && r.write.status === 'refused').map((r) => String(r.write.reason))])]) + '`), while the readings the AS-FILED criterion charged ('
-  + eAsFiledChargeCount + ': ' + JSON.stringify([...eCommittedReceiptOnUnrep.map((p) => p.value + '/' + p.member), ...eBridgeCommittedReceipts.map((r) => r.id + '/' + r.member)]) + ') are the DECLARED-ADMITTED positions (`§2.2` item 3 / `§6` PAR-2/PAR-3 / `§3.1` M-6 / `§5.6.1` row 8 attempt (7)) — each of them lands a JSON-safe state with NO in-memory-versus-file divergence, which is the architect\'s own test. `Infinity` — the fixture the as-filed criterion was built on — is NOT committed anywhere on these bytes: it is REFUSED.')
-console.log('    E-2 (COMMIT ⟺ PERSISTED: a write is not committed until it saves to file) = ' + e2VerdictDerived)
-console.log('      ARMS: module [B] ' + JSON.stringify(dById(/^SC-E-04/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · live [CDP]+[G] ' + JSON.stringify(dById(/^SC-E-05/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · CONTROL ' + JSON.stringify(dById(/^SC-E-06/).map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
-console.log('      TERMS: receipt honest at every site = ' + (e2ReceiptsHonest && e5ReceiptHonest)
-  + ' (module `{"status":"refused","reason":"write-failed"}` at all 3 unwritable sites; live receipt = ' + JSON.stringify(e5.receipt ?? null) + '); record advanced past a refused persist = ' + (!e2NoInMemoryAdvance) + ' (module, all 3 sites) / ' + (e5.recordAdvancedPastARefusedPersist === true) + ' (live); file bytes unmoved = ' + e2BytesUnmoved
-  + '; the writable-path control commits and lands = ' + eWritableControlHolds)
-console.log('      WHY THIS VERDICT: the RECEIPT is honest — it says `refused` and never claims full commitment, so answer (4)\'s first half HOLDS — while `src/main/security-store.ts:138-139` assigns the record BEFORE `persist()` runs, so the tier\'s own read afterwards SHOWS A CHANGE THE FILE DOES NOT HAVE. That is the second half of answer (4) measured false, and it is a FAIL with its measurement rather than a defect of the instrument. `docs/specs/store-security.md` `§2.1` item 2 DOCUMENTS the in-memory-applies discipline, so this is a decision-contract drift as well as a reading: the row names both.')
-console.log('    E-3 (FULL-SURFACE CLONE: no carve-out) = ' + e3VerdictDerived)
-console.log('      ARMS: [B] ' + JSON.stringify(dById(/^SC-E-07/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
-  + ' · CONTROL ' + JSON.stringify(dById(/^SC-E-08|^SC-E-06/).map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
-console.log('      TERMS: the surface census = ' + JSON.stringify(e3SurfaceCensus) + '; members that hand back the SAME object twice = ' + JSON.stringify(e3HandsOutTheSameObject.map((r) => r.member))
-  + '; members whose returned value, mutated by the holder, was VISIBLE on the next read = ' + JSON.stringify(e3MutationVisible.map((r) => r.member))
-  + '; the clone-detector control pair holds = ' + e3ControlsHold + ' (clone-returning subject must stay silent, shared-object subject must fire)')
-console.log('      WHY THIS VERDICT: TWO of the three value-returning members are detached (`get()`, `set(patch)`\'s return), and `lastWriteReceipt()` is NOT — it hands the SAME receipt object back on every call (`src/main/security-store.ts:142-144`), so a holder can rewrite the tier\'s own answer to its last write. **`SC-D-02a` READ PASS BECAUSE IT MEASURED ONLY THE FIRST TWO; the architect\'s answer (3) removes the carve-out, and this row is the census that makes the third member in scope.** The FAIL names the member.')
-console.log('    E-4 (CONDITION-1: the lock/access condition, both readings kept visible) = ' + JSON.stringify(dById(/^SC-E-09/).map((c) => `${c.id.split(' ')[0]}:${c.verdict}`)) + ' — a CONDITION row, NOT a requirement arm')
-console.log('      TERMS: ' + JSON.stringify(e9Terms))
-console.log('      WHY THIS ROW EXISTS: the architect answered that `D-2` is STRUCTURAL, so the operative condition is the tier\'s own unlocked/blocked state and NOT a predicate consulted on MCP state. That answer does not move the Family-D arms\' measured fact — **the write surface admits a write while the tier is CLOSED** — and it does not license dropping them. READING A (the store-site lock rule the arms assert) and READING B (structural non-reachability) are BOTH printed, at the row and in this family block, so no later pass can quote one of them as the other.')
-console.log('    THE FAMILY-E ROW SET, BUCKETED BY THE DECLARED TABLE: ' + JSON.stringify(familyRows('E').map((c) => `${c.id.split(' ')[0]}:${rowKind(c)}:${c.verdict}`)))
-console.log('    THE DECLARED LIMITS OF THIS FAMILY (printed so a PASS cannot be over-read): (1) `function` and `Symbol` CANNOT cross the IPC boundary and are [B]-ONLY — the bridge arm says so in its own terms rather than reporting a probe it could not run; (2) "the unlock is only reachable while the MCP is blocked" is NOT measured by this battery at any layer (the unlock path is the operator\'s pane/`setExclusion` channel, whose reachability is not censused here); (3) `SC-E-01`\'s `t2` and `SC-E-02`\'s `b2` were RE-GRAINED `2026-10-11` (the `S3` re-measure) — the AS-FILED form ("no `committed` receipt for ANY value that does not survive a JSON round trip") is KEPT PRINTED as `t2AsFiled`/`b2AsFiled` and is NOT a term of the verdict, because it charged positions the LANDED CONTRACT DECLARES ADMITTED (`§2.2` item 3, `§6` PAR-2/PAR-3, `§3.1` M-6, `§5.6.1` row 8 attempt (7)); the verdict-carrying form is the CONTRACT-DECLARED boundary, and `t1`/`t3`/`b1`/`b3` remain the architect\'s own words ("must not be accepted"; the record and the file must not disagree) — the rows print WHICH term each reading reddens so no two can be conflated; (4) the re-grained charge is only as strong as the CONTRACT TABLE it reads, so the table is a NON-VACUITY TERM on both arms (`contractTableAgrees` and `b1b_theBridgeCarriesTheContractTable`): a table that had lost its refused positions, or its admitted ones, reads MANUAL rather than PASS; (5) `t2b`/`b2b` charge the refusal\'s OWN SHAPE (the reason token is exactly `write-failed`) — a clause the as-filed rows never charged, added in the same pass and NOT a re-grain.')
+console.log('      ARMS: live bridge [CDP]+[G] ' + JSON.stringify(e1ArmsLive.map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
+console.log('      TERMS: ' + JSON.stringify(e2BridgeTerms) + '; refusals whose reason token is not the declared one = '
+  + JSON.stringify(eBridgeWrongReasonToken.map((r) => r.id + '/' + r.member))
+  + '; transport witnessed = ' + eBridgeTransportWitnessed.length + ' of ' + E_BRIDGE_PROBES.length + ' probe(s)'
+  + '; rows of this family still declared: ' + JSON.stringify(familyRows('E').map((c) => `${c.id.split(' ')[0]}:${rowKind(c)}:${c.verdict}`)))
+console.log('      WHY THIS VERDICT: ' + (e1ArmFails.length === 0 && e1ArmManuals.length === 0
+  ? 'the live channel commits no value the CONTRACT DECLARES REFUSED, answers the declared value-refusal token for every refusal, and its live read-back equals the record the store saved.'
+  : 'the live channel is charged by its own named terms, listed above; a MANUAL arm withholds the claim and is never a PASS.'))
+console.log('    E-2 (COMMIT ⟺ PERSISTED) AND E-3 (FULL-SURFACE CLONE): their rows are RETIRED WITH THE STORE MODULE — they drove the deleted module\'s own `persist()`, its `lastWriteReceipt()` member and its three value-returning members in-process, and the live E-2 arm seeded the RETIRED name as a directory to make that persist fail, which under the rebuild refuses the instance\'s CONSTRUCTION instead (`FilePathUnreachable`, `docs/L2/security-store-storeroom/interface.md` §2.1) — a different behaviour, not re-pointed here.')
+console.log('    THE DECLARED LIMITS THAT SURVIVE (printed so a PASS cannot be over-read): (1) `function` and `Symbol` CANNOT cross the IPC boundary and are therefore NOT measured by the surviving bridge arm — the arm says so in its own terms; (2) "the unlock is only reachable while the MCP is blocked" is measured by no row of this battery (the unlock path is the operator\'s pane/`setExclusion` channel); (3) the arm\'s charge is only as strong as the CONTRACT TABLE it reads, so the table is a NON-VACUITY TERM on it (`b1b_theBridgeCarriesTheContractTable`): a table that had lost its refused or its admitted positions reads MANUAL rather than PASS.')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
 // PHASE 4 — [G] the static readings this battery's rows lean on
 // ══════════════════════════════════════════════════════════════════════════════════════
 const storeModulePath = join(root, 'src', 'renderer', 'store-core-graph.ts')
 const storeModuleSha = sha256(storeModulePath)
-const securityStoreSha = securityStoreShaA
-const securityStoreSrc = securityStoreSrcA
-/** The landed `set()`'s accepted patch member NAMES, read from the module's own type
- *  declaration — the census that makes SC-A-01's read-back claim auditable against the
- *  source rather than against the live answer alone. */
-const patchMembers = [...(securityStoreSrc.match(/set\(patch: \{([^}]*)\}/) ?? [, ''])[1].matchAll(/(\w+)\??:/g)].map((m) => m[1]).sort()
-const sanitizeKeys = [...(securityStoreSrc.match(/return \{ token:[^}]*\}/) ?? [''])[0].matchAll(/(\w+):/g)].map((m) => m[1]).sort()
-check('SC-G-01 (static census)', 'the landed tier-4 store\'s own API carries NO name-parameterised member and its `set()` admits exactly four patch member names — the source-side reading of SC-A-01', (patchMembers.length === 4 && !/set\(name|resolve\(|commit\(|subscribe\(/.test(securityStoreSrc)) ? 'PASS' : 'FAIL',
-  `NAMED TERMS: set() patch members=${JSON.stringify(patchMembers)}, the reconstructed shape's members=${JSON.stringify(sanitizeKeys)}, a name-addressed member (set(name…/resolve/commit/subscribe) present=${/set\(name|resolve\(|commit\(|subscribe\(/.test(securityStoreSrc)}; security-store.ts sha256=${securityStoreSha.slice(0, 16)}…`,
-  'the gate-1 record\'s §1 evidence rows (`security-store.ts:25-33` the API; `:121-141` the four patch members) re-read at this HEAD. This is the SOURCE half of Family A\'s arm (a); the live half is SC-A-01/02, and the two must agree — a disagreement is a doc/spec drift')
 
 const secureGateSites = ['src/renderer/store-core-graph.ts'].flatMap((p) => {
   const src = readFileSync(join(root, p), 'utf8')

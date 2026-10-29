@@ -973,7 +973,12 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
       return body.split('\n').map((line) => line.replace(/[|\s]/g, '')).filter((s) => s.startsWith("'")).map((s) => s.replace(/'/g, ''))
     })()
     const mutating = memberList(read('src/renderer/renderer.ts'), 'MUTATING_METHODS = new Set(')
-    const groups = memberList(read('src/main/security-store.ts'), 'VALID_GROUPS = new Set(')
+    // ⟶ C-1 RE-GRAIN (`security-store-storeroom` E-5, exception §4 C-1): the group set's SECOND LIVE
+    // COPY moved with the retired file — `VALID_GROUPS` is declared at
+    // `src/main/operator-settings/index.ts`, still SIX members, under an explicit
+    // `ReadonlySet<string>` annotation, so both the path literal and the reader's open-delimiter
+    // literal move with it. The FIRST copy (`src/main/security.ts:159`) does not move.
+    const groups = memberList(read('src/main/operator-settings/index.ts'), 'VALID_GROUPS: ReadonlySet<string> = new Set(')
     const headMethods = (() => {
       const head = headBytes('src/shared/types.ts') ?? ''
       const at = head.indexOf('export type RpcMethod =')

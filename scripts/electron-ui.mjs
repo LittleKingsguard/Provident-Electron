@@ -559,13 +559,18 @@ process.on('exit', () => {
   recordCleanup()
 })
 
-/** §3.2 — write the leg's OWN scratch security store into a fresh scratch
- *  profile: an operator-equivalent action on a throwaway file (the store file
- *  name is the landed `provident-security.json`), never against the operator's
- *  real profile. The profile comes from the shared helper's
- *  `makeFreshProfile` (§2.1 item 2), so there is ONE cleanup implementation
- *  (§3.7 `RT-3` wants exactly this: a FRESH profile per ATTEMPT, never a
- *  reused/partially-written one). */
+/** §3.2 — write the leg's OWN scratch security record into a fresh scratch
+ *  profile: an operator-equivalent action on a throwaway file, never against the
+ *  operator's real profile. **THE SEEDED NAME IS THE RETIRED `provident-security.json`
+ *  AND IT STAYS THE RETIRED NAME (C-4, `security-store-storeroom`):** the operator
+ *  record now lives in the instance's own `provident-operator-settings.json`, whose
+ *  bytes are the STORE's own image and which this leg may not hand-write, while the
+ *  retired name is READ ONCE at the first boot by the instance's import-once path —
+ *  so the seed is what makes the boot read a record at all, and the instance never
+ *  writes, renames or repairs it (its bytes stand as seeded). The profile comes from
+ *  the shared helper's `makeFreshProfile` (§2.1 item 2), so there is ONE cleanup
+ *  implementation (§3.7 `RT-3` wants exactly this: a FRESH profile per ATTEMPT,
+ *  never a reused/partially-written one). */
 function scratchProfile(tag) {
   const profile = makeFreshProfile(`provident-ui-${tag}`)
   writeFileSync(join(profile, 'provident-security.json'), JSON.stringify({ token: null, enabled: SCRATCH_GROUPS }, null, 2))
@@ -646,10 +651,16 @@ function operatorProfileCandidates() {
 /** The READ-ONLY state of the operator's profile candidates: directory existence
  *  plus, for each store the app persists there, the file's PRESENCE and MTIME (and
  *  size, as evidence only). A boot that resolved its store under the real profile
- *  and wrote it changes `provident-security.json`'s mtime — or creates the file, or
- *  the directory — all of which this records without ever reading store contents. */
+ *  and wrote it changes one of those facts — or creates the file, or the directory —
+ *  and all of them this records without ever reading store contents. **THE NAMES ARE
+ *  THE PERSISTED SET AFTER C-4 (`security-store-storeroom`):** the operator record's
+ *  file is the instance's own `provident-operator-settings.json`, which the store's
+ *  CONSTRUCTION creates (so a mis-resolved boot now leaves a file here even with no
+ *  write at all), and the retired `provident-security.json` is listed beside it
+ *  because that name is still read once at the first boot and must never be written
+ *  again — a write to either name is the failure this census exists to see. */
 function operatorProfileState() {
-  const stores = ['provident-security.json', 'provident-modules.json']
+  const stores = ['provident-operator-settings.json', 'provident-security.json', 'provident-modules.json']
   return operatorProfileCandidates().map((profile) => {
     let exists = false
     try {
@@ -1317,9 +1328,12 @@ try {
   //     code-group tools only if the app actually READ this file. A boot that
   //     resolved its store elsewhere (the developer's real profile, or the
   //     first-run default) cannot produce them.
-  // The store file is only ever WRITTEN when the store is mutated; this leg
-  // never mutates it after the seed, so the file the app read is the file the
-  // leg wrote — and an app that read elsewhere would rewrite nothing here.
+  // The seeded name is READ by the app — once, at the boot's import-once path — and
+  // is never WRITTEN by it (E-1 retires that name: it is read at most once and its
+  // bytes stand as seeded). So the file the app read is the file the leg wrote, and
+  // an app that read elsewhere would leave it byte-identical here; the seeded-bytes
+  // term below now witnesses that retirement directly, while the attribution itself
+  // rides the code-group surface above.
   //
   // G-2 — the row also OBSERVES what it prints. The three facts above are all
   // about the LEG'S OWN scratch scope, so on their own they can only INFER that

@@ -1155,10 +1155,19 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     // so the two figures below are READ from the tree as the FILES that carry
     // them, and the set claim itself stays the landing pass's diff-scope reading.
     const mainDir = fileURLToPath(new URL('../src/main', import.meta.url))
-    const mainFiles = readdirSync(mainDir)
+    // ⟶ RE-GRAIN (`2026-10-11`, `C-3`; `docs/L1/security-store-storeroom-exception.md` §2 E-2/E-3):
+    // THE CLAIM IS UNMOVED AND THE FIGURE MOVED. `readdirSync` answers DIRECTORY names beside file
+    // names, and `src/main/` now carries the declared module DIRECTORY `settings-surface/` — the
+    // composition site this unit moved the three security routes into — so the raw listing reddened
+    // over a directory that is not an MCP registration site at all. The listing is therefore read as
+    // FILES ONLY below. THE BAN IS UNSOFTENED: no allow-list, no name exemption — a *FILE* named
+    // `*register*`, `*surface*` or `*tool*` under `src/main/**` still FAILS this row.
+    const mainFiles = readdirSync(mainDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
     expect(
       mainFiles.filter((f) => /register|surface|tool/i.test(f)),
-      'R-3 — no MCP registration site file is added under `src/main/**` (a DENIED path)',
+      'R-3 — no MCP registration site FILE is added under `src/main/**` (a DENIED path): the listing is read as FILES ONLY — the declared module DIRECTORY `settings-surface/` (exception §2 E-2/E-3) is not a registration site — and a *FILE* named `*register*`, `*surface*` or `*tool*` under `src/main/**` still FAILS here (no allow-list)',
     ).toEqual([])
     const srcText = moduleSource()
     if (srcText !== null) {
