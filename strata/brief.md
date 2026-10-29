@@ -80,6 +80,11 @@ The seam's own boundary is the constraint the unit inherits: nothing it builds m
 package change (D-5), and nothing in the seam today is exposed over MCP, rendered or persisted
 (`src/main/storeroom.ts:9-21`).
 
+**Declared long-term goal, sequenced behind the map:** the flat `tests/**/*.test.ts` suite migrates into
+`tests/{e2e,integration/<module>,unit/<module>}/` **after** L1 files the map and modules claim their
+paths — per module, at claim time, never wholesale ahead of it (D-10). Until then the flat suite stands
+as filed, and `ASM-1`'s adoption of it is interim.
+
 ## 6. Instruments at this head (measured 2026-10-29, this seat)
 
 | Instrument | Reading | What it can see |
@@ -107,9 +112,10 @@ correction paragraph or history (D-1).
 
 ## 8. Open assumptions
 
-- `ASM-1` — the existing tree is adopted as the substrate: `src/{main,renderer,shared}` and the flat
-  `tests/*.test.ts` suite stay where they are, and L1's first act is a module map that either
-  claims those subtrees as modules or declares new ones. Rejected alternative: re-laying out `src/`
+- `ASM-1` — the existing tree is adopted as the substrate **for now**: `src/{main,renderer,shared}`
+  and the flat `tests/*.test.ts` suite stay where they are, and L1's first act is a module map that
+  either claims those subtrees as modules or declares new ones; the suite's migration into the layers'
+  test paths follows the claiming, per module (D-10). Rejected alternative: re-laying out `src/`
   and `tests/` into per-module folders before the map exists, which designs the modules from L0.
 - `ASM-2` — the gate-era .mjs drivers (`tests/e2e-battery.test.mjs`, `scripts/electron-divergence.mjs`,
   `scripts/electron-ui.mjs`) enter the L1 module map as existing harness code and are not re-authored

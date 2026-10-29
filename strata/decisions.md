@@ -192,3 +192,26 @@ pass that wants a held-contract stability row authors one against a live artifac
 **Nothing product-facing is retired.** Every retired row was a gate-process control over the
 corpus; no row that exercises `src/`, the MCP surface, the store or any shipped behaviour was
 touched. The measured delta is `3,114` collected rows before the sweep and `3,099` after.
+
+---
+
+## D-10 — The existing test suite is migrated after the module set is mapped and claimed
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, verbatim):** "Long-term goal is to migrate
+the existing test suite, but that should happen after module set is mapped out and claimed".
+
+**Decision:** moving the flat `tests/**/*.test.ts` suite into the strata layout — `tests/e2e/`,
+`tests/integration/<module>/`, `tests/unit/<module>/` — is a **declared long-term goal**, and it is
+sequenced behind the module map, not beside it.
+
+- **The precondition is a filed map and claimed paths.** L1 files `strata/modules.json` and its rows
+  claim the subtrees they own (`modules.md` §3); only then does a test row have a destination, because
+  a module's tests are the rows inside its declared paths.
+- **Migration is per module, at claim time.** When a module claims a suite subtree, its rows move with
+  it; there is no wholesale re-layout ahead of the map, because the map is what decides which rows
+  belong to whom.
+- **Until then the flat suite stands as filed**, and `ASM-1`'s adoption of it is interim rather than
+  final: the existing 3,099 rows keep running where they are, under the four legs of `brief.md` §6.
+- **A migration row is ordinary unit work.** It runs through the loop like any other change —
+  test-side work belongs to the test writer of the owning layer (`brief.md` §3), never to L0 and never
+  to the module's implementer.
