@@ -24,3 +24,11 @@ and the corpus linted clean at exit 0 throughout.
 **Carried as loop state, not as gaps:** the module map is absent, so module write scope is unchecked and
 `strata-lint` reports it INFO (`platform.md` §4); that is D-7's first act for the next unit, not a defect
 in this corpus.
+
+## Run 4 — `STALE` (not green)
+
+Fourth blind run of the corpus. Four of five tasks answered by citation; the corpus itself was the
+defect: `modules.md`'s `endpoints` line called the map's field "its harness cap" against the derived
+`50 + 10×N`, `brief.md` §6's suite row was 37 commits stale (91 files against the tree's 112), §5 named
+a superseded current unit, and `walkthrough.md` §5 had no route for a finding against a procedure file.
+All four fixed; `walkthrough.md` §5 now routes those to L0. A fifth run is owed.

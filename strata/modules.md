@@ -19,7 +19,7 @@ problem applied to context rather than to files (D-1).
 ## 3. The declarations
 
 `strata/modules.json` carries one entry per module with `name`, `paths` (the subtrees it owns) and
-`endpoints` (its harness cap, §4). Two modules never claim one path — the lint fails that (D-1).
+`endpoints` (the surface count the §4 cap is derived from). Two modules never claim one path — the lint fails that (D-1).
 L1 files the map as its first act of a unit, and no design is admitted before it (D-7).
 
 ## 4. Cross-module needs and the harness cap

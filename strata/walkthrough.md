@@ -40,7 +40,7 @@ would hit with no document at all.
 ## 5. Verdict and routing
 
 Closed vocabulary: `PASS` | `DOC-GAP` | `STALE` | `UNUSABLE`. `DOC-GAP` and `STALE` route to the
-owning layer of the cited document — L1, L2 or L3 — and L0 never edits another layer's document
+owning layer of the cited document — L1, L2 or L3 — and L0 never edits another layer's document; a finding against a procedure file or an L0-owned document routes to L0, which is its owner
 (D-3). `UNUSABLE` routes to L1. A unit is recommended as ready only on `PASS`; any other verdict
 still reaches the user, carrying a loop recommendation and never presented as readiness (D-1).
 

@@ -23,3 +23,7 @@ group is off; and D-16/D-18's MCP-isolation invariant names no row, so the isola
 checked. The last one is the `security-store-storeroom` rebuild's to build (D-16/D-18), not this unit's.
 
 **Verdict: not green.** A second blind run is owed before this unit is recommended as ready (D-10, D-11).
+
+## Run 2 — see the pass's next return
+
+A second blind run was dispatched with the other three; its verdict is recorded when it returns.

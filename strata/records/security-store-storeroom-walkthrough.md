@@ -24,3 +24,10 @@ wall itself is the limit — no built artifact was staged, so the running surfac
 `strata-bootstrap`'s record).
 
 **Verdict: not green.** A second blind run is owed before this unit is recommended as ready (D-10, D-11).
+
+## Run 2 — `STALE` (not green)
+
+Second blind run: content and coverage sufficient, no step guessed. Two live contradictions found and
+fixed — `docs/L2/security-store-storeroom/interface.md` §1 still attributed one address to L1 §3 (live:
+two), and this unit's N=10/15 pin no longer resolved after the carrier retirement moved the map to
+12/19. Both corrected in place. A further run is owed.

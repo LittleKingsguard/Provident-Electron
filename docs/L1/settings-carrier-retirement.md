@@ -62,6 +62,7 @@ Marker: **the absence of a record at `['operator-app-state']`**. The arm runs on
 
 | Arm | What it does | What is preserved / lost |
 |---|---|---|
+| **recorded** | a record already stands at the address: no import runs, `legacy:'recorded'` |
 | **absent** | no rows; `legacy:'absent'` | the cold tier unmoved: `[]`, no write, no throw |
 | **present and valid** | every `file.*` row imported **verbatim under its own name**; `schemaVersion` not carried | every operator row. **Lost: the `schemaVersion` stamp alone** — the retired record's format marker, not operator state, and D-13 gives the instance its own shape |
 | **corrupt** (unparsable, non-object, foreign key, unknown stamp, directory, unreadable) | no rows; the bytes stand untouched; `legacy:'corrupt'`, reported through the module bridge's `corrupt` | **nothing the old code loaded is lost** — its corrupt arm loaded nothing either — and the diagnosis survives where the bytes are not repaired (D-19) |

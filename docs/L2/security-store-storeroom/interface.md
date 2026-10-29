@@ -21,7 +21,7 @@ The record is **one value per tier, written whole**, so each transition is one s
 | `exclusion` | `mem` | `['operator-exclusion']` | `'mcp-enabled'` \| `'mcp-disabled'` — never persisted (ASM-L2-2) |
 | `tier4` | `mem` | same | **derived**: `exclusion === 'mcp-disabled'` — never persisted (ASM-L2-2) |
 
-- **Two addresses, and the measurement is why.** L1 §3 places all six at one address; a `file`-tier write purges the versions it outranks **at its own key** (`file` > `mem` > `temp`), so a settings commit would silently reset the operator's exclusion pair (`guide §5.1`; `persistence.md` §9 P-3). `ASM-L2-1` records the re-grain and what it rejected (D-17, L1 §3).
+- **Two addresses, and the measurement is why.** L1 §3 places them at **two** addresses, the durable four at `['operator-settings']` and the volatile pair at `['operator-exclusion']`; a `file`-tier write purges the versions it outranks **at its own key** (`file` > `mem` > `temp`), so a settings commit would silently reset the operator's exclusion pair (`guide §5.1`; `persistence.md` §9 P-3). `ASM-L2-1` records the re-grain and what it rejected (D-17, L1 §3).
 - **A patch names one tier**: the four `file` members, **or** `exclusion`. A patch naming both is outside this domain, because it is two store writes and therefore two receipts or a landed-then-refused tear (`ASM-L2-5`).
 
 ## 2. `src/main/operator-settings/index.ts` — the declared surface

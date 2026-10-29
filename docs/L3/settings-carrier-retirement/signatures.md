@@ -117,7 +117,7 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
 
 | name | kind | cite |
 |---|---|---|
-| `TIER4_CLOSED_REFUSAL` · `patchOf` · `onDelivery` · `sink` · `appliedGroups` · `off` | landed, **none edited** — and **no new private name is added**: `state` and `commit` are locals of `createSettingsSurface`, beside `read`/`set`/`transition`/`attach` | sibling design-settings-surface §2–§6; design.md §3 |
+| `TIER4_CLOSED_REFUSAL` · `patchOf` · `onDelivery` · `sink` · `appliedGroups` · `off` | landed, **none edited** — and **no new private name is added**: `state` and `commit` are locals of `createSettingsSurface`, beside `read`/`set`/`transition`/`attach` | `docs/L3/security-store-storeroom/design-settings-surface.md` §2–§6; design.md §3 |
 
 ## 6. `src/main/main.ts` — the locals and the two channel answers
 

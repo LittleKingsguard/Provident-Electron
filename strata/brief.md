@@ -71,7 +71,8 @@ is answered and counted as a failure (D-1).
 
 ## 5. The current unit (D-7)
 
-`central-data-management` — a central data management system over `provident-storeroom`. The import
+`settings-carrier-retirement` (closed) and behind it `central-data-management`, the central store over
+`provident-storeroom`. The import
 is landed (`f349549`, `4e404e2`, `1cab040`); the implementation beyond the seam is pending and no
 design is admitted until L1 files the module map. Its state is `strata/.strata/units/
 central-data-management.json`; the branch state is D-7.
@@ -89,7 +90,7 @@ as filed, and `ASM-1`'s adoption of it is interim.
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | `2 failed / 3,095 passed / 2 skipped` of `3,099`, over `91` test files (§6, measured after the archive sweep) | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | `2 failed / 3,175 passed / 2 skipped` of `3,179`, over `112` test files (89 flat + 23 nested) | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — main, preload, standalone, battery host, renderer | the bundles exist at all |
