@@ -9,6 +9,7 @@ import { ProvidentMcpServer, type McpBackend, type McpTransportKind } from './mc
 import { SecurityGate } from './security.js'
 import { installShim, mountEl } from '../shared/dom-shim.js'
 import { Runtime } from '../renderer/runtime.js'
+import { createProfileStore } from './storeroom.js'
 
 // A root-only bootstrap envelope (C3): a bare template.root + empty content.
 function rootOnlyEnvelope() {
@@ -19,6 +20,9 @@ function rootOnlyEnvelope() {
   }
 }
 
+// THE STOREROOM SEAM, HELD BY THE HEADLESS HOST (the app's ONE import of the package).
+// It is constructed and held so the import is real in a bundled entry point; it is not
+// exposed over MCP and no contract names a storeroom feature — see src/main/storeroom.ts.
 /** The Runtime-backed MCP backend: forwards each `provident.*` method to the
  *  live Runtime (battery mode). The Runtime boots root-only (C3); each load/
  *  teardown re-derives the graph. */
