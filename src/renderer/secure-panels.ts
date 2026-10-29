@@ -28,13 +28,13 @@ import {
 import { createIsolatedScope, type GraphScope } from 'provident-ssr/core/registry.js'
 import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
 // G3 §1.3 item 4 — the NEW `SecurityWriteReceipt` type lives in
-// `src/main/security-store.ts` and reaches the pane's bridge DECLARATION by
+// `src/main/settings-surface/index.ts` and reaches the pane's bridge DECLARATION by
 // IMPORT (type-only — erased at build; no runtime coupling to the main side).
 // `tier4-arbitrary-storage.md` `§2.4` item 8 adds the tier-4 refusal's own type
 // (`Tier4ClosedRefusal`) and the store's answer superset (`Tier4WriteAnswer`) to
 // the SAME import: the two declaration sites widen in LOCKSTEP with `preload.ts`
 // and `SecuritySettings` itself is untouched (§1.3 item 5).
-import type { SecurityWriteReceipt, Tier4ClosedRefusal, Tier4WriteAnswer } from '../main/security-store.js'
+import type { SecurityWriteReceipt, Tier4ClosedRefusal, Tier4WriteAnswer } from '../main/settings-surface/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
 import type { ExclusionState as EXCLUSION_STATE } from '../main/security.js'

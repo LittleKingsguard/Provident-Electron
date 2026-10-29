@@ -6,19 +6,15 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { join, dirname } from 'node:path'
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, rmSync, openSync, closeSync, fsyncSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload, type SecuritySettings } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload } from '../shared/types.js'
 import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
-import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt, type Tier4ClosedRefusal, type Tier4WriteAnswer } from './security-store.js'
+import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
+import { createSettingsSurface } from './settings-surface/index.js'
 import { createModuleStore, type ModuleStore, type ModuleRecord, type ModuleStoreStatus } from './module-store.js'
 import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from './store-channels.js'
 import { CapabilityRouter } from '../renderer/extensions.js'
-import { syncModuleRouter, TIER4_CLOSED, TIER4_CLOSED_MESSAGE } from './mcp-server.js'
-import { SecurityGate, type ExclusionState, type ToolGroup } from './security.js'
-// `docs/specs/tier4-arbitrary-storage.md` `§0A` item 1 (the `A-1` ruling) — THE ONE BOOLEAN'S STATIC
-// MODULE-LEVEL HOLDER, read here (the operator's carrier) exactly as `security-store.ts` reads it
-// at its gates. `main` is a READER only: the holder's ONE writer is the transition in
-// `mcp-server.ts` (`F-11`: `main` supplies STATE, never takes the DECISION).
-import { tier4OpenState } from './tier4-state.js'
+import { syncModuleRouter } from './mcp-server.js'
+import { SecurityGate, type ToolGroup } from './security.js'
 // central-data (`docs/L1/central-data-census-exception.md` §2 E-3) — the module's surface enters the
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
 // until a `data.*` tool is called (D-11, D-13).
@@ -89,25 +85,30 @@ async function main(): Promise<void> {
   const transport = transportFromArgs(process.argv.slice(1))
   const port = portFromArgs(process.argv.slice(1))
 
-  // The manual-UI security settings (mcp-endpoint.md §6.4): persisted to
-  // userData so a restart restores them. The MCP server gate is built from the
-  // persisted config (read+dispatch ON by default on first run).
+  // The manual-UI security settings (mcp-endpoint.md §6.4): persisted to userData so a restart
+  // restores them. The MCP server gate is built from the persisted config (read+dispatch ON by
+  // default on first run).
   //
   // ═══ `A-1`'S RULING (`docs/specs/tier4-arbitrary-storage.md` `§0A` item 1, AMENDED
   // `2026-10-11`) — THE ONE BOOLEAN'S HOME IS THE STATIC HOLDER, AND THIS MODULE HOLDS NO READER
   // AND NO WRITER OF IT ═══
-  // The as-filed named-reader option is WITHDRAWN: nothing is constructed before the store, so the
-  // LANDED boot window `store → boot read → gate → flip → mcp.start()` stands unmoved. The store's
-  // OPEN reading at the boot read below comes from the holder's DECLARED INITIAL VALUE `STORE-OPEN`
-  // (`src/main/tier4-state.ts`), which is `D-19`'s ingestion window and why that read is legal
-  // without any exception. `main` supplies STATE and never takes the DECISION (`F-11`): the only
-  // writer of the holder is the transition (`mcp.applyExclusion`), never this module.
-  const securityStore: SecurityStore = createSecurityStore({
-    path: join(app.getPath('userData'), 'provident-security.json'),
-  })
-  const persisted = securityStore.get()
+  // The as-filed named-reader option is WITHDRAWN: nothing is constructed before the record is
+  // read, so the LANDED boot window `construction → boot read → gate → flip → mcp.start() → window`
+  // stands unmoved in kind. The boot read below answers the INSTANCE'S OWN record, whose `mem`
+  // exclusion row boots to its declared SAFE pair, so the read is legal without any exception, and
+  // `main` supplies STATE and never takes the DECISION (`F-11`).
+  //
+  // ═══ THE COMPOSITION'S FIRST ACT IS THE SURFACE MODULE'S (exception §2 E-3; D-16, D-17) ═══
+  // The retired `security-store.ts` is gone — disregarded, not carried — and the instance the
+  // settings live in is constructed INSIDE `src/main/settings-surface/`, the operator path's ONE
+  // reference to it (D-18). So this file constructs no store, spells no `provident-*.json` literal
+  // for one (the surface module owns the file names — C-4), and reads the boot record through the
+  // surface's own `read()`. The holder's ONE writer is that module (ASM-4, settled at L1 rev 3);
+  // `mcp.applyExclusion` now only ENFORCES.
+  const settingsSurface = createSettingsSurface({ userDataDir: app.getPath('userData') })
+  const persisted = settingsSurface.read()
   // `docs/specs/secure-exclusion.md` `§2.1` item 4 — THE ORDERING ENVELOPE, STEP 2: the gate is
-  // CONSTRUCTED here (after the store, before the transports) and the exclusion record is
+  // CONSTRUCTED here (after the construction and the boot read, before the transports) and the exclusion record is
   // INITIALIZED to its boot terminal `'mcp-enabled'` AT THIS CONSTRUCTION SITE — never read from
   // a file, because the flag is NOT persisted (`D-19`). A crash, a torn record, a corrupt file and
   // a missing file therefore all resolve to the SAFE pair.
@@ -288,14 +289,15 @@ async function main(): Promise<void> {
   const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface: createDataSurface({ profileDir: app.getPath('userData') }) })
   // `§0A` item 1 (the `A-1` ruling) — NO RE-POINT IS OWED HERE ANY MORE. The landed `R-2` re-point
   // existed because the store consulted a reader `main` had to keep aimed at the LIVE server
-  // (`mcp-server.ts`'s `get gate()`). The store now reads the STATIC HOLDER, and the server's own
-  // `applyExclusion` is that holder's ONE writer, so there is nothing to re-point and no window in
-  // which the store and the operator could disagree. No second home and no second writer exists.
+  // (`mcp-server.ts`'s `get gate()`). Neither half of that exists now: the retired store is gone
+  // (D-16), and the STATIC HOLDER's ONE writer is the surface module constructed above — not the
+  // server's `applyExclusion`, which only ENFORCES. So there is nothing to re-point, no window in
+  // which the record and the operator could disagree, and no second home and no second writer.
 
-  // The manual-UI settings IPC: main owns the config + re-wires the MCP server
-  // tool-gating on change. This is manual-UI-ONLY — it is NOT reachable over an
-  // MCP tool (the MCP tool handlers never route to it), so an agent cannot grant
-  // itself capabilities.
+  // The manual-UI settings IPC: the surface module owns the config and re-patches the MCP server's
+  // tool-gating from its own subscription when the record changes; the three handlers below only
+  // delegate to it. This is manual-UI-ONLY — it is NOT reachable over an MCP tool (the MCP tool
+  // handlers never route to it), so an agent cannot grant itself capabilities.
 
   // ══ THE TIER-1 CHANNEL HANDLERS (§2.9 — registered BEFORE the BrowserWindow) ══
 
@@ -395,92 +397,47 @@ async function main(): Promise<void> {
     }
   }
 
-  // PAR-9 — the GET response record is EXTENDED ADDITIVELY by the declared `exclusion` member
-  // (the landed `write` member's precedent below): the member is NEVER absent on a read.
-  // **THE READ IS OFF THE SERVER'S LIVE GATE, NOT THE BOOT-CONSTRUCTED ONE (gate-6 `F-1`).**
-  // `SecurityGate.withExclusion` ALWAYS returns a NEW instance and `mcp.applyExclusion` REPLACES the
-  // server's `_gate`, so a handler closing over the boot `gate` answers a PERMANENTLY STALE value
-  // after the operator's first transition — the gate-4 `A-1` defect class, one layer up, and the
-  // reason the pane rendered `· MCP: enabled` over a server refusing every call (`F-5`).
-  // **THE CARRIER NO LONGER READS THE SERVER'S LIVE GATE (`§0A` item 1, AMENDED `2026-10-11`).** The
-  // gate-6 `F-1` hazard the landed wording below worked around — a handler closing over a since-
-  // REPLACED gate instance — is now closed STRUCTURALLY: the ONE boolean lives in the static holder
-  // `src/main/tier4-state.ts`, whose ONE writer is the transition itself, so there is no instance to
-  // capture and nothing to re-point. `mcp.gate` is still the ENFORCEMENT path's accessor.
-  //
-  // ═══ THE CARRIER'S COMPOSITION, AND THE DEADLOCK'S DISSOLUTION (`tier4-arbitrary-storage.md`
-  // `§2.4` item 7 / `§2.6` item 2) ═══
-  // The record's own members come from the tier's read; the ONE boolean is read at the handler's own
-  // turn DIRECTLY OFF THE STATIC HOLDER and is **NEVER routed through a store read** — which is
-  // exactly what stops a gated store from blanking the operator's only reader (pre-amendment `:384`
-  // routed it through `securityStore.get()`). From THAT ONE READING both additive members derive: the
-  // landed `exclusion` (the STATE token — never the message, never a tier-4 value) and the NEW
-  // `read` (`null` iff the read was performed, the closed refusal otherwise). They are mutual
-  // inverses on one axis and NEITHER may be substituted for the other (`§3.4`).
-  //
-  // DECLARED LIMITS, NAMED (the red set's own `§9` item 5 finding (d)): the "read ONCE" half is
-  // witnessed by the ABSENCE of the store read in this body plus the member census, and the local's
-  // reading and the composed member are the same accessor within one synchronous turn (no `await`
-  // separates them), so no reader can observe two values.
-  const liveSecurityRecord = (): SecuritySettings => securityStore.get()
-  const tier4ClosedRefusal = (): Tier4ClosedRefusal => ({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
-  ipcMain.handle(IPC_SECURITY_GET, () => {
-    // `§0A` item 1 (the `A-1` ruling) + `§2.4` item 7's dated note (`D-viii`, `2026-10-11`; `§3c`'s
-    // `S2-ADV-06`): THE HOLDER IS READ **EXACTLY ONCE PER TURN**, AND BOTH ADDITIVE MEMBERS DERIVE
-    // FROM THAT ONE READING. The ONE consult is the `exclusion` member of the local below — the
-    // STATE WORD this carrier reports — and the boolean it yields feeds BOTH: `read` answers the
-    // closed refusal iff that reading does not say `mcp-disabled`, and `exclusion` re-states it. No
-    // second consult can therefore answer differently (the two members cannot carry two states in
-    // one response). `main` supplies STATE, never the DECISION: the boolean is never routed through
-    // a store read and never through a captured gate instance (`mcp.gate` is REPLACED by
-    // `applyExclusion`, so a captured accessor was the `F-1` class; the holder has no instance).
-    const holder = { exclusion: tier4OpenState() ? 'mcp-disabled' : 'mcp-enabled' } as const satisfies { exclusion: ExclusionState }
-    const open: boolean = holder.exclusion === 'mcp-disabled'
-    // THE MEMBER ORDER IS DELIBERATE: the LANDED `exclusion` term stays the record's LAST member
-    // (the shape the landed `PAR-9` reading evaluates — `{ ...settings, exclusion: <expr> }`), and
-    // the new `read` term rides BESIDE it (§2.4 item 8's ONE intersection).
-    return ({ ...liveSecurityRecord(), read: open ? null : tier4ClosedRefusal(), exclusion: open ? 'mcp-disabled' : 'mcp-enabled' })
-  })
+  // PAR-9 — the GET response record is EXTENDED ADDITIVELY by the declared `exclusion` member (the
+  // landed `write` member's precedent below): the member is NEVER absent on a read.
+  // **THE CARRIER IS THE SURFACE MODULE'S ANSWER (exception §2 E-3; D-17).** The gate-6 `F-1`
+  // hazard the landed wording worked around — a handler closing over a since-REPLACED gate instance
+  // — stays closed STRUCTURALLY and one layer further out: `read()` mints both additive members
+  // from ONE reading of the instance's row, so `read` (`null` iff the answer was minted while the
+  // pair stands at `mcp-enabled`, the closed refusal otherwise) and `exclusion` cannot carry two
+  // states in one response. They remain mutual inverses on one axis and NEITHER is substituted for
+  // the other (`§3.4`). THIS FILE NOW READS NO STORE AND NO HOLDER: the surface module holds the
+  // one reference and writes `src/main/tier4-state.ts` as the gate's projection (ASM-4), while
+  // `mcp.gate` remains the ENFORCEMENT path's accessor. `main` supplies STATE, never the DECISION.
+  ipcMain.handle(IPC_SECURITY_GET, () => settingsSurface.read())
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
-    // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING
-    // reading, G3 2026-10-03): `set()`'s OWN return stays the post-state
-    // SecuritySettings (no consumer reads it — the pane bodies fire-and-forget);
-    // the RESPONSE record is the post-state extended by the declared member
-    // `write` — `{ ...settings, write }`, a SUPERSET of the old resolution (a
-    // reader typed to the old shape continues to typecheck and reads
-    // identically). The `write` member is NEVER absent on a SET response — the
-    // handler just performed a write (totality, P-SE-TP-1).
-    const updated = { ...securityStore.set(patch), write: securityStore.lastWriteReceipt() } as SecuritySettings & { write: Tier4WriteAnswer }
-    // Re-gate the live MCP server + persist.
-    mcp.applyGatePatch({ token: patch.token, groups: patch.groups as ToolGroup[] | undefined, disable: patch.disable as ToolGroup[] | undefined })
-    // `§2.1` item 3 `T-5` / `PAR-9` — the SET is NOT a transition site: the response carries the
-    // SAME additive `exclusion` member BESIDE the landed `write`, and the state is untouched (a
-    // SET that flipped the exclusion would make it a side effect of an unrelated write). The
-    // member is attached to the SAME post-state record `set()` minted, so the landed
-    // `return updated` resolution — and every reader anchored on it — is unchanged.
-    ;(updated as unknown as { exclusion: string }).exclusion = mcp.gate.exclusionState()
-    return updated
+    // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING reading, G3
+    // 2026-10-03): the ANSWER is the post-state settings extended by the declared member `write` —
+    // `{ ...settings, write }`, a SUPERSET of the old resolution (a reader typed to the old shape
+    // continues to typecheck and reads identically). The `write` member is NEVER absent on a SET
+    // answer: the surface just performed a write (totality, P-SE-TP-1). `§2.1` item 3 `T-5` /
+    // `PAR-9` — the SET is NOT a transition site: the answer carries the SAME additive `exclusion`
+    // member BESIDE the landed `write`, minted from the same post-state reading, so the state is
+    // untouched by an unrelated write.
+    //
+    // AND THIS HANDLER RE-PATCHES NO GATE: the re-patch rides the surface module's OWN subscription,
+    // inside the write, so the gate already holds the granted groups when this answer is minted and
+    // no second edge exists (D-17; design §3, §6).
+    return settingsSurface.set(patch)
   })
 
   // `docs/specs/secure-exclusion.md` §2.4 item 4 / PAR-8 — THE TRANSITION'S OWN CHANNEL. It is
   // SEPARATE from the settings write, so the transition and the settings write stay two
   // distinguishable operations (`T-5` is observable rather than inferred) and `set(patch)`'s
-  // declared domain stays unmoved. THE HANDLER IS TOTAL OVER ITS DECLARED DOMAIN: the two legal
-  // tokens apply the transition; EVERY outside value — a boolean, a number, an object, an array,
-  // `undefined`, `null`, an unknown string, a case-variant, a whitespace-padded string — is
-  // REFUSED AS A VALUE, never a throw and never a silent no-op that looks applied.
-  ipcMain.handle(IPC_SECURITY_EXCLUSION, (_event, state: unknown) => {
-    if (state !== 'mcp-enabled' && state !== 'mcp-disabled') {
-      return { applied: false, state: mcp.gate.exclusionState(), reason: 'malformed-state' }
-    }
-    // THE TRANSITION IS THE GATE'S OWN (the pure-constructor form) and the server's live gate is
-    // REPLACED exactly as `applyGatePatch` replaces it: the record, the epoch bump and the
-    // in-flight invalidation land together, and the registered handles are toggled beside them.
-    // A SELF-TRANSITION is a legal no-op: no bump, no invalidation, the toggles re-applied
-    // idempotently (an epoch bump on a no-op would be a denial-of-service surface).
-    mcp.applyExclusion(state)
-    return { applied: true, state: mcp.gate.exclusionState() }
-  })
+  // declared domain stays unmoved. THE ANSWER IS TOTAL OVER THE DECLARED DOMAIN and the surface
+  // module mints it: the two legal tokens apply the transition — the instance's ONE `mem` write,
+  // whose committed delivery makes the EPOCH BUMP and the in-flight invalidation land inside
+  // `mcp.applyExclusion`, and whose self-transition is the legal no-op that bumps nothing (an epoch
+  // bump on a no-op would be a denial-of-service surface) — while EVERY outside value — a boolean,
+  // a number, an object, an array, `undefined`, `null`, an unknown string, a case-variant, a
+  // whitespace-padded string — is REFUSED AS A VALUE naming `reason:'malformed-state'`, never a
+  // throw and never a silent no-op that looks applied. THE ANSWER CARRIES NO RECEIPT MEMBER:
+  // `write` is declared on `set` alone (ASM-L2-4).
+  ipcMain.handle(IPC_SECURITY_EXCLUSION, (_event, state: unknown) => settingsSurface.transition(state))
 
   // U8 → Q-5 — the module management IPC (module-feature-list.md §4). Manual-UI only: the
   // module registry is operator-owned (the settings-backed surface above); an agent never
@@ -551,20 +508,23 @@ async function main(): Promise<void> {
 
   // `D-19` STEP 3 — THE CLOSE (`tier4-arbitrary-storage.md` `§2.5` item 4 / `§0A` item 4, AMENDED
   // `2026-10-11` by the gate-4 repair contract's `D-vii`; `§3c`'s `S2-ADV-01` limb (b)): the flip
-  // off the declared boot value lands HERE — **BEFORE THE WINDOW IS CREATED OR LOADED** — and the
-  // gate is constructed with its boot terminal `'mcp-enabled'`, so this is a SELF-TRANSITION — the
-  // landed `T-3` arm: a legal NO-OP that bumps no epoch and invalidates nothing. It is written
-  // explicitly because the ORDER is the clause: `{MCP-DISABLED, TIER-4-CLOSED}` is reachable ONLY
-  // inside this window and is not a legal steady pair, and a design in which the MCP enables while
-  // the state still says store-open FAILS. **`D-vii`'s own repair, stated at the bytes:** the
-  // landed boot created the window and LOADED the renderer (`win.loadFile(...)`, below) BEFORE this
-  // flip, so a renderer turn in that gap could take its carrier read with the holder still
-  // `STORE-OPEN` and paint the INVERSE of the steady pair with nothing re-sourcing it. The close
-  // therefore MOVES AHEAD of the window's creation/load; `D-19`'s order
-  // `store → boot read → gate → flip → mcp.start()` is PRESERVED UNMOVED (the boot read still
-  // precedes the flip, and the enable below still follows it), and nothing else in the boot is
-  // re-ordered. From here the two axes move together, one writer only.
-  mcp.applyExclusion('mcp-enabled')
+  // lands HERE — **AFTER THE HANDLERS AND BEFORE THE WINDOW IS CREATED OR LOADED** — as the surface
+  // module's `attach`, which is the composition's SECOND ACT and the ONLY gate edge (exception §2
+  // E-3; D-17): it subscribes FIRST, writes the holder from the boot record, re-patches the gate
+  // from that same record and lands the boot terminal `'mcp-enabled'`. The gate was constructed
+  // with its boot terminal, so that last act is a SELF-TRANSITION — the landed `T-3` arm: a legal
+  // NO-OP that bumps no epoch and invalidates nothing. It is written explicitly because the ORDER is
+  // the clause: `{MCP-DISABLED, TIER-4-CLOSED}` is reachable ONLY inside this window and is not a
+  // legal steady pair, and a design in which the MCP enables while the state still says store-open
+  // FAILS. **`D-vii`'s own repair, stated at the bytes:** the landed boot created the window and
+  // LOADED the renderer (`win.loadFile(...)`, below) BEFORE this flip, so a renderer turn in that
+  // gap could take its carrier read with the holder still `STORE-OPEN` and paint the INVERSE of the
+  // steady pair with nothing re-sourcing it. The close therefore MOVES AHEAD of the window's
+  // creation/load; `D-19`'s order `construction → boot read → gate → flip → mcp.start()` is
+  // PRESERVED UNMOVED (the boot read still precedes the flip, and the enable below still follows
+  // it), and nothing else in the boot is re-ordered. From here the two axes move together, and
+  // NOTHING ELSE IN THIS FILE RE-PATCHES OR RE-TRANSITIONS THE GATE.
+  settingsSurface.attach(mcp)
 
   const win = new BrowserWindow({
     width: 980,
