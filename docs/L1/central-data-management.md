@@ -1,7 +1,7 @@
 # L1 — central data management over `provident-storeroom`
 
-- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2
-- **Replaces** rev 1 as filed (`git show 50be1cb:docs/L1/central-data-management.md`); git is the history (D-1, D-2). The four answers are D-11..D-14, and two refute rev 1's §6: rev 1's `ASM-7` ("no new surface") is refuted by D-11 and survives nowhere in this document (D-11)
+- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3
+- **Replaces** rev 2 as filed (`git show e103d9d:docs/L1/central-data-management.md`), and rev 1 behind it (`git show 50be1cb:docs/L1/central-data-management.md`); git is the history (D-1, D-2). The four answers are D-11..D-14, and rev 1's `ASM-7` ("no new surface") is refuted by D-11 and survives nowhere in this document (D-11). §5's S-10 and §6's rendered-surface boundary state one ruling, ASM-12, and agree with the tree at this head (D-11, D-12)
 - **Status:** DESIGN — the module map is filed at `strata/modules.json`; nothing below this layer is admitted (D-7)
 - **Inputs:** `strata/brief.md` §5/§6, `strata/decisions.md` D-1..D-14 (D-5, D-7, D-10, D-11, D-12, D-13, D-14
   load-bearing), `strata/platform.md` §4, `strata/modules.md` §3, the tree at this head
@@ -97,7 +97,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 | S-7 | delete and journal are observable, and nothing reverses | `provident.data.delete` → a receipt; the journal shows the write and the delete in order with a cursor; no tool offers a reversal (D-12) |
 | S-8 | volatile keys never persist | no `mem.`/`temp.`/`secure.` spelling in the store's file after a session that used all four tiers |
 | S-9 | the package is never modified | the seam census row green (14 members / 11 symbols); `provident-storeroom` imported in exactly two files — the seam and the operator-settings instance (`src/main/operator-settings/index.ts:37`, D-16) — and nowhere in `src/main/data/` |
-| S-10 | the data view is agent-visible, drivable, graph-driven | every element carries `data-node-id`; a `dispatch` on one answers the four-member record; the change shows in `get_markdown` |
+| S-10 | the profile has no rendered surface in this unit | a commit moves no rendered reading: `get_rendered_html` and `get_markdown` are byte-identical across it, `list_targets` mints no node, and the four-member `dispatch` record still answers on the app's own graph (ASM-12; D-11, D-12) |
 | S-11 | nothing crosses while the tier is open | the declared refusal as a value on a data tool and on a resource read; no profile write |
 | S-12 | two profiles are disjoint; a corrupt file recovers by declaration | disjoint paths; an unparsable or foreign-keyed file answers the cold tier, boots, and the next commit replaces it |
 
@@ -108,7 +108,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 - No standing migration obligation: the store chooses its own shape, and the one-time import is recorded here rather than inherited as a rule (D-13).
 - Not the tier-4 operator-settings rules or their file — `operator-settings` owns them (`modules.md` §1).
 - Not the graph store's contract: `GraphStore`, `hydrate(rows)`, `crossing.put(row)` are `graph-store`'s (ASM-6), and `src/renderer/store.ts` stays landed and unwired (ASM-7).
-- No element outside the producing graph: a data view is envelope data in the app graph, never hand-written DOM (`AGENTS.md` § "Project-wide constraint"; `src/shared/demo-envelope.ts:1-18`).
+- No rendered surface: this unit renders nothing and adds no graph node, so a commit moves neither `get_rendered_html` nor `get_markdown` (D-11; `docs/L2/central-data/interface.md` §7). The rendered data pane is **owed as a later unit** with its own surface decision, exactly as D-12 leaves undo; when it is built it is provident envelope data driven through the graph, never hand-written DOM, because an element outside the producing graph is invisible to `dispatch`, `get_rendered_html` and `get_markdown` (UI authority, `strata/brief.md` §2; `archive/gate-corpus-2026-10-29/AGENTS.md:21-34`; `src/shared/demo-envelope.ts:1-18`).
 - No wholesale test re-layout: only this unit's own rows move, at claim time (D-10).
 
 ## 7. Assumptions, each with the alternative it rejected
@@ -126,6 +126,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 | ASM-9 | the data routes terminate in main, so the union moves while `MUTATING_METHODS` stays seven | routing data through the renderer's method switch, which makes the producing process the profile's authority |
 | ASM-10 | the group is tools only; the three resource URIs are unmoved | a `mcp://provident/data/{path}` mirror, which gate-mirrors the same five readings twice and adds a fourth resource |
 | ASM-11 | the store's own file is the only new written name; the settings file is imported once, then retired | two writers, which leaves two authorities and defeats D-7's subject; or abandoning the old bytes outright, which D-13 permits but drops an operator's data silently |
+| ASM-12 | this unit's e2e surface declares **no** rendered data view: the five tools answer values and a commit moves no rendered reading (D-11), and the rendered data pane is owed to a later unit that must owe provident-authored UI, as D-12 leaves undo | declaring the view here (rev 2's S-10), which contradicts `interface.md` §7 and the landed `src/main/data/` surface and routes a finding against L2 while writing a second unit's UI into existence with no decision behind it |
 
 ## 8. The re-grain set — named here, performed by the owning layer's test writer
 

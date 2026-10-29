@@ -65,7 +65,8 @@ const backend: McpBackend = { invoke: async () => ({}) }
 
 /** The app's own producing graph, without a window: the backend `battery-host.ts` composes, under
  *  the layout-less shim (`brief.md` §6). Used only by the two rows whose L1 expectation is a
- *  graph reading (§5's S-4 census and S-10 view); every other row stays at the main-process grain. */
+ *  graph reading (§5's S-4 census and S-10 rendered-surface invariance); every other row stays at
+ *  the main-process grain. */
 function graphBackend(): McpBackend {
   const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
   runtime.bootstrap()
@@ -311,29 +312,44 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(walk(join(SRC, 'main', 'data')).filter((file) => readFileSync(file, 'utf8').includes('provident-storeroom')).map(rel), 'no file of this module spells the package at all').toEqual([])
   })
 
-  it('S-10 · the data view is agent-visible, drivable and graph-driven: its elements carry data-node-id, a dispatch answers the four-member record, and a change shows in get_markdown', async () => {
-    // THE LIMIT THIS ROW CARRIES, STATED: L1 §5 S-10 declares a rendered data view in the app graph,
-    // while `interface.md` §7 declares this module renders nothing and adds no graph node, and the
-    // tree at this head carries no data view. The row drives the app's own producing graph under the
-    // shim (the grain of `src/main/battery-host.ts`), so the real-DOM half is app-green — and the
-    // view's absence is the finding, never a missing row.
+  it('S-10 · this unit declares no rendered data view: a commit moves no rendered surface, mints no node, and the graph a view would ride answers a four-member dispatch', async () => {
+    // THE RULING THIS ROW CARRIES (L1 §7 ASM-12): this unit's e2e surface declares NO rendered data
+    // view. D-11 gives the unit five tools that answer values; D-12 keeps every operator-visible
+    // surface — the undo unit's provident-authored UI — for a unit of its own, with its own surface
+    // decision; `interface.md` §7 measures the same. The rendered data pane is OWED, not built, so
+    // the observable here is the invariance the landed module owes: a commit through
+    // `provident.data.write` adds no graph node and moves no rendered reading, while the app's own
+    // producing graph — the only road a data view may ever ride (UI authority, `brief.md` §2) —
+    // still names its targets and answers a dispatch. The row drives that graph under the
+    // layout-less shim (the grain of `src/main/battery-host.ts`); the real-DOM half of any owed pane
+    // is app-green and is not claimed here (`brief.md` §6).
     const { client, close } = await live(['read', 'dispatch', 'data'], createDataSurface({ profileDir }), graphBackend())
     try {
-      const written = await call(client, 'provident.data.write', { path: ['alpha'], value: 'shown-in-the-view' })
-      expect(written.answer.status, 'the row is committed before the view is read, so nothing below depends on a cold profile').toBe('committed')
-      const markdown = await call(client, 'provident.get_markdown', {})
-      expect(String(markdown.answer.markdown ?? '').includes('shown-in-the-view'), 'L1 §5 S-10 — a committed row shows in get_markdown through the rendered view. FINDING: no data view stands in the app’s envelope at this head, and L2 interface.md §7 declares this module renders nothing').toBe(true)
+      type Target = { nodeId: string }
+      const reading = async (): Promise<{ rendered: string; markdown: string; nodes: Target[] }> => ({
+        rendered: String((await call(client, 'provident.get_rendered_html', {})).answer.renderedHtml ?? ''),
+        markdown: String((await call(client, 'provident.get_markdown', {})).answer.markdown ?? ''),
+        nodes: ((await call(client, 'provident.list_targets', {})).answer.nodes ?? []) as Target[],
+      })
+      const carriersOf = (rendered: string): number =>
+        [...rendered.matchAll(/<[a-z][\w-]*(\s[^>]*)?>/gi)].filter((match) => (match[1] ?? '').includes('data-node-id')).length
 
-      const html = await call(client, 'provident.get_rendered_html', {})
-      const rendered = String(html.answer.renderedHtml ?? '')
-      const elements = [...rendered.matchAll(/<([a-z][\w-]*)(\s[^>]*)?>/gi)].map((match) => match[0])
-      expect(elements.some((element) => element.includes('data-node-id') && /data-(row|view|profile)|>shown-in-the-view</i.test(element)), 'L1 §5 S-10 — every element of the data view carries data-node-id, so the agent can name and drive one').toBe(true)
+      const before = await reading()
+      expect(before.nodes.length, 'the app’s own envelope stands before the commit, so the invariance below is not a vacuous reading').toBeGreaterThan(0)
+      expect(carriersOf(before.rendered), 'and its elements carry data-node-id — the attribute vocabulary an owed data view inherits rather than invents').toBeGreaterThan(0)
 
-      const targets = await call(client, 'provident.list_targets', {})
-      const nodes = (targets.answer.nodes ?? []) as Array<{ nodeId: string }>
-      expect(nodes.length, 'the view’s nodes are the producing graph’s own targets, not hand-written DOM').toBeGreaterThan(0)
-      const dispatched = await call(client, 'provident.dispatch', { target: nodes[nodes.length - 1].nodeId, event: 'click' })
-      expect(Object.keys(dispatched.answer).sort(), 'L1 §5 S-10 — a dispatch on a data-view element answers the four-member record').toEqual(['dirtied', 'renderedHtml', 'results', 'ssrHtml'])
+      const written = await call(client, 'provident.data.write', { path: ['alpha'], value: 'no-view-in-this-unit' })
+      expect(written.answer.status, 'a landed change is measured, so the readings below are taken against a committed row (D-11)').toBe('committed')
+
+      const after = await reading()
+      expect(after.rendered, 'interface.md §7 — a commit adds no graph node, so the rendered reading is byte-identical across it').toBe(before.rendered)
+      expect(carriersOf(after.rendered), 'and no element carrying data-node-id was added: the store mints no node (D-11)').toBe(carriersOf(before.rendered))
+      expect(after.markdown, 'the markdown reading is unmoved: nothing renders the profile, so no commit reaches it').toBe(before.markdown)
+      expect(after.markdown.includes('no-view-in-this-unit'), 'the committed value is absent from get_markdown because no view carries it — the owed pane, never a hidden one (ASM-12)').toBe(false)
+      expect(after.nodes.map((node) => node.nodeId), 'the node-id vocabulary is position-for-position identical, so no target appeared or vanished').toEqual(before.nodes.map((node) => node.nodeId))
+
+      const dispatched = await call(client, 'provident.dispatch', { target: before.nodes[before.nodes.length - 1].nodeId, event: 'click' })
+      expect(Object.keys(dispatched.answer).sort(), 'the four-member record answers on the graph an owed data view will ride, so the pane inherits a drivable surface rather than a dead one').toEqual(['dirtied', 'renderedHtml', 'results', 'ssrHtml'])
     } finally {
       await close()
     }
