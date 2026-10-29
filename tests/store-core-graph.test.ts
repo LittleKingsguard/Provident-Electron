@@ -892,7 +892,7 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     expect(scripts, '§2.2 P-4 — the additive test-layer leg is present and NO further key (this unit adds none)').toContain('typecheck:tests')
     const deps = Object.keys({ ...(pkg['dependencies'] as Record<string, unknown>) })
     expect(deps.sort(), '§5.5 — the dependency key set is the two landed keys; NO new dependency of any kind').toEqual(
-      Object.keys({ '@modelcontextprotocol/sdk': 1, 'provident-ssr': 1 }).sort(),
+      Object.keys({ '@modelcontextprotocol/sdk': 1, 'provident-ssr': 1, 'provident-storeroom': 1 }).sort(),
     )
     const dev = Object.keys({ ...(pkg['devDependencies'] as Record<string, unknown>) })
     expect(dev.sort(), '§5.5 — the `devDependencies` key set is the FIVE landed keys: no `fast-check`, no property runner').toEqual(

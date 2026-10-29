@@ -1224,7 +1224,8 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     }
     const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp']
     const LANDED_DEV = ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest']
-    const LANDED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr']
+    // THE SET STAYS EXACT: 'provident-storeroom' is the one member added by the 2026-10-29 import (src/main/storeroom.ts is the single seam; no capability is exposed).
+    const LANDED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom']
     // A SET claim against the NAMES, never a bare count (§4.4 S-TH-6).
     expect(Object.keys(pkg.scripts ?? {}).sort(), 'R-3 — the scripts KEY SET is the landed set: ANY further script key reddens this row, and a config change cannot satisfy it (§5.1 item 7, AGENTS.md item 4). §5.2 leg 5 adds NO script.').toEqual([...LANDED_SCRIPT_KEYS].sort())
     expect(Object.keys(pkg.devDependencies ?? {}).sort(), 'R-3 — no new devDependency: the register is executed by plain deterministic vitest tables with NO property runner and NO fast-check (§5.5).').toEqual([...LANDED_DEV].sort())

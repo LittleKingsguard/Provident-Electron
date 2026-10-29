@@ -835,7 +835,8 @@ function importBreakOf(source: string, label: string): string | null {
  *  rather than re-opened), and no dependency may be added. */
 const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp']
 const PINNED_DEV_DEPS = ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest']
-const PINNED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr']
+// THE SET STAYS EXACT: 'provident-storeroom' is the one member added by the 2026-10-29 import.
+const PINNED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom']
 function readJson(rel: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(ROOT, rel), 'utf8')) as Record<string, unknown>
 }

@@ -1022,7 +1022,7 @@ describeC('§3.5 X-1 + §3.4 R-9 / R-11 / R-12 — the red set\'s own premise (e
     expect(
       Object.keys(pkg.dependencies ?? {}).sort(),
       'R-11 — this unit adds no runtime dependency either',
-    ).toEqual(['@modelcontextprotocol/sdk', 'provident-ssr'])
+    ).toEqual(['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom'])
   })
 
   itc('R-12 (the no-importer half) at red time src/shared/container.ts is imported by NO src/** file, and no src/** file names it', () => {

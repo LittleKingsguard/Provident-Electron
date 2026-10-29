@@ -4,6 +4,8 @@
 // AUTHORED BEFORE `src/main/storeroom.ts` EXISTS (the gate-3 order: the red set is RUN and
 // REPORTED first). The declared surface is the one the package's own `index.d.ts` carries and
 // the one the 1.6.x review measured; every figure below is a LITERAL, not a derivation.
+import { readFileSync } from 'node:fs'
+
 import { describe, expect, it } from 'vitest'
 import { storeCreate } from 'provident-storeroom'
 
@@ -37,6 +39,13 @@ describe('S-1 — the seam module is what the app imports', () => {
     expect(typeof createProfileStore).toBe('function')
     expect(STOREROOM_DECLARED_SURFACE.members).toEqual([...MEMBERS])
     expect(STOREROOM_DECLARED_SURFACE.memberCount).toBe(14)
+  })
+
+  it('S-1.3 — package.json pins the reviewed package, and the pin is a caret RANGE so a patch fix lands'
+    + ' without a repo change', () => {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as
+      { dependencies: Record<string, string> }
+    expect(pkg.dependencies['provident-storeroom']).toBe('^1.6.1')
   })
 
   it('S-1.2 — the store `createProfileStore` returns IS a storeroom store, member for member', () => {

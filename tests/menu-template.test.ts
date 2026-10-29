@@ -963,7 +963,7 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
     expect(
       Object.keys(pkg.dependencies ?? {}).sort(),
       'R-3 — the runtime dependency set is UNCHANGED (the module imports NOTHING, so no dependency could be added for it)',
-    ).toEqual(['@modelcontextprotocol/sdk', 'provident-ssr'].sort())
+    ).toEqual(['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom'].sort())
     expect(readOrEmpty(fileURLToPath(new URL('../package-lock.json', import.meta.url))), 'R-3 — package-lock.json exists and is READ (its bytes are the supervisor\'s commit claim, not a run-time assertion)').not.toBe('')
     // R-13's no-importer half.
     const specifier = /['"](\.{1,2}\/)*(?:src\/shared\/)?menu-template(?:\.js)?['"]/

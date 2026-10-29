@@ -71,7 +71,7 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
     //   S3 no `engines`/`exports`/`files` override was slipped in
     const pkg = readJson('package.json')
     const deps = pkg.dependencies as Record<string, string>
-    expect(Object.keys(deps).sort()).toEqual(['@modelcontextprotocol/sdk', 'provident-ssr'])
+    expect(Object.keys(deps).sort()).toEqual(['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom'])
     expect(pkg.type).toBe('module')
     expect(pkg.engines).toBeUndefined()
     expect(pkg.exports).toBeUndefined()
