@@ -1,9 +1,12 @@
 # L1 — `central-data`'s census re-grain: one declared cross-module exception
 
-- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 1
-- **Status:** DECLARED — filed before this unit's L2 work opens, so no writer below this layer improvises it
+- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 1 is read through
+  this one: N measured 16 → 15 (§1), E-3 added (§2), E-4 added and the two falsified comment figures licensed (§3)
+- **Status:** DECLARED — filed before this unit's L2 work opened, so no writer below this layer improvises it; rev 2
+  filed at the closing examination, after the move it licenses was measured
 - **Inputs:** `docs/L1/central-data-management.md` rev 2 §3/§4/§8, `strata/decisions.md` D-5/D-10/D-11/D-12/D-13/D-14/D-15,
-  `strata/modules.json`, `strata/modules.md` §1/§3/§5, `strata/platform.md` §4, the tree at this head
+  `strata/modules.json`, `strata/modules.md` §1/§3/§5, `strata/platform.md` §4, the L2 examiner's readings at `57c5825`
+  and at `d52cd13`
 - **Ceiling:** 150 lines (class max) (D-1)
 
 ## 1. What this artifact decides
@@ -42,7 +45,8 @@ reader takes it for one (D-11, D-13).
 | `src/shared/types.ts` (`ipc-contract`) | `RpcMethod` 22 → 27 with `data.read`/`data.write`/`data.delete`/`data.list`/`data.journal`; `MUTATING_METHODS` untouched at seven (D-11; L1 rev 2 §4 ASM-9) | `central-data`'s L4, one shot |
 
 **E-3 — composition: one line, and it is not a census.** `src/main/main.ts` (`app-shell`): one import line and the one
-options member at `:284`, `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })`. Without it the
+options member on the server's options pass — `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })`
+— which reads `:288` at this head, the census's own two citation lines having moved it off `:284`. Without it the
 five names stand in `ALL_TOOLS` and register nothing, which is D-11's own finding read backwards; the surface
 constructs no store and touches no file until a tool is called, so the boot's own behaviour is unmoved (D-11, D-13;
 `docs/L2/central-data/interface.md` §5). Writer: `central-data`'s L4, one shot.
@@ -72,6 +76,20 @@ writer moves exactly that set and records both lists: the rows it moved, and the
 3. **No third writer.** A row the predicate leaves green is left byte-identical; a row that reddens and is not in
    §8's classes is a finding recorded in the unit's record, and the finding is diagnosed, never patched under this
    exception (D-1, `examiner.md` §4).
+
+**E-4 — the byte-image pins, licensed by this rev-2 clause.** Four frozen-digest cells in three files read none of the
+moved numbers and reddened only because E-1/E-3 moved the bytes they image: `tests/secure-exclusion.test.ts`'s
+`SECURITY_STORE_PIN` and its `FS-EX-15` chain, `tests/tier4-arbitrary-storage-register.ts`'s pin chain,
+`tests/secure-store-discipline.test.ts`'s two `P-O3-TP-1` digests. Their re-point is **the same class as E-2's move** —
+a pin whose referent moved with this unit's own census — and is licensed on the register's own declared convention,
+with the superseded digest kept awake and asserted distinct wherever the register already does that. A pin's exact
+64-hex equality is never relaxed (D-11, D-15; measured by the L2 examiner at `d52cd13`).
+
+**Two comment figures this unit's own move falsified**, and only these: `src/main/security.ts:13-16` ("`VALID_GROUPS`
+STAYS AT FIVE", now false beside the sixth group's own rows) and `tests/focus-tool.test.ts:99` ("the 22nd `ALL_TOOLS`
+member"). Both are corrected in this unit by the same writer, because a comment that contradicts the count three lines
+below it is the stale figure the re-grain exists to prevent — and for no other comment is the E-1 no-sweep clause
+lifted (D-11).
 
 **Red before green holds for both.** E-2's rows go red the moment E-1's numbers move and are green only when the
 rows themselves move; a module battery row is red before its implementation exists (D-1 §4, `examiner.md` §3).
@@ -113,9 +131,12 @@ same finding read backwards.
 `strata-lint` run with `--changed` naming exactly the **five** licensed paths — the four E-1 files and E-3's
 `src/main/main.ts` — plus the E-2 rows and this unit's own claimed paths (`src/main/storeroom.ts`,
 `src/main/data/`, `tests/integration/central-data/`, `tests/unit/central-data/`): a written path outside that list is
-a finding against this unit (D-1, `platform.md` §4). The lens the lint cannot supply is the one that matters here —
-that E-1 changed a census and not a behaviour, and that E-3 moved one line and not a boot — so the module's examiner
-reads the five files as code, not as a list (D-1, `examiner.md` §1).
+a finding against this unit (D-1, `platform.md` §4). The check runs over **module** paths: `docs/L1/`,
+`docs/L2/central-data/` and `docs/L3/central-data/` are layer write scopes that no module row may claim, so naming
+them in `--changed` fails diff scope by the map's own shape and is not a work finding (L1 rev 2 §2; `modules.md` §1).
+The lens the lint cannot supply is the one that matters here — that E-1 changed a census and not a behaviour, and that
+E-3 moved one line and not a boot — so the module's examiner reads the five files as code, not as a list (D-1,
+`examiner.md` §1).
 
 ## 7. Findings this pass surfaced, and where they go
 

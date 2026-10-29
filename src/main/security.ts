@@ -11,8 +11,9 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.code.validate': 'read',
   'provident.dispatch': 'dispatch',
   // U-FOCUS-TOOL (`F3`) — `provident.focus` JOINS the EXISTING `dispatch` group
-  // (ON by default). `VALID_GROUPS` STAYS AT FIVE: the tool joins rather than
-  // mints a sixth group (docs/specs/focus-tool.md §2.1 item 2, §2.2 X-2).
+  // (ON by default). The group set is SIX at this head: the sixth is central-data's
+  // `data` (`docs/L1/central-data-census-exception.md` §2 E-1), and this tool mints
+  // none of its own — it joins (docs/specs/focus-tool.md §2.1 item 2, §2.2 X-2).
   'provident.focus': 'dispatch',
   'provident.load': 'graph',
   'provident.op': 'graph',

@@ -96,7 +96,7 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
   it('X-1 — `provident.focus` IS in `ALL_TOOLS` and the `RpcMethod` member EXISTS', () => {
     const tools = liveAllTools()
     const rpc = liveRpcMethods()
-    expect(tools, `§2.1 item 1 — the tool must be the 22nd ALL_TOOLS member. Measured: ${JSON.stringify(tools)}`).toContain(TOOL_NAME)
+    expect(tools, `§2.1 item 1 — the tool must be an ALL_TOOLS member (27 at this head). Measured: ${JSON.stringify(tools)}`).toContain(TOOL_NAME)
     expect(rpc, `§2.1 item 3 / the layer map's site 5 — the RpcMethod union must carry '${METHOD}'. Measured: ${JSON.stringify(rpc)}`).toContain(METHOD)
   })
 
