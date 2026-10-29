@@ -11,6 +11,13 @@ import { storeCreate } from 'provident-storeroom'
 
 import { createProfileStore, STOREROOM_DECLARED_SURFACE } from '../src/main/storeroom'
 
+/**
+ * The package types a constraint body's context as `unknown` (`index.d.ts`, `export type Constraint`),
+ * so a typed consumer narrows it. This file reads two members and no more.
+ */
+type PairContext = { readonly value?: unknown; readonly tier?: unknown }
+const ctxOf = (ctx: unknown): PairContext => ctx as PairContext
+
 const MEMBERS = [
   'read',
   'readLiteral',
@@ -61,7 +68,7 @@ describe('S-2 — the refused form is the four-member literal, and its `address`
     const store = fresh()
     store.write(['q'], 'mem', 5)
     store.addConstraint({ address: ['q'], id: 'no-nine' }, (ctx) =>
-      ctx.value === 9 ? { message: 'nine is refused at q' } : true,
+      ctxOf(ctx).value === 9 ? { message: 'nine is refused at q' } : true,
     )
     let refusal: unknown = null
     try {
@@ -96,7 +103,7 @@ describe('S-2 — the refused form is the four-member literal, and its `address`
     store.addConstraint({ address: ['a'], id: 'no-five' }, (ctx) => {
       asks += 1
       if (asks === 1) return true
-      return ctx.value === 5 ? { message: 'five is not admitted at a' } : true
+      return ctxOf(ctx).value === 5 ? { message: 'five is not admitted at a' } : true
     })
     store.listen('L', [['b']])
     store.register('L', () => {
@@ -127,7 +134,7 @@ describe('S-3 — the log entry is the five-key record, and its size is bounded'
     const store = fresh()
     store.write(['q'], 'mem', 5)
     store.addConstraint({ address: ['q'], id: 'no-nine' }, (ctx) =>
-      ctx.value === 9 ? { message: 'nine is refused at q' } : true,
+      ctxOf(ctx).value === 9 ? { message: 'nine is refused at q' } : true,
     )
     let refusal: unknown = null
     try {
@@ -159,7 +166,7 @@ describe('S-3 — the log entry is the five-key record, and its size is bounded'
       }
       return true
     }
-    store.addConstraint({ address: ['c'], id: 'c0' }, (ctx) => (ctx.value === 1 ? throwOnce() : true))
+    store.addConstraint({ address: ['c'], id: 'c0' }, (ctx) => (ctxOf(ctx).value === 1 ? throwOnce() : true))
     let refusal: unknown = null
     try {
       store.write(['c', '0'], 'mem', 1)
