@@ -1,17 +1,15 @@
 {
   "unit": "settings-carrier-retirement",
   "layer": "L0",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
     "carrier-retired",
     "unit-record"
   ],
   "assumptions": [],
-  "streaks": {
-    "walkthrough-record": 1
-  },
+  "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-29T21:34:45.042Z",
+  "updated": "2026-10-29T21:47:57.985Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

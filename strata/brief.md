@@ -71,7 +71,7 @@ is answered and counted as a failure (D-1).
 
 ## 5. The current unit (D-7)
 
-`settings-carrier-retirement` (closed) and behind it `central-data-management`, the central store over
+`settings-carrier-retirement` (green at its exit walkthrough) and `security-store-storeroom`, then `central-data-management`, the central store over
 `provident-storeroom`. The import
 is landed (`f349549`, `4e404e2`, `1cab040`); the implementation beyond the seam is pending and no
 design is admitted until L1 files the module map. Its state is `strata/.strata/units/

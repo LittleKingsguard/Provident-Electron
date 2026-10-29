@@ -42,8 +42,7 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
 
 Branch `strata` carries the bootstrap and `main` is frozen until the user grants merge permission
 (`strata/decisions.md` D-6). The standing work is a central data management system over
-`provident-storeroom` — imported and inert (`src/main/storeroom.ts`), implementation pending, no design
-admitted before L1 files the module map (D-7). Where work stands is state, not prose:
+`provident-storeroom` — imported and inert (`src/main/storeroom.ts`), implementation pending, no design is admitted before a module’s row is filed — the map now carries 20 rows (D-7). Where work stands is state, not prose:
 `strata/.strata/units/*.json`.
 
 ## Commands
