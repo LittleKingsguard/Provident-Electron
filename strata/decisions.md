@@ -417,3 +417,38 @@ it** (`ISO-5`).
 rewriting it — the decision fixes the invariant, the interface fixes where the code puts it — but the
 ASM may not *relax* an invariant, and a D-row whose wording names a file is a claim about the tree, so
 when the tree moves the row gets a corrigendum like this one rather than a silent reading.
+
+---
+
+## D-22 — The old settings carrier retires first; the other modules consume the instance after it
+
+**Status:** ACTIVE · **Date:** 2026-10-29
+
+**Source (user, verbatim):** "Proceed with the full retirement of the old system, reimplementation of
+the other modules to rely on the store as state engine will proceed after that checkpoint."
+
+**Decision:** the **checkpoint** is the complete retirement of the old carrier, and nothing else. Then,
+in the passes after it, the other modules are reimplemented to consume the instance as their state
+engine.
+
+**In the checkpoint (this unit, `settings-carrier-retirement`):**
+
+- `provident-settings.json`'s hand-written carrier goes: its boot read (`src/main/main.ts:143`), its
+  read at the settings channel (`:315`), its tmp+rename+fsync writer (`:384-390`), the `settingsPath`
+  constant, and every other reader or writer of that path the tree still holds.
+- The instance takes over that state the way it took over the security record: **imported once**, then
+  owned (D-19's precedent). After the import the app never writes that file again.
+- The persisted-file census falls to **two** — `provident-operator-settings.json` and
+  `provident-profile.json` — and the rows that pinned three are re-grained, not deleted.
+- Boot parity is its own red set: `maxJournalLength`, the group grants, the token and the exclusion
+  state survive a restart **through the instance**, proven by a second construction rather than by a
+  substring read.
+
+**Outside the checkpoint, explicitly parked:** the gate's exclusion/tier-4 enforcement, the module
+registry and the journal-length consumers moving onto the instance as state engine. Those are the
+passes after this checkpoint is green, admitted as units like any other — they are not smuggled into
+this one, and this unit may not read the instance from a place the isolation rows forbid (D-18).
+
+**The checkpoint is green when** the carrier is gone (no writer, no reader of the old path anywhere),
+the import-once arm carries its own red set, boot parity passes, the isolation rows stay green, and the
+four legs plus `strata-lint` pass on a clean tree.

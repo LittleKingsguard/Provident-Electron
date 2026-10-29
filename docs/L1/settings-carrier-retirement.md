@@ -50,7 +50,7 @@ The unit's batteries are claimed by `operator-settings` — `tests/integration/s
 
 | The write | Replaced by |
 |---|---|
-| Y-2 `STORE_FILE_PUT` (the projection of every `file.*` key) | one whole-map write; the answer stays `{status:'committed'}` or a `refused` receipt whose `reason` is **the store's own status verbatim**, `'malformed-payload'` remaining the channel's pre-write refusal (ASM-2) |
+| Y-2 `STORE_FILE_PUT` (the projection of every `file.*` key) | one write of the whole rows list — an **ordered** `{name,value}[]`, because the package does not preserve object member order across the crossing (measured by L2 as finding `P-2`); the answer stays `{status:'committed'}` or a `refused` receipt whose `reason` is **the store's own status verbatim**, `'malformed-payload'` remaining the channel's pre-write refusal (ASM-2) |
 | `moduleSurface.put/remove/setDisabled` | the same members composing a new rows map and issuing that same one write |
 | the Q-5 migration's one atomic write | the same one write; the `provident-modules.json` read and its post-boot removal are unmoved |
 
@@ -95,7 +95,7 @@ Parity is **the next process, not a substring**: a second `createSettingsSurface
 
 | # | Goal | Expected |
 |---|---|---|
-| S-1 | the carrier is gone | no `provident-settings.json` literal in `src/**`; `src/main/main.ts` holds no write verb for any carrier |
+| S-1 | the carrier is gone | exactly **one** occurrence of `provident-settings.json` in `src/**` — the import arm's own name in the instance, as `provident-security.json` is — and `src/main/main.ts` holds no read and no write of it |
 | S-2 | the rows are served by the instance | a seeded retired record's `file.*` rows answer Y-1 after one boot, names verbatim |
 | S-3 | the import writes no byte | the retired file's sha256 is identical after a boot and three commits |
 | S-4 | the absent arm | no retired file → `[]`, `legacy:'absent'`, no write, no throw |
