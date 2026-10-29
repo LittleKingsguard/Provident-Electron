@@ -17,11 +17,13 @@
       "status": "reviewed"
     }
   ],
-  "streaks": {},
+  "streaks": {
+    "walkthrough-record": 1
+  },
   "rebuildEligible": false,
-  "updated": "2026-10-29T03:59:30.449Z",
+  "updated": "2026-10-29T04:10:26.197Z",
   "lastFailure": {
-    "artifact": "l3-unit-battery",
+    "artifact": "walkthrough-record",
     "reason": "red"
   }
 }

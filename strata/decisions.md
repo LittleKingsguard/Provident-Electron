@@ -298,3 +298,102 @@ Two corrections to D-11's list, both measured:
 - The rest of D-11 stands unchanged: `ALL_TOOLS` 22 → 27 with the five `provident.data.*` tools,
   `RpcMethod` 22 → 27, groups five → six, and the default grant still `['read','dispatch']` (8 tools,
   so enabling `data` lists 13).
+
+---
+
+## D-16 — The security store is rebuilt as its own provident-storeroom instance, isolated from MCP
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Supersedes:** the current `SecurityStore` design and
+implementation.
+
+**Source (user, verbatim):** "The security store implementation is going to be rebuilt entirely to
+instead be a separate provident-storeroom instance that is isolated from MCP, disregard the current
+design and implementation."
+
+**Decision:** `src/main/security-store.ts` — the five-member `SecurityStore` (`get`,
+`lastWriteReceipt`, `readEntry`, `set`, `writeEntry`), its receipt form closed at `'write-failed'`, and
+its `tier4-closed` answer — is **disregarded, not carried**. Its design and implementation are replaced
+wholesale, and no part of the old shape is preserved by default.
+
+- **Its own instance, not the central store's.** The replacement is a **separate**
+  `provident-storeroom` instance with its own lifetime and its own file. It is not the instance
+  `provident.data.*` reads, and sharing that instance would defeat the separation.
+- **Isolation from MCP is a hard invariant.** No MCP tool, resource, `RpcMethod` member, bridge channel
+  or rendered surface may read or write the security instance. Concretely: the `provident.data.*`
+  surface is scoped to the central profile store and **refuses** a security-owned path, and every
+  path that reaches the security record stays on the operator's manual-UI channels
+  (`src/main/main.ts`, `src/main/preload.ts`). The invariant is *tested* — a declared boundary with no
+  row behind it is a claim, not a control.
+- **The group set's second live copy moves with it.** `VALID_GROUPS` lives inside the file being
+  rebuilt (`security-store.ts:87`, D-15); the rebuild owns that copy and must not drop it.
+- **Nothing here is patched in place.** D-13's persisted-file census, and every frozen digest imaging
+  `security-store.ts` (E-4's class), are **re-derived by the rebuild's own unit** — the old bytes and
+  the old digests do not survive a wholesale replacement.
+
+**Consequence:** this opens a unit of its own (`security-store-storeroom`), which starts at L1 like
+every other: the `operator-settings` row in `strata/modules.json` and the module's I/O surface are the
+first things that must change. It does not merge to `main` until the user grants it (D-6).
+
+---
+
+## D-17 — The instance is the operator-settings state machine; its surface is a separate module
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, verbatim):** "The security store will be the
+state machine underlying the operator-settings surface (the surface itself will interact with read/write
+and listeners as a separate module), and also containing the current security record."
+
+**Decision:** the rebuilt `provident-storeroom` instance is the **state machine** under the operator's
+settings, not a repository behind one module. It holds the current security record — bearer token, group
+grants, exclusion state, tier-4 flag — **and** the operator-settings state that today lives in the profile
+files.
+
+- **The surface is a separate module.** It sees the instance only through **read, write and listeners**;
+  it never reaches into the instance's internals, and the instance knows nothing about the surface. That
+  is the same interface a foreign consumer gets from the package, so the surface's tests can drive it
+  without the instance's code.
+- **Listeners are the change path**, so a committed write reaches the gate, the window and any rendered
+  view through subscription rather than through a poll or a re-read.
+- **Consequences to carry as this unit's own work:** the `operator-settings` row in `strata/modules.json`
+  and the new surface module's row are re-declared by L1; `preload.ts`'s imports move off
+  `security-store.ts`; and the group set's second live copy (`VALID_GROUPS`, D-15) moves with the instance
+  and must not be dropped.
+
+---
+
+## D-18 — Isolation from MCP is enforced by one operator-only reference, tested by absence
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Operator-only reference, tested
+by absence (Recommended)"
+
+**Decision:** exactly **one** reference to the instance exists, held by the operator path — `main.ts`
+constructing it, the surface module and the gate consuming it. Nothing in the MCP stack holds it, and no
+`provident.data.*` tool, MCP resource, `RpcMethod` member or bridge channel resolves into it.
+
+The control is **absence, asserted**: rows state that no data path, resource or bridge member reaches the
+instance's file or its keys, and that the operator's channel set is the manual-UI IPC only. A refusal
+implemented inside the MCP stack would make a refusal bug a data leak, which is why sharing the instance
+was rejected.
+
+---
+
+## D-19 — The instance imports the existing profile bytes once, then owns a new shape
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Import once, then own a new
+shape (Recommended)"
+
+**Decision:** on first boot after the rebuild, the instance reads the existing profile files once and
+imports the security record into its own shape; from then on it owns that shape and the old names are
+**retired, not written**. The import carries its own red set — an operator's token, grants, exclusion
+state and tier-4 flag survive it, and a row proves it — because a silent capability change on upgrade is
+exactly the kind of loss D-13's freedom must not buy.
+
+---
+
+## D-20 — The central-data unit's walkthrough closes before the rebuild starts
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Close the current unit's
+exit walkthrough first, then rebuild (Recommended)"
+
+**Decision:** the `central-data-management` unit gets its L0 exit walkthrough first, on the settled tree;
+the `security-store-storeroom` rebuild then starts at L1 against that baseline. Two units in flight over
+the same files, digests and census copies is the condition this ordering exists to avoid.

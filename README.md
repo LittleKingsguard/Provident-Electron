@@ -43,9 +43,10 @@ Transports are also selectable with `PROVIDENT_MCP_TRANSPORT` / `PROVIDENT_MCP_P
 
 ## The MCP surface
 
-**22 tools** in five groups: `read` holds six (four graph readers plus `code.get` and `code.validate`)
+**27 tools** in six groups: `read` holds six (four graph readers plus `code.get` and `code.validate`)
 and the three resources, `dispatch` holds `dispatch` and `focus`, `graph` the six graph verbs, `code`
-the five code-tree writers, `module` three — 6 + 2 + 6 + 5 + 3 = 22. The default grant is `['read','dispatch']`, so **8 tools
+the five code-tree writers, `module` three, and `data` the five central-store verbs —
+6 + 2 + 6 + 5 + 3 + 5 = 27. Enabling `data` brings the listed set to 13. The default grant is `['read','dispatch']`, so **8 tools
 register** until the operator enables more — a disabled group's tools are absent from `tools/list`
 rather than present-and-refusing.
 
