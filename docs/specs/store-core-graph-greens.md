@@ -14,6 +14,15 @@ so **the store is NOT `landed-green` simpliciter while that suite is red** (the 
 green of this unit is APP-green** — the wave is `ENVELOPE-GREEN` / first-root `INTEGRATION-green`, the family's `§6.8`
 reading, recorded here rather than relitigated.** ⟶ THE CARVE-OUT'S SUBJECT IS NOW CLOSED BESIDE 2026-10-03 (THE RE-GRAIN FAMILY + THE REGISTER HARNESS): the legacy suite `tests/store-core-graph.test.ts` was RE-AUTHORED under the re-frozen artifact (the architect's entry-condition ruling, exercised by the option-1 chain), its register harness landed (`REGISTER-TOTAL`/`SEED`/`CAPS`/`EXEC`/`UNRUN`/`PER-ROW`), and it runs **`71 passed (71)`, exit 0** — the legacy-count trajectory `11 → 12 → 11 → 0` is complete (`REV` `§9D`); the store IS now `landed-green` WITH the 71/71 legacy suite and the 40/40 integration set named beside it (`REV` `§9D`), and the wave-layer sentence survives unchanged — every green of this unit remains ENVELOPE/INTEGRATION-green, NEVER APP-green.**
 
+**⟶ MEASURED THIS PASS (`2026-10-29`), ANNOTATED BESIDE — the `71 passed (71)`, exit `0` reading above is
+`2026-10-03`'s reading and stands as that date's observation; it is NOT this head's store-suite state.**
+At this head `tests/store-core-graph.test.ts` `§5.1` (the row at `tests/store-core-graph.test.ts:1027`) is
+**RED** — one of the three red rows in the suite run that reads **`3,114` collected / `3,109` passed / `3`
+failed / `2` skipped** over `91` files, so **the store suite is not green simpliciter at this head**, and
+every `71/71` / "ZERO red" figure elsewhere in this file is its own dated reading, never a claim about this
+head. **This pass ran no suite**: it states nothing about any row it did not run, and it attributes no red
+row to this file other than `§5.1`.
+
 **THE ONE FAIL IS A DOC/SPEC DRIFT — REPORTED PRECISELY, NEVER CORRECTED (the wall binds):** `SCG-G-28` — the summary
 artifact `docs/specs/store-core-graph-summary.md` `§3.1` still presents the **WITHDRAWN merged arm** as a live read case
 (`(c) the MERGED read with parts`) **with no beside-annotation**, while the merger contract (`GR` `§0` (A3), `§2.5` item

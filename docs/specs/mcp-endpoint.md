@@ -261,6 +261,25 @@ mutating app-graph op (see §8 Non-goals).
 > that causes it, and it leaves `U-ENGINE-PIN`'s prohibition-5 red intact for any **unlisted**
 > name.
 
+> **⟶ ANNOTATED BESIDE, DATED `2026-10-29` (MEASURED AGAINST `src/` THIS PASS; every as-filed cell above
+> stands as its own dated reading and none is rewritten).** (i) **THE `ALL_TOOLS` CITATION IS `stale — the
+> line moved`**: `src/main/mcp-server.ts:281-303` no longer carries the list; `static ALL_TOOLS` is now
+> **`src/main/mcp-server.ts:576-599`** and reads **`22`** names, `provident.focus` among them (`:578`). (ii)
+> **THE COUNTS ABOVE ARE SUPERSEDED BY MEASUREMENT, NOT BY ARGUMENT**: `ALL_TOOLS` is **`22`** and
+> `RpcMethod` is **`22`** at this head (`src/shared/types.ts:259-282`, `focus` at `:281`), so the *"live
+> census is **21**"* clause and its `:259-280` range are `2026-09-27`'s reading and `2026-09-27`'s line
+> range; **`provident.focus` HAS landed** and the *"remaining same-commit obligation"* above is DISCHARGED
+> — the set-equality freeze now pins `22` with `provident.focus` in it
+> (`tests/engine-pin-version.test.ts:102-132`) — the *"bare `21` … size check"* that clause names now reads
+> **`22`** too (`tests/engine-pin-version.test.ts:132`). The **default-gate registered subset is therefore `8`**
+> (`dispatch` + `focus` + the `6` `read` tools), not `7`. (iii) **TWO MORE CITATIONS IN THIS SECTION ARE
+> `stale — the line moved`**: item 3's `VALID_GROUPS` citation `src/main/security.ts:134` is now
+> **`src/main/security.ts:151`** (still exactly five members), and the `MUTATING_METHODS` citation
+> `src/renderer/renderer.ts:12` is now **`src/renderer/renderer.ts:829`**. (iv) **`§6.2`'s missing `module`
+> row is ADDED below** (the row for the `module` tool family, its group and its two-gate registration and
+> invocation behaviour read from `src/main/security.ts:28-42`/`:70-84` and
+> `src/main/mcp-server.ts:339-361`/`:617-632`, never from prose).
+
 ## 4. Code / data CRUD (the authoring surface — OUTSIDE the live graph)
 
 The tools above READ the live graph + DISPATCH into it. This section adds a
@@ -414,6 +433,11 @@ whose group is disabled is not registered / not listed / returns an error.
 | `dispatch` | `provident.dispatch` | mutates the graph (handler args, no eval) | **ON** |
 | `graph` | `load`, `op`, `export`, `validate`, `teardown`, `journal` | mutates/re-derives the graph + the envelope re-load + journal reversibility | **OFF** (manual) |
 | `code` | `code.set`, `code.create`, `code.delete`, `code.load` | WRITES + re-loads (eval via `new Function` on load) | **OFF** (manual) |
+| `module` | `module.install`, `module.update`, `module.list`, plus the dynamic `module:<name>.<tool>` capability tools a loaded module declares | the persisted module registry (install/update/list) and module-declared capability code; **`module.install`/`module.update` register ONLY with `module` AND `code`** (registration two-gate, `src/main/mcp-server.ts:339-361`) and every dynamic `module:` tool re-checks **both** at EACH call (invocation two-gate, `src/main/security.ts:70-84`, `src/main/mcp-server.ts:617-632`); a `module:` name with an empty rest is malformed and denied | **OFF** (manual) |
+
+*(The `module` row is ADDED `2026-10-29` — `VALID_GROUPS` has five members at `src/main/security.ts:151`
+while this table listed four. The row's group, tools and gate behaviour are read from the code cited in its
+own cell, not from prose.)*
 
 \* `code.validate` may eval a proposed body to check it compiles — treat it as
 `code`-group when the body is evaluated; `code.get`/`code.validate`(shape-only)

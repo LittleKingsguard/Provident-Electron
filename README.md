@@ -97,6 +97,14 @@ UNMOVED** (`divergence` `9/0` with `N = 9` intact, `battery` `184/0`, `ui` exit 
 `docs/next-steps.md`, `docs/decisions.md`, `docs/pending.md` and `docs/FORKER.md`, never deleted**;
 `M-46` stays `UNMEASURABLE`.
 
+**⟶ MEASURED THIS PASS (`2026-10-29`), THE DATED READING BESIDE THE DATED READING — the `59` files /
+`916` passed / `2` skipped / `0` failed figure above is `2026-09-27`'s reading and stands as that
+date's measurement.** At this head the vitest suite is **`91` files loaded, `3,114` collected / `3,109`
+passed / `3` failed / `2` skipped**, and it is **NOT GREEN**: the three red rows are
+`tests/store-core-graph.test.ts` `§5.1`, `tests/store-tabs-record.test.ts` `§4.2` item 7 and
+`tests/store-tabs-record.test.ts` `§4.2` item 8. The three leg figures above (`divergence` `9/0`,
+`battery` `184/0`, `ui` `11/11`) were **not re-measured by this pass** and this line does not move them.
+
 | Leg | What it is | What it is **not** |
 | --- | --- | --- |
 | `npm run battery` | the DOM-shim battery host (`dist/main/battery-host.mjs`) over stdio MCP — envelope/shim-layer corroboration | **not** a browser and **not** a real-DOM carrier |
@@ -136,6 +144,14 @@ The **`read` group is 6** tools — `get_rendered_html`, `get_markdown`,
 **default-gate registered subset is 7** (those 6 + `dispatch`), not 6;
 **CORRECTED 2026-09-27** by the `U-ENGINE-PIN` doc review against
 `src/main/security.ts:5-38`).
+
+**⟶ MEASURED THIS PASS (`2026-10-29`) — the `21` / *"`ALL_TOOLS` becomes `22` when `provident.focus`
+lands"* reading above is that earlier pass's reading and STANDS as such; it is no longer this head's
+state.** `provident.focus` **has landed**: the live `ALL_TOOLS` reads **`22`**
+(`src/main/mcp-server.ts:576-599`, `focus` at `:578`), so the group tally above is **`22` today** and
+the **default-gate registered subset is `8`** (the `6` `read` tools + `dispatch` + `focus`), not the
+`7` above. The `src/main/security.ts:5-38` citation above is **`stale — the line moved`**:
+`TOOL_GROUPS` is now `src/main/security.ts:5-42`.
 Two targets:
 
 - **battery** (default) — spawns `dist/main/battery-host.mjs` (a real Runtime
