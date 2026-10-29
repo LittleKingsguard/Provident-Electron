@@ -4,12 +4,13 @@
   "stage": "done",
   "artifacts": [
     "carrier-retired",
-    "unit-record"
+    "unit-record",
+    "l1-e2e-battery"
   ],
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-29T21:47:57.985Z",
+  "updated": "2026-10-29T22:18:16.493Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

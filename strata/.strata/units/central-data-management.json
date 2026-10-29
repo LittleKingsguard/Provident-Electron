@@ -9,7 +9,9 @@
     "l3-unit-battery",
     "central-data-module",
     "carrier-regrain",
-    "unit-record"
+    "unit-record",
+    "l1-e2e-battery",
+    "l1-ruling-s10"
   ],
   "assumptions": [
     {
@@ -23,7 +25,7 @@
     "walkthrough-record": 3
   },
   "rebuildEligible": true,
-  "updated": "2026-10-29T22:12:45.568Z",
+  "updated": "2026-10-29T22:18:16.479Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

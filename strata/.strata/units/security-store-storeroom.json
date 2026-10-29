@@ -4,14 +4,15 @@
   "stage": "design",
   "artifacts": [
     "security-store-instance",
-    "unit-record"
+    "unit-record",
+    "l1-regrain"
   ],
   "assumptions": [],
   "streaks": {
     "walkthrough-record": 3
   },
   "rebuildEligible": true,
-  "updated": "2026-10-29T22:12:45.582Z",
+  "updated": "2026-10-29T22:18:16.506Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

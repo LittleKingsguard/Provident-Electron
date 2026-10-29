@@ -29,12 +29,12 @@
 - **Owed by L0 before the unit is recommended ready:** a further blind walkthrough run — runs 1, 2 and 3 are not green,
   so the unit stays at L0 with its walkthrough red (D-10, D-11; `strata/records/central-data-management-walkthrough.md`).
 - **Owed to the pane's own unit, surfaced by run 3 and not repairable here:** `src/renderer/secure-panels.ts:72` enumerates
-  five group names, so the sixth group is in the gate and in the persisted grant but has **no operator control** — the
-  group cannot be enabled from the Settings pane. The group set's third reader is therefore outside `C-1`..`C-3`'s closure,
-  and `README.md` now states the pane's five-way list rather than the six-way grant it claimed.
-- **This file discharges** exception §7's last bullet: both findings and the L2 examiner's readings now stand here rather
-  than as a pointer in `docs/L1/`.
-
-**Reclassified by D-24:** every finding above is the store working as designed — the only demand is
-documentary. The purge rule and the absent-address refusal family are documented in the shipped guide;
-the boot behaviour over non-image bytes and the member ordering are not (two documentation defects).
+  five group names, so the sixth group is in the gate and in the persisted grant but has **no operator control** — it cannot
+  be enabled from the Settings pane, and the group set's third reader therefore stands outside `C-1`..`C-3`'s closure.
+- **Owed a later unit, ruled at L1 and not smuggled in here:** no rendered data view is declared — S-10 now asserts the
+  invariance the landed module owes, and the pane that would render the rows is its own unit with its own surface decision
+  (`docs/L1/central-data-management.md` §6, `ASM-12`).
+- **Discharged:** exception §7's last bullet, both findings, and the L2 examiner's readings now stand here, not as a pointer.
+- **Reclassified by D-24:** every finding above is the store working as designed — the only demand is documentary. The
+  purge rule and the absent-address refusal family are documented in the shipped guide; the boot behaviour over non-image
+  bytes and the member ordering are not (two documentation defects).

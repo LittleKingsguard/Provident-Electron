@@ -90,7 +90,7 @@ as filed, and `ASM-1`'s adoption of it is interim.
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | `2 failed / 3,175 passed / 2 skipped` of `3,179`, over `112` test files (89 flat + 23 nested) | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | `2 failed / 3,199 passed / 2 skipped` of `3,203`, over `114` test files (89 flat + 25 nested) | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — main, preload, standalone, battery host, renderer | the bundles exist at all |
@@ -110,6 +110,10 @@ The two red rows are `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`, the 
 §4.2 item 8 (`REG-EXEC`, the register's broken attempts) — both long-standing, neither new to this
 head. The third the gate-era corpus carried, `tests/store-core-graph.test.ts` §5.1, was retired with
 its referent when the corpus was archived (D-9), so the known-red set is now two (D-1 §6).
+
+**A fourth red is by construction, not by defect:** the same file's §4.2 item 9 asserts the worktree
+against a declared edit set, so it reddens while any uncommitted file exists. A reading taken to be
+believed is taken on a clean tree (`tests/store-tabs-record.test.ts:1916`).
 
 ## 7. The archive (D-2)
 
