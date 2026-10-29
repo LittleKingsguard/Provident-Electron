@@ -2,9 +2,18 @@
   "unit": "central-data-management",
   "layer": "L1",
   "stage": "design",
-  "artifacts": [],
-  "assumptions": [],
+  "artifacts": [
+    "module-map"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-4",
+      "text": "N counts the surface a module exposes or consumes; both sides of one route count",
+      "alternative": "count only MCP/HTTP surfaces, leaving the twelve unwired pure mechanisms and every store at N=0",
+      "status": "open"
+    }
+  ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-29T02:35:48.034Z"
+  "updated": "2026-10-29T02:58:44.945Z"
 }

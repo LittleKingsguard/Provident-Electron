@@ -1,0 +1,267 @@
+{
+  "modules": [
+    {
+      "name": "mcp-surface",
+      "paths": [
+        "src/main/mcp-server.ts",
+        "src/main/security.ts",
+        "src/main/battery-host.ts",
+        "src/main/standalone.ts",
+        "tests/security-gate.test.ts",
+        "tests/mcp-server-wiring.test.ts",
+        "tests/markdown-endpoint.test.ts",
+        "tests/renderer-backend.test.ts",
+        "tests/mcp-notify.test.ts",
+        "tests/blind-mcp-notify.test.ts",
+        "tests/mcp-notify-adversarial.test.ts",
+        "tests/mcp-resources.test.ts",
+        "tests/mcp-resources-adversarial.test.ts",
+        "tests/blind-mcp-resources.test.ts",
+        "tests/mcp-server-gate.test.ts",
+        "tests/blind-security-gate.test.ts",
+        "tests/module-security-gate.test.ts",
+        "tests/module-tools.test.ts",
+        "tests/journal-endpoint.test.ts",
+        "tests/blind-battery-verify.test.ts",
+        "tests/engine-pin-version.test.ts",
+        "tests/security.test.ts",
+        "tests/focus-tool.test.ts",
+        "tests/focus-tool-register.ts"
+      ],
+      "endpoints": 25
+    },
+    {
+      "name": "app-shell",
+      "paths": [
+        "src/main/main.ts",
+        "src/main/preload.ts",
+        "src/main/store-channels.ts",
+        "tests/store-persist.test.ts",
+        "tests/ui-leg-seam.test.ts"
+      ],
+      "endpoints": 7
+    },
+    {
+      "name": "operator-settings",
+      "paths": [
+        "src/main/security-store.ts",
+        "src/main/module-store.ts",
+        "src/main/tier4-state.ts",
+        "tests/security-store.test.ts",
+        "tests/module-store.test.ts",
+        "tests/store-security.test.ts",
+        "tests/secure-store-discipline.test.ts",
+        "tests/tier4-arbitrary-storage.test.ts",
+        "tests/secure-exclusion.test.ts",
+        "tests/tier4-arbitrary-storage-register.ts",
+        "tests/secure-exclusion-register.ts",
+        "tests/secure-exclusion-live.mjs",
+        "tests/store-compliance-live.mjs"
+      ],
+      "endpoints": 5
+    },
+    {
+      "name": "central-data",
+      "paths": [
+        "src/main/storeroom.ts",
+        "src/main/data/",
+        "tests/storeroom-surface.test.ts",
+        "tests/integration/central-data/",
+        "tests/unit/central-data/"
+      ],
+      "endpoints": 7
+    },
+    {
+      "name": "producing-runtime",
+      "paths": [
+        "src/renderer/runtime.ts",
+        "tests/runtime.test.ts",
+        "tests/runtime-host.test.ts",
+        "tests/blind-runtime-host.test.ts",
+        "tests/runtime-battery.test.ts",
+        "tests/construction-exhaustion.test.ts",
+        "tests/construction-exhaustion2.test.ts",
+        "tests/engine-surfaces.test.ts",
+        "tests/engine-pin-controls.test.ts",
+        "tests/engine-pin-boolean-dom.test.ts",
+        "tests/engine-pin-boolean-ssr.test.ts",
+        "tests/journal-reversibility.test.ts",
+        "tests/loadbatch.test.ts",
+        "tests/blind-loadbatch.test.ts",
+        "tests/loadbatch-adversarial.test.ts",
+        "tests/blind-battery-hooks-handlers.test.ts",
+        "tests/gemma4-blind-battery.test.ts",
+        "tests/0-2-regression-adversarial.test.ts"
+      ],
+      "endpoints": 17
+    },
+    {
+      "name": "graph-store",
+      "paths": [
+        "src/renderer/store-core-graph.ts",
+        "src/renderer/store-graph-references.ts",
+        "tests/store-core-graph.test.ts",
+        "tests/store-core-graph-register.ts",
+        "tests/store-core-graph-integration.test.ts",
+        "tests/store-modules-seams.test.ts",
+        "tests/store-modules-bytes.test.ts",
+        "tests/store-focus.test.ts",
+        "tests/store-tabs-record.test.ts",
+        "tests/store-tabs-record-register.ts",
+        "tests/store-tabs-record-live.mjs",
+        "tests/fork-store-reads.test.ts"
+      ],
+      "endpoints": 13
+    },
+    {
+      "name": "renderer-wiring",
+      "paths": [
+        "src/renderer/renderer.ts",
+        "src/renderer/index.html",
+        "tests/op-command-unwrap.test.ts",
+        "tests/pane-drag-compliance.test.ts"
+      ],
+      "endpoints": 22
+    },
+    {
+      "name": "module-system",
+      "paths": [
+        "src/renderer/extensions.ts",
+        "tests/module-router.test.ts",
+        "tests/module-dynamic.test.ts",
+        "tests/module-e2e.test.ts",
+        "tests/module-transform.test.ts",
+        "tests/module-queue.test.ts",
+        "tests/module-image.test.ts"
+      ],
+      "endpoints": 7
+    },
+    {
+      "name": "secure-panels",
+      "paths": [
+        "src/renderer/secure-panels.ts",
+        "tests/secure-panels.test.ts",
+        "tests/debug-panel.test.ts",
+        "tests/blind-renderer-debug.test.ts",
+        "tests/module-pane.test.ts",
+        "tests/isolation-adversarial.test.ts",
+        "tests/isolation-adv-d.test.ts",
+        "tests/isolation-adversarial-e2e.test.ts"
+      ],
+      "endpoints": 7
+    },
+    {
+      "name": "store-rederive",
+      "paths": [
+        "src/renderer/store.ts",
+        "tests/store-rederive.test.ts",
+        "tests/store-rederive-register.ts"
+      ],
+      "endpoints": 10
+    },
+    {
+      "name": "interaction",
+      "paths": [
+        "src/shared/gesture-session.ts",
+        "src/shared/gutter.ts",
+        "src/shared/gutter-affordance.ts",
+        "src/shared/relocate.ts",
+        "tests/gesture-session.test.ts",
+        "tests/gutter.test.ts",
+        "tests/gutter-ui.test.ts",
+        "tests/relocate.test.ts"
+      ],
+      "endpoints": 11
+    },
+    {
+      "name": "panes-layout",
+      "paths": [
+        "src/shared/zones.ts",
+        "src/shared/census.ts",
+        "src/shared/layout-projection.ts",
+        "src/shared/container.ts",
+        "tests/zones.test.ts",
+        "tests/census.test.ts",
+        "tests/layout-projection.test.ts",
+        "tests/container.test.ts"
+      ],
+      "endpoints": 10
+    },
+    {
+      "name": "hosts",
+      "paths": [
+        "src/shared/owned-list-host.ts",
+        "src/shared/slot-host.ts",
+        "src/shared/mount-invariant-guard.ts",
+        "tests/owned-list-host.test.ts",
+        "tests/slot-host.test.ts",
+        "tests/mount-invariant-guard.test.ts",
+        "tests/host-guard.test.ts",
+        "tests/host-guard-panes.test.ts"
+      ],
+      "endpoints": 4
+    },
+    {
+      "name": "chrome",
+      "paths": [
+        "src/shared/theme.ts",
+        "src/shared/overlay.ts",
+        "src/shared/menu-template.ts",
+        "src/renderer/theme-store.ts",
+        "src/renderer/overlay-store.ts",
+        "tests/theme.test.ts",
+        "tests/theme-control.test.ts",
+        "tests/overlay.test.ts",
+        "tests/menu-template.test.ts"
+      ],
+      "endpoints": 9
+    },
+    {
+      "name": "focus-model",
+      "paths": [
+        "src/shared/focus-model.ts",
+        "tests/focus-model.test.ts"
+      ],
+      "endpoints": 4
+    },
+    {
+      "name": "app-envelope",
+      "paths": [
+        "src/shared/demo-envelope.ts"
+      ],
+      "endpoints": 7
+    },
+    {
+      "name": "ipc-contract",
+      "paths": [
+        "src/shared/types.ts"
+      ],
+      "endpoints": 8
+    },
+    {
+      "name": "harness",
+      "paths": [
+        "src/shared/dom-shim.ts",
+        "src/shared/path-fork-cycle.ts",
+        "scripts/",
+        "tests/fixtures/",
+        "tests/e2e-battery.test.mjs",
+        "tests/adapter-parity-battery.test.mjs",
+        "tests/mcp-stdio-e2e.test.mjs",
+        "tests/path-fork-cycle.test.ts",
+        "tests/dom-shim-remove-attribute.test.ts",
+        "tests/divergence-attribute-extractor.test.ts",
+        "tests/blind-ci-divergence.test.ts",
+        "tests/ui-leg-contract.test.ts"
+      ],
+      "endpoints": 11
+    },
+    {
+      "name": "demo-panes",
+      "paths": [
+        "demo/pane-drag-demo/"
+      ],
+      "endpoints": 0
+    }
+  ]
+}

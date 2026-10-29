@@ -1,0 +1,24 @@
+{
+  "unit": "central-data-management",
+  "from": "L1",
+  "to": "L0",
+  "verdict": "PASS",
+  "artifact": "module-map",
+  "citations": [
+    "strata/modules.json",
+    "docs/L1/central-data-management.md",
+    "strata/brief.md",
+    "strata/decisions.md",
+    "strata/platform.md",
+    "strata/modules.md",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "assumptions": [
+    { "id": "ASM-4", "text": "N counts the surface a module exposes or consumes: tools and resources, bridge routes, package exports called, and pure modules' exported value names; both sides of one route count", "alternative": "count only MCP/HTTP surfaces, which leaves the twelve unwired pure mechanisms and every store at N=0" },
+    { "id": "ASM-5", "text": "every flat test row is claimed by one module now, so D-10's migration has a destination for each row", "alternative": "leave the suite unclaimed until the migration, which makes the partition the migration's problem instead of the map's" },
+    { "id": "ASM-6", "text": "durability stays the one provident-settings.json crossing, keeping the persisted-file census at two", "alternative": "a third storeroom-owned file, which the live compliance battery's Family B pins as a violation" },
+    { "id": "ASM-7", "text": "the unit adds no MCP tool, resource, group or bridge member; it is observed through the existing surface", "alternative": "a provident.data.* family, which moves the 22-tool census, the five-group table and the default grant" }
+  ],
+  "question": "Q-1 an agent-facing data surface or not; Q-2 is the journal operator-visible; Q-3 may the profile's byte shape change; Q-4 does the migrated flat suite count against 50+10N"
+}
