@@ -82,7 +82,7 @@ const ENVELOPE_PATH = 'src/shared/demo-envelope.ts' // §5.1 row 11 (ALLOWED, au
 const RENDERER_PATH = 'src/renderer/renderer.ts' // §5.1 row 12 (ALLOWED, one wiring role)
 const INDEX_PATH = 'src/renderer/index.html' // §5.1 row 8 (DENIED — the appearance authority)
 const CLI_PATH = 'scripts/mcp-cli.mjs' // §3.5 X-2's shipped command surface
-const SPEC_PATH = 'docs/specs/theme-control.md' // the contract
+const SPEC_PATH = 'archive/gate-corpus-2026-10-29/specs/theme-control.md' // the contract
 const DESIGN_SKILL_PATH = 'docs/skills/designing-pages.md' // §3.4 R-9 / §3.5 X-5 (absent)
 const ENGINE_PIN_PATH = 'tests/engine-pin-version.test.ts' // R-3's pinned name set
 const UI_LEG_CONTRACT_PATH = 'tests/ui-leg-contract.test.ts' // the landed script-key pin
@@ -1513,7 +1513,7 @@ describe('§3.5 X-* — the existence rows', () => {
   })
 
   it('X-5 (§3.5 X-5) — `docs/skills/designing-pages.md` is absent; `process-guardrails.md` is what is there', () => {
-    const dir = join(REPO_ROOT, 'docs/skills')
+    const dir = join(REPO_ROOT, 'archive/gate-corpus-2026-10-29/skills')
     expect(existsSync(dir), '§3.5 X-5 — `docs/skills/` exists').toBe(true)
     const entries = existsSync(dir) ? readdirSync(dir) : []
     expect(entries.includes('designing-pages.md'), '§3.5 X-5 — globbed: the page-design skill does NOT exist').toBe(false)

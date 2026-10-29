@@ -1,0 +1,30 @@
+{
+  "unit": "archive-sweep-pins",
+  "from": "L1",
+  "to": "L0",
+  "verdict": "PASS",
+  "artifact": "docs-pin-disposition",
+  "citations": [
+    "strata/examiner.md",
+    "strata/envelope.md",
+    "strata/brief.md",
+    "strata/decisions.md",
+    ".gitignore",
+    "package.json",
+    "tests/fork-store-reads.test.ts",
+    "tests/store-core-graph.test.ts",
+    "tests/secure-exclusion-register.ts"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-1",
+      "text": "the move commits as a removal of docs/ from index and worktree while archive/ stays untracked, and the trio runs after the move commit",
+      "alternative": "the move commits with archive/ tracked, which would allow the two RETIRE rows to be repointed instead"
+    },
+    {
+      "id": "ASM-2",
+      "text": "the sweep covers every executable docs-path dependency in the legacy suite, not only the sites a grep listed",
+      "alternative": "the original list's literal count is authoritative and the extra 39 rows are left to go red"
+    }
+  ]
+}

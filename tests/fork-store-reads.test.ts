@@ -103,7 +103,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const specPath = (rel: string): string => `${ROOT}/${rel}`
 
 /** The unit's contract — `docs/specs/fork-store-reads.md` (`§0.1` item 1). */
-const SPEC_REL = 'docs/specs/fork-store-reads.md'
+const SPEC_REL = 'archive/gate-corpus-2026-10-29/specs/fork-store-reads.md'
 const SPEC = readFileSync(specPath(SPEC_REL), 'utf8')
 
 /** Read a repo file, or `null` when absent. The `null` return turns "the
@@ -1084,7 +1084,7 @@ describe('§6.3 — the `H-r6` handoff note: the as-filed `OWED` is KEPT VISIBLE
     // -- (5) THE DELIVERED ARTIFACT ACTUALLY EXISTS (the falsifiable half the row
     //        lacked: a pass that DELETED the note — or reverted the reconcile —
     //        reddens HERE, against the live file, not against the spec's prose) ---
-    const footerRel = 'docs/FORKER.md'
+    const footerRel = 'archive/gate-corpus-2026-10-29/FORKER.md'
     const footer = readOrNull(footerRel)
     expect(footer, `S-10 — the delivered artifact EXISTS: \`${footerRel}\` is present (its absence reddens the note's VERIFICATION, not just its record)`).not.toBeNull()
     const footerText = footer ?? ''

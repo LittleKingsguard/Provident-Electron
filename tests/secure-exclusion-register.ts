@@ -180,7 +180,7 @@ export const SECURITY_STORE_SRC = SRC('main/security-store.ts')
  *  path as `'./../docs/specs/…'` from `TESTS_DIR`, so **the CLAIM is unchanged** (the
  *  frozen artifact is byte-identical to its measured digest) and only the
  *  instrument's resolution is corrected. */
-const DOCS = (rel: string): string => fileURLToPath(new URL('./docs/' + rel, REPO))
+const DOCS = (rel: string): string => fileURLToPath(new URL('./archive/gate-corpus-2026-10-29/' + rel, REPO))
 export const SURFACE_ARTIFACT = DOCS('specs/store-core-module-store-core-graph-surface.md')
 /** CONTROL ONLY — the PRE-REPAIR resolution, kept under a clearly-named helper so the
  *  control row can drive the malformed form in-line and PROVE it resolves outside the

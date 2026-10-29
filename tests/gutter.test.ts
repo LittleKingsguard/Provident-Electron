@@ -4616,7 +4616,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       existsSync(`${REPO_ROOT}/${path}`),
       `R-9 §3.4 — \`${path}\` DOES NOT EXIST at the time this unit’s red set runs (globbed \`docs/skills/*\`). If it DOES exist, this unit OWES a test-use-case coverage row in that file’s coverage matrix plus an entry in its demo-page index — and the row would be an ABSENCE row, because this unit renders no page (§1 item 5). A FAIL here is meaningful`,
     ).toBe(false)
-    const skills = readdirSync(`${REPO_ROOT}/docs/skills`)
+    const skills = readdirSync(`${REPO_ROOT}/archive/gate-corpus-2026-10-29/skills`)
     expect(
       skills.length,
       `R-9 §3.4 — the skills directory is present and non-empty (the probe reads a REAL directory rather than a mistyped path). Entries: ${JSON.stringify(

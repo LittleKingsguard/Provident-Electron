@@ -365,7 +365,7 @@ const TEST_FILE = fileURLToPath(import.meta.url)
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url))
 const MODULE_RELPATH = 'src/shared/gutter-affordance.ts'
 const TEST_RELPATH = 'tests/gutter-ui.test.ts'
-const SPEC_RELPATH = 'docs/specs/gutter-ui.md'
+const SPEC_RELPATH = 'archive/gate-corpus-2026-10-29/specs/gutter-ui.md'
 const SESSION_RELPATH = 'src/shared/gesture-session.ts'
 const GUTTER_RELPATH = 'src/shared/gutter.ts'
 const RENDERER_RELPATH = 'src/renderer/renderer.ts'
@@ -1799,7 +1799,7 @@ describe('§3.5 — the existence and precondition rows (the red’s own premise
     // the dated discharge note; its as-filed `predicateSourcePresent: false` reading is kept
     // as THAT unit's own reading against the tree it ran on, never rewritten).
     // =====================================================================
-    const PREDICATE_SOURCE_RELPATH = 'docs/specs/user-flow-audit.md'
+    const PREDICATE_SOURCE_RELPATH = 'archive/gate-corpus-2026-10-29/specs/user-flow-audit.md'
     /** **THE FOUR CITED SECTIONS, AS LITERAL TOKENS — THE ROW'S *CONTROL* CORPUS, kept SEPARATE
      *  from the row's own marker table (`PREDICATE_SOURCE_SECTION_MARKERS`, below) so the two
      *  cannot be mutated in one stroke.** Each token is a section the gate instructions cite and

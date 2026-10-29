@@ -137,8 +137,8 @@ const MODULE_SRC = new URL('../src/shared/focus-model.ts', import.meta.url)
 const MODULE_PATH = fileURLToPath(MODULE_SRC)
 const TEST_PATH = fileURLToPath(new URL('./focus-model.test.ts', import.meta.url))
 const MODULE_SPECIFIER = ['..', 'src', 'shared', 'focus-model.js'].join('/')
-const SPEC_PATH = join(ROOT, 'docs', 'specs', 'focus-model.md')
-const SPEC_SRC = fileURLToPath(new URL('../docs/specs/focus-model.md', import.meta.url))
+const SPEC_PATH = join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'focus-model.md')
+const SPEC_SRC = fileURLToPath(new URL('../archive/gate-corpus-2026-10-29/specs/focus-model.md', import.meta.url))
 
 /** `§2.1` item 3 — `FocusResult`'s SEVEN declared names, IN DECLARED ORDER. */
 const RESULT_KEYS = ['state', 'accepted', 'verb', 'refusals', 'seated', 'changed', 'persisted'] as const
@@ -894,16 +894,16 @@ describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the r
   })
 
   it('X-3 / X-6 — the TWO INPUT RECORDS exist and are FROZEN for this unit', () => {
-    expect(existsSync(join(ROOT, 'docs', 'specs', 'focus-model-review.md')), 'X-6 — the gate-1 record must exist (its FAIL means this contract\'s authority is gone).').toBe(true)
-    expect(existsSync(join(ROOT, 'docs', 'specs', 'focus-model-adoption-dossier.md')), 'X-6 — the STEP-0 dossier must exist.').toBe(true)
+    expect(existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'focus-model-review.md')), 'X-6 — the gate-1 record must exist (its FAIL means this contract\'s authority is gone).').toBe(true)
+    expect(existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'focus-model-adoption-dossier.md')), 'X-6 — the STEP-0 dossier must exist.').toBe(true)
     // ⟶ FLIPPED by the `F3`/`U-FOCUS-TOOL` TestWriter pass: `docs/specs/focus-tool.md` IS
     // filed, so the consumed module's SPEC-EXISTENCE ROW reads `true` (`focus-tool.md`
     // `§5.2` item 4 `N-5`).
-    expect(existsSync(join(ROOT, 'docs', 'specs', 'focus-tool.md')), "§5.2 item 4 N-5 — `F3`'s spec IS filed, so this row reads `true` (the same-commit spec-existence obligation).").toBe(true)
+    expect(existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'focus-tool.md')), "§5.2 item 4 N-5 — `F3`'s spec IS filed, so this row reads `true` (the same-commit spec-existence obligation).").toBe(true)
   })
 
   it('X-4 / R-14 — THE PAGE-DESIGN ABSENCE PROBE: `docs/skills/designing-pages.md` does NOT exist', () => {
-    const skills = readdirSync(join(ROOT, 'docs', 'skills'))
+    const skills = readdirSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'skills'))
     expect(
       skills.includes('designing-pages.md'),
       `R-14 — the probe whose FAIL is meaningful: if designing-pages.md comes to exist, this unit OWES a coverage row and a demo-page entry (an ABSENCE row: a mechanism that renders nothing contributes no page). Measured docs/skills/: ${JSON.stringify(skills)}`,
@@ -959,7 +959,7 @@ describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the r
       control.outside,
       `R-6 (POSITIVE control for the declared exemption) — a file OUTSIDE the declared set still FAILS this row: the instrument routes ${JSON.stringify(control.exempted)} to the exempt side and ${JSON.stringify(control.outside)} to the OFFENDER side, so the exemption is the PATH BY NAME, never the token.`,
     ).toEqual(['src/main/mcp-server.ts'])
-    const allowed = ['src/shared/focus-model.ts', 'tests/focus-model.test.ts', 'docs/specs/focus-model.md']
+    const allowed = ['src/shared/focus-model.ts', 'tests/focus-model.test.ts', 'archive/gate-corpus-2026-10-29/specs/focus-model.md']
     expect(existsSync(join(ROOT, allowed[2]!)), 'R-6 — this unit\'s OWN artifacts must non-vacuously exist in the range: the spec.').toBe(true)
     expect(existsSync(join(ROOT, allowed[1]!)), 'R-6 — and this unit\'s own test file (allow-list row 2).').toBe(true)
     expect(

@@ -1180,7 +1180,7 @@ describe('§3.5 X-1 / X-2 / X-3 / X-4 / X-5 / X-6 + §3.4 R-13 / R-3(config) / R
   })
 
   it('X-2 (§3.5) — THIS UNIT\'S CONTRACT IS FILED: docs/specs/overlay.md EXISTS and is this file\'s contract', () => {
-    const specPath = join(ROOT, 'docs', 'specs', 'overlay.md')
+    const specPath = join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'overlay.md')
     expect(existsSync(specPath), `X-2 — the contract is filed at ${specPath} (the unit is not delegable without it, §4.5)`).toBe(true)
     const spec = readFileSync(specPath, 'utf8')
     expect(spec.split('\n')[0], 'X-2 — the first line names the unit and its two-function mechanism, so the file is the contract and not a sibling').toContain('U-OVERLAY')
@@ -1188,7 +1188,7 @@ describe('§3.5 X-1 / X-2 / X-3 / X-4 / X-5 / X-6 + §3.4 R-13 / R-3(config) / R
   })
 
   it('X-3 (§3.5) — the gate-1 record is the RECORD and NOT this file\'s contract, and it EXISTS (a DENIED path of §5.1 item 12)', () => {
-    const recordPath = join(ROOT, 'docs', 'specs', 'overlay-review.md')
+    const recordPath = join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'overlay-review.md')
     expect(existsSync(recordPath), 'X-3 — docs/specs/overlay-review.md is the gate-1 record; this unit does not edit it again, so the row is an EXISTENCE probe whose FAIL is meaningful').toBe(true)
     const record = readFileSync(recordPath, 'utf8')
     expect(record, 'X-3 — the record is NOT this contract: it does not carry this file\'s `§2.1` surface block as its own (the two documents are distinguishable)').not.toContain('export function overlayTransition(state: unknown, verb: unknown, callback?: unknown): OverlayTransition')
@@ -1318,13 +1318,13 @@ describe('§3.5 X-1 / X-2 / X-3 / X-4 / X-5 / X-6 + §3.4 R-13 / R-3(config) / R
       'src/renderer/index.html', 'src/renderer/renderer.ts', 'src/main/main.ts', 'src/main/preload.ts',
       'src/shared/demo-envelope.ts', 'src/shared/dom-shim.ts', 'package.json', 'package-lock.json',
       'scripts/electron-divergence.mjs', 'tsconfig.json', 'tsconfig.tests.json', 'vitest.config.ts',
-      'docs/specs/overlay-review.md',
+      'archive/gate-corpus-2026-10-29/specs/overlay-review.md',
     ]
     for (const p of denied) {
       expect(existsSync(join(ROOT, p)), `R-6 — the DENIED path §5.1 names is PRESENT on disk: ${p}. The denial binds this unit's diff; it does NOT forbid a later consumer from importing the module.`).toBe(true)
     }
     expect(existsSync(new URL('./overlay.test.ts', import.meta.url)), 'R-6 — the allow-list row 2 (THIS file) EXISTS; §5.1 names it so the register\'s own execution cannot read as a DENY-set violation').toBe(true)
-    expect(existsSync(join(ROOT, 'docs', 'specs', 'overlay.md')), 'R-6 — the allow-list row 3 (this unit\'s spec) EXISTS').toBe(true)
+    expect(existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'overlay.md')), 'R-6 — the allow-list row 3 (this unit\'s spec) EXISTS').toBe(true)
     // THE ALLOW-LIST ROW 1, IN THE BRANCH FORM: asserting the module's ABSENCE as a
     // STANDING claim would be a red-only premise (true before the work and false for
     // ever after). The RED branch states the absence; the GREEN branch states the
@@ -2005,7 +2005,7 @@ describe('§3.3 I-2 / I-3 / I-5..I-10 / I-12 — the invariants that hold in eve
   })
 
   it('I-7 (§3.3) — NO [U] ROW IS OFFERED AND NO [D] ROW IS CLAIMED: both refusals are STRUCTURAL, and gate 6 is never "waived"', () => {
-    const spec = readFileSync(join(ROOT, 'docs', 'specs', 'overlay.md'), 'utf8')
+    const spec = readFileSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'overlay.md'), 'utf8')
     expect(spec, 'I-7 / §5.2 — the three-part [U] refusal carries docs/specs/zones.md §4.4 S-6\'s sentence VERBATIM (step 4 required the lift rather than a paraphrase)').toContain('the row may not be moved to the `ui` leg silently.')
     expect(spec, 'I-7 / §5.2 — gate 6 is stated as STRUCTURAL with its reason: no importer, no rendered surface, nothing written or moved').toContain('GATE 6 IS `STRUCTURAL`, NOT WAIVED')
     expect(spec, 'I-7 / §5.2 — the reader question is answered NONE').toContain('THE READER QUESTION, ANSWERED: `NONE`')
@@ -3066,7 +3066,7 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     const im = terms.slice(0, 5).reduce((a, b) => a + b, 0)
     const sm = terms.slice(5, 7).reduce((a, b) => a + b, 0)
     const tp = terms.slice(7).reduce((a, b) => a + b, 0)
-    const spec = readFileSync(join(ROOT, 'docs', 'specs', 'overlay.md'), 'utf8')
+    const spec = readFileSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'overlay.md'), 'utf8')
     // ⟶ **THE TWO PRINTED TOTALS ARE ANCHORED THROUGH THEIR SIXTH TERM.** Both figures
     // are printed `**`NNN` = `10` + `6` + `12` + `4` + `4` + …**`, and the declared and
     // the distinct printings diverge at EXACTLY that sixth term (`P-OV-SM-1`: `6`

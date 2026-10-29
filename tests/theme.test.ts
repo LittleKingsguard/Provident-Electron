@@ -1116,7 +1116,7 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
   })
 
   it('X-2 (§3.5) — this unit\'s contract is FILED: docs/specs/theme.md EXISTS and is THIS file\'s contract', () => {
-    const specPath = join(ROOT, 'docs', 'specs', 'theme.md')
+    const specPath = join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'theme.md')
     expect(existsSync(specPath), `X-2 — the contract is filed at ${specPath} (the unit is not delegable without it, §4.5)`).toBe(true)
     const spec = readFileSync(specPath, 'utf8')
     expect(spec.split('\n')[0], 'X-2 — the first line names the unit and its two-function surface, so the file is the contract and not a sibling').toContain('U-THEME')
@@ -1286,7 +1286,7 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     for (const p of denied) {
       expect(existsSync(join(ROOT, p)), `R-6 — the DENIED path §5.1 names is PRESENT on disk: ${p}. The denial binds this unit's diff (a later F1 pass lawfully importing the module does NOT falsify U-THEME).`).toBe(true)
     }
-    expect(existsSync(join(ROOT, 'docs', 'specs', 'theme-review.md')), 'R-6 / X-3 — the gate-1 record is a DENIED path (§5.1 item 11) and it EXISTS, so a later edit is a FINDING').toBe(true)
+    expect(existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'theme-review.md')), 'R-6 / X-3 — the gate-1 record is a DENIED path (§5.1 item 11) and it EXISTS, so a later edit is a FINDING').toBe(true)
     expect(existsSync(new URL('./theme.test.ts', import.meta.url)), 'R-6 — the allow-list row 2 is THIS file').toBe(true)
     // THE ALLOW-LIST ROW 1, IN THE BRANCH FORM (`X-1`'s own shape, "no third path"):
     // asserting the module's ABSENCE as a STANDING claim would be a red-only premise
@@ -1874,7 +1874,7 @@ describe('§3.3 I-1..I-11 — the invariants that hold in every state', () => {
   })
 
   it('I-11 (§3.3) — [U] is NOT offered and [D] is NOT claimed: both refusals are STRUCTURAL, and gate 6 is never "waived"', () => {
-    const spec = readFileSync(join(ROOT, 'docs', 'specs', 'theme.md'), 'utf8')
+    const spec = readFileSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'theme.md'), 'utf8')
     expect(spec, 'I-11 — the contract records gate 6 as STRUCTURAL').toContain('STRUCTURAL')
     expect(spec, 'I-11 — the §7.1 predicate decision is recorded as DOES NOT TRIGGER').toContain('DOES NOT TRIGGER')
     expect(/\[U\].{0,200}not offered|THE `\[U\]` ROW IS NOT OFFERED/s.test(spec), 'I-11 — the three-part [U] refusal is recorded (the refusal · the structural reason · the zones.md §4.4 S-6 sentence).').toBe(true)

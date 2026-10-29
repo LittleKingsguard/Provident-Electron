@@ -1039,7 +1039,7 @@ describeC('§3.5 X-1 + §3.4 R-9 / R-11 / R-12 — the red set\'s own premise (e
   })
 
   itc('R-9 / X-4 the page-design layer is absent, so no page-design artifact can be owed or updated', () => {
-    const dir = fileURLToPath(new URL('../docs/skills', import.meta.url))
+    const dir = fileURLToPath(new URL('../archive/gate-corpus-2026-10-29/skills', import.meta.url))
     const names = existsSync(dir) ? readdirSync(dir) : []
     expect(
       names.includes('designing-pages.md'),
@@ -1478,11 +1478,11 @@ describeC('§3.4 R-1..R-13 — the static rows (the rows §2.2\'s prohibition ta
       expect(existsSync(url), `R-12 — the DENIED path '${name}' exists and is therefore a path this unit may not change (§5.1 item 2 / item 4)`).toBe(true)
     }
     expect(
-      existsSync(new URL('../docs/specs/container-review.md', import.meta.url)),
+      existsSync(new URL('../archive/gate-corpus-2026-10-29/specs/container-review.md', import.meta.url)),
       'R-12 / X-3 — the CLOSED gate-1 record exists and is a DENIED path: this unit derives from it and never edits it (`§5.1` item 11)',
     ).toBe(true)
     expect(
-      existsSync(new URL('../docs/specs/container.md', import.meta.url)),
+      existsSync(new URL('../archive/gate-corpus-2026-10-29/specs/container.md', import.meta.url)),
       'X-2 / R-12 — this unit\'s contract is FILED, so the allow-list is a real, checkable set',
     ).toBe(true)
     const mine = [MODULE_PATH, TEST_PATH]

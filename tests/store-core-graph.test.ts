@@ -849,10 +849,10 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
 
   // [T] §3.5 R-10(a) — the design skill file does not exist.
   it('§3.5 R-10(a) · `docs/skills/designing-pages.md` DOES NOT EXIST (no coverage matrix, no demo-page index)', () => {
-    const skills = fileURLToPath(new URL('./../docs/skills/', import.meta.url))
+    const skills = fileURLToPath(new URL('./../archive/gate-corpus-2026-10-29/skills/', import.meta.url))
     expect(existsSync(skills), '§3.5 R-10(a) — `docs/skills/*` exists').toBe(true)
     expect(
-      existsSync(fileURLToPath(new URL('./../docs/skills/designing-pages.md', import.meta.url))),
+      existsSync(fileURLToPath(new URL('./../archive/gate-corpus-2026-10-29/skills/designing-pages.md', import.meta.url))),
       '§3.5 R-10(a) — the file\u2019s later appearance is a finding against THIS row',
     ).toBe(false)
   })
@@ -1005,7 +1005,7 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     }
     const preload = read('src/main/preload.ts')
     expect(preload, 'I-11 — the preload member set is UNMOVED: `src/main/preload.ts` is byte-identical to HEAD').toBe(headBytes('src/main/preload.ts'))
-    const gsession = readFileSync(new URL('./../docs/specs/gsession.md', import.meta.url), 'utf8')
+    const gsession = readFileSync(new URL('./../archive/gate-corpus-2026-10-29/specs/gsession.md', import.meta.url), 'utf8')
     expect(gsession, 'I-11 — `docs/specs/gsession.md` `§2.5`\u2019s frozen delegate surface is unmoved (the contract file itself is untouched, which the DENIED-set row asserts independently)').toContain('§2.5')
   })
 

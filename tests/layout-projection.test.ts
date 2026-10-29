@@ -3883,7 +3883,7 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     // The probe's own instrument is real (not a restatement): the sibling path
     // that DOES exist resolves through the same mechanism.
     expect(
-      existsSync(new URL('../docs/skills/process-guardrails.md', import.meta.url)),
+      existsSync(new URL('../archive/gate-corpus-2026-10-29/skills/process-guardrails.md', import.meta.url)),
       'R-23: the probe is not vacuous — `docs/skills/process-guardrails.md` DOES exist, so `existsSync` on the sibling path answers true',
     ).toBe(true)
   })

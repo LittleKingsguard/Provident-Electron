@@ -1190,7 +1190,7 @@ describe('R-8/R-9 — §3.5 the existence rows (the red’s own premise)', () =>
         'renders no page, so the row would be an ABSENCE row rather than a claim.',
     ).toBe(false)
     expect(
-      existsSync(new URL('../docs/skills/process-guardrails.md', import.meta.url)),
+      existsSync(new URL('../archive/gate-corpus-2026-10-29/skills/process-guardrails.md', import.meta.url)),
       'R-9/§3.5 — the probe is not vacuous: `docs/skills/process-guardrails.md` DOES exist (globbed `docs/skills/*` at filing), so `existsSync` on the sibling path answers true',
     ).toBe(true)
   })

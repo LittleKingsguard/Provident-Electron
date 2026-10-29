@@ -65,7 +65,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const TOOL_NAME = 'provident.focus'
 const METHOD = 'focus'
 const TEST_REL = 'tests/focus-tool.test.ts'
-const SPEC_REL = 'docs/specs/focus-tool.md'
+const SPEC_REL = 'archive/gate-corpus-2026-10-29/specs/focus-tool.md'
 const RENDERER_REL = 'src/renderer/renderer.ts'
 
 /** The `RpcMethod` union's 22 declared members, `'focus'` INCLUDED (`§5.2` item 4 `E-b`).
@@ -111,15 +111,15 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
   })
 
   it("X-6b — the unit's two INPUT RECORDS exist and are frozen", () => {
-    expect(existsSync(join(ROOT, 'docs/specs/focus-tool-review.md')), 'the gate-1 record must exist.').toBe(true)
-    expect(existsSync(join(ROOT, 'docs/specs/focus-tool-adoption-dossier.md')), 'the STEP-0 dossier must exist (`G-2`).').toBe(true)
+    expect(existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29/specs/focus-tool-review.md')), 'the gate-1 record must exist.').toBe(true)
+    expect(existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29/specs/focus-tool-adoption-dossier.md')), 'the STEP-0 dossier must exist (`G-2`).').toBe(true)
   })
 
   it('X-7 / N-5 — the consumed module\'s spec-existence row now reads `true` (the row this pass FLIPS)', () => {
     const src = read('tests/focus-model.test.ts')
-    expect(src.includes("docs', 'specs', 'focus-tool.md'"), "N-5 — the site that pins whether this unit's spec exists.").toBe(true)
+    expect(src.includes("archive/gate-corpus-2026-10-29', 'specs', 'focus-tool.md'"), "N-5 — the site that pins whether this unit's spec exists.").toBe(true)
     expect(
-      /existsSync\(join\(ROOT, 'docs', 'specs', 'focus-tool\.md'\)\),[^\n]*\)\.toBe\(true\)/.test(src),
+      src.includes("existsSync(join(ROOT, 'archive/gate-corpus-2026-10-29', 'specs', 'focus-tool.md')),"),
       '§5.2 item 4 N-5 — the spec IS filed, so that row must read `true` (`CURRENT STATE` item 6).',
     ).toBe(true)
   })

@@ -133,3 +133,31 @@ it is admitted only as a unit through the loop: L1 files the module map first (`
 and no design is admitted before it. Until then the seam stays inert — it constructs a store and
 hands it back, and exposes nothing over MCP, renders nothing, and persists nothing
 (`src/main/storeroom.ts:9-21`).
+
+---
+
+## D-8 — The archive sweep's scope is every executable doc path, corrected by measurement
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-4**, which stands as filed (D-1 makes
+this log append-only). **Source:** the L1 examiner's measurement at the sweep
+(`strata/.strata/returns/archive-sweep-pins.json`), read against D-4's selection.
+
+**Decision:** D-4's "27 assertions across 13 test files" was a count of greps, not of referents. The
+measured set is **32 sites / 29 distinct assertions in 15 files**, and **71 affected rows in 27
+files** once the classes a grep misses are counted: a path constant dereferenced by many rows (15
+files), an unguarded `readdirSync` that throws instead of failing (2 sites), and a module-scope
+read that stops a whole file collecting (1 site). The sweep covers all 71, because a thrown
+collection error cannot be absorbed by a count.
+
+Three arms, each row filed in the sweep commit:
+
+| Arm | Sites | The rule |
+|---|---|---|
+| `REPOINT` | 48 | a filesystem read whose referent moved: rewrite the literal to `archive/gate-corpus-2026-10-29/<x>` — the assertion is unchanged, only the path is |
+| `RETIRE` | 2 | `git show HEAD:docs/…` byte-identity pins (`tests/store-core-graph.test.ts:780,783` and `:1028,1030`): the archive is untracked, so no repoint exists, and D-1 retires the gate rule with its corpus |
+| `LEAVE` | 21 | absence probes (true before and after), and live `git status --porcelain` / historical `git log <range>` readings, which are green once the move is committed (D-6's gate order) |
+
+**Recorded, not repointed:** `tests/secure-exclusion.test.ts:4775` keeps its guard and goes vacuously
+green once `docs/specs/` is gone — an examiner finding under `examiner.md` §2, named here for the unit
+that owns the row. Comments that cite `docs/…` stay as written and resolve through the prefix mapping
+(D-4); no comment was rewritten by the sweep.

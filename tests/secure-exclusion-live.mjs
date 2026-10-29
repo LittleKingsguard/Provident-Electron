@@ -2057,7 +2057,7 @@ const UNIT_UNIT = 'U-TIER4-ARBITRARY-STORAGE'
 const UNIT_STORE_MOVES = ['2d07d3f', '19da51d', '269beac']
 const NAMED_MOVES_TERM = 'unit-store-moves-are-the-three-named-ruled-landings'
 const UNIT_LICENCE_TERM = 'unit-store-move-licence-is-cited-live'
-const UNIT_LICENCE_SPEC = 'docs/specs/tier4-arbitrary-storage.md'
+const UNIT_LICENCE_SPEC = 'archive/gate-corpus-2026-10-29/specs/tier4-arbitrary-storage.md'
 const UNIT_LICENCE_CITATIONS = ['§3c', 'A-1', 'G-1', 'G-2', 'G-3', 'G-4']
 
 // ⟶ THE GATE-4 AUDIT'S `§3c` ITEM 1 LIMIT CLOSED FOR THIS ROW: the digest the artifact carried at a
@@ -2075,7 +2075,7 @@ function diffScopeReading() {
   }
   const unitTest = readFileSync(join(root, 'tests', 'secure-exclusion.test.ts'), 'utf8')
   const lineage = [...unitTest.matchAll(/const (SECURITY_STORE_PIN(?:_PRE_[A-Z0-9]+)?) = '([0-9a-f]{64})'/g)].map((m) => [m[1], m[2]])
-  const decisions = readFileSync(join(root, 'docs', 'decisions.md'), 'utf8')
+  const decisions = readFileSync(join(root, 'archive/gate-corpus-2026-10-29', 'decisions.md'), 'utf8')
   // (a-i) AWAKE: a term is awake iff its LABEL is READ beyond its own declaration, in the unit's own test
   // file — the `D-x` rule (`a dead stale pin is a finding, not a harmless constant`). The count is read
   // from the file's own bytes; nothing is assumed about how many terms the file carries.

@@ -1307,7 +1307,7 @@ describe('R-11/R-12/R-13 — §3.5 the existence rows (the red’s own premise)'
     // NON-VACUITY: the sibling path DOES exist (globbed `docs/skills/*` at filing),
     // so `existsSync` on this directory really answers true for a present file.
     expect(
-      existsSync(new URL('../docs/skills/process-guardrails.md', import.meta.url)),
+      existsSync(new URL('../archive/gate-corpus-2026-10-29/skills/process-guardrails.md', import.meta.url)),
       'R-11/§3.5 — the probe is not vacuous: `docs/skills/process-guardrails.md` DOES exist',
     ).toBe(true)
   })

@@ -2550,7 +2550,7 @@ describe('R-10/R-11 — §3.5 the existence rows (the red’s own premise)', () 
       'R-9/§1 item 8/§7 item 11 — `docs/skills/designing-pages.md` DOES NOT EXIST at the time this red set runs. IF IT EXISTS this row FAILS MEANINGFULLY: this unit then OWES a test-use-case coverage row in that file’s coverage matrix PLUS an entry in its demo-page index — and a mechanism renders no page, so the row would be an ABSENCE row rather than a claim',
     ).toBe(false)
     expect(
-      existsSync(new URL('../docs/skills/process-guardrails.md', import.meta.url)),
+      existsSync(new URL('../archive/gate-corpus-2026-10-29/skills/process-guardrails.md', import.meta.url)),
       'R-9/§3.4 — the probe is not vacuous: `docs/skills/process-guardrails.md` DOES exist (globbed `docs/skills/*` at filing), so `existsSync` on the sibling path answers true',
     ).toBe(true)
   })

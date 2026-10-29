@@ -4646,7 +4646,7 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
     const repoRoot = fileURLToPath(new URL('./../', new URL('./', import.meta.url)))
     expect(SURFACE_ARTIFACT.startsWith(repoRoot),
       'FS-EX-15 — `SURFACE_ARTIFACT` resolves INSIDE the repo root (the exact defect: the as-filed form resolved one level too far out, landing outside the repo entirely)').toBe(true)
-    expect(SURFACE_ARTIFACT.endsWith('docs/specs/store-core-module-store-core-graph-surface.md'),
+    expect(SURFACE_ARTIFACT.endsWith('archive/gate-corpus-2026-10-29/specs/store-core-module-store-core-graph-surface.md'),
       'FS-EX-15 — `SURFACE_ARTIFACT` lands on `<repo>/docs/specs/store-core-module-store-core-graph-surface.md`')
       .toBe(true)
     // THE MEASURED DIGEST IS A REAL 64-HEX STRING (never the `'ABSENT'` sentinel):
@@ -4817,7 +4817,7 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     expect(fixedPath.startsWith(repoRoot),
       'POSITIVE HALF — the REPAIRED path resolves inside the repo root').toBe(true)
     expect(fixedPath,
-      'POSITIVE HALF — and it lands on `<repo>/docs/specs/store-core-module-store-core-graph-surface.md`').toBe(repoRoot + 'docs/specs/store-core-module-store-core-graph-surface.md')
+      'POSITIVE HALF — and it lands on `<repo>/docs/specs/store-core-module-store-core-graph-surface.md`').toBe(repoRoot + 'archive/gate-corpus-2026-10-29/specs/store-core-module-store-core-graph-surface.md')
     expect(exists(fixedPath), 'POSITIVE HALF — the repaired path EXISTS').toBe(true)
     expect(sha256Of(fixedPath),
       'POSITIVE HALF — the repaired instrument MEASURES a real digest (this pass\'s reading, independently confirmed with `sha256sum`)').toBe(SURFACE_ARTIFACT_MEASURED)

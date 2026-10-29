@@ -849,8 +849,8 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
   })
 
   it('X-2/X-3/(§5.2 leg 5) the contract is FILED, the gate-1 record is NOT this unit\'s file, and the six type names resolve at the type layer', () => {
-    expect(existsSync(new URL('../docs/specs/menulib.md', import.meta.url)), 'X-2 — `docs/specs/menulib.md` is the unit\'s FILED contract').toBe(true)
-    expect(existsSync(new URL('../docs/specs/menulib-review.md', import.meta.url)), 'X-3 — `docs/specs/menulib-review.md` is the CLOSED gate-1 record, a §5.1 item-11 DENIED path').toBe(true)
+    expect(existsSync(new URL('../archive/gate-corpus-2026-10-29/specs/menulib.md', import.meta.url)), 'X-2 — `docs/specs/menulib.md` is the unit\'s FILED contract').toBe(true)
+    expect(existsSync(new URL('../archive/gate-corpus-2026-10-29/specs/menulib-review.md', import.meta.url)), 'X-3 — `docs/specs/menulib-review.md` is the CLOSED gate-1 record, a §5.1 item-11 DENIED path').toBe(true)
     // The SIX type names are a COMPILE-TIME claim (§5.2 leg 5): the `import type`
     // block at the head of this file is the claim, and the two structural probes
     // below are the only type identity asserted (`S-ML-10` bars more).
@@ -1400,7 +1400,7 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
       'tsconfig.json',
       'tsconfig.tests.json',
       'vitest.config.ts',
-      'docs/specs/menulib-review.md',
+      'archive/gate-corpus-2026-10-29/specs/menulib-review.md',
       'docs/skills/designing-pages.md',
     ]
     const present = denied.filter((p) => existsSync(fileURLToPath(new URL(`../${p}`, import.meta.url))))
