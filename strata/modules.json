@@ -28,7 +28,7 @@
         "tests/focus-tool.test.ts",
         "tests/focus-tool-register.ts"
       ],
-      "endpoints": 25
+      "endpoints": 30
     },
     {
       "name": "app-shell",
@@ -69,7 +69,7 @@
         "tests/integration/central-data/",
         "tests/unit/central-data/"
       ],
-      "endpoints": 7
+      "endpoints": 16
     },
     {
       "name": "producing-runtime",

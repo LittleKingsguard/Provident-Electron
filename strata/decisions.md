@@ -215,3 +215,86 @@ sequenced behind the module map, not beside it.
 - **A migration row is ordinary unit work.** It runs through the loop like any other change —
   test-side work belongs to the test writer of the owning layer (`brief.md` §3), never to L0 and never
   to the module's implementer.
+
+---
+
+## D-11 — The central store gets its own MCP tool group
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Add a
+`provident.data.*` tool group"
+
+**Decision:** this unit adds a **sixth** group to the gate — `data` — whose tools are named
+`provident.data.*`. It is OFF by default like `graph`, `code` and `module`, so the **default grant is
+unchanged** (`['read','dispatch']`, 8 tools). L1's ASM-7 default (no new surface) is refuted by this row
+and does not survive in the design.
+
+The consequence is a census move, and it is named rather than absorbed: the tool count goes from **22**
+to **22 + |data|**, the group count from **five** to **six**, and every statement that pins those
+numbers re-grains in the same unit that registers the tools — `src/main/security.ts`'s
+`TOOL_GROUPS`/`VALID_GROUPS`, `ALL_TOOLS`, the `RpcMethod` union, the group table in the archived
+contract, and each test row that counts them. A count that moves without its row moving is a finding.
+
+---
+
+## D-12 — The profile store is write-through in this unit; undo is its own unit
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Write-through only; undo is a
+later unit (Recommended)"
+
+**Decision:** the store journals and persists internally, and nothing operator-visible reverses
+profile data in this unit. Operator-facing undo/rollback is a separate unit: it needs provident-authored
+UI (no hand-written DOM, ever) and its own surface decision, so admitting it here would carry two units
+through one design gate (D-1).
+
+---
+
+## D-13 — The central store may choose its own on-disk shape
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "The store may choose its own
+on-disk shape"
+
+**Decision:** the existing `<userData>/provident-settings.json` bytes are **not** a compatibility
+constraint on the central store's layout. Where a unit changes the profile's shape it records the
+change in that unit's record; there is no standing migration obligation.
+
+**Consequence, and it is a ledger move like D-9's:** the live compliance battery's Family B reading —
+"exactly two persisted files" — stops being a true standing pin the moment the store writes its own
+file. The rows that assert it are re-grained by the owning layer's test writer in the unit that adds the
+file; they are not deleted, and no other row inherits their claim by default.
+
+---
+
+## D-14 — The harness cap bounds the harness artifact, not the migrated suite
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Caps the harness/driver
+artifact only (Recommended)". **Ratifies:** L1's `ASM-4` (the N convention), which no longer floats.
+
+**Decision:** `50 + 10×N` bounds a module's **harness** — driver, fixtures, factories, mock seams. A
+module's product batteries and the rows D-10 migrates are **evidence**, not harness, and do not count
+against it; otherwise the first migrated suite (hundreds of lines) would breach a 120–270 line cap the
+moment the migration runs.
+
+`N` is the count of the surface a module **exposes or consumes** — MCP tools and resources, bridge
+routes, package exports called, and a pure module's exported value names — with both sides of one route
+counted. The lint derives the cap from the module's declared row; the author never declares the cap.
+
+---
+
+## D-15 — The re-grain runs against the live tree; the archived group table is not editable
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-11.** **Source:** D-11's own enumeration,
+measured against D-2 by the L1 pass that executed it.
+
+**Decision:** D-11 named "the group table in the archived contract" among the places that must move
+with the tool census. That one cannot move: D-2 archived the corpus as a closed, untracked historical
+record, and editing it to match today's tree would falsify a superseded reading (D-9's precedent). The
+re-grain therefore executes against the **live** tree only.
+
+Two corrections to D-11's list, both measured:
+
+- The group set lives in **two** live copies, not one: `src/main/security.ts:151` (`VALID_GROUPS`) and
+  `src/main/security-store.ts:87,122,339`, whose settings filter would silently drop a `data` patch if
+  only the first moved. Both are in the re-grain set.
+- The rest of D-11 stands unchanged: `ALL_TOOLS` 22 → 27 with the five `provident.data.*` tools,
+  `RpcMethod` 22 → 27, groups five → six, and the default grant still `['read','dispatch']` (8 tools,
+  so enabling `data` lists 13).

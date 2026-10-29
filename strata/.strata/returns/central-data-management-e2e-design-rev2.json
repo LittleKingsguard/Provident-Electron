@@ -1,0 +1,21 @@
+{
+  "unit": "central-data-management",
+  "from": "L1",
+  "to": "L0",
+  "verdict": "PASS",
+  "artifact": "e2e-design-rev2",
+  "citations": [
+    "docs/L1/central-data-management.md section 3",
+    "docs/L1/central-data-management.md section 8",
+    "strata/decisions.md D-11",
+    "strata/decisions.md D-12",
+    "strata/decisions.md D-13",
+    "strata/decisions.md D-14",
+    "strata/modules.json"
+  ],
+  "assumptions": [
+    { "id": "ASM-8", "text": "the group exposes five tools; rollback and constraint mutation stay off the agent's surface", "alternative": "exposing the store's declared surface wholesale, which pulls the undo unit onto this gate" },
+    { "id": "ASM-9", "text": "the data routes terminate in main, so the union moves while MUTATING_METHODS stays seven", "alternative": "routing data through the renderer's method switch, which makes the producing process the profile's authority" },
+    { "id": "ASM-11", "text": "the store's own file is the only new written name; the settings file is imported once, then retired", "alternative": "two writers, which leaves two authorities and defeats D-7's subject" }
+  ]
+}

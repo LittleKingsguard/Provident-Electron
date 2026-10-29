@@ -1,143 +1,129 @@
 # L1 — central data management over `provident-storeroom`
 
-- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 1
+- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2
+- **Replaces** rev 1 as filed (`git show 50be1cb:docs/L1/central-data-management.md`); git is the history (D-1, D-2). The four answers are D-11..D-14, and two refute rev 1's §6: rev 1's `ASM-7` ("no new surface") is refuted by D-11 and survives nowhere in this document (D-11)
 - **Status:** DESIGN — the module map is filed at `strata/modules.json`; nothing below this layer is admitted (D-7)
-- **Inputs resolved:** `strata/brief.md` §5/§6, `strata/decisions.md` D-1..D-10, `strata/platform.md` §4, `strata/modules.md` §3, `AGENTS.md`, `README.md`, the tree at this head
+- **Inputs:** `strata/brief.md` §5/§6, `strata/decisions.md` D-1..D-14 (D-5, D-7, D-10, D-11, D-12, D-13, D-14
+  load-bearing), `strata/platform.md` §4, `strata/modules.md` §3, the tree at this head
 - **Ceiling:** 150 lines (class max) — at the ceiling split by owner, never append (D-1, D-2)
 
 ## 1. What this unit is
 
-A central data management system for the app over `provident-storeroom`, which today is *imported and
-inert*: the seam constructs a store and hands it back, persisting nothing, exposing nothing, rendering
-nothing (`src/main/storeroom.ts:9-21,45-75`; D-7). The app already has a data path it does not call a
-store: main holds `<userData>/provident-settings.json`, a `schemaVersion`-stamped projection of
-`file.*` rows, written atomically and re-served at each realm's boot hand-off, which the renderer's
-graph store mints into its `file` tier (`src/main/main.ts:335-392`; `src/renderer/renderer.ts:1279-1329`).
+A central data management system over `provident-storeroom`, *imported and inert* today: the seam constructs a
+store and hands it back, persisting, exposing and rendering nothing (`src/main/storeroom.ts:9-21,45-75`; D-7). The app
+already has a data path it does not call a store — `<userData>/provident-settings.json`, a `schemaVersion`-stamped
+projection of `file.*` rows, written atomically and re-served at each realm's boot hand-off
+(`src/main/main.ts:115-119,335-392`). The unit is the join of the two: **one authority for the app's data**, whose
+durability is the crossing that already exists and whose agent-facing face is a sixth tool group (D-11). The store
+journals and persists on its own on-disk shape, and nothing operator-visible reverses it (D-12, D-13). It is not a
+package change (D-5).
 
-The unit's subject is the join of those two: **one authority for the app's data, whose durability is
-the crossing that already exists**. It is not a package change (D-5) and not an MCP-surface change
-(ASM-7).
+## 2. The module map (filed in `strata/modules.json`; 19 modules, each path claimed once)
 
-## 2. The module map (filed in `strata/modules.json`)
+`mcp-surface` **30** · `app-shell` 7 · `operator-settings` 5 · `central-data` **16** *(new)* · `producing-runtime`
+17 · `graph-store` 13 · `renderer-wiring` 22 · `module-system` 7 · `secure-panels` 7 · `store-rederive` 10 ·
+`interaction` 11 · `panes-layout` 10 · `hosts` 4 · `chrome` 9 · `focus-model` 4 · `app-envelope` 7 · `ipc-contract`
+8 · `harness` 11 · `demo-panes` 0 (D-7, D-14).
 
-| Module | Owns | Interacts with | N |
-|---|---|---|---|
-| `mcp-surface` | `src/main/{mcp-server,security,battery-host,standalone}.ts` | every module behind a tool; `ipc-contract` | 25 |
-| `app-shell` | `src/main/{main,preload,store-channels}.ts` | `mcp-surface`, `operator-settings`, `central-data` | 7 |
-| `operator-settings` | `src/main/{security-store,module-store,tier4-state}.ts` | `app-shell`, `mcp-surface`, `secure-panels` | 5 |
-| `central-data` *(new)* | `src/main/storeroom.ts`, `src/main/data/` *(created)*, `tests/{unit,integration}/central-data/` *(created)* | `app-shell` (the crossing), `graph-store` (`hydrate`/`crossing`), `mcp-surface` (headless import) | 7 |
-| `producing-runtime` | `src/renderer/runtime.ts` | `provident-ssr`, `mcp-surface`, `module-system` | 17 |
-| `graph-store` | `src/renderer/{store-core-graph,store-graph-references}.ts` | `renderer-wiring`, `central-data`, `hosts` | 13 |
-| `renderer-wiring` | `src/renderer/renderer.ts`, `src/renderer/index.html` | all renderer modules, `app-shell` | 22 |
-| `module-system` | `src/renderer/extensions.ts` | `mcp-surface`, `producing-runtime` | 7 |
-| `secure-panels` | `src/renderer/secure-panels.ts` | `operator-settings` (bridge), `producing-runtime` | 7 |
-| `store-rederive` | `src/renderer/store.ts` — landed, **unwired** | nothing at runtime; its own suite | 10 |
-| `interaction` | `src/shared/{gesture-session,gutter,gutter-affordance,relocate}.ts` | `renderer-wiring`, `panes-layout` | 11 |
-| `panes-layout` | `src/shared/{zones,census,layout-projection,container}.ts` | `interaction`, `renderer-wiring` | 10 |
-| `hosts` | `src/shared/{owned-list-host,slot-host,mount-invariant-guard}.ts` | `panes-layout`, `renderer-wiring` | 4 |
-| `chrome` | `src/shared/{theme,overlay,menu-template}.ts`, `src/renderer/{theme,overlay}-store.ts` | `renderer-wiring`, `graph-store` | 9 |
-| `focus-model` | `src/shared/focus-model.ts` | `renderer-wiring`, `graph-store` | 4 |
-| `app-envelope` | `src/shared/demo-envelope.ts` | `renderer-wiring`, `hosts`, `interaction` | 7 |
-| `ipc-contract` | `src/shared/types.ts` | every module that crosses the bridge | 8 |
-| `harness` | `src/shared/{dom-shim,path-fork-cycle}.ts`, `scripts/`, `tests/fixtures/`, the three general `.mjs` drivers | every module's battery | 11 |
-| `demo-panes` | `demo/pane-drag-demo/` (the fork's live reference, not built) | `graph-store`, `interaction`, `hosts` | 0 |
+**Two rows moved, both by D-11 and by nothing else.** `mcp-surface` 25 → 30: 22 tools + 3 resources + the five `data` tools it registers and gates. `central-data` 7 → 16 under D-14's convention (the surface a module *exposes or consumes*): 5 tools exposed + 5 bridge routes answered + 6 `provident-storeroom` exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`, `register`) — `rollback` is out (D-12), and the seam's whole 14-member census is a version pin, not a called surface (ASM-5). **Every other row is as filed.** The edges this unit turns on: `central-data` ← `app-shell` (the crossing) → `graph-store` (`hydrate(rows)`/`crossing.put(row)`), and `central-data` → `mcp-surface` (the group, registered and gated in `src/main/{mcp-server,security}.ts`). Coverage stands: 39 `src/**/*.ts`, 4 `scripts/*`, every `tests/**` file and `demo/pane-drag-demo/` claimed once; `tests/e2e/` is L1's own artifact, claimed by no module exactly as `docs/L1/` is not (D-10).
 
-**19 modules.** Three readings the table depends on, stated because the cap follows from them
-(`platform.md` §4): N counts the surface a module **exposes or consumes** — MCP tools and resources,
-bridge routes (IPC channels), a package's exports it calls, or a pure module's exported value names;
-both sides of one route count, because each side's harness is its own. Every existing `tests/**` file
-is claimed by exactly one module today, so D-10's migration has a destination per row; the `.mjs`
-live drivers stay with the module whose rows they drive, and only the three general drivers, the
-fixtures and `scripts/` sit in `harness` (ASM-5). Landed-but-unwired is marked where it holds: `store.ts`,
-the two `*-store` wiring partners in `chrome`, and the twelve `src/shared` mechanisms no running path
-imports (`zones`, `census`, `layout-projection`, `container`, `menu-template`, `theme`, `overlay`,
-`owned-list-host`, `slot-host`, `mount-invariant-guard`, `relocate`, `path-fork-cycle`).
+## 3. The `data` group — a first-class part of this unit's surface (D-11)
 
-## 3. The e2e I/O surface, in the app's own vocabulary
+`provident.data.*` is the **sixth** group. Its five tools are the agent's vocabulary for the profile: a refusal is a
+receipt carried as a value, never a throw, and absence is answered explicitly (D-11).
 
-**The MCP surface (the agent's side).** Two transports: stdio (long-lived, push-capable) and
-Streamable HTTP on `127.0.0.1:3787` (stateless, token-gated, push a no-op)
-(`src/main/mcp-server.ts:746-774`). **22 tools** in five groups plus **3 resources**; the default grant
-`['read','dispatch']` registers **8 tool names**, and a disabled group's tools are absent from
-`tools/list` rather than present-and-refusing. What comes back, in the contract's own words
-(`src/shared/types.ts:31-91,143-158`):
+| Tool | Drive | What comes back |
+|---|---|---|
+| `provident.data.read` | one path | the value held at that path, or an explicit absent answer — never an empty success (D-11) |
+| `provident.data.write` | one or more path/value pairs | one receipt — committed, or refused with a reason word; a refusal leaves the previous bytes intact (D-11, D-12) |
+| `provident.data.delete` | one path | one receipt from the same closed vocabulary, carrying whether a row was actually removed (D-11) |
+| `provident.data.list` | nothing, or a path prefix | the paths the profile holds, with the count that answered (D-11) |
+| `provident.data.journal` | an optional cursor | the committed change sequence since that cursor, read-only — it reverses nothing (D-12) |
 
-| Drive / observation | Answer |
+**Posture.** OFF by default, exactly like `graph`, `code` and `module`: a disabled group's tools are absent from
+`tools/list` rather than present-and-refusing (`src/main/security.ts:5-42,151`; D-11). Tools only — no
+`mcp://provident/data/…` resource (ASM-10), so the three resource URIs are unmoved.
+
+**The census move, named (D-11).** `ALL_TOOLS` **22 → 27**; the `RpcMethod` union **22 → 27**; gate groups
+**five → six**; `ALL_RESOURCES` **3, unchanged**; the default-grant registered subset **8, unchanged** — the six
+`read` tools plus `dispatch` and `focus` — so the default grant stays `['read','dispatch']` and enabling `data` lists
+**13**. A count that moves without its row moving is a finding: §8 names every site that pins a moved number.
+
+## 4. The e2e I/O surface, in the app's own vocabulary
+
+Both transports answer every drive: stdio (long-lived, push-capable) and Streamable HTTP on `127.0.0.1:3787`
+(stateless, token-gated, push a no-op) (`src/main/mcp-server.ts:746-774`).
+
+| Drive | Answer |
 |---|---|
+| the five `provident.data.*` tools | the §3 column, on both transports; absent from `tools/list` while the group is off |
 | `provident.dispatch` (target by `cssId`, `nodeId` or `wire`) | `{results, dirtied, renderedHtml, ssrHtml}` |
-| `provident.get_rendered_html` | `{renderedHtml, ssrHtml, census}` |
-| `provident.get_markdown` | `{markdown, census}` |
-| `provident.list_targets` | `{nodes: [{nodeId, cssId?, propsId?, type, state, inTree, handlers}]}` |
-| `provident.get_node_state` | `{nodeId, states, census}` |
-| resources `mcp://provident/app`, `…/targets`, `…/node/{nodeId}` | the same three readings, gate-mirrored |
-| any of the above while the exclusion tier is open | `{status:'refused', reason:'exclusion-closed'\|'tier4-closed', message}` as a **value** |
+| `provident.get_rendered_html` / `get_markdown` / `list_targets` / `get_node_state` | the four landed readings (`src/shared/types.ts:31-91`) |
+| resources `mcp://provident/app`, `…/targets`, `…/node/{nodeId}` | the same three readings, gate-mirrored — 3, unmoved |
+| any of the above while the exclusion tier is open | a refusal carried as a value: `exclusion-closed` or `tier4-closed`, with the server-authored message |
 
-**The IPC bridge (the renderer's side).** `window.provident` (`src/main/preload.ts:42-75`): `ready`,
-`onRequest`, `sendReply`, `notify`; `security.{get,set,setExclusion}`; `module.{get,setDisabled}`;
-`store.{get,put,onFileChanged}`. A request is `{id, method, payload}` over one of 22 `RpcMethod`
-names and its answer is `{id, ok, value?, error?}` (`src/shared/types.ts:259-294`) — one method per MCP
-tool, which is how a drive reaches the producing process.
+**The bridge.** `window.provident` (`src/main/preload.ts:42-75`) gains no member. The five data routes enter the
+`RpcMethod` union (`src/shared/types.ts:259-281`) as `data.read` … `data.journal` — D-11 names the union as moving —
+and are answered **in main** by `central-data`, so no renderer method-switch arm and no `MUTATING_METHODS` entry is
+added; that set stays at its seven (ASM-9).
 
-**The profile store (the operator's side, on disk).** `<userData>/provident-settings.json`: one JSON
-object carrying `schemaVersion:'1'` and `file.*`-keyed rows; the crossing projects **only** `file.*`,
-refuses a malformed payload as a receipt, and writes `tmp → fsync → rename → dir-fsync`, so a torn file
-is impossible and a refusal leaves the previous bytes intact (`src/main/main.ts:335-392`).
-`<userData>/provident-security.json` is the operator-settings axis with its tier-4 `entries` map
-(`src/main/security-store.ts:56-85`); the legacy `provident-modules.json` is migrated and removed at
-boot.
+**The profile on disk.** Two *written* names at steady state: `<userData>/provident-security.json` (`operator-settings`, unmoved) and the store's own file, whose name and shape this unit chooses (D-13). The retired `provident-settings.json` is read once at a profile's first boot and never written again — a one-time import recorded here, not a standing migration obligation (D-13; ASM-11). The crossing keeps its shapes (`store.get`, `store.put`, `store.onFileChanged`), so `hydrate(rows)` and `crossing.put(row)` stay frozen inputs (ASM-6).
 
-**The unit does not add a fourth surface** (ASM-7): it is reached through these three, and what changes
-is *behind* them — the authority that answers the crossing and the hand-off.
-
-## 4. The e2e scenarios the L1 battery must drive (`tests/e2e/`, goal → expected)
+## 5. The L1 battery — twelve scenarios in `tests/e2e/` (goal → expected)
 
 | # | Goal | Expected |
 |---|---|---|
-| S-1 | a first-ever profile serves nothing | `store.get()` → `[]`; no settings file created; `tools/list` = 8 names; both transports answer |
-| S-2 | a data write through the app's own path lands | `store.put` → `{status:'committed'}`; the file carries `schemaVersion:'1'` + only `file.*` rows; no `.tmp` residue |
-| S-3 | the next process re-serves the same rows | identical `store.get()` rows; identical `census` and node-id vocabulary in `get_rendered_html` |
-| S-4 | two profiles never see each other | disjoint rows; neither boot resolves its store under the default `userData` |
-| S-5 | a malformed row is refused, not swallowed | `{status:'refused', reason:'malformed-payload'}`; previous bytes intact; `store.get()` unchanged |
-| S-6 | a failing write leaves no tear | `{status:'refused', reason:'write-failed'}` at the failing point; previous bytes intact; no `.tmp` |
-| S-7 | volatile keys never persist | no `mem.`/`temp.`/`secure.` spelling in the profile file after a session that used all four tiers |
-| S-8 | the package is never modified | the seam's census row green (14 members / 11 symbols); `provident-storeroom` imported only in `src/main/storeroom.ts` and `src/main/data/` |
-| S-9 | the data view stays agent-visible and drivable | every element carries `data-node-id`; a `dispatch` on one answers the four-member record; the change shows in `get_markdown` |
-| S-10 | the operator axis is unmoved | `security.get` carries `exclusion` + `read`; `security.set` carries `write`; `setExclusion` applies |
-| S-11 | nothing crosses while the tier is open | the declared refusal as a value on tool **and** resource read; no profile write |
-| S-12 | a corrupt profile recovers by declaration | an unparsable or foreign-keyed file answers the cold tier, boots, and the next commit replaces it |
+| S-1 | a first-ever profile serves nothing | `provident.data.list` returns no paths; no store file created; `tools/list` = the 8 default names and no `data` tool; both transports answer |
+| S-2 | the group is a decision, not a default | `data` off → the five tools are absent, not present-and-refusing; `['read','dispatch','data']` → 13 names, all five answer |
+| S-3 | a first write commits through the store | `provident.data.write` → a committed receipt; the store's file carries the declared shape; `read` returns the value; no `.tmp` residue |
+| S-4 | the next process re-serves the same rows | identical `read`/`list` answers; identical `census` and node-id vocabulary in `get_rendered_html` |
+| S-5 | a malformed row is refused, not swallowed | a refused receipt with a reason word; previous bytes intact; `read` unchanged |
+| S-6 | a failing write leaves no tear | a refused receipt at the failing point; previous bytes intact; no `.tmp` |
+| S-7 | delete and journal are observable, and nothing reverses | `provident.data.delete` → a receipt; the journal shows the write and the delete in order with a cursor; no tool offers a reversal (D-12) |
+| S-8 | volatile keys never persist | no `mem.`/`temp.`/`secure.` spelling in the store's file after a session that used all four tiers |
+| S-9 | the package is never modified | the seam census row green (14 members / 11 symbols); `provident-storeroom` imported only in `src/main/storeroom.ts` and `src/main/data/` |
+| S-10 | the data view is agent-visible, drivable, graph-driven | every element carries `data-node-id`; a `dispatch` on one answers the four-member record; the change shows in `get_markdown` |
+| S-11 | nothing crosses while the tier is open | the declared refusal as a value on a data tool and on a resource read; no profile write |
+| S-12 | two profiles are disjoint; a corrupt file recovers by declaration | disjoint paths; an unparsable or foreign-keyed file answers the cold tier, boots, and the next commit replaces it |
 
-## 5. Boundaries — what this unit does NOT claim
+## 6. Boundaries — what this unit does NOT claim
 
-- No change to `provident-storeroom` or `provident-ssr`; a defect or gap is recorded upstream-owned in
-  this unit's record (D-5).
-- Not the MCP census: 22 tools, 3 resources, 5 groups and the default grant stand (ASM-7).
+- No change to `provident-storeroom` or `provident-ssr`; a defect or gap is recorded upstream-owned in this unit's record (D-5). Nothing in §§2-5 requires a package change.
+- No operator-visible reversal: the journal is read-only observation, and undo/rollback is a later unit with its own provident-authored UI and its own surface decision (D-12).
+- No standing migration obligation: the store chooses its own shape, and the one-time import is recorded here rather than inherited as a rule (D-13).
 - Not the tier-4 operator-settings rules or their file — `operator-settings` owns them (`modules.md` §1).
-- Not the graph store's contract: `GraphStore`, `hydrate(rows)` and `crossing.put(row)` are `graph-store`'s
-  and this unit adapts to them (ASM-9).
-- Not `src/renderer/store.ts` (the ten-function successor store): it stays landed and unwired (ASM-10).
-- No element outside the producing graph; a data view is envelope data in the app graph, never
-  hand-written DOM (`AGENTS.md`; the charter's § "Project-wide constraint").
+- Not the graph store's contract: `GraphStore`, `hydrate(rows)`, `crossing.put(row)` are `graph-store`'s (ASM-6), and `src/renderer/store.ts` stays landed and unwired (ASM-7).
+- No element outside the producing graph: a data view is envelope data in the app graph, never hand-written DOM (`AGENTS.md` § "Project-wide constraint"; `src/shared/demo-envelope.ts:1-18`).
 - No wholesale test re-layout: only this unit's own rows move, at claim time (D-10).
 
-## 6. Assumptions, each with the alternative it rejected
+## 7. Assumptions, each with the alternative it rejected
 
 | id | Assumption | Rejected alternative |
 |---|---|---|
-| ASM-4 | N is the surface a module exposes **or** consumes; a pure module's N is its exported value names | count only MCP/HTTP surfaces, which leaves the twelve shared mechanisms at N=0 |
-| ASM-5 | every flat `tests/**` row is claimed by one module now; the three general `.mjs` drivers, fixtures and `scripts/` go to `harness` | one `harness` module owning all of `tests/`, which leaves D-10 with no per-module destination |
-| ASM-6 | the profile store's durability stays the one `provident-settings.json` crossing — the persisted-file census stays two | a third storeroom-owned file, which the live compliance battery's Family B pins as a violation |
-| ASM-7 | the unit adds no MCP tool, resource, group or bridge member; it is observed through the existing surface | a `provident.data.*` family, which moves the 22-tool census, the five-group table and the default grant |
-| ASM-8 | `central-data`'s N=7 is provisional: `storeCreate`, `read`, `readLiteral`, `write`, `delete`, `rollback`, `register` — the exports a data authority must call | N=14, the seam's whole declared census, which is a version-drift pin, not a called surface (it would set the cap off the wrong number) |
-| ASM-9 | `hydrate(rows)` and `crossing.put(row)` are frozen inputs this unit satisfies | re-shaping the crossing to the storeroom model, which redesigns another module's contract from L1 |
-| ASM-10 | `store.ts` stays unwired; the join runs over the wired `graph-store` + the storeroom seam | adopting the successor store as the authority, which is a different unit with its own mapping |
+| ASM-1 | the existing tree is the substrate: `src/{main,renderer,shared}` and the flat suite stay, and this map claims them | re-laying out `src/` and `tests/` before the map exists, which designs the modules from L0 |
+| ASM-2 | the gate-era `.mjs` drivers are existing harness code, not re-authored at this gate | a fresh harness before the map, which sets its own scope |
+| ASM-3 | the four legs of `brief.md` §6 stay the floor, and layer batteries add to them | replacing the 3,099-row suite with layer batteries, which discards its coverage |
+| ASM-4 | every flat `tests/**` row is claimed by exactly one module; the three general drivers, `tests/fixtures/` and `scripts/` sit in `harness` | one `harness` owning all of `tests/`, which leaves D-10 no per-module destination |
+| ASM-5 | `central-data`'s N is 16: 5 tools + 5 routes + 6 package exports (D-14) | the seam's whole 14-member census, which sets the cap off a version-drift pin; or tools only, leaving routes and exports uncounted |
+| ASM-6 | `hydrate(rows)` and `crossing.put(row)` are frozen inputs | re-shaping the crossing to the storeroom model, which redesigns another module's contract from L1 |
+| ASM-7 | `src/renderer/store.ts` stays landed and unwired | adopting the successor store as the authority, which is a different unit with its own map |
+| ASM-8 | the group exposes five tools; `rollback`, constraint mutation and listener registration stay off the agent's surface (D-12) | exposing the store's declared surface wholesale, which makes the agent an operator and pulls the undo unit onto this one's gate |
+| ASM-9 | the data routes terminate in main, so the union moves while `MUTATING_METHODS` stays seven | routing data through the renderer's method switch, which makes the producing process the profile's authority |
+| ASM-10 | the group is tools only; the three resource URIs are unmoved | a `mcp://provident/data/{path}` mirror, which gate-mirrors the same five readings twice and adds a fourth resource |
+| ASM-11 | the store's own file is the only new written name; the settings file is imported once, then retired | two writers, which leaves two authorities and defeats D-7's subject; or abandoning the old bytes outright, which D-13 permits but drops an operator's data silently |
 
-## 7. Open questions — user intent, not answered here (D-1 §8)
+## 8. The re-grain set — named here, performed by the owning layer's test writer
 
-- **Q-1** Does the central store get an agent-facing surface of its own (a new MCP tool/group), or does
-  it stay behind the crossing and the rendered data (ASM-7's default)?
-- **Q-2** Is the store's journal operator-visible at all — undo/rollback of profile data — or is the
-  profile store write-through only?
-- **Q-3** Must existing `<userData>/provident-settings.json` bytes stay readable and migratable, or may
-  the central store choose its own on-disk shape?
-- **Q-4** Does the migrated flat suite count against `50 + 10×N` per module? The cap's unit is unstated
-  in the corpus, and every declared N feeds it (ASM-4).
+D-11's census move and D-13's persisted-set move will redden **40 sites in 24 files** — 5 `src/` statements and 35
+test or battery rows, 2 of them **compile-reds** under `typecheck:tests`. Nothing is edited at this layer; a site is
+in the set iff it reads one of the moved numbers, so the list is closed by the three predicates below.
+
+| C | Sites / files | The sites |
+|---|---|---|
+| C-1 · the tool and route census at 22 | 16 / 14 | `src/main/mcp-server.ts:576-599` (`ALL_TOOLS`); `src/shared/types.ts:259-281` (the union); `tests/engine-pin-version.test.ts:102-132` and `:183-210` (**compile-red**: `Record<RpcMethod, true>`); `tests/focus-tool-register.ts:306,1238,1240`; `tests/focus-tool.test.ts:74` (**compile-red**), `:526,530,623,713,721`; `tests/theme-control.test.ts:1083,1351,1357`; `tests/census.test.ts:2920-2946` (`R-7`); `tests/zones.test.ts:2138-2167` (`R-6`); `tests/gesture-session.test.ts:2825-2848,5047-5060` (`R-6(c)`, `F-9(b)`); `tests/gutter.test.ts:4462-4473`; `tests/gutter-ui.test.ts:2381-2448` (`R-11`); `tests/slot-host.test.ts:3042,3078-3079` (`S-5`); `tests/layout-projection.test.ts:3132-3149` (`R-21`); `tests/secure-exclusion.test.ts:4994,4998` (`I-EX-11`) |
+| C-2 · `VALID_GROUPS` at five, or "no sixth group" | 14 / 13 | `src/main/security.ts:3,5-42,151` (`ToolGroup`, `TOOL_GROUPS`, `VALID_GROUPS`) and `src/main/security-store.ts:87,122,339` — **the second live copy of the group set**, which would silently filter a `data` patch out and which D-11 does not name; recorded here as this unit's sixth place that moves. Rows: `tests/focus-tool.test.ts:428`; `tests/focus-tool-register.ts:1251`; `tests/census.test.ts:2931-2935`; `tests/zones.test.ts:2149-2152`; `tests/gesture-session.test.ts:2836-2839,5049-5050`; `tests/gutter.test.ts:4481-4484`; `tests/gutter-ui.test.ts:2456`; `tests/slot-host.test.ts:3006-3014`; `tests/store-core-graph.test.ts:976-988` (`I-11`); `tests/secure-exclusion.test.ts:1600,1655,5006-5007`; `tests/secure-store-discipline.test.ts:616-623` (the battery's own five-member model) |
+| C-3 · the persisted set at exactly two named files | 10 / 6 | `src/main/main.ts:115-119,335-392` (carrier and write site); `tests/store-persist.test.ts:93,1088-1105,1179` (`S-3`), `:1315` (`SC-1`); `tests/store-security.test.ts:873-879` (`F-7`/`F-10`/`I-2`/`I-3`); `tests/store-compliance-live.mjs:252,254,989` (`SC-B-01`), `:1018` (`SC-B-03`), `:1367` (`SC-B-09`); `tests/secure-exclusion-live.mjs:1525` (`U-6` restart arm); `tests/store-tabs-record-live.mjs:93,122` (the fixture that seeds and removes the settings file); `tests/secure-exclusion.test.ts:4990` (the row's title only) |
+
+**Green by predicate.** The default-grant subset rows (8 names, unmoved — D-11), including `tests/focus-tool.test.ts:726-728` and every value assertion of `['read','dispatch']`; the seven `MUTATING_METHODS` rows (ASM-9); and the no-new-surface negatives that scan a *mechanism module's own* bytes — `tests/census.test.ts:2893`, `tests/zones.test.ts:2108`, `tests/gesture-session.test.ts:2852,5026`, `tests/layout-projection.test.ts:3100,3154`, `tests/container.test.ts:2016` — green because those modules are untouched. The 12 comment sites carrying the old numbers (`tests/secure-exclusion.test.ts:48`, `tests/census.test.ts:819-845`, `tests/zones.test.ts:818-844`, `tests/gesture-session.test.ts:1596-1600`, `tests/gutter.test.ts:2295-2320`, `tests/gutter-ui.test.ts:377-407`, `tests/engine-pin-version.test.ts:16,97`, `tests/module-security-gate.test.ts:7`, `tests/store-persist.test.ts:36`, `tests/fork-store-reads.test.ts:94`, `tests/store-compliance-live.mjs:7,83,241`) redden nothing and are swept only so the corpus carries no stale figure.
+
+**One item of D-11 cannot be executed as written.** Its list names "the group table in the archived contract"; that corpus is D-2's closed, untracked historical record, and D-9's precedent retired obligations whose artifact class the archive move dissolved. The live group table is §3 here and `src/main/security.ts:5-42,151`; the archived table stays as the gate-era reading.
