@@ -436,96 +436,53 @@ body that wants to keep what it read must copy it.** One sentence would do it.
 byte-identical after the return; the cause was our script, which ran a **second** inner-refusal arm and
 re-assigned the handle while comparing against a snapshot of the first. The clean run above is the
 measurement.
-### 2.3 `DEF-X` — three hosts do not judge, and the guide declares two of them
+### 2.3 `DEF-X` — WITHDRAWN. The `delete` pass judges the raise. Our probe's raise was consumed at registration.
 
-**SYMPTOM / REPRO** (`observed`, `b-defx7-150.txt`, measured **identically at `1.4.0`** —
-`b-defx7-140.txt`, same bytes). Seven hosts, each driven with a pair that refuses, so that a
-judged host must answer a refusal and an unjudged one leaves the refused `5` standing:
+**The package agent is right: this does not reproduce.** We filed it three times and the third filing added a
+claim that it generalizes to a plain write host. **Both were our instrument.**
 
-| host | what it is | judged? | effect stands? |
-| --- | --- | --- | --- |
-| `1` | a `TOP-LEVEL` reversal (the control) | **YES (`1`)** | no — `7` held |
-| `2` | a reversal inside a `write`'s own commit (a listener body) | **YES (`1`)** | no — `7` held |
-| `3` | a reversal **from a repair body** | **YES (`1`)** | no — `7` held |
-| `4` | a reversal from a **registration's evaluation** | `NO (0)` | **YES** — the refused `5` stands |
-| `5` | a reversal from a **`delete`'s listener delivery** | `NO (0)` | **YES** — the refused `5` stands |
-| `6` | a reversal from a **`delete`'s CONSTRAINT pass** | `NO (0)` | **YES** — the refused `5` stands |
-| `7` | a **reentrant** reversal-then-nested-write | **YES (`1`)** | no — `7` held |
+**What we claimed.** A raise from a constraint body during a `delete`'s constraint pass is not judged, its
+effect stands, and the guide declares only two windows (`:1920-1927`).
 
-**`4` hosts judge (`1`, `2`, `3`, `7`); `3` do not (`4`, `5`, `6`).** The shipped guide declares
-**exactly two** unjudged windows as *"known and NOT defects"* (`read`,
-`README.guide.md:1920-1927` — §12.6b: *"Two windows in the constraint machinery are known and
-are NOT defects"*, item `1` a `delete`'s **listener delivery**, item `2` a **registration's own
-evaluation**). **Hosts `4` and `5` are therefore declared, and this consumer files nothing on
-them.** **Host `6` — a `delete`'s constraint pass — is declared nowhere, runs a pass, and is
-not judged.**
+**What a clean reproduction shows** (`defx-only.txt`; one script, both hosts, the raise **armed after
+registration** so nothing else can consume it):
 
-**ROOT CAUSE** (`read` + `observed`). A reversal is judged where a commitment is closed around
-it; the declared windows are windows in which **no pass runs at all**, which is what makes
-their unjudged state a design rather than a gap. **Host `6` does run a pass** — `§7.8` of the
-same document says so (`read`, `README.guide.md:1008-1013`: *"FROM 2026-10-29 A `delete` RUNS A
-CONSTRAINT PASS OF ITS OWN … the three editing verbs — `write`, `delete`, `rollback` — all ask
-the pairs"*) — and a raise contained by it is consumed by a window that is not the raiser's.
-**So host `6` has the property the two declared windows were defined to exclude.**
+| arm | host pair ran | raise fired | `a-no-one` invoked (`ctx.tier === null`) | `read a` | the act answered |
+| --- | --- | --- | --- | --- | --- |
+| **host 6** — `delete`'s constraint pass | 1× | RETURNED | **1** (**1**) | **2** — undone | `ConstraintPassRefused` |
+| **host 3** — a write's constraint pass | 1× | RETURNED | **1** (**1**) | **2** — undone | `ConstraintPassRefused` |
 
-**EVIDENCE.** `observed` at both installs (`b-defx7-{140,150}.txt`); the same harness prints
-host `6` as `judged? NO (0) | effect stands? YES` at **both**, byte-identical. **The fix shape
-is one of two sentences and no code:** judge host `6`, or declare it. A declared window with
-two exits is a design decision this consumer accepts (§4.3); an undeclared one is the thing we
-cannot write a policy on.
+**Line for line identical. The `delete`'s pass judges the raise.**
 
-**WHAT IT COSTS A CONSUMER.** A host must know whether an intervention raised inside a
-`delete`'s own pass is inside or outside the machinery, because that determines whether it must
-verify the state itself afterwards. Today it must assume the worst for host `6` and may rely on
-the declaration for `4` and `5`. **One sentence in the guide closes this row.**
+**The confound that fabricated it.** Our probe registered the raising pair with an **unconditionally armed**
+body, so the raise fired during **registration's evaluation — host 4, a DECLARED unjudged window** — and was
+already applied when the `delete`'s pass asked the pair again. The second attempt answered
+**`RollbackCompacted`**, nothing remained to judge, and our counter honestly read `0`. **The count was right;
+our reading of it was wrong.**
 
-**And a correction we owe, which §4.2 records in full:** this consumer's `1.4.0` cell said host
-`6` **judged** and that *"zero unjudged hosts remain"*. **Our own output said `NO` at the time
-and says `NO` again at `1.5.0`.** The cell was wrong and is withdrawn; the row is unchanged.
+**Nothing is filed on hosts 4, 5 or 6.** The guide's two declared windows stand as declared, and our `1.4.0`
+host-6 cell was wrong for this same reason.
+### 2.4 `DEF-AH` — downgraded to documentation: the member's PRESENCE is undeclared; the count claim is withdrawn
 
-### 2.4 `DEF-AH` — the discard witness is count-dependent: one raise is reported, two are not
+**What we claimed.** The witness reports at one raise (`AH.4` → `[{opId: "op-15", addresses: [["a"]]}]`) and
+stays silent at two (`AH.5` / `AH.6` → `[]`), so *"`isEmpty` means nothing was discarded"* cannot be trusted.
 
-**SYMPTOM / REPRO** (`observed`, `ah-150.txt`, six arms; the `1.4.0` arms `ah-140.txt`). The
-`discarded` witness on a `delete` record is the only place a consumer is told that an
-intervention was discarded. It reports **nothing** for two raises while the effects stand:
+**What clean arms show** (`defah-clean.txt`, `defah-listener2.txt`). `.discarded` is **absent** on every path
+we can build:
 
-```
-AH.4  ONE raise, a pair standing at the raised address
-        .discarded: [{opId: "op-15", addresses: [["a"]]}]     judge asks (tier-null): 1
-AH.5  TWO raises, a pair standing at BOTH raised addresses
-        .discarded: []                                       read a: VALUE 5
-AH.6  TWO raises, a pair standing at only the FIRST raised address
-        .discarded: []                                       read a: VALUE 5
-```
+- a raise **at rest**, refused → the raise's own `ConstraintPassRefused`; admitted → `RETURNED`;
+- a raise from **inside a constraint body**;
+- a **listener** raising **once, twice and three times**, with the pairs **refusing every raise**
+  (`read a` / `read b` → `2`, the raises undone) or **admitting every raise** (`→ 1`, standing).
 
-**Two things are true at once, and the row is the second.** First, `AH.4` is **better than
-`1.3.0`**: the witness now names a **non-empty** address list — `[["a"]]` — where `1.3.0`
-reported `addresses: []`. Second, **at two raises the witness reports `[]` at both `1.4.0` and
-`1.5.0`** (`ah-140.txt` lines `37`/`45`, `ah-150.txt` `AH.5`/`AH.6`, byte-identical), while the
-`5` the raises moved **stands** unjudged in the store. **The defect is COUNT-DEPENDENCE, not
-silence**: one discarded raise is reported, two are not, and a consumer cannot tell an empty
-witness from a clean one.
+**No arm produced a false or empty-but-clearing answer.** Where the member exists it names what was
+discarded; where it does not, the consumer gets `undefined`, **which cannot be read as a clearance**. So the
+`AH.4`/`AH.5` contrast reflects **different outcomes** — something discarded versus nothing discarded — and
+**not a count-dependent silence.**
 
-**ROOT CAUSE.** The witness is assembled from a single slot rather than accumulated across the
-delivery window: the address list is written where one raise lands and is not carried for the
-second. **We cite no line for it.** The catalogue's row records the mechanism as the shape
-observed and this round did not re-derive it by reading — §4.2's discipline, and the reason
-`DEF-W` cost the package a cycle.
-
-**EVIDENCE.** `observed`, paths above. **This row is also where this consumer's own filing was
-too strong**, and §4.2 says so: it was filed as *"the witness reports nothing discarded"*, and
-the witness is not silent — it is count-dependent. The correction narrows the demand and does
-not weaken it.
-
-**FIX SHAPE.** Report **every** discarded raise, at any count. A witness that answers
-differently for `1` and `2` raises is worse than one that always answers `[]`, because the
-consumer has been taught to trust the non-empty case.
-
-**WHAT IT COSTS A CONSUMER.** After a `delete` whose delivery carried two raises, we cannot
-tell from the receipt that anything was discarded or refused — so a host that reports store
-hygiene to its own user must read every address it might care about and diff it, which is the
-cost the witness exists to remove.
-
+**One small demand survives.** The sentence *"`discarded.length === 0` means this act's delivery discarded
+nothing"* describes a member that is often **absent**. **The guide should say when it is present and what its
+absence means — `undefined` is not `[]`.**
 ### 2.5 `DEF-AT` — the false clauses MOVED, they did not leave
 
 **SYMPTOM / REPRO** (`observed` + `read`). At `1.4.0` this row named two sites; **the guide was
