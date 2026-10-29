@@ -69,7 +69,7 @@
         "src/main/settings-surface/",
         "tests/unit/settings-surface/"
       ],
-      "endpoints": 11
+      "endpoints": 15
     },
     {
       "name": "central-data",

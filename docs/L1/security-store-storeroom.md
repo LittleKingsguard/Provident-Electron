@@ -1,6 +1,6 @@
 # L1 — the security store rebuilt as its own `provident-storeroom` instance
 
-- **Layer:** L1 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 1
+- **Layer:** L1 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 2 — **rev 1 is read through this one**: the record stands at **two** addresses and not one (§3, ASM-1: the `file` tier purges the `mem` version at its own key, so a settings commit would have silently reset the exclusion pair — measured by L2, filed as `persistence.md` §9 P-3), `settings-surface` N is **15** and not 11 (§2: D-14 counts what a module consumes as well as what it exposes), and `window.provident` carries **seven** top-level members and not six (§6, §8: the L2 examiner's reading of `src/main/preload.ts:42-75`)
 - **Status:** DESIGN — the map is filed at `strata/modules.json`; nothing below this layer is admitted (D-7, D-16). The census sites, the retirement set and every cross-module write are in `docs/L1/security-store-storeroom-exception.md` (E-1..E-5)
 - **Charter:** D-16 rebuilt wholesale and MCP-isolated · D-17 the instance is the operator-settings state machine and the surface a separate module · D-18 one operator-only reference, tested by absence · D-19 import once, then own a new shape · D-20 sequenced after `central-data-management`'s exit walkthrough, which is `done`
 - **Inputs:** `strata/brief.md` §2/§6; `strata/decisions.md` D-1..D-20 (D-5, D-11, D-13, D-15, D-16..D-20 load-bearing); `strata/modules.md` §3/§4; `strata/platform.md` §4; `docs/L1/central-data-management.md` and `docs/L1/central-data-census-exception.md`, the sibling's two patterns; the tree at `0eca66b`; `node_modules/provident-storeroom/{index.d.ts,README.guide.md}`, read and never edited (D-5)
@@ -26,16 +26,16 @@
 | Row | Paths claimed | N |
 |---|---|---|
 | `operator-settings` (re-declared) | `src/main/operator-settings/` *(new — the instance)* · `src/main/tier4-state.ts` · `src/main/module-store.ts` · `src/main/security-store.ts` **(retired, exception §5)** · the eight flat rows it already held · `tests/unit/security-store-storeroom/` · `tests/integration/security-store-storeroom/` | **10** |
-| `settings-surface` **(new row)** | `src/main/settings-surface/` · `tests/unit/settings-surface/` | **11** |
+| `settings-surface` **(new row)** | `src/main/settings-surface/` · `tests/unit/settings-surface/` | **15** |
 
 - **`operator-settings` N = 10** by D-14's convention: **6** `provident-storeroom` exports called (`storeCreate`, `read`, `write`, `listen`, `register`, `unlisten`) plus **4** value names exposed to the surface module (`createOperatorSettings`, `read`, `write`, `subscribe`). `readLiteral`, `delete`, `rollback` and the four constraint members are **not** called (D-14; D-12's posture unmoved).
-- **`settings-surface` N = 11**: **3** bridge routes with both sides counted (`IPC_SECURITY_GET`, `IPC_SECURITY_SET`, `IPC_SECURITY_EXCLUSION` × their renderer declaration members `get`/`set`/`setExclusion`) = 6, plus **5** value names exposed to `main.ts` (`createSettingsSurface`, `read`, `set`, `transition`, `attach`). The caps follow and no author declares one: **150** and **160** (D-14, `platform.md` §4).
+- **`settings-surface` N = 15**: **3** bridge routes with both sides counted (`IPC_SECURITY_GET`, `IPC_SECURITY_SET`, `IPC_SECURITY_EXCLUSION` × their renderer declaration members `get`/`set`/`setExclusion`) = 6, **5** value names exposed to `main.ts` (`createSettingsSurface`, `read`, `set`, `transition`, `attach`), and **4** value names it **consumes** from `operator-settings` — D-14 counts what a module exposes *or consumes*, and the row counted only one side in rev 1 (D-14, `platform.md` §4). The caps follow and no author declares one: **150** and **200**.
 - **`app-shell` 7 and `mcp-surface` 30 hold**: no tool, no resource, no `RpcMethod` member and no bridge channel is added or removed (§4, §6), so no census of D-11's moves (D-11, D-15).
 - **The unit's two batteries are claimed by the `operator-settings` row** — `tests/integration/security-store-storeroom/` (L2's) and `tests/unit/security-store-storeroom/` (L3's) — because that row owns the file being replaced and the state machine they drive; **`tests/e2e/` is L1's own artifact and is claimed by no module**, exactly as `docs/L1/` is not, and `tests/unit/settings-surface/` holds the surface module's own unit rows (D-10, `modules.md` §3).
 
 ## 3. The instance — the state it holds and the transitions it exposes (D-17)
 
-**Six members, written as one value at one address** `['operator-settings']` — four on the `file` tier and two on `mem` — so each transition is one store write and therefore one op, one cursor and one receipt (guide §4 `W-4`; ASM-1).
+**Six members at two addresses** — the durable record as one value at `['operator-settings']` on the `file` tier, and the volatile pair as one value at `['operator-exclusion']` on `mem` — so each transition is **one** store write and therefore one op, one cursor and one receipt (guide §4 `W-4`, §5.1; ASM-1).
 
 | Member | Tier | What it is | Cite |
 |---|---|---|---|
@@ -52,7 +52,7 @@
 |---|---|---|---|
 | `read` | no argument, or one member name | the committed record, detached at every depth | a read moves nothing; the refusal is a value on the channel, never in the value |
 | `write` | a patch of the four `file` members | a **receipt** | the previous bytes exactly as they stood, and the live record unmoved |
-| `subscribe` / `unsubscribe` | one listener, one address (`['operator-settings']`) | the handle, or its withdrawal | no state moves; an unregistered handle fires nothing (guide §6.2) |
+| `subscribe` / `unsubscribe` | one listener, one or both addresses | the handle, or its withdrawal | no state moves; an unregistered handle fires nothing (guide §6.2) |
 
 - **A receipt is `{status:'committed', cursor, opId}` or `{status:'refused', reason, message}`** — `reason` the store's own status verbatim, `message` the package's generated sentence, and nothing throws across the module boundary (guide §8; D-5). **A refusal leaves the record and the bytes untouched**, the store's own commit restore having run before it crosses, so live equals durable at every terminal (guide §5.4, §9.4; D-17). **`'write-failed'` and `'tier4-closed'` do not survive as write-outcome tokens** (D-16; ASM-3).
 - **The exclusion pair boots to the safe pair and is never persisted**, so a crash, a torn record, a corrupt file and a missing file all resolve to it exactly as today (`src/main/main.ts:109-113`; ASM-2). **The enforcement path keeps its one reader and gains one writer:** the surface module is the sole writer of `src/main/tier4-state.ts`'s holder — on the committed `mem` write and at boot — so the holder is the gate's *projection* of the instance's row and no second home (`src/main/tier4-state.ts:12-18`; ASM-4).
@@ -96,7 +96,7 @@ Absence is the control, so each row is stated as **nothing resolves** and driven
 | `ISO-1` | no `provident.data.*` tool reads or writes an operator-settings member or the instance's file | the five tools, both transports |
 | `ISO-2` | no MCP resource resolves into the instance | `mcp://provident/app`, `…/targets`, `…/node/{nodeId}` — 3, unmoved |
 | `ISO-3` | no `RpcMethod` member names a security member or the instance's file | the 27-member union (`src/shared/types.ts:259-286`) |
-| `ISO-4` | no bridge channel carries a security write except the three manual-UI channels | `window.provident`'s six members (`src/main/preload.ts:42-75`) |
+| `ISO-4` | no bridge channel carries a security write except the three manual-UI channels | `window.provident`'s **seven** top-level members (`src/main/preload.ts:42-75`) |
 | `ISO-5` | exactly **one** construction of the instance exists and the MCP stack holds no reference to it | `main.ts`, `operator-settings/`, `mcp-server.ts`, `security.ts` |
 | `ISO-6` | the instance's file name is spelled in no file the MCP stack reaches, so no drive can even name it | `mcp-server.ts`, `data/`, `security.ts` |
 
@@ -128,7 +128,7 @@ A count that moves without its row moving is a finding, and a row that moves wit
 | S-8 | the import's absent and corrupt arms | absent, unparsable, non-object and directory-shaped files each import the first-run default, throw nothing, leave the bytes untouched (D-19) |
 | S-9 | the old name is never written | after the import and three committed writes, `provident-security.json` is byte-identical to its seed and the new name carries the record (D-19) |
 | S-10 | `ISO-1` and `ISO-3` | no `provident.data.*` tool and no `RpcMethod` member reaches a member or the instance's file (D-18) |
-| S-11 | `ISO-2`, `ISO-4`, `ISO-5`, `ISO-6` | the three resources, the six bridge members and the MCP stack's own files hold no reference; exactly one construction exists (D-18) |
+| S-11 | `ISO-2`, `ISO-4`, `ISO-5`, `ISO-6` | the three resources, the seven bridge members and the MCP stack's own files hold no reference; exactly one construction exists (D-18) |
 | S-12 | two profiles are disjoint | two `userData` overrides carry two instances; a write through one is never served by the other; the group set is six in both |
 
 ## 9. Boundaries — what this unit does not claim
@@ -140,7 +140,7 @@ A count that moves without its row moving is a finding, and a row that moves wit
 
 | id | Assumption | Rejected alternative |
 |---|---|---|
-| ASM-1 | the record stands at **one address as one object value**, so one transition is one write, one op and one receipt | a row per member, which makes a four-member patch four commits and leaves a landed `token` beside a refused `enabled` — the tear the receipt exists to forbid |
+| ASM-1 | the durable record stands at **one** address as one object value and the volatile pair at a **second**, so one transition is one write, one op and one receipt | one address for all six members (rev 1's shape), which the package forbids in effect: a `file`-tier write purges the versions it outranks at its own key, so a settings commit would silently reset the `mem` exclusion pair — measured by L2 and filed as `persistence.md` §9 P-3 |
 | ASM-2 | the exclusion pair and the tier-4 boolean are `mem` rows, never persisted, booting to the safe pair | a `file` row, which persists the gate's own state and lets a crash or a hand-edited file boot the app open |
 | ASM-3 | the surface's vocabulary is the store's own statuses plus its generated sentence | keeping the old closed reason set in front of the store's, which gives one refusal two spellings and hides the store's cause |
 | ASM-4 | `src/main/tier4-state.ts` survives as the enforcement path's **projection**, written only by the surface module on the committed row | the gate reading the instance through a thunk, which puts an instance-shaped reference inside the MCP stack (D-18); or a second flag home, the defect that leaf exists to close |
