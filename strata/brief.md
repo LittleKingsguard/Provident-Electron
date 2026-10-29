@@ -84,7 +84,7 @@ package change (D-5), and nothing in the seam today is exposed over MCP, rendere
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | `3 failed / 3,109 passed / 2 skipped` of `3,114`, over `91` test files | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | `2 failed / 3,095 passed / 2 skipped` of `3,099`, over `91` test files (§6, measured after the archive sweep) | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — main, preload, standalone, battery host, renderer | the bundles exist at all |
@@ -92,8 +92,10 @@ package change (D-5), and nothing in the seam today is exposed over MCP, rendere
 
 The layer rule every later claim inherits: a node-suite green is **envelope-green and never
 app-green** — no window, no IPC, no transport is exercised by `npm test` (D-1; §3's L1 exit).
-The three red rows are long-standing live-battery/re-grain rows, not new to this head, and are named
-in the archived corpus (`archive/gate-corpus-2026-10-29/brief/limits-and-state.md` §3).
+The two red rows are `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`, the un-run live battery) and
+§4.2 item 8 (`REG-EXEC`, the register's broken attempts) — both long-standing, neither new to this
+head. The third the gate-era corpus carried, `tests/store-core-graph.test.ts` §5.1, was retired with
+its referent when the corpus was archived (D-9), so the known-red set is now two (D-1 §6).
 
 ## 7. The archive (D-2)
 

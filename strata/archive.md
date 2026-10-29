@@ -47,13 +47,20 @@ A new document never cites the archive as authority for a live rule. When an arc
 forward — the UI-authority rule in `AGENTS.md` is the one instance — it is cited by its archive path and
 its own section, as `strata/brief.md` §2 does.
 
-## 3. The pinned rows the move touched (D-4)
+## 3. What the move did to the suite (D-4, D-8, D-9)
 
-32 assertions across 14 test files read a `docs/…` path. Each was repointed to its archive path or
-retired where it existed only to pin a gate-era artifact; the dispositions are recorded per row in the
-sweep commit's message and in the walkthrough record for `strata-bootstrap`. A row that asserts a path
-exists still asserts exactly what it did before — the referent moved, the claim did not.
+The L1 examiner measured the affected set rather than trusting a grep: **32 sites / 29 assertions in
+15 files**, and **71 affected rows in 27 files** once path constants, unguarded `readdirSync` calls and
+a module-scope read are counted. Three arms, executed in one pass:
 
+| Arm | Executed | The rule |
+|---|---|---|
+| `REPOINT` | **55 literals in 20 files** | a filesystem read whose referent moved: the literal becomes `archive/gate-corpus-2026-10-29/<x>`, and the assertion itself is unchanged |
+| `RETIRE` | **15 rows in 6 files** | the row's subject was the corpus: the diff-scope and amendment-namespace controls, the held-contract byte pins, and the archived contract's citation-resolution set (D-9) |
+| `LEAVE` | untouched | absence probes (true before and after), comments, scope declarations, and every line that reads git history — a rewritten path there would make a row vacuously green |
+
+Measured delta: `3,114` collected rows before the sweep, `3,099` after, with two red rows left
+(`store-tabs-record` §4.2 items 7 and 8). The retired list and the ledger move are D-9.
 ## 4. When you need an archived fact
 
 Read it at the archive path, and treat it as history. If the fact is still load-bearing — a contract an

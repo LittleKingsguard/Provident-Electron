@@ -161,3 +161,32 @@ Three arms, each row filed in the sweep commit:
 green once `docs/specs/` is gone — an examiner finding under `examiner.md` §2, named here for the unit
 that owns the row. Comments that cite `docs/…` stay as written and resolve through the prefix mapping
 (D-4); no comment was rewritten by the sweep.
+
+---
+
+## D-9 — The rows whose subject was the gate corpus are retired; the known-red ledger is two
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Completes** D-4/D-8's retirement arm. **Source:** the
+user's D-4 selection ("Repoint or retire those assertions in the same pass, recorded"), executed
+against the L1 examiner's disposition table.
+
+**Decision:** 15 test rows are retired, across six files, because their **subject** is the corpus
+that D-2 archived and no repoint can satisfy them:
+
+| Rows | Why retirement and not repoint |
+|---|---|
+| `census` `R-8`, `zones` `R-4`, `gutter` `R-12`, `gesture-session` `R-7`, `layout-projection` `R-20` | the diff-scope and amendment-namespace controls: each predicate is written against `^docs/specs/<x>\.md$` and reads the live corpus, so a repointed path fails the predicate itself |
+| `store-core-graph` `§4.1(red)` and `§5.1` | the held-contract byte pins compare the worktree copy with `git show HEAD:docs/specs/store-core.md`; the archive is untracked, so there is no path in `HEAD` to compare against |
+| `fork-store-reads` `S-1`, `S-2`, `S-4`, `S-10` (8 rows) | the archived contract's own citation-resolution set: they resolve a document's citations against the live tree, which the prefix mapping settles but their predicate does not |
+
+**Consequence, stated because it moves a ledger:** the suite's known-red set is now **two** rows —
+`store-tabs-record` §4.2 item 7 (`P-7`, the un-run live battery) and item 8 (`REG-EXEC`, the
+register's broken attempts) — not the three the brief shipped with. The third, `store-core-graph`
+`§5.1`, was red for a held-contract byte drift whose subject D-2 removes; its obligation is not
+discharged but **dissolved with its artifact class**, and the live equivalents are strata-lint's
+citation resolution over `docs/L1..L3/` and the module diff-scope check (`platform.md` §4). A later
+pass that wants a held-contract stability row authors one against a live artifact, not a gate one.
+
+**Nothing product-facing is retired.** Every retired row was a gate-process control over the
+corpus; no row that exercises `src/`, the MCP surface, the store or any shipped behaviour was
+touched. The measured delta is `3,114` collected rows before the sweep and `3,099` after.

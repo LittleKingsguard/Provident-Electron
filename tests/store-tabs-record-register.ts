@@ -87,11 +87,11 @@ const STORE_REFS_SRC = new URL('./../src/renderer/' + 'store-graph' + '-referenc
 /** The frozen artifact whose fields-1–7 span carries the `29772ac7…` figure (never a
  *  file-pin figure — `§5.1` item 7's own attribution note). */
 const FROZEN_ARTIFACT_SRC = new URL(
-  './../docs/specs/' + 'store-core-module-store-core' + '-graph-surface.md',
+  './../archive/gate-corpus-2026-10-29/specs/' + 'store-core-module-store-core' + '-graph-surface.md',
   import.meta.url,
 )
 /** The two `[U]` precedents the contract names (`§7` item 2(d)). */
-const GUTTER_LIVE_BATTERY_SRC = new URL('./../docs/specs/gutter-ui-live-battery.md', import.meta.url)
+const GUTTER_LIVE_BATTERY_SRC = new URL('./../archive/gate-corpus-2026-10-29/specs/gutter-ui-live-battery.md', import.meta.url)
 /** `§5.1` item 7 / `§7` item 3 — the census rows ANOTHER unit owns. */
 const THEME_CONTROL_SRC = new URL('./../tests/' + 'theme-control' + '.test.ts', import.meta.url)
 

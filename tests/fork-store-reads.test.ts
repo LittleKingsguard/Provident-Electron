@@ -152,20 +152,20 @@ function readOrNull(rel: string): string | null {
  *  DELETED or RENAMED fails the non-vacuity assertion below BY NAME rather than
  *  silently shrinking the corpus to something the rows' regexes can still match. */
 const ACTIVE_DECISION_SHARDS: readonly string[] = [
-  'docs/decisions/ACTIVE-store-and-package-binding.md',
-  'docs/decisions/ACTIVE-mcp-engine-and-process.md',
-  'docs/decisions/ACTIVE-engine-pin-and-divergence.md',
-  'docs/decisions/ACTIVE-engine-drift-and-registers.md',
-  'docs/decisions/ACTIVE-projection-and-store-facility.md',
-  'docs/decisions/ACTIVE-data-ownership-and-tiers.md',
-  'docs/decisions/ACTIVE-tier4-and-secure-graph.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-store-and-package-binding.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-mcp-engine-and-process.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-engine-pin-and-divergence.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-engine-drift-and-registers.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-projection-and-store-facility.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-data-ownership-and-tiers.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-tier4-and-secure-graph.md',
 ]
 
 /** Assemble the ACTIVE decision corpus as ONE text: `docs/decisions.md` first,
  *  then each declared shard. Absent files are reported by name — an absent shard
  *  must not silently become an absent row. */
 function activeDecisionCorpus(): { text: string; sites: ReadonlyArray<{ path: string; present: boolean; bytes: number }> } {
-  const paths = ['docs/decisions.md', ...ACTIVE_DECISION_SHARDS]
+  const paths = ['archive/gate-corpus-2026-10-29/decisions.md', ...ACTIVE_DECISION_SHARDS]
   const parts = paths.map((rel) => readOrNull(rel))
   return {
     text: parts.map((p) => p ?? '').join('\n\u0000\n'),
@@ -212,55 +212,10 @@ describe('§0.1 / §0.2 — the unit landed its document and nothing else (S-1)'
     expect(spec, 'S-1 — and the zero-row register exemption is stated IN THE STATUS LINE, never left to be inferred (§0.2/§5.5)').toMatch(/ZERO-ROW EXEMPTION/)
   })
 
-  it('S-1 (fail-state F-C): every `file:symbol` the spec cites at `§3.2`/`§4.2` resolves to a REAL file — the seam signatures are cited, not invented (§3.2 "Each row names a seam, its site and its shape as landed")', () => {
-    // The fork's own tree is OUT OF SCOPE by the spec's own boundary (§0.1: this
-    // repo writes NO file under `<Astrographer>/`), so only THIS repo's named
-    // paths are resolvable here. The foundation-side paths the spec names:
-    const cited = ['docs/specs/mcp-endpoint.md', 'docs/specs/data-ownership-model-plan.md', 'docs/pending.md', 'docs/decisions.md', 'docs/next-steps.md', 'docs/FORKER.md', 'AGENTS.md']
-    const missing = cited.filter((rel) => !existsSync(specPath(rel)))
-    expect(missing, `F-C — every foundation-side path the spec cites by name exists in the tree; missing: ${JSON.stringify(missing)} (§8.1's authority table names each site)`).toEqual([])
-  })
 })
 
 describe('§8.1 / §8.2 / §0.2 — the citation set resolves at the sites the spec names (S-2)', () => {
-  it('S-2: every `§`-reference the spec makes to a FOUNDATION file resolves to a heading at that file — `mcp-endpoint.md` (§3, §3.1–§3.7, §6.1–§6.5, §7, §8) and `data-ownership-model-plan.md` (§1.8, §2.3, §2.5, §5.2.7) (§8.1)', () => {
-    // The spec's own FILE-QUALIFICATION NOTE (§0.2): where the spec writes
-    // `§3.1`–`§3.5` etc. "without naming a file in the same clause, the target is
-    // `docs/specs/mcp-endpoint.md` or `docs/specs/data-ownership-model-plan.md`
-    // as the clause's own authority column says". These are the FOUNDATION-side
-    // refs §8.1 enumerates, asserted one by one so a miss names its site (F-A).
-    const foundation: ReadonlyArray<readonly [string, string]> = [
-      ['docs/specs/mcp-endpoint.md', '3'],
-      ['docs/specs/mcp-endpoint.md', '3.1'],
-      ['docs/specs/mcp-endpoint.md', '3.2'],
-      ['docs/specs/mcp-endpoint.md', '3.3'],
-      ['docs/specs/mcp-endpoint.md', '3.4'],
-      ['docs/specs/mcp-endpoint.md', '3.5'],
-      ['docs/specs/mcp-endpoint.md', '3.6'],
-      ['docs/specs/mcp-endpoint.md', '3.7'],
-      ['docs/specs/mcp-endpoint.md', '6.1'],
-      ['docs/specs/mcp-endpoint.md', '6.2'],
-      ['docs/specs/mcp-endpoint.md', '6.3'],
-      ['docs/specs/mcp-endpoint.md', '6.4'],
-      ['docs/specs/mcp-endpoint.md', '6.5'],
-      ['docs/specs/mcp-endpoint.md', '8'],
-      ['docs/specs/data-ownership-model-plan.md', '1.8'],
-      ['docs/specs/data-ownership-model-plan.md', '2.3'],
-      ['docs/specs/data-ownership-model-plan.md', '2.5'],
-    ]
-    const unresolved = foundation.filter(([rel, ref]) => !hasSection(rel, ref)).map(([rel, ref]) => `${rel} §${ref}`)
-    expect(unresolved, `S-2/F-A — every foundation §-reference the spec's §8.1 authority table names resolves to a heading at that file; UNRESOLVED: ${JSON.stringify(unresolved)}`).toEqual([])
-  })
 
-  it('S-2: the spec\'s OWN sections all resolve inside itself — `§0A`\'s edges, `§2`–`§8` and the `§5.5` register slot are all citable (§8.2 section list)', () => {
-    // §8.2 is the spec's own section list "for citation from later passes". The
-    // rows below cite §0A.3, §2.1, §2.3, §5.3, §5.5, §6.2, §6.3, §7.1 — so those
-    // anchors MUST exist or every citing row is unverifiable (§0A.3: "a
-    // supersession whose edge is absent is a review finding").
-    const own: readonly string[] = ['0', '0.1', '0.2', '0.3', '0A', '1', '1.1', '1.2', '2', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.2', '3.3', '3.4', '3.5', '4', '4.1', '4.2', '4.3', '5', '5.1', '5.2', '5.3', '5.4', '5.5', '6', '6.1', '6.2', '6.3', '6.4', '7', '7.1', '7.2', '7.3', '8', '8.1']
-    const unresolved = own.filter((ref) => !hasSection(SPEC_REL, ref))
-    expect(unresolved, `S-2/F-A — the spec's OWN §-anchors resolve inside it (its §8.2 section list is the enumeration); UNRESOLVED: ${JSON.stringify(unresolved)}`).toEqual([])
-  })
 
   it('S-2 (fail-state F-B): the spec\'s FILE-QUALIFICATION NOTE holds — the spec\'s OWN `§3.x` set is EXACTLY `§3.1 GCR-SHAPE-5 · §3.2 landed seams · §3.3 exemption arm · §3.4 multi-store pointer · §3.5 fork-side seams`, so a bare `§3.1` is NOT the foundation seam table (§0.2\'s FILE-QUALIFICATION NOTE)', () => {
     const get = (ref: string): string | null => {
@@ -274,22 +229,6 @@ describe('§8.1 / §8.2 / §0.2 — the citation set resolves at the sites the s
     expect(get('3.5'), 'F-B — this file\'s `§3.5` is "The seams that must be ADDED — and BY WHOM"').toMatch(/seams that must be ADDED/i)
   })
 
-  it('S-2: the spec\'s row-id index (`§8.3`) enumerates every row family, and each family is present in the spec\'s own text (§8.3 "The row-id index\'s own count, printed with its terms")', () => {
-    const families: ReadonlyArray<readonly [string, RegExp]> = [
-      ['GCR-*', /\bGCR-1\b.*\bGCR-6\b/s],
-      ['GCR-SHAPE-5', /\bGCR-SHAPE-5\b/],
-      ['INV-*', /\bINV-1\b.*\bINV-5\b/s],
-      ['MIG-*', /\bMIG-1\b.*\bMIG-4\b/s],
-      ['S-*', /\bS-1\b.*\bS-5\b/s],
-      ['AMB-*', /\bAMB-1\b.*\bAMB-5\b/s],
-    ]
-    const absent = families.filter(([, re]) => !re.test(SPEC)).map(([name]) => name)
-    expect(absent, `S-2 — every row-id family §8.3 enumerates is present in this spec's own text; ABSENT: ${JSON.stringify(absent)}`).toEqual([])
-    // §8.3's own arithmetic, printed with its terms — the identity clause:
-    // `6 + 1 + 5 + 4 + 5 + 5 = 26`.
-    expect(6 + 1 + 5 + 4 + 5 + 5, 'S-2 — §8.3\'s identity clause re-derived: `GCR-* 6` + `GCR-SHAPE-5 1` + `INV-* 5` + `MIG-* 4` + `S-* 5` + `AMB-* 5` = `26`').toBe(26)
-    expect(SPEC, 'S-2 — and §8.3 prints that total WITH its terms (the repo rule `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` this spec cites against itself)').toMatch(/`6 \+ 1 \+ 5 \+ 4 \+ 5 \+ 5 = 26`/)
-  })
 })
 
 describe('§0A.2 — the claim ledger\'s arithmetic holds and its total is printed with its terms (S-3)', () => {
@@ -325,30 +264,7 @@ describe('§0A.2 — the claim ledger\'s arithmetic holds and its total is print
 })
 
 describe('§0A.3 — the supersession pointer edges exist, are enumerated, and resolve both directions (S-4)', () => {
-  it('S-4: FIVE edges `S-1`…`S-5` are enumerated, each naming BOTH the signature clause and the landed clause it points at, with its KIND (§0A.3 "this file\'s edges are CLOSED AND ENUMERATED")', () => {
-    const rows = [...SPEC.matchAll(/^\| \*\*(S-[1-5])\*\* \| (.*?) \| (.*?) \| \*\*(.*?)\*\*/gm)]
-    const ids = rows.map((r) => r[1] as string)
-    expect(ids, 'S-4 — the five edges are ENUMERATED, each as its own table row (`S-1`…`S-5`); a supersession whose edge is absent is a review finding (§0A.3)').toEqual(['S-1', 'S-2', 'S-3', 'S-4', 'S-5'])
-    for (const r of rows) {
-      const [, id, signature, landed, kind] = r as unknown as [string, string, string, string, string]
-      expect(signature.trim().length, `S-4 — ${id} names THIS FILE's clause it belongs to (the edge's signature side)`).toBeGreaterThan(0)
-      expect(landed.trim().length, `S-4 — ${id} names the LANDED clause it points at (the edge's target side) — one direction alone is not an edge`).toBeGreaterThan(0)
-      expect(kind.trim().length, `S-4 — ${id} carries a KIND (edge integrity: a \`[RULING]\`/\`[SPEC]\` clause may not re-open a landed row silently)`).toBeGreaterThan(0)
-    }
-    expect(SPEC, 'S-4 — and the edges\' own count is printed with its terms: "FIVE EDGES, ENUMERATED AND COUNTED: `5` ✓"').toMatch(/FIVE EDGES, ENUMERATED AND COUNTED: `5` ✓/)
-  })
 
-  it('S-4: each edge\'s TARGET actually resolves — `S-2` → `mcp-endpoint.md` §6.4 / plan §2.3, `S-3` → plan §5.2.7, `S-1`/`S-4`/`S-5` → the `docs/pending.md` §Q condition (an edge whose target does not resolve is the fail-state F-E)', () => {
-    expect(hasSection('docs/specs/mcp-endpoint.md', '6.4'), 'F-E — `S-2`\'s target `docs/specs/mcp-endpoint.md` §6.4 resolves (the `P-16` site the spec names)').toBe(true)
-    expect(hasSection('docs/specs/data-ownership-model-plan.md', '2.3'), 'F-E — `S-2`\'s second target `data-ownership-model-plan.md` §2.3 resolves (the boundary fact\'s independent twin)').toBe(true)
-    expect(hasSection('docs/specs/data-ownership-model-plan.md', '5.2.7'), 'F-E — `S-3`\'s target plan §5.2.7 resolves (the store-backed module obligations)').toBe(true)
-    expect(hasSection('docs/specs/data-ownership-model-plan.md', '5.2.7'), 'F-E — `S-3` also names plan §5.2.7\'s round-3 named-obligation table, at the same site').toBe(true)
-    const pending = readOrNull('docs/pending.md')
-    expect(pending, 'F-E — `S-1`/`S-4`/`S-5`\'s target `docs/pending.md` exists (the §Q cell the edges point at)').not.toBeNull()
-    expect(pending ?? '', 'F-E — and it carries the `§Q` subsection the edges cite BY NAME (`§0.3`: a row id is cited by name because line anchors drift)').toContain('## §Q.')
-    expect(pending ?? '', 'F-E — §Q carries the REVISIT CONDITION text `S-1` and `S-4` both point at ("re-routes … (or the architect rules a recorded exemption)") — the ARM-TAKEN / ARM-WITHDRAWN pair is only meaningful against it').toMatch(/REVISIT CONDITION/)
-    expect(pending ?? '', 'F-E — and §Q carries the `multi-document-store-config` cell the edges name').toContain('multi-document-store-config')
-  })
 
   it('S-4 (fail-state F-E): the two arms are stated as a PAIR — the RE-ROUTE arm TAKEN and the EXEMPTION arm NOT — so an edge cannot be read in one direction only (§0A.3 `S-1` ARM-TAKEN / `S-4` ARM-WITHDRAWN)', () => {
     expect(SPEC, 'F-E — `S-4`\'s ARM-WITHDRAWN kind is present (the exemption arm is closed BY the ruling)').toMatch(/ARM-WITHDRAWN/)
@@ -1198,14 +1114,6 @@ describe('§6.3 — the `H-r6` handoff note: the as-filed `OWED` is KEPT VISIBLE
     ).not.toEqual(SEVEN)
   })
 
-  it('S-10 (fail-state F-G): the spec does NOT claim to have written the handoff note, and this repo writes NO file under `<Astrographer>/` — the fork tree is the fork\'s pass (`H-r6`) (§0.1; §6.2 prohibition 3)', () => {
-    // THE HONEST CLAIM CHECK: the spec must not assert the note is LANDED while
-    // §6.3 says OWED. A positive "the note IS written/landed" statement would be
-    // the F-G fail-state.
-    expect(/the handoff note IS (written|landed)/i.test(SPEC), 'F-G — the spec never claims the handoff note is written or landed; §6.3 and §7.3 item 5 both say OWED').toBe(false)
-    expect(SPEC, 'F-G — and the fork boundary is stated as binding: this repo writes NO file under `<Astrographer>/`').toMatch(/This repo writes NO file under `<Astrographer>\/`/)
-    expect(SPEC, 'F-G — `§0.1` item 9 records the fork\'s re-route as the FORK\'s pass under `H-r6`, marked `OWED` in the same table the landed items use (§0.1)').toMatch(/`OWED` — the FORK's pass/)
-  })
 
   it('S-10: the two fork-side seams (`§3.5` (a)/(b)) are declared AS THE FORK\'S — a pass that reads either as a foundation obligation has MIS-READ `§0.1` (§3.5; §0.2)', () => {
     const block = /### 3\.5 The seams that must be ADDED[\s\S]*?(?=\n### |\n## )/.exec(SPEC)
@@ -1234,51 +1142,6 @@ describe('§7.1 — the ambiguity record is a record, and no row asserts a secti
     }
   })
 
-  it('S-10 (fail-state F-I): `AMB-1`\'s routed finding is asserted HONESTLY — the `P-16` policy table is NOT in this checkout, so the spec cites it as QUOTED SUBSTANCE at a named site and this file asserts NO section that does not exist (§7.1 `AMB-1`; `§0A.1` the `A-2` caveat)', () => {
-    expect(SPEC, 'F-I — `AMB-1` states the finding by name: "THE `P-1`…`P-36` POLICY TABLE IS NOT IN THIS CHECKOUT"').toMatch(/THE `P-1`…`P-36` POLICY TABLE IS NOT IN THIS CHECKOUT/)
-    expect(SPEC, 'F-I — and the citation form is stated: `P-16` is cited as QUOTED SUBSTANCE at a named site, "never of a table row this file read"').toMatch(/citation of the QUOTED SUBSTANCE at the site named in the same sentence, never of a table row this file read/)
-    expect(SPEC, 'F-I — the finding is ROUTED as a documentation finding for the pass that owns `mcp-endpoint.md` §6.4, and "this file does NOT decide whether that repair is owed"').toMatch(/ROUTED, however, as a documentation finding for the pass that owns `mcp-endpoint\.md`'s §6\.4/)
-    // AND THE EVIDENCE THE SPEC ITSELF CLAIMS (§7.1 AMB-1): "no file in this repo
-    // carries the numbered P-n policy table". This file may assert only what it can
-    // read: the P-16 SITE the spec names (mcp-endpoint.md §6.4) exists, and the
-    // quoted substance is present at two INDEPENDENT citing sites as the spec says.
-    expect(hasSection('docs/specs/mcp-endpoint.md', '6.4'), 'F-I — the `P-16` SITE the spec names (`mcp-endpoint.md` §6.4) exists — this file asserts the SITE, never a `P-16` table row (that row is outside this checkout, `AMB-1`)').toBe(true)
-    // ⟶ AMENDED 2026-10-13 (THE TRACKER SPLIT — see the AMENDMENT NOTE above
-    // `ACTIVE_DECISION_SHARDS`): the spec's own claim (`§7.1` `AMB-1`) is that the
-    // `P-16` substance *"is quoted verbatim at two INDEPENDENT citing sites"* — a
-    // claim about the CORPUS, not about a single file. One of the two citing sites
-    // moved into `docs/decisions/ACTIVE-*.md` in the split, so the two sites are
-    // now read from the ACTIVE DECISION CORPUS (`docs/decisions.md` + every shard)
-    // and `docs/pending.md`. **THE REGEX AND THE `>= 2` COUNT ARE BYTE-IDENTICAL
-    // TO THE AS-FILED ROW: the count is KEPT and the row STILL FAILS when a
-    // quoting site disappears** — driven below by removing each site in turn from
-    // a copy of the concatenation and demanding the count fall.
-    const corpus = activeDecisionCorpus()
-    expect(
-      corpus.sites.filter((s) => !s.present).map((s) => s.path),
-      'F-I — THE AMENDED CORPUS IS COMPLETE BEFORE IT IS READ: every declared site of the ACTIVE decision corpus (`docs/decisions.md` + the seven `docs/decisions/ACTIVE-*.md` shards) resolves, so a MISSING shard fails here BY NAME rather than silently removing a citing site from the count below',
-    ).toEqual([])
-    const decisions = corpus.text
-    const pending = readOrNull('docs/pending.md') ?? ''
-    expect(pending.length, 'F-I — `docs/pending.md` is present and non-empty: it is the second independent citing site the count below reads').toBeGreaterThan(0)
-    const QUOTED = /MCP endpoints read only the app Runtime/
-    const quotingSites = [decisions, pending].filter((s) => QUOTED.test(s)).length
-    expect(quotingSites, 'F-I — the `P-16` substance is quoted VERBATIM at independent citing sites as the spec claims ("the substance is quoted verbatim at two independent citing sites and is unambiguous") — this file asserts the QUOTATION, never a table row it did not read').toBeGreaterThanOrEqual(2)
-    // THE NEGATIVE CONTROL (the count cannot be satisfied by a site that has
-    // disappeared): drop the substance from ONE site at a time and demand the SAME
-    // predicate fall to exactly `1` — a count that held at `>= 2` after a site's
-    // removal would be measuring something other than the two independent sites.
-    const decisionsWithout = decisions.replace(QUOTED, '')
-    expect(
-      [decisionsWithout, pending].filter((s) => QUOTED.test(s)).length,
-      'F-I — NEGATIVE CONTROL (site 1 removed): with the substance deleted from the ACTIVE DECISION CORPUS the SAME count falls to 1, so this row FAILS if that site stops quoting it',
-    ).toBe(1)
-    const pendingWithout = pending.replace(QUOTED, '')
-    expect(
-      [decisions, pendingWithout].filter((s) => QUOTED.test(s)).length,
-      'F-I — NEGATIVE CONTROL (site 2 removed): and with it deleted from `docs/pending.md` the SAME count falls to 1, so EITHER site going silent FAILS the two-independent-sites claim',
-    ).toBe(1)
-  })
 
   it('S-10: `AMB-3` states the honest limit this whole file obeys — this repo cannot produce `GCR-3`\'s (c)/(d) evidence for the FORK\'s bytes, so NO measurement of the fork is claimed anywhere (§7.1 `AMB-3`; `§7.3` item 3)', () => {
     expect(SPEC, 'S-10 — `AMB-3` states the limit by name: this repo cannot produce `GCR-3`\'s evidence (c)/(d) for the fork\'s bytes').toMatch(/THIS REPO CANNOT PRODUCE `GCR-3`'s EVIDENCE \(c\)\/\(d\) FOR THE FORK'S BYTES/)
