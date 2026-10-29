@@ -43,18 +43,17 @@ Transports are also selectable with `PROVIDENT_MCP_TRANSPORT` / `PROVIDENT_MCP_P
 
 ## The MCP surface
 
-**22 tools** in five groups: `read` holds six (four graph readers plus `code.get` and
-`code.validate`) and the three resources, `dispatch` holds `provident.dispatch` and
-`provident.focus`, `graph` holds the six graph verbs, `code` holds five code-tree writers,
-`module` holds three — 6 + 2 + 6 + 5 + 3 = 22. The default grant is `['read','dispatch']`, so **8 tools
+**22 tools** in five groups: `read` holds six (four graph readers plus `code.get` and `code.validate`)
+and the three resources, `dispatch` holds `dispatch` and `focus`, `graph` the six graph verbs, `code`
+the five code-tree writers, `module` three — 6 + 2 + 6 + 5 + 3 = 22. The default grant is `['read','dispatch']`, so **8 tools
 register** until the operator enables more — a disabled group's tools are absent from `tools/list`
 rather than present-and-refusing.
 
 A drive is `provident.dispatch` (target by css.id, nodeId or wire; answers `{results, dirtied,
 renderedHtml, ssrHtml}`); an observation is `provident.get_rendered_html`, `get_markdown`,
-`list_targets` or `get_node_state`, and every emitted element carries `data-node-id` back to its node.
-The demo envelope renders a counter, an echo input, a gutter card, two theme buttons and two tab
-terminals; `demo/pane-drag-demo/` is the live store-integrated panes demo.
+`list_targets` or `get_node_state`, and every emitted element carries `data-node-id`. The demo envelope
+renders a counter, an echo input, a gutter card, two theme buttons and two tab terminals;
+`demo/pane-drag-demo/` is the live store-integrated panes demo.
 
 ## License
 

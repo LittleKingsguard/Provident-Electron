@@ -7,7 +7,9 @@
     "decisions",
     "procedures",
     "platform",
-    "archive-index"
+    "archive-index",
+    "archive-sweep",
+    "walkthrough-record"
   ],
   "assumptions": [
     {
@@ -25,11 +27,17 @@
     {
       "id": "ASM-3",
       "text": "the four legs of brief.md 6 remain the floor of verification and per-layer batteries add to them",
-      "alternative": "replacing the vitest suite with strata batteries, discarding 3,114 existing rows",
+      "alternative": "replacing the vitest suite with strata batteries, discarding 3,099 existing rows",
       "status": "open"
     }
   ],
-  "streaks": {},
+  "streaks": {
+    "walkthrough-record": 1
+  },
   "rebuildEligible": false,
-  "updated": "2026-10-29T02:35:48.007Z"
+  "updated": "2026-10-29T02:49:05.726Z",
+  "lastFailure": {
+    "artifact": "walkthrough-record",
+    "reason": "red"
+  }
 }

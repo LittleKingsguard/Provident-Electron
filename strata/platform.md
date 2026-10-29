@@ -28,8 +28,9 @@ Ceiling: 60 lines.
 - The 2026-10-29 readings after the archive sweep are `brief.md` §6's: `2 failed / 3,095 passed /
   2 skipped` of `3,099` over `91` files, and three clean legs (`typecheck`, `typecheck:tests`,
   `build`). A later pass re-measures rather than quoting this row.
-- **Eight** npm script keys: `test`, `typecheck`, `typecheck:tests`, `build`, `battery`, `divergence`,
-  `ui`, `mcp` (`package.json:8-22`); the last three build first, and `ui` needs a `DISPLAY`. Node `v24.20.0`;
+- **Eight of the thirteen** script keys are verification legs — `test`, `typecheck`, `typecheck:tests`,
+  `build`, `battery`, `divergence`, `ui`, `mcp`; the five others are build/launch shims
+  (`package.json:8-22`). The last three legs build first, and `ui` needs a `DISPLAY`. Node `v24.20.0`;
   devDependencies are Electron `^44.4.5`, esbuild `^0.28.2`, TypeScript `^5.5.0`, vitest `^5.0.1`, `@types/node` `^26.6.2` (`package.json:28-34`).
 - The repository is the sole workspace: this repo's `src/`, `tests/`, `scripts/` and `strata/`. The
   packages it consumes are read-only for every layer (D-5).
@@ -45,12 +46,15 @@ Ceiling: 60 lines.
   layer fails with it (D-1).
 - It ships with the workflow, not with this project: run it from the workflow checkout against this
   tree, for example `node "../Agent Harness/strata/lint/strata-lint.mjs" strata`, and add
-  `--changed <a,b>` when a unit's diff is being scope-checked (D-1).
+  `--changed <a,b>` when a unit's diff is being scope-checked (D-1). It reads documents and the module
+  map only: it never runs code, cannot tell a truthful test from a hollow one, and cannot see a path no
+  declaration names.
 - A missing `strata/modules.json` is reported as INFO and leaves diff scope unchecked; L1 files it
   with the first unit's map (D-7, `modules.md` §3).
 - **The map's shape** is `{"modules":[{"name":"store","paths":["src/store","tests/unit/store"],
-  "endpoints":7}]}`: `endpoints` counts the module's declared surface — tools, routes, or a package's
-  exported functions — and the cap follows from it (`50 + 10×N`); L1 declares the surface, never the
-  cap (D-1, `modules.md` §4).
+  "endpoints":7}]}`: `endpoints` counts the surface the module **exposes or consumes** — MCP tools, routes, or, for a
+  package-backed module, the exported functions it calls (the seam's 14 members are not 14 endpoints;
+  N is the surface the module's row names) — and the cap follows from it (`50 + 10×N`); L1 declares the
+  surface, never the cap (D-1, `modules.md` §4).
 - **Unit state** (`strata-state`'s output) is `unit`, `layer`, `stage`, `artifacts`, `assumptions`
   (`{id, text, alternative, status}`), `streaks` (artifact id → failures), `rebuildEligible`, `updated`.

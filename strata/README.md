@@ -46,10 +46,13 @@ re-growing. A review task (an examiner's measurement, a walkthrough) may leave a
 
 ## Checking this tree
 
-The lint ships with the workflow (`platform.md` §4). From the repo root:
+The lint ships with the workflow (`platform.md` §4); `strata-state` does too, and L0 runs it at a unit's
+start (`init`, then `enter` for the first layer) and on every verdict the layers return. From the repo
+root:
 
 ```
 node "../Agent Harness/strata/lint/strata-lint.mjs" strata
+node "../Agent Harness/strata/state/strata-state.mjs" strata show <unit>
 ```
 
 Exit 0 means every ceiling, citation, quarantine, provenance and shape check passed. A failing check

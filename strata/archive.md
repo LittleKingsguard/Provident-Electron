@@ -59,6 +59,11 @@ a module-scope read are counted. Three arms, executed in one pass:
 | `RETIRE` | **15 rows in 6 files** | the row's subject was the corpus: the diff-scope and amendment-namespace controls, the held-contract byte pins, and the archived contract's citation-resolution set (D-9) |
 | `LEAVE` | untouched | absence probes (true before and after), comments, scope declarations, and every line that reads git history — a rewritten path there would make a row vacuously green |
 
+**How this split relates to D-8's table:** D-8 filed the examiner's *proposed* arms over the 71
+measured rows as 48 repoint / 2 retire / 21 leave. The executed split is 55 repoint literals / 15
+retired rows / the rest untouched, because the first repoint pass is what showed which rows could not
+survive one at all — D-9's table is the governing list, and this section is its execution record.
+
 Measured delta: `3,114` collected rows before the sweep, `3,099` after, with two red rows left
 (`store-tabs-record` §4.2 items 7 and 8). The retired list and the ledger move are D-9.
 ## 4. When you need an archived fact
