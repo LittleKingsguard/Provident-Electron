@@ -41,9 +41,10 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
 ## Current state
 
 Branch `strata` carries the bootstrap and `main` is frozen until the user grants merge permission
-(`strata/decisions.md` D-6). The standing work is a central data management system over
-`provident-storeroom` — imported and inert (`src/main/storeroom.ts`), implementation pending, no design is admitted before a module’s row is filed — the map now carries 20 rows (D-7). Where work stands is state, not prose:
-`strata/.strata/units/*.json`.
+(`strata/decisions.md` D-6). Three units have landed on `provident-storeroom`: the central data store
+(the `data` group), the security record rebuilt as its own isolated instance, and the retirement of the
+old settings carrier — four more are queued behind them and the map carries 20 module rows (D-7, D-22).
+Where work stands is state, not prose: `strata/.strata/units/*.json`.
 
 ## Commands
 
