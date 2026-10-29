@@ -43,7 +43,7 @@ replaced, never annotated; the as-filed copy is cited by path under the archive 
 | Gate groups | **6** — `read`, `dispatch`, `graph`, `code`, `module`, `data`; default grant `['read','dispatch']` registers **8** tools, 13 with `data` | `src/main/security.ts` (`TOOL_GROUPS`, `VALID_GROUPS`), `src/main/operator-settings/index.ts:112` (the second live copy, `security-store.ts` having been deleted — D-16) |
 | Transports | Streamable HTTP on `127.0.0.1:3787` (stateless, token-gated, push is a no-op) and stdio (long-lived, push-capable) | `src/main/mcp-server.ts:1097-1117,746-773` |
 | Packages consumed and pinned | `provident-ssr ^0.5.1`, `provident-storeroom ^1.6.1` | `package.json:25-26` |
-| The storeroom seam | **two** imports of the package — the seam (`src/main/storeroom.ts`, declared surface census `14` members / `11` symbols) and the operator-settings instance (`src/main/operator-settings/index.ts:37`, D-16); the central store writes its own `<userData>/provident-profile.json` | `src/main/storeroom.ts`, `src/main/operator-settings/index.ts`, `docs/L2/central-data/persistence.md` §3 |
+| The storeroom seam | **two** imports of the package — the seam (`src/main/storeroom.ts`, declared surface census `14` members / `11` symbols) and the operator-settings instance (`src/main/operator-settings/index.ts:37`, D-16); the central store writes its own `<userData>/provident-profile.json` | `src/main/storeroom.ts`, `src/main/operator-settings/index.ts`, `docs/L2/central-data/persistence.md` §1 |
 | UI authority | every element outside the Electron shell's own chrome is provident data driven through the graph, never hand-written DOM; one rendered outside it is invisible to `dispatch`, `get_rendered_html` and `get_markdown` | `src/shared/demo-envelope.ts:1-18`; §2 charter (`archive/gate-corpus-2026-10-29/AGENTS.md:22-34`) |
 | Source files | **47** TypeScript files under `src/` | glob `src/**/*.ts` |
 
@@ -73,8 +73,8 @@ is answered and counted as a failure (D-1).
 
 `settings-carrier-retirement` (green at its exit walkthrough) and `security-store-storeroom`, then `central-data-management`, the central store over
 `provident-storeroom`. The import
-is landed (`f349549`, `4e404e2`, `1cab040`); the implementation beyond the seam is pending and no
-design is admitted until L1 files the module map. Its state is `strata/.strata/units/
+landed (`f349549`, `4e404e2`, `1cab040`), and so is the module built on it (`f4dfb2a`): five
+`provident.data.*` tools, the map filed and this unit closed at its batteries. Its state is `strata/.strata/units/
 central-data-management.json`; the branch state is D-7.
 
 The seam's own boundary is the constraint the unit inherits: nothing it builds may be a storeroom
