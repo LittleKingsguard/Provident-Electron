@@ -26,6 +26,20 @@ reproduction → suspected root cause → proposed fix shape (upstream-owned).
 
 ## OPEN
 
+## provident-storeroom@1.6.1 — THE DOCUMENTATION RELEASE, REVIEWED (`2026-10-29`)
+
+**`observed`; installed `1.6.1` (`dist.unpackedSize` `1,647,566`, `21` files, `time.modified` `2026-10-29T01:26:20.518Z`), six commits past `v1.6.0` (`636e69f` `D-79` · `9ac7e0e` `D-80` · `93682f3` `D-81` · `674b79e` `D-82` · `dd019cd` · `abdcbd7`).**
+
+**VERDICT: `DEF-AC` IS CLOSED, THE RELEASE IS DOCUMENTATION-ONLY AS CLAIMED, AND THIS CATALOGUE NOW CARRIES NO OUTSTANDING DEMAND AGAINST THE PACKAGE.**
+
+**`DEF-AC` — CLOSED, and verified by absence rather than by promise.** `grep -c "NOTHING IN THIS SECTION IS CUT" RELEASE-NOTES.md` → **`0`**. **The sentence is gone, not annotated.** And every section heading is now tense-correct: `## §1.2.0 · CUT AND PUBLISHED — tag v1.2.0`, `§1.3.0`, `§1.4.0`, `§1.5.0`, `§1.6.0` likewise, with **`§1.6.1 · PREPARED`** the only prepared heading and `:19` reading *"THE VERSION THIS CHANGE LIST DESCRIBES IS `1.6.1`"*. **The rule the release adopted is the one our row was reaching for, and it is better than our row: `D-80` — *"only tense separates a citation from a claim"* — with `D-79`'s tag set as the record and `D-82`'s one-way ratchet as the guard.**
+
+**DOCUMENTATION-ONLY, PROVEN BY BYTES.** `index.mjs`, `index.d.ts` and the whole `src/**` tree are **byte-identical** between `1.6.0` and `1.6.1`; `package.json` differs **only** in `version` (`1.6.0` → `1.6.1`) and the five platform-package pins. **The documents grew: `README.guide.md` `271,960` → `273,585`, `RELEASE-NOTES.md` `117,264` → `123,609`, `README.md` unchanged.** A patch bump for a documentation-only release is the correct semver call.**
+
+**THE BEHAVIOUR BATTERY, RE-RUN AND UNMOVED.** `p-defar` at `N = 28`: `longestLogEntryChars` **`196`**, `messageChars` `754`, `logEntries` `30`, `bodiesRun` `28`, state `ABSENT · ABSENT · ABSENT` — identical to `1.6.0`. `c-r8`: tier-null invocations **`0`**, per-op floor reached (`read a` → `5`). `defx-only`: the raise **judged** in both hosts, undone (`read a` → `2`). `ao-post-return2`: four entries at the return, **byte-identical** after. **No regression, and no behaviour change to test for.**
+
+**ONE OBSERVATION, NO DEMAND, and it is the same class the release has just learned to police.** `RELEASE-NOTES.md:173` still reads ***"NO VERSION BUMP IS PROPOSED BY THIS SECTION AND THE ELEVEN VERSION CELLS STAY AT `1.4.0` — AND WHETHER `1.5.0` IS CUT IS NOT WRITTEN HERE, BECAUSE IT IS NOT A DOCUMENT'S TO WRITE"***, with `:175` superseding **only its first clause**. It sits inside `§1.5.0`'s section, whose heading now reads `CUT AND PUBLISHED`, so a reader meets a present-tense *"no version bump is proposed"* under a heading that says the bump happened, with a partial annotation between them. **By `D-80`'s own rule the tense is what makes it a claim rather than a citation, and this sentence is retained in place rather than moved out.** **It is not a demand: the object our row named — the tag-set denial — is gone, this clause is a version-cell claim about a dated preparation and is annotated as superseded in the clause that matters, and the package now has a ratchet that will find it.** **Recorded so that a later pass files it deliberately or dismisses it deliberately, never by accident.**
+
 ## provident-storeroom@1.6.0 — THE REVIEW'S MEASUREMENTS (`2026-10-29`)
 
 **`observed`; installed `1.6.0` (`dist.unpackedSize` `1,639,596`, `21` files, `time.modified` `2026-10-29T00:33:09.665Z`), head `3b2a8cd`, twelve commits past `v1.5.0`. Probes re-pointed at the new install with `PKG_INSTALL`; `1.5.0` re-run as the control from the same scripts.**
