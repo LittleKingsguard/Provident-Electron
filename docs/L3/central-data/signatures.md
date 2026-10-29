@@ -1,0 +1,141 @@
+# L3 — `central-data`: the signatures
+
+- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Ceiling:** 150 lines, class max (D-1)
+- **Inputs:** `docs/L2/central-data/interface.md` §1-§8, `behaviour.md` §1-§10, `persistence.md` §1-§9 (rev 2); `strata/decisions.md` D-11/D-12/D-13/D-14; `node_modules/provident-storeroom/index.d.ts` and `README.guide.md`, read and never edited (D-5)
+- **Status:** DESIGN — stubs only. Every line below is a declaration and never a body; §1 is `interface.md` §2's surface restated so the unit battery can import it before any implementation exists (D-1 §4)
+- **Companion:** `design.md` carries the structure, the operations' pseudocode and the twelve guardrails
+
+## 1. The declared surface — `src/main/data/index.ts`
+
+`index.ts` exports exactly this and nothing else to `src/main/mcp-server.ts`, and no line here is new — it is `interface.md` §2, restated as a stub (`interface.md` §2; D-11, D-14):
+
+```ts
+export type DataPath = readonly (string | number)[]
+export type DataTier = 'file' | 'mem' | 'temp'
+export type DataLedger = { status: 'refused'; reason: DataRefusalReason; message: string; floor?: number; through?: number; storeStatus?: string; path?: DataPath }
+export type DataRefusalReason =
+  | 'malformed-arguments' | 'root-not-writable' | 'volatile-path' | 'cursor-unknown' | 'store-unreachable'
+  | 'address-malformed' | 'parent-absent' | 'container-kind-conflict' | 'value-not-admitted' | 'write-failed'
+  | 'store-refused'
+export type DataReadAnswer =
+  | { status: 'read'; kind: 'row' | 'branch'; path: DataPath; value: unknown }
+  | { status: 'absent'; path: DataPath }
+  | DataLedger
+export type DataWriteAnswer = { status: 'committed'; path: DataPath; cursor: number } | DataLedger
+export type DataDeleteAnswer =
+  | { status: 'committed'; path: DataPath; removed: boolean; tiers: readonly DataTier[]; cursor: number | null }
+  | DataLedger
+export type DataListAnswer = { status: 'read'; prefix: DataPath | null; paths: readonly DataPath[]; count: number } | DataLedger
+export interface DataJournalEntry { cursor: number; kind: 'write' | 'delete'; path: DataPath; changedTo: 'present' | 'absent' }
+export type DataJournalAnswer =
+  | { status: 'read'; from: number; through: number; floor: number; entries: readonly DataJournalEntry[]; count: number }
+  | DataLedger
+export interface DataSurfaceOptions {
+  /** The app's profile directory; the FILE's name is this module's own choice (D-13). */
+  profileDir: string
+  journalLength?: number
+}
+export interface DataSurface {
+  read(args: unknown): DataReadAnswer
+  write(args: unknown): DataWriteAnswer
+  delete(args: unknown): DataDeleteAnswer
+  list(args: unknown): DataListAnswer
+  journal(args: unknown): DataJournalAnswer
+}
+export type DataToolName =
+  | 'provident.data.read' | 'provident.data.write' | 'provident.data.delete'
+  | 'provident.data.list' | 'provident.data.journal'
+export declare const DATA_TOOL_NAMES: readonly DataToolName[]
+export declare function createDataSurface(options: DataSurfaceOptions): DataSurface
+```
+
+`DATA_TOOL_NAMES` is the five names in `interface.md` §1's declared order and is the only member of this surface that is a value (`interface.md` §1, §2). `journalLength` defaults to the seam's `DEFAULT_JOURNAL_LENGTH` (`4096`) and bounds this module's own window (`src/main/storeroom.ts:53`; D-12).
+
+## 2. The module's private files — not imported by the battery
+
+`src/main/data/` is seven files and only `index.ts` leaves the module; these stubs fix the seams between them (`design.md` §1; D-14):
+
+```ts
+// ---- types.ts: §1's declarations and the DATA_TOOL_NAMES value, in one home ----
+
+// ---- args.ts ----
+export type Parsed<T> = { ok: true; value: T } | { ok: false; ledger: DataLedger }
+export function parseRead(args: unknown): Parsed<{ path: DataPath }>
+export function parseWrite(args: unknown): Parsed<{ path: DataPath; value: unknown }>
+export function parseDelete(args: unknown): Parsed<{ path: DataPath }>
+export function parseList(args: unknown): Parsed<{ prefix: DataPath | null }>
+export function parseJournal(args: unknown): Parsed<{ from: number }>
+export function isVolatile(path: DataPath): boolean            // 'mem.' | 'temp.' | 'secure.' (D-13)
+export function pathText(path: DataPath): string               // the sort key: JSON.stringify(path) (ASM-L2-2)
+
+// ---- store.ts ----
+export const PROFILE_FILE_NAME = 'provident-profile.json'      // persistence.md §1; D-13
+export type ProfileStore = ReturnType<typeof createProfileStore>   // no package type spelled (D-5)
+export type StorePort = {
+  open(): { kind: 'ready'; store: ProfileStore } | { kind: 'cold' } | { kind: 'unreachable'; ledger: DataLedger }
+  construct(): { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger }
+}
+export function createStorePort(options: DataSurfaceOptions): StorePort
+
+// ---- mapper.ts ----
+export function probeOutcome(caught: unknown): { kind: 'branch' } | { kind: 'absent' } | { kind: 'ledger'; ledger: DataLedger }
+export function refusalLedger(caught: unknown, path?: DataPath): DataLedger
+export function sentence(reason: DataRefusalReason): string     // the fixed module sentences (interface.md §3)
+
+// ---- journal.ts ----
+export type ChangeJournal = {
+  append(kind: 'write' | 'delete', path: DataPath, changedTo: 'present' | 'absent'): number
+  window(from: number):
+    | { ok: true; from: number; floor: number; through: number; entries: readonly DataJournalEntry[] }
+    | { ok: false; floor: number; through: number }
+}
+export function createJournal(length: unknown): ChangeJournal
+
+// ---- surface.ts ----
+export function createDataSurface(options: DataSurfaceOptions): DataSurface
+```
+
+`probeOutcome` classifies a caught probe refusal and the operation composes the answer: `branch` means the caller then reads the branch, `absent` means the absent answer or the empty receipt, `ledger` means the mapped refusal (`design.md` §3; `guide §4`).
+
+## 3. The store-status mapping — the eleven reason words are closed
+
+Each store status this module can meet, and the one word it answers with (`interface.md` §2, §3; `guide §8.1`; D-5, D-11):
+
+| store status | arm | reason word |
+|---|---|---|
+| `AddressMalformed` | any verb, where the guard already passed (a residue, not a route) | `address-malformed` |
+| `AddressNotFound`, `LeafHasNoDownstream` | `write` — the parent does not stand | `parent-absent` |
+| `AddressNotFound`, `LeafHasNoDownstream` | the `read`/`list` probe — no refusal reaches the caller | the `absent` answer or no rows |
+| `AddressNotFound`, `LeafHasNoDownstream` | the `delete` probe — no refusal reaches the caller | the empty receipt (`behaviour.md` §6) |
+| `ReadTargetIsBranch` | the `read`/`list` probe | the `branch` answer (`interface.md` §2) |
+| `ReadTargetIsBranch` | the `delete` probe | the empty receipt (ASM-L2-6) |
+| `ContainerKindConflict`, `WriteParentNotLink` | `write` | `container-kind-conflict` |
+| `ValueRefusedAtBoundary`, `ValueNotAdmitted` | `write` — the package's walk, before any verb | `value-not-admitted` (`guide §10`) |
+| `FileCommitFailed` | `write`, `delete` — the store's rollback has already run | `write-failed` (`guide §9.4`) |
+| `FilePathUnreachable`, `ConstructionArgumentMissing` | `storeCreate` | `store-unreachable` (`guide §8.2`) |
+| `TierNotFound`, `OutOfDomainTier`, `ParentAnchorMonotonicityViolation`, `JournalOpUnknown`, `RollbackCompacted`, `ConstraintListInvalid`, `ConstraintBodyThrew`, `ConstraintRefusedAtRegistration`, `ConstraintPassRefused`, and any escape-arm string | any verb | `store-refused`, carrying the status verbatim in `storeStatus` |
+| a thrown value carrying no string `status` (the declared class-test `TypeError`, `guide §8.3`) | any verb | `store-refused`, with `storeStatus` absent and a fixed module sentence |
+
+Every arm carries `message`: the store's own generated sentence where the store refused, a fixed module sentence otherwise; `floor` and `through` ride the `cursor-unknown` arm alone (`interface.md` §3; D-12).
+
+## 4. Every answer an operation can return
+
+The battery's rows are written against this closed set (`interface.md` §2, §3; `behaviour.md` §1-§6; D-11):
+
+| Operation | The answer statuses, and nothing else |
+|---|---|
+| `read` | `read`/`row`, `read`/`branch`, `absent`; ledgers: `malformed-arguments`, `volatile-path`, `address-malformed`, `store-unreachable`, `store-refused` |
+| `write` | `committed` with the minted `cursor`; ledgers: `malformed-arguments`, `root-not-writable`, `volatile-path`, `store-unreachable`, `parent-absent`, `container-kind-conflict`, `value-not-admitted`, `write-failed`, `address-malformed`, `store-refused` |
+| `delete` | `committed` with `removed:true` and a cursor, or `removed:false` with `tiers:[]` and `cursor:null`; ledgers: `malformed-arguments`, `root-not-writable`, `volatile-path`, `store-unreachable`, `address-malformed`, `write-failed`, `store-refused` |
+| `list` | `read` with `prefix`, `paths`, `count`; ledgers: `malformed-arguments`, `address-malformed`, `store-unreachable`, `store-refused` |
+| `journal` | `read` with `from`, `through`, `floor`, `entries`, `count`; ledgers: `malformed-arguments`, `cursor-unknown` |
+
+## 5. Assumptions this design makes, each with the alternative it rejected
+
+| id | Assumption | Rejected alternative |
+|---|---|---|
+| ASM-L3-1 | `list` and `journal` never answer `volatile-path`: `list.prefix` is not narrowed, and `list` answers whatever rows stand — none, since nothing volatile was ever written (D-13) | refusing a volatile `prefix`, which narrows a tool `interface.md` §1 declares as answering rows, i.e. an L2 change made at L3 |
+| ASM-L3-2 | the store is built at the first `write`, and at the first `read`/`list`/`delete` whose profile name is occupied; an absent directory therefore answers the cold tier for those three and `store-unreachable` for `write` (`behaviour.md` §9 read through §1) | constructing on every operation, so a read-only profile pays the exclusive file create (`guide §9.1`) against `persistence.md` §1's no-filesystem-act |
+| ASM-L3-3 | the seam gains one optional `filePath` on `ProfileStoreOptions`, and `src/main/data/` imports `createProfileStore` and never the package (D-5) | a second import of `provident-storeroom` under `src/main/data/`, which breaks the seam's declared purpose and its pinned census (`src/main/storeroom.ts:5-8,45-53`) |
+| ASM-L3-4 | `journalLength` is honoured only where it is a positive safe integer; otherwise the seam's `DEFAULT_JOURNAL_LENGTH` stands (`src/main/storeroom.ts:53`; D-12) | passing a hostile figure through, which makes construction throw and turns every `write` into `store-unreachable` |
+| ASM-L3-5 | a thrown value with no string `status` answers `store-refused` with `storeStatus` absent (`guide §8.3`) | a twelfth reason word for the status-less class test, which widens `interface.md` §2's closed vocabulary |
