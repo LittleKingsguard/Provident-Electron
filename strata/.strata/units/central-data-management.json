@@ -1,12 +1,13 @@
 {
   "unit": "central-data-management",
-  "layer": "L3",
+  "layer": "L0",
   "stage": "done",
   "artifacts": [
     "module-map",
     "e2e-design-rev2",
     "l2-integration-battery",
-    "l3-unit-battery"
+    "l3-unit-battery",
+    "central-data-module"
   ],
   "assumptions": [
     {
@@ -18,7 +19,7 @@
   ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-29T03:58:15.775Z",
+  "updated": "2026-10-29T03:59:30.449Z",
   "lastFailure": {
     "artifact": "l3-unit-battery",
     "reason": "red"
