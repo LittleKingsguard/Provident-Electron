@@ -31,3 +31,8 @@
   the unit stays at L0 with its walkthrough red (D-10, D-11; `strata/records/central-data-management-walkthrough.md`).
 - **This file discharges** exception §7's last bullet: both findings and the L2 examiner's readings now stand here rather
   than as a pointer in `docs/L1/`.
+
+**Reclassified by D-24:** every finding above is the store working as designed; the only
+demand is documentary. The purge rule and the absent-address refusal family are documented in the
+shipped guide (no demand); the boot behaviour over non-image bytes and the member ordering are not
+(two documentation defects).

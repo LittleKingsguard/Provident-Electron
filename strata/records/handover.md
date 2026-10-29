@@ -49,8 +49,13 @@ persisted: **written** `provident-operator-settings.json`, `provident-profile.js
 - **The walkthrough stages no built artifact** — a PASS certifies the documentation, never the app.
 - **A fix over prose must be re-read, not substituted:** `53` once matched inside `536bdc6`.
 
-## Findings the packages owe upstream (in the unit records, D-5)
+## Findings against the package: one documentary demand, none behavioural (D-24)
 
-`delete` at an absent address throws `AddressNotFound` · no declared boot arm over non-image bytes · a
-`file`-tier write purges the `mem` version at its own key (the behaviour `ASM-1` rests on) · object
-members come back **sorted**, so a durable value must be an ordered array (`P-2`).
+All four behaviours a unit met are **intended**: `AddressNotFound` on a delete of an absent address · no
+declared boot arm over non-image bytes · a `file`-tier write purging the `mem` version at its own key
+(the behaviour `ASM-1` rests on) · members returning in a fixed order (`P-2`). Measured against the
+installed `provident-storeroom@1.6.1` guide: the purge rule (`README.guide.md:380-382,423-424`) and the
+absent-address refusal family (`:351,359,425`) are **documented — no demand**; the **boot over
+non-image bytes** and the **member ordering across the crossing** are described nowhere in the guide's
+prose (ordering appears only in `RELEASE-NOTES.md`) — **two documentation defects**, filed in the unit
+that met each and handed off under D-5. No behavioural demand stands against either package.

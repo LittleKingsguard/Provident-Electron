@@ -35,3 +35,8 @@
   earlier reading of `S-1` as a literal ban is retired.
 - Discharged: run 2 came back `PASS` and the unit is closed with its three findings fixed in place
   (`strata/records/settings-carrier-retirement-walkthrough.md`).
+
+**Reclassified by D-24:** every finding above is the store working as designed; the only
+demand is documentary. The purge rule and the absent-address refusal family are documented in the
+shipped guide (no demand); the boot behaviour over non-image bytes and the member ordering are not
+(two documentation defects).

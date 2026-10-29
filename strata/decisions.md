@@ -471,3 +471,31 @@ D-16 said the rebuild would own it. The file is now **deleted** (D-16 executed),
 row whose wording names a file gets a corrigendum like this one when the file goes (D-21's rule). The
 alternative — silently reading D-15's cite as historical — leaves a reader chasing a path that no longer
 exists, which is the drift the corpus exists to prevent.
+
+---
+
+## D-24 — The four package findings are intended behaviour; any gap is documentary
+
+**Status:** ACTIVE · **Date:** 2026-10-29
+
+**Source (user, verbatim):** "All of the package findings listed are intended behavior and should be
+described in documentation. If documentation is missing that should be passed as a documentation defect"
+
+**Decision:** none of the four findings is a behavioural defect. `AddressNotFound` on a delete of an
+address where no row stands, the absence of a declared boot arm over non-image bytes, a `file`-tier write
+purging the `mem` version at its own key, and a durable value's members returning in a fixed order are
+all **the store working as designed**. The only demand that can stand against any of them is that the
+package's documentation **describe** it.
+
+Consequences, and they move the records:
+
+- The unit records reclassify each row: `intended` plus its documentation status, never a behavioural
+  demand. A row whose behaviour the shipped guide already describes carries **no demand at all**.
+- Measured against the installed `provident-storeroom@1.6.1` guide at this head: the purge-at-own-tier
+  rule is **documented** (`README.guide.md:380-382,423-424`), and the absent-address refusal family is
+  documented (`:351,359,425`) including the delete arm — **no demand**. The boot behaviour over
+  non-image bytes and the member ordering across the crossing are **not described anywhere in the
+  guide's prose** (the only mention of ordering is `RELEASE-NOTES.md`) — those two are **documentation
+  defects**.
+- A documentation defect is filed in the unit record of the unit that met it and handed off the same way
+  any finding is (D-5); it never justifies a code change in this repo or in the package.

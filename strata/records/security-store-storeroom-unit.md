@@ -29,3 +29,8 @@
 - **Owed elsewhere, and named because it bounds this unit's evidence:** the app cannot boot at this head — `dist/main/main.cjs`
   dies at module load on the ESM-only package's `import.meta.url` (`npm run battery`/`divergence` cannot see it) — so the
   instance is absent from the product until that host-side defect has its own unit (L2 examination return, `F-1`/`F-2`).
+
+**Reclassified by D-24:** every finding above is the store working as designed; the only
+demand is documentary. The purge rule and the absent-address refusal family are documented in the
+shipped guide (no demand); the boot behaviour over non-image bytes and the member ordering are not
+(two documentation defects).
