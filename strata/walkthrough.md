@@ -44,6 +44,14 @@ owning layer of the cited document — L1, L2 or L3 — and L0 never edits anoth
 (D-3). `UNUSABLE` routes to L1. A unit is recommended as ready only on `PASS`; any other verdict
 still reaches the user, carrying a loop recommendation and never presented as readiness (D-1).
 
+**The verdict's envelope form.** A run returns `PASS` for `PASS` and `FAIL` for the other three, because
+`envelope.md` §2's set is closed and carries no walkthrough member; the record keeps the four-word
+verdict, and the return's `rootCause` names what was contradicted (`envelope.md` §2, D-1).
+
+**An instrument error is not a corpus finding.** When a staged root, a copied tree listing or the
+runner's own tooling supplies a false reading, the record states it beside the verdict and the corpus is
+not amended for it: that listing is L0's instrument, never evidence about the tree (§3, D-1).
+
 ## 6. Record
 
 L0 writes the report to `strata/records/<unit>-walkthrough.md`, ≤ 40 lines, replaced on every run

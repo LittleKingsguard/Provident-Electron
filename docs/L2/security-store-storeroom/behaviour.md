@@ -1,7 +1,7 @@
 # L2 — `security-store-storeroom`: the behaviour
 
 - **Layer:** L2 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 1 is read through this one. The rows that asserted an answer `interface.md` did not declare are re-grained to declared answers: the **construction act and the six import arms** (§1, §3 — declared in `interface.md` §2.1), the **receipt's ordinal** (§2 — `ASM-L2-7`: differences, not an absolute origin), the **`enabled` order** (§2, §3 — `A-5`, and the row now discriminates against `VALID_GROUPS` order), the **carrier's `read` condition** (§10 — `interface.md` §5), the **composition site** (§10 — `main.ts`), and the **transition answer** (§10 — no receipt member, `ASM-L2-4`). §9's four weak cells are re-grained to the import closure with their limits stated in the row. **Status:** DESIGN — the integration battery is filed against this file (D-1 §4)
-- **Inputs:** `interface.md` §0-§8; L1 §3/§4/§5/§6; exception §1/§2/§8; D-5, D-12, D-13, D-16..D-20; the package's shipped guide and declaration at this head (read, never edited — D-5)
+- **Inputs:** `interface.md` §0/§1/§2/§2.1/§3/§5/§5.1/§6/§7/§8; L1 §3/§4/§5/§6; exception §1/§2/§8; D-5, D-12, D-13, D-16..D-20; the package's shipped guide and declaration at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; **the declaration** is its `index.d.ts` (D-5)
 
 ## 1. A first boot over no file

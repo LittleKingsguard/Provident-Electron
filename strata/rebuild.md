@@ -11,6 +11,10 @@ recommendation is rejected; the streak alone is also not enough, and the examine
 whether the code is worth salvaging. An adjudication request from a lower layer counts as one failure
 (D-1 §5): asking is not a pause and is not free.
 
+The streak is cleared **per artifact**: that artifact's own `pass` deletes its entry, a `pass` on a
+sibling leaves it standing, and `lastFailure` is cleared only by `rebuild` — so a per-artifact
+`streaks` map and a standing `lastFailure` can both be true at once (`platform.md` §4, D-1).
+
 ## 2. What the examiner may emit
 
 `examiner.md` §4 — one statement of the rule, not two, and the envelope check enforces it (D-1).

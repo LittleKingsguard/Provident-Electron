@@ -35,6 +35,6 @@ ledger move is recorded in D-9 — the suite's known-red set went from three row
 
 ## Checks after the sweep
 
-`npm test`: `2 failed / 3,095 passed / 2 skipped` of `3,099` over `91` files, the two being
-`tests/store-tabs-record.test.ts` §4.2 items 7 and 8. `npm run typecheck`, `npm run typecheck:tests`
-and `npm run build` all clean. `strata-lint`: exit 0, 34 checks.
+The sweep's own reading is `archive.md` §3's. At this head the legs read `2 failed / 3,175 passed /
+2 skipped` of `3,179` over `112` files (two reds: `store-tabs-record` §4.2 items 7 and 8), the other
+three legs are clean, and `strata-lint` is exit 0 over 42 checks (`strata/brief.md` §6).

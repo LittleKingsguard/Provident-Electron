@@ -499,3 +499,56 @@ Consequences, and they move the records:
   defects**.
 - A documentation defect is filed in the unit record of the unit that met it and handed off the same way
   any finding is (D-5); it never justifies a code change in this repo or in the package.
+
+---
+
+## D-25 — The import carries the record; the exclusion pair is not an import member
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-19**, which stands as filed (D-1 makes this
+log append-only). **Source:** D-19's own wording, read against the tree at the exit walkthrough of
+`security-store-storeroom` (run 3) and the layer documents that carry the design.
+
+**Decision:** D-19's decision stands whole — the instance reads the legacy profile bytes once and then
+owns a new shape, and the import carries a red set because a silent capability change on upgrade is
+exactly the loss D-13's freedom must not buy. What this row corrects is D-19's **enumeration** of that
+red set. It named "an operator's token, grants, exclusion state and tier-4 flag" as surviving the import;
+measured at this head, the import carries **exactly the four record members**, and the exclusion pair is
+not among them.
+
+- The durable record at `['operator-settings']` (`file` tier) holds the token, the enabled-grant set,
+  `maxJournalLength` and the ordered entries row set (`src/main/operator-settings/index.ts:113,537`).
+- The exclusion pair at `['operator-exclusion']` is a `mem` row, written in memory and **never persisted**
+  (`:114,499`; `docs/L1/security-store-storeroom.md` §3 `ASM-2`, `docs/L2/security-store-storeroom/interface.md`
+  §1/§7 `ASM-L2-2`), so it boots to the safe pair `'mcp-enabled'` on every start and is not an import
+  member at all.
+
+**Consequence, stated because it moves a claim:** the upgrade's red set is the record's four members, not
+five. An operator's exclusion state and tier-4 flag survive a **restart** in the sense that the declared
+default is the safe one they are designed to boot to; they do not survive as data, and a reader who takes
+D-19's list literally would design an import that carries a pair the store is built never to persist.
+
+---
+
+## D-26 — A live count is a measurement, and measurements live in `brief.md` §6
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-9 and D-10** on the numbers they carry,
+which stand as filed. **Source:** D-9's and D-10's own wording, measured against the suite at this head
+(`2 failed / 3,175 passed / 2 skipped` of `3,179` over `112` files) after the fifth blind walkthrough of
+`strata-bootstrap` filed the drift as its top finding class.
+
+**Decision:** a count that describes **this tree right now** is a measurement, and a measurement has one
+home — `brief.md` §6's instrument table, which is rewritten whenever it is re-measured. A `D-n` row may
+carry a count, and where it does, the number is that row's own dated reading and is **not** a claim about
+the tree today: a reader takes the current figure from §6 and never from the row.
+
+- D-9's "`3,114` collected rows before the sweep and `3,099` after" is the **sweep's delta** and stays
+  exactly as filed; it measures what that pass moved, not what the suite holds now.
+- D-10's "the existing 3,099 rows keep running where they are" fixes the **rule** — the suite keeps running
+  in place until the map claims its paths — and its number is D-10's date, not today's reading.
+- Any live document outside the register follows the same rule: it cites §6 rather than restating a count,
+  so a re-measurement touches one table instead of a corpus (`brief.md` §6, D-1).
+
+**Consequence, stated because it is the failure this row answers:** three walkthrough runs have now filed
+a stale count as their finding, and each was "fixed" by writing a newer number into another document, which
+drifted again at the next commit. The fix is to stop restating measurements outside the one table that owns
+them — not to keep re-measuring faithfully into a dozen files.

@@ -20,10 +20,10 @@
     }
   ],
   "streaks": {
-    "walkthrough-record": 2
+    "walkthrough-record": 3
   },
-  "rebuildEligible": false,
-  "updated": "2026-10-29T21:34:45.016Z",
+  "rebuildEligible": true,
+  "updated": "2026-10-29T22:12:45.568Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

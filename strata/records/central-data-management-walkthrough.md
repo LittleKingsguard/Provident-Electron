@@ -1,40 +1,27 @@
-# record — `central-data-management` exit walkthrough (D-10; replaced on every run)
+# record — `central-data-management` exit walkthrough, run 3 (D-10; replaced on every run)
 
-**Scenario set** (L0-authored from the documentation): 1 use the `data` surface · 2 what owns the data ·
-3 follow a write to its receipt · 4 find the census numbers and their pins · 5 report a defect.
-Seat: one fresh delegation, quarantined to `strata/`, `docs/L1..L3/`, the root pointers and
-`src/main/data/` file names.
+**Scenario set** (L0-authored from the documentation): 1 use the `data` surface and say how a group is
+granted · 2 say what owns a written row and which profile files are only seeded · 3 follow a write to its
+receipt, and a write that cannot land · 4 find the census numbers and the pins that move with them ·
+5 report a package defect and say what may be demanded. Seat: one fresh delegation, staged to
+`/tmp/wt-central-data-management/` — `strata/`, `docs/L1..L3/`, the root pointers, `package.json`, a
+tracked-path listing, an archived-path listing and the built bundles; no `src/`, no `tests/`.
 
-## Run 1 — `STALE`
+## Run 3 — `STALE` (not green)
 
-All five steps were answerable with citations, and the runner reached the right numbers (27 / 6 / 8 /
-3 / endpoints 15 / cap 200) from the exception document. What it falsified:
+Every step was answerable with a resolving citation, and the census was re-counted from the built bundles:
+27 tools / 6 groups (6/2/6/5/3/5) / 3 resource URIs, default grant 8 names, 13 with `data`; `central-data`
+at N=15 and cap 200. Four claims were falsified; each is routed, none edited here (D-3):
 
-| Finding | Disposition |
-|---|---|
-| `README.md`'s MCP-surface block still read **22 tools in five groups**, summing to 22 | fixed in place — 27 in six groups, 6+2+6+5+3+5, 13 names with `data` |
-| `strata/brief.md` §2 still read **22** tools and **5** groups, with a dead `security.ts:5-42` cite | fixed in place — 27 tools, six groups, both `VALID_GROUPS` copies cited |
-| The unit's state carried `stage: done` and a stale `lastFailure` beside a walkthrough that had not run | recorded honestly: the walkthrough is a failure on the unit until a run passes |
-| Only 2 of the unit's 5 artifacts had a return in `.strata/returns/` | noted, not reconstructable — the L2/L3 envelopes were not persisted as they were returned |
+| # | Falsified claim | Owner | Disposition |
+|---|---|---|---|
+| 1 | `README.md` said a group is granted through the Settings pane, so enabling `data` reaches 13 — but `src/renderer/secure-panels.ts:72` enumerates **five** names and builds one toggle each, so the sixth group has no control | L0 (README), the pane's unit (code) | README re-grained to the measured five-way list; the pane gap filed in the unit record as owed to its own unit |
+| 2 | L1 §8 `C-2` and exception §2 close the re-grain set over the group set's two copies; the pane's five-name list is a third reader that stands in no class (D-11) | L1 | routed |
+| 3 | L1 §4 says the five `data.*` routes are answered in main; `docs/L2/central-data/interface.md` §5 records them **Unlanded**, and the build carries no `data.*` string | L1 | routed |
+| 4 | L1 §5 locates twelve scenarios in `tests/e2e/`; no central-data path is tracked there | L1 | routed — the battery is authored in this pass |
 
-**docs-insufficient, routed rather than fixed here:** no document narrates *granting* a group (every text
-describes the enabled state); no document says whether the five `data.*` bridge routes answer while the
-group is off; and D-16/D-18's MCP-isolation invariant names no row, so the isolation is believed, not
-checked. The last one is the `security-store-storeroom` rebuild's to build (D-16/D-18), not this unit's.
+`docs-insufficient`: none — run 1's two silences are answered. `undocumented`: the pane's five-way group
+list, and a renderer caller reaching the method switch's `unknown method` for the declared vocabulary.
 
-**Verdict: not green.** A second blind run is owed before this unit is recommended as ready (D-10, D-11).
-
-## Run 2 — `STALE` (not green)
-
-Second blind run, same seat: every step answerable with a citation, and the census figures reachable from the exception
-document. Five falsified claims, all corrected in place this pass:
-
-| Finding | Disposition |
-|---|---|
-| L1 §2 and `ASM-5`: the **19-module / N=16** snapshot against a map of 20 rows and `endpoints: 15` | 20 modules; `central-data` 15, `operator-settings` 12 and the `settings-surface` row at 19 named; ASM-5 at 5 exports with `register` off the called set |
-| Citations to the **deleted** `src/main/security-store.ts` — L1 §3/§4, exception §2 `E-1`, `interface.md` §4, `behaviour.md` §8, `brief.md` §2 | repointed: `src/main/operator-settings/index.ts:112,178` for the group set's second copy, `settings-surface/index.ts:75-77,132` + `mcp-server.ts:42-57` for the tier-4 token |
-| `persistence.md` §1/§7 named `provident-security.json` a steady-state **written** name | seeded-only (D-19); `provident-operator-settings.json` is the written operator file, and `provident-settings.json` is a seed too (D-22) |
-| Pins that no longer land: exception §1's `strata/modules.json:72`, L1 §8 `C-2` | each resolves to the `central-data` row (`modules.json:82`, row `73-83`) and to the second live copy's actual home |
-| The two silences run 1 carried | `interface.md` §5 settles the routes' answer with the group off, alternative recorded, and marks it **unlanded**; the second copy is named at its home everywhere it was implied |
-
-**Verdict: not green.** A third blind run is owed before this unit is recommended as ready, and it stays at L0 with its walkthrough red (D-10, D-11).
+**Verdict: not green.** The README finding is L0's and is fixed; the other three are L1's and are routed.
+A fourth blind run is owed before this unit is recommended as ready (`walkthrough.md` §5, D-10, D-11).

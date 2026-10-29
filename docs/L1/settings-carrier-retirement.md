@@ -18,7 +18,7 @@
 | `settings-surface` | no path moves; delegates two verbs and therefore consumes the same two (D-14 counts both sides) | **15 → 19** |
 | `app-shell` | no path and **no channel** moves: `STORE_FILE_GET`/`STORE_FILE_PUT` keep their names, answers and two `invoke` sites | **7**, unmoved |
 
-The unit's batteries are claimed by `operator-settings` — `tests/integration/settings-carrier-retirement/` (L2's) and `tests/unit/settings-carrier-retirement/` (L3's) — because the artifact under test is the instance's durable record; `tests/e2e/` is L1's own artifact and no module row claims it (D-10, `modules.md` §3).
+The unit's batteries are claimed by `operator-settings` — `tests/integration/settings-carrier-retirement/` (L2's), `tests/unit/settings-carrier-retirement/` (L3's) and `tests/e2e/settings-carrier-retirement/` (this layer's) — because the artifact under test is the instance's durable record; `tests/e2e/` is L1's own artifact by write scope and its rows sit on that row so the map resolves them (`strata/brief.md` §3; `strata/modules.json`; D-10, `modules.md` §3).
 
 ## 3. The retirement's exact surface (D-22)
 
@@ -92,7 +92,11 @@ Parity is **the next process, not a substring**: a second `createSettingsSurface
 |---|---|
 | `ISO-7` | no `provident.module.*` tool, `RpcMethod` member or bridge route reaches `['operator-settings']` or the exclusion address: after `module.install`, `module.update` and `IPC_MODULE_SET_DISABLED`, the security record at its address is byte-identical and the app-state record is the only one that moved |
 
-## 8. The L1 battery — twelve scenarios, `tests/e2e/settings-carrier-retirement/` (this layer's artifact)
+## 8. The L1 battery — twelve scenarios at `tests/e2e/settings-carrier-retirement/scenarios.test.ts` (this layer's artifact)
+
+**Authored after the implementation, so it carries no red-first evidence** — the rows are written against the
+documents and the shipped surface, and a red row is a finding against the code or this design, never evidence about
+ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D-15).
 
 | # | Goal | Expected |
 |---|---|---|

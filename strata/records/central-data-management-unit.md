@@ -22,17 +22,19 @@
 - **Owed to the test writer of this layer:** E-2's re-grain set — `C-1`..`C-3` of `docs/L1/central-data-management.md` §8 —
   moved by one predicate (*a site is in the set iff it reads one of the moved numbers*), recording both the rows it moved
   and the sites the predicate left green (exception §2/§3; D-10).
-- **Owed and unlanded at this head:** the five `provident.data.*` bridge routes have **no answer site** — the renderer's
-  method switch has no `data.*` arm and `main.ts` registers no IPC handler for them — so `interface.md` §5's answer is
-  design and not a measurement (`docs/L2/central-data/interface.md` §5).
+- **Owed and unlanded at this head:** the five `provident.data.*` bridge routes have **no answer site** — no `data.*` arm
+  in the renderer's method switch, no IPC handler in `main.ts` — so `interface.md` §5 is design, not measurement.
 - **Discharged, not owed:** the parked `ASM-11` retirement half (the one-time import and the retirement of
   `provident-settings.json`'s write site) was delivered by `settings-carrier-retirement` (D-22), which owns that record.
-- **Owed by L0 before the unit is recommended ready:** a further blind walkthrough run — runs 1 and 2 are not green, so
-  the unit stays at L0 with its walkthrough red (D-10, D-11; `strata/records/central-data-management-walkthrough.md`).
+- **Owed by L0 before the unit is recommended ready:** a further blind walkthrough run — runs 1, 2 and 3 are not green,
+  so the unit stays at L0 with its walkthrough red (D-10, D-11; `strata/records/central-data-management-walkthrough.md`).
+- **Owed to the pane's own unit, surfaced by run 3 and not repairable here:** `src/renderer/secure-panels.ts:72` enumerates
+  five group names, so the sixth group is in the gate and in the persisted grant but has **no operator control** — the
+  group cannot be enabled from the Settings pane. The group set's third reader is therefore outside `C-1`..`C-3`'s closure,
+  and `README.md` now states the pane's five-way list rather than the six-way grant it claimed.
 - **This file discharges** exception §7's last bullet: both findings and the L2 examiner's readings now stand here rather
   than as a pointer in `docs/L1/`.
 
-**Reclassified by D-24:** every finding above is the store working as designed; the only
-demand is documentary. The purge rule and the absent-address refusal family are documented in the
-shipped guide (no demand); the boot behaviour over non-image bytes and the member ordering are not
-(two documentation defects).
+**Reclassified by D-24:** every finding above is the store working as designed — the only demand is
+documentary. The purge rule and the absent-address refusal family are documented in the shipped guide;
+the boot behaviour over non-image bytes and the member ordering are not (two documentation defects).

@@ -6,7 +6,8 @@ The contract is the workflow's, carried whole by D-1; this file fixes nothing ne
 ## 1. Fields
 
 Required are `unit`, `from`, `to`, `verdict` and `artifact`; optional are `testIds`, `rootCause`,
-`assumptions`, `question` and `citations` (D-1). `from` and `to` are layer ids, and a return travels
+`assumptions`, `question`, `citations` and `notes` — the last a free-form remark a reader needs and no
+other field carries (D-1). `from` and `to` are layer ids, and a return travels
 exactly one layer up, so `to` is one below `from` — except from L4 on any non-`PASS` verdict, which
 routes to L2, because L4 owns no design and L3 designed the thing under judgement
 (`examiner.md` §5, D-1).

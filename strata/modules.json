@@ -49,8 +49,10 @@
         "src/main/tier4-state.ts",
         "tests/unit/security-store-storeroom/",
         "tests/integration/security-store-storeroom/",
+        "tests/e2e/security-store-storeroom/",
         "tests/unit/settings-carrier-retirement/",
         "tests/integration/settings-carrier-retirement/",
+        "tests/e2e/settings-carrier-retirement/",
         "tests/module-store.test.ts",
         "tests/store-security.test.ts",
         "tests/tier4-arbitrary-storage.test.ts",
@@ -77,7 +79,8 @@
         "src/main/data/",
         "tests/storeroom-surface.test.ts",
         "tests/integration/central-data/",
-        "tests/unit/central-data/"
+        "tests/unit/central-data/",
+        "tests/e2e/central-data/"
       ],
       "endpoints": 15
     },

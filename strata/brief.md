@@ -94,7 +94,15 @@ as filed, and `ASM-1`'s adoption of it is interim.
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — main, preload, standalone, battery host, renderer | the bundles exist at all |
-| `npm run battery`, `npm run divergence`, `npm run ui` | not run in this pass; `ui` needs a `DISPLAY` | contract-over-stdio; shim-vs-real identity on 9 surfaces; one real-DOM measurement |
+| `npm run battery` | **green** — `184 checks, 0 failures`, run at a seat with a `DISPLAY` | contract-over-stdio, on the battery host only: it carries no `provident-storeroom` and so says nothing about the seam |
+| `npm run divergence` | **red**, exit 1, and the leg root-causes itself: `dist/main/main.cjs:38480` throws `createRequire(undefined)` before any surface is reached | shim-vs-real identity on 9 surfaces — unreachable until the main bundle boots |
+| `npm run ui` | **no verdict** inside a 600 s bound; each attempt dies at the same line, and its own per-boot ceiling is 121,750 ms over 4 attempts | the real-DOM measurement — unreachable for the same reason |
+
+The Electron legs are no longer un-run: one is green and two are red on **one** host-side defect — the
+main bundle is built CJS while the ESM-only `provident-storeroom` resolves its native addon through
+`import.meta.url`, which esbuild's CJS output leaves as `{}`. Nothing in the four-leg floor reaches that
+bundle, so the defect is invisible to `npm test`, to both typechecks and to `npm run build` (`strata/records/
+security-store-storeroom-unit.md` §2 owns it; it is owed its own unit).
 
 The layer rule every later claim inherits: a node-suite green is **envelope-green and never
 app-green** — no window, no IPC, no transport is exercised by `npm test` (D-1; §3's L1 exit).
@@ -123,7 +131,7 @@ correction paragraph or history (D-1).
   at bootstrap. Rejected alternative: a fresh harness before the map, which sets its own scope.
 - `ASM-3` — the four legs of §6 stay the floor of verification, and strata's per-layer batteries add
   to them rather than replace them. Rejected alternative: replacing the vitest suite with L1/L2/L3
-  batteries, which discards the 3,099 existing rows and their coverage.
+  batteries, which discards the existing rows — §6 holds the count, this row does not (D-26).
 
 ## 9. Non-goals at rev 1
 

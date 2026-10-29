@@ -8,10 +8,10 @@
   ],
   "assumptions": [],
   "streaks": {
-    "walkthrough-record": 2
+    "walkthrough-record": 3
   },
-  "rebuildEligible": false,
-  "updated": "2026-10-29T21:34:45.029Z",
+  "rebuildEligible": true,
+  "updated": "2026-10-29T22:12:45.582Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

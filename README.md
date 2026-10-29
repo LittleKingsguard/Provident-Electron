@@ -52,6 +52,11 @@ group's tools are absent from `tools/list` rather than present-and-refusing.
 the persisted `enabled` set in `<userData>/provident-operator-settings.json`. The act is manual-UI only and
 **never an MCP tool** — no agent can grant itself capabilities; enabling `data` brings the listed set to 13.
 
+**The pane's toggle list is five groups**, not six: `src/renderer/secure-panels.ts` enumerates `read`,
+`dispatch`, `graph`, `code` and `module`, so the sixth group is in the gate and in the persisted grant but
+has no control of its own at this head — the gap is recorded, owed to its own unit, and named in the
+`central-data-management` unit record.
+
 A drive is `provident.dispatch` (by css.id, nodeId or wire); observations are `get_rendered_html`,
 `get_markdown`, `list_targets` and `get_node_state`, and every emitted element carries `data-node-id`.
 

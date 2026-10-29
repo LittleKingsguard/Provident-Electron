@@ -12,30 +12,27 @@
 ## 1. What this artifact decides
 
 D-11 puts the tool census in the same unit that registers the tools, and D-15 fixes where that move happens: the live
-tree only, never the archived corpus. The five `provident.data.*` tools are registered from `src/main/mcp-server.ts`
-and gated from `src/main/security.ts`, and both files are claimed by the `mcp-surface` row of the map — not by
-`central-data` (`strata/modules.json:3-32,73-83`; D-11, D-15). This unit therefore cannot execute D-11 without
-touching another module's paths, and `modules.md` §1 forbids a module agent doing that silently.
+tree only, never the archived corpus. Those tools are registered from `src/main/mcp-server.ts` and gated from
+`src/main/security.ts`, and both are claimed by the `mcp-surface` row, not by `central-data`
+(`strata/modules.json:3-32,73-83`; D-11, D-15) — so this unit cannot execute D-11 without touching another module's
+paths, and `modules.md` §1 forbids a module agent doing that silently.
 
-**Decision.** One **declared cross-module exception**, enumerated by path in §2, with a named writer per row in §3
-and a closed set of moved numbers in §4. It licences writes on the stated paths for this unit and no others, it does
-not renew, and it moves no module's declared surface other than the census it names (D-4's precedent for a swept
-pass, D-11, D-15).
+**Decision.** One **declared cross-module exception**, enumerated by path in §2, with a named writer per row in §3 and
+a closed set of moved numbers in §4: writes on the stated paths for this unit and no others, not renewed, moving no
+module's declared surface other than the census it names (D-4's precedent, D-11, D-15).
 
 **The map's one row moves, and only its count.** `central-data`'s N is **15**, not the 16 an earlier count carried:
-the sixth `provident-storeroom` export that count named, `register`, has no call site — the package publishes no
-route by which a caller restricted to `register` observes a change — so the surface consumed is 5 tools + 5 bridge
-routes answered + 5 exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`), measured by this unit's
-L2 examiner at `57c5825` and corrected here (`strata/modules.json:82`; D-14, `strata/platform.md` §4). The cap
-follows: `50 + 10×15 = 200`, and L1 §2 now reads this figure. `mcp-surface` keeps `30` — 22 tools + 3 resources + the
-five `data` tools it registers and gates (D-11).
+the sixth `provident-storeroom` export that count named, `register`, has no call site — the package publishes no route
+by which a caller restricted to `register` observes a change — so the surface consumed is 5 tools + 5 bridge routes
+answered + 5 exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`), measured by this unit's L2
+examiner at `57c5825` (`strata/modules.json:82`; D-14, `strata/platform.md` §4). The cap follows: `50 + 10×15 = 200`,
+and `mcp-surface` keeps `30` — 22 tools + 3 resources + the five `data` tools it registers and gates (D-11).
 
 ## 2. The exception, by path (E-1 census · E-2 rows · E-3 composition)
 
 **E-1 — the census: four files, exactly the lines named.** The first four rows below are the census and nothing else:
-no behaviour of the owning module changes, no exported name changes meaning, no reformatting, no comment sweep
-(D-15, `modules.md` §5). **E-3 is not a census row** — it is one composition line, and it is listed apart so no
-reader takes it for one (D-11, D-13).
+no behaviour changes, no exported name changes meaning, no reformatting, no comment sweep (D-15, `modules.md` §5).
+**E-3 is not a census row** — one composition line, listed apart so no reader takes it for one (D-11, D-13).
 
 | Path (owning row) | The rows that move | Writer |
 |---|---|---|
@@ -47,13 +44,17 @@ reader takes it for one (D-11, D-13).
 **E-3 — composition: one line, and it is not a census.** `src/main/main.ts` (`app-shell`): one import line and the one
 options member on the server's options pass — `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })`
 — which reads `:257` at this head. Without it the five names stand in `ALL_TOOLS` and register nothing, which is D-11's
-own finding read backwards; the surface constructs no store and touches no file until a tool is called, so the boot's
-own behaviour is unmoved (D-11, D-13; `docs/L2/central-data/interface.md` §5). Writer: `central-data`'s L4, one shot.
+own finding read backwards; the surface touches no file until a tool is called, so the boot's behaviour is unmoved
+(D-11, D-13; `docs/L2/central-data/interface.md` §5). Writer: `central-data`'s L4, one shot.
 
 **E-2 — rows, the §8 set, moved by this unit's L2 test writer.** L1 rev 2 §8 names 40 sites in 24 files — 5 `src/`
-statements (they are E-1 above) and 35 test or battery rows, 2 of them compile-reds under `typecheck:tests` — and
-closes the set by one predicate: *a site is in the set iff it reads one of the moved numbers* (L1 rev 2 §8). The
-writer moves exactly that set and records both lists: the rows it moved, and the sites the predicate left green.
+statements (they are E-1 above) and 35 test or battery rows, 2 compile-reds under `typecheck:tests` — by one predicate:
+*a site is in the set iff it reads one of the moved numbers* (L1 rev 2 §8). **The set is not closed, and the predicate
+is what shows it**: `src/renderer/secure-panels.ts:72` declares `const GROUPS = ['read','dispatch','graph','code',
+'module']` — five names, no `data` — with a five-entry `GROUP_LABELS` at `:73` and one Settings toggle per entry at
+`:171`, so the pane cannot grant the sixth group at all. That site reads the moved number and stands in no class of §2
+or §4: an **uncovered site**, whose repair belongs to the unit that owns the pane (the `secure-panels` row), not to this
+exception. The writer moves the 40 sited rows and records both lists — the rows it moved and the sites left green (D-11).
 
 | Class | Rows | Where |
 |---|---|---|
@@ -116,12 +117,11 @@ same finding read backwards.
   this unit's record, upstream-owned (D-5).
 - **Never a second module's behaviour.** E-1 moves a census; it does not reshape `security.ts`'s gate, the union's
   meaning, resource registration, or `MUTATING_METHODS` (L1 rev 2 §4, ASM-9).
-- **Parked: ASM-11's retirement half.** The store's own file is the only *new* written name this unit adds (D-13).
-  The one-time import of `<userData>/provident-settings.json` and the retirement of its write site in
-  `src/main/main.ts` are **not** delivered here: that path is `app-shell`'s and carries the tier-1 crossing, so
-  taking it up would run a second module's contract through one design gate, which D-1 forbids. It is owed to the
-  increment that owns the join, and until then C-3's rows move only if the store's file actually reddens them —
-  which the §8 predicate decides, not this artifact (D-13, D-1).
+- **Parked here, and since executed elsewhere: ASM-11's retirement half.** The store's own file is the only *new*
+  written name this unit adds (D-13). The one-time import of `<userData>/provident-settings.json` and its write site in
+  `src/main/main.ts` were **not** delivered here — that path is `app-shell`'s tier-1 crossing, so taking it up would run
+  a second module's contract through one gate (D-1). D-22 made it the `settings-carrier-retirement` unit, whose L1 §3
+  and §4 are the live declaration; C-3's rows move only if the store's file reddens them (D-13, D-19, D-22).
 - **Parked: nothing else.** The five tools, their five routes, the store's file, the read-only journal and the sixth
   group are claimed paths in `strata/modules.json:73-83` (D-11, D-12).
 

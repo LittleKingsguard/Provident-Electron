@@ -1,7 +1,7 @@
 # strata — the working corpus for Provident-Electron
 
 This directory replaces the gate workflow's 219-file corpus (archived, see `archive.md`). It is the
-only document set the layers read, and every file here has a ceiling.
+only document set the layers read, and every document here declares a ceiling.
 
 ## What is here
 
@@ -15,34 +15,35 @@ only document set the layers read, and every file here has a ceiling.
 | `rebuild.md` | the rebuild protocol and its threshold | 40 |
 | `modules.md` | module isolation, `modules.json`, the harness cap | 40 |
 | `platform.md` | measured deployment and checkout constraints | 60 |
-| `archive.md` | where the gate corpus went, and how its citations resolve | — |
+| `archive.md` | where the gate corpus went, and how its citations resolve | 60 |
+| `README.md` | this file: what is here, how a unit moves, what owns state | 60 |
 | `modules.json` | the module map — L1-owned, absent until the first unit files it (`platform.md` §4 gives its shape) | — |
 | `.strata/units/*.json` | state per unit, script-written: layer, stage, artifacts, assumptions, per-artifact `streaks` (`platform.md` §4 gives the full shape) | 40 |
 | `records/<unit>-<pass>.md` | a review record (walkthrough, sweep): the scenario set or row table, replaced per run | 40 |
 | `.strata/returns/*.json` | layer returns, as collected envelopes | — |
-| `records/<unit>-walkthrough.md` | the L0 walkthrough record, replaced per run | 40 |
+| `records/handover.md` | the session handover: where the branch stands and what a fresh session does next | 60 |
 
 The preset that supplies the roles lives in the deployment, not here (`platform.md` §1). Nothing in
 this tree restates a preset persona — personas point, procedures rule.
 
 ## How a unit moves
 
-1. L0 interviews the user and records the answer in `decisions.md`; the design intent is the row, not
-   a prose plan.
-2. L1 takes `brief.md` plus the tree and files the module map into `modules.json`, then designs the
-   e2e surface into `docs/L1/`.
+1. L0 interviews the user and records the answer in `decisions.md`; the design intent is the row.
+2. L1 takes `brief.md` plus the tree, files the module map into `modules.json`, then designs `docs/L1/`.
 3. Each module goes down L2 → L3 → L4 as `brief.md` §4 describes; each return carries `envelope.md`.
-4. L0 runs the walkthrough (`walkthrough.md`) and reports outcome-first, naming any verdict that is
-   not `PASS` as a loop state rather than as readiness.
+4. L0 runs the walkthrough (`walkthrough.md`) and reports outcome-first; anything but `PASS` is a loop
+   state, never readiness.
 
 ## State, not prose
 
 `strata-state` owns progress: `init`, `enter --layer`, `artifact --id`, `assume --id --text --alternative`,
 `pass`, `fail [--reason] [--from]`, `rebuild`, `close`, `show`. A unit's layer, stage, artifacts, assumptions and per-artifact
 `streaks` live in `.strata/units/<unit>.json`, overwritten at every transition; no document records
-where a unit stands, and the shape is `platform.md` §4's list. This is what keeps the corpus from
-re-growing. A review task (an examiner's measurement, a walkthrough) may leave a return in
-`.strata/returns/` with no unit state row, because it decides nothing about a unit's progress.
+where a unit stands, and the shape is `platform.md` §4's list. `stage` has exactly two legal values,
+written by the script and by nothing else: `design` at `init` and again at `rebuild`, `done` at `close`
+(`platform.md` §4). This is what keeps the corpus from re-growing. A review task (an examiner's
+measurement, a walkthrough) may leave a return in `.strata/returns/` with no unit state row, because it
+decides nothing about a unit's progress.
 
 ## Checking this tree
 
