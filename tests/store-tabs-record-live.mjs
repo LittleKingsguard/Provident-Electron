@@ -88,18 +88,63 @@ function scratchProfile() {
   profiles.push(dir)
   return dir
 }
+/* ── **THE TWO FILE PRIMITIVES, RE-GRAINED UNDER `E-5` (`settings-carrier-retirement`).** ──
+ *
+ * THE RULE (`docs/L1/settings-carrier-retirement.md` §6, §9 E-5): re-grain where the row's subject is
+ * a CHANNEL'S ANSWER; retire with the referent where it is the hand-written machinery. HERE the
+ * subject of every row in this driver is an ANSWER — M5's "the app wrote nothing", M6's "the boot's
+ * write reached the tier", M7's "the close persisted" — and the ANSWER is unmoved. What moved is
+ * WHERE the answer lands.
+ *
+ *   · `seedRecord` still writes `provident-settings.json` — deliberately, and it is now the ONLY thing
+ *     that ever writes it. The old hand-written CARRIER retired (`L1 §3` closed removal list, E-1), so
+ *     this file lives on as the IMPORT ARM'S SEED: `provident-settings.json` is read at most once by
+ *     the second import-once arm (`L1 §4`; `docs/L2/settings-carrier-retirement/persistence.md`) and
+ *     never written back. A seed is exactly what these rows need — a tier-1 row set that exists before
+ *     the first boot — so the seed keeps its name and its shape verbatim.
+ *   · `readPersisted` now reads the APP-STATE RECORD: `<userData>/provident-operator-settings.json`,
+ *     the record at `['operator-app-state']`, whose on-disk value is `{rows:[{name, value}, …]}` — an
+ *     ORDERED ARRAY and never a name→value map, because the crossing does not preserve object member
+ *     order while an array's survives exactly (`src/main/operator-settings/index.ts:16-21`; `L1 §3`
+ *     ASM-1). It is flattened back to `{name: value}` here so every row's comparison keeps reading
+ *     the SHAPE it always read, and every "the file did not move / the write reached the tier" claim
+ *     is now a claim about what a tier-1 commit actually writes (`L1 §6`: "a tier-1 commit moves the
+ *     app-state record at `['operator-app-state']`").
+ *
+ * WHAT THIS IS NOT: a row whose subject was the tmp sequence or the `schemaVersion` stamp — those are
+ * `tests/store-persist.test.ts`'s and are retired THERE. This driver has no such row, so nothing here
+ * is deleted, weakened or re-pointed: two primitives move, and every row above them stands as filed. */
+const SEED_FILE = 'provident-settings.json'   // the RETIRED carrier, now a SEED only
+const APP_STATE_FILE = 'provident-operator-settings.json'
+const APP_STATE_KEY = 'operator-app-state'
 function seedRecord(dir, record_) {
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'provident-settings.json'), JSON.stringify(record_, null, 2))
+  writeFileSync(join(dir, SEED_FILE), JSON.stringify(record_, null, 2))
 }
+/** Tier 1's persisted rows as the app really persists them (the app-state record), flattened to the
+ *  seed's own `{name: value}` shape. `null` means NO RECORD STANDS — the cold tier, which is a
+ *  declared answer and not a defect — so M5's "no write" arm keeps its exact reading. */
 function readPersisted(dir) {
-  const p = join(dir, 'provident-settings.json')
+  const p = join(dir, APP_STATE_FILE)
   if (!existsSync(p)) return null
+  let image
   try {
-    return JSON.parse(readFileSync(p, 'utf8'))
+    image = JSON.parse(readFileSync(p, 'utf8'))
   } catch (e) {
     return { unparseable: String(e) }
   }
+  if (image === null || typeof image !== 'object' || Array.isArray(image)) return null
+  const record = image[APP_STATE_KEY]
+  if (record === null || typeof record !== 'object' || Array.isArray(record)) return null
+  const rows = record.rows
+  if (!Array.isArray(rows)) return { unparseable: 'the app-state record carries no rows array (L1 §3 ASM-1)' }
+  const flat = {}
+  for (const row of rows) {
+    if (row === null || typeof row !== 'object') continue
+    if (typeof row.name !== 'string' || row.name === '') continue
+    flat[row.name] = row.value
+  }
+  return flat
 }
 
 // ── THE LAUNCH VECTOR + THE T-8 PREFLIGHT (no stale app of THIS driver may hold the port). ────
@@ -117,9 +162,13 @@ async function bootApp(profileDir, { cold = false } = {}) {
   const mcp = ++MCP_PORT
   killStale(cdp)
   if (cold) {
-    // A COLD TIER, EXACTLY: the profile exists and carries NO settings file at all, so the
-    // hand-off answers `[]` (the first-ever-boot case `§3.3` item 7 names).
-    rmSync(join(profileDir, 'provident-settings.json'), { force: true })
+    // A COLD TIER, EXACTLY: the profile exists and carries NEITHER the retired carrier's seed NOR any
+    // app-state record, so the hand-off answers `[]` (the first-ever-boot case `§3.3` item 7 names).
+    // `E-5`: BOTH are removed, because either one would give the boot a tier-1 row set to serve — the
+    // seed through the import arm (`L1 §4`) and the record through the store — so leaving the record
+    // behind would make "cold" mean "seeded", which is exactly the vacuity M5 exists to refuse.
+    rmSync(join(profileDir, SEED_FILE), { force: true })
+    rmSync(join(profileDir, APP_STATE_FILE), { force: true })
   }
   const child = spawn(
     electronBinary,
@@ -394,7 +443,7 @@ async function main() {
       const noWrite = order.found !== true && persisted === null
       record('M5', noWrite ? 'PASS' : 'FAIL',
         `${SPEC} §3.3 item 7 (the declared NO-WRITE arm) + §6 PAR-11 / PAR-16 (the cold-tier OUTSIDE arm)`,
-        (`COLD boot (no settings file): the APP'S OWN STORE answers file.tabs.order as ${JSON.stringify({ found: order.found, status: order.status, value: order.value, reason: order.reason })}; the profile still carries ${persisted === null ? 'NO settings file at all' : JSON.stringify(persisted)}; NON-VACUITY CONTROL: a SEEDED profile's file before its own boot was ${JSON.stringify(before)} (so "no file" is the cold arm and not a blanket absence of the instrument)`.replace(/\s+/g, ' ')))
+        (`COLD boot (neither the retired carrier's seed nor any app-state record — E-5): the APP'S OWN STORE answers file.tabs.order as ${JSON.stringify({ found: order.found, status: order.status, value: order.value, reason: order.reason })}; the profile still carries ${persisted === null ? 'NO app-state record at all (so the boot wrote NOTHING — L1 §6\'s claim that a tier-1 commit moves the store\'s record, unexercised because nothing committed)' : JSON.stringify(persisted)}; NON-VACUITY CONTROL: a SEEDED profile's imported rows before its own boot were ${JSON.stringify(before)} (so "no record" is the cold arm and not a blanket absence of the instrument)`.replace(/\s+/g, ' ')))
     } finally { shutdown(app) }
   }
 
@@ -429,7 +478,7 @@ async function main() {
     // so the boot-derived membership must be readable from the tier, never re-derived per boot.
     record('M6', carried && repairLanded ? 'PASS' : 'FAIL',
         `${SPEC} §3.3 items 3/5 (the boot step's ONE evaluated write) + §3.1 M-5 (the record survives the realm)`,
-        `seed order=[] (the F-T2-4 arm): REALM 1's repair landed — its own store reads order=${realm1Order} with the reserved entry ${JSON.stringify(firstRecord.entries.landing.value ?? { reason: firstRecord.entries.landing.reason })} (${repairLanded ? 'the declared re-seat' : 'NOT the declared re-seat'}); REALM 1's file is ${bootMovedTheTier ? 'MOVED — the boot step\'s evaluated write reached the tier: ' + JSON.stringify(fileAfterFirst) : 'BYTE-UNCHANGED — the boot step\'s write did not reach the tier: ' + JSON.stringify(fileAfterFirst)} (before: ${JSON.stringify(fileBefore)}); REALM 2's hand-off reads order=${realm2Order} (${carried ? 'carried' : 'RE-DERIVED, not carried'}); file after realm 2 = ${JSON.stringify(fileAfterSecond)} — ${carried ? 'the boot-derived membership survives the realm' : 'the boot-derived membership is re-derived on every boot and is NOT carried by a landed projection'}`
+        `seed order=[] (the F-T2-4 arm): REALM 1's repair landed — its own store reads order=${realm1Order} with the reserved entry ${JSON.stringify(firstRecord.entries.landing.value ?? { reason: firstRecord.entries.landing.reason })} (${repairLanded ? 'the declared re-seat' : 'NOT the declared re-seat'}); REALM 1's app-state record is ${bootMovedTheTier ? 'MOVED — the boot step\'s evaluated write reached the store\'s record: ' + JSON.stringify(fileAfterFirst) : 'UNCHANGED — the boot step\'s write did not reach the store\'s record: ' + JSON.stringify(fileAfterFirst)} (before, the rows the SEED imported: ${JSON.stringify(fileBefore)}); REALM 2's hand-off reads order=${realm2Order} (${carried ? 'carried' : 'RE-DERIVED, not carried'}); app-state record after realm 2 = ${JSON.stringify(fileAfterSecond)} — ${carried ? 'the boot-derived membership survives the realm' : 'the boot-derived membership is re-derived on every boot and is NOT carried by a landed projection'}`
           .replace(/\s+/g, ' '))
   }
 
@@ -461,7 +510,7 @@ async function main() {
     const refusalsClean = outcome.removeStatus === 'refused' || outcome.removeStatus === 'committed'
     record('M7', orderHeld && !fileUntouched ? 'PASS' : 'FAIL',
         `${SPEC} §2.4 items 1/3 (the two-operation close and its order rewrite) + §3.1 M-5 (persistence)`,
-        `close of the ACTIVE tab over order=["t9","landing"]: callerOperations=${outcome.callerOperations}, refusal=${outcome.refusal}, remove=${outcome.removeStatus}/${outcome.removeReason}, commit=${outcome.commitStatus} (crossings=${outcome.commitCrossings}, repaired=${JSON.stringify(outcome.commitRepaired)}); the app's own store's FINAL order=${JSON.stringify(after.order)} (rewrite holds: ${orderHeld}); the profile file after the close is ${fileUntouched ? 'BYTE-UNCHANGED — the CLOSE did not persist: ' + JSON.stringify(fileAfter) : 'updated'} (shape control: the store answered a RETURNED record, never a throw: ${refusalsClean})`)
+        `close of the ACTIVE tab over order=["t9","landing"]: callerOperations=${outcome.callerOperations}, refusal=${outcome.refusal}, remove=${outcome.removeStatus}/${outcome.removeReason}, commit=${outcome.commitStatus} (crossings=${outcome.commitCrossings}, repaired=${JSON.stringify(outcome.commitRepaired)}); the app's own store's FINAL order=${JSON.stringify(after.order)} (rewrite holds: ${orderHeld}); the app-state record after the close is ${fileUntouched ? 'UNCHANGED — the CLOSE did not persist: ' + JSON.stringify(fileAfter) : 'updated'} (shape control: the store answered a RETURNED record, never a throw: ${refusalsClean})`)
   }
 
   // ── M8 ─────────────────────────────────────────────────────────────────────────────────────

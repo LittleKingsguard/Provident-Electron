@@ -279,20 +279,34 @@ const JOURNAL = 41
  *  channel-only (store-security.md §2.3 item 2) — their presence in the RECORD is a finding. */
 const DECLARED_SECURITY_KEYS = ['token', 'enabled', 'maxJournalLength']
 const FORBIDDEN_SECURITY_KEYS = ['exclusion', 'write', 'schemaVersion']
-/** **THE PERSISTED-FILE SET, RE-GRAINED UNDER C-4 (`2026-10-29`): it is no longer "exactly two".**
- *  `provident-operator-settings.json` is the INSTANCE'S OWN file — created at its construction,
- *  zero-length and empty, and the only writer of it is the instance's one `write` — and the retired
- *  `provident-security.json` STANDS BESIDE IT as the profile's seed: read at most once by the
- *  import-once path, never written, its bytes left exactly as seeded. `provident-settings.json` is
- *  tier 1's. **Old figure `['provident-security.json','provident-settings.json']`; the claim the
- *  census keeps is UNCHANGED — an entry OUTSIDE the declared set is a finding** (`docs/L2/
- *  security-store-storeroom/persistence.md` §1 names this re-grain as owed by this pass). The census
- *  reads `*.json` entries only: Chromium writes its own bookkeeping into `userData` lazily (`Cache/`,
- *  `Code Cache/`, `GPUCache/`, `DIPS`, `Trust Tokens`, `blob_storage/`,
- *  `declarative_performance_observer.db`, `Local Storage`, `Shared Dictionary`, `Dictionaries`,
- *  `Dawn*Cache`) — the S1 driver's own comment names this class, and those are the RUNTIME's, not
- *  the store's. */
-const DECLARED_PERSISTED_JSON = ['provident-operator-settings.json', 'provident-security.json', 'provident-settings.json']
+/** **THE PERSISTED-FILE SET, RE-GRAINED UNDER `E-5` (`2026-10-29`, `settings-carrier-retirement`):
+ *  the set is no longer "three names", and — the point of the split — IT IS NO LONGER ONE KIND OF
+ *  NAME.** `docs/L1/settings-carrier-retirement.md` §6 states the census in its own words: *"Written
+ *  at steady state: `provident-settings.json`, `provident-operator-settings.json`,
+ *  `provident-profile.json` → the last two. The retired names (`provident-security.json`, and now
+ *  `provident-settings.json`) may stand in a profile as seeds, read at most once and never written."*
+ *  So the census is TWO lists, because a SEED and a WRITTEN NAME are different claims and a single
+ *  flat list could not distinguish a legitimate seed from a third writer:
+ *
+ *    · `DECLARED_WRITTEN_JSON` — the two names the app WRITES in this build: the instance's own
+ *      record (created at construction, its one writer the instance's `write`) and the profile
+ *      store's, whose literal lives in `src/main/data/store.ts` (`PROFILE_FILE_NAME`, central-data's
+ *      own census — cited here, not re-pointed).
+ *    · `DECLARED_SEEDED_RETIRED_JSON` — the two RETIRED names, which may only ever be SEEDS: read at
+ *      most once by an import-once path, NEVER written, their bytes left exactly as seeded
+ *      (`L1 §4`, D-19, D-22).
+ *
+ *  **Old figure (`C-4`): `['provident-operator-settings.json', 'provident-security.json',
+ *  'provident-settings.json']`.** The claim the census keeps is UNCHANGED and is now better stated —
+ *  an entry OUTSIDE the declared set is a finding, AND a retired name that MOVED is now a finding
+ *  (its bytes must stand: SC-B-03/B-07 assert exactly that). The census reads `*.json` entries only:
+ *  Chromium writes its own bookkeeping into `userData` lazily (`Cache/`, `Code Cache/`, `GPUCache/`,
+ *  `DIPS`, `Trust Tokens`, `blob_storage/`, `declarative_performance_observer.db`, `Local Storage`,
+ *  `Shared Dictionary`, `Dictionaries`, `Dawn*Cache`) — the S1 driver's own comment names this class,
+ *  and those are the RUNTIME's, not the store's. */
+const DECLARED_WRITTEN_JSON = ['provident-operator-settings.json', 'provident-profile.json']
+const DECLARED_SEEDED_RETIRED_JSON = ['provident-security.json', 'provident-settings.json']
+const DECLARED_PERSISTED_JSON = [...DECLARED_WRITTEN_JSON, ...DECLARED_SEEDED_RETIRED_JSON]
 /** **THE RECORD'S FILE, RE-GRAINED UNDER C-4** (old figure: `'provident-security.json'`). Every
  *  reading of "the security file's bytes" in this battery reads THIS file — the instance's own —
  *  and reads the RECORD at its address inside it (`readPersistedRecord` below); the retired name is
@@ -301,7 +315,23 @@ const SECURITY_FILE = 'provident-operator-settings.json'
 /** The RETIRED name (E-1, D-19): seeded by `seedProfile` so the boot's import-once path has a record
  *  to read, and never written, renamed or repaired by anything. */
 const RETIRED_SECURITY_FILE = 'provident-security.json'
-const SETTINGS_FILE = 'provident-settings.json'
+  /** THE RETIRED TIER-1 CARRIER (`E-5`, D-22). It is a SEED and nothing else: `seedProfile` writes it
+ *  before every boot, the boot's SECOND import-once arm reads it at most once (`L1 §4`), and NOBODY
+ *  writes it again — so every "unmoved bytes" term in this battery is now a claim that a SEED's bytes
+ *  stand, which is one of L1 §6's own new claims. Tier 1's live state is the APP-STATE RECORD at
+ *  `['operator-app-state']` inside `SECURITY_FILE` (`appStateBytes` below), and THAT is what a tier-1
+ *  commit moves. */
+const RETIRED_SETTINGS_FILE = 'provident-settings.json'
+/** The instance's own file — created at construction — which now carries BOTH durable records: the
+ *  security record at `['operator-settings']` and tier 1's at `['operator-app-state']` (`L1 §3`
+ *  ASM-1: "the rows live at `['operator-app-state']` on the `file` tier, beside
+ *  `['operator-settings']` and not inside that record's `entries`"). The retired carrier's name is
+ *  `RETIRED_SETTINGS_FILE`, above. */
+const APP_STATE_KEY = 'operator-app-state'
+/** The retired carrier's name, as every seed/unmoved-bytes reader in this file spells it. ONE
+ *  binding, aliased rather than re-spelled, so a reader who greps `SETTINGS_FILE` finds the seed and
+ *  a reader who greps the literal finds the seed too (`E-5`). */
+const SETTINGS_FILE = RETIRED_SETTINGS_FILE
 const THIRD_FILE = 'third-party-store.json'
 const TMP_RESIDUAL = `${SECURITY_FILE}.tmp`
 /** The `file` tier's own logical path at the SAME tail as the `secure.*` attempt — the name
@@ -621,6 +651,11 @@ function countInCode(src, token) {
  *  instance's own `provident-operator-settings.json` (created at construction) beside the
  *  seeded retired `provident-security.json` and tier 1's `provident-settings.json`; the
  *  property the census asserts is UNCHANGED — the ABSENCE of a name outside the declared set.**
+ *  **RE-GRAINED AGAIN UNDER `E-5`:** `provident-settings.json` is NOT "tier 1's file" any more — it
+ *  is a SEED, and tier 1's live state is the app-state record at `['operator-app-state']` inside the
+ *  instance's file (`L1 §3` ASM-1, `L1 §6`). The census now reports the two kinds separately
+ *  (`writtenPresent` / `seededRetiredPresent`), because "allowed" and "written" are different claims
+ *  and the flat list could not tell them apart.**
  *  `settingsPresent` is REPORTED but not asserted — **and the reason is NOT
  *  "absent on a settled cold boot": this driver's `seedProfile` WRITES the tier-1 file before
  *  every boot, and the run's own reading is `settingsPresent=true` (the `§6.2` audit's `B-F17`,
@@ -638,6 +673,8 @@ function persistedCensus(listing) {
     undeclaredJsonNames,
     securityPresent: listing.includes(SECURITY_FILE),
     settingsPresent: listing.includes(SETTINGS_FILE),
+    writtenPresent: DECLARED_WRITTEN_JSON.filter((n) => listing.includes(n)),
+    seededRetiredPresent: DECLARED_SEEDED_RETIRED_JSON.filter((n) => listing.includes(n)),
     ok: undeclaredJsonNames.length === 0 && listing.includes(SECURITY_FILE),
   }
 }
@@ -689,6 +726,28 @@ function recordInValue(value) {
 }
 function readPersistedRecord(profile) {
   try { return recordInValue(JSON.parse(readOrNull(join(profile, SECURITY_FILE)))) } catch { return null }
+}
+
+/** **TIER 1'S LIVE STATE, READ WHERE IT LIVES NOW (`E-5`, D-22).** The hand-written carrier
+ *  `provident-settings.json` is a SEED: nobody writes it (`L1 §3` closed removal list), so its bytes
+ *  standing is a claim about a seed. The state a tier-1 commit actually moves is the record at
+ *  `['operator-app-state']` inside the instance's own file, beside the security record and NOT inside
+ *  it (`L1 §3` ASM-1: "a `file`-tier write purges only at its own key … the separation is
+ *  structural"). These two readers are the ONLY way any row below reads tier 1's bytes, so no row can
+ *  accidentally measure the seed while claiming to measure the record. */
+function readAppStateRecord(profile) {
+  try {
+    const image = JSON.parse(readOrNull(join(profile, SECURITY_FILE)))
+    if (image === null || typeof image !== 'object' || Array.isArray(image)) return null
+    const record = image[APP_STATE_KEY]
+    return record !== null && typeof record === 'object' && !Array.isArray(record) ? record : null
+  } catch { return null }
+}
+/** Tier 1's persisted bytes, as THIS build persists them: the app-state record's own stable JSON
+ *  (`null` when no record stands yet — a cold tier, which is a declared answer and not a defect). */
+function appStateBytes(profile) {
+  const record = readAppStateRecord(profile)
+  return record === null ? null : JSON.stringify(record)
 }
 
 /** THE TIER-4 CARRIER SCANNER — five NAMED NEEDLES, each a falsifiable byte-shape:
@@ -1056,18 +1115,39 @@ const censusRestored = persistedCensus(settledRestored.list)
  *  own SUBJECT claims *"the SETTLED scratch profile"*, so the honest fix is the term rather than a
  *  declared limit: an unsettled window now reads `FAIL`, and `settled=`/`age` stay PRINTED beside
  *  the verdict so an unsettled run is attributable to its instrument window rather than to the store. */
-check('SC-B-01 (Family B, arm a)', 'the settled scratch profile carries NO `.json` OUTSIDE the DECLARED persisted set — `{provident-operator-settings.json, provident-security.json, provident-settings.json}` after C-4 (the instance\'s own file, the seeded retired name, tier 1\'s), read on a SETTLED listing (`settled === true` is now a VERDICT term: `S6-03`)', settledA.settled === true && censusA.ok ? 'PASS' : 'FAIL',
-  `NAMED TERMS: declaredSet=${JSON.stringify(DECLARED_PERSISTED_JSON)}, jsonNames=${JSON.stringify(censusA.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusA.undeclaredJsonNames)}, securityPresent=${censusA.securityPresent}, settingsPresent=${censusA.settingsPresent}, settled=${settledA.settled} after ${settledA.polls} poll(s) at age ${settledA.ageMs} ms (3 identical reads, ≥12 s floor); the RUNTIME's own lazily-written entries reported: ${JSON.stringify(settledA.added)}`,
-  '**RE-GRAINED UNDER C-4 — the FIGURE moved, the CLAIM did not.** The EXACTLY-TWO persisted-file pin of `docs/specs/store-persist.md` / `docs/FORKER.md` §4 (ii)/(iv) / the `G2` DONE row is no longer a true standing pin: this unit adds one written name (`provident-operator-settings.json`, created at construction) and retires another (`provident-security.json`: read at most once, never written, bytes standing), as `docs/L2/security-store-storeroom/persistence.md` §1 declares and names as owed by this pass. What survives is `store-security.md` §1.2 item 2 read through the declared set — **a `.json` name outside it is a finding** — and the CONTROL below drives exactly that. `settingsPresent` is REPORTED, not asserted — **on a profile THIS battery seeds the tier-1 file is written BEFORE the boot by `seedProfile`, so the run reads `settingsPresent=true` (`B-F17`: the as-filed reason "absent on a settled cold boot" was FALSE of these profiles and was quotable as a measurement).**')
+check('SC-B-01 (Family B, arm a)', 'the settled scratch profile carries NO `.json` OUTSIDE the DECLARED persisted set — the TWO WRITTEN names `{provident-operator-settings.json, provident-profile.json}` with the TWO RETIRED names `{provident-security.json, provident-settings.json}` declared BESIDE them as seeds after `E-5` (L1 §6), read on a SETTLED listing (`settled === true` is a VERDICT term: `S6-03`)', settledA.settled === true && censusA.ok ? 'PASS' : 'FAIL',
+  `NAMED TERMS: declaredSet=${JSON.stringify(DECLARED_PERSISTED_JSON)} (WRITTEN ${JSON.stringify(DECLARED_WRITTEN_JSON)} + SEEDED-RETIRED ${JSON.stringify(DECLARED_SEEDED_RETIRED_JSON)}), jsonNames=${JSON.stringify(censusA.jsonNames)}, writtenPresent=${JSON.stringify(censusA.writtenPresent)}, seededRetiredPresent=${JSON.stringify(censusA.seededRetiredPresent)}, undeclaredJsonNames=${JSON.stringify(censusA.undeclaredJsonNames)}, securityPresent=${censusA.securityPresent}, settingsPresent=${censusA.settingsPresent}, settled=${settledA.settled} after ${settledA.polls} poll(s) at age ${settledA.ageMs} ms (3 identical reads, ≥12 s floor); the RUNTIME's own lazily-written entries reported: ${JSON.stringify(settledA.added)}`,
+  '**RE-GRAINED UNDER C-4 — the FIGURE moved, the CLAIM did not.** The EXACTLY-TWO persisted-file pin of `docs/specs/store-persist.md` / `docs/FORKER.md` §4 (ii)/(iv) / the `G2` DONE row is no longer a true standing pin: this unit adds one written name (`provident-operator-settings.json`, created at construction) and retires another (`provident-security.json`: read at most once, never written, bytes standing), as `docs/L2/security-store-storeroom/persistence.md` §1 declares and names as owed by this pass. What survives is `store-security.md` §1.2 item 2 read through the declared set — **a `.json` name outside it is a finding** — and the CONTROL below drives exactly that. `settingsPresent` is REPORTED, not asserted — **on a profile THIS battery seeds the tier-1 file is written BEFORE the boot by `seedProfile`, so the run reads `settingsPresent=true` (`B-F17`: the as-filed reason "absent on a settled cold boot" was FALSE of these profiles and was quotable as a measurement).** **RE-GRAINED AGAIN UNDER `E-5`:** the set is now TWO lists, and the retirement makes a SECOND property assertable that the flat list could not state — a RETIRED name may be PRESENT only as a SEED, so its bytes must STAND (SC-B-03 and SC-B-07 assert that, below). `settingsPresent` still reports the seed, unchanged.**')
 check('SC-B-02 (CONTROL-CENSUS)', 'CONTROL: with a THIRD `.json` seeded into the LIVE profile the SAME predicate REFUSES it, and after the seed is removed it passes again — so SC-B-01 is not a predicate that cannot fail', (censusControl.ok === false && censusControl.undeclaredJsonNames.length === 1 && censusRestored.ok === true) ? 'PASS' : 'FAIL',
   `NAMED TERMS: with ${THIRD_FILE} seeded — jsonNames=${JSON.stringify(censusControl.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusControl.undeclaredJsonNames)}, predicate=${censusControl.ok}; after removal — undeclaredJsonNames=${JSON.stringify(censusRestored.undeclaredJsonNames)}, predicate=${censusRestored.ok}`,
   'a live control, not a synthetic list: the wrong state is created in the very directory the row reads. A deletion of the census term reddens SC-B-01; a census that could not see a third file reddens SC-B-02')
 
-// ── FAMILY B, arm (b) — the two files are INDEPENDENT ─────────────────────────────────
-/** One real operator write through the bridge (the manual-UI channel, §2.4 item 6). */
+// ── FAMILY B, arm (b) — THE TWO DURABLE RECORDS ARE INDEPENDENT (`E-5` re-grain) ─────────────
+/** One real operator write through the bridge (the manual-UI channel, §2.4 item 6).
+ *
+ *  **RE-GRAINED UNDER `E-5` — THE SUBJECT MOVED, THE CLAIM DID NOT.** AS RE-GRAINED UNDER `C-4` this
+ *  arm asserted that two FILES are independent: a security write moves `provident-operator-settings.json`
+ *  and leaves tier 1's `provident-settings.json` untouched. TIER 1 HAS NO FILE OF ITS OWN ANY MORE:
+ *  the carrier retired (`L1 §3`) and the rows live at `['operator-app-state']` in the INSTANCE'S OWN
+ *  file, beside the security record and not inside it (`L1 §3` ASM-1) — so the two durable things are
+ *  now two RECORDS IN ONE FILE, and "independent" is a claim about ADDRESSES, not about files. That is
+ *  strictly the shape L1 §6 states: *"a tier-1 commit moves the app-state record at
+ *  `['operator-app-state']`, and the seeded retired name's bytes stand."* Both halves are asserted
+ *  here, on the same window, with the same non-vacuity discipline the `A-F4` repair introduced:
+ *    · `securityChanged` — the security RECORD moved (its sha moved: the store's own save ran);
+ *    · `appStateUnmovedBySecurityWrite` — the app-state RECORD did not move across a SECURITY write;
+ *    · `retiredSeedObserved` + `retiredSeedUnchanged` — the SEED's bytes stand, and its presence is
+ *      asserted BESIDE its sha so an absent file can never read as an unmoved one (the `A-F4` rule,
+ *      carried forward unchanged);
+ *    · `appStateAddressLive` — the app-state address is not a phantom: a record stands there, which is
+ *      what makes "unmoved" a measurement rather than a statement about nothing.
+ *  The positive half — that a TIER-1 COMMIT *moves* that record — is `SC-A-06`'s
+ *  `appStateBytesMoved` term below, where this battery already drives three real `store.put`s and
+ *  already reads the bytes after each one; asserting it twice would double-drive one channel. */
 const settingsPathA = join(bootA.profile, SETTINGS_FILE)
 const settingsPresentBefore = exists(settingsPathA)
 const settingsShaBefore = settingsPresentBefore ? sha256(settingsPathA) : null
+const appStateBytesBeforeWrite = appStateBytes(bootA.profile)
 const secShaBeforeWrite = sha256(secPathA)
 const secBytesBeforeWrite = readOrNull(secPathA)
 const operatorWrite = await cdp.evaluate(`window.provident.security.set({ token: ${JSON.stringify(TOKEN)}, maxJournalLength: ${JOURNAL + 3} })`)
@@ -1076,18 +1156,21 @@ const secShaAfterWrite = sha256(secPathA)
 const secBytesAfterWrite = readOrNull(secPathA)
 const settingsPresentAfter = exists(settingsPathA)
 const settingsShaAfter = settingsPresentAfter ? sha256(settingsPathA) : null
-const settingsUnchanged = settingsShaBefore === settingsShaAfter
-/** `A-F4` (`FIXED`): `settingsUnchanged` would hold VACUOUSLY as `null === null` if the
- *  tier-1 file had never been created. The PRESENCE terms are therefore asserted BESIDE it, so
- *  the row cannot read PASS by measuring an absent file. MEASURED: the seed creates the tier-1
- *  file before the boot, so both terms are `true` on this profile — and if they were not, the
- *  row FAILS rather than passing vacuously. */
-const settingsFileObserved = settingsPresentBefore === true && settingsPresentAfter === true
+const appStateBytesAfterWrite = appStateBytes(bootA.profile)
+const retiredSeedUnchanged = settingsShaBefore === settingsShaAfter
+/** `A-F4` (`FIXED`), CARRIED FORWARD UNCHANGED IN FORCE AND RE-GRAINED IN SUBJECT: the
+ *  "unchanged" term would hold VACUOUSLY as `null === null` if the seed had never been written. The
+ *  PRESENCE terms are therefore asserted BESIDE it, so the row cannot read PASS by measuring an
+ *  absent file. MEASURED: `seedProfile` creates the carrier before the boot, so both terms are `true`
+ *  on this profile — and if they were not, the row FAILS rather than passing vacuously. */
+const retiredSeedObserved = settingsPresentBefore === true && settingsPresentAfter === true
   && settingsShaBefore !== null && settingsShaAfter !== null
 const securityChanged = secShaBeforeWrite !== secShaAfterWrite
-check('SC-B-03 (Family B, arm b)', 'the security file REALLY moves on a live operator write, and the settings file does NOT move across the same window — the two persisted files are independent', (securityChanged && settingsFileObserved && settingsUnchanged) ? 'PASS' : 'FAIL',
-  `NAMED TERMS: securitySha ${secShaBeforeWrite.slice(0, 16)}… → ${secShaAfterWrite.slice(0, 16)}… (changed=${securityChanged}), securityBytes ${secBytesBeforeWrite?.length} → ${secBytesAfterWrite?.length}, settings PRESENCE before=${settingsPresentBefore} after=${settingsPresentAfter} (settingsFileObserved=${settingsFileObserved} — the NON-VACUITY term added by A-F4), settingsSha ${settingsShaBefore === null ? 'ABSENT' : settingsShaBefore.slice(0, 16) + '…'} → ${settingsShaAfter === null ? 'ABSENT' : settingsShaAfter.slice(0, 16) + '…'} (unchanged=${settingsUnchanged}), the write's own receipt=${JSON.stringify(operatorWrite?.write)}`,
-  '**RE-GRAINED UNDER C-4 (`2026-10-29`, the `security-store-storeroom` rebuild) — the TERM LIST IS UNCHANGED (`securityChanged`, `settingsFileObserved`, `settingsUnchanged`) and only the FIGURES moved:** the security file read is now the instance\'s own `provident-operator-settings.json`, whose one writer is the instance\'s single `write` at `[\'operator-settings\']` (`docs/L2/security-store-storeroom/interface.md` §1, §2.1), and the retired `provident-security.json` is written by NOTHING — its bytes stand as seeded (D-19). store-security.md §2.2 item 5 (THE SINGLE-WRITER DISCIPLINE) and §1.2 item 2 are read through that re-grain: one file\'s writer is the instance, the other\'s is the tier-1 channel, and the retired name has no writer at all. Both halves are asserted: a security write that moved NOTHING would mean the store\'s own save never ran, and a security write that ALSO rewrote the settings file would mean the two files are not independent')
+const appStateUnmovedBySecurityWrite = appStateBytesBeforeWrite === appStateBytesAfterWrite
+const appStateAddressLive = appStateBytesAfterWrite !== null
+check('SC-B-03 (Family B, arm b)', 'the security RECORD really moves on a live operator write, and the APP-STATE RECORD at `[\'operator-app-state\']` does NOT move across the same window — the two durable records are independent, and the SEEDED retired carrier\'s bytes stand', (securityChanged && retiredSeedObserved && retiredSeedUnchanged && appStateAddressLive && appStateUnmovedBySecurityWrite) ? 'PASS' : 'FAIL',
+  `NAMED TERMS: securityRecordSha ${secShaBeforeWrite.slice(0, 16)}… → ${secShaAfterWrite.slice(0, 16)}… (securityChanged=${securityChanged}), securityBytes ${secBytesBeforeWrite?.length} → ${secBytesAfterWrite?.length}, appState record at ['${APP_STATE_KEY}'] before=${appStateBytesBeforeWrite === null ? 'ABSENT' : appStateBytesBeforeWrite.slice(0, 64) + '…'} after=${appStateBytesAfterWrite === null ? 'ABSENT' : appStateBytesAfterWrite.slice(0, 64) + '…'} (appStateAddressLive=${appStateAddressLive} — the address is not a phantom; appStateUnmovedBySecurityWrite=${appStateUnmovedBySecurityWrite}), seeded carrier PRESENCE before=${settingsPresentBefore} after=${settingsPresentAfter} (retiredSeedObserved=${retiredSeedObserved} — the A-F4 NON-VACUITY term, carried forward), seeded carrier sha ${settingsShaBefore === null ? 'ABSENT' : settingsShaBefore.slice(0, 16) + '…'} → ${settingsShaAfter === null ? 'ABSENT' : settingsShaAfter.slice(0, 16) + '…'} (retiredSeedUnchanged=${retiredSeedUnchanged}), the write's own receipt=${JSON.stringify(operatorWrite?.write)}`,
+  '**RE-GRAINED UNDER `E-5` (`2026-10-29`, `settings-carrier-retirement`) — the CLAIM is unchanged and its SUBJECT moved from two FILES to two RECORDS.** The carrier `provident-settings.json` retired: `src/main/main.ts` no longer reads or writes it (no boot read, no guarded second read, no `settingsPath`, no tmp+rename+fsync writer — `L1 §3` closed removal list, E-1), and tier 1\'s rows live at `[\'operator-app-state\']` on the `file` tier inside the instance\'s own `provident-operator-settings.json`, BESIDE `[\'operator-settings\']` and not inside that record\'s `entries` (`L1 §3` ASM-1; a `file`-tier write purges only at its own key, so the separation is structural). So the independence claim is read at ADDRESSES: the security RECORD\'s writer is the instance\'s single `write`, the app-state RECORD\'s writer is the one `settingsSurface.commit(...)`, and a write to one may not move the other. Three things are asserted TOGETHER, none vacuously: the security record MOVED (a save that ran), the app-state record stands at its address and did NOT move across that write, and the SEEDED carrier\'s bytes stand with its presence asserted beside its sha (the `A-F4` rule). **THE POSITIVE SIDE OF THE SAME COIN — that a TIER-1 COMMIT moves the app-state record — is `SC-A-06`\'s `appStateBytesMoved` term**, where three real `store.put`s are already driven; `L1 §6` states both halves in one sentence and this battery now measures both, in the two arms that already drive them.')
 
 // ── FAMILY B, arm (c) — the persisted RECORD's key set is the tier's own ────────────────
 /** **RE-GRAINED UNDER C-4:** the row reads the RECORD at its declared address inside the instance's
@@ -1149,19 +1232,23 @@ check('SC-B-06 (CONTROL-TMP + CONTROL-TORN)', 'CONTROL: with a residual `.tmp` s
 // ── FAMILY B, arm (e) — NO LOWER-TIER ALIAS ────────────────────────────────────────────
 /** The `file` tier's own value at the SAME LOGICAL PATH as the refused `secure.*` attempt —
  *  the name the architect's `D-CLAUSE-2` cites verbatim. BOTH SIDES are read live: the
- *  resolved VALUE off the store AND the persisted BYTES of tier 1's file. */
+ *  resolved VALUE off the store AND the persisted BYTES of tier 1's state. **RE-GRAINED UNDER
+ *  `E-5`: "tier 1's bytes" is the APP-STATE RECORD at `['operator-app-state']` (`appStateBytes`
+ *  below), not the retired carrier — a seed nobody writes could not show a moved byte, so the
+ *  original reading would have held VACUOUSLY. The SEED's bytes are asserted beside it, unchanged:
+ *  the two terms together say "the refusal moved neither the record NOR the seed". */
 const fileBefore = await cdp.evaluate(`(async function(){
   const mod = await import(new URL('./renderer.js', document.baseURI).href);
   return mod.getWiredGraphStore().resolve(${JSON.stringify(FILE_LOGICAL)});
 })()`)
-const settingsBytesBeforeAlias = readOrNull(join(bootA.profile, SETTINGS_FILE))
+const settingsBytesBeforeAlias = appStateBytes(bootA.profile)
 const aliasAttempt = await driveGenericSurface(cdp, 'secure.settings.theme.token', 'ALIAS-ATTEMPT-VALUE')
 await sleep(500)
 const fileAfter = await cdp.evaluate(`(async function(){
   const mod = await import(new URL('./renderer.js', document.baseURI).href);
   return mod.getWiredGraphStore().resolve(${JSON.stringify(FILE_LOGICAL)});
 })()`)
-const settingsBytesAfterAlias = readOrNull(join(bootA.profile, SETTINGS_FILE))
+const settingsBytesAfterAlias = appStateBytes(bootA.profile)
 const aliasRefused = ['resolve', 'set', 'commit', 'clear', 'remove', 'subscribe'].every((k) => isSecureRefusal(aliasAttempt?.[k]))
 const fileLogicalUnmoved = JSON.stringify(fileBefore) === JSON.stringify(fileAfter)
 const fileBytesUnmoved = settingsBytesBeforeAlias === settingsBytesAfterAlias
@@ -1794,7 +1881,9 @@ const d2FileAfterAdmissible = d2FileRead()
 const d2AdmissibleFileLanded = d2FileAfterAdmissible.raw !== null && d2FileAfterAdmissible.raw.includes(D2_ADMISSIBLE_VALUE)
 const d2AdmissibleFileRestored = d2FileAfterAdmissible.raw !== null && d2FileAfterAdmissible.raw.includes('dark-seeded')
 /** **THE FILE-BYTES HALF IS RE-SCOPED TO THE MEASURED BEHAVIOUR OF THIS CHANNEL, WITH ITS REASON AT THE ROW.**
- *  `window.provident.store.put` REPLACES `provident-settings.json` with the projection of the payload (the
+ *  `window.provident.store.put` REPLACES the APP-STATE RECORD at `['operator-app-state']` with the projection
+ *  of the payload — **`E-5`: it used to replace the retired carrier `provident-settings.json`; the subject
+ *  moved with the writer, the behaviour did not** (the
  *  already-filed `STORE-BRIDGE-EMPTY-PROJECTION-COMMITS`), so the control's own value is GONE from the bytes
  *  after its restore — and the seeded `file.settings.*` row does not survive either. The control therefore
  *  asserts the STORE's read-back while the value was in place (the primary term), the STORE's read-back after
@@ -2105,7 +2194,8 @@ const secBPath = join(bootB.profile, SECURITY_FILE)
  *  `provident.store.get()` — wired through `STORE_FILE_PUT` into `src/main/main.ts`'s own handler.
  *  That handler is a live, page-reachable, NAME-ADDRESSED WRITE PATH whose own comment declares
  *  that "the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the file". A regression letting a
- *  `secure.*` key through it would land tier-4 material in `provident-settings.json` (the
+ *  `secure.*` key through it would land tier-4 material in TIER 1'S STATE — the app-state record at
+ *  `['operator-app-state']`, `E-5`: it used to be the retired carrier `provident-settings.json` (the
  *  lower-tier alias `D-CLAUSE-2` forbids, and a Family C leak) and EVERY ROW OF THIS BATTERY
  *  WOULD STILL HAVE READ PASS, because the first draft never probed it.
  *
@@ -2118,7 +2208,8 @@ const secBPath = join(bootB.profile, SECURITY_FILE)
  *  THREE probes, in ONE boot, each with its OWN before/after byte reading **AND ITS OWN `get()`
  *  reading**, PLUS a PRE-PROBE `get()` baseline — the `§6.2` audit's `B-F1` (`FIXED`), whose count
  *  the THIRD audit's `A3-03` (`FIXED`) reconciled: the as-filed row asserted the leak term over
- *  `settingsBytesB3` ALONE while its evidence claimed *"no `secure.`-keyed member appears in tier
+ *  the third byte reading ALONE (then `provident-settings.json`'s, now the app-state record's —
+ *  `E-5`) while its evidence claimed *"no `secure.`-keyed member appears in tier
  *  1's bytes at ANY of the four readings"*, and probe (iii) **REPLACES THE WHOLE FILE** (the very
  *  behaviour filed as `STORE-BRIDGE-EMPTY-PROJECTION-COMMITS`), so **a leak landing at (i) or at
  *  the strict alias probe (ii) was ERASED before B3 and before the single live `get()` — a
@@ -2128,8 +2219,15 @@ const secBPath = join(bootB.profile, SECURITY_FILE)
  *  the audit offered: the count is made true by ADDING the pre-probe reading, because a pre-probe
  *  `get()` is a reading the row did not previously take and it strengthens the window rather than
  *  correcting five cells downward.** */
-const settingsPathB = join(bootB.profile, SETTINGS_FILE)
-const settingsBytesB0 = readOrNull(settingsPathB)
+// ⟶ RE-GRAIN (`E-5`). AS RE-GRAINED UNDER `C-4` these four byte readings were `provident-settings.json`'s
+// bytes — tier 1's carrier. THE CARRIER RETIRED (`L1 §3`): it is a SEED now, nobody writes it, so
+// reading it would make this row's leak predicate hold VACUOUSLY forever (a file that is never written
+// cannot carry a leak). What a tier-1 commit writes, and therefore what a leaking `secure.*` key would
+// land in, is the APP-STATE RECORD at `['${APP_STATE_KEY}']` inside the instance's file (`L1 §3` ASM-1;
+// `L1 §6`: "a tier-1 commit moves the app-state record at `['${APP_STATE_KEY}']`"). The four readings
+// read THAT, which both preserves the leak claim and — `appStateBytesMoved` below — makes the
+// record's MOVEMENT a term, so "nothing leaked" can never be true only because nothing was written.
+const appStateBytesB0 = appStateBytes(bootB.profile)
 const secShaBBefore = sha256(secBPath)
 const storeGet = async (label) => {
   const raw = await cdpB.evaluate(`(async function(){
@@ -2145,21 +2243,21 @@ const putSecureName = await cdpB.evaluate(`(async function(){
   catch (e) { return { threw: String(e) }; }
 })()`)
 await sleep(500)
-const settingsBytesB1 = readOrNull(settingsPathB)
+const appStateBytesB1 = appStateBytes(bootB.profile)
 const getB1 = await storeGet('after (i)')
 const putFileLookingName = await cdpB.evaluate(`(async function(){
   try { return await window.provident.store.put({ name: 'file.settings.complianceprobe', value: JSON.stringify({ 'file.settings.complianceprobe': 'T1-ROW', 'secure.settings.theme.token': 'TIER4-ALIAS-PROBE' }) }); }
   catch (e) { return { threw: String(e) }; }
 })()`)
 await sleep(500)
-const settingsBytesB2 = readOrNull(settingsPathB)
+const appStateBytesB2 = appStateBytes(bootB.profile)
 const getB2 = await storeGet('after (ii)')
 const putNameHonour = await cdpB.evaluate(`(async function(){
   try { return await window.provident.store.put({ name: 'file.settings.namedprobe', value: JSON.stringify({ 'file.settings.theme.token': 'NAMED-PROBE-VALUE' }) }); }
   catch (e) { return { threw: String(e) }; }
 })()`)
 await sleep(500)
-const settingsBytesB3 = readOrNull(settingsPathB)
+const appStateBytesB3 = appStateBytes(bootB.profile)
 const getB3 = await storeGet('after (iii)')
 const liveRowsB = getB3.raw
 const secShaBAfter = sha256(secBPath)
@@ -2169,10 +2267,10 @@ const storeBridgeReadable = Array.isArray(liveRowsB)
  *  the four `get()` readings is its own term; the composite is an `any`, so a leak at ANY probe
  *  reddens the row even if a later probe's whole-file replace erased it from the final bytes. */
 const SETTINGS_READINGS = [
-  { label: 'B0 (before any probe)', bytes: settingsBytesB0 },
-  { label: 'B1 (after (i))', bytes: settingsBytesB1 },
-  { label: 'B2 (after (ii))', bytes: settingsBytesB2 },
-  { label: 'B3 (after (iii))', bytes: settingsBytesB3 },
+  { label: 'B0 (before any probe)', bytes: appStateBytesB0 },
+  { label: 'B1 (after (i))', bytes: appStateBytesB1 },
+  { label: 'B2 (after (ii))', bytes: appStateBytesB2 },
+  { label: 'B3 (after (iii))', bytes: appStateBytesB3 },
 ]
 const secureKeyInSettingsBytesPerReading = SETTINGS_READINGS.map((r) => ({ label: r.label, present: r.bytes !== null && /"secure\./.test(r.bytes) }))
 const secureKeyInSettingsBytes = secureKeyInSettingsBytesPerReading.some((r) => r.present)
@@ -2190,10 +2288,17 @@ const valueKeyLanded = (() => {
   const row = storeBridgeRows.find((r) => r?.name === 'file.settings.theme.token')
   return row !== undefined && row?.value === 'NAMED-PROBE-VALUE'
 })()
-const settingsB0Present = settingsBytesB0 !== null && /"file\.settings\./.test(settingsBytesB0)
+const settingsB0Present = appStateBytesB0 !== null && /"file\.settings\./.test(appStateBytesB0)
+/** **THE MOVEMENT TERM (`E-5`) — the positive side of `L1 §6`'s sentence.** The four readings above are
+ *  the leak predicate's window; this term asserts the window was LIVE: at least two of the four
+ *  distinct readings differ, i.e. the three `store.put` probes really moved the app-state record. A
+ *  dead write path (or a retired carrier still being read) would show one value throughout and the
+ *  leak predicate would then be true only because nothing was written — exactly the vacuity the
+ *  `B-F2` repair closed inside the predicate and that this term closes in the SUBJECT. */
+const appStateBytesMoved = new Set(SETTINGS_READINGS.map((r) => r.bytes).filter((b) => b !== null)).size >= 2
 const securityFileUnmovedByStoreBridge = secShaBBefore === secShaBAfter
 const storeBridgeNoLeak = storeBridgeReadable && storeBridgeGetReadable && !secureKeyInSettingsBytes && !secureNameInStoreGet
-  && securityFileUnmovedByStoreBridge && (nameHonoured || valueKeyLanded)
+  && securityFileUnmovedByStoreBridge && (nameHonoured || valueKeyLanded) && appStateBytesMoved
 /** **THE PUT-RECEIPT PRECONDITION — the THIRD `§6.2` audit's `A3-04`, disposed `FIXED` (MED).**
  *  The `B-F2` remedy made `(nameHonoured || valueKeyLanded)` a TERM of `storeBridgeNoLeak`, which
  *  closed the "a dead put moves nothing, so nothing leaked" vacuity — **but it mapped the outcome
@@ -2212,8 +2317,8 @@ const putReceiptStatuses = [putSecureName, putFileLookingName, putNameHonour]
 const putReceiptStatusesNotCommitted = putReceiptStatuses.filter((r) => r.status !== 'committed')
 const putReceiptsOk = putReceiptStatusesNotCommitted.length === 0
 /** THE FOUR-STATE MAPPING (rules 1/2/5 of the record's `§4d` per-row table, applied): a real leak
- *  is a FAIL whatever the instrument's health; an instrument that could not READ (no settings file
- *  to census at B0, a `get()` that did not answer an array at every probe, **or a put probe that
+ *  is a FAIL whatever the instrument's health; an instrument that could not READ (no app-state record
+ *  to census at B0 — `E-5`, a `get()` that did not answer an array at every probe, **or a put probe that
  *  answered no `committed` receipt — the `A3-04` term**) reads `MANUAL`; otherwise the census's own
  *  claim decides. */
 const storeBridgeLeakTermsBreached = secureKeyInSettingsBytes || secureNameInStoreGet
@@ -2221,15 +2326,15 @@ const scA06InstrumentOk = settingsB0Present && storeBridgeGetReadable && putRece
 const scA06Verdict = storeBridgeLeakTermsBreached ? 'FAIL' : (!scA06InstrumentOk ? 'MANUAL' : (storeBridgeNoLeak ? 'PASS' : 'FAIL'))
 const scA06TermNames = [
   `storeBridgeReadable=${storeBridgeReadable}`, `storeBridgeGetReadable=${storeBridgeGetReadable}`,
-  `noSecureKeyInAnySettingsReading=${!secureKeyInSettingsBytes}`, `noSecureNameInAnyStoreGetReading=${!secureNameInStoreGet}`,
+  `noSecureKeyInAnySettingsReading=${!secureKeyInSettingsBytes}`, `appStateBytesMoved=${appStateBytesMoved}`, `noSecureNameInAnyStoreGetReading=${!secureNameInStoreGet}`,
   `securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge}`, `nameHonoured||valueKeyLanded=${nameHonoured || valueKeyLanded}`,
   `settingsB0Present=${settingsB0Present}`, `putReceiptsOk=${putReceiptsOk}`,
 ].join(', ')
 const scA06NameTerm = nameHonoured
   ? 'MEASURED, the name parameter IS honoured: the landed row is keyed by the NAME the caller passed'
   : 'MEASURED, the name parameter is INERT: the landed row is keyed by the VALUE\'s own spelling (file.settings.theme.token), i.e. the main-side handler projects the crossing\'s translation by the value\'s keys and never reads row.name'
-check('SC-A-06 (Family A, arm a-iii — CHANNEL CENSUS) — THE TIER-1 FILE-STORE BRIDGE NAMESPACE', 'CHANNEL-CENSUS ARM: the third page-reachable bridge namespace (`provident.store.put/get`) accepts NO arbitrary tier-4 NAME — a `secure.`-keyed name and a `secure.`-keyed value member both fail to land in `provident-settings.json`\'s bytes or in the live `get()`, and the tier-4 file is untouched by this channel', scA06Verdict,
-  `NAMED TERMS (the predicate in full — rules 1 and 3 of §4d): ${scA06TermNames} => storeBridgeNoLeak=${storeBridgeNoLeak}. **RE-GRAINED UNDER C-4: the "tier-4 file" whose sha this row holds unmoved is the INSTANCE'S OWN \`provident-operator-settings.json\` (old figure: the retired \`provident-security.json\`), and at this boot it is the file the construction created — so a channel that wrote the record would move it. THE CLAIM IS UNCHANGED.** live store.get() ANSWERED AT EVERY READING (the B-F1 widening, its count reconciled by A3-03): PRE-PROBE baseline (B0) rows=${JSON.stringify(getB0.rows)}; after (i) rows=${JSON.stringify(getB1.rows)}, after (ii) rows=${JSON.stringify(getB2.rows)}, after (iii) rows=${JSON.stringify(getB3.rows)} (the final reading, ${storeBridgeReadable ? storeBridgeRows.length : JSON.stringify(liveRowsB)} row(s)); settings bytes BEFORE the probe=${JSON.stringify(settingsBytesB0)}; after (i) put with a secure.-keyed NAME and a secure.-keyed VALUE member: receipt=${JSON.stringify(putSecureName)} => ${JSON.stringify(settingsBytesB1)}; after (ii) put with a file.-looking NAME carrying a secure.-keyed VALUE member: receipt=${JSON.stringify(putFileLookingName)} => ${JSON.stringify(settingsBytesB2)}; after (iii) put with the NAME file.settings.namedprobe and the VALUE key file.settings.theme.token: receipt=${JSON.stringify(putNameHonour)} => ${JSON.stringify(settingsBytesB3)}. THE PUT-RECEIPT PRECONDITION (the A3-04 term, so a DEAD write instrument reads MANUAL rather than being charged as a LEAK — §4d rule 2): putReceiptStatuses=${JSON.stringify(putReceiptStatuses.map((r) => ({ label: r.label, status: r.status })))}, putReceiptStatusesNotCommitted=${JSON.stringify(putReceiptStatusesNotCommitted.map((r) => r.label))}, putReceiptsOk=${putReceiptsOk}, scA06InstrumentOk=${scA06InstrumentOk}, putReceiptsWithAnEmptyProjectionButACommittedReceipt=${JSON.stringify(putReceiptStatuses.filter((r) => r.status === 'committed' && (nameHonoured || valueKeyLanded)).map((r) => r.label))} (a committed receipt on a probe that landed nothing IS the leak-predicate reading — the filter dropped it; a THROWN or receipt-less probe is the instrument state). LEAK TERMS, EACH READING ITS OWN TERM: secureKeyInSettingsBytesPerReading=${JSON.stringify(secureKeyInSettingsBytesPerReading)}, secureKeyInSettingsBytes=${secureKeyInSettingsBytes} (no secure.-keyed member appears in tier 1's bytes at ANY of the four readings — the as-filed claim, now true of its predicate instead of only of its prose); secureNameInStoreGetPerReading=${JSON.stringify(secureNameInStoreGetPerReading)}, secureNameInStoreGet=${secureNameInStoreGet} (no row ANY of the four live get() readings reports is secure.-named); securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge} (the tier-4 file's sha256 ${secShaBBefore.slice(0, 16)} ... ${secShaBAfter.slice(0, 16)}: this channel cannot reach tier 4's file). THE NAME-PARAMETER DISCRIMINATOR (iii): nameHonoured=${nameHonoured}, valueKeyLanded=${valueKeyLanded} - ${scA06NameTerm}. **NOTHING LANDED IS ALSO A NON-VACUITY QUESTION (B-F2): this row's own positive evidence is that the channel MOVES bytes and lands a name at all, so \`nameHonoured || valueKeyLanded\` is a TERM — a dead or refusing put() moves nothing and no longer reads PASS**`,
+check('SC-A-06 (Family A, arm a-iii — CHANNEL CENSUS) — THE TIER-1 FILE-STORE BRIDGE NAMESPACE', 'CHANNEL-CENSUS ARM: the third page-reachable bridge namespace (`provident.store.put/get`) accepts NO arbitrary tier-4 NAME — a `secure.`-keyed name and a `secure.`-keyed value member both fail to land in the APP-STATE RECORD\'s bytes at `[\'operator-app-state\']` (tier 1\'s state after `E-5`; the retired carrier is a seed) or in the live `get()`, the app-state record really MOVES across the three probes, and the tier-4 record\'s file is untouched by this channel', scA06Verdict,
+  `NAMED TERMS (the predicate in full — rules 1 and 3 of §4d): ${scA06TermNames} => storeBridgeNoLeak=${storeBridgeNoLeak}. **RE-GRAINED UNDER C-4: the "tier-4 file" whose sha this row holds unmoved is the INSTANCE'S OWN \`provident-operator-settings.json\` (old figure: the retired \`provident-security.json\`), and at this boot it is the file the construction created — so a channel that wrote the record would move it. THE CLAIM IS UNCHANGED.** **RE-GRAINED AGAIN UNDER E-5: the four byte readings are the APP-STATE RECORD's (['${APP_STATE_KEY}'] inside that same file), because tier 1's carrier retired to a seed and a seed cannot carry a leak — and appStateBytesMoved is now a TERM, so the leak predicate is taken over a window that provably moved (L1 §6).** live store.get() ANSWERED AT EVERY READING (the B-F1 widening, its count reconciled by A3-03): PRE-PROBE baseline (B0) rows=${JSON.stringify(getB0.rows)}; after (i) rows=${JSON.stringify(getB1.rows)}, after (ii) rows=${JSON.stringify(getB2.rows)}, after (iii) rows=${JSON.stringify(getB3.rows)} (the final reading, ${storeBridgeReadable ? storeBridgeRows.length : JSON.stringify(liveRowsB)} row(s)); APP-STATE RECORD bytes BEFORE the probe=${JSON.stringify(appStateBytesB0)}; after (i) put with a secure.-keyed NAME and a secure.-keyed VALUE member: receipt=${JSON.stringify(putSecureName)} => ${JSON.stringify(appStateBytesB1)}; after (ii) put with a file.-looking NAME carrying a secure.-keyed VALUE member: receipt=${JSON.stringify(putFileLookingName)} => ${JSON.stringify(appStateBytesB2)}; after (iii) put with the NAME file.settings.namedprobe and the VALUE key file.settings.theme.token: receipt=${JSON.stringify(putNameHonour)} => ${JSON.stringify(appStateBytesB3)}. THE PUT-RECEIPT PRECONDITION (the A3-04 term, so a DEAD write instrument reads MANUAL rather than being charged as a LEAK — §4d rule 2): putReceiptStatuses=${JSON.stringify(putReceiptStatuses.map((r) => ({ label: r.label, status: r.status })))}, putReceiptStatusesNotCommitted=${JSON.stringify(putReceiptStatusesNotCommitted.map((r) => r.label))}, putReceiptsOk=${putReceiptsOk}, scA06InstrumentOk=${scA06InstrumentOk}, putReceiptsWithAnEmptyProjectionButACommittedReceipt=${JSON.stringify(putReceiptStatuses.filter((r) => r.status === 'committed' && (nameHonoured || valueKeyLanded)).map((r) => r.label))} (a committed receipt on a probe that landed nothing IS the leak-predicate reading — the filter dropped it; a THROWN or receipt-less probe is the instrument state). LEAK TERMS, EACH READING ITS OWN TERM: appStateBytesMoved=${appStateBytesMoved} (THE MOVEMENT TERM, E-5: the three probes really moved the app-state record, so the leak window below is LIVE and 'nothing leaked' cannot be true only because nothing was written), secureKeyInSettingsBytesPerReading=${JSON.stringify(secureKeyInSettingsBytesPerReading)}, secureKeyInSettingsBytes=${secureKeyInSettingsBytes} (no secure.-keyed member appears in TIER 1'S bytes — now the APP-STATE RECORD at ['${APP_STATE_KEY}'], the only place a tier-1 commit writes — at ANY of the four readings; the as-filed claim, now true of its predicate instead of only of its prose); secureNameInStoreGetPerReading=${JSON.stringify(secureNameInStoreGetPerReading)}, secureNameInStoreGet=${secureNameInStoreGet} (no row ANY of the four live get() readings reports is secure.-named); securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge} (the tier-4 file's sha256 ${secShaBBefore.slice(0, 16)} ... ${secShaBAfter.slice(0, 16)}: this channel cannot reach tier 4's file). THE NAME-PARAMETER DISCRIMINATOR (iii): nameHonoured=${nameHonoured}, valueKeyLanded=${valueKeyLanded} - ${scA06NameTerm}. **NOTHING LANDED IS ALSO A NON-VACUITY QUESTION (B-F2): this row's own positive evidence is that the channel MOVES bytes and lands a name at all, so \`nameHonoured || valueKeyLanded\` is a TERM — a dead or refusing put() moves nothing and no longer reads PASS**`,
   'the §6.2 audit\'s `A-F1` (HIGH, gate-6-blocking): the driver censused `window.provident.security` and the generic store surface, then asserted "NO live channel accepts an arbitrary tier-4 name" — while `src/main/preload.ts:61-65,123-129` exposes `provident.store.put(row)`/`get()`, wired through `STORE_FILE_PUT` to `src/main/main.ts:315-336`, whose own comment declares "the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the file". THIS ROW IS THAT CLAIM, DRIVEN. `docs/decisions.md` `SECURE-TIER-IS-A-FILESTORE-PEER` clause (2) (`D-CLAUSE-2`) forbids a lower-tier alias, and `data-ownership-model-plan.md` §3.8 forbids a tier-4 value reaching a nonsecure reader — a `secure.`-keyed member landing in tier 1\'s file would violate BOTH and would be a Family C leak. MEASURED at this HEAD: it does not land, and the channel cannot move the tier-4 file. A FAIL here is a NEW HIGH live defect and must be filed, not explained. **ITS INSTRUMENT WINDOW IS NOW WHOLE (the SECOND audit\'s `B-F1`/`B-F2`): every byte reading AND every `get()` reading is a predicate term, and the name/value discriminator is the row\'s non-vacuity term. **AND ITS INSTRUMENT STATE IS NOW SEPARATED FROM ITS LEAK READING (the THIRD audit\'s `A3-04`): the non-vacuity term\'s failure used to read `FAIL`, i.e. a dead/refusing `store.put` was charged as a LEAK — against `§4d` rule 2 — so the three put receipts are now a NAMED PRECONDITION (`putReceiptsOk`) and a broken write instrument reads `MANUAL`. A receipted write that lands nothing is STILL the leak-predicate reading (`FAIL`), which is the direction this row exists for.**')
 
 

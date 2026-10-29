@@ -329,8 +329,18 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     // available to compose the instance's file out of (`persistence.md` §8).
     const literals = new Set<string>()
     for (const file of MCP_CLOSURE) for (const match of textOf(file).matchAll(/provident-[a-z0-9-]+\.json/g)) literals.add(match[0])
-    const foreign = [...literals].filter((name) => !['provident-profile.json', 'provident-settings.json'].includes(name)).sort()
+    // ⟶ RE-GRAINED UNDER `E-5` (`settings-carrier-retirement`, L1 §6/§9 E-5): **THE ALLOWED SET
+    // SHRINKS FROM TWO NAMES TO ONE — `['provident-profile.json']` — AND THE CLAIM DOES NOT MOVE.**
+    // `provident-settings.json` was tier 1's hand-written carrier and `main.ts` spelled it at its
+    // `settingsPath`; this unit DELETED that path, the boot read, the guarded second read and the whole
+    // tmp+rename+fsync writer (L1 §3's closed removal list, E-1), so the MCP closure now has ONE
+    // foreign literal to allow and the retired name has none. The retirement is ASSERTED below rather
+    // than assumed: a set that shrank because a name silently reappeared elsewhere would be a finding,
+    // and shrinking the list without checking would make the shrink unfalsifiable.
+    const allowedForeignLiterals = ['provident-profile.json']
+    const foreign = [...literals].filter((name) => !allowedForeignLiterals.includes(name)).sort()
     expect(foreign, 'every `provident-*.json` literal in the stack names another module’s carrier; a third name is a finding, and a path so composed at run time would be invisible to a byte scan — which this row names rather than pretends otherwise').toEqual([])
+    expect(literals.has('provident-settings.json'), 'and the RETIRED carrier’s literal stands in NO file the stack reaches — the name left the tree with the writer (L1 §3), so its absence is exactly why the allowed set could shrink').toBe(false)
   })
 
   it('RQ-1 · the group cannot gate a route: each data.* spelling resolves to no group, under either grant (interface.md §6)', () => {

@@ -280,9 +280,15 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
     expect(hits.map(rel), 'no reachable file spells the instance’s own name or either of its addresses, so no drive can even name it').toEqual([])
     const literals = new Set<string>()
     for (const file of MCP_CLOSURE) for (const match of textOf(file).matchAll(/provident-[a-z0-9-]+\.json/g)) literals.add(match[0])
+    // ⟶ RE-GRAINED UNDER `E-5` (`settings-carrier-retirement`, L1 §6/§9 E-5): the allowed set SHRINKS
+    // from `['provident-profile.json', 'provident-settings.json']` to `['provident-profile.json']` —
+    // tier 1's carrier retired and its literal left the tree with the writer (L1 §3) — and the claim is
+    // unmoved. The retirement is asserted beside it, so the shrink is falsifiable rather than assumed.
+    const allowedForeignLiterals = ['provident-profile.json']
     expect(
-      [...literals].filter((name) => !['provident-profile.json', 'provident-settings.json'].includes(name)).sort(),
+      [...literals].filter((name) => !allowedForeignLiterals.includes(name)).sort(),
       'every `provident-*.json` literal in the stack names another module’s carrier; a path composed at run time would be invisible to a byte scan, which this row names rather than pretends otherwise',
     ).toEqual([])
+    expect(literals.has('provident-settings.json'), 'and the RETIRED carrier’s literal stands in NO file the stack reaches — the name left the tree with the writer (L1 §3)').toBe(false)
   })
 })

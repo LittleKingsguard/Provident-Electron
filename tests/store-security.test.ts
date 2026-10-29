@@ -75,6 +75,26 @@
  *   read, the `{uri}`-only payload and the Runtime/Supervisor wiring all still read
  *   as filed).
  *
+ * THE SECOND PASS'S LEDGER — `settings-carrier-retirement` `E-5` (L1 §6/§9 E-5,
+ * `2026-10-29`).  ONE row moves in this file, and it is a RE-GRAIN, never a
+ * retirement: this file holds no row whose subject is the retired tier-1 carrier's
+ * own machinery (that battery is `tests/store-persist.test.ts`, where the tmp
+ * sequence and the `schemaVersion` stamp live and where §6's retirement rule bites).
+ *   RE-GRAINED (1) · "F-7/F-10/I-2/I-3" — the carrier's `provident-settings.json`
+ *   LEFT `main.ts` with the writer, so the userData literal census falls to
+ *   `['provident-modules.json']` ALONE (L1 §3's closed removal list), the instance
+ *   module's `readFileSync` count moves ONE → TWO (the security record's import read
+ *   plus the carrier's, still with no write, rename or remove call anywhere), and
+ *   the "spell neither record name" and "the retired name is declared once" limbs are
+ *   EXTENDED to the second retired name (`provident-settings.json`, `L2
+ *   behaviour.md` §8 `RET-2`/`RET-3`, `persistence.md`:43).  THE CLAIM IS UNMOVED: the
+ *   persisted set is exactly the declared carriers, each with one writer, no third
+ *   file — only the place the tree spells the names moved (D-13).
+ *   RETIRED (0) · UNTOUCHED (16) · every other row above reads `src/renderer/**`,
+ *   `src/shared/**` or the security record, none of which this unit moved (checked:
+ *   `src/renderer/renderer.ts` still names no record file, and the instance module
+ *   still carries no write verb).
+ *
  * NO TIMING FIGURE IS CLAIMED ANYWHERE IN THIS FILE (§1.4), and no row asserts a
  * refusal, a token or a digest of the retired module.
  * ============================================================================
@@ -526,7 +546,7 @@ describe('G3 §2.6 THE INVISIBILITY CENSUS (honest: the current surface is clean
  * ========================================================================== */
 
 describe('G3 §3.2 fail-states and §3.3 invariants', () => {
-  it('F-7/F-10/I-2/I-3: the write-site census — EXACTLY the declared persisted files, the record file\'s single writer, no third file (RE-GRAINED 2026-10-29: `C-4`, the persisted-file names moved)', async () => {
+  it('F-7/F-10/I-2/I-3: the write-site census — EXACTLY the declared persisted files, the record file\'s single writer, no third file (RE-GRAINED 2026-10-29: `C-4` moved the persisted-file names; then `E-5`, the carrier\'s literal leaves `main.ts` and the read count becomes two)', async () => {
     const mainSrc = await awaitMainSource()
     const userDataFiles = [...mainSrc.matchAll(/join\(app\.getPath\('userData'\), '([a-z-]+\.json)'\)/g)].map((m) => m[1]).sort()
     // **THE RE-GRAIN, OLD → NEW.** AS FILED the census read
@@ -535,19 +555,38 @@ describe('G3 §3.2 fail-states and §3.3 invariants', () => {
     // `C-4` RETIRED that name (`provident-security.json` is read at most once by the
     // import-once path and NEVER written) and ADDED `provident-operator-settings.json`,
     // whose two names belong to the INSTANCE module (main.ts spells neither: it
-    // constructs no store and owns no record file name).  THE CLAIM IS UNMOVED — the
-    // persisted set is EXACTLY the declared carriers, each with ONE writer, and no third
-    // file exists — and the bite is kept where the bytes now are.
-    expect(userDataFiles, 'I-2 / `C-4` — main.ts\'s userData file literals are the Tier-1 carrier + the legacy name that is never written; the operator record\'s names live in the INSTANCE module, and a THIRD literal here still reddens').toEqual(['provident-modules.json', 'provident-settings.json'])
+    // constructs no store and owns no record file name).
+    // **`E-5` (this re-grain, `settings-carrier-retirement`) MOVES THE SECOND NAME OUT TOO.**
+    // AS RE-GRAINED UNDER `C-4` the census still read TWO literals from `main.ts` —
+    // `['provident-modules.json', 'provident-settings.json']` — because
+    // `provident-settings.json` was still the hand-written tier-1 CARRIER, composed at
+    // `main.ts`'s `settingsPath`.  THE CARRIER LEFT THE FILE (L1 §3's CLOSED removal list:
+    // `const settingsPath`, the boot read, the guarded second read, and the whole
+    // tmp+rename+fsync writer), so what stands in `main.ts` now is the Q-5 legacy name
+    // ALONE.  THE CLAIM IS UNMOVED — the persisted set is EXACTLY the declared carriers,
+    // each with ONE writer, and no third file exists — and it is carried now by the two
+    // facts below rather than by a literal count: `main.ts` spells no record name at all,
+    // and the instance module makes TWO import-once reads and no write (L1 §6; L2
+    // `behaviour.md` §8 `RET-2`/`RET-3`; `persistence.md`:43).
+    expect(userDataFiles, 'I-2 / `E-5` — main.ts\'s ONE userData file literal is the legacy `provident-modules.json`, read once and never written; every record name lives in the INSTANCE module, and a SECOND literal here still reddens (L1 §3/§6)').toEqual(['provident-modules.json'])
     expect(/never WRITTEN by this boot/.test(mainSrc), 'the legacy provident-modules.json is declared never-written — so the persisted Tier-1 set stays the exactly-two').toBe(true)
-    expect(/provident-security|provident-operator-settings/.test(mainSrc), '`C-4` — main.ts spells NEITHER record name (the surface module owns the file names)').toBe(false)
+    // THE ABSENCE LIMB, EXTENDED TO THE SECOND RETIRED NAME (`E-5`): `main.ts` spelled
+    // `provident-settings.json` while the carrier was its own; it spells no record name now —
+    // neither the added one, nor the security record's, nor the carrier's retired name.
+    expect(/provident-security|provident-operator-settings|provident-settings/.test(mainSrc), '`C-4` / `E-5` — main.ts spells NEITHER record name, and no longer the retired carrier\'s name either (the surface module owns the record names; the instance module owns the carrier\'s)').toBe(false)
     const surfaceSrc = await surfaceSource()
-    expect(/(provident-security|provident-operator-settings)\.json/.test(surfaceSrc), '`C-4` — and the surface module spells neither: the names are the instance module\'s alone').toBe(false)
+    expect(/(provident-security|provident-operator-settings|provident-settings)\.json/.test(surfaceSrc), '`C-4` / `E-5` — and the surface module spells none of the three: the names are the instance module\'s alone').toBe(false)
     const instanceSrc = await sourceOf(['main', 'operator-settings', 'index.ts'])
     expect(/const FILE_NAME = 'provident-operator-settings\.json'/.test(instanceSrc), '`C-4` — the ADDED name is declared ONCE, in the instance module').toBe(true)
+    // THE SINGLE-DECLARATION LIMB, EXTENDED TO THE SECOND RETIRED NAME (`E-5`): each retired
+    // name is declared EXACTLY ONCE, here, and is read by an import-once path at most once.
     expect(/const RETIRED_NAME = 'provident-security\.json'/.test(instanceSrc), '`C-4` — the RETIRED name is declared here and is read by the import-once path at most once (D-19)').toBe(true)
-    expect((instanceSrc.match(/readFileSync\(/g) ?? []).length, 'I-3 / `C-4` — the module makes EXACTLY ONE `fs` call: the import-once read of the retired name').toBe(1)
-    expect(/readFileSync\(join\(userDataDir, RETIRED_NAME\), 'utf8'\)/.test(instanceSrc), 'I-3 — and that one call IS the retired name\'s read').toBe(true)
+    expect((instanceSrc.match(/const RETIRED_NAME = 'provident-security\.json'/g) ?? []).length, '`E-5` — and declared exactly ONCE: a second declaration would be a second reader\'s spelling').toBe(1)
+    expect(/const RETIRED_SETTINGS_NAME = 'provident-settings\.json'/.test(instanceSrc), '`E-5` — the SECOND retired name is declared here and nowhere else, read at most once per boot by the carrier\'s import arm (L1 §4/§6; `RET-2`)').toBe(true)
+    expect((instanceSrc.match(/const RETIRED_SETTINGS_NAME = 'provident-settings\.json'/g) ?? []).length, '`E-5` — and declared exactly ONCE, the same single-declaration rule `C-4` set for the first retired name').toBe(1)
+    expect((instanceSrc.match(/readFileSync\(/g) ?? []).length, 'I-3 / `E-5` — the module makes EXACTLY TWO `fs` calls: two import-once reads, the security record\'s and the retired carrier\'s (L2 `behaviour.md` §8 `RET-3`; `persistence.md`:43)').toBe(2)
+    expect(/readFileSync\(join\(userDataDir, RETIRED_NAME\), 'utf8'\)/.test(instanceSrc), 'I-3 — and the first of those two calls IS the security record\'s read').toBe(true)
+    expect(/readFileSync\(join\(userDataDir, RETIRED_SETTINGS_NAME\), 'utf8'\)/.test(instanceSrc), 'I-3 / `E-5` — and the second IS the retired carrier\'s import-once read: neither is a write, and no third read stands (L1 §4 `ASM-4`: the arm writes no byte)').toBe(true)
     expect(/writeFileSync|renameSync|rmSync|unlinkSync/.test(instanceSrc), '`C-4` / `E-1` — the retired file is NEVER written, renamed, repaired or deleted: the module carries no write/rename/remove call at all').toBe(false)
     expect(/filePath: join\(options\.userDataDir, FILE_NAME\)/.test(instanceSrc), 'I-3 — the record file has ONE writer: the instance\'s own store construction (`filePath` names `FILE_NAME` and nothing else)').toBe(true)
     const rendererSrc = await sourceOf(['renderer', 'renderer.ts'])

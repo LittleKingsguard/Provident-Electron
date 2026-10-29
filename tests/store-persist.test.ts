@@ -44,6 +44,53 @@
 //  preload members, the absent Y-1/Y-2 handlers, the boot-order inversion, the non-atomic
 //  write's absence at the landing site, the two-files census (currently {security, modules}),
 //  the missing `schemaVersion`, the missing migration, the missing third-holder bound.
+//
+// ─────────────────────── THE E-5 CENSUS RE-GRAIN — THIS FILE'S OWN LEDGER (`2026-10-29`) ───────────────────────
+//
+// THE LICENCE: `docs/L1/settings-carrier-retirement.md` §6 and §9 `E-5`, and the rule §6 states in its
+// own words: **re-grain where the row's subject is a CHANNEL'S ANSWER; retire WITH THE REFERENT where
+// the subject is the hand-written MACHINERY (the tmp sequence, the stamp).** The machinery retired in
+// this unit: `provident-settings.json`'s boot read, its guarded second read, `const settingsPath`, the
+// whole tmp+rename+fsync writer, the `schemaVersion` stamp and the `bootRecord` third holder (L1 §3,
+// licensed by E-1; D-22). Nothing here is a weakening and nothing is deleted silently: every retired
+// row stands in the file where it stood, as a comment block naming its subject, its referent and the
+// surviving home of its claim, and the four retired REGISTER rows are additionally carried as data in
+// `RETIRED_REGISTER_ROWS` and printed by the register report.
+//
+//   RE-GRAINED (the subject is a channel's answer — the machinery probe is replaced by a probe of the
+//   ANSWER, DRIVEN through `createSettingsSurface`, which is importable where `main.ts`'s bodies are
+//   not; L2 `behaviour.md` §1/§2/§3):
+//     · `M-1`  the atomic sequence at the landing site → ONE whole-map commit, one receipt, no file verb
+//     · `M-2`  `existsSync` in the Y-1 body → the cold ANSWER driven (`[]`, `legacy:'absent'`, no throw)
+//     · `M-3`  the holder + a read-time `schemaVersion` → the SERVED imported rows, driven, order unmoved
+//     · `M-4`  the atomic sequence again → the per-arriving-crossing duty: no comparison read-back
+//     · `M-5`  the carrier's path in `main.ts` → the migration's ONE `settingsSurface.commit(...)`
+//     · `M-6`  `catch` in the Y-1 body → the corrupt IMPORT answer driven (`legacy:'corrupt'`, rows `[]`)
+//     · `M-7`  the holder BOUNDED → the holder ABSENT (`bootRecord`/`settingsCorrupt` stand nowhere)
+//     · `F-2`  `'write-failed'` + refusal-before-rename → the refusal RECEIPT, the store's own status
+//              verbatim, and the retired word asserted ABSENT (the stronger polarity)
+//     · `F-4`  the `schemaVersion` stamp limb → retired; the `file.*` projection kept and driven
+//     · `F-6`  "the settings file wins from then on" → the app-state record, one commit site
+//     · `F-7`  the carrier's literal as the write site → `y2CommitSiteProbe()` (one commit, no file verb)
+//     · `F-9`  `catch`/`existsSync` in the Y-1 body → every import arm's ANSWER driven, none throws
+//     · `S-3`  the carrier in the census → the TWO WRITTEN names + the two retired names as seeds
+//     · `S-4`  the token's one home in `main.ts` → the token's one home, the IMPORT arm, and no stamp
+//     · `MIG-1` "the file" as a second written carrier → both writer classes share ONE commit verb
+//     · `BO-3` `existsSync` in the cold arm → the cold ANSWER driven
+//     · `SC-1` the carrier's `<userData>` path → the two written names under `<userData>`, and a
+//              tier-1 commit moves the app-state record at `['operator-app-state']`
+//     · `SC-3` a `file.settings` substring (which survived only in a COMMENT) → the namespace DRIVEN
+//     · register `P-PS-IM-2` A2/A3/A4, `P-PS-SM-2`'s three checkpoint-2s, `P-PS-TP-1` whole
+//   RETIRED WITH THE REFERENT (the subject dissolved; the claim is named and its surviving home is
+//   given, never re-pointed — `tests/store-security.test.ts`'s header rule):
+//     · `F-1`  a torn file is impossible — the staging sequence; survives as the PACKAGE's durability
+//              (cited), L1 e2e `S-8`/`S-9`, `y2CommitSiteProbe` and `retiredWriteFailedAbsent`
+//     · `SC-4` VERSION-FROM-FIRST-WRITE — the stamp; survives as the import's answer (`SM-2`, `M-6`,
+//              `S-4`, and the L2 import battery)
+//     · register `P-PS-IM-3`, `P-PS-SM-1`, `P-PS-TP-2`, `P-PS-SM-3` — see `RETIRED_REGISTER_ROWS`
+//   UNTOUCHED: `M-8`, `F-3`, `F-5`, `F-8`, `F-10`, `S-1`, `S-2`, `S-5`, `BO-1`, `BO-2`, `BO-4`, `BO-5`,
+//   `SE-1`, `SE-2`, `R-1`, `SC-2`, register `P-PS-IM-1` — every figure each cites is a channel-name,
+//   renderer, shared or module-store fact this unit did not move (checked, not assumed).
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
@@ -52,6 +99,10 @@ import { fileURLToPath } from 'node:url'
 import { createGraphStore } from '../src/renderer/store-core-graph'
 import { storeGraphReferences } from '../src/renderer/store-graph-references'
 import { createModuleStore } from '../src/main/module-store'
+// ⟶ `E-5` — THE SURFACE THE TWO CHANNELS DELEGATE TO, imported so a row can DRIVE the answer
+// rather than scan a body no node test can construct (`main.ts` imports `electron` at module
+// scope; L2 `behaviour.md` §2/§3's stated limit; `examiner.md` §2).
+import { createSettingsSurface } from '../src/main/settings-surface'
 // NOTE for `tsc -p tsconfig.tests.json`: the literal specifier below is INTENTIONAL — the
 // honest diagnostic for this red set is that `src/main/store-channels.ts` does not exist
 // (TS2307 "Cannot find module" + the row-level break inside `channelModule()`). When the
@@ -93,6 +144,25 @@ const DECLARED_RESERVED_NAMESPACES: readonly string[] = ['window', 'tabs', 'layo
 const DECLARED_SETTINGS_FILE = 'provident-settings.json'
 const DECLARED_SECURITY_FILE = 'provident-security.json'
 const DECLARED_LEGACY_FILE = 'provident-modules.json'
+/* ── ⟶ THE `E-5` RE-GRAIN'S FIGURES (`2026-10-29`; `docs/L1/settings-carrier-retirement.md` §3/§4/§6,
+ *  §9 E-5; `docs/L2/settings-carrier-retirement/behaviour.md` §1–§3; `persistence.md` §2). ──
+ *
+ * `DECLARED_SETTINGS_FILE` IS NOW CITED AS RETIRED, exactly as `DECLARED_SECURITY_FILE` is. The
+ * hand-written tier-1 CARRIER `provident-settings.json` — its boot read, its guarded second read,
+ * its `settingsPath` constant and its whole tmp+rename+fsync writer — is GONE from
+ * `src/main/main.ts` (L1 §3's CLOSED removal list, licensed by E-1), so neither it nor the
+ * security record is a WRITTEN name any more. The TWO WRITTEN NAMES are:
+ *   · `provident-operator-settings.json` — the instance's own record (`FILE_NAME`), and
+ *   · `provident-profile.json` — the profile store's, bound as `PROFILE_FILE_NAME`.
+ * The retired names may stand in a profile as SEEDS: read at most once, never written (L1 §6,
+ * D-13). The persisted set therefore stays exactly TWO while the CENSUS that names it moves —
+ * the row's claim is unmoved, its figure is re-grained, and nothing is deleted (D-13). */
+const DECLARED_PROFILE_FILE = 'provident-profile.json'
+const PROFILE_FILE_MODULE = 'main/data/store.ts'
+/** THE APP-STATE ADDRESS the rows live at, on the `file` tier, beside the security record
+ *  (`ASM-1`; L1 §3). Every re-grained drive below names it, because what a tier-1 commit now
+ *  moves is THAT record and not a hand-written file (L1 §6). */
+const DECLARED_APP_STATE_ADDRESS = 'operator-app-state'
 /* ── ⟶ THE `C-4` RE-GRAIN'S TWO FIGURES (`2026-10-11`; `docs/L1/security-store-storeroom-exception.md`
  *  §2 E-2/E-3, `docs/L3/security-store-storeroom/signatures.md` §2). `src/main/security-store.ts` is
  *  DELETED (`E-1`): the operator's security record now lives in ONE `provident-storeroom` instance inside
@@ -279,33 +349,13 @@ function committedToken(y2: string): Probe {
   return /\bcommitted\b/.test(y2) ? HOLD('the committed receipt token is present in the Y-2 handler') : BREAK('the committed receipt token is absent from the Y-2 handler')
 }
 
-function writeFailedArm(y2: string): Probe {
-  return y2.includes("'write-failed'")
-    ? HOLD("the 'write-failed' arm is present in the Y-2 handler")
-    : BREAK("the 'write-failed' arm is absent from the Y-2 handler")
-}
-
-/** The tmp-target-only rule: every write in the Y-2 region targets `${path}.tmp`; the real
- *  path changes ONLY via `renameSync` (the torn-file-impossible shape, §2.6 items 1/6). */
-function tmpTargetOnly(y2: string): Probe {
-  const writes = [...y2.matchAll(/writeFileSync\s*\(/g)]
-  if (writes.length === 0) return BREAK('the Y-2 handler performs no tmp write (no writeFileSync targeting {path}.tmp)')
-  for (const w of writes) {
-    const tail = y2.slice(w.index ?? 0, (w.index ?? 0) + 120)
-    if (!tail.includes('.tmp')) return BREAK('a writeFileSync in the Y-2 handler does not target the {path}.tmp staging path — the real path would be written non-atomically (the security-store pattern the channel MUST NOT copy, §2.6 item 1)')
-  }
-  return HOLD('every write in the Y-2 handler targets the {path}.tmp staging path; the real path is only renamed onto')
-}
-
-/** The tmp-never-parsed probe: the Y-1 read-back reads the REAL path only — a `${path}.tmp`
- *  is never parsed as the record (§2.6 item 3 (c)). */
-function tmpNeverParsed(): Probe {
-  return y1Probe("tmp-never-parsed", (y1) =>
-    y1.includes('.tmp')
-      ? BREAK('the Y-1 read-back references the {path}.tmp path — a tmp file must never be parsed as the record')
-      : HOLD('the Y-1 read-back reads the real path only'),
-  )
-}
+/* ⟶ `E-5` — REMOVED WITH THEIR REFERENT: `writeFailedArm()`, `tmpTargetOnly()` and
+ * `tmpNeverParsed()` scanned the Y-2/Y-1 bodies for the staging machinery and for the retired
+ * `'write-failed'` vocabulary. The machinery is deleted from `main.ts` (L1 §3, E-1) and the
+ * vocabulary was retired by ASM-2 (the refusal names the STORE's own status verbatim), so the
+ * surviving claims are asserted with the opposite polarity and where they live: no file verb stands
+ * at the landing site (`y2CommitSiteProbe`), `'write-failed'` stands NOWHERE (`retiredWriteFailedAbsent`),
+ * and every refusal is a receipt the surface answers (`commitDrive`). */
 
 const REGISTER_ROWS: readonly RegisterRow[] = [
   {
@@ -378,7 +428,7 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
     type: 'P-IM',
     property: 'THE EXACTLY-TWO FILES CENSUS, WITH THE WITNESS-GAP PIN',
     strategy: 'S-PS-FILES-1',
-    term: '4 attempts = (1) post-migration boot: the legacy provident-modules.json does not exist at userData; (2) the settings file exists and validates as the declared schema; (3) the RETIRED security file\'s model writes nothing of its own — the operator store\'s module binds RETIRED_NAME to \'provident-security.json\', reads it EXACTLY ONCE and writes never (the deleted security-store.ts\'s plain writeFileSync is the RETIRED model, cited not re-pointed) — AND the write it must not bequeath is measured on the tier-1 channel\'s OWN write site (mkdirSync → .tmp → fsync → renameSync → dir-fsync, never a plain writeFileSync; a channel degrading to one FAILS); (4) the write-site census: main\'s write/rename sites reference exactly the two declared paths',
+    term: '4 attempts = (1) post-migration boot: the legacy provident-modules.json does not exist at userData; (2) the persisted record IS the instance\'s own file and the retired record\'s schema is validated by the IMPORT arm, which answers the diagnosis rather than throwing (RE-GRAINED, E-5: the carrier path and its read-time validation retired with the carrier); (3) the RETIRED names write nothing — each has ONE home, ONE reader and NO writer (RE-GRAINED, E-5: the tier-1 channel\'s tmp write site retired with the tmp writer, so the bite is now the ABSENCE of a file verb at the landing site); (4) the write-site census: the one write site is ONE whole-map commit and no write/rename construct references a third provident-*.json literal (RE-GRAINED, E-5)',
     attempts: [
       {
         label: 'IM-2 A1 — post-migration boot: the legacy provident-modules.json is gone after the one-boot window',
@@ -392,40 +442,45 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
         },
       },
       {
-        label: 'IM-2 A2 — the settings file exists and validates as the declared schema',
-        run: async (): Promise<Probe> => {
-          const main = readSrcSafe('main/main.ts')
-          if (main === null) return BREAK('main.ts unreadable')
-          const pathDeclared = main.includes(DECLARED_SETTINGS_FILE)
-          const y1 = y1Region()
-          const validates = y1 !== null && y1.includes('schemaVersion')
-          return pathDeclared && validates
-            ? HOLD('the settings file path is declared and the read-back validates the schema')
-            : BREAK(`the settings file is not the store's crossing: '<userData>/${DECLARED_SETTINGS_FILE}' is not declared as a persisted path and the schema validation is absent`)
-        },
-      },
-      {
-        label: 'IM-2 A3 — the RETIRED model writes nothing of its own, and the tier-1 channel\'s own write site is the atomic shape, never a plain writeFileSync',
+        label: 'IM-2 A2 — the persisted record is the instance\'s own file and the retired record\'s schema is validated by the IMPORT arm, which ANSWERS the diagnosis rather than throwing',
         run: async (): Promise<Probe> =>
-          // ⟶ RE-GRAIN (`C-4`, `E-1`). This attempt read `src/main/security-store.ts` and `main.ts`'s
-          // `provident-security.json` for a `writeFileSync`; the file is DELETED, the name RETIRED (read
-          // at most once, never written) and `main.ts` no longer spells it. THE CLAIM IS UNMOVED and its
-          // SUBJECT STILL STANDS: the tier-1 channel may NOT copy the retired store's plain write. So the
-          // model is CITED AS RETIRED (the module that replaced it writes nothing at all) and the bite is
-          // taken on the channel's own write site, which is where a copy would land.
-          ALL(retiredStoreModelProbe(), tier1WriteSiteProbe()),
+          // ⟶ RE-GRAIN (`E-5`). AS FILED this attempt read `main.ts` for
+          // `'<userData>/provident-settings.json'` and the Y-1 body for a `schemaVersion`
+          // validation. THE CARRIER'S PATH IS GONE (L1 §3) and the read-time validation went with
+          // it; what stands is the IMPORT arm's validation, which IS the retired boot read's own
+          // (L1 §4 `ASM-3`) — `schemaVersion === '1'` or the corrupt arm. THE CLAIM IS UNMOVED —
+          // the persisted record exists and validates as the declared schema — and it is now
+          // measured where the schema is declared and DRIVEN at the answer it produces.
+          ALL(
+            instanceFileNameProbe(),
+            importSchemaValidationProbe(),
+            (() => {
+              const valid = stateDrive({ name: DECLARED_SETTINGS_FILE, text: CARRIER_SEED_VALID })
+              return valid.threw === null && valid.legacy !== 'corrupt'
+                ? HOLD(`a seeded retired record whose schemaVersion is the declared '1' is IMPORTED, not refused: legacy='${valid.legacy}', ${valid.rows.length} rows served (L1 §4)`)
+                : BREAK(`a well-formed seeded record did not import: threw=${String(valid.threw)} legacy=${valid.legacy} — the import's validation is not the retired boot read's own (L1 §4 ASM-3)`)
+            })(),
+          ),
       },
       {
-        label: 'IM-2 A4 — the write-site census: main\'s write/rename sites reference exactly the two declared paths',
+        label: 'IM-2 A3 — the RETIRED names write nothing of their own — ONE home, ONE reader, NO writer each — and the landing site carries NO file verb',
+        run: async (): Promise<Probe> =>
+          // ⟶ RE-GRAIN (`E-5`). The as-filed second half measured the tier-1 channel's OWN write
+          // site for the atomic `mkdirSync → .tmp → fsync → renameSync → dir-fsync` sequence, with a
+          // plain `writeFileSync` as the exactly-named anti-pattern. THERE IS NO CHANNEL WRITE SITE
+          // ANY MORE: the writer retired (L1 §3), so a channel cannot copy the pattern because it
+          // cannot write a file at all. THE CLAIM SURVIVES IN ITS STRONGEST FORM — the landing site
+          // carries NO file verb — and `retiredStoreModelProbe` extends to BOTH retired names.
+          ALL(retiredStoreModelProbe(), y2CommitSiteProbe()),
+      },
+      {
+        label: 'IM-2 A4 — the write-site census: ONE whole-map commit, and no write/rename construct references a third provident-*.json literal',
         run: async (): Promise<Probe> => {
-          const settingsWrite = y2Probe('write-site census', (y2) =>
-            y2.includes('.tmp')
-              ? HOLD('the settings write is the atomic {path}.tmp → rename machinery (the settings path is its real path by construction)')
-              : BREAK('the settings write site (the atomic tmp-write target) is absent'),
-          )
+          // ⟶ RE-GRAIN (`E-5`): the as-filed settings-write probe looked for `.tmp` in the Y-2
+          // region. The commit site is where the write happens now, so the census reads IT.
           const thirdLiteral = thirdLiteralWrites()
           return ALL(
-            settingsWrite,
+            y2CommitSiteProbe(),
             thirdLiteral.length === 0
               ? HOLD('no write/rename construct in the main-side tree references a third provident-*.json literal')
               : BREAK(`a write construct references a third persisted filename: ${thirdLiteral.join(', ')} — the witness-gap pin (§2.7 item 2) reddens`),
@@ -434,176 +489,206 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
       },
     ],
   },
-  {
-    id: 'P-PS-IM-3',
-    type: 'P-IM',
-    property: 'TORN-FILE-IMPOSSIBLE AND NO tmp RESIDUE',
-    strategy: 'S-PS-TORN-1',
-    term: '6 attempts = 3 injection points (tmp-write failure · fsync failure · rename failure) × 2 readings per point (the real path\'s record byte-identical to the pre-write record; the tmp path is never parsed as the record). The success case\'s no-tmp assertion rides reading pair (1)\'s control',
-    attempts: [
-      {
-        label: 'IM-3 inj:tmp-write · reading 1 — the real path\'s record is byte-identical to the pre-write record (it changes ONLY via rename)',
-        run: async (): Promise<Probe> => {
-          const successNoTmp = 'the success case\'s no-tmp assertion rides this reading: the rename terminal removes the staging path (the write target ceases at renameSync)'
-          return y2Probe('injection tmp-write', (y2) => ALL(tmpTargetOnly(y2), committedToken(y2), HOLD(successNoTmp)))
-        },
-      },
-      { label: 'IM-3 inj:tmp-write · reading 2 — the tmp path is never parsed as the record', run: async (): Promise<Probe> => tmpNeverParsed() },
-      {
-        label: 'IM-3 inj:fsync · reading 1 — the tmp file is fsync\'ed BEFORE the rename (a failed fsync leaves the previous file intact)',
-        run: async (): Promise<Probe> =>
-          y2Probe('injection fsync', (y2) => {
-            const firstFsync = y2.indexOf('fsync')
-            const rename = y2.indexOf('renameSync')
-            if (firstFsync < 0 || rename < 0 || firstFsync >= rename) return BREAK('the tmp fsync does not precede the rename — the plan\'s row (b) "fsync before the rename" is not landed')
-            return ALL(writeFailedArm(y2), HOLD('a failed fsync answers {status:\'refused\', reason:\'write-failed\'} with the previous file intact'))
-          }),
-      },
-      { label: 'IM-3 inj:fsync · reading 2 — the tmp path is never parsed as the record', run: async (): Promise<Probe> => tmpNeverParsed() },
-      {
-        label: 'IM-3 inj:rename · reading 1 — the rename is atomic on the same filesystem; the parent directory is fsync\'ed AFTER it',
-        run: async (): Promise<Probe> =>
-          y2Probe('injection rename', (y2) => {
-            const o = ordered(y2, ['renameSync', 'fsync'])
-            if (!o.held) return BREAK('the directory fsync does not follow the rename (renameSync → fsync), or one is absent — the rename\'s durability is not completed')
-            return ALL(tmpTargetOnly(y2), HOLD('a crashed rename leaves the previous file intact at the real path (the real path changes only at renameSync) and a stale {path}.tmp the next write overwrites (the universal staging target)'))
-          }),
-      },
-      { label: 'IM-3 inj:rename · reading 2 — the tmp path is never parsed as the record', run: async (): Promise<Probe> => tmpNeverParsed() },
-    ],
-  },
-  {
-    id: 'P-PS-SM-1',
-    type: 'P-SM',
-    property: 'THE COMMIT STATE MACHINE (CLOSED) — IDLE → TMP-WRITTEN → (fsync) → RENAMED → COMMITTED, every failure → REFUSED with the previous file intact',
-    strategy: 'S-PS-WSM-1',
-    term: '8 attempts = 4 machine states (IDLE · TMP-WRITTEN · FSYNCED · COMMITTED/RENAMED) × 2 terminals (committed — receipt answered, no tmp; refused — previous file intact, receipt answered)',
-    attempts: [
-      { label: 'SM-1 IDLE · committed terminal — the handler exists and writes the staging path only', run: async (): Promise<Probe> => y2Probe('state IDLE', (y2) => ALL(committedToken(y2), tmpTargetOnly(y2))) },
-      { label: 'SM-1 IDLE · refused terminal — the failure arm answers a receipt, never a swallow', run: async (): Promise<Probe> => y2Probe('state IDLE', writeFailedArm) },
-      { label: 'SM-1 TMP-WRITTEN · committed terminal — the tmp write materialises, then the fsync follows', run: async (): Promise<Probe> => y2Probe('state TMP-WRITTEN', (y2) => (ordered(y2, ['.tmp', 'fsync']).held ? HOLD('the tmp write precedes the tmp fsync') : BREAK('the tmp write does not precede the tmp fsync'))) },
-      { label: 'SM-1 TMP-WRITTEN · refused terminal — a failed tmp write leaves the previous file intact', run: async (): Promise<Probe> => y2Probe('state TMP-WRITTEN', writeFailedArm) },
-      { label: 'SM-1 FSYNCED · committed terminal — the tmp is fsync\'ed before the rename', run: async (): Promise<Probe> => y2Probe('state FSYNCED', (y2) => (ordered(y2, ['fsync', 'renameSync']).held ? HOLD('fsync precedes renameSync') : BREAK('fsync does not precede renameSync')) ) },
-      { label: 'SM-1 FSYNCED · refused terminal — a failed fsync leaves the previous file intact', run: async (): Promise<Probe> => y2Probe('state FSYNCED', writeFailedArm) },
-      { label: 'SM-1 COMMITTED/RENAMED · committed terminal — rename, then the DIRECTORY fsync; the receipt answered; no tmp residue', run: async (): Promise<Probe> => y2Probe('state COMMITTED', (y2) => ALL(ordered(y2, ['renameSync', 'fsync']).held ? HOLD('renameSync precedes the directory fsync') : BREAK('renameSync does not precede the directory fsync'), committedToken(y2))) },
-      { label: 'SM-1 COMMITTED/RENAMED · refused terminal — a crashed rename keeps the previous file; the stale tmp is overwritten next and never read', run: async (): Promise<Probe> => y2Probe('state COMMITTED', (y2) => ALL(writeFailedArm(y2), tmpTargetOnly(y2))) },
-    ],
-  },
+  /* ─────────────────────── TWO REGISTER ROWS RETIRED WITH THEIR REFERENT (`E-5`) ───────────────────────
+   *
+   * `P-PS-IM-3` and `P-PS-SM-1` stood HERE and are RETIRED, not re-pointed. Their subject is not a
+   * channel's answer: it is the tmp→fsync→rename staging sequence itself, which this unit DELETED
+   * (`L1 §3`'s closed removal list, E-1; D-22). A row about the order of five `fs` calls has no
+   * subject left once the five calls are gone, and the durability claim it carried is the PACKAGE's
+   * now (`provident-storeroom`, cited not re-pointed: `L1 §10`, D-5). `RETIRED_REGISTER_ROWS` below
+   * names each id, its subject, its referent and the surviving home, and the register report prints
+   * that ledger, so a retirement can be audited but never re-entered silently (D-1, D-13).
+   */
   {
     id: 'P-PS-SM-2',
     type: 'P-SM',
     property: 'THE BOOT-ORDER MACHINE (CLOSED — NO GRAPH LOAD BEFORE THE HAND-OFF)',
     strategy: 'S-PS-BSM-1',
-    term: '6 attempts = 3 boot states (cold → [] · corrupt → the registered defaults + module corrupt:true · persisted → the record) × 2 checkpoints per state (the hand-off precedes the first envelope load; the payload/table answers the declared state for that boot). The cold and corrupt states also assert NOTHING throws',
+    term: '6 attempts = 3 boot states (cold → [] · corrupt → the diagnosis on state().legacy, rows [] · persisted → the seeded rows) × 2 checkpoints per state (the hand-off precedes the first envelope load; the ANSWER for that boot is the declared one, DRIVEN). The cold and corrupt states also assert NOTHING throws. RE-GRAINED, E-5: every checkpoint-2 attempt probes the ANSWER the surface answers rather than a substring of a body no node test can import (L2 behaviour.md §1/§2)',
     attempts: [
       { label: 'SM-2 cold · checkpoint 1 — the hand-off precedes the first envelope load', run: async (): Promise<Probe> => bootOrderProbe() },
       {
         label: 'SM-2 cold · checkpoint 2 — the hand-off answers [] and NOTHING throws',
-        run: async (): Promise<Probe> =>
-          y1Probe('cold boot', (y1) =>
-            ALL(
-              y1.includes('existsSync') ? HOLD('the missing-file arm is present (a cold tier is a MISS, never an error)') : BREAK('the cold/missing-file arm is absent'),
-              !y1.includes('throw') ? HOLD('the Y-1 read-back never throws') : BREAK('the Y-1 read-back throws — a Y-1 that throws on a missing file FAILS the plan\'s failure-mode (2) clause'),
-            ),
-          ),
+        run: async (): Promise<Probe> => {
+          // ⟶ RE-GRAIN (`E-5`). AS FILED this read the Y-1 body for `existsSync` (the missing-file
+          // arm) and the absence of `throw`. There is no file to probe for any more: the cold answer
+          // is the SURFACE's, so the row DRIVES it (`behaviour.md` §1's first row, §2's `[]` row).
+          const cold = stateDrive()
+          return ALL(
+            cold.threw === null ? HOLD('a cold profile answers — nothing throws (the import arm ran and found no record)') : BREAK(`a cold boot THREW: ${String(cold.threw)} — a missing file is a MISS, never an error`),
+            cold.rows.length === 0 ? HOLD('the cold answer is [] — no invented row, no registered default smuggled in') : BREAK(`the cold answer carries ${cold.rows.length} rows — a cold tier must answer []`),
+            cold.legacy === 'absent' ? HOLD("the diagnosis is 'absent' — the cold arm is a declared answer, not a swallow") : BREAK(`the cold arm answered legacy='${cold.legacy}' — declared 'absent'`),
+            cold.twice === 'stable' ? HOLD('a second state() in the same process answers the same rows') : BREAK(`the second state() ${cold.twice} — the answer must be stable within one process`),
+          )
+        },
       },
       { label: 'SM-2 corrupt · checkpoint 1 — the hand-off precedes the first envelope load', run: async (): Promise<Probe> => bootOrderProbe() },
       {
         label: 'SM-2 corrupt · checkpoint 2 — the registered defaults + module corrupt:true; NOTHING throws',
-        run: async (): Promise<Probe> =>
-          ALL(
-            y1Probe('corrupt boot', (y1) =>
-              ALL(
-                y1.includes('catch') ? HOLD('the corrupt-file recovery arm is present') : BREAK('the corrupt-file recovery arm (catch → the registered defaults) is absent'),
-                !y1.includes('throw') ? HOLD('the Y-1 read-back never throws') : BREAK('a corrupt file must never throw'),
-              ),
-            ),
+        run: async (): Promise<Probe> => {
+          // ⟶ RE-GRAIN (`E-5`). AS FILED this read the Y-1 body for `catch` and the absence of
+          // `throw`. The corrupt arm is now the IMPORT's answer (`L1 §4`: `legacy:'corrupt'`,
+          // bytes standing, nothing thrown), so the row DRIVES it against an unparsable seed.
+          const corrupt = stateDrive({ name: DECLARED_SETTINGS_FILE, text: CARRIER_SEED_CORRUPT })
+          return ALL(
+            corrupt.threw === null ? HOLD('an unparsable retired record does NOT throw — the diagnosis is an answer') : BREAK(`an unparsable retired record THREW: ${String(corrupt.threw)} — a corrupt file must never throw (L1 §4)`),
+            corrupt.legacy === 'corrupt' ? HOLD("the corrupt arm is REPORTED as legacy:'corrupt' — the diagnosis survives where the bytes are not repaired (L1 §4; ASM-4)") : BREAK(`the corrupt seed answered legacy='${corrupt.legacy}' — declared 'corrupt'`),
+            corrupt.rows.length === 0 ? HOLD('the corrupt arm loads no row — its own declared recovery, the same one the retired boot read had (L1 §4)') : BREAK(`the corrupt arm answered ${corrupt.rows.length} rows — it must load none`),
             moduleCorruptDrive(true),
-          ),
+          )
+        },
       },
       { label: 'SM-2 persisted · checkpoint 1 — the hand-off precedes the first envelope load', run: async (): Promise<Probe> => bootOrderProbe() },
       {
         label: 'SM-2 persisted · checkpoint 2 — the hand-off serves the persisted record (validated, never a throw)',
-        run: async (): Promise<Probe> =>
-          y1Probe('persisted boot', (y1) =>
-            ALL(
-              y1.includes('schemaVersion') ? HOLD('the read-back validates the schemaVersion member') : BREAK('the schemaVersion validation is absent from the read-back'),
-              y1.includes('catch') ? HOLD('the validation-failure recovery arm is present') : BREAK('the validation-failure recovery arm is absent'),
-              !y1.includes('throw') ? HOLD('a validation failure is NEVER a throw') : BREAK('the read-back throws on a validation failure'),
-            ),
-          ),
+        run: async (): Promise<Probe> => {
+          // ⟶ RE-GRAIN (`E-5`). AS FILED this read the Y-1 body for `schemaVersion` and `catch`.
+          // The persisted answer is the imported ROWS, so the row DRIVES what the channel serves.
+          const persisted = stateDrive({ name: DECLARED_SETTINGS_FILE, text: CARRIER_SEED_VALID })
+          const names = persisted.rows.map((r) => r.name).sort()
+          const declared = Object.keys(JSON.parse(CARRIER_SEED_VALID) as Record<string, unknown>)
+            .filter((n) => n.startsWith('file.'))
+            .sort()
+          return ALL(
+            persisted.threw === null ? HOLD('the persisted boot answers — never a throw') : BREAK(`the persisted boot THREW: ${String(persisted.threw)}`),
+            JSON.stringify(names) === JSON.stringify(declared)
+              ? HOLD(`the seeded record's file.* rows are served VERBATIM and whole: ${names.join(', ')} (L1 §4; behaviour.md §2)`)
+              : BREAK(`the persisted answer serves ${JSON.stringify(names)} — the seeded rows are ${JSON.stringify(declared)} (names must stand verbatim: L1 §4)`),
+            names.includes('schemaVersion') ? BREAK("a `schemaVersion` ROW was served — the retired record's format marker is NOT operator state and is not carried (L1 §4; D-13)") : HOLD('no schemaVersion row is served (the format marker is dropped on import)'),
+          )
+        },
       },
     ],
   },
   {
     id: 'P-PS-TP-1',
     type: 'P-TP',
-    property: 'RECEIPT TOTALITY — EVERY write-outcome class answers EXACTLY ONE of {committed, refused}; a refusal NEVER clears, NEVER emits and leaves the previous file intact',
+    property: 'RECEIPT TOTALITY — EVERY write-outcome class answers EXACTLY ONE of {committed, refused}; a refusal NEVER clears and leaves the previous rows intact',
     strategy: 'S-PS-RCPT-1',
-    term: '8 attempts = 4 outcome classes (success · tmp-write failure · fsync failure · rename failure) × 2 assertions per class (the crossing\'s answered status is the declared one; on a refusal the file\'s post-state is the pre-write record and cleared: []/events: 0 on the store\'s receipt)',
+    term: '3 attempts = 3 outcome classes (a committed whole-map commit · a refusal minted by the STORE, carrying its own status verbatim · a refusal minted by the CHANNEL before any store call: malformed-payload) × 1 assertion per class (the answer is the declared one and the previous rows stand on a refusal). RE-GRAINED (E-5): the as-filed four classes (success · tmp-write failure · fsync failure · rename failure) dissolved with the tmp sequence; the totality claim — every outcome answers exactly one receipt, never a swallow — is a CHANNEL ANSWER and is re-grained onto the answer itself, DRIVEN (L2 behaviour.md §3; L1 §3 ASM-2)',
     attempts: [
-      { label: 'TP-1 success · assertion 1 — the crossing answers {status:\'committed\'}', run: async (): Promise<Probe> => y2Probe('outcome success', committedToken) },
-      { label: 'TP-1 success · assertion 2 — the committed receipt is answered only at the terminal (after the rename)', run: async (): Promise<Probe> => y2Probe('outcome success', (y2) => (ordered(y2, ['renameSync', 'committed']).held ? HOLD('the committed receipt is answered at the rename terminal') : BREAK('the committed receipt is not answered at the rename terminal'))) },
-      { label: 'TP-1 tmp-write failure · assertion 1 — the crossing answers {status:\'refused\', reason:\'write-failed\'}', run: async (): Promise<Probe> => y2Probe('outcome tmp-write failure', writeFailedArm) },
-      { label: 'TP-1 tmp-write failure · assertion 2 — refused ⇒ the previous file is intact (the refusal returns before the rename)', run: async (): Promise<Probe> => y2Probe('outcome tmp-write failure', refusalBeforeRename) },
-      { label: 'TP-1 fsync failure · assertion 1 — {status:\'refused\', reason:\'write-failed\'}', run: async (): Promise<Probe> => y2Probe('outcome fsync failure', writeFailedArm) },
-      { label: 'TP-1 fsync failure · assertion 2 — refused ⇒ the previous file is intact', run: async (): Promise<Probe> => y2Probe('outcome fsync failure', refusalBeforeRename) },
-      { label: 'TP-1 rename failure · assertion 1 — {status:\'refused\', reason:\'write-failed\'}', run: async (): Promise<Probe> => y2Probe('outcome rename failure', writeFailedArm) },
-      { label: 'TP-1 rename failure · assertion 2 — refused ⇒ the previous file intact; a stale tmp is overwritten next; cleared: []/events: 0 ride the refusal posture', run: async (): Promise<Probe> => y2Probe('outcome rename failure', (y2) => ALL(refusalBeforeRename(y2), tmpTargetOnly(y2))) },
+      {
+        label: "TP-1 committed · the crossing answers {status:'committed'} and the committed rows stand",
+        run: async (): Promise<Probe> => {
+          const drive = commitDrive([{ name: 'file.tabs.order', value: ['a', 'b'] }])
+          return ALL(
+            drive.threw === null ? HOLD('the commit answers — never a throw') : BREAK(`the commit THREW: ${String(drive.threw)}`),
+            drive.status === 'committed' ? HOLD("the crossing's answer is {status:'committed'} — ONE receipt, no ordinal (ASM-L2-4)") : BREAK(`the commit answered status='${drive.status}'${drive.reason === null ? '' : ` reason='${drive.reason}'`} — declared 'committed'`),
+            drive.after.length === 1 && drive.after[0].name === 'file.tabs.order'
+              ? HOLD('the committed row stands, and it is the whole map that was sent (a commit is a whole-map replacement, A-6)')
+              : BREAK(`the record after the commit holds ${JSON.stringify(drive.after.map((r) => r.name))} — expected exactly ['file.tabs.order']`),
+          )
+        },
+      },
+      {
+        label: "TP-1 refused by the STORE · the answer carries the store's own status VERBATIM, and a refusal is one of the two receipt forms",
+        run: async (): Promise<Probe> => {
+          // A `null`-carrying value cannot be represented by the store's walk, so the commit is
+          // refused as a VALUE (L1 §4's unrepresentable arm; guide §10.1/§10.2) — the one refusal
+          // class a drive can reach from here, and the one whose SPELLING this re-grain is about:
+          // the channel adds NO word of its own (L1 §3 ASM-2 retired 'write-failed').
+          const drive = commitDrive([{ name: 'file.layout.dock', value: null }])
+          return ALL(
+            drive.threw === null ? HOLD('a refused commit still ANSWERS — never a swallow') : BREAK(`the refused commit THREW: ${String(drive.threw)}`),
+            drive.status === 'refused' ? HOLD("the answer is {status:'refused', reason} — one of the two receipt forms and no third") : BREAK(`the answer was '${drive.status}' — a refusal must answer the refused form, never a throw and never a silent success`),
+            drive.reason !== null && drive.reason !== 'write-failed'
+              ? HOLD(`the reason is the STORE's own status verbatim ('${drive.reason}'), not the retired closed vocabulary — one refusal, one spelling (L1 §3 ASM-2)`)
+              : BREAK(`the reason is '${String(drive.reason)}' — ASM-2 retired 'write-failed': the refusal names the store's own status verbatim`),
+            drive.after.length === 0 ? HOLD('a refusal clears nothing and commits nothing: the record holds no row from the refused map') : BREAK(`after a refusal the record holds ${JSON.stringify(drive.after.map((r) => r.name))} — a refusal must leave the previous rows standing`),
+          )
+        },
+      },
+      {
+        label: "TP-1 refused by the CHANNEL · malformed-payload is decided BEFORE any store call",
+        run: async (): Promise<Probe> =>
+          // The channel's own pre-write refusal survives the retirement UNMOVED (L1 §3: "the
+          // channel's pre-write refusal `'malformed-payload'`"), so its region is read where it is
+          // still written — and its position before the commit is what the row asserts.
+          y2Probe('outcome malformed payload', (y2) => {
+            const arm = y2.indexOf("'malformed-payload'")
+            const site = y2.indexOf('settingsSurface.commit(')
+            return ALL(
+              arm >= 0 ? HOLD("the channel's own 'malformed-payload' arm is present — its validation of the incoming translation") : BREAK("the channel's 'malformed-payload' arm is absent"),
+              site >= 0 ? HOLD('and the body issues its one settingsSurface.commit(...) after that validation') : BREAK('the Y-2 body issues no settingsSurface.commit(...) — the write site is absent'),
+              arm >= 0 && site >= 0 && arm < site ? HOLD('the channel refuses BEFORE any store call — a malformed translation never reaches the record (L1 §3)') : BREAK('the malformed-payload arm does not precede the commit — the channel would call the store on a payload it has already refused'),
+            )
+          }),
+      },
     ],
+  },
+  /* ─────────────────────── TWO MORE REGISTER ROWS RETIRED WITH THEIR REFERENT (`E-5`) ───────────────────────
+   *
+   * `P-PS-TP-2` (VERSION-FROM-FIRST-WRITE) and `P-PS-SM-3` (THE THIRD HOLDER IS BOUNDED) stood HERE and are
+   * RETIRED, not re-pointed. TP-2's subject is the `schemaVersion` STAMP the writer wrote onto every
+   * payload: the stamp retired with the writer, and the instance has its own record shape (D-13, D-22), so
+   * there is no first write that stamps anything. SM-3's subject is the `bootRecord` THIRD HOLDER: removed
+   * with the boot read, so no reader holds a copy and every reader asks the surface on the call it serves
+   * ("`main.ts` holds no copy of the rows", L2 behaviour.md §1).
+   * BOTH ROWS' SURVIVING CLAIMS ARE PINNED ELSEWHERE AND NAMED HERE, not dropped: the
+   * missing/unknown-version recovery is `SM-2`'s corrupt arm above plus the L2 import battery
+   * (`tests/integration/settings-carrier-retirement/import.test.ts`); "after the hand-off the renderer
+   * answers the handed-off values" is `M-7`'s renderer limbs (`rendererHydrateSeam`, `hydratedStoreDrive`).
+   * `RETIRED_REGISTER_ROWS` below records all four retired ids with their subjects, referents and homes.
+   */
+]
+
+/* ═══════════════════ THE RETIREMENT LEDGER — THE REGISTER'S OWN RECORD OF WHAT IT REPLACED ═══════════════
+ *
+ * L1 §6's rule, applied: **re-grain where the row's subject is a channel's answer; retire WITH THE
+ * REFERENT where the subject is the hand-written machinery** (the tmp sequence, the `schemaVersion`
+ * stamp, the carrier path, the third holder). A retirement is NEVER a silent deletion (D-13): each
+ * retired id is named here with its subject, the referent that dissolved, and the surviving home of
+ * any claim that is still true. The register report prints this ledger, and `runRegister` FAILS the
+ * register if a retired id reappears among the live rows or if a surviving home is unnamed.
+ *
+ * WHY A RETIRED ROW MAY NOT SIMPLY BE RE-POINTED: `tests/store-security.test.ts`'s header states the
+ * rule this file inherits — "a retired row is NEVER re-pointed: no deleted file is re-hashed and no
+ * digest is re-pinned". Re-pointing would make the row a claim about a different subject wearing the
+ * old row's name; the honest move is to retire it and SAY SO. */
+interface RetiredRegisterRow {
+  readonly id: string
+  readonly type: string
+  readonly strategy: string
+  /** What the row was about. */
+  readonly subject: string
+  /** The machinery that dissolved — the REASON the row has no subject left. */
+  readonly referent: string
+  /** Where the surviving claim lives, or '' when no claim survived the referent. */
+  readonly survivingHome: string
+}
+
+const RETIRED_REGISTER_ROWS: readonly RetiredRegisterRow[] = [
+  {
+    id: 'P-PS-IM-3',
+    type: 'P-IM',
+    strategy: 'S-PS-TORN-1',
+    subject: 'TORN-FILE-IMPOSSIBLE AND NO tmp RESIDUE — 6 attempts over three injection points (tmp-write · fsync · rename) × two readings each',
+    referent: 'the tmp→fsync→rename staging sequence itself: `.tmp` writes, the tmp fsync, renameSync and the directory fsync, all DELETED from `src/main/main.ts` with the carrier writer (L1 §3\'s closed removal list, E-1; D-22)',
+    survivingHome: 'L1 §8 S-8 (a commit is ONE store write: no `.tmp`, no lock, no second name, on a booted app) and `provident-storeroom`\'s own durability, cited as the package\'s and never re-pointed here (L1 §10, D-5)',
+  },
+  {
+    id: 'P-PS-SM-1',
+    type: 'P-SM',
+    strategy: 'S-PS-WSM-1',
+    subject: 'THE COMMIT STATE MACHINE (CLOSED) — IDLE → TMP-WRITTEN → FSYNCED → RENAMED → COMMITTED, 8 attempts over four machine states × two terminals',
+    referent: 'the same staging sequence, read as a state machine: every one of its four states is a position inside the five deleted `fs` calls, so the machine has no states once the calls are gone',
+    survivingHome: 'the receipt-totality claim ("every outcome answers exactly one receipt") is a CHANNEL ANSWER and survives as `P-PS-TP-1` below, re-grained and driven; the durability half is the package\'s (L1 §10)',
   },
   {
     id: 'P-PS-TP-2',
     type: 'P-TP',
-    property: 'VERSION-FROM-FIRST-WRITE TOTALITY — the payload carries its declared schemaVersion from its FIRST write; a missing/unknown version answers the declared recovery, never a throw',
     strategy: 'S-PS-VER-1',
-    term: '6 attempts = 3 payload shapes (cold first write · migrated first write · version-missing/unknown at read-back) × 2 readings per shape (the payload\'s schemaVersion member is the declared 1 where owed; the read-back\'s answered state is the declared one — never a throw)',
-    attempts: [
-      { label: 'TP-2 cold first write · reading 1 — the payload carries schemaVersion from its FIRST write (the declared 1)', run: async (): Promise<Probe> => y2Probe('cold first write', (y2) => (y2.includes('schemaVersion') ? HOLD(`the cold first write stamps schemaVersion (declared default ${DECLARED_SCHEMA_VERSION})`) : BREAK('the first write does not stamp schemaVersion — VERSION-FROM-FIRST-WRITE (FORKER (iii)(c)) is not landed'))) },
-      { label: 'TP-2 cold first write · reading 2 — the read-back answers the declared state, never a throw', run: async (): Promise<Probe> => y1Probe('cold first write', (y1) => ALL(y1.includes('catch') ? HOLD('the recovery arm is present') : BREAK('the recovery arm is absent'), !y1.includes('throw') ? HOLD('never a throw') : BREAK('the read-back throws'))) },
-      { label: 'TP-2 migrated first write · reading 1 — the migration stamps schemaVersion through the SAME write machinery', run: async (): Promise<Probe> => {
-          const main = readSrcSafe('main/main.ts')
-          if (main === null) return BREAK('main.ts unreadable')
-          const lines = main.split('\n')
-          const settingsLine = lines.findIndex((l) => l.includes(DECLARED_SETTINGS_FILE))
-          const legacyLine = lines.findIndex((l) => l.includes(DECLARED_LEGACY_FILE))
-          const near = settingsLine >= 0 && legacyLine >= 0 && Math.abs(settingsLine - legacyLine) <= 80
-          const y2 = y2Region()
-          const stamp = y2 !== null && y2.includes('schemaVersion')
-          return near && stamp ? HOLD('the migration write path runs through the settings stamping machinery') : BREAK('the migrated first write is not wired to the settings stamping machinery (the migration itself is absent)')
-        },
-      },
-      { label: 'TP-2 migrated first write · reading 2 — the read-back answers the declared state, never a throw', run: async (): Promise<Probe> => y1Probe('migrated first write', (y1) => ALL(y1.includes('schemaVersion') ? HOLD('the read-back validates the member') : BREAK('the read-back does not validate the member'), !y1.includes('throw') ? HOLD('never a throw') : BREAK('the read-back throws'))) },
-      { label: 'TP-2 version-missing/unknown at read-back · reading 1 — the declared recovery answers (registered defaults, never a fatal stop)', run: async (): Promise<Probe> => y1Probe('version-missing/unknown at read-back', (y1) => ALL(y1.includes('schemaVersion') ? HOLD('the read-back validates the schemaVersion member (missing/unknown → the declared recovery)') : BREAK('the schemaVersion validation is absent — R4\'s declared outcome cannot be answered'), y1.includes('catch') ? HOLD('the recovery arm is present') : BREAK('the recovery arm is absent'))) },
-      { label: 'TP-2 version-missing/unknown at read-back · reading 2 — never a throw, never a fatal stop', run: async (): Promise<Probe> => y1Probe('version-missing/unknown at read-back', (y1) => (!y1.includes('throw') ? HOLD('the read-back never throws on a missing/unknown version') : BREAK('the read-back throws on a missing/unknown version')) ) },
-    ],
+    subject: 'VERSION-FROM-FIRST-WRITE TOTALITY — the payload carries `schemaVersion` from its FIRST write; a missing/unknown version answers the declared recovery, 6 attempts over three payload shapes',
+    referent: 'the `schemaVersion` STAMP the deleted writer composed onto every projection (`L1 §3`\'s `:366`; the stamp is the retired record\'s FORMAT MARKER, not operator state — L1 §4, D-13). The instance has its own record shape, so no first write stamps a version',
+    survivingHome: 'the missing/unknown-version recovery survives as the IMPORT arm\'s answer and is pinned by `P-PS-SM-2`\'s corrupt checkpoint-2 attempt above and by the L2 import battery (`tests/integration/settings-carrier-retirement/import.test.ts`)',
   },
   {
     id: 'P-PS-SM-3',
     type: 'P-SM',
-    property: 'THE THIRD HOLDER IS BOUNDED (C-10/R1) — populated at the boot read, refreshed only by the channel\'s own committed writes, served at Y-1; after the hand-off the renderer answers the handed-off values; a reload serves the FILE\'s current value and never replays a dead realm\'s cleared[]',
     strategy: 'S-PS-HOLD-1',
-    term: '6 attempts = 3 realm turns (boot · after-commit · reload) × 2 readings per turn (the served hand-off\'s payload; the renderer\'s resolve on tier-1 names answers the handed-off value — the R1 falsifier\'s positive control is a value main wrote outside the channel, which must NOT appear)',
-    attempts: [
-      { label: 'SM-3 boot · reading 1 — the holder (bootRecord) is populated at the boot read and served at Y-1', run: async (): Promise<Probe> => y1Probe('boot turn', (y1) => (y1.includes('bootRecord') ? HOLD('bootRecord is held and served at the Y-1 hand-off (C-10\'s name)') : BREAK('the bootRecord (C-10 — the third holder) is not held/served at the boot read'))) },
-      { label: 'SM-3 boot · reading 2 — the renderer resolves the handed-off values (the real Y-1 hand-off call exists)', run: async (): Promise<Probe> => (rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('the renderer calls the Y-1 hand-off once — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), still firing with the comments elided (G4-P2)') : BREAK('the renderer\'s Y-1 hand-off call (bridge.store[\'get\'](), renderer.ts:570) is absent from the CODE — the renderer cannot construct its tiers from the persisted record')) },
-      { label: 'SM-3 after-commit · reading 1 — the holder is REFRESHED only by the channel\'s own committed writes', run: async (): Promise<Probe> => y2Probe('after-commit turn', (y2) => (y2.includes('bootRecord') ? HOLD('each Y-2\'s projected record synchronously replaces bootRecord') : BREAK('the Y-2 write does not refresh the holder (bootRecord)'))) },
-      { label: 'SM-3 after-commit · reading 2 — the renderer\'s tier-1 table updates from the crossed receipt (the seam put exists)', run: async (): Promise<Probe> => (rendererTextSafe().includes('bridge.store.put') ? HOLD('the crossing seam (bridge.store.put) is wired') : BREAK('the crossing seam is not implemented at the construction site (renderer.ts) — the receipt-only rule (§2.11 item 2) cannot hold')) },
-      { label: 'SM-3 reload · reading 1 — the hand-off serves the FILE\'s current value; a dead realm\'s cleared[] is NOT replayed', run: async (): Promise<Probe> => y1Probe('reload turn', (y1) => {
-          const readsFile = y1.includes('readFileSync') || y1.includes('existsSync')
-          const noClearedReplay = (y2Region() ?? '').includes('cleared') ? BREAK('the channel consumes the store\'s cleared[] — a dead realm\'s clears would be replayed (NW-15 (c))') : HOLD('the channel never consumes the store\'s cleared[]')
-          return ALL(readsFile ? HOLD('the boot read reads the FILE once (the reload\'s hand-off serves the file\'s current value)') : BREAK('the boot read does not read the file'), y1.includes('bootRecord') ? HOLD('bootRecord is served') : BREAK('bootRecord is not served'), noClearedReplay)
-        }) },
-      { label: 'SM-3 reload · reading 2 — a value main wrote outside the channel must NOT appear (the R1 falsifier\'s positive control)', run: async (): Promise<Probe> => {
-          const renderer = rendererTextSafe()
-          const handoffs = rendererHandoffCount()
-          const directFileRead = renderer.includes(DECLARED_SETTINGS_FILE)
-          return ALL(
-            handoffs === 1 && rendererHandoffControl() ? HOLD('exactly one Y-1 hand-off per realm — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK(`expected exactly one Y-1 hand-off call (bridge.store['get']()) in the renderer boot, found ${handoffs}`),
-            directFileRead ? BREAK('the renderer references a file path — the renderer never touches a path (§2.12 item 1)') : HOLD('no settings-path literal in the renderer (it cannot read the file)'),
-          )
-        } },
-    ],
+    subject: 'THE THIRD HOLDER IS BOUNDED (C-10/R1) — `bootRecord` populated at the boot read, refreshed only by the channel\'s own commits, served at Y-1, 6 attempts over three realm turns',
+    referent: 'the `bootRecord` THIRD HOLDER and its corrupt flag, both removed with the boot read (L1 §3: `bootRecord`, `settingsCorrupt` and `readSettingsRecord()`), so there is no copy of the rows for any row to bound',
+    survivingHome: 'the renderer half ("after the hand-off the renderer answers the handed-off values") is `M-7`\'s renderer limbs — `rendererHydrateSeam()` and `hydratedStoreDrive()` — and the post-removal claim is `M-7`\'s new ABSENCE limb: `main.ts` holds no `bootRecord` at all (L2 behaviour.md §1)',
   },
 ]
 
@@ -651,6 +736,11 @@ interface RegisterSummary {
   readonly declaredTotal: number
   readonly terms: string
   readonly typeSubtotals: string
+  /** ⟶ `E-5`: the retirement ledger travels WITH the summary, so the report prints what the register
+   *  replaced and the `it` row can assert the ledger's own integrity (no retired id live, no
+   *  retiring row without a named surviving home or an explicit '(none)'). */
+  readonly retiredIds: string
+  readonly retiredTotal: number
   readonly rowCapOk: boolean
   readonly rowCapText: string
   readonly totalCapOk: boolean
@@ -664,10 +754,29 @@ interface RegisterSummary {
 
 /** THE REGISTER DRIVER (§5.5.1 + §4.3): sequential, in register order; per-row cap ≤100
  *  attempts (all rows ≤ 8 by construction), total cap ≤400, STOP AFTER 5 CONSECUTIVE
- *  FAILURES. Un-run attempts/rows are reported UN-RUN — a FAILURE, never a pass. No seed. */
+ *  FAILURES. Un-run attempts/rows are reported UN-RUN — a FAILURE, never a pass. No seed.
+ *
+ *  ⟶ `E-5` — THE TERMS ARE NOW DERIVED FROM THE TABLES, never restated as a literal. The as-filed
+ *  driver hardcoded `47 = 3+4+6+8+6+8+6+6` beside a table it could not check; four register rows
+ *  retired here, so a restated literal would have had to be hand-reconciled with the table — the
+ *  one thing a register must not do. `terms` and `typeSubtotals` are composed FROM
+ *  `REGISTER_ROWS`, and `RETIRED_REGISTER_ROWS` is printed beside them, so the total, the
+ *  subtotals and the retirement ledger cannot drift apart (`§4.2`: the totals print WITH their
+ *  terms, and an un-run row is a FAILURE). */
 async function runRegister(): Promise<RegisterSummary> {
-  const terms = '47 = 3+4+6+8+6+8+6+6'
-  const typeSubtotals = 'P-IM 13 = 3+4+6 · P-SM 20 = 8+6+6 · P-TP 14 = 8+6 · 13+20+14 = 47'
+  const counts = REGISTER_ROWS.map((r) => r.attempts.length)
+  const declaredTotal = counts.reduce((a, b) => a + b, 0)
+  const terms = `${declaredTotal} = ${counts.join('+')}`
+  const byType = new Map<string, number[]>()
+  for (const r of REGISTER_ROWS) {
+    const list = byType.get(r.type) ?? []
+    list.push(r.attempts.length)
+    byType.set(r.type, list)
+  }
+  const typeParts: string[] = []
+  for (const [type, list] of byType) typeParts.push(`${type} ${list.reduce((a, b) => a + b, 0)} = ${list.join('+')}`)
+  const typeSubtotals = `${typeParts.join(' · ')} · ${[...byType.keys()].length} type groups = ${declaredTotal}`
+  const retiredIds = RETIRED_REGISTER_ROWS.map((r) => r.id).join(', ')
   const rows: RegisterRowResult[] = []
   let totalRun = 0
   let consecutive = 0
@@ -742,14 +851,17 @@ async function runRegister(): Promise<RegisterSummary> {
     brokenTotal += r.broken
     unrunTotal += r.unrun
   }
+  const largestRow = counts.length === 0 ? 0 : Math.max(...counts)
   return {
-    declaredTotal: 47,
+    declaredTotal,
     terms,
     typeSubtotals,
+    retiredIds,
+    retiredTotal: RETIRED_REGISTER_ROWS.reduce((n, r) => n + 1, 0),
     rowCapOk: REGISTER_ROWS.every((r) => r.attempts.length <= 100),
-    rowCapText: '8 ≤ 100 (largest row; headroom 92)',
-    totalCapOk: 47 <= 400,
-    totalCapText: '47 ≤ 400 (headroom 353)',
+    rowCapText: `${REGISTER_ROWS.length} rows, largest ${largestRow} attempts ≤ 100 (headroom ${100 - largestRow})`,
+    totalCapOk: declaredTotal <= 400,
+    totalCapText: `${declaredTotal} ≤ 400 (headroom ${400 - declaredTotal})`,
     rows,
     totalRun,
     brokenTotal,
@@ -764,11 +876,18 @@ function registerReport(s: RegisterSummary): string {
   lines.push(`REGISTER-TYPE-SUBTOTALS: ${s.typeSubtotals}`)
   lines.push(`REGISTER-CAPS: ${s.rowCapText} · ${s.totalCapText} (each compared against its own cap, never against a subtotal)`)
   lines.push(`REGISTER-STOPPED-AT: ${s.stoppedAt === null ? 'null (no stop)' : `attempt ${s.stoppedAt}`} · RUN ${s.totalRun} · BROKEN ${s.brokenTotal} · UN-RUN ${s.unrunTotal} (un-run ⇒ FAILURE, never a pass)`)
+  lines.push(`REGISTER-RETIRED-WITH-THEIR-REFERENT (E-5): ${s.retiredTotal} rows — ${s.retiredIds}`)
   for (const r of s.rows) {
     lines.push(`  ${r.id} [${r.type}] ${r.strategy} term ${r.attemptsTotal} → ${r.status} (held ${r.held} / broken ${r.broken} / unrun ${r.unrun})`)
     for (const a of r.perAttempt) {
       lines.push(`    ${a.held ? 'HELD  ' : 'BROKEN'} ${a.label}: ${a.why}`)
     }
+  }
+  for (const r of RETIRED_REGISTER_ROWS) {
+    lines.push(`  RETIRED ${r.id} [${r.type}] ${r.strategy}`)
+    lines.push(`    SUBJECT:  ${r.subject}`)
+    lines.push(`    REFERENT: ${r.referent}`)
+    lines.push(`    SURVIVES: ${r.survivingHome === '' ? '(no claim survived the referent)' : r.survivingHome}`)
   }
   return lines.join('\n')
 }
@@ -877,15 +996,22 @@ function joinedUnderUserData(text: string, symbol: string): boolean {
 }
 
 /** THE RETIRED MODEL'S OWN WRITE CENSUS (`E-1`; persistence §2/§3/§5). `src/main/operator-settings/
- *  index.ts` is the RETIRED `security-store.ts`'s successor and it writes NOTHING: the retired
- *  `provident-security.json` is bound to `RETIRED_NAME`, read by exactly ONE `readFileSync` (the
- *  import-once path) and never written, renamed, repaired or deleted; the instance's own bytes belong
- *  to `provident-storeroom`. The name must have ONE home in `src/**` — a re-pointer anywhere else
- *  (a second reader, a writer, a repair) FAILS. */
+ *  index.ts` is the RETIRED `security-store.ts`'s successor and it writes NOTHING: each retired name is
+ *  bound to ONE constant and read by ONE `readFileSync` — the import-once path — and never written,
+ *  renamed, repaired or deleted; the instance's own bytes belong to `provident-storeroom`. Each name
+ *  must have ONE home in `src/**` — a re-pointer anywhere else (a second reader, a writer, a repair)
+ *  FAILS.
+ *
+ *  ⟶ RE-GRAINED (`E-5`): the as-filed census demanded EXACTLY ONE `readFileSync` in this module,
+ *  because one retired record existed. THIS UNIT ADDS THE SECOND IMPORT-ONCE ARM (`L1 §4`; D-19's
+ *  precedent), so the declared census is TWO reads — the security record's and the carrier's — and
+ *  still NO write, rename, repair or delete (`L2 behaviour.md` §8 `RET-3`; `persistence.md`:43). The
+ *  claim the old figure carried — "the retired names are read once each and written never" — is
+ *  UNMOVED and is now asserted per name rather than by a bare total. */
 function retiredStoreModelProbe(): Probe {
   const model = readSrcSafe(OPERATOR_SETTINGS_MODULE)
   if (model === null) {
-    return BREAK(`the operator store's module (${OPERATOR_SETTINGS_MODULE}) is unreadable — the RETIRED '${DECLARED_SECURITY_FILE}' has no observable model at all (the retired security-store.ts is DELETED, E-1)`)
+    return BREAK(`the operator store's module (${OPERATOR_SETTINGS_MODULE}) is unreadable — the RETIRED names have no observable model at all (the retired security-store.ts is DELETED, E-1)`)
   }
   const homes = scanSrcFor(DECLARED_SECURITY_FILE)
   if (homes.length !== 1 || homes[0] !== OPERATOR_SETTINGS_MODULE) {
@@ -894,11 +1020,21 @@ function retiredStoreModelProbe(): Probe {
   if (!nameBinding(model, 'RETIRED_NAME', DECLARED_SECURITY_FILE)) {
     return BREAK(`'${DECLARED_SECURITY_FILE}' is not bound to the constant RETIRED_NAME in ${OPERATOR_SETTINGS_MODULE} — the retired name is spelled ad hoc, not declared as the one retired name`)
   }
+  if (!nameBinding(model, 'RETIRED_SETTINGS_NAME', DECLARED_SETTINGS_FILE)) {
+    return BREAK(`'${DECLARED_SETTINGS_FILE}' is not bound to the constant RETIRED_SETTINGS_NAME in ${OPERATOR_SETTINGS_MODULE} — this unit's second import-once arm has no declared name (L1 §4; E-5)`)
+  }
   const readers = (model.match(/readFileSync\s*\(/g) ?? []).length
   const writers = (model.match(/\b(?:writeFileSync|appendFileSync|renameSync|rmSync|unlinkSync)\s*\(/g) ?? []).length
-  if (readers !== 1) return BREAK(`the operator store's module makes ${readers} readFileSync calls — the retired name is read EXACTLY ONCE (the import-once path); the module's ONE fs call is that read`)
-  if (writers !== 0) return BREAK(`the operator store's module makes ${writers} write/rename/rm/unlink calls — it writes NOTHING: the retired file is never written, renamed, repaired or deleted and the instance's bytes are provident-storeroom's`)
-  return HOLD(`the RETIRED '${DECLARED_SECURITY_FILE}' has ONE home, ONE reader and NO writer: ${OPERATOR_SETTINGS_MODULE} binds RETIRED_NAME to it, reads it once through the import-once path and writes nothing itself (its only fs call is that readFileSync)`)
+  // EACH retired name has its OWN import read — asserted by name, not by the total alone, so a second
+  // read of the SAME file cannot masquerade as the second arm.
+  const securityRead = /readFileSync\(join\(userDataDir, RETIRED_NAME\), 'utf8'\)/.test(model)
+  const carrierRead = /readFileSync\(join\(userDataDir, RETIRED_SETTINGS_NAME\), 'utf8'\)/.test(model)
+  if (readers !== 2) return BREAK(`the operator store's module makes ${readers} readFileSync calls — the declared census is TWO import-once reads, one per retired name (L2 behaviour.md §8 RET-3; E-5)`)
+  if (!securityRead || !carrierRead) {
+    return BREAK(`the two reads are not one-per-retired-name: security record read ${securityRead}, carrier read ${carrierRead} — each retired name has its OWN import-once read and neither is read twice`)
+  }
+  if (writers !== 0) return BREAK(`the operator store's module makes ${writers} write/rename/rm/unlink calls — it writes NOTHING: neither retired file is written, renamed, repaired or deleted and the instance's bytes are provident-storeroom's`)
+  return HOLD(`both RETIRED names have ONE home each, ONE reader each and NO writer: ${OPERATOR_SETTINGS_MODULE} binds RETIRED_NAME and RETIRED_SETTINGS_NAME, reads each exactly once through its import-once path, and its only fs calls are those two reads`)
 }
 
 /** THE INSTANCE'S OWN PERSISTED NAME, CREATED AT CONSTRUCTION (`C-4`): `FILE_NAME =
@@ -916,28 +1052,159 @@ function instanceFileNameProbe(): Probe {
   return HOLD(`the instance's own '${DECLARED_OPERATOR_SETTINGS_FILE}' is created at construction under <userData> (filePath: join(options.userDataDir, FILE_NAME)) and no second filePath is supplied`)
 }
 
-/** THE TIER-1 CHANNEL'S OWN WRITE SITE — THE ANTI-PATTERN'S LIVE BITE (`§2.6` item 1). The retired
- *  store's plain `writeFileSync` is the exactly-named pattern the channel must NOT copy, so the bite
- *  is taken HERE, on the channel: the atomic `mkdirSync` → `.tmp` → `fsync` → `renameSync` →
- *  directory-`fsync` sequence, EVERY write landing on a `{path}.tmp` staging path (never on the real
- *  path), and the real path moving only at the rename. A channel that DEGRADES to a plain
- *  `writeFileSync(<the real path>)` FAILS this probe on the write-target census alone (the target
- *  carries no `.tmp`), and a channel that loses the staging sequence FAILS on the ordered token scan. */
-function tier1WriteSiteProbe(): Probe {
-  return y2Probe('the tier-1 channel write site', (y2) => {
-    const plainTargets: string[] = []
-    for (const w of y2.matchAll(/writeFileSync\s*\(([^,)]*)/g)) {
-      const target = (w[1] ?? '').trim()
-      if (!target.includes('.tmp')) plainTargets.push(target)
+/** THE RETIRED RECORD'S SCHEMA VALIDATION, READ WHERE THE IMPORT DECLARES IT (`E-5`; L1 §4 `ASM-3`:
+ *  "the import's validation is the retired boot read's own"). After the carrier retired there is no
+ *  read-time validation in `main.ts` — the ONLY place a `schemaVersion` is still understood is the
+ *  import arm in the instance module, and it must understand it as the retired boot read did: the
+ *  single reserved `schemaVersion === '1'`, everything else `corrupt`. */
+function importSchemaValidationProbe(): Probe {
+  const model = readSrcSafe(OPERATOR_SETTINGS_MODULE)
+  if (model === null) return BREAK(`the operator store's module (${OPERATOR_SETTINGS_MODULE}) is unreadable — the import's schema validation cannot be observed`)
+  if (!/schemaVersion\s*!==\s*'1'|schemaVersion\s*===\s*'1'/.test(model)) {
+    return BREAK("the import arm does not validate `schemaVersion === '1'` — without it an unknown stamp would import as rows, which is the laxer import ASM-3 rejects (L1 §4)")
+  }
+  if (!/legacy:\s*'corrupt'/.test(model)) {
+    return BREAK("the import arm does not answer the corrupt arm — a refused validation must be a DECLARED diagnosis, never a throw (L1 §4 ASM-4)")
+  }
+  return HOLD("the import arm validates the retired record's ONE reserved stamp (`schemaVersion === '1'`) and answers the corrupt arm rather than throwing — the retired boot read's own validation, carried (L1 §4 ASM-3)")
+}
+
+/* ⟶ `E-5`: `tier1WriteSiteProbe()` and the atomic-sequence helpers it composed
+ * (`atomicSequenceProbe`, `atomicSequenceProbeIn`, `tmpTargetOnly`, `tmpNeverParsed`,
+ * `refusalBeforeRename`, `writeFailedArm`) were removed from this file WITH THEIR REFERENT. Each of
+ * them read the five-call staging sequence out of `main.ts`'s Y-2 body; the sequence is deleted
+ * (L1 §3's closed removal list, E-1; D-22), the body issues ONE `settingsSurface.commit(...)` and no
+ * file verb at all (`y2CommitSiteProbe` below), so a helper that scanned for `.tmp`, `fsync` or
+ * `renameSync` would now be a scanner over nothing. Keeping them would let a reader believe the
+ * machinery is still somewhere to be checked — the exact confusion L1 §3's "closed removal list"
+ * exists to prevent. The anti-pattern claim they carried survives in its strongest available form:
+ * the landing site carries NO file write verb at all (IM-2 A3, `y2CommitSiteProbe`), and the retired
+ * `'write-failed'` vocabulary is asserted ABSENT rather than present (`F-2`). */
+
+/* ═══════════════════════ THE `E-5` DRIVES — THE ANSWER, NEVER THE MACHINERY ═══════════════════════ *
+ * WHY THESE EXIST, IN ONE SENTENCE: the tmp→fsync→rename sequence, the `schemaVersion` stamp, the
+ * carrier path and the third holder are GONE (D-22, D-1), so every row whose subject was that
+ * machinery is RETIRED WITH ITS REFERENT — while every row whose subject was A CHANNEL'S ANSWER is
+ * RE-GRAINED onto the answer itself, which the surface below IS (`L1 §6`; `L2 behaviour.md` §2/§3;
+ * `persistence.md`). The drives are honest for the same reason the scans they replace were: `main.ts`
+ * imports `electron` at module scope, so its two handler BODIES are unimportable in a node test — but
+ * `settingsSurface.state()` and `settingsSurface.commit(rows)` ARE the two calls those bodies make
+ * (`src/main/main.ts:279`, `:318`), and they are importable, so the answer can be DRIVEN. */
+
+/** THE RETIRED CARRIER AS A SEED — written by the ROW, never by a module. The import arm's own
+ *  validation is the retired boot read's (`L1 §4` `ASM-3`), so one well-formed seed and one
+ *  unparsable seed are the two arms a row can hand it. `schemaVersion:'1'` is the retired record's
+ *  own reservation and is NOT carried as a row (`L1 §4`; D-13). */
+const CARRIER_SEED_VALID = JSON.stringify({
+  'file.tabs.order': ['a', 'b'],
+  'file.settings.theme.token': 'themed',
+  'file.modules.m': { name: 'm', version: '1' },
+  schemaVersion: '1',
+})
+const CARRIER_SEED_CORRUPT = '{ this is not json'
+
+/** One profile per drive, removed afterwards, so no row leaks a directory into the machine. */
+function withProfile<T>(body: (dir: string) => T, seed?: { name: string; text: string }): T {
+  const dir = mkdtempSync(join(tmpdir(), 'g2-surface-'))
+  try {
+    if (seed !== undefined) writeFileSync(join(dir, seed.name), seed.text, 'utf8')
+    return body(dir)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+}
+
+interface StateDrive {
+  readonly rows: { name: string; value: unknown }[]
+  readonly legacy: string
+  readonly storage: string
+  readonly threw: string | null
+  readonly twice: 'stable' | 'drifted' | 'threw'
+}
+
+/** Y-1's ANSWER, driven: `settingsSurface.state()` is the ONE reading `main.ts`'s Y-1 body mints its
+ *  `{name,value}[]` from, so this IS the channel's answer (`behaviour.md` §2: cold `[]`, never a
+ *  throw; a corrupt import arm answers `[]` with the diagnosis on `state().legacy`, never in the
+ *  answer; the second call reads no file and answers the same rows). */
+function stateDrive(seed?: { name: string; text: string }): StateDrive {
+  return withProfile((dir) => {
+    try {
+      const surface = createSettingsSurface({ userDataDir: dir })
+      const first = surface.state()
+      const second = surface.state()
+      return {
+        rows: first.rows.map((r) => ({ name: r.name, value: r.value })),
+        legacy: first.legacy,
+        storage: first.storage,
+        threw: null,
+        twice: JSON.stringify(second.rows) === JSON.stringify(first.rows) ? 'stable' : 'drifted',
+      } as StateDrive
+    } catch (caught) {
+      return { rows: [], legacy: 'threw', storage: 'threw', threw: caught instanceof Error ? caught.message : String(caught), twice: 'threw' } as StateDrive
     }
-    return ALL(
-      atomicSequenceProbeIn(y2),
-      tmpTargetOnly(y2),
-      plainTargets.length === 0
-        ? HOLD('every writeFileSync in the tier-1 channel targets a {path}.tmp staging path; the record lands on the real path ONLY at renameSync')
-        : BREAK(`the tier-1 channel writes its record with a PLAIN writeFileSync whose target is not a {path}.tmp staging path: ${JSON.stringify(plainTargets)} — that is the DELETED security-store.ts's non-atomic write, the exactly-named anti-pattern this channel must NOT copy (§2.6 item 1); the record may land only via fsync → renameSync`),
-    )
+  }, seed)
+}
+
+interface CommitDrive {
+  readonly status: string
+  readonly reason: string | null
+  readonly after: { name: string; value: unknown }[]
+  readonly threw: string | null
+}
+
+/** Y-2's ANSWER, driven at the verb `main.ts:318` delegates to: one `commit` of the projected rows,
+ *  answering `{status:'committed'}` or a refusal whose reason is the STORE's own status verbatim
+ *  (`ASM-2`; `behaviour.md` §3). */
+function commitDrive(rows: { name: string; value: unknown }[]): CommitDrive {
+  return withProfile((dir) => {
+    try {
+      const surface = createSettingsSurface({ userDataDir: dir })
+      const answer = surface.commit(rows)
+      const after = surface.state().rows.map((r) => ({ name: r.name, value: r.value }))
+      return {
+        status: answer.status,
+        reason: answer.status === 'refused' ? answer.reason : null,
+        after,
+        threw: null,
+      } as CommitDrive
+    } catch (caught) {
+      return { status: 'threw', reason: null, after: [], threw: caught instanceof Error ? caught.message : String(caught) } as CommitDrive
+    }
   })
+}
+
+/** THE LANDING SITE'S OWN SHAPE, read where the write now happens: the Y-2 body issues ONE
+ *  `settingsSurface.commit(` and calls NO `node:fs` write verb at all — the staging machinery
+ *  retired with the carrier and the store owns durability (`L1 §3`; `behaviour.md` §3's last
+ *  bullet: "no `.tmp`, no lock, no second name"). */
+function y2CommitSiteProbe(): Probe {
+  const y2 = y2Region()
+  if (y2 === null) return BREAK('the Y-2 handler region is absent from src/main/main.ts')
+  const sites = (y2.match(/settingsSurface\.commit\s*\(/g) ?? []).length
+  if (sites !== 1) return BREAK(`the Y-2 body issues ${sites} settingsSurface.commit(...) calls — a whole-map commit is ONE store write, one op, one receipt (L1 §3; behaviour.md §3)`)
+  const fsVerbs = ['writeFileSync', 'renameSync', 'fsyncSync', 'openSync', 'closeSync', 'mkdirSync', 'appendFileSync', 'unlinkSync'].filter((v) => new RegExp(`\\b${v}\\s*\\(`).test(y2))
+  if (fsVerbs.length > 0) return BREAK(`the Y-2 body still calls ${fsVerbs.join(', ')} — the tmp+rename+fsync writer retired with the carrier (L1 §3; D-22)`)
+  return HOLD('the Y-2 body issues ONE settingsSurface.commit(...) and no file verb at all: the commit is one store write and the staging machinery is gone (L1 §3; behaviour.md §3)')
+}
+
+/** THE `schemaVersion` CENSUS AFTER THE STAMP RETIRED: the token is the IMPORT ARM's validation and
+ *  nothing else — one home, in the instance module, and NO write-time stamp anywhere in `src/**`
+ *  (`L1 §4`; behaviour.md §5's last bullet: the migration's composition carries no `schemaVersion`). */
+function schemaVersionHomes(): string[] {
+  return scanSrcFor('schemaVersion')
+}
+
+/** THE RETIRED REFUSAL VOCABULARY, ASSERTED ABSENT (`E-5`; ASM-2). The as-filed channel answered
+ *  `{status:'refused', reason:'write-failed'}`; the carrier's retirement replaced that closed word
+ *  with **the store's own status verbatim** (L1 §3 ASM-2: keeping the old vocabulary "gives one
+ *  refusal two spellings and hides the cause"). So the claim is now a NEGATIVE one, and it is
+ *  stronger than the positive one it replaces: the retired word must stand NOWHERE in the Y-2 body. */
+function retiredWriteFailedAbsent(): Probe {
+  const y2 = y2Region()
+  if (y2 === null) return BREAK('the Y-2 handler region is absent from src/main/main.ts')
+  return y2.includes("'write-failed'") || y2.includes('"write-failed"')
+    ? BREAK("the retired 'write-failed' vocabulary still stands in the Y-2 body — ASM-2 retired it: a refusal answers the STORE's own status verbatim, one refusal and one spelling (L1 §3)")
+    : HOLD("the retired 'write-failed' vocabulary stands nowhere in the Y-2 body — the refusal is the store's own status verbatim (L1 §3 ASM-2)")
 }
 
 /* ═════════════════════════════ THE TESTS — authored in §4.2's order ═════════════════════════════ */
@@ -946,23 +1213,48 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
   /* ── §4.2 (1) THE REGISTER FIRST — §5.5.1, 8 rows / 47 attempts ── */
 
   describe('§5.5.1 the typed property register (executed deterministically; strategy ids; terms)', () => {
-    it('executes all 8 rows with their strategy ids and terms; the totals are printed WITH their terms; caps hold; no seed; un-run rows are FAILURE', async () => {
+    it('executes all four surviving rows with their strategy ids and terms; the totals are printed WITH their terms; the retirement ledger is printed and consistent; caps hold; no seed; un-run rows are FAILURE', async () => {
+      // ⟶ RE-GRAINED (`E-5`): the register's as-filed census was 8 rows / 47 attempts. FOUR ROWS
+      // RETIRED WITH THEIR REFERENTS (§5.5.1: IM-3 and SM-1 with the tmp sequence, TP-2 with the
+      // `schemaVersion` stamp, SM-3 with the third holder) and their surviving claims moved to the
+      // homes `RETIRED_REGISTER_ROWS` names. The surviving four are IM-1 (untouched), IM-2, SM-2 and
+      // TP-1 (all re-grained onto the ANSWERS their subjects now answer). NOTHING IS WEAKENED: the
+      // caps, the no-seed rule, the stop-after-five rule and "un-run ⇒ FAILURE" are unmoved, and the
+      // ledger below is now itself an asserted row, so a retirement cannot go silently missing.
       const s = await runRegister()
       console.log(registerReport(s))
       expect(s.rowCapOk, s.rowCapText).toBe(true)
       expect(s.totalCapOk, s.totalCapText).toBe(true)
-      expect(s.declaredTotal, `declared totals must be printed with terms: ${s.terms}`).toBe(47)
-      expect(s.rows.length, 'all 8 register rows must execute (an un-run register row is a FAILURE, never a pass)').toBe(8)
+      expect(s.declaredTotal, `declared totals must be printed with terms: ${s.terms}`).toBe(REGISTER_ROWS.reduce((n, r) => n + r.attempts.length, 0))
+      expect(s.rows.length, 'every surviving register row must execute (an un-run register row is a FAILURE, never a pass)').toBe(REGISTER_ROWS.length)
       expect(s.stoppedAt, `the register stopped at attempt ${s.stoppedAt} — un-run rows are FAILURE`).toBeNull()
       expect(s.brokenTotal, `broken attempts: ${s.brokenTotal} (first-row reasons in the report above)`).toBe(0)
       expect(s.unrunTotal, `un-run attempts: ${s.unrunTotal} (reported as FAILURE)`).toBe(0)
+      // THE RETIREMENT LEDGER'S OWN INTEGRITY — three limbs, each falsifiable:
+      //  (a) no retired id stands among the live rows (a retirement that came back reddens here);
+      //  (b) every retired row NAMES its subject, its dissolved referent and the home of any surviving
+      //      claim, so a retirement is never a silent deletion (D-13);
+      //  (c) the ledger is non-empty and printed with the totals, so the report shows what it replaced.
+      const liveIds = REGISTER_ROWS.map((r) => r.id)
+      const retiredIds = RETIRED_REGISTER_ROWS.map((r) => r.id)
+      expect(retiredIds.filter((id) => liveIds.includes(id)), 'a retired register row id reappeared among the live rows — a retirement must not be re-entered silently').toEqual([])
+      expect(new Set([...liveIds, ...retiredIds]).size, 'the live and retired ids must be DISTINCT — an id cannot be both').toBe(liveIds.length + retiredIds.length)
+      expect(retiredIds.length > 0 && s.retiredTotal === retiredIds.length, `the retirement ledger must be printed with the totals (measured ${s.retiredTotal})`).toBe(true)
+      for (const r of RETIRED_REGISTER_ROWS) {
+        expect(r.subject.length > 0, `retired ${r.id} must NAME its subject — a retirement that says only its id is a silent deletion`).toBe(true)
+        expect(r.referent.length > 0, `retired ${r.id} must NAME the referent that dissolved — that is the whole reason it was retired rather than re-pointed`).toBe(true)
+      }
+      // THE INSTRUMENT IS NOT VACUOUS: driven over a synthetic table that re-enters a retired id, the
+      // same distinctness instrument MUST fail — a ledger check that cannot go red is a rubber stamp.
+      const controlLive = [...liveIds, retiredIds[0]]
+      expect(controlLive.filter((id) => retiredIds.includes(id)).length > 0, 'CONTROL — re-entering a retired id MUST be detectable by the instrument used above').toBe(true)
     })
   })
 
   /* ── §4.2 (2) THE BEHAVIOURAL M-* ROWS — §3.1 ── */
 
   describe('M-rows — valid / happy states (§3.1)', () => {
-    it('M-1: a tier-1 commit crosses once and lands atomically (§2.4/§2.6; crossings: 1)', async () => {
+    it('M-1: a tier-1 commit crosses once and lands as ONE store write (§2.4/§2.6; crossings: 1)  [RE-GRAINED, E-5: the atomic sequence at the landing site became ONE whole-map commit]', async () => {
       // LANDED-SURFACE DRIVE (the store's side — G1's, held today): one commit = one crossing,
       // the cargo is the stable-JSON translation (a JSON string), the receipt carries crossings: 1.
       const calls: { name: string; value: unknown }[] = []
@@ -973,43 +1265,58 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       const receipt = store.commit('file.settings', { theme: { token: 'a' } })
       const storeSide = calls.length === 1 && typeof calls[0].value === 'string' && receipt.crossings === 1
       expect(storeSide, 'the landed store crosses ONCE per commit with a stable-JSON translation (store-core-graph.ts §2.8 items 7/10)').toBe(true)
-      // THE CHANNEL/LANDING SIDE (this unit's): the crossing seam fed at the construction site,
-      // the atomic sequence at the landing site, the {status:'committed'} receipt.
+      // THE CHANNEL/LANDING SIDE (this unit's) — RE-GRAINED. AS FILED it asserted the atomicity at the
+      // landing site (mkdirSync → .tmp → fsync → renameSync → dir-fsync). THAT SEQUENCE IS DELETED
+      // (L1 §3, E-1): the landing site is now ONE `settingsSurface.commit(...)` and the durability is
+      // the PACKAGE's (D-22, cited not re-pointed). So the row pins what "lands atomically" came to
+      // mean at this head — one crossing, one whole-map commit, one receipt, no file verb — and it
+      // additionally DRIVES the answer the channel serves.
+      const landed = commitDrive([{ name: 'file.tabs.order', value: ['a', 'b'] }])
       assertProbe(ALL(
         crossingSeamProbe(),
-        atomicSequenceProbe(),
+        y2CommitSiteProbe(),
+        retiredWriteFailedAbsent(),
         committedToken(y2Region() ?? ''),
+        landed.status === 'committed' ? HOLD("the commit that IS the landing answers {status:'committed'} — one op, one receipt") : BREAK(`the landing commit answered '${landed.status}' — declared 'committed'`),
       ), 'M-1 channel/landing side')
     })
 
-    it('M-2: a cold boot answers [] and boots on it (§2.3 item 1, §2.6 item 4, §2.9 consequence (3))', async () => {
+    it('M-2: a cold boot answers [] and boots on it (§2.3 item 1, §2.6 item 4, §2.9 consequence (3))  [RE-GRAINED, E-5: the answer is driven]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the settings half read the Y-1 body for `existsSync`. There is no
+      // file for the channel to probe any more: the cold answer is the SURFACE's (`behaviour.md` §2,
+      // §1's first row), so the row DRIVES it and keeps the boot-order and the module half unmoved.
+      const cold = stateDrive()
       assertProbe(ALL(
         bootOrderProbe(),
-        y1Probe('cold boot', (y1) => ALL(
-          y1.includes('existsSync') ? HOLD('the missing-file arm is present') : BREAK('the cold/missing-file arm is absent'),
-          !y1.includes('throw') ? HOLD('NOTHING throws') : BREAK('the Y-1 read-back throws on a missing file'),
-        )),
+        cold.threw === null ? HOLD('a cold profile answers — NOTHING throws') : BREAK(`the cold boot THREW: ${String(cold.threw)}`),
+        cold.rows.length === 0 ? HOLD('the hand-off answers [] — the cold tier is a MISS, never an error and never an invented value') : BREAK(`the cold answer carries ${cold.rows.length} rows — declared []`),
+        cold.legacy === 'absent' ? HOLD("and the diagnosis is the declared 'absent'") : BREAK(`the cold arm answered legacy='${cold.legacy}' — declared 'absent'`),
         moduleMissingDrive(),
       ), 'M-2 cold boot')
     })
 
-    it('M-3: a persisted boot serves the record BEFORE the first graph load (§2.9 consequences (1)/(3), the hydration pin\'s PERSIST half)', async () => {
+    it('M-3: a persisted boot serves the record BEFORE the first graph load (§2.9 consequences (1)/(3), the hydration pin\'s PERSIST half)  [RE-GRAINED, E-5: the serve path is the imported rows]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the serve path was `bootRecord` + a `schemaVersion` validation in
+      // the Y-1 body. The third holder is gone and the validation is the import's, so what the row now
+      // drives is the ORDER (unmoved) and the SERVED RECORD (the imported rows) — the persist half of
+      // the hydration pin, which is exactly what it was always about.
+      const persisted = stateDrive({ name: DECLARED_SETTINGS_FILE, text: CARRIER_SEED_VALID })
       assertProbe(ALL(
         bootOrderProbe(),
-        y1Probe('persisted boot', (y1) => (y1.includes('bootRecord') && y1.includes('schemaVersion')
-          ? HOLD('the boot read validates and holds the record (bootRecord), served at the hand-off')
-          : BREAK('the persisted-record serve path is absent'))),
+        persisted.threw === null ? HOLD('a persisted profile answers the boot read — never a throw') : BREAK(`the persisted boot THREW: ${String(persisted.threw)}`),
+        persisted.rows.length > 0 ? HOLD(`the boot serves the persisted record BEFORE the first graph load: ${persisted.rows.length} rows stand in the instance (L1 §5: parity is the next process's answer)`) : BREAK('the persisted serve path is absent — a seeded record answered no row'),
+        persisted.twice === 'stable' ? HOLD('and the same rows are served on a second reading within the process') : BREAK(`the second state() ${persisted.twice}`),
         rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('the renderer calls the hand-off once — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK('the renderer\'s hand-off call (bridge.store[\'get\'](), renderer.ts:570) is absent from the CODE'),
         rendererHydrateSeam(),
       ), 'M-3 persisted boot')
     })
 
-    it('M-4: a repeated identical write is a DECLARED second write (§2.4 item 5 (b), §0A item 4)', async () => {
+    it('M-4: a repeated identical write is a DECLARED second write (§2.4 item 5 (b), §0A item 4)  [RE-GRAINED, E-5: the per-arriving-crossing duty, without the staging machinery]', async () => {
       // LANDED-SURFACE OBSERVATION (driven): the STORE itself suppresses the crossing for an
       // identical value (two identical commits → crossings observed: 1) — the store decides
       // whether to cross. The CHANNEL's declared duty (§0A item 4) is the per-arriving-crossing
-      // duty: WHEN a put arrives, a FULL write (one projection, one serialize, one atomic
-      // replace, one receipt) — the channel never compares values and never no-ops.
+      // duty: WHEN a put arrives, a FULL write (one projection, one commit, one receipt) — the
+      // channel never compares values and never no-ops.
       const calls: { name: string; value: unknown }[] = []
       const store = createGraphStore({
         declarations: storeGraphReferences([{ name: 'settings' }]),
@@ -1019,21 +1326,28 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       const r2 = store.commit('file.settings', { theme: { token: 'a' } })
       expect(r1.status === 'committed' && r2.status === 'committed',
         `M-4 store drive — repeated identical commits answer committed receipts (crossings observed: ${calls.length}; the store suppresses the identical crossing — the channel's duty below is per-arriving-crossing)`).toBe(true)
+      // ⟶ RE-GRAIN (`E-5`): the channel half loses the atomic-sequence limb (deleted with the writer)
+      // and keeps the two claims that are still about the channel: it performs NO comparison read-back
+      // and it answers the committed receipt. The "one projection" is asserted at the landing site.
       assertProbe(y2Probe('idempotence', (y2) => ALL(
-        atomicSequenceProbeIn(y2),
-        y2.includes('readFileSync') ? BREAK('the Y-2 write reads the file back — the channel must not compare values (§0A item 4)') : HOLD('the write path performs no comparison read-back'),
+        y2.includes('readFileSync') ? BREAK('the Y-2 write reads the file back — the channel must not compare values (§0A item 4)') : HOLD('the write path performs no comparison read-back — the channel never decides whether to write'),
+        y2CommitSiteProbe(),
         committedToken(y2),
       )), 'M-4 channel half')
     })
 
-    it('M-5: the migration lands in ONE write and the readers re-point (§2.8 items 1/2)', async () => {
+    it('M-5: the migration lands in ONE write and the readers re-point (§2.8 items 1/2)  [RE-GRAINED, E-5: the one write is the app-state commit]', async () => {
       const main = readSrcSafe('main/main.ts') ?? ''
       assertProbe(ALL(
         main.includes('file.modules') ? HOLD('the module registry lands under the declared namespace file.modules.<id>') : BREAK('the file.modules.<id> namespace is not wired — the Q-5 migration is absent'),
         main.includes('moduleStore.setDisabled')
-          ? BREAK('writer class 1 (ipcMain.handle(IPC_MODULE_SET_DISABLED)) still writes the legacy module store directly (main.ts:121) — the two-writer class this correction names')
+          ? BREAK('writer class 1 (ipcMain.handle(IPC_MODULE_SET_DISABLED)) still writes the legacy module store directly — the two-writer class this correction names')
           : HOLD('the operator toggle is re-pointed to the store\'s file tier'),
-        main.includes(DECLARED_SETTINGS_FILE) ? HOLD('the settings path is declared') : BREAK('the settings path is absent'),
+        // ⟶ RE-GRAIN (`E-5`). AS FILED this limb asserted `main.ts` spells
+        // `<userData>/provident-settings.json` — the carrier. The carrier retired, so the limb asserts
+        // what the migration's ONE write actually is: a commit of the composed rows, which is the same
+        // `settingsSurface.commit(...)` every other writer class issues (L2 behaviour.md §5).
+        /settingsSurface\.commit\s*\(/.test(main) ? HOLD('the migration\'s ONE write is a settingsSurface.commit(...) of the composed rows — the same verb every writer class issues (behaviour.md §5)') : BREAK('the migration has no commit site — the one write is absent'),
         main.includes('rmSync(') || main.includes('unlinkSync(')
           ? HOLD('the legacy file\'s removal is declared')
           : BREAK('the legacy removal is absent'),
@@ -1043,21 +1357,35 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       ), 'M-5 migration')
     })
 
-    it('M-6: a corrupt file boots the registered defaults with the fail-disabled status (§2.6 item 4 — the posture split)', async () => {
-      // SETTINGS HALF: default-on-corrupt, never a throw (absent → red).
-      const settingsHalf = y1Probe('settings half', (y1) => ALL(
-        y1.includes('catch') ? HOLD('the corrupt read answers the REGISTERED defaults (C-9 (b): defaults registered at the channel\'s construction, never derived at read time)') : BREAK('the registered-defaults recovery arm is absent'),
-        !y1.includes('throw') ? HOLD('NOTHING throws') : BREAK('the settings read throws on a corrupt file'),
-      ))
+    it('M-6: a corrupt file is DIAGNOSED, never thrown (§2.6 item 4 — the posture split)  [RE-GRAINED, E-5: the corrupt arm is the import\'s answer]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the settings half read the Y-1 body for a `catch`. The corrupt arm
+      // is the IMPORT's now and it ANSWERS (`L1 §4`: rows [], bytes standing, `legacy:'corrupt'`), so
+      // the row drives it instead of scanning for a keyword — and the module half is unmoved.
+      const corrupt = stateDrive({ name: DECLARED_SETTINGS_FILE, text: CARRIER_SEED_CORRUPT })
+      const settingsHalf = ALL(
+        corrupt.threw === null ? HOLD('a corrupt retired record is DIAGNOSED, never thrown') : BREAK(`a corrupt record THREW: ${String(corrupt.threw)}`),
+        corrupt.legacy === 'corrupt' ? HOLD("the answer is legacy:'corrupt' — the diagnosis survives where the bytes are not repaired (L1 §4 ASM-4)") : BREAK(`the corrupt seed answered legacy='${corrupt.legacy}'`),
+        corrupt.rows.length === 0 ? HOLD('and it loads no row — the retired boot read\'s own corrupt arm, which also loaded nothing (L1 §4)') : BREAK(`the corrupt arm answered ${corrupt.rows.length} rows`),
+      )
       // MODULE HALF (landed, driven): corrupt file → corrupt:true, loaded:[] — never a throw.
       const moduleHalf = moduleCorruptDrive(true)
       assertProbe(ALL(settingsHalf, moduleHalf), 'M-6 corrupt boot')
     })
 
-    it('M-7: the third holder is bounded — after the hand-off the renderer answers the handed-off values (§2.10, R R1)', async () => {
+    it('M-7: no third holder — main.ts holds NO copy of the rows, and after the hand-off the renderer answers the handed-off values (§2.10, R R1)  [RE-GRAINED, E-5: the holder is GONE, so its bound becomes an absence]', async () => {
+      // ⟶ RE-GRAIN (`E-5`), AND IT IS THE SHARPEST ONE IN THIS FILE. AS FILED the row asserted the
+      // holder EXISTED and was bounded: `bootRecord` populated at the boot read and refreshed by the
+      // channel's own commits. THE HOLDER IS GONE (L1 §3: `bootRecord`/`settingsCorrupt`/
+      // `settingsReadRecord()` removed, E-1), and L2 behaviour.md §1 states the replacement plainly:
+      // "`main.ts` holds no copy of the rows... every reader asks the surface on the call it serves".
+      // So the bound is now the ABSENCE of the holder — a claim that could not be made while the holder
+      // stood, and one that reddens the moment a copy is reintroduced. What the row was really about
+      // (the renderer answers the handed-off values, and the hand-off is the only flow) is kept whole.
+      const main = readSrcSafe('main/main.ts') ?? ''
       assertProbe(ALL(
-        y1Probe('holder-boot', (y1) => (y1.includes('bootRecord') ? HOLD('bootRecord populated at the boot read, served at Y-1') : BREAK('the bootRecord holder is absent at the boot read (C-10)'))),
-        y2Probe('holder-commit', (y2) => (y2.includes('bootRecord') ? HOLD('bootRecord refreshed by the channel\'s own committed writes') : BREAK('the committed write does not refresh bootRecord'))),
+        main.includes('bootRecord') ? BREAK('`bootRecord` stands in src/main/main.ts again — the third holder was removed (L1 §3, E-1) and a reintroduced copy reddens here') : HOLD('`main.ts` holds NO `bootRecord`: the retired third holder is absent, so no reader can serve a stale copy (L2 behaviour.md §1)'),
+        main.includes('settingsCorrupt') ? BREAK('`settingsCorrupt` stands in src/main/main.ts again — the holder\'s corrupt flag went with the holder (L1 §3)') : HOLD('and no `settingsCorrupt` flag stands — the diagnosis is the import answer, not a held boolean (L1 §4)'),
+        y1Probe('holder-boot', (y1) => (/settingsSurface\.state\s*\(/.test(y1) ? HOLD('the Y-1 body asks the SURFACE on the call it serves (settingsSurface.state()) — the replacement for the holder') : BREAK('the Y-1 body does not ask the surface — with no holder, that body has no source of rows at all'))),
         rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('the renderer reads the handed-off record once — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK('the renderer has no Y-1 hand-off (bridge.store[\'get\'](), renderer.ts:570)'),
         // THE G4-P1 CLOSURE (the hydrated-store reading — this row no longer accepts the
         // wiring-held-only reading): bootHandoff is CONSUMED by the store's `hydrate(rows)`
@@ -1108,16 +1436,27 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
   /* ── §4.2 (2) THE BEHAVIOURAL F-* ROWS — §3.2 ── */
 
   describe('F-rows — documented fail-states (§3.2)', () => {
-    it('F-1: a torn file is impossible (§2.6 items 3/6) — the atomic shape at the landing site, every injection arm, the tmp never parsed', async () => {
-      assertProbe(ALL(
-        atomicSequenceProbe(),
-        y2Probe('torn-file', writeFailedArm),
-        y2Probe('torn-file', tmpTargetOnly),
-        tmpNeverParsed(),
-      ), 'F-1 torn-file-impossible')
-    })
-
-    it('F-2: a refused crossing clears nothing (§2.4 items 3/4, S §2.8 items 2/6, C-3)', async () => {
+    /* ── `F-1` RETIRED WITH ITS REFERENT (`E-5`) ──
+     *
+     * `F-1: a torn file is impossible (§2.6 items 3/6) — the atomic shape at the landing site, every
+     * injection arm, the tmp never parsed` stood HERE and is RETIRED, not re-pointed.
+     *
+     * ITS SUBJECT WAS THE STAGING SEQUENCE: four limbs — `atomicSequenceProbe()` (the
+     * mkdirSync → .tmp → fsync → renameSync → fsync order), a `'write-failed'` arm, `tmpTargetOnly()`
+     * (every write landing on `{path}.tmp`) and `tmpNeverParsed()`. This unit DELETED that sequence
+     * from `src/main/main.ts` (L1 §3's closed removal list, E-1; D-22), so there is no staging path to
+     * target, no tmp file to avoid parsing and no five-call order to measure. A row about the shape of
+     * a write that no longer exists cannot be re-pointed at a different write without becoming a
+     * different row wearing F-1's name — the rule `tests/store-security.test.ts`'s header states.
+     *
+     * THE CLAIM THAT SURVIVES, AND WHERE IT LIVES: "a torn record is impossible" is now the PACKAGE's
+     * durability promise, measured by `provident-storeroom` and by L1's e2e `S-8`/`S-9` on a booted app
+     * (a commit is ONE store write: no `.tmp`, no lock, no second name). Both are cited, never
+     * re-pointed (L1 §10, D-5). Locally, the strongest adjacent claim is pinned twice: no file write
+     * verb stands at the landing site at all (`y2CommitSiteProbe`, `IM-2 A3`) and the retired refusal
+     * vocabulary stands nowhere (`retiredWriteFailedAbsent`).
+     */
+    it('F-2: a refused crossing clears nothing (§2.4 items 3/4, S §2.8 items 2/6, C-3)  [RE-GRAINED, E-5: the refusal is a RECEIPT the surface answers, and its spelling is the store\'s own]', async () => {
       // THE STORE'S refused-receipt posture (landed, driven — §2.4 item 3: the store's three-arm
       // refusal discipline applies to the STORE's serialization/validation gates): a file-tier
       // commit whose value is not JSON-representable (BigInt) is refused BEFORE the crossing,
@@ -1127,13 +1466,23 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       const storePosture = refused.status === 'refused' && refused.cleared.length === 0 && refused.crossings === 0 && refused.events === 0
       expect(storePosture,
         `F-2 store-receipt drive — the store's refused receipt posture (cleared: [], crossings: 0, events: 0): observed status='${refused.status}' cleared=[${refused.cleared.join(',')}] crossings=${refused.crossings} events=${refused.events} reason='${refused.reason ?? 'undefined'}'`).toBe(true)
-      // THE CHANNEL'S arms (absent → red): the two closed refusal tokens, returned BEFORE the
-      // write (the previous file is intact), never a swallow.
-      assertProbe(y2Probe('refused crossing', (y2) => ALL(
-        y2.includes("'malformed-payload'") ? HOLD("the channel's 'malformed-payload' arm (ITS validation of the incoming translation)") : BREAK("the channel's 'malformed-payload' arm is absent"),
-        writeFailedArm(y2),
-        refusalBeforeRename(y2),
-      )), 'F-2 channel refusal arms')
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the channel arms were `writeFailedArm` + `refusalBeforeRename`,
+      // both read against the tmp writer: the refusal had to PRECEDE `renameSync`, and it answered
+      // the retired `'write-failed'` word. The writer is deleted, so "clears nothing" is now a fact
+      // about the RECORD, not about a file that was never touched — and it is DRIVEN, twice: the
+      // channel's own pre-write refusal (malformed-payload) and the store's refusal both leave the
+      // rows standing. The retired word is asserted ABSENT, which is the stronger polarity.
+      const preWrite = commitDrive([{ name: 'file.tabs.order', value: null }])
+      assertProbe(ALL(
+        y2Probe('refused crossing', (y2) => ALL(
+          y2.includes("'malformed-payload'") ? HOLD("the channel's 'malformed-payload' arm (ITS validation of the incoming translation)") : BREAK("the channel's 'malformed-payload' arm is absent"),
+          retiredWriteFailedAbsent(),
+          y2CommitSiteProbe(),
+        )),
+        preWrite.threw === null ? HOLD('a refused commit still ANSWERS — never a swallow') : BREAK(`a refused commit THREW: ${String(preWrite.threw)}`),
+        preWrite.status === 'refused' ? HOLD("the refusal is a RECEIPT ({status:'refused', reason}), not a throw and not a silent success") : BREAK(`the refusal answered '${preWrite.status}'`),
+        preWrite.after.length === 0 ? HOLD('a refusal CLEARS NOTHING and commits nothing: no row from the refused map stands') : BREAK(`after a refusal the record holds ${JSON.stringify(preWrite.after.map((r) => r.name))} — a refusal must leave the previous rows standing`),
+      ), 'F-2 channel refusal arms')
     })
 
     it('F-3: a graph load before the hand-off FAILS the boot (§2.9 consequence (1)) — the starting-order gate observes the CURRENT inversion', async () => {
@@ -1141,14 +1490,31 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       expect(p.held, `F-3 — ${p.why}`).toBe(true)
     })
 
-    it('F-4: no resurrected in-realm value (§2.7 item 3, §0A item 6) — the file-tier projection, mem/temp never land', async () => {
+    it('F-4: no resurrected in-realm value (§2.7 item 3, §0A item 6) — the file-tier projection, mem/temp never land  [RE-GRAINED, E-5: the schemaVersion stamp limb retired with the stamp]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the projection limb also required `schemaVersion` to be STAMPED on
+      // the write. That stamp retired with the writer (the instance has its own record shape — D-13,
+      // D-22) and is retired WITH its referent, so the limb is gone; the projection claim is kept whole.
+      //
+      // WHERE THE FILTER LIVES, STATED SO NO READER OVER-READS THIS ROW: the `file.*`-only projection is
+      // `src/main/main.ts`'s Y-2 BODY (`:309-312`, `key.startsWith('file.')`) — that body is unimportable
+      // in a node test, and the SURFACE it delegates to is a general verb that commits whatever rows it
+      // is handed. So this row pins the filter at the two places it can be honestly observed: READ off
+      // the region (the filter stands, keyed on the `file.` prefix), and DRIVEN at the surface for the
+      // arm the channel actually sends — the projected `file.*` rows — which must land verbatim. A drive
+      // that handed the surface a `mem.`/`secure.` row would be measuring the CHANNEL against a verb
+      // that never saw the channel, which is not a claim about anything (examiner.md §2).
+      const y2 = y2Region() ?? ''
+      const filterPresent = /startsWith\s*\(\s*['"]file\.['"]\s*\)/.test(y2) || y2.includes("'file.'")
+      const landed = commitDrive([{ name: 'file.tabs.order', value: ['a'] }])
       assertProbe(ALL(
-        y2Probe('projection', (y2) => ALL(
-          (y2.includes('file.') || /startsWith\s*\(\s*['"]file\./.test(y2))
-            ? HOLD('the persisted record is the file.*-keyed projection of the crossing\'s translation')
-            : BREAK('the file.*-keyed projection filter is absent from the write path'),
-          y2.includes('schemaVersion') ? HOLD('the reserved schemaVersion member is stamped') : BREAK('schemaVersion is not stamped'),
-        )),
+        filterPresent
+          ? HOLD('the Y-2 body projects the crossing\'s translation through a `file.`-prefixed filter — the mem./temp./secure. spellings have no arm that lands them (§0A item 6)')
+          : BREAK('the file.*-keyed projection filter is absent from the write path — nothing stops a mem./temp./secure. spelling from landing'),
+        landed.threw === null ? HOLD('the commit answers — never a throw') : BREAK(`the commit THREW: ${String(landed.threw)}`),
+        landed.status === 'committed' ? HOLD("the projected file.* row commits ({status:'committed'})") : BREAK(`the projected commit answered '${landed.status}'`),
+        JSON.stringify(landed.after.map((r) => r.name)) === JSON.stringify(['file.tabs.order'])
+          ? HOLD('and it stands under its own name in the app-state record — the projection the channel sends IS the record (A-6)')
+          : BREAK(`the record holds ${JSON.stringify(landed.after.map((r) => r.name))} — expected exactly ['file.tabs.order']`),
         rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('a restart re-hydrates from the hand-off — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK('the renderer has no Y-1 hand-off (bridge.store[\'get\'](), renderer.ts:570) — a restart cannot reconstruct its tiers from the record'),
         rendererHydrateSeam(),
       ), 'F-4 projection')
@@ -1170,7 +1536,10 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         main.includes('rmSync(') || main.includes('unlinkSync(')
           ? HOLD('the legacy file is removed after the window')
           : BREAK('the legacy removal after the one-boot window is absent — today provident-modules.json is a live persisted member (§1.2 row 5)'),
-        main.includes(DECLARED_SETTINGS_FILE) ? HOLD('the settings file wins from then on') : BREAK('the settings file does not exist'),
+        // ⟶ RE-GRAIN (`E-5`): AS FILED this limb asserted the CARRIER (`provident-settings.json`)
+        // wins from then on. The carrier retired; what wins is the app-state record, written by the
+        // one commit every writer class issues (L1 §6; behaviour.md §5).
+        /settingsSurface\.commit\s*\(/.test(main) ? HOLD("the app-state record wins from then on — every writer class issues the one settingsSurface.commit(...) (L1 §6)") : BREAK('the app-state record has no write site — the migration lands nowhere'),
       ), 'F-6 one-boot window')
     })
 
@@ -1191,9 +1560,10 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
     it('F-7: a second writer class FAILS the two-writer falsifier (§2.6 item 5, the write-site census)', async () => {
       const main = readSrcSafe('main/main.ts') ?? ''
       assertProbe(ALL(
-        main.includes(DECLARED_SETTINGS_FILE)
-          ? HOLD('the settings write site exists')
-          : BREAK(`the settings write site is absent — the pre-landing persisted set was the RETIRED {${DECLARED_SECURITY_FILE} (RETIRED under C-4: read at most once, never written), ${DECLARED_LEGACY_FILE}} (main.ts:71-81, [H]), i.e. the declared member ${DECLARED_SETTINGS_FILE} is MISSING from the census (I-2 reddens)`),
+        // ⟶ RE-GRAIN (`E-5`): AS FILED this limb demanded the CARRIER's literal in `main.ts`. The
+        // carrier retired, so the write site is the app-state commit and the row pins THAT — one
+        // write site, no file verb, which is the two-writer falsifier's live form (L1 §3/§6).
+        y2CommitSiteProbe(),
         thirdLiteralWrites().length === 0
           ? HOLD('no main-side write construct writes the legacy file — writer class 1\'s direct legacy-store write is migrated (the removal may DECLARE the name at §2.8 step (4); it never WRITES it)')
           : BREAK(`a write construct still names a legacy/third provident-*.json literal: ${thirdLiteralWrites().join(', ')} — the legacy file would still be written directly, i.e. a second writer class reddens the two-writer falsifier`),
@@ -1220,12 +1590,27 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       ), 'F-8 single-source')
     })
 
-    it('F-9: a validation failure is NEVER a throw (§2.3 item 1, §2.6 item 4, §2.7 item 5)', async () => {
-      assertProbe(y1Probe('never-throw', (y1) => ALL(
-        !y1.includes('throw') ? HOLD('the read-back never throws') : BREAK('the read-back throws on a corrupt/missing/foreign-key file'),
-        y1.includes('catch') ? HOLD('every failure answers the declared recovery') : BREAK('the recovery arm is absent'),
-        y1.includes('existsSync') ? HOLD('a missing file is a MISS, never an error (the cold tier)') : BREAK('the cold/missing arm is absent'),
-      )), 'F-9 never-throw')
+    it('F-9: a validation failure is NEVER a throw (§2.3 item 1, §2.6 item 4, §2.7 item 5)  [RE-GRAINED, E-5: the recovery is the import arm\'s ANSWER, driven]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED this read the Y-1 body for `catch` and `existsSync`. Neither is
+      // there any more: the body is three lines over the surface (`src/main/main.ts:277-281`). The
+      // claim — "every validation failure answers the declared recovery and NOTHING throws" — is a
+      // CHANNEL ANSWER, so it is driven across every arm the import can answer, including the one the
+      // Y-1 body itself cannot produce: a profile whose store construction was refused.
+      const arms = [
+        { label: 'cold (no retired record)', drive: stateDrive() },
+        { label: 'corrupt (unparsable bytes)', drive: stateDrive({ name: DECLARED_SETTINGS_FILE, text: CARRIER_SEED_CORRUPT }) },
+        { label: 'valid (the declared stamp)', drive: stateDrive({ name: DECLARED_SETTINGS_FILE, text: CARRIER_SEED_VALID }) },
+      ]
+      const thrown = arms.filter((a) => a.drive.threw !== null)
+      assertProbe(ALL(
+        y1Probe('never-throw', (y1) => (!y1.includes('throw') ? HOLD('the Y-1 body never throws') : BREAK('the Y-1 body throws — a validation failure must answer, never throw'))),
+        thrown.length === 0
+          ? HOLD(`every import arm ANSWERS: ${arms.map((a) => `${a.label}→${a.drive.legacy}`).join(', ')} — no arm throws, and each names a declared outcome (absent/imported/corrupt)`)
+          : BREAK(`an import arm THREW where it must answer: ${thrown.map((a) => `${a.label} (${String(a.drive.threw)})`).join(', ')}`),
+        arms.every((a) => a.drive.rows.length === 0 || a.drive.legacy !== 'corrupt')
+          ? HOLD('and a corrupt arm never smuggles rows: the recovery is the DECLARED one, never a partial load behind a diagnosis')
+          : BREAK('a corrupt arm answered rows — a diagnosis and a load cannot both stand'),
+      ), 'F-9 never-throw')
     })
 
     it('F-10: a leaked registration FAILS the release row (§2.11 item 3, the P1-P7 pattern)', async () => {
@@ -1273,30 +1658,58 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         `NW-17 — the store sub-namespace is {${actualStore.join(', ')}}; declared {get, put, onFileChanged} — the THREE new members are absent today (§2.11 item 4)`).toBe(true)
     })
 
-    it('S-3: the write-site census — the persisted set is EXACTLY the declared two files (I-2 / the witness-gap pin)', async () => {
+    it('S-3: the write-site census — the persisted set is EXACTLY the declared two WRITTEN names (I-2 / the witness-gap pin)  [RE-GRAINED, E-5: the written names moved]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED limb 1 demanded the CARRIER's literal in `main.ts`. The carrier
+      // retired (L1 §3), so the census is now over the TWO WRITTEN NAMES — `provident-operator-settings.json`
+      // and `provident-profile.json` (L1 §6) — with the two RETIRED names cited BESIDE them as seeds:
+      // read at most once, written never (D-13). THE CLAIM IS UNMOVED: the persisted set is EXACTLY
+      // the declared names, each with ONE writer, and no third file exists.
       assertProbe(ALL(
         (readSrcSafe('main/main.ts') ?? '').includes(DECLARED_SETTINGS_FILE)
-          ? HOLD('the settings file is a declared persistence path')
-          : BREAK(`'${DECLARED_SETTINGS_FILE}' is absent from main.ts — the file-surface is not yet the store's crossing (the pre-landing census was the RETIRED {${DECLARED_SECURITY_FILE}, ${DECLARED_LEGACY_FILE}} (main.ts:71-81, [H]); the retired name is RETIRED — read at most once, never written — and is cited here, never re-pointed)`),
-        // ⟶ RE-GRAIN (`C-4`, `E-1`). The second limb read `main.ts` for `provident-security.json` and
-        // `security-store.ts` for `writeFileSync`; BOTH ARE NOW FALSE BY RULING — the file is DELETED and
-        // `main.ts` spells no `provident-*.json` literal for the operator store. THE CLAIM IS UNMOVED: the
-        // persisted set is EXACTLY the declared two — the tier-1 carrier above, and the operator store's
-        // OWN instance file — while the retired name has exactly ONE reader and NO writer. The figures are
-        // read where `C-4` moved them: `src/main/operator-settings/index.ts`, which binds BOTH names.
-        retiredStoreModelProbe(),
+          ? BREAK(`'${DECLARED_SETTINGS_FILE}' still stands in main.ts — the carrier's literal retired with its writer (L1 §3), so the persisted set cannot still be counted through it`)
+          : HOLD(`'${DECLARED_SETTINGS_FILE}' is ABSENT from main.ts — the carrier left the file census with its writer (L1 §3). The pre-landing census was {${DECLARED_SECURITY_FILE}, ${DECLARED_LEGACY_FILE}}; the retired security name is cited here AS RETIRED and never re-pointed`),
+        // THE TWO WRITTEN NAMES, each declared ONCE where it is written (L1 §6).
         instanceFileNameProbe(),
+        (() => {
+          const profileModule = readSrcSafe(PROFILE_FILE_MODULE) ?? ''
+          return nameBinding(profileModule, 'PROFILE_FILE_NAME', DECLARED_PROFILE_FILE)
+            ? HOLD(`the second written name '${DECLARED_PROFILE_FILE}' is declared ONCE, in ${PROFILE_FILE_MODULE}, and joined onto the profile dir there`)
+            : BREAK(`'${DECLARED_PROFILE_FILE}' is not bound to PROFILE_FILE_NAME in ${PROFILE_FILE_MODULE} — the second written name is undeclared`)
+        })(),
+        // THE RETIRED NAMES, cited as seeds: one home, one reader, no writer each.
+        retiredStoreModelProbe(),
+        (() => {
+          const operatorModule = readSrcSafe(OPERATOR_SETTINGS_MODULE) ?? ''
+          const homes = scanSrcFor(DECLARED_SETTINGS_FILE)
+          const boundOnce = (operatorModule.match(/const RETIRED_SETTINGS_NAME = 'provident-settings\.json'/g) ?? []).length === 1
+          return homes.length === 1 && homes[0] === OPERATOR_SETTINGS_MODULE && boundOnce
+            ? HOLD(`the second RETIRED name '${DECLARED_SETTINGS_FILE}' lives in ONE module (${OPERATOR_SETTINGS_MODULE}), declared exactly ONCE as RETIRED_SETTINGS_NAME — a seed, never a written name (L1 §6)`)
+            : BREAK(`the second RETIRED name '${DECLARED_SETTINGS_FILE}' must live in ONE module, declared exactly once — measured homes ${JSON.stringify(homes)}, single declaration ${boundOnce}`)
+        })(),
         thirdLiteralWrites().length === 0
           ? HOLD('no write/rename construct carries a third provident-*.json literal')
           : BREAK(`a third persisted filename is written: ${thirdLiteralWrites().join(', ')}`),
       ), 'S-3 exactly-two census')
     })
 
-    it('S-4: the no-schemaVersion-elsewhere probe (§2.7 item 6 — the token is introduced by this unit; a claim it pre-existed is a finding)', () => {
-      const hits = scanSrcFor('schemaVersion')
-      const allowed = ['main/main.ts']
-      const clean = hits.every((h) => allowed.includes(h))
-      expect(clean, `S-4 — 'schemaVersion' must appear ONLY in the landing site (${allowed.join(', ')}); hits today: ${hits.length === 0 ? '0 (measured: the gate record §2 row 7)' : hits.join(', ')}`).toBe(true)
+    it('S-4: the schemaVersion census after the stamp retired — the token is the IMPORT arm\'s validation and NO write stamps it (§2.7 item 6)  [RE-GRAINED, E-5: the stamp\'s home moved to the import]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the token was allowed ONLY in `main.ts`'s landing site, because
+      // that is where the writer stamped it. The stamp retired with the writer (L1 §3 `:366`), so the
+      // token's ONE surviving home is the IMPORT arm, which validates the retired record's reserved
+      // member before carrying any row (L1 §4 `ASM-3`). THE CLAIM IS UNMOVED — the token is not
+      // loose in the tree, and it is not re-introduced as a write-time stamp — with the home re-grained.
+      const hits = schemaVersionHomes()
+      const unique = hits.length === 1 && hits[0] === OPERATOR_SETTINGS_MODULE
+      const y2 = y2Region() ?? ''
+      const y1 = y1Region() ?? ''
+      assertProbe(ALL(
+        unique
+          ? HOLD(`'schemaVersion' has exactly ONE home in src/** — the import arm (${OPERATOR_SETTINGS_MODULE}) — and none elsewhere: ${JSON.stringify(hits)}`)
+          : BREAK(`'schemaVersion' must live in exactly one module (${OPERATOR_SETTINGS_MODULE}); measured ${JSON.stringify(hits)} — a second home is a re-pointer or a re-introduced stamp`),
+        y2.includes('schemaVersion') ? BREAK('the Y-2 body stamps `schemaVersion` again — the stamp retired with the carrier writer (L1 §3) and the instance has its own record shape (D-13)') : HOLD('the Y-2 body stamps no `schemaVersion`: the write is one store commit and stamps nothing (L1 §3; D-13)'),
+        y1.includes('schemaVersion') ? BREAK('the Y-1 body re-introduces a `schemaVersion` validation — that validation is the import\'s now (L1 §4)') : HOLD('the Y-1 body carries no `schemaVersion` validation: it asks the surface, and the import validated at construction (L1 §4)'),
+        importSchemaValidationProbe(),
+      ), 'S-4 schemaVersion census')
     })
 
     it('S-5: who imports the channel — src/main/main.ts and src/main/preload.ts ONLY (§2.1 item 3; a renderer/shared import is a finding)', () => {
@@ -1310,16 +1723,28 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
   /* ── §4.2 (5) THE MIGRATION ROWS (§2.8) ── */
 
   describe('migration rows (§2.8)', () => {
-    it('MIG-1: the two-writer falsifier — after module.update + IPC_MODULE_SET_DISABLED on the same module, the store\'s record and the file AGREE (§2.8 item 2)', async () => {
+    it('MIG-1: the two-writer falsifier — after module.update + IPC_MODULE_SET_DISABLED on the same module, the two writer classes issue the SAME ONE commit (§2.8 item 2)  [RE-GRAINED, E-5: "the file" is the app-state record]', async () => {
       const main = readSrcSafe('main/main.ts') ?? ''
       const mcp = readSrcSafe('main/mcp-server.ts') ?? ''
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the row said the store's record and "the file" must AGREE, where
+      // "the file" was the carrier both writers wrote. There is no carrier: every writer class composes
+      // its rows and issues the SAME `settingsSurface.commit(...)`, so agreement is structural rather
+      // than a coincidence of two writers spelling the same path (L2 behaviour.md §4: "any member's
+      // write → ONE commit of the whole composed map; no member writes a second time").
+      const commitSites = (main.match(/settingsSurface\.commit\s*\(/g) ?? []).length
       assertProbe(ALL(
         main.includes('file.modules') || mcp.includes('file.modules')
           ? HOLD('both writer classes land under the declared namespace file.modules.<id> — a single authority')
-          : BREAK('the file.modules.<id> namespace is not wired — with writer class 1 still writing `moduleStore.setDisabled` (main.ts:121) and writer class 2 the MCP handlers, the two-writer disagreement the correction names is still the tree\'s state'),
+          : BREAK('the file.modules.<id> namespace is not wired — the two-writer disagreement the correction names is still the tree\'s state'),
         main.includes('moduleStore.setDisabled')
           ? BREAK('writer class 1 is NOT re-pointed (the direct legacy-store write remains)')
-          : HOLD('writer class 1 is re-pointed'),
+          : HOLD('writer class 1 is re-pointed: IPC_MODULE_SET_DISABLED composes rows, it does not write the legacy store'),
+        commitSites > 0
+          ? HOLD(`every writer class reaches the record through the SAME verb — ${commitSites} settingsSurface.commit(...) sites and no second write path (one authority, so the two classes cannot disagree)`)
+          : BREAK('no settingsSurface.commit(...) site stands in main.ts — the two writer classes have no shared write path'),
+        main.includes('writeFileSync') || main.includes('renameSync')
+          ? BREAK('a file write verb stands in main.ts — the two-writer falsifier is about ONE writer class, and a file writer would be a second')
+          : HOLD('and no file write verb stands in main.ts: the record has exactly one writer, the store'),
       ), 'MIG-1 two-writer falsifier')
     })
   })
@@ -1354,13 +1779,16 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       )), 'BO-2 tier-1 channel distinctness')
     })
 
-    it('BO-3: consequence (3) — the settings file may not exist: the hand-off answers [] and the renderer boots on it (§2.9 item 2(3))', async () => {
+    it('BO-3: consequence (3) — the retired record may not exist: the hand-off answers [] and the renderer boots on it (§2.9 item 2(3))  [RE-GRAINED, E-5: the cold answer is driven]', async () => {
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the cold half read the Y-1 body for `existsSync`. With no file
+      // for the channel to probe, the answer IS the observable, so the row drives it (`behaviour.md`
+      // §2: "Y-1 over a cold profile → `[]` — never a throw, never an invented row").
+      const cold = stateDrive()
       assertProbe(ALL(
         bootOrderProbe(),
-        y1Probe('cold', (y1) => ALL(
-          y1.includes('existsSync') ? HOLD('a missing file is the cold tier (a MISS, never an error)') : BREAK('the cold/missing arm is absent'),
-          !y1.includes('throw') ? HOLD('NOTHING throws') : BREAK('the cold boot throws'),
-        )),
+        cold.threw === null ? HOLD('a cold profile is NOT an error: the hand-off answers, nothing throws') : BREAK(`the cold boot THREW: ${String(cold.threw)}`),
+        cold.rows.length === 0 ? HOLD('the hand-off answers [] — a MISS, never an invented row, and the renderer boots on it') : BREAK(`the cold answer carries ${cold.rows.length} rows — declared []`),
+        cold.legacy === 'absent' ? HOLD("the diagnosis is 'absent', which is a declared answer") : BREAK(`the cold arm answered legacy='${cold.legacy}'`),
       ), 'BO-3 cold hand-off []')
     })
 
@@ -1414,29 +1842,45 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
   /* ── THE SETTINGS SCHEMA + VERSION ROWS (§2.7) ── */
 
   describe('the settings schema, the file.settings.* names, VERSION-FROM-FIRST-WRITE (§2.7)', () => {
-    it('SC-1: tier 1\'s carrier is <userData>/provident-settings.json; the consolidated-location rule (§2.7 items 1/2)', async () => {
+    it('SC-1: the persisted names and the consolidated-location rule — the two WRITTEN names under <userData>, the retired names joined there for their one read (§2.7 items 1/2)  [RE-GRAINED, E-5: the carrier retired; what a commit moves is the app-state record]', async () => {
       const main = readSrcSafe('main/main.ts') ?? ''
-      const settingsUnderUserData = main.includes(DECLARED_SETTINGS_FILE) && /getPath\('userData'\)[\s\S]{0,200}provident-settings\.json|join\(app\.getPath\('userData'\),\s*'provident-settings\.json'/.test(main)
-      // ⟶ RE-GRAIN (`C-4`, `E-1`). DIAGNOSIS: this row reddened on its SECOND limb alone — a
-      // `/getPath\('userData'\)[\s\S]{0,200}provident-security\.json/` scan of `main.ts`, whose literal has
-      // been REMOVED from that file by `C-4` (the composition reads the boot record through the surface's
-      // `read()` and spells no `provident-*.json` literal for the operator store). THE CLAIM IS UNMOVED
-      // and the CARRIER'S OWN LITERAL IS UNMOVED (limb 1 above, untouched): what moved is the OTHER
-      // persisted name. Both operator-store names live in ONE module now — the RETIRED
-      // `provident-security.json` (read at most once, NEVER written) and the instance's own
-      // `provident-operator-settings.json` (created at construction) — and BOTH must be joined onto the
-      // userData directory there, or the consolidated-location rule has a persisted file outside it.
       const operatorModule = readSrcSafe(OPERATOR_SETTINGS_MODULE) ?? ''
+      const profileModule = readSrcSafe(PROFILE_FILE_MODULE) ?? ''
+      // ⟶ RE-GRAIN (`E-5`). AS FILED limb 1 demanded that `main.ts` declare
+      // `<userData>/provident-settings.json` and limb 2 that every operator name be joined onto
+      // `<userData>`. THE CARRIER'S PATH IS DELETED (L1 §3: `const settingsPath` and the whole
+      // writer), so limb 1 is now the ABSENCE that retirement makes true, and the consolidated
+      // location is asserted over the TWO WRITTEN NAMES (`L1 §6`: "written at steady state:
+      // `provident-settings.json`, `provident-operator-settings.json`, `provident-profile.json` → the
+      // last two") plus the retired names' one-read joins. THE CLAIM IS UNMOVED — every persisted
+      // file lives under one <userData> — and the census it is claimed over moved, which is D-13's
+      // re-grain rather than a weakening.
       const retiredUnderUserData = nameBinding(operatorModule, 'RETIRED_NAME', DECLARED_SECURITY_FILE) && joinedUnderUserData(operatorModule, 'RETIRED_NAME')
       const instanceUnderUserData = nameBinding(operatorModule, 'FILE_NAME', DECLARED_OPERATOR_SETTINGS_FILE) && joinedUnderUserData(operatorModule, 'FILE_NAME')
+      const carrierUnderUserData = nameBinding(operatorModule, 'RETIRED_SETTINGS_NAME', DECLARED_SETTINGS_FILE) && joinedUnderUserData(operatorModule, 'RETIRED_SETTINGS_NAME')
+      const profileBound = nameBinding(profileModule, 'PROFILE_FILE_NAME', DECLARED_PROFILE_FILE)
       assertProbe(ALL(
-        settingsUnderUserData
-          ? HOLD(`'${DECLARED_SETTINGS_FILE}' is declared under userData`)
-          : BREAK(`'${DECLARED_SETTINGS_FILE}' is NOT declared under <userData> — the settings file is not the store's crossing (SC-1 reddens on the absent carrier)`),
-        retiredUnderUserData && instanceUnderUserData
-          ? HOLD(`every persisted file lives under <userData> (the consolidated-location rule holds for the landed files): the RETIRED '${DECLARED_SECURITY_FILE}' is joined there for its one read and the instance's own '${DECLARED_OPERATOR_SETTINGS_FILE}' is joined there at construction, in ${OPERATOR_SETTINGS_MODULE}`)
-          : BREAK(`the consolidated-location rule is not observed for the operator store's file names — measured in ${OPERATOR_SETTINGS_MODULE}: retired ${DECLARED_SECURITY_FILE} bound-and-joined ${retiredUnderUserData}, instance ${DECLARED_OPERATOR_SETTINGS_FILE} bound-and-joined ${instanceUnderUserData} (both must hold; a name bound elsewhere or joined onto a directory that is not <userData> persists OUTSIDE the consolidated location)`),
-      ), 'SC-1 carrier + consolidation')
+        main.includes(DECLARED_SETTINGS_FILE)
+          ? BREAK(`'${DECLARED_SETTINGS_FILE}' still stands in src/main/main.ts — the carrier's literal retired with its writer (L1 §3)`)
+          : HOLD(`'${DECLARED_SETTINGS_FILE}' stands NOWHERE in src/main/main.ts: the carrier's path retired with its writer, so the file does not move because it does not exist (L1 §3/§6)`),
+        profileBound
+          ? HOLD(`the profile store's written name '${DECLARED_PROFILE_FILE}' is declared where it is written (${PROFILE_FILE_MODULE}: PROFILE_FILE_NAME) — the FIRST of the two written names`)
+          : BREAK(`'${DECLARED_PROFILE_FILE}' is not bound to PROFILE_FILE_NAME in ${PROFILE_FILE_MODULE} — the profile store's written name is undeclared`),
+        instanceUnderUserData
+          ? HOLD(`and the instance's own '${DECLARED_OPERATOR_SETTINGS_FILE}' is joined onto <userData> at construction (FILE_NAME) — the SECOND of the two written names`)
+          : BREAK(`the instance's own '${DECLARED_OPERATOR_SETTINGS_FILE}' is not bound-and-joined in ${OPERATOR_SETTINGS_MODULE}`),
+        retiredUnderUserData && carrierUnderUserData
+          ? HOLD(`both RETIRED names are joined onto <userData> for their one seed read — '${DECLARED_SECURITY_FILE}' (RETIRED_NAME) and '${DECLARED_SETTINGS_FILE}' (RETIRED_SETTINGS_NAME) — so a seed can only ever come from the consolidated location (L1 §6)`)
+          : BREAK(`a retired name is not bound-and-joined in ${OPERATOR_SETTINGS_MODULE}: security ${retiredUnderUserData}, carrier ${carrierUnderUserData} (a seeded read from anywhere but <userData> would put a persisted file outside the consolidated location)`),
+        // WHAT A TIER-1 COMMIT MOVES NOW (L1 §6: "a tier-1 commit moves the app-state record at
+        // `['operator-app-state']`") — DRIVEN, because this is the answer the census is about.
+        (() => {
+          const drive = commitDrive([{ name: 'file.tabs.order', value: ['a'] }])
+          return drive.status === 'committed' && drive.after.length === 1
+            ? HOLD(`a tier-1 commit moves the app-state record at ['${DECLARED_APP_STATE_ADDRESS}'] and nothing else — the row stands and no third file appears (L1 §6)`)
+            : BREAK(`a tier-1 commit moved ${JSON.stringify(drive.after.map((r) => r.name))} (status '${drive.status}') — the commit must move the app-state record alone`)
+        })(),
+      ), 'SC-1 consolidated location + the two written names')
     })
 
     it('SC-2: the reserved top-level names — window · tabs · layout · settings · tracked · modules (NW-10), refused never overwritten (§2.7 item 4, §2.8 item 4)', async () => {
@@ -1446,28 +1890,42 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         `SC-2 — the collision rule's refusal token is absent; a module id colliding with one of {${DECLARED_RESERVED_NAMESPACES.join(', ')}} must be REFUSED, never silently overwritten`).toBe(true)
     })
 
-    it('SC-3: the file.settings.* names — the caller-side read is landed (theme.token); the channel\'s projection admits the namespace (§2.7 item 4)', async () => {
+    it('SC-3: the file.settings.* names — the caller-side read is landed (theme.token); and the projection is DRIVEN to carry the namespace (§2.7 item 4)  [RE-GRAINED, E-5: the projection is driven, not read off a comment]', async () => {
       const themeCaller = readSrcSafe('renderer/theme-store.ts') ?? ''
       expect(themeCaller.includes('file.settings.theme.token'),
         'SC-3 — the LANDED caller-side read (theme-store.ts:17, H2b) consumes file.settings.theme.token (held today)').toBe(true)
-      assertProbe(y2Probe('settings namespace', (y2) => ALL(
-        y2.includes('file.settings') ? HOLD('the projection admits the file.settings.* reference spellings') : BREAK('the write path does not admit the file.settings.* names — the settings namespace is not wired'),
-      )), 'SC-3 settings namespace')
+      // ⟶ RE-GRAIN (`E-5`). AS FILED the second limb read `y2.includes('file.settings')` — and at this
+      // head that substring survives ONLY inside a comment line of the Y-2 body, so the row would have
+      // been satisfied by prose. The projection claim is a CHANNEL ANSWER and is now DRIVEN: a
+      // `file.settings.*` row put through the commit lands, and it lands under its own NAME.
+      const drive = commitDrive([{ name: 'file.settings.theme.token', value: 'themed' }])
+      assertProbe(ALL(
+        drive.threw === null ? HOLD('the commit answers — never a throw') : BREAK(`the commit THREW: ${String(drive.threw)}`),
+        drive.status === 'committed' ? HOLD("the projection admits the file.settings.* namespace — the commit answers {status:'committed'}") : BREAK(`a file.settings.* row was not admitted: status '${drive.status}' — the settings namespace is not wired`),
+        JSON.stringify(drive.after.map((r) => r.name)) === JSON.stringify(['file.settings.theme.token'])
+          ? HOLD('and the row stands under its OWN name — the caller (theme-store.ts) can read it back verbatim (§2.7 item 4)')
+          : BREAK(`the record holds ${JSON.stringify(drive.after.map((r) => r.name))} — expected exactly ['file.settings.theme.token']`),
+      ), 'SC-3 settings namespace')
     })
 
-    it('SC-4: VERSION-FROM-FIRST-WRITE — the payload carries schemaVersion (declared \'1\') from its FIRST write; a missing/unknown version answers the declared recovery, never a throw (§2.7 item 5, FORKER (iii)(c), R4)', async () => {
-      assertProbe(ALL(
-        y2Probe('version stamp', (y2) => ALL(
-          y2.includes('schemaVersion') ? HOLD(`the first write (cold AND migrated alike) stamps schemaVersion — declared default ${DECLARED_SCHEMA_VERSION}`) : BREAK('the first write does not stamp schemaVersion'),
-          new RegExp(`schemaVersion[^,}\\n]{0,30}['"]?${DECLARED_SCHEMA_VERSION}`).test(y2) ? HOLD(`the stamped value is the declared ${DECLARED_SCHEMA_VERSION}`) : BREAK(`the stamped value is not the declared ${DECLARED_SCHEMA_VERSION}`),
-        )),
-        y1Probe('version read-back', (y1) => ALL(
-          y1.includes('schemaVersion') ? HOLD('the read-back validates the member (missing/unknown → the declared recovery)') : BREAK('the read-back does not validate schemaVersion — the older-version payload cannot answer a DECLARED outcome (R4)'),
-          y1.includes('catch') ? HOLD('the recovery arm answers (coercible, never fatal)') : BREAK('the recovery arm is absent'),
-          !y1.includes('throw') ? HOLD('never a throw, never a fatal stop') : BREAK('the read-back throws'),
-        )),
-      ), 'SC-4 version-from-first-write')
-    })
+    /* ── `SC-4` RETIRED WITH ITS REFERENT (`E-5`) ──
+     *
+     * `SC-4: VERSION-FROM-FIRST-WRITE — the payload carries schemaVersion (declared '1') from its FIRST
+     * write; a missing/unknown version answers the declared recovery, never a throw` stood HERE and is
+     * RETIRED, not re-pointed.
+     *
+     * ITS SUBJECT WAS THE STAMP: both limbs read the `schemaVersion` member out of the Y-2 body (the
+     * stamp the writer composed onto every projection) and out of the Y-1 body (the validation of that
+     * member). The writer and its stamp are DELETED (L1 §3 `:366`; the retired record's format marker
+     * is not operator state — L1 §4, D-13), and the read-time validation left with the read, so neither
+     * limb has a site to stand on.
+     *
+     * THE CLAIM THAT SURVIVES, AND WHERE IT LIVES: "a missing/unknown version answers the declared
+     * recovery, never a throw" is the IMPORT arm's answer, and it is pinned three times over — `SM-2`'s
+     * corrupt checkpoint-2 attempt and `M-6` above DRIVE it through a seeded profile, `S-4` pins the
+     * token's single home and its absence from both channel bodies, and the L2 import battery
+     * (`tests/integration/settings-carrier-retirement/import.test.ts`) owns the package-side arm.
+     */
   })
 })
 
