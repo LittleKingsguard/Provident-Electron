@@ -43,18 +43,17 @@ Transports are also selectable with `PROVIDENT_MCP_TRANSPORT` / `PROVIDENT_MCP_P
 
 ## The MCP surface
 
-**27 tools** in six groups: `read` holds six (four graph readers plus `code.get` and `code.validate`)
-and the three resources, `dispatch` holds `dispatch` and `focus`, `graph` the six graph verbs, `code`
-the five code-tree writers, `module` three, and `data` the five central-store verbs —
-6 + 2 + 6 + 5 + 3 + 5 = 27. Enabling `data` brings the listed set to 13. The default grant is `['read','dispatch']`, so **8 tools
-register** until the operator enables more — a disabled group's tools are absent from `tools/list`
-rather than present-and-refusing.
+**27 tools** in six groups — `read` six plus the three resources, `dispatch` two, `graph` six, `code` five,
+`module` three, `data` five. The default grant is `['read','dispatch']`, so **8 tools register**; a disabled
+group's tools are absent from `tools/list` rather than present-and-refusing.
 
-A drive is `provident.dispatch` (target by css.id, nodeId or wire; answers `{results, dirtied,
-renderedHtml, ssrHtml}`); an observation is `provident.get_rendered_html`, `get_markdown`,
-`list_targets` or `get_node_state`, and every emitted element carries `data-node-id`. The demo envelope
-renders a counter, an echo input, a gutter card, two theme buttons and two tab terminals;
-`demo/pane-drag-demo/` is the live store-integrated panes demo.
+**A group is granted by the operator alone**, through the Settings pane: `security.set` → `IPC_SECURITY_SET`
+→ the surface module, which commits the grant and re-patches the live gate. A grant is a group name added to
+the persisted `enabled` set in `<userData>/provident-operator-settings.json`. The act is manual-UI only and
+**never an MCP tool** — no agent can grant itself capabilities; enabling `data` brings the listed set to 13.
+
+A drive is `provident.dispatch` (by css.id, nodeId or wire); observations are `get_rendered_html`,
+`get_markdown`, `list_targets` and `get_node_state`, and every emitted element carries `data-node-id`.
 
 ## License
 

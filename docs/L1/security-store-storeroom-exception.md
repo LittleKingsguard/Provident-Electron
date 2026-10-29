@@ -1,0 +1,83 @@
+# L1 — `security-store-storeroom`'s declared cross-module exception
+
+- **Layer:** L1 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 1
+- **Status:** DECLARED — filed before this unit's L2 work opens, so no writer below this layer improvises it. Rev 1 is measured at `0eca66b`; the closing L1 rev re-measures it against the tree the move actually left, the sibling's pattern (`docs/L1/central-data-census-exception.md` rev 2)
+- **Inputs:** `docs/L1/security-store-storeroom.md` §2/§4/§5/§7; `strata/decisions.md` D-5, D-9, D-11, D-13, D-15, D-16..D-20; `strata/modules.json` (the two rows); `strata/modules.md` §1/§3/§5; `strata/platform.md` §4
+- **Ceiling:** 150 lines (class max) (D-1, D-2)
+
+## 1. What this artifact decides
+
+D-16 rebuilds the security store with **no compatibility shim and no dual write**, and D-17 puts the instance where `src/main/security-store.ts` stands today — a file claimed by the `operator-settings` row of the map, importing nothing the `settings-surface` row owns, and reachable by `app-shell`'s `main.ts` and by the gate (`strata/modules.json`; D-16, D-17). A wholesale replacement therefore cannot be executed from inside one module's declared subtree: `preload.ts` and `secure-panels.ts` import the retired file's types, `main.ts` constructs it, and `mcp-server.ts` is the transition's current writer of the one boolean. `modules.md` §1 forbids a module agent doing that silently (D-1).
+
+**Decision.** Five **declared cross-module exceptions**, enumerated by path in §2, one named writer per row in §3, and a closed set of moved numbers and retired artifacts in §4 and §5. The exception licences writes on the stated paths for this unit and no others, it does not renew, and it moves no module's declared surface other than the census and retirement it names (D-4's single-pass precedent, D-15, D-16).
+
+## 2. The exceptions, by path
+
+| Id | Path (owning row) | The writes that move | Writer |
+|---|---|---|---|
+| **E-1** | `src/main/security-store.ts` → `src/main/operator-settings/` (`operator-settings`) | the group set's **second live copy** `VALID_GROUPS` re-homed with its **six** members and the two sites that read it; the four-member admission, the five-arm boot ingestion, the detached-copy discipline and the `entries` prototype discipline carried as **behaviour**; the whole file then **deleted** (D-15, D-16) | this unit's L4, one shot |
+| **E-2** | `src/main/preload.ts` (`app-shell`) · `src/renderer/secure-panels.ts` (`secure-panels`) · `src/main/main.ts` (`app-shell`) | three `import type` sources move off `./security-store.js` to the surface module's declaration — `Tier4ClosedRefusal`, `Tier4WriteAnswer`, `SecurityWriteReceipt` — with the re-exported type **names** unchanged so the two `declare global` widenings do not move; `SecuritySettings` in `src/shared/types.ts` stays byte-identical (D-17, D-18) | this unit's L4, one shot |
+| **E-3** | `src/main/main.ts` (`app-shell`) · `src/main/mcp-server.ts` (`mcp-surface`) | **two composition moves and no behaviour of either module's own**: the store's construction (`:105-108`), its boot read (`:108`), the carrier's source (`:425`) and the two handlers' bodies (`:444-463`, `:472-483`) now call the surface module; and the one boolean's **one writer** leaves the transition (`mcp-server.ts:484`) for the surface module, `mcp-server.ts` keeping its reader and its `exclusionTurn` unchanged (ASM-4; D-17, D-18) | this unit's L4, one shot |
+| **E-4** | `README.md` (**claimed by no module row**) | one paragraph under § "The MCP surface": who grants a group, what a grant is, that the grant act is the manual-UI channel and never an MCP tool, and where it persists. The file enters and leaves this edit at **≤ 60 lines** (D-3's ceiling), so the paragraph is paid for by compacting the same section (D-11, D-18) | this unit's L2, before its battery is filed |
+| **E-5** | `tests/**` and `scripts/**` — the rows in §3's table, each named by file and line at this head | the re-grain of C-1..C-4 and the retirement of §5's set. **No row outside those classes is touched** (D-10: test-side work belongs to the owning layer's test writer) | this unit's L2 test writer |
+
+**E-4 is the routed finding, and it is answered rather than parked.** Nothing in the tree said how a group is granted: `src/main/security.ts` shows the gate *reading* `VALID_GROUPS` and `README.md:46-51` shows the counts, but the act — the operator's Settings pane calling `security.set` → `IPC_SECURITY_SET` → `mcp.applyGatePatch` — was documented nowhere the operator reads (D-11). **E-4 is that paragraph.** Its sibling half, *whether the `data.*` bridge routes answer while the group is off*, is **not** settled here: it is an I/O-surface clause and L2 owns it, with the rejected alternative recorded (`docs/L1/security-store-storeroom.md` §4; `examiner.md` §2).
+
+**E-3 is not a census row**, and is listed apart so no reader takes it for one: it moves no count, adds no tool, resource, `RpcMethod` member or channel, and changes no declared surface of either module (D-18).
+
+## 3. Who writes what, and in what order
+
+1. **This unit's L2** files `docs/L2/security-store-storeroom/` (interface, behaviour, persistence) and E-4's paragraph, then authors `tests/integration/security-store-storeroom/` and runs it; its examiner validates that battery before any code is examined (`examiner.md` §1, D-14).
+2. **This unit's L2's own chain** carries L3 and L4: `docs/L3/security-store-storeroom/` (design and signatures), then `tests/unit/security-store-storeroom/`, then the implementation in the two modules' subtrees, and **E-1's four files, E-2's three and E-3's two in the same one-shot** — the lines §2 names and nothing else (D-1 §3, `modules.md` §5; ASM-7).
+3. **This unit's L2 test writer**, in a separate task that runs after the implementation has landed, moves E-5's rows: measured by the two predicates below, each row moved to the new figure and no row moved by guess (D-10).
+4. **No fourth writer.** A row the predicate leaves green is left byte-identical; a row that reddens and is in no class of §4 or §5 is a finding recorded in this unit's record and diagnosed, never patched under this exception (D-1, `examiner.md` §4).
+
+**The two predicates, closed by their own words.** A **re-grain** row is one whose *figure or path literal moved* under C-1..C-4 and whose subject still stands; it is moved to the new figure. A **retirement** row is one whose *subject* is E-1's retired file, its five-member API, its two-token receipt vocabulary or its on-disk record shape; it retires with its referent and is named in §5, never re-pointed (D-9's precedent, D-16).
+
+**Red before green holds for both.** A re-grain row goes red the moment E-1..E-3 move the figure it reads and is green only when the row itself moves; a module battery row is red before its implementation exists (`examiner.md` §3).
+
+## 4. The set that MOVES — re-grained, sited at `0eca66b`
+
+| Class | Sites / files | The sites |
+|---|---|---|
+| **C-1** · the group set's second live copy at six | 4 / 4 | `src/main/security-store.ts:87,122,339` (E-1); `tests/gutter.test.ts:4481`; `tests/store-core-graph.test.ts:976`; `tests/ui-leg-seam.test.ts:304`. **`src/main/security.ts:159` does not move** — the first copy is `mcp-surface`'s and the group set stays six (D-11, D-15) |
+| **C-2** · the receipt types' import source | 3 / 3 | `src/main/preload.ts:9`; `src/renderer/secure-panels.ts:37`; `src/main/main.ts:11` (E-2). The rows that census these files' bytes or names — `tests/secure-exclusion.test.ts:655-718,1126-1128,1411`-class, `tests/store-security.test.ts:1126-1128,1411` — redden only if they image a moved path |
+| **C-3** · `main.ts`'s construction, boot order and carrier | 7 / 5 | `src/main/main.ts:11,105-108,425,444-463,472-483` (E-2, E-3); `tests/tier4-arbitrary-storage.test.ts:562,1465,1499,2680-2688` (the landed order **construction < boot read < flip < `await mcp.start()` < `new BrowserWindow(`**, which survives unchanged in kind); `tests/secure-exclusion.test.ts:3116-3118,4073`; `tests/ui-leg-seam.test.ts:37,70,80,103,171`; `tests/store-persist.test.ts:1184` |
+| **C-4** · the persisted-file names, and "exactly two persisted files" | 18 / 13 | `src/main/main.ts:106` (the retired literal leaves `main.ts`); `tests/store-security.test.ts:876-879`; `tests/store-compliance-live.mjs:252-253,989,1020`; `tests/secure-exclusion-live.mjs:886,1429-1430`; `tests/store-persist.test.ts:36,94`; `tests/ui-leg-seam.test.ts:51,190-195,244-245,324,422,451,462`; `tests/ui-leg-contract.test.ts:3669,3822,3834`; `scripts/electron-ui.mjs:564-571,652,1340`; `scripts/electron-divergence.mjs:412` |
+
+**Green by predicate, swept only for a stale figure:** the default-grant subset (8 names, unmoved), the 27-tool and 3-resource censuses, the seven `MUTATING_METHODS` rows, every `RpcMethod` count, the six-group counts that read `security.ts` rather than the retired file, and the four anti-pattern rows `tests/store-persist.test.ts:286,402,832,1478` — the tier-1 channel still may not copy *that* write pattern, and the instruction outlives its model (D-11, D-13).
+
+## 5. The set that RETIRES — named site by site, with its reason
+
+A retired digest of a retired artifact asserts a byte identity the rebuild's whole point denies, and a row whose subject is a deleted API cannot be re-grained because its referent is gone (D-9's precedent, D-16, D-15).
+
+| Retires | Sites | Why retirement and not re-grain |
+|---|---|---|
+| `src/main/security-store.ts` and its declared API — `createSecurityStore`, `SecurityStore`, `SecurityStoreOptions`, `SecurityWriteReceipt`, `Tier4Entry`, `Tier4WriteAnswer`, `Tier4ClosedRefusal` | the file, 565 lines | D-16: disregarded, not carried; no shim and no dual write |
+| the frozen digests — `SECURITY_STORE_PIN` `7a85e021…` and `…_PRE_{CENTRAL_DATA,HOLDER,LOCK,ADV1,AMENDMENT}` | `tests/secure-exclusion.test.ts:726,852-880,4722,4727-4777`; `tests/tier4-arbitrary-storage-register.ts:145-196`; `tests/tier4-arbitrary-storage.test.ts:99,2726-2737` | a 64-hex image of a file that will not exist; re-pointing one would assert a byte identity across a wholesale replacement (D-16) |
+| `tests/security-store.test.ts` in full | the file (`:24-168`) | every row's subject is the retired five-member API's own behaviour |
+| the digest **readers and licences** | `tests/secure-exclusion-register.ts:154`; `tests/secure-exclusion-live.mjs:1936-2194`; `tests/secure-store-discipline.test.ts:478,2221`; `tests/store-compliance-live.mjs:1042,1417,1431,2314-2510,2851,3177` | each resolves the retired source **by path** and images its bytes; `store-compliance-live.mjs`'s probe imports it by source path, so it cannot run at all |
+| the retired **shape**'s rows — the five-member `Object.keys` census, the two-token reason set, the `entries`-absent pin, the `sanitize`/`ingest` byte arms, the `/tmp` stale-tmp mechanics, the advance-after-return detector | `tests/secure-store-discipline.test.ts:1001-1015,1626,2003,2105-2176,2657,2747,3279,3416`; `tests/tier4-arbitrary-storage.test.ts:2310-2324,2620-2621`; `tests/store-security.test.ts:218,483,584,815,1001,1038,1086,1307,1343`; `tests/secure-exclusion.test.ts:1907-1979,2401,3177-3210,3494,4312-4333,4692-4771` | the mechanism is the store's now; a row that keeps asserting a mechanism it no longer owns is the vacuous green `examiner.md` §2 names (D-5, D-16) |
+
+**Nothing product-facing retires.** Every behaviour the operator and the gate depend on — the six-member group set, the token, the cap, the arbitrary entries, the exclusion transition, the tier-4 refusal **as an answer**, the carrier's two additive members, the landed boot order — is re-homed and driven by `docs/L1/security-store-storeroom.md` §8's twelve scenarios and by C-1..C-4 (§4).
+
+**The one measurement that authorises the retirement count.** `tests/tier4-arbitrary-storage.test.ts:2726-2737` asserts the six digests are distinct and operative; a replacement artifact makes all six dead at once, so the *chain* retires as a unit and no single term can be silently re-pointed (D-16, D-15's "never silently").
+
+## 6. What the exception does not licence, and what it parks
+
+- **Never the archived corpus**: no archived byte is edited and no row repoints into it (D-2, D-15).
+- **Never a package**: `provident-storeroom` and `provident-ssr` stay read-only; a defect or requirement gap found in either is recorded with symptom, reproduction, suspected root cause and fix shape, upstream-owned, in this unit's record, and archived with it (D-5).
+- **Never a second module's behaviour**: E-2 moves an import source, E-3 moves a composition and the one boolean's writer; neither reshapes `preload.ts`'s six `window.provident` members, `mcp-server.ts`'s gate, its `exclusionTurn`, its resource set, or `src/shared/types.ts`'s `SecuritySettings` (D-18).
+- **Never an MCP surface**: no tool, resource, `RpcMethod` member or bridge channel is added — the isolation invariant is asserted by absence and this exception may not create the reference it forbids (`docs/L1/security-store-storeroom.md` §6; D-18).
+- **Parked: `provident-settings.json`'s import.** Its one-time import and the retirement of its write site are `app-shell`'s tier-1 crossing, parked by the sibling unit to the increment that owns the join (`docs/L1/central-data-census-exception.md` §5; D-13). Taking it up here would run a second module's contract through one gate (D-1).
+- **Parked: the Settings pane's own rendering.** Any operator-visible element is provident data in the app graph, never hand-written DOM, and no such element is added by this unit (`AGENTS.md` § "Project-wide constraint").
+
+## 7. How the exception is checked
+
+`strata-lint` with `--changed` naming exactly E-1's, E-2's and E-3's paths, E-4's `README.md`, and E-5's rows plus this unit's claimed subtrees is the check: a written path outside that list is a finding (D-1, `platform.md` §4). It reads **module** paths only, so naming `docs/L1/`, `docs/L2/security-store-storeroom/` or `docs/L3/security-store-storeroom/` in it fails diff scope by the map's own shape and is not a work finding (`modules.md` §1). What it cannot supply is the lens that matters — that E-1 moved a census and a shape, that E-2 moved three import sources and no declaration, and that E-3 moved a composition and one writer and no boot — so the examiner reads the nine files as code, not as a list (D-1, `examiner.md` §1).
+
+## 8. Findings this pass surfaced, and where they go (D-5)
+
+- **`provident-storeroom`: no declared arm for a boot over bytes that are not its own image.** Measured at this head: `storeCreate` over a provided, existing `filePath` whose bytes are the retired record boots **cold** and leaves those bytes untouched until the first `file`-tier save, so a consumer can state the recovery arm while the package declares neither it nor a parse-failure arm. Reproduced by seeding `{token, enabled}` at a `filePath` and calling `read`. Suspected root cause: the guide's §9.1 boot clauses declare the creation, reachability and constraint-list arms and no parse-failure arm. Proposed fix shape: declare the parse-failure arm's status and whether the bytes stand, in the native contract and in guide §9.1. **Upstream-owned, never patched here** — this unit's import (§5 of the design doc) exists precisely because of it (D-5).
+- **`provident-storeroom`: a listener's only argument is the triggering address, never the value.** So a subscriber learns *that* an address moved and must `read` it — which is why the surface module's listener reads rather than receiving, and why `pending`/`triggered` cannot carry a change's value. Not a defect, a declared limit this unit designs around; recorded so the next consumer does not re-derive it (D-5, guide §6.4).
+- **Owed to this unit's record under `strata/records/`** — both findings, the L2 and L3 examiners' readings, and the closing revision of this artifact. L1's write scope is `docs/L1/`, so the record is named here and owed by the layer that owns it (D-1 §3, D-5).

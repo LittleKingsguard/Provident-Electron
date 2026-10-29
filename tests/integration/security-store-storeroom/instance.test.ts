@@ -1,0 +1,217 @@
+// tests/integration/security-store-storeroom/instance.test.ts — THE L2 BATTERY for
+// `security-store-storeroom`, part 1: THE INSTANCE, through its DECLARED SURFACE.
+//
+// THE CONTRACT: docs/L2/security-store-storeroom/interface.md §1-§4 and §8, and behaviour.md
+// §1-§8 — the boot, the committed write and its re-serve, the six import arms, the refusals, the
+// subscription, the listener-throw hazard, the volatile exclusion pair and the two-profile row.
+//
+// EVERY ANSWER IS READ THROUGH THE DECLARED SHAPE (`interface.md` §2). No row widens an answer
+// with a local view and no row casts one: the status word narrows the arm, and the members a row
+// names are the members that arm declares. A refusal where the row needs an arm is a named
+// FAILURE, never a skip (examiner.md §2). The subject is the real `createOperatorSettings` over
+// the real `provident-storeroom` instance: no mock, no stub, no `todo`.
+//
+// RED BEFORE GREEN (examiner.md §3): `src/main/operator-settings/` does not exist at this head,
+// so this file is the red set the implementation has to turn green — and it fails at collection
+// today rather than row by row, which is the shape a filed-before-implementation battery has.
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+
+import { createOperatorSettings, type OperatorSettingsAddress, type OperatorSettingsReceipt } from '../../../src/main/operator-settings'
+
+const OPERATOR_FILE = 'provident-operator-settings.json'
+const LEGACY_FILE = 'provident-security.json'
+const RECORD_ADDRESS = ['operator-settings']
+const VOLATILE_ADDRESS = ['operator-exclusion']
+
+let userDataDir: string
+
+beforeEach(() => {
+  userDataDir = mkdtempSync(join(tmpdir(), 'security-store-instance-'))
+})
+
+afterEach(() => {
+  rmSync(userDataDir, { recursive: true, force: true })
+})
+
+const filePath = (name: string): string => join(userDataDir, name)
+const bytesOf = (name: string): Buffer => readFileSync(filePath(name))
+
+function committed(receipt: OperatorSettingsReceipt): { status: 'committed'; cursor: number; opId: string } {
+  if (receipt.status !== 'committed') throw new Error(`expected a committed receipt; it answered ${JSON.stringify(receipt)}`)
+  return receipt
+}
+
+function refused(receipt: OperatorSettingsReceipt): { status: 'refused'; reason: string; message: string; address: unknown } {
+  if (receipt.status !== 'refused') throw new Error(`expected a refused receipt; it answered ${JSON.stringify(receipt)}`)
+  return receipt
+}
+
+describe('security-store-storeroom · the instance through its declared surface', () => {
+  it('a first boot over no file serves the first-run default, leaves the new file zero-length and creates the retired name nowhere (interface.md §4)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    const record = settings.read()
+    expect(record.token, 'the first-run default token').toBeNull()
+    expect(record.enabled, 'the first-run default grant is read+dispatch').toEqual(['read', 'dispatch'])
+    expect(record.maxJournalLength, 'no cap on a first run').toBeUndefined()
+    expect(record.entries, 'entries is absent until first written').toBeUndefined()
+    expect({ exclusion: record.exclusion, tier4: record.tier4 }, 'the exclusion pair boots to the safe pair').toEqual({ exclusion: 'mcp-enabled', tier4: false })
+    expect(existsSync(filePath(OPERATOR_FILE)), 'construction creates the store file').toBe(true)
+    expect(readdirSync(userDataDir), 'and nothing else stands beside it').toEqual([OPERATOR_FILE])
+    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'the file is created exclusively, zero-length and empty (guide §9.1)').toBe(0)
+    expect(existsSync(filePath(LEGACY_FILE)), 'the retired name is not created by the absent import arm').toBe(false)
+  })
+
+  it('one committed write is one commit: a receipt with a cursor and an op id, and the read re-serves it (interface.md §3)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    const first = committed(settings.write({ token: 't' }))
+    expect(first.cursor, 'the first write of a fresh process is the store’s first op').toBe(1)
+    expect(typeof first.opId, 'the op id is the store’s own string').toBe('string')
+    expect(first.opId.length, 'and a non-empty one').toBeGreaterThan(0)
+    expect(settings.read().token, 'the read serves what the write committed').toBe('t')
+    const second = committed(settings.write({ token: 't2' }))
+    expect(second.cursor, 'a second write is the next op').toBe(2)
+    expect(settings.read().token).toBe('t2')
+    expect(readdirSync(userDataDir), 'no `.tmp`, no lock, no sidecar and no second name appears (persistence.md §5)').toEqual([OPERATOR_FILE])
+  })
+
+  it('the group filter keeps the six-member set and drops an outside name (D-11, D-15)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    committed(settings.write({ enabled: ['read', 'dispatch', 'graph', 'code', 'module', 'data', 'bogus', 'read'] }))
+    expect(settings.read().enabled, 'six groups, deduplicated, and a non-group string dropped').toEqual(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
+  })
+
+  it('the journal cap is written and then cleared (interface.md §2)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    committed(settings.write({ maxJournalLength: 12 }))
+    expect(settings.read().maxJournalLength).toBe(12)
+    committed(settings.write({ maxJournalLength: null }))
+    expect(settings.read().maxJournalLength, 'a null clears the cap').toBeUndefined()
+  })
+
+  it('the import carries its own red set: token, grants, cap and an arbitrary entry all survive, and the retired bytes stand (D-19)', () => {
+    const seed = JSON.stringify({ token: 'tok', enabled: ['read', 'graph', 'graph', 'bogus'], maxJournalLength: 12, 'x-mine': { a: 1 } }, null, 2)
+    writeFileSync(filePath(LEGACY_FILE), seed)
+
+    const settings = createOperatorSettings({ userDataDir })
+    const record = settings.read()
+    expect(record.token, 'the operator’s token survives the crossing').toBe('tok')
+    expect(record.enabled, 'the grants survive and are deduplicated through the six-member set').toEqual(['read', 'graph'])
+    expect(record.maxJournalLength, 'the cap survives').toBe(12)
+    expect(record.entries, 'and a foreign key lands in `entries` verbatim').toEqual({ 'x-mine': { a: 1 } })
+    expect(bytesOf(LEGACY_FILE).toString('utf8'), 'the retired name is read once and never written').toBe(seed)
+    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'the import commits, so the new name carries the record').toBeGreaterThan(0)
+  })
+
+  it('the import’s absent arm serves the default and writes no byte', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.read().token).toBeNull()
+    expect(existsSync(filePath(LEGACY_FILE)), 'no retired name is created').toBe(false)
+    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'and the absent arm writes nothing').toBe(0)
+  })
+
+  it('the import’s unparsable arm serves the default, throws nothing and leaves the bytes (L1 §5)', () => {
+    const seed = '{"token":"tok",'
+    writeFileSync(filePath(LEGACY_FILE), seed)
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.read().token, 'an unparsable file is the first-run default').toBeNull()
+    expect(bytesOf(LEGACY_FILE).toString('utf8'), 'and its bytes are untouched').toBe(seed)
+  })
+
+  it('the import’s non-object arm serves the default (L1 §5)', () => {
+    writeFileSync(filePath(LEGACY_FILE), '[1,2,3]')
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.read().token).toBeNull()
+    expect(settings.read().entries, 'an array is not a record, so no index-like name is walked into `entries`').toBeUndefined()
+  })
+
+  it('the import’s directory arm serves the default and throws nothing (L1 §5)', () => {
+    mkdirSync(filePath(LEGACY_FILE), { recursive: true })
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.read().enabled).toEqual(['read', 'dispatch'])
+    expect(existsSync(filePath(LEGACY_FILE))).toBe(true)
+  })
+
+  it('the import’s non-map `entries` arm treats the member as absent, the one declared non-verbatim arm (L1 §5)', () => {
+    writeFileSync(filePath(LEGACY_FILE), JSON.stringify({ token: 'tok', entries: [1, 2] }))
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.read().token, 'the imported member beside it still lands').toBe('tok')
+    expect(settings.read().entries, 'a non-object `entries` is treated as absent and its raw value is not preserved').toBeUndefined()
+  })
+
+  it('a refused write is a value, names a reason word, and leaves the record and the bytes exactly as they stood (interface.md §3)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    committed(settings.write({ token: 'keep' }))
+    const before = readFileSync(filePath(OPERATOR_FILE))
+    const receipt = refused(settings.write({ entries: { bad: undefined } }))
+    expect(receipt.reason, 'the store’s own status verbatim, from the closed three of interface.md §3').toBe('ValueRefusedAtBoundary')
+    expect(typeof receipt.message, 'the package’s generated sentence rides it').toBe('string')
+    expect('address' in receipt, 'and the fourth member is present on every arm, `null` where nothing is nameable').toBe(true)
+    expect(settings.read().token, 'the record is unmoved').toBe('keep')
+    expect(readFileSync(filePath(OPERATOR_FILE)).equals(before), 'and the bytes are byte-identical').toBe(true)
+  })
+
+  it('a listener is the change path: a committed write delivers the triggering address, and the withdrawal stops it (D-17)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    const seen: OperatorSettingsAddress[] = []
+    const off = settings.subscribe((address: OperatorSettingsAddress) => { seen.push(address) })
+    committed(settings.write({ token: 'x' }))
+    expect(seen, 'the record’s own address, delivered inside the write’s call').toEqual([RECORD_ADDRESS])
+    committed(settings.write({ exclusion: 'mcp-disabled' }))
+    expect(seen, 'and the volatile pair’s address, because that is the address the act touched').toEqual([RECORD_ADDRESS, VOLATILE_ADDRESS])
+    off()
+    committed(settings.write({ token: 'y' }))
+    expect(seen.length, 'a withdrawn handle fires nothing, silently (guide §6.2-§6.3)').toBe(2)
+  })
+
+  it('a listener’s throw cannot take the write’s answer away, and the throwing subscriber is withdrawn (A-6, guide §6.5a)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    let calls = 0
+    settings.subscribe(() => { calls += 1; throw new Error('boom-in-subscriber') })
+    const seen: OperatorSettingsAddress[] = []
+    settings.subscribe((address: OperatorSettingsAddress) => { seen.push(address) })
+
+    const receipt = committed(settings.write({ token: 'boom-1' }))
+    expect(receipt.cursor, 'the write answers its own receipt though a subscriber threw').toBe(1)
+    expect(settings.read().token, 'and the data had already landed, so the read serves it').toBe('boom-1')
+    expect(seen.length, 'the subscriber beside it was delivered: one withdrawal is not the window’s failure').toBe(1)
+
+    committed(settings.write({ token: 'boom-2' }))
+    expect(calls, 'the throwing subscriber is withdrawn, so no later write pays its cost').toBe(1)
+    expect(settings.read().token).toBe('boom-2')
+  })
+
+  it('the exclusion pair is volatile: a transition commits, a file write leaves it unmoved, and a fresh construction boots it to the safe pair (ASM-L2-2)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    expect({ exclusion: settings.read().exclusion, tier4: settings.read().tier4 }).toEqual({ exclusion: 'mcp-enabled', tier4: false })
+
+    committed(settings.write({ exclusion: 'mcp-disabled' }))
+    expect({ exclusion: settings.read().exclusion, tier4: settings.read().tier4 }, 'one record, two derived readings').toEqual({ exclusion: 'mcp-disabled', tier4: true })
+
+    committed(settings.write({ token: 'z' }))
+    expect(settings.read().exclusion, 'a `file`-tier write purges only its own key, so the pair stands (interface.md §1 ASM-L2-1)').toBe('mcp-disabled')
+
+    const rebooted = createOperatorSettings({ userDataDir })
+    expect(rebooted.read().token, 'the durable record survives the reconstruction').toBe('z')
+    expect({ exclusion: rebooted.read().exclusion, tier4: rebooted.read().tier4 }, 'and the pair is back at the safe pair: it was never persisted').toEqual({ exclusion: 'mcp-enabled', tier4: false })
+  })
+
+  it('two profiles are disjoint: a write through one is never served by the other (D-13, L1 §8 S-12)', () => {
+    const other = mkdtempSync(join(tmpdir(), 'security-store-instance-other-'))
+    try {
+      const a = createOperatorSettings({ userDataDir })
+      const b = createOperatorSettings({ userDataDir: other })
+      committed(a.write({ token: 'only-a' }))
+      expect(a.read().token).toBe('only-a')
+      expect(b.read().token, 'the second profile never serves the first one’s write').toBeNull()
+      committed(b.write({ enabled: ['read', 'dispatch', 'graph', 'code', 'module', 'data'] }))
+      expect(a.read().enabled, 'and each carries its own grant set').toEqual(['read', 'dispatch'])
+      expect(b.read().enabled).toEqual(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
+    } finally {
+      rmSync(other, { recursive: true, force: true })
+    }
+  })
+})

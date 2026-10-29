@@ -45,9 +45,12 @@
       "name": "operator-settings",
       "paths": [
         "src/main/security-store.ts",
+        "src/main/operator-settings/",
         "src/main/module-store.ts",
         "src/main/tier4-state.ts",
         "tests/security-store.test.ts",
+        "tests/unit/security-store-storeroom/",
+        "tests/integration/security-store-storeroom/",
         "tests/module-store.test.ts",
         "tests/store-security.test.ts",
         "tests/secure-store-discipline.test.ts",
@@ -58,7 +61,15 @@
         "tests/secure-exclusion-live.mjs",
         "tests/store-compliance-live.mjs"
       ],
-      "endpoints": 5
+      "endpoints": 10
+    },
+    {
+      "name": "settings-surface",
+      "paths": [
+        "src/main/settings-surface/",
+        "tests/unit/settings-surface/"
+      ],
+      "endpoints": 11
     },
     {
       "name": "central-data",
