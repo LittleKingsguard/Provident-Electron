@@ -1,0 +1,55 @@
+{
+  "unit": "security-store-storeroom",
+  "from": "L2",
+  "to": "L1",
+  "verdict": "FAIL",
+  "artifact": "security-store-instance",
+  "testIds": [
+    "tests/unit/security-store-storeroom/operator-settings.test.ts (every row green)",
+    "tests/unit/settings-surface/surface.test.ts (every row green)",
+    "tests/integration/security-store-storeroom/instance.test.ts (every row green)",
+    "tests/integration/security-store-storeroom/surface.test.ts (every row green)",
+    "tests/integration/security-store-storeroom/isolation.test.ts ISO-1..ISO-6, RQ-1 (every row green)",
+    "tests/e2e-battery.test.mjs (184 checks, 0 failures)",
+    "scripts/electron-divergence.mjs (no verdict: wedged 26 min, killed; F-2)"
+  ],
+  "rootCause": "F-1, and it is the floor rather than the code below it: the app cannot boot at this head, so nothing this unit built exists in the product. The built main bundle dies at module load — `dist/main/main.cjs:38480` runs esbuild's CJS shim `createRequire(import_meta.url)` with `import_meta = {}`, generated from `node_modules/provident-storeroom/index.mjs:94-97`, which is ESM-only and resolves its native addon through `import.meta.url`. Measured: Electron spawned on the landed vector with a fresh scratch profile (seeded `provident-security.json`) answers `App threw an error during load / TypeError [ERR_INVALID_ARG_VALUE] ... Received undefined` on stderr, emits ZERO stdout bytes in 45 s, and leaves no `provident-operator-settings.json` in the profile — the instance never constructs, so the exclusion pair, the three channels, `attach` and every absence row of D-18 describe a process that never starts. `main.cjs` is the ONLY output that carries the seam, and nothing in the verification floor reaches it: `battery-host.mjs` and `standalone.mjs` carry none of it (measured 0 occurrences of the package, of `createProfileStore` and of `import.meta`; `src/main/battery-host.ts:12`'s import is unused and tree-shaken, and neither host passes a `dataSurface`), so the 184 green checks of `tests/e2e-battery.test.mjs` say nothing about the seam; vitest imports `src/**` as ESM TS and never loads a bundle; and `npm run build` exits 0 with NO warning at this esbuild version. The defect is reachable from the earlier seam (`src/main/data/store.ts:23` -> `src/main/storeroom.ts:21`), so it predates this unit; this unit adds the second importer (`src/main/operator-settings/index.ts:27`) and its instance is the first thing the boot would construct, which is what makes a host-side build defect the constraint this unit inherits. The two legs that DO boot the bundle cannot see it either, because neither bounds its handshake (F-2: measured 26-minute hang, no verdict). Host-side, so it is closed by a regression row that runs the built bundle and requires a stdio handshake, not by a green node row. Not a rebuild: the two modules, their declared surfaces, the composition and both batteries are sound and measured; one seam/bundle contract, one unexercised seam and one unbounded harness wait are what is broken. F-3 is a figure correction beside them.",
+  "assumptions": [
+    {
+      "id": "ASM-L2E-1",
+      "text": "the boot-order figure restated at L1 section 7 C-3, L2 behaviour section 10 and L3 design-settings-surface section 5 (`construction < boot read < flip < await mcp.start() < new BrowserWindow(`) is corrected to the measured order, not satisfied by re-ordering the code",
+      "alternative": "re-ordering main.ts to match the document, which moves the MCP enable ahead of the window's creation and load and re-opens a boot window no row pins"
+    },
+    {
+      "id": "ASM-L2E-2",
+      "text": "the two modules' internal contract stands unamended: `plain` remains an undeclared helper and `write`'s no-instance arm keeps answering one stored receipt, both recorded as observations for the next unit that touches those files",
+      "alternative": "opening a FAIL on an internal name and a receipt identity, which reaches no declared answer and spends a gate on two unobservable distinctions"
+    }
+  ],
+  "citations": [
+    "strata/examiner.md",
+    "strata/envelope.md",
+    "docs/L2/security-store-storeroom/interface.md sections 1, 2, 2.1, 3, 5, 5.1, 7",
+    "docs/L2/security-store-storeroom/behaviour.md sections 1-10",
+    "docs/L2/security-store-storeroom/persistence.md sections 1-9",
+    "docs/L3/security-store-storeroom/design.md sections 2-9",
+    "docs/L3/security-store-storeroom/design-settings-surface.md sections 2-7",
+    "docs/L3/security-store-storeroom/signatures.md sections 2-5",
+    "docs/L1/security-store-storeroom.md sections 3, 4, 6, 7, 8",
+    "docs/L1/security-store-storeroom-exception.md sections 2, 4, 5, 9",
+    "src/main/operator-settings/index.ts",
+    "src/main/settings-surface/index.ts",
+    "src/main/main.ts",
+    "src/main/tier4-state.ts",
+    "src/shared/dom-shim.ts",
+    "scripts/electron-spawn.mjs",
+    "scripts/electron-divergence.mjs",
+    "scripts/electron-ui.mjs",
+    "tests/store-compliance-live.mjs",
+    "tests/secure-exclusion-live.mjs",
+    "tests/e2e-battery.test.mjs",
+    "dist/main/main.cjs",
+    "node_modules/provident-storeroom/index.mjs",
+    "strata/decisions.md D-5, D-11, D-13, D-14, D-16, D-17, D-18, D-19"
+  ]
+}
