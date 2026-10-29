@@ -1,9 +1,10 @@
 // tests/integration/security-store-storeroom/instance.test.ts — THE L2 BATTERY for
 // `security-store-storeroom`, part 1: THE INSTANCE, through its DECLARED SURFACE.
 //
-// THE CONTRACT: docs/L2/security-store-storeroom/interface.md §1-§4 and §8, and behaviour.md
-// §1-§8 — the boot, the committed write and its re-serve, the six import arms, the refusals, the
-// subscription, the listener-throw hazard, the volatile exclusion pair and the two-profile row.
+// THE CONTRACT: docs/L2/security-store-storeroom/interface.md §1-§3 and §7, and behaviour.md
+// §1-§8 — the boot and the construction act (`interface.md` §2.1), the committed write and its
+// re-serve, the six import arms, the refusals, the subscription, the listener-throw hazard, the
+// volatile exclusion pair and the two-profile row.
 //
 // EVERY ANSWER IS READ THROUGH THE DECLARED SHAPE (`interface.md` §2). No row widens an answer
 // with a local view and no row casts one: the status word narrows the arm, and the members a row
@@ -11,9 +12,15 @@
 // FAILURE, never a skip (examiner.md §2). The subject is the real `createOperatorSettings` over
 // the real `provident-storeroom` instance: no mock, no stub, no `todo`.
 //
-// RED BEFORE GREEN (examiner.md §3): `src/main/operator-settings/` does not exist at this head,
-// so this file is the red set the implementation has to turn green — and it fails at collection
-// today rather than row by row, which is the shape a filed-before-implementation battery has.
+// REV 2 — THE THREE RE-GRAINS the L2 examiner's FAIL binds this file to:
+//   · the receipt's ORDINAL is asserted by DIFFERENCE, never by its absolute origin: `interface.md`
+//     §2 declares that `cursor` is the op's own `seq` and says in the same breath that no row pins
+//     the figure it starts at (`ASM-L2-7`). Rows #2 and #13 were asserting `1`.
+//   · the `enabled` ORDER is asserted against a patch and a seed whose order is NOT `VALID_GROUPS`'
+//     order, because `interface.md` §2 `A-5` declares first-occurrence-in-the-caller's-order: the
+//     old rows would have passed an implementation that re-sorted. Rows #3 and #5.
+//   · the throw row cites `ASM-L2-6`, the id `interface.md` §7 actually carries (row #13 cited
+//     `A-6`, which no table in that document contains).
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -51,7 +58,7 @@ function refused(receipt: OperatorSettingsReceipt): { status: 'refused'; reason:
 }
 
 describe('security-store-storeroom · the instance through its declared surface', () => {
-  it('a first boot over no file serves the first-run default, leaves the new file zero-length and creates the retired name nowhere (interface.md §4)', () => {
+  it('a first boot over no file serves the first-run default, leaves the new file zero-length and creates the retired name nowhere (interface.md §2.1, §2)', () => {
     const settings = createOperatorSettings({ userDataDir })
     const record = settings.read()
     expect(record.token, 'the first-run default token').toBeNull()
@@ -65,23 +72,24 @@ describe('security-store-storeroom · the instance through its declared surface'
     expect(existsSync(filePath(LEGACY_FILE)), 'the retired name is not created by the absent import arm').toBe(false)
   })
 
-  it('one committed write is one commit: a receipt with a cursor and an op id, and the read re-serves it (interface.md §3)', () => {
+  it('one committed write is one commit: a receipt with an ordinal and an op id, and the read re-serves it (interface.md §2 ASM-L2-7)', () => {
     const settings = createOperatorSettings({ userDataDir })
     const first = committed(settings.write({ token: 't' }))
-    expect(first.cursor, 'the first write of a fresh process is the store’s first op').toBe(1)
+    expect(Number.isInteger(first.cursor), 'the ordinal is the store’s own integer `seq`, verbatim — its absolute origin is pinned by no row').toBe(true)
     expect(typeof first.opId, 'the op id is the store’s own string').toBe('string')
     expect(first.opId.length, 'and a non-empty one').toBeGreaterThan(0)
     expect(settings.read().token, 'the read serves what the write committed').toBe('t')
     const second = committed(settings.write({ token: 't2' }))
-    expect(second.cursor, 'a second write is the next op').toBe(2)
+    expect(second.cursor - first.cursor, 'a second write is the NEXT op: one commit, one ordinal, no gap and no reuse').toBe(1)
+    expect(second.opId, 'and the two ops are distinguishable').not.toBe(first.opId)
     expect(settings.read().token).toBe('t2')
     expect(readdirSync(userDataDir), 'no `.tmp`, no lock, no sidecar and no second name appears (persistence.md §5)').toEqual([OPERATOR_FILE])
   })
 
-  it('the group filter keeps the six-member set and drops an outside name (D-11, D-15)', () => {
+  it('the group filter keeps the six-member set, drops an outside name and keeps the caller’s order (D-11, D-15, A-5)', () => {
     const settings = createOperatorSettings({ userDataDir })
-    committed(settings.write({ enabled: ['read', 'dispatch', 'graph', 'code', 'module', 'data', 'bogus', 'read'] }))
-    expect(settings.read().enabled, 'six groups, deduplicated, and a non-group string dropped').toEqual(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
+    committed(settings.write({ enabled: ['data', 'bogus', 'read', 'dispatch', 'module', 'graph', 'code', 'data'] }))
+    expect(settings.read().enabled, 'the patch’s own order, first occurrence first, and a non-group string dropped — NOT a re-sort into VALID_GROUPS order').toEqual(['data', 'read', 'dispatch', 'module', 'graph', 'code'])
   })
 
   it('the journal cap is written and then cleared (interface.md §2)', () => {
@@ -93,13 +101,13 @@ describe('security-store-storeroom · the instance through its declared surface'
   })
 
   it('the import carries its own red set: token, grants, cap and an arbitrary entry all survive, and the retired bytes stand (D-19)', () => {
-    const seed = JSON.stringify({ token: 'tok', enabled: ['read', 'graph', 'graph', 'bogus'], maxJournalLength: 12, 'x-mine': { a: 1 } }, null, 2)
+    const seed = JSON.stringify({ token: 'tok', enabled: ['graph', 'read', 'graph', 'bogus'], maxJournalLength: 12, 'x-mine': { a: 1 } }, null, 2)
     writeFileSync(filePath(LEGACY_FILE), seed)
 
     const settings = createOperatorSettings({ userDataDir })
     const record = settings.read()
     expect(record.token, 'the operator’s token survives the crossing').toBe('tok')
-    expect(record.enabled, 'the grants survive and are deduplicated through the six-member set').toEqual(['read', 'graph'])
+    expect(record.enabled, 'the grants survive in the seeded order, deduplicated through the six-member set').toEqual(['graph', 'read'])
     expect(record.maxJournalLength, 'the cap survives').toBe(12)
     expect(record.entries, 'and a foreign key lands in `entries` verbatim').toEqual({ 'x-mine': { a: 1 } })
     expect(bytesOf(LEGACY_FILE).toString('utf8'), 'the retired name is read once and never written').toBe(seed)
@@ -147,7 +155,7 @@ describe('security-store-storeroom · the instance through its declared surface'
     committed(settings.write({ token: 'keep' }))
     const before = readFileSync(filePath(OPERATOR_FILE))
     const receipt = refused(settings.write({ entries: { bad: undefined } }))
-    expect(receipt.reason, 'the store’s own status verbatim, from the closed three of interface.md §3').toBe('ValueRefusedAtBoundary')
+    expect(receipt.reason, 'the store’s own status verbatim, one of the three named spellings of interface.md §3').toBe('ValueRefusedAtBoundary')
     expect(typeof receipt.message, 'the package’s generated sentence rides it').toBe('string')
     expect('address' in receipt, 'and the fourth member is present on every arm, `null` where nothing is nameable').toBe(true)
     expect(settings.read().token, 'the record is unmoved').toBe('keep')
@@ -167,19 +175,20 @@ describe('security-store-storeroom · the instance through its declared surface'
     expect(seen.length, 'a withdrawn handle fires nothing, silently (guide §6.2-§6.3)').toBe(2)
   })
 
-  it('a listener’s throw cannot take the write’s answer away, and the throwing subscriber is withdrawn (A-6, guide §6.5a)', () => {
+  it('a listener’s throw cannot take the write’s answer away, and the throwing subscriber is withdrawn (ASM-L2-6, guide §6.5a)', () => {
     const settings = createOperatorSettings({ userDataDir })
     let calls = 0
     settings.subscribe(() => { calls += 1; throw new Error('boom-in-subscriber') })
     const seen: OperatorSettingsAddress[] = []
     settings.subscribe((address: OperatorSettingsAddress) => { seen.push(address) })
 
-    const receipt = committed(settings.write({ token: 'boom-1' }))
-    expect(receipt.cursor, 'the write answers its own receipt though a subscriber threw').toBe(1)
+    const first = committed(settings.write({ token: 'boom-1' }))
+    expect(Number.isInteger(first.cursor), 'the write answers its own receipt though a subscriber threw').toBe(true)
     expect(settings.read().token, 'and the data had already landed, so the read serves it').toBe('boom-1')
     expect(seen.length, 'the subscriber beside it was delivered: one withdrawal is not the window’s failure').toBe(1)
 
-    committed(settings.write({ token: 'boom-2' }))
+    const second = committed(settings.write({ token: 'boom-2' }))
+    expect(second.cursor - first.cursor, 'the second write is the next op, so the failed subscriber cost it no commit').toBe(1)
     expect(calls, 'the throwing subscriber is withdrawn, so no later write pays its cost').toBe(1)
     expect(settings.read().token).toBe('boom-2')
   })

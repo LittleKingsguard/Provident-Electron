@@ -2,18 +2,35 @@
 // `security-store-storeroom`, part 3: THE SIX ISOLATION ABSENCES AND THE SETTLED ROUTE QUESTION.
 //
 // THE CONTRACT: docs/L1/security-store-storeroom.md §6 (`ISO-1`..`ISO-6`) and
-// docs/L2/security-store-storeroom/interface.md §6 and §9 ("RQ-1"); behaviour.md §9 states every
-// row's expected answer. D-18 makes the control ABSENCE, ASSERTED: each row states that nothing
-// resolves, and drives that over a live surface or over the bytes of the files the MCP stack
-// actually reaches — never inferred from a code read in prose.
+// docs/L2/security-store-storeroom/interface.md §6, and behaviour.md §9 ("RQ-1"). D-18 makes the
+// control ABSENCE, ASSERTED: each row states that nothing resolves, and drives that over a live
+// surface or over the files the MCP stack actually reaches — never inferred from a code read in
+// prose.
 //
-// THIS FILE IMPORTS NO HALF OF THE SUBJECT. The instance module and the surface module do not
-// exist yet; the absences they are the SUBJECT of are true of this tree and must stay true when
-// they land (D-18, examiner.md §3). The red-before-green rows that drive the two modules are
-// `instance.test.ts` and `surface.test.ts` beside this file.
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+// REV 2 — THE FOUR RE-GRAINS the L2 examiner's FAIL binds this file to, and the limit each one
+// now states in its own message instead of passing silently:
+//   · `ISO-3` no longer tests a six-string regex over source bytes. The union's every member must
+//     now be ANSWERED — by a `handleRequest` dispatch arm or by a registered tool name — so a
+//     member spelled `settings.get` or `operator.write` fails the row. The dispatch arms and the
+//     `MUTATING_METHODS` set are not exported, so THAT limb is a declaration read and the row says
+//     so out loud; the member census itself is driven against the live `ALL_TOOLS`.
+//   · `ISO-4` now scans EVERY `ipcRenderer` call site in `src/**` and the renderer's own `declare
+//     global` half, so a fourth channel spelled in `secure-panels.ts`, or a raw `ipcRenderer.invoke`
+//     outside the bridge, fails. The security channels are counted by constant VALUE, live.
+//   · `ISO-5`'s scanned set is no longer a hand-list: it is the TRANSITIVE IMPORT CLOSURE of
+//     `mcp-server.ts` and `security.ts` over `src/**`, which reaches `src/shared/types.ts`,
+//     `store-channels.ts` (through the composition), `module-store.ts`, `renderer/extensions.ts`
+//     and `data/**`; and it now asserts the CONSTRUCTION CENSUS its own `behaviour.md` §9 cell
+//     attributes to it.
+//   · `ISO-6` scans that same closure for the name AND for every fragment of it, and for any other
+//     `provident-*.json` literal the stack would need in order to compose the name at run time.
+//
+// THIS FILE IMPORTS NO HALF OF THE SUBJECT. The instance module and the surface module are the
+// SUBJECT of these absences and are never imported here (D-18, examiner.md §3). The red-before-green
+// rows that drive the two modules are `instance.test.ts` and `surface.test.ts` beside this file.
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -23,8 +40,10 @@ import { describe, expect, it } from 'vitest'
 import { createDataSurface, DATA_TOOL_NAMES } from '../../../src/main/data'
 import { ProvidentMcpServer, type McpBackend } from '../../../src/main/mcp-server.js'
 import { SecurityGate, groupForTool, toolAllowed, type ToolGroup } from '../../../src/main/security.js'
+import * as storeChannels from '../../../src/main/store-channels.js'
+import * as sharedTypes from '../../../src/shared/types.js'
 
-/** The instance's file name — interface.md §1, persistence.md §1. It is a literal here ON PURPOSE:
+/** The instance's file name — interface.md §2.1, persistence.md §1. It is a literal here ON PURPOSE:
  *  a row that imported it from the module could not assert its ABSENCE (`ISO-6`). */
 const OPERATOR_FILE = 'provident-operator-settings.json'
 const PROFILE_FILE = 'provident-profile.json'
@@ -45,14 +64,16 @@ const RPC_METHODS = [
 /** The seven `MUTATING_METHODS` as filed (`src/renderer/renderer.ts:829`). */
 const MUTATING = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'] as const
 
-/** The seven top-level `window.provident` members as filed (`src/main/preload.ts:42-75`);
- *  interface.md §5's `A-1` records that L1 §6's "six" is the stale figure. */
+/** The seven top-level `window.provident` members as filed (`src/main/preload.ts:42-75`). */
 const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store'] as const
 
-const MAIN_DIR = fileURLToPath(new URL('../../../src/main', import.meta.url))
+const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
+const MAIN_DIR = join(SRC_DIR, 'main')
 const REPO = new URL('../../../', import.meta.url)
 
 const sourceOf = (relative: string): string => readFileSync(new URL(relative, REPO), 'utf8')
+const textOf = (absolute: string): string => readFileSync(absolute, 'utf8')
+const rel = (absolute: string): string => absolute.slice(SRC_DIR.length + 1).split('\\').join('/')
 
 function walk(dir: string): string[] {
   const out: string[] = []
@@ -64,15 +85,55 @@ function walk(dir: string): string[] {
   return out
 }
 
-/** The files the MCP stack reaches: the server, the gate, both entry hosts and the profile module. */
-function mcpStackFiles(): string[] {
-  return [
-    join(MAIN_DIR, 'mcp-server.ts'),
-    join(MAIN_DIR, 'security.ts'),
-    join(MAIN_DIR, 'battery-host.ts'),
-    join(MAIN_DIR, 'standalone.ts'),
-    ...walk(join(MAIN_DIR, 'data')),
-  ]
+const ALL_SRC = walk(SRC_DIR)
+
+/** THE TRANSITIVE IMPORT CLOSURE of the MCP stack's two entry files over `src/**`.
+ *  Every relative specifier is followed, `import type` included — a type-only edge still names the
+ *  file in the stack's own declaration, which is what `ISO-5` and `ISO-6` are about. Bare specifiers
+ *  (packages, `node:`, `electron`) are skipped: they are not files in this tree (D-18). */
+function importClosure(entries: string[]): string[] {
+  const spec = /(?:from|import|require)\s*[(\s]\s*['"]([^'"]+)['"]/g
+  const seen = new Set<string>()
+  const queue = [...entries]
+  while (queue.length > 0) {
+    const file = queue.shift() as string
+    if (seen.has(file) || !existsSync(file)) continue
+    seen.add(file)
+    for (const match of textOf(file).matchAll(spec)) {
+      const target = match[1]
+      if (!target.startsWith('.')) continue
+      const base = resolve(dirname(file), target)
+      const candidates = [base.replace(/\.js$/, '.ts'), `${base}.ts`, join(base, 'index.ts')]
+      for (const candidate of candidates) {
+        if (candidate.startsWith(SRC_DIR) && existsSync(candidate) && candidate.endsWith('.ts') && statSync(candidate).isFile()) {
+          queue.push(candidate)
+          break
+        }
+      }
+    }
+  }
+  return [...seen].sort()
+}
+
+/** The MCP stack's reach: the server, the gate, both entry hosts and everything they import. */
+const MCP_CLOSURE = importClosure([
+  join(MAIN_DIR, 'mcp-server.ts'),
+  join(MAIN_DIR, 'security.ts'),
+  join(MAIN_DIR, 'battery-host.ts'),
+  join(MAIN_DIR, 'standalone.ts'),
+])
+
+/** The `security` member's route names, out of a bridge declaration block, at whatever its own
+ *  indentation is — so `preload.ts`'s and `secure-panels.ts`'s halves are read by ONE reader. */
+function securityRoutesOf(source: string, label: string): string[] {
+  const marker = /^(\s*)security[?]?:\s*\{/m.exec(source)
+  if (marker === null) throw new Error(`${label}: no \`security\` member is declared`)
+  const indent = marker[1].length
+  const after = source.slice(marker.index)
+  const close = new RegExp(`\\n\\s{${indent}}\\}`, 'm').exec(after)
+  if (close === null) throw new Error(`${label}: the \`security\` member's close is not found at its own indent`)
+  const body = after.slice(0, close.index)
+  return [...body.matchAll(new RegExp(`^\\s{${indent + 2}}(\\w+)\\s*\\(`, 'gm'))].map((match) => match[1]).sort()
 }
 
 const backend: McpBackend = { invoke: async () => ({}) }
@@ -164,23 +225,47 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     }
   })
 
-  it('ISO-3 · no RpcMethod member names a security member or the instance file, and MUTATING_METHODS stays seven', () => {
+  it('ISO-3 · every RpcMethod member is ANSWERED by the tree, so no member can name a security write; MUTATING_METHODS stays seven', () => {
     const types = sourceOf('src/shared/types.ts')
     const block = /export type RpcMethod =([\s\S]*?)\n\n/.exec(types)
     expect(block, 'src/shared/types.ts declares the RpcMethod union').not.toBeNull()
     const members = [...(block?.[1] ?? '').matchAll(/'([^']+)'/g)].map((match) => match[1])
     expect(members, 'the union is 27 members and its order is the filed one').toEqual([...RPC_METHODS])
-    for (const member of members) {
-      expect(/token|enabled|exclusion|tier4|operator-settings|security/i.test(member), `no union member names the security record: ${member}`).toBe(false)
+
+    // LIMB ONE — LIVE. Every name the server can register is a member of the union or one of the
+    // four read tools whose tool spelling differs from its method spelling. This is the limb that
+    // makes an added member a finding: a spelling the union does not carry cannot be answered.
+    const toolNames = ProvidentMcpServer.ALL_TOOLS.map((name) => name.replace(/^provident\./, ''))
+    for (const name of toolNames) {
+      if (['get_rendered_html', 'get_markdown', 'list_targets', 'get_node_state'].includes(name)) continue
+      expect(members.includes(name), `the server registers a tool the RpcMethod union must carry: ${name}`).toBe(true)
     }
+    for (const name of DATA_TOOL_NAMES) {
+      expect(members.includes(name.replace(/^provident\./, '')), `every data tool is a union member: ${name}`).toBe(true)
+    }
+
+    // LIMB TWO — STRUCTURAL, and named as such. `handleRequest`'s dispatch arms are not exported,
+    // so the twenty-seven members' ANSWERABILITY by the renderer's own switch is a declaration
+    // read; it is a read of the DISPATCH SURFACE rather than of the subject's internals. A member
+    // with neither a dispatch arm nor a registered tool — `settings.get`, `operator.write`, any
+    // fourth route — fails RIGHT HERE, which the six-string spelling test this row used to run
+    // could not do.
     const renderer = sourceOf('src/renderer/renderer.ts')
+    const arms = new Set([...renderer.matchAll(/^\s*case '([^']+)':/gm)].map((match) => match[1]))
+    for (const member of members) {
+      const answered = arms.has(member) || toolNames.includes(member)
+      expect(answered, `no dispatch arm and no registered tool answers this RpcMethod member, and a member nothing answers cannot be a security path either: ${member}`).toBe(true)
+    }
+
+    // LIMB THREE — the mutating set, which is not a union and not exported either: a source read,
+    // stated as one. A security write joining it would make the transition a journaled mutation.
     const mutating = /const MUTATING_METHODS = new Set\(\[([^\]]*)\]\)/.exec(renderer)
     expect(mutating, 'src/renderer/renderer.ts declares MUTATING_METHODS').not.toBeNull()
     const names = [...(mutating?.[1] ?? '').matchAll(/'([^']+)'/g)].map((match) => match[1])
     expect(names, 'the mutating set is seven, and no security write joins it').toEqual([...MUTATING])
   })
 
-  it('ISO-4 · no bridge channel carries a security write but the three, over a seven-member bridge', () => {
+  it('ISO-4 · no bridge channel carries a security write but the three, over a seven-member bridge, in both lockstep declarations', () => {
     const preload = sourceOf('src/main/preload.ts')
     const start = preload.indexOf('export interface ProvidentBridge {')
     const end = preload.indexOf('\n}', start)
@@ -188,33 +273,64 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     const block = preload.slice(start, end)
     const members = [...block.matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
     expect(members, 'the bridge carries seven top-level members and gains none (interface.md §5 A-1)').toEqual([...BRIDGE_MEMBERS])
-    const securityStart = block.indexOf('  security: {')
-    // The interface's members close with `  }` and NO trailing comma — the commas live in the
-    // implementation object below the declaration, which is outside this block. The sentinel is
-    // therefore `\n  }`, and the guard below fails the row loudly if the block is mis-sliced
-    // rather than letting a `-1` run the slice to the end of the interface (the over-fit this
-    // row was corrected for after its first run).
-    const securityEnd = block.indexOf('\n  }', securityStart)
-    expect(securityStart, 'the bridge declares a `security` member').toBeGreaterThan(-1)
-    expect(securityEnd, 'and its close is found inside the declaration block').toBeGreaterThan(securityStart)
-    const routes = [...block.slice(securityStart, securityEnd).matchAll(/^ {4}(\w+)\(/gm)].map((match) => match[1]).sort()
-    expect(routes, 'the security member carries exactly the three manual-UI routes').toEqual(['get', 'set', 'setExclusion'])
     expect(preload.split("contextBridge.exposeInMainWorld('provident'").length - 1, 'one exposure of one bridge').toBe(1)
+
+    // LIMB TWO — THE LOCKSTEP HALF. `preload.ts` and `secure-panels.ts` re-declare the same
+    // `security` member and must move together, so a fourth route spelled in the RENDERER's half
+    // alone is a finding here even though `preload.ts` reads clean.
+    const preloadRoutes = securityRoutesOf(preload, 'src/main/preload.ts')
+    const panelsRoutes = securityRoutesOf(sourceOf('src/renderer/secure-panels.ts'), 'src/renderer/secure-panels.ts')
+    expect(preloadRoutes, 'the security member carries exactly the three manual-UI routes').toEqual(['get', 'set', 'setExclusion'])
+    expect(panelsRoutes, 'and the renderer’s `declare global` half carries the SAME three — a half-widening or a fourth route fails').toEqual(preloadRoutes)
+
+    // LIMB THREE — THE RAW-CALL SITE. `ipcRenderer` is obtainable only from `electron`, so the one
+    // file in `src/**` that imports it is the bridge: any other file able to `invoke` a channel
+    // would carry a security write outside the three, and it cannot, because it cannot reach one.
+    const holders = ALL_SRC.filter((file) => /\bipcRenderer\b/.test(textOf(file)))
+    expect(holders.map(rel).sort(), 'only the preload bridge holds `ipcRenderer`; no file may reach a channel behind its back').toEqual(['main/preload.ts'])
+
+    // LIMB FOUR — THE CHANNEL CENSUS, BY VALUE AND LIVE. Three security channels exist in the
+    // shared vocabulary, and they are the three the bridge exposes.
+    const vocabulary: unknown[] = [...Object.values(sharedTypes), ...Object.values(storeChannels)]
+    const securityChannels = vocabulary
+      .filter((value): value is string => typeof value === 'string' && /security/i.test(value))
+      .sort()
+    expect(securityChannels, 'the shared channel vocabulary carries exactly three security channels, and no fourth').toEqual(['provident:security:exclusion', 'provident:security:get', 'provident:security:set'])
   })
 
-  it('ISO-5 · no MCP-stack file names the instance, its module or its constructor', () => {
+  it('ISO-5 · no file in the MCP stack’s import closure names the instance, its module or its constructor, and exactly one construction site stands outside each module', () => {
     const named = /operator-settings|operator-exclusion|createOperatorSettings|createSettingsSurface|settings-surface/
-    const hits: string[] = []
-    for (const file of mcpStackFiles()) {
-      expect(existsSync(file), `the MCP stack's file exists and is read: ${file}`).toBe(true)
-      if (named.test(readFileSync(file, 'utf8'))) hits.push(file)
-    }
-    expect(hits, 'no file the MCP stack reaches names the instance, so no drive there can hold a reference to it').toEqual([])
+    expect(MCP_CLOSURE.length, 'the closure is computed, not hand-listed — it reaches every file the stack imports, `import type` included').toBeGreaterThan(5)
+    const hits = MCP_CLOSURE.filter((file) => named.test(textOf(file)))
+    expect(hits.map(rel), 'no file the MCP stack reaches names the instance, so no drive there can hold a reference to it (a module path composed at RUN TIME is invisible to this closure — the row says so rather than passing silently)').toEqual([])
+
+    // THE CONSTRUCTION CENSUS its own behaviour.md §9 cell attributes to this row: the instance is
+    // constructed in exactly one file, and that file is the surface module's; the surface is
+    // constructed in exactly one file, and that file is the composition site.
+    const instanceSites = ALL_SRC.filter((file) => !rel(file).startsWith('main/operator-settings/') && textOf(file).includes('createOperatorSettings('))
+    expect(instanceSites.map(rel), 'the instance is constructed in exactly one file, and it is inside the surface module that holds the one reference (D-18, interface.md §5 ASM-L2-8)').toEqual(['main/settings-surface/index.ts'])
+
+    const surfaceSites = ALL_SRC.filter((file) => !rel(file).startsWith('main/settings-surface/') && textOf(file).includes('createSettingsSurface('))
+    expect(surfaceSites.map(rel), 'the surface is constructed at the composition site and nowhere else (interface.md §5)').toEqual(['main/main.ts'])
   })
 
-  it('ISO-6 · the instance file’s name is spelled in no file the MCP stack reaches', () => {
-    const hits = mcpStackFiles().filter((file) => readFileSync(file, 'utf8').includes(OPERATOR_FILE))
-    expect(hits, 'no reachable file spells the instance’s own name, so no drive can even name it').toEqual([])
+  it('ISO-6 · the instance file’s name is spelled in no file the MCP stack reaches, and nothing there composes one', () => {
+    const fragments = [OPERATOR_FILE, 'provident-operator', RECORD_ADDRESS, VOLATILE_ADDRESS]
+    const hits: string[] = []
+    for (const file of MCP_CLOSURE) {
+      const text = textOf(file)
+      if (fragments.some((fragment) => text.includes(fragment))) hits.push(file)
+    }
+    expect(hits.map(rel), 'no reachable file spells the instance’s own name or either of its addresses, so no drive can even name it').toEqual([])
+
+    // THE COMPOSITION HALF. A path assembled at run time from pieces never appears as a literal, so
+    // this limb cannot see it — it asserts what CAN be seen, and says so: the closure's own
+    // `provident-*.json` literals are the two carriers other modules own, so no third name is
+    // available to compose the instance's file out of (`persistence.md` §8).
+    const literals = new Set<string>()
+    for (const file of MCP_CLOSURE) for (const match of textOf(file).matchAll(/provident-[a-z0-9-]+\.json/g)) literals.add(match[0])
+    const foreign = [...literals].filter((name) => !['provident-profile.json', 'provident-settings.json'].includes(name)).sort()
+    expect(foreign, 'every `provident-*.json` literal in the stack names another module’s carrier; a third name is a finding, and a path so composed at run time would be invisible to a byte scan — which this row names rather than pretends otherwise').toEqual([])
   })
 
   it('RQ-1 · the group cannot gate a route: each data.* spelling resolves to no group, under either grant (interface.md §6)', () => {
