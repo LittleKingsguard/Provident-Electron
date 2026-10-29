@@ -4,7 +4,13 @@
   "stage": "design",
   "artifacts": [],
   "assumptions": [],
-  "streaks": {},
+  "streaks": {
+    "security-store-instance": 1
+  },
   "rebuildEligible": false,
-  "updated": "2026-10-29T04:04:44.417Z"
+  "updated": "2026-10-29T04:55:46.145Z",
+  "lastFailure": {
+    "artifact": "security-store-instance",
+    "reason": "red"
+  }
 }
