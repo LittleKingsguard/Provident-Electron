@@ -452,3 +452,22 @@ this one, and this unit may not read the instance from a place the isolation row
 **The checkpoint is green when** the carrier is gone (no writer, no reader of the old path anywhere),
 the import-once arm carries its own red set, boot parity passes, the isolation rows stay green, and the
 four legs plus `strata-lint` pass on a clean tree.
+
+---
+
+## D-23 — The group set's second copy lives in the operator-settings instance
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-15 and D-16.**
+
+**Source:** D-16's own instruction that the rebuild owns the copy, measured at the tree after the file it
+lived in was deleted.
+
+**Decision:** D-15 named `src/main/security-store.ts:87,122,339` as the group set's second live copy and
+D-16 said the rebuild would own it. The file is now **deleted** (D-16 executed), so the copy lives at
+`src/main/operator-settings/index.ts:112,178` — the instance — and the two live copies are
+`src/main/security.ts` (`TOOL_GROUPS`, `VALID_GROUPS`) and that one.
+
+**Reading recorded:** an append-only log will always keep a line cite into a tree that later moves, so a
+row whose wording names a file gets a corrigendum like this one when the file goes (D-21's rule). The
+alternative — silently reading D-15's cite as historical — leaves a reader chasing a path that no longer
+exists, which is the drift the corpus exists to prevent.

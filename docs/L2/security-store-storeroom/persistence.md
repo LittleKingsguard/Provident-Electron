@@ -7,7 +7,7 @@
 ## 1. The two written names, and the one that retires
 
 - **`<userDataDir>/provident-operator-settings.json`** — the instance's file. The **directory** arrives from the module's caller and the **name** is this unit's own choice, so no other module spells it (D-13, D-19; L1 §5 ASM-6).
-- **`<userDataDir>/provident-security.json`** — the retired name. It is **read at most once** (§3), **never written again**, and its bytes are **left standing**: this unit adds no delete, no rename and no migration of that file (D-19; L1 §5).
+- **`<userDataDir>/provident-security.json`** — the retired name. It is **read at every boot until a record stands, then never again** (§3), **never written again**, and its bytes are **left standing**: this unit adds no delete, no rename and no migration of that file (D-19; L1 §5).
 - This unit therefore **adds exactly one written name and retires another**, which is what stops D-13's "exactly two persisted files" being a true standing pin. The rows that read that figure are re-grained by this unit's L2 test writer in the task that runs after the implementation (exception §2 E-5, §4 C-4) — named here as owed, not performed here (D-10, D-13).
 - `<userDataDir>/provident-settings.json` and `<userDataDir>/provident-profile.json` are **not** this unit's and are neither read nor written nor retired here (§8).
 
@@ -21,7 +21,7 @@
 
 - **A directory or name the store cannot occupy refuses the construction and creates nothing** — no instance, no file, no directory, no byte — and every later write answers `FilePathUnreachable` (`guide §8.2`).
 
-## 3. The retired name is read at most once
+## 3. The retired name is read at every boot until a record stands, then never again
 
 - The object is `<userDataDir>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the five boot arms move as **behaviour**, not as bytes (D-19; L1 §5; `src/main/operator-settings/index.ts (the import arm; `security-store.ts` is deleted)`).
 - **The import runs iff the instance's own file carries no record at `['operator-settings']`**, so it needs no marker, no version member and no second written name: after the first committed write the new file carries the record and the import does not run again (D-19; `guide §9.1`).
@@ -66,7 +66,7 @@
 
 - **`<userDataDir>/provident-settings.json`** — `app-shell`'s tier-1 carrier: neither read, written nor retired here; its retirement is parked to the increment that owns the app-shell crossing (exception §2; D-13).
 - **`<userDataDir>/provident-profile.json`** — `central-data`'s profile store, unmoved: this module neither reads nor writes it, and the two instances are separate on purpose (D-16; `docs/L2/central-data/persistence.md` §1).
-- **`<userDataDir>/provident-security.json`** — the retired name: read at most once, never written again, bytes standing (§1, §3; D-19).
+- **`<userDataDir>/provident-security.json`** — the retired name: read at every boot until a record stands, then never again, never written again, bytes standing (§1, §3; D-19).
 - **The renderer's own store** (`src/renderer/store.ts`, `store-rederive`'s) — read, written and persisted nowhere by this module (D-13).
 - **No second store and no second `filePath`**: one instance per surface, constructed at most once and kept for the process's life, which is what makes the one reference of D-18 countable (`guide §3.2`; D-18).
 

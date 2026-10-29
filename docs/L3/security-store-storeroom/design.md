@@ -71,7 +71,7 @@ read():
 ```
 
 - **`AddressNotFound` and `TierNotFound` are read arms, never refusals**, and **any other read failure resolves to the same defaults and throws nothing**: a read moves nothing and a refusal has no channel on this surface, so neither appears in the value (interface §2; guide §4, §5.2; L1 §3).
-- **The overlay answers only while the record address carries nothing**, so a profile whose operator never writes re-imports at every boot and answers the same record (persistence §3; behaviour §3).
+- **The overlay answers only while the record address carries nothing**, so a profile whose operator never writes re-attempts at every boot while no record stands and answers the same record (persistence §3; behaviour §3).
 - **Two reads, one synchronous turn, no `await` between them**, so the record and the pair a carrier sees in one answer are never two states of one act; and the answer is detached at every depth by construction, because `fromStored` builds fresh containers and `newMap` gives the `entries` map a null prototype (guide §5.1, §10; ASM-1; the deleted `src/main/security-store.ts:231-260`).
 
 ## 6. `write()` — one admission, one call, one receipt
@@ -112,7 +112,7 @@ importOnce(dir):
 ```
 
 - **Six arms, each answering without a throw**: absent, an object, unparsable bytes, a non-object, a directory or an unreadable file, and `entries` not a plain object — the last the one declared non-verbatim arm (interface §2.1; behaviour §3; the deleted `src/main/security-store.ts:112-142`).
-- **The marker is the absence of a record at the record address**, so there is no version member, no second written name and no repair of the retired file; **the retired name is read at most once per profile and never written, renamed, repaired or deleted**, its bytes standing as seeded (persistence §3; guide §9.1; D-19; L1 §5).
+- **The marker is the absence of a record at the record address**, so there is no version member, no second written name and no repair of the retired file; **the retired name is read only until a record stands and never written, renamed, repaired or deleted**, its bytes standing as seeded (persistence §3; guide §9.1; D-19; L1 §5).
 - **Ingested values cross as data and not as an admission**: a `JSON.parse`d value is representable by construction, so no per-entry admission runs at boot (the deleted `src/main/security-store.ts:108`; guide §10.4).
 
 ## 8. The listener registry — one handle per subscription, per address

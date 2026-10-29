@@ -73,7 +73,7 @@
 
 ## 5. The import-once path (D-19)
 
-**Read once, at the first boot after the rebuild, then never again.** The object is `<userData>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the five boot arms of `ingest()` move as **behaviour**, not as bytes (the deleted `src/main/security-store.ts:112-142`).
+**Read once, at the first boot after the rebuild, then never again once a record stands.** The object is `<userData>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the five boot arms of `ingest()` move as **behaviour**, not as bytes (the deleted `src/main/security-store.ts:112-142`).
 
 | Arm | What the import does | Cite |
 |---|---|---|
