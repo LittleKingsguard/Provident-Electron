@@ -131,7 +131,7 @@ A count that moves without its row moving is a finding, and a row that moves wit
 | S-11 | `ISO-2`, `ISO-4`, `ISO-5`, `ISO-6` | the three resources, the seven bridge members and the MCP stack's own files hold no reference; exactly one construction exists (D-18) |
 | S-12 | two profiles are disjoint | two `userData` overrides carry two instances; a write through one is never served by the other; the group set is six in both |
 
-- **These twelve are not yet authored at this grain**, and the audit of the rows E-5 retired leaves **seven required scenarios** beside them: `docs/L1/security-store-storeroom-scenarios.md` (D-10, D-16; exception §9).
+These twelve are authored at their declared entry points in `tests/e2e/security-store-storeroom/` as `S-1`..`S-12`; the seven recovered scenarios are authored beside them, and `security-store-storeroom-scenarios.md` §4-§5 carries the live coverage column.
 ## 9. Boundaries — what this unit does not claim
 
 - No `provident-storeroom` or `provident-ssr` change; a defect or requirement gap is recorded upstream-owned, with symptom, reproduction, suspected root cause and fix shape, and archived with this unit (D-5). No undo and no rollback surface: `rollback` is not called and nothing operator-visible reverses the record (D-12's posture, unmoved). No operator-visible UI element outside the producing graph (`AGENTS.md` § "Project-wide constraint"; `src/shared/demo-envelope.ts:1-18`).

@@ -397,3 +397,23 @@ exit walkthrough first, then rebuild (Recommended)"
 **Decision:** the `central-data-management` unit gets its L0 exit walkthrough first, on the settled tree;
 the `security-store-storeroom` rebuild then starts at L1 against that baseline. Two units in flight over
 the same files, digests and census copies is the condition this ordering exists to avoid.
+
+---
+
+## D-21 — The single operator reference is the surface module, and `main.ts` holds the surface
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Reconciles:** D-18's wording with the L2 interface.
+
+**Source:** D-18's selection ("Operator-only reference, tested by absence") plus the L2 row it had to be
+satisfied by, measured at the unit's own walkthrough.
+
+**Decision:** D-18 said "`main.ts` constructing it". The construction is the **surface module's**
+(`createSettingsSurface`), and `main.ts` constructs the *surface* and delegates the three channel bodies
+to it. The invariant D-18 actually buys is unchanged and is what the rows assert: **exactly one
+reference to the instance exists, it lives on the operator side, and nothing in the MCP stack holds
+it** (`ISO-5`).
+
+**Reading recorded because a reader will need it:** an `ASM-n` at L2 may satisfy a D-row without
+rewriting it — the decision fixes the invariant, the interface fixes where the code puts it — but the
+ASM may not *relax* an invariant, and a D-row whose wording names a file is a claim about the tree, so
+when the tree moves the row gets a corrigendum like this one rather than a silent reading.

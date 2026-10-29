@@ -6,11 +6,13 @@
     "security-store-instance"
   ],
   "assumptions": [],
-  "streaks": {},
+  "streaks": {
+    "walkthrough-record": 1
+  },
   "rebuildEligible": false,
-  "updated": "2026-10-29T05:41:28.191Z",
+  "updated": "2026-10-29T20:06:12.597Z",
   "lastFailure": {
-    "artifact": "security-store-instance",
+    "artifact": "walkthrough-record",
     "reason": "red"
   }
 }
