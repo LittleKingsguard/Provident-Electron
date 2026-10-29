@@ -82,10 +82,28 @@ describe('settings-carrier-retirement · src/main/main.ts, E-1, read as a source
     expect(/\brmSync\s*\(/.test(main), 'and the Q-5 legacy-registry removal keeps its `rmSync` (L1 §3)').toBe(true)
   })
 
-  it('MS-2 · `dirname` is gone with the writer: `node:path` binds `join` and nothing else, and the name stands nowhere in the file (design.md §4 `:6`, §5; signatures.md §6; L1 §3 `:7`)', () => {
+  it('MS-2 · `node:path` binds `join` ALONE and `dirname(…)` is called nowhere: `dirname`’s one caller, the tmp+rename writer, retired with its whole vocabulary (design.md §4 `:6`, §5; signatures.md §6; L1 §3 `:7`)', () => {
     const main = sourceOfMain()
     expect(bindingsOf(main, 'node:path'), 'the file composes paths with `join` alone: `dirname` retires with the tmp+rename writer that was its only caller (design.md §4; signatures.md §6)').toEqual(['join'])
-    expect(main.includes('dirname'), 'and the name `dirname` stands nowhere in src/main/main.ts — not in the import, not in a comment re-spelling the removed verb (design.md §5)').toBe(false)
+
+    // THE BARE-SUBSTRING LIMB IS WITHDRAWN, AND THE REASON IS IN `main.ts` RATHER THAN IN THIS ROW'S
+    // CONVENIENCE: this row used to also assert `main.includes('dirname') === false`. That limb was
+    // UNSATISFIABLE, not merely unpassed. `src/main/main.ts:25` holds the pre-existing, deliberate
+    // `const here = __dirname` (consumed at `:455` and `:462` to locate `preload.cjs` and the renderer's
+    // `index.html` in the built tree), so the substring `dirname` is a NECESSARY consequence of the CJS
+    // free variable `__dirname` and stands in the file no matter how much of the carrier is removed. The
+    // only way to satisfy it would be to re-derive the built main directory by another route — a new
+    // path resolution in `main.ts` that L1 §3's CLOSED removal list does not name and E-1 does not
+    // license, so this unit may not make that edit and must not assert it.
+    // NOTHING IS SOFTENED BY THE WITHDRAWAL: what the limb MEANT is pinned below at the grain that is
+    // both true and licensed — no `dirname` BINDING (the census above, which is the only form an import
+    // can take) and no `dirname(…)` CALL (an invocation would need exactly the binding the census
+    // forbids) — and the writer that was `dirname`'s sole caller is asserted gone, name by name.
+    for (const spelling of ['.tmp', 'renameSync', 'fsyncSync', 'writeFileSync', 'openSync', 'closeSync', 'mkdirSync', 'commitSettingsWrite']) {
+      expect(main.includes(spelling), `"${spelling}" stands nowhere in src/main/main.ts: the tmp+rename+fsync writer — the one caller of the retired dirname import — has no successor, no shim and no re-export here (L1 §3; design.md §4, §5)`)
+        .toBe(false)
+    }
+    expect(/\bdirname\s*\(/.test(main), 'no `dirname(…)` call stands in src/main/main.ts: the name appears only as the CJS free variable inside `__dirname`, never as an imported helper (design.md §4 `:6`; signatures.md §6)').toBe(false)
   })
 
   it('MS-3 · the legacy registry’s existence probe is retired with the record’s reader: no `existsSync` stands in the file, while the Q-5 read and its post-boot removal do (design.md §4 `:173-192`, §6 ASM-6; L1 §3/§5)', () => {

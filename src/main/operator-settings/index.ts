@@ -4,23 +4,33 @@
 // signatures.md` §2 and nothing else; the design is `design.md` §2-§8, whose §3/§8 name every private
 // helper below so this file mints none of its own (the one exception: `plain`, reported at L4).
 //
-// TWO ADDRESSES, one per tier, and the measurement is why: a `file`-tier write purges the versions
-// it outranks AT ITS OWN KEY, so one address would let a settings commit reset the operator's
-// exclusion pair (guide §5.1; design.md §2). `['operator-settings']` carries the durable record
+// THREE ADDRESSES, and the measurement is why: a `file`-tier write purges the versions it outranks
+// AT ITS OWN KEY, so one address would let a settings commit reset the operator's exclusion pair
+// (guide §5.1; design.md §2). `['operator-settings']` carries the durable record
 // WHOLE — `enabled` always, `token` and `maxJournalLength` only while they stand, `entries` iff it
 // stands — and `['operator-exclusion']` carries `{exclusion}` alone, because a cleared member is
 // written as its ABSENCE and the package's walk refuses `null`/`undefined` anywhere in a value
 // (guide §10.1; persistence §4). `tier4` is derived at the read and never stored, so the illegal
 // pair is unspellable (interface §1).
 //
+// THE THIRD ADDRESS — `['operator-app-state']` on `file` — carries the retired carrier's rows WHOLE
+// as `{rows: [{name, value}, …]}`, an ORDERED array and never a name→value map, because the
+// crossing does not preserve an object's member order while a genuine array's survives exactly
+// (persistence §3; interface §1). Its two verbs are `readAppState`/`writeAppState`: one store write
+// per act, the sibling's own receipt, and NO listener — `subscribe` binds the two addresses above
+// (design §2; L1 §3). Its second import-once arm reads the retired carrier at most once and writes
+// no byte of it, and the diagnosis it answers is the BOOT's, served for the process's life
+// (design §2.2; interface §2).
+//
 // ONE TRANSITION IS ONE STORE WRITE: one op, one cursor, one receipt, the store's own ordinals
 // verbatim — no offset, no renumbering, and `write`'s fourth position never supplied, so its
 // class-test arm is unreachable (guide §3.3, §6.4; interface §2 `ASM-L2-7`).
 //
-// IT WRITES NO FILE OF ITS OWN and makes exactly ONE `fs` call — `readFileSync` of the retired
-// `provident-security.json` inside the import-once path, which is read once and never written,
-// renamed, repaired or deleted (D-19; persistence §2, §3, §5). NO VERB HERE THROWS, for any patch
-// and any state: every caught value is contained and every arm answers its declared answer (L1 §3).
+// IT WRITES NO FILE OF ITS OWN and makes exactly TWO `fs` calls — the two import-once reads: the
+// retired `provident-security.json` inside the first path, and the retired settings carrier inside
+// the second. Each is read once and never written, renamed, repaired or deleted (D-19; persistence
+// §2, §3, §5). NO VERB HERE THROWS, for any patch, any rows list and any state: every caught value
+// is contained and every arm answers its declared answer (L1 §3).
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -33,6 +43,10 @@ type Store = ReturnType<typeof storeCreate>
 
 /** The durable row: the record minus the pair and the flag it derives (interface §1). */
 type Row = Omit<OperatorSettingsRecord, 'exclusion' | 'tier4'>
+
+/** The second import arm's answer as it is HELD: the four members an answer carries minus `storage`,
+ *  which is the read's own member and never an arm's (signatures §3; design §2.2). */
+type AppStateImport = Omit<AppStateAnswer, 'storage'>
 
 export type OperatorSettingsAddress = readonly (string | number)[]
 
@@ -64,12 +78,33 @@ export type OperatorSettingsReceipt =
 
 export type OperatorSettingsListener = (address: OperatorSettingsAddress) => void
 
+/** The app-state row: a name carried VERBATIM and the value under it, in the carrier's own order
+ *  (`A-2`). A name is a member of a row and never a path segment, so nothing is interpreted. */
+export interface AppStateRow { name: string; value: unknown }
+
+/** The boot-time diagnosis, served for the process's life and never written: the second import
+ *  arm's three words plus the fourth L1 §4 does not name — a record stood, so no arm applied
+ *  (interface §2 `ASM-L2-1`; L1 §4 `ASM-4`). */
+export type AppStateLegacy = 'absent' | 'imported' | 'corrupt' | 'recorded'
+
+/** The third address's whole answer: the rows, the arm that ran, the names the import could not
+ *  carry, and whether a store stands at all (`storage` is the refused construction as a READ,
+ *  interface §2 `ASM-L2-3`). */
+export interface AppStateAnswer {
+  rows: AppStateRow[]
+  legacy: AppStateLegacy
+  unrepresentable: string[]
+  storage: 'standing' | 'unreachable'
+}
+
 export interface OperatorSettingsOptions { userDataDir: string; journalLength?: number }
 
 export interface OperatorSettings {
   read(): OperatorSettingsRecord
   write(patch: OperatorSettingsPatch): OperatorSettingsReceipt
   subscribe(listener: OperatorSettingsListener): () => void      // answers the withdrawal
+  readAppState(): AppStateAnswer
+  writeAppState(rows: readonly AppStateRow[]): OperatorSettingsReceipt
 }
 
 /** The group set's SECOND LIVE COPY (D-11, D-15; exception §2 E-1): six members, re-homed here with
@@ -77,8 +112,18 @@ export interface OperatorSettings {
 const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
 const RECORD_ADDRESS: OperatorSettingsAddress = ['operator-settings']
 const EXCLUSION_ADDRESS: OperatorSettingsAddress = ['operator-exclusion']
+/** THE THIRD DURABLE ADDRESS, beside the record and not inside its value: a `file`-tier write
+ *  purges at its own key, so a module write can never compose a value carrying the token
+ *  (interface §1; design §2; L1 §3 `ASM-1`). */
+const APP_STATE_ADDRESS: OperatorSettingsAddress = ['operator-app-state']
 const FILE_NAME = 'provident-operator-settings.json'
 const RETIRED_NAME = 'provident-security.json'
+/** The retired tier-1 carrier, spelled ONCE in `src/**`: read by the second import-once arm and
+ *  written by none (behaviour §8 `RET-2`; persistence §4; L1 §4). */
+const RETIRED_SETTINGS_NAME = 'provident-settings.json'
+/** The absent answer the second arm's other branches start from. Its arrays are NEVER served: every
+ *  `rows` and every `unrepresentable` an answer carries is fresh (`FIRST_RUN`'s discipline). */
+const NO_IMPORT: AppStateImport = { rows: [], legacy: 'absent', unrepresentable: [] }
 /** The answer over no file and over every import-failure arm: `read`+`dispatch` on, token null
  *  (behaviour §1, §3). It is handed out only as a FRESH copy — never itself, never its array. */
 const FIRST_RUN: Row = { token: null, enabled: ['read', 'dispatch'] }
@@ -191,6 +236,109 @@ function importOnce(userDataDir: string): Row | undefined {
   return row
 }
 
+/**
+ * THE SECOND IMPORT-ONCE ARM — the retired tier-1 carrier, read AT MOST ONCE and never written,
+ * renamed, repaired or deleted: the module's SECOND and last `fs` call (L1 §4; persistence §4).
+ * The validation is the retired boot read's own, carried whole — a JSON object whose keys are
+ * `file.*` names plus the single reserved `schemaVersion === '1'` — so what the old code loaded is
+ * what this one imports (behaviour §7 `ASM-L2-7`; L1 §4 `ASM-3`). `absent` and `corrupt` are told
+ * apart from the CAUGHT error's own `code`, never by a second `fs` call: a directory (`EISDIR`) and
+ * an unreadable file (`EACCES`) are `corrupt` (design §2.2, §6 `ASM-1`). A row whose value carries
+ * `null`/`undefined` cannot be represented, so it is answered BY NAME and never dropped (L1 §4).
+ */
+function importAppStateOnce(userDataDir: string): AppStateImport {
+  let text: string
+  try { text = readFileSync(join(userDataDir, RETIRED_SETTINGS_NAME), 'utf8') } catch (caught) {
+    return missing(caught) ? NO_IMPORT : { rows: [], legacy: 'corrupt', unrepresentable: [] }
+  }
+  let parsed: unknown
+  try { parsed = JSON.parse(text) } catch { return { rows: [], legacy: 'corrupt', unrepresentable: [] } }
+  if (!plain(parsed)) return { rows: [], legacy: 'corrupt', unrepresentable: [] }
+  for (const name of Object.keys(parsed)) {
+    if (name !== 'schemaVersion' && !name.startsWith('file.')) return { rows: [], legacy: 'corrupt', unrepresentable: [] }
+  }
+  if (parsed.schemaVersion !== '1') return { rows: [], legacy: 'corrupt', unrepresentable: [] }
+  // THE RECORD'S OWN ORDER, in, and `schemaVersion` skipped: the retired record's format marker is
+  // not operator state and is never carried as a row (L1 §4; D-13).
+  const rows: AppStateRow[] = []
+  const unrepresentable: string[] = []
+  for (const name of Object.keys(parsed)) {
+    if (name === 'schemaVersion') continue
+    const value = parsed[name]
+    if (representable(value)) rows.push({ name, value })
+    else unrepresentable.push(name)
+  }
+  return { rows, legacy: 'imported', unrepresentable }
+}
+
+/** The caught value's own `code === 'ENOENT'`: `absent` and `corrupt` are told apart from the ONE
+ *  `readFileSync`, never by a probe (design §2.2, §6 `ASM-1`). */
+function missing(caught: unknown): boolean {
+  const code = (caught as { code?: unknown } | null)?.code
+  return code === 'ENOENT'
+}
+
+/** `false` iff the value carries `null` or `undefined` anywhere at any depth — the ONE refusal the
+ *  import tests, because the package publishes no admission predicate (`guide §10.1`; persistence
+ *  §8 `P-1`, `ASM-L2-9`). Everything else it cannot carry is the store's refusal at the first commit,
+ *  with its own status verbatim. */
+function representable(value: unknown): boolean {
+  if (value === null || value === undefined) return false
+  if (typeof value !== 'object') return true
+  const pending: unknown[] = [value]
+  while (pending.length > 0) {
+    const here = pending.pop()
+    if (here === null || here === undefined) return false
+    if (typeof here !== 'object') continue
+    for (const name of Object.keys(here)) {
+      const member = (here as Record<string, unknown>)[name]
+      if (member === null || member === undefined) return false
+      if (typeof member === 'object') pending.push(member)
+    }
+  }
+  return true
+}
+
+/** The marker is the record's PRESENCE: a plain object carrying a genuine array at `rows` — no
+ *  version member, no marker file and no second written name (persistence §4; `guide §9.1`). */
+function recordedAt(value: unknown): boolean {
+  if (!plain(value)) return false
+  return Array.isArray(value.rows)
+}
+
+/** The read-back: `undefined` where no record stands, else the rows in their committed order with
+ *  every value detached. A stored row that fails the declared `{name, value}` shape on read-back is
+ *  SKIPPED and its siblings served — never `[]` for the whole record (design §6 `ASM-4`; `guide §10`). */
+function fromAppState(value: unknown): AppStateRow[] | undefined {
+  if (!recordedAt(value)) return undefined
+  const rows: AppStateRow[] = []
+  for (const row of (value as { rows: unknown[] }).rows) {
+    if (!plain(row)) continue
+    const name: unknown = row.name
+    if (typeof name !== 'string' || name === '') continue
+    if (!Object.prototype.hasOwnProperty.call(row, 'value')) continue
+    rows.push({ name, value: detach(row.value) })
+  }
+  return rows
+}
+
+/** THE WRITE BOUNDARY: each row composed as EXACTLY `{name, value}` (a caller's extra member does not
+ *  cross), wrapped as `{rows}`, imaged through `JSON.stringify`/`JSON.parse` — so an own member whose
+ *  value is `undefined` crosses as ABSENCE, exactly as the retired carrier's `JSON.stringify` dropped
+ *  it, and `undefined` where no image can be minted (persistence §3; interface §7 `ASM-L2-2`;
+ *  design §6 `ASM-5`). */
+function toAppState(rows: readonly AppStateRow[]): Record<string, unknown> | undefined {
+  try {
+    const carried: unknown[] = []
+    for (const row of rows) carried.push({ name: row.name, value: row.value })
+    const image: unknown = JSON.parse(JSON.stringify({ rows: carried }))
+    return plain(image) ? image : undefined
+  } catch {
+    return undefined
+  }
+}
+
+
 /** The store's own ordinals VERBATIM — no offset and no renumbering (design §3; guide §6.4). */
 function receiptOf(record: ReturnType<Store['write']>): OperatorSettingsReceipt {
   return { status: 'committed', cursor: record.op.seq, opId: record.op.opId }
@@ -267,6 +415,25 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     // THE MARKER IS THE ABSENCE OF A RECORD AT THE RECORD ADDRESS: no version member, no second
     // written name, and the import only over a standing instance (design §7; persistence §3).
     if (!carries) overlay = importOnce(options.userDataDir) ?? null
+  }
+
+  // THE SECOND ARM'S MARKER IS ITS OWN ADDRESS, and the diagnosis it answers is the BOOT'S: a
+  // record standing at construction means no arm applies and the fourth word is served; otherwise
+  // one read of the retired carrier runs HERE and its answer is held — the rows it carries stand in
+  // memory until an ordinary write supersedes them, and nothing is written (interface §2; L1 §4;
+  // persistence §4). A refused construction stands at `absent`, because no record was read and no
+  // arm ran (interface §2 `ASM-L2-3`).
+  let appLegacy: AppStateLegacy = 'absent'
+  let appImport: AppStateImport = NO_IMPORT
+  if (store !== null) {
+    const standing = store
+    let stands = false
+    try { stands = recordedAt(standing.read(APP_STATE_ADDRESS, 'file')) } catch { stands = false }
+    if (stands) appLegacy = 'recorded'
+    else {
+      appImport = importAppStateOnce(options.userDataDir)
+      appLegacy = appImport.legacy
+    }
   }
 
   const read = (): OperatorSettingsRecord => {
@@ -399,5 +566,59 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     return () => withdraw(standing, handles)
   }
 
-  return { read, write, subscribe }
+  // THE THIRD ADDRESS'S READ: each answer re-projects the store, so the import overlay is served
+  // ONLY while nothing stands at the address, and `legacy` — fixed at construction — never moves
+  // (interface §2; persistence §4; behaviour §7). No record, no arm and no store: the empty answer
+  // with `storage:'unreachable'`, never a throw (interface §2 `ASM-L2-3`).
+  const readAppState = (): AppStateAnswer => {
+    const standing = store
+    if (standing === null) return { rows: [], legacy: appLegacy, unrepresentable: [], storage: 'unreachable' }
+    let held: unknown
+    try { held = standing.read(APP_STATE_ADDRESS, 'file') } catch { held = undefined }
+    const recorded = fromAppState(held)
+    if (recorded !== undefined) return { rows: recorded, legacy: appLegacy, unrepresentable: [], storage: 'standing' }
+    const rows: AppStateRow[] = []
+    for (const row of appImport.rows) rows.push({ name: row.name, value: detach(row.value) })
+    return { rows, legacy: appLegacy, unrepresentable: [...appImport.unrepresentable], storage: 'standing' }
+  }
+
+  // THE THIRD ADDRESS'S ONE WRITE, and its receipt is the SIBLING'S: the store's `cursor`/`opId` or
+  // the store's `reason`/`message`/`address` verbatim, never a second vocabulary (interface §2).
+  // NO VERB HERE THROWS FOR ANY ARGUMENT: the construction's refusal is answered FIRST, before any
+  // admission; then every argument-shape failure and every caught value raised before the store is
+  // called answers THIS module's own `ValueRefusedAtBoundary` sentence with `address:null`
+  // (interface §6 `ASM-L2-6`; design §2.1, §6 `ASM-5`).
+  const writeAppState = (rows: readonly AppStateRow[]): OperatorSettingsReceipt => {
+    const standing = store
+    if (refusal !== null) return refusal
+    if (standing === null) return { status: 'refused', reason: 'FilePathUnreachable', message: 'no instance stands behind this module', address: null }
+    const refuse = (message: string): OperatorSettingsReceipt =>
+      ({ status: 'refused', reason: 'ValueRefusedAtBoundary', message, address: null })
+    let candidate: Record<string, unknown> | undefined
+    try {
+      if (!Array.isArray(rows)) return refuse('the rows are an array of app-state rows')
+      const admitted: AppStateRow[] = []
+      const named: string[] = []
+      for (const row of rows) {
+        if (!plain(row)) return refuse('a row is a plain object carrying a name and a value')
+        const name: unknown = row.name
+        if (typeof name !== 'string' || name === '') return refuse('a row names a non-empty string')
+        if (named.includes(name)) return refuse('two rows name one name')
+        named.push(name)
+        admitted.push({ name, value: row.value })
+      }
+      candidate = toAppState(admitted)
+    } catch {
+      return refuse('the rows could not be read as an app-state row list')
+    }
+    if (candidate === undefined) return refuse('the rows have no JSON image, so no record can carry them')
+    try {
+      // ONE write at the one address, and the fourth position never supplied.
+      return receiptOf(standing.write(APP_STATE_ADDRESS, 'file', candidate))
+    } catch (caught) {
+      return refusalOf(caught, APP_STATE_ADDRESS)
+    }
+  }
+
+  return { read, write, subscribe, readAppState, writeAppState }
 }

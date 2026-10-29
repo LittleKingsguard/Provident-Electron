@@ -11,11 +11,11 @@
 //
 // THE TWO STRINGS ARE IMPORTED FROM THEIR LANDED HOME and never re-spelled, so one refusal has one
 // sentence and one closed pair has one spelling (PAR-13; design §1 ASM-6). No `node:fs`, no
-// `electron`, no `ipcMain`, no `provident-storeroom` import, no channel registered, no rendered
-// element and no MCP drive: the three `ipcMain.handle` sites stay in `main.ts` (exception §2 E-3).
+// `electron`, no `provident-storeroom` import, no IPC handler registered here, no rendered element
+// and no MCP drive: the three handler registrations stay in `main.ts` (exception §2 E-3).
 import { TIER4_CLOSED, TIER4_CLOSED_MESSAGE } from '../mcp-server.js'
 import { setTier4OpenState } from '../tier4-state.js'
-import { createOperatorSettings, type OperatorSettings, type OperatorSettingsRecord, type OperatorSettingsReceipt } from '../operator-settings/index.js'
+import { createOperatorSettings, type AppStateLegacy, type AppStateRow, type OperatorSettings, type OperatorSettingsRecord, type OperatorSettingsReceipt } from '../operator-settings/index.js'
 
 import type { ExclusionState } from '../security.js'
 
@@ -45,12 +45,31 @@ export type SettingsTransitionAnswer =
   | { applied: true; state: ExclusionState }
   | { applied: false; state: ExclusionState; reason?: 'malformed-state' }
 
+/** THE INSTANCE'S APP-STATE ANSWER, as this surface hands it on: the row, the boot-time diagnosis
+ *  alias and the four members, none of them re-composed here (interface §3; signatures §4). */
+export type SettingsAppStateRow = AppStateRow
+export type SettingsLegacyAnswer = AppStateLegacy
+export interface SettingsAppStateAnswer {
+  rows: SettingsAppStateRow[]
+  legacy: SettingsLegacyAnswer
+  unrepresentable: string[]
+  storage: 'standing' | 'unreachable'
+}
+/** The channel's answer, which this module mints: the committed arm carries NO ordinal because the
+ *  bridge answer it serves has none and `preload.ts` is byte-identical (interface §3 `ASM-L2-4`). */
+export type SettingsCommitAnswer =
+  | { status: 'committed' }
+  | { status: 'refused'; reason: string; message: string
+      address: readonly (string | number)[] | null }
+
 export interface SettingsSurface {
   read(): SettingsReadAnswer
   set(patch: { token?: string | null; groups?: string[]; disable?: string[]
     maxJournalLength?: number | null }): SettingsSetAnswer
   transition(state: unknown): SettingsTransitionAnswer
   attach(sink: SettingsGateSink): void
+  state(): SettingsAppStateAnswer
+  commit(rows: readonly SettingsAppStateRow[]): SettingsCommitAnswer
 }
 
 /** The carrier's closed read token: `tier4-closed` is a READ outcome and never a write outcome, and
@@ -203,5 +222,20 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
     heldSink.applyExclusion(record.exclusion)
   }
 
-  return { read, set, transition, attach }
+  // THE TWO DELEGATING VERBS ARE LOCALS OF THIS FACTORY, beside the four above: no module-scope name
+  // is added, and neither verb composes, filters, sorts or validates a name or a value — the
+  // instance owns the record and the argument's own shape is the ONE thing it judges (interface §3
+  // `ASM-L2-5`; signatures §5; design §3).
+  const state = (): SettingsAppStateAnswer => settings.readAppState()
+
+  const commit = (rows: readonly SettingsAppStateRow[]): SettingsCommitAnswer => {
+    const receipt = settings.writeAppState(rows)
+    // THE COMMITTED ARM DROPS THE ORDINALS, because the channel this serves answers exactly
+    // `{status:'committed'}` and `preload.ts` is byte-identical (interface §3 `ASM-L2-4`); the
+    // refused arm carries the store's own three members VERBATIM and re-spells none of them.
+    if (receipt.status === 'committed') return { status: 'committed' }
+    return { status: 'refused', reason: receipt.reason, message: receipt.message, address: receipt.address }
+  }
+
+  return { read, set, transition, attach, state, commit }
 }

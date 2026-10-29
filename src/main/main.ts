@@ -3,12 +3,12 @@
 // (stdio or Streamable HTTP), and bridges MCP tool calls to the renderer via
 // IPC.
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { join, dirname } from 'node:path'
-import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, rmSync, openSync, closeSync, fsyncSync } from 'node:fs'
+import { join } from 'node:path'
+import { rmSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload } from '../shared/types.js'
 import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
-import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
+import type { SettingsAppStateRow, Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
 import { createSettingsSurface } from './settings-surface/index.js'
 import { createModuleStore, type ModuleStore, type ModuleRecord, type ModuleStoreStatus } from './module-store.js'
 import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from './store-channels.js'
@@ -115,111 +115,76 @@ async function main(): Promise<void> {
   const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled as ToolGroup[] })
   const backend = new RendererBackend()
 
-  // ═══════════════════════════ TIER 1 — THE CHANNEL + THE FILE (G2 `U-STORE-PERSIST`,
+  // ═══════════════════════════ TIER 1 — THE CHANNEL + THE INSTANCE'S RECORD (G2 `U-STORE-PERSIST`,
   // `docs/specs/store-persist.md` §2.7/§2.8) ═══════════════════════════
-  // Tier 1's carrier is `<userData>/provident-settings.json` (the consolidated-location
-  // rule, §2.7 item 1). The legacy `<userData>/provident-modules.json` is named ONLY at the
-  // migration's removal declaration (§2.8 step (4)) — it is never WRITTEN by this boot.
-  const settingsPath = join(app.getPath('userData'), 'provident-settings.json')
+  // Tier 1's carrier is the instance's app-state record (`['operator-app-state']`, `file`), served
+  // through the surface's `state()` and written by its one `commit` (E-1; L1 §3). This file spells
+  // no file name for it: the instance module owns the one it reads and the store owns the one it
+  // writes. The legacy `<userData>/provident-modules.json` is named ONLY at the migration's read
+  // and removal declaration (§2.8 step (4)) — it is never WRITTEN by this boot.
   const legacyModulesPath = join(app.getPath('userData'), 'provident-modules.json')
-  /** THE THIRD HOLDER OF TIER-1 STATE IN MAIN (`C-10` / `R1` — `bootRecord`): the parsed
-   *  settings record held between the boot read and the Y-1 hand-off — populated at the boot
-   *  read, refreshed ONLY by the channel's own committed writes, served at each realm's Y-1
-   *  and NEVER authoritative after the hand-off (§2.10). */
-  let bootRecord: Record<string, unknown> | null = null
-  /** The module half's cold-vs-corrupt status: a missing settings file is the COLD tier
-   *  (`corrupt: false`), an unreadable/invalid one is `corrupt: true` (§2.6 item 4). */
-  let settingsCorrupt = false
 
-  /** THE BOOT READ — read the file ONCE, validate (a JSON object whose keys are admissible
-   *  `file.*` reference spellings plus the single reserved `schemaVersion` member), hold the
-   *  parsed record. A missing file and a corrupt/invalid file both answer the REGISTERED
-   *  DEFAULTS (the empty record today) — this read NEVER throws (§2.6 item 4; the plan's
-   *  failure-mode (2) clause). */
-  function readSettingsRecord(): { readonly record: Record<string, unknown>; readonly corrupt: boolean } {
-    let record: Record<string, unknown> = {}
-    let corrupt = false
-    try {
-      if (existsSync(settingsPath)) {
-        const parsed: unknown = JSON.parse(readFileSync(settingsPath, 'utf8'))
-        if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          const candidate = parsed as Record<string, unknown>
-          let admissible = true
-          for (const key of Object.keys(candidate)) {
-            if (key !== 'schemaVersion' && !key.startsWith('file.')) admissible = false
-          }
-          if (admissible && candidate['schemaVersion'] === '1') record = candidate
-          else corrupt = true
-        } else {
-          corrupt = true
-        }
+  /** THE REPLACE-OR-APPEND RULE: the rows in their order, the row named `key` replaced by
+   *  `{name: key, value}`, else appended. It REPLACES rather than appends because the whole-map
+   *  write refuses two rows naming one name as a VALUE, so an append would refuse the whole commit
+   *  and the migration below would lose the records it had read (design §4; interface §6
+   *  `ASM-L2-6`). */
+  function rowsWith(rows: readonly SettingsAppStateRow[], key: string, value: unknown): SettingsAppStateRow[] {
+    const next: SettingsAppStateRow[] = []
+    let replaced = false
+    for (const row of rows) {
+      if (row.name !== key) next.push(row)
+      else {
+        next.push({ name: key, value })
+        replaced = true
       }
-    } catch {
-      corrupt = true
     }
-    return { record, corrupt }
+    if (!replaced) next.push({ name: key, value })
+    return next
   }
-  const bootRead = readSettingsRecord()
-  bootRecord = bootRead.record
-  settingsCorrupt = bootRead.corrupt
 
   // ══ THE Q-5 MIGRATION — the five steps (§2.8 item 1): (1) READ the legacy registry through
-  // the module store's landed load/sanitize shape; (2) VERIFY — the SHA-256 per-record
+  // the module store's landed load/sanitize shape — a missing file answers an empty registry with
+  // no throw, so no existence probe stands here; (2) VERIFY — the SHA-256 per-record
   // re-verification rides WITH the record (the hash is re-verified at every boot from the
   // store's own record; `quarantined`/`corrupt` stay DERIVED per process, never migrated);
-  // (3) WRITE the records + their `disabled` flags under `file.modules.<id>` in ONE atomic
-  // settings write; (4) THE ONE-BOOT WINDOW — the legacy file is retained READ-ONLY for this
-  // boot (never written) and REMOVED after it; the settings file wins from then on. ══
-  if (existsSync(legacyModulesPath)) {
-    const legacyStore = createModuleStore({ path: legacyModulesPath })
-    const legacyRecords = legacyStore.list()
-    if (legacyRecords.length > 0) {
-      const migrated: Record<string, unknown> = Object.create(null)
-      if (bootRecord !== null) {
-        for (const key of Object.keys(bootRecord)) {
-          if (key.startsWith('file.')) migrated[key] = bootRecord[key]
-        }
-      }
-      for (const rec of legacyRecords) {
-        // a derived value is not data — `quarantined` is re-derived per process, never migrated
-        const clean: ModuleRecord = { ...rec, quarantined: undefined }
-        migrated[`file.modules.${rec.name}`] = clean
-      }
-      migrated['schemaVersion'] = '1'
-      commitSettingsWrite(migrated)
+  // (3) WRITE the records + their `disabled` flags under `file.modules.<id>` in ONE commit of the
+  // whole rows list; (4) THE ONE-BOOT WINDOW — the legacy file is retained READ-ONLY for this
+  // boot (never written) and REMOVED after it; the instance's record wins from then on. ══
+  const legacyStore = createModuleStore({ path: legacyModulesPath })
+  const legacyRecords = legacyStore.list()
+  if (legacyRecords.length > 0) {
+    let composed = settingsSurface.state().rows
+    for (const rec of legacyRecords) {
+      // a derived value is not data — `quarantined` is re-derived per process, never migrated
+      const clean: ModuleRecord = { ...rec, quarantined: undefined }
+      composed = rowsWith(composed, `file.modules.${rec.name}`, clean)
     }
-    rmSync(legacyModulesPath, { force: true })
+    settingsSurface.commit(composed)
   }
+  rmSync(legacyModulesPath, { force: true })
 
-  // ══ THE SETTINGS-BACKED MODULE SURFACE (§2.8 item 2 — BOTH writer classes re-pointed to
-  // the store's file tier): the MCP `module.*` handlers (writer class 2, received through the
-  // server's `moduleStore` option) and the operator `IPC_MODULE_SET_DISABLED` toggle (writer
-  // class 1) both mutate THIS surface, whose every mutation lands via the channel's ONE
-  // atomic write — a single authority, so after a `module.update` + a `setDisabled` on the
-  // same module the store's record and the file AGREE. The readers (`syncModuleRouter`,
-  // `status().loaded`) read the same record. ══
+  // ══ THE SETTINGS-BACKED MODULE SURFACE (§2.8 item 2 — BOTH writer classes re-pointed to the
+  // instance's app-state record): the MCP `module.*` handlers (writer class 2, received through the
+  // server's `moduleStore` option) and the operator `IPC_MODULE_SET_DISABLED` toggle (writer class
+  // 1) both mutate THIS surface, whose every mutation issues ONE commit of the whole composed rows
+  // list — a single authority, so after a `module.update` + a `setDisabled` on the same module the
+  // record and the served rows AGREE. The readers (`syncModuleRouter`, `status().loaded`) read the
+  // same rows. ══
   const moduleRecordsOf = (): ModuleRecord[] => {
     const out: ModuleRecord[] = []
-    if (bootRecord === null) return out
-    for (const key of Object.keys(bootRecord)) {
-      if (!key.startsWith('file.modules.')) continue
-      const entry: unknown = bootRecord[key]
+    for (const row of settingsSurface.state().rows) {
+      if (!row.name.startsWith('file.modules.')) continue
+      const entry: unknown = row.value
       if (entry !== null && typeof entry === 'object' && !Array.isArray(entry)) out.push(entry as ModuleRecord)
     }
     return out
   }
-  const modulePayloadWith = (key: string, rec: ModuleRecord): Record<string, unknown> | null => {
-    if (bootRecord === null) return null
-    const payload: Record<string, unknown> = Object.create(null)
-    for (const k of Object.keys(bootRecord)) payload[k] = bootRecord[k]
-    payload[key] = rec
-    payload['schemaVersion'] = '1'
-    return payload
-  }
+  const modulePayloadWith = (key: string, rec: ModuleRecord): SettingsAppStateRow[] =>
+    rowsWith(settingsSurface.state().rows, key, rec)
   const moduleSurface: ModuleStore = {
     get(name: string): ModuleRecord | undefined {
-      if (bootRecord === null) return undefined
-      const entry: unknown = bootRecord[`file.modules.${name}`]
+      const entry: unknown = settingsSurface.state().rows.find((row) => row.name === `file.modules.${name}`)?.value
       if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) return undefined
       return entry as ModuleRecord
     },
@@ -229,12 +194,19 @@ async function main(): Promise<void> {
     status(): ModuleStoreStatus {
       const loadedNames: string[] = []
       const quarantinedNames: string[] = []
-      for (const rec of moduleRecordsOf()) {
+      const answer = settingsSurface.state()
+      for (const row of answer.rows) {
+        if (!row.name.startsWith('file.modules.')) continue
+        const rec = row.value as ModuleRecord
+        if (rec === null || typeof rec !== 'object' || Array.isArray(rec)) continue
         // boot re-verification: the hash is ALWAYS re-derived from the record's own source
         if (rec.hash !== sha256(rec.source)) quarantinedNames.push(rec.name)
         else if (rec.disabled !== true) loadedNames.push(rec.name)
       }
-      return { corrupt: settingsCorrupt, quarantined: quarantinedNames, loaded: loadedNames }
+      // THE CORRUPT FLAG IS THE IMPORT ANSWER'S, never a second reader: a corrupt retired carrier or
+      // a store that never stood (`legacy === 'corrupt' || storage === 'unreachable'`) — a landed
+      // import is not a corruption (L1 §4; interface §5 `ASM-L2-3`).
+      return { corrupt: answer.legacy === 'corrupt' || answer.storage === 'unreachable', quarantined: quarantinedNames, loaded: loadedNames }
     },
     put(record: ModuleRecord): ModuleRecord {
       // F2 (adversarial) — put() validates its input like the disk path: never crash, never
@@ -257,26 +229,22 @@ async function main(): Promise<void> {
         disabled: record.disabled === true,
         quarantined: false,
       }
-      const payload = modulePayloadWith(`file.modules.${rec.name}`, rec)
-      if (payload !== null) commitSettingsWrite(payload)
+      // ONE commit of the whole composed list, and no receipt crosses a member's answer.
+      settingsSurface.commit(modulePayloadWith(`file.modules.${rec.name}`, rec))
       return { ...rec, capabilities: rec.capabilities }
     },
     remove(name: string): boolean {
-      if (bootRecord === null) return false
       const key = `file.modules.${name}`
-      if (!(key in bootRecord)) return false
-      const payload: Record<string, unknown> = Object.create(null)
-      for (const k of Object.keys(bootRecord)) if (k !== key) payload[k] = bootRecord[k]
-      payload['schemaVersion'] = '1'
-      commitSettingsWrite(payload)
+      const held = settingsSurface.state().rows
+      if (!held.some((row) => row.name === key)) return false
+      settingsSurface.commit(held.filter((row) => row.name !== key))
       return true
     },
     setDisabled(name: string, disabled: boolean): void {
       const rec = moduleSurface.get(name)
       if (rec === undefined) return
       const next: ModuleRecord = { ...rec, disabled }
-      const payload = modulePayloadWith(`file.modules.${name}`, next)
-      if (payload !== null) commitSettingsWrite(payload)
+      settingsSurface.commit(modulePayloadWith(`file.modules.${name}`, next))
     },
   }
   // U9-FIX — the live capability router (main-process). Synced from the store's record so
@@ -302,45 +270,26 @@ async function main(): Promise<void> {
   // ══ THE TIER-1 CHANNEL HANDLERS (§2.9 — registered BEFORE the BrowserWindow) ══
 
   // THE Y-1 BOOT HAND-OFF (the request channel, §2.3): once per realm, at boot, BEFORE the
-  // first graph load. The response is `{name, value}[]` — the persisted reference list, and
-  // `[]` for a cold tier. A missing/corrupt file NEVER throws — the read-back answers the
-  // declared recovery (§2.6 item 4) in every case.
+  // first graph load. The response is `{name, value}[]` — the app-state rows the surface serves,
+  // and `[]` for a cold tier. NOTHING HERE HOLDS A COPY: the retired third holder is gone, so a
+  // second Y-1 in one realm re-serves the instance's own answer and reads no file (L1 §3;
+  // interface §4).
   ipcMain.handle(STORE_FILE_GET, async () => {
-    // THE THIRD HOLDER (§2.10): the boot read populated `bootRecord`; a realm that drives
-    // this handler without the boot read performs the ONE guarded read here — a second Y-1
-    // in the same realm re-serves the current record, never a second file read.
-    if (bootRecord === null) {
-      let record: Record<string, unknown> = {}
-      try {
-        if (existsSync(settingsPath)) {
-          const parsed: unknown = JSON.parse(readFileSync(settingsPath, 'utf8'))
-          if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            const candidate = parsed as Record<string, unknown>
-            if (candidate['schemaVersion'] === '1') record = candidate
-          }
-        }
-      } catch {
-        record = {}
-      }
-      bootRecord = record
-    }
     const entries: { name: string; value: unknown }[] = []
-    for (const key of Object.keys(bootRecord)) {
-      if (key === 'schemaVersion') continue
-      entries.push({ name: key, value: bootRecord[key] })
-    }
+    for (const row of settingsSurface.state().rows) entries.push({ name: row.name, value: row.value })
     return entries
   })
 
   // THE Y-2 COMMIT CHANNEL (the crossing's wire, §2.4): ONE crossing per commit — the
   // incoming `value` is the STABLE-JSON TRANSLATION of the graph (a JSON string). The
-  // channel VALIDATES it, projects it to the file-tier record, stamps `schemaVersion` from
-  // the FIRST write (§2.7 item 5), and answers the minimal status — `{status:'committed'}`
-  // or a refused receipt `{status:'refused', reason}`. A refusal clears NOTHING and leaves
-  // the previous file intact (§2.4 item 4); the receipt is ALWAYS answered, never a swallow.
+  // channel VALIDATES it, projects it to the `file.*` rows, and answers the minimal status —
+  // `{status:'committed'}` or a refused receipt `{status:'refused', reason}` where the reason is
+  // the CHANNEL's own pre-write word or the store's status verbatim. A refusal clears NOTHING and
+  // leaves the previous record intact (§2.4 item 4); the receipt is ALWAYS answered, never a
+  // swallow (L1 §3; interface §4).
   ipcMain.handle(STORE_FILE_PUT, (_event, row: { name?: unknown; value?: unknown }) => {
     const MALFORMED = 'malformed-payload'
-    let projected: Record<string, unknown> = Object.create(null)
+    const projected: SettingsAppStateRow[] = []
     try {
       if (row === null || typeof row !== 'object') return { status: 'refused', reason: MALFORMED }
       const raw: unknown = (row as { value?: unknown }).value
@@ -356,46 +305,19 @@ async function main(): Promise<void> {
       }
       // THE FILE-TIER PROJECTION (§2.7 item 3 / §0A item 6): every `file.*`-keyed spelling of
       // the crossing's translation lands (incl. the file.settings.* and file.modules.*
-      // namespaces); the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the file; the single
-      // reserved `schemaVersion` member is stamped on the projected record.
+      // namespaces); the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the record.
       for (const key of Object.keys(translated as Record<string, unknown>)) {
         if (typeof key === 'string' && key.startsWith('file.')) {
-          projected[key] = (translated as Record<string, unknown>)[key]
+          projected.push({ name: key, value: (translated as Record<string, unknown>)[key] })
         }
       }
-      projected['schemaVersion'] = '1'
     } catch {
       return { status: 'refused', reason: MALFORMED }
     }
-    return commitSettingsWrite(projected)
+    // ONE commit of the projected rows — the whole-map replacement the crossing's `value` is.
+    const answer = settingsSurface.commit(projected)
+    return answer.status === 'committed' ? { status: 'committed' } : { status: 'refused', reason: answer.reason }
   })
-
-  /** THE ONE ATOMIC WRITE MACHINERY (§2.6 items 1-3/6 — THE HEADLINE): IN ORDER — the parent
-   *  directory created recursively, the projected record STAGED to `${path}.tmp`, the staged
-   *  file FLUSHED before the rename, the rename onto the real path, then the parent DIRECTORY
-   *  flushed after it. The real path changes ONLY at the rename, so a torn file is IMPOSSIBLE
-   *  by construction; a failure at any point leaves the previous file intact and answers the
-   *  refused receipt; a successful persist leaves NO `${path}.tmp` residue and refreshes
-   *  `bootRecord` (the third holder's refresh rule, §2.10 clause (b)); the non-atomic plain
-   *  write of `security-store.ts` is the pattern this machinery must NOT copy (§2.6 item 1). */
-  function commitSettingsWrite(payload: Record<string, unknown>): { status: 'committed' | 'refused'; reason?: 'malformed-payload' | 'write-failed' } {
-    const WRITE_FAILED = 'write-failed'
-    try {
-      mkdirSync(dirname(settingsPath), { recursive: true })
-      writeFileSync(`${settingsPath}.tmp`, JSON.stringify(payload, null, 2))
-      const tmpFd = openSync(`${settingsPath}.tmp`, 'r')
-      fsyncSync(tmpFd)
-      closeSync(tmpFd)
-      renameSync(`${settingsPath}.tmp`, settingsPath)
-      const dirFd = openSync(dirname(settingsPath), 'r')
-      fsyncSync(dirFd)
-      closeSync(dirFd)
-      bootRecord = payload
-      return { status: 'committed' }
-    } catch {
-      return { status: 'refused', reason: WRITE_FAILED }
-    }
-  }
 
   // PAR-9 — the GET response record is EXTENDED ADDITIVELY by the declared `exclusion` member (the
   // landed `write` member's precedent below): the member is NEVER absent on a read.
