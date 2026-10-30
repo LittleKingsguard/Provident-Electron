@@ -1,12 +1,13 @@
 {
   "unit": "store-tabs-record",
-  "layer": "L1",
+  "layer": "L2",
   "stage": "design",
   "artifacts": [
-    "l1-design"
+    "l1-design",
+    "l2-interface"
   ],
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T18:32:33.637Z"
+  "updated": "2026-10-30T21:52:04.830Z"
 }

@@ -12,4 +12,4 @@ clears is deleted with the reason recorded here, not quietly kept. Actionable wo
 
 **Not pending, and recorded so nobody re-opens them:** `R-7` (the `preload.ts` comment it named is corrected and
 `docs/L2/secure-panels/interface.md` §8 records it discharged); the Tier4 type import in `main.ts` (discharged);
-both paths `strata/records/security-store-storeroom-exception.md` §9 carried (fully discharged).
+both paths `docs/L1/security-store-storeroom-exception.md` §9 carried (fully discharged).
