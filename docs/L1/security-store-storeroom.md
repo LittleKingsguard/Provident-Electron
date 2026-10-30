@@ -16,10 +16,10 @@
 |---|---|
 | read, write | `read(address, tier?)` · `write(address, tier, value)` (guide §3.1) |
 | listeners as the change path | `listen(handle, addresses)` + `register(handle, listener)`, the listener's one argument the triggering address; withdrawal is `unlisten` (guide §6.1-§6.2) |
-| a committed write reaches the gate by subscription | a listener is delivered **after** the constraint pass and **after** the `file`-tier save, so a subscriber reads a judged, committed state (guide §9, `D-55`) |
+| a committed write reaches the gate by subscription | a listener is delivered **after** the constraint pass and **after** the `file`-tier save, so a subscriber reads a judged, committed state (guide §9; **the package's own** `D-55` — a ruling in `provident-storeroom`'s register, never a row of this log) |
 | a durable record and a volatile flag in one machine | one store carries a `file` and a `mem` tier side by side (guide §5, §9.1) |
 | one transition, one receipt, no tear | a whole structured value written at one key mints the tree beneath it **in one call** (guide §4, arm `W-4`) |
-| a refusal is a value | refusals are thrown `{status, message, log, address}` and the surface maps them (guide §8, `D-77`) |
+| a refusal is a value | refusals are thrown `{status, message, log, address}` and the surface maps them (guide §8; **the package's own** `D-77`, the row that made the form four members — again not a row of this log) |
 
 ## 2. The module map — two rows, one retired path (D-16, D-17)
 
