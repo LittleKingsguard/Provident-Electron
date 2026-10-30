@@ -14,9 +14,10 @@ Five units, tree committed at every gate boundary; each unit's stage and walkthr
 | `security-store-storeroom` | `src/main/operator-settings/`, `src/main/settings-surface/`; `security-store.ts` deleted |
 | `strata-bootstrap` | `strata/`, `archive/gate-corpus-2026-10-29/` |
 | `bundle-boot-seam` | ESM main bundle at `dist/main/main.mjs`, the package external (D-27) |
+| `secure-panels` | the pane's roster as a projection of a gate-typed table; a live leg on `panes` (D-35, D-37) |
 
-**Census:** `strata/brief.md` §6 and §2 own every count and the module map is `strata/modules.json`'s —
-this record restates neither, because a count in a second place drifts at the next commit (D-26, D-28).
+**Census:** `strata/brief.md` §6 and §2 own every count and the map is `strata/modules.json`'s; this record
+restates neither, because a count in a second place drifts at the next commit (D-26, D-28, D-43).
 
 ## What stands between the tree and the product now
 
@@ -26,9 +27,9 @@ this record restates neither, because a count in a second place drifts at the ne
   legs are retained and gate; every integration and unit scenario carries `// strata:marked-file rework` and
   reports on notice, bar the one worktree assertion that measures the loop's own tree. The two readings are
   `scripts/strata-marks.mjs report`'s, never restated here (D-26); the runner still measures the whole tree.
-- **The Settings pane grants all six groups**, the `secure-panels` unit having landed its roster as a
-  projection of a table the gate's `ToolGroup` types (`docs/L1/secure-panels.md` §7 `E-1`; D-35, D-38). Its
-  record is filed; what remains is its exit walkthrough and `close`.
+- **The Settings pane grants all six groups** and that unit is **closed**: `secure-panels` landed its roster
+  as a projection of a table the gate's `ToolGroup` types, and passed its exit walkthrough at run 5
+  (`docs/L1/secure-panels.md` §7 `E-1`; D-35, D-38; `strata/records/secure-panels-walkthrough.md`).
 - **The artifact is not self-contained**: it resolves `provident-storeroom` from `node_modules` at run time,
   so a packaged build ships the package and a loadable addon (`docs/L3/bundle-boot-seam/design.md` §4 `G-8`).
 
@@ -54,7 +55,6 @@ this record restates neither, because a count in a second place drifts at the ne
 - **A `routed` disposition is not a landed one.** Two findings in `central-data-management`'s run 5 still
   read `routed` alone at this head: route to an owner only with a landing, or record it as owed (D-3).
 - **A fix over prose must be re-read, not substituted** — a commit hash once ate a row count in two L1 documents.
-- **Instruments before prose** (D-29, D-30): `strata-walkthrough.mjs` resolves path cites and prints the
-  counts a document must cite, and `strata-marks.mjs` keeps markers and index agreeing — a finding a script
-  should have caught is evidence about the script.
+- **Instruments before prose** (D-29, D-30, D-44): `strata-walkthrough.mjs` stages, checks and pins;
+  `strata-marks.mjs` keeps markers and index agreeing — a finding a script should have caught indicts it.
 - **Commit per gate**, never merge or push (D-6); four legs and `strata-lint` (run from `strata/`).

@@ -14,7 +14,7 @@ documentation. What it falsified, and where each went:
 
 | Falsified claim | Owner | Disposition |
 |---|---|---|
-| `README.md` still said a group is granted through the pane, and that enabling `data` reaches 13 | L0 | fixed — the pane carries five groups and the sixth has no control |
+| `README.md` still said a group is granted through the pane, and that enabling `data` reaches 13 | L0 | fixed — and overtaken since: the pane now grants all six (`docs/L1/secure-panels.md` §7 `E-1`) |
 | L1 §2 and the exception still count five **unlanded** bridge routes as "answered" in N=15 | L1 | routed |
 | L2's map cites resolve to other modules' rows (D-28's class) | L2 | routed and landed |
 | L1 §8's 24-file total contradicts its own C-3 counter of 6 | L1 | routed |

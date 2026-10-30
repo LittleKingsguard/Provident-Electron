@@ -22,11 +22,11 @@ path (D-1).
 
 ## 3. Staging and the runner
 
-The staging root holds exactly three things: a copy of the docs a unit owns (this repo's `strata/`,
-`docs/L1…L3/` for the unit) and the built artifact from `npm run build`, and an empty working
-directory. The real source tree is not staged. The runner is a fresh delegation with `read`, `glob`,
-`grep` and `bash` scoped to that root; if a step cannot be completed from the documentation, that is
-the finding (D-1).
+The staging root holds the documents a unit owns (this repo's `strata/`, `docs/L1…L3/` for the unit), the
+`src/` those documents make claims about (D-44), the built artifact from `npm run build`, the root pointers,
+both path listings and an empty working directory; `tests/`, `scripts/` and `node_modules/` stay out. The
+runner is a fresh delegation scoped to that root, and a claim the root cannot settle is recorded as
+**unverifiable**, never as falsified (D-1, D-44).
 
 ## 4. Report
 
