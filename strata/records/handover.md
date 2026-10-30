@@ -35,9 +35,9 @@ restates neither, because a count in a second place drifts at the next commit (D
 
 ## What a fresh session does next, in order
 
-1. **Close the three open units.** All three were rebuilt (`builds: 2`, streaks cleared); what each needs now
-   is a run whose own documents are clean, then `pass` and `close` — or a finding and another round
-   (`strata/records/*-walkthrough.md`; D-48, `strata/rebuild.md` §3).
+1. **Close the units still open.** `central-data-management` closed on a `PASS` at its tenth run; what
+   remains is a run whose own documents are clean for each unit still at `stage: design`, then `pass` and
+   `close` — or a finding and another round (state is `strata/.strata/units/*.json`; D-48, `strata/rebuild.md` §3).
 2. **Land D-30's runner split**: the markers are in and `strata/marks.json` is generated, so what remains is
    L2's arrangement for reporting the gating reading beside the on-notice one, and L4 landing it.
 3. **D-22's second half**, still parked: the gate's exclusion/tier-4 enforcement (giving

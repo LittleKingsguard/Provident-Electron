@@ -5,8 +5,8 @@ is never edited, reworded or annotated, and a later decision supersedes an earli
 One section per decision, ≤ 40 lines each. **Source** is the user's own words or the exact option
 they chose, or — for a rule the corpus derived from its own measured error — the measurement itself, which
 the row names (D-47). An assumption no ruling settled belongs in `brief.md` as an `ASM-n`, not here.
-A **corrigendum** row is sourced by the user-sourced row it corrects plus the measurement that
-compelled it, and it carries that row's authority — it may not change what the user decided.
+A **corrigendum** row is sourced by the row it corrects — user-sourced or measurement-sourced (D-47) — plus
+the measurement that compelled it, and it carries that row's authority: it may not change what a user decided.
 
 ---
 

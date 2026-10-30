@@ -1,23 +1,25 @@
-# record — `strata-bootstrap` exit walkthrough, run 8 (D-10; replaced on every run)
+# record — `strata-bootstrap` exit walkthrough, run 11 (D-10; replaced on every run)
 
 **Scenario set** (L0-authored from the documentation): 1 file a user decision · 2 start the next unit ·
 3 place an L3 write · 4 report a failure up the loop · 5 the archive's authority and the instruments'
-readings. Seat: one fresh delegation per run, staged to the root `walkthrough.md` §3 declares — the corpus,
-the layers, `src/`, `dist/`, the root pointers and both path listings (D-44).
+readings. Seat: one fresh delegation per run, staged to the root `walkthrough.md` §3 declares (D-44).
 
-## Run 8 — `STALE`
+## Run 11 — `STALE`
 
-All five answered, and the corpus's counts re-derived exactly again (221 at the archive prefix, 215 beside
-it, 181 specs = 163 + 18, 21 map rows with no path claimed twice and every cap `50 + 10×N`, 120 test files,
-47 source files, 27 tools in six groups). What it falsified, and where each went:
+All five answered, and every figure this root can check landed exactly: 221 archive files at the prefix and
+215 beside it, 181 specs = 163 + 18; 27 tools, 3 resources, six groups in both copies, 8/13; 47 sources;
+five bundles; two package imports; the 14/11 seam census; 21 map rows with no path twice and every cap
+`50 + 10×N`; 121 test files as 89 + 32; 54 register rows at or under 40 lines.
+
+What it falsified, and where each went:
 
 | Falsified claim | Owner | Disposition |
 |---|---|---|
-| This record ended "see the state machine's own refusal below" and pointed at nothing — no section followed the verdict | L0 | fixed — this record, which states what the run found instead |
-| The corpus README said `platform.md` §4 carries the walkthrough and marks instruments' invocation; §4 names only the lint | L0 | fixed — the command lines are the README's own block |
-| **D-35** still described the pane as enumerating five group names in `GROUPS`, which its own unit replaced with a typed table and a projection | L0 | filed as **D-50** — a corrigendum, because D-1 forbids rewording the row that chartered the unit |
-| The handover said each open unit "carries a `walkthrough-record` streak at the limit"; every unit's streak is `{}` after this pass's rebuilds | L0 | fixed — the item now says what is actually owed |
-| **Insufficiency:** nothing placed `strata-state init` in the admission order — the README listed the verb and `platform.md` §4 had only the state's shape | L0 | fixed — step 1 of "How a unit moves" opens the unit in the state machine |
+| This record still said run 8 and "a ninth run is owed", two runs behind the register's own citations | L0 | fixed — this record |
+| The register's preamble said a corrigendum is sourced by a **user-sourced** row, which D-47 made one of two kinds; three of its own corrigenda correct measurement-sourced rows | L0 | fixed — the preamble now names both |
+| The handover said "close the three open units, all three were rebuilt"; two are open and four carry `builds: 2` | L0 | fixed, and the item now points at the state rather than counting |
+| `brief.md` §5 said "all four Electron legs" are the boot unit's return; §6 and D-37 make three the floor with `panes` outside it | L0 | fixed |
+| `AGENTS.md` claimed to carry "no workflow rule" while stating four, which is the restatement D-43 forbids | L0 | fixed — the non-negotiables are a floor, and the steps are the procedures' |
 
-`docs-insufficient`: the admission order above. `undocumented`: none.
-**Verdict: not green.** A ninth run is owed, and each item above is fixed rather than annotated.
+`docs-insufficient`: none. `undocumented`: none.
+**Verdict: not green.** Run 12 is owed, and every item above is fixed rather than annotated.
