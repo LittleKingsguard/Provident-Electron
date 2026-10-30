@@ -128,13 +128,16 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 | ASM-11 | the store's own file is the only new written name; the settings file is imported once, then retired | two writers, which leaves two authorities and defeats D-7's subject; or abandoning the old bytes outright, which D-13 permits but drops an operator's data silently |
 | ASM-12 | this unit's e2e surface declares **no** rendered data view: the five tools answer values and a commit moves no rendered reading (D-11), and the rendered data pane is owed to a later unit that must owe provident-authored UI, as D-12 leaves undo | declaring the view here (rev 2's S-10), which contradicts `interface.md` §7 and the landed `src/main/data/` surface and routes a finding against L2 while writing a second unit's UI into existence with no decision behind it |
 
-## 8. The re-grain set — named here, performed by the owning layer's test writer
+## 8. The mark set — named here, re-grained and marked by the owning layer's test writer (D-30, D-31)
 
 D-11's census move and D-13's persisted-set move will redden **40 sites across the three classes' files** — 5 `src/` statements and 35 test or
-battery rows, 2 of them **compile-reds** under `typecheck:tests` — and **the class counters overlap, so the set's file total is not their sum**: the
-`24` this document carried is withdrawn rather than replaced, because no total is derivable from the tree the classes were measured against (D-26,
-D-28). Nothing is edited at this layer; a site is in the set iff it reads one of the moved numbers, and **the set was not closed by the three
-predicates**: one site read the moved number and stood in none of them — named as C-2's last term, whose discharge that row records (D-43).
+battery rows, 2 of them **compile-reds** under `typecheck:tests` — and **the class counters overlap, so the set's file total is not their sum**:
+the `24` this document carried is withdrawn, not replaced (D-26, D-28). Nothing is edited at this layer; a site is in the set iff it reads one of
+the moved numbers, and **the set was not closed by the three predicates**: one site read the moved number and stood in none of them — named as
+C-2's last term, whose discharge that row records (D-43). **D-31 governs what becomes of each side**: the 5 `src/` statements are re-grained by
+the unit that moves the number, while each scenario row of the 35 is **marked** `// strata:marked-file rework` and replaced whole by the rework
+rather than re-pointed — and the three `.mjs` drivers among them are the Electron legs D-30 **retains**, so those are maintained and never marked
+(D-30, D-31; `strata/marks.json`).
 
 | C | Sites / files | The sites |
 |---|---|---|

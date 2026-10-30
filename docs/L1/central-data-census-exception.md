@@ -28,8 +28,7 @@ the sixth `provident-storeroom` export that count named, `register`, has no call
 by which a caller restricted to `register` observes a change — so the surface consumed is 5 tools + 5 bridge routes **declared** (D-14
 counts the declaration, and no `data.*` arm answers one at this head — `docs/L1/central-data-management.md` §4) + 5 exports called
 (`storeCreate`, `read`, `readLiteral`, `write`, `delete`), measured by this unit's L2 examiner at `57c5825` (the `central-data` row of
-`strata/modules.json`; D-14, `strata/platform.md` §4). The cap follows: `50 + 10×15 = 200`, and `mcp-surface` keeps `30` — 22 tools +
-3 resources + the five `data` tools it registers and gates (D-11).
+`strata/modules.json`; D-14, `strata/platform.md` §4). The cap follows: `50 + 10×15 = 200`, and `mcp-surface` keeps `30` — 22 tools + 3 resources + the five `data` tools it registers and gates (D-11).
 
 ## 2. The exception, by path (E-1 census · E-2 rows · E-3 composition)
 
@@ -50,15 +49,15 @@ options member on the server's options pass — `dataSurface: createDataSurface(
 `ALL_TOOLS` and register nothing, which is D-11's own finding read backwards; the surface touches no file until a tool is called,
 so the boot's behaviour is unmoved (D-11, D-13; `docs/L2/central-data/interface.md` §5). Writer: `central-data`'s L4, one shot.
 
-**E-2 — rows, the §8 set, moved by this unit's L2 test writer.** L1 rev 2 §8 names **40 sites** — 5 `src/` statements (E-1
+**E-2 — rows, the §8 set, marked by this unit's L2 test writer.** L1 rev 2 §8 names **40 sites** — 5 `src/` statements (E-1
 above) and 35 test or battery rows, 2 compile-reds under `typecheck:tests` — by one predicate: *a site is in the set iff it
 reads one of the moved numbers*, and its file counters overlap, so no file total is stated there or here (L1 rev 2 §8; D-26).
 **The set was not closed, and the predicate is what showed it**: at this re-grain the pane carried a hand-maintained group-set
 copy — a five-name `GROUPS` roster, a five-entry `GROUP_LABELS`, no `ToolGroup` link — so it could not grant the sixth group,
 read the moved number, and stood in no class of §2 or §4. Its repair belonged to the pane's owning unit (the `secure-panels`
 row) and is **discharged there** — what it landed is the pane design's to state (`docs/L1/secure-panels.md` §7 `E-1`, cited
-not restated; `docs/L1/central-data-management.md` §8 `C-2`; D-35, D-43). The writer moves the 40 sited rows and records both
-lists — the rows it moved and the sites left green (D-11).
+**The writer's instruction is §3 item 2's**, and D-31 governs what becomes of each side: the 5 `src/` statements re-grained, the 35 test or
+battery rows marked and replaced whole, both lists recorded (D-11, D-30, D-31).
 
 | Class | Rows | Where |
 |---|---|---|
@@ -71,14 +70,14 @@ lists — the rows it moved and the sites left green (D-11).
 
 ## 3. Who writes what, and in what order
 
-1. **`central-data`'s L4**, in the same one-shot as the module's own source: E-1's four files and E-3's two lines,
-   the lines §2 names, and nothing else (D-1 §3, `modules.md` §5).
-2. **This unit's L2 test writer**, in a separate task that runs after E-1 has landed: E-2's rows, measured by the
-   §8 predicate against the tree it then sees, each row moved to the new figure and no row moved by guess (D-10:
-   test-side work belongs to the owning layer's test writer, never to an implementer).
+1. **`central-data`'s L4**, in the same one-shot as the module's own source: E-1's four files and E-3's two lines, the lines §2 names, and nothing else (D-1 §3, `modules.md` §5).
+2. **This unit's L2 test writer**, in a separate task that runs after E-1 has landed: E-2's rows, measured by the §8 predicate against the
+   tree it then sees — the 5 `src/` statements re-grained, every scenario row **marked** `// strata:marked-file rework` and replaced whole
+   rather than re-pointed, so no row is moved by guess. D-31 is the rule and `strata/marks.json` its mark set; the three `.mjs` drivers among
+   the sited rows are the legs D-30 retains, so maintained not marked, and `tests/focus-tool-register.ts` is a helper they share (D-10, D-30,
+   D-31: test-side work is the owning layer's test writer's, never an implementer's).
 3. **No third writer.** A row the predicate leaves green is left byte-identical; a row that reddens and is not in
-   §8's classes is a finding recorded in the unit's record, and the finding is diagnosed, never patched under this
-   exception (D-1, `examiner.md` §4).
+   §8's classes is a finding recorded in the unit's record, and the finding is diagnosed, never patched under this exception (D-1, `examiner.md` §4).
 
 **E-4 — the byte-image pins, licensed by this rev-2 clause.** Four frozen-digest cells in three files read none of the
 moved numbers and reddened only because E-1/E-3 moved the bytes they image: `tests/secure-exclusion.test.ts`'s
@@ -138,11 +137,12 @@ a boot — so the examiner reads the five files as code, not as a list (D-1, `ex
 
 ## 7. Findings this pass surfaced, and where they go
 
-- **`provident-storeroom`: `delete` at an address where no row stands throws `AddressNotFound`** instead of answering
-  the empty removal a caller's receipt would carry; reproduced by the L2 examiner at `57c5825` at both the
-  whole-target and `file`-tier spellings, `tiers: []` reachable only where the address stands at another tier
-  (suspected root cause: the delete arm reads an absent target as a malformed address rather than a no-op; fix shape:
-  answer `{tiers: []}`, append nothing, throw nothing). Upstream-owned, never patched, filed in this unit's record (D-5).
+- **`provident-storeroom`: `delete` at an address where no row stands throws `AddressNotFound`** instead of answering the empty removal a
+  caller's receipt would carry; measured by the L2 examiner at `57c5825` at both the whole-target and `file`-tier spellings, `tiers: []`
+  reachable only where the address stands at another tier. **Intended behaviour, documented — no behavioural demand and no code change
+  (D-24):** the refusal is the store working as designed (an absent address is not a no-op) and the guide's absent-address refusal family, the
+  delete arm among it (`README.guide.md:351,359,425`), already describes it; the module steps around it in its own answer (L3 `design.md` §4
+  `G7`), and the record files CD-F1 as `intended` (D-5, D-24).
 - **`provident-storeroom`: the boot over non-image bytes has no declared arm.** Measured: a foreign, unparsable
   image boots cold with its bytes untouched until the next `file`-tier save, so the consumer can state the recovery
   but the package does not declare it (requirement gap, same disposition) (D-5).

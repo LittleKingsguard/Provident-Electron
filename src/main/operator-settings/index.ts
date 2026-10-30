@@ -517,8 +517,9 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
       if (hasCap) {
         if (max === null) nextCap = undefined
         else if (typeof max !== 'number') return refuse('maxJournalLength is a finite number or null')
-        // The landed clear/refuse split carried verbatim: `null`, `NaN` and a non-positive value
-        // CLEAR the cap, while `±Infinity` REFUSES the patch with no store verb at all.
+        // The landed clear/refuse split carried verbatim, in the guards' order: `null` CLEARS the
+        // cap; a non-number REFUSES; `NaN` and any non-positive value — `-Infinity` included —
+        // CLEAR; then only a remaining `+Infinity` REFUSES, with no store verb; else `Math.floor`.
         else if (Number.isNaN(max) || max <= 0) nextCap = undefined
         else if (!Number.isFinite(max)) return refuse('maxJournalLength is a finite number or null')
         else nextCap = Math.floor(max)
