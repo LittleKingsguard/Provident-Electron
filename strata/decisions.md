@@ -552,3 +552,30 @@ the tree today: a reader takes the current figure from §6 and never from the ro
 a stale count as their finding, and each was "fixed" by writing a newer number into another document, which
 drifted again at the next commit. The fix is to stop restating measurements outside the one table that owns
 them — not to keep re-measuring faithfully into a dozen files.
+
+---
+
+## D-27 — The next unit is the main bundle's boot seam, and the walkthrough stays documentation-only
+
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Fix the boot seam first
+(Recommended)"; "Documentation-only, as now (Recommended)".
+
+**Decision:** the next unit admitted through the loop is the **boot seam** — the measured defect that
+`dist/main/main.cjs` dies at module load, because the main bundle is built CJS while the ESM-only
+`provident-storeroom` resolves its native addon through `import.meta.url`, which esbuild's CJS output
+leaves as `{}`. The failure is `createRequire(undefined)` at `dist/main/main.cjs:38480`; it is recorded
+with its reproduction in `strata/records/security-store-storeroom-unit.md` §2, and both Electron legs that
+reach the bundle are red on it at this head (`npm run divergence` exit 1; `npm run ui` no verdict).
+
+- It is admitted like any other unit: L1 files its `strata/modules.json` row **first**, and no design is
+  admitted before the map (D-7, `modules.md` §3).
+- It is sequenced ahead of D-22's parked second half because it is the **floor** of verification: nothing
+  about a running app, a bridge hop or a rendered surface is observable until the bundle boots, so every
+  later unit's evidence would otherwise stop at the node-suite boundary.
+- The regression that closes it is a row that **runs the built bundle and requires a handshake** — not a
+  node-level row that inspects source, which is the reading that let this defect survive three units
+  (`security-store-storeroom-unit.md` §2, `F-1`).
+
+**Walkthrough scope, confirmed rather than changed:** the exit walkthrough stays documentation-only. The
+staging root carries the built bundles, but a run reads documents and never drives the app, so a `PASS`
+certifies the documentation and never the app (`walkthrough.md` §2-§3, D-1).
