@@ -79,6 +79,37 @@ const rowOf = (value: Record<string, unknown>): TabsRecordRow | null => {
   return row
 }
 
+
+/** THE `exactly-one-active` CONSTRAINT — the module's own function, registered into the engine (D-63; `guide §7.2`
+ *  route one, `cfg.constraints`). The engine invokes it with the attempt's own context and reads its answer:
+ *  **`true` is the only pass value**, and an object carrying a `message` is a rejection (`guide §7.2`, `§7.5`,
+ *  and the `landing-page-must-stand` example at `§7.7`).
+ *
+ *  THE BODY READS THE RECORD, which `guide §7.6` says is the caller's work and not a defect: a constraint that
+ *  cares about a location other than the one it judges **reads that location**, and a read inside a body brackets
+ *  no commit and is judged by nothing (`§7.6`'s measured clause of 2026-10-28). */
+const exactlyOneActive = (store: Store) => (): true | { message: string } => {
+  let order: string[] = []
+  try {
+    const read = store.read(TABS_ORDER_ADDRESS, 'file') as unknown
+    if (Array.isArray(read)) order = read.filter((id): id is string => typeof id === 'string')
+  } catch {
+    return true // a record with no order seat carries no tabs, so it carries no second active tab
+  }
+  let active = 0
+  for (const id of order) {
+    try {
+      const value = store.read(['tabs', id], 'file') as unknown
+      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+        if ((value as { active?: unknown }).active === true) active += 1
+      }
+    } catch {
+      // an id whose record the store does not hold cannot be an active tab
+    }
+  }
+  return active > 1 ? { message: 'the tab record carries more than one active tab' } : true
+}
+
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
   let store: Store | null = null
   let refusal: TabsRecordAnswer | null = null
@@ -86,6 +117,18 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
     store = storeCreate({
       journalLength: options.journalLength ?? 1024,
       listeners: [],
+      // THE CONSTRAINT IS ARMED AT CONSTRUCTION (`guide §7.2` route one): the element carries the pair AND the
+      // function, and a construction that refused the list would throw before any filesystem act.
+      constraints: [
+        {
+          address: TABS_RECORD_ADDRESS,
+          id: TABS_CONSTRAINT_ID,
+          constraint: (context: unknown) => {
+            void context
+            return exactlyOneActive(store as Store)()
+          },
+        },
+      ],
       filePath: join(options.userDataDir, TABS_RECORD_FILE_NAME),
     })
   } catch (caught) {
