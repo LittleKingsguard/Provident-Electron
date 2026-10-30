@@ -123,7 +123,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 | **E-2** | `src/main/operator-settings/index.ts` (`operator-settings`) | the third durable address, the second import-once arm (§4) and its two exposed verbs; no `fs` call but the two import reads | this unit's **L4**, one shot |
 | **E-3** | `src/main/settings-surface/index.ts` (`settings-surface`) | the two delegating verbs and the import answer's mapping into `legacy`; no new channel, no rendered element | this unit's **L4**, one shot |
 | **E-4** | `strata/modules.json` (L1's own map) | §2's two N figures and this unit's two battery subtrees | **L1**, filed with this artifact |
-| **E-5** | `tests/**` — §6's rows, each named by file and line | the re-grain and the retirement §6 classifies | this unit's **L2 test writer** (D-10) |
+| **E-5** | `tests/**` — §6's rows, each named by file and line | the re-grain and the retirement §6 classifies, **executed at this unit's close under the rule that then stood**: D-31 supersedes the instruction for every later unit, which **marks** its scenario rows `// strata:marked-file rework` and replaces them whole (`strata/marks.json`) | this unit's **L2 test writer** (D-10, D-30, D-31) |
 
 **Not a move, named so no reader looks for one**: `src/main/module-store.ts`, `store-channels.ts`, `preload.ts`, `security.ts`, `tier4-state.ts`, `src/shared/types.ts` and `src/renderer/**` are byte-identical after this unit.
 

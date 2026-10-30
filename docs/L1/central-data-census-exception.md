@@ -145,6 +145,6 @@ a boot — so the examiner reads the five files as code, not as a list (D-1, `ex
   `G7`), and the record files CD-F1 as `intended` (D-5, D-24).
 - **`provident-storeroom`: the boot over non-image bytes has no declared arm.** Measured: a foreign, unparsable
   image boots cold with its bytes untouched until the next `file`-tier save, so the consumer can state the recovery
-  but the package does not declare it (requirement gap, same disposition) (D-5).
+  but the package does not declare it — a **documentation defect**, not a behavioural one: the guide's `§9.1` declares the creation, reachability and constraint-list arms and no parse-failure arm, so the only demand is a sentence in the native contract and in the guide (D-5, D-24).
 - **Owed to the unit's record under `strata/records/`** — both findings, the L2 examiner's readings and the parked
   ASM-11 half (§5). L1's write scope is `docs/L1/`, so the record is named here and owed by the layer that owns it (D-1 §3, D-5).
