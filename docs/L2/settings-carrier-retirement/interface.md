@@ -1,7 +1,7 @@
 # L2 — `settings-carrier-retirement`: the interface
 
-- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Status:** DESIGN — `tests/integration/settings-carrier-retirement/` is filed against this file and stands red until `src/main/operator-settings/` and `src/main/settings-surface/` carry the verbs this file declares (D-1, `examiner.md` §3)
-- **Inputs:** `docs/L1/settings-carrier-retirement.md` §2–§9 (authoritative for this unit's design; this file declares the surface that design needs and **re-derives none of it**); D-5, D-10, D-13, D-14, D-16…D-22; `docs/L2/security-store-storeroom/interface.md` §1/§2/§2.1/§3/§5 (the sibling unit's surface, extended here and never re-spelled); `strata/modules.json:44-72` (`operator-settings` **12**, `settings-surface` **19**); the tree at `e3b59d5`
+- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — the standing sentence below no longer says the two modules are missing (they exist and carry the verbs this file declares, cited at their sites), §2's `set` is spelled with the shape the tree declares instead of an undeclared `SettingsPatch`, and §5's member count reads **six** — three reads, three writes — where it said seven. Rev 1 is read through this one · **Status:** DESIGN — `tests/integration/settings-carrier-retirement/` is filed against this file; the two modules it declares now carry the verbs, and the battery's own reading is `strata/brief.md` §6's instrument and is not restated here (D-1 §4, D-26, `examiner.md` §3)
+- **Inputs:** `docs/L1/settings-carrier-retirement.md` §2–§9 (authoritative for this unit's design; this file declares the surface that design needs and **re-derives none of it**); D-5, D-10, D-13, D-14, D-16…D-22; `docs/L2/security-store-storeroom/interface.md` §1/§2/§2.1/§3/§5 (the sibling unit's surface, extended here and never re-spelled); the `operator-settings` and `settings-surface` rows of `strata/modules.json` (`endpoints` **12** and **19**); the tree at `e3b59d5`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md` and **the declaration** is its `index.d.ts`; both are read and never edited (D-5)
 
 ## 0. Scope, and what this document does not fix
@@ -65,7 +65,8 @@ export type SettingsCommitAnswer =
   | { status: 'committed' }
   | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }
 export interface SettingsSurface {
-  read(): SettingsReadAnswer; set(patch: SettingsPatch): SettingsSetAnswer      // sibling §5, unmoved
+  read(): SettingsReadAnswer                                                 // sibling §5, unmoved
+  set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): SettingsSetAnswer
   transition(state: unknown): SettingsTransitionAnswer; attach(sink: SettingsGateSink): void
   state(): SettingsAppStateAnswer                              // NEW — delegates readAppState
   commit(rows: readonly SettingsAppStateRow[]): SettingsCommitAnswer   // NEW — delegates writeAppState
@@ -92,7 +93,7 @@ Each handler keeps its channel name, its registration site and its answer shape;
 
 ## 5. The module surface's three re-pointed writes and three reads
 
-`moduleSurface` keeps its seven members, its answers, its hash re-verification, its `reserved-namespace` refusal and its quarantine (D-22; L1 §1). Only its **source of rows** moves (L1 §3).
+`moduleSurface` keeps its **six** members — three reads (`get`, `list`, `status`) and three writes (`put`, `remove`, `setDisabled`) — beside its answers, its hash re-verification, its `reserved-namespace` refusal and its quarantine (D-22; L1 §1; the `ModuleStore` declaration in `src/main/module-store.ts`). Only its **source of rows** moves (L1 §3).
 
 | Member | Its rows come from | Its write |
 |---|---|---|

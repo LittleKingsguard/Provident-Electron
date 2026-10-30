@@ -40,7 +40,7 @@ no behaviour changes, no exported name changes meaning, no reformatting, no comm
 | Path (owning row) | The rows that move | Writer |
 |---|---|---|
 | `src/main/security.ts` (`mcp-surface`) | `ToolGroup` gains `'data'`; `TOOL_GROUPS` gains the five `provident.data.*` → `'data'`; `VALID_GROUPS` five → six (D-11, D-15) | `central-data`'s L4, one shot |
-| `src/main/operator-settings/index.ts` (`operator-settings`) | `VALID_GROUPS` at `:112` gains `'data'`; `:178` reads that same constant and moves with it — no second edit (D-15's second live copy, which the rebuild re-homed here when `src/main/security-store.ts` was deleted, D-16) | `central-data`'s L4, one shot |
+| `src/main/operator-settings/index.ts` (`operator-settings`) | the second live `VALID_GROUPS` copy gains `'data'`, and the dedupe that reads it moves with it — no second edit (D-15's second live copy, which the rebuild re-homed here when `src/main/security-store.ts` was deleted, D-16) | `central-data`'s L4, one shot |
 | `src/main/mcp-server.ts` (`mcp-surface`) | `ALL_TOOLS` 22 → 27 with the five names; five registrations calling the module's own adapter, each inside the landed per-invocation wrapper (`exclusionTurn`, D-11) | `central-data`'s L4, one shot |
 | `src/shared/types.ts` (`ipc-contract`) | `RpcMethod` 22 → 27 with `data.read`/`data.write`/`data.delete`/`data.list`/`data.journal`; `MUTATING_METHODS` untouched at seven (D-11; L1 rev 2 §4 ASM-9) | `central-data`'s L4, one shot |
 

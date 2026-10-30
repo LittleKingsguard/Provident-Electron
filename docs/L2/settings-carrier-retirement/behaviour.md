@@ -1,6 +1,6 @@
 # L2 — `settings-carrier-retirement`: the behaviour
 
-- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Status:** DESIGN — the integration battery is filed against this file (D-1, `examiner.md` §3)
+- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — §1's boot-order clause is corrected against the tree and now cites **L1's `C-3` row** as the order's owner instead of restating it, stating only the site relation it can see in `main.ts` (D-43); §7's `schemaVersion` clause names `importAppStateOnce` as where the validation lives, not `main.ts`. Rev 1 is read through this one · **Status:** DESIGN — the integration battery is filed against this file (D-1, `examiner.md` §3)
 - **Inputs:** `interface.md` §1–§8; `docs/L1/settings-carrier-retirement.md` §3–§8; `docs/L2/security-store-storeroom/behaviour.md` §1/§3/§7/§10 (the sibling's boot, import, pair and carrier rows, which this file extends and never re-drives); D-5, D-10, D-13, D-16…D-22; the package's shipped guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; the instance's file, tier rules and admitted tree are the sibling `persistence.md`'s (§2–§5)
 
@@ -13,7 +13,7 @@
 | a second `state()` in the same process | the same answer, and **no file is read twice**: the import ran at most once, at construction (L1 §4; `guide §6`) |
 | `state()` over a store construction the package refused | `rows:[]`, `storage:'unreachable'`, nothing thrown (sibling §2.1; `guide §8.2`) |
 
-- **`main.ts` holds no copy of the rows.** The retired third holder is gone, so every reader asks the surface on the call it serves, and the boot order is unmoved in kind — construction → boot read → gate → flip → `start()` → window (L1 §3/§5; the statements in `main()`: `createSettingsSurface`/`settingsSurface.read()`/`new SecurityGate(...)`, then `settingsSurface.attach(mcp)`, then `await mcp.start()` and `new BrowserWindow(...)`).
+- **`main.ts` holds no copy of the rows.** The retired third holder is gone, so every reader asks the surface on the call it serves. What `src/main/main.ts` shows at three sites is the one relation this file depends on: `settingsSurface.attach(mcp)` — the flip that writes the holder — lands before the `new BrowserWindow(...)` construction and its `win.loadFile(rendererHtml)` call, and those precede `await mcp.start()`. **The boot order as a whole is L1's `C-3` row's and is cited here, never restated** (`docs/L1/security-store-storeroom.md` §7 `C-3`, the row that names itself the order's owner; D-43).
 - **One boot read feeds the gate, and it is the sibling's `read()`** — this unit adds a second read of the same construction and moves nothing about the first (D-16, D-22).
 
 ## 2. `STORE_FILE_GET` serves the rows, cold or warm
