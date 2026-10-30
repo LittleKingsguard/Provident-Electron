@@ -11,6 +11,6 @@ replaced reads and write, the third address and why, the boot arms including `re
 names against the two seeds, and the unit's declared non-scope at D-22. Documentation-only pass, so
 src-level claims were not exercised — the standing wall, unchanged (`walkthrough.md` §3).
 
-This unit is the only one in the corpus closed on a green walkthrough; the units still open carry their
-own records and their own owed runs. A later pass that re-opens the unit re-runs this set and replaces
+This unit was the first closed on a green walkthrough; which units are closed is state, read from
+`strata/.strata/units/*.json`, and the open ones carry their own records and their own owed runs (D-26). A later pass that re-opens the unit re-runs this set and replaces
 the run above rather than adding to it (`walkthrough.md` §6, D-1).

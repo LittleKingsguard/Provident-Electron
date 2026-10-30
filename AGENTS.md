@@ -22,18 +22,14 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
   `get_rendered_html` and `get_markdown`. Source: the charter's own section, retained in
   `archive/gate-corpus-2026-10-29/AGENTS.md:22-34` (§ "Project-wide constraint (UI rendering)").
 - **A node-suite green is envelope-green, never app-green** — the module rows run under a layout-less DOM
-  shim; the one exception states itself in its own header, the boot battery that spawns the built bundle
-  and opens its transports, and even that green is a process green, never a rendered-surface one
-  (`strata/brief.md` §6, D-27).
-- **What gates is the boundary, not the machinery** — `tests/e2e/**` and the three Electron legs are
-  retained as-is, because each states an agent-or-drive exchange at a process boundary; every integration
-  and unit scenario **that stood when the rework was decided** is marked `// strata:marked-file rework` and
-  reports **on notice**, while a scenario **authored after** that sweep carries no marker and gates
-  (`strata/decisions.md` D-30, D-40). `tests/e2e/` files are never marked, and the worktree boundary row
-  never is: a loop that marks the row measuring its own tree has nothing left to measure
-  (`strata/marks.json`).
-- **Four legs before any change is reported**: `npm test`, `npm run typecheck`,
-  `npm run typecheck:tests`, `npm run build` (`strata/brief.md` §6).
+  shim; the boot battery that spawns the built bundle states its own exception, and even that green is a
+  process green, never a rendered-surface one (`strata/brief.md` §6, D-27).
+- **What gates is the boundary, not the machinery** — `tests/e2e/**` and the Electron legs are retained
+  because each states an agent-or-drive exchange at a process boundary; an integration or unit scenario
+  that stood when the rework was decided is marked and reports **on notice**, while one authored after
+  that sweep gates (`strata/decisions.md` D-30, D-40). Never marked: a `tests/e2e/` file, or the
+  worktree boundary row — a loop that marks the row measuring its own tree measures nothing.
+- **Four legs before any change is reported** — `npm test`, `typecheck`, `typecheck:tests`, `build` (`brief.md` §6).
 - **No layer judges its own design**: examiners diagnose and never patch, and L4 owns implementation
   only (`strata/examiner.md`, `strata/rebuild.md`).
 
@@ -49,11 +45,9 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
 
 ## Current state
 
-Branch `strata` carries the bootstrap and `main` is frozen until the user grants merge permission
-(`strata/decisions.md` D-6). Three units have landed on `provident-storeroom`: the central data store
-(the `data` group), the security record rebuilt as its own isolated instance, and the retirement of the
-old settings carrier — more are queued behind them, and the map is filed with a row per module (D-7, D-22).
-Where work stands is state, not prose: `strata/.strata/units/*.json`.
+Branch `strata` carries the work; `main` is frozen until the user grants merge permission (`strata/decisions.md`
+D-6). **Which units are landed, open or closed is state, not prose**: read `strata/.strata/units/*.json` and the
+map's `strata/modules.json`, and take the counts from `strata/brief.md` §6 — never from this file (D-26, D-43).
 
 ## Commands
 
@@ -62,5 +56,5 @@ npm install && npm run build      # main, preload, standalone, battery host, ren
 npm test && npm run typecheck && npm run typecheck:tests
 npm start                         # build + launch; --mcp-transport=http|stdio, default http :3787
 npm run mcp -- --help             # the local MCP CLI, against the battery host or a running app
-npm run battery | npm run divergence | npm run ui   # the Electron legs; ui needs a DISPLAY
+npm run battery | npm run divergence | npm run ui | npm run panes   # Electron legs; ui/panes need a DISPLAY
 ```

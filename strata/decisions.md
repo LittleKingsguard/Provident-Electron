@@ -927,3 +927,28 @@ nine paths when the e2e and integration claims were the last to land, and L2's i
 - Nothing else in D-39 moves: the claim-kind correction it makes against D-36 stands, and so does the rule.
 - A walkthrough found this, which is what a walkthrough is for. That the corpus's own rule-bearing row broke
   its rule is worth more to a reader than the number it got wrong.
+
+---
+
+## D-43 — A summary may not restate a fact another document or the state owns
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the `secure-panels` unit's **third** exit walkthrough,
+which returned `STALE` with six findings and **not one of them in the unit's own three layers** — every one
+was a corpus summary asserting a fact owned elsewhere: a ceiling from D-3, a code shape from L1's census, a
+unit's stage from the handover, a uniqueness claim from a record.
+
+**Decision:** a document that summarizes may **cite** a fact owned elsewhere and may not **restate** it. The
+owners are `brief.md` §6 for counts (D-26), `strata/.strata/units/*.json` for a unit's stage and streaks, the
+map for paths and endpoints, and each document for its own content (D-3).
+
+- A summary that names another layer's internals — "E-1 cites `:40`" — cannot be kept true: the owner moves it
+  and the summary is not re-read at that moment. Cite the row or the section and stop (D-28, D-41).
+- A queue names **work**. A landed unit is not work; the entry names what the unit still **owes**.
+- A ceiling is a rule of its owning row (D-3), so a file that outgrows one is trimmed or the rule is amended —
+  never left as a silent breach.
+
+**Consequence, stated because this is the third consecutive `STALE`:** `rebuild.md` §3 says a third
+consecutive failure on one artifact indicts the **artifact**, not the prose. The three runs are recorded
+together and they do indict it — the walkthrough is doing its job, since every finding was real, and what it
+exposed is that the drift lives in the **summary layer**. This row is the correction, written as a rule
+because repairing six sentences would produce the next six.

@@ -1,6 +1,6 @@
 # handover — branch `strata` (`main` still `28e9ac1`, unmerged by D-6)
 
-Read `strata/brief.md` first, then `strata/decisions.md` **D-1..D-30**. This file is the short version.
+Read `strata/brief.md` first, then `strata/decisions.md` in full — its last row is the current one.
 
 ## What is landed
 
@@ -39,8 +39,8 @@ this record restates neither, because a count in a second place drifts at the ne
    `rebuild` (`strata/records/*-walkthrough.md`; `strata/rebuild.md` §3).
 2. **Land D-30's runner split**: the markers are in and `strata/marks.json` is generated, so what remains is
    L2's arrangement for reporting the gating reading beside the on-notice one, and L4 landing it.
-3. **The pane's sixth group**, as its own unit — the one finding that has survived five passes, and the
-   running app can now be driven for real to prove it.
+3. **The pane unit's own close**: `secure-panels` has landed and its evidence is green, so what it owes is
+   its exit walkthrough and then `close` (`strata/.strata/units/secure-panels.json`).
 4. **D-22's second half**, still parked: the gate's exclusion/tier-4 enforcement (which gives
    `src/main/tier4-state.ts`'s reader its first `src/**` consumer, discharging `ASM-4`), the module
    registry, and the journal-length consumers onto the instance as their state engine.

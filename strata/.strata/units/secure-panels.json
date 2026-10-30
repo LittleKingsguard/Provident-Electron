@@ -12,7 +12,13 @@
     "e-harness-panes-key"
   ],
   "assumptions": [],
-  "streaks": {},
-  "rebuildEligible": false,
-  "updated": "2026-10-30T06:17:35.306Z"
+  "streaks": {
+    "walkthrough-record": 3
+  },
+  "rebuildEligible": true,
+  "updated": "2026-10-30T07:32:31.281Z",
+  "lastFailure": {
+    "artifact": "walkthrough-record",
+    "reason": "red"
+  }
 }
