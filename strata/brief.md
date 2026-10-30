@@ -97,11 +97,15 @@ map (D-10).
 
 **All three Electron legs are green at this head, and that is the `bundle-boot-seam` unit's whole
 return** (D-27): before it, one leg was green and two could not reach the app at all, because the main
-bundle died at module evaluation. Nothing in the four-leg floor can see a bundle, which is why the
-defect survived three units and why the unit's regression runs the built artifact (D-27).
+bundle died at module evaluation. Nothing in the four-leg floor could see a bundle **before this unit**, which
+is why the defect survived three units; its regression now loads one (D-27).
 
-The layer rule every later claim inherits: a node-suite green is **envelope-green and never
-app-green** — no window, no IPC, no transport is exercised by `npm test` (D-1; §3's L1 exit).
+The layer rule every later claim inherits, **narrowed by the boot unit rather than repealed by it**: a
+module row's green under `npm test` is envelope-green, because the suite runs the modules under a
+layout-less DOM shim. One battery is the exception and says so in its own header — `tests/e2e/bundle-boot-seam/`
+spawns the built bundle, opens its stdio and HTTP transports and constructs its instance, which is exactly
+what D-27 admitted the unit to prove. So the shim rule still governs every module row, and a boot green is a
+process green that is **not** a rendered-surface green (D-1, D-27).
 The two long-standing reds are `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`, the un-run live
 battery) and §4.2 item 8 (`REG-EXEC`, the register's broken attempts) — neither new to this head. The
 third the gate-era corpus carried, `tests/store-core-graph.test.ts` §5.1, was retired with its referent

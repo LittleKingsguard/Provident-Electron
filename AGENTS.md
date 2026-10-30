@@ -21,8 +21,10 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
   hand-written DOM; an element rendered outside it is invisible to `provident.dispatch`,
   `get_rendered_html` and `get_markdown`. Source: the charter's own section, retained in
   `archive/gate-corpus-2026-10-29/AGENTS.md:22-34` (§ "Project-wide constraint (UI rendering)").
-- **A node-suite green is envelope-green, never app-green** — `npm test` runs under a layout-less DOM
-  shim, with no window, no IPC and no transport (`strata/brief.md` §6).
+- **A node-suite green is envelope-green, never app-green** — the module rows run under a layout-less DOM
+  shim; the one exception states itself in its own header, the boot battery that spawns the built bundle
+  and opens its transports, and even that green is a process green, never a rendered-surface one
+  (`strata/brief.md` §6, D-27).
 - **Four legs before any change is reported**: `npm test`, `npm run typecheck`,
   `npm run typecheck:tests`, `npm run build` (`strata/brief.md` §6).
 - **No layer judges its own design**: examiners diagnose and never patch, and L4 owns implementation
