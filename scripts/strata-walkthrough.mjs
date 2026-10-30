@@ -42,7 +42,10 @@ function stage(unit, dest) {
   const root = resolve(dest ?? `/tmp/wt-${unit}`)
   rmSync(root, { recursive: true, force: true })
   mkdirSync(join(root, 'work'), { recursive: true })
-  for (const p of ['strata', 'docs', 'dist']) {
+  // `src/` IS STAGED, because a document's claims about code are checkable only against the code, and a
+  // claim about a comment is checkable only in source — a `declare global` block is erased from every
+  // bundle, which is how a true claim came back as a falsified one (D-44).
+  for (const p of ['strata', 'docs', 'dist', 'src']) {
     if (existsSync(join(REPO, p))) cpSync(join(REPO, p), join(root, p), { recursive: true })
   }
   for (const p of ['README.md', 'AGENTS.md', 'package.json']) cpSync(join(REPO, p), join(root, p))
@@ -54,7 +57,8 @@ function stage(unit, dest) {
   writeFileSync(join(root, 'STAGING.md'), `# staging root — a blind run's whole universe
 
 Built by \`scripts/strata-walkthrough.mjs stage\` at HEAD \`${h}\` of branch \`strata\`. It is not the source
-repository, and the real \`src/\`, \`tests/\`, \`scripts/\` and \`node_modules/\` are deliberately absent.
+repository: \`src/\` is staged so that a claim about code — including a claim about a comment, which no bundle
+carries — is checkable here, while \`tests/\`, \`scripts/\` and \`node_modules/\` are deliberately absent (D-44).
 
 | Path | What it is |
 |---|---|
@@ -63,12 +67,14 @@ repository, and the real \`src/\`, \`tests/\`, \`scripts/\` and \`node_modules/\
 | \`README.md\`, \`AGENTS.md\`, \`package.json\` | the root pointers and the manifest — \`package.json\` is staged, so its claims are checkable here |
 | \`tree.txt\` | every tracked path at this head, names only |
 | \`archive-tree.txt\` | every archived file at its real path from the repository root |
+| \`src/\` | the TypeScript the bundles were built from, comments intact (D-44) |
 | \`dist/\` | the built bundles from \`npm run build\` (no runner) |
 | \`work/\` | empty scratch |
 
-A path either listing carries resolves as a name. A \`file:line\` cite into \`src/\`, \`tests/\`, \`scripts/\` or
-\`node_modules/\` cannot resolve here, and that is a declared limit of this instrument — never a finding
-against the document that carries it (\`strata/walkthrough.md\` §3).
+A path either listing carries resolves as a name, and a \`file:line\` cite into \`src/\` resolves against the
+staged copy. A cite into \`tests/\`, \`scripts/\` or \`node_modules/\` cannot resolve here: that is a declared limit
+of this instrument, never a finding against the document that carries it, and a claim the root cannot settle is
+recorded as **unverifiable** rather than as falsified (\`strata/walkthrough.md\` §3, D-44).
 `)
   const counts = { files: walk(root).length }
   console.log(`staged ${unit} at ${root} (HEAD ${h}, ${counts.files} files)`)

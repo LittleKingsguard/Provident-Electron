@@ -27,8 +27,8 @@ this record restates neither, because a count in a second place drifts at the ne
   reports on notice, bar the one worktree assertion that measures the loop's own tree. The two readings are
   `scripts/strata-marks.mjs report`'s, never restated here (D-26); the runner still measures the whole tree.
 - **The Settings pane grants all six groups**, the `secure-panels` unit having landed its roster as a
-  projection of a table the gate's `ToolGroup` types (`docs/L1/secure-panels.md` §7 `E-1`; D-35, D-38). What
-  remains for that unit is its record and its exit walkthrough.
+  projection of a table the gate's `ToolGroup` types (`docs/L1/secure-panels.md` §7 `E-1`; D-35, D-38). Its
+  record is filed; what remains is its exit walkthrough and `close`.
 - **The artifact is not self-contained**: it resolves `provident-storeroom` from `node_modules` at run time,
   so a packaged build ships the package and a loadable addon (`docs/L3/bundle-boot-seam/design.md` §4 `G-8`).
 

@@ -36,5 +36,5 @@
 
 ## 4. Owed by L0
 
-- **The exit walkthrough.** Run 1 was `STALE` on four L0 drift findings and on this record's absence; both are
-  fixed, so run 2 closes it (D-10; `strata/records/secure-panels-walkthrough.md`).
+- **The exit walkthrough.** Runs 1-3 were `STALE`, each on corpus drift and none on this unit's layers; the
+  fourth found the root's own limit (D-44) and rebuilt it, so a fifth run is what closes the unit (D-10).

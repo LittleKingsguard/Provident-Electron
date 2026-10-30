@@ -952,3 +952,28 @@ consecutive failure on one artifact indicts the **artifact**, not the prose. The
 together and they do indict it — the walkthrough is doing its job, since every finding was real, and what it
 exposed is that the drift lives in the **summary layer**. This row is the correction, written as a rule
 because repairing six sentences would produce the next six.
+
+---
+
+## D-44 — The walkthrough root carries `src/`, and an unverifiable claim is never a falsified one
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** `secure-panels`' fourth exit walkthrough, which filed
+as **falsified** a claim that is **true**: `src/main/preload.ts`'s `set()` declaration says a closed-pair set
+answers the channel refusal, and the staged `dist/main/preload.cjs` carries no such sentence — because that
+block lives in a `declare global` **interface**, which esbuild erases. The run noted the alternative reading
+and filed it anyway.
+
+**Decision:** the staging root carries `src/` — a document's claims about code, including claims about
+comments, are checkable only against the code — and a claim the root cannot settle is recorded as
+**unverifiable**, never as falsified.
+
+- Comments survive in source and vanish in every bundle. Since D-41 already names the site, and the site is
+  in `src/`, the root must carry it or the rule cannot be tested.
+- `tests/`, `scripts/` and `node_modules/` stay absent: a battery's or a driver's internals are not what a
+  walkthrough judges.
+- A run that cannot check a claim says `unverifiable` in its table and does not count it as a finding.
+
+**Consequence, and it is the rebuild `rebuild.md` §3 called for:** the unit's first three failures were real
+findings about the corpus's summaries (D-43), but the fourth was the instrument's own limit. So the
+**instrument** changed and the sentence did not — which is what it means to indict the artifact rather than
+the prose.
