@@ -11,13 +11,12 @@
 
 A central data management system over `provident-storeroom`, **landed rather than inert**: `src/main/data/` holds the
 module — `surface.ts` the five operations' one answer site, over `store.ts`, `journal.ts`, `mapper.ts` and `args.ts` — the
-five `provident.data.*` tools stand in `ALL_TOOLS` and in the built `dist/main/main.mjs` — `package.json`'s `main` — and the composition site
-passes `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })` (`src/main/main.ts:257`;
-`src/main/mcp-server.ts:602-606`; D-7, D-11). The module renders no surface and mints no graph node — that ruling
-stands (§6, ASM-12; D-11). The app already has a data path it does not call a store — `<userData>/provident-settings.json`,
-a `schemaVersion`-stamped projection of `file.*` rows, read at most once and never written again and re-served at each
-realm's boot hand-off
-(`docs/L1/settings-carrier-retirement.md §3`). The unit is the join of the two: **one authority for the app's data**, whose
+five `provident.data.*` tools stand in `ALL_TOOLS` in `src/main/mcp-server.ts` and in the built `dist/main/main.mjs` — `package.json`'s
+`main` — and the composition passes it in as one options member — `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })`
+— on `src/main/main.ts`'s one-line options pass to the server's construction (D-7, D-11, D-41). The module renders no surface and
+mints no graph node — that ruling stands (§6, ASM-12; D-11). The app already has a data path it does not call a store —
+`<userData>/provident-settings.json`, a `schemaVersion`-stamped projection of `file.*` rows, read at most once and never written again and
+re-served at each realm's boot hand-off (`docs/L1/settings-carrier-retirement.md §3`). The unit is the join of the two: **one authority for the app's data**, whose
 durability is the crossing that already exists and whose agent-facing face is a sixth tool group (D-11). The store
 journals and persists on its own on-disk shape, and nothing operator-visible reverses it (D-12, D-13). It is not a
 package change (D-5).
@@ -29,7 +28,7 @@ package change (D-5).
 `secure-panels` 7 · `store-rederive` 10 · `interaction` 11 · `panes-layout` 10 · `hosts` 4 · `chrome` 9 ·
 `focus-model` 4 · `app-envelope` 7 · `ipc-contract` 8 · `harness` 11 · `demo-panes` 0 (D-7, D-14, D-27).
 
-**Four rows moved, and this unit's census is one of them.** `mcp-surface` 25 → 30: 22 tools + 3 resources + the five `data` tools it registers and gates (D-11). `central-data` 7 → **15** under D-14's convention (the surface a module *exposes or consumes*): 5 tools exposed + 5 bridge routes answered + 5 `provident-storeroom` exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`) — `rollback` is out (D-12), `register` has no call site, and the seam's whole 14-member census is a version pin, not a called surface (ASM-5; exception §1). `operator-settings` 5 → 12 and the new `settings-surface` row at 19 arrived with the rebuild and the carrier retirement, not with this unit (D-16, D-17, D-22). The edges this unit turns on: `central-data` ← `app-shell` (the crossing) → `graph-store` (`hydrate(rows)`/`crossing.put(row)`), and `central-data` → `mcp-surface` (the group, registered and gated in `src/main/{mcp-server,security}.ts`). Coverage stands: every `src/**/*.ts`, `scripts/*`, `tests/**` file and `demo/pane-drag-demo/` claimed once, and `tests/e2e/central-data/` — L1's own artifact by write scope — is claimed on this unit's `central-data` row so the map resolves it rather than leaving it unowned (`strata/brief.md` §3; the `central-data` row of `strata/modules.json`; D-10).
+**Four rows moved, and this unit's census is one of them.** `mcp-surface` 25 → 30: 22 tools + 3 resources + the five `data` tools it registers and gates (D-11). `central-data` 7 → **15** under D-14's convention (the surface a module *exposes or consumes*): 5 tools exposed + 5 bridge routes **declared** (D-14 counts the declaration, and no `data.*` arm answers one — §4) + 5 `provident-storeroom` exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`) — `rollback` is out (D-12), `register` has no call site, and the seam's whole 14-member census is a version pin, not a called surface (ASM-5; exception §1). `operator-settings` 5 → 12 and the new `settings-surface` row at 19 arrived with the rebuild and the carrier retirement, not with this unit (D-16, D-17, D-22). The edges this unit turns on: `central-data` ← `app-shell` (the crossing) → `graph-store` (`hydrate(rows)`/`crossing.put(row)`), and `central-data` → `mcp-surface` (the group, registered and gated in `src/main/{mcp-server,security}.ts`). Coverage stands: every `src/**/*.ts`, `scripts/*`, `tests/**` file and `demo/pane-drag-demo/` claimed once, and `tests/e2e/central-data/` — L1's own artifact by write scope — is claimed on this unit's `central-data` row so the map resolves it rather than leaving it unowned (`strata/brief.md` §3; the `central-data` row of `strata/modules.json`; D-10).
 
 ## 3. The `data` group — a first-class part of this unit's surface (D-11)
 
@@ -71,11 +70,12 @@ Both transports answer every drive: stdio (long-lived, push-capable) and Streama
 `RpcMethod` union (`src/shared/types.ts:282-286`) as `data.read` … `data.journal` — D-11 names the union as moving —
 and their answer site is **in main**, in `central-data`, so no renderer method-switch arm and no `MUTATING_METHODS`
 entry is added; that set stays at its seven (ASM-9). **Unlanded at this head, so the answer site is design and not
-measurement:** no answer site for the five routes exists — `src/renderer/renderer.ts`'s method switch carries no
-`data.*` arm, `src/main/main.ts` registers no IPC handler for them, and the built `dist/renderer/renderer.js` spells no
-`data.*` string (D-15; `docs/L2/central-data/interface.md` §5; `strata/records/central-data-management-unit.md` §2).
-The group's posture does not reach them once landed: a route answers whatever the group's state, because the group
-governs MCP tool registration and not the bridge's vocabulary (D-11; `docs/L2/central-data/interface.md` §5).
+measurement:** no answer site for the five routes exists — no `data.*` arm in the method switch, no IPC handler in
+`src/main/main.ts` — while `dist/renderer/renderer.js` does spell `data`, as the pane roster's `GROUP_LABELS` gate-group
+row listing the five data tools: a label, never an answer site (`docs/L1/secure-panels.md` §7 `E-1`; D-15, D-35;
+`strata/records/central-data-management-unit.md` §2). The group's posture does not reach them once landed: a route
+answers whatever the group's state, since the group governs tool registration, not the bridge's vocabulary (D-11;
+`docs/L2/central-data/interface.md` §5).
 
 **The profile on disk.** Two *written* names at steady state: `<userData>/provident-operator-settings.json` — the
 instance's own file, which the rebuild moved off `provident-security.json` (D-16, D-19) — and `<userData>/provident-profile.json`,
@@ -136,8 +136,8 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 
 D-11's census move and D-13's persisted-set move will redden **40 sites in 24 files** — 5 `src/` statements and 35
 test or battery rows, 2 of them **compile-reds** under `typecheck:tests`. Nothing is edited at this layer; a site is
-in the set iff it reads one of the moved numbers, and **the set is not closed by the three predicates**: one site
-reads the moved number and stands in none of them, named as C-2's last term.
+in the set iff it reads one of the moved numbers, and **the set was not closed by the three predicates**: one site
+read the moved number and stood in none of them — named as C-2's last term, whose discharge that row records (D-43).
 
 | C | Sites / files | The sites |
 |---|---|---|

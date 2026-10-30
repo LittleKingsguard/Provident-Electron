@@ -1,7 +1,7 @@
 # L3 — `src/main/operator-settings/`: the instance
 
-- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Artifact:** `security-store-storeroom-l3-design`
-- **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for one owner; the declared surface is `signatures.md` §2, the contract is `docs/L2/security-store-storeroom/interface.md` §1-§3 and `behaviour.md` §1-§8 (rev 2)
+- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 3 · **Artifact:** `security-store-storeroom-l3-design`
+- **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for one owner; the declared surface is `signatures.md` §2, the contract is `docs/L2/security-store-storeroom/interface.md` §1-§3 and `behaviour.md` §1-§8 (rev 3: the `fs` count is measured at **two** reads, and the third address's arm is cited from `settings-carrier-retirement`, §7; D-25, D-43)
 - **Charter:** D-16 rebuilt wholesale and MCP-isolated · D-17 the state machine under the operator's surface · D-18 one operator-only reference · D-19 import once, then own a new shape · D-13 its own on-disk shape
 - **Ceiling:** 150 lines, class max (D-1) · `guide §n` is `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
 
@@ -13,11 +13,11 @@
 | held state | **no copy of the record**: `read()` projects the store at each call. The one held value is the import overlay, which answers only while the record address carries nothing | guide §9.2; persistence §3; ASM-1 |
 | the store | one `storeCreate` with `listeners: []`, no `constraints`, one `filePath` under the caller's `userDataDir` | interface §2.1; guide §3.1 |
 | a transition | **one** `write` at the one address the patch names — one op, one cursor, one receipt | guide §4 arm `W-4`; interface §1 |
-| file effects | none of the module's own: no `.tmp`, no lock, no sidecar, no `mkdir`, no `rename`, no `delete`, no `rollback`, no second name | persistence §5; D-13 |
-| `fs` | exactly one call, `readFileSync`, inside the import path; every other file effect is the store's | persistence §2; D-19 |
+| file effects | **no write of the module's own**: no `.tmp`, no lock, no sidecar, no `mkdir`, no `rename`, no `delete`, no `rollback`, no second written name | persistence §5; D-13 |
+| `fs` | exactly **two** calls, both `readFileSync`, both in the import path — the retired security record and the retired settings carrier; every other file effect is the store's | persistence §2, §4; D-19, D-25 |
 | throws | none — for any patch, any listener and any state | interface §2; L1 §3 |
 
-## 2. The two addresses, and why each transition is one write
+## 2. The two addresses this design owns, and why each transition is one write (the third is cited in §7)
 
 | address | tier | the value written whole | the act that writes it | cite |
 |---|---|---|---|---|
@@ -27,13 +27,13 @@
 - **Two addresses, and the measurement is why**: a `file`-tier write purges the versions it outranks **at its own key**, so one address would let a settings commit reset the operator's exclusion pair (guide §5.1; interface §1 `ASM-L2-1`; persistence §9 P-3).
 - **A patch names one tier** — the durable members **or** `exclusion`; one naming both is refused as a value with no store call (interface §1 `ASM-L2-5`; ASM-2 below).
 
-## 3. The private helpers (never exported — the product is the whole surface)
+## 3. The private helpers of the record and exclusion addresses (never exported — the product is the whole surface; the third address's helpers are the retirement document's, §7)
 
 | helper | what it does | cite |
 |---|---|---|
 | `VALID_GROUPS` | the group set's **second live copy**, six members — `read`·`dispatch`·`graph`·`code`·`module`·`data` — re-homed here with the file, read at the **two** filter sites: the patch's `enabled` and the import's `enabled` | D-11, D-15; exception §2 E-1; the deleted `src/main/security-store.ts:87,122,339` |
 | `FIRST_RUN` | `{token:null, enabled:['read','dispatch']}`, no cap, no `entries` — the answer over no file and over every import failure arm | L1 §5; behaviour §1, §3 |
-| `SAFE_PAIR` | `{exclusion:'mcp-enabled', tier4:false}` — what a boot, a crash, a torn record and a corrupt file all resolve to, because the pair is `mem` | interface §1 `ASM-L2-2`; `src/main/main.ts:109-113` |
+| `SAFE_PAIR` | `{exclusion:'mcp-enabled', tier4:false}` — what a boot, a crash, a torn record and a corrupt file all resolve to, because the pair is `mem` | interface §1 `ASM-L2-2`; the gate's construction with its boot terminal in `src/main/main.ts` |
 | `detach(value)` · `newMap()` | the copy discipline both ways: arrays as real arrays, maps built with `Object.create(null)` so an entry named `__proto__` lands as an **own data property** and survives to the bytes and across a re-read; cycle-safe, each member read once | guide §10, §10.1; the deleted `src/main/security-store.ts:131-141,243-260` |
 | `admitGroups(list)` | first occurrence first, in the caller's own order, a non-group string dropped, never re-sorted into `VALID_GROUPS` order | interface §2 `A-5`; the deleted `src/main/security-store.ts:122,339` |
 | `toStored(record)` | the value that crosses: a **cleared member is written as its absence**, because the walk refuses `null`/`undefined` anywhere in a value | guide §10.1; persistence §4 |
@@ -50,9 +50,9 @@ createOperatorSettings({ userDataDir, journalLength }):
   filePath ← join(userDataDir, FILE_NAME)                                  · interface §2.1; D-13
   try store ← storeCreate({ journalLength: cap(…), listeners: [], filePath })
   catch caught → refusal ← refusalOf(caught, null); no instance stands      · guide §8.2
-  if an instance stands:
-      overlay ← RECORD_ADDRESS carries nothing ? importOnce(userDataDir) : nothing   · persistence §3
-  return the product over (store, overlay, refusal)
+  if an instance stands: overlay ← RECORD_ADDRESS carries nothing ? importOnce(userDataDir) : nothing   · persistence §3
+  appImport ← importAppStateOnce(userDataDir), or NO_IMPORT with no instance standing   · §7; D-25, D-43
+  return the product over (store, overlay, appImport, refusal)
 ```
 
 - **The construction creates the file exclusively, zero-length and empty where it is absent, and truncates nothing where it stands** — that is the store's act, not this module's (guide §9.1; interface §2.1; persistence §2).
@@ -97,11 +97,11 @@ write(patch):
 - **`enabled` is served in the caller's own order**, first occurrence first — the order row discriminates against a re-sort (interface §2 `A-5`; behaviour §2).
 - **A refusal leaves the record and the bytes exactly as they stood, mints no cursor and delivers nothing**, and its `reason` is the store's own status **verbatim under the open escape arm** — never narrowed to a spelling this surface does not name, and a sentence is authored here only for a refusal this module makes itself (interface §3; guide §9.4, §8.1; behaviour §5; ASM-6).
 
-## 7. The import-once path — six arms, one name, and the marker
+## 7. The import-once path — the record's six arms, its one name, and the marker
 
 ```
 importOnce(dir):
-  try text ← readFileSync(join(dir, RETIRED_NAME), 'utf8')      · D-19: the module's ONE fs call
+  try text ← readFileSync(join(dir, RETIRED_NAME), 'utf8')      · D-19: the FIRST of the module's TWO fs calls
   catch → nothing                                              · arms 1 and 5: absent, directory, unreadable
   try parsed ← JSON.parse(text) catch → nothing                · arm 3: unparsable
   if parsed is not a plain object → nothing                    · arm 4: an array, a string, a number, a boolean
@@ -112,7 +112,7 @@ importOnce(dir):
 ```
 
 - **Six arms, each answering without a throw**: absent, an object, unparsable bytes, a non-object, a directory or an unreadable file, and `entries` not a plain object — the last the one declared non-verbatim arm (interface §2.1; behaviour §3; the deleted `src/main/security-store.ts:112-142`).
-- **The marker is the absence of a record at the record address**, so there is no version member, no second written name and no repair of the retired file; **the retired name is read only until a record stands and never written, renamed, repaired or deleted**, its bytes standing as seeded (persistence §3; guide §9.1; D-19; L1 §5).
+- **The marker is the absence of a record at the record address**, so there is no version member, no second written name and no repair of the retired file; **the retired name is read only until a record stands and never written, renamed, repaired or deleted**, its bytes standing as seeded (persistence §3; guide §9.1; D-19; L1 §5). **The module's other `fs` call is the second import-once arm**, `importAppStateOnce` over the retired settings carrier — the same at-most-once read, writing no byte of it, and no third call exists in the file: its arms and its private helpers are `docs/L3/settings-carrier-retirement/design.md` §2.1/§2.2 and are cited here, never restated (D-43; persistence §4; D-25).
 - **Ingested values cross as data and not as an admission**: a `JSON.parse`d value is representable by construction, so no per-entry admission runs at boot (the deleted `src/main/security-store.ts:108`; guide §10.4).
 
 ## 8. The listener registry — one handle per subscription, per address

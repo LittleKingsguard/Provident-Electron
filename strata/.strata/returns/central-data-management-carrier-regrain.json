@@ -11,7 +11,7 @@
     "docs/L2/central-data/persistence.md sections 1, 7, 9",
     "docs/L2/central-data/behaviour.md section 8",
     "strata/brief.md section 2",
-    "strata/modules.json lines 73-83 (central-data, endpoints 15)",
+    "strata/modules.json — the `central-data` row (endpoints 15, D-28)",
     "strata/decisions.md D-11, D-13, D-16, D-19, D-22",
     "strata/records/central-data-management-unit.md",
     "strata/records/security-store-storeroom-unit.md",

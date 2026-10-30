@@ -1,7 +1,7 @@
 # L3 — `bundle-boot-seam`: the declared signatures and the landing sites
 
-- **Layer:** L3 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Artifact:** `l3-signatures-regrain`
-- **Status:** DECLARED NAMES AND STUBS ONLY — structure, pseudocode and guardrails are `design.md`; this file carries every name the implementation must expose or land, and the exact text it lands on (D-1 §4). Rev 2 carries L2's decided arm: the main emission is `--external:provident-storeroom` **in both build keys**, and the artifact that text produces is **not self-contained** — §3 states that requirement as `G-8` (`interface.md` §1, §5; `persistence.md` §3)
+- **Layer:** L3 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 3 · **Artifact:** `l3-signatures-regrain`
+- **Status:** DECLARED NAMES AND STUBS ONLY — structure, pseudocode and guardrails are `design.md`; this file carries every name the implementation must expose or land, and the exact text it lands on (D-1 §4). Rev 2 carries L2's decided arm: the main emission is `--external:provident-storeroom` **in both build keys**, and the artifact that text produces is **not self-contained** — §3 states that requirement as `G-8` (`interface.md` §1, §5; `persistence.md` §3). Rev 3 corrects the three offsets this file cited into `src/main/main.ts` to **site names** (D-41) and replaces its restated suite count with a cite of the table that owns it (D-26)
 - **Contract:** every name below is a name `docs/L2/bundle-boot-seam/interface.md` §1/§4/§5 or `docs/L1/bundle-boot-seam.md` §8 already declares — the `main` field, one emission arm in two keys, the entry's derivation and E-5's two harness constants. No name is added and none is dropped (`interface.md` §7 `A-1`..`A-5`; D-1)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `P-n` is `interface.md` §2's probe answer on this seat; the two harness files are read and never edited (D-5, D-3)
 
@@ -18,10 +18,10 @@
 | Artifact | Module system its name carries | Named by | Site |
 |---|---|---|---|
 | `dist/main/main.mjs` | **ESM** | `package.json`'s `main` field | E-1 |
-| `dist/main/preload.cjs` | **CJS** | the entry's own `join(here, 'preload.cjs')`, `src/main/main.ts:459` | unmoved (ASM-L2-5) |
+| `dist/main/preload.cjs` | **CJS** | the entry's own `join(here, 'preload.cjs')` — the window's `webPreferences.preload` site in `src/main/main.ts` | unmoved (ASM-L2-5) |
 | `dist/main/standalone.mjs` | ESM | no field: spawned by path (L1 §6 B-7) | unmoved (ASM-L2-6) |
 | `dist/main/battery-host.mjs` | ESM | as above | unmoved (ASM-L2-6) |
-| `dist/renderer/renderer.js` + `index.html` | browser ESM | the HTML entry the window loads, `src/main/main.ts:466-467` | unmoved (ASM-L2-6) |
+| `dist/renderer/renderer.js` + `index.html` | browser ESM | the HTML entry the window loads — the `rendererHtml` join beside the preload join in `src/main/main.ts` | unmoved (ASM-L2-6) |
 
 The set is exactly five artifacts, and `dist/main/main.cjs` is **retired, never emitted beside them** (`design.md` §4 `G-6`; `persistence.md` §1). The first is the only one that carries a package at all, and it carries it as an **`import` of a bare specifier**, never as bytes (`interface.md` §1; `persistence.md` §1).
 
@@ -62,11 +62,11 @@ import { fileURLToPath } from 'node:url'           // new
 const here = dirname(fileURLToPath(import.meta.url))
 ```
 
-- **That is the landed text, verbatim and unannotated**: `const here = dirname(fileURLToPath(import.meta.url))` is the line `U-7` matches, so a `const here: string = …` spelling is **not** the declared text — the value is inferred, and the row reads the expression rather than a type declaration (`U-7`; `interface.md` §4, `src/main/main.ts:29`).
-- **The value must equal the directory holding the emitted entry**, in the exact form `__dirname` held — no trailing separator — so `:459`'s preload join and `:466`'s renderer join keep their targets unchanged (`design.md` §3; `tests/unit/bundle-boot-seam/derivation.test.ts` `U-8`).
+- **That is the landed text, verbatim and unannotated**: `const here = dirname(fileURLToPath(import.meta.url))` is the line `U-7` matches, so a `const here: string = …` spelling is **not** the declared text — the value is inferred, and the row reads the expression rather than a type declaration (`U-7`; `interface.md` §4; the `here` binding's one site in `src/main/main.ts`; D-41).
+- **The value must equal the directory holding the emitted entry**, in the exact form `__dirname` held — no trailing separator — so the preload join and the renderer join in `src/main/main.ts` keep their targets unchanged (`design.md` §3; `tests/unit/bundle-boot-seam/derivation.test.ts` `U-8`).
 - **`here` is bound once and consumed by exactly two `join(here, …)` call sites**, which is how "no boot step moved" is pinned at this grain (L1 §5; `U-7`).
 - **The one rejected spelling is not a stub alternative any more**: `fileURLToPath(new URL('.', import.meta.url))` answers the same directory, but it brings a trailing separator and is refused by the same row, so L1 settled §3's collision in the landed direction — `dirname` beside `join` (`design.md` §3, §8 `ASM-L3-2`).
-- **Nothing else in the file's text is this unit's**: the CJS comment standing where the binding stood is replaced, not annotated, and `:459`/`:466` are not edited (`interface.md` §4, ASM-L2-5; D-18).
+- **Nothing else in the file's text is this unit's**: the CJS comment standing where the binding stood is replaced, not annotated, and the two `join(here, …)` sites are not edited (`interface.md` §4, ASM-L2-5; D-18).
 
 ## 5. Names L4 must not mint
 
@@ -95,6 +95,6 @@ npm run typecheck:tests
 npm run build
 ```
 
-- **The four legs are the floor, and three of them cannot see a bundle**: `npm run typecheck`, `npm run typecheck:tests` and `npm run build` stop at source, types and the artifacts' existence; the fourth, `npm test`, **does** see one, because vitest collects `tests/e2e/bundle-boot-seam/` (`vitest.config.ts:5`) — the floor reaches a spawned bundle and the stdio/HTTP transports it opens. That narrowing is the boot unit's, not a repeal of the shim rule: this is one battery among the suite's 118 files, and even its green is a **process green, never a rendered-surface one** — so a green floor is still not a green seam (`brief.md` §6, D-27; `docs/L1/bundle-boot-seam.md` §7).
-- **`npx vitest run tests/integration/bundle-boot-seam` is the narrower command for L2's own rows, which `npm test` collects too** (`vitest.config.ts:5`): it is L2's and green at this head — all five rows, `A-1`..`A-3` and `A-4` on E-1's and E-2's landing, `A-5` on `harness`'s E-5, which that row has filed — so no row of it is this unit's L4's to write, and an L4 that reaches `A-5` by editing `scripts/` writes outside its row (`design.md` §6; `interface.md` §7; `modules.json`'s `harness` row; D-3).
+- **The four legs are the floor, and three of them cannot see a bundle**: `npm run typecheck`, `npm run typecheck:tests` and `npm run build` stop at source, types and the artifacts' existence; the fourth, `npm test`, **does** see one, because vitest collects `tests/e2e/bundle-boot-seam/` (`vitest.config.ts`'s `test.include` row) — the floor reaches a spawned bundle and the stdio/HTTP transports it opens. That narrowing is the boot unit's, not a repeal of the shim rule: **this is one battery among the suite's files, and the count is not restated here** — `strata/brief.md` §6 owns it (D-26) — and even its green is a **process green, never a rendered-surface one** — so a green floor is still not a green seam (`brief.md` §6, D-27; `docs/L1/bundle-boot-seam.md` §7).
+- **`npx vitest run tests/integration/bundle-boot-seam` is the narrower command for L2's own rows, which `npm test` collects too** (`vitest.config.ts`'s `test.include` row): it is L2's and green at this head — all five rows, `A-1`..`A-3` and `A-4` on E-1's and E-2's landing, `A-5` on `harness`'s E-5, which that row has filed — so no row of it is this unit's L4's to write, and an L4 that reaches `A-5` by editing `scripts/` writes outside its row (`design.md` §6; `interface.md` §7; `modules.json`'s `harness` row; D-3).
 - **`tests/e2e/bundle-boot-seam/` is L1's and needs a `DISPLAY`**: its rows spawn Electron and are not this layer's green (`docs/L1/bundle-boot-seam.md` §6, L1 §9 ASM-1).

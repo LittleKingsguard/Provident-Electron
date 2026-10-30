@@ -97,9 +97,12 @@ async function main(): Promise<void> {
   // ═══ `A-1`'S RULING (`docs/specs/tier4-arbitrary-storage.md` `§0A` item 1, AMENDED
   // `2026-10-11`) — THE ONE BOOLEAN'S HOME IS THE STATIC HOLDER, AND THIS MODULE HOLDS NO READER
   // AND NO WRITER OF IT ═══
-  // The as-filed named-reader option is WITHDRAWN: nothing is constructed before the record is
-  // read, so the LANDED boot window `construction → boot read → gate → flip → mcp.start() → window`
-  // stands unmoved in kind. The boot read below answers the INSTANCE'S OWN record, whose `mem`
+  // The as-filed named-reader option is WITHDRAWN: the surface is constructed and then read through
+  // its own `read()`, so no reader is constructed ahead of the read — and the LANDED boot order
+  // stands unmoved in kind, the order the code below performs: `createSettingsSurface(...)`, then
+  // `settingsSurface.read()`, then the `SecurityGate` construction, then the flip
+  // `settingsSurface.attach(mcp)`, then `new BrowserWindow(...)` with its `win.loadFile(...)`, and
+  // `await mcp.start()` LAST. The boot read below answers the INSTANCE'S OWN record, whose `mem`
   // exclusion row boots to its declared SAFE pair, so the read is legal without any exception, and
   // `main` supplies STATE and never takes the DECISION (`F-11`).
   //
@@ -447,10 +450,10 @@ async function main(): Promise<void> {
   // LOADED the renderer (`win.loadFile(...)`, below) BEFORE this flip, so a renderer turn in that
   // gap could take its carrier read with the holder still `STORE-OPEN` and paint the INVERSE of the
   // steady pair with nothing re-sourcing it. The close therefore MOVES AHEAD of the window's
-  // creation/load; `D-19`'s order `construction → boot read → gate → flip → mcp.start()` is
-  // PRESERVED UNMOVED (the boot read still precedes the flip, and the enable below still follows
-  // it), and nothing else in the boot is re-ordered. From here the two axes move together, and
-  // NOTHING ELSE IN THIS FILE RE-PATCHES OR RE-TRANSITIONS THE GATE.
+  // creation/load; `D-19`'s order `construction → boot read → gate → flip → window → renderer
+  // load → mcp.start()` is PRESERVED UNMOVED (the boot read still precedes the flip, and the
+  // enable below still follows it), and nothing else in the boot is re-ordered. From here the two
+  // axes move together, and NOTHING ELSE IN THIS FILE RE-PATCHES OR RE-TRANSITIONS THE GATE.
   settingsSurface.attach(mcp)
 
   const win = new BrowserWindow({

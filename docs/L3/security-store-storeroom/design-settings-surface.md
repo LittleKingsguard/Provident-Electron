@@ -1,7 +1,7 @@
 # L3 — `src/main/settings-surface/`: the surface
 
-- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Artifact:** `security-store-storeroom-l3-design`
-- **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for one owner; the declared surface is `signatures.md` §3, the contract is `docs/L2/security-store-storeroom/interface.md` §5/§5.1 and `behaviour.md` §9/§10 (rev 2)
+- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 3 · **Artifact:** `security-store-storeroom-l3-design`
+- **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for one owner; the declared surface is `signatures.md` §3, the contract is `docs/L2/security-store-storeroom/interface.md` §5/§5.1 and `behaviour.md` §9/§10. §2-§6 design the **four bridge verbs**; the app-state pair `state()`/`commit()` is E-3's and is designed in `docs/L3/settings-carrier-retirement/design.md` §3, cited here and never restated (D-43; rev 3)
 - **Charter:** D-17 the surface is a separate module, seeing the instance through read, write and listeners alone · D-18 one operator-only reference, tested by absence · D-14 its `N` counts both sides
 - **Ceiling:** 150 lines, class max (D-1) · `guide §n` is `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
 
@@ -9,7 +9,7 @@
 
 | what | the decision | cite |
 |---|---|---|
-| files | **one**: `src/main/settings-surface/index.ts` — the factory, the four verbs, and the receipt types E-2 moves here | interface §5; exception §2 E-2 |
+| files | **one**: `src/main/settings-surface/index.ts` — the factory, the **six** verbs (the four bridge verbs designed below and E-3's app-state pair), and the receipt types E-2 moves here | interface §5; exception §2 E-2 |
 | the instance | constructed **here**, once, and held here — the operator path's single reference | interface §5; D-18; `ASM-L2-8` |
 | held state | the sink, the one subscription's withdrawal and the group list this module last applied to the gate (§6) — **never a copy of the record** | interface §5; ASM-1 |
 | the gate edge | `attach` and the listener body, and no third site: no call re-patches, polls or re-reads at boot order | interface §5; D-17; L1 §4 |
@@ -82,7 +82,7 @@ attach(sink):
   sink.applyExclusion(record.exclusion)                      · the boot terminal 'mcp-enabled'; a self-transition is lawful
 ```
 
-- **`attach` is where the boot terminal lands**: before it the gate is untouched, after it the gate's groups equal the record's and its exclusion is the pair the instance booted to; the landed order — construction, boot read, flip, `mcp.start()`, window — survives in kind (interface §5; L1 §7 C-3; behaviour §10).
+- **`attach` is where the boot terminal lands**: before it the gate is untouched, after it the gate's groups equal the record's and its exclusion is the pair the instance booted to. **The boot's order is L1's to state and is cited, not restated** — the `C-3` row of `docs/L1/security-store-storeroom.md` §7 (D-43). Measured at this head the window is created and its renderer loaded **before** `await mcp.start()` (the `new BrowserWindow(` / `win.loadFile(` pair ahead of `mcp.start()` in `src/main/main.ts`), and `attach`'s flip precedes both (interface §5; L1 §7 `C-3`; behaviour §10).
 - **`patchOf(record)` is the one composer of the sink's patch, and it carries `token` only while a non-empty string stands** (ASM-7): the gate admits that member as a non-empty string wherever it is **present** and rejects the **whole patch** — groups included — for any other value, so a `token:null` would leave `attach`'s boot patch and every later group patch silently unapplied on exactly the first-run profile, whose default token is `null` (`src/main/security.ts:176-179`, `:94-96`; interface §2; behaviour §1; exception §2 E-2, E-3, §6).
 - **The outcome is the gate's groups equal the record's after `attach` and after each committed write**, and the one thing this sink cannot carry is a **cleared** token: the declared patch has no member that expresses a clear and E-2/E-3 licence none, so the gate keeps the token it stood with while its groups still land (interface §5; behaviour §10; exception §2 E-2, E-3, §6; ASM-7).
 - **Subscribe before the first patch**, so a commit landing between the two acts is delivered rather than lost (D-17; guide §6.1).
@@ -111,7 +111,7 @@ onDelivery(address):
 
 ## 7. Guardrails for L4
 
-- **The four verbs of the declared surface are the whole of it** — `read`, `set`, `transition`, `attach` — plus the factory and the types; no fifth member and no second export path (interface §5; `interface.md` §7 `A-4`).
+- **The declared surface is six verbs and no more** — `read`, `set`, `transition`, `attach` designed here, plus E-3's `state`/`commit` — beside the factory and the types; no seventh member and no second export path (interface §5; `interface.md` §7 `A-4`; `docs/L3/settings-carrier-retirement/design.md` §3).
 - **No rendered element and no MCP drive**: `window.provident` gains no member, its seven top-level members stand, and the three security routes keep their declared answers (D-18; L1 §6 ISO-4; interface §5).
 - **No second instance, no second `filePath`, no second `userDataDir`-derived name**: one instance per surface, for the process's life (persistence §8; D-16; D-18).
 - **No `node:fs`, no `electron`, no `ipcMain`, no `provident-storeroom` import**: the instance is the only seam, and the three channel bodies are delegated to, never registered here (interface §5; exception §2 E-3; D-18).

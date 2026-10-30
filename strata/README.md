@@ -58,3 +58,9 @@ node "../Agent Harness/strata/state/strata-state.mjs" strata show <unit>
 ```
 
 Exit 0 means every ceiling, citation, quarantine, provenance and shape check passed; a failing check fails the layer.
+
+**Neither instrument lives in this repository.** Both ship with the adjacent `../Agent Harness/` checkout,
+which is not a dependency of this repo — so `scripts/` holds only this tree's own two instruments
+(`strata-walkthrough.mjs`, `strata-marks.mjs`), and a fork must supply the lint and the state machine or
+lose the loop's ceilings and its state transitions. It is the same class of fact as the packaged build's
+(`docs/L3/bundle-boot-seam/design.md` §4 `G-8`), and it is stated once, here (D-44).

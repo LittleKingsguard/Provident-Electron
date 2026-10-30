@@ -1,16 +1,16 @@
 # L3 — `security-store-storeroom`: the declared signatures and the file layout
 
-- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Artifact:** `security-store-storeroom-l3-design`
+- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 3 · **Artifact:** `security-store-storeroom-l3-design`
 - **Status:** DECLARED SURFACE AND FILE LAYOUT ONLY — structure, private helpers, pseudocode and guardrails are `design.md` (the instance) and `design-settings-surface.md` (the surface), split by owner at the class ceiling (D-1)
-- **Contract:** every symbol below is a symbol `docs/L2/security-store-storeroom/interface.md` §2, §2.1, §5 or §5.1 declares; no name is added and none is dropped (interface §7 `A-4`; D-1)
+- **Contract:** every symbol below is an **export the tree carries at this head** — `src/main/operator-settings/index.ts`'s exports and `src/main/settings-surface/index.ts`'s, read off those files — declared to `docs/L2/security-store-storeroom/interface.md` §2/§2.1 and §5/§5.1 where that document settles them. Two groups are declared here **beyond those code blocks and are named as such**: the app-state types and the two app-state verbs per side, which `docs/L2/security-store-storeroom/interface.md` counts in its own `N` bullets and `A-4` but does not spell in §2's and §5's declarations, and whose contract is `docs/L3/settings-carrier-retirement/design.md` §2-§3 (L1 `settings-carrier-retirement` §2, §3 E-2/E-3; interface §7 `A-4`; D-1, D-43). **Nothing either file exports is dropped below, and no name is declared that neither the tree nor those rows carries** (D-1)
 - **Ceiling:** 150 lines, class max (D-1) · `guide §n` is `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
 
 ## 1. The file layout — two subtrees, one file each
 
 | path | holds | cite |
 |---|---|---|
-| `src/main/operator-settings/index.ts` | the instance: the factory, its product, `VALID_GROUPS`, the two addresses, the import path, the listener registry | interface §2, §2.1; D-16 |
-| `src/main/settings-surface/index.ts` | the surface: the factory, its four verbs, the receipt types E-2 moves here, the sink shape | interface §5, §5.1; exception §2 E-2 |
+| `src/main/operator-settings/index.ts` | the instance: the factory, its product, `VALID_GROUPS`, the **three** addresses (record, exclusion, app-state — D-25), the two import-once arms, the listener registry | interface §2, §2.1; D-16 |
+| `src/main/settings-surface/index.ts` | the surface: the factory, its six verbs, the receipt types E-2 moves here, the sink shape | interface §5, §5.1; exception §2 E-2 |
 | `src/main/security-store.ts` | **deleted**, not emptied — no shim, no dual write, no re-export left standing | D-16; exception §2 E-1, §5 |
 
 No third file is created under either subtree, and neither module writes outside its own (interface §0; `modules.md` §1; D-3).
@@ -48,12 +48,23 @@ export type OperatorSettingsReceipt =
 
 export type OperatorSettingsListener = (address: OperatorSettingsAddress) => void
 
+export interface AppStateRow { name: string; value: unknown }
+export type AppStateLegacy = 'absent' | 'imported' | 'corrupt' | 'recorded'
+export interface AppStateAnswer {
+  rows: AppStateRow[]
+  legacy: AppStateLegacy
+  unrepresentable: string[]
+  storage: 'standing' | 'unreachable'
+}
+
 export interface OperatorSettingsOptions { userDataDir: string; journalLength?: number }
 
 export interface OperatorSettings {
   read(): OperatorSettingsRecord
   write(patch: OperatorSettingsPatch): OperatorSettingsReceipt
   subscribe(listener: OperatorSettingsListener): () => void      // answers the withdrawal
+  readAppState(): AppStateAnswer                                  // the third address, no listener (D-25)
+  writeAppState(rows: readonly AppStateRow[]): OperatorSettingsReceipt
 }
 
 export function createOperatorSettings(options: OperatorSettingsOptions): OperatorSettings
@@ -62,7 +73,8 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
 - **Six package exports are called** — `storeCreate`, `read`, `write`, `listen`, `register`, `unlisten` — and `readLiteral`, `delete`, `rollback` and the four constraint members are **not** (interface §2; D-12's posture unmoved; guide §3.1).
 - **`N = 12`**, matching the map row: 6 package exports called + 6 value names exposed (the factory, its three verbs, and the app-state pair `readAppState`/`writeAppState` the retirement added — `docs/L1/settings-carrier-retirement.md` §2, §3 E-2) — 6 + 6 = **12** (interface §2; the `operator-settings` row of `strata/modules.json`, `endpoints` 12; D-14, D-28). The cap follows from the row and is never declared here (`platform.md` §4).
 - **`write`'s fourth position is never supplied**, so the class-test `TypeError` arm is unreachable and the refusal vocabulary is the store's alone (interface §2; guide §3.3).
-- **`subscribe` answers its own withdrawal** rather than exporting a fourth verb, so the module's own surface is four value names and no more (interface §2; `interface.md` §7 `A-4`).
+- **`subscribe` answers its own withdrawal** rather than exporting a fourth verb, so the module's own surface is **six value names** — the factory and five verbs — and no more (interface §2; `interface.md` §7 `A-4`).
+- **The app-state pair is the third address's whole surface, and it is the retirement unit's**: `readAppState`/`writeAppState` are one store read or one store write each, carry the sibling `OperatorSettingsReceipt` verbatim, and bind **no listener**, so `subscribe` stays the two-address subscription (D-25; `docs/L1/settings-carrier-retirement.md` §2, §3 E-2; `design.md` §2). Their arm-by-arm design is that unit's document and is cited here, never restated (D-43).
 - **`unlisten` is the withdrawal and `removeListener` is never called**: it is a seventh export, so calling it would move `N` and the map's row, which is L1's to re-declare and not this layer's — and the module binds **one handle per address**, so `unlisten` is the arm the package silences (interface §2; `design.md` §8 `ASM-7`; guide §6.2; P-6).
 
 ## 3. `src/main/settings-surface/index.ts` — the declared surface
@@ -91,12 +103,27 @@ export type SettingsTransitionAnswer =
   | { applied: true; state: ExclusionState }
   | { applied: false; state: ExclusionState; reason?: 'malformed-state' }
 
+export type SettingsAppStateRow = AppStateRow
+export type SettingsLegacyAnswer = AppStateLegacy
+export interface SettingsAppStateAnswer {
+  rows: SettingsAppStateRow[]
+  legacy: SettingsLegacyAnswer
+  unrepresentable: string[]
+  storage: 'standing' | 'unreachable'
+}
+export type SettingsCommitAnswer =
+  | { status: 'committed' }                       // no ordinal: the bridge answer has none (interface §3)
+  | { status: 'refused'; reason: string; message: string
+      address: readonly (string | number)[] | null }
+
 export interface SettingsSurface {
   read(): SettingsReadAnswer
   set(patch: { token?: string | null; groups?: string[]; disable?: string[]
     maxJournalLength?: number | null }): SettingsSetAnswer
   transition(state: unknown): SettingsTransitionAnswer
   attach(sink: SettingsGateSink): void
+  state(): SettingsAppStateAnswer                 // the instance's answer, handed on, never recomposed
+  commit(rows: readonly SettingsAppStateRow[]): SettingsCommitAnswer
 }
 
 export function createSettingsSurface(options: { userDataDir: string; journalLength?: number }): SettingsSurface
@@ -104,15 +131,16 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
 
 - **`N = 12` and `19`**: `operator-settings` is 6 package exports called + 6 value names exposed (**12**); the surface is three bridge routes with both sides counted (**6**) + seven value names exposed to `main.ts` (the factory, `read`, `set`, `transition`, `attach`, and the retirement's `state`/`commit`) + six value names consumed from `operator-settings` (`createOperatorSettings`, `read`, `write`, `subscribe`, `readAppState`, `writeAppState`) — 6 + 7 + 6 = **19** (interface §5; the `operator-settings` and `settings-surface` rows of `strata/modules.json`, `endpoints` 12 and 19; `docs/L1/settings-carrier-retirement.md` §2, §3 E-3; D-14, D-28).
 - **`main.ts` is the only caller of `createSettingsSurface` in `src/**`**, and the instance's single construction lives inside this module (interface §5 `ASM-L2-8`; D-18).
-- **The transition's answer carries no receipt member**; `write` is declared on `set` alone, exactly as the bridge declares it (interface §5.1 `ASM-L2-4`; `src/main/preload.ts:63-64`).
+- **The transition's answer carries no receipt member**; `write` is declared on `set` alone, exactly as the bridge declares it (interface §5.1 `ASM-L2-4`; the `set` and `setExclusion` declarations in `src/main/preload.ts`'s `window.provident.security` block).
 - **`SettingsGateSink` is structural**, so `ProvidentMcpServer` satisfies it without a second declaration, and the surface names no `ToolGroup` (interface §5; D-18).
-- **`SettingsGateSink` is not widened, and no member of it is added to express a cleared token**: the patch is composed so that `token` is **present only while a non-empty string stands**, because the gate rejects the **whole patch** — `groups` included — wherever the member is present and is not one (`src/main/security.ts:176-179`; interface §5; exception §2 E-2, E-3; `design-settings-surface.md` §5 `ASM-7`).
+- **`SettingsGateSink` is not widened, and no member of it is added to express a cleared token**: the patch is composed so that `token` is **present only while a non-empty string stands**, because the gate rejects the **whole patch** — `groups` included — wherever the member is present and is not one (the gate's patch admission in `src/main/security.ts`; interface §5; exception §2 E-2, E-3; `design-settings-surface.md` §5 `ASM-7`).
+- **The surface's own file effects are the instance's alone, and its two app-state verbs are delegations**: `state()` hands the instance's answer on without recomposing a member and `commit(rows)` is one `writeAppState` mapped to the channel's answer — the pair's design is `docs/L3/settings-carrier-retirement/design.md` §3 and is cited, not restated here (D-43; `docs/L1/settings-carrier-retirement.md` §3 E-3).
 
 ## 4. Internal names — declared so L4 mints nothing extra
 
 | module | never exported | cite |
 |---|---|---|
-| `operator-settings` | `VALID_GROUPS` · `FIRST_RUN` · `SAFE_PAIR` · `RECORD_ADDRESS` · `EXCLUSION_ADDRESS` · `FILE_NAME` · `RETIRED_NAME` · `detach` · `newMap` · `admitGroups` · `toStored` · `fromStored` · `importOnce` · `receiptOf` · `refusalOf` · `cap` · `seq` · `handleFor` · `withdraw` | D-15; exception §2 E-1; `design.md` §3, §8 |
+| `operator-settings` | `VALID_GROUPS` · `FIRST_RUN` · `SAFE_PAIR` · `RECORD_ADDRESS` · `EXCLUSION_ADDRESS` · `APP_STATE_ADDRESS` · `FILE_NAME` · `RETIRED_NAME` · `RETIRED_SETTINGS_NAME` · `NO_IMPORT` · `issuance` · `plain` · `detach` · `newMap` · `admitGroups` · `toStored` · `fromStored` · `importOnce` · `importAppStateOnce` · `missing` · `representable` · `recordedAt` · `fromAppState` · `toAppState` · `receiptOf` · `refusalOf` · `cap` · `seq` · `handleFor` · `withdraw` (the app-state arm's design is the retirement document's, `docs/L3/settings-carrier-retirement/design.md` §2.1/§2.2, cited not restated, D-43) | D-15, D-25; exception §2 E-1; `design.md` §3, §8 |
 | `settings-surface` | `TIER4_CLOSED_REFUSAL` · `onDelivery` · `patchOf` · `appliedGroups` · `off` · `sink` (everything else is a local inside a verb) | interface §5; `design-settings-surface.md` §2-§6 |
 
 ## 5. What neither module declares
