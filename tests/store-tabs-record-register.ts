@@ -4050,7 +4050,7 @@ export function registerRows(): readonly RegisterRow[] {
             expect(FROZEN_SPAN_PREFIX).not.toBe('5c0c1a97')
           } },
         { name: '(5) static reading — no new `scripts` key (`L-1`’s set-equality reading)', drive: (): void => {
-            const declared = new Set(['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp'])
+            const declared = new Set(['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp', 'panes'])
             const pkg = JSON.parse(bytesAt(fileURLToPath(new URL('./../package.json', import.meta.url))) ?? '{}') as { scripts?: Record<string, string> }
             const keys = Object.keys(pkg.scripts ?? {})
             const extra = keys.filter((k) => !declared.has(k))
