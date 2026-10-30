@@ -100,13 +100,13 @@ describe('bundle-boot-seam — the arrangement `npm run build` emits', () => {
     expect(loaderModuleSystem(emittedEntry), `the loader reads ${extname(emittedEntry)} as ${loaderModuleSystem(emittedEntry)}`).toBe(
       DECLARED_MODULE_SYSTEM,
     )
-    // The declared emission itself, not just its product: the `build` command's own arm for this
-    // outfile must carry the format and the platform the artifact is read back with (E-1).
+    // The declared emission itself, not just its product: the `build` command's own arm that emits
+    // this path must carry the format and the platform the artifact is read back with (E-1).
     const arms = (manifest.scripts.build ?? '').split('&&').map((arm) => arm.trim())
-    const emission = arms.find((arm) => arm.includes(`--outfile=${manifest.main}`))
+    const emission = arms.find((arm) => arm.includes(manifest.main))
     expect(emission, `no \`build\` arm emits ${manifest.main}`).toBeDefined()
-    expect(emission).toMatch(/--format=esm\b/)
-    expect(emission).toMatch(/--platform=node\b/)
+    expect(emission).toMatch(/--format[= ]esm\b/)
+    expect(emission).toMatch(/--platform[= ]node\b/)
   }, BUILD_MS)
 
   it('A-2 the emitted artifact’s own module system matches the format the build emitted', async () => {

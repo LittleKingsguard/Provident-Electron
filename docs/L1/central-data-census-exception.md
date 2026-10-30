@@ -13,9 +13,8 @@
 
 D-11 puts the tool census in the same unit that registers the tools, and D-15 fixes where that move happens: the live
 tree only, never the archived corpus. Those tools are registered from `src/main/mcp-server.ts` and gated from
-`src/main/security.ts`, and both are claimed by the `mcp-surface` row, not by `central-data`
-(`strata/modules.json:3-32,73-83`; D-11, D-15) — so this unit cannot execute D-11 without touching another module's
-paths, and `modules.md` §1 forbids a module agent doing that silently.
+`src/main/security.ts`, and both paths stand on the `mcp-surface` row of `strata/modules.json`, not on `central-data`
+(D-11, D-15) — so this unit cannot execute D-11 without touching another module's paths, and `modules.md` §1 forbids a module agent doing that silently.
 
 **Decision.** One **declared cross-module exception**, enumerated by path in §2, with a named writer per row in §3 and
 a closed set of moved numbers in §4: writes on the stated paths for this unit and no others, not renewed, moving no
@@ -25,8 +24,9 @@ module's declared surface other than the census it names (D-4's precedent, D-11,
 the sixth `provident-storeroom` export that count named, `register`, has no call site — the package publishes no route
 by which a caller restricted to `register` observes a change — so the surface consumed is 5 tools + 5 bridge routes
 answered + 5 exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`), measured by this unit's L2
-examiner at `57c5825` (`strata/modules.json:82`; D-14, `strata/platform.md` §4). The cap follows: `50 + 10×15 = 200`,
-and `mcp-surface` keeps `30` — 22 tools + 3 resources + the five `data` tools it registers and gates (D-11).
+examiner at `57c5825` (the `central-data` row of `strata/modules.json`; D-14, `strata/platform.md` §4). The cap
+follows: `50 + 10×15 = 200`, and `mcp-surface` keeps `30` — 22 tools + 3 resources + the five `data` tools it
+registers and gates (D-11).
 
 ## 2. The exception, by path (E-1 census · E-2 rows · E-3 composition)
 
@@ -123,7 +123,7 @@ same finding read backwards.
   a second module's contract through one gate (D-1). D-22 made it the `settings-carrier-retirement` unit, whose L1 §3
   and §4 are the live declaration; C-3's rows move only if the store's file reddens them (D-13, D-19, D-22).
 - **Parked: nothing else.** The five tools, their five routes, the store's file, the read-only journal and the sixth
-  group are claimed paths in `strata/modules.json:73-83` (D-11, D-12).
+  group are claimed paths on the `central-data` row of `strata/modules.json` (D-11, D-12).
 
 ## 6. How the exception is checked
 

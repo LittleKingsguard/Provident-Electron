@@ -18,7 +18,7 @@ Seven observables and no eighth: the arrangement changes **when a process exists
 | the instance's own file in a scratch profile | `src/main/operator-settings/index.ts:405` | nothing — the file is written by the store the ESM artifact now constructs (L1 §4) |
 | the scratch profile the boot is pinned to | `src/main/main.ts:82-84`, `scripts/electron-spawn.mjs:362` | nothing — the pin is argv, not module scope |
 
-- **The eighth thing the arrangement adds is a silence, and it is the point**: the `ERR_INVALID_ARG_VALUE` of P-1 and the `ReferenceError` of P-3 are both published **at module load**, so the observable set above either exists in full or is replaced by one reason-bearing line (`behaviour.md` §4, `examiner.md` §2).
+- **What the arrangement adds is a silence, and it is the point**: the `ERR_INVALID_ARG_VALUE` of P-1 and the `ReferenceError` of P-3 are both published **at module load**, so the observable set above either exists in full or is replaced by one reason-bearing line (§4, `examiner.md` §2).
 
 ## 2. The boot order, which the arrangement does not move (L1 §5)
 

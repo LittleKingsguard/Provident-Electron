@@ -2,30 +2,34 @@
 
 - **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3
 - **Replaces** rev 2 as filed (`git show e103d9d:docs/L1/central-data-management.md`), and rev 1 behind it (`git show 50be1cb:docs/L1/central-data-management.md`); git is the history (D-1, D-2). The four answers are D-11..D-14, and rev 1's `ASM-7` ("no new surface") is refuted by D-11 and survives nowhere in this document (D-11). §5's S-10 and §6's rendered-surface boundary state one ruling, ASM-12, and agree with the tree at this head (D-11, D-12)
-- **Status:** DESIGN — the module map is filed at `strata/modules.json`; nothing below this layer is admitted (D-7)
+- **Status:** LANDED — the map is filed at `strata/modules.json`, the `data` group is the landed surface and the composition site passes the module (§1, §3), while the rendered pane stays owed to a later unit (§5 S-10, §6 ASM-12; D-7, D-11)
 - **Inputs:** `strata/brief.md` §5/§6, `strata/decisions.md` D-1..D-14 (D-5, D-7, D-10, D-11, D-12, D-13, D-14
   load-bearing), `strata/platform.md` §4, `strata/modules.md` §3, the tree at this head
 - **Ceiling:** 150 lines (class max) — at the ceiling split by owner, never append (D-1, D-2)
 
 ## 1. What this unit is
 
-A central data management system over `provident-storeroom`, *imported and inert* today: the seam constructs a
-store and hands it back, persisting, exposing and rendering nothing (`src/main/storeroom.ts:9-21,45-75`; D-7). The app
-already has a data path it does not call a store — `<userData>/provident-settings.json`, a `schemaVersion`-stamped
-projection of `file.*` rows, read at most once and never written again and re-served at each realm's boot hand-off
+A central data management system over `provident-storeroom`, **landed rather than inert**: `src/main/data/` holds the
+module — `surface.ts` the five operations' one answer site, over `store.ts`, `journal.ts`, `mapper.ts` and `args.ts` — the
+five `provident.data.*` tools stand in `ALL_TOOLS` and in the built `dist/main/main.cjs`, and the composition site
+passes `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })` (`src/main/main.ts:257`;
+`src/main/mcp-server.ts:602-606`; D-7, D-11). The module renders no surface and mints no graph node — that ruling
+stands (§6, ASM-12; D-11). The app already has a data path it does not call a store — `<userData>/provident-settings.json`,
+a `schemaVersion`-stamped projection of `file.*` rows, read at most once and never written again and re-served at each
+realm's boot hand-off
 (`docs/L1/settings-carrier-retirement.md §3`). The unit is the join of the two: **one authority for the app's data**, whose
 durability is the crossing that already exists and whose agent-facing face is a sixth tool group (D-11). The store
 journals and persists on its own on-disk shape, and nothing operator-visible reverses it (D-12, D-13). It is not a
 package change (D-5).
 
-## 2. The module map (filed in `strata/modules.json`; 20 modules, each path claimed once)
+## 2. The module map (filed in `strata/modules.json` — a row per module, every path claimed once)
 
-`mcp-surface` **30** · `app-shell` 7 · `operator-settings` 12 · `settings-surface` 19 · `central-data` **15**
-*(new)* · `producing-runtime` 17 · `graph-store` 13 · `renderer-wiring` 22 · `module-system` 7 ·
+`mcp-surface` **30** · `app-shell` 7 · `bundle-boot-seam` 12 · `operator-settings` 12 · `settings-surface` 19 ·
+`central-data` **15** *(new)* · `producing-runtime` 17 · `graph-store` 13 · `renderer-wiring` 22 · `module-system` 7 ·
 `secure-panels` 7 · `store-rederive` 10 · `interaction` 11 · `panes-layout` 10 · `hosts` 4 · `chrome` 9 ·
-`focus-model` 4 · `app-envelope` 7 · `ipc-contract` 8 · `harness` 11 · `demo-panes` 0 (D-7, D-14).
+`focus-model` 4 · `app-envelope` 7 · `ipc-contract` 8 · `harness` 11 · `demo-panes` 0 (D-7, D-14, D-27).
 
-**Four rows moved, and this unit's census is one of them.** `mcp-surface` 25 → 30: 22 tools + 3 resources + the five `data` tools it registers and gates (D-11). `central-data` 7 → **15** under D-14's convention (the surface a module *exposes or consumes*): 5 tools exposed + 5 bridge routes answered + 5 `provident-storeroom` exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`) — `rollback` is out (D-12), `register` has no call site, and the seam's whole 14-member census is a version pin, not a called surface (ASM-5; exception §1). `operator-settings` 5 → 12 and the new `settings-surface` row at 19 arrived with the rebuild and the carrier retirement, not with this unit (D-16, D-17, D-22). The edges this unit turns on: `central-data` ← `app-shell` (the crossing) → `graph-store` (`hydrate(rows)`/`crossing.put(row)`), and `central-data` → `mcp-surface` (the group, registered and gated in `src/main/{mcp-server,security}.ts`). Coverage stands: 47 `src/**/*.ts`, 4 `scripts/*`, every `tests/**` file and `demo/pane-drag-demo/` claimed once, and `tests/e2e/central-data/` — L1's own artifact by write scope — is claimed on this unit's `central-data` row so the map resolves it rather than leaving it unowned (`strata/brief.md` §3; `strata/modules.json`; D-10).
+**Four rows moved, and this unit's census is one of them.** `mcp-surface` 25 → 30: 22 tools + 3 resources + the five `data` tools it registers and gates (D-11). `central-data` 7 → **15** under D-14's convention (the surface a module *exposes or consumes*): 5 tools exposed + 5 bridge routes answered + 5 `provident-storeroom` exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`) — `rollback` is out (D-12), `register` has no call site, and the seam's whole 14-member census is a version pin, not a called surface (ASM-5; exception §1). `operator-settings` 5 → 12 and the new `settings-surface` row at 19 arrived with the rebuild and the carrier retirement, not with this unit (D-16, D-17, D-22). The edges this unit turns on: `central-data` ← `app-shell` (the crossing) → `graph-store` (`hydrate(rows)`/`crossing.put(row)`), and `central-data` → `mcp-surface` (the group, registered and gated in `src/main/{mcp-server,security}.ts`). Coverage stands: every `src/**/*.ts`, `scripts/*`, `tests/**` file and `demo/pane-drag-demo/` claimed once, and `tests/e2e/central-data/` — L1's own artifact by write scope — is claimed on this unit's `central-data` row so the map resolves it rather than leaving it unowned (`strata/brief.md` §3; the `central-data` row of `strata/modules.json`; D-10).
 
 ## 3. The `data` group — a first-class part of this unit's surface (D-11)
 
@@ -117,7 +121,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 |---|---|---|
 | ASM-1 | the existing tree is the substrate: `src/{main,renderer,shared}` and the flat suite stay, and this map claims them | re-laying out `src/` and `tests/` before the map exists, which designs the modules from L0 |
 | ASM-2 | the gate-era `.mjs` drivers are existing harness code, not re-authored at this gate | a fresh harness before the map, which sets its own scope |
-| ASM-3 | the four legs of `brief.md` §6 stay the floor, and layer batteries add to them | replacing the 3,179-row suite with layer batteries, which discards its coverage |
+| ASM-3 | the four legs of `brief.md` §6 stay the floor, and layer batteries add to them | replacing the whole collected suite with layer batteries, which discards its coverage (D-10) |
 | ASM-4 | every flat `tests/**` row is claimed by exactly one module; the three general drivers, `tests/fixtures/` and `scripts/` sit in `harness` | one `harness` owning all of `tests/`, which leaves D-10 no per-module destination |
 | ASM-5 | `central-data`'s N is 15: 5 tools + 5 routes + 5 package exports (D-14; exception §1, which measures `register` off the called set) | the seam's whole 14-member census, which sets the cap off a version-drift pin; or tools only, leaving routes and exports uncounted |
 | ASM-6 | `hydrate(rows)` and `crossing.put(row)` are frozen inputs | re-shaping the crossing to the storeroom model, which redesigns another module's contract from L1 |

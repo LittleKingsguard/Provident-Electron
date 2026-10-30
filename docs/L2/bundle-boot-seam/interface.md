@@ -16,7 +16,7 @@ The **arrangement** is this unit's whole surface: which artifact each of the fou
 | `src/main/preload.ts` | `dist/main/preload.cjs` | **CJS — kept** | the main entry's own `join(here, 'preload.cjs')`, `src/main/main.ts:455` |
 | `src/main/standalone.ts` | `dist/main/standalone.mjs` | ESM — kept | no field: spawned by path (L1 §6 B-7) |
 | `src/main/battery-host.ts` | `dist/main/battery-host.mjs` | ESM — kept | as above |
-| `src/renderer/renderer.ts` | `dist/renderer/renderer.js` | browser ESM — kept | `src/main/main.ts:462` (the HTML entry `loadFile` reads) |
+| `src/renderer/renderer.ts` | `dist/renderer/renderer.js` | browser ESM — kept | the HTML entry `src/main/main.ts:462-463` loads, which loads it |
 
 - **`package.json:7` names `dist/main/main.mjs`**, and it is the only field that names a boot artifact: `package.json:6` already declares the package `type: module`, and Electron resolves that field when it is handed the package (D-27, L1 §9 ASM-1).
 - **The two CJS emissions of `package.json:10` are not one decision**: `preload.cjs` **stays** CJS because the renderer's `webPreferences` sets `contextIsolation: true` and never `sandbox: false` (`src/main/main.ts:451-459`), so the preload is loaded as CommonJS; `main.cjs` becomes `main.mjs` (ASM-L2-5, D-27).
@@ -39,7 +39,7 @@ The **arrangement** is this unit's whole surface: which artifact each of the fou
 
 ## 3. The rejected alternative, and each variant it was tried as
 
-L1 §3 named the second arrangement as *main kept CJS* with the package's derivation satisfied some other way; three ways exist and each was measured.
+L1 §3 named the second arrangement as *main kept CJS* with the package's derivation satisfied some other way; three ways exist, each was measured, and a fourth arm was tried to keep the artifact's name instead.
 
 | Arm | What was measured | Why it is rejected |
 |---|---|---|
@@ -81,7 +81,7 @@ L1 §3 named the second arrangement as *main kept CJS* with the package's deriva
 
 | # | Goal at the arrangement grain | Expected | At this head |
 |---|---|---|---|
-| A-1 | the build emits the artifact the `main` field names, in the declared format | `package.json:7`'s path exists, is non-empty, the loader's module type for it is ESM, and the `build` line whose `--outfile` is that path carries `--format=esm` on `--platform=node` | **red** — the field names `main.cjs`, and `package.json:10` says `--format=cjs` |
+| A-1 | the build emits the artifact the `main` field names, in the declared format | `package.json:7`'s path exists, is non-empty, the loader's module type for it is ESM, and the `build` arm that emits that path carries `--format=esm` on `--platform=node` | **red** — the field names `main.cjs`, and `package.json:10` says `--format=cjs` |
 | A-2 | the emitted artifact's own module system matches the format the build emitted | it parses under the loader's own mapping, and carries neither the CJS `import.meta` placeholder nor a free `__dirname`/`__filename` | **red** — `dist/main/main.cjs:38479` is `var import_meta = {}` and `:40392` is `var here = __dirname` |
 | A-3 | the package's addon-path derivation is satisfiable in the emitted artifact | the artifact's module scope supplies a real `import.meta.url`, and the platform artefact the package declares resolves and loads **from the artifact's own URL** | **red** — the module scope is the empty object |
 | A-4 | the preload artifact is still CJS and still loads | `dist/main/preload.cjs` exists, parses as CJS, evaluates without a parse error, and the built entry still names `preload.cjs` beside itself | **green** |
@@ -99,7 +99,7 @@ L1 §3 named the second arrangement as *main kept CJS* with the package's deriva
 | **5** | transports they open: the app's stdio and Streamable HTTP, the standalone's stdio and HTTP, the battery host's stdio | no transport code is in the seam: `src/main/mcp-server.ts:1191,1203` publish readiness either way (L1 §2, §4) |
 | **3** | handshakes that must complete: the app's `initialize`/`tools/list`/tool call, the siblings' `initialize`/`tools/list`, and the renderer bridge's arrival | each is an L1 §6 row, and this layer adds no call: its battery reads the **artifact**, not a transport (§7) |
 
-- **N = 12 stands and the cap is 170** (`strata/modules.json`, `platform.md` §4): the battery below is evidence and does not count against it, and this layer's one build invocation plus one file is far inside the remainder (D-14, `brief.md` §6).
+- **N = 12 stands and the cap is 170** (`strata/modules.json`, `platform.md` §4): §7's battery is evidence and does not count against it, and this layer's one read of the emission set plus one file is far inside the remainder (D-14, `brief.md` §6).
 
 ## 9. Assumptions, each with the alternative it rejected (`envelope.md` §3)
 

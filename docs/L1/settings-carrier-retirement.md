@@ -1,6 +1,6 @@
 # L1 — the old settings carrier retired into the instance
 
-- **Layer:** L1 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Status:** DECLARED · **Ceiling:** 150 lines (class max) (D-1, D-2)
+- **Layer:** L1 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Status:** CLOSED — the carrier is retired: `provident-settings.json` is imported once and never written again (§3, §4), and `strata/.strata/units/settings-carrier-retirement.json` holds `done` with `carrier-retired` among its artifacts (D-22) · **Ceiling:** 150 lines (class max) (D-1, D-2)
 - **Charter:** D-22 is the scope: this unit is **the checkpoint** — the carrier retires; the gate's exclusion/tier-4 enforcement, the module registry and the journal-length consumers moving onto the instance as state engine are **parked**
 - **Inputs:** `strata/brief.md` §2/§3/§6; `strata/decisions.md` D-5, D-10, D-13, D-16…D-22; `strata/modules.md` §1/§3; `strata/platform.md` §4; `docs/L1/security-store-storeroom.md` §5/§6/§8; the tree at `e3b59d5`
 
