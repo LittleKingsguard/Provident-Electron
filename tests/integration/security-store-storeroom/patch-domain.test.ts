@@ -115,8 +115,9 @@ describe('security-store-storeroom · the patch domain and the journal cap’s s
 
     // A CAP STANDS FIRST, so the clear below is an OBSERVABLE: with no cap to begin with, "cleared" and
     // "never written" would answer the same reading and the minus arm would pass for the wrong reason.
-    expect(committedOf(surface.set({ maxJournalLength: 12 }).write).cursor, 'the seed cap commits over the carrier').toEqual(expect.any(Number))
-    expect(surface.read().maxJournalLength, 'the seed cap stands as written').toBe(12)
+    const seed = committedOf(surface.set({ maxJournalLength: 12 }).write)
+    expect(seed.opId.length, 'the seed cap COMMITS over the carrier — a receipt, not a refusal — so the clears below are measured against a cap that really stood').toBeGreaterThan(0)
+    expect(surface.read().maxJournalLength, 'the seed cap stands as written, floored at its own value').toBe(12)
     expect(imageOf(userDataDir).includes('maxJournalLength'), 'and the durable image carries the cap member, so its absence below is a measurement rather than a constant').toBe(true)
 
     // THE MINUS ARM — the arm behaviour.md §2 states and names as unasserted. `-Infinity <= 0` is true,
