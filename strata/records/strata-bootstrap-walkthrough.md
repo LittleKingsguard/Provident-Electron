@@ -26,4 +26,7 @@ and this record states plainly that the rule now applies — **the artifact that
 summary layer** (`brief.md`, the register's cross-references, and these records), not another round of readers.
 
 `docs-insufficient`: none. `undocumented`: none.
-**Verdict: not green.** A rebuild of the summary layer is owed before run 15 (D-29, `rebuild.md` §3).
+**Verdict: not green.** The rebuild this run owed has since been taken: the state carries the unit's build count, and the
+retrospective `rebuild.md` §4 requires stands beside this record (`strata/.strata/units/strata-bootstrap.json`;
+`strata/records/strata-bootstrap-retrospective.md`; `rebuild.md` §3-§5). Run 15 — a fresh cycle over the rebuilt summary layer —
+is what the unit owes next. The figures above stay run 14's readings and are not a live measurement (D-46).

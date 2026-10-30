@@ -35,4 +35,5 @@ came out of that (D-26, D-28) and one instrument (D-29), and the unit is now gre
 has: its three batteries at 8/8, 5/5 and 8/8, and `battery` 184/184, `divergence` 9/9 and `ui` 11/11 — the
 first time all three Electron legs have passed together (`strata/brief.md` §6).
 
-**Verdict: `PASS`.** The unit is recommended as ready and is closed (`stage: done`, streak cleared).
+**Verdict: `PASS`.** The unit is recommended as ready and is closed; its stage and any streak are the state's
+(`strata/.strata/units/bundle-boot-seam.json`; `rebuild.md` §3, D-10).
