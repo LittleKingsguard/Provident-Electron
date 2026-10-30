@@ -1,7 +1,7 @@
 {
   "unit": "security-store-storeroom",
   "layer": "L0",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
     "security-store-instance",
     "unit-record",
@@ -10,6 +10,6 @@
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T09:07:02.156Z",
+  "updated": "2026-10-30T10:18:58.057Z",
   "builds": 2
 }
