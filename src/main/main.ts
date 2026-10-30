@@ -24,8 +24,9 @@ import { createDataSurface } from './data/index.js'
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
 // names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
 // directory holding this artifact, derived from the URL the loader supplies for this module — the
-// only directory source an ESM entry has — and `:455`'s preload join and `:462`'s HTML entry join
-// compose from it unchanged.
+// only module-scope directory source an ESM entry has — and both joins that compose from it are
+// unchanged: the `preload:` join in the `BrowserWindow` options, and the renderer-HTML join that
+// builds `rendererHtml` below it (D-41: name the site, never the offset).
 const here = dirname(fileURLToPath(import.meta.url))
 
 /** THE RESERVED SETTINGS TOP-LEVEL NAMES (`docs/specs/store-persist.md` §2.7 item 4 / §2.8
