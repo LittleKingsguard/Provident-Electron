@@ -3,7 +3,8 @@
 // What this file is, exactly, and what it is NOT:
 //
 //  - IT IS one of the app's TWO imports of `provident-storeroom` — the seam that declares its
-//    surface; `storeCreate` in the operator-settings instance is the other (`brief.md` §2, D-16).
+//    surface; `storeCreate` in the rebuilt security instance's own module is the other (`brief.md`
+//    §2, D-16).
 //    The package is the object of this repo's defect catalogue (`docs/defects.md`, handoff
 //    `docs/HANDOFF.md`): the app is the implementation test, and one that never imports it is a
 //    paper exercise. This module is where the surface is pinned, so there is ONE seam to point at.

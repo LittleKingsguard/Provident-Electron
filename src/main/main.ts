@@ -97,12 +97,12 @@ async function main(): Promise<void> {
   // ═══ `A-1`'S RULING (`docs/specs/tier4-arbitrary-storage.md` `§0A` item 1, AMENDED
   // `2026-10-11`) — THE ONE BOOLEAN'S HOME IS THE STATIC HOLDER, AND THIS MODULE HOLDS NO READER
   // AND NO WRITER OF IT ═══
-  // The as-filed named-reader option is WITHDRAWN: the surface is constructed and then read through
-  // its own `read()`, so no reader is constructed ahead of the read — and the LANDED boot order
-  // stands unmoved in kind, the order the code below performs: `createSettingsSurface(...)`, then
-  // `settingsSurface.read()`, then the `SecurityGate` construction, then the flip
-  // `settingsSurface.attach(mcp)`, then `new BrowserWindow(...)` with its `win.loadFile(...)`, and
-  // `await mcp.start()` LAST. The boot read below answers the INSTANCE'S OWN record, whose `mem`
+  // The as-filed named-reader option is WITHDRAWN: the surface is constructed and then read
+  // through its own `read()`, so no reader is constructed ahead of the read — and the LANDED boot
+  // order stands unmoved in kind, the order the code below performs: the surface's construction,
+  // then its own boot `read()`, then the gate's construction, then the flip — the surface's
+  // `attach` of the live server — then the window's creation and its renderer load, and the enable
+  // LAST. The boot read below answers the INSTANCE'S OWN record, whose `mem`
   // exclusion row boots to its declared SAFE pair, so the read is legal without any exception, and
   // `main` supplies STATE and never takes the DECISION (`F-11`).
   //
