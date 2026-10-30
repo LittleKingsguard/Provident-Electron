@@ -36,18 +36,29 @@ reader looks for them: **there is no `delete`** (a tab leaves by being absent fr
 constraint's corrective write, not a caller's), and **there is no `journal`** (the record's history is the package's, and a
 second reader of it would be a second opinion about the record's past).
 
-## 4. The constraint — the engine's, declared once
+## 4. The constraint — the engine's gate, and the boundary's repair
 
-The constraint is registered at construction, over the `tabs` matched set, evaluated on `set`/`commit`/`remove`. Its
-**corrective write** deactivates every active tab but the one the commit named; when the commit names none, it keeps the
-last-active order seat and deactivates the rest.
+**Rev 2** — the adjudication at `.strata/returns/store-tabs-record-l4.json` resolved this section's one ambiguity, and the
+split is what the shipped package actually declares.
 
-**The constraint never mutates its argument** — it answers the corrective write and the engine applies it. That is the same
-rule the gate-era constraint carried (`§0A` item 3), and it survives the move unchanged because it is the engine's rule, not
-the renderer's.
+**The gate is the engine's.** The module writes the constraint function and registers it at construction through
+`cfg.constraints`, whose element carries the pair **and** the function and is **armed before any filesystem act**
+(`guide §7.2` route one). The engine invokes the body with the attempt's own context and reads its answer: **`true` is the
+only pass value**, and an object carrying a `message` is a **rejection** (`guide §7.2`, `§7.5`; the shipped
+`landing-page-must-stand` example at `§7.7` is the precedent for both arms). The body **reads the record** to count
+actives, which `guide §7.6` says is the caller's work — *"if your constraint cares about the state at any other location,
+it reads that location"* — and a read inside a body brackets no commit and is judged by nothing (`§7.6`'s measured clause).
 
-**A repaired commit answers `committed` with the repair named** (L2 §3): the renderer re-reads and renders what the store
-says, rather than being told what to think.
+**The repair is the boundary's, and the reason is declared rather than hidden.** The guide describes a repair as a value a
+constraint "returns … that writes `11` at a different address", but **the shipped `index.d.ts` declares the return as
+`unknown`** and neither it nor the guide names the repair's object shape. A return this layer cannot transcribe is a return
+it must not invent, so exactly-one-active's **corrective write** stays at the commit boundary: the module deactivates every
+active tab but the one the commit named, and the engine's constraint then judges the state the write left and rejects a
+record carrying two.
+
+**Two homes, one invariant, and the division is the point**: the engine refuses an illegal state that arrives by any route,
+and the module's own commit produces a legal one so the refusal is never reached in normal use. A repaired commit answers
+`committed` with `repaired: true` (L2 §3) — the renderer re-reads and renders what the store says.
 
 ## 5. The listener — an address, never a payload
 

@@ -1,0 +1,19 @@
+{
+  "unit": "store-tabs-record",
+  "from": "L2",
+  "to": "L1",
+  "verdict": "PASS",
+  "artifact": "constraint-adjudication",
+  "rootCause": "The L4 adjudication asked whether a boundary corrective write is an acceptable home for exactly-one-active or whether design.md §4 requires the engine's constraint, and if the latter, what the constraint context's shape is. Answered by reading the shipped package: the mechanism is route one at construction (cfg.constraints element = {address, id, constraint}, function required and armed before any filesystem act, guide §7.2), the body is invoked with the attempt's context and read for its answer where true is the only pass value and an object carrying message is a rejection (guide §7.2, §7.5, and the landing-page-must-stand example at §7.7), and a body may read the store (§7.6 — 'if your constraint cares about the state at any other location, it reads that location', and a read inside a body brackets no commit). The repair arm is the one piece the shipped declaration does not give: index.d.ts types the return as unknown and neither it nor the guide names a repair's object shape, so no repair return was invented.",
+  "notes": [
+    "Resolution: the GATE is the engine's and is registered at construction; the REPAIR stays at the commit boundary as the module's corrective write. Two homes, one invariant — the engine refuses an illegal state arriving by any route, and the module's commit produces a legal one so the refusal is never reached in normal use.",
+    "docs/L3/store-tabs-record/design.md §4 is now rev 2 and states that split, with the citation that makes each half checkable.",
+    "The L4 deviation is therefore resolved rather than overridden: nothing the shipped package declares was left untranscribed, and the one thing it does not declare was left alone with the reason written down."
+  ],
+  "citations": [
+    "node_modules/provident-storeroom/index.d.ts",
+    "node_modules/provident-storeroom/README.guide.md",
+    "src/main/tabs-record/index.ts",
+    "docs/L3/store-tabs-record/design.md"
+  ]
+}

@@ -8,11 +8,9 @@
     "l4-implementation"
   ],
   "assumptions": [],
-  "streaks": {
-    "l4-implementation": 1
-  },
+  "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T22:03:01.115Z",
+  "updated": "2026-10-30T22:07:48.392Z",
   "lastFailure": {
     "artifact": "l4-implementation",
     "reason": "adjudication"
