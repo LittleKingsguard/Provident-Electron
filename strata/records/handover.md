@@ -39,11 +39,11 @@ this record restates neither, because a count in a second place drifts at the ne
    `rebuild` (`strata/records/*-walkthrough.md`; `strata/rebuild.md` §3).
 2. **Land D-30's runner split**: the markers are in and `strata/marks.json` is generated, so what remains is
    L2's arrangement for reporting the gating reading beside the on-notice one, and L4 landing it.
-3. **The pane unit's own close**: `secure-panels` has landed and its evidence is green, so what it owes is
-   its exit walkthrough and then `close` (`strata/.strata/units/secure-panels.json`).
-4. **D-22's second half**, still parked: the gate's exclusion/tier-4 enforcement (which gives
-   `src/main/tier4-state.ts`'s reader its first `src/**` consumer, discharging `ASM-4`), the module
-   registry, and the journal-length consumers onto the instance as their state engine.
+3. **D-22's second half**, still parked: the gate's exclusion/tier-4 enforcement (giving
+   `src/main/tier4-state.ts`'s reader its first `src/**` consumer and discharging `ASM-4`), the module
+   registry, and the journal-length consumers onto the instance. It is also where `R-7` lands.
+4. **The carried small items**: `F-5`'s stale comment in `src/shared/types.ts` (the group set's fourth
+   reader), `gesture-session` `F-9(b)`'s missing sibling entry, and `bundle-boot-seam`'s `A-4` flake.
 
 ## Operating notes that cost real time
 
