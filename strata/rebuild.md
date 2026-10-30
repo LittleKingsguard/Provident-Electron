@@ -29,7 +29,7 @@ adjudicate its own design (D-1 §2).
 
 The owning layer's designer writes ≤ 20 lines answering exactly three questions: what did we
 believe that was false; which test should have caught it and why it did not; what changes next cycle
-(D-1). It is archived beside the torn-down artifact, never appended to a live document, and it never
+(D-1). It **replaces** the recommendation it supersedes in `strata/records/` — there is no per-unit archive (D-52) — is never appended to a live design document, and never
 re-opens an earlier cycle's reasoning (D-1, D-2).
 
 ## 5. Then

@@ -21,9 +21,10 @@
 - **Landed, named so it is not re-opened:** E-1's replacement and the file's deletion, E-2's three import sources, E-3's
   composition and the one writer, E-4's `README.md` paragraph, and E-5's **63 rows re-grained / 160 retired** at `536bdc6`
   (exception §9). `P-1`'s extension is why both import markers are record-absences (sibling `persistence.md` §3).
-- **Owed, carried not patched:** `src/main/tier4-state.ts:6` still asserts the retired store as its reader and the
-  transition as its writer, and `main.ts`'s import from the surface module keeps two type names it no longer spells — owed to the unit that
-  next touches those files (exception §9; `examiner.md` §4).
+- **Carried, and half discharged:** `src/main/tier4-state.ts` is **discharged at the bytes** — its header now names
+  the surface module sole writer with no `src/**` reader, witnessed by the bundle (`setTier4OpenState` ×3,
+  `tier4OpenState` ×0). Still owed: `main.ts`'s import keeps two type names it no longer spells — that file's
+  next writer's to remove (exception §9; D-52).
 - **Owed by L0:** a further blind walkthrough run — runs 1-7 are `STALE` and each round's findings were closed. The deviation that no built
   artifact was staged is **no longer standing**: the root stages `dist/` and, since D-44, `src/` too.
 - **Discharged elsewhere, and named because it bounded this unit's evidence:** the app could not boot, because the main
