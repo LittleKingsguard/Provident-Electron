@@ -1,13 +1,10 @@
 # Provident-Electron — the L0 exit walkthrough
 
-The blind documentation pass a unit must survive before L0 recommends it as ready (D-1 §4.1).
-Ceiling: 60 lines.
+The blind documentation pass a unit must survive before L0 recommends it as ready (D-1 §4.1). Ceiling: 60 lines.
 
 ## 1. What it is, and what it is not
 
-A subagent that has never seen this unit's code attempts a scenario set using only the documentation
-and the built surface. It tests whether the docs are **current** and **sufficient** — not whether
-the feature works, which is the batteries' job (D-1). L0 authors the scenarios at exit from the
+A subagent that has never seen this unit's code attempts a scenario set using only the documentation and the built surface. It tests whether the docs are **current** and **sufficient** — not whether the feature works, which is the batteries' job (D-1). L0 authors the scenarios at exit from the
 documentation and the brief, never from the source tree.
 
 ## 2. Scenarios
@@ -23,8 +20,10 @@ path (D-1).
 ## 3. Staging and the runner
 
 The staging root holds the documents a unit owns (this repo's `strata/`, `docs/L1…L3/` for the unit), the
-`src/` those documents make claims about (D-44), the built artifact from `npm run build`, the root pointers,
-both path listings and an empty working directory; `tests/`, `scripts/` and `node_modules/` stay out. The
+`src/` those documents make claims about (D-44), the built artifact from `npm run build`, the root pointers
+**and the manifest** — `README.md`, `AGENTS.md` and `package.json`, so a claim about a script key or a
+dependency is checkable rather than unverifiable — both path listings and an empty working directory;
+`tests/`, `scripts/` and `node_modules/` stay out. The
 runner is a fresh delegation scoped to that root, and a claim the root cannot settle is recorded as
 **unverifiable**, never as falsified (D-1, D-44).
 

@@ -11,6 +11,7 @@ clears is deleted with the reason recorded here, not quietly kept. Actionable wo
 | 4 | **`F-5`** — `src/shared/types.ts`'s `SecuritySettings.enabled` comment still enumerates four group names, stale twice. Carried by the `ipc-contract` row (`docs/L1/secure-panels.md` §8) | that file's next writer | `app-shell`'s next writer |
 | 5 | **`gesture-session`'s `F-9(b)`** — the sibling census omits `secure-panels`' entry **because** `src/renderer/secure-panels.ts` is one of its unclaimed-probe controls, so the entry and the control must move in one pass or the negative control breaks | `gesture-session`'s next writer, with the control in the same edit | that writer |
 | 6 | **`bundle-boot-seam`'s `A-4`** — `pathToFileURL(...).href` hands a checkout path containing a space a `%20` URL, so the row is flaky under full-suite parallelism (5/5 green in isolation) | `bundle-boot-seam`'s next writer | that writer |
+| 7 | **`strata-lint` does not check `strata/records/`** — ten files in its registry, not one a record, so thirteen records' ceilings, provenance and citations are enforced by nothing (a rebuilt record passed at 43 lines against 40) | the instrument ships **outside this repo** and is not writable from here — measured, `Permission denied` — so it is a harness change | the harness owner |
 
 **Not pending, and recorded so nobody re-opens them:** `R-7` (the `preload.ts` comment it named is corrected and
 `docs/L2/secure-panels/interface.md` §8 records it discharged); the Tier4 type import in `main.ts` (discharged);
