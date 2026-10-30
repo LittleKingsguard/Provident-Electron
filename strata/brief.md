@@ -72,7 +72,7 @@ is answered and counted as a failure (D-1).
 ## 5. Where the loop stands (D-27, D-30)
 
 `bundle-boot-seam` is landed: the app's built main bundle **boots**, and its three batteries plus all
-three Electron legs are green at this head — the reading §6 carries (D-27). It was admitted at L1 like
+four Electron legs are green at this head — the reading §6 carries (D-27, D-37). It was admitted at L1 like
 any other unit, filed its map row first, and is closed on its own exit walkthrough; every unit's stage and
 walkthrough streak are state, read from `strata/.strata/units/*.json` and never restated here (D-26).
 

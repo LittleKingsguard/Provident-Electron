@@ -15,7 +15,7 @@ five `provident.data.*` tools stand in `ALL_TOOLS` in `src/main/mcp-server.ts` a
 `main` — and the composition passes it in as one options member — `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })`
 — on `src/main/main.ts`'s one-line options pass to the server's construction (D-7, D-11, D-41). The module renders no surface and
 mints no graph node — that ruling stands (§6, ASM-12; D-11). The app already has a data path it does not call a store —
-`<userData>/provident-settings.json`, a `schemaVersion`-stamped projection of `file.*` rows, read at most once and never written again and
+`<userData>/provident-settings.json`, a `schemaVersion`-stamped projection of `file.*` rows, read at most once **per boot** and never written again and
 re-served at each realm's boot hand-off (`docs/L1/settings-carrier-retirement.md §3`). The unit is the join of the two: **one authority for the app's data**, whose
 durability is the crossing that already exists and whose agent-facing face is a sixth tool group (D-11). The store
 journals and persists on its own on-disk shape, and nothing operator-visible reverses it (D-12, D-13). It is not a package change (D-5).
@@ -74,11 +74,12 @@ row listing the five data tools: a label, never an answer site (`docs/L1/secure-
 `strata/records/central-data-management-unit.md` §2). The group's posture does not reach them once landed: a route
 answers whatever the group's state, since the group governs tool registration, not the bridge's vocabulary (D-11; `docs/L2/central-data/interface.md` §5).
 
-**The profile on disk.** Two *written* names at steady state: `<userData>/provident-operator-settings.json` — the
-instance's own file, which the rebuild moved off `provident-security.json` (D-16, D-19) — and `<userData>/provident-profile.json`,
-the store's own file, whose shape this unit chooses and whose name L2 fixes (D-13; `docs/L2/central-data/persistence.md` §1). `provident-security.json` and `provident-settings.json` are **seeds**
-now: read at most once and never written again, a one-time import recorded here, not a standing migration obligation
-(D-13, D-19, D-22; ASM-11). The crossing keeps its shapes (`store.get`, `store.put`, `store.onFileChanged`), so `hydrate(rows)` and `crossing.put(row)` stay frozen inputs (ASM-6).
+**The profile on disk.** Two *written* names at steady state: `<userData>/provident-operator-settings.json` — the instance's own file, which the
+rebuild moved off `provident-security.json` (D-16, D-19) — and `<userData>/provident-profile.json`, the store's own file, whose shape this unit
+chooses and whose name L2 fixes (D-13; `docs/L2/central-data/persistence.md` §1). `provident-security.json` and `provident-settings.json` are
+**seeds** now: read **at most once per boot** — at each construction whose record address carries nothing — and **never written again**, which is
+what makes re-reading them safe and why each arm is import-once-*per boot* rather than a one-time migration; recorded here, never a standing
+migration obligation (D-13, D-19, D-22; ASM-11). The crossing keeps its shapes (`store.get`, `store.put`, `store.onFileChanged`), so `hydrate(rows)` and `crossing.put(row)` stay frozen inputs (ASM-6).
 
 ## 5. The L1 battery — twelve scenarios at `tests/e2e/central-data/scenarios.test.ts` (goal → expected)
 
@@ -105,7 +106,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 
 - No change to `provident-storeroom` or `provident-ssr`; a defect or gap is recorded upstream-owned in this unit's record (D-5). Nothing in §§2-5 requires a package change.
 - No operator-visible reversal: the journal is read-only observation, and undo/rollback is a later unit with its own provident-authored UI and its own surface decision (D-12).
-- No standing migration obligation: the store chooses its own shape, and the one-time import is recorded here rather than inherited as a rule (D-13).
+- No standing migration obligation: the store chooses its own shape, and the seed's import is recorded here rather than inherited as a rule — it runs at each boot whose record address carries nothing, and writes no byte (D-13).
 - Not the tier-4 operator-settings rules or their file — `operator-settings` owns them (`modules.md` §1).
 - Not the graph store's contract: `GraphStore`, `hydrate(rows)`, `crossing.put(row)` are `graph-store`'s (ASM-6), and `src/renderer/store.ts` stays landed and unwired (ASM-7).
 - No rendered surface: this unit renders nothing and adds no graph node, so a commit moves neither `get_rendered_html` nor `get_markdown` (D-11; `docs/L2/central-data/interface.md` §7). The rendered data pane is **owed as a later unit** with its own surface decision, exactly as D-12 leaves undo; when it is built it is provident envelope data driven through the graph, never hand-written DOM, because an element outside the producing graph is invisible to `dispatch`, `get_rendered_html` and `get_markdown` (UI authority, `strata/brief.md` §2; `archive/gate-corpus-2026-10-29/AGENTS.md:21-34`; `src/shared/demo-envelope.ts:1-18`).
@@ -125,7 +126,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 | ASM-8 | the group exposes five tools; `rollback`, constraint mutation and listener registration stay off the agent's surface (D-12) | exposing the store's declared surface wholesale, which makes the agent an operator and pulls the undo unit onto this one's gate |
 | ASM-9 | the data routes terminate in main, so the union moves while `MUTATING_METHODS` stays seven | routing data through the renderer's method switch, which makes the producing process the profile's authority |
 | ASM-10 | the group is tools only; the three resource URIs are unmoved | a `mcp://provident/data/{path}` mirror, which gate-mirrors the same five readings twice and adds a fourth resource |
-| ASM-11 | the store's own file is the only new written name; the settings file is imported once, then retired | two writers, which leaves two authorities and defeats D-7's subject; or abandoning the old bytes outright, which D-13 permits but drops an operator's data silently |
+| ASM-11 | the store's own file is the only new written name; the settings file is imported at each boot whose record address carries nothing, and never written | two writers, which leaves two authorities and defeats D-7's subject; or abandoning the old bytes outright, which D-13 permits but drops an operator's data silently |
 | ASM-12 | this unit's e2e surface declares **no** rendered data view: the five tools answer values and a commit moves no rendered reading (D-11), and the rendered data pane is owed to a later unit that must owe provident-authored UI, as D-12 leaves undo | declaring the view here (rev 2's S-10), which contradicts `interface.md` §7 and the landed `src/main/data/` surface and routes a finding against L2 while writing a second unit's UI into existence with no decision behind it |
 
 ## 8. The mark set — named here, re-grained and marked by the owning layer's test writer (D-30, D-31)
@@ -136,8 +137,7 @@ the `24` this document carried is withdrawn, not replaced (D-26, D-28). Nothing 
 the moved numbers, and **the set was not closed by the three predicates**: one site read the moved number and stood in none of them — named as
 C-2's last term, whose discharge that row records (D-43). **D-31 governs what becomes of each side**: the 5 `src/` statements are re-grained by
 the unit that moves the number, while each scenario row of the 35 is **marked** `// strata:marked-file rework` and replaced whole by the rework
-rather than re-pointed — and the three `.mjs` drivers among them are the Electron legs D-30 **retains**, so those are maintained and never marked
-(D-30, D-31; `strata/marks.json`).
+rather than re-pointed — and the three `.mjs` drivers among them are the Electron legs D-30 **retains**, so those are maintained and never marked (D-30, D-31; `strata/marks.json`).
 
 | C | Sites / files | The sites |
 |---|---|---|

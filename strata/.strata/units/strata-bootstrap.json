@@ -27,12 +27,18 @@
     {
       "id": "ASM-3",
       "text": "the four legs of brief.md 6 remain the floor of verification and per-layer batteries add to them",
-      "alternative": "replacing the vitest suite with strata batteries, discarding 3,099 existing rows",
+      "alternative": "replacing the vitest suite with strata batteries, which discards the rows `brief.md` \u00a76 counts \u2014 \u00a76 holds the figure, this row does not (D-26)",
+      "status": "open"
+    },
+    {
+      "id": "ASM-3",
+      "text": "the four legs of brief.md \u00a76 stay the floor of verification, and strata's per-layer batteries add to them rather than replace them",
+      "alternative": "replacing the vitest suite with strata batteries, which discards the rows `brief.md` \u00a76 counts \u2014 \u00a76 holds the figure, this row does not (D-26)",
       "status": "open"
     }
   ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T09:07:02.179Z",
+  "updated": "2026-10-30T09:46:49.464Z",
   "builds": 2
 }

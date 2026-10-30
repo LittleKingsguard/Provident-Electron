@@ -24,12 +24,13 @@
 - **Carried, and half discharged:** `src/main/tier4-state.ts` is **discharged at the bytes** — its header now names the surface module sole writer with no `src/**` reader, witnessed by the bundle (`setTier4OpenState` ×3,
   `tier4OpenState` ×0). Still owed: `main.ts`'s import keeps two type names it no longer spells — that file's
   next writer's to remove (exception §9; D-52).
-- **Owed by L0:** a further blind walkthrough run — runs 1-7 are `STALE` and each round's findings were closed. The deviation that no built
+- **Owed by L0:** a further blind walkthrough run. The run history is the walkthrough record's (D-10), which holds the
+  latest run and its verdict; each round's findings were closed rather than annotated. The deviation that no built
   artifact was staged is **no longer standing**: the root stages `dist/` and, since D-44, `src/` too.
 - **Discharged elsewhere, and named because it bounded this unit's evidence:** the app could not boot, because the main
   bundle was CJS while the ESM-only package derives its addon and manifest paths from `import.meta.url`. That host-side
   defect got its own unit and is fixed (`D-27`, `bundle-boot-seam`): the bundle is ESM at `dist/main/main.mjs`, and the
-  instance stands: its own file appears in a scratch profile (`strata/records/bundle-boot-seam-walkthrough.md`);
+  instance stands: its own file appears in a scratch profile (`docs/L2/bundle-boot-seam/interface.md` P-10/P-11);
   `strata/brief.md` §6 is the instrument table and carries no such row.
 
 **Reclassified by D-24:** each finding above is the store working as designed, and the only

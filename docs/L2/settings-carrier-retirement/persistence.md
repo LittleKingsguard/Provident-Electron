@@ -1,6 +1,6 @@
 # L2 — `settings-carrier-retirement`: the persistence
 
-- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — §1's and §9's test-row sentences now divide by marks as D-31 requires (marked rows replaced whole, unmarked legs maintained). Rev 1 · **Status:** DESIGN — the instance's on-disk story as this unit constrains it, and nothing else (D-13, D-22)
+- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 3 — §1's and §7's retired-name sentences and §4's heading now say **at most once per boot** (a second boot re-reads the same bytes), keeping the half that holds: no import writes a seed. Rev 2 — §1's and §9's test-row sentences now divide by marks as D-31 requires (marked rows replaced whole, unmarked legs maintained). Rev 1 · **Status:** DESIGN — the instance's on-disk story as this unit constrains it, and nothing else (D-13, D-22)
 - **Inputs:** `interface.md` §1–§7, `behaviour.md` §1–§8; L1 §3–§6; `docs/L2/security-store-storeroom/persistence.md` §1–§6, §9 (the sibling's file, tier rules, admitted tree and its D-5 filings, carried here by citation and never re-filed); D-5, D-13, D-19, D-22; the package's shipped guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; **the declaration** is its `index.d.ts` (D-5)
 
@@ -13,7 +13,7 @@
 | `<userDataDir>/provident-settings.json` | **retired** | read **at most once per boot** by the second import-once arm, **never written** after it (L1 §4; D-22, D-19's precedent) |
 | `<userDataDir>/provident-security.json` | **retired** (sibling) | read at most once **per boot**, never written (sibling §1; D-19) |
 
-- **The census moves from three written names to two** (L1 §6; D-22, D-13). The retired names may stand in a profile as **seeds**: read at most once, their bytes left exactly as seeded, and no delete, rename or repair (L1 §4; D-19).
+- **The census moves from three written names to two** (L1 §6; D-22, D-13). The retired names may stand in a profile as **seeds**: read **at most once per boot** — at every construction whose record address carries nothing, so a second boot re-reads them — their bytes left exactly as seeded, and no delete, rename or repair (L1 §4; D-19).
 - **The rows that pin three divide by marks, and the difference is D-31's** — the **unmarked** legs are maintained: `tests/store-compliance-live.mjs` (`DECLARED_PERSISTED_JSON`, `SC-B-01`, `SC-B-03`, `SC-A-06`) and `tests/store-tabs-record-live.mjs:91-122`; the **marked** ones are replaced whole and never re-pointed: `tests/store-security.test.ts` and `tests/store-persist.test.ts` (`scope:"file"`, `kind:"rework"` in `strata/marks.json`), and `tests/integration/security-store-storeroom/isolation.test.ts`, whose `ISO-6` literal set is therefore the rework's and not a re-grain's (L1 §6; `ASM-L2-10`; D-31, D-30). The census's maintenance is E-5's, filed by this unit's L2 test writer (L1 §9 E-5; D-10, D-31).
 
 ## 2. What construction and the boot write
@@ -37,7 +37,7 @@
 - **The value that crosses is the rows' JSON image** (`ASM-L2-2`): an own member whose value is `undefined` is absent from the image, exactly as the retired carrier's `JSON.stringify` dropped it, and a value `JSON.stringify` refuses answers the commit as a contained refusal rather than a throw (L1 §3; `guide §10.2`).
 - **What the image still cannot carry is `null` anywhere in a row's value** — the package's one declared value refusal a JSON file can spell — plus a lone surrogate, a depth over `126` and more than `1,000,000` nodes (`guide §10.1`, §10.2, §10.3). The first is answered by name at the import (`behaviour.md` §7); the other three are refused by the store at the first commit, with its own status verbatim, and nothing is silently dropped (`ASM-L2-9`).
 
-## 4. The retired carrier is read at most once, and writes no byte
+## 4. The retired carrier is read at most once per boot, and writes no byte
 
 - **The marker is the absence of a record at `['operator-app-state']`**: no version member, no second written name and no marker file — after the first committed write the record stands and the arm does not run again (L1 §4; `guide §9.1`).
 - **It reads `<userDataDir>/provident-settings.json` at most once per boot** and is the module's **second** `readFileSync`, beside the security record's — so `tests/store-security.test.ts:549`'s one-call count becomes two, and its "no write" half is unmoved (L1 §6; D-19).
@@ -66,7 +66,7 @@
 ## 7. What this unit does not touch
 
 - **`provident-profile.json`** — `central-data`'s store, unmoved and unread here (D-13; `docs/L2/central-data/persistence.md` §1).
-- **`provident-security.json`** — the sibling's retired name, read at most once by the sibling's arm; this unit adds no reader and no writer (D-19; sibling §1).
+- **`provident-security.json`** — the sibling's retired name, read **at most once per boot** by the sibling's arm; this unit adds no reader and no writer (D-19; sibling §1).
 - **The store's own file image** — never produced, parsed or repaired by this unit: the records are read through the declared verbs, and the two addresses are two keys of an image whose shape is the store's (sibling §4; `guide §9.1`).
 - **No second store and no second `filePath`**: one instance, constructed once by the surface, for the process's life (D-18; sibling §8).
 - **`provident-modules.json`** — the Q-5 legacy registry, read by `module-store.ts` and removed post-boot; not this unit's file and not retired here (L1 §3; D-22).
