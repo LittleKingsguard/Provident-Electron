@@ -6,7 +6,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` in full — its last ro
 
 Six units, the tree committed at every gate boundary. Which are `done` and which is not is **state**
 (`strata/.strata/units/*.json`); what each landed is its own design documents' and its map row's (`strata/modules.json`).
-Both are cited here and neither is restated: a landed unit is not a queue, and only the open unit has one (D-26, D-43).
+Both are cited here and neither is restated: **a landed unit is not a queue**, and no unit is open at this head (D-26, D-43).
 
 | Unit | Where what it landed is read |
 |---|---|
@@ -31,22 +31,12 @@ Both are cited here and neither is restated: a landed unit is not a queue, and o
 
 ## What a fresh session does next, in order
 
-1. **Run the walkthrough the one open unit owes.** `strata-bootstrap` is the only unit not at `done` (state); it owes run 15 over the summary layer its own
-   retrospective rebuilt, and only a `PASS` closes it (D-29, `rebuild.md` §3-§5).
-2. **Land D-30's runner split**: the markers are in and `strata/marks.json` is generated, so what remains is L2's arrangement for reporting the gating reading beside the on-notice one, and L4 landing it.
-3. **D-22's second half**, still parked and admitted as units like any other: the module registry and the journal-length consumers onto the instance.
-   The tier-4 half has moved — `docs/L1/security-store-storeroom.md` §10 `ASM-4` settles at rev 3 that the holder stays as a projection with no
-   `src/**` reader — so the work is the later unit that gives the enforcement path a use for it, not a first reader.
-4. **Two bridge widenings**, each owed to the file's next writer: `src/main/main.ts`'s type-only import keeps `Tier4ClosedRefusal` and `Tier4WriteAnswer`,
-   neither referenced; and `src/main/preload.ts`'s `store.put` reason — with its renderer-side copy in `src/renderer/renderer.ts` — is the closed pair
-   where the channel answers the surface's own status (D-3, D-5).
-5. **The carried small items**: `F-5`'s four-name comment on `SecuritySettings.enabled` in `src/shared/types.ts` (the `ipc-contract` row); `gesture-session`
-   `F-9(b)`'s sibling census, where `src/renderer/secure-panels.ts` is also an unclaimed-probe control, so entry and control move in one pass; and
-   `bundle-boot-seam` `A-4`, whose `pathToFileURL(...).href` hands a checkout path with a space a `%20` URL.
-6. **The data bridge is design, not measurement**: the five `data.*` members of `RpcMethod` have no answer site — no arm in `src/renderer/renderer.ts`'s
-   method switch, no handler in `src/main/main.ts` — so `docs/L2/central-data/interface.md` §5 waits on a unit nobody has admitted yet (D-7).
+**The queue is `strata/next-steps.md`, `strata/pending.md` and `strata/proposals.md`** (D-61), and this record does not
+restate it (D-43): next-steps is what is actionable now and in what order, pending is what is blocked and on what,
+proposals is what nobody has asked for. Read those three before acting.
 
-`R-7` is **not** in this queue and must not be re-opened: the `preload.ts` comment it named is corrected at this head, and `docs/L2/secure-panels/interface.md` §8 records it discharged at rev 6.
+State decides what is open: `strata/.strata/units/*.json` says every unit is `done`, so nothing here waits on a
+walkthrough, and a session's first act is the first row of `next-steps.md` rather than a survey.
 
 ## Operating notes that cost real time
 
