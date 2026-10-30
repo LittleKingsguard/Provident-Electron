@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/dom-shim-remove-attribute.test.ts — R-7..R-10 of the §4.1 RED SET of
 // docs/specs/engine-pin.md (`U-ENGINE-PIN`), plus the P-IM-2 table
 // (`S-TAB-IDEMP-1`).

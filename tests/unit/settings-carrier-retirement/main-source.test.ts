@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/settings-carrier-retirement/main-source.test.ts — THE L3 UNIT BATTERY for E-1,
 // `src/main/main.ts` AT THE ONLY GRAIN IT ADMITS: a SOURCE READ, plus one live limb for the one rule
 // this design adds that a row can actually drive.

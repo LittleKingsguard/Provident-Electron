@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/bundle-boot-seam/derivation.test.ts — THE L3 UNIT BATTERY for E-2, the entry's own
 // directory derivation, at the ONLY GRAIN IT ADMITS: one binding, one expression, one value. The
 // structure is `docs/L3/bundle-boot-seam/design.md` §3, the guardrails are §4 `G-1`/`G-2`, and the

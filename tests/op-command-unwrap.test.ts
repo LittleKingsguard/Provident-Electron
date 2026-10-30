@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/op-command-unwrap.test.ts — RED rows for the `LIVE-OP-REJECT` host defect
 // (docs/defects.md, the `LIVE-OP-REJECT` row; filed 2026-09-27).
 //

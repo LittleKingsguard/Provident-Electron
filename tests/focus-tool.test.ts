@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/focus-tool.test.ts — THE RED SET for `U-FOCUS-TOOL` (`F3`), wave F.
 //
 // CONTRACT (the only source of truth): `docs/specs/focus-tool.md` — `§2.1` (the surface

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/overlay.test.ts
 // ===========================================================================
 // U-OVERLAY · wave E · ledger row E9 · **THE RED SET** (RCA-1)

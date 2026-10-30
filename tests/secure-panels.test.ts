@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/secure-panels.test.ts — the RED set for the SecurePanels isolated
 // graph (multi-graph isolation adoption, 2026-08-25).
 //

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-queue.test.ts — RED tests for Unit U7: the async-queue data-hook
 // (M-r12). Contract: docs/specs/module-import-proposal.md §4 (hook seam:
 // "async-queued off the sync render path (M-r12); data-minimized snapshot") +

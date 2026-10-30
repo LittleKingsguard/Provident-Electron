@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-pane.test.ts — RED tests for Unit U8: the module management pane
 // in the isolated SecurePanels graph (docs/specs/module-feature-list.md §4 +
 // docs/specs/module-import-proposal.md §6 store status).

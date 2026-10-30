@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/settings-carrier-retirement/app-state.test.ts — THE L2 BATTERY for
 // `settings-carrier-retirement`, part 1: THE THIRD DURABLE ADDRESS AND ITS ONE COMMIT, driven
 // through the instance's DECLARED SURFACE.

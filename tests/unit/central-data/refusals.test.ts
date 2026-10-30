@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/central-data/refusals.test.ts — refusals are values, and the previous bytes stay.
 //
 // Every row drives one declared guardrail: malformed arguments are refused by name with the

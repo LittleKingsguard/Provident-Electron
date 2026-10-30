@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/blind-loadbatch.test.ts — BLIND-TEST WRITER artifact (AGENTS.md item 10a).
 //
 // Produced from DOCUMENTATION ONLY:

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 /**
  * ============================================================================
  * G3 = U-STORE-SECURITY — `docs/specs/store-security.md`'s battery, RE-GRAINED

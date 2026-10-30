@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/security-gate.test.ts — RED tests for the SecurityGate wiring unit
 // (docs/specs/mcp-security-gate.md §2-§5). Imports from ../src/main/security.js.
 // These tests are RED because SecurityGate is NOT exported yet (the primitives

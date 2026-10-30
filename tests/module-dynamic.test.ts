@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-dynamic.test.ts — RED tests for Unit U9 of the module.* extension
 // system (docs/specs/module-import-proposal.md §5 dynamic registration + §9 F1
 // note + docs/specs/module-feature-list.md §5 U9). This unit wires the

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/divergence-attribute-extractor.test.ts — the NODE-SIDE HALF of the
 // `H-r10` extension (`U-DIVERGENCE-EXT`, ledger row `C2`), authored with the
 // implementation of the AMENDMENT BLOCK in `docs/specs/ci-divergence-leg.md`.

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/ui-leg-contract.test.ts — the `[U]` real-DOM leg's contract rows, for
 // unit `U-REALDOM-BOOT` (wave C), written RED-FIRST from
 // docs/specs/ci-ui-leg.md ONLY (AGENTS.md item 3 / RCA-1 / RCA-2).

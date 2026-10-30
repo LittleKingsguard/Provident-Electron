@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/security-store-storeroom/operator-settings.test.ts — THE L3 UNIT BATTERY for the
 // `operator-settings` instance (`src/main/operator-settings/index.ts`), driven through the surface
 // `docs/L3/security-store-storeroom/signatures.md` §2 declares and nothing else.

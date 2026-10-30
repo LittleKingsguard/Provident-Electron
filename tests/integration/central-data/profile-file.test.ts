@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/central-data/profile-file.test.ts — THE L2 BATTERY for `central-data`, part 3:
 // persistence and the profile's bytes.
 //

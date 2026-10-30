@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/engine-pin-boolean-ssr.test.ts — the SSR half of the §4.1 RED SET of
 // docs/specs/engine-pin.md (`U-ENGINE-PIN`). Carries R-1, R-2, R-5 (SSR leg)
 // and the SSR leg of P-TP-2 (`S-TAB-OFF-2`).

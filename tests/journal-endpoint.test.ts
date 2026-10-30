@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/journal-endpoint.test.ts — RED tests for the journal reversibility
 // MCP endpoint (docs/specs/journal-endpoint-review.md J3-J8). The Runtime must
 // expose a `journal(action)` method that drives the engine's

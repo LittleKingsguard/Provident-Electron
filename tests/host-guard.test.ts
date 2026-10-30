@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/host-guard.test.ts — R-6, R-11, R-12 of the §4.1 RED SET of
 // docs/specs/engine-pin.md (`U-ENGINE-PIN`), the §3.4 PASS-THROUGH table
 // (PA-1..PA-10), the §3.5 pass-through table (P1..P7), the §3.6 shape rows

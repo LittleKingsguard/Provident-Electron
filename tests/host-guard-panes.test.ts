@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/host-guard-panes.test.ts — the PANE-FIXTURE rows `PF-1..PF-8` of the
 // §4.1 RED SET of docs/specs/engine-pin.md (`U-ENGINE-PIN`), and the §5.5
 // register row `P-SM-3` / strategy `S-TAB-PANE-1` (ruling 2, "Add test panes to

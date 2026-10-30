@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/engine-pin-controls.test.ts — CONTROL-1 (R-16) and CONTROL-2 (R-17) of
 // the §4.1 RED SET of docs/specs/engine-pin.md (`U-ENGINE-PIN`), plus the §5.5
 // strategies `S-TAB-CYCLE-2` (P-IM-4) and `S-TAB-PAIR-1` (P-IM-1).

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/mcp-resources-adversarial.test.ts — the adversarial pass for the
 // gated MCP resources (mcp-resources-review.md R1-R5). Hunts edge cases:
 //   A1  a `read`-off gate must NOT leave a resource readable (no always-

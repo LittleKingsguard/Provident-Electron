@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/mcp-notify-adversarial.test.ts — the adversarial pass for the gated
 // live-change-notification surface (live-notification-review.md N1-N7). Hunts:
 //   A1  N3 — the notify source is app-Runtime-ONLY: a SecurePanels operator

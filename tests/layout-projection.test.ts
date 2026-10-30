@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/layout-projection.test.ts
 // ===========================================================================
 // U-PROJ · wave D · **THE RED SET** (RCA-1) — ledger row `D4`.

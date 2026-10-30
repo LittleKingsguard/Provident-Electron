@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/central-data/surface-and-profile.test.ts — the declared surface and the one written name.
 //
 // Every row drives one declared invariant: the surface is the five operations and five tool names

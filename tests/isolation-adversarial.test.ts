@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/isolation-adversarial.test.ts — a stress/adversarial pass on the
 // multi-graph isolation (D1-D8). Probes for defects that let one graph reach
 // into an isolated graph's runtime state.

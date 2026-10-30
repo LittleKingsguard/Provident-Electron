@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/engine-pin-version.test.ts — R-14, R-14b and R-15 of the §4.1 RED SET
 // of docs/specs/engine-pin.md (`U-ENGINE-PIN`), plus the `S-READ-JSON-1`
 // strategy (the `(a)` half of P-IM-4, which absorbed the former P-IM-3 — §5.5)

@@ -19,20 +19,706 @@
       "sites": 96
     }
   },
-  "marked": [],
-  "gates": [],
+  "marked": [
+    {
+      "file": "tests/0-2-regression-adversarial.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-battery-hooks-handlers.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-battery-verify.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-ci-divergence.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-loadbatch.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-mcp-notify.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-mcp-resources.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-renderer-debug.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-runtime-host.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/blind-security-gate.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/census.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/construction-exhaustion.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/construction-exhaustion2.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/container.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/debug-panel.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/divergence-attribute-extractor.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/dom-shim-remove-attribute.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/engine-pin-boolean-dom.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/engine-pin-boolean-ssr.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/engine-pin-controls.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/engine-pin-version.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/engine-surfaces.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/focus-model.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/focus-tool.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/fork-store-reads.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/gemma4-blind-battery.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/gesture-session.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/gutter-ui.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/gutter.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/host-guard-panes.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/host-guard.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/bundle-boot-seam/arrangement.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/central-data/profile-file.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/central-data/registration.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/central-data/surface.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/security-store-storeroom/instance.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/security-store-storeroom/isolation.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/security-store-storeroom/recovered-scenarios.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/security-store-storeroom/surface.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/settings-carrier-retirement/app-state.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/settings-carrier-retirement/import.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/settings-carrier-retirement/retirement.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/integration/settings-carrier-retirement/surface.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/isolation-adv-d.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/isolation-adversarial-e2e.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/isolation-adversarial.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/journal-endpoint.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/journal-reversibility.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/layout-projection.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/loadbatch-adversarial.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/loadbatch.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/markdown-endpoint.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/mcp-notify-adversarial.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/mcp-notify.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/mcp-resources-adversarial.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/mcp-resources.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/mcp-server-gate.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/mcp-server-wiring.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/menu-template.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-dynamic.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-e2e.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-image.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-pane.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-queue.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-router.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-security-gate.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-store.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-tools.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/module-transform.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/mount-invariant-guard.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/op-command-unwrap.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/overlay.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/owned-list-host.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/pane-drag-compliance.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/path-fork-cycle.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/relocate.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/renderer-backend.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/runtime-battery.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/runtime-host.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/runtime.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/secure-exclusion.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/secure-panels.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/security-gate.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/security.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/slot-host.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-core-graph-integration.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-core-graph.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-focus.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-modules-bytes.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-modules-seams.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-persist.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-rederive.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-security.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/store-tabs-record.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/storeroom-surface.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/theme-control.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/theme.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/tier4-arbitrary-storage.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/ui-leg-contract.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/ui-leg-seam.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/bundle-boot-seam/derivation.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/bundle-boot-seam/emission.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/central-data/cold-and-write.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/central-data/delete-and-journal.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/central-data/refusals.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/central-data/surface-and-profile.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/security-store-storeroom/operator-settings.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/security-store-storeroom/recovered-scenarios.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/settings-carrier-retirement/main-source.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/settings-carrier-retirement/operator-settings.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/settings-carrier-retirement/settings-surface.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/unit/settings-surface/surface.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    },
+    {
+      "file": "tests/zones.test.ts",
+      "scope": "file",
+      "kind": "rework",
+      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
+    }
+  ],
+  "gates": [
+    {
+      "file": "tests/store-tabs-record.test.ts",
+      "scenario": "S-1 · §5.1 / C-9 — THE EDIT-SET ASSERTION AS A SET: `edit-set ⊆ declared scope ∪ declared wiring points`, WITH the positive control that an edit outside that union FAILS",
+      "reason": "the loop's own tree assertion, not module machinery (D-30)"
+    }
+  ],
   "readings": {
     "gating": {
-      "files": 118,
-      "sites": 2994
+      "files": 6,
+      "sites": 45
     },
     "onNotice": {
-      "files": 0,
-      "sites": 0
+      "files": 113,
+      "sites": 2949
     },
     "retained": {
       "files": 5,
       "sites": 44
-    }
+    },
+    "carveOut": 1
   }
 }

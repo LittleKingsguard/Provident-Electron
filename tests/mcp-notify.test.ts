@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/mcp-notify.test.ts — RED tests for the gated live-change-notification
 // surface (docs/specs/live-notification-review.md N1-N7). The server must:
 //   N1  map a renderer "app graph changed" notify into a resource-updated

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ProvidentMcpServer, type McpBackend } from '../src/main/mcp-server.js';
 import { SecurityGate, type ToolGroup } from '../src/main/security.js';

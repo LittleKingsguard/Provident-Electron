@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/relocate.test.ts
 // ===========================================================================
 // U-RELOCATE · wave E (ledger row `E4`) · upstream `SCH-7` (`A-d4`, ADOPTED-RESHAPED)

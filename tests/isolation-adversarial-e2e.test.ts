@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/isolation-adversarial-e2e.test.ts — the adversarial pass driven
 // through the ACTUAL MCP-facing surfaces: the app `Runtime` (what
 // `provident.dispatch`/`get_rendered_html`/`list_targets` read) vs the

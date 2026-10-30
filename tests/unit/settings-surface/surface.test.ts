@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/settings-surface/surface.test.ts — THE L3 UNIT BATTERY for the `settings-surface`
 // module (`src/main/settings-surface/index.ts`), driven through the surface
 // `docs/L3/security-store-storeroom/signatures.md` §3 declares and nothing else.

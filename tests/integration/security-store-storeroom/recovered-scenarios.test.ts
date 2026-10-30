@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/security-store-storeroom/recovered-scenarios.test.ts — THE AUTHORED HALF of the
 // seven REQUIRED scenarios `docs/L1/security-store-storeroom-scenarios.md` §4 files, at the grain this
 // row's subject asks for: THE CARRIER AND THE INSTANCE TOGETHER.

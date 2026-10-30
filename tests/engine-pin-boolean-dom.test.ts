@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/engine-pin-boolean-dom.test.ts — the DOM/shim half of the §4.1 RED
 // SET of docs/specs/engine-pin.md (`U-ENGINE-PIN`). Carries R-3, R-4, R-5
 // (DOM leg) and the DOM leg of P-TP-2 (`S-TAB-OFF-2`).

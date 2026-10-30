@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/runtime-battery.test.ts — Unit C: the Runtime's battery + code-CRUD
 // surface (docs/specs/e2e-test-battery.md §3 + docs/specs/mcp-endpoint.md §4).
 // The 5 graph tools + 6 code tools map to Runtime methods that consume the

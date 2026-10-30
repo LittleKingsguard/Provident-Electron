@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/menu-template.test.ts
 // ===========================================================================
 // `U-MENULIB` · wave **E** · ledger row **`E7`** · **THE RED SET** (`RCA-1`).

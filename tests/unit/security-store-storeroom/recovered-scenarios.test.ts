@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/security-store-storeroom/recovered-scenarios.test.ts — THE AUTHORED HALF of the seven
 // REQUIRED scenarios `docs/L1/security-store-storeroom-scenarios.md` §4 files, at the grain this
 // row's subject asks for: THE INSTANCE'S OWN DECLARED SURFACE AND THE PRIVATE CONTRACTS L3 NAMES.

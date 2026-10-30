@@ -177,7 +177,7 @@ function readings(scan_) {
     const notice = r.markedSites - r.exempt
     if (notice > 0) { onNotice.files += 1; onNotice.sites += notice }
   }
-  return { gating, onNotice, retained }
+  return { gating, onNotice, retained, carveOut: scan_.gates.length }
 }
 
 function build(scan_) {
@@ -194,6 +194,9 @@ function build(scan_) {
 function printReadings(r) {
   console.log(`  gating    ${r.gating.sites} spec site(s) in ${r.gating.files} file(s), incl. ${r.retained.sites} retained boundary site(s)`)
   console.log(`  on notice ${r.onNotice.sites} spec site(s) marked for the storeroom rework (D-30)`)
+  // THE CARVE-OUT IS COUNTED OUT LOUD: the L1 seat's first sweep missed it silently, and the only symptom
+  // was `gating` one short of the retained reading. A reader must not have to infer it from arithmetic.
+  console.log(`  carve-out ${r.carveOut} spec site(s) marked by a file and still gating (D-30)`)
   console.log('  retained drivers (outside npm test): scripts/electron-{spawn,divergence,ui}.mjs')
   // A SITE IS NOT A COLLECTED ROW: `it.each` expands one site into many. The collected-row reading is
   // `npm test`'s own and lives in `strata/brief.md` §6 — restating it here would drift (D-26).

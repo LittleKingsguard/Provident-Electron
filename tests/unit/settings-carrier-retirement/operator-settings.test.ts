@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/settings-carrier-retirement/operator-settings.test.ts — THE L3 UNIT BATTERY for E-2,
 // `src/main/operator-settings/index.ts` AT UNIT GRAIN: the third durable address, the two verbs that
 // serve it, the second import-once arm, and the module's own `fs` census.

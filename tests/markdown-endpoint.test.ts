@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/markdown-endpoint.test.ts — the 0.2 MarkdownAdapter MCP endpoint
 // (Feature 2 — the simplified output document for agentic consumers) + the
 // def-prototype round-trip (Feature 1a) through the Runtime's load path.

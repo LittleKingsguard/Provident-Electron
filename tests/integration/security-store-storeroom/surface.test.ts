@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/security-store-storeroom/surface.test.ts — THE L2 BATTERY for
 // `security-store-storeroom`, part 2: THE OPERATOR-SETTINGS SURFACE MODULE.
 //

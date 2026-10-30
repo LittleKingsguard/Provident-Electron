@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/slot-host.test.ts
 // ===========================================================================
 // U-SLOTHOST · wave D (ledger row D3) · **THE RED SET** (RCA-1)

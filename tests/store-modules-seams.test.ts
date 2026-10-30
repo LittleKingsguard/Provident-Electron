@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 /**
  * tests/store-modules-seams.test.ts — THE RED SET (RCA-1) FOR UNIT `H2b` =
  * `U-STORE-MODULES-SEAMS` (`docs/specs/store-modules-seams.md`, 915 lines).

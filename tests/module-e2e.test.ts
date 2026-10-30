@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-e2e.test.ts — RED test for the FULL-STACK integration gap
 // (the adversarial pass found the store→router→MCP dynamic-tool chain was never
 // wired in production: a module.install persisted a module but never registered

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/blind-battery-verify.test.ts — BLIND verification of the GREEN
 // scenario set (docs/specs/battery-units-greens.md B1..D1, scenarios 1-39)
 // against the implementation, WITHOUT having read the implementation

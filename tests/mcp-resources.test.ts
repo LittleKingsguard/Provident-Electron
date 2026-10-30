@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/mcp-resources.test.ts — RED tests for the gated MCP resources
 // (docs/specs/mcp-resources-review.md R1-R5). The server must:
 //   R1  register resources only when their group (`read`) is allowed — never

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 /**
  * ============================================================================
  * T2 = U-STORE-TABS-RECORD — THE RED SET (RCA-1: tests FIRST, RUN and REPORTED
@@ -1886,6 +1887,7 @@ describe('T2 §4.2 item 8 — §5.5.1 THE TYPED PROPERTY REGISTER (15 rows = 5 P
  * ───────────────────────────────────────────────────────────────────────────── */
 
 describe('T2 §4.2 item 9 — THE STATIC BOUNDARY (`§5.1`, `C-9`, `§5.3`, `§2.6`)', () => {
+  // strata:gates — the loop's own tree assertion, not module machinery (D-30)
   it('S-1 · §5.1 / C-9 — THE EDIT-SET ASSERTION AS A SET: `edit-set ⊆ declared scope ∪ declared wiring points`, WITH the positive control that an edit outside that union FAILS', () => {
     const control = editSetIsSubset([EDIT_SET_OFFENDER_FIXTURE], ['src/renderer/renderer.ts'])
     expect(control.ok, '§5.1 — a contract or red set that merely LISTS the allowed names, without the subset assertion and its positive control, is a finding').toBe(false)

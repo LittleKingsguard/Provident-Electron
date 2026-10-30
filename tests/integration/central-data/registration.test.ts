@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/central-data/registration.test.ts — THE L2 BATTERY for `central-data`, part 2:
 // the group, the gate and the registration surface.
 //

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/settings-carrier-retirement/settings-surface.test.ts — THE L3 UNIT BATTERY for E-3,
 // `src/main/settings-surface/index.ts` AT UNIT GRAIN: the two delegating verbs, the answers they mint,
 // and the module's two absences (no new private name, no `ipcMain` site, no channel).

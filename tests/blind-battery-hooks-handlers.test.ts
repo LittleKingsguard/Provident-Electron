@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/blind-battery-hooks-handlers.test.ts — BLIND-TEST WRITER artifact
 // (AGENTS.md item 10a). Produced from the DOCUMENTATION ONLY:
 //   docs/specs/battery-hooks-greens.md + docs/specs/battery-hooks-unit.md

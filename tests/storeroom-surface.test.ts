@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/storeroom-surface.test.ts — THE STOREROOM IMPORT SEAM: what the app gets when it imports
 // `provident-storeroom`, pinned so a version drift is a red row here rather than a surprise later.
 //

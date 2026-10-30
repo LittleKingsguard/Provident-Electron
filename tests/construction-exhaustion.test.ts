@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/construction-exhaustion.test.ts — the upstream "construction-path
 // exhaustion" adversarial check (AGENTS.md item 11a): for the graphScope value
 // threaded through N sites, assert it on EVERY node each DISTINCT construction

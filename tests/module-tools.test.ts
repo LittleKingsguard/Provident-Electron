@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-tools.test.ts — RED tests for Unit U3 of the module.* extension
 // system (docs/specs/module-import-proposal.md §2 ModuleManifest + §3
 // import/versioning/update/list + §5 gating). This unit wires the module store

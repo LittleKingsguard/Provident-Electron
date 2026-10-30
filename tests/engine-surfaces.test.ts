@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/engine-surfaces.test.ts — pins the provident-ssr shared multi-host
 // surfaces this repo adopts (the upstream REQ-GAP-4/5/3 landings + the
 // REQ-GAP-8 threading): Supervisor.dispatchAndReport ({results, dirtied}),

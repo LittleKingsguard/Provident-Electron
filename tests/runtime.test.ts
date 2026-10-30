@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/runtime.test.ts — the renderer Runtime's MCP-facing surface, verified
 // against a DOM shim (the upstream adapters.test.ts pattern). This exercises
 // the Phase B synthetic-event contract end-to-end from the Electron shell's

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/settings-carrier-retirement/retirement.test.ts — THE L2 BATTERY for
 // `settings-carrier-retirement`, part 4: THE RETIREMENT'S ABSENCES, THE WRITTEN-NAME CENSUS AND `ISO-7`.
 //

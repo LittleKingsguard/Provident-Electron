@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 /**
  * ============================================================================
  * U-STORE-REDERIVE — THE RED SET (RCA-1: tests FIRST, RUN and REPORTED failing,

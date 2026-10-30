@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/store-core-graph.test.ts — THE RED SET (`RCA-1`) for `U-STORE-CORE`'s
 // successor (ledger row `G1`): the AMENDED four-tier store on a node-anchor-link
 // graph.

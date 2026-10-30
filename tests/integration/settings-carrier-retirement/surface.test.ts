@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/settings-carrier-retirement/surface.test.ts — THE L2 BATTERY for
 // `settings-carrier-retirement`, part 3: THE TWO DELEGATING VERBS, THE TWO CHANNELS' ANSWERS, THE
 // DECLARED MEMBER SETS, AND BOOT PARITY BY A SECOND CONSTRUCTION.

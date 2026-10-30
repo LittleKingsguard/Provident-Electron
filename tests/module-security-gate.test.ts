@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-security-gate.test.ts — RED tests for Unit U1 of the module.*
 // extension system (docs/specs/module-import-proposal.md §5 + M-r2/M-r3/M-r6,
 // and the third-pass invocation two-gate fix). Imports from ../src/main/security.js.

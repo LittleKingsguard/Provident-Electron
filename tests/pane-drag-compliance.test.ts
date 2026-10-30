@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 /**
  * U-PANE-DRAG-COMPLIANCE — the RED SET (TestWriter, RCA-1).
  *

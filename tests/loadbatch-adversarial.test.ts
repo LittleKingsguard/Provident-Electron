@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/loadbatch-adversarial.test.ts — the adversarial pass for `code.loadBatch`
 // (loadbatch-review.md B1-B8). Hunts:
 //   A1  B2 — a failing batch leaves the envelope UNTOUCHED (no half-applied

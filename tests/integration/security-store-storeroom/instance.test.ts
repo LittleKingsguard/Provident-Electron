@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/security-store-storeroom/instance.test.ts — THE L2 BATTERY for
 // `security-store-storeroom`, part 1: THE INSTANCE, through its DECLARED SURFACE.
 //

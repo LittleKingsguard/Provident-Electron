@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/loadbatch.test.ts — RED tests for `code.loadBatch` (docs/specs/
 // loadbatch-review.md B1-B8). The Runtime must:
 //   B2  all-or-nothing: a batch applies to a clone; on any op failure the live

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // ---------------------------------------------------------------------------
 // H2a · U-STORE-MODULES-BYTES — the RED SET (RCA-1: tests first, reported
 // failing, before any implementation). Contract: docs/specs/store-modules-bytes.md

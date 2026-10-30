@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/journal-reversibility.test.ts — the journal reversibility stress battery
 // (docs/specs/journal-reversibility-battery.md). Drives the provident engine's
 // journal surface (Supervisor.apply → journal, then undo()/redo()/replay())

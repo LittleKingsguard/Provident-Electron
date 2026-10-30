@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/gutter.test.ts
 // ===========================================================================
 // U-GUTTER · wave E (ledger row `E3`) · **THE RED SET** (RCA-1)

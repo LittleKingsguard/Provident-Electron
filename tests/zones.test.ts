@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/zones.test.ts
 // ===========================================================================
 // U-ZONES · wave E · **THE RED SET** (RCA-1) — the next-steps row `E1`.

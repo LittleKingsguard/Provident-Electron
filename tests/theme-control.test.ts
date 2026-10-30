@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/theme-control.test.ts
 // ===========================================================================
 // U-THEME-CONTROL · wave `F` · ledger row `F1` · **THE RED SET** (`RCA-1`, `§4`)

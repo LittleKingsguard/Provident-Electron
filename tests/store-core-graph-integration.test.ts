@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 /**
  * INTEGRATION RED SET — module wave, unit `U-STORE-CORE` (ledger G1), PHASE 5 (the family's T4),
  * re-frozen by `AMENDMENT TENANT-1` (2026-10-03, the tenant-admitting pass — the architect's

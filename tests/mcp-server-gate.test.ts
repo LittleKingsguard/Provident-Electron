@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/mcp-server-gate.test.ts — RED tests for the A1-W4 MCP server gate unit
 // (docs/specs/mcp-server-gate.md §2/§4). Imports `ProvidentMcpServer` /
 // `McpBackend` from ../src/main/mcp-server.js and `SecurityGate` from

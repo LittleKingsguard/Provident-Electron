@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/central-data/delete-and-journal.test.ts — the delete receipt and the change window.
 //
 // Every row drives one declared answer: a delete where a row stands removes it and mints a cursor

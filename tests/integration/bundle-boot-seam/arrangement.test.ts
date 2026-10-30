@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/bundle-boot-seam/arrangement.test.ts — THE L2 BATTERY for `bundle-boot-seam`:
 // the arrangement `docs/L2/bundle-boot-seam/interface.md` §1 declares, driven at the grain of what
 // `npm run build` emits and what the two module systems agree on (rows A-1..A-5, `interface.md` §7).

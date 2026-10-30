@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/unit/bundle-boot-seam/emission.test.ts — THE L3 UNIT BATTERY for E-1, the landing site
 // `package.json` at the ONLY GRAIN IT ADMITS: the name of each emission and the text of the arm that
 // produces it. The structure and the guardrails are `docs/L3/bundle-boot-seam/design.md` §2/§4 and the

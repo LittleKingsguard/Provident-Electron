@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { Runtime } from '../src/renderer/runtime.js';
 import { installShim, mountEl } from '../src/shared/dom-shim.js';

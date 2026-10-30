@@ -664,9 +664,9 @@ a measurement with a shelf life, and the loop stops spending passes keeping it t
   scenario in it, which is the shape every flat file and every strata integration/unit battery takes, being
   one kind throughout. A marker above a `describe` is refused rather than guessed at (`check`).
 - **The registry** is `strata/marks.json`, L1-owned beside `strata/modules.json`, generated from those
-  markers by `scripts/strata-marks.mjs` (the `harness` row) and never hand-edited: `index` writes it,
-  `check` refuses when source and index disagree, `report` prints both readings per suite. Its counts are
-  the index's, never restated in prose (D-26).
+  markers by `scripts/strata-marks.mjs` (the `harness` row) and never hand-edited: `index` writes it and
+  refuses to write past a malformed marker, `check` refuses when source and index disagree, `report` prints
+  both readings. Its counts are the index's, never restated in prose (D-26).
 - **The gate:** a marked row stops gating. `npm test` reports the on-notice reading beside the gating one,
   and the four legs of `brief.md` §6 rest on `tests/e2e/**`, the three Electron legs and every unmarked row.
   How the runner separates the two readings is L2's arrangement to decide and L4's to land; this row states

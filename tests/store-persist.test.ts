@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/store-persist.test.ts — U-STORE-PERSIST (`G2`): tier 1's crossing — THE RED SET (RCA-1).
 //
 // AUTHORED FROM `docs/specs/store-persist.md` ALONE (the gate-3 role: tests FIRST, RUN and

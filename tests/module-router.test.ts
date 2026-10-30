@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-router.test.ts — RED tests for Unit U4: the capability router +
 // internal toolset (docs/specs/module-import-proposal.md §4 + §7b, and
 // docs/specs/module-feature-list.md §3). Imports from

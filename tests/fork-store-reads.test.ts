@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/fork-store-reads.test.ts
 // ===========================================================================
 // `U-FORK-STORE-READS` (ledger row `H3`) — **THE RED SET** (RCA-1, authored

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-store.test.ts — Unit U2: the persisted module registry store
 // (docs/specs/module-import-proposal.md §6, M-r8 revised to fail-disabled).
 // Mirrors security-store.test.ts (temp dirs via node:fs). The store boots

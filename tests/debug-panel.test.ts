@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/debug-panel.test.ts — the Debug pane's live agent-visibility line,
 // now hosted in the isolated SecurePanels graph (2026-08-25). The pane renders
 // through `SecurePanels.refreshDebug(runtime)`, which sources the APP graph's

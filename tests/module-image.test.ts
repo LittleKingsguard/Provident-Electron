@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-image.test.ts — RED tests for Unit U5: the image/binary MCP
 // tool-result channel (M-r4). Contract: docs/specs/module-import-proposal.md
 // §9 (M-r4 payload guard) + docs/specs/module-feature-list.md §3

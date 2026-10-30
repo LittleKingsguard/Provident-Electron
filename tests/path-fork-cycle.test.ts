@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/path-fork-cycle.test.ts — Unit B: the CYCLE-variant static envelope
 // (docs/specs/e2e-test-battery.md §5.1.x + src/shared/path-fork-cycle.ts). The
 // upstream static trio (placement/values/link) has no cycle variant; this is

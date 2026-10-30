@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/ui-leg-seam.test.ts — §3.5's `SEAM-1..4` rows + §4's ONE additive
 // production seam (`ADD-1..ADD-6`) + §3.0 `R0`(c), for unit `U-REALDOM-BOOT`
 // (wave C), written RED-FIRST from docs/specs/ci-ui-leg.md ONLY

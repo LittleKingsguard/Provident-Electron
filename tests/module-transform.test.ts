@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/module-transform.test.ts — RED tests for Unit U6: the render-transform
 // wiring (M-r5). The CapabilityRouter (U4) has `applyTransforms(fragment)`
 // (emit-only, composed in order, throwing transform contained). U6 wires it

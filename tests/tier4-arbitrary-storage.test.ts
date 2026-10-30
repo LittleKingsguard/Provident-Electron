@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 /**
  * ============================================================================
  * S2 = U-TIER4-ARBITRARY-STORAGE — THE SURVIVING BATTERY, RE-GRAINED ON THE

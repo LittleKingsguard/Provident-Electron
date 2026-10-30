@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/integration/settings-carrier-retirement/import.test.ts — THE L2 BATTERY for
 // `settings-carrier-retirement`, part 2: THE SECOND IMPORT-ONCE ARM, and the bytes it may not touch.
 //

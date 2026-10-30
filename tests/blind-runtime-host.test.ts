@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/blind-runtime-host.test.ts — BLIND-TEST WRITER artifact (AGENTS.md item 10a).
 // Produced from the DOCUMENTATION ONLY: docs/specs/runtime-host-greens.md (R1..R8,
 // scenarios 1-39) + docs/specs/runtime-host.md. The writer did NOT read the

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/security.test.ts — RED tests for the A1 MCP security gate & agent
 // permissions unit (docs/specs/mcp-security.md). Imports the to-be-implemented
 // pure module at src/main/security.js. These tests are RED because that module

@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/renderer-backend.test.ts — RED tests for the A2/A6 RendererBackend
 // lifecycle hardening unit (docs/specs/renderer-backend-hardening.md §2/§3/§4).
 //

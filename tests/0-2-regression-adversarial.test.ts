@@ -1,3 +1,4 @@
+// strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
 // tests/0.2-regression-adversarial.test.ts — a broad adversarial pass on the
 // host's 0.1.x MCP/Runtime surface, hunting regressions introduced by the 0.2
 // scope refactor (registry/serialize/ops/supervisor gained scope threading +
