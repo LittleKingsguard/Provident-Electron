@@ -4,8 +4,9 @@
 Blocked work lives in `pending.md`; unasked ideas in `proposals.md`.
 
 | # | Work | Owner | Closed when |
+|---|---|---|---|
+| 1 | **Land the crossing.** The L2 interface is filed (`docs/L2/store-tabs-record/interface.md`, rev 1): one bridge member, three routes, the instance's file and addresses, the refusal vocabulary. What remains is L3's module design, then L4's one shot — and the landing pass carries the named census move (bridge 7 → 8) that three gating batteries and two layer documents assert | `store-tabs-record`'s L3, then its L4 | the bridge member answers, the constraint runs in the instance, and the seven-member assertions are re-grained in the same commit |
 
-| 1 | **Design the bridge crossing for the tab record.** D-63 fixed the *where* — a main-side instance, the third of its kind — and left the *which*: the L2 interface naming the record's routes, and whether they ride the five declared-but-unanswered `data.*` members or add their own (reusing them puts two units over one route, D-32). The instance's file, its three addresses, and `TABS_CONSTRAINT`'s translation out of `GraphConstraint` into the instance's engine all belong in that design | `store-tabs-record`'s L2, whose map row and L1 artifact are filed (D-62) | a passing L2 interface whose routes the bridge carries and whose constraint the instance evaluates |
 
 The `§5.U` battery landed with its unit (D-62) and the suite is green — `scripts/strata-suite-reading.mjs` reads
 gating 0 / on notice 0, and `brief.md` §6 carries the reading (D-26).
