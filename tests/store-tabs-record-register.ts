@@ -217,7 +217,11 @@ export const U_MATRIX_CAP = 8
  *  landed is `docs/specs/<unit>-live-battery.md`; `T2`'s unit slug is `store-tabs-record`,
  *  so the OWED path is THIS one. It does not exist yet — the gate-6 battery is OWED and
  *  **an un-run live row is a FAILURE, never a pass** (`§5.5.1` `P-TR-TP-4`/`-TP-5`). */
-const LIVE_BATTERY_SRC = new URL('./../docs/specs/' + 'store-tabs-record-live' + '-battery.md', import.meta.url)
+// **⟶ RE-FILED 2026-10-30 (D-62): the battery is the ADMITTED unit's L1 artifact, not a `docs/specs/` file. The
+//    gate-era document moved to the archive with the corpus (D-2) and carried no `post` provenance at all — it
+//    records `observation`/`verdict` and no measured post-state — so the unit authors its own matrix, and the rows
+//    below read it. A live list must not cite a retired directory, which is why this path moved with the admission.**
+const LIVE_BATTERY_SRC = new URL('./../docs/L1/' + 'store-tabs-record' + '.md', import.meta.url)
 export const LIVE_BATTERY_PATH = fileURLToPath(LIVE_BATTERY_SRC)
 
 /** `§5.1` item `3b` / `§5.2` item `7`(a) — THE UNIT'S OWN POINTER-CARRYING DRIVER, at the
@@ -293,7 +297,7 @@ export const DECLARED_SCOPE_PATHS: readonly string[] = [
   'tests/theme-control.test.ts',
   // ── `§5.1` item `3b`, ADDED `2026-10-11` BY THE ARCHITECT'S `[U]`-EVIDENCE-LAYER RULING.
   'tests/store-tabs-record-live.mjs',
-  'docs/specs/store-tabs-record-live-battery.md',
+  'docs/L1/store-tabs-record.md',
   // ── ADDED `2026-10-11` BY THE ROW-LEVEL RESIDUE PASS, AND IT IS A DECLARED WRITE-BACK —
   //    NOT A WIDENED SCOPE (`T2`'s contract `§7b` item 3): `store-focus.md`'s carrier cells
   //    that name the slice record as UNLANDED move with this unit's landing, and
@@ -4008,7 +4012,7 @@ export function registerRows(): readonly RegisterRow[] {
             // (`tests/store-focus.test.ts`, `T2` `§7b` item 3) and it is NAMED, never folded
             // into the count.** A pass that adds a fourth path without naming it here reddens.
             const declared = [...DECLARED_SCOPE_PATHS].sort()
-            const expected = [...DECLARED_SCOPE_PATHS_AS_FILED, 'tests/store-tabs-record-live.mjs', 'docs/specs/store-tabs-record-live-battery.md', 'tests/store-focus.test.ts'].sort()
+            const expected = [...DECLARED_SCOPE_PATHS_AS_FILED, 'tests/store-tabs-record-live.mjs', 'docs/L1/store-tabs-record.md', 'tests/store-focus.test.ts'].sort()
             expect(declared, '§5.1 / C-9 — the declared scope is a SET: the as-filed seven plus exactly the two `§5.1` item `3b` paths plus the ONE declared write-back path (`tests/store-focus.test.ts`, `T2` `§7b` item 3), no duplicate, no drop').toEqual(expected)
             expect(new Set(DECLARED_SCOPE_PATHS).size, '§5.1 (C-9) — no duplicate path inflates the set').toBe(DECLARED_SCOPE_PATHS.length)
             expect(DECLARED_SCOPE_PATHS).toContain('tests/store-tabs-record-live.mjs')

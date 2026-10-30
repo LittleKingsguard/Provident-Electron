@@ -1505,7 +1505,7 @@ describe('T2 §4.2 item 7 — THE TWO AUTHORED PAGES’ NODE-LAYER HALF (`§3.5`
     //    PAINTED-SURFACE observation. A machine green is never a substitute for an operator
     //    row, and an operator row is never evidence about the record's arithmetic.
     expect(LIVE_DRIVER_PATH.endsWith('tests/store-tabs-record-live.mjs'), '§5.1 item 3b / §5.2 item 7(a) — the unit’s OWN driver, at the unit’s own `tests/*-live.mjs` path').toBe(true)
-    expect(LIVE_BATTERY_PATH.endsWith('docs/specs/store-tabs-record-live-battery.md'), '§5.1 item 6 — the `§5.U` matrix / `§6.1` report / `§6.2` audit record at this repo’s gate-6 convention path').toBe(true)
+    expect(LIVE_BATTERY_PATH.endsWith('docs/L1/store-tabs-record.md'), '§5.1 item 6 — the `§5.U` matrix / `§6.1` report / `§6.2` audit record at this repo’s gate-6 convention path').toBe(true)
     expect(
       DRIVER_RUN_FORM,
       '§5.2 item 7(a) — the driver’s RUN FORM is a LITERAL COMMAND LINE with its own exit code, so that NO `scripts` KEY IS ADDED',
