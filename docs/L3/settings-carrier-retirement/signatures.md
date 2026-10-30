@@ -109,7 +109,7 @@ export interface SettingsSurface {
 export function createSettingsSurface(options: { userDataDir: string; journalLength?: number }): SettingsSurface
 ```
 
-- **`N = 15 → 19`**, the two new verbs exposed and consumed with both sides counted (interface §3; L1 §2; D-14; `platform.md` §4); and **`AppStateRow`/`AppStateLegacy` are imported as types from `../operator-settings/index.js`** beside the four names already imported there, while `preload.ts:72`'s closed pair stays unwidened — owed to the unit that next touches the bridge (`src/main/settings-surface/index.ts:18`; interface §3; persistence §8; L1 §9).
+- **`N = 15 → 19`**, the two new verbs exposed and consumed with both sides counted (interface §3; L1 §2; D-14; `platform.md` §4); and **`AppStateRow`/`AppStateLegacy` are imported as types from `../operator-settings/index.js`** beside the four names already imported there, while `preload.ts:72`'s closed pair stays unwidened — owed to the unit that next touches the bridge (the `../operator-settings/index.js` import line of `src/main/settings-surface/index.ts`, named as a site and never an offset — D-41; interface §3; persistence §8; L1 §9).
 
 ## 5. `src/main/settings-surface/index.ts` — the private names, never exported
 

@@ -11,7 +11,7 @@
 
 | # | Piece | Kind | Where (post-landing) |
 |---|---|---|---|
-| 1 | `ToolGroup` as a **second specifier** on the existing type-only import | a type-only import specifier — erased at build (S-4) | `src/renderer/secure-panels.ts:42` |
+| 1 | `ToolGroup` as a **second specifier** on the existing type-only import | a type-only import specifier — erased at build (S-4) | the type-only `'../main/security.js'` import line, beside `ExclusionState` |
 | 2 | the table's annotation `Record<ToolGroup, string>` + the `data` entry | an annotation and one data line | `:77-84`, inside the block `:74-90` |
 | 3 | the projection `const GROUPS = Object.keys(GROUP_LABELS) as readonly ToolGroup[]` | one assertion, at one site, replacing a literal | `:90`, immediately after the table |
 | 4 | the roster guard in `syncConfig`'s `toggle:` arm | one replaced line and one added line | `:556-565` |
@@ -21,7 +21,7 @@
 
 ## 2. The exact text (verbatim; `signatures.md` is the authority L4 copies from)
 
-### 2.1 The import — the `'../main/security.js'` statement, `:42` post-landing (region 1)
+### 2.1 The import — the `'../main/security.js'` statement, the type-only line beside `ExclusionState` (region 1)
 
 The existing line gains **one specifier**; the statement, the specifier string and the `import type` keyword do not move. The two comment lines above it are this unit's and sit between the PAR-13 block and the import:
 
@@ -85,7 +85,7 @@ One line replaced, one added, four comment lines; the branch's condition and eve
 
 | # | Site, and the text it replaced (post-landing offset) | Action | Compiles alone? |
 |---|---|---|---|
-| 1 | the existing `'../main/security.js'` import statement, `:42` post-landing — it carried `import type { ExclusionState as EXCLUSION_STATE }` | append `, ToolGroup` to the specifier list and put §2.1's two comment lines above it | yes — the file stays green |
+| 1 | the existing `'../main/security.js'` import statement — the type-only line beside `ExclusionState`, which carried `import type { ExclusionState as EXCLUSION_STATE }` | append `, ToolGroup` to the specifier list and put §2.1's two comment lines above it | yes — the file stays green |
 | 2 | the constants block, `:74-90` post-landing — it carried `const GROUPS = […] as const` above `const GROUP_LABELS: Record<string, string> = {…}` | replace both with §2.2 verbatim (table first, projection after, `data` last) | **no — leaves exactly one `TS7053`** at region 3's table index (`:565`; T-2); that red is the design's own statement |
 | 3 | `syncConfig`'s `toggle:` arm, `:556-565` post-landing — it carried `const g = id.slice('toggle:'.length)` | replace that line and add the guard, per §2.3 | yes — the file is green; `npm run typecheck` is the instrument |
 
