@@ -977,3 +977,30 @@ comments, are checkable only against the code — and a claim the root cannot se
 findings about the corpus's summaries (D-43), but the fourth was the instrument's own limit. So the
 **instrument** changed and the sentence did not — which is what it means to indict the artifact rather than
 the prose.
+
+---
+
+## D-45 — A document's hand-kept declaration block is checked, or it is not kept
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the `security-store-storeroom` unit's L2 documents,
+measured — both declaration blocks had drifted from their modules (three verbs declared against five, four
+against six, and a receipt shape carrying an ordinal the tree's answer does not), while the L3 document
+declaring **the same surfaces** had not drifted at all.
+
+**Decision:** a document may keep a declaration block only if something compares it to the tree. Cheapest
+first:
+
+- **(i) keep none** — cite the code and stop carrying a copy. Zero drift surface, and D-43's rule already
+  says a summary cites rather than restates. It costs the reader a hop.
+- **(ii) a battery row** comparing the block's declared **name set** against the module's exported names —
+  no new instrument, no new module name, and per D-40 a row authored now **gates**. Measured on this unit:
+  ~15 lines, and it would have caught both drifts.
+- **(iii) a generated block**, which needs a new instrument row and a `brief.md` §6 entry, and strips the
+  per-line glosses unless they move into a hand-kept table beside it.
+
+**No arm moves a census:** a doc-side projection, a lint or a battery row mints no module endpoint (D-14).
+Arm (ii) is the default where the glosses earn their keep; (i) where they do not.
+
+**What looks like the check but is not:** `surface.test.ts`'s export-census row pins the **entry's run-time
+exports** and asserts four callables of the six, so it could not have reddened on either drift, and it titles
+itself "the four verbs" (routed to that unit's test writer).
