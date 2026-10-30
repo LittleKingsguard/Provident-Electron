@@ -2,10 +2,11 @@
 //
 // What this file is, exactly, and what it is NOT:
 //
-//  - IT IS the app's single import of `provident-storeroom`. The package is the object of this
-//    repo's defect catalogue (`docs/defects.md`, handoff `docs/HANDOFF.md`): the app is the
-//    implementation test, and an implementation test that never imports the package is a paper
-//    exercise. This module is the place the import happens, so there is ONE seam to point at.
+//  - IT IS one of the app's TWO imports of `provident-storeroom` — the seam that declares its
+//    surface; `storeCreate` in the operator-settings instance is the other (`brief.md` §2, D-16).
+//    The package is the object of this repo's defect catalogue (`docs/defects.md`, handoff
+//    `docs/HANDOFF.md`): the app is the implementation test, and one that never imports it is a
+//    paper exercise. This module is where the surface is pinned, so there is ONE seam to point at.
 //  - IT IS NOT a capability. Nothing here is exposed over MCP, rendered, or persisted to the
 //    operator's profile, and no contract in `docs/specs/**` names a storeroom feature. Adding
 //    such a capability is a UNIT — proposal gate, spec, red set — and it is not been admitted.
