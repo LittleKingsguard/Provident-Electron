@@ -1,10 +1,13 @@
 {
   "unit": "bundle-boot-seam",
-  "layer": "L0",
+  "layer": "L2",
   "stage": "design",
-  "artifacts": [],
+  "artifacts": [
+    "l1-boot-seam-design",
+    "l1-e2e-battery"
+  ],
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T01:36:00.922Z"
+  "updated": "2026-10-30T01:50:09.889Z"
 }
