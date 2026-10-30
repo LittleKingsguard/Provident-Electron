@@ -1,6 +1,6 @@
 {
   "unit": "bundle-boot-seam",
-  "layer": "L2",
+  "layer": "L0",
   "stage": "design",
   "artifacts": [
     "l1-boot-seam-design",
@@ -13,5 +13,5 @@
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T02:19:47.743Z"
+  "updated": "2026-10-30T02:23:55.530Z"
 }

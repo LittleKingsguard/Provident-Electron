@@ -6,7 +6,7 @@
 
 ## 1. What this unit is (D-27)
 
-The app's built main bundle cannot be evaluated, so no process it starts ever exists — D-27 records the defect this unit is admitted on: `npm run build` emits `src/main/main.ts` as **CJS** (`package.json:10`), so esbuild writes `var import_meta = {}` and `createRequire(import_meta.url)` (`dist/main/main.cjs:38479-38482`) on behalf of the ESM-only `provident-storeroom`, whose addon path is derived from `import.meta.url` (`node_modules/provident-storeroom/index.mjs:94-97`) — and the process dies at module load with `ERR_INVALID_ARG_VALUE` (D-27).
+The app's built main bundle could not be evaluated, so no process it started ever existed — D-27 records the defect this unit is admitted on: `npm run build` emitted `src/main/main.ts` as **CJS**, so esbuild left `var import_meta = {}` and `createRequire(import_meta.url)` on behalf of the ESM-only `provident-storeroom`, whose addon path is derived from `import.meta.url` (`node_modules/provident-storeroom/index.mjs:94-97`) — and the process died at module load with `ERR_INVALID_ARG_VALUE` (D-27).
 
 **This unit owns the arrangement that turns four entry points into four booting bundles, and the battery that proves it; it does not own that arrangement's shape** (D-27, `examiner.md` §3): L2 designs it, L3 details it, and no row below prescribes it.
 
@@ -32,19 +32,19 @@ The battery reads only what a running process publishes — its stderr trace, it
 
 | Observable | Where the process publishes it |
 |---|---|
-| the boot trace line `[provident-main] node …` | `src/main/main.ts:76`, the first statement of `main()` |
+| the boot trace line `[provident-main] node …` | `src/main/main.ts:80`, the first statement of `main()` |
 | the stdio transport's readiness | `src/main/mcp-server.ts:1191` |
 | the HTTP transport's readiness, naming its port | `src/main/mcp-server.ts:1202-1203` |
 | the HTTP transport's answer set (404 off-route, 405 on GET/DELETE, 401 unauthorised, else `/mcp`) | `src/main/mcp-server.ts:1208-1217,1224-1228` |
-| the renderer bridge's arrival, `renderer ready — MCP backend armed` | `src/main/main.ts:418` |
+| the renderer bridge's arrival, `renderer ready — MCP backend armed` | `src/main/main.ts:422` |
 | the instance's own file in a scratch profile | `src/main/operator-settings/index.ts:119,405`, constructed through `src/main/settings-surface/index.ts:91` |
-| the scratch profile the boot is pinned to | `src/main/main.ts:83`; the legs' own `--user-data-dir=` at `scripts/electron-spawn.mjs:362` |
+| the scratch profile the boot is pinned to | `src/main/main.ts:87`; the legs' own `--user-data-dir=` at `scripts/electron-spawn.mjs:362` |
 
 **The MCP client is the battery's only caller** — `initialize`, `tools/list` and one tool call over the transport the bundle opened, exactly as `tests/mcp-stdio-e2e.test.mjs:29-68` drives the standalone bundle (D-27).
 
 ## 5. The boot order the battery pins (D-27, D-18)
 
-The landed order is **construction → boot read → gate → window → renderer load → `mcp.start()`** (`src/main/main.ts:108,109,115,451,455,463,467`), and the three lines it publishes on the way are §4's trace, transport-ready and renderer-ready (D-18, `src/main/main.ts:76,418`). The instance's construction precedes the server's, so a boot that reaches the renderer-ready line has already constructed it — which is why §6's B-5 can assert the addon resolved without reading a source file (D-27, `strata/records/security-store-storeroom-unit.md` §2).
+The landed order is **construction → boot read → gate → `attach` → window → renderer load → `mcp.start()`** — seven steps, one number each (`src/main/main.ts:112,113,119,453,455,467,471`) — and the three lines it publishes on the way are §4's trace, transport-ready and renderer-ready (D-18, `src/main/main.ts:80,422`). The instance's construction precedes the server's, so a boot that reaches the renderer-ready line has already constructed it — which is why §6's B-5 can assert the addon resolved without reading a source file (D-27, `strata/records/security-store-storeroom-unit.md` §2).
 
 ## 6. The L1 battery — eight scenarios at `tests/e2e/bundle-boot-seam/` (D-27)
 
@@ -53,10 +53,10 @@ The landed order is **construction → boot read → gate → window → rendere
 | # | Goal | Expected |
 |---|---|---|
 | B-1 | the build produces the entry the app boots | `npm run build` exits 0 and the `main` field's path exists and is non-empty (`package.json:7,10`) |
-| B-2 | the built main bundle survives module evaluation | the spawned bundle publishes `[provident-main] node …` within the bound and no load-error marker at all (`src/main/main.ts:76`) |
+| B-2 | the built main bundle survives module evaluation | the spawned bundle publishes `[provident-main] node …` within the bound and no load-error marker at all (`src/main/main.ts:80`) |
 | B-3 | the bundle completes a stdio handshake | over the bundle's own stdio, in a scratch profile, `initialize` then `tools/list` answer and the granted set carries `provident.get_rendered_html` (`src/main/mcp-server.ts:1191`) |
-| B-4 | it answers a real tool call through that handshake | one `provident.get_rendered_html` call answers content carrying a non-empty `renderedHtml` (`src/main/main.ts:418`, `src/main/mcp-server.ts:1330`) |
-| B-5 | the boot order holds and the addon resolved | the trace line precedes both readiness lines, no `fatal:`/load-error marker appears, and the profile holds `provident-operator-settings.json` — the instance constructed (`src/main/main.ts:108,418`; `src/main/operator-settings/index.ts:405`) |
+| B-4 | it answers a real tool call through that handshake | one `provident.get_rendered_html` call answers content carrying a non-empty `renderedHtml` (`src/main/main.ts:422`, `src/main/mcp-server.ts:1330`) |
+| B-5 | the boot order holds and the addon resolved | the trace line precedes both readiness lines, no `fatal:`/load-error marker appears, and the profile holds `provident-operator-settings.json` — the instance constructed (`src/main/main.ts:112,422`; `src/main/operator-settings/index.ts:405`) |
 | B-6 | the HTTP transport binds and answers on the configured port | spawned on a scratch port, the readiness line names that port, `/mcp` answers the handshake, and a GET answers 405 (`src/main/mcp-server.ts:1202-1217`) |
 | B-7 | the other two bundles still boot | `standalone.mjs` and `battery-host.mjs` each publish a handshake and `tools/list` over stdio — the arrangement may not regress them (`src/main/standalone.ts:53`, `src/main/battery-host.ts:95`) |
 | B-8 | an unbootable bundle is a failure with its reason | a corrupted copy — carrying the **basename the `main` field names**, so it is the artifact's own module system and reaches the injected reason instead of a parse error — is reported within the bound carrying that reason, never as a bare timeout with no verdict: the shape `F-2` let this defect live in (`package.json:7`; `strata/records/security-store-storeroom-unit.md` §2, L2 examination return `F-2`) |
@@ -78,13 +78,13 @@ The landed order is **construction → boot read → gate → window → rendere
 
 | Id | Path (owning row) | The writes that may move | Writer |
 |---|---|---|---|
-| **E-1** | `package.json` (`bundle-boot-seam`) | the `build` script's two CJS emissions and the `main` field — the arrangement's whole landing site (`package.json:7,10`) | this unit's **L4**, one shot |
-| **E-2** | `src/main/main.ts` (`app-shell`) | only what the chosen arrangement forces in the entry's own text — the CJS assumption at `src/main/main.ts:23-25` and the `preload` join at `:455`; no boot step, channel or handler moves (D-18) | this unit's **L4**, one shot, under L2's design |
+| **E-1** | `package.json` (`bundle-boot-seam`) | the `build` script's main and preload emissions and the `main` field — the arrangement's whole landing site (`package.json:7,10`) | this unit's **L4**, one shot |
+| **E-2** | `src/main/main.ts` (`app-shell`) | only what the arrangement forces in the entry's own text — the two imports at `src/main/main.ts:6-7` and the module-URL derivation at `:29`; no boot step, no channel, no handler and no `:459` `preload` join is edited (D-18) | this unit's **L4**, one shot, under L2's design (`docs/L2/bundle-boot-seam/interface.md` §5; `docs/L3/bundle-boot-seam/signatures.md` §4) |
 | **E-3** | `strata/modules.json` (L1's own map) | §2's row, filed with this document (D-7) | **L1** |
 | **E-4** | `tests/e2e/bundle-boot-seam/` | §6's battery, this layer's artifact under `brief.md` §3's write scope (D-27) | **L1** |
-| **E-5** | `scripts/electron-spawn.mjs`, `scripts/electron-ui.mjs`, `tests/ui-leg-contract.test.ts` (the `harness` row) | **one name per file and nothing else in it**: `scripts/electron-spawn.mjs:75`'s `mainCjs` constant — Electron's app argument, `baseArgs[0]` at `:81` — and `scripts/electron-ui.mjs:131`'s `mainBundle` constant, read by the digest map's `main` entry (`:1158`, the map opened at `:1157`), both moving to the artifact the `main` field names; and the **test row** rather than a script at `tests/ui-leg-contract.test.ts:498`, whose matcher is `/main\.cjs/` over the ui leg's own source (its comment at `:479`) | **`harness`** — its script writer for the two names and its **test** writer for the matcher; never this unit's L4 |
+| **E-5** | `scripts/electron-spawn.mjs`, `scripts/electron-ui.mjs`, `tests/ui-leg-contract.test.ts` (the `harness` row) | **one name per file and nothing else in it**: `scripts/electron-spawn.mjs:75`'s `mainCjs` constant — Electron's app argument, `baseArgs[0]` at `:81` — and `scripts/electron-ui.mjs:131`'s `mainBundle` constant, read by the digest map's `main` entry (`:1158`, the map opened at `:1157`), both moving to the artifact the `main` field names; and the **test row** rather than a script at `tests/ui-leg-contract.test.ts:498`, whose matcher requires that artifact's name over the ui leg's own source (its comment at `:479`) | **`harness`** — its script writer for the two names and its **test** writer for the matcher; never this unit's L4 |
 
-**E-5 is one change with E-1, and A-5 is the row that says so**: L2's battery row A-5 asserts the harness's spawn vector names the artifact the `main` field names, so it is green at this head, **red between E-1 landing and E-5 landing** and green again when E-5 lands — the only row in that state, which is why the two writes land together (`docs/L2/bundle-boot-seam/interface.md` §5, §7; D-27). E-5's third site keeps its substance — a digest of the built artifacts is recorded before and after the divergence run — and moves only the name its matcher accepts, so it reddens when the name moves, not before (`docs/L2/bundle-boot-seam/interface.md` §7). **No other name in those three files moves**: the spawn vector, the digest map's four other entries and the leg's other assertions stay byte-identical (`modules.md` §3).
+**E-5 is one change with E-1, and A-5 is the row that says so**: L2's battery row A-5 asserts the harness's spawn vector names the artifact the `main` field names, so it is green only where E-1 and E-5 have both landed — which is why the two writes are one change and E-5's writer is `harness`, never this unit's L4 (`docs/L2/bundle-boot-seam/interface.md` §5, §7; D-27). E-5's third site keeps its substance — a digest of the built artifacts is recorded before and after the divergence run — and moves only the name its matcher accepts, so it reddens when the name moves, not before (`docs/L2/bundle-boot-seam/interface.md` §7). **No other name in those three files moves**: the spawn vector, the digest map's four other entries and the leg's other assertions stay byte-identical (`modules.md` §3).
 
 **Not a move, named so no reader looks for one**: `src/main/standalone.ts` and `src/main/battery-host.ts` stay `mcp-surface`'s and byte-identical, and `scripts/` stays `harness`'s — E-5 is `harness` writing inside its own row, and B-7 is the row that catches an arrangement which breaks the two ESM bundles (`modules.md` §3).
 

@@ -1,7 +1,7 @@
 # L2 — `bundle-boot-seam`: the persistence
 
-- **Layer:** L2 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Status:** DESIGN — what this unit's arrangement puts on disk, **what it deliberately does not put on disk and must find there at run time**, what it retires, and what a boot writes that is not the arrangement's (D-27)
-- **Inputs:** `interface.md` §1-§5/§8 (the arrangement, P-1..P-15, E-1/E-2/E-5, the census), `behaviour.md` §1-§7; `docs/L1/bundle-boot-seam.md` §4/§5/§8; D-5, D-14, D-18, D-27, D-28; `docs/L2/security-store-storeroom/persistence.md` §1 (the instance's file, whose writer is not this unit)
+- **Layer:** L2 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 2 is read through this one: it states what this unit's arrangement puts on disk, **what it deliberately does not put on disk and must find there at run time**, what it retires, and what a boot writes that is not the arrangement's; rev 3 states that same arrangement **landed** — the emission set this tree holds is the external one and the retired name is gone (**Status:** DESIGN; D-26, D-27)
+- **Inputs:** `interface.md` §1-§5/§8 (the arrangement, P-1..P-15, E-1/E-2/E-5, the census), `behaviour.md` §1-§7; `docs/L1/bundle-boot-seam.md` §4/§5/§8; D-5, D-14, D-18, D-26, D-27, D-28; `docs/L2/security-store-storeroom/persistence.md` §1 (the instance's file, whose writer is not this unit)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `P-n` is `interface.md` §2's probe answer for this seat; the package is read and never edited (D-5)
 
 ## 1. The artifacts an arrangement produces, the one it retires, and the one it stops carrying
@@ -17,7 +17,7 @@ The seam's on-disk product is **the build's emission set** — five artifacts, o
 | `dist/renderer/renderer.js` + `index.html` | browser ESM | not imported | `package.json:10` | `src/main/main.ts:466-467` |
 
 - **`dist/main/main.cjs` is the retired name**, and it retires by being **replaced, never left behind**: `package.json:9`'s `clean` removes `dist` before every build, so the CJS artifact cannot survive a build that no longer emits it (D-1, D-27).
-- **The package's bytes leave the emission set** and this is the only on-disk change rev 2 makes: the inlined emission measured **1,532,476** bytes and the external one **1,345,550**, and what left is `provident-storeroom`'s JavaScript — the native addon was never in either artifact, because the package resolves it from `node_modules` (P-10, P-11, P-15).
+- **The package's bytes leave the emission set** and this is the only on-disk change rev 2 makes: the inlined emission measured **1,532,476** bytes and the external one **1,345,550**, and what left is `provident-storeroom`'s JavaScript — the native addon was never in either artifact, because the package resolves it from `node_modules` (P-10, P-11, P-15). The artifact on disk at this head is the second figure (`dist/main/main.mjs`, `stat` size), carrying the bare specifier twice and 0 addon-path references.
 - **`dist` is generated, untracked output** (`.gitignore`), so no artifact of this unit is a repository file and no reading here depends on a committed byte (`brief.md` §1).
 - **Nothing else is emitted**: no shim, no launcher, no second copy of the entry under a `.cjs` name, no copy of the package's manifest, no copied native binary, and no source map (`interface.md` §5 E-1, §4 below).
 
@@ -26,13 +26,13 @@ The seam's on-disk product is **the build's emission set** — five artifacts, o
 | Line | Before E-1 | After E-1 | After rev 2 |
 |---|---|---|---|
 | `package.json:7` (`main`) | `dist/main/main.cjs` | `dist/main/main.mjs` *(landed)* | unchanged |
-| `package.json:10` (`build`), the main emission | `--format=cjs --outfile=dist/main/main.cjs` | `--format=esm --outfile=dist/main/main.mjs` *(landed)* | **+ `--external:provident-storeroom`** (pending) |
+| `package.json:10` (`build`), the main emission | `--format=cjs --outfile=dist/main/main.cjs` | `--format=esm --outfile=dist/main/main.mjs` *(landed)* | **+ `--external:provident-storeroom`** *(landed)* |
 | `package.json:10` (`build`), the preload emission | `--format=cjs` | unchanged | unchanged (`interface.md` §1, ASM-L2-5) |
 | `package.json:10` (`build`), the two sibling emissions | `--format=esm` | unchanged | unchanged (L1 §6 B-7, ASM-L2-6) |
-| `package.json:11` (`build:watch`), the main emission | as the retired line | `--format=esm --outfile=dist/main/main.mjs` *(landed)* | **+ `--external:provident-storeroom`** (pending) |
+| `package.json:11` (`build:watch`), the main emission | as the retired line | `--format=esm --outfile=dist/main/main.mjs` *(landed)* | **+ `--external:provident-storeroom`** *(landed)* |
 
-- **`build:watch` moves with `build` or the arrangement is half-landed**: a watch leg that rebuilds an inlined artifact while `build` emits an external one leaves a tree whose boot behaviour depends on which command ran last (`interface.md` §5 E-1).
-- **No build key is added and no dependency moves**: `package.json:23-34`'s three dependencies and four devDependencies are untouched — `provident-storeroom` stands there already (`package.json:26`) — and esbuild stays the one bundler (L1 §2, D-14).
+- **`build:watch` moves with `build`, and both carry the flag**: a watch leg that rebuilt an inlined artifact while `build` emitted an external one would leave a tree whose boot behaviour depends on which command ran last, so the arrangement landed at both sites (`package.json:10`, `:11`; `interface.md` §5 E-1).
+- **No build key is added and no dependency moves**: both dependency blocks of the manifest stand as landed — `provident-storeroom` already among `dependencies` (`package.json:26`), every other entry as the head has it (`package.json:23-34`; `platform.md` §3) — and esbuild stays the one bundler (L1 §2, D-14, D-26).
 
 ## 3. What the built app must find beside it at run time (rev 2's own new surface)
 
@@ -64,9 +64,9 @@ The seam's on-disk product is **the build's emission set** — five artifacts, o
 
 ## 6. The harness's own copy of the name, and the digest it takes
 
-- **The artifact's name is copied in two harness constants** — `scripts/electron-spawn.mjs:75` (`mainCjs`) and `scripts/electron-ui.mjs:131` (`mainBundle`) — and the first is the container's app argument (`:81`), so the copy is load-bearing rather than documentary (`interface.md` §5 E-5).
-- **E-5's write is one name per file**, written by `harness`, and its landing is verified by this unit's battery row A-5 rather than trusted — **red at `6901a6e`, green once the rename lands** (`interface.md` §7).
-- **The digest stays a digest of what the leg boots**: `scripts/electron-ui.mjs:1157`'s map covers the app bundle, the battery host, the renderer bundle and its HTML entry, and a rename moves one entry of that map, not its shape (E-5).
+- **The artifact's name is copied in two harness constants and required again by one test matcher** — `scripts/electron-spawn.mjs:75` (`mainCjs`) and `scripts/electron-ui.mjs:131` (`mainBundle`), plus `tests/ui-leg-contract.test.ts:498`, whose matcher reads the ui leg's own source — and the first constant is the container's app argument (`:81`), so the copy is load-bearing rather than documentary (E-5's three sites, `interface.md` §5).
+- **E-5 was three sites and all three landed, one name per file**: both constants' *values* spell `main.mjs` and the matcher now requires `main.mjs`, with no path decided by any fourth line — the retired name survives in `scripts/electron-ui.mjs` only as a printed digest label (`:1075`) and a doc comment (`:1152`), neither of which decides a path or a digest target and both of which are `harness`'s to clean, not this layer's (D-3). The landing is verified by this unit's battery row A-5 rather than trusted, and A-5 is **green at this head** (`interface.md` §5 E-5, §7).
+- **The digest stays a digest of what the leg boots**: `scripts/electron-ui.mjs:1157-1163`'s map covers the app bundle, the battery host, the renderer bundle and its HTML entry, and the sibling's manifest, and a rename moved one entry of that map, not its shape (E-5).
 
 ## 7. Package findings: none new, and the existing one stays where it was filed (D-5)
 

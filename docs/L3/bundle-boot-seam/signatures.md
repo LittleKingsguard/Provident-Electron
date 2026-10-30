@@ -95,5 +95,5 @@ npm run typecheck:tests
 npx vitest run tests/integration/bundle-boot-seam
 ```
 
-- **`tests/integration/bundle-boot-seam` is L2's and answers half-green at L4**: `A-1`..`A-3` and `A-4` are expected green once E-1 and E-2 land, and `A-5` goes green only when `harness` lands E-5 — an L4 that cannot make `A-5` green has not failed, an L4 that edits `scripts/` to make it green has (`design.md` §6; `interface.md` §7).
+- **`tests/integration/bundle-boot-seam` is L2's and green at this head — all five rows**: `A-1`..`A-3` and `A-4` on E-1's and E-2's landing, `A-5` on `harness`'s E-5, which that row has filed — so no row of it is this unit's L4's to write, and an L4 that reaches `A-5` by editing `scripts/` writes outside its row (`design.md` §6; `interface.md` §7; `modules.json`'s `harness` row; D-3).
 - **`tests/e2e/bundle-boot-seam/` is L1's and needs a `DISPLAY`**: its rows spawn Electron and are not this layer's green (`docs/L1/bundle-boot-seam.md` §6, L1 §9 ASM-1).

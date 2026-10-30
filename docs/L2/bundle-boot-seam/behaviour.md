@@ -1,7 +1,7 @@
 # L2 — `bundle-boot-seam`: the behaviour
 
-- **Layer:** L2 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Status:** DESIGN — the arrangement `interface.md` §1 declares, stated as the behaviour L1 §4/§5 fixed and as the negative behaviours it must answer (D-27, `examiner.md` §3). Rev 2 states the behaviour **with the package external**, and the behaviour the inlined arm measurably did not reach (§4)
-- **Inputs:** `interface.md` §1-§9 (the arrangement, the probes P-1..P-15, E-1/E-2/E-5, the census); `docs/L1/bundle-boot-seam.md` §4 (the eight observables), §5 (the boot order), §6 (B-1..B-8), §8 (the exceptions); D-5, D-14, D-18, D-27, D-28; the unit record at `strata/records/security-store-storeroom-unit.md` §2 and its return `F-1`/`F-2`
+- **Layer:** L2 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 2 is read through this one: it states the arrangement `interface.md` §1 declares as the behaviour L1 §4/§5 fixed and as the negative behaviours it must answer, **with the package external**, and the behaviour the inlined arm measurably did not reach (§4). Rev 3 states that same behaviour **landed and re-measured**: every cite below is read against the tree at this head, and the artifact it reads is rev 2's external emission (**Status:** DESIGN; D-26, D-27)
+- **Inputs:** `interface.md` §1-§9 (the arrangement, the probes P-1..P-15, E-1/E-2/E-5, the census); `docs/L1/bundle-boot-seam.md` §4 (the eight observables), §5 (the boot order), §6 (B-1..B-8), §8 (the exceptions); D-5, D-14, D-18, D-26, D-27, D-28; the unit record at `strata/records/security-store-storeroom-unit.md` §2 and its return `F-1`/`F-2`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `P-n` is `interface.md` §2's probe answer for this seat; the package is read and never edited (D-5)
 
 ## 1. What the arrangement must serve, in the app's own vocabulary
@@ -60,7 +60,7 @@ Seven observables and no eighth: the arrangement changes **when a process exists
 - **ESM provides what the package needs and takes away one global**: `import.meta.url` is the artifact's own file URL and `createRequire(import.meta.url)` resolves (P-2), while `__dirname`, `__filename` and a bare `require` are absent — the two facts `interface.md` §1 and §4 are built on (P-2, P-3).
 - **The artifact carries a bare specifier, not the package's bytes**: the emission holds `import { storeCreate } from "provident-storeroom"` and resolves it at run time, so the app must have the package reachable from the artifact's own directory — `ERR_MODULE_NOT_FOUND` where it is not, the module where it is (P-13, `persistence.md` §3).
 - **Both arms already needed `node_modules`**: the inlined artifact's rung-one `require` of the platform addon package answers `MODULE_NOT_FOUND` with no `node_modules` reachable, so rev 2 adds **one** requirement to an artifact that had one (P-15, `interface.md` §5).
-- **`--external:electron` stays** — the container supplies it — and `--bundle`, `--platform=node`, `--format=esm` and the outfile stay as landed in `package.json:10`; rev 2 adds `--external:provident-storeroom` and nothing else (E-1).
+- **`--external:electron` stays** — the container supplies it — and `--bundle`, `--platform=node`, `--format=esm`, the flag and the outfile all stand landed in `package.json:10`, with the flag repeated in `:11`: rev 2's addition is `--external:provident-storeroom` and nothing else (E-1).
 - **The artifact names no absolute path of its own**: `import.meta.url` is supplied by the loader rather than baked — the property the rejected `--define` arm destroyed (P-14, `interface.md` §3).
 
 ## 6. The preload stays CJS, and why that is not a compromise
@@ -71,7 +71,7 @@ Seven observables and no eighth: the arrangement changes **when a process exists
 
 ## 7. The sibling bundles are outside this seam
 
-- **`dist/main/standalone.mjs` and `dist/main/battery-host.mjs` stay ESM and byte-identical, and measured to be unaffected**: neither emission carries an addon-path reference, so neither inlines the package and the flag has nothing to externalise in them (L1 §6 B-7, D-27; `interface.md` §1).
+- **`dist/main/standalone.mjs` and `dist/main/battery-host.mjs` stay ESM and byte-identical, and measured to be unaffected**: neither emission carries an addon-path reference — 0 occurrences in either at this head, and 0 in the main emission too — so neither inlines the package and the flag has nothing to externalise in them (L1 §6 B-7, D-27; `interface.md` §1).
 - **The renderer bundle stays browser ESM** at `dist/renderer/renderer.js` beside its HTML entry (`package.json:10`, `src/main/main.ts:466`).
 - **A row that reddens either sibling is the arrangement's failure** — L1 §6 B-7 owns it and this layer adds no row of its own (`ASM-L2-6`, L1 §6).
 

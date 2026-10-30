@@ -10,7 +10,7 @@
 | Site | Owning row | What lands | Pinned by |
 |---|---|---|---|
 | `package.json`'s `main` field | `bundle-boot-seam` (E-1) | `dist/main/main.mjs` — the one field that names a boot artifact | `U-1` |
-| `package.json`'s `build` and `build:watch`, the `main.ts` emission | `bundle-boot-seam` (E-1) | `--format=esm --external:provident-storeroom --outfile=dist/main/main.mjs`, one decision in two keys | `U-2`, `U-3` |
+| `package.json`'s `build` and `build:watch`, the `main.ts` emission | `bundle-boot-seam` (E-1) | `--format=esm --platform=node --external:electron --external:provident-storeroom --outfile=dist/main/main.mjs`, one decision in two keys | `U-2`, `U-3` |
 | `src/main/main.ts` `:6-7` and `:29` | `app-shell` (E-2) | one module-scope binding deriving the entry's own directory from its module URL | `U-7`, `U-8` |
 | `scripts/electron-spawn.mjs` `:75`, `scripts/electron-ui.mjs` `:131` | `harness` (E-5, §6) | the same artifact's new name, one name per file | L2's `A-5` |
 
@@ -83,10 +83,10 @@ imports it is spelled through (three names, two specifiers):
 
 ## 6. E-5 — E-1's declared cross-module dependency, and no more (L2 `ASM-L2-4`)
 
-- **E-1 renames the artifact and two harness constants name it, by path**, because `scripts/electron-spawn.mjs:75`'s `mainCjs` is the container's app argument at `:81` and `scripts/electron-ui.mjs:131`'s `mainBundle` is one entry of the digest map at `:1157-1160` (`interface.md` §5 E-5; `persistence.md` §6). Both constants' **values** now spell `main.mjs`; their identifiers are unchanged, so the write was one value per file and no second name was minted (L1 §8).
+- **E-1 renames the artifact and two harness constants name it, by path**, because `scripts/electron-spawn.mjs:75`'s `mainCjs` is the container's app argument at `:81` and `scripts/electron-ui.mjs:131`'s `mainBundle` is the `main` entry at `:1158` of `artifactPaths()`'s digest map (`interface.md` §5 E-5; `persistence.md` §6). Both constants' **values** spell `main.mjs`; their identifiers are unchanged, so the write was one value per file and no second name was minted (L1 §8).
 - **The owning row is `harness`** and the write is one name per file, one writer: this unit's L4 lands E-1 and E-2, and the harness write is that row's own task, verified by L2's `A-5` and by no row of this battery (`modules.md` §3, L1 §8).
 - **The two names are the only sites that decide a path** — so L4's E-1 needs no edit under `scripts/`, and a third edit there is an invention, not E-5 (D-3, L1 §8).
-- **E-5 as L1 §8 files it is three sites, one writer each**: the two constants and the test row whose matcher reads the artifact's name, `tests/ui-leg-contract.test.ts:498` — and that matcher now **requires** `main.mjs` rather than accepting the retired name, so the pair moved together as E-5 declared and neither site is this unit's L4's (L1 §8; D-3).
+- **E-5 is three sites, and the `harness` row landed all three**: the two constants and the test row whose matcher reads the artifact's name, `tests/ui-leg-contract.test.ts:498` — that matcher requires `main.mjs`, so the three moved together as E-5 declared and none of them is this unit's L4's (L1 §8; `modules.json`'s `harness` row, which names `scripts/` and `tests/ui-leg-contract.test.ts`; D-3).
 - **Two further spellings exist and are not that write, named so none is mistaken for it**: `scripts/electron-ui.mjs:1075` prints the retired name in a digest line (a display literal, `harness`'s, and not a path the leg reads); and the two unwired gate-era live drivers `tests/store-compliance-live.mjs:264` and `tests/secure-exclusion-live.mjs:187` name the old path while no script key and no vitest collection reaches them — their paths are the `operator-settings` row's, not `harness`'s (`modules.json`'s rows; D-10).
 
 ## 7. What this layer reads as the harness budget (D-14, `platform.md` §4)
@@ -94,7 +94,7 @@ imports it is spelled through (three names, two specifiers):
 - **`N = 12` is the map row's own figure** — four entry points that must boot, five transports they open, three handshakes that must complete (`modules.json`'s `bundle-boot-seam` row; L1 §2).
 - **The cap is `50 + 10×N` = 170**, and it bounds the module's *harness* — driver, fixtures, factories, mock seams. The lint derives it from the row and prints it; **no document of this layer declares it** (D-14, `platform.md` §4).
 - **A product battery is evidence, not harness** (`U-1`..`U-8` included): the unit battery's helpers are the reads a row needs, not a driver the module ships, so the cap is not the budget they answer to (D-14; L1 §6).
-- **The battery's own path is unclaimed by the map row**: `bundle-boot-seam`'s row names `package.json` and `tests/e2e/bundle-boot-seam/` only, so `tests/unit/bundle-boot-seam/` must be added by L1 under E-3 — a `--changed` lint run otherwise reports it owned by no module, where the precedent rows name their own `tests/unit/` subtree (`modules.json`'s rows; `modules.md` §3, D-28).
+- **Both batteries are claimed by the map row, beside the package**: `bundle-boot-seam`'s row names four paths — `package.json`, `tests/e2e/bundle-boot-seam/`, `tests/unit/bundle-boot-seam/` and `tests/integration/bundle-boot-seam/` — under `endpoints` 12, so a `--changed` lint run attributes this layer's battery to the module and no path of it is owned by no module (`modules.json`'s `bundle-boot-seam` row; `modules.md` §3, D-28).
 
 ## 8. Assumptions, each with the alternative it rejected (`envelope.md` §3)
 
