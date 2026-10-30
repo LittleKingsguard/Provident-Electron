@@ -66,7 +66,7 @@ Rev 1 filed these as goal → expected so a test writer could author them withou
 **20 recovered scenarios = 20 covered + 0 missing**, over **55 retired rows / 2 files** — `security-store.test.ts` 12 rows, `secure-store-discipline.test.ts` 43 rows, both counted at `536bdc6^` and the figure exception §9 records (D-9, `docs/L1/security-store-storeroom-exception.md` §9). Rev 1 measured **13 covered + 7 missing**; the 7 authored rows are the seven above, at two files and six subjects. Beside them stand the **12 §8 scenarios, now 12 of 12 authored at L1's grain**, at two more files — so the unit's scenario debt is discharged at **19 authored rows over four files** (7 recovered + 12 e2e), 4 of the e2e rows overlapping a covered recovered scenario (S-1, S-2, S-3, S-4) and 8 of them this unit's own new surface.
 
 **And one battery this register did not author, which nevertheless carries two of the arms it recorded as thin**:
-`tests/integration/security-store-storeroom/patch-domain.test.ts` — the unit's **only gating** battery (D-40), because it was authored after D-30's
+`tests/integration/security-store-storeroom/patch-domain.test.ts` — the unit's **only gating *integration*** battery (D-40), because it was authored after D-30's
 sweep and so carries no marker — pins the empty patch's refusal arm for arm (`SC-E5-15`'s `write({})`: the module's own sentence, a null address, no
 cursor minted, the record and the bytes unmoved) and the cap's **sign** rule that `SC-E5-14` left half-driven (`-Infinity` is `<= 0` and commits with
 the cap absent; `+Infinity` refuses `ValueRefusedAtBoundary` and nothing lands) — `behaviour.md` §2/§4, `interface.md` §1/§2, and no mock in either
