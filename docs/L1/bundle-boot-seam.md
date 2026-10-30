@@ -35,7 +35,7 @@ The battery reads only what a running process publishes — its stderr trace, it
 | the boot trace line `[provident-main] node …` | `src/main/main.ts:80`, the first statement of `main()` |
 | the stdio transport's readiness | `src/main/mcp-server.ts:1191` |
 | the HTTP transport's readiness, naming its port | `src/main/mcp-server.ts:1202-1203` |
-| the HTTP transport's answer set (404 off-route, 405 on GET/DELETE, 401 unauthorised, else `/mcp`) | `src/main/mcp-server.ts:1208-1217,1224-1228` |
+| the HTTP transport's answer set (404 off-route, 405 on GET/DELETE, 401 unauthorised, else `/mcp`) | `src/main/mcp-server.ts:1209-1229` — the four `writeHead` anchors `:1210`, `:1215`, `:1220`, `:1226`, the off-route test at `:1209` opening the span and the token gate's arm closing at `:1229` |
 | the renderer bridge's arrival, `renderer ready — MCP backend armed` | `src/main/main.ts:422` |
 | the instance's own file in a scratch profile | `src/main/operator-settings/index.ts:119,405`, constructed through `src/main/settings-surface/index.ts:91` |
 | the scratch profile the boot is pinned to | `src/main/main.ts:87`; the legs' own `--user-data-dir=` at `scripts/electron-spawn.mjs:362` |
