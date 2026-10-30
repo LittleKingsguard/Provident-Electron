@@ -1,4 +1,4 @@
-# record — `bundle-boot-seam` exit walkthrough, run 6 (D-10; replaced on every run)
+# record — `bundle-boot-seam` exit walkthrough (D-10; replaced on every run)
 
 **Scenario set** (L0-authored from the documentation): 1 what was broken, and why the verification floor
 never saw it · 2 the arrangement chosen, and every `package.json` line it lands in · 3 what the entry had
@@ -7,7 +7,7 @@ answer · 5 what the artifact cannot do · 6 which writes belong to whom, and wh
 Seat: one fresh delegation per run, staged to a copy of `strata/`, `docs/L1..L3/`, the root pointers,
 `package.json`, a tracked-path listing, an archived-path listing and the built bundles.
 
-## Run 6 — `STALE` (not green)
+## Latest run — `STALE` (not green)
 
 Every step answered from the cited documents, and every figure of the unit's own three layers landed:
 the artifact's `1,345,550` bytes, its two bare-specifier sites, zero `import_meta`/`__dirname`/addon-path
@@ -32,7 +32,9 @@ fix moved the prose and the next pass read a different page. The engineering was
 geometry (`strata/brief.md` §6), with the unit's own three batteries green at every grain. This is the signal `rebuild.md`
 §3 describes: seven passes on one artifact class indict the class, not the sentences.
 
-**Verdict: not green.** Run 7 then found two sentences in one L2 document — a cite to an `L1 §0` that does
-not exist and a four-command floor called "the three legs" — both fixed. Seven runs, seven passes, and not
-one of them failed on coverage: the corpus's own answer to a seventh red is not another prose pass, and the
-state machine has now made that unavoidable (below).
+**Verdict: not green.** Runs 8 and 9 followed under the instrument (D-29), and found the first substantive
+claim of the whole series: the corpus's own shim rule — "no window, no IPC, no transport is exercised by
+`npm test`" — stopped being true when this unit's battery began spawning the built bundle, and both L0
+documents now say so. Nine runs, and not one of them failed on coverage: the corpus's answer to a ninth red
+is not another prose pass, which the state machine has made unavoidable (it refuses a fourth `fail` on this
+artifact — `run rebuild or pass`).
