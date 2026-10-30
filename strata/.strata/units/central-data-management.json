@@ -1,7 +1,7 @@
 {
   "unit": "central-data-management",
   "layer": "L0",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
     "module-map",
     "e2e-design-rev2",
@@ -23,6 +23,6 @@
   ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T09:07:02.130Z",
+  "updated": "2026-10-30T09:53:53.557Z",
   "builds": 2
 }
