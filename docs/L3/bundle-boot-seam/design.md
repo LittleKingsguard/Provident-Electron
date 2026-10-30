@@ -96,6 +96,19 @@ imports it is spelled through (three names, two specifiers):
 - **A product battery is evidence, not harness** (`U-1`..`U-8` included): the unit battery's helpers are the reads a row needs, not a driver the module ships, so the cap is not the budget they answer to (D-14; L1 §6).
 - **Both batteries are claimed by the map row, beside the package**: `bundle-boot-seam`'s row names four paths — `package.json`, `tests/e2e/bundle-boot-seam/`, `tests/unit/bundle-boot-seam/` and `tests/integration/bundle-boot-seam/` — under `endpoints` 12, so a `--changed` lint run attributes this layer's battery to the module and no path of it is owned by no module (`modules.json`'s `bundle-boot-seam` row; `modules.md` §3, D-28).
 
+The eight rows as **goal → expected**, each pair read off the battery's own assertion and adding no claim the rows do not make (`walkthrough.md` §3; `tests/unit/bundle-boot-seam/`):
+
+| Row | Goal at this layer's grain | Expected (what the row pins) |
+|---|---|---|
+| `U-1` | the `main` field's name decides the module system | the field's extension is `.mjs` and the loader reads that path as `esm` (§2, `G-5`) |
+| `U-2` | exactly one `build` arm emits the entry, in the declared format | one arm names `src/main/main.ts` and carries `--format=esm`, `--platform=node`, `--external:electron` and an `--outfile` equal to `main`'s path; no `build` arm emits `main.cjs` (§2) |
+| `U-3` | `build:watch` carries the same decision | its main arm's `--format` and `--outfile` equal `build`'s, and the key spells no `main.cjs` (§2, `G-3`) |
+| `U-4` | the preload stays CJS and its arm stays the declared text | the preload arm is byte-identical to the declared text; `dist/main/preload.cjs` parses as CJS under `node --check`, carries `contextBridge`/`exposeInMainWorld` and no `import` statement (`G-2`) |
+| `U-5` | the arms this unit may not move did not | `clean`, both siblings, the renderer and its HTML copy are the declared text; the siblings and `renderer.js` parse and `index.html` is non-empty (`G-4`) |
+| `U-6` | the emission set is exactly five artifacts | `dist/main` holds `battery-host.mjs`, `preload.cjs`, `standalone.mjs` and `main`'s basename; `dist/renderer` holds `index.html` and `renderer.js`; `main.cjs` is absent (`G-6`) |
+| `U-7` | the derivation is declared once, through exactly three names, and no CJS global stands | `node:path` binds `['dirname','join']`, `node:url` binds `['fileURLToPath']`, the source matches `const here = dirname(fileURLToPath(import.meta.url))`, `join(here, …)` appears twice, and `__dirname`/`__filename` appear nowhere (§3) |
+| `U-8` | the emitted entry derives the bundle's own directory, live | `dirname(artifactUrl)` carries no trailing separator and equals `dirname(entry)`; its two joins land on the arms' own outfiles, both artifacts exist, and the emitted bytes carry `import.meta.url` and no CJS global (§3) |
+
 ## 8. Assumptions, each with the alternative it rejected (`envelope.md` §3)
 
 | id | Assumption | Rejected alternative |

@@ -86,14 +86,15 @@ const here = dirname(fileURLToPath(import.meta.url))
 npx vitest run tests/unit/bundle-boot-seam
 ```
 
-The floor it runs beside, in this order (`brief.md` §6, D-14):
+The floor it runs beside — the corpus's **four legs, in the corpus's own order** (`brief.md` §6, D-14; `interface.md` §6):
 
 ```sh
-npm run build
+npm test
 npm run typecheck
 npm run typecheck:tests
-npx vitest run tests/integration/bundle-boot-seam
+npm run build
 ```
 
-- **`tests/integration/bundle-boot-seam` is L2's and green at this head — all five rows**: `A-1`..`A-3` and `A-4` on E-1's and E-2's landing, `A-5` on `harness`'s E-5, which that row has filed — so no row of it is this unit's L4's to write, and an L4 that reaches `A-5` by editing `scripts/` writes outside its row (`design.md` §6; `interface.md` §7; `modules.json`'s `harness` row; D-3).
+- **The four legs are the floor and not this layer's green**: none of them can see a bundle's module evaluation — that is why this unit's battery is the one command above, and why a green floor is never reported as a green seam (D-27; `brief.md` §6).
+- **`npx vitest run tests/integration/bundle-boot-seam` runs beside the floor and is not one of its four legs**: it is L2's and green at this head — all five rows, `A-1`..`A-3` and `A-4` on E-1's and E-2's landing, `A-5` on `harness`'s E-5, which that row has filed — so no row of it is this unit's L4's to write, and an L4 that reaches `A-5` by editing `scripts/` writes outside its row (`design.md` §6; `interface.md` §7; `modules.json`'s `harness` row; D-3).
 - **`tests/e2e/bundle-boot-seam/` is L1's and needs a `DISPLAY`**: its rows spawn Electron and are not this layer's green (`docs/L1/bundle-boot-seam.md` §6, L1 §9 ASM-1).

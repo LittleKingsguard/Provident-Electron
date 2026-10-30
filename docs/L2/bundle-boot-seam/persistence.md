@@ -6,7 +6,7 @@
 
 ## 1. The artifacts an arrangement produces, the one it retires, and the one it stops carrying
 
-The seam's on-disk product is **the build's emission set** — five artifacts, one per entry point, and no sixth (D-27, L1 §4).
+The seam's on-disk product is **the build's emission set** — four boot entry points, one artifact each, plus the renderer bundle the HTML entry loads, which is not an entry point: five artifacts, and no sixth (D-27, L1 §4; `interface.md` §8).
 
 | Artifact | Module system | The package | Produced by | Read at boot by |
 |---|---|---|---|---|

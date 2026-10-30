@@ -13,7 +13,7 @@ Seven observables and no eighth: the arrangement changes **when a process exists
 | the boot trace line `[provident-main] node …` | `src/main/main.ts:80`, first statement of `main()` | nothing — the first line a successfully evaluated module prints (P-3, P-4) |
 | the stdio transport's readiness | `src/main/mcp-server.ts:1191` | nothing — reached only after `mcp.start()` (`src/main/main.ts:471`) |
 | the HTTP transport's readiness, naming its port | `src/main/mcp-server.ts:1203` | nothing — same statement order |
-| the HTTP answer set: 404 off-route, 405 on GET/DELETE, 401 unauthorised, else `/mcp` | `src/main/mcp-server.ts:1209-1229` — `handleHttp`'s answer arms, from the off-route test at `:1209` to where the token gate's arm closes at `:1229` (404 at `:1210`, 405 at `:1215` and `:1220`, 401 at `:1226`) | nothing — the gate is not in the seam (D-18) |
+| the HTTP answer set: 404 off-route, 405 on GET/DELETE, 405 on any other non-POST method, 401 unauthorised, else `/mcp` | `src/main/mcp-server.ts:1209-1229` — `handleHttp`'s **five** arms, from the off-route test at `:1209` to where the token gate's arm closes at `:1229` (404 at `:1210`, 405 on GET/DELETE at `:1215`, 405 on other methods at `:1220`, 401 at `:1226`) | nothing — the gate is not in the seam (D-18) |
 | `renderer ready — MCP backend armed` | `src/main/main.ts:422` | nothing — it follows the instance's construction, which is what makes it evidence the **window** loaded, and (before rev 2) not that the store stood (P-10, §4) |
 | the instance's own file in a scratch profile | `src/main/operator-settings/index.ts:405` composes the path and the store writes it | **everything**: externalising the package is what makes this row exist at all (P-10 → P-11) |
 | the scratch profile the boot is pinned to | `src/main/main.ts:87-88`, `scripts/electron-spawn.mjs:362` | nothing — the pin is argv, not module scope |
@@ -38,7 +38,7 @@ Seven observables and no eighth: the arrangement changes **when a process exists
 | the instance stands and writes its profile file | `<userDataDir>/provident-operator-settings.json` exists in the scratch profile | L1 §4, P-11 (`src/main/operator-settings/index.ts:405`) |
 | a tool call answers through the bundle's own transport | `provident.get_rendered_html` answers content with a non-empty `renderedHtml` | L1 §6 B-4 |
 
-- **A window's arrival is not asserted here**: this seat cannot fire `app.whenReady()` for either file format (P-9), so rows above that need a live window remain L1 §6's and are marked unmeasured rather than claimed (`ASM-L2-1`, `examiner.md` §2).
+- **What is not asserted here is a handshake, not a window**: the window and the renderer do run — P-11's `renderer ready — MCP backend armed` is printed from `ipcMain.on(IPC_READY)` inside `main()` (`src/main/main.ts:420-422`), reached only through `app.whenReady().then(...)` (`:479-480`) — so the rows needing a transport handshake or a rendered surface remain L1 §6's and are marked unmeasured rather than claimed (P-10, P-11; `ASM-L2-1`, `examiner.md` §2).
 
 ## 4. The negative behaviours — a bundle that cannot boot answers a reason, never a bare timeout, and a boot whose store refuses answers one too
 
