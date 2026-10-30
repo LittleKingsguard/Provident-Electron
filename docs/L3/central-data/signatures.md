@@ -1,6 +1,6 @@
 # L3 — `central-data`: the signatures
 
-- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Ceiling:** 150 lines, class max (D-1)
+- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 3 names the seam's `DEFAULT_JOURNAL_LENGTH`, its header comment and its census block as **sites** rather than offsets, because that file grew a line and every cite into it was one early (D-41) · **Ceiling:** 150 lines, class max (D-1)
 - **Inputs:** `docs/L2/central-data/interface.md` §1-§8, `behaviour.md` §1-§10 (**§5 and §9 as revised: two unreachability arms, `ASM-L2-7`**), `persistence.md` §1-§9 (rev 2); `strata/decisions.md` D-11/D-12/D-13/D-14; `node_modules/provident-storeroom/index.d.ts` and `README.guide.md`, read and never edited (D-5)
 - **Status:** DESIGN — stubs only. Every line below is a declaration and never a body; §1 is `interface.md` §2's surface restated so the unit battery can import it before any implementation exists, and **rev 2 moves nothing in §1** (D-1 §4)
 - **Rev 1 → rev 2, stated in as many words:** `StorePort.open()` is **replaced** by `StorePort.probe()`, a new `ProfileReading` type and a `readProfile` function appear beside it, `mapper.probeOutcome` is **renamed** `readOutcome`, and `mapper.unreachableLedger()` is added — because the reading of `design.md` §2 must answer *whether the profile's one name can be occupied at all* before any store instance, which `open()`'s cold/ready/unreachable triple could not express (`behaviour.md` §5, §9; `ASM-L2-7`; D-11, D-13)
@@ -50,7 +50,7 @@ export declare const DATA_TOOL_NAMES: readonly DataToolName[]
 export declare function createDataSurface(options: DataSurfaceOptions): DataSurface
 ```
 
-`DATA_TOOL_NAMES` is the five names in `interface.md` §1's declared order and is the only member of this surface that is a value (`interface.md` §1, §2). `journalLength` defaults to the seam's `DEFAULT_JOURNAL_LENGTH` (`4096`) and bounds this module's own window (`src/main/storeroom.ts:53`; D-12).
+`DATA_TOOL_NAMES` is the five names in `interface.md` §1's declared order and is the only member of this surface that is a value (`interface.md` §1, §2). `journalLength` defaults to the seam's `DEFAULT_JOURNAL_LENGTH` (`4096`) and bounds this module's own window (the `DEFAULT_JOURNAL_LENGTH` export of `src/main/storeroom.ts`, named as a site and never an offset — D-41; D-12).
 
 ## 2. The module's private files — not imported by the battery
 
@@ -143,6 +143,6 @@ The battery's rows are written against this closed set, and every operation's re
 |---|---|---|
 | ASM-L3-1 | `list` and `journal` never answer `volatile-path`: `list.prefix` is not narrowed, and `list` answers whatever rows stand — none, since nothing volatile was ever written (D-13) | refusing a volatile `prefix`, which narrows a tool `interface.md` §1 declares as answering rows, i.e. an L2 change made at L3 |
 | ASM-L3-2 | the reading precedes every store instance and answers `unreachable` for all five tools where the profile's one name cannot be occupied, while an absent name stays the cold tier until a `write` constructs (`behaviour.md` §5, §9; `design.md` §2, §6 ASM-L3-U1/U2) | constructing on every operation, so a read-only profile pays the exclusive file create (`guide §9.1`, against `persistence.md` §1's no-filesystem-act) and `journal` would answer a window where the profile can never be built |
-| ASM-L3-3 | the seam gains one optional `filePath` on `ProfileStoreOptions`, and `src/main/data/` imports `createProfileStore` and never the package (D-5) | a second import of `provident-storeroom` under `src/main/data/`, which breaks the seam's declared purpose and its pinned census (`src/main/storeroom.ts:5-8,45-53`) |
-| ASM-L3-4 | `journalLength` is honoured only where it is a positive safe integer; otherwise the seam's `DEFAULT_JOURNAL_LENGTH` stands (`src/main/storeroom.ts:53`; D-12) | passing a hostile figure through, which makes construction throw and turns every `write` into `store-unreachable` |
+| ASM-L3-3 | the seam gains one optional `filePath` on `ProfileStoreOptions`, and `src/main/data/` imports `createProfileStore` and never the package (D-5) | a second import of `provident-storeroom` under `src/main/data/`, which breaks the seam's declared purpose and its pinned census (the seam's header comment and its census block in `src/main/storeroom.ts`, named as sites and never offsets — D-41) |
+| ASM-L3-4 | `journalLength` is honoured only where it is a positive safe integer; otherwise the seam's `DEFAULT_JOURNAL_LENGTH` stands (the `DEFAULT_JOURNAL_LENGTH` export of `src/main/storeroom.ts`; D-12) | passing a hostile figure through, which makes construction throw and turns every `write` into `store-unreachable` |
 | ASM-L3-5 | a thrown value with no string `status` answers `store-refused` with `storeStatus` absent (`guide §8.3`) | a twelfth reason word for the status-less class test, which widens `interface.md` §2's closed vocabulary |

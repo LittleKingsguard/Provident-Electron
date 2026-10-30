@@ -1043,3 +1043,31 @@ what a user-sourced row decided**, and it binds exactly as a corrigendum does (D
   without a ruling. A rule derived from a measured failure is not an assumption, and the register is its home.
 - A measurement-sourced row names its measurement in its `Source` line; one that cannot is an opinion, and an
   opinion is what D-1's provenance rule exists to keep out.
+
+---
+
+## D-48 — A walkthrough verdict is scoped to the unit it walks
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** four rounds of walking three units, measured — every
+round's findings were single-sentence defects in the corpus at large, each unit's own scenario set was
+answerable throughout, and the one class that genuinely blocked a unit was a unit **contradicting itself
+inside its own layer** (the security-record layer saying the retired import reads "at most once per profile"
+while its own `behaviour.md` says "again at the next boot").
+
+**Decision:** a verdict answers two questions — can the scenarios be answered from the documentation, and does
+**this unit's** documentation contradict the tree or itself. Contradictions found elsewhere are filed to their
+owner and **do not block the verdict**.
+
+- **Blocking:** a claim in the unit's own L1/L2/L3 documents or its record, or any corpus claim without which
+  one of its scenarios cannot be answered.
+- **Not blocking:** a stale sentence in another unit's document, a source comment in a file this unit does not
+  claim, or a figure owned by `brief.md` §6 that has moved (D-26).
+- **The report is never scoped, only the verdict**: every finding is recorded and routed in full, so a run
+  that finds nothing outside its unit is reporting a fact about the corpus, not about its diligence.
+- A unit may therefore close on its own evidence while corpus-wide findings remain owed elsewhere — which is
+  what `close` means, and never a claim that the corpus is clean.
+
+**Why this is not a lowered bar:** the bar it protects is "can a customer use this unit's documents". A
+`central-data` claim in a file `strata-bootstrap` does not touch cannot make bootstrap's documentation
+unusable, and paying a further round per unit to re-measure the same corpus is how four rounds became the
+price of one close.
