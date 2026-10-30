@@ -13,6 +13,9 @@ This directory replaces the gate workflow's 219-file corpus (`archive.md`): the 
 | `examiner.md` | the examiner's procedure at L1, L2 and L3 | 45 |
 | `rebuild.md` | the rebuild protocol and its threshold | 40 |
 | `modules.md` | module isolation, `modules.json`, the harness cap | 40 |
+| `next-steps.md` | open work that is actionable now — a row leaves when its work lands (D-61) | 40 |
+| `pending.md` | open work that is real but blocked, each row naming what it waits on (D-61) | 40 |
+| `proposals.md` | speculative work nobody has asked for, kept so it is not re-derived (D-61) | 40 |
 | `platform.md` | measured deployment and checkout constraints | 60 |
 | `archive.md` | where the gate corpus went, and how its citations resolve | 60 |
 | `modules.json` | the module map — L1-owned, absent until the first unit files it (`platform.md` §4 gives its shape) | — |
@@ -23,15 +26,11 @@ This directory replaces the gate workflow's 219-file corpus (`archive.md`): the 
 | `.strata/returns/*.json` | layer returns, as collected envelopes | — |
 | `records/handover.md` | the session handover: where the branch stands and what a fresh session does next | 60 |
 
-The preset that supplies the roles lives in the deployment, not here (`platform.md` §1): personas
-point, procedures rule, and nothing here restates one.
+The preset that supplies the roles lives in the deployment, not here (`platform.md` §1): personas point, procedures rule, and nothing here restates one.
 
 ## How a unit moves
 
-1. L0 interviews the user, records the row in `decisions.md`, and opens the unit (`init`, then `enter`).
-2. L1 takes `brief.md` plus the tree, files the module map into `modules.json`, then designs `docs/L1/`.
-3. Each module goes down L2 → L3 → L4 as `brief.md` §4 describes; each return carries `envelope.md`.
-4. L0 runs the walkthrough (`walkthrough.md`); anything but `PASS` is a loop state, never readiness.
+1. L0 interviews the user, records the row in `decisions.md`, and opens the unit (`init`, then `enter`). 2. L1 takes `brief.md` plus the tree, files the module map into `modules.json`, then designs `docs/L1/`. 3. Each module goes down L2 → L3 → L4 as `brief.md` §4 describes; each return carries `envelope.md`. 4. L0 runs the walkthrough (`walkthrough.md`); anything but `PASS` is a loop state, never readiness.
 
 ## State, not prose
 

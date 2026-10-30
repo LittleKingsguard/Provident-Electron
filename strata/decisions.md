@@ -1315,3 +1315,25 @@ than assumed. Three are removable; six are **row subjects**, and every removal a
 - The three removable names are `RenderedHtmlResult`, `ListTargetsResult` and `NodeStateResult`, imported by
   `src/main/mcp-server.ts` and referenced by nothing; they land under the `mcp-surface` row that already claims the
   file, so no new map claim is made (D-32).
+
+---
+
+## D-61 — Three open-work trackers, and a tracker entry dies when its work does
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the user's instruction — "build tracker docs for next-steps,
+pending, and speculative work, as separate files … for still-open work *only*, not a checklist of completed work.
+When a feature is green and doc passes are complete, drop from trackers."
+
+**Decision:** `strata/next-steps.md`, `strata/pending.md` and `strata/proposals.md` carry the open work, at **40 lines
+each**, and a tracker lists **only what is still open**.
+
+- **next-steps** — work that is actionable now, ordered, each row naming its owner and what would close it.
+- **pending** — work that is real and agreed but **blocked**: on a decision, a unit admission, an upstream package,
+  or the user. A pending row says what it waits on.
+- **proposals** — speculative work nobody has asked for, kept so it is not re-derived; a proposal that is wanted
+  moves to next-steps with a decision row, and one that is refused is deleted.
+
+**A row leaves its tracker the moment its work lands** — a feature green with its doc passes complete is not open,
+and a tracker that keeps it is a checklist of the past, which is the thing this row exists to prevent. The live
+queue for *units* stays `strata/.strata/units/*.json` and this register (`archive.md` §2's rule, unchanged): a
+tracker is a readable view of open work, never an authority for what a unit is doing.
