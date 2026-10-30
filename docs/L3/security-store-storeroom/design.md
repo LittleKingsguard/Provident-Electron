@@ -22,7 +22,7 @@
 | address | tier | the value written whole | the act that writes it | cite |
 |---|---|---|---|---|
 | `['operator-settings']` | `file` | an object of the durable members: `enabled` always, `token` and `maxJournalLength` **only while they stand**, `entries` **iff it stands** | `write({token\|enabled\|maxJournalLength\|entries})` | guide §4 `W-4`, §10.2; persistence §4 |
-| `['operator-exclusion']` | `mem` | `{exclusion}` alone — `tier4` is **derived at the read** and never stored, so the illegal pair is unspellable | `write({exclusion})` | interface §1; `src/main/security.ts:98-101` |
+| `['operator-exclusion']` | `mem` | `{exclusion}` alone — `tier4` is **derived at the read** and never stored, so the illegal pair is unspellable | `write({exclusion})` | interface §1; the `ExclusionState` declaration in `src/main/security.ts` |
 
 - **Two addresses, and the measurement is why**: a `file`-tier write purges the versions it outranks **at its own key**, so one address would let a settings commit reset the operator's exclusion pair (guide §5.1; interface §1 `ASM-L2-1`; persistence §9 P-3).
 - **A patch names one tier** — the durable members **or** `exclusion`; one naming both is refused as a value with no store call (interface §1 `ASM-L2-5`; ASM-2 below).
@@ -31,7 +31,7 @@
 
 | helper | what it does | cite |
 |---|---|---|
-| `VALID_GROUPS` | the group set's **second live copy**, six members — `read`·`dispatch`·`graph`·`code`·`module`·`data` — re-homed here with the file, read at the **two** filter sites: the patch's `enabled` and the import's `enabled` | D-11, D-15; exception §2 E-1; the deleted `src/main/security-store.ts:87,122,339` |
+| `VALID_GROUPS` | the group set's **second live copy**, six members — `read`·`dispatch`·`graph`·`code`·`module`·`data` — re-homed here with the file and read at **three** sites through `admitGroups`, its only reader: the patch's `enabled`, the import's `enabled`, and **`fromStored`'s read-back, which runs on every `read()`** and drops a stored name outside the six | D-11, D-15; exception §2 E-1; the deleted `src/main/security-store.ts:87,122,339` |
 | `FIRST_RUN` | `{token:null, enabled:['read','dispatch']}`, no cap, no `entries` — the answer over no file and over every import failure arm | L1 §5; behaviour §1, §3 |
 | `SAFE_PAIR` | `{exclusion:'mcp-enabled', tier4:false}` — what a boot, a crash, a torn record and a corrupt file all resolve to, because the pair is `mem` | interface §1 `ASM-L2-2`; the gate's construction with its boot terminal in `src/main/main.ts` |
 | `detach(value)` · `newMap()` | the copy discipline both ways: arrays as real arrays, maps built with `Object.create(null)` so an entry named `__proto__` lands as an **own data property** and survives to the bytes and across a re-read; cycle-safe, each member read once | guide §10, §10.1; the deleted `src/main/security-store.ts:131-141,243-260` |
@@ -79,7 +79,7 @@ read():
 ```
 write(patch):
   values ← read each declared member ONCE off the patch, inside one try/catch   · the deleted security-store.ts:341-354
-  if the patch is not a plain object, or names both tiers → refused(ValueRefusedAtBoundary, null)   · ASM-2
+  if the patch is not a plain object, names both tiers, or names **no** member of either tier → refused(ValueRefusedAtBoundary, null)   · ASM-2
   case durable:
       candidate ← toStored(current projection with token/enabled/cap/entries from values)
       try record ← store.write(RECORD_ADDRESS, 'file', candidate)          · guide §3.3: no commit position
@@ -92,8 +92,8 @@ write(patch):
   otherwise → refused(ValueRefusedAtBoundary, null)                       · interface §2
 ```
 
-- **Two admission layers, each with its own subject and no duplication**: this module admits the **member domains** (a `token` that is a string or `null`, an `enabled` array, a finite cap or `null`, an `entries` plain object, one of the two literals); the **package's walk** admits the **value**, so a cycle, a function, a symbol, a lone surrogate, a non-finite number, a `-0` or a node past the two ceilings answer `ValueRefusedAtBoundary` from the store and cross verbatim (guide §10.2, §10.3; interface §3; ASM-5).
-- **`maxJournalLength`'s clear arm is `null`**, and the durable member is a `> 0` floored number or absent — `NaN` and a non-positive value clear it, `±Infinity` refuse the patch (interface §2; behaviour §2; the deleted `src/main/security-store.ts:365-377` carried).
+- **Two admission layers, each with its own subject and no duplication**: this module admits the **member domains**, in the order the members are read — a `token` that is `null` **or `''`** (both CLEAR it) or another string, which is stored; an `enabled` array through `admitGroups`; the cap's ordered chain, below; an `entries` plain object copied into a null-prototype map; one of the two exclusion literals — and the **package's walk** then admits the **value**, so a cycle, a function, a symbol, a lone surrogate, a non-finite number, a `-0` or a node past the two ceilings answer `ValueRefusedAtBoundary` from the store and cross verbatim (guide §10.2, §10.3; interface §3; ASM-5).
+- **`maxJournalLength` is admitted by an ORDERED chain, and the order is the rule**: `null` clears; a non-number refuses; **then** `Number.isNaN(max) || max <= 0` clears — which takes `NaN`, every negative number, `0` **and `-Infinity`**, so a negative infinity commits with the cap absent; **only then** does `!Number.isFinite` refuse, so **`+Infinity` is the one infinity this patch refuses**; anything left is `Math.floor`ed (interface §2; behaviour §2; the deleted `src/main/security-store.ts:365-377` carried).
 - **`enabled` is served in the caller's own order**, first occurrence first — the order row discriminates against a re-sort (interface §2 `A-5`; behaviour §2).
 - **A refusal leaves the record and the bytes exactly as they stood, mints no cursor and delivers nothing**, and its `reason` is the store's own status **verbatim under the open escape arm** — never narrowed to a spelling this surface does not name, and a sentence is authored here only for a refusal this module makes itself (interface §3; guide §9.4, §8.1; behaviour §5; ASM-6).
 
@@ -135,7 +135,7 @@ subscribe(listener):
 
 - No file write of the module's own, no `.tmp`, no lock, no sidecar, no `delete`, no `rollback`, no constraint registered and no `commit` position supplied; and no throw for any patch and any state, every caught value contained and every arm answering a receipt (D-16; interface §2; guide §3.3, §8.3; L1 §3).
 - No MCP surface, resource, `RpcMethod` member, bridge channel or rendered element: the module is reached by the surface module alone (D-18; L1 §6).
-- No second `filePath`, no second construction, no other module's file name; and `VALID_GROUPS` stays six and stays here — the group set's first copy in `src/main/security.ts:159` does not move (persistence §8; D-11, D-15; exception §2 E-1).
+- No second `filePath`, no second construction, no other module's file name; and `VALID_GROUPS` stays six and stays here — the group set's first copy in `src/main/security.ts` does not move (persistence §8; D-11, D-15; exception §2 E-1).
 
 ## 10. Assumptions made here that L2 left open, with the alternative each rejected
 

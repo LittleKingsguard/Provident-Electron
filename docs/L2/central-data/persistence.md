@@ -2,7 +2,7 @@
 
 - **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3 — one cite re-grained, no claim moved: the package's version names the `dependencies` block of `package.json` instead of a line range the later `panes` key moved (D-41); rev 2 and behind are read through this one
 - **Status:** DESIGN — the store's own on-disk shape as this unit constrains it, and nothing else (D-13)
-- **Inputs:** `docs/L2/central-data/interface.md`, `behaviour.md`; L1 rev 2 §4; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7; D-5, D-12, D-13, D-15; the package's shipped declaration, README and guide at this head (read, never edited — D-5)
+- **Inputs:** `docs/L2/central-data/interface.md`, `behaviour.md`; L1 rev 4 §4; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7; D-5, D-12, D-13, D-15; the package's shipped declaration, README and guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
 - **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide; it is read here and never edited (D-5)
 
@@ -88,7 +88,7 @@
 - This unit owes **no migration**: the store chooses its own shape, and the existing settings bytes are not a compatibility
   constraint (D-13).
 - A future shape change is read through `read` and written through `write`, never by rewriting bytes by hand (`guide §9.1`; D-13).
-- The C-3 rows of L1 §8's re-grain — the "exactly two persisted files" reading — move only if this new file actually reddens
+- The C-3 rows of L1 §8's re-grain — that row's own form, the persisted set at **exactly two named files** — move only if this new file actually reddens
   them, and the moving is this unit's test writer's (exception §5; D-15).
 
 ## 9. Package findings — recorded, upstream-owned, never patched here (D-5)

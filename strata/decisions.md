@@ -1117,3 +1117,25 @@ D-36, D-39 and D-42 corrected that row's *counts* without touching this sentence
   shape today takes it from the unit's own design, not from the row that chartered it.
 - The alternative — rewriting D-35 — is what D-1 forbids, and D-23's precedent is that the tree moving earns
   a corrigendum rather than a silent edit.
+
+---
+
+## D-51 — A row that supersedes a policy re-grains the documents that instruct it
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the `central-data-management` walkthrough, run 6,
+measured — two of its three findings were documents still **instructing** a policy that D-24 and D-31 had
+superseded: an L1 exception still carried a behavioural fix shape D-24 rules out, and its re-grain sections
+still told the test writer to move each row to a new figure, which D-31 replaced with a mark.
+
+**Decision:** when a row supersedes a policy, the pass that files it also re-grains the **live documents that
+instruct** that policy — not only the records that report it. A superseded instruction is worse than a stale
+count: the count misleads a reader, the instruction gets executed.
+
+- The distinction from D-43: D-43 stops a summary **restating** an owner's fact. This row stops a document
+  **carrying out** a superseded rule, which no reader can catch unless they happen to know the later row.
+- The check is cheap and mechanical: for each row superseded, grep the corpus for the policy's verbs
+  ("re-grain", "move each row", "fix shape") and re-grain every live hit.
+- Records are exempt as ever (D-46): a past pass's report keeps the policy it followed.
+
+**Consequence:** this is the third rule in this pass that exists because a correction was applied where it was
+found rather than where it was filed — D-41 (offsets), D-43 (restatements), and this one (instructions).

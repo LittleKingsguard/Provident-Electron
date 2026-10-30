@@ -2,7 +2,7 @@
 
 - **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3 — one statement re-grained against the tree and no design: a read-only profile does not cost “no filesystem act” — every operation takes one reachability reading first (`probe()` in `src/main/data/store.ts`); rev 2 and behind are read through this one
 - **Status:** DESIGN — the expected behaviour of the five `provident.data.*` tools, stated as observable outcomes; the integration battery is filed against this file (D-1 §4)
-- **Inputs:** `docs/L2/central-data/interface.md` (§1-§7 fix the surface), `persistence.md` §9, L1 rev 2 §3/§4/§5, `docs/L1/central-data-census-exception.md` §1/§7, D-5/D-11/D-12/D-13, the package's shipped guide and declaration at this head (read, never edited — D-5)
+- **Inputs:** `docs/L2/central-data/interface.md` (§1-§7 fix the surface), `persistence.md` §9, L1 rev 4 §3/§4/§5, `docs/L1/central-data-census-exception.md` §1/§7, D-5/D-11/D-12/D-13, the package's shipped guide and declaration at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
 - **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide; it is read here and never edited (D-5)
 
@@ -86,7 +86,7 @@
 - A write, read or delete at a path whose first segment begins `mem.`, `temp.` or `secure.` answers `volatile-path`; nothing is
   created, nothing is removed, and `list` is unmoved (the `isVolatile` guard and its `refusal('volatile-path')` arms in `src/main/data/args.ts`; D-13).
 - After a session that attempted all four of the app's tier spellings, the profile's bytes carry no `mem.`, `temp.` or `secure.`
-  spelling — asserted as an absence over the bytes, never as a parse of the store's image (D-13; L1 rev 2 §5 S-8).
+  spelling — asserted as an absence over the bytes, never as a parse of the store's image (D-13; L1 rev 4 §5 S-8).
 - The refusal is a value, so the attempt is visible to the agent instead of being silently dropped the way the retired
   projection dropped it (D-11, D-13).
 
@@ -99,7 +99,7 @@
 - `exclusion-closed` is the server's channel token and not a reason word of this module's vocabulary; `tier4-closed` is the
   tier-4 reader's inverse token — the token is declared at `src/main/mcp-server.ts:42-57` and minted by the settings
   surface at the `TIER4_CLOSED_REFUSAL` constant and the `read` body's `open ? TIER4_CLOSED_REFUSAL : null` arm in `src/main/settings-surface/index.ts`, where the reader that answers it lives now that
-  `src/main/security-store.ts` is deleted — and it does not appear on this surface (D-16; L1 rev 2 §4).
+  `src/main/security-store.ts` is deleted — and it does not appear on this surface (D-16; L1 rev 4 §4).
 - The registry toggle that also runs at the transition is the landed gate's business and this module adds no second mechanism
   (`src/main/mcp-server.ts:649-660`; D-11).
 

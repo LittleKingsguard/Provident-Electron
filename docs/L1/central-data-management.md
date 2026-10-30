@@ -54,8 +54,7 @@ D-11). Tools only — no `mcp://provident/data/…` resource (ASM-10), so the th
 
 ## 4. The e2e I/O surface, in the app's own vocabulary
 
-Both transports answer every drive: stdio (long-lived, push-capable) and Streamable HTTP on `127.0.0.1:3787`
-(stateless, token-gated, push a no-op) (`src/main/mcp-server.ts:746-774`).
+Both transports answer every drive: stdio (long-lived, push-capable) and Streamable HTTP on `127.0.0.1:3787` (stateless, token-gated, push a no-op) (`src/main/mcp-server.ts:746-774`).
 
 | Drive | Answer |
 |---|---|
@@ -73,15 +72,13 @@ measurement:** no answer site for the five routes exists — no `data.*` arm in 
 `src/main/main.ts` — while `dist/renderer/renderer.js` does spell `data`, as the pane roster's `GROUP_LABELS` gate-group
 row listing the five data tools: a label, never an answer site (`docs/L1/secure-panels.md` §7 `E-1`; D-15, D-35;
 `strata/records/central-data-management-unit.md` §2). The group's posture does not reach them once landed: a route
-answers whatever the group's state, since the group governs tool registration, not the bridge's vocabulary (D-11;
-`docs/L2/central-data/interface.md` §5).
+answers whatever the group's state, since the group governs tool registration, not the bridge's vocabulary (D-11; `docs/L2/central-data/interface.md` §5).
 
 **The profile on disk.** Two *written* names at steady state: `<userData>/provident-operator-settings.json` — the
 instance's own file, which the rebuild moved off `provident-security.json` (D-16, D-19) — and `<userData>/provident-profile.json`,
 the store's own file, whose shape this unit chooses and whose name L2 fixes (D-13; `docs/L2/central-data/persistence.md` §1). `provident-security.json` and `provident-settings.json` are **seeds**
 now: read at most once and never written again, a one-time import recorded here, not a standing migration obligation
-(D-13, D-19, D-22; ASM-11). The crossing keeps its shapes (`store.get`, `store.put`, `store.onFileChanged`), so
-`hydrate(rows)` and `crossing.put(row)` stay frozen inputs (ASM-6).
+(D-13, D-19, D-22; ASM-11). The crossing keeps its shapes (`store.get`, `store.put`, `store.onFileChanged`), so `hydrate(rows)` and `crossing.put(row)` stay frozen inputs (ASM-6).
 
 ## 5. The L1 battery — twelve scenarios at `tests/e2e/central-data/scenarios.test.ts` (goal → expected)
 
