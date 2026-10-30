@@ -10,7 +10,7 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
    and docs live in the adjacent `../Preempt-Providence/` checkout, which is not a dependency of this
    repo. **Neither package is ever modified**: a defect or requirement gap is recorded with symptom,
    reproduction, suspected root cause and proposed fix shape, upstream-owned, in the record of the unit
-   that surfaced it and archived with that unit (`strata/decisions.md` D-5).
+   that surfaced it, which stays live in `strata/records/` (`strata/decisions.md` D-5, D-52).
 2. **Prebuild baseline for Electron apps on that framework** — synthetic-event access plus
    rendered-HTML visibility as MCP endpoints, for agentic use and debugging exposure.
 
