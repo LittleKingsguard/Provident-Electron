@@ -604,3 +604,36 @@ insertion falsifies, and a falsified cite is the drift this corpus exists to pre
 **Consequence, stated because it happened:** the map grew one row this pass and eight cites in five
 documents stopped landing. Re-pointing each number would fix the symptom until the next row; naming the row
 fixes the cause, and it is the same reasoning D-26 applies to counts (D-1, `platform.md` §4).
+
+---
+
+## D-29 — The walkthrough instrument is a script, not another prose pass
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** "Rebuild the walkthrough
+instrument (Recommended)", after seven blind runs on the `bundle-boot-seam` unit and four more on the
+open units found **no coverage failure at all** — every finding they filed was a drifted count, a
+non-landing cite or a cross-document contradiction.
+
+**Decision:** the exit walkthrough's staging root and its mechanical checks become a script,
+`scripts/strata-walkthrough.mjs`, owned by the `harness` row like the other instruments. Three verbs:
+
+- `stage <unit> [dest]` builds exactly the root `walkthrough.md` §3 declares — the corpus, the layers, the
+  root pointers, the manifest, a correct tracked-path listing, a correct archived-path listing, the built
+  bundles and an empty work directory — so the listing that a run reads is generated, never hand-made. The
+  first hand-built listing prepended the archive prefix to paths that already carried it, and a run
+  reported the resulting misreading as a corpus defect.
+- `check <root>` resolves every path a staged document cites, through the archive prefix mapping, and
+  exits non-zero on anything that does not land; a cite naming a file the tree no longer carries is
+  reported as a **note** rather than a failure, because the corpus cites retired files on purpose.
+- `pins [root]` prints the counts a document must cite rather than restate (D-26): test files flat and
+  nested, source files, map rows and each row's derived cap.
+
+**What it does not do, stated so nobody over-reads a green:** it resolves paths, not claims. It cannot tell
+whether a sentence is true, whether a figure agrees across two documents, or whether a section cite names a
+real section. Those remain the blind run's work — the script exists so the run spends its judgement on
+truth rather than on arithmetic.
+
+**Consequence:** a walkthrough report now carries the script's reading beside its verdict, and a run that
+reports a path-class finding the script did not see is evidence about the script. `strata-state` already
+refuses a fourth failure on the same artifact class (`run rebuild or pass`), so the corpus has no way left
+to spend another pass on prose that a script can refuse.
