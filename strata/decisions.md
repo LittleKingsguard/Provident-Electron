@@ -1294,3 +1294,24 @@ printed beside the root.
   pass re-grainned the row that enumerates it, which is D-51's class in the register itself.
 - A row that enumerates another document's contents is the most fragile kind of restatement the corpus allows; it
   is tolerable only because the enumeration is short and the procedure is the owner.
+
+---
+
+## D-60 — A sweep removes only what no row asserts, and the worktree rows are not content rows
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the user's instruction to sweep legacy code from the completed
+modules, measured — nine unused imports and nine dead-looking exports were found, and removing them was tested rather
+than assumed. Three are removable; six are **row subjects**, and every removal also reddened `I-12`, `F-9(b)`, `S-1`,
+`P-7` and `REG-EXEC`, which read `git status` and not file content.
+
+**Decision:** a sweep removes a name only when **no row asserts it** and the four legs agree; and a row that reads
+`git status` is a worktree-discipline row, never evidence that a committed edit is forbidden.
+
+- `themeWiringRole` has no importer and is the subject of `§5.1 row 12`'s source probe — removing it reddened 50 rows.
+  `POINTER_TYPES`, `createProfileStore`, `applyThemeDeclaration`, `IPC_INVOKE`, `Tier4ClosedRefusal` and
+  `Tier4WriteAnswer` are named by tests. All seven stay.
+- `Tier4ClosedRefusal`/`Tier4WriteAnswer` in `main.ts` remain the owed item the unit records name: they are a **row
+  subject** for another file, so removing them belongs to a unit that re-registers those rows, not to a sweep.
+- The three removable names are `RenderedHtmlResult`, `ListTargetsResult` and `NodeStateResult`, imported by
+  `src/main/mcp-server.ts` and referenced by nothing; they land under the `mcp-surface` row that already claims the
+  file, so no new map claim is made (D-32).

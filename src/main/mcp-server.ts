@@ -6,26 +6,19 @@
 //   - stdio: the process is spawned by an MCP client (agent/IDE).
 //   - http:   a Streamable HTTP server on 127.0.0.1:<port>/mcp (the app runs,
 //             the client connects).
-import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
-import type { RegisteredTool, RegisteredResource, RegisteredResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
-import { z } from 'zod'
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import type {
-  RpcRequest,
-  RpcReply,
-  DispatchRequest,
-  RenderedHtmlResult,
-  ListTargetsResult,
-  NodeStateResult,
-} from '../shared/types.js'
-import { SecurityGate, exclusionAllowsWork, type ToolGroup, moduleToolAllowed } from './security.js'
-import type { ModuleStore } from './module-store.js'
-import type { CapabilityRouter } from '../renderer/extensions.js'
+import {McpServer, ResourceTemplate} from '@modelcontextprotocol/sdk/server/mcp.js'
+import type {RegisteredTool, RegisteredResource, RegisteredResourceTemplate} from '@modelcontextprotocol/sdk/server/mcp.js'
+import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
+import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import {z} from 'zod'
+import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
+import type {RpcRequest, RpcReply, DispatchRequest} from '../shared/types.js'
+import {SecurityGate, exclusionAllowsWork, type ToolGroup, moduleToolAllowed} from './security.js'
+import type {ModuleStore} from './module-store.js'
+import type {CapabilityRouter} from '../renderer/extensions.js'
 // central-data — the module's OWN surface, supplied at the composition site. The server never
 // constructs it: the profile's directory is not a server's to derive (`interface.md` §5; D-13).
-import type { DataSurface } from './data/index.js'
+import type {DataSurface} from './data/index.js'
 
 const TOOL_PREFIX = 'provident.'
 
