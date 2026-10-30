@@ -1004,3 +1004,23 @@ Arm (ii) is the default where the glosses earn their keep; (i) where they do not
 **What looks like the check but is not:** `surface.test.ts`'s export-census row pins the **entry's run-time
 exports** and asserts four callables of the six, so it could not have reddened on either drift, and it titles
 itself "the four verbs" (routed to that unit's test writer).
+
+---
+
+## D-46 — A record of a past pass keeps its readings; a live document names sites
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the D-41 sweep, measured — after ~170 offset
+citations became statements, the residue is exactly two kinds: three rows in the register and one historical
+returns envelope, each of which is a record of what a document said at a time.
+
+**Decision:** D-41 binds **live** documents. A record — a `D-n` row (D-33), a `.strata/returns/` envelope, a
+walkthrough record, a closure record's dated table — **keeps the readings it took**, because its subject is
+what was measured then, and re-pointing it would make the record agree with today at the cost of being true
+about its own moment.
+
+- The test is the document's tense: a sentence that says what **is** names a site; a sentence that says what
+  **was measured** keeps its reading and dates it.
+- A record whose reading no longer lands is not a defect to repair — it is evidence, and a reader who needs
+  the current fact takes it from the live document or from `brief.md` §6 (D-26).
+- The exception proves the rule: `docs/L1/settings-carrier-retirement.md`'s removal table is a dated record
+  and stayed, while the same file's live claims were converted in the same pass.
