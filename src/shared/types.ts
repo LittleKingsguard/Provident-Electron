@@ -320,7 +320,8 @@ export interface NotifyPayload {
  *  be able to grant itself capabilities). */
 export interface SecuritySettings {
   token: string | null
-  /** The enabled tool groups (`read`/`dispatch`/`graph`/`code`). */
+  /** The enabled tool groups — the gate's own `ToolGroup` union, six wide; this member spells none of them
+   *  (D-3: a second list would drift, and it did — four names stood here while six existed). */
   enabled: string[]
   /** Maximum journal entries before auto-condense (undefined = never condense).
    *  Passed to the provident-ssr Supervisor constructor. */
