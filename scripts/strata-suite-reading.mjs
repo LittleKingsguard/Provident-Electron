@@ -9,6 +9,19 @@ import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
 
 const REPO = process.cwd()
+
+// **A DIRTY TREE REDS THE BOUNDARY ROWS BY CONSTRUCTION** (D-60): the flat suite asserts the worktree against a
+// declared edit set, so a reading taken before the commit measures the edits and not the tree. Say so rather than
+// printing a number a reader will believe.
+let dirty = []
+try {
+  dirty = execFileSync('git', ['status', '--porcelain'], { cwd: REPO, encoding: 'utf8' })
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+} catch {
+  // no git is not this script's problem; the reading still runs
+}
 const dir = mkdtempSync(join(tmpdir(), 'strata-suite-'))
 const out = join(dir, 'vitest.json')
 let raw
@@ -64,6 +77,10 @@ const pass = (report.numPassedTests ?? 0)
 const fail = (report.numFailedTests ?? 0)
 const skip = (report.numPendingTests ?? 0)
 
+if (dirty.length > 0) {
+  console.log(`strata-suite-reading · WARNING: ${dirty.length} uncommitted path(s) — the boundary rows measure the`)
+  console.log(`  worktree, so a gating failure below may be YOUR EDIT and not a defect (D-60). Commit, then re-read.`)
+}
 console.log(`strata-suite-reading · ${pass} passed · ${fail} failed · ${skip} skipped`)
 console.log(`  GATING     ${buckets.gating.length} failing test(s) in ${new Set(buckets.gating.map((f) => f.file)).size} file(s)`)
 for (const f of buckets.gating) console.log(`     ${f.file} — ${f.test.slice(0, 100)}`)
