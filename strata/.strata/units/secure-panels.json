@@ -1,0 +1,18 @@
+{
+  "unit": "secure-panels",
+  "layer": "L4",
+  "stage": "design",
+  "artifacts": [
+    "l1-pane-design",
+    "l1-panes-live-battery",
+    "l2-pane-integration",
+    "l2-panes-battery",
+    "l3-pane-design",
+    "l4-pane",
+    "e-harness-panes-key"
+  ],
+  "assumptions": [],
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-10-30T06:17:35.306Z"
+}
