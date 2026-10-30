@@ -20,8 +20,7 @@
   landed rows are ordered identically throughout, and no pane node is reachable from
   `provident.list_targets` or `provident.get_rendered_html` on either boot.
 - **`npx vitest run tests/integration/secure-panels` — 11/11**: the arrangement, the projection's order, the
-  click's one patch, and the record as bytes — zero-length, then the grant, then the revoke, then an empty
-  list that is a record and not an absence.
+  click's one patch, and the record as bytes — zero-length, grant, revoke, then an empty list that is a record.
 - **The four legs**: `npm test` carries its two long-standing reds and nothing else; `typecheck`,
   `typecheck:tests` and `build` are clean. Red-first on the same evidence before the landing: **2/7**, **8/11**.
 
@@ -29,8 +28,9 @@
 
 - **F-5 → the `ipc-contract` row:** `SecuritySettings.enabled`'s comment enumerates four group names — stale
   since `module`, again since `data`: a **fourth reader**, and a comment, so nothing reddens.
-- **R-7 → the `security-store-storeroom` row:** `src/main/preload.ts`'s comment declares that a closed-pair
-  `set` answers a refusal; the battery measured that it commits.
+- **R-7 → the `security-store-storeroom` row:** `src/main/preload.ts`'s comment says a closed-pair `set`
+  answers a refusal, and it is measured to commit; `read()` also mints the refusal with `MCP: disabled`
+  where the archived line pairs it with `MCP: enabled` — the surface's rule, not this pane's.
 - **`gesture-session` F-9(b):** no `secure-panels` entry in its sibling list, so it charged this unit's
   artifact to itself; **`bundle-boot-seam` A-4** failed once in four runs on a `%20` `file://` import.
 
