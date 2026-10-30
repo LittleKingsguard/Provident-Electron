@@ -128,7 +128,7 @@ import { ChildProcessTransport, cleanupProfiles, electronEnv, makeFreshProfile, 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = repoRoot
 const batteryHost = join(root, 'dist', 'main', 'battery-host.mjs')
-const mainBundle = join(root, 'dist', 'main', 'main.cjs')
+const mainBundle = join(root, 'dist', 'main', 'main.mjs')
 // The §5 precondition's leg: `scripts/electron-divergence.mjs` — the script
 // behind `npm run divergence`. Declared here with the other leg paths; the
 // precondition is run (and its verdict consumed) as §3.1's step 2, before this

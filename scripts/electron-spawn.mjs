@@ -72,7 +72,7 @@ export const electronBin = (() => {
   )
 })()
 /** The built main-process bundle the app boots (`PRE-2`'s digest target). */
-export const mainCjs = join(repoRoot, 'dist', 'main', 'main.cjs')
+export const mainCjs = join(repoRoot, 'dist', 'main', 'main.mjs')
 
 /** The landed base argument vector (§2.1 item 1, byte-identical). The
  *  `--user-data-dir=<fresh scratch>` member is appended per spawn — the pair is

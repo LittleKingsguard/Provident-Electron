@@ -476,7 +476,7 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
   //   S1 the leg records the divergence leg's own result line verbatim
   //      (`R13 RESULT: <N> checks, <M> failures`, §5.1)
   //   S2 the `PRECONDITION-FAILED` marker is produced when it is not green
-  //   S3 a digest of the built artifacts (`dist/main/main.cjs` at minimum) is
+  //   S3 a digest of the built artifacts (`dist/main/main.mjs` at minimum) is
   //      recorded before AND after the divergence run (§5.1 PRE-2)
   //   S4 `node_modules/provident-ssr/package.json`'s version is recorded
   // Fail-states (§5.1): not green ⇒ PRECONDITION-FAILED, exit 2, no measurement,
@@ -495,7 +495,7 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
     expect(src, "§5.1 PRE-1: the divergence leg's own result line is recorded verbatim — `R13 RESULT: <N> checks, <M> failures`").toMatch(
       /R13 RESULT/,
     )
-    expect(src, '§5.1 PRE-2: a digest of the built artifacts (dist/main/main.cjs at minimum) is recorded').toMatch(/main\.cjs/)
+    expect(src, '§5.1 PRE-2: a digest of the built artifacts (dist/main/main.mjs at minimum) is recorded').toMatch(/main\.mjs/)
     expect(src, '§5.1 PRE-2: the digest is a real hash, before and after the divergence run').toMatch(/(createHash|sha256|digest)/i)
     expect(src, '§5.1 PRE-2: the before/after comparison is stated').toMatch(/before/i)
     expect(src, '§5.1 PRE-2: the after/differing-digest fail state is stated').toMatch(/after|differ/i)

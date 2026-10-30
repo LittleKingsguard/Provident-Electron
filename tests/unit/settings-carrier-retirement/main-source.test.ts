@@ -6,14 +6,17 @@
 // the import pair, `:118-123` the TIER 1 block and `settingsPath`, `:173-192` the Q-5 migration's
 // removed probe, and the three re-points with `rowsWith`'s replace-or-append rule) and §5 (the
 // guardrail: "`main.ts` ends with exactly one `node:fs` name, `rmSync`") and §6 (`ASM-6`); signatures.md
-// §6 (the locals and the two channel answers, `import { join } from 'node:path'` +
-// `import { rmSync } from 'node:fs'`, and `rowsWith` as "this file's one new local"); read on
+// §6 (the locals and the two channel answers, `import { rmSync } from 'node:fs'`, and `rowsWith` as
+// "this file's one new local"), with `node:path` read at the set E-2 leaves it: the entry derives its
+// own directory from its module URL, so the file binds `import { dirname, join } from 'node:path'` and
+// `import { fileURLToPath } from 'node:url'` (docs/L1/bundle-boot-seam.md §8 E-2;
+// docs/L3/bundle-boot-seam/design.md §3, signatures.md §4); read on
 // docs/L1/settings-carrier-retirement.md §3 (the retirement's exact surface) and §9 E-1, and on
 // docs/L2/settings-carrier-retirement/interface.md §5 and behaviour.md §8 `RET-1`/`RET-2`.
 //
-// THIS FILE STANDS RED UNTIL THE IMPLEMENTATION EXISTS (examiner.md §3, D-1): at this head `main.ts`
-// imports nine `node:fs` names and `dirname`, holds `existsSync`, and declares no `rowsWith`, so
-// `MS-1`…`MS-4` fail on exactly the census they pin. Nothing is skipped and nothing is softened.
+// EVERY ROW HERE ASSERTS THE LANDED FILE AT THE CENSUS IT PINS (examiner.md §3, D-1): `src/main/main.ts`
+// binds `rmSync` ALONE from `node:fs`, holds no `existsSync`, declares `rowsWith`, and reaches `dirname`
+// only through E-2's directory derivation. Nothing is skipped and nothing is softened.
 //
 // WHY THIS FILE IS ALMOST ENTIRELY A SOURCE READ, STATED PLAINLY AND NOT PASSED OVER: `src/main/main.ts`
 // imports `electron` at module scope, so NO node-suite row can construct it — there is no live form of
@@ -82,28 +85,47 @@ describe('settings-carrier-retirement · src/main/main.ts, E-1, read as a source
     expect(/\brmSync\s*\(/.test(main), 'and the Q-5 legacy-registry removal keeps its `rmSync` (L1 §3)').toBe(true)
   })
 
-  it('MS-2 · `node:path` binds `join` ALONE and `dirname(…)` is called nowhere: `dirname`’s one caller, the tmp+rename writer, retired with its whole vocabulary (design.md §4 `:6`, §5; signatures.md §6; L1 §3 `:7`)', () => {
+  it('MS-2 · `node:path` binds `{dirname, join}` and `dirname` has exactly ONE call site — this entry’s own directory derivation, module URL → filesystem path → parent directory — while the retired tmp+rename writer’s whole vocabulary stands nowhere (design.md §4 `:6`, §5; signatures.md §6; L1 §3 `:7`; the `dirname` binding is E-2’s: docs/L1/bundle-boot-seam.md §8, docs/L3/bundle-boot-seam/design.md §3)', () => {
     const main = sourceOfMain()
-    expect(bindingsOf(main, 'node:path'), 'the file composes paths with `join` alone: `dirname` retires with the tmp+rename writer that was its only caller (design.md §4; signatures.md §6)').toEqual(['join'])
 
-    // THE BARE-SUBSTRING LIMB IS WITHDRAWN, AND THE REASON IS IN `main.ts` RATHER THAN IN THIS ROW'S
-    // CONVENIENCE: this row used to also assert `main.includes('dirname') === false`. That limb was
-    // UNSATISFIABLE, not merely unpassed. `src/main/main.ts:25` holds the pre-existing, deliberate
-    // `const here = __dirname` (consumed at `:455` and `:462` to locate `preload.cjs` and the renderer's
-    // `index.html` in the built tree), so the substring `dirname` is a NECESSARY consequence of the CJS
-    // free variable `__dirname` and stands in the file no matter how much of the carrier is removed. The
-    // only way to satisfy it would be to re-derive the built main directory by another route — a new
-    // path resolution in `main.ts` that L1 §3's CLOSED removal list does not name and E-1 does not
-    // license, so this unit may not make that edit and must not assert it.
-    // NOTHING IS SOFTENED BY THE WITHDRAWAL: what the limb MEANT is pinned below at the grain that is
-    // both true and licensed — no `dirname` BINDING (the census above, which is the only form an import
-    // can take) and no `dirname(…)` CALL (an invocation would need exactly the binding the census
-    // forbids) — and the writer that was `dirname`'s sole caller is asserted gone, name by name.
+    // THE BINDING SET IS `{dirname, join}` BECAUSE E-2 MOVED THIS ENTRY TO ESM: an ESM module scope has no
+    // CJS free variable, so `main.ts` derives the directory holding its own artifact as
+    // `dirname(fileURLToPath(import.meta.url))` — this module's file URL, as a filesystem path, taken to
+    // its parent (docs/L1/bundle-boot-seam.md §8 E-2; docs/L3/bundle-boot-seam/design.md §3). `dirname`
+    // therefore arrives as that exception's consequence and NOT as the retired carrier's helper coming
+    // back: what this row pins is that the name has ONE call site and that the call site is the
+    // derivation, never a path the settings writer would have composed.
+    expect(bindingsOf(main, 'node:path'), 'the `node:path` surface is exactly the two helpers this file needs — `join` for its two artifact paths, `dirname` as E-2’s derivation call — so the census pins E-2’s set and refuses any third path helper a writer could be built from (docs/L1/bundle-boot-seam.md §8 E-2; design.md §4 `:6`, §5; signatures.md §6)').toEqual(['dirname', 'join'])
+
+    // `dirname`'S ONLY CALLER, NAMED PRECISELY: the derivation is spelled once and its value consumed
+    // twice by `join`, so the COUNT and the EXPRESSION are both pinned — a second `dirname(…)` anywhere
+    // in this file is a path being composed for something else, which is the vocabulary the carrier
+    // retired.
+    expect(main.match(/\bdirname\s*\(/g) ?? [], '`dirname` is invoked exactly once in src/main/main.ts: one module-scope derivation whose value two `join` calls consume (docs/L3/bundle-boot-seam/design.md §3; docs/L1/bundle-boot-seam.md §8 E-2)').toHaveLength(1)
+    expect(/\bdirname\s*\(\s*fileURLToPath\s*\(\s*import\.meta\.url\s*\)\s*\)/.test(main), 'and that one call site is this entry’s own directory derivation — the module URL turned into a filesystem path and then into its parent directory — the only `dirname` E-2 licenses here (docs/L1/bundle-boot-seam.md §8 E-2; docs/L3/bundle-boot-seam/design.md §3, signatures.md §4)').toBe(true)
+
+    // WHAT THE WITHDRAWN BARE-SUBSTRING LIMB MEANT, PINNED AT THE GRAIN THAT IS BOTH TRUE AND LICENSED:
+    // the substring `dirname` reaches this file ONLY through that imported helper. It is not the CJS free
+    // variable `__dirname` — which no ESM module scope supplies, and which E-2 retired in the same edit
+    // that added the derivation — and it is not an alias or a re-export standing beside the census.
+    expect(/\b__dirname\b/.test(main), 'no `__dirname` free variable stands in src/main/main.ts: the entry is ESM, where that CJS global does not exist, so the directory comes from the module URL and from nowhere else (docs/L1/bundle-boot-seam.md §8 E-2; docs/L3/bundle-boot-seam/design.md §3)').toBe(false)
+
+    // AND THE WRITER THAT WAS `dirname`'S JOB IS GONE, NAME BY NAME: the tmp+rename+fsync writer composed
+    // its `.tmp` sibling and its rename target through `dirname`, so its whole vocabulary is asserted
+    // absent — no successor, no shim, no re-export, and no second path helper above to build one from.
+    // THIS ABSENCE IS THE ROW'S SUBJECT, and E-2 licensing a derivation for this entry leaves it untouched.
     for (const spelling of ['.tmp', 'renameSync', 'fsyncSync', 'writeFileSync', 'openSync', 'closeSync', 'mkdirSync', 'commitSettingsWrite']) {
-      expect(main.includes(spelling), `"${spelling}" stands nowhere in src/main/main.ts: the tmp+rename+fsync writer — the one caller of the retired dirname import — has no successor, no shim and no re-export here (L1 §3; design.md §4, §5)`)
+      expect(main.includes(spelling), `"${spelling}" stands nowhere in src/main/main.ts: the tmp+rename+fsync writer the carrier retired composed its temp sibling with dirname, and it has no successor, no shim and no re-export here (L1 §3; design.md §4, §5; behaviour.md §8 RET-1)`)
         .toBe(false)
     }
-    expect(/\bdirname\s*\(/.test(main), 'no `dirname(…)` call stands in src/main/main.ts: the name appears only as the CJS free variable inside `__dirname`, never as an imported helper (design.md §4 `:6`; signatures.md §6)').toBe(false)
+
+    // THE ASSERTION THIS ROW MAY NOT MAKE, AS THE CURRENT REASON RATHER THAN AS HISTORY: a flat
+    // `main.includes('dirname') === false` is satisfiable only by deriving this entry's directory another
+    // way — a new path resolution in `main.ts` that L1 §3's CLOSED removal list does not name and E-1 does
+    // not license, so this unit may not make that edit and must not assert it. E-2 is the exception that
+    // licensed exactly that resolution, which is why the substring now stands legitimately and why the
+    // limbs above pin its PROVENANCE — one call site, its expression, and no `__dirname` to supply it —
+    // instead of a substring absence no edit could satisfy while the derivation stands.
   })
 
   it('MS-3 · the legacy registry’s existence probe is retired with the record’s reader: no `existsSync` stands in the file, while the Q-5 read and its post-boot removal do (design.md §4 `:173-192`, §6 ASM-6; L1 §3/§5)', () => {
