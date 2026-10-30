@@ -31,14 +31,8 @@
       "status": "open"
     }
   ],
-  "streaks": {
-    "walkthrough-record": 1
-  },
+  "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T10:34:43.980Z",
-  "builds": 2,
-  "lastFailure": {
-    "artifact": "walkthrough-record",
-    "reason": "STALE"
-  }
+  "updated": "2026-10-30T15:06:45.706Z",
+  "builds": 3
 }
