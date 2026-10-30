@@ -637,3 +637,45 @@ truth rather than on arithmetic.
 reports a path-class finding the script did not see is evidence about the script. `strata-state` already
 refuses a fourth failure on the same artifact class (`run rebuild or pass`), so the corpus has no way left
 to spend another pass on prose that a script can refuse.
+
+---
+
+## D-30 — Test triage for the storeroom rework: e2e is retained, integration and unit scenarios are marked
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, ruling and three selections):** "For e2e tests
+(ex. agent hits MCP with X given existing state Y, expecting response Z or UI equivalent), retain as-is
+unless existing behavior is found to be a defect"; "For integration/unit tests, mark the scenario for later
+review/reimplementation"; "tests/e2e/** plus the three Electron legs"; "Per-scenario source marker +
+L1-owned registry, script-checkable"; "marked rows are reported separately and stop gating".
+
+**Decision:** the modules' machinery is to be reworked onto the storeroom's constraint/repair and listener
+engines as a state machine and event generator, so a scenario pinning how that machinery is built today is
+a measurement with a shelf life, and the loop stops spending passes keeping it true.
+
+- **Retained as-is:** `tests/e2e/**` and the three Electron legs (`battery`, `divergence`, `ui`). Each states
+  an exchange at a process boundary — a supplied state, a surface, an answer that is the product — so a red
+  there is a defect in behaviour until another measurement says otherwise.
+- **Marked for later review/reimplementation:** every integration and unit scenario — `tests/integration/**`,
+  `tests/unit/**` and the flat `tests/*.test.ts` suite. It is not re-grained: re-pointing a test row at a
+  moved census, a renamed internal or a new arrangement is exactly the work this decision removes, and the
+  rework replaces the row whole.
+- **The marker** rides in the test source beside what it marks: `// strata:marked rework — <reason>` above an
+  `it` or a `test` marks that scenario; the same line with `marked-file` in the file's header marks every
+  scenario in it, which is the shape every flat file and every strata integration/unit battery takes, being
+  one kind throughout. A marker above a `describe` is refused rather than guessed at (`check`).
+- **The registry** is `strata/marks.json`, L1-owned beside `strata/modules.json`, generated from those
+  markers by `scripts/strata-marks.mjs` (the `harness` row) and never hand-edited: `index` writes it,
+  `check` refuses when source and index disagree, `report` prints both readings per suite. Its counts are
+  the index's, never restated in prose (D-26).
+- **The gate:** a marked row stops gating. `npm test` reports the on-notice reading beside the gating one,
+  and the four legs of `brief.md` §6 rest on `tests/e2e/**`, the three Electron legs and every unmarked row.
+  How the runner separates the two readings is L2's arrangement to decide and L4's to land; this row states
+  the rule only (D-3).
+- **Carried over unmarked, being a loop instrument and not module machinery:** the worktree boundary
+  assertion of `tests/store-tabs-record.test.ts` §4.2 item 9. A loop that marks the row measuring its own
+  tree has nothing left to measure.
+
+**Consequences, stated because they follow:** the two long-standing reds — that same file's §4.2 items 7
+and 8 — sit in a flat file, so they move from red to on notice and the rework owns them; a run that finds a
+marked scenario's expectation outdated files a `mark`, not a defect; `brief.md` §5/§6 and `AGENTS.md` carry
+the split as their own rule; no package change follows (D-5), and nothing is merged or pushed (D-6).

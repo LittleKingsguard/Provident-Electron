@@ -1,0 +1,38 @@
+{
+  "rule": "D-30",
+  "instrument": "scripts/strata-marks.mjs",
+  "suites": {
+    "flat": {
+      "files": 89,
+      "sites": 2759
+    },
+    "e2e": {
+      "files": 5,
+      "sites": 44
+    },
+    "integration": {
+      "files": 12,
+      "sites": 95
+    },
+    "unit": {
+      "files": 12,
+      "sites": 96
+    }
+  },
+  "marked": [],
+  "gates": [],
+  "readings": {
+    "gating": {
+      "files": 118,
+      "sites": 2994
+    },
+    "onNotice": {
+      "files": 0,
+      "sites": 0
+    },
+    "retained": {
+      "files": 5,
+      "sites": 44
+    }
+  }
+}

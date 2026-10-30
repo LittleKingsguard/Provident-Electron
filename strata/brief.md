@@ -69,13 +69,12 @@ L2. Examiners validate the battery before examining code, diagnose root cause an
 patch. Repeat failure escalates to a rebuild (`rebuild.md`). A lower layer that asks for adjudication
 is answered and counted as a failure (D-1).
 
-## 5. The current unit (D-27)
+## 5. Where the loop stands (D-27, D-30)
 
 `bundle-boot-seam` is landed: the app's built main bundle **boots**, and its three batteries plus all
 three Electron legs are green at this head — the reading §6 carries (D-27). It was admitted at L1 like
-any other unit, filed its map row first, and is closed only by its own exit walkthrough; the other four
-units live in `strata/.strata/units/*.json`, where `settings-carrier-retirement` is the only one closed
-on a green walkthrough so far.
+any other unit, filed its map row first, and is closed on its own exit walkthrough; every unit's stage and
+walkthrough streak are state, read from `strata/.strata/units/*.json` and never restated here (D-26).
 
 The constraint it inherits: nothing it builds may be a `provident-storeroom` or `provident-ssr` change —
 the arrangement is this repo's (D-5) — and no new MCP surface is added to prove a boot (D-18). The
@@ -95,10 +94,9 @@ map (D-10).
 | `npm run divergence` | **green**, exit 0 — `9 checks, 0 failures` on the pinned N plus 4 extension checks | shim-versus-real-DOM identity, measured on a real renderer |
 | `npm run ui` | **green**, exit 0 — `11/11 assertions`, real measurements (`425x22`, `fontSize=16px`) out of a live renderer | the real-DOM measurement leg |
 
-**All three Electron legs are green at this head, and that is the `bundle-boot-seam` unit's whole
-return** (D-27): before it, one leg was green and two could not reach the app at all, because the main
-bundle died at module evaluation. Nothing in the four-leg floor could see a bundle **before this unit**, which
-is why the defect survived three units; its regression now loads one (D-27).
+**All three Electron legs are green at this head, and that is the `bundle-boot-seam` unit's whole return**
+(D-27): before it, one leg was green and two could not reach the app at all, because the main bundle died at
+module evaluation — nothing in the four-leg floor could see a bundle **before this unit** (D-27).
 
 The layer rule every later claim inherits, **narrowed by the boot unit rather than repealed by it**: a
 module row's green under `npm test` is envelope-green, because the suite runs the modules under a
@@ -106,18 +104,18 @@ layout-less DOM shim. One battery is the exception and says so in its own header
 spawns the built bundle, opens its stdio and HTTP transports and constructs its instance, which is exactly
 what D-27 admitted the unit to prove. So the shim rule still governs every module row, and a boot green is a
 process green that is **not** a rendered-surface green (D-1, D-27).
-The two long-standing reds are `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`, the un-run live
-battery) and §4.2 item 8 (`REG-EXEC`, the register's broken attempts) — neither new to this head. The
-third the gate-era corpus carried, `tests/store-core-graph.test.ts` §5.1, was retired with its referent
-when the corpus was archived (D-9).
+**What the floor rests on is D-30's split:** the module machinery is to be reworked onto the storeroom's
+constraint/repair and listener engines, so `tests/e2e/**` and the three Electron legs gate while every
+integration and unit scenario — `tests/integration/**`, `tests/unit/**`, the flat suite — is marked and
+reports **on notice** (`scripts/strata-marks.mjs`); until a runner separates the two readings, the table
+above still measures the whole tree (D-30). The two long-standing reds — `tests/store-tabs-record.test.ts`
+§4.2 item 7 (`P-7`) and §4.2 item 8 (`REG-EXEC`) — sit in a flat file, so they are on notice, not gating,
+and the rework owns them; the gate-era third, `tests/store-core-graph.test.ts` §5.1, was retired (D-9, D-30).
 
-**No red-standing row is a design complaint at this head.** The `bundle-boot-seam` battery was authored
-red-first and its five red rows went green when the arrangement landed, which is the evidence the unit
-was admitted on (D-27).
-
-**One more row is by construction, not a red:** the same `store-tabs-record` file's §4.2 item 9 asserts the
+**One row is by construction, not a red:** the same `store-tabs-record` file's §4.2 item 9 asserts the
 worktree against a declared edit set, so it fails while any uncommitted file exists and passes on a clean
-tree. A reading worth believing is taken after the commit, never before it (`tests/store-tabs-record.test.ts:1916`).
+tree. It measures the loop's own tree and not module machinery, so it is **unmarked and keeps gating**; a
+reading worth believing is taken after the commit, never before it (`tests/store-tabs-record.test.ts:1916`; D-30).
 
 ## 7. The archive (D-2)
 
