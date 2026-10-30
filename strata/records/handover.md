@@ -22,10 +22,10 @@ this record restates neither, because a count in a second place drifts at the ne
 
 - **The boot seam is fixed** (D-27): all three Electron legs are green for the first time, and their
   readings live in `strata/brief.md` §6, never restated here (D-26).
-- **The test triage is decided and instrumented, not yet applied** (D-30): `tests/e2e/**` and the three
-  Electron legs are retained; every integration and unit scenario is to be marked `// strata:marked rework`
-  and reports on notice. `scripts/strata-marks.mjs` indexes and checks the markers, no file carries one yet,
-  and the runner still measures the whole tree.
+- **The test triage is decided, instrumented and applied** (D-30): `tests/e2e/**` and the three Electron
+  legs are retained and gate; every integration and unit scenario carries `// strata:marked-file rework` and
+  reports on notice, bar the one worktree assertion that measures the loop's own tree. The two readings are
+  `scripts/strata-marks.mjs report`'s, never restated here (D-26); the runner still measures the whole tree.
 - **The Settings pane still cannot grant the sixth group.** `src/renderer/secure-panels.ts:72` enumerates
   five group names, so `data` is in the gate's valid set with no operator control — owed to the
   `secure-panels` row's unit (`strata/records/central-data-management-unit.md` §2).
@@ -37,8 +37,8 @@ this record restates neither, because a count in a second place drifts at the ne
 1. **Decide the open units' walkthrough cap.** Each carries a `walkthrough-record` streak at the state
    machine's limit, which refuses a fourth `fail`: run its set under the instrument, then `pass` or
    `rebuild` (`strata/records/*-walkthrough.md`; `strata/rebuild.md` §3).
-2. **Apply D-30**: mark the integration and unit scenarios, generate `strata/marks.json`, and let L2 decide
-   how the runner separates the gating reading from the on-notice one.
+2. **Land D-30's runner split**: the markers are in and `strata/marks.json` is generated, so what remains is
+   L2's arrangement for reporting the gating reading beside the on-notice one, and L4 landing it.
 3. **The pane's sixth group**, as its own unit — the one finding that has survived five passes, and the
    running app can now be driven for real to prove it.
 4. **D-22's second half**, still parked: the gate's exclusion/tier-4 enforcement (which gives
