@@ -1,6 +1,6 @@
 # L2 — `central-data`: the persistence
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3 — one cite re-grained, no claim moved: the package's version names the `dependencies` block of `package.json` instead of a line range the later `panes` key moved (D-41); rev 2 and behind are read through this one
 - **Status:** DESIGN — the store's own on-disk shape as this unit constrains it, and nothing else (D-13)
 - **Inputs:** `docs/L2/central-data/interface.md`, `behaviour.md`; L1 rev 2 §4; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7; D-5, D-12, D-13, D-15; the package's shipped declaration, README and guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
@@ -12,7 +12,7 @@
 - This unit adds **exactly one** written name. The other written name at steady state is not this module's: `<userData>/provident-operator-settings.json`, the instance's own file (`operator-settings`, D-16, D-19). `provident-security.json` is a **seed** since the rebuild — read at most once and never written — and `<userData>/provident-settings.json` is a seed too since the carrier retirement (D-19, D-22; exception §5, discharged by `settings-carrier-retirement`; D-13).
 - D-13's consequence follows and is not absorbed: the compliance battery's Family-B reading "exactly two persisted files" stops being a true standing pin the moment this file exists, and its rows are re-grained by this unit's test writer in the unit that adds the file — moved, never deleted (`D-13`, `D-15`).
 - This module's own filesystem acts are **the existence probe and nothing else**: it creates no `.tmp`, no lock, no sidecar, no copy, no journal file and no directory of its own (D-13).
-- The store's construction is what creates the file (an exclusive zero-length file at a provided, absent path), which is why construction is deferred to the first write: a profile that is only read costs no filesystem act (`guide §9.1`; D-13).
+- The store's construction is what creates the file (an exclusive zero-length file at a provided, absent path), which is why construction is deferred to the first write: a profile that is only read costs **one reachability reading per operation** — `probe()` in `src/main/data/surface.ts`'s operations, `readProfile(profileDir)` in `src/main/data/store.ts` — and **no construction**, so no file appears (`guide §9.1`; D-13; `behaviour.md` §1).
 - `<userData>/provident-settings.json` is **not read, not written and not retired by this module** — L1's ASM-11 half is **delivered** by `settings-carrier-retirement`, which carries the second import-once arm at its §4 (D-22, D-19; exception §5; D-13).
 
 ## 2. The key space
@@ -40,7 +40,7 @@
   (`guide §9.1`; D-13).
 - The retired projection's `schemaVersion: '1'` was that projection's, and the projection is gone from `src/main/main.ts` (which stamps no `schemaVersion` and holds no store); it has no counterpart in this
   file, and D-13 makes it no compatibility constraint (D-13).
-- The format's version is the **package's** — `provident-storeroom ^1.6.1` (`package.json:25-26`) — and the seam's census pins
+- The format's version is the **package's** — `provident-storeroom ^1.6.1` (the `dependencies` block of `package.json`) — and the seam's census pins
   the fourteen-member instance this unit calls into (`src/main/storeroom.ts:45-50`; D-5).
 - A change to the shape is the store's to make; the unit that makes one records it in that unit's record, and no migration
   obligation stands (`D-13`).

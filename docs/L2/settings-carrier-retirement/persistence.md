@@ -10,8 +10,8 @@
 |---|---|---|
 | `<userDataDir>/provident-operator-settings.json` | `operator-settings` | written by the instance's one `write`/`writeAppState` (sibling §1; D-16) |
 | `<userDataDir>/provident-profile.json` | `central-data` | written by the profile store, unmoved (D-13; `docs/L2/central-data/persistence.md` §1) |
-| `<userDataDir>/provident-settings.json` | **retired** | read **at most once** by the second import-once arm, **never written** after it (L1 §4; D-22, D-19's precedent) |
-| `<userDataDir>/provident-security.json` | **retired** (sibling) | read at most once, never written (sibling §1; D-19) |
+| `<userDataDir>/provident-settings.json` | **retired** | read **at most once per boot** by the second import-once arm, **never written** after it (L1 §4; D-22, D-19's precedent) |
+| `<userDataDir>/provident-security.json` | **retired** (sibling) | read at most once **per boot**, never written (sibling §1; D-19) |
 
 - **The census moves from three written names to two** (L1 §6; D-22, D-13). The retired names may stand in a profile as **seeds**: read at most once, their bytes left exactly as seeded, and no delete, rename or repair (L1 §4; D-19).
 - **The rows that pin three re-grain and are never deleted** — `tests/store-compliance-live.mjs` (`DECLARED_PERSISTED_JSON`, `SC-B-01`, `SC-B-03`, `SC-A-06`), `tests/store-security.test.ts:529-555`, `tests/store-persist.test.ts`'s carrier rows, `tests/store-tabs-record-live.mjs:91-122` and the two `isolation.test.ts` copies' `ISO-6` literal set (L1 §6; `ASM-L2-10`). The re-grain is E-5's, filed by this unit's L2 test writer (L1 §9 E-5; D-10).

@@ -32,7 +32,7 @@ The seam's on-disk product is **the build's emission set** — four boot entry p
 | `package.json:11` (`build:watch`), the main emission | as the retired line | `--format=esm --outfile=dist/main/main.mjs` *(landed)* | **+ `--external:provident-storeroom`** *(landed)* |
 
 - **`build:watch` moves with `build`, and both carry the flag**: a watch leg that rebuilt an inlined artifact while `build` emitted an external one would leave a tree whose boot behaviour depends on which command ran last, so the arrangement landed at both sites (`package.json:10`, `:11`; `interface.md` §5 E-1).
-- **No build key is added and no dependency moves**: both dependency blocks of the manifest stand as landed — `provident-storeroom` already among `dependencies` (`package.json:26`), every other entry as the head has it (`package.json:23-34`; `platform.md` §3) — and esbuild stays the one bundler (L1 §2, D-14, D-26).
+- **No build key is added and no dependency moves**: both dependency blocks of the manifest stand as landed — `provident-storeroom` already among the `dependencies` block's three entries (`package.json`), every other entry as the head has it (`package.json:23-34`; `platform.md` §3) — and esbuild stays the one bundler (L1 §2, D-14, D-26).
 
 ## 3. What the built app must find beside it at run time (rev 2's own new surface)
 

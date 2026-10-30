@@ -1,6 +1,6 @@
 # L2 — `central-data`: the behaviour
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3 — one statement re-grained against the tree and no design: a read-only profile does not cost “no filesystem act” — every operation takes one reachability reading first (`probe()` in `src/main/data/store.ts`); rev 2 and behind are read through this one
 - **Status:** DESIGN — the expected behaviour of the five `provident.data.*` tools, stated as observable outcomes; the integration battery is filed against this file (D-1 §4)
 - **Inputs:** `docs/L2/central-data/interface.md` (§1-§7 fix the surface), `persistence.md` §9, L1 rev 2 §3/§4/§5, `docs/L1/central-data-census-exception.md` §1/§7, D-5/D-11/D-12/D-13, the package's shipped guide and declaration at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
@@ -17,9 +17,10 @@
 | `delete` on any path but `[]` | `{ status:'committed', path, removed:false, tiers:[], cursor:null }` — the empty receipt §6 declares, reached without a store refusal (D-11) |
 | `journal` | `{ status:'read', from:0, through:0, floor:0, entries:[], count:0 }` (D-12) |
 
-- The store is constructed at the first operation that needs one, so a read-only profile costs no filesystem act and the
-  profile file does not exist after `list` — the construction a `filePath` forces (an exclusive zero-length file) is
-  deferred to the first write (`guide §9.1`; D-13).
+- The store is constructed at the first operation that needs one, so a read-only profile costs **one reachability reading per
+  operation and no store**: `probe()` — `readProfile(profileDir)` in `src/main/data/store.ts` — is taken at the top of every
+  operation in `src/main/data/surface.ts`, and while the reading is `absent` the profile file does not exist after `list` —
+  the construction a `filePath` forces (an exclusive zero-length file) is deferred to the first write (`guide §9.1`; D-13; `persistence.md` §1).
 
 ## 2. A write commits through the store and is re-served
 
