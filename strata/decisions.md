@@ -1237,3 +1237,21 @@ it stale, in whichever file it lives.
 - A cite into them therefore names the site ("the `ToolGroup` union", "the `RpcMethod` union's `data.*` members"),
   and the exemption D-54 offered belongs to files no unit has touched at this head — not to the two most-edited
   ones in `src/shared` and `src/main`.
+
+---
+
+## D-57 — Corrigendum to D-49: the clause's home is its own block, never a quotation
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-49**, which stands as filed (D-1). **Source:** the
+`strata-bootstrap` walkthrough, run 18, measured — D-49 says a `Discharged by:` clause goes "at the END of the
+Status/Source block, after the source field has closed", and D-2, D-16 and D-23 each place it in the **Status**
+block, before `**Source:**`.
+
+**Decision:** the rule D-49 was filed for is **one clause in its own block, never spliced into a quotation and
+never appended to a line of prose** — which is what went wrong when D-34 was applied literally and eleven rows got
+it spliced mid-sentence. Its **placement relative to `Source`** is not part of the rule: the three rows that put it
+after `Status` are compliant, because the clause is a block and a reader can find it.
+
+- What may never recur is the splice: a clause inserted inside a quoted user sentence changes what the user said.
+- What D-49 called "the end" is where the block happens to sit in most rows, not a position obligation; a
+  corrigendum cannot impose one on rows already filed, and three of them demonstrate the rule is satisfied without.

@@ -43,7 +43,7 @@ gate corpus's as-filed copy is cited by path under the archive prefix (§7, D-2)
 | Transports | Streamable HTTP on `127.0.0.1:3787` (stateless, token-gated, push is a no-op) and stdio (long-lived, push-capable) | `src/main/mcp-server.ts`'s two transport setup sites (D-41: the sites, not offsets) |
 | Packages consumed and pinned | `provident-ssr ^0.5.1`, `provident-storeroom ^1.6.1` | `package.json`'s `dependencies` block (D-41: the site, never a range that a new script key moves) |
 | The storeroom seam | **two** imports of the package — the seam (`src/main/storeroom.ts`'s `STOREROOM_DECLARED_SURFACE`, a declared census of `14` members / `11` symbols) and the operator-settings instance (`src/main/operator-settings/index.ts`'s import-once construction, D-16); the central store writes its own `<userData>/provident-profile.json` | `src/main/storeroom.ts`, `src/main/operator-settings/index.ts`, `docs/L2/central-data/persistence.md` §1 |
-| UI authority | every element outside the Electron shell's own chrome is provident data driven through the graph, never hand-written DOM; one rendered outside it is invisible to `dispatch`, `get_rendered_html` and `get_markdown` | `src/shared/demo-envelope.ts`'s header comment; §2 charter (`archive/gate-corpus-2026-10-29/AGENTS.md:22-34`) |
+| UI authority | every element outside the Electron shell's own chrome is provident data driven through the graph, never hand-written DOM; one rendered outside it is invisible to `dispatch`, `get_rendered_html` and `get_markdown` | `src/shared/demo-envelope.ts`'s data-not-DOM construction and the §2 charter (`archive/gate-corpus-2026-10-29/AGENTS.md:22-34`) |
 | Source files | **47** TypeScript files under `src/` | `node scripts/strata-walkthrough.mjs pins` (`srcTypeScriptFiles`) |
 
 ## 3. The layers (D-1, D-3)
@@ -69,8 +69,8 @@ counted as a failure (D-1).
 
 ## 5. Where the loop stands (D-27, D-30)
 
-`bundle-boot-seam` is landed — that stage is `strata/.strata/units/bundle-boot-seam.json`'s, cited here and never restated (D-26)
-— and the app's built main bundle **boots**: its three batteries and the **three Electron legs** are green. The legs' readings are
+The app's built main bundle **boots**: `bundle-boot-seam`'s three batteries and the **three Electron legs** are green, and that
+unit's stage is state's, never restated here (D-26, D-43). The legs' readings are
 §6's and the batteries' the unit's own exit walkthrough record (`strata/records/bundle-boot-seam-walkthrough.md`); `panes` is the
 fourth Electron leg and outside those three (D-27, D-37); the four-leg floor is §6's. It was admitted at L1 like any other unit,
 filed its map row first, and closed on its own exit walkthrough; every unit's stage and walkthrough streak are state, read from

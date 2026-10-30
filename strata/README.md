@@ -6,7 +6,7 @@ This directory replaces the gate workflow's 219-file corpus (`archive.md`): the 
 
 | File | What it is | Ceiling |
 |---|---|---|
-| `brief.md` | the project brief: what the app is, the layers, the current unit, the instruments | 150 |
+| `brief.md` | the project brief: what the app is, the layers, the instruments — a unit's stage is `state`, never here (D-26) | 150 |
 | `decisions.md` | the append-only register: user intent and measured rules, `D-n` (D-47) | 40 per row |
 | `envelope.md` | the return contract every layer ends with | 40 |
 | `walkthrough.md` | the L0 exit pass: documentation sufficiency, blind | 60 |

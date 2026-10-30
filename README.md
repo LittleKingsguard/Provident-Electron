@@ -7,8 +7,8 @@ A prebuilt Electron shell for apps built on the Provident SSR framework
 Its two goals: the **implementation test** of `provident-ssr` and `provident-storeroom` (neither package
 is ever modified; findings are recorded and handed off), and a **prebuild baseline** a fork inherits.
 
-**Read `strata/brief.md` next** — the authoritative brief: what the app is, the layers, the current
-unit, and the instruments with their measured readings. `strata/decisions.md` records who decided what
+**Read `strata/brief.md` next** — the authoritative brief: what the app is, the layers, and the instruments — a unit's stage
+is state, never there (D-26) with their measured readings. `strata/decisions.md` records who decided what
 and why; `AGENTS.md` carries the non-negotiables agents work under. `strata/` replaces the older
 documentation corpus, retired but preserved at `archive/gate-corpus-2026-10-29/`.
 ## Architecture
