@@ -11,7 +11,13 @@
     "e5-harness-renames"
   ],
   "assumptions": [],
-  "streaks": {},
-  "rebuildEligible": false,
-  "updated": "2026-10-30T02:23:55.530Z"
+  "streaks": {
+    "walkthrough-record": 3
+  },
+  "rebuildEligible": true,
+  "updated": "2026-10-30T02:42:50.969Z",
+  "lastFailure": {
+    "artifact": "walkthrough-record",
+    "reason": "red"
+  }
 }

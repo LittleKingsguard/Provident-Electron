@@ -24,7 +24,7 @@ The seam is reached from the central store (`src/main/data/store.ts:23` → `src
 
 `provident-storeroom` and `provident-ssr` are read-only for every layer, so the fix is this repo's build/boot arrangement and never a package edit; a package-side finding is recorded in the unit that surfaced it and archived with it (D-5, `strata/records/security-store-storeroom-unit.md` §2).
 
-**Two arrangements are visible from here, so the battery is completable** (ASM-1, ASM-2): main emitted as ESM and pointed at by the `main` field (Electron 44's own ESM main, `package.json:7`), or main kept CJS with the package's `import.meta.url` derivation satisfied inside the bundle (`node_modules/provident-storeroom/index.mjs:94-97`; `platform.md` §3). Which one lands is L2's design (D-27, `examiner.md` §3).
+**The battery is completable, and it was so before the arm landed** (ASM-1): the arrangement L2 settled — main emitted as ESM and named by the `main` field, Electron 44's own ESM main (`package.json:6,7`; `platform.md` §3) — needs no package edit, so every row below could be satisfied by it, and the CJS arms that would instead satisfy the package's `import.meta.url` derivation inside the bundle (`node_modules/provident-storeroom/index.mjs:94-97`) are the ones L2 measured and rejected (`docs/L2/bundle-boot-seam/interface.md` §1, §3; D-27, `examiner.md` §3).
 
 ## 4. The e2e I/O surface, in the app's own vocabulary (D-27)
 
@@ -61,7 +61,7 @@ The landed order is **construction → boot read → gate → `attach` → windo
 | B-7 | the other two bundles still boot | `standalone.mjs` and `battery-host.mjs` each publish a handshake and `tools/list` over stdio — the arrangement may not regress them (`src/main/standalone.ts:53`, `src/main/battery-host.ts:95`) |
 | B-8 | an unbootable bundle is a failure with its reason | a corrupted copy — carrying the **basename the `main` field names**, so it is the artifact's own module system and reaches the injected reason instead of a parse error — is reported within the bound carrying that reason, never as a bare timeout with no verdict: the shape `F-2` let this defect live in (`package.json:7`; `strata/records/security-store-storeroom-unit.md` §2, L2 examination return `F-2`) |
 
-**Completable, and the battery says so**: B-2…B-6 are satisfied by either arrangement §3 names, B-7 by any arrangement that leaves the two ESM bundles alone, and B-8 needs no arrangement at all (ASM-1, ASM-3).
+**Completable, and the battery says so**: B-2…B-6 are satisfied by the arm §3 names, B-7 by any arrangement that leaves the two ESM bundles alone, and B-8 needs no arrangement at all (ASM-1, ASM-3).
 
 **The cap does not bind this file** (D-14, `platform.md` §4): `50 + 10×N` bounds a module's **harness** — driver, fixtures, factories, mock seams — and a product battery is **evidence**, which does not count against it. This battery is evidence, so its 294 lines breach nothing, N = 12 stands and the surface does not shrink to meet a cap that does not apply (D-14, `platform.md` §4).
 

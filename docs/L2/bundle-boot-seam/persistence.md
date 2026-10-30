@@ -45,7 +45,7 @@ The seam's on-disk product is **the build's emission set** — five artifacts, o
 ## 4. What the boot writes, and what the seam writes
 
 - **The seam writes nothing at runtime**: it is a build arrangement plus one derivation in the entry's own text, so a boot's disk effect is the boot's, unchanged (L1 §5, `docs/L2/security-store-storeroom/persistence.md` §2).
-- **The boot's own disk effect is the profile**, and it is not this unit's to shape: the scratch `--user-data-dir=`/`--provident-user-data=` pair pins it (`src/main/main.ts:87-88`, `scripts/electron-spawn.mjs:362`), and `provident-operator-settings.json` is written by the store the artifact now **imports** (`src/main/operator-settings/index.ts:405`; `docs/L2/security-store-storeroom/persistence.md` §1, D-19).
+- **The boot's own disk effect is the profile**, and it is not this unit's to shape: the scratch `--user-data-dir=`/`--provident-user-data=` pair pins it (`src/main/main.ts:87-88`, `scripts/electron-spawn.mjs:362`), and `provident-operator-settings.json` is written by the store the artifact now **imports**, whose shape is that instance's own once imported (`src/main/operator-settings/index.ts:405`; `docs/L2/security-store-storeroom/persistence.md` §1; D-19).
 - **That file is this unit's one measured disk fact, and rev 2 exists because of it**: present with the package external, absent with it inlined, with both readiness lines published either way — the profile is the only place the difference is visible (P-10, P-11; `behaviour.md` §4).
 - **The artifact carries no machine path**: `import.meta.url` is supplied by the loader, so the emitted bytes are the same on every host — the property the rejected `--define` arm destroyed by baking an absolute literal (P-14, `interface.md` §3).
 
