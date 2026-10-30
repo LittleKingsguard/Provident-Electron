@@ -289,7 +289,7 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     const preload = textOf(join(MAIN, 'preload.ts'))
     const start = preload.indexOf('export interface ProvidentBridge {')
     const bridge = [...preload.slice(start, preload.indexOf('\n}', start)).matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(bridge, 'ISO-4: eight top-level members since D-63, and this unit adds none (D-18)').toEqual(['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs']
+    expect(bridge, 'ISO-4: eight top-level members since D-63, and this unit adds none (D-18)').toEqual(['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs'])
 
     // ISO-5 and ISO-6 — nothing the MCP stack's own import closure reaches names the instance, its
     // module or either retired name, and its allowed `provident-*.json` literal set has SHRUNK to the

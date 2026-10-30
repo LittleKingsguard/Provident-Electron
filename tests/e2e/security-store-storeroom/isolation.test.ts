@@ -248,7 +248,7 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const members = [...preload.slice(start, end).matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries eight top-level members — seven plus the tab record\'s crossing (D-63); interface.md §5 A-1')).toEqual([...BRIDGE_MEMBERS])
+    expect(members, 'the bridge carries eight top-level members — seven plus the tab record\'s crossing (D-63); interface.md §5 A-1').toEqual([...BRIDGE_MEMBERS])
     const preloadRoutes = securityRoutesOf(preload, 'src/main/preload.ts')
     expect(preloadRoutes, 'the security member carries exactly the three manual-UI routes').toEqual(['get', 'set', 'setExclusion'])
     expect(securityRoutesOf(sourceOf('src/renderer/secure-panels.ts'), 'src/renderer/secure-panels.ts'), 'and the renderer’s `declare global` half carries the same three').toEqual(preloadRoutes)

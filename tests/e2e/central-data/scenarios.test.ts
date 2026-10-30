@@ -307,7 +307,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(STOREROOM_DECLARED_SURFACE.members.length, 'and the declared member list is that length, so a growth fails here rather than silently').toBe(14)
     expect(STOREROOM_DECLARED_SURFACE.symbolCount, 'and eleven own symbols').toBe(11)
     const importers = walk(SRC).filter((file) => readFileSync(file, 'utf8').includes("from 'provident-storeroom'")).map(rel).sort()
-    expect(importers, 'L1 §5 S-9 — the package is imported in exactly the seam, the operator-settings instance and (D-63) the tab record\'s own instance').toEqual(['main/operator-settings/index.ts', 'main/storeroom.ts', 'main/tabs-record/index.ts']
+    expect(importers, 'L1 §5 S-9 — the package is imported in exactly the seam, the operator-settings instance and (D-63) the tab record\'s own instance').toEqual(['main/operator-settings/index.ts', 'main/storeroom.ts', 'main/tabs-record/index.ts'])
     expect(importers.filter((file) => file.startsWith('main/data/')), 'and nowhere under src/main/data/: this module reaches the store through the seam').toEqual([])
     expect(walk(join(SRC, 'main', 'data')).filter((file) => readFileSync(file, 'utf8').includes('provident-storeroom')).map(rel), 'no file of this module spells the package at all').toEqual([])
   })
