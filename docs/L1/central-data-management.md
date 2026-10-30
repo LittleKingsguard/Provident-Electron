@@ -11,7 +11,7 @@
 
 A central data management system over `provident-storeroom`, **landed rather than inert**: `src/main/data/` holds the
 module — `surface.ts` the five operations' one answer site, over `store.ts`, `journal.ts`, `mapper.ts` and `args.ts` — the
-five `provident.data.*` tools stand in `ALL_TOOLS` and in the built `dist/main/main.cjs`, and the composition site
+five `provident.data.*` tools stand in `ALL_TOOLS` and in the built `dist/main/main.mjs` — `package.json`'s `main` — and the composition site
 passes `dataSurface: createDataSurface({ profileDir: app.getPath('userData') })` (`src/main/main.ts:257`;
 `src/main/mcp-server.ts:602-606`; D-7, D-11). The module renders no surface and mints no graph node — that ruling
 stands (§6, ASM-12; D-11). The app already has a data path it does not call a store — `<userData>/provident-settings.json`,

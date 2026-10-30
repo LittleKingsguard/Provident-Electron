@@ -1,6 +1,6 @@
 # L3 — `settings-carrier-retirement`: the declared signatures and the file layout
 
-- **Layer:** L3 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Artifact:** `settings-carrier-retirement-l3-design`
+- **Layer:** L3 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — §6 states the entry's landed binding set and the reason `dirname` is bound at all: E-2's derivation, whose single caller is the entry's own directory (`docs/L1/bundle-boot-seam.md` §8 E-2) · **Artifact:** `l3-binding-regrain`
 - **Status:** DECLARED SURFACE AND FILE LAYOUT ONLY — structure, private helpers, pseudocode and guardrails are `design.md` §2–§6
 - **Contract:** every symbol below is one `docs/L2/settings-carrier-retirement/interface.md` §2, §3 or §4 declares, or one the landed file already declares and this unit leaves standing; no name is added and none is dropped (interface §7 `A-1`, `A-3`; D-1)
 - **Ceilings:** 150 lines, class max (D-1) · **Shorthands:** `L1` = `docs/L1/settings-carrier-retirement.md`; `interface`/`behaviour`/`persistence` = the three `docs/L2/settings-carrier-retirement/` files; `sibling` = `docs/L3/security-store-storeroom/signatures.md`; `guide §n` = `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
@@ -86,8 +86,7 @@ export type Tier4ClosedRefusal = …                        // landed, UNMOVED
 export interface SettingsGateSink { … }                   // landed three members, NEVER widened
 export type SettingsSetAnswer = …                         // landed, UNMOVED
 export type SettingsReadAnswer = …                        // landed, UNMOVED
-export type SettingsTransitionAnswer = …                  // landed, UNMOVED (`SettingsPatch` is the landed INLINE
-                                                          // patch object; no type alias is minted by this unit)
+export type SettingsTransitionAnswer = …                  // landed, UNMOVED (`SettingsPatch` is the landed INLINE patch object; no type alias is minted by this unit)
 
 // ── NEW, and the whole of this unit's declared delta on this file (interface §3) ──
 export type SettingsAppStateRow = AppStateRow
@@ -98,8 +97,7 @@ export interface SettingsAppStateAnswer {
 }
 export type SettingsCommitAnswer =
   | { status: 'committed' }                               // no cursor, no opId (interface §3 ASM-L2-4)
-  | { status: 'refused'; reason: string; message: string
-      address: readonly (string | number)[] | null }
+  | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }
 
 export interface SettingsSurface {
   read(): SettingsReadAnswer; set(patch: SettingsPatch): SettingsSetAnswer                 // landed, UNMOVED
@@ -122,9 +120,11 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
 ## 6. `src/main/main.ts` — the locals and the two channel answers
 
 ```ts
-import { join } from 'node:path'                                   // `dirname` retires with the writer
-import { rmSync } from 'node:fs'                                   // the WHOLE node:fs surface this file keeps
+import { dirname, join } from 'node:path'                 // E-2's set: `join` composes the two artifact paths, `dirname` the entry's directory
+import { fileURLToPath } from 'node:url'                  // E-2's: the module URL the derivation begins at
+import { rmSync } from 'node:fs'                          // the WHOLE node:fs surface this file keeps
 import type { SettingsAppStateRow } from './settings-surface/index.js'
+const here = dirname(fileURLToPath(import.meta.url))      // E-2's and unmoved: `dirname`'s ONE caller, the ESM entry's only directory source
 
 // DELETED, never emptied — no shim, no re-export, no dual write (L1 §3; behaviour §8 RET-1):
 //   settingsPath · bootRecord · settingsCorrupt · readSettingsRecord · commitSettingsWrite
@@ -137,13 +137,13 @@ function rowsWith(rows: readonly AppStateRow[], key: string, value: unknown): Ap
 (): { name: string; value: unknown }[]
 
 // Y-2 · STORE_FILE_PUT — the answer SHAPE is unchanged (preload.ts:72 is byte-identical)
-(row: { name?: unknown; value?: unknown }) =>
-  { status: 'committed' } | { status: 'refused'; reason: string }
+(row: { name?: unknown; value?: unknown }) => { status: 'committed' } | { status: 'refused'; reason: string }
 ```
 
 - **`rowsWith` is this file's one new local** and carries the replace-or-append rule; `modulePayloadWith` is its one caller for a single record and the Q-5 migration threads it over its own list (design.md §4; interface §6).
 - **No handler is added, renamed or unregistered**: the seven `ipcMain.handle` sites and the three `ipcMain.on` sites keep their names and their argument positions (L1 §2; D-18).
 - **`rmSync` and the two paths are the only filesystem names left** — `legacyModulesPath` and the Q-5 removal stand, `settingsPath` does not exist — and **no value is exported**: `main.ts` exports nothing today and nothing after, so its map row's `N` stands at 7 (L1 §3; behaviour §8 `RET-1`; `platform.md` §4; L1 §2).
+- **The two `node:` import lines and the `here` derivation are E-2's and this unit edits none of them**: `dirname`'s one caller is that derivation, so no helper bound in this file is evidence about the retired writer in either direction (`docs/L1/bundle-boot-seam.md` §8 E-2; L1 §9 E-1).
 
 ## 7. What none of the three declares
 

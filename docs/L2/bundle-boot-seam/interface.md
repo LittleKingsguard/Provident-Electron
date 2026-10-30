@@ -1,7 +1,7 @@
 # L2 — `bundle-boot-seam`: the interface
 
 - **Layer:** L2 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 2 is read through this one: rev 2 **replaces** rev 1's arm (the main emission is built `--format=esm --external:provident-storeroom`, because L4's landing left `tests/e2e/bundle-boot-seam/boot-contract.test.ts` **B-5** red on the inlined shape), and rev 3 carries that same arm **landed and re-measured**: the flag stands in `package.json:10` and `:11`, the tree's own `dist/main/main.mjs` is rev 2's external emission, and E-5's three sites name it (§5, §7). **Status:** DESIGN (`examiner.md` §3; D-26, D-27)
-- **Inputs:** `docs/L1/bundle-boot-seam.md` §1-§9 — the map row **N = 12** (§2), the two arrangements L1 fixed neither (§3), the observables (§4), the boot order (§5), B-1..B-8 (§6), the cross-module exceptions E-1/E-2/E-5 (§8), the assumptions (§9); `strata/decisions.md` D-5, D-14, D-18, D-26, D-27, D-28; the `bundle-boot-seam` row of `strata/modules.json` (endpoints **12**, cap **170**) cited by row and by id, never by line (D-28); `strata/platform.md` §3/§4
+- **Inputs:** `docs/L1/bundle-boot-seam.md` §1-§9 — the map row **N = 12** (§2), the two arrangements L1 fixed neither (§3), the observables (§4), the boot order (§5), B-1..B-8 (§6), the cross-module exceptions E-1/E-2/E-5 (§8), the assumptions (§9); `strata/decisions.md` D-5, D-14, D-18, D-26, D-27, D-28; the `bundle-boot-seam` row of `strata/modules.json` — `name`, `paths` and **`endpoints` 12**, and no cap field, because the cap is derived: `50 + 10×N` as `strata/platform.md` §4 derives it and `strata-lint` enforces (D-14) — cited by row and by id, never by line (D-28); `strata/platform.md` §3/§4
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** every probe answer in §2 is a measurement taken on this seat at HEAD `6901a6e` with the repo's own `node_modules/electron` (**44.4.5**) and `node_modules/esbuild` (**0.28.2**), the whole probe tree under `/tmp` and none of it in the repository; §7's readings are a second, separate measurement — the artifacts `npm run build` leaves in `dist/` and the manifest that names and builds them, read off the tree rather than asserted, and a byte figure that is a live count re-read at each battery run (D-26); the package and the siblings are read and never edited (D-5)
 
 ## 0. Scope, and what this document does not fix
@@ -105,7 +105,7 @@ The **arrangement** is this unit's whole surface: which artifact each of the fou
 | **5** | transports they open: the app's stdio and Streamable HTTP, the standalone's stdio and HTTP, the battery host's stdio | no transport code is in the seam: `src/main/mcp-server.ts:1191,1203` publish readiness either way (L1 §2) |
 | **3** | handshakes that must complete: the app's `initialize`/`tools/list`/tool call, the siblings' `initialize`/`tools/list`, the renderer bridge's arrival | each is an L1 §6 row; this layer adds no call, and its battery reads the **artifact** (§7) |
 
-- **N = 12 stands and the cap is 170** (`strata/modules.json`'s `bundle-boot-seam` row; `platform.md` §4): §7's battery is evidence and does not count against it (D-14, `brief.md` §6).
+- **N = 12 stands, and the cap is what `50 + 10×N` derives from it — 170 at N = 12 — computed by the lint from the row's `endpoints`, never stored in the row** (`strata/modules.json`'s `bundle-boot-seam` row; `platform.md` §4, D-14): §7's battery is evidence and does not count against it (D-14, `brief.md` §6).
 
 ## 9. Assumptions, each with the alternative it rejected (`envelope.md` §3)
 

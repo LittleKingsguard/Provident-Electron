@@ -28,7 +28,7 @@ the SSR fragment. The HTML is a view, never a live surface.
 ## Setup and run
 
 ```sh
-npm install && npm run build   # main (cjs), preload (cjs), standalone, battery host, renderer (esm)
+npm install && npm run build   # main (esm), preload (cjs), standalone, battery host, renderer (esm)
 npm test && npm run typecheck && npm run typecheck:tests
 npm start                      # build + launch, HTTP MCP on :3787 (stdio: -- --mcp-transport=stdio,
                                # or PROVIDENT_MCP_TRANSPORT / PROVIDENT_MCP_PORT)

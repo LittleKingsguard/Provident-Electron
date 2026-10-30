@@ -1,6 +1,6 @@
 # L3 — `settings-carrier-retirement`: the three edits
 
-- **Layer:** L3 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Artifact:** `settings-carrier-retirement-l3-design`
+- **Layer:** L3 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — §4's import row states the landed head: `:8`'s `node:fs` ends as `{ rmSync }` alone, and `:6`/`:7`'s `dirname` and `fileURLToPath` are E-2's derivation, evidence about no writer (`docs/L1/bundle-boot-seam.md` §8 E-2) · **Artifact:** `settings-carrier-retirement-l3-design`
 - **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for three one-shot edits (L1 §9 E-1/E-2/E-3); the declared surface and the file layout are `signatures.md`, the contract is `docs/L1/settings-carrier-retirement.md` §3/§4/§9 and the three `docs/L2/settings-carrier-retirement/` files
 - **Charter:** D-22 — this unit is the **checkpoint** and nothing else: the carrier retires; the gate's exclusion/tier-4 enforcement, the registry's own code and every journal-length consumer are **parked** (D-22)
 - **Ceilings:** 150 lines, class max (D-1) · **Shorthands:** `L1` = `docs/L1/settings-carrier-retirement.md`; `interface`/`behaviour`/`persistence` = the three `docs/L2/settings-carrier-retirement/` files; `sibling` = `docs/L3/security-store-storeroom/design.md`; `guide §n` = `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
@@ -103,11 +103,11 @@ commit(rows):                                                                   
 
 | site | what L4 does | cite |
 |---|---|---|
-| `:6` `:7` | `dirname` and the record's reader leave with the writer; the `node:fs` import ends as **`{ rmSync }`** alone | L1 §3; behaviour §8 `RET-1` |
+| `:8` (`:6` `:7`) | the `node:fs` import ends as **`{ rmSync }`** alone — the record's reader leaves with the writer — and the two lines above it are E-2's: `:6`'s `{dirname, join}` and `:7`'s `fileURLToPath`, bound for the entry's own directory derivation, so neither is evidence about the retired writer | L1 §3; behaviour §8 `RET-1`; `docs/L1/bundle-boot-seam.md` §8 E-2 |
 | `:118-123` | the TIER 1 comment block and `settingsPath`: the constant deleted **and** the block stops spelling the retired name, so `RET-2`'s byte census sees exactly one occurrence, in the instance | L1 §3; behaviour §8 `RET-2` |
 | `:129` `:132` | `bootRecord`, `settingsCorrupt` — deleted, and the third holder has no successor | L1 §3; behaviour §1 |
 | `:134-164` | `readSettingsRecord`, its boot call and its two assignments — deleted | L1 §3 |
-| `:173-192` | the Q-5 migration: the registry's read and its post-boot removal stay, the probe goes with `:7`, the write becomes **one** `commit` and stamps no `schemaVersion` | L1 §3; persistence §7 |
+| `:173-192` | the Q-5 migration: the registry's read and its post-boot removal stay, the probe goes with `:8`, the write becomes **one** `commit` and stamps no `schemaVersion` | L1 §3; persistence §7 |
 | `:201-218` | `moduleRecordsOf`/`modulePayloadWith` keep their names and answers; only their **source of rows** moves, and the second now answers the whole rows list | L1 §3; interface §5 |
 | `:212` `:237` | the `bootRecord === null` and `settingsCorrupt` reads become the served rows and `legacy === 'corrupt' \|\| storage === 'unreachable'` | interface §5 `ASM-L2-3` |
 | `:308-333` | Y-1: one `state()` projected to `{name, value}[]`; no holder, no second read, no `schemaVersion` skip | interface §4; behaviour §2 |
@@ -147,4 +147,4 @@ rowsWith(rows, key, value):                           // main.ts's ONE new local
 | `ASM-3` | a row object is composed as **exactly** `{name, value}`, so a caller's extra member does not cross | carrying the whole object through the image, which makes the in-process and post-restart answers differ on exactly the members the declared row type does not name (interface §2; persistence §3) |
 | `ASM-4` | a record row failing its shape on read-back is **skipped**, its siblings served | answering `[]` for the whole record, which discards every other row for one bad member (interface §2; `guide §10`) |
 | `ASM-5` | an image `JSON.stringify` refuses is `ValueRefusedAtBoundary` with this module's sentence | letting the `TypeError` fall to `refusalOf`, which reports a value refusal as `UnattributedFailure` and names no act (interface §6; `guide §8.3`) |
-| `ASM-6` | main.ts's legacy-registry existence probe retires with `:7`, since `load()` already answers a missing file as empty | keeping `existsSync` for that one probe, which leaves a reader named in `:7`'s removal row standing and makes `RET-1`'s own scan the only arbiter (L1 §3) |
+| `ASM-6` | main.ts's legacy-registry existence probe retires with `:8`, since `load()` already answers a missing file as empty | keeping `existsSync` for that one probe, which leaves a reader named in `:8`'s removal row standing and makes `RET-1`'s own scan the only arbiter (L1 §3) |
