@@ -4,10 +4,17 @@
   "stage": "design",
   "artifacts": [
     "l1-design",
-    "l2-interface"
+    "l2-interface",
+    "l4-implementation"
   ],
   "assumptions": [],
-  "streaks": {},
+  "streaks": {
+    "l4-implementation": 1
+  },
   "rebuildEligible": false,
-  "updated": "2026-10-30T21:52:04.830Z"
+  "updated": "2026-10-30T22:03:01.115Z",
+  "lastFailure": {
+    "artifact": "l4-implementation",
+    "reason": "adjudication"
+  }
 }

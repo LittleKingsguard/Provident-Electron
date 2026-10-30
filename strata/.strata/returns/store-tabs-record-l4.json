@@ -1,0 +1,27 @@
+{
+  "unit": "store-tabs-record",
+  "from": "L4",
+  "to": "L2",
+  "verdict": "ADJUDICATION",
+  "artifact": "l4-implementation",
+  "rootCause": "docs/L3/store-tabs-record/design.md §4 says TABS_CONSTRAINT 'becomes the instance's constraint' through the engine. provident-storeroom exposes addConstraint(pair, constraint) where constraint is (context: unknown) => unknown (node_modules/provident-storeroom/index.d.ts:982, :1177) - the context's members are not declared in a form L4 can transcribe, and the guide sections that define them (§6.4's delivery argument, §10's admission set) describe the listener and refusal faces, not the constraint context. L4 therefore enforced exactly-one-active with a corrective write at the commit boundary (src/main/tabs-record/index.ts, the commit arm) and DID NOT register a constraint with the engine. The invariant holds; the mechanism is not the designed one.",
+  "question": "Is a boundary corrective write an acceptable home for exactly-one-active, or does design.md §4 require the engine's constraint - in which case L3 must declare the constraint context's shape, which this layer cannot infer from the package's declaration file?",
+  "notes": [
+    "The crossing itself landed as designed: one bridge member, three routes, the surface holding the one reference, two channels, the shape arm before any store verb.",
+    "The census move the L2 named is paid in the same commit (bridge 7 -> 8 across five assertions in three batteries and two layer documents; the package's importers 2 -> 3 in e2e central-data S-9).",
+    "A repaired commit answers committed with repaired: true, per L2 §3 - the renderer treats a repair as a success and re-reads.",
+    "Nothing in src/renderer imports the module; the crossing is the bridge's and only the bridge's (design §6)."
+  ],
+  "citations": [
+    "docs/L2/store-tabs-record/interface.md",
+    "docs/L3/store-tabs-record/design.md",
+    "docs/L3/store-tabs-record/signatures.md",
+    "src/main/tabs-record/index.ts",
+    "src/main/tabs-surface/index.ts",
+    "src/shared/tabs-channels.ts",
+    "src/shared/types.ts",
+    "src/main/main.ts",
+    "src/main/preload.ts",
+    "src/renderer/secure-panels.ts"
+  ]
+}
