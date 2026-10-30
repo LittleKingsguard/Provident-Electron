@@ -31,7 +31,9 @@
   defect got its own unit and is fixed (`D-27`, `bundle-boot-seam`): the bundle is ESM at `dist/main/main.mjs`, and the
   instance stands — its own file appears in a scratch profile (`strata/brief.md` §6).
 
-**Reclassified by D-24:** every finding above is the store working as designed; the only
-demand is documentary. The purge rule and the absent-address refusal family are documented in the
+**Reclassified by D-24:** each finding above is the store working as designed, and the only
+demand that can stand is that the guide **describe** it. D-24's own four are adjacent rather than
+these five, and `SS-F5`'s runtime-predicate proposal is a package code change, which D-24 bars —
+so what it asks for is a documented membership set, not a new export. The purge rule and the absent-address refusal family are documented in the
 shipped guide (no demand); the boot behaviour over non-image bytes and the member ordering are not
 (two documentation defects).

@@ -33,7 +33,7 @@ npm test && npm run typecheck && npm run typecheck:tests
 npm start                      # build + launch, HTTP MCP on :3787 (stdio: -- --mcp-transport=stdio,
                                # or PROVIDENT_MCP_TRANSPORT / PROVIDENT_MCP_PORT)
 npm run mcp -- --help          # the local MCP CLI
-npm run battery | npm run divergence | npm run ui  # the Electron legs; ui needs a DISPLAY
+npm run battery | npm run divergence | npm run ui | npm run panes   # Electron legs; ui/panes need a DISPLAY
 ```
 
 ## The MCP surface

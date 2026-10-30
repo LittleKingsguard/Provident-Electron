@@ -48,7 +48,8 @@ Bare `D-n` in any other file means a row of THIS log; a canonical row is always 
 
 ## D-2 — The gate corpus is archived and never carried forward
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Discharged by:** `strata/records/archive-sweep-pins.md` and `archive/gate-corpus-2026-10-29/`
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Discharged by:** `strata/records/archive-sweep-pins.md` and
+`archive/gate-corpus-2026-10-29/`
 
 **Source (user, verbatim):** "construct the necessary documentation for the strata subagents, and
 then archive all existing docs".
@@ -69,8 +70,9 @@ live file carries a correction paragraph, a dated annotation or history (D-1 §1
 
 ## D-3 — The root entry points become pointers, not rule carriers
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "docs/ tree → archive/, · **Discharged by:** `AGENTS.md`, `strata/README.md` and the bootstrap unit's pointer set
-AGENTS.md + README.md become short pointers (Recommended)"
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "docs/ tree → archive/,
+AGENTS.md + README.md become short pointers (Recommended)" · **Discharged by:** `AGENTS.md`,
+`strata/README.md` and the bootstrap unit's pointer set
 
 **Decision:** `AGENTS.md` and `README.md` are rewritten in the same pass to ≤ 60 lines each: what
 the app is, the two goals, the command set, and where the authoritative corpus lives. Neither
@@ -81,8 +83,9 @@ carries a workflow rule — a restated rule is a rule that drifts, and it would 
 
 ## D-4 — The archive pass is a one-time mechanical sweep, authorised here
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Repoint or retire those · **Discharged by:** `strata/decisions.md` D-8 and D-9
-assertions in the same pass, recorded (Recommended)"
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Repoint or retire those
+assertions in the same pass, recorded (Recommended)" · **Discharged by:** `strata/decisions.md` D-8 and
+D-9
 
 **Decision:** 27 assertions across 13 test files assert that specific `docs/…` paths exist or name
 them in a diff-scope allow-list. The archive move breaks them because their referent moved. The
@@ -141,9 +144,10 @@ hands it back, and exposes nothing over MCP, renders nothing, and persists nothi
 
 ## D-8 — The archive sweep's scope is every executable doc path, corrected by measurement
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-4**, which stands as filed (D-1 makes · **Discharged by:** `strata/decisions.md` D-9
-this log append-only). **Source:** the L1 examiner's measurement at the sweep
-(`strata/.strata/returns/archive-sweep-pins.json`), read against D-4's selection.
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-4**, which stands as filed (D-1 makes this
+log append-only). **Source:** the L1 examiner's measurement at the sweep
+(`strata/.strata/returns/archive-sweep-pins.json`), read against D-4's selection. · **Discharged by:**
+`strata/decisions.md` D-9
 
 **Decision:** D-4's "27 assertions across 13 test files" was a count of greps, not of referents. The
 measured set is **32 sites / 29 distinct assertions in 15 files**, and **71 affected rows in 27
@@ -169,9 +173,10 @@ that owns the row. Comments that cite `docs/…` stay as written and resolve thr
 
 ## D-9 — The rows whose subject was the gate corpus are retired; the known-red ledger is two
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Completes** D-4/D-8's retirement arm. **Source:** the · **Discharged by:** `strata/brief.md` §6 (the two-red ledger) and `archive/gate-corpus-2026-10-29/`
-user's D-4 selection ("Repoint or retire those assertions in the same pass, recorded"), executed
-against the L1 examiner's disposition table.
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Completes** D-4/D-8's retirement arm. **Source:** the
+user's D-4 selection ("Repoint or retire those assertions in the same pass, recorded"), executed against
+the L1 examiner's disposition table. · **Discharged by:** `strata/brief.md` §6 (the two-red ledger) and
+`archive/gate-corpus-2026-10-29/`
 
 **Decision:** 15 test rows are retired, across seven files, because their **subject** is the corpus
 that D-2 archived and no repoint can satisfy them:
@@ -251,8 +256,8 @@ through one design gate (D-1).
 
 ## D-13 — The central store may choose its own on-disk shape
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "The store may choose its own · **Discharged by:** `src/main/storeroom.ts` and `docs/L2/central-data/persistence.md` §1
-on-disk shape"
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "The store may choose its own
+on-disk shape" · **Discharged by:** `src/main/storeroom.ts` and `docs/L2/central-data/persistence.md` §1
 
 **Decision:** the existing `<userData>/provident-settings.json` bytes are **not** a compatibility
 constraint on the central store's layout. Where a unit changes the profile's shape it records the
@@ -304,8 +309,9 @@ Two corrections to D-11's list, both measured:
 
 ## D-16 — The security store is rebuilt as its own provident-storeroom instance, isolated from MCP
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Supersedes:** the current `SecurityStore` design and · **Discharged by:** `src/main/operator-settings/` and `strata/records/security-store-storeroom-unit.md`
-implementation.
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Supersedes:** the current `SecurityStore` design and
+implementation. · **Discharged by:** `src/main/operator-settings/` and
+`strata/records/security-store-storeroom-unit.md`
 
 **Source (user, verbatim):** "The security store implementation is going to be rebuilt entirely to
 instead be a separate provident-storeroom instance that is isolated from MCP, disregard the current
@@ -339,9 +345,10 @@ first things that must change. It does not merge to `main` until the user grants
 
 ## D-17 — The instance is the operator-settings state machine; its surface is a separate module
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, verbatim):** "The security store will be the · **Discharged by:** `src/main/operator-settings/` and `src/main/settings-surface/`
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, verbatim):** "The security store will be the
 state machine underlying the operator-settings surface (the surface itself will interact with read/write
-and listeners as a separate module), and also containing the current security record."
+and listeners as a separate module), and also containing the current security record." · **Discharged
+by:** `src/main/operator-settings/` and `src/main/settings-surface/`
 
 **Decision:** the rebuilt `provident-storeroom` instance is the **state machine** under the operator's
 settings, not a repository behind one module. It holds the current security record — bearer token, group
@@ -379,8 +386,8 @@ was rejected.
 
 ## D-19 — The instance imports the existing profile bytes once, then owns a new shape
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Import once, then own a new · **Discharged by:** `strata/records/security-store-storeroom-unit.md`
-shape (Recommended)"
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Import once, then own a new
+shape (Recommended)" · **Discharged by:** `strata/records/security-store-storeroom-unit.md`
 
 **Decision:** on first boot after the rebuild, the instance reads the existing profile files once and
 imports the security record into its own shape; from then on it owns that shape and the old names are
@@ -458,7 +465,8 @@ four legs plus `strata-lint` pass on a clean tree.
 
 ## D-23 — The group set's second copy lives in the operator-settings instance
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-15 and D-16.** · **Discharged by:** `src/main/operator-settings/index.ts`
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-15 and D-16.** · **Discharged by:**
+`src/main/operator-settings/index.ts`
 
 **Source:** D-16's own instruction that the rebuild owns the copy, measured at the tree after the file it
 lived in was deleted.
@@ -505,9 +513,10 @@ Consequences, and they move the records:
 
 ## D-25 — The import carries the record; the exclusion pair is not an import member
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-19**, which stands as filed (D-1 makes this · **Discharged by:** `strata/records/security-store-storeroom-unit.md`
-log append-only). **Source:** D-19's own wording, read against the tree at the exit walkthrough of
-`security-store-storeroom` (run 3) and the layer documents that carry the design.
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-19**, which stands as filed (D-1 makes
+this log append-only). **Source:** D-19's own wording, read against the tree at the exit walkthrough of
+`security-store-storeroom` (run 3) and the layer documents that carry the design. · **Discharged by:**
+`strata/records/security-store-storeroom-unit.md`
 
 **Decision:** D-19's decision stands whole — the instance reads the legacy profile bytes once and then
 owns a new shape, and the import carries a red set because a silent capability change on upgrade is
@@ -558,8 +567,9 @@ them — not to keep re-measuring faithfully into a dozen files.
 
 ## D-27 — The next unit is the main bundle's boot seam, and the walkthrough stays documentation-only
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Fix the boot seam first · **Discharged by:** `strata/records/bundle-boot-seam-walkthrough.md` (run 12, `PASS`)
-(Recommended)"; "Documentation-only, as now (Recommended)".
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Fix the boot seam first
+(Recommended)"; "Documentation-only, as now (Recommended)". · **Discharged by:**
+`strata/records/bundle-boot-seam-walkthrough.md` (run 12, `PASS`)
 
 **Decision:** the next unit admitted through the loop is the **boot seam** — the measured defect that
 `dist/main/main.cjs` dies at module load, because the main bundle is built CJS while the ESM-only
@@ -610,10 +620,10 @@ fixes the cause, and it is the same reasoning D-26 applies to counts (D-1, `plat
 
 ## D-29 — The walkthrough instrument is a script, not another prose pass
 
-**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** "Rebuild the walkthrough · **Discharged by:** `scripts/strata-walkthrough.mjs`
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** "Rebuild the walkthrough
 instrument (Recommended)", after seven blind runs on the `bundle-boot-seam` unit and four more on the
 open units found **no coverage failure at all** — every finding they filed was a drifted count, a
-non-landing cite or a cross-document contradiction.
+non-landing cite or a cross-document contradiction. · **Discharged by:** `scripts/strata-walkthrough.mjs`
 
 **Decision:** the exit walkthrough's staging root and its mechanical checks become a script,
 `scripts/strata-walkthrough.mjs`, owned by the `harness` row like the other instruments. Three verbs:
@@ -1071,3 +1081,21 @@ owner and **do not block the verdict**.
 `central-data` claim in a file `strata-bootstrap` does not touch cannot make bootstrap's documentation
 unusable, and paying a further round per unit to re-measure the same corpus is how four rounds became the
 price of one close.
+
+---
+
+## D-49 — A corrigendum to D-34: the clause goes at the end of the block, never into a line
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-34**, which stands as filed (D-1). **Source:**
+the `strata-bootstrap` walkthrough, measured — D-34 said a wholly discharged row "carries one added clause on
+its Status line", and applying that literally spliced the clause into **eleven** rows mid-sentence, cutting a
+user-sourced quotation in half wherever the Status line wrapped.
+
+**Decision:** the clause goes at the **end** of the row's Status/Source block, after the source field has closed
+— never inserted into a line, and never inside a quotation. D-34's rule is unchanged: the decision text does not
+move, only that one clause is added.
+
+- A row whose `Source` quotes the user must still read as a quotation end to end; the clause is provenance,
+  and provenance that interrupts the words it attributes is worse than none.
+- The eleven rows repaired here are evidence that the rule needed the placement stated, and this row states it
+  rather than leaving "on its Status line" to be read as "wherever the line ends".

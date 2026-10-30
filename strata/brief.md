@@ -28,7 +28,7 @@ replaces it with three record kinds, hard per-class ceilings and provenance-or-s
 |---|---|---|---|
 | State | scripts only, never prose (`strata-state`) | overwritten at every transition | 40 lines |
 | Design | exactly one layer (§3) | replaced on revision; git is the history | 150 lines |
-| Decisions | L0 only (`decisions.md`) | append-only, id'd `D-n`, user-sourced, never reworded | 40 lines per row |
+| Decisions | L0 only (`decisions.md`) | append-only, id'd `D-n`, user- or measurement-sourced (D-47), never reworded | 40 per row |
 
 Provenance attaches to a statement — a bullet, a table row or a paragraph — and a normative line
 carrying no `D-n` or § is a lint failure, not a style opinion (D-1). A superseded artifact is
@@ -51,7 +51,7 @@ replaced, never annotated; the as-filed copy is cited by path under the archive 
 
 | Layer | Responsibility | Owns (writes) | Exit condition |
 |---|---|---|---|
-| L0 | user interface: brief, decisions, exit walkthrough, reporting | `strata/brief.md`, `strata/decisions.md` | walkthrough green, then the user accepts |
+| L0 | user interface: brief, decisions, exit walkthrough, reporting | `strata/brief.md`, `decisions.md`, `records/`, `.strata/returns/` | walkthrough green, then the user accepts |
 | L1 | e2e technical design: module map, module interactions, e2e battery | `docs/L1/`, `tests/e2e/`, `strata/modules.json` — the first two created on first write | e2e battery green, adversarially reviewed |
 | L2 | integration design: each module's I/O surface and behaviour | `docs/L2/<module>/`, `tests/integration/<module>/` | integration battery green |
 | L3 | module design: structure, signatures, pseudocode, guardrail notes | `docs/L3/<module>/` (the design and its `signatures.md` stubs), `tests/unit/<module>/` | unit battery green |
@@ -93,8 +93,9 @@ map (D-10).
 | `npm run battery` | **green** — `184 checks, 0 failures` | contract-over-stdio, on the battery host: it carries no `provident-storeroom` and says nothing about the seam |
 | `npm run divergence` | **green**, exit 0 — `9 checks, 0 failures` on the pinned N plus 4 extension checks | shim-versus-real-DOM identity, measured on a real renderer |
 | `npm run ui` | **green**, exit 0 — `11/11 assertions`, real measurements (`425x22`, `fontSize=16px`) out of a live renderer | the real-DOM measurement leg |
+| `npm run panes` | **green**, exit 0 — `7/7` rows on a real renderer | the rendered surface a node row cannot see; **outside the floor** (D-37) |
 
-**All three Electron legs are green at this head, and that is the `bundle-boot-seam` unit's whole return**
+**All four Electron legs are green at this head, and the three-leg return is the `bundle-boot-seam` unit's**
 (D-27): before it, one leg was green and two could not reach the app at all, because the main bundle died at
 module evaluation — nothing in the four-leg floor could see a bundle **before this unit** (D-27).
 

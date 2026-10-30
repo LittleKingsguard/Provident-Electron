@@ -8,7 +8,7 @@ read, and every document here declares a ceiling — this file's is 60 lines.
 | File | What it is | Ceiling |
 |---|---|---|
 | `brief.md` | the project brief: what the app is, the layers, the current unit, the instruments | 150 |
-| `decisions.md` | the append-only log of user intent, `D-n` (D-47) | 40 per row |
+| `decisions.md` | the append-only register: user intent and measured rules, `D-n` (D-47) | 40 per row |
 | `envelope.md` | the return contract every layer ends with | 40 |
 | `walkthrough.md` | the L0 exit pass: documentation sufficiency, blind | 60 |
 | `examiner.md` | the examiner's procedure at L1, L2 and L3 | 45 |
