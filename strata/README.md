@@ -1,14 +1,14 @@
 # strata — the working corpus for Provident-Electron
 
-This directory replaces the gate workflow's 219-file corpus (`archive.md`): the only document set the
-layers read, in which every document declares a ceiling — this file's is 60 lines.
+This directory replaces the gate workflow's 219-file corpus (`archive.md`): the only document set the layers
+read, and every document here declares a ceiling — this file's is 60 lines.
 
 ## What is here
 
 | File | What it is | Ceiling |
 |---|---|---|
 | `brief.md` | the project brief: what the app is, the layers, the current unit, the instruments | 150 |
-| `decisions.md` | the append-only log of user intent, `D-n` | 40 per row |
+| `decisions.md` | the append-only log of user intent, `D-n` (D-47) | 40 per row |
 | `envelope.md` | the return contract every layer ends with | 40 |
 | `walkthrough.md` | the L0 exit pass: documentation sufficiency, blind | 60 |
 | `examiner.md` | the examiner's procedure at L1, L2 and L3 | 45 |
@@ -30,37 +30,31 @@ point, procedures rule, and nothing here restates one.
 1. L0 interviews the user and records the answer in `decisions.md`; the design intent is the row.
 2. L1 takes `brief.md` plus the tree, files the module map into `modules.json`, then designs `docs/L1/`.
 3. Each module goes down L2 → L3 → L4 as `brief.md` §4 describes; each return carries `envelope.md`.
-4. L0 runs the walkthrough (`walkthrough.md`) and reports outcome-first; anything but `PASS` is a loop
-   state, never readiness.
+4. L0 runs the walkthrough (`walkthrough.md`); anything but `PASS` is a loop state, never readiness.
 
 ## State, not prose
 
 `strata-state` owns progress: `init`, `enter --layer`, `artifact --id`, `assume --id --text --alternative`,
-`pass`, `fail [--reason] [--from]`, `rebuild`, `close`, `show`. A unit's layer, stage, artifacts, assumptions and per-artifact
-`streaks` live in `.strata/units/<unit>.json`, overwritten at every transition; no document records
-where a unit stands, and the shape is `platform.md` §4's list. `stage` has exactly two legal values,
+`pass`, `fail [--reason] [--from]`, `rebuild`, `close`, `show`. A unit's layer, stage, artifacts, assumptions
+and per-artifact `streaks` live in `.strata/units/<unit>.json`, overwritten at every transition; no document
+records where a unit stands, and the shape is `platform.md` §4's list. `stage` has exactly two legal values,
 written by the script and by nothing else: `design` at `init` and again at `rebuild`, `done` at `close`
 (`platform.md` §4). **`stage` is the last structural transition, not a verdict:** a unit that closes and
 then fails a walkthrough keeps `stage: done` while its `streaks` and `lastFailure` carry the red, so
-readiness is the walkthrough's — never the stage's (`walkthrough.md` §5, D-10). This is what keeps the
-corpus from re-growing. A review task (an examiner's measurement, a walkthrough) may leave a return in
-`.strata/returns/` with no unit state row, because it decides nothing about a unit's progress.
+readiness is the walkthrough's — never the stage's (`walkthrough.md` §5, D-10). A review task (an examiner's measurement, a walkthrough) may leave a return in `.strata/returns/` with no unit state row: it decides
+nothing about a unit's progress.
 
 ## Checking this tree
 
-The lint ships with the workflow (`platform.md` §4); `strata-state` does too, and L0 runs it at a unit's
-start (`init`, then `enter` for the first layer) and on every verdict the layers return. From the repo
-root:
+L0 runs both at a unit's start and on every verdict; exit 0 means every ceiling, citation, quarantine,
+provenance and shape check passed. From the repo root:
 
 ```
 node "../Agent Harness/strata/lint/strata-lint.mjs" strata
 node "../Agent Harness/strata/state/strata-state.mjs" strata show <unit>
 ```
 
-Exit 0 means every ceiling, citation, quarantine, provenance and shape check passed; a failing check fails the layer.
-
-**Neither instrument lives in this repository.** Both ship with the adjacent `../Agent Harness/` checkout,
-which is not a dependency of this repo — so `scripts/` holds only this tree's own two instruments
-(`strata-walkthrough.mjs`, `strata-marks.mjs`), and a fork must supply the lint and the state machine or
-lose the loop's ceilings and its state transitions. It is the same class of fact as the packaged build's
-(`docs/L3/bundle-boot-seam/design.md` §4 `G-8`), and it is stated once, here (D-44).
+**Neither lives in this repository** — both ship with the adjacent `../Agent Harness/` checkout, not a
+dependency of this repo, so a fork must supply them or lose the loop's ceilings and transitions (D-44).
+`scripts/` holds this tree's own two instruments beside the Electron legs and the MCP CLI (`tree.txt` is
+the list, never a count here; `platform.md` §4 has their invocation).

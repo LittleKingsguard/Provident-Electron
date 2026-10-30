@@ -4,7 +4,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` in full — its last ro
 
 ## What is landed
 
-Five units, tree committed at every gate boundary; each unit's stage and walkthrough streak are state
+Six units, tree committed at every gate boundary; each unit's stage and walkthrough streak are state
 (`strata/.strata/units/*.json`), so no count of them is restated here (D-26):
 
 | Unit | Code |

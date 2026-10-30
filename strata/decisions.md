@@ -3,7 +3,8 @@
 The only record of user intent for this project under the strata workflow. Append-only: a decision
 is never edited, reworded or annotated, and a later decision supersedes an earlier one by naming it.
 One section per decision, ≤ 40 lines each. **Source** is the user's own words or the exact option
-they chose; a row with no user source is not a decision and belongs in `brief.md` as an `ASM-n`.
+they chose, or — for a rule the corpus derived from its own measured error — the measurement itself, which
+the row names (D-47). An assumption no ruling settled belongs in `brief.md` as an `ASM-n`, not here.
 A **corrigendum** row is sourced by the user-sourced row it corrects plus the measurement that
 compelled it, and it carries that row's authority — it may not change what the user decided.
 
@@ -1024,3 +1025,21 @@ about its own moment.
   the current fact takes it from the live document or from `brief.md` §6 (D-26).
 - The exception proves the rule: `docs/L1/settings-carrier-retirement.md`'s removal table is a dated record
   and stayed, while the same file's live claims were converted in the same pass.
+
+---
+
+## D-47 — The register admits two sources, and a measurement-sourced row says which it is
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the `strata-bootstrap` walkthrough, measured — the
+register's own preamble said "a row with no user source is not a decision and belongs in `brief.md` as an
+`ASM-n`", while six rows in the same file are sourced wholly by a measurement (D-28, D-41, D-43, D-44, D-45,
+D-46) and every layer cites them as binding.
+
+**Decision:** a row has one of two sources. A **user-sourced** row records intent. A **measurement-sourced**
+row records what the corpus learned from its own error: it **cites the measurement**, it **may not change
+what a user-sourced row decided**, and it binds exactly as a corrigendum does (D-15, D-25, D-33).
+
+- The preamble's "belongs in `brief.md` as an `ASM-n`" governs an **assumption** — something a layer holds
+  without a ruling. A rule derived from a measured failure is not an assumption, and the register is its home.
+- A measurement-sourced row names its measurement in its `Source` line; one that cannot is an opinion, and an
+  opinion is what D-1's provenance rule exists to keep out.
