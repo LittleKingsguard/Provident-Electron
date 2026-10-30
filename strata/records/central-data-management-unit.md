@@ -26,9 +26,9 @@
   in the renderer's method switch, no IPC handler in `main.ts` — so `interface.md` §5 is design, not measurement.
 - **Discharged, not owed:** the parked `ASM-11` retirement half (the one-time import and the retirement of
   `provident-settings.json`'s write site) was delivered by `settings-carrier-retirement` (D-22), which owns that record.
-- **Owed by L0:** a blind walkthrough run whose own documents are clean. Runs 1-7 are `STALE`; each round's findings
-  were closed rather than annotated, and run 7 left only two sentences of this record and one L2 clause
-  (`strata/records/central-data-management-walkthrough.md`; D-10, D-48).
+- **Nothing owed.** The run this item asked for was delivered: run 10 is `PASS` and the unit is closed — runs 1-9
+  were `STALE` and each round's findings were closed rather than annotated (D-10, D-48;
+  `strata/records/central-data-management-walkthrough.md`).
 - **Delivered by the pane's own unit, surfaced by run 3 and discharged:** the pane enumerated five group names, so the
   sixth group had **no operator control** and the group set's third reader stood outside `C-1`..`C-3`'s closure. The
   `secure-panels` unit (D-35) landed the roster as a projection of a table bound to the gate's union, so the pane

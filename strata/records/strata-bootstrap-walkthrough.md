@@ -1,8 +1,11 @@
 # record — `strata-bootstrap` exit walkthrough, run 11 (D-10; replaced on every run)
 
-**Scenario set** (L0-authored from the documentation): 1 file a user decision · 2 start the next unit ·
-3 place an L3 write · 4 report a failure up the loop · 5 the archive's authority and the instruments'
-readings. Seat: one fresh delegation per run, staged to the root `walkthrough.md` §3 declares (D-44).
+**Scenario set** (L0-authored, goal → the outcome that would satisfy it): 1 file a user decision → a valid row
+lands in the register, append-only, with a Source and what it obliges · 2 start the next unit → the order of
+first acts, and a map row before any design · 3 place an L3 write → who may write it, what it may contain, its
+ceiling · 4 report a failure up the loop → the repair owner, and what the state machine refuses · 5 the archive
+and the instruments → what each may be trusted to answer. Seat: one fresh delegation per run, staged to the
+root `walkthrough.md` §3 declares (D-44).
 
 ## Run 11 — `STALE`
 

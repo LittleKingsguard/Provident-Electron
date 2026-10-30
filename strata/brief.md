@@ -51,8 +51,8 @@ replaced, never annotated; the as-filed copy is cited by path under the archive 
 
 | Layer | Responsibility | Owns (writes) | Exit condition |
 |---|---|---|---|
-| L0 | user interface: brief, decisions, exit walkthrough, reporting | `strata/brief.md`, `decisions.md`, `records/`, `.strata/returns/` | walkthrough green, then the user accepts |
-| L1 | e2e technical design: module map, module interactions, e2e battery | `docs/L1/`, `tests/e2e/`, `strata/modules.json` — the first two created on first write | e2e battery green, adversarially reviewed |
+| L0 | user interface: brief, decisions, exit walkthrough, reporting | `strata/brief.md`, `decisions.md`, `records/`, `.strata/returns/`, the procedures beside the register | walkthrough green, then the user accepts |
+| L1 | e2e technical design: module map, module interactions, e2e battery | `docs/L1/`, `tests/e2e/`, `strata/modules.json` and `marks.json` (D-30) — the first two created on first write | e2e battery green, adversarially reviewed |
 | L2 | integration design: each module's I/O surface and behaviour | `docs/L2/<module>/`, `tests/integration/<module>/` | integration battery green |
 | L3 | module design: structure, signatures, pseudocode, guardrail notes | `docs/L3/<module>/` (the design and its `signatures.md` stubs), `tests/unit/<module>/` | unit battery green |
 | L4 | line implementation, one shot | source files of its module | unit battery green, or fail early |

@@ -1,9 +1,8 @@
 # Provident-Electron — agent notes
 
 **The authoritative corpus is `strata/`. Read `strata/brief.md` first.** This file is a pointer: it
-carries the two goals and the non-negotiables, each citing the row that owns it. The **steps** of the
-workflow live in `strata/decisions.md` and the six procedure files beside it (D-3) — a non-negotiable here is
-a floor, never a procedure, and where the two could be confused the row decides.
+carries the two goals and the non-negotiables, each citing the row that owns it. The **steps** live in `strata/decisions.md` and the six procedures beside it (D-3); a non-negotiable here is a floor, never a
+procedure — where the two could be confused, the row decides.
 
 ## The two goals
 
