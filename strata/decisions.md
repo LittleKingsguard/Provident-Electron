@@ -872,3 +872,22 @@ and not the figure, exactly as D-28 requires of any citation into such a file: "
   sentence dates it.
 - The `secure-panels` row carries nine paths and seven endpoints at this head; a reader takes both from the
   row itself (D-26, D-28).
+
+---
+
+## D-40 — A scenario authored after D-30's sweep is not marked
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** D-30's own wording, read against the unit it was
+written for — it marks "every integration and unit scenario", which taken literally would mark the new
+batteries the `secure-panels` unit is authoring as its own evidence.
+
+**Decision:** the mark covers what **existed when the rework was decided**. A scenario authored after it, for
+a unit whose subject is not the rework, is **new evidence and gates**: it carries no marker, and leaving it
+unmarked is the act of declaring it evidence rather than a pin.
+
+- The mark is not inherited by a directory: `tests/integration/<module>/` being marked once does not mark a
+  later file in it, and `strata-marks.mjs`'s readings show the difference as a gating site.
+- A unit that marks its own new battery has said, in effect, that nobody should trust it yet — which is
+  allowed, and then the unit's record must say so (D-1).
+- The rework's own replacement rows are authored unmarked for the same reason: what the rework *adds* is the
+  thing to hold to, and what it *replaces* is what D-30 released.

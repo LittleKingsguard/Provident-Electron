@@ -48,8 +48,11 @@
 //     operator-settings instance's own bytes.
 //
 // RED-FIRST BY CONSTRUCTION (D-27, `examiner.md` §3). At the head this file was authored
-// against, `GROUPS` carries five names, so P-2…P-6 answer RED until E-1 (one entry in
-// `GROUPS`, one in `GROUP_LABELS`) lands. That red is the evidence the unit is admitted on,
+// against, the pane's `GROUPS` roster is a hand-written literal with no `data` member, so
+// P-2…P-6 answer RED until E-1 lands — that repair is one label table typed against the gate's
+// `ToolGroup`, the roster projected from that table's own keys, and the one roster guard
+// `syncConfig`'s `toggle:` arm needs in order to index it, all spelled at
+// `docs/L3/secure-panels/signatures.md` §2. That red is the evidence the unit is admitted on,
 // never a green filed early — so a reader may meet this leg red and be looking at the defect
 // it exists to name.
 //

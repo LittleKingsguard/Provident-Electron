@@ -27,10 +27,11 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
   (`strata/brief.md` §6, D-27).
 - **What gates is the boundary, not the machinery** — `tests/e2e/**` and the three Electron legs are
   retained as-is, because each states an agent-or-drive exchange at a process boundary; every integration
-  and unit scenario is marked `// strata:marked rework` for the rework onto the storeroom's
-  constraint/repair and listener engines and reports **on notice** instead of gating. `tests/e2e/` files
-  are never marked, and the worktree boundary row never is: a loop that marks the row measuring its own
-  tree has nothing left to measure (`strata/decisions.md` D-30, `strata/marks.json`).
+  and unit scenario **that stood when the rework was decided** is marked `// strata:marked-file rework` and
+  reports **on notice**, while a scenario **authored after** that sweep carries no marker and gates
+  (`strata/decisions.md` D-30, D-40). `tests/e2e/` files are never marked, and the worktree boundary row
+  never is: a loop that marks the row measuring its own tree has nothing left to measure
+  (`strata/marks.json`).
 - **Four legs before any change is reported**: `npm test`, `npm run typecheck`,
   `npm run typecheck:tests`, `npm run build` (`strata/brief.md` §6).
 - **No layer judges its own design**: examiners diagnose and never patch, and L4 owns implementation

@@ -106,10 +106,11 @@ what D-27 admitted the unit to prove. So the shim rule still governs every modul
 process green that is **not** a rendered-surface green (D-1, D-27).
 **What the floor rests on is D-30's split:** the module machinery is to be reworked onto the storeroom's
 constraint/repair and listener engines, so `tests/e2e/**` and the three Electron legs gate while every
-integration and unit scenario — `tests/integration/**`, `tests/unit/**`, the flat suite — is marked and
-reports **on notice** — applied at every such file, and read off `scripts/strata-marks.mjs` rather than
-restated here. Until a runner separates the two readings, the table above still measures the whole tree
-(D-30). The two long-standing reds — `tests/store-tabs-record.test.ts`
+integration and unit scenario **that stood when the rework was decided** is marked and reports **on
+notice** — applied at every such file, and read off `scripts/strata-marks.mjs` rather than restated here.
+The mark is not inherited by a directory: a scenario **authored after** that sweep carries no marker and
+gates, which is what makes a new battery evidence (D-40). Until a runner separates the two readings, the
+table above still measures the whole tree (D-30). The two long-standing reds — `tests/store-tabs-record.test.ts`
 §4.2 item 7 (`P-7`) and §4.2 item 8 (`REG-EXEC`) — sit in a flat file, so they are on notice, not gating,
 and the rework owns them; the gate-era third, `tests/store-core-graph.test.ts` §5.1, was retired (D-9, D-30).
 

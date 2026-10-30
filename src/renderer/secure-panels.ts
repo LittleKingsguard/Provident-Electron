@@ -37,7 +37,9 @@ import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
 import type { SecurityWriteReceipt, Tier4ClosedRefusal, Tier4WriteAnswer } from '../main/settings-surface/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
-import type { ExclusionState as EXCLUSION_STATE } from '../main/security.js'
+// L3 (secure-panels E-1) — the group roster's binding to the gate's union: `ToolGroup` is
+// TYPE-ONLY here, on the `ExclusionState` precedent above (erased at build; no runtime edge).
+import type { ExclusionState as EXCLUSION_STATE, ToolGroup } from '../main/security.js'
 
 declare global {
   interface Window {
@@ -69,14 +71,23 @@ declare global {
   }
 }
 
-const GROUPS = ['read', 'dispatch', 'graph', 'code', 'module'] as const
-const GROUP_LABELS: Record<string, string> = {
+// ONE author for the pane's group set: the gate's union types the table, and the table's own
+// key order IS the roster's order. A seventh gate group with no row is TS2741; a row naming
+// no group is TS2353; a misspelt key is TS2561 — all on `npm run typecheck`, the floor leg.
+const GROUP_LABELS: Record<ToolGroup, string> = {
   read: 'read (get_rendered_html, get_markdown, list_targets, get_node_state, code.get, code.validate)',
   dispatch: 'dispatch (synthetic event driving)',
   graph: 'graph (load, op, export, validate, teardown)',
   code: 'code (code.set/create/delete/load — evaluates handler bodies)',
   module: 'module (module.install/update/list + module:<name>.<tool> extensions — trusted-equivalent to code)',
+  data: 'data (data.read/write/delete/list/journal — the central store)',
 }
+// The roster is the table's own keys, in insertion order (non-numeric string keys keep their
+// creation order), so the five landed rows stay in place and `data` lands last (P-7). The one
+// assertion in this unit asserts only what the annotation has already proven — the key set IS
+// `ToolGroup` — because `Object.keys` erases that to `string[]`; without it the index in
+// `paneEnvelope()` reddens as a second TS7053 (T-3).
+const GROUPS = Object.keys(GROUP_LABELS) as readonly ToolGroup[]
 
 /** U-ENGINE-PIN §2.4 (AMENDED — ruling 1 applied to the pane channel) — the
  *  managed channel's OWN call site for the same SHAPE-ONLY predicate as
@@ -543,7 +554,12 @@ export class SecurePanels {
       } else if (id === 'token-input') {
         mutation.push({ targetProp: 'content', value: this.cfg.token ?? '' })
       } else if (typeof id === 'string' && id.startsWith('toggle:')) {
-        const g = id.slice('toggle:'.length)
+        // `toggle:<group>` is authored from GROUPS, so the suffix IS a group — but the id's
+        // TYPE is `string`, and the roster is the only thing entitled to say so. The guard
+        // reads the roster, never a cast: an id that spells no group refreshes nothing, where
+        // `GROUP_LABELS[id.slice('toggle:'.length) as ToolGroup]` would paint `☐ undefined`.
+        const g = GROUPS.find((k) => `toggle:${k}` === id)
+        if (g === undefined) continue
         const on = this.cfg.enabled.includes(g)
         mutation.push({ targetProp: 'props.data-on', mode: 'replace', value: on ? 'true' : 'false' })
         mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${GROUP_LABELS[g]}` })
