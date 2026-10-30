@@ -111,10 +111,14 @@ describe('security-store-storeroom · the surface module, its channels and the l
   it('a refused write leaves the live gate unpatched: the re-patch is the subscription’s, not the call site’s (interface.md §5)', () => {
     const { surface, server } = composed()
     const before = [...server.getGateConfig().enabled].sort()
-    // THE REFUSING MEMBER IS `Infinity`, NOT `NaN`: interface.md §2 carries the landed clear/refuse
-    // split, where `NaN` and a non-positive cap CLEAR the cap and commit, and only `±Infinity`
-    // refuses the patch (`src/main/security-store.ts:365-377`). A `NaN` here would assert a refusal
-    // the document does not declare — the over-fit this row was corrected for.
+    // THE REFUSING MEMBER IS `+Infinity` — NOT `NaN`, AND NOT `-Infinity`: interface.md §2 carries
+    // the landed clear/refuse split in the tree's own guard ORDER, where `NaN` and any cap `<= 0`
+    // CLEAR the cap and commit, and `-Infinity` is `<= 0`, so it takes that same clear arm; only a
+    // value that survives those guards and then fails `Number.isFinite` — `+Infinity`, the one
+    // infinity left — refuses the patch (the `write` body's cap arm in
+    // `src/main/operator-settings/index.ts`; behaviour.md §2). A `NaN` here would assert a refusal
+    // the document does not declare — the over-fit this row was corrected for — and a `-Infinity`
+    // would assert the opposite of what it declares.
     const answer = surface.set({ maxJournalLength: Number.POSITIVE_INFINITY })
     if (answer.write.status !== 'refused') throw new Error(`the row needs the refused arm to read its reason word; it answered ${JSON.stringify(answer.write)}`)
     expect(answer.write.reason, 'a non-finite cap refuses the patch before any store verb (guide §10.2; interface.md §2)').toBe('ValueRefusedAtBoundary')

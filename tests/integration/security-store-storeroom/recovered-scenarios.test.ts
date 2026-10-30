@@ -20,6 +20,17 @@
 // returned exactly the names `signatures.md` §2/§3 declares — and for nothing else. No assertion
 // below was chosen by reading the code under test.
 //
+// REV 2 — `SC-E5-15`'s EMPTY-PATCH ARM IS PINNED, and the sentence above is amended rather than left
+// to mislead. The row asserted `['committed','refused']` — *"whatever status it answers"* — which a
+// refusal and a commit BOTH satisfy, so it could not fail and measured nothing; behaviour.md §4 now
+// declares the empty patch's refusal and names that row as the place the pin is owed. The pin is the
+// declaration's OWN: `refused`, `reason:'ValueRefusedAtBoundary'`, the sentence quoted in §4
+// ('the patch names no member of either tier') and `address:null`. Those literals were read out of
+// `behaviour.md` §4/`interface.md` §1-§2 and then VERIFIED at the `write` body's pre-tier refusal in
+// `src/main/operator-settings/index.ts` — the one reading of the code under test this file now
+// carries, made to check a documented pin rather than to choose an assertion (D-41). The record and
+// byte assertions the row already held are kept.
+//
 // WHY THESE THREE LIVE AT THE INTEGRATION GRAIN, where the register's cites reach both modules:
 //   · `SC-E5-03` is a construction act over a real profile directory whose expected answer is the
 //     record the whole unit serves at boot, and whose bound is a package fact (`persistence.md` §9
@@ -233,16 +244,31 @@ describe('security-store-storeroom · the required scenarios authored against th
     const rebooted = createOperatorSettings({ userDataDir })
     expect(rebooted.read().token, 'a fresh construction over that directory still serves `null`').toBeNull()
 
-    // `write({})` — the register's absent-member arm: whatever status it answers, the record stands.
+    // `write({})` — the register's ABSENT-MEMBER arm, PINNED (behaviour.md §4; interface.md §1). The
+    // empty patch is a refusal and never a no-op, even though every member of `OperatorSettingsPatch`
+    // is optional, so the status is not left to "whatever it answers": the answer is `refused`, with
+    // the module's own sentence and a null address. That assertion is what behaviour.md §4 named as
+    // owed to this unit's test writer, and the shapes it replaces are `[]` and
+    // `['committed','refused']`, which a refusal and a commit both satisfy and which therefore
+    // measured nothing (examiner.md §2; D-1 §4).
     committed(rebooted.write({ token: 'kept', maxJournalLength: 12 }))
+    const standingBeforeAbsent = committed(rebooted.write({ token: 'kept-standing' }))
     const beforeAbsent = image(OPERATOR_FILE)
     const absent = rebooted.write({})
-    expect(['committed', 'refused'], 'an empty patch answers one of the two declared statuses').toContain(absent.status)
+    if (absent.status !== 'refused') throw new Error(`SC-E5-15: the empty patch answers the declared REFUSAL; it answered ${JSON.stringify(absent)}`)
+    expect(absent.reason, 'the reason word: this module’s own boundary refusal, answered before any store verb (interface.md §1, §3)').toBe('ValueRefusedAtBoundary')
+    expect(absent.message, 'and the module’s own sentence, declaring that the patch names neither tier (interface.md §1)').toBe('the patch names no member of either tier')
+    expect('address' in absent, 'the declared fourth member is carried, so `null` below is an answer and not an omitted property (interface.md §2)').toBe(true)
+    expect(absent.address, 'and it is null: an empty patch names nothing an address could be minted from').toBeNull()
     expect(
       { token: rebooted.read().token, enabled: rebooted.read().enabled, maxJournalLength: rebooted.read().maxJournalLength },
-      'and the absent-member patch leaves the token, the grants and the cap exactly as they stood',
-    ).toEqual({ token: 'kept', enabled: ['read', 'dispatch'], maxJournalLength: 12 })
-    expect(image(OPERATOR_FILE), 'with the durable bytes unmoved, whether it committed or refused').toBe(beforeAbsent)
+      'and the refused patch leaves the token, the grants and the cap exactly as they stood',
+    ).toEqual({ token: 'kept-standing', enabled: ['read', 'dispatch'], maxJournalLength: 12 })
+    expect(image(OPERATOR_FILE), 'with the durable bytes unmoved').toBe(beforeAbsent)
+    // NO CURSOR IS MINTED by the refusal, so the next commit is exactly one past the one that stood
+    // before it: asserted by DIFFERENCE, never by its absolute value (interface.md §2 `ASM-L2-7`).
+    const afterAbsent = committed(rebooted.write({ token: 'kept-2' }))
+    expect(afterAbsent.cursor - standingBeforeAbsent.cursor, 'the refused write minted no ordinal: one commit, one cursor').toBe(1)
 
     // THE LANDED `token:''`-CLEARS ARM IS NOT DRIVEN HERE, and the reason is recorded rather than
     // skipped silently: the register files it conditionally ("if the implemented domain admits it"),

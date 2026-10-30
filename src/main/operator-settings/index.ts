@@ -107,8 +107,8 @@ export interface OperatorSettings {
   writeAppState(rows: readonly AppStateRow[]): OperatorSettingsReceipt
 }
 
-/** The group set's SECOND LIVE COPY (D-11, D-15; exception §2 E-1): six members, re-homed here with
- *  the file and read at the two filter sites — the patch's `enabled` and the import's `enabled`. */
+/** The group set's SECOND LIVE COPY (D-11, D-15; exception §2 E-1): six members, re-homed with the
+ *  file and filtered at THREE sites — `fromStored` on every `read()`, `importOnce`, the patch. */
 const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
 const RECORD_ADDRESS: OperatorSettingsAddress = ['operator-settings']
 const EXCLUSION_ADDRESS: OperatorSettingsAddress = ['operator-exclusion']
