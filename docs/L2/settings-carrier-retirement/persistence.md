@@ -1,6 +1,6 @@
 # L2 — `settings-carrier-retirement`: the persistence
 
-- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Status:** DESIGN — the instance's on-disk story as this unit constrains it, and nothing else (D-13, D-22)
+- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — §1's and §9's test-row sentences now divide by marks as D-31 requires (marked rows replaced whole, unmarked legs maintained). Rev 1 · **Status:** DESIGN — the instance's on-disk story as this unit constrains it, and nothing else (D-13, D-22)
 - **Inputs:** `interface.md` §1–§7, `behaviour.md` §1–§8; L1 §3–§6; `docs/L2/security-store-storeroom/persistence.md` §1–§6, §9 (the sibling's file, tier rules, admitted tree and its D-5 filings, carried here by citation and never re-filed); D-5, D-13, D-19, D-22; the package's shipped guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; **the declaration** is its `index.d.ts` (D-5)
 
@@ -14,7 +14,7 @@
 | `<userDataDir>/provident-security.json` | **retired** (sibling) | read at most once **per boot**, never written (sibling §1; D-19) |
 
 - **The census moves from three written names to two** (L1 §6; D-22, D-13). The retired names may stand in a profile as **seeds**: read at most once, their bytes left exactly as seeded, and no delete, rename or repair (L1 §4; D-19).
-- **The rows that pin three re-grain and are never deleted** — `tests/store-compliance-live.mjs` (`DECLARED_PERSISTED_JSON`, `SC-B-01`, `SC-B-03`, `SC-A-06`), `tests/store-security.test.ts:529-555`, `tests/store-persist.test.ts`'s carrier rows, `tests/store-tabs-record-live.mjs:91-122` and the two `isolation.test.ts` copies' `ISO-6` literal set (L1 §6; `ASM-L2-10`). The re-grain is E-5's, filed by this unit's L2 test writer (L1 §9 E-5; D-10).
+- **The rows that pin three divide by marks, and the difference is D-31's** — the **unmarked** legs are maintained: `tests/store-compliance-live.mjs` (`DECLARED_PERSISTED_JSON`, `SC-B-01`, `SC-B-03`, `SC-A-06`) and `tests/store-tabs-record-live.mjs:91-122`; the **marked** ones are replaced whole and never re-pointed: `tests/store-security.test.ts` and `tests/store-persist.test.ts` (`scope:"file"`, `kind:"rework"` in `strata/marks.json`), and `tests/integration/security-store-storeroom/isolation.test.ts`, whose `ISO-6` literal set is therefore the rework's and not a re-grain's (L1 §6; `ASM-L2-10`; D-31, D-30). The census's maintenance is E-5's, filed by this unit's L2 test writer (L1 §9 E-5; D-10, D-31).
 
 ## 2. What construction and the boot write
 
@@ -85,4 +85,4 @@
 
 ## 9. Assumptions named here
 
-`ASM-L2-10` — the census is re-grained by this unit's L2 test writer as E-5 licensed it (rejected: leaving the three-name pin standing, which makes a true statement false — D-13). `ASM-L2-9` — the import's representability test is the `null`/`undefined` refusal alone, with the residue named above (rejected: re-implementing `§10.2`'s seventeen rows inside the instance, which duplicates the package's walk and mis-types the set the moment it moves — `P-1`, D-5). `ASM-L2-2` and `ASM-L2-1` are `interface.md` §7's, and `ASM-L2-8` is the **sibling unit's** id for "the surface constructs the instance" — this document does not reuse it (§4; sibling `interface.md` §5).
+`ASM-L2-10` — the census's rows are **maintained where they are unmarked and replaced whole where they are marked** (D-31): the unmarked legs are re-pointed by this unit's L2 test writer as E-5 licensed it, and each marked `.test.ts` row is the rework's (rejected: leaving the three-name pin standing, which makes a true statement false — D-13, D-31). `ASM-L2-9` — the import's representability test is the `null`/`undefined` refusal alone, with the residue named above (rejected: re-implementing `§10.2`'s seventeen rows inside the instance, which duplicates the package's walk and mis-types the set the moment it moves — `P-1`, D-5). `ASM-L2-2` and `ASM-L2-1` are `interface.md` §7's, and `ASM-L2-8` is the **sibling unit's** id for "the surface constructs the instance" — this document does not reuse it (§4; sibling `interface.md` §5).

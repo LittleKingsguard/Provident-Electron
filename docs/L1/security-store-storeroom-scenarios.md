@@ -65,6 +65,13 @@ Rev 1 filed these as goal → expected so a test writer could author them withou
 
 **20 recovered scenarios = 20 covered + 0 missing**, over **55 retired rows / 2 files** — `security-store.test.ts` 12 rows, `secure-store-discipline.test.ts` 43 rows, both counted at `536bdc6^` and the figure exception §9 records (D-9, `docs/L1/security-store-storeroom-exception.md` §9). Rev 1 measured **13 covered + 7 missing**; the 7 authored rows are the seven above, at two files and six subjects. Beside them stand the **12 §8 scenarios, now 12 of 12 authored at L1's grain**, at two more files — so the unit's scenario debt is discharged at **19 authored rows over four files** (7 recovered + 12 e2e), 4 of the e2e rows overlapping a covered recovered scenario (S-1, S-2, S-3, S-4) and 8 of them this unit's own new surface.
 
+**And one battery this register did not author, which nevertheless carries two of the arms it recorded as thin**:
+`tests/integration/security-store-storeroom/patch-domain.test.ts` — the unit's **only gating** battery (D-40), because it was authored after D-30's
+sweep and so carries no marker — pins the empty patch's refusal arm for arm (`SC-E5-15`'s `write({})`: the module's own sentence, a null address, no
+cursor minted, the record and the bytes unmoved) and the cap's **sign** rule that `SC-E5-14` left half-driven (`-Infinity` is `<= 0` and commits with
+the cap absent; `+Infinity` refuses `ValueRefusedAtBoundary` and nothing lands) — `behaviour.md` §2/§4, `interface.md` §1/§2, and no mock in either
+row.
+
 ## 6. What this pass did, and what it did not
 
 - **Authored from the documents, never from the implementation.** Every row's assertion comes from this register and from L2/L3; the implementation was read only for its exported names (a grep of `^export ` in the two module entry files, which returned exactly `signatures.md` §2/§3's names). No row's observable was chosen by reading the code under test.
@@ -72,3 +79,10 @@ Rev 1 filed these as goal → expected so a test writer could author them withou
 - **One design-document claim was half-satisfied, and both halves are now named.** `interface.md` §3 said the battery drives all three named refusal spellings; the **arm** was driven — `SC-E5-08`'s row makes a `file`-tier commit that cannot land and reads a `refused` value, the store's own status, the byte-identical previous bytes and the unmoved record — but the **word** `FileCommitFailed` is spelled by no row, because that row deliberately does not pin a spelling the register warned the package may not mint (`examiner.md` §3, register §4 item 2). **That document was re-grained in this pass rather than left a claim**: `interface.md` §3 and its `ASM-L2-3` now state that **two** of the three spellings are spelled by a row (`ValueRefusedAtBoundary`, `FilePathUnreachable`) and that `FileCommitFailed` is driven as an arm and pinned by none — so the unspelled word stands as a **recorded gap**, and a row that can observe the word would still close it.
 - **The e2e battery reads 12 of 12 green over two files at this head**: `npx vitest run tests/e2e/security-store-storeroom/` reports `scenarios.test.ts` 10 rows and `isolation.test.ts` 2 rows, every one passing. It was authored **after** the implementation and after both module batteries, so it carries **no red-first evidence** — a red row here is a finding against the code or the design, never evidence about ordering (`strata/examiner.md` §3). The twelve rows state their **envelope limit**: `npm test` runs with no window, no IPC and no transport (`strata/brief.md` §6), so "the next process" is a second construction over the same directory and a real Electron restart, bridge hop or rendered view stays app-green.
 - **No test, row or verdict was retired, weakened or skipped**, and no `src/` file was touched. Every verdict in §2 that rev 1 measured at `f9b21f4` reads the same at `34986f2` except the seven moved here, and moving one is a revision of this file, not an annotation (D-1).
+- **What the coverage rests on at this head, stated because nothing else in this file says it**: every battery §2's verdicts cite is **marked** `//
+strata:marked-file rework` and reports **on notice** — the four `tests/integration/security-store-storeroom/` files, the two
+`tests/unit/security-store-storeroom/` files, `tests/unit/settings-surface/surface.test.ts`, `tests/store-security.test.ts` and
+`tests/store-persist.test.ts` — so every one of §2's twenty COVERED verdicts, the seven authored in §4 among them, sits **outside the gating set**,
+and a red row there is on notice rather than a gate (D-30). **The unit's gating evidence is elsewhere and smaller**: the twelve
+`tests/e2e/security-store-storeroom/` rows, which a `tests/e2e/` file never marks, and the one unmarked integration battery named in §5. The split is
+read from `strata/marks.json`, the instrument's own index (`scripts/strata-marks.mjs`), and no count of it is restated here (D-26, D-30, D-40).

@@ -22,7 +22,7 @@ The seam is reached from the central store (`src/main/data/store.ts:23` → `src
 
 ## 3. The constraint it inherits (D-5)
 
-`provident-storeroom` and `provident-ssr` are read-only for every layer, so the fix is this repo's build/boot arrangement and never a package edit; a package-side finding is recorded in the unit that surfaced it and archived with it (D-5, `strata/records/security-store-storeroom-unit.md` §2).
+`provident-storeroom` and `provident-ssr` are read-only for every layer, so the fix is this repo's build/boot arrangement and never a package edit; a package-side finding is recorded in the unit that surfaced it, and that record **stays live in `strata/records/`** — there is no per-unit archive (D-5, D-52; `strata/records/security-store-storeroom-unit.md` §2).
 
 **The battery is completable, and it was so before the arm landed** (ASM-1): the arrangement L2 settled — main emitted as ESM and named by the `main` field, Electron 44's own ESM main (`package.json:6,7`; `platform.md` §3) — needs no package edit, so every row below could be satisfied by it, and the CJS arms that would instead satisfy the package's `import.meta.url` derivation inside the bundle (`node_modules/provident-storeroom/index.mjs:94-97`) are the ones L2 measured and rejected (`docs/L2/bundle-boot-seam/interface.md` §1, §3; D-27, `examiner.md` §3).
 

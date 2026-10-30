@@ -70,7 +70,7 @@ The battery is therefore a **leg**, invoked by its literal command with a displa
 - **No hand-written DOM and no new structural pattern**: the sixth toggle is one more data node of the landed `label`/`group-row`/`toggle:<group>` shape, and no CSS, class, pane id or DOM is added (`src/renderer/secure-panels.ts`'s `paneEnvelope()`, the one site that authors the `label`/`group-row`/`toggle:<group>` shape; `brief.md` §2).
 - **No change to `src/main/security.ts`'s group set**, to the instance's copy, or to any count it carries: the gate already validates `data` (`src/main/security.ts:3,159`; D-11, D-23).
 - **No new MCP tool, resource, route, `RpcMethod` member or bridge channel**, and no script key beyond the single `panes` key §4.2 declares: an instrument the design needs and does not own is a finding to route, not a licence to add one (D-11, D-18, D-35, D-37).
-- **Nothing in `provident-storeroom` or `provident-ssr`**: a package gap met here is recorded upstream-owned in this unit's record and archived with it (D-5).
+- **Nothing in `provident-storeroom` or `provident-ssr`**: a package gap met here is recorded upstream-owned in this unit's record, which **stays live in `strata/records/`** (D-5, D-52; `archive.md` §1).
 - **No design of the repair below this layer, and none left open here either**: the label's **wording** and the repair's **spelling** — the import specifier, the annotation, the projection and the narrowing — are **fixed by `docs/L3/secure-panels/signatures.md` §2**, and **L4 transcribes them**; this document fixes no signature, constant or edit order of its own (`examiner.md` §4; D-3).
 
 ## 6. The marked-test reality, carried rather than worked around (D-30, D-31)
