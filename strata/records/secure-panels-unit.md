@@ -7,8 +7,8 @@
 - **No new package finding.** The zero-length boot is the sibling's, filed once as `P-1` of
   `docs/L2/security-store-storeroom/persistence.md` §9 and cited here, never re-filed.
 - The asymmetry measured — a `set` while the tier-4 pair is closed **commits**, since `tier4-closed` is a
-  `read` outcome and the set handler consults no tier state — is the tree's composition, not a package defect
-  (`src/main/settings-surface/index.ts`'s own words; D-16).
+  `read` outcome and the set handler consults no tier state — is the tree's composition, not a package
+  defect (D-16).
 
 ## 2. The readings (D-26: taken by this unit, so stated here and nowhere restated)
 
@@ -34,7 +34,6 @@
 - **`gesture-session` F-9(b):** no `secure-panels` entry in its sibling list, so it charged this unit's
   artifact to itself; **`bundle-boot-seam` A-4** failed once in four runs on a `%20` `file://` import.
 
-## 4. Owed by L0
-
-- **The exit walkthrough.** Runs 1-3 were `STALE`, each on corpus drift and none on this unit's layers; the
-  fourth found the root's own limit (D-44) and rebuilt it, so a fifth run is what closes the unit (D-10).
+- **Closed:** the exit walkthrough passed at its fifth run, and the unit is `close`d in the state. Runs 1-3 were
+  `STALE` on corpus drift, never on this unit's layers; the fourth found the root's own limit (D-44). The run
+  history is `strata/records/secure-panels-walkthrough.md`'s (D-10, `rebuild.md` §3).
