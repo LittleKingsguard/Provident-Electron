@@ -29,7 +29,8 @@
 - **Discharged elsewhere, and named because it bounded this unit's evidence:** the app could not boot, because the main
   bundle was CJS while the ESM-only package derives its addon and manifest paths from `import.meta.url`. That host-side
   defect got its own unit and is fixed (`D-27`, `bundle-boot-seam`): the bundle is ESM at `dist/main/main.mjs`, and the
-  instance stands — its own file appears in a scratch profile (`strata/brief.md` §6).
+  instance stands: its own file appears in a scratch profile (`strata/records/bundle-boot-seam-walkthrough.md`);
+  `strata/brief.md` §6 is the instrument table and carries no such row.
 
 **Reclassified by D-24:** each finding above is the store working as designed, and the only
 demand that can stand is that the guide **describe** it. D-24's own four are adjacent rather than

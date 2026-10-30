@@ -27,7 +27,7 @@ point, procedures rule, and nothing here restates one.
 
 ## How a unit moves
 
-1. L0 interviews the user and records the answer in `decisions.md`; the design intent is the row.
+1. L0 interviews the user, records the row in `decisions.md`, and opens the unit (`init`, then `enter`).
 2. L1 takes `brief.md` plus the tree, files the module map into `modules.json`, then designs `docs/L1/`.
 3. Each module goes down L2 → L3 → L4 as `brief.md` §4 describes; each return carries `envelope.md`.
 4. L0 runs the walkthrough (`walkthrough.md`); anything but `PASS` is a loop state, never readiness.
@@ -56,5 +56,5 @@ node "../Agent Harness/strata/state/strata-state.mjs" strata show <unit>
 
 **Neither lives in this repository** — both ship with the adjacent `../Agent Harness/` checkout, not a
 dependency of this repo, so a fork must supply them or lose the loop's ceilings and transitions (D-44).
-`scripts/` holds this tree's own two instruments beside the Electron legs and the MCP CLI (`tree.txt` is
-the list, never a count here; `platform.md` §4 has their invocation).
+`scripts/` holds this tree's own two (`node scripts/strata-walkthrough.mjs`, `…-marks.mjs`) beside the
+Electron legs and the MCP CLI; `tree.txt` is the list.

@@ -1,7 +1,7 @@
 {
   "unit": "central-data-management",
   "layer": "L0",
-  "stage": "done",
+  "stage": "design",
   "artifacts": [
     "module-map",
     "e2e-design-rev2",
@@ -21,13 +21,8 @@
       "status": "reviewed"
     }
   ],
-  "streaks": {
-    "walkthrough-record": 3
-  },
-  "rebuildEligible": true,
-  "updated": "2026-10-29T22:18:16.479Z",
-  "lastFailure": {
-    "artifact": "walkthrough-record",
-    "reason": "red"
-  }
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-10-30T09:07:02.130Z",
+  "builds": 2
 }

@@ -35,9 +35,9 @@ restates neither, because a count in a second place drifts at the next commit (D
 
 ## What a fresh session does next, in order
 
-1. **Decide the open units' walkthrough cap.** Each carries a `walkthrough-record` streak at the state
-   machine's limit, which refuses a fourth `fail`: run its set under the instrument, then `pass` or
-   `rebuild` (`strata/records/*-walkthrough.md`; `strata/rebuild.md` §3).
+1. **Close the three open units.** All three were rebuilt (`builds: 2`, streaks cleared); what each needs now
+   is a run whose own documents are clean, then `pass` and `close` — or a finding and another round
+   (`strata/records/*-walkthrough.md`; D-48, `strata/rebuild.md` §3).
 2. **Land D-30's runner split**: the markers are in and `strata/marks.json` is generated, so what remains is
    L2's arrangement for reporting the gating reading beside the on-notice one, and L4 landing it.
 3. **D-22's second half**, still parked: the gate's exclusion/tier-4 enforcement (giving

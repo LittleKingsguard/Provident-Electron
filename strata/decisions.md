@@ -1099,3 +1099,21 @@ move, only that one clause is added.
   and provenance that interrupts the words it attributes is worse than none.
 - The eleven rows repaired here are evidence that the rule needed the placement stated, and this row states it
   rather than leaving "on its Status line" to be read as "wherever the line ends".
+
+---
+
+## D-50 — Corrigendum to D-35: what the pane carried when it was admitted
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-35**, which stands as filed (D-1). **Source:**
+the `strata-bootstrap` walkthrough, run 8 — D-35 says "`src/renderer/secure-panels.ts` enumerates five group
+names in `GROUPS` … so `data` is in `VALID_GROUPS` with no operator control", and the file that unit landed
+now carries a six-entry label table with the roster projected from its keys.
+
+**Decision:** D-35's description of the pane is **its own dated reading**, the defect as it stood when the
+unit was admitted (D-26, D-41). What the unit landed is `docs/L1/secure-panels.md` §7 `E-1`'s to state, and
+D-36, D-39 and D-42 corrected that row's *counts* without touching this sentence.
+
+- A row that admits a unit by describing the defect inherits the defect's shelf life; a reader wanting the
+  shape today takes it from the unit's own design, not from the row that chartered it.
+- The alternative — rewriting D-35 — is what D-1 forbids, and D-23's precedent is that the tree moving earns
+  a corrigendum rather than a silent edit.
