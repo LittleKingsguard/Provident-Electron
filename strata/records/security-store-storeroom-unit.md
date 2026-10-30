@@ -1,10 +1,7 @@
 # record — `security-store-storeroom`: package findings, and what its closure leaves standing (D-5)
 
 - **Unit:** `security-store-storeroom` · **Layer:** L0 at this record · **Branch:** `strata` (D-6) · **Ceiling:** 40 lines (D-1)
-- **What this file is:** the unit's **closure record** for D-5 — the findings its passes surfaced, in their owner's terms — and never
-  a patch: the package is read-only for every layer. The unit is **closed**, so its stage and streaks are
-  `strata/.strata/units/security-store-storeroom.json`'s, its run history and verdict `strata/records/security-store-storeroom-walkthrough.md`'s,
-  and its two modules' paths and endpoint counts the `operator-settings` and `settings-surface` rows of `strata/modules.json`'s — cited, never restated here (D-26, D-43, D-48, D-52).
+- **What this file is:** the unit's **closure record** for D-5 — the findings its passes surfaced, in their owner's terms — and never a patch: the package is read-only for every layer. The unit is **closed**, so its stage and streaks are `strata/.strata/units/security-store-storeroom.json`'s, its run history and verdict `strata/records/security-store-storeroom-walkthrough.md`'s, and its two modules' paths and endpoint counts the `operator-settings` and `settings-surface` rows of `strata/modules.json`'s — cited, never restated here (D-26, D-43, D-48, D-52).
 - **Recovered from:** `docs/L1/security-store-storeroom-exception.md` §8/§9, `docs/L1/security-store-storeroom.md` §10, and `docs/L2/security-store-storeroom/persistence.md` §9 (`P-1`..`P-5`).
 
 ## 1. Package findings — `provident-storeroom ^1.6.1`, upstream-owned, never patched (D-5)
@@ -34,7 +31,9 @@ these five, not these five.
 - **Still owed, to the tree and not to the package:** `src/main/main.ts`'s type-only import from its surface module keeps two names it no
   longer spells — `Tier4ClosedRefusal` and `Tier4WriteAnswer`, neither of them referenced — and they are that file's next writer's to remove (exception §9).
 - **Discharged elsewhere, and named because it bounded this unit's evidence:** the app could not boot while the main bundle was CJS and the
-  ESM-only package derived its addon and manifest paths from `import.meta.url`. That host-side defect got its own unit and is fixed (D-27,
-  `bundle-boot-seam`); the instance stands and its own file appears in a scratch profile (`docs/L2/bundle-boot-seam/interface.md`). The root's
+  ESM-only package derived its addon and manifest paths from `import.meta.url` — **reproduction: the spawned Electron wrote zero bytes of
+  stdout in 45 s against a scratch profile** (`.strata/returns/security-store-storeroom-l2-examination.json`'s `rootCause`). That host-side
+  defect got its own unit and is fixed (D-27, `bundle-boot-seam`); the instance stands and its own file appears in a scratch profile
+  (`docs/L2/bundle-boot-seam/interface.md`). The root's
   staging deviation is not standing either: it carries `src/` and the built artifact, so a claim about code or a boot is checkable rather than
   unverifiable (`walkthrough.md` §3; D-44).

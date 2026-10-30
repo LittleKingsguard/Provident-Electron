@@ -1,7 +1,6 @@
 # strata — the working corpus for Provident-Electron
 
-This directory replaces the gate workflow's 219-file corpus (`archive.md`): the only document set the layers
-read, and every document here declares a ceiling — this file's is 60 lines.
+This directory replaces the gate workflow's 219-file corpus (`archive.md`): the only document set the layers read, and every document here declares a ceiling — this file's is 60 lines.
 
 ## What is here
 
@@ -17,6 +16,7 @@ read, and every document here declares a ceiling — this file's is 60 lines.
 | `platform.md` | measured deployment and checkout constraints | 60 |
 | `archive.md` | where the gate corpus went, and how its citations resolve | 60 |
 | `modules.json` | the module map — L1-owned, absent until the first unit files it (`platform.md` §4 gives its shape) | — |
+| `marks.json` | the marker index — L1-owned beside the map (D-30) | — |
 | `.strata/units/*.json` | state per unit, script-written: layer, stage, artifacts, assumptions, per-artifact `streaks` (`platform.md` §4 gives the full shape) | 40 |
 | `records/<unit>-<pass>.md` | a review record (walkthrough, sweep): the scenario set or row table, replaced per run | 40 |
 | `.strata/returns/*.json` | layer returns, as collected envelopes | — |
