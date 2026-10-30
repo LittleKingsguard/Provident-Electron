@@ -24,7 +24,7 @@
 - **Owed, carried not patched:** `src/main/tier4-state.ts:6` still asserts the retired store as its reader and the
   transition as its writer, and `main.ts`'s import from the surface module keeps two type names it no longer spells — owed to the unit that
   next touches those files (exception §9; `examiner.md` §4).
-- **Owed by L0:** a further blind walkthrough run (runs 1 and 2 are not green). The deviation that no built
+- **Owed by L0:** a further blind walkthrough run — runs 1-7 are `STALE` and each round's findings were closed. The deviation that no built
   artifact was staged is **no longer standing**: the root stages `dist/` and, since D-44, `src/` too.
 - **Discharged elsewhere, and named because it bounded this unit's evidence:** the app could not boot, because the main
   bundle was CJS while the ESM-only package derives its addon and manifest paths from `import.meta.url`. That host-side

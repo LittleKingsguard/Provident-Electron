@@ -1139,3 +1139,22 @@ count: the count misleads a reader, the instruction gets executed.
 
 **Consequence:** this is the third rule in this pass that exists because a correction was applied where it was
 found rather than where it was filed — D-41 (offsets), D-43 (restatements), and this one (instructions).
+
+---
+
+## D-52 — Corrigendum to D-5: a unit's record is not archived, it stays live
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-5**, which stands as filed (D-1). **Source:**
+the `strata-bootstrap` walkthrough, run 9, measured — D-5 says a finding is "archived with that unit when it
+closes (D-2)", and nothing has ever been archived with a unit: `archive/` holds the retired gate corpus and
+nothing else, and every unit's record sits live in `strata/records/`, including three units closed on a PASS.
+
+**Decision:** a unit's record **stays live in `strata/records/`**. There is no per-unit archive; `archive/` is
+the retired gate corpus and its two bodies (D-2, `archive.md` §1), and archiving a unit's record would put it
+where `archive.md` §2 says nothing may be treated as authority.
+
+- The sentence was a promise, and promises are the one thing a corpus cannot carry: it appeared in D-5,
+  `walkthrough.md` §6 and `examiner.md` §5, so four documents told a reader that closing a unit moves its
+  record somewhere it has never gone.
+- What survives is D-5's real obligation: the finding is recorded in the unit's own record, in the four-part
+  shape, upstream-owned, never patched.

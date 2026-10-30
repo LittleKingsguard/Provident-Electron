@@ -55,5 +55,6 @@ not amended for it: that listing is L0's instrument, never evidence about the tr
 ## 6. Record
 
 L0 writes the report to `strata/records/<unit>-walkthrough.md`, ≤ 40 lines, replaced on every run
-(git holds the history), and archived with the unit when it closes (D-2). The scenario set lives in
+(git holds the history), and it **stays live in `strata/records/`** — this corpus does not archive per unit:
+`archive/` holds the retired gate corpus only (D-2, `archive.md` §1). The scenario set lives in
 that same record, above the report — a step without its goal/expected pair is not a scenario.

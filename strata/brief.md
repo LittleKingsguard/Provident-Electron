@@ -1,6 +1,6 @@
 # Provident-Electron — strata design brief
 
-- **Layer:** L0 · **Rev:** 1 · **Date:** 2026-10-29 · **Branch:** `strata` (D-6)
+- **Layer:** L0 · **Rev:** 2 · **Date:** 2026-10-30 · **Branch:** `strata` (D-6)
 - **Status:** BOOTSTRAP — filed with `decisions.md` D-1..D-7; `ASM-1`..`ASM-3` (§8) await the user's disposition
 - **Scope:** the strata bootstrap and the archive of the gate corpus; no module design, no code
 - **Ceiling:** 150 lines (class max); at the ceiling split by owner — never append (D-1, D-2)
@@ -82,7 +82,7 @@ declared long-term goal stands unchanged: the flat `tests/**/*.test.ts` suite mi
 `tests/{e2e,integration/<module>,unit/<module>}/` per module, at claim time, never wholesale ahead of the
 map (D-10).
 
-## 6. Instruments at this head (measured 2026-10-29, this seat)
+## 6. Instruments at this head (measured 2026-10-30, this seat)
 
 | Instrument | Reading | What it can see |
 |---|---|---|

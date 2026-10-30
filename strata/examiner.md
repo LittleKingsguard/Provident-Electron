@@ -39,5 +39,5 @@ blind to the framing it is testing (D-1).
   (`rebuild.md` §1).
 - **Where the finding is written** → the layer's return in `.strata/returns/`, and the owning unit's
   record under `strata/records/`; a host-side finding is fixed here with a regression test, a package
-  finding is recorded in that unit's record and archived with it (`brief.md` §2, D-5).
+  finding is recorded in that unit's record, which stays live in `strata/records/` (`brief.md` §2, D-5, D-52).
 - **Repeat failure at threshold** → a rebuild recommendation (`rebuild.md` §3).

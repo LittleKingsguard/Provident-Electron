@@ -24,9 +24,9 @@ restates neither, because a count in a second place drifts at the next commit (D
 - **The boot seam is fixed** (D-27): all three Electron legs are green for the first time, and their
   readings live in `strata/brief.md` §6, never restated here (D-26).
 - **The test triage is decided, instrumented and applied** (D-30): `tests/e2e/**` and the three Electron
-  legs are retained and gate; every integration and unit scenario carries `// strata:marked-file rework` and
-  reports on notice, bar the one worktree assertion that measures the loop's own tree. The two readings are
-  `scripts/strata-marks.mjs report`'s, never restated here (D-26); the runner still measures the whole tree.
+  legs are retained and gate; the integration and unit scenarios **that stood when the rework was decided**
+  carry `// strata:marked-file rework` and report on notice, one authored after that sweep gates (D-40), and ten carve-outs inside marked files still gate (D-38) — `strata/marks.json`'s `gates` list is the reading. The two readings are
+`scripts/strata-marks.mjs report`'s, never restated here (D-26); the runner still measures the whole tree.
 - **The Settings pane grants all six groups** and that unit is **closed**: `secure-panels` landed its roster
   as a projection of a table the gate's `ToolGroup` types, and passed its exit walkthrough at run 5
   (`docs/L1/secure-panels.md` §7 `E-1`; D-35, D-38; `strata/records/secure-panels-walkthrough.md`).
