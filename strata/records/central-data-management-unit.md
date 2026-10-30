@@ -14,7 +14,7 @@
 | **CD-F2** | the **boot over non-image bytes** has no declared arm: a foreign, unparsable image boots **cold** with its bytes untouched until the next `file`-tier save, so a consumer can state the recovery while the package declares neither it nor a parse-failure arm (symptom measured at `57c5825`) | place non-image bytes at the `filePath`, call `storeCreate`, then `list`/`read` (cold tier answers, bytes byte-identical) and one `write` (bytes replaced) | `guide §9.1` declares the creation, reachability and constraint-list arms and no parse-failure arm, and the declaration carries no such boot status | declare the boot's parse-failure arm — its status and whether the bytes are left untouched — in the native contract and in `guide §9.1` |
 
 - **Neither finding is a demand on this tree**, and neither was promoted past what was measured: CD-F1 is answered inside
-  the module without entering the throwing arm (`design.md` §3 `G7`), and CD-F2 leaves the recovery *statable* by the
+  the module without entering the throwing arm (`design.md` §4 `G7`), and CD-F2 leaves the recovery *statable* by the
   consumer and undeclared by the package (`persistence.md` §9 `P-1`).
 
 ## 2. What this unit owes, and where each item went
