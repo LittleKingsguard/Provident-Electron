@@ -2,24 +2,24 @@
 // (the renderer owns the provident-ssr graph + DOM), starts the MCP server
 // (stdio or Streamable HTTP), and bridges MCP tool calls to the renderer via
 // IPC.
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { rmSync } from 'node:fs'
-import { createHash } from 'node:crypto'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload } from '../shared/types.js'
-import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
-import type { SettingsAppStateRow, Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
-import { createSettingsSurface } from './settings-surface/index.js'
-import { createModuleStore, type ModuleStore, type ModuleRecord, type ModuleStoreStatus } from './module-store.js'
-import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from './store-channels.js'
-import { CapabilityRouter } from '../renderer/extensions.js'
-import { syncModuleRouter } from './mcp-server.js'
-import { SecurityGate, type ToolGroup } from './security.js'
+import {app, BrowserWindow, ipcMain} from 'electron'
+import {dirname, join} from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {rmSync} from 'node:fs'
+import {createHash} from 'node:crypto'
+import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload} from '../shared/types.js'
+import {ProvidentMcpServer, RendererBackend, type McpTransportKind} from './mcp-server.js'
+import type {SettingsAppStateRow} from './settings-surface/index.js'
+import {createSettingsSurface} from './settings-surface/index.js'
+import {createModuleStore, type ModuleStore, type ModuleRecord, type ModuleStoreStatus} from './module-store.js'
+import {STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION} from './store-channels.js'
+import {CapabilityRouter} from '../renderer/extensions.js'
+import {syncModuleRouter} from './mcp-server.js'
+import {SecurityGate, type ToolGroup} from './security.js'
 // central-data (`docs/L1/central-data-census-exception.md` §2 E-3) — the module's surface enters the
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
 // until a `data.*` tool is called (D-11, D-13).
-import { createDataSurface } from './data/index.js'
+import {createDataSurface} from './data/index.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
 // names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
