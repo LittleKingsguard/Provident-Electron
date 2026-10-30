@@ -28,8 +28,8 @@ these five, not these five.
   with no `src/**` reader, and the built bundle is its witness — `setTier4OpenState` present, `tier4OpenState` tree-shaken out. Its
   **retirement** stays parked: `docs/L1/security-store-storeroom.md` §10 `ASM-4` settles that at rev 3, and the unit that gives the
   enforcement path a use for the holder is a later one (exception §6).
-- **Still owed, to the tree and not to the package:** `src/main/main.ts`'s type-only import from its surface module keeps two names it no
-  longer spells — `Tier4ClosedRefusal` and `Tier4WriteAnswer`, neither of them referenced — and they are that file's next writer's to remove (exception §9).
+- **Discharged, to the tree and not to the package:** `src/main/main.ts`'s type-only import no longer carries the two names it stopped
+  spelling — `Tier4ClosedRefusal` and `Tier4WriteAnswer` are gone, and no row asserted that file's import list (exception §9, now closed).
 - **Discharged elsewhere, and named because it bounded this unit's evidence:** the app could not boot while the main bundle was CJS and the
   ESM-only package derived its addon and manifest paths from `import.meta.url` — **reproduction: the spawned Electron wrote zero bytes of
   stdout in 45 s against a scratch profile** (`.strata/returns/security-store-storeroom-l2-examination.json`'s `rootCause`). That host-side
