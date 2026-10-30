@@ -1,8 +1,9 @@
 # record — `security-store-storeroom` exit walkthrough, run 5 (D-10; replaced on every run)
 
-**Scenario set** (L0-authored from the documentation): 1 what replaced the deleted store, and where that
-state lives · 2 prove the isolation from MCP · 3 describe a boot and the import · 4 who may write the
-record, and what a commit that cannot land answers · 5 the coverage and each row's evidence status. Seat:
+**Scenario set** (L0-authored from the documentation): 1 what replaced the deleted store, and where that state lives → a second instance, three addresses · 2 prove the
+isolation from MCP → six named absences, and the reachable address beside them · 3 describe a boot and the import →
+the order, and six arms over five rows · 4 who may write the record, and what a commit that cannot land answers →
+the surface alone, one receipt · 5 the coverage and each row's evidence status → the count, and which rows gate. Seat:
 one fresh delegation per run, staged to a copy of `strata/`, `docs/L1..L3/`, the root pointers,
 `package.json`, a tracked-path listing, an archived-path listing and the built bundles.
 

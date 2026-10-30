@@ -1,8 +1,10 @@
 # record — `central-data-management` exit walkthrough, run 10 (D-10; replaced on every run)
 
-**Scenario set** (L0-authored from the documentation): 1 use the `data` surface and say how a group is granted ·
-2 what owns a written row, and which files are only seeded · 3 follow a write to its receipt · 4 the census
-numbers and the pins that move with them · 5 report a package defect and what may be demanded. Seat: one fresh
+**Scenario set** (L0-authored from the documentation): 1 use the `data` surface and say how a group is granted → five tools, off by default, the operator alone granting ·
+2 what owns a written row, and which files are only seeded → the store owns it, two names written, two seeded ·
+3 follow a write to its receipt → one receipt, or a refusal from the closed ledger · 4 the census numbers and the
+pins that move with them → every figure re-derived, and the mark set named · 5 report a package defect and what may
+be demanded → the four-part shape, and a documentary demand at most. Seat: one fresh
 delegation per run, staged to the root `walkthrough.md` §3 declares (D-44).
 
 ## Run 10 — `PASS`

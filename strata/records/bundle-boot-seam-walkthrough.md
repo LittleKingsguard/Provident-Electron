@@ -1,9 +1,10 @@
 # record — `bundle-boot-seam` exit walkthrough, run 12 — `PASS` (D-10; replaced on every run)
 
-**Scenario set** (L0-authored from the documentation): 1 what was broken, and why the verification floor
-never saw it · 2 the arrangement chosen, every `package.json` line it lands in, and what it cost · 3 what the
-entry had to change, and the proof nothing else moved · 4 how a boot is proven, and what a failed boot must
-answer · 5 what the artifact cannot do · 6 which writes belong to whom, and what lies outside.
+**Scenario set** (L0-authored from the documentation): 1 what was broken, and why the verification floor never saw it → the defect, and the gap in the floor explained ·
+2 the arrangement chosen, every `package.json` line it lands in, and what it cost → a complete edit list · 3 what the
+entry had to change, and the proof nothing else moved → the diff, and its bounded scope · 4 how a boot is proven,
+and what a failed boot must answer → the battery, and a named refusal · 5 what the artifact cannot do → stated
+limits · 6 which writes belong to whom, and what lies outside → each write's owner, and the out-of-scope set.
 
 **Seat.** One fresh delegation per run, staged to a generated copy of `strata/`, `docs/L1..L3/`, the root
 pointers, `package.json`, a tracked-path listing, an archived-path listing and the built bundles —

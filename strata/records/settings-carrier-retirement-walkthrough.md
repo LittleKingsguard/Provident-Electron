@@ -1,8 +1,9 @@
 # record — `settings-carrier-retirement` exit walkthrough (D-10; replaced on every run)
 
-**Scenario set**: 1 what was retired and what replaced it · 2 where the imported rows live and why · 3 the
-boot arms (present / absent / corrupt / unrepresentable) · 4 written versus seeded files · 5 what the
-unit explicitly did not do. Seat: one fresh delegation, quarantined to the docs.
+**Scenario set**: 1 what was retired and what replaced it → the file, and its successor · 2 where the imported rows live and why →
+the third address, and the purge rule that forces it · 3 the boot arms (present / absent / corrupt /
+unrepresentable) → each arm's answer · 4 written versus seeded files → the two lists, kept apart · 5 what the unit
+explicitly did not do → the non-goal, named. Seat: one fresh delegation, quarantined to the docs.
 
 ## Latest run — `PASS`
 

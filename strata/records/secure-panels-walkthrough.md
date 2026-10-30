@@ -1,8 +1,9 @@
 # record — `secure-panels` exit walkthrough, run 5 (D-10; replaced on every run)
 
-**Scenario set** (L0-authored from the documentation): 1 grant the group · 2 what a click does, with the
-composed status line · 3 restart, and what is on disk · 4 the group set's readers and what binds them ·
-5 the evidence, its greens and what it does not claim. Seat: one fresh delegation per run, staged to a copy of
+**Scenario set** (L0-authored from the documentation): 1 grant the group → the toggle, and the six-label roster bound to the gate's own type · 2 what a click does, with the
+composed status line → one `set`, and the three members it answers · 3 restart, and what is on disk → the persisted
+record, and what a torn write leaves · 4 the group set's readers and what binds them → three sites, one type · 5 the
+evidence, its greens and what it does not claim → the gating rows, and the stated limit. Seat: one fresh delegation per run, staged to a copy of
 `strata/`, `docs/L1..L3/`, `src/`, `dist/`, the root pointers, `package.json` and both path listings.
 
 ## Run 5 — `PASS`
