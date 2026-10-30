@@ -69,28 +69,24 @@ L2. Examiners validate the battery before examining code, diagnose root cause an
 patch. Repeat failure escalates to a rebuild (`rebuild.md`). A lower layer that asks for adjudication
 is answered and counted as a failure (D-1).
 
-## 5. The current unit (D-7)
+## 5. The current unit (D-27)
 
-`settings-carrier-retirement` (green at its exit walkthrough) and `security-store-storeroom`, then `central-data-management`, the central store over
-`provident-storeroom`. The import
-landed (`f349549`, `4e404e2`, `1cab040`), and so is the module built on it (`f4dfb2a`): five
-`provident.data.*` tools, the map filed and this unit closed at its batteries. Its state is `strata/.strata/units/
-central-data-management.json`; the branch state is D-7.
+`bundle-boot-seam`: the app's built main bundle cannot be evaluated at this head, so no process it starts
+exists and both Electron legs that reach the bundle are red (D-27). It is admitted at L1 like any other
+unit and files its map row first; the four units before it are in `strata/.strata/units/*.json`, where
+`settings-carrier-retirement` is the only one closed on a green walkthrough.
 
-The seam's own boundary is the constraint the unit inherits: nothing it builds may be a storeroom
-package change (D-5), and nothing in the seam today is exposed over MCP, rendered or persisted
-(`src/main/storeroom.ts:9-21`).
-
-**Declared long-term goal, sequenced behind the map:** the flat `tests/**/*.test.ts` suite migrates into
-`tests/{e2e,integration/<module>,unit/<module>}/` **after** L1 files the map and modules claim their
-paths — per module, at claim time, never wholesale ahead of it (D-10). Until then the flat suite stands
-as filed, and `ASM-1`'s adoption of it is interim.
+The constraint it inherits: nothing it builds may be a `provident-storeroom` or `provident-ssr` change —
+the arrangement is this repo's (D-5) — and no new MCP surface is added to prove a boot (D-18). The
+declared long-term goal stands unchanged: the flat `tests/**/*.test.ts` suite migrates into
+`tests/{e2e,integration/<module>,unit/<module>}/` per module, at claim time, never wholesale ahead of the
+map (D-10).
 
 ## 6. Instruments at this head (measured 2026-10-29, this seat)
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | `2 failed / 3,199 passed / 2 skipped` of `3,203`, over `114` test files (89 flat + 25 nested) | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | `7 failed / 3,202 passed / 2 skipped` of `3,211`, over `115` test files (89 flat + 26 nested) | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — main, preload, standalone, battery host, renderer | the bundles exist at all |
@@ -106,12 +102,17 @@ security-store-storeroom-unit.md` §2 owns it; it is owed its own unit).
 
 The layer rule every later claim inherits: a node-suite green is **envelope-green and never
 app-green** — no window, no IPC, no transport is exercised by `npm test` (D-1; §3's L1 exit).
-The two red rows are `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`, the un-run live battery) and
-§4.2 item 8 (`REG-EXEC`, the register's broken attempts) — both long-standing, neither new to this
-head. The third the gate-era corpus carried, `tests/store-core-graph.test.ts` §5.1, was retired with
-its referent when the corpus was archived (D-9), so the known-red set is now two (D-1 §6).
+The two long-standing reds are `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`, the un-run live
+battery) and §4.2 item 8 (`REG-EXEC`, the register's broken attempts) — neither new to this head. The
+third the gate-era corpus carried, `tests/store-core-graph.test.ts` §5.1, was retired with its referent
+when the corpus was archived (D-9).
 
-**A fourth red is by construction, not by defect:** the same file's §4.2 item 9 asserts the worktree
+**Five more reds are red-first, not defects:** `tests/e2e/bundle-boot-seam/` is the battery of the unit
+D-27 admits, authored before the arrangement exists, and B-2…B-6 fail at this head on the very stack the
+unit exists to fix (`dist/main/main.cjs:38480`). Red-first evidence is never filed green, so they stand
+until the arrangement lands (D-14, D-27).
+
+**An eighth red is by construction:** the same `store-tabs-record` file's §4.2 item 9 asserts the worktree
 against a declared edit set, so it reddens while any uncommitted file exists. A reading taken to be
 believed is taken on a clean tree (`tests/store-tabs-record.test.ts:1916`).
 
