@@ -43,7 +43,7 @@ carries the two goals and the non-negotiables and no workflow rule — the proce
 Branch `strata` carries the bootstrap and `main` is frozen until the user grants merge permission
 (`strata/decisions.md` D-6). Three units have landed on `provident-storeroom`: the central data store
 (the `data` group), the security record rebuilt as its own isolated instance, and the retirement of the
-old settings carrier — four more are queued behind them and the map carries 20 module rows (D-7, D-22).
+old settings carrier — more are queued behind them, and the map is filed with a row per module (D-7, D-22).
 Where work stands is state, not prose: `strata/.strata/units/*.json`.
 
 ## Commands

@@ -13,10 +13,10 @@ contracts, reviews, greens sets and battery records, plus 18 part files in two c
 the gate-era `README.md` and `AGENTS.md`, whose UI-authority section is still cited.
 
 `archive/` also holds an **earlier body of corpora at its own top level** — `reviews/` 53, `gate1/` 49,
-`gate5-blind-instruments/` 26, `live-probes/` 24, `specs/` 19, `defects/` 14, `decisions/` 7,
-`pending/` 7, `handoffs/` 6, `next-steps/` 5, `findings/` 2, `agents/` 1 and `HANDOFF-battery.md` —
-**215 files** that predate the gate corpus and that no document indexes; read them at their path, never
-as authority for a live rule (§2, D-2). The archive is gitignored and is the retrieval mechanism:
+`gate5-blind-instruments/` 26, `live-probes/` 24, `specs/` 19, `defects/` 14, `decisions/` 7, `pending/` 7,
+`handoffs/` 6, `next-steps/` 5, `findings/` 2, `agents/` 1, `HANDOFF-battery.md` and its own `README.md` —
+**215 files** that predate the gate corpus and that no document indexes; read them at their path, never as
+authority for a live rule (§2, D-2). The archive is gitignored and is the retrieval mechanism:
 nothing live carries a correction paragraph, a dated annotation or history (D-1).
 
 ## 2. The prefix mapping

@@ -579,3 +579,28 @@ reach the bundle are red on it at this head (`npm run divergence` exit 1; `npm r
 **Walkthrough scope, confirmed rather than changed:** the exit walkthrough stays documentation-only. The
 staging root carries the built bundles, but a run reads documents and never drives the app, so a `PASS`
 certifies the documentation and never the app (`walkthrough.md` §2-§3, D-1).
+
+---
+
+## D-28 — A citation into a live, appendable file names the row, never the line
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the sixth blind walkthrough of `strata-bootstrap`,
+measured against the tree at `bd04abf`: one inserted row in `strata/modules.json` moved every row below it
+and broke **five** documents' cites at once, and no corpus rule required a cite that survives an insertion.
+
+**Decision:** where a document cites `strata/modules.json` — or any other file the layers append to — it
+names the **row or the section** and never a line number: "the `central-data` row of `strata/modules.json`",
+not "`modules.json:83-94`". A line cite into an appendable file is a claim about a layout that the next
+insertion falsifies, and a falsified cite is the drift this corpus exists to prevent (D-21, D-23, D-26).
+
+- A cite into a **stable** file — one no layer appends to, `brief.md` §6's table or a code file's own body
+  — keeps its line numbers, and a line cite is still the sharpest form available there.
+- The rule binds the corpus, not the code: a comment in `src/**` citing a document by line stays as written
+  (D-4), and a document citing an archived path keeps its path and section (D-2 §2).
+- **What it changes for a reader:** a map cite that cannot name its row is not specific enough to be
+  useful, so a re-grain of one replaces the number with the row's `name` and, where the figure matters,
+  the figure itself — never a repaired line range.
+
+**Consequence, stated because it happened:** the map grew one row this pass and eight cites in five
+documents stopped landing. Re-pointing each number would fix the symptom until the next row; naming the row
+fixes the cause, and it is the same reasoning D-26 applies to counts (D-1, `platform.md` §4).

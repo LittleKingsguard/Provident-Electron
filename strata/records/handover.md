@@ -1,6 +1,6 @@
 # handover — branch `strata` (`main` still `28e9ac1`, unmerged by D-6)
 
-Read `strata/brief.md` first, then `strata/decisions.md` **D-1..D-26**. This file is the short version.
+Read `strata/brief.md` first, then `strata/decisions.md` **D-1..D-28**. This file is the short version.
 
 ## What is landed
 
@@ -13,9 +13,8 @@ Four units on the `provident-storeroom` instance, tree committed at every gate b
 | `security-store-storeroom` | batteries green; walkthrough red at run 3 | `src/main/operator-settings/`, `src/main/settings-surface/`; `security-store.ts` deleted |
 | `strata-bootstrap` | corpus + archive; walkthrough red at run 5 | `strata/`, `archive/gate-corpus-2026-10-29/` |
 
-**Census:** 27 tools / 6 groups (`data` off by default) / 8 default-gated, 13 with `data` / 3 resources;
-N: `central-data` 15, `operator-settings` 12, `settings-surface` 19; 20 module rows. Counts are `brief.md`
-§6's to state — do not restate them in a new document (D-26).
+**Census:** `strata/brief.md` §6 and §2 own every count and the module map is `strata/modules.json`'s —
+this record restates neither, because a count in a second place drifts at the next commit (D-26, D-28).
 
 ## Two defects stand between the tree and the product
 

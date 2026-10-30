@@ -35,6 +35,5 @@ ledger move is recorded in D-9 — the suite's known-red set went from three row
 
 ## Checks after the sweep
 
-The sweep's own reading is `archive.md` §3's. At this head the legs read `2 failed / 3,175 passed /
-2 skipped` of `3,179` over `112` files (two reds: `store-tabs-record` §4.2 items 7 and 8), the other
-three legs are clean, and `strata-lint` is exit 0 over 42 checks (`strata/brief.md` §6).
+The sweep's own reading is `archive.md` §3's, and this head's is `strata/brief.md` §6's: this record
+restates neither, because a count in a second place drifts at the next commit (D-26).

@@ -25,9 +25,8 @@ Ceiling: 60 lines.
 
 ## 3. This checkout
 
-- The 2026-10-29 readings after the archive sweep are `brief.md` §6's: `2 failed / 3,175 passed /
-  2 skipped` of `3,179` over `112` test files, and three clean legs (`typecheck`, `typecheck:tests`,
-  `build`). A later pass re-measures rather than quoting this row.
+- The instruments' readings are `brief.md` §6's table and are never restated here: that table is
+  re-measured, this paragraph is not, and a count in a second place drifts at the next commit (D-26).
 - **Eight of the thirteen** script keys are verification legs — `test`, `typecheck`, `typecheck:tests`,
   `build`, `battery`, `divergence`, `ui`, `mcp`; the five others are build/launch shims
   (`package.json:8-22`). The last three legs build first, and `ui` needs a `DISPLAY`. Node `v24.20.0`;

@@ -4,15 +4,13 @@ A prebuilt Electron shell for apps built on the Provident SSR framework
 ([`provident-ssr`](https://www.npmjs.com/package/provident-ssr)): **full synthetic-event access** and
 **rendered-HTML visibility**, exposed as MCP endpoints for agentic use and debugging exposure.
 
-Its two goals: it is the **implementation test** of `provident-ssr` and of `provident-storeroom`
-(neither package is ever modified; findings are recorded and handed off), and it is a **prebuild
-baseline** a fork inherits for the MCP surface, the gate, both transports and the renderer bridge.
+Its two goals: the **implementation test** of `provident-ssr` and `provident-storeroom` (neither package
+is ever modified; findings are recorded and handed off), and a **prebuild baseline** a fork inherits.
 
 **Read `strata/brief.md` next** — the authoritative brief: what the app is, the layers, the current
 unit, and the instruments with their measured readings. `strata/decisions.md` records who decided what
 and why; `AGENTS.md` carries the non-negotiables agents work under. `strata/` replaces the older
 documentation corpus, retired but preserved at `archive/gate-corpus-2026-10-29/`.
-
 ## Architecture
 
 ```
@@ -21,25 +19,22 @@ MCP client (agent / IDE) ── stdio ──┬── Streamable HTTP (http://12
 Electron MAIN process — MCP server (@modelcontextprotocol/sdk) + IPC bridge
    │  IPC: provident:invoke / provident:reply / provident:ready
    ▼
-Electron RENDERER — the provident-ssr producing process
-   (Supervisor graph + DomAdapter render + SSRFragmentAdapter mirror)
+Electron RENDERER — the provident-ssr producing process (graph + adapters)
 ```
 
-The graph is authoritative: a synthetic event mutates the graph, then the host re-emits both the live
-DOM and the SSR fragment. The HTML is a view, never a live surface.
+The graph is authoritative: a synthetic event mutates it, then the host re-emits both the live DOM and
+the SSR fragment. The HTML is a view, never a live surface.
 
 ## Setup and run
 
 ```sh
 npm install && npm run build   # main (cjs), preload (cjs), standalone, battery host, renderer (esm)
 npm test && npm run typecheck && npm run typecheck:tests
-npm start                                       # build + launch, HTTP MCP on :3787
-npm start -- --mcp-transport=stdio              # stdio instead
-npm run mcp -- --help                           # the local MCP CLI
+npm start                      # build + launch, HTTP MCP on :3787 (stdio: -- --mcp-transport=stdio,
+                               # or PROVIDENT_MCP_TRANSPORT / PROVIDENT_MCP_PORT)
+npm run mcp -- --help          # the local MCP CLI
 npm run battery | npm run divergence | npm run ui  # the Electron legs; ui needs a DISPLAY
 ```
-
-Transports are also selectable with `PROVIDENT_MCP_TRANSPORT` / `PROVIDENT_MCP_PORT`.
 
 ## The MCP surface
 
@@ -53,9 +48,9 @@ the persisted `enabled` set in `<userData>/provident-operator-settings.json`. Th
 **never an MCP tool** — no agent can grant itself capabilities; enabling `data` brings the listed set to 13.
 
 **The pane's toggle list is five groups**, not six: `src/renderer/secure-panels.ts` enumerates `read`,
-`dispatch`, `graph`, `code` and `module`, so the sixth group is in the gate and in the persisted grant but
-has no control of its own at this head — the gap is recorded, owed to its own unit, and named in the
-`central-data-management` unit record.
+`dispatch`, `graph`, `code` and `module`, so the sixth group stands in the gate's valid set while the
+persisted grant holds only what an operator enabled by hand — and there is no control to enable it. That gap
+is owed to its own unit and named in the `central-data-management` unit record.
 
 A drive is `provident.dispatch` (by css.id, nodeId or wire); observations are `get_rendered_html`,
 `get_markdown`, `list_targets` and `get_node_state`, and every emitted element carries `data-node-id`.
