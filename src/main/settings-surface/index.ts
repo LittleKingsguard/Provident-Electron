@@ -1,7 +1,8 @@
 // src/main/settings-surface/index.ts — THE SURFACE (D-17, D-18): the operator path's ONE reference
-// to the instance, the four verbs `src/main/main.ts` delegates its three security routes to, and
-// the composition's only gate edge. The declared surface is `docs/L3/security-store-storeroom/
-// signatures.md` §3 and nothing else; the design is `design-settings-surface.md` §2-§7.
+// to the instance, the six verbs `src/main/main.ts` delegates — `read`, `set` and `transition` for
+// its three security routes, `attach` the composition's only gate edge, `state` and `commit` for
+// the app-state rows. The declared surface is `docs/L3/security-store-storeroom/signatures.md` §3
+// and nothing else; the design is `design-settings-surface.md` §2-§7.
 //
 // IT SEES THE INSTANCE THROUGH READ, WRITE AND LISTENERS ALONE — the same interface a foreign
 // consumer gets from the package — so the instance knows nothing about this file and its tests can

@@ -202,7 +202,7 @@ function fromStored(value: Record<string, unknown>): Row {
   return row
 }
 
-/** The boot import, six arms each answering without a throw, and the module's ONE `fs` call: the
+/** The boot import, six arms each answering without a throw, and the module's FIRST `fs` call: the
  *  retired name is READ here and never written, renamed, repaired or deleted (design §7; D-19).
  *  A foreign top-level name copies into the entries map VERBATIM under its own name — preserved,
  *  never dropped — so the operator's token, grants, cap and arbitrary entries all survive (behaviour
