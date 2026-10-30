@@ -833,8 +833,12 @@ function importBreakOf(source: string, label: string): string | null {
 }
 /** `R-3` — the config/dependency half: the pinned `scripts` key set is the
  *  landed set PLUS `ui` (`tests/ui-leg-contract.test.ts` `L-1`, quoted here
- *  rather than re-opened), and no dependency may be added. */
-const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp']
+ *  rather than re-opened), and no dependency may be added.
+ *  ⟶ EXTENDED 2026-10-30: the landed set gains `panes`, the `secure-panels`
+ *  unit's live leg key (D-37). A `scripts` key set is a loop INSTRUMENT, so the
+ *  rows that guard it are EXTENDED and stay gating rather than becoming lower
+ *  bounds (D-38) — `R-3` and `I-9` both read this one list. */
+const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp', 'panes']
 const PINNED_DEV_DEPS = ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest']
 // THE SET STAYS EXACT: 'provident-storeroom' is the one member added by the 2026-10-29 import.
 const PINNED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom']
@@ -935,6 +939,7 @@ describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the r
     ).toBe(true)
   })
 
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('R-3 (config half) — no shim/config/script/dependency change: `package.json` keeps the landed key set + `ui`, and the five pinned devDependencies', () => {
     const pkg = readJson('package.json')
     const scripts = (pkg['scripts'] ?? {}) as Record<string, unknown>
@@ -1696,6 +1701,7 @@ describe('§3.3 I-1..I-14 — the invariants that hold in every state', () => {
     expect(rec.received.length, 'I-14 — no seam is retained: a second call with the same seam observes a FRESH count.').toBe(0)
   })
 
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('I-9 (§2.2 P-FM-5/P-FM-6) — no store of its own, no MCP surface, no shim member, no `electron`/`node:*` import, no new dependency, no script', async () => {
     const pkg = readJson('package.json')
     expect(Object.keys((pkg['scripts'] ?? {}) as Record<string, unknown>).filter((k) => !LANDED_SCRIPT_KEYS.includes(k)), 'I-9 — no script is added by this unit.').toEqual(['ui'])

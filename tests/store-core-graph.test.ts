@@ -856,10 +856,14 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
   })
 
   // [T] §3.4 R-10 — the frozen surfaces are unmoved, by set equality against NAMES.
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('§3.4 R-10 · the frozen surfaces are UNMOVED, and no `scripts` key was added', () => {
     const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./../package.json', import.meta.url)), 'utf8')) as Record<string, unknown>
     const scripts = Object.keys(pkg['scripts'] as Record<string, unknown>)
-    expect(scripts, '§2.2 P-4 — the `scripts` KEY SET is unmoved: adding a key would redden `tests/ui-leg-contract.test.ts`\u2019s `L-1`').toHaveLength(13)
+    // ⟶ EXTENDED 2026-10-30: the count moves from 13 to 14 with the landed set, which gains `panes` —
+    // the `secure-panels` unit's live leg key (D-37). A `scripts` key set is a loop INSTRUMENT, so the
+    // row guarding it stays gating and is EXTENDED, count arm included, rather than loosened (D-38).
+    expect(scripts, '§2.2 P-4 — the `scripts` KEY SET is unmoved: adding a key would redden `tests/ui-leg-contract.test.ts`\u2019s `L-1`').toHaveLength(14)
     // READ AS A SET, NOT AS AN ORDERED ARRAY. REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR
     // PASS, Repair 2): the as-filed form compared the LIVE `Object.keys(package.json.scripts)`
     // — an ORDERED array, in the file's own insertion order — against a HAND-WRITTEN array
@@ -869,10 +873,10 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     // words: `§2.2` `P-4` pins *"the `scripts` key set"*, and `§3.4` `R-10` reads *"the frozen
     // surfaces asserted **by set equality against the NAMES**"* — set equality is
     // order-insensitive. Sorting BOTH sides makes the comparison a set comparison while
-    // keeping the row's id and its substantive claim (the landed twelve plus exactly `ui`;
+    // keeping the row's id and its substantive claim (the landed thirteen plus exactly `ui`;
     // a count is asserted BESIDE the set, never instead of it — `§4.4 S-7`).
-    expect([...scripts].sort(), '§2.2 P-4/§3.4 R-10 — the `scripts` KEY SET is EXACTLY the landed twelve plus `ui`, read BY SET EQUALITY AGAINST THE NAMES (never as an ordered array: the key order is `package.json`\u2019s own and is not a declared surface)').toEqual(
-      ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp', 'ui'].sort(),
+    expect([...scripts].sort(), '§2.2 P-4/§3.4 R-10 — the `scripts` KEY SET is EXACTLY the landed thirteen plus `ui`, read BY SET EQUALITY AGAINST THE NAMES (never as an ordered array: the key order is `package.json`\u2019s own and is not a declared surface)').toEqual(
+      ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp', 'panes', 'ui'].sort(),
     )
     // THE POSITIVE CONTROL: the SAME set-equality reading FAILS on an added/renamed key, so
     // its passing over the live key set is a reading and not a dead scan.

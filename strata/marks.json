@@ -4,7 +4,7 @@
   "suites": {
     "flat": {
       "files": 89,
-      "sites": 2759
+      "sites": 2760
     },
     "e2e": {
       "files": 5,
@@ -701,24 +701,69 @@
   ],
   "gates": [
     {
+      "file": "tests/container.test.ts",
+      "scenario": "(line 991)",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/focus-model.test.ts",
+      "scenario": "I-9 (§2.2 P-FM-5/P-FM-6) — no store of its own, no MCP surface, no shim member, no `electron`/`node:*` import, no new dependency, no script",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/focus-model.test.ts",
+      "scenario": "R-3 (config half) — no shim/config/script/dependency change: `package.json` keeps the landed key set + `ui`, and the five pinned devDependencies",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/menu-template.test.ts",
+      "scenario": "R-3 (config half) and R-13 (no-importer half) are evaluable with NO module at all",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/overlay.test.ts",
+      "scenario": "R-3(config half) (§3.4) — package.json/package-lock.json carry the LANDED dependency and script sets: no new dependency and no new script key",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/store-core-graph.test.ts",
+      "scenario": "§3.4 R-10 · the frozen surfaces are UNMOVED, and no `scripts` key was added",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
       "file": "tests/store-tabs-record.test.ts",
       "scenario": "S-1 · §5.1 / C-9 — THE EDIT-SET ASSERTION AS A SET: `edit-set ⊆ declared scope ∪ declared wiring points`, WITH the positive control that an edit outside that union FAILS",
       "reason": "the loop's own tree assertion, not module machinery (D-30)"
+    },
+    {
+      "file": "tests/store-tabs-record.test.ts",
+      "scenario": "S-7 · §4.3 item 4 / §7 item 4 — this unit takes NO new `package.json` script key (so `L-1`’s pinned `scripts` KEY SET is untouched)",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/theme.test.ts",
+      "scenario": "R-3(config half) (§3.4) — package.json/package-lock.json carry the LANDED dependency and script sets: no new dependency, no new script key",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/ui-leg-contract.test.ts",
+      "scenario": "L-1 (§2 items 1+3) — scripts/electron-ui.mjs exists and `npm run ui` carries the pinned shape",
+      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
     }
   ],
   "readings": {
     "gating": {
-      "files": 6,
-      "sites": 45
+      "files": 13,
+      "sites": 54
     },
     "onNotice": {
       "files": 113,
-      "sites": 2949
+      "sites": 2941
     },
     "retained": {
       "files": 5,
       "sites": 44
     },
-    "carveOut": 1
+    "carveOut": 10
   }
 }

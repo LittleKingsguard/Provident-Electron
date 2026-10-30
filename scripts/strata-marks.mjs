@@ -44,6 +44,10 @@ const FILE_MARK = /^\s*\/\/\s*strata:marked-file\s+([A-Za-z][A-Za-z-]*)\s+—\s*
 const SPEC_MARK = /^\s*\/\/\s*strata:marked\s+([A-Za-z][A-Za-z-]*)\s+—\s*(\S.*)$/
 const GATE_MARK = /^\s*\/\/\s*strata:gates\s+—?\s*(\S.*)$/
 const ANY_MARK = /^\s*\/\/\s*strata:(?:marked|marked-file|gates)\b/
+// A WRAPPER HELPER IS NOT A SPEC TO THIS SCANNER. A file whose rows are declared through `itc(title, body)`
+// — a local wrapper that calls `it(recordTitle(title), body)` — cannot carry a marker above the call, because
+// a marker must bind to a literal `it`/`test`. The repair is to declare that spec literally; widening this
+// regex to any identifier would make a marker above an arbitrary call look like evidence of a marked scenario.
 const SPEC = /^\s*(?:it|test)(?:\.(?:each|skip|todo|only|concurrent|fails|sequential)(?:\([^)]*\))?)?\s*\(/
 const DESCRIBE = /^\s*describe(?:\.\w+(?:\([^)]*\))?)?\s*\(/
 const COMMENT_OR_BLANK = /^\s*(?:\/\/|\/\*|\*|$)/

@@ -175,8 +175,10 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
     'battery',
     'divergence',
     'mcp',
+    'panes', // ⟶ ADDED 2026-10-30: the pane unit's own live leg key, `npm run build && node tests/e2e/secure-panels/panes-live.mjs` (D-37); a key set is a loop instrument, so this row is EXTENDED and stays gating rather than treating the set as a lower bound (D-38)
   ]
 
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('L-1 (§2 items 1+3) — scripts/electron-ui.mjs exists and `npm run ui` carries the pinned shape', () => {
     const src = readSource(LEG_PATH)
     expect(src, LEG_ABSENT).not.toBeNull()

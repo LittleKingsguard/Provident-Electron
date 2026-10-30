@@ -1217,13 +1217,17 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     expect(hits[0], 'X-5 — the one match is in src/renderer/index.html, the DENIED path of §5.1 item 2').toContain('index.html')
   })
 
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('R-3(config half) (§3.4) — package.json/package-lock.json carry the LANDED dependency and script sets: no new dependency, no new script key', () => {
     const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
       scripts?: Record<string, string>
       dependencies?: Record<string, string>
       devDependencies?: Record<string, string>
     }
-    const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp']
+    // ⟶ ADDED 2026-10-30: `panes` — the `secure-panels` unit's live leg key (D-37). A `scripts`
+    // key set is a loop INSTRUMENT, so this row is EXTENDED and stays gating rather than being
+    // turned into a lower bound (D-38); the set stays EXACT, and no key this unit owns is added.
+    const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp', 'panes']
     const LANDED_DEV = ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest']
     // THE SET STAYS EXACT: 'provident-storeroom' is the one member added by the 2026-10-29 import (src/main/storeroom.ts is the single seam; no capability is exposed).
     const LANDED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom']

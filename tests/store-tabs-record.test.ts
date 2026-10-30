@@ -1956,8 +1956,13 @@ describe('T2 §4.2 item 9 — THE STATIC BOUNDARY (`§5.1`, `C-9`, `§5.3`, `§2
     expect(/\blanding\b/.test(refs), '§2.2 item 6 — no `landing` token in the references module’s bytes').toBe(false)
   })
 
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('S-7 · §4.3 item 4 / §7 item 4 — this unit takes NO new `package.json` script key (so `L-1`’s pinned `scripts` KEY SET is untouched)', () => {
-    const declaredKeys = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp']
+    // ⟶ EXTENDED 2026-10-30: the declared set gains `panes` — the `secure-panels` unit's live leg key
+    // (D-37), landed by the harness row that owns `package.json`. A `scripts` key set is a loop
+    // INSTRUMENT, so this row is EXTENDED and stays gating rather than flagging a legitimate
+    // instrument as an unexpected key (D-38); the claim stays exact — THIS unit takes no new key.
+    const declaredKeys = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp', 'panes']
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { scripts?: Record<string, string> }
     const extra = Object.keys(pkg.scripts ?? {}).filter((key) => !declaredKeys.includes(key))
     expect(extra, '§4.3 item 4 — any new key is OWED to a TestWriter extension of `L-1`’s pinned set, and a config change cannot satisfy it').toEqual([])

@@ -163,6 +163,7 @@
       "name": "secure-panels",
       "paths": [
         "src/renderer/secure-panels.ts",
+        "tests/e2e/secure-panels/",
         "tests/secure-panels.test.ts",
         "tests/debug-panel.test.ts",
         "tests/blind-renderer-debug.test.ts",

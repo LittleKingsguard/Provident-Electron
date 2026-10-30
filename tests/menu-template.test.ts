@@ -949,14 +949,18 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
     ).toBe(true)
   })
 
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('R-3 (config half) and R-13 (no-importer half) are evaluable with NO module at all', () => {
     // R-3's config half.
     const pkg = JSON.parse(readFileSync(PKG_PATH, 'utf8')) as { scripts?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> }
+    // ⟶ ADDED 2026-10-30: `panes` — the `secure-panels` unit's live leg key (D-37). A `scripts` key set
+    // is a loop INSTRUMENT, so this row is EXTENDED and stays gating rather than becoming a lower bound
+    // (D-38); the set stays EXACT — the count in the message below moves with the list, never instead of it.
     expect(
       Object.keys(pkg.scripts ?? {}).sort(),
-      'R-3 / §5.1 item 7 — the `scripts` key set is EXACTLY the twelve landed keys (`tests/ui-leg-contract.test.ts` L-1 pins it): this unit adds NO script, so a new key here reddens L-1 as well as this row',
+      'R-3 / §5.1 item 7 — the `scripts` key set is EXACTLY the thirteen landed keys (`tests/ui-leg-contract.test.ts` L-1 pins it): this unit adds NO script, so a new key here reddens L-1 as well as this row',
     ).toEqual(
-      ['battery', 'build', 'build:watch', 'clean', 'divergence', 'mcp', 'start', 'start:http', 'test', 'test:watch', 'typecheck', 'typecheck:tests', 'ui'].sort(),
+      ['battery', 'build', 'build:watch', 'clean', 'divergence', 'mcp', 'panes', 'start', 'start:http', 'test', 'test:watch', 'typecheck', 'typecheck:tests', 'ui'].sort(),
     )
     expect(Object.keys(pkg.devDependencies ?? {}).sort(), 'R-3 / AGENTS.md item 11(d) — the devDependencies key set is the FIVE landed keys: NO new dependency and no property runner').toEqual(
       ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest'].sort(),

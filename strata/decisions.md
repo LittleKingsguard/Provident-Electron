@@ -792,3 +792,83 @@ the register review that ranked the open items.
   (D-32).
 - It is measured, not asserted: the app boots and `npm run ui` drives a live renderer (D-27), so a green
   on this unit is a rendered-surface reading rather than a node-suite one.
+
+---
+
+## D-36 — Corrigendum to D-35: the pane's map row claims eight paths, not seven
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-35**, which stands as filed (D-1).
+**Source:** the `secure-panels` unit's L1 design, finding F-2, measured against the `secure-panels` row of
+`strata/modules.json`: its `paths` carries **eight** entries — `src/renderer/secure-panels.ts` and seven
+flat test files — while its `endpoints` is **7**.
+
+**Decision:** D-35's "seven claimed paths" read the endpoints figure onto the path list. The row claims
+eight paths and seven endpoints, and the derived cap `50 + 10×7 = 120` is unmoved by the correction.
+
+- The row claims **no** `tests/e2e/` path at this head, which is finding F-1 of the same design: D-7's
+  map-before-the-artifact ordering is unsatisfied for the battery this unit needs, and the claim is added
+  by the map's own writer before the battery is authored — not by this row and not by L0.
+- Recorded because a count in a decision row is both its own dated reading (D-26) **and** a claim about
+  the tree (D-21). This one was wrong on both counts at once — the failure mode D-26 and D-28 exist to
+  prevent, committed by the seat that wrote them.
+
+---
+
+## D-37 — The pane unit's proof is a live leg with a script key, outside the four legs
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** "A script key outside the four
+legs, exactly as `ui` sits".
+
+**Decision:** the `secure-panels` unit's decisive evidence — a rendered sixth toggle — is taken by a
+live-renderer leg at `tests/e2e/secure-panels/panes-live.mjs`, reachable by one script key beside
+`battery`, `divergence` and `ui`. It is **not** a fifth member of `brief.md` §6's floor: a display-gated leg
+that every change had to satisfy would change the non-negotiable itself, and the corpus already carries
+this shape — three Electron legs that run when a unit needs what only they can see.
+
+- The floor stays **four legs**. A unit whose claim is a rendered surface adds this leg to its own evidence
+  and says so in its record (D-1).
+- The key is a `package.json` change, and that file is claimed by the `bundle-boot-seam` row: the key lands
+  through that row's owner as harness work, never by L0 and never by the unit that needs it (D-7).
+- The battery sits under `tests/e2e/`, the path D-30 retains: it is never marked, and it gates whenever it
+  is run.
+
+---
+
+## D-38 — The carve-out is a class: a row that guards a loop instrument stays gating
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** D-37's selection, measured against the tree —
+adding the `panes` key reddens `L-1` of `tests/ui-leg-contract.test.ts`, which pins the `scripts` key set
+**as a set in both directions**, and that row carries D-30's file marker.
+
+**Decision:** D-30's carve-out is not one row. A scenario whose subject is **how the loop measures** — the
+leg set and the shape of each leg, the worktree boundary and its declared edit set, the script keys those
+legs answer to — is an **instrument row**: it stays unmarked, it gates, and it may be **extended** when the
+instrument set legitimately grows, because a marked instrument cannot measure the tree it guards.
+
+- The test for membership is narrow: would the scenario still mean anything if every module were rewritten?
+  A row about a leg's command, an edit set or a key set survives that rewrite; a row about a module's
+  behaviour does not, and stays marked.
+- Extension follows the row's **own** doctrine rather than this row's licence: `L-1`'s comment already says a
+  legitimately added key extends the landed set and never turns the assertion into a lower bound.
+- A row that merely **reads** `package.json` for a build arm is not an instrument row; the class is rows
+  whose *subject* is the instrument (D-30, `strata-marks.mjs`'s carve-out reading).
+
+---
+
+## D-39 — A register corrigendum about a count cites the row, never the figure
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-36**, which stands as filed (D-1).
+**Source:** the `secure-panels` map claim, measured — D-36 says the row "claims eight paths", and the claim
+F-1 required landed later in the same pass, making it nine.
+
+**Decision:** where a corrigendum turns on a **count inside a file the layers append to**, it cites the row
+and not the figure, exactly as D-28 requires of any citation into such a file: "the `secure-panels` row of
+`strata/modules.json`", never "eight paths".
+
+- D-36's figure was true when measured and false an hour later. That is not a reason to stop counting; it is
+  the reason the count is not the correction's subject. What D-36 corrects is the **claim kind** — a path
+  count read as an endpoints figure — and that correction stands.
+- A figure may still appear where it *is* the provenance (a dated reading under D-26), and then the row's own
+  sentence dates it.
+- The `secure-panels` row carries nine paths and seven endpoints at this head; a reader takes both from the
+  row itself (D-26, D-28).

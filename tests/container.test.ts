@@ -987,7 +987,8 @@ describeC('§3.5 X-1 + §3.4 R-9 / R-11 / R-12 — the red set\'s own premise (e
     ).toBe(false)
   })
 
-  itc('R-11 the config/dependency rows: the scripts key set, the devDependencies key set and the absence of any new dependency', () => {
+  // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
+  it(recordTitle('R-11 the config/dependency rows: the scripts key set, the devDependencies key set and the absence of any new dependency'), () => {
     const pkg = JSON.parse(readOrEmpty(fileURLToPath(new URL('../package.json', import.meta.url)))) as {
       scripts?: Record<string, string>
       dependencies?: Record<string, string>
@@ -997,6 +998,13 @@ describeC('§3.5 X-1 + §3.4 R-9 / R-11 / R-12 — the red set\'s own premise (e
     // `AGENTS.md` item 4's recorded hazard: `tests/ui-leg-contract.test.ts`'s `L-1`
     // pins the `scripts` KEY SET (the landed keys plus exactly `ui`), so this unit
     // adds NO script key at all — leg 5 is a bare tsc invocation, never a script.
+    // ⟶ EXTENDED 2026-10-30 (ANNOTATE-BESIDE, `RCA-8(d)`; the as-filed reading above
+    // stands): the landed set gains ONE key it did not carry — `panes`, the
+    // `secure-panels` unit's own live leg (D-37), landed by the harness row that owns
+    // `package.json` and not by this unit. A `scripts` KEY SET is a loop INSTRUMENT, so
+    // the row that guards it stays gating and is EXTENDED when the instrument set
+    // legitimately grows (D-38); the claim THIS row makes is unchanged and still exact:
+    // this unit adds no key, and the set below is still pinned in both directions.
     expect(
       [...scripts].sort(),
       'R-11 — the `scripts` key set is UNCHANGED by this unit: leg 5 adds NO script (`§5.1` item 7, `§5.2` leg 5). ' +
@@ -1008,6 +1016,7 @@ describeC('§3.5 X-1 + §3.4 R-9 / R-11 / R-12 — the red set\'s own premise (e
       'clean',
       'divergence',
       'mcp',
+      'panes', // ⟶ ADDED 2026-10-30: the `secure-panels` unit's live leg key (D-37); an extended INSTRUMENT, never a licence (D-38)
       'start',
       'start:http',
       'test',

@@ -1,0 +1,108 @@
+# L1 — the Settings pane's sixth group
+
+- **Layer:** L1 · **Unit:** `secure-panels` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Status:** DECLARED · **Ceiling:** 150 lines (class max) (D-1, D-2)
+- **Charter:** D-35 — the unit closes D-11's uncovered census term: the gate validates **six** groups and the operator's pane offers **five**, so `data` is a valid group with no operator control
+- **Inputs:** `strata/brief.md` §1/§3/§5/§6; `strata/decisions.md` D-3, D-7, D-11, D-14, D-17, D-19, D-22, D-23, D-26, D-28, D-30, D-31, D-32, D-35, D-36, D-37, D-38; `strata/modules.md` §1/§3; `strata/platform.md` §4; `strata/examiner.md` §2-§3; `docs/L1/bundle-boot-seam.md` (the shape this document takes); `docs/L1/central-data-management.md` §6 and C-2's last term (the transfer, D-32)
+
+## 1. The goal, in the operator's own terms (D-35)
+
+An operator opens the app, finds the Security Settings pane, and sees **one toggle per gate group — six of them**, the sixth being `data`; they can **grant and revoke `data`** from that pane exactly as they grant `graph`, `code` or `module` today (`src/renderer/secure-panels.ts:72,171-177`; D-35). The grant reaches the running app: the five `provident.data.*` tools enter and leave `tools/list` as the toggle moves (`src/main/security.ts:38-42`; D-11). It survives a restart, because **the operator-settings instance owns the grant** and the pane is a view and a setter over it — never an authority (D-17, D-19, D-22).
+
+Two sentences carry the document. The **defect** is a data set of five names against a gate that validates six (`src/renderer/secure-panels.ts:72`; `src/main/security.ts:3,159`). The **repair** is a sixth entry in that data set, on the graph path that already exists: `paneEnvelope()` builds one toggle per `GROUPS` entry and `syncConfig()` refreshes every `toggle:<group>` node from the carrier's `enabled` list (`src/renderer/secure-panels.ts:171-177,545-549`). No hand-written DOM is created, and no new structural pattern is introduced (D-35; `brief.md` §2 UI authority).
+
+## 2. Why five walkthrough passes could not see it (D-11, D-23, D-30)
+
+The pane's group set is a **third copy** of the group set. D-23 names the gate's two live copies (`src/main/security.ts:3,159` and `src/main/operator-settings/index.ts:112`); this one is neither, it carries no type link to `ToolGroup`, and its label table is a `Record<string, string>` that accepts any key (`src/renderer/secure-panels.ts:72-79`; D-23).
+
+Measured at this head, **no row in the tree reads the set's completeness**: of the seven claimed test files, the one that addresses a group row at all drives `toggle:graph` and asserts the *carrier's* `enabled` list rather than the pane's membership (`tests/secure-panels.test.ts:108-111`), the other six never spell a group name, a `data-group` or `#group-toggles`, and the live exclusion battery reads the pane's rendered *exclusion* control, not its group rows (`tests/secure-exclusion-live.mjs`). A drift no row reads is a drift a documentation-only walkthrough cannot see (`brief.md` §5; D-30). This unit's evidence is therefore a **rendered reading of the sixth row**, never a restatement of the data set (D-35).
+
+## 3. The map row, filed, and what the sixth toggle moves (D-7, D-14, D-26, D-31)
+
+The `secure-panels` row of `strata/modules.json` is filed: one `src/` path (`src/renderer/secure-panels.ts`) and the seven flat test files §6 carries, with `endpoints: 7` (D-7, D-35). `N` is the surface the module **exposes or consumes** (D-14, `platform.md` §4), and the cap `50 + 10×7` is derived by the lint and never declared here (`platform.md` §4).
+
+**The census consequence, named rather than absorbed: the sixth toggle moves nothing `N` counts.** No MCP tool, resource or route is added; no package export is called that the pane did not already call; no exported value name is added; the row's click rides the landed shared `TOGGLE_BODY`'s already-counted `security.set` route (`src/renderer/secure-panels.ts:135-142,176`). **`endpoints: 7` stands and the cap stands** (D-14).
+
+- **D-11's census is inherited, not moved**: 27 tools, six groups, three resources, the 8-tool default grant and 13 under `data` are figures this unit reads in `brief.md` §2 — central-data registered the sixth group, and this unit only makes it reachable from the pane (D-11, D-35).
+- **`brief.md` §6's floor stays four legs and is unmoved by the change itself**: no `src/` file is added and no test file migrates, and §6 owns the live count, so the battery's new rows are re-measured into it by whoever takes the reading, never restated here (D-26). The one `package.json` addition — the `panes` key §4.2 names — is harness work outside the floor, and §4.2 states why it is not a fifth member of it (D-7, D-37).
+- **The one set that changes size is the pane's own**, five entries to six, and that set is this unit's subject rather than a registered count (`src/renderer/secure-panels.ts:72`; D-35).
+- **No existing row's expectation moves**, measured: the five-member group lists elsewhere in the tree are *seeded states* of other rows' fixtures (`tests/store-compliance-live.mjs:268-271`), not censuses of the pane, and the marked seven read the carrier, not the set (D-26, D-31). §6 carries what that means for the marked suite.
+
+## 4. The proof, designed before the repair (D-30, D-27)
+
+### 4.1 Where the proof belongs, and why
+
+**A new live battery at `tests/e2e/secure-panels/`, driven like the app's other live legs.** A rendered toggle lives only in a real renderer, and this pane's rendered nodes are reachable by no MCP endpoint at all — it is an isolated graph (`src/renderer/secure-panels.ts:1-17`; D-16, D-18), so an app-graph reading cannot see the toggle and a node-suite reading cannot either (`brief.md` §6). The app boots and all three Electron legs are green at this head, so the surface claim is measurable (D-27).
+
+| Candidate | Verdict |
+|---|---|
+| `tests/e2e/secure-panels/` — this layer's own artifact (`brief.md` §3) | **taken**: D-30 retains `tests/e2e/**` because a row there states a supplied state, an action and an answer at a process boundary, which is exactly this unit's scenario |
+| the live-renderer leg `scripts/electron-ui.mjs` extended | **refused**: that leg takes **exactly one** measurement and throws on a second (`scripts/electron-ui.mjs:441-447`), and its `R4` limit declares it makes no app-level claim (`scripts/electron-ui.mjs:35-37`) — an operator capability control is one, so hosting this row there would breach the leg's own contract rather than extend it (D-30) |
+| a node-side `.test.ts` collected by `npm test` | **refused**: `npm test` runs the modules under a layout-less DOM shim, and a row that skipped without a `DISPLAY` would be conditional, which `examiner.md` §2 forbids (D-30) |
+
+The battery is therefore a **leg**, invoked by its literal command with a display prerequisite and a closed exit-code vocabulary in the ui leg's shape — `3` for the missing display, never a skip (`scripts/electron-ui.mjs:97-103`; `platform.md` §3), and reached by the `panes` key §4.2 declares, which wraps that command rather than replacing it; it gates where D-30 keeps a boundary reading: a red row is a defect in behaviour until another measurement says otherwise (D-30, D-37).
+
+### 4.2 The battery's instruments, and the limit each carries
+
+- **[MCP]** a literal MCP client over the app's own stdio transport, built with the repo's shipped helper, one process per boot (`scripts/electron-spawn.mjs:404,367`): `initialize`, `tools/list`, and the two read tools §4.3's isolation row needs (D-27).
+- **[REALM]** the live renderer's own DOM, read and acted on by a driver-authored handler body loaded through the EXISTING `provident.load` and driven by the EXISTING `provident.dispatch` — the channel the retained ui leg declares and measures with (`scripts/electron-ui.mjs:384-425`). The body reads `#panes` in the renderer realm (`src/renderer/index.html:40`), and **the click it issues is an ordinary `click` event on a rendered element**, which the pane's own `DomAdapter` turns into a pane-graph dispatch and then into the landed `TOGGLE_BODY` (`src/renderer/secure-panels.ts:385-397,135-142`): the production path from the control to the store, with only the event's origin synthetic (D-35; `brief.md` §2). **The limit is the ui leg's own and is carried, not hidden**: a body-issued click is not a coordinate gesture — that leg's honest-limits row says as much about `provident.dispatch` (`scripts/electron-ui.mjs:238-241`) — so P-3's non-zero rendered box is a row, not a comfort, and a pointer-level upgrade would be the CDP channel ASM-2 refuses (D-30).
+- **[G]** the scratch profile's own bytes: the instance's file, read at the record's address (`src/main/operator-settings/index.ts:112-116`; D-25).
+- **Not used, named so no reader looks for them**: `webContents.executeJavaScript` and CDP are not used, so the ui leg's `R4` static set is neither weakened nor extended, and the exclusion battery's CDP channel stays its own unit's (`scripts/electron-ui.mjs:238-264`; D-32). **The one addition is a script key, and D-37 decides it** — the battery gets a `panes` key beside `battery`/`divergence`/`ui`, reading `npm run build && node tests/e2e/secure-panels/panes-live.mjs`, so the battery's own command stays correct, since the key wraps it rather than replacing it. `package.json` is the `bundle-boot-seam` row's, so the key lands through that row's owner as harness work, never from here (D-7, D-37). **It is not a fifth member of `brief.md` §6's floor**: that floor stays four legs, and a unit that needs a rendered-surface reading adds this leg to its own evidence and says so in its record (D-1, D-37). **The pinned key set is extended rather than violated** — `L-1` of `tests/ui-leg-contract.test.ts` is an **instrument row**, whose subject is the instrument set itself, so it stays gating and is extended exactly as its own doctrine requires (D-38; `tests/ui-leg-contract.test.ts:165-203`).
+
+### 4.3 The rows — goal → expected, at `tests/e2e/secure-panels/panes-live.mjs`
+
+**Authored before the repair, so it carries red-first evidence by construction**: `GROUPS` carries five names at this head (`src/renderer/secure-panels.ts:72`, measured), so P-2…P-6 answer red until E-1 lands — and a battery that is red for that reason is the evidence the unit is admitted on, never a green filed early (`examiner.md` §3; D-27).
+
+| # | Goal | Expected |
+|---|---|---|
+| P-1 | the gate declares the group set the pane must offer (precondition, the B-1 precedent — it reads the tree) | `ToolGroup` carries six members and `data` is one; `VALID_GROUPS` in both live copies admits all six (`src/main/security.ts:3,159`; `src/main/operator-settings/index.ts:112`; D-23) |
+| P-2 | the rendered pane offers one toggle per declared group | the `#panes` subtree holds six `[data-group]` rows whose value set equals P-1's declared set, so the third copy cannot drift silently — and a seventh group lands here as a red row rather than as a census finding five passes later (D-11, D-23) |
+| P-3 | the sixth row is a control, not a decoration | the `data` row carries a non-zero rendered box, a text that names the `data` group, and reads off (`data-on="false"`, `☐`) under the driver's supplied state — `['read','dispatch','graph','code']`, seeded through the retired name's import-once path, which the measurement channel's own groups require (`scripts/electron-ui.mjs:576`; D-19) |
+| P-4 | the operator grants `data` from the pane | one click on that rendered row turns it on (`data-on="true"`, `☑`), the pane's status line carries `data` in its `enabled:` composition (`src/renderer/secure-panels.ts:540`), and `tools/list` gains **exactly** the five `provident.data.*` names — a set difference, never a count (D-11, D-26) |
+| P-5 | the instance owns the grant across a restart | a second boot on the **same** scratch profile, before any gesture, paints the sixth row on at first paint, its status line carries `data`, the instance's file carries the grant, and `tools/list` still carries the five names (D-17, D-19, D-22) |
+| P-6 | the same control revokes | a second click turns the row off and the five names leave `tools/list`; the file's record no longer carries `data` — a toggle, not a one-way grant (D-35) |
+| P-7 | the five landed rows are unmoved, and the pane stays unreachable from the MCP surface | each of the five reads what it read before P-4, and `provident.list_targets`/`get_rendered_html` still resolve no pane node across both boots (D-16, D-18, D-35) |
+
+**Completable, and the battery says so**: P-2…P-6 are satisfied by one entry in `GROUPS` and one in `GROUP_LABELS`, because every write path they exercise is landed — the per-entry toggle, the `toggle:` refresh arm and the shared click body (`src/renderer/secure-panels.ts:171-177,545-549,135-142`) — and P-1/P-7 hold at this head (`examiner.md` §3; D-35).
+
+## 5. What this unit does not do (D-3, D-5, D-18, D-35)
+
+- **The five landed toggles do not change**: their labels, their handler body, their `data-on` writes and their order in `#group-toggles` stay byte-identical, and P-7 is the row that keeps them so (`src/renderer/secure-panels.ts:72-79,171-177`; D-35).
+- **No hand-written DOM and no new structural pattern**: the sixth toggle is one more data node of the landed `label`/`group-row`/`toggle:<group>` shape, and no CSS, class, pane id or DOM is added (`src/renderer/secure-panels.ts:171-177,209`; `brief.md` §2).
+- **No change to `src/main/security.ts`'s group set**, to the instance's copy, or to any count it carries: the gate already validates `data` (`src/main/security.ts:3,159`; D-11, D-23).
+- **No new MCP tool, resource, route, `RpcMethod` member or bridge channel**, and no script key beyond the single `panes` key §4.2 declares: an instrument the design needs and does not own is a finding to route, not a licence to add one (D-11, D-18, D-35, D-37).
+- **Nothing in `provident-storeroom` or `provident-ssr`**: a package gap met here is recorded upstream-owned in this unit's record and archived with it (D-5).
+- **No design of the repair below this layer**: the exact label wording and the entry's typing are L3's, and no signature, constant or edit order is fixed here (`examiner.md` §4; D-3).
+
+## 6. The marked-test reality, carried rather than worked around (D-30, D-31)
+
+The seven flat test files the row claims carry `// strata:marked-file rework` in their headers, so they are **on notice** and stop gating; **this design instructs nobody to re-grain them** (D-30, D-31). What the rework will replace is those files' whole envelope-level machinery — the DOM-shim pane, the mutation predicate and the module-pane rows — which a rendered reading makes redundant rather than repairable (D-30). What the new rows carry instead is §4.3's rendered surface, the gate's answer and the instance's own bytes: the evidence a marked envelope row cannot give, because it runs without a renderer (`brief.md` §6; D-27, D-35).
+
+**One finding belongs here and not in another layer's document**: the marked seven do not redden on this change — measured, they read the carrier's `enabled` list — so the marked suite is silent on the defect in both directions, before and after the repair (D-31). Nothing in this unit's landing depends on that silence, and nothing in it repairs it.
+
+## 7. Declared cross-module writes, one writer each (D-3, `modules.md` §1)
+
+| Id | Path (owning row) | What moves | Writer |
+|---|---|---|---|
+| **E-1** | `src/renderer/secure-panels.ts` (`secure-panels`) | two entries: one in `GROUPS` and one in `GROUP_LABELS`, and nothing else in the file — the five landed rows, their order and their refresh arm stay byte-identical (`src/renderer/secure-panels.ts:72-79`; D-35) | this unit's **L4**, one shot, under L2's and L3's design (D-3) |
+| **E-2** | `docs/L1/secure-panels.md` | this document (D-3, `brief.md` §3) | **L1** |
+| **E-3** | `tests/e2e/secure-panels/` | §4.3's battery — this layer's own artifact, and no row of it touches another module's path (D-30) | **L1** |
+| **E-4** | `strata/modules.json` (L1's own map) | the `secure-panels` row's **path set** gains `tests/e2e/secure-panels/`, so the map resolves the battery instead of leaving it unowned — D-10's destination convention and the `central-data` row's own precedent. `endpoints` does not move (§3), and the claim is filed **before** the battery is authored (D-7) | **L1's map pass** — routed as F-1, not performed under this session's write limit |
+| **E-5** | `package.json` (the `bundle-boot-seam` row's file) | one additive script key, `panes`, reading §4.2's command and nothing else in the file (`"panes": "npm run build && node tests/e2e/secure-panels/panes-live.mjs"`) — outside `brief.md` §6's four-leg floor and not this unit's write (D-1, D-37) | **the harness row's owner**, as that row's work (D-7, D-37) |
+
+**The census this repair measured, kept beside the E-rows (D-38).** The landed `scripts` key set is guarded by **nine rows across eight `tests/*.test.ts` files** — `L-1` of `tests/ui-leg-contract.test.ts` plus eight private copies (`container` `R-11`, `theme` `R-3`, `focus-model` `R-3` and `I-9`, `overlay` `R-3`, `menu-template` `R-3`, `store-core-graph` `R-10`, `store-tabs-record` `S-7`), with a tenth row (`theme-control` `I-8`) deriving the set from `L-1`'s own source instead of copying it. So E-5's one key extends **eight rows, not one**: the extension is class-wide because every guard is an instrument row, and each stays gating with its own claim still exact, never loosened into a lower bound (D-37, D-38).
+
+## 8. Findings routed, with their owners (D-3, D-21, D-28)
+
+- **F-1 → the map's writer (L1's map pass, D-7/E-4)**: the filed row claims no e2e path, so this unit's battery has nowhere to live until the row gains `tests/e2e/secure-panels/`; the claim must precede the battery (D-7, D-10). **⟶ DISCHARGED 2026-10-30**: the `secure-panels` row of `strata/modules.json` now carries `tests/e2e/secure-panels/` among its paths, so E-4's claim has landed and the battery has a home — the claim is read from the row itself, and its path and endpoint counts are not restated here (D-39, D-26).
+- **F-2 → L0 (D-35, D-28)**: D-35 calls the row "seven claimed paths" while the row and `strata/modules.json` carry **eight** — one `src/` path and seven test files. The `seven` counts the marked test files; a reader resolving the row counts eight. A corrigendum, never this document's edit (D-28, D-34) — and it is filed: **D-36** is that corrigendum, and nothing here was edited to meet it (D-36).
+- **F-3 → L3 (`secure-panels`)**: the pane's group list is the third copy (§2) and no mechanism binds it to `ToolGroup`; a seventh group would repeat this drift. The landed precedent for a binding without a runtime edge is the pane's type-only import from the gate module (`src/renderer/secure-panels.ts:38-40`). The mechanism is L3's to design; the requirement is this document's (D-11, D-23).
+- **F-4 → nobody, recorded so it is not chased**: `docs/L1/central-data-management.md` C-2's last term becomes this document's subject by transfer (D-32); its line cites stand as that document's dated reading and are not repaired here (D-28, D-3).
+
+## 9. Assumptions, each with the alternative it rejected (`brief.md` §8)
+
+| id | Assumption | Rejected alternative |
+|---|---|---|
+| ASM-1 | the repaired pane is proven by a rendered reading on a live leg, gated by its own command and exit code (§4.1) | a `.test.ts` row under the DOM shim, which proves an envelope and never a rendered control (`brief.md` §6; D-30) |
+| ASM-2 | the driver's own `graph`/`code` grants are the channel its reading needs, supplied as a state through the import-once path, and the `panes` key §4.2 declares is the one instrument key this design adds (§4.2, P-3) | a CDP reach-in, or any further key beside `panes`, which widens an instrument set this unit does not own (`scripts/electron-ui.mjs:238-264`; D-32, D-37) |
+| ASM-3 | the sixth entry is a data change, and the group set's *derivation* is left to L3 (F-3) | deriving the list at L1, which puts a signature and a mechanism in a design layer that fixes neither (`examiner.md` §4; D-3) |
+| ASM-4 | the grant is measured as a set difference on `tools/list`, never as a tool count | restating a live count outside `brief.md` §6, which is the drift D-26 exists to stop |
