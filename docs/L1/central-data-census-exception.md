@@ -1,9 +1,12 @@
 # L1 — `central-data`'s census re-grain: one declared cross-module exception
 
-- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 1 is read through
-  this one: N measured 16 → 15 (§1), E-3 added (§2), E-4 added and the two falsified comment figures licensed (§3)
-- **Status:** DECLARED — filed before this unit's L2 work opened, so no writer below this layer improvises it; rev 2
-  filed at the closing examination, after the move it licenses was measured
+- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 3 re-grains four
+statements and no design: §1's route predicate (declared, not answered), §2's `E-2` uncovered-site term (history now,
+discharged in the pane's own unit), `E-3`'s cite form and §4's `C-3` order restatement, plus the §4/§9 cites into `main.ts`,
+the surface module and the pane — each naming its site and not its offset (D-41, D-43); rev 2 is read through this one: N
+measured 16 → 15 (§1), E-3 added (§2), E-4 added and the two falsified comment figures licensed (§3), rev 1 behind both. Rev
+2 as last filed: `git show ec76308:docs/L1/central-data-census-exception.md`
+- **Status:** DECLARED — filed before this unit's L2 work opened, so no writer below this layer improvises it; rev 2 filed at the closing examination, after the move it licenses was measured
 - **Inputs:** `docs/L1/central-data-management.md` rev 2 §3/§4/§8, `strata/decisions.md` D-5/D-10/D-11/D-12/D-13/D-14/D-15,
   `strata/modules.json`, `strata/modules.md` §1/§3/§5, `strata/platform.md` §4, the L2 examiner's readings at `57c5825`
   and at `d52cd13`
@@ -47,15 +50,15 @@ options member on the server's options pass — `dataSurface: createDataSurface(
 `ALL_TOOLS` and register nothing, which is D-11's own finding read backwards; the surface touches no file until a tool is called,
 so the boot's behaviour is unmoved (D-11, D-13; `docs/L2/central-data/interface.md` §5). Writer: `central-data`'s L4, one shot.
 
-**E-2 — rows, the §8 set, moved by this unit's L2 test writer.** L1 rev 2 §8 names 40 sites in 24 files — 5 `src/`
-statements (E-1 above) and 35 test or battery rows, 2 compile-reds under `typecheck:tests` — by one predicate: *a site
-is in the set iff it reads one of the moved numbers* (L1 rev 2 §8). **The set was not closed, and the predicate is what
-showed it**: at this re-grain the pane carried a hand-maintained copy of the group set — a five-name `GROUPS` roster, a
-five-entry `GROUP_LABELS`, no `ToolGroup` link — so it could not grant the sixth group, read the moved number, and stood
-in no class of §2 or §4. Its repair belonged to the pane's owning unit (the `secure-panels` row) and is **discharged
-there** — what it landed is the pane design's to state (`docs/L1/secure-panels.md` §7 `E-1`, cited not restated;
-`docs/L1/central-data-management.md` §8 `C-2`; D-35, D-43). The writer moves the 40 sited rows and records both lists —
-the rows it moved and the sites left green (D-11).
+**E-2 — rows, the §8 set, moved by this unit's L2 test writer.** L1 rev 2 §8 names **40 sites** — 5 `src/` statements (E-1
+above) and 35 test or battery rows, 2 compile-reds under `typecheck:tests` — by one predicate: *a site is in the set iff it
+reads one of the moved numbers*, and its file counters overlap, so no file total is stated there or here (L1 rev 2 §8; D-26).
+**The set was not closed, and the predicate is what showed it**: at this re-grain the pane carried a hand-maintained group-set
+copy — a five-name `GROUPS` roster, a five-entry `GROUP_LABELS`, no `ToolGroup` link — so it could not grant the sixth group,
+read the moved number, and stood in no class of §2 or §4. Its repair belonged to the pane's owning unit (the `secure-panels`
+row) and is **discharged there** — what it landed is the pane design's to state (`docs/L1/secure-panels.md` §7 `E-1`, cited
+not restated; `docs/L1/central-data-management.md` §8 `C-2`; D-35, D-43). The writer moves the 40 sited rows and records both
+lists — the rows it moved and the sites left green (D-11).
 
 | Class | Rows | Where |
 |---|---|---|
@@ -64,8 +67,7 @@ the rows it moved and the sites left green (D-11).
 | C-3 · the persisted set at exactly two named files | 10 sites / 6 files | `store-persist` `S-3`/`SC-1`; `store-security` `F-7`/`F-10`/`I-2`/`I-3`; `store-compliance-live.mjs` `SC-B-01`/`SC-B-03`/`SC-B-09`; `secure-exclusion-live.mjs` `U-6`; `store-tabs-record-live.mjs:93,122`; `secure-exclusion.test.ts:4990` (title only) |
 
 **Green by predicate, swept only for a stale figure:** the default-grant subset (8 names, unmoved), the seven
-`MUTATING_METHODS` rows, the no-new-surface negatives that scan an untouched mechanism module's own bytes, and the
-12 comment sites carrying the old numbers — L1 rev 2 §8 names each (D-11).
+`MUTATING_METHODS` rows, the no-new-surface negatives that scan an untouched mechanism module's own bytes, and the 12 comment sites carrying the old numbers — L1 rev 2 §8 names each (D-11).
 
 ## 3. Who writes what, and in what order
 
@@ -114,8 +116,7 @@ same finding read backwards.
 
 - **Never the archived corpus.** D-2 archived it as a closed historical record and D-15 says the re-grain runs
   against the live tree only; no archived byte is edited, and no test row repoints into it (D-2, D-15).
-- **Never a package.** `provident-storeroom`/`provident-ssr` stay read-only; a defect found there is a finding in
-  this unit's record, upstream-owned (D-5).
+- **Never a package.** `provident-storeroom`/`provident-ssr` stay read-only; a defect found there is a finding in this unit's record, upstream-owned (D-5).
 - **Never a second module's behaviour.** E-1 moves a census; it does not reshape `security.ts`'s gate, the union's
   meaning, resource registration, or `MUTATING_METHODS` (L1 rev 2 §4, ASM-9).
 - **Parked here, and since executed elsewhere: ASM-11's retirement half.** The store's own file is the only *new*
@@ -146,5 +147,4 @@ a boot — so the examiner reads the five files as code, not as a list (D-1, `ex
   image boots cold with its bytes untouched until the next `file`-tier save, so the consumer can state the recovery
   but the package does not declare it (requirement gap, same disposition) (D-5).
 - **Owed to the unit's record under `strata/records/`** — both findings, the L2 examiner's readings and the parked
-  ASM-11 half (§5). L1's write scope is `docs/L1/`, so the record is named here and owed by the layer that owns it
-  (D-1 §3, D-5).
+  ASM-11 half (§5). L1's write scope is `docs/L1/`, so the record is named here and owed by the layer that owns it (D-1 §3, D-5).

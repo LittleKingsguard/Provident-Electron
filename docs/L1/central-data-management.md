@@ -1,7 +1,7 @@
 # L1 — central data management over `provident-storeroom`
 
-- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 3
-- **Replaces** rev 2 as filed (`git show e103d9d:docs/L1/central-data-management.md`), and rev 1 behind it (`git show 50be1cb:docs/L1/central-data-management.md`); git is the history (D-1, D-2). The four answers are D-11..D-14, and rev 1's `ASM-7` ("no new surface") is refuted by D-11 and survives nowhere in this document (D-11). §5's S-10 and §6's rendered-surface boundary state one ruling, ASM-12, and agree with the tree at this head (D-11, D-12)
+- **Layer:** L1 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 4 — rev 4 re-grains six statements and no design: §1's composition site, §2's route predicate, §4's bundle clause, §8's `C-2` tense and its set total, and the cite form beside each, which now names the site instead of the offset (D-41, D-43); rev 3 and behind are read through this one
+- **Replaces** rev 3 as last filed (`git show ec76308:docs/L1/central-data-management.md`), rev 2 before it (`git show e103d9d:docs/L1/central-data-management.md`) and rev 1 behind that (`git show 50be1cb:docs/L1/central-data-management.md`); git is the history (D-1, D-2). The four answers are D-11..D-14, and rev 1's `ASM-7` ("no new surface") is refuted by D-11 and survives nowhere in this document (D-11). §5's S-10 and §6's rendered-surface boundary state one ruling, ASM-12, and agree with the tree at this head (D-11, D-12)
 - **Status:** LANDED — the map is filed at `strata/modules.json`, the `data` group is the landed surface and the composition site passes the module (§1, §3), while the rendered pane stays owed to a later unit (§5 S-10, §6 ASM-12; D-7, D-11)
 - **Inputs:** `strata/brief.md` §5/§6, `strata/decisions.md` D-1..D-14 (D-5, D-7, D-10, D-11, D-12, D-13, D-14
   load-bearing), `strata/platform.md` §4, `strata/modules.md` §3, the tree at this head
@@ -18,8 +18,7 @@ mints no graph node — that ruling stands (§6, ASM-12; D-11). The app already 
 `<userData>/provident-settings.json`, a `schemaVersion`-stamped projection of `file.*` rows, read at most once and never written again and
 re-served at each realm's boot hand-off (`docs/L1/settings-carrier-retirement.md §3`). The unit is the join of the two: **one authority for the app's data**, whose
 durability is the crossing that already exists and whose agent-facing face is a sixth tool group (D-11). The store
-journals and persists on its own on-disk shape, and nothing operator-visible reverses it (D-12, D-13). It is not a
-package change (D-5).
+journals and persists on its own on-disk shape, and nothing operator-visible reverses it (D-12, D-13). It is not a package change (D-5).
 
 ## 2. The module map (filed in `strata/modules.json` — a row per module, every path claimed once)
 
@@ -134,10 +133,11 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 
 ## 8. The re-grain set — named here, performed by the owning layer's test writer
 
-D-11's census move and D-13's persisted-set move will redden **40 sites in 24 files** — 5 `src/` statements and 35
-test or battery rows, 2 of them **compile-reds** under `typecheck:tests`. Nothing is edited at this layer; a site is
-in the set iff it reads one of the moved numbers, and **the set was not closed by the three predicates**: one site
-read the moved number and stood in none of them — named as C-2's last term, whose discharge that row records (D-43).
+D-11's census move and D-13's persisted-set move will redden **40 sites across the three classes' files** — 5 `src/` statements and 35 test or
+battery rows, 2 of them **compile-reds** under `typecheck:tests` — and **the class counters overlap, so the set's file total is not their sum**: the
+`24` this document carried is withdrawn rather than replaced, because no total is derivable from the tree the classes were measured against (D-26,
+D-28). Nothing is edited at this layer; a site is in the set iff it reads one of the moved numbers, and **the set was not closed by the three
+predicates**: one site read the moved number and stood in none of them — named as C-2's last term, whose discharge that row records (D-43).
 
 | C | Sites / files | The sites |
 |---|---|---|
