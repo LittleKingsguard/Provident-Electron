@@ -70,11 +70,11 @@ Marker: **the absence of a record at `['operator-app-state']`**. The arm runs on
 
 ## 5. Boot parity — its own red set, proven by a second construction (D-22)
 
-Parity is **the next process, not a substring**: a second `createSettingsSurface` over the same `userData` directory must serve identically the app rows (`file.tabs.order`, a `file.modules.<id>` record, a `file.settings.*` row), the token, the granted groups and `maxJournalLength`. The exclusion pair is the one member whose restart value is its **declared initial**, not its previous value — `mem`, never persisted, unmoved here (D-17, `security-store-storeroom.md` ASM-2) — and a row asserts it, so no reader takes "survives" for "persists". Boot order is unmoved: construction → boot read → gate → flip → `start()` → window.
+Parity is **the next process, not a substring**: a second `createSettingsSurface` over the same `userData` directory must serve identically the app rows (`file.tabs.order`, a `file.modules.<id>` record, a `file.settings.*` row), the token, the granted groups and `maxJournalLength`. The exclusion pair is the one member whose restart value is its **declared initial**, not its previous value — `mem`, never persisted, unmoved here (D-17, `security-store-storeroom.md` ASM-2) — and a row asserts it, so no reader takes "survives" for "persists". Boot order is unmoved — this unit inserts no step: the flip's `settingsSurface.attach(mcp)` site, the window's creation and its `win.loadFile(...)`, and `await mcp.start()` after both keep the order L1's `C-3` row of `docs/L1/security-store-storeroom.md` §7 states, cited and not restated (D-43).
 
 ## 6. The census move — three written names to two, and the rows that pin three (D-22, D-13)
 
-**Written at steady state: `provident-settings.json`, `provident-operator-settings.json`, `provident-profile.json` → the last two.** The retired names (`provident-security.json`, and now `provident-settings.json`) may stand in a profile as seeds, read at most once and never written. The rows that pin three re-grain, never delete (D-13):
+**Written at steady state: `provident-settings.json`, `provident-operator-settings.json`, `provident-profile.json` → the last two.** The retired names (`provident-security.json`, and now `provident-settings.json`) may stand in a profile as seeds, read at most once **per boot** and never written. The rows that pin three re-grain, never delete (D-13):
 
 | Row | Reads three as | Becomes |
 |---|---|---|
