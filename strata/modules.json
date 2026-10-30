@@ -42,6 +42,14 @@
       "endpoints": 7
     },
     {
+      "name": "bundle-boot-seam",
+      "paths": [
+        "package.json",
+        "tests/e2e/bundle-boot-seam/"
+      ],
+      "endpoints": 12
+    },
+    {
       "name": "operator-settings",
       "paths": [
         "src/main/operator-settings/",
