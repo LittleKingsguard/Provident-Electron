@@ -1544,6 +1544,12 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   'docs/specs/gutter-ui-greens.md', // row 5 — the unit's gate-5 blind-greens artifact
   'src/renderer/renderer.ts', // row 10 + §R.1 — the bounded renderer wiring
   'src/renderer/runtime.ts', // row 11 + §R.1 — `Runtime.elementForNodeId` and nothing else
+  // **⟶ ADDED 2026-10-30 (THE `F-9(b)` REPAIR, `docs/L1/secure-panels.md` §7 `E-1`): the SIBLING
+  //    `secure-panels` unit's declared artifact — one file, three regions, its writer named by that
+  //    row. The sibling specs above are cited by their `§5.1` allow-list rows; this one is cited by
+  //    its own L1 write-scope row, because the gate-era `docs/specs/` citations moved to the archive
+  //    with the corpus (D-2) and a live list must not cite a retired path.** */
+  'src/renderer/secure-panels.ts', // `docs/L1/secure-panels.md` §7 `E-1` — one pass, three regions
 ]
 // ---------------------------------------------------------------------------
 // **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE THIRD AND FOURTH DECLARING
@@ -1764,7 +1770,11 @@ const SIBLING_ARTIFACT_UNIT_BY_PATH: Readonly<Record<string, string>> = {
  *  elsewhere** (the sibling declaration's own `true` direction is driven in `R-7`'s positive control). */
 const GS_UNIT_OWN_ARTIFACT_CONTROL: readonly string[] = [MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH]
 const UNCLAIMED_PATH_CONTROL: readonly string[] = [
-  'src/renderer/secure-panels.ts',
+  // **⟶ SUBSTITUTED 2026-10-30 (`F-9(b)`): `src/renderer/secure-panels.ts` stood here and is NOW a
+  //    DECLARED SIBLING ARTIFACT (the census entry above), so it can no longer probe the predicate's
+  //    FALSE direction. `src/renderer/theme-store.ts` takes its place: unclaimed by every list in this
+  //    file and absent from the census, so a predicate that claimed everything still FAILS here.**
+  'src/renderer/theme-store.ts',
   'src/main/main.ts',
   'src/shared/census.ts',
   // **⟶ SUBSTITUTED 2026-09-27 (THE `F3` SAME-COMMIT OBLIGATION, `R-7`'s `N-15`): `tests/census.test.ts`
