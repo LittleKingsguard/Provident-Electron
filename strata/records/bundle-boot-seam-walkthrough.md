@@ -32,5 +32,7 @@ fix moved the prose and the next pass read a different page. The engineering was
 and the unit's own batteries at 8/8, 5/5 and 8/8 (`strata/brief.md` §6). This is the signal `rebuild.md`
 §3 describes: six passes on one artifact class indict the class, not the sentences.
 
-**Verdict: not green.** A seventh run is owed, and the corpus's own answer to a sixth red is not another
-prose pass — it is a machine-checked pin inventory, which is the decision now standing with the user.
+**Verdict: not green.** Run 7 then found two sentences in one L2 document — a cite to an `L1 §0` that does
+not exist and a four-command floor called "the three legs" — both fixed. Seven runs, seven passes, and not
+one of them failed on coverage: the corpus's own answer to a seventh red is not another prose pass, and the
+state machine has now made that unavoidable (below).
