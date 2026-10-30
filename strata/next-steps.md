@@ -5,7 +5,8 @@ Blocked work lives in `pending.md`; unasked ideas in `proposals.md`.
 
 | # | Work | Owner | Closed when |
 |---|---|---|---|
-| 1 | **Land the crossing.** The L2 interface is filed (`docs/L2/store-tabs-record/interface.md`, rev 1): one bridge member, three routes, the instance's file and addresses, the refusal vocabulary. What remains is L3's module design, then L4's one shot — and the landing pass carries the named census move (bridge 7 → 8) that three gating batteries and two layer documents assert | `store-tabs-record`'s L3, then its L4 | the bridge member answers, the constraint runs in the instance, and the seven-member assertions are re-grained in the same commit |
+| 1 | **Answer the L4 adjudication on the constraint.** `.strata/returns/store-tabs-record-l4.json` records that `design.md` §4's "the engine's constraint" could not be transcribed: the package declares `addConstraint(pair, constraint)` with `(context: unknown) => unknown` and no declared context members. L4 enforced exactly-one-active with a corrective write at the commit boundary instead — the invariant holds, the mechanism is not the designed one. Either L3 declares the context's shape so the engine can carry it, or §4 is amended to make the boundary the designed home; a layer cannot judge its own design (`rebuild.md` §3) | `store-tabs-record`'s L2, which owns the verdict | `design.md` §4 and the code agree, and the adjudication envelope is superseded by a resolved one |
+|---|---|---|---|
 
 
 The `§5.U` battery landed with its unit (D-62) and the suite is green — `scripts/strata-suite-reading.mjs` reads
