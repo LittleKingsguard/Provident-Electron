@@ -22,7 +22,7 @@
   composition and the one writer, E-4's `README.md` paragraph, and E-5's **63 rows re-grained / 160 retired** at `536bdc6`
   (exception §9). `P-1`'s extension is why both import markers are record-absences (sibling `persistence.md` §3).
 - **Owed, carried not patched:** `src/main/tier4-state.ts:6` still asserts the retired store as its reader and the
-  transition as its writer, and `src/main/main.ts:11` keeps two type names it no longer spells — owed to the unit that
+  transition as its writer, and `main.ts`'s import from the surface module keeps two type names it no longer spells — owed to the unit that
   next touches those files (exception §9; `examiner.md` §4).
 - **Owed by L0:** a further blind walkthrough run (runs 1 and 2 are not green). The deviation that no built
   artifact was staged is **no longer standing**: the root stages `dist/` and, since D-44, `src/` too.
