@@ -56,10 +56,10 @@ export interface ProvidentBridge {
     // resolution is re-declared as the SUPERSET — the post-state settings
     // extended by the declared member `write` (the receipt of THIS write).
     // `set()`'s own return shape is UNCHANGED (C-11 NON-BREAKING — the receipt
-    // rides NEW members only, §2.3 item 4). The `write` holder's declared type follows the
-    // store's OWN answer type (`Tier4WriteAnswer`, the declared superset): a SET attempted while
-    // the tier is CLOSED answers the channel refusal `{status:'refused', reason:'tier4-closed'}`
-    // as a VALUE, so the declaration follows the artifact rather than refusing to name it.
+    // rides NEW members only, §2.3 item 4). `Tier4WriteAnswer` is the store's OWN answer type —
+    // ONE receipt form: the post-state receipt of this write, and NEVER a refusal for a closed
+    // tier — `tier4-closed` is a READ outcome only, minted by `read()` and declared at the `get()`
+    // site above (D-16), so a `set` consults no tier state and commits whatever the tier state is.
     set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: Tier4WriteAnswer }>
     setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
   }
