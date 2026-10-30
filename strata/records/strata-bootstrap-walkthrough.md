@@ -1,4 +1,4 @@
-# record — `strata-bootstrap` exit walkthrough, run 11 (D-10; replaced on every run)
+# record — `strata-bootstrap` exit walkthrough, run 14 (D-10; replaced on every run)
 
 **Scenario set** (L0-authored, goal → the outcome that would satisfy it): 1 file a user decision → a valid row
 lands in the register, append-only, with a Source and what it obliges · 2 start the next unit → the order of
@@ -7,22 +7,23 @@ ceiling · 4 report a failure up the loop → the repair owner, and what the sta
 and the instruments → what each may be trusted to answer. Seat: one fresh delegation per run, staged to the
 root `walkthrough.md` §3 declares (D-44).
 
-## Run 11 — `STALE`
+## Run 14 — `STALE`, and the fifth consecutive round of one class
 
-All five answered, and every figure this root can check landed exactly: 221 archive files at the prefix and
-215 beside it, 181 specs = 163 + 18; 27 tools, 3 resources, six groups in both copies, 8/13; 47 sources;
-five bundles; two package imports; the 14/11 seam census; 21 map rows with no path twice and every cap
-`50 + 10×N`; 121 test files as 89 + 32; 54 register rows at or under 40 lines.
+All five scenarios answered, and every figure the root can check landed exactly — 27 tools, 3 resources, six
+groups, 8/13, 47 sources, five bundles, 121 test files as 89+32, 21 map rows with no path twice and every cap
+`50 + 10×N`, 221/215/181 archive files, 55 register rows under 40 lines.
 
-What it falsified, and where each went:
+What it falsified, all in this unit's own corpus and all **summary-layer drift**: D-55's Source cited a run whose
+record was two rounds behind; `brief.md` §5 called the Electron legs "floor legs"; the write-scope table gave L0
+`.strata/returns/`, which every layer writes; `brief.md` cited a source range that had drifted eight lines; and
+D-54 exempted two files this pass had moved (now D-56).
 
-| Falsified claim | Owner | Disposition |
-|---|---|---|
-| This record still said run 8 and "a ninth run is owed", two runs behind the register's own citations | L0 | fixed — this record |
-| The register's preamble said a corrigendum is sourced by a **user-sourced** row, which D-47 made one of two kinds; three of its own corrigenda correct measurement-sourced rows | L0 | fixed — the preamble now names both |
-| The handover said "close the three open units, all three were rebuilt"; two are open and four carry `builds: 2` | L0 | fixed, and the item now points at the state rather than counting |
-| `brief.md` §5 said "all four Electron legs" are the boot unit's return; §6 and D-37 make three the floor with `panes` outside it | L0 | fixed |
-| `AGENTS.md` claimed to carry "no workflow rule" while stating four, which is the restatement D-43 forbids | L0 | fixed — the non-negotiables are a floor, and the steps are the procedures' |
+## The finding about the artifact, not the run
+
+Runs 10-14 have each closed their findings and each produced the same class: a summary that had fallen behind the
+layer it summarises. D-29's rule for a fourth consecutive failure of one artifact class is "run rebuild or pass",
+and this record states plainly that the rule now applies — **the artifact that needs rebuilding is the corpus's
+summary layer** (`brief.md`, the register's cross-references, and these records), not another round of readers.
 
 `docs-insufficient`: none. `undocumented`: none.
-**Verdict: not green.** Run 12 is owed, and every item above is fixed rather than annotated.
+**Verdict: not green.** A rebuild of the summary layer is owed before run 15 (D-29, `rebuild.md` §3).

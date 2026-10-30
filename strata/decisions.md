@@ -1218,3 +1218,22 @@ has not read the corpus still must not modify a package or judge its own design.
   loads it first.
 - The alternative — moving the non-negotiables into the procedure files — would delete the only statements that
   survive a session which never opens `strata/`.
+
+---
+
+## D-56 — Corrigendum to D-54: the two examples it exempted are files this pass moved
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-54**, which stands as filed (D-1). **Source:** the
+`strata-bootstrap` walkthrough, run 14, measured — D-54 exempted "a cite into `security.ts`'s `ToolGroup` union or
+`types.ts`'s `SecuritySettings`" as a reading of a file that has not moved, and both moved in this very pass: the
+census move added `'data'` to `ToolGroup` with five tool rows, and five members to `RpcMethod`.
+
+**Decision:** D-54's **rule** stands and its **examples** do not. The test for D-41 is not whether a file *feels*
+stable but whether **any unit in this pass has edited it** — and a count that a unit moved makes every offset below
+it stale, in whichever file it lives.
+
+- The two files D-54 named are exactly the kind of file the rule must catch: a union and a type table, small,
+  central, and edited by every census move.
+- A cite into them therefore names the site ("the `ToolGroup` union", "the `RpcMethod` union's `data.*` members"),
+  and the exemption D-54 offered belongs to files no unit has touched at this head — not to the two most-edited
+  ones in `src/shared` and `src/main`.

@@ -10,7 +10,7 @@
 An Electron app whose renderer **is** a `provident-ssr` producing process — the graph is
 authoritative and the HTML is a view re-emitted on demand (`src/renderer/runtime.ts:1-9`) — with a
 main-process MCP server exposing that graph to agents over stdio or Streamable HTTP
-(`src/main/mcp-server.ts:1-8,576-599`).
+(`ALL_TOOLS` in `src/main/mcp-server.ts`).
 
 Two goals stand. It is the **implementation test** of `provident-ssr` and of the sibling
 `provident-storeroom`: a finding is recorded, never patched, and the package is never modified
@@ -51,7 +51,7 @@ replaced, never annotated; the as-filed copy is cited by path under the archive 
 
 | Layer | Responsibility | Owns (writes) | Exit condition |
 |---|---|---|---|
-| L0 | user interface: brief, decisions, exit walkthrough, reporting | `strata/brief.md`, `decisions.md`, `records/`, `.strata/returns/`, the procedures beside the register | walkthrough green, then the user accepts |
+| L0 | user interface: brief, decisions, exit walkthrough, reporting | `strata/brief.md`, `decisions.md`, `records/`, the procedures beside the register — `.strata/returns/` is shared: **each layer writes its own envelope** there (`examiner.md` §5) | walkthrough green, then the user accepts | The returns dir is shared.
 | L1 | e2e technical design: module map, module interactions, e2e battery | `docs/L1/`, `tests/e2e/`, `strata/modules.json` and `marks.json` (D-30) — the first two created on first write | e2e battery green, adversarially reviewed |
 | L2 | integration design: each module's I/O surface and behaviour | `docs/L2/<module>/`, `tests/integration/<module>/` | integration battery green |
 | L3 | module design: structure, signatures, pseudocode, guardrail notes | `docs/L3/<module>/` (the design and its `signatures.md` stubs), `tests/unit/<module>/` | unit battery green |
@@ -71,8 +71,8 @@ is answered and counted as a failure (D-1).
 
 ## 5. Where the loop stands (D-27, D-30)
 
-`bundle-boot-seam` is landed: the app's built main bundle **boots**, and its three batteries plus the three
-floor legs are green — the reading §6 carries; `panes` is the fourth, outside the floor (D-27, D-37). It was admitted at L1 like
+`bundle-boot-seam` is landed: the app's built main bundle **boots**, and its three batteries plus the
+**three Electron legs** are green — the reading §6 carries, `panes` being the fourth and outside those three (D-27, D-37); the four-leg floor is §6's. It was admitted at L1 like
 any other unit, filed its map row first, and is closed on its own exit walkthrough; every unit's stage and
 walkthrough streak are state, read from `strata/.strata/units/*.json` and never restated here (D-26).
 
