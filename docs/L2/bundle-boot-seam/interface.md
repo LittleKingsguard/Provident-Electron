@@ -2,7 +2,7 @@
 
 - **Layer:** L2 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 2 is read through this one: rev 2 **replaces** rev 1's arm (the main emission is built `--format=esm --external:provident-storeroom`, because L4's landing left `tests/e2e/bundle-boot-seam/boot-contract.test.ts` **B-5** red on the inlined shape), and rev 3 carries that same arm **landed and re-measured**: the flag stands in `package.json:10` and `:11`, the tree's own `dist/main/main.mjs` is rev 2's external emission, and E-5's three sites name it (§5, §7). **Status:** DESIGN (`examiner.md` §3; D-26, D-27)
 - **Inputs:** `docs/L1/bundle-boot-seam.md` §1-§9 — the map row **N = 12** (§2), the two arrangements L1 fixed neither (§3), the observables (§4), the boot order (§5), B-1..B-8 (§6), the cross-module exceptions E-1/E-2/E-5 (§8), the assumptions (§9); `strata/decisions.md` D-5, D-14, D-18, D-26, D-27, D-28; the `bundle-boot-seam` row of `strata/modules.json` (endpoints **12**, cap **170**) cited by row and by id, never by line (D-28); `strata/platform.md` §3/§4
-- **Ceiling:** 150 lines, class max (D-1) · **Citations:** every probe answer in §2 is a measurement taken on this seat at HEAD `6901a6e` with the repo's own `node_modules/electron` (**44.4.5**) and `node_modules/esbuild` (**0.28.2**), the whole probe tree under `/tmp` and none of it in the repository; rev 3 re-measures the **landed tree** at this head against P-1's and P-11's shape (`dist/main/main.mjs`, 1,345,550 bytes, 0 `import_meta` placeholders, 0 free `__dirname`, the bare specifier present twice); the package and the siblings are read and never edited (D-5)
+- **Ceiling:** 150 lines, class max (D-1) · **Citations:** every probe answer in §2 is a measurement taken on this seat at HEAD `6901a6e` with the repo's own `node_modules/electron` (**44.4.5**) and `node_modules/esbuild` (**0.28.2**), the whole probe tree under `/tmp` and none of it in the repository; §7's readings are a second, separate measurement — the artifacts `npm run build` leaves in `dist/` and the manifest that names and builds them, read off the tree rather than asserted, and a byte figure that is a live count re-read at each battery run (D-26); the package and the siblings are read and never edited (D-5)
 
 ## 0. Scope, and what this document does not fix
 
@@ -85,9 +85,9 @@ The **arrangement** is this unit's whole surface: which artifact each of the fou
 - **No boot-contract restatement**: the observables, the order and the eight scenarios are L1 §4-§6's (D-1 §4).
 - **No re-grain of the three legs**: `npm test`, both typechecks and `npm run build` stay the floor (D-14, `brief.md` §6).
 
-## 7. The integration battery's rows at this head
+## 7. The integration battery's rows, each with its reading
 
-| # | Goal at the arrangement grain | Expected | At this head (`dd209d2`) |
+| # | Goal at the arrangement grain | Expected | Reading |
 |---|---|---|---|
 | A-1 | the build emits the artifact the `main` field names, in the declared format | `package.json:7`'s path exists, is non-empty, the loader's module type for it is ESM, and the `build` arm carries `--format=esm` on `--platform=node` | **green** — `dist/main/main.mjs` stands at 1,345,550 bytes and `package.json:10` carries both `--format=esm` and the flag |
 | A-2 | the emitted artifact's module system matches the format the build emitted | it parses under the loader's own mapping and carries neither the CJS `import.meta` placeholder nor a free `__dirname`/`__filename` | **green** — 0 `import_meta` placeholders and 0 `__dirname` in the landed emission; under plain node it parses and stops only at `electron`'s named-export link, which the container supplies (P-8's shape) |

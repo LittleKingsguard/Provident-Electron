@@ -71,10 +71,11 @@ is answered and counted as a failure (D-1).
 
 ## 5. The current unit (D-27)
 
-`bundle-boot-seam`: the app's built main bundle cannot be evaluated at this head, so no process it starts
-exists and both Electron legs that reach the bundle are red (D-27). It is admitted at L1 like any other
-unit and files its map row first; the four units before it are in `strata/.strata/units/*.json`, where
-`settings-carrier-retirement` is the only one closed on a green walkthrough.
+`bundle-boot-seam` is landed: the app's built main bundle **boots**, and its three batteries plus all
+three Electron legs are green at this head — the reading §6 carries (D-27). It was admitted at L1 like
+any other unit, filed its map row first, and is closed only by its own exit walkthrough; the other four
+units live in `strata/.strata/units/*.json`, where `settings-carrier-retirement` is the only one closed
+on a green walkthrough so far.
 
 The constraint it inherits: nothing it builds may be a `provident-storeroom` or `provident-ssr` change —
 the arrangement is this repo's (D-5) — and no new MCP surface is added to prove a boot (D-18). The
