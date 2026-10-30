@@ -4,9 +4,8 @@
 Blocked work lives in `pending.md`; unasked ideas in `proposals.md`.
 
 | # | Work | Owner | Closed when |
-| — | **Nothing is actionable at this head** | — | a new finding adds a row |
+| 1 | **Author the `§5.U` live battery `store-tabs-record` owes.** The unit is admitted (D-62) and its map row is filed, so the blocker is gone: the row `P-7`/`REG-EXEC` require needs a matrix carrying `instrument`/`cmd`/`post` provenance as **keys**, not the gate-era prose the archived battery holds. L1 designs it, the test writer authors it, the file's mark comes off when it lands (D-30, D-40) | `store-tabs-record`'s L1, then its test writer | `scripts/strata-suite-reading.mjs` reads **gating 0 / on notice 0** |
 
-Every row this file has carried is closed: the `store.put` reason widened, the handover re-pointed, D-30's runner
-split landed (`scripts/strata-suite-reading.mjs` reads gating 0 / on notice 2), the staging declaration completed,
-the state semantics written, and `brief.md` §6's label reconciled with `marks.json`. The L1/L2/L3 revision audit was
-**measured clean** — no document sits behind its own notes — so it left rather than lingering as a style preference.
+**Carried over from `pending.md`:** with the unit admitted (D-62) the `§5.U` battery stopped being blocked; the four
+rows that closed here earlier — the `store.put` reason, the handover queue, D-30's runner split, the staging
+declaration, the state semantics and the §6 label — are recorded in the commits that landed them, not restated.
