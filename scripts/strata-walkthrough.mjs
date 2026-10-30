@@ -185,13 +185,48 @@ function pins(root) {
   }, null, 2))
 }
 
+
+/**
+ * refs — every `D-n` cited anywhere in the corpus must resolve to a filed row, or say whose register it
+ * belongs to. The class this catches is the phantom cite: a row number that reads as ours and is not
+ * (D-1: "a bare `D-n` in any other file means a row of THIS log"). Qualification is prose, so a cite
+ * counts as resolved when the 40 characters before it name another register (package, canonical) —
+ * anything else is reported.
+ */
+function refs() {
+  const dec = readFileSync(join(REPO, 'strata/decisions.md'), 'utf8')
+  const rows = new Set([...dec.matchAll(/^## (D-\d+)/gm)].map((m) => m[1]))
+  const files = [...walk(join(REPO, 'strata')), ...walk(join(REPO, 'docs')), join(REPO, 'AGENTS.md'), join(REPO, 'README.md')]
+    .filter((p) => p.endsWith('.md'))
+  const unresolved = []
+  for (const file of files) {
+    const text = readFileSync(file, 'utf8')
+    for (const m of text.matchAll(/\bD-(\d+)\b/g)) {
+      const id = m[0]
+      if (rows.has(id)) continue
+      const before = text.slice(Math.max(0, m.index - 90), m.index).replace(/\s+/g, ' ')
+      if (/package's own|canonical|another register|not a row of this log/i.test(before)) continue
+      unresolved.push({ file: relative(REPO, file), id, near: before.slice(-60) })
+    }
+  }
+  if (unresolved.length === 0) {
+    console.log(`resolved: every D-n cite names a filed row (${rows.size} rows) or states whose register it is`)
+    return
+  }
+  for (const u of unresolved) console.log(`UNRESOLVED ${u.file}: ${u.id} … ${u.near}`)
+  console.log(`FAIL ${unresolved.length} unresolved decision cite(s)`)
+  process.exitCode = 1
+}
+
 if (verb === 'stage') stage(args[1] ?? 'unit', args[2])
 else if (verb === 'check') check(resolve(args[1] ?? '.'))
 else if (verb === 'pins') pins(args[1])
+else if (verb === 'refs') refs()
 else {
   console.log('strata-walkthrough <stage|check|pins> [args]')
   console.log('  stage <unit> [dest]   build the staging root walkthrough.md §3 declares')
   console.log('  check <root>          resolve every backticked path cite against the listings; exit 1 on any failure')
   console.log('  pins [root]           print the counts a document must cite, never restate (D-26)')
+  console.log('  refs                  resolve every D-n cite to a filed row or a named other register (D-1)')
   process.exit(verb ? 2 : 0)
 }
