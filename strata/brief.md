@@ -112,10 +112,10 @@ long-standing reds — `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`) an
 they are on notice, not gating, and the rework owns them; the gate-era third, `tests/store-core-graph.test.ts` §5.1, was retired
 (D-9, D-30).
 
-**One row is by construction, not a red:** the same `store-tabs-record` file's §4.2 item 9 asserts the worktree against a declared
+**One row is by construction, not a red:** the same `store-tabs-record` file's `S-1` row (the `C-9` edit-set assertion inside `T2 §4.2 item 9`) asserts the worktree against a declared
 edit set, so it fails while any uncommitted file exists and passes on a clean tree — which is why the row above reads `2 failed`
 at a clean head and `3 failed` mid-pass. It measures the loop's own tree and not module machinery, so it is **unmarked and keeps
-gating**; a reading worth believing is taken after the commit, never before it (that file's `T2 §4.2 item 9` row, carved out in
+gating**; a reading worth believing is taken after the commit, never before it (that file's `S-1` row, the `C-9` edit-set assertion inside `T2 §4.2 item 9`, carved out in
 the `gates` list of `strata/marks.json`; D-30).
 
 ## 7. The archive (D-2)

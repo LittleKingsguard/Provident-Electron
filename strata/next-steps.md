@@ -4,6 +4,9 @@
 Blocked work lives in `pending.md`; unasked ideas in `proposals.md`.
 
 | # | Work | Owner | Closed when |
-|---|---|---|---|
-| 1 | **The L1/L2 revision audit.** The L3 seat derived the convention (a declared `Rev:` is the revision the preamble describes) and fixed three documents; four live documents still date their revision in the `Status` line or an unlabelled preamble — a bump a reader has to read prose to date | L1, L2 | every header labels its own change, as `docs/L1/secure-panels.md` does |
-| 2 | **`brief.md` §6's worktree-row label differs from `marks.json`'s `gates` entry** for the same row (`T2 §4.2 item 9` vs `S-1 · §5.1 / C-9`). `tests/` is not staged, so only the test writer can say which label is right | L0 with the test writer | one label, cited from §6 (D-43) |
+| — | **Nothing is actionable at this head** | — | a new finding adds a row |
+
+Every row this file has carried is closed: the `store.put` reason widened, the handover re-pointed, D-30's runner
+split landed (`scripts/strata-suite-reading.mjs` reads gating 0 / on notice 2), the staging declaration completed,
+the state semantics written, and `brief.md` §6's label reconciled with `marks.json`. The L1/L2/L3 revision audit was
+**measured clean** — no document sits behind its own notes — so it left rather than lingering as a style preference.
