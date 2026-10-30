@@ -9,8 +9,7 @@ Ceiling: 60 lines.
 - The strata preset lives in the deployment (`~/.dsh/.agent-presets/strata/agent.cordis.yml`), not in
   this tree; the project carries the artifacts, the deployment carries the role walls. Every role
   row is a `dsh-tool-subagent` row with `toolName: role_*`, `maxDepth: 4` (five layers need four
-  recursions), and an explicit `toolFilter.allow` list — a role that owns no L4 work cannot call
-  `role_l4_implementer` (D-1).
+  recursions), and an explicit `toolFilter.allow` list — a role that owns no L4 work cannot call `role_l4_implementer` (D-1).
 - Children inherit this workspace and the delegation-scoped sandbox mode, and approval is pinned to
   never for a delegated child. A child therefore cannot stall a pass on a permission prompt (D-1).
 - Layer returns arrive as text: the `subagent` tool exposes no structured-return parameter, so every
@@ -20,8 +19,7 @@ Ceiling: 60 lines.
 
 - The sandbox enforces whole-workspace modes only (read-only / workspace-write /
   danger-full-access); it cannot restrict writes to a subdirectory. Layer quarantine is therefore
-  tool wall plus diff-scope lint, and must never be described as sandbox-enforced (D-1,
-  `modules.md` §5).
+  tool wall plus diff-scope lint, and must never be described as sandbox-enforced (D-1, `modules.md` §5).
 
 ## 3. This checkout
 
@@ -55,5 +53,8 @@ Ceiling: 60 lines.
   package-backed module, the exported functions it calls (the seam's 14 members are not 14 endpoints;
   N is the surface the module's row names) — and the cap follows from it (`50 + 10×N`); L1 declares the
   surface, never the cap (D-1, `modules.md` §4).
-- **Unit state** (`strata-state`'s output) is `unit`, `layer`, `stage`, `artifacts`, `assumptions`
-  (`{id, text, alternative, status}`), `streaks` (artifact id → failures), `rebuildEligible`, `lastFailure` (when a failure stands), `updated`, and the `builds` count `rebuild` adds.
+- **Unit state** (`strata-state`'s output): `unit`, `layer`, `stage`, `artifacts`, `assumptions`
+  (`{id, text, alternative, status}`), `streaks`, `rebuildEligible`, `lastFailure`, `updated`, `builds`. Three
+  outlive the work: **`layer`** is the layer last entered and says nothing about ownership after `close`
+  (`secure-panels` reads `L4`); **`rebuildEligible`** is the script's answer at `streaks ≥ 3`; **`updated`** is
+  when the state last changed, not the work.
