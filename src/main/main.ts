@@ -3,7 +3,8 @@
 // (stdio or Streamable HTTP), and bridges MCP tool calls to the renderer via
 // IPC.
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { rmSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload } from '../shared/types.js'
@@ -20,9 +21,12 @@ import { SecurityGate, type ToolGroup } from './security.js'
 // until a `data.*` tool is called (D-11, D-13).
 import { createDataSurface } from './data/index.js'
 
-// The main process is bundled as CJS (Electron runs it reliably that way), so
-// `__dirname` is available.
-const here = __dirname
+// This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
+// names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
+// directory holding this artifact, derived from the URL the loader supplies for this module — the
+// only directory source an ESM entry has — and `:455`'s preload join and `:462`'s HTML entry join
+// compose from it unchanged.
+const here = dirname(fileURLToPath(import.meta.url))
 
 /** THE RESERVED SETTINGS TOP-LEVEL NAMES (`docs/specs/store-persist.md` §2.7 item 4 / §2.8
  *  item 4 — the collision rule's set, `NW-10`): a module id colliding with one is REFUSED

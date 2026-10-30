@@ -18,7 +18,7 @@ import { execFileSync } from 'node:child_process'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -276,7 +276,10 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
     const reason = 'bundle-boot-seam negative control: injected boot failure'
     const dir = mkdtempSync(join(tmpdir(), 'bundle-boot-seam-corrupt-'))
     scratchDirs.push(dir)
-    const corrupt = join(dir, 'main.cjs')
+    /** The copy carries the basename the `main` field names, so it is the artifact's own module
+     *  system: a `.cjs`-named copy of ESM bytes fails at PARSE with `SyntaxError: Cannot use import
+     *  statement outside a module` and never reaches the injected reason this row asserts. */
+    const corrupt = join(dir, basename(mainEntry))
     writeFileSync(corrupt, `throw new Error(${JSON.stringify(reason)})\n${readFileSync(mainEntry, 'utf8')}`)
     const boot = bootApp(corrupt)
     let report = ''

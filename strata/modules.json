@@ -45,7 +45,9 @@
       "name": "bundle-boot-seam",
       "paths": [
         "package.json",
-        "tests/e2e/bundle-boot-seam/"
+        "tests/e2e/bundle-boot-seam/",
+        "tests/unit/bundle-boot-seam/",
+        "tests/integration/bundle-boot-seam/"
       ],
       "endpoints": 12
     },
