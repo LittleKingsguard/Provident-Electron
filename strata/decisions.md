@@ -1179,3 +1179,22 @@ could pass. A row that reads raw text is a row that punishes documentation.
   `tests/ui-leg-contract.test.ts`, an instrument row under D-38.
 - A comment should describe a site in words rather than quote it — the cheap half of the same lesson, and what
   the `main.ts` order list now does.
+
+---
+
+## D-54 — Corrigendum to D-46: the residue it counted was the moving-file one
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-46**, which stands as filed (D-1). **Source:** the
+`strata-bootstrap` walkthrough, run 10, measured — D-46 said "the residue is exactly two kinds: three rows in the
+register and one historical returns envelope", and the tree carries **105** bare `src/**/*.ts:line` cites across
+23 live documents, seven of them in the register itself.
+
+**Decision:** D-46's count is the residue of **cites into files this branch edits** — the class D-41 governs —
+and it never counted an offset into a file no unit has touched in this pass. A cite into `security.ts`'s
+`ToolGroup` union or `types.ts`'s `SecuritySettings` is a dated reading of a file that has not moved, and D-41
+itself leaves those alone.
+
+- The distinction is the whole of D-41: an offset is a defect when the file moves under it, not when the corpus
+  contains one.
+- A reader counting "offsets" without that scope will find a hundred and conclude the rule failed; the rule
+  never claimed them.

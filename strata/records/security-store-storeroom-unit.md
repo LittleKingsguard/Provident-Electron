@@ -21,8 +21,7 @@
 - **Landed, named so it is not re-opened:** E-1's replacement and the file's deletion, E-2's three import sources, E-3's
   composition and the one writer, E-4's `README.md` paragraph, and E-5's **63 rows re-grained / 160 retired** at `536bdc6`
   (exception §9). `P-1`'s extension is why both import markers are record-absences (sibling `persistence.md` §3).
-- **Carried, and half discharged:** `src/main/tier4-state.ts` is **discharged at the bytes** — its header now names the surface module sole writer with no `src/**` reader, witnessed by the bundle (`setTier4OpenState` ×3,
-  `tier4OpenState` ×0). Still owed: `main.ts`'s import keeps two type names it no longer spells — that file's
+- **Carried, and half discharged:** `src/main/tier4-state.ts` is **discharged at the bytes** — its header now names the surface module sole writer with no `src/**` reader, witnessed by the bundle (`setTier4OpenState` ×3, `tier4OpenState` ×0). Still owed: `main.ts`'s import keeps two type names it no longer spells — that file's
   next writer's to remove (exception §9; D-52).
 - **Owed by L0:** a further blind walkthrough run. The run history is the walkthrough record's (D-10), which holds the
   latest run and its verdict; each round's findings were closed rather than annotated. The deviation that no built
