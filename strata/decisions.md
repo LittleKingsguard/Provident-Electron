@@ -47,7 +47,7 @@ Bare `D-n` in any other file means a row of THIS log; a canonical row is always 
 
 ## D-2 — The gate corpus is archived and never carried forward
 
-**Status:** ACTIVE · **Date:** 2026-10-29
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Discharged by:** `strata/records/archive-sweep-pins.md` and `archive/gate-corpus-2026-10-29/`
 
 **Source (user, verbatim):** "construct the necessary documentation for the strata subagents, and
 then archive all existing docs".
@@ -68,7 +68,7 @@ live file carries a correction paragraph, a dated annotation or history (D-1 §1
 
 ## D-3 — The root entry points become pointers, not rule carriers
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "docs/ tree → archive/,
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "docs/ tree → archive/, · **Discharged by:** `AGENTS.md`, `strata/README.md` and the bootstrap unit's pointer set
 AGENTS.md + README.md become short pointers (Recommended)"
 
 **Decision:** `AGENTS.md` and `README.md` are rewritten in the same pass to ≤ 60 lines each: what
@@ -80,7 +80,7 @@ carries a workflow rule — a restated rule is a rule that drifts, and it would 
 
 ## D-4 — The archive pass is a one-time mechanical sweep, authorised here
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Repoint or retire those
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Repoint or retire those · **Discharged by:** `strata/decisions.md` D-8 and D-9
 assertions in the same pass, recorded (Recommended)"
 
 **Decision:** 27 assertions across 13 test files assert that specific `docs/…` paths exist or name
@@ -140,7 +140,7 @@ hands it back, and exposes nothing over MCP, renders nothing, and persists nothi
 
 ## D-8 — The archive sweep's scope is every executable doc path, corrected by measurement
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-4**, which stands as filed (D-1 makes
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-4**, which stands as filed (D-1 makes · **Discharged by:** `strata/decisions.md` D-9
 this log append-only). **Source:** the L1 examiner's measurement at the sweep
 (`strata/.strata/returns/archive-sweep-pins.json`), read against D-4's selection.
 
@@ -168,7 +168,7 @@ that owns the row. Comments that cite `docs/…` stay as written and resolve thr
 
 ## D-9 — The rows whose subject was the gate corpus are retired; the known-red ledger is two
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Completes** D-4/D-8's retirement arm. **Source:** the
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Completes** D-4/D-8's retirement arm. **Source:** the · **Discharged by:** `strata/brief.md` §6 (the two-red ledger) and `archive/gate-corpus-2026-10-29/`
 user's D-4 selection ("Repoint or retire those assertions in the same pass, recorded"), executed
 against the L1 examiner's disposition table.
 
@@ -250,7 +250,7 @@ through one design gate (D-1).
 
 ## D-13 — The central store may choose its own on-disk shape
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "The store may choose its own
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "The store may choose its own · **Discharged by:** `src/main/storeroom.ts` and `docs/L2/central-data/persistence.md` §1
 on-disk shape"
 
 **Decision:** the existing `<userData>/provident-settings.json` bytes are **not** a compatibility
@@ -303,7 +303,7 @@ Two corrections to D-11's list, both measured:
 
 ## D-16 — The security store is rebuilt as its own provident-storeroom instance, isolated from MCP
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Supersedes:** the current `SecurityStore` design and
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Supersedes:** the current `SecurityStore` design and · **Discharged by:** `src/main/operator-settings/` and `strata/records/security-store-storeroom-unit.md`
 implementation.
 
 **Source (user, verbatim):** "The security store implementation is going to be rebuilt entirely to
@@ -338,7 +338,7 @@ first things that must change. It does not merge to `main` until the user grants
 
 ## D-17 — The instance is the operator-settings state machine; its surface is a separate module
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, verbatim):** "The security store will be the
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, verbatim):** "The security store will be the · **Discharged by:** `src/main/operator-settings/` and `src/main/settings-surface/`
 state machine underlying the operator-settings surface (the surface itself will interact with read/write
 and listeners as a separate module), and also containing the current security record."
 
@@ -378,7 +378,7 @@ was rejected.
 
 ## D-19 — The instance imports the existing profile bytes once, then owns a new shape
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Import once, then own a new
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Import once, then own a new · **Discharged by:** `strata/records/security-store-storeroom-unit.md`
 shape (Recommended)"
 
 **Decision:** on first boot after the rebuild, the instance reads the existing profile files once and
@@ -457,7 +457,7 @@ four legs plus `strata-lint` pass on a clean tree.
 
 ## D-23 — The group set's second copy lives in the operator-settings instance
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-15 and D-16.**
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-15 and D-16.** · **Discharged by:** `src/main/operator-settings/index.ts`
 
 **Source:** D-16's own instruction that the rebuild owns the copy, measured at the tree after the file it
 lived in was deleted.
@@ -504,7 +504,7 @@ Consequences, and they move the records:
 
 ## D-25 — The import carries the record; the exclusion pair is not an import member
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-19**, which stands as filed (D-1 makes this
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Corrigendum to D-19**, which stands as filed (D-1 makes this · **Discharged by:** `strata/records/security-store-storeroom-unit.md`
 log append-only). **Source:** D-19's own wording, read against the tree at the exit walkthrough of
 `security-store-storeroom` (run 3) and the layer documents that carry the design.
 
@@ -557,7 +557,7 @@ them — not to keep re-measuring faithfully into a dozen files.
 
 ## D-27 — The next unit is the main bundle's boot seam, and the walkthrough stays documentation-only
 
-**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Fix the boot seam first
+**Status:** ACTIVE · **Date:** 2026-10-29 · **Source (user, selection):** "Fix the boot seam first · **Discharged by:** `strata/records/bundle-boot-seam-walkthrough.md` (run 12, `PASS`)
 (Recommended)"; "Documentation-only, as now (Recommended)".
 
 **Decision:** the next unit admitted through the loop is the **boot seam** — the measured defect that
@@ -609,7 +609,7 @@ fixes the cause, and it is the same reasoning D-26 applies to counts (D-1, `plat
 
 ## D-29 — The walkthrough instrument is a script, not another prose pass
 
-**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** "Rebuild the walkthrough
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** "Rebuild the walkthrough · **Discharged by:** `scripts/strata-walkthrough.mjs`
 instrument (Recommended)", after seven blind runs on the `bundle-boot-seam` unit and four more on the
 open units found **no coverage failure at all** — every finding they filed was a drifted count, a
 non-landing cite or a cross-document contradiction.
@@ -648,17 +648,15 @@ unless existing behavior is found to be a defect"; "For integration/unit tests, 
 review/reimplementation"; "tests/e2e/** plus the three Electron legs"; "Per-scenario source marker +
 L1-owned registry, script-checkable"; "marked rows are reported separately and stop gating".
 
-**Decision:** the modules' machinery is to be reworked onto the storeroom's constraint/repair and listener
-engines as a state machine and event generator, so a scenario pinning how that machinery is built today is
-a measurement with a shelf life, and the loop stops spending passes keeping it true.
+**Decision:** the machinery is to be reworked onto the storeroom's constraint/repair and listener engines as
+a state machine and event generator, so a scenario pinning today's build is a measurement with a shelf life.
 
 - **Retained as-is:** `tests/e2e/**` and the three Electron legs (`battery`, `divergence`, `ui`). Each states
   an exchange at a process boundary — a supplied state, a surface, an answer that is the product — so a red
   there is a defect in behaviour until another measurement says otherwise.
 - **Marked for later review/reimplementation:** every integration and unit scenario — `tests/integration/**`,
-  `tests/unit/**` and the flat `tests/*.test.ts` suite. It is not re-grained: re-pointing a test row at a
-  moved census, a renamed internal or a new arrangement is exactly the work this decision removes, and the
-  rework replaces the row whole.
+  `tests/unit/**` and the flat `tests/*.test.ts` suite. It is never re-grained: re-pointing a test row at a
+  moved census or a renamed internal is the work this decision removes, and the rework replaces it whole.
 - **The marker** rides in the test source beside what it marks: `// strata:marked rework — <reason>` above an
   `it` or a `test` marks that scenario; the same line with `marked-file` in the file's header marks every
   scenario in it, which is the shape every flat file and every strata integration/unit battery takes, being
@@ -671,11 +669,126 @@ a measurement with a shelf life, and the loop stops spending passes keeping it t
   and the four legs of `brief.md` §6 rest on `tests/e2e/**`, the three Electron legs and every unmarked row.
   How the runner separates the two readings is L2's arrangement to decide and L4's to land; this row states
   the rule only (D-3).
-- **Carried over unmarked, being a loop instrument and not module machinery:** the worktree boundary
-  assertion of `tests/store-tabs-record.test.ts` §4.2 item 9. A loop that marks the row measuring its own
-  tree has nothing left to measure.
+- **Carried over unmarked:** the worktree boundary assertion of `tests/store-tabs-record.test.ts` §4.2 item
+  9, being a loop instrument rather than machinery — a loop that marks the row measuring its own tree has
+  nothing left to measure.
 
 **Consequences, stated because they follow:** the two long-standing reds — that same file's §4.2 items 7
-and 8 — sit in a flat file, so they move from red to on notice and the rework owns them; a run that finds a
-marked scenario's expectation outdated files a `mark`, not a defect; `brief.md` §5/§6 and `AGENTS.md` carry
-the split as their own rule; no package change follows (D-5), and nothing is merged or pushed (D-6).
+and 8 — move from red to on notice and the rework owns them; a run that finds a marked scenario's expectation
+outdated files a `mark`, not a defect; `brief.md` §5/§6 and `AGENTS.md` carry the split; no package change
+follows and nothing is merged or pushed (D-5, D-6).
+
+---
+
+## D-31 — D-30 supersedes the test-row re-grain arm of D-10, D-11, D-13 and D-22
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-10, D-11, D-13 and D-22** on their
+test-row arm; those rows stand as filed (D-1). **Source:** the register read against the tree after D-30
+landed, where four live rows still instruct the re-grain D-30 forbids.
+
+**Decision:** where any of the four says a **test row** is re-grained in the unit that moves a number, a
+name or an arrangement, the row now reads: the test row is **marked** `// strata:marked-file rework` and
+the rework replaces it whole (`strata/marks.json`; D-30). Nothing else in those rows moves.
+
+- D-10's **location** goal stands untouched: a module's rows migrate into
+  `tests/{e2e,integration/<module>,unit/<module>}/` at claim time. D-30 replaces the assertion's
+  maintenance, not its address.
+- D-11's "each test row that counts them", and D-13's and D-22's "re-grained, not deleted", keep their
+  **subject** — the census copies and the persisted-file set still move with the unit that moves them —
+  and lose only the instruction to re-point a test row's expectation.
+- A **`src/` statement** that reads a moved number is not test-side and is still re-grained by the unit
+  that moves it: `src/main/security.ts`'s `TOOL_GROUPS`/`VALID_GROUPS`, `ALL_TOOLS`, the `RpcMethod`
+  union (D-11). D-30 touches nothing there.
+- The old instruction was followed once and cost a pass: `docs/L1/central-data-management.md` §8 lists
+  `tests/secure-store-discipline.test.ts`, whose rows were retired whole with the file by the sibling
+  unit's E-5, so a re-grain of that row had no referent left to re-point.
+
+**Consequence:** a unit that moves a number now re-grains the code and the documents, and **marks** the
+test rows. D-10's migration and D-30's marking govern different things, and a reader who finds both should
+not read a contradiction.
+
+---
+
+## D-32 — Corrigendum to D-20: the ordering was missed, and the principle still binds
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-20**, which stands as filed (D-1).
+**Source:** the register against the tree — D-20 entered at `0eca66b` (2026-10-28 23:10), the rebuild's
+implementation landed at `574cecd` (2026-10-29 00:08), and `central-data-management`'s walkthrough has
+never closed (`strata/records/central-data-management-walkthrough.md`).
+
+**Decision:** D-20's ordered pair is **spent and unmet**, and the corpus records that rather than reading
+it away — which is D-21's own rule about a row that makes a claim about the tree.
+
+- The **collision it existed to prevent occurred**, and the corpus still shows the scar:
+  `docs/L1/central-data-management.md` C-2 lists `tests/secure-store-discipline.test.ts`, a file the
+  rebuild's E-5 retired whole, and names `src/main/operator-settings/index.ts` as the second group-set
+  copy "re-homed by the rebuild after `src/main/security-store.ts` was deleted (D-16)".
+- The **principle binds from here**, in D-20's own words and not its spent ordering: no two units in
+  flight over the same files, digests or census copies.
+- It does **not** gate the `secure-panels` unit (D-35). The one file that unit shares with an open unit is
+  `src/renderer/secure-panels.ts`, and central-data's own documents transfer that term to the pane's unit
+  (`docs/L1/central-data-management.md` C-2's last term; `strata/records/central-data-management-unit.md`
+  §2); an owner taking its own property is not the overlap D-20 forbids.
+- The three open units' walkthroughs are **not** a precondition for a unit that touches none of their
+  files. They close on their own schedule, at the cap decision their records owe (D-10).
+
+---
+
+## D-33 — Corrigendum to D-22: the retirement is named, not its line numbers
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-22**, which stands as filed (D-1).
+**Source:** D-22's three cites into `src/main/main.ts` measured at this head — `:143`, `:315` and
+`:384-390` no longer name the boot read, the settings-channel read or the tmp+rename+fsync writer.
+
+**Decision:** D-22's checkpoint is **discharged**, and what it claims is the retirement, not the
+coordinates: no `settingsPath` constant, no reader of `provident-settings.json` and no writer of it
+anywhere in `src/main/main.ts`, with the state that carrier held carried by the operator-settings instance
+under D-19/D-25's import-once.
+
+- The three line cites are **D-22's dated reading** and are not repaired: a repaired range drifts at the
+  next edit, and D-28 already rules that a cite which must survive a moving file names its subject.
+- A reader takes from the row the retired carrier, its replacement and the checkpoint's green conditions —
+  which `strata/records/settings-carrier-retirement-unit.md` carries in its own terms.
+
+---
+
+## D-34 — A discharged row says so on its own Status line
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** "D-34 — a convention for
+marking a row discharged", from a review that found all thirty rows reading `ACTIVE` — executed,
+standing and unpaid alike.
+
+**Decision:** a row whose work is **wholly** discharged carries one added clause on its Status line:
+
+` · **Discharged by:** <the record, artifact or row that closes it>`
+
+Nothing else in the row moves. This is provenance, which D-1 already attaches to a statement: it is
+**not** a rewording, and a change of substance still needs a corrigendum row.
+
+- **Absence asserts nothing.** A row without the clause is not thereby open — it may be a standing rule, a
+  rule whose work is partly done, or an obligation nobody has taken. A reader who needs the difference
+  reads the row itself.
+- A row discharged **in part keeps no clause**, and names its remainder in a corrigendum or in the unit
+  record that owns it (D-22 with D-32; D-11 with D-35).
+- The clause cites something that exists, and it is checked like any other citation (D-28).
+
+---
+
+## D-35 — The next unit is the Settings pane's sixth group
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source (user, selection):** the `secure-panels` unit, from
+the register review that ranked the open items.
+
+**Decision:** the next unit admitted through the loop closes D-11's uncovered term:
+`src/renderer/secure-panels.ts` enumerates five group names in `GROUPS` against the gate's six
+(`src/main/security.ts`'s `ToolGroup`), so `data` is in `VALID_GROUPS` with **no operator control**.
+
+- Its map row is already filed — `secure-panels`, seven claimed paths — so L1's first act is a design
+  against an owned subtree, not a new claim (D-7).
+- The pane is provident-authored data already: `paneEnvelope()` builds one toggle per `GROUPS` entry, so
+  the change is a sixth entry in a data set on the graph path that exists. No hand-written DOM.
+- It carries D-12's precondition — an operator-visible control over store state — which the undo unit
+  will need in the same envelope, and it discharges the term central-data's documents transferred here
+  (D-32).
+- It is measured, not asserted: the app boots and `npm run ui` drives a live renderer (D-27), so a green
+  on this unit is a rendered-surface reading rather than a node-suite one.
