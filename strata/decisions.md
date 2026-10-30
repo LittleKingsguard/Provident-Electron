@@ -1198,3 +1198,23 @@ itself leaves those alone.
   contains one.
 - A reader counting "offsets" without that scope will find a hundred and conclude the rule failed; the rule
   never claimed them.
+
+---
+
+## D-55 — Corrigendum to D-3: the pointers carry the non-negotiables, which are floors and not rules
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-3**, which stands as filed (D-1). **Source:** the
+`strata-bootstrap` walkthrough, run 13, measured — D-3 says "Neither carries a workflow rule", and `AGENTS.md`
+states five: UI authority, envelope-green is never app-green, what gates is the boundary, the four-leg floor, and
+that no layer judges its own design.
+
+**Decision:** a **non-negotiable is a floor, not a rule**, and D-3's sentence bars the second, not the first. The
+distinction is what each does when it fires: a *rule* tells a session the next step (a procedure owns that, and a
+restated step drifts silently), while a *floor* says what may never be true whatever the step — and a session that
+has not read the corpus still must not modify a package or judge its own design.
+
+- Each non-negotiable cites its owning row, so the pointer states a bound and the corpus keeps the procedure.
+- Where the two can be confused the row decides; that is the whole reason the floor is stated where a session
+  loads it first.
+- The alternative — moving the non-negotiables into the procedure files — would delete the only statements that
+  survive a session which never opens `strata/`.

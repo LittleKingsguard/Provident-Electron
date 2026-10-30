@@ -42,7 +42,7 @@ restates neither, because a count in a second place drifts at the next commit (D
    L2's arrangement for reporting the gating reading beside the on-notice one, and L4 landing it.
 3. **D-22's second half**, still parked: the gate's exclusion/tier-4 enforcement (giving
    `src/main/tier4-state.ts`'s reader its first `src/**` consumer and discharging `ASM-4`), the module
-   registry, and the journal-length consumers onto the instance. It is also where `R-7` lands.
+   registry, and the journal-length consumers onto the instance. `R-7` is **no longer** in this queue: the `preload.ts` comment it named was corrected at this head, so its premise has gone.
 4. **The carried small items**: `F-5`'s stale comment in `src/shared/types.ts` (the group set's fourth
    reader), `gesture-session` `F-9(b)`'s missing sibling entry, and `bundle-boot-seam`'s `A-4` flake.
 
