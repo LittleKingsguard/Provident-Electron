@@ -1,7 +1,9 @@
 # record — `strata-bootstrap` rebuild retrospective, builds 3 (D-1; replaces its predecessor)
 
 Answers three questions (rebuild.md §4). The artifact rebuilt is the **summary layer**: `brief.md`, the
-register's cross-references, and the unit records.
+register's cross-references, and the unit records. It **supersedes the recommendation** in
+`strata/records/strata-bootstrap-walkthrough.md` (run 14) — that record's verdict proposed this rebuild, and a
+proposal taken is not a proposal standing (`rebuild.md` §4).
 
 **What did we believe that was false?** That a summary can be *maintained*. Fourteen rounds edited `brief.md`
 and the records as the layers moved, and each edit left the next sentence behind — a count, a leg list, a section

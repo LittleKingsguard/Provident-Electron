@@ -38,10 +38,10 @@ point, procedures rule, and nothing here restates one.
 `pass`, `fail [--reason] [--from]`, `rebuild`, `close`, `show`. A unit's layer, stage, artifacts, assumptions
 and per-artifact `streaks` live in `.strata/units/<unit>.json`, overwritten at every transition; no document
 records where a unit stands, and the shape is `platform.md` §4's list. `stage` has two legal values, written by the script alone — `design` at `init` and `rebuild`, `done` at `close` — **and this paragraph is where that rule
-lives** (no procedure states it), so a unit that closes and later fails keeps `stage: done` with its red in
-`streaks`, and readiness is the walkthrough's. **`stage` is the last structural transition, not a verdict:** a unit that closes and
-then fails a walkthrough keeps `stage: done` while its `streaks` and `lastFailure` carry the red, so
-readiness is the walkthrough's — never the stage's (`walkthrough.md` §5, D-10). A review task (an examiner's measurement, a walkthrough) may leave a return in `.strata/returns/` with no unit state row: it decides
+lives** (no procedure states it). **`stage` is the last structural transition, not a verdict:** a unit that closes
+and then fails a walkthrough keeps `stage: done` — its `streaks` entry is deleted by the next `pass`, so the red that
+stands is `lastFailure`, which only `rebuild` clears (`rebuild.md` §1; `platform.md` §4). Readiness is the
+walkthrough's, never the stage's. A review task (an examiner's measurement, a walkthrough) may leave a return in `.strata/returns/` with no unit state row: it decides
 nothing about a unit's progress.
 
 ## Checking this tree
