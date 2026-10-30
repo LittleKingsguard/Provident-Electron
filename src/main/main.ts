@@ -20,6 +20,11 @@ import {SecurityGate, type ToolGroup} from './security.js'
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
 // until a `data.*` tool is called (D-11, D-13).
 import {createDataSurface} from './data/index.js'
+// `store-tabs-record` (D-62, D-63) — the tab record's surface enters the composition HERE and nothing else
+// of this file moves: it constructs no store, spells no `provident-*.json` literal for one, and reaches the
+// record only through the surface's own read/commit (the arrangement the operator's store already uses).
+import {createTabsSurface} from './tabs-surface/index.js'
+import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
 // names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
@@ -114,6 +119,18 @@ async function main(): Promise<void> {
   // surface's own `read()`. The holder's ONE writer is that module (ASM-4, settled at L1 rev 3);
   // `mcp.applyExclusion` now only ENFORCES.
   const settingsSurface = createSettingsSurface({ userDataDir: app.getPath('userData') })
+  // THE TAB RECORD'S ONE REFERENCE (D-63): constructed here, held by its surface module, and named by no
+  // MCP-reachable file — the crossing is the bridge's and only the bridge's (L2 §2, L3 §6).
+  const tabsSurface = createTabsSurface({
+    userDataDir: app.getPath('userData'),
+    // THE CHANGE PUSH (L2 §2): the record moved, and every window is told so it can re-read. The delivery
+    // carries no value — the address is the L2's contract, and a payload here would be a second copy.
+    onChanged: () => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC_TABS_CHANGED)
+      }
+    },
+  })
   const persisted = settingsSurface.read()
   // `docs/specs/secure-exclusion.md` `§2.1` item 4 — THE ORDERING ENVELOPE, STEP 2: the gate is
   // CONSTRUCTED here (after the construction and the boot read, before the transports) and the exclusion record is
@@ -338,6 +355,12 @@ async function main(): Promise<void> {
   // the other (`§3.4`). THIS FILE NOW READS NO STORE AND NO HOLDER: the surface module holds the
   // one reference and writes `src/main/tier4-state.ts` as the gate's projection (ASM-4), while
   // `mcp.gate` remains the ENFORCEMENT path's accessor. `main` supplies STATE, never the DECISION.
+  // THE TAB RECORD'S TWO CHANNELS (L2 §2): a whole-record read takes no argument, and a commit names its tab.
+  // The surface's shape arm answers `malformed-row` before any store verb; nothing here inspects the argument.
+  ipcMain.handle(IPC_TABS_READ, () => tabsSurface.read())
+  ipcMain.handle(IPC_TABS_COMMIT, (_event, row: unknown) => tabsSurface.commit(row))
+  // the change push: one subscription, taken here so the window's teardown can withdraw exactly what it took
+  tabsSurface.attach()
   ipcMain.handle(IPC_SECURITY_GET, () => settingsSurface.read())
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING reading, G3

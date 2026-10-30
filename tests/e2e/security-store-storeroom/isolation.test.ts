@@ -47,7 +47,7 @@ const RPC_METHODS = [
 ] as const
 
 /** The seven top-level `window.provident` members (`src/main/preload.ts:42-75`), `ISO-4`. */
-const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store'] as const
+const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs'] as const // ⟶ D-63: eight
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -241,14 +241,14 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
       await close()
     }
 
-    // ISO-4 — the bridge: seven top-level members, three security routes in BOTH lockstep halves, and
+    // ISO-4 — the bridge: EIGHT top-level members (D-63 added the tab record's crossing), three security routes in BOTH lockstep halves, and
     // `ipcRenderer` obtainable from no file but the bridge.
     const preload = sourceOf('src/main/preload.ts')
     const start = preload.indexOf('export interface ProvidentBridge {')
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const members = [...preload.slice(start, end).matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries seven top-level members and gains none (interface.md §5 A-1)').toEqual([...BRIDGE_MEMBERS])
+    expect(members, 'the bridge carries eight top-level members — seven plus the tab record\'s crossing (D-63); interface.md §5 A-1')).toEqual([...BRIDGE_MEMBERS])
     const preloadRoutes = securityRoutesOf(preload, 'src/main/preload.ts')
     expect(preloadRoutes, 'the security member carries exactly the three manual-UI routes').toEqual(['get', 'set', 'setExclusion'])
     expect(securityRoutesOf(sourceOf('src/renderer/secure-panels.ts'), 'src/renderer/secure-panels.ts'), 'and the renderer’s `declare global` half carries the same three').toEqual(preloadRoutes)

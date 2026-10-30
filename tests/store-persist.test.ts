@@ -174,7 +174,7 @@ const DECLARED_APP_STATE_ADDRESS = 'operator-app-state'
 const OPERATOR_SETTINGS_MODULE = 'main/operator-settings/index.ts'
 const DECLARED_OPERATOR_SETTINGS_FILE = 'provident-operator-settings.json'
 /** §2.11 item 4 — the preload bridge's declared TOP-LEVEL member set, and the `store` sub-namespace's. */
-const DECLARED_TOP_LEVEL_BRIDGE_MEMBERS: readonly string[] = ['ready', 'onRequest', 'sendReply', 'notify', 'security', 'module', 'store']
+const DECLARED_TOP_LEVEL_BRIDGE_MEMBERS: readonly string[] = ['ready', 'onRequest', 'sendReply', 'notify', 'security', 'module', 'store', 'tabs'] // ⟶ D-63
 const DECLARED_STORE_SUB_MEMBERS: readonly string[] = ['get', 'put', 'onFileChanged']
 
 /* ───────────────────────────── THE DRIVE/PROBE LAYER ───────────────────────────── */

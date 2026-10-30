@@ -6,6 +6,8 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
+import type { TabsRecordRow } from '../shared/types.js'
+import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (erased at build; no runtime coupling). The WIDENING is an intersection at the declaration
@@ -67,6 +69,16 @@ export interface ProvidentBridge {
     get(): Promise<ModuleBridgeResult>
     setDisabled(name: string, disabled: boolean): Promise<ModuleBridgeResult>
   }
+  // THE TAB RECORD'S CROSSING (D-63, `docs/L2/store-tabs-record/interface.md` §2): ONE member, THREE routes.
+  // `read` takes no argument because the record is one document; `commit` names its tab and never a path, so the
+  // renderer cannot compose an address; `onChanged` delivers that the record moved and never its value. The
+  // declaration below and `src/renderer/renderer.ts`'s copy are the same text in both files — the lockstep rule
+  // the `store`/`security` pair already follows (L3 signatures §4).
+  tabs: {
+    read(): Promise<{ status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }>
+    commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number; repaired?: boolean }>
+    onChanged(handler: () => void): () => void
+  },
   store: {
     get(): Promise<{ name: string; value: unknown }[]>
     put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: string }>
@@ -135,6 +147,21 @@ const bridge: ProvidentBridge = {
   // the THREE new members — Y-1 the boot hand-off, Y-2 the commit crossing, Y-3 the
   // change-push registration (registered once at boot; the returned release is held by the
   // wiring and answered at realm teardown — the P1-P7 release discipline).
+  tabs: {
+    read(): Promise<{ status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }> {
+      return ipcRenderer.invoke(IPC_TABS_READ)
+    },
+    commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number; repaired?: boolean }> {
+      return ipcRenderer.invoke(IPC_TABS_COMMIT, row)
+    },
+    onChanged(handler: () => void): () => void {
+      const listener = (): void => handler()
+      ipcRenderer.on(IPC_TABS_CHANGED, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC_TABS_CHANGED, listener)
+      }
+    },
+  },
   store: {
     get(): Promise<{ name: string; value: unknown }[]> {
       return ipcRenderer.invoke(STORE_FILE_GET)

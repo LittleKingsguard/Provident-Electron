@@ -35,6 +35,7 @@ import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
 // the SAME import: the two declaration sites widen in LOCKSTEP with `preload.ts`
 // and `SecuritySettings` itself is untouched (§1.3 item 5).
 import type { SecurityWriteReceipt, Tier4ClosedRefusal, Tier4WriteAnswer } from '../main/settings-surface/index.js'
+import type { TabsRecordRow } from '../shared/types.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
 // L3 (secure-panels E-1) — the group roster's binding to the gate's union: `ToolGroup` is
@@ -63,6 +64,25 @@ declare global {
         // body calls it and NEVER throws; a malformed request answers `applied: false`.
         setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
       }
+      // THE TAB RECORD'S CROSSING (D-63; `docs/L2/store-tabs-record/interface.md` §2): ONE member, THREE routes.
+      // This copy and `src/main/preload.ts`'s are the same text in both files — the lockstep rule the `store`
+      // and `security` members already follow. `read` takes no argument, `commit` names its tab and never a
+      // path, and `onChanged` delivers that the record moved and never its value.
+      tabs?: {
+        read(): Promise<
+          | { status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] }
+          | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }
+        >
+        commit(row: TabsRecordRow): Promise<{
+          status: 'committed' | 'refused'
+          reason?: string
+          message?: string
+          address?: readonly (string | number)[] | null
+          cursor?: number
+          repaired?: boolean
+        }>
+        onChanged(handler: () => void): () => void
+      },
       module?: {
         get(): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
         setDisabled(name: string, disabled: boolean): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>

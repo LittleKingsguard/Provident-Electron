@@ -80,7 +80,7 @@ const RPC_METHODS = [
 const MUTATING = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'] as const
 
 /** The seven top-level `window.provident` members as filed (`src/main/preload.ts:42-75`). */
-const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store'] as const
+const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs'] as const // ⟶ D-63: eight
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')

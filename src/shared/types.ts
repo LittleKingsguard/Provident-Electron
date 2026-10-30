@@ -285,6 +285,16 @@ export type RpcMethod =
   | 'data.list'
   | 'data.journal'
 
+/** The tab record's one row, as it crosses the bridge (D-63; `docs/L2/store-tabs-record/interface.md` §2).
+ *  It is the record's `file.tabs.<id>` leaf: the id is the leaf's NAME and this is its value. */
+export interface TabsRecordRow {
+  readonly id: string
+  readonly target: string
+  readonly active: boolean
+  readonly error?: string
+  readonly label?: string
+}
+
 export interface RpcRequest {
   id: number
   method: RpcMethod
