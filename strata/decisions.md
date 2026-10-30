@@ -1357,3 +1357,28 @@ becomes a unit of its own, and `graph-store`'s row stops carrying its batteries.
 - **What it does not own:** the store itself (`store-rederive`), the envelope that seeds the tabs
   (`app-envelope`), and the renderer wiring (`renderer-wiring`). A unit that reached into any of those would be
   claiming a sibling's artifact by another route.
+
+---
+
+## D-63 — The tab record crosses the bridge; no renderer-side instance
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the user's instruction, verbatim — "Use bridge crossing".
+
+**Decision:** the tab record's store lives **main-side on a `provident-storeroom` instance**, and the renderer reaches
+it only through the bridge. No renderer-side instance, and the native addon stays out of a `nodeIntegration: false`
+renderer (`src/main/main.ts`'s window options).
+
+- **Its own instance, not the profile store's.** `provident-profile.json` is `central-data`'s and its surface is that
+  unit's (`src/main/data/surface.ts`); a second unit over one path is what D-32 forbids. The tab record takes a
+  **third** instance beside the profile store and the operator's, and its file is that instance's.
+- **The bridge must carry it, and the five declared-but-unanswered `data.*` members are the precedent to weigh**: they
+  are a renderer→main store crossing that was declared and never answered. Whether the tab record rides those members
+  or adds its own is the crossing's design question — named here, not decided, because reusing them would put two
+  units over one route.
+- **The engines run where the instance does.** `TABS_CONSTRAINT` is a `GraphConstraint` the renderer evaluates today;
+  under this decision the constraint, the repair and the listeners are the **instance's**, and the renderer becomes a
+  client that renders what the store says. That is the state-machine-and-event-generator shape the rework intends.
+- **It decouples the tabs from `src/renderer/store.ts`.** That store is renderer-side and stays unwired (ASM-7); it is
+  no longer a prerequisite for this rework, and adopting it is a separate question with its own census cost.
+- **The census moves.** A third instance, the bridge routes it adds and the twelve unwired mechanisms' count are the
+  map's to re-derive, not this row's to state (D-26, D-39).
