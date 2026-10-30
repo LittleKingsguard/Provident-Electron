@@ -1,7 +1,7 @@
 # L2 — `bundle-boot-seam`: the behaviour
 
 - **Layer:** L2 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 2 is read through this one: it states the arrangement `interface.md` §1 declares as the behaviour L1 §4/§5 fixed and as the negative behaviours it must answer, **with the package external**, and the behaviour the inlined arm measurably did not reach (§4). Rev 3 states that same behaviour **landed and re-measured**: every cite below is read against the tree at this head, and the artifact it reads is rev 2's external emission (**Status:** DESIGN; D-26, D-27)
-- **Inputs:** `interface.md` §1-§9 (the arrangement, the probes P-1..P-15, E-1/E-2/E-5, the census); `docs/L1/bundle-boot-seam.md` §4 (the eight observables), §5 (the boot order), §6 (B-1..B-8), §8 (the exceptions); D-5, D-14, D-18, D-26, D-27, D-28; the unit record at `strata/records/security-store-storeroom-unit.md` §2 and its return `F-1`/`F-2`
+- **Inputs:** `interface.md` §1-§9 (the arrangement, the probes P-1..P-15, E-1/E-2/E-5, the census); `docs/L1/bundle-boot-seam.md` §4 (the seven observables), §5 (the boot order), §6 (B-1..B-8), §8 (the exceptions); D-5, D-14, D-18, D-26, D-27, D-28; the unit record at `strata/records/security-store-storeroom-unit.md` §2 and its return `F-1`/`F-2`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `P-n` is `interface.md` §2's probe answer for this seat; the package is read and never edited (D-5)
 
 ## 1. What the arrangement must serve, in the app's own vocabulary
