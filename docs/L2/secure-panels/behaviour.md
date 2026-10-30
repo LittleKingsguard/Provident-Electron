@@ -1,8 +1,8 @@
 # L2 — `secure-panels`: the behaviour
 
-- **Layer:** L2 · **Unit:** `secure-panels` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 2 is read through this one: §7's tier-4 sentence is replaced by the measured behaviour — a closed tier stops a reader, not a writer (`src/main/settings-surface/index.ts:28`) — and `ASM-L2-9` is re-stated to match (§7, §8). Rev 2: §7's "the roster is the table" no longer paraphrases the pane's declaration, it points at `docs/L3/secure-panels/signatures.md` §1-§2.2. · **Status:** DESIGN — the answer set L1 §4.3 fixes, stated at this layer's grain: the state before, the act, the state after, and the observation each of `P-1`…`P-7` takes of it
-- **Inputs:** `interface.md` §1-§9 (the arrangement, S-1…S-7, the surface, the census, R-1…R-7); `docs/L1/secure-panels.md` §1/§2/§4 (the goal, the defect, the rows), §5 (what does not change), §6 (the marked reality); `persistence.md` §1-§4 (the bytes behind P-5/P-6); `tests/integration/secure-panels/{roster,persistence}.test.ts` read as the battery's own statement of what it can and cannot observe; D-5, D-11, D-16, D-17, D-19, D-22, D-23, D-26, D-30, D-31, D-35, D-37, D-40; the tree at this head
-- **Ceiling:** 150 lines, class max (D-1) · **Citations:** `P-n` is `docs/L1/secure-panels.md` §4.3's row of that number and every claim below is one of those rows can observe; `S-n` is `interface.md` §3's probe; a `file:line` is this head's dated reading (D-28)
+- **Layer:** L2 · **Unit:** `secure-panels` · **Branch:** `strata` (D-6) · **Rev:** 4 — rev 3 is read through this one: every cite into `src/renderer/secure-panels.ts` now names the **site** it measures — `paneEnvelope()`'s toggle rows, `syncConfig`'s `toggle:` arm and its status write, the one shared `TOGGLE_BODY`, the supervisor's dispatch path, the exclusion arm — rather than an offset, because E-1 landed in that file after rev 3's readings and moved them (§1-§3, §6, §8); no claim below moves with the cites. Rev 3 — rev 2 is read through this one: §7's tier-4 sentence is replaced by the measured behaviour — a closed tier stops a reader, not a writer (`src/main/settings-surface/index.ts:28`) — and `ASM-L2-9` is re-stated to match (§7, §8). Rev 2: §7's "the roster is the table" no longer paraphrases the pane's declaration, it points at `docs/L3/secure-panels/signatures.md` §1-§2.2. · **Status:** DESIGN — the answer set L1 §4.3 fixes, stated at this layer's grain: the state before, the act, the state after, and the observation each of `P-1`…`P-7` takes of it
+- **Inputs:** `interface.md` §1-§9 (the arrangement, S-1…S-7, the surface, the census, R-1…R-8); `docs/L1/secure-panels.md` §1/§2/§4 (the goal, the defect, the rows), §5 (what does not change), §6 (the marked reality); `persistence.md` §1-§4 (the bytes behind P-5/P-6); `tests/integration/secure-panels/{roster,persistence}.test.ts` read as the battery's own statement of what it can and cannot observe; D-5, D-11, D-16, D-17, D-19, D-22, D-23, D-26, D-30, D-31, D-35, D-37, D-40; the tree at this head
+- **Ceiling:** 150 lines, class max (D-1) · **Citations:** `P-n` is `docs/L1/secure-panels.md` §4.3's row of that number and every claim below is one of those rows can observe; `S-n` is `interface.md` §3's probe; a cite into `src/renderer/secure-panels.ts` names the **site and never an offset**, because E-1 moved that file after rev 3's readings, and every other `file:line` is this head's dated reading (D-28)
 
 ## 1. The answer set, at the grain of one operator gesture
 
@@ -20,31 +20,31 @@
 
 | Paint | `data-on` (rendered attribute) | Row text | Where it comes from |
 |---|---|---|---|
-| the authored envelope, before any bridge answer | `"false"` — authored in the data | the label table's entry, with no mark | `paneEnvelope()` (`src/renderer/secure-panels.ts:171-177`) |
-| after the first carrier answer | `"true"` iff the carrier's `enabled` names the group, else `"false"` | `☑`/`☐` + that entry, one `content` write | `syncConfig`'s `toggle:` arm (`:545-549`) |
-| after a click settles | the flipped value, re-read from the carrier | the flipped mark, re-composed from the carrier | the same arm, over a `refresh()` this click caused (`:486-510`) |
+| the authored envelope, before any bridge answer | `"false"` — authored in the data | the label table's entry, with no mark | `paneEnvelope()`'s toggle rows (`src/renderer/secure-panels.ts`) |
+| after the first carrier answer | `"true"` iff the carrier's `enabled` names the group, else `"false"` | `☑`/`☐` + that entry, one `content` write | `syncConfig`'s `toggle:` arm |
+| after a click settles | the flipped value, re-read from the carrier | the flipped mark, re-composed from the carrier | the same arm, over a `refresh()` this click caused |
 
-- **The pane owns no state of its own:** `data-on` is written from `cfg.enabled.includes(g)` and never from the pane's prior value, so a click that the store refuses repaints the row it had (`:545-549`; the `D-vi` shape at `:322-332`).
-- **The authored `"false"` is the only state the pane holds before an answer,** and it is the landed shape of the group rows — not the exclusion control's silence (which declares no state member at all, `:243`). No row of this unit asserts that pre-answer paint — P-2 and P-3 read after the first carrier answer (P-2, P-3) — **and neither does the battery**: `paneEnvelope()` is module-private and the shim's only paint follows a `refresh()`, which overwrites the authored `false` from the carrier (`interface.md` §7).
+- **The pane owns no state of its own:** `data-on` is written from `cfg.enabled.includes(g)` and never from the pane's prior value, so a click that the store refuses repaints the row it had (`syncConfig`'s `toggle:` arm; the `D-vi` shape in that pass's exclusion arm).
+- **The authored `"false"` is the only state the pane holds before an answer,** and it is the landed shape of the group rows — not the exclusion control's silence (that control's authored node declares no state member at all). No row of this unit asserts that pre-answer paint — P-2 and P-3 read after the first carrier answer (P-2, P-3) — **and neither does the battery**: `paneEnvelope()` is module-private and the shim's only paint follows a `refresh()`, which overwrites the authored `false` from the carrier (`interface.md` §7).
 - **The sixth row is indistinguishable in kind from the five:** same `type`, same class, one generated handler name, one `[data-group]` attribute — which is what makes P-2's set comparison the whole of its drift check (P-2; L1 §5, `brief.md` §2).
 
 ## 3. What one click does, in order
 
-1. the rendered row's `click` reaches the pane's `DomAdapter` and becomes a pane-graph dispatch — the production path, with only the event's origin synthetic (`src/renderer/secure-panels.ts:366,385-397`; L1 §4.2).
-2. the **one shared** `TOGGLE_BODY` reads the group from the node's own `data-group` and the direction from its own `data-on`, then issues **one** call: `security.set({ groups: [g] })` when off, `security.set({ disable: [g] })` when on (`:135-142`).
+1. the rendered row's `click` reaches the pane's `DomAdapter` and becomes a pane-graph dispatch — the production path, with only the event's origin synthetic (the `DomAdapter` and the supervisor's dispatch path, in `src/renderer/secure-panels.ts`; L1 §4.2).
+2. the **one shared** `TOGGLE_BODY` reads the group from the node's own `data-group` and the direction from its own `data-on`, then issues **one** call: `security.set({ groups: [g] })` when off, `security.set({ disable: [g] })` when on (that body, `src/renderer/secure-panels.ts`).
 3. the call crosses `IPC_SECURITY_SET` into `settingsSurface.set(patch)` (`src/main/preload.ts:108-110`; `src/main/main.ts:338`), which composes the pair patch and writes **one** `file`-tier record (`persistence.md` §1, §5; D-17).
 4. that write's committed delivery re-patches the gate inside the surface's subscription, so the gate holds the new grant before the answer is minted (`src/main/settings-surface/index.ts:102-125`; D-17).
-5. the DomAdapter's flush re-renders and `refresh()` re-reads the carrier, so the row and the status line paint the **carrier's** answer, not the click's intent (`src/renderer/secure-panels.ts:385-397,486-510`).
+5. the DomAdapter's flush re-renders and `refresh()` re-reads the carrier, so the row and the status line paint the **carrier's** answer, not the click's intent (the supervisor's dispatch path and `refresh()`, in `src/renderer/secure-panels.ts`).
 6. the gate's registered name set moved, so `tools/list` — a second, independent reading — answers the new set (`src/main/security.ts:38-42`; P-4).
 
 - **One gesture, one write:** no second channel call, no second store verb, and no `RpcMethod` member is involved anywhere in the chain (`interface.md` §4; D-18).
-- **A click with no bridge returns silently:** the body's `!s` guard is the first statement, so a plain page throws nothing and writes nothing (`src/renderer/secure-panels.ts:135-142`; `brief.md` §2).
+- **A click with no bridge returns silently:** the body's `!s` guard is the first statement, so a plain page throws nothing and writes nothing (the one shared `TOGGLE_BODY`, `src/renderer/secure-panels.ts`; `brief.md` §2).
 - **A click carries no group of its own:** `TOGGLE_BODY` takes the group off the node it runs on, so the sixth row needs no per-group body and no second handler body is added (L1 §5; `interface.md` §5).
 
 ## 4. What the status line composes
 
-- **One `content` write into `#security-status`, one string** — no new node, no second line (`src/renderer/secure-panels.ts:520-540`).
-- **The composition, in order:** `token: ••••|(none)`, then `enabled: [<the carrier's list, comma-separated>]`, then `journal: ≤N|∞`, then the exclusion segment when the carrier supplied one, then the refusal token when the carrier supplied one (`:520-540`).
+- **One `content` write into `#security-status`, one string** — no new node, no second line (the status row's single write in `syncConfig`, `src/renderer/secure-panels.ts`).
+- **The composition, in order:** `token: ••••|(none)`, then `enabled: [<the carrier's list, comma-separated>]`, then `journal: ≤N|∞`, then the exclusion segment when the carrier supplied one, then the refusal token when the carrier supplied one (that same write).
 - **`data` appears in that `enabled:` composition by being in the carrier's list** — the pane composes it, it does not add it, which is why P-4 reads the line rather than the row alone (P-4; D-17).
 - **The order inside the brackets is the record's own,** appended as grants arrive and never re-sorted into `VALID_GROUPS` order (`src/main/operator-settings/index.ts:176-181`); P-2 compares the composition as a **set**, so no row pins that order (P-2).
 
@@ -57,7 +57,7 @@
 ## 6. What a restart paints
 
 - **The instance owns the grant and the pane is its view** (D-17): a second boot on the **same** scratch profile, before any gesture, serves a `read()` whose `enabled` carries `data`, so the first carrier answer paints the row on and the status line names the group (P-5; `persistence.md` §3).
-- **The paint is not a cache:** nothing in the renderer persists the set — the six rows are re-authored at boot and re-filled from the instance's record, so a boot with no record paints all six off and a boot with a record paints what the record carries (`src/renderer/secure-panels.ts:333,486-510`; D-19, P-5).
+- **The paint is not a cache:** nothing in the renderer persists the set — the six rows are re-authored at boot and re-filled from the instance's record, so a boot with no record paints all six off and a boot with a record paints what the record carries (the constructor's one `paneEnvelope()` translation and `syncConfig`'s `refresh()` pass, in `src/renderer/secure-panels.ts`; D-19, P-5).
 - **The restart is a second process on one directory:** the leg keeps boot A's profile and boots B on it, so the claim is the file's, not a warm renderer's (L1 §4.2, P-5).
 - **`tools/list` at boot B carries the five names before any gesture,** which is the same fact read over the other channel (P-5; D-11).
 
@@ -75,7 +75,7 @@
 
 | id | Assumption | Rejected alternative |
 |---|---|---|
-| ASM-L2-6 | the row's rendered state is read **after the first carrier answer**, and the pre-answer authored paint is stated but not asserted (§2) | asserting the authored paint as behaviour, which would make a row about the pane's own default rather than about the carrier (the `D-vi` failure shape, `src/renderer/secure-panels.ts:322-332`) |
+| ASM-L2-6 | the row's rendered state is read **after the first carrier answer**, and the pre-answer authored paint is stated but not asserted (§2) | asserting the authored paint as behaviour, which would make a row about the pane's own default rather than about the carrier (the `D-vi` failure shape, in `syncConfig`'s exclusion arm) |
 | ASM-L2-7 | `tools/list` is read as a **set difference** within one boot (§1, §5) | a count, which D-26 forbids outside `brief.md` §6 and which no row of this unit needs |
 | ASM-L2-8 | the restart claim is a **second process on one profile** (§6) | a warm re-read in the same renderer, which proves a refresh and never a restart (D-19, P-5) |
 | ASM-L2-9 | §7's tier-4 reading is **this seat's measurement**, carrying its own date and the surface's declaration, and named as asserted by nobody (§7) | asserting it as coverage: no row of `P-1`…`P-7` and no battery row drives the closed pair, so a claim dressed as a row would read as a check that does not exist (D-30) |

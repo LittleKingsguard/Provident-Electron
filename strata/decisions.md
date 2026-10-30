@@ -891,3 +891,22 @@ unmarked is the act of declaring it evidence rather than a pin.
   allowed, and then the unit's record must say so (D-1).
 - The rework's own replacement rows are authored unmarked for the same reason: what the rework *adds* is the
   thing to hold to, and what it *replaces* is what D-30 released.
+
+---
+
+## D-41 — A cite into a source file names the site; an offset is a dated reading and says so
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the `secure-panels` landing, measured — a
+twenty-line insertion moved **eleven** offsets that L1's and L2's documents were citing, and L3 had to
+recompute every one of them inside the same session that wrote them.
+
+**Decision:** a document citing a source file a unit edits names the **site** — "the constants block",
+"`paneEnvelope()`", "`syncConfig`'s `toggle:` arm" — and never a bare offset. Where an offset is genuinely
+useful it carries the state it was true at ("post-landing at `4bd17d6`") and is a dated reading (D-26).
+
+- This is D-28 extended from *appendable* files to *moving* ones: the same failure — an insertion falsifying
+  every cite below it — reached by a different mechanism, paid for twice in one unit.
+- A blind run must not have to recompute an offset to read a claim. A finding of the form "the cited line is
+  not that" is arithmetic, and the instrument resolves paths, not truth (D-29).
+- **L4's edit order is the exception:** it is an instruction to a one-shot pass, so its offsets are
+  pre-landing by construction and say so.

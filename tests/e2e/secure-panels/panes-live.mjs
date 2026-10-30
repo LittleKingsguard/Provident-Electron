@@ -3,18 +3,23 @@
 // rows `P-1`…`P-7` of `docs/L1/secure-panels.md` §4.3, over a real renderer.
 //
 // WHAT THIS LEG IS. The unit closes D-11's uncovered census term: the gate validates SIX
-// group names (`src/main/security.ts`'s `ToolGroup`) and the operator's pane offers FIVE
-// (`src/renderer/secure-panels.ts`'s `GROUPS`), so `data` is a valid group with no operator
-// control (D-35). The pane lives in its OWN isolated graph, so NO MCP endpoint can read or
-// drive it (`src/renderer/secure-panels.ts:1-17`; D-16, D-18) — which is why the proof is a
-// RENDERED reading on a live leg and never a node-suite row (`brief.md` §6, D-27, D-30).
+// group names (`src/main/security.ts`'s `ToolGroup`) while the operator's pane offered FIVE at
+// the head this leg first ran against (the pane's `GROUPS` roster in
+// `src/renderer/secure-panels.ts`), so `data` was a valid group with no operator control
+// (D-35). E-1 has landed since and this leg reads 7 of 7 rows at this head against 2 of 7
+// before it, the roster now being the projection of the gate-typed label table's own keys —
+// the section below carries that measurement, not a forecast. The pane lives in its OWN
+// isolated graph, so NO MCP endpoint can read or drive it (the file's own header comment in
+// `src/renderer/secure-panels.ts`; D-16, D-18) — which is why the proof is a RENDERED reading
+// on a live leg and never a node-suite row (`brief.md` §6, D-27, D-30).
 //
 // THE MEASUREMENT CHANNEL (§4.2), exactly the design's: a driver-authored provident HANDLER
 // BODY, loaded through the EXISTING `provident.load` and driven by the EXISTING
 // `provident.dispatch`, which reads `#panes` in the RENDERER realm and — for the gesture —
 // issues an ordinary `click` event on the RENDERED toggle. The pane's own `DomAdapter` turns
 // that into a pane-graph dispatch and then into the landed shared `TOGGLE_BODY`
-// (`src/renderer/secure-panels.ts:385-397,135-142`), which calls the IPC bridge
+// (the pane's `handleDomEvent` and `TOGGLE_BODY`, both in `src/renderer/secure-panels.ts`),
+// which calls the IPC bridge
 // (`window.provident.security.set`) — the production path from control to store, with only
 // the event's ORIGIN synthetic. The observation comes back over the EXISTING
 // `provident.get_rendered_html` (the body writes it into authored graph content), never as a
@@ -33,7 +38,8 @@
 //     envelope in the APP graph (`Runtime.loadEnvelope` REPLACES that graph) and issues no
 //     click, so "before any gesture" in P-4/P-5 means "before any click on the pane", never
 //     "before this leg touched the app at all". Loading the driver touches no pane node: the
-//     pane is a second, ISOLATED graph (`src/renderer/secure-panels.ts:9-17`).
+//     pane is a second, ISOLATED graph (the file's header comment in
+//     `src/renderer/secure-panels.ts`).
 //   · Both boots share ONE scratch profile (P-5's restart), and the instance's own record file
 //     is created ZERO-LENGTH at the store's construction, so "no record yet" and "a record"
 //     are told apart by the bytes this leg reads and PRINTS, never assumed.
@@ -47,14 +53,17 @@
 //     status line's `enabled:` composition, `tools/list` as a SET DIFFERENCE, and the
 //     operator-settings instance's own bytes.
 //
-// RED-FIRST BY CONSTRUCTION (D-27, `examiner.md` §3). At the head this file was authored
-// against, the pane's `GROUPS` roster is a hand-written literal with no `data` member, so
-// P-2…P-6 answer RED until E-1 lands — that repair is one label table typed against the gate's
-// `ToolGroup`, the roster projected from that table's own keys, and the one roster guard
-// `syncConfig`'s `toggle:` arm needs in order to index it, all spelled at
-// `docs/L3/secure-panels/signatures.md` §2. That red is the evidence the unit is admitted on,
-// never a green filed early — so a reader may meet this leg red and be looking at the defect
-// it exists to name.
+// RED-FIRST, MEASURED (D-27, `examiner.md` §3). This leg was authored before E-1 and has been
+// run on both sides of it, so what stands here is a reading and not a prediction: **2 of 7
+// rows green before the landing, 7 of 7 after**. At the head this file was authored against,
+// the pane's `GROUPS` roster was a hand-written literal with no `data` member, and P-2…P-6 —
+// the five rows that read the sixth toggle — were the rows that answered RED while P-1 and P-7
+// held. E-1 is that roster replaced: one label table typed against the gate's `ToolGroup`, the
+// roster projected from that table's own keys, and the one roster guard `syncConfig`'s
+// `toggle:` arm needs in order to index it, all spelled at
+// `docs/L3/secure-panels/signatures.md` §2. It has landed, so a reader at this head meets seven
+// green rows carrying that history. The red set is kept as the evidence the unit was admitted
+// on — never as a green filed early, and never as a state still owed.
 //
 // EXIT CODES (closed vocabulary; no failure may become a skip, a `0` or a green):
 //   `0` every declared row passed · `1` a row failed, or a spawn/handshake failure, or the
@@ -105,7 +114,8 @@ const DATA_TOOLS = [
  *  PREFIX, matched as such. */
 const PANE_ID_PREFIX = 'toggle:'
 const PANE_IDS = ['secure-panes', 'settings-pane', 'group-toggles', 'security-status']
-/** The pane's status line's `enabled:` composition (`src/renderer/secure-panels.ts:540`). */
+/** The pane's status line's `enabled:` composition (the `security-status` write in the pane's
+ *  `syncConfig`). */
 const ENABLED_RE = /enabled:\s*\[([^\]]*)\]/
 /** The settle bound: the renderer settles a requested load asynchronously and the pane's
  *  `refresh()` is an async IPC round-trip, so a single read can catch the pre-settlement paint
@@ -199,7 +209,8 @@ const READ_BODY = `function (ctx) {
 // THE GESTURE, and the whole of its synthetic part: an ordinary `click` event raised on the
 // RENDERED row. Nothing about the pane, the pane graph or the bridge is reached from here —
 // the pane's own DomAdapter resolves the element's wiring and the landed `TOGGLE_BODY` runs
-// under the pane's supervisor (`src/renderer/secure-panels.ts:385-397,135-142`).
+// under the pane's supervisor (the pane's `handleDomEvent` and `TOGGLE_BODY`, both in
+// `src/renderer/secure-panels.ts`).
 const CLICK_BODY = `function (ctx) {
   var out = null
   var nodes = ctx.tree.allNodes()

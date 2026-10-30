@@ -1,6 +1,6 @@
 # L3 — `secure-panels`: the declared signatures and the exact landing text
 
-- **Layer:** L3 · **Unit:** `secure-panels` · **Branch:** `strata` (D-6) · **Rev:** 1 · **Artifact:** `l3-secure-panels-signatures`
+- **Layer:** L3 · **Unit:** `secure-panels` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 1 is read through this one: the landing has happened, the file's offsets are re-grained from pre-landing numbers to **sites with their post-landing reading**, and §3 records that the landing transcribed §2.1/§2.2/§2.3 verbatim · **Artifact:** `l3-secure-panels-signatures`
 - **Status:** DECLARED NAMES AND EXACT TEXT ONLY — the structure, the variants and the guardrails are `design.md`; this file carries every name the landing exposes or consumes and the exact text each region of `src/renderer/secure-panels.ts` must carry afterwards. The arrangement is L2's (`docs/L2/secure-panels/interface.md` §1-§2, `R-3`), restated and never re-decided (D-3)
 - **Contract:** no name is added, dropped or renamed. The four names the repair touches — `GROUP_LABELS`, `GROUPS`, `ToolGroup` and the `toggle:` arm's local `g` — are all names L1 E-1 or L2 `S-7` already spell; only their **types, their order in the file and one guard** move (L1 §7 E-1; L2 `S-7`; D-1)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `T-n` is `design.md`'s probe of this seat on **2026-10-30** (a `/tmp` byte copy of `src/`, the repo's own `tsc`, nothing of the repository written); `S-n` is L2's `interface.md` §3 probe; `P-n` is `docs/L1/secure-panels.md` §4.3's live row; `G-n` is `design.md` §8's guardrail
@@ -9,19 +9,19 @@
 
 **This unit exports nothing and mints nothing.** No module, class, function, verb, constant or type is added to `src/**`, no file is added anywhere, and no MCP tool, resource, route, `RpcMethod` member, bridge channel or `window.provident` member is touched (L2 §5; D-11, D-14, D-18). What the landing adds is **four pieces of text in one file**:
 
-| # | Piece | Kind | Where |
+| # | Piece | Kind | Where (post-landing) |
 |---|---|---|---|
-| 1 | `ToolGroup` as a **second specifier** on the existing type-only import | a type-only import specifier — erased at build (S-4) | `src/renderer/secure-panels.ts:40` |
-| 2 | the table's annotation `Record<ToolGroup, string>` + the `data` entry | an annotation and one data line | `:72-79` |
-| 3 | the projection `const GROUPS = Object.keys(GROUP_LABELS) as readonly ToolGroup[]` | one assertion, at one site, replacing a literal | immediately after the table |
-| 4 | the roster guard in `syncConfig`'s `toggle:` arm | one replaced line and one added line | `:545-549` |
+| 1 | `ToolGroup` as a **second specifier** on the existing type-only import | a type-only import specifier — erased at build (S-4) | `src/renderer/secure-panels.ts:42` |
+| 2 | the table's annotation `Record<ToolGroup, string>` + the `data` entry | an annotation and one data line | `:77-84`, inside the block `:74-90` |
+| 3 | the projection `const GROUPS = Object.keys(GROUP_LABELS) as readonly ToolGroup[]` | one assertion, at one site, replacing a literal | `:90`, immediately after the table |
+| 4 | the roster guard in `syncConfig`'s `toggle:` arm | one replaced line and one added line | `:556-565` |
 
 - **The roster's element type is `ToolGroup`**, and that is the only type this unit puts on a *value*: it is what keeps `paneEnvelope()`'s index clean and what the guard narrows through (`design.md` §2-§3; T-2, T-3).
 - **Nothing is exported**, so nothing here is counted by the map row's `endpoints` — a type-only import of a type an already-imported module exports adds no called export, no route and no bridge member (L2 §6; D-14).
 
 ## 2. The exact text (verbatim; `signatures.md` is the authority L4 copies from)
 
-### 2.1 The import — `src/renderer/secure-panels.ts:40` (region 1)
+### 2.1 The import — the `'../main/security.js'` statement, `:42` post-landing (region 1)
 
 The existing line gains **one specifier**; the statement, the specifier string and the `import type` keyword do not move. The two comment lines above it are this unit's and sit between the PAR-13 block and the import:
 
@@ -33,7 +33,7 @@ import type { ExclusionState as EXCLUSION_STATE, ToolGroup } from '../main/secur
 
 - **A type-only import and never a value import**: the gate module must not enter the renderer bundle, and the specifier set on that line is the only site the type can come from (`src/main/security.ts:3`; L2 `ASM-L2-2`; S-4).
 
-### 2.2 The table and the projection — `:72-79` (region 2)
+### 2.2 The table and the projection — the constants block, `:74-90` post-landing (region 2)
 
 The **whole two-constant block is replaced**, the projection declared **after** the table, `data` the literal's **last** entry:
 
@@ -57,11 +57,11 @@ const GROUP_LABELS: Record<ToolGroup, string> = {
 const GROUPS = Object.keys(GROUP_LABELS) as readonly ToolGroup[]
 ```
 
-- **The five landed label strings are byte-identical to this head's** (`src/renderer/secure-panels.ts:74-78`): not one character of them moves, and `data` is appended (L1 §5; `P-7`).
+- **The five landed label strings are byte-identical to the pre-landing file's**, and the landed file carries them at `:78-82`: not one character of them moves, and `data` is appended at `:83` (L1 §5; `P-7`).
 - **`data`'s text, quoted alone** for a reader checking `P-3`: `data: 'data (data.read/write/delete/list/journal — the central store)',` — it leads with the group name and keeps the family style (`design.md` §4).
 - **`as const` appears nowhere**: the annotation is the table's type, and the projection's assertion is the unit's only `as` (T-4/T-5 fire on the annotation; `design.md` §1).
 
-### 2.3 The narrowing — `syncConfig`'s `toggle:` arm, `:545-549` (region 3)
+### 2.3 The narrowing — `syncConfig`'s `toggle:` arm, `:556-565` post-landing (region 3)
 
 One line replaced, one added, four comment lines; the branch's condition and everything above it stay as landed:
 
@@ -83,13 +83,14 @@ One line replaced, one added, four comment lines; the branch's condition and eve
 
 ## 3. The landing sites, in the order L4 applies them (one pass, one file)
 
-| # | Anchor at this head | Action | Compiles alone? |
+| # | Site, and the text it replaced (post-landing offset) | Action | Compiles alone? |
 |---|---|---|---|
-| 1 | `src/renderer/secure-panels.ts:40`, `import type { ExclusionState as EXCLUSION_STATE } from '../main/security.js'` | append `, ToolGroup` to the specifier list and put §2.1's two comment lines above it | yes — the file stays green |
-| 2 | `:72-79`, `const GROUPS = […] as const` + `const GROUP_LABELS: Record<string, string> = {…}` | replace both with §2.2 verbatim (table first, projection after, `data` last) | **no — leaves exactly one `TS7053`** at region 3's table index (T-2); that red is the design's own statement |
-| 3 | `:545-549`, `const g = id.slice('toggle:'.length)` | replace that line and add the guard, per §2.3 | yes — the file is green; `npm run typecheck` is the instrument |
+| 1 | the existing `'../main/security.js'` import statement, `:42` post-landing — it carried `import type { ExclusionState as EXCLUSION_STATE }` | append `, ToolGroup` to the specifier list and put §2.1's two comment lines above it | yes — the file stays green |
+| 2 | the constants block, `:74-90` post-landing — it carried `const GROUPS = […] as const` above `const GROUP_LABELS: Record<string, string> = {…}` | replace both with §2.2 verbatim (table first, projection after, `data` last) | **no — leaves exactly one `TS7053`** at region 3's table index (`:565`; T-2); that red is the design's own statement |
+| 3 | `syncConfig`'s `toggle:` arm, `:556-565` post-landing — it carried `const g = id.slice('toggle:'.length)` | replace that line and add the guard, per §2.3 | yes — the file is green; `npm run typecheck` is the instrument |
 
-- **No fourth site.** `paneEnvelope()` (`:171-177`), `TOGGLE_BODY` (`:135-142`), the `declare global` block (`:42-70`), `paneMutationValid` (`:103-111`) and every other arm of `syncConfig` are **not edited**; they compile unchanged (T-2) and an edit there is beyond E-1 (`G-1`, `G-4`).
+- **Followed verbatim, measured against the landed file:** the landing transcribed §2.1, §2.2 and §2.3 **byte-for-byte** and **nothing outside the three regions was forced** — `paneEnvelope()` (`:182-188`), the handler bodies (`:134-176`), `paneMutationValid` (`:114-122`) and the `declare global` block (`:44-72`) sit exactly where their pre-landing text implies and read as they read before. That is the evidence this order was buildable as written, and it is why §2 is the authority L4 copies from rather than a sketch to be reconciled.
+- **No fourth site.** `paneEnvelope()` (`:182-188`), `TOGGLE_BODY` (`:146-153`), the `declare global` block (`:44-72`), `paneMutationValid` (`:114-122`) and every other arm of `syncConfig` are **not edited**; they compile unchanged (T-2) and an edit there is beyond E-1 (`G-1`, `G-4`).
 - **Region 2 and region 3 are one pass, not two**: a file holding the annotated table and the un-guarded arm is a file the floor leg reddens, and nothing may be reported from that state (D-1, `examiner.md` §3).
 
 ## 4. Names and texts L4 must not mint
