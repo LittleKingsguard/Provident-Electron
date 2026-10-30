@@ -28,9 +28,9 @@ Four sentences elsewhere in the corpus were contradicted by the surfaced artifac
 Not one of the six runs failed on coverage. Every one named between one and four sentences — always a
 stale cite, a count, or a cross-document contradiction — and the six sets barely overlapped, because each
 fix moved the prose and the next pass read a different page. The engineering was green from run 1 onward:
-`battery` 184/184, `divergence` 9/9 on the pinned N plus 4 extension checks, `ui` 11/11 with real geometry,
-and the unit's own batteries at 8/8, 5/5 and 8/8 (`strata/brief.md` §6). This is the signal `rebuild.md`
-§3 describes: six passes on one artifact class indict the class, not the sentences.
+`battery` 184/184, `divergence` 9/9 on the pinned N plus 4 extension checks, and `ui` 11/11 with real
+geometry (`strata/brief.md` §6), with the unit's own three batteries green at every grain. This is the signal `rebuild.md`
+§3 describes: seven passes on one artifact class indict the class, not the sentences.
 
 **Verdict: not green.** Run 7 then found two sentences in one L2 document — a cite to an `L1 §0` that does
 not exist and a four-command floor called "the three legs" — both fixed. Seven runs, seven passes, and not
