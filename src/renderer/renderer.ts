@@ -68,7 +68,7 @@ interface WiredStoreOptions {
 interface Tier1StoreSurface {
   readonly store: {
     get(): Promise<{ name: string; value: unknown }[]>
-    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: 'malformed-payload' | 'write-failed' }>
+    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: string }>
     onFileChanged(handler: () => void): () => void
   }
 }

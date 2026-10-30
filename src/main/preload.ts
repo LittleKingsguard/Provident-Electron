@@ -69,7 +69,7 @@ export interface ProvidentBridge {
   }
   store: {
     get(): Promise<{ name: string; value: unknown }[]>
-    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: 'malformed-payload' | 'write-failed' }>
+    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: string }>
     onFileChanged(handler: () => void): () => void
   }
 }
@@ -126,7 +126,12 @@ const bridge: ProvidentBridge = {
       return ipcRenderer.invoke(IPC_MODULE_SET_DISABLED, { name, disabled })
     },
   },
-  // THE TIER-1 STORE BRIDGE (`store.*` — G2 `U-STORE-PERSIST`, §2.10 item 4 / §2.11 item 4):
+  // THE TIER-1 STORE BRIDGE (`store.*` — G2 `U-STORE-PERSIST`, §2.10 item 4 / §2.11 item 4).
+  // `put`'s `reason` is the SURFACE'S OWN status, verbatim: the channel returns whatever
+  // `SettingsCommitAnswer` refused with (`reason: string`), so the declared type is `string` and
+  // never a closed pair — a two-word union here was narrower than the value that arrives, and one
+  // of its words (`'write-failed'`) was the vocabulary ASM-2 retired. The same declaration is
+  // copied in `src/renderer/renderer.ts`, and the two move together (D-3, D-43):
   // the THREE new members — Y-1 the boot hand-off, Y-2 the commit crossing, Y-3 the
   // change-push registration (registered once at boot; the returned release is held by the
   // wiring and answered at realm teardown — the P1-P7 release discipline).
@@ -134,7 +139,7 @@ const bridge: ProvidentBridge = {
     get(): Promise<{ name: string; value: unknown }[]> {
       return ipcRenderer.invoke(STORE_FILE_GET)
     },
-    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: 'malformed-payload' | 'write-failed' }> {
+    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: string }> {
       return ipcRenderer.invoke(STORE_FILE_PUT, row)
     },
     onFileChanged(handler: () => void): () => void {
