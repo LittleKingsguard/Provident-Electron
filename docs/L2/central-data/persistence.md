@@ -8,7 +8,7 @@
 
 ## 1. The one new written name
 
-- **`<userData>/provident-profile.json`** — the profile store's file. The **directory** arrives from the module's caller (`DataSurfaceOptions.profileDir`) and the **name** is this module's own choice, so no other module spells it (`src/main/main.ts:115-119`; D-13).
+- **`<userData>/provident-profile.json`** — the profile store's file. The **directory** arrives from the module's caller (`DataSurfaceOptions.profileDir`) and the **name** is this module's own choice, so no other module spells it (the `createDataSurface({ profileDir: app.getPath('userData') })` pass in `src/main/main.ts`'s `new ProvidentMcpServer(...)`; D-13).
 - This unit adds **exactly one** written name. The other written name at steady state is not this module's: `<userData>/provident-operator-settings.json`, the instance's own file (`operator-settings`, D-16, D-19). `provident-security.json` is a **seed** since the rebuild — read at most once and never written — and `<userData>/provident-settings.json` is a seed too since the carrier retirement (D-19, D-22; exception §5, discharged by `settings-carrier-retirement`; D-13).
 - D-13's consequence follows and is not absorbed: the compliance battery's Family-B reading "exactly two persisted files" stops being a true standing pin the moment this file exists, and its rows are re-grained by this unit's test writer in the unit that adds the file — moved, never deleted (`D-13`, `D-15`).
 - This module's own filesystem acts are **the existence probe and nothing else**: it creates no `.tmp`, no lock, no sidecar, no copy, no journal file and no directory of its own (D-13).
@@ -38,7 +38,7 @@
 
 - The store's image carries the **register**, not a document header; this module stamps no version member and reads none
   (`guide §9.1`; D-13).
-- The retired projection's `schemaVersion: '1'` is that projection's (`src/main/main.ts:351-360`); it has no counterpart in this
+- The retired projection's `schemaVersion: '1'` was that projection's, and the projection is gone from `src/main/main.ts` (which stamps no `schemaVersion` and holds no store); it has no counterpart in this
   file, and D-13 makes it no compatibility constraint (D-13).
 - The format's version is the **package's** — `provident-storeroom ^1.6.1` (`package.json:25-26`) — and the seam's census pins
   the fourteen-member instance this unit calls into (`src/main/storeroom.ts:45-50`; D-5).

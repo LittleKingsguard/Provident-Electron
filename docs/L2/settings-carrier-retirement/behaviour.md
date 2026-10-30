@@ -13,7 +13,7 @@
 | a second `state()` in the same process | the same answer, and **no file is read twice**: the import ran at most once, at construction (L1 §4; `guide §6`) |
 | `state()` over a store construction the package refused | `rows:[]`, `storage:'unreachable'`, nothing thrown (sibling §2.1; `guide §8.2`) |
 
-- **`main.ts` holds no copy of the rows.** The retired third holder is gone, so every reader asks the surface on the call it serves, and the boot order is unmoved in kind: construction → boot read → gate → flip → `start()` → window (L1 §3/§5; `src/main/main.ts:108-115,527,545`).
+- **`main.ts` holds no copy of the rows.** The retired third holder is gone, so every reader asks the surface on the call it serves, and the boot order is unmoved in kind — construction → boot read → gate → flip → `start()` → window (L1 §3/§5; the statements in `main()`: `createSettingsSurface`/`settingsSurface.read()`/`new SecurityGate(...)`, then `settingsSurface.attach(mcp)`, then `await mcp.start()` and `new BrowserWindow(...)`).
 - **One boot read feeds the gate, and it is the sibling's `read()`** — this unit adds a second read of the same construction and moves nothing about the first (D-16, D-22).
 
 ## 2. `STORE_FILE_GET` serves the rows, cold or warm
@@ -51,10 +51,10 @@
 | Drive | Expected |
 |---|---|
 | `list()` / `get(name)` after a Y-2 commit that carried `file.modules.<id>` | the record is served from the same rows Y-1 serves, so the two realms cannot disagree (L1 §3; D-22) |
-| `put(record)` on a valid record | the record it composed, with `hash` derived from its own `source`; the row stands at `file.modules.<name>` (D-22; `src/main/main.ts:239-263`) |
-| `put` a record named `tabs` | `reserved-namespace` refusal thrown as today, and **no commit** is issued (D-22; `src/main/main.ts:247-249`) |
+| `put(record)` on a valid record | the record it composed, with `hash` derived from its own `source`; the row stands at `file.modules.<name>` (D-22; the module registry's `put` arm and its one `commit` of the whole rows list in `src/main/main.ts`) |
+| `put` a record named `tabs` | `reserved-namespace` refusal thrown as today, and **no commit** is issued (D-22; the reserved-namespace refusal inside the module registry's `put` arm in `src/main/main.ts`) |
 | `remove(name)` where the row stands | `true`, and the row is gone from the served rows (L1 §3) |
-| `remove(name)` where no row stands | `false`, and **no commit** is issued (L1 §8 S-12; `src/main/main.ts:264-273`) |
+| `remove(name)` where no row stands | `false`, and **no commit** is issued (L1 §8 S-12; the module registry's `remove` arm in `src/main/main.ts`, which commits nothing when no row stands) |
 | `setDisabled(name, true)` where the row stands | no answer; the row's `disabled` is `true` on the next `get` (L1 §3) |
 | `status()` | `quarantined`/`loaded` derived from `sha256(source)` as landed; `corrupt` is `legacy === 'corrupt' \|\| storage === 'unreachable'` (L1 §3 `ASM-L2-3`; D-22) |
 | `status()` over a profile whose retired file was valid | `corrupt:false` — a landed import is not a corruption (L1 §4) |
@@ -68,8 +68,8 @@
 
 | Drive | Expected |
 |---|---|
-| a profile holding `provident-modules.json` with two registry records and a retired carrier with one `file.*` row | one `commit` of `{the carrier's row} ∪ {file.modules.<id> for each legacy record}`, then the legacy registry is removed as landed (L1 §3; `src/main/main.ts:173-192`) |
-| the same, with no legacy registry | no commit at all: the migration's write happens only when it has records to land (L1 §3; `src/main/main.ts:176`) |
+| a profile holding `provident-modules.json` with two registry records and a retired carrier with one `file.*` row | one `commit` of `{the carrier's row} ∪ {file.modules.<id> for each legacy record}`, then the legacy registry is removed as landed (L1 §3; the migration's `rmSync` of `provident-modules.json` in `src/main/main.ts`) |
+| the same, with no legacy registry | no commit at all: the migration's write happens only when it has records to land (L1 §3; the migration's conditional `commit` in `src/main/main.ts`) |
 | the same, with a legacy registry whose record carries `quarantined: undefined` | the record lands **without** that member (the JSON image drops it), and the commit commits — never a whole-value refusal (`ASM-L2-2`; `guide §10.2`) |
 | the migration's composition | carries **no** `schemaVersion`, and the `provident-modules.json` read and its post-boot removal are unmoved (L1 §3) |
 
@@ -107,7 +107,7 @@ The arm runs at construction **iff no record stands at `['operator-app-state']`*
 | a second construction over the same directory, nothing written between | the import runs again and answers the same rows — the marker is a record, and nothing wrote one (`persistence.md` §4; L1 §4) |
 | a second construction **after** a commit | `legacy:'recorded'` and the committed rows: the marker now stands (L1 §4; `ASM-L2-1`) |
 
-- **`ASM-L2-7`: the validation is the retired boot read's, carried whole** — a JSON object whose keys are `file.*` plus the single reserved `schemaVersion === '1'` (`src/main/main.ts:139-161`; L1 §4 ASM-3).
+- **`ASM-L2-7`: the validation is the retired boot read's, carried whole** — a JSON object whose keys are `file.*` plus the single reserved `schemaVersion === '1'` — a validation that left `main.ts` with the carrier and now runs in `src/main/operator-settings/index.ts`'s `importAppStateOnce` (L1 §4 ASM-3).
 
 ## 8. The retirement's absences, and the one row this unit adds
 

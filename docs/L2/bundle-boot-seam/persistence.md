@@ -11,10 +11,10 @@ The seam's on-disk product is **the build's emission set** — four boot entry p
 | Artifact | Module system | The package | Produced by | Read at boot by |
 |---|---|---|---|---|
 | `dist/main/main.mjs` | **ESM** | **imported, not inlined** | the `main.ts` emission of `package.json:10` | the container, through `package.json:7` |
-| `dist/main/preload.cjs` | CJS | not imported | the `preload.ts` emission of `package.json:10` | the window, through `src/main/main.ts:459` |
+| `dist/main/preload.cjs` | CJS | not imported | the `preload.ts` emission of `package.json:10` | the window, through the preload join in `src/main/main.ts`'s `new BrowserWindow(...)` call |
 | `dist/main/standalone.mjs` | ESM | not carried | `package.json:10` | the standalone's own spawn (L1 §6 B-7) |
 | `dist/main/battery-host.mjs` | ESM | not carried | `package.json:10` | the battery leg's own spawn (L1 §6 B-7) |
-| `dist/renderer/renderer.js` + `index.html` | browser ESM | not imported | `package.json:10` | `src/main/main.ts:466-467` |
+| `dist/renderer/renderer.js` + `index.html` | browser ESM | not imported | `package.json:10` | the `rendererHtml` join and the `win.loadFile(rendererHtml)` call in `src/main/main.ts` |
 
 - **`dist/main/main.cjs` is the retired name**, and it retires by being **replaced, never left behind**: `package.json:9`'s `clean` removes `dist` before every build, so the CJS artifact cannot survive a build that no longer emits it (D-1, D-27).
 - **The package's bytes leave the emission set** and this is the only on-disk change rev 2 makes: the inlined emission measured **1,532,476** bytes and the external one **1,345,550**, and what left is `provident-storeroom`'s JavaScript — the native addon was never in either artifact, because the package resolves it from `node_modules` (P-10, P-11, P-15). The artifact on disk at this head is the second figure (`dist/main/main.mjs`, `stat` size), carrying the bare specifier twice and 0 addon-path references.
@@ -45,7 +45,7 @@ The seam's on-disk product is **the build's emission set** — four boot entry p
 ## 4. What the boot writes, and what the seam writes
 
 - **The seam writes nothing at runtime**: it is a build arrangement plus one derivation in the entry's own text, so a boot's disk effect is the boot's, unchanged (L1 §5, `docs/L2/security-store-storeroom/persistence.md` §2).
-- **The boot's own disk effect is the profile**, and it is not this unit's to shape: the scratch `--user-data-dir=`/`--provident-user-data=` pair pins it (`src/main/main.ts:87-88`, `scripts/electron-spawn.mjs:362`), and `provident-operator-settings.json` is written by the store the artifact now **imports**, whose shape is that instance's own once imported (`src/main/operator-settings/index.ts:405`; `docs/L2/security-store-storeroom/persistence.md` §1; D-19).
+- **The boot's own disk effect is the profile**, and it is not this unit's to shape: the scratch `--user-data-dir=`/`--provident-user-data=` pair pins it (the `userDataFromArgs` argv pin in `main()`, `src/main/main.ts`; `scripts/electron-spawn.mjs:362`), and `provident-operator-settings.json` is written by the store the artifact now **imports**, whose shape is that instance's own once imported (the construction's `storeCreate(...)` statement in `src/main/operator-settings/index.ts`; `docs/L2/security-store-storeroom/persistence.md` §1; D-19).
 - **That file is this unit's one measured disk fact, and rev 2 exists because of it**: present with the package external, absent with it inlined, with both readiness lines published either way — the profile is the only place the difference is visible (P-10, P-11; `behaviour.md` §4).
 - **The artifact carries no machine path**: `import.meta.url` is supplied by the loader, so the emitted bytes are the same on every host — the property the rejected `--define` arm destroyed by baking an absolute literal (P-14, `interface.md` §3).
 

@@ -83,7 +83,7 @@
 ## 7. Volatile spellings never land in the persisted file
 
 - A write, read or delete at a path whose first segment begins `mem.`, `temp.` or `secure.` answers `volatile-path`; nothing is
-  created, nothing is removed, and `list` is unmoved (`src/main/main.ts:351-359`; D-13).
+  created, nothing is removed, and `list` is unmoved (the `isVolatile` guard and its `refusal('volatile-path')` arms in `src/main/data/args.ts`; D-13).
 - After a session that attempted all four of the app's tier spellings, the profile's bytes carry no `mem.`, `temp.` or `secure.`
   spelling — asserted as an absence over the bytes, never as a parse of the store's image (D-13; L1 rev 2 §5 S-8).
 - The refusal is a value, so the attempt is visible to the agent instead of being silently dropped the way the retired
@@ -97,7 +97,7 @@
 - No profile byte moves and no store is constructed at that turn (D-11).
 - `exclusion-closed` is the server's channel token and not a reason word of this module's vocabulary; `tier4-closed` is the
   tier-4 reader's inverse token — the token is declared at `src/main/mcp-server.ts:42-57` and minted by the settings
-  surface at `src/main/settings-surface/index.ts:75-77,132`, where the reader that answers it lives now that
+  surface at the `TIER4_CLOSED_REFUSAL` constant and the `read` body's `open ? TIER4_CLOSED_REFUSAL : null` arm in `src/main/settings-surface/index.ts`, where the reader that answers it lives now that
   `src/main/security-store.ts` is deleted — and it does not appear on this surface (D-16; L1 rev 2 §4).
 - The registry toggle that also runs at the transition is the landed gate's business and this module adds no second mechanism
   (`src/main/mcp-server.ts:649-660`; D-11).
