@@ -101,7 +101,7 @@ export function createJournal(length: unknown): ChangeJournal
 export function createDataSurface(options: DataSurfaceOptions): DataSurface
 ```
 
-`readOutcome` (rev 1's `probeOutcome`) classifies a caught **store read** refusal and the operation composes the answer: `branch` means the caller then reads the branch, `absent` means the absent answer or the empty receipt, `ledger` means the mapped refusal (`design.md` §3; `guide §4`). The name moves because `probe` now means the reachability reading, which is not a store call and has no store status. `readProfile` is the reading itself: `store.ts` owns it, `createStorePort` memoises the result and the one instance, and `unreachableLedger()` is the single ledger all five operations return on the `unreachable` arm (`design.md` §2; `behaviour.md` §9).
+`readOutcome` (rev 1's `probeOutcome`) classifies a caught **store read** refusal and the operation composes the answer: `branch` means the caller then reads the branch, `absent` means the absent answer or the empty receipt, `ledger` means the mapped refusal (`design.md` §3; `guide §4`). The name moves because `probe` now means the reachability reading, which is not a store call and has no store status. `readProfile` is the reading itself, owned by `store.ts`, and **`createStorePort` memoises the one instance and nothing else**: `probe()` re-runs `readProfile(options.profileDir)` on **every** call, so the reading is fresh each time an operation takes it — which is what lets a profile file removed between two operations answer the cold tier again — while `construct()` is the one cached outcome (`design.md` §2; `behaviour.md` §9). `unreachableLedger()` is the single ledger **form** all five operations answer on the `unreachable` arm, minted fresh per refusal so no answer aliases it (G10).
 
 ## 3. The store-status mapping — the eleven reason words are closed
 
@@ -127,7 +127,7 @@ Every arm carries `message`: the store's own generated sentence where the store 
 
 ## 4. Every answer an operation can return
 
-The battery's rows are written against this closed set, and every operation's refusal set carries `store-unreachable` because the reading of `design.md` §2 precedes every store (`interface.md` §2, §3; `behaviour.md` §1-§6, §9; D-11):
+The battery's rows are written against this closed set, and every operation's refusal set carries `store-unreachable` because the reading of `design.md` §2 precedes every store (`interface.md` §2, §3; `behaviour.md` §1-§6, §9; D-11). **Each of the five also ends in G1's last-resort `refusalLedger` arm**, so a thrown value that reaches this module's own `catch` answers `store-refused` (status-less class) from any operation, `journal` included, even where no store was consulted — the arm no row drives (`design.md` §4 G1, G8; `mapper.ts`'s `refusalLedger`):
 
 | Operation | The answer statuses, and nothing else |
 |---|---|

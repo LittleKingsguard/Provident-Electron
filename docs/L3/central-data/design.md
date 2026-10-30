@@ -56,9 +56,9 @@ if (r.kind === 'unreachable') return r.ledger     // all five, journal included:
 if (r.kind === 'absent') return g.path.length === 0
   ? { status:'read', kind:'branch', path:[], value:{} } : { status:'absent', path: g.path }  // behaviour.md §1
 s = port.construct(); if (s.kind === 'unreachable') return s.ledger      // construction refused, §2
-try { if (g.path.length === 0) return branch(s.store.read([]))       // guide §4 rule 1
-      return row(s.store.readLiteral(g.path)) }                      // guide §4
-catch (e) { return readOutcome(e, g.path) }                         // the three arms below
+try { return g.path.length === 0 ? branch(s.store.read([])) : row(s.store.readLiteral(g.path)) }   // guide §4
+catch (e) { o = readOutcome(e)        // ONE argument, the caught value (signatures.md §2)
+            return o.kind === 'ledger' ? o.ledger : o.kind === 'branch' ? { status:'read', kind:'branch', path:g.path, value:s.store.read(g.path) } : { status:'absent', path: g.path } }
 ```
 
 The probe's arms: a literal answers `kind:'row'` with the value the store copied out; `ReadTargetIsBranch` answers `kind:'branch'` with `read(path)`'s assembled value; `AddressNotFound` and `LeafHasNoDownstream` answer `{status:'absent', path}` — absence is an answer and never an empty success (`interface.md` §2, §3; `guide §4, §8.1`).
@@ -83,7 +83,7 @@ try { s.store.readLiteral(g.path)                     // a row stands at the add
       removed = rec.tiers.length > 0
       cursor = removed ? journal.append('delete', g.path, 'absent') : null
       return { status:'committed', path: g.path, removed, tiers: rec.tiers, cursor } }
-catch (e) { return readOutcome(e, g.path) }           // branch | absent -> emptyReceipt
+catch (e) { o = readOutcome(e); return o.kind === 'ledger' ? o.ledger : emptyReceipt(g.path) }   // branch | absent -> the empty receipt
 ```
 
 The empty receipt is `{status:'committed', path, removed:false, tiers:[], cursor:null}`, reached with **no** `AddressNotFound` leaving this module: the shipped `delete` throws it where nothing stands, so the module learns that nothing stands from the probe and never enters the throwing arm (`behaviour.md` §6; `guide §5.3`, measured false at this head; exception §7; D-5, D-11).
@@ -95,8 +95,8 @@ if (r.kind === 'absent') return { status:'read', prefix: g.prefix, paths: [], co
 s = port.construct(); if (s.kind === 'unreachable') return s.ledger
 if (g.prefix === null || g.prefix.length === 0) rows = walk(s.store.read([]), [])  // guide §4 rule 1
 else try { s.store.readLiteral(g.prefix); rows = [g.prefix] }        // that address holds a row
-     catch (e) { ReadTargetIsBranch -> rows = walk(s.store.read(g.prefix), g.prefix)
-                 AddressNotFound | LeafHasNoDownstream -> rows = [] }
+     catch (e) { o = readOutcome(e)                                  // one argument (signatures.md §2)
+                 'ledger' -> return o.ledger; 'branch' -> rows = walk(s.store.read(g.prefix), g.prefix); 'absent' -> rows = [] }   // a refusal is never "no rows" (G8)
 rows.sort(by JSON.stringify)                                         // ASM-L2-2
 return { status:'read', prefix: g.prefix, paths: rows, count: rows.length }
 ```
@@ -139,7 +139,7 @@ The mapping behind G8 is one table, and it is closed against the package's twent
 - `N = 15` — 5 tools + 5 routes + the 5 `provident-storeroom` exports called (`storeCreate`, `read`, `readLiteral`, `write`, `delete`; `register` has no call site) — so **the harness cap is `50 + 10 × 15 = 200` lines** (`strata/modules.json`; exception §1; D-14; `platform.md` §4).
 - The harness as filed is `tests/unit/central-data/support/temp-profile.ts`: one temp-profile factory (`mkdtemp`, the one written name, its removal, the entries and bytes scan) and one answer-shape helper (`expectRefusal`). **No seam is scripted there** — every arm the battery drives is reachable through a real profile directory and the real store behind the seam — so fixture, helper and driver together stay well inside **≤ 200 lines** (`temp-profile.ts:1-6`; D-14; `platform.md` §4).
 - **The unit battery's coverage is asymmetric, and no exemption follows from it**: its 40 rows are evidence and do not count against the cap, and the occupied-name row drives `read`, `write`, `delete` and `list` and leaves `journal` un-asserted (`refusals.test.ts:199-212`), so a green `npx vitest run tests/unit/central-data` does **not** prove `journal`'s refusal on that arm. The row that asserts it is the integration battery's profile-file row, which drives all five with `journal` included (`tests/integration/central-data/profile-file.test.ts:72-88`, this unit's L2 test writer's and not L4's to move): a coverage asymmetry of the battery, never a licence to answer a window where the profile can never be built (`behaviour.md` §9; `ASM-L2-7`; D-11, D-14; ASM-L3-U1).
-- Both commands run from the workspace root and must go green once L4 lands: `npx vitest run tests/unit/central-data` and `npm run typecheck:tests` (`brief.md` §6; D-1 §4).
+- Both commands run from the workspace root — `npx vitest run tests/unit/central-data` and `npm run typecheck:tests` — and the landing has happened, so this document states neither leg's colour of its own: the reading is `strata/brief.md` §6's instrument, cited there and not restated here (`brief.md` §6; D-1 §4, D-26).
 
 ## 6. This design's two assumptions, each with the alternative it rejected
 
