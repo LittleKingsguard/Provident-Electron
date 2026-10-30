@@ -129,9 +129,6 @@
         "tests/store-modules-seams.test.ts",
         "tests/store-modules-bytes.test.ts",
         "tests/store-focus.test.ts",
-        "tests/store-tabs-record.test.ts",
-        "tests/store-tabs-record-register.ts",
-        "tests/store-tabs-record-live.mjs",
         "tests/fork-store-reads.test.ts"
       ],
       "endpoints": 13
@@ -287,6 +284,15 @@
         "demo/pane-drag-demo/"
       ],
       "endpoints": 0
+    },
+    {
+      "name": "store-tabs-record",
+      "paths": [
+        "tests/store-tabs-record.test.ts",
+        "tests/store-tabs-record-register.ts",
+        "tests/store-tabs-record-live.mjs"
+      ],
+      "endpoints": 4
     }
   ]
 }

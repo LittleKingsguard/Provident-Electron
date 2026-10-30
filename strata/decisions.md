@@ -1337,3 +1337,23 @@ each**, and a tracker lists **only what is still open**.
 and a tracker that keeps it is a checklist of the past, which is the thing this row exists to prevent. The live
 queue for *units* stays `strata/.strata/units/*.json` and this register (`archive.md` §2's rule, unchanged): a
 tracker is a readable view of open work, never an authority for what a unit is doing.
+
+---
+
+## D-62 — Admit `store-tabs-record` as a unit, taking the tab record from `graph-store`'s row
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the user's instruction, verbatim — "Create a unit/module for the
+tab management `store-tabs-record`".
+
+**Decision:** the **tab record** — the `file.tabs.*` row family, its exactly-one-active constraint and its repair —
+becomes a unit of its own, and `graph-store`'s row stops carrying its batteries.
+
+- **Why it is a split and not a new claim:** `graph-store` already claims `tests/store-tabs-record.*`, so a second row
+  claiming them would be two units over one path (D-32). L1 moves the three tab battery paths and re-derives both
+  rows; the source subtree (`src/renderer/store-core-graph.ts`) stays `graph-store`'s, because the tab record is a
+  *row family the store hosts*, not a second store.
+- **What the unit owns:** the three tab batteries, and the `§5.U` live battery that `strata/pending.md` has carried —
+  that document is the first artifact this unit owes, and it is why the row was blocked.
+- **What it does not own:** the store itself (`store-rederive`), the envelope that seeds the tabs
+  (`app-envelope`), and the renderer wiring (`renderer-wiring`). A unit that reached into any of those would be
+  claiming a sibling's artifact by another route.
