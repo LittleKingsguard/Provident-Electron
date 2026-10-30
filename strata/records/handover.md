@@ -46,14 +46,21 @@ this record restates neither, because a count in a second place drifts at the ne
 
 ## Operating notes that cost real time
 
-- **A run is only trustworthy on a clean tree.** `tests/store-tabs-record.test.ts` §4.2 item 9 asserts the
-  worktree against a declared edit set, so a dirty tree makes it red **by construction**. Commit, then measure.
-- **The layer wall was prompt-level this pass.** The seat ran without the preset's `role_*` tools, so the L1
-  and L2 seats were plain delegations carrying the role's persona and its procedure file. The write scopes
-  held; nothing enforced them but the instruction and the diff.
+- **A run is only trustworthy on a clean tree.** The flat suite's own boundary row asserts the worktree
+  against a declared edit set, so a dirty tree makes it red **by construction**. Commit, then measure.
+- **The layer wall is prompt-level in this seat.** Without the preset's `role_*` tools the L1/L2/L3 seats are
+  plain delegations carrying the role's persona and its procedure file: the write scopes hold, and nothing
+  enforces them but the instruction and the diff.
 - **L0 never edits another layer's document (D-3).** Every `docs/L1`/`docs/L2` finding goes to a seat that
   owns that path, even when the fix is one sentence.
-- **A fix over prose must be re-read, not substituted.** `536bdc6` had already eaten one count (`53`) and was
-  still standing in two L1 documents as a row count; a blind pass found it where a re-read had not.
+- **A fix over prose must be re-read, not substituted.** A commit hash once ate a row count and stood in two
+  L1 documents as one; a blind pass found it where a re-read had not.
 - **Commit per gate**, never merge or push (D-6). Four legs plus `strata-lint`, and `strata-lint` with
   `--changed <a,b>` when a unit's diff is scope-checked.
+- **The walkthrough now has an instrument** (D-29): `node scripts/strata-walkthrough.mjs stage <unit>` builds
+  the root §3 declares with generated listings, `check <root>` resolves every path cite it carries, and
+  `pins` prints the counts a document must cite rather than restate. Nine runs before it spent themselves on
+  arithmetic; a run that files a path-class finding the script did not see is evidence about the script.
+- **The state machine caps the prose passes.** At three consecutive failures on one artifact `strata-state`
+  refuses another `fail` — "run `rebuild` or `pass`" — so a fourth red is not available to a session that has
+  not first rebuilt or passed the artifact. All four open units sit at that cap.
