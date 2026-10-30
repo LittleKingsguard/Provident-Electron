@@ -1255,3 +1255,42 @@ after `Status` are compliant, because the clause is a block and a reader can fin
 - What may never recur is the splice: a clause inserted inside a quoted user sentence changes what the user said.
 - What D-49 called "the end" is where the block happens to sit in most rows, not a position obligation; a
   corrigendum cannot impose one on rows already filed, and three of them demonstrate the rule is satisfied without.
+
+---
+
+## D-58 — A Source names the measurement, never a walkthrough run number
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-55, D-56 and D-57**, which stand as filed (D-1).
+**Source:** the `strata-bootstrap` walkthrough, measured — three consecutive corrigenda cited "run 13", "run 14" and
+"run 18" as what measured them, and `strata/records/<unit>-walkthrough.md` is **replaced on every run**
+(`walkthrough.md` §6), so a run number in a row is unverifiable by construction: by the time a reader checks, the
+record holds a later run.
+
+**Decision:** a row sourced by a measurement names **the measurement** — "the walkthrough's finding that X", "the
+`refs` check's reading", "the census the archive move took" — and never the ordinal of a run. D-47 already required
+the measurement to be named; this row says what naming it means for a record that is replaced.
+
+- D-55, D-56 and D-57 each named both — the finding and a run number — so their substance stands and only the ordinal
+  is void. A reader checking them should look for the finding in the current record, which holds the latest run's
+  verdict and no history.
+- The same rule already governs `brief.md`: a live figure belongs to §6 and a record keeps a dated reading (D-26,
+  D-46). A run number in a Source was the register committing the error it forbids elsewhere.
+
+---
+
+## D-59 — Corrigendum to D-29: what `stage` builds, as the procedure now declares it
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-29**, which stands as filed (D-1). **Source:** the
+`strata-bootstrap` walkthrough, measured — D-29 enumerated what `stage` builds as "the corpus, the layers, the root
+pointers, the manifest, …", and `walkthrough.md` §3 declares the **`src/`** those documents make claims about
+(D-44) while naming the manifest as a separate row of its own output.
+
+**Decision:** the enumeration follows the procedure, not the row: `stage` builds the corpus, the layers, **the
+`src/` and `dist/` the layers claim about**, the root pointers, a tracked and an archived path listing, and an empty
+work directory. The manifest is **not** a staged document — it is the instrument's own report of what it staged,
+printed beside the root.
+
+- The row's sentence and its subject are two different documents that moved apart: D-44 added `src/` to §3 and no
+  pass re-grainned the row that enumerates it, which is D-51's class in the register itself.
+- A row that enumerates another document's contents is the most fragile kind of restatement the corpus allows; it
+  is tolerable only because the enumeration is short and the procedure is the owner.
