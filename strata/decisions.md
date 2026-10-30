@@ -1158,3 +1158,24 @@ where `archive.md` §2 says nothing may be treated as authority.
   record somewhere it has never gone.
 - What survives is D-5's real obligation: the finding is recorded in the unit's own record, in the four-part
   shape, upstream-owned, never patched.
+
+---
+
+## D-53 — A row that locates code by text must read the code, not the prose
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** two independent collisions in one session, measured — the
+isolation rows reddened on an honest comment in `src/main/storeroom.ts`, and six more rows reddened because a
+comment in `src/main/main.ts` reproduced call spellings **above** the calls they name, so `indexOf` found the
+comment and the comparison inverted.
+
+**Decision:** where a test row finds a site by searching source text, it searches **code with comments
+stripped** — and keeps string and template bodies verbatim, because a name inside a literal is a name a drive
+could pass. A row that reads raw text is a row that punishes documentation.
+
+- A comment cannot call a constructor, compose a path or satisfy an ordering constraint, so counting one is a
+  false positive; equally, a comment that **paraphrases call syntax** can shadow the call below it, which is a
+  false negative that inverts the assertion rather than failing it.
+- The idiom already exists and is cited rather than re-invented: `stripComments()` in
+  `tests/ui-leg-contract.test.ts`, an instrument row under D-38.
+- A comment should describe a site in words rather than quote it — the cheap half of the same lesson, and what
+  the `main.ts` order list now does.
