@@ -44,7 +44,7 @@
 | `maxJournalLength` | `file` | the supervisor's journal cap, or absent | D-17 |
 | `entries` | `file` | the arbitrary-name map, absent until first written | D-16 (behaviour carried, shape not) |
 | `exclusion` | `mem` | `'mcp-enabled'` \| `'mcp-disabled'` — **never persisted** | D-17, ASM-2 |
-| `tier4` | `mem` | the boolean the gate consults — **never persisted** | D-17, ASM-2 |
+| `tier4` | `mem` | the pair's derived boolean, mirrored into `src/main/tier4-state.ts` at `attach` and on every committed exclusion write — **never persisted**, and read by **no `src/` file**: enforcement reads the gate's own `exclusionState()`, so this is a projection and never a consulted value | D-17, ASM-2, ASM-4 |
 
 **The three transitions, and nothing else** (D-17):
 
