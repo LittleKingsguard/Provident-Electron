@@ -2,9 +2,11 @@
   "unit": "store-tabs-record",
   "layer": "L1",
   "stage": "design",
-  "artifacts": [],
+  "artifacts": [
+    "l1-design"
+  ],
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T18:19:18.702Z"
+  "updated": "2026-10-30T18:32:33.637Z"
 }
