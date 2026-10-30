@@ -1,6 +1,6 @@
 # L2 — `central-data`: the interface
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Status:** DESIGN — `docs/L1/central-data-management.md` rev 2 and its census exception rev 2 are the inputs; the integration battery is filed against this file and stands red until `src/main/data/` exists (D-1 §4)
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Status:** DESIGN — `docs/L1/central-data-management.md` rev 2 and its census exception rev 2 are the inputs; the integration battery is filed against this file and and `src/main/data/` **exists**; the battery's own reading is `strata/brief.md` §6's instrument and is not restated here (D-1 §4, D-26)
 - **Inputs:** L1 rev 2 §3/§4/§8; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7 (E-1, E-2, E-3; N = 15); D-5, D-11, D-12, D-13, D-14, D-15; the `central-data` row of `strata/modules.json` (`endpoints: 15`); `strata/platform.md` §4; the tree at `57c5825`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide, and `the declaration` is its `index.d.ts`; both are read and never edited (D-5)
 
