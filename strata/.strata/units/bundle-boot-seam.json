@@ -1,7 +1,7 @@
 {
   "unit": "bundle-boot-seam",
   "layer": "L0",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
     "l1-boot-seam-design",
     "l1-e2e-battery",
@@ -11,11 +11,9 @@
     "e5-harness-renames"
   ],
   "assumptions": [],
-  "streaks": {
-    "walkthrough-record": 3
-  },
-  "rebuildEligible": true,
-  "updated": "2026-10-30T02:42:50.969Z",
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-10-30T04:21:49.304Z",
   "lastFailure": {
     "artifact": "walkthrough-record",
     "reason": "red"

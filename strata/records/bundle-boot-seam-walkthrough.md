@@ -1,40 +1,37 @@
-# record — `bundle-boot-seam` exit walkthrough (D-10; replaced on every run)
+# record — `bundle-boot-seam` exit walkthrough, run 12 — `PASS` (D-10; replaced on every run)
 
 **Scenario set** (L0-authored from the documentation): 1 what was broken, and why the verification floor
-never saw it · 2 the arrangement chosen, and every `package.json` line it lands in · 3 what the entry had
-to change, and the proof that nothing else moved · 4 how a boot is proven, and what a failed boot must
-answer · 5 what the artifact cannot do · 6 which writes belong to whom, and what lies outside the unit.
-Seat: one fresh delegation per run, staged to a copy of `strata/`, `docs/L1..L3/`, the root pointers,
-`package.json`, a tracked-path listing, an archived-path listing and the built bundles.
+never saw it · 2 the arrangement chosen, every `package.json` line it lands in, and what it cost · 3 what the
+entry had to change, and the proof nothing else moved · 4 how a boot is proven, and what a failed boot must
+answer · 5 what the artifact cannot do · 6 which writes belong to whom, and what lies outside.
 
-## Latest run — `STALE` (not green)
+**Seat.** One fresh delegation per run, staged to a generated copy of `strata/`, `docs/L1..L3/`, the root
+pointers, `package.json`, a tracked-path listing, an archived-path listing and the built bundles —
+`scripts/strata-walkthrough.mjs stage`, which also resolved every path cite (exit 0) before the run began.
 
-Every step answered from the cited documents, and every figure of the unit's own three layers landed:
-the artifact's `1,345,550` bytes, its two bare-specifier sites, zero `import_meta`/`__dirname`/addon-path
-references, five artifacts, N=12, the row's four paths, and `package.json`'s `:7`, `:10`, `:11`, `:26`.
-Four sentences elsewhere in the corpus were contradicted by the surfaced artifact:
+## Run 12 — `PASS`
 
-| Falsified claim | Owner | Disposition |
-|---|---|---|
-| `README.md`'s build line still described the main bundle as CJS | L0 | fixed — the main artifact is ESM |
-| `docs/L1/central-data-management.md` §1 cited `dist/main/main.cjs`, an artifact no build emits | L1 | routed and fixed |
-| `docs/L3/settings-carrier-retirement/signatures.md` §6 still claimed `node:path` binds `join` alone | L3 | routed and fixed — the binding set is E-2's consequence now |
-| `docs/L2/bundle-boot-seam/interface.md`'s Inputs read the derived cap as a field of the map row | L2 | routed and fixed |
+All six steps were answered from the documents alone, and every checkable claim in the unit's three layers
+agreed with the other staged documents and with the staged surface:
 
-`docs-insufficient`: none in any of the six runs. `undocumented`: none.
+| Step | What the run verified |
+|---|---|
+| 1 | the defect as D-27 records it, and the floor's blindness stated in the **past** tense, agreeing with `signatures.md` §6 and L1 §7 after the re-grain |
+| 2 | `package.json:7` names the ESM entry; `:10` and `:11` each carry `--format=esm --external:provident-storeroom`, exactly two occurrences; no key added, `:26` unchanged |
+| 3 | the emission carries one `dirname3(fileURLToPath(import.meta.url))` and exactly two `join3(here, …)` sites; five artifacts, no `main.cjs`, no source map |
+| 4 | all seven observables exist in the built bundle, each named by one of B-1..B-8, with the reason-before-the-bound rule behind them |
+| 5 | the three limit statements agree, and no packaging config exists anywhere in the tree |
+| 6 | every declared write sits on its own row, and no path is claimed twice |
 
-## What six runs establish, and what they say about the instrument
+`docs-insufficient`: none. `docs-stale`: none. `undocumented`: none.
 
-Not one of the six runs failed on coverage. Every one named between one and four sentences — always a
-stale cite, a count, or a cross-document contradiction — and the six sets barely overlapped, because each
-fix moved the prose and the next pass read a different page. The engineering was green from run 1 onward:
-`battery` 184/184, `divergence` 9/9 on the pinned N plus 4 extension checks, and `ui` 11/11 with real
-geometry (`strata/brief.md` §6), with the unit's own three batteries green at every grain. This is the signal `rebuild.md`
-§3 describes: seven passes on one artifact class indict the class, not the sentences.
+## What twelve runs cost, and what they bought
 
-**Verdict: not green.** Runs 8 and 9 followed under the instrument (D-29), and found the first substantive
-claim of the whole series: the corpus's own shim rule — "no window, no IPC, no transport is exercised by
-`npm test`" — stopped being true when this unit's battery began spawning the built bundle, and both L0
-documents now say so. Nine runs, and not one of them failed on coverage: the corpus's answer to a ninth red
-is not another prose pass, which the state machine has made unavoidable (it refuses a fourth `fail` on this
-artifact — `run rebuild or pass`).
+Runs 1–11 never failed on coverage. Each named between one and five **contradicted claims** — a stale count,
+a cite into an appendable file that had moved, a retired artifact named in the present tense, and finally the
+corpus's own shim rule, which stopped being true the moment this unit's battery entered `npm test`. Two rules
+came out of that (D-26, D-28) and one instrument (D-29), and the unit is now green on every measure the corpus
+has: its three batteries at 8/8, 5/5 and 8/8, and `battery` 184/184, `divergence` 9/9 and `ui` 11/11 — the
+first time all three Electron legs have passed together (`strata/brief.md` §6).
+
+**Verdict: `PASS`.** The unit is recommended as ready and is closed (`stage: done`, streak cleared).
