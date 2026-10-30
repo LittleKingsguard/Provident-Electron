@@ -19,6 +19,7 @@ This directory replaces the gate workflow's 219-file corpus (`archive.md`): the 
 | `marks.json` | the marker index — L1-owned beside the map (D-30) | — |
 | `.strata/units/*.json` | state per unit, script-written: layer, stage, artifacts, assumptions, per-artifact `streaks` (`platform.md` §4 gives the full shape) | 40 |
 | `records/<unit>-<pass>.md` | a review record (walkthrough, sweep): the scenario set or row table, replaced per run | 40 |
+| `records/<unit>-retrospective.md` | a rebuild retrospective — the three answers, superseding the recommendation it answers (`rebuild.md` §4) | 20 |
 | `.strata/returns/*.json` | layer returns, as collected envelopes | — |
 | `records/handover.md` | the session handover: where the branch stands and what a fresh session does next | 60 |
 
@@ -34,8 +35,7 @@ point, procedures rule, and nothing here restates one.
 
 ## State, not prose
 
-`strata-state` owns progress: `init`, `enter --layer`, `artifact --id`, `assume --id --text --alternative`,
-`pass`, `fail [--reason] [--from]`, `rebuild`, `close`, `show`. A unit's layer, stage, artifacts, assumptions
+`strata-state` owns progress: `init`, `enter --layer`, `artifact --id`, `assume --id --text --alternative`, `pass`, `fail [--reason] [--from]`, `rebuild`, `close`, `show`. A unit's layer, stage, artifacts, assumptions
 and per-artifact `streaks` live in `.strata/units/<unit>.json`, overwritten at every transition; no document
 records where a unit stands, and the shape is `platform.md` §4's list. `stage` has two legal values, written by the script alone — `design` at `init` and `rebuild`, `done` at `close` — **and this paragraph is where that rule
 lives** (no procedure states it). **`stage` is the last structural transition, not a verdict:** a unit that closes
