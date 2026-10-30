@@ -86,19 +86,18 @@ map (D-10).
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | `7 failed / 3,202 passed / 2 skipped` of `3,211`, over `115` test files (89 flat + 26 nested) | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | `2 failed / 3,220 passed / 2 skipped` of `3,224`, over `118` test files (89 flat + 29 nested) | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
-| `npm run build` | OK — main, preload, standalone, battery host, renderer | the bundles exist at all |
-| `npm run battery` | **green** — `184 checks, 0 failures`, run at a seat with a `DISPLAY` | contract-over-stdio, on the battery host only: it carries no `provident-storeroom` and so says nothing about the seam |
-| `npm run divergence` | **red**, exit 1, and the leg root-causes itself: `dist/main/main.cjs:38480` throws `createRequire(undefined)` before any surface is reached | shim-vs-real identity on 9 surfaces — unreachable until the main bundle boots |
-| `npm run ui` | **no verdict** inside a 600 s bound; each attempt dies at the same line, and its own per-boot ceiling is 121,750 ms over 4 attempts | the real-DOM measurement — unreachable for the same reason |
+| `npm run build` | OK — five artifacts: `main.mjs`, `preload.cjs`, `standalone.mjs`, `battery-host.mjs`, `renderer.js` | the bundles exist at all |
+| `npm run battery` | **green** — `184 checks, 0 failures` | contract-over-stdio, on the battery host: it carries no `provident-storeroom` and says nothing about the seam |
+| `npm run divergence` | **green**, exit 0 — `9 checks, 0 failures` on the pinned N plus 4 extension checks | shim-versus-real-DOM identity, measured on a real renderer |
+| `npm run ui` | **green**, exit 0 — `11/11 assertions`, real measurements (`425x22`, `fontSize=16px`) out of a live renderer | the real-DOM measurement leg |
 
-The Electron legs are no longer un-run: one is green and two are red on **one** host-side defect — the
-main bundle is built CJS while the ESM-only `provident-storeroom` resolves its native addon through
-`import.meta.url`, which esbuild's CJS output leaves as `{}`. Nothing in the four-leg floor reaches that
-bundle, so the defect is invisible to `npm test`, to both typechecks and to `npm run build` (`strata/records/
-security-store-storeroom-unit.md` §2 owns it; it is owed its own unit).
+**All three Electron legs are green at this head, and that is the `bundle-boot-seam` unit's whole
+return** (D-27): before it, one leg was green and two could not reach the app at all, because the main
+bundle died at module evaluation. Nothing in the four-leg floor can see a bundle, which is why the
+defect survived three units and why the unit's regression runs the built artifact (D-27).
 
 The layer rule every later claim inherits: a node-suite green is **envelope-green and never
 app-green** — no window, no IPC, no transport is exercised by `npm test` (D-1; §3's L1 exit).
@@ -107,10 +106,9 @@ battery) and §4.2 item 8 (`REG-EXEC`, the register's broken attempts) — neith
 third the gate-era corpus carried, `tests/store-core-graph.test.ts` §5.1, was retired with its referent
 when the corpus was archived (D-9).
 
-**Five more reds are red-first, not defects:** `tests/e2e/bundle-boot-seam/` is the battery of the unit
-D-27 admits, authored before the arrangement exists, and B-2…B-6 fail at this head on the very stack the
-unit exists to fix (`dist/main/main.cjs:38480`). Red-first evidence is never filed green, so they stand
-until the arrangement lands (D-14, D-27).
+**No red-standing row is a design complaint at this head.** The `bundle-boot-seam` battery was authored
+red-first and its five red rows went green when the arrangement landed, which is the evidence the unit
+was admitted on (D-27).
 
 **An eighth red is by construction:** the same `store-tabs-record` file's §4.2 item 9 asserts the worktree
 against a declared edit set, so it reddens while any uncommitted file exists. A reading taken to be

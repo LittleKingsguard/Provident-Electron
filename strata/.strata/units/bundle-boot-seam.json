@@ -4,10 +4,14 @@
   "stage": "design",
   "artifacts": [
     "l1-boot-seam-design",
-    "l1-e2e-battery"
+    "l1-e2e-battery",
+    "l2-boot-seam-integration",
+    "l3-boot-seam-design",
+    "l4-boot-seam",
+    "e5-harness-renames"
   ],
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T01:50:09.889Z"
+  "updated": "2026-10-30T02:19:47.743Z"
 }
