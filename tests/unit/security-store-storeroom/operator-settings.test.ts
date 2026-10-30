@@ -120,7 +120,7 @@ describe('security-store-storeroom · the operator-settings instance at unit gra
     expect(settings.read().enabled, 'and a non-group string is dropped rather than carried').toEqual(['read'])
   })
 
-  it('the journal cap is a floored positive integer or absent: set, floor, clear by null/NaN/non-positive, and refuse a non-finite cap (interface.md §2; design.md §6)', () => {
+  it('the journal cap is a floored positive integer or absent: set, floor, clear by null/NaN/non-positive (and `-Infinity`, which is `<= 0`), and refuse `+Infinity` alone (interface.md §2; design.md §6)', () => {
     const settings = createOperatorSettings({ userDataDir })
     committed(settings.write({ maxJournalLength: 3.7 }))
     expect(settings.read().maxJournalLength, 'the durable member is floored (design.md §6)').toBe(3)
@@ -134,7 +134,10 @@ describe('security-store-storeroom · the operator-settings instance at unit gra
 
     committed(settings.write({ maxJournalLength: 9 }))
     const receipt = refused(settings.write({ maxJournalLength: Number.POSITIVE_INFINITY }))
-    expect(receipt.reason, 'the non-finite pair refuses the patch (guide §10.2)').toBe('ValueRefusedAtBoundary')
+    // THE MESSAGE NAMES THE ONE VALUE THAT REFUSES, because "the non-finite pair" was a claim about
+    // `-Infinity` too — and `-Infinity` is `<= 0`, so it takes the CLEAR arm above and commits
+    // (interface.md §2's guard order; behaviour.md §2). The ASSERTION is untouched: only what it says.
+    expect(receipt.reason, 'a cap surviving the clear guards and failing `Number.isFinite` — `+Infinity`, the one non-finite value left — refuses the patch (guide §10.2; interface.md §2)').toBe('ValueRefusedAtBoundary')
     expect(settings.read().maxJournalLength, 'and a refusal leaves the cap as it stood').toBe(9)
   })
 

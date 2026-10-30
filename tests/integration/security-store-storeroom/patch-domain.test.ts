@@ -137,10 +137,13 @@ describe('security-store-storeroom · the patch domain and the journal cap’s s
     const plus = surface.set({ maxJournalLength: Number.POSITIVE_INFINITY })
     const plusRefusal = refusedOf(plus.write)
     expect(plusRefusal.reason, 'the plus arm is REFUSED with the boundary word').toBe('ValueRefusedAtBoundary')
-    // THE SENTENCE IS NOT PINNED, and that is a stated choice: no L2 document quotes this refusal's
-    // message, and pinning a literal the contract does not carry would make the row a reading of the
-    // implementation (D-1 §4). What is declared — `message: string` — is asserted.
-    expect(plusRefusal.message.length, 'the refusal carries the module’s non-empty sentence (interface.md §2)').toBeGreaterThan(0)
+    // AND THE SENTENCE IS PINNED, because `interface.md` §2 Rev 8 DECLARES it — "this module's own
+    // sentence, `'maxJournalLength is a finite number or null'`" — and §3 lists the cap arm among the
+    // four arms that produce `ValueRefusedAtBoundary` from this module rather than from the store's own
+    // walk. Before that declaration existed this assertion was a non-empty-string check, on the rule
+    // that a literal the contract does not carry makes the row a reading of the implementation (D-1 §4);
+    // the declaration is what makes the pin legitimate, so the pin follows it.
+    expect(plusRefusal.message, 'the module’s own sentence for a cap outside its domain (interface.md §2, §3)').toBe('maxJournalLength is a finite number or null')
     expect(plusRefusal.address, 'and a null address: a pre-store refusal names no address').toBeNull()
     expect(imageOf(userDataDir), 'nothing lands: not one byte moved (persistence.md §5)').toBe(beforePlus)
     expect(surface.read().maxJournalLength, 'and the cap stands where the minus arm left it — absent').toBeUndefined()
