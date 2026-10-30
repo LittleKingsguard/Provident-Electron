@@ -26,9 +26,9 @@ this record restates neither, because a count in a second place drifts at the ne
   legs are retained and gate; every integration and unit scenario carries `// strata:marked-file rework` and
   reports on notice, bar the one worktree assertion that measures the loop's own tree. The two readings are
   `scripts/strata-marks.mjs report`'s, never restated here (D-26); the runner still measures the whole tree.
-- **The Settings pane still cannot grant the sixth group.** `src/renderer/secure-panels.ts:72` enumerates
-  five group names, so `data` is in the gate's valid set with no operator control — owed to the
-  `secure-panels` row's unit (`strata/records/central-data-management-unit.md` §2).
+- **The Settings pane grants all six groups**, the `secure-panels` unit having landed its roster as a
+  projection of a table the gate's `ToolGroup` types (`docs/L1/secure-panels.md` §7 `E-1`; D-35, D-38). What
+  remains for that unit is its record and its exit walkthrough.
 - **The artifact is not self-contained**: it resolves `provident-storeroom` from `node_modules` at run time,
   so a packaged build ships the package and a loadable addon (`docs/L3/bundle-boot-seam/design.md` §4 `G-8`).
 

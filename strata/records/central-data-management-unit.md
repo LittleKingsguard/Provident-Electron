@@ -28,10 +28,10 @@
   `provident-settings.json`'s write site) was delivered by `settings-carrier-retirement` (D-22), which owns that record.
 - **Owed by L0 before the unit is recommended ready:** a further blind walkthrough run — runs 1, 2 and 3 are not green,
   so the unit stays at L0 with its walkthrough red (D-10, D-11; `strata/records/central-data-management-walkthrough.md`).
-- **Owed to the pane's own unit, surfaced by run 3:** `src/renderer/secure-panels.ts:72` enumerates five group names, so
-  the sixth group has **no operator control** and the group set's third reader stands outside `C-1`..`C-3`'s closure.
-  the pane that would render the rows is its own unit with its own surface decision (`docs/L1/central-data-management.md`
-  §6, `ASM-12`).
+- **Delivered by the pane's own unit, surfaced by run 3 and discharged:** the pane enumerated five group names, so the
+  sixth group had **no operator control** and the group set's third reader stood outside `C-1`..`C-3`'s closure. The
+  `secure-panels` unit (D-35) landed the roster as a projection of a table bound to the gate's union, so the pane
+  cannot drift from the gate again (`docs/L1/secure-panels.md` §7 `E-1`; D-38).
 - **Discharged:** exception §7's last bullet and both findings stand here, not as a pointer. `persistence.md` §9 files
   three more — `P-1` (CD-F2's subject), `P-2` (the undeclared writer mechanism), `P-3` (`register` with no call site) —
   and the last two are declared gaps under D-24, not demands.

@@ -47,9 +47,10 @@ group's tools are absent from `tools/list` rather than present-and-refusing.
 the persisted `enabled` set in `<userData>/provident-operator-settings.json`. The act is manual-UI only and
 **never an MCP tool** — no agent can grant itself capabilities.
 
-**The pane carries five groups, not six:** `src/renderer/secure-panels.ts` enumerates `read`, `dispatch`,
-`graph`, `code` and `module`, so `data` stands in the gate's valid set with **no operator control at this
-head** and no document says how it is enabled without one. That gap is owed its own unit.
+**The pane grants every group the gate validates**, six of them: `src/renderer/secure-panels.ts` builds one
+toggle per entry of a label table the gate's own `ToolGroup` types, so `data` is an operator control like the
+other five, and a group the gate gains without a pane row is a `tsc` error rather than a silent gap
+(`docs/L1/secure-panels.md` §7 `E-1`; `strata/decisions.md` D-35, D-38).
 
 A drive is `provident.dispatch` (by css.id, nodeId or wire); observations are `get_rendered_html`,
 `get_markdown`, `list_targets` and `get_node_state`; every emitted element carries `data-node-id`.

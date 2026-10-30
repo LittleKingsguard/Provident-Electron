@@ -27,9 +27,9 @@ Ceiling: 60 lines.
 
 - The instruments' readings are `brief.md` §6's table and are never restated here: that table is
   re-measured, this paragraph is not, and a count in a second place drifts at the next commit (D-26).
-- **Eight of the thirteen** script keys are verification legs — `test`, `typecheck`, `typecheck:tests`,
-  `build`, `battery`, `divergence`, `ui`, `mcp`; the five others are build/launch shims
-  (`package.json:8-22`). The last three legs build first, and `ui` needs a `DISPLAY`. Node `v24.20.0`;
+- **Nine of the fourteen** script keys are verification legs — `test`, `typecheck`, `typecheck:tests`,
+  `build`, `battery`, `divergence`, `ui`, `panes`, `mcp`; the five others are build/launch shims
+  (`package.json:8-22`). The four Electron legs build first, and `ui` and `panes` need a `DISPLAY`. Node `v24.20.0`;
   devDependencies are Electron `^44.4.5`, esbuild `^0.28.2`, TypeScript `^5.5.0`, vitest `^5.0.1`, `@types/node` `^26.6.2` (`package.json:28-34`).
 - The repository is the sole workspace: this repo's `src/`, `tests/`, `scripts/` and `strata/`. The
   packages it consumes are read-only for every layer (D-5).

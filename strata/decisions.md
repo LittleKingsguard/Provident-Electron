@@ -910,3 +910,20 @@ useful it carries the state it was true at ("post-landing at `4bd17d6`") and is 
   not that" is arithmetic, and the instrument resolves paths, not truth (D-29).
 - **L4's edit order is the exception:** it is an instruction to a one-shot pass, so its offsets are
   pre-landing by construction and say so.
+
+---
+
+## D-42 — Corrigendum to D-39: the figure D-39 forbade is the one it carried
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-39**, which stands as filed (D-1).
+**Source:** the `secure-panels` unit's blind exit walkthrough, run 1, measured against the staged tree —
+D-39 says the row "carries nine paths and seven endpoints at this head", and the `secure-panels` row of
+`strata/modules.json` carries **ten** paths and seven endpoints.
+
+**Decision:** the correction is D-39's own rule turned on itself: a statement about a count in a map **cites
+the row**, and the reader takes the figure there. D-39's sentence is read as its dated reading — the row held
+nine paths when the e2e and integration claims were the last to land, and L2's integration claim made it ten.
+
+- Nothing else in D-39 moves: the claim-kind correction it makes against D-36 stands, and so does the rule.
+- A walkthrough found this, which is what a walkthrough is for. That the corpus's own rule-bearing row broke
+  its rule is worth more to a reader than the number it got wrong.
