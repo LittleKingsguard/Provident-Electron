@@ -6,11 +6,12 @@ Ceiling: 60 lines.
 ## 1. What moved
 
 One commit moved every tracked file under `docs/` — **219 files, 20 MB** — into
-`archive/gate-corpus-2026-10-29/`, tree preserved: the four-file `brief/`; `specs/` (**181**: 163 flat
-contracts, reviews, greens sets and battery records, plus 18 part files in two contract directories);
-`decisions.md` and its seven `ACTIVE-*` digests; `defects.md` and `defects-history.md`;
-`next-steps.md` and `pending.md`; `HANDOFF.md` and `FORKER.md`; `guide/`, `handoffs/`, `skills/`; and
-the gate-era `README.md` and `AGENTS.md`, whose UI-authority section is still cited.
+`archive/gate-corpus-2026-10-29/` beside the two gate-era root pointers, **221 files** at that prefix, tree
+preserved: the four-file `brief/`; `specs/` (**181**: 163 flat contracts, reviews, greens sets and battery
+records, plus 18 part files in two contract directories); `decisions.md` and its seven `ACTIVE-*` digests;
+`defects.md` and `defects-history.md`; `next-steps.md` and `pending.md`; `HANDOFF.md` and `FORKER.md`;
+`guide/`, `handoffs/`, `skills/`; and the gate-era `README.md` and `AGENTS.md`, whose UI-authority section
+is still cited.
 
 `archive/` also holds an **earlier body of corpora at its own top level** — `reviews/` 53, `gate1/` 49,
 `gate5-blind-instruments/` 26, `live-probes/` 24, `specs/` 19, `defects/` 14, `decisions/` 7, `pending/` 7,
@@ -47,10 +48,9 @@ module-scope read are counted. One pass ran three arms:
 | `RETIRE` | 15 rows, 7 files | the row's subject was the corpus: the diff-scope and amendment-namespace controls, the held-contract byte pins, the archived citation-resolution set (D-9) |
 | `LEAVE` | 21 sites | absence probes, comments, scope declarations and git-history lines, which a rewrite would make vacuously green |
 
-The arms count different things and do not sum to the 71 rows — one row can stand at more than one
-site. D-8 filed the examiner's *proposed* split over those rows as 48/2/21; D-9's table governs this
-unit and this section is its execution record. At the sweep the suite collected 3,114 rows and 3,099
-after it, leaving two red rows; the current readings are `brief.md` §6's, not this paragraph's (D-1).
+The arms count different things and do not sum to the 71 rows — one row can stand at more than one site.
+D-8 filed the examiner's *proposed* split as 48/2/21; D-9's table governs and this is its execution record.
+The sweep's own suite readings are that pass's; the live ones are `brief.md` §6's (D-1, D-26).
 
 ## 4. When you need an archived fact
 

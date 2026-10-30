@@ -16,22 +16,24 @@ Four units on the `provident-storeroom` instance, tree committed at every gate b
 **Census:** `strata/brief.md` §6 and §2 own every count and the module map is `strata/modules.json`'s —
 this record restates neither, because a count in a second place drifts at the next commit (D-26, D-28).
 
-## Two defects stand between the tree and the product
+## What stands between the tree and the product now
 
-- **The app cannot boot.** `dist/main/main.cjs:38480` throws `createRequire(undefined)`: the main bundle is
-  CJS while the ESM-only `provident-storeroom` resolves its native addon through `import.meta.url`, which
-  esbuild's CJS output leaves as `{}`. No leg in the four-leg floor reaches that bundle. Owned by
-  `strata/records/security-store-storeroom-unit.md` §2, **owed its own unit** — and it is the floor: until
-  it is fixed, `divergence` and `ui` are red and no product-level claim means anything.
-- **The Settings pane cannot grant the sixth group.** `src/renderer/secure-panels.ts:72` enumerates five
-  group names, so `data` is in the gate and in the persisted grant with no operator control. Filed in
+- **The boot seam is fixed** (D-27, `bundle-boot-seam`): the main bundle is ESM at `dist/main/main.mjs`, the
+  package is external, and the entry derives its own directory from its own module URL. All **three**
+  Electron legs are green for the first time — `battery` 184/184, `divergence` 9/9 on its pinned N plus
+  four extension checks, `ui` 11/11 with real geometry — and the unit's own batteries are 8/8, 5/5 and 8/8.
+  The readings live in `strata/brief.md` §6 and are never restated here (D-26).
+- **The Settings pane still cannot grant the sixth group.** `src/renderer/secure-panels.ts:72` enumerates
+  five group names, so `data` is in the gate's valid set with no operator control. Filed in
   `strata/records/central-data-management-unit.md` §2, owed to the `secure-panels` row's unit.
+- **The artifact is not self-contained**, and a fork must know it: it resolves `provident-storeroom` from
+  `node_modules` at run time, so a packaged build ships the package with its platform optional dependency
+  and a loadable addon (`docs/L3/bundle-boot-seam/design.md` §4 `G-8`). It never was self-contained.
 
 ## What a fresh session does next, in order
 
-1. **The boot seam, as its own unit** (L1 files its map row first). It unblocks both Electron legs and every
-   claim about the running app; nothing in D-22's parked set can be verified without it.
-2. **The pane's sixth group**, as its own unit — it closes the walkthrough finding that survives two passes.
+1. **The pane's sixth group**, as its own unit — it closes the walkthrough finding that has survived four
+   passes, and the running app can now be driven for real to prove it.
 3. **D-22's second half**, still parked and still admitted as units: the gate's exclusion/tier-4 enforcement
    (which is also what gives `src/main/tier4-state.ts`'s reader its first `src/**` consumer, discharging
    `ASM-4`), the module registry (`src/main/module-store.ts` is the last hand-written JSON carrier of the

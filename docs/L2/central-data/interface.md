@@ -1,7 +1,7 @@
 # L2 — `central-data`: the interface
 
 - **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 2 · **Status:** DESIGN — `docs/L1/central-data-management.md` rev 2 and its census exception rev 2 are the inputs; the integration battery is filed against this file and stands red until `src/main/data/` exists (D-1 §4)
-- **Inputs:** L1 rev 2 §3/§4/§8; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7 (E-1, E-2, E-3; N = 15); D-5, D-11, D-12, D-13, D-14, D-15; `strata/modules.json:73-83` (`endpoints: 15`); `strata/platform.md` §4; the tree at `57c5825`
+- **Inputs:** L1 rev 2 §3/§4/§8; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7 (E-1, E-2, E-3; N = 15); D-5, D-11, D-12, D-13, D-14, D-15; the `central-data` row of `strata/modules.json` (`endpoints: 15`); `strata/platform.md` §4; the tree at `57c5825`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide, and `the declaration` is its `index.d.ts`; both are read and never edited (D-5)
 
 ## 0. Scope
@@ -71,7 +71,7 @@ export const DATA_TOOL_NAMES: readonly DataToolName[]
 export function createDataSurface(options: DataSurfaceOptions): DataSurface
 ```
 
-- **The declared surface is `N = 15`**: 5 tools + 5 routes + 5 `provident-storeroom` exports called — `storeCreate`, `read`, `readLiteral`, `write`, `delete` — so the harness cap is `50 + 10×15 = 200`; `register` has no call site and is **not** on the called set (`strata/modules.json:82`; exception §1; D-14, `platform.md` §4).
+- **The declared surface is `N = 15`**: 5 tools + 5 routes + 5 `provident-storeroom` exports called — `storeCreate`, `read`, `readLiteral`, `write`, `delete` — so the harness cap is `50 + 10×15 = 200`; `register` has no call site and is **not** on the called set (the `central-data` row of `strata/modules.json`, `endpoints: 15`; exception §1; D-14, `platform.md` §4).
 - The answer types stay in `src/main/data/`: no renderer sees them, so `src/shared/types.ts` gains the five union strings and nothing else (D-15's E-1 row). `journalLength` defaults to the seam's `DEFAULT_JOURNAL_LENGTH` (`4096`) and bounds this module's own change window (`src/main/storeroom.ts:53`; D-12).
 
 ## 3. The receipt vocabulary — closed, and a value

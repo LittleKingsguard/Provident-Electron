@@ -45,15 +45,14 @@ group's tools are absent from `tools/list` rather than present-and-refusing.
 **A group is granted by the operator alone**, through the Settings pane: `security.set` → `IPC_SECURITY_SET`
 → the surface module, which commits the grant and re-patches the live gate. A grant is a group name added to
 the persisted `enabled` set in `<userData>/provident-operator-settings.json`. The act is manual-UI only and
-**never an MCP tool** — no agent can grant itself capabilities; enabling `data` brings the listed set to 13.
+**never an MCP tool** — no agent can grant itself capabilities.
 
-**The pane's toggle list is five groups**, not six: `src/renderer/secure-panels.ts` enumerates `read`,
-`dispatch`, `graph`, `code` and `module`, so the sixth group stands in the gate's valid set while the
-persisted grant holds only what an operator enabled by hand — and there is no control to enable it. That gap
-is owed to its own unit and named in the `central-data-management` unit record.
+**The pane carries five groups, not six:** `src/renderer/secure-panels.ts` enumerates `read`, `dispatch`,
+`graph`, `code` and `module`, so `data` stands in the gate's valid set with **no operator control at this
+head** and no document says how it is enabled without one. That gap is owed its own unit.
 
 A drive is `provident.dispatch` (by css.id, nodeId or wire); observations are `get_rendered_html`,
-`get_markdown`, `list_targets` and `get_node_state`, and every emitted element carries `data-node-id`.
+`get_markdown`, `list_targets` and `get_node_state`; every emitted element carries `data-node-id`.
 
 ## License
 

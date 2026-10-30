@@ -111,9 +111,9 @@ when the corpus was archived (D-9).
 red-first and its five red rows went green when the arrangement landed, which is the evidence the unit
 was admitted on (D-27).
 
-**An eighth red is by construction:** the same `store-tabs-record` file's §4.2 item 9 asserts the worktree
-against a declared edit set, so it reddens while any uncommitted file exists. A reading taken to be
-believed is taken on a clean tree (`tests/store-tabs-record.test.ts:1916`).
+**One more row is by construction, not a red:** the same `store-tabs-record` file's §4.2 item 9 asserts the
+worktree against a declared edit set, so it fails while any uncommitted file exists and passes on a clean
+tree. A reading worth believing is taken after the commit, never before it (`tests/store-tabs-record.test.ts:1916`).
 
 ## 7. The archive (D-2)
 

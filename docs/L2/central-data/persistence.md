@@ -13,7 +13,7 @@
 - D-13's consequence follows and is not absorbed: the compliance battery's Family-B reading "exactly two persisted files" stops being a true standing pin the moment this file exists, and its rows are re-grained by this unit's test writer in the unit that adds the file — moved, never deleted (`D-13`, `D-15`).
 - This module's own filesystem acts are **the existence probe and nothing else**: it creates no `.tmp`, no lock, no sidecar, no copy, no journal file and no directory of its own (D-13).
 - The store's construction is what creates the file (an exclusive zero-length file at a provided, absent path), which is why construction is deferred to the first write: a profile that is only read costs no filesystem act (`guide §9.1`; D-13).
-- `<userData>/provident-settings.json` is **not read, not written and not retired by this module** — L1's ASM-11 half was parked to the increment that owns the app-shell crossing and has since been delivered by `settings-carrier-retirement`, which is read through `docs/L1/settings-carrier-retirement.md` §4 (D-22, D-19; exception §5; D-13).
+- `<userData>/provident-settings.json` is **not read, not written and not retired by this module** — L1's ASM-11 half is **delivered** by `settings-carrier-retirement`, which carries the second import-once arm at its §4 (D-22, D-19; exception §5; D-13).
 
 ## 2. The key space
 
@@ -76,12 +76,12 @@
 
 ## 7. What this module does not touch
 
-- `provident-security.json` — `operator-settings`' **retired seed**, never a written name since the rebuild: read at most once at a first boot, its bytes left standing, and never read or written here (`strata/modules.json:44-64`; D-13, D-19).
+- `provident-security.json` — `operator-settings`' **retired seed**, never a written name since the rebuild: read at most once at a first boot, its bytes left standing, and never read or written here (the `operator-settings` row of `strata/modules.json`; D-13, D-19).
 - `<userData>/provident-settings.json` — neither read, written nor retired (exception §5; D-13).
 - No second store and no second `filePath`: one store per surface, constructed at most once and kept for the process's life
   (`guide §3.2`; D-13).
 - No file of the renderer's: the producing process's store (`src/renderer/store.ts`) is another module's and is read, written
-  and persisted nowhere by this one (`strata/modules.json:163-171`; D-13).
+  and persisted nowhere by this one (the `store-rederive` row of `strata/modules.json`; D-13).
 
 ## 8. Migrations: none standing
 

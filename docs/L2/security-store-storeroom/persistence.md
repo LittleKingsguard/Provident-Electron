@@ -9,7 +9,7 @@
 - **`<userDataDir>/provident-operator-settings.json`** — the instance's file. The **directory** arrives from the module's caller and the **name** is this unit's own choice, so no other module spells it (D-13, D-19; L1 §5 ASM-6).
 - **`<userDataDir>/provident-security.json`** — the retired name. It is **read at every boot until a record stands, then never again** (§3), **never written again**, and its bytes are **left standing**: this unit adds no delete, no rename and no migration of that file (D-19; L1 §5).
 - This unit therefore **adds exactly one written name and retires another**, which is what stops D-13's "exactly two persisted files" being a true standing pin. The rows that read that figure are re-grained by this unit's L2 test writer in the task that runs after the implementation (exception §2 E-5, §4 C-4) — named here as owed, not performed here (D-10, D-13).
-- `<userDataDir>/provident-settings.json` and `<userDataDir>/provident-profile.json` are **not** this unit's and are neither read nor written nor retired here (§8).
+- `<userDataDir>/provident-profile.json` is **not** this unit's and is neither read nor written here; `<userDataDir>/provident-settings.json` is a **seed** — read at most once per boot by the second import-once arm, never written and never retired, its bytes left standing (`docs/L1/settings-carrier-retirement.md` §4; §8; D-19, D-22).
 
 ## 2. What construction does, and what the boot does
 
@@ -64,7 +64,7 @@
 
 ## 8. What this module does not touch
 
-- **`<userDataDir>/provident-settings.json`** — `app-shell`'s tier-1 carrier: neither read, written nor retired here; its retirement is parked to the increment that owns the app-shell crossing (exception §2; D-13).
+- **`<userDataDir>/provident-settings.json`** — `app-shell`'s tier-1 carrier, and its retirement is **executed** (D-22): the carrier's `settingsPath`, its boot read, the settings channel's guarded second read and its whole tmp+rename+fsync writer left the tree, and the name survives only as a **seed** — read at most once per boot by `operator-settings`' second import-once arm, written by none, its bytes left standing (§1; `docs/L1/settings-carrier-retirement.md` §3, §4, §6; D-19, D-22).
 - **`<userDataDir>/provident-profile.json`** — `central-data`'s profile store, unmoved: this module neither reads nor writes it, and the two instances are separate on purpose (D-16; `docs/L2/central-data/persistence.md` §1).
 - **`<userDataDir>/provident-security.json`** — the retired name: read at every boot until a record stands, then never again, never written again, bytes standing (§1, §3; D-19).
 - **The renderer's own store** (`src/renderer/store.ts`, `store-rederive`'s) — read, written and persisted nowhere by this module (D-13).

@@ -50,7 +50,7 @@ The **arrangement** is this unit's whole surface: which artifact each of the fou
 
 | Arm | What was measured | Why it is rejected |
 |---|---|---|
-| **Keep inlining, satisfy the derivation at build time** (`--define:import.meta.url`, or the literal it bakes) | P-6 on CJS, P-14 on ESM: the literal lands three times | the artifact would name **one absolute path on the building host** — it could not be shipped as the prebuild baseline, and the derivation would describe the builder's disk instead of the artifact (L1 §0) |
+| **Keep inlining, satisfy the derivation at build time** (`--define:import.meta.url`, or the literal it bakes) | P-6 on CJS, P-14 on ESM: the literal lands three times | the artifact would name **one absolute path on the building host** — it could not be shipped as the prebuild baseline, and the derivation would describe the builder's disk instead of the artifact (`strata/brief.md` §0, the prebuild baseline this repository is; D-27) |
 | **Keep inlining, copy the manifest and the addon beside the artifact** | P-12 fixes exactly what would have to be copied: `package.json`'s `version` and `build/Release/storeroom_js_binding.node` | the emission set would gain a **host-arch native binary** and a fabricated package directory, so `dist/` stops being host-independent, and both B-5's file and the version equality would rest on a copy the package did not make (`persistence.md` §1) |
 | **CJS main, package externalised** | P-5: `ERR_PACKAGE_PATH_NOT_EXPORTED` | the package declares **no `require` condition**, so the arm is unavailable rather than unwise, and a package change is the only alternative (D-5) |
 | **CJS main, dynamic `import()` of the package** | esbuild 0.28.2 preserves `import("provident-storeroom")` in CJS output | it turns store construction **async**, and the boot constructs at `src/main/main.ts:112`: the change would move `src/main/storeroom.ts`, `src/main/settings-surface/`, `src/main/operator-settings/` and `src/main/data/` — four files of three other modules, where L1 §8 declares one entry file (E-2) |
@@ -83,7 +83,7 @@ The **arrangement** is this unit's whole surface: which artifact each of the fou
 - **No package change**, and no package-side workaround: the arrangement leaves the package where it declares its own location, and a gap in `provident-storeroom` is recorded, never patched (D-5, `persistence.md` §7).
 - **No new MCP surface**: no tool, resource, group, `RpcMethod` member or bridge channel is added (D-18, L1 §7).
 - **No boot-contract restatement**: the observables, the order and the eight scenarios are L1 §4-§6's (D-1 §4).
-- **No re-grain of the three legs**: `npm test`, both typechecks and `npm run build` stay the floor (D-14, `brief.md` §6).
+- **No re-grain of the four legs**: `npm test`, both typechecks and `npm run build` stay the floor (D-14, `brief.md` §6).
 
 ## 7. The integration battery's rows, each with its reading
 

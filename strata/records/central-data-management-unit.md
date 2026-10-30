@@ -2,15 +2,15 @@
 
 - **Unit:** `central-data-management` · **Layer:** L0 at this record · **Branch:** `strata` (D-6) · **Ceiling:** 40 lines (D-1)
 - **What this file is:** the unit's **closure record** for D-5 — the findings its passes surfaced, in their owner's terms,
-  and what the unit itself still owes. It is not a queue: nothing here asks any layer of this tree for work, and the
-  package is never modified (D-5). Recovered from `docs/L1/central-data-census-exception.md` §7/§5,
-  `docs/L2/central-data/behaviour.md` §6/§9, `docs/L2/central-data/persistence.md` §9 and `docs/L3/central-data/design.md` §3.
+  and what the unit still owes. It is not a queue: nothing here asks any layer of this tree for work, and the package is
+  never modified (D-5). Recovered from `docs/L1/central-data-census-exception.md` §5/§7, the module's L2 documents §6/§9
+  and `docs/L3/central-data/design.md` §3.
 
 ## 1. Package findings — `provident-storeroom ^1.6.1`, upstream-owned, never patched (D-5)
 
 | id | Symptom | Reproduction | Suspected root cause | Proposed fix shape |
 |---|---|---|---|---|
-| **CD-F1** | `delete` at an address where **no row stands** throws `AddressNotFound` instead of answering the empty removal a caller's receipt would carry; `tiers: []` is reachable only where the address stands at another tier (measured at `57c5825`) | call `delete` at an absent address, at both the whole-target and the `file`-tier spellings | the delete arm reads an absent target as a malformed address rather than a no-op | answer `{tiers: []}`, append nothing, throw nothing |
+| **CD-F1** | `delete` at an address where **no row stands** throws `AddressNotFound` instead of answering the empty removal a caller's receipt would carry; `tiers: []` is reachable only where the address stands at another tier (measured at `57c5825`) | call `delete` at an absent address, at both the whole-target and the `file`-tier spellings | the delete arm reads an absent target as a malformed address rather than a no-op | **none behavioural** — D-24 rules the absent-address family intended and documented; the module steps around it in its own answer (`docs/L3/central-data/design.md` §4 `G7`), and all a demand could ask is a sentence in the guide |
 | **CD-F2** | the **boot over non-image bytes** has no declared arm: a foreign, unparsable image boots **cold** with its bytes untouched until the next `file`-tier save, so a consumer can state the recovery while the package declares neither it nor a parse-failure arm (symptom measured at `57c5825`) | place non-image bytes at the `filePath`, call `storeCreate`, then `list`/`read` (cold tier answers, bytes byte-identical) and one `write` (bytes replaced) | `guide §9.1` declares the creation, reachability and constraint-list arms and no parse-failure arm, and the declaration carries no such boot status | declare the boot's parse-failure arm — its status and whether the bytes are left untouched — in the native contract and in `guide §9.1` |
 
 - **Neither finding is a demand on this tree**, and neither was promoted past what was measured: CD-F1 is answered inside
@@ -28,13 +28,13 @@
   `provident-settings.json`'s write site) was delivered by `settings-carrier-retirement` (D-22), which owns that record.
 - **Owed by L0 before the unit is recommended ready:** a further blind walkthrough run — runs 1, 2 and 3 are not green,
   so the unit stays at L0 with its walkthrough red (D-10, D-11; `strata/records/central-data-management-walkthrough.md`).
-- **Owed to the pane's own unit, surfaced by run 3 and not repairable here:** `src/renderer/secure-panels.ts:72` enumerates
-  five group names, so the sixth group is in the gate and in the persisted grant but has **no operator control** — it cannot
-  be enabled from the Settings pane, and the group set's third reader therefore stands outside `C-1`..`C-3`'s closure.
-- **Owed a later unit, ruled at L1 and not smuggled in here:** no rendered data view is declared — S-10 now asserts the
-  invariance the landed module owes, and the pane that would render the rows is its own unit with its own surface decision
-  (`docs/L1/central-data-management.md` §6, `ASM-12`).
-- **Discharged:** exception §7's last bullet, both findings, and the L2 examiner's readings now stand here, not as a pointer.
+- **Owed to the pane's own unit, surfaced by run 3:** `src/renderer/secure-panels.ts:72` enumerates five group names, so
+  the sixth group has **no operator control** and the group set's third reader stands outside `C-1`..`C-3`'s closure.
+  the pane that would render the rows is its own unit with its own surface decision (`docs/L1/central-data-management.md`
+  §6, `ASM-12`).
+- **Discharged:** exception §7's last bullet and both findings stand here, not as a pointer. `persistence.md` §9 files
+  three more — `P-1` (CD-F2's subject), `P-2` (the undeclared writer mechanism), `P-3` (`register` with no call site) —
+  and the last two are declared gaps under D-24, not demands.
 - **Reclassified by D-24:** every finding above is the store working as designed — the only demand is documentary. The
   purge rule and the absent-address refusal family are documented in the shipped guide; the boot behaviour over non-image
   bytes and the member ordering are not (two documentation defects).

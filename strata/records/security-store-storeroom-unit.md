@@ -26,9 +26,10 @@
   next touches those files (exception §9; `examiner.md` §4).
 - **Owed by L0:** a further blind walkthrough run (runs 1 and 2 are not green), and the standing deviation that no built
   artifact was staged for either run, so the running surface was never tested (`walkthrough.md` §3).
-- **Owed elsewhere, and named because it bounds this unit's evidence:** the app cannot boot at this head — `dist/main/main.cjs`
-  dies at module load on the ESM-only package's `import.meta.url` (`npm run battery`/`divergence` cannot see it) — so the
-  instance is absent from the product until that host-side defect has its own unit (L2 examination return, `F-1`/`F-2`).
+- **Discharged elsewhere, and named because it bounded this unit's evidence:** the app could not boot, because the main
+  bundle was CJS while the ESM-only package derives its addon and manifest paths from `import.meta.url`. That host-side
+  defect got its own unit and is fixed (`D-27`, `bundle-boot-seam`): the bundle is ESM at `dist/main/main.mjs`, and the
+  instance stands — its own file appears in a scratch profile (`strata/brief.md` §6).
 
 **Reclassified by D-24:** every finding above is the store working as designed; the only
 demand is documentary. The purge rule and the absent-address refusal family are documented in the

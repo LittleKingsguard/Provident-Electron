@@ -29,8 +29,8 @@ read():
            exclusion: open ? 'mcp-disabled' : 'mcp-enabled' }
 ```
 
-- **`read` is `null` iff the answer was minted while `exclusion` is `'mcp-enabled'`**, and the closed `{status:'refused', reason:'tier4-closed', message}` value otherwise: one reading of one row feeds both members, so the two cannot carry two states (interface §5; behaviour §10; `src/main/main.ts:427-443` carried).
-- **The reading is the instance's row and not `tier4-state.ts`'s holder**, because the holder still carries its declared initial `STORE-OPEN` until `attach` flips it, and that initial maps to the unsafe pair — while the instance boots to the safe pair, which is what the pre-`attach` carrier must answer (interface §1 `ASM-L2-2`; `src/main/tier4-state.ts:24-28`; `src/main/main.ts:437`; behaviour §10; ASM-2).
+- **`read` is `null` iff the answer was minted while `exclusion` is `'mcp-enabled'`**, and the closed `{status:'refused', reason:'tier4-closed', message}` value otherwise: one reading of one row feeds both members, so the two cannot carry two states (interface §5; behaviour §10; `src/main/settings-surface/index.ts:123-137` carried).
+- **The reading is the instance's row and not `tier4-state.ts`'s holder**, because the holder still carries its declared initial `STORE-OPEN` until `attach` flips it, and that initial maps to the unsafe pair — while the instance boots to the safe pair, which is what the pre-`attach` carrier must answer (interface §1 `ASM-L2-2`; `src/main/tier4-state.ts:24-28`; `src/main/main.ts:453`; behaviour §10; ASM-2).
 - **`entries` is not on the carrier**: `SecuritySettings` stays byte-identical, so the answer is its three durable members plus `exclusion` and `read` and nothing else (interface §5; exception §2 E-2).
 - **`tier4-closed` here is a read token and never a write outcome**, and no third state exists (D-16; interface §3).
 
@@ -65,7 +65,7 @@ transition(state):
 ```
 
 - **The answer carries no receipt member**: the bridge's `setExclusion` resolution is `{applied, state, reason?}` and `write` is declared on `set` alone, so E-2's licence does not reach this answer (interface §5.1 `ASM-L2-4`; `src/main/preload.ts:63-64`).
-- **`reason:'malformed-state'` is the input arm alone and is total over every outside value** — a boolean, a number, an object, an array, `undefined`, `null`, an unknown string, a case variant, a padded string (behaviour §10; `src/main/main.ts:472-483`).
+- **`reason:'malformed-state'` is the input arm alone and is total over every outside value** — a boolean, a number, an object, an array, `undefined`, `null`, an unknown string, a case variant, a padded string (behaviour §10; `src/main/settings-surface/index.ts:194-199`).
 - **`{applied:false, state}` with no `reason` is the store's arm**, and the only state that produces it is *no instance stands*: a well-formed two-literal `mem` write at a standing instance cannot refuse (interface §5.1; guide §8.2).
 - **The receipt of a transition is observed on `set` and on the record**, never on this answer, and the state it left is read back through `read().exclusion` (interface §5.1; behaviour §10).
 
