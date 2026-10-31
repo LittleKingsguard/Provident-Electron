@@ -36,6 +36,6 @@ layer's "three to two" is that unit's dated reading of its own move and is not r
 
 ## 3. Until the finding lands
 
-**The arm is implemented**: `docs/L3/store-tabs-record/design.md` §4 rev 3 declares the constraint's `{ message, repair }`
-return, the boundary's corrective write makes a legal state arrive, and the engine's arm guards every other route. The L4
-adjudication that raised the question is resolved at `.strata/returns/store-tabs-record-l2-resolution.json`.
+**The arm is implemented**: `docs/L3/store-tabs-record/design.md` §4 rev 3 declares the `{ message, repair }` return, the
+boundary's corrective write makes a legal state arrive, and the engine's arm guards every other route (the L4 adjudication:
+`.strata/returns/store-tabs-record-l2-resolution.json`).
