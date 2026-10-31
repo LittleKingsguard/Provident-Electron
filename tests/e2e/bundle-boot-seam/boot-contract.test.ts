@@ -16,7 +16,7 @@
 // conditionally disabled or softened to reach a colour (`strata/examiner.md` §2-§3).
 import { execFileSync } from 'node:child_process'
 import { spawn, type ChildProcess } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -280,6 +280,18 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
      *  system: a `.cjs`-named copy of ESM bytes fails at PARSE with `SyntaxError: Cannot use import
      *  statement outside a module` and never reaches the injected reason this row asserts. */
     const corrupt = join(dir, basename(mainEntry))
+    // **THE COPY MUST BE ABLE TO LINK BEFORE IT CAN THROW** (`B-8`'s premise, corrected 2026-10-30): the artifact
+    // imports `provident-storeroom` as an EXTERNAL (`package.json`'s build line), and ESM resolves a module's static
+    // imports before its body runs — so a copy in a bare temp directory fails with `ERR_MODULE_NOT_FOUND` at link
+    // time and the injected `throw` never executes. The row's claim is "an unbootable bundle fails WITH ITS REASON",
+    // which needs the copy resolvable to the point of running, so the external is linked beside it. The bundle is
+    // still corrupt: the injected throw is the failure under test.
+    mkdirSync(join(dir, 'node_modules'), { recursive: true })
+    symlinkSync(
+      realpathSync(join(repoRoot, 'node_modules', 'provident-storeroom')),
+      join(dir, 'node_modules', 'provident-storeroom'),
+      'dir',
+    )
     writeFileSync(corrupt, `throw new Error(${JSON.stringify(reason)})\n${readFileSync(mainEntry, 'utf8')}`)
     const boot = bootApp(corrupt)
     let report = ''
