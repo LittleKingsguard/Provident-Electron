@@ -15,15 +15,20 @@ vocabulary — and the instance behind it. It never fixes the store's internals,
 
 ## 1. Where the record lives, and why it is a third instance
 
-`provident-tabs-record.json` under `userDataDir`, written by a **third** `provident-storeroom` instance — beside the
-profile store (`central-data`'s) and the operator's (`security-store-storeroom`'s). It is a third because a store file and
-its surface belong to one unit (D-32); the tab record does not borrow either sibling's.
+**Rev 2** — *D-64 supersedes this section's first reading.* The record lives in the app's **one central
+`provident-storeroom` instance**, at the `['tabs']` addresses inside `provident-profile.json`, beside the profile rows it
+already hosts — **not** in an instance of its own. D-32 governs two units claiming one path in the map, not two surfaces
+reading one store at different addresses, and the app keeps one store rather than three. The routes below are unchanged;
+only whose instance answers them is. The move is blocked on **`central-data`'s L2**, because sharing that instance moves
+*when* the profile file is created (boot instead of first use) and that is that unit's declared guarantee
+(`strata/pending.md` row 6). Until it lands, this unit's own instance is the temporary second one and
+`provident-tabs-record.json` is the third written name.
 
 Its addresses are the L1 §1 family, unchanged by the crossing:
 
 | Address | Tier | Holds |
 |---|---|---|
-| `['tabs']` | `file` | the record root: `order` and `landing` seats plus **one flat leaf per tab** whose name is the tab id |
+| `['tabs']` (the central instance's) | `file` | the record root: `order` and `landing` seats plus **one flat leaf per tab** whose name is the tab id |
 | `['tabs-exclusion']` | `mem` | the volatile pair the renderer's landing witness reads, never persisted |
 
 The `file`-tier write is `provident-storeroom`'s, not this module's: the module writes no byte and parses no file

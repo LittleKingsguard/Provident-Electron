@@ -30,9 +30,10 @@ undocumented, and that was wrong — it *is* documented, in the package's own sp
 
 ## 2. The census this unit moved
 
-**Written names: two → three.** The app now creates `provident-tabs-record.json` at boot beside the profile store's file
-and the operator's, so `DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs` carries three. The settings-carrier
-layer's "three to two" is that unit's dated reading of its own move and is not re-opened here (D-46).
+**Written names: two → three, and back to two.** This unit's own instance creates `provident-tabs-record.json` at boot, so
+`DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs` carries three **at this head**. **D-64 supersedes it**: the
+record moves onto the app's central instance, the third name goes, and the set returns to two — blocked on `central-data`'s
+L2 (`strata/pending.md` row 6) because sharing that instance moves when the profile file is created.
 
 ## 3. Until the finding lands
 **The arm is implemented**: `docs/L3/store-tabs-record/design.md` §4 rev 3 declares the `{ message, repair }` return, the

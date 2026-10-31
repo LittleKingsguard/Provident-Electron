@@ -1382,3 +1382,28 @@ renderer (`src/main/main.ts`'s window options).
   no longer a prerequisite for this rework, and adopting it is a separate question with its own census cost.
 - **The census moves.** A third instance, the bridge routes it adds and the twelve unwired mechanisms' count are the
   map's to re-derive, not this row's to state (D-26, D-39).
+
+---
+
+## D-64 — Corrigendum to D-63: the tab record rides the app's CENTRAL store instance
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Corrigendum to D-63**, which stands as filed (D-1). **Source:** the user's
+instruction, verbatim — "Use the same central store instance".
+
+**Decision:** the tab record lives in the **one central `provident-storeroom` instance** the app already has, at the
+`['tabs']` addresses in `provident-profile.json`. It gets **no instance of its own**, and D-63's "its own instance, not the
+profile store's, because a second unit over one path is what D-32 forbids" is **superseded**: D-32 governs two units
+*claiming one path in the map*, not two surfaces reading one store — the record and the profile rows are different
+addresses in one document, and the app keeps one store rather than three.
+
+- **Written names return to two.** The third name this unit had begun creating at boot
+  (`provident-tabs-record.json`) goes away with the third instance; `DECLARED_WRITTEN_JSON` in
+  `tests/store-compliance-live.mjs` returns to the two it carried before.
+- **The crossing is unchanged.** D-63's bridge decision stands in full — one member, three routes, the renderer a client,
+  the engine's constraint and repair. What changes is only *whose* instance answers the routes.
+- **What it costs, named rather than absorbed:** the central instance today is constructed **lazily**, on the first
+  operation that needs one, and `central-data`'s `persistence.md` §2 pins that a profile which is only read creates
+  nothing. Sharing the instance therefore moves **when** `provident-profile.json` is created — boot instead of first use —
+  which is that unit's declared guarantee, so the change belongs to **`central-data`'s L2**, not to a unilateral edit here.
+- **Until that lands**, this unit's instance remains the temporary second one and the third written name is the honest
+  current reading; `strata/pending.md` carries the move.
