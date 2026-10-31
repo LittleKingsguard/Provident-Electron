@@ -71,6 +71,10 @@ the module mints no status of its own beyond the one shape arm below:
 **A repaired commit is `committed`, never `refused`** — the repair is the engine working (L1 §2), and a renderer that treats
 it as a failure would refuse a write the store accepted.
 
+**The four constraint sentences a caller can receive** (each repaired, never left standing): *the tab record carries more
+than one active tab* · *a tab carries no title* · *a tab contains no data object* · *a tab carries no last-active stamp*.
+Each names the field it is about, because that is how a caller learns which one it broke.
+
 ## 4. The constraint moves to the instance
 
 `TABS_CONSTRAINT` is a `GraphConstraint` the renderer evaluates today (L1 §2). Under D-63 it becomes the **instance's**

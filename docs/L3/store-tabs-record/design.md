@@ -62,6 +62,18 @@ engine's rejection arm is the guard for any write that does not pass through thi
 which is why the arm is a safety net rather than a routine path. A consumer writing to the record by another route is
 refused by the constraint, and the refusal carries the repair the kernel applies.
 
+**Four declarations ride the batch, not one — and the reason is the sentence a caller gets.** `exactly-one-active` guards
+the *shape of the set*; three more guard each tab's own **fields**, and each is a separate pair because a violation is a fact
+about ONE field — a repair that fixed all of them at once could not tell the caller which they broke (D-65's batched list;
+`guide §7.2` rejects a repeated `id` in one supplied list, so the four are named apart):
+
+| id | Holds when | Repair |
+|---|---|---|
+| `exactly-one-active` | at least one member survives **and** exactly one entry reads active | the referent discipline (§4's first paragraph) |
+| `tab-has-title` | the tab's `label` is a non-empty string | writes `'untitled'` |
+| `tab-has-content` | the tab's `target` — the data object it contains — is a non-empty string | points it at the landing page |
+| `tab-has-lastActiveAt` | the tab carries an activation stamp | stamps it with **now**, as an ISO string so the record's byte image stays JSON-plain |
+
 **A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store
 says, rather than being told what to think.
 
