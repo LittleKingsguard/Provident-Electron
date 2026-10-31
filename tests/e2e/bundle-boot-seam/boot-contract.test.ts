@@ -54,6 +54,35 @@ const stringEnv = (): Record<string, string> =>
   Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined))
 
 const children: ChildProcess[] = []
+
+/** **HOLD NO STORE OPEN PAST THE ROW** (added 2026-10-30). Killing the spawned child is NOT enough: Electron forks
+ *  zygotes, a network utility and renderers, and those outlive their parent as orphans — measured on this checkout,
+ *  where two runs' survivors had been holding `provident-*-record` files open for a day and seventeen hours against
+ *  temp profiles whose DIRECTORIES the old teardown had already removed.
+ *
+ *  So the teardown reaps by PROFILE: every process whose command line names the scratch directory is killed before
+ *  that directory is removed. That is the one identity both spawn sites share (this file's `spawn` and the SDK's
+ *  `StdioClientTransport`), and it catches descendants the parent's death does not. */
+function reapProfile(profile: string): void {
+  let listing = ''
+  try {
+    listing = execFileSync('ps', ['-eo', 'pid,args'], { encoding: 'utf8' })
+  } catch {
+    return // no `ps` on this host: the directories still go, the strays are the platform's to reap
+  }
+  for (const line of listing.split('\n')) {
+    if (!line.includes(profile)) continue
+    const pid = Number(line.trim().split(/\s+/, 1)[0])
+    if (!Number.isSafeInteger(pid) || pid <= 0 || pid === process.pid) continue
+    try {
+      process.kill(pid, 'SIGKILL')
+    } catch {
+      // already gone, or not ours to kill
+    }
+  }
+}
+
+
 const scratchDirs: string[] = []
 let buildFailure: string | null = null
 
@@ -112,6 +141,8 @@ function bootApp(entry: string, extra: string[] = []): Boot {
   child.stdout?.on('data', (chunk) => { trace += String(chunk) })
 
   const stop = (): void => {
+    // the child AND whatever it forked: Electron's own children are the ones that hold the profile
+    reapProfile(profile)
     try { child.kill('SIGKILL') } catch { /* already gone */ }
   }
 
@@ -174,6 +205,8 @@ afterEach(() => {
 
 afterAll(() => {
   for (const dir of scratchDirs.splice(0)) {
+    // the profile first: a directory removed under a live process leaves the survivor holding a file nobody can find
+    reapProfile(dir)
     try { rmSync(dir, { recursive: true, force: true }) } catch { /* best effort */ }
   }
 })
