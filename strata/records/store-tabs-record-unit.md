@@ -29,7 +29,14 @@ consumer installs.
   example beside `landing-page-must-stand` at `guide §7.7`; and re-point the docblock's `kernel-surface.md §2.3` citation at
   a shipped path. **No export, no symbol, no behaviour change is asked for.**
 
-## 2. What this unit carries until the finding lands
+## 2. The census this unit moved
+
+**Written names: two → three.** The app now creates `provident-tabs-record.json` at boot beside the profile store's file
+and the operator's, so `DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs` (the instrument) carries three and every
+reader of that set follows it. The settings-carrier layer's "three written names to two" is that unit's own dated reading of
+its own move and is not re-opened by this one (D-46).
+
+## 3. What this unit carries until the finding lands
 
 **The gate is the engine's and the repair is the boundary's**, on exactly this ground: `docs/L3/store-tabs-record/design.md` §4
 rev 2 states the split, and the L4 adjudication that raised it is resolved at

@@ -304,7 +304,10 @@ const FORBIDDEN_SECURITY_KEYS = ['exclusion', 'write', 'schemaVersion']
  *  `DIPS`, `Trust Tokens`, `blob_storage/`, `declarative_performance_observer.db`, `Local Storage`,
  *  `Shared Dictionary`, `Dictionaries`, `Dawn*Cache`) — the S1 driver's own comment names this class,
  *  and those are the RUNTIME's, not the store's. */
-const DECLARED_WRITTEN_JSON = ['provident-operator-settings.json', 'provident-profile.json']
+// **⟶ THREE AT THIS HEAD (2026-10-30, D-63):** the tab record's own instance creates
+// `provident-tabs-record.json` at boot beside the profile store's file and the operator's, so the written-name
+// census this battery reads is three, not two. The seeded-and-retired pair below is unchanged.
+const DECLARED_WRITTEN_JSON = ['provident-operator-settings.json', 'provident-profile.json', 'provident-tabs-record.json']
 const DECLARED_SEEDED_RETIRED_JSON = ['provident-security.json', 'provident-settings.json']
 const DECLARED_PERSISTED_JSON = [...DECLARED_WRITTEN_JSON, ...DECLARED_SEEDED_RETIRED_JSON]
 /** **THE RECORD'S FILE, RE-GRAINED UNDER C-4** (old figure: `'provident-security.json'`). Every
