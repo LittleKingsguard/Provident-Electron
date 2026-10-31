@@ -4,9 +4,8 @@
 
 **ST-F1 — the repair arm is declared in the package's own contract and absent from the surface it ships.**
 
-**Corrected 2026-10-30 after reading the upstream checkout** (`../Provident-Storeroom/`): the first version of this row
-said the arm was undocumented, and that was wrong. It *is* documented — in the package's own spec, not in the artifact a
-consumer installs.
+**Corrected 2026-10-30 after reading `../Provident-Storeroom/`**: the first version of this row said the arm was
+undocumented, and that was wrong — it *is* documented, in the package's own spec, not in the artifact consumers install.
 
 - **What IS documented, and precisely.** the package's own **constraint contract** §(viii) (the sibling `../Provident-Storeroom/` checkout's constraint contract, upstream — no path of this repo) (added 2026-10-30 by that
   repo's gate-3 append pass, on its `D-86`/`D-85`) states that *one returned shape* answers the registration instant and
@@ -32,14 +31,11 @@ consumer installs.
 ## 2. The census this unit moved
 
 **Written names: two → three.** The app now creates `provident-tabs-record.json` at boot beside the profile store's file
-and the operator's, so `DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs` (the instrument) carries three and every
-reader of that set follows it. The settings-carrier layer's "three written names to two" is that unit's own dated reading of
-its own move and is not re-opened by this one (D-46).
+and the operator's, so `DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs` carries three. The settings-carrier
+layer's "three to two" is that unit's dated reading of its own move and is not re-opened here (D-46).
 
 ## 3. What this unit carries until the finding lands
 
-**The gate is the engine's and the repair is the boundary's**, on exactly this ground: `docs/L3/store-tabs-record/design.md` §4
-rev 2 states the split, and the L4 adjudication that raised it is resolved at
-`.strata/returns/store-tabs-record-l2-resolution.json`. When ST-F1 lands, the corrective write can move into the constraint
-body as a returned repair and the boundary's copy becomes redundant — a change this unit does not make until the shape is
-documented, because a return invented here would be an implementation guessed against an unshipped spec.
+**The arm is implemented**: `docs/L3/store-tabs-record/design.md` §4 rev 3 declares the constraint's `{ message, repair }`
+return, the boundary's corrective write makes a legal state arrive, and the engine's arm guards every other route. The L4
+adjudication that raised the question is resolved at `.strata/returns/store-tabs-record-l2-resolution.json`.
