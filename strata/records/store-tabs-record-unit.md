@@ -34,7 +34,7 @@ undocumented, and that was wrong — it *is* documented, in the package's own sp
 and the operator's, so `DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs` carries three. The settings-carrier
 layer's "three to two" is that unit's dated reading of its own move and is not re-opened here (D-46).
 
-## 3. What this unit carries until the finding lands
+## 3. Until the finding lands
 
 **The arm is implemented**: `docs/L3/store-tabs-record/design.md` §4 rev 3 declares the constraint's `{ message, repair }`
 return, the boundary's corrective write makes a legal state arrive, and the engine's arm guards every other route. The L4
