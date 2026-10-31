@@ -88,7 +88,7 @@ const rowOf = (value: Record<string, unknown>): TabsRecordRow | null => {
  *  THE BODY READS THE RECORD, which `guide §7.6` says is the caller's work and not a defect: a constraint that
  *  cares about a location other than the one it judges **reads that location**, and a read inside a body brackets
  *  no commit and is judged by nothing (`§7.6`'s measured clause of 2026-10-28). */
-const exactlyOneActive = (store: Store) => (): true | { message: string } => {
+const exactlyOneActive = (store: Store) => (): true | { message: string; repair: () => void } => {
   let order: string[] = []
   try {
     const read = store.read(TABS_ORDER_ADDRESS, 'file') as unknown
@@ -107,7 +107,42 @@ const exactlyOneActive = (store: Store) => (): true | { message: string } => {
       // an id whose record the store does not hold cannot be an active tab
     }
   }
-  return active > 1 ? { message: 'the tab record carries more than one active tab' } : true
+  if (active <= 1) return true
+  return {
+    message: 'the tab record carries more than one active tab',
+    // **THE REPAIR IS A FUNCTION ON THE RETURNED OUTCOME** (`provident-storeroom`'s constraint contract,
+    // `docs/specs/storeroom-constraints/contract.md` §(viii): the outcome object's `message` and `repair` members
+    // are what the kernel reads; `bindings/js/src/entry/kernel-attempt.mjs` reads an own `repair` and, where it is
+    // a function, invokes it as `repair(repairContext)` through `repairInCommit` — so the writes below JOIN the
+    // attempt's own commit rather than opening a second one (upstream `D-45`, `D-46` item 2).
+    //
+    // It keeps the last tab in the order active and deactivates the rest: the same rule the boundary applied
+    // before the arm was documented, now expressed where the engine evaluates it.
+    repair: () => {
+      const rows: TabsRecordRow[] = []
+      for (const id of order) {
+        try {
+          const value = store.read(['tabs', id], 'file') as unknown
+          if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+            const row = { ...(value as Record<string, unknown>), id } as unknown as TabsRecordRow
+            if (row.active === true) rows.push(row)
+          }
+        } catch {
+          // an id whose record the store does not hold cannot be an active tab
+        }
+      }
+      if (rows.length <= 1) return
+      const keep = rows[rows.length - 1]
+      for (const row of rows) {
+        if (row.id === keep.id) continue
+        try {
+          store.write(['tabs', row.id], 'file', { ...row, active: false })
+        } catch {
+          // a write the store refuses leaves the engine's own refusal to answer; this body adds no sentence of its own
+        }
+      }
+    },
+  }
 }
 
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
