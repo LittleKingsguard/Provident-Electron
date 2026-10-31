@@ -8,7 +8,7 @@
 undocumented, and that was wrong — it *is* documented, in the package's own spec, not in the artifact consumers install.
 
 - **What IS documented, and precisely.** the package's own **constraint contract** §(viii) (the sibling `../Provident-Storeroom/` checkout's constraint contract, upstream — no path of this repo) (added 2026-10-30 by that
-  repo's gate-3 append pass, on its `D-86`/`D-85`) states that *one returned shape* answers the registration instant and
+  repo's gate-3 append pass, on two rows of **another register** — that repo's own, never this log) states that *one returned shape* answers the registration instant and
   the write's evaluation, and names the members: **`message` and `repair`**, read by own-property forms at the landing
   instant and through the prototype chain at registration. The implementation matches: the kernel's attempt binding (`bindings/js/src/entry/kernel-attempt.mjs`, upstream)
   reads an own `message`, then an own `repair`, and where `typeof outcomeRepair === 'function'` invokes it as
