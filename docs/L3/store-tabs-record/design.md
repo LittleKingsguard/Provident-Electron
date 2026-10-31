@@ -49,16 +49,21 @@ only pass value**, and an object carrying a `message` is a **rejection** (`guide
 actives, which `guide §7.6` says is the caller's work — *"if your constraint cares about the state at any other location,
 it reads that location"* — and a read inside a body brackets no commit and is judged by nothing (`§7.6`'s measured clause).
 
-**The repair is the boundary's, and the reason is declared rather than hidden.** The guide describes a repair as a value a
-constraint "returns … that writes `11` at a different address", but **the shipped `index.d.ts` declares the return as
-`unknown`** and neither it nor the guide names the repair's object shape. A return this layer cannot transcribe is a return
-it must not invent, so exactly-one-active's **corrective write** stays at the commit boundary: the module deactivates every
-active tab but the one the commit named, and the engine's constraint then judges the state the write left and rejects a
-record carrying two.
+**The repair is the engine's too, and the shape is the package's own contract.** *Rev 3* — the upstream checkout settles
+what the shipped declaration omits (`../Provident-Storeroom/docs/specs/storeroom-constraints/contract.md` §(viii)): the
+outcome object carries **`message` and `repair`**, and `repair` is a **function** the kernel invokes as
+`repair(repairContext)` **inside the attempt's own commit** (`bindings/js/src/entry/kernel-attempt.mjs` reads an own
+`message`, then an own `repair`, and calls it through `repairInCommit`, so its writes join the attempt rather than opening a
+second commit — that repo's `D-45`, `D-46` item 2). The body above therefore returns `{ message, repair }` when the record
+carries more than one active tab, and the repair keeps the last tab in `order` active and deactivates the rest.
 
-**Two homes, one invariant, and the division is the point**: the engine refuses an illegal state that arrives by any route,
-and the module's own commit produces a legal one so the refusal is never reached in normal use. A repaired commit answers
-`committed` with `repaired: true` (L2 §3) — the renderer re-reads and renders what the store says.
+**The boundary's corrective write stays, and it is not a second home.** It is what makes a legal state *arrive*, so the
+engine's rejection arm is the guard for any write that does not pass through this module's `commit` — today there are none,
+which is why the arm is a safety net rather than a routine path. A consumer writing to the record by another route is
+refused by the constraint, and the refusal carries the repair the kernel applies.
+
+**A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store
+says, rather than being told what to think.
 
 ## 5. The listener — an address, never a payload
 
