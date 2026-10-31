@@ -19,10 +19,14 @@ vocabulary — and the instance behind it. It never fixes the store's internals,
 `provident-storeroom` instance**, at the `['tabs']` addresses inside `provident-profile.json`, beside the profile rows it
 already hosts — **not** in an instance of its own. D-32 governs two units claiming one path in the map, not two surfaces
 reading one store at different addresses, and the app keeps one store rather than three. The routes below are unchanged;
-only whose instance answers them is. The move is blocked on **`central-data`'s L2**, because sharing that instance moves
-*when* the profile file is created (boot instead of first use) and that is that unit's declared guarantee
-(`strata/pending.md` row 6). Until it lands, this unit's own instance is the temporary second one and
-`provident-tabs-record.json` is the third written name.
+only whose instance answers them is.
+
+**And D-65 fixes the boot order that makes it possible**: the central instance is constructed **at boot, unconditionally**,
+with the **batched `cfg.constraints`** every module declares — this module contributes
+`{ address: ['tabs'], id: 'exactly-one-active', constraint }` as a declaration, not as a constructor call — and then
+**listeners drive the rest of the data flow**. So this module declares its constraint and its change push and constructs
+nothing; the third instance and `provident-tabs-record.json` go, and the written name set returns to two. The lazy
+construction `central-data` documented is superseded by D-65, which that unit's L2 revises.
 
 Its addresses are the L1 §1 family, unchanged by the crossing:
 

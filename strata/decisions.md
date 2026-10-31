@@ -1407,3 +1407,29 @@ addresses in one document, and the app keeps one store rather than three.
   which is that unit's declared guarantee, so the change belongs to **`central-data`'s L2**, not to a unilateral edit here.
 - **Until that lands**, this unit's instance remains the temporary second one and the third written name is the honest
   current reading; `strata/pending.md` carries the move.
+
+---
+
+## D-65 — The store is always needed at boot, and constraints are batched before it is constructed
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the user's instruction, verbatim — "The store will always be needed
+at boot. Boot order — first get the list of constraints and listeners from each module that imposes them, then initialize
+the store with the batched constraints. The listeners will drive the rest of the data flow."
+
+**Decision:** the app's central `provident-storeroom` instance is **constructed at boot, unconditionally**, and it is
+constructed **once, with the constraints every module declares**, in this order:
+
+1. **Collect.** Each module that imposes a constraint or needs a listener exports its **declaration** — a pair
+   `{address, id, constraint}` for a constraint, and the listener's own declaration beside it. No module constructs a store.
+2. **Construct once, batched.** Boot gathers those declarations into one `cfg.constraints` list and one listener list and
+   creates the store with them. `guide §7.2` route one: the batch **arms** the functions at construction, and within one
+   supplied list a repeated `id` is **rejected** — so the identifiers are a namespace the modules share, not private ones.
+3. **Then boot proceeds.** The store stands, the constraint pass is armed, and **listeners drive the rest of the data
+   flow** — a commit moves the record, a listener is told the address, and what reads the record re-reads it.
+
+**What this settles:** D-64's blocker is **gone**. Sharing the central instance no longer moves a lazy construction into
+boot, because boot is where it belongs: `central-data`'s "a profile that is only read creates nothing" is superseded by this
+row — the store is needed at boot and its file is created there, by design.
+
+**What it costs, named:** every module's constraint must be a **declaration** rather than a constructor call, the ids must
+be unique across the whole app, and a module that wants a listener declares it instead of subscribing for itself.
