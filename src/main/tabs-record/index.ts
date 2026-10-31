@@ -80,71 +80,136 @@ const rowOf = (value: Record<string, unknown>): TabsRecordRow | null => {
 }
 
 
-/** THE `exactly-one-active` CONSTRAINT — the module's own function, registered into the engine (D-63; `guide §7.2`
- *  route one, `cfg.constraints`). The engine invokes it with the attempt's own context and reads its answer:
- *  **`true` is the only pass value**, and an object carrying a `message` is a rejection (`guide §7.2`, `§7.5`,
- *  and the `landing-page-must-stand` example at `§7.7`).
+/** **`exactly-one-active` — THE RENDERER'S ALGORITHM, TRANSPORTED** (`D-63`, `D-65`; the source is
+ *  `src/renderer/renderer.ts`'s `TABS_CONSTRAINT`, whose referent discipline this body carries rule for rule).
  *
- *  THE BODY READS THE RECORD, which `guide §7.6` says is the caller's work and not a defect: a constraint that
- *  cares about a location other than the one it judges **reads that location**, and a read inside a body brackets
- *  no commit and is judged by nothing (`§7.6`'s measured clause of 2026-10-28). */
-const exactlyOneActive = (store: Store) => (): true | { message: string; repair: () => void } => {
-  let order: string[] = []
+ *  The engine hands a constraint `{address, op, tier, value}` — the LANDING op and the value that write returned
+ *  (`kernel-attempt.mjs`'s context; `kernel-surface.md §2.3` item 1) — and never the machinery's own pre-write
+ *  capture. So the PRE side is the last record this module observed, kept in `lastView` and refreshed by every read
+ *  and every commit. **That substitution is the one thing the port could not carry, and it is bounded**: the cache is
+ *  this module's own view of a record only this module writes, so it is stale only for a write that bypassed
+ *  `commit` — which the store's own refusal arm answers before the repair is reached.
+ */
+let lastView: { order: string[]; entries: Record<string, TabsRecordRow> } | null = null
+
+/** The record as one view: the order seat and every entry the store still holds under it. */
+const viewOf = (store: Store): { order: string[]; entries: Record<string, TabsRecordRow> } => {
+  const order: string[] = []
+  const entries: Record<string, TabsRecordRow> = {}
   try {
     const read = store.read(TABS_ORDER_ADDRESS, 'file') as unknown
-    if (Array.isArray(read)) order = read.filter((id): id is string => typeof id === 'string')
+    if (Array.isArray(read)) for (const id of read) if (typeof id === 'string') order.push(id)
   } catch {
-    return true // a record with no order seat carries no tabs, so it carries no second active tab
+    return { order, entries }
   }
-  let active = 0
   for (const id of order) {
     try {
       const value = store.read(['tabs', id], 'file') as unknown
       if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        if ((value as { active?: unknown }).active === true) active += 1
+        entries[id] = { ...(value as Record<string, unknown>), id } as unknown as TabsRecordRow
       }
     } catch {
-      // an id whose record the store does not hold cannot be an active tab
+      // an id whose record the store does not hold is not an entry
     }
   }
-  if (active <= 1) return true
+  return { order, entries }
+}
+
+const readActive = (row: TabsRecordRow | undefined): boolean => row !== undefined && row.active === true
+
+/** Write one entry back, inside whatever commit the caller's body is running in. */
+const writeEntry = (store: Store, row: TabsRecordRow): void => {
+  try {
+    store.write(['tabs', row.id], 'file', row)
+  } catch {
+    // a refused write leaves the engine's own refusal to answer
+  }
+}
+
+const writeOrder = (store: Store, order: readonly string[]): void => {
+  try {
+    store.write(TABS_ORDER_ADDRESS, 'file', order)
+  } catch {
+    // ditto
+  }
+}
+
+/** The landing page is the one target the app always has (the renderer's `TABS_LANDING_ID`). */
+const TABS_LANDING_ID = 'tabs-landing-page'
+
+const exactlyOneActive = (store: Store) => (): true | { message: string; repair: () => void } => {
+  const post = viewOf(store)
+  const pre = lastView ?? post
+  lastView = post
+  // (a) THE RECORD-LEVEL REMOVAL: an id the PRE view carried whose entry the post-state no longer holds is one whose
+  //     leaf was detached, while an entry carried with `active: false` was merely DEACTIVATED — the renderer's H-1/H-3
+  //     distinction, and treating deactivation as removal was a measured defect there.
+  const dropped = Object.keys(pre.entries).filter((id) => post.entries[id] === undefined)
+  // (b) THE CALLER'S OWN WRITTEN REFERENCE: the entry whose value moved pre→post while staying readable, or one the
+  //     pre view did not carry at all (a first write mints the key) — the renderer's H-2 derivation, uniform across
+  //     both value arms because it reads the record and never the written value's shape.
+  let written: string | null = null
+  for (const id of Object.keys(post.entries)) {
+    if (post.entries[id] === undefined) continue
+    if (!readActive(post.entries[id])) continue
+    if (pre.entries[id] === undefined || !Object.is(pre.entries[id], post.entries[id])) written = id
+  }
+  const membershipDropped = pre.order.filter((id) => !post.order.includes(id))
+  const removals = [...dropped, ...membershipDropped.filter((id) => !dropped.includes(id))]
+  const survivors = post.order.filter((id) => !dropped.includes(id)).length
+  const actives = Object.keys(post.entries).filter((id) => readActive(post.entries[id])).length
+  if (survivors > 0 && actives === 1) return true
+
   return {
     message: 'the tab record carries more than one active tab',
-    // **THE REPAIR IS A FUNCTION ON THE RETURNED OUTCOME** (`provident-storeroom`'s constraint contract,
-    // `docs/specs/storeroom-constraints/contract.md` §(viii): the outcome object's `message` and `repair` members
-    // are what the kernel reads; `bindings/js/src/entry/kernel-attempt.mjs` reads an own `repair` and, where it is
-    // a function, invokes it as `repair(repairContext)` through `repairInCommit` — so the writes below JOIN the
-    // attempt's own commit rather than opening a second one (upstream `D-45`, `D-46` item 2).
-    //
-    // It keeps the last tab in the order active and deactivates the rest: the same rule the boundary applied
-    // before the arm was documented, now expressed where the engine evaluates it.
+    // THE REPAIR, RULE FOR RULE FROM THE RENDERER'S: drop detached keys; an empty sequence gets the landing page; one
+    // active is already right; zero active takes the referent (the removed entry's pre-position, else the caller's own
+    // written referent's position, else the first survivor); more than one keeps one by the same precedence.
     repair: () => {
-      const rows: TabsRecordRow[] = []
-      for (const id of order) {
-        try {
-          const value = store.read(['tabs', id], 'file') as unknown
-          if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-            const row = { ...(value as Record<string, unknown>), id } as unknown as TabsRecordRow
-            if (row.active === true) rows.push(row)
-          }
-        } catch {
-          // an id whose record the store does not hold cannot be an active tab
-        }
+      const view = viewOf(store)
+      const order = [...view.order]
+      for (const id of removals) {
+        const at = order.indexOf(id)
+        if (at >= 0) order.splice(at, 1)
       }
-      if (rows.length <= 1) return
-      const keep = rows[rows.length - 1]
-      for (const row of rows) {
-        if (row.id === keep.id) continue
-        try {
-          store.write(['tabs', row.id], 'file', { ...row, active: false })
-        } catch {
-          // a write the store refuses leaves the engine's own refusal to answer; this body adds no sentence of its own
+      if (order.length === 0) {
+        order.push(TABS_LANDING_ID)
+        writeOrder(store, order)
+        writeEntry(store, { id: TABS_LANDING_ID, target: TABS_LANDING_ID, active: true, label: TABS_LANDING_ID, lastActiveAt: new Date().toISOString() })
+        return
+      }
+      const activeIds = order.filter((id) => readActive(view.entries[id]))
+      if (activeIds.length === 1) return
+      const removed = removals.find((id) => !order.includes(id) || !readActive(view.entries[id])) ?? null
+      if (activeIds.length === 0) {
+        const candidates = (removed !== null && pre.order.includes(removed) ? pre.order : order).filter((id) => !removals.includes(id))
+        if (candidates.length === 0) return
+        let index = 0
+        if (removed !== null && pre.order.includes(removed)) index = pre.order.indexOf(removed)
+        else if (written !== null && order.includes(written)) index = order.indexOf(written)
+        index = ((index % candidates.length) + candidates.length) % candidates.length
+        const survivor = candidates[index]
+        if (survivor !== undefined) {
+          const row = view.entries[survivor]
+          if (row !== undefined) writeEntry(store, { ...row, active: true })
         }
+        return
+      }
+      let keep: string | null = null
+      if (removed !== null && pre.order.includes(removed)) {
+        const rest = order.filter((id) => id !== removed)
+        if (rest.length > 0) keep = rest[((pre.order.indexOf(removed) % rest.length) + rest.length) % rest.length] ?? null
+      }
+      if (keep === null && written !== null && activeIds.includes(written)) keep = written
+      if (keep === null) keep = activeIds[0] ?? null
+      for (const id of activeIds) {
+        const row = view.entries[id]
+        if (row === undefined || id === keep) continue
+        writeEntry(store, { ...row, active: false })
       }
     },
   }
 }
-
 
 /** **THE THREE FIELD CONSTRAINTS** (D-65's batched declarations; `guide §7.2` route one). Each is a body the module
  *  writes and the engine evaluates, each reads the record (`§7.6`), and each answers `true` or `{ message, repair }`
@@ -343,7 +408,11 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
   return {
     read(): TabsRecordReading | TabsRecordAnswer {
       const { order, landing } = seats()
-      return { status: 'committed', order, landing, rows: rowsNow(order) }
+      const rows = rowsNow(order)
+      // THE OBSERVED VIEW IS REFRESHED HERE: the constraint's PRE side is the last record this module saw, and a read
+      // is the one place a caller's own eyes and this module's memory must agree.
+      lastView = { order: [...order], entries: Object.fromEntries(rows.map((row) => [row.id, row])) }
+      return { status: 'committed', order, landing, rows }
     },
     commit(input: TabsRecordRow): TabsRecordAnswer {
       const value: unknown = input
@@ -356,23 +425,16 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       }
       const { order } = seats()
       const next = order.includes(row.id) ? order : [...order, row.id]
-      // THE CORRECTIVE WRITE (design §4's invariant, enforced here — see this file's header): a commit that
-      // makes a tab active deactivates every other active tab, so the set answers one active at rest.
-      const repaired = row.active && rowsNow(order).some((other) => other.id !== row.id && other.active)
+      // **NO CORRECTIVE WRITE HERE ANY MORE** (`D-65`; the logic moved into the constraint): this commit writes the
+      // caller's own row and the order seat, and the engine's `exactly-one-active` evaluation — whose repair carries the
+      // renderer's referent discipline — makes the state legal inside the same commit. One home for the invariant, and
+      // it is the engine's.
       try {
-        if (repaired) {
-          for (const other of rowsNow(order)) {
-            if (other.id !== row.id && other.active) {
-              const quiet: TabsRecordRow = { ...other, active: false }
-              standing.write(['tabs', other.id], 'file', quiet)
-            }
-          }
-        }
         const answer = standing.write(['tabs', row.id], 'file', row) as unknown
         standing.write(TABS_ORDER_ADDRESS, 'file', next)
         if (row.active) standing.write(TABS_LANDING_ADDRESS, 'file', row.id)
         const cursor = plain(answer) && typeof answer['cursor'] === 'number' ? answer['cursor'] : undefined
-        return { status: 'committed', ...(cursor === undefined ? {} : { cursor }), ...(repaired ? { repaired: true } : {}) }
+        return { status: 'committed', ...(cursor === undefined ? {} : { cursor }) }
       } catch (caught) {
         const reason = caught instanceof Error && typeof (caught as { status?: unknown }).status === 'string'
           ? String((caught as { status?: unknown }).status)
