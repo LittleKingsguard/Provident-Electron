@@ -145,6 +145,99 @@ const exactlyOneActive = (store: Store) => (): true | { message: string; repair:
   }
 }
 
+
+/** **THE THREE FIELD CONSTRAINTS** (D-65's batched declarations; `guide §7.2` route one). Each is a body the module
+ *  writes and the engine evaluates, each reads the record (`§7.6`), and each answers `true` or `{ message, repair }`
+ *  where `repair` is the function the kernel invokes inside the attempt's own commit.
+ *
+ *  They are three pairs rather than one because a violation is a fact about ONE field: a repair that fixed all three
+ *  at once could not tell which of them the caller broke, and the refusal's sentence is how a caller learns it. */
+
+/** Every tab carries a TITLE. The record's own title field is the row's `label`. */
+const TAB_TITLE_REPAIR = 'untitled'
+/** Every tab carries the DATA OBJECT it contains. A tab without one is pointed at the landing page, which is the one
+ *  target the app always has (`TABS_LANDING_ID` on the renderer side). */
+const TAB_CONTENT_FALLBACK = 'tabs-landing-page'
+
+/** The entries of the record as it stands: every id in `order` that the store still holds a plain value under. */
+const entriesOf = (store: Store): { id: string; row: Record<string, unknown> }[] => {
+  let order: string[] = []
+  try {
+    const read = store.read(TABS_ORDER_ADDRESS, 'file') as unknown
+    if (Array.isArray(read)) order = read.filter((id): id is string => typeof id === 'string')
+  } catch {
+    return []
+  }
+  const out: { id: string; row: Record<string, unknown> }[] = []
+  for (const id of order) {
+    try {
+      const value = store.read(['tabs', id], 'file') as unknown
+      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+        out.push({ id, row: value as Record<string, unknown> })
+      }
+    } catch {
+      // an id whose record the store does not hold cannot violate a field constraint
+    }
+  }
+  return out
+}
+
+/** Writes one member back to one tab, inside whatever commit the caller's body is running in. */
+const writeMember = (store: Store, id: string, row: Record<string, unknown>, member: string, value: unknown): void => {
+  try {
+    store.write(['tabs', id], 'file', { ...row, [member]: value })
+  } catch {
+    // a refused write leaves the engine's own refusal to answer; this body adds no sentence of its own
+  }
+}
+
+/** **`tab-has-title`** — a tab with no title, or an empty one, is repaired to `'untitled'`. */
+const tabHasTitle = (store: Store) => (): true | { message: string; repair: () => void } => {
+  const bare = entriesOf(store).filter(({ row }) => {
+    const label = row['label']
+    return typeof label !== 'string' || label.trim().length === 0
+  })
+  if (bare.length === 0) return true
+  return {
+    message: 'a tab carries no title',
+    repair: () => {
+      for (const { id, row } of bare) writeMember(store, id, row, 'label', TAB_TITLE_REPAIR)
+    },
+  }
+}
+
+/** **`tab-has-content`** — a tab that contains no data object is pointed at the landing page. */
+const tabHasContent = (store: Store) => (): true | { message: string; repair: () => void } => {
+  const empty = entriesOf(store).filter(({ row }) => {
+    const target = row['target']
+    return typeof target !== 'string' || target.trim().length === 0
+  })
+  if (empty.length === 0) return true
+  return {
+    message: 'a tab contains no data object',
+    repair: () => {
+      for (const { id, row } of empty) writeMember(store, id, row, 'target', TAB_CONTENT_FALLBACK)
+    },
+  }
+}
+
+/** **`tab-has-lastActiveAt`** — a tab with no activation stamp is stamped with NOW. The stamp is written as an ISO
+ *  string so the record's byte image stays JSON-plain and a reader needs no clock of its own to interpret it. */
+const tabHasLastActiveAt = (store: Store) => (): true | { message: string; repair: () => void } => {
+  const unstamped = entriesOf(store).filter(({ row }) => {
+    const stamp = row['lastActiveAt']
+    return typeof stamp !== 'string' || stamp.trim().length === 0
+  })
+  if (unstamped.length === 0) return true
+  return {
+    message: 'a tab carries no last-active stamp',
+    repair: () => {
+      const now = new Date().toISOString()
+      for (const { id, row } of unstamped) writeMember(store, id, row, 'lastActiveAt', now)
+    },
+  }
+}
+
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
   let store: Store | null = null
   let refusal: TabsRecordAnswer | null = null
@@ -154,6 +247,8 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       listeners: [],
       // THE CONSTRAINT IS ARMED AT CONSTRUCTION (`guide §7.2` route one): the element carries the pair AND the
       // function, and a construction that refused the list would throw before any filesystem act.
+      // THE BATCHED DECLARATIONS (D-65): one list, one construction act, and the ids are unique within it — a
+      // repeated id in one supplied list is REJECTED by the package (`guide §7.2`), so the four are named apart.
       constraints: [
         {
           address: TABS_RECORD_ADDRESS,
@@ -161,6 +256,30 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
           constraint: (context: unknown) => {
             void context
             return exactlyOneActive(store as Store)()
+          },
+        },
+        {
+          address: TABS_RECORD_ADDRESS,
+          id: 'tab-has-title',
+          constraint: (context: unknown) => {
+            void context
+            return tabHasTitle(store as Store)()
+          },
+        },
+        {
+          address: TABS_RECORD_ADDRESS,
+          id: 'tab-has-content',
+          constraint: (context: unknown) => {
+            void context
+            return tabHasContent(store as Store)()
+          },
+        },
+        {
+          address: TABS_RECORD_ADDRESS,
+          id: 'tab-has-lastActiveAt',
+          constraint: (context: unknown) => {
+            void context
+            return tabHasLastActiveAt(store as Store)()
           },
         },
       ],

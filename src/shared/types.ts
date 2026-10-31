@@ -289,10 +289,14 @@ export type RpcMethod =
  *  It is the record's `file.tabs.<id>` leaf: the id is the leaf's NAME and this is its value. */
 export interface TabsRecordRow {
   readonly id: string
+  /** The tab's contained content reference — the data object it holds (constraint `tab-has-content`). */
   readonly target: string
   readonly active: boolean
   readonly error?: string
+  /** The tab's title (constraint `tab-has-title`): a non-empty string, repaired to `'untitled'`. */
   readonly label?: string
+  /** When the tab last became active (constraint `tab-has-lastActiveAt`): an ISO timestamp, repaired to now. */
+  readonly lastActiveAt?: string
 }
 
 export interface RpcRequest {
