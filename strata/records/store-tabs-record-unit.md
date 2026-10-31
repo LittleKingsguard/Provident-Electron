@@ -34,7 +34,6 @@ undocumented, and that was wrong — it *is* documented, in the package's own sp
 `DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs` carries three **at this head**. **D-64 supersedes it**: the
 record moves onto the app's central instance, the third name goes, and the set returns to two — blocked on `central-data`'s
 L2 (`strata/pending.md` row 6) because sharing that instance moves when the profile file is created.
-
 ## 3. Until the finding lands
 **The arm is implemented**: `docs/L3/store-tabs-record/design.md` §4 rev 3 declares the `{ message, repair }` return, the
 boundary's corrective write makes a legal state arrive, and the engine's arm guards every other route (the L4 adjudication:
