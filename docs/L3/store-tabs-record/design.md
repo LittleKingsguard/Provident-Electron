@@ -57,10 +57,16 @@ outcome object carries **`message` and `repair`**, and `repair` is a **function*
 second commit — that repo's `D-45`, `D-46` item 2). The body above therefore returns `{ message, repair }` when the record
 carries more than one active tab, and the repair keeps the last tab in `order` active and deactivates the rest.
 
-**The boundary's corrective write stays, and it is not a second home.** It is what makes a legal state *arrive*, so the
-engine's rejection arm is the guard for any write that does not pass through this module's `commit` — today there are none,
-which is why the arm is a safety net rather than a routine path. A consumer writing to the record by another route is
-refused by the constraint, and the refusal carries the repair the kernel applies.
+**The repair carries the renderer's rules, rule for rule** (transported 2026-10-30): drop the detached keys; give an empty
+sequence the **landing page**; where no tab is active take the referent — the removed entry's **pre-position**, else the
+caller's own **written referent**, else the first survivor; where more than one is active **keep one** by that same
+precedence and deactivate the rest.
+
+**The boundary no longer writes a correction, and that is the point of the transport.** The invariant has **one home** —
+the engine's evaluation — so `commit` writes the caller's row and the order seat and nothing else. The engine hands a
+constraint the **landing op and its value** and never the machinery's pre-write capture, so the PRE side here is **the last
+record this module observed**, refreshed by every read and every commit: bounded because the cache is this module's own view
+of a record only this module writes.
 
 **Four declarations ride the batch, not one — and the reason is the sentence a caller gets.** `exactly-one-active` guards
 the *shape of the set*; three more guard each tab's own **fields**, and each is a separate pair because a violation is a fact
