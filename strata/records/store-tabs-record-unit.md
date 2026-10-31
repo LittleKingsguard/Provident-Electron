@@ -21,13 +21,13 @@ consumer installs.
   package therefore cannot learn the arm's shape from the package, and the docblock's own citation points at
   `kernel-surface.md §2.3` — a file the repo has **archived** (that repo's own `archive/pre-strata-docs-2026-10-24/` copy of `kernel-surface.md`)
   and does not ship.
-- **A second thing the contract states and a consumer should be told.** The two instants read the same shape differently —
-  own-property at the landing instant, prototype chain at registration — so an **inherited** `repair` registers and is then
-  read as carrying none. That is the repo's own measured divergence, not ours.
-- **Proposed fix shape — documentation only, and not pushed (D-5, D-24).** State the `{ message, repair }` shape, including
-  that `repair` is a **function invoked inside the attempt's commit**, in `index.d.ts`'s `Constraint` docblock and in one
-  example beside `landing-page-must-stand` at `guide §7.7`; and re-point the docblock's `kernel-surface.md §2.3` citation at
-  a shipped path. **No export, no symbol, no behaviour change is asked for.**
+- **Also worth telling a consumer:** the two instants read the same shape differently — own-property at landing, prototype
+  chain at registration — so an **inherited** `repair` registers and is then read as carrying none (that repo's own measured
+  divergence, not ours).
+- **Proposed fix shape — documentation only, not pushed (D-5, D-24).** State the `{ message, repair }` shape, and that
+  `repair` is a **function invoked inside the attempt's commit**, in `index.d.ts`'s `Constraint` docblock and in one example
+  beside `landing-page-must-stand` at `guide §7.7`; re-point the docblock's `kernel-surface.md §2.3` citation at a shipped
+  path. **No export, no symbol, no behaviour change is asked for.**
 
 ## 2. The census this unit moved
 
