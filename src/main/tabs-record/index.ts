@@ -27,7 +27,14 @@ export interface TabsRecordAnswer {
   readonly reason?: string
   readonly message?: string
   readonly address?: readonly (string | number)[] | null
-  readonly cursor?: number
+  /** **`repaired: true` WHEN THE RECORD THAT STANDS IS NOT THE RECORD THIS ACT INTENDED** — the engine's repair changed
+   *  it inside the same commit (`design.md` §4, L2 §3). **ABSENT ON A CLEAN ACT AND NEVER `false`**: the member is a
+   *  signal, and a `false` would be a second spelling of its absence. It is DERIVED from the store, never predicted —
+   *  the write record carries no member for the repair that ran in its own commit (`guide §6.4`) — see
+   *  `standsAsIntended`. **THERE IS NO `cursor` MEMBER**, and its absence is the correction of a member that named
+   *  nothing: the store's write receipt is `{op, watched, triggered}` and `grep -n 'cursor'
+   *  node_modules/provident-storeroom/index.d.ts` is empty, so the member was read off a receipt that never carried it
+   *  and could not have been produced by any act (D-70). */
   readonly repaired?: boolean
 }
 
@@ -65,8 +72,42 @@ export const TABS_CONSTRAINT_ID = 'exactly-one-active'
 export const TABS_MUST_STAND_ID = 'tabs-must-stand'
 /** The one shape arm's sentence (L3 signatures §5). */
 export const MALFORMED_ROW_MESSAGE = 'the commit carries no tab id, or no plain record'
-/** The listener's handle: one subscriber per surface, named rather than minted, so a second subscribe overwrites. */
-const HANDLE = 'tabs-record'
+/** **THE CHANGE LISTENER INSTALLS AT A DESCENDANT OF THE RECORD ROOT — `['tabs','order']` — AND IT CANNOT BE `['tabs']`.**
+ *
+ *  The five pairs this module declares all stand at `TABS_RECORD_ADDRESS`, and the package refuses to let a listener and a
+ *  constraint share one address (`guide §6.2`; the cross-kind ruling is the package's own, its `D-25`). **MEASURED
+ *  2026-11-01, the installed `1.6.2`:** `store.listen('tabs-record', [['tabs']])` threw the plain form
+ *  `{status: 'AddressMalformed', message: "… the listener 'tabs-record' cannot be installed at tabs: the constraint
+ *  'tabs-must-stand' stands there, and a listener and a constraint do not share one"}` — so the one address the record
+ *  LIVES at is the one address no listener may be bound to, which is how `subscribe` came to install nothing at all and
+ *  swallow the refusal in its own `catch` (D-70).
+ *
+ *  **AND A DESCENDANT IS LAWFUL BECAUSE A TRIGGER IS DECIDED BY `PREFIX` OR BY `TOUCHED`** (`guide §6.3` item 2, `D-66`):
+ *  the touched set is the paths the act's value CONTAINS, so the one whole value this module writes at `['tabs']` — which
+ *  always carries its `order` seat — touches `['tabs','order']` whatever else it changes. **MEASURED 2026-11-01 over this
+ *  same address:** a `commit` of a NEW tab fired it once, a `commit` that only UPDATED an existing tab's `label` fired it
+ *  once, a `remove` fired it once, the `['tabs']` delete whose `tabs-must-stand` repair re-creates the record inside the
+ *  same commit fired it once, and a `mem` write at `['elsewhere']` fired it ZERO times — one notification per committed
+ *  change, and no notification for a write that touches none of the record. `TABS_ORDER_ADDRESS` is reused rather than
+ *  re-spelled: a second spelling of one address is the rename that half-lands. */
+const LISTENER_ADDRESS: readonly string[] = TABS_ORDER_ADDRESS
+
+/** **ONE HANDLE PER SUBSCRIPTION, MINTED HERE — MEASURED, NOT PREFERRED** (2026-11-01, the installed `1.6.2`). The store's
+ *  registry is the INSTANCE's — two instances spelling one name see none of each other's deliveries — but within one
+ *  instance `register` REPLACES the function held under a handle and `unlisten` withdraws the handle WHOLE
+ *  (`guide §6.2`). **Driven over one store with ONE spelled name:** two subscriptions answered `{first: 0, second: 1}`
+ *  for a commit, and `{first: 0, second: 1}` again after the FIRST withdrawal — the second subscriber silently starved
+ *  the first, and the first's teardown silenced the second. **With a name per subscription the same drive answers
+ *  `{h1: 1, h2: 1}` and then `{h1: 1, h2: 2}`.** A fixed `'tabs-record'` name therefore encoded "one subscriber" as a
+ *  fact about the SPELLING, and a second `subscribe` is not impossible in this app: the surface holds exactly one
+ *  subscription (`attach`/`detach` guard their own), while `subscribe` is a route of this module's own interface that
+ *  nothing refuses a second caller — the crossing battery itself builds a second record over one store. So the name is
+ *  minted, and the one-subscriber arrangement stays where it belongs, in the surface. */
+let issuance = 0
+const handleFor = (): string => {
+  issuance += 1
+  return 'tabs-record:' + String(issuance) + '@' + LISTENER_ADDRESS.join('/')
+}
 
 
 /** **THE PACKAGE'S THROWN FORM IS A PLAIN OBJECT** (`{status, message, log}`, `guide §8` — never an `Error` subclass), so a
@@ -229,6 +270,53 @@ const composeRecord = (
   }
   if (landing !== null) whole['landing'] = landing
   return whole
+}
+
+/** **THE RECORD'S CANONICAL FORM — ONE SPELLING, SO THE COMPARISON IS ABOUT THE RECORD AND NOT ABOUT HOW IT WAS BUILT.**
+ *
+ *  Two records that STAND the same are routinely spelled differently, and either difference would make a naive
+ *  `JSON.stringify` on the two objects lie about whether a repair ran:
+ *
+ *  1. **MEMBER ORDER IS NOT PART OF THE RECORD.** The intent is composed here (`order`, then one member per seated id,
+ *     then `landing`; each row `id`, `target`, `active`, then its optional members) while the record a READ returns is
+ *     rebuilt by the store from its own byte image, members in the image's order. `JSON.stringify` is order-sensitive, so
+ *     a raw comparison reports a difference on every clean commit — a FALSE POSITIVE that would make `repaired` say
+ *     nothing.
+ *  2. **ABSENCE HAS ONE SPELLING.** `composeRecord` omits `landing` where a removal takes it away, and a row is admitted
+ *     field by field, so a record carrying no `error` and one carrying `error: null` name the same absence; both project
+ *     to the JSON literal `null` here, and a present empty string stays distinct from it.
+ *
+ *  So each record is projected onto exactly the shape L1 §1 declares — the `order` array, the `landing` string, and each
+ *  seated row in a FIXED field order — and the two projections are compared as text. Nothing outside that family can
+ *  reach this function: `read` and `commit` both admit the record field by field (`rowOf`). */
+const canonicalRecord = (record: Record<string, unknown>): string => {
+  const order: string[] = []
+  if (Array.isArray(record['order'])) for (const id of record['order']) if (typeof id === 'string') order.push(id)
+  const text = (value: unknown): string | null => (typeof value === 'string' ? value : null)
+  const rows = order.map((id) => {
+    const held = record[id]
+    const row: Record<string, unknown> = plain(held) ? held : {}
+    return [id, text(row['id']), text(row['target']), row['active'] === true, text(row['label']), text(row['error']), text(row['lastActiveAt'])]
+  })
+  return JSON.stringify({ order, landing: text(record['landing']), rows })
+}
+
+/** **WHETHER A REPAIR RAN IS A FACT OF THE STORE, SO IT IS READ BACK AND NOT PREDICTED.** The engine's repairs write
+ *  inside the commit this module opened (`design.md` §4), and the write's own record carries no member saying one did
+ *  (`guide §6.4`): so the ONE honest derivation is to hold the record this act INTENDED, write it, and compare it with the
+ *  record that STANDS afterwards. **A difference means a repair changed it** — the answer then carries `repaired: true`
+ *  and the renderer re-reads, rendering what the store says rather than what this module thought (L2 §3).
+ *
+ *  **An unreadable standing record answers DIFFERING, not equal**: the claim `repaired` would suppress is "the record that
+ *  stands is the one I intended", and a read that refuses has established no such thing. That is the one arm this
+ *  derivation cannot see, and it errs toward the renderer re-reading, which is what the member asks for anyway. */
+const standsAsIntended = (store: Store, intended: Record<string, unknown>): boolean => {
+  try {
+    const held = store.read(TABS_RECORD_ADDRESS, 'file') as unknown
+    return plain(held) && canonicalRecord(held) === canonicalRecord(intended)
+  } catch {
+    return false
+  }
 }
 
 /** **A REPAIR'S ANSWER, IN THE ONLY SHAPE THE KERNEL CREDITS** (`landedOp`: a non-empty `opId` absent from the attempt's
@@ -602,18 +690,22 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       const entries: Record<string, TabsRecordRow> = Object.fromEntries(rowsNow(next).map((seated) => [seated.id, seated]))
       entries[row.id] = row
       const active = [...next].reverse().find((id) => entries[id]?.active === true) ?? null
+      // **THE RECORD THIS ACT INTENDS, COMPOSED ONCE AND WRITTEN ONCE.** What the engine's repairs then do to it is
+      // measured, not guessed: the record that stands is read back and compared with this intent (`standsAsIntended`),
+      // which is how a commit that triggered a repair came to answer `{status: 'committed'}` and nothing else — the
+      // member `docs/L3/store-tabs-record/design.md` §4 declares and no code produced (D-70).
+      const intent = composeRecord(next, entries, active ?? landingOf(standing))
       try {
-        const answer = standing.write(
-          TABS_RECORD_ADDRESS,
-          'file',
-          composeRecord(next, entries, active ?? landingOf(standing)),
-        ) as unknown
+        standing.write(TABS_RECORD_ADDRESS, 'file', intent)
         // THE OBSERVED VIEW MOVES WITH THE WRITE: a commit is a write this module made and saw, so the constraint's PRE
         // side must be the record as it stands afterwards — otherwise the next evaluation compares against a record two
         // acts old and reads the caller's own change as a removal.
         lastView = viewOf(standing)
-        const cursor = plain(answer) && typeof answer['cursor'] === 'number' ? answer['cursor'] : undefined
-        return { status: 'committed', ...(cursor === undefined ? {} : { cursor }) }
+        // THE MEMBER IS OMITTED ON A CLEAN ACT AND NEVER ANSWERED `false`: a repair that ran is the only thing that makes
+        // the standing record differ from the intent, so its presence IS the signal (L2 §3).
+        return standsAsIntended(standing, intent)
+          ? { status: 'committed' }
+          : { status: 'committed', repaired: true }
       } catch (caught) {
         const refused = refusalOfThrown(caught)
         // THE REFUSAL LEAVES THE OBSERVED VIEW WHERE THE STORE LEFT THE RECORD: a refused attempt restores its own state
@@ -637,15 +729,16 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       const next = order.filter((other) => other !== id)
       const entries: Record<string, TabsRecordRow> = Object.fromEntries(rowsNow(next).map((seated) => [seated.id, seated]))
       const landing = landingOf(standing)
+      // **ONE WHOLE RECORD WITHOUT THE TAB, AND THE SAME DERIVATION AS `commit`'S**: `landing` is omitted where the removal
+      // takes the seat away with the tab, so a removal that needs no repair leaves exactly the intent (`composeRecord`
+      // omits the member), and one whose repair seated a survivor differs from it (D-70).
+      const intent = composeRecord(next, entries, landing === id ? null : landing)
       try {
-        const answer = standing.write(
-          TABS_RECORD_ADDRESS,
-          'file',
-          composeRecord(next, entries, landing === id ? null : landing),
-        ) as unknown
+        standing.write(TABS_RECORD_ADDRESS, 'file', intent)
         lastView = viewOf(standing)
-        const cursor = plain(answer) && typeof answer['cursor'] === 'number' ? answer['cursor'] : undefined
-        return { status: 'committed', ...(cursor === undefined ? {} : { cursor }) }
+        return standsAsIntended(standing, intent)
+          ? { status: 'committed' }
+          : { status: 'committed', repaired: true }
       } catch (caught) {
         const refused = refusalOfThrown(caught)
         lastView = viewOf(standing)
@@ -653,15 +746,51 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       }
     },
     subscribe(handler: () => void): () => void {
-      let handle: unknown = null
+      // **THE REGISTRATION IS TWO ACTS, NOT ONE** (`guide §6.2`, `§6.3`): `listen(handle, addresses)` installs the ENTRY
+      // and `register(handle, listener)` installs the FUNCTION under it — the store answers the triggered set and invokes
+      // nothing it was not registered with, and an unregistered handle fires nothing, silently. **The body this replaces
+      // called `listen` alone and dropped `handler` on the floor, at an address the package refuses anyway: the push
+      // existed in name only** (D-70).
+      //
+      // **THE BODY IS A NOTIFICATION AND NOTHING ELSE.** It calls the caller's `handler` and writes nothing at all: a
+      // listener's write opens its own commit (`guide §6.5` item 1), so a delivery path that wrote would be a second
+      // writer inside the one that fired it, with no loop guard to bound it (`§7.9` item 2). The renderer RE-READS.
+      //
+      // **THE CALLER'S THROW IS CONTAINED HERE, AND THAT IS MEASURED RATHER THAN DEFENSIVE** (2026-11-01, the installed
+      // `1.6.2`): a listener body's throw is neither caught nor reported by the store and crosses every hop back into the
+      // write that fired it (`guide §6.5a`), so an uncontained subscriber made a LANDED commit — the tab seated, the
+      // repair filed — answer `{status: 'refused', reason: 'refused', message: 'boom-in-subscriber'}`. The act's answer is
+      // the act's; the subscriber's failure is the subscriber's.
+      const body = (): void => {
+        try {
+          handler()
+        } catch {
+          // the record moved and the delivery happened; the subscriber's own failure stops at the subscriber
+        }
+      }
+      const handle = handleFor()
       try {
-        handle = standing.listen(HANDLE, [TABS_RECORD_ADDRESS])
+        standing.listen(handle, [LISTENER_ADDRESS])
+        standing.register(handle, body)
       } catch {
+        // **A REGISTRATION THAT COULD NOT STAND LEAVES NOTHING BEHIND**: an entry `listen` wrote that `register` could not
+        // fill would fire nothing and would hold this subscription's name against a later one, so it is withdrawn here.
+        try {
+          standing.unlisten(handle)
+        } catch {
+          // a withdrawal answers nothing, not even a failure
+        }
         return () => undefined
       }
+      let live = true
       return () => {
+        // **THE WITHDRAWAL IS THIS SUBSCRIPTION'S OWN ANSWER** and it is idempotent: one `unlisten` per handle, a plain
+        // no-op success over a handle already withdrawn, and never a throw to the caller (`guide §6.2`). The flag keeps
+        // the second call from withdrawing whatever a later minted name might own.
+        if (!live) return
+        live = false
         try {
-          if (handle !== null) standing.unlisten(handle as never)
+          standing.unlisten(handle)
         } catch {
           // a withdrawal the store refuses leaves the listener to the instance's lifetime, not a throw to the caller
         }

@@ -46,9 +46,19 @@ routes, no fourth:
 | Route | Argument | Answer |
 |---|---|---|
 | `tabs.read()` | none | `{ status: 'committed'; rows: readonly TabRow[]; order: readonly string[]; landing: string }` or the refusal arm |
-| `tabs.commit(row: TabRow)` | one tab's whole record, by name | `{ status: 'committed'; cursor: number }` or the refusal arm |
-| `tabs.remove(id: string)` | one tab's id | `{ status: 'committed'; cursor }` or the refusal arm |
+| `tabs.commit(row: TabRow)` | one tab's whole record, by name | `{ status: 'committed' }`, carrying **`repaired: true`** where a repair changed the record, or the refusal arm |
+| `tabs.remove(id: string)` | one tab's id | `{ status: 'committed' }`, carrying **`repaired: true`** on the same condition, or the refusal arm |
 | `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else |
+
+**THE COMMITTED ARM OF `commit` AND `remove` IS `{ status: 'committed' }` AND NOTHING ELSE, EXCEPT `repaired`.** **Rev 2
+(2026-11-01) deletes the `cursor` member these two rows declared**: the store's write receipt is `{op, watched, triggered}`
+and its declaration carries no `cursor` at all (`grep -n 'cursor' node_modules/provident-storeroom/index.d.ts` is empty), so
+the member was read off a receipt that never held it and no act could have produced it — a name with nothing behind it,
+removed as a contract deletion (D-70). **`repaired` is the member that was declared and never produced, and it is present
+EXACTLY when the record that STANDS is not the record the act intended**: the engine's repair ran in the act's own commit,
+the module derived it by comparing the written intent with the standing record, and the renderer therefore re-reads and
+renders what the store says (§3). **It is ABSENT on a clean act and never answered `false`** — the member is a signal, and
+`false` would be a second spelling of its absence.
 
 **`tabs.read` takes no argument** because the record is one document: a whole-record read is the only shape the instance
 offers that cannot half-succeed. **`tabs.commit` names its tab** and never a path — the renderer must not compose an
@@ -73,6 +83,11 @@ refusing: the tab was already gone and the record already said so.
 
 **`tabs.onChanged` is the event generator**: the instance's own listener delivers the triggered address, and the renderer
 re-reads rather than being handed the value — the delivery argument is an address, not a payload (`guide §6.4`).
+**The listener is REGISTERED, not merely listened for** (`guide §6.2`: `listen(handle, addresses)` installs the entry and
+`register(handle, listener)` installs the function under it — the store invokes nothing it was not registered with), and
+**it cannot install at `['tabs']`**: all five of the record's pairs stand there and a listener and a constraint do not
+share one address, so it installs at the record's `order` descendant, which the one whole value every act writes always
+touches (design §5). A `subscribe` that installed one act and not two was a push that existed in name only (D-70).
 
 ## 3. The refusal vocabulary — closed, and the store's own words
 
@@ -83,10 +98,15 @@ the module mints no status of its own beyond the one shape arm below:
 |---|---|---|
 | shape | `'malformed-row'` | the commit's argument is not a plain object, or its `id` is not a non-empty string — refused **before** any store verb |
 | store | the instance's status verbatim | any refusal the instance answers: the write did not land, the construction could not stand, the address is not the record's |
-| constraint | `'constraint-repaired'` **on a committed answer**, not as a refusal | the instance repaired the record to one active tab; the answer carries the repair so the renderer can re-read |
+
+**There is no third token, and there was no third arm.** This section carried **`'constraint-repaired'`** as a reason minted
+*on a committed answer*; **nothing in `src/main/` ever produced it** (`grep -rn 'constraint-repaired' src/` is empty) and it is
+removed here: a repair is not a refusal vocabulary's business, it is the `repaired` member of a `committed` answer (§2).
 
 **A repaired commit is `committed`, never `refused`** — the repair is the engine working (L1 §2), and a renderer that treats
-it as a failure would refuse a write the store accepted.
+it as a failure would refuse a write the store accepted. **And the act does not GUESS that a repair ran**: the answer
+carries `repaired: true` only where the record that stands is not the record the act intended, derived by the module and
+never read from the store, whose write record has no member for a repair inside its own commit (`guide §6.4`).
 
 **The five constraint sentences a caller can receive** (each repaired, never left standing): *the tab record does not
 stand* · *the tab record carries more than one active tab* · *a tab carries no title* · *a tab contains no data object* ·

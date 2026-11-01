@@ -5,7 +5,7 @@
 // existence pair that mints the root; `exactly-one-active`; and the three field invariants), each answering `true` or
 // `{ message, repair }`, where the repair leaves ONE corrected record and RETURNS the op its write landed
 // (`{ ok: true, op }`, the shape the kernel credits through `landedOp`), and `docs/L2/store-tabs-record/interface.md` §2 —
-// four routes.
+// four routes; and design §5 — the change push, which is a listener REGISTERED under a handle (`subscribe`).
 //
 // **THE FOUR MACHINERY RULES THIS FILE PINS, EACH MEASURED AND NOT ASSUMED (the first three 2026-11-01; the fourth on the
 // package's own clause stamped 2026-11-02, measured here 2026-11-01):**
@@ -17,6 +17,11 @@
 //  4. a pair whose own key is ABSENT is APPLIED where its parent resolves, and its repair may create the key — the route
 //     it takes there carries the store's THREE positions and no fourth (`guide §7.2`'s dated clause, items (3) and (4);
 //     D-69). That is what makes `['tabs']` stand BEFORE the first commit rather than as a side effect of it.
+//
+// **AND TWO FACTS ABOUT THE DELIVERY, MEASURED 2026-11-01 AND PINNED HERE (D-70):** a listener cannot be installed where a
+// constraint's `id` stands — all five of this module's pairs stand at `['tabs']`, so the push installs at its `order`
+// descendant and a whole-record write touches it — and `repaired` is DERIVED by comparing the written intent with the
+// record that stands, because the store's write record carries no member for the repair that ran in its own commit.
 //
 // This authority is this repo's (`docs/L3`, `docs/L2`) and the package's own guide, never the package's internals.
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -233,5 +238,86 @@ describe('store-tabs-record · the crossing', () => {
     if (!('rows' in answer)) throw new Error('a reopened record must answer a reading')
     expect([...answer.order]).toEqual(['tabs-landing-page', 'tab-1'])
     expect(answer.rows.find((each) => each.id === 'tab-1')?.label).toBe('kept')
+  })
+
+  // ═══════════════ THE CHANGE DELIVERY (L2 §2's fourth route, design §5; D-70) — the push that shipped as a name ═══════════════
+
+  it('THE DELIVERY HAPPENS AND THE WITHDRAWAL IS ITS ANSWER: `subscribe` then a `commit` fires the handler ONCE, a `remove` fires it AGAIN, and the unsubscribe STOPS it — a counter, because a listener the store never registered fires nothing, silently', () => {
+    // THE COUNT IS THE WHOLE MEASUREMENT: the module's `subscribe` used to install at `['tabs']`, where the package refuses
+    // a listener beside a constraint, so the counter read `0` while every one of these acts answered `committed` — and the
+    // first `commit` below is the one that ALSO runs `exactly-one-active`'s repair, whose write joins the same commit and
+    // is therefore ONE delivery and not two.
+    let delivered = 0
+    const off = record.subscribe(() => {
+      delivered += 1
+    })
+    expect(record.commit(row('tab-1')).status, 'the commit that fires the delivery commits').toBe('committed')
+    expect(delivered, 'a commit of a NEW tab delivers exactly one notification').toBe(1)
+    expect(record.remove('tab-1').status, 'the removal that fires it again commits').toBe('committed')
+    expect(delivered, 'a `remove` delivers exactly one more — the removal is a committed change of the record like any other').toBe(2)
+    off()
+    expect(record.commit(row('tab-2')).status, 'a commit after the withdrawal still commits').toBe('committed')
+    expect(delivered, 'the withdrawal is the answer: no delivery follows it').toBe(2)
+  })
+
+  it('THE CONTROL FOR THAT ROW: a store write that touches NO PART of the record does not notify, and the SAME subscription then delivers on a commit — so the zero above is not a dead subscription', () => {
+    // WITHOUT THIS ROW the delivery row could pass for the wrong reason: a listener bound at an address the write touches
+    // anyway would deliver on the wrong act, and a subscription that had silently died would deliver on nothing.
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    let delivered = 0
+    record.subscribe(() => {
+      delivered += 1
+    })
+    // A `mem` write at an address the record does not name: the store answers its own receipt and fires no trigger.
+    store.write(['elsewhere'] as never, 'mem', { note: 'not the record' })
+    expect(delivered, 'a write outside the record does not notify: the listener is bound to the record, not to the store').toBe(0)
+    // AND THE POSITIVE HALF ON THE SAME SUBSCRIPTION, so a subscription that never registered cannot pass this row.
+    expect(record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' })).status).toBe('committed')
+    expect(delivered, 'and the very same subscription delivers when the record does move').toBe(1)
+  })
+
+  // ═══════════════ `repaired` — DERIVED FROM THE STANDING RECORD, NOT PREDICTED (L2 §3, design §4; D-70) ═══════════════
+
+  it('`repaired: true` — a commit that makes TWO tabs active is answered `committed` WITH `repaired`, and the record shows what the repair did: the second active tab deactivated and the active seat moved to the caller\'s own referent', () => {
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
+    const answer = record.commit(row('tab-2', { label: 'two', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
+    expect(answer.status, 'a repaired commit is `committed`, never `refused`').toBe('committed')
+    // ASSERTED BY MEMBERSHIP AND VALUE: the member is a signal, and an answer that merely carried `repaired: false` would
+    // pass a `toBe(false)`-shaped row while saying nothing.
+    expect('repaired' in answer, 'the answer CARRIES the member').toBe(true)
+    expect(answer.repaired, 'and it says a repair ran').toBe(true)
+    const { rows, landing } = reading()
+    expect(rows.find((each) => each.id === 'tab-1')?.active, 'the record shows the repair: the first active tab is deactivated').toBe(false)
+    expect(actives(), 'and exactly one tab is active after it').toEqual(['tab-2'])
+    expect(landing, 'and the landing seat moved with the surviving active tab').toBe('tab-2')
+  })
+
+  it('AND ON THE SAME BATTERY, A CLEAN COMMIT CARRIES NO `repaired` AT ALL: `commit` answers `{ status: \'committed\' }` and nothing else — the member is OMITTED, never answered `false`', () => {
+    // THE ROW THAT STOPS THE ONE ABOVE FROM BEING VACUOUS. Nothing repairs the second act: one tab is active, and every
+    // row carries all three fields, so the record that stands IS the record the act intended (`standsAsIntended`). A
+    // derivation that answered `repaired` unconditionally — or that compared the two records by raw `JSON.stringify` and
+    // so reported a difference in MEMBER ORDER — fails here.
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
+    const answer = record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
+    expect(answer.status).toBe('committed')
+    expect(Object.keys(answer), 'the clean arm is exactly `status`').toEqual(['status'])
+    expect('repaired' in answer, 'and the member is absent, not `false`').toBe(false)
+    expect(actives(), 'the control half: the clean act left the record as it intended').toEqual(['tab-1'])
+  })
+
+  it('AND THE SAME DERIVATION ON `remove`: a removal whose repair seats a survivor carries `repaired`, while a removal nothing repairs is `{ status: \'committed\' }` alone', () => {
+    // BOTH HALVES IN ONE ROW because it is ONE derivation applied at the module's other write site: removing an INACTIVE
+    // tab leaves exactly the intent (`landing` untouched, one active already), while removing the ACTIVE tab leaves zero
+    // active and the repair's survivor re-seats the `landing` member this act omitted.
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
+    record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
+    const clean = record.remove('tab-2')
+    expect(clean.status).toBe('committed')
+    expect('repaired' in clean, 'removing a tab nothing has to repair is a clean act').toBe(false)
+    const repaired = record.remove('tab-1')
+    expect(repaired.status, 'the removal of the ACTIVE tab is still `committed`').toBe('committed')
+    expect('repaired' in repaired && repaired.repaired === true, 'and it names the repair that seated the survivor').toBe(true)
+    expect(actives(), 'the record shows it: the survivor is active').toEqual(['tabs-landing-page'])
   })
 })

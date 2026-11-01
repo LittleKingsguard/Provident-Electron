@@ -31,7 +31,6 @@ export interface TabsRecordAnswer {
   readonly reason?: string
   readonly message?: string
   readonly address?: readonly (string | number)[] | null
-  readonly cursor?: number
   readonly repaired?: boolean
 }
 

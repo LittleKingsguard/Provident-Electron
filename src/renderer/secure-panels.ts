@@ -78,7 +78,6 @@ declare global {
           reason?: string
           message?: string
           address?: readonly (string | number)[] | null
-          cursor?: number
           repaired?: boolean
         }>
         remove(id: string): Promise<{
@@ -86,7 +85,7 @@ declare global {
           reason?: string
           message?: string
           address?: readonly (string | number)[] | null
-          cursor?: number
+          repaired?: boolean
         }>
         onChanged(handler: () => void): () => void
       },

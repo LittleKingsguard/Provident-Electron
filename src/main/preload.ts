@@ -76,8 +76,8 @@ export interface ProvidentBridge {
   // the `store`/`security` pair already follows (L3 signatures §4).
   tabs: {
     read(): Promise<{ status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }>
-    commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number; repaired?: boolean }>
-    remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number }>
+    commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }>
+    remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }>
     onChanged(handler: () => void): () => void
   },
   store: {
@@ -152,10 +152,10 @@ const bridge: ProvidentBridge = {
     read(): Promise<{ status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }> {
       return ipcRenderer.invoke(IPC_TABS_READ)
     },
-    commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number; repaired?: boolean }> {
+    commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }> {
       return ipcRenderer.invoke(IPC_TABS_COMMIT, row)
     },
-    remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number }> {
+    remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }> {
       return ipcRenderer.invoke(IPC_TABS_REMOVE, id)
     },
     onChanged(handler: () => void): () => void {

@@ -1560,3 +1560,45 @@ invariant of the instance and no longer a side effect of the first commit.** The
   **The record is the instance's, not the file's, at that instant**: the profile file stays at 0 bytes until the first
   write's terminal act materialises it, so a fresh profile's written-name census is UNMOVED and `DECLARED_WRITTEN_JSON`
   still holds at its two names.
+
+---
+
+## D-70 — The change push is REGISTERED, `repaired` is DERIVED, and `cursor` is deleted as a member that named nothing
+
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's instruction, verbatim — *"every committed change to the
+record delivers exactly one notification"*, and *"`cursor` … is a member that names nothing in the package that would ever
+supply it"* — plus the measurements below, driven over the installed `provident-storeroom@1.6.2`.
+
+**Decision:** three corrections to the crossing, each measured before it was written, and the third a contract deletion.
+
+- **A LISTENER CANNOT BE INSTALLED WHERE A CONSTRAINT'S `id` STANDS**, so the record's change delivery installs at a
+  DESCENDANT address and REGISTERS a body. `subscribe` asked for `['tabs']` — where all five of this module's pairs stand —
+  and the package refused it `AddressMalformed`: *"… the constraint 'tabs-must-stand' stands there, and a listener and a
+  constraint do not share one"*. It installs at `['tabs','order']`, lawful because a trigger is decided by `PREFIX` **or**
+  by `TOUCHED` and the one whole value every act writes carries its `order` seat; and the registration is the package's TWO
+  acts — `listen(handle, addresses)`, then `register(handle, listener)`.
+- **`subscribe` HAD INSTALLED NOTHING AND INVOKED NOTHING, so the push existed in name only.** It passed `handler` to
+  nothing — the parameter's only two occurrences in the file were its declaration and itself — and the `catch` around the
+  refused `listen` answered a withdrawal that withdrew nothing, so every `commit` and `remove` answered `committed` while no
+  subscriber heard one. The battery's counter reads `0` on the revert and `1` per committed change now.
+- **`repaired` IS DERIVED FROM THE STORE AND NEVER PREDICTED, AND `cursor` IS DELETED.** A repair-running commit answered
+  `{"status":"committed"}` — keys `["status"]` — though the interface declares `repaired` and `design.md` §4 promises it: the
+  write's own record carries no member for a repair inside its own commit. So the act holds the record it INTENDED, writes
+  it, and compares it with the record that STANDS — CANONICALLY, member order and absence normalised, because a raw
+  `JSON.stringify` differs on every clean act — answering `repaired: true` only where they differ and OMITTING the member on
+  a clean act. `remove` derives it the same way. **`cursor` was read off the store's write receipt, whose shape is
+  `{op, watched, triggered}`; the package declares no such member, so the name had no source at all.**
+- **`cursor`'s removal is a CONTRACT DELETION, not a design change**: no route, address or census moves, and the member is
+  gone from `TabsRecordAnswer`, from L2 §2's two answer rows, and from the bridge's `commit`/`remove` declarations in
+  lockstep (`preload.ts`, `secure-panels.ts`). `'constraint-repaired'` — a reason token no code produced — goes with it.
+- **Two more measured facts ride in the same fix.** The handle is MINTED PER SUBSCRIPTION: one spelled name made `register`
+  replace the earlier function and `unlisten` withdraw it WHOLE (measured `{first: 0, second: 1}`, unchanged after the first
+  withdrawal). And the body CONTAINS the caller's throw: a listener's throw crosses into the write that fired it, and an
+  uncontained subscriber turned a landed commit into `{"status":"refused","message":"boom-in-subscriber"}`. The body WRITES
+  NOTHING — the renderer re-reads.
+- **Measured, 2026-11-01, over a scratch `filePath` with the batch supplied:** a listener at `['tabs','order']` fires once
+  for a commit of a NEW tab, once for a commit that only UPDATES a label, once for a `remove`, and once for the root
+  `delete` whose `tabs-must-stand` repair re-creates the record inside that same commit; it fires ZERO times for a `mem`
+  write at `['elsewhere']`. **The construction instant is the one arm no listener can hear** — the instance that holds the
+  registry is the one being constructed — measured with a handle adopted by `cfg.listeners`, which delivered nothing there
+  and delivered on the next commit.

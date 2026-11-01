@@ -1,7 +1,7 @@
 # L3 — `store-tabs-record`: the module design
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — the crossing's structure, and the
-  record root as an enforced invariant.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 7 — the crossing's structure, the record
+  root as an enforced invariant, and the change push registered at a descendant.
 - **Inputs:** `docs/L2/store-tabs-record/interface.md` rev 1 §1–§6; `docs/L1/store-tabs-record.md` rev 1 §1–§3.
 - **Ceiling:** 150 lines, class max (D-1) · **Status:** structure and guardrails; every declared name and its exact text
   is in `signatures.md`, which is what L4 transcribes (D-45).
@@ -126,17 +126,19 @@ an empty record with no `landing` seat (D-69). `tabs-must-stand` makes existence
   `delete(['tabs'])` is answered as the store's own success while the existence pair's repair re-creates the record inside
   the same commit, so the address the record is read at is an invariant at both ends.
 
-**A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store
-says, rather than being told what to think.
+**A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store says, rather than being told what to think. **Rev 7 DERIVES that member, and until it no code produced it at all.** The write's record carries no member for a
+repair inside its own commit (`guide §6.4`), so the act compares the record it INTENDED with the record that STANDS — CANONICALLY, member order and absence normalised, or a clean act would report a false difference — answering `repaired: true` only where they differ and omitting
+the member on a clean act. **No `cursor` member survives**: it named nothing the package supplies (D-70).
 
 ## 5. The listener — an address, never a payload
 
-`onChanged` subscribes once and re-delivers every committed change of the `tabs` root. The delivery names the **triggered
-address** and never the value (`guide §6.4`): a renderer that needs the value re-reads, and a renderer that needs to know
-*what moved* diffs the record it already holds.
+**`onChanged` takes ONE subscription and delivers exactly ONE notification per committed change of the record** — a `commit`, a `remove`, and a repair's own write inside that same commit, which JOINs it (D-67) rather than opening a second one. The delivery names the **triggered
+address** and never the value (`guide §6.4`): a renderer that needs the value re-reads, and one that needs to know *what moved* diffs the record it already holds.
 
-**The withdrawal is its own answer** and is exercised: a boot that subscribes and a teardown that withdraws is the pair,
-and a listener that outlives its window is a leak the renderer cannot see.
+**The installation is TWO acts at a DESCENDANT address, and both are the package's** (`guide §6.2`). `listen(handle, addresses)` installs the entry and `register(handle, listener)` the FUNCTION under it — an unregistered handle fires nothing, silently. **The address cannot be `['tabs']`**: all five
+pairs stand there and *"a listener and a constraint do not share one"*, so a listener at the root is refused `AddressMalformed`; it installs at `['tabs','order']`, lawful because a trigger is decided by `PREFIX` or `TOUCHED` (`§6.3` item 2, D-66) and every act's one whole value carries its `order`
+seat. The handle is MINTED PER SUBSCRIPTION (`register` replaces a handle's function, `unlisten` withdraws it WHOLE, so a fixed name starves a second subscriber), the body WRITES NOTHING (a listener's write opens its own commit) and CONTAINS the caller's throw (it crosses into the firing write,
+`§6.5a`). **The withdrawal is its own answer**, exercised by a counter in `crossing.test.ts`'s delivery row, its control, and `surface.test.ts`'s `attach`/`detach` row — a listener that outlives its window is a leak the renderer cannot see.
 
 ## 6. What this module may not do
 
