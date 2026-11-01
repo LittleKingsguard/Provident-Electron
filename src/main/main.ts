@@ -24,6 +24,9 @@ import {createDataSurface} from './data/index.js'
 // of this file moves: it constructs no store, spells no `provident-*.json` literal for one, and reaches the
 // record only through the surface's own read/commit (the arrangement the operator's store already uses).
 import {createTabsSurface} from './tabs-surface/index.js'
+import {tabsConstraintDeclarations} from './tabs-record/index.js'
+import {createProfileStore} from './storeroom.js'
+import {PROFILE_FILE_NAME} from './data/store.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
@@ -119,10 +122,20 @@ async function main(): Promise<void> {
   // surface's own `read()`. The holder's ONE writer is that module (ASM-4, settled at L1 rev 3);
   // `mcp.applyExclusion` now only ENFORCES.
   const settingsSurface = createSettingsSurface({ userDataDir: app.getPath('userData') })
-  // THE TAB RECORD'S ONE REFERENCE (D-63): constructed here, held by its surface module, and named by no
-  // MCP-reachable file — the crossing is the bridge's and only the bridge's (L2 §2, L3 §6).
+  // **THE BOOT ORDER (D-65), IN THREE ACTS.** (1) COLLECT: every module that imposes a constraint declares it — the tab
+  // record's four are gathered here, and a module that wanted a listener would declare one beside them. (2) CONSTRUCT:
+  // the app's ONE store, built here with the BATCHED constraints, so the pass is armed before anything can write.
+  // (3) LISTENERS DRIVE: the surfaces read and write that store, and a commit's listeners carry the flow from there.
+  const storeHolder: { current: ReturnType<typeof createProfileStore> | null } = { current: null }
+  const centralStore = createProfileStore({
+    filePath: join(app.getPath('userData'), PROFILE_FILE_NAME),
+    constraints: tabsConstraintDeclarations(() => storeHolder.current) as never,
+  })
+  storeHolder.current = centralStore
+  // THE TAB RECORD'S SURFACE (D-63): the one reference the crossing holds, named by no MCP-reachable file — the crossing
+  // is the bridge's and only the bridge's (L2 §2, L3 §6). It constructs nothing: the store above is its store.
   const tabsSurface = createTabsSurface({
-    userDataDir: app.getPath('userData'),
+    store: centralStore,
     // THE CHANGE PUSH (L2 §2): the record moved, and every window is told so it can re-read. The delivery
     // carries no value — the address is the L2's contract, and a payload here would be a second copy.
     onChanged: () => {

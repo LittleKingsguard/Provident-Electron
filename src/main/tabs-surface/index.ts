@@ -19,8 +19,8 @@ export interface TabsSurface {
 }
 
 export interface TabsSurfaceOptions {
-  readonly userDataDir: string
-  readonly journalLength?: number
+  /** THE APP'S ONE STORE (D-64, D-65): this surface neither constructs nor owns one. */
+  readonly store: import('../tabs-record/index.js').TabsRecordStore
   /** The change push: called once per committed change of the record's root, and never handed the value —
    *  the delivery names that the record moved, and a renderer that needs the value re-reads (L2 §2). */
   readonly onChanged?: () => void
@@ -31,10 +31,7 @@ const plain = (value: unknown): value is Record<string, unknown> =>
 
 export function createTabsSurface(options: TabsSurfaceOptions): TabsSurface {
   // THE INSTANCE IS CONSTRUCTED HERE, ONCE, AND HELD HERE: one reference, one file, one constraint (design §6).
-  const record: TabsRecord = createTabsRecord({
-    userDataDir: options.userDataDir,
-    ...(options.journalLength === undefined ? {} : { journalLength: options.journalLength }),
-  })
+  const record: TabsRecord = createTabsRecord({ store: options.store })
   let off: (() => void) | null = null
 
   return {

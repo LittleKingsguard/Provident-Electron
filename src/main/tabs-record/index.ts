@@ -16,6 +16,8 @@ import { join } from 'node:path'
 import type { TabsRecordRow } from '../../shared/types.js'
 
 type Store = ReturnType<typeof storeCreate>
+/** The store handle this module works over, named so the surface can declare it without re-deriving the package's type. */
+export type TabsRecordStore = Store
 
 export type { TabsRecordRow } from '../../shared/types.js'
 
@@ -36,8 +38,8 @@ export interface TabsRecordReading {
 }
 
 export interface TabsRecordOptions {
-  readonly userDataDir: string
-  readonly journalLength?: number
+  /** THE APP'S ONE STORE (D-64, D-65): the tab record lives at its `['tabs']` addresses and owns no instance. */
+  readonly store: Store
 }
 
 export interface TabsRecord {
@@ -46,8 +48,6 @@ export interface TabsRecord {
   subscribe(handler: () => void): () => void
 }
 
-/** The instance's own file name. Nothing outside `tabs-surface/` spells it (design §1's absence claim). */
-export const TABS_RECORD_FILE_NAME = 'provident-tabs-record.json'
 /** The record root: `order`, `landing` and one flat leaf per tab. */
 export const TABS_RECORD_ADDRESS: readonly string[] = ['tabs']
 /** The two singleton seats, named so no caller composes them. */
@@ -303,71 +303,40 @@ const tabHasLastActiveAt = (store: Store) => (): true | { message: string; repai
   }
 }
 
-export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
-  let store: Store | null = null
-  let refusal: TabsRecordAnswer | null = null
-  try {
-    store = storeCreate({
-      journalLength: options.journalLength ?? 1024,
-      listeners: [],
-      // THE CONSTRAINT IS ARMED AT CONSTRUCTION (`guide §7.2` route one): the element carries the pair AND the
-      // function, and a construction that refused the list would throw before any filesystem act.
-      // THE BATCHED DECLARATIONS (D-65): one list, one construction act, and the ids are unique within it — a
-      // repeated id in one supplied list is REJECTED by the package (`guide §7.2`), so the four are named apart.
-      constraints: [
-        {
-          address: TABS_RECORD_ADDRESS,
-          id: TABS_CONSTRAINT_ID,
-          constraint: (context: unknown) => {
-            void context
-            return exactlyOneActive(store as Store)()
-          },
-        },
-        {
-          address: TABS_RECORD_ADDRESS,
-          id: 'tab-has-title',
-          constraint: (context: unknown) => {
-            void context
-            return tabHasTitle(store as Store)()
-          },
-        },
-        {
-          address: TABS_RECORD_ADDRESS,
-          id: 'tab-has-content',
-          constraint: (context: unknown) => {
-            void context
-            return tabHasContent(store as Store)()
-          },
-        },
-        {
-          address: TABS_RECORD_ADDRESS,
-          id: 'tab-has-lastActiveAt',
-          constraint: (context: unknown) => {
-            void context
-            return tabHasLastActiveAt(store as Store)()
-          },
-        },
-      ],
-      filePath: join(options.userDataDir, TABS_RECORD_FILE_NAME),
-    })
-  } catch (caught) {
-    refusal = {
-      status: 'refused',
-      reason: caught instanceof Error && typeof (caught as { status?: unknown }).status === 'string'
-        ? String((caught as { status?: unknown }).status)
-        : 'FilePathUnreachable',
-      message: 'the tab record could not stand, so no tab can be read or committed',
-      address: null,
-    }
+/** **THE BATCHED DECLARATIONS, COLLECTED BY BOOT** (D-65's first act). Each element carries the pair and the body; the
+ *  boot gathers these from every module that imposes one and constructs the central store **once** with the batch, so a
+ *  constraint is a DECLARATION here rather than a constructor call. The getter is how a body reaches the instance it is
+ *  registered on — it is armed at construction and only *evaluated* on a write, so the reference is bound by then.
+ *
+ *  The ids are a namespace the modules share (`guide §7.2`: a repeated id in one supplied list is REJECTED). */
+export function tabsConstraintDeclarations(getStore: () => Store | null): readonly {
+  readonly address: readonly string[]
+  readonly id: string
+  readonly constraint: (context: unknown) => unknown
+}[] {
+  const body = (evaluate: (store: Store) => () => unknown) => (context: unknown): unknown => {
+    void context
+    const store = getStore()
+    return store === null ? true : evaluate(store)()
   }
+  return [
+    { address: TABS_RECORD_ADDRESS, id: TABS_CONSTRAINT_ID, constraint: body(exactlyOneActive) },
+    { address: TABS_RECORD_ADDRESS, id: 'tab-has-title', constraint: body(tabHasTitle) },
+    { address: TABS_RECORD_ADDRESS, id: 'tab-has-content', constraint: body(tabHasContent) },
+    { address: TABS_RECORD_ADDRESS, id: 'tab-has-lastActiveAt', constraint: body(tabHasLastActiveAt) },
+  ]
+}
 
-  const standing = store
-  if (standing === null) {
-    return {
-      read: () => refusal as TabsRecordAnswer,
-      commit: () => refusal as TabsRecordAnswer,
-      subscribe: () => () => undefined,
-    }
+/** **THE RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65): this module constructs nothing and owns no file — it is handed
+ *  the app's one store and reads and writes its `['tabs']` addresses through it. The instance's lifetime, its file and
+ *  its constraint pass are the boot's. */
+export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
+  const standing: Store = options.store
+  const refusal: TabsRecordAnswer = {
+    status: 'refused',
+    reason: 'FilePathUnreachable',
+    message: 'the tab record could not stand, so no tab can be read or committed',
+    address: null,
   }
 
   /** The order seat and the landing witness, read as the record holds them. */
