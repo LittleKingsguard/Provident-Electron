@@ -79,7 +79,7 @@ const reading = (): { order: string[]; landing: string; rows: TabsRecordRow[] } 
 const actives = (): string[] => reading().rows.filter((each) => each.active === true).map((each) => each.id)
 
 describe('store-tabs-record · the crossing', () => {
-  it('THE CONSTRUCTION INSTANT: `tabs-must-stand` creates the record before any commit — a store built over a scratch file path answers a root holding the landing page, seated and active, on the file tier', () => {
+  it('THE CONSTRUCTION INSTANT: `tabs-must-stand` creates the record BEFORE ANY COMMIT — a store built over a scratch file path answers a root holding the landing page, seated and active, and `read()` on the never-committed record is a reading', () => {
     // THE ABSENCE→REPAIR PATH, DRIVEN FROM ITS OWN STORE so the row measures the CONSTRUCTION rather than a record this
     // file already opened: nothing is committed and no verb of the module has been called when the record is read.
     const instant = mkdtempSync(join(tmpdir(), 'tabs-construction-'))
@@ -112,11 +112,12 @@ describe('store-tabs-record · the crossing', () => {
       ])
       // AND IT IS THE INSTANCE'S, NOT A PASS THE MODULE REMEMBERS: the assertion above is the STORE's own read, taken
       // before `createTabsRecord` was called at all. **MEASURED 2026-11-01: the construction write lands in the instance and
-      // NOT in the profile file's bytes** — the file stands at 0 bytes until the first write's terminal act materialises
-      // it (345 bytes after one `commit` here) — so a fresh profile's listing is UNCHANGED by this pair, and the record a
-      // boot hands out is minted again at each construction. `DECLARED_WRITTEN_JSON` in `tests/store-compliance-live.mjs`
-      // therefore still holds at its two names: the central instance's `provident-profile.json` is written by this pair
-      // as it already was, and no third name is created.
+      // NOT in the profile file's bytes** — over this same scratch shape the file stands at 0 bytes until the first write's
+      // terminal act materialises it (345 bytes after ONE `commit`) — so a fresh profile's listing is UNCHANGED by this
+      // pair and the record a boot hands out is minted again at each construction. `DECLARED_WRITTEN_JSON` in
+      // `tests/store-compliance-live.mjs` therefore still holds at its two names: this pair writes the central instance's
+      // `provident-profile.json`, which the record already lived in, and creates no third name (that battery's `SC-B-01`
+      // reads `undeclaredJsonNames: []` over a live profile).
     } finally {
       bound = null
       rmSync(instant, { recursive: true, force: true })
