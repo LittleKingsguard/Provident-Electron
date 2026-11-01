@@ -55,6 +55,16 @@ offers that cannot half-succeed. **`tabs.commit` names its tab** and never a pat
 address, which is the property that keeps the crossing from becoming a generic store proxy (D-63's reason for a third
 instance rather than a widened `data.*`).
 
+**A record that has never been committed to still answers a READING, and it now holds the landing page** (D-69,
+2026-11-01). `['tabs']`'s existence is an enforced invariant of the instance rather than a side effect of the first
+`commit`: the existence pair `tabs-must-stand` is asked at the instance's **construction** — its parent is the register,
+which always resolves — and its repair creates the record. So a fresh profile's `tabs.read()` answers
+`{ status: 'committed', order: ['tabs-landing-page'], landing: 'tabs-landing-page', rows: [the landing row] }`, with that
+entry **active**: the empty answer this route gave before (an `order` of `[]`, a `landing` of `''`) was a record that did
+not exist, and the renderer cannot tell that state from one it had emptied. The first commit **appends** to that record
+rather than creating the root, so `order` begins with `tabs-landing-page` and `exactly-one-active` hands the active seat to
+the committed tab.
+
 **`tabs.remove` is the fourth route** (added 2026-10-30 after attempting the renderer's port found that a close could
 not be expressed): it deletes the entry's own address and rewrites the order seat without it — **the order seat first
 without the id, because a removal that left the id in `order` is the state the constraint refuses.** A delete that removes
@@ -78,9 +88,12 @@ the module mints no status of its own beyond the one shape arm below:
 **A repaired commit is `committed`, never `refused`** — the repair is the engine working (L1 §2), and a renderer that treats
 it as a failure would refuse a write the store accepted.
 
-**The four constraint sentences a caller can receive** (each repaired, never left standing): *the tab record carries more
-than one active tab* · *a tab carries no title* · *a tab contains no data object* · *a tab carries no last-active stamp*.
-Each names the field it is about, because that is how a caller learns which one it broke.
+**The five constraint sentences a caller can receive** (each repaired, never left standing): *the tab record does not
+stand* · *the tab record carries more than one active tab* · *a tab carries no title* · *a tab contains no data object* ·
+*a tab carries no last-active stamp*. Each names the thing it is about, because that is how a caller learns what broke; the
+first names the record's **existence** and is the one a caller never reads from a `commit`, since a write at `['tabs']`
+creates what it writes — it reaches a caller only where an act finds the address gone (a `delete` at the root, or the
+instance's own construction refusal).
 
 ## 4. The constraint moves to the instance
 

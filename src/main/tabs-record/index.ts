@@ -7,10 +7,12 @@
 // (`docs/L2/store-tabs-record/interface.md` §1). **It is written as ONE WHOLE VALUE at `['tabs']`, never as a leaf per
 // tab**, because a nested write does not create its parent — the measured rule quoted at `composeRecord`.
 //
-// THE INVARIANTS ARE THE ENGINE'S (design §4): `exactly-one-active` plus the three field pairs are DECLARATIONS this
-// module exports (`tabsConstraintDeclarations`) and the boot batches into the instance's construction. Their repairs
-// carry the renderer's referent discipline rule for rule and return the op their write landed — the two facts this pass
-// had to measure before the crossing answered anything but `refused`.
+// THE INVARIANTS ARE THE ENGINE'S (design §4): `exactly-one-active`, the three field pairs and the EXISTENCE pair that
+// mints the root are DECLARATIONS this module exports (`tabsConstraintDeclarations`) and the boot batches into the
+// instance's construction. Their repairs carry the renderer's referent discipline rule for rule and return the op their
+// write landed — the two facts this pass had to measure before the crossing answered anything but `refused`. The fifth,
+// `tabs-must-stand`, is the one that makes `['tabs']` an ENFORCED INVARIANT rather than a side effect of the first commit
+// (D-69), so the record exists — landing page seated and active — from the instant the instance is constructed.
 import { storeCreate } from 'provident-storeroom'
 import type { TabsRecordRow } from '../../shared/types.js'
 
@@ -58,6 +60,9 @@ export const TABS_ORDER_ADDRESS: readonly string[] = ['tabs', 'order']
 export const TABS_LANDING_ADDRESS: readonly string[] = ['tabs', 'landing']
 /** The declared constraint id, kept even though this pass enforces the invariant at the boundary. */
 export const TABS_CONSTRAINT_ID = 'exactly-one-active'
+/** **THE EXISTENCE PAIR'S id** — `['tabs']` must stand, and its repair is the one act that creates it. Exported beside
+ *  `TABS_CONSTRAINT_ID` so the registered list is nameable without a caller spelling either id (`D-69`). */
+export const TABS_MUST_STAND_ID = 'tabs-must-stand'
 /** The one shape arm's sentence (L3 signatures §5). */
 export const MALFORMED_ROW_MESSAGE = 'the commit carries no tab id, or no plain record'
 /** The listener's handle: one subscriber per surface, named rather than minted, so a second subscribe overwrites. */
@@ -178,6 +183,19 @@ const TAB_CONTENT_FALLBACK = 'tabs-landing-page'
 /** A field that is absent, not a string, or blank is a field the record cannot be read for. */
 const blank = (value: unknown): boolean => typeof value !== 'string' || value.trim().length === 0
 
+/** **THE SEAT AN EMPTY RECORD NEVER KEEPS: the landing page, seated and active, with all three field defaults already
+ *  filled.** Two bodies mint it and they must mint the SAME one — `healRecord`'s `order.length === 0` branch, where the
+ *  invariant refuses a record holding no tab at all, and `mintRecord`, where the address holds nothing and the record
+ *  itself has to be created. A second spelling of this row is a second answer to "what is a record with no tabs", and the
+ *  engine's re-run would judge whichever one wrote last. */
+const landingRow = (stamp: string): TabsRecordRow => ({
+  id: TABS_LANDING_ID,
+  target: TABS_LANDING_ID,
+  active: true,
+  label: TABS_LANDING_ID,
+  lastActiveAt: stamp,
+})
+
 /** **THE RECORD IS WRITTEN WHOLE, AND A REPAIR NAMES THE COMMIT IT WAS HANDED.** Both halves were measured on
  *  2026-11-01, and the second one corrects a rule this file once stated wrongly:
  *
@@ -236,8 +254,9 @@ interface HealHints {
  *  record that still violates the others: measured on 2026-10-30, `tab-has-title`'s repair write was itself refused
  *  `ConstraintPassRefused` because the next check found no stamp, and each repair nested another until the restart
  *  budget was spent. **The GATE stays one pair per invariant** — a violation is a fact about one field and the
- *  refusal's sentence must name it, which is why there are four declarations and not one — **while the REPAIR leaves
- *  one record that satisfies all four**, so at most one extra pass runs and that pass passes.
+ *  refusal's sentence must name it, which is why there are five declarations and not one — **while the REPAIR leaves
+ *  one record that satisfies all five**, so at most one extra pass runs and that pass passes — `mintRecord`'s included,
+ *  which lands the landing row with all three field defaults already filled.
  *
  *  It reads the record at the moment it is invoked (`§7.6`: a body reads the location it judges), never the state
  *  this body judged — an earlier repair in the same pass may already have written. */
@@ -264,13 +283,7 @@ const healRecord = (store: Store, hints: HealHints) => (context: unknown): { ok:
   if (order.length === 0) {
     // AN EMPTY SEQUENCE NEVER SURVIVES: the landing page is the one target the app always has, so it takes the seat.
     order.push(TABS_LANDING_ID)
-    rows[TABS_LANDING_ID] = {
-      id: TABS_LANDING_ID,
-      target: TABS_LANDING_ID,
-      active: true,
-      label: TABS_LANDING_ID,
-      lastActiveAt: stamp,
-    }
+    rows[TABS_LANDING_ID] = landingRow(stamp)
   } else {
     const standing = order.filter((id) => readActive(rows[id]))
     if (standing.length === 0) {
@@ -369,7 +382,7 @@ const exactlyOneActive = (store: Store) => (): true | { message: string; repair:
  *
  *  They are three pairs rather than one because a violation is a fact about ONE field: the refusal's sentence is how a
  *  caller learns which default was applied, and a body that tested all three could not say. The repairs still leave one
- *  record that satisfies all four — see `healRecord`. */
+ *  record that satisfies all five — see `healRecord`. */
 
 /** The entries of the record as it stands: every id in `order` the record holds a member for. Read through `viewOf`,
  *  which reads the ONE object at `TABS_RECORD_ADDRESS` — the object a body must judge (`§7.6`: a body reads the
@@ -424,12 +437,90 @@ const tabHasLastActiveAt = (store: Store) => (): true | { message: string; repai
   }
 }
 
+/** **THE ONE WRITE THAT CREATES THE ROOT, AND THE TWO ROUTES IT MAY TAKE — BECAUSE A REPAIR'S RECORD IS NOT THE SAME
+ *  SHAPE AT THE TWO INSTANTS A PAIR IS ASKED.**
+ *
+ *  - **AT A REGISTRATION INSTANT** — construction, a boot over an existing `filePath`, `addConstraint`, a re-arm — the
+ *    record carries a `write` MEMBER and nothing else does (`guide §7.2`'s dated clause of 2026-11-02, item (4); the
+ *    carrier is `kernel-registration.mjs`'s `registrationRepairContext`, whose own comment says the member exists *"at
+ *    this instant and at no other"*). **THAT ROUTE TAKES THE STORE'S OWN THREE POSITIONS AND NO FOURTH** —
+ *    `write(address, tier, value)`: the commit is the registration's own and cannot be named, and a call supplying a
+ *    fourth position is a `TypeError` thrown **before any store act**, so naming the commit here would refuse the
+ *    registration rather than make the record stand.
+ *  - **AT A LANDING INSTANT** the record is the six-member `{address, id, op, tier, value, pending}` and carries no
+ *    `write`, and **the commit it is part of MUST be named**: passing that record at `write`'s fourth position on the
+ *    store this module holds is what makes the write JOIN the attempt instead of opening a second `K-2` at the address
+ *    that already holds one (`D-67`; `healRecord`'s call at the bottom of that function does the same with the same
+ *    reason). The two rules are not two spellings of one — they are two instants' own contracts, and a single call shape
+ *    cannot satisfy both.
+ *
+ *  **THE BRANCH IS THE RECORD'S OWN `write` MEMBER, NEVER THE INSTANT'S NAME**: a repair runs with no handle of its own
+ *  at the first instant (the boot has not bound one yet) and with this module's store at the second, so the record it is
+ *  handed is the only thing that can say which route is lawful. **Both arms answer through `repairAnswer`** — the kernel
+ *  credits a repair only through `landedOp`, whatever route landed the op (`ST-F2`).
+ *
+ *  **THE WRITE RUNS NO PASS OF ITS OWN**: the pair is judged by the registration's own RE-RUN over the op this returns,
+ *  so the body above is asked twice — once absent, once over the created record, where `value` is that record and the
+ *  answer is `true`. That is why the created value must be one the body itself admits — and why `landingRow` is the value
+ *  written rather than a bare root: the other four pairs read the same re-run, and it satisfies them too. */
+const mintRecord = (getStore: () => Store | null) => (context: unknown): unknown => {
+  const whole = composeRecord([TABS_LANDING_ID], { [TABS_LANDING_ID]: landingRow(new Date().toISOString()) }, TABS_LANDING_ID)
+  const route = plain(context) ? context['write'] : undefined
+  if (typeof route === 'function') {
+    const write = route as (address: readonly string[], tier: string, value: unknown) => unknown
+    // THREE POSITIONS, AND NO FOURTH: supplying the commit here is the refusal this branch exists to avoid.
+    return repairAnswer(write(TABS_RECORD_ADDRESS, 'file', whole))
+  }
+  const store = getStore()
+  if (store === null) {
+    // NEITHER ROUTE: no store to write through and no route on the record, so the record cannot be made to stand and
+    // the repair says so in the failed arm's own two members rather than answering `void`, which carries "no op".
+    return { ok: false, message: 'the tab record does not stand, and this repair reached no write route' }
+  }
+  return repairAnswer(store.write(TABS_RECORD_ADDRESS, 'file', whole, context as never) as unknown)
+}
+
+/** **`tabs-must-stand` — THE RECORD ROOT IS AN ENFORCED INVARIANT, NOT A SIDE EFFECT OF THE FIRST COMMIT** (D-69).
+ *
+ *  Until this pair stood, `['tabs']` was minted only by the first whole-record write, so between the boot and that write
+ *  the address held NOTHING and `read()` answered an empty record with no `landing` seat — a state indistinguishable
+ *  from one a caller had emptied. The pair makes the root the ENGINE's to demand and its repair the one act that creates
+ *  it, so the record stands from the instant the instance is constructed.
+ *
+ *  **IT JUDGES `context.value` AND NEVER REACHES FOR THE INSTANCE — the only body in this batch that cannot go through
+ *  the `body` wrapper below.** At the CONSTRUCTION instant the store handle is genuinely unassigned (`src/main/main.ts`
+ *  binds its holder only after `createProfileStore` returns), so the wrapper's `getStore() === null` arm answers `true`
+ *  and this pair would never be asked; the engine asks it all the same, with **the current value read at the address**:
+ *  a registration's five-member `AttemptContext` carries `value: readCurrent(store, address)`, which is `undefined` where
+ *  that read refuses. **Absence therefore needs no handle** — and the handle is only wanted by the REPAIR, which runs at
+ *  an instant where one exists.
+ *
+ *  **ABSENCE IS THE WHOLE ARM, AND THAT IS MEASURED, NOT CHOSEN** (`guide §7.2`'s dated clause of 2026-11-02, item (3)):
+ *  the pair is CARRIED and applied at every instant its PARENT resolves, and `['tabs']`'s parent is the empty address —
+ *  the register, which always resolves — so the pair is asked over an empty store at construction, which is the one arm
+ *  a repair can rescue (a pair under an ABSENT parent is never asked at all). A record that STANDS but holds no tab is a
+ *  different arm and stays the other pairs': `exactly-one-active` answers *"the tab record holds no tab at all"* and its
+ *  repair mints the same `landingRow`. */
+const tabsMustStand = (getStore: () => Store | null) => (context: unknown): unknown => {
+  if (plain(context) && context['value'] !== undefined) return true
+  return {
+    message: 'the tab record does not stand',
+    repair: mintRecord(getStore),
+  }
+}
+
 /** **THE BATCHED DECLARATIONS, COLLECTED BY BOOT** (D-65's first act). Each element carries the pair and the body; the
  *  boot gathers these from every module that imposes one and constructs the central store **once** with the batch, so a
  *  constraint is a DECLARATION here rather than a constructor call. The getter is how a body reaches the instance it is
  *  registered on — it is armed at construction and only *evaluated* on a write, so the reference is bound by then.
  *
- *  The ids are a namespace the modules share (`guide §7.2`: a repeated id in one supplied list is REJECTED). */
+ *  The ids are a namespace the modules share (`guide §7.2`: a repeated id in one supplied list is REJECTED).
+ *
+ *  **FIVE, AND THE FIFTH IS LISTED FIRST**: `tabs-must-stand` is registered and not wrapped by `body`, because the
+ *  wrapper's null-store arm would silence it at the exact instant it is the only pair that can act (`tabsMustStand`), and
+ *  it stands ahead of the other four because it is the precondition of their subject — a record that does not exist has
+ *  no field to judge and no tab to activate. The pairs it writes past are silent at that instant for a reason of their
+ *  own: their bodies read through the same handle and the wrapper is what tells them to abstain. */
 export function tabsConstraintDeclarations(getStore: () => Store | null): readonly {
   readonly address: readonly string[]
   readonly id: string
@@ -441,6 +532,7 @@ export function tabsConstraintDeclarations(getStore: () => Store | null): readon
     return store === null ? true : evaluate(store)()
   }
   return [
+    { address: TABS_RECORD_ADDRESS, id: TABS_MUST_STAND_ID, constraint: tabsMustStand(getStore) },
     { address: TABS_RECORD_ADDRESS, id: TABS_CONSTRAINT_ID, constraint: body(exactlyOneActive) },
     { address: TABS_RECORD_ADDRESS, id: 'tab-has-title', constraint: body(tabHasTitle) },
     { address: TABS_RECORD_ADDRESS, id: 'tab-has-content', constraint: body(tabHasContent) },
@@ -453,9 +545,15 @@ export function tabsConstraintDeclarations(getStore: () => Store | null): readon
  *  its constraint pass are the boot's. */
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
   const standing: Store = options.store
-  // **NOTHING IS WRITTEN AT CONSTRUCTION**: the record root is minted by the first whole-record write, so a module that is
-  // armed and never used touches no file. The observed view still starts from what the store already holds, because a
-  // record carried over from a previous run is the PRE side of its first evaluation.
+  // **NOTHING IS WRITTEN HERE, AND THE ROOT IS NO LONGER THE FIRST COMMIT'S TO MINT** (D-69). This module still writes
+  // nothing at construction — but the address is no longer absent when it is handed over: `tabs-must-stand` was asked at
+  // the INSTANCE's construction, before this function existed, and its repair created the record with the landing page
+  // seated and active. So the observed view starts from what the store already holds on both counts at once: a fresh
+  // profile's landing seat and a record carried over from a previous run, which is the PRE side of the first evaluation
+  // alike. **NOTHING IN THIS MODULE DEPENDS ON THE OLD EMPTINESS** — `seats()` reads the order seat, `landingOf` reads the
+  // landing seat and falls back to the active entry, and every write composes the whole record from what stands — so the
+  // one thing that changes is that the first `commit` now APPENDS to a record holding `tabs-landing-page` instead of
+  // creating the root, and `read()` answers a landing-seated record before any commit.
   lastView = viewOf(standing)
 
   /** The order seat and the landing witness, read as the record holds them. */

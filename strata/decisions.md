@@ -1521,3 +1521,42 @@ reviewed version moves with it — `package.json` and `package-lock.json`, `test
   answers `{"opId":"op-3","address":["b"]}` with `read(['a'])` `2`, while the same body returning `undefined` is refused
   `the repair two-goes-elsewhere produced no op at a` and its own write stands at `b` — `ST-F1` discharged at its evidence,
   `ST-F2` narrowed to what is still owed (`records/store-tabs-record-unit.md` §1, `pending.md`).
+
+---
+
+## D-69 — `['tabs']`'s existence is an ENFORCED INVARIANT, and the repair that creates it has two routes
+
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's instruction, verbatim — "`provident-storeroom` was just
+upgraded to 1.6.2, which adds explicit support for enforcing the existence of a top-level address by constraint. The record
+root `['tabs']` is currently created only as a side effect of the first `commit`, so between boot and the first commit the
+record does not exist at all and `read()` answers an empty record with no `landing` seat"; plus the measurements below.
+
+**Decision:** a **fifth declaration** rides this module's batch — id `tabs-must-stand`, address `['tabs']` — whose body
+refuses when the address holds nothing and whose repair CREATES the record. The created record is the one the invariant
+already demands of an empty one: the landing page, seated and active, with all three field defaults filled (the row
+`healRecord`'s `order.length === 0` branch mints, now named `landingRow` and shared by both). **So `['tabs']` is an enforced
+invariant of the instance and no longer a side effect of the first commit.** The id is exported beside `TABS_CONSTRAINT_ID`.
+
+- **The body judges `context.value` and needs no store handle.** A pair whose own key is ABSENT is APPLIED where its parent
+  resolves, and `['tabs']`'s parent is the register, which always resolves — so the pair is asked over an empty store at
+  construction. The existing wrapper answers `true` when its getter returns null, and at that instant the boot has bound no
+  handle yet, so **this body alone does not go through the wrapper**: a registration's `value` is the current value read at
+  the address and `undefined` where nothing is held, which is all absence needs. The other four keep the wrapper unchanged.
+- **The registration instant's write route takes THREE positions and cannot name a commit; the landing instant's takes FOUR
+  and must.** A repair at a registration instant is handed a record carrying a `write` member (`write(address, tier, value)`)
+  — the commit there is the registration's own, and a supplied fourth position is a `TypeError` thrown before any store act.
+  At a landing instant the record is the six-member one with no `write`, and `pending` must be named at `write`'s fourth
+  position or the write is refused `KC-7` (D-67). **The two are different instants' own contracts, so one repair helper
+  branches on the record's own `write` member** and answers through `repairAnswer` in both arms.
+- **The write runs no pass of its own**: the pair is judged by the registration's own re-run over the op the repair
+  returned, so the body is asked twice — absent, then over the created record, where it answers `true`.
+- **Consequence, carried rather than absorbed: a fresh record carries the landing tab.** `read()` on a never-committed
+  record answers `order: ['tabs-landing-page']` with that entry active where it once answered `[]` with no landing seat, and
+  the first commit APPENDS to the record instead of creating the root. Nothing in the module depended on the old emptiness.
+- **Measured, 2026-11-01, over a scratch `filePath` with the batch supplied:** before the declaration, `read()` at
+  construction answers `{"status":"committed","order":[],"landing":"","rows":[]}` and the store's own `read(['tabs'])`
+  refuses `AddressNotFound`; with it, the root stands holding the landing page with `landing: 'tabs-landing-page'` before
+  any module verb is called, and the first `commit` answers `order: ['tabs-landing-page','tab-1']` with `tab-1` active.
+  **The record is the instance's, not the file's, at that instant**: the profile file stays at 0 bytes until the first
+  write's terminal act materialises it, so a fresh profile's written-name census is UNMOVED and `DECLARED_WRITTEN_JSON`
+  still holds at its two names.

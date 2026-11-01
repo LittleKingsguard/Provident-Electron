@@ -1,6 +1,7 @@
 # L3 — `store-tabs-record`: the module design
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — the crossing's structure.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — the crossing's structure, and the
+  record root as an enforced invariant.
 - **Inputs:** `docs/L2/store-tabs-record/interface.md` rev 1 §1–§6; `docs/L1/store-tabs-record.md` rev 1 §1–§3.
 - **Ceiling:** 150 lines, class max (D-1) · **Status:** structure and guardrails; every declared name and its exact text
   is in `signatures.md`, which is what L4 transcribes (D-45).
@@ -74,7 +75,7 @@ decide the shape of every write in §4, and the earlier revisions of this sectio
 - **A repair RETURNS THE OP ITS WRITE LANDED**, `{ok: true, op: receipt.op}`: the kernel credits it only through `landedOp`,
   so a `void` return fails `KC-4` as *"the repair … produced no op"*. That contract is undocumented in the shipped artifact —
   filed upstream as `ST-F2`.
-- **A repair leaves ONE legal record**, and every one of the four leaves the same one: the three field pairs heal all three
+- **A repair leaves ONE legal record**, and every one of the five leaves the same one: the three field pairs heal all three
   defaults and the active invariant in the same write, because a repair correcting only its own field hands the re-run a
   record that still violates the others and each repair then nests another until the restart budget (`RESTART_LIMIT` 3) is
   spent.
@@ -87,17 +88,41 @@ no constraint is ever asked). The engine hands a constraint the **landing op and
 pre-write capture, so the PRE side here is **the last record this module observed**, refreshed by every read and every
 commit: bounded because the cache is this module's own view of a record only this module writes.
 
-**Four declarations ride the batch, not one — and the reason is the sentence a caller gets.** `exactly-one-active` guards
-the *shape of the set*; three more guard each tab's own **fields**, and each is a separate pair because a violation is a fact
-about ONE field — a repair that fixed all of them at once could not tell the caller which they broke (D-65's batched list;
-`guide §7.2` rejects a repeated `id` in one supplied list, so the four are named apart):
+**Five declarations ride the batch, not one — and the reason is the sentence a caller gets.** `tabs-must-stand` guards the
+record's **existence**; `exactly-one-active` guards the *shape of the set*; three more guard each tab's own **fields**, and
+each is a separate pair because a violation is a fact about ONE field — a repair that fixed all of them at once could not
+tell the caller which they broke (D-65's batched list; `guide §7.2` rejects a repeated `id` in one supplied list, so the
+five are named apart):
 
 | id | Holds when | Repair |
 |---|---|---|
+| `tabs-must-stand` | the address `['tabs']` holds a record at all | **creates** it: the landing page, seated and active |
 | `exactly-one-active` | at least one member survives **and** exactly one entry reads active | the referent discipline (§4's first paragraph) |
 | `tab-has-title` | the tab's `label` is a non-empty string | writes `'untitled'` |
 | `tab-has-content` | the tab's `target` — the data object it contains — is a non-empty string | points it at the landing page |
 | `tab-has-lastActiveAt` | the tab carries an activation stamp | stamps it with **now**, as an ISO string so the record's byte image stays JSON-plain |
+
+**Rev 6 (2026-11-01) — THE ROOT IS AN ENFORCED INVARIANT, AND ITS REPAIR IS ASKED AT TWO INSTANTS WITH TWO ARITIES.**
+Before this revision `['tabs']` was minted only by the first `commit`, so between the boot and that write `read()` answered
+an empty record with no `landing` seat (D-69). `tabs-must-stand` makes existence the engine's to demand:
+
+- **A pair whose own key is ABSENT is APPLIED** where its parent resolves (`guide §7.2`'s dated clause, item (3)) — and
+  `['tabs']`'s parent is the register, which always resolves — so it is asked at construction over an empty store. That is
+  the one arm a repair can rescue: a pair under an absent PARENT is never asked at all.
+- **The body judges `context.value` and needs no store handle**: at the construction instant the boot has not bound one, so
+  the null-store abstention every other body rides would silence the one pair that must act. `value` is the value read at
+  the address, `undefined` where nothing is held.
+- **THE REGISTRATION INSTANT'S REPAIR WRITES WITH THREE POSITIONS — `write(address, tier, value)` — AND CANNOT NAME THE
+  COMMIT** (item (4)): that commit is the registration's own, and a fourth position there is a `TypeError` before any store
+  act. **THE LANDING INSTANT'S WRITES WITH FOUR AND MUST NAME IT** — `pending`, the commit the repair is part of
+  (`D-67`), which is what makes the write join the attempt instead of opening a second `K-2`. **Each instant declares its
+  own arity and one call shape cannot satisfy both**, so the repair branches on the record's own `write` member — the only
+  thing that tells them apart. **The write runs no pass of its own**: the registration's re-run judges the pair over the op
+  the repair returned.
+- **Consequence, carried and not absorbed: a fresh record carries the landing tab.** `read()` answers
+  `order: ['tabs-landing-page']`, that entry active, before any commit — and the first commit APPENDS to that record
+  instead of creating the root. Nothing in the module depended on the old emptiness: every route reads the record as it
+  stands and writes it whole.
 
 **A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store
 says, rather than being told what to think.
