@@ -64,6 +64,19 @@ export const MALFORMED_ROW_MESSAGE = 'the commit carries no tab id, or no plain 
 /** The listener's handle: one subscriber per surface, named rather than minted, so a second subscribe overwrites. */
 const HANDLE = 'tabs-record'
 
+
+/** **THE PACKAGE'S THROWN FORM IS A PLAIN OBJECT** (`{status, message, log}`, `guide §8` — never an `Error` subclass), so a
+ *  refusal read through `instanceof Error` loses its own status and sentence. This reads both shapes. */
+const refusalOfThrown = (caught: unknown): { reason: string; message: string } => {
+  if (caught !== null && typeof caught === 'object') {
+    const record = caught as Record<string, unknown>
+    const reason = typeof record['status'] === 'string' ? record['status'] : 'refused'
+    const message = typeof record['message'] === 'string' ? record['message'] : 'the store refused the tab record'
+    return { reason, message }
+  }
+  return { reason: 'refused', message: caught instanceof Error ? caught.message : 'the store refused the tab record' }
+}
+
 const plain = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
@@ -100,6 +113,28 @@ let lastView: { order: string[]; entries: Record<string, TabsRecordRow> } | null
 const viewOf = (store: Store): { order: string[]; entries: Record<string, TabsRecordRow> } => {
   const order: string[] = []
   const entries: Record<string, TabsRecordRow> = {}
+  // **THE BODY READS THE OBJECT AT THE PAIR'S OWN ADDRESS** (D-66): a sub-property write changes what `['tabs']` reads,
+  // which is why the watch fires, and the object read there is the record to judge.
+  try {
+    const whole = store.read(TABS_RECORD_ADDRESS, 'file') as unknown
+    if (whole !== null && typeof whole === 'object' && !Array.isArray(whole)) {
+      const record = whole as Record<string, unknown>
+      const seated = record['order']
+      if (Array.isArray(seated)) {
+        for (const id of seated) {
+          if (typeof id !== 'string') continue
+          order.push(id)
+          const row = record[id]
+          if (row !== null && typeof row === 'object' && !Array.isArray(row)) {
+            entries[id] = { ...(row as Record<string, unknown>), id } as unknown as TabsRecordRow
+          }
+        }
+        return { order, entries }
+      }
+    }
+  } catch {
+    // the split seats below are the fallback the module's own writes keep readable
+  }
   try {
     const read = store.read(TABS_ORDER_ADDRESS, 'file') as unknown
     if (Array.isArray(read)) for (const id of read) if (typeof id === 'string') order.push(id)
@@ -162,6 +197,7 @@ const exactlyOneActive = (store: Store) => (): true | { message: string; repair:
   const removals = [...dropped, ...membershipDropped.filter((id) => !dropped.includes(id))]
   const survivors = post.order.filter((id) => !dropped.includes(id)).length
   const actives = Object.keys(post.entries).filter((id) => readActive(post.entries[id])).length
+  const removed = removals.find((id) => !post.order.includes(id) || !readActive(post.entries[id])) ?? null
   if (survivors > 0 && actives === 1) return true
 
   return {
@@ -176,41 +212,52 @@ const exactlyOneActive = (store: Store) => (): true | { message: string; repair:
         const at = order.indexOf(id)
         if (at >= 0) order.splice(at, 1)
       }
+      const rows: Record<string, TabsRecordRow> = { ...view.entries }
       if (order.length === 0) {
+        // an empty sequence never survives: the landing page takes the seat
         order.push(TABS_LANDING_ID)
-        writeOrder(store, order)
-        writeEntry(store, { id: TABS_LANDING_ID, target: TABS_LANDING_ID, active: true, label: TABS_LANDING_ID, lastActiveAt: new Date().toISOString() })
-        return
-      }
-      const activeIds = order.filter((id) => readActive(view.entries[id]))
-      if (activeIds.length === 1) return
-      const removed = removals.find((id) => !order.includes(id) || !readActive(view.entries[id])) ?? null
-      if (activeIds.length === 0) {
-        const candidates = (removed !== null && pre.order.includes(removed) ? pre.order : order).filter((id) => !removals.includes(id))
-        if (candidates.length === 0) return
-        let index = 0
-        if (removed !== null && pre.order.includes(removed)) index = pre.order.indexOf(removed)
-        else if (written !== null && order.includes(written)) index = order.indexOf(written)
-        index = ((index % candidates.length) + candidates.length) % candidates.length
-        const survivor = candidates[index]
-        if (survivor !== undefined) {
-          const row = view.entries[survivor]
-          if (row !== undefined) writeEntry(store, { ...row, active: true })
+        const stamped = new Date().toISOString()
+        rows[TABS_LANDING_ID] = { id: TABS_LANDING_ID, target: TABS_LANDING_ID, active: true, label: TABS_LANDING_ID, lastActiveAt: stamped }
+      } else {
+        const activeIds = order.filter((id) => readActive(rows[id]))
+        if (activeIds.length === 0) {
+          // the referent: the removed entry's pre-position, else the caller's written referent, else the first survivor
+          const candidates = (removed !== null && pre.order.includes(removed) ? pre.order : order).filter((id) => !removals.includes(id))
+          if (candidates.length > 0) {
+            let index = 0
+            if (removed !== null && pre.order.includes(removed)) index = pre.order.indexOf(removed)
+            else if (written !== null && order.includes(written)) index = order.indexOf(written)
+            index = ((index % candidates.length) + candidates.length) % candidates.length
+            const survivor = candidates[index]
+            const row = survivor === undefined ? undefined : rows[survivor]
+            if (row !== undefined) rows[row.id] = { ...row, active: true }
+          }
+        } else if (activeIds.length > 1) {
+          // keep one by the same precedence; the rest are deactivated IN THE SAME OBJECT
+          let keep: string | null = null
+          if (removed !== null && pre.order.includes(removed)) {
+            const rest = order.filter((id) => id !== removed)
+            if (rest.length > 0) keep = rest[((pre.order.indexOf(removed) % rest.length) + rest.length) % rest.length] ?? null
+          }
+          if (keep === null && written !== null && activeIds.includes(written)) keep = written
+          if (keep === null) keep = activeIds[0] ?? null
+          for (const id of activeIds) {
+            const row = rows[id]
+            if (row === undefined || id === keep) continue
+            rows[id] = { ...row, active: false }
+          }
         }
-        return
       }
-      let keep: string | null = null
-      if (removed !== null && pre.order.includes(removed)) {
-        const rest = order.filter((id) => id !== removed)
-        if (rest.length > 0) keep = rest[((pre.order.indexOf(removed) % rest.length) + rest.length) % rest.length] ?? null
-      }
-      if (keep === null && written !== null && activeIds.includes(written)) keep = written
-      if (keep === null) keep = activeIds[0] ?? null
-      for (const id of activeIds) {
-        const row = view.entries[id]
-        if (row === undefined || id === keep) continue
-        writeEntry(store, { ...row, active: false })
-      }
+      // **ONE WRITE OF ONE CORRECTED OBJECT** — the whole point: the next evaluation reads this, so the pass converges on
+      // the second try instead of re-violating. Several separate writes would trigger several more evaluations against
+      // intermediate states, which is what made the first version refuse every commit (D-66).
+      const landing = order.find((id) => readActive(rows[id])) ?? (typeof view.order[0] === 'string' ? view.order[0] : TABS_LANDING_ID)
+      const next: Record<string, unknown> = { order }
+      for (const id of order) { const row = rows[id]; if (row !== undefined) next[id] = row }
+      // NOTHING IS SWALLOWED HERE: a repair whose write fails must SAY so, because the refusal it produces otherwise
+      // reads as a violation of the invariant rather than as the repair's own failure (D-66's convergence rule).
+      store.write(TABS_RECORD_ADDRESS, 'file', next)
+      if (landing !== undefined) store.write(TABS_LANDING_ADDRESS, 'file', landing)
     },
   }
 }
@@ -434,14 +481,8 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
         const cursor = plain(receipt) && typeof receipt['cursor'] === 'number' ? receipt['cursor'] : undefined
         return { status: 'committed', ...(cursor === undefined ? {} : { cursor }) }
       } catch (caught) {
-        return {
-          status: 'refused',
-          reason: caught instanceof Error && typeof (caught as { status?: unknown }).status === 'string'
-            ? String((caught as { status?: unknown }).status)
-            : 'refused',
-          message: caught instanceof Error ? caught.message : 'the store refused the tab removal',
-          address: ['tabs', id],
-        }
+        const refused = refusalOfThrown(caught)
+        return { status: 'refused', reason: refused.reason, message: refused.message, address: ['tabs', id] }
       }
     },
     subscribe(handler: () => void): () => void {
