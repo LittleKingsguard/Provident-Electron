@@ -50,36 +50,15 @@ routes, no fourth:
 | `tabs.remove(id: string)` | one tab's id | `{ status: 'committed' }`, carrying **`repaired: true`** on the same condition, or the refusal arm |
 | `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else |
 
-**THE COMMITTED ARM OF `commit` AND `remove` IS `{ status: 'committed' }` AND NOTHING ELSE, EXCEPT `repaired`.** **Rev 2
-(2026-11-01) deletes the `cursor` member these two rows declared**: the store's write receipt is `{op, watched, triggered}`
-and its declaration carries no `cursor` at all (`grep -n 'cursor' node_modules/provident-storeroom/index.d.ts` is empty), so
-the member was read off a receipt that never held it and no act could have produced it — a name with nothing behind it,
-removed as a contract deletion (D-70). **`repaired` is the member that was declared and never produced, and it is present
-EXACTLY when the record that STANDS is not the record the act intended**: the engine's repair ran in the act's own commit,
-the module derived it by comparing the written intent with the standing record, and the renderer therefore re-reads and
-renders what the store says (§3). **It is ABSENT on a clean act and never answered `false`** — the member is a signal, and
-`false` would be a second spelling of its absence.
-
-**`tabs.read` takes no argument** because the record is one document: a whole-record read is the only shape the instance
-offers that cannot half-succeed. **`tabs.commit` names its tab** and never a path — the renderer must not compose an
-address, which is the property that keeps the crossing from becoming a generic store proxy (D-63's reason for a third
-instance rather than a widened `data.*`).
-
-**A record that has never been committed to still answers a READING, and it now holds the landing page** (D-69,
-2026-11-01). `['tabs']`'s existence is an enforced invariant of the instance rather than a side effect of the first
-`commit`: the existence pair `tabs-must-stand` is asked at the instance's **construction** — its parent is the register,
-which always resolves — and its repair creates the record. So a fresh profile's `tabs.read()` answers
-`{ status: 'committed', order: ['tabs-landing-page'], landing: 'tabs-landing-page', rows: [the landing row] }`, with that
-entry **active**: the empty answer this route gave before (an `order` of `[]`, a `landing` of `''`) was a record that did
-not exist, and the renderer cannot tell that state from one it had emptied. The first commit **appends** to that record
-rather than creating the root, so `order` begins with `tabs-landing-page` and `exactly-one-active` hands the active seat to
-the committed tab.
-
-**`tabs.remove` is the fourth route** (added 2026-10-30 after attempting the renderer's port found that a close could
-not be expressed): it deletes the entry's own address and rewrites the order seat without it — **the order seat first
-without the id, because a removal that left the id in `order` is the state the constraint refuses.** A delete that removes
-nothing is the store's own **success** (`tiers: []`, `guide §5.3`), so a repeat close answers `committed` rather than
-refusing: the tab was already gone and the record already said so.
+**THE COMMITTED ARM OF `commit` AND `remove` IS `{ status: 'committed' }` AND NOTHING ELSE, EXCEPT `repaired`.** **Measured
+2026-11-01, and the two answer declarations above consequently carry no `cursor`**: the store's write receipt is `{op,
+watched, triggered}` and its declaration carries no `cursor` at all (`grep -n 'cursor'
+node_modules/provident-storeroom/index.d.ts` is empty), so the member was read off a receipt that never held it and no act
+could have produced it — a name with nothing behind it, removed as a contract deletion (D-70). **`repaired` is the member
+that was declared and never produced, and it is present EXACTLY when the record that STANDS is not the record the act
+intended**: the engine's repair ran in the act's own commit, the module derived it by comparing the written intent with the
+standing record, and the renderer therefore re-reads and renders what the store says (§3). **It is ABSENT on a clean act and
+never answered `false`** — the member is a signal, and `false` would be a second spelling of its absence.
 
 **`tabs.onChanged` is the event generator**: the instance's own listener delivers the triggered address, and the renderer
 re-reads rather than being handed the value — the delivery argument is an address, not a payload (`guide §6.4`).
