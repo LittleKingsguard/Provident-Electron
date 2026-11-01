@@ -1,6 +1,6 @@
 # L3 — `store-tabs-record`: the module design
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 1 — the crossing's structure.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — the crossing's structure.
 - **Inputs:** `docs/L2/store-tabs-record/interface.md` rev 1 §1–§6; `docs/L1/store-tabs-record.md` rev 1 §1–§3.
 - **Ceiling:** 150 lines, class max (D-1) · **Status:** structure and guardrails; every declared name and its exact text
   is in `signatures.md`, which is what L4 transcribes (D-45).
@@ -63,11 +63,29 @@ sequence the **landing page**; where no tab is active take the referent — the 
 caller's own **written referent**, else the first survivor; where more than one is active **keep one** by that same
 precedence and deactivate the rest.
 
+**Rev 5 (2026-11-01) — WHAT A REPAIR MUST DO TO BE CREDITED, MEASURED RATHER THAN ASSUMED.** Three facts of the engine
+decide the shape of every write in §4, and the earlier revisions of this section were wrong about the third:
+
+- **A repair NAMES THE COMMIT IT WAS HANDED** (D-67). The context is `{address, id, op, tier, value, pending}`, and `pending`
+  is the commit's own member (`surface.md §2.11` clause 6). Passing that context at `write`'s **fourth position** makes the
+  repair's write **join** the open attempt; without it the same write is refused `KC-7` — *"a constraint attempt is already
+  open at `tabs`; it is disposed of by its own K-3 and by no other act"* — which is a ban on a second `K-2` there and not on
+  the address.
+- **A repair RETURNS THE OP ITS WRITE LANDED**, `{ok: true, op: receipt.op}`: the kernel credits it only through `landedOp`,
+  so a `void` return fails `KC-4` as *"the repair … produced no op"*. That contract is undocumented in the shipped artifact —
+  filed upstream as `ST-F2`.
+- **A repair leaves ONE legal record**, and every one of the four leaves the same one: the three field pairs heal all three
+  defaults and the active invariant in the same write, because a repair correcting only its own field hands the re-run a
+  record that still violates the others and each repair then nests another until the restart budget (`RESTART_LIMIT` 3) is
+  spent.
+
 **The boundary no longer writes a correction, and that is the point of the transport.** The invariant has **one home** —
-the engine's evaluation — so `commit` writes the caller's row and the order seat and nothing else. The engine hands a
-constraint the **landing op and its value** and never the machinery's pre-write capture, so the PRE side here is **the last
-record this module observed**, refreshed by every read and every commit: bounded because the cache is this module's own view
-of a record only this module writes.
+the engine's evaluation — so `commit` writes the caller's record as the caller asked for it and nothing else: **one whole
+value at `['tabs']`**, which mints the root, the `order` seat and the tab's member in the same call (a nested write does
+not create its parent — measured: `write(['tabs', id])` on a fresh store answers `AddressNotFound` with an EMPTY `log`, so
+no constraint is ever asked). The engine hands a constraint the **landing op and its value** and never the machinery's
+pre-write capture, so the PRE side here is **the last record this module observed**, refreshed by every read and every
+commit: bounded because the cache is this module's own view of a record only this module writes.
 
 **Four declarations ride the batch, not one — and the reason is the sentence a caller gets.** `exactly-one-active` guards
 the *shape of the set*; three more guard each tab's own **fields**, and each is a separate pair because a violation is a fact
