@@ -134,8 +134,11 @@
 //                `remove`/`subscribe`) is driven directly. This is the live renderer
 //                graph, not a reconstruction.
 //          THE BRIDGE NAMESPACE CENSUS (read at SC-A-01/SC-A-06): the bridge exposes exactly
-//          THREE object-valued namespaces — `security`, `store`, `module` (the other four
-//          top-level members are the `ready`/`onRequest`/`sendReply`/`notify` plumbing).
+//          FOUR object-valued namespaces — `security`, `store`, `module`, `tabs` (the other four
+//          top-level members are the `ready`/`onRequest`/`sendReply`/`notify` plumbing). **FOUR
+//          SINCE `D-63`'s crossing landed (`cb5fde4`), and this line read THREE until 2026-11-01:
+//          that commit moved the census in five test files and left this battery behind, so the
+//          set-equality term below reddened SC-A-01 on an instrument that was behind the code.**
 //          **`Function.length` is `0` for EVERY bridged member** (the `contextBridge` proxy
 //          does not expose arity — MEASURED), so no census here rests on arity: the
 //          name-addressability of a channel is decided by DRIVING it, which is exactly why
@@ -344,12 +347,20 @@ const FILE_LOGICAL = 'file.settings.theme.token'
 /** An ARBITRARY caller-named key inside a DECLARED root, seeded in tier 1's file so the boot
  *  hand-off declares/mints it — the positive control's subject. */
 const ARBITRARY_FILE_NAME = 'file.settings.complianceprobe.value'
-/** The THREE object-valued namespaces `window.provident` is DECLARED to expose (the preload's
- *  `contextBridge` surface: the tier-4 `security` bridge, the tier-1 `store` bridge and the
- *  operator-only `module` surface). Asserted by SET EQUALITY against the live object's own
- *  object-valued members (`B-F15`), so a FOURTH such member is an un-censused channel and FAILS
- *  the census rather than being filtered away. */
-const BRIDGE_NAMESPACES_DECLARED = ['module', 'security', 'store']
+/** The FOUR object-valued namespaces `window.provident` is DECLARED to expose (the preload's
+ *  `contextBridge` surface: the tier-4 `security` bridge, the tier-1 `store` bridge, the
+ *  operator-only `module` surface and `tabs`, the tab record's crossing `D-63` lands). Asserted by
+ *  SET EQUALITY against the live object's own object-valued members (`B-F15`), so a FIFTH such
+ *  member is an un-censused channel and FAILS the census rather than being filtered away.
+ *
+ *  **`tabs` WAS MISSING UNTIL 2026-11-01 — THE INSTRUMENT WAS BEHIND THE CODE, NOT THE CODE WRONG.**
+ *  `cb5fde4` ("Land the crossing and pay its census move") added the member and moved the census in
+ *  `tests/store-persist.test.ts`, `tests/{e2e,integration}/security-store-storeroom/isolation.test.ts`
+ *  and two scenario files — and did not move this one, so the live read `['module','security',
+ *  'store','tabs']` was charged as `unknown=['tabs']` and SC-A-01 reddened on its census term in every
+ *  state. The truth is read off `src/main/preload.ts`'s `ProvidentBridge` (EIGHT top-level members:
+ *  `ready`/`onRequest`/`sendReply`/`notify` plus these four) and its renderer mirror. */
+const BRIDGE_NAMESPACES_DECLARED = ['module', 'security', 'store', 'tabs']
 /** The SIX generic name-addressed members `SC-CH-02`'s subject claims are PRESENT on the live
  *  boot-constructed store (`resolve`/`set`/`commit`/`clear`/`remove`/`subscribe`). Required in the
  *  predicate since the THIRD `§6.2` audit's `A3-07` (disposed `FIXED`, `§4d` rule 1): the as-filed
@@ -896,10 +907,11 @@ check('SC-CH-02 (live channel 2)', 'the app\'s own renderer module answers THE O
  *  name-addressed API would show as a `set` whose first parameter is a NAME or a member
  *  like `set(name, value)` / `get(name)` / `commit` / `subscribe`; the landed bridge's is
  *  `get()` / `set(patch)` / `setExclusion(state)` with no name parameter at all. */
-/** THE BRIDGE SURFACE AND ITS THREE OBJECT-VALUED NAMESPACES — the census that supports the
+/** THE BRIDGE SURFACE AND ITS FOUR OBJECT-VALUED NAMESPACES — the census that supports the
  *  "NO live channel" clause, restated by the `§6.2` audit's `A-F1` (`FIXED`). The `security`
  *  namespace alone is NOT the bridge: `store` (the tier-1 file-store bridge, wired through
- *  `STORE_FILE_PUT` into main's own handler) and `module` are page-reachable too, and a census
+ *  `STORE_FILE_PUT` into main's own handler), `module` and `tabs` (the tab record's crossing,
+ *  three named routes plus its change push, `D-63`) are page-reachable too, and a census
  *  that stopped at `security` could not support the clause. `Function.length` is read as well
  *  and is expected to be `0` for EVERY member — the `contextBridge` proxy does not expose arity,
  *  so the census records that fact rather than resting on it. */
@@ -922,8 +934,8 @@ const bridgeCensus = await cdp.evaluate(`(function(){
  *  the declared set is compared by SET EQUALITY, so an unknown object-valued member FAILS the row
  *  (it is an un-censused channel until a pass declares and drives it) rather than reddening
  *  nothing. MEASURED at this HEAD: the four string/function plumbing members
- *  (`ready`/`onRequest`/`sendReply`/`notify`) are filtered out and exactly three object-valued
- *  namespaces remain. */
+ *  (`ready`/`onRequest`/`sendReply`/`notify`) are filtered out and exactly four object-valued
+ *  namespaces remain (`module`/`security`/`store`/`tabs`). */
 const bridgeNamespaces = Object.entries(bridgeCensus?.namespaces ?? {}).map(([k, v]) => (v.present !== false ? k : null)).filter((k) => k !== null).sort()
 const bridgeNamespaceUnknowns = bridgeNamespaces.filter((k) => !BRIDGE_NAMESPACES_DECLARED.includes(k))
 const bridgeNamespaceMisses = BRIDGE_NAMESPACES_DECLARED.filter((k) => !bridgeNamespaces.includes(k))
@@ -943,10 +955,10 @@ const bridgeNamespaceMisses = BRIDGE_NAMESPACES_DECLARED.filter((k) => !bridgeNa
  *  the round-trip term can no longer bypass either:
  *    `bridgeNamespaceCensusUnreadable` — the census could NOT BE TAKEN (`window.provident` absent,
  *      or the whole walk enumerated ZERO object-valued namespaces, which cannot be a reading about
- *      the declared three) → the row reads `MANUAL` (rule 2: a broken instrument manufactures
+ *      the declared four) → the row reads `MANUAL` (rule 2: a broken instrument manufactures
  *      neither direction).
  *    `bridgeNamespaceCensusDirty` — the census WAS readable and its namespace set is NOT equal to
- *      the declared three (`unknown`/`missing` non-empty) → the row reads **`FAIL`**, whatever the
+ *      the declared four (`unknown`/`missing` non-empty) → the row reads **`FAIL`**, whatever the
  *      round-trip term says (rule 1: every computed term the evidence claims is IN the predicate).
  *  The two are mutually exclusive by construction, and `bridgeNamespaceCensusOk` is retained as the
  *  conjunction so the printed term keeps its `B-F15` meaning. */
@@ -976,7 +988,7 @@ const scA01Verdict = bridgeNamespaceCensusUnreadable ? 'MANUAL'
   : bridgeNamespaceCensusDirty ? 'FAIL'
     : (arbitraryRoundTripped ? 'PASS' : 'FAIL')
 check('SC-A-01 (Family A, arm a-i) — THE MAIN-SIDE RENDERER BRIDGE', 'REQUIREMENT ARM (a-i): an ARBITRARY caller-named datum can be written to and read back from tier 4 through the main-side renderer bridge — MEASURED: it cannot; the bridge is not name-addressed and the write is dropped', scA01Verdict,
-  `NAMED TERMS: the ARM is MET iff the live read-back carries the caller's own key; the row's census clause CARRIES BOTH of its states as terms, each read BEFORE the round-trip term: an UNREADABLE census (window.provident absent, or ZERO object-valued namespaces enumerated) reads MANUAL, and a READABLE but DIRTY census (unknown/missing non-empty) reads FAIL whatever the round-trip says (the A3-02 split — before it, a fourth namespace read PASS whenever the round-trip succeeded). bridge top-level keys=${JSON.stringify(bridgeCensus?.topKeys)}, the object-valued namespaces READ OFF THE LIVE OBJECT=${JSON.stringify(bridgeNamespaces)} vs DECLARED=${JSON.stringify(BRIDGE_NAMESPACES_DECLARED)} (unknown=${JSON.stringify(bridgeNamespaceUnknowns)}, missing=${JSON.stringify(bridgeNamespaceMisses)}, censusUnreadable=${bridgeNamespaceCensusUnreadable}, censusDirty=${bridgeNamespaceCensusDirty}, censusOk=${bridgeNamespaceCensusOk} — the B-F15 SET-EQUALITY term, now in the predicate as TWO terms so a FOURTH page-reachable namespace reddens the row in EITHER live state), their members and Function.length arities=${JSON.stringify(bridgeCensus?.namespaces)}; a live set({myNewField:'COMPLIANCE-ARBITRARY-DATUM'}) answered ${JSON.stringify(arbitraryNameWritten?.setAnswer)}; the live get() AFTER it answered ${JSON.stringify(arbitraryNameReadBack)}; arbitraryKeyRoundTripped=${arbitraryRoundTripped}; rowVerdict=${scA01Verdict}. THE CHANNEL CENSUS, so "ANY live channel" is answered and not assumed — and RESTATED by the §6.2 audit's A-F1 over the THREE BRIDGE NAMESPACES rather than the security namespace alone: (i) security={${(bridgeCensus?.namespaces?.security?.members ?? []).join(',')}} with no name-addressed member; (ii) store={${(bridgeCensus?.namespaces?.store?.members ?? []).join(',')}} — the tier-1 FILE bridge, DRIVEN at SC-A-06 with a secure.-keyed payload and a secure.-looking name, because a name-parameterised put() exists there and was NEVER probed by this battery's first draft; (iii) module={${(bridgeCensus?.namespaces?.module?.members ?? []).join(',')}} (operator-only, main->renderer->main); (iv) the generic surface's six name-addressed members, driven at SC-A-02; (v) the live MCP tool set, censused against the landed ALL_TOOLS at SC-C-02. Every bridged member reports Function.length=0, so no census here rests on arity. NO live channel accepts an arbitrary tier-4 name`,
+  `NAMED TERMS: the ARM is MET iff the live read-back carries the caller's own key; the row's census clause CARRIES BOTH of its states as terms, each read BEFORE the round-trip term: an UNREADABLE census (window.provident absent, or ZERO object-valued namespaces enumerated) reads MANUAL, and a READABLE but DIRTY census (unknown/missing non-empty) reads FAIL whatever the round-trip says (the A3-02 split — before it, a fourth namespace read PASS whenever the round-trip succeeded). bridge top-level keys=${JSON.stringify(bridgeCensus?.topKeys)}, the object-valued namespaces READ OFF THE LIVE OBJECT=${JSON.stringify(bridgeNamespaces)} vs DECLARED=${JSON.stringify(BRIDGE_NAMESPACES_DECLARED)} (unknown=${JSON.stringify(bridgeNamespaceUnknowns)}, missing=${JSON.stringify(bridgeNamespaceMisses)}, censusUnreadable=${bridgeNamespaceCensusUnreadable}, censusDirty=${bridgeNamespaceCensusDirty}, censusOk=${bridgeNamespaceCensusOk} — the B-F15 SET-EQUALITY term, now in the predicate as TWO terms so a FIFTH page-reachable namespace reddens the row in EITHER live state — the fourth, tabs, is declared since 2026-11-01), their members and Function.length arities=${JSON.stringify(bridgeCensus?.namespaces)}; a live set({myNewField:'COMPLIANCE-ARBITRARY-DATUM'}) answered ${JSON.stringify(arbitraryNameWritten?.setAnswer)}; the live get() AFTER it answered ${JSON.stringify(arbitraryNameReadBack)}; arbitraryKeyRoundTripped=${arbitraryRoundTripped}; rowVerdict=${scA01Verdict}. THE CHANNEL CENSUS, so "ANY live channel" is answered and not assumed — and RESTATED by the §6.2 audit's A-F1 over the FOUR BRIDGE NAMESPACES rather than the security namespace alone: (i) security={${(bridgeCensus?.namespaces?.security?.members ?? []).join(',')}} with no name-addressed member; (ii) store={${(bridgeCensus?.namespaces?.store?.members ?? []).join(',')}} — the tier-1 FILE bridge, DRIVEN at SC-A-06 with a secure.-keyed payload and a secure.-looking name, because a name-parameterised put() exists there and was NEVER probed by this battery's first draft; (iii) module={${(bridgeCensus?.namespaces?.module?.members ?? []).join(',')}} (operator-only, main->renderer->main); (iv) tabs={${(bridgeCensus?.namespaces?.tabs?.members ?? []).join(',')}} — the tab record's crossing (D-63), censused here and DRIVEN by its own battery (tests/integration/store-tabs-record/crossing.test.ts); (v) the generic surface's six name-addressed members, driven at SC-A-02; (vi) the live MCP tool set, censused against the landed ALL_TOOLS at SC-C-02. Every bridged member reports Function.length=0, so no census here rests on arity. NO live channel accepts an arbitrary tier-4 name`,
   'the authority is the architect\'s clause (1) in docs/decisions.md `SECURE-TIER-IS-A-FILESTORE-PEER`: tier 4\'s ONLY distinctions from the `file` tier are "its FILE, its NO-LOWER-TIER-ALIAS rule and its ACCESS-CONTROL POLICY", with the shape "OPENED to arbitrary data keyed by the app\'s own subsystems". The landed three-member patch surface is the FOURTH distinction the same row says a pass must "surface rather than enforce". THIS ROW IS DELIBERATELY WRITTEN AS THE REQUIREMENT ARM: a PASS would mean an arbitrary datum round-tripped through the tier\'s own store API, which is the only admissible form of a Family A pass. ITS CENSUS CLAUSE IS NOW SUPPORTED BY A DRIVEN PROBE OF EVERY NAMESPACE, not by a member list — the `§6.2` audit\'s `A-F1` found the `store` namespace unprobed and every row still green, which is why SC-A-06 exists; and the NAMESPACE SET is itself a predicate term since the second audit\'s `B-F15` — **AND SINCE THE THIRD AUDIT\'S `A3-02` THAT TERM IS TWO TERMS READ BEFORE THE ROUND-TRIP: a fourth object-valued member used to redden nothing when the round-trip succeeded, and a readable-but-dirty census used to read `MANUAL` (which moves neither the exit code nor an arm count) while the prose claimed it FAILS the row. BOTH ARE CLOSED HERE, and the code comment, `§4d` rules 1/2 and this cell now say the same thing.** **⟶ AND THIS ROW CARRIES TWO FAIL DIRECTIONS UNDER ONE ID, WHICH IS DECLARED HERE RATHER THAN LEFT TO BE INFERRED (the FOURTH `§6.2` audit\'s `A4-06`, INFO, disposed `DECLARED`): (i) the REQUIREMENT direction — `arbitraryRoundTripped === false` means `S2`\'s requirement ("an arbitrary caller-named datum can be written to and read back from tier 4") is UNMET, which is why this row is one of Family A\'s four REQUIREMENT arms; and (ii) the CHANNEL-NAMESPACE CENSUS direction — `bridgeNamespaceCensusDirty === true` means a page-reachable namespace set that is NOT the declared three (a fourth namespace, or a declared one gone), which the `A3-02` remedy deliberately makes redden THIS row whatever the round-trip says, so that it cannot hide behind a successful round trip. THE CONSEQUENCE IS NAMED: **A DIRTY CENSUS THEREFORE FAILS A ROW THAT CARRIES FAMILY A\'S VERDICT** (the family verdict is derived from the ARMS `SC-A-01/02/04/05`, and this row is charged to that bucket), so a channel-census regression moves the family\'s FAIL/arm count and is not reported as a leak-class finding beside it. `A3-02`\'s remedy INTENDS this, and the two directions are NOT separately id\'d: a split id would remove a census regression from beneath the requirement arm\'s own line, which is the opposite of the repair. Both directions are printed as separate NAMED TERMS (`censusUnreadable`/`censusDirty`/`censusOk`/`arbitraryKeyRoundTripped`/`rowVerdict`) in this row\'s observation, so a later auditor can read which one moved the verdict (`§4` carries the same declaration).**')
 
 const genericSecure = await driveGenericSurface(cdp, 'secure.operator.token')
@@ -1205,6 +1217,12 @@ check('SC-B-04 (Family B, arm c) — THE TIER-SHAPE HALF', 'the persisted RECORD
  *  (`docs/L2/security-store-storeroom/interface.md` §2.1; `behaviour.md` §2's last row; `persistence.md`
  *  §5). The mechanism itself is the package's own declared save and is NOT witnessed by any live term
  *  here — that limit is stated at the row rather than papered over. */
+// **THIS ROW'S EVIDENCE CELL CARRIED AN INSTRUMENT DEFECT THAT KILLED THE RUN, FIXED 2026-11-01.** It
+// interpolated `${path}` — an identifier that has never existed in this file — so evaluating the cell threw
+// `ReferenceError: path is not defined` at module evaluation and NO ROW BELOW IT (`SC-B-06` … `SC-CLEAN-01`)
+// reached a verdict at all: a battery that dies mid-row states nothing about the rows it never read, and the
+// historical staging name it was quoting is now printed literally. Measured at `0a22290` and, on a scratch
+// worktree, at `cb5fde4` and `cdbbd7e` — the same abort at all three.
 const residueA = tmpResidueCensus(bootA.profile)
 // CONTROL-TMP: seed a residual at the REAL path and re-run the SAME predicate.
 writeFileSync(join(bootA.profile, TMP_RESIDUAL), JSON.stringify({ token: 'TORN-OR-RESIDUAL' }))
@@ -1226,7 +1244,7 @@ const secShaAfterTornRestore = sha256(join(bootA.profile, SECURITY_FILE))
 const residueTornRestored = tmpResidueCensus(bootA.profile)
 const tornRestoreByteIdentical = secShaBeforeTorn === secShaAfterTornRestore
 check('SC-B-05 (Family B, arm d)', 'the write leaves NO residual `${path}.tmp` at the real path and the real path always PARSES after a real write — the OBSERVABLE shape of the store\'s save on the live profile (the MECHANISM itself is the package\'s own declared save and is witnessed by no live term here)', residueA.ok ? 'PASS' : 'FAIL',
-  `NAMED TERMS: residuals=${JSON.stringify(residueA.residuals)}, realPathParses=${residueA.realPathParses}, realPathKeys=${JSON.stringify(residueA.realPathKeys)}, tornOrUnparsable=${residueA.tornOrUnparsable}; the real path read is <profile>/${SECURITY_FILE} (the instance's own file, C-4). **THE STATIC MECHANISM WITNESS IS RETIRED WITH THE STORE MODULE (E-1, D-16): the four source terms it printed — mkdirSync, the ${path}.tmp stage, fsync and renameSync, read out of the deleted module's bytes — no longer have a file to read, so the mechanism half is NOT witnessed by any live term here.**`,
+  `NAMED TERMS: residuals=${JSON.stringify(residueA.residuals)}, realPathParses=${residueA.realPathParses}, realPathKeys=${JSON.stringify(residueA.realPathKeys)}, tornOrUnparsable=${residueA.tornOrUnparsable}; the real path read is <profile>/${SECURITY_FILE} (the instance's own file, C-4). **THE STATIC MECHANISM WITNESS IS RETIRED WITH THE STORE MODULE (E-1, D-16): the four source terms it printed — mkdirSync, the \${path}.tmp stage, fsync and renameSync, read out of the deleted module's bytes — no longer have a file to read, so the mechanism half is NOT witnessed by any live term here.**`,
   '**RE-GRAINED UNDER C-4 and the retired term DROPPED, its claim kept:** the rebuild declares that **nothing is created beside the file — no `.tmp`, no lock, no sidecar and no second written name, at construction or at any later write** (`docs/L2/security-store-storeroom/interface.md` §2.1; `behaviour.md` §2). A torn file does not parse, so `realPathParses` is the torn-file term and it is read from the real path\'s OWN bytes — and since the §6.2 audit\'s A-F10, BOTH halves of this predicate are driven toward failure by a live control. **WHAT THIS ROW DOES NOT PROVE, STATED AT THE ROW (the second audit\'s `B-F9`) and now WIDER than before: residue + parseability are CONSISTENT WITH a non-atomic overwrite, and the writer is the package\'s native save, so NO live term here witnesses the mechanism — that half is the package\'s own contract (read, never edited, `D-5`) and the `[T]`-layer suite, NOT this battery. OWNER of a live mechanism witness: the package\'s own battery**')
 check('SC-B-06 (CONTROL-TMP + CONTROL-TORN)', 'CONTROL: with a residual `.tmp` seeded at the real path the SAME predicate REFUSES it, and with deliberately TORN bytes at the real path the SAME predicate REFUSES that too — and after each is removed/restored it passes again, so neither half of SC-B-05 is a predicate that cannot fail', (residueControl.ok === false && residueControl.residuals.length === 1 && residueRestored.ok === true && residueTornControl.ok === false && residueTornControl.realPathParses === false && residueTornControl.tornOrUnparsable === true && tornRestoreByteIdentical === true && residueTornRestored.ok === true) ? 'PASS' : 'FAIL',
   `NAMED TERMS: with ${TMP_RESIDUAL} seeded — residuals=${JSON.stringify(residueControl.residuals)}, predicate=${residueControl.ok}; after removal — residuals=${JSON.stringify(residueRestored.residuals)}, predicate=${residueRestored.ok}; with TORN bytes ('{"token:') at the real path — realPathParses=${JSON.stringify(residueTornControl.realPathParses)}, tornOrUnparsable=${JSON.stringify(residueTornControl.tornOrUnparsable)}, realPathKeys=${JSON.stringify(residueTornControl.realPathKeys)}, predicate=${JSON.stringify(residueTornControl.ok)}; after the exact prior bytes were restored — sha256 byte-identical=${tornRestoreByteIdentical} (${secShaBeforeTorn.slice(0, 16)}… → ${secShaAfterTornRestore.slice(0, 16)}…), predicate=${JSON.stringify(residueTornRestored.ok)}`,
