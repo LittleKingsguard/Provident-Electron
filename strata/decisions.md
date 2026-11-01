@@ -1480,3 +1480,44 @@ own address — and returns **the op its write landed**, `{ok: true, op: receipt
 - **A repair should leave ONE legal record.** A repair correcting only its own field hands the re-run a record that still
   violates the others, and each repair nests another until the restart budget (`RESTART_LIMIT` 3) is spent. The GATE
   stays one pair per invariant — the refusal's sentence must name the field — while every repair heals the whole record.
+
+---
+
+## D-68 — `provident-storeroom` moves to 1.6.2, and the repair's return contract reaches the artifacts it ships
+
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** measurement — the published `1.6.2` installed and read at its own bytes
+this date (its `RELEASE-NOTES.md` §1.6.2, `README.guide.md` §7.6 and §7.2's clause stamped 2026-11-02, `index.d.ts`'s
+`Constraint` docblock), plus a drive of the guide's own example through the published entry.
+
+**Decision:** the consumed package is **`provident-storeroom ^1.6.2`**, up from `^1.6.1`, and every in-repo pin of the
+reviewed version moves with it — `package.json` and `package-lock.json`, `tests/storeroom-surface.test.ts`'s `S-1.3`,
+`brief.md` §2's pinned row, and the census header in `src/main/storeroom.ts`.
+
+- **The caret already admitted it and the pin moved anyway**: `^1.6.1` resolved to `1.6.2` the day it published, so nothing
+  here needed a repo change to receive it — the pin is a **reviewed** pin (D-41's site), not a resolution floor.
+- **The eleven cells moved together, none left behind**: the manifest's `version`, its five exact `optionalDependencies`
+  pins and the five `platforms/*/package.json` versions all read `1.6.2`, and the lock carries all six at `1.6.2`.
+- **What a consumer sees change**, each an item of the package's own `RELEASE-NOTES.md` §1.6.2 change list: a pair whose
+  PARENT does not resolve is **skipped, not asked**; a pair whose parent resolves is applied **even where the parent holds a
+  leaf**; `ConstraintListInvalid` answers the **malformed list alone**; a repair at a **registration instant can write**
+  through a `write` on its own record, taking the store write's first three positions and **no fourth**; the re-run after a
+  repair **always runs**; `value` on a registration record is read **once**; a `rollback`'s judgement reads the same rule.
+  **The one member added is not on the store** — `write` rides the repair's record at that instant — so the store's own census
+  reads **14, unmoved**.
+- **Two costs the release declares rather than leaving to bug reports**: a pair at a deep address no longer guards its
+  ANCESTOR's removal (to guard a container, register AT the container), and a construction refused for a well-formed pair with an absent parent now stands.
+- **What 1.6.2 discharges for this repo is a citation, not a behaviour.** The app's four tab-record pairs stand at `['tabs']`,
+  whose parent is the register and always resolves, and their repairs already name the commit at `write`'s fourth position
+  and answer `{ok: true, op}` — so none of the seven arms moves them, and the suite is unmoved at `3,247` tests.
+- **The repair's `{ok: true, op}` return contract is now documented in the shipped artifacts**: `README.guide.md` §7.6 declares the
+  closed two-arm set with a worked example and §7.2's 2026-11-02 clause declares the registration instant's write route, and
+  `index.d.ts`'s `Constraint` docblock declares both — so **D-67's *"documented nowhere a consumer can read it"* is read through this row.**
+- **So is the "name the commit at `write`'s fourth position" rule** — the guide's example carries it at its own line and the
+  docblock at its own — so D-67's practice is no longer folklore this repo alone holds.
+- **What 1.6.2 does NOT deliver, said so it is not read as done:** `Constraint` is **still** `(context: unknown) => unknown`,
+  so the return is prose in a docblock and not a type a consumer can annotate; and the `produced no op` sentence **still names
+  the attempt's address**, the release naming that a recorded defect row with *"no successor queued"*.
+- **Both halves are measured, not read** (2026-11-01, the installed `1.6.2`): the guide's §7.6 block driven on its own bytes
+  answers `{"opId":"op-3","address":["b"]}` with `read(['a'])` `2`, while the same body returning `undefined` is refused
+  `the repair two-goes-elsewhere produced no op at a` and its own write stands at `b` — `ST-F1` discharged at its evidence,
+  `ST-F2` narrowed to what is still owed (`records/store-tabs-record-unit.md` §1, `pending.md`).
