@@ -31,10 +31,11 @@ stand must not take the app's boot with it).
 
 ## 3. The three verbs, and the two that are not verbs
 
-`read()`, `commit(row)` and `onChanged(handler)` are the surface's whole public surface. Two more exist and are named so no
-reader looks for them: **there is no `delete`** (a tab leaves by being absent from `order`, and the store's own removal is the
-constraint's corrective write, not a caller's), and **there is no `journal`** (the record's history is the package's, and a
-second reader of it would be a second opinion about the record's past).
+`read()`, `commit(row)`, `remove(id)` and `onChanged(handler)` are the surface's whole public surface. **`remove` is the
+fourth and it is a caller's act** (rev 4, 2026-10-30): the renderer's close deletes the entry's own address and reports its
+receipt, and no arrangement of the other three routes can express that — `commit` writes a whole row and cannot unsay one.
+One verb is still absent and named so no reader looks for it: **there is no `journal`** (the record's history is the
+package's, and a second reader of it would be a second opinion about the record's past).
 
 ## 4. The constraint — the engine's gate, and the boundary's repair
 

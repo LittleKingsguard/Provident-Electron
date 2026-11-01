@@ -47,12 +47,19 @@ routes, no fourth:
 |---|---|---|
 | `tabs.read()` | none | `{ status: 'committed'; rows: readonly TabRow[]; order: readonly string[]; landing: string }` or the refusal arm |
 | `tabs.commit(row: TabRow)` | one tab's whole record, by name | `{ status: 'committed'; cursor: number }` or the refusal arm |
+| `tabs.remove(id: string)` | one tab's id | `{ status: 'committed'; cursor }` or the refusal arm |
 | `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else |
 
 **`tabs.read` takes no argument** because the record is one document: a whole-record read is the only shape the instance
 offers that cannot half-succeed. **`tabs.commit` names its tab** and never a path — the renderer must not compose an
 address, which is the property that keeps the crossing from becoming a generic store proxy (D-63's reason for a third
 instance rather than a widened `data.*`).
+
+**`tabs.remove` is the fourth route** (added 2026-10-30 after attempting the renderer's port found that a close could
+not be expressed): it deletes the entry's own address and rewrites the order seat without it — **the order seat first
+without the id, because a removal that left the id in `order` is the state the constraint refuses.** A delete that removes
+nothing is the store's own **success** (`tiers: []`, `guide §5.3`), so a repeat close answers `committed` rather than
+refusing: the tab was already gone and the record already said so.
 
 **`tabs.onChanged` is the event generator**: the instance's own listener delivers the triggered address, and the renderer
 re-reads rather than being handed the value — the delivery argument is an address, not a payload (`guide §6.4`).
