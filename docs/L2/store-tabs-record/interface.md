@@ -91,9 +91,10 @@ it as a failure would refuse a write the store accepted.
 **The five constraint sentences a caller can receive** (each repaired, never left standing): *the tab record does not
 stand* · *the tab record carries more than one active tab* · *a tab carries no title* · *a tab contains no data object* ·
 *a tab carries no last-active stamp*. Each names the thing it is about, because that is how a caller learns what broke; the
-first names the record's **existence** and is the one a caller never reads from a `commit`, since a write at `['tabs']`
-creates what it writes — it reaches a caller only where an act finds the address gone (a `delete` at the root, or the
-instance's own construction refusal).
+first names the record's **existence**, and it is the one a caller does not read from a `commit` or a `delete`: a write at
+`['tabs']` creates what it writes, and a `delete` at the root is answered as the store's own success while the repair
+re-creates the record in the same commit (measured 2026-11-01: `tiers: ['file']`, and the read after it holds the landing
+page again). It reaches a caller as a refusal only where the registration's own repair could not land the record.
 
 ## 4. The constraint moves to the instance
 

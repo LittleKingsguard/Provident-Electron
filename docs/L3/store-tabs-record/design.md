@@ -122,7 +122,9 @@ an empty record with no `landing` seat (D-69). `tabs-must-stand` makes existence
 - **Consequence, carried and not absorbed: a fresh record carries the landing tab.** `read()` answers
   `order: ['tabs-landing-page']`, that entry active, before any commit — and the first commit APPENDS to that record
   instead of creating the root. Nothing in the module depended on the old emptiness: every route reads the record as it
-  stands and writes it whole.
+  stands and writes it whole. **And the root cannot be deleted out from under the app**: measured 2026-11-01, a
+  `delete(['tabs'])` is answered as the store's own success while the existence pair's repair re-creates the record inside
+  the same commit, so the address the record is read at is an invariant at both ends.
 
 **A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store
 says, rather than being told what to think.
