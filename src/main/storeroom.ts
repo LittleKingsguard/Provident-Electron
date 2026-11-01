@@ -14,7 +14,7 @@
 //    Until one is, this seam constructs a store and hands it to whoever asked; it wires nothing.
 //
 // THE DECLARED SURFACE BELOW IS A CENSUS, NOT A DERIVATION. Every entry was measured against the
-// installed package (`provident-storeroom@1.6.1`, `Object.getOwnPropertyNames(store)` → 14 string
+// installed package (`provident-storeroom@1.6.2`, `Object.getOwnPropertyNames(store)` → 14 string
 // members in this order, 11 own symbols) during the 1.6.x review. `tests/storeroom-surface.test.ts`
 // pins it: a version bump that adds, removes or re-orders a member reddens that row HERE, in a
 // message that names the drift, rather than surfacing as an undefined-is-not-a-function somewhere
