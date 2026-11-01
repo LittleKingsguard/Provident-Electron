@@ -1433,3 +1433,24 @@ row — the store is needed at boot and its file is created there, by design.
 
 **What it costs, named:** every module's constraint must be a **declaration** rather than a constructor call, the ids must
 be unique across the whole app, and a module that wants a listener declares it instead of subscribing for itself.
+
+---
+
+## D-66 — The tab watch fires on a SUB-PROPERTY write, and the body reads the object
+
+**Status:** ACTIVE · **Date:** 2026-10-30 · **Source:** the user's instruction, verbatim — "The tab watch should trigger
+when a sub-property is written, because that changes the object read from tabs", and "watch tabs, read the tab object
+within the constraint, and then file the repair using that information".
+
+**Decision:** a constraint pair at `['tabs']` is triggered by a write to **any sub-property under it** — `['tabs','order']`,
+`['tabs', <id>]` — because such a write **changes the object the pair reads at its own address**. The body's job is then
+exactly three acts: **watch `tabs`**, **read the tab object** (the record as the store serves it), and **file the repair from
+that reading**.
+
+- **The record may therefore stay split across the addresses the module writes** — an `order` seat and one leaf per tab —
+  without the pair needing a per-leaf arrangement. What the pair reads is the whole object, and what changes it is the write.
+- **`exactly-one-active` is expressible this way and could not be expressed otherwise**: it is a fact about the whole set, so
+  it needs the whole object, which is what the pair's own address gives it.
+- **Consequence for this module's implementation**: a split layout is legitimate, and the failure measured tonight — every
+  `commit` answering `refused` — is therefore a **defect in this module's constraint/repair convergence**, not evidence that
+  the layout is wrong. The repair must leave a record the very next evaluation passes; tonight's does not.
