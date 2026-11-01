@@ -4,4 +4,5 @@
 
 export const IPC_TABS_READ = 'provident:tabs:read'
 export const IPC_TABS_COMMIT = 'provident:tabs:commit'
+export const IPC_TABS_REMOVE = 'provident:tabs:remove'
 export const IPC_TABS_CHANGED = 'provident:tabs:changed'

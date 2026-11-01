@@ -27,7 +27,7 @@ import {createTabsSurface} from './tabs-surface/index.js'
 import {tabsConstraintDeclarations} from './tabs-record/index.js'
 import {createProfileStore} from './storeroom.js'
 import {PROFILE_FILE_NAME} from './data/store.js'
-import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
+import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
 // names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
@@ -372,6 +372,7 @@ async function main(): Promise<void> {
   // The surface's shape arm answers `malformed-row` before any store verb; nothing here inspects the argument.
   ipcMain.handle(IPC_TABS_READ, () => tabsSurface.read())
   ipcMain.handle(IPC_TABS_COMMIT, (_event, row: unknown) => tabsSurface.commit(row))
+  ipcMain.handle(IPC_TABS_REMOVE, (_event, id: unknown) => tabsSurface.remove(id))
   // the change push: one subscription, taken here so the window's teardown can withdraw exactly what it took
   tabsSurface.attach()
   ipcMain.handle(IPC_SECURITY_GET, () => settingsSurface.read())

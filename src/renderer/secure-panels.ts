@@ -81,6 +81,13 @@ declare global {
           cursor?: number
           repaired?: boolean
         }>
+        remove(id: string): Promise<{
+          status: 'committed' | 'refused'
+          reason?: string
+          message?: string
+          address?: readonly (string | number)[] | null
+          cursor?: number
+        }>
         onChanged(handler: () => void): () => void
       },
       module?: {

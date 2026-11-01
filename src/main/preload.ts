@@ -7,7 +7,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
 import type { TabsRecordRow } from '../shared/types.js'
-import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
+import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (erased at build; no runtime coupling). The WIDENING is an intersection at the declaration
@@ -77,6 +77,7 @@ export interface ProvidentBridge {
   tabs: {
     read(): Promise<{ status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }>
     commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number; repaired?: boolean }>
+    remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number }>
     onChanged(handler: () => void): () => void
   },
   store: {
@@ -153,6 +154,9 @@ const bridge: ProvidentBridge = {
     },
     commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number; repaired?: boolean }> {
       return ipcRenderer.invoke(IPC_TABS_COMMIT, row)
+    },
+    remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; cursor?: number }> {
+      return ipcRenderer.invoke(IPC_TABS_REMOVE, id)
     },
     onChanged(handler: () => void): () => void {
       const listener = (): void => handler()

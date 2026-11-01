@@ -45,6 +45,10 @@ export interface TabsRecordOptions {
 export interface TabsRecord {
   read(): TabsRecordReading | TabsRecordAnswer
   commit(row: TabsRecordRow): TabsRecordAnswer
+  /** **REMOVE A TAB** (L2 §2's fourth route): the entry's own address is deleted, and the `order` seat is rewritten
+   *  without it. A delete that removes nothing is the store's own SUCCESS (`tiers: []`, `guide §5.3`) — the tab was
+   *  already absent, so the answer says so rather than refusing. */
+  remove(id: string): TabsRecordAnswer
   subscribe(handler: () => void): () => void
 }
 
@@ -413,6 +417,30 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
           reason,
           message: caught instanceof Error ? caught.message : 'the store refused the tab record',
           address: ['tabs', row.id],
+        }
+      }
+    },
+    remove(id: string): TabsRecordAnswer {
+      if (typeof id !== 'string' || id.length === 0) {
+        return { status: 'refused', reason: 'malformed-row', message: MALFORMED_ROW_MESSAGE, address: null }
+      }
+      const { order } = seats()
+      try {
+        // THE ENTRY'S OWN ADDRESS FIRST, then the order seat without it: a removal that left the id in `order` would be
+        // the state the constraint refuses, and the crossing removes its own seats rather than asking the engine to.
+        const receipt = standing.delete(['tabs', id], 'file') as unknown
+        const next = order.filter((other) => other !== id)
+        if (next.length !== order.length) standing.write(TABS_ORDER_ADDRESS, 'file', next)
+        const cursor = plain(receipt) && typeof receipt['cursor'] === 'number' ? receipt['cursor'] : undefined
+        return { status: 'committed', ...(cursor === undefined ? {} : { cursor }) }
+      } catch (caught) {
+        return {
+          status: 'refused',
+          reason: caught instanceof Error && typeof (caught as { status?: unknown }).status === 'string'
+            ? String((caught as { status?: unknown }).status)
+            : 'refused',
+          message: caught instanceof Error ? caught.message : 'the store refused the tab removal',
+          address: ['tabs', id],
         }
       }
     },

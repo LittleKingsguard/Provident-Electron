@@ -14,6 +14,8 @@ export type TabsReadAnswer =
 export interface TabsSurface {
   read(): TabsReadAnswer
   commit(row: unknown): TabsRecordAnswer
+  /** L2 §2's fourth route: a tab leaves by name, and the order seat is rewritten without it. */
+  remove(id: unknown): TabsRecordAnswer
   attach(): void
   detach(): void
 }
@@ -57,6 +59,14 @@ export function createTabsSurface(options: TabsSurfaceOptions): TabsSurface {
         return { status: 'refused', reason: 'malformed-row', message: 'the commit carries no tab id, or no plain record', address: null }
       }
       return record.commit(row as unknown as TabsRecordRow)
+    },
+
+    remove(id: unknown): TabsRecordAnswer {
+      // the shape arm before any store verb, as `commit`'s is
+      if (typeof id !== 'string' || id.length === 0) {
+        return { status: 'refused', reason: 'malformed-row', message: 'the removal names no tab id', address: null }
+      }
+      return record.remove(id)
     },
 
     /** The change push: one subscription, held here so `detach` can withdraw exactly what `attach` took. */
