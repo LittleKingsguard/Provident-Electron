@@ -1454,3 +1454,29 @@ that reading**.
 - **Consequence for this module's implementation**: a split layout is legitimate, and the failure measured tonight — every
   `commit` answering `refused` — is therefore a **defect in this module's constraint/repair convergence**, not evidence that
   the layout is wrong. The repair must leave a record the very next evaluation passes; tonight's does not.
+
+## D-67 — A repair NAMES the commit it was handed; the open-attempt hold is not a ban on the address
+
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's correction, verbatim — "Clarification: the ban on
+writes at an open attempt by a repair function".
+
+**Decision:** `KC-7` — *"a constraint attempt is already open at `tabs`; it is disposed of by its own K-3 and by no other
+act"* — is a ban on a **second `K-2` at the held address**, never a ban on that address. A repair is handed
+`{address, id, op, tier, value, pending}`, whose `pending` is the commit's own member (`surface.md §2.11` clause 6: the
+repair *"should be using the package surface functions … so that they can make their own write call use that commit"*);
+passing that context at `write`'s **fourth position** makes the repair's write **join** the open attempt, so it meets no
+hold and lands inside the same commit. A repair therefore writes wherever its correction belongs — including the attempt's
+own address — and returns **the op its write landed**, `{ok: true, op: receipt.op}`.
+
+- **Both halves are measured, not read** (2026-11-01, the installed `provident-storeroom@1.6.1`). Writing `['tabs']`
+  inside a pass opened at `['tabs']` **without** the commit was refused with that sentence and an empty `log`; the same
+  write **with** it answered `{op: {opId: 'op-2', seq: 2}}` and the pass re-ran green.
+- **The correction this row makes is mine, not the package's.** An earlier pass concluded from that refusal that terminal
+  acts must land on a descendant so the record root stayed free for the repair, and built two-step acts around it. That
+  conclusion was wrong, and the two-step acts are withdrawn: one whole record per act, terminal or repair.
+- **The `{ok: true, op}` return is not a preference either**: the kernel credits a repair only through `landedOp`, and a
+  `void` return carries "no op" (`KC-4`). That contract is documented nowhere a consumer can read it — filed upstream as
+  `ST-F2` (`strata/records/store-tabs-record-unit.md` §1), which is why this row states it here as well.
+- **A repair should leave ONE legal record.** A repair correcting only its own field hands the re-run a record that still
+  violates the others, and each repair nests another until the restart budget (`RESTART_LIMIT` 3) is spent. The GATE
+  stays one pair per invariant — the refusal's sentence must name the field — while every repair heals the whole record.
