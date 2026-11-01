@@ -5,18 +5,10 @@ Blocked work lives in `pending.md`; unasked ideas in `proposals.md`.
 
 | # | Work | Owner | Closed when |
 |---|---|---|---|
+| 1 | **Re-point the renderer at the crossing — the move's consumer half.** `src/renderer/renderer.ts` still owns the tab record in its own graph store (`TABS_CONSTRAINT` registered at construction, nine references to the tab machinery), and **nothing in `src/renderer/` calls `provident.tabs` at all** — so the record has two homes with no sync between them and the bridge member D-63/TABS added is currently unused by the UI (D-60's class: an unused crossing is a finding, not a spare). The renderer reads and commits through the bridge, the graph store's tab constraint and helpers retire, and the renderer's copy stops existing | `renderer-wiring`'s next writer, with `store-tabs-record`'s L2 for the hand-off | `grep 'provident.tabs' src/renderer/` is non-empty, `TABS_CONSTRAINT` is gone from `renderer.ts`, and the `panes` leg still reads 7/7 |
 |---|---|---|---|
-|---|---|---|---|
 
+What is left is `pending.md`'s five rows, and every one states what it waits on: the `data.*` answer sites and D-22's
+second half wait on admission, `A-4` waits on a reproduction, `strata-lint`'s record gap waits on the harness owner, and
+ST-F1 waits on the package's own documentation.
 
-The `§5.U` battery landed with its unit (D-62) and the suite is green — `scripts/strata-suite-reading.mjs` reads
-gating 0 / on notice 0, and `brief.md` §6 carries the reading (D-26).
-
-
-**Nothing is actionable at this head.** The adjudication is resolved: `.strata/returns/store-tabs-record-l2-resolution.json`
-answers it from the shipped package, `design.md` §4 is rev 2, and `streaks` is empty — the gate is the engine's, the repair
-is the boundary's, and both halves cite what declares them.
-
-**Nothing is actionable at this head.** D-65's boot order landed: the four tab constraints are collected declarations,
-the central store is constructed once with the batch, the tab record owns no instance and no file, and the written-name
-census is two.
