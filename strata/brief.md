@@ -85,7 +85,7 @@ wholesale ahead of the map (D-10).
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | **no failures** — `3,245 passed / 2 skipped` of `3,247` on a clean tree, over `122` test files — `89` flat + `33` nested, `node scripts/strata-walkthrough.mjs pins` | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | **no failures** — `3,246 passed / 2 skipped` of `3,248` on a clean tree, over `122` test files — `89` flat + `33` nested, `node scripts/strata-walkthrough.mjs pins` | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — five artifacts: `main.mjs`, `preload.cjs`, `standalone.mjs`, `battery-host.mjs`, `renderer.js` | the bundles exist at all |
