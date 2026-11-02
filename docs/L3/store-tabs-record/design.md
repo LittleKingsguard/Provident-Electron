@@ -1,7 +1,7 @@
 # L3 — `store-tabs-record`: the module design
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 8 — the crossing's structure, the record
-  root as an enforced invariant, and the change push standing at the record root itself, beside the five pairs.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 9 — the crossing's structure, the record root as
+  an enforced invariant, and the change push at the record root itself, beside the five pairs; rev 9 retires §1's and §2's pre-`D-64` description.
 - **Inputs:** `docs/L2/store-tabs-record/interface.md` rev 1 §1–§6; `docs/L1/store-tabs-record.md` rev 1 §1–§3.
 - **Ceiling:** 150 lines, class max (D-1) · **Status:** structure and guardrails; every declared name and its exact text
   is in `signatures.md`, which is what L4 transcribes (D-45).
@@ -12,25 +12,24 @@ The module is main-side and has no renderer code. Three files, and each exists b
 
 | File | Holds | Why it is separate |
 |---|---|---|
-| `src/main/tabs-record/index.ts` | the instance, its one file path, its two addresses, and the three verbs | the store's whole life is here, so the surface holds no store verb and `main.ts` holds no file path |
-| `src/main/tabs-surface/index.ts` | the surface module: the one reference, the constraint, the listener fan-out, the refusal mapping | the instance is constructed once, and the module that constructs it is the only one that can name it (the `settings-surface` arrangement, `docs/L1/security-store-storeroom.md` §4) |
-| `src/shared/tabs-channels.ts` | the two channel constants, single-sourced | a channel name spelled in two files is a rename that half-lands (`store-channels.ts`'s precedent) |
+| `src/main/tabs-record/index.ts` | the record over the APP'S ONE STORE: **three** address constants, **five** batched declarations and **four** routes — and no instance and no file of its own (D-64, D-65) | every write is one whole record at `['tabs']`, so the surface holds no store verb and `main.ts` holds no file path |
+| `src/main/tabs-surface/index.ts` | the surface module: the one reference to the record, the one subscription (`attach`/`detach`), the shape arm and the refusal mapping | the record is constructed once at boot, and this module is the only one that holds it (the `settings-surface` arrangement, `docs/L1/security-store-storeroom.md` §4) |
+| `src/shared/tabs-channels.ts` | the **four** channel constants, single-sourced | a channel name spelled in two files is a rename that half-lands (`store-channels.ts`'s precedent) |
 
-**One construction site, checked as an absence**: no file outside `tabs-surface/` may call the constructor, and no file the
-MCP stack reaches may spell the instance's file name. That is the isolation property this module shares with the operator's
-store, and it is asserted the same way (`docs/L1/security-store-storeroom.md` §6's `ISO-5`/`ISO-6`).
+**One construction site, and it is the boot's, not this module's**: no tabs file constructs an instance and none spells a `provident-*.json`
+name — measured 2026-11-02, `grep -rn "provident-.*\.json" src/main/tabs-record/ src/main/tabs-surface/ src/shared/tabs-channels.ts` is empty.
 
 ## 2. The instance, and what is not decided by this module
 
-The instance is `provident-storeroom`'s, created with one file path and no options of its own — the package owns the file's
-byte image, its journal, its rollback and its durability (`guide §9`). This module chooses **three** things and no more: the
-file name, the two addresses, and the constraint.
+The instance is `provident-storeroom`'s and it is the APP'S CENTRAL ONE (D-64): the boot constructs it with one file path and
+the batched `cfg.constraints`, and the package owns that file's byte image, its journal, its rollback and its durability
+(`guide §9`). This module constructs nothing and opens no file. It chooses **three** address constants — `TABS_RECORD_ADDRESS`,
+`TABS_ORDER_ADDRESS` and `TABS_LANDING_ADDRESS` — and **five** declarations (`tabsConstraintDeclarations`), and nothing else.
 
-**A construction that cannot stand is answered, not thrown.** The surface holds a nullable instance and every verb answers
-`FilePathUnreachable` while it is null — the shape `settings-surface` already uses for the same reason (a store that cannot
-stand must not take the app's boot with it).
+**A construction that cannot stand is not this module's arm.** No route answers `FilePathUnreachable`: measured 2026-11-02, `grep -rn
+'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/` is empty — the boot hands this module a store that already stands (D-65).
 
-## 3. The three verbs, and the two that are not verbs
+## 3. The four routes, and the one that is absent
 
 `read()`, `commit(row)`, `remove(id)` and `onChanged(handler)` are the surface's whole public surface. **`remove` is the
 fourth and it is a caller's act** (rev 4, 2026-10-30): the renderer's close deletes the entry's own address and reports its

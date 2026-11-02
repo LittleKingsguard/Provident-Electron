@@ -64,7 +64,7 @@ declare global {
         // body calls it and NEVER throws; a malformed request answers `applied: false`.
         setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
       }
-      // THE TAB RECORD'S CROSSING (D-63; `docs/L2/store-tabs-record/interface.md` §2): ONE member, THREE routes.
+      // THE TAB RECORD'S CROSSING (D-63; `docs/L2/store-tabs-record/interface.md` §2): ONE member, FOUR routes.
       // This copy and `src/main/preload.ts`'s are the same text in both files — the lockstep rule the `store`
       // and `security` members already follow. `read` takes no argument, `commit` names its tab and never a
       // path, and `onChanged` delivers that the record moved and never its value.

@@ -39,10 +39,10 @@ Its addresses are the L1 §1 family, unchanged by the crossing:
 The `file`-tier write is `provident-storeroom`'s, not this module's: the module writes no byte and parses no file
 (§2, `persistence.md`).
 
-## 2. The bridge member and its three routes
+## 2. The bridge member and its four routes
 
-`window.provident` gains **one** top-level member, `tabs`, shaped like the tier-1 `store` bridge it sits beside — three
-routes, no fourth:
+`window.provident` gains **one** top-level member, `tabs`, shaped like the tier-1 `store` bridge it sits beside — four
+routes, no fifth:
 
 | Route | Argument | Answer |
 |---|---|---|

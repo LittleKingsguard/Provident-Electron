@@ -69,7 +69,7 @@ export interface ProvidentBridge {
     get(): Promise<ModuleBridgeResult>
     setDisabled(name: string, disabled: boolean): Promise<ModuleBridgeResult>
   }
-  // THE TAB RECORD'S CROSSING (D-63, `docs/L2/store-tabs-record/interface.md` §2): ONE member, THREE routes.
+  // THE TAB RECORD'S CROSSING (D-63, `docs/L2/store-tabs-record/interface.md` §2): ONE member, FOUR routes.
   // `read` takes no argument because the record is one document; `commit` names its tab and never a path, so the
   // renderer cannot compose an address; `onChanged` delivers that the record moved and never its value. The
   // declaration below and `src/renderer/renderer.ts`'s copy are the same text in both files — the lockstep rule
