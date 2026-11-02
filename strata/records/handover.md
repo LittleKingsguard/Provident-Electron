@@ -48,3 +48,7 @@ walkthrough, and a session's first act is the first row of `next-steps.md` rathe
   commit hash once ate a row count in two L1 documents (D-3).
 - **Instruments before prose** (D-29, D-30, D-44): `strata-walkthrough.mjs` stages, checks and pins; `strata-marks.mjs` keeps markers and index
   agreeing — a finding a script should have caught indicts it. **Commit per gate**, never merge or push (D-6); four legs and `strata-lint`, run from `strata/`.
+- **`npm test` — not only the Electron legs — can leave process trees**, because the boot battery spawns Electron and a teardown lives only as long as
+  its vitest hooks. Check with `ps -eo pid,etime,args | grep -E 'node_modules/electron/dist|dist/main/main.mjs'` after a run: it must be empty. The
+  battery's teardown now SIGKILLs a boot's whole tree by process-tree walk, never by SIGTERM (Electron's main process ignores it), and **proves zero**,
+  failing loudly with every survivor listed; `reapProfile`'s old cmdline-only match could not see the two `--type=zygote` children at all (D-74).

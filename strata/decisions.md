@@ -1739,3 +1739,46 @@ it against the wrong op (`D-67`).
   TabsCommitCarrier | undefined` → `TS2578` *"Unused '@ts-expect-error' directive"* at the omission row while
   `npm run typecheck` over `src/**` stayed GREEN, so the catching leg is `typecheck:tests`; `commit: unknown` → three `TS2578`;
   restore → both clean.** The JOIN stays measured by the repair-answer row's credited op, the delivery row's ONE notification.
+
+---
+
+## D-74 — A boot battery's teardown SIGKILLs a boot's whole process TREE and PROVES zero; a bounded wait re-acquires only ABSENCE
+
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries — *"after `npm test` completes, no
+process naming this repository survives … treat SIGTERM as a courtesy and SIGKILL as the guarantee … verify zero and fail the
+teardown loudly if anything survives"* — plus the measurements below, on this head and this checkout.
+
+**Decision:** the boot battery's teardown **kills with SIGKILL, walks the process TREE (profile OR descent from a spawned root),
+repeats until a sweep finds nothing, and VERIFIES ZERO — failing loudly with every survivor listed.** SIGTERM is never load-bearing.
+And a bounded artifact wait **re-acquires only the ABSENCE class**: a content fault always reds the row.
+
+- **SIGKILL, because SIGTERM was measured not to work**: the reported survivor ignored SIGTERM for three seconds and needed SIGKILL.
+  The MCP SDK's `StdioClientTransport.close()` keeps its own `stdin.end()` → SIGTERM → SIGKILL ladder, which is a courtesy that lets a
+  clean app exit cleanly and reaches the MAIN process only, so the tree reap runs after it and is what guarantees the outcome.
+- **A TREE, because the cmdline cannot name the tree**: a live boot here is five processes and only three carry the scratch profile —
+  both `--type=zygote` children carry `--no-sandbox` and nothing else. They were reaped by INHERITANCE, which is exactly the guarantee
+  that is gone when the parent is the survivor. Membership is therefore the profile set UNION the descendants of every spawned root.
+- **NOT a process group**, and that is a measurement rather than a preference: `detached: true` plus a negative-pid kill was tried in
+  this repo and regressed the SDK stdio transport the handshake rows drive (`MCP error -32001`, `1 checks, 2 failures`;
+  `scripts/electron-spawn.mjs`'s own account of it). The tree is reaped, never grouped.
+- **`/proc`, because the old reaper's only failure path was silence**: `catch { return }` around a `ps` pipeline meant one unreadable
+  listing left the whole tree alive with the caller unable to tell "reaped" from "not reaped". The table is read from `/proc` (no
+  external binary, nothing on PATH to shadow, and an unreadable table THROWS); `ps` stays only as the fallback for a host without it,
+  with a buffer sized for a busy machine (measured here: 79-90 KB, so a 1 MB default would not have overflowed — but the *response to
+  any* failure was the defect, not its probability).
+- **Zero is PROVEN, and a survivor is a verdict.** `afterAll` reaps, removes the profiles only after the zero, and throws naming every
+  survivor. Measured with the sweeps disabled and one process left naming a profile: the file fails with
+  `4 process(es) SURVIVED … pid … (ppid …) …` while all eight rows pass — a leak is now a red file, not a directory someone finds later.
+  `process.on('exit')` is the net for the teardown that never runs (a killed worker, a rejected `beforeAll`), mirroring the one
+  `scripts/electron-spawn.mjs` already registers.
+- **And the waits, which are the same defect in another shape**: a bound that answers alone cannot tell "never happened" from "too
+  slow". The boot wait now reads the child's `error` and `close` as well, so a dead child reds AT ONCE naming its exit — measured: a
+  bundle that exits silently reds in 1.5 s with `EXITED (code 3, signal null) … "never", not "too slow"`, where a bundle that hangs
+  silently reds at the bound with `still ALIVE (pid …) … "too slow", not "never"`. The 60 s bound is kept and now has a stated margin:
+  the negative control's observable arrives at p95 83 ms over 15 boots, so the bound is ~720x it.
+- **The artifact read re-acquires ABSENCE and nothing else** (`arrangement.test.ts`'s own header already declared that rule and only
+  the existence poll implemented it). Reproduced before the fix: driving a concurrent `npm run build` at the row red `A-4` **2 of 4 runs**
+  at a +250 ms offset with `MODULE_NOT_FOUND` at its `--check`; after it, 0 of 16 across four offsets and 3 of 3 under a continuous
+  build loop. **The bite is kept and measured**: a preload that parses but never reaches `contextBridge` still reds `A-4`, and an
+  artifact carrying `var import_meta = {}` still reds `A-2`, `A-3` and `A-4`. A row that retried a content fault would be a row that
+  cannot fail, which is worth less than no row (the boundary rows are the reason these batteries exist, `D-27`).
