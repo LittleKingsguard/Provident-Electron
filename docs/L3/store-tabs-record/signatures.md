@@ -1,6 +1,6 @@
 # L3 — `store-tabs-record`: signatures
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 2 — every declared name and its exact text, transcribing `design.md` rev 9,
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 3 — every declared name and its exact text, transcribing `design.md` rev 10,
   **regenerated from the landed modules** on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
 - **Ceiling:** 150 lines, class max (D-1). `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
@@ -95,7 +95,7 @@ export function tabsConstraintDeclarations(getStore: () => TabsRecordStore | nul
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord
 ```
 
-The three address constants are `['tabs']`, `['tabs', 'order']` and `['tabs', 'landing']`; the exported ids are `'exactly-one-active'` and `'tabs-must-stand'`, and the batch adds
+The three address constants are `['tabs']`, `['tabs', 'order']` and `['tabs', 'landing']` — **the last the landing ENTRY's own leaf, not a seat** (design §2, D-76); the exported ids are `'exactly-one-active'` and `'tabs-must-stand'`, and the batch adds
 `'tab-has-title'`, `'tab-has-content'` and `'tab-has-lastActiveAt'` as literals — **five** declarations in all (design §4), of which this block declares the two exported ids.
 
 ## 3. `src/main/tabs-surface/index.ts` — the one reference

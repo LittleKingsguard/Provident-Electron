@@ -1824,3 +1824,34 @@ name on a different thing. **So the alignment is held rather than half-landed, a
   cheapest measured shape: derive the seat (`read()`'s `landing` member is already the fallback `landingOf` computes) and let
   `['tabs','landing']` mean the landing entry's leaf, exactly as the renderer's `file.tabs.landing` does. **Only then does the entry
   id move, and only then is the migration the ownership change this pass set out to hand over.**
+
+---
+
+## D-76 — The `landing` seat is DERIVED, not stored, so the family has ONE seat and the entry's id can be spelled
+
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's decision D-75 carries — the landing entry's id is `'landing'` —
+plus D-75's own four measurements, re-measured on this head before the change and again after it (2026-11-02).
+
+**Decision:** `['tabs','landing']` is **the landing ENTRY's own leaf and no longer a SEAT.** `composeRecord` writes the `order`
+array and one member per seated id and **no witness at all**; `landingOf` derives the witness — the landing entry's row when it
+reads active, else `order`'s active row — and `read()`'s `landing` member **is that derivation**. One namespace is left where
+there were two, which is what frees `landing` to be an entry's id. **The five pairs are unmoved**, and that is the test of the
+change rather than a hope: `exactly-one-active` still requires one active among the survivors, the empty sequence still re-mints
+the landing entry, and `tab-has-content`'s fallback is still the authored `'tabs-landing-page'` CONTENT target.
+
+- **Why, in the collision this head measured** (a scratch profile with the five declarations batched, one fresh instance per arm).
+  The family keys one member per tab in the SAME flat object as its seats, so with the entry spelled `'landing'` the composer wrote
+  the row and then the seat STRING over it: the construction instant's own bytes read `{"landing":"landing","order":["landing"]}`
+  and `read()` answered `rows: []`. **A HEALTHY record was worse** — the same `commit({id:'landing',…})` was ANSWERED
+  `{status:'committed'}` and wrote `{"landing":"landing","order":["tab-1","landing"], …}` with **no `landing` row member**, so the
+  record answered `committed` over a read that names a landing row it does not hold. **And a record carrying the landing ROW at
+  that key, no string seat, passes all five pairs** and reads `landing: 'tab-1'`: the seat, not the id, was the whole obstruction.
+- **Measured after it, the same arms on this head.** The construction write's own bytes are now
+  `{"order":["tabs-landing-page"],"tabs-landing-page":{…}}` with `read()` answering `landing: 'tabs-landing-page'`, and the same
+  `commit({id:'landing',…})` on a healthy record writes a real row member at that key, seats it in `order` and reads it back — so
+  the hole was the seat and it is closed by the derivation, not by a guard over it.
+- **What this means for a client**: `read()`'s `landing` member is the DERIVATION, not a stored pointer — `'landing'` when the
+  landing entry is the shown tab, `''` on a record no legal act has left — so a client reads it as "which tab is the terminal" and
+  never composes it. The rows are the state; this is the one member of them that names the shown one.
+- **Two steps follow this row and each is appended here as it lands**: the refusal of an entry id equal to the one remaining
+  stored seat (`order`), and then the id move itself. **Neither is taken on this row's word**: each is measured on its own head.

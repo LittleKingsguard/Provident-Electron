@@ -34,7 +34,7 @@ Its addresses are the L1 §1 family, unchanged by the crossing:
 
 | Address | Tier | Holds |
 |---|---|---|
-| `['tabs']` (the central instance's) | `file` | the record root: `order` and `landing` seats plus **one flat leaf per tab** whose name is the tab id |
+| `['tabs']` (the central instance's) | `file` | the record root: the `order` seat plus **one flat leaf per tab** whose name is the tab id — the landing entry's among them, so `file.tabs.landing` is its leaf and no second seat is stored (D-76) |
 | `['tabs-exclusion']` | `mem` | the volatile pair the renderer's landing witness reads, never persisted |
 
 The `file`-tier write is `provident-storeroom`'s, not this module's: the module writes no byte and parses no file
@@ -52,6 +52,7 @@ routes, no fifth:
 | `tabs.remove(id: string)` | one tab's id | `{ status: 'committed' }`, carrying **`repaired: true`** on the same condition, or the refusal arm |
 | `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else |
 
+**`read()`'s `landing` MEMBER IS DERIVED, NOT A STORED POINTER** (D-76): the id of the row reading active — `'landing'` when that entry is the shown tab, `''` on a record no legal act has left — so a client reads it and never composes it.
 **THE COMMITTED ARM OF `commit` AND `remove` IS `{ status: 'committed' }` AND NOTHING ELSE, EXCEPT `repaired`.** **Measured
 2026-11-01, and the two answer declarations above consequently carry no `cursor`**: the store's write receipt is `{op,
 watched, triggered}` and its declaration carries no `cursor` at all (`grep -n 'cursor'
@@ -82,11 +83,11 @@ the module mints no status of its own beyond the one shape arm below:
 | Arm | `reason` | When |
 |---|---|---|
 | shape | `'malformed-row'` | the commit's argument is not a plain object, or its `id` is not a non-empty string — refused **before** any store verb |
-| store | the instance's status verbatim | any refusal the instance answers: the write did not land, the construction could not stand, the address is not the record's |
+| store | the instance's status verbatim | any refusal the instance answers: a write that did not land, an address that is not the record's |
 
-**There is no third token, and there was no third arm.** This section carried **`'constraint-repaired'`** as a reason minted
-*on a committed answer*; **nothing in `src/main/` ever produced it** (`grep -rn 'constraint-repaired' src/` is empty) and it is
-removed here: a repair is not a refusal vocabulary's business, it is the `repaired` member of a `committed` answer (§2).
+**And there was no third arm.** This section carried **`'constraint-repaired'`** as a reason minted *on a committed answer*;
+**nothing in `src/main/` ever produced it** (`grep -rn 'constraint-repaired' src/` is empty), so it is removed: a repair is the
+`repaired` member of a `committed` answer, never a refusal (§2).
 
 **A repaired commit is `committed`, never `refused`** — the repair is the engine working (L1 §2), and a renderer that treats
 it as a failure would refuse a write the store accepted. **And the act does not GUESS that a repair ran**: the answer
@@ -132,17 +133,16 @@ every `tabs.onChanged`, and changes the record only through `tabs.commit(row)` a
 - **When it re-reads.** After every `onChanged` delivery, which carries an ADDRESS and not a value (`guide §6.4`), and after
   every act of its OWN, because `repaired` is exactly the case where the record that stands is not the one the act intended
   (§3). A write a pair REFUSED delivers nothing (D-71), so the push is never a client's only signal.
-- **What it commits.** One tab's whole row, by name, in `TabsRecordRow`'s own fields — or one id's removal. **No SEAT**:
-  `order` and `landing` are the record's composed members, and a client composing them would be a second authority on the
-  record's shape — this module's act, and the engine's repair's (§4).
+- **What it commits.** One tab's whole row, by name, in `TabsRecordRow`'s own fields — or one id's removal. **No SEAT**: `order`
+  is the one composed member a client must not spell, and `landing` is derived, written by no act at all (D-76, §4).
 - **What it must never do.** Hold, construct or persist a second record — the graph store's `file.tabs.*` root family is the
   renderer-owned copy this role retires. Register a constraint at `['tabs']`, or any second authority on
   `exactly-one-active`: the five pairs are this module's and the boot's batch (D-65). Write outside `commit`/`remove` — no
   `put`, no file, no channel of its own — and never notify by writing: a listener runs in its own commit (`guide §6.5`), so an
   `onChanged` body that committed would be a second writer inside the one that fired it (D-71).
-- **DECIDED, AND NOT YET SPELLABLE HERE (D-75):** the landing ENTRY's id is the renderer's `'landing'`, while this record
-  still spells it `'tabs-landing-page'` — `landing` is also one of its two SEAT names in this same flat object, so an entry
-  under it is unrepresentable (measured). **No migration:** the carrier's rows are dropped, not moved. **OPEN:** boot order.
+- **DECIDED, AND NO LONGER BLOCKED (D-75, D-76):** the landing ENTRY's id is the renderer's `'landing'`, and the seat that made
+  it unrepresentable is DERIVED away; the record still spells it `'tabs-landing-page'` until that one name moves. **No migration**
+  (the carrier's rows are dropped, not moved); **OPEN:** boot order.
 
 ## 7. What this document does not decide
 

@@ -11,8 +11,11 @@
 
 The tab record is a family of `file`-tier rows the store hosts, not a second store (D-62). Its operative spelling is
 **one flat leaf per tab** whose NAME is the tab id and whose VALUE is that tab's declared record — `file.tabs.<id>` —
-beside two singleton seats: `file.tabs.order` (the id's ordered place) and `file.tabs.landing` (the witness the
-renderer's bounded wiring reads, `src/shared/demo-envelope.ts`'s `TABS_LANDING_PAGE_ID`).
+beside **one** singleton seat, `file.tabs.order` (the ids' ordered place). **The second singleton seat is retired** (D-76):
+the landing entry — the tab the app always has — is an ordinary member of the same family, keyed by its own id, so
+`file.tabs.landing` is **that entry's leaf** and the witness the renderer's bounded wiring reads is **derived, not
+stored**: the id of the row reading active. As a second seat it was a STRING written beside `order`, and a member's key and
+a seat's name are one namespace, so an entry whose id spelled it could not be held at all (measured 2026-11-02; D-75).
 
 The as-filed nested spellings (`file.tabs.<id>.target`, `.active`, `.error`, `.label`) are **kept visible and
 superseded in effect**: a reader must be able to find what the record used to be without reading it as what it is

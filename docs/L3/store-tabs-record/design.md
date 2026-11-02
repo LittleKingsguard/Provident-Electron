@@ -1,7 +1,7 @@
 # L3 — `store-tabs-record`: the module design
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 9 — the crossing's structure, the record root as
-  an enforced invariant, and the change push at the record root itself, beside the five pairs; rev 9 retires §1's and §2's pre-`D-64` description.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 10 — the crossing's structure, the record root as
+  an enforced invariant, the change push beside the five pairs, and the landing witness DERIVED rather than stored (D-76).
 - **Inputs:** `docs/L2/store-tabs-record/interface.md` rev 1 §1–§6; `docs/L1/store-tabs-record.md` rev 1 §1–§3.
 - **Ceiling:** 150 lines, class max (D-1) · **Status:** structure and guardrails; every declared name and its exact text
   is in `signatures.md`, which is what L4 transcribes (D-45).
@@ -24,7 +24,8 @@ name — measured 2026-11-02, `grep -rn "provident-.*\.json" src/main/tabs-recor
 The instance is `provident-storeroom`'s and it is the APP'S CENTRAL ONE (D-64): the boot constructs it with one file path and
 the batched `cfg.constraints`, and the package owns that file's byte image, its journal, its rollback and its durability
 (`guide §9`). This module constructs nothing and opens no file. It chooses **three** address constants — `TABS_RECORD_ADDRESS`,
-`TABS_ORDER_ADDRESS` and `TABS_LANDING_ADDRESS` — and **five** declarations (`tabsConstraintDeclarations`), and nothing else.
+`TABS_ORDER_ADDRESS` and `TABS_LANDING_ADDRESS` — and **five** declarations (`tabsConstraintDeclarations`), and nothing else. **Only
+the second names a SEAT**: the third is the landing ENTRY's own leaf, where the witness a reader asks for is derived, not stored (D-76).
 
 **A construction that cannot stand is not this module's arm.** No route answers `FilePathUnreachable`: measured 2026-11-02, `grep -rn
 'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/` is empty — the boot hands this module a store that already stands (D-65).
@@ -47,8 +48,7 @@ split is what the shipped package actually declares.
 (`guide §7.2` route one). The engine invokes the body with the attempt's own context and reads its answer: **`true` is the
 only pass value**, and an object carrying a `message` is a **rejection** (`guide §7.2`, `§7.5`; the shipped
 `landing-page-must-stand` example at `§7.7` is the precedent for both arms). The body **reads the record** to count
-actives, which `guide §7.6` says is the caller's work — *"if your constraint cares about the state at any other location,
-it reads that location"* — and a read inside a body brackets no commit and is judged by nothing (`§7.6`'s measured clause).
+actives, which `guide §7.6` says is the caller's work — *"if your constraint cares about the state at any other location, it reads that location"* — and a read inside a body brackets no commit and is judged by nothing (`§7.6`'s measured clause).
 
 **The repair is the engine's too, and the shape is the package's own contract.** *Rev 3* — the upstream checkout settles
 what the shipped declaration omits (`../Provident-Storeroom/docs/specs/storeroom-constraints/contract.md` §(viii)): the
@@ -58,13 +58,11 @@ outcome object carries **`message` and `repair`**, and `repair` is a **function*
 second commit — that repo's `D-45`, `D-46` item 2). The body above therefore returns `{ message, repair }` when the record
 carries more than one active tab, and the repair keeps the last tab in `order` active and deactivates the rest.
 
-**The repair carries the renderer's rules, rule for rule** (transported 2026-10-30): drop the detached keys; give an empty
-sequence the **landing page**; where no tab is active take the referent — the removed entry's **pre-position**, else the
-caller's own **written referent**, else the first survivor; where more than one is active **keep one** by that same
-precedence and deactivate the rest.
+**The repair carries the renderer's rules, rule for rule** (transported 2026-10-30): drop the detached keys; give an empty sequence
+the **landing entry**; where no tab is active take the referent — the removed entry's **pre-position**, else the caller's own
+**written referent**, else the first survivor; where more than one is active **keep one** by that precedence and deactivate the rest.
 
-**Rev 5 (2026-11-01) — WHAT A REPAIR MUST DO TO BE CREDITED, MEASURED RATHER THAN ASSUMED.** Three facts of the engine
-decide the shape of every write in §4, and the earlier revisions of this section were wrong about the third:
+**Rev 5 (2026-11-01) — WHAT A REPAIR MUST DO TO BE CREDITED, MEASURED RATHER THAN ASSUMED.** Three facts of the engine decide the shape of every write here, and the earlier revisions were wrong about the third:
 
 - **A repair NAMES THE COMMIT IT WAS HANDED** (D-67). The context is `{address, id, op, tier, value, pending}`, and `pending`
   is the commit's own member (`surface.md §2.11` clause 6). Passing that context at `write`'s **fourth position** makes the
@@ -83,9 +81,21 @@ decide the shape of every write in §4, and the earlier revisions of this sectio
 the engine's evaluation — so `commit` writes the caller's record as the caller asked for it and nothing else: **one whole
 value at `['tabs']`**, which mints the root, the `order` seat and the tab's member in the same call (a nested write does
 not create its parent — measured: `write(['tabs', id])` on a fresh store answers `AddressNotFound` with an EMPTY `log`, so
-no constraint is ever asked). The engine hands a constraint the **landing op and its value** and never the machinery's
-pre-write capture, so the PRE side here is **the last record this module observed**, refreshed by every read and every
-commit: bounded because the cache is this module's own view of a record only this module writes.
+no constraint is ever asked).
+
+**The engine hands a constraint the **landing op and its value** and never the machinery's pre-write capture, so the PRE side
+here is **the last record this module observed**, refreshed by every read and every commit: bounded because the cache is this
+module's own view of a record only this module writes.
+
+**Rev 10 (2026-11-02) — THE LANDING WITNESS IS DERIVED, AND THE FAMILY CARRIES ONE SEAT (D-75's measurement, D-76's derivation).**
+The composer used to append a `landing` STRING after the tab members, and a member's key and a seat's name are one namespace: the
+construction instant wrote `{"landing":"tabs-landing-page","order":["tabs-landing-page"],…}`, and on a healthy record a
+`commit({id:'landing',…})` was answered `committed` while `order` gained a member the object did not hold — `read()` naming a
+landing row it could not seat. So **`composeRecord` writes `order` and one member per seated id and no witness at all**, and
+`landingOf` derives it: the landing entry's row when it reads active, else `order`'s active row — one row on any legal record
+(`exactly-one-active` makes it so), and `''` at `read()` where no act left one. **No route's shape moved and none of the five
+pairs' behaviour either**: the empty sequence still re-mints the entry, and `tab-has-content`'s fallback is still the authored
+`'tabs-landing-page'` content target, which is not an id.
 
 **Five declarations ride the batch, not one — and the reason is the sentence a caller gets.** `tabs-must-stand` guards the
 record's **existence**; `exactly-one-active` guards the *shape of the set*; three more guard each tab's own **fields**, and
@@ -95,39 +105,34 @@ five are named apart):
 
 | id | Holds when | Repair |
 |---|---|---|
-| `tabs-must-stand` | the address `['tabs']` holds a record at all | **creates** it: the landing page, seated and active |
+| `tabs-must-stand` | the address `['tabs']` holds a record at all | **creates** it: the landing entry, seated and active |
 | `exactly-one-active` | at least one member survives **and** exactly one entry reads active | the referent discipline (§4's first paragraph) |
 | `tab-has-title` | the tab's `label` is a non-empty string | writes `'untitled'` |
 | `tab-has-content` | the tab's `target` — the data object it contains — is a non-empty string | points it at the landing page |
 | `tab-has-lastActiveAt` | the tab carries an activation stamp | stamps it with **now**, as an ISO string so the record's byte image stays JSON-plain |
 
-**Rev 6 (2026-11-01) — THE ROOT IS AN ENFORCED INVARIANT, AND ITS REPAIR IS ASKED AT TWO INSTANTS WITH TWO ARITIES.**
-Before this revision `['tabs']` was minted only by the first `commit`, so between the boot and that write `read()` answered
-an empty record with no `landing` seat (D-69). `tabs-must-stand` makes existence the engine's to demand:
+**Rev 6 (2026-11-01) — THE ROOT IS AN ENFORCED INVARIANT, AND ITS REPAIR IS ASKED AT TWO INSTANTS WITH TWO ARITIES.** Before this
+revision `['tabs']` was minted only by the first `commit`, so between the boot and that write `read()` answered an empty record
+with no witness (D-69). `tabs-must-stand` makes existence the engine's to demand:
 
-- **A pair whose own key is ABSENT is APPLIED** where its parent resolves (`guide §7.2`'s dated clause, item (3)) — and
-  `['tabs']`'s parent is the register, which always resolves — so it is asked at construction over an empty store. That is
-  the one arm a repair can rescue: a pair under an absent PARENT is never asked at all.
+- **A pair whose own key is ABSENT is APPLIED** where its parent resolves (`guide §7.2`'s dated clause, item (3)); `['tabs']`'s parent is the register, which always resolves, so it is asked at construction over an empty store — the one arm a repair can rescue, since a pair under an absent PARENT is never asked at all.
 - **The body judges `context.value` and needs no store handle**: at the construction instant the boot has not bound one, so
   the null-store abstention every other body rides would silence the one pair that must act. `value` is the value read at
   the address, `undefined` where nothing is held.
-- **THE REGISTRATION INSTANT'S REPAIR WRITES WITH THREE POSITIONS — `write(address, tier, value)` — AND CANNOT NAME THE
-  COMMIT** (item (4)): that commit is the registration's own, and a fourth position there is a `TypeError` before any store
-  act. **THE LANDING INSTANT'S WRITES WITH FOUR AND MUST NAME IT** — `pending`, the commit the repair is part of
-  (`D-67`), which is what makes the write join the attempt instead of opening a second `K-2`. **Each instant declares its
-  own arity and one call shape cannot satisfy both**, so the repair branches on the record's own `write` member — the only
-  thing that tells them apart. **The write runs no pass of its own**: the registration's re-run judges the pair over the op
-  the repair returned.
-- **Consequence, carried and not absorbed: a fresh record carries the landing tab.** `read()` answers
-  `order: ['tabs-landing-page']`, that entry active, before any commit — and the first commit APPENDS to that record
-  instead of creating the root. Nothing in the module depended on the old emptiness: every route reads the record as it
-  stands and writes it whole. **And the root cannot be deleted out from under the app**: measured 2026-11-01, a
-  `delete(['tabs'])` is answered as the store's own success while the existence pair's repair re-creates the record inside
-  the same commit, so the address the record is read at is an invariant at both ends.
+- **THE REGISTRATION INSTANT'S REPAIR WRITES WITH THREE POSITIONS — `write(address, tier, value)` — AND CANNOT NAME THE COMMIT**
+  (item (4)): that commit is the registration's own, and a fourth position there is a `TypeError` before any store act. **THE LANDING
+  INSTANT'S WRITES WITH FOUR AND MUST NAME IT** — `pending`, the commit the repair is part of (`D-67`), which is what makes the write
+  join the attempt instead of opening a second `K-2`. **Each instant declares its own arity and one call shape cannot satisfy both**,
+  so the repair branches on the record's own `write` member, which alone tells them apart. **The write runs no pass of its own**: the
+  registration's re-run judges the pair over the op the repair returned.
+- **Consequence, carried and not absorbed: a fresh record carries the landing tab.** `read()` answers that entry seated and
+  active — `order: ['tabs-landing-page']` while the id reads so — before any commit, and the first commit APPENDS to that record
+  instead of creating the root. Nothing in the module depended on the old emptiness: every route reads the record as it stands and
+  writes it whole. **And the root cannot be deleted out from under the app**: measured 2026-11-01, a `delete(['tabs'])` is answered
+  as the store's own success while the existence pair's repair re-creates the record inside the same commit, so the address the
+  record is read at is an invariant at both ends.
 
-**A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store says, rather than being told what to think. **Rev 7 DERIVES that member, and until it no code produced it at all.** The write's record carries no member for a
-repair inside its own commit (`guide §6.4`), so the act compares the record it INTENDED with the record that STANDS — CANONICALLY, member order and absence normalised, or a clean act would report a false difference — answering `repaired: true` only where they differ and omitting
-the member on a clean act. **No `cursor` member survives**: it named nothing the package supplies (D-70).
+**A repaired commit answers `committed` with `repaired: true`** (L2 §3): the renderer re-reads and renders what the store says, rather than being told what to think. **Rev 7 DERIVES that member, and until it no code produced it at all.** The write's record carries no member for a repair inside its own commit (`guide §6.4`), so the act compares the record it INTENDED with the record that STANDS — CANONICALLY, member order and absence normalised, or a clean act would report a false difference — answering `repaired: true` only where they differ and omitting the member on a clean act. **No `cursor` member survives**: it named nothing the package supplies (D-70).
 
 ## 5. The listener — an address, never a payload
 
