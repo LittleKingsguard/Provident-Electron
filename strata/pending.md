@@ -14,12 +14,12 @@ clears is deleted with the reason recorded here, not quietly kept. Actionable wo
 `docs/L2/secure-panels/interface.md` §8 records it discharged); the Tier4 type import in `main.ts` (discharged);
 both paths `docs/L1/security-store-storeroom-exception.md` §9 carried (fully discharged).
 
-**The row numbered `5` at that date was deleted, not merged, on 2026-11-01: it carried `ST-F1`, whose blocker was the package's own documentation
+**The row that carried `ST-F1` — numbered `5` at that date — was deleted, not merged, on 2026-11-01: its blocker was the package's own documentation
 change, and `provident-storeroom@1.6.2` made it — the repair arm now ships in both artifacts the row named (guide §7.6 and
 `index.d.ts`'s `Constraint` docblock).** What that release did **not** discharge — the two instants still disagree on an
 inherited `repair` — stays live in `strata/records/store-tabs-record-unit.md` §1 as ST-F1's own "still open" clause.
 
-**The row numbered `5` today was deleted, not narrowed, on 2026-11-02: it carried `ST-F2` — the repair's failure sentence naming the CALLER's
+**The row that carried `ST-F2` — numbered `5` today — was deleted, not narrowed, on 2026-11-02: it carried the repair's failure sentence naming the CALLER's
 address, and a return nothing types — and both halves are gone by measurement, so the row's blocker can never clear.**
 `provident-storeroom@1.9.0` CREDITS an op-less repair: the release notes' own §1.9.0 item 1 says a repair returning
 `undefined`, a bare `{ok: true}` *"or any value outside the declared arms at all"* is credited, and that *"the value the
