@@ -44,7 +44,7 @@ gate corpus's as-filed copy is cited by path under the archive prefix (§7, D-2)
 | Packages consumed and pinned | `provident-ssr ^0.5.1`, `provident-storeroom ^1.9.0` | `package.json`'s `dependencies` block (D-41: the site, never a range that a new script key moves) |
 | The storeroom seam | **two** imports of the package — the seam (`src/main/storeroom.ts`'s `STOREROOM_DECLARED_SURFACE`, a declared census of `14` members / `12` symbols) and the operator-settings instance (`src/main/operator-settings/index.ts`'s import-once construction, D-16); the central store writes its own `<userData>/provident-profile.json` | `src/main/storeroom.ts`, `src/main/operator-settings/index.ts`, `docs/L2/central-data/persistence.md` §1 |
 | UI authority | every element outside the Electron shell's own chrome is provident data driven through the graph, never hand-written DOM; one rendered outside it is invisible to `dispatch`, `get_rendered_html` and `get_markdown` | `src/shared/demo-envelope.ts`'s data-not-DOM construction and the §2 charter (`archive/gate-corpus-2026-10-29/AGENTS.md:22-34`) |
-| Source files | **47** TypeScript files under `src/` | `node scripts/strata-walkthrough.mjs pins` (`srcTypeScriptFiles`) |
+| Source files | **50** tracked `src/**/*.ts` files — what `pins` counts, `/^src\/.*\.ts$/` over `git ls-files`; no `.d.ts` and no direct child of `src/`, so it is the whole TypeScript source tree (measured 2026-11-02: `srcTypeScriptFiles: 50`, the figure the 47 this row carried had missed the crossing's three) | `node scripts/strata-walkthrough.mjs pins` (`srcTypeScriptFiles`) |
 
 ## 3. The layers (D-1, D-3)
 
@@ -108,15 +108,15 @@ the three Electron legs gate while every integration and unit scenario **that st
 reports **on notice** — applied at every such file, and read off `scripts/strata-marks.mjs` rather than restated here. The mark is
 not inherited by a directory: a scenario **authored after** that sweep carries no marker and gates, which is what makes a new
 battery evidence (D-40). Until a runner separates the two readings, the table above still measures the whole tree (D-30). The two
-long-standing reds — `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`) and §4.2 item 8 (`REG-EXEC`) — sit in a flat file, so
-they are on notice, not gating, and the rework owns them; the gate-era third, `tests/store-core-graph.test.ts` §5.1, was retired
-(D-9, D-30).
+reds this line once named are green — `tests/store-tabs-record.test.ts` §4.2 item 7 (`P-7`) and §4.2 item 8 (`REG-EXEC`) pass at
+this head (measured 2026-11-02: that file alone reads `100 passed` of `100`) — and the gate-era third,
+`tests/store-core-graph.test.ts` §5.1, was retired (D-9, D-30).
 
-**One row is by construction, not a red:** the same `store-tabs-record` file's `S-1` row (the `C-9` edit-set assertion inside `T2 §4.2 item 9`) asserts the worktree against a declared
-edit set, so it fails while any uncommitted file exists and passes on a clean tree — which is why the row above reads `2 failed`
-at a clean head and `3 failed` mid-pass. It measures the loop's own tree and not module machinery, so it is **unmarked and keeps
-gating**; a reading worth believing is taken after the commit, never before it (that file's `S-1` row, the `C-9` edit-set assertion inside `T2 §4.2 item 9`, carved out in
-the `gates` list of `strata/marks.json`; D-30).
+**One row is by construction, not a red:** the same file's `S-1` row (the `C-9` edit-set assertion inside `T2 §4.2 item 9`) asserts
+the worktree against a declared edit set, so it fails while any uncommitted file exists and passes on a clean tree. **Measured
+2026-11-02: a clean head reads `0 failed`; one trivial no-op edit at a path no unit pins reads `2 failed`** — `S-1` and `REG-EXEC`,
+whose `P-TR-TP-6`(1) drive embeds the same assertion. It measures the loop's own tree, not module machinery, so it is **carved out
+and keeps gating** (`strata/marks.json`'s `gates`); a reading worth believing is taken after the commit, never before it (D-30).
 
 ## 7. The archive (D-2)
 
