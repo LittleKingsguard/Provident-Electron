@@ -1,7 +1,8 @@
 # L2 — `store-tabs-record`: the interface
 
-- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 3 — the crossing D-63 decided; rev 2
-  moved the record onto the central instance (D-64, §1), rev 3 puts the change push at the record's own address (D-71, §2).
+- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — the crossing D-63 decided; rev 2
+  moved the record onto the central instance (D-64, §1), rev 3 put the change push at the record's own address (D-71, §2),
+  and rev 4 declares the renderer's client role (§6).
 - **Inputs:** `docs/L1/store-tabs-record.md` rev 1 §1–§4 (the record family, the constraint, the `§5.U` matrix); D-62
   (the unit and its `N = 4`), D-63 (the crossing), D-32 (no path or route claimed twice), D-26/D-39 (a count has one
   home), D-30/D-40 (the marked surface), D-43 (cite, never restate).
@@ -119,7 +120,31 @@ gains a client's duty: **re-read after every `onChanged`**.
   the profile store, and a second unit over one route is what D-32 forbids. Their own debt is `strata/pending.md`'s.
 - **`src/renderer/store.ts` is not involved.** It is renderer-side and unwired (ASM-7); D-63 decoupled this rework from it.
 
-## 6. What this document does not decide
+## 6. The renderer's client role — it reads this record, and it owns none
+
+**A CLIENT, HOLDING NO SECOND RECORD** (D-63's client role; D-64's one instance): it reads through `tabs.read()`, re-reads after
+every `tabs.onChanged`, and changes the record only through `tabs.commit(row)` and `tabs.remove(id)` — §2's four routes, no fifth.
+
+- **What it reads.** `read()` answers `order`, `landing` and `rows`, and every witness a client needs comes from those three
+  members alone: the landing terminal stands where `landing` names a row reading `active: true` and no other row does, the
+  error terminal where a row carries `error`. Both page nodes are the ENVELOPE's (`src/shared/demo-envelope.ts`'s
+  `TABS_LANDING_PAGE_ID` / `TABS_ERROR_PAGE_ID`), resolved through `Runtime.elementForNodeId`; it authors no element and no text.
+- **When it re-reads.** After every `onChanged` delivery, which carries an ADDRESS and not a value (`guide §6.4`), and after
+  every act of its OWN, because `repaired` is exactly the case where the record that stands is not the one the act intended
+  (§3). A write a pair REFUSED delivers nothing (D-71), so the push is never a client's only signal.
+- **What it commits.** One tab's whole row, by name, in `TabsRecordRow`'s own fields — or one id's removal. **No SEAT**:
+  `order` and `landing` are the record's composed members, and a client composing them would be a second authority on the
+  record's shape — this module's act, and the engine's repair's (§4).
+- **What it must never do.** Hold, construct or persist a second record — the graph store's `file.tabs.*` root family is the
+  renderer-owned copy this role retires. Register a constraint at `['tabs']`, or any second authority on
+  `exactly-one-active`: the five pairs are this module's and the boot's batch (D-65). Write outside `commit`/`remove` — no
+  `put`, no file, no channel of its own — and never notify by writing: a listener runs in its own commit (`guide §6.5`), so an
+  `onChanged` body that committed would be a second writer inside the one that fired it (D-71).
+- **OPEN — named, never minted here:** which id the landing entry carries once the two spellings meet (the renderer's reserved
+  `'landing'` and this record's `'tabs-landing-page'` are both live; no filed row decides); whether a user's existing
+  `file.tabs.*` rows in the tier-1 carrier are migrated once, dropped or dual-written; and who reads first at boot.
+
+## 7. What this document does not decide
 
 The battery's rows (`tests/integration/store-tabs-record/`, claimed before it is authored — D-36 `F-1`), the landing
 pass's diff scope, and the `§5.U` matrix's operator rows, which stay `PARKED` until a human is at the window (L1 §3).
