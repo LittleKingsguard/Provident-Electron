@@ -706,84 +706,26 @@ export function driveTabsLandingPage(holder: GraphStore, runtime: { elementForNo
   }
 }
 
-/** THE SLICE BOOT STEP'S OWN ROLE (`§3.3` items 1/3/4/5 — `C-12`'s claim, the reservation's
- *  form), **EXPORTED AS `SD-G4-1`'S SIBLING SEAM**: the step's behaviour is MOVED HERE OUT OF
- *  `main()` UNCHANGED IN SEMANTICS and `main()` CALLS THIS FUNCTION, so the guarded site is the
- *  SAME code a row drives — there is no second copy of the step anywhere (the close site's, the
- *  mint's and the two pages' drives answer exported seams already; the boot step answers this
- *  one, which is what makes `G-5`/`H-4` drivable at all).
+/** **THE SLICE BOOT STEP IS DELETED, AND THIS PARAGRAPH IS ITS HEADSTONE — NOT ITS HOME** (`D-83`, 2026-11-02).
+ *  What stood here was `TabsBootOutcome` and `evaluateTabsBootStep(store, handedOrder)`: the app-graph's boot step, whose
+ *  one act was `store.commit('file.tabs.order', [...handed])`. **A boot step is an IMPERATIVE WRITE, and the convention's
+ *  third clause (`strata/decisions.md` D-82's clause 3) admits boot data only "from file or constraint repairs"** — so
+ *  the audit measured the one write in this app with no external event behind it, and the user's instruction was that the
+ *  step "needs to be a repair following a constraint tested on store creation".
  *
- *  **THE DECLARED SHAPE, EXACTLY AS `§3.3` ITEM 3 STATES IT:** the caller hands the store its
- *  handed-off membership sequence, and when a sequence is ACTUALLY CARRIED the function performs
- *  **ONE `commit` on the record's membership name** (`TABS_ORDER_NAME` — the membership rewrite
- *  is the declared vehicle), whose post-state the constraint evaluates, in the SAME committed
- *  write as any repair it lands, and NEVER on a later read. `§3.3` item 4's three negatives hold
- *  in this body: it performs NO caller `set` of the landing entry's `active` (that is `F-T2-3`'s
- *  forbidden shape), it does NOT re-mint the record through duplicate `commit` chains, and it
- *  cannot run before the hand-off because the hand-off is its argument.
+ *  **IT HAS NO COUNTERPART AT THE CROSSING, AND THAT IS WHY IT DIES RATHER THAN MOVES.** The sequence this seam wrote was
+ *  derived from `bootHandoff` — the operator-settings carrier's rows, a RENDERER-side hand-off, handed to the renderer's
+ *  own frozen graph store. The crossing's record is read from `provident-profile.json` by the app's central store
+ *  (`src/main/main.ts`), and **nothing at that construction can know a "handed order" at all**: the record is the file's,
+ *  the batch is the module's, and the order the boot must repair is the one THE FILE carries. The repair that answers the
+ *  clause therefore lives where the order lives — `order-names-its-tabs`, the sixth declaration in
+ *  `src/main/tabs-record/index.ts`, tested at the store's creation — and this file writes no record byte at boot at all.
  *
- *  **THE GUARD, AND WHY IT IS THE WHOLE OF `H-4`** (`§3.3` item 4; the as-filed defect, named):
- *  as filed the step committed `[]` WHENEVER the hand-off was an ARRAY, so a FIRST-EVER boot — a
- *  COLD tier handing off `[]`, the boot-handoff default — MINTED the membership leaf and, through
- *  the repair that evaluates it, the reserved landing ENTRY's own leaf, emitting repair events on
- *  a tier that held NOTHING. **A HAND-OFF THAT CARRIES NO MEMBERSHIP SEQUENCE PERFORMS NO WRITE
- *  AT ALL: no commit, nothing minted, no event.** A hand-off that DOES carry a sequence IS
- *  evaluated — that is the reservation this unit takes — and an EMPTY sequence is the
- *  no-sequence case too: committing it would mint, and `[]` is precisely what a cold tier hands
- *  off. The answer is a DECLARED outcome either way — the evaluated write's own receipt, or the
- *  declared no-write value — NEVER a bare `void` and NEVER a throw (the store answers values,
- *  `§2.5`'s throw pattern names no store throw this path can trigger). */
-export interface TabsBootOutcome {
-  /** THE DISCRIMINATOR: `true` exactly when ONE committed membership write was performed and
-   *  evaluated; `false` on the declared no-write arm AND on the declared refusal arm
-   *  (`receipt` then `null` on both). */
-  readonly written: boolean
-  /** THE EVALUATED WRITE'S OWN RECEIPT — the store's returned `GraphWriteReceipt`
-   *  (`§2.5`: `{ status, name, cleared, repaired, rows, crossings, events, … }`), which is
-   *  where the boot step's repair is OBSERVABLE (`§3.3` item 5's `repaired: [...]` terms and
-   *  its `repaired: []` positive control); **`null` on the declared no-write arm** — so "no
-   *  write was performed" is a VALUE the caller reads, never an absence it must infer. */
-  readonly receipt: unknown
-  /** **THE DECLARED REFUSAL ARM OF THE SEAM'S OWN ARGUMENT DOMAIN (`G-5`; `§3.3` items 3/4).**
-   *  `'non-sequence-argument'` exactly when the hand-off carried a value that is NOT the
-   *  membership sequence this step writes and NOT its absence — i.e. anything but a
-   *  `readonly string[]` of admitted tab ids or `undefined`; `null` on both declared arms.
-   *
-   *  **THE DEFECT THIS ARM CLOSES, MEASURED AND NAMED (`H-3`/`B-8`):** as filed the seam read its
-   *  parameter only through `Array.isArray(...)` and `length`, so the HAND-OFF'S OWN ROWS
-   *  (`{ name, value }[]` — what `bridge.store.get()` answers, never what `main()` passes) were
-   *  written INTO `file.tabs.order` as the membership, and the store's own repair diff MINTED a
-   *  readable `file.tabs.[object Object]` leaf from the `join` spelling; an array of non-strings
-   *  (`[1, 2, null]`) was accepted just as readily. **THE ARGUMENT'S DOMAIN IS A DOMAIN, NOT A
-   *  SHAPE CHECK AT THE WRITE:** the value is validated BEFORE any `store.commit`, and an outside
-   *  value is REFUSED AS A VALUE — never coerced, never written, nothing minted, no event. */
-  readonly refusal: 'non-sequence-argument' | null
-}
-
-export function evaluateTabsBootStep(store: GraphStore, handedOrder: readonly string[] | undefined): TabsBootOutcome {
-  // ── THE ARGUMENT'S DECLARED DOMAIN, CHECKED FIRST AND BEFORE ANY WRITE (`G-5`; `§3.3` item 3's
-  //    "the caller hands the store its handed-off membership SEQUENCE"). `main()` derives the
-  //    sequence it hands over (`bootHandoff`'s own `file.tabs.order` value, an array of ids) and
-  //    is this seam's only shipped caller; the seam accepts THE SAME DOMAIN and nothing else:
-  //    `undefined` (the declared no-write arm, `H-4`), or a `readonly string[]` whose members are
-  //    admitted tab ids — **a non-empty, all-string sequence**. Everything else — the hand-off's
-  //    ROWS, a non-sequence, a sequence carrying a non-string member — answers the DECLARED
-  //    REFUSAL, and the store is never touched.
-  const carried: unknown = handedOrder
-  const refuse = (): TabsBootOutcome => ({ written: false, receipt: null, refusal: 'non-sequence-argument' })
-  if (carried === undefined) return { written: false, receipt: null, refusal: null }
-  if (!Array.isArray(carried)) return refuse()
-  for (const member of carried as readonly unknown[]) {
-    if (typeof member !== 'string' || member.length === 0) return refuse()
-  }
-  // THE GUARD (`H-4`): a hand-off carrying NO membership sequence — absent, or the cold tier's
-  // empty one — performs NO commit, mints nothing and fires nothing.
-  if (carried.length === 0) return { written: false, receipt: null, refusal: null }
-  // THE ONE EVALUATED WRITE (`§3.3` item 3): the membership rewrite, carrying the handed-off
-  // sequence in the same copy discipline the caller's own writes use.
-  const receipt = store.commit(TABS_ORDER_NAME, [...(carried as readonly string[])])
-  return { written: true, receipt, refusal: null }
-}
+ *  **WHAT STILL STANDS IN THIS FILE AND IS NOT THIS STEP**: `TABS_ORDER_NAME` and the `file.tabs.*` record are the frozen
+ *  graph store's own, unmoved by this deletion (the purge's remaining item, `strata/pending.md`), and `hydrate`,
+ *  `driveTabsLandingPage` and the Y-1/Y-2/Y-3 hand-off keep their order in the boot trace (`tests/store-tabs-record.test.ts`
+ *  `B-6` reads that order off these bytes). `TabsBootOutcome` is deleted with the step: it described only what the step
+ *  answered, and a declared outcome with no producer is a name with nothing behind it (D-70's rule). */
 
 /** **THE CONSTRUCTION'S DECLARATION SET — THE CALLER'S ROWS PLUS THE RESERVED ENTRY'S OWN ROW,
  *  AND NOTHING THE CALLER CAN DROP** (`§2.1` item 6, `R3-2`; `§5.1` item 1's wiring's tab-record
@@ -1337,35 +1279,24 @@ async function main(): Promise<void> {
   // (§2.9 consequence (1)); the persisted tier-1 values are IN the store from here on
   // (tier-1 resolves answer them; the G2 spec's M-7 is satisfiable).
   wired.hydrate(bootHandoff)
-  // ⟶ THE SLICE BOOT STEP (`U-STORE-TABS-RECORD`, `T2`, `§3.3` items 1/3/4 — `C-12`'s claim).
-  // THE RESERVATION IS TAKEN HERE: the frozen store reserved its FIRST CONSTRAINT EVALUATION for
-  // this slice's boot step ("the FIRST constraint evaluation stays reserved for `U-STORE-FOCUS`'s
-  // boot step", `store-core-graph.ts:2169-2170`), and this unit is the constraint's landing, so
-  // the reservation is its own. THE DECLARED SHAPE: after `hydrate(bootHandoff)` and BEFORE the
-  // first graph load, ONE `commit` on a declared name of the `tabs` root whose post-state the
-  // constraint evaluates — the membership rewrite is the declared vehicle (it is the record's own
-  // membership write and idempotent in substance), so the first evaluation lands on a WRITE's
-  // post-state, in the SAME committed write as any repair it lands, and NEVER on a later read
-  // (`§3.3` item 3). WHAT IT MUST NOT DO, and does not (`§3.3` item 4): it performs NO caller
-  // `set` of the landing entry's `active` (that would be `F-T2-3`'s forbidden shape), it does NOT
-  // bypass `hydrate` by re-minting the record through duplicate `commit` chains, and it does not
-  // run before the hand-off.
-  // **A COLD TIER PERFORMS NO COMMIT AT ALL (`H-4`), AND THAT IS THE CODE'S OWN CLAIM MADE
-  // TRUE: the step is GUARDED ON THE HAND-OFF ACTUALLY CARRYING A MEMBERSHIP SEQUENCE.** As
-  // filed the step committed `[]` whenever the hand-off was an ARRAY — so a FIRST-EVER boot (a
-  // cold tier handing off `[]`, the boot-handoff default) MINTED the membership leaf and,
-  // through the repair that evaluates it, the reserved landing ENTRY's own leaf, emitting
-  // repair events on a tier that held NOTHING. A hand-off that DOES carry an `order` sequence IS
-  // evaluated (that is the reservation this unit takes, `§3.3` item 3/5); a hand-off carrying NO
-  // sequence performs no write, mints nothing and fires nothing. NO CALLER `set` of the landing
-  // entry's `active` is involved either way (`§3.3` item 4).
-  // **THE BODY LIVES IN THE EXPORTED SEAM, NOT HERE** (`evaluateTabsBootStep`, this unit's
-  // `SD-G4-1`-sibling addition): the guard, the ONE evaluated `commit` and its declared outcome
-  // are ONE body, `main()` calls it, and the boot step therefore has NO second copy — a row can
-  // drive the very site this call executes (`§3.3` items 3/4/5).
-  const handedTabsOrder = Array.isArray(bootHandoff) ? bootHandoff.find((row) => row.name === TABS_ORDER_NAME) : undefined
-  const handedOrderSequence = Array.isArray(handedTabsOrder?.value) ? (handedTabsOrder.value as readonly string[]) : undefined
-  evaluateTabsBootStep(wired, handedOrderSequence)
+  // ═══ THE SLICE BOOT STEP IS DELETED FROM THIS SITE (`D-83`) ═══
+  // **WHAT STOOD HERE**: after `hydrate(bootHandoff)` and before the first graph load, ONE commit —
+  // `evaluateTabsBootStep(wired, handedTabsOrder)`, whose whole act was
+  // `wired.commit('file.tabs.order', [...handed])` whenever the hand-off carried a non-empty membership
+  // sequence. **WHY IT IS GONE, IN ONE PARAGRAPH.** A boot step is an IMPERATIVE WRITE, and D-82's clause 3
+  // admits boot data only from a file or from a constraint's repair; the audit measured this commit as the
+  // one write in the app with no external event behind it — the frozen store pushes every `file`-tier commit
+  // through `crossing.put` into `STORE_FILE_PUT`, so the step re-projected file data back into the file,
+  // self-perpetuating after the first externally-caused one. **AND IT HAS NO COUNTERPART AT THE CROSSING**:
+  // its argument was derived from `bootHandoff`, the RENDERER-side carrier's rows, while the record the app
+  // keeps is read from `provident-profile.json` by the central store — so nothing at that construction can
+  // know a "handed order", and there is nothing here to move. The repair the clause asks for lives where the
+  // order lives: `order-names-its-tabs`, the sixth declaration in `src/main/tabs-record/index.ts`, tested at
+  // the STORE'S CREATION and repairing the seat the FILE carries. **THE FIRST CONSTRAINT EVALUATION IS STILL
+  // NOT TAKEN HERE** (`§3.3` item 2, `store-core-graph.ts`'s reservation): `hydrate` mints the handed-off rows
+  // and evaluates no pair, and the next evaluation is the first caller's own write — exactly the relation this
+  // region had before the step existed, one boot step lighter, and `G-5`/`B-8`/`H-3`/`H-4`'s subject is deleted
+  // with it rather than left dangling (see the headstone above the declarations).
   // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 items 1/2): boot-constructed from the
   // wired store — the boot MINT-DECLARES `mem.focus` (the register's row pre-exists the
   // first focus write) and the two exact-reference store subscriptions (rule 2) register
@@ -1448,8 +1379,9 @@ async function main(): Promise<void> {
  * THE TAB-RECORD CLIENT'S INSTRUMENT — **STAGE A OF THE RENDERER MIGRATION** (`strata/next-steps.md`
  * row 1; D-63's client role, `docs/L2/store-tabs-record/interface.md` §6; D-77). THE STAGE IS
  * ADDITIVE: every path this file already had — `TABS_CONSTRAINT`, the graph-store record,
- * `readTabsRef`, `mintTabId`, `closeTab`, `evaluateTabsBootStep`, `driveTabsLandingPage`, the
- * tier-1 tab write-backs and the Y-1/Y-2/Y-3 hand-off — is BYTE-UNMOVED, and nothing below reads,
+ * `readTabsRef`, `mintTabId`, `closeTab`, `driveTabsLandingPage`, the tier-1 tab write-backs and
+ * the Y-1/Y-2/Y-3 hand-off — is BYTE-UNMOVED (the boot step's deletion is `D-83`'s and is not this
+ * stage's: see the headstone at the declarations), and nothing below reads,
  * reorders or waits on any of them. (The tab record's ONE flat leaf spelling is written ABOVE, in the
  * region that declaration owns, and is not spelled again here: `tests/store-focus.test.ts`'s `S22-1`
  * attributes every occurrence of that spelling to that region and reds on one outside it.)
@@ -1461,8 +1393,8 @@ async function main(): Promise<void> {
  * consumer that appeared here would be the second record this role exists to retire (L2 §6).
  *
  * **WHY THE READ SITS AT THE END OF `main()` AND IS NOT AWAITED (`D-77`).** The boot order this head
- * ships is a measured one, and it is a GATE's: `wired.hydrate(bootHandoff)` → `evaluateTabsBootStep`
- * → `focusCarrier` → `new Runtime(...)`/`bootstrap()` → `driveTabsLandingPage` → `startGutterAffordance`
+ * ships is a measured one, and it is a GATE's: `wired.hydrate(bootHandoff)` → `focusCarrier` (the boot step
+ * that stood between them is DELETED, `D-83`) → `new Runtime(...)`/`bootstrap()` → `driveTabsLandingPage` → `startGutterAffordance`
  * → the Y-3 registration → `bridge.ready()`, with `tests/e2e/bundle-boot-seam/`'s `B-5` asserting the
  * bundle-boot trace's ORDER rather than a duration. An `await` placed anywhere between the hand-off and
  * `bridge.ready()` would sit INSIDE that order — a slow or failing bridge would delay the first graph

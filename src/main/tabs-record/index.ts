@@ -9,12 +9,15 @@
 // of the row reading active. **It is written as ONE WHOLE VALUE at `['tabs']`, never as a leaf per tab**, because a nested
 // write does not create its parent — the measured rule quoted at `composeRecord`.
 //
-// THE INVARIANTS ARE THE ENGINE'S (design §4): `exactly-one-active`, the three field pairs and the EXISTENCE pair that
-// mints the root are DECLARATIONS this module exports (`tabsConstraintDeclarations`) and the boot batches into the
-// instance's construction. Their repairs carry the renderer's referent discipline rule for rule and return the op their
-// write landed — the two facts this pass had to measure before the crossing answered anything but `refused`. The fifth,
-// `tabs-must-stand`, is the one that makes `['tabs']` an ENFORCED INVARIANT rather than a side effect of the first commit
-// (D-69), so the record exists — landing page seated and active — from the instant the instance is constructed.
+// THE INVARIANTS ARE THE ENGINE'S (design §4): `exactly-one-active`, the three field pairs, the EXISTENCE pair that mints
+// the root and the SEAT pair that names the record's own tabs are DECLARATIONS this module exports
+// (`tabsConstraintDeclarations`) and the boot batches into the instance's construction. Their repairs carry the renderer's
+// referent discipline rule for rule and return the op their write landed — the two facts this pass had to measure before
+// the crossing answered anything but `refused`. `tabs-must-stand` is the one that makes `['tabs']` an ENFORCED INVARIANT
+// rather than a side effect of the first commit (D-69), so the record exists — landing page seated and active — from the
+// instant the instance is constructed; `order-names-its-tabs` is the one that makes the `order` SEAT an invariant at that
+// same instant (D-83), so a seat that arrives from the file naming no row the record holds, or naming one twice, is the
+// engine's to correct before any act of a caller's reaches it.
 import { types } from 'node:util'
 
 import { storeCreate } from 'provident-storeroom'
@@ -215,7 +218,7 @@ const namesASeat = (id: string): boolean => SEAT_NAMES.includes(id)
  *  the pass, the listener DELIVERED after it. **THE ONLY CROSS-KIND RESTRICTION IS THE HANDLE**: a listener whose handle
  *  equals a constraint pair's `id` is `AddressMalformed` at `listen`/`register`/`addConstraint`, in both directions, and
  *  the address is named by no rule at all. **MEASURED 2026-11-01 on the published `1.7.0`, a fresh instance carrying this
- *  module's five pairs at `['tabs']`:** a live registered listener at `['tabs']` was accepted, and one whole-record write
+ *  module's five pairs at `['tabs']` (the five that release's batch carried, D-83 added the sixth):** a live registered listener at `['tabs']` was accepted, and one whole-record write
  *  there answered `triggered` naming ALL FIVE pair ids and the listener, every entry at `['tabs']` — `[{handle:
  *  'tabs-must-stand', address: ['tabs']}, …, {handle: 'tabs-record:1@tabs', address: ['tabs']}]` — and fired the listener
  *  ONCE; a write a pair REFUSED threw the pass's own form and delivered ZERO — the pairs are asked, then the thrown form,
@@ -250,11 +253,13 @@ const namesASeat = (id: string): boolean => SEAT_NAMES.includes(id)
  *  minted, and the one-subscriber arrangement stays where it belongs, in the surface. */
 let issuance = 0
 /** **AND THE MINTED SPELLING CAN NEVER EQUAL A CONSTRAINT `id`, WHICH IS THE WHOLE OF THE ONE RULE THAT SURVIVES** (D-71):
- *  the five ids this module declares are `tabs-must-stand`, `exactly-one-active`, `tab-has-title`, `tab-has-content` and
+ *  the six ids this module declares are `tabs-must-stand`, `order-names-its-tabs`, `exactly-one-active`, `tab-has-title`,
+ *  `tab-has-content` and
  *  `tab-has-lastActiveAt` (`tabsConstraintDeclarations`), and this handle is `tabs-record:<n>@tabs` — a FIXED `tabs-record:`
  *  prefix no id carries, plus a MINTED ORDINAL that only ever grows, plus the address it is bound at. A table of literals
  *  cannot spell either part, so no `register`, no `listen` and no `addConstraint` of this module's can meet a cross-kind
- *  duplicate; the five pairs and a live listener stand at `['tabs']` at once, measured on the published `1.7.0`. */
+ *  duplicate; the six pairs and a live listener stand at `['tabs']` at once, measured on the published `1.7.0` with the five
+ *  that release's batch carried, and re-measured at six on this head 2026-11-02 (`D-83`). */
 const handleFor = (): string => {
   issuance += 1
   return 'tabs-record:' + String(issuance) + '@' + TABS_RECORD_ADDRESS.join('/')
@@ -377,31 +382,45 @@ const rowOf = (value: Record<string, unknown>): TabsRecordRow | null => {
  *  this module's own view of a record only this module writes, so it is stale only for a write that bypassed
  *  `commit` — which the store's own refusal arm answers before the repair is reached.
  */
-let lastView: { order: string[]; entries: Record<string, TabsRecordRow> } | null = null
+interface RecordView {
+  readonly order: string[]
+  readonly entries: Record<string, TabsRecordRow>
+}
+
+let lastView: RecordView | null = null
+
+/** **THE RECORD AS ONE VIEW, FROM A VALUE RATHER THAN FROM A HANDLE — and the reason it is a function of a VALUE is the
+ *  CREATION instant** (`D-83`): a repair invoked at a registration instant has no store handle to read through (the boot
+ *  binds its holder only after `storeCreate` answers, `src/main/main.ts`), and what it is handed instead is the record
+ *  itself. So the ONE parse of the family is spelled here, `viewOf` reads the store through it, and the sixth declaration's
+ *  repair composes from the value it was handed through the same one. **`null` means "no record at this value"** — an
+ *  absent address, a primitive, or a record whose `order` is not an array; each of those is a state the caller decides
+ *  about, and none of them is an empty view. */
+const viewFrom = (whole: unknown): RecordView | null => {
+  if (!plain(whole)) return null
+  const record = whole
+  const seated = record['order']
+  if (!Array.isArray(seated)) return null
+  const order: string[] = []
+  const entries: Record<string, TabsRecordRow> = {}
+  for (const id of seated) {
+    if (typeof id !== 'string') continue
+    order.push(id)
+    const row = record[id]
+    if (plain(row)) entries[id] = { ...row, id } as unknown as TabsRecordRow
+  }
+  return { order, entries }
+}
 
 /** The record as one view: the order seat and every entry the store still holds under it. */
-const viewOf = (store: Store): { order: string[]; entries: Record<string, TabsRecordRow> } => {
+const viewOf = (store: Store): RecordView => {
   const order: string[] = []
   const entries: Record<string, TabsRecordRow> = {}
   // **THE BODY READS THE OBJECT AT THE PAIR'S OWN ADDRESS** (D-66): a sub-property write changes what `['tabs']` reads,
   // which is why the watch fires, and the object read there is the record to judge.
   try {
-    const whole = store.read(TABS_RECORD_ADDRESS, 'file') as unknown
-    if (whole !== null && typeof whole === 'object' && !Array.isArray(whole)) {
-      const record = whole as Record<string, unknown>
-      const seated = record['order']
-      if (Array.isArray(seated)) {
-        for (const id of seated) {
-          if (typeof id !== 'string') continue
-          order.push(id)
-          const row = record[id]
-          if (row !== null && typeof row === 'object' && !Array.isArray(row)) {
-            entries[id] = { ...(row as Record<string, unknown>), id } as unknown as TabsRecordRow
-          }
-        }
-        return { order, entries }
-      }
-    }
+    const whole = viewFrom(store.read(TABS_RECORD_ADDRESS, 'file') as unknown)
+    if (whole !== null) return whole
   } catch {
     // the split seats below are the fallback the module's own writes keep readable
   }
@@ -607,8 +626,8 @@ interface HealHints {
  *  record that still violates the others: measured on 2026-10-30, `tab-has-title`'s repair write was itself refused
  *  `ConstraintPassRefused` because the next check found no stamp, and each repair nested another until the restart
  *  budget was spent. **The GATE stays one pair per invariant** — a violation is a fact about one field and the
- *  refusal's sentence must name it, which is why there are five declarations and not one — **while the REPAIR leaves
- *  one record that satisfies all five**, so at most one extra pass runs and that pass passes — `mintRecord`'s included,
+ *  refusal's sentence must name it, which is why there are six declarations and not one — **while the REPAIR leaves
+ *  one record that satisfies all six**, so at most one extra pass runs and that pass passes — `mintRecord`'s included,
  *  which lands the landing row with all three field defaults already filled.
  *
  *  It reads the record at the moment it is invoked (`§7.6`: a body reads the location it judges), never the state
@@ -621,12 +640,28 @@ interface HealHints {
  *  open a second attempt and be refused or misjudged, which the package declares unsupported and this project treats as
  *  unwritten. That arm is unreachable through the engine — the kernel hands its own six-member record, `pending` among them —
  *  and it exists so the module never falls back to a write that names nothing. */
-const healRecord = (store: Store, hints: HealHints) => (context: unknown): TabsRepairAnswer => {
-  const view = viewOf(store)
-  const stamp = new Date().toISOString()
-  // AN ID IS A SURVIVOR ONLY IF THE RECORD STILL HOLDS IT: a seat left in `order` with no member under it is a removal
-  // made in the wrong order, and keeping it would hand the re-run the same dangling seat.
-  const order = view.order.filter((id) => !hints.removals.includes(id) && view.entries[id] !== undefined)
+/** **THE CORRECTED FAMILY, COMPOSED ONCE FROM A VIEW — the ONE home of the convergence rule, and `D-83` is why it is a
+ *  function of a VIEW rather than of the store.** Every repair this module runs leaves the same record: the `order` seat
+ *  and one member per surviving id, all three field defaults filled, exactly one row reading active, never empty. The
+ *  landing-instant repairs reach it through `viewOf` (they hold the store) and the creation-instant one through `viewFrom`
+ *  (it holds only the record it was handed), and **a repair that composed its own version would be a second answer to
+ *  "what is a corrected record"** — the failure mode `healRecord`'s docblock measured on 2026-10-30.
+ *
+ *  **AND `order` IS NOW THE RECORD'S IDS, ONCE EACH** (`D-83`, measured): a seat repeated in `order` names ONE held row
+ *  twice, so `exactly-one-active` counted two actives over one id and its repair could not fix it — the record was stuck
+ *  and every later act was REFUSED `ConstraintPassRefused`, *"the pair tabs#exactly-one-active violated a re-run and its
+ *  repair had already been applied"*. A sequence is a set here, so the survivor list is deduped before anything judges it. */
+const healedFamily = (
+  view: RecordView,
+  hints: HealHints,
+  stamp: string,
+): { order: string[]; rows: Record<string, TabsRecordRow> } => {
+  // AN ID IS A SURVIVOR ONLY IF THE RECORD STILL HOLDS IT, AND ONLY ONCE: a seat left in `order` with no member under it
+  // is a removal made in the wrong order, and a seat repeated is one row counted twice — keeping either would hand the
+  // re-run the same broken seat.
+  const order = view.order.filter(
+    (id, at) => !hints.removals.includes(id) && view.entries[id] !== undefined && view.order.indexOf(id) === at,
+  )
   const rows: Record<string, TabsRecordRow> = {}
   for (const id of order) {
     const row = view.entries[id]
@@ -678,6 +713,41 @@ const healRecord = (store: Store, hints: HealHints) => (context: unknown): TabsR
       }
     }
   }
+  return { order, rows }
+}
+
+/** **THE MODULE'S ONE WRITE OF A WHOLE RECORD FROM A REPAIR, AT EITHER INSTANT — AND THE BRANCH IS THE RECORD'S OWN
+ *  `write` MEMBER, NEVER THE INSTANT'S NAME** (`D-69`'s two arities, `D-73`'s one required carrier; `D-83` is why it is
+ *  now a shared helper rather than `mintRecord`'s body). A registration-instant record carries a `write` FUNCTION and the
+ *  store's own three positions, and a fourth position there is a `TypeError` thrown before any store act; a landing-instant
+ *  record is the six-member one and its commit MUST be named at `write`'s fourth, which is what `writeJoined` requires.
+ *  **Both arms answer through `repairAnswer`** — the credited arm's one home (`D-72`) — and **the failed arm is stated
+ *  rather than fallen into**: a repair that reached no route and holds no store says so, and one handed no carrier does
+ *  not write a second attempt's record. */
+const writeWholeRecord =
+  (getStore: () => Store | null) =>
+  (context: unknown, whole: Record<string, unknown>): TabsRepairAnswer => {
+    const route = plain(context) ? context['write'] : undefined
+    if (typeof route === 'function') {
+      const routeWrite = route as (address: readonly string[], tier: string, value: unknown) => unknown
+      // THREE POSITIONS, AND NO FOURTH: supplying the commit here is the refusal this branch exists to avoid.
+      return repairAnswer(routeWrite(TABS_RECORD_ADDRESS, 'file', whole))
+    }
+    const store = getStore()
+    if (store === null) {
+      // NEITHER ROUTE: no store to write through and no route on the record, so the record cannot be made to stand and
+      // the repair says so in the failed arm's own two members rather than answering `void`, which carries "no op".
+      return { ok: false, message: 'the tab record does not stand, and this repair reached no write route' }
+    }
+    if (!isCommitCarrier(context)) {
+      // A LANDING record that names no commit is not written here (`D-73`): the failed arm, never a second attempt's write.
+      return { ok: false, message: 'the record does not stand, and this repair was handed no commit to create it in' }
+    }
+    return repairAnswer(writeJoined(store, context, whole))
+  }
+
+const healRecord = (store: Store, hints: HealHints) => (context: unknown): TabsRepairAnswer => {
+  const { order, rows } = healedFamily(viewOf(store), hints, new Date().toISOString())
   // **ONE WRITE OF ONE CORRECTED OBJECT, JOINED TO THE ATTEMPT** — the whole point: the re-run reads this, so the pass
   // converges on the next evaluation instead of re-violating. **AND NO WITNESS RIDES IN IT ANY MORE**: the landing member is
   // derived at read (D-76), so this repair writes the corrected family — `order` and one member per surviving id — and the
@@ -752,7 +822,7 @@ const exactlyOneActive = (store: Store) => (): TabsConstraintAnswer => {
  *
  *  They are three pairs rather than one because a violation is a fact about ONE field: the refusal's sentence is how a
  *  caller learns which default was applied, and a body that tested all three could not say. The repairs still leave one
- *  record that satisfies all five — see `healRecord`. */
+ *  record that satisfies all six — see `healRecord`. */
 
 /** The entries of the record as it stands: every id in `order` the record holds a member for. Read through `viewOf`,
  *  which reads the ONE object at `TABS_RECORD_ADDRESS` — the object a body must judge (`§7.6`: a body reads the
@@ -856,26 +926,8 @@ const tabHasLastActiveAt = (store: Store) => (): TabsConstraintAnswer => {
  *  are different KINDS (a three-position function the record lent us, and the store itself), so the helper is not applicable
  *  to the route and the route is not applicable to the store — the arity each takes is fixed by the shape it is spelled on.
  *  **A landing record the class test refuses writes nothing** and answers the failed arm, exactly as `healRecord` does. */
-const mintRecord = (getStore: () => Store | null) => (context: unknown): TabsRepairAnswer => {
-  const whole = composeRecord([TABS_LANDING_ID], { [TABS_LANDING_ID]: landingRow(new Date().toISOString()) })
-  const route = plain(context) ? context['write'] : undefined
-  if (typeof route === 'function') {
-    const routeWrite = route as (address: readonly string[], tier: string, value: unknown) => unknown
-    // THREE POSITIONS, AND NO FOURTH: supplying the commit here is the refusal this branch exists to avoid.
-    return repairAnswer(routeWrite(TABS_RECORD_ADDRESS, 'file', whole))
-  }
-  const store = getStore()
-  if (store === null) {
-    // NEITHER ROUTE: no store to write through and no route on the record, so the record cannot be made to stand and
-    // the repair says so in the failed arm's own two members rather than answering `void`, which carries "no op".
-    return { ok: false, message: 'the tab record does not stand, and this repair reached no write route' }
-  }
-  if (!isCommitCarrier(context)) {
-    // A LANDING record that names no commit is not written here (`D-73`): the failed arm, never a second attempt's write.
-    return { ok: false, message: 'the record does not stand, and this repair was handed no commit to create it in' }
-  }
-  return repairAnswer(writeJoined(store, context, whole))
-}
+const mintRecord = (getStore: () => Store | null) => (context: unknown): TabsRepairAnswer =>
+  writeWholeRecord(getStore)(context, composeRecord([TABS_LANDING_ID], { [TABS_LANDING_ID]: landingRow(new Date().toISOString()) }))
 
 /** **`tabs-must-stand` — THE RECORD ROOT IS AN ENFORCED INVARIANT, NOT A SIDE EFFECT OF THE FIRST COMMIT** (D-69).
  *
@@ -906,6 +958,88 @@ const tabsMustStand = (getStore: () => Store | null) => (context: unknown): Tabs
   }
 }
 
+/** **`order-names-its-tabs` — THE `order` SEAT IS TESTED AT THE INSTANT THE RECORD ARRIVES, AND ITS REPAIR WRITES THE
+ *  CORRECTED ORDER (`D-83`).** The five pairs beside it gate a record's EXISTENCE, its active count and its three fields, and
+ *  not one of them judges the seat every other judgement is seated from: `viewOf` takes the family from `order`, so an
+ *  `order` that names nothing the record holds is read as a record with no tabs, one that repeats a seat is read as two
+ *  active tabs over one row, and one that is not a sequence at all falls through to the split-seat fallback and answers
+ *  the empty view. **Measured 2026-11-02 on this head, one fresh instance per arm, over a profile written before the
+ *  batch was constructed** — `read()` after the construction instant answered, for each: `order: []` with `rows: []` over
+ *  a record holding `tab-1` and no `order`; the same over `order: 'x'`; the same over `order: []`; `order: ['landing']`
+ *  with `rows: []` over the LEGACY STRING SEAT `{order: ['landing'], landing: 'landing'}`; `order: ['landing', 'ghost']`
+ *  with ONE row, a read naming a tab the record did not hold; and `order: ['landing', 'landing']` with the SAME ROW
+ *  COUNTED TWICE — the last of which no legal act could then recover from, a later `commit` being REFUSED
+ *  `ConstraintPassRefused` with *"the pair tabs#exactly-one-active violated a re-run and its repair had already been
+ *  applied"*, because both seats named the one held row and the repair had nothing to choose between.
+ *
+ *  **IT IS TESTED ON STORE CREATION, WHICH IS WHY IT IS NOT WRAPPED BY `body`.** The wrapper's `getStore() === null` arm
+ *  answers `true`, and at the construction instant the boot has bound no handle yet (`src/main/main.ts` binds its holder
+ *  only after `createProfileStore` returns) — so every wrapped body abstains there and a seat that arrives BROKEN FROM
+ *  THE FILE stands until some later write happens to repair it, or forever. **The judgement therefore needs no handle**:
+ *  a registration's context carries `value: readCurrent(store, address)`, and at this pair's address that is the record
+ *  itself (measured: the same five-member context a write hands, `tier: null` where the write's carries `'file'`). **The
+ *  handle is wanted by the REPAIR only**, exactly as `tabsMustStand` has it — and the repair is handed the same record, so
+ *  even its view is taken from a value (`viewFrom`) rather than from a read.
+ *
+ *  **THE ARM IS THE SEAT, AND IT IS FOUR FACTS, EACH A FAULT A CALLER CAN NAME**: the seat is absent or not an array; it
+ *  is empty; a member is not a non-empty string; a member repeats one already named; or a member is one the record holds
+ *  no ROW under. **A record that does not stand is NOT this pair's arm** — that is `tabs-must-stand`'s sentence, and a body
+ *  answering `true` over an absent value is what keeps two pairs from both minting the root on one instant. */
+const ORDER_NAMES_ITS_TABS_ID = 'order-names-its-tabs'
+/** **THE SIXTH SENTENCE, IN THE REGISTER OF THE OTHER FIVE** (L2 §3): it names the SEAT and the fault — a sequence of the
+ *  record's own tabs, once each — rather than the generic "the record is malformed", so a caller holding it knows the tab
+ *  set is what to look at and not a row's shape (`malformed-row`) or an id's spelling (`seat-name`). */
+const ORDER_SEAT_MESSAGE = "the tab record's 'order' seat carries no sequence of its own tabs, once each"
+
+/** The hints a seat repair states: it knows nothing of a referent, a removal or a written entry — its subject is the
+ *  membership itself — so the normalisation follows the record as it arrives and picks its survivor from the seat's own
+ *  order (`healedFamily`'s first-survivor arm). */
+const NO_HINTS: HealHints = { removals: [], written: null, removed: null, preOrder: [] }
+
+const orderNamesItsTabs = (getStore: () => Store | null) => (context: unknown): TabsConstraintAnswer => {
+  const held = plain(context) ? context['value'] : undefined
+  // A RECORD THAT DOES NOT STAND IS THE EXISTENCE PAIR'S, NOT THIS ONE'S: answering `true` here keeps two bodies from
+  // minting one root inside one instant, and the minted record is judged by the re-run like any other.
+  if (!plain(held)) return true
+  const refuse: TabsConstraintAnswer = { message: ORDER_SEAT_MESSAGE, repair: repairOrderSeat(getStore) }
+  const seat = held['order']
+  if (!Array.isArray(seat) || seat.length === 0) return refuse
+  const named = new Set<string>()
+  for (const id of seat) {
+    if (typeof id !== 'string' || id.length === 0) return refuse
+    if (named.has(id) || !plain(held[id])) return refuse
+    named.add(id)
+  }
+  return true
+}
+
+/** **THE REPAIR WRITES THE CORRECTED ORDER, AND IT WRITES IT AS ONE WHOLE LEGAL RECORD — never as a seat alone.**
+ *  Measured 2026-11-02, and it is the finding that fixed this pair's ADDRESS: a pair standing at `['tabs','order']` is
+ *  handed the SEAT at a registration instant (`['landing','ghost']`, measured), so a repair there can write an `order` and
+ *  cannot write the ROWS it names — and `{order: ['landing']}` over a record holding no `landing` row is exactly the state
+ *  this pair refuses. **The record is what a legal repair must leave, so the pair stands where the record is** (`['tabs']`,
+ *  the address `composeRecord` writes the order into and `viewOf` reads it from), and the repair composes the family
+ *  through the one home of the convergence rule.
+ *
+ *  **THE VIEW COMES FROM THE HANDED RECORD WHEN THERE IS ONE, AND FROM THE STORE OTHERWISE** — a landing instant hands the
+ *  act's value, which is the record at this address, and a root `delete` hands absence, where the store's own view is the
+ *  record that stands. **A record whose `order` is not an array falls to the landing floor**: with no sequence there is no
+ *  membership to salvage, which is the disposition `healRecord` already takes for the same state.
+ *
+ *  **AND THE WRITE NAMES ITS COMMIT AT EITHER INSTANT** — `writeWholeRecord` is the one route, three positions at a
+ *  registration instant and `writeJoined`'s fourth at a landing one — so this repair is credited exactly as `D-72`/`D-73`
+ *  require, and the registration's own RE-RUN judges the record it landed. */
+const repairOrderSeat = (getStore: () => Store | null) => (context: unknown): TabsRepairAnswer => {
+  const handed = plain(context) ? context['value'] : undefined
+  const store = getStore()
+  const view = plain(handed) ? (viewFrom(handed) ?? { order: [], entries: {} }) : store === null ? null : viewOf(store)
+  if (view === null) {
+    return { ok: false, message: 'the tab record does not stand and this repair holds no record to correct' }
+  }
+  const { order, rows } = healedFamily(view, NO_HINTS, new Date().toISOString())
+  return writeWholeRecord(getStore)(context, composeRecord(order, rows))
+}
+
 /** **THE BATCHED DECLARATIONS, COLLECTED BY BOOT** (D-65's first act). Each element carries the pair and the body; the
  *  boot gathers these from every module that imposes one and constructs the central store **once** with the batch, so a
  *  constraint is a DECLARATION here rather than a constructor call. The getter is how a body reaches the instance it is
@@ -913,13 +1047,17 @@ const tabsMustStand = (getStore: () => Store | null) => (context: unknown): Tabs
  *
  *  The ids are a namespace the modules share (`guide §7.2`: a repeated id in one supplied list is REJECTED).
  *
- *  **FIVE, AND THE FIFTH IS LISTED FIRST**: `tabs-must-stand` is registered and not wrapped by `body`, because the
- *  wrapper's null-store arm would silence it at the exact instant it is the only pair that can act (`tabsMustStand`), and
- *  it stands ahead of the other four because it is the precondition of their subject — a record that does not exist has
- *  no field to judge and no tab to activate. The pairs it writes past are silent at that instant for a reason of their
- *  own: their bodies read through the same handle and the wrapper is what tells them to abstain.
+ *  **SIX, AND THE ONE THAT IS LISTED FIRST IS NOT THE ONLY ONE THAT ACTS AT THE CREATION INSTANT** (`D-83`): the batch's
+ *  order is `tabs-must-stand`, then `order-names-its-tabs`, then the active-count pair, then the three field pairs.
+ *  `tabs-must-stand` is registered and not wrapped by `body`, because the wrapper's null-store arm would silence it at the
+ *  exact instant it is the only pair that can act (`tabsMustStand`); it stands ahead of the rest because it is the
+ *  precondition of their subject — a record that does not exist has no seat to name and no field to judge. **The second is
+ *  unwrapped for the same reason and is the precondition of the other four's SUBJECT** (`orderNamesItsTabs`): the family is
+ *  read from the `order` seat, so a seat that names no row the record holds is a record with no tabs at all, and a seat
+ *  that repeats one is two actives over one row. The pairs below it are silent at the creation instant for a reason of
+ *  their own: their bodies read through the same handle and the wrapper is what tells them to abstain.
  *
- *  **AND THE RETURN OF THIS FUNCTION IS TYPED, WHERE IT USED TO BE `(context: unknown) => unknown`** (`D-72`): the five
+ *  **AND THE RETURN OF THIS FUNCTION IS TYPED, WHERE IT USED TO BE `(context: unknown) => unknown`** (`D-72`): the six
  *  bodies answer `TabsConstraintAnswer` and their repairs answer `TabsRepairAnswer` — `true` or `{message, repair}`, and
  *  `{ok: true, op}` or `{ok: false, message}` — so **a body or a repair that returns nothing is a COMPILE ERROR here**,
  *  every element is a `TabsConstraintDeclaration`, and no site needs a cast to say so. That is the point of the types: the
@@ -936,6 +1074,7 @@ export function tabsConstraintDeclarations(getStore: () => Store | null): readon
     }
   return [
     { address: TABS_RECORD_ADDRESS, id: TABS_MUST_STAND_ID, constraint: tabsMustStand(getStore) },
+    { address: TABS_RECORD_ADDRESS, id: ORDER_NAMES_ITS_TABS_ID, constraint: orderNamesItsTabs(getStore) },
     { address: TABS_RECORD_ADDRESS, id: TABS_CONSTRAINT_ID, constraint: body(exactlyOneActive) },
     { address: TABS_RECORD_ADDRESS, id: 'tab-has-title', constraint: body(tabHasTitle) },
     { address: TABS_RECORD_ADDRESS, id: 'tab-has-content', constraint: body(tabHasContent) },
@@ -1083,7 +1222,7 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       // built on it: `register` runs at once, and the entry is withdrawn where `register` fails (D-71). **The body this
       // replaces called `listen` alone and dropped `handler` on the floor: the push existed in name only** (D-70).
       //
-      // **THE LISTENER STANDS AT `['tabs']` ITSELF, beside all five of this module's pairs** — lawful from `1.7.0`, whose
+      // **THE LISTENER STANDS AT `['tabs']` ITSELF, beside all six of this module's pairs** — lawful from `1.7.0`, whose
       // one cross-kind rule reads the HANDLE and never the address (`guide §7.3`'s clause of 2026-11-01; the listener's own
       // docblock above, and `D-71`).
       //

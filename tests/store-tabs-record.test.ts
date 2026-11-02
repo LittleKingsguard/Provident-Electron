@@ -76,6 +76,12 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 
+/** **THE CROSSING'S BATCH, READ HERE BECAUSE `D-83` MOVED ITS SUBJECT HERE**: `G-5`'s cold-hand-off arm and `B-8`'s argument
+ *  domain were arms of a RENDERER boot step that is deleted, and the arm that replaces them is the crossing's sixth
+ *  declaration — tested at the store's creation. The import is the SUBJECT, not a second instrument: the behaviour is
+ *  driven in `tests/integration/store-tabs-record/crossing.test.ts`, and these two rows read the batch and its answer. */
+import { tabsConstraintDeclarations } from '../src/main/tabs-record/index'
+
 import {
   CLOSE_REFERENCE_SET_MEMBERS,
   CLOSE_REFERENCE_SET_MEMBERS_AS_FILED,
@@ -130,13 +136,11 @@ import {
   tabsStore,
   valueOf,
   wiredConstraintReading,
-  shippedBootSeamDrive,
   shippedLandingReservationDrive,
   shippedMint,
   shippedNonMemberWriteDrive,
   nonMemberArmLine,
   nonMemberWriteLines,
-  type BootSeamReading,
   type LandingReservationReading,
   type NonMemberWriteArm,
   type NonMemberWriteReading,
@@ -283,6 +287,24 @@ const RENDERER_PATH = new URL('../src/renderer/renderer.ts', import.meta.url)
 const ENVELOPE_PATH = new URL('../src/shared/demo-envelope.ts', import.meta.url)
 const rendererSrc = (): string => readFileSync(RENDERER_PATH, 'utf8')
 const envelopeSrc = (): string => readFileSync(ENVELOPE_PATH, 'utf8')
+
+/** **THE SAME BYTES WITH COMMENTS ELIDED — the reader every ABSENCE and COUNT row here must use (`D-83`).** A row that
+ *  asserts a name is GONE, or counts a spelling, passes or fails on a COMMENT if it reads the raw text: this file's own
+ *  headstones name the identifiers they replaced, on purpose, and a count of `commit('file.tabs.` read off the raw bytes
+ *  counted the headstones instead of the code (measured 2026-11-02: **3** raw, **0** elided, after `D-83` deleted the boot
+ *  step). So the elision is one function here, block comments and comment LINES removed and trailing `//` comments
+ *  stripped, and each row that uses it keeps its own positive control — the name it looks for IS in `rendererSrc()` — so a
+ *  reading cannot pass by eliding everything. */
+const rendererCode = (): string =>
+  rendererSrc()
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((line) => {
+      const trimmed = line.trimStart()
+      return !trimmed.startsWith('//') && !trimmed.startsWith('*')
+    })
+    .map((line) => line.replace(/\s\/\/.*$/, ''))
+    .join('\n')
 
 /** THE POSITIVE CONTROL for the "no hand-written DOM" scan (`§3.5` item 3): the detector
  *  FIRES on the synthetic fixture and does NOT fire on the declared region's own bytes. */
@@ -1397,13 +1419,18 @@ describe('T2 §4.2 item 6 — THE BOOT STEP (`§3.3`, C-12, `§5.5.1` `P-TR-SM-3
     expect(hydrateAt, '§3.3 item 1 — hand-off → construction → `hydrate` → the slice boot step → Runtime/first envelope').toBeLessThan(runtimeAt)
   })
 
-  it('B-7 · §3.3 item 4 — the boot step must NOT bypass `hydrate` by re-minting the record through `commit` chains that duplicate what `hydrate` already minted', () => {
+  it('B-7 · §3.3 item 4 — the boot step must NOT bypass `hydrate` by re-minting the record through `commit` chains that duplicate what `hydrate` already minted — and since `D-83` deleted the boot step the count is read over the COMMENT-ELIDED code and is exactly ZERO', () => {
     // ── **STATIC READING (DECLARED, `2026-10-11`, `RCA-8(d)`; named by `SR-1`):** a byte-level
     //    COUNT of `commit('file.tabs.…')` occurrences in the wiring region — a reading of the
-    //    shipped text, never of a host's state.
+    //    shipped text, never of a host's state. **IT READS `rendererCode()` AND NOT `rendererSrc()`
+    //    FROM `D-83`**: the headstones that record the deletion NAME the write they removed, so a
+    //    count over the raw bytes counted prose (measured: 3 raw against 0 in the code). The bound
+    //    tightened from ≤ 1 to exactly 0 in the same change: the ONE commit this bound once
+    //    permitted WAS the boot step, and it is gone.
     const region = rendererSrc()
-    const tabRecordCommits = region.match(/commit\(\s*['"`]file\.tabs\./g) ?? []
-    expect(tabRecordCommits.length, '§3.3 item 4 — no `commit` chain duplicates what `hydrate` already minted').toBeLessThanOrEqual(1)
+    expect(region.includes("commit('file.tabs."), 'the positive control for the elision: the raw bytes DO carry a headstone spelling the removed write, so the count below is not zero merely because nothing was elided').toBe(true)
+    const tabRecordCommits = rendererCode().match(/commit\(\s*['"`]file\.tabs\./g) ?? []
+    expect(tabRecordCommits, '§3.3 item 4 — the wiring performs NO `commit` on a `file.tabs.*` name: no chain duplicates what `hydrate` already minted, and the boot writes no record byte at all').toEqual([])
   })
 })
 
@@ -1539,7 +1566,7 @@ describe('T2 §4.2 item 7 — THE TWO AUTHORED PAGES’ NODE-LAYER HALF (`§3.5`
  * `F-4` / `T2-C-15`, AND THE DECLARED STATIC READINGS.
  *
  * These rows are driven against the SHIPPED seams (`getWiredGraphStore()` with NO options, the
- * exported `closeTab`, the exported `evaluateTabsBootStep`, the exported `mintTabId`) — never
+ * exported `closeTab`, the exported `mintTabId` — the exported boot step was DELETED, `D-83`) — never
  * against a fixture that supplies a declaration `src/**` does not carry, and never against a
  * source-text match.  Every as-filed form stays VISIBLE beside its re-grain (`RCA-8(d)`): the
  * fixture-declared reserved-entry rows (`L-1`…`L-6`, `A-5`), the sequence-only boot rows
@@ -1635,76 +1662,26 @@ describe('T2 §4.2 items 4/6/8b — THE RE-TRIAGE’S BEHAVIOURAL ROWS (`F-6`·`
     expect(reading.closeOrderAfter, '§2.1 item 6 / §3.1 M-1 — its `order` seat is untouched (the close never leaves the sequence without the reserved entry)').toEqual(['A', 'landing'])
   })
 
-  it('B-8 · §3.3 items 3/4 (`F-1` / host `H-3`) — **SPEC-SILENT-OWED**: the boot seam must REFUSE or NORMALIZE a non-string-sequence argument — a DECLARED outcome, never a corrupted write — with the declared-sequence arm as the positive control', () => {
-    const reading: BootSeamReading = shippedBootSeamDrive()
-    expect(reading.reason).toBeNull()
-    // ── THE POSITIVE CONTROL (`§3.3` item 3): the DECLARED sequence form writes the membership.
-    expect(reading.declaredArmWritten, '§3.3 item 3 — a hand-off that CARRIES a sequence is evaluated: ONE `commit` on `file.tabs.order`').toBe(true)
-    expect(reading.declaredArmOrderAfter, '§3.3 item 3 — the declared-sequence arm writes the SEQUENCE itself').toEqual(['A', 'B'])
-    // ── THE DECLARED NO-WRITE ARM (`§3.3` item 4, `H-4`): a hand-off carrying NO sequence writes NOTHING.
-    expect(reading.absentArmWritten, '§3.3 item 4 — no sequence, no commit, nothing minted, no event').toBe(false)
-    expect(reading.absentArmReceipt).toBeNull()
-    // ── THE ROWS ARM. **SPEC-SILENT-OWED, MARKED IN-LINE AS THE INSTRUCTION REQUIRES:** the
-    //    contract pins NO outcome for a hand-off that carries the HAND-OFF'S OWN ROWS
-    //    (`{ name, value }[]`, what `bridge.store.get()` answers) instead of a membership
-    //    sequence; the declared outcome the triage owes is a REFUSAL (no write) or a
-    //    NORMALIZATION (the rows' own `file.tabs.order` value written as the sequence). NEITHER
-    //    is landed: the ROWS ARRAY ITSELF is written into `file.tabs.order`, and the store's own
-    //    repair diff MINTS a `file.tabs.[object Object]` leaf that is afterwards READABLE — a
-    //    corrupted write, which is the one outcome no clause declares. (`main()` derives the
-    //    correct membership sequence at `renderer.ts:1161` and is the seam's ONLY shipped caller,
-    //    so no shipped path ever hands it rows.)
-    const refused = reading.rowsArmWritten === false
-    const normalized = JSON.stringify(reading.rowsArmOrderAfter) === JSON.stringify(['A', 'B'])
-    expect(refused || normalized, `SPEC-SILENT-OWED — the seam must REFUSE the rows argument or NORMALIZE it to the rows’ own membership sequence; writing the rows array into \`file.tabs.order\` is a corrupted write. MEASURED at this head: written ${String(reading.rowsArmWritten)} · refusal ${JSON.stringify(reading.rowsArmRefusal)} · receipt ${JSON.stringify(reading.rowsArmReceipt)} · \`file.tabs.order\` after ${JSON.stringify(reading.rowsArmOrderAfter)}`).toBe(true)
-    // ── **ASSERTION 3, RE-GRAINED THE `CL-1` WAY (`2026-10-11`; `RCA-8(d)` — THE AS-FILED FORM IS
-    //    KEPT VISIBLE IN-LINE WITH ITS CAUSE).** **AS FILED this assertion demanded**
-    //    `expect(reading.rowsArmBogusLeafFound, '… the corrupted write MINTS and makes READABLE a
-    //    `file.tabs.[object Object]` leaf …').toBe(false)` — **the DECLARED MISS (`§3.6` `A-1`).
-    //    THAT DEMAND IS UNSATISFIABLE ON THE FROZEN STORE'S OWN READ PATH, AND IT WAS ALREADY
-    //    RECORDED AS SUCH BY THIS UNIT'S OWN SIBLING ROW:** `CL-1` (this file, the close verb's
-    //    terminal state) MEASURES the same store fact — a reference the store cannot resolve
-    //    answers a **READ-SIDE REFUSAL**, `{ status: 'refused', reason: 'no-such-anchor',
-    //    diagnostic: { step: 'D-ANCHOR' } }`, **which carries NO `found` member at all**, so the
-    //    reading is `undefined`, never `false` — and `CL-1` therefore asserts the readable effect
-    //    (`afterClose['found'] ?? false → false`) together with the CLOSED token set
-    //    `['no-such-anchor', 'undeclared-name']`. **THE AS-FILED `=== false` AND `CL-1`’S OWN
-    //    FORM ARE AN ASSERTION PAIR THIS SUITE CANNOT BOTH HOLD**; the demand is re-grained to the
-    //    fact the store actually delivers, NEVER WEAKENED IN SUBSTANCE: what the row must exclude
-    //    is a BOGUS LEAF THAT WAS MINTED AND IS READABLE, and `found !== true` excludes exactly
-    //    that (a minted, readable leaf answers `found: true` and reddens here).
-    expect(
-      reading.rowsArmBogusLeafFound !== true,
-      `SPEC-SILENT-OWED / §3.6 A-1 — the read must NOT answer the bogus spelling as a FOUND value. AS FILED this demanded \`=== false\`; the frozen read path answers a READ-SIDE REFUSAL with NO \`found\` member (the store fact \`CL-1\` already records), so the as-filed form could never hold. MEASURED: found ${JSON.stringify(reading.rowsArmBogusLeafFound)} · reason ${JSON.stringify(reading.rowsArmBogusLeafReason)} · step ${JSON.stringify(reading.rowsArmBogusLeafStep)}`,
-    ).toBe(true)
-    // ── AND THE CL-1 ROW'S OWN CLOSED SET, ASSERTED THE WAY `CL-1` ASSERTS IT (`:666-669`), so the
-    //    row RECORDS WHAT THE READ DOES ANSWER instead of only what it does not: a RETURNED
-    //    refusal record whose token is in the unit's closed answer set for this store fact. The
-    //    token is MEASURED at this head (`no-such-anchor` at step `D-ANCHOR`); a store that answers
-    //    the declared miss INSTEAD also fails it (`CL-1`'s own stated reason for its pair), and a
-    //    fourth, un-enumerated token fails it as a `§3.6` totality finding — `CL-1` reddens with
-    //    this row, never diverging from it.
-    expect(
-      ['no-such-anchor', 'undeclared-name'],
-      `SPEC-SILENT-OWED / §3.6 — the read on the un-minted bogus spelling answers a RETURNED refusal record, never a throw and never an un-enumerated token. MEASURED: reason ${JSON.stringify(reading.rowsArmBogusLeafReason)} · step ${JSON.stringify(reading.rowsArmBogusLeafStep)}`,
-    ).toContain(reading.rowsArmBogusLeafReason)
-    expect(
-      reading.rowsArmBogusLeafReadsActive,
-      'SPEC-SILENT-OWED — **THE BITE, KEPT:** NO LEAF IS MINTED for the rows’ `join` spelling, so nothing reads active at `file.tabs.[object Object]` (a run that DID mint a readable, ACTIVE bogus leaf reddens here)',
-    ).toBe(false)
-    // ── THE ROWS ARM AND THE BOGUS READ, PRINTED WITH THEIR TERMS (`§4.1` item 2 /
-    //    `EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-PRINTS`): the SPEC-SILENT-OWED readings are reported,
-    //    including the read-side token the frozen path answers where the as-filed form demanded a
-    //    `found: false` miss.
-    process.stdout.write(
-      `\n── T2 \`B-8\` — THE BOOT SEAM’S ARGUMENT DOMAIN, MEASURED ──\n` +
-      `  ROWS ARM (\`{name,value}[]\`, what \`bridge.store.get()\` answers): written ${String(reading.rowsArmWritten)} · refusal ${JSON.stringify(reading.rowsArmRefusal)} · receipt ${JSON.stringify(reading.rowsArmReceipt)} · \`file.tabs.order\` after ${JSON.stringify(reading.rowsArmOrderAfter)}\n` +
-      `  BOGUS LEAF \`file.tabs.[object Object]\`: found ${JSON.stringify(reading.rowsArmBogusLeafFound)} · reason ${JSON.stringify(reading.rowsArmBogusLeafReason)} · step ${JSON.stringify(reading.rowsArmBogusLeafStep)} · reads active ${String(reading.rowsArmBogusLeafReadsActive)}\n` +
-      `  NON-STRING SEQUENCE \`[1, 2, null]\`: written ${String(reading.nonStringArmWritten)} · order after ${JSON.stringify(reading.nonStringArmOrderAfter)}\n` +
-      `  CONTROLS: declared sequence \`['A','B']\` → written ${String(reading.declaredArmWritten)} · order ${JSON.stringify(reading.declaredArmOrderAfter)} · absent → written ${String(reading.absentArmWritten)} · receipt ${JSON.stringify(reading.absentArmReceipt)}\n` +
-      `────────────────────────────────────────────────────────────\n`,
-    )
-    expect(reading.nonStringArmWritten, 'SPEC-SILENT-OWED — the same seam accepts an array of NON-STRING members (`[1, 2, null]`); the declared sequence domain is the caller’s id sequence').toBe(false)
+  it('B-8 · §3.3 items 3/4 (`F-1` / host `H-3`) — **REPLACED BY THE DELETION ROW**: the boot step this row drove (`evaluateTabsBootStep`, its argument domain and its one `commit` on `file.tabs.order`) is DELETED (`D-83`), so what this row now asserts is that the NAME and the WRITE are gone from the wiring’s CODE — comments elided — and that no row anywhere can drive them green again', () => {
+    // ── **THE HOLLOW-GREEN CLASS THIS ROW IS BUILT AGAINST, STATED FIRST.** A naive `rendererSrc().includes('evaluateTabsBootStep')`
+    //    passes on a COMMENT that mentions the name — and the headstone the deletion left at the declarations DOES mention it,
+    //    deliberately. So the scan is taken over the SOURCE WITH COMMENT LINES AND BLOCK COMMENTS ELIDED, and the elision is
+    //    PROVEN to bite by the positive control below: the same probe run over the raw bytes FINDS the name (in the
+    //    headstone) while the elided bytes do not. Without that control the row could pass because the elision deleted
+    //    everything, which is the failure mode `SR-1` files under static readings.
+    const region = rendererSrc()
+    const code = rendererCode()
+    // THE POSITIVE CONTROL FOR THE ELISION: the name IS in the raw bytes and NOT in the code.
+    expect(region.includes('evaluateTabsBootStep'), 'the raw bytes mention the deleted name — its headstone does — so the elision has something to remove and this row is not vacuous').toBe(true)
+    expect(code.includes('evaluateTabsBootStep'), 'and the CODE does not: no declaration, no call and no export of the boot step survives in `src/renderer/renderer.ts`').toBe(false)
+    expect(code.includes('TabsBootOutcome'), 'nor does the answer type that described only what the step answered — a declared outcome with no producer is a name with nothing behind it (D-70)').toBe(false)
+    // AND THE WRITE IT PERFORMED IS GONE FROM THE CODE TOO: no `commit` on a `file.tabs.*` name stands anywhere in this file,
+    // so the renderer performs no record write at boot at all (`B-7`’s count, read here as an exact zero rather than a bound).
+    const tabRecordCommits = code.match(/commit\(\s*['"`]file\.tabs\./g) ?? []
+    expect(tabRecordCommits, 'no `commit` on a `file.tabs.*` name survives the deletion: the boot writes no record byte').toEqual([])
+    // AND THE SEAM THE ROWS DROVE IS GONE FROM THE MODULE NAMESPACE, read the same way the register reads exports.
+    const boot = (wiring.module ?? {})['evaluateTabsBootStep']
+    expect(typeof boot, 'the wiring exports no boot step: a row that drove `evaluateTabsBootStep` would now drive `undefined`').toBe('undefined')
   })
 
   it('M-1 · §0A item 2 / §1.1 item 8 / §5.5.1 `P-TR-IM-5` (`F-4` / `T2-C-15`) — THE MINT’S REFUSAL DRIVEN BEHAVIOURALLY AT THE EXPORTED SEAM `mintTabId(holder, tabId)`: a duplicate, a dotted, a malformed and the reserved spelling each answer their DECLARED refusal reason, with a fresh id MINTED as the positive control', () => {
@@ -2337,79 +2314,33 @@ describe('T2 GATE-4 REPAIR — THE FIXTURE SUPPLIES THE WIRING’S MEMBER, AND T
     ).toEqual(activesOf(store, ['C', 'A']))
   })
 
-  it('G-5 · §3.3 item 3/4 — H-4 (HIGH): the boot step must write NOTHING on a COLD hand-off, and a hand-off that CARRIES a membership sequence IS evaluated', () => {
-    // ── **THE ROW IS RE-POINTED AT THE EXPORTED SEAM (`2026-10-11`, the concurrent
-    //    Implementer pass): `evaluateTabsBootStep(store, handedOrder)` — the boot step's OWN
-    //    body, exported by `src/renderer/renderer.ts` with the declared outcome type
-    //    `TabsBootOutcome` (`{ written: boolean, receipt: unknown | null }`). IT IS THE ONLY
-    //    FORM THAT CAN REACH THE GUARDED SITE: the wiring's `main()` is file-local, so before
-    //    this seam the row could only re-drive the boot step's DECLARED OPERATIONS.**
-    //
-    //    **THE AS-FILED DRIVE, KEPT VISIBLE IN-LINE — THE FORM THAT COULD NOT REACH THE GUARDED
-    //    SITE (the gate-4 repair's own classification):**
-    //        const { store } = constrainedStore()
-    //        seedWiringState(store, [], null)
-    //        const bootReceipt = callStore(store, 'commit', ORDER, [])   // ← a BARE commit
-    //        // → MEASURED: found=true, value=["landing"], repaired=["file.tabs.order",
-    //        //   "file.tabs.landing"], events=3 — the unconditional `commit(order, [])` MINTS
-    //        //   `file.tabs.landing` (and the record root) on a tier that held NOTHING.
-    //    MEASURED, A BARE `commit(ORDER, [])` STILL MINTS TODAY — it is a CALLER write and no
-    //    boot-step guard can reach it — which is exactly why the row may no longer take that
-    //    form as its subject: THE GUARD LIVES IN THE EXPORTED BOOT STEP. THE DRIVE BELOW IS
-    //    THEREFORE THE BOOT STEP ITSELF, AND BOTH ARMS ARE ASSERTED.**
-    const bootStep = (wiring.module?.['evaluateTabsBootStep'] ?? null) as
-      | ((store: Rec, handedOrder: readonly string[] | undefined) => { written: boolean; receipt: Rec | null })
-      | null
-    expect(
-      typeof bootStep,
-      '§3.3 item 3 — the wiring EXPORTS its boot step (`evaluateTabsBootStep`), so the guard the clause declares is reachable by a drive; a file-local boot step makes this row UNFALSIFIABLE',
-    ).toBe('function')
-    if (bootStep === null) return
-    // ── ARM ONE — A COLD HAND-OFF PERFORMS NO WRITE AT ALL: no `order`, no `file.tabs.landing`,
-    //    no event, nothing minted. **THIS IS THE ARM H-4'S DEFECT REDDENS: a boot step that
-    //    commits the handed-off (empty) sequence mints the landing entry on a tier that held
-    //    NOTHING, where the step's own contract claims a total no-op.**
-    const cold = constrainedStore()
-    const coldOutcome = bootStep(cold.store, [])
-    expect(
-      coldOutcome['written'],
-      `§3.3 item 4 / §2.4 item 3 — a COLD hand-off must perform NO write: MEASURED written=${String(coldOutcome['written'])} receipt=${JSON.stringify(coldOutcome['receipt'])}`,
-    ).toBe(false)
-    expect(coldOutcome['receipt'], '§3.3 item 4 — the declared no-write arm answers `receipt: null`, a VALUE the caller reads rather than an absence it infers').toBeNull()
-    expect(
-      resolveOf(cold.store, ORDER)['found'],
-      '§3.3 item 4 — and NOTHING is minted: `file.tabs.order` is STILL a MISS on a tier that held nothing',
-    ).toBe(false)
-    expect(
-      resolveOf(cold.store, LANDING)['found'],
-      '§3.3 item 4 — and the landing ENTRY is a MISS: the reservation is taken by the FIRST real hand-off, never by a boot that handed off nothing',
-    ).toBe(false)
-    // THE UNDEFINED HAND-OFF (an absent sequence) IS THE SAME DECLARED ARM, read so the pair of
-    // cold forms is closed rather than sampled.
-    const absent = constrainedStore()
-    expect(bootStep(absent.store, undefined)['written'], '§3.3 item 4 — an ABSENT hand-off is the no-write arm too').toBe(false)
-    expect(resolveOf(absent.store, ORDER)['found'], '§3.3 item 4 — and it mints nothing').toBe(false)
-    // ── ARM TWO — A HAND-OFF THAT CARRIES A MEMBERSHIP SEQUENCE **IS** EVALUATED, with the
-    //    repair's OWN RECEIPT: this is the reservation this unit takes (`§3.3` item 3), and it
-    //    makes the cold reading attributable rather than vacuous.
-    const handed = constrainedStore()
-    seedWiringState(handed.store, ['A'], null)
-    const handedOutcome = bootStep(handed.store, ['A'])
-    expect(handedOutcome['written'], '§3.3 item 3 — a hand-off that CARRIES a sequence IS evaluated').toBe(true)
-    const handedReceipt = (handedOutcome['receipt'] ?? {}) as Rec
-    expect(
-      ((handedReceipt['repaired'] as string[] | undefined) ?? []).length,
-      `§3.3 item 5 — the boot write’s receipt carries \`repaired: [...]\` (the zero-active arm), and the post-state holds exactly one active; MEASURED repaired=${JSON.stringify(handedReceipt['repaired'])}`,
-    ).toBeGreaterThan(0)
-    expect(activesOf(handed.store, ['A']), '§3.3 item 5 — exactly one active after the boot write').toEqual(['A'])
-    // ── THE POSITIVE CONTROL FOR THE COLD ARM (`§3.3` item 5's own pair): a handed-off record
-    //    ALREADY holding exactly one active answers `repaired: []` with its post-state unchanged,
-    //    so neither arm's reading is vacuous.
-    const already = constrainedStore()
-    seedWiringState(already.store, ['A'], 'A')
-    const alreadyReceipt = (bootStep(already.store, ['A'])['receipt'] ?? {}) as Rec
-    expect(alreadyReceipt['repaired'], '§3.3 item 5 — the positive control’s `repaired: []`').toEqual([])
-    expect(activesOf(already.store, ['A']), '§3.3 item 5 — and the post-state is unchanged').toEqual(['A'])
+  it('G-5 · §3.3 item 3/4 — H-4 (HIGH) — **REPLACED BY THE DELETION ROW**: the cold hand-off’s no-write arm and the carried hand-off’s ONE evaluated write were the same seam’s two arms, and the seam is DELETED (`D-83`). What this row asserts now is the arm that SUPERSEDES it: the boot step’s write does not exist, and the repair the convention’s third clause asks for is the crossing’s declaration `order-names-its-tabs`, TESTED AT THE STORE’S CREATION — so this row reads the crossing’s batch, not the wiring’s bytes', () => {
+    // ── **WHY THE ROW MOVED RATHER THAN VANISHED.** `H-4`’s claim was *"a cold hand-off performs no write at all"*, and its
+    //    defect was a boot step that MINTED on an empty hand-off. With the step deleted the claim is TRUE BY CONSTRUCTION —
+    //    there is no boot write to guard — and a row asserting `written === false` over a function that no longer exists
+    //    would be a green arm over nothing (the class `D-70` files: a declared answer with no producer). So the row keeps its
+    //    ID, its subject moves to the crossing, and both halves of the arm that replaced it are read: the pair is IN the
+    //    batch, and it is asked AT THE CREATION INSTANT (its behaviour is driven, arm by arm, in
+    //    `tests/integration/store-tabs-record/crossing.test.ts` under `D-83`).
+    const batch = tabsConstraintDeclarations(() => null)
+    expect(batch.map((declaration) => declaration.id), 'SIX declarations, and the SEAT pair is the second — it is unwrapped, so the boot’s null holder does not silence it at the instant it is the only one that can act').toEqual([
+      'tabs-must-stand',
+      'order-names-its-tabs',
+      'exactly-one-active',
+      'tab-has-title',
+      'tab-has-content',
+      'tab-has-lastActiveAt',
+    ])
+    for (const declaration of batch) {
+      expect([...declaration.address], `the declaration ${declaration.id} stands at the record’s own address`).toEqual(['tabs'])
+    }
+    // AND THE TWO UNWRAPPED BODIES ARE THE TWO THAT MUST ACT AT CONSTRUCTION: measured at this head (`D-83`), `tabs-must-stand`
+    // and `order-names-its-tabs` answer `true`/a refusal from `context.value` alone, while the four wrapped ones answer
+    // `true` whenever the holder is null — which is what the boot’s construction instant IS.
+    const bodyOf = (id: string) => (batch.find((each) => each.id === id) as unknown as { constraint: (context: unknown) => unknown }).constraint
+    expect(bodyOf('order-names-its-tabs')({ address: ['tabs'], id: 'order-names-its-tabs', op: null, tier: null, value: undefined }), 'over an ABSENT record the seat pair PASSES: existence is `tabs-must-stand`’s arm, and two bodies minting one root on one instant is the shape this arm exists to avoid').toBe(true)
+    const refusal = bodyOf('order-names-its-tabs')({ address: ['tabs'], id: 'order-names-its-tabs', op: null, tier: null, value: { order: ['landing', 'ghost'], landing: { id: 'landing', target: 'p', active: true, label: 'l', lastActiveAt: '2026-11-02T00:00:00.000Z' } } }) as { message?: string }
+    expect(refusal.message, 'and over a seat naming a tab the record does not hold it REFUSES, in a sentence that names the seat').toBe("the tab record's 'order' seat carries no sequence of its own tabs, once each")
   })
 })
 

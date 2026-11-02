@@ -20,7 +20,7 @@
 // already carries, exactly as the wiring's landed driver does (`src/renderer/renderer.ts`'s `driveTabsLandingPage`).
 //
 // WHAT IT MUST NOT DO, AND DOES NOT (L2 §6's "What it must never do"). It registers no constraint at `['tabs']` and no
-// second authority on `exactly-one-active` (the five pairs are the module's and the boot's batch, D-65). It writes nothing:
+// second authority on `exactly-one-active` (the six pairs are the module's and the boot's batch, D-65, D-83). It writes nothing:
 // **Stage A takes NO WRITE ROUTE AT ALL** — `commit` and `remove` are L2 §2's third and fourth routes and Stage B's, and a
 // write site with no caller is a route nobody drives. It never notifies by writing, because a listener runs in its own
 // commit (`guide §6.5`) and an `onChanged` body that wrote would be a second writer inside the one that fired it (D-71).

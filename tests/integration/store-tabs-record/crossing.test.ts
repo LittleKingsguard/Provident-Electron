@@ -1,8 +1,9 @@
 // tests/integration/store-tabs-record/crossing.test.ts — THE L3 BATTERY for `store-tabs-record`, part 1: the crossing
 // over the central instance.
 //
-// THE CONTRACT: `docs/L3/store-tabs-record/design.md` §4 — FIVE registered pairs at `['tabs']` (`tabs-must-stand`, the
-// existence pair that mints the root; `exactly-one-active`; and the three field invariants), each answering `true` or
+// THE CONTRACT: `docs/L3/store-tabs-record/design.md` §4 — SIX registered pairs at `['tabs']` (`tabs-must-stand`, the
+// existence pair that mints the root; `order-names-its-tabs`, the seat pair that names the record's own tabs, D-83;
+// `exactly-one-active`; and the three field invariants), each answering `true` or
 // `{ message, repair }`, where the repair leaves ONE corrected record and RETURNS the op its write landed
 // (`{ ok: true, op }`, the shape the kernel credits through `landedOp`), and `docs/L2/store-tabs-record/interface.md` §2 —
 // four routes; and design §5 — the change push, which is a listener REGISTERED under a handle (`subscribe`).
@@ -27,7 +28,7 @@
 //
 // **AND THREE FACTS ABOUT THE DELIVERY, PINNED HERE (D-70, D-71):** from the consumed `provident-storeroom 1.7.0` a
 // constraint pair and a LIVE LISTENER may stand at ONE address — the pair asked by the pass, the listener delivered after
-// it, the only cross-kind restriction being the HANDLE — so the push installs at `['tabs']` itself, beside all five of this
+// it, the only cross-kind restriction being the HANDLE — so the push installs at `['tabs']` itself, beside all six of this
 // module's pairs; `repaired` is DERIVED by comparing the written intent with the record that stands, because the store's
 // write record carries no member for the repair that ran in its own commit; and **a write a pair REFUSES delivers
 // nothing**, the pair asked and the pass thrown with the delivery window never opened.
@@ -65,7 +66,7 @@ let dir: string
 let holder: TabsRecordStore | null = null
 let record: TabsRecord
 
-/** A record over a real store built the way the app builds it: the five declarations batched at construction (D-65). */
+/** A record over a real store built the way the app builds it: the six declarations batched at construction (D-65, D-83). */
 const open = (): void => {
   dir = mkdtempSync(join(tmpdir(), 'tabs-crossing-'))
   holder = null
@@ -395,7 +396,7 @@ describe('store-tabs-record · the crossing', () => {
 
   // ═══════════════ THE CHANGE DELIVERY (L2 §2's fourth route, design §5; D-70) — the push that shipped as a name ═══════════════
 
-  it('THE DELIVERY HAPPENS AND THE WITHDRAWAL IS ITS ANSWER: `subscribe` — a live listener at the record\'s OWN address, `[\'tabs\']`, beside all five pairs (D-71) — then a `commit` fires the handler ONCE, a `remove` fires it AGAIN, and the unsubscribe STOPS it — a counter, because a listener the store never registered fires nothing, silently', () => {
+  it('THE DELIVERY HAPPENS AND THE WITHDRAWAL IS ITS ANSWER: `subscribe` — a live listener at the record\'s OWN address, `[\'tabs\']`, beside all six pairs (D-71, D-83) — then a `commit` fires the handler ONCE, a `remove` fires it AGAIN, and the unsubscribe STOPS it — a counter, because a listener the store never registered fires nothing, silently', () => {
     // THE COUNT IS THE WHOLE MEASUREMENT: the module's `subscribe` once installed nothing at all — it asked for `['tabs']`
     // while a pre-`1.7.0` package refused a listener beside a constraint there, and swallowed the refusal — so the counter
     // read `0` while every one of these acts answered `committed` (D-70). The first `commit` below is also the one that runs
@@ -432,8 +433,8 @@ describe('store-tabs-record · the crossing', () => {
 
   // ═══════════════ THE PATTERN THIS CHANGE RESTS ON (D-71): ONE ADDRESS, BOTH KINDS ═══════════════
 
-  it('THE PATTERN THE WHOLE CHANGE RESTS ON: a LIVE LISTENER and ALL FIVE pairs stand at ONE address — `[\'tabs\']` — where one whole-record write there ASKS the pairs and DELIVERS the listener exactly once, the write record names the listener AT `[\'tabs\']` (the address it was BOUND at, guide §6.4), and a write a pair REFUSES delivers NOTHING', () => {
-    // ITS OWN INSTANCE, BUILT THE WAY THE BOOT BUILDS IT, WITH ITS OWN INSTRUMENT: the five declarations are WRAPPED so the
+  it('THE PATTERN THE WHOLE CHANGE RESTS ON: a LIVE LISTENER and ALL SIX pairs stand at ONE address — `[\'tabs\']` — where one whole-record write there ASKS the pairs and DELIVERS the listener exactly once, the write record names the listener AT `[\'tabs\']` (the address it was BOUND at, guide §6.4), and a write a pair REFUSES delivers NOTHING', () => {
+    // ITS OWN INSTANCE, BUILT THE WAY THE BOOT BUILDS IT, WITH ITS OWN INSTRUMENT: the six declarations are WRAPPED so the
     // row can see the pass ask each pair — an observation, not an inference from the record the act leaves — and the
     // wrapper returns the module's own answer untouched, so the machinery measured here is the module's and not a
     // stand-in for it.
@@ -454,10 +455,13 @@ describe('store-tabs-record · the crossing', () => {
     bound = store as unknown as TabsRecordStore
     try {
       const recordHere = createTabsRecord({ store: bound })
-      // ALL FIVE PAIRS ARE AT THE ONE ADDRESS, read off the store's own registered-pair read — where `address` is the pair's
-      // own SET, so one address reads `[['tabs']]` (`guide §7.4`).
+      // ALL SIX PAIRS ARE AT THE ONE ADDRESS, read off the store's own registered-pair read — where `address` is the
+      // pair's own SET, so one address reads `[['tabs']]` (`guide §7.4`). **THE SIXTH IS `order-names-its-tabs`** (`D-83`):
+      // the seat pair, listed second because it is the precondition of the four field pairs' SUBJECT, as `tabs-must-stand`
+      // is the precondition of their existence.
       expect(store.constraints().map((pair) => [pair.id, pair.address])).toEqual([
         ['tabs-must-stand', [['tabs']]],
+        ['order-names-its-tabs', [['tabs']]],
         ['exactly-one-active', [['tabs']]],
         ['tab-has-title', [['tabs']]],
         ['tab-has-content', [['tabs']]],
@@ -485,6 +489,7 @@ describe('store-tabs-record · the crossing', () => {
       const receipt = store.write(['tabs'] as never, 'file', intent)
       expect(asked, 'the pass ASKS every pair standing at that one address').toEqual([
         'tabs-must-stand',
+        'order-names-its-tabs',
         'exactly-one-active',
         'tab-has-title',
         'tab-has-content',
@@ -497,13 +502,13 @@ describe('store-tabs-record · the crossing', () => {
       // reverted tree. **THE ORDINAL IS NOT PINNED**: `issuance` is the module's and moves with every subscription the file
       // made before this row, which is the minting working and not a fact this row needs.
       const listenerEntries = receipt.triggered.filter((entry) => entry.handle.startsWith('tabs-record:'))
-      expect(listenerEntries, 'the triggered set names the listener beside the five pairs, both kinds in one list').toHaveLength(1)
+      expect(listenerEntries, 'the triggered set names the listener beside the six pairs, both kinds in one list').toHaveLength(1)
       expect(listenerEntries[0]?.address, 'and it names the ONE address both kinds stand at').toEqual(['tabs'])
       expect(listenerEntries[0]?.handle, 'and the handle spells the same address after its `@`').toMatch(/^tabs-record:\d+@tabs$/)
       expect(delivered, 'AND THE DELIVERY IS EXACTLY ONE per committed change, the pairs\' asking being no delivery at all').toBe(1)
 
       // **THE OTHER HALF: A WRITE A PAIR REFUSES DELIVERS NOTHING.** The refusing pair is this ROW's instrument and not the
-      // module's — all five of the module's pairs REPAIR rather than refuse, so a refusal has to be asked for — and it is
+      // module's — all six of the module's pairs REPAIR rather than refuse, so a refusal has to be asked for — and it is
       // also the HANDLE rule's second demonstration: it is added at `['tabs']` WHERE A LIVE LISTENER STANDS, and it is
       // accepted because its `id` is not that listener's handle (`guide §7.3` item (ii): multiple pairs at one address are
       // lawful).
@@ -661,5 +666,254 @@ describe('store-tabs-record · the crossing', () => {
     // which only a JOINED write can produce — and the delivery row counts ONE notification for a commit that ran a repair,
     // which a second commit could not deliver. A row here driving its own store would restate those two with a third
     // instrument, so this row measures the one fact they cannot: the carrier's own admission.
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * THE `order` SEAT AT THE CREATION INSTANT — THE SIXTH DECLARATION (`D-83`)
+ *
+ * **WHAT WAS MEASURED ON THE BATCH OF FIVE, ONE FRESH INSTANCE PER ARM, OVER A PROFILE WRITTEN BEFORE THAT INSTANCE WAS
+ * CONSTRUCTED** (`D-83`, 2026-11-02): the four pairs that judge the record read through the boot's holder, and the holder
+ * is bound only after `createProfileStore` answers — so they ABSTAIN at the creation instant, and a record the FILE
+ * brought that the seat cannot describe stood exactly as it arrived until some later write happened to repair it. Each
+ * arm's `read()` immediately after the construction answered, for a record holding `tab-1` with no `order`: `order: []`,
+ * `rows: []`; for `order: 'x'`: the same; for `order: []`: the same; for `order: ['ghost']`: the same; for
+ * `{order: ['landing'], landing: 'landing'}` — the LEGACY STRING SEAT the module's own `LANDING_ENTRY_KEY` docblock warns
+ * an old file may still carry — `order: ['landing']` with `rows: []`; for `order: ['landing', 'ghost']`: **one row under a
+ * seat naming two**, a read naming a tab the record did not hold; and for `order: ['landing', 'landing']`: **the same row
+ * counted twice**, which no legal act could then recover from — a later `commit` was REFUSED `ConstraintPassRefused`,
+ * *"the pair tabs#exactly-one-active violated a re-run and its repair had already been applied"*, because both seats named
+ * the one held row and the repair had nothing to choose between.
+ *
+ * **THE ROWS BELOW DRIVE THE INSTANT THE PAIR EXISTS FOR AND NOT A WRITE**, because a write-time row cannot see it: the
+ * profile is written by a store carrying NO pair at all, and the batch is handed to a SECOND store over that same file —
+ * the shape a boot sees when the file already carries a record.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+const SEAT_STAMP = '2026-11-02T00:00:00.000Z'
+/** The record's landing row AS THE FILE HOLDS IT, with a label and a stamp of its own so a repair that DISCARDED it and
+ *  re-minted the entry is distinguishable from one that dropped the seat it could not justify. */
+const fileLandingRow = { id: 'landing', target: 'tabs-landing-page', active: true, label: 'kept-from-the-file', lastActiveAt: SEAT_STAMP }
+const fileTabRow = { id: 'tab-1', target: 'page://tab-1', active: false, label: 'one', lastActiveAt: SEAT_STAMP }
+
+interface SeatedOn {
+  readonly store: TabsRecordStore
+  readonly read: () => { order: string[]; landing: string; rows: TabsRecordRow[] }
+  readonly standing: () => unknown
+  readonly close: () => void
+}
+
+/** **THE BOOT'S OWN SHAPE, DRIVEN FROM A FILE THIS FILE WROTE**: a store with NO pair writes the state (so it is the
+ *  file's, not this module's), then this module's batch is handed to a SECOND store over that path, and the handle is
+ *  bound only after the construction — exactly as `src/main/main.ts` binds its holder. */
+const seatedOn = (record: unknown, declared?: readonly TabsConstraintDeclaration[]): SeatedOn => {
+  const scratch = mkdtempSync(join(tmpdir(), 'tabs-order-seat-'))
+  const path = join(scratch, PROFILE_FILE)
+  createProfileStore({ filePath: path }).write(['tabs'] as never, 'file', record as never)
+  let bound: TabsRecordStore | null = null
+  const batch = declared ?? tabsConstraintDeclarations(() => bound)
+  const store = createProfileStore({
+    filePath: path,
+    constraints: batch.map((declaration) => ({ address: declaration.address, id: declaration.id, constraint: declaration.constraint })) as never,
+  })
+  bound = store as unknown as TabsRecordStore
+  const seated = createTabsRecord({ store: bound })
+  return {
+    store: bound,
+    read: () => {
+      const answer = seated.read()
+      if (!('rows' in answer)) throw new Error('a record repaired at construction must answer a reading')
+      return { order: [...answer.order], landing: answer.landing, rows: [...answer.rows] }
+    },
+    standing: () => store.read(['tabs'] as never),
+    close: () => {
+      bound = null
+      rmSync(scratch, { recursive: true, force: true })
+    },
+  }
+}
+
+describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)', () => {
+  it('THE CREATION INSTANT IS WHERE THE SIXTH PAIR IS TESTED — the pass ASKS it there with the RECORD as its `value` and `tier: null`, which is the reading the five wrapped pairs cannot give; and a seat naming a tab the record does not hold is REPAIRED at that instant, into the corrected order and into a LEGAL record', () => {
+    // THE INSTRUMENT WRAPS THE DECLARATIONS so the row reads the CONTEXT the engine hands, rather than inferring that the
+    // pair ran from a record it left. `tier` is the discriminator the guide's two instants actually differ in
+    // (`D-83`: measured `tier: null` at the construction and `'file'` at a write), and `value` is `readCurrent` at the
+    // pair's OWN address — the record itself, at `['tabs']`.
+    const scratch = mkdtempSync(join(tmpdir(), 'tabs-seat-asked-'))
+    const path = join(scratch, PROFILE_FILE)
+    createProfileStore({ filePath: path }).write(['tabs'] as never, 'file', { order: ['landing', 'ghost'], landing: fileLandingRow } as never)
+    let bound: TabsRecordStore | null = null
+    const seen: { tier: unknown; holds: unknown; order: unknown }[] = []
+    const store = createProfileStore({
+      filePath: path,
+      constraints: tabsConstraintDeclarations(() => bound).map((declaration) => ({
+        address: declaration.address,
+        id: declaration.id,
+        constraint: (context: unknown) => {
+          if (declaration.id === 'order-names-its-tabs') {
+            const held = (context as { tier?: unknown; value?: Record<string, unknown> }).value ?? {}
+            seen.push({ tier: (context as { tier?: unknown }).tier, holds: typeof held, order: held['order'] })
+          }
+          return declaration.constraint(context)
+        },
+      })) as never,
+    })
+    bound = store as unknown as TabsRecordStore
+    try {
+      expect(seen.length, 'the engine ASKS the seat pair at the creation instant — a pair the batch does not carry is asked nowhere, and this row reds on that revert').toBeGreaterThan(0)
+      expect(seen[0]?.tier, 'and it is the REGISTRATION instant it is asked at: `tier` is `null` where a write hands the tier').toBeNull()
+      expect(seen[0]?.holds, 'and `value` is the VALUE AT ITS OWN ADDRESS — the record — not a seat read off some other path').toBe('object')
+      expect(seen[0]?.order, 'the seat it judged first is the one the file brought').toEqual(['landing', 'ghost'])
+      // THE RE-RUN IS THE SECOND ASKING, and it reads the CORRECTED family the repair landed — so the answer this body
+      // gives over its own repair is `true`, which is what makes the registration stand.
+      const last = seen[seen.length - 1]
+      expect(last?.order, 'the registration’s own RE-RUN reads the corrected seat the repair wrote, in the same instant').toEqual(['landing'])
+      const seated = createTabsRecord({ store: bound })
+      const read = seated.read()
+      if (!('rows' in read)) throw new Error('the repaired record must answer a reading')
+      expect([...read.order], 'THE CORRECTED ORDER: the dangling id is GONE and the record is read, not merely stored').toEqual(['landing'])
+      expect(read.landing, 'and the derived witness names a row the record holds').toBe('landing')
+      expect(read.rows.map((each) => each.id), 'ONE row, the one the file held').toEqual(['landing'])
+      expect(read.rows.filter((each) => each.active === true).map((each) => each.id), 'exactly one active: the record is LEGAL').toEqual(['landing'])
+      expect(read.rows[0]?.label, 'AND THE REPAIR KEPT THE ROW THE FILE HELD — it dropped the seat it could not justify, and did not replace the record').toBe('kept-from-the-file')
+      expect(read.rows[0]?.lastActiveAt, 'so its own stamp survives too: a repair that re-minted the entry would write a fresh one').toBe(SEAT_STAMP)
+    } finally {
+      bound = null
+      rmSync(scratch, { recursive: true, force: true })
+    }
+  })
+
+  // ═══════════════ THE STATES THE FIVE DECLARATIONS LEFT STANDING (D-83's ground measurement) ═══════════════
+
+  it('A RECORD ARRIVING WITH NO `order` AT ALL is repaired at the creation instant: the seat becomes a sequence of the record’s own tabs — here the landing floor, because nothing in the file says which member was a tab', () => {
+    const seated = seatedOn({ 'tab-1': fileTabRow })
+    try {
+      expect(seated.read().order, 'the seat stands, and it names a row the record holds').toEqual(['landing'])
+      expect((seated.standing() as Record<string, unknown>)['order'], 'the FILE is what moved: the store holds the corrected seat').toEqual(['landing'])
+      expect(seated.read().rows.filter((each) => each.active === true), 'one active').toHaveLength(1)
+    } finally {
+      seated.close()
+    }
+  })
+
+  it('A RECORD ARRIVING WITH `order: \'x\'` — a leaf where the seat belongs — is repaired at the creation instant; `viewOf` reads such a record as EMPTY, so without this pair the boot answers a record with no tabs over a file that holds one', () => {
+    const seated = seatedOn({ order: 'x', landing: fileLandingRow })
+    try {
+      expect((seated.standing() as Record<string, unknown>)['order'], 'the leaf is replaced by the sequence it should have been').toEqual(['landing'])
+      expect(seated.read().rows.map((each) => each.id), 'and the row the file held is still read').toEqual(['landing'])
+    } finally {
+      seated.close()
+    }
+  })
+
+  it('A RECORD ARRIVING WITH `order: []` is repaired at the creation instant — the EMPTY sequence cannot name a tab, so it takes the landing floor exactly as `healRecord`’s empty branch mints it', () => {
+    const seated = seatedOn({ order: [], landing: fileLandingRow })
+    try {
+      expect((seated.standing() as Record<string, unknown>)['order']).toEqual(['landing'])
+      expect(seated.read().rows.filter((each) => each.active === true).map((each) => each.id)).toEqual(['landing'])
+    } finally {
+      seated.close()
+    }
+  })
+
+  it('A RECORD ARRIVING WITH `order: [\'ghost\']` — the seat names a tab the record does not hold — is repaired at the creation instant into the landing floor', () => {
+    const seated = seatedOn({ order: ['ghost'], landing: fileLandingRow })
+    try {
+      expect((seated.standing() as Record<string, unknown>)['order']).toEqual(['landing'])
+      expect(seated.read().rows.map((each) => each.id)).toEqual(['landing'])
+    } finally {
+      seated.close()
+    }
+  })
+
+  it('A RECORD ARRIVING WITH `order: [\'landing\', \'tab-1\']` WHERE `tab-1` IS ABSENT — the seat names two tabs and the record holds one — is repaired at the creation instant: the dangling id is DROPPED and the row that stands is KEPT', () => {
+    // THIS IS THE ARM NO OTHER PAIR CATCHES. `exactly-one-active` counts SURVIVORS — ids the post state both seats and
+    // holds — so one held row under a two-name seat is ONE active and the gate PASSES; `healRecord` drops the dangling id
+    // when it runs for some other reason, but nothing makes it run. Measured 2026-11-02: with the batch of five, `read()`
+    // after the construction answered `order: ['landing', 'tab-1']` with ONE row — a read naming a tab the record did not
+    // hold — and stayed that way until a write happened to repair something else.
+    const seated = seatedOn({ order: ['landing', 'tab-1'], landing: fileLandingRow })
+    try {
+      expect((seated.standing() as Record<string, unknown>)['order'], 'the seat is the record’s own tabs and no others').toEqual(['landing'])
+      expect((seated.standing() as Record<string, unknown>)['tab-1'], 'and no row was minted for the id the seat named').toBeUndefined()
+      expect(seated.read().rows[0]?.label, 'the surviving row is the file’s own, not a re-mint').toBe('kept-from-the-file')
+      expect(seated.read().rows.filter((each) => each.active === true).map((each) => each.id), 'one active, so the record is legal').toEqual(['landing'])
+    } finally {
+      seated.close()
+    }
+  })
+
+  it('A RECORD ARRIVING WITH THE SEAT REPEATED — `order: [\'landing\', \'landing\']` — is repaired at the creation instant, and THAT is a defect this pair closes rather than a tidy-up: measured on the batch of five, the same row counted twice left the record UNRECOVERABLE — a later `commit` was refused `ConstraintPassRefused`', () => {
+    const seated = seatedOn({ order: ['landing', 'landing'], landing: fileLandingRow })
+    try {
+      expect((seated.standing() as Record<string, unknown>)['order'], 'a sequence is a set here: the id is named once').toEqual(['landing'])
+      expect(seated.read().rows, 'and the record holds one row, not the same one twice').toHaveLength(1)
+    } finally {
+      seated.close()
+    }
+  })
+
+  it('A RECORD ARRIVING WITH THE LEGACY STRING SEAT — `{ order: [\'landing\'], landing: \'landing\' }` — is repaired at the creation instant: the string is replaced by the ROW the family needs, which `LANDING_ENTRY_KEY` says an old file may otherwise carry until "the first whole-record write"', () => {
+    // THE MODULE'S OWN DOCBLOCK NAMES THIS STATE AND HANDS ITS REPAIR TO A LATER WRITE (`LANDING_ENTRY_KEY`, D-76). The pair
+    // takes it at the creation instant instead — the same repair, at the instant clause 3 of the convention asks for it.
+    const seated = seatedOn({ order: ['landing'], landing: 'landing' })
+    try {
+      const held = (seated.standing() as Record<string, unknown>)['landing']
+      expect(typeof held, 'the retired STRING seat is gone').toBe('object')
+      expect((held as Record<string, unknown>)['id'], 'and a ROW stands at that key').toBe('landing')
+      expect(seated.read().rows.map((each) => each.id), 'which the record now reads').toEqual(['landing'])
+    } finally {
+      seated.close()
+    }
+  })
+
+  it('A RECORD ARRIVING WITH A NON-STRING MEMBER IN THE SEAT — `order: [\'landing\', 7]` — is repaired at the creation instant, because `viewFrom` carries only string ids and would otherwise read the seat as one tab and say nothing about the other', () => {
+    const seated = seatedOn({ order: ['landing', 7], landing: fileLandingRow })
+    try {
+      expect((seated.standing() as Record<string, unknown>)['order']).toEqual(['landing'])
+      expect(seated.read().rows.map((each) => each.id)).toEqual(['landing'])
+    } finally {
+      seated.close()
+    }
+  })
+
+  // ═══════════════ THE CONTROL: A LEGAL RECORD IS NOT DOUBLE-REPAIRED (so the pair above is not re-writing what another does) ═══════════════
+
+  it('THE CONTROL THAT KEEPS THE PAIR FROM DOUBLE-REPAIRING: a LEGAL record stands BYTE-IDENTICAL through the construction — the sixth pair passes it, writes nothing, and a later commit over it answers `committed` with no `repaired` member at all', () => {
+    // WITHOUT THIS ROW the pair could pass every assertion above by rewriting every record it is asked about, which would
+    // make `repaired` fire on clean acts and move every row that reads the member. The bytes are compared WHOLE: a repair
+    // that rewrote even the same family would leave the store's own image re-ordered or re-stamped, and `repaired: true`
+    // on the second half is the same fact read through the module's own derivation.
+    const two = seatedOn({ order: ['landing', 'tab-1'], landing: { ...fileLandingRow, active: false }, 'tab-1': { ...fileTabRow, active: true } })
+    try {
+      expect(two.standing(), 'the record the file brought, byte for byte').toEqual({
+        order: ['landing', 'tab-1'],
+        'landing': { id: 'landing', target: 'tabs-landing-page', active: false, label: 'kept-from-the-file', lastActiveAt: SEAT_STAMP },
+        'tab-1': { id: 'tab-1', target: 'page://tab-1', active: true, label: 'one', lastActiveAt: SEAT_STAMP },
+      })
+      expect(two.read().order, 'and it reads as the file wrote it').toEqual(['landing', 'tab-1'])
+      expect(two.read().rows.filter((each) => each.active === true).map((each) => each.id), 'with the one active the file named').toEqual(['tab-1'])
+    } finally {
+      two.close()
+    }
+    // THE SECOND HALF ON A FRESH PROFILE, so the pair is not merely silent over an existing file: the construction mints the
+    // landing entry through `tabs-must-stand`, and the seat pair PASSES the record that mint lands — no second write, no
+    // re-mint, and a first commit answers exactly `status`.
+    const fresh = seatedOn({ order: ['landing'], landing: fileLandingRow })
+    try {
+      // THE ROW IS INACTIVE ON PURPOSE: a SECOND ACTIVE tab is `exactly-one-active`'s arm and would repair on any batch,
+      // which is why it cannot be the reading here — this half asks only what THIS pair left behind.
+      const answer = (() => {
+        const seated = createTabsRecord({ store: fresh.store })
+        // EVERY FIELD IS SUPPLIED, so the only repair that COULD fire is this module's own seat pair: a blank `label` or a
+        // missing stamp would hand `tab-has-title`/`tab-has-lastActiveAt` a violation and `repaired` would say nothing about
+        // the pair this row is asking about.
+        return seated.commit(row('tab-1', { active: false, label: 'two', lastActiveAt: SEAT_STAMP }))
+      })()
+      expect(answer.status, 'a clean commit over a record this pair passed').toBe('committed')
+      expect(Object.keys(answer), 'carries `status` alone: the pair repaired nothing, so nothing differs from the intent').toEqual(['status'])
+    } finally {
+      fresh.close()
+    }
   })
 })

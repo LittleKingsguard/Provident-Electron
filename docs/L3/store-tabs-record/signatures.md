@@ -1,6 +1,6 @@
 # L3 — `store-tabs-record`: signatures
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 3 — every declared name and its exact text, transcribing `design.md` rev 10,
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — every declared name and its exact text, transcribing `design.md` rev 11,
   **regenerated from the landed modules** on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
 - **Ceiling:** 150 lines, class max (D-1). `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
@@ -99,7 +99,7 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord
 ```
 
 The three address constants are `['tabs']`, `['tabs', 'order']` and `['tabs', 'landing']` — **the last the landing ENTRY's own leaf (`['tabs', TABS_LANDING_ID]`, whose id is `'landing'`), not a seat** (design §2, D-76); the exported ids are `'exactly-one-active'` and `'tabs-must-stand'`, and the batch adds
-`'tab-has-title'`, `'tab-has-content'` and `'tab-has-lastActiveAt'` as literals — **five** declarations in all (design §4), of which this block declares the two exported ids.
+`'order-names-its-tabs'`, `'tab-has-title'`, `'tab-has-content'` and `'tab-has-lastActiveAt'` as literals — **six** declarations in all (design §4, D-83), of which this block declares the two exported ids. **The batch's ORDER is part of the contract**: `tabs-must-stand` and then `order-names-its-tabs` are the two bodies the boot's unbound holder cannot silence, so they are the two that act at the store's creation.
 
 ## 3. `src/main/tabs-surface/index.ts` — the one reference
 
@@ -124,8 +124,7 @@ export interface TabsSurfaceOptions {
 export function createTabsSurface(options: TabsSurfaceOptions): TabsSurface
 ```
 
-**`commit(row: unknown)` and `remove(id: unknown)` take `unknown` on purpose**: the shape arm is the surface's first act, and a typed
-parameter would move that check into the type system where the renderer's boundary cannot reach it (L2 §3).
+**`commit(row: unknown)` and `remove(id: unknown)` take `unknown` on purpose**: the shape arm is the surface's first act, and a typed parameter would move that check into the type system where the renderer's boundary cannot reach it (L2 §3).
 
 ## 4. The bridge member — cited, never copied (D-45 arm (i))
 
@@ -143,7 +142,8 @@ and `onChanged(handler)`. This document names the sites instead of copying the b
 | store arm | the instance's status verbatim | the instance's own sentence |
 
 **There is no construction arm.** Measured 2026-11-02, `grep -rn 'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/`
-is empty: D-64/D-65 hand this module a store the boot already constructed, and a root the existence pair has created (design §2).
+is empty: D-64/D-65 hand this module a store the boot already constructed, and a root the existence pair has created (design §2). **The sixth constraint's sentence —
+`"the tab record's 'order' seat carries no sequence of its own tabs, once each"` — is a REFUSAL a caller reads at the store's creation and never at a route**, so it is not in the table above and it mints no `reason` (L2 §3, D-83).
 
 ## 6. What L4 must not transcribe
 

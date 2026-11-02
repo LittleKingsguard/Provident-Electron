@@ -126,9 +126,12 @@ async function main(): Promise<void> {
   // `mcp.applyExclusion` now only ENFORCES.
   const settingsSurface = createSettingsSurface({ userDataDir: app.getPath('userData') })
   // **THE BOOT ORDER (D-65), IN THREE ACTS.** (1) COLLECT: every module that imposes a constraint declares it — the tab
-  // record's FIVE are gathered here (`tabsConstraintDeclarations` returns five: `tabs-must-stand`, `exactly-one-active`,
-  // `tab-has-title`, `tab-has-content`, `tab-has-lastActiveAt`), and a module that wanted a listener would declare one
-  // beside them. (2) CONSTRUCT: the app's ONE store, built here with the BATCHED constraints, so the pass is armed before
+  // record's SIX are gathered here (`tabsConstraintDeclarations` returns six: `tabs-must-stand`, `order-names-its-tabs`,
+  // `exactly-one-active`, `tab-has-title`, `tab-has-content`, `tab-has-lastActiveAt`), and a module that wanted a listener
+  // would declare one beside them. **THE SECOND IS THE ONE TESTED AT THIS STORE'S OWN CREATION** (`D-83`): the holder below
+  // is bound only after `createProfileStore` answers, so every WRAPPED body abstains at that instant and the two unwrapped
+  // ones are the two that can repair a seat the profile FILE brought broken — the clause-3 repair the renderer's deleted
+  // boot step could not be. (2) CONSTRUCT: the app's ONE store, built here with the BATCHED constraints, so the pass is armed before
   // anything can write. (3) LISTENERS DRIVE: the surfaces read and write that store, and a commit's listeners carry the flow
   // from there.
   const storeHolder: { current: ReturnType<typeof createProfileStore> | null } = { current: null }

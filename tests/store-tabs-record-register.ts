@@ -959,22 +959,23 @@ export function wiredClose(store: Rec, id: string, nextOrder: readonly string[])
  *     below therefore drive the WIRED construction — the set `main()` boots — and never a fixture
  *     that supplies the missing declaration.
  *   · `F-1`/`H-3` — as filed, the boot step was measured only through the DECLARED sequence form
- *     (`B-1`…`B-7`), while its parameter accepts any array. The rows below drive the ROWS form
- *     (`{ name, value }[]`, what `bridge.store.get()` answers) through the SHIPPED
- *     `evaluateTabsBootStep` seam.
+ *     (`B-1`…`B-7`), while its parameter accepts any array. **THAT BULLET'S SUBJECT IS DELETED**
+ *     (`D-83`): the drive it introduced, `shippedBootSeamDrive()`, is gone with `evaluateTabsBootStep`
+ *     and the rows are `tests/store-tabs-record.test.ts`'s deletion row beside this register, never a
+ *     green arm over a seam that does not exist.
  *   · `F-4`/`T2-C-15` — as filed, `mintingSiteProbe()` (below, KEPT VISIBLE) is a SOURCE REGEX
  *     whose success reason is a BARE CLAIM, so a host that deleted the duplicate branch while
  *     keeping the identifier `mintTabId` stayed green. The behavioural rows below drive the
  *     EXPORTED seam `mintTabId(holder, tabId)` — the SHIPPED signature — instead.
  * ═══════════════════════════════════════════════════════════════════════════════════════════ */
 
-/** THE FOUR SHIPPED SEAMS THE RE-TRIAGE'S ROWS DRIVE, read off the wiring module the suite
+/** THE THREE SHIPPED SEAMS THE RE-TRIAGE'S ROWS DRIVE, read off the wiring module the suite
  *  already probes (`probeWiring()`, `§4.1` item 2). An absent export is DATA — a reason the row
- *  reports — never a throw. */
+ *  reports — never a throw. **IT WAS FOUR UNTIL `D-83` DELETED `evaluateTabsBootStep`**, and the fourth's
+ *  removal is why the three left are the ones a reader can still drive. */
 export interface ShippedSeams {
   readonly getWiredGraphStore: ((options?: unknown) => Rec) | null
   readonly closeTab: ((holder: unknown, tabId: string, nextOrder: readonly string[]) => Rec) | null
-  readonly evaluateTabsBootStep: ((store: unknown, handedOrder: unknown) => Rec) | null
   readonly mintTabId: ((holder: unknown, tabId: string) => Rec) | null
   readonly reason: string | null
 }
@@ -982,7 +983,7 @@ export interface ShippedSeams {
 export function shippedSeams(): ShippedSeams {
   const probed = wiring as WiringProbe | null
   const absent = (reason: string): ShippedSeams => ({
-    getWiredGraphStore: null, closeTab: null, evaluateTabsBootStep: null, mintTabId: null, reason,
+    getWiredGraphStore: null, closeTab: null, mintTabId: null, reason,
   })
   if (probed === null || !probed.loaded || probed.module === null) {
     return absent(probed?.reason ?? 'the wiring module has not answered its probe yet (probeWiring() has not run)')
@@ -990,12 +991,10 @@ export function shippedSeams(): ShippedSeams {
   const mod = probed.module
   const wired = mod['getWiredGraphStore']
   const close = mod['closeTab']
-  const boot = mod['evaluateTabsBootStep']
   const mint = mod['mintTabId']
   const missing = [
     typeof wired === 'function' ? null : 'getWiredGraphStore',
     typeof close === 'function' ? null : 'closeTab',
-    typeof boot === 'function' ? null : 'evaluateTabsBootStep',
     typeof mint === 'function' ? null : 'mintTabId',
   ].filter((name): name is string => name !== null)
   if (missing.length > 0) {
@@ -1004,7 +1003,6 @@ export function shippedSeams(): ShippedSeams {
   return {
     getWiredGraphStore: wired as (options?: unknown) => Rec,
     closeTab: close as (holder: unknown, tabId: string, nextOrder: readonly string[]) => Rec,
-    evaluateTabsBootStep: boot as (store: unknown, handedOrder: unknown) => Rec,
     mintTabId: mint as (holder: unknown, tabId: string) => Rec,
     reason: null,
   }
@@ -1345,92 +1343,17 @@ export async function shippedLandingReservationDrive(): Promise<LandingReservati
   }
 }
 
-/** `F-1`/`H-3` — **THE BOOT SEAM ACCEPTS AN ARGUMENT ITS ONLY SHIPPED CALLER NEVER PASSES**, the
- *  ROWS form (`{ name, value }[]`). The declared-sequence arm is the POSITIVE CONTROL and the
- *  no-sequence arm the declared no-write arm; a NON-STRING sequence is the third, undeclared one. */
-export interface BootSeamReading {
-  readonly reason: string | null
-  readonly rowsArmWritten: unknown
-  readonly rowsArmReceipt: unknown
-  /** The seam's OWN declared refusal token, read off the OUTCOME (not the receipt — a refusal
-   *  carries `receipt: null`), so the row can PRINT what it measured. */
-  readonly rowsArmRefusal: unknown
-  readonly rowsArmOrderAfter: unknown
-  readonly rowsArmBogusLeafFound: unknown
-  /** THE READ THE FROZEN PATH ACTUALLY ANSWERS for the bogus spelling — CL-1's own store fact
-   *  (`tests/store-tabs-record.test.ts:654-669`): a READ-SIDE refusal record, which carries no
-   *  `found` member at all. Printed by the row beside the as-filed `=== false` demand. */
-  readonly rowsArmBogusLeafReason: unknown
-  readonly rowsArmBogusLeafStep: unknown
-  readonly rowsArmBogusLeafReadsActive: unknown
-  readonly nonStringArmWritten: unknown
-  readonly nonStringArmRepaired: unknown
-  readonly nonStringArmOrderAfter: unknown
-  readonly declaredArmWritten: unknown
-  readonly declaredArmOrderAfter: unknown
-  readonly absentArmWritten: unknown
-  readonly absentArmReceipt: unknown
-}
-
-export function shippedBootSeamDrive(): BootSeamReading {
-  const blank: BootSeamReading = {
-    reason: 'unreachable', rowsArmWritten: undefined, rowsArmReceipt: undefined, rowsArmRefusal: undefined,
-    rowsArmOrderAfter: undefined, rowsArmBogusLeafFound: undefined, rowsArmBogusLeafReason: undefined,
-    rowsArmBogusLeafStep: undefined, rowsArmBogusLeafReadsActive: undefined, nonStringArmWritten: undefined,
-    nonStringArmRepaired: undefined, nonStringArmOrderAfter: undefined, declaredArmWritten: undefined,
-    declaredArmOrderAfter: undefined, absentArmWritten: undefined, absentArmReceipt: undefined,
-  }
-  const seams = shippedSeams()
-  const member = wiredTabsConstraintMember()
-  if (seams.reason !== null || seams.evaluateTabsBootStep === null || member === null) {
-    return { ...blank, reason: seams.reason ?? wiringMemberReason ?? 'the wiring supplies no constraint member' }
-  }
-  // THE STORE THIS ROW'S SUBJECT SEAM WRITES INTO: the frozen factory's own construction with the
-  // shipped member — the SAME options `buildWiredGraphStore` (renderer.ts:763-780) passes, EXCEPT
-  // the declaration merge (see `shippedConstruction`, which is re-grain 1's BITE and never an
-  // evidence store for a WIRING-side behaviour). **THIS ROW'S FIX SITE IS NOT THE CONSTRUCTION:**
-  // `H-3`'s argument-domain fix lives in the EXPORTED seam `evaluateTabsBootStep`
-  // (renderer.ts:714-737), which is driven DIRECTLY here — so this instrument reaches the site
-  // the fix is at, and the store is only the subject the refuse-before-any-write arm is measured
-  // on. Every store-shaped reading below (the undeclared bogus leaf's own answer) is a FROZEN
-  // read-path fact, exactly as the unit's own `CL-1` row records it. `B-8`'s instrument carries no
-  // `T2`-wiring-side expectation through this store.
-  const store = shippedConstruction(member)
-  const bogus = `${DECLARED_SPELLINGS.root}.[object Object]`
-  shippedSeedEntryState(store, ['A'], 'A')
-  // (1) THE ROWS ARM — the hand-off's OWN rows, exactly as `bridge.store.get()` answers them.
-  const handoffRows: Rec[] = [
-    { name: DECLARED_SPELLINGS.order, value: ['A', 'B'] },
-    { name: DECLARED_SPELLINGS.entry('A'), value: { target: 'target-A', active: false, error: null, label: 'label-A' } },
-    { name: DECLARED_SPELLINGS.entry('B'), value: { target: 'target-B', active: false, error: null, label: 'label-B' } },
-  ]
-  const rowsArm = callSeam(seams.evaluateTabsBootStep, store, handoffRows)
-  const rowsArmReceipt = (rowsArm['receipt'] ?? {}) as Rec
-  const rowsArmOrder = valueOf(store, DECLARED_SPELLINGS.order)
-  const bogusLeaf = resolveOf(store, bogus)
-  const bogusDiagnostic = (bogusLeaf['diagnostic'] ?? {}) as Rec
-  // (2) THE NON-STRING-SEQUENCE ARM — an array of values no `order` member can be.
-  shippedSeedEntryState(store, ['A'], 'A')
-  const nonStringArm = callSeam(seams.evaluateTabsBootStep, store, [1, 2, null])
-  const nonStringReceipt = (nonStringArm['receipt'] ?? {}) as Rec
-  const nonStringOrder = valueOf(store, DECLARED_SPELLINGS.order)
-  // (3) THE DECLARED-SEQUENCE ARM (POSITIVE CONTROL) and (4) THE NO-SEQUENCE ARM.
-  shippedSeedEntryState(store, ['A'], 'A')
-  const declaredArm = callSeam(seams.evaluateTabsBootStep, store, ['A', 'B'])
-  const declaredOrder = valueOf(store, DECLARED_SPELLINGS.order)
-  const absentArm = callSeam(seams.evaluateTabsBootStep, store, undefined)
-  return {
-    reason: null,
-    rowsArmWritten: rowsArm['written'], rowsArmReceipt, rowsArmRefusal: rowsArm['refusal'],
-    rowsArmOrderAfter: rowsArmOrder, rowsArmBogusLeafFound: bogusLeaf['found'],
-    rowsArmBogusLeafReason: bogusLeaf['reason'], rowsArmBogusLeafStep: bogusDiagnostic['step'],
-    rowsArmBogusLeafReadsActive: entryReadsActive(bogusLeaf['value']),
-    nonStringArmWritten: nonStringArm['written'], nonStringArmRepaired: nonStringReceipt['repaired'],
-    nonStringArmOrderAfter: nonStringOrder,
-    declaredArmWritten: declaredArm['written'], declaredArmOrderAfter: declaredOrder,
-    absentArmWritten: absentArm['written'], absentArmReceipt: absentArm['receipt'],
-  }
-}
+/** **THE BOOT-SEAM DRIVE IS DELETED WITH THE SEAM IT DROVE** (`D-83`, 2026-11-02). `BootSeamReading` and
+ *  `shippedBootSeamDrive()` drove `evaluateTabsBootStep(store, handedOrder)` — the app-graph's imperative boot write —
+ *  through its four arms: the hand-off's ROWS, a non-string sequence, the declared sequence, and the declared no-sequence.
+ *  **The subject is gone, so the instrument is gone**: `evaluateTabsBootStep` and `TabsBootOutcome` are deleted from
+ *  `src/renderer/renderer.ts` (their headstone stands where they were), the renderer writes no record byte at boot, and the
+ *  repair the convention's third clause asks for is the crossing's declaration `order-names-its-tabs`, tested at the store's
+ *  creation (`src/main/tabs-record/index.ts`; its rows are `tests/integration/store-tabs-record/crossing.test.ts`'s, and
+ *  they red on this revert). **A drive left standing for a seam that no longer exists would keep four arms green over
+ *  nothing**, which is the class of reading this corpus files rather than keeps (`D-70`'s rule: a declared answer with no
+ *  producer is a name with nothing behind it). `G-5` and `B-8` — the two rows that consumed this drive — are replaced by
+ *  ONE row asserting the deletion, in `tests/store-tabs-record.test.ts`. */
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
  * THE GATE-5 RE-MEASUREMENT — **THE NON-MEMBER ACTIVE WRITE** (`2026-10-11`).

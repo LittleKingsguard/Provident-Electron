@@ -121,11 +121,16 @@ describe('D-45 — the declaration blocks, checked against the modules they tran
     expect(tabsRecord.TABS_MUST_STAND_ID).toBe('tabs-must-stand')
   })
 
-  it('C-4 — the batch returns FIVE declarations, which is the count §2\'s prose states', () => {
+  it('C-4 — the batch returns SIX declarations, which is the count §2\'s prose states', () => {
+    // **THE SIXTH IS `order-names-its-tabs` AND IT IS SECOND** (`D-83`): the seat pair is unwrapped by the batch's `body`
+    // helper for `tabs-must-stand`'s reason, because the boot's holder is unbound at the store's creation — the one instant
+    // a seat the FILE brought broken can be repaired before any caller's act. Its position is part of the contract, not an
+    // accident of the list: the two unwrapped bodies are the two that must act there.
     const declarations = tabsRecord.tabsConstraintDeclarations(() => null)
-    expect(declarations.length, '§2 — the prose says five').toBe(5)
+    expect(declarations.length, '§2 — the prose says six').toBe(6)
     expect(declarations.map((declaration) => declaration.id)).toEqual([
       'tabs-must-stand',
+      'order-names-its-tabs',
       'exactly-one-active',
       'tab-has-title',
       'tab-has-content',
@@ -136,10 +141,10 @@ describe('D-45 — the declaration blocks, checked against the modules they tran
       expect([...declaration.address]).toEqual(['tabs'])
       expect(typeof declaration.constraint).toBe('function')
     }
-    // THE TWO EXPORTED IDS ARE THE TWO THE BATCH USES, in the order §2's gloss names them.
+    // THE TWO EXPORTED IDS ARE THE TWO THE BATCH USES, each read off the module's own constant rather than re-spelled.
     expect(declarations[0]?.id).toBe(tabsRecord.TABS_MUST_STAND_ID)
-    expect(declarations[1]?.id).toBe(tabsRecord.TABS_CONSTRAINT_ID)
-    expect(DOC, '§2\'s gloss states the count, so the sentence and this row measure the same five').toContain('**five**')
+    expect(declarations[2]?.id, '`exactly-one-active` is the third: the seat pair stands between the EXISTENCE pair and the ACTIVE-COUNT pair, because the family is read from the seat (D-83)').toBe(tabsRecord.TABS_CONSTRAINT_ID)
+    expect(DOC, '§2\'s gloss states the count, so the sentence and this row measure the same six').toContain('**six**')
   })
 
   it("C-5 — `src/main/tabs-surface/index.ts`: the block's names equal the module's, and its four routes plus attach/detach", () => {

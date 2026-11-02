@@ -3,13 +3,13 @@
 //
 // THE CONTRACT: `docs/L2/store-tabs-record/interface.md` §2 — **`tabs.onChanged` is the event generator**: the instance's
 // own listener delivers the triggered address and the renderer re-reads rather than being handed a value — and
-// `docs/L3/store-tabs-record/design.md` §5 — **the listener stands at the record root `['tabs']` ITSELF, beside all five of
+// `docs/L3/store-tabs-record/design.md` §5 — **the listener stands at the record root `['tabs']` ITSELF, beside all six of
 // this module's pairs** (lawful from `provident-storeroom 1.7.0`, whose one cross-kind restriction reads the HANDLE and
 // never the address — guide §7.3's clause of 2026-11-01; D-71), **the withdrawal is the subscription's own answer**, and a
 // listener that outlives its window is a leak the renderer cannot see.
 //
 // **WHY THIS ROW IS A SIBLING FILE AND NOT A ROW OF `crossing.test.ts`.** The two files measure two modules: part 1 drives
-// `src/main/tabs-record/index.ts` — the record's five pairs and its four routes — while this one drives
+// `src/main/tabs-record/index.ts` — the record's six pairs and its four routes — while this one drives
 // `src/main/tabs-surface/index.ts`, the module that CONSTRUCTS the reference, holds exactly one subscription and is the
 // only file that may name it (design §1). `createTabsSurface` appears in no other test file at all, so without this row
 // the push Defect 1 repaired is proven inside `tabs-record` and never across the boundary the app actually uses: a
@@ -41,7 +41,7 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'tabs-surface-'))
   holder = null
   delivered = 0
-  // THE INSTANCE IS THE APP'S, BUILT THE WAY THE BOOT BUILDS IT: the five declarations batched at construction (D-65),
+  // THE INSTANCE IS THE APP'S, BUILT THE WAY THE BOOT BUILDS IT: the six declarations batched at construction (D-65, D-83),
   // and the surface handed that instance rather than constructing one (D-64).
   const store = createProfileStore({
     filePath: join(dir, PROFILE_FILE),
