@@ -85,7 +85,8 @@
   the option is required, so a caller that has no instance cannot stand a surface, and a surface that *can* build one is a
   surface one caller away from a second store (D-79, D-80).
 - No file of the renderer's: the producing process's store (`src/renderer/store.ts`) is another module's and is read, written
-  and persisted nowhere by this one (the `store-rederive` row of `strata/modules.json`; D-13).
+  and persisted nowhere by this one (D-13). **Both names this sentence leans on are gone as of 2026-11-02: D-78's purge
+  stage 1 DELETED the module, and the `store-rederive` row it cites left `strata/modules.json` with it — the map reads 21 rows.**
 
 ## 8. Migrations: none standing
 

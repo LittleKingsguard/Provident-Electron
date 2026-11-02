@@ -71,7 +71,7 @@
 - **`<userDataDir>/provident-settings.json`** — `app-shell`'s tier-1 carrier, and its retirement is **executed** (D-22): the carrier's `settingsPath`, its boot read, the settings channel's guarded second read and its whole tmp+rename+fsync writer left the tree, and the name survives only as a **seed** — read at most once per boot by `operator-settings`' second import-once arm, written by none, its bytes left standing (§1; `docs/L1/settings-carrier-retirement.md` §3, §4, §6; D-19, D-22).
 - **`<userDataDir>/provident-profile.json`** — `central-data`'s profile store, unmoved: this module neither reads nor writes it, and the two instances are separate on purpose (D-16; `docs/L2/central-data/persistence.md` §1).
 - **`<userDataDir>/provident-security.json`** — the retired name: read at every boot until a record stands, then never again, never written again, bytes standing (§1, §3; D-19).
-- **The renderer's own store** (`src/renderer/store.ts`, `store-rederive`'s) — read, written and persisted nowhere by this module (D-13).
+- **The renderer's own store** (`src/renderer/store.ts`, `store-rederive`'s) — read, written and persisted nowhere by this module (D-13); **the module is DELETED** (D-78's purge stage 1, 2026-11-02), so what D-13 states here is now the vacuous truth about a name that stands in no tier at all.
 - **No second store and no second `filePath`**: one instance per surface, constructed at most once and kept for the process's life, which is what makes the one reference of D-18 countable (`guide §3.2`; D-18).
 
 ## 9. Package findings — recorded, upstream-owned, never patched here (D-5)

@@ -5,7 +5,9 @@
 - **Ceiling:** 150 lines (class max); at the ceiling split by owner — never append (D-1, D-3).
 - **Write scope:** the three tab batteries and this document, per the `store-tabs-record` row of `strata/modules.json`
   (D-62). The store is `store-rederive`'s, the envelope that seeds the tabs is `app-envelope`'s and the wiring is
-  `renderer-wiring`'s — reaching into any of them would claim a sibling's artifact by another route (D-32).
+  `renderer-wiring`'s — reaching into any of them would claim a sibling's artifact by another route (D-32). **The first
+  of those three no longer exists: D-78's purge stage 1 DELETED `src/renderer/store.ts` and its row 2026-11-02, so this
+  scope's "not mine" reading loses a subject and gains nothing — the store the record rides is `provident-storeroom`'s.**
 
 ## 1. The record family
 

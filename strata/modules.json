@@ -173,15 +173,6 @@
       "endpoints": 7
     },
     {
-      "name": "store-rederive",
-      "paths": [
-        "src/renderer/store.ts",
-        "tests/store-rederive.test.ts",
-        "tests/store-rederive-register.ts"
-      ],
-      "endpoints": 10
-    },
-    {
       "name": "interaction",
       "paths": [
         "src/shared/gesture-session.ts",

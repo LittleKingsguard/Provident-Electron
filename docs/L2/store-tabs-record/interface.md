@@ -119,7 +119,7 @@ gains a client's duty: **re-read after every `onChanged`**.
   counts (D-39: the figure is read from the row, never counted here).
 - **The five `data.*` members stay unanswered.** The tab record does not ride them: they are `central-data`'s surface over
   the profile store, and a second unit over one route is what D-32 forbids. Their own debt is `strata/pending.md`'s.
-- **`src/renderer/store.ts` is not involved.** It is renderer-side and unwired (ASM-7); D-63 decoupled this rework from it.
+- **`src/renderer/store.ts` is not involved.** It is renderer-side and unwired (ASM-7); D-63 decoupled this rework from it — **and it no longer exists: D-78's purge stage 1 DELETED it 2026-11-02, so this line now means "no module of that name is in the closure at all".**
 
 ## 6. The renderer's client role — it reads this record, and it owns none
 
