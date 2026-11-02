@@ -8,7 +8,9 @@
 //   unreachable            — all five answer the reading's ledger, `journal` included, with no store
 //
 // An `absent` name is the COLD TIER for `read`/`list`/`delete` and the WINDOW ALONE for `journal`;
-// the first `write` is where the store's construction can refuse. Every failure is a value: no
+// the first `write` is where a construction this surface OWES can refuse — and in the app it owes
+// none: `main.ts` supplies the boot's store, so every operation acts through that one instance
+// (D-79). Every failure is a value: no
 // operation throws for any argument or any store state (G1; `interface.md` §6).
 
 import { parseDelete, parseJournal, parseList, parseRead, parseWrite, pathText } from './args.js'

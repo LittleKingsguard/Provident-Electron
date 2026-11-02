@@ -302,7 +302,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(text.includes('file.kept'), 'and the durable row is the one it does carry').toBe(true)
   })
 
-  it('S-9 · the package is never modified: the seam’s census stands at fourteen members and twelve symbols, and the package is imported in exactly two files outside src/main/data/', () => {
+  it('S-9 · the package is never modified: the seam’s census stands at fourteen members and twelve symbols, and the package is imported in exactly three files — the seam, the operator-settings instance and the tab record’s own instance — none of them under src/main/data/', () => {
     expect(STOREROOM_DECLARED_SURFACE.memberCount, 'L1 §5 S-9 — the seam census row reads fourteen members').toBe(14)
     expect(STOREROOM_DECLARED_SURFACE.members.length, 'and the declared member list is that length, so a growth fails here rather than silently').toBe(14)
     expect(STOREROOM_DECLARED_SURFACE.symbolCount, 'and twelve own symbols').toBe(12)

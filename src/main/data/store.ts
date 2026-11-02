@@ -1,6 +1,6 @@
-// src/main/data/store.ts — the profile's ONE written name, THE REACHABILITY READING, the deferred
-// construction, and the port the operations drive (`design.md` §1, §2; `persistence.md` §1;
-// `behaviour.md` §5, §9).
+// src/main/data/store.ts — the profile's ONE written name, THE REACHABILITY READING, the port the
+// operations drive, and the construction that stands ONLY for a caller which supplies no instance
+// (`design.md` §1, §2; `persistence.md` §1; `behaviour.md` §5, §9; D-79).
 //
 // THE READING IS THE HEART OF THIS FILE. It is taken at the top of every operation, BEFORE any
 // store instance exists or is consulted, and it answers ONE question: can the profile's one name,
@@ -40,7 +40,8 @@ export type ProfileReading =
 export type StorePort = {
   /** Taken first, at the top of every operation, before any store instance (§2). */
   probe(): ProfileReading
-  /** Built at most once, at the first operation whose reading did not answer `unreachable`. */
+  /** THE CALLER'S INSTANCE WHERE ONE WAS SUPPLIED, and — for a caller that stands this surface alone — built at
+   *  most once, at the first operation whose reading did not answer `unreachable` (D-79). */
   construct(): { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger }
 }
 
@@ -110,9 +111,12 @@ function journalLengthOf(length: unknown): number {
   return typeof length === 'number' && Number.isSafeInteger(length) && length > 0 ? length : DEFAULT_JOURNAL_LENGTH
 }
 
-/** The construction: ONE store per surface, at most once, at the profile's one name. A refused
- *  construction answers `store-unreachable` and creates nothing — not even `profileDir`
- *  (`guide §8.2`, `§9.1`; `behaviour.md` §9). */
+/** **THE FALLBACK CONSTRUCTION, FOR A CALLER THAT SUPPLIED NO INSTANCE** (D-79): ONE store per surface, at most
+ *  once, at the profile's one name. A refused construction answers `store-unreachable` and creates nothing — not even
+ *  `profileDir` (`guide §8.2`, `§9.1`; `behaviour.md` §9). **THE APP NEVER REACHES THIS**: `main.ts` hands the surface
+ *  the boot's own instance, so the file is opened once by the boot and no second register or journal is ever minted
+ *  over it. It stands for the batteries that must exercise a reading of `absent`, which a supplied store would
+ *  foreclose by creating the file (see `DataSurfaceOptions.store`). */
 function constructStore(
   options: DataSurfaceOptions,
 ): { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger } {
@@ -128,7 +132,12 @@ function constructStore(
 }
 
 export function createStorePort(options: DataSurfaceOptions): StorePort {
-  let built: { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger } | null = null
+  // **A SUPPLIED INSTANCE IS THE ANSWER, AND NOTHING IS BUILT FOR IT** (D-79). It is not copied, wrapped or
+  // re-pointed: the handle the boot constructed is the handle every `data.*` operation acts through, so the tab
+  // record's constraint pass sees these writes and one file has one register.
+  const supplied =
+    options.store === undefined ? null : ({ kind: 'ready', store: options.store } as const)
+  let built: { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger } | null = supplied
   return {
     probe: () => {
       try {

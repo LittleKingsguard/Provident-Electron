@@ -1,6 +1,6 @@
 # L2 — `central-data`: the interface
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 4 — §1's `write` clause drops its quotation of a wording L1 rev 4 superseded and states the figure the row now carries (D-51); §5's composition-line sentence is de-duplicated after the last cite pass, and this file's L1 cites name rev 4. Rev 3 — four statements re-grained against L1 rev 4 and no design: §5's lead now says the five `data.*` members are **declared** and counted as declarations (D-14), with no arm answering one, and the Inputs line names L1 rev 4; rev 2 and behind are read through this one · **Status:** DESIGN — `docs/L1/central-data-management.md` rev 4 and its census exception rev 3 are the inputs; the integration battery is filed against this file and `src/main/data/` **exists**; the battery's own reading is `strata/brief.md` §6's instrument and is not restated here (D-1 §4, D-26)
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 5 — §2's `DataSurfaceOptions` carries the optional `store` handle and §5's composition line passes it, so `data.*` acts through the normal crossing and constructs nothing (D-79); Rev 4 — §1's `write` clause drops its quotation of a wording L1 rev 4 superseded and states the figure the row now carries (D-51); §5's composition-line sentence is de-duplicated after the last cite pass, and this file's L1 cites name rev 4. Rev 3 — four statements re-grained against L1 rev 4 and no design: §5's lead now says the five `data.*` members are **declared** and counted as declarations (D-14), with no arm answering one, and the Inputs line names L1 rev 4; rev 2 and behind are read through this one · **Status:** DESIGN — `docs/L1/central-data-management.md` rev 4 and its census exception rev 3 are the inputs; the integration battery is filed against this file and `src/main/data/` **exists**; the battery's own reading is `strata/brief.md` §6's instrument and is not restated here (D-1 §4, D-26)
 - **Inputs:** L1 rev 4 §2/§3/§4/§8; `docs/L1/central-data-census-exception.md` rev 3 §1/§2/§5/§7 (E-1, E-2, E-3; N = 15); D-5, D-11, D-12, D-13, D-14, D-15; the `central-data` row of `strata/modules.json` (`endpoints: 15`); `strata/platform.md` §4; the tree at `57c5825`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide, and `the declaration` is its `index.d.ts`; both are read and never edited (D-5)
 
@@ -49,12 +49,12 @@ export type DataDeleteAnswer =
 export type DataListAnswer = { status: 'read'; prefix: DataPath | null; paths: readonly DataPath[]; count: number } | DataLedger
 export interface DataJournalEntry { cursor: number; kind: 'write' | 'delete'; path: DataPath; changedTo: 'present' | 'absent' }
 export type DataJournalAnswer =
-  | { status: 'read'; from: number; through: number; floor: number; entries: readonly DataJournalEntry[]; count: number }
-  | DataLedger
+  | { status: 'read'; from: number; through: number; floor: number; entries: readonly DataJournalEntry[]; count: number } | DataLedger
 export interface DataSurfaceOptions {
   /** The app's profile directory; the FILE's name is this module's own choice (D-13). */
   profileDir: string
   journalLength?: number
+  store?: ProfileStore   // THE BOOT'S OWN INSTANCE, `ProfileStore` = `ReturnType<typeof storeCreate>` in `store.ts` (D-79): supplied, nothing is constructed and `data.*` acts through the normal crossing
 }
 export interface DataSurface {
   read(args: unknown): DataReadAnswer
@@ -67,7 +67,7 @@ export type DataToolName =
   | 'provident.data.read' | 'provident.data.write' | 'provident.data.delete'
   | 'provident.data.list' | 'provident.data.journal'
 export const DATA_TOOL_NAMES: readonly DataToolName[]
-/** Constructs no store and touches no file; the store is built at the first operation that needs it (D-13). */
+/** Constructs no store where the caller supplies `store`; else built at the first operation that needs it (D-13, D-79). */
 export function createDataSurface(options: DataSurfaceOptions): DataSurface
 ```
 
@@ -102,7 +102,7 @@ Every answer is one of the statuses `committed`, `read`, `absent`, `refused`; no
 - **The group's posture does not reach a route, and the tree has yet to carry the answer.** A `data.*` route is **declared** to answer while `data` is OFF: the group governs which MCP tool names are registered and therefore absent from `tools/list`, and it says nothing about the bridge's own vocabulary — the rejected alternative, gating the routes by the group too, would make a route the renderer's contract declares vanish whenever an operator narrows a grant, which is a power no clause of D-11 gives an MCP group (D-11; ASM-9). **Unlanded at this head, so the clause above is design and is not measured:** no answer site for the five routes exists — the renderer's method switch has no `data.*` arm and its default throws `unknown method` (`src/renderer/renderer.ts:961-1033`), and the IPC handler registrations in `main()` (`src/main/main.ts`) cover no such route (D-11, D-15).
 - No renderer method-switch arm is added, so `MUTATING_METHODS` stays at its seven, and `window.provident` gains no member: the routes are vocabulary and record, not a new bridge surface (`src/renderer/renderer.ts:829`; `src/main/preload.ts:42-75`; D-11, L1 rev 4 §4 ASM-9).
 - The registrations obtain their adapter through **one new optional option, `McpServerOptions.dataSurface?: DataSurface`**, exactly as the `module.*` handlers receive `moduleStore` (`src/main/mcp-server.ts:392-404,813-820`; D-11).
-- That option is supplied by the composition site's existing one-line options pass — `new ProvidentMcpServer({ …, dataSurface: createDataSurface({ profileDir: app.getPath('userData') }) })`, the `new ProvidentMcpServer(...)` composition line in `src/main/main.ts` — and **that line is licensed by the census exception's E-3**: one import line plus that one options member, written by `central-data`'s L4 in the same one shot, with no other line of `main.ts` moving, and it is not a census row (`docs/L1/central-data-census-exception.md` §2 E-3; D-11, D-13).
+- That option is supplied by the composition site's existing one-line options pass — `new ProvidentMcpServer({ …, dataSurface: createDataSurface({ profileDir: app.getPath('userData'), store: centralStore }) })`, the `new ProvidentMcpServer(...)` composition line in `src/main/main.ts` — and **that line is licensed by the census exception's E-3**: one import line plus that one options member, written by `central-data`'s L4 in the same one shot, with no other line of `main.ts` moving, and it is not a census row (`docs/L1/central-data-census-exception.md` §2 E-3; D-11, D-13). **`store` is the same line's second member and not a second pass: it names the boot's instance, so the surface opens none (D-79).**
 - Until it lands, a server constructed without a surface registers **no** `data` tool even with the group enabled: the five names are enumerated in `ALL_TOOLS` and unregistered, which is the count-moved-without-its-row finding D-11 forbids. The live composition must supply the surface (D-11).
 
 ## 6. The discipline: a refusal is a value, and the previous bytes stay

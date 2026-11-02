@@ -1,6 +1,6 @@
 # L2 — `central-data`: the behaviour
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 4 — §1's construction clause now states the reading's rule (`occupied` constructs, `absent`/`unreachable` do not, `write` unconditionally, `journal` never) where it implied the first *write*; Rev 3 — one statement re-grained against the tree and no design: a read-only profile does not cost “no filesystem act” — every operation takes one reachability reading first (`probe()` in `src/main/data/store.ts`); rev 2 and behind are read through this one
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 5 — §1's construction paragraph now carries the clause that the APP takes none of those constructions: the composition supplies the boot's instance, so the reading's rule governs a caller that supplies none (D-79); Rev 4 — §1's construction clause now states the reading's rule (`occupied` constructs, `absent`/`unreachable` do not, `write` unconditionally, `journal` never) where it implied the first *write*; Rev 3 — one statement re-grained against the tree and no design: a read-only profile does not cost “no filesystem act” — every operation takes one reachability reading first (`probe()` in `src/main/data/store.ts`); rev 2 and behind are read through this one
 - **Status:** DESIGN — the expected behaviour of the five `provident.data.*` tools, stated as observable outcomes; the integration battery is filed against this file (D-1 §4)
 - **Inputs:** `docs/L2/central-data/interface.md` (§1-§7 fix the surface), `persistence.md` §9, L1 rev 4 §3/§4/§5, `docs/L1/central-data-census-exception.md` §1/§7, D-5/D-11/D-12/D-13, the package's shipped guide and declaration at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
@@ -23,6 +23,10 @@
   and every operation still takes one `probe()` first (`readProfile(profileDir)` in `src/main/data/store.ts`). A profile whose
   file is **absent** therefore answers from the cold tier with no construction, which is why the profile file does not exist
   after `list` on a fresh install and why the first `write` there is what brings it into being (`guide §9.1`; D-13; `persistence.md` §1; `docs/L3/central-data/design.md` §2).
+- **AND THE APP TAKES NONE OF THOSE CONSTRUCTIONS SINCE D-79**: the composition hands `createDataSurface` the boot's own
+  instance (`DataSurfaceOptions.store`; `src/main/main.ts:132` → `:297`), so `read`, `remove`, `list` and `write` act through
+  the store that already stands, and the paragraph above governs the caller that supplies none — the batteries' arm, the
+  only one that can still read a cold profile (D-79).
 
 ## 2. A write commits through the store and is re-served
 
