@@ -85,7 +85,7 @@ wholesale ahead of the map (D-10).
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | **no failures** — `3,094 passed / 2 skipped` of `3,096` on a clean tree, over `124` test files — `88` flat + `36` nested, `node scripts/strata-walkthrough.mjs pins` (the `8`-row `D-45` checking row at `tests/unit/store-tabs-record/signatures.test.ts` and the `12`-row client battery at `tests/integration/store-tabs-record/tabs-client.test.ts` counted here, 2026-11-02; **`183` fewer than `3,277` of `3,279` over `125`**, which is the `183` spec sites of the two `store-rederive` files D-78's purge stage 1 deletes — measured per file, not computed) | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | **no failures** — `3,095 passed / 2 skipped` of `3,097` on a clean tree, over `124` test files — `88` flat + `36` nested, `node scripts/strata-walkthrough.mjs pins` (the `8`-row `D-45` checking row at `tests/unit/store-tabs-record/signatures.test.ts` and the `12`-row client battery at `tests/integration/store-tabs-record/tabs-client.test.ts` counted here, 2026-11-02; **`182` fewer than `3,277` of `3,279` over `125`** — the `183` spec sites of the two `store-rederive` files D-78's purge stage 1 deletes, less the one `B-9` D-80 adds, each measured rather than computed) | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — five artifacts: `main.mjs`, `preload.cjs`, `standalone.mjs`, `battery-host.mjs`, `renderer.js` | the bundles exist at all |
