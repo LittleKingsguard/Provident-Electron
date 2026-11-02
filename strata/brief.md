@@ -44,7 +44,7 @@ gate corpus's as-filed copy is cited by path under the archive prefix (§7, D-2)
 | Packages consumed and pinned | `provident-ssr ^0.5.1`, `provident-storeroom ^1.9.0` | `package.json`'s `dependencies` block (D-41: the site, never a range that a new script key moves) |
 | The storeroom seam | **two** imports of the package — the seam (`src/main/storeroom.ts`'s `STOREROOM_DECLARED_SURFACE`, a declared census of `14` members / `12` symbols) and the operator-settings instance (`src/main/operator-settings/index.ts`'s import-once construction, D-16); the central store writes its own `<userData>/provident-profile.json` | `src/main/storeroom.ts`, `src/main/operator-settings/index.ts`, `docs/L2/central-data/persistence.md` §1 |
 | UI authority | every element outside the Electron shell's own chrome is provident data driven through the graph, never hand-written DOM; one rendered outside it is invisible to `dispatch`, `get_rendered_html` and `get_markdown` | `src/shared/demo-envelope.ts`'s data-not-DOM construction and the §2 charter (`archive/gate-corpus-2026-10-29/AGENTS.md:22-34`) |
-| Source files | **50** tracked `src/**/*.ts` files — what `pins` counts, `/^src\/.*\.ts$/` over `git ls-files`; no `.d.ts` and no direct child of `src/`, so it is the whole TypeScript source tree (measured 2026-11-02: `srcTypeScriptFiles: 50`, the figure the 47 this row carried had missed the crossing's three) | `node scripts/strata-walkthrough.mjs pins` (`srcTypeScriptFiles`) |
+| Source files | **51** tracked `src/**/*.ts` files — what `pins` counts, `/^src\/.*\.ts$/` over `git ls-files`; no `.d.ts` and no direct child of `src/`, so it is the whole TypeScript source tree (measured 2026-11-02: `srcTypeScriptFiles: 51` — the crossing's three the `47` missed, plus the client D-77 added) | `node scripts/strata-walkthrough.mjs pins` (`srcTypeScriptFiles`) |
 
 ## 3. The layers (D-1, D-3)
 
@@ -85,7 +85,7 @@ wholesale ahead of the map (D-10).
 
 | Instrument | Reading | What it can see |
 |---|---|---|
-| `npm test` | **no failures** — `3,265 passed / 2 skipped` of `3,267` on a clean tree, over `124` test files — `89` flat + `35` nested, `node scripts/strata-walkthrough.mjs pins` (the `8`-row `D-45` checking row at `tests/unit/store-tabs-record/signatures.test.ts` counted here, 2026-11-02) | pure-module and main-process behaviour under the DOM shim |
+| `npm test` | **no failures** — `3,277 passed / 2 skipped` of `3,279` on a clean tree, over `125` test files — `89` flat + `36` nested, `node scripts/strata-walkthrough.mjs pins` (the `8`-row `D-45` checking row at `tests/unit/store-tabs-record/signatures.test.ts` and the `12`-row client battery at `tests/integration/store-tabs-record/tabs-client.test.ts` counted here, 2026-11-02) | pure-module and main-process behaviour under the DOM shim |
 | `npm run typecheck` | clean (`0` errors) | `src/**/*.ts` only — never a test file |
 | `npm run typecheck:tests` | clean (`0` errors) | the whole `tests/**/*.ts` tree at the unit leg's strictness |
 | `npm run build` | OK — five artifacts: `main.mjs`, `preload.cjs`, `standalone.mjs`, `battery-host.mjs`, `renderer.js` | the bundles exist at all |
