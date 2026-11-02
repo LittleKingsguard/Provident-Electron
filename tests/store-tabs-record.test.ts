@@ -1675,10 +1675,14 @@ describe('T2 §4.2 items 4/6/8b — THE RE-TRIAGE’S BEHAVIOURAL ROWS (`F-6`·`
     expect(region.includes('evaluateTabsBootStep'), 'the raw bytes mention the deleted name — its headstone does — so the elision has something to remove and this row is not vacuous').toBe(true)
     expect(code.includes('evaluateTabsBootStep'), 'and the CODE does not: no declaration, no call and no export of the boot step survives in `src/renderer/renderer.ts`').toBe(false)
     expect(code.includes('TabsBootOutcome'), 'nor does the answer type that described only what the step answered — a declared outcome with no producer is a name with nothing behind it (D-70)').toBe(false)
-    // AND THE WRITE IT PERFORMED IS GONE FROM THE CODE TOO: no `commit` on a `file.tabs.*` name stands anywhere in this file,
-    // so the renderer performs no record write at boot at all (`B-7`’s count, read here as an exact zero rather than a bound).
-    const tabRecordCommits = code.match(/commit\(\s*['"`]file\.tabs\./g) ?? []
-    expect(tabRecordCommits, 'no `commit` on a `file.tabs.*` name survives the deletion: the boot writes no record byte').toEqual([])
+    // AND THE WRITE IT PERFORMED IS GONE FROM THE CODE TOO, WITH THE COUNT TAKEN TWICE — by the LITERAL spelling (the boot
+    // step’s own form, `commit('file.tabs.order', …)`) and by the CONSTANT every other site in this file uses
+    // (`commit(TABS_ORDER_NAME, …)`). **THE SECOND COUNT IS THE ONE THAT CANNOT BE EVADED BY A CONSTANT**: a boot write
+    // re-added through `TABS_ORDER_NAME` would pass a literal-spelling scan and die here. **THE ONE LAWFUL SITE IS THE CLOSE
+    // VERB’S** (`closeTab`’s single ordered-name rewrite, the declared write-back of `T2` §7b item 3), so the count is EXACTLY
+    // ONE and not zero: a zero would mean the close verb had stopped rewriting the seat, which is a different defect.
+    expect(code.match(/commit\(\s*['"`]file\.tabs\./g) ?? [], 'no `commit` on a LITERAL `file.tabs.*` name survives the deletion: the boot writes no record byte').toEqual([])
+    expect((code.match(/commit\(\s*TABS_ORDER_NAME/g) ?? []).length, 'and exactly ONE `commit(TABS_ORDER_NAME, …)` stands — the close verb’s ordered-name rewrite — so no boot step re-appears through the constant').toBe(1)
     // AND THE SEAM THE ROWS DROVE IS GONE FROM THE MODULE NAMESPACE, read the same way the register reads exports.
     const boot = (wiring.module ?? {})['evaluateTabsBootStep']
     expect(typeof boot, 'the wiring exports no boot step: a row that drove `evaluateTabsBootStep` would now drive `undefined`').toBe('undefined')
