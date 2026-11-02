@@ -387,26 +387,60 @@ const viewOf = (store: Store): { order: string[]; entries: Record<string, TabsRe
 
 const readActive = (row: TabsRecordRow | undefined): boolean => row !== undefined && row.active === true
 
-/** The landing page is the one target the app always has (the renderer's `TABS_LANDING_ID`). */
+/** **THE LANDING ENTRY'S ID IS `'landing'` BY THE USER'S DECISION (D-75), AND THIS CONSTANT STILL READS
+ *  `'tabs-landing-page'` BECAUSE THE RECORD CANNOT YET SPELL IT.** The family keys one member per tab in the SAME flat
+ *  object as its two SEATS, so an entry named `landing` is not a row it can hold: measured 2026-11-02, `composeRecord`
+ *  writes the row at that key and then the `landing` seat over it, so the construction instant's own bytes answer
+ *  `{"landing":"landing","order":["landing"]}` at `['tabs']` with `read()` answering `rows: []`, the first
+ *  `commit({id:'landing',…})` is refused `ConstraintPassRefused`, and on a HEALTHY record the same commit is ANSWERED
+ *  `committed` while leaving `order` naming a row the record does not hold. **So the alignment is not a rename: it needs
+ *  the seat DERIVED RATHER THAN STORED** — measured the same date, a record carrying the landing ROW at that key and no
+ *  string seat passes all five pairs and reads `landing: 'tab-1'` — and that is `docs/L1/store-tabs-record.md` §1's family
+ *  and `docs/L2/store-tabs-record/interface.md` §1's table to change, never an implementation pass's (no layer judges its
+ *  own design). **IT IS ALSO NOT THE PAGE NODE'S ID** (`src/shared/demo-envelope.ts`'s `TABS_LANDING_PAGE_ID`, which
+ *  authors the node and stays `'tabs-landing-page'`) **AND NOT A CONTENT TARGET** (`TAB_CONTENT_FALLBACK` below): four
+ *  spellings share these letters — this entry's id, the authored node's, the content target's, and the SEAT's — and only
+ *  the first is waiting to move. */
 const TABS_LANDING_ID = 'tabs-landing-page'
 
 /** Every tab carries a TITLE. The record's own title field is the row's `label`. */
 const TAB_TITLE_REPAIR = 'untitled'
-/** Every tab carries the DATA OBJECT it contains. A tab without one is pointed at the landing page, which is the one
- *  target the app always has (`TABS_LANDING_ID` on the renderer side). */
+/** **A CONTENT REFERENCE AND NOT AN ID, SO THIS STAYS `'tabs-landing-page'` WHEN THE ENTRY'S ID BECOMES `'landing'`**
+ *  (D-75). A row's `target` is the content the tab CONTAINS (`src/shared/types.ts`'s docblock on the row) and its `id` is
+ *  the tab's IDENTITY; the two coincided here only because the landing tab's content is the landing page. **What decides
+ *  it is that `'landing'` names no authored node**: the one node a client can resolve for that page is
+ *  `TABS_LANDING_PAGE_ID` (L2 §6 — both page nodes are the ENVELOPE's, resolved through `Runtime.elementForNodeId`), so a
+ *  blank target repaired to `'landing'` would point a tab at content that resolves to NOTHING — the unresolvable-target
+ *  terminal the error page exists for, minted by the repair meant to prevent it. So the fallback names authored content,
+ *  and `landingRow` spells its own `target` through THIS constant rather than through the entry's id — the separation
+ *  stated at the one row where the two once coincided, and a no-op today because both constants read that same string. */
 const TAB_CONTENT_FALLBACK = 'tabs-landing-page'
 
 /** A field that is absent, not a string, or blank is a field the record cannot be read for. */
 const blank = (value: unknown): boolean => typeof value !== 'string' || value.trim().length === 0
 
-/** **THE SEAT AN EMPTY RECORD NEVER KEEPS: the landing page, seated and active, with all three field defaults already
- *  filled.** Two bodies mint it and they must mint the SAME one — `healRecord`'s `order.length === 0` branch, where the
- *  invariant refuses a record holding no tab at all, and `mintRecord`, where the address holds nothing and the record
- *  itself has to be created. A second spelling of this row is a second answer to "what is a record with no tabs", and the
- *  engine's re-run would judge whichever one wrote last. */
+/** **THE SEAT AN EMPTY RECORD NEVER KEEPS: the landing ENTRY, seated and active, with all three field defaults already
+ *  filled** — `id` and `label` are the entry's spelling and `target` is the authored landing page
+ *  (`TAB_CONTENT_FALLBACK`), because identity and content are two things (D-75). Two bodies mint it and they must mint the
+ *  SAME one — `healRecord`'s `order.length === 0` branch, where the invariant refuses a record holding no tab at all, and
+ *  `mintRecord`, where the address holds nothing and the record itself has to be created. A second spelling of this row is
+ *  a second answer to "what is a record with no tabs", and the engine's re-run would judge whichever one wrote last.
+ *
+ *  **AND "RESERVED" HAS NO ANSWER IN THIS MODULE YET: THAT IS A HOLE, NOT A DECISION, AND NO FLAG OR REFUSAL WAS ADDED
+ *  FOR IT (D-75).** The renderer guards the spelling twice (`mintTabId('landing')` answers `'reserved-spelling'`; its
+ *  store answers `remove('file.tabs.landing')` `'reserved-name'`), and this module was expected to answer the same
+ *  reservation with an UPDATE on `commit` and the empty-sequence REPAIR on `remove`. **Neither is what happens, for two
+ *  reasons at once**: the entry's id is still `'tabs-landing-page'`, and the seat below owns the name `landing`, so an
+ *  entry under it is unrepresentable — measured 2026-11-02, `commit({id:'landing',…})` on a healthy record is answered
+ *  `{status: 'committed'}` while writing `order: ['tab-1','landing']` with NO `landing` row member (the seat string takes
+ *  the key), so `read()` names a landing row it does not hold. **The guard that write needs — an entry id equal to either
+ *  SEAT name (`order`, `landing`) refused before any store act — is REPORTED in D-75 and built nowhere**, because a new
+ *  refusal is a crossing design change this pass does not take; the repair this row exists to perform is the answer only
+ *  once the seat is derived rather than stored, and then `remove` of the last tab re-mints it here and `commit` under that
+ *  id updates this row in place. */
 const landingRow = (stamp: string): TabsRecordRow => ({
   id: TABS_LANDING_ID,
-  target: TABS_LANDING_ID,
+  target: TAB_CONTENT_FALLBACK,
   active: true,
   label: TABS_LANDING_ID,
   lastActiveAt: stamp,
@@ -561,7 +595,9 @@ const healRecord = (store: Store, hints: HealHints) => (context: unknown): TabsR
     rows[id] = healed
   }
   if (order.length === 0) {
-    // AN EMPTY SEQUENCE NEVER SURVIVES: the landing page is the one target the app always has, so it takes the seat.
+    // AN EMPTY SEQUENCE NEVER SURVIVES: the landing ENTRY is the one tab the app always has, so it takes the seat. This
+    // branch is the whole of what the renderer's `'reserved-name'` guard would answer here, once the seat frees the name
+    // (D-75, `landingRow`).
     order.push(TABS_LANDING_ID)
     rows[TABS_LANDING_ID] = landingRow(stamp)
   } else {
