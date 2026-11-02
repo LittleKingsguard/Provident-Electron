@@ -10,7 +10,7 @@
 |---|---|
 | `createSettingsSurface({ userDataDir })`, then `state()` | `{rows:[], legacy:'absent', unrepresentable:[], storage:'standing'}` over a profile holding no retired file and no record (L1 §4; `interface.md` §2) |
 | then `read()` | the sibling's first-run answer, unmoved: `token:null`, `enabled:['read','dispatch']`, the safe pair (sibling §1; D-16) |
-| a second `state()` in the same process | the same answer, and **no file is read twice**: the import ran at most once, at construction (L1 §4; `guide §6`) |
+| a second `state()` in the same process | the same answer, and **no file is read twice**: the import ran at most once, inside the repair at `['operator-app-state']` at the store's creation, and each `state()` re-projects the record that repair wrote (L1 §4; `guide §6`, `§7.2` (4); D-85) |
 | `state()` over a store construction the package refused | `rows:[]`, `storage:'unreachable'`, nothing thrown (sibling §2.1; `guide §8.2`) |
 
 - **`main.ts` holds no copy of the rows.** The retired third holder is gone, so every reader asks the surface on the call it serves. What `src/main/main.ts` shows at three sites is the one relation this file depends on: `settingsSurface.attach(mcp)` — the flip that writes the holder — lands before the `new BrowserWindow(...)` construction and its `win.loadFile(rendererHtml)` call, and those precede `await mcp.start()`. **The boot order as a whole is L1's `C-3` row's and is cited here, never restated** (`docs/L1/security-store-storeroom.md` §7 `C-3`, the row that names itself the order's owner; D-43).

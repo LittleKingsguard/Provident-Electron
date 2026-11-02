@@ -10,10 +10,10 @@
 |---|---|
 | `createOperatorSettings({ userDataDir })`, then `read()` | `token:null`, `enabled:['read','dispatch']`, no `maxJournalLength`, no `entries`, and the safe pair `{exclusion:'mcp-enabled', tier4:false}` (L1 §5; `guide §4`; `interface.md` §2) |
 | the same, over `userDataDir` holding nothing | `<userDataDir>/provident-operator-settings.json` **exists and is zero-length**: the store's construction created it, exclusively and empty (`guide §9.1`; `interface.md` §2.1) |
-| the same, with `<userDataDir>/provident-security.json` absent | no `provident-security.json` is created, and the boot writes no byte at all (D-19; `interface.md` §2.1) |
+| the same, with `<userDataDir>/provident-security.json` absent | no `provident-security.json` is created, and the boot writes no byte of the instance's file — its three creation repairs land journal ops and materialise nothing, the package saving at a `file`-tier write's commit alone (`guide §9.3`; D-19, D-85; `interface.md` §2.1) |
 | a second `createOperatorSettings` over the same directory, nothing written between | the same record; the boot still writes nothing (`guide §9.1`) |
 
-- **The boot is read-only, so the first write of a process is the store's first op** — which is why the ordinal a commit answers is the store's own and is asserted by difference and never by its absolute value (`interface.md` §2 `ASM-L2-7`; `guide §6.4`).
+- **The boot writes no byte, but it is not order-free: its THREE creation repairs land the journal's first three ops, so the first caller write of a process is its FOURTH** — which is why the ordinal a commit answers is the store's own, is asserted by difference and never by its absolute value, and why the one figure a row pins absolutely is the creation instant's (`D-85`: `cursor` `1` absent the declarations, `2` under `D-84`'s one, `4` under all three; `interface.md` §2 `ASM-L2-7`; `guide §6.4`).
 
 ## 2. A committed write, and the read that re-serves it
 
@@ -30,11 +30,11 @@
 
 ## 3. The import-once path carries its own red set (D-19)
 
-The import runs at construction **iff the instance's own file carries no record at `['operator-settings']`**, and it reads `<userDataDir>/provident-security.json` once (D-19; `interface.md` §2.1).
+The import runs **INSIDE the declaration at `['operator-settings']`, at the store's creation, iff the instance's own file carries no record at that address** — the absence it is keyed by is the address's, and the act the absence keys is the repair's (D-19, D-85; `interface.md` §2.1). It reads `<userDataDir>/provident-security.json` and writes what it answers as ONE whole record, `toStored(imported ?? FIRST_RUN)`.
 
 | Seed | What the first `read()` answers |
 |---|---|
-| absent | the first-run default; no file written; the import is attempted again at the next boot and answers the same (L1 §5; D-19) |
+| absent | the first-run default written into the record; no byte on the disk until the first save; while unsaved, the next boot's repair reads again and answers the same (L1 §5; D-19, D-85) |
 | `{token:'tok',enabled:['graph','read','graph','bogus'],maxJournalLength:12,'x-mine':{'a':1}}` | `token:'tok'`, **`enabled:['graph','read']`** (the seed's own order, deduplicated), the cap `12`, and `entries` carrying `x-mine` verbatim — **the operator's token, grants, cap and an arbitrary entry all survive** (D-19; L1 §5; `A-5`) |
 | unparsable bytes | the first-run default, nothing thrown, the seed's bytes byte-identical (L1 §5; the deleted `src/main/security-store.ts`'s unparsable-bytes arm) |
 | a non-object (`[1,2,3]`, a string, a number, a boolean) | the same: the first-run default, no throw, the bytes untouched (L1 §5) |
@@ -82,7 +82,7 @@ The import runs at construction **iff the instance's own file carries no record 
 
 | Drive | Expected |
 |---|---|
-| `read()` on any boot | `exclusion:'mcp-enabled'`, `tier4:false` — never read from a file (ASM-L2-2; the boot read at the `settingsSurface.read()` site in `src/main/main.ts`). **The word comes from the RECORD now, not from the constant**: the instance's one declaration stands at `['operator-exclusion']` at the store's creation and its repair writes `{exclusion:'mcp-enabled'}`, so the read of a `mem` address that holds nothing is what D-84 measured away — the constant is still the read's failed-read and non-token arm, and the two agree by construction (`OPERATOR_CONSTRAINT_DECLARATIONS`; D-84) |
+| `read()` on any boot | `exclusion:'mcp-enabled'`, `tier4:false` — never read from a file (ASM-L2-2; the boot read at the `settingsSurface.read()` site in `src/main/main.ts`). **The word comes from the RECORD now, not from the constant**: the instance's one declaration stands at `['operator-exclusion']` at the store's creation and its repair writes `{exclusion:'mcp-enabled'}`, so the read of a `mem` address that holds nothing is what D-84 measured away — the constant is still the read's failed-read and non-token arm, and the two agree by construction (`declarationsFor`'s exclusion pair; D-84) |
 | `write({ exclusion: 'mcp-disabled' })` | `{status:'committed', …}`, and `read()` answers `'mcp-disabled'` with `tier4:true` — one record, two derived readings (the `ExclusionState` declaration and its one-record-two-derived-readings note in `src/main/security.ts`; D-17) |
 | then `write({ token: 'z' })` | the pair is **unmoved**: a `file`-tier write purges only its own key, and the pair stands at its own address (`guide §5.1`; `interface.md` §1 `ASM-L2-1`) |
 | then a fresh `createOperatorSettings` over the same directory | the record survives and the pair is back at `'mcp-enabled'`: the pair is never persisted (`persistence.md` §6; ASM-L2-2) |

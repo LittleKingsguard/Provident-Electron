@@ -56,10 +56,23 @@ const SEED = { enabled: ['read', 'dispatch', 'graph', 'code'] }
 
 /** THE THREE IMAGES `persistence.md` §2 measured, as bytes: a grant (`B-2`), a revoke (`B-3`) and a
  *  record whose list is EMPTY (`B-4`). Asserted as text, so a header, a version member, a newline or
- *  a re-ordered array is a red row rather than a comment. */
-const GRANTED_IMAGE = '{"operator-settings":{"enabled":["read","dispatch","graph","code","data"]}}'
-const REVOKED_IMAGE = '{"operator-settings":{"enabled":["read","dispatch","graph","code"]}}'
-const EMPTY_LIST_IMAGE = '{"operator-settings":{"enabled":[]}}'
+ *  a re-ordered array is a red row rather than a comment.
+ *
+ *  **RE-DERIVED 2026-11-03 (`D-85`), AND THE CLAIM IS STRONGER, NOT WEAKER.** Each image is now the
+ *  WHOLE FILE, because the file carries TWO records: `['operator-settings']` — the image these rows
+ *  have always asserted, byte for byte, unmoved — and beside it `['operator-app-state']`, which until
+ *  `D-85` stood only in the instance's memory until an ordinary write superseded it, and which now
+ *  STANDS AT THE CREATION INSTANT, written by the declaration that repairs that address's absence.
+ *  The second record's own image is the arm the boot ran: this battery seeds `provident-security.json`
+ *  (the sibling's retired seed) and no `provident-settings.json`, so the arm is `absent`, the rows are
+ *  empty and nothing was named uncarryable. Measured 2026-11-03 on this head over the same drives.
+ *  **So the old "the register at the address and nothing else" clause is asserted over a file that
+ *  now has a second record, and it says what that record is** — no `version`, no `schemaVersion`, no
+ *  envelope, no third name, and the app-state record's own three members and no more. */
+const APP_STATE_ABSENT_IMAGE = '"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]}'
+const GRANTED_IMAGE = `{${APP_STATE_ABSENT_IMAGE},"operator-settings":{"enabled":["read","dispatch","graph","code","data"]}}`
+const REVOKED_IMAGE = `{${APP_STATE_ABSENT_IMAGE},"operator-settings":{"enabled":["read","dispatch","graph","code"]}}`
+const EMPTY_LIST_IMAGE = `{${APP_STATE_ABSENT_IMAGE},"operator-settings":{"enabled":[]}}`
 
 let userDataDir: string
 let secondDir: string
@@ -100,7 +113,7 @@ describe('secure-panels · the grant, as bytes', () => {
     expect(granted.write.status, 'the store commits the one write the gesture makes').toBe('committed')
     expect(granted.enabled, 'and the answer read back from the record names the gain').toEqual([...SEED.enabled, 'data'])
     const bytes = bytesOf(userDataDir)
-    expect(bytes.toString('utf8'), 'the file now carries the record, in the store’s OWN image — the register at the address and nothing else (§2: no `version`, no `schemaVersion`, no envelope)').toBe(GRANTED_IMAGE)
+    expect(bytes.toString('utf8'), 'the file now carries the record, in the store’s OWN image, with the app-state record the creation repair wrote beside it (§2: no `version`, no `schemaVersion`, no envelope, and no third name — `D-85`)').toBe(GRANTED_IMAGE)
     expect(bytes.length, 'and it is bytes, not the zero-length file that says "no record yet"').toBeGreaterThan(0)
     expect(bytes.toString('utf8').includes('"token"'), 'a cleared member crosses as its ABSENCE, never as `null` — which is why `B-2`’s bytes carry no `token` member at all (§5)').toBe(false)
     expect(readdirSync(userDataDir).sort(), 'one gesture, one name: the write creates no `.tmp`, no lock and no second file (§6)').toEqual([OPERATOR_FILE, SEED_FILE])
@@ -114,7 +127,10 @@ describe('secure-panels · the grant, as bytes', () => {
     // A GRANT IS A REPLACE OF THE BYTES, never an edit of the array inside them (§5): the surface
     // hands the instance the members the click named, and the instance composes the whole record
     // from `read()`'s durable row over it — so every member the click did not name is still there.
-    expect(JSON.parse(bytesOf(userDataDir).toString('utf8')), 'the record the gesture left is the record it found, with one member moved').toEqual({
+    // The app-state record stands beside it with the boot's own arm in it (`D-85`), and is asserted
+    // whole rather than skipped: the claim is the FILE's, not one address's.
+    expect(JSON.parse(bytesOf(userDataDir).toString('utf8')), 'the record the gesture left is the record it found, with one member moved — beside the app-state record the creation repair wrote, unmoved by the gesture').toEqual({
+      'operator-app-state': { legacy: 'absent', rows: [], unrepresentable: [] },
       'operator-settings': {
         enabled: [...SEED.enabled, 'data'],
         token: 'tok',
@@ -154,7 +170,12 @@ describe('secure-panels · the grant, as bytes', () => {
 
     // THE ROSTER IS NEVER A STORED VALUE (§6): the record is a GRANT LIST, and at this state it names
     // no group at all — so nothing in the file could answer the pane's roster (interface.md §3 `S-5`).
-    expect([...empty.toString('utf8').matchAll(/"([^"]*)"/g)].map((match) => match[1]), 'the record names the address and the member, and NO group: a roster cannot be read out of the store because none is in it (§6, S-5)').toEqual(['operator-settings', 'enabled'])
+    // **RE-DERIVED 2026-11-03 (`D-85`): the reading is the whole FILE, and it names BOTH addresses and
+    // the app-state record's three members — and still no group** — which is the same claim taken over
+    // the file the product now writes rather than over half of it (`legacy` carries the arm the
+    // creation repair ran, `absent`, and `rows`/`unrepresentable` are the empty list and the empty
+    // name list; none of the three can spell a group name).
+    expect([...empty.toString('utf8').matchAll(/"([^"]*)"/g)].map((match) => match[1]), 'the file names both addresses, the record’s one member and the app-state record’s three — and NO group: a roster cannot be read out of the store because none is in it (§6, S-5)').toEqual(['operator-app-state', 'legacy', 'absent', 'rows', 'unrepresentable', 'operator-settings', 'enabled'])
     // …and the CARRIER never carries one either: the read answer is the grant and the two additive
     // members, so a roster cannot be reconstructed from what the pane is served (`S-5`, §6).
     const answer = warm.read()

@@ -21,11 +21,11 @@
 | Act | What the disk shows | Cite |
 |---|---|---|
 | `createSettingsSurface({ userDataDir })` on a directory holding no instance file | `<userDataDir>/provident-operator-settings.json` is **created exclusively, zero-length and empty** — the store's own act, unchanged by this unit | sibling §2; `guide §9.1` |
-| the boot read, both import arms, and `attach` | **no byte is written**: a read moves nothing, and the import writes not even the record it carries | L1 §4; sibling §2 |
+| the three creation repairs, the boot read and `attach` | **no byte is written and three ops are**: the app-state repair writes the rows AND the arm word into the record at `['operator-app-state']`, and a registration-instant repair is saved by nothing (`guide §9.3`), so the file keeps its zero length until the first caller write | L1 §4; sibling §2; measured 2026-11-03, D-85 |
 | a first `commit` | one `file`-tier save; the file's bytes now describe the rows that commit wrote | `guide §9.2`; L1 §3 |
 | a refused `commit` | the bytes stand exactly as they stood, and the store's own journal rollback has already run | `guide §9.4`; L1 §3 |
 
-- **The import's whole point is that the boot is write-free**: the rows it carries stand in memory until an ordinary write supersedes them, exactly as the security import's overlay does (L1 §4; sibling §3).
+- **The import's whole point is that the boot is write-free AND that the record it answers stands**: the rows and the arm word are written into the record at the creation instant — no longer an overlay in memory — and they reach the disk at the first save, where a caller's write supersedes them (L1 §4; sibling §3; D-85).
 - **This unit adds no written name of its own and no second file**: the third address lives in the instance's existing file, which is why the census moves by one *retired* name and no *added* one (L1 §6; D-13).
 
 ## 3. The app-state record's shape, and the prototype discipline
@@ -39,7 +39,7 @@
 
 ## 4. The retired carrier is read at most once per boot, and writes no byte
 
-- **The marker is the absence of a record at `['operator-app-state']`**: no version member, no second written name and no marker file — after the first committed write the record stands and the arm does not run again (L1 §4; `guide §9.1`).
+- **The marker is the absence of a row list at `['operator-app-state']`, and the ACT it keys is the repair's** (`D-85`): no version member, no second written name and no marker file — the declaration at that address performs `importAppStateOnce` and writes `{rows, legacy, unrepresentable}` as ONE whole record, so the import cannot be retired by a repair that only minted a placeholder; after the first save the record stands and the arm does not run again (L1 §4; `guide §9.1`, `§7.2` (4); D-84, D-85).
 - **It reads `<userDataDir>/provident-settings.json` at most once per boot** and is the module's **second** `readFileSync`, beside the security record's — so `tests/store-security.test.ts:549`'s one-call count becomes two, and its "no write" half is unmoved (L1 §6; D-19).
 - **It never writes, renames, repairs or deletes the retired file**: its bytes stand as seeded, which is the sha256 row `behaviour.md` §6 states (L1 §4; D-19).
 - **The marker discipline is the sibling's, chosen for the sibling's reason**: the store's boot over its own zero-length file is an undeclared arm (sibling `persistence.md` §9 `P-1`), so this unit depends on **no** boot-over-empty reading for a correctness claim (sibling §3; L1 §4 `ASM-4`).

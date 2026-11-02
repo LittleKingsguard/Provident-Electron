@@ -17,15 +17,15 @@
 |---|---|---|
 | `createOperatorSettings({ userDataDir })` on a directory holding no store file | the file is **created exclusively, zero-length and empty**: a provided, absent `filePath` is created at construction, with no register key, no journal entry and no registration committed | `guide §9.1`; L1 §5 |
 | the same, over an existing file that carries a record | the file is **not truncated and not reset**: the primitive is an exclusive create whose `AlreadyExists` falls through to a write-mode open that writes no byte | `guide §9.1` |
-| the boot read, the import and `attach` | **no byte is written**: a read moves nothing, the absent import arm creates nothing, and the boot's flip is a gate state change with no store write | `guide §6`; L1 §5; `behaviour.md` §1 |
+| the three creation repairs, the boot read and `attach` | **no byte is written, and three OPS are**: each repair lands its own op at the registration instant and the package's save producers are a `file`-tier write's commit and a restore that moved, so the file keeps the zero length the exclusive create gave it until the first caller write (`guide §6`, `§9.3`; L1 §5; `behaviour.md` §1, §3; measured 2026-11-03, D-85) |
 
 - **A directory or name the store cannot occupy refuses the construction and creates nothing** — no instance, no file, no directory, no byte — and every later write answers `FilePathUnreachable` (`guide §8.2`).
 
 ## 3. The retired name is read at every boot until a record stands, then never again
 
 - The object is `<userDataDir>/provident-security.json`, the one file the replaced module wrote; the members imported are exactly its four record members, and the **six** boot arms `importOnce` declares — absent, directory/unreadable, unparsable, non-object, object, `entries` not a plain object — move as **behaviour**, not as bytes (the `importOnce` function in `src/main/operator-settings/index.ts`; D-19; L1 §5).
-- **The import runs iff the instance's own file carries no record at `['operator-settings']`**, so it needs no marker, no version member and no second written name: after the first committed write the new file carries the record and the import does not run again (the construction's `RECORD_ADDRESS` read and the `importOnce` call beside it in `src/main/operator-settings/index.ts`; D-19; `guide §9.1`).
-- **The absent arm writes nothing**, so a profile whose operator never writes reaches the same first-run default at every boot — exactly the landed store's behaviour (the absent arm of `importOnce` in `src/main/operator-settings/index.ts`; D-19; L1 §5).
+- **The import runs iff the instance's own file carries no record at `['operator-settings'], and it runs INSIDE the declaration at that address** (`D-85`), so it needs no marker, no version member and no second written name: the repair writes the imported value as ONE whole record, and after the first save the new file carries that record and the import does not run again (the `mintRecord` repair and `declarationsFor`'s record pair in `src/main/operator-settings/index.ts`; D-19, D-85; `guide §9.1`).
+- **The absent arm writes nothing to a retired file and writes `FIRST_RUN` to the record**, so a profile whose operator never writes reaches the same first-run default at every boot — exactly the landed store's behaviour, and while the record is unsaved the next boot's repair reads again and answers the same (the absent arm of `importOnce` in `src/main/operator-settings/index.ts`; D-19, D-85; L1 §5).
 - **The import never writes the retired name**, never renames it and never repairs it: its bytes stand as seeded, which is the row `behaviour.md` §3 states (D-19).
 
 ## 4. The row shape: the store's image and no header

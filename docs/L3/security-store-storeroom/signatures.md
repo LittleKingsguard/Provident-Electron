@@ -9,7 +9,7 @@
 
 | path | holds | cite |
 |---|---|---|
-| `src/main/operator-settings/index.ts` | the instance: the factory, its product, `VALID_GROUPS`, the **three** addresses (record, exclusion, app-state — D-25), the two import-once arms, the listener registry | interface §2, §2.1; D-16 |
+| `src/main/operator-settings/index.ts` | the instance: the factory, its product, `VALID_GROUPS`, the **three** addresses (record, exclusion, app-state — D-25), the **three declarations** their existence is enforced by (D-84, D-85), the two import-once arms those repairs perform, the listener registry | interface §2, §2.1; D-16 |
 | `src/main/settings-surface/index.ts` | the surface: the factory, its six verbs, the receipt types E-2 moves here, the sink shape | interface §5, §5.1; exception §2 E-2 |
 | `src/main/security-store.ts` | **deleted**, not emptied — no shim, no dual write, no re-export left standing | D-16; exception §2 E-1, §5 |
 
@@ -140,7 +140,7 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
 
 | module | never exported | cite |
 |---|---|---|
-| `operator-settings` | `VALID_GROUPS` · `FIRST_RUN` · `SAFE_PAIR` · `RECORD_ADDRESS` · `EXCLUSION_ADDRESS` · `APP_STATE_ADDRESS` · `FILE_NAME` · `RETIRED_NAME` · `RETIRED_SETTINGS_NAME` · `NO_IMPORT` · `issuance` · `plain` · `detach` · `newMap` · `admitGroups` · `toStored` · `fromStored` · `importOnce` · `importAppStateOnce` · `missing` · `representable` · `recordedAt` · `fromAppState` · `toAppState` · `receiptOf` · `refusalOf` · `cap` · `seq` · `handleFor` · `withdraw` (the app-state arm's design is the retirement document's, `docs/L3/settings-carrier-retirement/design.md` §2.1/§2.2, cited not restated, D-43) | D-15, D-25; exception §2 E-1; `design.md` §3, §8 |
+| `operator-settings` | `VALID_GROUPS` · `FIRST_RUN` · `SAFE_PAIR` · `RECORD_ADDRESS` · `EXCLUSION_ADDRESS` · `APP_STATE_ADDRESS` · `FILE_NAME` · `RETIRED_NAME` · `RETIRED_SETTINGS_NAME` · `NO_IMPORT` · `issuance` · `plain` · `detach` · `newMap` · `admitGroups` · `toStored` · `fromStored` · `importOnce` · `importAppStateOnce` · `missing` · `representable` · `recordedAt` · `fromAppState` · `toAppState` · `legacyOf` · `unrepresentableOf` · `toAppStateRecord` · `receiptOf` · `refusalOf` · `cap` · `seq` · `handleFor` · `withdraw` · **and the declarations' own fifteen**: `EXCLUSION_MUST_STAND_ID` · `RECORD_MUST_STAND_ID` · `APP_STATE_MUST_STAND_ID` · `EXCLUSION_ABSENT_MESSAGE` · `RECORD_ABSENT_MESSAGE` · `APP_STATE_ABSENT_MESSAGE` · `repairAnswer` · `registrationRoute` · `mintExclusion` · `exclusionMustStand` · `mintRecord` · `recordMustStand` · `mintAppState` · `appStateMustStand` · `declarationsFor` (the app-state arm's design is the retirement document's, `docs/L3/settings-carrier-retirement/design.md` §2.1/§2.2, cited not restated, D-43; the declarations' is `design.md` §3, D-84 and D-85) | D-15, D-25, D-84, D-85; exception §2 E-1; `design.md` §3, §8 |
 | `settings-surface` | `TIER4_CLOSED_REFUSAL` · `onDelivery` · `patchOf` · `appliedGroups` · `off` · `sink` (everything else is a local inside a verb) | interface §5; `design-settings-surface.md` §2-§6 |
 
 ## 5. What neither module declares

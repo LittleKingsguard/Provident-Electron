@@ -20,30 +20,31 @@
 // crossing does not preserve an object's member order while a genuine array's survives exactly
 // (persistence §3; interface §1). Its two verbs are `readAppState`/`writeAppState`: one store write
 // per act, the sibling's own receipt, and NO listener — `subscribe` binds the two addresses above
-// (design §2; L1 §3). Its second import-once arm reads the retired carrier at most once and writes
-// no byte of it, and the diagnosis it answers is the BOOT's, served for the process's life
-// (design §2.2; interface §2).
+// (design §2; L1 §3). Its second import-once arm reads the retired carrier and writes no byte of it,
+// and the diagnosis it answers is the BOOT's, served for the process's life (design §2.2;
+// interface §2) — **and since `D-85` the word rides the record, so a boot that finds the record
+// standing reads the arm that created it instead of asking the import again.**
 //
 // ONE TRANSITION IS ONE STORE WRITE: one op, one cursor, one receipt, the store's own ordinals
 // verbatim — no offset, no renumbering, and `write`'s fourth position never supplied, so its
 // class-test arm is unreachable (guide §3.3, §6.4; interface §2 `ASM-L2-7`).
 //
-// **THE VOLATILE PAIR'S EXISTENCE IS AN ENFORCED INVARIANT OF THE INSTANCE AND NO LONGER A READ-SIDE DEFAULT** (D-84):
-// one declaration rides the construction's `constraints` batch — `operator-exclusion-must-stand` at
-// `['operator-exclusion']` — whose body refuses an address holding nothing and whose repair mints `SAFE_PAIR`'s own
-// value as ONE whole `{exclusion}` at `mem`. **That address cannot come from a file, so a repair at creation on EVERY
-// boot is its only lawful source under the convention's clause 3**, and the boot value stops being the code constant
-// substituted at a read. **THE TWO `file` ADDRESSES CARRY NO DECLARATION YET, AND THE REASON IS MEASURED**: each of them
-// is MARKED BY ABSENCE by one of this module's two import-once arms, so a creation repair there retires an import
-// silently — the record address's would lose a retired `provident-security.json`'s token, grants, cap and entries, and
-// the app-state address's would collapse `legacy` to `'recorded'` and never import the retired carrier. Closing those two
-// needs a marker a repair cannot forge, which is a ruling and not this pass's (`D-84`, `D-82`'s `V2`/`V3`/`V4` open).
+// **ALL THREE ADDRESSES' EXISTENCE IS AN ENFORCED INVARIANT OF THE INSTANCE AND NO LONGER A READ-SIDE DEFAULT** (D-84,
+// D-85): one declaration rides the construction's `constraints` batch at each of them — `operator-exclusion-must-stand` at
+// `['operator-exclusion']`, `operator-record-must-stand` at `['operator-settings']`, `operator-app-state-must-stand` at
+// `['operator-app-state']` — and **EACH REPAIR PERFORMS WHAT THAT ADDRESS'S ABSENCE USED TO KEY**: the `mem` pair's repair
+// mints `SAFE_PAIR`'s own value at creation on EVERY boot, because a `mem` address can never come from a file (D-84); the
+// two `file` addresses' repairs perform their own IMPORT-ONCE ARM and write what it answered as ONE whole legal record —
+// the record as `toStored(imported ?? FIRST_RUN)`, the rows as `{rows, legacy, unrepresentable}` (D-85).
+// **SO THE ABSENCE-KEYED ACTION IS IN THE REPAIR AND NOT BESIDE IT**: `D-84` stopped these two declarations because a
+// creation repair made each arm's marker permanently true and the import never ran, measured there as `54` rows red over
+// `16` files; a repair that performs the import itself cannot retire it — the marker's truth IS the repair's own act.
 //
-// IT WRITES NO FILE OF ITS OWN and makes exactly TWO `fs` calls — the two import-once reads: the
-// retired `provident-security.json` inside the first path, and the retired settings carrier inside
-// the second. Each is read once and never written, renamed, repaired or deleted (D-19; persistence
-// §2, §3, §5). NO VERB HERE THROWS, for any patch, any rows list and any state: every caught value
-// is contained and every arm answers its declared answer (L1 §3).
+// IT WRITES NO FILE OF ITS OWN and makes exactly TWO `fs` calls — the two import-once reads, now taken INSIDE a repair at
+// the registration instant: the retired `provident-security.json`, and the retired settings carrier. Each is read and
+// never written, renamed, repaired or deleted (D-19; persistence §2, §3, §5). The file the records land in is the STORE's
+// own and every byte of it is the store's write (D-85). NO VERB HERE THROWS, for any patch, any rows list and any state:
+// every caught value is contained and every arm answers its declared answer (L1 §3).
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -121,7 +122,8 @@ export interface OperatorSettings {
 }
 
 /** The group set's SECOND LIVE COPY (D-11, D-15; exception §2 E-1): six members, re-homed with the
- *  file and filtered at THREE sites — `fromStored` on every `read()`, `importOnce`, the patch. */
+ *  file and filtered at THREE sites — `fromStored` on every `read()`, the record's repair (`mintRecord`
+ *  through `importOnce`), the patch. */
 const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
 const RECORD_ADDRESS: OperatorSettingsAddress = ['operator-settings']
 const EXCLUSION_ADDRESS: OperatorSettingsAddress = ['operator-exclusion']
@@ -134,11 +136,13 @@ const RETIRED_NAME = 'provident-security.json'
 /** The retired tier-1 carrier, spelled ONCE in `src/**`: read by the second import-once arm and
  *  written by none (behaviour §8 `RET-2`; persistence §4; L1 §4). */
 const RETIRED_SETTINGS_NAME = 'provident-settings.json'
-/** The absent answer the second arm's other branches start from. Its arrays are NEVER served: every
- *  `rows` and every `unrepresentable` an answer carries is fresh (`FIRST_RUN`'s discipline). */
+/** The absent answer the second arm's `ENOENT` branch starts from. Its arrays are NEVER served and never written:
+ *  the repair images the rows through `toAppState` before the store sees them, and every `rows`/`unrepresentable`
+ *  an ANSWER carries is freshly minted off the record (`fromAppState`, `unrepresentableOf`; signatures §3). */
 const NO_IMPORT: AppStateImport = { rows: [], legacy: 'absent', unrepresentable: [] }
 /** The answer over no file and over every import-failure arm: `read`+`dispatch` on, token null
- *  (behaviour §1, §3). It is handed out only as a FRESH copy — never itself, never its array. */
+ *  (behaviour §1, §3). It is handed out only as a FRESH copy — never itself, never its array — and
+ *  since `D-85` it is also the PLACEHOLDER the record address's repair writes through `toStored`. */
 const FIRST_RUN: Row = { token: null, enabled: ['read', 'dispatch'] }
 /** What a boot, a crash, a torn record and a corrupt file all resolve to, because the pair is
  *  `mem` and is never persisted (interface §1 `ASM-L2-2`; behaviour §7). */
@@ -215,8 +219,9 @@ function fromStored(value: Record<string, unknown>): Row {
   return row
 }
 
-/** The boot import, six arms each answering without a throw, and the module's FIRST `fs` call: the
- *  retired name is READ here and never written, renamed, repaired or deleted (design §7; D-19).
+/** The record address's import, six arms each answering without a throw, and the module's FIRST `fs` call — taken
+ *  INSIDE the repair at `['operator-settings']` since `D-85`, which is the act that address's absence used to key: the
+ *  retired name is READ here and never written, renamed, repaired or deleted (design §7; D-19; `guide §7.2` (4)).
  *  A foreign top-level name copies into the entries map VERBATIM under its own name — preserved,
  *  never dropped — so the operator's token, grants, cap and arbitrary entries all survive (behaviour
  *  §3). Nothing is imported when the file is absent, unparsable, not an object or unreadable. */
@@ -250,8 +255,9 @@ function importOnce(userDataDir: string): Row | undefined {
 }
 
 /**
- * THE SECOND IMPORT-ONCE ARM — the retired tier-1 carrier, read AT MOST ONCE and never written,
- * renamed, repaired or deleted: the module's SECOND and last `fs` call (L1 §4; persistence §4).
+ * THE SECOND IMPORT-ONCE ARM — the retired tier-1 carrier, read by the repair at `['operator-app-state']` and never
+ * written, renamed, repaired or deleted: the module's SECOND and last `fs` call, and since `D-85` the act that address's
+ * absence used to key (L1 §4; persistence §4; `guide §7.2` (4)).
  * The validation is the retired boot read's own, carried whole — a JSON object whose keys are
  * `file.*` names plus the single reserved `schemaVersion === '1'` — so what the old code loaded is
  * what this one imports (behaviour §7 `ASM-L2-7`; L1 §4 `ASM-3`). `absent` and `corrupt` are told
@@ -349,6 +355,49 @@ function toAppState(rows: readonly AppStateRow[]): Record<string, unknown> | und
   } catch {
     return undefined
   }
+}
+
+/** **THE ARM'S OWN ANSWER AS ONE WHOLE LEGAL RECORD, AND THE WORD RIDES IT** (`D-85`): `{rows, legacy,
+ *  unrepresentable}` — the rows imaged exactly as the caller's write images them, the arm the import
+ *  ran under, and the names it could not carry. **THE WORD IS HERE BECAUSE IT WAS DERIVED FROM THE
+ *  IMPORT OUTCOME AT THE READ, AND ONCE THE RECORD STANDS THE DERIVATION MUST COME FROM THE RECORD**:
+ *  measured 2026-11-03, `legacy` was `'recorded'` iff a record stood and the import's own word
+ *  otherwise, so a record standing over a profile whose carrier held rows was the ONLY way to keep
+ *  both facts — the rows and the arm that produced them — and a repair that wrote the rows alone
+ *  would collapse every arm to `'recorded'` (D-84's own measurement of that collapse). The two
+ *  import words a repair can write are `'absent'`, `'imported'` and `'corrupt'`; `'recorded'` is a
+ *  read's word for a record this repair did not write and is never written by it.
+ *  `undefined` where the rows have no JSON image — unreachable from a parsed carrier, and answered
+ *  rather than thrown so a repair can state its own failed arm. */
+function toAppStateRecord(imported: AppStateImport): Record<string, unknown> | undefined {
+  const image = toAppState(imported.rows)
+  if (image === undefined) return undefined
+  return { rows: image['rows'], legacy: imported.legacy, unrepresentable: [...imported.unrepresentable] }
+}
+
+/** **THE DIAGNOSIS THE BOOT SERVES, READ OFF THE RECORD** (`D-85`, closing the read-side derivation): a
+ *  record that stands carries the arm that created it, and a record that stands WITHOUT a word is one
+ *  a caller's write composed (`{rows}` alone) — the arm that ran is then no longer knowable and the
+ *  fourth word is the honest answer, which is exactly the answer this module gave before the word was
+ *  stored (measured 2026-11-03, both arms). Nothing stands → the address was never repaired, so no arm
+ *  can be claimed and `'absent'` is served; that state is only reachable through a refused
+ *  construction, where no store and no batch exist (D-84's measured read-side arm). */
+function legacyOf(value: unknown): AppStateLegacy {
+  if (!recordedAt(value)) return 'absent'
+  const word = plain(value) ? value['legacy'] : undefined
+  if (word === 'absent' || word === 'imported' || word === 'corrupt') return word
+  return 'recorded'
+}
+
+/** The names the import could not carry, read back off the record as a FRESH list per answer: the
+ *  discipline `NO_IMPORT`'s arrays were held to is now the record's (signatures §3; `D-85`). */
+function unrepresentableOf(value: unknown): string[] {
+  if (!plain(value)) return []
+  const held = value['unrepresentable']
+  if (!Array.isArray(held)) return []
+  const names: string[] = []
+  for (const name of held) if (typeof name === 'string') names.push(name)
+  return names
 }
 
 
@@ -453,26 +502,35 @@ interface ConstraintDeclaration {
  *  record's default and its only authority. Under the convention's clause 3 — *boot data comes from file or constraint
  *  repairs* — a `mem` address has exactly one lawful source, and a **repair at creation on EVERY boot** is it.
  *
- *  **SO THIS IS THE ONE DECLARATION OF THE THREE `D-82` NAMED THAT CAN STAND, AND THAT IS MEASURED RATHER THAN
- *  PREFERRED.** The instance's two `file` addresses are MARKED BY ABSENCE: `importOnce` runs iff
- *  `read(['operator-settings'],'file')` throws, and the second import arm runs iff `['operator-app-state']` holds no
- *  recorded value. A creation repair at either makes its marker permanently true and silently RETIRES an import —
- *  measured 2026-11-02 over a profile seeded with a retired `provident-security.json` carrying a token, three grants, a
- *  cap and one entry: as this head stands, `read()` answers all four; with a declaration at `['operator-settings']` it
- *  answers `token:null` / `enabled:['read','dispatch']` and the retired values are GONE. `['operator-app-state']` is the
- *  same fact with a different marker: with a declaration there, `legacy` reads `'recorded'` on every arm and the retired
- *  carrier's rows never import. **Both are reported, not built** (`D-84`): a marker a repair cannot forge is a ruling
- *  this pass does not hold. The `mem` pair has no import arm, writes no byte and marks nothing — so it is declarable. */
+ *  **AND IT IS THE ONE ADDRESS OF THE THREE `D-82` NAMED WHOSE REPAIR MINTS A PLACEHOLDER RATHER THAN PERFORMING AN
+ *  IMPORT** (`D-84`, `D-85`): this pair has no import arm, writes no byte to the file and marks nothing. The two `file`
+ *  addresses are declared beside it and their repairs DO perform what their absence keyed — `D-85` moved that work into
+ *  them, which is the whole of what `D-84` could not build. */
 const EXCLUSION_MUST_STAND_ID = 'operator-exclusion-must-stand'
+/** The two `file` addresses' ids, exported nowhere for the exclusion's own reason: the instance is the only consumer. */
+const RECORD_MUST_STAND_ID = 'operator-record-must-stand'
+const APP_STATE_MUST_STAND_ID = 'operator-app-state-must-stand'
 /** **THE SENTENCE NAMES THE FAULT AND NOT THE ACT** — the register of L2 §3 and of the tab record's five: the address
  *  holds no version of the pair, which is why nothing can be read there, and `tier4` is a DERIVED member and never part
- *  of what is missing (interface §1). */
+ *  of what is missing (interface §1). The two `file` addresses' sentences hold the same line: what is missing is the
+ *  RECORD (or the row list), never the read that wants it (`D-85`). */
 const EXCLUSION_ABSENT_MESSAGE = "the operator exclusion does not stand at its address, so no 'mem' version of the pair exists"
+const RECORD_ABSENT_MESSAGE = 'no operator record stands at its address, so no durable settings exist to read'
+const APP_STATE_ABSENT_MESSAGE = 'no app-state row list stands at its address, so no tier-1 row can be read'
+
 /** **THE ONE PLACE A REPAIR'S ANSWER IS CONSTRUCTED** (`D-72`): a `repair` returns the op its own write landed, and the
  *  store's refusal arm is not swallowed — a receipt with no `op` answers `null`, which is the failed value the kernel
  *  refuses as *"produced no op"*, and the write that produced it has already said why. */
 function repairAnswer(receipt: unknown): RepairCredited {
   return { ok: true, op: plain(receipt) ? (receipt as Record<string, unknown>)['op'] : null }
+}
+
+/** The registration instant's route, or nothing: `write(address, tier, value)` on the record the repair is handed, with
+ *  NO FOURTH POSITION, because the commit there is the registration's own and cannot be named (`D-69`, `D-73`; `guide
+ *  §7.2` (4)). `undefined` where the repair was handed no such record, so the caller answers its own failed arm. */
+function registrationRoute(context: unknown): ((address: OperatorSettingsAddress, tier: string, value: unknown) => unknown) | undefined {
+  const route = plain(context) ? context['write'] : undefined
+  return typeof route === 'function' ? route as (address: OperatorSettingsAddress, tier: string, value: unknown) => unknown : undefined
 }
 
 /** **THE REPAIR MINTS THE PAIR FROM `SAFE_PAIR` AND WRITES ONE WHOLE LEGAL VALUE AT THE ONE ADDRESS** (`D-84`). The value
@@ -495,16 +553,78 @@ function repairAnswer(receipt: unknown): RepairCredited {
  *  The failed arm below is stated rather than fallen into, because a repair that reaches no lawful write says so in its
  *  own two members instead of answering `void`, which carries "no op". */
 function mintExclusion(context: unknown): RepairAnswer {
-  const route = plain(context) ? context['write'] : undefined
-  if (typeof route !== 'function') {
+  const routeWrite = registrationRoute(context)
+  if (routeWrite === undefined) {
     return {
       ok: false,
       message: 'the exclusion does not stand, and this repair was handed no registration route to create it through',
     }
   }
-  const routeWrite = route as (address: OperatorSettingsAddress, tier: string, value: unknown) => unknown
-  // THREE POSITIONS AND NO FOURTH: the commit here is the registration's own and cannot be named (`D-69`, `D-73`).
   return repairAnswer(routeWrite(EXCLUSION_ADDRESS, 'mem', { exclusion: SAFE_PAIR.exclusion }))
+}
+
+/** **`['operator-settings']`'s REPAIR PERFORMS THE IMPORT ITS ABSENCE USED TO KEY, AND WRITES WHAT IT ANSWERED AS ONE WHOLE
+ *  LEGAL RECORD** (`D-85`, the instruction's own shape: *"If their absence keys another action, then that is part of the
+ *  repair shape"*). The absence of this address WAS the marker for `importOnce` — `carries` at the old construction — so
+ *  the act the marker keyed moves into the repair that stands where the marker stood: the retired
+ *  `provident-security.json` is read HERE, once, and `toStored(imported ?? FIRST_RUN)` is written at the address as ONE
+ *  value. **`?? FIRST_RUN` IS THE WHOLE OF WHAT THE READ-SIDE DEFAULT WAS**: `importOnce` answers `undefined` on its four
+ *  absent/corrupt arms (absent, unparsable, not a plain object, unreadable), and the old `read()` substituted `FIRST_RUN`
+ *  over that arm, so the placeholder written here is the constant the read used to answer and not a second authority
+ *  (`D-84`'s rule at this address).
+ *
+ *  **THE IMPORT IS AN `fs` READ THAT NOW RUNS INSIDE A REPAIR AT THE REGISTRATION INSTANT, AND THAT IS LAWFUL AND
+ *  MEASURED**: nothing in the package constrains a repair's body beyond the answer it returns — the route is the
+ *  repair's alone and the body is the caller's code (`guide §7.2` (4)) — so a body that reads a file, decides, and writes
+ *  through the route is the ordinary repairable arm. **Measured 2026-11-03, and measured at the RECORD rather than at the
+ *  receipt**: a profile seeded with a retired carrier carrying a token, three grants, a cap and one entry, booted and
+ *  then flushed by a write at the OTHER address, leaves `provident-operator-settings.json` holding
+ *  `{"operator-settings":{"enabled":["graph","read","module"],"entries":{"x-kept":{"a":1}},"maxJournalLength":9,
+ *  "token":"tok"}}` — the imported values, at the address, in the store's own bytes, with no `read()` in the path. A
+ *  repair whose write merely succeeded would leave `FIRST_RUN`'s value there instead.
+ *
+ *  **ONE WHOLE VALUE AND NEVER A SEQUENCE** (`D-85`, and the tab record's rule): one `write`, one op, one value —
+ *  `toStored`'s own composition, which is also what this module's `write` composes, so no second answer to "what is a
+ *  legal record" exists. A caught value is answered in the repair's own failed arm rather than thrown. */
+function mintRecord(context: unknown, userDataDir: string): RepairAnswer {
+  const routeWrite = registrationRoute(context)
+  if (routeWrite === undefined) {
+    return { ok: false, message: 'the operator record does not stand, and this repair was handed no registration route to create it through' }
+  }
+  try {
+    return repairAnswer(routeWrite(RECORD_ADDRESS, 'file', toStored(importOnce(userDataDir) ?? FIRST_RUN)))
+  } catch {
+    return { ok: false, message: 'the operator record does not stand, and its import could not be written at this registration' }
+  }
+}
+
+/** **`['operator-app-state']`'s REPAIR DOES THE SAME FOR THE ROWS *AND* FOR THE WORD** (`D-85`). This address's absence was
+ *  the marker for `importAppStateOnce` — `recordedAt` at the old construction — and `legacy` was read straight off that
+ *  import's outcome; so the repair performs the import and writes ONE record carrying `{rows, legacy, unrepresentable}`.
+ *  **THE WORD IS IN THE RECORD BECAUSE IT WAS DERIVED FROM THE IMPORT AT THE READ AND THE DERIVATION MUST NOW COME FROM
+ *  THE RECORD**: `D-84` measured the failure of the alternative — a declaration that wrote rows alone made `legacy` read
+ *  `'recorded'` on every arm, `absent`, `imported` and `corrupt` alike. Measured 2026-11-03 over a carrier with an
+ *  uncarryable row: the flushed bytes at this address are
+ *  `{"rows":[{"name":"file.layout.dock","value":"left"}],"legacy":"imported","unrepresentable":["file.tabs.order"]}`.
+ *
+ *  **AND A CORRUPT CARRIER DOES NOT CRASH THE BOOT**: `importAppStateOnce` discriminates `absent` from `corrupt` on the
+ *  caught error's own `code` and answers `{rows: [], legacy: 'corrupt'}` for every failure arm, so the repair writes that
+ *  word and the record stands — measured on five corrupt shapes, the answer unmoved at `'corrupt'` (behaviour §7). */
+function mintAppState(context: unknown, userDataDir: string): RepairAnswer {
+  const routeWrite = registrationRoute(context)
+  if (routeWrite === undefined) {
+    return { ok: false, message: 'the app-state rows do not stand, and this repair was handed no registration route to create them through' }
+  }
+  try {
+    const imported = importAppStateOnce(userDataDir)
+    const value = toAppStateRecord(imported)
+    if (value === undefined) {
+      return { ok: false, message: 'the app-state rows do not stand, and the import answered a row list with no JSON image' }
+    }
+    return repairAnswer(routeWrite(APP_STATE_ADDRESS, 'file', value))
+  } catch {
+    return { ok: false, message: 'the app-state rows do not stand, and their import could not be written at this registration' }
+  }
 }
 
 /** **THE BODY JUDGES `context.value` AND NEEDS NO HANDLE — the shape `tabsMustStand` measured, and the reason is the same
@@ -529,64 +649,79 @@ function exclusionMustStand(context: unknown): ConstraintAnswer {
   return { message: EXCLUSION_ABSENT_MESSAGE, repair: mintExclusion }
 }
 
-/** **THE INSTANCE'S BATCH — ONE DECLARATION, AND THE CONSTRUCTION THAT ADOPTS IT IS THE ONE CONSUMER IT HAS.** The list
- *  rides `StoreConfig['constraints']` at the `storeCreate` call below, so the pair is ARMED before anything can write
- *  and is asked again at every later instant its address is touched (`guide §7.2`; `D-65`'s batching, applied to an
- *  instance that constructs itself rather than being handed a store).
+/** **THE RECORD ADDRESS'S BODY REFUSES EXACTLY WHAT `read()` CANNOT READ, AND NOTHING WIDER** (`D-85`): `plain(value)` is
+ *  the read's own admission — `read()` is `plain(durable) ? fromStored(durable) : …` — so refusing a non-plain value here
+ *  is the read's test lifted into a repair and not a second authority over the record's members. A record that stands as
+ *  `{}` still passes, exactly as `D-84` measured it (`{}` stays `{}`, and the per-member defaults are `fromStored`'s), so
+ *  the only states this pair repairs are the ones in which NO record stands at all. */
+function recordMustStand(context: unknown, userDataDir: string): ConstraintAnswer {
+  const value = plain(context) ? context['value'] : undefined
+  if (plain(value)) return true
+  return { message: RECORD_ABSENT_MESSAGE, repair: (repairContext: unknown) => mintRecord(repairContext, userDataDir) }
+}
+
+/** **THE APP-STATE ADDRESS'S BODY REFUSES AN ABSENT ROW LIST**, which is `recordedAt` — the very predicate the old
+ *  construction used to decide whether to import (`D-85`; persistence §4). A value that stands without a `rows` array is
+ *  a state the read cannot serve (`fromAppState` answers `undefined` for it) and the import is what the read fell back
+ *  to, so it is repaired here with the record the import answers. */
+function appStateMustStand(context: unknown, userDataDir: string): ConstraintAnswer {
+  const value = plain(context) ? context['value'] : undefined
+  if (recordedAt(value)) return true
+  return { message: APP_STATE_ABSENT_MESSAGE, repair: (repairContext: unknown) => mintAppState(repairContext, userDataDir) }
+}
+
+/** **THE INSTANCE'S BATCH — THREE DECLARATIONS, ONE PER ADDRESS, AND THE CONSTRUCTION THAT ADOPTS THEM IS THE ONE
+ *  CONSUMER THEY HAVE.** The list rides `StoreConfig['constraints']` at the `storeCreate` call below, so every address is
+ *  ARMED before anything can write and is asked again at every later instant it is touched (`guide §7.2`; `D-65`'s
+ *  batching, applied to an instance that constructs itself rather than being handed a store).
  *
- *  **NO LISTENER COLLIDES WITH ITS `id`, AND THAT IS A PROPERTY OF THE SPELLING**: this module mints
- *  `operator-settings:<n>@<address>` for a handle while the id is the literal `operator-exclusion-must-stand`, and the
- *  cross-kind rule `1.7.0` keeps reads the HANDLE — so a live listener and a pair stand at `['operator-exclusion']` at
- *  once, which is what `subscribe` does (D-71; guide §7.3's clause of 2026-11-01).
+ *  **IT IS BUILT PER CONSTRUCTION, AND THAT IS THE `D-85` CHANGE TO `D-84`'s MODULE-LEVEL LIST**: the two `file`
+ *  addresses' repairs must reach the profile directory the construction was handed — the path is the only thing that says
+ *  WHERE the retired carriers stand — and `cfg.constraints`' act is taken while the caller holds no handle (`guide §7.2`
+ *  (1)), so a body cannot read it off the instance. Two instances in one process therefore adopt two lists with the same
+ *  three ids, and each store's registry is its own (`guide §6.2`).
  *
- *  **AND THE TWO `file` ADDRESSES CARRY NO DECLARATION, WHICH `D-84` RECORDS AS A STOPPED PASS AND NOT AS AN OVERSIGHT**:
- *  see `EXCLUSION_MUST_STAND_ID`'s docblock for the two measurements that obstruct them. */
-const OPERATOR_CONSTRAINT_DECLARATIONS: readonly ConstraintDeclaration[] = [
-  { address: EXCLUSION_ADDRESS, id: EXCLUSION_MUST_STAND_ID, constraint: exclusionMustStand },
-]
+ *  **NO LISTENER COLLIDES WITH AN `id`, AND THAT IS A PROPERTY OF THE SPELLING**: this module mints
+ *  `operator-settings:<n>@<address>` for a handle while the ids are the literals above, and the cross-kind rule `1.7.0`
+ *  keeps reads the HANDLE — so a live listener and a pair stand at `['operator-settings']` or `['operator-exclusion']` at
+ *  once, which is what `subscribe` does (D-71; guide §7.3's clause of 2026-11-01). */
+function declarationsFor(userDataDir: string): readonly ConstraintDeclaration[] {
+  return [
+    { address: RECORD_ADDRESS, id: RECORD_MUST_STAND_ID, constraint: (context: unknown) => recordMustStand(context, userDataDir) },
+    { address: APP_STATE_ADDRESS, id: APP_STATE_MUST_STAND_ID, constraint: (context: unknown) => appStateMustStand(context, userDataDir) },
+    { address: EXCLUSION_ADDRESS, id: EXCLUSION_MUST_STAND_ID, constraint: exclusionMustStand },
+  ]
+}
 
 export function createOperatorSettings(options: OperatorSettingsOptions): OperatorSettings {
   let store: Store | null = null
   let refusal: OperatorSettingsReceipt | null = null
-  let overlay: Row | null = null
   try {
-    // **THE BATCH IS THE CONSTRUCTION'S, AND IT IS WHAT MAKES THE PAIR AN INVARIANT RATHER THAN A READ-SIDE DEFAULT**
-    // (D-84): `constraints` is `StoreConfig`'s fourth declared key and its absence is in domain, so supplying it is the
-    // whole of the change — the pair is armed before this constructor returns, and its repair mints the `mem` value a
-    // `mem` address can never get from a file. The list is module-level and read-only: two instances in one process
-    // adopt the same one body, and each store's registry is its own (`guide §6.2`).
-    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [], filePath: join(options.userDataDir, FILE_NAME), constraints: OPERATOR_CONSTRAINT_DECLARATIONS })
+    // **THE BATCH IS THE CONSTRUCTION'S, AND IT IS WHAT MAKES ALL THREE ADDRESSES INVARIANTS RATHER THAN READ-SIDE
+    // DEFAULTS** (D-84, D-85): `constraints` is `StoreConfig`'s fourth declared key and its absence is in domain, so
+    // supplying it is the whole of the structural change — every address is armed before this constructor returns, the
+    // `mem` pair's repair mints the value a `mem` address can never get from a file, and the two `file` repairs perform
+    // the imports their addresses' absence used to key. The list is minted PER CONSTRUCTION because a repair must know
+    // where the retired carriers stand and no handle exists at that instant (`guide §7.2` (1); `declarationsFor`).
+    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [], filePath: join(options.userDataDir, FILE_NAME), constraints: declarationsFor(options.userDataDir) })
   } catch (caught) {
     // A refused construction throws nothing across this boundary: no instance stands and every
     // later write answers this value (design §4 `ASM-4`; interface §2.1; guide §8.2).
     refusal = refusalOf(caught, null)
   }
-  if (store !== null) {
-    const standing = store
-    let carries = true
-    try { standing.read(RECORD_ADDRESS, 'file') } catch { carries = false }
-    // THE MARKER IS THE ABSENCE OF A RECORD AT THE RECORD ADDRESS: no version member, no second
-    // written name, and the import only over a standing instance (design §7; persistence §3).
-    if (!carries) overlay = importOnce(options.userDataDir) ?? null
-  }
 
-  // THE SECOND ARM'S MARKER IS ITS OWN ADDRESS, and the diagnosis it answers is the BOOT'S: a
-  // record standing at construction means no arm applies and the fourth word is served; otherwise
-  // one read of the retired carrier runs HERE and its answer is held — the rows it carries stand in
-  // memory until an ordinary write supersedes them, and nothing is written (interface §2; L1 §4;
-  // persistence §4). A refused construction stands at `absent`, because no record was read and no
-  // arm ran (interface §2 `ASM-L2-3`).
+  // THE DIAGNOSIS IS THE BOOT'S AND IT IS NOW READ OFF THE RECORD: the construction's own repair wrote the arm that
+  // created the record, so this reads one member of one value and holds it for the process's life — the same lifetime
+  // rule the read-side derivation had (interface §2; persistence §4), with the import outcome stored rather than
+  // re-derived. A refused construction stands at `absent`, because no record stands and no arm ran (interface §2
+  // `ASM-L2-3`), and that is the ONE arm no declaration can reach: with no instance there is no batch and no repair
+  // (measured, `D-84`; `readAppState`'s two answer sites below serve it).
   let appLegacy: AppStateLegacy = 'absent'
-  let appImport: AppStateImport = NO_IMPORT
   if (store !== null) {
     const standing = store
-    let stands = false
-    try { stands = recordedAt(standing.read(APP_STATE_ADDRESS, 'file')) } catch { stands = false }
-    if (stands) appLegacy = 'recorded'
-    else {
-      appImport = importAppStateOnce(options.userDataDir)
-      appLegacy = appImport.legacy
-    }
+    let held: unknown
+    try { held = standing.read(APP_STATE_ADDRESS, 'file') } catch { held = undefined }
+    appLegacy = legacyOf(held)
   }
 
   const read = (): OperatorSettingsRecord => {
@@ -600,7 +735,11 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
       try { durable = standing.read(RECORD_ADDRESS, 'file') } catch { durable = undefined }
       try { pair = standing.read(EXCLUSION_ADDRESS, 'mem') } catch { pair = undefined }
     }
-    const row = plain(durable) ? fromStored(durable) : (overlay ?? FIRST_RUN)
+    // **NO IMPORT STANDS ON THIS PATH ANY MORE** (D-85): the record address's absence is repaired at the creation
+    // instant, so `durable` is the imported-or-placeholder record the store itself holds. `FIRST_RUN` remains as the
+    // answer for the ONE arm no declaration can reach — a refused construction, whose read has no store behind it and
+    // whose `FIRST_RUN` is therefore not a substituted placeholder but the only value there is (measured, D-84).
+    const row = plain(durable) ? fromStored(durable) : FIRST_RUN
     const exclusion: 'mcp-enabled' | 'mcp-disabled' = plain(pair) && (pair.exclusion === 'mcp-disabled' || pair.exclusion === 'mcp-enabled')
       ? pair.exclusion
       : SAFE_PAIR.exclusion
@@ -720,20 +859,20 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     return () => withdraw(standing, handles)
   }
 
-  // THE THIRD ADDRESS'S READ: each answer re-projects the store, so the import overlay is served
-  // ONLY while nothing stands at the address, and `legacy` — fixed at construction — never moves
-  // (interface §2; persistence §4; behaviour §7). No record, no arm and no store: the empty answer
-  // with `storage:'unreachable'`, never a throw (interface §2 `ASM-L2-3`).
+  // **THE THIRD ADDRESS'S READ READS THE RECORD, WHICH NOW ALWAYS STANDS** (D-85): each answer re-projects the store, and
+  // the word — fixed at construction — never moves (interface §2; persistence §4; behaviour §7). **NO IMPORT STANDS ON
+  // THIS PATH ANY MORE**: the rows are the record's, the names it could not carry are the record's, and the arm is the
+  // one the construction read off it. A standing store whose record could not stand would be a construction that never
+  // returned; the branch is answered rather than assumed, with the same empty answer the refused construction gets and
+  // the `storage` member telling the two apart (interface §2 `ASM-L2-3`).
   const readAppState = (): AppStateAnswer => {
     const standing = store
     if (standing === null) return { rows: [], legacy: appLegacy, unrepresentable: [], storage: 'unreachable' }
     let held: unknown
     try { held = standing.read(APP_STATE_ADDRESS, 'file') } catch { held = undefined }
     const recorded = fromAppState(held)
-    if (recorded !== undefined) return { rows: recorded, legacy: appLegacy, unrepresentable: [], storage: 'standing' }
-    const rows: AppStateRow[] = []
-    for (const row of appImport.rows) rows.push({ name: row.name, value: detach(row.value) })
-    return { rows, legacy: appLegacy, unrepresentable: [...appImport.unrepresentable], storage: 'standing' }
+    if (recorded === undefined) return { rows: [], legacy: appLegacy, unrepresentable: [], storage: 'standing' }
+    return { rows: recorded, legacy: appLegacy, unrepresentable: unrepresentableOf(held), storage: 'standing' }
   }
 
   // THE THIRD ADDRESS'S ONE WRITE, and its receipt is the SIBLING'S: the store's `cursor`/`opId` or
