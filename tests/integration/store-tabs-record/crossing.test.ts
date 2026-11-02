@@ -34,7 +34,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createProfileStore } from '../../../src/main/storeroom'
 import { createTabsRecord, tabsConstraintDeclarations } from '../../../src/main/tabs-record'
-import type { TabsRecord, TabsRecordStore } from '../../../src/main/tabs-record'
+import type {
+  TabsConstraintAnswer,
+  TabsConstraintDeclaration,
+  TabsRecord,
+  TabsRecordStore,
+  TabsRepair,
+  TabsRepairAnswer,
+} from '../../../src/main/tabs-record'
 import type { TabsRecordRow } from '../../../src/shared/types'
 
 const PROFILE_FILE = 'provident-profile.json'
@@ -84,6 +91,35 @@ const reading = (): { order: string[]; landing: string; rows: TabsRecordRow[] } 
 }
 
 const actives = (): string[] => reading().rows.filter((each) => each.active === true).map((each) => each.id)
+
+// ═══════════════ THE REPAIR'S RETURN: TYPED IN THE MODULE, AND READ AT THE ENGINE (D-72) ═══════════════
+//
+// **THE TYPE-LEVEL ROW, AND IT IS A ROW AND NOT A COMMENT.** `npm run typecheck:tests` compiles THIS file, so each
+// `@ts-expect-error` below passes only while the error it suppresses is really there — and the property that makes that a
+// measurement is what a WIDENING does: put `void` back into `TabsRepairAnswer` and the two directives that ride on it become
+// UNUSED, which `tsc` reports as `TS2578` ("Unused '@ts-expect-error' directive") and this leg reds. **MEASURED 2026-11-02
+// on this tree: `| void` added to the credited arm → `TS2578` twice, at the first directive and at the `repair` member
+// below, while `npm run typecheck` over `src/**` stayed green — so the leg that catches the revert is THIS one; restore →
+// clean.** The third directive rides on `TabsConstraintAnswer` instead, which does not derive from the repair's own return.
+// The rule asserted is D-72's: a repair answers its credited arm `{ok: true, op}` or the declared failed arm
+// `{ok: false, message}`, and `undefined`, `void` and a bare `{ok: true}` are not written in this module. No directive here
+// suppresses a cast: each one covers a value the module would accept only by breaking the rule.
+
+// @ts-expect-error — an answer that IS `void` is not a `TabsRepairAnswer`: the arm is stated, never left to fall through
+const voidRepairAnswer: TabsRepairAnswer = undefined as unknown as void
+
+const voidRepairDeclaration: TabsConstraintDeclaration = {
+  address: ['tabs'],
+  id: 'a-void-repair',
+  constraint: () => ({
+    message: 'a violation',
+    // @ts-expect-error — a `() => void` is not the `repair` member a declaration's answer accepts
+    repair: (): void => undefined,
+  }),
+}
+
+// @ts-expect-error — and a BODY that answers nothing is not a `TabsConstraintAnswer` either: `true` or one of the two arms
+const voidConstraintBody: TabsConstraintDeclaration = { address: ['tabs'], id: 'a-void-body', constraint: (): void => undefined }
 
 describe('store-tabs-record · the crossing', () => {
   it('THE CONSTRUCTION INSTANT: `tabs-must-stand` creates the record BEFORE ANY COMMIT — a store built over a scratch file path answers a root holding the landing page, seated and active, and `read()` on the never-committed record is a reading', () => {
@@ -419,5 +455,68 @@ describe('store-tabs-record · the crossing', () => {
     expect(repaired.status, 'the removal of the ACTIVE tab is still `committed`').toBe('committed')
     expect('repaired' in repaired && repaired.repaired === true, 'and it names the repair that seated the survivor').toBe(true)
     expect(actives(), 'the record shows it: the survivor is active').toEqual(['tabs-landing-page'])
+  })
+
+  // ═══════════════ THE ANSWER THE ENGINE IS HANDED (D-72) ═══════════════
+
+  it('THE REPAIR\'S RETURN, READ AT THE ENGINE AND NOT INFERRED FROM THE RECORD: a commit that triggers `exactly-one-active`\'s repair is instrumented at the DECLARATION, so the value the kernel receives is read — and it is the credited arm `{ok: true, op}`, `op` carrying a non-empty `opId`, never `undefined` — while the record shows the write that answer is about did land', () => {
+    // **THE INSTRUMENT SITS ONE LEVEL DEEPER THAN THE ONE-ADDRESS ROW ABOVE.** That row wraps each declaration's `constraint`
+    // to see the pass ASK it; this one wraps the `repair` that answer carries, so the ENGINE invokes the MODULE'S OWN repair
+    // through the wrapper — inside the attempt's own commit, with the context it would have been handed anyway, `pending`
+    // included, which is what makes the repair's write JOIN the commit — and the return the kernel credits is recorded.
+    // Nothing is stubbed and the answer is returned unchanged: what this row measures is the module's `repairAnswer`, reached
+    // by the route the app reaches it by, which is the only route there is — `commit` never sees a repair's return.
+    const instant = mkdtempSync(join(tmpdir(), 'tabs-repair-answer-'))
+    let bound: TabsRecordStore | null = null
+    const answers: TabsRepairAnswer[] = []
+    const store = createProfileStore({
+      filePath: join(instant, PROFILE_FILE),
+      constraints: tabsConstraintDeclarations(() => bound).map((declaration) => ({
+        address: declaration.address,
+        id: declaration.id,
+        constraint: (context: unknown): TabsConstraintAnswer => {
+          const answer = declaration.constraint(context)
+          // NARROWED ON THE MEMBER AND ON ITS VALUE: the unrepairable arm spells `repair?: never` (so a shape carrying one is
+          // refused at the type), which leaves `repair` optional on the narrowed object — a value check settles it, and
+          // settles it without a cast.
+          if (typeof answer !== 'object' || !('repair' in answer) || answer.repair === undefined) return answer
+          const moduleRepair: TabsRepair = answer.repair
+          return {
+            message: answer.message,
+            repair: (repairContext: unknown): TabsRepairAnswer => {
+              const reply = moduleRepair(repairContext)
+              answers.push(reply)
+              return reply
+            },
+          }
+        },
+      })) as never,
+    })
+    bound = store as unknown as TabsRecordStore
+    try {
+      const here = createTabsRecord({ store: bound })
+      // THE COMMIT THAT TRIGGERS A REPAIR: the existence pair minted the record with the landing page SEATED AND ACTIVE, so
+      // this row's tab makes two actives — `exactly-one-active` answers `{message, repair}` and the engine invokes it.
+      expect(here.commit(row('tab-1')).status, 'the commit carrying the repair still commits').toBe('committed')
+      expect(answers.length, 'the engine INVOKED the repair — so its return was reached at all, and not only declared').toBeGreaterThan(0)
+      for (const answer of answers) {
+        // THE ARMS, MEMBER BY MEMBER. `ok` IS `true` AND IS PRESENT: the whole subject of D-72 is the repair that answered
+        // nothing, and an answer read back here as `undefined` reds on the first expectation rather than passing quietly.
+        expect(answer.ok, 'the repair answered its CREDITED arm').toBe(true)
+        if (!answer.ok) continue
+        const op: unknown = answer.op
+        if (op === null || typeof op !== 'object') throw new Error('the credited arm carries no op record')
+        const opId = 'opId' in op ? op['opId'] : undefined
+        expect(typeof opId === 'string' && opId.length > 0, 'and the op its own write landed carries a non-empty `opId` — the one thing `landedOp` credits').toBe(true)
+      }
+      // AND THE WRITE THAT ANSWER IS ABOUT LANDED, so the credited arm is not a claim about a pass that rolled back. Read
+      // THROUGH THIS ROW'S OWN record and not the battery's module-level one, which belongs to `open()`'s instance.
+      const read = here.read()
+      if (!('rows' in read)) throw new Error('the repaired record must answer a reading')
+      expect(read.rows.filter((each) => each.active === true).map((each) => each.id), 'the record shows the repair the answer was about').toEqual(['tab-1'])
+    } finally {
+      bound = null
+      rmSync(instant, { recursive: true, force: true })
+    }
   })
 })

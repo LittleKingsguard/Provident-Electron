@@ -60,6 +60,65 @@ export interface TabsRecord {
   subscribe(handler: () => void): () => void
 }
 
+/** **THE REPAIR'S CREDITED ARM, AND `repairAnswer` IS ITS ONE CONSTRUCTOR IN THIS MODULE** (`D-67`, `D-72`). The kernel
+ *  credits a repair only through `landedOp` — a non-empty `opId` absent from the attempt's own ops, whose `seq` stands
+ *  strictly above the op the repair was invoked for — so a repair STATES the op its own write landed. **`op` IS A MEMBER
+ *  AND NEVER A MAYBE**: the failed arm below carries no `op` at all — not `op: null`, not `op: undefined`. */
+export interface TabsRepairCredited {
+  readonly ok: true
+  readonly op: unknown
+}
+
+/** The declared FAILED arm: the repair reached no write it could be credited for, and says so in its own sentence. **IT IS
+ *  THE ONLY OTHER LAWFUL RETURN** — the two arms are the whole set, and a third shape is one this module does not write. */
+export interface TabsRepairFailed {
+  readonly ok: false
+  readonly message: string
+}
+
+/** **A REPAIR ANSWERS ONE OF THESE TWO ARMS AND NOTHING ELSE: `undefined`, `void` AND A BARE `{ok: true}` ARE NOT WRITTEN
+ *  HERE** (`D-72`). **AND THE RULE IS STRUCTURAL, NOT CONVENTIONAL** — this union is `TabsRepair`'s declared return and
+ *  every body's `repair` member is typed by it, so a repair that returns nothing is a COMPILE ERROR in this repo
+ *  (`npm run typecheck`), not a habit a reviewer has to hold.
+ *
+ *  **IT IS DELIBERATELY NOT SPELLED BY THE PACKAGE'S OWN TYPE.** The consumed `provident-storeroom` types a constraint body
+ *  as `(context: unknown) => unknown` at the installed `1.7.0` — where a `void` repair return is REFUSED at run time, as
+ *  `KC-4`'s *"the repair … produced no op"* — and `1.9.0` widens its declared repair outcome to ACCEPT `void` and credits
+ *  an op-less repair by the legs it wrote. **This module takes neither half of that licence**, so borrowing that union here
+ *  would admit exactly what this row forbids: `undefined` is the shape `ST-F2` was measured on, where a repair that made its
+ *  correction and returned nothing was refused with a sentence naming the CALLER's address instead of the address the repair
+ *  wrote (`strata/records/store-tabs-record-unit.md` §1 — filed upstream, never patched here, D-5). **So the explicit arm
+ *  stays on any version**, and the return states the intent rather than leaving the next reader to work out which release
+ *  credits what (`D-72`). */
+export type TabsRepairAnswer = TabsRepairCredited | TabsRepairFailed
+
+/** **WHAT THE ENGINE INVOKES INSIDE THE ATTEMPT'S OWN COMMIT**: one argument — the repair's OWN record, which is not the
+ *  constraint's (`guide §7.6`) — and one of the two arms. **THE DECLARED RETURN IS THE ENFORCEMENT**: a `() => void` does
+ *  not assign here, so the type-level row in the crossing battery reds the moment this is widened (`D-72`). */
+export type TabsRepair = (context: unknown) => TabsRepairAnswer
+
+/** **WHAT A CONSTRAINT BODY MAY ANSWER, IN THE PACKAGE'S OWN CLOSED THREE-ARM SET** (`guide §7.2`, `§7.6`): `true` is the
+ *  only pass value; `{message, repair}` is a repairable violation; `{message}` is one no repair answers. **NO FOURTH ARM AND
+ *  NO `undefined`**: a body that falls off its own end answers nothing at all, which the kernel reads as an outcome this
+ *  module never wrote — so the arm is declared rather than left to fall through (`D-72`, the batch of `D-65`).
+ *
+ *  **AND THE UNREPAIRABLE ARM SPELLS `repair?: never`, WHICH IS THE WHOLE OF ITS JOB — MEASURED 2026-11-02.** Written as a
+ *  bare `{message: string}`, the union was assignable from `{message, repair: () => void}`: excess-property checking reads
+ *  the union's WHOLE member set, so `repair` was a known member (from the repairable arm) while the literal satisfied the
+ *  bare arm — a `void` repair riding a shape whose type says nothing is there. `never` makes the unrepairable arm refuse the
+ *  member outright, so the two arms stay one decision and neither can be reached by the other's shape. */
+export type TabsConstraintAnswer =
+  | true
+  | { readonly message: string; readonly repair: TabsRepair }
+  | { readonly message: string; readonly repair?: never }
+
+/** One element of the batch the boot constructs the instance with (`D-65`): the pair, and the body the engine asks. */
+export interface TabsConstraintDeclaration {
+  readonly address: readonly string[]
+  readonly id: string
+  readonly constraint: (context: unknown) => TabsConstraintAnswer
+}
+
 /** The record root: `order`, `landing` and one flat leaf per tab. */
 export const TABS_RECORD_ADDRESS: readonly string[] = ['tabs']
 /** The two singleton seats, named so no caller composes them. */
@@ -335,8 +394,12 @@ const standsAsIntended = (store: Store, intended: Record<string, unknown>): bool
 
 /** **A REPAIR'S ANSWER, IN THE ONLY SHAPE THE KERNEL CREDITS** (`landedOp`: a non-empty `opId` absent from the attempt's
  *  own ops, whose `seq` stands strictly above the op the repair was invoked for). Returning `void` fails `KC-4` with
- *  *"the repair … produced no op"* naming the CALLER's address, which is the defect `ST-F2` files upstream. */
-const repairAnswer = (receipt: unknown): { ok: true; op: unknown } => ({
+ *  *"the repair … produced no op"* naming the CALLER's address, which is the defect `ST-F2` files upstream.
+ *
+ *  **AND THIS IS THE ONE CONSTRUCTOR OF `TabsRepairCredited` IN THIS MODULE** (`D-72`): every credited arm in this file is
+ *  some call of this function's answer, so the explicit return has ONE HOME and no repair spells the shape itself — which is
+ *  also why the two routes at `mintRecord` cannot drift apart in what they answer. */
+const repairAnswer = (receipt: unknown): TabsRepairCredited => ({
   ok: true,
   op: plain(receipt) ? receipt['op'] : null,
 })
@@ -362,7 +425,7 @@ interface HealHints {
  *
  *  It reads the record at the moment it is invoked (`§7.6`: a body reads the location it judges), never the state
  *  this body judged — an earlier repair in the same pass may already have written. */
-const healRecord = (store: Store, hints: HealHints) => (context: unknown): { ok: true; op: unknown } => {
+const healRecord = (store: Store, hints: HealHints) => (context: unknown): TabsRepairAnswer => {
   const view = viewOf(store)
   const stamp = new Date().toISOString()
   // AN ID IS A SURVIVOR ONLY IF THE RECORD STILL HOLDS IT: a seat left in `order` with no member under it is a removal
@@ -439,7 +502,7 @@ const liveHints = (store: Store): HealHints => {
   return { removals, written: null, removed: removals[0] ?? null, preOrder: pre.order }
 }
 
-const exactlyOneActive = (store: Store) => (): true | { message: string; repair: (context: unknown) => unknown } => {
+const exactlyOneActive = (store: Store) => (): TabsConstraintAnswer => {
   const post = viewOf(store)
   const pre = lastView ?? post
   lastView = post
@@ -512,7 +575,7 @@ const landingOf = (store: Store): string | null => {
 }
 
 /** **`tab-has-title`** — a tab with no title, or an empty one, is repaired to `'untitled'`. */
-const tabHasTitle = (store: Store) => (): true | { message: string; repair: (context: unknown) => unknown } => {
+const tabHasTitle = (store: Store) => (): TabsConstraintAnswer => {
   if (!entriesOf(store).some(({ row }) => blank(row['label']))) return true
   return {
     message: 'a tab carries no title',
@@ -521,7 +584,7 @@ const tabHasTitle = (store: Store) => (): true | { message: string; repair: (con
 }
 
 /** **`tab-has-content`** — a tab that contains no data object is pointed at the landing page. */
-const tabHasContent = (store: Store) => (): true | { message: string; repair: (context: unknown) => unknown } => {
+const tabHasContent = (store: Store) => (): TabsConstraintAnswer => {
   if (!entriesOf(store).some(({ row }) => blank(row['target']))) return true
   return {
     message: 'a tab contains no data object',
@@ -531,7 +594,7 @@ const tabHasContent = (store: Store) => (): true | { message: string; repair: (c
 
 /** **`tab-has-lastActiveAt`** — a tab with no activation stamp is stamped with NOW. The stamp is written as an ISO
  *  string so the record's byte image stays JSON-plain and a reader needs no clock of its own to interpret it. */
-const tabHasLastActiveAt = (store: Store) => (): true | { message: string; repair: (context: unknown) => unknown } => {
+const tabHasLastActiveAt = (store: Store) => (): TabsConstraintAnswer => {
   if (!entriesOf(store).some(({ row }) => blank(row['lastActiveAt']))) return true
   return {
     message: 'a tab carries no last-active stamp',
@@ -565,7 +628,7 @@ const tabHasLastActiveAt = (store: Store) => (): true | { message: string; repai
  *  so the body above is asked twice — once absent, once over the created record, where `value` is that record and the
  *  answer is `true`. That is why the created value must be one the body itself admits — and why `landingRow` is the value
  *  written rather than a bare root: the other four pairs read the same re-run, and it satisfies them too. */
-const mintRecord = (getStore: () => Store | null) => (context: unknown): unknown => {
+const mintRecord = (getStore: () => Store | null) => (context: unknown): TabsRepairAnswer => {
   const whole = composeRecord([TABS_LANDING_ID], { [TABS_LANDING_ID]: landingRow(new Date().toISOString()) }, TABS_LANDING_ID)
   const route = plain(context) ? context['write'] : undefined
   if (typeof route === 'function') {
@@ -603,7 +666,7 @@ const mintRecord = (getStore: () => Store | null) => (context: unknown): unknown
  *  a repair can rescue (a pair under an ABSENT parent is never asked at all). A record that STANDS but holds no tab is a
  *  different arm and stays the other pairs': `exactly-one-active` answers *"the tab record holds no tab at all"* and its
  *  repair mints the same `landingRow`. */
-const tabsMustStand = (getStore: () => Store | null) => (context: unknown): unknown => {
+const tabsMustStand = (getStore: () => Store | null) => (context: unknown): TabsConstraintAnswer => {
   if (plain(context) && context['value'] !== undefined) return true
   return {
     message: 'the tab record does not stand',
@@ -622,17 +685,23 @@ const tabsMustStand = (getStore: () => Store | null) => (context: unknown): unkn
  *  wrapper's null-store arm would silence it at the exact instant it is the only pair that can act (`tabsMustStand`), and
  *  it stands ahead of the other four because it is the precondition of their subject — a record that does not exist has
  *  no field to judge and no tab to activate. The pairs it writes past are silent at that instant for a reason of their
- *  own: their bodies read through the same handle and the wrapper is what tells them to abstain. */
-export function tabsConstraintDeclarations(getStore: () => Store | null): readonly {
-  readonly address: readonly string[]
-  readonly id: string
-  readonly constraint: (context: unknown) => unknown
-}[] {
-  const body = (evaluate: (store: Store) => () => unknown) => (context: unknown): unknown => {
-    void context
-    const store = getStore()
-    return store === null ? true : evaluate(store)()
-  }
+ *  own: their bodies read through the same handle and the wrapper is what tells them to abstain.
+ *
+ *  **AND THE RETURN OF THIS FUNCTION IS TYPED, WHERE IT USED TO BE `(context: unknown) => unknown`** (`D-72`): the five
+ *  bodies answer `TabsConstraintAnswer` and their repairs answer `TabsRepairAnswer` — `true` or `{message, repair}`, and
+ *  `{ok: true, op}` or `{ok: false, message}` — so **a body or a repair that returns nothing is a COMPILE ERROR here**,
+ *  every element is a `TabsConstraintDeclaration`, and no site needs a cast to say so. That is the point of the types: the
+ *  package's own declared return admits far more (and, from `1.9.0`, admits `void` outright), and this module's whole answer
+ *  to that is a local type the boot and any later renderer work can annotate against. The wrapper carries the same rule as
+ *  the elements: its pass arm is `true` and its other arm is the body's own answer, never a fall-through. */
+export function tabsConstraintDeclarations(getStore: () => Store | null): readonly TabsConstraintDeclaration[] {
+  const body =
+    (evaluate: (store: Store) => () => TabsConstraintAnswer) =>
+    (context: unknown): TabsConstraintAnswer => {
+      void context
+      const store = getStore()
+      return store === null ? true : evaluate(store)()
+    }
   return [
     { address: TABS_RECORD_ADDRESS, id: TABS_MUST_STAND_ID, constraint: tabsMustStand(getStore) },
     { address: TABS_RECORD_ADDRESS, id: TABS_CONSTRAINT_ID, constraint: body(exactlyOneActive) },

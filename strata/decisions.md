@@ -1646,3 +1646,43 @@ installs at the record's OWN address, `['tabs']`, beside all five of its constra
   new pattern; and the live pins move — `package.json`, `storeroom-surface.test.ts`'s `S-1.3`, `brief.md` §2's row and
   `src/main/storeroom.ts`'s census header. **The dated readings do not move**: what `1.6.1` and `1.6.2` were measured to do
   stays written as that tree's own, and `signatures.md`'s staleness stays next-steps' row 2.
+
+---
+
+## D-72 — A repair RETURNS its credited arm explicitly; the module's own types make a `void` repair a compile error
+
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries, verbatim — "Stop writing
+undefined-return repairs. A repair must return its credited arm explicitly — `{ ok: true, op }` — and never `undefined`,
+never `void`, and never a bare `{ ok: true }`" — plus the measurements below, on the installed `provident-storeroom 1.7.0`.
+
+**Decision:** every repair in this app returns **its credited arm explicitly**, `{ok: true, op}` — `op` being what the write
+it made landed — and the only other lawful return is the declared failed arm `{ok: false, message}`. **`undefined`, `void`
+and a bare `{ok: true}` are not written here, on any version of the package**, and `repairAnswer` is the credited arm's one
+constructor.
+
+- **Why, and it is a measurement rather than a preference**: `undefined` is the exact shape `ST-F2` was filed on — a repair
+  at `['a']` that wrote its correction at `['b']` and returned nothing was refused `KC-4` with *"the repair … produced no op
+  at a"*, a sentence naming the CALLER's address while the repair's write stood at its own (`records/store-tabs-record-unit.md`
+  §1; `D-67`'s third bullet). **Re-measured 2026-11-02 on this module**: with `healRecord` returning nothing, a plain
+  `commit` answered `{"status":"refused","reason":"ConstraintPassRefused","message":"the repair exactly-one-active produced
+  no op at tabs"}` and fifteen rows of the crossing battery red — the return is load-bearing, never decorative.
+- **`1.9.0` makes an op-less repair CREDITED, and this project does not take that licence.** That release credits a repair by
+  the legs its own write wrote rather than by the value it returned, and widens its declared repair return to accept `void`.
+  **That is a decision about the package's kernel, not a rule adopted here**: the explicit return states the intent, stays
+  correct on ANY installed version, and spares the next reader from working out which release credits what. On the installed
+  `1.7.0` a `void` return is still refused, so today the package enforces this too — **the point is that it must stay enforced
+  by US after a bump**, which the next two bullets make true.
+- **So the rule is STRUCTURAL, not conventional** — a type, not a habit a reviewer must hold. `TabsRepairAnswer` is the union
+  of the two arms, `TabsRepair` is `(context: unknown) => TabsRepairAnswer`, `TabsConstraintAnswer` is `true | {message,
+  repair} | {message, repair?: never}`, and the five declarations are `readonly TabsConstraintDeclaration[]`, **so a repair or
+  a body that returns nothing is a COMPILE ERROR in this repo** (`npm run typecheck`). Every site satisfies them with NO cast;
+  the one cast near a repair — `context as never` at `write`'s fourth position — is the package's commit parameter.
+- **A type-level row pins it where a revert reds it** (`tests/integration/store-tabs-record/crossing.test.ts`, compiled by
+  `npm run typecheck:tests`): three `@ts-expect-error` assertions, one per forbidden shape. **Measured 2026-11-02: widen the
+  credited arm to `| void` → `TS2578` *"Unused '@ts-expect-error' directive"* twice, the runtime row's reads of `ok` and `op`
+  red with it; restore → clean.** That runtime row reads the answer the ENGINE receives — a wrapped `repair` on the
+  declaration, recording `{ok: true, op}` with a non-empty `opId` — the module exposing no other route to a repair's return.
+- **The package's own `RepairOutcome` now includes `void`, and that is precisely why it is not used here**: a repair typed by
+  the release's union would admit exactly what this row forbids, and at `1.7.0` the package's `Constraint` is still
+  `(context: unknown) => unknown` — prose in a docblock, never a type. The module's types are LOCAL and EXPORTED, so the boot
+  and any later renderer work annotate against the same rule rather than against a release's licence.
