@@ -2,7 +2,9 @@
 // and settings as ONE `provident-storeroom` instance of its own — its own lifetime, its own file,
 // and no MCP path resolving into it (D-18). The declared surface is `docs/L3/security-store-storeroom/
 // signatures.md` §2 and nothing else; the design is `design.md` §2-§8, whose §3/§8 name every private
-// helper below so this file mints none of its own (the one exception: `plain`, reported at L4).
+// helper below so this file mints none of its own but the declaration machinery `D-84` adds — `repairAnswer`,
+// `mintExclusion`, `exclusionMustStand` and the batch itself, all named in that table (the one L4 exception:
+// `plain`, reported at L4).
 //
 // THREE ADDRESSES, and the measurement is why: a `file`-tier write purges the versions it outranks
 // AT ITS OWN KEY, so one address would let a settings commit reset the operator's exclusion pair
@@ -25,6 +27,17 @@
 // ONE TRANSITION IS ONE STORE WRITE: one op, one cursor, one receipt, the store's own ordinals
 // verbatim — no offset, no renumbering, and `write`'s fourth position never supplied, so its
 // class-test arm is unreachable (guide §3.3, §6.4; interface §2 `ASM-L2-7`).
+//
+// **THE VOLATILE PAIR'S EXISTENCE IS AN ENFORCED INVARIANT OF THE INSTANCE AND NO LONGER A READ-SIDE DEFAULT** (D-84):
+// one declaration rides the construction's `constraints` batch — `operator-exclusion-must-stand` at
+// `['operator-exclusion']` — whose body refuses an address holding nothing and whose repair mints `SAFE_PAIR`'s own
+// value as ONE whole `{exclusion}` at `mem`. **That address cannot come from a file, so a repair at creation on EVERY
+// boot is its only lawful source under the convention's clause 3**, and the boot value stops being the code constant
+// substituted at a read. **THE TWO `file` ADDRESSES CARRY NO DECLARATION YET, AND THE REASON IS MEASURED**: each of them
+// is MARKED BY ABSENCE by one of this module's two import-once arms, so a creation repair there retires an import
+// silently — the record address's would lose a retired `provident-security.json`'s token, grants, cap and entries, and
+// the app-state address's would collapse `legacy` to `'recorded'` and never import the retired carrier. Closing those two
+// needs a marker a repair cannot forge, which is a ruling and not this pass's (`D-84`, `D-82`'s `V2`/`V3`/`V4` open).
 //
 // IT WRITES NO FILE OF ITS OWN and makes exactly TWO `fs` calls — the two import-once reads: the
 // retired `provident-security.json` inside the first path, and the retired settings carrier inside
@@ -397,12 +410,152 @@ function withdraw(store: Store, handles: readonly string[]): void {
   }
 }
 
+/** **THE REPAIR'S TWO ARMS, DECLARED AS A TYPE SO A `void` REPAIR IS A COMPILE ERROR HERE TOO** (`D-72`, `D-84`).
+ *  This module exports one VALUE name and this is not a second one (`signatures.md` §1/§2, the census row that reads
+ *  `Object.keys` of the module entry): the constraint machinery below stands INSIDE the instance, which is what makes
+ *  it different from the tab record's batch — the crossing there is a module the boot hands a store, while this
+ *  instance CONSTRUCTS its own and is the only consumer of its own declarations. **So the declaration types are local
+ *  and `npm run typecheck` is the leg that holds them**, where `tabs-record`'s are exported because the boot annotates
+ *  against them (`src/main/tabs-record/index.ts`'s `TabsRepairAnswer`, `D-72`).
+ *
+ *  **THE CREDITED ARM CARRIES `op` AND NEVER A MAYBE**: `undefined`, `void` and a bare `{ok: true}` are not written
+ *  here on any release. At `1.9.0` the package *would* credit an op-less repair — it credits by the legs its own write
+ *  wrote — and the reason this module takes none of that licence is the one `D-72` records: the explicit arm states the
+ *  intent and stays correct after a bump, and at `1.7.0` a `void` return is still refused `KC-4` naming the CALLER's
+ *  address (`ST-F2`, filed upstream, never patched here — D-5). */
+interface RepairCredited { readonly ok: true; readonly op: unknown }
+interface RepairFailed { readonly ok: false; readonly message: string }
+type RepairAnswer = RepairCredited | RepairFailed
+
+/** **THE BODY'S CLOSED THREE-ARM SET, IN THE PACKAGE'S OWN WORDS** (`guide §7.2`, `§7.6`): `true` is the only pass value,
+ *  `{message, repair}` a repairable violation, `{message}` one no repair answers. **`repair?: never` ON THE THIRD ARM IS
+ *  THE WHOLE OF ITS JOB** — written as a bare `{message: string}` the union was assignable from a shape carrying a
+ *  `void` repair, because excess-property checking reads the union's WHOLE member set (measured 2026-11-02,
+ *  `src/main/tabs-record/index.ts`'s `TabsConstraintAnswer`); `never` makes that arm refuse the member outright. */
+type ConstraintAnswer =
+  | true
+  | { readonly message: string; readonly repair: (context: unknown) => RepairAnswer }
+  | { readonly message: string; readonly repair?: never }
+
+/** One element of the batch the construction adopts (`StoreConfig['constraints']`): the pair, and the body the engine
+ *  asks at every instant the pair's address is touched. */
+interface ConstraintDeclaration {
+  readonly address: OperatorSettingsAddress
+  readonly id: string
+  readonly constraint: (context: unknown) => ConstraintAnswer
+}
+
+/** **`['operator-exclusion']`'s EXISTENCE IS AN ENFORCED INVARIANT OF THE INSTANCE, AND ITS REPAIR IS ITS ONLY LAWFUL
+ *  SOURCE OF BOOT DATA** (`D-84`, closing `D-82`'s `V5` and one of `V1`'s three addresses). The address is `mem`, so it
+ *  can never come from a file: before this pair, a boot's value came from the code constant `SAFE_PAIR` substituted at
+ *  the READ — measured 2026-11-02 on this head, `read(['operator-exclusion'],'mem')` refuses `AddressNotFound` and
+ *  `read()` answers `exclusion:'mcp-enabled'` over an address holding nothing, so the constant was simultaneously the
+ *  record's default and its only authority. Under the convention's clause 3 — *boot data comes from file or constraint
+ *  repairs* — a `mem` address has exactly one lawful source, and a **repair at creation on EVERY boot** is it.
+ *
+ *  **SO THIS IS THE ONE DECLARATION OF THE THREE `D-82` NAMED THAT CAN STAND, AND THAT IS MEASURED RATHER THAN
+ *  PREFERRED.** The instance's two `file` addresses are MARKED BY ABSENCE: `importOnce` runs iff
+ *  `read(['operator-settings'],'file')` throws, and the second import arm runs iff `['operator-app-state']` holds no
+ *  recorded value. A creation repair at either makes its marker permanently true and silently RETIRES an import —
+ *  measured 2026-11-02 over a profile seeded with a retired `provident-security.json` carrying a token, three grants, a
+ *  cap and one entry: as this head stands, `read()` answers all four; with a declaration at `['operator-settings']` it
+ *  answers `token:null` / `enabled:['read','dispatch']` and the retired values are GONE. `['operator-app-state']` is the
+ *  same fact with a different marker: with a declaration there, `legacy` reads `'recorded'` on every arm and the retired
+ *  carrier's rows never import. **Both are reported, not built** (`D-84`): a marker a repair cannot forge is a ruling
+ *  this pass does not hold. The `mem` pair has no import arm, writes no byte and marks nothing — so it is declarable. */
+const EXCLUSION_MUST_STAND_ID = 'operator-exclusion-must-stand'
+/** **THE SENTENCE NAMES THE FAULT AND NOT THE ACT** — the register of L2 §3 and of the tab record's five: the address
+ *  holds no version of the pair, which is why nothing can be read there, and `tier4` is a DERIVED member and never part
+ *  of what is missing (interface §1). */
+const EXCLUSION_ABSENT_MESSAGE = "the operator exclusion does not stand at its address, so no 'mem' version of the pair exists"
+/** **THE ONE PLACE A REPAIR'S ANSWER IS CONSTRUCTED** (`D-72`): a `repair` returns the op its own write landed, and the
+ *  store's refusal arm is not swallowed — a receipt with no `op` answers `null`, which is the failed value the kernel
+ *  refuses as *"produced no op"*, and the write that produced it has already said why. */
+function repairAnswer(receipt: unknown): RepairCredited {
+  return { ok: true, op: plain(receipt) ? (receipt as Record<string, unknown>)['op'] : null }
+}
+
+/** **THE REPAIR MINTS THE PAIR FROM `SAFE_PAIR` AND WRITES ONE WHOLE LEGAL VALUE AT THE ONE ADDRESS** (`D-84`). The value
+ *  is `{exclusion}` ALONE — the same shape the module's own transition write composes — because `tier4` is derived at the
+ *  read and is never stored, so a repair carrying it would be a second authority over a member no write may hold
+ *  (interface §1; design §2). **AND IT IS `SAFE_PAIR`'S OWN SPELLING, NOT A SECOND LITERAL**: a placeholder that disagreed
+ *  with the read-side default would be two authorities for one value, which is the failure `D-84` closes at the record
+ *  address by reading `FIRST_RUN` — so the constant stays the source and the repair is one arm over it.
+ *
+ *  **IT WRITES THROUGH THE REGISTRATION'S OWN ROUTE AND NEVER AT A LANDING INSTANT, WHICH IS A MEASURED BOUND AND NOT AN
+ *  OMISSION.** A repair at a registration instant is handed a record carrying a `write` MEMBER — the store's own three
+ *  positions, the commit being the registration's own — so the write NAMES that commit the only way that instant allows
+ *  (`D-73`; a supplied fourth position there is a `TypeError` thrown before any store act). At a LANDING instant the
+ *  record is the six-member one with no `write`, and the commit MUST be named at `write`'s fourth position — **and this
+ *  module supplies that position nowhere** (`signatures.md` §2: *"`write`'s fourth position is never supplied, so the
+ *  class-test `TypeError` arm is unreachable"*). The two are reconciled by the reachability of the arm, measured
+ *  2026-11-02: every store write this module makes at that address composes `{ exclusion }` at the literal in
+ *  `write`'s exclusion arm, and `delete` — the only route that could leave the address absent — is called by no line of this
+ *  file (`signatures.md` §2's call census), so **no route of this instance can hand a landing instant an absent pair**.
+ *  The failed arm below is stated rather than fallen into, because a repair that reaches no lawful write says so in its
+ *  own two members instead of answering `void`, which carries "no op". */
+function mintExclusion(context: unknown): RepairAnswer {
+  const route = plain(context) ? context['write'] : undefined
+  if (typeof route !== 'function') {
+    return {
+      ok: false,
+      message: 'the exclusion does not stand, and this repair was handed no registration route to create it through',
+    }
+  }
+  const routeWrite = route as (address: OperatorSettingsAddress, tier: string, value: unknown) => unknown
+  // THREE POSITIONS AND NO FOURTH: the commit here is the registration's own and cannot be named (`D-69`, `D-73`).
+  return repairAnswer(routeWrite(EXCLUSION_ADDRESS, 'mem', { exclusion: SAFE_PAIR.exclusion }))
+}
+
+/** **THE BODY JUDGES `context.value` AND NEEDS NO HANDLE — the shape `tabsMustStand` measured, and the reason is the same
+ *  one** (`D-69`, `D-83`, `D-84`). A pair whose own key is absent is APPLIED where its parent resolves, and this
+ *  address's parent is the register, which always resolves — so the pair is asked over an empty store **at
+ *  construction**, which is the one instant a repair can rescue (a pair under an ABSENT parent is never asked at all).
+ *  **Measured 2026-11-02, one fresh instance per arm, on the three addresses at once:** a registration's context is the
+ *  five-member `{address, attempt, op, tier, value}` with `attempt`/`op`/`tier` all `null`, no `write` member on the
+ *  BODY's record, and `value` the current value read at the address — `{"token":"t"}` where the address held that
+ *  object, `{}` where it held an empty one **and `undefined` where it held nothing**, which is the whole of what absence
+ *  needs. So no handle is wanted for the judgement; the write is the only thing that wants one, and the record the
+ *  repair is handed lends it.
+ *
+ *  **ABSENCE IS THE WHOLE ARM, AND EVERY OTHER SHAPE IS LEFT WHERE IT ALREADY HAS AN AUTHORITY.** A pair that stands is
+ *  passed through, INCLUDING one whose `exclusion` member is not a token: this body judges EXISTENCE, and the read's own
+ *  admission (`plain(pair)` and one of the two words) remains the authority over the member — the split the tab record
+ *  draws between `tabs-must-stand` and its three field pairs, which this instance has no field pair for. Repairing the
+ *  member here would be the second authority over one value that the placeholder rule forbids (`D-84`). */
+function exclusionMustStand(context: unknown): ConstraintAnswer {
+  const value = plain(context) ? context['value'] : undefined
+  if (plain(value)) return true
+  return { message: EXCLUSION_ABSENT_MESSAGE, repair: mintExclusion }
+}
+
+/** **THE INSTANCE'S BATCH — ONE DECLARATION, AND THE CONSTRUCTION THAT ADOPTS IT IS THE ONE CONSUMER IT HAS.** The list
+ *  rides `StoreConfig['constraints']` at the `storeCreate` call below, so the pair is ARMED before anything can write
+ *  and is asked again at every later instant its address is touched (`guide §7.2`; `D-65`'s batching, applied to an
+ *  instance that constructs itself rather than being handed a store).
+ *
+ *  **NO LISTENER COLLIDES WITH ITS `id`, AND THAT IS A PROPERTY OF THE SPELLING**: this module mints
+ *  `operator-settings:<n>@<address>` for a handle while the id is the literal `operator-exclusion-must-stand`, and the
+ *  cross-kind rule `1.7.0` keeps reads the HANDLE — so a live listener and a pair stand at `['operator-exclusion']` at
+ *  once, which is what `subscribe` does (D-71; guide §7.3's clause of 2026-11-01).
+ *
+ *  **AND THE TWO `file` ADDRESSES CARRY NO DECLARATION, WHICH `D-84` RECORDS AS A STOPPED PASS AND NOT AS AN OVERSIGHT**:
+ *  see `EXCLUSION_MUST_STAND_ID`'s docblock for the two measurements that obstruct them. */
+const OPERATOR_CONSTRAINT_DECLARATIONS: readonly ConstraintDeclaration[] = [
+  { address: EXCLUSION_ADDRESS, id: EXCLUSION_MUST_STAND_ID, constraint: exclusionMustStand },
+]
+
 export function createOperatorSettings(options: OperatorSettingsOptions): OperatorSettings {
   let store: Store | null = null
   let refusal: OperatorSettingsReceipt | null = null
   let overlay: Row | null = null
   try {
-    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [], filePath: join(options.userDataDir, FILE_NAME) })
+    // **THE BATCH IS THE CONSTRUCTION'S, AND IT IS WHAT MAKES THE PAIR AN INVARIANT RATHER THAN A READ-SIDE DEFAULT**
+    // (D-84): `constraints` is `StoreConfig`'s fourth declared key and its absence is in domain, so supplying it is the
+    // whole of the change — the pair is armed before this constructor returns, and its repair mints the `mem` value a
+    // `mem` address can never get from a file. The list is module-level and read-only: two instances in one process
+    // adopt the same one body, and each store's registry is its own (`guide §6.2`).
+    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [], filePath: join(options.userDataDir, FILE_NAME), constraints: OPERATOR_CONSTRAINT_DECLARATIONS })
   } catch (caught) {
     // A refused construction throws nothing across this boundary: no instance stands and every
     // later write answers this value (design §4 `ASM-4`; interface §2.1; guide §8.2).

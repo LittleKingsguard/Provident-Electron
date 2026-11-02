@@ -51,7 +51,7 @@
 
 ## 6. The volatile pair is never persisted
 
-- `exclusion` and the derived `tier4` are **`mem` rows at `['operator-exclusion']`** and never enter the file: a committed transition's bytes are not durable, and a fresh construction answers the safe pair (ASM-L2-2; D-17; `interface.md` §1).
+- `exclusion` and the derived `tier4` are **`mem` rows at `['operator-exclusion']`** and never enter the file: a committed transition's bytes are not durable, and a fresh construction answers the safe pair — **which it now MINTS rather than substitutes**: the instance's one declaration stands at that address and repairs absence to `{exclusion:'mcp-enabled'}` inside the construction, on every boot, because a `mem` address can never come from a file and a creation repair is therefore its only lawful source under the convention's clause 3 (D-84; ASM-L2-2; D-17; `interface.md` §1).
 - The **tier-4 boolean is never persisted** either, and `src/main/tier4-state.ts`'s holder is a projection and not a second home (L1 §3 ASM-4; `interface.md` §5).
 - **The pair keeps an address of its own for a measured reason**: the instance's rows stand at **three** addresses (§7) and this pair holds the only `mem` one, because a `file`-tier write purges the versions it outranks (`file` > `mem` > `temp`) **at its own key**, so one shared address would let a settings commit reset the pair (`guide §5.1`; `interface.md` §1 `ASM-L2-1`; finding P-3).
 - After a session that used both tiers, the file's bytes carry no `exclusion`, no `tier4` and no `mcp-disabled` spelling — asserted as an absence over the bytes, never as a parse of the store's image (D-13; L1 §8 **`S-4`**, whose row is the pair re-booting to its declared initial, with **`S-1`** for the boot's file state).

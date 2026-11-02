@@ -78,11 +78,11 @@ The import runs at construction **iff the instance's own file carries no record 
 | `write` with no subscriber registered | the same receipt, and no delivery is attempted (`guide §6.3` item 1) |
 | a second subscriber that does not throw, beside the throwing one | it is delivered on the same write: one subscriber's withdrawal is not the window's failure (`guide §6.5`) |
 
-## 7. The exclusion pair is volatile and boots to the safe pair
+## 7. The exclusion pair is volatile and boots to the safe pair — MINTED at the creation instant, not substituted at the read (D-84)
 
 | Drive | Expected |
 |---|---|
-| `read()` on any boot | `exclusion:'mcp-enabled'`, `tier4:false` — never read from a file (ASM-L2-2; the boot read at the `settingsSurface.read()` site in `src/main/main.ts`) |
+| `read()` on any boot | `exclusion:'mcp-enabled'`, `tier4:false` — never read from a file (ASM-L2-2; the boot read at the `settingsSurface.read()` site in `src/main/main.ts`). **The word comes from the RECORD now, not from the constant**: the instance's one declaration stands at `['operator-exclusion']` at the store's creation and its repair writes `{exclusion:'mcp-enabled'}`, so the read of a `mem` address that holds nothing is what D-84 measured away — the constant is still the read's failed-read and non-token arm, and the two agree by construction (`OPERATOR_CONSTRAINT_DECLARATIONS`; D-84) |
 | `write({ exclusion: 'mcp-disabled' })` | `{status:'committed', …}`, and `read()` answers `'mcp-disabled'` with `tier4:true` — one record, two derived readings (the `ExclusionState` declaration and its one-record-two-derived-readings note in `src/main/security.ts`; D-17) |
 | then `write({ token: 'z' })` | the pair is **unmoved**: a `file`-tier write purges only its own key, and the pair stands at its own address (`guide §5.1`; `interface.md` §1 `ASM-L2-1`) |
 | then a fresh `createOperatorSettings` over the same directory | the record survives and the pair is back at `'mcp-enabled'`: the pair is never persisted (`persistence.md` §6; ASM-L2-2) |

@@ -15,7 +15,7 @@ The retired carrier's rows live at **`['operator-app-state']` on the `file` tier
 | Address | Tier | What stands there | Written by |
 |---|---|---|---|
 | `['operator-settings']` | `file` | the security record, whole (sibling §1) | `write`, unchanged (D-16) |
-| `['operator-exclusion']` | `mem` | `{exclusion}`, never persisted (sibling §1) | `write`, unchanged (D-17) |
+| `['operator-exclusion']` | `mem` | `{exclusion}`, never persisted (sibling §1) | `write`, unchanged (D-17) — **and the instance's one constraint repair, which MINTS the pair at the store's creation since D-84**; this unit's verbs are unmoved, and the value it reads at a boot is the same word it read before |
 | **`['operator-app-state']`** | `file` | `{rows}` — the carrier's rows, **whole** (L1 §3) | **`writeAppState`**, one commit per act (D-22) |
 
 - **Read and write are whole-record acts.** One `writeAppState` is one store write, one op, one cursor and one receipt, because the rows are one value at one address (L1 §3; `guide §4` arm `W-4`).
