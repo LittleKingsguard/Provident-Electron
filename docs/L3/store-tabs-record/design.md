@@ -1,7 +1,7 @@
 # L3 — `store-tabs-record`: the module design
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 7 — the crossing's structure, the record
-  root as an enforced invariant, and the change push registered at a descendant.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 8 — the crossing's structure, the record
+  root as an enforced invariant, and the change push standing at the record root itself, beside the five pairs.
 - **Inputs:** `docs/L2/store-tabs-record/interface.md` rev 1 §1–§6; `docs/L1/store-tabs-record.md` rev 1 §1–§3.
 - **Ceiling:** 150 lines, class max (D-1) · **Status:** structure and guardrails; every declared name and its exact text
   is in `signatures.md`, which is what L4 transcribes (D-45).
@@ -132,13 +132,9 @@ the member on a clean act. **No `cursor` member survives**: it named nothing the
 
 ## 5. The listener — an address, never a payload
 
-**`onChanged` takes ONE subscription and delivers exactly ONE notification per committed change of the record** — a `commit`, a `remove`, and a repair's own write inside that same commit, which JOINs it (D-67) rather than opening a second one. The delivery names the **triggered
-address** and never the value (`guide §6.4`): a renderer that needs the value re-reads, and one that needs to know *what moved* diffs the record it already holds.
+**`onChanged` takes ONE subscription and delivers exactly ONE notification per committed change of the record** — a `commit`, a `remove`, and a repair's own write inside that same commit, which JOINs it (D-67) rather than opening a second one. The delivery names the **triggered address** and never the value (`guide §6.4`): a renderer that needs the value re-reads, and one that needs to know *what moved* diffs the record it already holds. **A write a pair REFUSES delivers NOTHING**: the pair is asked, the pass throws, and the delivery window never opens.
 
-**The installation is TWO acts at a DESCENDANT address, and both are the package's** (`guide §6.2`). `listen(handle, addresses)` installs the entry and `register(handle, listener)` the FUNCTION under it — an unregistered handle fires nothing, silently. **The address cannot be `['tabs']`**: all five
-pairs stand there and *"a listener and a constraint do not share one"*, so a listener at the root is refused `AddressMalformed`; it installs at `['tabs','order']`, lawful because a trigger is decided by `PREFIX` or `TOUCHED` (`§6.3` item 2, D-66) and every act's one whole value carries its `order`
-seat. The handle is MINTED PER SUBSCRIPTION (`register` replaces a handle's function, `unlisten` withdraws it WHOLE, so a fixed name starves a second subscriber), the body WRITES NOTHING (a listener's write opens its own commit) and CONTAINS the caller's throw (it crosses into the firing write,
-`§6.5a`). **The withdrawal is its own answer**, exercised by a counter in `crossing.test.ts`'s delivery row, its control, and `surface.test.ts`'s `attach`/`detach` row — a listener that outlives its window is a leak the renderer cannot see.
+**Rev 8 (2026-11-01) — THE LISTENER STANDS AT `['tabs']` ITSELF, BESIDE ALL FIVE PAIRS** (D-71). The consumed `provident-storeroom 1.7.0` lifts the address exclusion: **a constraint pair and a listener MAY stand at one address** — the pair ASKED by the pass, the listener DELIVERED after it — and **the ONLY cross-kind restriction is the HANDLE**, a listener whose handle equals a pair's `id` being refused `AddressMalformed` at `listen`/`register`/`addConstraint` (`guide §7.3`'s clause of 2026-11-01). This module's handles are `tabs-record:<n>@tabs` — a fixed prefix plus a minted ordinal — so none can spell one of its five ids. **The `['tabs','order']` installation rev 7 declared was a workaround for a refusal 1.7.0 no longer makes, and it is withdrawn.** **The installation is TWO acts, and both are the package's** (`guide §6.2`): `listen` installs the entry, `register` the FUNCTION under it — an entry no `register` filled is a lawful, silent RESERVATION that fires nothing (`§6.3` rule 1). The handle is MINTED PER SUBSCRIPTION (`register` replaces a handle's function, `unlisten` withdraws it WHOLE, so a fixed name starves a second subscriber), the body WRITES NOTHING (a listener's write opens its own commit) and CONTAINS the caller's throw (it crosses into the firing write, `§6.5a`). **The withdrawal is its own answer**, exercised by a counter in `crossing.test.ts`'s delivery rows and its control, by the row pinning the pair-and-listener-at-one-address pattern, and by `surface.test.ts`'s `attach`/`detach` row — a listener that outlives its window is a leak the renderer cannot see.
 
 ## 6. What this module may not do
 

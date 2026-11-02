@@ -18,10 +18,12 @@
 //     it takes there carries the store's THREE positions and no fourth (`guide §7.2`'s dated clause, items (3) and (4);
 //     D-69). That is what makes `['tabs']` stand BEFORE the first commit rather than as a side effect of it.
 //
-// **AND TWO FACTS ABOUT THE DELIVERY, MEASURED 2026-11-01 AND PINNED HERE (D-70):** a listener cannot be installed where a
-// constraint's `id` stands — all five of this module's pairs stand at `['tabs']`, so the push installs at its `order`
-// descendant and a whole-record write touches it — and `repaired` is DERIVED by comparing the written intent with the
-// record that stands, because the store's write record carries no member for the repair that ran in its own commit.
+// **AND THREE FACTS ABOUT THE DELIVERY, PINNED HERE (D-70, D-71):** from the consumed `provident-storeroom 1.7.0` a
+// constraint pair and a LIVE LISTENER may stand at ONE address — the pair asked by the pass, the listener delivered after
+// it, the only cross-kind restriction being the HANDLE — so the push installs at `['tabs']` itself, beside all five of this
+// module's pairs; `repaired` is DERIVED by comparing the written intent with the record that stands, because the store's
+// write record carries no member for the repair that ran in its own commit; and **a write a pair REFUSES delivers
+// nothing**, the pair asked and the pass thrown with the delivery window never opened.
 //
 // This authority is this repo's (`docs/L3`, `docs/L2`) and the package's own guide, never the package's internals.
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -242,11 +244,11 @@ describe('store-tabs-record · the crossing', () => {
 
   // ═══════════════ THE CHANGE DELIVERY (L2 §2's fourth route, design §5; D-70) — the push that shipped as a name ═══════════════
 
-  it('THE DELIVERY HAPPENS AND THE WITHDRAWAL IS ITS ANSWER: `subscribe` then a `commit` fires the handler ONCE, a `remove` fires it AGAIN, and the unsubscribe STOPS it — a counter, because a listener the store never registered fires nothing, silently', () => {
-    // THE COUNT IS THE WHOLE MEASUREMENT: the module's `subscribe` used to install at `['tabs']`, where the package refuses
-    // a listener beside a constraint, so the counter read `0` while every one of these acts answered `committed` — and the
-    // first `commit` below is the one that ALSO runs `exactly-one-active`'s repair, whose write joins the same commit and
-    // is therefore ONE delivery and not two.
+  it('THE DELIVERY HAPPENS AND THE WITHDRAWAL IS ITS ANSWER: `subscribe` — a live listener at the record\'s OWN address, `[\'tabs\']`, beside all five pairs (D-71) — then a `commit` fires the handler ONCE, a `remove` fires it AGAIN, and the unsubscribe STOPS it — a counter, because a listener the store never registered fires nothing, silently', () => {
+    // THE COUNT IS THE WHOLE MEASUREMENT: the module's `subscribe` once installed nothing at all — it asked for `['tabs']`
+    // while a pre-`1.7.0` package refused a listener beside a constraint there, and swallowed the refusal — so the counter
+    // read `0` while every one of these acts answered `committed` (D-70). The first `commit` below is also the one that runs
+    // `exactly-one-active`'s repair, whose write joins the same commit and is therefore ONE delivery and not two.
     let delivered = 0
     const off = record.subscribe(() => {
       delivered += 1
@@ -275,6 +277,104 @@ describe('store-tabs-record · the crossing', () => {
     // AND THE POSITIVE HALF ON THE SAME SUBSCRIPTION, so a subscription that never registered cannot pass this row.
     expect(record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' })).status).toBe('committed')
     expect(delivered, 'and the very same subscription delivers when the record does move').toBe(1)
+  })
+
+  // ═══════════════ THE PATTERN THIS CHANGE RESTS ON (D-71): ONE ADDRESS, BOTH KINDS ═══════════════
+
+  it('THE PATTERN THE WHOLE CHANGE RESTS ON: a LIVE LISTENER and ALL FIVE pairs stand at ONE address — `[\'tabs\']` — where one whole-record write there ASKS the pairs and DELIVERS the listener exactly once, the write record names the listener AT `[\'tabs\']` (the address it was BOUND at, guide §6.4), and a write a pair REFUSES delivers NOTHING', () => {
+    // ITS OWN INSTANCE, BUILT THE WAY THE BOOT BUILDS IT, WITH ITS OWN INSTRUMENT: the five declarations are WRAPPED so the
+    // row can see the pass ask each pair — an observation, not an inference from the record the act leaves — and the
+    // wrapper returns the module's own answer untouched, so the machinery measured here is the module's and not a
+    // stand-in for it.
+    const instant = mkdtempSync(join(tmpdir(), 'tabs-one-address-'))
+    let bound: TabsRecordStore | null = null
+    const asked: string[] = []
+    const store = createProfileStore({
+      filePath: join(instant, PROFILE_FILE),
+      constraints: tabsConstraintDeclarations(() => bound).map((declaration) => ({
+        address: declaration.address,
+        id: declaration.id,
+        constraint: (context: unknown) => {
+          asked.push(declaration.id)
+          return declaration.constraint(context)
+        },
+      })) as never,
+    })
+    bound = store as unknown as TabsRecordStore
+    try {
+      const recordHere = createTabsRecord({ store: bound })
+      // ALL FIVE PAIRS ARE AT THE ONE ADDRESS, read off the store's own registered-pair read — where `address` is the pair's
+      // own SET, so one address reads `[['tabs']]` (`guide §7.4`).
+      expect(store.constraints().map((pair) => [pair.id, pair.address])).toEqual([
+        ['tabs-must-stand', [['tabs']]],
+        ['exactly-one-active', [['tabs']]],
+        ['tab-has-title', [['tabs']]],
+        ['tab-has-content', [['tabs']]],
+        ['tab-has-lastActiveAt', [['tabs']]],
+      ])
+      let delivered = 0
+      const off = recordHere.subscribe(() => {
+        delivered += 1
+      })
+      const stamp = '2026-11-01T00:00:00.000Z'
+      const intent = {
+        order: ['tabs-landing-page', 'tab-1'],
+        'tabs-landing-page': {
+          id: 'tabs-landing-page',
+          target: 'tabs-landing-page',
+          active: false,
+          label: 'tabs-landing-page',
+          lastActiveAt: stamp,
+        },
+        'tab-1': { id: 'tab-1', target: 'page://tab-1', active: true, label: 'one', lastActiveAt: stamp },
+        landing: 'tab-1',
+      }
+      asked.length = 0
+      // THE ONE ACT BOTH KINDS ARE REACHED BY — a whole record at `['tabs']`, written through the store so this row can read
+      // the write's OWN record, which `commit` answers nothing of (`store's write receipt`: `{op, watched, triggered}`).
+      const receipt = store.write(['tabs'] as never, 'file', intent)
+      expect(asked, 'the pass ASKS every pair standing at that one address').toEqual([
+        'tabs-must-stand',
+        'exactly-one-active',
+        'tab-has-title',
+        'tab-has-content',
+        'tab-has-lastActiveAt',
+      ])
+      // THE TRIGGERED ENTRY IS THE MEASUREMENT, AND IT IS WHAT A REVERT CANNOT SURVIVE — TWICE OVER: `TriggerPair.address` is
+      // the address the listener was BOUND at and NEVER the address the write targeted (`guide §6.4`), and the minted handle
+      // spells that same address after its `@` (`handleFor`). A listener moved back to `['tabs','order']` therefore reads
+      // `['tabs','order']` and `tabs-record:<n>@tabs/order` here — measured 2026-11-01 on the published `1.7.0`, and on the
+      // reverted tree. **THE ORDINAL IS NOT PINNED**: `issuance` is the module's and moves with every subscription the file
+      // made before this row, which is the minting working and not a fact this row needs.
+      const listenerEntries = receipt.triggered.filter((entry) => entry.handle.startsWith('tabs-record:'))
+      expect(listenerEntries, 'the triggered set names the listener beside the five pairs, both kinds in one list').toHaveLength(1)
+      expect(listenerEntries[0]?.address, 'and it names the ONE address both kinds stand at').toEqual(['tabs'])
+      expect(listenerEntries[0]?.handle, 'and the handle spells the same address after its `@`').toMatch(/^tabs-record:\d+@tabs$/)
+      expect(delivered, 'AND THE DELIVERY IS EXACTLY ONE per committed change, the pairs\' asking being no delivery at all').toBe(1)
+
+      // **THE OTHER HALF: A WRITE A PAIR REFUSES DELIVERS NOTHING.** The refusing pair is this ROW's instrument and not the
+      // module's — all five of the module's pairs REPAIR rather than refuse, so a refusal has to be asked for — and it is
+      // also the HANDLE rule's second demonstration: it is added at `['tabs']` WHERE A LIVE LISTENER STANDS, and it is
+      // accepted because its `id` is not that listener's handle (`guide §7.3` item (ii): multiple pairs at one address are
+      // lawful).
+      store.addConstraint({ address: ['tabs'] as never, id: 'no-marked-record' } as never, ((context: unknown) => {
+        const value = (context as { value?: { note?: unknown } }).value
+        return value?.note === 'refuse-me' ? { message: 'the record may not carry a marked note' } : true
+      }) as never)
+      let refusal: unknown = null
+      try {
+        store.write(['tabs'] as never, 'file', { ...intent, note: 'refuse-me' })
+      } catch (caught) {
+        refusal = caught
+      }
+      expect((refusal as { status?: string }).status, 'the pair REFUSES, and the pass throws the store\'s own form').toBe('ConstraintPassRefused')
+      expect(delivered, 'and the listener standing at that same address delivers NOTHING: the pair is asked, then the thrown form, and no delivery follows a refused write').toBe(1)
+      expect(recordHere.read().status, 'while the record stands exactly as the committed write left it').toBe('committed')
+      off()
+    } finally {
+      bound = null
+      rmSync(instant, { recursive: true, force: true })
+    }
   })
 
   // ═══════════════ `repaired` — DERIVED FROM THE STANDING RECORD, NOT PREDICTED (L2 §3, design §4; D-70) ═══════════════

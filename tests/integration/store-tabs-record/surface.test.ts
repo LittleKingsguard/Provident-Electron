@@ -3,9 +3,10 @@
 //
 // THE CONTRACT: `docs/L2/store-tabs-record/interface.md` §2 — **`tabs.onChanged` is the event generator**: the instance's
 // own listener delivers the triggered address and the renderer re-reads rather than being handed a value — and
-// `docs/L3/store-tabs-record/design.md` §5 — **the listener installs at a descendant of the record root** (a listener and
-// a constraint do not share an address, and all five of this module's pairs stand at `['tabs']`), **the withdrawal is the
-// subscription's own answer**, and a listener that outlives its window is a leak the renderer cannot see.
+// `docs/L3/store-tabs-record/design.md` §5 — **the listener stands at the record root `['tabs']` ITSELF, beside all five of
+// this module's pairs** (lawful from `provident-storeroom 1.7.0`, whose one cross-kind restriction reads the HANDLE and
+// never the address — guide §7.3's clause of 2026-11-01; D-71), **the withdrawal is the subscription's own answer**, and a
+// listener that outlives its window is a leak the renderer cannot see.
 //
 // **WHY THIS ROW IS A SIBLING FILE AND NOT A ROW OF `crossing.test.ts`.** The two files measure two modules: part 1 drives
 // `src/main/tabs-record/index.ts` — the record's five pairs and its four routes — while this one drives

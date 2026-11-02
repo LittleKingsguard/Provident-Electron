@@ -1603,3 +1603,46 @@ supply it"* — plus the measurements below, driven over the installed `providen
   registry is the one being constructed — measured with a handle adopted by `cfg.listeners`, which delivered nothing there
   and delivered on the next commit.
 - **A `listen` WITH NO `register` IS A LAWFUL RESERVATION AND HOLDS NOTHING AGAINST A PAIR — ONLY A LIVE LISTENER DOES**: the entry `listen` writes stands in the write's `triggered` list and fires nothing, and it carries no kind — the package's own record calls it *"a reservation, `off: true`, no function"* — so only a LIVE listener blocks a pair's `id`, one whose `off` is cleared and a function installed and whose kind is no constraint's (the package's own `D-24`/`D-25`, whose subject is a live listener). **Measured 2026-11-01 over the packaged `1.7.0`**, one fresh instance per arm: `listen('dup', [['q']])` with no `register`, then `addConstraint({address: ['q'], id: 'dup'})`, **ANSWERED**; the same with `register` before the add **THREW** `AddressMalformed` — *"the listener 'dup' keeps that handle, and a listener and a constraint do not share one handle"* — and threw where the live listener stood at `['x']` and the pair at `['q']`, so the arm reads the HANDLE and not the address; and a listener claiming a carried pair's `id` threw at `listen` and again at `register`. **THE LESSON, because a drive that never called `register` reported the rule as one-directional to the user: measure a REGISTERED listener, never a bare `listen` — a reservation is silent, and this `subscribe` is built on that silence, registering at once and withdrawing the entry where `register` fails.**
+
+---
+
+## D-71 — `provident-storeroom` moves to `1.7.0`: the cross-kind rule reads the HANDLE alone, and the change push returns to `['tabs']`
+
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's instruction this pass carries — the published `1.7.0`
+removes the rule this app worked around, so the workaround goes — plus the measurements below, driven on the published
+artefact (`latest`, tagged `v1.7.0`) at its own bytes.
+
+**Decision:** the consumed package is **`provident-storeroom ^1.7.0`**, up from `^1.6.2`, and the tab record's change push
+installs at the record's OWN address, `['tabs']`, beside all five of its constraint pairs.
+
+- **The eleven cells moved together, none left behind**: the manifest's `version`, its five exact `optionalDependencies`
+  pins and the five `platforms/*/package.json` versions all read `1.7.0`, and the lock carries all six nodes at `1.7.0` with
+  their own `resolved` and `integrity`; the three generated doc version lines read `1.7.0` at their own lines.
+- **The package lifted the ADDRESS exclusion and kept only the HANDLE** (its §7.3 clause of 2026-11-01, and its own
+  cross-kind register): a constraint pair and a listener MAY stand at one address — the pair ASKED by the pass, the
+  listener DELIVERED after it; multiple pairs at one address, and multiple listeners, are lawful; and the ONE cross-kind
+  restriction is that a listener's handle must not equal a pair's `id`, refused `AddressMalformed` at
+  `listen`/`register`/`addConstraint`, in both directions. **An application that moved a subscription off a constrained
+  address to work around a refusal may reclaim it**, and this module does.
+- **So the `['tabs','order']` installation is withdrawn, and it was always a workaround**: measured 2026-11-01 on the
+  then-installed `1.6.2`, `listen` at `['tabs']` threw *"a listener and a constraint do not share one"*. That reading stays
+  as that tree's own; the address is named by no rule `1.7.0` keeps.
+- **The handles cannot collide, and that is a property of the SPELLING**: this module mints `tabs-record:<n>@tabs` — a fixed
+  prefix no constraint id carries, a minted ordinal, and the address — while its five ids are `tabs-must-stand`,
+  `exactly-one-active`, `tab-has-title`, `tab-has-content` and `tab-has-lastActiveAt`, every one a literal. A table of
+  literals cannot spell the minted part.
+- **The fact that made the PREVIOUS pass's upstream report wrong, and the rule this row sets: measure a REGISTERED
+  listener, never a bare `listen`.** An entry `listen` writes and `register` never fills is a lawful, SILENT reservation —
+  the package's own record calls it *"a reservation, `off: true`, no function"* — so it holds nothing against a pair's `id`
+  and the cross-kind refusal does not fire for it; only a LIVE listener does, and a drive that never called `register`
+  reported the rule as one-directional. This `subscribe` registers at once and withdraws the entry where `register` fails.
+- **Measured 2026-11-01 on the published `1.7.0`, one fresh instance per arm:** all five of this module's pairs at
+  `['tabs']` plus a live listener there with a distinct handle — **accepted**; one whole-record write answered `triggered`
+  naming the five ids AND the listener, each at `['tabs']`, and fired it **once**; a write a pair REFUSED threw the pass's
+  own form and delivered **nothing**. **The store's census is unmoved** — `Object.getOwnPropertyNames(store)` still reads
+  the declared **14** members and **11** own symbols.
+- **What moves in the artifacts, and nothing else**: `src/main/tabs-record/index.ts`'s `LISTENER_ADDRESS` goes and the
+  record root is reused rather than re-spelled; `design.md` §5 (rev 8) and `interface.md` §2 (rev 3) are rewritten for the
+  new pattern; and the live pins move — `package.json`, `storeroom-surface.test.ts`'s `S-1.3`, `brief.md` §2's row and
+  `src/main/storeroom.ts`'s census header. **The dated readings do not move**: what `1.6.1` and `1.6.2` were measured to do
+  stays written as that tree's own, and `signatures.md`'s staleness stays next-steps' row 2.

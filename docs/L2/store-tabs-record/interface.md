@@ -1,6 +1,7 @@
 # L2 — `store-tabs-record`: the interface
 
-- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 1 — the crossing D-63 decided.
+- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 3 — the crossing D-63 decided; rev 2
+  moved the record onto the central instance (D-64, §1), rev 3 puts the change push at the record's own address (D-71, §2).
 - **Inputs:** `docs/L1/store-tabs-record.md` rev 1 §1–§4 (the record family, the constraint, the `§5.U` matrix); D-62
   (the unit and its `N = 4`), D-63 (the crossing), D-32 (no path or route claimed twice), D-26/D-39 (a count has one
   home), D-30/D-40 (the marked surface), D-43 (cite, never restate).
@@ -64,9 +65,13 @@ never answered `false`** — the member is a signal, and `false` would be a seco
 re-reads rather than being handed the value — the delivery argument is an address, not a payload (`guide §6.4`).
 **The listener is REGISTERED, not merely listened for** (`guide §6.2`: `listen(handle, addresses)` installs the entry and
 `register(handle, listener)` installs the function under it — the store invokes nothing it was not registered with), and
-**it cannot install at `['tabs']`**: all five of the record's pairs stand there and a listener and a constraint do not
-share one address, so it installs at the record's `order` descendant, which the one whole value every act writes always
-touches (design §5). A `subscribe` that installed one act and not two was a push that existed in name only (D-70).
+**Rev 3 — it installs at `['tabs']` ITSELF, the record's own address, beside all five of the record's pairs** (D-71): from
+the consumed `provident-storeroom 1.7.0` a constraint pair and a listener **may stand at one address** — the pair ASKED by
+the pass, the listener DELIVERED after it — and **the only cross-kind restriction is the HANDLE**, a listener's handle
+equal to a pair's `id` being refused `AddressMalformed`, which this module's minted `tabs-record:<n>@tabs` can never spell
+(design §5; `guide §7.3`'s clause of 2026-11-01). **The client's duty is therefore unchanged and says nothing about
+addressing: RE-READ AFTER EVERY `onChanged`** — the push carries no value, and a write a pair REFUSES delivers nothing at
+all. A `subscribe` that installed one act and not two was a push that existed in name only (D-70).
 
 ## 3. The refusal vocabulary — closed, and the store's own words
 

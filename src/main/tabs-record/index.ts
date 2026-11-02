@@ -72,25 +72,33 @@ export const TABS_CONSTRAINT_ID = 'exactly-one-active'
 export const TABS_MUST_STAND_ID = 'tabs-must-stand'
 /** The one shape arm's sentence (L3 signatures §5). */
 export const MALFORMED_ROW_MESSAGE = 'the commit carries no tab id, or no plain record'
-/** **THE CHANGE LISTENER INSTALLS AT A DESCENDANT OF THE RECORD ROOT — `['tabs','order']` — AND IT CANNOT BE `['tabs']`.**
+/** **THE CHANGE LISTENER STANDS AT THE RECORD ROOT ITSELF — `['tabs']`, BESIDE ALL FIVE PAIRS — AND FROM `1.7.0` THAT IS
+ *  THE LAW AND NOT AN ARGUMENT** (`guide §7.3`'s clause of 2026-11-01, items (i) and (iii); `D-71`). **A CONSTRAINT PAIR
+ *  AND A LISTENER MAY STAND AT ONE ADDRESS**: different handles, one address, both reached by the act — the pair ASKED by
+ *  the pass, the listener DELIVERED after it. **THE ONLY CROSS-KIND RESTRICTION IS THE HANDLE**: a listener whose handle
+ *  equals a constraint pair's `id` is `AddressMalformed` at `listen`/`register`/`addConstraint`, in both directions, and
+ *  the address is named by no rule at all. **MEASURED 2026-11-01 on the published `1.7.0`, a fresh instance carrying this
+ *  module's five pairs at `['tabs']`:** a live registered listener at `['tabs']` was accepted, and one whole-record write
+ *  there answered `triggered` naming ALL FIVE pair ids and the listener, every entry at `['tabs']` — `[{handle:
+ *  'tabs-must-stand', address: ['tabs']}, …, {handle: 'tabs-record:1@tabs', address: ['tabs']}]` — and fired the listener
+ *  ONCE; a write a pair REFUSED threw the pass's own form and delivered ZERO — the pairs are asked, then the thrown form,
+ *  and no delivery follows a refused commit.
  *
- *  The five pairs this module declares all stand at `TABS_RECORD_ADDRESS`, and the package refuses to let a listener and a
- *  constraint share one address (`guide §6.2`; the cross-kind ruling is the package's own, its `D-25`). **MEASURED
- *  2026-11-01, the installed `1.6.2`:** `store.listen('tabs-record', [['tabs']])` threw the plain form
- *  `{status: 'AddressMalformed', message: "… the listener 'tabs-record' cannot be installed at tabs: the constraint
- *  'tabs-must-stand' stands there, and a listener and a constraint do not share one"}` — so the one address the record
- *  LIVES at is the one address no listener may be bound to, which is how `subscribe` came to install nothing at all and
- *  swallow the refusal in its own `catch` (D-70).
+ *  **WHAT THIS REPLACES IS A WORKAROUND, AND ITS READING IS KEPT AS THAT TREE'S OWN** (2026-11-01, the then-installed
+ *  `1.6.2`): `store.listen('tabs-record', [['tabs']])` threw the plain form `{status: 'AddressMalformed', message: "… the
+ *  listener 'tabs-record' cannot be installed at tabs: the constraint 'tabs-must-stand' stands there, and a listener and a
+ *  constraint do not share one"}`, so the push installed at the `order` descendant — the seat the one whole value every act
+ *  writes always touches — and `subscribe` swallowed that refusal in its own `catch` (D-70). The address was never the
+ *  objection `1.7.0` keeps; the HANDLE is, and that release re-derived the rule sentence in place to say so.
  *
- *  **AND A DESCENDANT IS LAWFUL BECAUSE A TRIGGER IS DECIDED BY `PREFIX` OR BY `TOUCHED`** (`guide §6.3` item 2, `D-66`):
- *  the touched set is the paths the act's value CONTAINS, so the one whole value this module writes at `['tabs']` — which
- *  always carries its `order` seat — touches `['tabs','order']` whatever else it changes. **MEASURED 2026-11-01 over this
- *  same address:** a `commit` of a NEW tab fired it once, a `commit` that only UPDATED an existing tab's `label` fired it
- *  once, a `remove` fired it once, the `['tabs']` delete whose `tabs-must-stand` repair re-creates the record inside the
- *  same commit fired it once, and a `mem` write at `['elsewhere']` fired it ZERO times — one notification per committed
- *  change, and no notification for a write that touches none of the record. `TABS_ORDER_ADDRESS` is reused rather than
- *  re-spelled: a second spelling of one address is the rename that half-lands. */
-const LISTENER_ADDRESS: readonly string[] = TABS_ORDER_ADDRESS
+ *  **ONE DELIVERY PER COMMITTED CHANGE, MEASURED OVER THE DESCENDANT THIS NO LONGER NEEDS** (2026-11-01, the installed
+ *  `1.6.2`): a `commit` of a NEW tab fired it once, a `commit` that only UPDATED an existing tab's `label` fired it once, a
+ *  `remove` fired it once, the `['tabs']` delete whose `tabs-must-stand` repair re-creates the record inside the same
+ *  commit fired it once, and a `mem` write at `['elsewhere']` fired it ZERO times — one notification per committed change,
+ *  and none for a write that touches no part of the record. **AND THE ROOT IS THE ONE ADDRESS THAT CANNOT MISS**: a
+ *  descendant hears a delete only through `TOUCHED` (`guide §6.3` item 2, D-66), while a listener at the pair's own
+ *  address is a PREFIX of every address under it. `TABS_RECORD_ADDRESS` is reused rather than re-spelled: a second
+ *  spelling of one address is the rename that half-lands. */
 
 /** **ONE HANDLE PER SUBSCRIPTION, MINTED HERE — MEASURED, NOT PREFERRED** (2026-11-01, the installed `1.6.2`). The store's
  *  registry is the INSTANCE's — two instances spelling one name see none of each other's deliveries — but within one
@@ -104,9 +112,15 @@ const LISTENER_ADDRESS: readonly string[] = TABS_ORDER_ADDRESS
  *  nothing refuses a second caller — the crossing battery itself builds a second record over one store. So the name is
  *  minted, and the one-subscriber arrangement stays where it belongs, in the surface. */
 let issuance = 0
+/** **AND THE MINTED SPELLING CAN NEVER EQUAL A CONSTRAINT `id`, WHICH IS THE WHOLE OF THE ONE RULE THAT SURVIVES** (D-71):
+ *  the five ids this module declares are `tabs-must-stand`, `exactly-one-active`, `tab-has-title`, `tab-has-content` and
+ *  `tab-has-lastActiveAt` (`tabsConstraintDeclarations`), and this handle is `tabs-record:<n>@tabs` — a FIXED `tabs-record:`
+ *  prefix no id carries, plus a MINTED ORDINAL that only ever grows, plus the address it is bound at. A table of literals
+ *  cannot spell either part, so no `register`, no `listen` and no `addConstraint` of this module's can meet a cross-kind
+ *  duplicate; the five pairs and a live listener stand at `['tabs']` at once, measured on the published `1.7.0`. */
 const handleFor = (): string => {
   issuance += 1
-  return 'tabs-record:' + String(issuance) + '@' + LISTENER_ADDRESS.join('/')
+  return 'tabs-record:' + String(issuance) + '@' + TABS_RECORD_ADDRESS.join('/')
 }
 
 
@@ -748,9 +762,15 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
     subscribe(handler: () => void): () => void {
       // **THE REGISTRATION IS TWO ACTS, NOT ONE** (`guide §6.2`, `§6.3`): `listen(handle, addresses)` installs the ENTRY
       // and `register(handle, listener)` installs the FUNCTION under it — the store answers the triggered set and invokes
-      // nothing it was not registered with, and an unregistered handle fires nothing, silently. **The body this replaces
-      // called `listen` alone and dropped `handler` on the floor, at an address the package refuses anyway: the push
-      // existed in name only** (D-70).
+      // nothing it was not registered with. **An entry `listen` wrote and `register` never filled is a LAWFUL, SILENT
+      // RESERVATION** (`§6.3` rule 1: *"an unregistered handle fires nothing, silently"*) — the package's own record calls
+      // it "a reservation, `off: true`, no function" — and it holds nothing against anything, which is why the push is
+      // built on it: `register` runs at once, and the entry is withdrawn where `register` fails (D-71). **The body this
+      // replaces called `listen` alone and dropped `handler` on the floor: the push existed in name only** (D-70).
+      //
+      // **THE LISTENER STANDS AT `['tabs']` ITSELF, beside all five of this module's pairs** — lawful from `1.7.0`, whose
+      // one cross-kind rule reads the HANDLE and never the address (`guide §7.3`'s clause of 2026-11-01; the listener's own
+      // docblock above, and `D-71`).
       //
       // **THE BODY IS A NOTIFICATION AND NOTHING ELSE.** It calls the caller's `handler` and writes nothing at all: a
       // listener's write opens its own commit (`guide §6.5` item 1), so a delivery path that wrote would be a second
@@ -770,7 +790,7 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       }
       const handle = handleFor()
       try {
-        standing.listen(handle, [LISTENER_ADDRESS])
+        standing.listen(handle, [TABS_RECORD_ADDRESS])
         standing.register(handle, body)
       } catch {
         // **A REGISTRATION THAT COULD NOT STAND LEAVES NOTHING BEHIND**: an entry `listen` wrote that `register` could not
