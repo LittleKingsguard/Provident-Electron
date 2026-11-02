@@ -140,9 +140,9 @@ every `tabs.onChanged`, and changes the record only through `tabs.commit(row)` a
   `exactly-one-active`: the five pairs are this module's and the boot's batch (D-65). Write outside `commit`/`remove` — no
   `put`, no file, no channel of its own — and never notify by writing: a listener runs in its own commit (`guide §6.5`), so an
   `onChanged` body that committed would be a second writer inside the one that fired it (D-71).
-- **OPEN — named, never minted here:** which id the landing entry carries once the two spellings meet (the renderer's reserved
-  `'landing'` and this record's `'tabs-landing-page'` are both live; no filed row decides); whether a user's existing
-  `file.tabs.*` rows in the tier-1 carrier are migrated once, dropped or dual-written; and who reads first at boot.
+- **DECIDED, AND NOT YET SPELLABLE HERE (D-75):** the landing ENTRY's id is the renderer's `'landing'`, while this record
+  still spells it `'tabs-landing-page'` — `landing` is also one of its two SEAT names in this same flat object, so an entry
+  under it is unrepresentable (measured). **No migration:** the carrier's rows are dropped, not moved. **OPEN:** boot order.
 
 ## 7. What this document does not decide
 

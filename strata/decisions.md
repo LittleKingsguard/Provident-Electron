@@ -1782,3 +1782,45 @@ And a bounded artifact wait **re-acquires only the ABSENCE class**: a content fa
   never reaches `contextBridge` still reds `A-4`, an artifact carrying `var import_meta = {}` reds `A-2`..`A-4`, and a stable
   unparseable one reds in 0.47 s with node's own SyntaxError — a row that retried a content fault could not fail, which is worth less
   than no row (the boundary rows are why these batteries exist, `D-27`).
+
+---
+
+## D-75 — The landing entry's id is `'landing'`, and this record cannot SPELL it yet: `landing` is one of its two SEATS
+
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's two decisions this pass carries, verbatim — *"The landing entry
+id is `'landing'`. The renderer's spelling wins; the crossing adopts it."* and *"There is no migration. No install holds tabs in the
+operator-settings carrier, so the old rows are dropped rather than migrated. Do not build a boot migration."* — plus the measurements below, 2026-11-02.
+
+**Decision:** both user decisions stand as taken, and the id they name is **not yet spelled by the record**: `'landing'` is the
+landing ENTRY's id, while `TABS_LANDING_ID` still reads `'tabs-landing-page'`, because the record's own family already spends that
+name on a different thing. **So the alignment is held rather than half-landed, and the reason is measured rather than argued.**
+
+- **THREE THINGS SHARE THESE LETTERS, ONLY THE FIRST IS THE ENTRY, AND THERE IS A FOURTH.** The **entry id** is `'landing'` by the
+  decision above — what `order` seats and what the minted row's `id` and `label` carry. The **authored page node** `'tabs-landing-page'`
+  does NOT move: `src/shared/demo-envelope.ts`'s `TABS_LANDING_PAGE_ID` is the node a client resolves through
+  `Runtime.elementForNodeId`. The **content target** stays `'tabs-landing-page'` too (`TAB_CONTENT_FALLBACK`), because a row's
+  `target` is the content it CONTAINS while its `id` is its IDENTITY, and `'landing'` names no authored node — a blank target
+  repaired to it would mint the unresolvable-target terminal the error page exists to show. **The fourth spelling is the `landing`
+  SEAT** (`['tabs','landing']`, L1 §1's second singleton, L2 §1's table), and it is the one that keeps the other three from mattering.
+- **WHY THE ENTRY CANNOT MOVE YET — MEASURED**, scratch profile with the five declarations batched, one fresh instance per arm. The
+  family keys one member per tab in the SAME flat object as its seats, so `composeRecord` writes the row at `landing` and then the seat
+  string over it: the construction write's own bytes read `{"landing":"landing","order":["landing"]}`, `read()` answers
+  `order: ['landing']` with `rows: []`, and the first `commit({id:'landing',…})` is refused `ConstraintPassRefused` — *"the pair
+  tabs#exactly-one-active violated a re-run and its repair had already been applied"*. **A healthy record is worse**: the same commit
+  answers `{status:'committed'}` and writes `{"landing":"landing","order":["tab-1","landing"], …}` with NO `landing` row member, so
+  `read()` names a landing row the record does not hold. **And the fix is not a rename**: a record carrying the landing ROW at that
+  key with no string seat passes all five pairs and reads `landing: 'tab-1'`, so the seat must be DERIVED rather than stored.
+- **"RESERVED" THEREFORE HAS NO COUNTERPART IN THE CROSSING YET — A HOLE THIS ROW NAMES RATHER THAN FILLS.** The renderer guards the
+  spelling twice: `mintTabId('landing')` answers `'reserved-spelling'`, and its store answers `remove('file.tabs.landing')`
+  `'reserved-name'`. The expectation this pass carried was that the crossing answers that same reservation with an UPDATE on `commit`
+  and the empty-sequence REPAIR on `remove`; **the measurement is that neither happens today** — the guards lose their counterpart to
+  a GAP and not by design, an entry id equal to either SEAT name (`order`, `landing`) being unrepresentable here with nothing at
+  either route refusing it. **No reserved flag and no new refusal were added** (a crossing design change this pass does not take):
+  the guard such a write needs is **REPORTED HERE AND BUILT NOWHERE**, and the repair is the answer once the seat is derived.
+- **NO MIGRATION, AND NOTHING WAS DROPPED.** No install holds these rows in the operator-settings carrier, so they are dropped rather
+  than migrated and no boot migration is built; this pass had nothing to drop either, since the rows are simply not read.
+- **CONSEQUENCE FOR THE RENDERER PASS, CORRECTED AGAINST WHAT THIS PASS EXPECTED.** The two records do **not** yet spell the entry the
+  same way, so the migration is an OWNERSHIP CHANGE **AND** the disposition of the `landing` seat — not an ownership change alone. Its
+  cheapest measured shape: derive the seat (`read()`'s `landing` member is already the fallback `landingOf` computes) and let
+  `['tabs','landing']` mean the landing entry's leaf, exactly as the renderer's `file.tabs.landing` does. **Only then does the entry
+  id move, and only then is the migration the ownership change this pass set out to hand over.**
