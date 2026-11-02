@@ -52,3 +52,7 @@ walkthrough, and a session's first act is the first row of `next-steps.md` rathe
   its vitest hooks. Check with `ps -eo pid,etime,args | grep -E 'node_modules/electron/dist|dist/main/main.mjs'` after a run: it must be empty. The
   battery's teardown now SIGKILLs a boot's whole tree by process-tree walk, never by SIGTERM (Electron's main process ignores it), and **proves zero**,
   failing loudly with every survivor listed; `reapProfile`'s old cmdline-only match could not see the two `--type=zygote` children at all (D-74).
+- **A snapshot of an artifact another worker may rebuild is not a reading.** `dist/` is co-owned: `boot-contract.test.ts`'s `beforeAll` runs
+  `npm run build` (whose first arm is `npm run clean`) while `arrangement.test.ts` reads the same files, so "it exists" is true one millisecond
+  and false the next. Every read of a co-owned artifact is a BOUNDED wait — present, non-empty, unchanged across two polls — and a failure is
+  awaited to its reason line rather than sampled, because a published error arrives in more than one stderr chunk (D-74).
