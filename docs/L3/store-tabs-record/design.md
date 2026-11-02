@@ -141,5 +141,5 @@ the member on a clean act. **No `cursor` member survives**: it named nothing the
   and only the bridge's.
 - **No renderer import.** `src/renderer/**` never imports these files — it reaches the record through `window.provident.tabs`
   and nothing else, which is the property that keeps the renderer a client (D-63).
-- **No second instance.** One construction site, one file, one constraint. A second `createTabsRecord` call anywhere is a
-  finding, not a convenience.
+- **No second record.** One construction site (`createTabsSurface`) and no file of this module's own (§2). A second
+  `createTabsRecord` call anywhere is a finding, not a convenience.
