@@ -21,7 +21,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
-import { createModuleStore, type ModuleStore } from '../src/main/module-store.js'
+// THE FIXTURE IS THE CROSSING'S, NOT A FILE'S (2026-11-02, D-78's second clause / D-81): the rows
+// arrive through `tests/module-registry-fixture.ts`, which builds the registry over
+// `createSettingsSurface` — the same surface `src/main/main.ts` reads and commits — because
+// `src/main/module-store.ts` and the `provident-modules.json` file it wrote are DELETED.
+import type { ModuleStore } from '../src/main/mcp-server.js'
+import { createModuleRegistry } from './module-registry-fixture.js'
 import { IPC_MODULE_GET, IPC_MODULE_SET_DISABLED } from '../src/shared/types.js'
 
 beforeAll(() => {
@@ -103,7 +108,7 @@ describe('window.provident.module.get — the module store status + modules (§6
   it('2. get() returns the store status + modules (corrupt/quarantined/loaded + name/version/capabilities/disabled/quarantined)', async () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'modules.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE, capabilities: { tools: ['module:capture.screenshot'] } })
       store.put({ name: 'embed', version: '0.2.0', source: SOURCE, capabilities: { hooks: ['after-render'] } })
       const bridge = fakeModuleBridge(store)
@@ -130,7 +135,7 @@ describe('SecurePanels — the module management pane (§4)', () => {
   it('3. the pane envelope renders a module-list node with per-module enable/disable toggles', async () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'modules.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE })
       const bridge = fakeModuleBridge(store)
       installModuleBridge(bridge)
@@ -149,7 +154,7 @@ describe('SecurePanels — the module management pane (§4)', () => {
   it('4. syncConfig writes the module list + quarantine status into the pane graph nodes', async () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'modules.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE })
       store.put({ name: 'embed', version: '0.2.0', source: SOURCE })
       const bridge = fakeModuleBridge(store)
@@ -173,7 +178,7 @@ describe('window.provident.module.setDisabled — enable/disable toggle (§4/M-r
   it('5. setDisabled(name, true) toggles a module disabled in the store (dropped from loaded)', async () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'modules.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE })
       const bridge = fakeModuleBridge(store)
       expect(store.status().loaded).toContain('capture')
@@ -190,7 +195,7 @@ describe('window.provident.module.setDisabled — enable/disable toggle (§4/M-r
   it('6. the real IPC bridge shape is wired (F1 adversarial fix) — the module bridge result matches the store', async () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'modules.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE })
       // The main-process IPC handler builds this exact shape from the store.
       const status = store.status()

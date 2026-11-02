@@ -64,16 +64,18 @@
 - **The in-process answer now equals the post-restart answer**: a member whose value is `undefined` is absent from the served row, because the record the store holds is the rows' JSON image (`ASM-L2-2`; `persistence.md` §3).
 - **The stated limit of this table, so no reader takes silence for coverage**: these nine cells are `main.ts`'s behaviours and `main.ts` imports `electron` at module scope, so no node-suite row can construct its surface. L1's e2e `S-12` drives them on a booted app, `RET-1` scans the file for the machinery they would have to use, and the L2 battery drives **the one act they issue** — the whole-map commit — through the declared surface (L1 §8 S-12; `examiner.md` §2).
 
-## 5. The Q-5 migration writes once, through the same verb
+## 5. The Q-5 migration — DELETED, and what the registry is now
+
+**The three drives this section carried are retired with their referent (`D-81`; D-78's second clause): there is no migration.** The user's ruling gave the module registry `D-75`'s disposition for the tabs rows — *"There is no migration … Do not build a boot migration"* — so the arm, `src/main/module-store.ts` and the `provident-modules.json` they read, projected and removed are gone, and the `file.modules.<id>` rows are the registry for the product's whole life. **What survives is the verb and its one rule**, driven where this unit always drove it:
 
 | Drive | Expected |
 |---|---|
-| a profile holding `provident-modules.json` with two registry records and a retired carrier with one `file.*` row | one `commit` of `{the carrier's row} ∪ {file.modules.<id> for each legacy record}`, then the legacy registry is removed as landed (L1 §3; the migration's `rmSync` of `provident-modules.json` in `src/main/main.ts`) |
-| the same, with no legacy registry | no commit at all: the migration's write happens only when it has records to land (L1 §3; the migration's conditional `commit` in `src/main/main.ts`) |
-| the same, with a legacy registry whose record carries `quarantined: undefined` | the record lands **without** that member (the JSON image drops it), and the commit commits — never a whole-value refusal (`ASM-L2-2`; `guide §10.2`) |
-| the migration's composition | carries **no** `schemaVersion`, and the `provident-modules.json` read and its post-boot removal are unmoved (L1 §3) |
+| a profile holding `provident-modules.json` with two registry records and a retired carrier with one `file.*` row | **nothing reads the legacy file**: no row is projected from it, the file is LEFT ON DISK unread, and the rows served are the carrier's own — `{the carrier's row}` and no `file.modules.<id>` at all |
+| a module installed through the surface (`put` → one `commit`) | the record lands as one `file.modules.<id>` row and stands across the next construction (`ASM-L2-2`) |
+| a record whose value carries a `null`/`undefined` member | the store's walk REFUSES it, answered by address and never silently dropped — the one hazard that survives the migration, because it was never the migration's |
+| the composition | carries **no** `schemaVersion`; the migration's conditional `commit` **has no site**, so there is no write whose order could lose a record the boot had read |
 
-- **The inherited hazard is named and not repaired here**: the legacy registry is removed whether or not the commit committed, exactly as landed; a store refusal therefore loses the legacy records it had read. It is owed to the parked module-registry pass (D-22), and this unit moves the write without changing that order (L1 §3; `A-7`).
+- **The inherited hazard is DISCHARGED BY DELETION, not repaired**: "the legacy registry is removed whether or not the commit committed" cannot happen any more — there is no removal and no commit, so nothing can be lost after having been read (`D-81`; the parked module-registry pass D-22 no longer inherits it).
 - **The stated limit here is §4's**: the four cells above are unimportable in a node test, so L1's e2e `S-10`/`S-12` carry them and the L2 battery drives the commit they issue (L1 §8; `examiner.md` §2).
 
 ## 6. Boot parity is proven by a second construction, never by a substring

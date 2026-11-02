@@ -3818,12 +3818,20 @@ describe('G-4 falsifiability — the declared rows RUN the leg\'s own predicates
       b: Array<Record<string, unknown>>,
       a: Array<Record<string, unknown>>,
     ) => { unchanged: boolean; diffs: string[] }
+    // **THE FIXTURE MIRRORS THE LEG'S OWN CENSUS, AND THE CENSUS MOVED (2026-11-02, `D-81`).** The
+    // operator-profile witness reads three names: the secure crossing's record, the retired carrier
+    // (read once at first boot, never written) and the normal crossing's `provident-profile.json`.
+    // `provident-modules.json` LEFT the list with the Q-5 arm — the app touches it at no site, so its
+    // presence or mtime can witness nothing, while the profile store's CAN (a boot that resolved
+    // against the real profile would create it). The fixture is kept in lockstep with the leg, which is
+    // the only thing that makes this row evidence about the leg rather than about a copy of it.
     const mk = (profile: string, present: boolean, mtimeMs: number | null, exists = true): Record<string, unknown> => ({
       profile,
       exists,
       files: {
         'provident-security.json': { present, mtimeMs, size: present ? 10 : null },
-        'provident-modules.json': { present: false, mtimeMs: null, size: null },
+        'provident-operator-settings.json': { present: false, mtimeMs: null, size: null },
+        'provident-profile.json': { present: false, mtimeMs: null, size: null },
       },
     })
     const before = [mk('/home/operator/.config/app', true, 1000)]

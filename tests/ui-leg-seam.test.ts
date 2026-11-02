@@ -17,8 +17,14 @@
 //     `ADD-3`) — which is RED today (the seam does not exist); and
 //   * a BEHAVIOURAL half over the landed stores (`createOperatorSettings`, whose
 //     instance owns the operator record under the `userDataDir` it is handed, and
-//     `createModuleStore`, which takes a `path`), which PASSES today and is the
-//     guard that the seam may not weaken what it sits above.
+//     `createProfileStore`, which takes a `filePath`), which PASSES today and is the
+//     guard that the seam may not weaken what it sits above. **`createModuleStore`
+//     STOOD HERE AS THE SECOND STORE UNTIL 2026-11-02**: it, `src/main/module-store.ts`
+//     and the `provident-modules.json` it wrote are DELETED with the Q-5 arm (`D-78`'s
+//     second clause, the user's ruling, `D-81`), so the second store the seam must
+//     precede is the boot's OWN — the normal crossing, `createProfileStore` at
+//     `src/main/main.ts:150`-class at `src/main/main.ts:150`-class, over `provident-profile.json`.
+//     The rows' claims are unmoved; their SECOND STORE is the one the product has.
 // Where a row's two halves differ in state, the halves are SEPARATE `it` rows
 // so the red set stays honest (a green guard is reported, never dressed as a
 // red).
@@ -32,18 +38,29 @@
 // `app.setPath('userData', …)` before `app.whenReady()` resolves, or the store
 // path derivations themselves stop being the landed literal defaults.
 import { describe, it, expect } from 'vitest'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { createOperatorSettings } from '../src/main/operator-settings/index.js'
-import { createModuleStore, type ModuleRecord } from '../src/main/module-store.js'
+// THE SECOND STORE THE SEAM MUST PRECEDE IS THE BOOT'S OWN (2026-11-02, `D-81`): the module store this
+// file used to import is deleted with the Q-5 arm, and what a boot opens now is `createProfileStore`
+// over `<userData>/provident-profile.json` — the normal crossing (`D-78`'s item (a)).
+import { createProfileStore } from '../src/main/storeroom.js'
+import { PROFILE_FILE_NAME } from '../src/main/data/store.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const MAIN_PATH = join(ROOT, 'src', 'main', 'main.ts')
 const LEG_PATH = join(ROOT, 'scripts', 'electron-ui.mjs')
 
 const MAIN_SRC = readFileSync(MAIN_PATH, 'utf8')
+/** **`main.ts` WITH ITS `//` LINES ELIDED (2026-11-02, `D-81`).** `SEAM-1a`'s new absence limb asserts
+ *  that the deleted module registry is named NOWHERE in the composition — and the composition carries a
+ *  comment where the arm stood that must NAME the file it says is no longer read. A bare `toMatch` on the
+ *  raw source cannot tell prose from a reader, so the absence limb reads the CODE while every other row
+ *  here keeps reading the raw file it always read. Same idiom as `tests/store-persist.test.ts`'s
+ *  `rendererCommentElided`/`mainCommentElided` (`G4-P2`) and `store-security.test.ts`'s `awaitMainCode`. */
+const MAIN_CODE = MAIN_SRC.split('\n').filter((line) => !line.trimStart().startsWith('//')).join('\n')
 const OPERATOR_SETTINGS_PATH = join(ROOT, 'src', 'main', 'operator-settings', 'index.ts')
 const OPERATOR_SETTINGS_SRC = readFileSync(OPERATOR_SETTINGS_PATH, 'utf8')
 const LEG_SRC: string | null = existsSync(LEG_PATH) ? readFileSync(LEG_PATH, 'utf8') : null
@@ -55,7 +72,11 @@ const LEG_ABSENT =
  *  The surface module owns the persisted-file names (§2 C-4), so this file spells no
  *  `provident-*.json` literal for the operator record. */
 const SETTINGS_CARRIER = "createSettingsSurface({ userDataDir: app.getPath('userData') })"
-const DEFAULT_MODULES_STORE_PATH = "join(app.getPath('userData'), 'provident-modules.json')"
+/* **THE SECOND LANDED DERIVATION IS THE PROFILE STORE'S (2026-11-02, `D-81`).** It was
+ * `join(app.getPath('userData'), 'provident-modules.json')` — the deleted module registry's path. The
+ * boot derives its ONE profile-store path the same way, from `PROFILE_FILE_NAME`, and that is what the
+ * absent case must keep. `main.ts` no longer spells the legacy name at all (not read, not removed). */
+const DEFAULT_PROFILE_STORE_PATH = "join(app.getPath('userData'), PROFILE_FILE_NAME)"
 
 /** §2 C-1 — the group set's SECOND LIVE COPY: six members, re-homed with the file at
  *  `src/main/operator-settings/index.ts:77` (the other live copy, `src/main/security.ts:159`, does
@@ -79,7 +100,9 @@ const SETPATH = /app\.setPath\(\s*['"]userData['"]/
 /** §4.2 `ADD-1` — the seam sits INSIDE `main()` and ABOVE the carrier's construction. */
 const MAIN_FN_AT = MAIN_SRC.search(/async function main\s*\(/)
 const SETTINGS_CARRIER_AT = MAIN_SRC.search(/createSettingsSurface\s*\(\s*\{/)
-const MODULES_STORE_AT = MAIN_SRC.search(/createModuleStore\s*\(/)
+/* The second store's construction site — `createProfileStore(...)` (2026-11-02, `D-81`; it was
+ * `createModuleStore(...)`, deleted with the Q-5 arm). */
+const PROFILE_STORE_AT = MAIN_SRC.search(/createProfileStore\s*\(/)
 
 /** Where the override is APPLIED, if anywhere (`-1` = no seam). `ADD-2` admits
  *  two routes, so this is a disjunction: (a) `app.setPath('userData', …)`, or
@@ -115,8 +138,18 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
     expect(MAIN_SRC, '§4.2 ADD-1: the landed settings carrier, on its `app.getPath(\'userData\')` derivation, must survive the seam').toContain(
       SETTINGS_CARRIER,
     )
-    expect(MAIN_SRC, '§4.2 ADD-1: the landed module-store path derivation must survive the seam').toContain(
-      DEFAULT_MODULES_STORE_PATH,
+    // ⟶ RE-DERIVED (`D-81`, 2026-11-02). OLD: the module store's path derivation
+    // (`join(app.getPath('userData'), 'provident-modules.json')`) had to survive the seam. NEW: that
+    // store and its file are deleted with the Q-5 arm, so the SECOND landed derivation this row keeps
+    // is the boot's own profile-store path — `join(app.getPath('userData'), PROFILE_FILE_NAME)` — which
+    // is the normal crossing the seam must sit above. **AND THE DELETED NAME'S ABSENCE IS ASSERTED
+    // HERE**, so the re-derivation closes in both directions: the survivor must stand, the dropped one
+    // must not be spelled (not read, not removed — the file is left on disk UNREAD).
+    expect(MAIN_SRC, '§4.2 ADD-1: the landed profile-store path derivation must survive the seam').toContain(
+      DEFAULT_PROFILE_STORE_PATH,
+    )
+    expect(MAIN_CODE, '§3.5 SEAM-1/`D-81`: the legacy module registry is dropped, not migrated — src/main/main.ts spells neither its path nor a removal for it').not.toMatch(
+      /provident-modules\.json|rmSync\s*\(/,
     )
     expect(MAIN_SRC, '§4.2 ADD-2: the argv-scan idiom the override reuses must be intact').toMatch(/function transportFromArgs\s*\(/)
     expect(MAIN_SRC, '§4.2 ADD-2: the argv-scan idiom the override reuses must be intact').toMatch(/function portFromArgs\s*\(/)
@@ -161,8 +194,10 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
   // States: S1 the override application exists at all (ADD-3); S2 it sits
   //   INSIDE `main()` (ADD-1: "the seam sits above line 49 in `main()`");
   //   S3 it precedes `createSettingsSurface(...)`; S4 it precedes
-  //   `createModuleStore(...)` (§3.5: "BOTH stores are created against the
-  //   overridden path").
+  //   `createProfileStore(...)` (§3.5: "BOTH stores are created against the
+  //   overridden path" — re-derived 2026-11-02, `D-81`: the second store was
+  //   `createModuleStore(...)` and is deleted with the Q-5 arm, so the second
+  //   store the seam must precede is the boot's own normal crossing).
   // Fail-states (§3.5 SEAM-2): a store created against the default path ⇒
   //   `R0`(c) fails and this row fails. Also ADD-3: `app.setPath('userData', …)`
   //   must be called BEFORE `app.whenReady()` resolves — satisfied structurally
@@ -174,7 +209,7 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
     expect(SEAM_AT, SEAM_APPLIED).toBeGreaterThanOrEqual(0)
     expect(MAIN_FN_AT, 'src/main/main.ts must still declare `async function main()` (ADD-1)').toBeGreaterThanOrEqual(0)
     expect(SETTINGS_CARRIER_AT, 'src/main/main.ts must still construct the settings carrier (ADD-1)').toBeGreaterThanOrEqual(0)
-    expect(MODULES_STORE_AT, 'src/main/main.ts must still construct the module store (ADD-1)').toBeGreaterThanOrEqual(0)
+    expect(PROFILE_STORE_AT, 'src/main/main.ts must still construct the boot\'s profile store (ADD-1; `D-81` — the module store that stood here is deleted)').toBeGreaterThanOrEqual(0)
     expect(
       SEAM_AT > MAIN_FN_AT,
       '§4.2 ADD-1: "the seam sits above line 49 in `main()`" — the override must be applied inside `main()`, not at module scope',
@@ -184,8 +219,8 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
       '§4.2 ADD-1: the override is honoured BEFORE `createSettingsSurface(...)` — the carrier the operator record is built behind',
     ).toBe(true)
     expect(
-      SEAM_AT < MODULES_STORE_AT,
-      '§3.5 SEAM-2: BOTH stores are created against the overridden path — the module store too',
+      SEAM_AT < PROFILE_STORE_AT,
+      '§3.5 SEAM-2: BOTH stores are created against the overridden path — the profile store too (`D-81`)',
     ).toBe(true)
   })
 
@@ -205,18 +240,25 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
   //   row is not re-pointed; the module half is the same claim over the store
   //   that still stands.
   // -------------------------------------------------------------------------
-  it('SEAM-2b (§3.5 SEAM-2) — a store handed the override path writes there and leaves the default profile alone (guard, passes today)', () => {
+  it('SEAM-2b (§3.5 SEAM-2) — a store handed the override path writes there and leaves the default profile alone (guard, passes today; re-derived 2026-11-02 to the boot\'s PROFILE store, `D-81`)', () => {
+    // ⟶ **RE-DERIVED, NOT WEAKENED (`D-81`).** AS FILED this drove `createModuleStore({ path })`, `put`
+    // and `list` over the override's `provident-modules.json`. That store is deleted and the file it
+    // wrote is dropped, so the drive moves to the store a boot actually opens against the override —
+    // the NORMAL CROSSING, `createProfileStore` over `<override>/provident-profile.json` — and the
+    // claim is kept WHOLE and driven harder: the construction CREATES the file at the override, a
+    // written row lands BYTES there (a construction-only file is zero-length, `D-80`'s measurement), and
+    // the default profile gains neither.
     const override = freshDir('override')
     const defaultProfile = freshDir('default')
     try {
-      const modPath = join(override, 'provident-modules.json')
-      const modStore = createModuleStore({ path: modPath })
-      modStore.put({ name: 'probe', version: '0.0.1', source: 'return 1' } as unknown as ModuleRecord)
-      expect(existsSync(modPath), '§3.5 SEAM-2: the module registry lands under the OVERRIDE').toBe(true)
-      expect(modStore.list().length, '§3.5 SEAM-2: the module store read from its own path').toBe(1)
+      const profilePath = join(override, PROFILE_FILE_NAME)
+      const store = createProfileStore({ filePath: profilePath })
+      expect(existsSync(profilePath), '§3.5 SEAM-2: the profile store lands under the OVERRIDE').toBe(true)
+      store.write(['probe'] as never, 'file', { at: 'override' })
+      expect(statSync(profilePath).size, '§3.5 SEAM-2: a row written through the store lands BYTES under the override (not merely a created, empty file)').toBeGreaterThan(0)
       expect(
-        existsSync(join(defaultProfile, 'provident-modules.json')),
-        '§3.5 SEAM-2/§3.0 R0(c): the default profile gains no module registry either',
+        existsSync(join(defaultProfile, PROFILE_FILE_NAME)),
+        '§3.5 SEAM-2/§3.0 R0(c): the default profile gains no store file either',
       ).toBe(false)
     } finally {
       rmSync(override, { recursive: true, force: true })
@@ -442,7 +484,8 @@ describe('G-4 falsifiability — the seam-side `R0`(c) witness is RUN, not count
       exists: true,
       files: {
         'provident-security.json': { present, mtimeMs, size: present ? 10 : null },
-        'provident-modules.json': { present: false, mtimeMs: null, size: null },
+        'provident-operator-settings.json': { present: false, mtimeMs: null, size: null },
+        'provident-profile.json': { present: false, mtimeMs: null, size: null },
       },
     },
   ]
@@ -481,7 +524,7 @@ describe('G-4 falsifiability — the seam-side `R0`(c) witness is RUN, not count
         {
           profile: '/home/operator/.config/app',
           exists: false,
-          files: { 'provident-security.json': { present: true, mtimeMs: 1000, size: 10 }, 'provident-modules.json': { present: false, mtimeMs: null, size: null } },
+          files: { 'provident-security.json': { present: true, mtimeMs: 1000, size: 10 }, 'provident-operator-settings.json': { present: false, mtimeMs: null, size: null }, 'provident-profile.json': { present: false, mtimeMs: null, size: null } },
         },
       ]).unchanged,
       '§3.0 R0(c): the operator directory itself vanishing/being created ⇒ NOT unchanged',

@@ -12,8 +12,12 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { CapabilityRouter, type ModuleCtx } from '../src/renderer/extensions.js'
-import { createModuleStore, type ModuleStore } from '../src/main/module-store.js'
-import { syncModuleRouter, handleModuleTool, ProvidentMcpServer, type McpBackend } from '../src/main/mcp-server.js'
+import { syncModuleRouter, handleModuleTool, ProvidentMcpServer, type McpBackend, type ModuleStore } from '../src/main/mcp-server.js'
+// THE FIXTURE IS THE CROSSING'S, NOT A FILE'S (2026-11-02, D-78's second clause / D-81): the rows
+// arrive through `tests/module-registry-fixture.ts`, which builds the registry over
+// `createSettingsSurface` — the same surface `src/main/main.ts` reads and commits — because
+// `src/main/module-store.ts` and the `provident-modules.json` file it wrote are DELETED.
+import { createModuleRegistry } from './module-registry-fixture.js'
 import { SecurityGate } from '../src/main/security.js'
 
 beforeAll(() => {
@@ -40,7 +44,7 @@ describe('U9-FIX — the store→router→MCP dynamic-tool chain (integration)',
   it('1. syncModuleRouter registers an installed module declared tools into the router', () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'm.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE, capabilities: { tools: ['module:capture.screenshot'] } })
       const router = new CapabilityRouter()
       syncModuleRouter(router, store)
@@ -53,7 +57,7 @@ describe('U9-FIX — the store→router→MCP dynamic-tool chain (integration)',
   it('2. after module.install, the router is re-synced so the new module tool is callable (the critical gap fix)', () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'm.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       const router = new CapabilityRouter()
       // initial sync (no modules yet)
       syncModuleRouter(router, store)
@@ -77,7 +81,7 @@ describe('U9-FIX — the store→router→MCP dynamic-tool chain (integration)',
   it('3. a server built with a router lists + can invoke a synced module tool (full chain)', () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'm.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE, capabilities: { tools: ['module:capture.screenshot'] } })
       const router = new CapabilityRouter()
       syncModuleRouter(router, store)
@@ -98,7 +102,7 @@ describe('U9-FIX — the store→router→MCP dynamic-tool chain (integration)',
   it('4. a disabled module is NOT registered into the router (tools not callable)', () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'm.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE, capabilities: { tools: ['module:capture.screenshot'] } })
       store.setDisabled('capture', true)
       const router = new CapabilityRouter()
@@ -112,7 +116,7 @@ describe('U9-FIX — the store→router→MCP dynamic-tool chain (integration)',
   it('5. disabling code re-gates the dynamic module:<name>.<tool> tools (re-gate colon fix, #4)', () => {
     const dir = freshDir()
     try {
-      const store: ModuleStore = createModuleStore({ path: join(dir, 'm.json') })
+      const store: ModuleStore = createModuleRegistry(dir)
       store.put({ name: 'capture', version: '1.0.0', source: SOURCE, capabilities: { tools: ['module:capture.screenshot'] } })
       const router = new CapabilityRouter()
       syncModuleRouter(router, store)

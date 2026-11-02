@@ -140,9 +140,9 @@ function rowsWith(rows: readonly AppStateRow[], key: string, value: unknown): Ap
 (row: { name?: unknown; value?: unknown }) => { status: 'committed' } | { status: 'refused'; reason: string }
 ```
 
-- **`rowsWith` is this file's one new local** and carries the replace-or-append rule; `modulePayloadWith` is its one caller for a single record and the Q-5 migration threads it over its own list (design.md §4; interface §6).
+- **`rowsWith` is this file's one new local** and carries the replace-or-append rule; `modulePayloadWith` is its one caller — **and the Q-5 migration, which once threaded it over its own list, is DELETED (`D-81`)**, so that is the only list it is threaded over (design.md §4; interface §6).
 - **No handler is added, renamed or unregistered**: the seven `ipcMain.handle` sites and the three `ipcMain.on` sites keep their names and their argument positions (L1 §2; D-18).
-- **`rmSync` and the two paths are the only filesystem names left** — `legacyModulesPath` and the Q-5 removal stand, `settingsPath` does not exist — and **no value is exported**: `main.ts` exports nothing today and nothing after, so its map row's `N` stands at 7 (L1 §3; behaviour §8 `RET-1`; `platform.md` §4; L1 §2).
+- **No filesystem name is left at all** — `legacyModulesPath`, the Q-5 removal and its `rmSync` are **DELETED at this head** with `src/main/module-store.ts` (`D-81`; the file is dropped, not migrated, and an existing one is left on disk UNREAD), so `main.ts` imports nothing from `node:fs`, and **no value is exported**: `main.ts` exports nothing today and nothing after, so its map row's `N` stands at 7 (L1 §3; behaviour §8 `RET-1`; `platform.md` §4; L1 §2).
 - **The two `node:` import lines and the `here` derivation are E-2's and this unit edits none of them**: `dirname`'s one caller is that derivation, so no helper bound in this file is evidence about the retired writer in either direction (`docs/L1/bundle-boot-seam.md` §8 E-2; L1 §9 E-1).
 
 ## 7. What none of the three declares

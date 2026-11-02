@@ -312,6 +312,14 @@ const FORBIDDEN_SECURITY_KEYS = ['exclusion', 'write', 'schemaVersion']
 // **⟶ TWO, AND STILL TWO (2026-10-30, D-64/D-65):** the tab record rides the app's CENTRAL store, at its `['tabs']`
 // addresses inside `provident-profile.json`, so it creates no third name. The third-instance reading that briefly stood
 // here is superseded.
+// **⟶ AND THE CENSUS OWES NOTHING TO `provident-modules.json` (2026-11-02, `D-81`).** The module
+// registry's legacy file — the Q-5 arm's `provident-modules.json` — is DROPPED, not migrated: the arm and
+// `src/main/module-store.ts` are deleted, and the app neither reads, writes nor removes that name. **So it
+// needs NO ENTRY, in EITHER list** — not as a WRITTEN name (nothing writes it) and not as a SEEDED-RETIRED
+// name (nothing reads it as a seed either, which is what that list means: a name the boot reads once and
+// must never rewrite). A scratch profile this battery seeds can never carry it, so no reading below sees
+// it, and were one to appear it would be an UNDECLARED name — which `SC-B-01` already reddens on. Adding
+// it to either list would declare a claim about a name the product no longer has any relation to.
 const DECLARED_WRITTEN_JSON = ['provident-operator-settings.json', 'provident-profile.json']
 const DECLARED_SEEDED_RETIRED_JSON = ['provident-security.json', 'provident-settings.json']
 const DECLARED_PERSISTED_JSON = [...DECLARED_WRITTEN_JSON, ...DECLARED_SEEDED_RETIRED_JSON]

@@ -20,6 +20,7 @@
         "tests/mcp-server-gate.test.ts",
         "tests/blind-security-gate.test.ts",
         "tests/module-security-gate.test.ts",
+        "tests/module-registry-fixture.ts",
         "tests/module-tools.test.ts",
         "tests/journal-endpoint.test.ts",
         "tests/blind-battery-verify.test.ts",
@@ -55,7 +56,6 @@
       "name": "operator-settings",
       "paths": [
         "src/main/operator-settings/",
-        "src/main/module-store.ts",
         "src/main/tier4-state.ts",
         "tests/unit/security-store-storeroom/",
         "tests/integration/security-store-storeroom/",
@@ -63,7 +63,6 @@
         "tests/unit/settings-carrier-retirement/",
         "tests/integration/settings-carrier-retirement/",
         "tests/e2e/settings-carrier-retirement/",
-        "tests/module-store.test.ts",
         "tests/store-security.test.ts",
         "tests/tier4-arbitrary-storage.test.ts",
         "tests/secure-exclusion.test.ts",

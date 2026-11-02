@@ -14,7 +14,15 @@ import {z} from 'zod'
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
 import type {RpcRequest, RpcReply, DispatchRequest} from '../shared/types.js'
 import {SecurityGate, exclusionAllowsWork, type ToolGroup, moduleToolAllowed} from './security.js'
-import type {ModuleStore} from './module-store.js'
+// **THE MODULE REGISTRY'S INTERFACE LIVES HERE NOW (D-81, 2026-11-02).** It stood in `module-store.ts`
+// — the raw-`fs` registry module, deleted with the Q-5 arm that was its only reader (`D-78`'s second
+// clause, the user's ruling). What survives of that module is the three INTERFACES below and nothing
+// else: no `node:fs`, no construction, no file, and no file NAME — **the literal is deliberately not
+// spelled in this file**, which the MCP closure reaches and whose byte census allows exactly one
+// foreign name; the composition root's own comment names the dropped file once, and `D-81` records the
+// disposition. They are declared here because this file is the module tools' surface —
+// `handleModuleTool`, `syncModuleRouter` and `ProvidentMcpServerOptions.moduleStore` are the three
+// consumers — and the composition root imports them back from here rather than the reverse.
 import type {CapabilityRouter} from '../renderer/extensions.js'
 // central-data — the module's OWN surface, supplied at the composition site. The server never
 // constructs it: the profile's directory is not a server's to derive (`interface.md` §5; D-13).
@@ -198,9 +206,57 @@ function keyAllowed(key: string): boolean {
   return DECLARED_ARGUMENTS.includes(key)
 }
 
-/** U3 — handle a `module.*` tool in MAIN (the persisted node:fs store). The
- *  module tools are NOT routed to the renderer (the store is main-process).
- *  Exported for direct unit testing. */
+/* ═════════════ THE MODULE REGISTRY'S INTERFACE — ALL THAT IS LEFT OF `module-store.ts` ═════════════
+ *
+ * The registry module (207 lines) was DELETED on 2026-11-02 with the Q-5 arm that read it (`D-78`'s
+ * second clause; `D-81`). The FILE it persisted is dropped, not migrated, and an existing one is left
+ * on disk UNREAD — its name is written once, in the composition's own comment where the arm stood, and
+ * is NOT spelled here (the MCP closure's literal census, ISO-6). These three interfaces are the part
+ * that was never the file: the shape of a record, its status answer and the six verbs. The one
+ * implementation the product has is `src/main/main.ts`'s object literal over the secure crossing's
+ * `file.modules.<id>` rows, so a reader of these types is reading the ROWS' contract, not a legacy
+ * file's. `tests/module-registry-fixture.ts` is the same shape built over the surface for the node
+ * suite, and it is a FIXTURE, never a second store in `src/`. */
+export interface ModuleRecord {
+  name: string
+  version: string
+  source: string
+  /** SHA-256 of `source` — ALWAYS derived at put(), never trusted from input. */
+  hash: string
+  capabilities?: { tools?: string[]; hooks?: string[]; transforms?: string[] }
+  installedAt?: string
+  /** U2 — the record persists the flag; enable/disable toggles it. */
+  disabled?: boolean
+  /** Set at boot if hash verification fails. NOT loaded/active. */
+  quarantined?: boolean
+}
+
+export interface ModuleStoreStatus {
+  /** The imported record's diagnosis was corrupt, or the tier is unreachable → NO modules loaded
+   *  (fail-disabled). `src/main/main.ts` composes this from the settings surface's OWN answer. */
+  corrupt: boolean
+  /** Names quarantined on this boot (hash verification failed). */
+  quarantined: string[]
+  /** Names active (not disabled, not quarantined). */
+  loaded: string[]
+}
+
+export interface ModuleStore {
+  get(name: string): ModuleRecord | undefined
+  list(): ModuleRecord[]
+  status(): ModuleStoreStatus
+  /** Install/update a module. Computes `hash` from `source` (never trusts input). */
+  put(record: Omit<ModuleRecord, 'hash'> & { hash?: string }): ModuleRecord
+  /** Remove a module. Returns true if it existed. */
+  remove(name: string): boolean
+  /** Toggle a module's disabled flag (disabled modules are NOT loaded). */
+  setDisabled(name: string, disabled: boolean): void
+}
+
+/** U3 — handle a `module.*` tool in MAIN (the registry the composition hands this server: the
+ *  secure crossing's `file.modules.<id>` rows — the legacy store and its `put`/`remove`/`setDisabled`
+ *  FILE writers are deleted, `D-81`). The module tools are NOT routed to the renderer. Exported for
+ *  direct unit testing. */
 export function handleModuleTool(store: ModuleStore | null, name: string, args: Record<string, unknown>): unknown {
   if (!store) throw new Error(`${name}: no module store configured`)
   const nameArg = typeof args.name === 'string' ? args.name : ''
@@ -258,8 +314,8 @@ export function handleModuleTool(store: ModuleStore | null, name: string, args: 
   throw new Error(`unknown module tool: ${name}`)
 }
 
-/** U9-FIX — re-sync the CapabilityRouter from the persisted module store. The
- *  store is the source of truth (persisted, fail-disabled/hash-verified); the
+/** U9-FIX — re-sync the CapabilityRouter from the module registry. The
+ *  registry is the source of truth (the crossing's rows, fail-disabled/hash-verified); the
  *  router is the LIVE capability surface. Each installed, non-disabled,
  *  non-quarantined module's declared capabilities are registered into the router
  *  so its dynamic `module:<name>.<tool>` tools become callable. Disabled and

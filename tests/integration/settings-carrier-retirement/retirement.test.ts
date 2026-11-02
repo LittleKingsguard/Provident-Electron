@@ -74,6 +74,17 @@ const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const REPO = new URL('../../../', import.meta.url)
 
 const sourceOf = (relative: string): string => readFileSync(new URL(relative, REPO), 'utf8')
+
+/** **`src/main/main.ts` WITH ITS `//` LINES ELIDED (2026-11-02, `D-81`).** `RET-1` asserts that the
+ *  deleted Q-5 arm's verbs and its file NAME are absent from the composition, and the composition
+ *  carries a comment where the arm stood that must name them in order to explain the absence. A bare
+ *  `includes` cannot tell prose from a reader — and reading the raw file would keep the row green on
+ *  the comment alone, the hollow-green class `G4-P2` named. Same idiom as `tests/store-persist.test.ts`'s
+ *  `rendererCommentElided`/`mainCommentElided` (`:935`) and `store-security.test.ts`'s `awaitMainCode`. */
+const MAIN_CODE = sourceOf('src/main/main.ts')
+  .split('\n')
+  .filter((line) => !line.trimStart().startsWith('//'))
+  .join('\n')
 const textOf = (absolute: string): string => readFileSync(absolute, 'utf8')
 const rel = (absolute: string): string => absolute.slice(SRC_DIR.length + 1).split('\\').join('/')
 
@@ -168,17 +179,20 @@ describe('settings-carrier-retirement · the retirement’s absences, the census
     // instance's shape carries none (L1 §3/§4; D-13).
     expect(main.includes('schemaVersion'), 'the retired record’s `schemaVersion` stamp retires with its record, and no member of this unit composes one (L1 §3; D-13)').toBe(false)
 
-    // THE SIX FS VERBS the stage-and-rename writer used. `rmSync` STAYS for the Q-5 removal, so it may
-    // not be asserted absent; the record's reader took `readFileSync` AND `existsSync` with it (L1 §3
-    // `:7`), and the Q-5 legacy-registry probe goes too — `createModuleStore(...).list()` answers a
-    // missing file as an empty registry with no throw, so the probe discriminated nothing (L3
-    // `design.md` §4 `:6`/`:7`, §6 `ASM-6`; `src/main/module-store.ts` `load`).
-    for (const verb of ['writeFileSync', 'renameSync', 'fsyncSync', 'openSync', 'closeSync', 'mkdirSync']) {
-      expect(main.includes(verb), `\`${verb}\` was the retired writer's machinery and has no successor in src/main/main.ts (L1 §3; persistence.md §5)`).toBe(false)
+    // THE SIX FS VERBS the stage-and-rename writer used. **⟶ `rmSync` IS NOW ABSENT TOO (2026-11-02,
+    // `D-81`)**: this limb read `expect(main.includes('rmSync')).toBe(true)` — the Q-5 legacy-registry
+    // removal — and the arm it belonged to is DELETED (the registry's legacy file is dropped, not
+    // migrated; the user's ruling), so `main.ts` holds no `node:fs` name at all. **AND THE LIMB IS READ
+    // OFF THE CODE, NOT THE PROSE**: the composition carries a comment where the arm stood that names
+    // `rmSync`, so a bare `includes` would have kept this row green on the comment alone — the
+    // hollow-green class `G4-P2` named. `MAIN_CODE` elides the comment lines; the record's reader took
+    // `readFileSync` AND `existsSync` with it (L1 §3 `:7`), and the Q-5 probe with them.
+    for (const verb of ['writeFileSync', 'renameSync', 'fsyncSync', 'openSync', 'closeSync', 'mkdirSync', 'rmSync']) {
+      expect(MAIN_CODE.includes(verb), `\`${verb}\` was the retired writer's or the deleted Q-5 removal's machinery and has no successor in src/main/main.ts (L1 §3; persistence.md §5; D-81)`).toBe(false)
     }
-    expect(main.includes('rmSync'), 'the Q-5 legacy-registry removal keeps its `rmSync` (L1 §3)').toBe(true)
     expect(/readFileSync\s*\(/.test(main), 'the carrier\'s own reader goes with the writer, and main.ts reads no file of its own (L1 §3 `:7`; persistence.md §5)').toBe(false)
-    expect(main.includes('existsSync'), 'and the legacy registry\'s existence probe retires with it: `createModuleStore(...).list()` already answers a missing file as an empty registry, so the probe discriminated nothing and keeping it would leave a reader named in `:7`\'s removal row standing (L3 design.md §4, §6 ASM-6)').toBe(false)
+    expect(main.includes('existsSync'), 'and the legacy registry\'s existence probe retires with it — and so does the registry itself: its store, its read and its removal are DELETED (D-81), so no probe could discriminate anything (L3 design.md §4, §6 ASM-6)').toBe(false)
+    expect(MAIN_CODE.includes('provident-modules.json'), 'and the name is not read, not written and not removed: an existing `provident-modules.json` is left on disk UNREAD (D-81)').toBe(false)
 
     // THE LIMIT, STATED: a path assembled at run time from pieces never appears as a literal, so a byte
     // scan cannot see one. What this row CAN see — and what it asserts — is that no literal spelling of

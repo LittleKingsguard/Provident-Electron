@@ -69,7 +69,7 @@
 - **`provident-security.json`** — the sibling's retired name, read **at most once per boot** by the sibling's arm; this unit adds no reader and no writer (D-19; sibling §1).
 - **The store's own file image** — never produced, parsed or repaired by this unit: the records are read through the declared verbs, and the two addresses are two keys of an image whose shape is the store's (sibling §4; `guide §9.1`).
 - **No second store and no second `filePath`**: one instance, constructed once by the surface, for the process's life (D-18; sibling §8).
-- **`provident-modules.json`** — the Q-5 legacy registry, read by `module-store.ts` and removed post-boot; not this unit's file and not retired here (L1 §3; D-22).
+- **`provident-modules.json`** — the Q-5 legacy registry. It was read by `module-store.ts` and removed post-boot and is **deleted with both at this head**: the file is DROPPED, not migrated — the user's ruling gives the module registry `D-75`'s disposition for the tabs rows — so nothing reads, writes or removes it and an existing one is left on disk UNREAD (`D-78`'s second clause; `D-81`; L1 §3).
 
 ## 8. Findings — this unit's own D-5 filing, and what is owed to the tree
 

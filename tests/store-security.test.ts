@@ -83,7 +83,8 @@
  * sequence and the `schemaVersion` stamp live and where §6's retirement rule bites).
  *   RE-GRAINED (1) · "F-7/F-10/I-2/I-3" — the carrier's `provident-settings.json`
  *   LEFT `main.ts` with the writer, so the userData literal census falls to
- *   `['provident-modules.json']` ALONE (L1 §3's closed removal list), the instance
+ *   `[]` ALONE — from `['provident-modules.json']`, which `D-81` then emptied (L1 §3's closed removal
+ *   list; the Q-5 arm deleted, its legacy file DROPPED, not migrated) — the instance
  *   module's `readFileSync` count moves ONE → TWO (the security record's import read
  *   plus the carrier's, still with no write, rename or remove call anywhere), and
  *   the "spell neither record name" and "the retired name is declared once" limbs are
@@ -129,6 +130,18 @@ let cachedMainSrc: string | null = null
 async function awaitMainSource(): Promise<string> {
   if (cachedMainSrc === null) cachedMainSrc = await sourceOf(['main', 'main.ts'])
   return cachedMainSrc
+}
+/** **`main.ts` WITH ITS `//` LINES ELIDED (2026-11-02, `D-81`).** The userData-literal census below is
+ *  a claim about the CODE, and the tree deliberately carries a long comment where the deleted Q-5 arm
+ *  stood — a comment that must NAME the file it says is no longer read. A bare regex over the raw
+ *  source cannot tell prose from a reader, so the census reads the code and the `left on disk UNREAD`
+ *  witness reads the comment. This is `tests/store-persist.test.ts`'s `rendererCommentElided`/`mainCommentElided`
+ *  idiom (`G4-P2`), used for the same reason: an observable must observe the thing it claims. */
+async function awaitMainCode(): Promise<string> {
+  return (await awaitMainSource())
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('//'))
+    .join('\n')
 }
 let cachedSurfaceSrc: string | null = null
 async function surfaceSource(): Promise<string> {
@@ -549,7 +562,8 @@ describe('G3 §2.6 THE INVISIBILITY CENSUS (honest: the current surface is clean
 describe('G3 §3.2 fail-states and §3.3 invariants', () => {
   it('F-7/F-10/I-2/I-3: the write-site census — EXACTLY the declared persisted files, the record file\'s single writer, no third file (RE-GRAINED 2026-10-29: `C-4` moved the persisted-file names; then `E-5`, the carrier\'s literal leaves `main.ts` and the read count becomes two)', async () => {
     const mainSrc = await awaitMainSource()
-    const userDataFiles = [...mainSrc.matchAll(/join\(app\.getPath\('userData'\), '([a-z-]+\.json)'\)/g)].map((m) => m[1]).sort()
+    const mainCode = await awaitMainCode()
+    const userDataFiles = [...mainCode.matchAll(/join\(app\.getPath\('userData'\), '([a-z-]+\.json)'\)/g)].map((m) => m[1]).sort()
     // **THE RE-GRAIN, OLD → NEW.** AS FILED the census read
     // `['provident-modules.json', 'provident-security.json', 'provident-settings.json']`
     // from `main.ts` — the security file's name among them, written by the retired module.
@@ -557,6 +571,12 @@ describe('G3 §3.2 fail-states and §3.3 invariants', () => {
     // import-once path and NEVER written) and ADDED `provident-operator-settings.json`,
     // whose two names belong to the INSTANCE module (main.ts spells neither: it
     // constructs no store and owns no record file name).
+    // **⟶ AND `D-81` MOVES THE LAST ONE OUT (2026-11-02).** The Q-5 arm's `legacyModulesPath` was the
+    // ONE remaining literal; the arm, `src/main/module-store.ts` and the file are dropped, not
+    // migrated (D-78's second clause, the user's ruling), so `main.ts` spells **no `provident-*.json`
+    // literal at all** and the row below reads `[]`. **THE ROW IS RE-DERIVED, NEVER DELETED** — it is
+    // the witness that this name is no longer written, and an empty census is a stronger statement
+    // than a one-name one: a SECOND literal anywhere reddens, and so does this one coming back.
     // **`E-5` (this re-grain, `settings-carrier-retirement`) MOVES THE SECOND NAME OUT TOO.**
     // AS RE-GRAINED UNDER `C-4` the census still read TWO literals from `main.ts` —
     // `['provident-modules.json', 'provident-settings.json']` — because
@@ -569,8 +589,17 @@ describe('G3 §3.2 fail-states and §3.3 invariants', () => {
     // facts below rather than by a literal count: `main.ts` spells no record name at all,
     // and the instance module makes TWO import-once reads and no write (L1 §6; L2
     // `behaviour.md` §8 `RET-2`/`RET-3`; `persistence.md`:43).
-    expect(userDataFiles, 'I-2 / `E-5` — main.ts\'s ONE userData file literal is the legacy `provident-modules.json`, read once and never written; every record name lives in the INSTANCE module, and a SECOND literal here still reddens (L1 §3/§6)').toEqual(['provident-modules.json'])
-    expect(/never WRITTEN by this boot/.test(mainSrc), 'the legacy provident-modules.json is declared never-written — so the persisted Tier-1 set stays the exactly-two').toBe(true)
+    // **OLD → NEW (`D-81`).** OLD: `toEqual(['provident-modules.json'])` — main.ts's one userData
+    // literal, the Q-5 legacy registry, "read once and never written". NEW: `toEqual([])` — the
+    // literal is gone with the arm that named it, so the file census over `main.ts` is EMPTY and the
+    // persisted set is the instance module's two names alone. **The row is not deleted**: it is the
+    // witness that this name is no longer written, and it now also witnesses that the app no longer
+    // LOOKS for it. A first literal of any kind reddens it.
+    expect(userDataFiles, 'I-2 / `D-81` — main.ts spells NO userData `provident-*.json` literal: the last one was the legacy `provident-modules.json` of the deleted Q-5 arm, and a reappearing literal reddens here (L1 §3/§6)').toEqual([])
+    // THE DISPOSITION, PINNED WHERE THE CODE STATES IT: the arm's replacement is a comment saying the
+    // file is left on disk UNREAD. That sentence is the whole reason the absence is not an oversight,
+    // so it is the witness this row takes — deleting the comment reddens the row.
+    expect(/THE BOOT LEAVES IT ON DISK/.test(mainSrc) && /UNREAD/.test(mainSrc), '`D-81` — and the absence is EXPLAINED where the arm stood: an existing `provident-modules.json` IS NOT DELETED, the boot leaves it on disk UNREAD').toBe(true)
     // THE ABSENCE LIMB, EXTENDED TO THE SECOND RETIRED NAME (`E-5`): `main.ts` spelled
     // `provident-settings.json` while the carrier was its own; it spells no record name now —
     // neither the added one, nor the security record's, nor the carrier's retired name.

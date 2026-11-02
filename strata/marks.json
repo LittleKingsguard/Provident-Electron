@@ -3,8 +3,8 @@
   "instrument": "scripts/strata-marks.mjs",
   "suites": {
     "flat": {
-      "files": 88,
-      "sites": 2577
+      "files": 87,
+      "sites": 2565
     },
     "e2e": {
       "files": 5,
@@ -417,12 +417,6 @@
       "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
     },
     {
-      "file": "tests/module-store.test.ts",
-      "scope": "file",
-      "kind": "rework",
-      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
-    },
-    {
       "file": "tests/module-tools.test.ts",
       "scope": "file",
       "kind": "rework",
@@ -751,8 +745,8 @@
       "sites": 110
     },
     "onNotice": {
-      "files": 112,
-      "sites": 2758
+      "files": 111,
+      "sites": 2746
     },
     "retained": {
       "files": 5,

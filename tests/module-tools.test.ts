@@ -20,8 +20,12 @@ import { join } from 'node:path'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { Runtime } from '../src/renderer/runtime.js'
-import { ProvidentMcpServer, handleModuleTool, type McpBackend } from '../src/main/mcp-server.js'
-import { createModuleStore, type ModuleStore } from '../src/main/module-store.js'
+import { ProvidentMcpServer, handleModuleTool, type McpBackend, type ModuleStore } from '../src/main/mcp-server.js'
+// THE FIXTURE IS THE CROSSING'S, NOT A FILE'S (2026-11-02, D-78's second clause / D-81): the rows
+// arrive through `tests/module-registry-fixture.ts`, which builds the registry over
+// `createSettingsSurface` — the same surface `src/main/main.ts` reads and commits — because
+// `src/main/module-store.ts` and the `provident-modules.json` file it wrote are DELETED.
+import { createModuleRegistry } from './module-registry-fixture.js'
 import { SecurityGate } from '../src/main/security.js'
 import type { ModuleManifest } from '../src/shared/types.js'
 
@@ -41,10 +45,11 @@ function rmSyncSafe(dir: string): void {
   }
 }
 
-/** A main-process module store in a throwaway temp dir. */
+/** The module registry over a throwaway temp profile — the crossing's rows, at the shape
+ *  `src/main/main.ts` composes them (`tests/module-registry-fixture.ts`). */
 function storeWithDir(): { store: ModuleStore; dir: string } {
   const dir = freshDir()
-  return { store: createModuleStore({ path: join(dir, 'modules.json') }), dir }
+  return { store: createModuleRegistry(dir), dir }
 }
 
 const SOURCE = `export const greeting = () => 'hello from the module'`

@@ -26,7 +26,7 @@ The unit's batteries are claimed by `operator-settings` — `tests/integration/s
 
 | Site | What it is |
 |---|---|
-| `:7` | the `node:fs` write half (`writeFileSync`, `renameSync`, `mkdirSync`, `openSync`, `closeSync`, `fsyncSync`) and the record's reader (`existsSync`, `readFileSync`); `rmSync` stays for the Q-5 removal, `dirname` leaves with the writer |
+| `:7` | the `node:fs` write half (`writeFileSync`, `renameSync`, `mkdirSync`, `openSync`, `closeSync`, `fsyncSync`) and the record's reader (`existsSync`, `readFileSync`); `rmSync` stayed then for the Q-5 removal and **has since left with that arm too** — `main.ts` imports NOTHING from `node:fs` at this head (`D-81`) — while `dirname` left with the writer |
 | `:123` | `const settingsPath` — the carrier's path |
 | `:129`, `:132` | `bootRecord`, `settingsCorrupt` — the third holder and its corrupt flag |
 | `:134-164` | `readSettingsRecord()`, the boot read that calls it, and the two assignments it makes |
@@ -35,7 +35,7 @@ The unit's batteries are claimed by `operator-settings` — `tests/integration/s
 | `:366` | the `schemaVersion` stamp |
 | `:373-398` | `commitSettingsWrite()` whole — the tmp+rename+fsync writer, `:384-390` its five fs calls |
 
-**No other site in `src/**` reads or writes that path, and each is named so no reader takes silence for a move**: `src/main/store-channels.ts` (two channel-name constants), `src/main/preload.ts:135,138` (two `invoke`s), `src/main/security.ts` and `src/main/tier4-state.ts` (no file edge at all), `src/main/module-store.ts` (its own `path`; main.ts uses it for the Q-5 *legacy* read only), `src/renderer/**` (`bridge.store.get/put`, a consumer that never touches a path).
+**No other site in `src/**` reads or writes that path, and each is named so no reader takes silence for a move**: `src/main/store-channels.ts` (two channel-name constants), `src/main/preload.ts:135,138` (two `invoke`s), `src/main/security.ts` and `src/main/tier4-state.ts` (no file edge at all), `src/main/module-store.ts` (its own `path`; main.ts used it for the Q-5 *legacy* read only — **and both the file and that read are DELETED at this head: the registry's legacy file is dropped, not migrated, and `main.ts` spells no `provident-*.json` literal at all (`D-78`'s second clause, `D-81`)**), `src/renderer/**` (`bridge.store.get/put`, a consumer that never touches a path).
 
 **What replaces each read** — one reading of the instance's durable app-state record, served through the surface, with the shape each caller already expects unchanged:
 
@@ -52,7 +52,7 @@ The unit's batteries are claimed by `operator-settings` — `tests/integration/s
 |---|---|
 | Y-2 `STORE_FILE_PUT` (the projection of every `file.*` key) | one write of the whole rows list — an **ordered** `{name,value}[]`, because the package does not preserve object member order across the crossing (measured by L2 as finding `P-2`); the answer stays `{status:'committed'}` or a `refused` receipt whose `reason` is **the store's own status verbatim**, `'malformed-payload'` remaining the channel's pre-write refusal (ASM-2) |
 | `moduleSurface.put/remove/setDisabled` | the same members composing a new rows map and issuing that same one write |
-| the Q-5 migration's one atomic write | the same one write; the `provident-modules.json` read and its post-boot removal are unmoved |
+| the Q-5 migration's one atomic write | the same one write. **The migration itself is GONE (`D-81`): the module registry's legacy file is dropped, not migrated** — the user's ruling gives it D-75's disposition for the tabs rows — so there is no read and no post-boot removal; an existing such file is left on disk, UNREAD, and the `file.modules.<id>` rows are the registry for the product's whole life |
 
 **The address — ASM-1.** The rows live at `['operator-app-state']` on the `file` tier, beside `['operator-settings']` and not inside that record's `entries`: a `file`-tier write purges only at its own key (measured, `docs/L1/security-store-storeroom.md` §10 ASM-1), so the separation is structural, and the record the token lives in never appears in a value the module tools' path composes (D-18).
 
@@ -79,7 +79,7 @@ Parity is **the next process, not a substring**: a second `createSettingsSurface
 | Row | Reads three as | Becomes |
 |---|---|---|
 | `tests/store-compliance-live.mjs:282-306` (`DECLARED_PERSISTED_JSON`), `:1059-1061` (`SC-B-01`), `:1066-1090` (`SC-B-03`), `:2231` (`SC-A-06`), `:277-287,622,1797,2108` | the three-member declared set; "the settings file does not move"; "lands in `provident-settings.json`" | the two written names with the seeded retired names declared beside them; a seeded retired name's bytes stand, and a tier-1 commit moves the app-state record |
-| `tests/store-security.test.ts:529-555` (`F-7/F-10/I-2/I-3`) | main.ts's literals `['provident-modules.json','provident-settings.json']`; one `readFileSync` in the instance then — the security boot import alone, before this unit's second read was added | `['provident-modules.json']`; **two** import-once reads, still no write |
+| `tests/store-security.test.ts:529-555` (`F-7/F-10/I-2/I-3`) | main.ts's literals `['provident-modules.json','provident-settings.json']`; one `readFileSync` in the instance then — the security boot import alone, before this unit's second read was added | `['provident-modules.json']`; **two** import-once reads, still no write. **RE-DERIVED AGAIN AT THIS HEAD** (`D-81`): that last literal left with the Q-5 arm, so the row now reads **`[]`** — `main.ts` spells no userData `provident-*.json` literal — and it is the witness that this name is no longer written; the row is not deleted and a reappearing literal reddens it |
 | `tests/store-persist.test.ts` (the carrier's own battery) | `SC-1` `:1417-1439`, `SC-4` `:1458-1470`, `MIG-1` `:1313-1324`, `BO-3` `:1357-1365`, `SC-3` `:1449-1456`, the atomic/anti-pattern rows | re-grained where the subject is a channel's answer; **retired with their referent** where it is the hand-written machinery (the tmp sequence, the stamp) |
 | `tests/store-tabs-record-live.mjs:91-122` | seeds and removes `provident-settings.json` | seeds the retired name for the *import* arm, the app-state record for the rest |
 | `tests/{e2e,integration}/security-store-storeroom/isolation.test.ts:284,332` (`ISO-6`) | the MCP closure's allowed literals `['provident-profile.json','provident-settings.json']` | `['provident-profile.json']` — the set **shrinks**, the claim is unmoved |
@@ -125,7 +125,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 | **E-4** | `strata/modules.json` (L1's own map) | §2's two N figures and this unit's two battery subtrees | **L1**, filed with this artifact |
 | **E-5** | `tests/**` — §6's rows, each named by file and line | the re-grain and the retirement §6 classifies, **executed at this unit's close under the rule that then stood**: D-31 supersedes the instruction for every later unit, which **marks** its scenario rows `// strata:marked-file rework` and replaces them whole (`strata/marks.json`) | this unit's **L2 test writer** (D-10, D-30, D-31) |
 
-**Not a move, named so no reader looks for one**: `src/main/module-store.ts`, `store-channels.ts`, `preload.ts`, `security.ts`, `tier4-state.ts`, `src/shared/types.ts` and `src/renderer/**` are byte-identical after this unit.
+**Not a move, named so no reader looks for one**: `store-channels.ts`, `preload.ts`, `security.ts`, `tier4-state.ts`, `src/shared/types.ts` and `src/renderer/**` are byte-identical after this unit — `src/main/module-store.ts` stood in this list as byte-identical *then* and **is DELETED now** (`D-81`: 207 lines, with the Q-5 arm; its three interfaces moved to `src/main/mcp-server.ts`), so it is named as deleted rather than as unmoved.
 
 ## 10. Boundaries — what this unit does not do (D-22)
 

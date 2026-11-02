@@ -658,9 +658,19 @@ function operatorProfileCandidates() {
  *  CONSTRUCTION creates (so a mis-resolved boot now leaves a file here even with no
  *  write at all), and the retired `provident-security.json` is listed beside it
  *  because that name is still read once at the first boot and must never be written
- *  again — a write to either name is the failure this census exists to see. */
+ *  again — a write to either name is the failure this census exists to see.
+ *
+ *  **RE-DERIVED 2026-11-02 (`D-81`; `D-78`'s second clause): THREE NAMES, AND TWO OF THEM ARE THE TWO
+ *  CROSSINGS.** `provident-modules.json` LEFT this census with the Q-5 arm — that registry's legacy
+ *  file is dropped, not migrated, and the app touches it at no site (no read, no write, no removal), so
+ *  a stale one standing in an operator profile is now the EXPECTED state and its presence or mtime can
+ *  witness nothing. `provident-profile.json` ENTERS in its place: it is the NORMAL crossing's file
+ *  (`PROFILE_FILE_NAME`, `src/main/data/store.ts`), created at its construction, and this census never
+ *  named it — a boot that resolved against the operator's real profile would create it there. The
+ *  census therefore grows by one name while shedding the one nothing writes, which is a STRENGTHENING:
+ *  the two crossings are both observed, and the retired carrier's read-once name stays beside them. */
 function operatorProfileState() {
-  const stores = ['provident-operator-settings.json', 'provident-security.json', 'provident-modules.json']
+  const stores = ['provident-operator-settings.json', 'provident-security.json', 'provident-profile.json']
   return operatorProfileCandidates().map((profile) => {
     let exists = false
     try {

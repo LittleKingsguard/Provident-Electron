@@ -60,6 +60,20 @@ function bindingsOf(source: string, specifier: string): string[] {
 
 const sourceOfMain = (): string => readFileSync(new URL(MAIN, REPO), 'utf8')
 
+/** **`main.ts` WITH ITS `//` LINES ELIDED — THE OBSERVABLE FOR A NAME THAT MUST NOT BE THERE
+ *  (2026-11-02, `D-81`).** `MS-1` and `MS-3` assert that the Q-5 registry's verbs and its file name are
+ *  ABSENT from the composition, and the composition deliberately carries a comment where the arm stood
+ *  — a comment that must NAME the file it says is no longer read. A bare `includes` cannot tell prose
+ *  from a reader, so those two rows read the CODE; `MS-2` and `MS-4` read the raw file, because what
+ *  they pin (the `dirname` derivation, `rowsWith`'s declaration and its caller) is code either way.
+ *  Same idiom as `tests/store-persist.test.ts`'s `rendererCommentElided`/`mainCommentElided` (`G4-P2`).
+ */
+const sourceOfMainCode = (): string =>
+  sourceOfMain()
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('//'))
+    .join('\n')
+
 /** Every profile this file creates, so no row leaks a directory into the machine. */
 const scratch: string[] = []
 
@@ -74,16 +88,22 @@ const profile = (): string => {
 }
 
 describe('settings-carrier-retirement · src/main/main.ts, E-1, read as a source (plus the one live rule)', () => {
-  it('MS-1 · the `node:fs` import ends as `rmSync` ALONE: no read verb, no write verb, no stage-and-rename machinery survives in this file (design.md §4 `:6`/`:7`, §5; signatures.md §6; L1 §3 `:7`)', () => {
-    const main = sourceOfMain()
-    expect(bindingsOf(main, 'node:fs'), 'the whole `node:fs` surface this file keeps is `rmSync` — the Q-5 legacy removal, and nothing else (design.md §5; signatures.md §6)').toEqual(['rmSync'])
+  it('MS-1 · the `node:fs` import ends as NOTHING AT ALL: `rmSync` left with the Q-5 arm, so no `node:fs` name stands in this file (design.md §4 `:6`/`:7`, §5; signatures.md §6 re-derived under `D-81`)', () => {
+    // **OLD → NEW (`D-81`, 2026-11-02).** OLD: `toEqual(['rmSync'])` — "the whole `node:fs` surface this
+    // file keeps is `rmSync`, the Q-5 legacy removal, and nothing else". NEW: `toEqual([])` — the
+    // removal is DELETED with the arm it served (the module registry's legacy file is dropped, not
+    // migrated; the user's ruling, D-78's second clause), so the composition imports NOTHING from
+    // `node:fs`. The row's subject is unmoved — "which file verbs does this entry hold" — and the
+    // answer is now the empty set, which is the strongest form the claim has ever had.
+    const main = sourceOfMainCode()
+    expect(bindingsOf(main, 'node:fs'), 'the `node:fs` surface this file keeps is EMPTY: the Q-5 legacy removal went with the arm and no read, write or stage-and-rename verb replaced it (design.md §5; `D-81`)').toEqual([])
 
     // The binding set above is the census; these are the spellings a hand could leave behind in a
     // bare call inside a helper, so they are asserted by NAME, and `rmSync` is the one that stays.
     for (const verb of ['writeFileSync', 'renameSync', 'fsyncSync', 'openSync', 'closeSync', 'mkdirSync', 'readFileSync', 'appendFileSync', 'copyFileSync', 'unlinkSync', 'rmdirSync']) {
       expect(new RegExp(`\\b${verb}\\s*\\(`).test(main), `no \`${verb}\` call stands in src/main/main.ts: the retired stage-and-rename writer, and the boot read that carried it, have no successor here (L1 §3 colon 7; persistence.md §5)`).toBe(false)
     }
-    expect(/\brmSync\s*\(/.test(main), 'and the Q-5 legacy-registry removal keeps its `rmSync` (L1 §3)').toBe(true)
+    expect(/\brmSync\s*\(/.test(main), 'and no `rmSync` stands either: an existing legacy `provident-modules.json` is LEFT ON DISK, unread — the boot may not delete an operator\'s file (`D-81`)').toBe(false)
   })
 
   it('MS-2 · `node:path` binds `{dirname, join}` and `dirname` has exactly ONE call site — this entry’s own directory derivation, module URL → filesystem path → parent directory — while the retired tmp+rename writer’s whole vocabulary stands nowhere (design.md §4 `:6`, §5; signatures.md §6; L1 §3 `:7`; the `dirname` binding is E-2’s: docs/L1/bundle-boot-seam.md §8, docs/L3/bundle-boot-seam/design.md §3)', () => {
@@ -129,8 +149,8 @@ describe('settings-carrier-retirement · src/main/main.ts, E-1, read as a source
     // instead of a substring absence no edit could satisfy while the derivation stands.
   })
 
-  it('MS-3 · the legacy registry’s existence probe is retired with the record’s reader: no `existsSync` stands in the file, while the Q-5 read and its post-boot removal do (design.md §4 `:173-192`, §6 ASM-6; L1 §3/§5)', () => {
-    const main = sourceOfMain()
+  it('MS-3 · the legacy registry is retired WHOLE — probe, read and post-boot removal: no `existsSync`, no `createModuleStore(`, no legacy name and no `rmSync` stands in the file (design.md §4 `:173-192`, §6 ASM-6 re-derived under `D-81`; L1 §3/§5)', () => {
+    const main = sourceOfMainCode()
 
     // THE PROBE DISCRIMINATED NOTHING: `createModuleStore({ path }).list()` answers a missing file as
     // an empty registry with no throw (src/main/module-store.ts `load`), which is `ASM-6`'s reason for
@@ -139,11 +159,17 @@ describe('settings-carrier-retirement · src/main/main.ts, E-1, read as a source
     // states it.
     expect(main.includes('existsSync'), 'no `existsSync` stands in src/main/main.ts: the record’s reader took it with the writer and the Q-5 probe retires with it (design.md §4, §6 ASM-6)').toBe(false)
 
-    // AND THE MIGRATION ITSELF STANDS: the read, its records and the post-boot removal are unmoved
-    // (L1 §3; interface.md §5 "the legacy registry read and its post-boot removal are unmoved").
-    expect(main.includes('createModuleStore('), 'the Q-5 legacy read still constructs the module store (L1 §3)').toBe(true)
-    expect(main.includes('provident-modules.json'), 'over the legacy registry’s own name (L1 §3; persistence.md §7)').toBe(true)
-    expect(/\brmSync\s*\(\s*legacyModulesPath\b/.test(main), 'and its post-boot removal still removes that path (L1 §3)').toBe(true)
+    // **OLD → NEW (`D-81`, 2026-11-02).** OLD: "AND THE MIGRATION ITSELF STANDS: the read, its records
+    // and the post-boot removal are unmoved" — three `toBe(true)` limbs asserting `createModuleStore(`,
+    // the legacy name and `rmSync(legacyModulesPath)`. NEW: the arm is DELETED under the user's ruling
+    // (D-78's second clause: the module registry's legacy file is DROPPED, not migrated — D-75's
+    // disposition for the tabs rows), so all three limbs invert and the row keeps its subject: what
+    // this file does about the legacy registry. It does nothing, which is what it must now be measured
+    // to do. **`interface.md` §5's "the legacy registry read and its post-boot removal are unmoved" is
+    // corrected in that file by the same pass** — a row may not cite a sentence the landing falsified.
+    expect(main.includes('createModuleStore('), 'the Q-5 legacy read is GONE: no module store is constructed at boot (`D-81`)').toBe(false)
+    expect(main.includes('provident-modules.json'), 'and the legacy registry\'s own name is not spelled — nothing can open it, so nothing may name it (`D-81`)').toBe(false)
+    expect(/\brmSync\s*\(/.test(main), 'and no removal stands: an existing file is left on disk UNREAD, which is the disposition and not an oversight (`D-81`)').toBe(false)
   })
 
   it('MS-4 · `rowsWith` is this file’s one new local, carrying the replace-or-append rule — declared where a row can read it, with its one live consequence driven at the declared verb (design.md §4; signatures.md §6; interface.md §2, §6)', () => {

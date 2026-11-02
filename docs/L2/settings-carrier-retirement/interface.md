@@ -104,7 +104,7 @@ Each handler keeps its channel name, its registration site and its answer shape;
 
 - **Each member answers exactly what it answers today**: `put` returns the record it composed, `remove` answers whether the row stood, `setDisabled` answers nothing, and **none of the three surfaces the commit's receipt** — its answer is the channel's, and a member's answer is not a channel (L1 §3; `ASM-L2-5`).
 - **No member composes a `schemaVersion`**: the stamp retires with its record (L1 §3; D-13).
-- **The legacy registry read and its post-boot removal are unmoved** — `provident-modules.json` is read by `module-store.ts` and `rmSync`-removed after the migration's one write (L1 §3; `src/main/main.ts`'s `createModuleStore` read of `provident-modules.json` and the `rmSync` that follows the migration's one commit).
+- **The legacy registry read and its post-boot removal are DELETED, not unmoved** (`D-81`; D-78's second clause). `provident-modules.json` was read by `module-store.ts` and `rmSync`-removed after the migration's one write; the user's ruling gave the module registry `D-75`'s disposition for the tabs rows — *"There is no migration … Do not build a boot migration"* — so the read, the removal and `src/main/module-store.ts` are gone, and the `file.modules.<id>` rows are the registry for the product's whole life. **An existing such file is left on disk, UNREAD**; the interface above is unmoved, its source of rows being `state()` and only `state()` (L1 §3).
 
 ## 6. The refusal vocabulary, as it reaches a caller
 

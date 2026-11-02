@@ -5,13 +5,16 @@
 import {app, BrowserWindow, ipcMain} from 'electron'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {rmSync} from 'node:fs'
 import {createHash} from 'node:crypto'
 import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload} from '../shared/types.js'
 import {ProvidentMcpServer, RendererBackend, type McpTransportKind} from './mcp-server.js'
 import type {SettingsAppStateRow} from './settings-surface/index.js'
 import {createSettingsSurface} from './settings-surface/index.js'
-import {createModuleStore, type ModuleStore, type ModuleRecord, type ModuleStoreStatus} from './module-store.js'
+// THE REGISTRY'S INTERFACE ONLY — the record shape, the status answer and the six verbs. They lived
+// in the deleted `src/main/module-store.ts` and are declared by the module tools' own module now
+// (`D-81`); this file CONSTRUCTS nothing from them: the one implementation is the object literal
+// below, over the secure crossing's rows.
+import type {ModuleStore, ModuleRecord, ModuleStoreStatus} from './mcp-server.js'
 import {STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION} from './store-channels.js'
 import {CapabilityRouter} from '../renderer/extensions.js'
 import {syncModuleRouter} from './mcp-server.js'
@@ -192,15 +195,39 @@ async function main(): Promise<void> {
   // Tier 1's carrier is the instance's app-state record (`['operator-app-state']`, `file`), served
   // through the surface's `state()` and written by its one `commit` (E-1; L1 §3). This file spells
   // no file name for it: the instance module owns the one it reads and the store owns the one it
-  // writes. The legacy `<userData>/provident-modules.json` is named ONLY at the migration's read
-  // and removal declaration (§2.8 step (4)) — it is never WRITTEN by this boot.
-  const legacyModulesPath = join(app.getPath('userData'), 'provident-modules.json')
+  // writes — and it spells no `provident-*.json` literal at all.
+  //
+  // ═══ WHAT STOOD HERE, WHY IT IS GONE, AND WHAT HAPPENS TO THE FILE IT READ (D-78's second clause,
+  // the user's ruling, carried here as `D-81`) ═══
+  // The Q-5 MIGRATION arm stood at this point until 2026-11-02: `const legacyModulesPath =
+  // join(app.getPath('userData'), 'provident-modules.json')`, `createModuleStore({ path:
+  // legacyModulesPath })`, its `.list()`, a loop projecting each record into a `file.modules.<id>`
+  // row through `rowsWith`, ONE `settingsSurface.commit` of the composed rows, and a closing
+  // `rmSync(legacyModulesPath, { force: true })`. D-78 measured what it was for and held it: a
+  // one-way migration input, reachable on EVERY boot, and — because the JSON outranks a standing row
+  // at the one boot it is read — not dead. **The ruling then given is the disposition the tabs rows
+  // got (D-75): *"There is no migration … Do not build a boot migration."*** So the arm is DELETED,
+  // `src/main/module-store.ts` with it, and the rows are the registry for the product's whole life:
+  // every read and every write below goes through `settingsSurface.state()` / `.commit()` and no
+  // other source exists.
+  //
+  // **AN EXISTING `<userData>/provident-modules.json` IS NOT DELETED. THE BOOT LEAVES IT ON DISK,
+  // UNREAD.** That is deliberate and it is the half of the old arm most likely to be missed: the
+  // `rmSync` above is what used to remove the file, and with the arm gone nothing in this tree opens,
+  // parses, rewrites or unlinks that name — it is not READ, so its records reach no row, and it is
+  // not REMOVED, so a profile that carried one keeps it byte-for-byte. This is D-75's own rule for the
+  // tabs rows, *"stop projecting, not delete"*, applied to the module registry: the app stops
+  // looking, and the profile is the operator's to tidy. A boot MUST NOT fail on such a file (measured
+  // 2026-11-02: the built bundle starts over a scratch profile carrying one, ignores it, leaves it in
+  // place), which is why no probe, no guard and no `try`/`catch` stands here either.
 
   /** THE REPLACE-OR-APPEND RULE: the rows in their order, the row named `key` replaced by
    *  `{name: key, value}`, else appended. It REPLACES rather than appends because the whole-map
-   *  write refuses two rows naming one name as a VALUE, so an append would refuse the whole commit
-   *  and the migration below would lose the records it had read (design §4; interface §6
-   *  `ASM-L2-6`). */
+   *  write refuses two rows naming one name as a VALUE, so an append would refuse the whole commit —
+   *  and a refused commit is a module the operator installed and cannot see (design §4; interface §6
+   *  `ASM-L2-6`). **THE MIGRATION THAT FIRST MADE THIS RULE MANDATORY IS GONE (D-81) AND THE RULE IS
+   *  NOT**: `modulePayloadWith` is the live caller and the duplicate-name refusal is still driven at
+   *  the instance's own verb (`tests/unit/settings-carrier-retirement/main-source.test.ts` `MS-4`). */
   function rowsWith(rows: readonly SettingsAppStateRow[], key: string, value: unknown): SettingsAppStateRow[] {
     const next: SettingsAppStateRow[] = []
     let replaced = false
@@ -215,29 +242,8 @@ async function main(): Promise<void> {
     return next
   }
 
-  // ══ THE Q-5 MIGRATION — the five steps (§2.8 item 1): (1) READ the legacy registry through
-  // the module store's landed load/sanitize shape — a missing file answers an empty registry with
-  // no throw, so no existence probe stands here; (2) VERIFY — the SHA-256 per-record
-  // re-verification rides WITH the record (the hash is re-verified at every boot from the
-  // store's own record; `quarantined`/`corrupt` stay DERIVED per process, never migrated);
-  // (3) WRITE the records + their `disabled` flags under `file.modules.<id>` in ONE commit of the
-  // whole rows list; (4) THE ONE-BOOT WINDOW — the legacy file is retained READ-ONLY for this
-  // boot (never written) and REMOVED after it; the instance's record wins from then on. ══
-  const legacyStore = createModuleStore({ path: legacyModulesPath })
-  const legacyRecords = legacyStore.list()
-  if (legacyRecords.length > 0) {
-    let composed = settingsSurface.state().rows
-    for (const rec of legacyRecords) {
-      // a derived value is not data — `quarantined` is re-derived per process, never migrated
-      const clean: ModuleRecord = { ...rec, quarantined: undefined }
-      composed = rowsWith(composed, `file.modules.${rec.name}`, clean)
-    }
-    settingsSurface.commit(composed)
-  }
-  rmSync(legacyModulesPath, { force: true })
-
-  // ══ THE SETTINGS-BACKED MODULE SURFACE (§2.8 item 2 — BOTH writer classes re-pointed to the
-  // instance's app-state record): the MCP `module.*` handlers (writer class 2, received through the
+  // ══ THE MODULE REGISTRY'S ROWS ARE THE WHOLE STORY (§2.8 item 2 — BOTH writer classes re-pointed to
+  // the instance's app-state record): the MCP `module.*` handlers (writer class 2, received through the
   // server's `moduleStore` option) and the operator `IPC_MODULE_SET_DISABLED` toggle (writer class
   // 1) both mutate THIS surface, whose every mutation issues ONE commit of the whole composed rows
   // list — a single authority, so after a `module.update` + a `setDisabled` on the same module the

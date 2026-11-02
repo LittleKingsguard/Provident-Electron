@@ -99,7 +99,12 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { createGraphStore } from '../src/renderer/store-core-graph'
 import { storeGraphReferences } from '../src/renderer/store-graph-references'
-import { createModuleStore } from '../src/main/module-store'
+// **THE MODULE-STORE IMPORT IS GONE (2026-11-02, D-78's second clause / `D-81`).** The rows that
+// used to drive it now read its subject where the product keeps it: `DECLARED_LEGACY_FILE` is a name
+// this boot must NOT carry, and the module registry's status is the CROSSING's answer
+// (`src/main/main.ts` composes `corrupt` from `settingsSurface`'s own `legacy`/`storage`). Nothing here
+// constructs a registry any more; `main.ts` spells no literal for a module file, and the fixture the
+// module tools' own files use is `tests/module-registry-fixture.ts`, not this battery's business.
 // ⟶ `E-5` — THE SURFACE THE TWO CHANNELS DELEGATE TO, imported so a row can DRIVE the answer
 // rather than scan a body no node test can construct (`main.ts` imports `electron` at module
 // scope; L2 `behaviour.md` §2/§3's stated limit; `examiner.md` §2).
@@ -144,6 +149,13 @@ const DECLARED_SCHEMA_VERSION = '1'
 const DECLARED_RESERVED_NAMESPACES: readonly string[] = ['window', 'tabs', 'layout', 'settings', 'tracked', 'modules']
 const DECLARED_SETTINGS_FILE = 'provident-settings.json'
 const DECLARED_SECURITY_FILE = 'provident-security.json'
+/* **`DECLARED_LEGACY_FILE` IS NOW A NAME THIS BOOT MUST NOT CARRY, NOT ONE IT MUST REMOVE (D-81).**
+ *  Until 2026-11-02 the Q-5 arm read `<userData>/provident-modules.json` once, projected its records
+ *  into `file.modules.<id>` rows and `rmSync`-ed it. The user's ruling gave the module registry the
+ *  disposition D-75 gave the tabs rows — *"There is no migration … Do not build a boot migration"* —
+ *  so the arm, `src/main/module-store.ts` and this battery's drives of it are deleted, and an
+ *  existing file is LEFT ON DISK, UNREAD. The constant survives because its ABSENCE from `main.ts` is
+ *  now the claim (P-PS-IM-2 A1, F-6); it is cited, never written. */
 const DECLARED_LEGACY_FILE = 'provident-modules.json'
 /* ── ⟶ THE `E-5` RE-GRAIN'S FIGURES (`2026-10-29`; `docs/L1/settings-carrier-retirement.md` §3/§4/§6,
  *  §9 E-5; `docs/L2/settings-carrier-retirement/behaviour.md` §1–§3; `persistence.md` §2). ──
@@ -429,17 +441,27 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
     type: 'P-IM',
     property: 'THE EXACTLY-TWO FILES CENSUS, WITH THE WITNESS-GAP PIN',
     strategy: 'S-PS-FILES-1',
-    term: '4 attempts = (1) post-migration boot: the legacy provident-modules.json does not exist at userData; (2) the persisted record IS the instance\'s own file and the retired record\'s schema is validated by the IMPORT arm, which answers the diagnosis rather than throwing (RE-GRAINED, E-5: the carrier path and its read-time validation retired with the carrier); (3) the RETIRED names write nothing — each has ONE home, ONE reader and NO writer (RE-GRAINED, E-5: the tier-1 channel\'s tmp write site retired with the tmp writer, so the bite is now the ABSENCE of a file verb at the landing site); (4) the write-site census: the one write site is ONE whole-map commit and no write/rename construct references a third provident-*.json literal (RE-GRAINED, E-5)',
+    term: '4 attempts = (1) the legacy provident-modules.json is a name this boot carries NOWHERE: not read, not removed, left on disk unread (RE-GRAINED, D-81: the Q-5 arm is deleted under the user\'s ruling, so the file is DROPPED, not migrated); (2) the persisted record IS the instance\'s own file and the retired record\'s schema is validated by the IMPORT arm, which answers the diagnosis rather than throwing (RE-GRAINED, E-5: the carrier path and its read-time validation retired with the carrier); (3) the RETIRED names write nothing — each has ONE home, ONE reader and NO writer (RE-GRAINED, E-5: the tier-1 channel\'s tmp write site retired with the tmp writer, so the bite is now the ABSENCE of a file verb at the landing site); (4) the write-site census: the one write site is ONE whole-map commit and no write/rename construct references a third provident-*.json literal (RE-GRAINED, E-5)',
     attempts: [
       {
-        label: 'IM-2 A1 — post-migration boot: the legacy provident-modules.json is gone after the one-boot window',
+        label: 'IM-2 A1 — the legacy provident-modules.json is DROPPED, not migrated: the boot neither reads nor removes it, and an existing one is left on disk UNREAD',
         run: async (): Promise<Probe> => {
-          const main = readSrcSafe('main/main.ts')
+          // ⟶ RE-GRAINED 2026-11-02 (`D-81`; D-78's second clause, the user's ruling). AS FILED this
+          // attempt required `rmSync(`/`unlinkSync(` AND the legacy name in `main.ts` — the one-boot
+          // window's removal, which was the proof the migration had RUN. **The claim INVERTS with the
+          // disposition, and it is not deleted**: the registry's legacy file is dropped rather than
+          // migrated, exactly as D-75 ruled for the tabs rows (*"stop projecting, not delete"*), so
+          // the boot must carry NEITHER a reader NOR a remover for the name, and the file that stands
+          // in a profile is the operator's. The row reddens the moment either half comes back.
+          const main = mainCommentElided()
           if (main === null) return BREAK('main.ts unreadable')
           const removal = main.includes('rmSync(') || main.includes('unlinkSync(')
-          return removal && main.includes(DECLARED_LEGACY_FILE)
-            ? HOLD('the boot sequence declares the legacy file\'s removal after the one-boot window (§0A item 7)')
-            : BREAK('the legacy-file removal after the one-boot window is not implemented — the migration\'s step (4) is absent, and `provident-modules.json` is still a persisted name today (§1.2 row 5)')
+          const reader = main.includes('createModuleStore(')
+          if (reader) return BREAK('`createModuleStore(` stands in src/main/main.ts again — the Q-5 read is deleted (D-81) and a re-added arm reddens here, because the file it reads is dropped, not migrated')
+          if (removal) return BREAK('a `rmSync(`/`unlinkSync(` stands in src/main/main.ts — the boot must LEAVE an existing `provident-modules.json` on disk; the removal went with the arm (D-81)')
+          return main.includes(DECLARED_LEGACY_FILE)
+            ? BREAK('`provident-modules.json` is spelled in src/main/main.ts again — the name is not read, not written and not removed, so this boot names it nowhere (D-81)')
+            : HOLD('the legacy registry file is DROPPED, not migrated: no reader, no removal and no spelling of the name in src/main/main.ts — an existing file is left on disk UNREAD (D-75\'s rule for the tabs rows, applied by D-81)')
         },
       },
       {
@@ -525,7 +547,7 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
       },
       { label: 'SM-2 corrupt · checkpoint 1 — the hand-off precedes the first envelope load', run: async (): Promise<Probe> => bootOrderProbe() },
       {
-        label: 'SM-2 corrupt · checkpoint 2 — the registered defaults + module corrupt:true; NOTHING throws',
+        label: 'SM-2 corrupt · checkpoint 2 — the registered defaults; the module half\'s corrupt flag is the CROSSING\'s answer (D-81); NOTHING throws',
         run: async (): Promise<Probe> => {
           // ⟶ RE-GRAIN (`E-5`). AS FILED this read the Y-1 body for `catch` and the absence of
           // `throw`. The corrupt arm is now the IMPORT's answer (`L1 §4`: `legacy:'corrupt'`,
@@ -535,7 +557,7 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
             corrupt.threw === null ? HOLD('an unparsable retired record does NOT throw — the diagnosis is an answer') : BREAK(`an unparsable retired record THREW: ${String(corrupt.threw)} — a corrupt file must never throw (L1 §4)`),
             corrupt.legacy === 'corrupt' ? HOLD("the corrupt arm is REPORTED as legacy:'corrupt' — the diagnosis survives where the bytes are not repaired (L1 §4; ASM-4)") : BREAK(`the corrupt seed answered legacy='${corrupt.legacy}' — declared 'corrupt'`),
             corrupt.rows.length === 0 ? HOLD('the corrupt arm loads no row — its own declared recovery, the same one the retired boot read had (L1 §4)') : BREAK(`the corrupt arm answered ${corrupt.rows.length} rows — it must load none`),
-            moduleCorruptDrive(true),
+            moduleCorruptIsTheCrossing(),
           )
         },
       },
@@ -702,23 +724,33 @@ function refusalBeforeRename(y2: string): Probe {
     : BREAK('the refusal arm does not precede the rename — the file could be touched before the refusal is answered')
 }
 
-/** The R1 falsifier's module-half control: a corrupt module file answers `corrupt: true`
- *  with an empty `loaded` (the module half's landed posture, §2.6 item 4 — driven). */
-function moduleCorruptDrive(expectCorrupt: boolean): Probe {
-  const dir = mkdtempSync(join(tmpdir(), 'g2-corrupt-'))
-  try {
-    const path = join(dir, 'provident-modules.json')
-    // unparsable bytes ⇒ corrupt
-    writeFileSync(path, '{ not json', 'utf8')
-    const store = createModuleStore({ path })
-    const status = store.status()
-    const ok = status.corrupt === expectCorrupt && status.loaded.length === 0
-    return ok
-      ? HOLD(`module half driven: a corrupt file answers corrupt:${expectCorrupt}, loaded:[] (never a throw)`)
-      : BREAK(`module half driven: corrupt file answered corrupt:${status.corrupt} loaded:[${status.loaded.join(',')}] — expected corrupt:${expectCorrupt}, loaded:[]`)
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+/** **THE MODULE HALF'S POSTURE IS THE CROSSING'S NOW, AND IT IS READ WHERE THE PRODUCT STATES IT
+ *  (2026-11-02, `D-81`; D-78's second clause).** AS FILED this was a DRIVE: `createModuleStore({ path })`
+ *  over unparsable `provident-modules.json` bytes, asserting `corrupt:true` with an empty `loaded`.
+ *  That claim's REFERENT is deleted — nothing reads that file, so a corrupt one answers nothing at
+ *  all, and no node row can construct `main.ts`'s registry literal (`electron` at module scope,
+ *  `interface.md` §8). What is still a claim, and is driven at both halves here, is **where the
+ *  module registry's `corrupt` flag COMES FROM**: `main.ts` composes it out of the settings surface's
+ *  own diagnosis (`legacy === 'corrupt' || storage === 'unreachable'`), never out of a module file, so
+ *  the module half can report corrupt only when the CROSSING does. The structural half reddens the
+ *  moment a module-file reader returns; the live half evaluates the composition's own terms over a
+ *  real surface answer, so a source that stopped answering `legacy`/`storage` reddens too.
+ *  **THE ROW IS NOT WEAKENED AND NOT DELETED: it moved from "a corrupt module file says corrupt" to
+ *  "a corrupt module file cannot say anything, and the crossing's answer is what does."** */
+function moduleCorruptIsTheCrossing(): Probe {
+  const main = mainCommentElided()
+  if (main === null) return BREAK('main.ts unreadable')
+  const composed = /corrupt:\s*answer\.legacy\s*===\s*'corrupt'\s*\|\|\s*answer\.storage\s*===\s*'unreachable'/.test(main)
+  if (!composed) return BREAK("the module registry's `corrupt` flag is no longer composed from the settings surface's own answer (`legacy === 'corrupt' || storage === 'unreachable'`) — the module half would be deciding corruption itself")
+  if (main.includes(DECLARED_LEGACY_FILE)) return BREAK(`\`${DECLARED_LEGACY_FILE}\` is spelled in src/main/main.ts — a module-file reader is back, and the file it would answer over is dropped (D-81)`)
+  // THE LIVE HALF: the composition's own two terms, evaluated over a REAL surface answer. A cold
+  // profile must not read as corrupt — the answer is 'absent'/'standing', never 'corrupt'.
+  const cold = stateDrive()
+  if (cold.threw !== null) return BREAK(`the cold crossing THREW: ${String(cold.threw)} — the module half's corrupt term has no answer to compose from`)
+  const wouldReportCorrupt = cold.legacy === 'corrupt' || cold.storage === 'unreachable'
+  return wouldReportCorrupt
+    ? BREAK(`the cold crossing answered legacy='${cold.legacy}' storage='${cold.storage}' — the composition would report the module registry CORRUPT over a profile with no record at all`)
+    : HOLD(`module half: \`corrupt\` is the CROSSING's answer (legacy='${cold.legacy}', storage='${cold.storage}' on a cold profile ⇒ false, never a throw) and no module file is read to decide it (D-81)`)
 }
 
 interface RegisterRowResult {
@@ -900,6 +932,24 @@ function rendererTextSafe(): string {
 /** The comment-ELIDED renderer text (G4-P2's control surface): a probe that fires in this
  *  text observes the CALL, never the doc-comment's prose — a match that dies with the
  *  comments elided is a comment-only match and breaks. */
+/**
+ * **`main.ts` WITH ITS `//` LINES ELIDED — THE HONEST OBSERVABLE FOR A NAME THAT MUST NOT BE THERE
+ * (2026-11-02, `D-81`).** The three probes that assert the module registry's legacy name is ABSENT
+ * from the composition (`P-PS-IM-2` A1, `F-6`, `M-6`'s module half) test a claim about the CODE, and
+ * the code here carries a long comment that NAMES the file in order to explain why it is no longer
+ * read — which a bare `includes` cannot tell from a reader. This is `rendererCommentElided`'s idiom
+ * (the `G4-P2` control, `:935`) applied to a second file: the class the `G4-P2` finding named, one
+ * file over, and the same fix. Nothing here is softened — a comment cannot open a file.
+ */
+function mainCommentElided(): string | null {
+  const text = readSrcSafe('main/main.ts')
+  if (text === null) return null
+  return text
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('//'))
+    .join('\n')
+}
+
 function rendererCommentElided(): string | null {
   const text = readSrcSafe('renderer/renderer.ts')
   if (text === null) return null
@@ -967,7 +1017,11 @@ function thirdLiteralWrites(): string[] {
   // member to a census whose subject is "which files carry a `provident-*.json` literal". The module
   // that now carries the operator store's own persisted literal is `OPERATOR_SETTINGS_MODULE`
   // (`main/operator-settings/index.ts`, the retired file's successor), which sits in the list below.
-  for (const rel of ['main/main.ts', 'main/preload.ts', 'main/module-store.ts', 'main/mcp-server.ts', 'main/store-channels.ts', OPERATOR_SETTINGS_MODULE]) {
+  // ⟶ `D-81` (2026-11-02): `main/module-store.ts` LEFT this scan list with the file it named, on the
+  // same rule the `C-4` re-grain above used for `main/security-store.ts` — an absent path contributes
+  // nothing but a vacuous member to a census whose subject is "which files carry a
+  // `provident-*.json` literal". It is the SECOND path this list has shed for that reason.
+  for (const rel of ['main/main.ts', 'main/preload.ts', 'main/mcp-server.ts', 'main/store-channels.ts', OPERATOR_SETTINGS_MODULE]) {
     const t = readSrcSafe(rel)
     if (t === null) continue
     op.lastIndex = 0
@@ -1285,14 +1339,16 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
     it('M-2: a cold boot answers [] and boots on it (§2.3 item 1, §2.6 item 4, §2.9 consequence (3))  [RE-GRAINED, E-5: the answer is driven]', async () => {
       // ⟶ RE-GRAIN (`E-5`). AS FILED the settings half read the Y-1 body for `existsSync`. There is no
       // file for the channel to probe any more: the cold answer is the SURFACE's (`behaviour.md` §2,
-      // §1's first row), so the row DRIVES it and keeps the boot-order and the module half unmoved.
+      // §1's first row), so the row DRIVES it. **THE MODULE HALF IS RE-DERIVED, NOT UNMOVED (D-81)**:
+      // its store and its file are deleted, so the cold claim is driven over the crossing's own rows
+      // (`moduleColdRegistryIsTheCrossing`, below).
       const cold = stateDrive()
       assertProbe(ALL(
         bootOrderProbe(),
         cold.threw === null ? HOLD('a cold profile answers — NOTHING throws') : BREAK(`the cold boot THREW: ${String(cold.threw)}`),
         cold.rows.length === 0 ? HOLD('the hand-off answers [] — the cold tier is a MISS, never an error and never an invented value') : BREAK(`the cold answer carries ${cold.rows.length} rows — declared []`),
         cold.legacy === 'absent' ? HOLD("and the diagnosis is the declared 'absent'") : BREAK(`the cold arm answered legacy='${cold.legacy}' — declared 'absent'`),
-        moduleMissingDrive(),
+        moduleColdRegistryIsTheCrossing(),
       ), 'M-2 cold boot')
     })
 
@@ -1338,7 +1394,7 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
     })
 
     it('M-5: the migration lands in ONE write and the readers re-point (§2.8 items 1/2)  [RE-GRAINED, E-5: the one write is the app-state commit]', async () => {
-      const main = readSrcSafe('main/main.ts') ?? ''
+      const main = mainCommentElided() ?? ''
       assertProbe(ALL(
         main.includes('file.modules') ? HOLD('the module registry lands under the declared namespace file.modules.<id>') : BREAK('the file.modules.<id> namespace is not wired — the Q-5 migration is absent'),
         main.includes('moduleStore.setDisabled')
@@ -1349,12 +1405,19 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         // what the migration's ONE write actually is: a commit of the composed rows, which is the same
         // `settingsSurface.commit(...)` every other writer class issues (L2 behaviour.md §5).
         /settingsSurface\.commit\s*\(/.test(main) ? HOLD('the migration\'s ONE write is a settingsSurface.commit(...) of the composed rows — the same verb every writer class issues (behaviour.md §5)') : BREAK('the migration has no commit site — the one write is absent'),
+        // ⟶ RE-DERIVED (`D-81`, 2026-11-02). AS RE-GRAINED under `E-5` this limb required
+        // `rmSync(`/`unlinkSync(` — "the legacy file's removal is declared". **THE REMOVAL IS DELETED
+        // WITH THE ARM**: the module registry's legacy file is DROPPED, not migrated (the user's
+        // ruling, D-78's second clause), so the claim inverts and is not dropped — the boot declares
+        // no removal and therefore cannot delete an operator's file.
         main.includes('rmSync(') || main.includes('unlinkSync(')
-          ? HOLD('the legacy file\'s removal is declared')
-          : BREAK('the legacy removal is absent'),
-        readSrcSafe('main/module-store.ts')?.includes('createHash') === true
-          ? HOLD('the SHA-256 per-record verification is landed (the module half keeps its posture — the hash moves WITH the record)')
-          : BREAK('the per-record SHA-256 verification is not observed'),
+          ? BREAK('a removal verb stands in src/main/main.ts again — the boot must LEAVE an existing provident-modules.json on disk, UNREAD (D-81)')
+          : HOLD('no removal is declared: an existing provident-modules.json is left on disk unread, which is D-75\'s disposition for the tabs rows applied to this registry (D-81)'),
+        // AND THE HASH MOVED WITH THE RECORD, NOT WITH A FILE: `sha256` was `module-store.ts`'s and is
+        // `main.ts`'s now (`:300`-class, `hash: sha256(record.source)` at the one `put`).
+        readSrcSafe('main/main.ts')?.includes('createHash') === true && /hash:\s*sha256\(/.test(main)
+          ? HOLD('the SHA-256 per-record verification is landed in the composition: the hash is derived from `source` at the one `put` and re-derived at boot (D-81)')
+          : BREAK('the per-record SHA-256 verification is not observed in src/main/main.ts — the module half\'s posture went with the deleted store and did not land'),
       ), 'M-5 migration')
     })
 
@@ -1368,8 +1431,8 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         corrupt.legacy === 'corrupt' ? HOLD("the answer is legacy:'corrupt' — the diagnosis survives where the bytes are not repaired (L1 §4 ASM-4)") : BREAK(`the corrupt seed answered legacy='${corrupt.legacy}'`),
         corrupt.rows.length === 0 ? HOLD('and it loads no row — the retired boot read\'s own corrupt arm, which also loaded nothing (L1 §4)') : BREAK(`the corrupt arm answered ${corrupt.rows.length} rows`),
       )
-      // MODULE HALF (landed, driven): corrupt file → corrupt:true, loaded:[] — never a throw.
-      const moduleHalf = moduleCorruptDrive(true)
+      // MODULE HALF: the corrupt flag is the CROSSING's answer and no module file decides it (D-81).
+      const moduleHalf = moduleCorruptIsTheCrossing()
       assertProbe(ALL(settingsHalf, moduleHalf), 'M-6 corrupt boot')
     })
 
@@ -1528,22 +1591,41 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         "F-5 — a module id colliding with a reserved top-level settings key must be REFUSED reason:'reserved-namespace', never silently overwritten — the token is absent from the wiring today").toBe(true)
     })
 
-    it('F-6: the migration\'s one-boot window stays declared (§2.8 item 1 (4), §0A item 7)', async () => {
-      const main = readSrcSafe('main/main.ts') ?? ''
+    // ⟶ **RETITLED AND RE-DERIVED 2026-11-02 (`D-81`; D-78's second clause, the user's ruling): THERE IS
+    // NO ONE-BOOT WINDOW ANY MORE.** This row's subject was §2.8 item 1 step (4) — the legacy registry
+    // "retained READ-ONLY for this boot (never written) and REMOVED after it". The user gave the module
+    // registry the disposition `D-75` gave the tabs rows (*"There is no migration … Do not build a boot
+    // migration"*), so the window, the read that opened it and the removal that closed it are DELETED
+    // with `src/main/module-store.ts`, and **an existing `provident-modules.json` is left on disk,
+    // UNREAD**. The row keeps its subject — what this boot does about that legacy file — and states the
+    // new answer, which is nothing at all: no writer, no reader, no remover, no spelling of the name.
+    it('F-6: there is NO one-boot window — the legacy registry file is left on disk UNREAD (was §2.8 item 1 (4); re-derived under D-81)', async () => {
+      const main = mainCommentElided() ?? ''
       assertProbe(ALL(
         main.includes('moduleStore.setDisabled') || main.includes('moduleStore.put') || main.includes('moduleStore.remove')
-          ? BREAK('a legacy-store mutator is still invoked — the legacy file is still WRITTEN (the window declares read-only retention, never a write)')
-          : HOLD('the legacy file is retained read-only during the one-boot window'),
+          ? BREAK('a legacy-store mutator is still invoked — the legacy file would still be WRITTEN')
+          : HOLD('no legacy-store mutator stands: the registry is written only through the crossing\'s one commit'),
         main.includes('rmSync(') || main.includes('unlinkSync(')
-          ? HOLD('the legacy file is removed after the window')
-          : BREAK('the legacy removal after the one-boot window is absent — today provident-modules.json is a live persisted member (§1.2 row 5)'),
+          ? BREAK('a removal verb stands in src/main/main.ts — the boot must LEAVE an existing provident-modules.json on disk, UNREAD (D-81); the removal went with the arm')
+          : HOLD('and NO removal: an existing provident-modules.json is left on disk, unread and un-tidied — the profile is the operator\'s (D-75\'s disposition, applied by D-81)'),
+        main.includes(DECLARED_LEGACY_FILE)
+          ? BREAK(`\`${DECLARED_LEGACY_FILE}\` is spelled in src/main/main.ts — the name is read, written and removed nowhere, so this file names it nowhere (D-81)`)
+          : HOLD('and no reader either: the name is not spelled in src/main/main.ts at all, so nothing can open it'),
         // ⟶ RE-GRAIN (`E-5`): AS FILED this limb asserted the CARRIER (`provident-settings.json`)
         // wins from then on. The carrier retired; what wins is the app-state record, written by the
         // one commit every writer class issues (L1 §6; behaviour.md §5).
         /settingsSurface\.commit\s*\(/.test(main) ? HOLD("the app-state record wins from then on — every writer class issues the one settingsSurface.commit(...) (L1 §6)") : BREAK('the app-state record has no write site — the migration lands nowhere'),
-      ), 'F-6 one-boot window')
+      ), 'F-6 no one-boot window — the file is left on disk unread')
     })
 
+    // **⟶ AND THE OVER-CONSTRAINT THE BLOCK BELOW RECORDS IS NOW GONE, SO THE PROBE IT WITHDREW IS BACK
+    // (2026-11-02, `D-81`).** The bare-name-absence probe was withdrawn because the migration's boot
+    // sequence was REQUIRED to name `provident-modules.json` at its removal declaration, so
+    // `main.includes(DECLARED_LEGACY_FILE)` could not be false. **The arm is deleted, the removal with it,
+    // and the name is now a name `main.ts` must not carry at all** — which is what `P-PS-IM-2` A1's third
+    // arm and this row's third limb assert. The 2026-10-03 ruling was right about the SPEC and right to
+    // replace the probe; it was measuring an arm the user has since ruled away, and the absence is now
+    // the claim rather than the contradiction.
     // RULED 2026-10-03 (option 1 — the G2 red-set self-contradiction, Implementer-verified): this row's
     // middle sub-probe was a bare-name-absence probe, `main.includes(DECLARED_LEGACY_FILE) ? BREAK : HOLD`
     // — it FORBADE the literal 'provident-modules.json' in src/main/main.ts. But the migration's boot
@@ -2050,17 +2132,26 @@ function atomicSequenceProbeIn(y2: string): Probe {
     : BREAK(`the atomic sequence is not the declared shape at the landing site (mkdirSync → .tmp → fsync → renameSync → fsync; tokens found at ${JSON.stringify(o.where)}) — the security-store plain-write pattern is the exactly-named anti-pattern this channel must NOT copy (§2.6 item 1)`)
 }
 
-function moduleMissingDrive(): Probe {
-  const dir = mkdtempSync(join(tmpdir(), 'g2-cold-'))
-  try {
-    const store = createModuleStore({ path: join(dir, 'provident-modules.json') }) // never written — the file is absent
-    const status = store.status()
-    return status.corrupt === false
-      ? HOLD('module half driven: a MISSING file answers corrupt:false, loaded:[] (a cold tier is a MISS, never an error)')
-      : BREAK(`module half driven: a missing file answered corrupt:${status.corrupt}`)
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+/**
+ * **THE COLD MODULE REGISTRY IS THE CROSSING'S (2026-11-02, `D-81`).** AS FILED this drive was
+ * `moduleMissingDrive`: it constructed `createModuleStore({ path })` over a profile with no
+ * `provident-modules.json` and asserted `corrupt:false, loaded:[]` — "a cold tier is a MISS, never an
+ * error". The store, and with it the file that could be absent, is DELETED, so that exact drive has
+ * no subject: a MISSING module file is now indistinguishable from a corrupt one, a full one or none
+ * at all, because nothing opens the name. **THE CLAIM SURVIVES AT THE PLACE THE PRODUCT KEEPS IT**:
+ * the module registry's cold answer is the crossing's — no `file.modules.<id>` row stands on a cold
+ * profile, `loaded` is `[]`, and the `corrupt` term is the crossing's own diagnosis, which a cold
+ * profile answers `'absent'`/`'standing'` and never `'corrupt'`. Driven off a real surface answer.
+ */
+function moduleColdRegistryIsTheCrossing(): Probe {
+  const cold = stateDrive()
+  if (cold.threw !== null) return BREAK(`the cold crossing THREW: ${String(cold.threw)} — a cold registry must be a MISS, never an error`)
+  const moduleRows = cold.rows.filter((r) => r.name.startsWith('file.modules.'))
+  if (moduleRows.length !== 0) return BREAK(`the cold registry answered ${moduleRows.length} file.modules.* row(s) — a cold tier is a MISS`)
+  const corrupt = cold.legacy === 'corrupt' || cold.storage === 'unreachable'
+  return corrupt
+    ? BREAK(`the cold registry's corrupt term evaluated TRUE (legacy='${cold.legacy}', storage='${cold.storage}') — a cold profile is a MISS, never an error`)
+    : HOLD(`module half driven: a cold profile answers NO file.modules.* row and its corrupt term (the crossing's own) is false — a MISS, never an error (D-81)`)
 }
 
 /** The bridge object's top-level member names, extracted from preload.ts's bridge literal
