@@ -132,11 +132,13 @@ const voidConstraintBody: TabsConstraintDeclaration = { address: ['tabs'], id: '
 // FOURTH store position — the act that makes the write JOIN the attempt instead of opening a second `K-2` (`D-67`, `KC-7`).
 // Each `@ts-expect-error` below rides on that position and passes only while the error it suppresses is really there, and the
 // property that makes it a measurement is the same one the block above has: **widen the position and the directive is UNUSED**,
-// which `tsc` reports as `TS2578` and this leg reds. **MEASURED 2026-11-02 on this tree: `commit?: TabsCommitCarrier` →
-// `TS2578` at the omission row below (`the carrier is optional, so nothing is omitted`), while `npm run typecheck` over
-// `src/**` stayed green — the widening breaks no call site, so THE LEG THAT CATCHES IT IS THIS ONE; `commit: unknown` → three
-// `TS2578`, one per row. Restore → clean.** The bodies live in arrows that are never invoked: these rows measure a SIGNATURE,
-// and calling them would drive a store this file has not opened.
+// which `tsc` reports as `TS2578` and this leg reds. **MEASURED 2026-11-02 on this tree, three widenings, each restored before
+// the next: `commit?: TabsCommitCarrier` → `TS1016` *"A required parameter cannot follow an optional parameter"* at the helper
+// AND `TS2578` at the omission row; `commit: TabsCommitCarrier | undefined` → `TS2578` at THAT row alone, and `npm run
+// typecheck` over `src/**` STILL GREEN, because the widening breaks no call site — so THE LEG THAT CATCHES IT IS THIS ONE;
+// `commit: unknown` → three `TS2578`, one per row. Restore → both legs clean and the battery green.** The bodies live in
+// arrows that are never invoked: these rows measure a SIGNATURE, and calling them would drive a store this file has not
+// opened.
 declare const aStore: TabsRecordStore
 const anIntendedRecord: unknown = { order: [] }
 const aCarrier: TabsCommitCarrier = { pending: [] }
