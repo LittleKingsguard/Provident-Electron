@@ -13,7 +13,10 @@
 // write landed — the two facts this pass had to measure before the crossing answered anything but `refused`. The fifth,
 // `tabs-must-stand`, is the one that makes `['tabs']` an ENFORCED INVARIANT rather than a side effect of the first commit
 // (D-69), so the record exists — landing page seated and active — from the instant the instance is constructed.
+import { types } from 'node:util'
+
 import { storeCreate } from 'provident-storeroom'
+import type { CommitRecord, TriggerPair } from 'provident-storeroom'
 import type { TabsRecordRow } from '../../shared/types.js'
 
 type Store = ReturnType<typeof storeCreate>
@@ -96,6 +99,30 @@ export type TabsRepairAnswer = TabsRepairCredited | TabsRepairFailed
  *  constraint's (`guide §7.6`) — and one of the two arms. **THE DECLARED RETURN IS THE ENFORCEMENT**: a `() => void` does
  *  not assign here, so the type-level row in the crossing battery reds the moment this is widened (`D-72`). */
 export type TabsRepair = (context: unknown) => TabsRepairAnswer
+
+/** **THE COMMIT CARRIER — THE FOURTH POSITION'S OWN CLASS TEST, EXPORTED SO A REPAIR WRITE CANNOT NAME NOTHING** (`D-73`). A
+ *  repair is invoked INSIDE an attempt and the write it makes must JOIN that attempt; the only way to join is to name the
+ *  commit the repair was handed, and the only position that names one is `write`'s **FOURTH**. **THAT POSITION'S DECLARED
+ *  TYPE AT THE INSTALLED `1.7.0` IS NOT THIS TYPE** — `node_modules/provident-storeroom/index.d.ts` declares
+ *  `write(address: Address, tier: Tier, value: unknown, commit?: CommitRecord): WriteRecord`, with
+ *  `interface CommitRecord { attempt: AttemptRef; op: JournalOp; triggered: readonly TriggerPair[]; pending: readonly
+ *  TriggerPair[] }`, **FOUR MEMBERS** — while **the position's own CLASS TEST admits far less**: a non-null, non-`Proxy`,
+ *  non-array object carrying an OWN, present, non-`undefined` `pending` member, every other form being a `TypeError` thrown
+ *  before any store act (`1.7.0`'s `src/entry/delivery.mjs`, `commitPositionRefusal`, read at its own bytes; its docblock is
+ *  `surface.md §2.4` item 9 (g) item 1). **A landing repair's record is the six-member
+ *  `{address, id, op, tier, value, pending}` and carries NO `attempt`**, so it satisfies the class test and NOT the
+ *  declaration — the one seam `writeJoined` casts across, and the only cast in this module's repair path.
+ *
+ *  **THIS TYPE IS THE CLASS TEST AND ONE MEMBER, SPELLED THE PACKAGE'S OWN WAY**: `TriggerPair` is imported rather than
+ *  re-spelled, so the member's element type is the kernel's and not this module's guess. **THE RELEASE AFTER `1.7.0` DECLARES
+ *  `commit?: CommitCarrier`, one member `readonly pending: readonly TriggerPair[]`** — the shape this interface already is, so
+ *  on that release the cast goes and nothing else moves. **That declaration is carried from the release notes and NOT from
+ *  these bytes**: this tree installs `1.7.0`, whose tarball ships no such interface and whose `RELEASE-NOTES.md` names no
+ *  later version, so the installed declaration is the one typed against here and the later one is read as its successor.
+ *  Exported because the boot and any later renderer work annotate against ONE rule rather than against a release's licence. */
+export interface TabsCommitCarrier {
+  readonly pending: readonly TriggerPair[]
+}
 
 /** **WHAT A CONSTRAINT BODY MAY ANSWER, IN THE PACKAGE'S OWN CLOSED THREE-ARM SET** (`guide §7.2`, `§7.6`): `true` is the
  *  only pass value; `{message, repair}` is a repairable violation; `{message}` is one no repair answers. **NO FOURTH ARM AND
@@ -197,6 +224,66 @@ const refusalOfThrown = (caught: unknown): { reason: string; message: string } =
 
 const plain = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
+
+/** **THE CLASS TEST ITSELF, PREDICATE FOR PREDICATE — MIRRORED FROM THE INSTALLED `1.7.0`, NOT REASONED ABOUT** (`D-73`).
+ *  The position is refused unless the value is (i) a non-null object, (ii) NOT a `Proxy`, (iii) NOT an array, and (iv) carries
+ *  an own `pending` whose read does not throw and is not `undefined` — `src/entry/delivery.mjs`'s `commitPositionRefusal` at
+ *  its own bytes, whose member read is wrapped because a hostile getter is outside the position's domain (`JS-1`), and whose
+ *  `Proxy` arm is `types.isProxy` (the same `node:util` predicate used here, so the two agree case for case). **EVERY CHECK
+ *  IS TAKEN, INCLUDING THE `Proxy` ONE**: a `Proxy` carrying an own `pending` passes (i), (iii) and (iv) and would be refused
+ *  by the store alone — a rejection this module cannot see and would therefore report as a thrown `TypeError` out of a repair
+ *  instead of the failed arm.
+ *
+ *  **THE ONE CHECK THAT IS THIS MODULE'S AND NOT THE CLASS TEST'S IS THE MEMBER'S SHAPE**: the class test admits ANY present,
+ *  non-`undefined` `pending`, while `TabsCommitCarrier` spells the `readonly TriggerPair[]` the kernel's own `CommitRecord`
+ *  declares — so a `pending` that is present but not a list answers the failed arm here rather than being carried as a member
+ *  this module cannot honestly type. The kernel mints that list and nothing else (`CommitRecord.pending`, seeded as a clone of
+ *  `triggered`), so the arm is stated rather than discovered at a write. **`pending` IS NEVER READ FOR ITS CONTENT**: the
+ *  carrier is a TOKEN — naming the commit is what joins the attempt, and the op the repair lands is the whole of what the
+ *  kernel credits it for (`repairAnswer`, `landedOp`).
+ *
+ *  **AND THE VALUE IS PASSED ON AS IT WAS HANDED, NEVER REBUILT**: the commit carries its log under a symbol key
+ *  (`state.mjs`'s `COMMIT_LOG`), read by the store's refusal path to report what the commit already held — a fresh
+ *  `{pending}` built here would answer `[]` there, so the predicate NARROWS and nothing constructs. */
+export const isCommitCarrier = (value: unknown): value is TabsCommitCarrier => {
+  if (!plain(value)) return false // (i) non-null object, (iii) not an array — the one admission the module already carries
+  if (types.isProxy(value)) return false
+  if (!Object.hasOwn(value, 'pending')) return false
+  let pending: unknown
+  try {
+    pending = value['pending']
+  } catch {
+    return false // the class test's own guarded read: a getter that throws is outside the position's domain
+  }
+  return pending !== undefined && Array.isArray(pending)
+}
+
+/** **THE ONE PLACE A REPAIR'S WRITE IS MADE — AND ITS `commit` POSITION IS REQUIRED, SO A REPAIR CANNOT WRITE WITHOUT ONE**
+ *  (`D-73`). A repair write names the commit it was handed at `write`'s **FOURTH** position, which is what makes it JOIN the
+ *  open attempt instead of opening a second `K-2` at the address that already holds one — measured 2026-11-01 both ways: with
+ *  no commit, `write(['tabs'], …)` inside a pass opened at `['tabs']` was refused *"a constraint attempt is already open at
+ *  tabs; it is disposed of by its own K-3 and by no other act"* (`KC-7`); with the commit, the same write answered
+ *  `{op: {opId: 'op-2', seq: 2}}` and the pass re-ran green (`D-67`). **THE SIGNATURE IS THE RULE**: `healRecord` and
+ *  `mintRecord` are the module's two repair bodies, both go through this call, and the carrier is a REQUIRED second position —
+ *  so a repair that names no commit is an ARITY ERROR at compile time, not a convention a reviewer holds. The type-level rows
+ *  in `tests/integration/store-tabs-record/crossing.test.ts` red the moment this position is widened to optional or to
+ *  `unknown` (`npm run typecheck:tests`).
+ *
+ *  **THE REGISTRATION INSTANT NEVER REACHES THIS HELPER, AND THAT IS STRUCTURAL RATHER THAN REMEMBERED**: a repair handed the
+ *  registration's record writes through the `write` MEMBER that record carries, three positions and no fourth — a fourth there
+ *  is a `TypeError` thrown before any store act (`mintRecord`'s first branch, `guide §7.2`'s dated clause of 2026-11-02, item
+ *  (4)). That route's handle is a three-position FUNCTION and not the store, so handing it to this helper is a type error of
+ *  its own: there is no shape in which this call supplies a fourth position to the registration route.
+ *
+ *  **THE ONE CAST IN THIS MODULE'S REPAIR PATH, AND IT SITS EXACTLY ON THE SEAM**: `TabsCommitCarrier` is what the position's
+ *  class test admits, `CommitRecord` is what the installed `1.7.0` DECLARES, and the landing repair's six-member record is
+ *  the former and not the latter — it carries no `attempt`/`op`/`triggered`. **IT CANNOT BE REMOVED ON THIS VERSION**: a
+ *  narrow carrier is not assignable to a four-member parameter, and widening the carrier to the declared `CommitRecord` would
+ *  be a second lie — the repair is genuinely handed no `attempt` member. **WHAT REMOVES IT**: a release declaring the position
+ *  `commit?: CommitCarrier` with one member `readonly pending: readonly TriggerPair[]` (the shape the release after `1.7.0`
+ *  declares, per its notes), at which point the carrier is assignable with no assertion and this line loses its `as`. */
+export const writeJoined = (store: Store, commit: TabsCommitCarrier, value: unknown): unknown =>
+  store.write(TABS_RECORD_ADDRESS, 'file', value, commit as CommitRecord)
 
 /** One tab's record, admitted field by field: an unknown member is dropped, never carried. **EVERY MEMBER OF
  *  `TabsRecordRow` IS CARRIED**, because this is the same admission the module writes back: a member dropped here is a
@@ -424,7 +511,15 @@ interface HealHints {
  *  which lands the landing row with all three field defaults already filled.
  *
  *  It reads the record at the moment it is invoked (`§7.6`: a body reads the location it judges), never the state
- *  this body judged — an earlier repair in the same pass may already have written. */
+ *  this body judged — an earlier repair in the same pass may already have written.
+ *
+ *  **AND ITS WRITE NAMES THE COMMIT IT WAS HANDED** (`D-73`): this is a LANDING-instant repair, so its one write goes through
+ *  `writeJoined`, whose `commit` position is required — the fourth position at the store, `pending` named, joining the
+ *  attempt rather than opening a second one (`KC-7`; `D-67`). **A repair handed a record the class test refuses writes
+ *  NOTHING and says so in the failed arm** (`isCommitCarrier`), because a write naming no commit is not written here: it would
+ *  open a second attempt and be refused or misjudged, which the package declares unsupported and this project treats as
+ *  unwritten. That arm is unreachable through the engine — the kernel hands its own six-member record, `pending` among them —
+ *  and it exists so the module never falls back to a write that names nothing. */
 const healRecord = (store: Store, hints: HealHints) => (context: unknown): TabsRepairAnswer => {
   const view = viewOf(store)
   const stamp = new Date().toISOString()
@@ -484,11 +579,17 @@ const healRecord = (store: Store, hints: HealHints) => (context: unknown): TabsR
   // converges on the next evaluation instead of re-violating, and `landing` rides in the same value (`D-66`).
   const landing = order.find((id) => readActive(rows[id])) ?? null
   // NOTHING IS SWALLOWED HERE: a repair whose write fails must SAY so, because a swallowed refusal reads as a violation
-  // of the invariant the caller broke rather than as the repair's own failure. **THE CONTEXT AT `write`'S FOURTH POSITION
-  // IS WHAT MAKES THIS WRITE JOIN THE ATTEMPT** instead of opening a second `K-2` at the address that already holds one
-  // (`surface.md §2.11` clause 6), and the op it lands is what the kernel credits — see `repairAnswer`.
-  const receipt = store.write(TABS_RECORD_ADDRESS, 'file', composeRecord(order, rows, landing), context as never) as unknown
-  return repairAnswer(receipt)
+  // of the invariant the caller broke rather than as the repair's own failure. **THE CARRIER IS WHAT MAKES THIS WRITE JOIN
+  // THE ATTEMPT** instead of opening a second `K-2` at the address that already holds one (`surface.md §2.11` clause 6), the
+  // op it lands is what the kernel credits — see `repairAnswer` — and **A REPAIR HANDED NO CARRIER WRITES NOTHING** (`D-73`):
+  // the arm below is the failed one, not a write that names no commit.
+  if (!isCommitCarrier(context)) {
+    return {
+      ok: false,
+      message: 'the repair was handed no commit at its own position, so the record it corrects is not written here',
+    }
+  }
+  return repairAnswer(writeJoined(store, context, composeRecord(order, rows, landing)))
 }
 
 /** The hints a FIELD repair can honestly state: it knows nothing of a referent, so it derives the removals from the
@@ -627,14 +728,22 @@ const tabHasLastActiveAt = (store: Store) => (): TabsConstraintAnswer => {
  *  **THE WRITE RUNS NO PASS OF ITS OWN**: the pair is judged by the registration's own RE-RUN over the op this returns,
  *  so the body above is asked twice — once absent, once over the created record, where `value` is that record and the
  *  answer is `true`. That is why the created value must be one the body itself admits — and why `landingRow` is the value
- *  written rather than a bare root: the other four pairs read the same re-run, and it satisfies them too. */
+ *  written rather than a bare root: the other four pairs read the same re-run, and it satisfies them too.
+ *
+ *  **BOTH ARMS NAME A COMMIT, AND EACH NAMES IT THE WAY ITS INSTANT'S CONTRACT ALLOWS** (`D-73`): the registration arm hands
+ *  its three positions to the ROUTE the record carries — never to `store.write`, and never a fourth position, which that
+ *  route answers with a `TypeError` before any store act — while the landing arm goes through `writeJoined`, whose carrier
+ *  position is required, so the commit it was handed is named at `write`'s fourth. **THE ROUTES CANNOT DRIFT**: their handles
+ *  are different KINDS (a three-position function the record lent us, and the store itself), so the helper is not applicable
+ *  to the route and the route is not applicable to the store — the arity each takes is fixed by the shape it is spelled on.
+ *  **A landing record the class test refuses writes nothing** and answers the failed arm, exactly as `healRecord` does. */
 const mintRecord = (getStore: () => Store | null) => (context: unknown): TabsRepairAnswer => {
   const whole = composeRecord([TABS_LANDING_ID], { [TABS_LANDING_ID]: landingRow(new Date().toISOString()) }, TABS_LANDING_ID)
   const route = plain(context) ? context['write'] : undefined
   if (typeof route === 'function') {
-    const write = route as (address: readonly string[], tier: string, value: unknown) => unknown
+    const routeWrite = route as (address: readonly string[], tier: string, value: unknown) => unknown
     // THREE POSITIONS, AND NO FOURTH: supplying the commit here is the refusal this branch exists to avoid.
-    return repairAnswer(write(TABS_RECORD_ADDRESS, 'file', whole))
+    return repairAnswer(routeWrite(TABS_RECORD_ADDRESS, 'file', whole))
   }
   const store = getStore()
   if (store === null) {
@@ -642,7 +751,11 @@ const mintRecord = (getStore: () => Store | null) => (context: unknown): TabsRep
     // the repair says so in the failed arm's own two members rather than answering `void`, which carries "no op".
     return { ok: false, message: 'the tab record does not stand, and this repair reached no write route' }
   }
-  return repairAnswer(store.write(TABS_RECORD_ADDRESS, 'file', whole, context as never) as unknown)
+  if (!isCommitCarrier(context)) {
+    // A LANDING record that names no commit is not written here (`D-73`): the failed arm, never a second attempt's write.
+    return { ok: false, message: 'the record does not stand, and this repair was handed no commit to create it in' }
+  }
+  return repairAnswer(writeJoined(store, context, whole))
 }
 
 /** **`tabs-must-stand` — THE RECORD ROOT IS AN ENFORCED INVARIANT, NOT A SIDE EFFECT OF THE FIRST COMMIT** (D-69).

@@ -1686,3 +1686,46 @@ constructor.
   the release's union would admit exactly what this row forbids, and at `1.7.0` the package's `Constraint` is still
   `(context: unknown) => unknown` — prose in a docblock, never a type. The module's types are LOCAL and EXPORTED, so the boot
   and any later renderer work annotate against the same rule rather than against a release's licence.
+
+---
+
+## D-73 — A repair write NAMES the commit, and the module makes an unnamed one a compile error
+
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries, verbatim — *"Repairs that do not
+pass the commit are unsupported. Do not write them. A write it makes must join that attempt, and the only way to join is to name
+the commit the repair was handed"* — plus the audit and the measurements below, on the installed `provident-storeroom 1.7.0`.
+
+**Decision:** every write a repair makes **NAMES THE COMMIT IT WAS HANDED** — at a **landing instant** the commit's record at
+`write`'s **FOURTH** position, at a **registration instant** the `write` MEMBER the registration's repair record carries,
+**three positions and no fourth** (a fourth there is a `TypeError` before any store act). **A repair write that names neither is
+not written here**: it opens a second commit at an address that already holds one, and the machinery refuses it `KC-7` or credits
+it against the wrong op (`D-67`).
+
+- **Why, in the package's own framing**: a constraint body's direct write is **declared unsupported** while the capability stays —
+  *"any changes should be handled by a repair"* — and a repair's own write is the supported route **because it rides the commit it
+  is part of** (`guide §7.6`; its `§7.2` clause of 2026-11-02, item (4), is the registration route's).
+- **The audit found no unnamed repair write, and says so plainly** (2026-11-02, `grep -rn "\.write(\|\.delete(\|\.rollback("
+  src/ --include='*.ts'`): on a store handle, **seven** `.write(` calls, one `.delete(` and no `rollback` — `commit` and `remove`
+  in `createTabsRecord` (TERMINAL acts: no attempt is open, so naming a commit is neither possible nor required), four terminal
+  acts in `operator-settings` and `data/surface`, and the tab record's repairs, which already named the commit as
+  `context as never`. Every other `.write(`/`.delete(` in `src/` is a `Map`/`Set` or a surface's own member. **The defect closed is
+  LATENT**: `never` tells the compiler nothing, so `mintRecord`'s second cast sat one refactor from naming nothing.
+- **And it is STRUCTURAL, which is the whole of this change.** `TabsCommitCarrier` is EXPORTED — one member
+  `readonly pending: readonly TriggerPair[]`, taken from the position's own class test (a non-null, non-`Proxy`, non-array object
+  carrying an OWN, present, non-`undefined` `pending`: `1.7.0`'s `commitPositionRefusal`, mirrored by `isCommitCarrier` at run
+  time). `writeJoined(store, commit, value)` is the module's **ONE** repair write with its carrier position **REQUIRED**, both
+  repair bodies go through it, and the registration arm keeps its three positions because it is passed the ROUTE the record lends
+  — a different handle from the store, so the helper is not applicable to it. A repair write with no commit is an ARITY ERROR.
+- **One cast survives in the repair path, only at the package boundary.** The installed `1.7.0` declares
+  `write(address, tier, value, commit?: CommitRecord)` with **FOUR** members, while a landing repair's record is the six-member
+  `{address, id, op, tier, value, pending}` with no `attempt` — it satisfies the class test and not the declaration.
+  `commit as CommitRecord` is that seam, commented at `writeJoined` with what removes it: a release declaring
+  `commit?: CommitCarrier`, one member `readonly pending: readonly TriggerPair[]` — the shape the release after `1.7.0` declares,
+  which the carrier already IS. **This supersedes `D-72`'s clause counting `context as never` as "the package's commit
+  parameter"**: `never` was a type lie, and the honest carrier replaced it.
+- **A type-level row pins it where a widening reds it** (`tests/integration/store-tabs-record/crossing.test.ts`, compiled by
+  `npm run typecheck:tests`): three `@ts-expect-error` rows over `writeJoined` — carrier omitted, an array, `null` — beside a
+  positive control, plus a run-time row pinning the class test case for case. **Measured 2026-11-02: `commit:
+  TabsCommitCarrier | undefined` → `TS2578` *"Unused '@ts-expect-error' directive"* at the omission row while
+  `npm run typecheck` over `src/**` stayed GREEN, so the catching leg is `typecheck:tests`; `commit: unknown` → three `TS2578`;
+  restore → both clean.** The JOIN stays measured by the repair-answer row's credited op, the delivery row's ONE notification.

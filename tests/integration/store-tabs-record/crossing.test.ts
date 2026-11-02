@@ -17,6 +17,9 @@
 //  4. a pair whose own key is ABSENT is APPLIED where its parent resolves, and its repair may create the key — the route
 //     it takes there carries the store's THREE positions and no fourth (`guide §7.2`'s dated clause, items (3) and (4);
 //     D-69). That is what makes `['tabs']` stand BEFORE the first commit rather than as a side effect of it.
+//  5. a repair's write NAMES the commit it was handed, and it does so through `writeJoined`, whose carrier position is
+//     REQUIRED — so a repair write that names no commit is an ARITY ERROR here rather than a convention (D-73). The
+//     type-level rows below red the moment that position is widened.
 //
 // **AND THREE FACTS ABOUT THE DELIVERY, PINNED HERE (D-70, D-71):** from the consumed `provident-storeroom 1.7.0` a
 // constraint pair and a LIVE LISTENER may stand at ONE address — the pair asked by the pass, the listener delivered after
@@ -33,8 +36,9 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createProfileStore } from '../../../src/main/storeroom'
-import { createTabsRecord, tabsConstraintDeclarations } from '../../../src/main/tabs-record'
+import { createTabsRecord, isCommitCarrier, tabsConstraintDeclarations, writeJoined } from '../../../src/main/tabs-record'
 import type {
+  TabsCommitCarrier,
   TabsConstraintAnswer,
   TabsConstraintDeclaration,
   TabsRecord,
@@ -120,6 +124,34 @@ const voidRepairDeclaration: TabsConstraintDeclaration = {
 
 // @ts-expect-error — and a BODY that answers nothing is not a `TabsConstraintAnswer` either: `true` or one of the two arms
 const voidConstraintBody: TabsConstraintDeclaration = { address: ['tabs'], id: 'a-void-body', constraint: (): void => undefined }
+
+// ═══════════════ THE REPAIR'S WRITE: A CARRIER IS REQUIRED, SO NO CARRIER IS A COMPILE ERROR (D-73) ═══════════════
+//
+// **THE SECOND TYPE-LEVEL ROW, AND IT GUARDS THE OTHER HALF OF THE SAME REPAIR.** `writeJoined` is the module's ONE repair
+// write: its `commit` position is second and REQUIRED, and it is what a repair hands the commit it was given to `write`'s
+// FOURTH store position — the act that makes the write JOIN the attempt instead of opening a second `K-2` (`D-67`, `KC-7`).
+// Each `@ts-expect-error` below rides on that position and passes only while the error it suppresses is really there, and the
+// property that makes it a measurement is the same one the block above has: **widen the position and the directive is UNUSED**,
+// which `tsc` reports as `TS2578` and this leg reds. **MEASURED 2026-11-02 on this tree: `commit?: TabsCommitCarrier` →
+// `TS2578` at the omission row below (`the carrier is optional, so nothing is omitted`), while `npm run typecheck` over
+// `src/**` stayed green — the widening breaks no call site, so THE LEG THAT CATCHES IT IS THIS ONE; `commit: unknown` → three
+// `TS2578`, one per row. Restore → clean.** The bodies live in arrows that are never invoked: these rows measure a SIGNATURE,
+// and calling them would drive a store this file has not opened.
+declare const aStore: TabsRecordStore
+const anIntendedRecord: unknown = { order: [] }
+const aCarrier: TabsCommitCarrier = { pending: [] }
+
+// The positive control: a carrier IS accepted here, so the three directives below are about the position and not about the call.
+const joinedRepairWrite = (): unknown => writeJoined(aStore, aCarrier, anIntendedRecord)
+
+// @ts-expect-error — A REPAIR WRITE WITH NO CARRIER DOES NOT COMPILE: the omission is an arity fault, not a convention
+const carrierlessRepairWrite = (): unknown => writeJoined(aStore, undefined, anIntendedRecord)
+
+// @ts-expect-error — a carrier-SHAPED position given an ARRAY is not a commit: the class test refuses an array before a read
+const arrayCarrierRepairWrite = (): unknown => writeJoined(aStore, [], anIntendedRecord)
+
+// @ts-expect-error — nor is `null` a commit: the position admits a non-null object, and naming nothing is not naming a commit
+const nullCarrierRepairWrite = (): unknown => writeJoined(aStore, null, anIntendedRecord)
 
 describe('store-tabs-record · the crossing', () => {
   it('THE CONSTRUCTION INSTANT: `tabs-must-stand` creates the record BEFORE ANY COMMIT — a store built over a scratch file path answers a root holding the landing page, seated and active, and `read()` on the never-committed record is a reading', () => {
@@ -518,5 +550,34 @@ describe('store-tabs-record · the crossing', () => {
       bound = null
       rmSync(instant, { recursive: true, force: true })
     }
+  })
+
+  // ═══════════════ THE COMMIT CARRIER, AT RUN TIME (D-73) ═══════════════
+
+  it('THE CARRIER IS THE PACKAGE\'S OWN CLASS TEST, CASE FOR CASE: the six-member landing record a repair is handed is ADMITTED, and every form the fourth position refuses — no own `pending`, an inherited one, a present `undefined`, an array, `null`, a `Proxy` — is refused HERE rather than left to a store `TypeError`', () => {
+    // WHY THIS ROW EXISTS AT ALL: the type-level rows above pin the SIGNATURE; this one pins the TEST the signature stands on,
+    // because a guard weakened to `plain(value)` alone would still compile and would hand the store a value the position
+    // refuses — a `TypeError` thrown out of a repair instead of the failed arm the module answers. The arms below are the
+    // class test's, read off the installed `1.7.0`'s own predicate (`commitPositionRefusal`), including the two that need care:
+    // `pending` must be an OWN member (a prototype's does not count, the package reads `Object.hasOwn`) and a `Proxy` is
+    // refused BEFORE a member is read from it.
+    expect(
+      isCommitCarrier({ address: ['tabs'], id: 'exactly-one-active', op: {}, tier: 'file', value: {}, pending: [] }),
+      'the six-member `{address, id, op, tier, value, pending}` record a LANDING repair is handed is admitted'
+    ).toBe(true)
+    expect(isCommitCarrier({ pending: [{ handle: 'tab-has-title', address: ['tabs'] }] }), 'and one whose `pending` carries pair entries').toBe(true)
+    expect(isCommitCarrier({}), 'a record with no `pending` member is outside the position').toBe(false)
+    expect(isCommitCarrier({ pending: undefined }), 'and one carrying a PRESENT `undefined` is outside it too').toBe(false)
+    expect(isCommitCarrier(Object.create({ pending: [] })), 'an INHERITED `pending` is not an own member, which is `Object.hasOwn` read back').toBe(false)
+    expect(isCommitCarrier([]), 'an array is outside the position whatever it carries').toBe(false)
+    expect(isCommitCarrier(null), '`null` is outside the position').toBe(false)
+    expect(isCommitCarrier('pending'), 'and so is a primitive').toBe(false)
+    expect(isCommitCarrier(new Proxy({ pending: [] }, {})), 'a `Proxy` is refused before a member is read, as the store refuses it').toBe(false)
+    expect(isCommitCarrier({ pending: 'not-a-list' }), 'and a `pending` that is present but not a pair list is refused rather than carried').toBe(false)
+    // THE JOIN ITSELF IS ALREADY MEASURED, ON THE ROWS ABOVE AND NOT HERE: the repair-answer row reads the op the kernel
+    // CREDITS — `landedOp` credits an op absent from the attempt's own and strictly above the one the repair was invoked for,
+    // which only a JOINED write can produce — and the delivery row counts ONE notification for a commit that ran a repair,
+    // which a second commit could not deliver. A row here driving its own store would restate those two with a third
+    // instrument, so this row measures the one fact they cannot: the carrier's own admission.
   })
 })
