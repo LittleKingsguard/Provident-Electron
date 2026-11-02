@@ -1,17 +1,37 @@
 // tests/unit/central-data/support/temp-profile.ts — the unit battery's harness (design.md §5).
 //
 // A temp-profile factory (one `mkdtemp` directory per filesystem row, its one written name, its
-// removal) and one answer-shape helper. The battery imports nothing of the subject but
-// `src/main/data/index.ts`, and no seam is scripted here: every arm this battery drives is
-// reachable through a real profile directory and the real store behind the seam (D-14).
+// removal), one answer-shape helper, and THE BOOT: the store every row must now supply. The battery
+// imports `src/main/data/index.ts` for the subject and the seam's `createProfileStore` for the one
+// instance the composition hands the surface (`src/main/main.ts:132` → `:302`) — the app's own
+// construction, never a stub, and no fake is scripted here (D-14, D-80).
 
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect } from 'vitest'
 
+import { createDataSurface, type DataSurface } from '../../../../src/main/data'
+import { createProfileStore } from '../../../../src/main/storeroom.js'
+
 /** `<profileDir>/provident-profile.json` — the one name this unit writes (`persistence.md` §1; D-13). */
 export const PROFILE_FILE_NAME = 'provident-profile.json'
+
+/** **THE BOOT'S CONSTRUCTION, STOOD BY THE BATTERY** (D-80): one `provident-storeroom` instance at the profile's one
+ *  name, which that construction brings into being exclusively. `DataSurfaceOptions.store` is REQUIRED, so this is the
+ *  only way to stand a surface at all — and because the construction creates the name, **no row of this battery can
+ *  measure a profile with no file**: that is the state this product no longer has. The state it has is one name that
+ *  stands and holds nothing, which is what the rows below assert (D-79, D-80). */
+export function bootProfileStore(profileDir: string) {
+  return createProfileStore({ filePath: profileFilePath(profileDir) })
+}
+
+/** The composition `src/main/main.ts:302` performs, in one call: the directory the reading names and the instance the
+ *  caller already owns. A row that needs a SECOND boot over the same profile calls this again — two boots over one
+ *  name is what `behaviour.md` §3's "next process" is at this grain (D-80). */
+export function surfaceAt(profileDir: string): DataSurface {
+  return createDataSurface({ profileDir, store: bootProfileStore(profileDir) })
+}
 
 /** One fresh profile directory under `os.tmpdir()` (D-14). */
 export function makeProfileDir(): string {

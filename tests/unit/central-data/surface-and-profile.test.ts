@@ -3,19 +3,23 @@
 //
 // Every row drives one declared invariant: the surface is the five operations and five tool names
 // in their declared order (`signatures.md` §1; `interface.md` §1, §2), nothing reverses (G4;
-// D-12), the factory constructs no store and touches no file (`behaviour.md` §1; D-13), exactly
-// one name is ever written — `<profileDir>/provident-profile.json` (`persistence.md` §1; G3), a
+// D-12), the factory constructs no store and touches no file — the instance is the caller's and the
+// option is REQUIRED, so it cannot reach one (`behaviour.md` §1; D-13, D-80) — exactly one name is
+// ever written, and the boot's construction is what brings it into being —
+// `<profileDir>/provident-profile.json` (`persistence.md` §1; G3), a
 // fresh surface serves the same rows while its own journal starts empty (`behaviour.md` §3;
 // D-12), and a `file`-tier delete stays deleted across a boot (`persistence.md` §5; guide §9.3).
 // Red until `src/main/data/` exists (D-1 §4).
 
 import { afterEach, describe, expect, it } from 'vitest'
-import { createDataSurface, DATA_TOOL_NAMES, type DataSurface } from '../../../src/main/data'
+import { DATA_TOOL_NAMES, type DataSurface } from '../../../src/main/data'
 import {
   makeProfileDir,
+  profileBytes,
   profileEntries,
   PROFILE_FILE_NAME,
   removeProfileDir,
+  surfaceAt,
 } from './support/temp-profile'
 
 const created: string[] = []
@@ -42,7 +46,7 @@ describe('the declared surface', () => {
   })
 
   it('answers the five operations of the declared type', () => {
-    const surface: DataSurface = createDataSurface({ profileDir: newProfileDir() })
+    const surface: DataSurface = surfaceAt(newProfileDir())
     for (const name of ['read', 'write', 'delete', 'list', 'journal'] as const) {
       expect(typeof surface[name]).toBe('function')
     }
@@ -50,7 +54,7 @@ describe('the declared surface', () => {
 
   it('nothing reverses: no reversal member on the surface and no such word in an answer', () => {
     const forbidden = /undo|rollback|replay|revert|inverse/i
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     expect(Object.keys(surface).filter((name: string) => forbidden.test(name))).toEqual([])
     expect(DATA_TOOL_NAMES.filter((name: string) => forbidden.test(name))).toEqual([])
     const answers: unknown[] = [
@@ -73,19 +77,29 @@ describe('the declared surface', () => {
 })
 
 describe('the one written name', () => {
-  it('constructs no store and writes no file before the first operation', () => {
+  it('constructs no store of its own: the boot’s one name stands at zero length and the surface adds nothing to it', () => {
+    // RE-DERIVED, D-80. "Constructs no store and writes no file" was measured as an EMPTY directory, which the
+    // surface's own lazy construction is what left behind. The boot constructs, so the directory holds its one name;
+    // what the sentence still owes is that the SURFACE constructs nothing itself, and that is what is measured: the
+    // name stands at zero length after the surface is stood, and standing the surface adds no second entry of any
+    // kind. A construction reintroduced in `src/main/data/` would create a second file here — or, over the same
+    // name, throw — and either way reddens this row.
     const profileDir = newProfileDir()
-    createDataSurface({ profileDir })
-    expect(profileEntries(profileDir)).toEqual([])
+    surfaceAt(profileDir)
+    expect(profileEntries(profileDir)).toEqual([PROFILE_FILE_NAME])
+    expect(profileBytes(profileDir), 'and the one name holds no byte: the surface wrote nothing').toBe('')
   })
 
-  it('holds exactly provident-profile.json after one committed write and no sidecar before it', () => {
+  it('holds exactly provident-profile.json after one committed write, and no byte beside it before', () => {
     const profileDir = newProfileDir()
-    const surface = createDataSurface({ profileDir })
+    const surface = surfaceAt(profileDir)
     surface.list({})
     surface.read({ path: ['alpha'] })
     surface.journal({})
-    expect(profileEntries(profileDir)).toEqual([])
+    // The one name stands from the boot's construction onward and carries no byte until a commit lands: that is the
+    // "no sidecar before it" half, asserted on the bytes rather than on an empty listing (D-80).
+    expect(profileEntries(profileDir), 'no `.tmp`, no lock and no sidecar after a read-only session').toEqual([PROFILE_FILE_NAME])
+    expect(profileBytes(profileDir), 'and the name carries no byte yet').toBe('')
     expect(surface.write({ path: ['alpha'], value: 'x' })).toEqual({
       status: 'committed',
       path: ['alpha'],
@@ -98,10 +112,10 @@ describe('the one written name', () => {
 describe('a fresh surface over the same profile', () => {
   it('serves the same rows and starts its own empty journal', () => {
     const profileDir = newProfileDir()
-    const first = createDataSurface({ profileDir })
+    const first = surfaceAt(profileDir)
     first.write({ path: ['alpha'], value: 'x' })
     first.write({ path: ['beta'], value: { nested: [1, true] } })
-    const second = createDataSurface({ profileDir })
+    const second = surfaceAt(profileDir)
     expect(second.read({ path: ['alpha'] })).toEqual({
       status: 'read',
       kind: 'row',
@@ -130,12 +144,12 @@ describe('a fresh surface over the same profile', () => {
 
   it('serves a file-tier delete as deleted', () => {
     const profileDir = newProfileDir()
-    const first = createDataSurface({ profileDir })
+    const first = surfaceAt(profileDir)
     first.write({ path: ['alpha'], value: 'x' })
     const receipt = first.delete({ path: ['alpha'] })
     if (receipt.status !== 'committed') throw new Error(`expected a receipt, got ${receipt.status}`)
     expect(receipt.removed).toBe(true)
-    const second = createDataSurface({ profileDir })
+    const second = surfaceAt(profileDir)
     expect(second.read({ path: ['alpha'] })).toEqual({ status: 'absent', path: ['alpha'] })
     expect(second.list({})).toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
   })

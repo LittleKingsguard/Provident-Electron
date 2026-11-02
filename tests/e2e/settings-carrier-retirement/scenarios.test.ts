@@ -36,6 +36,7 @@ import { createDataSurface } from '../../../src/main/data'
 import { ProvidentMcpServer } from '../../../src/main/mcp-server.js'
 import { groupForTool } from '../../../src/main/security.js'
 import { createSettingsSurface, type SettingsAppStateRow, type SettingsSurface } from '../../../src/main/settings-surface/index.js'
+import { createProfileStore } from '../../../src/main/storeroom.js'
 
 /** `persistence.md` §1: the settled written names and the two retired seeds, spelled as literals
  *  here because half the rows assert their presence or their absence in a directory this file
@@ -250,9 +251,12 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     const seeded = readFileSync(at(CARRIER_FILE))
     const settings = surface()
     settings.commit([{ name: 'file.tabs.order', value: ['a', 'b'] }])
-    // The second written name is `central-data`'s, written by its own store in the same profile
-    // directory: the census S-10 states is the app's, not this unit's alone (D-13, D-22).
-    expect(createDataSurface({ profileDir: userDataDir }).write({ path: ['alpha'], value: 'x' }).status, 'the profile store commits its own row').toBe('committed')
+    // The second written name is `central-data`'s, written through the `provident-storeroom` instance the boot
+    // constructs at that same profile directory: the census S-10 states is the app's, not this unit's alone
+    // (D-13, D-22). **THE ROW BOOTS THE INSTANCE ITSELF** (`src/main/main.ts:132`), because `DataSurfaceOptions.store`
+    // is REQUIRED and the surface constructs nothing — the composition's own act, stood here (D-80).
+    const centralStore = createProfileStore({ filePath: join(userDataDir, PROFILE_FILE) })
+    expect(createDataSurface({ profileDir: userDataDir, store: centralStore }).write({ path: ['alpha'], value: 'x' }).status, 'the profile store commits its own row').toBe('committed')
 
     const settled = names(userDataDir)
     expect(settled, 'exactly the two written names and the seeded retired name, and no third name').toEqual([INSTANCE_FILE, PROFILE_FILE, CARRIER_FILE].sort())
@@ -264,7 +268,7 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     // ISO-1 — no `provident.data.*` operation reaches an operator-settings member or the instance's
     // file: the surface's declared refusal keeps an operator-shaped path out, and no answer names
     // the record. (The five tools answer through this one answer site — `interface.md` §5.)
-    const data = createDataSurface({ profileDir: userDataDir })
+    const data = createDataSurface({ profileDir: userDataDir, store: createProfileStore({ filePath: join(userDataDir, PROFILE_FILE) }) })
     for (const spelling of ['secure.token', 'mem.secret', 'temp.scratch']) {
       const answer = data.write({ path: [spelling], value: 'x' }) as Record<string, unknown>
       expect({ status: answer.status, reason: answer.reason }, `ISO-1: an operator-shaped path is refused, not written: ${spelling}`).toEqual({ status: 'refused', reason: 'volatile-path' })

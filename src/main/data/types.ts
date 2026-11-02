@@ -3,9 +3,10 @@
 // operations, their answer shapes and the five tool names are the surface `interface.md` §2
 // declares, and `DATA_TOOL_NAMES` is the only member of it that is a value.
 //
-// IT NOW CARRIES ONE IMPORT, AND IT IS A TYPE (D-79): `ProfileStore` is `store.ts`'s name for the seam's own
+// IT NOW CARRIES ONE IMPORT, AND IT IS A TYPE (D-79, D-80): `ProfileStore` is `store.ts`'s name for the seam's own
 // return type, so the composition can hand this module the store it already owns without any file here spelling
-// the package (S-9). A type import is erased at build, so nothing of `store.ts` reaches the bundle through it.
+// the package (S-9). A type import is erased at build, so nothing of `store.ts` reaches the bundle through it, and
+// the option that names it is REQUIRED — the surface has no way to build an instance of its own.
 
 import type { ProfileStore } from './store.js'
 
@@ -57,26 +58,47 @@ export type DataJournalAnswer =
   | { status: 'read'; from: number; through: number; floor: number; entries: readonly DataJournalEntry[]; count: number }
   | DataLedger
 
+/**
+ * Three members, and each one is READ by this module and nothing else — no member here opens a file, and none was
+ * left behind by a deleted path (D-80).
+ */
 export interface DataSurfaceOptions {
-  /** The app's profile directory; the FILE's name is this module's own choice (D-13). */
+  /**
+   * The app's profile directory: the directory the READING names — `<profileDir>/provident-profile.json` is
+   * `lstat`ed, `stat`ed and `access`ed by `readProfile`, never opened, and the FILE's name is this module's own
+   * choice (D-13). **IT IS KEPT BECAUSE THE READING STILL READS IT AND NOTHING ELSE CAN**: the reading is taken
+   * before the store is consulted and answers at a NAME (`occupied` / `absent` / `unreachable`), so it cannot be
+   * derived from the instance — a store carries no address for its own file — and without the directory the
+   * surface would lose §3's `store-unreachable` arm, the cold tier and the `profile` that every refusal sentence
+   * names. It fed the deleted construction too; that is a second use and not the reason it stands (D-80).
+   */
   profileDir: string
-  /** Bounds this module's own change window. Defaults to the seam's `DEFAULT_JOURNAL_LENGTH`. */
+  /**
+   * Bounds this module's own change window — the in-memory `{ cursor, kind, path, changedTo }` sequence
+   * `journal.ts` retains, and nothing else. Defaults to the seam's `DEFAULT_JOURNAL_LENGTH` (ASM-L3-4). The
+   * deleted construction sized the caller's store from it as well; the store's journal is set at its own creation
+   * and never moves, so a supplied instance fixes this figure and this option cannot (D-79, D-80).
+   */
   journalLength?: number
   /**
-   * **THE STORE THE CALLER ALREADY OWNS, THREADED IN SO THIS MODULE CONSTRUCTS NOTHING** (D-79). In the app the
-   * boot's one instance is passed here (`src/main/main.ts:132` → `:297`), so `data.*` writes through the NORMAL
-   * CROSSING — the instance that carries the five tab-record declarations — instead of opening a second one on the
-   * same `provident-profile.json`. Before this option existed the surface opened its OWN instance there: a third
-   * store holding its own register and journal over that file, whose every flush discarded what the other instance
-   * had written (measured 2026-11-02 across three sequences; D-79).
+   * **THE ONE STORE THIS SURFACE ACTS THROUGH, AND IT IS REQUIRED** (D-80). In the app the boot's one instance is
+   * passed here (`src/main/main.ts:132` → `:302`), so `data.*` acts through the NORMAL CROSSING — the instance
+   * carrying the five tab-record declarations — and one register stands over the one `provident-profile.json`.
    *
-   * **IT IS OPTIONAL, AND THE ABSENT ARM IS THE MODULE'S OWN BATTERIES, NOT THE APP.** An operation whose reading
-   * answers `absent` answers the cold tier WITHOUT constructing anything, so a battery that must exercise that tier
-   * stands the surface alone on a directory it seeded and hands it no store. Supplying one there would CONSTRUCT the
-   * profile file — a construction creates its `filePath` exclusively — the reading would then answer `occupied`, and
-   * the cold tier would stop being expressible at all. The app never takes that arm.
+   * **THE OPTIONAL FORM WAS THE DEFECT THIS TYPING REMOVES.** While `store` could be omitted, this module owned a
+   * construction that opened its own instance on the boot's own file — a third register and a third journal over one
+   * set of bytes, whose every flush discarded what the other instance had written (measured 2026-11-02, D-79) — and
+   * the fallback was kept only because four gating rows pinned a cold tier a constructed store cannot express.
+   * A surface that CAN build an instance is a surface one caller away from a second store, so the fallback is deleted
+   * rather than left unreachable: with `store` required there is no arm a caller can reach that constructs anything.
+   *
+   * **THE COLD TIER MOVED, AND IT DID NOT DISAPPEAR.** A supplied store creates its `filePath` at its own
+   * construction, so the reading of a freshly booted profile answers `occupied` over an EMPTY register: `list` serves
+   * `count:0`, `read` serves `{status:'absent'}` at an unwritten path, and the FILE STANDS — the state "a first-ever
+   * profile with no store file" is the one this product no longer has. The cold tier is now the name being REMOVED
+   * under a live process, which is `behaviour.md` §9's own row (D-80).
    */
-  store?: ProfileStore
+  store: ProfileStore
 }
 
 export interface DataSurface {

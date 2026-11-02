@@ -15,6 +15,19 @@
 // FINDING against the implementation or the design, never evidence about ordering (`strata/
 // examiner.md` §3). No row is skipped, conditionally disabled or softened.
 //
+// EVERY ROW STANDS THE BOOT FIRST, BECAUSE THE PRODUCT HAS NO SURFACE WITHOUT ONE (D-80). `store` is
+// a REQUIRED member of `DataSurfaceOptions` and the surface's fallback construction is deleted, so a
+// row that handed the surface a directory and no instance would be measuring a shape the product no
+// longer has. `boot()` below is `src/main/main.ts:132`'s construction — one instance at the profile's
+// one name — and `surfaceAt()` is `:302`'s pass of it. **WHAT THAT MOVED, AND WHAT IT DID NOT**: a
+// constructed store creates its `filePath` at its own construction, so the reading answers `occupied`
+// over an EMPTY register. Claims that a first-ever profile serves NO PATH and that an unwritten path
+// answers `absent` therefore stand unchanged — `read` distinguishes a name that holds no row from a
+// register that holds no row — while the claims that a first-ever profile has NO STORE FILE, and that
+// nothing stands in the profile directory, are states this product no longer has: each was re-derived
+// to the state it does have (the one name stands and is EMPTY, and no `.tmp`, lock or sidecar stands
+// beside it), never dropped and never loosened (D-80).
+//
 // AUTHORED FROM THE DOCUMENTS: L1 §3-§5 read on `interface.md` §1-§7, `behaviour.md` §1-§9 and
 // `persistence.md` §1-§9. The implementation was read only for exported names and call shapes
 // (`src/main/data/index.ts`, `surface.ts`, `store.ts`, `mcp-server.ts`). THE TWO LIMITS THIS HEAD
@@ -23,7 +36,7 @@
 // route, and the route's one declared answer site is the `DataSurface` operation it names; (b) the
 // Electron main bundle cannot boot, so no row depends on a real boot, a real IPC hop, a real socket
 // transport or a layout-ful rendered view (`brief.md` §6).
-import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -34,7 +47,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createDataSurface, DATA_TOOL_NAMES, type DataSurface } from '../../../src/main/data'
 import { EXCLUSION_CLOSED, ProvidentMcpServer, type McpBackend, type McpTransportKind } from '../../../src/main/mcp-server.js'
 import { SecurityGate, type ToolGroup } from '../../../src/main/security.js'
-import { STOREROOM_DECLARED_SURFACE } from '../../../src/main/storeroom.js'
+import { createProfileStore, STOREROOM_DECLARED_SURFACE } from '../../../src/main/storeroom.js'
 import { Runtime } from '../../../src/renderer/runtime.js'
 import { demoEnvelope } from '../../../src/shared/demo-envelope.js'
 import { installShim, mountEl } from '../../../src/shared/dom-shim.js'
@@ -62,6 +75,20 @@ afterEach(() => { rmSync(profileDir, { recursive: true, force: true }) })
 beforeAll(() => { installShim() })
 
 const backend: McpBackend = { invoke: async () => ({}) }
+
+/** **THE BOOT'S CONSTRUCTION, STOOD BY THE ROW** (`src/main/main.ts:132`): ONE store at the profile's
+ *  one name, which brings that name into being exclusively and holds an empty register until a write
+ *  lands. It is the only way to stand a surface at all — `DataSurfaceOptions.store` is required — so
+ *  every row below begins here rather than at a bare directory (D-80). */
+function boot(dir: string = profileDir) {
+  return createProfileStore({ filePath: join(dir, PROFILE_FILE) })
+}
+
+/** The composition `src/main/main.ts:302` performs: the directory the reading names, and the instance
+ *  the caller already owns. Two arguments, one of them required, and no third way in (D-80). */
+function surfaceAt(dir: string = profileDir): DataSurface {
+  return createDataSurface({ profileDir: dir, store: boot(dir) })
+}
 
 /** The app's own producing graph, without a window: the backend `battery-host.ts` composes, under
  *  the layout-less shim (`brief.md` §6). Used only by the two rows whose L1 expectation is a
@@ -129,12 +156,18 @@ const SRC = join(process.cwd(), 'src')
 const rel = (file: string): string => file.slice(SRC.length + 1).split('\\').join('/')
 
 describe('central-data-management · the twelve L1 scenarios through their declared entry points', () => {
-  it('S-1 · a first-ever profile serves nothing: no paths, no store file, the eight default names and no data tool', async () => {
-    const surface = createDataSurface({ profileDir })
-    expect(surface.list({}), 'behaviour.md §1 — the cold tier answers the empty register').toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
+  it('S-1 · a first-ever profile serves nothing: the boot’s store answers the empty register, its one name stands EMPTY, the eight default names and no data tool', async () => {
+    const surface = surfaceAt()
+    expect(surface.list({}), 'behaviour.md §1 — the open register answers with no path').toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
     expect(surface.read({ path: ['anywhere'] }), 'absence is an answer, never an empty success (D-11)').toEqual({ status: 'absent', path: ['anywhere'] })
-    expect(existsSync(at(PROFILE_FILE)), 'no store is constructed for a profile that is only read (D-13)').toBe(false)
-    expect(readdirSync(profileDir), 'and no byte, no `.tmp` and no sidecar stands in the profile').toEqual([])
+    // RE-DERIVED, D-80. This row used to assert that NO store file stood after a read, which was the cold
+    // tier of a surface that constructed on demand. The product has no such state: the boot constructs the one
+    // instance, that construction creates the name exclusively, and the reading therefore answers `occupied`.
+    // What is still owed — and is the stronger reading of the same sentence — is that NOTHING HAS LANDED IN IT:
+    // the name stands at zero length, so the "no path" above is an empty register and not a missing store.
+    expect(existsSync(at(PROFILE_FILE)), 'the boot’s own construction is what brings the one name into being (D-80)').toBe(true)
+    expect(statSync(at(PROFILE_FILE)).size, 'and it holds no byte: a first-ever profile’s store is open and empty, never absent').toBe(0)
+    expect(readdirSync(profileDir), 'no `.tmp`, no lock and no sidecar stands beside the one name (persistence.md §5)').toEqual([PROFILE_FILE])
 
     const { client, close } = await live(['read', 'dispatch'], surface)
     try {
@@ -152,7 +185,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-2 · the group is a decision, not a default: off the five are absent rather than present-and-refusing; with data, thirteen names and all five answer', async () => {
-    const off = await live(['read', 'dispatch'], createDataSurface({ profileDir }))
+    const off = await live(['read', 'dispatch'], surfaceAt())
     try {
       const attempt = await call(off.client, 'provident.data.list', {})
       expect(attempt.isError, 'a disabled group registers nothing, so the call is answered by the protocol as an absent tool').toBe(true)
@@ -160,7 +193,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       expect(attempt.answer.status, 'no declared status crosses from an unregistered tool').toBeUndefined()
     } finally { await off.close() }
 
-    const on = await live(['read', 'dispatch', 'data'], createDataSurface({ profileDir }))
+    const on = await live(['read', 'dispatch', 'data'], surfaceAt())
     try {
       const names = await listed(on.client)
       expect(names.length, 'interface.md §4 — with `data` enabled the listed set is thirteen').toBe(13)
@@ -174,7 +207,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-3 · a first write commits through the store: a committed receipt, the store’s file carrying the row, the read serving it, and no .tmp residue', () => {
-    const surface = createDataSurface({ profileDir })
+    const surface = surfaceAt()
     const receipt = surface.write({ path: ['alpha'], value: 'x' })
     expect(receipt.status, 'behaviour.md §2 — one file-tier write is the durability unit').toBe('committed')
     if (receipt.status !== 'committed') throw new Error(`the write answered ${JSON.stringify(receipt)}`)
@@ -188,13 +221,15 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-4 · the next process re-serves the same rows: identical read and list answers, and the census and node-id vocabulary are identical', async () => {
-    const first = createDataSurface({ profileDir })
+    const first = surfaceAt()
     first.write({ path: ['alpha'], value: 'x' })
     first.write({ path: ['beta'], value: 2 })
     const before = { rows: first.read({ path: ['alpha'] }), list: first.list({}) }
-    // "The next process" at the envelope grain: a second construction over the same directory, which
-    // is what `behaviour.md` §3 declares; a real Electron restart is app-green (`brief.md` §6).
-    const second = createDataSurface({ profileDir })
+    // "The next process" at the envelope grain: a second BOOT over the same directory — a second
+    // instance constructed at the same one name, which adopts the bytes the first one left — and a
+    // second surface over it. That is what `behaviour.md` §3 declares; a real Electron restart is
+    // app-green (`brief.md` §6).
+    const second = surfaceAt()
     expect(second.read({ path: ['alpha'] }), 'the identical read across a new process').toEqual(before.rows)
     expect(second.list({}), 'and the identical list, with its count unmoved').toEqual(before.list)
     // The graph half, at the producing-graph grain: two boots of the app's own envelope carry the
@@ -204,7 +239,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     // stay app-green (`brief.md` §6) and this row says so rather than passing silently.
     type Target = { nodeId: string; cssId?: string; type?: string; inTree?: boolean; handlers?: Array<{ name?: string; event?: string }> }
     const reading = async (): Promise<{ census: unknown; vocabulary: unknown[]; count: number }> => {
-      const { client, close } = await live(['read', 'dispatch'], createDataSurface({ profileDir }), graphBackend())
+      const { client, close } = await live(['read', 'dispatch'], surfaceAt(), graphBackend())
       try {
         const html = await call(client, 'provident.get_rendered_html', {})
         const nodes = ((await call(client, 'provident.list_targets', {})).answer.nodes ?? []) as Target[]
@@ -221,7 +256,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-5 · a malformed row is refused, not swallowed: a reason word, the previous bytes intact, and the read unchanged', () => {
-    const surface = createDataSurface({ profileDir })
+    const surface = surfaceAt()
     surface.write({ path: ['alpha'], value: 'prev' })
     const stood = bytesOf(PROFILE_FILE)
     const arms: Array<{ label: string; args: unknown }> = [
@@ -242,7 +277,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-6 · a failing write leaves no tear: a refused receipt at the failing point, the previous bytes intact, and no .tmp', () => {
-    const surface = createDataSurface({ profileDir })
+    const surface = surfaceAt()
     surface.write({ path: ['alpha'], value: 'prev' })
     const stood = bytesOf(PROFILE_FILE)
     // THE FIRST FAILING POINT — a store-level refusal, reached inside the write path: a nested write
@@ -267,7 +302,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-7 · delete and journal are observable and nothing reverses: the delete answers a receipt, the journal shows the write then the delete with cursors, and no tool reverses', () => {
-    const surface = createDataSurface({ profileDir })
+    const surface = surfaceAt()
     const written = surface.write({ path: ['alpha'], value: 'x' })
     const removed = surface.delete({ path: ['alpha'] }) as Record<string, unknown>
     expect(removed.status, 'behaviour.md §6 — a delete of a standing row commits').toBe('committed')
@@ -288,7 +323,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-8 · volatile keys never persist: all four tier spellings are driven, the three volatile ones are refused, and the file carries none', () => {
-    const surface = createDataSurface({ profileDir })
+    const surface = surfaceAt()
     expect(surface.write({ path: ['file.kept'], value: 'durable' }).status, 'the durable spelling lands, so the absence below is not a blanket').toBe('committed')
 
     for (const spelling of ['mem.cache', 'temp.scratch', 'secure.vault']) {
@@ -310,6 +345,24 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(importers, 'L1 §5 S-9 — the package is imported in exactly the seam, the operator-settings instance and (D-63) the tab record\'s own instance').toEqual(['main/operator-settings/index.ts', 'main/storeroom.ts', 'main/tabs-record/index.ts'])
     expect(importers.filter((file) => file.startsWith('main/data/')), 'and nowhere under src/main/data/: this module reaches the store through the seam').toEqual([])
     expect(walk(join(SRC, 'main', 'data')).filter((file) => readFileSync(file, 'utf8').includes('provident-storeroom')).map(rel), 'no file of this module spells the package at all').toEqual([])
+    // THE CONSTRUCTION CENSUS (D-80). Reaching the package through the seam was never the whole of it: the surface
+    // could reach the seam's construction and open a `provident-profile.json` of its own, which the import census
+    // above is blind to by construction. It cannot now. The needle is a VALUE import of the construction — the
+    // binding inside an `import { … }` statement — because a TYPE position is erased at build and opens nothing:
+    // `store.ts` keeps the name in `import type` and in `ReturnType<typeof createProfileStore>`, and `journal.ts`
+    // keeps a value import of `DEFAULT_JOURNAL_LENGTH`, which is no construction. A `constructStore` reintroduced
+    // in this module would have to bind the construction as a value, and that reddens THIS line.
+    expect(walk(join(SRC, 'main', 'data')).filter((file) => /import\s*\{[^}]*\bcreateProfileStore\b[^}]*\}\s*from/.test(readFileSync(file, 'utf8'))).map(rel), 'the module holds no construction: `DataSurfaceOptions.store` is REQUIRED and the fallback is deleted rather than left unreachable (D-80)').toEqual([])
+    // AND THE TYPING, WHICH IS THE HALF NO GREP CAN SEE — the state that made a second store reachable was an
+    // OPTIONAL member, so the deletion is a compile-time fact before it is anything else. The closure below is never
+    // called: `typecheck:tests` reds on it twice over, once if the omission stops being an error (TS2578, the
+    // directive unused) and once if the directive or the line is removed.
+    const withoutAnInstance = (): DataSurface => {
+      // @ts-expect-error — D-80: `DataSurfaceOptions.store` is REQUIRED. A surface with a directory and no instance
+      // does not compile, so no caller is one line away from a second store.
+      return createDataSurface({ profileDir })
+    }
+    expect(typeof withoutAnInstance, 'the omitted-instance construction is a COMPILE fault, refused by `typecheck:tests` and never run (D-80)').toBe('function')
   })
 
   it('S-10 · this unit declares no rendered data view: a commit moves no rendered surface, mints no node, and the graph a view would ride answers a four-member dispatch', async () => {
@@ -323,7 +376,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     // still names its targets and answers a dispatch. The row drives that graph under the
     // layout-less shim (the grain of `src/main/battery-host.ts`); the real-DOM half of any owed pane
     // is app-green and is not claimed here (`brief.md` §6).
-    const { client, close } = await live(['read', 'dispatch', 'data'], createDataSurface({ profileDir }), graphBackend())
+    const { client, close } = await live(['read', 'dispatch', 'data'], surfaceAt(), graphBackend())
     try {
       type Target = { nodeId: string }
       const reading = async (): Promise<{ rendered: string; markdown: string; nodes: Target[] }> => ({
@@ -356,9 +409,15 @@ describe('central-data-management · the twelve L1 scenarios through their decla
   })
 
   it('S-11 · nothing crosses while the tier is open: the declared refusal as a value on a data tool and on a resource read, and no profile write', async () => {
-    const { server, client, close } = await live(['read', 'dispatch', 'data'], createDataSurface({ profileDir }))
+    const { server, client, close } = await live(['read', 'dispatch', 'data'], surfaceAt())
     try {
       const control = await call(client, 'provident.data.list', {})
+      // RE-DERIVED, D-80. The row used to assert that NO profile file stood at this turn, which was a cold profile
+      // with no boot behind it. The product's profile file stands from the boot's construction onward, so the claim
+      // the row's own name makes — NO PROFILE BYTE MOVES WHILE THE TIER IS OPEN — is now taken on the bytes: the
+      // zero-length image the construction left, compared byte for byte after the five tools and the resource read
+      // have been refused. A single `committed` reaching the store would move them, which is what makes it a row.
+      const stood = bytesOf(PROFILE_FILE)
       expect(control.answer.status, 'the POSITIVE CONTROL — with the tier closed the same call answers normally, so the reading below is not a blanket refusal').toBe('read')
 
       server.applyExclusion('mcp-disabled')
@@ -370,22 +429,26 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       const resource = await client.readResource({ uri: 'mcp://provident/app' })
       const text = String((resource.contents?.[0] as { text?: string } | undefined)?.text ?? '')
       expect(text.includes(EXCLUSION_CLOSED), 'a resource read answers the same refusal as a value at the same turn (behaviour.md §8)').toBe(true)
-      expect(existsSync(at(PROFILE_FILE)), 'no profile byte moves while the tier is open').toBe(false)
-      expect(readdirSync(profileDir), 'and no store is constructed at that turn').toEqual([])
+      expect(bytesOf(PROFILE_FILE).equals(stood), 'no profile byte moves while the tier is open (behaviour.md §8)').toBe(true)
+      expect(readdirSync(profileDir), 'and nothing new stands in the profile: no `.tmp`, no lock, no sidecar').toEqual([PROFILE_FILE])
     } finally { await close() }
   })
 
-  it('S-12 · two profiles are disjoint and a corrupt image recovers by declaration: the cold tier answers, the process boots, and the next commit replaces the bytes', () => {
+  it('S-12 · two profiles are disjoint and a corrupt image recovers by declaration: an empty register answers, the process boots, and the next commit replaces the bytes', () => {
     const other = mkdtempSync(join(tmpdir(), 'central-data-e2e-other-'))
     try {
-      const a = createDataSurface({ profileDir })
-      const b = createDataSurface({ profileDir: other })
+      const a = surfaceAt()
+      const b = surfaceAt(other)
       expect(a.write({ path: ['alpha'], value: 'only-a' }).status, 'the first profile commits its own row').toBe('committed')
       expect(a.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'only-a' })
       expect(b.read({ path: ['alpha'] }), 'and the second profile never serves it (behaviour.md §9)').toEqual({ status: 'absent', path: ['alpha'] })
       const bList = b.list({})
       expect({ status: bList.status, count: bList.status === 'read' ? bList.count : null }, 'their lists are disjoint').toEqual({ status: 'read', count: 0 })
-      expect(existsSync(join(other, PROFILE_FILE)), 'two profiles, two files').toBe(false)
+      // RE-DERIVED, D-80, and STRONGER THAN THE LINE IT REPLACES. "Two profiles, two files" used to be asserted as
+      // the second file's ABSENCE, because neither surface had opened one. Both boots open one now, so the
+      // disjointness is asserted on the bytes: the second profile's own file stands and carries NO ROW of the
+      // first, which is the claim the sentence was always reaching for and is red if the two ever share a register.
+      expect(readFileSync(join(other, PROFILE_FILE), 'utf8'), 'two profiles, two files — and the second carries none of the first\'s row').toBe('')
     } finally { rmSync(other, { recursive: true, force: true }) }
 
     // A FOREIGN image each answers the cold tier, boots, and is replaced by the next commit — the
@@ -401,8 +464,12 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       const dir = mkdtempSync(join(tmpdir(), 'central-data-e2e-corrupt-'))
       try {
         writeFileSync(join(dir, PROFILE_FILE), seed.bytes)
-        const surface = createDataSurface({ profileDir: dir })
-        expect(surface.list({}), `S-12/${seed.label}: the cold tier, not a refusal and not a throw`).toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
+        // RE-DERIVED, D-80. The row's subject is P-1's measured arm — a boot over bytes that are not the store's
+        // image answers cold and leaves them untouched — and the boot is now the ROW's act rather than the surface's
+        // lazy one, which puts the finding exactly where `persistence.md` §9 P-1 states it: `createProfileStore` is
+        // what meets the foreign image, and a boot that threw here would redden this line by throwing out of the row.
+        const surface = surfaceAt(dir)
+        expect(surface.list({}), `S-12/${seed.label}: the register is empty — not a refusal and not a throw`).toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
         expect(surface.read({ path: ['alpha'] }), `S-12/${seed.label}: absence is the answer`).toEqual({ status: 'absent', path: ['alpha'] })
         expect(readFileSync(join(dir, PROFILE_FILE), 'utf8'), `S-12/${seed.label}: the foreign bytes stand untouched until a commit`).toBe(seed.bytes)
         expect(surface.write({ path: ['alpha'], value: 'recovered' }).status, `S-12/${seed.label}: the next commit commits`).toBe('committed')

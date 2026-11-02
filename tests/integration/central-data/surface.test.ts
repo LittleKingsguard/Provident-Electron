@@ -18,7 +18,8 @@ import { join } from 'node:path'
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { createDataSurface } from '../../../src/main/data'
+import { createDataSurface, type DataSurface } from '../../../src/main/data'
+import { createProfileStore } from '../../../src/main/storeroom.js'
 
 const PROFILE_FILE = 'provident-profile.json'
 
@@ -36,9 +37,17 @@ afterEach(() => {
 
 const coldList = { status: 'read', prefix: null, paths: [], count: 0 } as const
 
+/** **THE BOOT'S CONSTRUCTION, STOOD BY THE BATTERY** (`src/main/main.ts:132`): one instance at the profile's one
+ *  name, handed to the surface the way `:302` hands it. `DataSurfaceOptions.store` is REQUIRED, so no row can stand
+ *  a surface without one — and a construction creates its `filePath`, so the reading of a fresh profile answers
+ *  `occupied` over an empty register, never `absent` (D-80). */
+function surfaceAt(dir: string = profileDir): DataSurface {
+  return createDataSurface({ profileDir: dir, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }) })
+}
+
 describe('central-data · the five operations through createDataSurface', () => {
-  it('a first-ever profile is read → list {paths:[],count:0}, read {absent}, read [] {kind:"branch",value:{}}, journal {from:0,through:0,count:0}, and no profile file is created', () => {
-    const s = createDataSurface({ profileDir })
+  it('a first-ever profile is read → list {paths:[],count:0}, read {absent}, read [] {kind:"branch",value:{}}, journal {from:0,through:0,count:0}, and the store’s one name holds no byte', () => {
+    const s = surfaceAt()
     expect(s.list({})).toEqual(coldList)
     expect(s.list(undefined), 'interface §1 — an omitted `arguments` is the same call as `{}`').toEqual(coldList)
     expect(s.read({ path: ['never'] })).toEqual({ status: 'absent', path: ['never'] })
@@ -47,15 +56,19 @@ describe('central-data · the five operations through createDataSurface', () => 
     if (j.status !== 'read') throw new Error(`the journal must answer a reading on a first-ever profile; it answered ${JSON.stringify(j)}`)
     expect({ from: j.from, through: j.through, floor: j.floor, entries: j.entries, count: j.count })
       .toEqual({ from: 0, through: 0, floor: 0, entries: [], count: 0 })
-    expect(existsSync(profilePath),
-      'D-13 — the store is constructed at the first operation that NEEDS one, so a read-only profile costs no filesystem act: nothing stands at <profileDir>/provident-profile.json').toBe(false)
+    // RE-DERIVED, D-80. The row asserted that NOTHING stood at `<profileDir>/provident-profile.json`, which was the
+    // cold tier of a surface that constructed on demand. The product's composition constructs once at boot, so the
+    // name stands — and the claim the row owes is that nothing has LANDED in it: the file is at zero length, which is
+    // what an empty register looks like on disk and what no read, list or journal can move.
+    expect(existsSync(profilePath), 'the boot’s construction is what brings the one name into being (D-80)').toBe(true)
+    expect(readFileSync(profilePath, 'utf8'), 'and it holds no byte: an OPEN register that holds nothing, never an absent one').toBe('')
   })
 
   it('a literal is written → write {committed, cursor:1} then read {kind:"row", value}; a second write serves the new value at cursor 2 with list.count unchanged', () => {
-    const s = createDataSurface({ profileDir })
+    const s = surfaceAt()
     expect(s.write({ path: ['alpha'], value: 'x' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1 })
     expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
-    expect(existsSync(profilePath), 'the first committed write is what creates the profile file').toBe(true)
+    expect(existsSync(profilePath), 'the one name stands').toBe(true)
     expect(s.list({}), 'a `row` is a literal standing at that exact address, so `list` names that one path').toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
     expect(s.write({ path: ['alpha'], value: 'y' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 2 })
     expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'y' })
@@ -68,8 +81,8 @@ describe('central-data · the five operations through createDataSurface', () => 
     // at the same address. That collision arm is nobody's assertion in this battery
     // (`interface.md` §"the integration battery's surface", row 2's repair), and no row
     // re-introduces it.
-    const s = createDataSurface({ profileDir })
-    expect(existsSync(profilePath), 'the fresh directory carries no profile file before the write').toBe(false)
+    const s = surfaceAt()
+    expect(readFileSync(profilePath, 'utf8'), 'the fresh directory’s store is open and holds no row before the write (D-80)').toBe('')
     expect(s.write({ path: ['alpha'], value: { nested: [1, true] } })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1 })
     expect(s.read({ path: ['alpha'] }), 'a container is a BRANCH, and the assembled value is served as it was written').toEqual({ status: 'read', kind: 'branch', path: ['alpha'], value: { nested: [1, true] } })
     expect(s.list({}), '`list` answers the paths that hold a ROW (ASM-L2-2): the two literals beneath the container, and never the branch itself').toEqual({
@@ -81,7 +94,7 @@ describe('central-data · the five operations through createDataSurface', () => 
   })
 
   it('a write beneath a parent that does not stand → refused parent-absent and nothing lands; a write at [] → refused root-not-writable', () => {
-    const s = createDataSurface({ profileDir })
+    const s = surfaceAt()
     s.write({ path: ['alpha'], value: 'x' })
     const before = readFileSync(profilePath)
     const orphan = s.write({ path: ['absent-parent', 'child'], value: 1 })
@@ -93,9 +106,9 @@ describe('central-data · the five operations through createDataSurface', () => 
   })
 
   it('the process is re-entered → a second surface over the same profileDir serves the same read and the same list, and its own journal starts empty', () => {
-    const first = createDataSurface({ profileDir })
+    const first = surfaceAt()
     first.write({ path: ['alpha'], value: 'kept' })
-    const second = createDataSurface({ profileDir })
+    const second = surfaceAt()
     expect(second.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'kept' })
     expect(second.list({})).toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
     const j = second.journal({})
@@ -105,7 +118,7 @@ describe('central-data · the five operations through createDataSurface', () => 
   })
 
   it('a malformed write is driven → refused malformed-arguments naming the member, the previous row still served, its bytes unchanged', () => {
-    const s = createDataSurface({ profileDir })
+    const s = surfaceAt()
     s.write({ path: ['alpha'], value: 'x' })
     const before = readFileSync(profilePath)
     const missing = s.write({ path: ['alpha'] })
@@ -121,7 +134,7 @@ describe('central-data · the five operations through createDataSurface', () => 
   })
 
   it('a volatile spelling is written, read and deleted → refused volatile-path each time, list unmoved, and no mem./temp./secure. spelling in the profile\'s bytes', () => {
-    const s = createDataSurface({ profileDir })
+    const s = surfaceAt()
     s.write({ path: ['alpha'], value: 'x' })
     const before = s.list({})
     for (const spelling of ['mem.cache', 'temp.scratch', 'secure.vault']) {
@@ -142,7 +155,7 @@ describe('central-data · the five operations through createDataSurface', () => 
   })
 
   it('a delete is driven → removed:true with tiers naming "file" and cursor 2, then read {absent}; a delete of an absent address answers removed:false, tiers:[], cursor:null with no store refusal reaching the caller', () => {
-    const s = createDataSurface({ profileDir })
+    const s = surfaceAt()
     s.write({ path: ['alpha'], value: 'x' })
     expect(s.delete({ path: ['alpha'] })).toEqual({ status: 'committed', path: ['alpha'], removed: true, tiers: ['file'], cursor: 2 })
     expect(s.read({ path: ['alpha'] })).toEqual({ status: 'absent', path: ['alpha'] })
@@ -155,7 +168,7 @@ describe('central-data · the five operations through createDataSurface', () => 
   })
 
   it('the journal is driven from a cursor → the write then the delete in that order with their cursors, `from` echoes the cursor, and no answer carries a reversal', () => {
-    const s = createDataSurface({ profileDir })
+    const s = surfaceAt()
     s.write({ path: ['alpha'], value: 'x' })
     s.delete({ path: ['alpha'] })
     const all = s.journal({})
@@ -178,7 +191,7 @@ describe('central-data · the five operations through createDataSurface', () => 
   })
 
   it('a stale cursor is driven → refused cursor-unknown, with the window\'s own floor and through read through the DECLARED ledger members', () => {
-    const s = createDataSurface({ profileDir })
+    const s = surfaceAt()
     s.write({ path: ['alpha'], value: 'x' })
     // THE DECLARED READING OF THE STALE CURSOR (`interface.md` §2/§3): the answer's own status
     // word narrows it to the `DataLedger` arm, and `floor`/`through` are that arm's declared

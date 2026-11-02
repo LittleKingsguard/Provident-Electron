@@ -8,8 +8,12 @@
 // caller re-anchors (`persistence.md` §6; D-12). Red until `src/main/data/` exists (D-1 §4).
 
 import { afterEach, describe, expect, it } from 'vitest'
-import { createDataSurface } from '../../../src/main/data'
-import { expectRefusal, makeProfileDir, removeProfileDir } from './support/temp-profile'
+import {
+  expectRefusal,
+  makeProfileDir,
+  removeProfileDir,
+  surfaceAt,
+} from './support/temp-profile'
 
 const created: string[] = []
 
@@ -24,8 +28,8 @@ afterEach(() => {
 })
 
 /** A write, a write over it and a delete of it: cursors 1, 2 and 3 (D-12). */
-function threeCommits(): ReturnType<typeof createDataSurface> {
-  const surface = createDataSurface({ profileDir: newProfileDir() })
+function threeCommits(): ReturnType<typeof surfaceAt> {
+  const surface = surfaceAt(newProfileDir())
   surface.write({ path: ['alpha'], value: 'x' })
   surface.write({ path: ['alpha'], value: 'y' })
   surface.delete({ path: ['alpha'] })
@@ -34,7 +38,7 @@ function threeCommits(): ReturnType<typeof createDataSurface> {
 
 describe('a delete names one row', () => {
   it('removes the row, answers tiers naming the file tier and mints the next cursor', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     surface.write({ path: ['alpha'], value: 'x' })
     const receipt = surface.delete({ path: ['alpha'] })
     if (receipt.status !== 'committed') throw new Error(`expected a receipt, got ${receipt.status}`)
@@ -47,7 +51,7 @@ describe('a delete names one row', () => {
   })
 
   it('answers the empty receipt where no row stands, leaving the standing row and cursor alone', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     surface.write({ path: ['alpha'], value: 'x' })
     const journal = surface.journal({})
     expect(surface.delete({ path: ['gamma'] })).toEqual({
@@ -67,7 +71,7 @@ describe('a delete names one row', () => {
   })
 
   it('answers the empty receipt where only rows stand beneath the address and leaves them intact', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     surface.write({ path: ['alpha'], value: { nested: [1, true] } })
     expect(surface.delete({ path: ['alpha'] })).toEqual({
       status: 'committed',

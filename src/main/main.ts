@@ -294,11 +294,12 @@ async function main(): Promise<void> {
   syncModuleRouter(moduleRouter, moduleSurface)
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
-  // **AND THE `data` SURFACE IS HANDED THE BOOT'S OWN STORE** (D-79): `centralStore` was constructed above
+  // **AND THE `data` SURFACE IS HANDED THE BOOT'S OWN STORE** (D-79, D-80): `centralStore` was constructed above
   // (`:132`), and without this handle the surface opens a SECOND instance on the same
   // `provident-profile.json` — its own register, its own journal, one file, and every flush from it discards what the
   // other instance wrote (measured 2026-11-02). Two instances are the ruling's whole number, so the handle is passed
-  // and the surface constructs nothing.
+  // and the surface constructs nothing — **and now it CANNOT**: `DataSurfaceOptions.store` is required and the
+  // fallback construction is deleted, so this line is the surface's only source of an instance (D-80).
   const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface: createDataSurface({ profileDir: app.getPath('userData'), store: centralStore }) })
   // `§0A` item 1 (the `A-1` ruling) — NO RE-POINT IS OWED HERE ANY MORE. The landed `R-2` re-point
   // existed because the store consulted a reader `main` had to keep aimed at the LIVE server

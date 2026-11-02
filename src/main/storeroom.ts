@@ -2,9 +2,15 @@
 //
 // What this file is, exactly, and what it is NOT:
 //
-//  - IT IS one of the app's TWO imports of `provident-storeroom` — the seam that declares its
-//    surface; `storeCreate` in the rebuilt security instance's own module is the other (`brief.md`
-//    §2, D-16).
+//  - IT IS one of the app's THREE imports of `provident-storeroom` — the seam that declares its
+//    surface. The second is the rebuilt SECURE crossing's own module and the third (D-63) is the tab
+//    record's own instance (`brief.md` §2, D-16, D-63). **THE FIGURE WAS TWO HERE AND WAS RE-MEASURED,
+//    NOT READ OFF THIS COMMENT**: `grep -rn "from 'provident-storeroom'" src/` answers three files and
+//    four statements at this head, and no file under `src/main/data/` names the package at all — which
+//    is the census `tests/e2e/central-data/scenarios.test.ts` `S-9` pins and the count the decision row
+//    for this pass records with the three paths in full, `strata/decisions.md` being where a
+//    cross-module name belongs and the MCP import closure being no place for one (measured 2026-11-02;
+//    the closure row `S-11` reds on a path spelled here).
 //    The package is the object of this repo's defect catalogue (`docs/defects.md`, handoff
 //    `docs/HANDOFF.md`): the app is the implementation test, and one that never imports it is a
 //    paper exercise. This module is where the surface is pinned, so there is ONE seam to point at.

@@ -13,7 +13,7 @@
 // six groups, the default-grant subset unmoved at 8, thirteen names with `data` enabled). This file
 // executes no census row of its own: it reads the listing the gate drives and the answers the five
 // registrations return.
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -22,6 +22,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createDataSurface, DATA_TOOL_NAMES, type DataSurface } from '../../../src/main/data'
+import { createProfileStore } from '../../../src/main/storeroom.js'
 import {
   EXCLUSION_CLOSED,
   EXCLUSION_CLOSED_MESSAGE,
@@ -58,6 +59,11 @@ afterEach(() => {
 
 const backend: McpBackend = { invoke: async () => ({}) }
 
+/** **THE BOOT'S CONSTRUCTION, STOOD BY THE BATTERY** (`src/main/main.ts:132`): one instance at the profile's one
+ *  name, handed to the surface the way `:302` hands it. `DataSurfaceOptions.store` is REQUIRED (D-80). */
+const surfaceAt = (dir: string = profileDir): DataSurface =>
+  createDataSurface({ profileDir: dir, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }) })
+
 interface Live {
   server: ProvidentMcpServer
   client: Client
@@ -90,7 +96,7 @@ async function call(client: Client, name: string, args: Record<string, unknown> 
 
 describe('central-data · the group, the gate and the registration surface', () => {
   it('the group is off → tools/list holds exactly the eight default names and none of the five data names', async () => {
-    const dataSurface = createDataSurface({ profileDir })
+    const dataSurface = surfaceAt()
     const { client, close } = await live(['read', 'dispatch'], dataSurface)
     try {
       const names = await listed(client)
@@ -105,7 +111,7 @@ describe('central-data · the group, the gate and the registration surface', () 
   })
 
   it('with [read,dispatch,data] → tools/list holds thirteen names and all five data tools answer a declared status', async () => {
-    const dataSurface = createDataSurface({ profileDir })
+    const dataSurface = surfaceAt()
     const { client, close } = await live(['read', 'dispatch', 'data'], dataSurface)
     try {
       const names = await listed(client)
@@ -138,12 +144,15 @@ describe('central-data · the group, the gate and the registration surface', () 
   })
 
   it('while the exclusion tier is open → every data tool answers {status:"refused",reason:"exclusion-closed",message} and no profile byte moves', async () => {
-    const dataSurface = createDataSurface({ profileDir })
+    const dataSurface = surfaceAt()
     const { server, client, close } = await live(['read', 'dispatch', 'data'], dataSurface)
     try {
       const control = await call(client, 'provident.data.list', {})
       expect(control.answer.status, 'the POSITIVE CONTROL — with the tier closed the same call answers normally, so the reading below is not a blanket refusal').toBe('read')
-      expect(existsSync(profilePath), 'no store has been constructed yet').toBe(false)
+      // RE-DERIVED, D-80: the boot's construction is where the one name comes into being, so the "nothing has been
+      // constructed yet" half of this row is measured on the BYTES — the empty image the construction left — and the
+      // refusal below must leave them exactly as they stood.
+      const stood = readFileSync(profilePath)
 
       server.applyExclusion('mcp-disabled')
 
@@ -154,7 +163,7 @@ describe('central-data · the group, the gate and the registration surface', () 
         const refused = await call(client, name, {})
         expect(refused.answer.reason, `every data tool refuses while the tier is open: ${name}`).toBe(EXCLUSION_CLOSED)
       }
-      expect(existsSync(profilePath), 'no profile byte moves and no store is constructed at that turn').toBe(false)
+      expect(readFileSync(profilePath).equals(stood), 'no profile byte moves while the tier is open (behaviour.md §8)').toBe(true)
 
       server.applyExclusion('mcp-enabled')
       const after = await call(client, 'provident.data.write', { path: ['alpha'], value: 'x' })

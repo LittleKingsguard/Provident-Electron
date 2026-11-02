@@ -53,6 +53,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { describe, expect, it } from 'vitest'
 
 import { createDataSurface, DATA_TOOL_NAMES } from '../../../src/main/data'
+import { createProfileStore } from '../../../src/main/storeroom.js'
 import { ProvidentMcpServer, type McpBackend } from '../../../src/main/mcp-server.js'
 import { SecurityGate, groupForTool, toolAllowed, type ToolGroup } from '../../../src/main/security.js'
 import * as storeChannels from '../../../src/main/store-channels.js'
@@ -246,8 +247,13 @@ interface Live {
  *  The subject here is the MCP surface, never a stand-in for it (`examiner.md` §2). */
 async function live(groups: ToolGroup[]): Promise<Live> {
   const profileDir = mkdtempSync(join(tmpdir(), 'security-store-isolation-'))
+  // THE BOOT'S CONSTRUCTION, STOOD BY THIS BATTERY (`src/main/main.ts:132`): `DataSurfaceOptions.store` is REQUIRED
+  // and the surface's own construction is deleted (D-80), so the drive owns one instance at the profile's one name
+  // exactly as the composition does. The construction creates that name, which is why the control below asserts the
+  // file's PRESENCE after a commit rather than its absence before one.
+  const store = createProfileStore({ filePath: join(profileDir, PROFILE_FILE) })
   const gate = new SecurityGate({ token: null, enabled: groups })
-  const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio', dataSurface: createDataSurface({ profileDir }) })
+  const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio', dataSurface: createDataSurface({ profileDir, store }) })
   const mcp = server.ensureServerRegistered()
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   await mcp.connect(serverTransport)

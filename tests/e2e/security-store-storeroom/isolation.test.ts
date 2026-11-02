@@ -27,6 +27,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { describe, expect, it } from 'vitest'
 
 import { createDataSurface, DATA_TOOL_NAMES } from '../../../src/main/data'
+import { createProfileStore } from '../../../src/main/storeroom.js'
 import { ProvidentMcpServer, type McpBackend } from '../../../src/main/mcp-server.js'
 import { SecurityGate, type ToolGroup } from '../../../src/main/security.js'
 import * as storeChannels from '../../../src/main/store-channels.js'
@@ -145,8 +146,13 @@ interface Live {
  *  subject is the MCP surface an agent drives, never a stand-in for it (`examiner.md` §2). */
 async function live(groups: ToolGroup[]): Promise<Live> {
   const profileDir = mkdtempSync(join(tmpdir(), 'security-store-e2e-isolation-'))
+  // THE BOOT'S CONSTRUCTION, STOOD BY THIS BATTERY (`src/main/main.ts:132`): `DataSurfaceOptions.store` is REQUIRED
+  // and the surface's own construction is deleted (D-80), so the drive owns one instance at the profile's one name
+  // exactly as the composition does. The construction creates that name, which is why the control below asserts the
+  // file's PRESENCE after a commit rather than its absence before one.
+  const store = createProfileStore({ filePath: join(profileDir, 'provident-profile.json') })
   const gate = new SecurityGate({ token: null, enabled: groups })
-  const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio', dataSurface: createDataSurface({ profileDir }) })
+  const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio', dataSurface: createDataSurface({ profileDir, store }) })
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   await server.ensureServerRegistered().connect(serverTransport)
   const client = new Client({ name: 'security-store-e2e-isolation', version: '0.0.0' })
@@ -188,7 +194,7 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
       // THE CONTROL, so the absence below is not a blanket: the drive really reached the profile
       // store, and that store owns its own file (D-16: two instances, two files).
       expect(answers[2].status, 'the third drive committed through the profile store').toBe('committed')
-      expect(existsSync(join(profileDir, 'provident-profile.json')), 'the data surface writes its own file').toBe(true)
+      expect(existsSync(join(profileDir, 'provident-profile.json')), 'the drive wrote through the profile store it booted, which owns that one file (D-80)').toBe(true)
 
       // THE POSITIVE HALF — the sibling's declared refusal keeps an operator-shaped path out
       // (`docs/L2/central-data/interface.md` §1; L1 §6 `ISO-1`).

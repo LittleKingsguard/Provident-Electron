@@ -1,32 +1,35 @@
 # L2 — `central-data`: the behaviour
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 5 — §1's construction paragraph now carries the clause that the APP takes none of those constructions: the composition supplies the boot's instance, so the reading's rule governs a caller that supplies none (D-79); Rev 4 — §1's construction clause now states the reading's rule (`occupied` constructs, `absent`/`unreachable` do not, `write` unconditionally, `journal` never) where it implied the first *write*; Rev 3 — one statement re-grained against the tree and no design: a read-only profile does not cost “no filesystem act” — every operation takes one reachability reading first (`probe()` in `src/main/data/store.ts`); rev 2 and behind are read through this one
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 6 — §1 is re-derived: with `DataSurfaceOptions.store` REQUIRED and the surface's fallback construction DELETED there is no caller that supplies none, so §1 now states one table for the state the product has (an OPEN register holding nothing, whose one name stands at zero length) and §9's last row carries the cold tier (a name removed under a live store); §5's construction clause and §10's `ASM-L2-7` are re-grained beside them (D-80); Rev 5 — §1's construction paragraph now carries the clause that the APP takes none of those constructions: the composition supplies the boot's instance, so the reading's rule governs a caller that supplies none (D-79); Rev 4 — §1's construction clause now states the reading's rule (`occupied` constructs, `absent`/`unreachable` do not, `write` unconditionally, `journal` never) where it implied the first *write*; Rev 3 — one statement re-grained against the tree and no design: a read-only profile does not cost “no filesystem act” — every operation takes one reachability reading first (`probe()` in `src/main/data/store.ts`); rev 2 and behind are read through this one
 - **Status:** DESIGN — the expected behaviour of the five `provident.data.*` tools, stated as observable outcomes; the integration battery is filed against this file (D-1 §4)
 - **Inputs:** `docs/L2/central-data/interface.md` (§1-§7 fix the surface), `persistence.md` §9, L1 rev 4 §3/§4/§5, `docs/L1/central-data-census-exception.md` §1/§7, D-5/D-11/D-12/D-13, the package's shipped guide and declaration at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
 - **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`, the package's shipped consumer guide; it is read here and never edited (D-5)
 
-## 1. A first-ever profile serves nothing
+## 1. A first-ever profile serves nothing — and its store is OPEN, not absent
 
 | Drive | Answer |
 |---|---|
-| `createDataSurface({ profileDir })`, nothing else | no store constructed, no file created, no byte read (D-13) |
+| `createDataSurface({ profileDir, store })` with the boot's instance | one name at zero length, no byte written by this module, no `.tmp` and no sidecar (D-13, D-80) |
 | `list` | `{ status:'read', prefix:null, paths:[], count:0 }` (D-11) |
 | `read` on any path | `{ status:'absent', path }` — absence is an answer, never an empty success (D-11) |
-| `read { path: [] }` | `{ status:'read', kind:'branch', path:[], value:{} }` — the register stands and holds nothing, and no store is constructed for it (`guide §4`; D-13) |
+| `read { path: [] }` | `{ status:'read', kind:'branch', path:[], value:{} }` — the register stands and holds nothing, and this module constructs nothing for it (`guide §4`; D-13, D-80) |
 | `delete` on any path but `[]` | `{ status:'committed', path, removed:false, tiers:[], cursor:null }` — the empty receipt §6 declares, reached without a store refusal (D-11) |
 | `journal` | `{ status:'read', from:0, through:0, floor:0, entries:[], count:0 }` (D-12) |
 
-- The store is constructed at the reading's verdict, not the verb's: `read`, `remove` and `list` construct only when that
-  reading answered **`occupied`**, `write` constructs **unconditionally** (an absent name is where the exclusive create makes
-  the file), and `journal` never constructs at all —
-  and every operation still takes one `probe()` first (`readProfile(profileDir)` in `src/main/data/store.ts`). A profile whose
-  file is **absent** therefore answers from the cold tier with no construction, which is why the profile file does not exist
-  after `list` on a fresh install and why the first `write` there is what brings it into being (`guide §9.1`; D-13; `persistence.md` §1; `docs/L3/central-data/design.md` §2).
-- **AND THE APP TAKES NONE OF THOSE CONSTRUCTIONS SINCE D-79**: the composition hands `createDataSurface` the boot's own
-  instance (`DataSurfaceOptions.store`; `src/main/main.ts:132` → `:297`), so `read`, `remove`, `list` and `write` act through
-  the store that already stands, and the paragraph above governs the caller that supplies none — the batteries' arm, the
-  only one that can still read a cold profile (D-79).
+- **THE TABLE ABOVE IS THE STATE THE PRODUCT HAS, AND THE STATE IT REPLACED IS GONE** (D-80). Until this row's rev 6 the
+  surface could be stood with no instance and constructed one at the reading's verdict, so a profile with **no file at all**
+  was answerable and the file's absence was the cold tier. `DataSurfaceOptions.store` is now **REQUIRED** and the fallback
+  construction is **DELETED**: the composition hands `createDataSurface` the boot's own instance (`src/main/main.ts:132` →
+  `:302`), that construction creates the one name exclusively, and the reading therefore answers **`occupied`** over an
+  EMPTY file. Every answer above is unmoved, because a reading at a path that holds no row is `absent` whether the register
+  is empty or the file is new — what moved is the FILE, and the row that used to assert its absence asserts its zero length
+  (D-79, D-80).
+- **AND THE COLD TIER DID NOT DISAPPEAR; IT MOVED TO §9.** `absent` is still one of the reading's three words and still
+  answers the table above without consulting the store, so the reachable state is the one `behaviour.md` §9's last row
+  declares: the profile's name **removed** under a live process. The distinction the two rows now carry is exact — *cold*
+  is a name that does not stand and nothing forbids it, *a path absent* is a name that holds no row — and only the first of
+  those ever was, or is, the surface's business (D-80).
 
 ## 2. A write commits through the store and is re-served
 
@@ -70,8 +73,10 @@
   journal rollback has already run and the profile's bytes are byte-identical to the bytes that stood before (`guide §9.4`; D-11).
 - No `.tmp` file, no lock, no sidecar and no second name is written at any point: this module writes no byte of the profile
   itself, so a tear has no producer at this layer (D-13).
-- A `storeCreate` that refuses answers `{ status:'refused', reason:'store-unreachable', message }` on every data tool and
-  creates nothing — no instance, no file, no byte (`guide §8.2`; D-11).
+- A **name that cannot be occupied** answers `{ status:'refused', reason:'store-unreachable', message }` on every data tool
+  — `journal` included — and creates nothing: no instance, no file, no byte. It is the READING that answers, taken at the top
+  of every operation and ahead of the instance, so it costs no store call; **and since D-80 this module attempts no
+  construction it could be refused at**, so this arm is the reading's alone (`guide §8.2`; D-11, D-80).
 
 ## 6. Delete and journal are observable, in order, with a cursor — and nothing reverses
 
@@ -115,8 +120,8 @@
 |---|---|
 | two surfaces over two `profileDir`s | two registers: a write through one is never served by the other; their `list`s and `journal`s are disjoint (D-13) |
 | a profile seeded with the store's own empty image (`{}`) | `list` answers `count:0`, `read` answers `absent`, and the next `write` answers `committed` — the bytes then carry that row (`guide §4, §9.3`; D-13) |
-| a `profileDir` under which the profile's file name **cannot be occupied** (a regular file at that directory, a dangling symlink, an unwritable directory, or a directory standing at the file's own name) | every one of the five tools, **`journal` included**, answers `{ status:'refused', reason:'store-unreachable', message }`, with no instance and nothing created (`guide §8.2`; D-11) |
-| an **absent but writable** `profileDir` | not the arm above: `list` and `read` answer the cold tier, and the first `write` is where the store's construction can refuse — answering `store-unreachable` and creating nothing (D-13; ASM-L2-7) |
+| a `profileDir` under which the profile's file name **cannot be occupied** (a regular file at that directory, a dangling symlink, an unwritable directory, or a directory standing at the file's own name) | every one of the five tools, **`journal` included**, answers `{ status:'refused', reason:'store-unreachable', message }`, with the instance never consulted and nothing created — the reading is taken at a NAME, so it answers this whether or not an instance was handed in (`guide §8.2`; D-11, D-80) |
+| an **absent but writable** name under a LIVE store — the profile's file removed between two operations | not the arm above: `list`, `read` and `delete` answer the cold tier and `journal` answers its window unmoved, while the instance still holds the rows it was given; the next `write` commits and the store's own save re-creates the name with the register it held (D-13, D-80; ASM-L2-7) |
 | a foreign, unparsable profile image is seeded | `list` answers the cold tier (`count:0`), `read` answers `absent`, and the next `write` answers `committed` and replaces the bytes — **measured at `57c5825`: the store boots cold and the foreign bytes stand untouched until that `file`-tier save** (`persistence.md` §9 P-1; D-13, D-5) |
 | the profile file removed between two operations | the next `read` answers the cold tier again and the next `write` re-creates the file: this module's file is its own and holds no state it must be told about (D-13) |
 
@@ -131,4 +136,4 @@
 | id | Assumption | Rejected alternative |
 |---|---|---|
 | ASM-L2-6 | a `delete` names **one row**: at an address where no row stands it answers the empty receipt and removes nothing, even where rows stand beneath it (D-11, D-12) | the store's whole-target arm, which removes every version at the target and everything downstream of each in one call the agent never named and nothing reverses (D-12) |
-| ASM-L2-7 | the unreachability reading precedes any store instance, so a name that cannot be occupied refuses all five tools while an absent name stays the cold tier until a write constructs (D-13) | reading both as the cold tier, which serves `absent` for a directory the store can never be built under and drops the refusal the integration battery drives (D-11) |
+| ASM-L2-7 | the unreachability reading precedes the store instance, so a name that cannot be occupied refuses all five tools while an absent name stays the cold tier — and, since D-80, no operation of this module constructs: the instance is the caller's and is required (D-13, D-79, D-80) | reading both as the cold tier, which serves `absent` for a directory the store can never be built under and drops the refusal the integration battery drives (D-11) |

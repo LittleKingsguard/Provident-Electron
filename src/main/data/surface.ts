@@ -8,10 +8,10 @@
 //   unreachable            — all five answer the reading's ledger, `journal` included, with no store
 //
 // An `absent` name is the COLD TIER for `read`/`list`/`delete` and the WINDOW ALONE for `journal`;
-// the first `write` is where a construction this surface OWES can refuse — and in the app it owes
-// none: `main.ts` supplies the boot's store, so every operation acts through that one instance
-// (D-79). Every failure is a value: no
-// operation throws for any argument or any store state (G1; `interface.md` §6).
+// `write` is where a store is needed and where a supplied one lands — and this surface owes no
+// construction of its own: `main.ts` supplies the boot's store, the option is required, and
+// `src/main/data/` opens no file at all (D-79, D-80). Every failure is a value: no operation
+// throws for any argument or any store state (G1; `interface.md` §6).
 
 import { parseDelete, parseJournal, parseList, parseRead, parseWrite, pathText } from './args.js'
 import { createJournal } from './journal.js'
@@ -98,9 +98,7 @@ export function createDataSurface(options: DataSurfaceOptions): DataSurface {
           ? { status: 'read', kind: 'branch', path: [], value: {} }
           : { status: 'absent', path: copy(path) }
       }
-      const built = port().construct()
-      if (built.kind === 'unreachable') return built.ledger
-      const store = built.store
+      const store = port().store()
       if (path.length === 0) return { status: 'read', kind: 'branch', path: [], value: store.read([]) }
       try {
         return { status: 'read', kind: 'row', path: copy(path), value: store.readLiteral(path) }
@@ -124,12 +122,11 @@ export function createDataSurface(options: DataSurfaceOptions): DataSurface {
       const { path, value } = parsed.value
       const reading = port().probe()
       if (reading.kind === 'unreachable') return reading.ledger
-      // `write` always needs a store: an absent name is where the construction's own exclusive
-      // create brings the file into being, and where it can refuse (`behaviour.md` §9).
-      const built = port().construct()
-      if (built.kind === 'unreachable') return built.ledger
+      // `write` always needs the store, and it is the caller's: a supplied instance recreates its
+      // own file where that file was removed under the process (`behaviour.md` §9; D-80).
+      const store = port().store()
       try {
-        built.store.write(path, FILE_TIER, value)
+        store.write(path, FILE_TIER, value)
         return { status: 'committed', path: copy(path), cursor: window().append('write', path, 'present') }
       } catch (caught) {
         // A refused call mints no cursor and appends no entry: the store's own rollback has already
@@ -149,19 +146,18 @@ export function createDataSurface(options: DataSurfaceOptions): DataSurface {
       const reading = port().probe()
       if (reading.kind === 'unreachable') return reading.ledger
       if (reading.kind === 'absent') return emptyReceipt(path)
-      const built = port().construct()
-      if (built.kind === 'unreachable') return built.ledger
+      const store = port().store()
       // A delete names ONE row and never the store's whole-target arm, so it asks whether a row
       // stands before it acts: the shipped `delete` throws where nothing stands, and no
       // `AddressNotFound` leaves this module as an answer (`behaviour.md` §6; ASM-L2-6; G7).
       try {
-        built.store.readLiteral(path)
+        store.readLiteral(path)
       } catch (caught) {
         const outcome = readOutcome(caught)
         return outcome.kind === 'ledger' ? outcome.ledger : emptyReceipt(path)
       }
       try {
-        const record = built.store.delete(path, FILE_TIER)
+        const record = store.delete(path, FILE_TIER)
         const removed = record.tiers.length > 0
         const cursor = removed ? window().append('delete', path, 'absent') : null
         return { status: 'committed', path: copy(path), removed, tiers: [...record.tiers], cursor }
@@ -184,9 +180,7 @@ export function createDataSurface(options: DataSurfaceOptions): DataSurface {
       if (reading.kind === 'absent') {
         return { status: 'read', prefix: prefix === null ? null : copy(prefix), paths: [], count: 0 }
       }
-      const built = port().construct()
-      if (built.kind === 'unreachable') return built.ledger
-      const store = built.store
+      const store = port().store()
       const rows: DataPath[] = []
       if (prefix === null || prefix.length === 0) {
         rows.push(...walk(store.read([]), []))

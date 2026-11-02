@@ -1,15 +1,15 @@
-// src/main/data/store.ts — the profile's ONE written name, THE REACHABILITY READING, the port the
-// operations drive, and the construction that stands ONLY for a caller which supplies no instance
-// (`design.md` §1, §2; `persistence.md` §1; `behaviour.md` §5, §9; D-79).
+// src/main/data/store.ts — the profile's ONE written name, THE REACHABILITY READING, and the port
+// the operations drive (`design.md` §1, §2; `persistence.md` §1; `behaviour.md` §5, §9; D-79, D-80).
 //
-// THE READING IS THE HEART OF THIS FILE. It is taken at the top of every operation, BEFORE any
-// store instance exists or is consulted, and it answers ONE question: can the profile's one name,
+// THE READING IS THE HEART OF THIS FILE. It is taken at the top of every operation, BEFORE the
+// store instance is consulted, and it answers ONE question: can the profile's one name,
 // `<profileDir>/provident-profile.json`, be occupied here at all? It answers one of three words:
 //
 //   occupied     — the name stands and can back a store file: a regular file this process may
 //                  write, or a symlink resolving to one (`guide §9.1`).
 //   absent       — the name does not stand and nothing forbids it: its parent is absent, or is a
-//                  directory that admits a create. This is the COLD TIER until a write constructs.
+//                  directory that admits a create. This is the COLD TIER: the register holds
+//                  nothing this module will serve.
 //   unreachable  — the name cannot be occupied: `lstat` fails with anything but `ENOENT`, the name
 //                  stands as something that cannot back a store file, or it is absent under a
 //                  parent that exists and is not a writable directory (`guide §8.2`).
@@ -17,10 +17,19 @@
 // It is not a store call and it moves nothing: no instance, no byte, no directory. THIS MODULE'S
 // OWN FILESYSTEM ACTS ARE THE READING AND NOTHING ELSE (`persistence.md` §1; D-13), and every
 // failure of it is an answer, never a throw (G1).
+//
+// AND THIS MODULE OPENS NOTHING, EVER (D-80). The store every operation acts through is the
+// caller's own instance, handed in as `DataSurfaceOptions.store` — required, so there is no
+// absent arm and no fallback construction for one. The construction that once stood here is
+// DELETED, not unreachable: no value, no branch and no exported name in this file can reach
+// `createProfileStore` at run time, so nothing under `src/main/data/` can bring a
+// `provident-profile.json` into being. The reading still NAMES the profile file and still
+// `lstat`s, `stat`s and `access`es it — naming and opening are different acts, and this file
+// performs only the first.
 
 import { accessSync, constants, lstatSync, statSync, type Stats } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { DEFAULT_JOURNAL_LENGTH, createProfileStore } from '../storeroom.js'
+import type { createProfileStore } from '../storeroom.js'
 import { unreachableLedger } from './mapper.js'
 import type { DataLedger, DataSurfaceOptions } from './types.js'
 
@@ -28,7 +37,8 @@ import type { DataLedger, DataSurfaceOptions } from './types.js'
  *  directory is the caller's; the name is this module's own choice, so no other module spells it. */
 export const PROFILE_FILE_NAME = 'provident-profile.json'
 
-/** The store's type, named through the seam so no file here spells a package type (D-5). */
+/** The store's type, named through the seam so no file here spells a package type (D-5). A TYPE
+ *  import alone: the seam's runtime export is not reached from this file (D-80). */
 export type ProfileStore = ReturnType<typeof createProfileStore>
 
 /** THE READING, as one word (`design.md` §2; `signatures.md` §2). */
@@ -38,11 +48,12 @@ export type ProfileReading =
   | { kind: 'unreachable'; ledger: DataLedger }
 
 export type StorePort = {
-  /** Taken first, at the top of every operation, before any store instance (§2). */
+  /** Taken first, at the top of every operation, before the store is consulted (§2). */
   probe(): ProfileReading
-  /** THE CALLER'S INSTANCE WHERE ONE WAS SUPPLIED, and — for a caller that stands this surface alone — built at
-   *  most once, at the first operation whose reading did not answer `unreachable` (D-79). */
-  construct(): { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger }
+  /** **THE CALLER'S INSTANCE, AND THE ONLY ONE** (D-80): returned as handed in — not copied, not
+   *  wrapped, not re-pointed, and with no arm that could answer a construction's refusal, because
+   *  no construction stands here. */
+  store(): ProfileStore
 }
 
 function unreachable(): ProfileReading {
@@ -78,7 +89,8 @@ function backsStoreFile(name: string): boolean {
 }
 
 /** THE READING (`design.md` §2). Probes only: it creates nothing, writes no byte, and throws
- *  nothing — every failure of it is an answer. */
+ *  nothing — every failure of it is an answer. It is the ONE reader of `DataSurfaceOptions.profileDir`
+ *  and the only place this module touches a path (D-80). */
 export function readProfile(profileDir: string): ProfileReading {
   try {
     const name = join(profileDir, PROFILE_FILE_NAME)
@@ -87,8 +99,8 @@ export function readProfile(profileDir: string): ProfileReading {
     // Anything but ENOENT — ENOTDIR where the directory is a regular file, EACCES, ELOOP, a name
     // too long — is a name that cannot be occupied.
     if (at.kind === 'failed') return unreachable()
-    // The name does not stand. An ABSENT PARENT is `absent`'s business: the construction is where
-    // it refuses (`guide §8.2`; `behaviour.md` §9; ASM-L3-U2).
+    // The name does not stand. An ABSENT PARENT is `absent`'s business (`guide §8.2`;
+    // `behaviour.md` §9; ASM-L3-U2).
     const parent = dirname(name)
     const holder = look(parent)
     if (holder.kind === 'none') return { kind: 'absent' }
@@ -105,39 +117,7 @@ export function readProfile(profileDir: string): ProfileReading {
   }
 }
 
-/** `journalLength` is honoured only where it is a POSITIVE safe integer; otherwise the seam's
- *  `DEFAULT_JOURNAL_LENGTH` stands (ASM-L3-4). */
-function journalLengthOf(length: unknown): number {
-  return typeof length === 'number' && Number.isSafeInteger(length) && length > 0 ? length : DEFAULT_JOURNAL_LENGTH
-}
-
-/** **THE FALLBACK CONSTRUCTION, FOR A CALLER THAT SUPPLIED NO INSTANCE** (D-79): ONE store per surface, at most
- *  once, at the profile's one name. A refused construction answers `store-unreachable` and creates nothing — not even
- *  `profileDir` (`guide §8.2`, `§9.1`; `behaviour.md` §9). **THE APP NEVER REACHES THIS**: `main.ts` hands the surface
- *  the boot's own instance, so the file is opened once by the boot and no second register or journal is ever minted
- *  over it. It stands for the batteries that must exercise a reading of `absent`, which a supplied store would
- *  foreclose by creating the file (see `DataSurfaceOptions.store`). */
-function constructStore(
-  options: DataSurfaceOptions,
-): { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger } {
-  try {
-    const store = createProfileStore({
-      journalLength: journalLengthOf(options.journalLength),
-      filePath: join(options.profileDir, PROFILE_FILE_NAME),
-    })
-    return { kind: 'ready', store }
-  } catch {
-    return { kind: 'unreachable', ledger: unreachableLedger() }
-  }
-}
-
 export function createStorePort(options: DataSurfaceOptions): StorePort {
-  // **A SUPPLIED INSTANCE IS THE ANSWER, AND NOTHING IS BUILT FOR IT** (D-79). It is not copied, wrapped or
-  // re-pointed: the handle the boot constructed is the handle every `data.*` operation acts through, so the tab
-  // record's constraint pass sees these writes and one file has one register.
-  const supplied =
-    options.store === undefined ? null : ({ kind: 'ready', store: options.store } as const)
-  let built: { kind: 'ready'; store: ProfileStore } | { kind: 'unreachable'; ledger: DataLedger } | null = supplied
   return {
     probe: () => {
       try {
@@ -146,9 +126,10 @@ export function createStorePort(options: DataSurfaceOptions): StorePort {
         return unreachable()
       }
     },
-    construct: () => {
-      if (built === null) built = constructStore(options)
-      return built
-    },
+    // **A SUPPLIED INSTANCE IS THE ANSWER, AND NOTHING IS BUILT FOR IT** (D-79, D-80). The handle the
+    // boot constructed is the handle every `data.*` operation acts through, so the tab record's
+    // constraint pass sees these writes and one file has one register. There is no second arm: the
+    // options make the store non-optional, so a caller that has no instance cannot stand a surface.
+    store: () => options.store,
   }
 }

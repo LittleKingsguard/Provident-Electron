@@ -2,19 +2,22 @@
 // tests/unit/central-data/cold-and-write.test.ts — the cold tier and the write path.
 //
 // Every row drives the declared surface (`signatures.md` §1) and asserts one observable answer:
-// a first-ever profile serves nothing and costs no filesystem act (`behaviour.md` §1; ASM-L3-2),
+// a first-ever profile's store serves nothing — the register is open and empty, never absent, which
+// is the state the product has and the one D-80 re-derived this file onto (`behaviour.md` §1; ASM-L3-2),
 // a write commits through the store's `file` tier and is re-served (`behaviour.md` §2), a
 // container write answers a branch and `list` answers the leaf rows beneath it (ASM-L2-2), and a
 // nested write does not create its parent (guide §4; `behaviour.md` §2). Red until
 // `src/main/data/` exists (D-1 §4).
 
 import { afterEach, describe, expect, it } from 'vitest'
-import { createDataSurface } from '../../../src/main/data'
 import {
   expectRefusal,
   makeProfileDir,
+  profileBytes,
   profileEntries,
+  PROFILE_FILE_NAME,
   removeProfileDir,
+  surfaceAt,
 } from './support/temp-profile'
 
 const created: string[] = []
@@ -31,18 +34,18 @@ afterEach(() => {
 
 describe('a first-ever profile reads cold', () => {
   it('answers list with the whole profile and no rows', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     expect(surface.list({})).toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
   })
 
   it('answers read with absence, never an empty success', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     const path = ['window', 'tabs', 0, 'title']
     expect(surface.read({ path })).toEqual({ status: 'absent', path })
   })
 
   it('answers read at the empty path as the register branch holding nothing', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     expect(surface.read({ path: [] })).toEqual({
       status: 'read',
       kind: 'branch',
@@ -52,7 +55,7 @@ describe('a first-ever profile reads cold', () => {
   })
 
   it('answers delete with the empty receipt and no cursor', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     const path = ['alpha']
     expect(surface.delete({ path })).toEqual({
       status: 'committed',
@@ -64,7 +67,7 @@ describe('a first-ever profile reads cold', () => {
   })
 
   it('answers journal with the empty window', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     expect(surface.journal({})).toEqual({
       status: 'read',
       from: 0,
@@ -75,21 +78,26 @@ describe('a first-ever profile reads cold', () => {
     })
   })
 
-  it('creates no profile file across a read-only session', () => {
+  it('writes no byte across a read-only session: the one name stands at zero length and holds no row', () => {
+    // RE-DERIVED, D-80. This row asserted that a read-only session created NO PROFILE FILE, which held only while the
+    // surface constructed on demand. The boot constructs the one instance and that construction creates the name
+    // exclusively, so the claim the session still owes — and the one it always meant — is that nothing it does lands:
+    // the name stands at zero length afterwards, which the construction alone produces and no read, list or delete moves.
     const profileDir = newProfileDir()
-    const surface = createDataSurface({ profileDir })
+    const surface = surfaceAt(profileDir)
     surface.list({})
     surface.read({ path: ['alpha'] })
     surface.read({ path: [] })
     surface.delete({ path: ['alpha'] })
     surface.journal({})
-    expect(profileEntries(profileDir)).toEqual([])
+    expect(profileEntries(profileDir), 'no `.tmp`, no lock and no sidecar beside the one name').toEqual([PROFILE_FILE_NAME])
+    expect(profileBytes(profileDir), 'and the name still carries no byte: nothing this session drove landed').toBe('')
   })
 })
 
 describe('a write commits through the store and is re-served', () => {
   it('commits a literal row with cursor 1 and serves it back as a row', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     expect(surface.write({ path: ['alpha'], value: 'x' })).toEqual({
       status: 'committed',
       path: ['alpha'],
@@ -105,7 +113,7 @@ describe('a write commits through the store and is re-served', () => {
   })
 
   it('serves a second write at one path and leaves list.count unchanged', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     expect(surface.write({ path: ['alpha'], value: 'x' })).toEqual({
       status: 'committed',
       path: ['alpha'],
@@ -126,7 +134,7 @@ describe('a write commits through the store and is re-served', () => {
   })
 
   it('answers a container write as a branch and lists the leaf rows beneath it', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     expect(surface.write({ path: ['alpha'], value: { nested: [1, true] } })).toEqual({
       status: 'committed',
       path: ['alpha'],
@@ -150,7 +158,7 @@ describe('a write commits through the store and is re-served', () => {
   })
 
   it('lists the leaf rows beneath a prefix and echoes that prefix', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     surface.write({ path: ['alpha'], value: { nested: [1, true] } })
     expect(surface.list({ prefix: ['alpha'] })).toEqual({
       status: 'read',
@@ -164,7 +172,7 @@ describe('a write commits through the store and is re-served', () => {
   })
 
   it('refuses a write beneath a parent that does not stand', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     const ledger = expectRefusal(surface.write({ path: ['a', 'b'], value: 1 }))
     expect(ledger.reason).toBe('parent-absent')
     const path = ['a', 'b']
@@ -173,7 +181,7 @@ describe('a write commits through the store and is re-served', () => {
   })
 
   it('answers the whole register as a branch once rows stand', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     surface.write({ path: ['alpha'], value: 'x' })
     surface.write({ path: ['beta'], value: { nested: [1, true] } })
     expect(surface.read({ path: [] })).toEqual({
@@ -185,7 +193,7 @@ describe('a write commits through the store and is re-served', () => {
   })
 
   it('answers the value the store copied out, so a caller mutation is not served again', () => {
-    const surface = createDataSurface({ profileDir: newProfileDir() })
+    const surface = surfaceAt(newProfileDir())
     surface.write({ path: ['alpha'], value: { nested: [1, 2] } })
     const first = surface.read({ path: ['alpha'] })
     if (first.status !== 'read') throw new Error(`expected a reading, got ${first.status}`)
