@@ -81,7 +81,7 @@ repo's (D-5) — and no new MCP surface is added to prove a boot (D-18). The dec
 `tests/**/*.test.ts` suite migrates into `tests/{e2e,integration/<module>,unit/<module>}/` per module, at claim time, never
 wholesale ahead of the map (D-10).
 
-## 6. Instruments at this head (measured 2026-10-30, this seat)
+## 6. Instruments at this head (all eight rows measured 2026-11-02, this seat; the four Electron legs read identically on 2026-10-30)
 
 | Instrument | Reading | What it can see |
 |---|---|---|
