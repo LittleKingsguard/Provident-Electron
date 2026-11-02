@@ -88,6 +88,15 @@ function armed(dir: string, batch: readonly Record<string, unknown>[]): ReturnTy
   return storeCreate({ journalLength: 256, listeners: [], filePath: join(dir, FILE), constraints: batch as never })
 }
 
+/** **THE SECOND INSTANCE — the same `filePath`, NO constraint list and therefore NO repair.** It reads the bytes the
+ *  module's own instance left and answers nothing else, which is what makes it the instrument `CD-10` needs: a store that
+ *  repairs its own absent address would answer the very value the question is about (`armed` above does exactly that, and
+ *  that is why it cannot be used here). A value this store answers stood on the DISK; a refusal is the disk's own word
+ *  `AddressNotFound` (`guide §9.1`). */
+function reopened(dir: string): ReturnType<typeof storeCreate> {
+  return storeCreate({ journalLength: 256, listeners: [], filePath: join(dir, FILE) })
+}
+
 /** The store's refusal as its own two members: the package throws a plain `{status, message, log}` and never an `Error`
  *  subclass (`guide §8`), so `instanceof Error` would lose the status a control row has to name. */
 function refusalOf(read: () => unknown): { status: string; message: string } {
@@ -342,7 +351,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     }
   })
 
-  it('CD-10 · TWO SUCCESSIVE BOOTS over the same profile: once a save has landed the record, the second boot imports NOTHING and repairs NOTHING at either `file` address — measured by the op count and by the carriers’ own bytes, not by the values (D-85)', () => {
+  it('CD-10 · TWO SUCCESSIVE BOOTS over the same profile: once a save has landed the records the second boot imports NOTHING and repairs NOTHING at either `file` address, and a creation repair’s DURABILITY is decided by a SECOND INSTANCE over the same bytes — which answers `AddressNotFound` until a save has run (D-85)', () => {
     writeFileSync(join(userDataDir, SEED), JSON.stringify({ token: 'tok', enabled: ['graph'], maxJournalLength: 9 }))
     writeFileSync(join(userDataDir, CARRIER), '{"schemaVersion":"1","file.tabs.order":["a"]}')
     const seededSeed = readFileSync(join(userDataDir, SEED), 'utf8')
@@ -364,18 +373,41 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(readFileSync(join(userDataDir, SEED), 'utf8'), 'and the retired seed is byte-identical: nothing wrote it, and nothing needed to re-read it (D-19)').toBe(seededSeed)
     expect(readFileSync(join(userDataDir, CARRIER), 'utf8'), 'nor the retired carrier').toBe(seededCarrier)
 
-    // **THE LIMIT, PINNED RATHER THAN DESCRIBED: A BOOT THAT SAVES NOTHING LEAVES NOTHING DURABLE, SO THE NEXT BOOT REPEATS
-    // THE IMPORT.** A registration-instant repair lands an op and is saved by nothing (`guide §9.3`), so a profile whose
-    // only act is the boot keeps a ZERO-LENGTH file — and CD-1 asserts that file is zero-length, which is `guide §9.1`'s
-    // own declared state and every gating size row's claim. The import is therefore read ONCE PER BOOT until the first
-    // save, and once per PROFILE after it; the answers are identical either way, because both retired carriers are
-    // read-only inputs this module never writes (D-19) — but the count is stated here, because a row that claimed
-    // otherwise would be claiming a durability the package does not give a registration repair.
+    // **AND THE INSTRUMENT THE REST OF THIS ROW USES IS PROVED HERE, ON THE ARM WHERE A SAVE HAS ALREADY RUN**: a SECOND
+    // INSTANCE over the same file answers BOTH repaired records at their own tier. It carries no constraint list and so
+    // runs no repair, which is the whole of why its answer is the DISK's and not a repair's — the reading is `guide §9.1`'s
+    // own ("a fresh construction at the same `filePath` re-boots from those bytes"), and it is stronger than any size: a
+    // file could hold the wrong bytes at the right length and this store could not answer them (measured 2026-11-03).
+    const landed = reopened(userDataDir)
+    expect(landed.read(RECORD, 'file'), 'a second instance over these bytes answers the record a CALLER’S save landed').toEqual({ token: 'second-boot', enabled: ['graph'], maxJournalLength: 9 })
+    expect(landed.read(APP_STATE, 'file'), 'and the row-list record beside it — the `{rows}` a caller’s `writeAppState` composes, which is why the word above reads `recorded`').toEqual({ rows: [{ name: 'file.tabs.order', value: ['a'] }] })
+
+    // **THE DURABILITY OF A CREATION REPAIR, PINNED BY THE SAME INSTRUMENT AND NOT BY A SIZE: A BOOT THAT SAVES NOTHING
+    // LEAVES NOTHING A SECOND INSTANCE CAN READ, SO THE NEXT BOOT REPEATS THE IMPORT.** A registration-instant repair
+    // lands an op and is saved by nothing — not because a `file`-tier write is not durable, but because the SAVE IS THE
+    // TERMINAL ARM'S ACT and a registration's route performs no terminal act (`guide §9.2`'s *"the terminal arm performs the
+    // store's `commit_file` as its FIRST act on the PASSING arm"*, read with `§7.2` (4)'s *"THE WRITE RUNS NO PASS OF ITS
+    // OWN"* and the binding's own *"it appends … no terminal act"* at `kernel-registration.mjs:487`) — so a profile whose
+    // only act is the boot keeps the ZERO-LENGTH file `guide §9.1` declares. The import is therefore read ONCE PER BOOT
+    // until the first save, and once per PROFILE after it; the answers are identical either way, because both retired
+    // carriers are read-only inputs this module never writes (D-19).
     const unsaved = mkdtempSync(join(tmpdir(), 'creation-declarations-cd10-'))
     try {
       writeFileSync(join(unsaved, CARRIER), '{"schemaVersion":"1","file.first":1}')
-      createOperatorSettings({ userDataDir: unsaved })
+      const unsavedBoot = createOperatorSettings({ userDataDir: unsaved })
+      // THE REPAIR DID WRITE: the value stands in the instance that minted it, so the byte reading below is "nothing was
+      // saved" and never "nothing happened" (CD-1's and CD-7's subject, quoted here as this row's own premise).
+      expect(unsavedBoot.readAppState().rows, 'the boot’s repair wrote the imported row INTO THE INSTANCE').toEqual([{ name: 'file.first', value: 1 }])
       expect(statSync(join(unsaved, FILE)).size, 'no save, no byte: the boot alone never materialises the file').toBe(0)
+      expect(readFileSync(join(unsaved, FILE), 'utf8'), 'and the bytes are empty, which is the size read the other way').toBe('')
+      // **THE DECISIVE READING, AND IT IS NOT A SIZE**: a second instance over the SAME file answers `AddressNotFound` at
+      // BOTH `file` addresses — the repaired records are the INSTANCE's and not the DISK's. This is the reading a claim of
+      // durability would have to survive, and the arm above shows the same instrument answering the same two addresses
+      // once a save has run (measured 2026-11-03, one fresh process per arm).
+      const secondInstance = reopened(unsaved)
+      expect(refusalOf(() => secondInstance.read(RECORD, 'file')).status, 'a second instance does NOT answer the repaired record: the creation repair’s write never reached these bytes').toBe('AddressNotFound')
+      expect(refusalOf(() => secondInstance.read(APP_STATE, 'file')).status, 'nor the repaired row list at the other `file` address').toBe('AddressNotFound')
+      expect(secondInstance.read([]), 'and the register it re-booted from holds nothing at all').toEqual({})
       // THE CARRIER IS REWRITTEN BETWEEN THE BOOTS, which is the instrument: a second boot that re-ran the import answers
       // the NEW row, and one that did not answers the old — a content test, not an atime one (this volume mounts with
       // `relatime`/`noatime` and an atime reading is not an instrument here, measured 2026-11-03).
