@@ -277,12 +277,29 @@ export function createTabsClient(options: TabsClientOptions = {}): TabsClient {
       // so this is `unread` and never `refused`, and the caller learns the record is unknown instead of assuming it is empty.
       return { status: 'unread', reason: 'route-threw', detail: detailOf(error) }
     }
-    const resolved = answerOrDivergence(raw)
+    // THE ANSWER IS READ INSIDE A GATE, BECAUSE READING IT IS ITSELF A TRUST BOUNDARY: `status`, `order`, `landing` and
+    // `rows` are four GETTERS on an object this module did not build, so an answer whose own member THROWS on the read is
+    // the same class as a route that threw — `unread`, with the throw's own message as the detail. Without the gate a
+    // hostile member would reject the promise and make `read()` a route a caller has to `try`, which is the one thing L2 §6's
+    // client must not be (an IPC crossing delivers plain data by structured clone, so this arm is the boundary's shape
+    // stated rather than a path the app meets).
+    let resolved: ReturnType<typeof answerOrDivergence>
+    try {
+      resolved = answerOrDivergence(raw)
+    } catch (error) {
+      return { status: 'unread', reason: 'answer-not-declared', detail: detailOf(error) }
+    }
     if ('detail' in resolved) return { status: 'unread', reason: 'answer-not-declared', detail: resolved.detail }
     if (resolved.answer.status === 'refused') {
       return { status: 'refused', reason: resolved.answer.reason, message: resolved.answer.message, address: resolved.answer.address }
     }
-    return { ...resolved.answer, witness: deriveTabsWitness(resolved.answer, runtime) }
+    let witness: TabsWitness
+    try {
+      witness = deriveTabsWitness(resolved.answer, runtime)
+    } catch (error) {
+      return { status: 'unread', reason: 'answer-not-declared', detail: detailOf(error) }
+    }
+    return { ...resolved.answer, witness }
   }
 
   function subscribe(handler: (reading: TabsClientReading) => void): TabsSubscription {

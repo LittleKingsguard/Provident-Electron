@@ -235,6 +235,19 @@ describe('the answers that are not a record are values, never throws (L2 §2/§3
     expect(badRow.status).toBe('unread')
     if (badRow.status !== 'unread') return
     expect(badRow.detail).toBe('rows[0] carries no string id')
+
+    // AND THE ANSWER'S OWN MEMBERS ARE A TRUST BOUNDARY TOO: reading `rows` off a member that THROWS is the same class as a
+    // route that threw — the read is stated as `unread`, and `read()` does not become a route a caller must `try`.
+    const hostileMember = {
+      status: 'committed',
+      order: ['t1'],
+      landing: 't1',
+      get rows(): readonly TabsRecordRow[] {
+        throw new Error('the answer member threw')
+      },
+    }
+    const hostile = await createTabsClient({ bridge: stubMember(() => hostileMember).bridge }).read()
+    expect(hostile).toEqual({ status: 'unread', reason: 'answer-not-declared', detail: 'the answer member threw' })
   })
 })
 
