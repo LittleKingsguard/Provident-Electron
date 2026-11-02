@@ -11,6 +11,16 @@ import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState 
 import { createGraphStore, type GraphStore, type GraphEvent, type GraphConstraint, type GraphCrossing } from './store-core-graph.js'
 import { storeGraphReferences } from './store-graph-references.js'
 import { clampToBounds } from '../shared/gutter.js'
+import { createTabsClient, type TabsClientReading, type TabsSubscription } from './tabs-client.js'
+
+/** **THE WITNESS DERIVATION, RE-EXPORTED FOR THE LIVE DRIVER AND FOR NOTHING ELSE** (D-77; L2 §6). The page reaches this
+ *  module through `document.baseURI + "renderer.js"` and cannot import a second file from the renderer bundle
+ *  (`package.json`'s build line is ONE esbuild `--bundle` into `--outdir=dist/renderer`, so `tabs-client.ts` is INLINED
+ *  into `renderer.js` and never emitted beside it). Without this line `tests/store-tabs-record-live.mjs`'s agreement row
+ *  would have to re-spell the predicate it is meant to compare, and a re-spelling is the one thing that row cannot afford:
+ *  it reads the SAME witness off both records. It is additive, it is PURE, it dispatches nothing and it is driven by no
+ *  boot path — `createTabsClient` stays the only way the app reads. */
+export { deriveTabsWitness } from './tabs-client.js'
 
 /** THE WIRED GRAPH STORE — `U-STORE-CORE`'s integration seam (field 3/6 of the frozen
  *  artifacts, `AMENDMENT TENANT-1`). THE REALM-SCOPE BINDING OWNED BY THE WIRING: the store is
@@ -1424,6 +1434,97 @@ async function main(): Promise<void> {
   }
   bridge.onRequest(replyRoute)
   bridge.ready()
+  // ⟶ THE TAB-RECORD CLIENT'S INSTRUMENT (STAGE A — the block BELOW this function, D-77): ONE read and ONE registration,
+  // STARTED here and NOT awaited. It stays the last statement of `main()` on purpose: every boot step above
+  // including `bridge.ready()` has already run, so no step's order can move and a slow or failing bridge
+  // cannot delay or fail the boot. Nothing it answers is acted on (see the block's header). The block sits AFTER
+  // `main()` so that the focus region's byte scanners (the `U-FOCUS-TOOL` slice up to `async function main`) and its
+  // module-level-holder rule see the bytes they saw before this stage: the instrument is NOT the focus carrier, and
+  // the bindings it does hold are outside every region a landed row scans.
+  startTabsClientInstrument(runtime)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * THE TAB-RECORD CLIENT'S INSTRUMENT — **STAGE A OF THE RENDERER MIGRATION** (`strata/next-steps.md`
+ * row 1; D-63's client role, `docs/L2/store-tabs-record/interface.md` §6; D-77). THE STAGE IS
+ * ADDITIVE: every path this file already had — `TABS_CONSTRAINT`, the graph-store record,
+ * `readTabsRef`, `mintTabId`, `closeTab`, `evaluateTabsBootStep`, `driveTabsLandingPage`, the
+ * tier-1 tab write-backs and the Y-1/Y-2/Y-3 hand-off — is BYTE-UNMOVED, and nothing below reads,
+ * reorders or waits on any of them. (The tab record's ONE flat leaf spelling is written ABOVE, in the
+ * region that declaration owns, and is not spelled again here: `tests/store-focus.test.ts`'s `S22-1`
+ * attributes every occurrence of that spelling to that region and reds on one outside it.)
+ *
+ * WHAT THIS IS, EXACTLY, AND WHAT IT IS NOT. It takes ONE read through the client (`tabs-client.ts`)
+ * and REGISTERS so a later change re-reads; the reading is HELD ON THESE TWO BINDINGS and is ACTED ON
+ * BY NOTHING — it drives no page, resolves no terminal into a node's state, writes no byte and
+ * answers no request. Stage A produces the instrument; Stage B is the pass that consumes it, and a
+ * consumer that appeared here would be the second record this role exists to retire (L2 §6).
+ *
+ * **WHY THE READ SITS AT THE END OF `main()` AND IS NOT AWAITED (`D-77`).** The boot order this head
+ * ships is a measured one, and it is a GATE's: `wired.hydrate(bootHandoff)` → `evaluateTabsBootStep`
+ * → `focusCarrier` → `new Runtime(...)`/`bootstrap()` → `driveTabsLandingPage` → `startGutterAffordance`
+ * → the Y-3 registration → `bridge.ready()`, with `tests/e2e/bundle-boot-seam/`'s `B-5` asserting the
+ * bundle-boot trace's ORDER rather than a duration. An `await` placed anywhere between the hand-off and
+ * `bridge.ready()` would sit INSIDE that order — a slow or failing bridge would delay the first graph
+ * load, the pages' drive or the ready signal — and this stage is forbidden to change what the app does.
+ * So the read is STARTED after `bridge.ready()` and its promise is not awaited: **no boot step's order
+ * moves, and a bridge that never answers, answers slowly, or rejects cannot delay boot, fail boot or
+ * keep the app from reaching ready.** `read()` is total by construction (all four of its answers are
+ * values, `tabs-client.ts`), and the one `.catch` below is defence against a defect in that totality
+ * rather than a path any arm relies on.
+ *
+ * THE ONE THING IT SAYS OUT LOUD is a single `console.info` line carrying the arm and, where the
+ * record was read, the two terminals' witnesses — the instrument's own reading, recorded where a
+ * reader can see it. It is NOT a claim about a rendered pixel (`§1.3`): no element is touched.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** THE INSTRUMENT'S HELD READING — the LAST answer the client gave (the boot read's, then one per
+ *  `onChanged` delivery). Nothing in this file reads it; the binding exists so a Stage B consumer has
+ *  one place to attach to, and so the boot read is HELD rather than dropped on the floor. */
+let tabsClientReading: TabsClientReading | null = null
+
+/** THE SUBSCRIPTION'S OWN ANSWER — `subscribed: false` on a realm whose bridge carries no `tabs`
+ *  member, which is the stated absent case (`tabs-client.ts`'s header) and never a throw. Held for
+ *  the same reason `releaseY3` is: the P1-P7 release discipline holds a registration, and this
+ *  realm's teardown is the page's. */
+let tabsClientSubscription: TabsSubscription | null = null
+
+/** THE ONE SITE — called from `main()` as its last statement, never awaited (see above). ONE read and
+ *  ONE registration, and the client is constructed with the RUNTIME as its envelope-query so each
+ *  terminal is resolved through `Runtime.elementForNodeId` and not by this file's spelling (L2 §6). */
+function startTabsClientInstrument(runtime: Runtime): void {
+  const client = createTabsClient({ runtime })
+  tabsClientSubscription = client.subscribe((reading) => {
+    // A DELIVERY IS A RE-READ (L2 §6): the push carries an address and not a value (`guide §6.4`), so
+    // the client re-read and this handler only holds the answer. No page is driven from it, on this stage.
+    tabsClientReading = reading
+  })
+  void client.read().then(
+    (reading) => {
+      tabsClientReading = reading
+      console.info(`[provident-renderer] tabs client: ${describeTabsReading(reading)}`)
+    },
+    (error: unknown) => {
+      // THE DEFECT ARM, NOT AN ORDINARY ONE: `read()` answers values, so a rejection here is a bug in
+      // the instrument. It is held as the client's own `unread` value and never re-thrown — boot is over
+      // by the time this runs, and a rejected promise nobody caught would surface as a page error.
+      tabsClientReading = { status: 'unread', reason: 'route-threw', detail: String(error) }
+    },
+  )
+}
+
+/** THE ONE LINE'S TEXT — the arm, and on a read the two witnesses with the ids that decided them. */
+function describeTabsReading(reading: TabsClientReading): string {
+  if (reading.status === 'committed') {
+    const landing = reading.witness.landing
+    const error = reading.witness.error
+    return `read; rows=${reading.rows.length}, order=${reading.order.length}, landing=${JSON.stringify(reading.landing)}; `
+      + `landing-terminal=${landing.witness} (actives ${JSON.stringify(landing.activeIds)}), `
+      + `error-terminal=${error.witness} (tab ${JSON.stringify(error.tabId)})`
+  }
+  if (reading.status === 'refused') return `refused (${reading.reason}): ${reading.message}`
+  if (reading.status === 'absent') return `absent (${reading.reason}) — no crossing in this realm; nothing read`
+  return `unread (${reading.reason})${reading.detail === null ? '' : `: ${reading.detail}`}`
 }
 
 if (typeof document !== 'undefined') {

@@ -669,6 +669,91 @@ async function main() {
     } finally { shutdown(app) }
   }
 
+  // ── M13 — THE AGREEMENT INSTRUMENT (STAGE A of the renderer migration; D-63's client role, D-77, and
+  //    `docs/L2/store-tabs-record/interface.md` §6). ───────────────────────────────────────────
+  //
+  // **THIS ROW IS UNRUN, AND NO LEG RUNS IT — READ ITS VERDICT AS A RECORDED INSTRUMENT AND NEVER AS A
+  // VERIFIED GATE.** No `package.json` key invokes this driver (by design: `tests/ui-leg-contract.test.ts`'s
+  // `L-1` pins the `scripts` key set, and this file is run by the LITERAL command line
+  // `node tests/store-tabs-record-live.mjs`), it SPAWNS Electron, and **NO RUN OF IT WAS TAKEN on the pass
+  // that authored this row** — that pass drove the node suite and the four legs and took no Electron boot.
+  // `M13` is therefore an instrument left where the NEXT run will read it: a green `M13` printed by some
+  // future run is that run's reading, and this row's own pass claims none.
+  //
+  // WHAT IT MEASURES, AND IT IS THE ONLY THING STAGE B MAY BUILD ON: **the same witness, read off BOTH
+  // records.** Side (1) is the RENDERER'S OWN graph-store record — `file.tabs.order` plus one flat
+  // `file.tabs.<id>` entry per tab — read through the store this page booted, with the wiring's landed
+  // driver (`driveTabsLandingPage`) answering its two witnesses. Side (2) is `provident.tabs.read()`, the
+  // CROSSING's answer (L2 §2), whose witness is derived by the CLIENT'S OWN exported predicate
+  // (`m.deriveTabsWitness`, `src/renderer/tabs-client.ts`, re-exported by the renderer bundle) rather than
+  // by a re-spelling written here: a second spelling would compare a re-implementation with itself and
+  // prove nothing about either record.
+  // Agreement is compared on FIVE members and every disagreement is NAMED rather than counted — the landing
+  // witness, the error witness, the error witness's tab, the active-id set the two records derive, and the
+  // shown tab (which the graph store spells as its single active entry while the crossing DERIVES
+  // `landing` — D-76). A disagreement is EXPECTED to be possible until Stage B makes the renderer read the
+  // crossing; this row is what measures whether one happened, and it is the agreement instrument Stage B's
+  // landing pass will read first.
+  {
+    const prof = scratchProfile(); seedRecord(prof, SEED_ONE_TAB)
+    const app = await bootApp(prof)
+    let out = null
+    try {
+      out = JSON.parse(await evalStore(app.cdp, `
+        const probe = { elementForNodeId: (id) => ({ id, probe: true }) };
+        // (1) THE RENDERER'S RECORD, through the store this page booted: its members, the actives over them,
+        //     and the wiring's own two witnesses.
+        const pages = m.driveTabsLandingPage(s, probe);
+        const orderAnswer = R("file.tabs.order");
+        const storeIds = orderAnswer && Array.isArray(orderAnswer.value) ? orderAnswer.value : [];
+        const storeActives = [];
+        for (const id of storeIds) {
+          const e = R("file.tabs." + id);
+          if (!e || e.found !== true) continue;
+          const v = e.value;
+          if (v && typeof v === "object" ? v.active === true : v === true) storeActives.push(id);
+        }
+        // (2) THE CROSSING's answer, over the preload member the app exposes (L2 §2's first route).
+        let bridgeRead = null; let bridgeThrew = null;
+        try { bridgeRead = await window.provident.tabs.read(); } catch (err) { bridgeThrew = String((err && err.message) || err); }
+        // (3) THE SAME WITNESS OFF IT — the client's own predicate, taken from the renderer bundle.
+        let bridgeWitness = null;
+        if (bridgeRead && bridgeRead.status === "committed") bridgeWitness = m.deriveTabsWitness(bridgeRead, probe);
+        return JSON.stringify({
+          storeWitness: pages,
+          storeActives,
+          storeOrder: storeIds,
+          bridgeStatus: bridgeRead && bridgeRead.status,
+          bridgeReason: bridgeRead && bridgeRead.reason !== undefined ? bridgeRead.reason : null,
+          bridgeThrew,
+          bridgeLanding: bridgeRead && bridgeRead.landing !== undefined ? bridgeRead.landing : null,
+          bridgeOrder: bridgeRead && Array.isArray(bridgeRead.order) ? bridgeRead.order : null,
+          bridgeActives: bridgeWitness ? bridgeWitness.landing.activeIds : null,
+          bridgeWitness,
+        });`))
+    } finally { shutdown(app) }
+    // THE FIVE COMPARISONS, EACH NAMED SO A DIVERGENCE IS THE SENTENCE AND NOT A RED WORD.
+    const divergence = []
+    if (out.bridgeThrew !== null) divergence.push(`the crossing's read THREW (${out.bridgeThrew}) — no witness to compare`)
+    else if (out.bridgeWitness === null) divergence.push(`the crossing answered ${JSON.stringify(out.bridgeStatus)}${out.bridgeReason ? ` (${out.bridgeReason})` : ''} rather than a record`)
+    else {
+      if (out.storeWitness.landing.witness !== out.bridgeWitness.landing.witness)
+        divergence.push(`landing witness: renderer's record ${out.storeWitness.landing.witness}, the crossing ${out.bridgeWitness.landing.witness}`)
+      if (out.storeWitness.error.witness !== out.bridgeWitness.error.witness)
+        divergence.push(`error witness: renderer's record ${out.storeWitness.error.witness}, the crossing ${out.bridgeWitness.error.witness}`)
+      if (out.storeWitness.error.tabId !== out.bridgeWitness.error.tabId)
+        divergence.push(`the error witness's tab: renderer's record ${JSON.stringify(out.storeWitness.error.tabId)}, the crossing ${JSON.stringify(out.bridgeWitness.error.tabId)}`)
+      if (JSON.stringify(out.storeActives) !== JSON.stringify(out.bridgeActives))
+        divergence.push(`the active-id set: renderer's record ${JSON.stringify(out.storeActives)}, the crossing ${JSON.stringify(out.bridgeActives)}`)
+      const shownAgrees = out.storeActives.length === 1 && out.storeActives[0] === out.bridgeLanding
+      if (!shownAgrees)
+        divergence.push(`the shown tab: the renderer's record names ${JSON.stringify(out.storeActives.length === 1 ? out.storeActives[0] : out.storeActives)} active, the crossing DERIVES landing=${JSON.stringify(out.bridgeLanding)}`)
+    }
+    record('M13', out.bridgeThrew === null && out.bridgeWitness !== null && divergence.length === 0 ? 'PASS' : 'FAIL',
+      `docs/L2/store-tabs-record/interface.md §6 (the client role's witness) + D-63 (the crossing) + D-76 (the derived landing) + D-77 (this stage)`,
+      `${divergence.length === 0 ? 'THE TWO RECORDS AGREE on the landing witness, the error witness, its tab, the active-id set and the shown tab' : 'DIVERGENCE, stated exactly: ' + divergence.join('; ')} — renderer's record: order=${JSON.stringify(out.storeOrder)}, actives=${JSON.stringify(out.storeActives)}, landing witness=${out.storeWitness.landing.witness}, error witness=${out.storeWitness.error.witness} (tab ${JSON.stringify(out.storeWitness.error.tabId)}); the crossing: status=${JSON.stringify(out.bridgeStatus)}, order=${JSON.stringify(out.bridgeOrder)}, landing=${JSON.stringify(out.bridgeLanding)}, actives=${JSON.stringify(out.bridgeActives)}, landing witness=${out.bridgeWitness === null ? 'n/a' : out.bridgeWitness.landing.witness}, error witness=${out.bridgeWitness === null ? 'n/a' : out.bridgeWitness.error.witness} (tab ${out.bridgeWitness === null ? 'n/a' : JSON.stringify(out.bridgeWitness.error.tabId)}). UNRUN BY THIS PASS: no leg invokes this driver and no Electron boot was taken.`)
+  }
+
   // ── P1/P2/P3 — PARKED FOR A STRUCTURAL REASON (the only lawful park reason). ────────────────
   {
     const prof = scratchProfile(); seedRecord(prof, SEED_ONE_TAB)

@@ -1867,3 +1867,40 @@ the landing entry, and `tab-has-content`'s fallback is still the authored `'tabs
   did NOT move, `'landing'` naming no authored node. **`D-75`'s "held" clause is superseded here; its dated measurements stay
   written as that head's own** (D-46). Measured: `order: ['landing']`, `read().landing` = `'landing'`, a commit under that id
   updates ONE member in place, and `remove` of it as the last tab re-mints it.
+
+---
+
+## D-77 — The renderer's tab client APPEARS in Stage A: one read-only module, one un-awaited boot read at the END of `main()`, and an absent member that answers
+
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries, verbatim — "Stage A of the
+renderer migration — the client APPEARS, nothing is deleted" — on the staging already agreed in the corpus
+(`strata/next-steps.md` row 1; D-63's client role, `docs/L2/store-tabs-record/interface.md` §6).
+
+**Decision:** the renderer gets the tab record's client as ONE module, `src/renderer/tabs-client.ts` (claimed by this
+record's map row), and **this stage is ADDITIVE**: `TABS_CONSTRAINT`, the graph-store record, `readTabsRef`, `mintTabId`,
+`closeTab`, `evaluateTabsBootStep`, `driveTabsLandingPage`, the `file.tabs.*` writes and the Y-1/Y-2/Y-3 hand-off are
+unmoved, and no element, route or answer changes. The client reads through `tabs.read()`, re-reads after every
+`tabs.onChanged` delivery, holds no record of its own, and takes **no write route at all** — `commit` and `remove` are
+Stage B's, and a write site with no caller is a route nobody drives.
+
+- **WHERE THE BOOT READ SITS, AND WHY IT IS NOT AWAITED.** `main()`'s boot order is a GATE's reading:
+  `tests/e2e/bundle-boot-seam/` asserts the bundle-boot trace's ORDER (hand-off → store → hydrate → boot step → runtime →
+  pages → gutters → Y-3 → `ready()`). The instrument's one read is therefore STARTED as the LAST statement of `main()`,
+  **after `bridge.ready()`**, and its promise is not awaited: no step's order moves, and a bridge that is slow, silent or
+  failing cannot delay the first graph load, the pages' drive or the ready signal. **A pass that needs the reading EARLIER
+  is changing the boot, and that is Stage B's own measurement — never a silent move of this call site.**
+- **WHAT THE ABSENT MEMBER MEANS, STATED.** `window.provident.tabs` is optional at its declaration and is simply NOT THERE
+  in three realms: the node suite's layout-less shim, a plain page loaded without the preload, and a bridge older than the
+  crossing. In all three the client answers `{ status: 'absent' }` with a closed reason (`'no-tabs-member'`, or
+  `'no-read-route'` where the member carries no `read`), and `subscribe` answers `subscribed: false` with a withdrawal that
+  is still callable. **It is NOT a refusal**: L2 §3's refusal vocabulary is the store's own words, and a realm with no
+  crossing has no store that spoke — so a missing instrument never reads as a record that failed.
+- **`unread` IS THE CLIENT'S OWN THIRD STATE AND NOT A REFUSAL.** A route that rejected, and an answer outside L2 §2's
+  declaration, both answer `unread` with the divergence named, because a record that could not be read must never be
+  rendered as a record that was empty. The client is TOTAL on all four arms: nothing it does throws out of a read or a
+  subscription.
+- **THE WITNESS IS ONE PREDICATE, DERIVED FROM `read()`'s ANSWER ALONE** (L2 §6): the landing terminal stands where
+  `landing` names a row reading `active: true` AND no other row does — one comparison and not two — and the error terminal
+  where a row carries an `error`; both nodes are the ENVELOPE's, resolved through `Runtime.elementForNodeId`, and the
+  client authors no element and no text. The derivation is exported, and the renderer bundle re-exports it, so the live
+  driver reads the SAME predicate off both records rather than a re-spelling of it.
