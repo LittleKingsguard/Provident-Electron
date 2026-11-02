@@ -1,5 +1,9 @@
 // tests/e2e/bundle-boot-seam/boot-contract.test.ts — THE L1 BATTERY for `bundle-boot-seam`: the
-// eight boot-contract scenarios of `docs/L1/bundle-boot-seam.md` §6, B-1..B-8.
+// eight boot-contract scenarios of `docs/L1/bundle-boot-seam.md` §6, B-1..B-8 — **and ONE row this
+// battery carries of its own, B-9 (added 2026-11-02, D-80), which §6 does not declare and L1 owes:
+// a profile whose name cannot be OCCUPIED fails the boot with a stated message. It is named in the
+// B-family because it states the same kind of observable — what a failing boot publishes — and it is
+// called out here because a reader counting this file against its design would otherwise find nine.**
 //
 // THE GRAIN IS THE BUILT BUNDLE, NOT THE SOURCE (D-27): every row spawns an artifact `npm run build`
 // produced and reads what the running process publishes — its stderr trace, the answers its own
@@ -66,6 +70,16 @@ const HTTP_READY = /http transport ready on http:\/\/127\.0\.0\.1:\d+\/mcp/
 const LOAD_ERROR = /App threw an error during load|\[provident-main\] fatal:|Uncaught Exception/
 /** The instance's own file, the record a second construction would read (`D-22`'s census). */
 const INSTANCE_FILE = 'provident-operator-settings.json'
+/** **THE PROFILE'S OWN FILE NAME, SPELLED HERE ON PURPOSE** (B-9): the boot's one store is constructed over
+ *  `<userData>/provident-profile.json` (`src/main/main.ts`'s `createProfileStore`), and this battery's grain is
+ *  the BUILT BUNDLE, never the source (D-27) — so the name is a literal here and not an import of
+ *  `PROFILE_FILE_NAME`. A bundle that moved the name would leave B-9 measuring a directory that no longer
+ *  collides with anything, which is why the row also asserts the PATH it read back off the bundle's own message. */
+const PROFILE_FILE = 'provident-profile.json'
+/** **THE STATED REFUSAL** (D-80): the one sentence the boot must publish when the profile's name cannot be
+ *  occupied — the store's construction failed, so the profile cannot be opened. A row that only asserted "the
+ *  process exited" would be green against an unhandled throw, which is the shape this row exists to refuse. */
+const STATED_REFUSAL = /the profile store could not be CONSTRUCTED at boot/
 
 /** `StdioServerParameters.env` is a closed `Record<string, string>`; `process.env` is not. */
 const stringEnv = (): Record<string, string> =>
@@ -279,11 +293,19 @@ interface Boot {
   stop: () => void
 }
 
-/** Spawn the built bundle the way a client spawns it, on a fresh scratch profile. */
-function bootApp(entry: string, extra: string[] = []): Boot {
+/** Spawn the built bundle the way a client spawns it, on a fresh scratch profile.
+ *
+ *  **`prepare` IS WHAT MAKES A PROFILE UNOCCUPIABLE, AND IT RUNS ON THE VERY PROFILE THE SPAWN WILL USE**
+ *  (B-9, added 2026-11-02): the scratch directory is created, the hook is handed it, and only then is the
+ *  process spawned — because the state B-9 needs, a DIRECTORY standing where `provident-profile.json` goes,
+ *  must stand BEFORE the store's own construction, and there is no later instant at which a row could put it
+ *  there. The profile is registered for reaping before the hook runs, so a hook that throws still leaves
+ *  nothing for the teardown to miss. */
+function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string) => void): Boot {
   const profile = mkdtempSync(join(tmpdir(), 'bundle-boot-seam-'))
   scratchDirs.push(profile)
   trackedProfiles.push(profile)
+  prepare?.(profile)
   const args = [...extra, entry, ...BASE_ARGS, `--user-data-dir=${profile}`, `--provident-user-data=${profile}`]
   const child = spawn(electronBin, args, {
     cwd: repoRoot,
@@ -575,5 +597,38 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
     }
     expect(report).toContain(reason)
     expect(report).not.toMatch(/no observable within/)
+  }, ROW_MS)
+
+  /** **B-9 — A PROFILE THAT CANNOT BE OCCUPIED FAILS THE BOOT WITH A STATED MESSAGE, NEVER AS AN UNHANDLED
+   *  THROW** (D-80; added 2026-11-02, and **the ninth row of this battery, which L1 §6 does not yet declare** —
+   *  `docs/L1/bundle-boot-seam.md` owes it). `createProfileStore` refuses an unoccupiable `filePath` with the
+   *  store's own `FilePathUnreachable` and returns no instance; D-79/D-80 deleted the `data` surface's
+   *  construction, so the arm that used to answer that refusal as `store-unreachable` no longer exists and the
+   *  boot is the only place left that can say anything about it.
+   *
+   *  **THE STATE IS A DIRECTORY STANDING WHERE THE FILE GOES**, planted before the spawn (`bootApp`'s
+   *  `prepare`) because the store's construction creates the name exclusively at `main.ts`'s second act.
+   *
+   *  **IT CAN FAIL, AND IT FAILS ON REVERT — MEASURED 2026-11-02, BOTH WAYS.** With the catch in place the boot
+   *  publishes `the profile store could not be CONSTRUCTED at boot … status 'FilePathUnreachable' at
+   *  '<profile>/provident-profile.json' … the profile cannot be opened` and exits `1` in ~130 ms; with the catch
+   *  removed it publishes the raw refusal OBJECT instead — `{ status: 'FilePathUnreachable', message: … }` — so
+   *  `STATED_REFUSAL` never matches and the row reports the object it found. The consequence sentence and the
+   *  `status '…'` spelling are what make this row red on revert rather than merely present. */
+  it('B-9 a profile that cannot be OCCUPIED fails the boot with a stated message, not an unhandled throw', async () => {
+    const boot = bootApp(mainEntry, [], (profile) => {
+      mkdirSync(join(profile, PROFILE_FILE))
+    })
+    try {
+      await boot.waitFor(STATED_REFUSAL, 'B-9 the stated boot refusal')
+      const trace = boot.trace()
+      expect(trace, 'B-9 — the store\'s OWN status is named as a status, not left inside a dumped object').toMatch(/status 'FilePathUnreachable'/)
+      expect(trace, 'B-9 — the path involved is named, and it is this row\'s own profile').toContain(join(boot.profile, PROFILE_FILE))
+      expect(trace, 'B-9 — and the consequence is stated: the profile cannot be opened').toContain('the profile cannot be opened')
+      expect(trace, 'B-9 — the failure is STATED: never the unhandled-throw shape, which has no sentence a reader can act on')
+        .not.toMatch(/Uncaught Exception|UnhandledPromiseRejection|unhandledRejection/)
+    } finally {
+      boot.stop()
+    }
   }, ROW_MS)
 })

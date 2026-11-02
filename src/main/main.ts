@@ -129,10 +129,42 @@ async function main(): Promise<void> {
   // anything can write. (3) LISTENERS DRIVE: the surfaces read and write that store, and a commit's listeners carry the flow
   // from there.
   const storeHolder: { current: ReturnType<typeof createProfileStore> | null } = { current: null }
-  const centralStore = createProfileStore({
-    filePath: join(app.getPath('userData'), PROFILE_FILE_NAME),
-    constraints: tabsConstraintDeclarations(() => storeHolder.current) as never,
-  })
+  // ═══ THE BOOT'S ONE STORE CONSTRUCTION, AND THE ONE REFUSAL THAT MUST BE LEGIBLE (D-80) ═══
+  // `createProfileStore` REFUSES rather than degrades: a `filePath` that can never be OCCUPIED — a directory
+  // standing where the file goes, an absent parent, an existing file that is not writable, a read-only mount,
+  // a denied create — throws the store's own `FilePathUnreachable` and returns NO instance (`guide §8.2`,
+  // measured 2026-11-02 over a directory at `<userData>/provident-profile.json`). **D-79/D-80 collapsed the
+  // `data` surface onto THIS handle and DELETED its construction**, so no surface is left that could answer
+  // that refusal as `store-unreachable` (`src/main/data/mapper.ts`'s own translation arm): the refusal now
+  // reaches the boot, and nothing downstream of it can translate one.
+  //
+  // **WHAT THE CATCH BELOW IS, EXACTLY — AND WHAT IT IS NOT.** It is **FATALITY MADE LEGIBLE**: the app still
+  // dies here, at the same instant, with the same exit code as before, and the failure now NAMES what failed,
+  // the store's own `status`, the path involved and the consequence. It SWALLOWS NOTHING, substitutes no
+  // default, retries nothing and constructs no second instance to work around the first. **WHETHER THE APP
+  // SHOULD INSTEAD DEGRADE INTO A STATED, WINDOW-VISIBLE STATE IS OPEN AND NEEDS A RULING** (D-80) — and the
+  // measurement that makes it a product call rather than a wording one is the ORDER, which `D-19`'s boot
+  // sequence fixes and this file keeps: this construction is the boot's SECOND act, and `const win = new
+  // BrowserWindow` is its ELEVENTH, so at the instant this throws **NO WINDOW EXISTS** and a stated message can
+  // reach a log and never a user (the offset is deliberately not cited: the site is the name, `D-41`).
+  const profileFilePath = join(app.getPath('userData'), PROFILE_FILE_NAME)
+  let centralStore: ReturnType<typeof createProfileStore>
+  try {
+    centralStore = createProfileStore({
+      filePath: profileFilePath,
+      constraints: tabsConstraintDeclarations(() => storeHolder.current) as never,
+    })
+  } catch (refusal) {
+    const shape = refusal as { status?: unknown; message?: unknown } | null
+    const status = typeof shape?.status === 'string' ? shape.status : 'no `status` member, so this is not a store refusal'
+    const reason = typeof shape?.message === 'string' ? shape.message : String(refusal)
+    throw new Error(
+      `the profile store could not be CONSTRUCTED at boot, so the profile cannot be opened and the app cannot run: ` +
+      `status '${status}' at '${profileFilePath}' — the store's own words: "${reason}". ` +
+      `Nothing degraded, defaulted or retried, and no second instance was constructed: this boot is over (D-80).`,
+      { cause: refusal },
+    )
+  }
   storeHolder.current = centralStore
   // THE TAB RECORD'S SURFACE (D-63): the one reference the crossing holds, named by no MCP-reachable file — the crossing
   // is the bridge's and only the bridge's (L2 §2, L3 §6). It constructs nothing: the store above is its store.
