@@ -17,7 +17,7 @@
 // `FIRST_RUN`/`SAFE_PAIR`). **NO ROW IN THIS FILE READS `src/**`**, so none of them can pass on a comment that mentions a
 // name — the hollow-green class this corpus keeps meeting. Every absence asserted below is asserted against a runtime
 // registry, not against bytes.
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -162,12 +162,23 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(body({ address: EXCLUSION, attempt: null, op: null, tier: null, value: { exclusion: 'mcp-disabled' } }), 'and so does the other word: existence is the arm, not the value').toBe(true)
     expect(body({ address: EXCLUSION, attempt: null, op: null, tier: null, value: { exclusion: 7 } }), 'AND A PRESENT PAIR WHOSE MEMBER IS NOT A TOKEN PASSES TOO — repairing the member here would be the second authority over one value the placeholder rule forbids, and the read’s own admission is the member’s (this file proves the SPLIT, not an omission)').toBe(true)
 
-    // THE LANDING INSTANT IS WHERE THE PAIR STANDS, AND THE STORE IS WHERE THAT IS OBSERVED: a write of a wrong-typed
-    // member lands and stands, and the module's read would answer the safe pair over it — `SAFE_PAIR` is therefore still
-    // LOAD-BEARING for that arm and is not deleted by this pass (D-84's §3 answer).
+    // THE LANDING INSTANT IS WHERE THE PAIR STANDS, AND THE STORE IS WHERE THAT IS OBSERVED: a wrong-typed member
+    // written at a landing instant LANDS AND STANDS, because no repair ran over it.
     store.write(EXCLUSION, 'mem', { exclusion: 7 })
-    expect(store.read(EXCLUSION, 'mem'), 'the wrong-typed member stands: this declaration did not rewrite it').toEqual({ exclusion: 7 })
-    expect(createOperatorSettings({ userDataDir }).read().exclusion, 'while the module’s read answers the safe pair over it — the read-side default is the member authority, and it is reachable: measured here').toBe('mcp-enabled')
+    expect(store.read(EXCLUSION, 'mem'), 'the wrong-typed member stands: this declaration did not rewrite it, which is the split asserted above and observed here on the store itself').toEqual({ exclusion: 7 })
+
+    // **AND `SAFE_PAIR` IS STILL LOAD-BEARING, WHICH IS THE ARM NO DECLARATION CAN REACH: A CONSTRUCTION THE PACKAGE
+    // REFUSES HAS NO INSTANCE, SO NO BATCH IS ADOPTED AND NO REPAIR CAN RUN.** A DIRECTORY occupying the instance's own
+    // name refuses the construction (`guide §8.2`, measured 2026-11-02 over this same call), and the read is then served
+    // the constant alone. This is why D-84 keeps the read-side default rather than deleting it.
+    const unusable = mkdtempSync(join(tmpdir(), 'creation-declarations-unusable-'))
+    try {
+      mkdirSync(join(unusable, FILE))
+      const refused = createOperatorSettings({ userDataDir: unusable })
+      expect({ exclusion: refused.read().exclusion, tier4: refused.read().tier4 }, 'over a refused construction the safe pair is the CONSTANT’s answer, with no instance and no repair behind it').toEqual({ exclusion: 'mcp-enabled', tier4: false })
+    } finally {
+      rmSync(unusable, { recursive: true, force: true })
+    }
   })
 
   it('CD-5 · the creation instant LANDS AN OP: the construction’s one repair is the journal’s first, so the first caller-visible receipt is the second op — the declared surface’s own witness that a repair ran (interface.md §2 ASM-L2-7; D-84)', () => {
