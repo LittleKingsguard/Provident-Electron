@@ -187,6 +187,28 @@ export const TABS_CONSTRAINT_ID = 'exactly-one-active'
 export const TABS_MUST_STAND_ID = 'tabs-must-stand'
 /** The one shape arm's sentence (L3 signatures §5). */
 export const MALFORMED_ROW_MESSAGE = 'the commit carries no tab id, or no plain record'
+
+/** **THE SEAT-NAME ARM'S `reason` — THE SECOND TOKEN THIS MODULE MINTS, AND IT IS A FAULT THE SHAPE ARM'S IS NOT** (D-76).
+ *  The record's family keys one member per tab in the SAME flat object that holds its seat, so an entry id equal to a SEAT
+ *  name is unrepresentable: the seat and the member are one namespace, and whichever wrote last is what a read answers.
+ *  `malformed-row` is therefore the wrong token for it — that sentence is about a row carrying no id or no plain record,
+ *  and a caller sent it here would look for a shape fault in a row whose shape is fine. **This token is minted by this
+ *  module and by nothing else**: the store never answers it, and the two routes that take an id (`commit`, `remove`) answer
+ *  it before any store act, so the record is untouched when it is refused. */
+export const SEAT_NAME_REASON = 'seat-name'
+/** **AND THE SENTENCE THAT SAYS WHAT IS WRONG**, in the same register as `MALFORMED_ROW_MESSAGE`: the id spells the record's
+ *  own `order` seat, and a member and a seat are one name in this family — so the entry cannot be held beside the seat that
+ *  is already there. It names the seat rather than the act, because the fault is the id and both routes refuse the same
+ *  one. **THE SEAT SET IS `TABS_ORDER_ADDRESS`'S, NOT A SECOND SPELLING**: `SEAT_NAMES` below reads the address constant,
+ *  and the sentence's `'order'` is that constant's own text. */
+export const SEAT_NAME_MESSAGE = "the tab id spells the record's own 'order' seat, and a member and a seat are one name in this family"
+
+/** **THE ONE NAME AN ENTRY ID MAY NOT TAKE — DERIVED FROM THE ADDRESS CONSTANT, NEVER RE-SPELLED.** After D-76 derived the
+ *  landing witness the record has exactly ONE stored singleton seat left, `order`; an entry under that key would be written
+ *  into the same object the seat occupies, so the record could hold one or the other and never both. `landing` is NOT in
+ *  this list: `['tabs','landing']` is now the landing ENTRY's own leaf, which is the whole point of the derivation. */
+const SEAT_NAMES: readonly string[] = [TABS_ORDER_ADDRESS[1] as string]
+const namesASeat = (id: string): boolean => SEAT_NAMES.includes(id)
 /** **THE CHANGE LISTENER STANDS AT THE RECORD ROOT ITSELF — `['tabs']`, BESIDE ALL FIVE PAIRS — AND FROM `1.7.0` THAT IS
  *  THE LAW AND NOT AN ARGUMENT** (`guide §7.3`'s clause of 2026-11-01, items (i) and (iii); `D-71`). **A CONSTRAINT PAIR
  *  AND A LISTENER MAY STAND AT ONE ADDRESS**: different handles, one address, both reached by the act — the pair ASKED by
@@ -972,6 +994,12 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       if (row === null) {
         return { status: 'refused', reason: 'malformed-row', message: MALFORMED_ROW_MESSAGE, address: null }
       }
+      // **THE SEAT-NAME ARM, BEFORE ANY STORE ACT** (D-76): an id equal to the record's own `order` seat cannot be held
+      // beside it, so it is refused rather than written — measured 2026-11-02, this commit was ANSWERED `committed` and left
+      // `order` naming a member the object did not hold, which is the same hole the retired `landing` seat had.
+      if (namesASeat(row.id)) {
+        return { status: 'refused', reason: SEAT_NAME_REASON, message: SEAT_NAME_MESSAGE, address: ['tabs', row.id] }
+      }
       // **ONE WRITE OF ONE WHOLE RECORD** — and that single value mints the record root, the `order` seat and this tab's
       // member in the same call (the rule at `composeRecord`), which is why there is no seed and no per-seat ordering.
       // **NO CORRECTIVE WRITE HERE** (`D-65`): the caller's row is written as the caller asked for it, and the engine's
@@ -1009,6 +1037,12 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
     remove(id: string): TabsRecordAnswer {
       if (typeof id !== 'string' || id.length === 0) {
         return { status: 'refused', reason: 'malformed-row', message: MALFORMED_ROW_MESSAGE, address: null }
+      }
+      // **THE SAME ARM AT THE OTHER ENTRY POINT, AND FOR THE SAME REASON** (D-76): a removal of the seat's own name is not a
+      // removal of a tab — `order` is no member — so it is refused here rather than answered as the store's own success
+      // over a name that is not a tab's.
+      if (namesASeat(id)) {
+        return { status: 'refused', reason: SEAT_NAME_REASON, message: SEAT_NAME_MESSAGE, address: ['tabs', id] }
       }
       const { order } = seats()
       // AN ALREADY-ABSENT TAB IS THE STORE'S OWN SUCCESS (`guide §5.3`: a delete that removes nothing answers `tiers: []`)

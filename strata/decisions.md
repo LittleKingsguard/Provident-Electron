@@ -1855,3 +1855,9 @@ the landing entry, and `tab-has-content`'s fallback is still the authored `'tabs
   never composes it. The rows are the state; this is the one member of them that names the shown one.
 - **Two steps follow this row and each is appended here as it lands**: the refusal of an entry id equal to the one remaining
   stored seat (`order`), and then the id move itself. **Neither is taken on this row's word**: each is measured on its own head.
+- **⟶ THE SEAT-NAME GUARD, appended when it landed (2026-11-02).** After the derivation `order` is the ONE stored seat, so an entry
+  id of `order` is unrepresentable exactly as `landing` was — and it was accepted as silently: measured with the guard removed,
+  `commit({id:'order',…})` was ANSWERED `{"status":"committed","repaired":true}` and the record **lost every tab** (the member write
+  overwrote the `order` array the whole family is seated from), while `remove('order')` was answered `committed` as the store's own
+  success over a name that is no member. **Both routes that take an id refuse it before any store act**, under `SEAT_NAME_REASON`
+  (`'seat-name'`) and `SEAT_NAME_MESSAGE`, and one crossing row reads the refusal at both entry points and the record byte-identical after.

@@ -88,6 +88,8 @@ export const TABS_LANDING_ADDRESS: readonly string[]
 export const TABS_CONSTRAINT_ID: string
 export const TABS_MUST_STAND_ID: string
 export const MALFORMED_ROW_MESSAGE: string
+export const SEAT_NAME_REASON: string
+export const SEAT_NAME_MESSAGE: string
 
 export const isCommitCarrier: (value: unknown) => value is TabsCommitCarrier
 export const writeJoined: (store: TabsRecordStore, commit: TabsCommitCarrier, value: unknown) => unknown
@@ -128,8 +130,7 @@ parameter would move that check into the type system where the renderer's bounda
 
 The `tabs` member of `window.provident` is declared in `src/main/preload.ts`'s `ProvidentBridge` and copied verbatim in
 `src/renderer/secure-panels.ts`'s `declare global` widening; it carries **four** routes — `read()`, `commit(row)`, `remove(id)`
-and `onChanged(handler)`. This document names the sites instead of copying the block: each answer is a five-line inline generic
-type, and a third spelling here would be one more surface to drift (D-45, D-63).
+and `onChanged(handler)`. This document names the sites instead of copying the block: each answer is a five-line inline generic type, and a third spelling here would be one more surface to drift (D-45, D-63).
 
 ## 5. The refusal vocabulary, as text
 
@@ -137,6 +138,7 @@ type, and a third spelling here would be one more surface to drift (D-45, D-63).
 |---|---|---|
 | shape arm, `commit` | `'malformed-row'` | `MALFORMED_ROW_MESSAGE` — `'the commit carries no tab id, or no plain record'` |
 | shape arm, the surface's `remove` | `'malformed-row'` | `'the removal names no tab id'` |
+| seat arm, `commit` and `remove` | `SEAT_NAME_REASON` — `'seat-name'` | `SEAT_NAME_MESSAGE` — `"the tab id spells the record's own 'order' seat, and a member and a seat are one name in this family"` |
 | store arm | the instance's status verbatim | the instance's own sentence |
 
 **There is no construction arm.** Measured 2026-11-02, `grep -rn 'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/`
@@ -144,6 +146,4 @@ is empty: D-64/D-65 hand this module a store the boot already constructed, and a
 
 ## 6. What L4 must not transcribe
 
-No `journal`, no second construction site and no renderer import (design §3, §6) — and no `FilePathUnreachable` arm: the
-nullable-instance shape is `settings-surface`'s and is not repeated here. A name L4 finds inconvenient is a design finding routed
-to L3, never a local invention.
+No `journal`, no second construction site and no renderer import (design §3, §6) — and no `FilePathUnreachable` arm: the nullable-instance shape is `settings-surface`'s and is not repeated here. A name L4 finds inconvenient is a design finding routed to L3, never a local invention.

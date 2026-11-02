@@ -48,8 +48,8 @@ routes, no fifth:
 | Route | Argument | Answer |
 |---|---|---|
 | `tabs.read()` | none | `{ status: 'committed'; rows: readonly TabRow[]; order: readonly string[]; landing: string }` or the refusal arm |
-| `tabs.commit(row: TabRow)` | one tab's whole record, by name | `{ status: 'committed' }`, carrying **`repaired: true`** where a repair changed the record, or the refusal arm |
-| `tabs.remove(id: string)` | one tab's id | `{ status: 'committed' }`, carrying **`repaired: true`** on the same condition, or the refusal arm |
+| `tabs.commit(row: TabRow)` | one tab's whole record, by name | `{ status: 'committed' }`, carrying **`repaired: true`** where a repair changed the record, or the refusal arm — `'seat-name'` where the id spells the record's own seat (§3) |
+| `tabs.remove(id: string)` | one tab's id | `{ status: 'committed' }`, carrying **`repaired: true`** on the same condition, or the refusal arm — `'seat-name'` on the same id rule (§3) |
 | `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else |
 
 **`read()`'s `landing` MEMBER IS DERIVED, NOT A STORED POINTER** (D-76): the id of the row reading active — `'landing'` when that entry is the shown tab, `''` on a record no legal act has left — so a client reads it and never composes it.
@@ -78,16 +78,16 @@ all. A `subscribe` that installed one act and not two was a push that existed in
 ## 3. The refusal vocabulary — closed, and the store's own words
 
 Every refusal is a **value**, never a throw, and its `reason` is the store's own status verbatim under an open escape arm;
-the module mints no status of its own beyond the one shape arm below:
+the module mints no status of its own beyond the two arms below:
 
 | Arm | `reason` | When |
 |---|---|---|
 | shape | `'malformed-row'` | the commit's argument is not a plain object, or its `id` is not a non-empty string — refused **before** any store verb |
+| seat | `'seat-name'` | the `id` spells the record's own `order` seat, by `commit` **and** `remove` — refused **before** any store verb, because a member and a seat are one name in this family (D-76) |
 | store | the instance's status verbatim | any refusal the instance answers: a write that did not land, an address that is not the record's |
 
-**And there was no third arm.** This section carried **`'constraint-repaired'`** as a reason minted *on a committed answer*;
-**nothing in `src/main/` ever produced it** (`grep -rn 'constraint-repaired' src/` is empty), so it is removed: a repair is the
-`repaired` member of a `committed` answer, never a refusal (§2).
+**And `'constraint-repaired'` is removed, never renamed into one of these.** It was minted *on a committed answer*, **nothing in
+`src/main/` ever produced it** (`grep -rn 'constraint-repaired' src/` is empty), and a repair is the `repaired` member of a `committed` answer (§2).
 
 **A repaired commit is `committed`, never `refused`** — the repair is the engine working (L1 §2), and a renderer that treats
 it as a failure would refuse a write the store accepted. **And the act does not GUESS that a repair ran**: the answer

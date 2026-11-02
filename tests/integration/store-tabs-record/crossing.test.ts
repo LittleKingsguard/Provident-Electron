@@ -40,7 +40,14 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createProfileStore } from '../../../src/main/storeroom'
-import { createTabsRecord, isCommitCarrier, tabsConstraintDeclarations, writeJoined } from '../../../src/main/tabs-record'
+import {
+  createTabsRecord,
+  isCommitCarrier,
+  SEAT_NAME_MESSAGE,
+  SEAT_NAME_REASON,
+  tabsConstraintDeclarations,
+  writeJoined,
+} from '../../../src/main/tabs-record'
 import type {
   TabsCommitCarrier,
   TabsConstraintAnswer,
@@ -276,6 +283,42 @@ describe('store-tabs-record · the crossing', () => {
     expect(reading().order, 'no refused act moved the record — it holds what the existence pair created').toEqual([
       'tabs-landing-page',
     ])
+  })
+
+  // ═══════════════ THE SEAT-NAME GUARD: ONE NAMESPACE, SO A SEAT'S OWN NAME IS NOT AN ID (D-76) ═══════════════
+
+  it('THE SEAT-NAME GUARD — an entry id equal to the record\'s own `order` seat is REFUSED by BOTH routes that take an id, under this module\'s own reason and sentence rather than the shape arm\'s, before any store act: the record stands byte-identical afterwards', () => {
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-02T00:00:00.000Z' }))
+    const before = reading()
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    const bytes = JSON.stringify(store.read(['tabs'] as never))
+
+    // THE ROW IS WELL FORMED — an id, a `target`, a plain record — so `malformed-row` is the WRONG sentence here and the
+    // reason is the whole of what says this refusal is about the NAME. **MEASURED 2026-11-02 WITH THE GUARD REMOVED**: this
+    // very commit was ANSWERED `committed` and wrote `order: [..., 'order']` with no member under that key, so a read named
+    // a tab the record did not hold — the same hole the retired `landing` seat had (D-75).
+    const committed = record.commit(row('order', { label: 'a seat is not a tab' }))
+    expect(committed, 'the commit is refused under the seat-name arm').toMatchObject({
+      status: 'refused',
+      reason: SEAT_NAME_REASON,
+      message: SEAT_NAME_MESSAGE,
+    })
+    expect(committed.reason, 'and NOT under the shape arm, whose sentence names a fault this row does not have').not.toBe('malformed-row')
+
+    // THE SAME NAME AT THE OTHER ENTRY POINT: `remove` takes an id too, and a removal of the seat's own name is not the
+    // removal of a tab — without this arm it would be answered `committed` as the store's own success over a name that is
+    // not a member.
+    expect(record.remove('order'), 'the removal is refused under the same arm').toMatchObject({
+      status: 'refused',
+      reason: SEAT_NAME_REASON,
+      message: SEAT_NAME_MESSAGE,
+    })
+
+    // AND NO STORE ACT RAN EITHER TIME: a guard placed AFTER the write would pass both sets of expectations above and fail
+    // here, which is why the record is read back through this module AND through the store's own bytes.
+    expect(reading(), 'the record stands as the last lawful act left it').toEqual(before)
+    expect(JSON.stringify(store.read(['tabs'] as never)), 'and the store\'s own value is byte-identical').toBe(bytes)
   })
 
   it('a removal of a tab the record does not hold is the store\'s own SUCCESS, not a refusal', () => {
