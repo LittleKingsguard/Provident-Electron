@@ -25,7 +25,7 @@ The instance is `provident-storeroom`'s and it is the APP'S CENTRAL ONE (D-64): 
 the batched `cfg.constraints`, and the package owns that file's byte image, its journal, its rollback and its durability
 (`guide §9`). This module constructs nothing and opens no file. It chooses **three** address constants — `TABS_RECORD_ADDRESS`,
 `TABS_ORDER_ADDRESS` and `TABS_LANDING_ADDRESS` — and **five** declarations (`tabsConstraintDeclarations`), and nothing else. **Only
-the second names a SEAT**: the third is the landing ENTRY's own leaf, where the witness a reader asks for is derived, not stored (D-76).
+the second names a SEAT**: the third is `['tabs', TABS_LANDING_ID]` — the landing ENTRY's own leaf, where the witness is derived, not stored (D-76).
 
 **A construction that cannot stand is not this module's arm.** No route answers `FilePathUnreachable`: measured 2026-11-02, `grep -rn
 'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/` is empty — the boot hands this module a store that already stands (D-65).
@@ -126,7 +126,7 @@ with no witness (D-69). `tabs-must-stand` makes existence the engine's to demand
   so the repair branches on the record's own `write` member, which alone tells them apart. **The write runs no pass of its own**: the
   registration's re-run judges the pair over the op the repair returned.
 - **Consequence, carried and not absorbed: a fresh record carries the landing tab.** `read()` answers that entry seated and
-  active — `order: ['tabs-landing-page']` while the id reads so — before any commit, and the first commit APPENDS to that record
+  active — `order: ['landing']`, the id D-76 moved — before any commit, and the first commit APPENDS to that record
   instead of creating the root. Nothing in the module depended on the old emptiness: every route reads the record as it stands and
   writes it whole. **And the root cannot be deleted out from under the app**: measured 2026-11-01, a `delete(['tabs'])` is answered
   as the store's own success while the existence pair's repair re-creates the record inside the same commit, so the address the

@@ -1861,3 +1861,9 @@ the landing entry, and `tab-has-content`'s fallback is still the authored `'tabs
   overwrote the `order` array the whole family is seated from), while `remove('order')` was answered `committed` as the store's own
   success over a name that is no member. **Both routes that take an id refuse it before any store act**, under `SEAT_NAME_REASON`
   (`'seat-name'`) and `SEAT_NAME_MESSAGE`, and one crossing row reads the refusal at both entry points and the record byte-identical after.
+- **⟶ THE ID MOVED, appended when it landed (2026-11-02).** `TABS_LANDING_ID` is `'landing'` — `LANDING_ENTRY_KEY`, the literal
+  `TABS_LANDING_ADDRESS` is spelled from — and EXPORTED, because the renderer pass reads one spelling. `landingRow`, `mintRecord`,
+  `healRecord`, the crossing's rows, L1 §1 and its two `§5.U` posts, L2 §1/§2/§6 and L3 design §2 carry it; `TAB_CONTENT_FALLBACK`
+  did NOT move, `'landing'` naming no authored node. **`D-75`'s "held" clause is superseded here; its dated measurements stay
+  written as that head's own** (D-46). Measured: `order: ['landing']`, `read().landing` = `'landing'`, a commit under that id
+  updates ONE member in place, and `remove` of it as the last tab re-mints it.

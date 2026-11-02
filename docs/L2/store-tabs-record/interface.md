@@ -140,9 +140,9 @@ every `tabs.onChanged`, and changes the record only through `tabs.commit(row)` a
   `exactly-one-active`: the five pairs are this module's and the boot's batch (D-65). Write outside `commit`/`remove` — no
   `put`, no file, no channel of its own — and never notify by writing: a listener runs in its own commit (`guide §6.5`), so an
   `onChanged` body that committed would be a second writer inside the one that fired it (D-71).
-- **DECIDED, AND NO LONGER BLOCKED (D-75, D-76):** the landing ENTRY's id is the renderer's `'landing'`, and the seat that made
-  it unrepresentable is DERIVED away; the record still spells it `'tabs-landing-page'` until that one name moves. **No migration**
-  (the carrier's rows are dropped, not moved); **OPEN:** boot order.
+- **DECIDED, AND SPELLED (D-75, D-76):** the landing ENTRY's id is the renderer's `'landing'` in this record too — the seat that
+  made it unrepresentable is DERIVED away, `TABS_LANDING_ID` is exported so a client reads one spelling, and a tab id equal to the
+  remaining seat (`order`) is refused. **No migration** (the carrier's rows are dropped, not moved); **OPEN:** boot order.
 
 ## 7. What this document does not decide
 

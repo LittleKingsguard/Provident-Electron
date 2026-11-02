@@ -12,10 +12,17 @@
 The tab record is a family of `file`-tier rows the store hosts, not a second store (D-62). Its operative spelling is
 **one flat leaf per tab** whose NAME is the tab id and whose VALUE is that tab's declared record — `file.tabs.<id>` —
 beside **one** singleton seat, `file.tabs.order` (the ids' ordered place). **The second singleton seat is retired** (D-76):
-the landing entry — the tab the app always has — is an ordinary member of the same family, keyed by its own id, so
-`file.tabs.landing` is **that entry's leaf** and the witness the renderer's bounded wiring reads is **derived, not
-stored**: the id of the row reading active. As a second seat it was a STRING written beside `order`, and a member's key and
-a seat's name are one namespace, so an entry whose id spelled it could not be held at all (measured 2026-11-02; D-75).
+the landing entry — the tab the app always has, whose id is `'landing'` — is an ordinary member of the same family, keyed by
+its own id, so `file.tabs.landing` is **that entry's leaf** and the witness the renderer's bounded wiring reads is
+**derived, not stored**: the id of the row reading active. As a second seat it was a STRING written beside `order`, and a
+member's key and a seat's name are one namespace, so an entry whose id spelled it could not be held at all (measured
+2026-11-02; D-75). **A tab id equal to the one remaining seat's name, `order`, is refused at both routes that take an id**
+(D-76) — the same namespace, read the other way.
+
+**Four spellings, and only one of them is the entry's id** (D-75, D-76): the id `'landing'` (what `order` seats and what the
+row's `id` and `label` carry), the authored page node `'tabs-landing-page'` (`src/shared/demo-envelope.ts`'s
+`TABS_LANDING_PAGE_ID`, resolved through `Runtime.elementForNodeId`), the content target `'tabs-landing-page'` a row's
+`target` names, and the address key `['tabs','landing']` — which IS the entry's leaf, not a seat.
 
 The as-filed nested spellings (`file.tabs.<id>.target`, `.active`, `.error`, `.label`) are **kept visible and
 superseded in effect**: a reader must be able to find what the record used to be without reading it as what it is
@@ -43,8 +50,8 @@ observation (the three untaken precedents are the gutter battery's `U-3`/`U-4`/`
 
 | Row | Page | instrument | cmd | post |
 |---|---|---|---|---|
-| `U-1` | `tabs-landing-page` | `MANUAL OPERATOR` | `cmd: npm start -- --seed file.tabs.order=[]` at a session with a human at the window | `post: file.tabs.order` absent and `file.tabs.landing` = `tabs-landing-page`; the window paints the landing page as the terminal |
-| `U-2` | `tabs-error-page` | `MANUAL OPERATOR` | `cmd: npm start -- --seed file.tabs.t9.target=page-9` at the same session | `post: file.tabs.t9.error` carries the unresolvable-target token and `file.tabs.landing` = `tabs-error-page`; the window paints the error page as that tab's terminal |
+| `U-1` | `tabs-landing-page` | `MANUAL OPERATOR` | `cmd: npm start -- --seed file.tabs.order=[]` at a session with a human at the window | `post: file.tabs.order` = `['landing']` — the empty sequence re-mints the landing entry, the one tab the app always has — `file.tabs.landing` is that entry's own record (`target` `tabs-landing-page`), and `tabs.read()`'s `landing` names it; the window paints the landing page as the terminal |
+| `U-2` | `tabs-error-page` | `MANUAL OPERATOR` | `cmd: npm start -- --seed file.tabs.t9.target=page-9` at the same session | `post: file.tabs.t9.error` carries the unresolvable-target token and `read()`'s `landing` is `t9` — DERIVED from the active row, so the witness names the tab whose terminal is the error page; the window paints the error page as that tab's terminal |
 
 **Both rows read `verdict: PARKED`** and they are the only two this unit carries: `§7` item 2(c) caps the matrix at
 eight U-rows and requires `summary.total` to equal the row count, so the matrix states two and says so rather than

@@ -12,7 +12,7 @@
     },
     "integration": {
       "files": 17,
-      "sites": 128
+      "sites": 130
     },
     "unit": {
       "files": 13,
@@ -754,7 +754,7 @@
   "readings": {
     "gating": {
       "files": 19,
-      "sites": 95
+      "sites": 97
     },
     "onNotice": {
       "files": 113,

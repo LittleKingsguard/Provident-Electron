@@ -167,7 +167,7 @@ const arrayCarrierRepairWrite = (): unknown => writeJoined(aStore, [], anIntende
 const nullCarrierRepairWrite = (): unknown => writeJoined(aStore, null, anIntendedRecord)
 
 describe('store-tabs-record · the crossing', () => {
-  it('THE CONSTRUCTION INSTANT: `tabs-must-stand` creates the record BEFORE ANY COMMIT — a store built over a scratch file path answers a root holding the landing page, seated and active, and `read()` on the never-committed record is a reading', () => {
+  it('THE CONSTRUCTION INSTANT: `tabs-must-stand` creates the record BEFORE ANY COMMIT — a store built over a scratch file path answers a root holding the landing ENTRY, seated and active under the id `landing`, and `read()` on the never-committed record is a reading', () => {
     // THE ABSENCE→REPAIR PATH, DRIVEN FROM ITS OWN STORE so the row measures the CONSTRUCTION rather than a record this
     // file already opened: nothing is committed and no verb of the module has been called when the record is read.
     const instant = mkdtempSync(join(tmpdir(), 'tabs-construction-'))
@@ -188,15 +188,15 @@ describe('store-tabs-record · the crossing', () => {
       // THE ROOT EXISTS AT THE STORE'S OWN ADDRESS BEFORE ANY COMMIT: `read` of a never-committed record is a READING
       // and not "does not exist", which is the whole difference this pair makes.
       const answer = store.read(['tabs'] as never) as unknown
-      expect(answer, 'the existence pair minted the root at construction').toMatchObject({ order: ['tabs-landing-page'] })
+      expect(answer, 'the existence pair minted the root at construction').toMatchObject({ order: ['landing'] })
       const fresh = createTabsRecord({ store: bound })
       const read = fresh.read()
       if (!('rows' in read)) throw new Error('a record created at construction must answer a reading')
-      expect([...read.order], 'the fresh record seats the landing page and nothing else').toEqual(['tabs-landing-page'])
-      expect(read.landing, 'and the landing seat names it').toBe('tabs-landing-page')
-      expect(read.rows.map((each) => each.id)).toEqual(['tabs-landing-page'])
+      expect([...read.order], 'the fresh record seats the landing ENTRY — id `landing` — and nothing else').toEqual(['landing'])
+      expect(read.landing, "and `read()`'s DERIVED witness names it, from the row and not from a seat").toBe('landing')
+      expect(read.rows.map((each) => each.id)).toEqual(['landing'])
       expect(read.rows.filter((each) => each.active === true).map((each) => each.id), 'seated AND active').toEqual([
-        'tabs-landing-page',
+        'landing',
       ])
       // AND IT IS THE INSTANCE'S, NOT A PASS THE MODULE REMEMBERS: the assertion above is the STORE's own read, taken
       // before `createTabsRecord` was called at all. **MEASURED 2026-11-01: the construction write lands in the instance and
@@ -212,11 +212,11 @@ describe('store-tabs-record · the crossing', () => {
     }
   })
 
-  it('a first commit is ANSWERED committed and APPENDS to the record the existence pair created: `[tabs-landing-page, tab-1]`, exactly one active — the committed tab — and the landing seat on it', () => {
+  it('a first commit is ANSWERED committed and APPENDS to the record the existence pair created: `[landing, tab-1]`, exactly one active — the committed tab — and the derived witness on it', () => {
     const answer = record.commit(row('tab-1'))
     expect(answer.status).toBe('committed')
     const { order, landing, rows } = reading()
-    expect(order).toEqual(['tabs-landing-page', 'tab-1'])
+    expect(order).toEqual(['landing', 'tab-1'])
     expect(landing).toBe('tab-1')
     expect(rows).toHaveLength(2)
     expect(actives()).toEqual(['tab-1'])
@@ -227,7 +227,7 @@ describe('store-tabs-record · the crossing', () => {
     expect(answer.status, 'a violation the pair can repair is not a refusal').toBe('committed')
     const seated = reading().rows.find((each) => each.id === 'bare')
     expect(seated?.label, 'tab-has-title → "untitled"').toBe('untitled')
-    expect(seated?.target, 'tab-has-content → the landing page').toBe('tabs-landing-page')
+    expect(seated?.target, 'tab-has-content → the landing page, a CONTENT reference and not the entry\'s id').toBe('tabs-landing-page')
     expect(seated?.lastActiveAt, 'tab-has-lastActiveAt → now, as an ISO string').toMatch(/^\d{4}-\d{2}-\d{2}T/)
   })
 
@@ -235,7 +235,7 @@ describe('store-tabs-record · the crossing', () => {
     record.commit(row('tab-1'))
     expect(record.commit(row('tab-2')).status).toBe('committed')
     const { order } = reading()
-    expect(order).toEqual(['tabs-landing-page', 'tab-1', 'tab-2'])
+    expect(order).toEqual(['landing', 'tab-1', 'tab-2'])
     expect(actives(), 'the engine repair keeps the caller\'s own referent').toEqual(['tab-2'])
     expect(reading().landing).toBe('tab-2')
   })
@@ -244,7 +244,7 @@ describe('store-tabs-record · the crossing', () => {
     record.commit(row('tab-1'))
     expect(record.commit(row('tab-2', { active: false })).status).toBe('committed')
     expect(actives()).toEqual(['tab-1'])
-    expect(reading().order).toEqual(['tabs-landing-page', 'tab-1', 'tab-2'])
+    expect(reading().order).toEqual(['landing', 'tab-1', 'tab-2'])
   })
 
   it('`remove` → removing the ACTIVE tab is answered committed and a survivor takes the seat, chosen by the removed entry\'s pre-position', () => {
@@ -252,24 +252,24 @@ describe('store-tabs-record · the crossing', () => {
     record.commit(row('tab-2', { active: false }))
     expect(record.remove('tab-1').status).toBe('committed')
     const { order, rows } = reading()
-    expect(order).toEqual(['tabs-landing-page', 'tab-2'])
+    expect(order).toEqual(['landing', 'tab-2'])
     expect(rows.map((each) => each.id), 'the tab is gone from the record, not merely unseated').toEqual([
-      'tabs-landing-page',
+      'landing',
       'tab-2',
     ])
     expect(actives(), 'exactly one active survives a removal of the active tab').toEqual(['tab-2'])
   })
 
-  it('`remove` → removing the LAST tab — the landing page itself, since a fresh record starts holding it — leaves the record non-empty: the empty-sequence repair mints the landing page back into the seat', () => {
+  it('`remove` → removing the LAST tab — the landing ENTRY itself, since a fresh record starts holding it — leaves the record non-empty: the empty-sequence repair mints the landing entry back into `order`, under the id the renderer spells', () => {
     record.commit(row('tab-1'))
-    // THE FRESH RECORD ALREADY SEATS THE LANDING PAGE (D-69), so the empty sequence the invariant refuses is reached by
+    // THE FRESH RECORD ALREADY SEATS THE LANDING ENTRY (D-69), so the empty sequence the invariant refuses is reached by
     // removing THAT after the tab, and not by removing the only tab a record has.
     record.remove('tab-1')
-    expect(record.remove('tabs-landing-page').status).toBe('committed')
+    expect(record.remove('landing').status).toBe('committed')
     const { order, landing } = reading()
     expect(order, 'the record never stands empty').toHaveLength(1)
-    expect(order).toEqual(['tabs-landing-page'])
-    expect(actives()).toEqual(['tabs-landing-page'])
+    expect(order).toEqual(['landing'])
+    expect(actives()).toEqual(['landing'])
     expect(landing).toBe(order[0])
   })
 
@@ -281,7 +281,7 @@ describe('store-tabs-record · the crossing', () => {
     expect(record.commit(null as unknown as TabsRecordRow)).toMatchObject({ status: 'refused', reason: 'malformed-row' })
     expect(record.remove('')).toMatchObject({ status: 'refused', reason: 'malformed-row' })
     expect(reading().order, 'no refused act moved the record — it holds what the existence pair created').toEqual([
-      'tabs-landing-page',
+      'landing',
     ])
   })
 
@@ -319,19 +319,53 @@ describe('store-tabs-record · the crossing', () => {
     // here, which is why the record is read back through this module AND through the store's own bytes.
     expect(reading(), 'the record stands as the last lawful act left it').toEqual(before)
     expect(JSON.stringify(store.read(['tabs'] as never)), 'and the store\'s own value is byte-identical').toBe(bytes)
+
+    // **AND THE CONTROL THAT KEEPS THE GUARD FROM BEING OVER-BROAD**: `landing` is NOT a seat name any more — the derivation
+    // made it an entry's own key (D-76) — so an act under that id is ACCEPTED. A guard that refused both spellings would pass
+    // every expectation above and lose the entire point of the change.
+    expect(record.commit(row('landing', { active: false, label: 'the landing entry, updated in place', lastActiveAt: '2026-11-02T00:00:00.000Z' })).status, '`landing` is an ordinary entry id: the commit is accepted').toBe('committed')
+    expect(reading().rows.find((each) => each.id === 'landing')?.label, 'and it UPDATED the landing entry rather than being lost behind a seat string').toBe('the landing entry, updated in place')
+  })
+
+  it('THE ID THE DERIVATION FREED — the landing entry\'s id is `landing`, the renderer\'s own spelling: the fresh record seats it under that id, its `target` is the authored CONTENT reference, a `commit` under that id updates ONE member, and `remove` of it as the last tab re-mints it', () => {
+    // THE WHOLE CHANGE, READ AT THE ROUTES A CLIENT HAS. Before D-76 every expectation in this row was unreachable: the id
+    // `landing` wrote a member that the seat string then overwrote, so `order` named a tab the record did not hold.
+    const fresh = reading()
+    expect(fresh.order, 'the fresh record seats the landing entry under the renderer\'s spelling').toEqual(['landing'])
+    expect(fresh.landing, "and `read()`'s witness names it — DERIVED from the active row, not read off a seat").toBe('landing')
+    const entry = fresh.rows[0]
+    expect(entry?.id, 'the member is keyed by the id and its own `id` member spells it').toBe('landing')
+    expect(entry?.label, 'its label is the same spelling').toBe('landing')
+    // THE CONTENT REFERENCE IS A DIFFERENT THING AND DID NOT MOVE: `'landing'` names no authored node, so the page a client
+    // resolves for it stays the envelope's `tabs-landing-page` (L2 §6).
+    expect(entry?.target, 'the CONTENT it contains is the authored landing page, not the id').toBe('tabs-landing-page')
+
+    // ONE MEMBER, NOT A SECOND SEAT: a commit under that id UPDATES the landing entry in place.
+    expect(record.commit(row('landing', { label: 'updated', lastActiveAt: '2026-11-02T00:00:00.000Z' })).status).toBe('committed')
+    expect(reading().order, 'the same id is one member and not a second seat').toEqual(['landing'])
+    expect(reading().rows, 'and the record holds exactly the one row it held before').toHaveLength(1)
+    expect(reading().rows[0]?.label).toBe('updated')
+
+    // AND THE EMPTY SEQUENCE STILL NEVER SURVIVES: removing the landing entry as the record's last tab is answered
+    // `committed` and the repair re-mints it — with the fresh row's own defaults, which is why the label is the id again.
+    expect(record.remove('landing').status, 'the removal is a committed act').toBe('committed')
+    const after = reading()
+    expect(after.order, 'the repair re-minted the landing entry rather than leaving the record empty').toEqual(['landing'])
+    expect(after.rows[0]?.label, 'and it is the minted row, not the updated one').toBe('landing')
+    expect(after.landing, 'the witness follows the re-minted entry').toBe('landing')
   })
 
   it('a removal of a tab the record does not hold is the store\'s own SUCCESS, not a refusal', () => {
     record.commit(row('tab-1'))
     expect(record.remove('never-was').status).toBe('committed')
-    expect(reading().order).toEqual(['tabs-landing-page', 'tab-1'])
+    expect(reading().order).toEqual(['landing', 'tab-1'])
   })
 
   it('`commit` UPDATES a tab the record already seats, so the same id is one member and not a second seat', () => {
     record.commit(row('tab-1', { label: 'first' }))
     record.commit(row('tab-1', { label: 'second' }))
     const { order, rows } = reading()
-    expect(order).toEqual(['tabs-landing-page', 'tab-1'])
+    expect(order).toEqual(['landing', 'tab-1'])
     expect(rows).toHaveLength(2)
     expect(rows.find((each) => each.id === 'tab-1')?.label).toBe('second')
   })
@@ -355,7 +389,7 @@ describe('store-tabs-record · the crossing', () => {
     const answer = reopened.read()
     expect(answer.status).toBe('committed')
     if (!('rows' in answer)) throw new Error('a reopened record must answer a reading')
-    expect([...answer.order]).toEqual(['tabs-landing-page', 'tab-1'])
+    expect([...answer.order]).toEqual(['landing', 'tab-1'])
     expect(answer.rows.find((each) => each.id === 'tab-1')?.label).toBe('kept')
   })
 
@@ -435,16 +469,15 @@ describe('store-tabs-record · the crossing', () => {
       })
       const stamp = '2026-11-01T00:00:00.000Z'
       const intent = {
-        order: ['tabs-landing-page', 'tab-1'],
-        'tabs-landing-page': {
-          id: 'tabs-landing-page',
-          target: 'tabs-landing-page',
+        order: ['landing', 'tab-1'],
+        'landing': {
+          id: 'landing',
+          target: 'tabs-landing-page', // THE CONTENT REFERENCE, unmoved by the id change (D-76)
           active: false,
-          label: 'tabs-landing-page',
+          label: 'landing',
           lastActiveAt: stamp,
         },
         'tab-1': { id: 'tab-1', target: 'page://tab-1', active: true, label: 'one', lastActiveAt: stamp },
-        landing: 'tab-1',
       }
       asked.length = 0
       // THE ONE ACT BOTH KINDS ARE REACHED BY — a whole record at `['tabs']`, written through the store so this row can read
@@ -535,7 +568,7 @@ describe('store-tabs-record · the crossing', () => {
     const repaired = record.remove('tab-1')
     expect(repaired.status, 'the removal of the ACTIVE tab is still `committed`').toBe('committed')
     expect('repaired' in repaired && repaired.repaired === true, 'and it names the repair that seated the survivor').toBe(true)
-    expect(actives(), 'the record shows it: the survivor is active').toEqual(['tabs-landing-page'])
+    expect(actives(), 'the record shows it: the survivor is active').toEqual(['landing'])
   })
 
   // ═══════════════ THE ANSWER THE ENGINE IS HANDED (D-72) ═══════════════
@@ -576,7 +609,7 @@ describe('store-tabs-record · the crossing', () => {
     bound = store as unknown as TabsRecordStore
     try {
       const here = createTabsRecord({ store: bound })
-      // THE COMMIT THAT TRIGGERS A REPAIR: the existence pair minted the record with the landing page SEATED AND ACTIVE, so
+      // THE COMMIT THAT TRIGGERS A REPAIR: the existence pair minted the record with the landing ENTRY SEATED AND ACTIVE, so
       // this row's tab makes two actives — `exactly-one-active` answers `{message, repair}` and the engine invokes it.
       expect(here.commit(row('tab-1')).status, 'the commit carrying the repair still commits').toBe('committed')
       expect(answers.length, 'the engine INVOKED the repair — so its return was reached at all, and not only declared').toBeGreaterThan(0)

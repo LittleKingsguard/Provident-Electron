@@ -168,17 +168,17 @@ export const TABS_RECORD_ADDRESS: readonly string[] = ['tabs']
 /** **THE ONE SINGLETON SEAT**, named so no caller composes it: the ordered place of every tab id. */
 export const TABS_ORDER_ADDRESS: readonly string[] = ['tabs', 'order']
 /** **THE LANDING ENTRY'S KEY, SPELLED ONCE.** It is the second element of `TABS_LANDING_ADDRESS` below, and it is the id
- *  the landing entry will carry (`TABS_LANDING_ID`, below) — one spelling rather than two that must be kept equal by
- *  hand. Until the id moves, the key holds nothing on a record this module wrote: a legacy install's string seat may still
- *  sit there, and `landingOf` reads only a ROW at it, so a stale string answers nothing rather than naming a tab. */
+ *  the landing entry DOES carry (`TABS_LANDING_ID`, below) — one spelling rather than two that must be kept equal by hand.
+ *  A legacy install's retired STRING seat may still sit at this address in an old file: `landingOf` reads only a ROW there, so
+ *  a stale string answers nothing rather than naming a tab, and the first whole-record write replaces it whole. */
 const LANDING_ENTRY_KEY = 'landing'
 /** **THE LANDING ENTRY'S OWN LEAF — `file.tabs.landing` — AND NO LONGER A SEAT OF ITS OWN** (D-76). This address used to
  *  hold a STRING: the witness naming which tab is active, written beside `order` in the same flat object. **That string is
  *  the collision `D-75` measured**: a member's key and a seat's name are one namespace, so an entry whose id spelled the
  *  seat could not be held — the seat string took the key and `read()` named a landing row the record did not hold. So the
  *  witness is DERIVED (the id of the row reading active, `landingOf`) and this address is the landing ENTRY's record,
- *  exactly as the renderer's `file.tabs.landing` already was. **Once the entry's own id is `LANDING_ENTRY_KEY`, this
- *  address is `['tabs', TABS_LANDING_ID]` and the two are one thing.** */
+ *  exactly as the renderer's `file.tabs.landing` already was. **And now the entry's own id IS `LANDING_ENTRY_KEY`, so this
+ *  address is `['tabs', TABS_LANDING_ID]` and the two are one thing** (D-76). */
 export const TABS_LANDING_ADDRESS: readonly string[] = ['tabs', LANDING_ENTRY_KEY]
 /** The declared constraint id, kept even though this pass enforces the invariant at the boundary. */
 export const TABS_CONSTRAINT_ID = 'exactly-one-active'
@@ -426,32 +426,34 @@ const viewOf = (store: Store): { order: string[]; entries: Record<string, TabsRe
 
 const readActive = (row: TabsRecordRow | undefined): boolean => row !== undefined && row.active === true
 
-/** **THE LANDING ENTRY'S ID IS `'landing'` BY THE USER'S DECISION (D-75), AND THE COLLISION THAT HELD IT IS NOW CLOSED
- *  (D-76): the entry's own id moves one step after this derivation lands.** Until then this constant still reads
- *  `'tabs-landing-page'`, and the reason it once could not move is worth keeping as the measurement that forced the
- *  change: the family keyed one member per tab in the SAME flat object as its two SEATS, so an entry named `landing` was
- *  not a row it could hold — measured 2026-11-02, the composer wrote the row at that key and then the `landing` seat over
- *  it, so the construction instant's own bytes answered `{"landing":"landing","order":["landing"]}` at `['tabs']` with
- *  `read()` answering `rows: []`; the first `commit({id:'landing',…})` was refused `ConstraintPassRefused`, and on a
- *  HEALTHY record the same commit was ANSWERED `committed` while leaving `order` naming a row the record did not hold.
- *  **So the alignment was never a rename, and it is not one now either: the seat is DERIVED AND NO LONGER STORED**
- *  (`landingOf`, and the composer writes no witness at all), which is what frees the spelling for an entry to carry.
- *  **IT IS ALSO NOT THE PAGE NODE'S ID** (`src/shared/demo-envelope.ts`'s `TABS_LANDING_PAGE_ID`, which authors the node
- *  and stays `'tabs-landing-page'`) **AND NOT A CONTENT TARGET** (`TAB_CONTENT_FALLBACK` below): four spellings share these
- *  letters — this entry's id, the authored node's, the content target's, and the address's key — and only the first moves. */
-const TABS_LANDING_ID = 'tabs-landing-page'
+/** **THE LANDING ENTRY'S ID IS `'landing'`, SPELLED ONCE AND EXPORTED** — the user's decision (D-75) as it now stands in the
+ *  record (D-76). It is `LANDING_ENTRY_KEY`, the same literal `TABS_LANDING_ADDRESS` is spelled from, so the entry's id, the
+ *  address it is seated at and the `order` member that names it are ONE spelling rather than three that must agree. **The
+ *  move was not a rename, and the measurement is why it needed a derivation first**: the family keyed one member per tab in
+ *  the SAME flat object as its two SEATS, so with this id the composer wrote the row at that key and then the `landing` seat
+ *  over it — the construction instant's own bytes answered `{"landing":"landing","order":["landing"]}` at `['tabs']` with
+ *  `read()` answering `rows: []`, the first `commit({id:'landing',…})` was refused `ConstraintPassRefused`, and on a HEALTHY
+ *  record the same commit was ANSWERED `committed` while leaving `order` naming a row the record did not hold. The seat is
+ *  DERIVED AND NO LONGER STORED (`landingOf`; the composer writes no witness at all), and that is what freed the spelling.
+ *
+ *  **Exported because the renderer pass reads ONE spelling** (D-76): its own `TABS_LANDING_ID` is this value, and a second
+ *  literal in a client is the rename that half-lands. **IT IS NOT THE PAGE NODE'S ID** (`src/shared/demo-envelope.ts`'s
+ *  `TABS_LANDING_PAGE_ID`, which AUTHORS the node and stays `'tabs-landing-page'`) **AND NOT A CONTENT TARGET**
+ *  (`TAB_CONTENT_FALLBACK` below, which stays the authored page because a row's `target` is the content it contains while its
+ *  `id` is its identity — and `'landing'` names no authored node at all): four spellings shared these letters before this
+ *  move, and exactly one of them — this entry's id — has changed. */
+export const TABS_LANDING_ID: string = LANDING_ENTRY_KEY
 
 /** Every tab carries a TITLE. The record's own title field is the row's `label`. */
 const TAB_TITLE_REPAIR = 'untitled'
-/** **A CONTENT REFERENCE AND NOT AN ID, SO THIS STAYS `'tabs-landing-page'` WHEN THE ENTRY'S ID BECOMES `'landing'`**
- *  (D-75). A row's `target` is the content the tab CONTAINS (`src/shared/types.ts`'s docblock on the row) and its `id` is
- *  the tab's IDENTITY; the two coincided here only because the landing tab's content is the landing page. **What decides
- *  it is that `'landing'` names no authored node**: the one node a client can resolve for that page is
- *  `TABS_LANDING_PAGE_ID` (L2 §6 — both page nodes are the ENVELOPE's, resolved through `Runtime.elementForNodeId`), so a
- *  blank target repaired to `'landing'` would point a tab at content that resolves to NOTHING — the unresolvable-target
- *  terminal the error page exists for, minted by the repair meant to prevent it. So the fallback names authored content,
- *  and `landingRow` spells its own `target` through THIS constant rather than through the entry's id — the separation
- *  stated at the one row where the two once coincided, and a no-op today because both constants read that same string. */
+/** **A CONTENT REFERENCE AND NOT AN ID, SO THIS DID NOT MOVE WHEN THE ENTRY'S ID DID** (D-75, `D-76`). A row's `target` is the
+ *  content the tab CONTAINS (`src/shared/types.ts`'s docblock on the row) and its `id` is the tab's IDENTITY; the two
+ *  coincided here only because the landing tab's content is the landing page. **What decides it is that `'landing'` names no
+ *  authored node**: the one node a client can resolve for that page is `TABS_LANDING_PAGE_ID` (L2 §6 — both page nodes are the
+ *  ENVELOPE's, resolved through `Runtime.elementForNodeId`), so a blank target repaired to `'landing'` would point a tab at
+ *  content that resolves to NOTHING — the unresolvable-target terminal the error page exists for, minted by the repair meant to
+ *  prevent it. So `landingRow` spells its own `target` through THIS constant rather than through `TABS_LANDING_ID`, and the two
+ *  now genuinely differ (`'tabs-landing-page'` the content, `'landing'` the id) where before they were one string by accident. */
 const TAB_CONTENT_FALLBACK = 'tabs-landing-page'
 
 /** A field that is absent, not a string, or blank is a field the record cannot be read for. */
@@ -507,7 +509,7 @@ const landingRow = (stamp: string): TabsRecordRow => ({
  *  **AND THE VALUE IT COMPOSES CARRIES NO `landing` SEAT, WHICH IS THE WHOLE OF D-76's DERIVATION.** The family it writes is
  *  the `order` array and one member per seated id — the landing ENTRY among them, keyed by its own id — so nothing here can
  *  overwrite a tab's member with a witness string: measured 2026-11-02, the composer that emitted `whole['landing']` after
- *  the members wrote the construction instant as `{"landing":"tabs-landing-page","order":["tabs-landing-page"],…}`, and a
+ *  the members wrote the construction instant as `{"landing":"landing","order":["landing"],…}` once the id was `'landing'`, and a
  *  `commit({id:'landing',…})` on a healthy record was answered `{status:'committed'}` while `order` gained a `landing`
  *  member the object did not hold (`docs/L2/store-tabs-record/interface.md` §1). The witness is now DERIVED at read
  *  (`landingOf`) and never written, so an entry id and a seat name are no longer one namespace. */

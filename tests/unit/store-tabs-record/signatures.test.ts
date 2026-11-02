@@ -113,6 +113,10 @@ describe('D-45 — the declaration blocks, checked against the modules they tran
     expect([...tabsRecord.TABS_RECORD_ADDRESS]).toEqual(['tabs'])
     expect([...tabsRecord.TABS_ORDER_ADDRESS]).toEqual(['tabs', 'order'])
     expect([...tabsRecord.TABS_LANDING_ADDRESS]).toEqual(['tabs', 'landing'])
+    // THE ENTRY'S ID, READ BY THE RENDERER PASS AND ONE SPELLING (D-76): the id IS the address's key, so the two constants
+    // cannot drift — and the value is the renderer's `'landing'`, not the `'tabs-landing-page'` that names the page NODE.
+    expect(tabsRecord.TABS_LANDING_ID, '§2 — the landing entry\'s id, the renderer\'s spelling').toBe('landing')
+    expect(tabsRecord.TABS_LANDING_ID, '§2 — and it is the address key, spelled once').toBe(tabsRecord.TABS_LANDING_ADDRESS[1])
     expect(tabsRecord.TABS_CONSTRAINT_ID).toBe('exactly-one-active')
     expect(tabsRecord.TABS_MUST_STAND_ID).toBe('tabs-must-stand')
   })
