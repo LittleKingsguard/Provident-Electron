@@ -53,7 +53,7 @@ describe('S-1 — the seam module is what the app imports', () => {
     + ' without a repo change', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as
       { dependencies: Record<string, string> }
-    expect(pkg.dependencies['provident-storeroom']).toBe('^1.7.0')
+    expect(pkg.dependencies['provident-storeroom']).toBe('^1.9.0')
   })
 
   it('S-1.2 — the store `createProfileStore` returns IS a storeroom store, member for member', () => {
@@ -155,7 +155,12 @@ describe('S-3 — the log entry is the five-key record, and its size is bounded'
     const store = fresh()
     let depth = 0
     const N = 28
-    const throwOnce = () => {
+    // **THE RETURN IS ANNOTATED `true` BECAUSE `1.9.0` CLOSED THE BODY'S ARM SET**: at `1.7.0` a constraint body was
+    // declared `(context: unknown) => unknown` and an inferred `boolean` assigned; `1.9.0` declares
+    // `Constraint = (context: AttemptContext) => ConstraintOutcome`, whose pass arm is the LITERAL `true`, so a helper that
+    // could return `false` no longer assigns. Nothing about the drive changes — this body has only ever returned `true`
+    // on the arm that does not throw — and the widened return was the type's looseness, not the row's intent.
+    const throwOnce = (): true => {
       depth += 1
       if (depth <= N) {
         try {

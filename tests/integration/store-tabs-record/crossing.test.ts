@@ -13,7 +13,11 @@
 //     root, the `order` seat and every tab member in the same call;
 //  2. a repair may write at the attempt's OWN address when it names the commit it was handed at `write`'s fourth
 //     position — without it the same write is refused `KC-7` *"a constraint attempt is already open"*;
-//  3. a repair that returns `void` is refused *"the repair … produced no op"* (`ST-F2`, filed upstream);
+//  3. a repair that returns `void` is refused *"the repair … produced no op"* (`ST-F2`, filed upstream) — **THAT WAS THE
+//     PACKAGE'S RULE AT `1.7.0` AND IT IS NOT ONE AT THE INSTALLED `1.9.0`**, which credits an op-less repair by the legs its
+//     own write wrote (measured 2026-11-02 on both trees). **THE RULE IS THIS MODULE'S NOW**: the `@ts-expect-error` rows
+//     further down are what make a `void` repair a COMPILE ERROR in this repo, and no runtime row below asks the package to
+//     refuse one — so nothing here moves when the package's licence widens;
 //  4. a pair whose own key is ABSENT is APPLIED where its parent resolves, and its repair may create the key — the route
 //     it takes there carries the store's THREE positions and no fourth (`guide §7.2`'s dated clause, items (3) and (4);
 //     D-69). That is what makes `['tabs']` stand BEFORE the first commit rather than as a side effect of it.

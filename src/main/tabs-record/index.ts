@@ -16,7 +16,7 @@
 import { types } from 'node:util'
 
 import { storeCreate } from 'provident-storeroom'
-import type { CommitRecord, TriggerPair } from 'provident-storeroom'
+import type { TriggerPair } from 'provident-storeroom'
 import type { TabsRecordRow } from '../../shared/types.js'
 
 type Store = ReturnType<typeof storeCreate>
@@ -84,15 +84,19 @@ export interface TabsRepairFailed {
  *  every body's `repair` member is typed by it, so a repair that returns nothing is a COMPILE ERROR in this repo
  *  (`npm run typecheck`), not a habit a reviewer has to hold.
  *
- *  **IT IS DELIBERATELY NOT SPELLED BY THE PACKAGE'S OWN TYPE.** The consumed `provident-storeroom` types a constraint body
- *  as `(context: unknown) => unknown` at the installed `1.7.0` — where a `void` repair return is REFUSED at run time, as
- *  `KC-4`'s *"the repair … produced no op"* — and `1.9.0` widens its declared repair outcome to ACCEPT `void` and credits
- *  an op-less repair by the legs it wrote. **This module takes neither half of that licence**, so borrowing that union here
- *  would admit exactly what this row forbids: `undefined` is the shape `ST-F2` was measured on, where a repair that made its
- *  correction and returned nothing was refused with a sentence naming the CALLER's address instead of the address the repair
- *  wrote (`strata/records/store-tabs-record-unit.md` §1 — filed upstream, never patched here, D-5). **So the explicit arm
- *  stays on any version**, and the return states the intent rather than leaving the next reader to work out which release
- *  credits what (`D-72`). */
+ *  **IT IS DELIBERATELY NOT SPELLED BY THE PACKAGE'S OWN TYPE, AND `1.9.0` IS WHY THE REASON IS NOW A NARROWER ONE RATHER
+ *  THAN AN ABSENCE.** At the previously installed `1.7.0` a constraint body was typed `(context: unknown) => unknown`,
+ *  so the two-arm return was prose in a docblock and not a type a consumer could annotate. **`1.9.0` declares it**:
+ *  `Constraint = (context: AttemptContext) => ConstraintOutcome`, with the closed three-arm
+ *  `true | {message, repair: (context: RepairContext | RegistrationRepairContext) => RepairOutcome} | {message}` and
+ *  `RepairOutcome = void | {ok: true; op?: …} | {ok: false; message}` — **and that union admits EXACTLY what this row
+ *  forbids**: `void`, and an "ok" with no `op`, because the release credits a repair by the LEGS ITS OWN WRITE WROTE
+ *  rather than by the value it returned. **This module takes none of that licence**, so borrowing the release's union
+ *  here would re-open the hole the local type closes. `undefined` is the shape `ST-F2` was measured on: a repair that made
+ *  its correction and returned nothing was refused with a sentence naming the CALLER's address instead of the address the
+ *  repair wrote (`strata/records/store-tabs-record-unit.md` §1 — filed upstream, never patched here, D-5). **So the
+ *  explicit arm stays on every version, and `RepairOutcome` is imported NOWHERE in this tree** — the return states the
+ *  intent rather than leaving the next reader to work out which release credits what (`D-72`). */
 export type TabsRepairAnswer = TabsRepairCredited | TabsRepairFailed
 
 /** **WHAT THE ENGINE INVOKES INSIDE THE ATTEMPT'S OWN COMMIT**: one argument — the repair's OWN record, which is not the
@@ -102,23 +106,31 @@ export type TabsRepair = (context: unknown) => TabsRepairAnswer
 
 /** **THE COMMIT CARRIER — THE FOURTH POSITION'S OWN CLASS TEST, EXPORTED SO A REPAIR WRITE CANNOT NAME NOTHING** (`D-73`). A
  *  repair is invoked INSIDE an attempt and the write it makes must JOIN that attempt; the only way to join is to name the
- *  commit the repair was handed, and the only position that names one is `write`'s **FOURTH**. **THAT POSITION'S DECLARED
- *  TYPE AT THE INSTALLED `1.7.0` IS NOT THIS TYPE** — `node_modules/provident-storeroom/index.d.ts` declares
- *  `write(address: Address, tier: Tier, value: unknown, commit?: CommitRecord): WriteRecord`, with
- *  `interface CommitRecord { attempt: AttemptRef; op: JournalOp; triggered: readonly TriggerPair[]; pending: readonly
- *  TriggerPair[] }`, **FOUR MEMBERS** — while **the position's own CLASS TEST admits far less**: a non-null, non-`Proxy`,
- *  non-array object carrying an OWN, present, non-`undefined` `pending` member, every other form being a `TypeError` thrown
- *  before any store act (`1.7.0`'s `src/entry/delivery.mjs`, `commitPositionRefusal`, read at its own bytes; its docblock is
- *  `surface.md §2.4` item 9 (g) item 1). **A landing repair's record is the six-member
- *  `{address, id, op, tier, value, pending}` and carries NO `attempt`**, so it satisfies the class test and NOT the
- *  declaration — the one seam `writeJoined` casts across, and the only cast in this module's repair path.
+ *  commit the repair was handed, and the only position that names one is `write`'s **FOURTH**. **AND SINCE `1.9.0` THAT
+ *  POSITION IS DECLARED AS THIS TYPE, NOT MERELY TESTED FOR IT** — `node_modules/provident-storeroom/index.d.ts` at the
+ *  installed `1.9.0` declares `write(address: Address, tier: Tier, value: unknown, commit?: CommitCarrier): WriteRecord`
+ *  beside `interface CommitCarrier { readonly pending: readonly TriggerPair[] }`: **one member, the same `TriggerPair`
+ *  spelling this interface carries**, so a `TabsCommitCarrier` is assignable to the position with NO assertion — which is
+ *  what let `writeJoined` lose its `commit as CommitRecord` on this bump.
+ *
+ *  **THE PREVIOUSLY INSTALLED RELEASE DECLARED A DIFFERENT TYPE THERE, AND THE DIFFERENCE IS THE WHOLE OF WHY A CAST ONCE
+ *  STOOD HERE**: `1.7.0` declared `commit?: CommitRecord`, **four members** `{attempt: AttemptRef; op: JournalOp;
+ *  triggered: readonly TriggerPair[]; pending: readonly TriggerPair[]}`, while **a landing repair's record is the
+ *  six-member `{address, id, op, tier, value, pending}` and carries NO `attempt`** — it satisfied the position's CLASS TEST
+ *  and not that DECLARATION, so `commit as CommitRecord` bridged the two. `1.9.0` closes the gap at the declaration
+ *  (measured 2026-11-02 on its own bytes, and re-measured end to end: a repair handed the six-member record writes through
+ *  it with no assertion and lands its op). **The interface below is UNCHANGED by that release**, because it was already the
+ *  shape the position now declares.
+ *
+ *  **THE POSITION'S CLASS TEST STILL ADMITS LESS THAN ITS DECLARATION DOES**, so `isCommitCarrier` is not replaced by the
+ *  release's type: a non-null, non-`Proxy`, non-array object carrying an OWN, present, non-`undefined` `pending` member,
+ *  every other form a `TypeError` thrown before any store act (`src/entry/delivery.mjs`, `commitPositionRefusal`, read at
+ *  its own bytes — byte-identical at `1.7.0` and `1.9.0`; its docblock is `surface.md §2.4` item 9 (g) item 1). The
+ *  release's own docblock on `CommitCarrier` names the three forms its TYPE admits and its RUNTIME refuses — an INHERITED
+ *  `pending`, a `Proxy`, and a SUPPLIED `undefined` at the `?` — and **the runtime refusal is what keeps the domain**.
  *
  *  **THIS TYPE IS THE CLASS TEST AND ONE MEMBER, SPELLED THE PACKAGE'S OWN WAY**: `TriggerPair` is imported rather than
- *  re-spelled, so the member's element type is the kernel's and not this module's guess. **THE RELEASE AFTER `1.7.0` DECLARES
- *  `commit?: CommitCarrier`, one member `readonly pending: readonly TriggerPair[]`** — the shape this interface already is, so
- *  on that release the cast goes and nothing else moves. **That declaration is carried from the release notes and NOT from
- *  these bytes**: this tree installs `1.7.0`, whose tarball ships no such interface and whose `RELEASE-NOTES.md` names no
- *  later version, so the installed declaration is the one typed against here and the later one is read as its successor.
+ *  re-spelled, so the member's element type is the kernel's and not this module's guess.
  *  Exported because the boot and any later renderer work annotate against ONE rule rather than against a release's licence. */
 export interface TabsCommitCarrier {
   readonly pending: readonly TriggerPair[]
@@ -225,14 +237,15 @@ const refusalOfThrown = (caught: unknown): { reason: string; message: string } =
 const plain = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
-/** **THE CLASS TEST ITSELF, PREDICATE FOR PREDICATE — MIRRORED FROM THE INSTALLED `1.7.0`, NOT REASONED ABOUT** (`D-73`).
- *  The position is refused unless the value is (i) a non-null object, (ii) NOT a `Proxy`, (iii) NOT an array, and (iv) carries
- *  an own `pending` whose read does not throw and is not `undefined` — `src/entry/delivery.mjs`'s `commitPositionRefusal` at
- *  its own bytes, whose member read is wrapped because a hostile getter is outside the position's domain (`JS-1`), and whose
- *  `Proxy` arm is `types.isProxy` (the same `node:util` predicate used here, so the two agree case for case). **EVERY CHECK
- *  IS TAKEN, INCLUDING THE `Proxy` ONE**: a `Proxy` carrying an own `pending` passes (i), (iii) and (iv) and would be refused
- *  by the store alone — a rejection this module cannot see and would therefore report as a thrown `TypeError` out of a repair
- *  instead of the failed arm.
+/** **THE CLASS TEST ITSELF, PREDICATE FOR PREDICATE — MIRRORED FROM THE INSTALLED PACKAGE'S BYTES, NOT REASONED ABOUT**
+ *  (`D-73`). The position is refused unless the value is (i) a non-null object, (ii) NOT a `Proxy`, (iii) NOT an array, and
+ *  (iv) carries an own `pending` whose read does not throw and is not `undefined` — `src/entry/delivery.mjs`'s
+ *  `commitPositionRefusal` at its own bytes, **byte-identical at `1.7.0` and at the installed `1.9.0`** (read at both
+ *  trees' bytes 2026-11-02, so this predicate carries over the bump unmoved), whose member read is wrapped because a hostile
+ *  getter is outside the position's domain (`JS-1`), and whose `Proxy` arm is `types.isProxy` (the same `node:util`
+ *  predicate used here, so the two agree case for case). **EVERY CHECK IS TAKEN, INCLUDING THE `Proxy` ONE**: a `Proxy`
+ *  carrying an own `pending` passes (i), (iii) and (iv) and would be refused by the store alone — a rejection this module
+ *  cannot see and would therefore report as a thrown `TypeError` out of a repair instead of the failed arm.
  *
  *  **THE ONE CHECK THAT IS THIS MODULE'S AND NOT THE CLASS TEST'S IS THE MEMBER'S SHAPE**: the class test admits ANY present,
  *  non-`undefined` `pending`, while `TabsCommitCarrier` spells the `readonly TriggerPair[]` the kernel's own `CommitRecord`
@@ -275,15 +288,17 @@ export const isCommitCarrier = (value: unknown): value is TabsCommitCarrier => {
  *  (4)). That route's handle is a three-position FUNCTION and not the store, so handing it to this helper is a type error of
  *  its own: there is no shape in which this call supplies a fourth position to the registration route.
  *
- *  **THE ONE CAST IN THIS MODULE'S REPAIR PATH, AND IT SITS EXACTLY ON THE SEAM**: `TabsCommitCarrier` is what the position's
- *  class test admits, `CommitRecord` is what the installed `1.7.0` DECLARES, and the landing repair's six-member record is
- *  the former and not the latter — it carries no `attempt`/`op`/`triggered`. **IT CANNOT BE REMOVED ON THIS VERSION**: a
- *  narrow carrier is not assignable to a four-member parameter, and widening the carrier to the declared `CommitRecord` would
- *  be a second lie — the repair is genuinely handed no `attempt` member. **WHAT REMOVES IT**: a release declaring the position
- *  `commit?: CommitCarrier` with one member `readonly pending: readonly TriggerPair[]` (the shape the release after `1.7.0`
- *  declares, per its notes), at which point the carrier is assignable with no assertion and this line loses its `as`. */
+ *  **NO CAST STANDS IN THIS MODULE'S REPAIR PATH ANY MORE, AND THE ONE THAT DID WAS REMOVED BY `1.9.0` RATHER THAN BY
+ *  A LOOSENING HERE**: the then-installed `1.7.0` declared the position `commit?: CommitRecord` — four members
+ *  `{attempt, op, triggered, pending}` — while the six-member `{address, id, op, tier, value, pending}` record a landing
+ *  repair is genuinely handed carries NO `attempt`, so it satisfied the position's class test and not its declaration and
+ *  `commit as CommitRecord` bridged the two. **`1.9.0` DECLARES `commit?: CommitCarrier`, one member `readonly pending:
+ *  readonly TriggerPair[]`** — the shape `TabsCommitCarrier` already IS — so the carrier is assignable on its own and the
+ *  assertion is gone (measured 2026-11-02: `npm run typecheck` clean without it, and this call still lands its op inside a
+ *  live `exactly-one-active` repair, `tests/integration/store-tabs-record/crossing.test.ts` green). The carrier is passed on
+ *  AS IT WAS HANDED, never rebuilt: it carries its log under a symbol key the store's refusal path reads. */
 export const writeJoined = (store: Store, commit: TabsCommitCarrier, value: unknown): unknown =>
-  store.write(TABS_RECORD_ADDRESS, 'file', value, commit as CommitRecord)
+  store.write(TABS_RECORD_ADDRESS, 'file', value, commit)
 
 /** One tab's record, admitted field by field: an unknown member is dropped, never carried. **EVERY MEMBER OF
  *  `TabsRecordRow` IS CARRIED**, because this is the same admission the module writes back: a member dropped here is a
@@ -479,9 +494,14 @@ const standsAsIntended = (store: Store, intended: Record<string, unknown>): bool
   }
 }
 
-/** **A REPAIR'S ANSWER, IN THE ONLY SHAPE THE KERNEL CREDITS** (`landedOp`: a non-empty `opId` absent from the attempt's
- *  own ops, whose `seq` stands strictly above the op the repair was invoked for). Returning `void` fails `KC-4` with
- *  *"the repair … produced no op"* naming the CALLER's address, which is the defect `ST-F2` files upstream.
+/** **A REPAIR'S ANSWER, IN THE ONLY SHAPE THE KERNEL CREDITS ON THE RECORD THIS MODULE WRITES** (`landedOp`: a non-empty
+ *  `opId` absent from the attempt's own ops, whose `seq` stands strictly above the op the repair was invoked for).
+ *  **RETURNING `void` USED TO FAIL `KC-4` WITH *"the repair … produced no op"*, naming the CALLER's address — the defect
+ *  `ST-F2` files upstream — AND AT THE INSTALLED `1.9.0` IT NO LONGER DOES**: measured 2026-11-02 on both trees, a repair
+ *  whose write corrects the record and which returns `undefined` is REFUSED by `1.7.0` with exactly that sentence and is
+ *  CREDITED by `1.9.0`, which credits a repair by the legs its own write wrote. **SO THE RULE IS THIS MODULE'S NOW AND NOT
+ *  THE PACKAGE'S** (`D-72`): `TabsRepairAnswer` is what makes a `void` return a COMPILE ERROR here, and this function is the
+ *  one home of the credited arm — the store would accept the sloppier answer, and this tree does not write it.
  *
  *  **AND THIS IS THE ONE CONSTRUCTOR OF `TabsRepairCredited` IN THIS MODULE** (`D-72`): every credited arm in this file is
  *  some call of this function's answer, so the explicit return has ONE HOME and no repair spells the shape itself — which is

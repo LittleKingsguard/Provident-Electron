@@ -1723,6 +1723,16 @@ it against the wrong op (`D-67`).
   `commit?: CommitCarrier`, one member `readonly pending: readonly TriggerPair[]` — the shape the release after `1.7.0` declares,
   which the carrier already IS. **This supersedes `D-72`'s clause counting `context as never` as "the package's commit
   parameter"**: `never` was a type lie, and the honest carrier replaced it.
+  **⟶ SUPERSEDED IN PART, 2026-11-02: `1.9.0` IS THAT RELEASE, AND THE CAST IS GONE.** The installed
+  `provident-storeroom 1.9.0` declares `write(address: Address, tier: Tier, value: unknown, commit?: CommitCarrier): WriteRecord`
+  beside `export interface CommitCarrier { readonly pending: readonly TriggerPair[] }` — one member, the exact shape
+  `TabsCommitCarrier` already carried — so the carrier is assignable with **no assertion**: `writeJoined` now reads
+  `store.write(TABS_RECORD_ADDRESS, 'file', value, commit)`, the `CommitRecord` type import is gone from
+  `src/main/tabs-record/index.ts`, and `npm run typecheck` is clean without it. **Everything else in this bullet stands
+  unchanged** — the carrier position is still REQUIRED, `writeJoined` is still the module's ONE repair write, both repair bodies
+  still go through it, and the registration arm still cannot reach it. Measured the same day, end to end: a live
+  `exactly-one-active` repair writes the whole corrected record at the fourth position through the uncast carrier, answers
+  `{ok: true, op}`, throws nothing, leaves the corrected record standing, and fires its listener once.
 - **A type-level row pins it where a widening reds it** (`tests/integration/store-tabs-record/crossing.test.ts`, compiled by
   `npm run typecheck:tests`): three `@ts-expect-error` rows over `writeJoined` — carrier omitted, an array, `null` — beside a
   positive control, plus a run-time row pinning the class test case for case. **Measured 2026-11-02: `commit:
