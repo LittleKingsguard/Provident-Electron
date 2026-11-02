@@ -1281,9 +1281,11 @@ async function main(): Promise<void> {
   wired.hydrate(bootHandoff)
   // ═══ THE SLICE BOOT STEP IS DELETED FROM THIS SITE (`D-83`) ═══
   // **WHAT STOOD HERE**: after `hydrate(bootHandoff)` and before the first graph load, ONE commit —
-  // `evaluateTabsBootStep(wired, handedTabsOrder)`, whose whole act was
-  // `wired.commit('file.tabs.order', [...handed])` whenever the hand-off carried a non-empty membership
-  // sequence. **WHY IT IS GONE, IN ONE PARAGRAPH.** A boot step is an IMPERATIVE WRITE, and D-82's clause 3
+  // `evaluateTabsBootStep(wired, handedTabsOrder)`, whose whole act was `wired.commit(TABS_ORDER_NAME, [...handed])`
+  // whenever the hand-off carried a non-empty membership sequence. **THE NAME IS NOT RE-SPELLED HERE ON PURPOSE**:
+  // `TABS_ORDER_NAME` is the one constant that carries it, and a second literal of it below `main()`'s boundary puts a
+  // tab-record name OUTSIDE `T2` §5.1 item 1's declared record region, which `tests/store-focus.test.ts`'s `S22-1`
+  // attributes and reds on (measured 2026-11-02: the literal here was the ONE reference outside that region). **WHY IT IS GONE, IN ONE PARAGRAPH.** A boot step is an IMPERATIVE WRITE, and D-82's clause 3
   // admits boot data only from a file or from a constraint's repair; the audit measured this commit as the
   // one write in the app with no external event behind it — the frozen store pushes every `file`-tier commit
   // through `crossing.put` into `STORE_FILE_PUT`, so the step re-projected file data back into the file,
