@@ -102,3 +102,14 @@ is the transient's; **(ii)** `activeId` is written as **absence** because `null`
 a client reads `null` back through the module's own admission and must not write one; **(iii)** the legacy `file.*`
 projection of these rows still lives in the secure crossing's own store (D-78's item (f)), so until the purge deletes it
 the same fact stands in two stores and nothing reconciles them.
+
+**THE SWAP IS MEASURED AND NOT TAKEN, AND THE MEASUREMENT MOVES WHAT THE NEXT PASS OWNS (D-88, 2026-11-03).** A client
+answering the async crossing exactly as §2's routes require was built and driven — a renderer module beside `tabs-client`,
+holding the data shape, refilled by deliveries, read synchronously — and the two families were swapped onto it in a scratch
+attempt. It is not in the tree because **the surface that pins the machinery it replaces is a rework of its own**: with the
+swap in place and the tests untouched, `tests/pane-drag-compliance.test.ts` read 28 failed of 129 and
+`tests/store-focus.test.ts` 49 of 96, falling to 20 once each fixture drove the client over a crossing double — and the
+residual is those files' own registers, whose declared terms count the boot mint and the two `mem.focus.*` subscriptions
+this swap deletes (§4's `focus-must-stand` and ONE client subscription replace them). So the three facts above stand
+unmoved, **and the pass that takes them also takes those registers and `tests/store-tabs-record.test.ts`'s rows** — a shape
+this document does not declare, which is why it is named here and not designed here.
