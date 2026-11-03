@@ -60,6 +60,8 @@ describe('a delete names one row', () => {
       removed: false,
       tiers: [],
       cursor: null,
+      repaired: false,
+      log: [],
     })
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',
@@ -79,6 +81,8 @@ describe('a delete names one row', () => {
       removed: false,
       tiers: [],
       cursor: null,
+      repaired: false,
+      log: [],
     })
     expect(surface.read({ path: ['alpha', 'nested', 0] })).toEqual({
       status: 'read',

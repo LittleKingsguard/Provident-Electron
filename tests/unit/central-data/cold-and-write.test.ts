@@ -63,6 +63,8 @@ describe('a first-ever profile reads cold', () => {
       removed: false,
       tiers: [],
       cursor: null,
+      repaired: false,
+      log: [],
     })
   })
 
@@ -102,6 +104,8 @@ describe('a write commits through the store and is re-served', () => {
       status: 'committed',
       path: ['alpha'],
       cursor: 1,
+      repaired: false,
+      log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }],
     })
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',
@@ -118,11 +122,15 @@ describe('a write commits through the store and is re-served', () => {
       status: 'committed',
       path: ['alpha'],
       cursor: 1,
+      repaired: false,
+      log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }],
     })
     expect(surface.write({ path: ['alpha'], value: 'y' })).toEqual({
       status: 'committed',
       path: ['alpha'],
       cursor: 2,
+      repaired: false,
+      log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }],
     })
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',
@@ -139,6 +147,8 @@ describe('a write commits through the store and is re-served', () => {
       status: 'committed',
       path: ['alpha'],
       cursor: 1,
+      repaired: false,
+      log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }],
     })
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',

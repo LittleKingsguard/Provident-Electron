@@ -130,7 +130,7 @@ describe('central-data · the group, the gate and the registration surface', () 
       const absent = await call(client, 'provident.data.read', { path: ['alpha'] })
       expect(absent.answer).toEqual({ status: 'absent', path: ['alpha'] })
       const committed = await call(client, 'provident.data.write', { path: ['alpha'], value: 'x' })
-      expect(committed.answer).toEqual({ status: 'committed', path: ['alpha'], cursor: 1 })
+      expect(committed.answer).toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
       const read = await call(client, 'provident.data.read', { path: ['alpha'] })
       expect(read.answer).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
       const list = await call(client, 'provident.data.list', {})
@@ -169,7 +169,7 @@ describe('central-data · the group, the gate and the registration surface', () 
 
       server.applyExclusion('mcp-enabled')
       const after = await call(client, 'provident.data.write', { path: ['alpha'], value: 'x' })
-      expect(after.answer, 'the surface answers again once the tier is closed').toEqual({ status: 'committed', path: ['alpha'], cursor: 1 })
+      expect(after.answer, 'the surface answers again once the tier is closed').toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
     } finally {
       await close()
     }

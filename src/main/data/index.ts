@@ -7,6 +7,7 @@ export type {
   DataTier,
   DataRefusalReason,
   DataLedger,
+  DataLogEntry,
   DataReadAnswer,
   DataWriteAnswer,
   DataDeleteAnswer,

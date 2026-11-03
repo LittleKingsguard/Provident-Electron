@@ -1596,6 +1596,15 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   'src/main/data/surface.ts', // `D-101` — the declared-root guard, and the tier threaded into write, delete and read
   'src/main/tabs-record/index.ts', // `D-101` — `TABS_RECORD_TIER` and `tabsDeclaredRoots`, the family's own pair
   'src/main/mcp-server.ts', // `D-101` — the three `data` tools' declared members gain `tier`; nothing registers anew
+  // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-103`): THE SAME UNIT'S TWO REMAINING PATHS.** The pass
+  //    that brings the package's log onto the `data.*` answers writes the module's entry (`data/index.ts`, which gains
+  //    the exported `DataLogEntry`) and the SEAM (`src/main/storeroom.ts`, which gains the one declared accessor that
+  //    reads the non-enumerable member and the census prose that says so). Both are the `central-data` unit's declared
+  //    artifacts (`strata/decisions.md` `D-103`), excluded BY NAME like every other entry here — **AND THE DENIED
+  //    PREDICATE IS UNTOUCHED**: the positive control below still drives a `src/renderer/**` path this list does not
+  //    name, and `src/main/security.ts` below is still charged to this unit.**
+  'src/main/data/index.ts', // `D-103` — the module's entry, and the `DataLogEntry` it exports
+  'src/main/storeroom.ts', // `D-103` — the one declared reader of the commit's log, and the census header it re-measures
   // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a
   // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/security.ts`, or the synthetic
   // `src/renderer/gesture-session-panel.ts` the control two paragraphs down feeds to the same instrument — is STILL

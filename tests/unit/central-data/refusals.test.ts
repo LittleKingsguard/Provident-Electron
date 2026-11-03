@@ -222,6 +222,8 @@ describe('a profile name that cannot be occupied answers store-unreachable on al
       removed: false,
       tiers: [],
       cursor: null,
+      repaired: false,
+      log: [],
     })
     expect(surface.journal({}).status, 'the window is this process’s own and the reading gates it, not the store').toBe('read')
     // `behaviour.md` §9's last row, and the arm that replaced "the construction refuses at the first write": the

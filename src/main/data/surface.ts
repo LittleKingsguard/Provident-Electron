@@ -25,7 +25,17 @@
 // at the family's own tier and is refused `declared-tier` otherwise, ahead of the reading and of any
 // byte. **THE ROOT NAMES AND THE TIER WORDS STAND IN THE MODULES THAT DECLARE THEM AND NOWHERE HERE**:
 // a family that moves tier moves in one place, and this guard cannot drift from it (D-53).
+//
+// **A PASSING `write` AND A PASSING `delete` ANSWER WITH THE COMMIT'S LOG, AND NOTHING ELSE DOES (D-103).**
+// `repaired` says whether a declared pair rewrote the value inside the caller's own commit, and `log` is the
+// entries that say so — the package's own `LogEntry` records, copied by the seam out of a member that is
+// NON-ENUMERABLE and therefore survives no serialisation raw. **`read`, `list` and `journal` carry NEITHER**: a
+// read consults no constraint (the package's shipped reading, *"★ AND READS CHECK NO CONSTRAINT"*), so there is
+// no pass for it to report, and *"every act that ran a constraint pass"* is the reading this surface takes of the
+// instruction whose words were *"always"*. The refusal ledger carries no `log` either and that asymmetry is
+// named rather than hidden (`D-103`).
 
+import { commitLog } from '../storeroom.js'
 import { parseDelete, parseJournal, parseList, parseRead, parseWrite, pathText } from './args.js'
 import { createJournal } from './journal.js'
 import { readOutcome, refusalLedger, sentence } from './mapper.js'
@@ -36,6 +46,7 @@ import type {
   DataJournalAnswer,
   DataLedger,
   DataListAnswer,
+  DataLogEntry,
   DataPath,
   DataReadAnswer,
   DataSurface,
@@ -102,9 +113,45 @@ function copy(path: DataPath): DataPath {
 }
 
 /** `delete` where no row stands: `committed`, nothing removed, no tier named, no cursor minted —
- *  reached with NO store refusal leaving this module (`behaviour.md` §6; ASM-L2-6; G7). */
+ *  reached with NO store refusal leaving this module (`behaviour.md` §6; ASM-L2-6; G7).
+ *
+ *  **AND ITS `log` IS EMPTY BECAUSE ITS ACT NEVER REACHED THE STORE** (`D-103`): this answer is built on the two
+ *  arms where NO STORE CALL WAS MADE — the reading said `absent` (the profile's name was removed under the live
+ *  process), or the store's own probe answered an absence so the delete itself never ran. Zero acts appended zero
+ *  entries, which is exactly what `[]` says here, and `repaired:false` says no pair judged anything. **THE EMPTY
+ *  ARRAY IS NOT THE CLEAN ARM'S ANSWER AND IS NOT THIS SHAPE'S ALIBI**: a `write` or a `delete` that DID reach the
+ *  store always answers between one and four entries, so `[]` on these two members means *"this surface performed
+ *  no store act"* and never *"the act ran and repaired nothing"* — the answer's own `removed:false` with
+ *  `cursor:null` already states the same fact beside it. */
 function emptyReceipt(path: DataPath): DataDeleteAnswer {
-  return { status: 'committed', path: copy(path), removed: false, tiers: [], cursor: null }
+  return { status: 'committed', path: copy(path), removed: false, tiers: [], cursor: null, repaired: false, log: [] }
+}
+
+/** **THE LOG AN ANSWER CARRIES, MATERIALIZED BY THE SEAM AND COPIED AGAIN HERE** (`D-103`). `commitLog` is the ONE
+ *  declared reader of the store's non-enumerable `log` member (`src/main/storeroom.ts`): it copies the array and
+ *  every entry into plain data, so this answer survives `JSON.stringify`, a spread and `Object.assign` — each of
+ *  which DROPS the raw member — and nothing served aliases the store's own release (G10).
+ *
+ *  **THE `?? []` IS A TOTAL FUNCTION'S FLOOR AND NEVER A CLAIM ABOUT THE CLEAN ARM.** `commitLog` answers `null`
+ *  for a record that was handed no list at all, and the one such record in this package is a REPAIR'S OWN JOINED
+ *  WRITE — the shape the tab record's `writeJoined` and the view record's `writeJoinedAt` make, and the record this
+ *  module never reads: `write` and `delete` below read the TOP-LEVEL record they drove, which carries the member on
+ *  every arm measured (`D-103`). So the empty arm is unreachable from this surface, and the three measured answers
+ *  stand beside it: FOUR entries where a pair repaired, TWO where a pair passed, ONE over a store carrying no pair. */
+function logOf(record: unknown): readonly DataLogEntry[] {
+  return commitLog(record) ?? []
+}
+
+/** **THE ONE DERIVATION OF `repaired`, AND IT IS A PRESENCE AND NEVER AN ABSENCE** (`D-103`). A commit in which a
+ *  declared pair refused the caller's value and a repair wrote the one that stands carries an entry of
+ *  `kind === 'repair-run'` — the package's own kind, in the package's own four-member set, so no word is minted
+ *  here. **THE DISCRIMINATOR IS THAT ENTRY, NOT THE LIST'S LENGTH**: the clean arm answers two entries and a write
+ *  over a store with no pair answers one, so a derivation reading *"the log is empty"* would answer `false` on
+ *  every arm and would have been a `D-79`-class lie wearing a member. `D-102` recorded the empty-array
+ *  discriminator as the one it would have used had the member existed; this row supersedes it BY POINTER (`D-46`)
+ *  on the measurement, and `D-103` is where that supersession lives. */
+function passRepaired(log: readonly DataLogEntry[] | null): boolean {
+  return log !== null && log.some((entry) => entry.kind === 'repair-run')
 }
 
 /** The row paths beneath a value: a scalar IS a row, a branch is composed from its children, and
@@ -199,8 +246,20 @@ export function createDataSurface(options: DataSurfaceOptions): DataSurface {
       // own file where that file was removed under the process (`behaviour.md` §9; D-80).
       const store = port().store()
       try {
-        store.write(path, tier, value)
-        return { status: 'committed', path: copy(path), cursor: window().append('write', path, 'present') }
+        const record = store.write(path, tier, value)
+        // **THE RECEIPT THE SURFACE USED TO DISCARD IS THE LOG IT NOW RETURNS** (`D-103`, `D-82`'s `V4`): the
+        // store's record carries the commit's entries non-enumerably, the seam copies them, and this answer names
+        // both the verdict (`repaired`) and its evidence (`log`) — so the dishonest `committed` `D-79` recorded,
+        // where a caller's value was rewritten inside its own commit and the answer said only `committed`, dies
+        // here. The cursor is minted BEFORE the answer is built, exactly as it was, so nothing about the window moves.
+        const log = logOf(record)
+        return {
+          status: 'committed',
+          path: copy(path),
+          cursor: window().append('write', path, 'present'),
+          repaired: passRepaired(log),
+          log,
+        }
       } catch (caught) {
         // A refused call mints no cursor and appends no entry: the store's own rollback has already
         // run, and this module adds no compensation (G2; `behaviour.md` §4).
@@ -239,7 +298,20 @@ export function createDataSurface(options: DataSurfaceOptions): DataSurface {
         const record = store.delete(path, tier)
         const removed = record.tiers.length > 0
         const cursor = removed ? window().append('delete', path, 'absent') : null
-        return { status: 'committed', path: copy(path), removed, tiers: [...record.tiers], cursor }
+        // **A `delete` RUNS A PASS OF ITS OWN KIND, SO IT ANSWERS ONE TOO** (`D-103`; `guide §5.3`). The tab
+        // record's root pair re-mints the record INSIDE this delete — measured at `1.9.1`, `removed:false` while
+        // `read(['tabs'])` served the record the repair wrote — so `repaired:true` beside `removed:false` is the
+        // pair of members that tells that truth, from the one derivation `passRepaired` holds.
+        const log = logOf(record)
+        return {
+          status: 'committed',
+          path: copy(path),
+          removed,
+          tiers: [...record.tiers],
+          cursor,
+          repaired: passRepaired(log),
+          log,
+        }
       } catch (caught) {
         const outcome = readOutcome(caught)
         return outcome.kind === 'ledger' ? outcome.ledger : emptyReceipt(path)

@@ -20,24 +20,30 @@
 //    Until one is, this seam constructs a store and hands it to whoever asked; it wires nothing.
 //
 // THE DECLARED SURFACE BELOW IS A CENSUS, NOT A DERIVATION. Every entry was measured against the
-// installed package (`provident-storeroom@1.9.1`, `Object.getOwnPropertyNames(store)` → 14 string
+// installed package (`provident-storeroom@1.9.2`, `Object.getOwnPropertyNames(store)` → 14 string
 // members in this order) — the same fourteen the `1.6.2` and `1.7.0` reviews read, so neither the
-// release that lifted the cross-kind address exclusion (`1.7.0`) nor `1.9.0` moved a member of the
-// store. **THE SYMBOL FIGURE IS THE ONE THAT MOVED WITH `1.9.0`, and it was RE-MEASURED rather than
-// carried**: at that release `1.7.0` read 11 own symbols and `1.9.0` read 12, the twelfth being
-// `Symbol(provident-storeroom.repair-leg)` (measured 2026-11-02 on the installed bytes, at
-// construction; see `symbolCount` below for the read that comes after a write). **AND IT MOVED
-// AGAIN WITH `1.9.1`, BY ONE, AND THE STRING LIST DID NOT MOVE WITH IT** (measured 2026-11-03 on
-// both installed trees, one fresh instance each): 12 at construction becomes **13**, the thirteenth
-// being `Symbol(provident-storeroom.registration-save)` — the marker of the release whose refusing
-// registration rolls its own landing back — and the two lists match member for member apart from it.
+// release that lifted the cross-kind address exclusion (`1.7.0`) nor `1.9.0` nor `1.9.2` moved a
+// member of the store. **THE SYMBOL FIGURE IS THE ONE THAT MOVED WITH `1.9.0`, and it was
+// RE-MEASURED rather than carried**: at that release `1.7.0` read 11 own symbols and `1.9.0` read
+// 12, the twelfth being `Symbol(provident-storeroom.repair-leg)` (measured 2026-11-02 on the
+// installed bytes, at construction; see `symbolCount` below for the read that comes after a write).
+// **AND IT MOVED AGAIN WITH `1.9.1`, BY ONE, AND THE STRING LIST DID NOT MOVE WITH IT** (measured
+// 2026-11-03 on both installed trees, one fresh instance each): 12 at construction becomes **13**,
+// the thirteenth being `Symbol(provident-storeroom.registration-save)` — the marker of the release
+// whose refusing registration rolls its own landing back — and the two lists match member for member
+// apart from it. **`1.9.2` MOVED NEITHER LIST**, which is the reading this header is re-measured at
+// rather than an assumption: 14 string members in this order and the same 13 own symbols at
+// construction, on a fresh instance over the installed bytes (measured 2026-11-03; `D-103`).
+// **WHAT THAT RELEASE ADDED IS IN NEITHER LIST, AND ITS ABSENCE FROM BOTH IS THE WHOLE OF THE
+// NARROWING BELOW**: a passing act's record now answers with the commit's log, carried
+// NON-ENUMERABLY, so it moves no name and no symbol — see `commitLog`, the one declared reader.
 // `tests/storeroom-surface.test.ts` pins the MEMBER list and the pin itself, and
 // `tests/e2e/central-data/scenarios.test.ts` `S-9` pins the two counts: a version bump that adds,
 // removes or re-orders a member reddens a row HERE and a count that moves reddens there, in a
 // message that names the drift, rather than surfacing as an undefined-is-not-a-function somewhere
 // downstream.
 
-import { storeCreate, type StoreConfig, type StoreInstance } from 'provident-storeroom'
+import { storeCreate, type LogEntry, type StoreConfig, type StoreInstance } from 'provident-storeroom'
 
 /** The store's own string members, in the order `getOwnPropertyNames` reports them. */
 const MEMBERS = [
@@ -68,9 +74,10 @@ export const STOREROOM_DECLARED_SURFACE = {
    * **Own symbols on the installed instance AT CONSTRUCTION; non-enumerable and internal, pinned as a count only.**
    * The figure was **12** under `1.9.0` where `1.7.0` read **11**, that release's whole contribution being
    * `Symbol(provident-storeroom.repair-leg)` (measured 2026-11-02 on both trees then installed, one fresh instance
-   * each — the two symbol lists match member for member apart from it). **THE INSTALLED `1.9.1` READS 13**: the
-   * thirteenth, `Symbol(provident-storeroom.registration-save)`, is that release's own and sits fifth in
-   * `getOwnPropertySymbols`' order (measured 2026-11-03 on the `1.9.0` and `1.9.1` trees, one fresh instance each).
+   * each — the two symbol lists match member for member apart from it). **THE INSTALLED TREE READS 13, AT `1.9.1`
+   * AND AGAIN AT `1.9.2`**: the thirteenth, `Symbol(provident-storeroom.registration-save)`, is `1.9.1`'s own and
+   * sits fifth in `getOwnPropertySymbols`' order (measured 2026-11-03 on the `1.9.0`, `1.9.1` and `1.9.2` trees, one
+   * fresh instance each — the two later lists identical member for member, which is why `D-103`'s bump left it alone).
    * **AND ONE WRITE INSTALLS ANOTHER**, `Symbol(provident-storeroom.kernel)`, absent on a fresh store and present
    * after the first `write` — so the read after that act is **14** here, 13 under `1.9.0` and 12 under `1.7.0`, the
    * one-member growth being the store's own and not either release's. The census is therefore read at
@@ -111,4 +118,57 @@ export function createProfileStore(opts: ProfileStoreOptions = {}): StoreInstanc
   // the same call: an absent `filePath` leaves the register at `mem`, and a supplied, absent path is
   // created exclusively at construction (`guide §3.3`, `§9.1`; `persistence.md` §1).
   return storeCreate(opts.filePath === undefined ? config : { ...config, filePath: opts.filePath })
+}
+
+/**
+ * **THE PACKAGE'S OWN LOG ENTRY, RE-EXPORTED AND NOT RE-SPELLED** (`D-103`). `LogEntry` is the declaration's
+ * name for the record a constraint pass appends — *"exactly FIVE members — `kind` · `id` · `message` · `opId` ·
+ * `state`"*, its set CLOSED, `kind` from the kernel's four-member set and `state` its `KC` token on the `outcome`
+ * entry alone. It is re-exported rather than duplicated so the surface that answers with one (`src/main/data/`)
+ * reads the package's vocabulary and not a second spelling of it (`D-53`): a consumer of this seam has ONE name
+ * for the entry, and a later release that types the passing member changes this alias and nothing downstream.
+ */
+export type { LogEntry }
+
+/**
+ * **THE COMMIT'S LOG, MATERIALIZED — AND THIS IS THE ONE DECLARED READER OF IT** (`D-103`). `provident-storeroom`
+ * `1.9.2` answers a PASSING act with the entries its commit appended (`RELEASE-NOTES.md` §1.9.2 item 1: *"A
+ * passing call answers with the commit's log"*), at `record.log` on a `write`'s record and a `delete`'s receipt.
+ *
+ * **THREE PROPERTIES OF THE MEMBER ARE WHY THIS FUNCTION EXISTS, EACH MEASURED ON THE INSTALLED BYTES:**
+ *
+ * 1. **IT IS NON-ENUMERABLE.** The member stands under its own name and `getOwnPropertyDescriptor` reports
+ *    `enumerable: false`, so `Object.keys`, `JSON.stringify`, `{...record}` and `Object.assign({}, record)` ALL
+ *    DROP IT — measured on both the repaired and the clean arm. **So a caller cannot pass the record on and
+ *    expect the log to travel**: this function COPIES the array into a fresh plain one, which is what makes the
+ *    answer survive every serialisation a tool answer goes through (`G10`: nothing served aliases the store's
+ *    state either, so the array and each entry is copied rather than handed over).
+ * 2. **IT IS UNTYPED.** `index.d.ts`'s diff between `1.9.1` and `1.9.2` is docblocks and NOTHING ELSE — zero code
+ *    lines — so `record.log` is a TYPE ERROR at this release and the narrowing has to be declared here, at the
+ *    seam, over the runtime shape. **THE ASSERTED TYPE IS THE PACKAGE'S OWN `LogEntry`**, measured to be the
+ *    shape the member carries: every entry's `Object.keys` reads exactly `['kind','id','opId','message','state']`
+ *    on all four arms driven (repaired write, clean write, no pair at all, `delete`). **A LATER RELEASE THAT
+ *    TYPES THE MEMBER REMOVES THIS ASSERTION AND NOT THIS FUNCTION** — the signature below is already the one a
+ *    typed member would give it, so the day `WriteRecord.log` is declared the body loses its cast and no caller
+ *    moves.
+ * 3. **ABSENT IS NOT EMPTY, AND THE TWO MUST NEVER BE FOLDED.** A TOP-LEVEL `write`/`delete` carries the member on
+ *    every arm measured, and `[]` is NOT among the answers: a clean write over a store whose pair passed answers
+ *    TWO entries (`constraint-check` · `commit`), a write over a store carrying NO pair answers ONE (`commit`), and
+ *    a repaired write answers FOUR (`constraint-check` · `repair-run` · `constraint-check` · `commit`). **A REPAIR'S
+ *    OWN JOINED WRITE CARRIES NO MEMBER AT ALL** — `undefined`, contradicting the package's own docblock — and
+ *    that is the record this function answers `null` for. So `null` means *"this record was never handed a
+ *    list"* and never *"the list was empty"*, and `readonly LogEntry[]` with a length answers the act's own
+ *    entries. **NOTHING IN THIS TREE READS `.log` OFF A REPAIR'S JOINED WRITE**: the tab record's `writeJoined`
+ *    and the view record's `writeJoinedAt` are exactly that shape and neither reads it (`D-103`).
+ *
+ * `null` is also the answer for anything that is not an object or whose member is not an array, so a caller can
+ * treat the return as total and never catch: this seam throws nothing, at any argument.
+ */
+export function commitLog(record: unknown): readonly LogEntry[] | null {
+  if (record === null || typeof record !== 'object') return null
+  // A PROPERTY READ FINDS A NON-ENUMERABLE OWN MEMBER; enumeration does not (`Object.keys` drops it, measured).
+  const carried = (record as { readonly log?: unknown }).log
+  if (!Array.isArray(carried)) return null
+  // COPIED ONE BY ONE, so neither the array nor an entry aliases the store's own release (G10).
+  return carried.map((entry) => ({ ...(entry as LogEntry) }))
 }

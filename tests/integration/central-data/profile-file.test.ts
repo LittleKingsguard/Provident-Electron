@@ -184,7 +184,7 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     expect(s.list({}), 'list answers the cold tier, not a refusal').toEqual(coldList)
     expect(s.read({ path: ['alpha'] }), 'and NOT the row the instance still holds: the reading is taken first').toEqual({ status: 'absent', path: ['alpha'] })
     expect(s.read({ path: [] })).toEqual({ status: 'read', kind: 'branch', path: [], value: {} })
-    expect(s.delete({ path: ['alpha'] }), 'the empty receipt §6 declares, reached with no store refusal leaving this module').toEqual({ status: 'committed', path: ['alpha'], removed: false, tiers: [], cursor: null })
+    expect(s.delete({ path: ['alpha'] }), 'the empty receipt §6 declares, reached with no store refusal leaving this module').toEqual({ status: 'committed', path: ['alpha'], removed: false, tiers: [], cursor: null, repaired: false, log: [] })
     expect(s.journal({}), 'journal is not refused and not emptied: the name is merely absent, so the window answers as it stood').toEqual({
       status: 'read',
       from: 0,

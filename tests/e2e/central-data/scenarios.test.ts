@@ -224,7 +224,12 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     const receipt = surface.write({ path: ['alpha'], value: 'x' })
     expect(receipt.status, 'behaviour.md §2 — one file-tier write is the durability unit').toBe('committed')
     if (receipt.status !== 'committed') throw new Error(`the write answered ${JSON.stringify(receipt)}`)
-    expect(Object.keys(receipt).sort(), 'one receipt: the path and the change’s cursor, no fifth member').toEqual(['cursor', 'path', 'status'])
+    // **THE RECEIPT'S MEMBER SET MOVED WITH `D-103` AND IT MOVED BY A RULING, NOT BY DRIFT**: `repaired` and `log` join
+    // the two members this row has pinned since it was filed, so the census below is RE-DERIVED to the answer the
+    // surface now gives — five members here where it asserted three, and the assertion is still a census of the WHOLE
+    // key set, so a sixth member still reds this row.
+    expect(Object.keys(receipt).sort(), 'one receipt: the path, the change’s cursor, the repair verdict and the commit’s log — no sixth member').toEqual(['cursor', 'log', 'path', 'repaired', 'status'])
+    expect([receipt.repaired, receipt.log.map((entry) => entry.kind)], 'the pass this bare store ran: one entry, the commit, and nothing repaired').toEqual([false, ['commit']])
     expect(Number.isInteger(receipt.cursor), 'a committed write mints one integer cursor (D-11)').toBe(true)
     expect(existsSync(at(PROFILE_FILE)), 'persistence.md §1 — the one written name this module adds stands at the declared name').toBe(true)
     const image = JSON.parse(bytesOf(PROFILE_FILE).toString('utf8')) as unknown

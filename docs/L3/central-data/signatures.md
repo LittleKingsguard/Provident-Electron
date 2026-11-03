@@ -1,6 +1,6 @@
 # L3 — `central-data`: the signatures
 
-- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 5 — §1's `DataSurfaceOptions` gains a **REQUIRED** `declaredRoots` and the ledger a TWELFTH word, §2's `args.ts` gains the tier's domain and its two defaults, and §3's mapping moves `TierNotFound` out of the escape arm into the ABSENCE row (D-101); Rev 4 — §1's `DataSurfaceOptions.store` becomes REQUIRED and §2's `StorePort.construct()` is **replaced** by `StorePort.store()`, which returns the caller's instance and has no refusal arm: nothing in this module builds a store, so the arm that could answer one was deleted with it (D-80); Rev 3 — rev 3 names the seam's `DEFAULT_JOURNAL_LENGTH`, its header comment and its census block as **sites** rather than offsets, because that file grew a line and every cite into it was one early (D-41) · **Ceiling:** 150 lines, class max (D-1)
+- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 6 — §1 gains the exported `DataLogEntry` and the two widened committed arms, §2's `surface.ts` block gains the two helpers `D-103` lands (`logOf`, `passRepaired`), and §4's answer table names the two new members on both mutating verbs (**no new line** — the type block, the pseudocode block and the table rows each absorbed one in place); Rev 5 — §1's `DataSurfaceOptions` gains a **REQUIRED** `declaredRoots` and the ledger a TWELFTH word, §2's `args.ts` gains the tier's domain and its two defaults, and §3's mapping moves `TierNotFound` out of the escape arm into the ABSENCE row (D-101); Rev 4 — §1's `DataSurfaceOptions.store` becomes REQUIRED and §2's `StorePort.construct()` is **replaced** by `StorePort.store()`, which returns the caller's instance and has no refusal arm: nothing in this module builds a store, so the arm that could answer one was deleted with it (D-80); Rev 3 — rev 3 names the seam's `DEFAULT_JOURNAL_LENGTH`, its header comment and its census block as **sites** rather than offsets, because that file grew a line and every cite into it was one early (D-41) · **Ceiling:** 150 lines, class max (D-1)
 - **Inputs:** `docs/L2/central-data/interface.md` §1-§8, `behaviour.md` §1-§10 (**§5 and §9 as revised: two unreachability arms, `ASM-L2-7`**), `persistence.md` §1-§9 (rev 2); `strata/decisions.md` D-11/D-12/D-13/D-14; `node_modules/provident-storeroom/index.d.ts` and `README.guide.md`, read and never edited (D-5)
 - **Status:** DESIGN — stubs only. Every line below is a declaration and never a body; §1 is `interface.md` §2's surface restated so the unit battery can import it before any implementation exists, and **rev 2 moves nothing in §1** (D-1 §4)
 - **Rev 1 → rev 2, stated in as many words:** `StorePort.open()` is **replaced** by `StorePort.probe()`, a new `ProfileReading` type and a `readProfile` function appear beside it, `mapper.probeOutcome` is **renamed** `readOutcome`, and `mapper.unreachableLedger()` is added — because the reading of `design.md` §2 must answer *whether the profile's one name can be occupied at all* before any store instance, which `open()`'s cold/ready/unreachable triple could not express (`behaviour.md` §5, §9; `ASM-L2-7`; D-11, D-13)
@@ -19,8 +19,9 @@ export type DataRefusalReason =
   | 'address-malformed' | 'parent-absent' | 'container-kind-conflict' | 'value-not-admitted' | 'write-failed'
   | 'declared-tier' | 'store-refused'
 export type DataReadAnswer = { status: 'read'; kind: 'row' | 'branch'; path: DataPath; value: unknown } | { status: 'absent'; path: DataPath } | DataLedger
-export type DataWriteAnswer = { status: 'committed'; path: DataPath; cursor: number } | DataLedger
-export type DataDeleteAnswer = { status: 'committed'; path: DataPath; removed: boolean; tiers: readonly DataTier[]; cursor: number | null } | DataLedger
+export type DataLogEntry = LogEntry   // the SEAM's re-export of the package's own record: kind · id · opId · message · state (D-103)
+export type DataWriteAnswer = { status: 'committed'; path: DataPath; cursor: number; repaired: boolean; log: readonly DataLogEntry[] } | DataLedger
+export type DataDeleteAnswer = { status: 'committed'; path: DataPath; removed: boolean; tiers: readonly DataTier[]; cursor: number | null; repaired: boolean; log: readonly DataLogEntry[] } | DataLedger
 export type DataListAnswer = { status: 'read'; prefix: DataPath | null; paths: readonly DataPath[]; count: number } | DataLedger
 export interface DataJournalEntry { cursor: number; kind: 'write' | 'delete'; path: DataPath; changedTo: 'present' | 'absent' }
 export type DataJournalAnswer = { status: 'read'; from: number; through: number; floor: number; entries: readonly DataJournalEntry[]; count: number } | DataLedger
@@ -97,6 +98,8 @@ export function createJournal(length: unknown): ChangeJournal
 // ---- surface.ts ----
 function declaredRootTable(roots: readonly DataDeclaredRoot[]): ReadonlyMap<string, DataTier>   // an address's ROOT -> its tier
 function declaredTierLedger(table: ReadonlyMap<string, DataTier>, path: DataPath, tier: DataTier, verb: 'write' | 'delete'): DataLedger | null   // null = ADMITTED
+function logOf(record: unknown): readonly DataLogEntry[]        // the seam's commitLog(record) ?? [] — the null arm is a JOINED write's and is unreachable here
+function passRepaired(log: readonly DataLogEntry[] | null): boolean   // an entry of kind 'repair-run' PRESENT — never a list's emptiness (D-103)
 export function createDataSurface(options: DataSurfaceOptions): DataSurface
 ```
 
@@ -131,8 +134,8 @@ The battery's rows are written against this closed set, and every operation's re
 | Operation | The answer statuses, and nothing else |
 |---|---|
 | `read` | `read`/`row`, `read`/`branch`, `absent`; ledgers: `malformed-arguments`, `volatile-path`, `address-malformed`, `store-unreachable`, `store-refused` |
-| `write` | `committed` with the minted `cursor`; ledgers: `malformed-arguments`, `root-not-writable`, `declared-tier`, `volatile-path`, `store-unreachable`, `parent-absent`, `container-kind-conflict`, `value-not-admitted`, `write-failed`, `address-malformed`, `store-refused` |
-| `delete` | `committed` with `removed:true` and a cursor, or `removed:false` with `tiers:[]` and `cursor:null`; ledgers: `malformed-arguments`, `root-not-writable`, `declared-tier`, `volatile-path`, `store-unreachable`, `address-malformed`, `write-failed`, `store-refused` |
+| `write` | `committed` with the minted `cursor`, `repaired` and `log`; ledgers: `malformed-arguments`, `root-not-writable`, `declared-tier`, `volatile-path`, `store-unreachable`, `parent-absent`, `container-kind-conflict`, `value-not-admitted`, `write-failed`, `address-malformed`, `store-refused` |
+| `delete` | `committed` with `removed:true` and a cursor, or `removed:false` with `tiers:[]` and `cursor:null` — each beside `repaired` and `log`; ledgers: `malformed-arguments`, `root-not-writable`, `declared-tier`, `volatile-path`, `store-unreachable`, `address-malformed`, `write-failed`, `store-refused` |
 | `list` | `read` with `prefix`, `paths`, `count`; ledgers: `malformed-arguments`, `address-malformed`, `store-unreachable`, `store-refused` |
 | `journal` | `read` with `from`, `through`, `floor`, `entries`, `count`; ledgers: `malformed-arguments`, `cursor-unknown`, `store-unreachable` (`behaviour.md` §9) |
 

@@ -71,11 +71,11 @@ describe('central-data · the five operations through createDataSurface', () => 
 
   it('a literal is written → write {committed, cursor:1} then read {kind:"row", value}; a second write serves the new value at cursor 2 with list.count unchanged', () => {
     const s = surfaceAt()
-    expect(s.write({ path: ['alpha'], value: 'x' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1 })
+    expect(s.write({ path: ['alpha'], value: 'x' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
     expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
     expect(existsSync(profilePath), 'the one name stands').toBe(true)
     expect(s.list({}), 'a `row` is a literal standing at that exact address, so `list` names that one path').toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
-    expect(s.write({ path: ['alpha'], value: 'y' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 2 })
+    expect(s.write({ path: ['alpha'], value: 'y' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 2, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
     expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'y' })
     expect(s.list({}), 'a second write at the same path adds no row').toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
   })
@@ -88,7 +88,7 @@ describe('central-data · the five operations through createDataSurface', () => 
     // re-introduces it.
     const s = surfaceAt()
     expect(readFileSync(profilePath, 'utf8'), 'the fresh directory’s store is open and holds no row before the write (D-80)').toBe('')
-    expect(s.write({ path: ['alpha'], value: { nested: [1, true] } })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1 })
+    expect(s.write({ path: ['alpha'], value: { nested: [1, true] } })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
     expect(s.read({ path: ['alpha'] }), 'a container is a BRANCH, and the assembled value is served as it was written').toEqual({ status: 'read', kind: 'branch', path: ['alpha'], value: { nested: [1, true] } })
     expect(s.list({}), '`list` answers the paths that hold a ROW (ASM-L2-2): the two literals beneath the container, and never the branch itself').toEqual({
       status: 'read',
@@ -162,13 +162,13 @@ describe('central-data · the five operations through createDataSurface', () => 
   it('a delete is driven → removed:true with tiers naming "file" and cursor 2, then read {absent}; a delete of an absent address answers removed:false, tiers:[], cursor:null with no store refusal reaching the caller', () => {
     const s = surfaceAt()
     s.write({ path: ['alpha'], value: 'x' })
-    expect(s.delete({ path: ['alpha'] })).toEqual({ status: 'committed', path: ['alpha'], removed: true, tiers: ['file'], cursor: 2 })
+    expect(s.delete({ path: ['alpha'] })).toEqual({ status: 'committed', path: ['alpha'], removed: true, tiers: ['file'], cursor: 2, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
     expect(s.read({ path: ['alpha'] })).toEqual({ status: 'absent', path: ['alpha'] })
     expect(s.list({}), 'the deleted row is gone from list').toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
     // `behaviour.md` §6 — where NO row stands at the address, the answer is the empty receipt:
     // never the store's own `AddressNotFound` served as an answer, as a `store-refused` ledger
     // or as a throw (exception §7 files the package side upstream, D-5).
-    expect(s.delete({ path: ['beta'] }), 'the answer says no row was removed rather than claiming one, and names no tier and mints no cursor').toEqual({ status: 'committed', path: ['beta'], removed: false, tiers: [], cursor: null })
+    expect(s.delete({ path: ['beta'] }), 'the answer says no row was removed rather than claiming one, and names no tier and mints no cursor').toEqual({ status: 'committed', path: ['beta'], removed: false, tiers: [], cursor: null, repaired: false, log: [] })
     expect(s.delete({ path: [] }), 'a one-call wipe of the whole profile has no reversal (D-12)').toMatchObject({ status: 'refused', reason: 'root-not-writable' })
   })
 

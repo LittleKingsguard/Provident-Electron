@@ -104,6 +104,8 @@ describe('the one written name', () => {
       status: 'committed',
       path: ['alpha'],
       cursor: 1,
+      repaired: false,
+      log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }],
     })
     expect(profileEntries(profileDir)).toEqual([PROFILE_FILE_NAME])
   })

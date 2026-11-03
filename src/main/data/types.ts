@@ -3,11 +3,14 @@
 // operations, their answer shapes and the five tool names are the surface `interface.md` §2
 // declares, and `DATA_TOOL_NAMES` is the only member of it that is a value.
 //
-// IT NOW CARRIES ONE IMPORT, AND IT IS A TYPE (D-79, D-80): `ProfileStore` is `store.ts`'s name for the seam's own
-// return type, so the composition can hand this module the store it already owns without any file here spelling
-// the package (S-9). A type import is erased at build, so nothing of `store.ts` reaches the bundle through it, and
-// the option that names it is REQUIRED — the surface has no way to build an instance of its own.
+// IT NOW CARRIES TWO IMPORTS, AND BOTH ARE TYPES (D-79, D-80, D-103): `ProfileStore` is `store.ts`'s name for the
+// seam's own return type, so the composition can hand this module the store it already owns without any file here
+// spelling the package (S-9); and `LogEntry` is the SEAM's re-export of the package's own log-entry record, so the
+// answer shapes below name the entries a constraint pass appended with the package's vocabulary rather than a second
+// spelling of it (D-53). A type import is erased at build, so nothing of `store.ts` or of the seam reaches the bundle
+// through either, and the options that name the store are REQUIRED — the surface has no way to build an instance.
 
+import type { LogEntry } from '../storeroom.js'
 import type { ProfileStore } from './store.js'
 
 /** The store's own address shape: a DENSE array of string keys and non-negative safe-integer
@@ -42,15 +45,60 @@ export type DataLedger = {
   path?: DataPath
 }
 
+/**
+ * **ONE ENTRY OF THE COMMIT'S LOG, AND IT IS THE PACKAGE'S OWN RECORD** (`D-103`). This alias adds no member and
+ * mints no vocabulary: `LogEntry` is the declaration's name for what a constraint pass appends — *"exactly FIVE
+ * members — `kind` · `id` · `message` · `opId` · `state`"*, the set CLOSED, `kind` from the kernel's four-member
+ * set and `state` the kernel's `KC` token on the one `outcome` entry and `null` on the other three — and the seam
+ * re-exports it so this module names the package's record through the seam and never spells the package (S-9).
+ * The `Data` prefix is this surface's convention and not a new shape: every type `index.ts` exports carries it.
+ */
+export type DataLogEntry = LogEntry
+
 export type DataReadAnswer =
   | { status: 'read'; kind: 'row' | 'branch'; path: DataPath; value: unknown }
   | { status: 'absent'; path: DataPath }
   | DataLedger
 
-export type DataWriteAnswer = { status: 'committed'; path: DataPath; cursor: number } | DataLedger
+/**
+ * **A PASSING `write`, AND THE TWO MEMBERS THAT MAKE IT HONEST** (`D-103`).
+ *
+ * `repaired` is the verdict and `log` is its evidence, in that order, and the SECOND is what the first is derived
+ * from: *"repaired"* is the presence of an entry of `kind === 'repair-run'` in the act's own commit's log, and
+ * **never the emptiness of a list** — the clean arm answers TWO entries over a store whose pair passed and ONE
+ * over a store carrying no pair at all, so `[]` is not an answer this surface has (`D-102` recorded the opposite
+ * and is superseded by pointer, `D-46`). **THIS IS WHERE `D-79`'s DISHONEST `committed` DIES**: a write the tab
+ * record's declarations rewrote inside its own commit used to answer `committed` with no member naming the pass,
+ * and the value that STOOD was not the one the caller sent.
+ *
+ * `log` is a PLAIN, ENUMERABLE array: the store's own member is non-enumerable and `Object.keys`,
+ * `JSON.stringify`, `{...receipt}` and `Object.assign({}, receipt)` each DROP it, so the seam's `commitLog` copies
+ * it into an array a tool answer can serialise (`src/main/storeroom.ts`). **A `read`, a `list` and a `journal`
+ * carry NO `log` and NO `repaired`**: a read consults no constraint (`README.md`'s own *"★ AND READS CHECK NO
+ * CONSTRAINT"* clause), so there is no pass for it to report — *"every act that ran a constraint pass"* is the
+ * reading this surface takes of *"always"*, and the two verbs that run one are `write` and `delete`.
+ */
+export type DataWriteAnswer =
+  | { status: 'committed'; path: DataPath; cursor: number; repaired: boolean; log: readonly DataLogEntry[] }
+  | DataLedger
 
+/**
+ * **A PASSING `delete`, AND THE SAME TWO MEMBERS FOR THE SAME REASON** (`D-103`). A delete runs a pass of its own
+ * kind (`guide §5.3`), and the tab record's root pair RE-MINTS the record inside that same delete: measured, the
+ * answer `removed:false` while `read(['tabs'])` serves the record the repair wrote. `repaired: true` beside
+ * `removed: false` is the pair of members that tells that truth, so the derivation is one — `repair-run` present
+ * — and it is stated on both mutating verbs rather than on one.
+ */
 export type DataDeleteAnswer =
-  | { status: 'committed'; path: DataPath; removed: boolean; tiers: readonly DataTier[]; cursor: number | null }
+  | {
+      status: 'committed'
+      path: DataPath
+      removed: boolean
+      tiers: readonly DataTier[]
+      cursor: number | null
+      repaired: boolean
+      log: readonly DataLogEntry[]
+    }
   | DataLedger
 
 export type DataListAnswer = { status: 'read'; prefix: DataPath | null; paths: readonly DataPath[]; count: number } | DataLedger

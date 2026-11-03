@@ -353,6 +353,41 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `strata/decisions.md` (the row), `strata/pending.md` (row `6`) and this file are already declared above; `strata/brief.md`
   //    and `strata/marks.json` are DELIBERATELY ABSENT — no count moves and no test file is added, so no figure and no marker does.
   'strata/records/central-data-management-unit.md',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-103` — THE BUMP TO `provident-storeroom@1.9.2` AND THE COMMIT'S LOG ON THE `data.*` ANSWERS. Nine paths, each
+  //    named with its reason and NOT ONE admitted by a prefix; every other path this pass writes is ALREADY DECLARED
+  //    ABOVE (the module's `types.ts`, `surface.ts` and `mapper.ts`, `mcp-server.ts`, the two crossings' modules, both
+  //    `docs/` scopes, `strata/decisions.md`, `strata/pending.md`, `strata/brief.md`, `strata/marks.json`,
+  //    `strata/next-steps.md`, `tests/gesture-session.test.ts` and the seven `central-data` batteries), so no entry is
+  //    added for any of them.
+  //    THE LOCK: the one command this pass runs is an install, and `npm install` writes the lock. It is here because the
+  //    eleven cells and the six lock nodes moved with the pin, and a boundary row that could not see the lock could not
+  //    say so — the pin is `package.json`'s (declared above) and this is the file that records what it resolved to.
+  'package-lock.json',
+  //    THE PIN'S OWN PIN: `tests/storeroom-surface.test.ts` carries the reviewed version as a LITERAL, so the bump moves
+  //    it — and it is NOT a `src/main/data/` path, which is why it is new to this union.
+  'tests/storeroom-surface.test.ts',
+  //    THE SEAM: the one declared accessor of the store's NON-ENUMERABLE `log` member, the re-export of the package's own
+  //    `LogEntry`, and the census header re-measured at `1.9.2`. It is where the narrowing has to live, so the module
+  //    under `src/main/data/` never spells the member (`D-103`'s `L-6`).
+  'src/main/storeroom.ts',
+  //    THE MODULE'S ENTRY: it gains the `DataLogEntry` export and nothing else. The four files `D-101` declared are the
+  //    module's internals; this is the one file another module imports, and it was not written by that pass.
+  'src/main/data/index.ts',
+  //    THE NEW BATTERY — six rows, unmarked and GATING (D-40): the repaired arm, the clean arm, a delete that ran a pass,
+  //    the three verbs that carry no log, the materialized array, and the narrowing's one home.
+  'tests/integration/central-data/message-log.test.ts',
+  //    THE FOUR UNIT FILES WHOSE ROWS PIN A WHOLE COMMITTED ANSWER and therefore meet the two new members: each is
+  //    re-derived by ADDING them to the object it already compared, so no row is weakened to a member read
+  //    (`cold-and-write`, `delete-and-journal`, `refusals`, `surface-and-profile`).
+  'tests/unit/central-data/cold-and-write.test.ts',
+  'tests/unit/central-data/delete-and-journal.test.ts',
+  'tests/unit/central-data/refusals.test.ts',
+  'tests/unit/central-data/surface-and-profile.test.ts',
+  //    AND THE THIRD PATH THE INSTRUCTION NAMED IS THE ONE ABOVE, `src/main/storeroom.ts` — so the three it listed
+  //    (`package-lock.json`, `tests/storeroom-surface.test.ts`, `src/main/storeroom.ts`) are all here, and `B-2`'s
+  //    control is untouched: `EDIT_SET_OFFENDER_FIXTURE` is still `src/main/security.ts`, a real file no declaration
+  //    names, and (b)/(c) below still drive the near-miss and the whole-set arms.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

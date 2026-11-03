@@ -217,7 +217,15 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     const mirror = { entries: [{ id: 'x', target: 't' }], activeId: 'x' }
 
     const landed = one.surface.write({ path: ['focus'], tier: 'mem', value: mirror })
-    expect(landed, 'a write at the family\'s own tier is admitted').toEqual({ status: 'committed', path: ['focus'], cursor: 1 })
+    // **AND THE ANSWER NAMES THE PASS THAT JUDGED IT** (`D-103`): one pair was asked at `['focus']` and it PASSED, so the
+    // log is two entries with no `repair-run` among them and `repaired:false` — which is the arm `D-9` does not reach.
+    expect(landed, 'a write at the family\'s own tier is admitted, and the answer names the pass that admitted it').toEqual({
+      status: 'committed', path: ['focus'], cursor: 1, repaired: false,
+      log: [
+        { kind: 'constraint-check', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
+      ],
+    })
     // THE FAMILY'S OWN READ IS THE OBSERVABLE, and it is the one the defect broke: `viewRecord.read()` serves what
     // the surface wrote because the two now address the same tier.
     expect(one.view.read().focus, 'the record reads the caller\'s mirror, member for member').toEqual(mirror)
@@ -308,9 +316,9 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     const one = stand()
     // THE THREE WRITES, EACH AT ITS OWN TIER AND EACH READ BACK AT THAT TIER — the same address `['alpha']`, three
     // versions in three tiers, which is what a tier being the caller's means at a path no crossing owns.
-    expect(one.surface.write({ path: ['alpha'], value: 'durable', tier: 'file' }), 'the `file` write commits').toEqual({ status: 'committed', path: ['alpha'], cursor: 1 })
-    expect(one.surface.write({ path: ['alpha'], value: 'session', tier: 'mem' }), 'the `mem` write commits').toEqual({ status: 'committed', path: ['alpha'], cursor: 2 })
-    expect(one.surface.write({ path: ['alpha'], value: 'transient', tier: 'temp' }), 'the `temp` write commits').toEqual({ status: 'committed', path: ['alpha'], cursor: 3 })
+    expect(one.surface.write({ path: ['alpha'], value: 'durable', tier: 'file' }), 'the `file` write commits').toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
+    expect(one.surface.write({ path: ['alpha'], value: 'session', tier: 'mem' }), 'the `mem` write commits').toEqual({ status: 'committed', path: ['alpha'], cursor: 2, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
+    expect(one.surface.write({ path: ['alpha'], value: 'transient', tier: 'temp' }), 'the `temp` write commits').toEqual({ status: 'committed', path: ['alpha'], cursor: 3, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
     // A WRITE AT A LOWER TIER DOES NOT DESTROY THE HIGHER ONE (`guide §5.1`: the more persistent version is SHADOWED,
     // not replaced) — so each tier is still readable at its own address, and this is the reading the surface's
     // `tier` member exists to make possible.
@@ -338,24 +346,32 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // leaves every other tier's standing (`guide §5.3`), so the answer names the tier it removed and the file's row
     // is still served afterwards — where a delete with no tier at all is refused at a declared root (`D-3`) and
     // answers `removed:false` only where no row stands at the tier it named.
-    expect(one.surface.delete({ path: ['alpha'], tier: 'mem' }), 'a delete at `mem` of a row that stands commits').toEqual({ status: 'committed', path: ['alpha'], removed: true, tiers: ['mem'], cursor: 4 })
-    expect(next.surface.delete({ path: ['alpha'], tier: 'temp' }), 'a delete at `temp` of a row the restart took away is the empty receipt, not a refusal').toEqual({ status: 'committed', path: ['alpha'], removed: false, tiers: [], cursor: null })
+    expect(one.surface.delete({ path: ['alpha'], tier: 'mem' }), 'a delete at `mem` of a row that stands commits, and its answer carries the pass that removed it').toEqual({ status: 'committed', path: ['alpha'], removed: true, tiers: ['mem'], cursor: 4, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
+    expect(next.surface.delete({ path: ['alpha'], tier: 'temp' }), 'a delete at `temp` of a row the restart took away is the empty receipt, not a refusal — and its `log` is EMPTY because no store act was reached, which is not the clean arm\'s shape (`D-103`)').toEqual({ status: 'committed', path: ['alpha'], removed: false, tiers: [], cursor: null, repaired: false, log: [] })
     expect(next.surface.read({ path: ['alpha'], tier: 'file' }), 'and the `file` row is untouched by both').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'durable' })
   })
 
-  it('D-9 · a value the family’s pair REFUSES is repaired inside the caller’s own commit and the answer still says `committed` — which is why `V4`’s receipt member is more necessary, not less', () => {
+  it('D-9 · a value the family’s pair REFUSES is repaired inside the caller’s own commit, and the answer NAMES the repair — `V4`’s receipt member landed at `D-103`, so this row is its evidence no longer a case for it', () => {
     const one = stand()
     // THE ARM `D-5` DOES NOT REACH: there the pair PASSED a plain record of junk, so nothing repaired anything.
     // Here the value is not a plain record, so the pair REFUSES it and its repair writes the placeholder — inside the very
-    // commit the caller named — and the caller is told `committed` and nothing else. **THAT IS `D-82`'s `V4`**, and the tier
-    // being the caller's makes it reachable where it was not: an agent can now address a family at its own tier, so it can
-    // now land a value the family quietly replaces. The receipt that would say so is the member `V4` owes (`D-79`'s
-    // proposed guard), and this row is its evidence rather than its argument.
+    // commit the caller named. **AND THE ANSWER NOW SAYS SO** (`D-103`): `repaired:true` beside a `log` whose second entry
+    // is the `repair-run` naming `focus-must-stand` is `D-82`'s `V2` and `V4` paid at this surface, which is the member
+    // `D-79` proposed and `D-102` blocked. **THE ROW IS RE-DERIVED AND ITS OLD CLAIM WAS TRUE OF ITS OWN DATE**: it
+    // asserted that no member of the receipt named the repair, and that assertion INVERTED here rather than being deleted.
     const landed = one.surface.write({ path: ['focus'], tier: 'mem', value: 'not-a-record' })
-    expect(landed, 'the caller is told a change LANDED, and it did — in the register, with the family’s own value').toEqual({ status: 'committed', path: ['focus'], cursor: 1 })
+    expect(landed, 'the caller is told a change LANDED, what stood is the family’s own value, and the pass that replaced it is named').toEqual({
+      status: 'committed', path: ['focus'], cursor: 1, repaired: true,
+      log: [
+        { kind: 'constraint-check', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'repair-run', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'constraint-check', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
+      ],
+    })
     expect(one.store.read(['focus'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER, and the caller’s value is nowhere').toEqual({ entries: [] })
     expect(one.view.read().focus, 'the record answers the empty pair, never the value that was written').toEqual({ entries: [], activeId: null })
-    expect(JSON.stringify(landed).includes('repaired'), 'and no member of the receipt names the repair, which a caller would have to be told by `V4`\'s arm').toBe(false)
+    expect(JSON.stringify(landed).includes('"repaired":true'), 'and the verdict SURVIVES JSON, which the store\'s own member does not — so the member a tool answer carries is the one that says it').toBe(true)
     // THE CONTROL: the same write with a value the pair ADMITS leaves the caller's own value standing, so the reading above
     // is the repair and not the tier.
     const admitted = one.surface.write({ path: ['focus'], tier: 'mem', value: { entries: [{ id: 'x', target: 't' }] } })
