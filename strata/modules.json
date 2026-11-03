@@ -289,6 +289,16 @@
         "tests/store-tabs-record-live.mjs"
       ],
       "endpoints": 4
+    },
+    {
+      "name": "store-view-record",
+      "paths": [
+        "src/main/view-record/index.ts",
+        "src/main/view-surface/index.ts",
+        "src/shared/view-channels.ts",
+        "tests/integration/store-view-record/crossing.test.ts"
+      ],
+      "endpoints": 4
     }
   ]
 }
