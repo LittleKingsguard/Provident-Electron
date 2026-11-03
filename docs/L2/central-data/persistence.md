@@ -1,6 +1,6 @@
 # L2 — `central-data`: the persistence
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 9 — §1's construction clause and §7's "no second store" row now say that **NO caller** takes a construction: `DataSurfaceOptions.store` is required and the fallback is deleted, so the one name's creation is the boot's alone and `src/main/data/` opens no profile file at all (D-80); Rev 8 — §7's "no second store" row and §1's construction clause now say that the app supplies the boot's instance and takes no construction, the construction standing only for a caller that supplies none (D-79); Rev 7 — §9's `P-3` demand reads "declare" where it read "publish", so no row of this unit's filings asks the package for code (D-24). Rev 6 — §1's and §7's retired-seed sentences now say **at most once per boot** (read at every construction whose record address carries nothing) rather than once per profile, keeping the half that holds: the import never writes the seed. Rev 5 — §1's and §8's test-row sentences now say **marked, not re-grained** (D-31): the marked rows are replaced whole, the unmarked legs are the ones maintained. Rev 4 — §1's construction clause is re-grained to the measured rule: the store is built at the first operation whose reading answered `occupied` (`write` unconditionally, `journal` never), not at the first write — a read over a standing file constructs. Rev 3 — one cite re-grained, no claim moved: the package's version names the `dependencies` block of `package.json` instead of a line range the later `panes` key moved (D-41); rev 2 and behind are read through this one
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 10 — §2's key space and §5's atomicity rows now say which tier a row is written at and that a `mem` one reaches no byte of the file, so the one written name is the `file` tier's alone (D-101); Rev 9 — §1's construction clause and §7's "no second store" row now say that **NO caller** takes a construction: `DataSurfaceOptions.store` is required and the fallback is deleted, so the one name's creation is the boot's alone and `src/main/data/` opens no profile file at all (D-80); Rev 8 — §7's "no second store" row and §1's construction clause now say that the app supplies the boot's instance and takes no construction, the construction standing only for a caller that supplies none (D-79); Rev 7 — §9's `P-3` demand reads "declare" where it read "publish", so no row of this unit's filings asks the package for code (D-24). Rev 6 — §1's and §7's retired-seed sentences now say **at most once per boot** (read at every construction whose record address carries nothing) rather than once per profile, keeping the half that holds: the import never writes the seed. Rev 5 — §1's and §8's test-row sentences now say **marked, not re-grained** (D-31): the marked rows are replaced whole, the unmarked legs are the ones maintained. Rev 4 — §1's construction clause is re-grained to the measured rule: the store is built at the first operation whose reading answered `occupied` (`write` unconditionally, `journal` never), not at the first write — a read over a standing file constructs. Rev 3 — one cite re-grained, no claim moved: the package's version names the `dependencies` block of `package.json` instead of a line range the later `panes` key moved (D-41); rev 2 and behind are read through this one
 - **Status:** DESIGN — the store's own on-disk shape as this unit constrains it, and nothing else (D-13)
 - **Inputs:** `docs/L2/central-data/interface.md`, `behaviour.md`; L1 rev 4 §4; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7; D-5, D-12, D-13, D-15; the package's shipped declaration, README and guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
@@ -23,7 +23,11 @@
 - A **row** is one value standing at one address; a **branch** is composed from the rows beneath it and is stored nowhere of
   its own. `read` distinguishes the two and `delete` speaks of a row only (`interface.md` §2; D-11).
 - Three spellings are refused rather than stored: a first segment beginning `mem.`, `temp.` or `secure.` (`behaviour.md` §7;
-  D-13).
+  D-13) — **and the SPELLING is not the TIER** (`D-101`): a caller now names `'file'`, `'mem'` or `'temp'` per call, `file` being
+  the default for a `write` and a `delete`, and this module adds no fourth token and no second key space.
+- **`<profileDir>/provident-profile.json` is the `file` tier's image and nothing else's**: a row written at `mem` is the
+  instance's register, survives no restart and appears in no byte of that name, and a row written at `temp` is shadowed by a
+  `mem` write and reaches it no more than the `mem` row does (`D-101`; §5's first row).
 - The empty path names the register itself: readable, never writable (`interface.md` §1; D-12).
 
 ## 3. The row shape
@@ -51,6 +55,7 @@
 | Guarantee | Where it comes from |
 |---|---|
 | this module writes **no byte** of the profile: zero module-level file writes, so a torn write has no producer here | D-13 |
+| **only a `file`-tier write or delete has a byte in that name at all** — the `mem` and `temp` registers are the instance's, so a `committed` receipt at either of them is a landing with no file behind it and no tear to own (`D-101`) | D-84, D-101 |
 | a `file`-tier write either commits — the bytes then describe the state the act left — or answers `FileCommitFailed` **after** the store's own journal rollback, with the previous bytes intact | `guide §9.2, §9.4`; D-11 |
 | a `delete` at the `file` tier saves its own op, so a durable deletion stays deleted across a boot | `guide §9.3`; D-12 |
 | no `.tmp`, no lock, no sidecar, no second name at any point | D-13 |

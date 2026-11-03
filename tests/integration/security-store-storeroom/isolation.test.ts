@@ -54,6 +54,8 @@ import { describe, expect, it } from 'vitest'
 
 import { createDataSurface, DATA_TOOL_NAMES } from '../../../src/main/data'
 import { createProfileStore } from '../../../src/main/storeroom.js'
+import { tabsDeclaredRoots } from '../../../src/main/tabs-record'
+import { viewDeclaredRoots } from '../../../src/main/view-record'
 import { ProvidentMcpServer, type McpBackend } from '../../../src/main/mcp-server.js'
 import { SecurityGate, groupForTool, toolAllowed, type ToolGroup } from '../../../src/main/security.js'
 import * as storeChannels from '../../../src/main/store-channels.js'
@@ -274,7 +276,7 @@ async function live(groups: ToolGroup[]): Promise<Live> {
   // file's PRESENCE after a commit rather than its absence before one.
   const store = createProfileStore({ filePath: join(profileDir, PROFILE_FILE) })
   const gate = new SecurityGate({ token: null, enabled: groups })
-  const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio', dataSurface: createDataSurface({ profileDir, store }) })
+  const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio', dataSurface: createDataSurface({ profileDir, store, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] }) })
   const mcp = server.ensureServerRegistered()
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   await mcp.connect(serverTransport)

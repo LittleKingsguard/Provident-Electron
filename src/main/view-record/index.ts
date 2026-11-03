@@ -913,6 +913,36 @@ export function viewConstraintDeclarations(getStore: () => Store | null): readon
   ]
 }
 
+/** **ONE DECLARED ROOT AS ANOTHER MODULE READS IT — THE ADDRESS AND THE FAMILY'S OWN TIER** (`D-101`). The tier
+ *  is the one the address is pinned to (`guide §3.1`), and this module is its authority: the four `*_TIER`
+ *  constants above are the only spelling of any of those three words in this file, so a pair here cannot
+ *  disagree with what this module's own reads, writes and repairs actually do. */
+export interface ViewDeclaredRoot {
+  readonly address: readonly string[]
+  readonly tier: ViewTier
+}
+
+/** **THE FOUR ROOTS `viewConstraintDeclarations` DECLARES, EACH WITH THE TIER IT IS DECLARED AT, AND NOTHING ELSE.**
+ *
+ *  **IT IS NOT A SECOND SPELLING OF THE ADDRESSES**: every `address` below is the exported constant the batch
+ *  above uses, and every `tier` is the constant that batch's own pair writes at — so a family that moves tier
+ *  moves here without a word, and `tests/integration/central-data/declared-root.test.ts`'s set row refuses the
+ *  day one of the two lists gains an entry the other does not have (`D-101`).
+ *
+ *  **ITS CALLER IS THE `data.*` SURFACE, AND THE REASON IS ONE DEFECT.** While the surface wrote a tier of its
+ *  own, `data.write({ path: ['focus'], … })` created a `file` version of a root this file declares at `mem`:
+ *  the family's `read()` answered `source.focus: 'default'` from that instant on, a restart did not heal it and
+ *  a `data.delete` at the root removed nothing. The surface can refuse that only where it can be TOLD which
+ *  roots are declared and at which tier, and this is that telling — the module's own, from its own constants. */
+export function viewDeclaredRoots(): readonly ViewDeclaredRoot[] {
+  return [
+    { address: VIEW_PANES_ADDRESS, tier: PANES_TIER },
+    { address: VIEW_FOCUS_ADDRESS, tier: FOCUS_TIER },
+    { address: VIEW_ZONES_ADDRESS, tier: ZONES_TIER },
+    { address: VIEW_THEME_ADDRESS, tier: THEME_TIER },
+  ]
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE RECORD OVER THE CENTRAL INSTANCE
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════

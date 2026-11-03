@@ -1,7 +1,6 @@
 # L3 — `store-tabs-record`: signatures
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — every declared name and its exact text, transcribing `design.md` rev 11,
-  **regenerated from the landed modules** on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — every declared name and its exact text, transcribing `design.md` rev 11, **regenerated from the landed modules** on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
 - **Ceiling:** 150 lines, class max (D-1). `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
 ## 1. `src/shared/tabs-channels.ts` — the four channel names
@@ -95,6 +94,7 @@ export const SEAT_NAME_MESSAGE: string
 export const isCommitCarrier: (value: unknown) => value is TabsCommitCarrier
 export const writeJoined: (store: TabsRecordStore, commit: TabsCommitCarrier, value: unknown) => unknown
 export function tabsConstraintDeclarations(getStore: () => TabsRecordStore | null): readonly TabsConstraintDeclaration[]
+export function tabsDeclaredRoots(): readonly { readonly address: readonly string[]; readonly tier: 'file' }[]
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord
 ```
 

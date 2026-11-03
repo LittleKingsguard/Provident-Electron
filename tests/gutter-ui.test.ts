@@ -2996,32 +2996,41 @@ describe('§3.3 — the every-state invariants', () => {
   // BITE IS UNCHANGED**: a surface path this list does not name STILL FAILS, and the CONTROL below drives one. What the row
   // no longer claims is that no sibling may ever touch the shell — that was never this unit's to assert (`§5.1`'s
   // commit-range scope rule: a diff-scope row *"must NOT read … a sibling's dirty working-tree file … as this unit's diff"*).
-  const PURGE_PASS_SURFACE_PATHS: readonly string[] = [
+  const DECLARED_SIBLING_SURFACE_PATHS: readonly string[] = [
     // `strata/decisions.md` `D-93` — the two main-side files the frozen store's projection was deleted from. Named
     // PATH BY PATH, never by a `src/main/` prefix: the two files below them in the `surface` list stay this unit's own.
     'src/main/main.ts',
     'src/main/preload.ts',
+    // **⟶ ADDED 2026-11-03 (`D-101`): the `central-data` unit's MCP path, and the constant is RENAMED for it.** The pass
+    // that makes the `data.*` tier the caller's rewrites the three `data` tools' declared member sets in
+    // `src/main/mcp-server.ts` — `tier` joins `path`, `value` and `prefix` — which is a SIBLING's declared artifact and
+    // no work of this unit's. The constant said `PURGE_PASS_SURFACE_PATHS`, which named one pass; it now names the
+    // declared sibling passes, because a name that claims one and carries three is the kind of quiet untruth these rows
+    // exist to refuse. **THE TERM AND THE BITE ARE UNCHANGED**: a `surface` path this list does not name STILL FAILS.
+    'src/main/mcp-server.ts',
   ]
   it('I-12 §3.3 — NO NEW MCP SURFACE AND NO SHELL CHANGE: the pinned surface files are UNCHANGED BY THIS UNIT, and a surface path outside the declared purge pass still FAILS', () => {
     const changed = gitChangeSet()
     const surface = ['src/main/main.ts', 'src/main/preload.ts', 'src/main/mcp-server.ts', 'src/renderer/index.html']
-    const attributable = (changed ?? []).filter((path) => !PURGE_PASS_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
+    const attributable = (changed ?? []).filter((path) => !DECLARED_SIBLING_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
     const touched = attributable.filter((path) => surface.some((s) => path.endsWith(s)))
     expect(
       touched,
-      `I-12 §3.3/§3.4 R-11/§2.2 P-7 — the preload bridge, the MCP server, the main process entry and the shell chrome are UNCHANGED by THIS unit and appear nowhere in its attributable change set (§5.1 DENIED item 4). The purge pass's two declared paths are excluded BY NAME (${JSON.stringify(PURGE_PASS_SURFACE_PATHS)}, \`D-93\`) and nothing else is. Touched: ${JSON.stringify(
+      `I-12 §3.3/§3.4 R-11/§2.2 P-7 — the preload bridge, the MCP server, the main process entry and the shell chrome are UNCHANGED by THIS unit and appear nowhere in its attributable change set (§5.1 DENIED item 4). The declared sibling passes' paths are excluded BY NAME (${JSON.stringify(DECLARED_SIBLING_SURFACE_PATHS)}, \`D-93\`, \`D-101\`) and nothing else is. Touched: ${JSON.stringify(
         touched,
       )}`,
     ).toEqual([])
     // THE CONTROL — the exclusion is BY NAME and is not a blanket strip: the SAME reading still reports a surface path
-    // that no declaration names, so a later unexplained write to the shell reddens this row.
-    const control = ['src/main/mcp-server.ts']
-      .filter((path) => !PURGE_PASS_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
+    // that no declaration names, so a later unexplained write to the shell reddens this row. **THE EXAMPLE MOVED FROM
+    // `src/main/mcp-server.ts` TO THE SHELL CHROME (`D-101`)**, because that file is now on the list: `index.html` is on
+    // the `surface` list, is named by no declaration, and is a file this unit may not edit either.
+    const control = ['src/renderer/index.html']
+      .filter((path) => !DECLARED_SIBLING_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
       .filter((path) => surface.some((s) => path.endsWith(s)))
     expect(
       control,
-      'I-12 (bounded-exclusion control) — `src/main/mcp-server.ts` is on the surface list and on NO exclusion list, so an edit to it is still reported here: the row measures the shell, not the worktree.',
-    ).toEqual(['src/main/mcp-server.ts'])
+      'I-12 (bounded-exclusion control) — `src/renderer/index.html` is on the surface list and on NO exclusion list, so an edit to it is still reported here: the row measures the shell, not the worktree.',
+    ).toEqual(['src/renderer/index.html'])
   })
 
   it('I-13 §3.3 — NO CAPTURE CHANNEL EXISTS IN THIS COMPOSITION, AND NO RELEASE TOKEN APPEARS ANYWHERE', () => {

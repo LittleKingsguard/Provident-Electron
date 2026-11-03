@@ -1583,11 +1583,27 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   //    read answer and route carry the fourth family — beside the four sibling paths already named above. It is excluded BY
   //    NAME like every other entry here; the DENIED predicate and the positive control below are untouched.
   'src/main/view-surface/index.ts', // `D-97` — the surface's read answer and its appearance route
+  // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-101`): THE `central-data` UNIT'S OWN PATHS.** The pass
+  //    that makes the `data.*` tier the caller's and guards the crossings' declared roots writes seven files under
+  //    `src/main/`: the module's four (`data/types.ts`, `data/args.ts`, `data/mapper.ts`, `data/surface.ts`), the two
+  //    declaring modules whose pairs the guard reads (`tabs-record/index.ts` — the record's ONE tier constant — and
+  //    `view-record/index.ts`, already named above for `D-87`/`D-89`), one line of `main.ts` (already named) and the MCP
+  //    server's three `data` argument schemas, which gain the `tier` member. Each is a SIBLING unit's declared artifact
+  //    (`strata/decisions.md` `D-101`) and every one is excluded BY NAME like every other entry here.
+  'src/main/data/types.ts', // `D-101` — the twelfth reason word and the declared-root pair's type
+  'src/main/data/args.ts', // `D-101` — the tier's domain, its two defaults and the arm that refuses a tier outside it
+  'src/main/data/mapper.ts', // `D-101` — the `declared-tier` sentence, and `TierNotFound` read as an ABSENCE
+  'src/main/data/surface.ts', // `D-101` — the declared-root guard, and the tier threaded into write, delete and read
+  'src/main/tabs-record/index.ts', // `D-101` — `TABS_RECORD_TIER` and `tabsDeclaredRoots`, the family's own pair
+  'src/main/mcp-server.ts', // `D-101` — the three `data` tools' declared members gain `tier`; nothing registers anew
   // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a
-  // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/mcp-server.ts`, or the synthetic
+  // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/security.ts`, or the synthetic
   // `src/renderer/gesture-session-panel.ts` the control two paragraphs down feeds to the same instrument — is STILL
   // charged to this unit and STILL fails the row. What the row no longer does is charge a declared SIBLING pass's
-  // in-flight edit to this unit, which is the same repair `F-9(b)` already carries three times (`E10`, `E3`, `D-89`).
+  // in-flight edit to this unit, which is the same repair `F-9(b)` already carries four times (`E10`, `E3`, `D-89`,
+  // `D-101`). **`src/main/mcp-server.ts` WAS THE EXAMPLE THIS SENTENCE CARRIED AND IT IS NOW ON THE LIST ABOVE**, so
+  // the illustration moved to `src/main/security.ts` — a surface file this unit still denies, named by no
+  // declaration, and untouched by any live pass.
 ]
 // ---------------------------------------------------------------------------
 // **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE THIRD AND FOURTH DECLARING

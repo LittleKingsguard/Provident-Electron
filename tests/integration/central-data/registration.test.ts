@@ -30,6 +30,8 @@ import {
   type McpBackend,
 } from '../../../src/main/mcp-server.js'
 import { SecurityGate, type ToolGroup } from '../../../src/main/security.js'
+import { tabsDeclaredRoots } from '../../../src/main/tabs-record'
+import { viewDeclaredRoots } from '../../../src/main/view-record'
 
 const PROFILE_FILE = 'provident-profile.json'
 
@@ -62,7 +64,7 @@ const backend: McpBackend = { invoke: async () => ({}) }
 /** **THE BOOT'S CONSTRUCTION, STOOD BY THE BATTERY** (`src/main/main.ts:132`): one instance at the profile's one
  *  name, handed to the surface the way `:302` hands it. `DataSurfaceOptions.store` is REQUIRED (D-80). */
 const surfaceAt = (dir: string = profileDir): DataSurface =>
-  createDataSurface({ profileDir: dir, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }) })
+  createDataSurface({ profileDir: dir, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }), declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
 
 interface Live {
   server: ProvidentMcpServer

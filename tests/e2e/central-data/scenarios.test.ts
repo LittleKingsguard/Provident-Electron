@@ -48,6 +48,8 @@ import { createDataSurface, DATA_TOOL_NAMES, type DataSurface } from '../../../s
 import { EXCLUSION_CLOSED, ProvidentMcpServer, type McpBackend, type McpTransportKind } from '../../../src/main/mcp-server.js'
 import { SecurityGate, type ToolGroup } from '../../../src/main/security.js'
 import { createProfileStore, STOREROOM_DECLARED_SURFACE } from '../../../src/main/storeroom.js'
+import { tabsDeclaredRoots } from '../../../src/main/tabs-record'
+import { viewDeclaredRoots } from '../../../src/main/view-record'
 import { Runtime } from '../../../src/renderer/runtime.js'
 import { demoEnvelope } from '../../../src/shared/demo-envelope.js'
 import { installShim, mountEl } from '../../../src/shared/dom-shim.js'
@@ -87,10 +89,12 @@ function boot(dir: string = profileDir) {
   return createProfileStore({ filePath: join(dir, PROFILE_FILE) })
 }
 
-/** The composition `src/main/main.ts:302` performs: the directory the reading names, and the instance
- *  the caller already owns. Two arguments, one of them required, and no third way in (D-80). */
+/** The composition `src/main/main.ts:374` performs: the directory the reading names, the instance the caller
+ *  already owns, and **the declared roots the two crossings publish** (`D-101`) — three arguments, two of them
+ *  required, and no fourth way in. The roots are the app's own, imported from the modules that declare them and
+ *  never re-spelled here (`D-53`), so every row below drives the address space the product has (D-80, D-101). */
 function surfaceAt(dir: string = profileDir): DataSurface {
-  return createDataSurface({ profileDir: dir, store: boot(dir) })
+  return createDataSurface({ profileDir: dir, store: boot(dir), declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
 }
 
 /** The app's own producing graph, without a window: the backend `battery-host.ts` composes, under

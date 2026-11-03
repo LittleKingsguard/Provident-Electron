@@ -30,7 +30,7 @@ import {createDataSurface} from './data/index.js'
 // of this file moves: it constructs no store, spells no `provident-*.json` literal for one, and reaches the
 // record only through the surface's own read/commit (the arrangement the operator's store already uses).
 import {createTabsSurface} from './tabs-surface/index.js'
-import {tabsConstraintDeclarations} from './tabs-record/index.js'
+import {tabsConstraintDeclarations, tabsDeclaredRoots} from './tabs-record/index.js'
 import {createProfileStore} from './storeroom.js'
 import {PROFILE_FILE_NAME} from './data/store.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
@@ -40,7 +40,7 @@ import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from 
 // is constructed beside the tab record's, and its three handlers stand beside the tab record's three. It constructs no
 // store and spells no `provident-*.json` literal for one.
 import {createViewSurface} from './view-surface/index.js'
-import {viewConstraintDeclarations} from './view-record/index.js'
+import {viewConstraintDeclarations, viewDeclaredRoots} from './view-record/index.js'
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
@@ -371,7 +371,7 @@ async function main(): Promise<void> {
   // other instance wrote (measured 2026-11-02). Two instances are the ruling's whole number, so the handle is passed
   // and the surface constructs nothing — **and now it CANNOT**: `DataSurfaceOptions.store` is required and the
   // fallback construction is deleted, so this line is the surface's only source of an instance (D-80).
-  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface: createDataSurface({ profileDir: app.getPath('userData'), store: centralStore }) })
+  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface: createDataSurface({ profileDir: app.getPath('userData'), store: centralStore, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] }) })
   // `§0A` item 1 (the `A-1` ruling) — NO RE-POINT IS OWED HERE ANY MORE. The landed `R-2` re-point
   // existed because the store consulted a reader `main` had to keep aimed at the LIVE server
   // (`mcp-server.ts`'s `get gate()`). Neither half of that exists now: the retired store is gone

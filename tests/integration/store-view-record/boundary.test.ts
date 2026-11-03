@@ -297,6 +297,53 @@ const DECLARED_SCOPE: readonly string[] = [
   //    and no marker moves, so `strata-marks.mjs check` stays green UNREGENERATED. `strata/pending.md` stays `39`,
   //    `strata/next-steps.md` `29`, `strata/proposals.md` `13`, `strata/modules.json` `21` rows and
   //    `strata/records/store-tabs-record-unit.md` exactly `40` — this pass writes none of them.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-101` — THE TIER BECOMES THE CALLER'S ON THE `data.*` SURFACE, AND THE CROSSINGS' DECLARED ROOTS GET A GUARD.
+  //    Every path this pass writes is declared here, one reason each, and NOT ONE is admitted by a prefix.
+  //
+  //    THE MODULE (`central-data`): its four files, the twelfth refusal word, the tier's domain and two defaults, the
+  //    declared-root guard and the option the composition hands it.
+  'src/main/data/types.ts',
+  'src/main/data/args.ts',
+  'src/main/data/mapper.ts',
+  'src/main/data/surface.ts',
+  //    THE TWO MODULES THAT DECLARE THE ROOTS: each gains the pair its guard reads, built from its OWN address and
+  //    tier constants (`tabsDeclaredRoots`, `viewDeclaredRoots`) — the guard imports them and spells neither.
+  //    `src/main/view-record/index.ts` is ALREADY DECLARED ABOVE (D-87/D-89) and is not re-listed: this pass adds its
+  //    second export to a path the union already carries, which is the difference between a write and a claim.
+  'src/main/tabs-record/index.ts',
+  //    THE SURFACE'S DECLARED MEMBERS: the three `data` tools' JSON schemas gain `tier`, which is a census move in the
+  //    MCP server and in `main.ts`'s one options line (`src/main/main.ts` is already declared above).
+  'src/main/mcp-server.ts',
+  //    THE BATTERIES: this pass's own gating battery (`declared-root.test.ts`, EIGHT rows, no other file added or
+  //    removed) and the four files whose `createDataSurface` call sites gain the now-REQUIRED `declaredRoots` member
+  //    (`tests/integration/central-data/profile-file.test.ts`, `tests/e2e/security-store-storeroom/isolation.test.ts`,
+  //    `tests/e2e/settings-carrier-retirement/scenarios.test.ts` and
+  //    `tests/integration/security-store-storeroom/isolation.test.ts` are ALREADY DECLARED ABOVE) — and not one assertion
+  //    moves in any of them, the three GATING `tests/e2e/` files among them.
+  'tests/integration/central-data/declared-root.test.ts',
+  'tests/unit/central-data/support/temp-profile.ts',
+  'tests/integration/central-data/surface.test.ts',
+  'tests/integration/central-data/registration.test.ts',
+  'tests/e2e/central-data/scenarios.test.ts',
+  //    TWO SIBLING UNITS' ROWS RE-DERIVED RATHER THAN WEAKENED, each keeping its control: `gesture-session`'s `F-9(b)`
+  //    sibling-artifact list gains this pass's `src/main/` paths BY NAME (its illustration moves from `mcp-server.ts`
+  //    to `security.ts`, so a path no declaration names still fails), and `gutter-ui`'s `I-12` exclusion gains
+  //    `src/main/mcp-server.ts` and is RENAMED with its control moved to `src/renderer/index.html`.
+  //    THE DOCUMENTS: the L2 interface's argument table and §2 block (the tier member, the twelfth reason word and the
+  //    new required option — paid for by ONE freed line), the behaviour, persistence and both L3 files corrected within
+  //    their ceilings, and `docs/L3/store-tabs-record/signatures.md`, whose `D-45` block MUST declare the export the
+  //    comparator would otherwise fail on (one line added, one re-flowed to pay for it).
+  'docs/L2/central-data/interface.md',
+  'docs/L2/central-data/behaviour.md',
+  'docs/L2/central-data/persistence.md',
+  'docs/L3/central-data/design.md',
+  'docs/L3/central-data/signatures.md',
+  'docs/L3/store-tabs-record/signatures.md',
+  //    THE CORPUS: the row itself, the `npm test` figure its own rows move and the mark index REGENERATED because this
+  //    pass adds a test file. `strata/pending.md` stays `39` and `strata/modules.json` `21` rows — the map's
+  //    `central-data` row already claims `tests/integration/central-data/` as a directory and no `endpoints` figure
+  //    moves, so this pass writes neither.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
@@ -308,7 +355,8 @@ const DECLARED_SCOPE_IS_A_SET = new Set(DECLARED_SCOPE).size === DECLARED_SCOPE.
  * repository (an MCP-surface module the purge never touches), so the control cannot be
  * satisfied by a string that names nothing.
  */
-const EDIT_SET_OFFENDER_FIXTURE = 'src/main/mcp-server.ts'
+const EDIT_SET_OFFENDER_FIXTURE = 'src/main/security.ts' // `D-101`: `mcp-server.ts` is declared above from this pass;
+// the fixture moves to the gate, a real MCP-surface module that no pass has touched and no declaration names.
 
 /** `edit-set ⊆ declared scope`, as a SET, with the offenders NAMED rather than counted. */
 function editSetIsSubset(changed: readonly string[], scope: readonly string[]): { readonly ok: boolean; readonly offenders: readonly string[] } {

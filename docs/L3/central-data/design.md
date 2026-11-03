@@ -1,6 +1,6 @@
 # L3 — `central-data`: the module design
 
-- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 4 — §1's, §2's and §3's construction is DELETED: `DataSurfaceOptions.store` is required, the port returns the caller's instance and nothing builds one, so §2 states the three readings against the state the product has and the pseudocode's four `port.construct()` sites collapse to `port.store()`; §1's package-import count is re-measured at **three** (D-80); rev 3's own correction read that count off the tree as **two** and rev 4 re-measured it at **three**, so §1 states three and rev 3's figure is superseded rather than erased · **Status:** DESIGN — the module and its batteries **are filed and landed**: `src/main/data/` carries the seven files §1 lists and the unit battery is filed against this file and `signatures.md` at `tests/unit/central-data/`, whose reading is `strata/brief.md` §6's instrument, cited there and never restated here (D-1 §4, D-26). Rev 3 states §5's registrations as landed rather than as L4's pending work, and names its `src/` sites rather than offsets (D-41)
+- **Layer:** L3 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 5 — **the tier is the caller's and the address space is the caller's too** (D-101): §3's pseudocode passes the parsed `tier` to `write`, to `delete` and to `read` instead of a module constant, a declared-root arm stands ahead of the reading, and §3's G11 is re-stated; Rev 4 — §1's, §2's and §3's construction is DELETED: `DataSurfaceOptions.store` is required, the port returns the caller's instance and nothing builds one, so §2 states the three readings against the state the product has and the pseudocode's four `port.construct()` sites collapse to `port.store()`; §1's package-import count is re-measured at **three** (D-80); rev 3's own correction read that count off the tree as **two** and rev 4 re-measured it at **three**, so §1 states three and rev 3's figure is superseded rather than erased · **Status:** DESIGN — the module and its batteries **are filed and landed**: `src/main/data/` carries the seven files §1 lists and the unit battery is filed against this file and `signatures.md` at `tests/unit/central-data/`, whose reading is `strata/brief.md` §6's instrument, cited there and never restated here (D-1 §4, D-26). Rev 3 states §5's registrations as landed rather than as L4's pending work, and names its `src/` sites rather than offsets (D-41)
 - **Inputs:** `docs/L2/central-data/interface.md` §1-§8, `behaviour.md` §1-§10 (**§5 and §9 as revised: two unreachability arms, `ASM-L2-7`**) and `persistence.md` §1-§9, all at rev 2; `strata/brief.md` §1/§3/§4, `strata/decisions.md` D-1/D-5/D-10/D-11/D-12/D-13/D-14 and `strata/envelope.md` §1; the seam `src/main/storeroom.ts`; the read-only package `node_modules/provident-storeroom/{index.d.ts,README.md,README.guide.md}` (D-5)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is the package's shipped `README.guide.md` and `the declaration` is its `index.d.ts`; both are read and never edited (D-5) · **Split:** every signature and every answer shape stands in `signatures.md`; this file carries the structure, the reachability reading, the operations' pseudocode, the twelve guardrails and this design's own two assumptions (`brief.md` §3; D-1 §1)
 
@@ -11,8 +11,8 @@
 | File | What it holds | Cite |
 |---|---|---|
 | `src/main/data/index.ts` | the module's entry and the only file another module imports: it exports exactly the surface `interface.md` §2 declares and nothing else | `interface.md` §2, §5; D-11 |
-| `src/main/data/types.ts` | the declared types and the `DATA_TOOL_NAMES` value — one home for the vocabulary | `interface.md` §2 |
-| `src/main/data/args.ts` | argument validation: the declared members, the path domain, the cursor domain, the volatile spelling, the sort key | `interface.md` §1; `behaviour.md` §4; D-13 |
+| `src/main/data/types.ts` | the declared types, **the declared-root pair and the twelfth reason word**, and the `DATA_TOOL_NAMES` value — one home for the vocabulary | `interface.md` §2; D-101 |
+| `src/main/data/args.ts` | argument validation: the declared members, the path domain, **the tier domain and its two defaults**, the cursor domain, the volatile spelling, the sort key | `interface.md` §1; `behaviour.md` §4; D-13, D-101 |
 | `src/main/data/store.ts` | the profile's one name, **the reachability reading of §2**, and the port the operations drive — which returns the caller's instance and constructs nothing | `persistence.md` §1; `behaviour.md` §9; D-13, D-80 |
 | `src/main/data/mapper.ts` | the store-status mapping and this module's fixed sentences, the reading's `store-unreachable` sentence among them | `interface.md` §2, §3; `guide §8.1, §8.2` |
 | `src/main/data/journal.ts` | the bounded in-memory change window, cursors minted from 1 | `persistence.md` §6; D-12 |
@@ -39,11 +39,12 @@
 The five share one preamble, and its order is the order the checks run in (`behaviour.md` §4; D-11):
 
 ```ts
-g = parse(args)          // the tool's declared member set by name, then the path or cursor domain
+g = parse(args)          // the tool's declared member set by name, then the path, tier or cursor domain
 if (!g.ok) return g.ledger                          // interface.md §1; behaviour.md §4
 // path domain: a dense array, each element a string or a non-negative safe integer; '' is a legal key
+// tier domain on write | delete | read: 'file' | 'mem' | 'temp', the member named otherwise   // D-101
 // first segment begins 'mem.' | 'temp.' | 'secure.' -> 'volatile-path'        // D-13
-// path.length === 0 on write | delete -> 'root-not-writable'                 // interface.md §1; D-12
+// path.length === 0 on write | delete -> 'root-not-writable'; at a DECLARED root, another tier -> 'declared-tier', ahead of the reading   // interface.md §1; D-12, D-101
 r = port.probe()         // THE reading of §2, taken before any store: occupied | absent | unreachable
 if (r.kind === 'unreachable') return r.ledger     // all five, journal included: behaviour.md §9
 ```
@@ -56,7 +57,7 @@ if (r.kind === 'unreachable') return r.ledger     // all five, journal included:
 if (r.kind === 'absent') return g.path.length === 0
   ? { status:'read', kind:'branch', path:[], value:{} } : { status:'absent', path: g.path }  // behaviour.md §1
 s = port.store()                                    // THE CALLER'S instance; nothing is built here (D-80)
-try { return g.path.length === 0 ? branch(s.store.read([])) : row(s.store.readLiteral(g.path)) }   // guide §4
+try { return g.path.length === 0 ? branch(s.read([], g.tier)) : row(s.readLiteral(g.path, g.tier)) }  // guide §4; a NULL tier means the position is OMITTED, never a supplied `undefined`
 catch (e) { o = readOutcome(e)        // ONE argument, the caught value (signatures.md §2)
             return o.kind === 'ledger' ? o.ledger : o.kind === 'branch' ? { status:'read', kind:'branch', path:g.path, value:s.store.read(g.path) } : { status:'absent', path: g.path } }
 ```
@@ -67,7 +68,7 @@ The probe's arms: a literal answers `kind:'row'` with the value the store copied
 
 ```ts
 s = port.store()                                                     // the supplied instance saves, or refuses
-try { s.store.write(g.path, 'file', g.value)          // no fourth position: guide §3.3
+try { s.store.write(g.path, g.tier, g.value)          // g.tier is the caller's token or the default 'file'; no fourth position: guide §3.3
       cursor = journal.append('write', g.path, 'present')            // D-12
       return { status:'committed', path: g.path, cursor } }           // interface.md §2
 catch (e) { return refusalLedger(e, g.path) }         // no cursor and no entry: behaviour.md §4
@@ -78,8 +79,8 @@ catch (e) { return refusalLedger(e, g.path) }         // no cursor and no entry:
 ```ts
 if (r.kind === 'absent') return emptyReceipt(g.path)               // behaviour.md §1
 s = port.store()                                                     // the caller's one instance (D-80)
-try { s.store.readLiteral(g.path)                     // a row stands at the address
-      rec = s.store.delete(g.path, 'file')            // one tier token, never an array: guide §5.2
+try { s.store.readLiteral(g.path, g.tier)            // a row stands at the address, AT THIS TIER
+      rec = s.store.delete(g.path, g.tier)            // one tier token, never an array: guide §5.2
       removed = rec.tiers.length > 0
       cursor = removed ? journal.append('delete', g.path, 'absent') : null
       return { status:'committed', path: g.path, removed, tiers: rec.tiers, cursor } }
@@ -111,8 +112,7 @@ if (!w.ok) return { status:'refused', reason:'cursor-unknown', message, floor: w
 return { status:'read', from: g.from, through: w.through, floor: w.floor, entries: w.entries, count: w.entries.length }
 ```
 
-- `from` is an integer `>= 0` or the answer is `malformed-arguments`; an integer below `floor` or above `through` is `cursor-unknown` carrying both bounds so a caller re-anchors (`behaviour.md` §4, §6; D-12).
-- A cursor is minted from `1` per committed write and per delete that removed a row; a refused call mints none and appends nothing; the window holds the newest `journalLength` entries, `floor` is the highest cursor that fell out, `through` is the last minted (`persistence.md` §6; D-12).
+- `from` is an integer `>= 0` or the answer is `malformed-arguments`; an integer below `floor` or above `through` is `cursor-unknown` carrying both bounds so a caller re-anchors, and a cursor is minted from `1` per committed write and per delete that removed a row — a refused call mints none and appends nothing, the window holds the newest `journalLength` entries, `floor` is the highest cursor that fell out and `through` is the last minted (`behaviour.md` §4, §6; `persistence.md` §6; D-12).
 - No entry carries a value: `{cursor, kind, path, changedTo}`, with the path a fresh copy, so nothing in the window can be replayed or mutated into the register (`D-12`; `interface.md` §2).
 
 ## 4. The guardrails, as invariants the battery drives
@@ -129,7 +129,7 @@ return { status:'read', from: g.from, through: w.through, floor: w.floor, entrie
 | G8 | a store status outside the mapped set is never read as success: it answers `store-refused` with that status verbatim in `storeStatus` | `interface.md` §2, §3; `guide §8.1`; D-5, D-11 |
 | G9 | the value's admission is the package's walk and never a second one here: nothing is wrapped, defaulted or dropped, and a refused value lands no row | `persistence.md` §3; `guide §10`; D-13 |
 | G10 | every answer is a fresh object and `read`'s value is the store's own copy-out, so no answer aliases module or store state | `guide §10`; D-13 |
-| G11 | the tier token is always spelled — `'file'` at `write` and at `delete` — never an array and never a supplied `undefined` | `guide §3.3, §5.2` |
+| G11 | **the tier is the CALLER's and it is always exactly ONE token** — `options`, never an array and never a supplied `undefined` — `file` where a `write` or a `delete` omits it, and NO token at all on a `read` that omits it; and it is `declared-tier` where the address is a root a crossing declares and the token is not that family's (D-101) | `guide §3.3, §5.2`; `interface.md` §1, §2 |
 | G12 | `exclusion-closed` is never produced here: it is the invocation turn's answer ahead of the adapter, so no operation mints it | `interface.md` §3, §4; `behaviour.md` §8 |
 
 The mapping behind G8 is one table, and it is closed against the package's twenty-status set plus its escape arm: `signatures.md` §3 (`guide §8.1`; D-5).
@@ -146,4 +146,5 @@ The mapping behind G8 is one table, and it is closed against the package's twent
 | id | Assumption | Rejected alternative |
 |---|---|---|
 | ASM-L3-U1 | the **occupied-name** arm refuses **all five** tools — the one the unit battery drives on four tools with `journal` un-asserted, and the integration battery asserts on five (`refusals.test.ts:199-212`; `profile-file.test.ts:72-88`) | refusing only the tools a row happens to drive, i.e. reading `journal`'s absent row as an exemption — which makes the answer depend on the battery's coverage instead of on `behaviour.md` §9, and which is the defect rev 1 carried |
+| ASM-L3-U3 | the declared-root guard keys on the address's ROOT — its first segment — because a family is one whole value at its root and every address below it answers the same tier, so `['panes','pane-a','size']` is guarded by `['panes']` (D-101) | a full-prefix match on each declared address, which is the same set of addresses for this tree and one more thing to keep equal |
 | ASM-L3-U2 | the **absent-name** arm stays the cold tier — `read`/`list`/`delete` answer cold and `journal` answers its window — with the instance never consulted, and the arm is REACHED by the name being removed under the live store, whose next `write` the supplied instance lands and whose save re-creates the name (D-80; `cold-and-write.test.ts`, `refusals.test.ts`'s removed-name row; `profile-file.test.ts`'s absent-name row) | folding an absent name into the same refusal, which serves `store-unreachable` for a profile that is merely new, reddens the cold-tier rows, and loses `behaviour.md` §9's second arm and `ASM-L2-7` |

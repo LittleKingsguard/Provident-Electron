@@ -25,7 +25,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createDataSurface, type DataSurface } from '../../../src/main/data'
 import { createProfileStore } from '../../../src/main/storeroom.js'
 import { tabsConstraintDeclarations } from '../../../src/main/tabs-record/index'
-import { viewConstraintDeclarations } from '../../../src/main/view-record/index'
+import { viewConstraintDeclarations, viewDeclaredRoots } from '../../../src/main/view-record/index'
+import { tabsDeclaredRoots } from '../../../src/main/tabs-record'
 
 const PROFILE_FILE = 'provident-profile.json'
 
@@ -59,7 +60,7 @@ const coldList = { status: 'read', prefix: null, paths: [], count: 0 }
  *  stand without a boot's holder; the difference is the boot's, and it is the row below's subject rather than a
  *  premise these rows quietly assume. */
 function surfaceAt(dir: string = profileDir, reading: string = dir): DataSurface {
-  return createDataSurface({ profileDir: reading, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }) })
+  return createDataSurface({ profileDir: reading, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }), declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
 }
 
 describe('central-data · persistence and the profile\'s bytes', () => {
@@ -112,7 +113,7 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     expect(statSync(profilePath).size, 'which is not zero: the boot’s own save is the difference this row exists to state').toBeGreaterThan(0)
     // A READ ONLY SESSION MOVES NOTHING AFTER IT: the surface over the same instance answers and lands no byte.
     const stood = readFileSync(profilePath)
-    const surface = createDataSurface({ profileDir, store })
+    const surface = createDataSurface({ profileDir, store, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
     surface.list({})
     surface.read({ path: ['alpha'] })
     surface.journal({})

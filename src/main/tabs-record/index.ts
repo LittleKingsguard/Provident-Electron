@@ -168,6 +168,11 @@ export interface TabsConstraintDeclaration {
 
 /** The record root: the `order` seat and one flat leaf per tab — the landing ENTRY's among them (D-76). */
 export const TABS_RECORD_ADDRESS: readonly string[] = ['tabs']
+/** **THE RECORD'S OWN TIER, SPELLED ONCE** (`D-101`). Every `write`, every `read`, the repair route and both
+ *  whole-record writes of this module drive this constant, so the family cannot half-move to another tier. It is
+ *  PRIVATE and is published only through `tabsDeclaredRoots` below, so the module has ONE spelling of the word and
+ *  no second export that a reader could confuse for a second authority. */
+const TABS_RECORD_TIER = 'file' as const
 /** **THE ONE SINGLETON SEAT**, named so no caller composes it: the ordered place of every tab id. */
 export const TABS_ORDER_ADDRESS: readonly string[] = ['tabs', 'order']
 /** **THE LANDING ENTRY'S KEY, SPELLED ONCE.** It is the second element of `TABS_LANDING_ADDRESS` below, and it is the id
@@ -342,7 +347,7 @@ export const isCommitCarrier = (value: unknown): value is TabsCommitCarrier => {
  *  live `exactly-one-active` repair, `tests/integration/store-tabs-record/crossing.test.ts` green). The carrier is passed on
  *  AS IT WAS HANDED, never rebuilt: it carries its log under a symbol key the store's refusal path reads. */
 export const writeJoined = (store: Store, commit: TabsCommitCarrier, value: unknown): unknown =>
-  store.write(TABS_RECORD_ADDRESS, 'file', value, commit)
+  store.write(TABS_RECORD_ADDRESS, TABS_RECORD_TIER, value, commit)
 
 /** One tab's record, admitted field by field: an unknown member is dropped, never carried. **EVERY MEMBER OF
  *  `TabsRecordRow` IS CARRIED**, because this is the same admission the module writes back: a member dropped here is a
@@ -419,20 +424,20 @@ const viewOf = (store: Store): RecordView => {
   // **THE BODY READS THE OBJECT AT THE PAIR'S OWN ADDRESS** (D-66): a sub-property write changes what `['tabs']` reads,
   // which is why the watch fires, and the object read there is the record to judge.
   try {
-    const whole = viewFrom(store.read(TABS_RECORD_ADDRESS, 'file') as unknown)
+    const whole = viewFrom(store.read(TABS_RECORD_ADDRESS, TABS_RECORD_TIER) as unknown)
     if (whole !== null) return whole
   } catch {
     // the split seats below are the fallback the module's own writes keep readable
   }
   try {
-    const read = store.read(TABS_ORDER_ADDRESS, 'file') as unknown
+    const read = store.read(TABS_ORDER_ADDRESS, TABS_RECORD_TIER) as unknown
     if (Array.isArray(read)) for (const id of read) if (typeof id === 'string') order.push(id)
   } catch {
     return { order, entries }
   }
   for (const id of order) {
     try {
-      const value = store.read(['tabs', id], 'file') as unknown
+      const value = store.read(['tabs', id], TABS_RECORD_TIER) as unknown
       if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
         entries[id] = { ...(value as Record<string, unknown>), id } as unknown as TabsRecordRow
       }
@@ -587,7 +592,7 @@ const canonicalRecord = (record: Record<string, unknown>): string => {
  *  derivation cannot see, and it errs toward the renderer re-reading, which is what the member asks for anyway. */
 const standsAsIntended = (store: Store, intended: Record<string, unknown>): boolean => {
   try {
-    const held = store.read(TABS_RECORD_ADDRESS, 'file') as unknown
+    const held = store.read(TABS_RECORD_ADDRESS, TABS_RECORD_TIER) as unknown
     return plain(held) && canonicalRecord(held) === canonicalRecord(intended)
   } catch {
     return false
@@ -731,7 +736,7 @@ const writeWholeRecord =
     if (typeof route === 'function') {
       const routeWrite = route as (address: readonly string[], tier: string, value: unknown) => unknown
       // THREE POSITIONS, AND NO FOURTH: supplying the commit here is the refusal this branch exists to avoid.
-      return repairAnswer(routeWrite(TABS_RECORD_ADDRESS, 'file', whole))
+      return repairAnswer(routeWrite(TABS_RECORD_ADDRESS, TABS_RECORD_TIER, whole))
     }
     const store = getStore()
     if (store === null) {
@@ -1082,6 +1087,18 @@ export function tabsConstraintDeclarations(getStore: () => Store | null): readon
   ]
 }
 
+/** **THE ONE ROOT `tabsConstraintDeclarations` DECLARES, AT THE TIER THIS MODULE WRITES IT** (`D-101`). All six
+ *  of that batch's declarations stand at `TABS_RECORD_ADDRESS` and every one of them judges the value of the one
+ *  whole record, so the family is ONE root — deduplicated here by construction rather than by six entries.
+ *
+ *  **ITS CALLER IS THE `data.*` SURFACE**: that surface may not create a version of a declared root at a tier the
+ *  declaring module does not use, and it can know which is which only by being told. The telling is this
+ *  function's, and both of its members are this module's own constants — `TABS_RECORD_ADDRESS` above and
+ *  `TABS_RECORD_TIER`, which every write and read of this file drives. */
+export function tabsDeclaredRoots(): readonly { readonly address: readonly string[]; readonly tier: typeof TABS_RECORD_TIER }[] {
+  return [{ address: TABS_RECORD_ADDRESS, tier: TABS_RECORD_TIER }]
+}
+
 /** **THE RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65): this module constructs nothing and owns no file — it is handed
  *  the app's one store and reads and writes its `['tabs']` addresses through it. The instance's lifetime, its file and
  *  its constraint pass are the boot's. */
@@ -1157,7 +1174,7 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       // act composes the family — `order` and one member per seated id — and nothing about it can collide with a tab id.
       const intent = composeRecord(next, entries)
       try {
-        standing.write(TABS_RECORD_ADDRESS, 'file', intent)
+        standing.write(TABS_RECORD_ADDRESS, TABS_RECORD_TIER, intent)
         // THE OBSERVED VIEW MOVES WITH THE WRITE: a commit is a write this module made and saw, so the constraint's PRE
         // side must be the record as it stands afterwards — otherwise the next evaluation compares against a record two
         // acts old and reads the caller's own change as a removal.
@@ -1202,7 +1219,7 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       // next read name one, and the act no longer has to predict which.
       const intent = composeRecord(next, entries)
       try {
-        standing.write(TABS_RECORD_ADDRESS, 'file', intent)
+        standing.write(TABS_RECORD_ADDRESS, TABS_RECORD_TIER, intent)
         lastView = viewOf(standing)
         return standsAsIntended(standing, intent)
           ? { status: 'committed' }

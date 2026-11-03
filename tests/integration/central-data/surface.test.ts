@@ -20,6 +20,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createDataSurface, type DataSurface } from '../../../src/main/data'
 import { createProfileStore } from '../../../src/main/storeroom.js'
+import { tabsDeclaredRoots } from '../../../src/main/tabs-record'
+import { viewDeclaredRoots } from '../../../src/main/view-record'
 
 const PROFILE_FILE = 'provident-profile.json'
 
@@ -42,7 +44,7 @@ const coldList = { status: 'read', prefix: null, paths: [], count: 0 } as const
  *  a surface without one — and a construction creates its `filePath`, so the reading of a fresh profile answers
  *  `occupied` over an empty register, never `absent` (D-80). */
 function surfaceAt(dir: string = profileDir): DataSurface {
-  return createDataSurface({ profileDir: dir, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }) })
+  return createDataSurface({ profileDir: dir, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }), declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
 }
 
 describe('central-data · the five operations through createDataSurface', () => {

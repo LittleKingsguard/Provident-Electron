@@ -13,6 +13,8 @@ import { expect } from 'vitest'
 
 import { createDataSurface, type DataSurface } from '../../../../src/main/data'
 import { createProfileStore } from '../../../../src/main/storeroom.js'
+import { tabsDeclaredRoots } from '../../../../src/main/tabs-record'
+import { viewDeclaredRoots } from '../../../../src/main/view-record'
 
 /** `<profileDir>/provident-profile.json` — the one name this unit writes (`persistence.md` §1; D-13). */
 export const PROFILE_FILE_NAME = 'provident-profile.json'
@@ -26,11 +28,19 @@ export function bootProfileStore(profileDir: string) {
   return createProfileStore({ filePath: profileFilePath(profileDir) })
 }
 
-/** The composition `src/main/main.ts:302` performs, in one call: the directory the reading names and the instance the
- *  caller already owns. A row that needs a SECOND boot over the same profile calls this again — two boots over one
- *  name is what `behaviour.md` §3's "next process" is at this grain (D-80). */
+/** **THE ADDRESS SPACE, FROM THE TWO MODULES THAT DECLARE IT** (`D-101`): the union `src/main/main.ts:374` hands the
+ *  surface. `DataSurfaceOptions.declaredRoots` is REQUIRED — a surface that is not told which roots a crossing
+ *  declares cannot refuse a write that creates a second version of one — so a battery that omitted it would be
+ *  measuring a shape the product does not have. */
+export function declaredRoots() {
+  return [...tabsDeclaredRoots(), ...viewDeclaredRoots()]
+}
+
+/** The composition `src/main/main.ts:302` performs, in one call: the directory the reading names, the instance the
+ *  caller already owns, and the declared roots. A row that needs a SECOND boot over the same profile calls this again
+ *  — two boots over one name is what `behaviour.md` §3's "next process" is at this grain (D-80). */
 export function surfaceAt(profileDir: string): DataSurface {
-  return createDataSurface({ profileDir, store: bootProfileStore(profileDir) })
+  return createDataSurface({ profileDir, store: bootProfileStore(profileDir), declaredRoots: declaredRoots() })
 }
 
 /** One fresh profile directory under `os.tmpdir()` (D-14). */

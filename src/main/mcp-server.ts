@@ -1120,18 +1120,22 @@ export class ProvidentMcpServer {
         name: 'provident.data.read',
         title: 'Read the profile data register',
         description:
-          'Read one address of the app\'s durable data profile. A literal standing at the address answers kind:"row" with the value; a container answers kind:"branch" with its assembled value; an address holding nothing answers status:"absent". The addresses are the register\'s own key space: an array of string keys and non-negative indices, and [] names the whole register.',
-        members: { path: z.unknown().optional().describe('The address to read: a dense array of string keys and non-negative indices; [] reads the whole register') },
+          'Read one address of the app\'s data profile. A literal standing at the address answers kind:"row" with the value; a container answers kind:"branch" with its assembled value; an address holding nothing answers status:"absent". The addresses are the register\'s own key space: an array of string keys and non-negative indices, and [] names the whole register. An omitted tier reads across the tiers — the lowest persistence present — and a named one narrows the read to that tier alone, where nothing standing there answers "absent".',
+        members: {
+          path: z.unknown().optional().describe('The address to read: a dense array of string keys and non-negative indices; [] reads the whole register'),
+          tier: z.unknown().optional().describe('The tier to read AT: "file", "mem" or "temp"; omit it to read across every tier'),
+        },
         run: (surface, args) => surface.read(args),
       },
       {
         name: 'provident.data.write',
         title: 'Write one row into the profile data register',
         description:
-          'Write exactly ONE path/value pair at the durable file tier and answer status:"committed" with the change\'s cursor. A nested write does not create its parent, and a container of another kind standing at the address is refused rather than converted. A refused call answers status:"refused" with its reason word and leaves the previous bytes exactly as they stood.',
+          'Write exactly ONE path/value pair at ONE tier and answer status:"committed" with the change\'s cursor. An omitted tier is "file", the durable one; "mem" is this process\'s register and persists nowhere, and "temp" is the transient tier. A nested write does not create its parent, and a container of another kind standing at the address is refused rather than converted. A root a crossing declares is written only at its family\'s own tier and is refused reason:"declared-tier" otherwise. A refused call answers status:"refused" with its reason word and leaves the previous bytes exactly as they stood.',
         members: {
           path: z.unknown().optional().describe('The address to write: a dense array of string keys and non-negative indices; [] is never writable'),
           value: z.unknown().optional().describe('The value to store: the admitted JSON tree (strings, finite numbers, booleans, dense arrays, plain objects)'),
+          tier: z.unknown().optional().describe('The tier to write AT: "file" (durable, the default), "mem" (this process only) or "temp" (transient)'),
         },
         run: (surface, args) => surface.write(args),
       },
@@ -1139,8 +1143,11 @@ export class ProvidentMcpServer {
         name: 'provident.data.delete',
         title: 'Delete one row from the profile data register',
         description:
-          'Delete ONE row at the address and answer status:"committed" with removed, the tiers the row stood at, and the change\'s cursor. An address where no row stands answers removed:false, tiers:[] and cursor:null — nothing beneath the address is touched, and no refusal is served for an absence.',
-        members: { path: z.unknown().optional().describe('The address of the row to delete: a dense array of string keys and non-negative indices; [] is never writable') },
+          'Delete ONE row at the address and answer status:"committed" with removed, the tiers the row stood at, and the change\'s cursor. An omitted tier is "file", the durable one. An address where no row stands AT THAT TIER answers removed:false, tiers:[] and cursor:null — nothing beneath the address is touched, and no refusal is served for an absence. A root a crossing declares is deleted only at its family\'s own tier and is refused reason:"declared-tier" otherwise.',
+        members: {
+          path: z.unknown().optional().describe('The address of the row to delete: a dense array of string keys and non-negative indices; [] is never writable'),
+          tier: z.unknown().optional().describe('The tier to delete AT: "file" (the default), "mem" or "temp"'),
+        },
         run: (surface, args) => surface.delete(args),
       },
       {

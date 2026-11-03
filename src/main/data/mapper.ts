@@ -14,6 +14,8 @@ const SENTENCES: Record<DataRefusalReason, string> = {
   'root-not-writable': 'the empty address names the whole register, which is readable and never writable',
   'volatile-path':
     "the first segment names a volatile tier ('mem.', 'temp.' or 'secure.') and this surface holds the durable profile only",
+  'declared-tier':
+    "the address is a root that a crossing declares, so its tier is the family's and not the caller's",
   'cursor-unknown':
     'the requested cursor lies outside the change window this process retains; re-anchor from the floor it carries',
   'store-unreachable':
@@ -77,13 +79,20 @@ export function refusalLedger(caught: unknown, path?: DataPath): DataLedger {
 }
 
 /** Classify a caught store READ refusal: a container to re-read, an absence to answer, or a ledger
- *  to return. `branch` means the caller then reads the branch (`design.md` §3; `guide §4`). */
+ *  to return. `branch` means the caller then reads the branch (`design.md` §3; `guide §4`).
+ *
+ *  **`TierNotFound` IS AN ABSENCE AND NOT A FAULT** (`D-101`; `guide §5.1`: *"a read narrowed to a tier the key
+ *  no longer holds refuses `TierNotFound`"*). While the tier was nobody's, no arm of this module could ask a
+ *  narrowed read and the status stayed in the escape arm; now that a caller may name the tier, a reading that
+ *  finds nothing AT THAT TIER is the same answer as a reading that finds nothing: `absent`. Serving it as
+ *  `store-refused` would report a lawful question as a store fault — and `delete`'s own probe answers the empty
+ *  receipt off this arm, so the two verbs would disagree about one absence if it did not. */
 export function readOutcome(
   caught: unknown,
 ): { kind: 'branch' } | { kind: 'absent' } | { kind: 'ledger'; ledger: DataLedger } {
   const status = statusOf(caught)
   if (status === 'ReadTargetIsBranch') return { kind: 'branch' }
-  if (status === 'AddressNotFound' || status === 'LeafHasNoDownstream') return { kind: 'absent' }
+  if (status === 'AddressNotFound' || status === 'LeafHasNoDownstream' || status === 'TierNotFound') return { kind: 'absent' }
   return { kind: 'ledger', ledger: refusalLedger(caught) }
 }
 
