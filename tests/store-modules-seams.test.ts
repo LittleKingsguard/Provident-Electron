@@ -82,6 +82,28 @@ import { buildMenuTemplate, normalizeCatalog, selectCatalogItem } from '../src/s
 
 const SRC_ROOT = join(process.cwd(), 'src')
 
+/** **COMMENT LINES ELIDED — THE DISCIPLINE'S OWN READING** (`AGENTS.md`): an absence assertion reads CODE, never prose, so
+ *  a row that explains what it deleted must not measure its own explanation. `//` lines and `/** … *\/` block lines are
+ *  dropped and every other line is kept verbatim. The positive control sits at each call site. */
+function elideComments(text: string): string {
+  let inBlock = false
+  const kept: string[] = []
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim()
+    if (inBlock) {
+      if (trimmed.includes('*/')) inBlock = false
+      continue
+    }
+    if (trimmed.startsWith('/*')) {
+      if (!trimmed.includes('*/')) inBlock = true
+      continue
+    }
+    if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue
+    kept.push(line)
+  }
+  return kept.join('\n')
+}
+
 function readSrc(relative: string): string {
   return readFileSync(join(SRC_ROOT, relative), 'utf8')
 }
@@ -361,14 +383,25 @@ interface WirePaneGeometry {
   readonly bounds: { readonly min: number; readonly max: number }
 }
 
+/** ONE ZONE THE SHAPE MAY CARRY (`D-91`): every member optional, `slot` opaque. */
+interface WireZone {
+  readonly id: string
+  readonly slot?: unknown
+  readonly distance?: number
+  readonly size?: number
+  readonly display?: string
+}
+
 interface PaneShapeDouble {
   readonly client: ViewClient
   readonly paneCalls: Array<{ readonly id: string; readonly geometry: unknown }>
   readonly reads: () => number
   readonly registrations: () => number
+  /** **THE ZONE FAMILY AS THE SHAPE HOLDS IT** (`D-92`): the composition's four zone reads answer here and nowhere else. */
+  readonly zones: () => readonly WireZone[]
 }
 
-function paneShapeOf(panes: readonly WirePaneGeometry[] = []): PaneShapeDouble {
+function paneShapeOf(panes: readonly WirePaneGeometry[] = [], zones: readonly WireZone[] = []): PaneShapeDouble {
   const paneCalls: Array<{ id: string; geometry: unknown }> = []
   const handlers: Array<() => void> = []
   let readCount = 0
@@ -376,8 +409,8 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = []): PaneShapeDouble {
     status: 'committed',
     panes: panes.map((pane) => ({ id: pane.id, size: pane.size, bounds: { min: pane.bounds.min, max: pane.bounds.max } })),
     focus: { entries: [], activeId: null },
-    // THE THIRD FAMILY'S DECLARED EMPTY ARM (D-91): the reading carries all three, and this double drives the panes.
-    zones: [],
+    // THE THIRD FAMILY (`D-91`, WIRED `D-92`): the reading carries all three, and a row that wants a zone hands it here.
+    zones: zones.map((zone) => ({ ...zone })),
     source: { panes: 'record', focus: 'record', zones: 'record' },
   })
   const member = {
@@ -407,6 +440,7 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = []): PaneShapeDouble {
     paneCalls,
     reads: (): number => readCount,
     registrations: (): number => handlers.length,
+    zones: (): readonly WireZone[] => zones,
   }
 }
 
@@ -962,36 +996,42 @@ describe('§3.1 M-rows — the VERIFICATION half on the LANDED composition (M-PD
     expect(structurallyEqual(canonicalOf(surface.boundsOf({ id: 'pane-x' }, 'pane-x')), canonicalOf({ min: 0, max: 200 }))).toBe(true)
   })
 
-  test('M-PDV-3 — the candidate read answers the stored OPAQUE slot + the stored distance; a MISSING slot answers [] (§2.5 items 1/2, pane-drag §2.1 B)', () => {
+  test('M-PDV-3 — the candidate read answers the SHAPE\'S `[\'zones\']` family: the recorded OPAQUE slot + the recorded distance by identity, and a zone the family does not name answers [] (`D-92`: the drag tier\'s zone pair is the record\'s now, so the FROZEN STORE is no longer read for it either — pane-drag §2.1 B)', () => {
     const double = createRecordingStoreDouble()
     const opaque = { slotToken: 'opaque-caller-value' }
-    double.commit('mem.layout.zone.zone-1.slot', opaque, { onRepeat: 'edit' })
-    double.commit('mem.layout.zone.zone-1.distance', 37, { onRepeat: 'edit' })
-    // THE BACKING RECORD (`D-88`): the ZONE references stay the frozen store\'s — they are the drag tier\'s and not the
-    // shape\'s — so the composition is handed both halves.
-    const { surface } = surfaceOver(double, paneShapeOf())
+    const shape = paneShapeOf([], [{ id: 'zone-1', slot: opaque, distance: 37 }])
+    const { surface } = surfaceOver(double, shape)
     const answer = surface.candidatesFor({ zoneId: 'zone-1' })
-    expect(double.readLog).toContain('mem.layout.zone.zone-1.slot')
-    expect(double.readLog).toContain('mem.layout.zone.zone-1.distance')
     expect(answer.length).toBe(1)
-    expect(answer[0]?.candidate).toBe(opaque) // OPAQUE AS STORED, by identity
+    expect(answer[0]?.candidate).toBe(opaque) // OPAQUE AS RECORDED, by identity
     expect(answer[0]?.distance).toBe(37)
+    // **NOT ONE STORE READ**: the frozen store\'s two zone tiers are not consulted, which is the change this row now names.
+    expect(double.readLog.filter((n) => n.includes('layout.zone'))).toEqual([])
     const missing = createRecordingStoreDouble()
+    // A ZONE THE FAMILY DOES NOT NAME — the creation repair\'s placeholder is the family that names no zone (`D-91`).
     expect(surfaceOver(missing, paneShapeOf()).surface.candidatesFor({ zoneId: 'zone-x' })).toEqual([])
   })
 
-  test('M-PDV-4 — the composition owns EXACTLY ONE subscriber (the tier-qualified temp.drag form) and registers NOTHING on the shape — the delivery is the client\'s ONE push, not a second consumer here (§2.5 items 1/2, pane-drag §2.3 item 2; D-88)', () => {
+  test('M-PDV-4 — the composition registers NOTHING AT ALL, on the store or on the shape: the render turn is a surface member the shape\'s ONE delivery calls, which is the `subscribe(\'temp.drag\', …, {subtree:true})` registration\'s successor (`D-92`; pane-drag §2.3 item 2, re-grain of `D-88`\'s "exactly one subscriber")', () => {
     const double = createRecordingStoreDouble()
     const shape = paneShapeOf()
-    surfaceOver(double, shape)
-    expect(double.subscriptions.length).toBe(1)
-    expect(double.subscriptions[0]?.name).toBe('temp.drag')
-    expect(double.subscriptions[0]?.subtree).toBe(true)
-    // nothing registered on ANY store reference: the shape's family is not on the frozen store any more.
-    expect(double.subscriptions.some((s) => s.name.startsWith('mem.layout') || s.name.startsWith('file.settings.pane'))).toBe(false)
-    // AND NOTHING REGISTERED ON THE SHAPE EITHER — the client owns its one subscription, so a second registration here would
-    // be a second consumer of one push (the count `D-88` re-grained the registers to).
-    expect(shape.registrations(), 'the composition takes no subscription of its own').toBe(0)
+    const { surface } = surfaceOver(double, shape)
+    // ZERO SUBSCRIPTIONS ON THE STORE — the temp-preview registration is DELETED, not narrowed.
+    expect(double.subscriptions, 'the composition takes no store subscription of any kind').toEqual([])
+    // AND ZERO ON THE SHAPE: a second `onChanged` registration would be a second consumer of one push and a second read
+    // per delivery, so the client owns the only one.
+    expect(shape.registrations(), 'the composition takes no subscription on the shape either').toBe(0)
+    // THE TURN EXISTS AND IS DRIVEN BY THE DELIVERY: the member is on the surface and it renders the delivered family.
+    const calls: Array<{ size: unknown; display: unknown }> = []
+    const withSink = createPaneDrag(
+      { frozen: double, view: paneShapeOf([], [{ id: 'zone-1', size: 320, display: 'block' }]).client },
+      { layout: (zoneId: string, size: unknown, display: unknown): void => { void zoneId; calls.push({ size, display }) } },
+    ) as PaneDragSurface
+    withSink.renderZone()
+    expect(calls).toEqual([{ size: 320, display: 'block' }])
+    // the surface the row composed above has the member too, and it answers without a sink.
+    expect(typeof surface.renderZone).toBe('function')
+    expect(() => surface.renderZone()).not.toThrow()
   })
 })
 
@@ -1301,12 +1341,14 @@ describe('§3.3 invariants (I-rows)', () => {
     }
   })
 
-  test('I-PDV-1 — one read authority per pane/zone reference: the landed store-backed composition\'s, and nothing else (F-PDV-1\'s complement, §2.5 items 1/3)', () => {
+  test('I-PDV-1 — one read authority per pane/zone reference: the SHAPE\'S, for BOTH families, and nothing else (F-PDV-1\'s complement, §2.5 items 1/3; `D-92`)', () => {
     const double = createRecordingStoreDouble()
-    double.commit('mem.layout.zone.zone-1.slot', 'slot-a', { onRepeat: 'edit' })
-    const { surface } = surfaceOver(double, paneShapeOf())
+    const shape = paneShapeOf([], [{ id: 'zone-1', slot: 'slot-a' }])
+    const { surface } = surfaceOver(double, shape)
     surface.candidatesFor({ zoneId: 'zone-1' })
-    expect(double.readLog.filter((n) => n === 'mem.layout.zone.zone-1.slot').length).toBe(1)
+    // **ZERO STORE READS FOR THE ZONE**, which is the authority claim in its strongest form: the store is not consulted.
+    expect(double.readLog.filter((n) => n.includes('layout.zone')), 'the record\'s zone family is the one authority').toEqual([])
+    expect(shape.zones()).toEqual([{ id: 'zone-1', slot: 'slot-a' }])
     // the tree scan half (S-PDV-1 drives the no-second-read-in-the-tree claim)
     const others = srcFiles().filter((f) => f.endsWith('renderer.ts') === false)
     for (const f of others) {
@@ -1470,14 +1512,24 @@ describe('§3.4 S-rows — the verification half (S-PDV-1)', () => {
     for (const needle of ['view.paneSizeOf(', 'view.paneBoundsOf(']) {
       expect(region.includes(needle), `composition must read the shape through ${needle}`).toBe(true)
     }
-    // THE DRAG TIER'S ZONE PAIR IS STILL THE STORE'S, still through the tierRead route.
-    for (const needle of ['layout.zone.${id}.slot', 'layout.zone.${id}.distance']) {
-      expect(region.includes(needle), `composition must read ${needle}`).toBe(true)
+    // **THE DRAG TIER'S ZONE PAIR LEFT THE STORE TOO (`D-92`)**: the composition reads the zone family through the SHAPE's
+    // `zoneOf`, and NOT ONE `layout.zone.*` spelling survives in it.
+    expect(region.includes('zoneOf('), 'the composition must read the shape\'s zone family through `zoneOf(').toBe(true)
+    for (const retired of ['layout.zone.${id}.slot', 'layout.zone.${id}.distance']) {
+      expect(region.includes(retired), `the zone reads left the store: ${retired} must not appear in the composition`).toBe(false)
     }
     // **THE ASSERTION THAT WOULD FAIL IF THE SWAP WERE REVERTED**: the pane tier spelling must NOT be in the composition.
     for (const retired of ['layout.pane.${id}.size', 'layout.pane.${id}.bounds']) {
       expect(region.includes(retired), `the pane read left the store: ${retired} must not appear in the composition`).toBe(false)
     }
+    // **AND THE `tierRead` HELPER ITSELF IS DELETED** — the one route all six reads used to take into the frozen store. The
+    // assertion reads COMMENT-ELIDED code, because this row's own explanation of the deletion names the helper (an absence
+    // assertion that a prose mention could fail is not an assertion about code at all).
+    const regionCode = elideComments(region)
+    expect(regionCode.includes('tierRead'), 'the tier-qualified store read helper is gone from the composition').toBe(false)
+    // the positive control: the elider keeps CODE and drops PROSE, so the assertion above is not vacuous.
+    expect(elideComments("const tierRead = 1").includes('tierRead')).toBe(true)
+    expect(elideComments("/** tierRead */ const x = 1").includes('tierRead')).toBe(false)
     // every layout read in the file lives INSIDE the composition region
     const textLines = text.split('\n')
     for (const line of textLines) {
@@ -1634,15 +1686,18 @@ describe('§4.2 item 4 — REAL-STORE integration drives', () => {
     expect(readback.found).toBe(false)
   })
 
-  test('REAL-STORE (M-PDV-1/M-PDV-3) — the LANDED composition on the HARDWARE store for the drag tier and on the SHAPE for the panes: the zone reads answer what the store committed, the pane reads answer what the shape delivered, and neither crosses into the other', () => {
+  test('REAL-STORE (M-PDV-1/M-PDV-3) — the LANDED composition on the SHAPE for BOTH families, driven over the HARDWARE store: every read answers what the shape delivered and NOT ONE answers the store\'s retired spellings (`D-92`)', () => {
     const store = createRealStore()
     const opaque = { token: 'opaque' }
+    // THE STORE CARRIES THE RETIRED SPELLINGS, AND THE READS MUST IGNORE THEM — that is the row's bite: a composition that
+    // still read the store for either family would answer these figures and redden.
     store.commit('mem.layout.zone.zone-1.slot', opaque, { onRepeat: 'edit' })
     store.commit('mem.layout.zone.zone-1.distance', 37, { onRepeat: 'edit' })
-    // THE PANES ON THE SAME STORE, IN THE RETIRED SPELLING — committed and then deliberately NOT what the read answers: the
-    // shape is the panes' authority, so a composition that still read the store here would answer 320 and redden this row.
     store.commit('mem.layout.pane.pane-a.size', 320, { onRepeat: 'edit' })
-    const shape = paneShapeOf([{ id: 'pane-a', size: 240, bounds: { min: 0, max: 400 } }])
+    const shape = paneShapeOf(
+      [{ id: 'pane-a', size: 240, bounds: { min: 0, max: 400 } }],
+      [{ id: 'zone-1', slot: opaque, distance: 37 }],
+    )
     const surface = createPaneDrag({ frozen: store as unknown as Record<string, unknown>, view: shape.client }, {}) as PaneDragSurface
     expect(surface.startSizeOf({ id: 'pane-a' }, 'pane-a'), 'the SHAPE answers, not the store\'s stale spelling').toBe(240)
     expect(surface.defaultSizeFor({ id: 'pane-a' }, 'pane-a')).toBe(240)

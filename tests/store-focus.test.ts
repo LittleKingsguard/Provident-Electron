@@ -732,37 +732,58 @@ function noTierOneWriteProbe(): { readonly ok: boolean; readonly detail: string 
  * untouched by this re-grain.
  * ───────────────────────────────────────────────────────────────────────────── */
 
-/** THE DECLARED RECORD REGION of `renderer.ts` — `T2` `§5.1` item 1's *"tab-record region"*:
- *  the slice between the unit's OWN contract header (`U-STORE-TABS-RECORD` +
- *  `store-tabs-record.md`) and the `async function main` boundary. The region is named by the
- *  unit's own contract citation, so a rewrite of its content does not move its boundary. */
-function tabRecordRegion(): string {
+/** **THE LEGACY RESERVATION'S REGION IN `renderer.ts` — RE-GRAINED BY `D-92`, AND IT IS THE WHOLE OF WHAT IS LEFT.**
+ *  The frozen store's tab-record region is GONE from the renderer: the record lives at `['tabs']` on the crossing, its
+ *  names are the crossing's, and the wiring reads `src/renderer/tabs-client.ts`'s reading. The ONE `file.tabs` spelling
+ *  that survives is `TABS_LEGACY_LANDING_NAME` — the reserved-entry declaration row handed to the frozen store's
+ *  construction, kept whole because the construction itself is the next pass's deletion. So the region is that ONE
+ *  declaration block, located by its own name. */
+function legacyReservationRegion(): string {
   const src = rendererSrc()
-  const end = src.indexOf('async function main')
-  const marker = src.indexOf('THE TAB-RECORD WIRING REGION')
-  if (marker < 0 || end < 0 || end <= marker) return ''
-  return src.slice(marker, end)
+  const at = src.indexOf('const TABS_LEGACY_LANDING_NAME')
+  if (at < 0) return ''
+  const close = src.indexOf(']', at)
+  if (close < 0) return ''
+  return src.slice(at, close + 1)
 }
 
-/** THE ATTRIBUTION PROBE (S22-1's re-grain): every `file.tabs` reference in the wiring is
- *  `T2`'s own DECLARED landing — inside the declared record region — and NONE is outside it. */
+/** THE ATTRIBUTION PROBE (S22-1's second re-grain, `D-92`): **the wiring carries EXACTLY ONE `file.tabs` reference, and
+ *  it is the FROZEN STORE'S LEGACY RESERVATION ROW** — a declaration kept only because the store is still constructed, on
+ *  a path nothing reads. Every other `file.tabs` spelling left this file with the record, so a pass that put one back
+ *  outside that block reddens here. */
 function tabsRecordAttribution(): { readonly ok: boolean; readonly detail: string } {
   const src = rendererSrc()
-  const region = tabRecordRegion()
+  const region = legacyReservationRegion()
   if (region === '') {
-    return { ok: false, detail: 'the declared record region is not locatable (no `THE TAB-RECORD WIRING REGION` header before `main()`) — T2 §5.1 item 1 names that region' }
+    return { ok: false, detail: 'the legacy reservation row is not locatable (`const TABS_LEGACY_LANDING_NAME`) — it is the one `file.tabs` spelling the row asserts, so an absent row is a FAILURE of the attribution' }
   }
   const regionStart = src.indexOf(region)
-  const references = [...src.matchAll(/file\.tabs/g)].map((m) => m.index ?? -1)
+  // **THE COUNT READS COMMENT-ELIDED CODE** (`AGENTS.md`'s elision discipline): every reference this row measures is a
+  // STRING LITERAL in code, and the docblocks above — which explain what was deleted — quote the same spellings in
+  // backticks. A count over the raw bytes would measure this row's own explanation, so the elider runs first and the
+  // references are counted in the code it leaves. The positive control: the elider keeps code and drops prose.
+  const code = commentElided(src)
+  expect(code.includes("'file.tabs.landing'"), 'the attribution\'s own subject survives comment elision').toBe(true)
+  expect(commentElided("// 'file.tabs.order'").includes('file.tabs'), 'and a prose mention does not').toBe(false)
+  const references = [...code.matchAll(/['"]file\.tabs/g)].map((m) => m.index ?? -1)
+  const regionInCode = code.indexOf(region)
   if (references.length === 0) {
-    return { ok: false, detail: 'the wiring carries NO `file.tabs` reference — T2 §5.1 item 1 declares the record landed HERE; an absent landing is a FAILURE of the attribution this row now asserts' }
+    return { ok: false, detail: 'the wiring carries NO `file.tabs` reference — the legacy reservation row is the one the row asserts, and the store it declares into still stands until the deletion pass' }
   }
-  const outside = references.filter((at) => at < regionStart || at >= regionStart + region.length)
+  if (references.length !== 1) {
+    return { ok: false, detail: `the wiring carries ${references.length} \`file.tabs\` references; after \`D-92\` there is EXACTLY ONE — the legacy reservation row — and the rest of the record's names are the crossing's` }
+  }
+  if (regionInCode < 0) {
+    return { ok: false, detail: 'the legacy reservation row is not locatable in COMMENT-ELIDED code — the row was found only in prose' }
+  }
+  const outside = references.filter((at) => at < regionInCode || at >= regionInCode + region.length)
   if (outside.length > 0) {
-    return { ok: false, detail: `a \`file.tabs\` reference sits OUTSIDE the declared record region (offsets ${outside.join(', ')}) — ` +
-      'T2 §5.1 item 1 licenses the tab-record region ONLY, and its item 1 pins that no byte of the focus region moves' }
+    return { ok: false, detail: `a \`file.tabs\` reference sits OUTSIDE the legacy reservation's block (offsets ${outside.join(', ')}) — the record's names are the crossing's, and the renderer spells none of them outside that legacy row` }
   }
-  return { ok: true, detail: `${references.length} \`file.tabs\` reference(s), ALL inside T2 §5.1 item 1's declared record region` }
+  if (!src.slice(0, regionStart).includes('GONE WITH THE STORE')) {
+    return { ok: false, detail: 'the legacy reservation row is not NAMED as legacy — a reader must be told the row is the store\'s and not the record\'s' }
+  }
+  return { ok: true, detail: `${references.length} \`file.tabs\` reference, inside the legacy reservation row's own block and named as the frozen store's` }
 }
 
 /** S22-1's POSITIVE CONTROL — the same attribution instrument against a subject that puts the
@@ -975,7 +996,7 @@ describe('H1 U-STORE-FOCUS — §2.2 THE AUTHORITY AND THE DIVERGENCE', () => {
     const attribution = tabsRecordAttribution()
     expect(attribution.ok, `T2 §5.1 item 1 — ${attribution.detail}`).toBe(true)
     // THE POSITIVE CONTROLS: an undeclared path and a DENIED path each FAIL the attribution.
-    const declaredRegion = tabRecordRegion()
+    const declaredRegion = legacyReservationRegion()
     expect(
       tabsRecordAttributionFires(ATTRIBUTION_OUTSIDE_FIXTURE, declaredRegion),
       'T2 §5.1 item 2 — a `file.tabs` reference in `src/shared/demo-envelope.ts` is on an UNDECLARED path (that file is licensed for its two page nodes only) and MUST redden',

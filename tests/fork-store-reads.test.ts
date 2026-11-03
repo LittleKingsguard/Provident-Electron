@@ -854,11 +854,15 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
       wiringReads,
       `S-9 — the tier-qualified reads found in this file are DISPOSITIONED as \`§2.4\` item 2's conforming shape (the read's product is a graph-committed/carried value). On this tree the set is ${JSON.stringify(wiringReads)} (measured, not assumed); a hit that did NOT feed a commit would have to be dispositioned by hand, not by this filter.`,
     ).toEqual(wiringReads.filter((h) => /tiers\s*\[/.test(h)))
-    // AND the site the disposition is ABOUT is asserted to EXIST (so the empty set
-    // above is "the closure spells its tier handle differently", never "there is no
-    // drag closure"): `tierRead` is the renderer's one tier-reading closure and it
-    // feeds the commit turns.
-    expect(raw, 'S-9 — the disposition is over a REAL site: the renderer\'s `tierRead` closure exists (`§2.4` item 2\'s commit-feeding read), so the empty tier-qualified set above is a SPELLING result, not an absent subject').toMatch(/const tierRead = \(tier: string, name: string\)/)
+    // **⟶ RE-GRAINED BY `D-92`: THE `tierRead` CLOSURE IS DELETED, AND THE SITE THE DISPOSITION IS ABOUT IS ITS
+    // SUCCESSOR.** The frozen store's tier-qualified read was the renderer's ONE route into its own store; the zone family
+    // moved to the crossing (`['zones']`, `D-91`) and the composition reads it through the shape's `zoneOf` — so there is no
+    // tier read left to disposition, and the row's empty set is now "there is no such site", which this assertion makes a
+    // MEASURED absence rather than a scanner blind spot. The comment elision is the discipline's: an absence assertion
+    // reads CODE, and this block's own prose names the deleted helper.
+    const elided = raw.replace(/^\s*(\/\/|\*|\/\*).*$/gm, '')
+    expect(elided.includes('tierRead('), 'S-9 — the tier-qualified store read closure is GONE from the renderer, measured over comment-elided code').toBe(false)
+    expect(raw, 'S-9 — and the site that replaced it exists, so the absence above is over a REAL subject: the shape\'s zone read').toMatch(/const zoneOf = \(id: string\)/)
     // **⟶ RE-GRAINED BY `D-89`**: the closure's product reached the frozen store's TWO commit spellings; it reaches the
     // crossing's ONE `commitPane` route now (`D-88`), which is still "the graph carries its result" and is still the
     // conforming shape — but the spelling this assertion looks for is the route's, not the tier's.
