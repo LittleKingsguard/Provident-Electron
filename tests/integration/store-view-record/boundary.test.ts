@@ -344,6 +344,15 @@ const DECLARED_SCOPE: readonly string[] = [
   //    pass adds a test file. `strata/pending.md` stays `39` and `strata/modules.json` `21` rows — the map's
   //    `central-data` row already claims `tests/integration/central-data/` as a directory and no `endpoints` figure
   //    moves, so this pass writes neither.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-102` — THE MESSAGE LOG, MEASURED AT LAST. A passing `write` is handed `{op, watched, triggered}` and nothing else, and
+  //    the package DROPS the entries at the handoff, so the row that would have carried them (`D-82`'s `V4`) is BLOCKED on a
+  //    package release rather than landed — and NO `src/` path, no test row and no test file moves with it. **THE ONE PATH NOT
+  //    ALREADY DECLARED ABOVE IS THE FINDING'S HOME**: `CD-F3` is filed in the data unit's own record, which `D-5`/`D-52` make the
+  //    owner of an upstream-owned finding, and it is named here rather than admitted by a prefix like every other entry.
+  //    `strata/decisions.md` (the row), `strata/pending.md` (row `6`) and this file are already declared above; `strata/brief.md`
+  //    and `strata/marks.json` are DELIBERATELY ABSENT — no count moves and no test file is added, so no figure and no marker does.
+  'strata/records/central-data-management-unit.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
