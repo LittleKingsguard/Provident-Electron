@@ -248,6 +248,55 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `srcTypeScriptFiles` `50`, `mapRows` `21`, `126` test files), with `strata/pending.md` untouched at `39` because
   //    `D-96`'s `overlay` blocker is not a prose defect and `strata/records/store-tabs-record-unit.md` untouched at exactly
   //    `40`. This block adds THREE paths and no second spelling of one already in the union.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-100` — THE SUITE'S INPUTS BECOME CHECKOUT-VISIBLE: a fresh clone of this branch ran RED, because `D-2` moved
+  //    the gate corpus under `archive/`, `.gitignore` had excluded that path since the initial commit, and `D-8`'s sweep
+  //    had then re-pointed the test rows that read it. **THE FIX IS TWO PATHS PLUS THE THIRTY-ONE CORPUS FILES THE SUITE
+  //    ACTUALLY READS**, and every one of the thirty-three is named here rather than admitted by a prefix:
+  //    `.gitignore` itself (the negation block that admits them and nothing else), `docs/L1/store-tabs-record.md` (the
+  //    retired-driver paragraph corrected in that document's own voice), and then the read set — the corpus root's two
+  //    files, all seven ACTIVE decision shards, the one skill `readdirSync` walks, and the twenty-one `specs/` contracts
+  //    that were re-pointed at `D-8`. **THE OTHER 190 CORPUS FILES ARE NOT HERE BECAUSE THEY ARE NOT WRITTEN**: they stay
+  //    ignored, and a path this union does not name is one `git status` reports the moment a pass touches it.
+  '.gitignore',
+  'docs/L1/store-tabs-record.md',
+  'archive/gate-corpus-2026-10-29/decisions.md',
+  'archive/gate-corpus-2026-10-29/FORKER.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-data-ownership-and-tiers.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-engine-drift-and-registers.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-engine-pin-and-divergence.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-mcp-engine-and-process.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-projection-and-store-facility.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-store-and-package-binding.md',
+  'archive/gate-corpus-2026-10-29/decisions/ACTIVE-tier4-and-secure-graph.md',
+  'archive/gate-corpus-2026-10-29/skills/process-guardrails.md',
+  'archive/gate-corpus-2026-10-29/specs/container.md',
+  'archive/gate-corpus-2026-10-29/specs/container-review.md',
+  'archive/gate-corpus-2026-10-29/specs/focus-model.md',
+  'archive/gate-corpus-2026-10-29/specs/focus-model-review.md',
+  'archive/gate-corpus-2026-10-29/specs/focus-model-adoption-dossier.md',
+  'archive/gate-corpus-2026-10-29/specs/focus-tool.md',
+  'archive/gate-corpus-2026-10-29/specs/focus-tool-review.md',
+  'archive/gate-corpus-2026-10-29/specs/focus-tool-adoption-dossier.md',
+  'archive/gate-corpus-2026-10-29/specs/fork-store-reads.md',
+  'archive/gate-corpus-2026-10-29/specs/gsession.md',
+  'archive/gate-corpus-2026-10-29/specs/gutter-ui.md',
+  'archive/gate-corpus-2026-10-29/specs/menulib.md',
+  'archive/gate-corpus-2026-10-29/specs/menulib-review.md',
+  'archive/gate-corpus-2026-10-29/specs/overlay.md',
+  'archive/gate-corpus-2026-10-29/specs/overlay-review.md',
+  'archive/gate-corpus-2026-10-29/specs/relocate.md',
+  'archive/gate-corpus-2026-10-29/specs/store-core-module-store-core-graph-surface.md',
+  'archive/gate-corpus-2026-10-29/specs/theme.md',
+  'archive/gate-corpus-2026-10-29/specs/theme-review.md',
+  'archive/gate-corpus-2026-10-29/specs/theme-control.md',
+  'archive/gate-corpus-2026-10-29/specs/user-flow-audit.md',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE — `strata/decisions.md` (the row),
+  //    `strata/brief.md` (three of §6's sentences) and this file — so no entry is added for them. **ONE PATH IS
+  //    DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/marks.json`, because no test file is added or removed
+  //    and no marker moves, so `strata-marks.mjs check` stays green UNREGENERATED. `strata/pending.md` stays `39`,
+  //    `strata/next-steps.md` `29`, `strata/proposals.md` `13`, `strata/modules.json` `21` rows and
+  //    `strata/records/store-tabs-record-unit.md` exactly `40` — this pass writes none of them.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

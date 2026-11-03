@@ -59,8 +59,12 @@ observation (the three untaken precedents are the gutter battery's `U-3`/`U-4`/`
 eight U-rows and requires `summary.total` to equal the row count, so the matrix states two and says so rather than
 padding to a shape.
 
-The driver half — the store-level statements each row's `post` asserts — is `tests/store-tabs-record-live.mjs`, which
-runs by a literal command line and takes no `scripts` key (`store-tabs-record`'s row; D-37).
+The driver half — the store-level statements each row's `post` asserts — **is not a live driver at this head, and this
+document said it was.** `tests/store-tabs-record-live.mjs` was the unit's pointer-carrying driver, and it is **retired whole
+at `D-93`**: run, it prints `RETIRED AT D-93; THIS FILE TAKES NO READING` and exits `2`; it takes no `scripts` key because
+no key names it, and nothing runs it — the map claim that once sat on the tab record's row was re-homed by `D-99` to the
+dispositions row carrying its two siblings. What answers a row's `post` across a real process boundary instead is
+`npm run crossings` — the `tests/e2e/store-crossings/` leg, and the instrument `D-93`'s two retirements left owed (D-94, D-95).
 
 ## 4. What this document is not
 
