@@ -1167,7 +1167,43 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     // was a store-shaped turn written against the frozen graph store's `file.settings.theme.token` address; it had NO live
     // consumer under `src/`, and the address space it addressed is deleted with `src/renderer/store-core-graph.ts`. The set is
     // now the TWO PRE-DECLARED paths and nothing else — a STRICTER reading than the amended one, not a looser one.
-    const X5_EXEMPT_PATHS: readonly string[] = ['src/shared/demo-envelope.ts', 'src/renderer/renderer.ts']
+    // ⟶ **RE-GRAINED 2026-11-03 (`D-97`) — THE NAME VOCABULARY MOVES TO A CLOSED SET WITH ITS MEMBERS NAMED, AND THE
+    // MACHINERY VOCABULARY IS TIGHTENED TO ZERO OVER ALL OF `src/**`.** The instruction this pass carries (*"No boot time
+    // declarations — Use constraint repairs"*) makes the appearance setting a DATA FLOW of the app: the crossing's
+    // `['theme']` family, its declaration, its route and the record that carries the mechanism's answer are, by ruling, part
+    // of `src/**` — so "no `src/**` file outside the mandated control names this vocabulary" is FALSE of this head, and the
+    // row's own remedy sentence applies: *"a FAIL here means a theme surface already exists OUTSIDE those exempt paths and
+    // this unit's DENIED list must be re-derived."* **THE RE-GRAIN IS A CLOSED SET WITH ONE REASON PER MEMBER, and it is
+    // bought with a TIGHTENING, not a relaxation**: the AMBIENT-APPEARANCE vocabulary — the media-query, attribute-write and
+    // OS-surface tokens that are this row's real subject — is now scanned over EVERY `src/**/*.ts` file WITH NO EXEMPTION AT
+    // ALL (the as-filed form applied it to `index.html` alone), and reads ZERO. So the row keeps its teeth: no file in this
+    // tree may carry the browser appearance machinery, and no file outside the closed set may even carry the NAME.
+    const X5_NAME_EXEMPT_PATHS: readonly string[] = [
+      // THE MANDATED CONTROL'S OWN PAIR, as filed: the authored card and the caller-held attribute-name role.
+      'src/shared/demo-envelope.ts',
+      'src/renderer/renderer.ts',
+      // THE APPEARANCE FAMILY OF THE VIEW RECORD (`D-97`), one path per layer of the flow it implements:
+      'src/main/view-record/index.ts', // the address, the pair's id and the derivation the record stores
+      'src/main/view-surface/index.ts', // the surface's read answer and its one shape-armed route
+      'src/shared/view-channels.ts', // the channel constant, single-sourced
+      'src/shared/view-shape.ts', // the record's vocabulary, one spelling for both realms
+      'src/renderer/view-client.ts', // the client's synchronous read and its one route
+      'src/main/preload.ts', // the bridge member's main half
+      'src/renderer/secure-panels.ts', // and its renderer half, in lockstep
+      'src/main/main.ts', // the boot's batch and the route's handler
+    ]
+    const X5_EXEMPT_PATHS = X5_NAME_EXEMPT_PATHS
+    // A SET CLAIM: a duplicate path inflates the exemption without widening it.
+    expect(new Set(X5_NAME_EXEMPT_PATHS).size, 'X-5 — the declared set carries no duplicate path').toBe(X5_NAME_EXEMPT_PATHS.length)
+    // AND EVERY MEMBER IS MEASURED, so the set cannot accumulate a dead entry: a named path that stopped carrying the
+    // vocabulary reddens here rather than sitting in the exemption as a licence for nothing.
+    for (const exempt of X5_NAME_EXEMPT_PATHS) {
+      const text = readFileSync(join(ROOT, exempt), 'utf8')
+      expect(
+        [t('theme'), t('appearance'), t('dark')].some((token) => scanForToken(text, token, false)),
+        `X-5 — the declared member ${exempt} really carries the vocabulary it is exempted for`,
+      ).toBe(true)
+    }
     const x5Exempt = (p: string): boolean => X5_EXEMPT_PATHS.some((e) => p === join(ROOT, e))
     const exemptedReads: string[] = []
     const x5Scan = (p: string, src: string, tokens: readonly string[]): string[] => {
@@ -1184,6 +1220,18 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
       else hits.push(...found)
     }
     readFile(join(ROOT, 'src', 'renderer', 'index.html'))
+    // ⟶ **THE TIGHTENING (`D-97`)**: the AMBIENT-APPEARANCE vocabulary — media query, attribute-write, colour-scheme — is
+    // scanned over EVERY `src/**/*.ts` file WITH NO EXEMPTION AT ALL, and it must read ZERO. This is the half of the as-filed
+    // row that no ruling moved: the browser's appearance machinery may not be reached from this tree, and this pass introduces
+    // none of it (the crossing's record carries the MECHANISM's answer and reads no environment — the claim is omitted, which
+    // is `D-97`'s own measurement).
+    const machineryVocabulary = [t('matchMedia'), t('prefers-color-scheme'), t('data-theme'), t('color-scheme')]
+    const machineryHits: string[] = []
+    for (const p of srcTsFiles()) machineryHits.push(...x5Scan(p, readFileSync(p, 'utf8'), machineryVocabulary))
+    expect(
+      machineryHits,
+      `X-5 (TIGHTENED 2026-11-03 by \`D-97\`: the machinery vocabulary over the WHOLE src/** tree, with NO exemption — the as-filed form applied it to index.html alone) — no src/**/*.ts file may carry the browser's appearance machinery: ${JSON.stringify(machineryHits)}`,
+    ).toEqual([])
     const tsHits: string[] = []
     for (const p of srcTsFiles()) {
       const src = readFileSync(p, 'utf8')
@@ -1283,16 +1331,22 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     // PATH BY NAME, never the tokens, and a SECOND importer is still a FINDING — which the bounded-extension control
     // below measures. The AS-FILED reading and `D-93`'s ("zero importers, not one") are KEPT VISIBLE BESIDE as the form
     // this row reverts to if that import is removed.
-    const ADMITTED_IMPORTER = '.src/renderer/renderer.ts:'
+    // ⟶ **RE-GRAINED 2026-11-03 (`D-97`) — THE IMPORTER SET IS STILL EXACTLY ONE, AND THE ONE IS NOW THE CROSSING.** The
+    // instruction this pass carries (*"No boot time declarations — Use constraint repairs"*) DELETES `D-96`'s drive from
+    // `src/renderer/renderer.ts`, so the mechanism's one in-tree consumer is the view record's `theme-must-stand` repair in
+    // `src/main/view-record/index.ts`, which computes the declaration the record stores. **THE ROW'S CLOSED INTENT IS
+    // UNCHANGED**: the exemption is the PATH BY NAME, a SECOND importer is still a FINDING (the bounded-extension control
+    // below measures it), and the AS-FILED / `D-93` / `D-96` forms are KEPT VISIBLE BESIDE as the forms this row reverts to.
+    const ADMITTED_IMPORTER = '.src/main/view-record/index.ts:'
     const unadmitted = importers.filter((entry) => !entry.startsWith(ADMITTED_IMPORTER))
     const admitted = importers.filter((entry) => entry.startsWith(ADMITTED_IMPORTER))
     expect(
       unadmitted,
-      `R-6 (RE-GRAINED 2026-11-03 by \`D-96\`) — the importer set is EXACTLY ONE, BY NAME: \`src/renderer/renderer.ts\`, the module renderer's appearance declaration drive. A second path importing the mechanism is a FINDING and is named here. The AS-FILED and \`D-93\` forms, KEPT VISIBLE BESIDE: "no src/** path reaches this mechanism … a later importer is a FINDING" (as filed) and "zero importers, not one" (\`D-93\`, after \`src/renderer/theme-store.ts\` was deleted). Measured: ${JSON.stringify(importers)}`,
+      `R-6 (RE-GRAINED 2026-11-03 by \`D-97\`, and by \`D-96\` before it) — the importer set is EXACTLY ONE, BY NAME: \`src/main/view-record/index.ts\`, the crossing's \`theme-must-stand\` repair, where the declaration is COMPUTED and stored. A second path importing the mechanism is a FINDING and is named here. The earlier forms, KEPT VISIBLE BESIDE: "no src/** path reaches this mechanism … a later importer is a FINDING" (as filed), "zero importers, not one" (\`D-93\`, after \`src/renderer/theme-store.ts\` was deleted) and "exactly one, \`src/renderer/renderer.ts\`" (\`D-96\`'s drive, deleted by this pass's instruction). Measured: ${JSON.stringify(importers)}`,
     ).toEqual([])
     expect(
       admitted.length,
-      `R-6 (RE-GRAINED 2026-11-03 by \`D-96\`) — and the ONE admitted importer IS the one measured, so the exemption is a named member rather than a blanket strip: ${JSON.stringify(admitted)}`,
+      `R-6 (RE-GRAINED 2026-11-03 by \`D-97\`, and by \`D-96\` before it) — and the ONE admitted importer IS the one measured, so the exemption is a named member rather than a blanket strip: ${JSON.stringify(admitted)}`,
     ).toBe(1)
     // THE BOUNDED-EXTENSION POSITIVE CONTROL (the licence's positive-control
     // clause: broadening the set BEYOND the one admitted path is a FINDING): the

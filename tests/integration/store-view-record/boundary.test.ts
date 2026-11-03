@@ -183,6 +183,26 @@ const DECLARED_SCOPE: readonly string[] = [
   //    (a test file was added) and `strata/modules.json` (the map claim for it) — so no entry is added for any of them,
   //    and `src/shared/overlay.ts` is NOT written at all: `D-96` records why its consumer is not buildable here.
   'tests/theme-declaration.test.ts',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-97` — THE APPEARANCE FAMILY, AND THE INSTRUCTION *"No boot time declarations — Use constraint repairs"*. **THE ONE
+  //    NEW PATH IS ITS BATTERY**, and every other path this pass writes is ALREADY DECLARED ABOVE — `src/main/view-record/
+  //    index.ts` (the address, the pair and the derivation), `src/main/view-surface/index.ts` and `src/shared/view-channels.ts`
+  //    (the surface's answer and the channel), `src/shared/view-shape.ts` (the record's vocabulary), `src/renderer/
+  //    view-client.ts` (the client's read and route), `src/main/preload.ts` with `src/renderer/secure-panels.ts` (both lockstep
+  //    halves), `src/main/main.ts` (the batch and the handler) and `src/renderer/renderer.ts` (the application that replaces
+  //    `D-96`'s deleted drive) — so no entry is added for any of them. The batteries re-grained in place are named for the
+  //    same reason: `tests/theme.test.ts` and `tests/theme-control.test.ts` (the mechanism's carrier and name censuses),
+  //    `tests/store-modules-seams.test.ts` (the same carrier, three rows), `tests/store-focus.test.ts` and
+  //    `tests/pane-drag-compliance.test.ts` and `tests/integration/store-view-record/client.test.ts` (the crossing doubles
+  //    that now speak the fourth family), `tests/integration/store-view-record/crossing.test.ts` and its `zone-family`
+  //    sibling (the read census and the lockstep pair), `tests/theme-declaration.test.ts` (RE-GRAINED WHOLE onto the
+  //    application) and `tests/gesture-session.test.ts` (the sibling-artifact list gains the view surface module). **AND THE
+  //    CORPUS THIS PASS WRITES IS ALREADY DECLARED TOO** — `strata/decisions.md`, `strata/brief.md`, `strata/marks.json`,
+  //    `strata/modules.json`, `strata/next-steps.md`, `strata/pending.md`, `strata/records/store-tabs-record-unit.md`,
+  //    `docs/L2/view-record/interface.md` and `docs/L3/view-record/design.md` — so this block adds ONE path and no second
+  //    spelling of one already in the union: `B-1`'s set assertion refuses a duplicate, which is how this comment was
+  //    written: the first draft declared six corpus paths twice and the row reddened on it.
+  'tests/integration/store-view-record/theme-family.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

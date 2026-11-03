@@ -40,7 +40,13 @@ import {
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
+  viewThemePlaceholder,
 } from '../../../src/shared/view-shape'
+
+/** **THE APPEARANCE FAMILY'S DECLARED PLACEHOLDER** (D-97), taken from the ONE spelling both realms read rather than typed
+ *  here — the creation repair mints exactly this value and the client's cold shape answers it, so a double that states it
+ *  by hand would be a second spelling of the record the wire is being tested against. */
+const PLACEHOLDER = viewThemePlaceholder()
 
 /** ONE ZONE as the wire carries it (D-91) — the four members the frozen store kept, each optional, `id` the family's key. */
 interface WireZone {
@@ -64,7 +70,7 @@ interface WirePane {
 interface BoundaryDouble {
   readonly member: unknown
   readonly reads: () => number
-  readonly writes: () => readonly { readonly route: 'pane' | 'focus'; readonly args: readonly unknown[] }[]
+  readonly writes: () => readonly { readonly route: 'pane' | 'focus' | 'theme'; readonly args: readonly unknown[] }[]
   readonly registrations: () => number
   readonly withdrawals: () => number
   /** Fire the one push the crossing sends after a committed write. */
@@ -88,14 +94,17 @@ const asBridge = (member: unknown): never => member as never
 function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?: boolean } = {}): BoundaryDouble {
   let reads = 0
   let withdrawals = 0
-  const writes: Array<{ route: 'pane' | 'focus'; args: readonly unknown[] }> = []
+  const writes: Array<{ route: 'pane' | 'focus' | 'theme'; args: readonly unknown[] }> = []
   const handlers: Array<() => void> = []
   let answer: unknown = {
     status: 'committed',
     panes: [{ id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } }],
     focus: { entries: [], activeId: null },
     zones: [],
-    source: { panes: 'record', focus: 'record', zones: 'record' },
+    // **THE FOURTH FAMILY, AT THE PLACEHOLDER THE CREATION REPAIR MINTS** (D-97): a declaration whose `name` is absent,
+    // which is the one record that can be applied nowhere — so a row that drives the appearance family supplies its own.
+    theme: PLACEHOLDER,
+    source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
   }
   let routeAnswer: Promise<unknown> = Promise.resolve({ status: 'committed' })
   let failing = false
@@ -106,6 +115,12 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
     },
     commitFocus: (mirror: unknown): Promise<unknown> => {
       writes.push({ route: 'focus', args: [mirror] })
+      return routeAnswer
+    },
+    // **THE APPEARANCE ROUTE, ON THE MEMBER AND NOT ON THE DOUBLE** (D-97): it records the ACT it was handed — the setting
+    // and the caller-held attribute name — so a row can prove this realm sends no declaration.
+    commitTheme: (token: unknown, attributeName: unknown): Promise<unknown> => {
+      writes.push({ route: 'theme', args: [token, attributeName] })
       return routeAnswer
     },
   }
@@ -129,7 +144,7 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
   return {
     member,
     reads: (): number => reads,
-    writes: (): readonly { readonly route: 'pane' | 'focus'; readonly args: readonly unknown[] }[] => writes,
+    writes: (): readonly { readonly route: 'pane' | 'focus' | 'theme'; readonly args: readonly unknown[] }[] => writes,
     registrations: (): number => handlers.length,
     withdrawals: (): number => withdrawals,
     deliver: (): void => {
@@ -149,7 +164,8 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
       panes,
       focus: { entries: entries as ViewCommittedReading['focus']['entries'], activeId: activeId as ViewCommittedReading['focus']['activeId'] },
       zones: zones as ViewCommittedReading['zones'],
-      source: { panes: 'record', focus: 'record', zones: 'record' },
+      theme: PLACEHOLDER,
+      source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
     }),
   }
 }
@@ -190,7 +206,10 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
     expect(client.paneBoundsOf('pane-b'), 'the pair AS STORED, never a clamped policy').toEqual({ min: 10, max: 400 })
     expect(client.paneSizeOf('pane-never-written'), 'a pane the family does not name answers the measured default').toBe(DEFAULT_PANE_SIZE)
     expect(client.focusState(), 'the mirror as the wire carried it').toEqual({ entries: [{ id: 'a', target: 'page://a' }], activeId: 'a' })
-    expect(client.shape().source, 'the record answered all three families').toEqual({ panes: 'record', focus: 'record', zones: 'record' })
+    expect(
+      client.shape().source,
+      'the record answered all four families — the appearance record included, whose `source` is the crossing\'s own word (D-97)',
+    ).toEqual({ panes: 'record', focus: 'record', zones: 'record', theme: 'record' })
     expect(client.zoneOf('zone-1'), 'and a zone the empty family does not name answers its ABSENCE, not a geometry').toBeNull()
   })
 
@@ -330,7 +349,10 @@ describe('view client · the release, and the arms that are VALUES', () => {
         { id: 'zone-broken', size: 'x' },
         { id: 'zone-opaque', slot: { token: [1, 'two'] }, distance: 37 },
       ],
-      source: { panes: 'record', focus: 'record', zones: 'record' },
+      // the appearance record is the fourth REQUIRED member (D-97), and this row is about the three that admit member by
+      // member — so it is the placeholder, stated from the one spelling both realms read.
+      theme: PLACEHOLDER,
+      source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
     } as unknown)
     await client.fill()
     expect(client.shape().panes.map((held) => held.id), 'the malformed member is not a pane the family names').toEqual(['pane-a'])

@@ -1577,6 +1577,12 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   'src/main/store-channels.ts', // `D-93` — the two channel constants die; `IPC_SECURITY_EXCLUSION` stands
   'src/main/main.ts', // `D-93` — the two `ipcMain.handle` sites and the `file.*` projection loop leave
   'src/main/preload.ts', // `D-93` — the three `store` members and the `store:file:changed` LOCAL leave
+  // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-97`): the `store-view-record` unit's SURFACE MODULE.** The
+  //    pass that moves the appearance declaration into the crossing (`strata/decisions.md` `D-97`, *"No boot time
+  //    declarations — use constraint repairs"*) edits `src/main/view-surface/index.ts` — the sibling's own surface, whose
+  //    read answer and route carry the fourth family — beside the four sibling paths already named above. It is excluded BY
+  //    NAME like every other entry here; the DENIED predicate and the positive control below are untouched.
+  'src/main/view-surface/index.ts', // `D-97` — the surface's read answer and its appearance route
   // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a
   // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/mcp-server.ts`, or the synthetic
   // `src/renderer/gesture-session-panel.ts` the control two paragraphs down feeds to the same instrument — is STILL

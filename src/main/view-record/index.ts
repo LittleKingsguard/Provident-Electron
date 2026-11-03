@@ -48,11 +48,14 @@ import {
   DEFAULT_PANE_SIZE,
   defaultPaneGeometry,
   paneGeometryIn,
+  viewThemePlaceholder,
   zoneIn,
   type ViewFocusEntry,
   type ViewFocusMirror,
   type ViewGeometrySource,
   type ViewPaneGeometry,
+  type ViewThemeDeclaration,
+  type ViewThemeRecord,
   type ViewZone,
 } from '../../shared/view-shape.js'
 export {
@@ -60,13 +63,22 @@ export {
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
   paneGeometryIn,
+  viewThemePlaceholder,
   zoneIn,
   type ViewFocusEntry,
   type ViewFocusMirror,
   type ViewGeometrySource,
   type ViewPaneGeometry,
+  type ViewThemeDeclaration,
+  type ViewThemeRecord,
   type ViewZone,
 }
+// **THE APPEARANCE MECHANISM, CONSUMED AT THE CROSSING AND NOWHERE ELSE** (D-97; `D-96`'s ruling that the mechanism is OWED
+// a consumer, and `docs/specs/theme.md` §2.5 item 3's licence for a later pass to import it). The resolution is PRODUCED BY
+// A CONSTRAINT REPAIR: this module is the one place `resolveTheme`/`applyThemeDeclaration` are called, the record it writes
+// carries their answer, and the renderer applies that answer as provident data. **THE MECHANISM IS NOT WIDENED AND NOT
+// RE-SPELLED** — it computes, this module carries, and the renderer writes.
+import { applyThemeDeclaration, resolveTheme } from '../../shared/theme.js'
 
 type Store = TabsRecordStore
 /** The store handle this module works over, re-exported under this module's own name so the surface can declare it
@@ -111,6 +123,24 @@ export const VIEW_PANES_MUST_STAND_ID = 'panes-must-stand'
  *  caller's element and falls back to `zone-1`, which the render turn hard-codes), so this module cannot name a closed set
  *  and does not try — the family is one member per id the caller named, and the placeholder is the family carrying none. */
 export const VIEW_ZONES_ADDRESS: readonly string[] = ['zones']
+/** **THE APPEARANCE FAMILY'S ROOT — ONE WHOLE VALUE AT `mem`, AND `mem` IS THE MEASUREMENT RATHER THAN A PREFERENCE**
+ *  (D-97). **WHAT THE APP DOES TODAY, MEASURED, IS THE TIER'S GROUND**: the appearance setting has NO durable image
+ *  anywhere in this tree — it is the authored envelope's `content` (its one initial token constant, rewritten by the
+ *  authored control's own handlers), re-authored at every boot, and no file under `src/` ever carried it: the address the deleted
+ *  `src/renderer/theme-store.ts` projected (`file.settings.theme.token`) was the FROZEN STORE's, is deleted with it, and no
+ *  writer of it survives (`grep` answers nothing). **AND A DURABLE APPEARANCE PREFERENCE IS BANNED BY THE CORPUS THAT OWNS
+ *  THE CONTROL**: `U-THEME-CONTROL`'s own prohibition row R-2 fails any corpus carrying the browser's ambient storage of
+ *  the appearance setting — named there, and deliberately not re-spelled in this file, which is why this sentence names the
+ *  route instead of its token — and its F-8 falsifier names *"a token block outside the demo"* as the boundary it must not
+ *  cross. A `file`-tier family would be exactly that: the app persisting an appearance preference that the spec places on
+ *  the consumer's side. So this family is `mem`, it is RE-MINTED AT EVERY BOOT, and the profile's bytes never carry it —
+ *  which is `focus-must-stand`'s and `zones-must-stand`'s shape, and clause 3 answered by a repair rather than deviated
+ *  from (`D-84`). **The cost is stated rather than hidden**: a restart forgets the setting, which is what the app does
+ *  today and is therefore not a behaviour change this pass invents. */
+export const VIEW_THEME_ADDRESS: readonly string[] = ['theme']
+/** **THE APPEARANCE FAMILY'S EXISTENCE-AND-CONSISTENCY PAIR'S id** — the tenth of the boot's ONE namespace (the tab
+ *  record's six and this module's four), minted against that batch and spelled nowhere else. */
+export const VIEW_THEME_MUST_STAND_ID = 'theme-must-stand'
 /** **THE FOCUS MIRROR'S EXISTENCE PAIR'S id.** `panes-must-stand`, `focus-must-stand` and the tab record's six are ONE
  *  namespace (`guide §7.2`: a repeated id in one supplied list is REJECTED), and this module's three are minted against
  *  that batch's six — neither spelling occurs in `tabsConstraintDeclarations`, and the listener handles below carry a
@@ -136,6 +166,14 @@ export const FOCUS_SHAPE_REASON = 'malformed-focus'
 export const DANGLING_ACTIVE_REASON = 'dangling-active'
 export const ZONE_SHAPE_REASON = 'malformed-zone'
 export const ZONE_MEMBER_REASON = 'malformed-zone-member'
+/** **THE APPEARANCE FAMILY'S TWO TOKENS, AND THE SECOND ONE IS WHAT MAKES THE PAIR A *REPAIR* RATHER THAN A PRESENCE CHECK**
+ *  (D-97). `malformed-theme` is the route's shape arm — no token that can be a setting, or no attribute name a caller can
+ *  hold. `stale-theme` is the CONSTRAINT's own arm and it is not a refusal a caller can make: a record carrying a
+ *  resolution the mechanism would not produce for the setting it carries is INTERNALLY CONTRADICTORY, and the pair
+ *  repairs it to the current resolution rather than refusing the write that exposed it. **The token is minted here and
+ *  answered by nothing else**: the crossing never says `stale-theme`, because it never judges a derivation. */
+export const THEME_SHAPE_REASON = 'malformed-theme'
+export const THEME_STALE_REASON = 'stale-theme'
 
 /** The sentences, in the register of the tab record's own (`MALFORMED_ROW_MESSAGE`, `SEAT_NAME_MESSAGE`): each names the
  *  FAULT and not the act, because both routes of a family refuse the same one. */
@@ -149,6 +187,10 @@ export const DANGLING_ACTIVE_MESSAGE =
 export const ZONE_SHAPE_MESSAGE = 'the zone family names no zone id, or carries no plain zone record'
 export const ZONE_MEMBER_MESSAGE =
   'the zone carries a size that is not a finite non-negative number, a distance that is not a finite number, a display that is not a string, or a slot no value the store carries'
+export const THEME_SHAPE_MESSAGE =
+  'the appearance act carries no setting token that can be an appearance setting, or no attribute name that can be one — a route of this module writes the pair those two name and nothing else'
+export const THEME_STALE_MESSAGE =
+  'the appearance record carries a declaration the mechanism would not produce for the setting and the attribute it carries, so the record and its own resolution contradict each other'
 
 /** **THE TWO FAMILIES' OWN TIERS, EACH NAMED ONCE.** A value's tier is the address's (`guide §3.1`), and these two
  *  constants are the whole of what says which — so no read, no write and no repair of this module spells a tier
@@ -156,11 +198,12 @@ export const ZONE_MEMBER_MESSAGE =
 const PANES_TIER = 'file'
 const FOCUS_TIER = 'mem'
 const ZONES_TIER = 'mem'
+const THEME_TIER = 'mem'
 /** **THE TIER UNION THIS MODULE USES, DERIVED FROM THE TWO CONSTANTS AND NOT RE-SPELLED FROM THE PACKAGE'S `Tier`.** The
  *  package's own domain is `'mem' | 'file' | 'temp'`; this module needs two of those words and needs them to be
  *  assignable to `write`'s `tier` position, so the type is taken from the constants themselves — one spelling of each
  *  word in this file, and a third family would have to add its constant rather than widen a table. */
-type ViewTier = typeof PANES_TIER | typeof FOCUS_TIER | typeof ZONES_TIER
+type ViewTier = typeof PANES_TIER | typeof FOCUS_TIER | typeof ZONES_TIER | typeof THEME_TIER
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE RECORD'S SHAPES
@@ -190,16 +233,23 @@ export interface ViewZoneReading {
   readonly source: ViewGeometrySource
 }
 
-/** The whole view: the pane family as the record admits it, the mirror as it stands, and the zone family as the record
- *  admits that. **THE `source` MEMBERS ARE PER FAMILY AND NOT PER MEMBER**: a family is one value, so it either stands
- *  (and each member it names is the record's) or it does not (and every pane answers the measured default, every zone
- *  answers its absence). */
+/** **THE WHOLE VIEW: the pane family as the record admits it, the mirror as it stands, the zone family as the record
+ *  admits that, and the appearance family as the mechanism's own answer stands** (D-97). **THE `source` MEMBERS ARE PER
+ *  FAMILY AND NOT PER MEMBER**: a family is one value, so it either stands (and each member it names is the record's) or it
+ *  does not (and every pane answers the measured default, every zone answers its absence, and the appearance family answers
+ *  the placeholder that has no attribute name to apply). */
 export interface ViewRecordReading {
   readonly status: 'committed'
   readonly panes: readonly ViewPaneGeometry[]
   readonly focus: ViewFocusMirror
   readonly zones: readonly ViewZone[]
-  readonly source: { readonly panes: ViewGeometrySource; readonly focus: ViewGeometrySource; readonly zones: ViewGeometrySource }
+  readonly theme: ViewThemeRecord
+  readonly source: {
+    readonly panes: ViewGeometrySource
+    readonly focus: ViewGeometrySource
+    readonly zones: ViewGeometrySource
+    readonly theme: ViewGeometrySource
+  }
 }
 
 /** **THE ANSWER A WRITE ROUTE GIVES — AND IT CARRIES NO `repaired` MEMBER, WHICH IS A DECISION AND NOT AN OMISSION**
@@ -223,11 +273,11 @@ export interface ViewRecordOptions {
   readonly store: Store
 }
 
-/** **THE ROUTES A CLIENT NEEDS, AND FIVE OF THEM — one per act, and no act without one.** The renderer reads a pane's
- *  geometry (`:1700-1722`), writes one (`:1823-1825`), reads the mirror (`:1104-1105`), writes it (`:1152-1153`,
- *  `:1967-1968`) and — once the deletion pass wires it (D-91) — reads a zone's four members twice (`:1799-1805`,
- *  `:1935-1941`). `read` is ONE route because all three families are read at once by the one consumer, and `subscribe`
- *  is the push's own — so no route of this module stands without an answer site, which is the defect
+/** **THE ROUTES A CLIENT NEEDS, AND SIX OF THEM — one per act, and no act without one** (the appearance route is D-97's).
+ *  The renderer reads a pane's geometry (`:1700-1722`), writes one (`:1823-1825`), reads the mirror (`:1104-1105`), writes it
+ *  (`:1152-1153`, `:1967-1968`), reads a zone's four members twice (`:1799-1805`, `:1935-1941`) and commits the appearance
+ *  act its authored control produced. `read` is ONE route because all four families are read at once by the one consumer,
+ *  and `subscribe` is the push's own — so no route of this module stands without an answer site, which is the defect
  *  `docs/L2/central-data/interface.md` §2 records against a bridge member nothing calls. */
 export interface ViewRecord {
   read(): ViewRecordReading
@@ -245,6 +295,20 @@ export interface ViewRecord {
    *  zone (the render turn reads `zone-1` and the candidate turn reads the caller's own id), and a whole-family write
    *  composed by a client one delivery stale could drop a zone a concurrent act had just written. */
   commitZones(id: string, zone: unknown): ViewRecordAnswer
+  /** **THE APPEARANCE ROUTE — THE USER ACTION'S ONE WRITE, AND IT WRITES THE ACT AND NOT ITS RESOLUTION** (D-97). It takes
+   *  the setting TOKEN the app's authored control produced and the caller-held attribute NAME, both as the caller supplied
+   *  them, and writes that pair as ONE whole legal value at the family's root. **THE RESOLUTION IS THE PAIR'S**: the engine
+   *  re-runs `theme-must-stand` inside this very commit, the pair finds the pair-with-no-declaration STALE, and its repair
+   *  writes the declaration `resolveTheme` + `applyThemeDeclaration` produce — so no route of this module computes a
+   *  declaration, and a caller cannot spell one. That is the whole of the instruction this module answers: *no boot-time
+   *  declarations; constraint repairs*.
+   *
+   *  **THE ATTRIBUTE NAME IS A REQUIRED ARGUMENT AND NOT A CONSTANT OF THIS MODULE**, which is the corpus's rule and not a
+   *  preference: `docs/specs/theme-control.md` §2.1 item 4 and §2.4 item 2 hold the appearance control's attribute name to
+   *  be a CALLER-SUPPLIED string carried by the consuming WIRING, `themeWiringRole` in `src/renderer/renderer.ts` — so this
+   *  module spells no attribute name anywhere, the caller hands its own, and the mechanism echoes it by identity into the
+   *  declaration the record carries. */
+  commitTheme(token: string, attributeName: string): ViewRecordAnswer
   subscribe(handler: () => void): () => void
 }
 
@@ -498,8 +562,7 @@ const zoneValueOf = (zone: ViewZone): Record<string, unknown> => {
  *  takes the members it supplied, each missing member kept from what that zone stands at; every OTHER zone the family
  *  holds is admitted member by member and kept, so one act cannot erase a sibling's slot or its size. This is `composePanes`
  *  applied to a family whose members are optional — and **it is the family's ONE composer**, so the repair below and the
- *  route above cannot disagree about what a legal family is. */
-const composeZones = (
+ *  route above cannot disagree about what a legal family is. */const composeZones = (
   zones: readonly ViewZone[],
   id: string,
   supplied: { slot?: unknown; distance?: number; size?: number; display?: string },
@@ -518,7 +581,101 @@ const composeZones = (
   return whole
 }
 
-/** **THE THREE FAMILIES' ONE READ EACH, AT THEIR OWN TIER.** A read that refuses answers the family's declared default —
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE APPEARANCE FAMILY — THE MECHANISM CONSUMED ONCE, THE DERIVATION STORED, AND THE PAIR THAT JUDGES AGREEMENT
+// (D-97; `D-96`'s ruling, `docs/specs/theme.md` §2.5 item 3's licence, `D-82` clause 1)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE RECORD'S TWO CARRIED INPUTS, AS THE STORE HOLDS THEM — `null` where the value names neither.** The setting and
+ *  the attribute name are the pair the mechanism resolves; both are written as ABSENCE when they are `null`, because the
+ *  crossing's boundary refuses `null` (`D-87`, `D-91`), and both read back as `null` here so no caller sees the difference
+ *  between "absent" and "empty" — the mechanism declares those two the same thing (`resolveTheme` answers `null` for `''`). */
+const carriedThemePair = (held: Record<string, unknown>): { token: string | null; attribute: string | null } => ({
+  token: typeof held['token'] === 'string' && held['token'] !== '' ? held['token'] : null,
+  attribute: typeof held['attribute'] === 'string' && held['attribute'] !== '' ? held['attribute'] : null,
+})
+
+/** **THE RECORD'S DERIVATION — `resolveTheme` AND `applyThemeDeclaration`, CALLED, AND THE ONLY SITE IN THE TREE THAT CALLS
+ *  THEM** (D-97): the renderer no longer computes a declaration, it applies one. Three statements, each the mechanism's:
+ *  the token is normalised to `resolveTheme`'s `setting` member (a string, or `null` for the empty setting), the
+ *  attribute name is carried as given, and the declaration is `applyThemeDeclaration`'s answer for exactly that pairing,
+ *  **copied member by member so no caller holds the mechanism's own object**.
+ *
+ *  **THE ENVIRONMENT CLAIM IS OMITTED, AND THAT IS A MEASUREMENT RATHER THAN A SIMPLIFICATION.** `resolveTheme`'s `env`
+ *  argument is *"a CALLER CLAIM ABOUT AN ENVIRONMENT, never an OS behaviour this repo can observe"* (`docs/specs/theme.md`
+ *  §2.3 item 2), the browser's media-query surface is banned corpus-wide (`U-THEME-CONTROL`'s prohibition row R-2 names it
+ *  beside the ambient storage route; neither token is re-spelled here), and no surface of this tree can reach one from the
+ *  MAIN process — the crossing is where the pair runs and it holds no window, so no window can be asked. So the claim is OMITTED, `resolveTheme` answers its own `degraded-env` reading, and nothing is
+ *  fabricated to fill it. **AND IT MOVES NOTHING IN THE DECLARATION, WHICH IS WHY THE RECORD DOES NOT CARRY IT**:
+ *  `applyThemeDeclaration` is handed the SETTING and never the claim, so `prefersDark` and `source` have no effect on the
+ *  three members stored here — a record carrying them would be a member naming nothing (`D-70`). */
+const derivedTheme = (held: Record<string, unknown>): ViewThemeRecord => {
+  const pair = carriedThemePair(held)
+  const resolution = resolveTheme(pair.token, undefined)
+  const declaration = applyThemeDeclaration(pair.attribute, resolution.setting)
+  return {
+    token: resolution.setting,
+    attribute: pair.attribute,
+    declaration: { name: declaration.name, value: declaration.value, removal: declaration.removal },
+  }
+}
+
+/** **THE RECORD AS THE CROSSING MUST CARRY IT: EVERY `null` MEMBER IS WRITTEN AS ABSENCE.** `null` is refused at the
+ *  boundary (`measured`, and `composeMirror`'s own reason for the empty active), so the placeholder's three-member
+ *  declaration is written as `{value: '', removal: true}` with no `name`, and a record naming no setting writes no `token`.
+ *  The admission maps both absences back to `null`, so the value standing at the address and the reading are one fact. */
+const composeTheme = (record: ViewThemeRecord): Record<string, unknown> => {
+  const whole: Record<string, unknown> = {}
+  if (record.token !== null) whole['token'] = record.token
+  if (record.attribute !== null) whole['attribute'] = record.attribute
+  const declaration: Record<string, unknown> = {}
+  if (record.declaration.name !== null) declaration['name'] = record.declaration.name
+  declaration['value'] = record.declaration.value
+  declaration['removal'] = record.declaration.removal
+  whole['declaration'] = declaration
+  return whole
+}
+
+/** **A STRUCTURAL COMPARISON, AND IT IS NOT `JSON.stringify` — MEASURED, NOT PREFERRED.** The crossing NORMALISES the key
+ *  order of a plain object on the way in (measured on the installed `1.9.1`: a value written as `{value, removal}` reads
+ *  back as `{removal, value}`), so a serialisation comparison of "what I would write" against "what stands" answers
+ *  `false` over a record that agrees member for member — and the pair would then repair a legal record on every boot and
+ *  every write. So the comparison walks the value: key sets by name, order never consulted, arrays by position. */
+const sameThemeValue = (left: unknown, right: unknown): boolean => {
+  if (left === right) return true
+  if (left === null || right === null) return false
+  if (typeof left !== 'object' || typeof right !== 'object') return false
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false
+    if (left.length !== right.length) return false
+    return left.every((entry, index) => sameThemeValue(entry, right[index]))
+  }
+  const leftRecord = left as Record<string, unknown>
+  const rightRecord = right as Record<string, unknown>
+  const leftKeys = Object.keys(leftRecord)
+  if (leftKeys.length !== Object.keys(rightRecord).length) return false
+  return leftKeys.every((key) => Object.hasOwn(rightRecord, key) && sameThemeValue(leftRecord[key], rightRecord[key]))
+}
+
+/** **THE APPEARANCE FAMILY AS ONE VALUE, OR `null`** — `null` when the address holds nothing this module can read as the
+ *  family, and the family otherwise. **ITS DECLARATION MEMBER IS REQUIRED AND IS NOT DEFAULTED**: a value carrying no
+ *  readable `{value, removal}` pair is not the record this module writes, so it is not the family (the `panesFrom`
+ *  disposition, applied to a family whose derived member is the whole point). A record that arrives so broken from a
+ *  caller's own `provident.data.write` is repaired inside that commit by the pair — a read never repairs, and never hides
+ *  a fault behind an invented declaration. */
+const themeFrom = (whole: unknown): ViewThemeRecord | null => {
+  if (!plain(whole)) return null
+  const held = whole['declaration']
+  if (!plain(held)) return null
+  const value = held['value']
+  const removal = held['removal']
+  if (typeof value !== 'string' || typeof removal !== 'boolean') return null
+  const pair = carriedThemePair(whole)
+  const name = typeof held['name'] === 'string' && held['name'] !== '' ? held['name'] : null
+  return { token: pair.token, attribute: pair.attribute, declaration: { name, value, removal } }
+}
+
+/** **THE FOUR FAMILIES' ONE READ EACH, AT THEIR OWN TIER.** A read that refuses answers the family's declared default —
  *  the arm NO declaration can reach, because a refused read has no address that a repair could have made stand, which is
  *  `D-84`'s own measurement about a refused construction and `D-85`'s about the read-side defaults being kept rather
  *  than deleted. **NOTHING IS WRITTEN HERE**: a read that MISSed leaves the miss, and it is the CREATION repair that
@@ -553,6 +710,19 @@ const mirrorOf = (store: Store): { focus: ViewFocusMirror; source: ViewGeometryS
   return { focus: { entries: [], activeId: null }, source: 'default' }
 }
 
+/** **THE APPEARANCE FAMILY'S READ — AND ITS DECLARED DEFAULT IS THE PLACEHOLDER, WHICH HAS NO ATTRIBUTE NAME TO APPLY.** The
+ *  default answers only where the family does not stand at all, which the creation repair makes unreachable on any boot
+ *  whose batch carried the pair; it exists so the read is total, exactly as the other three families' defaults do. */
+const themeOf = (store: Store): { theme: ViewThemeRecord; source: ViewGeometrySource } => {
+  try {
+    const read = themeFrom(store.read(VIEW_THEME_ADDRESS, THEME_TIER))
+    if (read !== null) return { theme: read, source: 'record' }
+  } catch {
+    // as above: the declared placeholder answers, and nothing is repaired at a read
+  }
+  return { theme: viewThemePlaceholder(), source: 'default' }
+}
+
 /** **THE WHOLE FAMILY A CALLER'S WRITE LEAVES: ONE LEGAL VALUE, COMPOSED FROM WHAT STANDS.** The pane the caller named
  *  takes the members it supplied, each missing member falling to what that pane stands at and then to the measured
  *  default; every OTHER pane the family holds is admitted field by field and kept, so one act cannot erase a sibling's
@@ -582,7 +752,8 @@ const composeMirror = (mirror: ViewFocusMirror): Record<string, unknown> => {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// THE TWO DECLARATIONS — CLAUSE 1 OF THE CONVENTION: EXISTENCE, REPAIRED WITH A PLACEHOLDER
+// THE FOUR DECLARATIONS — CLAUSE 1 OF THE CONVENTION: EXISTENCE, REPAIRED WITH A PLACEHOLDER — AND THE APPEARANCE
+// FAMILY'S SECOND ARM, CONSISTENCY, WHICH IS THE ONE THE INSTRUCTION NAMES (D-97)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 /** **`panes-must-stand` — THE PANE GEOMETRY IS AN ENFORCED INVARIANT, NOT A SIDE EFFECT OF THE FIRST DRAG.**
@@ -675,6 +846,48 @@ const zonesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
 const repairZones = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer =>
   writeWholeValue(getStore)(context, VIEW_ZONES_ADDRESS, ZONES_TIER, {})
 
+/** **`theme-must-stand` — THE APPEARANCE RECORD HAS TWO ARMS, AND THE SECOND IS THE WHOLE OF THE INSTRUCTION (D-97).**
+ *
+ *  **THE FIRST ARM IS EXISTENCE**, `tabs-must-stand`'s and `focus-must-stand`'s: a value that is not a plain record — the
+ *  address holding nothing, a primitive, an array — is the fault the pair names, and the repair writes the PLACEHOLDER,
+ *  which is the mechanism's own answer for the absent pair and carries no attribute name, so nothing can be applied from
+ *  it.
+ *
+ *  **THE SECOND ARM IS STALENESS, AND IT IS A CONSTRAINT OVER A *DERIVATION*, WHICH NOTHING ELSE IN THIS MODULE JUDGES.** A
+ *  record that STANDS but whose carried declaration is not the one the mechanism would produce for the setting and the
+ *  attribute it carries is INTERNALLY CONTRADICTORY: it names a resolution for a token it no longer carries — a record
+ *  written by an older head, by a caller's own `provident.data.write`, or by the ROUTE below, whose whole write is the
+ *  caller's pair and no declaration at all. So the pair re-derives from the value's OWN two members and compares
+ *  STRUCTURALLY (`sameThemeValue`; the crossing normalises key order, measured). Equal answers `true`, and the record
+ *  stands; unequal is `stale-theme` and the repair writes the derivation — **so the resolution is produced by a constraint
+ *  repair and by nothing else**, which is the shape the instruction asks for: *no boot-time declarations; use constraint
+ *  repairs*.
+ *
+ *  **IT JUDGES `context.value` AND NEVER REACHES FOR THE INSTANCE** — `panesMustStand`'s shape and its measured reason (the
+ *  boot binds its holder only after `createProfileStore` returns, so a handle-reading body abstains at the one instant it
+ *  is the only one that can act). **AND THE HANDLE IS WANTED BY THE REPAIR ALONE**, which runs at an instant where one
+ *  exists or the record lends it a route. */
+const themeMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
+  const held = plain(context) ? context['value'] : undefined
+  if (!plain(held)) {
+    return { message: 'the appearance record does not stand', repair: repairTheme(getStore) }
+  }
+  if (sameThemeValue(composeTheme(derivedTheme(held)), held)) return true
+  return { message: THEME_STALE_MESSAGE, repair: repairTheme(getStore) }
+}
+
+/** **THE APPEARANCE FAMILY'S REPAIR: THE MECHANISM'S ANSWER FOR WHAT THE VALUE CARRIES, AS ONE WHOLE LEGAL VALUE** — and it
+ *  is ONE body for both arms on purpose. A value that stands is re-derived from its own token and attribute name; a value
+ *  that does not stand is derived from the empty pair, which is the mechanism's answer for `(null, null)` and therefore
+ *  the placeholder. **NO MEMBER IS JUDGED HERE**: the body cannot disagree with the pair above about what a legal value is,
+ *  because both read the same derivation and the same composer, and the write goes through the module's ONE repair-write
+ *  path (`writeWholeValue`), answering the credited arm through `repairAnswer` (`D-72`, `D-73`). */
+const repairTheme = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer => {
+  const held = plain(context) ? context['value'] : undefined
+  const whole = composeTheme(derivedTheme(plain(held) ? held : {}))
+  return writeWholeValue(getStore)(context, VIEW_THEME_ADDRESS, THEME_TIER, whole)
+}
+
 /** **THE BATCHED DECLARATIONS, COLLECTED BY THE BOOT** (D-65's first act; D-87's second set; D-91's third family). The boot gathers these
  *  beside the tab record's six and constructs the central store ONCE with the whole batch, so a constraint is a
  *  DECLARATION here rather than a constructor call, and the two modules' ids stand in ONE namespace without a repeated
@@ -688,6 +901,7 @@ export function viewConstraintDeclarations(getStore: () => Store | null): readon
     { address: VIEW_PANES_ADDRESS, id: VIEW_PANES_MUST_STAND_ID, constraint: panesMustStand(getStore) },
     { address: VIEW_FOCUS_ADDRESS, id: VIEW_FOCUS_MUST_STAND_ID, constraint: focusMustStand(getStore) },
     { address: VIEW_ZONES_ADDRESS, id: VIEW_ZONES_MUST_STAND_ID, constraint: zonesMustStand(getStore) },
+    { address: VIEW_THEME_ADDRESS, id: VIEW_THEME_MUST_STAND_ID, constraint: themeMustStand(getStore) },
   ]
 }
 
@@ -701,15 +915,18 @@ export function viewConstraintDeclarations(getStore: () => Store | null): readon
  *  cross-kind rule that survives (`D-71`): this module's three are `panes-must-stand`, `focus-must-stand` and
  *  `zones-must-stand`, and the tab
  *  record's six are its own, while these handles carry a FIXED `view-record:` prefix no id has, a MINTED ORDINAL that
- *  only grows, and the address the handle is bound at. */
+ *  only grows, and the address the handle is bound at. **THIS MODULE'S FOUR ARE `panes-must-stand`, `focus-must-stand`,
+ *  `zones-must-stand` AND `theme-must-stand`** (D-97 added the fourth, and its spelling carries the `-must-stand` suffix
+ *  no tab-record id repeats). */
 let issuance = 0
 const handleFor = (address: readonly string[]): string => {
   issuance += 1
   return 'view-record:' + String(issuance) + '@' + address.join('/')
 }
 
-/** **THE VIEW RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65, D-87): this module constructs nothing and owns no file — it
- *  is handed the app's one store and reads and writes its three roots through it. */
+/** **THE VIEW RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65, D-87; the appearance family and a fourth root at D-97): this
+ *  module constructs nothing and owns no file — it is handed the app's one store and reads and writes its FOUR roots
+ *  through it. */
 export function createViewRecord(options: ViewRecordOptions): ViewRecord {
   const standing: Store = options.store
 
@@ -717,12 +934,14 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
     const panes = panesOf(standing)
     const mirror = mirrorOf(standing)
     const zones = zonesOf(standing)
+    const theme = themeOf(standing)
     return {
       status: 'committed',
       panes: panes.panes,
       focus: mirror.focus,
       zones: zones.zones,
-      source: { panes: panes.source, focus: mirror.source, zones: zones.source },
+      theme: theme.theme,
+      source: { panes: panes.source, focus: mirror.source, zones: zones.source, theme: theme.source },
     }
   }
 
@@ -876,6 +1095,31 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       }
     },
 
+    commitTheme(token: string, attributeName: string): ViewRecordAnswer {
+      // ── THE SHAPE ARMS, BEFORE ANY STORE VERB — `commitPane`'s rule, at this family (D-97) ──
+      // A SETTING IS A STRING, and the EMPTY STRING is admitted on purpose: it is what the authored handler writes for an
+      // absent argument, and the mechanism declares it as the absence the declaration's removal arm is made of. A
+      // non-string is not a setting. An ATTRIBUTE NAME is a non-empty string, because a declaration the renderer cannot
+      // compose a `props.<name>` write from is a declaration it could not apply — and it is the CALLER's string, never
+      // this module's (see `commitTheme`'s declaration above).
+      if (typeof token !== 'string') {
+        return { status: 'refused', reason: THEME_SHAPE_REASON, message: THEME_SHAPE_MESSAGE, address: null }
+      }
+      if (typeof attributeName !== 'string' || attributeName.length === 0) {
+        return { status: 'refused', reason: THEME_SHAPE_REASON, message: THEME_SHAPE_MESSAGE, address: null }
+      }
+      // **ONE WRITE OF THE CALLER'S PAIR, AND NOT OF A DECLARATION** — the resolution is the PAIR's: the engine re-runs
+      // `theme-must-stand` inside this commit, finds the pair-with-no-declaration stale, and its repair writes the whole
+      // legal record. So this route composes nothing, and the value it lands is the caller's act verbatim.
+      try {
+        standing.write(VIEW_THEME_ADDRESS, THEME_TIER, { token, attribute: attributeName })
+        return { status: 'committed' }
+      } catch (caught) {
+        const refused = refusalOfThrown(caught)
+        return { status: 'refused', reason: refused.reason, message: refused.message, address: [VIEW_THEME_ADDRESS[0] as string] }
+      }
+    },
+
     subscribe(handler: () => void): () => void {
       // **THE REGISTRATION IS TWO ACTS PER ADDRESS, NOT ONE** (`guide §6.2`, `§6.3`): `listen` installs the ENTRY and
       // `register` installs the FUNCTION under it; an entry `listen` wrote and `register` never filled is a lawful, silent
@@ -895,7 +1139,7 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
         }
       }
       const handles: string[] = []
-      for (const address of [VIEW_PANES_ADDRESS, VIEW_FOCUS_ADDRESS, VIEW_ZONES_ADDRESS]) {
+      for (const address of [VIEW_PANES_ADDRESS, VIEW_FOCUS_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]) {
         const handle = handleFor(address)
         try {
           standing.listen(handle, [address])

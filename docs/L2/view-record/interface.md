@@ -1,79 +1,80 @@
 # L2 — `view-record`: the interface
 
-- **Layer:** L2 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 1 filed the crossing's second
-  declaration set (D-87); **rev 2 adds the THIRD FAMILY and re-derives §5**, which rev 1 wrote before the swap landed: the
-  zone address, its declaration, its route and its client read (D-91), and the swap's own state corrected from *"measured
-  and not taken"* to **landed** (D-89). No rev-1 claim is withdrawn; what changed is what §5 says has happened.
-- **Inputs:** D-87 and D-91 (this unit's records), D-89 (the landed swap), D-82 (the four-clause convention), D-83 (a
-  creation-instant declaration's route), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save),
-  D-90 (the enumeration that found the zone family homeless), D-63/D-65/D-71 (the tab record's arrangement).
-- **Ceiling:** 120 lines · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; a source cite
-  names its site (D-41) — and the sites are NAMED rather than numbered since the renderer's regions moved (D-92):
-  `readPaneSize`/`readPaneBounds` and the `release` turn, `mirrorStateOf` and `persistTarget`, `renderZone`/`candidatesFor`.
+- **Layer:** L2 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 1 filed the crossing's second declaration set (D-87); rev 2 added the
+  THIRD FAMILY and re-derived §5 (D-91, D-89); **rev 3 adds the FOURTH FAMILY, the APPEARANCE RECORD, and re-derives §4 and §5**: its address, its declaration
+  with its second arm (staleness), its route, its client read, and the fact that its resolution is **produced by a constraint repair**, never computed by a
+  consumer (D-97). No earlier claim is withdrawn.
+- **Inputs:** D-87, D-91 and D-97 (this unit's records), D-89 (the landed swap), D-96 (the mechanism's ruling and the consumer it named), D-82 (the four-clause
+  convention), D-83 (a creation-instant declaration's route), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save), D-90 (the zone
+  family's homeless enumeration), D-63/D-65/D-71 (the tab record's arrangement).
+- **Ceiling:** 120 lines · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; a source cite names its site (D-41), and the sites
+  are NAMED rather than numbered since the renderer's regions moved (D-92): `readPaneSize`/`readPaneBounds` and the `release` turn, `mirrorStateOf` and
+  `persistTarget`, `renderZone`/`candidatesFor`.
 
 ## 0. Scope
 
-This document fixes the view record's I/O surface: the three addresses, the bridge member, its five routes, their
-arguments and answers, and the refusal vocabulary. It never fixes the store's internals, the engine `provident-storeroom`
-runs, or the renderer's rendering (§3's L2 row; `modules.md` §1).
+This document fixes the view record's I/O surface: four addresses, the bridge member, its six routes, their arguments and answers, and the refusal vocabulary.
+Never the store's internals, the engine `provident-storeroom` runs, or the renderer's rendering (§3's L2 row; `modules.md` §1).
 
-## 1. The three families, and why they are three roots
+## 1. The four families, and why they are four roots
 
-The frozen graph store (`src/renderer/store-core-graph.ts`) held three data sets nothing else addressed, so the purge's
-last deletion could not go until each had one (D-87, D-91): the **pane geometry** — a pane's `size` and `bounds`, read at
-`readPaneSize`/`readPaneBounds` and written by the `release` turn; the **focus mirror** — the entries the focus model
-seats and the id that is active, read by `mirrorStateOf` and committed by `answerForCarrier` and `createFocusCarrier`'s
-`persistTarget`; and the **zone family** — per zone an opaque `slot`, a caller-measured `distance`, a `size` and a
-`display`, read by the composition's `renderZone` turn and by `candidatesFor`.
+The frozen graph store held three data sets nothing else addressed, so the purge's last deletion could not go until each had one (D-87, D-91): the **pane
+geometry** — a pane's `size` and `bounds`, read at `readPaneSize`/`readPaneBounds` and written by the release turn; the **focus mirror** — the entries the focus
+model seats and the id that is active, read by `mirrorStateOf` and committed by `answerForCarrier` and `persistTarget`; and the **zone family** — per zone an
+opaque `slot`, a caller-measured `distance`, a `size` and a `display`, read by the render turn and by `candidatesFor`. **The FOURTH is not the store's legacy:
+it is the appearance record (D-97)**, which D-96's ruling made a consumer's obligation.
 
 | Address | Tier | Holds |
 |---|---|---|
 | `['panes']` | `file` | one member per pane id, each `{ size: number; bounds: { min: number; max: number } }` |
 | `['focus']` | `mem` | `{ entries: ViewFocusEntry[]; activeId? }` — the absent active is spelled as **absence**, never `null` |
 | `['zones']` | `mem` | one member per **zone** id, each carrying any of `slot` (opaque), `distance`, `size`, `display` |
+| `['theme']` | `mem` | **one whole record** `{ token?, attribute?, declaration: { name?, value, removal } }`: the setting, the caller-held attribute name, and the declaration the mechanism computes for that pair |
 
-**THREE ROOTS AND NOT ONE, MEASURED ON THE INSTALLED `provident-storeroom@1.9.1`** (D-87's ground, re-driven at the zone
-root by D-91): a nested write does not create its parent — `write(['zones','zone-1'], 'mem', …)` over a fresh store
-answers `AddressNotFound` — so one root would need a declaration minting a parent branch; and a root written at `file`
-answers its descendants at `file` and `TierNotFound` at `mem`, so one value could not carry a `mem` family at all. The tab
-record's pattern (one root with members, D-63) is therefore applied **once per tier**, not once per family.
+**FOUR ROOTS AND NOT ONE, MEASURED ON THE INSTALLED `provident-storeroom@1.9.1`** (D-87's ground, re-driven at the zone root by D-91 and at this one by D-97): a
+nested write does not create its parent — `write(['zones','zone-1'], 'mem', …)` over a fresh store answers `AddressNotFound` — so one root would need a
+declaration minting a parent branch; and a root written at `file` answers its descendants at `file` and `TierNotFound` at `mem`, so one value could not carry a
+`mem` family at all. The tab record's pattern (one root with members, D-63) is applied **once per tier**, not once per family.
 
-**THE MEASURED DEFAULTS ARE THE TREE'S OWN AND NOT THIS UNIT'S**: the one pane id the drag composition addresses is
-`pane-a`; the authored pane's `props` declare `size: '100'`, `min: '0'`, `max: '200'`. The frozen store held **no** pane
-default at all, so a read that MISSed at both tiers answered `undefined`, which made the release refuse
-`'unusable-default'` with zero writes. **THE ZONE FAMILY HAS NO SUCH DEFAULT AND THIS UNIT INVENTS NONE** (D-91): no
-`file` copy of any zone member exists in the tree, the read that missed its one tier answered `undefined`, the render turn
-handed that `undefined` straight to its layout call, and `candidatesFor` answered `[]` — so a zone the family does not
-name answers **its absence**, and the creation repair's placeholder is the family that **names no zone**.
+**THE PLACEHOLDERS ARE THE TREE'S OWN AND NOT THIS UNIT'S.** Panes: the one pane id the drag addresses is `pane-a`, the authored pane's `props` declare `size:
+'100'`, `min: '0'`, `max: '200'`, and the frozen store held **no** pane default, so a MISSed read answered `undefined` and the release refused
+`'unusable-default'` with zero writes. Zones (D-91): no `file` copy of any zone member exists, a MISS answered `undefined`, the render turn handed that to its
+layout call and `candidatesFor` answered `[]` — so a zone answers **its absence** and the placeholder names no zone. **Appearance (D-97): the placeholder is the
+MECHANISM'S OWN ANSWER for the absent pair** — `{name: null, value: '', removal: true}` — which names no attribute, so a boot applies nothing BY CONSTRUCTION.
+**ITS TIER IS `mem` BECAUSE THE APP PERSISTS NO APPEARANCE SETTING TODAY**: the setting is the authored envelope's own `content`, re-authored at every boot, and
+a durable appearance preference is the ambient store the control's own prohibition row fails.
 
-## 2. The bridge member and its five routes
+## 2. The bridge member and its six routes
 
-`window.provident` carries **one** top-level member, `view`, shaped like the `tabs` member it sits beside — five routes and
-no sixth. It is declared in `src/main/preload.ts` and re-declared in `src/renderer/secure-panels.ts`'s `declare global` as
-the **same text**, and the battery compares the two blocks rather than citing them.
+`window.provident` carries **one** top-level member, `view`, shaped like the `tabs` member beside it — six routes and no seventh. Declared in
+`src/main/preload.ts` and re-declared in `src/renderer/secure-panels.ts`'s `declare global` as the **same text**; the battery compares the two blocks rather
+than citing them.
 
 | Route | Argument | Answer |
 |---|---|---|
-| `view.read()` | none | `{ status: 'committed'; panes; focus; zones; source: { panes; focus; zones } }`, each `source` word `'record'` or `'default'` |
+| `view.read()` | none | `{ status: 'committed'; panes; focus; zones; theme; source: {…} }`, each `source` word `'record'` or `'default'` |
 | `view.commitPane(id, geometry)` | a pane **id** and a geometry, never a path | `{ status: 'committed' }` or the refusal arm (§3) |
 | `view.commitFocus(mirror)` | the whole mirror the model produced | `{ status: 'committed' }` or the refusal arm (§3) |
 | `view.commitZones(id, zone)` | a **zone id** and the members this act carries, never a path | `{ status: 'committed' }` or the refusal arm (§3) |
+| `view.commitTheme(token, attributeName)` | **the appearance ACT**: the setting the control produced and the CALLER-HELD attribute name — never a declaration (D-97) | `{ status: 'committed' }` or the refusal arm (§3) |
 | `view.onChanged(handler)` | one listener | the withdrawal, and nothing else |
 
-**`read()` IS TOTAL AND CARRIES NO REFUSED ARM**, which is a measurement and not an omission: a read that misses answers
-the family's declared empty arm and a refused read is caught at the same place. The tab record's read keeps a refused arm
-because its `read` is handed the store's own refusal.
+**`read()` IS TOTAL AND CARRIES NO REFUSED ARM**, a measurement and not an omission: a read that misses answers the family's declared empty arm and a refused
+read is caught at the same place. The tab record's read keeps a refused arm because its `read` is handed the store's own refusal.
 
-**THE `source` MEMBERS NAME A REAL DIFFERENCE** — whether the record answered or the declared default did — and they are
-what keeps a placeholder from being substituted at the read and called a record, which is the deviation D-84 refused.
-`paneGeometryIn(panes, id)` and `zoneIn(zones, id)` are the **pure** derivations over one reading, so a client needs no
-second store verb and this module has no route without an answer site. **They differ in their missing arm and that is the
-measurement**: a pane the family does not name answers the measured default geometry, a zone answers `null`.
+**THE `source` MEMBERS NAME A REAL DIFFERENCE** — the record answered, or the declared default did — and they keep a placeholder from being substituted at the
+read and called a record, the deviation D-84 refused. The appearance family carries the same two words. `paneGeometryIn(panes, id)` and `zoneIn(zones, id)` are
+the **pure** derivations over one reading, so a client needs no second store verb and no route here stands without an answer site; they differ in their missing
+arm, which is the measurement: a pane the family does not name answers the measured default geometry, a zone answers `null`.
 
-**THERE IS NO `repaired` MEMBER** (D-70's rule about a member that names nothing): each pair has one arm — the address
-does not stand — and no route here can leave an address absent, so a repair could only ever be `false`.
+**THERE IS NO `repaired` MEMBER** (D-70's rule about a member that names nothing): each of the first three pairs has one arm — the address does not stand — and
+no route here can leave an address absent, so a repair could only ever be `false`. **THE APPEARANCE PAIR HAS TWO ARMS AND ITS ROUTE EXPOSES THE SECOND**, which
+is why the member is still absent rather than widened: the route writes the caller's pair, the engine re-runs the pair inside that commit, and the committed
+value the answer describes is the RESOLVED record — a member reporting "a repair fired" would report the mechanism this family is. **The read's `theme` member
+is the record whole**, `declaration` required: a record carrying no readable `{value, removal}` pair is a divergence and reaches the client as `unread`, never
+as a placeholder substituted at the read.
 
-## 3. The refusal vocabulary — six tokens, two per family
+## 3. The refusal vocabulary — eight tokens, two per family
 
 | Token | Family | Names |
 |---|---|---|
@@ -83,36 +84,38 @@ does not stand — and no route here can leave an address absent, so a repair co
 | `dangling-active` | focus | an `activeId` that names no entry of its own list — the `order` seat's fault at the other family (D-83), under a token of its own |
 | `malformed-zone` | zones | no zone id, or no plain zone record |
 | `malformed-zone-member` | zones | a **supplied** `size` that is not finite and non-negative, a `distance` that is not finite, a `display` that is not a string, or a `slot` the crossing's boundary would refuse |
+| `malformed-theme` | theme | **no setting token that can be an appearance setting** (anything but a string, the EMPTY string admitted as the absence the mechanism declares), or **no attribute name a caller could compose a write from** |
+| `stale-theme` | theme | the record's carried declaration is not the one the mechanism would produce for the setting and the attribute it carries — the CONSTRAINT's arm, never a route's (D-97) |
 
-Each is minted by this module and by nothing else: the store never answers one of these words. **An ABSENT member is not a
-refusal** — and at the zone family it is the ordinary case: each of the four is optional, so a commit naming a `size` and
-nothing else keeps the zone's standing `slot`, `distance` and `display`, and a sibling zone is never touched.
+Each is minted by this module and by nothing else: the store never answers one of these words. **An ABSENT member is not a refusal** — at the zone family it is
+the ordinary case, so a commit naming a `size` and nothing else keeps the standing `slot`, `distance` and `display`, and a sibling zone is never touched.
 
 ## 4. Boot data: the file, or a repair
 
-**Clause 1 and clause 3 of D-82's convention, per address.** `panes-must-stand` at `['panes']` refuses a value that is not
-a plain record and repairs it to the measured default family as ONE whole legal value; on a fresh profile the file carries
-it when the constructor returns (`1.9.1`'s landing arm, D-86) and the next boot is handed it. `focus-must-stand` at
-`['focus']` refuses the same arm and repairs it to the declared empty pair, and **a `mem` value can never come from a
-file** (D-84), so it is re-minted at **every** boot: measured, boot two is handed the address absent, its repair writes it
-again, and not one byte of it reaches the profile. **`zones-must-stand` at `['zones']` is that shape and adds one fact of
-its own**: because the zone family's only lawful placeholder is the one that names no zone, a repair writes `{}` — the ONE
-whole legal value that answers every zone exactly as the absent address answered it — and the family is re-minted at every
-boot with a caller's zones not surviving one (measured: boot two answers `[]` and the profile is byte-identical).
+**Clause 1 and clause 3 of D-82's convention, per address.** `panes-must-stand` at `['panes']` refuses a value that is not a plain record and repairs it to the
+measured default family as ONE whole legal value; on a fresh profile the file carries it when the constructor returns (`1.9.1`'s landing arm, D-86) and the next
+boot is handed it. `focus-must-stand` refuses the same arm and repairs it to the declared empty pair, and **a `mem` value can never come from a file** (D-84),
+so it is re-minted at **every** boot: measured, boot two is handed the address absent, its repair writes it again, and not one byte of it reaches the profile.
+`zones-must-stand` is that shape with one fact of its own: the zone family's only lawful placeholder names no zone, so a repair writes `{}` — the ONE whole
+legal value answering every zone exactly as the absent address answered it.
 
-**A FAMILY THAT STANDS BUT CARRIES AN UNUSABLE MEMBER IS NOT ANY PAIR'S ARM, and that is owed rather than invented**
-(D-87): each repair must leave ONE whole legal value, and a body judging each member would be a second declaration wearing
-this one's. The admission DROPS a member it cannot state and answers its absence (zone) or the measured default (pane).
+**AND `theme-must-stand` AT `['theme']` IS THE ONE PAIR WHOSE SECOND ARM IS NOT ABSENCE (D-97).** Its first arm is the other three's: no plain record, repaired
+to the placeholder. **Its second is STALENESS** — a record that stands but whose carried declaration is not the mechanism's own answer for the setting and the
+attribute it carries — and its repair re-derives from the record's OWN two members and writes the current resolution. So **the resolution is produced by a
+constraint repair and by nothing else**, which is the instruction this family exists to answer. The comparison is STRUCTURAL and never a serialisation: the
+crossing normalises a value's key order (measured), so a byte comparison would report every legal record stale. Nothing is derived at a read, and a boot applies
+nothing: the placeholder names no attribute, so no `props.<name>` exists to write.
 
-## 5. What the deletion pass owns, and what is already landed
+**A FAMILY THAT STANDS BUT CARRIES AN UNUSABLE MEMBER IS NOT ANY PAIR'S ARM, and that is owed rather than invented** (D-87): each repair must leave ONE whole
+legal value, and a body judging each member would be a second declaration wearing this one's. The admission DROPS a member it cannot state and answers its
+absence (zone) or the measured default (pane). The appearance record's derived member is the exception: it is not a MEMBER judgement but the declaration's whole
+subject, which is why the second arm above exists.
 
-**THE SWAP IS LANDED (D-89) AND REV 1'S *"MEASURED AND NOT TAKEN"* IS SUPERSEDED RATHER THAN CORRECTED IN PLACE.** The
-renderer holds the shape in `src/renderer/view-client.ts`, filled by deliveries and read synchronously; the pane geometry
-and the focus mirror are wired, each writing ONE route. **The zone family is the one that is NOT wired**: the two frozen
-reads at `renderer.ts:1799-1805` and `:1935-1941` still address the store, so this family's route stands with the client's
-`zoneOf` as its only reader — and wiring those two, or ruling the flow out of the tree, is D-90's own two rulings.
+## 5. What is landed, and what a later pass owns
 
-Three facts that pass inherits, unmoved: **(i)** the pane geometry's `mem`/`file` precedence collapses to one `file` value;
-**(ii)** `activeId` is written as **absence** because `null` is refused at the crossing's boundary; **(iii)** the legacy
-`file.*` projection of these families still lives in the secure crossing's own store (D-78's item (f)), so until the purge
-deletes it the same fact stands in two stores and nothing reconciles them.
+**THE SWAP IS LANDED (D-89), THE ZONE FAMILY IS WIRED (D-92), AND THE APPEARANCE FAMILY IS APPLIED FROM THIS RECORD (D-97).** The renderer holds the shape in
+`src/renderer/view-client.ts`, filled by deliveries and read synchronously; every family writes ONE route, and the appearance route carries the ACT and not a
+resolution. Three inherited facts are closed by measurement rather than restated: the pane geometry's `mem`/`file` precedence collapsed to one `file` value;
+`activeId` is written as **absence** because `null` is refused at the boundary (this family writes `token`/`attribute` the same way); and the legacy `file.*`
+projection in the secure crossing's store went with the frozen store the purge deleted (D-93). **WHAT A LATER PASS OWNS**: nothing this document declares, and
+one thing it records as owed — a pair judging a STANDING family's unusable members (§4's last paragraph), which is a declaration this unit does not carry.

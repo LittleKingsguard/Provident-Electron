@@ -354,7 +354,8 @@ function clientHolding(panes: readonly unknown[], zones: readonly unknown[]): Vi
     panes: panes as never,
     focus: { entries: [], activeId: null },
     zones: zones as never,
-    source: { panes: 'record', focus: 'record', zones: 'record' },
+    theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
+    source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
   })
   return client
 }
@@ -513,7 +514,8 @@ function crossingOf(key?: object): PaneCrossing {
       if (held.display !== undefined) record.display = held.display
       return record
     }),
-    source: { panes: 'record', focus: 'record', zones: 'record' },
+    theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
+    source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
   })
   const bridge = {
     read: async (): Promise<unknown> => reading(),
@@ -529,6 +531,9 @@ function crossingOf(key?: object): PaneCrossing {
       return { status: 'committed' }
     },
     commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
+    // **THE APPEARANCE ROUTE** (D-97): the bridge's fifth route, present so the member set matches the bridge's. This file
+    // drives no appearance act — the fixture's record stands at the placeholder, which names no attribute to apply.
+    commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
     // **THE FAMILY IS COMPOSED AT THE CROSSING** (`composeZones`, D-91): the members supplied are written over what the
     // zone stands at, the ones the caller did not supply are KEPT, and every sibling zone survives — one act cannot erase
     // a zone it never read. This double drives no row through it; it stands here so the member set matches the bridge's.
@@ -753,7 +758,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     // shape's members answer from an in-realm projection, and the composition still guards every turn that calls one — so
     // the term ("a hostile read supplier never throws out of a wiring turn") is driven at the members that hold it.
     const hostile = {
-      shape: () => ({ filled: true, panes: [], focus: { entries: [], activeId: null }, zones: [], source: { panes: 'default', focus: 'default', zones: 'default' } }),
+      shape: () => ({ filled: true, panes: [], focus: { entries: [], activeId: null }, zones: [], theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }, source: { panes: 'default', focus: 'default', zones: 'default', theme: 'default' } }),
       zoneOf(): never { throw new Error('boom') },
       paneSizeOf(): never { throw new Error('boom') },
       paneBoundsOf(): never { throw new Error('boom') },
@@ -789,7 +794,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     // AND THE GUARD IS NOT A BLANKET OVER THE PAIR: a shape that ANSWERS is still believed, so the two `expect`s above
     // cannot be satisfied by a read that stopped reading. The control answers figures NO default could carry.
     const answering = {
-      shape: () => ({ filled: true, panes: [], focus: { entries: [], activeId: null }, zones: [], source: { panes: 'default', focus: 'default', zones: 'default' } }),
+      shape: () => ({ filled: true, panes: [], focus: { entries: [], activeId: null }, zones: [], theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }, source: { panes: 'default', focus: 'default', zones: 'default', theme: 'default' } }),
       zoneOf: () => null,
       paneSizeOf: () => 250,
       paneBoundsOf: () => ({ min: 10, max: 20 }),

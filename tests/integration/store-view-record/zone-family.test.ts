@@ -285,9 +285,15 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     // THE POSITIVE CONTROL — the instrument fires on a synthetic timer, so the absence above is about this code and not
     // about a scan that could never have matched anything.
     expect(/\bsetTimeout\s*\(/.test('const t = setTimeout(fn, 0)'), 'the instrument fires on a synthetic timer').toBe(true)
-    // THE FOUR WRITERS, ENUMERATED: three caller routes write at their own root and the ONE repair path writes through
-    // `writeJoinedAt`, so a fourth caller route (or a repair that reached the store directly) reds the census below.
-    expect((module.match(/\.write\(VIEW_/g) ?? []).length, 'exactly three routes write a whole family').toBe(3)
+    // THE FIVE WRITERS, ENUMERATED: FOUR caller routes write at their own root and the ONE repair path writes through
+    // `writeJoinedAt`, so a fifth caller route (or a repair that reached the store directly) reds the census below.
+    // **THE FOURTH ROUTE IS THE APPEARANCE ACT'S (`D-97`)** and its write is the caller's pair — the setting and the
+    // attribute name — which the crossing's own repair resolves; the count moves three → four HERE because the census is
+    // the MODULE's and not the zone family's, which is exactly what it is for.
+    expect(
+      (module.match(/\.write\(VIEW_/g) ?? []).length,
+      'exactly FOUR routes write a whole family — the panes, the mirror, the zones and the appearance act',
+    ).toBe(4)
     expect((module.match(/writeJoinedAt\(/g) ?? []).length, 'and the ONE repair path names its commit at exactly one call site').toBe(1)
     expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'the zone route writes its family whole').toBe(true)
     // AND THE ROUTE HAS A HANDLER AT THE BRIDGE'S OWN SITE, which is what makes it an IPC route rather than a member

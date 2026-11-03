@@ -10,8 +10,8 @@ import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, I
 import { IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
 import type { TabsRecordRow } from '../shared/types.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
-import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
-import type { ViewFocusMirror, ViewPaneGeometry, ViewZone } from './view-record/index.js'
+import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
+import type { ViewFocusMirror, ViewPaneGeometry, ViewThemeRecord, ViewZone } from './view-record/index.js'
 import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (erased at build; no runtime coupling). The WIDENING is an intersection at the declaration
@@ -80,18 +80,20 @@ export interface ProvidentBridge {
     remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }>
     onChanged(handler: () => void): () => void
   },
-  // THE VIEW RECORD'S CROSSING (D-87, D-91, `docs/L2/view-record/interface.md` §2): ONE member, FIVE routes — the pane
-  // geometry, the focus mirror and the zone family, over the boot's one store. `read` takes no argument because the view
-  // is one reading; `commitPane` names a pane and never a path, `commitFocus` hands the whole mirror the model produced,
-  // and `commitZones` names a zone and composes its family at the crossing; `onChanged` delivers that the view moved and
-  // never its value. The declaration below and `src/renderer/secure-panels.ts`'s copy are the same text in both files —
+  // THE VIEW RECORD'S CROSSING (D-87, D-91, D-97, `docs/L2/view-record/interface.md` §2): ONE member, SIX routes — the
+  // pane geometry, the focus mirror, the zone family and the appearance record, over the boot's one store. `read` takes no
+  // argument because the view is one reading; `commitPane` names a pane and never a path, `commitFocus` hands the whole
+  // mirror the model produced, `commitZones` names a zone and composes its family at the crossing, and `commitTheme` hands
+  // the appearance act — the setting and the caller-held attribute name — and composes NOTHING; `onChanged` delivers that
+  // the view moved and never its value. The declaration below and `src/renderer/secure-panels.ts`'s copy are the same text in both files —
   // the lockstep rule the `store`, `security` and `tabs` members already follow, and this pair is the one a row reads back
   // and compares rather than cites.
   view: {
-    read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default' } }>
+    read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>
     commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
     commitFocus(mirror: ViewFocusMirror): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
     commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+    commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
     onChanged(handler: () => void): () => void
   },
   // ⟶ **THE `store` MEMBER IS DELETED** (`D-93`; `D-90`'s clause (3): "the two preload members"). It carried Y-1 the boot
@@ -183,7 +185,7 @@ const bridge: ProvidentBridge = {
     },
   },
   view: {
-    read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default' } }> {
+    read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }> {
       return ipcRenderer.invoke(IPC_VIEW_READ)
     },
     commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }> {
@@ -194,6 +196,11 @@ const bridge: ProvidentBridge = {
     },
     commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }> {
       return ipcRenderer.invoke(IPC_VIEW_ZONES_COMMIT, id, zone)
+    },
+    // THE APPEARANCE ACT (D-97): the setting the authored control produced and the attribute name this realm holds. The
+    // declaration never crosses this channel inward — the crossing's pair resolves it and the change push carries it back.
+    commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }> {
+      return ipcRenderer.invoke(IPC_VIEW_THEME_COMMIT, token, attributeName)
     },
     onChanged(handler: () => void): () => void {
       const listener = (): void => handler()

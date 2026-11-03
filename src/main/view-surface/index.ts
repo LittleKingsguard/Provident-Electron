@@ -15,11 +15,14 @@ import {
   FOCUS_SHAPE_REASON,
   PANE_SHAPE_MESSAGE,
   PANE_SHAPE_REASON,
+  THEME_SHAPE_MESSAGE,
+  THEME_SHAPE_REASON,
   ZONE_SHAPE_MESSAGE,
   ZONE_SHAPE_REASON,
   type ViewRecord,
   type ViewRecordAnswer,
   type ViewRecordStore,
+  type ViewThemeRecord,
 } from '../view-record/index.js'
 
 /** **THE READ IS TOTAL AND CARRIES NO REFUSED ARM**, which is the module's own measurement and not an omission: a read
@@ -31,10 +34,12 @@ export type ViewReadAnswer = {
   readonly panes: readonly import('../view-record/index.js').ViewPaneGeometry[]
   readonly focus: import('../view-record/index.js').ViewFocusMirror
   readonly zones: readonly import('../view-record/index.js').ViewZone[]
+  readonly theme: ViewThemeRecord
   readonly source: {
     readonly panes: 'record' | 'default'
     readonly focus: 'record' | 'default'
     readonly zones: 'record' | 'default'
+    readonly theme: 'record' | 'default'
   }
 }
 
@@ -43,6 +48,7 @@ export interface ViewSurface {
   commitPane(id: unknown, geometry: unknown): ViewRecordAnswer
   commitFocus(mirror: unknown): ViewRecordAnswer
   commitZones(id: unknown, zone: unknown): ViewRecordAnswer
+  commitTheme(token: unknown, attributeName: unknown): ViewRecordAnswer
   attach(): void
   detach(): void
 }
@@ -63,7 +69,14 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
   return {
     read(): ViewReadAnswer {
       const answer = record.read()
-      return { status: 'committed', panes: answer.panes, focus: answer.focus, zones: answer.zones, source: answer.source }
+      return {
+        status: 'committed',
+        panes: answer.panes,
+        focus: answer.focus,
+        zones: answer.zones,
+        theme: answer.theme,
+        source: answer.source,
+      }
     },
 
     commitPane(id: unknown, geometry: unknown): ViewRecordAnswer {
@@ -93,7 +106,19 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
       return record.commitZones(id, zone)
     },
 
-    /** The change push: ONE subscription over ALL THREE roots, held here so `detach` can withdraw exactly what `attach`
+    commitTheme(token: unknown, attributeName: unknown): ViewRecordAnswer {
+      // the two arms for the appearance act: a setting that is not a string, and an attribute name a caller could not
+      // compose a write from (D-97). Both answer the module's own token and sentence, before any store verb.
+      if (typeof token !== 'string') {
+        return { status: 'refused', reason: THEME_SHAPE_REASON, message: THEME_SHAPE_MESSAGE, address: null }
+      }
+      if (typeof attributeName !== 'string' || attributeName.length === 0) {
+        return { status: 'refused', reason: THEME_SHAPE_REASON, message: THEME_SHAPE_MESSAGE, address: null }
+      }
+      return record.commitTheme(token, attributeName)
+    },
+
+    /** The change push: ONE subscription over ALL FOUR roots, held here so `detach` can withdraw exactly what `attach`
      *  took. */
     attach(): void {
       if (off !== null) return

@@ -2438,7 +2438,13 @@ const EDGE_TOKENS: ScanPattern[] = [
   { id: 'theme.ts', re: /shared\/theme|theme\.ts/g },
   { id: 'resolveTheme', re: /\bresolveTheme\b/g },
   { id: 'applyThemeDeclaration', re: /\bapplyThemeDeclaration\b/g },
-  { id: 'an import into the mechanism', re: /import[^;]*theme|require\([^)]*theme/g },
+  // ⟶ **CORRECTED 2026-11-03 (`D-97`) — THE IMPORT FORM IS SCANNED PER LINE, AND THE REASON IS MEASURED.** The as-filed
+  // pattern spans to the next `;`, and this tree's TypeScript is SEMICOLON-FREE, so the span ran from an `import` of
+  // `../shared/view-shape.js` across forty lines to the first member named `theme:` in the shape — reporting a file that
+  // imports NO mechanism as a carrier. An import statement is one logical line here, so the form ends at the newline. The
+  // planted-consumer control below is a single line and is still caught, which is what keeps this a correction of the
+  // instrument rather than a relaxation of the row.
+  { id: 'an import into the mechanism', re: /import[^;\n]*theme|require\([^)\n]*theme/g },
 ] // CORPUS-EXEMPT
 function edgeScan(surface: string, applyExemptions: boolean): string[] {
   const code = stripComments(surface)
@@ -2538,7 +2544,12 @@ function tp3Attempt(shape: number): AttemptResult {
   // SECOND carrier is still a FINDING — which the bounded-extension control below proves the instrument still catches.
   // THE ROLLBACK is the same one the `H2b` licence cell declared: removing that import reverts this attempt to the
   // `D-93` closed form (the annotation's removal, never a re-derivation).
-  const ADMITTED_CARRIERS: readonly string[] = ['src/renderer/renderer.ts']
+  // ⟶ **RE-GRAINED 2026-11-03 (`D-97`) — THE ONE ADMITTED CARRIER IS THE CROSSING'S, BY NAME.** `D-96` admitted
+  // `src/renderer/renderer.ts`; the instruction this pass carries (*"no boot time declarations — use constraint repairs"*)
+  // deletes that drive, and the mechanism's one consumer becomes `theme-must-stand` in `src/main/view-record/index.ts`,
+  // whose repair computes the declaration the view record stores. The set is still ONE named member and the
+  // bounded-extension control below still proves a SECOND carrier is a FINDING.
+  const ADMITTED_CARRIERS: readonly string[] = ['src/main/view-record/index.ts']
   const carriers = walkSrc()
     .filter((p) => /\.(?:ts|mjs|js)$/.test(p))
     .filter((p) => p !== 'src/shared/theme.ts')
@@ -2551,7 +2562,7 @@ function tp3Attempt(shape: number): AttemptResult {
   const secondCarrier = `import { resolveTheme, applyThemeDeclaration } from '../shared/theme.js'`
   return checkAssertions(
     [
-      { label: `§5.5.1 P-TC-TP-3 (12, RE-GRAINED 2026-11-03 by \`D-96\`; the CLOSED form was \`D-93\`'s) — no \`src/**\` file outside the allowed set names the mechanism on this unit's behalf, and the allowed set is the module PLUS its ONE admitted carrier \`src/renderer/renderer.ts\`; unadmitted carriers: ${offenders.join(', ')}`, ok: offenders.length === 0 },
+      { label: `§5.5.1 P-TC-TP-3 (12, RE-GRAINED 2026-11-03 by \`D-97\`, and by \`D-96\` before it; the CLOSED form was \`D-93\`'s) — no \`src/**\` file outside the allowed set names the mechanism on this unit's behalf, and the allowed set is the module PLUS its ONE admitted carrier \`src/main/view-record/index.ts\` (the crossing's \`theme-must-stand\` repair); unadmitted carriers: ${offenders.join(', ')}`, ok: offenders.length === 0 },
       { label: `§5.5.1 P-TC-TP-3 (12, the admitted member is MEASURED rather than merely allowed) — the one allowed carrier really is a carrier on this head: ${admittedCarriers.join(', ')}`, ok: admittedCarriers.length === 1 },
       { label: '§5.5.1 P-TC-TP-3 (12, bounded-extension control) — a SECOND new carrier (a synthetic second caller) is STILL flagged by the instrument: the allowed set is the mechanism plus this unit\'s own surfaces and admits NO caller path, so a re-landed caller is a FINDING rather than a blanket strip', ok: edgeScan(secondCarrier, true).length > 0 },
     ],

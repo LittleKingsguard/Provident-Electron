@@ -445,7 +445,10 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = [], zones: readonly Wi
     focus: { entries: [], activeId: null },
     // THE THIRD FAMILY (`D-91`, WIRED `D-92`): the reading carries all three, and a row that wants a zone hands it here.
     zones: zones.map((zone) => ({ ...zone })),
-    source: { panes: 'record', focus: 'record', zones: 'record' },
+    // THE FOURTH FAMILY, AT THE PLACEHOLDER THE CREATION REPAIR MINTS (D-97) — a declaration naming no attribute, so it can
+    // be applied nowhere; this fixture drives the pane and zone reads and never the appearance act.
+    theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
+    source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
   })
   const member = {
     read: async (): Promise<unknown> => {
@@ -458,6 +461,7 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = [], zones: readonly Wi
     },
     commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
     commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
+    commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
     onChanged: (handler: () => void): (() => void) => {
       handlers.push(handler)
       return (): void => {
@@ -1687,7 +1691,13 @@ describe('§3.4 S-rows — overlay (S-OV-*), the caller half RE-GRAINED to the s
  * re-grain honest rather than a blanket strip. The `D-93` reading these rows revert to if that import is removed is
  * *"NO importer at all, over the tree"*, and it is kept visible in each row's own note.
  */
-const ADMITTED_THEME_CARRIER = join(SRC_ROOT, 'renderer/renderer.ts')
+// ⟶ **RE-GRAINED 2026-11-03 (`D-97`) — THE ONE ADMITTED CARRIER MOVES TO THE CROSSING, BY NAME.** `D-96` admitted
+// `src/renderer/renderer.ts` (the renderer's `startThemeDeclaration`); this pass DELETES that drive because the instruction
+// it carries is *"no boot time declarations — use constraint repairs"*, so the mechanism's one in-tree consumer is now the
+// view record's `theme-must-stand` repair in `src/main/view-record/index.ts`, which computes the declaration the record
+// stores. The closed SET is not weakened by this re-grain: it is still ONE path, named, and a SECOND carrier still fails the
+// planted-consumer control at the end of each row.
+const ADMITTED_THEME_CARRIER = join(SRC_ROOT, 'main/view-record/index.ts')
 /** Is this `src/**` path the admitted carrier? Exact membership, never a prefix and never a directory. */
 function isAdmittedThemeCarrier(path: string): boolean {
   return path === ADMITTED_THEME_CARRIER
@@ -1715,8 +1725,8 @@ describe('§3.4 S-rows — theme (S-TH-*), the caller half RE-GRAINED to the str
       if (code.includes('resolveTheme')) unadmittedReferences.push(`${f}: resolveTheme`)
       if (code.includes('applyThemeDeclaration')) unadmittedReferences.push(`${f}: applyThemeDeclaration`)
     }
-    expect(unadmittedReferences, "no src/** file OUTSIDE the one admitted carrier references the module's values").toEqual([])
-    expect(importers.filter((entry) => !entry.startsWith(ADMITTED_THEME_CARRIER)), 'a SECOND importer is a FINDING: the admitted set is ONE path, by name').toEqual([])
+    expect(unadmittedReferences, "no src/** file OUTSIDE the one admitted carrier references the module's values (D-97: the carrier is the CROSSING, `src/main/view-record/index.ts`, where the repair computes the declaration)").toEqual([])
+    expect(importers.filter((entry) => !entry.startsWith(ADMITTED_THEME_CARRIER)), 'a SECOND importer is a FINDING: the admitted set is ONE path, by name — the crossing, D-97').toEqual([])
     expect(importers.length, 'and the ONE admitted carrier IS there — the exemption is a measured member, not a blanket strip').toBe(1)
     // CONTROL — a planted importer is reported by the same scan, in each import form.
     expect(scanSpecifier(`import { resolveTheme } from '../shared/theme.js'\n`, 'theme').length).toBeGreaterThan(0)
@@ -1869,7 +1879,7 @@ describe('§3.5 existence rows (E-*)', () => {
       if (code.includes('resolveTheme')) unadmittedReferences.push(`${f}: resolveTheme`)
       if (code.includes('applyThemeDeclaration')) unadmittedReferences.push(`${f}: applyThemeDeclaration`)
     }
-    expect(unadmittedReferences, 'resolveTheme/applyThemeDeclaration appear ONLY in the module and its ONE admitted consumer').toEqual([])
+    expect(unadmittedReferences, 'resolveTheme/applyThemeDeclaration appear ONLY in the module and its ONE admitted consumer — the repair of `theme-must-stand` at the crossing, D-97').toEqual([])
     expect(importers.filter((entry) => !entry.startsWith(ADMITTED_THEME_CARRIER)), 'NO src/** file OUTSIDE the admitted carrier imports theme.js').toEqual([])
     expect(importers.length, 'the admitted carrier really is the one measured').toBe(1)
     // THE POSITIVE CONTROL — a planted consumer MUST FAIL the no-importer probe.

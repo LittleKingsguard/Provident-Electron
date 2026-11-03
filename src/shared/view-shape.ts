@@ -1,7 +1,8 @@
 // src/shared/view-shape.ts — THE VIEW RECORD'S DECLARED SHAPE, ONE SPELLING FOR BOTH REALMS (D-88).
 //
-// WHY THIS FILE EXISTS AT ALL, AND WHY IT IS `shared/` RATHER THAN `main/`. The crossing declares the view record's THREE
-// families in `src/main/view-record/index.ts` (D-87, D-91), and the RENDERER reads the same three through the same member
+// WHY THIS FILE EXISTS AT ALL, AND WHY IT IS `shared/` RATHER THAN `main/`. The crossing declares the view record's FOUR
+// families in `src/main/view-record/index.ts` (D-87, D-91; the appearance family is `D-97`'s and its vocabulary is at the
+// end of this file), and the RENDERER reads the same four through the same member
 // (`src/renderer/view-client.ts`). Two realm-local copies of the shapes, the measured defaults and the per-pane and
 // per-zone derivations would be two answers to "what is a pane geometry" and to "what is a zone" — the one-spelling rule
 // (`D-73`) applied to a vocabulary rather than to a function. So the vocabulary is here, `main` re-exports every name from
@@ -71,6 +72,52 @@ export interface ViewZone {
   readonly size?: number
   readonly display?: string
 }
+
+/** **THE APPEARANCE DECLARATION AS `src/shared/theme.ts` COMPUTES IT — `{name, value, removal}`, CARRIED WHOLE** (D-97).
+ *  The mechanism answers exactly these three members (`ThemeAttributeWrite`, `applyThemeDeclaration`), and this type is the
+ *  CROSSING's spelling of them rather than a second answer: `name` is the caller-held attribute name echoed — `null` where
+ *  no caller has named one, which at a fresh boot is every record — `value` the token it was resolved against, and `removal`
+ *  the mechanism's removal arm. **NO MEMBER HERE IS DERIVED IN THIS REALM**: the record carries the mechanism's answer and
+ *  the renderer applies it (`D-96`'s one-write surface, now fed by a record rather than computed at a boot). */
+export interface ViewThemeDeclaration {
+  readonly name: string | null
+  readonly value: string
+  readonly removal: boolean
+}
+
+/** **THE THEME FAMILY'S ONE VALUE — THE FOURTH FAMILY OF THE VIEW RECORD (D-97), AND ITS MEMBERS ARE THREE.**
+ *  `token` is the appearance setting the app's own authored control produced, NORMALISED BY THE MECHANISM (`resolveTheme`'s
+ *  `setting` member: the caller's string, or `null` for the empty setting the mechanism declares as absence); `attribute`
+ *  is the caller-held attribute NAME the act carried, the input the derivation is a function of; and `declaration` is the
+ *  mechanism's own answer for that pair. **WHY A DERIVED MEMBER IS STORED AT ALL, AND NOT RECOMPUTED AT THE READ**: clause 1
+ *  of the convention (`D-82`) is a constraint over a VALUE, so a member recomputed on read could never be stale and the
+ *  pair would have nothing to judge — and a read is the one arm clause 4 forbids a re-derivation on. The record is therefore
+ *  SELF-DESCRIBING: what stands at the address is what the mechanism said about the setting it carries, and the pair
+ *  `theme-must-stand` judges exactly that agreement.
+ *
+ *  **`token` AND `attribute` ARE WRITTEN AS ABSENCE WHEN THEY ARE `null`**, which is the crossing's boundary's rule and not
+ *  this file's taste: the store carries strings, booleans, finite numbers, plain objects and arrays and REFUSES `null`
+ *  (measured, `D-87`; `D-91` writes the focus mirror's empty active the same way). So a record read back answers `null` for
+ *  both through the admission, while the value standing at the address simply does not name them. */
+export interface ViewThemeRecord {
+  readonly token: string | null
+  readonly attribute: string | null
+  readonly declaration: ViewThemeDeclaration
+}
+
+/** **THE RECORD BEFORE ANY CALLER HAS NAMED AN ATTRIBUTE — A FRESH ONE ON EVERY CALL, so no caller can move this file's own
+ *  constant** (`defaultPaneGeometry`'s rule). **ITS DECLARATION IS THE MECHANISM'S OWN ANSWER FOR THE ABSENT PAIR**, and that
+ *  is a claim a row owns rather than a comment: `applyThemeDeclaration(null, null)` answers `{name: null, value: '',
+ *  removal: true}`, which is this record's declaration member for member. It is the placeholder the creation repair mints
+ *  and the declared default the read answers for a family that does not stand — ONE value at both sites, which is what keeps
+ *  a placeholder from being a second authority beside the mechanism. **NOTHING CAN BE APPLIED FROM IT**: `name` is `null`,
+ *  so there is no `props.<name>` for a renderer to write, which is what makes a boot silent BY CONSTRUCTION and not by a
+ *  guard. */
+export const viewThemePlaceholder = (): ViewThemeRecord => ({
+  token: null,
+  attribute: null,
+  declaration: { name: null, value: '', removal: true },
+})
 
 /** **WHERE ONE PANE'S GEOMETRY CAME FROM, AND IT NAMES A REAL DIFFERENCE**: `'record'` when the family names this pane and
  *  `'default'` when the measured default answered because it does not. The member exists because the alternative is a read

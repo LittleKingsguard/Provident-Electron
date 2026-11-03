@@ -48,6 +48,8 @@ import {
   VIEW_FOCUS_MUST_STAND_ID,
   VIEW_PANES_ADDRESS,
   VIEW_PANES_MUST_STAND_ID,
+  VIEW_THEME_ADDRESS,
+  VIEW_THEME_MUST_STAND_ID,
   VIEW_ZONES_ADDRESS,
   VIEW_ZONES_MUST_STAND_ID,
   viewConstraintDeclarations,
@@ -67,6 +69,7 @@ import {
   IPC_VIEW_FOCUS_COMMIT,
   IPC_VIEW_PANE_COMMIT,
   IPC_VIEW_READ,
+  IPC_VIEW_THEME_COMMIT,
   IPC_VIEW_ZONES_COMMIT,
 } from '../../../src/shared/view-channels'
 
@@ -163,7 +166,7 @@ const boot = (path: string): { store: ViewRecordStore; read: () => ReturnType<Vi
 
 // ═══════════════ CLAUSE 1 — EXISTENCE + PLACEHOLDER REPAIR AT THE CREATION INSTANT, PER ADDRESS ═══════════════
 
-describe('view-record · clause 1 — all three addresses repaired at the CREATION INSTANT, each to its measured placeholder', () => {
+describe('view-record · clause 1 — all FOUR addresses repaired at the CREATION INSTANT, each to its measured placeholder', () => {
   it('THE CREATION INSTANT: `panes-must-stand` writes the MEASURED default family BEFORE ANY ROUTE OF THE MODULE RUNS — the store\'s own read answers it, and the record reads `source: record` — while a store carrying NO batch answers `AddressNotFound` at the same address, which is the absent arm this pair exists to repair', () => {
     // THE ABSENCE→REPAIR PATH, DRIVEN FROM ITS OWN STORE so the row measures the CONSTRUCTION rather than a store this
     // file already opened: nothing is committed and no route of the module has been called when the store is read.
@@ -197,10 +200,11 @@ describe('view-record · clause 1 — all three addresses repaired at the CREATI
 
       const fresh = createViewRecord({ store: bound.current })
       const read = fresh.read()
-      expect(read.source, 'all three families stand because a repair put them there, and the read says which').toEqual({
+      expect(read.source, 'all four families stand because a repair put them there, and the read says which').toEqual({
         panes: 'record',
         focus: 'record',
         zones: 'record',
+        theme: 'record',
       })
       expect(read.panes, 'and the record reads the family the repair wrote').toEqual([
         { id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
@@ -454,7 +458,11 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'the pane route writes the family whole').toBe(true)
     expect(/\.write\(VIEW_FOCUS_ADDRESS, FOCUS_TIER/.test(module), 'the focus route writes the mirror whole').toBe(true)
     expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'and the zone route writes its family whole (D-91)').toBe(true)
-    expect((module.match(/\.write\(VIEW_/g) ?? []).length, 'THREE routes write, and the one repair path writes through ONE helper').toBe(3)
+    expect(/\.write\(VIEW_THEME_ADDRESS, THEME_TIER/.test(module), 'and the appearance route writes its act whole (D-97)').toBe(true)
+    expect(
+      (module.match(/\.write\(VIEW_/g) ?? []).length,
+      'FOUR routes write, and the ONE repair path writes through ONE helper — a fifth write site would be a write path clause 4 has not seen',
+    ).toBe(4)
   })
 
   it('NO WRITE ON READ, MEASURED BOTH WAYS: a read lands no byte over a standing family, and a read over a store whose batch NEVER RAN answers the declared defaults WITHOUT minting either family', () => {
@@ -472,15 +480,20 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     const barePath = join(dir, 'bare.json')
     const bare = createProfileStore({ filePath: barePath })
     const overBare = createViewRecord({ store: bare as unknown as ViewRecordStore }).read()
-    expect(overBare.source, 'no declaration ran, so no family of the three stands').toEqual({
+    expect(overBare.source, 'no declaration ran, so no family of the FOUR stands').toEqual({
       panes: 'default',
       focus: 'default',
       zones: 'default',
+      theme: 'default',
     })
     expect(overBare.panes, 'the pane family answers the measured default through the declared arm, never a minted record').toEqual([])
     expect(overBare.focus, 'and the mirror the declared empty pair').toEqual({ entries: [], activeId: null })
     expect(overBare.zones, 'and the zone family at the arm that names no zone — never a geometry minted at a read').toEqual([])
-    for (const address of [VIEW_PANES_ADDRESS, VIEW_FOCUS_ADDRESS, VIEW_ZONES_ADDRESS]) {
+    expect(
+      overBare.theme,
+      'and the appearance record at the placeholder, whose declaration names no attribute — never a resolution minted at a read (D-97)',
+    ).toEqual({ token: null, attribute: null, declaration: { name: null, value: '', removal: true } })
+    for (const address of [VIEW_PANES_ADDRESS, VIEW_FOCUS_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]) {
       for (const tier of ['file', 'mem'] as const) {
         let absent = ''
         try {
@@ -575,10 +588,10 @@ describe('view-record · the routes', () => {
 // ═══════════════ THE WIRING: ONE BATCH, ONE CONSTRUCTION, ONE PAIR OF LOCKSTEP DECLARATIONS ═══════════════
 
 describe('view-record · the boot\'s wiring, read as code and never as prose', () => {
-  it('THE BATCH IS THE TAB RECORD\'S SIX AND THIS MODULE\'S THREE, IN THE ONE `createProfileStore` CALL — over comment-elided code, with the raw bytes carrying the names as the positive control', () => {
+  it('THE BATCH IS THE TAB RECORD\'S SIX AND THIS MODULE\'S FOUR, IN THE ONE `createProfileStore` CALL — over comment-elided code, with the raw bytes carrying the names as the positive control', () => {
     const main = commentElided(sourceOf('src/main/main.ts'))
     expect(main.includes('...tabsConstraintDeclarations('), 'the tab record\'s six are spread into the batch').toBe(true)
-    expect(main.includes('...viewConstraintDeclarations('), 'and this module\'s three into the SAME array').toBe(true)
+    expect(main.includes('...viewConstraintDeclarations('), 'and this module\'s four into the SAME array').toBe(true)
     // ONE CONSTRUCTION SITE, AND IT IS THE BOOT'S: a second `createProfileStore(` in the entry would be the third instance
     // the purge refuses (D-78, D-79). The count is stated as a figure a new site would break.
     expect((main.match(/createProfileStore\s*\(/g) ?? []).length, 'the entry constructs the profile store exactly once').toBe(1)
@@ -587,6 +600,7 @@ describe('view-record · the boot\'s wiring, read as code and never as prose', (
     expect(main.includes('ipcMain.handle(IPC_VIEW_PANE_COMMIT'), 'the pane route\'s handler is registered').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_FOCUS_COMMIT'), 'the focus route\'s').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_ZONES_COMMIT'), 'and the zone route\'s (D-91)').toBe(true)
+    expect(main.includes('ipcMain.handle(IPC_VIEW_THEME_COMMIT'), 'and the appearance route\'s (D-97)').toBe(true)
     // THE POSITIVE CONTROL: the RAW bytes carry the names too, so the four assertions above are about code that exists.
     expect(sourceOf('src/main/main.ts').includes('viewConstraintDeclarations'), 'the raw bytes name it').toBe(true)
   })
@@ -615,19 +629,21 @@ describe('view-record · the boot\'s wiring, read as code and never as prose', (
     const panels = routesOf('src/renderer/secure-panels.ts', /^\s*view\?\s*:\s*\{\s*$/)
     // THE LOCKSTEP IS A COMPARISON AND NOT A PROMISE: the two blocks are read at whatever their own indent is, so a
     // half-widening (a member added at one site only) reds here with the two texts in hand.
-    expect(panels, 'the renderer\'s `declare global` half carries the SAME five routes as the preload\'s').toEqual(preload)
-    expect(preload, 'which are the module\'s five: read, commitPane, commitFocus, commitZones, onChanged').toEqual([
-      "read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default' } }>",
+    expect(panels, 'the renderer\'s `declare global` half carries the SAME six routes as the preload\'s').toEqual(preload)
+    expect(preload, 'which are the module\'s six: read, commitPane, commitFocus, commitZones, commitTheme, onChanged').toEqual([
+      "read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>",
       "commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       "commitFocus(mirror: ViewFocusMirror): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       "commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
+      "commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       'onChanged(handler: () => void): () => void',
     ])
-    expect([IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_CHANGED], 'and the five channel names are single-sourced in one shared module').toEqual([
+    expect([IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED], 'and the six channel names are single-sourced in one shared module').toEqual([
       'provident:view:read',
       'provident:view:pane-commit',
       'provident:view:focus-commit',
       'provident:view:zones-commit',
+      'provident:view:theme-commit',
       'provident:view:changed',
     ])
   })

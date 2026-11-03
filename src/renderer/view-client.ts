@@ -40,11 +40,13 @@ import {
   DEFAULT_PANE_BOUNDS,
   paneGeometryIn,
   defaultPaneGeometry,
+  viewThemePlaceholder,
   zoneIn,
   type ViewFocusEntry,
   type ViewFocusMirror,
   type ViewGeometrySource,
   type ViewPaneGeometry,
+  type ViewThemeRecord,
   type ViewZone,
 } from '../shared/view-shape.js'
 
@@ -65,7 +67,13 @@ export interface ViewCommittedReading {
   readonly panes: readonly ViewPaneGeometry[]
   readonly focus: ViewFocusMirror
   readonly zones: readonly ViewZone[]
-  readonly source: { readonly panes: ViewGeometrySource; readonly focus: ViewGeometrySource; readonly zones: ViewGeometrySource }
+  readonly theme: ViewThemeRecord
+  readonly source: {
+    readonly panes: ViewGeometrySource
+    readonly focus: ViewGeometrySource
+    readonly zones: ViewGeometrySource
+    readonly theme: ViewGeometrySource
+  }
 }
 
 /** **THE CLIENT'S READING — the committed arm plus the TWO STATEMENTS this module can make and must never hide**: the
@@ -86,7 +94,13 @@ export interface ViewShape {
   readonly panes: readonly ViewPaneGeometry[]
   readonly focus: ViewFocusMirror
   readonly zones: readonly ViewZone[]
-  readonly source: { readonly panes: ViewGeometrySource; readonly focus: ViewGeometrySource; readonly zones: ViewGeometrySource }
+  readonly theme: ViewThemeRecord
+  readonly source: {
+    readonly panes: ViewGeometrySource
+    readonly focus: ViewGeometrySource
+    readonly zones: ViewGeometrySource
+    readonly theme: ViewGeometrySource
+  }
 }
 
 /** **A WRITE'S SENT ARM.** `sent` says the route was handed the write and the receipt is not the answer — it lands in
@@ -101,7 +115,7 @@ export type ViewWriteStatement =
  *  `unread` where the route threw or answered a shape L2 does not declare. It is held so a REFUSED write is a reading
  *  rather than a silent no-op; nothing composes a decision from it. */
 export interface ViewWriteOutcome {
-  readonly route: 'pane' | 'focus' | 'zone'
+  readonly route: 'pane' | 'focus' | 'zone' | 'theme'
   readonly answer: unknown
   readonly status: 'committed' | 'refused' | 'unread'
   readonly reason: string | null
@@ -125,6 +139,7 @@ export interface ViewClientBridge {
   commitPane(id: string, geometry: unknown): Promise<unknown>
   commitFocus(mirror: unknown): Promise<unknown>
   commitZones(id: string, zone: unknown): Promise<unknown>
+  commitTheme(token: string, attributeName: string): Promise<unknown>
   onChanged(handler: () => void): () => void
 }
 
@@ -149,6 +164,12 @@ export interface ViewClient {
   /** **THE FOCUS MODEL'S MIRROR READ — SYNCHRONOUS.** The declared empty pair where nothing has been read or where the
    *  mirror is empty; the absent active is `null`. */
   focusState(): ViewFocusState
+  /** **THE APPEARANCE READ — SYNCHRONOUS, AND IT ANSWERS THE CROSSING'S OWN RECORD** (D-97): the setting it carries, the
+   *  attribute name the last act supplied, and **THE DECLARATION THE MECHANISM COMPUTED FOR THE PAIR**. This module never
+   *  computes one: `resolveTheme` and `applyThemeDeclaration` are the crossing's (`src/main/view-record/index.ts`) and this
+   *  realm applies what the record says. A shape nothing has filled answers the declared placeholder, whose `name` is
+   *  `null` — so there is no `props.<name>` to write and nothing can be applied from it. */
+  themeRecord(): ViewThemeRecord
   /** **THE DRAG'S ZONE READ — SYNCHRONOUS, AND ITS MISSING ARM IS `null`** (D-91): the zone the standing family names,
    *  carrying exactly the members the record admitted, or `null` where it names none. **NO DEFAULT ANSWERS HERE AND THAT IS
    *  THE MEASUREMENT**: the frozen store held no zone default, its read answered `undefined` on a MISS and `candidatesFor`
@@ -162,6 +183,11 @@ export interface ViewClient {
   /** **THE ZONE ROUTE.** One zone id and the members this caller has, sent; the crossing composes the family from what
    *  stands, so a client one delivery stale cannot erase a zone it has not read. */
   commitZones(id: string, zone: unknown): ViewWriteStatement
+  /** **THE APPEARANCE ROUTE — THE USER ACTION'S ONE WRITE** (D-97): the setting the authored control produced and the
+   *  attribute name this realm holds, sent AS THE ACT and never as a resolution. The crossing's pair derives the
+   *  declaration inside the same commit and the change push carries it back, which is why nothing here awaits an answer:
+   *  the shape is refilled by the delivery the commit causes. */
+  commitTheme(token: string, attributeName: string): ViewWriteStatement
   /** **THE ONE STATED BOOT READ** (`D-78`'s chain, `D-88`): the answer is ADOPTED into the shape, and every later fill is a
    *  delivery's. Total: every arm is a value. */
   fill(): Promise<ViewClientReading>
@@ -186,7 +212,8 @@ const emptyShape = (): ViewShape => ({
   panes: [],
   focus: { entries: [], activeId: null },
   zones: [],
-  source: { panes: 'default', focus: 'default', zones: 'default' },
+  theme: viewThemePlaceholder(),
+  source: { panes: 'default', focus: 'default', zones: 'default', theme: 'default' },
 })
 
 /** THE AMBIENT MEMBER, READ AT CALL TIME — never at construction, so a bridge installed after the client was built is still
@@ -253,6 +280,31 @@ function zoneOfWire(held: unknown): ViewZone | null {
   return zone
 }
 
+/** **THE APPEARANCE RECORD, ADMITTED FROM THE WIRE — AND ITS DERIVED MEMBER IS REQUIRED** (D-97). The crossing carries
+ *  `{token?, attribute?, declaration: {name?, value, removal}}` with every `null` written as ABSENCE; this side maps the
+ *  absences back to `null` and REFUSES a record whose declaration is not a readable `{value, removal}` pair, because the
+ *  declaration is the whole member this realm acts on and a record missing it is a partial record, never a placeholder.
+ *  **NOTHING IS DERIVED HERE**: the three members are copied, and the only thing this function decides is whether the
+ *  answer is the shape L2 §2 declares (`paneOf`'s and `zoneOfWire`'s rule, applied at the one member a write depends on). */
+function themeOfWire(held: unknown): ViewThemeRecord | null {
+  if (!isObject(held) || Array.isArray(held)) return null
+  const declaration = held['declaration']
+  if (!isObject(declaration) || Array.isArray(declaration)) return null
+  const value = declaration['value']
+  const removal = declaration['removal']
+  if (typeof value !== 'string' || typeof removal !== 'boolean') return null
+  const nameRaw = declaration['name']
+  if (nameRaw !== undefined && nameRaw !== null && typeof nameRaw !== 'string') return null
+  const tokenRaw = held['token']
+  if (tokenRaw !== undefined && tokenRaw !== null && typeof tokenRaw !== 'string') return null
+  const attributeRaw = held['attribute']
+  if (attributeRaw !== undefined && attributeRaw !== null && typeof attributeRaw !== 'string') return null
+  const name = typeof nameRaw === 'string' && nameRaw !== '' ? nameRaw : null
+  const token = typeof tokenRaw === 'string' && tokenRaw !== '' ? tokenRaw : null
+  const attribute = typeof attributeRaw === 'string' && attributeRaw !== '' ? attributeRaw : null
+  return { token, attribute, declaration: { name, value, removal } }
+}
+
 /** **ONE FOCUS ENTRY, ADMITTED FROM THE WIRE** — the id narrowed to the three primitives `===` compares by value, `target`
  *  carried opaquely, `label` the model's optional string. */
 function entryOf(held: unknown): ViewFocusEntry | null {
@@ -304,21 +356,26 @@ function committedOrDivergence(raw: unknown): { readonly reading: ViewCommittedR
     const zone = zoneOfWire(candidate)
     if (zone !== null) zones.push(zone)
   }
+  const theme = themeOfWire(raw['theme'])
+  if (theme === null) return { detail: 'theme is not the record L2 §2 declares' }
   const sourceRaw = raw['source']
   if (!isObject(sourceRaw) || Array.isArray(sourceRaw)) return { detail: 'source is not a plain record' }
   const panesSource = sourceRaw['panes']
   const focusSource = sourceRaw['focus']
   const zonesSource = sourceRaw['zones']
+  const themeSource = sourceRaw['theme']
   if (panesSource !== 'record' && panesSource !== 'default') return { detail: 'source.panes is not record|default' }
   if (focusSource !== 'record' && focusSource !== 'default') return { detail: 'source.focus is not record|default' }
   if (zonesSource !== 'record' && zonesSource !== 'default') return { detail: 'source.zones is not record|default' }
+  if (themeSource !== 'record' && themeSource !== 'default') return { detail: 'source.theme is not record|default' }
   return {
     reading: {
       status: 'committed',
       panes,
       focus: { entries, activeId },
       zones,
-      source: { panes: panesSource, focus: focusSource, zones: zonesSource },
+      theme,
+      source: { panes: panesSource, focus: focusSource, zones: zonesSource, theme: themeSource },
     },
   }
 }
@@ -347,14 +404,14 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
    *  the ambient `window.provident.view` otherwise. */
   const memberFor = (): unknown => (options.bridge === undefined ? ambientViewMember() : options.bridge)
 
-  const routeOf = (member: unknown, name: 'read' | 'commitPane' | 'commitFocus' | 'commitZones'): ((...args: unknown[]) => Promise<unknown>) | null => {
+  const routeOf = (member: unknown, name: 'read' | 'commitPane' | 'commitFocus' | 'commitZones' | 'commitTheme'): ((...args: unknown[]) => Promise<unknown>) | null => {
     if (member === null) return null
     const route = (member as Record<string, unknown>)[name]
     return typeof route === 'function' ? (route as (...args: unknown[]) => Promise<unknown>).bind(member) : null
   }
 
   /** ONE WRITE, SENT — the receipt is recorded when it lands and composes nothing. */
-  function send(route: 'pane' | 'focus' | 'zone', call: ((...args: unknown[]) => Promise<unknown>) | null, args: unknown[]): ViewWriteStatement {
+  function send(route: 'pane' | 'focus' | 'zone' | 'theme', call: ((...args: unknown[]) => Promise<unknown>) | null, args: unknown[]): ViewWriteStatement {
     if (call === null) return { status: 'absent', reason: memberFor() === null ? 'no-view-member' : 'no-route' }
     void call(...args).then(
       (answer: unknown) => {
@@ -375,7 +432,8 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
       panes: reading.panes,
       focus: reading.focus,
       zones: reading.zones,
-      source: { panes: reading.source.panes, focus: reading.source.focus, zones: reading.source.zones },
+      theme: reading.theme,
+      source: { panes: reading.source.panes, focus: reading.source.focus, zones: reading.source.zones, theme: reading.source.theme },
     }
   }
 
@@ -428,6 +486,17 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
       return { entries: shape.focus.entries, activeId: shape.focus.activeId }
     },
 
+    themeRecord(): ViewThemeRecord {
+      // THE SHAPE'S OWN RECORD, HANDED OUT AS A FRESH VALUE so no caller can move the shape the next delivery replaces
+      // (`paneBoundsOf`'s reason, applied to a record with one nested object in it).
+      const theme = shape.theme
+      return {
+        token: theme.token,
+        attribute: theme.attribute,
+        declaration: { name: theme.declaration.name, value: theme.declaration.value, removal: theme.declaration.removal },
+      }
+    },
+
     zoneOf(id: string): ViewZone | null {
       // THE ONE ZONE DERIVATION, CALLED AND NOT RE-SPELLED — and the miss is `null`, the answer the app's own paths give
       // for a zone nothing names (`zoneIn`'s own note). A cold shape answers `null` for every zone, exactly as the frozen
@@ -448,6 +517,13 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
     commitZones(id: string, zone: unknown): ViewWriteStatement {
       const member = memberFor()
       return send('zone', routeOf(member, 'commitZones'), [id, zone])
+    },
+
+    commitTheme(token: string, attributeName: string): ViewWriteStatement {
+      // THE ACT, SENT — and never a declaration: the crossing's pair resolves it inside the commit and the change push
+      // carries the record back, so this member's whole answer is `sent` or `absent` (D-97).
+      const member = memberFor()
+      return send('theme', routeOf(member, 'commitTheme'), [token, attributeName])
     },
 
     fill,
@@ -507,7 +583,7 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
 /** **A WRITE'S DECLARED ANSWER, AS IT ARRIVED** — `committed`, the crossing's own refusal record (`status: 'refused'` with
  *  its `reason`/`message`), or `unread` for a shape L2 §2 does not declare. The refusal vocabulary stays the store's: this
  *  module mints no word of its own. */
-function outcomeOf(route: 'pane' | 'focus' | 'zone', answer: unknown): ViewWriteOutcome {
+function outcomeOf(route: 'pane' | 'focus' | 'zone' | 'theme', answer: unknown): ViewWriteOutcome {
   if (!isObject(answer)) return { route, answer, status: 'unread', reason: 'answer-not-declared', message: null }
   const status = answer['status']
   if (status === 'committed') return { route, answer, status: 'committed', reason: null, message: null }

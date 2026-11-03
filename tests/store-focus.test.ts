@@ -275,7 +275,10 @@ function crossingOf(store: GraphStore): CrossingRecorder {
       // THE THIRD FAMILY'S DECLARED EMPTY ARM (D-91): this double stands the focus mirror, and the reading the client's
       // parse requires now carries all three families — so a zone is what a read of a family this file does not drive says.
       zones: [],
-      source: { panes: 'record', focus: 'record', zones: 'record' },
+      // THE FOURTH FAMILY, AT ITS DECLARED PLACEHOLDER (D-97): the reading the client's parse requires carries all four, and
+      // this file drives the focus mirror alone — a placeholder names no attribute, so nothing is applicable from it.
+      theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
+      source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
     }
   }
   const handlers: Array<() => void> = []
@@ -296,6 +299,9 @@ function crossingOf(store: GraphStore): CrossingRecorder {
     },
     commitPane: async (): Promise<unknown> => ({ status: 'committed' }),
     commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
+    // THE APPEARANCE ROUTE (D-97): the bridge's fifth route, present so the member set matches the bridge's. The record the
+    // double projects stands at the placeholder, whose declaration names no attribute, so no row here applies one.
+    commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
     commitFocus: async (mirror: unknown): Promise<unknown> => {
       const held = mirror as { readonly entries?: unknown; readonly activeId?: unknown }
       focusCommits.push([mirror])
@@ -1404,6 +1410,7 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
         commitPane: async () => ({ status: 'committed' }),
         commitFocus: async () => ({ status: 'committed' }),
         commitZones: async () => ({ status: 'committed' }),
+        commitTheme: async () => ({ status: 'committed' }),
         onChanged: () => () => undefined,
       } as never,
     })
@@ -1417,6 +1424,7 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
         commitPane: () => Promise.reject(new Error('hostile pane')),
         commitFocus: () => Promise.reject(new Error('hostile focus')),
         commitZones: () => Promise.reject(new Error('hostile zone')),
+        commitTheme: () => Promise.reject(new Error('hostile theme')),
         onChanged: () => {
           throw new Error('hostile onChanged')
         },
@@ -2781,10 +2789,11 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
       { name: 'throwing onChanged → the subscription refuses to register and NO throw escapes', drive: (): void => {
         const hostile = createViewClient({
           bridge: {
-            read: async () => ({ status: 'committed', panes: [], focus: { entries: [], activeId: null }, zones: [], source: { panes: 'record', focus: 'record', zones: 'record' } }),
+            read: async () => ({ status: 'committed', panes: [], focus: { entries: [], activeId: null }, zones: [], theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }, source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' } }),
             commitPane: async () => ({ status: 'committed' }),
             commitFocus: async () => ({ status: 'committed' }),
             commitZones: async () => ({ status: 'committed' }),
+            commitTheme: async () => ({ status: 'committed' }),
             onChanged: () => {
               throw new Error('hostile onChanged')
             },
