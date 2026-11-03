@@ -85,7 +85,46 @@ out
 .nuxt
 dist
 .output
-archive/
+# ── THE RETIRED GATE CORPUS: IGNORED, EXCEPT THE FILES THE SUITE READS (D-100) ────────────────────
+# `D-2` moved the corpus here and this line excluded it; `D-8`'s sweep then re-pointed the test rows
+# that read it, so a fresh clone ran red. The files the SUITE AND SCRIPTS actually read are admitted
+# below, one negation per file, and nothing else is: 31 files / 5,435,793 bytes out of the corpus's
+# 19,826,527 — the 17.8 MB `specs/` tree is otherwise still out.
+# A negation CANNOT re-admit a file under an excluded DIRECTORY (that is why `archive/` had to
+# become `archive/*`), so every level is opened by pattern and closed again beneath it.
+archive/*
+!archive/gate-corpus-2026-10-29/
+archive/gate-corpus-2026-10-29/*
+#   the corpus root's two read files, and `decisions/` — all seven ACTIVE shards are read
+!archive/gate-corpus-2026-10-29/decisions/
+!archive/gate-corpus-2026-10-29/decisions.md
+!archive/gate-corpus-2026-10-29/FORKER.md
+#   the one skill an `existsSync` pins and a `readdirSync` walks
+!archive/gate-corpus-2026-10-29/skills/
+!archive/gate-corpus-2026-10-29/specs/
+archive/gate-corpus-2026-10-29/specs/*
+#   the 21 specs the suite reads, each named rather than admitted by prefix
+!archive/gate-corpus-2026-10-29/specs/container-review.md
+!archive/gate-corpus-2026-10-29/specs/container.md
+!archive/gate-corpus-2026-10-29/specs/focus-model-adoption-dossier.md
+!archive/gate-corpus-2026-10-29/specs/focus-model-review.md
+!archive/gate-corpus-2026-10-29/specs/focus-model.md
+!archive/gate-corpus-2026-10-29/specs/focus-tool-adoption-dossier.md
+!archive/gate-corpus-2026-10-29/specs/focus-tool-review.md
+!archive/gate-corpus-2026-10-29/specs/focus-tool.md
+!archive/gate-corpus-2026-10-29/specs/fork-store-reads.md
+!archive/gate-corpus-2026-10-29/specs/gsession.md
+!archive/gate-corpus-2026-10-29/specs/gutter-ui.md
+!archive/gate-corpus-2026-10-29/specs/menulib-review.md
+!archive/gate-corpus-2026-10-29/specs/menulib.md
+!archive/gate-corpus-2026-10-29/specs/overlay-review.md
+!archive/gate-corpus-2026-10-29/specs/overlay.md
+!archive/gate-corpus-2026-10-29/specs/relocate.md
+!archive/gate-corpus-2026-10-29/specs/store-core-module-store-core-graph-surface.md
+!archive/gate-corpus-2026-10-29/specs/theme-control.md
+!archive/gate-corpus-2026-10-29/specs/theme-review.md
+!archive/gate-corpus-2026-10-29/specs/theme.md
+!archive/gate-corpus-2026-10-29/specs/user-flow-audit.md
 live-prod/
 
 # Local opencode config (machine-specific MCP registration)
