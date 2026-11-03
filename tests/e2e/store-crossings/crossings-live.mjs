@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// tests/e2e/store-crossings/crossings-live.mjs — **THE LIVE INSTRUMENT `pending.md` ROW 5 OWED**: a
-// driver that reaches BOTH `provident-storeroom` crossings over a real process boundary, and that a
-// LEG RUNS (`npm run crossings`, a `package.json` key — D-94).
+// tests/e2e/store-crossings/crossings-live.mjs — **THE LIVE INSTRUMENT D-94 LANDED, WHICH IS WHAT CLOSED THE
+// GAP `pending.md`'s ROW 5 CARRIED UNTIL ITS WORK LANDED AND IT LEFT THAT FILE**: a driver that reaches BOTH
+// `provident-storeroom` crossings over a real process boundary, and that a LEG RUNS (`npm run crossings`, a
+// `package.json` key — D-94). No row of `pending.md` waits on this file any more, and it claims no such row.
 //
 // WHY THIS FILE EXISTS, IN THE CORPUS'S OWN WORDS. `D-93` retired BOTH live drivers whole —
 // `tests/store-tabs-record-live.mjs` (19 rows) and `tests/store-compliance-live.mjs` (32) — because
@@ -31,9 +32,11 @@
 //     `['operator-exclusion']` (`mem`). The two `file` addresses are then read FROM THIS PROCESS out of
 //     `<profile>/provident-operator-settings.json`; the `mem` address has no file image to read (a `mem`
 //     value can never come from a file), so it is read through the crossing and then at a FRESH BOOT.
-//   · **THE VIEW RECORD'S THREE FAMILIES** (`D-87`, `D-91`, `D-95`), through the `view` bridge member and
-//     the app's OWN profile file: `['panes']` (`file`), `['focus']` (`mem`) and `['zones']` (`mem`). The
-//     two `mem` families have no file image, so their non-survival is read at a FRESH PROCESS; the `file`
+//   · **THE VIEW RECORD'S FOUR FAMILIES, THREE OF THEM DRIVEN HERE** (`D-87`, `D-91`, `D-95`; the fourth
+//     arrives at `D-98`), through the `view` bridge member and the app's OWN profile file: `['panes']`
+//     (`file`), `['focus']` (`mem`) and `['zones']` (`mem`) are driven, and `['theme']` (`file` since
+//     `D-98`) is the APPEARANCE family, whose own rows are `store-view-record`'s battery and not this leg's.
+//     The two `mem` families have no file image, so their non-survival is read at a FRESH PROCESS; the `file`
 //     family's value is read out of `<profile>/provident-profile.json` BY THIS PROCESS as well as through
 //     the crossing, which is what makes "the repair's placeholder stands" a reading of the store's bytes
 //     rather than of the crossing's opinion of them.
@@ -43,7 +46,7 @@
 // graph, whichever crossing is being measured, which is why the TAB record's push is measured here); boot B
 // loads the envelope for the bridge routes and the secure crossing; boot C is a SECOND PROCESS on boot B's
 // profile, which is how a `file` address's survival and a `mem` address's non-survival are told apart; boot
-// D drives the view record's three families on a THIRD profile, and boot E is a SECOND PROCESS on boot D's,
+// D drives the view record's three DRIVEN families on a THIRD profile, and boot E is a SECOND PROCESS on boot D's,
 // which answers the same question for `['panes']` against `['focus']`/`['zones']`.
 //
 // THIS LEG'S OWN LIMITS, stated rather than hidden:
@@ -649,7 +652,7 @@ async function teardownBoot(boot) {
 // ══════════════════════════════════════════════════════════════════════════════
 // THE RUN
 // ══════════════════════════════════════════════════════════════════════════════
-console.log('\nCROSSINGS — both `provident-storeroom` crossings over a process boundary, and the view record\'s three families (pending.md row 5, D-94, D-95)')
+console.log('\nCROSSINGS — both `provident-storeroom` crossings over a process boundary, and THREE of the view record\'s four families (D-94, D-95, D-98)')
 console.log('='.repeat(96))
 
 if (typeof process.env.DISPLAY !== 'string' || process.env.DISPLAY === '') {
@@ -964,7 +967,7 @@ try {
   const freshShapePane = paneIn(freshShape, MEASURED_PANE_ID)
   row(
     'V-2',
-    `the view record's ONE READ answers the three families the creation repairs minted, over the boundary: \`['${PANES_KEY}']\` names \`${MEASURED_PANE_ID}\` at ${MEASURED_PANE_SIZE}/{${MEASURED_PANE_BOUNDS.min},${MEASURED_PANE_BOUNDS.max}}, the focus mirror is the DECLARED EMPTY PAIR (\`entries: []\`, \`activeId: null\`), the zone family is the family naming NO ZONE (\`[]\`) — and every family reports \`source: 'record'\`, because a repair and not a default made each one stand`,
+    `the view record's ONE READ answers all FOUR families the creation repairs minted — the three ASSERTED HERE over the boundary, and the fourth (\`['theme']\`, the appearance family at \`file\` since D-98) left to its own battery: \`['${PANES_KEY}']\` names \`${MEASURED_PANE_ID}\` at ${MEASURED_PANE_SIZE}/{${MEASURED_PANE_BOUNDS.min},${MEASURED_PANE_BOUNDS.max}}, the focus mirror is the DECLARED EMPTY PAIR (\`entries: []\`, \`activeId: null\`), the zone family is the family naming NO ZONE (\`[]\`) — and every family reports \`source: 'record'\`, because a repair and not a default made each one stand`,
     freshRead.status === 'ok' &&
       freshShape?.status === 'committed' &&
       freshShapePane !== null &&

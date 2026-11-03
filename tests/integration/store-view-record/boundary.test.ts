@@ -228,6 +228,26 @@ const DECLARED_SCOPE: readonly string[] = [
   //    file is added or removed, so `strata-marks.mjs check` stays green unregenerated), `strata/modules.json` (no new
   //    module, so no map row and no `endpoints` figure moves) and `strata/pending.md` (`D-96`'s `overlay` blocker is
   //    untouched by a tier change) — so this block adds ONE path and no second spelling of one already in the union.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-99` — THE PASS THAT MAKES THE CORPUS TELL THE TRUTH ABOUT ITSELF: it closes `store-tabs-record` through the
+  //    instrument's own `close`, rewrites `records/handover.md`, re-homes and drops four stale map paths, and re-grains
+  //    five pieces of prose (two corpus files, the renderer's dead re-export, the headless host's invented store seam,
+  //    and the crossings leg's two stale references). **THREE PATHS ARE NEW TO THIS UNION AND EACH IS NAMED, not
+  //    admitted by a prefix**: the handover record and `proposals.md` are corpus files no earlier block wrote, and the
+  //    unit's state file is written by the instrument rather than by hand — so a reader can see that the one file this
+  //    pass may not edit is edited by the script it was told to run and by nothing else.
+  'strata/records/handover.md',
+  'strata/proposals.md',
+  'strata/.strata/units/store-tabs-record.json',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE: `strata/decisions.md` (the row), `strata/next-steps.md`
+  //    (ROW 1's closure sentence and the fifth `pending.md` row), `strata/modules.json` (the four stale paths), the two
+  //    `src/` files whose prose is corrected (`renderer.ts`'s dead re-export, `battery-host.ts`'s invented seam) and
+  //    `tests/e2e/store-crossings/crossings-live.mjs` (the row-5 and three-families re-grains) — so no entry is added for
+  //    any of them. **TWO PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/marks.json` (no test file
+  //    is added or removed, so `strata-marks.mjs check` stays green unregenerated) and `strata/brief.md` (no count moves:
+  //    `srcTypeScriptFiles` `50`, `mapRows` `21`, `126` test files), with `strata/pending.md` untouched at `39` because
+  //    `D-96`'s `overlay` blocker is not a prose defect and `strata/records/store-tabs-record-unit.md` untouched at exactly
+  //    `40`. This block adds THREE paths and no second spelling of one already in the union.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

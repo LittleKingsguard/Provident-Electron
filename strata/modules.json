@@ -37,7 +37,6 @@
         "src/main/main.ts",
         "src/main/preload.ts",
         "src/main/store-channels.ts",
-        "tests/store-persist.test.ts",
         "tests/ui-leg-seam.test.ts"
       ],
       "endpoints": 7
@@ -63,13 +62,13 @@
         "tests/unit/settings-carrier-retirement/",
         "tests/integration/settings-carrier-retirement/",
         "tests/e2e/settings-carrier-retirement/",
-        "tests/store-security.test.ts",
         "tests/tier4-arbitrary-storage.test.ts",
         "tests/secure-exclusion.test.ts",
         "tests/tier4-arbitrary-storage-register.ts",
         "tests/secure-exclusion-register.ts",
         "tests/secure-exclusion-live.mjs",
-        "tests/store-compliance-live.mjs"
+        "tests/store-compliance-live.mjs",
+        "tests/store-tabs-record-live.mjs"
       ],
       "endpoints": 12
     },
@@ -272,7 +271,6 @@
         "src/renderer/tabs-client.ts",
         "tests/integration/store-tabs-record/crossing.test.ts",
         "tests/integration/store-tabs-record/tabs-client.test.ts",
-        "tests/store-tabs-record-live.mjs",
         "tests/e2e/store-crossings/"
       ],
       "endpoints": 4

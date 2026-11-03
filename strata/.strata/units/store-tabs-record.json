@@ -1,7 +1,7 @@
 {
   "unit": "store-tabs-record",
   "layer": "L2",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
     "l1-design",
     "l2-interface",
@@ -10,7 +10,7 @@
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-10-30T22:07:48.392Z",
+  "updated": "2026-11-03T20:31:42.572Z",
   "lastFailure": {
     "artifact": "l4-implementation",
     "reason": "adjudication"

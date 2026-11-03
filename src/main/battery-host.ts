@@ -19,9 +19,13 @@ function rootOnlyEnvelope() {
   }
 }
 
-// THE STOREROOM SEAM, HELD BY THE HEADLESS HOST (the app's ONE import of the package).
-// It is constructed and held so the import is real in a bundled entry point; it is not
-// exposed over MCP and no contract names a storeroom feature — see src/main/storeroom.ts.
+// THE STORE SEAM IS NOT HERE, AND THE PARAGRAPH THAT SAID IT WAS LEFT WITH THE IMPORT (`D-94`, `D-99`).
+// This entry constructs no instance and holds none: its backend owns a provident-ssr Runtime and
+// nothing else. The app's two `provident-storeroom` constructions are the crossings the boot lands
+// in `src/main/`, not this battery's; no member of this host's `invoke` switch reaches a store, and
+// no MCP contract names a store feature. "Constructed and held so the import is real" was the
+// comment's own invention — the construction it described never existed and the bundler had already
+// dropped the import, which is why `D-94`'s removal of that line left the artifact BYTE-IDENTICAL.
 /** The Runtime-backed MCP backend: forwards each `provident.*` method to the
  *  live Runtime (battery mode). The Runtime boots root-only (C3); each load/
  *  teardown re-derives the graph. */

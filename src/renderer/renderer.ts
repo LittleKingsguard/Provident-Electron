@@ -27,14 +27,14 @@ import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../s
  *  (`commitTheme(token, attributeName)`) and echoed back by the mechanism inside the record's declaration; the node id is
  *  where the record's declaration lands. */
 
-/** **THE WITNESS DERIVATION, RE-EXPORTED FOR THE LIVE DRIVER AND FOR NOTHING ELSE** (D-77; L2 §6). The page reaches this
- *  module through `document.baseURI + "renderer.js"` and cannot import a second file from the renderer bundle
- *  (`package.json`'s build line is ONE esbuild `--bundle` into `--outdir=dist/renderer`, so `tabs-client.ts` is INLINED
- *  into `renderer.js` and never emitted beside it). Without this line `tests/store-tabs-record-live.mjs`'s agreement row
- *  would have to re-spell the predicate it is meant to compare, and a re-spelling is the one thing that row cannot afford:
- *  it reads the SAME witness off both records. It is additive, it is PURE, it dispatches nothing and it is driven by no
- *  boot path — `createTabsClient` stays the only way the app reads. */
-export { deriveTabsWitness } from './tabs-client.js'
+/** **THE WITNESS DERIVATION IS NOT RE-EXPORTED HERE, AND THE RE-EXPORT LEFT WITH THE DRIVER THAT JUSTIFIED IT** (`D-99`).
+ *  This module carried `export { deriveTabsWitness } from './tabs-client.js'` under a docblock whose whole justification was
+ *  `tests/store-tabs-record-live.mjs`'s agreement row — and that driver was retired whole at `D-93`, imports nothing, and
+ *  exits `2` claiming no reading. A census over `src/` and `tests/` finds ZERO consumers of the name off THIS path: the one
+ *  test that exercises it, `tests/integration/store-tabs-record/tabs-client.test.ts`, imports it from `tabs-client.ts`
+ *  directly, which is where it is defined and where `createTabsClient` still derives the reading. A re-export with no
+ *  importer is a surface a reader has to disprove, so both the export and its justification are deleted rather than
+ *  re-pointed — and `src/main/view-record/index.ts` re-exports no such name, so nothing else carries it. */
 
 /** **THE FROZEN GRAPH STORE IS DELETED, AND THIS PARAGRAPH STANDS WHERE ITS BINDING STOOD** (`D-93`, the purge's last
  *  deletion; `D-78`'s ruling, `D-92`'s UNUSED head, `D-90`'s enumeration). What this module held here was
