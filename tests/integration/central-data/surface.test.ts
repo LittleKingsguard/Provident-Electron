@@ -46,7 +46,7 @@ function surfaceAt(dir: string = profileDir): DataSurface {
 }
 
 describe('central-data · the five operations through createDataSurface', () => {
-  it('a first-ever profile is read → list {paths:[],count:0}, read {absent}, read [] {kind:"branch",value:{}}, journal {from:0,through:0,count:0}, and the store’s one name holds no byte', () => {
+  it('a first-ever profile is read → list {paths:[],count:0}, read {absent}, read [] {kind:"branch",value:{}}, journal {from:0,through:0,count:0}, and a BARE store’s one name holds no byte', () => {
     const s = surfaceAt()
     expect(s.list({})).toEqual(coldList)
     expect(s.list(undefined), 'interface §1 — an omitted `arguments` is the same call as `{}`').toEqual(coldList)
@@ -58,10 +58,13 @@ describe('central-data · the five operations through createDataSurface', () => 
       .toEqual({ from: 0, through: 0, floor: 0, entries: [], count: 0 })
     // RE-DERIVED, D-80. The row asserted that NOTHING stood at `<profileDir>/provident-profile.json`, which was the
     // cold tier of a surface that constructed on demand. The product's composition constructs once at boot, so the
-    // name stands — and the claim the row owes is that nothing has LANDED in it: the file is at zero length, which is
-    // what an empty register looks like on disk and what no read, list or journal can move.
-    expect(existsSync(profilePath), 'the boot’s construction is what brings the one name into being (D-80)').toBe(true)
-    expect(readFileSync(profilePath, 'utf8'), 'and it holds no byte: an OPEN register that holds nothing, never an absent one').toBe('')
+    // name stands. **AND THIS SURFACE'S INSTANCE IS A BARE STORE** (`storeAt` passes no constraint list), so nothing
+    // can have LANDED in it: the file is at zero length, which is what an empty register looks like on disk and what
+    // no read, list or journal can move — while the APP'S OWN boot, whose construction batches six tab-record
+    // declarations, writes the landing record and leaves `160` bytes (measured 2026-11-03, `D-86`; driven at
+    // `profile-file.test.ts`'s *THE APP'S OWN BOOT* row).
+    expect(existsSync(profilePath), 'the construction is what brings the one name into being (D-80)').toBe(true)
+    expect(readFileSync(profilePath, 'utf8'), 'and this bare instance holds no byte: an OPEN register that holds nothing, never an absent one').toBe('')
   })
 
   it('a literal is written → write {committed, cursor:1} then read {kind:"row", value}; a second write serves the new value at cursor 2 with list.count unchanged', () => {

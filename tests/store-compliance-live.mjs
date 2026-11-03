@@ -740,8 +740,11 @@ function setEquality(actual, declared) {
  *  written whole, at `provident-operator-settings.json` (`docs/L2/security-store-storeroom/
  *  interface.md` §1; `guide §4` arm `W-4`) — so every reading of "the record the file carries"
  *  goes through here and never through the file's top-level key set. `null` for an absent,
- *  zero-length (the construction's exclusive create with no write behind it), unparsable or
- *  record-less file, so a non-vacuity term reading `null` reddens instead of throwing. */
+ *  zero-length, unparsable or record-less file, so a non-vacuity term reading `null` reddens
+ *  instead of throwing. **AND A ZERO-LENGTH FILE IS NOW A BARE STORE'S AND NOT THE BOOT'S**: from
+ *  `provident-storeroom@1.9.1` the construction's creation repairs are saved with it, so the app's
+ *  own boot leaves `125` bytes over a cold profile (measured 2026-11-03, `D-86`); this reader keeps
+ *  the arm because a profile a caller has truncated is still a state it must answer. */
 const SETTINGS_RECORD_KEY = 'operator-settings'
 function recordInValue(value) {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return null
