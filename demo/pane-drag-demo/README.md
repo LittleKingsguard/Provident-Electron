@@ -1,4 +1,4 @@
-# Pane-Drag Live Demo (store-backed)
+# Pane-Drag Live Demo (store-backed) — **ITS SOURCE IS GONE AND `demo.mjs` IS THE ARTEFACT** (`D-94`)
 
 Live Electron test of the store-integrated panes — the drag into a minimized zone,
 the gutter resize lifecycle, the minimized-zone clauses, the tab pane and the full
@@ -8,14 +8,25 @@ sections below record each block's layered result as it landed (25 → 31 → 41
 It is the reference for the fork's H-r6 pass (the fork's own bytes are NOT migrated
 yet).
 
+**WHAT THIS DIRECTORY IS AS OF 2026-11-03, STATED BEFORE THE HISTORY SO NOTHING BELOW
+IS MISTAKEN FOR A LIVE CLAIM.** `demo.ts` and `demo-entry.ts` were the source this
+bundle was built from, and **both are DELETED** (`D-94`): `demo.ts` imported
+`src/renderer/store-core-graph.ts` — the app's frozen graph store, deleted at `D-93` —
+and constructed it (`createGraphStore`), minted the layout into its `mem` tier, read it
+back through `store.tiers.mem.get(…)` and committed through it, so no line of it could
+compile against this tree. **`demo.mjs` is a self-contained esbuild bundle** (it carries
+`store-graph-references.ts` and `store-core-graph.ts` INLINED, 13,217 lines, zero
+`import`/`require` statements) and it still runs, so it is kept and it carries the demo.
+**It demonstrates a mechanism this tree no longer has**, and no file here regenerates
+it: a reader wanting a live instrument for the app's current panes, tabs or crossings
+wants `npm run panes` / `npm run crossings`, not this directory. The measurement that
+decided the deletion, and the four legs that read 0 on the other side of it, are `D-94`'s.
+
 ## Files
 - `index.html` — the demo page (three zones; zone-3 starts MINIMIZED; panes with
   `.pane-handle` drag handles; a ghost lower-opacity `.pane-frame.ghost`).
-- `demo.ts` — the wired store (`createGraphStore`) + the LANDED composition
-  (`createPaneDrag` + `zoneSizeConstraint`/`zoneSizeRepair`) + the display layer
-  (reads the store's carried values; the commit re-homes the pane + un-minimizes
-  the target zone).
-- `demo-entry.ts` — mounts the demo, exposes `window.__pgdemo` (driver read hook).
+- `demo.mjs` — **THE DEMO ITSELF**: the checked-in bundle (see the paragraph above) that
+  the page loads. Its source, `demo.ts` + `demo-entry.ts`, is deleted; nothing rebuilds it.
 - `electron-main.cjs` — the disposable Electron window (contextIsolation, sandbox).
 - `run-live.mjs` — the CDP live driver: real `Input.dispatchMouseEvent` drags from
   the SPECIFIC HANDLE into the MINIMIZED zone-3, asserting the ghost at reduced
@@ -24,11 +35,11 @@ yet).
 
 ## Run
 ```
-npx esbuild demo/pane-drag-demo/demo-entry.ts --bundle --platform=browser --format=esm --outfile=demo/pane-drag-demo/demo.mjs
 node demo/pane-drag-demo/run-live.mjs
 ```
 (Add `--cdp-port=<n>` to change the port. Electron flags `--no-sandbox
---disable-dev-shm-usage` are applied because the sandbox lacks /dev/shm.)
+--disable-dev-shm-usage` are applied because the sandbox lacks /dev/shm. **No `esbuild`
+step and no leg builds this directory**; the bundle is what runs.)
 
 ## Live result (2026-10-03)
 **PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN (21/21 PASS, exit 0).**

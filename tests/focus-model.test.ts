@@ -838,7 +838,10 @@ function importBreakOf(source: string, label: string): string | null {
  *  unit's live leg key (D-37). A `scripts` key set is a loop INSTRUMENT, so the
  *  rows that guard it are EXTENDED and stay gating rather than becoming lower
  *  bounds (D-38) — `R-3` and `I-9` both read this one list. */
-const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp', 'panes']
+// ⟶ EXTENDED 2026-11-03 (`D-94`): `crossings` — the crossings' live leg key, the instrument that
+// closes `pending.md` row 5. A `scripts` key set is a loop INSTRUMENT, so `R-3`/`I-9`'s one list is
+// EXTENDED and stays gating (D-38); this unit adds no key and its DELTA claim is unchanged.
+const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp', 'panes', 'crossings']
 const PINNED_DEV_DEPS = ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest']
 // THE SET STAYS EXACT: 'provident-storeroom' is the one member added by the 2026-10-29 import.
 const PINNED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom']
@@ -1704,7 +1707,7 @@ describe('§3.3 I-1..I-14 — the invariants that hold in every state', () => {
   // strata:gates — the script key set is a loop instrument, not module machinery (D-38)
   it('I-9 (§2.2 P-FM-5/P-FM-6) — no store of its own, no MCP surface, no shim member, no `electron`/`node:*` import, no new dependency, no script', async () => {
     const pkg = readJson('package.json')
-    expect(Object.keys((pkg['scripts'] ?? {}) as Record<string, unknown>).filter((k) => !LANDED_SCRIPT_KEYS.includes(k)), 'I-9 — no script is added by this unit.').toEqual(['ui'])
+    expect(Object.keys((pkg['scripts'] ?? {}) as Record<string, unknown>).filter((k) => !LANDED_SCRIPT_KEYS.includes(k)), 'I-9 — no script is added by this unit; the DELTA is exactly `ui` (and since 2026-11-03 `crossings` is in the LANDED set above, D-94, so the delta did not move).').toEqual(['ui'])
     const src = moduleSourceOrNull()
     if (src !== null) {
       expect(scanFor(src, ['electron', 'node:', 'ALL_TOOLS', 'RpcMethod', 'VALID_GROUPS', 'MUTATING_METHODS', 'dom-shim'], 'I-9'), 'I-9 — no MCP registration site, no shim member and no `electron`/`node:*` import appears in the module.').toBe(null)

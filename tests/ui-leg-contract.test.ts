@@ -162,6 +162,12 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
   // BOTH directions**: the filter below (no UNEXPECTED key may appear) and the
   // explicit set equality added beside it (the landed set is exactly these
   // twelve), so the extension did not turn the row into a lower bound.
+  // ⟶ EXTENDED 2026-11-03 (`D-94`): the landed set gains `crossings` — the `provident-storeroom` crossings'
+  // LIVE leg key (`npm run build && node tests/e2e/store-crossings/crossings-live.mjs`). `D-93` retired both
+  // un-run live drivers because no leg invoked them, so `pending.md` row 5 (no live instrument reaches either
+  // crossing) closes only if the instrument is RUN BY A LEG; a `scripts` key set is a loop INSTRUMENT, so
+  // every census of it is EXTENDED and stays gating, never turned into a lower bound (D-38). The claim below
+  // (`ui` is the DELTA; the set is exact in both directions) is unchanged, and this unit adds no key.
   const LANDED_SCRIPT_KEYS = [
     'clean',
     'build',
@@ -176,6 +182,7 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
     'divergence',
     'mcp',
     'panes', // ⟶ ADDED 2026-10-30: the pane unit's own live leg key, `npm run build && node tests/e2e/secure-panels/panes-live.mjs` (D-37); a key set is a loop instrument, so this row is EXTENDED and stays gating rather than treating the set as a lower bound (D-38)
+    'crossings', // ⟶ ADDED 2026-11-03: the crossings' live leg key (D-94) — see the note above
   ]
 
   // strata:gates — the script key set is a loop instrument, not module machinery (D-38)

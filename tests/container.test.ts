@@ -1014,6 +1014,7 @@ describeC('§3.5 X-1 + §3.4 R-9 / R-11 / R-12 — the red set\'s own premise (e
       'build',
       'build:watch',
       'clean',
+      'crossings', // ⟶ ADDED 2026-11-03: the crossings' live leg key (D-94) — the instrument `pending.md` row 5 closed on; extended on the same ground, never a licence (D-38)
       'divergence',
       'mcp',
       'panes', // ⟶ ADDED 2026-10-30: the `secure-panels` unit's live leg key (D-37); an extended INSTRUMENT, never a licence (D-38)

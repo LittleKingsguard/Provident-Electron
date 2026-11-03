@@ -1232,7 +1232,9 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     // ⟶ ADDED 2026-10-30: `panes` — the `secure-panels` unit's live leg key (D-37). A `scripts`
     // key set is a loop INSTRUMENT, so this row is EXTENDED and stays gating rather than being
     // turned into a lower bound (D-38); the set stays EXACT, and no key this unit owns is added.
-    const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp', 'panes']
+    // ⟶ EXTENDED 2026-11-03 (`D-94`): `crossings`, the crossings' live leg key (see the note above);
+    // a `scripts` key set is a loop INSTRUMENT, so this row is EXTENDED and stays gating (D-38).
+    const LANDED_SCRIPT_KEYS = ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'ui', 'mcp', 'panes', 'crossings']
     const LANDED_DEV = ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest']
     // THE SET STAYS EXACT: 'provident-storeroom' is the one member added by the 2026-10-29 import (src/main/storeroom.ts is the single seam; no capability is exposed).
     const LANDED_DEPS = ['@modelcontextprotocol/sdk', 'provident-ssr', 'provident-storeroom']

@@ -141,6 +141,27 @@ const DECLARED_SCOPE: readonly string[] = [
   'strata/pending.md',
   'docs/L2/view-record/interface.md',
   'docs/L3/view-record/design.md',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-94` — THE IMPORT FIXES AND THE LIVE INSTRUMENT (`pending.md` row 5's closure). Every path it writes is
+  //    declared here, one reason each, and NOT ONE is admitted by a prefix.
+  //
+  //    THE STALE IMPORT: one line, in the headless host, whose construction never existed (the bundler had already
+  //    dropped it, so the artifact is byte-identical across the removal — measured, `D-94`).
+  'src/main/battery-host.ts',
+  //    THE DEMO'S STALE SOURCES: `demo.ts` imported the store `D-93` deleted and could not compile against this
+  //    tree; `demo-entry.ts` was its entry. Both DELETED, with the checked-in self-contained `demo.mjs` carrying the
+  //    demo, and the README re-grained to say so (a deletion is a path this pass removed).
+  'demo/pane-drag-demo/demo.ts',
+  'demo/pane-drag-demo/demo-entry.ts',
+  'demo/pane-drag-demo/README.md',
+  //    THE INSTRUMENT: its `scripts` key, the leg itself, and the SIX key-set censuses the key moves (each extended
+  //    beside its own as-filed text, D-38) — the seventh, `theme-control`, reads L-1's pin and follows it.
+  'package.json',
+  'tests/e2e/store-crossings/crossings-live.mjs',
+  'tests/ui-leg-contract.test.ts',
+  'tests/focus-model.test.ts',
+  'tests/container.test.ts',
+  'tests/menu-template.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

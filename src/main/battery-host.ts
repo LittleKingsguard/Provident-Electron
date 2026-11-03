@@ -9,7 +9,6 @@ import { ProvidentMcpServer, type McpBackend, type McpTransportKind } from './mc
 import { SecurityGate } from './security.js'
 import { installShim, mountEl } from '../shared/dom-shim.js'
 import { Runtime } from '../renderer/runtime.js'
-import { createProfileStore } from './storeroom.js'
 
 // A root-only bootstrap envelope (C3): a bare template.root + empty content.
 function rootOnlyEnvelope() {

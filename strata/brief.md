@@ -81,7 +81,7 @@ repo's (D-5) — and no new MCP surface is added to prove a boot (D-18). The dec
 `tests/**/*.test.ts` suite migrates into `tests/{e2e,integration/<module>,unit/<module>}/` per module, at claim time, never
 wholesale ahead of the map (D-10).
 
-## 6. Instruments at this head (all eight rows measured 2026-11-02, this seat; the four Electron legs read identically on 2026-10-30)
+## 6. Instruments at this head (all nine rows measured 2026-11-02, this seat, plus `crossings` on 2026-11-03; the four Electron legs read identically on 2026-10-30)
 
 | Instrument | Reading | What it can see |
 |---|---|---|
@@ -93,10 +93,11 @@ wholesale ahead of the map (D-10).
 | `npm run divergence` | **green**, exit 0 — `9 checks, 0 failures` on the pinned N plus 4 extension checks | shim-versus-real-DOM identity, measured on a real renderer |
 | `npm run ui` | **green**, exit 0 — `11/11 assertions`, real measurements (`425x22`, `fontSize=16px`) out of a live renderer | the real-DOM measurement leg |
 | `npm run panes` | **green**, exit 0 — `7/7` rows on a real renderer | the rendered surface a node row cannot see; **outside the floor** (D-37) |
+| `npm run crossings` | **green**, exit 0 — `18/18` rows, `46` driver MCP calls (`48` with the `2` envelope-settle polls the leg prints apart, their count following the load's timing), `10` acts dispatched, `9` observation dumps, over three boots on two scratch profiles (D-94) | **both `provident-storeroom` crossings over a process boundary**: `['tabs']` at its raw address and through the preload's own routes, the change push read at the app's authored terminals, and the secure crossing's three addresses — the instrument `D-93`'s two retirements left owed; **outside the floor**, like `panes` (D-37) |
 
 **All four Electron legs are green at this head, and the three-leg return is the `bundle-boot-seam` unit's** (D-27): before it,
 one leg was green and two could not reach the app at all, because the main bundle died at module evaluation — nothing in the
-four-leg floor could see a bundle **before this unit** (D-27).
+four-leg floor could see a bundle **before this unit** (D-27). **A FIFTH live leg stands beside the four from 2026-11-03** — `crossings`, which is an instrument and no part of the floor (D-94).
 
 The layer rule every later claim inherits, **narrowed by the boot unit rather than repealed by it**: a module row's green under
 `npm test` is envelope-green, because the suite runs the modules under a layout-less DOM shim. One battery is the exception and

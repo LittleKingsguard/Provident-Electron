@@ -273,7 +273,8 @@
         "src/renderer/tabs-client.ts",
         "tests/integration/store-tabs-record/crossing.test.ts",
         "tests/integration/store-tabs-record/tabs-client.test.ts",
-        "tests/store-tabs-record-live.mjs"
+        "tests/store-tabs-record-live.mjs",
+        "tests/e2e/store-crossings/"
       ],
       "endpoints": 4
     },

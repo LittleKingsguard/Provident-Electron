@@ -958,9 +958,11 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
     // (D-38); the set stays EXACT — the count in the message below moves with the list, never instead of it.
     expect(
       Object.keys(pkg.scripts ?? {}).sort(),
-      'R-3 / §5.1 item 7 — the `scripts` key set is EXACTLY the thirteen landed keys (`tests/ui-leg-contract.test.ts` L-1 pins it): this unit adds NO script, so a new key here reddens L-1 as well as this row',
+      'R-3 / §5.1 item 7 — the `scripts` key set is EXACTLY the landed keys (`tests/ui-leg-contract.test.ts` L-1 pins it — thirteen as filed, FOURTEEN from 2026-11-03 when `crossings` joined the landed set, D-94, and the list below is the reading): this unit adds NO script, so a new key here reddens L-1 as well as this row',
     ).toEqual(
-      ['battery', 'build', 'build:watch', 'clean', 'divergence', 'mcp', 'panes', 'start', 'start:http', 'test', 'test:watch', 'typecheck', 'typecheck:tests', 'ui'].sort(),
+      // ⟶ EXTENDED 2026-11-03 (`D-94`): `crossings`, the crossings' live leg key — a `scripts` key set is
+      // a loop INSTRUMENT, so this row is EXTENDED and stays gating rather than becoming a lower bound (D-38).
+      ['battery', 'build', 'build:watch', 'clean', 'crossings', 'divergence', 'mcp', 'panes', 'start', 'start:http', 'test', 'test:watch', 'typecheck', 'typecheck:tests', 'ui'].sort(),
     )
     expect(Object.keys(pkg.devDependencies ?? {}).sort(), 'R-3 / AGENTS.md item 11(d) — the devDependencies key set is the FIVE landed keys: NO new dependency and no property runner').toEqual(
       ['@types/node', 'electron', 'esbuild', 'typescript', 'vitest'].sort(),

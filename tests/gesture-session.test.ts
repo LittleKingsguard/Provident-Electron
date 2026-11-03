@@ -1730,9 +1730,45 @@ function isSiblingUnitArtifact(path: string): boolean {
     // commit carries (see `F3_UNIT_TEST_ARTIFACT_PATHS` for the measured cause and the reason the
     // exemption is BY NAME). The predicate's DENIED counterpart is UNTOUCHED and still rejects
     // every path here.**
-    F3_UNIT_TEST_ARTIFACT_PATHS.includes(path)
+    F3_UNIT_TEST_ARTIFACT_PATHS.includes(path) ||
+    // ⟶ DECLARED 2026-11-03 (`D-94`): the import fixes' and live instrument's own paths, by name.
+    D94_UNIT_ARTIFACT_PATHS.includes(path)
   )
 }
+/** ⟶ **DECLARED 2026-11-03 (`D-94`) — THE `D-94` PASS'S OWN PATHS, BY NAME.** That pass removes an unused
+ *  import from the headless host, deletes the demo's dead sources, and lands the crossings' LIVE LEG
+ *  (`npm run crossings`) with the six `scripts`-key-set censuses it moves. `src/main/battery-host.ts`
+ *  is the ONE path it writes under a directory this unit denies, so without this declaration `F-9(b)`
+ *  would charge a sibling pass's line to this unit — the exact defect RULING B repaired above, and the
+ *  same reason the `F3` and `U-DIVERGENCE-EXT` paths are named. **The DENIED direction is untouched**:
+ *  `UNCLAIMED_PATH_CONTROL` still drives `src/main/main.ts`, `src/shared/census.ts` and both other
+ *  probes `false`, and `R-7`'s positive control still drives the declared census `true`. Every member
+ *  here is a path the pass WROTE (a deletion included), cited by the corpus row that records it. */
+const D94_UNIT_ARTIFACT_PATHS: readonly string[] = [
+  'src/main/battery-host.ts', // the stale import removed (D-94)
+  'package.json', // the `crossings` key added (D-94)
+  'demo/pane-drag-demo/demo.ts', // DELETED — its subject is the store `D-93` removed (D-94)
+  'demo/pane-drag-demo/demo-entry.ts', // DELETED with it (D-94)
+  'demo/pane-drag-demo/README.md', // re-grained to say the bundle is the artefact (D-94)
+  'tests/e2e/store-crossings/crossings-live.mjs', // the live instrument itself (D-94)
+  'tests/e2e/store-crossings/', // the same path while it is still untracked
+  'tests/ui-leg-contract.test.ts', // the landed script-key pin, extended (D-94, D-38)
+  'tests/focus-model.test.ts', // and five censuses beside it
+  'tests/container.test.ts',
+  'tests/menu-template.test.ts',
+  'tests/overlay.test.ts',
+  'tests/theme.test.ts',
+  'tests/integration/store-view-record/boundary.test.ts', // the worktree boundary row's declared scope
+  // `tests/gesture-session.test.ts` is NOT here: it is THIS unit's own artifact, and the row's NEGATIVE
+  // control requires this unit's own paths to stay attributable to it. This pass's edit to it is
+  // declared at the boundary row instead (`tests/integration/store-view-record/boundary.test.ts`).
+  'strata/decisions.md',
+  'strata/pending.md',
+  'strata/brief.md',
+  'strata/records/store-tabs-record-unit.md',
+  'strata/modules.json',
+]
+
 /** **THE DECLARED-SIBLING CENSUS, WITH ITS AUTHORITY PER PATH** — the control list `R-7` drives in
  *  the predicate's TRUE direction. Every member names the `§5.1` allow-list row of the sibling spec
  *  that declares it (`docs/specs/gutter-ui.md` rows `1`/`2`/`3`/`4`/`5`/`10`/`11` + `§R.1`;
@@ -1784,6 +1820,8 @@ const SIBLING_ARTIFACT_UNIT_BY_PATH: Readonly<Record<string, string>> = {
   // **⟶ DECLARED 2026-09-27 (THE `F3` SAME-COMMIT OBLIGATION, THIS ROW'S `N-15`) — the exemption's
   // OWNER MAP, so `R-7` reports each exempted path's declaring unit rather than a fallback label.**
   ...Object.fromEntries(F3_UNIT_TEST_ARTIFACT_PATHS.map((path) => [path, 'the `U-FOCUS-TOOL` / `F3` unit'])),
+  // ⟶ DECLARED 2026-11-03 (`D-94`): the pass that fixed the two imports and landed the crossings' leg.
+  ...Object.fromEntries(D94_UNIT_ARTIFACT_PATHS.map((path) => [path, 'the `D-94` pass (the import fixes + the crossings leg)'])),
 }
 /** **THE PREDICATE'S FALSE DIRECTION, NAMED ONCE** — this unit's own canonical artifacts (which no
  *  sibling allow-list claims), and the UNCLAIMED paths that must STAY this unit's responsibility: a
