@@ -12,6 +12,15 @@ import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, type TabsClient, type TabsClientReading, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
 import { DEFAULT_PANE_ID, defaultPaneGeometry } from '../shared/view-shape.js'
+/** **THE APPEARANCE MECHANISM, CONSUMED — `D-96`'s ruling, and the corpus's own licence for it.** `src/shared/theme.ts`
+ *  is a pure, total, stateless pair — `resolveTheme(setting, env)` and `applyThemeDeclaration(attributeName, resolved)` —
+ *  and `docs/specs/theme.md` `§2.5` item 3 states the edge this line is: *"a later `F1` pass LAWFULLY importing this
+ *  module must NOT be read as falsifying `U-THEME`. The denial binds this unit's own diff; it does not declare the module
+ *  permanently importer-less."* `F1` is `U-THEME-CONTROL`, whose authored card and whose attribute-name holder
+ *  (`themeWiringRole` above) live in THIS file, so the consumer `D-95` left open is this realm's. **THE MECHANISM STAYS
+ *  PURE**: it computes a declaration; the drive below is the only thing that applies one, and it applies it as provident
+ *  data through `Runtime.applyCommand`. */
+import { resolveTheme, applyThemeDeclaration } from '../shared/theme.js'
 
 /** **THE WITNESS DERIVATION, RE-EXPORTED FOR THE LIVE DRIVER AND FOR NOTHING ELSE** (D-77; L2 §6). The page reaches this
  *  module through `document.baseURI + "renderer.js"` and cannot import a second file from the renderer bundle
@@ -803,6 +812,13 @@ async function main(): Promise<void> {
   // pre-drag read now hits an in-realm tier (NO crossing, §2.9 item 1). It is part of the
   // APP UI and exists with or without the preload bridge (only the MCP endpoints need it).
   startGutterAffordance(runtime)
+  // ⟶ **THE APPEARANCE DECLARATION'S DRIVE (`D-96`)** — constructed here, ONCE, after the first envelope load so the
+  //    authored state node exists: `themeWiringRole` derives the caller-held attribute name and the authored carrier's id,
+  //    and the returned `drive` is the app's ONE declaration site. Its BOOT READ happens in that construction (a read,
+  //    never a write) so the first thing it can declare is a CHANGE; and it rides the SAME change push
+  //    `panels?.refreshDebug(runtime)` rides, in the reply callback below, so it adds no subscription, no timer and no
+  //    boot step that `tests/e2e/bundle-boot-seam`'s `B-5` could read as an order move.
+  const themeDeclaration = startThemeDeclaration(runtime)
   // ⟶ **THE Y-3 REGISTRATION IS DELETED FROM THIS SITE** (`D-93`; `D-90`'s clause (3), the legacy projection dying whole).
   // It was `bridge.store.onFileChanged(…)` — ONE registration at boot whose body was a DECLARED NO-OP ("a change SIGNAL
   // while a single window owns the realm"), plus the `releaseY3` binding held for the P1-P7 release discipline that the
@@ -839,6 +855,11 @@ async function main(): Promise<void> {
   // item 3's falsifier: graph changes × mutated pane nodes, capped by items 1/2).
   const replyRoute = (req: RpcRequest): void => {
     void handleRequest(runtime, req, (p) => {
+      // ⟶ **THE APPEARANCE DECLARATION RIDES THIS PUSH** (`D-96`). The notify callback is the app's ONE
+      //    app-graph-changed signal — `RH-3` half (b) already re-homed the Debug pane's refresh onto it — and the
+      //    declaration is driven BEFORE it, so a reader of the push observes the graph the declaration left. A reply
+      //    that moved nothing declares nothing: the drive is keyed on the authored setting's own change.
+      themeDeclaration.drive()
       bridge!.notify(p)
       panels?.refreshDebug(runtime)
     }).then((reply) => {
@@ -1061,6 +1082,144 @@ export function themeWiringRole(runtime: Runtime): readonly [string, string] {
   const stateNodeId = stateProps === undefined ? '' : String(stateProps['id'])
   void runtime.elementForNodeId(stateNodeId)
   return [attributeName, stateNodeId]
+}
+
+/** **THE APPEARANCE DECLARATION'S DRIVE — THE MECHANISM'S ONE IN-TREE CONSUMER, AND THE HALF `D-95` LEFT OPEN**
+ *  (`D-96`; `D-95`'s open item *(a)*: *"the corpus requires both modules and no `src/` importer exists, so their
+ *  disposal is the user's and not a census's"*). The user's ruling is that the mechanism is **owed a consumer** and that
+ *  the consumer is the module renderers; this file is the app's renderer wiring, it carries the authored appearance
+ *  control's attribute name (`themeWiringRole` above), and `src/shared/theme.ts`'s own contract licences the edge
+ *  (`docs/specs/theme.md` §2.5 item 3). **THE MECHANISM IS NOT WIDENED AND NOT RE-SPELLED**: `resolveTheme` and
+ *  `applyThemeDeclaration` are CALLED and their answers carried; every token, every attribute name and every refusal
+ *  stays theirs or the caller's.
+ *
+ *  **WHAT IT DOES, IN `D-78`'s CHAIN ORDER.** A change of the authored setting (the `theme-setting` node's `content`,
+ *  the envelope's ONE graph-readable carrier) is READ through the runtime's own graph read (`nodeState`, the surface
+ *  `provident.get_node_state` answers on), RESOLVED by `resolveTheme`, DECLARED by `applyThemeDeclaration`, and the
+ *  declaration is APPLIED as **provident data on the authored node** — ONE `state-slice` write of `props.<name>`, which
+ *  the engine renders as the bare attribute (`props.resizable` → `resizable`, `src/shared/demo-envelope.ts`) and whose
+ *  removal arm is `value: undefined` (`Runtime.applyCommand`'s own note: an `undefined` on `props.<key>` is a legitimate
+ *  attribute REMOVAL and is APPLIED). **NO HAND-WRITTEN DOM**: no attribute stamp, no class flip, no style write, no
+ *  created element, no injected CSS — the element is the graph's, and the write is visible to `get_rendered_html`, `get_markdown`
+ *  and `get_node_state` because it IS the graph (`AGENTS.md` § "UI authority").
+ *
+ *  **IT DECLARES ON A CHANGE AND NOT ON A BOOT, AND THE REASON IS MEASURED RATHER THAN PREFERRED.** The `ssrHtml` this
+ *  write moves is compared, between the REAL app and the headless battery host, by `npm run divergence`'s
+ *  `SSR fragment matches (structural)` row — and that host holds no renderer wiring (it boots a `Runtime` and its own
+ *  `invoke` switch, `src/main/battery-host.ts`). A declaration written at boot, or on a reply that changed nothing,
+ *  would therefore make the two realms render differently and red a leg that exists to prove they do not. So the drive
+ *  records the authored setting it FOUND (a read, never a write) and declares only when that setting MOVES — which is
+ *  what the ruling asks of it in its own words: *a change of state produces the declaration*.
+ *
+ *  **ITS ONE STATED LIMIT, NAMED HERE RATHER THAN DISCOVERED LATER.** The drive rides the app's own change push — the
+ *  `handleRequest` notify that `panels?.refreshDebug(runtime)` already rides (`RH-3` half (b)) — so an MCP-originated
+ *  mutation drives it and a DOM-originated one does not, exactly as the Debug pane's refresh does not. That is this
+ *  app's existing discipline and not a second one invented here: the runtime exposes no post-render hook, and adding one
+ *  is a `Runtime` surface no row of this pass claims.
+ *
+ *  **TOTAL, AND NO THROW OUT OF A WIRING TURN**: an absent or renamed state node, a thrown graph read, a missing
+ *  attribute name and a runtime that throws all answer a READING — `written: false` with the status the runtime itself
+ *  gave, or `null` where nothing was attempted — and never an exception. */
+export interface ThemeDeclarationReading {
+  /** The AUTHORED state node the declaration is written to, as the envelope spells it (`''` where none was derived). */
+  readonly nodeId: string
+  /** The caller-supplied attribute name the declaration carries — `themeWiringRole`'s own string. */
+  readonly attributeName: string
+  /** `resolveTheme`'s `setting` member: the caller's own token carried, or `null` for the absence it declares. */
+  readonly setting: string | null
+  /** `resolveTheme`'s `prefersDark` member — the caller's CLAIM about its environment, never an OS reading. */
+  readonly prefersDark: boolean
+  /** `resolveTheme`'s `source` member: `'env'` for a usable claim, `'degraded-env'` for every other shape. */
+  readonly source: 'env' | 'degraded-env'
+  /** `applyThemeDeclaration`'s answer — the declaration ITSELF, computed even when it is not applied. */
+  readonly declaration: { readonly name: string | null; readonly value: string; readonly removal: boolean } | null
+  /** Whether the authored setting MOVED since the last declaration — the ruling's own condition. */
+  readonly changed: boolean
+  /** The runtime's OWN answer to the `state-slice` write, or `null` where no write was attempted. */
+  readonly status: string | null
+  /** Whether the declaration reached the authored node (`status === 'applied'`). */
+  readonly written: boolean
+}
+
+/** The wiring-held role: the two holders the corpus's own role derives, and the drive that applies a declaration. */
+export interface ThemeDeclarationDrive {
+  readonly attributeName: string
+  readonly nodeId: string
+  drive(env?: unknown): ThemeDeclarationReading
+}
+
+/** The authored setting as the graph holds it, or the declared UNREADABLE answer when the state node is absent, was
+ *  renamed, or the read throws. A node that carries no `content` at all is a READABLE absence — the empty setting. */
+function authoredSettingOf(
+  runtime: Runtime,
+  nodeId: string,
+): { readonly readable: boolean; readonly setting: string } {
+  if (nodeId === '') return { readable: false, setting: '' }
+  try {
+    const answer = runtime.nodeState(nodeId) as { readonly states?: readonly unknown[] } | null | undefined
+    const states = answer?.states
+    if (!Array.isArray(states) || states.length === 0) return { readable: false, setting: '' }
+    const content = (states[0] as { readonly content?: unknown } | null | undefined)?.content
+    if (typeof content === 'string') return { readable: true, setting: content }
+    if (content === null || content === undefined) return { readable: true, setting: '' }
+    return { readable: false, setting: '' }
+  } catch {
+    return { readable: false, setting: '' }
+  }
+}
+
+export function startThemeDeclaration(runtime: Runtime): ThemeDeclarationDrive {
+  const [attributeName, nodeId] = themeWiringRole(runtime)
+  /** **THE LAST SETTING THIS REALM DECLARED, AND NOTHING ELSE** — the record the "on a CHANGE" clause needs, held in
+   *  this closure exactly as the drag's preview is (`D-90`'s judgement: closure state is not data). It is seeded by a
+   *  BOOT READ and never by a write; a realm whose state node cannot be read starts UNSEEDED, and its first readable
+   *  drive therefore declares. */
+  let last: { readonly setting: string } | null = null
+  const drive = (env?: unknown): ThemeDeclarationReading => {
+    const read = authoredSettingOf(runtime, nodeId)
+    // THE MECHANISM, CALLED — twice, and both calls are TOTAL for every input above.
+    const resolution = resolveTheme(read.readable ? read.setting : null, env)
+    const declaration = applyThemeDeclaration(attributeName, resolution.setting)
+    const changed = read.readable && (last === null || last.setting !== read.setting)
+    const computed: ThemeDeclarationReading = {
+      nodeId,
+      attributeName,
+      setting: resolution.setting,
+      prefersDark: resolution.prefersDark,
+      source: resolution.source,
+      declaration: { name: declaration.name, value: declaration.value, removal: declaration.removal },
+      changed,
+      status: null,
+      written: false,
+    }
+    // NOTHING TO DECLARE, OR NOTHING TO DECLARE IT ON: a state this realm cannot read, a setting that did not move,
+    // and a declaration with no usable attribute name are all REPORTED, and none of them writes.
+    if (!changed || nodeId === '' || declaration.name === null) return computed
+    const mutation = [
+      {
+        targetProp: `props.${declaration.name}`,
+        mode: 'replace',
+        // THE REMOVAL ARM IS THE MECHANISM'S `removal` MEMBER, never an empty string that happens to be falsy.
+        value: declaration.removal ? undefined : declaration.value,
+      },
+    ]
+    let status: string
+    try {
+      const answer = runtime.applyCommand({ kind: 'state-slice', node: nodeId, mutation })
+      status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    } catch {
+      status = 'threw'
+    }
+    const written = status === 'applied'
+    // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next change rather than
+    // being swallowed by a seed that claims it was declared.
+    if (written) last = { setting: read.setting }
+    return { ...computed, status, written }
+  }
+  // THE BOOT READ — the authored state as this realm finds it, recorded WITHOUT a declaration.
+  const boot = authoredSettingOf(runtime, nodeId)
+  if (boot.readable) last = { setting: boot.setting }
+  return { attributeName, nodeId, drive }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════

@@ -1275,10 +1275,25 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     // `src/`, and the address space it addressed is deleted with `src/renderer/store-core-graph.ts`. The licence's own
     // rollback clause — *"retiring the theme caller reverts this row to its as-filed `.toEqual([])` closed form"* — is what
     // fires. **THE AS-FILED READING IS NOW THE TRUTH OF THE TREE AND IT IS THE STRICTER ONE**: zero importers, not one.
+    // ⟶ **RE-GRAINED 2026-11-03 (`D-96`) — THE IMPORTER SET IS EXACTLY ONE, AND THE ONE IS NAMED.** The user's ruling is
+    // that this mechanism is OWED a consumer and that the consumer is the module renderers; `D-96` wires it at
+    // `src/renderer/renderer.ts`'s `startThemeDeclaration`, under the module's OWN licence (`docs/specs/theme.md` §2.5
+    // item 3: *"a later `F1` pass LAWFULLY importing this module must NOT be read as falsifying `U-THEME` … it does not
+    // declare the module permanently importer-less"*). **THE ROW'S CLOSED INTENT IS UNCHANGED**: the exemption is the
+    // PATH BY NAME, never the tokens, and a SECOND importer is still a FINDING — which the bounded-extension control
+    // below measures. The AS-FILED reading and `D-93`'s ("zero importers, not one") are KEPT VISIBLE BESIDE as the form
+    // this row reverts to if that import is removed.
+    const ADMITTED_IMPORTER = '.src/renderer/renderer.ts:'
+    const unadmitted = importers.filter((entry) => !entry.startsWith(ADMITTED_IMPORTER))
+    const admitted = importers.filter((entry) => entry.startsWith(ADMITTED_IMPORTER))
     expect(
-      importers.length,
-      `R-6 (AS-FILED FORM RESTORED, 2026-11-03 — the licence cell's own rollback, fired by the deletion of \`src/renderer/theme-store.ts\` under \`D-93\`) — "§2.5 item 5 answers the entry-point question NO: no src/** path reaches this mechanism, and at red time (module absent) the probe reads zero by construction; at green time it must STILL read zero, so a later importer is a FINDING." The AMENDED READING, KEPT VISIBLE BESIDE: "the importer set is EXACTLY ONE: the unit's own caller file \`src/renderer/theme-store.ts\`", which held while that caller existed. Measured: ${JSON.stringify(importers)}`,
-    ).toBe(0)
+      unadmitted,
+      `R-6 (RE-GRAINED 2026-11-03 by \`D-96\`) — the importer set is EXACTLY ONE, BY NAME: \`src/renderer/renderer.ts\`, the module renderer's appearance declaration drive. A second path importing the mechanism is a FINDING and is named here. The AS-FILED and \`D-93\` forms, KEPT VISIBLE BESIDE: "no src/** path reaches this mechanism … a later importer is a FINDING" (as filed) and "zero importers, not one" (\`D-93\`, after \`src/renderer/theme-store.ts\` was deleted). Measured: ${JSON.stringify(importers)}`,
+    ).toEqual([])
+    expect(
+      admitted.length,
+      `R-6 (RE-GRAINED 2026-11-03 by \`D-96\`) — and the ONE admitted importer IS the one measured, so the exemption is a named member rather than a blanket strip: ${JSON.stringify(admitted)}`,
+    ).toBe(1)
     // THE BOUNDED-EXTENSION POSITIVE CONTROL (the licence's positive-control
     // clause: broadening the set BEYOND the one admitted path is a FINDING): the
     // SAME instrument MUST still flag a SECOND new path's import.

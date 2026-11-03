@@ -207,12 +207,11 @@
         "src/shared/theme.ts",
         "src/shared/overlay.ts",
         "src/shared/menu-template.ts",
-        "src/renderer/theme-store.ts",
-        "src/renderer/overlay-store.ts",
         "tests/theme.test.ts",
         "tests/theme-control.test.ts",
         "tests/overlay.test.ts",
-        "tests/menu-template.test.ts"
+        "tests/menu-template.test.ts",
+        "tests/theme-declaration.test.ts"
       ],
       "endpoints": 9
     },

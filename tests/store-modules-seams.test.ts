@@ -1675,8 +1675,26 @@ describe('§3.4 S-rows — overlay (S-OV-*), the caller half RE-GRAINED to the s
   })
 })
 
+/**
+ * **`D-96` — THE ONE ADMITTED CARRIER OF THE THEME MECHANISM UNDER `src/`, BY NAME, DECLARED ONCE FOR THE THREE ROWS BELOW.**
+ * `D-95` left `src/shared/theme.ts`'s disposal OPEN AS A RULING — *"no `src/` importer and a corpus that requires them are
+ * BOTH true"* — and the user has given it: the mechanism is **OWED a consumer**, and the consumer is the module renderers.
+ * `src/renderer/renderer.ts` is where that ruling lands (`startThemeDeclaration`: resolve → declare → one `state-slice` on
+ * the authored node), and it lands under the module's OWN licence — `docs/specs/theme.md` §2.5 item 3: *"a later `F1` pass
+ * LAWFULLY importing this module must NOT be read as falsifying `U-THEME`. The denial binds this unit's own diff; it does
+ * not declare the module permanently importer-less."* **THE SET STAYS A CLOSED SET WITH ONE NAMED MEMBER**: the exemption
+ * is the PATH BY NAME and never the tokens, and every row below still fails on a SECOND carrier — which is what makes the
+ * re-grain honest rather than a blanket strip. The `D-93` reading these rows revert to if that import is removed is
+ * *"NO importer at all, over the tree"*, and it is kept visible in each row's own note.
+ */
+const ADMITTED_THEME_CARRIER = join(SRC_ROOT, 'renderer/renderer.ts')
+/** Is this `src/**` path the admitted carrier? Exact membership, never a prefix and never a directory. */
+function isAdmittedThemeCarrier(path: string): boolean {
+  return path === ADMITTED_THEME_CARRIER
+}
+
 describe('§3.4 S-rows — theme (S-TH-*), the caller half RE-GRAINED to the stronger true form (D-93)', () => {
-  test('S-TH-1 — (RE-GRAINED 2026-11-03, D-93) THE FLAG ROW: theme.ts carries ZERO imports (three views) PLUS the TREE census: NO file under src/ imports src/shared/theme.js at all — its one admitted caller is DELETED', () => {
+  test('S-TH-1 — (RE-GRAINED 2026-11-03 by `D-96`; ZERO imports D-93) THE FLAG ROW: theme.ts carries ZERO imports (three views) PLUS the TREE census: src/shared/theme.js has EXACTLY ONE importer under src/, `src/renderer/renderer.ts`, admitted BY NAME — a SECOND carrier is still a FINDING', () => {
     for (const reading of censusReadings('shared/theme.ts')) {
       expect(reading.hits, `${reading.reading} of theme.ts`).toEqual([])
     }
@@ -1684,16 +1702,22 @@ describe('§3.4 S-rows — theme (S-TH-*), the caller half RE-GRAINED to the str
     expect(scanImportForms(`import { createGraphStore } from '../renderer/store-core-graph.js'`).length).toBeGreaterThan(0)
     expect(scanImportForms(`const g = require('../renderer/store-core-graph.js')`).length).toBeGreaterThan(0)
     expect(scanImportForms(`const g = await import('../renderer/store-core-graph.js')`).length).toBeGreaterThan(0)
-    // THE TREE CENSUS IN ITS STRONGER TRUE FORM (the as-filed row counted the module's ONE admitted
-    // caller, `src/renderer/theme-store.ts`, which is DELETED): NO importer at all, over the tree.
+    // ⟶ **RE-GRAINED 2026-11-03 (`D-96`): THE TREE CENSUS ADMITS EXACTLY ONE CARRIER, BY NAME**
+    // (`ADMITTED_THEME_CARRIER`, declared above). THE AS-FILED AND `D-93` READING, KEPT VISIBLE BESIDE — *"NO importer at
+    // all, over the tree"* — was TRUE while nothing consumed the mechanism and is FALSE now that the ruling's consumer
+    // exists; the closed SET is not weakened by naming its one member, and a SECOND carrier still fails below.
     const importers: string[] = []
+    const unadmittedReferences: string[] = []
     for (const f of srcFiles().filter((p) => p.includes('shared/theme.ts') === false)) {
       const code = commentElided(readFileSync(f, 'utf8'))
       for (const hit of scanSpecifier(code, 'theme')) importers.push(`${f}: ${hit}`)
-      expect(code.includes('resolveTheme'), `${f} must not reference the module's values`).toBe(false)
-      expect(code.includes('applyThemeDeclaration'), `${f} must not reference the module's values`).toBe(false)
+      if (isAdmittedThemeCarrier(f)) continue
+      if (code.includes('resolveTheme')) unadmittedReferences.push(`${f}: resolveTheme`)
+      if (code.includes('applyThemeDeclaration')) unadmittedReferences.push(`${f}: applyThemeDeclaration`)
     }
-    expect(importers, 'the deleted caller left no successor: NO src/** file imports theme.js').toEqual([])
+    expect(unadmittedReferences, "no src/** file OUTSIDE the one admitted carrier references the module's values").toEqual([])
+    expect(importers.filter((entry) => !entry.startsWith(ADMITTED_THEME_CARRIER)), 'a SECOND importer is a FINDING: the admitted set is ONE path, by name').toEqual([])
+    expect(importers.length, 'and the ONE admitted carrier IS there — the exemption is a measured member, not a blanket strip').toBe(1)
     // CONTROL — a planted importer is reported by the same scan, in each import form.
     expect(scanSpecifier(`import { resolveTheme } from '../shared/theme.js'\n`, 'theme').length).toBeGreaterThan(0)
     expect(scanSpecifier(`const t = await import('../shared/theme.js')\n`, 'theme').length).toBeGreaterThan(0)
@@ -1828,16 +1852,26 @@ describe('§3.5 existence rows (E-*)', () => {
     expect(existsSync(join(SRC_ROOT, 'renderer/overlay-store.ts')), 'and the admitted caller really is gone').toBe(false)
   })
 
-  test('E-TH-1 — (RE-GRAINED 2026-11-03 to the STRONGER TRUE FORM, D-93) the theme module is referenced by NO file under src/ at all: resolveTheme/applyThemeDeclaration appear ONLY in the module itself; the positive control is a planted consumer that FAILS the probe (§3.5)', () => {
+  test('E-TH-1 — (RE-GRAINED 2026-11-03 by `D-96`; ZERO-consumer form D-93) the theme module is referenced by NOTHING under src/ outside its ONE admitted consumer, `src/renderer/renderer.ts`: resolveTheme/applyThemeDeclaration appear ONLY in the module and there; the positive control is a planted consumer at ANY OTHER path, which still FAILS the probe (§3.5)', () => {
     const moduleFile = 'shared/theme.ts'
+    // ⟶ **RE-GRAINED 2026-11-03 (`D-96`) — THE EXISTENCE ROW'S SUBJECT IS NOW "EXACTLY ONE CONSUMER, NAMED", NOT "NONE".**
+    // The as-filed row admitted ONE consumer (the unit's own caller `src/renderer/theme-store.ts`); `D-93` deleted that and
+    // re-grained the row to ZERO, honestly, because nothing then consumed the mechanism. **The user's ruling makes the
+    // mechanism OWED a consumer and names its kind — the module renderers — so `src/renderer/renderer.ts`'s
+    // `startThemeDeclaration` is that consumer**, admitted here BY NAME (`ADMITTED_THEME_CARRIER`) and bounded by the
+    // planted-consumer control at the end of this row, which still FAILS for any OTHER path.
     const importers: string[] = []
+    const unadmittedReferences: string[] = []
     for (const f of srcFiles().filter((p) => p.includes(moduleFile) === false)) {
       const code = commentElided(readFileSync(f, 'utf8'))
-      expect(code.includes('resolveTheme'), `${f} references the module's resolver`).toBe(false)
-      expect(code.includes('applyThemeDeclaration'), `${f} references the module's declaration`).toBe(false)
       for (const hit of scanSpecifier(code, 'theme')) importers.push(`${f}: ${hit}`)
+      if (isAdmittedThemeCarrier(f)) continue
+      if (code.includes('resolveTheme')) unadmittedReferences.push(`${f}: resolveTheme`)
+      if (code.includes('applyThemeDeclaration')) unadmittedReferences.push(`${f}: applyThemeDeclaration`)
     }
-    expect(importers, 'NO src/** file imports theme.js — the admitted caller is deleted, not replaced').toEqual([])
+    expect(unadmittedReferences, 'resolveTheme/applyThemeDeclaration appear ONLY in the module and its ONE admitted consumer').toEqual([])
+    expect(importers.filter((entry) => !entry.startsWith(ADMITTED_THEME_CARRIER)), 'NO src/** file OUTSIDE the admitted carrier imports theme.js').toEqual([])
+    expect(importers.length, 'the admitted carrier really is the one measured').toBe(1)
     // THE POSITIVE CONTROL — a planted consumer MUST FAIL the no-importer probe.
     const plantedConsumer = `import { resolveTheme } from '../shared/theme.js'\nimport { applyThemeDeclaration } from '../shared/theme.js'\n`
     expect(scanImportForms(plantedConsumer).length).toBeGreaterThan(0)
@@ -2291,7 +2325,7 @@ describe('§5.5.1 THE REGISTER — the executed layer', () => {
     for (const o of ctx.outcomes) expect(o.held, `P-SMS-OV-TP-1 attempt ${o.id}: ${o.note}`).toBe(true)
   }, 30000)
 
-  test('P-SMS-TH-IM-1 (S-SMS-TH-IM-1, P-IM) — 7 attempts: THE FLAG ROW — theme\'s EMPTY IMPORT CENSUS UNCHANGED + the TREE census (NO importer, the stronger true form, D-93)', () => {
+  test('P-SMS-TH-IM-1 (S-SMS-TH-IM-1, P-IM) — 7 attempts: THE FLAG ROW — theme\'s EMPTY IMPORT CENSUS UNCHANGED + the TREE census (EXACTLY ONE admitted carrier, by name — RE-GRAINED 2026-11-03 by `D-96`; the zero-importer form was D-93\'s)', () => {
     const ctx = newAttemptContext()
     const readings = censusReadings('shared/theme.ts')
     attempt(ctx, 'module-reading-raw', () => expect(readings[0]?.hits ?? []).toEqual([]))
@@ -2301,14 +2335,18 @@ describe('§5.5.1 THE REGISTER — the executed layer', () => {
     attempt(ctx, 'control-require-store', () => { expect(scanImportForms(`const g = require('../renderer/store-core-graph.js')`).length).toBeGreaterThan(0) })
     attempt(ctx, 'control-dynamic-import-store', () => { expect(scanImportForms(`const g = await import('../renderer/store-core-graph.js')`).length).toBeGreaterThan(0) })
     attempt(ctx, 'tree-census', () => {
+      // ⟶ RE-GRAINED 2026-11-03 (`D-96`): the same closed census, with its ONE admitted member NAMED
+      // (`ADMITTED_THEME_CARRIER`). The attempts above are UNTOUCHED — the module's own import census is still EMPTY.
       const importers: string[] = []
       for (const f of srcFiles().filter((p) => p.includes('shared/theme.ts') === false)) {
         const code = commentElided(readFileSync(f, 'utf8'))
         for (const hit of scanSpecifier(code, 'theme')) importers.push(`${f}: ${hit}`)
+        if (isAdmittedThemeCarrier(f)) continue
         expect(code.includes('resolveTheme')).toBe(false)
         expect(code.includes('applyThemeDeclaration')).toBe(false)
       }
-      expect(importers).toEqual([])
+      expect(importers.filter((entry) => !entry.startsWith(ADMITTED_THEME_CARRIER))).toEqual([])
+      expect(importers.length).toBe(1)
       // the planted importer IS reported — the attempt's own control
       expect(scanSpecifier(`import { resolveTheme } from '../shared/theme.js'`, 'theme').length).toBeGreaterThan(0)
     })

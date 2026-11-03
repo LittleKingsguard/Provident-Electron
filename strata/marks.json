@@ -3,8 +3,8 @@
   "instrument": "scripts/strata-marks.mjs",
   "suites": {
     "flat": {
-      "files": 82,
-      "sites": 2294
+      "files": 83,
+      "sites": 2300
     },
     "e2e": {
       "files": 5,
@@ -696,8 +696,8 @@
   ],
   "readings": {
     "gating": {
-      "files": 24,
-      "sites": 175
+      "files": 25,
+      "sites": 181
     },
     "onNotice": {
       "files": 106,

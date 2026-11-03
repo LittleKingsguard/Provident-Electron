@@ -172,6 +172,17 @@ const DECLARED_SCOPE: readonly string[] = [
   //    NOTHING**: `src/shared/overlay.ts` and `src/shared/theme.ts` were measured to be no part of the deleted address
   //    space and are left exactly where `D-93` left them, and `demo/pane-drag-demo/` is a path the corpus names, so
   //    neither owes this row a path. A reader who expects an entry here is owed the reason it is absent — this is it.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-96` — THE APPEARANCE MECHANISM'S CONSUMER (`D-95`'s open item *(a)*, taken as a RULING). The mechanism
+  //    `src/shared/theme.ts` is wired at the app renderer's `startThemeDeclaration`: a change of the authored setting is
+  //    resolved, declared, and written as provident data (`props.<name>`) on the authored state node. **THE ONE NEW PATH
+  //    IS ITS PROOF**, and every other path this pass writes is ALREADY DECLARED ABOVE — `src/renderer/renderer.ts` (the
+  //    role and its one wiring site), `tests/theme.test.ts`, `tests/theme-control.test.ts` and
+  //    `tests/store-modules-seams.test.ts` (the three no-importer forms re-grained to a closed set with its one named
+  //    member), `strata/decisions.md`, `strata/brief.md`, `strata/pending.md`, `strata/next-steps.md`, `strata/marks.json`
+  //    (a test file was added) and `strata/modules.json` (the map claim for it) — so no entry is added for any of them,
+  //    and `src/shared/overlay.ts` is NOT written at all: `D-96` records why its consumer is not buildable here.
+  'tests/theme-declaration.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
