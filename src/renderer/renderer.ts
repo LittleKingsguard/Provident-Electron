@@ -12,6 +12,8 @@ import { createGraphStore, type GraphStore, type GraphEvent, type GraphConstrain
 import { storeGraphReferences } from './store-graph-references.js'
 import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, type TabsClientReading, type TabsSubscription } from './tabs-client.js'
+import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
+import { DEFAULT_PANE_ID, defaultPaneGeometry } from '../shared/view-shape.js'
 
 /** **THE WITNESS DERIVATION, RE-EXPORTED FOR THE LIVE DRIVER AND FOR NOTHING ELSE** (D-77; L2 §6). The page reaches this
  *  module through `document.baseURI + "renderer.js"` and cannot import a second file from the renderer bundle
@@ -37,12 +39,25 @@ export { deriveTabsWitness } from './tabs-client.js'
  *  store never refuses construction (§0A note 8). */
 let wiredGraphStore: GraphStore | null = null
 
-/** THE FOCUS CARRIER — `U-STORE-FOCUS`'s boot-constructed seam composition
- *  (`docs/specs/store-focus.md` §2.3 item 1): a WIRING-HELD binding, set at boot
- *  from `getWiredGraphStore()` (and lazily in a node realm where `main()` never
- *  runs — the W4 form), with the store handle living in the factory's argument +
- *  the closures. THE FOCUS STATE ITSELF IS NEVER HELD HERE — it lives in the
- *  store's `mem.focus.*` mirror, never in a module-level focus-state carrier. */
+/** **THE VIEW RECORD'S CLIENT — THE SHAPE THIS REALM RENDERS FROM (`D-88`).** Constructed EXACTLY ONCE per realm, at the
+ *  same boot point the frozen store is, and lazily in a realm where `main()` never runs (the W4 form above), so the focus
+ *  route an MCP call reaches works in a node realm too. **IT IS NOT A STORE**: it holds no address space, owns no
+ *  persistence, carries no constraint and is REPLACED WHOLE by every delivery it is refilled from —
+ *  `src/renderer/view-client.ts`'s header states the distinction in the convention's own terms. What is held HERE is the
+ *  CLIENT and never the shape: no module-level binding names a pane size or a mirror. **ITS ONE STATED BOOT READ IS
+ *  `fill()`**, run at the end of `main()` beside the tab client's instrument; every later fill is a delivery's. */
+let viewClient: ViewClient | null = null
+
+/** THE SHAPE'S ONE PER-REALM CLIENT — the same identity on every call, exactly as `getWiredGraphStore()` answers its store. */
+export function getViewClient(): ViewClient {
+  if (viewClient === null) viewClient = createViewClient()
+  return viewClient
+}
+
+/** THE FOCUS CARRIER — `U-STORE-FOCUS`'s boot-constructed seam composition (`docs/specs/store-focus.md` §2.3 item 1):
+ *  a WIRING-HELD binding, set at boot from `getViewClient()` (and lazily in a node realm where `main()` never runs — the W4
+ *  form), with the client living in the factory's argument + the closures. **THE FOCUS STATE ITSELF IS NEVER HELD HERE**:
+ *  it is the client's shape, refilled by deliveries, never a module-level focus-state carrier (`D-88`). */
 let focusCarrier: FocusCarrierSurface | null = null
 
 /** THE FILE TIER'S DECLARED TOP-LEVEL NAMES — the caller's rows at the store's construction
@@ -1081,32 +1096,16 @@ function projectionAnswerOf(projection: { readonly entries: readonly FocusEntry[
   }
 }
 
-/** THE ONE STORE-BACKED READ — a HIT reads the held value; a MISS and the
- *  READ-SIDE REFUSAL RECORD (never a throw, never a HIT) both read the DECLARED
- *  EMPTY outcome (`§2.1` item 6 / `§2.3` item 3). A hostile resolve is absorbed
- *  as the same declared-empty degradation (`§2.3` item 6). */
-function readMirrorRef(store: GraphStore, name: string): { readonly found: boolean; readonly value: unknown } {
-  try {
-    const answer = store.resolve(name) as { found?: unknown; value?: unknown; status?: unknown } | null
-    if (answer === null || typeof answer !== 'object') return { found: false, value: undefined }
-    if ((answer as { status?: string }).status === 'refused') return { found: false, value: undefined }
-    if (answer.found === true) return { found: true, value: answer.value }
-    return { found: false, value: undefined }
-  } catch {
-    return { found: false, value: undefined }
-  }
-}
-
-/** THE MIRROR-STATE READ — the two references, MISS/refusal consumed as the
- *  DECLARED EMPTY PAIR (`entries: []`, `activeId: null`) — the module's own
- *  declared start, nothing invented. */
-function mirrorStateOf(store: GraphStore): FocusState {
-  const entries = readMirrorRef(store, 'mem.focus.entries')
-  const activeId = readMirrorRef(store, 'mem.focus.activeId')
-  return {
-    entries: entries.found ? (entries.value as readonly FocusEntry[]) : ([] as readonly FocusEntry[]),
-    activeId: activeId.found ? (activeId.value as unknown) : null,
-  }
+/** **THE MIRROR-STATE READ — AND IT IS THE SHAPE'S, NOT THE STORE'S (D-88).** It read `mem.focus.entries` and
+ *  `mem.focus.activeId` through two `resolve` calls on the frozen store and consumed a MISS/refusal as the DECLARED EMPTY
+ *  PAIR; it now reads the one `mem` root's projection off `src/renderer/view-client.ts`, SYNCHRONOUSLY, and the declared
+ *  empty pair still answers everything the shape cannot state (nothing read yet, an empty mirror, an unreadable answer).
+ *  The absent active crosses as ABSENCE and reads back as `null` (the crossing refuses `null` at its boundary, D-87's
+ *  inherited fact (ii)), so the model's `FocusState` is answered without a fourth spelling of "no active". */
+function mirrorStateOf(view: ViewClient | null): FocusState {
+  if (view === null) return { entries: [] as readonly FocusEntry[], activeId: null }
+  const shape = view.focusState()
+  return { entries: shape.entries as readonly FocusEntry[], activeId: shape.activeId }
 }
 
 /** THE ECHOED ENTRY IDS, IN THE CALLER'S OWN ORDER — read out of the state the model seated,
@@ -1144,13 +1143,22 @@ function resolveForHolder(payload: unknown): { readonly present: boolean; readon
  *  `mem.focus.entries` = `nextState.entries` AND `mem.focus.activeId` = `nextState.activeId`
  *  (tier `mem`, `{onRepeat:'edit'}`, EXACTLY ONE commit per reference); a REFUSED or accepted
  *  NO-OP transition writes NOTHING (`store-focus.md` §2.3 item 4). */
-function answerForCarrier(store: GraphStore, result: ReturnType<typeof focusTransition>): FocusAnswer {
+function answerForCarrier(view: ViewClient | null, result: ReturnType<typeof focusTransition>): FocusAnswer {
   if (result.accepted) {
     if (result.changed) {
+      // **THE WRITE-THROUGH TURN — ONE ROUTE, AND ITS RECEIPT ARRIVES A TICK LATER (D-88).** The frozen store's TWO
+      // synchronous commits (`mem.focus.entries` then `mem.focus.activeId`, each `{onRepeat:'edit'}`) become ONE
+      // `commitFocus` carrying the WHOLE mirror the model produced — the crossing composes nothing, and the absent active
+      // crosses as ABSENCE because the module writes it that way. **THE ANSWER BELOW IS NOT DERIVED FROM THE RECEIPT** and
+      // never was: `result.state` is the model's own next state, in hand before the write, so the delivery landing a tick
+      // later moves the SHAPE and not this answer. What the late arrival CAN change is observable elsewhere: a mirror the
+      // crossing's boundary refuses (an id that is not a string/number/boolean, a `target` carrying `null`) is recorded in
+      // `writeOutcome()` as a refusal where the frozen store would have taken it — the crossing's vocabulary, stated rather
+      // than hidden.
       persist(
         (next: FocusState): unknown => {
-          store.commit('mem.focus.entries', next.entries, { onRepeat: 'edit' })
-          return store.commit('mem.focus.activeId', next.activeId, { onRepeat: 'edit' })
+          if (view === null) return null
+          return view.commitFocus({ entries: next.entries, activeId: next.activeId })
         },
         result.state,
       )
@@ -1170,8 +1178,8 @@ function answerForCarrier(store: GraphStore, result: ReturnType<typeof focusTran
 /** THE STANDING ANSWER WHEN THE CALLER NAMED NO TARGET — the mirror state read,
  *  unchanged (`S-1`: no special case is applied and the consumer is simply asked
  *  with no target). */
-function standingAnswer(store: GraphStore): FocusAnswer {
-  const state = mirrorStateOf(store)
+function standingAnswer(view: ViewClient | null): FocusAnswer {
+  const state = mirrorStateOf(view)
   return { activeId: state.activeId, entries: carriedEntryIds(state), opened: false }
 }
 
@@ -1183,13 +1191,13 @@ function standingAnswer(store: GraphStore): FocusAnswer {
  *  from the transition's result + the mirror (`store-focus.md` §2.5 item 2). The
  *  carrier's `focusRoute` member and the case's entry both route through this
  *  shape. TOTAL for EVERY payload; a refusal is never a throw. */
-function focusRouteImpl(store: GraphStore, payload: unknown): FocusAnswer {
+function focusRouteImpl(view: ViewClient | null, payload: unknown): FocusAnswer {
   const projection = tabListProjectionOf(payload)
   if (projection !== null) return projectionAnswerOf(projection)
   const resolved = resolveForHolder(payload)
-  if (!resolved.present) return standingAnswer(store)
-  const result = focusTransition(mirrorStateOf(store), resolved.verb, resolved.arg)
-  return answerForCarrier(store, result)
+  if (!resolved.present) return standingAnswer(view)
+  const result = focusTransition(mirrorStateOf(view), resolved.verb, resolved.arg)
+  return answerForCarrier(view, result)
 }
 
 /** THE ROUTE — THE CASE'S ENTRY (`focusRoute(req.payload)`): the carrier is
@@ -1199,14 +1207,14 @@ function focusRouteImpl(store: GraphStore, payload: unknown): FocusAnswer {
  *  subscription (the subscription is the CONSUMER channel, not the route's data
  *  source). THE HOLDER'S OWN ANSWER IS WHAT SHIPS. */
 function focusRoute(payload: unknown): FocusAnswer {
-  if (focusCarrier === null) focusCarrier = createFocusCarrier(getWiredGraphStore())
+  const view = getViewClient()
+  if (focusCarrier === null) focusCarrier = createFocusCarrier(view)
   const projection = tabListProjectionOf(payload)
   if (projection !== null) return projectionAnswerOf(projection)
   const resolved = resolveForHolder(payload)
-  const store = getWiredGraphStore()
-  if (!resolved.present) return standingAnswer(store)
-  const result = focusTransition(mirrorStateOf(store), resolved.verb, resolved.arg)
-  return answerForCarrier(store, result)
+  if (!resolved.present) return standingAnswer(view)
+  const result = focusTransition(mirrorStateOf(view), resolved.verb, resolved.arg)
+  return answerForCarrier(view, result)
 }
 
 async function main(): Promise<void> {
@@ -1299,11 +1307,11 @@ async function main(): Promise<void> {
   // and evaluates no pair, and the next evaluation is the first caller's own write — exactly the relation this
   // region had before the step existed, one boot step lighter, and `G-5`/`B-8`/`H-3`/`H-4`'s subject is deleted
   // with it rather than left dangling (see the headstone above the declarations).
-  // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 items 1/2): boot-constructed from the
-  // wired store — the boot MINT-DECLARES `mem.focus` (the register's row pre-exists the
-  // first focus write) and the two exact-reference store subscriptions (rule 2) register
-  // at the same construction point.
-  focusCarrier = createFocusCarrier(wired)
+  // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 item 1) — **CONSTRUCTED OVER THE SHAPE, NOT OVER A STORE (`D-88`)**. The
+  // boot MINT-DECLARES nothing and registers no subscription: `focus-must-stand` is a creation-instant declaration at the
+  // crossing (`D-87`), and the one delivery channel is the client's `onChanged`. The CARRIER is what an MCP `focus` call
+  // reaches, so it must exist before the first request, and the client it holds is the realm's one (`getViewClient()`).
+  focusCarrier = createFocusCarrier(getViewClient())
   // ⟶ THE RUNTIME + FIRST ENVELOPE (`U-STORE-CORE`'s realm construction + G2 §2.9):
   // created and loaded ONLY AFTER the hand-off answered — a boot whose first envelope
   // loads before the Y-1 answer FAILS the starting-order gate (§2.9 consequence (1)).
@@ -1375,6 +1383,14 @@ async function main(): Promise<void> {
   // module-level-holder rule see the bytes they saw before this stage: the instrument is NOT the focus carrier, and
   // the bindings it does hold are outside every region a landed row scans.
   startTabsClientInstrument(runtime)
+  // ⟶ **THE SHAPE'S ONE STATED BOOT READ (`D-88`)**, started here and NOT awaited, for exactly the reason the tab client's
+  // instrument above is: every boot step including `bridge.ready()` has already run, so no step's order moves and a slow or
+  // failing crossing cannot delay or fail the boot (`tests/e2e/bundle-boot-seam`'s `B-5` reads the trace's ORDER, not a
+  // duration). **WHY A BOOT READ AT ALL, WHEN THE DELIVERY IS THE SHAPE'S SOURCE** (`D-78`'s chain): a delivery carries
+  // CHANGE, and a boot's own change — the crossing's creation load and its constraint/repair passes — happened in `main()`
+  // BEFORE this realm could subscribe, while a cold profile changes nothing afterwards. So the first fill has no delivery
+  // to ride and is ONE STATED READ; every later fill is a delivery's, and no timer, poll or interval exists anywhere in it.
+  startViewShape()
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
@@ -1445,6 +1461,41 @@ function startTabsClientInstrument(runtime: Runtime): void {
       tabsClientReading = { status: 'unread', reason: 'route-threw', detail: String(error) }
     },
   )
+}
+
+/** THE SHAPE'S SUBSCRIPTION — held for the P1-P7 release discipline exactly as `releaseY3` and `tabsClientSubscription`
+ *  are: a registration is held so a teardown could withdraw it (this realm's teardown is the page's). */
+let viewSubscription: ViewSubscription | null = null
+
+/** **THE SHAPE'S ONE BOOT SITE (`D-88`)** — ONE registration and ONE stated read, started from `main()` as its last
+ *  statement and never awaited. The registration goes FIRST so a change that lands between the read and its continuation is
+ *  still delivered (the delivery re-reads, so an extra delivery costs one read and can never lose a write). The read's
+ *  answer is ADOPTED by the client itself — this function holds no shape, composes nothing and writes nothing: it starts the
+ *  chain `D-78` names and stops there. */
+function startViewShape(): void {
+  const client = getViewClient()
+  viewSubscription = client.subscribe(() => undefined)
+  void client.fill().then(
+    (reading) => {
+      console.info(`[provident-renderer] view shape: ${describeViewReading(reading)}`)
+    },
+    (error: unknown) => {
+      // THE DEFECT ARM, NOT AN ORDINARY ONE: `fill()` answers values, so a rejection here is a bug in the client. The shape
+      // keeps what it last read, which on a boot is the declared empty pair, and boot is over by the time this runs.
+      console.warn(`[provident-renderer] view shape: the boot read rejected — ${String(error)}`)
+    },
+  )
+}
+
+/** THE ONE LINE'S TEXT — the arm, the per-family `source` words, and the two families' sizes. */
+function describeViewReading(reading: ViewClientReading): string {
+  if (reading.status === 'committed') {
+    const panes = reading.panes.map((pane) => `${pane.id}=${String(pane.size)}[${String(pane.bounds.min)}…${String(pane.bounds.max)}]`)
+    return `read; panes=[${panes.join(', ')}] (source ${reading.source.panes}), `
+      + `focus entries=${String(reading.focus.entries.length)} active=${JSON.stringify(reading.focus.activeId)} (source ${reading.source.focus})`
+  }
+  if (reading.status === 'absent') return `absent (${reading.reason}) — no view crossing in this realm; nothing read`
+  return `unread (${reading.reason})${reading.detail === null ? '' : `: ${reading.detail}`}`
 }
 
 /** THE ONE LINE'S TEXT — the arm, and on a read the two witnesses with the ids that decided them. */
@@ -1636,12 +1687,38 @@ export function zoneSizeRepair(min: number, max: number): (
   }
 }
 
-/** THE WIRED-STORE COMPOSITION (§2.1 A/B/C + §2.3's listener registration + §7a.1 item 1's
- *  reconcile turns, all bound to the caller-supplied STORE and the RECORDING SOURCE DOUBLE).
- *  TOTAL for ANY argument: an absent store, a hostile store and a throwing tier-handle read
- *  all land the DECLARED degradation and never a throw escapes a wiring turn. */
-export function createPaneDrag(store: unknown, source: unknown): PaneDragSurface {
-  const storeRecord = (store ?? null) as Record<string, unknown> | null
+/** **THE COMPOSITION'S TWO BACKINGS, NAMED APART BECAUSE THE SWAP SPLIT THEM (D-88).**
+ *
+ *  `view` is **THE SHAPE** — the pane geometry, read SYNCHRONOUSLY off `src/renderer/view-client.ts`'s in-realm projection
+ *  and written through the crossing's `commitPane` route. It is NOT a store: it holds no address space, owns no
+ *  persistence, carries no constraint and is replaced whole by every delivery it is refilled from. This file's
+ *  `readPaneSize`/`readPaneBounds` and its `release` turn were the frozen store's last synchronous callers of that family
+ *  (`:1700-1722`, `:1823-1825` before this pass), and they now read and write here.
+ *
+ *  `frozen` is the app's own graph store, kept for the TWO families that have no successor address and NOT for the pane
+ *  geometry: the gesture's **temp preview** (`temp.drag.<gestureId>.placement`) and the **zone** reads
+ *  (`mem.layout.zone.<id>.size`/`.display`/`.slot`/`.distance`). D-87's two roots carry the pane geometry and the focus
+ *  mirror and nothing else, so these stay where they are until the purge deletes the store — the reason this composition
+ *  still has a store argument at all, stated rather than hidden.
+ *
+ *  TOTAL for ANY argument (unchanged): an absent or hostile `view` answers the MEASURED DEFAULT and sends no write, an
+ *  absent or hostile `frozen` lands the declared degradation for the temp/zone turns, and no throw escapes a wiring turn. */
+export interface PaneDragBacking {
+  /** THE SHAPE (D-88) — synchronous reads, sent writes. */
+  readonly view?: ViewClient | null
+  /** THE FROZEN STORE — the temp preview and the zone families, which have no successor address (D-87). */
+  readonly frozen?: unknown
+}
+
+/** THE WIRED COMPOSITION (§2.1 A/B/C + §2.3's listener registration + §7a.1 item 1's reconcile turns), bound to the
+ *  caller-supplied BACKINGS above and the RECORDING SOURCE DOUBLE. The pane geometry's reads are the shape's and its
+ *  write is the crossing's route; the temp preview and the zone reads stay on the frozen store (see `PaneDragBacking`). */
+export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurface {
+  const backingRecord = (backing ?? null) as { readonly view?: unknown; readonly frozen?: unknown } | null
+  /** THE SHAPE, where the caller supplied one. `null` is a realm with no crossing: the reads answer the measured default
+   *  and every write is the client's `absent` statement, which is the declared degradation and never a throw. */
+  const view = (backingRecord?.view ?? null) as ViewClient | null
+  const storeRecord = (backingRecord?.frozen ?? null) as Record<string, unknown> | null
   const sourceRecord = (source ?? null) as { readonly layout?: unknown } | null
 
   /** THE CALLER'S OWN ELEMENT/TOKEN MAPPING (§2.1 A): `<id>` is derived from the caller's
@@ -1691,32 +1768,29 @@ export function createPaneDrag(store: unknown, source: unknown): PaneDragSurface
     }
   }
 
-  /** §2.1 A's size read (the `startSizeOf`/`defaultSizeFor` closure — ONE closure for both
-   *  turns, `gutter-ui.md` §2.1 item 3): reads `mem.layout.pane.<id>.size`; a MISS answers
-   *  the DECLARED FALLBACK — the FILE-tier value read through the ascending-durability
-   *  read (`file.settings.pane.<id>.size`) — and a MISS with NO fallback answers the
-   *  E3-declared non-number (an unusable value ⇒ the release/reset refuses
-   *  `'unusable-default'` with ZERO sink writes). The store invented NOTHING. */
+  /** **THE SIZE READ — §2.1 A's `startSizeOf`/`defaultSizeFor` closure (ONE closure for both turns, `gutter-ui.md` §2.1
+   *  item 3), AND IT IS NOW THE SHAPE'S READ (D-88).** It was `mem.layout.pane.<id>.size` then `file.settings.pane.<id>.size`
+   *  through two `tierRead` calls; the two tiers COLLAPSE to one `file` address (`['panes']`, D-87's inherited fact (i)) and
+   *  the answer is the client's, READ SYNCHRONOUSLY and never awaited — the reason the shape exists. A pane the standing
+   *  family does not name answers the MEASURED DEFAULT (100, the authored pane's `props.size`) instead of the `undefined`
+   *  that made the release refuse `'unusable-default'`: the missing default was the frozen store's, and D-87's ground
+   *  measured it. **NO WRITE HAPPENS HERE** — a read that misses leaves the miss (`D-82` clause 4). */
   const readPaneSize = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
-    const mem = tierRead('mem', `layout.pane.${id}.size`)
-    if (mem.found) return mem.value
-    const file = tierRead('file', `settings.pane.${id}.size`)
-    if (file.found) return file.value
-    return undefined
+    if (view !== null) return view.paneSizeOf(id)
+    // A REALM WITH NO CROSSING: the measured default stands, stated from the ONE shared declaration rather than invented.
+    return defaultPaneGeometry(id).size
   }
 
-  /** §2.1 A's bounds read: reads `mem.layout.pane.<id>.bounds` and hands the RECEIVED pair
-   *  through AS STORED — never a policy clamped here; a MISS answers the declared fallback
-   *  (the file tier at the settings path); a MISS with NO fallback answers an unusable
-   *  pair (so `clampToBounds` answers `NaN` ⇒ the move is INVALID — §3.2 F-8). */
+  /** §2.1 A's bounds read, also the shape's: the pair AS STORED, never a policy clamped here, and the measured default pair
+   *  (`{min: 0, max: 200}`, the authored pane's `props.min`/`props.max`) where the family names no such pane. A pair whose
+   *  members are not numbers is what `clampToBounds` turns into `NaN`, so the move is INVALID (§3.2 F-8) — that arm now
+   *  needs a shape the crossing's own admission refused, which is the boundary's business and not this read's. */
   const readPaneBounds = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
-    const mem = tierRead('mem', `layout.pane.${id}.bounds`)
-    if (mem.found) return mem.value
-    const file = tierRead('file', `settings.pane.${id}.bounds`)
-    if (file.found) return file.value
-    return { min: undefined, max: undefined }
+    if (view !== null) return view.paneBoundsOf(id)
+    const measured = defaultPaneGeometry(id).bounds
+    return { min: measured.min, max: measured.max }
   }
 
   /** THE ZONE-READ closure for the render's layout call (§2.3 item 4): the layout input is
@@ -1796,36 +1870,32 @@ export function createPaneDrag(store: unknown, source: unknown): PaneDragSurface
     }
   }
 
-  /** THE RELEASE/RESET TERMINAL — the single-sink channel (E10-SINGLE-SINK-CHANNEL):
-   *  ONE `commit('file.settings.pane.<id>.size', <final>)` riding INSIDE the single sink
-   *  invocation (SINK-2 — the sink is invoked once and the store is committed once, the
-   *  two readings agree at 1; `final` is EXACTLY the value the sink received, §2.1 C).
-   *  The E3-declared gate: a non-useful `final` (a non-number or `NaN`) is NEVER written
-   *  — ZERO sink writes (§3.2 F-5/F-8, `gutter.md` §2.5 item 5). Where the pane's STORED
-   *  pre-drag size exists, the reset arm's own validation runs against the RECEIVED
-   *  bounds pair via the family's ONE clamp site (`clampToBounds` answers `NaN` on an
-   *  unusable default/pair ⇒ the reset refuses with ZERO sink writes — §3.2 F-8, §2.1 A).
-   *  The §7a.1 item 1 reading (i) reconcile then refreshes the mem layout copy from the
-   *  committed file value — OUTSIDE the gesture's write count (M-5). */
+  /** **THE RELEASE/RESET TERMINAL — and it is now the CROSSING'S ROUTE, WHICH IS ASYNCHRONOUS (D-88).** The E10-single-sink
+   *  discipline is unmoved (`final` is EXACTLY the value the sink received, the sink is invoked once), and the E3 gate is
+   *  unmoved (a non-useful `final` — a non-number or `NaN` — is NEVER sent, ZERO writes). **WHAT CHANGED, SAID PLAINLY:**
+   *  the frozen store's TWO synchronous commits (`file.settings.pane.<id>.size` then `mem.layout.pane.<id>.size`, the same
+   *  `final` to both tiers) collapse to ONE `commitPane` on the one `file` address, and its receipt does NOT come back in
+   *  this turn — it lands in the client's `writeOutcome()` a tick later. **NO CALLER DEPENDS ON THE OLD TIMING**: this
+   *  member returns `void` (it always did), the SINK is invoked BEFORE the route is sent so the recorded sink trace is
+   *  unchanged, and the next read of the size is the shape's — refilled by the delivery the write itself causes, which is
+   *  `D-78`'s chain running in the order it names. The pre-write validation keeps its arm: a standing geometry the clamp
+   *  answers `NaN` for refuses with ZERO sink sends (§3.2 F-8, §2.1 A). */
   const release = (gestureId: string, final: unknown, sink: unknown): void => {
     void gestureId
     try {
       if (typeof final !== 'number' || Number.isNaN(final)) return
-      const mem = tierRead('mem', 'layout.pane.pane-a.size')
-      if (mem.found) {
-        const narrowed = clampToBounds(mem.value, readPaneBounds({}, 'pane-a'))
+      const standing = readPaneSize({}, DEFAULT_PANE_ID)
+      if (typeof standing === 'number' && Number.isFinite(standing)) {
+        const narrowed = clampToBounds(standing, readPaneBounds({}, DEFAULT_PANE_ID))
         if (Number.isNaN(narrowed)) return
       }
       if (typeof sink === 'function') {
         ;(sink as (value: unknown) => unknown).call(null, final)
       }
-      const commit = storeRecord?.commit as ((name: string, value: unknown) => unknown) | undefined
-      if (typeof commit === 'function') {
-        commit('file.settings.pane.pane-a.size', final)
-        commit('mem.layout.pane.pane-a.size', final)
-      }
+      // ONE ROUTE, ONE WHOLE MEMBER: the id names the pane and the crossing composes the family (D-87's `commitPane`).
+      if (view !== null) view.commitPane(DEFAULT_PANE_ID, { size: final })
     } catch {
-      // a hostile store must never throw out of the release turn
+      // a hostile view or sink must never throw out of the release turn
     }
   }
 
@@ -1915,84 +1985,45 @@ export interface FocusCarrierSurface {
   readonly dispose: () => void
 }
 
-/** THE CARRIER FACTORY — the boot sequence calls it with the wired store; returns the
- *  bounded surface. The factory's ONE declared throw: an ABSENT/non-store argument is
- *  refused at construction with a typed `Error` (`§2.1` item 5(a)). Every turn is TOTAL:
- *  a hostile store, a throwing tier-handle/`resolve`/`commit`/`subscribe` surface and a
- *  throwing listener all land the DECLARED degradation and never let a throw escape a
- *  wiring turn (`§2.3` item 6). */
-export function createFocusCarrier(store: GraphStore): FocusCarrierSurface {
-  if (store === undefined || store === null || typeof (store as { resolve?: unknown }).resolve !== 'function') {
-    throw new Error('H1 U-STORE-FOCUS: createFocusCarrier requires the wired GraphStore argument')
-  }
-
-  // THE BOOT MINT-DECLARE (`§2.3` item 2) — only where the mirror is COLD (the root not
-  // declared): the register's row pre-exists the first write. A hostile store absorbs
-  // every step and the carrier still constructs.
-  try {
-    const probe = store.resolve('mem.focus.entries') as { status?: string; reason?: string } | null
-    const cold = probe !== null && typeof probe === 'object' && probe.status === 'refused' && probe.reason === 'undeclared-name'
-    if (cold) {
-      store.commit('mem.focus', undefined)
-      store.clear('mem.focus')
-    }
-  } catch {
-    // a hostile store absorbs the boot mint — the mint is a no-op and the carrier still constructs
-  }
-
-  // THE TWO EXACT-REFERENCE SUBSCRIPTIONS (`§2.4` item 1) — the CONSUMER channel, held in
-  // the factory's closure (the ONLY subscription authority on the mirror's references).
-  const holds: Array<{ unsubscribe: () => boolean }> = []
-  const forward = (event: GraphEvent): void => {
-    // THE DECLARED CONSUMER CHANNEL — READ-ONLY: in-tree, no consumer exists today (the
-    // strip is the fork's/deferred), so the listener forwards and never writes the store
-    // from inside; each transition yields at most the declared two events.
-    void event
-  }
-  try {
-    holds.push(store.subscribe('mem.focus.entries', forward))
-  } catch {
-    // a hostile subscribe surface refuses to register (registered NOTHING) — never a throw
-  }
-  try {
-    holds.push(store.subscribe('mem.focus.activeId', forward))
-  } catch {
-    // a hostile subscribe surface refuses to register (registered NOTHING) — never a throw
-  }
-
-  /** THE STORE-BACKED SEAM TARGET (`§2.1` item 4 / `§2.3` item 4) — given a `FocusState`
-   *  it commits the mirror's two references (tier `mem`, default `{onRepeat:'edit'}`) and
-   *  its return is the store's declared return (the receipt), handed back by identity. */
-  const persistTarget = (state: FocusState): unknown => {
-    store.commit('mem.focus.entries', state.entries, { onRepeat: 'edit' })
-    return store.commit('mem.focus.activeId', state.activeId, { onRepeat: 'edit' })
+/** **THE CARRIER FACTORY — the boot calls it with the SHAPE (D-88), not with a store.** It registers NOTHING and mints
+ *  NOTHING, and both of those are the crossing's acts now rather than omissions:
+ *    · **THE BOOT MINT IS GONE.** The carrier used to `commit('mem.focus')` + `clear('mem.focus')` when the mirror was
+ *      cold, because the frozen store's register needed a row before the first write. `focus-must-stand` is a DECLARATION
+ *      tested at the crossing's creation (`D-87`), so the mirror stands at the instance's first instant and a `mem` family
+ *      is re-minted at every boot by the repair — the carrier has nothing to mint and must not become a second writer.
+ *    · **THE TWO SUBSCRIPTIONS ARE GONE.** The carrier held two exact-reference subscriptions on the frozen store as the
+ *      CONSUMER channel; the delivery is the CLIENT's now (`view-client.ts`'s `onChanged` → re-read → `adopt`), one
+ *      registration over both roots, and a second registration here would be a second consumer of one push.
+ *  So `dispose()` releases what this carrier took — nothing — and says so rather than pretending to a registration it never
+ *  made. **THE FACTORY'S ONE DECLARED THROW IS KEPT AND ITS SUBJECT IS THE SHAPE**: an absent/non-client argument is refused
+ *  at construction with a typed `Error`, which is the same arm the frozen-store argument had. Every turn is TOTAL: a null
+ *  client, a hostile client and a throwing route all land the DECLARED degradation and never let a throw escape a wiring
+ *  turn. */
+export function createFocusCarrier(view: ViewClient | null): FocusCarrierSurface {
+  if (view === null || view === undefined || typeof (view as { focusState?: unknown }).focusState !== 'function') {
+    throw new Error('U-STORE-FOCUS: createFocusCarrier requires the view client (the shape) as its argument')
   }
 
   let released = false
   return {
-    /** THE MIRROR-STATE READ (`§2.3` item 3) — `{ entries, activeId }`, MISS/refusal
-     *  consumed as the DECLARED EMPTY pair. */
+    /** THE MIRROR-STATE READ — the shape's, synchronously; the declared empty pair where nothing has been read. */
     state: (): { readonly entries: unknown; readonly activeId: unknown } => {
-      const state = mirrorStateOf(store)
+      const state = mirrorStateOf(view)
       return { entries: state.entries, activeId: state.activeId }
     },
-    /** THE RE-HOMED ROUTE — the same answer shape the current `focusRoute` answers
-     *  (`§2.5` item 3, BEHAVIOUR-PRESERVING). */
-    focusRoute: (payload: unknown): FocusAnswer => focusRouteImpl(store, payload),
-    persistTarget,
-    /** THE RELEASE — UNSUBSCRIBE-ON-DISPOSE (`§2.4` item 3): releases EXACTLY the wiring's
-     *  registrations (each `unsubscribe()` called once, registration order), idempotent,
-     *  non-throwing, emits NO store event, leaves the mirror's records in place (P1–P7). */
+    /** THE RE-HOMED ROUTE — the same answer shape the current `focusRoute` answers (BEHAVIOUR-PRESERVING). */
+    focusRoute: (payload: unknown): FocusAnswer => focusRouteImpl(view, payload),
+    /** **THE SEAM TARGET — ONE `commitFocus`, SENT (D-88).** It used to commit the mirror's two references and hand the
+     *  second receipt back by identity; the crossing takes the WHOLE mirror as one value, so the seam's return is the
+     *  client's own `ViewWriteStatement` — `{status:'sent'}`, or the `absent` arm on a realm with no crossing. **NO CALLER
+     *  READS IT FOR A RECEIPT**: the focus model's `persist` answers `{present, value}` and every caller here discards
+     *  `value`; the receipt lands in `view.writeOutcome()` a tick later. */
+    persistTarget: (state: FocusState): unknown => view.commitFocus({ entries: state.entries, activeId: state.activeId }),
+    /** THE RELEASE — kept for the four-member surface, and it releases NOTHING, which is the statement: the boot mint and
+     *  the two registrations this member used to unwind are the crossing's and the client's. Idempotent, non-throwing. */
     dispose: (): void => {
-      if (released) return
       released = true
-      for (const handle of holds) {
-        try {
-          handle.unsubscribe()
-        } catch {
-          // dispose() is non-throwing for any handle shape
-        }
-      }
+      void released
     },
   }
 }

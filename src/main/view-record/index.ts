@@ -35,6 +35,31 @@
 // (D-78's item (f), D-81).
 import { isCommitCarrier, type TabsCommitCarrier } from '../tabs-record/index.js'
 import type { TabsRecordStore } from '../tabs-record/index.js'
+// **THE SHAPE'S VOCABULARY IS `src/shared/view-shape.ts`'S AND THIS MODULE RE-EXPORTS IT** (D-88): the renderer reads the
+// same two families through the same member, and two realm-local copies of the types, the measured defaults and the
+// per-pane derivation would be two answers to one question. Every name below keeps its site of use in this file; only its
+// DECLARATION moved, which is why no cite into this module changes.
+import {
+  DEFAULT_PANE_BOUNDS,
+  DEFAULT_PANE_ID,
+  DEFAULT_PANE_SIZE,
+  defaultPaneGeometry,
+  paneGeometryIn,
+  type ViewFocusEntry,
+  type ViewFocusMirror,
+  type ViewGeometrySource,
+  type ViewPaneGeometry,
+} from '../../shared/view-shape.js'
+export {
+  DEFAULT_PANE_BOUNDS,
+  DEFAULT_PANE_ID,
+  DEFAULT_PANE_SIZE,
+  paneGeometryIn,
+  type ViewFocusEntry,
+  type ViewFocusMirror,
+  type ViewGeometrySource,
+  type ViewPaneGeometry,
+}
 
 type Store = TabsRecordStore
 /** The store handle this module works over, re-exported under this module's own name so the surface can declare it
@@ -71,25 +96,11 @@ export const VIEW_PANES_MUST_STAND_ID = 'panes-must-stand'
  *  third prefix again (`D-71`'s one cross-kind rule reads the HANDLE). */
 export const VIEW_FOCUS_MUST_STAND_ID = 'focus-must-stand'
 
-/** **THE PANE THE APP HAS, MEASURED AND NOT CHOSEN.** `src/renderer/store-backing`'s `paneIdOf` (the store-backed
- *  drag composition at `src/renderer/renderer.ts`) derives a pane id from the caller's own element or token and falls
- *  back to this one, and its `release` turn hard-codes the same id in both of its writes — so this is the ONE pane id
- *  the app's whole geometry reads and writes are keyed by, at this head. **THE AUTHORED DOM PANE IS A DIFFERENT NAME**
- *  (`src/shared/demo-envelope.ts` authors `gutter-pane`), and that is the rendering's business, not the address's: the
- *  store's family is keyed by the id the composition addresses, and `docs/L2/view-record/interface.md` §1 says so. */
-export const DEFAULT_PANE_ID = 'pane-a'
-/** **THE MEASURED DEFAULT SIZE.** `src/shared/demo-envelope.ts` authors the pane's `props.size` as `'100'` and
- *  `gutterSeamExample`'s `startSizeOf` answers the same figure as its own fallback, so 100 is the only starting size
- *  this tree states anywhere. **IT IS THE PLACEHOLDER'S VALUE AND NOT AN INVENTED ONE**: the frozen store the addresses
- *  replace holds NO pane default at all (`grep -n 'pane' src/renderer/store-core-graph.ts` answers zero), and a read at
- *  both of its tiers that MISSed answered `undefined` — an unusable value that made the release and the reset refuse
- *  `'unusable-default'` with ZERO writes and made every move INVALID (`renderer.ts`'s `readPaneSize`, and
- *  `clampToBounds`'s `NaN` arm). */
-export const DEFAULT_PANE_SIZE = 100
-/** **THE MEASURED DEFAULT BOUNDS PAIR**: the authored pane's `props.min`/`props.max` (`'0'`/`'200'`), the same two
- *  figures `gutterSeamExample`'s `boundsOf` falls back to. The pair is a VALUE and is copied into a fresh record by
- *  `defaultPaneGeometry` rather than handed out by reference, so no caller can move the module's own constant. */
-export const DEFAULT_PANE_BOUNDS: { readonly min: number; readonly max: number } = { min: 0, max: 200 }
+// **THE THREE MEASURED DEFAULTS ARE `src/shared/view-shape.ts`'S AND ARE RE-EXPORTED ABOVE** (D-88): the same figures the
+// authored pane states, read by this module's repair (`panes-must-stand`) and by the renderer's pane read alike. Their
+// measured ground — `props.size '100'`, `props.min '0'`, `props.max '200'`, and the frozen store's ZERO pane defaults,
+// which made a MISSed read answer `undefined` and the release refuse `'unusable-default'` with zero writes — is recorded
+// there, once, and `D-87` is where it was measured.
 
 /** **THE REASON TOKENS THIS MODULE MINTS, AND THEY ARE THIS MODULE'S AND NOT THE STORE'S** (the `SEAT_NAME_REASON`
  *  precedent, D-76): a shape arm answers one of these before ANY store verb, so the store never answers a word this
@@ -125,42 +136,9 @@ type ViewTier = typeof PANES_TIER | typeof FOCUS_TIER
 // THE RECORD'S SHAPES
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-/** One pane's geometry, admitted field by field: an unknown member is dropped, never carried. */
-export interface ViewPaneGeometry {
-  readonly id: string
-  readonly size: number
-  readonly bounds: { readonly min: number; readonly max: number }
-}
-
-/** **THE FOCUS ENTRY, AS THE MIRROR CARRIES IT — `src/shared/focus-model.ts`'s `FocusEntry`, narrowed to what the
- *  store's boundary admits and to what one identity test can compare.** The model declares `id` and `target` as
- *  `unknown` and compares ids with `===`; the crossing carries strings, booleans, finite numbers, plain objects and
- *  arrays and refuses `null` and `undefined` at the boundary (measured: `ValueRefusedAtBoundary`). So `id` is narrowed
- *  to the three primitives `===` compares BY VALUE — a record or an array id would cross the boundary and then
- *  compare by reference across two reads of the same mirror, which is the one rule the model's identity equality
- *  cannot survive — while `target` stays opaque because the model never consults it (`"CARRIED AND RETURNED, NEVER
- *  CONSULTED"`), and `label` stays the model's own optional string. */
-export interface ViewFocusEntry {
-  readonly id: string | number | boolean
-  readonly target: unknown
-  readonly label?: string
-}
-
-/** **THE MIRROR ITSELF — `FocusState` with the absent active spelled as ABSENCE.** The model's `activeId` is
- *  `FocusId | null` and `null` is not a value the store's boundary admits (measured, this pass), so a mirror with
- *  nothing active is a record carrying NO `activeId` member at all; the read maps that absence back to `null`, which is
- *  exactly the declared empty pair `mirrorStateOf` already answers for a MISS. Nothing is lost and no fourth spelling of
- *  "no active" is minted. */
-export interface ViewFocusMirror {
-  readonly entries: readonly ViewFocusEntry[]
-  readonly activeId: string | number | boolean | null
-}
-
-/** **WHERE ONE PANE'S GEOMETRY CAME FROM, AND IT NAMES A REAL DIFFERENCE**: `'record'` when the family names this pane
- *  and `'default'` when the MEASURED DEFAULT answered because it does not. The member exists because the alternative is
- *  a read that cannot be told from a store that answered `100` — the distinction `D-84` insisted on when it refused to
- *  let a placeholder be substituted at the READ and called a record. */
-export type ViewGeometrySource = 'record' | 'default'
+// **THE FOUR SHAPE DECLARATIONS ARE `src/shared/view-shape.ts`'S AND ARE RE-EXPORTED ABOVE** (D-88): `ViewPaneGeometry`,
+// `ViewFocusEntry`, `ViewFocusMirror` and `ViewGeometrySource`, with the measured ground each carries — the boundary's
+// domain for a focus entry, the absent active spelled as ABSENCE, and `'record'`/`'default'` naming a real difference.
 
 export interface ViewPaneReading {
   readonly status: 'committed'
@@ -339,13 +317,6 @@ const isBoundary = (value: unknown): boolean => {
   if (plain(value)) return Object.values(value).every(isBoundary)
   return false
 }
-
-/** The measured default geometry for one pane — a FRESH record every call, so no caller holds the module's constant. */
-const defaultPaneGeometry = (id: string): ViewPaneGeometry => ({
-  id,
-  size: DEFAULT_PANE_SIZE,
-  bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max },
-})
 
 /** **ONE PANE'S GEOMETRY, ADMITTED FIELD BY FIELD, OR `null`.** A record with no usable `size` or no usable bounds pair
  *  is not a geometry: this is the same admission `rowOf` performs for a tab, and its answer feeds both the READ (a
@@ -728,16 +699,6 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       }
     },
   }
-}
-
-/** **ONE PANE'S GEOMETRY OUT OF A READING, WITH THE MEASURED DEFAULT ANSWERING A PANE THE FAMILY DOES NOT NAME** — the
- *  read the renderer performs at `:1700-1722`, pure over a value so a consumer needs no second store verb (and so this
- *  module has no fifth route without an answer site). */
-export const paneGeometryIn = (panes: readonly ViewPaneGeometry[], id: string): ViewPaneReading => {
-  const held = panes.find((pane) => pane.id === id)
-  return held === undefined
-    ? { status: 'committed', pane: defaultPaneGeometry(id), source: 'default' }
-    : { status: 'committed', pane: { id: held.id, size: held.size, bounds: { min: held.bounds.min, max: held.bounds.max } }, source: 'record' }
 }
 
 /** **A STORE'S REFUSAL IS A PLAIN OBJECT** (`{status, message, log}`, `guide §8` — never an `Error` subclass), so a

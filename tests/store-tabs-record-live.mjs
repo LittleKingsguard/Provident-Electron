@@ -10,6 +10,25 @@
  * RUN FORM (literal, no `npm run` key):   node tests/store-tabs-record-live.mjs
  * Exit 0 when every RUN row holds; 1 when any RUN row fails; 2 on a driver/infra fatal.
  *
+ * **EVERY ROW IN THIS FILE IS UN-RUN BY EVERY LEG** (`D-30`'s un-run-is-a-failure rule, restated here
+ * because a reader of a green suite has no other way to know): `package.json` carries no key for it —
+ * the `scripts` key set is pinned by set-equality and this unit takes no key — so `npm test`,
+ * `typecheck`, `typecheck:tests` and `build` never evaluate a byte of it, and the four Electron legs
+ * (`battery`, `divergence`, `ui`, `panes`) spawn the app rather than this file. Its rows are therefore
+ * a MEASUREMENT THE SUPERVISOR CAN TAKE by the literal command above, never a claim a green suite
+ * makes.
+ *
+ * **D-89 RE-POINTED NOTHING HERE, AND THE REASON IS A MEASUREMENT.** Every row reaches the app through
+ * `getWiredGraphStore()`, `closeTab`, `mintTabId` and `driveTabsLandingPage`. The renderer swap that
+ * pass landed touches the VIEW record — the pane geometry and the focus mirror — and leaves the tab
+ * machinery's address where it was, because the frozen graph store's deletion (the purge's last
+ * deletion) was NOT taken: it still carries the per-gesture temp preview, the zone reads and the whole
+ * tab region, and `driveTabsLandingPage` still runs in `main()`'s boot trace. **A ROW IS RETIRED WHEN
+ * ITS SUBJECT IS GONE, NOT WHEN A LATER PASS IS PLANNED**: the four exports this file reaches all
+ * still exist and still answer, so no row was retired and none was re-pointed. The pass that deletes
+ * the frozen store owns this file's rows, and until then they stay UN-RUN rather than silently
+ * dropped.
+ *
  * WHAT IT REUSES: the in-tree CDP pattern already proven live —
  * `demo/pane-drag-demo/run-live.mjs`'s `Input.dispatchMouseEvent` with REAL COORDINATES and REAL
  * BUTTON STATE (`:136` mousePressed/button:'left', `:142` mouseMoved/buttons:1, `:147`

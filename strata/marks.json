@@ -3,16 +3,16 @@
   "instrument": "scripts/strata-marks.mjs",
   "suites": {
     "flat": {
-      "files": 87,
-      "sites": 2565
+      "files": 86,
+      "sites": 2465
     },
     "e2e": {
       "files": 5,
       "sites": 45
     },
     "integration": {
-      "files": 19,
-      "sites": 173
+      "files": 21,
+      "sites": 186
     },
     "unit": {
       "files": 15,
@@ -567,12 +567,6 @@
       "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
     },
     {
-      "file": "tests/store-tabs-record.test.ts",
-      "scope": "file",
-      "kind": "rework",
-      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
-    },
-    {
       "file": "tests/storeroom-surface.test.ts",
       "scope": "file",
       "kind": "rework",
@@ -719,16 +713,6 @@
       "reason": "the script key set is a loop instrument, not module machinery (D-38)"
     },
     {
-      "file": "tests/store-tabs-record.test.ts",
-      "scenario": "S-1 · §5.1 / C-9 — THE EDIT-SET ASSERTION AS A SET: `edit-set ⊆ declared scope ∪ declared wiring points`, WITH the positive control that an edit outside that union FAILS",
-      "reason": "the loop's own tree assertion, not module machinery (D-30)"
-    },
-    {
-      "file": "tests/store-tabs-record.test.ts",
-      "scenario": "S-7 · §4.3 item 4 / §7 item 4 — this unit takes NO new `package.json` script key (so `L-1`’s pinned `scripts` KEY SET is untouched)",
-      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
-    },
-    {
       "file": "tests/theme.test.ts",
       "scenario": "R-3(config half) (§3.4) — package.json/package-lock.json carry the LANDED dependency and script sets: no new dependency, no new script key",
       "reason": "the script key set is a loop instrument, not module machinery (D-38)"
@@ -741,17 +725,17 @@
   ],
   "readings": {
     "gating": {
-      "files": 23,
-      "sites": 154
+      "files": 24,
+      "sites": 165
     },
     "onNotice": {
-      "files": 111,
-      "sites": 2747
+      "files": 110,
+      "sites": 2649
     },
     "retained": {
       "files": 5,
       "sites": 45
     },
-    "carveOut": 10
+    "carveOut": 8
   }
 }

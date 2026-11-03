@@ -137,14 +137,21 @@ const PRE_CENSUS = 18 // §3.5 X-1 — the filing-time authored census
 const POST_CENSUS = 25 // as filed `23`; measured `25` = 18 + 5 + 2 (T2's two page nodes)
 const CENSUS_DELTA = 5 // the theme card's own FIVE authored nodes (UNMOVED by this re-grain)
 /** THE `T2` PAGE-NODE DELTA (`docs/specs/store-tabs-record.md` `§5.1` item 2 / `§0A` item 5):
- *  the TWO authored page nodes `tabs-landing-page` and `tabs-error-page`. **THE VALUE IS READ
- *  FROM THE REGISTER WHOSE CONTRACT DECLARES IT** (`tests/store-tabs-record-register.ts`'s own
- *  `PAGE_NODE_CENSUS_DELTA`), never re-derived here — the `X-1` row asserts the two agree. */
-const PAGE_NODE_CENSUS_DELTA_SOURCE = 'tests/store-tabs-record-register.ts'
+ *  the TWO authored page nodes `tabs-landing-page` and `tabs-error-page`.
+ *
+ *  **⟶ RE-POINTED BY `D-89`, AND ONTO A LANDED SOURCE RATHER THAN A RETIRED ONE.** The delta used to be
+ *  read by path out of `tests/store-tabs-record-register.ts`'s `PAGE_NODE_CENSUS_DELTA` — a TEST
+ *  register, and one this pass retires with the file it served (`D-30`'s REPLACED-WHOLE: that unit's
+ *  invariant rows' successor is the crossing's own battery). **THE SUBJECT WAS ALWAYS THE ENVELOPE'S**:
+ *  the two page ids are authored in `src/shared/demo-envelope.ts` and exported by name, so the count is
+ *  read off the module that AUTHORS them — a stronger source than a constant a register re-stated.
+ *  **THE BITE IS KEPT**: delete one of the two authored ids and this reads 1, which the `X-1` row
+ *  reddens against the measured census residue. */
+const PAGE_NODE_CENSUS_DELTA_SOURCE = 'src/shared/demo-envelope.ts'
 const PAGE_NODE_CENSUS_DELTA_AS_FILED = ((): number => {
   const raw = sourceOrEmpty(PAGE_NODE_CENSUS_DELTA_SOURCE)
-  const m = /export const PAGE_NODE_CENSUS_DELTA = (\d+)/.exec(raw)
-  return m === null ? -1 : Number(m[1])
+  const ids = raw.match(/export const TABS_(?:LANDING|ERROR)_PAGE_ID = '/g) ?? []
+  return ids.length === 0 ? -1 : ids.length
 })()
 const T2_PAGE_NODE_CENSUS_DELTA = 2 // as filed `-`; measured `2` — T2's two declared page nodes
 

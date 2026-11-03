@@ -284,8 +284,6 @@
         "src/renderer/tabs-client.ts",
         "tests/integration/store-tabs-record/crossing.test.ts",
         "tests/integration/store-tabs-record/tabs-client.test.ts",
-        "tests/store-tabs-record.test.ts",
-        "tests/store-tabs-record-register.ts",
         "tests/store-tabs-record-live.mjs"
       ],
       "endpoints": 4
@@ -296,7 +294,11 @@
         "src/main/view-record/index.ts",
         "src/main/view-surface/index.ts",
         "src/shared/view-channels.ts",
-        "tests/integration/store-view-record/crossing.test.ts"
+        "src/renderer/view-client.ts",
+        "src/shared/view-shape.ts",
+        "tests/integration/store-view-record/crossing.test.ts",
+        "tests/integration/store-view-record/client.test.ts",
+        "tests/integration/store-view-record/boundary.test.ts"
       ],
       "endpoints": 4
     }

@@ -91,6 +91,16 @@ import { readFileSync } from 'node:fs'
 
 import * as wiring from '../src/renderer/renderer'
 import { createGraphStore } from '../src/renderer/store-core-graph'
+// **THE SHAPE'S CLIENT (`D-88`)** — the composition reads the pane geometry off it, so this file's fixtures build one over a
+// CROSSING DOUBLE that projects the recorded store's pane rows and writes them back the way the route does.
+import { createViewClient, type ViewClient } from '../src/renderer/view-client'
+import {
+  DEFAULT_PANE_BOUNDS,
+  DEFAULT_PANE_ID,
+  DEFAULT_PANE_SIZE,
+  defaultPaneGeometry,
+  paneGeometryIn,
+} from '../src/shared/view-shape'
 import type {
   GraphConstraint,
   GraphEvent,
@@ -216,10 +226,19 @@ function compose(options: { store?: GraphStore; source?: SourceDouble } = {}): {
   w: PaneDragSurface
   source: SourceDouble
   store: GraphStore
+  view: ViewClient
+  crossing: PaneCrossing
 } {
   const source = options.source ?? makeSource()
   const store = options.store ?? makeStore()
-  return { w: wiring.createPaneDrag(store, source) as PaneDragSurface, source, store }
+  const crossing = crossingOf(store)
+  return {
+    w: wiring.createPaneDrag({ frozen: store, view: crossing.client }, source) as PaneDragSurface,
+    source,
+    store,
+    view: crossing.client,
+    crossing,
+  }
 }
 
 /** The register's drive wrapper: counts attempts, held and broken per row, rethrows so
@@ -264,50 +283,204 @@ function stored(store: GraphStore, name: string): GraphTierGetResult {
   return store.tiers[tierName].get(name)
 }
 
+
+/** **THE CROSSING DOUBLE (`D-88`, RE-GRAINED `D-89`)** — THE SHAPE THE COMPOSITION NOW READS, AND THE ROUTE LOG ITS
+ *  WRITES GO TO. The composition reads the pane geometry OFF THE SHAPE and writes ONE `commitPane`, so a row that used to
+ *  seed `mem.layout.pane.<id>.size` on the frozen store and read a commit back off it is measuring machinery that is gone.
+ *  This double stands the crossing in for both halves:
+ *
+ *   · **THE CREATION STATE IS THE REPAIR'S AND NOT AN EMPTY MAP.** `panes-must-stand` writes the MEASURED DEFAULT for the
+ *     one pane the app has at the store's creation (`src/main/view-record/index.ts`'s `repairPanes`), so the family stands
+ *     at `{pane-a: {size: 100, bounds: {min: 0, max: 200}}}` before any caller writes — which is why `pane-a` is the
+ *     RECORD arm and any other id is the DEFAULT arm.
+ *   · **`commitPane` COMPOSES THE WHOLE FAMILY THE WAY THE CROSSING'S ROUTE DOES** (`composePanes`): the named pane takes
+ *     the members supplied, each missing one falling to what that pane stands at and then to the measured default, and
+ *     every other pane the family holds is kept — one act cannot erase a sibling's geometry.
+ *   · **EVERY WRITE REFILLS THE SHAPE AND FIRES THE DELIVERY SYNCHRONOUSLY.** The real delivery is asynchronous; a node row
+ *     that had to await a microtask to read back what it just wrote would be measuring the event loop rather than the
+ *     composition. The real asynchronous path is driven in `tests/integration/store-view-record/client.test.ts` (C-3/C-5).
+ *   · **THE ROUTE LOG IS THE WRITE CENSUS.** What the rows used to count as `file.settings.pane.<id>.size` commits they now
+ *     count as `commitPane` CALLS — one route call is one whole member, which is the whole of what the swap changed about
+ *     the write. */
+interface PaneRouteCall {
+  readonly id: string
+  readonly geometry: unknown
+}
+
+interface PaneCrossing {
+  readonly client: ViewClient
+  /** Every `commitPane` the composition sent, in order. */
+  readonly calls: PaneRouteCall[]
+  /** The family as the crossing's store holds it. */
+  readonly family: () => Readonly<Record<string, { readonly size: number; readonly bounds: { readonly min: number; readonly max: number } }>>
+  /** **THE CAUSE OF A DELIVERY WITH NO ROUTE CALL**: the family as a store that already holds it would answer — a boot, a
+   *  second window's write, or the repair. It refills and delivers exactly as a route call does, and it records NO route
+   *  call, because it is not this composition's write. */
+  readonly seed: (id: string, geometry: { readonly size?: number; readonly bounds?: { readonly min: number; readonly max: number } }) => void
+  /** The live `onChanged` registrations — 0 for every row here, because this composition registers nothing on the push. */
+  readonly registrations: () => number
+  /** Read the shape's own `filled` statement. */
+  readonly filled: () => boolean
+}
+
+const crossingOfStore = new WeakMap<object, PaneCrossing>()
+
+/** **WHICH ARM ANSWERED ONE PANE'S READ** — `paneGeometryIn`'s own `source` member over the shape the composition reads,
+ *  so a row can tell the record from the measured default instead of inferring it from a figure that could coincidentally
+ *  equal the default. It reads the SHAPE (not the composition) on purpose: the derivation is the crossing's and the
+ *  composition must not be the only place that can state it. */
+function paneSourceOf(crossing: PaneCrossing, id: string): string {
+  return paneGeometryIn(crossing.client.shape().panes, id).source
+}
+
+function defaultGeometryFor(id: string): { size: number; bounds: { min: number; max: number } } {
+  const seed = defaultPaneGeometry(id)
+  return { size: seed.size, bounds: { min: seed.bounds.min, max: seed.bounds.max } }
+}
+
+function crossingOf(store?: GraphStore): PaneCrossing {
+  if (store !== undefined && store !== null) {
+    const cached = crossingOfStore.get(store as unknown as object)
+    if (cached !== undefined) return cached
+  }
+  // THE CREATION REPAIR'S PLACEHOLDER — `panes-must-stand`'s own seed, present before any caller writes.
+  let family: Record<string, { size: number; bounds: { min: number; max: number } }> = {
+    [DEFAULT_PANE_ID]: defaultGeometryFor(DEFAULT_PANE_ID),
+  }
+  const handlers: Array<() => void> = []
+  const calls: PaneRouteCall[] = []
+  const reading = (): unknown => ({
+    status: 'committed',
+    panes: Object.keys(family).map((id) => {
+      const held = family[id]!
+      return { id, size: held.size, bounds: { min: held.bounds.min, max: held.bounds.max } }
+    }),
+    focus: { entries: [], activeId: null },
+    source: { panes: 'record', focus: 'record' },
+  })
+  const bridge = {
+    read: async (): Promise<unknown> => reading(),
+    commitPane: async (id: string, geometry: unknown): Promise<unknown> => {
+      const supplied = geometry as { readonly size?: unknown; readonly bounds?: { readonly min: number; readonly max: number } } | undefined
+      const base = family[id] ?? defaultGeometryFor(id)
+      const size = typeof supplied?.size === 'number' ? supplied.size : base.size
+      const bounds = supplied?.bounds ?? base.bounds
+      // THE WHOLE FAMILY, ONE ACT — the sibling panes are kept (`composePanes`).
+      family = { ...family, [id]: { size, bounds: { min: bounds.min, max: bounds.max } } }
+      calls.push({ id, geometry })
+      refill()
+      return { status: 'committed' }
+    },
+    commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
+    onChanged: (handler: () => void): (() => void) => {
+      handlers.push(handler)
+      return (): void => {
+        const at = handlers.indexOf(handler)
+        if (at >= 0) handlers.splice(at, 1)
+      }
+    },
+  }
+  const client = createViewClient({ bridge })
+  /** THE DELIVERY, MODELLED AT THE CROSSING — the shape is REPLACED WHOLE by what a read answers, then the push fires. */
+  function refill(): void {
+    client.adopt(reading() as never)
+    for (const handler of [...handlers]) {
+      try {
+        handler()
+      } catch {
+        /* a delivery body's own throw stops at the body */
+      }
+    }
+  }
+  refill()
+  const crossing: PaneCrossing = {
+    client,
+    calls,
+    family: (): Readonly<Record<string, { readonly size: number; readonly bounds: { readonly min: number; readonly max: number } }>> => family,
+    seed: (id, geometry): void => {
+      const base = family[id] ?? defaultGeometryFor(id)
+      family = {
+        ...family,
+        [id]: {
+          size: typeof geometry.size === 'number' ? geometry.size : base.size,
+          bounds: geometry.bounds ?? base.bounds,
+        },
+      }
+      refill()
+    },
+    registrations: (): number => handlers.length,
+    filled: (): boolean => client.shape().filled,
+  }
+  if (store !== undefined && store !== null) crossingOfStore.set(store as unknown as object, crossing)
+  return crossing
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════════
  * PART I — THE STORE-BACKED READ ROWS (§4.2 item 1: M-1..M-3, M-11, F-5, F-8;
  * register P-PD-IM-1/2, P-PD-TP-2) — every drive against the ABSENT seam surface.
  * ══════════════════════════════════════════════════════════════════════════════════ */
 
 describe('§3.1 M-1 — the store-backed startSizeOf read answers the STORED size on a HIT', () => {
-  it('M-1: resident mem.layout.pane.<id>.size is answered BY VALUE, and the answer tracks the STORE (a module-held size that disagrees with the store FAILS)', () => {
-    const { w, store } = compose()
+  it('M-1: the family\'s own size is answered BY VALUE out of the SHAPE, and the answer tracks what the crossing holds (a module-held size that disagrees with the shape FAILS)', () => {
+    const { w, crossing } = compose()
     const seeded = 240
-    expect(store.commit(`mem.layout.pane.${PANE_ID}.size`, seeded).status).toBe('committed')
+    // THE RECORD ARM: the crossing\'s store holds the pane — a write this composition did not send (a boot, a second
+    // window, the repair) — the delivery refills the shape, and the read answers it in the caller\'s own turn.
+    crossing.seed(PANE_ID, { size: seeded })
+    expect(crossing.calls, 'the seed is not this composition\'s write, so it sends no route call').toEqual([])
     expect(w.startSizeOf(paneFixture, PANE_ID)).toBe(seeded)
+    // AND IT TRACKS: a second delivery moves the answer, so a module-held size could not have produced it.
+    crossing.seed(PANE_ID, { size: 260 })
+    expect(w.startSizeOf(paneFixture, PANE_ID)).toBe(260)
   })
 })
 
 describe('§3.1 M-2 — a MISS answers the DECLARED FALLBACK, never a silent default', () => {
-  it('M-2/MISS-fallback: with the file-tier value resident, the read MISS at mem answers the file-tier value (the ascending-durability read — §2.1 A\'s admissible form (A))', () => {
-    const { w, store } = compose()
-    const original = 200
-    expect(store.commit(`file.settings.pane.${PANE_ID}.size`, original).status).toBe('committed')
-    expect(store.tiers['mem'].get(`layout.pane.${PANE_ID}.size`).found).toBe(false)
-    // The declarable form: the file-tier value through the ascending-durability read.
-    expect(w.startSizeOf(paneFixture, PANE_ID)).toBe(original)
+  it('M-2/DEFAULT-arm: a pane THE FAMILY DOES NOT NAME answers the MEASURED DEFAULT — the swap\'s ONE stated behaviour change, and the two-tier fallback it replaces no longer exists to fall through (D-87\'s collapsed precedence, D-88)', () => {
+    const { w, crossing } = compose()
+    // THE ONE ADDRESS: the geometry is ONE family at `file` (D-87\'s inherited fact (i)), so there is no second tier for a
+    // MISS to ascend to. The declared fallback is the MEASURED DEFAULT — the authored pane\'s `props.size` — and the read
+    // says which arm answered, so a placeholder is never passed off as a record.
+    expect(Object.keys(crossing.family()), 'the creation repair minted the one pane the app has, and nothing else').toEqual([PANE_ID])
+    expect(w.startSizeOf({ id: 'pane-unwritten' }, 'pane-unwritten'), 'the measured default, not `undefined` and not a refusal').toBe(DEFAULT_PANE_SIZE)
+    expect(paneSourceOf(crossing, 'pane-unwritten'), 'and the read NAMES the arm that answered').toBe('default')
+    expect(paneSourceOf(crossing, PANE_ID), 'while the pane the family names is the record\'s').toBe('record')
   })
 
-  it('M-2/MISS-no-fallback: with NO declared fallback the answer is a non-number, so the E3-declared degradation applies (the reset refuses \'unusable-default\', ZERO sink writes — gutter.md §2.5 item 5)', () => {
-    const { w, store } = compose()
-    expect(store.tiers['mem'].get(`layout.pane.${PANE_ID}.size`).found).toBe(false)
-    const answer = w.startSizeOf(paneFixture, PANE_ID)
-    expect(typeof answer).not.toBe('number')
+  it('M-2/E3-gate: the DEGRADATION moves onto the value the terminal is HANDED — the read cannot answer a non-number any more (the boundary admits none), so the E3 gate is driven at the release: a non-number `final` is never sent, ZERO sink writes and ZERO route calls (gutter.md §2.5 item 5)', () => {
+    const { w, crossing } = compose()
+    // (a) THE READ IS ALWAYS A NUMBER NOW, and that is the swap\'s stated change: the frozen store\'s MISS answered
+    // `undefined`, which made the release refuse `\'unusable-default\'` with zero writes. The shape answers the measured
+    // default instead, so the degradation is unreachable FROM A READ.
+    for (const id of [PANE_ID, 'pane-unwritten']) {
+      expect(typeof w.startSizeOf({ id }, id), `the read for ${id} is a usable number`).toBe('number')
+    }
+    // (b) THE ARM ITSELF IS NOT DELETED, IT IS MOVED: the terminal still refuses a value it cannot use — ZERO sink writes,
+    // and now also ZERO route calls, because the route is sent only after the sink has been invoked.
     const sink = makeSink()
-    // The reset arm with an unusable default must refuse with ZERO sink writes.
-    w.release('g-r', answer, sink)
+    w.release('g-r', 'not-a-size', sink)
     expect(sink.stats().sinkCalls).toBe(0)
+    expect(crossing.calls, 'a refused final sends nothing to the crossing').toEqual([])
   })
 })
 
 describe('§3.1 M-3 — boundsOf hands the RECEIVED pair through — never a policy clamped here', () => {
-  it('M-3: the stored {min, max} pair is returned AS STORED (byte/value-identical members); no seam/store/repair member rewrote it', () => {
-    const { w, store } = compose()
+  it('M-3: the stored {min, max} pair is handed through AS STORED (value-identical members); no seam, no route and no repair member rewrote it', () => {
+    const { w, crossing } = compose()
     const pair = { min: 40, max: 800 }
-    expect(store.commit(`mem.layout.pane.${PANE_ID}.bounds`, pair).status).toBe('committed')
+    // THE RECORD ARM, held the way the crossing\'s own store would hold it.
+    crossing.seed(PANE_ID, { bounds: pair })
     const answer = w.boundsOf(paneFixture, PANE_ID) as { min: number; max: number }
     expect(answer.min).toBe(40)
     expect(answer.max).toBe(800)
+    // THE DEFAULT ARM: a fresh copy of the measured constant, never a clamped policy and never a caller-movable module value.
+    const measured = w.boundsOf({ id: 'pane-unwritten' }, 'pane-unwritten') as { min: number; max: number }
+    expect(measured).toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
+    measured.min = -1
+    expect(w.boundsOf({ id: 'pane-unwritten' }, 'pane-unwritten'), 'the caller\'s mutation cannot reach the constant').toEqual({
+      min: DEFAULT_PANE_BOUNDS.min,
+      max: DEFAULT_PANE_BOUNDS.max,
+    })
   })
 })
 
@@ -340,32 +513,37 @@ describe('§3.3 I-3 — the comparator stays pure', () => {
 })
 
 describe('§3.2 F-5 — a release with NO preview data commits NOTHING but a normal file write', () => {
-  it('F-5: commit(\'file.settings.pane.<id>.size\', <final>) with no lower copy (cleared: [] per §2.8 item 2), never a refusal, never a removal, never a second write — the two readings agree at 1', () => {
-    const { w, store } = compose()
+  it('F-5: ONE `commitPane(pane, {size})` with no lower copy to clear, never a refusal, never a removal, never a second write — the sink\'s record and the route log agree at 1', () => {
+    const { w, store, crossing } = compose()
     const sink = makeSink()
     const final = 260
     expect(store.tiers['temp'].get('temp.drag.g1.placement').found).toBe(false)
     w.release('g1', final, sink)
     expect(sink.stats().sinkCalls).toBe(1)
     expect(sink.record).toEqual([final])
-    // RE-AIMED (the tier-qualified read — `resolveRead`'s file-token leaf walk): the normal
-    // file-tier write lands at the settings root's own path and answers the FULL spelling:
-    const hit = stored(store, `file.settings.pane.${PANE_ID}.size`)
-    expect(hit.found).toBe(true)
-    expect(hit.value).toBe(final)
+    // THE WRITE, AS THE ROUTE CARRIES IT: ONE call, one whole member, the pane NAMED and never a path or a tier.
+    expect(crossing.calls, 'one route call — the two-tier commit spelling is gone').toEqual([{ id: PANE_ID, geometry: { size: final } }])
+    expect(crossing.family()[PANE_ID]?.size, 'and what the crossing holds is the sink\'s own argument').toBe(final)
   })
 })
 
 describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its turn', () => {
-  it('F-8/hostile-value: a hostile stored pane size (42, then \'x\') is handed through BY VALUE; the reset refuses with ZERO sink writes; NO throw escapes a wiring turn', () => {
-    for (const hostile of [42, 'x']) {
-      const { w, store } = compose()
-      expect(store.commit(`mem.layout.pane.${PANE_ID}.size`, hostile).status).toBe('committed')
-      expect(w.startSizeOf(paneFixture, PANE_ID)).toBe(hostile) // as stored, by value
+  it('F-8/hostile-value: a hostile value is BOUND to its turn — a non-number final is refused at the terminal with ZERO sink writes and ZERO route calls, and a usable one is handed through BY VALUE to both, with NO throw out of any wiring turn', () => {
+    // THE HOSTILE READ IS NO LONGER REACHABLE (the boundary admits no such member), so the row drives the hostile VALUE at
+    // the terminal instead — which is where E3\'s gate already lived.
+    for (const hostile of ['x', null, undefined, Number.NaN]) {
+      const { w, crossing } = compose()
       const sink = makeSink()
       expect(() => w.release('g-h1', hostile, sink)).not.toThrow()
-      expect(sink.stats().sinkCalls).toBe(0) // unusable value ⇒ the reset refuses, ZERO sink writes
+      expect(sink.stats().sinkCalls, `${String(hostile)} is unusable ⇒ ZERO sink writes`).toBe(0)
+      expect(crossing.calls, `${String(hostile)} is unusable ⇒ ZERO route calls`).toEqual([])
     }
+    // AND THE USABLE ARM PASSES THE VALUE THROUGH UNCHANGED — the same number the sink recorded is the number sent.
+    const { w, crossing } = compose()
+    const sink = makeSink()
+    expect(() => w.release('g-h2', 42, sink)).not.toThrow()
+    expect(sink.record).toEqual([42])
+    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 42 } }])
   })
 
   it('F-8/absent-closure: the value-reading seams driven with a hostile store shape answer the declared degradation — never a throw out of the wiring turn', () => {
@@ -392,67 +570,88 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
 
 /* ─── THE REGISTER ROW P-PD-IM-1 (S-PD-READS-1, 12 = 2 seams × 3 states × 2 turns) ─── */
 
-describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the store-backed size/bounds READS: hit / MISS / declared fallback', () => {
+/* ─── THE REGISTER ROW P-PD-IM-1 (S-PD-READS-1, 12 = 2 read seams × 3 shape states × 2 turns) ───
+ *
+ * **RE-GRAINED BY `D-89` ONTO WHAT THE SWAPPED SIDE ACTUALLY DOES.** The declared term is UNMOVED at twelve — two read
+ * seams (`startSizeOf`/`defaultSizeFor` and `boundsOf`) times THREE STATES times two gesture turns — and the three states
+ * are no longer the frozen store's tiers. They are the SHAPE's three:
+ *
+ *   1. **record** — the family NAMES the pane, and the read answers the family's own value;
+ *   2. **default** — the family stands but does not name this pane, so the MEASURED DEFAULT answers and the derivation says
+ *      so (`paneGeometryIn`'s `source`), which is the arm the two-tier MISS fallback used to answer;
+ *   3. **unfilled** — NOTHING HAS BEEN READ YET (`shape().filled === false`): the same measured figures, and the shape's
+ *      own flag is what tells this state apart from the second. That is the state the boot mint used to be reached for —
+ *      a cold mirror is now the crossing's creation repair's business and never the read's, so the read states it plainly
+ *      rather than writing anything (`D-82` clause 4).
+ *
+ * **THE ROW STILL BITES, ON ALL TWELVE CELLS**: move a measured default, drop the `filled` flag, or let the family's value
+ * go unread, and the cell reddens. */
+
+describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the shape-backed size/bounds READS: record / measured default / unfilled', () => {
   const cases: Array<[string, string]> = [
-    ['01', 'size-read HIT at mem, onStart read'],
-    ['02', 'size-read HIT at mem, terminal read'],
-    ['03', 'size-read MISS with declared fallback, onStart read'],
-    ['04', 'size-read MISS with declared fallback, terminal read'],
-    ['05', 'size-read MISS with NO declared fallback, onStart read'],
-    ['06', 'size-read MISS with NO declared fallback, terminal read'],
-    ['07', 'bounds-read HIT at mem, onStart read'],
-    ['08', 'bounds-read HIT at mem, terminal read'],
-    ['09', 'bounds-read MISS with declared fallback, onStart read'],
-    ['10', 'bounds-read MISS with declared fallback, terminal read'],
-    ['11', 'bounds-read MISS with NO declared fallback, onStart read'],
-    ['12', 'bounds-read MISS with NO declared fallback, terminal read'],
+    ['01', 'size-read RECORD (the family names the pane), onStart read'],
+    ['02', 'size-read RECORD (the family names the pane), terminal read'],
+    ['03', 'size-read MEASURED DEFAULT (the family names no such pane), onStart read'],
+    ['04', 'size-read MEASURED DEFAULT (the family names no such pane), terminal read'],
+    ['05', 'size-read UNFILLED (nothing has been read), onStart read'],
+    ['06', 'size-read UNFILLED (nothing has been read), terminal read'],
+    ['07', 'bounds-read RECORD (the family names the pane), onStart read'],
+    ['08', 'bounds-read RECORD (the family names the pane), terminal read'],
+    ['09', 'bounds-read MEASURED DEFAULT (the family names no such pane), onStart read'],
+    ['10', 'bounds-read MEASURED DEFAULT (the family names no such pane), terminal read'],
+    ['11', 'bounds-read UNFILLED (nothing has been read), onStart read'],
+    ['12', 'bounds-read UNFILLED (nothing has been read), terminal read'],
   ]
 
   it.each(cases)('P-PD-IM-1/%s — %s', drive('P-PD-IM-1', (id: string) => {
-    const { w, store } = compose()
-    const onStartRead = parseInt(id, 10) % 2 === 1
-    const isBounds = parseInt(id, 10) > 6
+    const n = parseInt(id, 10)
+    const onStartRead = n % 2 === 1
+    const isBounds = n > 6
+    const state = n <= 2 || (n >= 7 && n <= 8) ? 'record' : n <= 4 || (n >= 9 && n <= 10) ? 'default' : 'unfilled'
+    const readOf = (surface: PaneDragSurface, element: unknown, token: unknown): unknown =>
+      isBounds ? surface.boundsOf(element, token) : onStartRead ? surface.startSizeOf(element, token) : surface.defaultSizeFor(element, token)
 
-    if (isBounds) {
-      const pair = { min: 40, max: 800 }
-      if (id === '07' || id === '08') {
-        expect(store.commit(`mem.layout.pane.${PANE_ID}.bounds`, pair).status).toBe('committed')
-        const answer = w.boundsOf(paneFixture, PANE_ID) as { min: number; max: number }
-        expect(answer.min).toBe(40)
-        expect(answer.max).toBe(800)
-      } else if (id === '09' || id === '10') {
-        expect(store.commit(`file.settings.pane.${PANE_ID}.bounds`, pair).status).toBe('committed')
-        const fallback = w.boundsOf(paneFixture, PANE_ID) as { min: number; max: number }
-        expect(fallback.min).toBe(40) // the declared fallback: the file-tier value
-        expect(fallback.max).toBe(800)
+    // THE UNFILLED ARM IS A REALM WHOSE SHAPE NOTHING HAS FILLED — the client with no crossing member at all, which is the
+    // node shim's own case and the honest statement of "no delivery has arrived".
+    if (state === 'unfilled') {
+      const { store } = compose()
+      const cold = createViewClient({ bridge: null })
+      const coldSurface = wiring.createPaneDrag({ frozen: store, view: cold }, makeSource()) as PaneDragSurface
+      expect(cold.shape().filled, 'nothing has been read, and the shape SAYS so').toBe(false)
+      const answer = readOf(coldSurface, paneFixture, PANE_ID)
+      if (isBounds) {
+        expect(answer, 'the measured default pair, answered rather than withheld').toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
       } else {
-        const answer = w.boundsOf(paneFixture, PANE_ID) as { min: number; max: number }
-        // An unusable pair ⇒ clampToBounds answers NaN ⇒ the move is INVALID (§2.1 A)
-        expect(Number.isNaN(Number(answer.min)) || answer.min === undefined).toBe(true)
+        expect(answer, 'the measured default size').toBe(DEFAULT_PANE_SIZE)
       }
       return
     }
 
-    if (id === '01' || id === '02') {
-      expect(store.commit(`mem.layout.pane.${PANE_ID}.size`, 240).status).toBe('committed')
-      const answer = onStartRead
-        ? w.startSizeOf(paneFixture, PANE_ID)
-        : w.defaultSizeFor(paneFixture, PANE_ID)
-      expect(answer).toBe(240) // the STORED size by value
-    } else if (id === '03' || id === '04') {
-      expect(store.commit(`file.settings.pane.${PANE_ID}.size`, 200).status).toBe('committed')
-      const answer = onStartRead
-        ? w.startSizeOf(paneFixture, PANE_ID)
-        : w.defaultSizeFor(paneFixture, PANE_ID)
-      expect(answer).toBe(200) // the DECLARED fallback — never a store-invented default
-    } else {
-      const answer = onStartRead
-        ? w.startSizeOf(paneFixture, PANE_ID)
-        : w.defaultSizeFor(paneFixture, PANE_ID)
-      expect(typeof answer).not.toBe('number') // no fallback ⇒ the E3 degradation
+    const { w, crossing } = compose()
+    if (state === 'record') {
+      if (isBounds) {
+        crossing.seed(PANE_ID, { bounds: { min: 40, max: 800 } })
+        expect(readOf(w, paneFixture, PANE_ID)).toEqual({ min: 40, max: 800 })
+      } else {
+        crossing.seed(PANE_ID, { size: 240 })
+        expect(readOf(w, paneFixture, PANE_ID)).toBe(240) // the FAMILY'S value by value
+      }
+      expect(paneSourceOf(crossing, PANE_ID), 'and the derivation names the record arm').toBe('record')
+      return
     }
+
+    // THE MEASURED-DEFAULT ARM — a pane id the family does not name (the creation repair minted only the one pane the app
+    // has, so any other id is this arm), read through the same two turns.
+    const other = { id: 'pane-unwritten' }
+    if (isBounds) {
+      expect(readOf(w, other, 'pane-unwritten')).toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
+    } else {
+      expect(readOf(w, other, 'pane-unwritten')).toBe(DEFAULT_PANE_SIZE)
+    }
+    expect(paneSourceOf(crossing, 'pane-unwritten'), 'and the derivation names the default arm, never a record').toBe('default')
   }))
 })
+
 
 /* ─── THE REGISTER ROW P-PD-IM-2 (S-PD-ZONE-1, 9 = 3 zone states × 3 operand shapes) ─── */
 
@@ -509,7 +708,7 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the store-backed SEAM IMPLEMEN
     'tier-handle-absent',
     'tier-handle-get-throwing',
     'hostile-stored-value',
-    'miss-with-no-declared-fallback',
+    'unfilled-shape',
   ] as const
   const cases: Array<[string, string, string]> = []
   let n = 0
@@ -553,9 +752,25 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the store-backed SEAM IMPLEMEN
         // Landed by value or the declared degradation — NEVER a throw out of a wiring turn.
         expect(() => c.w.startSizeOf(paneFixture, PANE_ID)).not.toThrow()
         expect(() => c.w.boundsOf(paneFixture, PANE_ID)).not.toThrow()
-      } else if (shape === 'miss-with-no-declared-fallback') {
-        expect(() => surface.startSizeOf(paneFixture, PANE_ID)).not.toThrow()
-        expect(typeof surface.startSizeOf(paneFixture, PANE_ID)).not.toBe('number')
+      } else if (shape === 'unfilled-shape') {
+        // **THE FIFTH SHAPE, RE-GRAINED (`D-89`)**: it was `miss-with-no-declared-fallback`, whose declared answer was a
+        // NON-NUMBER — the `undefined` the frozen store's two-tier MISS produced, which the release then refused as
+        // `'unusable-default'`. The shape that replaces it is a realm where NOTHING HAS BEEN READ: the answer is the
+        // MEASURED DEFAULT (a finite number) and the shape says `filled: false`, so the degradation is stated rather than
+        // silent and the read is TOTAL over it exactly as it is over the hostile arms beside it.
+        const cold = createViewClient({ bridge: null })
+        const coldSurface = wiring.createPaneDrag({ frozen: makeStore(), view: cold }, makeSource()) as PaneDragSurface
+        expect(cold.shape().filled).toBe(false)
+        expect(() => coldSurface.startSizeOf(paneFixture, PANE_ID)).not.toThrow()
+        const answer = impl === 'boundsOf' ? coldSurface.boundsOf(paneFixture, PANE_ID) : coldSurface.startSizeOf(paneFixture, PANE_ID)
+        if (impl === 'boundsOf') {
+          expect(answer, 'the measured default pair answers, and it is a USABLE pair').toEqual({
+            min: DEFAULT_PANE_BOUNDS.min,
+            max: DEFAULT_PANE_BOUNDS.max,
+          })
+        } else {
+          expect(answer, 'the measured default size answers, and it is a USABLE number').toBe(DEFAULT_PANE_SIZE)
+        }
       } else {
         expect(() => surface.startSizeOf(paneFixture, PANE_ID)).not.toThrow()
         expect(() => surface.boundsOf(paneFixture, PANE_ID)).not.toThrow()
@@ -611,27 +826,21 @@ describe('§3.1 M-4 — the temp preview write fires the subscriber → the rend
 })
 
 describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the two readings AGREE at 1', () => {
-  it('M-5: the sink\'s own record reads 1, stats().sinkCalls reads 1 (they AGREE), and the STORE received exactly ONE commit(\'file.settings.pane.<id>.size\', final) whose value EQUALS the sink\'s argument; the §7a.1 item 1 reconcile refreshes the mem layout copy OUTSIDE the gesture write count', () => {
-    const { w, store } = compose()
+  it('M-5: the sink\'s own record reads 1 and stats().sinkCalls reads 1 (they AGREE), and the crossing received exactly ONE `commitPane(pane, {size: final})` whose value EQUALS the sink\'s argument — the reconcile that used to refresh a second tier OUTSIDE the gesture count has no second tier to refresh', () => {
+    const { w, crossing } = compose()
     const sink = makeSink()
     const clamped = 240
     w.move('g1', { placement: 120 }) // a preview
     w.release('g1', clamped, sink)
 
-    expect(sink.record).toEqual([clamped]) // the sink's own record
+    expect(sink.record).toEqual([clamped]) // the sink\'s own record
     expect(sink.stats().sinkCalls).toBe(1) // E3-side reading — they AGREE at 1
-    // RE-AIMED (the tier-qualified read): the release's file commit writes
-    // `file.settings.pane.<id>.size` — read back through the tier-qualified resolve
-    // (`resolveRead` with the `file` token filter reaches the written leaf; the unqualified
-    // form walks only the root's own name and answers the boot-clear MISS):
-    const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
-    expect(fileHit.found).toBe(true)
-    expect(fileHit.value).toBe(clamped) // the store's committed value equals the sink's argument
-    // §7a.1 item 1 reading (i): the reconcile refreshes the mem layout copy from the
-    // committed file value — OUTSIDE the gesture's write count (the sink stays at 1):
-    const memHit = stored(store, `mem.layout.pane.${PANE_ID}.size`)
-    expect(memHit.found).toBe(true)
-    expect(memHit.value).toBe(clamped)
+    // THE ONE WRITE: the route carries the sink\'s own argument to the ONE family at the ONE address.
+    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: clamped } }])
+    expect(crossing.family()[PANE_ID]?.size).toBe(clamped)
+    // THE §7a.1 ITEM 1 RECONCILE IS GONE WITH THE SECOND TIER: there is no `mem` copy to refresh, so the gesture\'s write
+    // count is exactly the sink\'s and nothing happens behind it.
+    expect(sink.stats().sinkCalls, 'still exactly one write inside the gesture').toBe(1)
   })
 })
 
@@ -704,26 +913,25 @@ describe('§3.2 F-4 — right-click during a NON-EXISTENT drag is a NO-OP — MI
 })
 
 describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, driven twice over)', () => {
-  it('F-6/valid-release: EXACTLY the ONE file commit — never a remove at the release terminal, never a per-move commit', () => {
-    const { w, store } = compose()
+  it('F-6/valid-release: EXACTLY the ONE route call — never a remove at the release terminal, never a per-move commit, and the temp tier\'s own write count is unmoved', () => {
+    const { w, store, crossing } = compose()
     const sink = makeSink()
-    // RE-AIMED (the emit's EXACT-match cell: `subscriber.name === name` — the event's name is
-    // the written reference, so the arm-counting rows subscribe the references EXACTLY; an
-    // ancestor subscriber would deliver `cause:'descendant'` and hide the arms):
+    // RE-AIMED (the emit's EXACT-match cell: `subscriber.name === name` — the event's name is the written reference, so the
+    // arm-counting rows subscribe the references EXACTLY; an ancestor subscriber would deliver `cause:\'descendant\'`):
     const tempEvents: GraphEvent[] = []
-    const fileEvents: GraphEvent[] = []
     store.subscribe(`temp.drag.g1.placement`, (e) => tempEvents.push(e))
-    store.subscribe(`file.settings.pane.${PANE_ID}.size`, (e) => fileEvents.push(e))
+    const tempCommitsBefore = tempEvents.length
     w.move('g1', { placement: 100 })
     w.move('g1', { placement: 140 })
     w.release('g1', 240, sink)
     expect(sink.stats().sinkCalls).toBe(1) // never two, never a per-move commit
     const tempCommits = tempEvents.filter((e) => e.cause === 'commit').length
     const tempRemoves = tempEvents.filter((e) => e.cause === 'remove').length
-    const fileCommits = fileEvents.filter((e) => e.cause === 'commit').length
+    expect(tempCommitsBefore).toBe(0)
     expect(tempRemoves).toBe(0) // no remove at the release terminal
     expect(tempCommits).toBe(1) // the ONE temp commit = the first-preview mint, never a per-move commit
-    expect(fileCommits).toBe(1) // the ONE file commit (setting path) inside the single sink invocation
+    // THE GESTURE END'S ONE WRITE IS THE ROUTE CALL — counted on the route\'s own log, which is where the write now lands.
+    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
   })
 
   it('F-6/right-click: EXACTLY the ONE temp remove, ZERO sink writes, never a commit at the same terminal', () => {
@@ -779,15 +987,15 @@ describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, 
     expect(filePost.value).toBe('orig')
   })
 
-  it('F-6/invalid-release (reset): ONE file commit holding the clamped PRE-DRAG size (the persistent original RESTORED BY THE COMMIT)', () => {
-    const { w, store } = compose()
+  it('F-6/invalid-release (reset): ONE route call holding the clamped PRE-DRAG size (the persistent original RESTORED BY THE CALL)', () => {
+    const { w, crossing } = compose()
     const sink = makeSink()
+    crossing.seed(PANE_ID, { size: 220 }) // the pre-drag size the reset restores
     w.move('g1', { placement: 100 })
     w.release('g1', 220, sink) // 220 = the clamped pre-drag size
     expect(sink.stats().sinkCalls).toBe(1)
-    // RE-AIMED (the tier-qualified read — `resolveRead`'s file-token leaf walk):
-    const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
-    expect(fileHit.value).toBe(220)
+    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 220 } }])
+    expect(crossing.family()[PANE_ID]?.size).toBe(220)
   })
 })
 
@@ -809,7 +1017,7 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
   it.each(cases)('P-PD-SM-1/%s — %s', drive('P-PD-SM-1', (id: string) => {
     const n = parseInt(id, 10)
     if (n <= 6) {
-      const { w, store } = compose()
+      const { w, crossing } = compose()
       const sink = makeSink()
       const endPath = Math.ceil(n / 2)
       if (endPath === 1 || endPath === 2) {
@@ -822,11 +1030,10 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
           expect(sink.stats().sinkCalls).toBe(expected) // E3's reading — they AGREE
         }
         if (n % 2 === 1) {
-          // RE-AIMED (the tier-qualified read — the file handle's `get` resolves the FULL
-          // spelling `file.settings.pane.<id>.size`; the old stripped form walked only the
-          // root's own name and answered the boot-clear MISS):
-          const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
-          expect(fileHit.value).toBe(endPath === 1 ? 240 : 220)
+          // RE-GRAINED (`D-89`): the write is the ROUTE CALL, not a store commit — ONE `commitPane` carrying the sink's own
+          // value, which is what the two-tier commit spelling became.
+          expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: endPath === 1 ? 240 : 220 } }])
+          expect(crossing.family()[PANE_ID]?.size).toBe(endPath === 1 ? 240 : 220)
         }
       } else {
         w.move('g1', { placement: 100 })
@@ -879,7 +1086,7 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
   }
 
   it.each(cases)('P-PD-SM-3/%s — %s × %s', drive('P-PD-SM-3', (_id: string, state: string, reading: string) => {
-    const { w, store } = compose()
+    const { w, store, crossing } = compose()
     if (state === 'active-rightclick') {
       // RE-AIMED (the landed tier routing): the file ORIGINAL lives at the wiring's own
       // FILE-tier root (`file.settings.<...>` — the boot mint's `file.settings` holder); a
@@ -910,9 +1117,10 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
       const sink = makeSink()
       w.release('g-free', 240, sink)
       if (reading === 'unqualified-read') {
-        // RE-AIMED (the tier-qualified read — `resolveRead`'s file-token leaf walk):
-        const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
-        expect(fileHit.value).toBe(240) // a NORMAL file write, never a removal
+        // RE-GRAINED (`D-89`): a NORMAL write — one route call carrying the value, never a removal and never a second
+        // write. The store-tier spelling this read used to consult no longer exists.
+        expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+        expect(crossing.family()[PANE_ID]?.size).toBe(240)
       } else {
         const tmp = stored(store, `temp.drag.g-free.placement`)
         expect(tmp.found).toBe(false) // never a removal, never a second write
@@ -1530,7 +1738,9 @@ describe('§3.1 M-12 — the wired-store composition holds end-to-end over the R
       },
     ] })
     const source = makeSource()
-    const w = wiring.createPaneDrag(store, source) as PaneDragSurface
+    // THE BACKING RECORD, NOT THE BARE STORE (`D-88`): the reads are the SHAPE's and the frozen store is the drag tier's.
+    const crossing = crossingOf(store)
+    const w = wiring.createPaneDrag({ frozen: store, view: crossing.client }, source) as PaneDragSurface
 
     // the DECLARED roots — the register's rows pre-exist the first write (§7a.1 item 4 (i)):
     const rootNames = store.register.rows.map((r) => r.name)
@@ -1542,9 +1752,9 @@ describe('§3.1 M-12 — the wired-store composition holds end-to-end over the R
     expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, 300).status).toBe('committed')
     w.move('g1', { placement: 120 }) // first preview write = the temp commit/mint
     w.move('g1', { placement: 140 }) // subsequent move = a temp set
-    w.release('g1', 240, sink) // release: ONE file commit inside the single sink invocation
+    w.release('g1', 240, sink) // release: ONE route call inside the single sink invocation
     expect(sink.stats().sinkCalls).toBe(1)
-    expect(stored(store, `file.settings.pane.${PANE_ID}.size`).value).toBe(240)
+    expect(crossing.calls, 'the release\'s write is the route call').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
     expect(source.calls.length).toBeGreaterThan(0) // the zone render ran
 
     // no throw escapes ANY turn (the whole lifecycle above ran without one — asserted
@@ -1678,17 +1888,15 @@ describe('§3.4 R-3 — THE FROZEN-SESSION ROW', () => {
 })
 
 describe('§3.4 R-4 — THE ONE-SINK/ONE-CLAMP ROW', () => {
-  it('R-4: the composition lands the single sink channel (SINK-2) and the family\'s ONE clamp site stands — the release turn performs ONE sink invocation and the store commit rides inside it (the two readings agree at 1); the repair function bytes contain no clamp', () => {
-    const { w, store } = compose()
+  it('R-4: the composition lands the single sink channel (SINK-2) and the family\'s ONE clamp site stands — the release turn performs ONE sink invocation and the route call rides inside it (the two readings agree at 1); the repair function bytes contain no clamp', () => {
+    const { w, crossing } = compose()
     const sink = makeSink()
     w.move('g1', { placement: 100 })
     w.release('g1', 240, sink)
     expect(sink.stats().sinkCalls).toBe(1) // one sink invocation
-    // RE-AIMED (the tier-qualified read — the file handle's `get` resolves the FULL spelling;
-    // the old stripped form walked only the root's own name and answered the boot-clear MISS):
-    expect(stored(store, `file.settings.pane.${PANE_ID}.size`).value).toBe(240)
-    // the family's one clamp site: no seam wrapper, reset path or repair function adds a
-    // clamp — the REPAIR's own bytes (the caller-supplied function) must not clamp:
+    expect(crossing.calls, 'and ONE route call, made inside that invocation').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    // the family\'s one clamp site: no seam wrapper, reset path or repair function adds a
+    // clamp — the REPAIR\'s own bytes (the caller-supplied function) must not clamp:
     if (typeof wiring.zoneSizeRepair === 'function') {
       const repairSource = wiring.zoneSizeRepair.toString()
       expect(repairSource).not.toContain('clamp')

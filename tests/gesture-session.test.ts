@@ -1550,6 +1550,15 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   //    its own L1 write-scope row, because the gate-era `docs/specs/` citations moved to the archive
   //    with the corpus (D-2) and a live list must not cite a retired path.** */
   'src/renderer/secure-panels.ts', // `docs/L1/secure-panels.md` §7 `E-1` — one pass, three regions
+  // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-89`): the `store-view-record` unit's own
+  //    renderer-side client.** The swap that points the renderer at the crossing's two successor addresses lands a
+  //    NEW module beside `tabs-client` (`src/renderer/view-client.ts`) and edits `src/renderer/renderer.ts` beside it;
+  //    this row charged the new file to THIS unit because it is under `src/renderer/` and on no sibling list. It is a
+  //    sibling's declared artifact — the unit that owns the renderer's read of the view record — so it is excluded BY
+  //    NAME, exactly as `renderer.ts` already was, and the DENIED predicate is untouched: a `src/renderer/**` path this
+  //    list does not name STILL fails the row (the positive control two paragraphs down drives one).** */
+  'src/renderer/view-client.ts', // `strata/decisions.md` D-88/D-89 — the shape's client, the sibling's own artifact
+  'src/main/view-record/index.ts', // `strata/decisions.md` D-87/D-89 — the crossing's two declarations, the same sibling's
 ]
 // ---------------------------------------------------------------------------
 // **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE THIRD AND FOURTH DECLARING

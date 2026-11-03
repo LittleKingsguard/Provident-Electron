@@ -814,17 +814,22 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     // the literal `'mem.focus.entries'` (store-focus §2.3 item 2) and (b) the `readMirrorRef`
     // helper's ONE dynamic resolve, whose ONLY call sites pass the two FIXED references
     // `mem.focus.entries` / `mem.focus.activeId` (store-focus §2.3 item 3's read turn).
+    // **⟶ RE-GRAINED BY `D-89`: THE ADMISSION IS NO LONGER NEEDED, AND ITS ABSENCE IS NOW THE CLAIM.** The mirror's read
+    // LEFT THE FROZEN STORE when the renderer was pointed at the crossing's successor addresses (`D-88`): the route reads
+    // `mirrorStateOf(view)` — the shape — so there is no `store.resolve('mem.focus.*')` site left to admit, and no
+    // `readMirrorRef` helper to hold a dynamic one. **THE ROW IS STRONGER, NOT WEAKER**: the renderer's store-resolve
+    // surface is EMPTY, and a pass that reintroduced one would redden this row rather than being waved through by an
+    // admission that had outlived its subject.
     const literalFocusSites = (raw.match(/store\.resolve\(\s*'mem\.focus\./g) ?? []).length
     const helperBodySites = (raw.match(/function readMirrorRef[\s\S]*?store\.resolve\(/g) ?? []).length
-    const helperCallSites = (raw.match(/readMirrorRef\(\s*store,\s*'mem\.focus\./g) ?? []).length
-    expect(literalFocusSites, 'S-9 — the focus mirror\'s literal resolve site exists as the declared conforming member (the boot mint\'s cold-home probe, store-focus §2.3 item 2), so the admission is over a REAL site, not an empty scan').toBeGreaterThan(0)
-    expect(helperBodySites, 'S-9 — the mirror-read helper holds its ONE dynamic resolve').toBe(1)
-    expect(helperCallSites, 'S-9 — the helper\'s ONLY call sites pass the TWO FIXED mirror references (store-focus §2.3 item 3\'s read turn)').toBe(2)
+    expect(literalFocusSites, 'S-9 — the focus mirror has NO store-resolve site left: its read is the shape\'s (`mirrorStateOf(view)`), so no admission is owed and none is made').toBe(0)
+    expect(helperBodySites, 'S-9 — and the mirror-read helper that held the one dynamic resolve is gone with it').toBe(0)
+    expect(raw, 'S-9 — the site that replaced both: the shape\'s read, named so the absence above is over a REAL subject').toMatch(/function mirrorStateOf\(view/)
     const resolveHits = hits.filter((h) => h === 'store.resolve(')
     expect(
       resolveHits.length,
-      `S-9 — EVERY \`store.resolve(\` in the renderer is an ADMITTED \`mem.focus.*\` mirror read (${literalFocusSites} boot-mint probe + ${helperBodySites} helper body, whose ${helperCallSites} call sites are the two fixed references). A store read of ANY OTHER spelling on an answering route is a \`GCR-3\` finding. RESOLVE HITS: ${JSON.stringify(resolveHits)}`,
-    ).toBe(literalFocusSites + helperBodySites)
+      `S-9 — and the renderer's whole \`store.resolve(\` surface is EMPTY: every route's answer is composed from the shape or from the app Runtime, and a store read of ANY spelling on an answering route is a \`GCR-3\` finding. RESOLVE HITS: ${JSON.stringify(resolveHits)}`,
+    ).toBe(0)
 
     // The live failure signal: an UNQUALIFIED store read (the plain `GCR-3` (b) form) that is
     // NEITHER the commit-feeding tier-qualified form (§2.4 item 2) NOR the focus mirror's
@@ -854,7 +859,10 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     // drag closure"): `tierRead` is the renderer's one tier-reading closure and it
     // feeds the commit turns.
     expect(raw, 'S-9 — the disposition is over a REAL site: the renderer\'s `tierRead` closure exists (`§2.4` item 2\'s commit-feeding read), so the empty tier-qualified set above is a SPELLING result, not an absent subject').toMatch(/const tierRead = \(tier: string, name: string\)/)
-    expect(raw, 'S-9 — and that closure\'s product reaches the STORE COMMIT turns (`§2.4` item 2: "the read is legitimate BECAUSE the graph carries its result"), so its reads are the conforming shape this row dispositions').toMatch(/commit\('mem\.layout\.pane\./)
+    // **⟶ RE-GRAINED BY `D-89`**: the closure's product reached the frozen store's TWO commit spellings; it reaches the
+    // crossing's ONE `commitPane` route now (`D-88`), which is still "the graph carries its result" and is still the
+    // conforming shape — but the spelling this assertion looks for is the route's, not the tier's.
+    expect(raw, 'S-9 — and that closure\'s product reaches the WRITE turn (`§2.4` item 2: "the read is legitimate BECAUSE the graph carries its result") — the crossing\'s `commitPane` route, which replaced the two tier commits').toMatch(/view\.commitPane\(/)
   })
 
   it('S-9: the MCP tool surface itself is UNCHANGED by this shape — `ALL_TOOLS` carries no store-qualified member AND no registered tool SCHEMA declares a `store` argument-key anywhere (`§3.5` "no foundation-side store-qualified tool … no foundation-side `store` argument on any `provident.*` tool"; `§5.3` item 8)', () => {

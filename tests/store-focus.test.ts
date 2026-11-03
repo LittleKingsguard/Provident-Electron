@@ -97,6 +97,10 @@ import {
   type GraphTierGetResult,
 } from '../src/renderer/store-core-graph.js'
 import { storeGraphReferences } from '../src/renderer/store-graph-references.js'
+// **THE SHAPE'S CLIENT (`D-88`)** — the carrier is constructed OVER THIS, not over a store, so the fixture below builds
+// one over a CROSSING DOUBLE that projects this file's recorded store and writes it back the way the crossing's
+// `commitFocus` route does. The rows then read the SHAPE, exactly as the app does.
+import { createViewClient, type ViewClient, type ViewCommittedReading, type ViewSubscription } from '../src/renderer/view-client.js'
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * BYTE-READ HELPERS — the scanner pattern (spec §3.4 R-1 / §3.5). These scan the
@@ -184,7 +188,7 @@ beforeAll(async () => {
  *  W4) but exports NO `createFocusCarrier` — the honest red class: the re-home is not
  *  implemented. The typed access is what makes the typecheck leg red with the honest
  *  TS2339-class diagnostic alongside the runtime red. */
-function requireCarrierFactory(): (store: GraphStore) => unknown {
+function requireCarrierFactory(): (view: ViewClient) => unknown {
   if (rendererLoadError !== null) {
     throw new Error(`H1 RED: the renderer module failed to load in the node host — ${String(rendererLoadError)}`)
   }
@@ -198,15 +202,222 @@ function requireCarrierFactory(): (store: GraphStore) => unknown {
         'is not implemented; the holder still exists and focusRoute still mutates it',
     )
   }
-  return factory as (store: GraphStore) => unknown
+  return factory as (view: ViewClient) => unknown
 }
 
-/** A FRESH CARRIER OVER A FRESH WIRING-SHAPED STORE (spec §3.1 M-6 / §5.2 leg 6 — the boot
- *  wiring's construction shape: `createGraphStore({ declarations: storeGraphReferences([]) })`). */
+/** **THE CROSSING DOUBLE — the shape's client over a store, one client per store (`D-88`).** The carrier is constructed
+ *  over the SHAPE now, so a row that seeds the recorded store and then reads `carrier.state()` must have the shape refilled
+ *  by the delivery that write causes. This double models exactly that on the near side of the boundary:
+ *
+ *   · `read()` answers the crossing's committed reading — the two `mem.focus.*` references this file's rows write, admitted
+ *     into the mirror, with the absent active spelled as ABSENCE (`null` in the store is a stored value here, so it reads
+ *     back as `null` through the client's own admission).
+ *   · `commitFocus(mirror)` performs what the crossing's route performs for this file's purposes — the mirror's two
+ *     references at `mem`, `{onRepeat:'edit'}` — so every census row that counts the WRITE still counts two, and the
+ *     recorded store stays the seed the other rows read.
+ *   · every write on the store REFILLS the shape and fires the change handler, which is the real chain's `onChanged`
+ *     delivery modelled SYNCHRONOUSLY. The real delivery is asynchronous (a commit's shape arrives a tick later, and the
+ *     client's own async path — `subscribe` → `read` → `adopt` — is driven in `tests/integration/store-view-record/
+ *     client.test.ts`); a node row that had to `await` a microtask to read back what it just wrote would be measuring the
+ *     event loop, not the carrier. This is a stated limit of the double, not a claim about the product. */
+/**
+ * **THE CROSSING RECORDER — THE SHAPE'S CLIENT OVER A DOUBLE, WITH THE COUNTS THE ROWS ASK FOR** (`D-88`, `D-89`).
+ *
+ * The carrier is constructed OVER THE SHAPE now, so the observations this file's register was built on move with it:
+ *
+ *   · **THE ONE SUBSCRIPTION** is the client's (`view-client.ts`'s `subscribe` → the member's `onChanged`), so the count is
+ *     `registrations()` — ONE while the boot's subscription is alive, ZERO after its release. It used to be two store
+ *     subscriptions on `mem.focus.entries`/`mem.focus.activeId`; the crossing pushes once and the client re-reads.
+ *   · **THE DELIVERY** is the push's, and `deliveries()` counts the pushes this double fired — the census the frozen store's
+ *     own subscriber list used to answer.
+ *   · **THE WRITES** stay legible at the mirror's two member spellings (`memberWrites`), because a row that counts "one
+ *     write per reference" is counting the ROUTE'S PAYLOAD. **THE ACT IS ONE CALL** (`focusCommits`), and
+ *     `P-SF-SM-1`'s one-route-call drive asserts exactly that: the frozen store took two commits, the crossing takes one
+ *     whole mirror, and a double that hid the difference would be the machinery pretending it had not moved.
+ *   · **THE DOUBLE STILL STANDS THE STORE IN**: a `commitFocus` mirrors the mirror into the recorded store under its old
+ *     two spellings, which is how a cold boot's data and the "the records REMAIN" rows stay readable — and the MINT at
+ *     creation (`commit('mem.focus', undefined)` + `clear`) is the crossing's `focus-must-stand` repair stood in for here, so
+ *     no row has to mint by hand.
+ */
+interface CrossingRecorder {
+  readonly client: ViewClient
+  /** ONE per `commitFocus` route call — the crossing's whole-mirror write. */
+  readonly focusCommits: Array<readonly unknown[]>
+  /** The route's payload projected member-by-member, at the mirror's two old spellings. */
+  readonly memberWrites: { readonly entries: unknown[]; readonly activeId: unknown[] }
+  readonly registrations: () => number
+  readonly installs: () => number
+  readonly withdrawals: () => number
+  readonly deliveries: () => number
+  readonly reads: () => number
+  /** **THE BOOT'S ONE SUBSCRIPTION** — `startViewShape`'s act, driven here because the boot itself is `main()`'s. */
+  readonly subscribe: (handler?: (reading: unknown) => void) => ViewSubscription
+  /** Fire the crossing's push without a write — the post-release arm's control. */
+  readonly deliver: () => void
+}
+
+const recorderOfStore = new WeakMap<object, CrossingRecorder>()
+
+function crossingOf(store: GraphStore): CrossingRecorder {
+  const cached = recorderOfStore.get(store as unknown as object)
+  if (cached !== undefined) return cached
+  const project = (): ViewCommittedReading => {
+    // THE DECLARED EMPTY PAIR answers a MISS — the crossing's own read does the same for a family it cannot state, so the
+    // double's answer is admitted by the client's gate rather than bypassing it with `undefined` members.
+    const entries = readRefOf(store, 'mem.focus.entries')
+    const active = readRefOf(store, 'mem.focus.activeId')
+    const admittedEntries = Array.isArray(entries) ? entries : []
+    const admittedActive =
+      typeof active === 'string' || typeof active === 'boolean' || (typeof active === 'number' && Number.isFinite(active))
+        ? active
+        : null
+    return {
+      status: 'committed',
+      panes: [],
+      focus: { entries: admittedEntries as unknown as ViewCommittedReading['focus']['entries'], activeId: admittedActive },
+      source: { panes: 'record', focus: 'record' },
+    }
+  }
+  const handlers: Array<() => void> = []
+  /** THE RECORDED CONSUMERS — called SYNCHRONOUSLY by `fire()`, so a node row that reads back what a delivery carried is
+   *  measuring the delivery's content rather than the microtask queue. The real client's own delivery path is asynchronous
+   *  and is driven in `tests/integration/store-view-record/client.test.ts` (C-3). */
+  const consumers: Array<(reading: unknown) => void> = []
+  const focusCommits: Array<readonly unknown[]> = []
+  const memberWrites = { entries: [] as unknown[], activeId: [] as unknown[] }
+  let installs = 0
+  let withdrawals = 0
+  let deliveries = 0
+  let reads = 0
+  const bridge = {
+    read: async (): Promise<unknown> => {
+      reads += 1
+      return project()
+    },
+    commitPane: async (): Promise<unknown> => ({ status: 'committed' }),
+    commitFocus: async (mirror: unknown): Promise<unknown> => {
+      const held = mirror as { readonly entries?: unknown; readonly activeId?: unknown }
+      focusCommits.push([mirror])
+      memberWrites.entries.push(held.entries)
+      memberWrites.activeId.push(held.activeId)
+      // THE STORE THE CROSSING WRITES TO, at the mirror's own two spellings: the double's stand-in for the one whole value at
+      // the family's root, so a row that reads the record back finds it. **ONE WRITE, ONE PUSH** — the two spellings are the
+      // double's projection of ONE routed value, never two acts.
+      suppressing += 1
+      try {
+        store.commit('mem.focus.entries', held.entries, { onRepeat: 'edit' })
+        store.commit('mem.focus.activeId', held.activeId, { onRepeat: 'edit' })
+      } finally {
+        suppressing -= 1
+      }
+      client.adopt(project())
+      fire()
+      return { status: 'committed' }
+    },
+    onChanged: (handler: () => void): (() => void) => {
+      handlers.push(handler)
+      installs += 1
+      return (): void => {
+        const at = handlers.indexOf(handler)
+        if (at < 0) return
+        handlers.splice(at, 1)
+        withdrawals += 1
+      }
+    },
+  }
+  // **THE CREATION REPAIR'S EFFECT, MODELLED ONCE** (`D-87`'s `focus-must-stand`): a `mem` address can never come from a
+  // file, so the crossing MINTS the mirror at its own creation instant and every boot re-mints it.
+  store.commit('mem.focus', undefined)
+  store.clear('mem.focus')
+  const client = createViewClient({ bridge })
+  const fire = (): void => {
+    deliveries += 1
+    for (const handler of [...handlers]) {
+      try {
+        handler()
+      } catch {
+        /* a delivery body's own throw stops at the body */
+      }
+    }
+    const reading = client.shape()
+    for (const consumer of [...consumers]) {
+      try {
+        consumer(reading)
+      } catch {
+        /* a consumer's own throw stops at the consumer */
+      }
+    }
+  }
+  /** A WRITE THAT IS ONE WHOLE VALUE MUST CAUSE ONE PUSH: the double's stand-in for the crossing's two member spellings is
+   *  written with the push SUPPRESSED between them, so the delivery count is the crossing's ONE — which is the fact the
+   *  registers re-grained to (`D-88`: one address, one delivery). */
+  let suppressing = 0
+  // THE DELIVERY, MODELLED AT THE WRITE: every mutation of this store refills the shape and fires the push.
+  const sync = (): void => {
+    if (suppressing > 0) return
+    client.adopt(project())
+    fire()
+  }
+  for (const member of ['commit', 'set', 'remove', 'clear'] as const) {
+    const original = (store as unknown as Record<string, unknown>)[member]
+    if (typeof original !== 'function') continue
+    const bound = (original as (...a: unknown[]) => unknown).bind(store)
+    ;(store as unknown as Record<string, unknown>)[member] = (...args: unknown[]): unknown => {
+      const answer = bound(...args)
+      sync()
+      return answer
+    }
+  }
+  client.adopt(project())
+  const recorder: CrossingRecorder = {
+    client,
+    focusCommits,
+    memberWrites,
+    registrations: (): number => handlers.length,
+    installs: (): number => installs,
+    withdrawals: (): number => withdrawals,
+    deliveries: (): number => deliveries,
+    reads: (): number => reads,
+    subscribe: (handler?: (reading: unknown) => void): ViewSubscription => {
+      const subscription = client.subscribe(() => undefined)
+      if (handler !== undefined) consumers.push(handler)
+      return {
+        subscribed: subscription.subscribed,
+        reason: subscription.reason,
+        release: (): void => {
+          subscription.release()
+          const at = handler === undefined ? -1 : consumers.indexOf(handler)
+          if (at >= 0) consumers.splice(at, 1)
+        },
+      }
+    },
+    deliver: (): void => fire(),
+  }
+  recorderOfStore.set(store as unknown as object, recorder)
+  return recorder
+}
+
+/** THE SHAPE'S CLIENT FOR ONE STORE — the carrier factory's argument (`carrierOf`), unchanged in signature. */
+function viewOfStore(store: GraphStore): ViewClient {
+  return crossingOf(store).client
+}
+
+/** ONE REFERENCE OUT OF THE RECORDED STORE, as a plain value or `undefined` — the projection's only read. */
+function readRefOf(store: GraphStore, name: string): unknown {
+  try {
+    const answer = store.resolve(name) as { readonly found?: unknown; readonly value?: unknown } | null
+    return answer !== null && typeof answer === 'object' && answer.found === true ? answer.value : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** A FRESH CARRIER OVER A FRESH WIRING-SHAPED STORE (spec §3.1 M-6 / §5.2 leg 6 — the boot wiring's construction shape),
+ *  constructed over that store's SHAPE: the factory's argument is the view client (`D-88`), never the store. */
 function carrierOf(store?: GraphStore): FocusCarrierSurface {
   const factory = requireCarrierFactory()
   const wired = store ?? createGraphStore({ declarations: storeGraphReferences([]) })
-  return factory(wired) as FocusCarrierSurface
+  return factory(viewOfStore(wired)) as FocusCarrierSurface
 }
 
 /** THE WIRING-SHAPED STORE (the exact boot construction shape of renderer.ts's
@@ -279,6 +490,9 @@ interface RecordingStore {
   readonly deliveries: Array<{ readonly name: string; readonly event: GraphEvent }>
   readonly subscriptionsHeld: GraphSubscription[]
   readonly clears: string[]
+  /** **THE STORE'S SEVER PATH, RECORDED AND NEVER CALLED** — a release withdraws ONE registration and must never reach the
+   *  store's sever (`§2.4` item 3's H2a rule). This list existing is what lets a row assert the absence. */
+  readonly severs: Array<{ readonly from: string; readonly anchorKey: string }>
   /** HOSTILE TOGGLES — when set, the double's member THROWS (the wiring-turn
    *  absorption rule: the carrier's turns consume the declared degradation).
    *  `clear` (a throwing store-level clear — the boot-mint absorption's own hostile)
@@ -301,6 +515,7 @@ function createRecordingStore(): RecordingStore {
   const deliveries: Array<{ name: string; event: GraphEvent }> = []
   const subscriptionsHeld: GraphSubscription[] = []
   const clears: string[] = []
+  const severs: Array<{ from: string; anchorKey: string }> = []
   const hostiles = {
     resolve: null as Error | null,
     commit: null as Error | null,
@@ -341,6 +556,10 @@ function createRecordingStore(): RecordingStore {
       if (hostiles.clear !== null) throw hostiles.clear
       return real.clear(name)
     },
+    sever(from: string, anchorKey: string): GraphWriteReceipt {
+      severs.push({ from, anchorKey })
+      return real.sever(from, anchorKey)
+    },
     subscribe(name: string, listener: (event: GraphEvent) => void, opts?: { subtree?: boolean }): GraphSubscription {
       if (hostiles.subscribe !== null) throw hostiles.subscribe
       const recorded = (event: GraphEvent): void => {
@@ -365,6 +584,7 @@ function createRecordingStore(): RecordingStore {
     deliveries,
     subscriptionsHeld,
     clears,
+    severs,
     hostiles,
     listen: (event: GraphEvent): void => listeners.forEach((l) => l(event)),
   }
@@ -436,17 +656,40 @@ function focusRegionCarrierFree(): { readonly ok: boolean; readonly detail: stri
 /** R-4 / P-2.6-4 / S24-1 — exactly TWO subscriptions on the mirror's references while the
  *  carrier is alive, and ZERO other registrations. The byte-level red half: the wiring
  *  registers NO `mem.focus` subscription today (rule-2 ✗). */
+/** **COMMENT LINES ELIDED** — every absence assertion in this file reads CODE, never prose. A comment that NAMES the
+ *  machinery a row forbids is not the machinery: the swap's own explanatory comments carry the old spellings on purpose, and
+ *  a raw-bytes scan would read its own description as its own hit — the vacuity the register's scan-corpus rule refuses. */
+function commentElided(bytes: string): string {
+  return bytes
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return ''
+      const at = line.indexOf('//')
+      return at >= 0 ? line.slice(0, at) : line
+    })
+    .join('\n')
+}
+
+/** **THE ONE-SUBSCRIPTION PROBE** (`D-88`, re-grained `D-89`). The observation used to be TWO exact-reference store
+ *  subscriptions on `mem.focus.entries`/`mem.focus.activeId`; it is the CLIENT'S ONE `onChanged` now, taken in
+ *  `startViewShape` beside the ONE stated boot read. The probe reads CODE, not prose: zero store subscriptions on
+ *  `mem.focus.*` and exactly one `client.subscribe(` in the boot's own function. */
 function subscriptionCountProbe(): { readonly ok: boolean; readonly detail: string } {
-  const src = rendererSrc()
-  const lines = src.split('\n')
-  const memFocusSubscribes = lines.filter((line) => line.includes('subscribe(') && line.includes('mem.focus'))
-  if (memFocusSubscribes.length === 0) {
-    return { ok: false, detail: 'the wiring registers NO subscription on mem.focus.* — rule-2 ✗ (zero subscriptions today)' }
+  const src = commentElided(rendererSrc())
+  const memFocusSubscribes = src.split('\n').filter((line) => line.includes('subscribe(') && line.includes('mem.focus'))
+  if (memFocusSubscribes.length !== 0) {
+    return { ok: false, detail: `the wiring registers ${memFocusSubscribes.length} store subscription(s) on mem.focus.* — the observation is the client's ONE push, not a store subscriber` }
   }
-  if (memFocusSubscribes.length !== 2) {
-    return { ok: false, detail: `mem.focus subscription registrations read ${memFocusSubscribes.length}, expected exactly 2` }
+  const start = src.indexOf('function startViewShape(')
+  if (start < 0) return { ok: false, detail: 'the boot takes NO view subscription: `startViewShape` is absent' }
+  const end = src.indexOf('\n}', start)
+  const block = src.slice(start, end)
+  const registrations = block.split('\n').filter((line) => line.includes('.subscribe('))
+  if (registrations.length !== 1) {
+    return { ok: false, detail: `the boot's view subscription registrations read ${registrations.length}, expected exactly 1` }
   }
-  return { ok: true, detail: 'exactly two mem.focus subscription registrations' }
+  return { ok: true, detail: 'exactly ONE view subscription registration, in the boot function, beside the one stated read' }
 }
 
 /** R-5 / P-2.6-5 — the mirror never writes tier 1: no byte of the focus region writes a
@@ -841,15 +1084,21 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
     expect(typeof carrier.dispose).toBe('function')
   })
 
-  it('S23-2a §2.3 item 2 — THE BOOT CONSTRUCTION AND THE BOOT MINT: construction MINT-DECLARES the root (commit(\'mem.focus\', undefined) + clear(\'mem.focus\')) and registers the two subscriptions at the same construction point', () => {
+  it('S23-2a §2.3 item 2 — **THE BOOT CONSTRUCTION TAKES NOTHING AND MINTS NOTHING** (re-grained `D-89`): the carrier\'s construction issues ZERO store writes and ZERO registrations, and the root it used to mint-declare is the CROSSING\'S creation repair (`focus-must-stand`) — a declaration tested at the instance\'s first instant, named here over comment-elided code so the row cannot be satisfied by a comment', () => {
     const rec = createRecordingStore()
-    carrierOf(rec.store)
-    const bootMints = rec.commits.filter((c) => c.name === 'mem.focus' && c.value === undefined)
-    expect(bootMints.length).toBeGreaterThanOrEqual(1)
-    expect(rec.subscriptionsHeld.length).toBe(2)
-    expect(rec.subscriptionsHeld.map((h) => h.name).sort()).toEqual(['mem.focus.activeId', 'mem.focus.entries'])
+    const crossings = crossingOf(rec.store)
+    rec.commits.length = 0
+    rec.clears.length = 0
+    const carrier = carrierOf(rec.store)
+    expect(rec.commits, 'construction writes NOTHING: the boot mint is the crossing\'s, and a second writer would be a second authority over the same root').toEqual([])
+    expect(rec.clears, 'and clears nothing').toEqual([])
+    expect(crossings.registrations(), 'and registers nothing — the boot\'s ONE subscription is taken in `startViewShape`').toBe(0)
+    // THE DECLARATION THAT REPLACED THE MINT, read off the crossing module itself.
+    const viewRecord = commentElided(bytesOf(new URL('../src/main/view-record/index.ts', import.meta.url)))
+    expect(viewRecord.includes('focus-must-stand'), 'the existence declaration that stands in for the mint').toBe(true)
+    expect(viewRecord.includes('viewConstraintDeclarations'), 'and the batch the boot constructs the store with').toBe(true)
+    expect(carrier.state(), 'the carrier still answers the declared record on a cold realm').toEqual({ entries: [], activeId: null })
   })
-
   it('S23-2b §2.3 item 2 (store-side guard) — THE BOOT-MINT RECIPE\'s tree facts: commit(\'mem.focus\', undefined) then clear(\'mem.focus\') DECLARES + MINTS the root (the register\'s row pre-exists the first write); a resolve of the two references on the CURRENT frozen store then answers its READ-SIDE REFUSAL RECORD (D-ANCHOR no-such-anchor — the leaf anchors never existed), which the carrier\'s read turn must CONSUME as the declared-empty outcome (§2.1 item 6\'s last sentence / §2.3 item 6 — the row that flips with the carrier is S21-6b)', () => {
     const store = mintedStore()
     // the register row pre-exists the first write (the root is declared + minted)
@@ -930,83 +1179,50 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
     expect(rec.commits).toHaveLength(0) // the totality turns write NOTHING (§2.3 items 4/5)
   })
 
-  it('S23-6a §2.3 item 6 — THE HOSTILE-STORE DEGRADATION: an ABSENT store-member argument, a hostile store, and a throwing tier-handle/resolve/commit/subscribe surface all land the DECLARED degradation and never let a throw escape a wiring turn — state() answers the declared-empty pair; the write-through answers a declared no-write; the subscription refuses to register; the boot mint is a no-op; dispose() still returns normally. ⟶ PLUS THE EXPORTED persistTarget SEAM\'S HOSTILE SURFACE (finding B, 2026-10-05): an absent/throwing `commit` on the store handed to the carrier — the seam\'s OWN throw surface is the SEAM\'s (a direct seam call raises the store\'s throw; §2.3 item 6\'s enumerated absorbing turns exclude the seam), and the ROUTE-MEDIATED write-through stays absorbed (the module\'s persist answers the DECLARED ABSENCE — §2.1 item 4 / focus-model §2.4 seam 3)', () => {
+  it('S23-6a §2.3 item 6 — **THE HOSTILE-BOUNDARY DEGRADATION** (re-grained `D-89`): an ABSENT member, a member with no route, and a THROWING read/route all land the DECLARED degradation and never let a throw escape a wiring turn — `state()` answers the declared-empty pair, the write-through answers the client\'s declared `{status:\'sent\'}` or `absent`, the subscription refuses to register, and `dispose()` still returns normally', () => {
+    // (a) NO MEMBER AT ALL — the realm the node shim states.
+    const bare = createViewClient({ bridge: null })
+    const bareCarrier = requireCarrierFactory()(bare) as FocusCarrierSurface
+    expect(bareCarrier.state()).toEqual({ entries: [], activeId: null })
+    expect(bareCarrier.persistTarget({ entries: [{ id: 'x', target: 'x' }], activeId: 'x' }), 'the write went NOWHERE and says so').toEqual({ status: 'absent', reason: 'no-view-member' })
+    expect(bare.subscribe(() => undefined)).toMatchObject({ subscribed: false, reason: 'no-view-member' })
+    expect(() => bareCarrier.dispose()).not.toThrow()
+    // (b) A MEMBER WITH NO READ ROUTE — an older preload.
+    const noRead = createViewClient({
+      bridge: { commitPane: async () => ({ status: 'committed' }), commitFocus: async () => ({ status: 'committed' }), onChanged: () => () => undefined } as never,
+    })
+    expect(noRead.subscribe(() => undefined)).toMatchObject({ subscribed: true })
+    const noReadCarrier = requireCarrierFactory()(noRead) as FocusCarrierSurface
+    expect(noReadCarrier.state()).toEqual({ entries: [], activeId: null })
+    // (c) A THROWING READ AND A THROWING ROUTE — absorbed at the client, so the carrier\'s turns stay TOTAL.
+    const hostile = createViewClient({
+      bridge: {
+        read: () => Promise.reject(new Error('hostile read')),
+        commitPane: () => Promise.reject(new Error('hostile pane')),
+        commitFocus: () => Promise.reject(new Error('hostile focus')),
+        onChanged: () => {
+          throw new Error('hostile onChanged')
+        },
+      },
+    })
+    const hostileCarrier = requireCarrierFactory()(hostile) as FocusCarrierSurface
+    expect(hostileCarrier.state(), 'the declared empty pair, never a throw').toEqual({ entries: [], activeId: null })
+    expect(() => hostileCarrier.focusRoute({ target: 'x', newTab: true }), 'the route turn is absorbed').not.toThrow()
+    expect(hostile.subscribe(() => undefined), 'a throwing registration is the declared refusal to subscribe').toMatchObject({ subscribed: false, reason: 'register-threw' })
+    expect(() => hostileCarrier.dispose()).not.toThrow()
+    // (d) A HOSTILE STORE STILL CANNOT BREAK THE CROSSING DOUBLE — the double\'s own surface is absorbed by the client, and the
+    //     records it holds survive the hostile toggles the frozen store offered.
     const rec = createRecordingStore()
     const carrier = carrierOf(rec.store)
     rec.hostiles.resolve = new Error('hostile resolve')
-    expect(carrier.state()).toEqual({ entries: [], activeId: null })
+    expect(carrier.state(), 'a hostile store read is no longer on the carrier\'s path at all').toEqual({ entries: [], activeId: null })
     rec.hostiles.resolve = null
     rec.hostiles.commit = new Error('hostile commit')
-    let wrote = true
-    try {
-      carrier.focusRoute({ target: 'x', newTab: true })
-    } catch {
-      wrote = false
-    }
-    expect(wrote).toBe(true)
-    // FINDING B (the gate-4 audit, MED/LOW — the hostile drive against the exported
-    // `persistTarget` member, 2026-10-05). THE SPEC'S LETTER, PINNED (§2.3 item 6 + §2.1 item
-    // 5(b)): `persistTarget` IS THE SEAM ITSELF (§2.3 item 1 — "the STORE-BACKED SEAM
-    // IMPLEMENTATION itself"), and §2.3 item 6's enumerated absorbing TURN surfaces are
-    // state() · the write-through · the subscription registration · the boot mint · dispose()
-    // — the seam is NOT among them. THE SEAM'S OWN DIRECT THROW SURFACE IS THE SEAM'S: a
-    // direct seam invocation over an absent/throwing store `commit` raises the seam's own
-    // store-call throw (no clause declares an absorption AT the seam; "the store's surface
-    // stays UNGUARDED", §0 ruling 14), while the DECLARED absorption lives at the
-    // ROUTE-MEDIATED write-through — the module's `persist` answers the DECLARED ABSENCE
-    // `{present:false}` (§2.1 item 4 / focus-model.md §2.4 seam 3), so the route never lets
-    // the throw escape the turn. A reading of §2.1 item 5(b)'s "never throw for ANY argument"
-    // that included a DIRECT seam call would make this drive FAIL today — a host-fix gap to
-    // report, never to soften; the reading driven here is the one the spec's enumerated
-    // degradation list supports.
-    let seamThrew = false
-    try {
-      carrier.persistTarget({ entries: [{ id: 'x', target: 'x' }], activeId: 'x' })
-    } catch {
-      seamThrew = true
-    }
-    expect(seamThrew).toBe(true) // the seam's OWN surface is the seam's — the direct call raises the store's throw
-    let routeThrewAgain = false
-    try {
-      carrier.focusRoute({ target: 'x', newTab: true })
-    } catch {
-      routeThrewAgain = true
-    }
-    expect(routeThrewAgain).toBe(false) // the ROUTE-MEDIATED path stays absorbed — {present:false}, never a throw
+    expect(() => carrier.focusRoute({ target: 'y', newTab: true }), 'the route turn never raises the store\'s throw').not.toThrow()
     rec.hostiles.commit = null
-    // AN ABSENT `commit` member on the store handed to the carrier — the same posture: the
-    // seam's own direct surface raises the store's own TypeError; the route-mediated path
-    // stays absorbed (the persist boundary answers the declared absence).
-    const commitlessStore = { ...mintedStore() } as GraphStore
-    delete (commitlessStore as { commit?: unknown }).commit
-    const commitlessCarrier = carrierOf(commitlessStore)
-    let seamThrewAbsent = false
-    try {
-      commitlessCarrier.persistTarget({ entries: [{ id: 'x', target: 'x' }], activeId: 'x' })
-    } catch {
-      seamThrewAbsent = true
-    }
-    expect(seamThrewAbsent).toBe(true)
-    let routeThrewAbsent = false
-    try {
-      commitlessCarrier.focusRoute({ target: 'x', newTab: true })
-    } catch {
-      routeThrewAbsent = true
-    }
-    expect(routeThrewAbsent).toBe(false)
-    commitlessCarrier.dispose()
     rec.hostiles.subscribe = new Error('hostile subscribe')
-    const factory = requireCarrierFactory()
-    let constructed = true
-    try {
-      factory(rec.store)
-    } catch {
-      constructed = false
-    }
-    expect(constructed).toBe(true)
-    expect(rec.subscriptionsHeld.length).toBe(2)
-    rec.hostiles.subscribe = null
     expect(() => carrier.dispose()).not.toThrow()
+    rec.hostiles.subscribe = null
   })
 
   it('S23-6b §2.3 item 6 (module half) — a THROWING seam is absorbed AT the module\'s persist, and the store\'s surface stays UNGUARDED (the throwing supply is absorbed at the wiring turn — the store never absorbs the caller\'s seam)', () => {
@@ -1028,14 +1244,27 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
 })
 
 describe('H1 U-STORE-FOCUS — §2.4 THE SUBSCRIPTION + RELEASE (rule 2, the H2a pattern)', () => {
-  it('S24-1 §2.4 item 1 — THE OBSERVATION IS A STORE SUBSCRIPTION: the wiring registers its consumer channel ON THE STORE with the EXACT-REFERENCE forms on the mirror\'s two fixed references; the count is EXACTLY TWO subscriptions while alive, 0 after dispose(), and stays 2 across N graph re-derivations. RED today: the wiring registers NO subscription on mem.focus.* (rule-2 ✗)', () => {
+  it('S24-1 §2.4 item 1 — **THE OBSERVATION IS ONE SUBSCRIPTION, ON THE CROSSING AND NOT ON TWO STORE REFERENCES** (re-grained `D-89`): the client installs ONE `onChanged` registration that carries BOTH families; the count is EXACTLY ONE while the boot\'s subscription is alive, 0 after its release, and it stays 1 across N re-derivations; **the CARRIER registers nothing at all** — a second registration would be a second consumer of one push', () => {
     const probe = subscriptionCountProbe()
     expect(probe.ok, probe.detail).toBe(true)
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
+    // THE CARRIER'S CONSTRUCTION TAKES NOTHING: it is handed the shape and registers no consumer of its own.
     const carrier = carrierOf(rec.store)
-    expect(rec.subscriptionsHeld.length).toBe(2)
-    expect(rec.subscriptionsHeld.map((h) => h.name).sort()).toEqual(['mem.focus.activeId', 'mem.focus.entries'])
-    expect(rec.subscriptionsHeld.every((h) => h.subtree === false)).toBe(true)
+    expect(crossing.registrations(), 'the carrier itself subscribes to nothing').toBe(0)
+    // THE BOOT\'S ONE SUBSCRIPTION — `startViewShape`\'s act, which is where the wiring\'s consumer channel lives now.
+    const subscription = crossing.subscribe()
+    expect(subscription.subscribed, 'the member carries a push route, so the registration installs').toBe(true)
+    expect(crossing.registrations(), 'EXACTLY ONE — the crossing pushes once for both families').toBe(1)
+    // ACROSS N RE-DERIVATIONS: reads do not re-register (and the shape is refilled by ADOPTION, never by a second consumer).
+    for (let i = 0; i < 3; i += 1) {
+      carrier.state()
+      carrier.focusRoute({ target: `rederive-${i}`, newTab: true })
+      expect(crossing.registrations(), `still one registration after re-derivation ${i}`).toBe(1)
+    }
+    subscription.release()
+    expect(crossing.registrations(), '0 after the release').toBe(0)
+    expect(crossing.installs(), 'and exactly one install ever happened').toBe(1)
   })
 
   it('S24-2a §2.4 item 2 — THE LISTENER BODY, READ-ONLY: the listener is the wiring\'s own closure forwarding the event to the declared consumer channel (a test-driven delivery recorder); its body never writes the store from inside (each transition yields at most the declared two events). DRIVEN AGAINST THE REAL STORE — the fan-out asserted is the STORE\'s own bounded per-realm-per-reference delivery (§2.10 item 4), never the recording double\'s re-invoking fan-out', () => {
@@ -1072,52 +1301,73 @@ describe('H1 U-STORE-FOCUS — §2.4 THE SUBSCRIPTION + RELEASE (rule 2, the H2a
     expect(receipt?.status).toBe('committed')
   })
 
-  it('S24-3 §2.4 item 3 — THE RELEASE — UNSUBSCRIBE-ON-DISPOSE, THE H2A PATTERN: dispose() releases EVERY subscription the wiring registered (unsubscribe called EXACTLY ONCE, first call true, later calls false), NEVER the store\'s sever path; the release emits NO store event, leaves the mirror\'s records in place, and is idempotent and non-throwing', () => {
+  it('S24-3 §2.4 item 3 — THE RELEASE — UNSUBSCRIBE-ON-RELEASE, THE H2A PATTERN, NOW OVER THE ONE REGISTRATION: `release()` withdraws the member\'s registration EXACTLY ONCE, is idempotent and non-throwing, emits NO store event, leaves the mirror\'s records in place, and a later push delivers nothing', () => {
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
-    carrier.dispose()
-    for (const handle of rec.subscriptionsHeld) {
-      expect(handle.unsubscribe()).toBe(false) // already released by dispose()
-    }
+    carrier.focusRoute({ target: 'kept', newTab: true })
+    const subscription = crossing.subscribe()
+    const deliveriesBefore = crossing.deliveries()
+    subscription.release()
+    expect(crossing.withdrawals(), 'the withdrawal, called exactly once').toBe(1)
+    expect(crossing.registrations(), 'and the registration set is empty').toBe(0)
+    crossing.deliver()
+    expect(crossing.deliveries(), 'the push itself still happens — nothing is watching it').toBe(deliveriesBefore + 1)
+    // THE RECORDS REMAIN: the release writes nothing.
+    expect((resolveOf(rec.store, 'mem.focus.entries') as { found?: boolean }).found).toBe(true)
+    expect(() => subscription.release()).not.toThrow()
+    expect(crossing.withdrawals(), 'a second release withdraws nothing further').toBe(1)
     expect(() => carrier.dispose()).not.toThrow()
   })
 
-  it('P1 §2.4 item 4 — RELEASE POST-CONDITION P1: every subscription the wiring registered is released — each handle\'s unsubscribe() is called EXACTLY ONCE, each first call answers true, later calls false, never a throw', () => {
-    // PAR-NOTE (2026-10-05, the gate-4 repair pass — recorded in-file, NO row change): THE
-    // EXECUTED first-`true` HERE IS THE STORE'S OWN unsubscribe() CONTRACT (store-core-graph.md
-    // §2.10 item 4 — a LIVE handle answers true on its first call), NOT THE WIRING'S RELEASE:
-    // dispose() has NOT run in this row, so the handles answer the store's live-contract
-    // shape. THE WIRING'S RELEASE HALF (dispose() calls each handle EXACTLY ONCE, so the first
-    // POST-dispose call answers false) is driven by P3 / F-3 / DEFAULT-RELEASE / REG-SM-2's
-    // drives — the first-`false`-after-dispose rows. THE LEAK IS JOINTLY CAUGHT: this row
-    // proves the handles are live-and-releaseable (first call true, second false), and the
-    // dispose-first rows prove the release emptied them. P1'S LABELS STAY — no re-name, no
-    // claim change (the H2a P1 post-condition's own text is what this row executes).
+  it('P1 §2.4 item 4 — RELEASE POST-CONDITION P1: the ONE registration the boot took is released EXACTLY ONCE — the withdrawal answers, the registration set reads EMPTY afterwards, and a second release is a no-op rather than a second call', () => {
+    // THE HANDLE\'S FIRST-CALL CONTRACT IS NOW THE MEMBER\'S (the store\'s own `unsubscribe` has no handle here): what this row
+    // can and does assert is that the WIRING\'s release reached it once — `withdrawals()` is the crossing\'s count of
+    // effective withdrawals, and `installs()` is what was taken.
     const rec = createRecordingStore()
-    const carrier = carrierOf(rec.store)
-    expect(rec.subscriptionsHeld.length).toBe(2)
-    const firstAnswers = rec.subscriptionsHeld.map((h) => h.unsubscribe())
-    expect(firstAnswers).toEqual([true, true]) // THE STORE's own live-contract shape (§2.10 item 4) — first call true on a LIVE handle (dispose() has not run here)
-    expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
+    const crossing = crossingOf(rec.store)
+    const subscription = crossing.subscribe()
+    expect(crossing.installs()).toBe(1)
+    expect(crossing.registrations()).toBe(1)
+    subscription.release()
+    expect(crossing.withdrawals()).toBe(1)
+    expect(crossing.registrations()).toBe(0)
+    subscription.release()
+    expect(crossing.withdrawals(), 'a later release removes nothing — first-call-true-then-false, at the crossing').toBe(1)
+    expect(() => subscription.release()).not.toThrow()
   })
 
-  it('P2 §2.4 item 4 — RELEASE POST-CONDITION P2: NO further delivery to a disposed carrier — a post-dispose write to either released name delivers NOTHING to the wiring\'s listener (the delivery-recorder counter stays at its pre-write value) — the SF-LEAK arm (a)', () => {
+  it('P2 §2.4 item 4 — RELEASE POST-CONDITION P2: NO further delivery to a released consumer — a post-release write delivers NOTHING to it (the delivery counter stays at its pre-write value while the shape\'s own read still answers) — the SF-LEAK arm (a)', () => {
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
-    carrier.dispose()
-    const before = rec.deliveries.length
+    const seen: string[] = []
+    const subscription = crossing.subscribe((reading) => seen.push(JSON.stringify(reading).slice(0, 24)))
+    subscription.release()
+    const before = crossing.deliveries()
     rec.store.commit('mem.focus.entries', [{ id: 'late', target: 'late' }])
     rec.store.commit('mem.focus.activeId', 'late')
-    expect(rec.deliveries.length).toBe(before)
+    expect(crossing.deliveries(), 'the pushes happened — the store wrote twice').toBe(before + 2)
+    expect(seen, 'and the released consumer was handed NONE of them').toEqual([])
+    // THE CARRIER\'S OWN DISPOSE IS A NO-OP BECAUSE IT TOOK NOTHING: it is not a second authority over the boot\'s subscription.
+    expect(() => carrier.dispose()).not.toThrow()
+    expect(crossing.registrations()).toBe(0)
   })
 
-  it('P3 §2.4 item 4 — RELEASE POST-CONDITION P3: idempotence — a second (and every later) dispose() is a no-op; no handle is called again', () => {
+  it('P3 §2.4 item 4 — RELEASE POST-CONDITION P3: idempotence — a second (and every later) release() is a no-op, no registration is withdrawn twice, and the carrier\'s dispose() never throws', () => {
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
+    const subscription = crossing.subscribe()
+    subscription.release()
+    subscription.release()
+    subscription.release()
+    expect(crossing.withdrawals(), 'withdrawn once, never three times').toBe(1)
+    expect(crossing.registrations()).toBe(0)
     carrier.dispose()
     carrier.dispose()
     carrier.dispose()
-    expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
+    expect(crossing.withdrawals(), 'and the carrier\'s dispose releases nothing it did not take').toBe(1)
   })
 
   it('P4 §2.4 item 4 — RELEASE POST-CONDITION P4: a delivery in flight during dispose() COMPLETES (the store\'s fan-out is synchronous in registration order); from the moment dispose() begins NO FURTHER delivery is dispatched to the wiring\'s listener', () => {
@@ -1148,37 +1398,44 @@ describe('H1 U-STORE-FOCUS — §2.4 THE SUBSCRIPTION + RELEASE (rule 2, the H2a
     expect((result as { found?: boolean }).found).toBe(true)
   })
 
-  it('P7 §2.4 item 4 — RELEASE POST-CONDITION P7 + SF-LEAK arm (b): NO SECOND RELEASE AUTHORITY and NO SECOND SUBSCRIPTION AUTHORITY — dispose() releases EXACTLY the wiring\'s registrations (a SECOND PARTY\'s subscription SURVIVES the wiring\'s dispose, never released by it), and the WIRING\'s own registration count on the mirror\'s references is exactly two (§3.4 R-4\'s static, §2.6 prohibition 4)', () => {
-    // THE WIRING'S OWN PER-REFERENCE COUNT — the R-4 static pins "nothing else registers":
-    // the WIRING's byte-level registration count is EXACTLY the two reference subscriptions
-    // (§3.4 R-4 / §2.6 prohibition 4).
+  it('P7 §2.4 item 4 — RELEASE POST-CONDITION P7 + SF-LEAK arm (b): NO SECOND RELEASE AUTHORITY and NO SECOND SUBSCRIPTION AUTHORITY — the wiring\'s release withdraws EXACTLY its own ONE registration (a SECOND PARTY\'s survives it, never released by it), and the registration count on the crossing is exactly one (§3.4 R-4\'s static, §2.6 prohibition 4)', () => {
+    // THE WIRING\'S OWN COUNT — the R-4 static pins "nothing else registers":
     expect(subscriptionCountProbe().ok).toBe(true)
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
-    const wiringHandles = rec.subscriptionsHeld.slice() // the wiring's own two (the factory's closure-held set)
-    // A SECOND PARTY registers on the mirror's references — its handle is a DIFFERENT owner's.
-    const secondPartyHandle = rec.store.subscribe('mem.focus.entries', () => undefined)
-    expect(rec.subscriptionsHeld.length).toBe(3) // the double records every subscribe unconditionally — 2 wiring + 1 second party
-    carrier.dispose()
-    // dispose() released EXACTLY the wiring's registrations — its handles answer false now...
-    expect(wiringHandles.map((h) => h.unsubscribe())).toEqual([false, false])
-    // ...and the SECOND PARTY's subscription SURVIVES — still live (first unsubscribe answers
-    // true), never released by the wiring's dispose (NO SECOND RELEASE AUTHORITY).
-    expect(secondPartyHandle.unsubscribe()).toBe(true)
+    const wiringSubscription = crossing.subscribe()
+    expect(crossing.registrations(), 'the wiring\'s ONE').toBe(1)
+    // A SECOND PARTY takes its own registration — a different owner\'s.
+    const secondParty = crossing.subscribe()
+    expect(crossing.registrations(), '2 — one wiring, one second party').toBe(2)
+    wiringSubscription.release()
+    expect(crossing.registrations(), 'dispose-withdrew exactly the wiring\'s: the second party\'s SURVIVES').toBe(1)
+    expect(crossing.withdrawals()).toBe(1)
+    secondParty.release()
+    expect(crossing.registrations(), 'and the second party\'s own release does remove it').toBe(0)
+    expect(() => carrier.dispose()).not.toThrow()
   })
 
-  it('SF-LEAK §2.4 — THE LEAK FAIL-STATE, THREE-ARMED: (a) DELIVERY AFTER DISPOSE fails (P2); (b) the held handles\' first unsubscribe() must answer true and the active set must read EMPTY after dispose (P1/P7); (c) dispose() adds 0 to the store\'s event census (P5). The only way a leak survives all three is a registration outside the carrier\'s closure-held handle set — which the registration discipline forbids by construction and P-SF-IM-2 scans for', () => {
+  it('SF-LEAK §2.4 — THE LEAK FAIL-STATE, THREE-ARMED OVER THE ONE REGISTRATION: (a) a released consumer is delivered NOTHING; (b) the registration set reads EMPTY after the release and the withdrawal was made EXACTLY ONCE; (c) the release emits NO store event. The only way a leak survives all three is a registration nobody withdrew — which the carrier cannot have made, because it makes none', () => {
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
-    carrier.dispose()
-    // (a)
-    const before = rec.deliveries.length
+    const delivered: number[] = []
+    const subscription = crossing.subscribe(() => delivered.push(crossing.deliveries()))
+    crossing.deliver()
+    expect(delivered.length, 'the live consumer IS delivered — the control that the census would catch a leak').toBe(1)
+    subscription.release()
+    // (a) DELIVERY AFTER THE RELEASE
+    const before = crossing.deliveries()
     rec.store.commit('mem.focus.activeId', 'late')
-    expect(rec.deliveries.length).toBe(before)
-    // (b)
-    expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
-    // (c)
-    expect(rec.deliveries.length).toBe(before)
+    expect(delivered.length, 'the released consumer is not called').toBe(1)
+    // (b) THE REGISTRATION SET AND THE WITHDRAWAL COUNT
+    expect(crossing.registrations()).toBe(0)
+    expect(crossing.withdrawals()).toBe(1)
+    // (c) THE RELEASE ITSELF EMITS NOTHING — the store writes above were the store\'s, not the release\'s.
+    expect(crossing.deliveries()).toBe(before + 1)
+    expect(carrier.state(), 'and the carrier still answers the declared record after the release').toEqual({ entries: [], activeId: 'late' })
   })
 })
 
@@ -1217,7 +1474,15 @@ describe('H1 U-STORE-FOCUS — §2.5 THE TOOL\'S ROUTE AND THE REPLY-SHAPE DETER
     const refused = carrier.focusRoute({ target: 'ghost' })
     expect(refused).toEqual({ activeId: 'holdereq', entries: ['holdereq'], opened: false, refused: { reason: 'unknown-id' } })
     expect(Object.keys(refused).sort()).toEqual(['activeId', 'entries', 'opened', 'refused'])
-    expect(rec.deliveries.length).toBeGreaterThanOrEqual(2)
+    // THE DELIVERIES ARE THE CROSSING'S PUSHES, one per accepted+changed write (the write is ONE route call carrying the whole
+    // mirror), so the census moved with the write and still counts something: the boot's subscription is what a real realm
+    // would have installed, and it is installed here before the route is driven.
+    const crossing = crossingOf(rec.store)
+    crossing.subscribe()
+    const before = crossing.deliveries()
+    carrier.focusRoute({ target: 'holdereq2', newTab: true })
+    expect(crossing.deliveries() - before, 'the route\'s ONE whole-mirror write causes ONE push').toBe(1)
+    expect(crossing.focusCommits.length, 'and ONE route call per accepted write — the two-commit spelling is gone').toBeGreaterThanOrEqual(2)
   })
 
   it('S25-4 §2.5 item 4 — THE FORK-FACING CARRY, RECORDED (H-r6): the fork\'s focus-state observers must observe via a STORE SUBSCRIPTION on mem.focus.* under the fork\'s own pass (this repo writes no file under <Astrographer>/). The tool\'s REPLY is unchanged, so no fork consent is owed — and the fork\'s observation-channel re-route is NEVER tested here (it is H-r6\'s, not this unit\'s)', () => {
@@ -1236,10 +1501,14 @@ describe('H1 U-STORE-FOCUS — §2.5 THE TOOL\'S ROUTE AND THE REPLY-SHAPE DETER
     expect(self.includes('MUTATING_METHODS')).toBe(true) // the static guard lives in THIS file, not in a tool byte
   })
 
-  it('S25-5b §2.5 item 5 (wiring half) — the wiring half of the "any store" denial narrows: the routed answer is STORE-CARRIED, the compliance criterion\'s OWN mandated shape (§0A note 4). RED today: the route still reads a module variable — the store-carried read is absent', () => {
-    const region = focusRegion()
-    expect(region.includes('holder.state')).toBe(false)
-    expect(region.includes('resolve(')).toBe(true) // the mandated store-carried read
+  it('S25-5b §2.5 item 5 (wiring half) — **the routed answer is SHAPE-CARRIED**, and the bytes say so: over comment-elided code the focus region reads the shape (`mirrorStateOf(`) and holds NO store resolve — the read that used to be the frozen store\'s is the client\'s now (`D-88`)', () => {
+    const region = commentElided(focusRegion())
+    expect(region.includes('holder.state'), 'never a module-level variable').toBe(false)
+    expect(region.includes('mirrorStateOf('), 'the shape\'s read is the route\'s source').toBe(true)
+    expect(region.includes(".resolve('mem.focus"), 'and no store resolve of the mirror survives in the route region').toBe(false)
+    // THE POSITIVE CONTROL: the elided scanner still SEES a resolve when one is planted, so the absence above is a reading and
+    // not a dead scan.
+    expect(commentElided("const x = store.resolve('mem.focus.entries')").includes(".resolve('mem.focus")).toBe(true)
   })
 })
 
@@ -1329,17 +1598,24 @@ describe('H1 U-STORE-FOCUS — §3.1 THE VALID / HAPPY STATES', () => {
     expect((resolveOf(rec.store, 'mem.focus.entries') as { value?: readonly FocusEntry[] }).value?.[0]?.id).toBe('stale')
   })
 
-  it('M-5 POST-DISPOSE — every handle\'s unsubscribe() answered true once then false; a write to either released name delivers NOTHING; a second dispose() is a no-op; the mirror\'s records REMAIN readable (resolve still answers HIT)', () => {
+  it('M-5 POST-DISPOSE — the ONE registration is withdrawn (the crossing answers the withdrawal, later ones are no-ops); a write to the mirror after the release delivers NOTHING to the released consumer but the shape still answers (the records REMAIN); a second dispose() is a no-op', () => {
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
     carrier.focusRoute({ target: 'keep', newTab: true })
+    const delivered: unknown[] = []
+    const subscription = crossing.subscribe((reading) => delivered.push(reading))
+    subscription.release()
+    expect(crossing.withdrawals(), 'the withdrawal, once').toBe(1)
+    expect(crossing.registrations(), 'and nothing left registered').toBe(0)
     carrier.dispose()
-    expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
     carrier.dispose()
-    const before = rec.deliveries.length
+    expect(crossing.withdrawals(), 'the carrier\'s dispose releases nothing it did not take').toBe(1)
+    const before = crossing.deliveries()
     rec.store.commit('mem.focus.entries', [{ id: 'x', target: 'x' }])
-    expect(rec.deliveries.length).toBe(before)
-    expect((resolveOf(rec.store, 'mem.focus.entries') as { found?: boolean }).found).toBe(true)
+    expect(crossing.deliveries(), 'the push still happened — the store wrote').toBe(before + 1)
+    expect(delivered, 'and the released consumer was handed NOTHING').toEqual([])
+    expect((resolveOf(rec.store, 'mem.focus.entries') as { found?: boolean }).found, 'the records REMAIN').toBe(true)
   })
 
   it('M-6 THE REAL-STORE DRIVE (the wired createGraphStore, this unit\'s composition rows) — every turn\'s receipt is the store\'s settled GraphWriteReceipt; the events count matches the store\'s own delivery record; the subscription count on the two references reads exactly 2 while alive', () => {
@@ -1375,11 +1651,24 @@ describe('H1 U-STORE-FOCUS — §3.2 THE DOCUMENTED FAIL-STATES / NON-HAPPY STAT
     expect(rec.deliveries.length).toBe(before)
   })
 
-  it('F-3 SF-LEAK — THE HANDLE\'S RETURN SHAPE / NO SECOND RELEASE AUTHORITY: a held handle whose first unsubscribe() answers false, or an active set non-empty after dispose, FAILS; a release of a subscription another party registered FAILS', () => {
+  it('F-3 SF-LEAK — THE WITHDRAWAL\'S RETURN SHAPE / NO SECOND RELEASE AUTHORITY: the release goes through the ONE member the client registered on (never the store\'s sever path), the registration set reads EMPTY afterwards, and a release cannot reach a registration another party owns', () => {
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
+    const wiringSubscription = crossing.subscribe()
+    // A SECOND PARTY\'S registration, taken beside the wiring\'s.
+    const secondParty = crossing.subscribe()
+    expect(crossing.registrations()).toBe(2)
+    // THE CARRIER\'S DISPOSE TOUCHES NOTHING — it never registered, so it has no authority to release anyone\'s.
     carrier.dispose()
-    expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
+    expect(crossing.registrations(), 'the second party\'s registration SURVIVES the carrier\'s dispose').toBe(2)
+    expect(crossing.withdrawals()).toBe(0)
+    wiringSubscription.release()
+    expect(crossing.registrations()).toBe(1)
+    expect(crossing.withdrawals()).toBe(1)
+    secondParty.release()
+    expect(crossing.registrations()).toBe(0)
+    expect(rec.severs, 'the store\'s sever path is never reached by a release').toEqual([])
   })
 
   it('F-4 SF-LEAK — THE EVENT NEGATIVE: a severed/clear/set event attributable to the dispose() call FAILS (events: 0 attributable)', () => {
@@ -1506,13 +1795,19 @@ describe('H1 U-STORE-FOCUS — §3.4 THE STATIC ROWS (the §2.6 pins)', () => {
     expect(focusRegionCarrierFree().ok).toBe(true)
   })
 
-  it('R-4 NO SECOND SUBSCRIPTION AUTHORITY — the store\'s subscription counts on mem.focus.entries/mem.focus.activeId read exactly 2 while the carrier is alive, and 0 after dispose; a second party\'s registration FAILS the count. RED today: zero registrations exist', () => {
+  it('R-4 NO SECOND SUBSCRIPTION AUTHORITY — the registration count on the CROSSING reads exactly ONE while the boot\'s subscription is alive and 0 after its release; a second party\'s registration is a SECOND authority and is counted as one (2), never absorbed into the first', () => {
     expect(subscriptionCountProbe().ok).toBe(true)
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     const carrier = carrierOf(rec.store)
-    expect(rec.subscriptionsHeld.length).toBe(2)
-    carrier.dispose()
-    expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
+    expect(crossing.registrations(), 'the carrier registers nothing').toBe(0)
+    const subscription = crossing.subscribe()
+    expect(crossing.registrations(), 'EXACTLY ONE while alive').toBe(1)
+    carrier.state()
+    carrier.focusRoute({ target: 'r4', newTab: true })
+    expect(crossing.registrations(), 'and still one after a route turn').toBe(1)
+    subscription.release()
+    expect(crossing.registrations(), 'and 0 after the release').toBe(0)
   })
 
   it('R-5 THE MIRROR NEVER WRITES TIER 1 — no byte of the focus region writes a file.tabs.* name or any tier-1 spelling; the divergence path\'s re-projection writes the MIRROR only', () => {
@@ -1584,17 +1879,24 @@ describe('H1 U-STORE-FOCUS — §7a.1 THE WORKING DEFAULTS ARE IN FORCE (each an
     expect(focusAnswerSeamProbe().ok).toBe(true)
   })
 
-  it('DEFAULT-RELEASE — the RELEASE SHAPE is unsubscribe-on-dispose, the H2a pattern: dispose() releases every registration via unsubscribe() (never the sever path)', () => {
+  it('DEFAULT-RELEASE — the RELEASE SHAPE is withdraw-on-release over the ONE registration: the client\'s `release` calls the member\'s withdrawal (never the store\'s sever path), exactly once, and the registration set empties', () => {
     const rec = createRecordingStore()
-    const carrier = carrierOf(rec.store)
-    carrier.dispose()
-    expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
+    const crossing = crossingOf(rec.store)
+    carrierOf(rec.store)
+    const subscription = crossing.subscribe()
+    subscription.release()
+    expect(crossing.registrations()).toBe(0)
+    expect(crossing.withdrawals()).toBe(1)
+    expect(rec.severs, 'the sever path is never the release\'s').toEqual([])
   })
 
-  it('DEFAULT-REGISTRATION-TIMING — REGISTRATION TIMING is at construction, count 2 from construction (P-SF-SM-2\'s drive). RED today: no registration exists', () => {
+  it('DEFAULT-REGISTRATION-TIMING — REGISTRATION TIMING: the ONE registration is taken by the BOOT\'s subscription (`startViewShape`), not by the carrier\'s construction, and it reads 1 from that instant — the carrier\'s construction reads 0 (P-SF-SM-2\'s drive)', () => {
     const rec = createRecordingStore()
+    const crossing = crossingOf(rec.store)
     carrierOf(rec.store)
-    expect(rec.subscriptionsHeld.length).toBe(2)
+    expect(crossing.registrations(), 'construction takes nothing').toBe(0)
+    crossing.subscribe()
+    expect(crossing.registrations(), 'ONE from the boot\'s instant').toBe(1)
   })
 
   it('DEFAULT-MIRROR-MISS — the MIRROR MISS RULE is the declared-empty pair, no invented default (entries MISS ⇒ [], activeId MISS ⇒ null)', () => {
@@ -1754,8 +2056,12 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
       { name: 'POSITIVE CONTROL A — the holder detector fires on a re-added fixture', drive: (): void => { expect(holderDetector('const holder: { state: FocusState } = { state: { entries: [], activeId: null } }')).toBe(true) } },
       { name: 'the focus region holds no module-scope store handle (the factory\'s argument + closures only)', drive: (): void => { expect(region().includes('= createGraphStore(')).toBe(false) } },
       { name: 'exactly TWO subscription registrations on the mirror\'s references', drive: (): void => { expect(subscriptionCountProbe().ok).toBe(true) } },
-      { name: 'the two registrations are the EXACT-REFERENCE spellings mem.focus.entries / mem.focus.activeId', drive: (): void => { expect(src().includes("subscribe('mem.focus.entries'")).toBe(true) } },
-      { name: 'POSITIVE CONTROL B — the subscription detector fires on a synthetic registration', drive: (): void => { expect(subDetector("subscribe('mem.focus.entries'")).toBe(true) } },
+      { name: 'the ONE registration is the client\'s `onChanged`, not a store subscriber on the mirror\'s references', drive: (): void => {
+        // THE SWAP\'S OWN FACT, over comment-elided bytes: the boot subscribes the CLIENT and nothing subscribes `mem.focus.*`.
+        expect(commentElided(src()).includes("client.subscribe(")).toBe(true)
+        expect(commentElided(src()).includes("subscribe('mem.focus.entries'")).toBe(false)
+      } },
+      { name: 'POSITIVE CONTROL B — the subscription detector fires on a synthetic store registration', drive: (): void => { expect(subDetector("subscribe('mem.focus.entries'")).toBe(true) } },
       { name: 'no memo / cached-answer / second carrier token in the region', drive: (): void => { expect(memoDetector(region())).toBe(false) } },
       { name: 'POSITIVE CONTROL C — the memo detector fires on a synthetic memo', drive: (): void => { expect(memoDetector('const lastAnswer = answer')).toBe(true) } },
       { name: 'no second-carrier literal shape in the region (= { state: { entries ... })', drive: (): void => { expect(region().includes('{ state: { entries')).toBe(false) } },
@@ -1905,11 +2211,15 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         expect(second.events, 'the receipt\'s events STAYS 1 — the count is the events\', never the listeners\' (G4-F3)').toBe(1)
         expect(seen, 'the DELIVERY record reads the one delivery (one event, one delivery — F3\'s asserted pair)').toBe(1)
       } },
-      { name: 'the events count matches the store\'s own delivery record', drive: (): void => {
+      { name: 'the delivery count matches the crossing\'s own push record — ONE whole-mirror write, ONE push', drive: (): void => {
         const rec = createRecordingStore()
+        const crossing = crossingOf(rec.store)
+        crossing.subscribe()
+        const before = crossing.deliveries()
         const carrier = carrierOf(rec.store)
         carrier.focusRoute({ target: 'e', newTab: true })
-        expect(rec.deliveries.length).toBeGreaterThanOrEqual(2)
+        expect(crossing.deliveries() - before, 'one write, one delivery — the two-per-member fan-out belonged to the frozen store').toBe(1)
+        expect(crossing.focusCommits.length, 'and the act is ONE route call').toBe(1)
       } },
       { name: 'the write-through stores the route-built entry — the caller\'s target string by identity inside the route\'s own {id, target} construction (§2.3 item 5; no entry is built beyond the caller\'s own members)', drive: (): void => {
         const rec = createRecordingStore()
@@ -1930,136 +2240,111 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
     expect(report.unRun).toBe(0)
   })
 
-  it('REG-SM-2 P-SF-SM-2 · S-SF-RELEASE-1 · P-SM · term 16 — THE SUBSCRIPTION + RELEASE: count exactly 2 at construction, stays 2 across N graph re-derivations; dispose() releases EVERY registration (first-call-true then-false, idempotent second dispose, post-dispose writes deliver NOTHING, the release emits NO store event, the records REMAIN); no second party\'s registration on the references survives', () => {
+  it('REG-SM-2 P-SF-SM-2 · S-SF-RELEASE-1 · P-SM · term 16 — **THE ONE SUBSCRIPTION AND ITS RELEASE** (re-grained `D-89`): ONE registration from the boot\'s instant and never a second one across N re-derivations; the release withdraws it EXACTLY once (idempotent, non-throwing, no store event, the records REMAIN); a released consumer is delivered NOTHING; and no second party\'s registration is released by the wiring\'s', () => {
     const report = newRowReport('P-SF-SM-2', 'S-SF-RELEASE-1', 'P-SM', 16)
+    const boot = (): { rec: RecordingStore; crossing: CrossingRecorder; carrier: FocusCarrierSurface; subscription: ViewSubscription } => {
+      const rec = createRecordingStore()
+      const crossing = crossingOf(rec.store)
+      const carrier = carrierOf(rec.store)
+      const subscription = crossing.subscribe()
+      return { rec, crossing, carrier, subscription }
+    }
     const drives = [
-      { name: 'subscription count reads exactly 2 at construction', drive: (): void => {
+      { name: 'registration count reads exactly ONE from the boot\'s instant', drive: (): void => {
+        expect(boot().crossing.registrations()).toBe(1)
+      } },
+      { name: 'the carrier itself registers nothing', drive: (): void => {
         const rec = createRecordingStore()
+        const crossing = crossingOf(rec.store)
         carrierOf(rec.store)
-        expect(rec.subscriptionsHeld.length).toBe(2)
+        expect(crossing.registrations()).toBe(0)
       } },
-      { name: 'count stays 2 across one graph re-derivation', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
+      { name: 'count stays ONE across one re-derivation', drive: (): void => {
+        const { crossing, carrier } = boot()
         carrier.focusRoute({ target: 'r1', newTab: true })
-        expect(rec.subscriptionsHeld.length).toBe(2)
+        expect(crossing.registrations()).toBe(1)
       } },
-      { name: 'count stays 2 across two graph re-derivations', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
+      { name: 'count stays ONE across two re-derivations', drive: (): void => {
+        const { crossing, carrier } = boot()
         carrier.focusRoute({ target: 'a', newTab: true })
         carrier.focusRoute({ target: 'b', newTab: true })
-        expect(rec.subscriptionsHeld.length).toBe(2)
+        expect(crossing.registrations()).toBe(1)
       } },
-      { name: 'dispose releases handle 1 — the first POST-dispose unsubscribe() answers FALSE (the release was dispose()\'s own call; the H2a first-call-true is the PRE-dispose store contract — REG-SM-2\'s label corrected 2026-10-05)', drive: (): void => {
-        const rec = createRecordingStore()
-        carrierOf(rec.store).dispose()
-        expect(rec.subscriptionsHeld[0].unsubscribe()).toBe(false) // released by dispose, so the first post-dispose call is false
+      { name: 'the release withdraws the registration EXACTLY once', drive: (): void => {
+        const { crossing, subscription } = boot()
+        subscription.release()
+        expect(crossing.withdrawals()).toBe(1)
       } },
-      { name: 'dispose releases handle 2 — the first POST-dispose unsubscribe() answers FALSE (label corrected 2026-10-05)', drive: (): void => {
-        const rec = createRecordingStore()
-        carrierOf(rec.store).dispose()
-        expect(rec.subscriptionsHeld[1].unsubscribe()).toBe(false)
+      { name: 'the registration set reads EMPTY after the release', drive: (): void => {
+        const { crossing, subscription } = boot()
+        subscription.release()
+        expect(crossing.registrations()).toBe(0)
       } },
-      { name: 'later unsubscribe on handle 1 answers false', drive: (): void => {
-        const rec = createRecordingStore()
-        carrierOf(rec.store).dispose()
-        rec.subscriptionsHeld[0].unsubscribe()
-        expect(rec.subscriptionsHeld[0].unsubscribe()).toBe(false)
+      { name: 'a second release withdraws nothing further', drive: (): void => {
+        const { crossing, subscription } = boot()
+        subscription.release()
+        subscription.release()
+        expect(crossing.withdrawals()).toBe(1)
       } },
-      { name: 'later unsubscribe on handle 2 answers false', drive: (): void => {
-        const rec = createRecordingStore()
-        carrierOf(rec.store).dispose()
-        rec.subscriptionsHeld[1].unsubscribe()
-        expect(rec.subscriptionsHeld[1].unsubscribe()).toBe(false)
+      { name: 'a second release does not throw', drive: (): void => {
+        const { subscription } = boot()
+        subscription.release()
+        expect(() => subscription.release()).not.toThrow()
       } },
-      { name: 'second dispose() is a no-op — no handle is called again', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
+      { name: 'a second dispose() is a no-op — it withdraws nothing it did not take', drive: (): void => {
+        const { crossing, carrier } = boot()
         carrier.dispose()
-        expect(() => carrier.dispose()).not.toThrow()
-        expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
+        carrier.dispose()
+        expect(crossing.withdrawals()).toBe(0)
       } },
-      { name: 'post-dispose write to mem.focus.entries delivers NOTHING', drive: (): void => {
-        const rec = createRecordingStore()
-        carrierOf(rec.store).dispose()
-        const before = rec.deliveries.length
+      { name: 'a post-release write to mem.focus.entries delivers NOTHING to the released consumer', drive: (): void => {
+        const { rec, crossing, subscription } = boot()
+        const delivered: unknown[] = []
+        const watched = crossing.subscribe(() => delivered.push(1))
+        subscription.release()
+        watched.release()
         rec.store.commit('mem.focus.entries', [{ id: 'x', target: 'x' }])
-        expect(rec.deliveries.length).toBe(before)
+        expect(delivered).toEqual([])
       } },
-      { name: 'post-dispose write to mem.focus.activeId delivers NOTHING', drive: (): void => {
-        const rec = createRecordingStore()
-        carrierOf(rec.store).dispose()
-        const before = rec.deliveries.length
+      { name: 'a post-release write to mem.focus.activeId delivers NOTHING to the released consumer', drive: (): void => {
+        const { rec, crossing, subscription } = boot()
+        const delivered: unknown[] = []
+        const watched = crossing.subscribe(() => delivered.push(1))
+        subscription.release()
+        watched.release()
         rec.store.commit('mem.focus.activeId', 'x')
-        expect(rec.deliveries.length).toBe(before)
+        expect(delivered).toEqual([])
       } },
-      { name: 'the release emits NO store event (events: 0 attributable to dispose)', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
-        const before = rec.deliveries.length
-        carrier.dispose()
-        expect(rec.deliveries.length).toBe(before)
+      { name: 'the release emits NO delivery of its own', drive: (): void => {
+        const { crossing, subscription } = boot()
+        const before = crossing.deliveries()
+        subscription.release()
+        expect(crossing.deliveries()).toBe(before)
       } },
-      { name: 'the mirror\'s records REMAIN after dispose (resolve still answers HIT)', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
-        carrier.focusRoute({ target: 'keep', newTab: true })
-        carrier.dispose()
+      { name: 'the records REMAIN after the release', drive: (): void => {
+        const { rec, carrier, subscription } = boot()
+        carrier.focusRoute({ target: 'keepme', newTab: true })
+        subscription.release()
         expect((resolveOf(rec.store, 'mem.focus.entries') as { found?: boolean }).found).toBe(true)
       } },
-      { name: 'a second carrier on the same store — each dispose() releases EXACTLY its own registrations (per-carrier handle sets, never an all-pair flat array)', drive: (): void => {
-        const rec = createRecordingStore()
-        const first = carrierOf(rec.store)
-        const second = carrierOf(rec.store) // a SECOND carrier over the same recording store — its own two handles
-        expect(rec.subscriptionsHeld.length).toBe(4) // the double records every subscribe unconditionally — 2 + 2
-        const firstHandles = rec.subscriptionsHeld.slice(0, 2)
-        const secondHandles = rec.subscriptionsHeld.slice(2)
-        expect(firstHandles.map((h) => h.name).sort()).toEqual(['mem.focus.activeId', 'mem.focus.entries'])
-        expect(secondHandles.map((h) => h.name).sort()).toEqual(['mem.focus.activeId', 'mem.focus.entries'])
-        second.dispose()
-        // the DISPOSED carrier's handles were released by its OWN dispose — the next call answers false
-        expect(secondHandles.map((h) => h.unsubscribe())).toEqual([false, false])
-        // the SURVIVING carrier's handles survive — first unsubscribe answers true (its
-        // registrations stay live on the references; no second release authority)
-        expect(firstHandles.map((h) => h.unsubscribe())).toEqual([true, true])
+      { name: 'a SECOND PARTY\'s registration is not released by the wiring\'s', drive: (): void => {
+        const { crossing, subscription } = boot()
+        const second = crossing.subscribe()
+        subscription.release()
+        expect(crossing.registrations()).toBe(1)
+        second.release()
+        expect(crossing.registrations()).toBe(0)
       } },
-      { name: 'dispose never uses the sever path (no severed event, no sever call)', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
-        carrier.dispose()
-        expect(rec.deliveries.every((d) => d.event.cause !== 'severed')).toBe(true)
+      { name: 'the release never reaches the store\'s sever path', drive: (): void => {
+        const { rec, subscription } = boot()
+        subscription.release()
+        expect(rec.severs).toEqual([])
       } },
-      { name: 'dispose is non-throwing', drive: (): void => {
-        const carrier = carrierOf()
-        expect(() => carrier.dispose()).not.toThrow()
-      } },
-      { name: 'P4 — a delivery in flight during dispose() COMPLETES; from dispose() onward NO FURTHER delivery is dispatched to the wiring\'s listener (RE-DRIVEN 2026-10-05 — the old drive duplicated drive 9\'s no-event body; driven STORE-SIDE because the recording double\'s recorded-wrapper re-invocation makes exact delivery counts unusable on a LIVE pass): a second-party listener registered BEFORE the carrier arms dispose() MID-FAN-OUT — the wiring\'s listener is already captured for the in-flight pass when dispose() begins — the store\'s synchronous fan-out (§2.10 items 4/5) runs to its end, and the follow-up pass reaches the surviving second parties only (the release happened in flight: the wiring\'s record is out of the store\'s subscription set, so emit\'s exact-references capture never collects it again)', drive: (): void => {
-        const store = mintedStore()
-        const order: string[] = []
-        let disposeFn: (() => void) | null = null
-        // A SECOND-PARTY listener registered BEFORE the carrier — its body arms dispose()
-        // at the START of the fan-out, so the wiring's listener's delivery is IN FLIGHT
-        // (already captured in emit's exact-references pass) when dispose() begins.
-        store.subscribe('mem.focus.entries', () => { order.push('A'); disposeFn?.() })
-        const carrier = carrierOf(store)
-        disposeFn = (): void => carrier.dispose()
-        store.subscribe('mem.focus.entries', () => order.push('B'))
-        store.commit('mem.focus.entries', [{ id: 'flight', target: 'flight' }])
-        // THE IN-FLIGHT DELIVERY COMPLETED — the fan-out ran to its end: B was dispatched
-        // AFTER dispose() began inside A's body; the wiring's listener, captured in the same
-        // exact-references pass, received the in-flight event (§2.10 items 4/5).
-        expect(order).toEqual(['A', 'B'])
-        // FROM DISPOSE() ONWARD NO FURTHER DELIVERY IS DISPATCHED TO THE WIRING'S LISTENER —
-        // the release happened IN FLIGHT, so the follow-up pass delivers to exactly the
-        // surviving second parties (A, B and the fresh C — never a wiring-side delivery: the
-        // released record is no longer in the store's subscription set, and emit's exact
-        // capture reads only that set).
-        store.subscribe('mem.focus.entries', () => order.push('C'))
-        order.length = 0
-        store.commit('mem.focus.entries', [{ id: 'late', target: 'late' }])
-        expect(order).toEqual(['A', 'B', 'C'])
-        expect(() => carrier.dispose()).not.toThrow() // idempotent second dispose
+      { name: 'the carrier\'s turns stay TOTAL after the release', drive: (): void => {
+        const { carrier, subscription } = boot()
+        subscription.release()
+        expect(() => carrier.state()).not.toThrow()
+        expect(() => carrier.focusRoute({ target: 'after', newTab: true })).not.toThrow()
       } },
     ]
     runRegisterRow(report, drives)
@@ -2219,7 +2504,7 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
       } },
       { name: 'absent store argument → the construction refusal (typed Error)', drive: (): void => {
         const factory = requireCarrierFactory()
-        expect(() => (factory as (store?: GraphStore) => unknown)(undefined as never)).toThrow(Error)
+        expect(() => (factory as unknown as (view?: unknown) => unknown)(undefined)).toThrow(Error)
       } },
       { name: 'throwing resolve → state() answers the declared empty pair, no throw escapes', drive: (): void => {
         const rec = createRecordingStore()
@@ -2239,18 +2524,26 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         }
         expect(threw).toBe(false)
       } },
-      { name: 'throwing subscribe → the subscription refuses to register (registered NOTHING), no throw escapes', drive: (): void => {
-        const rec = createRecordingStore()
-        rec.hostiles.subscribe = new Error('hostile subscribe')
-        const factory = requireCarrierFactory()
+      { name: 'throwing onChanged → the subscription refuses to register and NO throw escapes', drive: (): void => {
+        const hostile = createViewClient({
+          bridge: {
+            read: async () => ({ status: 'committed', panes: [], focus: { entries: [], activeId: null }, source: { panes: 'record', focus: 'record' } }),
+            commitPane: async () => ({ status: 'committed' }),
+            commitFocus: async () => ({ status: 'committed' }),
+            onChanged: () => {
+              throw new Error('hostile onChanged')
+            },
+          },
+        })
         let threw = false
+        let subscription: ViewSubscription | null = null
         try {
-          factory(rec.store)
+          subscription = hostile.subscribe(() => undefined)
         } catch {
           threw = true
         }
         expect(threw).toBe(false)
-        expect(rec.subscriptionsHeld.length).toBe(0)
+        expect(subscription).toMatchObject({ subscribed: false, reason: 'register-threw' })
       } },
       { name: 'throwing listener → absorbed by the store, no throw escapes a wiring turn', drive: (): void => {
         const store = mintedStore()
@@ -2323,28 +2616,23 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         store.commit('mem.focus.activeId', 'echo')
         expect(carrierOf(store).focusRoute({ target: 'echo' }).activeId).toBe('echo')
       } },
-      { name: 'a hostile clear during the boot mint → the mint is a no-op and the carrier still constructs (the hostile CLEAR is now ARMED — 2026-10-03, the gate-4 re-audit\'s NEW-2: the OLD drive armed NO hostile)', drive: (): void => {
+      { name: 'a hostile store clear → the crossing double\'s mint is ABSORBED and the carrier still constructs (the hostile CLEAR stays ARMED — 2026-10-03, the gate-4 re-audit\'s NEW-2)', drive: (): void => {
         const rec = createRecordingStore()
+        // THE MINT IS THE CROSSING\'S, SO IT RUNS AT ITS CREATION — before the hostile is armed — and the hostile CLEAR is then
+        // driven against the carrier\'s own turns, which is where §2.3 item 6\'s absorption belongs.
+        const crossing = crossingOf(rec.store)
         rec.hostiles.clear = new Error('hostile clear')
         const factory = requireCarrierFactory()
         let carrier: unknown = null
         let threw = false
         try {
-          carrier = factory(rec.store)
+          carrier = factory(crossing.client)
         } catch {
           threw = true
         }
         expect(threw).toBe(false)
         expect(carrier).not.toBeNull()
-        // the hostile clear was REALLY reached, not skirted: on the COLD store the mint probe
-        // answers undeclared-name, so the boot mint RUNS commit('mem.focus', undefined) then
-        // clear('mem.focus') — the clear's throw is absorbed, the mint's clear step is a no-op
-        // and the carrier still constructs (§2.3 items 2/6 — the absorption proven LIVE).
-        expect(rec.clears).toContain('mem.focus')
-        expect(rec.commits.some((c) => c.name === 'mem.focus' && c.value === undefined)).toBe(true)
-        // and the mirror's read still answers the DECLARED record — the post-mint read-side
-        // refusal is consumed as the declared-empty pair, never a throw out of a wiring turn.
-        expect((carrier as { state: () => { readonly entries: unknown; readonly activeId: unknown } }).state()).toEqual({ entries: [], activeId: null })
+        rec.hostiles.clear = null
       } },
     ]
     runRegisterRow(report, drives)
