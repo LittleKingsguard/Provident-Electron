@@ -42,6 +42,15 @@ import {
   DEFAULT_PANE_SIZE,
 } from '../../../src/shared/view-shape'
 
+/** ONE ZONE as the wire carries it (D-91) — the four members the frozen store kept, each optional, `id` the family's key. */
+interface WireZone {
+  readonly id: string
+  readonly slot?: unknown
+  readonly distance?: number
+  readonly size?: number
+  readonly display?: string
+}
+
 /** ONE PANE'S GEOMETRY as the wire carries it — the crossing's own admission is the store's
  *  business; this file only states values a boundary could legally hand over. */
 interface WirePane {
@@ -66,8 +75,10 @@ interface BoundaryDouble {
   readonly nextRouteAnswer: (answer: Promise<unknown>) => void
   /** Make the next reads REJECT — a transport fault, which is a statement about the wire and never about the record. */
   readonly failReads: () => void
-  /** The reading the double's `read` answers when nothing else was installed. */
-  readonly committed: (panes: readonly WirePane[], entries: readonly unknown[], activeId: unknown) => ViewCommittedReading
+  /** The reading the double's `read` answers when nothing else was installed. **THE THIRD FAMILY IS A PARAMETER WITH AN
+   *  EMPTY DEFAULT** (D-91): every row that does not drive a zone states the family's DECLARED EMPTY arm, and the one row
+   *  that does supplies it — so no row can pass while the wire silently omitted the family, because the parse requires it. */
+  readonly committed: (panes: readonly WirePane[], entries: readonly unknown[], activeId: unknown, zones?: readonly WireZone[]) => ViewCommittedReading
 }
 
 /** The double's member, narrowed at the ONE place it crosses into the client's option type — a test double is a boundary,
@@ -83,7 +94,8 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
     status: 'committed',
     panes: [{ id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } }],
     focus: { entries: [], activeId: null },
-    source: { panes: 'record', focus: 'record' },
+    zones: [],
+    source: { panes: 'record', focus: 'record', zones: 'record' },
   }
   let routeAnswer: Promise<unknown> = Promise.resolve({ status: 'committed' })
   let failing = false
@@ -132,11 +144,12 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
     nextRouteAnswer: (next: Promise<unknown>): void => {
       routeAnswer = next
     },
-    committed: (panes: readonly WirePane[], entries: readonly unknown[], activeId: unknown): ViewCommittedReading => ({
+    committed: (panes: readonly WirePane[], entries: readonly unknown[], activeId: unknown, zones: readonly WireZone[] = []): ViewCommittedReading => ({
       status: 'committed',
       panes,
       focus: { entries: entries as ViewCommittedReading['focus']['entries'], activeId: activeId as ViewCommittedReading['focus']['activeId'] },
-      source: { panes: 'record', focus: 'record' },
+      zones: zones as ViewCommittedReading['zones'],
+      source: { panes: 'record', focus: 'record', zones: 'record' },
     }),
   }
 }
@@ -161,6 +174,7 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
       max: DEFAULT_PANE_BOUNDS.max,
     })
     expect(client.focusState(), 'the declared empty pair').toEqual({ entries: [], activeId: null })
+    expect(client.zoneOf('zone-1'), 'and a zone answers its ABSENCE — the family has no measured default to give it (D-91)').toBeNull()
   })
 
   it('C-2 · `fill()` IS THE ONE STATED BOOT READ: it reads ONCE, adopts the answer WHOLE, and the shape then answers the record\'s own values with the crossing\'s two `source` words', async () => {
@@ -176,7 +190,8 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
     expect(client.paneBoundsOf('pane-b'), 'the pair AS STORED, never a clamped policy').toEqual({ min: 10, max: 400 })
     expect(client.paneSizeOf('pane-never-written'), 'a pane the family does not name answers the measured default').toBe(DEFAULT_PANE_SIZE)
     expect(client.focusState(), 'the mirror as the wire carried it').toEqual({ entries: [{ id: 'a', target: 'page://a' }], activeId: 'a' })
-    expect(client.shape().source, 'the record answered both families').toEqual({ panes: 'record', focus: 'record' })
+    expect(client.shape().source, 'the record answered all three families').toEqual({ panes: 'record', focus: 'record', zones: 'record' })
+    expect(client.zoneOf('zone-1'), 'and a zone the empty family does not name answers its ABSENCE, not a geometry').toBeNull()
   })
 
   it('C-3 · THE ONE SUBSCRIPTION, AND THE DELIVERY\'S ONLY CORRECT ANSWER IS A FRESH READ: one registration, one push → exactly ONE re-read, and the shape is REPLACED WHOLE by what that read answered', async () => {
@@ -310,11 +325,29 @@ describe('view client · the release, and the arms that are VALUES', () => {
       status: 'committed',
       panes: [pane('pane-a', 240), { id: 'pane-broken', size: 'x', bounds: { min: 0, max: 1 } }],
       focus: { entries: [{ id: 'a', target: 'page://a' }], activeId: 'not-an-entry' },
-      source: { panes: 'record', focus: 'record' },
+      zones: [
+        { id: 'zone-1', size: 160, display: 'normal', slot: 'doc-nav' },
+        { id: 'zone-broken', size: 'x' },
+        { id: 'zone-opaque', slot: { token: [1, 'two'] }, distance: 37 },
+      ],
+      source: { panes: 'record', focus: 'record', zones: 'record' },
     } as unknown)
     await client.fill()
     expect(client.shape().panes.map((held) => held.id), 'the malformed member is not a pane the family names').toEqual(['pane-a'])
     expect(client.paneSizeOf('pane-broken'), 'and it answers the measured default rather than a partial record').toBe(DEFAULT_PANE_SIZE)
     expect(client.focusState().activeId, 'an active naming no entry is the absent active, never a fourth spelling of "no active"').toBeNull()
+    expect(client.shape().zones.map((held) => held.id), 'the malformed zone is DROPPED and the opaque slot is KEPT').toEqual(['zone-1', 'zone-opaque'])
+    expect(client.zoneOf('zone-broken'), 'so the zone the family could not state answers its ABSENCE').toBeNull()
+    expect(client.zoneOf('zone-1'), 'and the admitted one answers exactly the members the wire carried').toEqual({
+      id: 'zone-1',
+      slot: 'doc-nav',
+      size: 160,
+      display: 'normal',
+    })
+    expect(client.zoneOf('zone-opaque'), 'the opaque slot is carried, never interpreted').toEqual({
+      id: 'zone-opaque',
+      slot: { token: [1, 'two'] },
+      distance: 37,
+    })
   })
 })

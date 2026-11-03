@@ -15,6 +15,8 @@ import {
   FOCUS_SHAPE_REASON,
   PANE_SHAPE_MESSAGE,
   PANE_SHAPE_REASON,
+  ZONE_SHAPE_MESSAGE,
+  ZONE_SHAPE_REASON,
   type ViewRecord,
   type ViewRecordAnswer,
   type ViewRecordStore,
@@ -28,13 +30,19 @@ export type ViewReadAnswer = {
   readonly status: 'committed'
   readonly panes: readonly import('../view-record/index.js').ViewPaneGeometry[]
   readonly focus: import('../view-record/index.js').ViewFocusMirror
-  readonly source: { readonly panes: 'record' | 'default'; readonly focus: 'record' | 'default' }
+  readonly zones: readonly import('../view-record/index.js').ViewZone[]
+  readonly source: {
+    readonly panes: 'record' | 'default'
+    readonly focus: 'record' | 'default'
+    readonly zones: 'record' | 'default'
+  }
 }
 
 export interface ViewSurface {
   read(): ViewReadAnswer
   commitPane(id: unknown, geometry: unknown): ViewRecordAnswer
   commitFocus(mirror: unknown): ViewRecordAnswer
+  commitZones(id: unknown, zone: unknown): ViewRecordAnswer
   attach(): void
   detach(): void
 }
@@ -55,7 +63,7 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
   return {
     read(): ViewReadAnswer {
       const answer = record.read()
-      return { status: 'committed', panes: answer.panes, focus: answer.focus, source: answer.source }
+      return { status: 'committed', panes: answer.panes, focus: answer.focus, zones: answer.zones, source: answer.source }
     },
 
     commitPane(id: unknown, geometry: unknown): ViewRecordAnswer {
@@ -74,7 +82,19 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
       return record.commitFocus(mirror)
     },
 
-    /** The change push: ONE subscription over BOTH roots, held here so `detach` can withdraw exactly what `attach` took. */
+    commitZones(id: unknown, zone: unknown): ViewRecordAnswer {
+      // the same two arms for the third family: an id that names no zone, and a record that is not one (D-91)
+      if (typeof id !== 'string' || id.length === 0) {
+        return { status: 'refused', reason: ZONE_SHAPE_REASON, message: ZONE_SHAPE_MESSAGE, address: null }
+      }
+      if (zone === null || typeof zone !== 'object' || Array.isArray(zone)) {
+        return { status: 'refused', reason: ZONE_SHAPE_REASON, message: ZONE_SHAPE_MESSAGE, address: null }
+      }
+      return record.commitZones(id, zone)
+    },
+
+    /** The change push: ONE subscription over ALL THREE roots, held here so `detach` can withdraw exactly what `attach`
+     *  took. */
     attach(): void {
       if (off !== null) return
       off = record.subscribe(() => options.onChanged?.())

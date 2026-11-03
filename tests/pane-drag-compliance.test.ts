@@ -356,7 +356,9 @@ function crossingOf(store?: GraphStore): PaneCrossing {
       return { id, size: held.size, bounds: { min: held.bounds.min, max: held.bounds.max } }
     }),
     focus: { entries: [], activeId: null },
-    source: { panes: 'record', focus: 'record' },
+    // THE THIRD FAMILY'S DECLARED EMPTY ARM (D-91): the reading carries all three, and this double drives the panes.
+    zones: [],
+    source: { panes: 'record', focus: 'record', zones: 'record' },
   })
   const bridge = {
     read: async (): Promise<unknown> => reading(),
@@ -372,6 +374,7 @@ function crossingOf(store?: GraphStore): PaneCrossing {
       return { status: 'committed' }
     },
     commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
+    commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
     onChanged: (handler: () => void): (() => void) => {
       handlers.push(handler)
       return (): void => {

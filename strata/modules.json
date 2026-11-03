@@ -298,9 +298,10 @@
         "src/shared/view-shape.ts",
         "tests/integration/store-view-record/crossing.test.ts",
         "tests/integration/store-view-record/client.test.ts",
-        "tests/integration/store-view-record/boundary.test.ts"
+        "tests/integration/store-view-record/boundary.test.ts",
+        "tests/integration/store-view-record/zone-family.test.ts"
       ],
-      "endpoints": 4
+      "endpoints": 5
     }
   ]
 }

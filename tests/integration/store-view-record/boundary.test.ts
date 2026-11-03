@@ -53,6 +53,19 @@ const DECLARED_SCOPE: readonly string[] = [
   //    subscription. It is the ONE `src/` file outside this unit's address space that the swap
   //    edits, and it is NAMED here rather than admitted by a prefix.
   'src/renderer/renderer.ts',
+  // ── THE THIRD FAMILY'S CROSSING (D-91), named path by path because a bridge route is never one
+  //    file's: the zone family's address, declaration and route live in `view-record` (already
+  //    above), and they reach a caller only through the surface's read answer and shape arm, the
+  //    shared channel module, the boot's batch and handler, and BOTH lockstep halves of the
+  //    `view` member. This pass writes each of those six, and not one is admitted by a prefix.
+  'src/main/view-surface/index.ts',
+  'src/shared/view-channels.ts',
+  'src/main/main.ts',
+  'src/main/preload.ts',
+  'src/renderer/secure-panels.ts',
+  // ── THIS PASS'S OWN BATTERY: the four clauses driven per address for the zone family. It is the
+  //    unit's fourth test file and it is listed here for the same reason the other three are.
+  'tests/integration/store-view-record/zone-family.test.ts',
   // ── THE BATTERIES: this unit's own three, and the four flat files whose rows pinned the
   //    machinery the swap replaces and were re-grained onto the shape and the route call log.
   'tests/integration/store-view-record/boundary.test.ts',

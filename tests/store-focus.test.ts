@@ -275,7 +275,10 @@ function crossingOf(store: GraphStore): CrossingRecorder {
       status: 'committed',
       panes: [],
       focus: { entries: admittedEntries as unknown as ViewCommittedReading['focus']['entries'], activeId: admittedActive },
-      source: { panes: 'record', focus: 'record' },
+      // THE THIRD FAMILY'S DECLARED EMPTY ARM (D-91): this double stands the focus mirror, and the reading the client's
+      // parse requires now carries all three families — so a zone is what a read of a family this file does not drive says.
+      zones: [],
+      source: { panes: 'record', focus: 'record', zones: 'record' },
     }
   }
   const handlers: Array<() => void> = []
@@ -295,6 +298,7 @@ function crossingOf(store: GraphStore): CrossingRecorder {
       return project()
     },
     commitPane: async (): Promise<unknown> => ({ status: 'committed' }),
+    commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
     commitFocus: async (mirror: unknown): Promise<unknown> => {
       const held = mirror as { readonly entries?: unknown; readonly activeId?: unknown }
       focusCommits.push([mirror])
@@ -1189,7 +1193,12 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
     expect(() => bareCarrier.dispose()).not.toThrow()
     // (b) A MEMBER WITH NO READ ROUTE — an older preload.
     const noRead = createViewClient({
-      bridge: { commitPane: async () => ({ status: 'committed' }), commitFocus: async () => ({ status: 'committed' }), onChanged: () => () => undefined } as never,
+      bridge: {
+        commitPane: async () => ({ status: 'committed' }),
+        commitFocus: async () => ({ status: 'committed' }),
+        commitZones: async () => ({ status: 'committed' }),
+        onChanged: () => () => undefined,
+      } as never,
     })
     expect(noRead.subscribe(() => undefined)).toMatchObject({ subscribed: true })
     const noReadCarrier = requireCarrierFactory()(noRead) as FocusCarrierSurface
@@ -1200,6 +1209,7 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
         read: () => Promise.reject(new Error('hostile read')),
         commitPane: () => Promise.reject(new Error('hostile pane')),
         commitFocus: () => Promise.reject(new Error('hostile focus')),
+        commitZones: () => Promise.reject(new Error('hostile zone')),
         onChanged: () => {
           throw new Error('hostile onChanged')
         },
@@ -2531,9 +2541,10 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
       { name: 'throwing onChanged → the subscription refuses to register and NO throw escapes', drive: (): void => {
         const hostile = createViewClient({
           bridge: {
-            read: async () => ({ status: 'committed', panes: [], focus: { entries: [], activeId: null }, source: { panes: 'record', focus: 'record' } }),
+            read: async () => ({ status: 'committed', panes: [], focus: { entries: [], activeId: null }, zones: [], source: { panes: 'record', focus: 'record', zones: 'record' } }),
             commitPane: async () => ({ status: 'committed' }),
             commitFocus: async () => ({ status: 'committed' }),
+            commitZones: async () => ({ status: 'committed' }),
             onChanged: () => {
               throw new Error('hostile onChanged')
             },

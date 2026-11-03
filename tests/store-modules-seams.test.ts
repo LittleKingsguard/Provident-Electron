@@ -376,7 +376,9 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = []): PaneShapeDouble {
     status: 'committed',
     panes: panes.map((pane) => ({ id: pane.id, size: pane.size, bounds: { min: pane.bounds.min, max: pane.bounds.max } })),
     focus: { entries: [], activeId: null },
-    source: { panes: 'record', focus: 'record' },
+    // THE THIRD FAMILY'S DECLARED EMPTY ARM (D-91): the reading carries all three, and this double drives the panes.
+    zones: [],
+    source: { panes: 'record', focus: 'record', zones: 'record' },
   })
   const member = {
     read: async (): Promise<unknown> => {
@@ -388,6 +390,7 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = []): PaneShapeDouble {
       return { status: 'committed' }
     },
     commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
+    commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
     onChanged: (handler: () => void): (() => void) => {
       handlers.push(handler)
       return (): void => {
