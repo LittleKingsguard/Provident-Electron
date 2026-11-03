@@ -3,8 +3,8 @@
   "instrument": "scripts/strata-marks.mjs",
   "suites": {
     "flat": {
-      "files": 86,
-      "sites": 2465
+      "files": 82,
+      "sites": 2294
     },
     "e2e": {
       "files": 5,
@@ -525,18 +525,6 @@
       "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
     },
     {
-      "file": "tests/store-core-graph-integration.test.ts",
-      "scope": "file",
-      "kind": "rework",
-      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
-    },
-    {
-      "file": "tests/store-core-graph.test.ts",
-      "scope": "file",
-      "kind": "rework",
-      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
-    },
-    {
       "file": "tests/store-focus.test.ts",
       "scope": "file",
       "kind": "rework",
@@ -550,18 +538,6 @@
     },
     {
       "file": "tests/store-modules-seams.test.ts",
-      "scope": "file",
-      "kind": "rework",
-      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
-    },
-    {
-      "file": "tests/store-persist.test.ts",
-      "scope": "file",
-      "kind": "rework",
-      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
-    },
-    {
-      "file": "tests/store-security.test.ts",
       "scope": "file",
       "kind": "rework",
       "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
@@ -708,11 +684,6 @@
       "reason": "the script key set is a loop instrument, not module machinery (D-38)"
     },
     {
-      "file": "tests/store-core-graph.test.ts",
-      "scenario": "§3.4 R-10 · the frozen surfaces are UNMOVED, and no `scripts` key was added",
-      "reason": "the script key set is a loop instrument, not module machinery (D-38)"
-    },
-    {
       "file": "tests/theme.test.ts",
       "scenario": "R-3(config half) (§3.4) — package.json/package-lock.json carry the LANDED dependency and script sets: no new dependency, no new script key",
       "reason": "the script key set is a loop instrument, not module machinery (D-38)"
@@ -725,17 +696,17 @@
   ],
   "readings": {
     "gating": {
-      "files": 25,
-      "sites": 176
+      "files": 24,
+      "sites": 175
     },
     "onNotice": {
-      "files": 110,
-      "sites": 2649
+      "files": 106,
+      "sites": 2479
     },
     "retained": {
       "files": 5,
       "sites": 45
     },
-    "carveOut": 8
+    "carveOut": 7
   }
 }

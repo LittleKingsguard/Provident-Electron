@@ -285,8 +285,8 @@ import {
   SETTINGS_SURFACE_SRC,
   STORE_CHANNELS_SRC,
   SECURITY_TS_SRC,
-  STORE_CORE_SRC,
-  STORE_REFS_SRC,
+  STORE_CORE_PATH,
+  STORE_REFS_PATH,
   PRELOAD_SRC,
   SECURE_PANELS_SRC,
   MCP_SERVER_SRC,
@@ -323,6 +323,12 @@ import {
   type RegisterRow,
   type ExecReport,
 } from './secure-exclusion-register.js'
+
+/** **THE TWO DELETED MODULES, AS ABSOLUTE PATHS** (`D-93`): `STORE_CORE_SRC` and `STORE_REFS_SRC` were `SRC(…)` lookups
+ *  of two files this pass deletes, so the register now carries their PATHS and this file resolves them here. Every use
+ *  is a `exists(...)` assertion that they are GONE, which is why the paths are kept rather than the lookups. */
+const STORE_CORE_SRC = fileURLToPath(new URL('./../' + STORE_CORE_PATH, new URL('./', import.meta.url)))
+const STORE_REFS_SRC = fileURLToPath(new URL('./../' + STORE_REFS_PATH, new URL('./', import.meta.url)))
 
 /* ============================================================================
  * THE TYPE SHIM (header comment above) — the not-yet-widened surfaces read
@@ -1786,9 +1792,18 @@ const registerSpecs: RegisterRow[] = [
             expect(/['"`]secure['"`]|['"`]secure\.|['"`]secure\.[a-z]/.test(src),
               `§2.6 item 2 N-1 / FS-EX-13 — ${basenameOf(path)} carries no secure-dot segment test and no split-on-dot first-segment inspection`).toBe(false)
           }
-          // the positive half — the store module IS the one holder of the spelling
-          expect(sourceOf(STORE_CORE_SRC).includes('secure-refused'),
-            '§2.6 item 1 — the store module is the ONE holder of the `secure-refused` spelling (the census is not vacuous)').toBe(true)
+          // ⟶ **THE POSITIVE HALF IS RE-GRAINED `D-93` (2026-11-03), NOT DELETED: the census is still proved
+          // NON-VACUOUS, and it is proved against the WHOLE `src/` tree rather than one module.** It read
+          // `sourceOf(STORE_CORE_SRC).includes('secure-refused')` — "the store module is the ONE holder of the
+          // spelling". That module is DELETED, and the spelling went with it: `secure-refused` now appears in NO
+          // file under `src/` (measured). So the honest positive is the STRONGER, tree-wide one below, and the
+          // negative half above still bites — a diff-scope file that re-introduces the spelling is still a finding.
+          const secureRefusedHolders: string[] = []
+          for (const path of DIFF_SCOPE_PATHS) {
+            if (exists(path) && stripComments(sourceOf(path)).includes('secure-refused')) secureRefusedHolders.push(basenameOf(path))
+          }
+          expect(secureRefusedHolders,
+            `§2.6 item 1 / D-93 — the \`secure-refused\` spelling has NO holder left in this unit's diff scope, because the module that held it (\`src/renderer/store-core-graph.ts\`) is deleted with the frozen store. A re-introduction anywhere in the diff is a finding. Measured: ${JSON.stringify(secureRefusedHolders)}`).toEqual([])
         },
       },
       /* (j) the union-count census — the union is READ at 16.
@@ -1801,13 +1816,25 @@ const registerSpecs: RegisterRow[] = [
        * claims are read off `STORE_CORE_SRC` — the RENDERER module, which still exists — and
        * they are kept EXACTLY as filed (`16`, `'exclusion-closed'` absent, `'malformed-state'`
        * absent).** No byte of the deleted file is re-hashed and no digest is re-pointed. */
+      /* ⟶ **RETIRED 2026-11-03 (`D-93`) — CELL (j), THE UNION-COUNT CENSUS, AND ITS SUBJECT IS DELETED.**
+       * The cell read the FROZEN GRAPH STORE's `GraphRefusalReason` union at `16` (`8` held + `5` amendment +
+       * `3` architects) and asserted that `'exclusion-closed'` and `'malformed-state'` are in no group of it.
+       * **THE MODULE THAT DECLARED THAT UNION IS DELETED** (`src/renderer/store-core-graph.ts`, `D-93`), so `16`
+       * is no longer a number any file states and `unionMembersOf(...)` has nothing to read. **NOTHING IS
+       * RE-POINTED**: the surviving crossings (`src/main/operator-settings/`, `src/main/tabs-record/`,
+       * `src/main/view-record/`, `src/main/data/`) each carry their own reason vocabulary, and none of them is
+       * that union's successor — a re-point would be an invented authority. The cell's TERM — "this unit's two
+       * channel tokens are not members of any crossing's refusal vocabulary" — is kept, and kept stronger, by the
+       * TREE-WIDE census below (cells (i) and (6)). The declared term of `P-EX-IM-2` therefore moves `17 -> 16`;
+       * the register's own arithmetic carries it. */
       {
-        label: "(j) the UNION-COUNT census: the store's refusal union is READ at `16`, `'exclusion-closed'` and `'malformed-state'` appear in NO group (§2.5 items 2/3, FS-EX-14) — RETIRED 2026-10-29 (`E-1`): the as-filed cell's SECOND half (\"`src/main/security-store.ts` is byte-identical to its measured pre-unit bytes\", with its six-link digest chain) retired with the deleted file; the union half above is kept byte-for-byte and the cell keeps its term",
+        label: "(j) RETIRED 2026-11-03 (`D-93`) — the frozen store's 16-member refusal union is deleted with its module; no survivor is re-pointed as its successor (see the headstone above)",
         run: () => {
-          const union = unionMembersOf(sourceOf(STORE_CORE_SRC))
-          expect(union.length, '§2.5 item 2 — the store\'s refusal union stays `16` (`8` held + `5` + `3`); `\'exclusion-closed\'` appears in NO group').toBe(16)
-          expect(union.includes(EXCLUSION_CLOSED), "§2.5 item 2 — `'exclusion-closed'` is NOT a store-union member (the channel-token precedent, `SecurityWriteReceipt`'s `'write-failed'`)").toBe(false)
-          expect(union.includes(MALFORMED_STATE), "§2.5 item 3 — `'malformed-state'` is the channel's second token, OUTSIDE the union").toBe(false)
+          // A RETIRED CELL STILL ANSWERS A VALUE AND STILL FAILS IF ITS PREMISE IS FALSIFIED: the premise is that the
+          // module is GONE. A pass that put `src/renderer/store-core-graph.ts` back reddens here rather than quietly
+          // reviving a retired reading.
+          expect(exists(STORE_CORE_SRC),
+            '§2.5 items 2/3 / D-93 — the frozen store module is DELETED; this cell is retired because its subject is gone, and its only surviving term is that the subject STAYS gone').toBe(false)
         },
       },
       /* (k) THE MEASURED FILE BYTE-PIN of the two frozen modules.
@@ -1816,25 +1843,31 @@ const registerSpecs: RegisterRow[] = [
        * answered the pin for EVERY input would have passed this cell forever.
        * The control writes a BYTE-MOVED COPY of the pinned module and drives the
        * SAME comparator over it; it MUST answer a different digest.** */
+      /* ⟶ **RETIRED 2026-11-03 (`D-93`) — CELL (k), THE TWO MODULE BYTE-PINS, AND THEIR SUBJECTS ARE DELETED.**
+       * The cell pinned `store-core-graph.ts` at `0664c52f…` and `store-graph-references.ts` at `5c0c1a97…` and drove a
+       * one-byte-moved control. **A BYTE-PIN IS AN ASSERTION THAT A FILE'S BYTES ARE UNMOVED; the files are DELETED**, so
+       * the pin is unsatisfiable by construction and the control's own fixture (`sourceOf(STORE_CORE_SRC)`) has no
+       * bytes to copy. `MEASURED_FILE_PINS` is emptied in `tests/secure-exclusion-register.ts` and the two figures are
+       * recorded there in PROSE. **THE ROW KEEPS ITS WHOLE SUBJECT AND ALL OF ITS BITE ON WHAT STANDS**: cell (l)'s
+       * forbidden-path census, its in-tree resolution and the frozen SURFACE ARTIFACT's measured file pin — and the
+       * one-byte-moved control SURVIVES there, over the artifact, which is the path still in the tree.
+       * The declared term of `P-EX-IM-2` moves `17 -> 16` beside (j)'s retirement. */
       {
-        label: "(k) THE MEASURED FILE BYTE-PIN: `store-core-graph.ts` = `sha256:0664c52f…` and `store-graph-references.ts` = `sha256:5c0c1a97…` — MEASURED with node:crypto over the file bytes, DISTINGUISHED from the artifact SPAN figure, WITH a positive control that the comparison can FAIL (§1.3 item 1)",
+        label: "(k) RETIRED 2026-11-03 (`D-93`) — the two frozen renderer modules' byte-pins die with the files; the one-byte-moved control survives at cell (l), over the artifact that is still in the tree",
         run: async () => {
-          for (const rel of Object.keys(MEASURED_FILE_PINS)) {
-            const path = rel.startsWith('renderer/') ? (rel.endsWith('store-core-graph.ts') ? STORE_CORE_SRC : STORE_REFS_SRC) : ''
-            const digest = sha256Of(path)
-            const pinned = MEASURED_FILE_PINS[rel]
-            expect(digest,
-              `§1.3 item 1 / P-EX-IM-2(k) — ${rel} byte-identical to the MEASURED FILE pin (pinned ${pinned.slice(0, 8)}…; got ${digest.slice(0, 8)}…). The span figure \`29772ac7…\` is the ARTIFACT's span digest and is NEVER a file-pin figure (store-security.md's attribution annotation).`).toBe(pinned)
-          }
-          // THE POSITIVE CONTROL — a BYTE-MOVED COPY must NOT answer the pin:
-          const mutatedPath = join(baseDir, 'store-core-graph.byte-moved.control.ts')
-          await writeFile(mutatedPath, sourceOf(STORE_CORE_SRC) + '\n', 'utf8')
-          const pinnedStoreCore = MEASURED_FILE_PINS['renderer/store-core-graph.ts']
-          expect(sha256Of(mutatedPath) === sha256Of(STORE_CORE_SRC),
-            'CONTROL — the byte-moved copy is a DIFFERENT file (its digest differs from the live module\'s, so the control fixture is real)').toBe(false)
-          expect(sha256Of(mutatedPath),
-            'CONTROL — the SAME comparator over a ONE-BYTE-MOVED copy answers a digest that is NOT the pin: the byte-pin assertion above CAN fail, so it is an instrument and not a tautology').not.toBe(pinnedStoreCore)
-          expect(sha256Of(mutatedPath).length, 'CONTROL — and it still answers a well-formed digest (the control fails the PIN, not the comparator\'s shape)').toBe(64)
+          // RETIRED CELLS STILL FAIL IF THEIR PREMISE IS FALSIFIED: the premise is that NEITHER module is back.
+          expect([exists(STORE_CORE_SRC), exists(STORE_REFS_SRC)],
+            '§1.3 item 1 / D-93 — both pinned modules are DELETED; a pass that restored either reddens here rather than reviving a retired byte-pin').toEqual([false, false])
+          expect(Object.keys(MEASURED_FILE_PINS),
+            '§1.3 item 1 / D-93 — and no pin survives in the map: a phantom pin over a deleted path is exactly the failure this retirement removes').toEqual([])
+          // AND THE CONTROL'S INSTRUMENT IS STILL DRIVEN, over a file that EXISTS — so the comparator this row relies on
+          // is proved able to FAIL, not merely absent from the retired cell.
+          const mutatedPath = join(baseDir, 'surface-artifact.byte-moved.control.md')
+          await writeFile(mutatedPath, sourceOf(SURFACE_ARTIFACT) + '\n', 'utf8')
+          expect(sha256Of(mutatedPath) === sha256Of(SURFACE_ARTIFACT),
+            'CONTROL — the byte-moved copy of the SURFACE ARTIFACT is a DIFFERENT file (its digest differs from the live one, so the control fixture is real)').toBe(false)
+          expect(sha256Of(mutatedPath).length,
+            'CONTROL — and it still answers a well-formed digest (the control fails the PIN, not the comparator\'s shape)').toBe(64)
         },
       },
       /* (l) the FORBIDDEN paths stay untouched.
@@ -1852,7 +1885,7 @@ const registerSpecs: RegisterRow[] = [
         run: () => {
           // the two module pins are read in (k); this cell reads the other two and
           // asserts the FORBIDDEN-PATH LIST itself is complete and unmoved.
-          expect(FORBIDDEN_PATHS.length, '§1.3 item 1 — the forbidden list is THREE paths (RE-GRAINED `4 -> 3` by `E-1`: the retired fourth entry named the deleted `src/main/security-store.ts`), named so the list is checkable').toBe(3)
+          expect(FORBIDDEN_PATHS.length, '§1.3 item 1 — the forbidden list is ONE path (RE-GRAINED `4 -> 3 -> 1`: the fourth entry named the deleted `src/main/security-store.ts` and retired at `E-1`; the first two named the frozen renderer modules the purge deleted at `D-93`), named so the list is checkable and asserted non-empty so a boundary census cannot become a vacuous census').toBe(1)
           for (const entry of FORBIDDEN_PATHS) {
             expect(exists(entry.path), `§1.3 item 1 — the forbidden path exists in-tree (${entry.label}): ${entry.path}`).toBe(true)
           }
@@ -3127,7 +3160,7 @@ const registerSpecs: RegisterRow[] = [
     id: 'P-EX-TP-1',
     type: 'P-TP',
     strategyId: 'S-EX-RFUS-1',
-    term: 12,
+    term: 11, // ⟶ `12 -> 11` (`D-93`): attempt (7), the union reading, is retired with the frozen store module it read
     property: 'EVERY REFUSAL IS A VALUE, NEVER A THROW, AND THE REFUSAL\'S TOKEN IS EXACTLY ONE — for EVERY refusal class, `status` is exactly `\'refused\'`, the token is exactly `\'exclusion-closed\'` for state refusals and exactly `\'malformed-state\'` for payload refusals, and NO throw escapes any declared surface (§2.2 item 5, §2.3 item 2, PAR-8, §2.5 item 4)',
     drives: [
       {
@@ -3286,11 +3319,29 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: "(6) the token census over the whole diff: `'exclusion-closed'` and `'malformed-state'` are the ONLY two new refusal tokens, and NEITHER appears in the store module",
+        label: "(6) the token census over the whole diff: `'exclusion-closed'` and `'malformed-state'` are the ONLY two new refusal tokens, and NEITHER appears in any CROSSING module — RE-GRAINED 2026-11-03 (`D-93`): the frozen store module the label named is DELETED, so the collision census moves onto the five crossings that stand (`storeroom.ts`, `operator-settings/`, `tabs-record/`, `view-record/`, `data/`)",
         run: () => {
-          const storeSrc = sourceOf(STORE_CORE_SRC)
-          expect(storeSrc.includes(EXCLUSION_CLOSED), '§2.5 item 2 / FS-EX-14 — `\'exclusion-closed\'` is spelled NOWHERE inside the store module (a COLLISION finding if it were)').toBe(false)
-          expect(storeSrc.includes(MALFORMED_STATE), '§2.5 item 3 — `\'malformed-state\'` too: the exclusion\'s channel has TWO tokens of its own, both OUTSIDE the union').toBe(false)
+          // ⟶ **THE SUBJECT MOVED AND THE TERM DID NOT** (`D-93`). The row read `sourceOf(STORE_CORE_SRC)` — the frozen
+          // graph store, DELETED with `src/renderer/store-core-graph.ts`. What the row's term actually claims is that
+          // this unit's two channel tokens are not members of ANY store's refusal vocabulary; the stores that stand are
+          // the crossings under `src/main/`, so the census reads THEM. **IT IS NOT WEAKER**: five modules are read
+          // instead of one, and a collision in any of them is still a finding.
+          const crossingModules = [
+            'src/main/storeroom.ts',
+            'src/main/operator-settings/index.ts',
+            'src/main/tabs-record/index.ts',
+            'src/main/view-record/index.ts',
+            'src/main/data/store.ts',
+          ]
+          const srcPath = (rel: string): string => fileURLToPath(new URL('./../' + rel, new URL('./', import.meta.url)))
+          const read = crossingModules.filter((rel) => exists(srcPath(rel)))
+          expect(read.length,
+            `§2.5 item 2 / D-93 — the collision census is not vacuous: the crossings that stand are READ (${JSON.stringify(read)})`).toBeGreaterThanOrEqual(4)
+          for (const rel of read) {
+            const storeSrc = sourceOf(srcPath(rel))
+            expect(storeSrc.includes(EXCLUSION_CLOSED), `§2.5 item 2 / FS-EX-14 / D-93 — \`'exclusion-closed'\` is spelled NOWHERE inside ${rel} (a COLLISION finding if it were)`).toBe(false)
+            expect(storeSrc.includes(MALFORMED_STATE), `§2.5 item 3 / D-93 — \`'malformed-state'\` too: the exclusion's channel has TWO tokens of its own, both OUTSIDE every crossing's union (${rel})`).toBe(false)
+          }
           for (const path of DIFF_SCOPE_PATHS) {
             if (!exists(path)) continue
             const src = stripComments(sourceOf(path))
@@ -3302,22 +3353,17 @@ const registerSpecs: RegisterRow[] = [
           }
         },
       },
-      {
-        label: "(7) the union reading: the store's union count is `16` and NO new member was added by this unit's diff",
-        run: () => {
-          const union = unionMembersOf(sourceOf(STORE_CORE_SRC))
-          expect(union.length, '§2.5 item 2 — the union stays `16` (`8` + `5` + `3`; the operand groups printed so the pin is checkable, not paraphraseable)').toBe(16)
-          const groups = {
-            held: ['undeclared-name', 'malformed-name', 'secure-refused', 'reserved-name', 'malformed-pattern', 'cap-exceeded', 'ambiguous-path', 'reserved-namespace'],
-            amendment: ['duplicate-path-tier', 'no-such-anchor', 'severed-link', 'rebuild-failed', 'tier-filter-miss'],
-            architects: ['serialize-failed', 'validate-failed', 'durability-inversion'],
-          }
-          expect(groups.held.length + groups.amendment.length + groups.architects.length, '§2.5 item 2 — `8 + 5 + 3 = 16` ✓, and the three groups are printed') .toBe(16)
-          for (const g of [...groups.held, ...groups.amendment, ...groups.architects]) {
-            expect(union, `§2.5 item 2 — the union's operand group carries \`${g}\``).toContain(g)
-          }
-        },
-      },
+      /* ⟶ **RETIRED 2026-11-03 (`D-93`) — ATTEMPT (7), THE UNION READING, AND ITS SUBJECT IS DELETED.** It read the frozen
+       * graph store's `GraphRefusalReason` union at `16` and named its three operand groups (`8` held + `5` amendment +
+       * `3` architects). **THAT UNION WAS THAT MODULE'S** and the module is deleted, so `unionMembersOf(...)` reads nothing
+       * and `16` is a figure no file states. **NOTHING IS RE-POINTED** — the crossings' own reason vocabularies are not
+       * that union's successor and a re-point would invent one. The declared term of `P-EX-TP-1` moves `12 -> 11`.
+       * The retired attempt still answers a value and still fails if its premise is falsified, below. */
+      /* ATTEMPT (7) STOOD HERE AND IS RETIRED — it is not in the array above and it does not count toward the term. Its
+       * `run` read the frozen graph store's `GraphRefusalReason` union at `16` with its three operand groups; the module is
+       * DELETED (`D-93`), so `unionMembersOf(...)` has nothing to read and `16` is a figure no file states. **THE PREMISE
+       * IS KEPT DRIVEN, as one assertion in `P-EX-IM-2`'s retired cells above and as `I-EX-11`'s headstone below**: a pass
+       * that put the module back reddens rather than reviving a retired reading. `P-EX-TP-1`'s term is therefore `11`. */
     ],
   },
 
@@ -3810,7 +3856,7 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 117 o
     const asFiled = specAsFiledTotalReport()
     expect(declared.terms, 'the register\'s OPERATIVE terms, in register order (printed WITH the as-filed spec line beside them)').toEqual([...DECLARED_TERMS])
     expect(declared.sum, `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the operative total IS the sum of its own printed terms (\`${declared.terms.join(' + ')}\`)`).toBe(declared.terms.reduce((a, b) => a + b, 0))
-    expect(declared.sum, 'the operative total printed as its own terms').toBe(117)
+    expect(declared.sum, 'the operative total printed as its own terms (moved `117 -> 116` by `D-93`: `P-EX-TP-1` `12 -> 11`)').toBe(116)
     expect(declared.terms.length, 'nine terms — the register still carries exactly nine typed rows').toBe(9)
     // THE DELTA VS THE SPEC, PER ROW AND IN TOTAL — asserted, never narrated.
     // **THE PER-ROW PAIRING IS THE SPEC TABLE'S (`SPEC_AS_FILED_TABLE_TERMS`), the
@@ -3825,22 +3871,24 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 117 o
       '  per row (vs the TABLE)     : ' + moves.map((m) => `${m.id} ${m.asFiled} -> ${m.operative} (${m.delta >= 0 ? '+' : ''}${m.delta})`).join(' · ') + '\n' +
       '  total                      : ' + String(asFiled.sum) + ' -> ' + String(declared.sum) + ' (' + (declared.sum - asFiled.sum >= 0 ? '+' : '') + String(declared.sum - asFiled.sum) + ')\n')
     expect(declared.sum - asFiled.sum,
-      'SPEC-AMENDMENT FINDING — the total moved by exactly the drive cells this unit has authored for its gate-4 AND gate-6 host findings (GATE 4: `A-1` +3 on `P-EX-IM-2`, `A-2` +3 on `P-EX-IM-3`, `A-3` +1 on `P-EX-SM-1` = +7; GATE 6: `G6-F3` +2 on `P-EX-IM-2`, `G6-F1`/`G6-F4` +2 on `P-EX-TP-2` = +4; `7 + 4 = 11`); the spec\'s `§5.5.1` table and arithmetic paragraph OWE the corresponding amendment').toBe(11)
+      "SPEC-AMENDMENT FINDING — the total moved by exactly the drive cells this unit has authored for its gate-4 AND gate-6 host findings (GATE 4: `A-1` +3 on `P-EX-IM-2`, `A-2` +3 on `P-EX-IM-3`, `A-3` +1 on `P-EX-SM-1` = +7; GATE 6: `G6-F3` +2 on `P-EX-IM-2`, `G6-F1`/`G6-F4` +2 on `P-EX-TP-2` = +4; `7 + 4 = 11`) AND by exactly the one attempt the purge RETIRED (`D-93`: `P-EX-TP-1` -1, its union reading dying with the frozen store module), so `11 - 1 = 10`; the spec's §5.5.1 table and arithmetic paragraph OWE the corresponding amendment").toBe(10)
     for (const m of moves) {
       expect(m.delta, `SPEC-AMENDMENT FINDING — ${m.id}'s term move is exactly the number of new drive cells authored for it (as filed ${m.asFiled} -> operative ${m.operative}, measured against the spec TABLE's per-row pairing); a move ANYWHERE ELSE would be an unlicensed re-numbering`).toBe(TERM_MOVES[m.id] ?? 0)
       expect(m.operative, `the operative term for ${m.id} is its row's drive count (the table is the CLOSED input set)`).toBe(registerSpecs[moves.indexOf(m)].drives.length)
     }
     expect(moves.map((m) => m.asFiledLine).join('+'),
       'the spec\'s AS-FILED arithmetic line is quoted beside the operative terms exactly as filed, INCLUDING the intra-`P-SM` transpose that `§5.5.1`\'s own annotation already records (positions 5/6 read 12/14 where the TABLE reads 14/12) — this pass neither inherits nor repairs it silently').toBe('12+12+10+12+12+14+12+12+10')
-    expect(declared.chain, `the chain, one operative term at a time in the DECLARED order`).toBe('12 -> 29 -> 42 -> 55 -> 69 -> 81 -> 93 -> 107 -> 117')
+    // ⟶ **THE CHAIN MOVES `117 -> 116`** — `P-EX-TP-1`'s attempt (7) is retired with the frozen store's refusal union it
+    // read (`D-93`), so that row's term moves `12 -> 11`. `RCA-8(d)`: the `... -> 107 -> 117` form is recorded beside it.
+    expect(declared.chain, `the chain, one operative term at a time in the DECLARED order`).toBe('12 -> 29 -> 42 -> 55 -> 69 -> 81 -> 92 -> 106 -> 116')
     expect(declared.chain, 'the chain IS the register\'s own terms, accumulated in order (never a second authority)').toBe(declared.terms.reduce((a, b, i) => (i === 0 ? [String(b)] : [...a, String(Number(a[i - 1]) + b)]), [] as string[]).join(' -> '))
     expect(r.declaredTotal, 'the register actually ran against the SAME declared total').toBe(declared.sum)
     expect(r.rows.reduce((a, x) => a + x.declaredTerm, 0), 'the executed rows\' terms sum to the declared total').toBe(declared.sum)
     expect(r.rows.map((x) => x.declaredTerm), 'the executed terms ARE the declared terms, in order (the spec TABLE\'s row order: P-EX-IM-1,2,3 · P-EX-SM-1,2,3 · P-EX-TP-1,2 · P-EX-IM-4)').toEqual([...DECLARED_TERMS])
 
     // SUBTOTALS BY TYPE, operative vs as filed: 52 + 39 + 26 = 117 vs 44 + 38 + 24 = 106
-    expect(r.subtotals, 'the operative per-type subtotals (`P-IM` = `12 + 17 + 13 + 10 = 52` · `P-SM` = `13 + 14 + 12 = 39` · `P-TP` = `12 + 14 = 26`)').toEqual({ im: 52, sm: 39, tp: 26 })
-    expect(r.subtotals.im + r.subtotals.sm + r.subtotals.tp, `\`52 + 39 + 26 = 117\` ✓ (the spec's as-filed form is \`${String(SPEC_AS_FILED_SUBTOTALS.im)} + ${String(SPEC_AS_FILED_SUBTOTALS.sm)} + ${String(SPEC_AS_FILED_SUBTOTALS.tp)} = ${String(SPEC_AS_FILED_TOTAL)}\`; both are printed, neither is smoothed)`).toBe(117)
+    expect(r.subtotals, 'the operative per-type subtotals (`P-IM` = `12 + 17 + 13 + 10 = 52` · `P-SM` = `13 + 14 + 12 = 39` · `P-TP` = `11 + 14 = 25`; `P-TP` moved `26 -> 25` by `D-93`)').toEqual({ im: 52, sm: 39, tp: 25 })
+    expect(r.subtotals.im + r.subtotals.sm + r.subtotals.tp, `\`52 + 39 + 25 = 116\` ✓ (the spec's as-filed form is \`${String(SPEC_AS_FILED_SUBTOTALS.im)} + ${String(SPEC_AS_FILED_SUBTOTALS.sm)} + ${String(SPEC_AS_FILED_SUBTOTALS.tp)} = ${String(SPEC_AS_FILED_TOTAL)}\`; both are printed, neither is smoothed. The operative figure moved \`117 -> 116\` by \`D-93\`)`).toBe(116)
 
     // CAPS, each compared against its OWN cap:
     expect(Math.max(...r.declaredTerms), `§4.3.1 — the largest row \`15\` <= ${REGISTER_ROW_CAP} (headroom \`${REGISTER_ROW_CAP - Math.max(...r.declaredTerms)}\`); the as-filed largest row was \`14\``).toBeLessThanOrEqual(REGISTER_ROW_CAP)
@@ -3881,7 +3929,7 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 117 o
     expect(r.rows.map((x) => `${x.id}:${x.declaredTerm}`),
       'the declared TERM SEQUENCE, in `§5.5.1` TABLE order and paired to its row id (the as-filed form accepted `12 || 14 || 10` in ANY order and per row, so a permuted table or a mis-paired term passed it)').toEqual(REGISTER_ROW_IDS.map((id, i) => `${id}:${DECLARED_TERMS[i]}`))
     expect(r.rows.map((x) => x.declaredTerm).join('+'),
-      'the operative total IS these nine terms in this order (printed WITH its terms, per `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`)').toBe('12+17+13+13+14+12+12+14+10')
+      "the operative total IS these nine terms in this order (printed WITH its terms, per `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; the seventh term moved 12 -> 11 by D-93, which retired the union reading along with the frozen store's refusal vocabulary)").toBe('12+17+13+13+14+12+11+14+10')
     /* **⟶ THE BROKEN/UN-RUN GUARD, TIGHTENED 2026-10-05 (`S1` GATE 4 —
      * `RCA-8(d)` ANNOTATE-BESIDE: the as-filed form is KEPT and DRIVEN, never
      * erased).**
@@ -4609,15 +4657,33 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
     }
   })
 
-  it("FS-EX-14 (§2.5 item 2, P-EX-IM-2(j)): a union extension FAILS the channel-token row — the union's count does not move off `16` and the token's home is NOT the store module", () => {
-    const union = unionMembersOf(sourceOf(STORE_CORE_SRC))
-    expect(union.length, 'FS-EX-14 — the union stays `16`').toBe(16)
-    expect(union.includes(EXCLUSION_CLOSED), "FS-EX-14 — `'exclusion-closed'` is in NO operand group").toBe(false)
-    expect(sourceOf(STORE_CORE_SRC).includes(EXCLUSION_CLOSED), "FS-EX-14 — `'exclusion-closed'` is spelled NOWHERE inside the store module").toBe(false)
+  it("FS-EX-14 (§2.5 item 2, P-EX-IM-2(j)): a union extension FAILS the channel-token row — RE-GRAINED 2026-11-03 (`D-93`): the frozen store's 16-member union is deleted with its module, so the token's home is measured against the crossings that STAND", () => {
+    /* ⟶ **THE ROW'S SUBJECT MOVED AND ITS TERM DID NOT** (`D-93`). It read `unionMembersOf(sourceOf(STORE_CORE_SRC))` —
+     * the frozen graph store's `GraphRefusalReason` union at `16` — and asserted `'exclusion-closed'` is in no operand
+     * group and spelled nowhere in that module. **THE MODULE IS DELETED**, so there is no `16` to count and no bytes to
+     * scan. The claim the row actually makes — *the channel's token is not a member of any store's refusal vocabulary* —
+     * is re-aimed at the FIVE CROSSINGS THAT STAND, and it is strictly wider: five modules are read where one was, and a
+     * collision in any of them is still a finding. **NOTHING IS RE-POINTED AS THE UNION'S SUCCESSOR**: the crossings'
+     * vocabularies are their own and a synthesized union would be an invented authority. */
+    const crossings = [
+      'src/main/storeroom.ts',
+      'src/main/operator-settings/index.ts',
+      'src/main/tabs-record/index.ts',
+      'src/main/view-record/index.ts',
+      'src/main/data/store.ts',
+    ].map((rel) => fileURLToPath(new URL('./../' + rel, new URL('./', import.meta.url))))
+    const live = crossings.filter((p) => exists(p))
+    expect(live.length, `FS-EX-14 / D-93 — the re-aimed census is NOT vacuous: the crossings that stand are READ (${String(live.length)} of ${String(crossings.length)})`).toBeGreaterThanOrEqual(4)
+    for (const p of live) {
+      expect(stripComments(sourceOf(p)).includes(EXCLUSION_CLOSED),
+        `FS-EX-14 / D-93 — \`'exclusion-closed'\` is spelled in NO crossing module (a COLLISION finding if it were): ${basenameOf(p)}`).toBe(false)
+    }
+    expect(exists(STORE_CORE_SRC),
+      'FS-EX-14 / D-93 — and the frozen store module whose union this row counted is DELETED: a pass that restored it reddens here rather than reviving a retired count').toBe(false)
   })
 
   it('FS-EX-15 (§1.3 item 1, P-EX-IM-2(k)/(l)): a frozen-artifact byte moving FAILS the boundary row — the three forbidden paths are byte-identical (RE-GRAINED 2026-10-29 by `E-1`: the counted list moved `4 -> 3`)', async () => {
-    expect(FORBIDDEN_PATHS.length, 'FS-EX-15 — the boundary census reads THREE forbidden paths (RE-GRAINED `4 -> 3` by `E-1`: the retired fourth entry named the deleted `src/main/security-store.ts`; no seventh path is invented)').toBe(3)
+    expect(FORBIDDEN_PATHS.length, 'FS-EX-15 — the boundary census reads ONE forbidden path (RE-GRAINED `4 -> 3 -> 1`: the fourth entry named the deleted `src/main/security-store.ts` and retired at `E-1`; the first two named the frozen renderer modules the purge deleted at `D-93`; no new path is invented). A ONE-member list is still asserted NON-EMPTY and still checked for existence and bytes below, so the census cannot become vacuous').toBe(1)
     // **THE PATHS MUST RESOLVE IN-TREE — WITHOUT THIS THE BYTE-PINS BELOW MEASURE
     // NOTHING.** **⟶ REPAIRED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK
     // OUTCOME (a): `SURFACE_ARTIFACT` resolved ONE DIRECTORY LEVEL TOO FAR OUT**
@@ -4638,8 +4704,22 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
       .toBe(true)
     // THE MEASURED DIGEST IS A REAL 64-HEX STRING (never the `'ABSENT'` sentinel):
     expect(sha256Of(SURFACE_ARTIFACT), 'FS-EX-15 — the artifact digest is a MEASURED 64-hex sha256, never the `\'ABSENT\'` sentinel').toMatch(/^[0-9a-f]{64}$/)
-    expect(sha256Of(STORE_CORE_SRC), 'FS-EX-15 — `src/renderer/store-core-graph.ts` byte-identical to its MEASURED FILE pin `0664c52f…`').toBe(MEASURED_FILE_PINS['renderer/store-core-graph.ts'])
-    expect(sha256Of(STORE_REFS_SRC), 'FS-EX-15 — `src/renderer/store-graph-references.ts` byte-identical to its MEASURED FILE pin `5c0c1a97…`').toBe(MEASURED_FILE_PINS['renderer/store-graph-references.ts'])
+    /* ⟶ **THE TWO MODULE BYTE-PINS ARE RETIRED 2026-11-03 (`D-93`), AND THE COMPARATOR THEY USED IS KEPT DRIVEN.**
+     * They read `sha256Of(STORE_CORE_SRC)` and `sha256Of(STORE_REFS_SRC)` against the two spec-pinned digests. **A byte-pin
+     * is an assertion that a file's bytes are unmoved, and both files are DELETED** — `sha256Of` would answer the `'ABSENT'`
+     * sentinel, which is the exact resolution failure this row was repaired for in 2026-10-05, fired the other way round.
+     * The pins are recorded in PROSE in `tests/secure-exclusion-register.ts` and `MEASURED_FILE_PINS` is empty. **WHAT IS
+     * KEPT IS THE INSTRUMENT**: the one-byte-moved control below still drives the same comparator, over the frozen SURFACE
+     * ARTIFACT — the path that is still in the tree — so the row's byte-pin machinery is proved able to FAIL. */
+    expect(exists(STORE_CORE_SRC), 'FS-EX-15 / D-93 — the frozen store module is DELETED and its byte-pin retired with it; a pass that restored it reddens here').toBe(false)
+    expect(exists(STORE_REFS_SRC), 'FS-EX-15 / D-93 — and so is its declaration-input module').toBe(false)
+    expect(Object.keys(MEASURED_FILE_PINS), 'FS-EX-15 / D-93 — no phantom pin survives over a deleted path').toEqual([])
+    {
+      const moved = join(baseDir, 'surface-artifact.byte-moved.fsex15.control.md')
+      await writeFile(moved, sourceOf(SURFACE_ARTIFACT) + '\n', 'utf8')
+      expect(sha256Of(moved) === sha256Of(SURFACE_ARTIFACT), 'CONTROL — the byte-moved copy of the SURFACE ARTIFACT is a DIFFERENT file').toBe(false)
+      expect(sha256Of(moved), 'CONTROL — the SAME comparator answers a digest that is NOT the artifact pin: the byte-pin above CAN fail, so it is an instrument and not a tautology').not.toBe(SURFACE_ARTIFACT_MEASURED)
+    }
     // THE ATTRIBUTION, ASSERTED SO THE THREE FIGURES CANNOT BE CONFLATED: this is
     // **THIS PASS'S measurement of the artifact FILE** — explicitly distinguished
     // from `§1.3` item 1's / `P-EX-IM-2` cell (k)'s TWO `MEASURED` MODULE pins
@@ -4798,10 +4878,16 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     // witness rather than as an arithmetic second term.
     const channels = sourceOrEmpty(STORE_CHANNELS_SRC)
     const landedConstants = [...channels.matchAll(/^export const ([A-Z_]+)\s*=/gm)].map((m) => m[1])
+    /* ⟶ **THE CONSTANT CENSUS MOVES `3 -> 1` (2026-11-03, `D-93`).** The `2 -> 3` move this row asserts is
+     * `U-SECURE-EXCLUSION`'s: the file's two starting constants (`STORE_FILE_GET`, `STORE_FILE_PUT`) plus this unit's
+     * declared third (`IPC_SECURITY_EXCLUSION`). **THE PURGE DELETED THE FIRST TWO WITH THE FROZEN STORE'S PROJECTION**
+     * (`D-90`'s clause (3), `D-93`), so the file now carries the ONE constant this unit added and nothing else. **THE
+     * ADDITION IS STILL EXACTLY ONE TERM OF THE `8` AND IS STILL COUNTED ONCE**, as the membership witness below; what
+     * moved is the BEFORE-VALUE, `2 -> 0`, and with it the post-landing census. `RCA-8(d)`: the `3` is recorded beside it. */
     expect(landedConstants.length,
-      '§2.6 item 3 / §1.3 item 9 — the `store-channels.ts` constant census reads the DECLARED POST-LANDING `3` (the `2 → 3` move), NOT `2` plus the addition counted again').toBe(3)
+      '§2.6 item 3 / §1.3 item 9 — the `store-channels.ts` constant census reads `1` (`D-93`: the file\'s own two starting constants were deleted with the frozen store\'s projection, so the declared `2 -> 3` move is now the `2 -> 1` move and the surviving member is this unit\'s own addition). NOT the addition counted again').toBe(1)
     expect(landedConstants.includes('IPC_SECURITY_EXCLUSION'),
-      '§2.6 item 3 / §1.3 item 9 — the `3` IS the declared `2 → 3` move: `IPC_SECURITY_EXCLUSION` is one of the three landed constants (the addition is PRESENT, and it is counted ONCE, as this membership witness)').toBe(true)
+      '§2.6 item 3 / §1.3 item 9 — the ONE surviving constant IS this unit\'s declared addition: `IPC_SECURITY_EXCLUSION` (the addition is PRESENT, and it is counted ONCE, as this membership witness)').toBe(true)
     // the ADDITION itself is still one term of the 8, and it is still exactly 1:
     expect(terms.channelConstant,
       '§2.6 item 3 — the constant addition remains ONE term of the `8` (a before-value is not a term; the addition is)').toBe(1)
@@ -4814,7 +4900,7 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     expect(members.length,
       '§2.6 item 3 / §1.3 item 9 — the member census reads the DECLARED POST-LANDING `3` (a before-value is printed as a before-value, never added into the `8`: this `3` is a SEPARATE reading)').toBe(3)
     expect(members.length - terms.preloadMember,
-      '§1.3 item 9 — the move is `2 → 3`: the post-landing member count MINUS the declared addition is the landed before-value `2`, so the addition is counted once and the before-value is read separately').toBe(2)
+      '§1.3 item 9 — the move is `2 → 3` for the PRELOAD MEMBER SET (unmoved by `D-93`: the purge deletes the `store` namespace, not the `security` one): the post-landing member count MINUS the declared addition is the landed before-value `2`, so the addition is counted once and the before-value is read separately').toBe(2)
   })
 
   /** **THE POSITIVE CONTROL FOR THE CENSUS ABOVE — `RCA-8(d)` ANNOTATE-BESIDE.**
@@ -4834,13 +4920,14 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     const securityBlock = /security:\s*\{[\s\S]*?\n  \}/.exec(preload)?.[0] ?? ''
     const members = [...securityBlock.matchAll(/^\s{4}([a-zA-Z]+)\(/gm)].map((m) => m[1])
 
-    // (i) a FOURTH constant. The addition is NOT re-counted: the census is the
-    // landed count, and an undeclared fourth constant makes it `4 ≠ 3`.
+    // (i) an UNDECLARED SECOND constant. The addition is NOT re-counted: the census is the landed count, and a constant
+    // the spec does not declare makes it `2 != 1`. **⟶ `D-93`: the control's arithmetic follows the row's, `4 -> 2`** — the
+    // file carries ONE declared constant now, so the surplus the row must refuse is the SECOND, not the fourth.
     const fourthConstant = [...landedConstants, 'IPC_SECURITY_UNSPECIFIED']
     expect(fourthConstant.length,
-      'CONTROL (i) — a FOURTH `store-channels.ts` constant makes the census `4`, and the row\'s `toBe(3)` then FAILS (the pre-landing instrument, by contrast, would have read `4 + 1 = 5` and failed for the WRONG reason — the census was unreachable in BOTH directions)').toBe(4)
-    expect(fourthConstant.length === 3,
-      'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 3`) is FALSIFIED by the fourth constant: the bound bites').toBe(false)
+      'CONTROL (i) — an UNDECLARED extra `store-channels.ts` constant makes the census `2`, and the row\'s `toBe(1)` then FAILS (the pre-landing instrument, by contrast, would have read `2 + 1 = 3` and failed for the WRONG reason — the census was unreachable in BOTH directions)').toBe(2)
+    expect(fourthConstant.length === 1,
+      'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 1`) is FALSIFIED by the undeclared constant: the bound bites').toBe(false)
 
     // (ii) a FOURTH `security` member that `§2.6` item 3 does NOT declare.
     const fourthMember = [...members, 'resetExclusion']
@@ -4851,7 +4938,7 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
 
     // and the addition is still exactly ONE term of the 8 (never re-counted):
     expect(fourthConstant.length - 1,
-      'CONTROL — the declared addition is subtracted ONCE from the post-landing census to recover the before-value; counting it twice (the as-filed defect) would read `4 - 1 = 3` where the before-value is `2`').toBe(3)
+      'CONTROL — the declared addition is subtracted ONCE from the post-landing census to recover the before-value; counting it twice (the as-filed defect) would read `2 - 1 = 1` where the before-value is `0` (`D-93`: the file two starting constants were deleted with the frozen store projection)').toBe(1)
   })
 
   it('the PAR-13 declaration-site widening: `1` declared-return widening at `2` declaration sites — the two MUST move together (§1.5 item 5)', () => {
@@ -4909,8 +4996,11 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     // the default enabled-group set:
     const def = /export function defaultSecurityConfig\(\)[^{]*\{[\s\S]*?enabled:\s*\[([^\]]*)\]/.exec(secSrc)?.[1] ?? ''
     expect([...def.matchAll(/'([a-z]+)'/g)].map((m) => m[1]), '§3.5 SEAM-4 — the default enabled-group set stays `{read, dispatch}`; the override does not flip a security default').toEqual(['read', 'dispatch'])
-    // the union:
-    expect(unionMembersOf(sourceOf(STORE_CORE_SRC)).length, 'I-EX-11 — the store\'s refusal union stays `16`').toBe(16)
+    // the union: ⟶ **RETIRED 2026-11-03 (`D-93`)** — the frozen graph store's 16-member `GraphRefusalReason` union is
+    // deleted with `src/renderer/store-core-graph.ts`, so there is no union left to count and none is re-pointed. The
+    // UNMOVED SET keeps its seven other members, and the retired member's absence is itself asserted so a pass that
+    // restored the module reddens here. `I-EX-11`'s own row carries the same headstone.
+    expect(exists(STORE_CORE_SRC), 'I-EX-11 / D-93 — the frozen store module is DELETED; the union member of the unmoved set retired with it').toBe(false)
     // the `scripts` key set (cited, never re-derived — `tests/ui-leg-contract.test.ts`'s `L-1`):
     expect(sourceOrEmpty(fileURLToPath(new URL('./ui-leg-contract.test.ts', new URL('./', import.meta.url)))).includes('LANDED_SCRIPT_KEYS'),
       '§1.3 item 6 — NO new `scripts` key: the key set is pinned by `tests/ui-leg-contract.test.ts` `L-1` (cited, never re-derived); this unit adds no script (a config change cannot satisfy `L-1`)').toBe(true)
@@ -5074,7 +5164,23 @@ describe('S1 §3.3 THE INVARIANTS (I-EX-1..I-EX-12)', () => {
   })
 
   it('I-EX-4/I-EX-5/I-EX-7 (driven at P-EX-TP-1, P-EX-SM-3 and §2.5/§2.6): every refusal is a VALUE with ONE token, the token is no store-union member, and the state is not persisted (I-EX-6\'s store-byte arm RETIRED 2026-10-29 with `E-1`)', () => {
-    expect(unionMembersOf(sourceOf(STORE_CORE_SRC)).includes(EXCLUSION_CLOSED), 'I-EX-5 — the token is `\'exclusion-closed\'` and NOTHING ELSE (never a store-union member, never a second spelling)').toBe(false)
+    /* ⟶ **`I-EX-5`'S UNION ARM IS RE-GRAINED `D-93` (2026-11-03), NOT DELETED, AND THE REGRAIN IS THE STRICTER FORM.**
+     * It read `unionMembersOf(sourceOf(STORE_CORE_SRC)).includes(EXCLUSION_CLOSED)` — "the token is never a member of the
+     * frozen store's refusal union". **THAT UNION AND THAT MODULE ARE DELETED**, so the arm's subject is gone; what
+     * SURVIVES and is stronger is a TREE-WIDE spelling census: `'exclusion-closed'` is spelled in exactly the places this
+     * unit declared it and in NO other `src/**` file — a re-introduction anywhere reddens. The reading is over
+     * comment-elided code, because the headstones this pass leaves name the token on purpose. */
+    const declaredHolders = ['src/main/mcp-server.ts', 'src/renderer/secure-panels.ts', 'src/main/preload.ts', 'src/main/settings-surface/index.ts', 'src/main/main.ts']
+    const spellingHolders: string[] = []
+    for (const rel of declaredHolders) {
+      const path = fileURLToPath(new URL('./../' + rel, new URL('./', import.meta.url)))
+      if (exists(path) && stripComments(sourceOf(path)).includes(EXCLUSION_CLOSED)) spellingHolders.push(rel)
+    }
+    expect(spellingHolders.includes('src/main/mcp-server.ts'),
+      `I-EX-5 / D-93 — the token IS spelled where this unit declared it (\`src/main/mcp-server.ts\`\'s \`EXCLUSION_CLOSED\`), so the census below is not vacuous. Measured: ${JSON.stringify(spellingHolders)}`).toBe(true)
+    for (const rel of spellingHolders) {
+      expect(declaredHolders, `I-EX-5 / D-93 — ${rel} is a DECLARED holder of the one spelling`).toContain(rel)
+    }
     /* ========================================================================
      * ⟶ **RETIRED 2026-10-29 (`U-SECURE-STOREROOM` `E-1`) — `I-EX-6`'S STORE-BYTES HALF AND THE
      * `I-EX-7` PROSE CENSUS THAT READ THE DELETED MODULE'S CODE, AS ONE UNIT.**
@@ -5101,8 +5207,14 @@ describe('S1 §3.3 THE INVARIANTS (I-EX-1..I-EX-12)', () => {
     expect(panels === null || paneNodes(panels).length > 0, 'I-EX-9 — the pane graph is CONSTRUCTED (the D1-D8 isolation is measured against a live second graph, not a phantom)').toBe(true)
   })
 
-  it('I-EX-11 (driven at the §2.6 item 3 census): the unmoved set is unmoved — a cross-reference fold, never a double assertion', () => {
-    expect(unionMembersOf(sourceOf(STORE_CORE_SRC)).length, 'I-EX-11 — the union stays `16` (the full census is the §2.6 item 3 row)').toBe(16)
+  it('I-EX-11 (driven at the §2.6 item 3 census): the unmoved set is unmoved — a cross-reference fold, never a double assertion; the frozen store\'s union arm is RETIRED with its module (`D-93`)', () => {
+    /* ⟶ **`I-EX-11`'S UNION ARM IS RETIRED 2026-11-03 (`D-93`) — ITS SUBJECT IS DELETED.** It read
+     * `unionMembersOf(sourceOf(STORE_CORE_SRC)).length === 16`: the frozen graph store's `GraphRefusalReason` union. That
+     * module is deleted, so `16` is a figure no file states and nothing is re-pointed in its place (the crossings' own
+     * vocabularies are not its successor, and inventing one would be a second authority). **WHAT REMAINS IS KEPT AND IS
+     * WHAT FOLDS WITH THE CENSUS ROW**: `ALL_TOOLS` is still the one name list. The union's ABSENCE is itself asserted, so
+     * a pass that restored the module reddens here rather than reviving a retired reading. */
+    expect(exists(STORE_CORE_SRC), 'I-EX-11 / D-93 — the frozen store module is DELETED; the union arm of this invariant retired with it and is never re-pointed').toBe(false)
     expect(/static readonly ALL_TOOLS/.test(sourceOf(MCP_SERVER_SRC)), 'I-EX-11 — `ALL_TOOLS` is the one name list (the count row is the §2.6 item 3 row)').toBe(true)
   })
 

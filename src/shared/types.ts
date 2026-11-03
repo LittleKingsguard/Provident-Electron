@@ -286,7 +286,10 @@ export type RpcMethod =
   | 'data.journal'
 
 /** The tab record's one row, as it crosses the bridge (D-63; `docs/L2/store-tabs-record/interface.md` §2).
- *  It is the record's `file.tabs.<id>` leaf: the id is the leaf's NAME and this is its value. */
+ *  **IT IS THE RECORD'S MEMBER AND NOT A PATH LEAF** (`D-93`): the record stands at `['tabs']` on the normal crossing as
+ *  `{order, <id>: row}`, so `id` is a MEMBER KEY of one flat family and this record is its value. The `file.tabs.<id>`
+ *  spelling this line used to carry was the FROZEN graph store's address, and that address space is deleted — a dotted key
+ *  is a character in a member name now, not a deeper path segment (`D-92`'s deletion of the `'dotted-id'` reason). */
 export interface TabsRecordRow {
   readonly id: string
   /** The tab's contained content reference — the data object it holds (constraint `tab-has-content`). */

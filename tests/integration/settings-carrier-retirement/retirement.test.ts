@@ -86,6 +86,21 @@ const MAIN_CODE = sourceOf('src/main/main.ts')
   .filter((line) => !line.trimStart().startsWith('//'))
   .join('\n')
 const textOf = (absolute: string): string => readFileSync(absolute, 'utf8')
+
+/** **COMMENT LINES ELIDED** — the absences below read CODE, never prose. The purge's headstones NAME the deleted channel
+ *  literals where the handlers stood (`D-46`'s annotate-beside discipline), so a raw-bytes scan would read its own
+ *  description as its own hit. */
+function commentElided(bytes: string): string {
+  return bytes
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return ''
+      const at = line.indexOf('//')
+      return at >= 0 ? line.slice(0, at) : line
+    })
+    .join('\n')
+}
 const rel = (absolute: string): string => absolute.slice(SRC_DIR.length + 1).split('\\').join('/')
 
 function walk(dir: string): string[] {
@@ -231,23 +246,43 @@ describe('settings-carrier-retirement · the retirement’s absences, the census
   it('RET-4 · the two channel names keep their spellings BY CONSTANT VALUE and nothing re-spells them: both handlers are registered where they were and both `invoke` sites stand where they stood (L1 §2; D-18; interface.md §0)', () => {
     // BY VALUE, off the module that owns the names — never by a local literal, which could drift in
     // lockstep with a rename and still pass.
-    expect(Object.keys(storeChannels).sort(), 'the channel-name file carries the three landed constants and mints no fourth (store-channels.ts’s own census)').toEqual(['IPC_SECURITY_EXCLUSION', 'STORE_FILE_GET', 'STORE_FILE_PUT'])
-    expect(storeChannels.STORE_FILE_GET, 'Y-1 keeps its spelling').toBe('provident:store:file:get')
-    expect(storeChannels.STORE_FILE_PUT, 'and Y-2 keeps its').toBe('provident:store:file:put')
+    /* ⟶ **RET-4 IS RE-GRAINED `3 -> 1` AND ITS SUBJECT IS WHAT STANDS (2026-11-03, `D-93`).** The row asserted the
+     * `store-channels.ts` constant set was the THREE landed names (`STORE_FILE_GET` · `STORE_FILE_PUT` ·
+     * `IPC_SECURITY_EXCLUSION`), that each of the first two kept its spelling BY VALUE, and that BOTH of their handler /
+     * `invoke` sites stood where they stood. **THE PURGE DELETED THE FIRST TWO CONSTANTS AND ALL FOUR OF THEIR SITES**
+     * (the two `ipcMain.handle` registrations and the two `ipcRenderer.invoke` calls), together with the three preload
+     * `store` members and the `provident:store:file:changed` local, because the renderer's `file.*` projection they
+     * carried is what `D-78` purges (`D-90`'s clause (3) measured exactly this set). **THE ROW IS NOT WEAKENED, IT IS
+     * RE-AIMED AT WHAT THIS UNIT'S OWN CONTRACT IS ABOUT**: the exclusion channel's constant, BY VALUE, and the one
+     * remaining handler/`invoke` pair, which is `IPC_SECURITY_EXCLUSION`'s. The F-8 single-source rule is unchanged and
+     * still bites. */
+    expect(Object.keys(storeChannels).sort(), 'the channel-name file carries the ONE landed constant and mints no second (store-channels.ts\'s own census, `D-93`: the frozen store\'s two names were deleted with its projection)').toEqual(['IPC_SECURITY_EXCLUSION'])
+    expect(storeChannels.IPC_SECURITY_EXCLUSION, 'the exclusion channel keeps its spelling BY VALUE').toBe('provident:security:exclusion')
+    expect(Object.values(storeChannels), 'and the two purged names are GONE from the module, not merely unreferenced').not.toContain('provident:store:file:get')
+    expect(Object.values(storeChannels), 'and so is the second one').not.toContain('provident:store:file:put')
 
     const main = sourceOf('src/main/main.ts')
-    expect(/ipcMain\.handle\(\s*STORE_FILE_GET\b/.test(main), 'the Y-1 handler is registered in src/main/main.ts at the site it stood at (L1 §3)').toBe(true)
-    expect(/ipcMain\.handle\(\s*STORE_FILE_PUT\b/.test(main), 'and so is the Y-2 handler').toBe(true)
+    expect(/ipcMain\.handle\(\s*IPC_SECURITY_EXCLUSION\b/.test(main), 'the exclusion handler is registered in src/main/main.ts at the site it stood at (L1 §3)').toBe(true)
+    // THE CONTROL: the purged pair's two registrations are gone, so the detector above is reading a real site and not
+    // simply matching anything that mentions the channel file.
+    expect(/ipcMain\.handle\(\s*STORE_FILE_GET\b/.test(main), 'the purged Y-1 handler is NOT registered any more (`D-93`), and this is the row\'s control that the detector above reads a site').toBe(false)
+    expect(/ipcMain\.handle\(\s*STORE_FILE_PUT\b/.test(main), 'and neither is Y-2\'s').toBe(false)
 
     const preload = sourceOf('src/main/preload.ts')
-    expect(/ipcRenderer\.invoke\(\s*STORE_FILE_GET\b/.test(preload), 'the Y-1 `invoke` site stands in src/main/preload.ts, byte-identical after this unit (L1 §9)').toBe(true)
-    expect(/ipcRenderer\.invoke\(\s*STORE_FILE_PUT\b/.test(preload), 'and so does the Y-2 one').toBe(true)
+    expect(/ipcRenderer\.invoke\(\s*IPC_SECURITY_EXCLUSION\b/.test(preload), 'and its `invoke` site stands in src/main/preload.ts (L1 §9)').toBe(true)
+    expect(/ipcRenderer\.invoke\(\s*STORE_FILE_(?:GET|PUT)\b/.test(preload), 'the purged pair\'s `invoke` sites are gone with the `store` member').toBe(false)
 
-    // THE F-8 RULE: the two names come from the one file, so a literal re-spelling anywhere else in
-    // `src/**` is a finding (store-channels.ts’s own header).
-    for (const spelling of [storeChannels.STORE_FILE_GET, storeChannels.STORE_FILE_PUT]) {
+    // THE F-8 RULE: the name comes from the one file, so a literal re-spelling anywhere else in `src/**` is a finding.
+    {
+      const spelling = storeChannels.IPC_SECURITY_EXCLUSION
       const reSpelled = ALL_SRC.filter((file) => rel(file) !== 'main/store-channels.ts' && textOf(file).includes(spelling))
       expect(reSpelled.map(rel), `no file re-spells the channel name as a literal: ${spelling}`).toEqual([])
+    }
+    // AND THE TWO PURGED SPELLINGS ARE RE-SPELLED NOWHERE EITHER — they are gone from the tree, comments included, so
+    // the F-8 rule's subject set shrank with the constants rather than leaving two names loose.
+    for (const purged of ['provident:store:file:get', 'provident:store:file:put', 'provident:store:file:changed']) {
+      expect(ALL_SRC.filter((file) => commentElided(textOf(file)).includes(purged)).map(rel),
+        `the purged channel literal appears in the CODE of no src/** file at all (the headstones that name it are comments, and this row reads code): ${purged}`).toEqual([])
     }
   })
 
@@ -347,16 +382,39 @@ describe('settings-carrier-retirement · the retirement’s absences, the census
     }
     // AND NO BRIDGE MEMBER DECLARES ONE EITHER: the `module` and `store` members are the two the module
     // surface and the carrier are reachable through, and neither names an address-shaped argument.
+    /* ⟶ **THE `store` MEMBER IS DELETED AND THE CENSUS MOVES ONTO WHAT STANDS (2026-11-03, `D-93`).** The row read the
+     * `module` and `store` members of the preload bridge and asserted neither takes an address-shaped argument. The `store`
+     * namespace is gone (its three members served the renderer's frozen graph store and the projection `D-78` purges), so
+     * the census reads the FOUR members that can now reach a record — `module` · `tabs` · `view` · `security` — and it is
+     * still a set assertion with the same falsifier: a member carrying an `address`/`path`-shaped argument reddens. **THE
+     * ABSENCE OF `store` IS ITSELF ASSERTED**, so a re-introduction reddens rather than quietly widening the census. */
     const preload = sourceOf('src/main/preload.ts')
-    for (const member of ['module', 'store']) {
+    expect(new RegExp('^ {2}store: \\{', 'm').test(preload), 'src/main/preload.ts declares NO `store` member any more (D-93)').toBe(false)
+    /* **THE DETECTOR NOW READS ARGUMENT LISTS, AND THAT IS A CORRECTION RATHER THAN A RELAXATION.** The as-filed form
+     *  scanned the member's WHOLE block for `<shape>:` anywhere, which was sound while the two members it read (`module`,
+     *  `store`) had no refusal RECORD in their return types. The members that stand now — `tabs` and `view` — answer the
+     *  crossing's own `{status, reason?, message?, address?}` record, so an `address` member appears in a RETURN position
+     *  on every one of them and the whole-block scan would redden on the crossing's own answer. The term is about
+     *  ARGUMENTS: no route takes an address, a tier or a store path. So each `name(args)` signature in the block is read
+     *  and its ARGUMENT list alone is checked — the narrower, stricter reading of the same sentence. */
+    for (const member of ['module', 'tabs', 'view', 'security']) {
       const marker = new RegExp(`^ {2}${member}: \\{`, 'm').exec(preload)
       expect(marker, `src/main/preload.ts declares the \`${member}\` member`).not.toBeNull()
       const after = preload.slice(marker?.index ?? 0)
       const end = /\n {2}\}/.exec(after)
       const block = after.slice(0, end?.index ?? after.length)
-      for (const shape of ADDRESS_SHAPED) {
-        expect(block.includes(`${shape}:`), `the \`${member}\` member takes no address-shaped argument: ${shape}`).toBe(false)
+      const signatures = [...block.matchAll(/^\s{4}(\w+)\(([^)]*)\)/gm)].map((m) => ({ name: m[1], args: m[2] }))
+      expect(signatures.length, `the \`${member}\` block's signatures are read (a block that answers no signature would make this census vacuous)`).toBeGreaterThan(0)
+      for (const signature of signatures) {
+        for (const shape of ADDRESS_SHAPED) {
+          expect(signature.args.includes(shape),
+            `the \`${member}.${signature.name}\` route takes no address-shaped ARGUMENT: ${shape}`).toBe(false)
+        }
       }
+      // THE CONTROL: the SAME detector fires on a synthetic signature that DOES take one, so the census can still fail.
+      expect([...'    read(address: readonly (string | number)[]): Promise<unknown>'.matchAll(/^\s{4}(\w+)\(([^)]*)\)/gm)]
+        .some((m) => ADDRESS_SHAPED.some((shape) => m[2].includes(shape))),
+        `CONTROL — an address-shaped ARGUMENT in the \`${member}\` block would be DETECTED, so the assertion above is a bound and not a tautology`).toBe(true)
     }
     const forbiddenConstants = [...Object.values(sharedTypes), ...Object.values(storeChannels)]
       .filter((value) => typeof value === 'string' && FORBIDDEN_IN_NAMES.some((forbidden) => value.includes(forbidden)))

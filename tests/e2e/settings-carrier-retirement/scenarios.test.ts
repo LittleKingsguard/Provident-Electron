@@ -18,12 +18,17 @@
 // AUTHORED FROM THE DOCUMENTS: L1 §3-§8 read on `interface.md` §1-§8, `behaviour.md` §1-§8 and
 // `persistence.md` §1-§9. The implementation was read only for exported names and call shapes
 // (`src/main/operator-settings/index.ts`, `src/main/settings-surface/index.ts`); no assertion below
-// was chosen from it. THE LIMIT THIS HEAD IMPOSES, named wherever it bites: the two channel bodies
-// (`STORE_FILE_GET`, `STORE_FILE_PUT`) and the module surface's three writing members live in
-// `src/main/main.ts`, which imports `electron` at module scope and is unimportable in a node test,
-// so a row that names a channel drives the declared surface that body calls and the answer shape it
-// mints from it, and names the booted-app remainder as app-green (`interface.md` §4; `strata/
-// brief.md` §6). No row depends on an Electron boot, an IPC hop or a rendered view.
+// was chosen from it. THE LIMIT THIS HEAD IMPOSES, named wherever it bites: the module surface's
+// three writing members and the exclusion channel's handler live in `src/main/main.ts`, which imports
+// `electron` at module scope and is unimportable in a node test, so a row that names a channel drives
+// the declared surface that body calls and the answer shape it mints from it, and names the
+// booted-app remainder as app-green (`interface.md` §4; `strata/brief.md` §6). No row depends on an
+// Electron boot, an IPC hop or a rendered view.
+// ⟶ **RE-GRAINED 2026-11-03 (`D-93`)**: this sentence used to name TWO more channel bodies,
+// `STORE_FILE_GET` and `STORE_FILE_PUT` — the frozen graph store's Y-1 hand-off and its Y-2 projection
+// wire. Both handlers, both their channel constants and the preload `store` members they answered are
+// DELETED with the store (`D-90`'s clause (3) measured exactly that set as the only main-side surface
+// which existed for it), so the limit above now names the ONE channel this unit's contract is about.
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -79,7 +84,25 @@ function walk(dir: string): string[] {
 const SRC = join(process.cwd(), 'src')
 const rel = (file: string): string => file.slice(SRC.length + 1).split('\\').join('/')
 const textOf = (file: string): string => readFileSync(file, 'utf8')
-const containing = (needle: string): string[] => walk(SRC).filter((file) => textOf(file).includes(needle)).map(rel).sort()
+
+/** **COMMENT LINES ELIDED** — every absence/spelling assertion in this file reads CODE, never prose (`AGENTS.md`'s
+ *  discipline, and this repository's own scan-corpus rule). The headstones the purge leaves in `src/main/main.ts`
+ *  NAME `['operator-app-state']` on purpose (`D-46`'s annotate-beside: a deleted write is recorded where it stood), and a
+ *  raw-bytes scan would read that description as a second spelling of the address. A line whose trimmed form opens `//`,
+ *  `*` or `/*` is blanked and a trailing `//` is cut, so what remains is the code the row is about. */
+function commentElided(bytes: string): string {
+  return bytes
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return ''
+      const at = line.indexOf('//')
+      return at >= 0 ? line.slice(0, at) : line
+    })
+    .join('\n')
+}
+
+const containing = (needle: string): string[] => walk(SRC).filter((file) => commentElided(textOf(file)).includes(needle)).map(rel).sort()
 
 /** THE TRANSITIVE IMPORT CLOSURE of the MCP stack's own entry files, `import type` included: the
  *  files a drive on the agent's surface can reach at all (`ISO-5`, `ISO-6`; the helper is the
@@ -299,7 +322,10 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     const preload = textOf(join(MAIN, 'preload.ts'))
     const start = preload.indexOf('export interface ProvidentBridge {')
     const bridge = [...preload.slice(start, preload.indexOf('\n}', start)).matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(bridge, 'ISO-4: nine top-level members since D-63\'s tab-record crossing and D-87\'s view-record crossing, and this unit adds none (D-18)').toEqual(['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs', 'view'])
+    // ⟶ **`9 -> 8` at `D-93`**: the `store` namespace — the frozen graph store's Y-1/Y-2/Y-3 trio — left the bridge with the
+    // store itself. `D-63`'s tab-record crossing and `D-87`'s view-record crossing stand, and NO member replaced the one that
+    // went, so this row's set-equality is still a set claim over what the bridge actually carries.
+    expect(bridge, 'ISO-4: EIGHT top-level members since D-63\'s tab-record crossing and D-87\'s view-record crossing, the `store` namespace having left at D-93, and this unit adds none (D-18)').toEqual(['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'])
 
     // ISO-5 and ISO-6 — nothing the MCP stack's own import closure reaches names the instance, its
     // module or either retired name, and its allowed `provident-*.json` literal set has SHRUNK to the
@@ -346,6 +372,12 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     }
     const moduleToolsHome = textOf(join(MAIN, 'mcp-server.ts'))
     for (const address of addresses) expect(moduleToolsHome.includes(address), `ISO-7: the module tools’ home spells no address: ${address}`).toBe(false)
-    expect(containing('operator-app-state'), 'ISO-7: the third address is spelled only where the instance declares it (and in the composition site’s own comment)').toEqual(['main/main.ts', 'main/operator-settings/index.ts'])
+    // ⟶ **THE LIST SHRINKS TO ONE — AND THE TERM GETS STRONGER, NOT WEAKER (2026-11-03, `D-93`).** The row read
+    // `['main/main.ts', 'main/operator-settings/index.ts']`, the first being the composition site's OWN COMMENT (the file
+    // never spelled the address in code: it reaches the address through `settingsSurface.state()`/`.commit()`). Per this
+    // repository's comment-elided discipline the census now reads CODE, and the code answers ONE file — the instance that
+    // declares the address. The purge deleted the only other thing in `main.ts` that had anything to do with it (the
+    // frozen store's `file.*` projection into those rows), so the strict form is also the true one.
+    expect(containing('operator-app-state'), 'ISO-7: the third address is spelled in the CODE of exactly ONE file — the instance that declares it; the composition site reaches it through `settingsSurface.state()`/`.commit()` and never spells it, and the frozen store projection that used to write it is deleted (`D-93`)').toEqual(['main/operator-settings/index.ts'])
   })
 })

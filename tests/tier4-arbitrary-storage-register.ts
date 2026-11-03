@@ -74,8 +74,14 @@ export const MAIN_SRC = SRC('main/main.ts')
 export const PRELOAD_SRC = SRC('main/preload.ts')
 export const SECURE_PANELS_SRC = SRC('renderer/secure-panels.ts')
 export const STORE_CHANNELS_SRC = SRC('main/store-channels.ts')
-export const STORE_CORE_SRC = SRC('renderer/store-core-graph.ts')
-export const STORE_REFS_SRC = SRC('renderer/store-graph-references.ts')
+/* **⟶ THE TWO DELETED MODULES, NAMED AS PATHS AND NOT AS `SRC(…)` LOOKUPS (2026-11-03, `D-93`).**
+ * `STORE_CORE_SRC` and `STORE_REFS_SRC` used to resolve `src/renderer/store-core-graph.ts` and
+ * `src/renderer/store-graph-references.ts`. **BOTH FILES ARE DELETED** by the purge, so a register that kept a
+ * `SRC(…)` constant for one would hand its readers a path that resolves to nothing and every `sha256Of`/`sourceOf`
+ * over it would answer a sentinel rather than a claim. What a retired reader still needs is the PATH itself — to
+ * assert that nothing stands there — so the constants below are plain paths and are used for exactly that. */
+export const STORE_CORE_PATH = 'src/renderer/store-core-graph.ts'
+export const STORE_REFS_PATH = 'src/renderer/store-graph-references.ts'
 export const SHARED_TYPES_SRC = SRC('shared/types.ts')
 
 // ---- THE DECLARED TOKEN + MESSAGE (`§2.4` items 1/4) — UNMOVED --------------------------

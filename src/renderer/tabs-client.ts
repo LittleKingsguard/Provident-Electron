@@ -4,6 +4,13 @@
 // `driveTabsLandingPage` and no `file.tabs.*` write moves or changes on this pass; `main()`'s boot hand-off is byte-for-byte
 // the boot it drove before. What this module adds is THE INSTRUMENT, and the row that consumes it is Stage B's.
 //
+// ⟶ **STAGE A IS SPENT AND THIS PARAGRAPH ABOVE IS ITS DATED TEXT, NOT THE FILE'S PRESENT STATE** (`D-46`: supersede the
+// framing, never the dated words). Stage B landed at `D-92` — the tab machinery is derived from THIS module's reading or
+// sent through the crossing's own route — and `D-93` then DELETED the frozen graph store the paragraph's `file.tabs.*`
+// clause was written against: `main()`'s boot hand-off, the hydration it fed and the store itself are gone, so there is no
+// `file.tabs.*` write anywhere in the renderer to move or not move. This module is now the record's ONE read surface in
+// this realm and the two authored pages' driver.
+//
 // WHAT IT IS. A READER of the record the store owns and nothing else: it reads through `tabs.read()`, RE-READS after every
 // `tabs.onChanged` delivery, and HOLDS NO SECOND RECORD — no rows, no `order`, no landing seat, and no `file.tabs.*` byte
 // of its own (L2 §6: "Hold, construct or persist a second record" is the first thing the role must never do). L2 §6 names

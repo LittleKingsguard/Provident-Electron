@@ -15,7 +15,10 @@ import {createSettingsSurface} from './settings-surface/index.js'
 // (`D-81`); this file CONSTRUCTS nothing from them: the one implementation is the object literal
 // below, over the secure crossing's rows.
 import type {ModuleStore, ModuleRecord, ModuleStoreStatus} from './mcp-server.js'
-import {STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION} from './store-channels.js'
+// ⟶ **TWO CONSTANTS LEAVE THIS IMPORT AND THE FILE KEEPS ONE** (`D-93`): `STORE_FILE_GET` and `STORE_FILE_PUT` are
+// deleted with the projection they carried, and `IPC_SECURITY_EXCLUSION` — the exclusion transition's own channel — stands
+// because its surface is the SECURE CROSSING's and has nothing to do with the renderer's frozen store.
+import {IPC_SECURITY_EXCLUSION} from './store-channels.js'
 import {CapabilityRouter} from '../renderer/extensions.js'
 import {syncModuleRouter} from './mcp-server.js'
 import {SecurityGate, type ToolGroup} from './security.js'
@@ -381,57 +384,29 @@ async function main(): Promise<void> {
   // delegate to it. This is manual-UI-ONLY — it is NOT reachable over an MCP tool (the MCP tool
   // handlers never route to it), so an agent cannot grant itself capabilities.
 
-  // ══ THE TIER-1 CHANNEL HANDLERS (§2.9 — registered BEFORE the BrowserWindow) ══
-
-  // THE Y-1 BOOT HAND-OFF (the request channel, §2.3): once per realm, at boot, BEFORE the
-  // first graph load. The response is `{name, value}[]` — the app-state rows the surface serves,
-  // and `[]` for a cold tier. NOTHING HERE HOLDS A COPY: the retired third holder is gone, so a
-  // second Y-1 in one realm re-serves the instance's own answer and reads no file (L1 §3;
-  // interface §4).
-  ipcMain.handle(STORE_FILE_GET, async () => {
-    const entries: { name: string; value: unknown }[] = []
-    for (const row of settingsSurface.state().rows) entries.push({ name: row.name, value: row.value })
-    return entries
-  })
-
-  // THE Y-2 COMMIT CHANNEL (the crossing's wire, §2.4): ONE crossing per commit — the
-  // incoming `value` is the STABLE-JSON TRANSLATION of the graph (a JSON string). The
-  // channel VALIDATES it, projects it to the `file.*` rows, and answers the minimal status —
-  // `{status:'committed'}` or a refused receipt `{status:'refused', reason}` where the reason is
-  // the CHANNEL's own pre-write word or the store's status verbatim. A refusal clears NOTHING and
-  // leaves the previous record intact (§2.4 item 4); the receipt is ALWAYS answered, never a
-  // swallow (L1 §3; interface §4).
-  ipcMain.handle(STORE_FILE_PUT, (_event, row: { name?: unknown; value?: unknown }) => {
-    const MALFORMED = 'malformed-payload'
-    const projected: SettingsAppStateRow[] = []
-    try {
-      if (row === null || typeof row !== 'object') return { status: 'refused', reason: MALFORMED }
-      const raw: unknown = (row as { value?: unknown }).value
-      if (typeof raw !== 'string') return { status: 'refused', reason: MALFORMED }
-      let translated: unknown
-      try {
-        translated = JSON.parse(raw)
-      } catch {
-        return { status: 'refused', reason: MALFORMED }
-      }
-      if (translated === null || typeof translated !== 'object' || Array.isArray(translated)) {
-        return { status: 'refused', reason: MALFORMED }
-      }
-      // THE FILE-TIER PROJECTION (§2.7 item 3 / §0A item 6): every `file.*`-keyed spelling of
-      // the crossing's translation lands (incl. the file.settings.* and file.modules.*
-      // namespaces); the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the record.
-      for (const key of Object.keys(translated as Record<string, unknown>)) {
-        if (typeof key === 'string' && key.startsWith('file.')) {
-          projected.push({ name: key, value: (translated as Record<string, unknown>)[key] })
-        }
-      }
-    } catch {
-      return { status: 'refused', reason: MALFORMED }
-    }
-    // ONE commit of the projected rows — the whole-map replacement the crossing's `value` is.
-    const answer = settingsSurface.commit(projected)
-    return answer.status === 'committed' ? { status: 'committed' } : { status: 'refused', reason: answer.reason }
-  })
+  /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   * THE TIER-1 CHANNEL HANDLERS ARE DELETED FROM THIS SITE (`D-93`; `D-78`'s purge, `D-90`'s clause (3)).
+   *
+   * **WHAT STOOD HERE — TWO HANDLERS, ELEVEN LINES AND A SIXTEEN-LINE PROJECTION LOOP BETWEEN THEM.** `STORE_FILE_GET` was
+   * the Y-1 boot hand-off: it copied `settingsSurface.state().rows` into a `{name, value}[]` for the renderer's frozen
+   * store to hydrate from. `STORE_FILE_PUT` was the Y-2 commit wire: it parsed the incoming STABLE-JSON translation of the
+   * frozen graph, walked `Object.keys(...)` keeping every spelling that `startsWith('file.')`, and made ONE
+   * `settingsSurface.commit(projected)` of them — the renderer's `file.*` projection persisted into the secure crossing's
+   * `['operator-app-state']` rows. That projection is the "legacy content inside an intended store" `D-78`'s inventory named,
+   * and both handlers existed for it alone.
+   *
+   * **WHAT SURVIVES, AND WHY IT IS NOT THE SAME SUBJECT.** `settingsSurface.state()` and `settingsSurface.commit()` STAY
+   * BESIDE THIS HEADSTONE AND ARE NOT THIS PASS'S TO DELETE: they are ALSO the MODULE REGISTRY's path — every read and
+   * every write of the `ModuleStore` object literal below goes through them (`state().rows`, `commit(rowsWith(...))`,
+   * `commit(modulePayloadWith(...))`, the remove arm, `attach(mcp)`), which is `D-81`'s landed arrangement. `D-90`'s clause
+   * (3) measured this before it ruled: *"Nothing on the main side exists only for it except the two handlers, the
+   * projection loop and the two preload members"*. So the deletion is those and exactly those.
+   *
+   * **AND NOTHING ON THE MAIN SIDE EVER READ WHAT THE PROJECTION WROTE**: the rows landed at `['operator-app-state']` and
+   * were served back only to the renderer's own store, which the renderer has now stopped reading. The secure crossing's
+   * three declarations (`operator-record` · `operator-settings` · `operator-app-state`) stand, and the address keeps its
+   * real writers — the module registry's.
+   * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
   // PAR-9 — the GET response record is EXTENDED ADDITIVELY by the declared `exclusion` member (the
   // landed `write` member's precedent below): the member is NEVER absent on a read.

@@ -84,10 +84,13 @@ export type ViewRecordStore = Store
 
 /** **THE PANE GEOMETRY'S ROOT — ONE WHOLE VALUE AT `file`.** Its family is one member per pane id, each a
  *  `{size, bounds}` record; the spelling of the leaf is this module's and is stated in
- *  `docs/L2/view-record/interface.md` §1. **NO `file.` PREFIX AND NO RESERVED ROOT**: the crossing's `file` tier already
- *  carries the frozen store's `window·tabs·layout·settings·tracked·modules` projection and `Y-2` (`STORE_FILE_PUT`)
- *  projects every `file.*`-keyed spelling of the graph's translation into the operator record, so a root outside those
- *  six names is the one shape a later projection cannot collide with. */
+ *  `docs/L2/view-record/interface.md` §1. **NO `file.` PREFIX AND NO RESERVED ROOT**: the six `file` roots this address
+ *  had to stay clear of were the FROZEN graph store's (`window·tabs·layout·settings·tracked·modules`), persisted by its
+ *  `Y-2` seam through `STORE_FILE_PUT`, which projected every `file.*`-keyed spelling of the graph's translation into the
+ *  operator record. **THAT PROJECTION IS DELETED AND THE SIX NAMES HAVE NO HOLDER** (`D-93`: the seam, the channel, the
+ *  handlers and the projection loop all went with the store), so no root outside them is owed this collision rule any
+ *  more — `['panes']` is simply the address this family declares, and a `file` root that no projection reads cannot
+ *  collide with one. The reason is recorded rather than deleted, because it is why the spelling was chosen. */
 export const VIEW_PANES_ADDRESS: readonly string[] = ['panes']
 /** **THE FOCUS MIRROR'S ROOT — ONE WHOLE VALUE AT `mem`.** A `mem` address can never come from a file (`D-84`): its
  *  only lawful source is a repair at the creation instant, and `provident-storeroom@1.9.1` saves a `file`-tier

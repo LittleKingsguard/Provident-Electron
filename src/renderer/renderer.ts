@@ -8,8 +8,6 @@ import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.j
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
 import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState } from '../shared/focus-model.js'
-import { createGraphStore, type GraphStore, type GraphCrossing } from './store-core-graph.js'
-import { storeGraphReferences } from './store-graph-references.js'
 import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, type TabsClient, type TabsClientReading, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
@@ -24,23 +22,20 @@ import { DEFAULT_PANE_ID, defaultPaneGeometry } from '../shared/view-shape.js'
  *  boot path — `createTabsClient` stays the only way the app reads. */
 export { deriveTabsWitness } from './tabs-client.js'
 
-/** THE WIRED GRAPH STORE — `U-STORE-CORE`'s integration seam (field 3/6 of the frozen
- *  artifacts, `AMENDMENT TENANT-1`). THE REALM-SCOPE BINDING OWNED BY THE WIRING: the store is
- *  constructed EXACTLY ONCE per realm — in `main()`'s boot sequence, after the realm's own
- *  construction of its runtime and before the boot sequence's hand-off/return (field 6 row 1)
- *  — and held HERE, in the wiring's own module-scope binding (the contract's
- *  no-module-level-mutable-state rule governs `store-core-graph.ts` itself, not the wiring
- *  host). Any `subscribe(...)` the wiring needs would be registered at that same point; this
- *  wiring needs none. THE SEAM IS THE MODULE-EXTERNAL WINDOW the end-point test drives:
- *  `getWiredGraphStore()` answers the ONE boot-constructed store — same identity on every
- *  read — and, in a realm where `main()` never runs (a node test), performs the single
- *  construction lazily so the wiring is observable in a DOM-less runtime (W4). It authors NO
- *  UI content and NO DOM (§5.1 row 6 — the WIRING ROLE ONLY). Construction is TOTAL: the
- *  store never refuses construction (§0A note 8). */
-let wiredGraphStore: GraphStore | null = null
+/** **THE FROZEN GRAPH STORE IS DELETED, AND THIS PARAGRAPH STANDS WHERE ITS BINDING STOOD** (`D-93`, the purge's last
+ *  deletion; `D-78`'s ruling, `D-92`'s UNUSED head, `D-90`'s enumeration). What this module held here was
+ *  `wiredGraphStore` — `U-STORE-CORE`'s single per-realm binding, constructed once at boot by `buildWiredGraphStore` and
+ *  answered on every call by `getWiredGraphStore`, with `FILE_TIER_ROOT_NAMES`, `WiredStoreOptions`, `Tier1StoreSurface`,
+ *  `bootHandoff`, `wiredDeclarations`, the `crossing: {put}` seam, the `hydrate(bootHandoff)` call, the Y-1 hand-off read
+ *  and the Y-3 registration feeding it. **After `D-92` nothing read any of it**: the tab machinery is `tabs-client.ts`'s,
+ *  the pane geometry and the zone family are the view record's, the preview is this composition's closure, and the
+ *  construction was the one act left — writing rows to a store whose every read had a successor. **THERE IS NO SECOND
+ *  AUTHORITY TO LEAVE BEHIND**: a construction with no reader is a store-like thing standing against `D-78`'s own number,
+ *  so it goes whole rather than half-emptied. The realm's two store-like things — the normal crossing and the secure
+ *  crossing — are `src/main/`'s and are reached only over the bridge. */
 
 /** **THE VIEW RECORD'S CLIENT — THE SHAPE THIS REALM RENDERS FROM (`D-88`).** Constructed EXACTLY ONCE per realm, at the
- *  same boot point the frozen store is, and lazily in a realm where `main()` never runs (the W4 form above), so the focus
+ *  same boot point the deleted frozen store's was, and lazily in a realm where `main()` never runs (the W4 form), so the focus
  *  route an MCP call reaches works in a node realm too. **IT IS NOT A STORE**: it holds no address space, owns no
  *  persistence, carries no constraint and is REPLACED WHOLE by every delivery it is refilled from —
  *  `src/renderer/view-client.ts`'s header states the distinction in the convention's own terms. What is held HERE is the
@@ -48,7 +43,9 @@ let wiredGraphStore: GraphStore | null = null
  *  `fill()`**, run at the end of `main()` beside the tab client's instrument; every later fill is a delivery's. */
 let viewClient: ViewClient | null = null
 
-/** THE SHAPE'S ONE PER-REALM CLIENT — the same identity on every call, exactly as `getWiredGraphStore()` answers its store. */
+/** THE SHAPE'S ONE PER-REALM CLIENT — the same identity on every call, the `getTabsClient()` form.
+ *  It is the ONLY per-realm binding this file holds over a crossing's data: after `D-93` there is no store
+ *  binding beside it, and no lazy construction of any store-like thing anywhere in the renderer. */
 export function getViewClient(): ViewClient {
   if (viewClient === null) viewClient = createViewClient()
   return viewClient
@@ -59,56 +56,6 @@ export function getViewClient(): ViewClient {
  *  form), with the client living in the factory's argument + the closures. **THE FOCUS STATE ITSELF IS NEVER HELD HERE**:
  *  it is the client's shape, refilled by deliveries, never a module-level focus-state carrier (`D-88`). */
 let focusCarrier: FocusCarrierSurface | null = null
-
-/** THE FILE TIER'S DECLARED TOP-LEVEL NAMES — the caller's rows at the store's construction
- *  site (G2 `U-STORE-PERSIST` §2.7 item 4's RESERVED settings namespaces, §2.11 item 1): the
- *  channel persists the `file.*`-keyed projection, and the wired store's file tier admits
- *  exactly these roots — `window` · `tabs` · `layout` · `settings` · `tracked` · `modules`
- *  (the collision rule's closed set, `NW-10`). */
-const FILE_TIER_ROOT_NAMES: ReadonlyArray<{ readonly name: string }> = [
-  { name: 'window' },
-  { name: 'tabs' },
-  { name: 'layout' },
-  { name: 'settings' },
-  { name: 'tracked' },
-  { name: 'modules' },
-]
-
-/** THE WIRED STORE'S CONSTRUCTION OPTIONS (G2 — §1.3 item 3: the renderer diff is the boot
- *  sequence + the construction options ONLY): the `crossing` feed (the Y-2 wire) and the
- *  caller's declarations, both supplied at the existing construction site.
- *
- *  **`constraints` IS GONE FROM THIS OPTION SET, AND ITS DELETION IS THE POINT** (`D-92`): the one member this wiring ever
- *  supplied was `exactly-one-active`, and that pair is the CROSSING's declaration at the store's creation now. An option
- *  nothing supplies is a seam a later pass would fill with a second authority over the record. */
-interface WiredStoreOptions {
-  readonly declarations?: ReadonlyArray<{ readonly name: string }>
-  readonly crossing?: GraphCrossing | null
-}
-
-/** THE TIER-1 BRIDGE SURFACE (G2 §2.10 item 4 / §2.11 item 4 — the THREE preload members
- *  under the `store` namespace). The ambient `Window.provident` declaration is another
- *  unit's bytes (`secure-panels.ts`), so the wiring's boot read narrows the bridge through
- *  this local surface — the members stay UNTYPED upstream. */
-interface Tier1StoreSurface {
-  readonly store: {
-    get(): Promise<{ name: string; value: unknown }[]>
-    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: string }>
-    onFileChanged(handler: () => void): () => void
-  }
-}
-
-/** THE IN-REALM TIER-1 BOOT AUTHORITY (G2 §2.3 item 3 — the hydration pin's PERSIST half,
- *  re-read by the HYDRATE-1 amendment): the handed-off record the realm owns at boot. The
- *  wiring holds the record and feeds it to the store's `hydrate(rows)` seam right after the
- *  store's construction — the file-tier nodes are minted from its entries and the `mem`/`temp`
- *  tiers are constructed EMPTY. The hydration mint FIRES the store's event surface BY DESIGN
- *  (the boot-load events ARE the consumer-notification channel — NO-CROSSING and
- *  NO-CONSTRAINT halves survive: no channel byte is written back and no constraint is
- *  evaluated at the hydration point), and the realm's first envelope loads only AFTER the
- *  hand-off answered and hydrated (the starting-order gate, §2.9 consequence (1)). */
-let bootHandoff: { name: string; value: unknown }[] = []
-
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
  * THE TAB MACHINERY, ON THE CROSSING'S CLIENT (`D-92`) — the frozen store's tab region is GONE from this file.
@@ -121,7 +68,8 @@ let bootHandoff: { name: string; value: unknown }[] = []
  * the reading, and the three roles below are derived from THAT READING or SENT THROUGH THE CROSSING'S OWN ROUTE.
  * **`TABS_CONSTRAINT` DOES NOT MOVE — IT DIES**: `exactly-one-active` is one of the crossing's SIX declarations, tested
  * at the store's creation (`src/main/tabs-record/index.ts`), so a second evaluation of it here would be a second
- * authority over one record, and the frozen store's construction below is handed NO `constraints` member at all.
+ * authority over one record — which is why `D-92` handed the frozen store's construction no `constraints` member, and why
+ * `D-93` deletes that construction whole (see the headstone below).
  *
  * **`mintTabId`'s THREE OUTSIDE VALUES ARE RE-GRAINED, NOT CARRIED** (`D-90`'s clause (1), landed here; `D-92`):
  *   · `'malformed-id'` → **`'malformed-row'`**, THE CROSSING'S OWN WORD for a row carrying no id (`src/main/tabs-surface/
@@ -147,18 +95,6 @@ let bootHandoff: { name: string; value: unknown }[] = []
  *  member: no shared module carries the word, and a main-side import would cross the boundary the bridge exists for
  *  (`tests/e2e/central-data/scenarios.test.ts` pins the package's importers exactly). */
 const TABS_SEAT_NAME = 'order'
-
-/** **THE FROZEN STORE'S RESERVED-ENTRY ROW — KEPT WHOLE, READ BY NOTHING, AND GONE WITH THE STORE** (`D-92`). It is the
- *  ONE `file.tabs.*` spelling left in this file, and it is here for exactly one reason: `buildWiredGraphStore` below still
- *  constructs the frozen graph store (the next pass's deletion), and the row is that construction's own option. Removing
- *  it would be half-removing a construction nothing reads rather than leaving it for the pass that deletes it, so it
- *  stands and is named. **THE RECORD'S OWN RESERVATION IS NO LONGER THIS FILE'S TO DECLARE**: the crossing derives the
- *  landing witness from `order` (`D-76`) and refuses a seat name at its own boundary, which is why this row's subject is
- *  now a store nothing reads. */
-const TABS_LEGACY_LANDING_NAME = 'file.tabs.landing'
-const TABS_RESERVED_DECLARATION_ROWS: ReadonlyArray<{ readonly name: string; readonly reserved?: boolean }> = [
-  { name: TABS_LEGACY_LANDING_NAME, reserved: true },
-]
 
 /** **THE TAB-ID MINTING SITE — ONE BOUNDED WIRING ROLE, NOW A GUARD OVER THE READING'S `order`** (`D-92`). It was
  *  `mintTabId(store, tabId)`: a `resolve('file.tabs.order')` on the frozen store, a miss read as `[]`, and four refusal
@@ -320,61 +256,36 @@ export function driveTabsLandingPage(reading: TabsClientReading, runtime: TabsPa
  *
  *  **WHAT STILL STANDS IN THIS FILE AND IS NOT THIS STEP**: `TABS_ORDER_NAME` and the `file.tabs.*` record were the frozen
  *  graph store's own, unmoved by that deletion (the purge's remaining item, `strata/pending.md`). **THAT REGION IS GONE
- *  NOW** — `D-92` moves the tab machinery onto the crossing's client, and the only `file.tabs` spelling left in this file
- *  is the legacy store's reserved row above, which goes with the store. `TabsBootOutcome` is deleted with the step: it
- *  described only what the step answered, and a declared outcome with no producer is a name with nothing behind it
+ *  NOW** — `D-92` moved the tab machinery onto the crossing's client, and **`D-93` leaves NOT ONE `file.tabs` SPELLING IN THIS
+ *  FILE**: the legacy store's reserved row went with the store it was an option of. `TabsBootOutcome` is deleted with the
+ *  step: it described only what the step answered, and a declared outcome with no producer is a name with nothing behind it
  *  (D-70's rule). */
 
-/** **THE CONSTRUCTION'S DECLARATION SET — THE CALLER'S ROWS PLUS THE RESERVED ENTRY'S OWN ROW,
- *  AND NOTHING THE CALLER CAN DROP** (`§2.1` item 6, `R3-2`; `§5.1` item 1's wiring's tab-record
- *  region). The store's declaration input is the realm's own (§2.4 item 8), and the caller's rows
- *  are carried VERBATIM — no row is re-spelled, re-ordered or dropped, and the `tabs` ROOT stays
- *  an ordinary declared row (`§0A` item 1). The ONE row this construction ADDS — and only when
- *  the caller's own set does not already carry that spelling, so no name is ever declared twice —
- *  is `TABS_RESERVED_DECLARATION_ROWS`: the reservation the record's `L-1`/`A-5` rows read on a
- *  fixture and that the SHIPPED construction was measured to be missing. A caller-supplied set
- *  can therefore ADD declarations but never MASK the reserved entry's own removal refusal. */
-function wiredDeclarations(supplied?: ReadonlyArray<{ readonly name: string }>): ReadonlyArray<{ readonly name: string; readonly reserved?: boolean }> {
-  const callerRows = Array.isArray(supplied) ? supplied : FILE_TIER_ROOT_NAMES
-  const rows: Array<{ readonly name: string; readonly reserved?: boolean }> = callerRows.map((row) => ({ ...row }))
-  for (const reserved of TABS_RESERVED_DECLARATION_ROWS) {
-    const at = rows.findIndex((row) => row.name === reserved.name)
-    // A NAME IS NEVER DECLARED TWICE (the store refuses a duplicate row at construction), so a
-    // caller-supplied row carrying the reserved spelling is UPGRADED IN PLACE rather than
-    // shadowed by a second row — which is what makes the reservation unmaskable: a caller can
-    // never turn the entry's own refusal off by declaring the same name WITHOUT the flag.
-    if (at < 0) rows.push({ ...reserved })
-    else rows[at] = { ...rows[at], reserved: true }
-  }
-  return rows
-}
-
-function buildWiredGraphStore(options?: WiredStoreOptions): GraphStore {
-  // THE STORE'S DECLARATIONS COME FROM `storeGraphReferences(rows)`, passed as
-  // `options.declarations` (the sibling artifact's field 6 — the wiring's single call site
-  // for the declaration-input module). The caller's rows are this realm's own; the realm's
-  // boot store is production-shaped (no test seam). THE CROSSING FEED (G2 §2.11 item 1):
-  // the `file` tier's commit crosses through the seam handed in at the construction site —
-  // `crossing: { put(row) { return bridge.store.put(row) } }`, the Y-2 wire.
-  //
-  // ⟶ **NO `constraints` MEMBER AT ALL — AND NOT AN EMPTY LIST** (`D-92`). `TABS_CONSTRAINT` was this file's one supplied
-  //    member and it DIES here rather than moving: `exactly-one-active` is one of the crossing's six declarations, tested at
-  //    the store's creation (`src/main/tabs-record/index.ts`, `D-83`), so the record has ONE authority. **NOTHING AT ALL
-  //    RATHER THAN `[]`**, because an empty list is still a declaration that a constraint set exists and that this wiring
-  //    supplies it — a name with nothing behind it (`D-70`'s rule). The store is still constructed with its declarations and
-  //    its crossing seam because the NEXT pass deletes it as one object (`strata/next-steps.md` row 1); stripping its
-  //    construction here would be that deletion done in halves.
-  wiredGraphStore = createGraphStore({
-    declarations: storeGraphReferences(wiredDeclarations(options?.declarations)),
-    crossing: options?.crossing ?? null,
-  })
-  return wiredGraphStore
-}
-
-export function getWiredGraphStore(options?: WiredStoreOptions): GraphStore {
-  if (wiredGraphStore === null) wiredGraphStore = buildWiredGraphStore(options)
-  return wiredGraphStore
-}
+/* ═════════════════════════════════════════════════════════════════════════════════════════
+ * THE CONSTRUCTION IS DELETED — THIS IS ITS HEADSTONE, NOT ITS HOME (`D-93`; `D-78`'s purge, `D-92`'s UNUSED head,
+ * `D-90`'s enumeration of every surface it still provided).
+ *
+ * WHAT STOOD HERE, IN THREE PARTS, AND WHERE EACH SUBJECT WENT.
+ *   · `wiredDeclarations(supplied)` — the store's construction-time declaration set: `FILE_TIER_ROOT_NAMES` (the six
+ *     `file` roots `window` · `tabs` · `layout` · `settings` · `tracked` · `modules`) plus `TABS_RESERVED_DECLARATION_ROWS`,
+ *     the `file.tabs.landing` reservation row whose `reserved: true` flag made the landing entry's removal a refusal.
+ *     **THE RESERVATION HAS NO SUCCESSOR AND NEEDS NONE**: after `D-76` the landing entry is an ORDINARY member of the
+ *     record's one family, the crossing derives the landing witness from `order`, and it refuses a seat name at its OWN
+ *     boundary (`src/main/tabs-record/index.ts`'s `SEAT_NAMES`). The six roots were the frozen store's file tier's
+ *     admissible names; the projection that persisted them (`STORE_FILE_PUT`) is deleted with this pass, so no name has
+ *     an address here any more.
+ *   · `buildWiredGraphStore(options)` — the ONE construction per realm: `createGraphStore` over
+ *     `storeGraphReferences(wiredDeclarations(...))` with the `crossing: {put(row){ return bridge.store.put(row) }}` seam
+ *     (the Y-2 wire) and, before `D-92`, `TABS_CONSTRAINT`; `D-92` handed it no `constraints` member at all.
+ *   · `getWiredGraphStore(options)` — the module-external window: one lazy construction, the same identity on every call,
+ *     which the node suite drove as the end-point seam (W4).
+ *
+ * **WHY NOTHING IS KEPT.** Every read of the thing these three built had a successor by `D-92` — the tab machinery on
+ * `tabs-client.ts`, the pane geometry and the zone family on the view record's shape, the preview as this composition's
+ * closure — and the Y-1 hand-off, the hydration, the crossing seam and the Y-3 registration existed ONLY to feed it. What
+ * was left was a construction writing rows no read answers, which is exactly what `D-78` rules out by its own number. A
+ * store-like thing kept "for the test seam" would be a third one standing, and a deletion done in halves.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /** N3 (live-notification-review.md) — the MCP methods that mutate the APP graph
  *  (content/structural/re-derive). Only these trigger the app-graph-changed push
@@ -787,11 +698,12 @@ function focusRouteImpl(view: ViewClient | null, payload: unknown): FocusAnswer 
 }
 
 /** THE ROUTE — THE CASE'S ENTRY (`focusRoute(req.payload)`): the carrier is
- *  boot-constructed once from `getWiredGraphStore()` (lazily in a realm where
- *  `main()` never ran) and this route reads THE MIRROR THROUGH THE STORE —
+ *  boot-constructed once from `getViewClient()` (lazily in a realm where
+ *  `main()` never ran) and this route reads THE MIRROR THROUGH THE SHAPE —
  *  never a module-level variable, never a second carrier, and never the
  *  subscription (the subscription is the CONSUMER channel, not the route's data
- *  source). THE HOLDER'S OWN ANSWER IS WHAT SHIPS. */
+ *  source). THE HOLDER'S OWN ANSWER IS WHAT SHIPS. (`D-88` moved the mirror off
+ *  the frozen store; `D-93` deletes the store, so there is no third source.) */
 function focusRoute(payload: unknown): FocusAnswer {
   const view = getViewClient()
   if (focusCarrier === null) focusCarrier = createFocusCarrier(view)
@@ -806,7 +718,10 @@ function focusRoute(payload: unknown): FocusAnswer {
 async function main(): Promise<void> {
   const mount = document.getElementById('app')
   if (!mount) throw new Error('mount #app missing')
-  const bridge = window.provident as unknown as ((typeof window.provident) & Tier1StoreSurface) | undefined
+  // **NO LOCAL BRIDGE SURFACE ANY MORE** (`D-93`): the `Tier1StoreSurface` narrowing existed because the ambient
+  // `Window.provident` declaration (`secure-panels.ts`, another unit's bytes) never carried the `store` namespace. That
+  // namespace is deleted from the preload with this pass, so the declaration is now complete and the cast is the plain one.
+  const bridge = window.provident as unknown as typeof window.provident | undefined
   // Read the persisted operator config (maxJournalLength) so the app Runtime's
   // Supervisor is constructed with the journal-condense threshold. The config
   // is manual-UI-only (never an MCP tool); the Runtime reads it at boot. Tier
@@ -822,57 +737,31 @@ async function main(): Promise<void> {
       // keep the default (never condense) on a bridge error
     }
   }
-  // ⟶ THE TIER-1 HAND-OFF (G2 `U-STORE-PERSIST` §2.9 — THE CHANGED BOOT ORDER): the
-  // persisted values are requested ONCE — the Y-1 hand-off (`bridge.store.get()`) reads the
-  // preload's store.get member BEFORE the store is constructed and BEFORE the first envelope
-  // loads (the call itself is spelled in the bracket form below so the fork-store-reads
-  // scanner's receiver grammar — a direct `.get(` on a store-ish receiver — stays silent for
-  // a BOOT read that answers no agent; the semantics of the member call are identical). A
-  // cold tier answers [] and the realm boots on it — never a throw. The in-realm tiers are
-  // then built from the handed-off record THROUGH the store's `hydrate(rows)` seam
-  // (§2.3 item 3's re-read, the HYDRATE-1 amendment): the file-tier nodes are minted from the
-  // record's entries and `mem`/`temp` are constructed EMPTY — the mint FIRES the event
-  // surface BY DESIGN (the boot-load events ARE the consumer-notification channel), never
-  // crosses (no channel byte back) and never evaluates a constraint.
-  const handedOff: { name: string; value: unknown }[] = []
-  if (bridge !== undefined && bridge.store !== undefined) {
-    try {
-      const served: unknown = await bridge.store['get']()
-      if (Array.isArray(served)) handedOff.push(...served)
-    } catch {
-      // an unanswered hand-off is the cold tier — the realm boots on [] (§2.9 consequence (3))
-    }
-  }
-  bootHandoff = handedOff
-  // ⟶ THE GRAPH-STORE WIRING (`U-STORE-CORE` field 3/6 + G2 §1.3 item 3): the ONE store
-  // construction per realm at boot — fed at the EXISTING construction site with the file
-  // tier's declared top-level names AND the crossing seam (the store's `file` tier crosses
-  // through the preload's STORE_FILE_PUT channel — `crossing: { put(row) {
-  // return bridge.store.put(row) } }`, §2.11 item 1). The store is held in the wiring's
-  // own binding and observed through `getWiredGraphStore()`; the WIRING ROLE ONLY — no UI
-  // content, no DOM.
-  const wired = getWiredGraphStore(
-    bridge !== undefined && bridge.store !== undefined
-      ? {
-          declarations: FILE_TIER_ROOT_NAMES,
-          crossing: { put(row) { return bridge.store.put(row) as unknown as { status: 'committed' | 'refused' } } },
-        }
-      : undefined,
-  )
-  // ⟶ THE TIER-1 HYDRATION (G2 §2.3 item 3's re-read + the frozen surface's HYDRATE-1
-  // amendment — the boot order: hand-off → store construction → hydrate → slice boot step →
-  // Runtime/first envelope): `wired.hydrate(bootHandoff)` MINTS the file-tier nodes the
-  // handed-off record names and FIRES the store's EVENT SURFACE BY DESIGN — the boot-load
-  // events ARE the consumer-notification channel (a consumer, e.g. pane placement, subscribes
-  // and learns via the emitted event that the persisted tier-1 values are READY). The seam
-  // NEVER crosses (no channel byte back — the record came FROM main; a boot write-back is a
-  // redundant round-trip) and NEVER evaluates the constraint table (the FIRST constraint
-  // evaluation stays reserved for the slice's boot step below); the `mem`/`temp` tiers stay
-  // constructed EMPTY (§0A item 6). The first envelope loads only AFTER the hydration — a
-  // boot whose first graph loads before the hand-off answered FAILS the starting-order gate
-  // (§2.9 consequence (1)); the persisted tier-1 values are IN the store from here on
-  // (tier-1 resolves answer them; the G2 spec's M-7 is satisfiable).
-  wired.hydrate(bootHandoff)
+  // ═════════════════════════════════════════════════════════════════════════════════════════
+  // ⟶ THE Y-1 HAND-OFF, THE STORE CONSTRUCTION AND THE TIER-1 HYDRATION ARE DELETED FROM THIS SITE (`D-93`).
+  //
+  // **WHAT STOOD HERE, IN THREE STEPS OF ONE CHAIN.** *(1)* the Y-1 hand-off: `bridge.store.get()` read ONCE, before the
+  // store was constructed and before the first envelope loaded, into a `handedOff` array — a cold tier answered `[]` and
+  // the realm booted on it. *(2)* `getWiredGraphStore({declarations: FILE_TIER_ROOT_NAMES, crossing: {put(row){…}}})` — the
+  // ONE frozen-store construction per realm, the `file` tier's commits crossing into `STORE_FILE_PUT` (the Y-2 wire).
+  // *(3)* `wired.hydrate(bootHandoff)` — the file-tier nodes minted from the handed-off rows, firing the store's event
+  // surface by design, with `mem`/`temp` constructed EMPTY.
+  //
+  // **WHY NOTHING IS LEFT TO MOVE** (`D-92`'s measurement, `D-78`'s ruling). The hand-off's rows were the operator settings
+  // instance's `['operator-app-state']` rows — the renderer's `file.*` projection, which is exactly the content the purge
+  // rules out. The record this realm renders from is READ where it lives now: the tab record through
+  // `src/renderer/tabs-client.ts` (one boot read + every `onChanged` delivery), the pane geometry and zone family through
+  // `src/renderer/view-client.ts` (`fill()` + deliveries). Nothing consumed the hydration's minted nodes and nothing read
+  // the store it minted them into. **THE BOOT ORDER THE GATE READS IS UNCHANGED IN SEQUENCE AND SHORTER IN STEPS**:
+  // `tests/e2e/bundle-boot-seam`'s `B-5` pins the trace's order against `bridge.ready()`, and the steps that leave are
+  // three that ran strictly between the operator-config read and the focus carrier — so every step that remains keeps its
+  // relative order.
+  //
+  // **THE FIRST ENVELOPE STILL LOADS AFTER THE ONE OPERATOR-CONFIG READ ABOVE** (`bridge.security.get()`, tier 4's own
+  // snapshot, a DIFFERENT channel that is not this pass's subject): that read is the only awaited bridge call left before
+  // the first graph load, and it never was the Y-1 hand-off's.
+  // ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
   // ═══ THE SLICE BOOT STEP IS DELETED FROM THIS SITE (`D-83`) ═══
   // **WHAT STOOD HERE**: after `hydrate(bootHandoff)` and before the first graph load, ONE commit —
   // `evaluateTabsBootStep(wired, handedTabsOrder)`, whose whole act was `wired.commit(TABS_ORDER_NAME, [...handed])`
@@ -914,16 +803,13 @@ async function main(): Promise<void> {
   // pre-drag read now hits an in-realm tier (NO crossing, §2.9 item 1). It is part of the
   // APP UI and exists with or without the preload bridge (only the MCP endpoints need it).
   startGutterAffordance(runtime)
-  // ⟶ THE Y-3 REGISTRATION (G2 §2.5 item 1 / §2.11 item 3 — the P1-P7 release discipline):
-  // registered ONCE at boot; the returned release is held by the wiring and answered at
-  // realm teardown. The signal is a DECLARED NO-OP on this single-window app — the
-  // renderer's file table updates from the STORE's receipts only, never from a push.
-  let releaseY3: (() => void) | null = null
-  if (bridge !== undefined && bridge.store !== undefined) {
-    releaseY3 = bridge.store.onFileChanged(() => {
-      // Y-3 is a change SIGNAL — a declared no-op while a single window owns the realm
-    })
-  }
+  // ⟶ **THE Y-3 REGISTRATION IS DELETED FROM THIS SITE** (`D-93`; `D-90`'s clause (3), the legacy projection dying whole).
+  // It was `bridge.store.onFileChanged(…)` — ONE registration at boot whose body was a DECLARED NO-OP ("a change SIGNAL
+  // while a single window owns the realm"), plus the `releaseY3` binding held for the P1-P7 release discipline that the
+  // page's teardown never reached. **IT FED NOTHING AND NOTHING FED IT**: the renderer's file table was to update from the
+  // frozen store's receipts, and that store and its projection (`STORE_FILE_PUT`, `provident:store:file:changed`) are
+  // deleted with it. **A LIVE REGISTRATION IS NOT KEPT FOR ITS OWN SAKE**: the P1-P7 discipline is satisfied by holding the
+  // registrations that remain — `tabsClientSubscription` and `viewSubscription` below, one per crossing this realm reads.
   if (!bridge) {
     console.warn('[provident-renderer] no preload bridge — MCP endpoints unavailable (running as a plain page?)')
     return
@@ -1006,7 +892,8 @@ async function main(): Promise<void> {
  * synchronously mid-boot, which is the price of the record being the crossing's rather than the frozen store's.
  * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/** THE REALM'S ONE TAB CLIENT — the same identity on every call, the `getViewClient()`/`getWiredGraphStore()` form. It is
+/** THE REALM'S ONE TAB CLIENT — the same identity on every call, the `getViewClient()` form (the `getWiredGraphStore()`
+ *  form it also named is deleted, `D-93`). It is
  *  constructed with the RUNTIME as its envelope query, so each terminal is resolved through `Runtime.elementForNodeId` and
  *  never by this file's spelling (L2 §6), and lazily so a node realm that reaches a role without `main()` still has one. */
 let tabsClient: TabsClient | null = null
@@ -1028,8 +915,9 @@ let tabsPagesReading: TabsPagesReading | null = null
 
 /** THE SUBSCRIPTION'S OWN ANSWER — `subscribed: false` on a realm whose bridge carries no `tabs`
  *  member, which is the stated absent case (`tabs-client.ts`'s header) and never a throw. Held for
- *  the same reason `releaseY3` is: the P1-P7 release discipline holds a registration, and this
- *  realm's teardown is the page's. */
+ *  the P1-P7 release discipline: a registration is held so a teardown could withdraw it, and this
+ *  realm's teardown is the page's. **IT IS THE ONLY SUCH REGISTRATION THE TAB RECORD HAS HERE** (`D-93`: the Y-3
+ *  registration that stood beside it in `main()` is deleted with the store it fed). */
 let tabsClientSubscription: TabsSubscription | null = null
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the
@@ -1063,8 +951,9 @@ function startTabsClientInstrument(runtime: Runtime): void {
   )
 }
 
-/** THE SHAPE'S SUBSCRIPTION — held for the P1-P7 release discipline exactly as `releaseY3` and `tabsClientSubscription`
- *  are: a registration is held so a teardown could withdraw it (this realm's teardown is the page's). */
+/** THE SHAPE'S SUBSCRIPTION — held for the P1-P7 release discipline exactly as `tabsClientSubscription` is: a registration
+ *  is held so a teardown could withdraw it (this realm's teardown is the page's). **THESE TWO AND NO THIRD** (`D-93`: the
+ *  Y-3 registration is gone, so the realm holds one registration per crossing it reads and nothing else). */
 let viewSubscription: ViewSubscription | null = null
 
 /** **THE SHAPE'S ONE BOOT SITE (`D-88`)** — ONE registration and ONE stated read, started from `main()` as its last
@@ -1298,37 +1187,34 @@ export function zoneSizeRepair(min: number, max: number): (
   }
 }
 
-/** **THE COMPOSITION'S TWO BACKINGS, AND AFTER `D-92` ONLY ONE OF THEM ANSWERED A READ** (`D-88` split them; this pass
- *  empties the second).
+/** **THE COMPOSITION'S ONE BACKING** (`D-88` split it from the store; `D-92` emptied the store's half; `D-93` deletes it).
  *
  *  `view` is **THE SHAPE** — the pane geometry AND the zone family, read SYNCHRONOUSLY off `src/renderer/view-client.ts`'s
  *  in-realm projection and written through the crossing's `commitPane` route. It is NOT a store: it holds no address
  *  space, owns no persistence, carries no constraint and is replaced whole by every delivery it is refilled from. **IT IS
- *  NOW THE COMPOSITION'S ONLY READ AUTHORITY**: all six of the flow's reads answer here.
+ *  THE COMPOSITION'S ONLY READ AUTHORITY**: all six of the flow's reads answer here.
  *
- *  `frozen` is the app's own graph store, and after this pass **NOTHING READS IT**. It survives this signature for exactly
- *  ONE act — the construction-time bootstrap below, three `commit`/`clear` pairs on roots nothing reads any more — which is
- *  left in place rather than half-removed because the NEXT pass deletes the store as one object (`strata/next-steps.md`
- *  row 1). A caller that supplies no `frozen` loses nothing but that dead write.
+ *  **`frozen` IS GONE FROM THIS INTERFACE, AND ITS DELETION IS THE POINT** (`D-93`). It was the app's own frozen graph
+ *  store, and after `D-92` NOTHING read it: the member survived for exactly one act, the construction-time
+ *  `commit`/`clear` bootstrap of `mem.layout`/`temp.drag`/`file.settings` below, which wrote three roots no read answered.
+ *  That bootstrap's subject is deleted here with the store, so the member goes too rather than becoming a duck-typed hole
+ *  a later caller could fill with a second authority — the "third path" `D-90` rejected before it was offered.
  *
  *  TOTAL for ANY argument (unchanged): an absent or hostile `view` answers the MEASURED DEFAULT, a zone nothing names
  *  answers `[]`/`undefined`, and no throw escapes a wiring turn. */
 export interface PaneDragBacking {
   /** THE SHAPE (D-88, D-92) — every read the flow makes, synchronous; the writes are the crossing's routes. */
   readonly view?: ViewClient | null
-  /** THE FROZEN STORE — READ BY NOTHING (D-92); kept for the construction-time bootstrap the deletion pass removes. */
-  readonly frozen?: unknown
 }
 
 /** THE WIRED COMPOSITION (§2.1 A/B/C + the shape's delivery turn + §7a.1 item 1's reconcile turns), bound to the
  *  caller-supplied BACKINGS above and the RECORDING SOURCE DOUBLE. Every read is the shape's; the temp preview is this
  *  closure's; the render turn is a member the shape's one delivery calls. */
 export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurface {
-  const backingRecord = (backing ?? null) as { readonly view?: unknown; readonly frozen?: unknown } | null
+  const backingRecord = (backing ?? null) as { readonly view?: unknown } | null
   /** THE SHAPE, where the caller supplied one. `null` is a realm with no crossing: the reads answer the measured default
    *  and every write is the client's `absent` statement, which is the declared degradation and never a throw. */
   const view = (backingRecord?.view ?? null) as ViewClient | null
-  const storeRecord = (backingRecord?.frozen ?? null) as Record<string, unknown> | null
   const sourceRecord = (source ?? null) as { readonly layout?: unknown } | null
 
   /** THE CALLER'S OWN ELEMENT/TOKEN MAPPING (§2.1 A): `<id>` is derived from the caller's
@@ -1372,27 +1258,17 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     }
   }
 
-  /** **THE BOOT BOOTSTRAP — KEPT WHOLE, READ BY NOTHING, GONE WITH THE STORE** (`D-92`, by `D-90`'s clause (3)). It
-   *  MINT-DECLARES three roots in the FROZEN STORE's register (`layout` at mem · `drag` at temp · `settings` at file) and
-   *  clears each holder, §7a.1 items 1/4's boot-seeding reading. **THIS IS THE ONE WRITE THIS COMPOSITION STILL MAKES TO
-   *  THE STORE AND IT EXISTS ONLY TO FEED THE REGISTER**: the temp preview is closure state now, the zone family is the
-   *  crossing's, and the pane geometry left the store at `D-88`. It is left standing rather than half-removed because the
-   *  next pass deletes the store as one object, and removing a write from a construction whose whole purpose is being
-   *  deleted is the deletion done in halves. A hostile store absorbs every step. */
-  try {
-    const commit = storeRecord?.commit as ((name: string, value: unknown) => unknown) | undefined
-    const clear = storeRecord?.clear as ((name: string) => unknown) | undefined
-    if (typeof commit === 'function' && typeof clear === 'function') {
-      commit('mem.layout', undefined)
-      clear('mem.layout')
-      commit('temp.drag', undefined)
-      clear('temp.drag')
-      commit('file.settings', undefined)
-      clear('file.settings')
-    }
-  } catch {
-    // a hostile store must never break the composition
-  }
+  /* **THE BOOT BOOTSTRAP IS DELETED FROM THIS SITE** (`D-93`, by `D-90`'s clause (3) and `D-92`'s head, which named it
+   *  "the ONE write still made to it"). It was three `commit`/`clear` pairs mint-declaring `mem.layout`, `temp.drag` and
+   *  `file.settings` in the FROZEN STORE's register — §7a.1 items 1/4's boot-seeding reading. **EVERY ROOT IT SEEDED HAD
+   *  ALREADY LEFT**: the pane geometry became the view record's at `D-88` (`['panes']`), the zone family at `D-91`
+   *  (`['zones']`), and the drag preview became this closure's `Map` at `D-92`. So the bootstrap wrote three roots no read
+   *  answered, into a store no other line of this file touched. **WHAT IT COST TO REMOVE: NOTHING** — the composition's
+   *  behaviour is a function of the shape and of `previews`, and no caller ever observed a register row. A caller that
+   *  supplies no `view` still loses nothing but the declared degradation, and no throw escapes any turn.
+   *
+   *  **AND `temp.drag` WAS NEVER A ROOT OF THE FAMILY'S**: `D-90`'s clause (2) measured the preview as ONE writer with NO
+   *  reader outside the rows asserting the write, holding no address, outliving no gesture, crossing no boundary. */
 
   /** **THE TEMP PREVIEW — PLAIN CLOSURE STATE, AND `D-90`'s JUDGEMENT IS THE REASON** (`D-92`).
    *

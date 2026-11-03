@@ -81,7 +81,12 @@ const RPC_METHODS = [
 const MUTATING = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'] as const
 
 /** The seven top-level `window.provident` members as filed (`src/main/preload.ts:42-75`). */
-const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine
+// ⟶ **THE MEMBER LEAVES THE LOCKSTEP PAIR AND THE SET MOVES `9 -> 8` (2026-11-03, `D-93`).** `'store'` was the frozen
+// graph store's THREE-member namespace (Y-1 · Y-2 · Y-3) and it is DELETED whole with the store it served; `D-90`'s clause
+// (3) named "the two preload members" as the only main-side surface that existed for the projection. **NO MEMBER REPLACES
+// IT** — the tab record's crossing and the view record's are the two that carry the data now, and both already stand. The
+// set-equality still bites: a ninth member of ANY name reddens this row.
+const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -89,6 +94,22 @@ const REPO = new URL('../../../', import.meta.url)
 
 const sourceOf = (relative: string): string => readFileSync(new URL(relative, REPO), 'utf8')
 const textOf = (absolute: string): string => readFileSync(absolute, 'utf8')
+
+/** **COMMENT LINES ELIDED** — every absence assertion in this file reads CODE, never prose. The headstones this pass
+ *  leaves in `src/` NAME the machinery they record (that is `D-46`'s annotate-beside discipline), and a raw-bytes scan
+ *  would read its own description as its own hit. A line whose trimmed form opens `//`, `*` or `/*` is blanked, and a
+ *  trailing `//` is cut, so what remains is the code the assertion is about. */
+function commentElided(bytes: string): string {
+  return bytes
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return ''
+      const at = line.indexOf('//')
+      return at >= 0 ? line.slice(0, at) : line
+    })
+    .join('\n')
+}
 const rel = (absolute: string): string => absolute.slice(SRC_DIR.length + 1).split('\\').join('/')
 
 function walk(dir: string): string[] {
@@ -374,7 +395,7 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const block = preload.slice(start, end)
     const members = [...block.matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries nine top-level members, and the row still asserts the set it declares (interface.md §5 A-1; D-87)').toEqual([...BRIDGE_MEMBERS])
+    expect(members, 'the bridge carries EIGHT top-level members, and the row still asserts the set it declares: the `store` namespace left at D-93 and no member replaced it (interface.md §5 A-1; D-63, D-87, D-93)').toEqual([...BRIDGE_MEMBERS])
     expect(preload.split("contextBridge.exposeInMainWorld('provident'").length - 1, 'one exposure of one bridge').toBe(1)
 
     // LIMB TWO — THE LOCKSTEP HALF. `preload.ts` and `secure-panels.ts` re-declare the same
@@ -388,7 +409,7 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     // LIMB THREE — THE RAW-CALL SITE. `ipcRenderer` is obtainable only from `electron`, so the one
     // file in `src/**` that imports it is the bridge: any other file able to `invoke` a channel
     // would carry a security write outside the three, and it cannot, because it cannot reach one.
-    const holders = ALL_SRC.filter((file) => /\bipcRenderer\b/.test(textOf(file)))
+    const holders = ALL_SRC.filter((file) => /\bipcRenderer\b/.test(commentElided(textOf(file))))
     expect(holders.map(rel).sort(), 'only the preload bridge holds `ipcRenderer`; no file may reach a channel behind its back').toEqual(['main/preload.ts'])
 
     // LIMB FOUR — THE CHANNEL CENSUS, BY VALUE AND LIVE. Three security channels exist in the

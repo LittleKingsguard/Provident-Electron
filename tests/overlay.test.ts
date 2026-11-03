@@ -1261,20 +1261,20 @@ describe('§3.5 X-1 / X-2 / X-3 / X-4 / X-5 / X-6 + §3.4 R-13 / R-3(config) / R
         if (/\bimport\b|\brequire\s*\(/.test(line) && specifier.test(line)) importers.push(`${p.replace(ROOT, '.')}: ${line.trim()}`)
       }
     }
-    // THE AMENDED SET (the licence's overlay cell): EXACTLY ONE admitted importer —
-    // the unit's own caller file `src/renderer/overlay-store.ts` — and NOTHING
-    // else. The as-filed reading ("the src/** tree contains ZERO importers of this
-    // unit's module") survives: the ONE member is the caller's own admission, and a
-    // SECOND importer is still a FINDING.
-    const admittedImporter = '.src/renderer/overlay-store.ts:'
+    // ⟶ **X-6 REVERTS TO ITS AS-FILED CLOSED FORM (2026-11-03, `D-93`) — THE ROLLBACK THE LICENCE ITSELF DECLARED.**
+    // The amended set admitted EXACTLY ONE importer, the unit's own caller file `src/renderer/overlay-store.ts`. **THAT
+    // CALLER IS DELETED**: it was a store-shaped turn written against the frozen graph store's `mem.overlay.<name>.state`
+    // address space, it had NO live consumer under `src/` (the amended row's own measurement was "one importer, and that
+    // importer is the caller"), and the address space it addressed is deleted with `src/renderer/store-core-graph.ts`
+    // (`D-93`; `strata/decisions.md` `D-78`'s purge). **THE LICENCE'S OWN ROLLBACK CLAUSE IS WHAT FIRES HERE** — *"retiring
+    // the overlay caller reverts this row to its as-filed `.toEqual([])` closed form"* — so the row goes back to the form
+    // the unit filed it in, which is now, again, the truth of the tree. **IT IS NOT A WEAKENING**: the as-filed reading is
+    // STRIcter than the amended one — zero importers rather than one — and the bounded-extension control below still fails
+    // any second importer.
     expect(
       importers.length,
-      `X-6 (AMENDED, licence cell of §2.7 item 7's dated extension — the overlay caller admission) — the importer set is EXACTLY ONE: the unit's own caller file \`src/renderer/overlay-store.ts\` (the §2.2 caller-side store turn, admitted BY NAME) and NOTHING else. The AS-FILED READING, KEPT VISIBLE BESIDE: "the src/** tree contains ZERO importers of this unit's module. A FAIL here admits an importer, FIRES the §7.1 predicate and VOIDS the three-part [U] refusal (§5.1's closing sentence)." That intent is UNCHANGED for every OTHER path — the overlay MODULE's own bytes still import nothing; only the one declared caller may import it. Measured: ${JSON.stringify(importers)}`,
-    ).toBe(1)
-    expect(
-      importers[0] ?? '',
-      'X-6 (AMENDED) — the ONE importer IS the admitted caller, by path prefix; any other path (or an absent overlay-store import) fails this row, keeping the closed set honest.',
-    ).toContain(admittedImporter)
+      `X-6 (AS-FILED FORM RESTORED, 2026-11-03 — the licence cell's own rollback, fired by the deletion of \`src/renderer/overlay-store.ts\` under \`D-93\`) — the src/** tree contains ZERO importers of this unit's module. A FAIL here admits an importer, FIRES the §7.1 predicate and VOIDS the three-part [U] refusal (§5.1's closing sentence). The AMENDED READING, KEPT VISIBLE BESIDE: "the importer set is EXACTLY ONE: the unit's own caller file \`src/renderer/overlay-store.ts\`", which held while that caller existed. Measured: ${JSON.stringify(importers)}`,
+    ).toBe(0)
     // THE BOUNDED-EXTENSION POSITIVE CONTROL (the licence's positive-control clause:
     // broadening the set BEYOND the one admitted path is a FINDING): the SAME
     // instrument MUST still flag a SECOND new path's import.

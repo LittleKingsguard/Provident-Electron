@@ -118,27 +118,13 @@
       "endpoints": 17
     },
     {
-      "name": "graph-store",
-      "paths": [
-        "src/renderer/store-core-graph.ts",
-        "src/renderer/store-graph-references.ts",
-        "tests/store-core-graph.test.ts",
-        "tests/store-core-graph-register.ts",
-        "tests/store-core-graph-integration.test.ts",
-        "tests/store-modules-seams.test.ts",
-        "tests/store-modules-bytes.test.ts",
-        "tests/store-focus.test.ts",
-        "tests/fork-store-reads.test.ts"
-      ],
-      "endpoints": 13
-    },
-    {
       "name": "renderer-wiring",
       "paths": [
         "src/renderer/renderer.ts",
         "src/renderer/index.html",
         "tests/op-command-unwrap.test.ts",
-        "tests/pane-drag-compliance.test.ts"
+        "tests/pane-drag-compliance.test.ts",
+        "tests/fork-store-reads.test.ts"
       ],
       "endpoints": 22
     },
@@ -209,7 +195,9 @@
         "tests/slot-host.test.ts",
         "tests/mount-invariant-guard.test.ts",
         "tests/host-guard.test.ts",
-        "tests/host-guard-panes.test.ts"
+        "tests/host-guard-panes.test.ts",
+        "tests/store-modules-seams.test.ts",
+        "tests/store-modules-bytes.test.ts"
       ],
       "endpoints": 4
     },
@@ -232,7 +220,8 @@
       "name": "focus-model",
       "paths": [
         "src/shared/focus-model.ts",
-        "tests/focus-model.test.ts"
+        "tests/focus-model.test.ts",
+        "tests/store-focus.test.ts"
       ],
       "endpoints": 4
     },

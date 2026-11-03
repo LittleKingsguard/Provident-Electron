@@ -1559,6 +1559,29 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   //    list does not name STILL fails the row (the positive control two paragraphs down drives one).** */
   'src/renderer/view-client.ts', // `strata/decisions.md` D-88/D-89 — the shape's client, the sibling's own artifact
   'src/main/view-record/index.ts', // `strata/decisions.md` D-87/D-89 — the crossing's two declarations, the same sibling's
+  // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-93`): THE PURGE PASS'S OWN RENDERER PATHS.** The pass that
+  //    deletes the renderer's frozen graph store (`strata/decisions.md` `D-78`/`D-93`) writes exactly five paths under
+  //    `src/renderer/`: the four it DELETES (`store-core-graph.ts`, `store-graph-references.ts`, and the two store-shaped
+  //    caller turns `overlay-store.ts` / `theme-store.ts`) and the tab record's client, which gains the dated headstone
+  //    that records Stage A's spent paragraph. Each is the SIBLING's declared artifact and none of them is this unit's, so
+  //    each is excluded BY NAME — exactly as `renderer.ts` already was. **THE DENIED PREDICATE IS UNTOUCHED**: a
+  //    `src/renderer/**` path this list does not name STILL fails the row, and the positive control below drives one.** */
+  'src/renderer/store-core-graph.ts', // `D-93` — DELETED by the purge; the app's own frozen graph store
+  'src/renderer/store-graph-references.ts', // `D-93` — DELETED by the purge; its declaration-input module
+  'src/renderer/overlay-store.ts', // `D-93` — DELETED by the purge; the store-shaped overlay caller turn
+  'src/renderer/theme-store.ts', // `D-93` — DELETED by the purge; the store-shaped theme caller turn
+  'src/renderer/tabs-client.ts', // `D-93` — the record's client, whose header carries Stage A's spent-paragraph note
+  // ── AND THE SAME SIBLING'S THREE MAIN-SIDE PATHS, for the identical reason: the purge deletes the frozen store's
+  //    projection, and the projection lived in `main.ts`'s two `ipcMain.handle` sites with their `file.*` loop, in
+  //    `preload.ts`'s three `store` members and `store:file:changed` LOCAL, and in `store-channels.ts`'s two constants.
+  'src/main/store-channels.ts', // `D-93` — the two channel constants die; `IPC_SECURITY_EXCLUSION` stands
+  'src/main/main.ts', // `D-93` — the two `ipcMain.handle` sites and the `file.*` projection loop leave
+  'src/main/preload.ts', // `D-93` — the three `store` members and the `store:file:changed` LOCAL leave
+  // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a
+  // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/mcp-server.ts`, or the synthetic
+  // `src/renderer/gesture-session-panel.ts` the control two paragraphs down feeds to the same instrument — is STILL
+  // charged to this unit and STILL fails the row. What the row no longer does is charge a declared SIBLING pass's
+  // in-flight edit to this unit, which is the same repair `F-9(b)` already carries three times (`E10`, `E3`, `D-89`).
 ]
 // ---------------------------------------------------------------------------
 // **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE THIRD AND FOURTH DECLARING

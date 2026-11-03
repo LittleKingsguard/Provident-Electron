@@ -5,7 +5,9 @@
 // surface (no Node objects leak into the page).
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
-import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
+// ⟶ **`STORE_FILE_GET` AND `STORE_FILE_PUT` LEAVE THIS IMPORT** (`D-93`): the `store` member they served is deleted with
+// the renderer's frozen graph store, so the preload reaches the channel file for `IPC_SECURITY_EXCLUSION` alone.
+import { IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
 import type { TabsRecordRow } from '../shared/types.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
@@ -24,17 +26,13 @@ import type { ExclusionState as EXCLUSION_STATE } from './security.js'
  *  (`write` on the SET response, `exclusion` on the GET response). */
 type SecurityReadBase = Promise<SecuritySettings>
 
-/** THE Y-3 PUSH CHANNEL (G2 §2.5 — a DECLARED NO-OP on this single-window app): the change
- *  signal rides the existing `webContents.send` surface. The channel name stays a preload
- *  LOCAL (no third constant enters `store-channels.ts` — the constants census stays EXACTLY
- *  TWO, §2.2).
- *  ⟶ ANNOTATED BESIDE 2026-10-05 (`U-SECURE-EXCLUSION` `S1`, `RCA-8(d)` annotate-beside; the
- *  sentence above STANDS as the as-filed words and is NOT rewritten): THE CENSUS IS NO LONGER
- *  TWO — the exclusion unit adds `IPC_SECURITY_EXCLUSION` to `store-channels.ts` (§1.3 item 9 /
- *  §2.4 item 4), moving that file's constant census `2 → 3`. THIS comment's own claim is
- *  unaffected: the `store:file:changed` push still rides its preload LOCAL and still enters NO
- *  constant. */
-const STORE_FILE_CHANGED = 'provident:store:file:changed'
+/* **THE Y-3 PUSH CHANNEL IS DELETED FROM THIS SITE** (`D-93`), and this headstone stands where its local did. What was
+ * here: a preload LOCAL, `provident:store:file:changed`, carrying the change signal for the renderer's frozen graph store —
+ * the reason the file's own as-filed note could say *"no third constant enters `store-channels.ts`"* while the channel
+ * existed anyway. **THE SIGNAL HAD NO CONSUMER THAT DID ANYTHING**: its one registration at boot was a declared no-op
+ * ("a change SIGNAL while a single window owns the realm", `renderer.ts`), and it is deleted with the store. **NO LITERAL
+ * SURVIVES**: the channel name appears nowhere in `src/`, `tests/` or `scripts/` after this pass, and `store-channels.ts`
+ * carries exactly the ONE constant its own surface needs (`IPC_SECURITY_EXCLUSION`). */
 
 export interface ModuleBridgeResult {
   corrupt: boolean
@@ -96,11 +94,13 @@ export interface ProvidentBridge {
     commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
     onChanged(handler: () => void): () => void
   },
-  store: {
-    get(): Promise<{ name: string; value: unknown }[]>
-    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: string }>
-    onFileChanged(handler: () => void): () => void
-  }
+  // ⟶ **THE `store` MEMBER IS DELETED** (`D-93`; `D-90`'s clause (3): "the two preload members"). It carried Y-1 the boot
+  // hand-off, Y-2 the commit crossing and Y-3 the change-push registration, all three exclusively for the renderer's frozen
+  // graph store — the file's own note above still describes that trio as it was filed, and this line is where it stopped
+  // being true. **WHAT THE BRIDGE NOW CARRIES, AND NOTHING ELSE**: `ready` · `onRequest` · `sendReply` · `notify` ·
+  // `security` · `module` · `tabs` · `view` — eight top-level members, one per crossing surface the app actually reads or
+  // writes. The lockstep pair `store`/`security` is no longer a pair: `security` stands (the secure crossing's manual-UI
+  // surface) and `store` has no successor, because the thing it existed for has none.
 }
 
 const bridge: ProvidentBridge = {
@@ -203,21 +203,10 @@ const bridge: ProvidentBridge = {
       }
     },
   },
-  store: {
-    get(): Promise<{ name: string; value: unknown }[]> {
-      return ipcRenderer.invoke(STORE_FILE_GET)
-    },
-    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: string }> {
-      return ipcRenderer.invoke(STORE_FILE_PUT, row)
-    },
-    onFileChanged(handler: () => void): () => void {
-      const listener = (): void => handler()
-      ipcRenderer.on(STORE_FILE_CHANGED, listener)
-      return () => {
-        ipcRenderer.removeListener(STORE_FILE_CHANGED, listener)
-      }
-    },
-  },
+  // ⟶ **THE `store` MEMBER'S IMPLEMENTATION IS DELETED** (`D-93`): the three members above are gone with the frozen graph
+  // store, and with them the `STORE_FILE_CHANGED` preload LOCAL that carried the Y-3 push. **NO CHANNEL SPELLING SURVIVES
+  // HERE**: `provident:store:file:get`, `provident:store:file:put` and `provident:store:file:changed` appear in no file of
+  // this tree any more, and `store-channels.ts` carries the ONE constant its own secure surface needs.
 }
 
 contextBridge.exposeInMainWorld('provident', bridge)

@@ -48,7 +48,14 @@ const RPC_METHODS = [
 ] as const
 
 /** The seven top-level `window.provident` members (`src/main/preload.ts:42-75`), `ISO-4`. */
-const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine
+// ⟶ **THE MEMBER LEAVES THE LOCKSTEP PAIR AND THE SET MOVES `9 -> 8` (2026-11-03, `D-93`).** `'store'` was the
+// frozen graph store's THREE-member namespace (Y-1 the boot hand-off, Y-2 the commit crossing, Y-3 the change push) and
+// it is DELETED whole with the store it served: `D-90`'s clause (3) named "the two preload members" as the only main-side
+// surface that existed for the projection, and this pass deletes them. **NO MEMBER REPLACES IT** — the tab record's
+// crossing and the view record's are the two that carry the data now, and both already stand. So the bridge is
+// `module` · `notify` · `onRequest` · `ready` · `security` · `sendReply` · `tabs` · `view`, and the row's set-equality
+// still bites: a ninth member of ANY name reddens it.
+const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -56,6 +63,22 @@ const REPO = new URL('../../../', import.meta.url)
 
 const sourceOf = (relative: string): string => readFileSync(new URL(relative, REPO), 'utf8')
 const textOf = (absolute: string): string => readFileSync(absolute, 'utf8')
+
+/** **COMMENT LINES ELIDED** — every absence assertion in this file reads CODE, never prose. The headstones this pass
+ *  leaves in `src/` NAME the machinery they record (that is `D-46`'s annotate-beside discipline), and a raw-bytes scan
+ *  would read its own description as its own hit. A line whose trimmed form opens `//`, `*` or `/*` is blanked, and a
+ *  trailing `//` is cut, so what remains is the code the assertion is about. */
+function commentElided(bytes: string): string {
+  return bytes
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return ''
+      const at = line.indexOf('//')
+      return at >= 0 ? line.slice(0, at) : line
+    })
+    .join('\n')
+}
 const rel = (absolute: string): string => absolute.slice(SRC_DIR.length + 1).split('\\').join('/')
 
 function walk(dir: string): string[] {
@@ -254,11 +277,11 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const members = [...preload.slice(start, end).matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries nine top-level members — seven plus the tab record\'s crossing (D-63) and the view record\'s (D-87); interface.md §5 A-1').toEqual([...BRIDGE_MEMBERS])
+    expect(members, 'the bridge carries EIGHT top-level members — six plus the tab record\'s crossing (D-63) and the view record\'s (D-87); the `store` namespace left the set at D-93, with its own two members gone; interface.md §5 A-1').toEqual([...BRIDGE_MEMBERS])
     const preloadRoutes = securityRoutesOf(preload, 'src/main/preload.ts')
     expect(preloadRoutes, 'the security member carries exactly the three manual-UI routes').toEqual(['get', 'set', 'setExclusion'])
     expect(securityRoutesOf(sourceOf('src/renderer/secure-panels.ts'), 'src/renderer/secure-panels.ts'), 'and the renderer’s `declare global` half carries the same three').toEqual(preloadRoutes)
-    expect(ALL_SRC.filter((file) => /\bipcRenderer\b/.test(textOf(file))).map(rel).sort(), 'only the preload bridge can reach a channel: no file invokes one behind its back').toEqual(['main/preload.ts'])
+    expect(ALL_SRC.filter((file) => /\bipcRenderer\b/.test(commentElided(textOf(file)))).map(rel).sort(), 'only the preload bridge can reach a channel: no file invokes one behind its back').toEqual(['main/preload.ts'])
     const vocabulary: unknown[] = [...Object.values(sharedTypes), ...Object.values(storeChannels)]
     expect(
       vocabulary.filter((value): value is string => typeof value === 'string' && /security/i.test(value)).sort(),

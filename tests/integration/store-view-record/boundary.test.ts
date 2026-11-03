@@ -88,6 +88,48 @@ const DECLARED_SCOPE: readonly string[] = [
   'tests/gesture-session.test.ts',
   // ── THE LIVE DRIVER: its rows were re-pointed at the crossing's shapes and its unrun status stated.
   'tests/store-tabs-record-live.mjs',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── THE PURGE'S LAST DELETION (`D-93`) — the pass that deletes the frozen graph store, taken AFTER `D-92` made it
+  //    UNUSED. Every path it writes is declared here, one reason each, and NOT ONE is admitted by a prefix.
+  //
+  //    THE SOURCE THE DELETION REMOVES, PATH BY PATH: the frozen store itself and its declaration-input module, and the
+  //    two store-shaped caller turns whose whole subject was that store's address space and which had NO live consumer
+  //    under `src/`. A DELETION IS A PATH THIS PASS REMOVED, and `git status` reports it like any other write.
+  'src/renderer/store-core-graph.ts',
+  'src/renderer/store-graph-references.ts',
+  'src/renderer/overlay-store.ts',
+  'src/renderer/theme-store.ts',
+  //    THE SOURCE THE DELETION EDITS: the renderer loses its store wiring whole (the binding, the two construction
+  //    functions, the declaration set, the hand-off, the hydration, the crossing seam, the Y-3 registration and the
+  //    composition's `frozen` backing + bootstrap); the main process loses the two channel handlers and the `file.*`
+  //    projection loop; the preload loses the three `store` members and its `store:file:changed` local; the channel file
+  //    loses two of its three constants and keeps the secure crossing's; `types.ts` re-grains the tab row's note; and the
+  //    record's client gains the dated headstone that records Stage A's spent paragraph.
+  'src/main/store-channels.ts',
+  'src/renderer/tabs-client.ts',
+  'src/shared/types.ts',
+  //    THE BATTERIES: the FIVE files whose subject IS the deleted module, RETIRED WHOLE by `D-30`'s REPLACED-WHOLE (their
+  //    `strata:marked-file` markers said so and `D-78`'s purge is what replaced them) — and the files whose censuses
+  //    count the store, the bridge members, the channel constants or the renderer's export set, re-grained in place.
+  'tests/store-core-graph.test.ts',
+  'tests/store-core-graph-integration.test.ts',
+  'tests/store-persist.test.ts',
+  'tests/store-security.test.ts',
+  'tests/store-core-graph-register.ts',
+  //    Re-grained, each keeping its term with a control (see each file's own `D-93` headstones):
+  'tests/store-modules-bytes.test.ts',
+  'tests/overlay.test.ts',
+  'tests/theme.test.ts',
+  'tests/gutter-ui.test.ts',
+  'tests/secure-exclusion.test.ts',
+  'tests/secure-exclusion-register.ts',
+  'tests/e2e/security-store-storeroom/isolation.test.ts',
+  'tests/integration/security-store-storeroom/isolation.test.ts',
+  'tests/integration/settings-carrier-retirement/retirement.test.ts',
+  'tests/e2e/settings-carrier-retirement/scenarios.test.ts',
+  //    THE SECOND LIVE DRIVER: `store-tabs-record-live.mjs` was the one `D-92` named as owed; this pass owns it together
+  //    with its sibling `store-compliance-live.mjs`, whose fourteen `getWiredGraphStore` rows reach the deleted module.
+  'tests/store-compliance-live.mjs',
   // ── THE CORPUS (the record of this pass) AND THE TWO LAYER DOCUMENTS WHOSE CONTRACTS THE SWAP
   //    MAKES TRUE: the client's contract, and the design that names the chain it implements.
   'strata/decisions.md',
@@ -96,6 +138,7 @@ const DECLARED_SCOPE: readonly string[] = [
   'strata/marks.json',
   'strata/modules.json',
   'strata/records/store-tabs-record-unit.md',
+  'strata/pending.md',
   'docs/L2/view-record/interface.md',
   'docs/L3/view-record/design.md',
 ]

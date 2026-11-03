@@ -149,8 +149,22 @@ export const MAIN_SRC = SRC('main/main.ts')
 export const PRELOAD_SRC = SRC('main/preload.ts')
 export const SECURE_PANELS_SRC = SRC('renderer/secure-panels.ts')
 export const STORE_CHANNELS_SRC = SRC('main/store-channels.ts')
-export const STORE_CORE_SRC = SRC('renderer/store-core-graph.ts')
-export const STORE_REFS_SRC = SRC('renderer/store-graph-references.ts')
+/** **THE TWO DELETED MODULE PATHS, NAMED AS PATHS AND NOT AS `SRC(…)` LOOKUPS** (`D-93`): `STORE_CORE_SRC` and
+ *  `STORE_REFS_SRC` used to resolve `src/renderer/store-core-graph.ts` and `src/renderer/store-graph-references.ts`.
+ *  Both files are DELETED, so the module must not hold a constant that pretends otherwise — what the retired rows need
+ *  is the PATH ITSELF, to assert that nothing stands there. These two constants are that assertion's operand and are
+ *  spelled as plain paths for exactly that reason: `exists()` on them answers `false` today and MUST keep answering it. */
+export const STORE_CORE_PATH = 'src/renderer/store-core-graph.ts'
+export const STORE_REFS_PATH = 'src/renderer/store-graph-references.ts'
+/* **⟶ RETIRED 2026-11-03 BY THE PURGE (`strata/decisions.md` `D-78`/`D-93`): `STORE_CORE_SRC` AND
+ * `STORE_REFS_SRC` ARE GONE, AND THEIR TWO PATHS ARE DELETED.** The as-filed lines were
+ * `SRC('renderer/store-core-graph.ts')` and `SRC('renderer/store-graph-references.ts')` — the app's frozen
+ * graph store and its declaration-input module. Both files are DELETED from the tree, so a constant that
+ * named one would resolve to nothing and every reader of it would measure an ABSENT path rather than a
+ * claim (`RCA-8(d)`: this is the resolution failure the `SURFACE_ARTIFACT` repair above was made for, fired
+ * the other way round). **NO RE-POINT IS OFFERED AND NONE IS POSSIBLE**: the frozen store's refusal union,
+ * its `secure-refused` spelling and its byte-pins were that module's and die with it. The rows that read
+ * them are RETIRED BY NAME in `tests/secure-exclusion.test.ts` — see the headstones where each stood. */
 /* **⟶ RETIRED 2026-10-29 BY `U-SECURE-STOREROOM`'S `E-1` (`strata` branch, commit
  * `5790656`): `SECURITY_STORE_SRC` = `src/main/security-store.ts` IS DELETED — disregarded,
  * not carried, no shim and no dual write — so this module holds NO export that names it.**
@@ -213,9 +227,16 @@ export const TEST_FILE = TEST('secure-exclusion.test.ts')
  *  two frozen RENDERER modules and the frozen SURFACE ARTIFACT. The as-filed count and entry are
  *  recorded here, never silently. This is a RETIREMENT, not a re-grain: no seventh path is
  *  invented and no deleted byte is re-hashed. */
+/* ⟶ **THE LIST MOVES `3 -> 1` (2026-11-03, `D-93`), AND THE TWO ENTRIES THAT LEAVE ARE THE ONES WHOSE
+ *  SUBJECT IS DELETED**: `{ label: 'the store module (frozen field-1..7 content)', path: STORE_CORE_SRC }` and
+ *  `{ label: 'the references module', path: STORE_REFS_SRC }` named files the purge removes, so a forbidden-path
+ *  list that still carried them would assert the EXISTENCE of two paths that no longer exist — a row that fails
+ *  for having been overtaken rather than for measuring anything. **WHAT STANDS IS THE ONE PATH WHOSE SUBJECT IS
+ *  NOT THE PURGE'S**: the frozen SURFACE ARTICACT, the archived `store-core-module-store-core-graph-surface.md`,
+ *  which is a `docs/` artifact and is unmoved by any `src/` deletion. The as-filed count and the two retired
+ *  entries are recorded here, never silently. **THIS IS A RETIREMENT, NOT A RE-GRAIN**: no new path is invented,
+ *  no deleted byte is re-hashed, and the surviving entry keeps its own digest assertion in `FS-EX-15`. */
 export const FORBIDDEN_PATHS: readonly { label: string; path: string }[] = [
-  { label: 'the store module (frozen field-1..7 content)', path: STORE_CORE_SRC },
-  { label: 'the references module', path: STORE_REFS_SRC },
   { label: 'the frozen SURFACE ARTIFACT', path: SURFACE_ARTIFACT },
 ]
 
@@ -260,8 +281,16 @@ export const STOP_AFTER_CONSECUTIVE = 5
  *  arithmetic line's positions `5`/`6` are the thing to reconcile (they should read
  *  `12 + 14`); the finding is REPORTED to the supervisor, not resolved here.  **The
  *  declared total is still `106` and is still the sum of these nine terms.** */
-export const DECLARED_TERMS: readonly number[] = [12, 17, 13, 13, 14, 12, 12, 14, 10]
-/* **⟶ ANNOTATED 2026-10-06 (`S1` GATE 6 RED — `RCA-8(d)` ANNOTATE-BESIDE; the
+export const DECLARED_TERMS: readonly number[] = [12, 17, 13, 13, 14, 12, 11, 14, 10]
+/* **⟶ ANNOTATED 2026-11-03 (`D-93`, THE PURGE — `RCA-8(d)` ANNOTATE-BESIDE; every annotation above is kept
+ * byte-for-byte and is NOT rewritten).** **ONE TERM MOVED, `P-EX-TP-1` `12 -> 11`**, and it moved by RETIREMENT:
+ * that row's attempt (7), THE UNION READING, read the frozen graph store's `GraphRefusalReason` union at `16` with
+ * its three operand groups. **THE MODULE THAT DECLARED THAT UNION IS DELETED** (`src/renderer/store-core-graph.ts`,
+ * `D-93`), so the attempt is retired by name — it still answers a value (its premise guard asserts the module
+ * STAYS gone) but it no longer counts toward the term. `P-EX-IM-2`'s two sibling attempts (j) and (k) are ALSO
+ * retired in subject and are KEPT AS PREMISE GUARDS at their own count, so that term stays `17`. **THE OPERATIVE
+ * TOTAL MOVES `117 -> 116`** and the delta vs the gate-6 `117` is `-1`, printed beside the spec's as-filed `106`
+ * exactly as the two earlier moves were. No row id, no strategy id, no property and no cap is touched. *//* **⟶ ANNOTATED 2026-10-06 (`S1` GATE 6 RED — `RCA-8(d)` ANNOTATE-BESIDE; the
  * GATE-4 annotation ABOVE is kept byte-for-byte and is NOT rewritten).** FOUR more
  * drive cells, in TWO rows — `P-EX-IM-2` `15 -> 17` and `P-EX-TP-2` `12 -> 14` — are
  * authored for the six LIVE contradictions the gate-6 battery measured
@@ -324,6 +353,13 @@ export const TERM_MOVES: Readonly<Record<string, number>> = {
   // (`RCA-8(d)` annotate-beside; the gate-4 figures above are UNCHANGED, and the
   // per-row figures below are the CUMULATIVE move vs `SPEC_AS_FILED_TABLE_TERMS`).
   'P-EX-TP-2': 2,
+  // ⟶ **`D-93` (2026-11-03) — ONE ROW, `-1`: `P-EX-TP-1` `12 -> 11`.** That row's attempt (7), THE UNION READING, read the
+  // frozen graph store's `GraphRefusalReason` union at `16` with its three operand groups, and the purge DELETED that
+  // module (`src/renderer/store-core-graph.ts`). The attempt is RETIRED, so the row's term moves DOWN by one — the only
+  // NEGATIVE move in this table, and it is a retirement rather than a re-numbering. `RCA-8(d)`: the gate-4 and gate-6
+  // figures above are UNCHANGED and the per-row figures are CUMULATIVE vs `SPEC_AS_FILED_TABLE_TERMS`, so `P-EX-TP-1`'s
+  // `-1` is printed beside its `0` predecessors rather than replacing them.
+  'P-EX-TP-1': -1,
 }
 /** `SPEC_AS_FILED_TERMS`' report, in the same shape `declaredTotalReport()` returns
  *  — so the delta is printed through ONE formatter, never by hand-typed arithmetic. */
@@ -388,10 +424,14 @@ export const BOUNDED_ROWS: readonly string[] = []
  *  `store-core-module-store-core-graph-surface.md` fields-1–7 span), NEVER a FILE
  *  hash of the store module's bytes. **A later pass re-deriving the byte-pin MUST
  *  quote the file hashes; `29772ac7…` is never a file-pin figure.** */
-export const MEASURED_FILE_PINS: Readonly<Record<string, string>> = {
-  'renderer/store-core-graph.ts': '0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450',
-  'renderer/store-graph-references.ts': '5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657',
-}
+/* ⟶ **THE TWO MODULE PINS ARE RETIRED AND THE MAP IS EMPTY (2026-11-03, `D-93`).** The two figures —
+ *  `'renderer/store-core-graph.ts'` = `0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450` and
+ *  `'renderer/store-graph-references.ts'` = `5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657` —
+ *  are RECORDED HERE IN PROSE, never as pins: a pin is an assertion that a file's bytes are unmoved, and the
+ *  files are DELETED, so a pin over them asserts nothing a tree could satisfy. The `P-EX-IM-2` cell (k) that
+ *  drove them is retired by name in `tests/secure-exclusion.test.ts`. **`ARTIFACT_SPAN_FIGURE` AND THE ARTIFACT
+ *  FILE PIN BELOW ARE UNMOVED** — neither is a renderer module. */
+export const MEASURED_FILE_PINS: Readonly<Record<string, string>> = {}
 /** The ARTIFACT SPAN figure — recorded here so it is never mistaken for a file pin. */
 export const ARTIFACT_SPAN_FIGURE = '29772ac7'
 /** `§1.3` item 1 — the surface artifact's MEASURED file pin.

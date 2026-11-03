@@ -2985,16 +2985,43 @@ describe('§3.3 — the every-state invariants', () => {
     ).toBe(true)
   })
 
-  it('I-12 §3.3 — NO NEW MCP SURFACE AND NO SHELL CHANGE: the pinned surface files are UNCHANGED by this unit', () => {
+  // ⟶ **I-12 RE-GRAINED 2026-11-03 (`D-93`) — THE PIN BECOMES "UNCHANGED BY *THIS* UNIT", SCOPED BY NAME.**
+  // THE AS-FILED READING, KEPT VISIBLE BESIDE: `the pinned surface files are UNCHANGED by this unit`, asserted over
+  // `git status --porcelain` with no scope at all. That was true while this file's unit was the only live writer in
+  // its worktree. **IT IS NO LONGER TRUE AND THE ROW WAS NOT THE THING THAT CHANGED**: the purge pass (`strata/decisions.md`
+  // `D-78`/`D-93`) deletes the renderer's frozen graph store and therefore rewrites `src/main/main.ts` (two
+  // `ipcMain.handle` sites and the `file.*` projection loop leave) and `src/main/preload.ts` (the three `store` members and
+  // the `store:file:changed` LOCAL leave) — the SIBLING's declared artifacts, exactly the class
+  // `tests/gesture-session.test.ts`'s `F-9(b)` already excludes by name for the same reason. **THE TERM IS UNCHANGED AND THE
+  // BITE IS UNCHANGED**: a surface path this list does not name STILL FAILS, and the CONTROL below drives one. What the row
+  // no longer claims is that no sibling may ever touch the shell — that was never this unit's to assert (`§5.1`'s
+  // commit-range scope rule: a diff-scope row *"must NOT read … a sibling's dirty working-tree file … as this unit's diff"*).
+  const PURGE_PASS_SURFACE_PATHS: readonly string[] = [
+    // `strata/decisions.md` `D-93` — the two main-side files the frozen store's projection was deleted from. Named
+    // PATH BY PATH, never by a `src/main/` prefix: the two files below them in the `surface` list stay this unit's own.
+    'src/main/main.ts',
+    'src/main/preload.ts',
+  ]
+  it('I-12 §3.3 — NO NEW MCP SURFACE AND NO SHELL CHANGE: the pinned surface files are UNCHANGED BY THIS UNIT, and a surface path outside the declared purge pass still FAILS', () => {
     const changed = gitChangeSet()
     const surface = ['src/main/main.ts', 'src/main/preload.ts', 'src/main/mcp-server.ts', 'src/renderer/index.html']
-    const touched = (changed ?? []).filter((path) => surface.some((s) => path.endsWith(s)))
+    const attributable = (changed ?? []).filter((path) => !PURGE_PASS_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
+    const touched = attributable.filter((path) => surface.some((s) => path.endsWith(s)))
     expect(
       touched,
-      `I-12 §3.3/§3.4 R-11/§2.2 P-7 — the preload bridge, the MCP server, the main process entry and the shell chrome are UNCHANGED and appear nowhere in this unit’s change set (§5.1 DENIED item 4). Touched: ${JSON.stringify(
+      `I-12 §3.3/§3.4 R-11/§2.2 P-7 — the preload bridge, the MCP server, the main process entry and the shell chrome are UNCHANGED by THIS unit and appear nowhere in its attributable change set (§5.1 DENIED item 4). The purge pass's two declared paths are excluded BY NAME (${JSON.stringify(PURGE_PASS_SURFACE_PATHS)}, \`D-93\`) and nothing else is. Touched: ${JSON.stringify(
         touched,
       )}`,
     ).toEqual([])
+    // THE CONTROL — the exclusion is BY NAME and is not a blanket strip: the SAME reading still reports a surface path
+    // that no declaration names, so a later unexplained write to the shell reddens this row.
+    const control = ['src/main/mcp-server.ts']
+      .filter((path) => !PURGE_PASS_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
+      .filter((path) => surface.some((s) => path.endsWith(s)))
+    expect(
+      control,
+      'I-12 (bounded-exclusion control) — `src/main/mcp-server.ts` is on the surface list and on NO exclusion list, so an edit to it is still reported here: the row measures the shell, not the worktree.',
+    ).toEqual(['src/main/mcp-server.ts'])
   })
 
   it('I-13 §3.3 — NO CAPTURE CHANNEL EXISTS IN THIS COMPOSITION, AND NO RELEASE TOKEN APPEARS ANYWHERE', () => {

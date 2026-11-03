@@ -87,16 +87,14 @@ import {
   type FocusState,
   type FocusEntry,
 } from '../src/shared/focus-model.js'
-import {
-  createGraphStore,
-  type GraphStore,
-  type GraphEvent,
-  type GraphWriteReceipt,
-  type GraphSubscription,
-  type GraphResolveResult,
-  type GraphTierGetResult,
-} from '../src/renderer/store-core-graph.js'
-import { storeGraphReferences } from '../src/renderer/store-graph-references.js'
+// **NO STORE IMPORT, BECAUSE THERE IS NOTHING LEFT TO IMPORT (`D-93`).** `src/renderer/store-core-graph.ts` (the
+// app's "frozen graph store") and `src/renderer/store-graph-references.ts` (its declaration table) were DELETED
+// WHOLE by the purge, and `createGraphStore`, `storeGraphReferences` and the `Graph*` type family went with them —
+// as did `getWiredGraphStore`, `buildWiredGraphStore`, `FILE_TIER_ROOT_NAMES`, `TABS_RESERVED_DECLARATION_ROWS`,
+// the Y-1 hand-off, `hydrate` and the Y-3 registration in `src/renderer/renderer.ts`. **NOTHING IN `src/**` IS A
+// STORE ANY MORE.** The rows below that used to drive a real store now drive THE REGISTER DOUBLE declared in this
+// file (see "THE REGISTER DOUBLE" below), and the `Graph*` names they read off it are declared here, member for
+// member, narrowed to exactly the surface the rows touch.
 // **THE SHAPE'S CLIENT (`D-88`)** — the carrier is constructed OVER THIS, not over a store, so the fixture below builds
 // one over a CROSSING DOUBLE that projects this file's recorded store and writes it back the way the crossing's
 // `commitFocus` route does. The rows then read the SHAPE, exactly as the app does.
@@ -109,17 +107,16 @@ import { createViewClient, type ViewClient, type ViewCommittedReading, type View
 
 const RENDERER_PATH = new URL('../src/renderer/renderer.ts', import.meta.url)
 const FOCUS_MODEL_PATH = new URL('../src/shared/focus-model.ts', import.meta.url)
-const STORE_CORE_PATH = new URL('../src/renderer/store-core-graph.ts', import.meta.url)
-const STORE_REFS_PATH = new URL('../src/renderer/store-graph-references.ts', import.meta.url)
-const LEGACY_STORE_SUITE_PATH = new URL('../tests/store-core-graph.test.ts', import.meta.url)
+// **`STORE_CORE_PATH`, `STORE_REFS_PATH` AND `LEGACY_STORE_SUITE_PATH` ARE DELETED FROM THIS LIST (`D-93`)**, and
+// with them `storeCoreSrc()`, `storeRefsSrc()`, `storeFrozenProbe()` and the two rows that read them: all three
+// paths name files the purge deleted, so a read of any of them is an ENOENT, never a measurement. The headstones at
+// `R-2` and `P-2.6-2` (below) and at `X-4` record what each one asserted.
 
 function bytesOf(path: URL): string {
   return readFileSync(path, 'utf8')
 }
 const rendererSrc = (): string => bytesOf(RENDERER_PATH)
 const focusModelSrc = (): string => bytesOf(FOCUS_MODEL_PATH)
-const storeCoreSrc = (): string => bytesOf(STORE_CORE_PATH)
-const storeRefsSrc = (): string => bytesOf(STORE_REFS_PATH)
 
 /** THE CURRENT FOCUS REGION of `renderer.ts`: the slice between the LAST `U-FOCUS-TOOL`
  *  marker before `main()` and the `async function main` boundary. The marker set is stable
@@ -416,25 +413,26 @@ function readRefOf(store: GraphStore, name: string): unknown {
   }
 }
 
-/** A FRESH CARRIER OVER A FRESH WIRING-SHAPED STORE (spec §3.1 M-6 / §5.2 leg 6 — the boot wiring's construction shape),
- *  constructed over that store's SHAPE: the factory's argument is the view client (`D-88`), never the store. */
+/** A FRESH CARRIER OVER A FRESH REGISTER DOUBLE (spec §3.1 M-6 / §5.2 leg 6 — the boot construction shape),
+ *  constructed over that double's SHAPE: the factory's argument is the view client (`D-88`), never a store. */
 function carrierOf(store?: GraphStore): FocusCarrierSurface {
   const factory = requireCarrierFactory()
-  const wired = store ?? createGraphStore({ declarations: storeGraphReferences([]) })
+  const wired = store ?? registerDouble()
   return factory(viewOfStore(wired)) as FocusCarrierSurface
 }
 
-/** THE WIRING-SHAPED STORE (the exact boot construction shape of renderer.ts's
- *  `buildWiredGraphStore`). */
-function wiringStore(): GraphStore {
-  return createGraphStore({ declarations: storeGraphReferences([]) })
+/** **A FRESH REGISTER DOUBLE** — the stand-in for the deleted frozen store (see "THE REGISTER DOUBLE" below).
+ *  The name is kept from the row set it served: it used to construct `buildWiredGraphStore`'s exact shape. */
+function registerDouble(): GraphStore {
+  return createRegisterDouble()
 }
 
-/** THE BOOT-MINT RECIPE GUARD (spec §0A note 6 / §2.3 item 2): `commit('mem.focus', undefined)`
- *  then `clear('mem.focus')` — the declared-but-unwritten root answers the DECLARED MISS,
- *  never a refusal. Drives the FROZEN store directly. */
+/** THE MINT RECIPE (`§0A` note 6 / §2.3 item 2): `commit('mem.focus', undefined)` then
+ *  `clear('mem.focus')` — the declared-but-unwritten root answers the DECLARED MISS. Driven on the
+ *  REGISTER DOUBLE (re-grained 2026-11-02, `D-93`: it used to drive the frozen store, which no
+ *  longer exists; the RECIPE is what the rows below assert, and the double is what answers it). */
 function mintedStore(): GraphStore {
-  const store = wiringStore()
+  const store = registerDouble()
   store.commit('mem.focus', undefined)
   store.clear('mem.focus')
   return store
@@ -448,9 +446,11 @@ function isMiss(result: GraphResolveResult | Record<string, unknown>): boolean {
   return (result as { found?: boolean }).found === false
 }
 
-function isRefusal(result: GraphResolveResult | Record<string, unknown>): boolean {
-  return (result as { status?: string }).status === 'refused'
-}
+/* `isRefusal()` STOOD HERE AND IS DELETED WITH ITS SUBJECT (`D-93`): it read `status === 'refused'`, and the
+ * register double mints no refusal record — the frozen store's `{status, reason, step}` taxonomy died with
+ * `src/renderer/store-core-graph.ts`. The three rows that asked it (`S21-6a`, `S23-2b`, `S23-3b`) carry dated
+ * headstones or a re-grain where they stood. */
+
 
 /** R-3's CANONICAL STRUCTURAL COMPARISON — own enumerable keys, SORTED, primitives by value;
  *  NO deep-equality dependency, `===` only for primitives (spec §0 ruling 11, `R-3`). */
@@ -481,10 +481,208 @@ function canonicalJson(value: unknown): string {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * THE RECORDING STORE DOUBLE (spec §2.3 item 6 + §5.2 leg 1 — "the recording store
- * double AND the real createGraphStore"). The real frozen store under the hood; the
- * recording layer counts commits/resolves/subscriptions/deliveries and can be made
- * HOSTILE (throwing resolve/commit/subscribe, throwing listener) for §2.3 item 6.
+ * **THE REGISTER DOUBLE — A TEST-SIDE STAND-IN FOR THE DELETED FROZEN STORE'S REGISTER** (`D-93`, 2026-11-02).
+ *
+ * `src/renderer/store-core-graph.ts` (the app's "frozen graph store") and `src/renderer/store-graph-references.ts`
+ * (its declaration table) were DELETED WHOLE by the purge, and with them `createGraphStore`, `storeGraphReferences`
+ * and the `Graph*` type family. **NOTHING IN `src/**` IS A STORE ANY MORE**, so the rows below that used to drive a
+ * real store to prove a fact about the FOCUS MIRROR — or about the crossing that stands where the store stood — must
+ * be backed by something, or they would be measuring a deletion instead of the carrier.
+ *
+ * WHAT THIS IS, EXACTLY: a plain object over one `Map<string, unknown>` keyed by the DOTTED NAME, implementing ONLY
+ * the surface the rows drive — `resolve`, `commit`, `set`, `remove`, `clear`, `sever`, `subscribe` and the three
+ * `tiers` handles. **IT IS NOT A MODEL OF THE DELETED MODULE AND MUST NEVER BE READ AS ONE.** It carries NO address
+ * space (any dotted string is a key), NO tier rule, NO register, NO constraint table, NO repair, NO journal and NO
+ * refusal taxonomy. The two things it deliberately KEEPS are the two the rows need to keep their bite:
+ *
+ *   · **`sever(from, anchorKey)` THROWS.** The frozen store had a sever path a release must never reach (`§2.4`
+ *     item 3, the H2a rule); here reaching it is a LOUD failure rather than a no-op, so the "the sever is never
+ *     called" rows (`F-3`, `DEFAULT-RELEASE`, `REG-SM-2` drive 15) still fail if anything ever calls it. The
+ *     recording layer above records the call BEFORE the throw, so such a row reports the call it made.
+ *   · **A WRITE DELIVERS TO THE NAME'S OWN SUBSCRIBERS, IN REGISTRATION ORDER, WITH A LISTENER'S THROW ABSORBED** —
+ *     and the receipt's `events` is the AFFECTED-REFERENCE count (one per write), which is the "one event, one
+ *     delivery" pair the F3 drives (`S22-3`, `REG-SM-1`) read.
+ *
+ * WHAT IT DROPS, NAMED SO NO ROW CAN PRETEND OTHERWISE: the refusal records (`{status:'refused', reason, step}`),
+ * the read-side address walk (`C-TOP` / `D-ANCHOR`), the register's `rows`, the tier precedence and the crossing
+ * seam. Rows whose SUBJECT was one of those were RETIRED with the module and carry a dated headstone where they
+ * stood — `S21-6a` (`C-TOP`/`undeclared-name`), `S23-2b` (the register's rows and `D-ANCHOR`), `R-2` and
+ * `P-2.6-2` (the deleted modules' own bytes) and `X-4` (the deleted legacy suite). `S23-3b`, whose subject is the
+ * resolve surface's TOTALITY rather than its taxonomy, is RE-GRAINED onto this double.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/** THE THREE TIERS the frozen store published — kept as a key so `tiers['mem'].get(name)` reads as it did. */
+type GraphNodeFlag = 'temp' | 'mem' | 'file'
+
+/** THE READ'S ANSWER — a HIT or the DECLARED MISS. **THERE IS NO REFUSAL ARM HERE**, and that absence is the
+ *  double's stated limit (see the headstones named above). */
+interface GraphResolveResult {
+  readonly found: boolean
+  readonly value: unknown
+  readonly name: string
+  readonly tier: GraphNodeFlag | null
+}
+
+/** THE WRITE'S RECEIPT — the members the rows read; `events` is the AFFECTED-REFERENCE count (`G4-F3`). */
+interface GraphWriteReceipt {
+  readonly status: 'committed'
+  readonly name: string
+  readonly events: number
+  readonly cleared: readonly string[]
+  readonly repaired: readonly string[]
+  readonly crossings: number
+}
+
+/** THE EVENT — one per affected reference, carrying the cause of the write that made it. */
+interface GraphEvent {
+  readonly name: string
+  readonly flag: GraphNodeFlag
+  readonly value: unknown
+  readonly cleared: readonly string[]
+  readonly cause: 'set' | 'commit' | 'clear' | 'sweep' | 'remove' | 'repair' | 'descendant' | 'severed'
+  readonly subtree?: true
+}
+
+/** THE SUBSCRIPTION HANDLE — `unsubscribe()` is first-call-true-then-false, the first-call contract `P1`/`P4` read. */
+interface GraphSubscription {
+  readonly name: string
+  readonly subtree: boolean
+  unsubscribe(): boolean
+}
+
+/** A TIER HANDLE's read — the form `REG-TP-2` drive 11 drives directly (`mem.focus.entries` ⇒ `found:false` cold). */
+interface GraphTierGetResult {
+  readonly found: boolean
+  readonly value: unknown
+  readonly name: string
+}
+
+interface GraphTierHandle {
+  readonly tier: GraphNodeFlag
+  get(name: string): GraphTierGetResult
+  has(name: string): boolean
+}
+
+interface GraphStore {
+  resolve(name: string): GraphResolveResult
+  set(name: string, value: unknown, opts?: { onRepeat?: 'edit' | 'refuse' }): GraphWriteReceipt
+  commit(name: string, value: unknown, opts?: { onRepeat?: 'edit' | 'refuse' }): GraphWriteReceipt
+  remove(name: string): GraphWriteReceipt
+  clear(name: string): GraphWriteReceipt
+  sever(from: string, anchorKey: string): GraphWriteReceipt
+  subscribe(name: string, listener: (event: GraphEvent) => void, opts?: { subtree?: boolean }): GraphSubscription
+  readonly tiers: Readonly<Record<GraphNodeFlag, GraphTierHandle>>
+}
+
+/** **THE DOUBLE ITSELF.** One `Map` per instance, so a row that seeds one cannot leak into a row that seeds another. */
+function createRegisterDouble(): GraphStore {
+  const held = new Map<string, unknown>()
+  const subscribers: Array<{
+    readonly name: string
+    readonly subtree: boolean
+    readonly listener: (event: GraphEvent) => void
+    live: boolean
+  }> = []
+
+  /** THE TIER A NAME IS FILED UNDER — a reading of the FIRST dotted segment only, with `mem` as the fallthrough
+   *  because that is where every spelling this file drives (`mem.focus.*`) lives. It is NOT the frozen store's
+   *  tier precedence: the double holds ONE plane and this is a label for the receipt's `flag`. */
+  const flagOf = (name: string): GraphNodeFlag => {
+    const dot = name.indexOf('.')
+    const head = dot < 0 ? name : name.slice(0, dot)
+    return head === 'temp' || head === 'file' ? head : 'mem'
+  }
+
+  /** ONE WRITE'S EVENT — delivered to the name's own subscribers, in registration order; a listener's own throw
+   *  stops AT the listener (the frozen store's `§2.10` item 4 disposition, which is what `S24-2b` asserts). The
+   *  return is the AFFECTED-REFERENCE count: ONE per write, whether or not a subscriber exists (`G4-F3`). */
+  const emit = (name: string, value: unknown, cleared: readonly string[], cause: GraphEvent['cause']): number => {
+    const event: GraphEvent = { name, flag: flagOf(name), value, cleared, cause }
+    for (const record of [...subscribers]) {
+      if (!record.live) continue
+      const matches = record.subtree ? name === record.name || name.startsWith(`${record.name}.`) : name === record.name
+      if (!matches) continue
+      try {
+        record.listener(event)
+      } catch {
+        /* a listener's own throw stops at the listener */
+      }
+    }
+    return 1
+  }
+
+  const write = (name: string, value: unknown, cause: GraphEvent['cause']): GraphWriteReceipt => {
+    held.set(name, value)
+    const events = emit(name, value, [], cause)
+    return { status: 'committed', name, events, cleared: [], repaired: [], crossings: 0 }
+  }
+
+  const erase = (name: string, cause: 'clear' | 'remove'): GraphWriteReceipt => {
+    held.delete(name)
+    const events = emit(name, undefined, [name], cause)
+    return { status: 'committed', name, events, cleared: [name], repaired: [], crossings: 0 }
+  }
+
+  const tierHandle = (tier: GraphNodeFlag): GraphTierHandle => ({
+    tier,
+    get(name: string): GraphTierGetResult {
+      return held.has(name)
+        ? { found: true, value: held.get(name), name }
+        : { found: false, value: undefined, name }
+    },
+    has(name: string): boolean {
+      return held.has(name)
+    },
+  })
+
+  return {
+    resolve(name: string): GraphResolveResult {
+      return held.has(name)
+        ? { found: true, value: held.get(name), name, tier: flagOf(name) }
+        : { found: false, value: undefined, name, tier: null }
+    },
+    set(name, value): GraphWriteReceipt {
+      return write(name, value, 'set')
+    },
+    commit(name, value): GraphWriteReceipt {
+      return write(name, value, 'commit')
+    },
+    remove(name): GraphWriteReceipt {
+      return erase(name, 'remove')
+    },
+    clear(name): GraphWriteReceipt {
+      return erase(name, 'clear')
+    },
+    /** **THE SEVER PATH THROWS, ON PURPOSE** — see this block's header. Nothing in the focus machinery may reach
+     *  it, and a row that reached it would report the call rather than pass quietly. */
+    sever(from: string, anchorKey: string): GraphWriteReceipt {
+      throw new Error(
+        `THE REGISTER DOUBLE: sever('${from}', '${anchorKey}') was called — the deleted store's sever path is not this file's to reach`,
+      )
+    },
+    subscribe(name, listener, opts): GraphSubscription {
+      const record = { name, subtree: opts?.subtree === true, listener, live: true }
+      subscribers.push(record)
+      return {
+        name,
+        subtree: record.subtree,
+        unsubscribe(): boolean {
+          if (!record.live) return false
+          record.live = false
+          const at = subscribers.indexOf(record)
+          if (at >= 0) subscribers.splice(at, 1)
+          return true
+        },
+      }
+    },
+    tiers: { temp: tierHandle('temp'), mem: tierHandle('mem'), file: tierHandle('file') },
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * THE RECORDING LAYER OVER THAT DOUBLE (spec §2.3 item 6 + §5.2 leg 1). It counts
+ * commits/resolves/subscriptions/deliveries and can be made HOSTILE (throwing
+ * resolve/commit/subscribe/clear/tier-get) for §2.3 item 6.
  * ───────────────────────────────────────────────────────────────────────────── */
 
 interface RecordingStore {
@@ -513,7 +711,7 @@ interface RecordingStore {
 }
 
 function createRecordingStore(): RecordingStore {
-  const real = wiringStore()
+  const real = registerDouble()
   const commits: Array<{ name: string; value: unknown; opts?: { onRepeat?: 'edit' | 'refuse' } }> = []
   const resolves: string[] = []
   const deliveries: Array<{ name: string; event: GraphEvent }> = []
@@ -529,7 +727,7 @@ function createRecordingStore(): RecordingStore {
   }
   const listeners: Array<(event: GraphEvent) => void> = []
 
-  /** THE TIER-HANDLE SURFACE of the double (§2.3 item 3): the real handles, with the mem
+  /** THE TIER-HANDLE SURFACE of the double (§2.3 item 3): the REGISTER DOUBLE's handles, with the mem
    *  handle's `get` REVOCABLE (a hostile/revoked tier handle — REG-TP-2 drive 11's host). */
   const tiers: GraphStore['tiers'] = {
     temp: real.tiers.temp,
@@ -634,17 +832,14 @@ function moduleCensusProbe(): { readonly ok: boolean; readonly detail: string } 
   return { ok: true, detail: '0 imports; 4 + 5 = 9-name export census verified by name' }
 }
 
-/** R-2 / P-2.6-2 — the store is FROZEN and ships NO focus vocabulary (spec §2.1 item 1): the
- *  store's own bytes carry NO `focus`-spelling token — the caller's `mem.focus.*` spellings
- *  never entered a store byte. */
-function storeFrozenProbe(): { readonly ok: boolean; readonly detail: string } {
-  const core = storeCoreSrc()
-  const refs = storeRefsSrc()
-  for (const [file, bytes] of [['store-core-graph.ts', core], ['store-graph-references.ts', refs]] as const) {
-    if (/focus/.test(bytes)) return { ok: false, detail: `${file} bytes carry a focus token` }
-  }
-  return { ok: true, detail: 'store bytes carry no focus vocabulary — nothing of the mirror landed store-side' }
-}
+/* ── `storeFrozenProbe()` — RETIRED 2026-11-02 (`D-93`) ────────────────────────────────────────────────
+ * AS FILED it read the RAW BYTES of `src/renderer/store-core-graph.ts` and `src/renderer/store-graph-references.ts`
+ * and asserted neither carried a `focus` token: "the store ships NO focus vocabulary". **BOTH FILES ARE DELETED**,
+ * so the probe's two subjects are gone, and the reading it produced is not re-grainable onto anything that stands —
+ * the record that took their place (`src/main/view-record/index.ts`) carries `focus-must-stand` and the mirror's
+ * whole clause-3 answer ON PURPOSE, so the old term would now read the opposite way. The probe's two consumers,
+ * `R-2` and `P-2.6-2`, carry their own headstones below.
+ * ─────────────────────────────────────────────────────────────────────────────────────────────────────── */
 
 /** R-3 / P-2.6-3 / P-SF-IM-2's first probe — the re-home's first observable: renderer.ts's
  *  focus region holds NO module-level focus-state carrier (the `const holder` is GONE) and
@@ -697,104 +892,74 @@ function subscriptionCountProbe(): { readonly ok: boolean; readonly detail: stri
 }
 
 /** R-5 / P-2.6-5 — the mirror never writes tier 1: no byte of the focus region writes a
- *  `file.tabs.*` name or any tier-1 spelling. */
+ *  `file.tabs.*` name or any tier-1 spelling. **THE SCAN IS OVER COMMENT-ELIDED CODE** (rule 4 of this file's
+ *  absence discipline): the focus region's docblocks explain what left it and name the deleted record's
+ *  spellings in backticks on purpose, so a raw-bytes scan would read its own explanation as its own hit. */
 function noTierOneWriteProbe(): { readonly ok: boolean; readonly detail: string } {
-  const region = focusRegion()
+  const region = commentElided(focusRegion())
   if (/file\.tabs/.test(region)) return { ok: false, detail: 'the focus region carries a file.tabs.* spelling' }
   if (/file\./.test(region)) return { ok: false, detail: 'the focus region carries a tier-1 (file) write spelling' }
   return { ok: true, detail: 'the focus region contains no tier-1 spelling — the mirror never writes the tab list' }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * S22-1 RE-GRAINED 2026-10-11 — THE `file.tabs` REFERENCE IS `T2`'s OWN DECLARED
- * LANDING (`RCA-8(d)`; the write-back `T2`'s contract `§7b` item 3 declares).
+ * S22-1 RE-GRAINED A THIRD TIME, 2026-11-02 (`D-93`) — AND THE THIRD TERM IS A ZERO,
+ * WHICH IS STRONGER THAN THE ONE IT REPLACES.
  *
- * **THE AS-FILED ASSERTION, IN ITS OWN BYTES:**
- *     expect(!rendererSrc().includes('file.tabs')).toBe(true)
- * — this unit's declaration that the tabs-slice record landing was NOT its work.
- * **AND IT IS SUPERSEDED IN SUBSTANCE: `U-STORE-TABS-RECORD` (`T2`) HAS NOW LANDED
- * `file.tabs.*` IN `src/renderer/renderer.ts`** (`docs/specs/store-tabs-record.md`
- * `§5.1` item 1: *"`src/renderer/renderer.ts` — the WIRING's tab-record region ONLY"*;
- * the gate-1 record's `§10.3` `T2` cell). The bare ABSENCE therefore no longer holds and
- * cannot be restored by any `src/**` remedy — the landing is the unit's declared act.
+ * **THE ROW HAS ASKED THIS QUESTION THREE TIMES, AND EACH ASKING IS KEPT VISIBLE:**
+ *   1. AS FILED — a bare ABSENCE: `expect(!rendererSrc().includes('file.tabs')).toBe(true)`.
+ *   2. `D-92` — an ATTRIBUTED POSITIVE: exactly ONE `file.tabs` reference, the frozen store's
+ *      `TABS_LEGACY_LANDING_NAME` reservation row, inside its own declaration block and named as the
+ *      store's.
+ *   3. NOW — **ZERO `file.tabs` SPELLINGS IN CODE.** The reservation row was the one spelling (2)
+ *      asserted, and it was DELETED WITH THE CONSTRUCTION IT DECLARED INTO: `TABS_RESERVED_DECLARATION_ROWS`,
+ *      `TABS_LEGACY_LANDING_NAME` and the whole frozen-store construction are gone from
+ *      `src/renderer/renderer.ts` (`D-93`). The tab record lives on the crossing's client
+ *      (`src/renderer/tabs-client.ts`) and the renderer spells none of its names, so the honest term is a
+ *      ZERO — strictly stronger than "exactly one".
  *
- * **THE PIN BECOMES AN ATTRIBUTED POSITIVE, NOT A BARE ABSENCE:** every `file.tabs`
- * reference that lands must be (a) inside the DECLARED RECORD REGION — the tab-record
- * wiring region `T2` `§5.1` item 1 authors, from its own contract header down to the
- * `main()` boundary, i.e. the region's declarations and the wiring roles that read them,
- * **never the FOCUS region between them** (`store-tabs-record.md` `§5.1` item 1: *"NO byte
- * of the focus region (`createFocusCarrier`, the `mem.focus.*` mirror) moves"*) — and
- * (b) a reference `T2`'s own declaration made.
+ * **THE COUNT READS COMMENT-ELIDED CODE, AND IT MUST** (`AGENTS.md`'s elision discipline): the docblocks above
+ * `main()` still quote the deleted record IN PROSE — deliberately, to record what left this file — so a scan over
+ * raw bytes would measure the file's own explanation. The elider runs first and the spellings are counted in the
+ * code it leaves.
  *
- * **THE BITE IS KEPT:** a `file.tabs` reference on an UNDECLARED path — a synthetic
- * fixture outside the region, or the DENIED `src/main/**` — still REDDENS (the positive
- * controls below), and the focus region's own tier-1-freedom pin (`R-5`/S22-2) is
- * untouched by this re-grain.
+ * **THE BITE IS KEPT:** the controls below put one `file.tabs` spelling into a SYNTHETIC source and require the
+ * scanner to report it, and they also prove the scanner keeps CODE while dropping PROSE — so a zero read here is a
+ * reading and not a dead scan.
  * ───────────────────────────────────────────────────────────────────────────── */
 
-/** **THE LEGACY RESERVATION'S REGION IN `renderer.ts` — RE-GRAINED BY `D-92`, AND IT IS THE WHOLE OF WHAT IS LEFT.**
- *  The frozen store's tab-record region is GONE from the renderer: the record lives at `['tabs']` on the crossing, its
- *  names are the crossing's, and the wiring reads `src/renderer/tabs-client.ts`'s reading. The ONE `file.tabs` spelling
- *  that survives is `TABS_LEGACY_LANDING_NAME` — the reserved-entry declaration row handed to the frozen store's
- *  construction, kept whole because the construction itself is the next pass's deletion. So the region is that ONE
- *  declaration block, located by its own name. */
-function legacyReservationRegion(): string {
-  const src = rendererSrc()
-  const at = src.indexOf('const TABS_LEGACY_LANDING_NAME')
-  if (at < 0) return ''
-  const close = src.indexOf(']', at)
-  if (close < 0) return ''
-  return src.slice(at, close + 1)
+/** **THE `file.tabs` SPELLING SCANNER — the ONE instrument `S22-1` and its controls share.** It reads
+ *  COMMENT-ELIDED code, so a docblock that NAMES the deleted record is not a hit while a string literal in code is. */
+function fileTabsSpellings(bytes: string): string[] {
+  return [...commentElided(bytes).matchAll(/['"]file\.tabs/g)].map((match) => match[0])
 }
 
-/** THE ATTRIBUTION PROBE (S22-1's second re-grain, `D-92`): **the wiring carries EXACTLY ONE `file.tabs` reference, and
- *  it is the FROZEN STORE'S LEGACY RESERVATION ROW** — a declaration kept only because the store is still constructed, on
- *  a path nothing reads. Every other `file.tabs` spelling left this file with the record, so a pass that put one back
- *  outside that block reddens here. */
+/** **THE ATTRIBUTION PROBE, THIRD RE-GRAIN (`D-93`): the wiring's CODE carries ZERO `file.tabs` spellings.**
+ *  A spelling that survives here means the renderer has re-acquired a name the crossing owns. */
 function tabsRecordAttribution(): { readonly ok: boolean; readonly detail: string } {
-  const src = rendererSrc()
-  const region = legacyReservationRegion()
-  if (region === '') {
-    return { ok: false, detail: 'the legacy reservation row is not locatable (`const TABS_LEGACY_LANDING_NAME`) — it is the one `file.tabs` spelling the row asserts, so an absent row is a FAILURE of the attribution' }
+  const spellings = fileTabsSpellings(rendererSrc())
+  if (spellings.length !== 0) {
+    return {
+      ok: false,
+      detail: `the wiring's CODE carries ${spellings.length} \`file.tabs\` spelling(s) — the tab record's names are the crossing's (\`src/renderer/tabs-client.ts\`), and the renderer spells none of them`,
+    }
   }
-  const regionStart = src.indexOf(region)
-  // **THE COUNT READS COMMENT-ELIDED CODE** (`AGENTS.md`'s elision discipline): every reference this row measures is a
-  // STRING LITERAL in code, and the docblocks above — which explain what was deleted — quote the same spellings in
-  // backticks. A count over the raw bytes would measure this row's own explanation, so the elider runs first and the
-  // references are counted in the code it leaves. The positive control: the elider keeps code and drops prose.
-  const code = commentElided(src)
-  expect(code.includes("'file.tabs.landing'"), 'the attribution\'s own subject survives comment elision').toBe(true)
-  expect(commentElided("// 'file.tabs.order'").includes('file.tabs'), 'and a prose mention does not').toBe(false)
-  const references = [...code.matchAll(/['"]file\.tabs/g)].map((m) => m.index ?? -1)
-  const regionInCode = code.indexOf(region)
-  if (references.length === 0) {
-    return { ok: false, detail: 'the wiring carries NO `file.tabs` reference — the legacy reservation row is the one the row asserts, and the store it declares into still stands until the deletion pass' }
-  }
-  if (references.length !== 1) {
-    return { ok: false, detail: `the wiring carries ${references.length} \`file.tabs\` references; after \`D-92\` there is EXACTLY ONE — the legacy reservation row — and the rest of the record's names are the crossing's` }
-  }
-  if (regionInCode < 0) {
-    return { ok: false, detail: 'the legacy reservation row is not locatable in COMMENT-ELIDED code — the row was found only in prose' }
-  }
-  const outside = references.filter((at) => at < regionInCode || at >= regionInCode + region.length)
-  if (outside.length > 0) {
-    return { ok: false, detail: `a \`file.tabs\` reference sits OUTSIDE the legacy reservation's block (offsets ${outside.join(', ')}) — the record's names are the crossing's, and the renderer spells none of them outside that legacy row` }
-  }
-  if (!src.slice(0, regionStart).includes('GONE WITH THE STORE')) {
-    return { ok: false, detail: 'the legacy reservation row is not NAMED as legacy — a reader must be told the row is the store\'s and not the record\'s' }
-  }
-  return { ok: true, detail: `${references.length} \`file.tabs\` reference, inside the legacy reservation row's own block and named as the frozen store's` }
+  return { ok: true, detail: 'ZERO `file.tabs` spellings in the renderer\'s code — the record\'s names are the crossing\'s' }
 }
 
-/** S22-1's POSITIVE CONTROL — the same attribution instrument against a subject that puts the
- *  reference on an UNDECLARED path: the envelope module is `T2`'s for its TWO PAGE NODES ONLY
- *  (`§5.1` item 2), so a `file.tabs` reference THERE fails the attribution; and `src/main/**` is
- *  in `T2`'s DENIED set in full (`§5.1`, denied item 1), so a reference there fails too. */
-function tabsRecordAttributionFires(outsideReference: string, declaredRegion: string): boolean {
-  return outsideReference.includes('file.tabs') && !declaredRegion.includes(outsideReference)
+/** **`S22-1`'s POSITIVE CONTROL — the same scanner against a source that puts a `file.tabs` reference in CODE.**
+ *  It fires on the fixture and stays silent on the same spelling written as PROSE, which is the pair that proves the
+ *  zero above is a reading rather than a dead scan. */
+function tabsRecordAttributionFires(syntheticSource: string): boolean {
+  return fileTabsSpellings(syntheticSource).length > 0
 }
+/** An UNDECLARED path: the envelope module is granted its two page nodes only, so a `file.tabs` reference THERE is a
+ *  failure of the attribution. */
 const ATTRIBUTION_OUTSIDE_FIXTURE = "const envelopeTabs = 'file.tabs.order' // src/shared/demo-envelope.ts — an UNDECLARED path"
+/** The DENIED set, item 1: `src/main/**` in full. */
 const ATTRIBUTION_DENIED_MAIN_FIXTURE = "const mainTabs = 'file.tabs.order' // src/main/mcp-server.ts — the DENIED set, item 1"
+/** The SAME spelling, in prose: never a hit. */
+const ATTRIBUTION_PROSE_FIXTURE = "// the deleted reservation row spelled 'file.tabs.landing'"
 
 
 /** R-6 / P-2.6-6 — NO CAP ROW on the mirror: no declared cap, no overflow limit and no
@@ -960,58 +1125,70 @@ describe('H1 U-STORE-FOCUS — §2.1 THE STORE ROUTE AND THE CARRIED STATE SHAPE
     }
   })
 
-  it('S21-6a §2.1 item 6 (store-side ground) — THE COLD-HOME, EXACT: on TODAY\'S unminted tree resolve(\'mem.focus.entries\') REFUSES undeclared-name at C-TOP — the boot mint (\'mem.focus\' root pre-existence) is owed', () => {
-    const store = wiringStore()
-    const result = resolveOf(store, 'mem.focus.entries')
-    expect(isRefusal(result)).toBe(true)
-    expect((result as { reason?: string }).reason).toBe('undeclared-name')
-    expect((result as { step?: string }).step).toBe('C-TOP')
-  })
+  /* ── S21-6a — RETIRED 2026-11-02 (`D-93`) ─────────────────────────────────────────────────────────────
+   * AS FILED: "THE COLD-HOME, EXACT: on TODAY'S unminted tree resolve('mem.focus.entries') REFUSES
+   * `undeclared-name` at `C-TOP` — the boot mint ('mem.focus' root pre-existence) is owed". **ITS SUBJECT WAS
+   * THE FROZEN STORE'S ADDRESS WALK** — the `C-TOP` gate, the `{status:'refused', reason, step}` record it
+   * produced and the register whose mint the reading said was owed. `D-93` deleted `src/renderer/store-core-graph.ts`
+   * whole: there is no address space left to refuse a name, no register left for a mint to pre-exist, and the
+   * boot mint itself is `focus-must-stand`'s at the crossing. **WHAT SURVIVES OF THE ROW'S TERM** — "a cold
+   * mirror is not an error, it is the declared empty pair, consumed rather than raised" — is asserted over the
+   * SHAPE at `S21-6b` immediately below, which keeps its bite via its own written-mirror control.
+   * ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 
-  it('S21-6b §2.1 item 6 (carrier half) — A MISS on either reference reads the DECLARED EMPTY member: entries MISS ⇒ [] and activeId MISS ⇒ null — never an invented default, never a refusal', () => {
+  it('S21-6b §2.1 item 6 (carrier half) — A MISS on either reference reads the DECLARED EMPTY member: entries MISS ⇒ [] and activeId MISS ⇒ null — never an invented default, never a throw', () => {
     const carrier = carrierOf(mintedStore())
     const read = carrier.state()
     expect(read.entries).toEqual([])
     expect(read.activeId).toBeNull()
+    // THE CONTROL — the read is a READING of the mirror, not a constant: the same carrier over a WRITTEN
+    // mirror answers the written members, so a `state()` hard-wired to the empty pair would redden here.
+    const written = carrierOf(mintedStore())
+    written.persistTarget({ entries: [{ id: 'w', target: 'w' }], activeId: 'w' })
+    expect(written.state(), 'a written mirror reads back — the empty pair above is the MISS, not a fixture').toEqual({
+      entries: [{ id: 'w', target: 'w' }],
+      activeId: 'w',
+    })
   })
 })
 
 describe('H1 U-STORE-FOCUS — §2.2 THE AUTHORITY AND THE DIVERGENCE', () => {
-  it('S22-1 §2.2 item 1 — THE AUTHORITY IS TIER 1\'S TAB LIST (Q-9 SUPERSEDED): the mirror is a WORKING COPY, never a second authority; the `file.tabs` reference that NOW exists is `T2`\'s OWN DECLARED LANDING, on its declared path only — AS FILED this row asserted the bare ABSENCE `!rendererSrc().includes(\'file.tabs\')`, which `U-STORE-TABS-RECORD`\'s landing has SUPERSEDED IN SUBSTANCE (kept visible in the probe\'s note above)', () => {
+  it('S22-1 §2.2 item 1 — THE AUTHORITY IS TIER 1\'S TAB LIST (Q-9 SUPERSEDED): the mirror is a WORKING COPY, never a second authority; and the renderer spells NONE of the record\'s names — ZERO `file.tabs` spellings in its CODE (re-grained a third time, 2026-11-02 `D-93`: the ONE `TABS_LEGACY_LANDING_NAME` reservation row the previous grain asserted was deleted with the frozen store it declared into). AS FILED this row asserted the bare ABSENCE `!rendererSrc().includes(\'file.tabs\')`; the landing superseded it in substance, the reservation row survived it as an attributed positive, and the deletion has now made the absence TRUE AGAIN — in code, which is the only place it ever mattered', () => {
     const probe = noTierOneWriteProbe()
     expect(probe.ok, probe.detail).toBe(true)
-    /* ── THE RE-GRAIN, WITH THE AS-FILED FORM KEPT VISIBLE (`RCA-8(d)`; the write-back `T2`'s
-     *  contract `§7b` item 3 declares) ─────────────────────────────────────────────────────
-     *  **AS FILED (and no longer true):** `expect(!rendererSrc().includes('file.tabs')).toBe(true)`
-     *  — the FOCUS unit's declaration that the tabs-slice record landing was NOT its work.
-     *  **MEASURED AT THIS HEAD: the wiring carries `7` `file.tabs` references and the as-filed
-     *  form measures `false`.** **`T2` HAS LANDED `file.tabs.*` IN `src/renderer/renderer.ts`**
-     *  — its contract's `§5.1` item 1 licenses exactly *"the WIRING's tab-record region ONLY"*
-     *  and adds *"NO byte of the focus region (`createFocusCarrier`, the `mem.focus.*` mirror)
-     *  moves"* — so the pin is re-grained to the ATTRIBUTED POSITIVE: **the reference IS `T2`'s
-     *  own declared landing, inside its declared record region and nowhere else.** **THE BITE
-     *  IS KEPT:** the two positive controls below put a `file.tabs` reference on an UNDECLARED
-     *  path (the envelope, which `§5.1` item 2 licenses for its two PAGE NODES only) and on the
-     *  DENIED `src/main/**` (`§5.1` denied item 1) — each MUST redden the attribution. */
+    /* ── THE THIRD RE-GRAIN, WITH ALL THREE ASKINGS KEPT VISIBLE ─────────────────────────────
+     *  **AS FILED:** `expect(!rendererSrc().includes('file.tabs')).toBe(true)` — the unit's
+     *  declaration that the tabs-slice record landing was NOT its work.
+     *  **`D-92`:** an ATTRIBUTED POSITIVE — exactly ONE `file.tabs` reference, the frozen store's
+     *  `TABS_LEGACY_LANDING_NAME` reservation row, inside its own declaration block.
+     *  **NOW (`D-93`):** that row and `TABS_RESERVED_DECLARATION_ROWS` with it are DELETED, so the
+     *  term is **ZERO `file.tabs` spellings in the renderer's CODE** — a strictly stronger claim
+     *  than "exactly one", and the one a reader of the swapped file needs. The raw bytes still
+     *  carry the words in the docblocks that record the deletion, which is exactly why the scan
+     *  elides comments first. **THE BITE IS KEPT:** the controls below put a `file.tabs` reference
+     *  into a SYNTHETIC source (an undeclared path, and the DENIED `src/main/**`) and require the
+     *  scanner to report each, and require it to stay silent on the same spelling written as prose. */
     const attribution = tabsRecordAttribution()
-    expect(attribution.ok, `T2 §5.1 item 1 — ${attribution.detail}`).toBe(true)
-    // THE POSITIVE CONTROLS: an undeclared path and a DENIED path each FAIL the attribution.
-    const declaredRegion = legacyReservationRegion()
+    expect(attribution.ok, attribution.detail).toBe(true)
+    // THE CONTROLS — a `file.tabs` reference in CODE is a hit, on an undeclared path and on the DENIED
+    // `src/main/**` alike; the same spelling in PROSE is not. A dead scan fails all three.
     expect(
-      tabsRecordAttributionFires(ATTRIBUTION_OUTSIDE_FIXTURE, declaredRegion),
-      'T2 §5.1 item 2 — a `file.tabs` reference in `src/shared/demo-envelope.ts` is on an UNDECLARED path (that file is licensed for its two page nodes only) and MUST redden',
+      tabsRecordAttributionFires(ATTRIBUTION_OUTSIDE_FIXTURE),
+      'a `file.tabs` reference in `src/shared/demo-envelope.ts` (an UNDECLARED path — that file is licensed for its two page nodes only) is a HIT, so a spelling put back in code reddens this row',
     ).toBe(true)
     expect(
-      tabsRecordAttributionFires(ATTRIBUTION_DENIED_MAIN_FIXTURE, declaredRegion),
-      'T2 §5.1 denied item 1 — a `file.tabs` reference in `src/main/**` is in the DENIED set and MUST redden',
+      tabsRecordAttributionFires(ATTRIBUTION_DENIED_MAIN_FIXTURE),
+      'a `file.tabs` reference in `src/main/**` (the DENIED set, item 1) is a HIT',
     ).toBe(true)
-    // THE AS-FILED FORM, DRIVEN AS THE RETAINED READING SO ITS SUPERSESSION IS OBSERVABLE
-    // (`RCA-8(d)`: the as-filed bytes stay visible and are not silently rewritten): the bare
-    // absence is asserted FALSE — the reading the landing produces — and is reported here
-    // rather than re-spelled as a passing assertion.
+    expect(
+      tabsRecordAttributionFires(ATTRIBUTION_PROSE_FIXTURE),
+      'and the SAME spelling inside a comment is NOT a hit — the elision discipline the zero above rests on',
+    ).toBe(false)
+    // THE RETAINED READING, ASSERTED SO THE DELETION IS OBSERVABLE: the renderer's RAW bytes still
+    // NAME the deleted record in prose; its CODE spells none of it. Both halves are the row's.
     expect(
       rendererSrc().includes('file.tabs'),
-      'T2 §5.1 item 1 — AS FILED this read `false` (no `file.tabs` anywhere); `T2`\'s declared landing produces `true`: the ABSENCE is superseded IN SUBSTANCE, so the row asserts WHERE the reference is, never THAT it is absent',
+      'the docblocks above `main()` still record what left this file, in prose',
     ).toBe(true)
   })
 
@@ -1023,6 +1200,11 @@ describe('H1 U-STORE-FOCUS — §2.2 THE AUTHORITY AND THE DIVERGENCE', () => {
     // The tab-list projection is FIXTURE-SUPPLIED (the real file.tabs.* record is the
     // deferred units' — this unit drives the declared rule against a fixture projection).
     const projection = { entries: [{ id: 'only-tab', target: 'only-tab' }], activeId: 'only-tab' }
+    // ⟶ RE-GRAINED AGAIN 2026-11-02 (`D-93`): THE HOST IS THE REGISTER DOUBLE. The frozen store — and with it
+    // the `C-TOP` write gate (`G4-F1`) and the `{status, reason, step}` refusal record this drive's history turns
+    // on — is deleted. What the drive still measures is unchanged and still live: the mirror writes land (the
+    // double holds them), the F3 pair reads ONE event and ONE delivery per affected reference (the double's
+    // declared receipt), and the projection turn writes NOTHING.
     // ⟶ RE-GRAINED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
     // as-filed drive wrote the stale mirror values onto a FRESH recording store whose top
     // `mem.focus` was UNDECLARED — G4-F1 (the F1 pin, the write-side C-TOP gate) refuses a
@@ -1124,20 +1306,17 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
     expect(viewRecord.includes('viewConstraintDeclarations'), 'and the batch the boot constructs the store with').toBe(true)
     expect(carrier.state(), 'the carrier still answers the declared record on a cold realm').toEqual({ entries: [], activeId: null })
   })
-  it('S23-2b §2.3 item 2 (store-side guard) — THE BOOT-MINT RECIPE\'s tree facts: commit(\'mem.focus\', undefined) then clear(\'mem.focus\') DECLARES + MINTS the root (the register\'s row pre-exists the first write); a resolve of the two references on the CURRENT frozen store then answers its READ-SIDE REFUSAL RECORD (D-ANCHOR no-such-anchor — the leaf anchors never existed), which the carrier\'s read turn must CONSUME as the declared-empty outcome (§2.1 item 6\'s last sentence / §2.3 item 6 — the row that flips with the carrier is S21-6b)', () => {
-    const store = mintedStore()
-    // the register row pre-exists the first write (the root is declared + minted)
-    const rootRow = store.register.rows.find((row) => row.name === 'focus')
-    expect(rootRow).toBeDefined()
-    // resolve on the minted-but-childless root answers the store's READ-SIDE REFUSAL
-    // RECORD — never a throw and never a HIT — the consumption duty is the carrier's.
-    const r1 = resolveOf(store, 'mem.focus.entries')
-    const r2 = resolveOf(store, 'mem.focus.activeId')
-    expect(isRefusal(r1)).toBe(true)
-    expect(r1 as { reason?: string }).toMatchObject({ reason: 'no-such-anchor', step: 'D-ANCHOR' })
-    expect(isRefusal(r2)).toBe(true)
-    expect(r2 as { reason?: string }).toMatchObject({ reason: 'no-such-anchor', step: 'D-ANCHOR' })
-  })
+  /* ── S23-2b — RETIRED 2026-11-02 (`D-93`) ─────────────────────────────────────────────────────────────
+   * AS FILED: "THE BOOT-MINT RECIPE's tree facts: … `commit('mem.focus', undefined)` then `clear('mem.focus')`
+   * DECLARES + MINTS the root (**the register's row pre-exists the first write**); a resolve of the two
+   * references on the CURRENT frozen store then answers its READ-SIDE REFUSAL RECORD (**`D-ANCHOR`
+   * `no-such-anchor`** — the leaf anchors never existed)". **ITS SUBJECT WAS THE FROZEN STORE'S REGISTER AND ITS
+   * ANCHOR WALK**: `store.register.rows`, the `D-ANCHOR` step and the `no-such-anchor` refusal record. The module
+   * that carried all three is deleted, so `store.register` is undefined and the refusal record has no producer.
+   * **WHAT SURVIVES OF ITS TERM** — the MINT RECIPE itself, and the fact that a minted-but-unwritten mirror reads
+   * back as the declared empty pair rather than as a throw — **is driven at `REG-TP-2` drive 2** ("minted-but-
+   * unwritten → state() answers the declared-empty pair") and at `S21-6b`, over the register double and the shape.
+   * ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 
   it('S23-3a §2.3 item 3 — THE READ TURN: state() and the route\'s answer assembly read resolve(\'mem.focus.entries\') and resolve(\'mem.focus.activeId\') — the answer assembly is UNCHANGED IN SHAPE and NO MEMBER EVER EMITS AS undefined (the §0A-note-8 defect-3 rule)', () => {
     const carrier = carrierOf()
@@ -1155,16 +1334,23 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
     }
   })
 
-  it('S23-3b §2.3 item 3 (store-side guard) — the resolve surface on the frozen store for the unit\'s OWN spellings reads TOTAL: unminted ⇒ undeclared-name at C-TOP; boot-minted ⇒ no-such-anchor at D-ANCHOR; a written reference ⇒ the GraphReadHit (found:true) — the carrier\'s read turn consumes each as its declared answer', () => {
-    const unminted = wiringStore()
-    expect(resolveOf(unminted, 'mem.focus.entries') as { reason?: string }).toMatchObject({ reason: 'undeclared-name', step: 'C-TOP' })
-    const minted = mintedStore()
-    expect(resolveOf(minted, 'mem.focus.entries') as { reason?: string }).toMatchObject({ reason: 'no-such-anchor', step: 'D-ANCHOR' })
+  it('S23-3b §2.3 item 3 (register-side guard) — the register double\'s resolve surface for the unit\'s OWN spellings reads TOTAL: an UNWRITTEN mirror answers the DECLARED MISS (found:false — never a throw and never a refusal record), and a WRITTEN reference answers found:true with the value held BY IDENTITY — the carrier\'s read turn consumes each as its declared answer. RE-GRAINED 2026-11-02 (`D-93`): the frozen store\'s refusal taxonomy (`undeclared-name` at C-TOP for an unminted name, `no-such-anchor` at D-ANCHOR for a minted-but-childless root) left with the module — the headstones at S21-6a and S23-2b record it — while the row\'s TERM, that the read surface is TOTAL, is asserted here over the double', () => {
+    const cold = registerDouble()
+    const coldRead = resolveOf(cold, 'mem.focus.entries')
+    expect(isMiss(coldRead), 'an unwritten name is the DECLARED MISS — never a throw').toBe(true)
+    expect(
+      Object.hasOwn(coldRead, 'status'),
+      'and the double mints no refusal record of its own — the read answers a value, not a taxonomy',
+    ).toBe(false)
     const written = mintedStore()
-    written.commit('mem.focus.entries', [{ id: 'w', target: 'w' }])
+    const entries: readonly FocusEntry[] = [{ id: 'w', target: 'w' }]
+    written.commit('mem.focus.entries', entries)
     const hit = resolveOf(written, 'mem.focus.entries') as { found?: boolean; value?: unknown }
     expect(hit.found).toBe(true)
-    expect((hit.value as readonly FocusEntry[])[0]?.id).toBe('w')
+    expect(hit.value, 'the value comes back BY IDENTITY — the double copies nothing').toBe(entries)
+    // THE CONTROL — a name the double has never held must still miss, so the HIT above is a reading of the
+    // WRITE and not a resolve that always answers found:true.
+    expect(isMiss(resolveOf(written, 'mem.focus.activeId')), 'the unwritten sibling still reads the MISS').toBe(true)
   })
 
   it('S23-4 §2.3 item 4 — THE WRITE-THROUGH TURN: on an ACCEPTED transition whose changed is true, the route calls the module\'s own persist(seamTarget, nextState) — EXACTLY ONE commit per reference (mem.focus.entries AND mem.focus.activeId, tier mem, {onRepeat:\'edit\'}); on a REFUSED transition and on an ACCEPTED NO-OP (changed:false) the route writes NOTHING', () => {
@@ -1298,22 +1484,36 @@ describe('H1 U-STORE-FOCUS — §2.4 THE SUBSCRIPTION + RELEASE (rule 2, the H2a
     expect(crossing.installs(), 'and exactly one install ever happened').toBe(1)
   })
 
-  it('S24-2a §2.4 item 2 — THE LISTENER BODY, READ-ONLY: the listener is the wiring\'s own closure forwarding the event to the declared consumer channel (a test-driven delivery recorder); its body never writes the store from inside (each transition yields at most the declared two events). DRIVEN AGAINST THE REAL STORE — the fan-out asserted is the STORE\'s own bounded per-realm-per-reference delivery (§2.10 item 4), never the recording double\'s re-invoking fan-out', () => {
+  it('S24-2a §2.4 item 2 — THE LISTENER BODY, READ-ONLY: a subscriber registered on the mirror\'s two references is the consumer channel and forwards only; its body never writes the register from inside, so each accepted+changed transition yields the declared TWO deliveries and no more. RE-GRAINED 2026-11-02 (`D-93`): the fan-out asserted here used to be the frozen store\'s own bounded per-realm-per-reference delivery — that store is deleted, so the host is THE REGISTER DOUBLE, whose delivery the recording layer above still counts. The TERM is unchanged: ONE transition, TWO deliveries, and the write-loop control at the end proves the census can fail', () => {
     const store = mintedStore()
     const recorded: Array<{ readonly name: string; readonly cause: unknown }> = []
     store.subscribe('mem.focus.entries', (event) => { recorded.push({ name: event.name, cause: event.cause }) })
     store.subscribe('mem.focus.activeId', (event) => { recorded.push({ name: event.name, cause: event.cause }) })
     const carrier = carrierOf(store)
     carrier.focusRoute({ target: 'delta', newTab: true })
-    // one accepted+changed transition ⇒ at most the declared TWO deliveries (one per committed
-    // reference — the store's own bounded fan-out).
-    expect(recorded.length).toBeLessThanOrEqual(2)
+    // one accepted+changed transition ⇒ the declared TWO deliveries (one per committed reference).
+    expect(recorded.length, 'the accepted+changed turn commits exactly two references, and each delivers once').toBe(2)
     for (const delivery of recorded) {
       expect(['mem.focus.entries', 'mem.focus.activeId']).toContain(delivery.name)
     }
-    // THE WRITE-LOOP PROOF (§2.4 item 2): the listener bodies never wrote the store from
-    // inside — every delivery is a 'commit' event of the route's own write-through turn.
+    // THE WRITE-LOOP PROOF (§2.4 item 2): the listener bodies never wrote the register from inside — every
+    // delivery is a 'commit' event of the route's own write-through turn.
     expect(recorded.every((d) => d.cause === 'commit')).toBe(true)
+    // THE CONTROL — the census CAN fail. A listener body that WRITES the register from inside is the write loop
+    // this row forbids, and it shows one delivery MORE than the read-only body gives for the same route turn.
+    const healthy = mintedStore()
+    let healthySeen = 0
+    healthy.subscribe('mem.focus.entries', () => { healthySeen += 1 })
+    carrierOf(healthy).focusRoute({ target: 'healthy', newTab: true })
+    expect(healthySeen, 'the READ-ONLY listener: one delivery for the route\'s one write to this reference').toBe(1)
+    const looped = mintedStore()
+    let loopedSeen = 0
+    looped.subscribe('mem.focus.entries', () => {
+      loopedSeen += 1
+      if (loopedSeen === 1) looped.commit('mem.focus.entries', [{ id: 'loop', target: 'loop' }])
+    })
+    carrierOf(looped).focusRoute({ target: 'looped', newTab: true })
+    expect(loopedSeen, 'a listener that WRITES from inside yields TWO — the excess the read-only census above refuses').toBe(2)
   })
 
   it('S24-2b §2.4 item 2 (store-side guard) — a THROWING listener body cannot propagate: the store catches it (§2.10 item 4)', () => {
@@ -1552,9 +1752,17 @@ describe('H1 U-STORE-FOCUS — §2.6 THE SIX PROHIBITIONS (each pinned by an enu
     expect(moduleCensusProbe().ok).toBe(true)
   })
 
-  it('P-2.6-2 — THE STORE IS FROZEN (pinned by §3.4 R-2 / §5.1 row 6): no store byte, no store member, no refusal token, no event arm, no release trigger is added or moved by this unit — the store\'s bytes carry NO focus vocabulary', () => {
-    expect(storeFrozenProbe().ok).toBe(true)
-  })
+  /* ── P-2.6-2 — RETIRED 2026-11-02 (`D-93`) ─────────────────────────────────────────────────────────────
+   * AS FILED: "THE STORE IS FROZEN (pinned by §3.4 R-2 / §5.1 row 6): … the store's bytes carry NO focus
+   * vocabulary" — driven through `storeFrozenProbe()`, which read `src/renderer/store-core-graph.ts` and
+   * `src/renderer/store-graph-references.ts` byte for byte. **BOTH FILES ARE DELETED**, so the prohibition's
+   * subject (a store whose bytes this unit must not move) does not exist, and the reading is not re-grainable
+   * onto the record that replaced them: `src/main/view-record/index.ts` carries `focus-must-stand` and the
+   * mirror's whole existence clause ON PURPOSE, so the old term would now read backwards. **WHAT SURVIVES of the
+   * prohibition** — "this file's focus machinery adds no store member, no refusal token, no event arm and no
+   * release trigger" — is asserted, harder, at `S23-2a` (construction takes nothing) and at `P-2.6-4` (one
+   * client registration, zero store subscriptions).
+   * ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 
   it('P-2.6-3 — renderer.ts\'s edit is BOUNDED to the focus region (pinned by §3.4 R-3 / §5.1 row 1): the holder\'s removal, the carrier factory + boot construction, the store-backed seam target, the two subscriptions, the switch case\'s routing — and NOTHING else. RED today: the re-home has not landed — the module-level carrier still sits in the focus region', () => {
     expect(focusRegionCarrierFree().ok).toBe(true)
@@ -1653,14 +1861,16 @@ describe('H1 U-STORE-FOCUS — §3.1 THE VALID / HAPPY STATES', () => {
     expect((resolveOf(rec.store, 'mem.focus.entries') as { found?: boolean }).found, 'the records REMAIN').toBe(true)
   })
 
-  it('M-6 THE REAL-STORE DRIVE (the wired createGraphStore, this unit\'s composition rows) — every turn\'s receipt is the store\'s settled GraphWriteReceipt; the events count matches the store\'s own delivery record; the subscription count on the two references reads exactly 2 while alive', () => {
-    const rec = createRecordingStore()
-    const carrier = carrierOf(rec.store)
-    carrier.focusRoute({ target: 'real', newTab: true })
-    const entryReceipt = rec.commits.find((c) => c.name === 'mem.focus.entries')
-    expect(entryReceipt).toBeDefined()
-    carrier.dispose()
-  })
+  /* ── M-6 — RETIRED 2026-11-02 (`D-93`) ────────────────────────────────────────────────────────────────
+   * AS FILED: "THE REAL-STORE DRIVE (the wired `createGraphStore`, this unit's composition rows) — every turn's
+   * receipt is the store's settled `GraphWriteReceipt`; the events count matches the store's own delivery
+   * record; **the subscription count on the two references reads exactly 2 while alive**". **THREE OF ITS FOUR
+   * SUBJECTS ARE DELETED**: `createGraphStore` with its module, the `GraphWriteReceipt` with its type family,
+   * and the TWO exact-reference store subscriptions — the carrier registers NOTHING now (`D-88`/`D-89`), and the
+   * realm holds ONE client registration per crossing instead. Nothing of the row's composition claim survives to
+   * re-grain: what a reader actually needs from it — "an accepted turn's write-through lands both mirror members,
+   * with the route's own constructed entry" — is asserted at `M-2` and at `REG-SM-1`'s last two drives.
+   * ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 })
 
 describe('H1 U-STORE-FOCUS — §3.2 THE DOCUMENTED FAIL-STATES / NON-HAPPY STATES', () => {
@@ -1822,9 +2032,15 @@ describe('H1 U-STORE-FOCUS — §3.4 THE STATIC ROWS (the §2.6 pins)', () => {
     expect(moduleCensusProbe().ok).toBe(true)
   })
 
-  it('R-2 THE STORE BYTES UNTOUCHED — store-core-graph.ts + store-graph-references.ts are NOT in this unit\'s diff scope; the store ships NO focus vocabulary', () => {
-    expect(storeFrozenProbe().ok).toBe(true)
-  })
+  /* ── R-2 — RETIRED 2026-11-02 (`D-93`) ────────────────────────────────────────────────────────────────
+   * AS FILED: "THE STORE BYTES UNTOUCHED — `store-core-graph.ts` + `store-graph-references.ts` are NOT in this
+   * unit's diff scope; the store ships NO focus vocabulary", driven by the same `storeFrozenProbe()` that
+   * `P-2.6-2` drove. **THE TWO FILES IT NAMED ARE DELETED, NOT UNTOUCHED** — the purge removed them whole, so
+   * "not in this unit's diff scope" is no longer a statement about anything, and a byte-scan of a missing path is
+   * an ENOENT rather than a measurement. Its sibling prohibition is retired beside it at `P-2.6-2`, and the part
+   * of R-2 that still has a subject — the renderer no longer constructs, imports or references either module —
+   * is asserted positively by `S23-2a` (construction takes nothing) and by this file's own import block.
+   * ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 
   it('R-3 THE FOCUS-REGION BOUND — renderer.ts\'s delta is the focus region ONLY (the holder\'s removal, the carrier, the turns, the subscriptions) and NO other region. RED today: the holder still occupies the region — the bounded edit has not landed', () => {
     expect(focusRegionCarrierFree().ok).toBe(true)
@@ -1878,18 +2094,13 @@ describe('H1 U-STORE-FOCUS — §3.5 THE EXISTENCE ROWS', () => {
     expect(focusAnswerSeamProbe().ok).toBe(true)
   })
 
-  it('X-4 — THE STORE\'S LEGACY SUITE IS THE DOCUMENTED T9-CLASS RED RESIDUE: tests/store-core-graph.test.ts is byte-unchanged T9-class evidence (H4\'s disposition) — OWED a re-author under the re-frozen artifact with the architect\'s ruling as its entry condition; NOT this unit\'s act; this unit\'s trio legs report it as the store\'s own residue, never as this unit\'s failure. This red run does NOT include it (this command runs only tests/store-focus.test.ts)', () => {
-    const exists = ((): boolean => {
-      try {
-        readFileSync(LEGACY_STORE_SUITE_PATH, 'utf8')
-        return true
-      } catch {
-        return false
-      }
-    })()
-    expect(exists).toBe(true)
-    expect(bytesOf(new URL('../tests/store-focus.test.ts', import.meta.url)).includes('store-focus.test.ts')).toBe(true)
-  })
+  /* ── X-4 — RETIRED 2026-11-02 (`D-93`) ────────────────────────────────────────────────────────────────
+   * AS FILED: "THE STORE'S LEGACY SUITE IS THE DOCUMENTED T9-CLASS RED RESIDUE: `tests/store-core-graph.test.ts`
+   * is byte-unchanged T9-class evidence (H4's disposition) — OWED a re-author … NOT this unit's act". **THE FILE
+   * IS DELETED**, so the row's whole subject — a suite that exists and is owed a re-author — is gone, and the
+   * residue it reported is discharged by the deletion rather than carried by this register. (Its second
+   * assertion, that this file names itself, was a self-reference and died with the first.)
+   * ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 
   it('X-5 — NO PAGE, NO ELEMENT, NO §5.U ROW IS OWED BY THIS UNIT: the unit authors no element, no envelope node, no handler body and no control; docs/skills/designing-pages.md does not exist (CURRENT STATE item 8)', () => {
     const designingPagesExists = ((): boolean => {
@@ -1907,7 +2118,9 @@ describe('H1 U-STORE-FOCUS — §3.5 THE EXISTENCE ROWS', () => {
 describe('H1 U-STORE-FOCUS — §7a.1 THE WORKING DEFAULTS ARE IN FORCE (each answered decision, none undefined-until-answered)', () => {
   it('DEFAULT-AUTHORITY — the AUTHORITY is tier 1\'s tab list (Q-9): the mem.focus.* row is the residual working copy; the mirror never becomes a second authority (the mirror-side drive rows are §2.2\'s; the static half holds)', () => {
     expect(noTierOneWriteProbe().ok).toBe(true)
-    expect(focusRegion().includes('file.tabs')).toBe(false)
+    // THE SCAN READS CODE, NOT PROSE (`commentElided`): the region that records what left it names the deleted
+    // record in its docblocks, and that is not a write.
+    expect(commentElided(focusRegion()).includes('file.tabs')).toBe(false)
   })
 
   it('DEFAULT-REPLY-SHAPE — the REPLY SHAPE is behaviour-preserving, unchanged: { activeId, entries, opened, refused? } (the BREAK clause is NOT triggered)', () => {
@@ -2222,7 +2435,10 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         expect(persisted.present).toBe(true)
         expect((persisted.value as GraphWriteReceipt).status).toBe('committed')
       } },
-      { name: 'each receipt is the store\'s settled GraphWriteReceipt (events = the count of AFFECTED REFERENCES, G4-F3 — 1 on a subscription-free store, still 1 with one exact-reference listener, whose DELIVERY record reads 1)', drive: (): void => {
+      { name: 'each receipt is the settled receipt (events = the count of AFFECTED REFERENCES, G4-F3 — 1 on a subscription-free register, still 1 with one exact-reference listener, whose DELIVERY record reads 1)', drive: (): void => {
+        // ⟶ RE-GRAINED 2026-11-02 (`D-93`): the host is THE REGISTER DOUBLE, whose receipt is the shape these
+        // assertions read (`{status, name, events, …}`). The frozen store's `GraphWriteReceipt` is deleted with its
+        // module, and the double keeps the ONE member this drive is about — `events`, the affected-reference count.
         // ⟶ RE-GRAINED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
         // as-filed drive pinned `events: 0` on a subscription-free store — the pre-re-freeze
         // delivery-dependent count. G4-F3 (the F3 pin) re-defines `events` as "a function of
@@ -2396,15 +2612,14 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
       persist: (): { readonly present: boolean; readonly value: unknown } => persist(() => 'fixed-seam-answer', { entries: [], activeId: null }),
     }
     const state3 = (): ReadonlyArray<{ readonly label: string; readonly store: GraphStore }> => {
-      // THE SHADOWING CONSTRUCTION'S COMMIT ORDER MATTERS (2026-10-05 — measured this pass):
-      // the frozen store's tier semantics re-plant a branch on a later commit, so the TEMP
-      // commits must land FIRST and the MEM mint + MIRROR commits LAST — otherwise the later
-      // temp commit answers D-ANCHOR/`tier-filter-miss` for `mem.focus.*` and the corpus would
-      // not hold the shadow at the mirror spellings (the as-authored interleave never held it —
-      // exactly the dead-corpus defect finding C named). The mem commits clear the temp copy
-      // (the store's tier-clear, §2.8 — the tiers DIFFER, which is the differential's point).
+      // RE-GRAINED 2026-11-02 (`D-93`) — THE HOST IS THE REGISTER DOUBLE AND THE CORPUS IS STILL ALIVE. The
+      // frozen store's tier semantics (`D-ANCHOR`/`tier-filter-miss`, the tier-clear that let a later `mem`
+      // commit erase a `temp` copy) left with the module, and the double has ONE plane keyed by the dotted name —
+      // so `temp.focus.*`, `mem.focus.*` and `file.focus.*` are three DIFFERENT keys and the three states below
+      // differ for a reason the probe can SEE. The build order is kept as filed (it costs nothing and records
+      // what the corpus was built to distinguish); its tier reasoning is now the double's own.
       const shadowing = ((): GraphStore => {
-        const s = wiringStore()
+        const s = registerDouble()
         s.commit('temp.focus', undefined)
         s.clear('temp.focus')
         s.commit('temp.focus.entries', [{ id: 'SHADOW', target: 'SHADOW' }])
@@ -2416,7 +2631,7 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         return s
       })()
       const committed = ((): GraphStore => {
-        const s = wiringStore()
+        const s = registerDouble()
         s.commit('file.focus', undefined)
         s.clear('file.focus')
         s.commit('file.focus.entries', [{ id: 'SHADOW', target: 'SHADOW' }])
@@ -2424,22 +2639,26 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         return s
       })()
       return [
-        { label: 'COLD', store: wiringStore() },
+        { label: 'COLD', store: registerDouble() },
         { label: 'SHADOWING temp+mem (mem holds the mirror)', store: shadowing },
         { label: 'COMMITTED file', store: committed },
       ]
     }
-    /** THE CORPUS PROBE — the state's own store demonstrably answers its ambient values at the
-     *  mirror spellings (the tiers differ: COLD refuses undeclared-name; SHADOWING/COMMITTED
-     *  HIT with the SHADOW id at their own tier), so the fixed-tuple call that follows runs
+    /** THE CORPUS PROBE — the state's own host demonstrably answers its ambient values at the
+     *  mirror spellings (the states differ: COLD answers the DECLARED MISS; SHADOWING/COMMITTED
+     *  HIT with the SHADOW id at their own spelling), so the fixed-tuple call that follows runs
      *  over a LIVE, DIFFERING ambient — the differential is EXECUTED, not assumed (finding C,
      *  2026-10-05). IN-DRIVE OBSERVATIONS BESIDE the declared term — never separate drives
-     *  (`A-DECLARED-REGISTER-TERM-IS-A-DRIVE-COUNT` — the term 24 stays, NO re-grain). */
+     *  (`A-DECLARED-REGISTER-TERM-IS-A-DRIVE-COUNT` — the term 24 stays, NO re-grain).
+     *  **THE COLD ARM RE-GRAINED 2026-11-02 (`D-93`)**: it used to read the frozen store's
+     *  `undeclared-name` REFUSAL at `C-TOP`. The register double has no address space to refuse a
+     *  name, so the COLD statement is the DECLARED MISS — and the corpus is STILL ALIVE, because the
+     *  other two states answer HITs where this one answers nothing. */
     function ambientProbeOf(state: { readonly label: string; readonly store: GraphStore }): void {
       if (state.label === 'COLD') {
         const read = resolveOf(state.store, 'mem.focus.entries')
-        expect((read as { status?: string }).status).toBe('refused')
-        expect((read as { reason?: string }).reason).toBe('undeclared-name')
+        expect(isMiss(read), 'COLD: nothing is held at the mirror spelling').toBe(true)
+        expect((read as { value?: unknown }).value, 'and the miss carries no value').toBeUndefined()
         return
       }
       const spelling = state.label.startsWith('SHADOWING') ? 'mem.focus' : 'file.focus'
@@ -2506,7 +2725,7 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         expect(carrier.state()).toEqual({ entries: [], activeId: null })
       } },
       { name: 'minted-but-unwritten → state() answers the declared-empty pair', drive: (): void => {
-        const store = wiringStore()
+        const store = registerDouble()
         store.commit('mem.focus', undefined)
         store.clear('mem.focus')
         expect(carrierOf(store).state()).toEqual({ entries: [], activeId: null })

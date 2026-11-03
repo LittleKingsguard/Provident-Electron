@@ -2522,11 +2522,16 @@ function tp3Attempt(shape: number): AttemptResult {
   // ROLLBACK: retiring the theme caller reverts this attempt to its as-filed
   // closed offending-carriers form (the annotation's removal, never a
   // re-derivation; `§5.4`'s rollback holds).
-  const admittedCarrier = 'src/renderer/theme-store.ts'
+  // ⟶ **THE ONE ADMITTED CARRIER IS GONE AND THE ATTEMPT REVERTS TO ITS AS-FILED CLOSED FORM** (2026-11-03, `D-93`; the
+  // licence cell's own rollback: *"retiring the theme caller reverts this attempt to its as-filed closed
+  // offending-carriers form (the annotation's removal, never a re-derivation)"*). `src/renderer/theme-store.ts` was a
+  // store-shaped turn naming the mechanism on this unit's behalf; it had NO live consumer under `src/` and its address
+  // space (`file.settings.theme.token`) is deleted with the frozen graph store, so it is deleted with it. **THE SET IS
+  // NOW THE MODULE PLUS THIS UNIT'S OWN SURFACES AND NOTHING ELSE** — a STRICTER reading: the attempt admits no carrier
+  // at all beyond the mechanism's own file.
   const offenders = walkSrc()
     .filter((p) => /\.(?:ts|mjs|js)$/.test(p))
     .filter((p) => p !== 'src/shared/theme.ts')
-    .filter((p) => p !== admittedCarrier)
     .filter((p) => edgeScan(sourceOrEmpty(p), true).length > 0)
   // THE BOUNDED-EXTENSION POSITIVE CONTROL (the licence's positive-control
   // clause: an EXTRA carrier beyond the one admitted path is a FINDING): the
@@ -2534,8 +2539,8 @@ function tp3Attempt(shape: number): AttemptResult {
   const secondCarrier = `import { resolveTheme, applyThemeDeclaration } from '../shared/theme.js'`
   return checkAssertions(
     [
-      { label: `§5.5.1 P-TC-TP-3 (12, AMENDED, licence cell (3) of §2.7 item 7's dated extension) — no \`src/**\` file outside the allowed set names the mechanism on this unit behalf; carriers: ${offenders.join(', ')}`, ok: offenders.length === 0 },
-      { label: '§5.5.1 P-TC-TP-3 (12, bounded-extension control) — a SECOND new carrier (a synthetic second caller) is STILL flagged by the instrument: the admitted set gained EXACTLY the one path (`src/renderer/theme-store.ts`), never a blanket strip', ok: edgeScan(secondCarrier, true).length > 0 },
+      { label: `§5.5.1 P-TC-TP-3 (12, AS-FILED CLOSED FORM RESTORED 2026-11-03 — the licence cell's own rollback, fired by the deletion of \`src/renderer/theme-store.ts\` under \`D-93\`) — no \`src/**\` file outside the allowed set names the mechanism on this unit's behalf; carriers: ${offenders.join(', ')}`, ok: offenders.length === 0 },
+      { label: '§5.5.1 P-TC-TP-3 (12, bounded-extension control) — a SECOND new carrier (a synthetic second caller) is STILL flagged by the instrument: the allowed set is the mechanism plus this unit\'s own surfaces and admits NO caller path, so a re-landed caller is a FINDING rather than a blanket strip', ok: edgeScan(secondCarrier, true).length > 0 },
     ],
     1,
   )
