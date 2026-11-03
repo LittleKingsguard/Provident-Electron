@@ -31,16 +31,27 @@
 //     `['operator-exclusion']` (`mem`). The two `file` addresses are then read FROM THIS PROCESS out of
 //     `<profile>/provident-operator-settings.json`; the `mem` address has no file image to read (a `mem`
 //     value can never come from a file), so it is read through the crossing and then at a FRESH BOOT.
+//   · **THE VIEW RECORD'S THREE FAMILIES** (`D-87`, `D-91`, `D-95`), through the `view` bridge member and
+//     the app's OWN profile file: `['panes']` (`file`), `['focus']` (`mem`) and `['zones']` (`mem`). The
+//     two `mem` families have no file image, so their non-survival is read at a FRESH PROCESS; the `file`
+//     family's value is read out of `<profile>/provident-profile.json` BY THIS PROCESS as well as through
+//     the crossing, which is what makes "the repair's placeholder stands" a reading of the store's bytes
+//     rather than of the crossing's opinion of them.
 //
-// THREE BOOTS, ONE PER SUBJECT, on two scratch profiles. Boot A loads NO driver envelope and reads the
+// FIVE BOOTS, ONE PER SUBJECT, on three scratch profiles. Boot A loads NO driver envelope and reads the
 // untouched app graph (the page drive is the app's own writing — loading an envelope would REPLACE that
-// graph, which is why the push is measured here); boot B loads the envelope for the bridge routes and the
-// secure crossing; boot C is a SECOND PROCESS on boot B's profile, which is how a `file` address's
-// survival and a `mem` address's non-survival are told apart.
+// graph, whichever crossing is being measured, which is why the TAB record's push is measured here); boot B
+// loads the envelope for the bridge routes and the secure crossing; boot C is a SECOND PROCESS on boot B's
+// profile, which is how a `file` address's survival and a `mem` address's non-survival are told apart; boot
+// D drives the view record's three families on a THIRD profile, and boot E is a SECOND PROCESS on boot D's,
+// which answers the same question for `['panes']` against `['focus']`/`['zones']`.
 //
 // THIS LEG'S OWN LIMITS, stated rather than hidden:
-//   · It drives `tabs`, not `view`. The view record's crossing is `store-view-record`'s and is driven by
-//     its own batteries; nothing here is claimed about it.
+//   · The view record's CHANGE PUSH is read THROUGH THE BRIDGE and not at an authored terminal, because the
+//     app's own view subscriber takes a NO-OP handler (`src/renderer/renderer.ts`'s `startViewShape`:
+//     `client.subscribe(() => undefined)`), so no authored node moves when the view does. The subscriber
+//     this leg installs on `window.provident.view.onChanged` is the app's own BRIDGE MEMBER and the app's
+//     own realm; the row says so and claims nothing about a rendered node.
 //   · `security.setExclusion`'s own `{applied:true}` answer is NOT read back: the write closes the MCP
 //     invocation tier, so every later call is refused (`exclusion-closed`) and the observation written
 //     inside the body cannot be retrieved over the boundary. What the row measures instead is the
@@ -89,6 +100,31 @@ const EXCLUSION_ADDRESS = 'operator-exclusion'
 const APP_STATE_ADDRESS = 'operator-app-state'
 /** The tab record's one address (`D-63`, `D-64`). */
 const TABS_ADDRESS = 'tabs'
+/** **THE APP'S OWN PROFILE FILE** — the normal crossing's one register, and the ONLY place a `file`-tier value can be
+ *  read without asking the crossing (`src/main/data/store.ts`'s `PROFILE_FILE_NAME`). The `mem` tiers have no image
+ *  here at all, which is what makes the fresh-boot reading decisive. */
+const PROFILE_FILE = 'provident-profile.json'
+/** **THE VIEW RECORD'S THREE ADDRESSES** (`src/main/view-record/index.ts`'s `VIEW_PANES_ADDRESS`, `VIEW_FOCUS_ADDRESS`,
+ *  `VIEW_ZONES_ADDRESS`): one root per family and never one root with three members, because a value lives at ONE tier
+ *  and two of these three are `mem` (D-87, D-91). Spelled once each here, as the file's own keys. */
+const PANES_KEY = 'panes'
+const FOCUS_KEY = 'focus'
+const ZONES_KEY = 'zones'
+/** **THE MEASURED DEFAULTS, SPELLED BECAUSE THIS FILE IMPORTS NO TYPESCRIPT** (`src/shared/view-shape.ts`'s
+ *  `DEFAULT_PANE_SIZE` / `DEFAULT_PANE_BOUNDS` / `DEFAULT_PANE_ID`): the authored pane's `props`, the figures
+ *  `panes-must-stand`'s repair mints at the store's creation and the figures `paneGeometryIn` answers for a pane the
+ *  family does not name. They are the row's EXPECTED values and not this leg's invention. */
+const MEASURED_PANE_ID = 'pane-a'
+const MEASURED_PANE_SIZE = 100
+const MEASURED_PANE_BOUNDS = { min: 0, max: 200 }
+/** **THE DRIVEN FIGURES — one per route, each a value the measured default COULD NOT answer**, so a read-back that
+ *  reports them is the write's effect and never the creation repair's placeholder. The pane size is outside
+ *  `{min…max}` on purpose: the crossing composes the family and this leg reads it back, and no policy clamps at the
+ *  address (the clamp is the drag's `move`, which is not driven here). */
+const DRIVEN_PANE_SIZE = 240
+const DRIVEN_FOCUS_ID = 'focus-alpha'
+const DRIVEN_ZONE_ID = 'zone-1'
+const DRIVEN_ZONE = { slot: 'slot-alpha', distance: 3, size: 120, display: 'normal' }
 /** The two authored terminals the app's own subscriber drives (`src/shared/demo-envelope.ts`). */
 const LANDING_PAGE_ID = 'tabs-landing-page'
 const ERROR_PAGE_ID = 'tabs-error-page'
@@ -228,6 +264,14 @@ function recordView(reading) {
   return { status: reading?.status ?? null, order: t.order, landing: null, active: t.active, rowIds: t.ids, terms: t, value }
 }
 
+// ---- the view record's families, read off its own answer ---------------------
+/** ONE MEMBER OF AN ADMITTED FAMILY, BY ID — the answer's own spelling (`{id, ...}`), or `null` where the family names
+ *  no such member. `null` is the family's declared miss (`zoneIn`'s own arm) and never a substituted default. */
+const paneIn = (reading, id) =>
+  (Array.isArray(reading?.panes) ? reading.panes : []).find((pane) => pane !== null && pane !== undefined && pane.id === id) ?? null
+const zoneIn = (reading, id) =>
+  (Array.isArray(reading?.zones) ? reading.zones : []).find((zone) => zone !== null && zone !== undefined && zone.id === id) ?? null
+
 // ---- the driver's envelope (the measurement channel) ------------------------
 const OUT_ID = 'xg-out'
 const DUMP_ID = 'xg-dump'
@@ -322,6 +366,50 @@ const ACTS = [
     id: 'xg-module-read',
     label: 'module-read',
     act: `var moduleBridge = need('module'); moduleBridge.get().then(ok, no)`,
+  },
+  // ── THE VIEW RECORD'S THREE FAMILIES (`D-95`) — the same channel, one act per route, plus the ONE subscription this
+  //    leg needs to measure the push. The subscriber is registered on the REALM (`window.__XV_HITS`) because the bridge
+  //    call that installs it and the delivery that fires it are two separate turns, and the counting handler is the only
+  //    place a delivery is observable at all: the app's own subscriber takes a no-op.
+  {
+    id: 'xv-read',
+    label: 'view-read',
+    act: `var view = need('view'); view.read().then(ok, no)`,
+  },
+  {
+    id: 'xv-subscribe',
+    label: 'view-subscribe',
+    act: `var view = need('view')
+    window.__XV_HITS = 0
+    window.__XV_WITHDRAW = view.onChanged(function () { window.__XV_HITS = (window.__XV_HITS || 0) + 1 })
+    ok({ subscribed: true, withdrawal: typeof window.__XV_WITHDRAW })`,
+  },
+  {
+    id: 'xv-commit-pane',
+    label: 'view-commit-pane',
+    act: `var view = need('view')
+    view.commitPane('${MEASURED_PANE_ID}', { size: ${DRIVEN_PANE_SIZE} })
+      .then(function (answer) { view.read().then(function (reading) { ok({ answer: answer, reading: reading }) }, no) }, no)`,
+  },
+  {
+    id: 'xv-push',
+    label: 'view-push',
+    act: `var view = need('view')
+    view.read().then(function (reading) { ok({ hits: window.__XV_HITS || 0, reading: reading }) }, no)`,
+  },
+  {
+    id: 'xv-commit-focus',
+    label: 'view-commit-focus',
+    act: `var view = need('view')
+    view.commitFocus({ entries: [{ id: '${DRIVEN_FOCUS_ID}', target: '/alpha' }], activeId: '${DRIVEN_FOCUS_ID}' })
+      .then(function (answer) { view.read().then(function (reading) { ok({ answer: answer, reading: reading }) }, no) }, no)`,
+  },
+  {
+    id: 'xv-commit-zones',
+    label: 'view-commit-zones',
+    act: `var view = need('view')
+    view.commitZones('${DRIVEN_ZONE_ID}', ${JSON.stringify(DRIVEN_ZONE)})
+      .then(function (answer) { view.read().then(function (reading) { ok({ answer: answer, reading: reading }) }, no) }, no)`,
   },
 ]
 
@@ -418,16 +506,42 @@ function readInstanceFile(profile) {
   const pick = (name) => (parsed[name] !== null && typeof parsed[name] === 'object' ? parsed[name] : null)
   return { present: true, keys: Object.keys(parsed).sort(), record: pick(RECORD_ADDRESS), appState: pick(APP_STATE_ADDRESS), raw, reason: '' }
 }
-async function settleInstanceFile(profile, until, what) {
-  let read = readInstanceFile(profile)
+/** **THE APP'S OWN PROFILE FILE AS THE STORE WROTE IT** — one JSON object whose keys are the `file`-tier addresses'
+ *  joined spellings, read BY THIS PROCESS and never through the crossing. A `mem` address has no key here by
+ *  construction (`D-84`: a `mem` value can never come from a file), so a row that read one would be reading the
+ *  driver's own fixture; the `keys` list is printed with every row so that absence is a measurement. */
+function readProfileFile(profile) {
+  const file = join(profile, PROFILE_FILE)
+  const absent = { present: false, keys: [], panes: null, focus: null, zones: null, raw: '', reason: 'the profile file is absent' }
+  if (!existsSync(file)) return absent
+  const raw = readFileSync(file, 'utf8')
+  if (raw.trim() === '') return { ...absent, present: true, reason: 'zero-length: the construction created it and no address has landed' }
+  let parsed
+  try {
+    parsed = JSON.parse(raw)
+  } catch (e) {
+    return { ...absent, present: true, reason: `unparsable: ${e instanceof Error ? e.message : String(e)}` }
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { ...absent, present: true, reason: 'the file carries no object' }
+  }
+  const pick = (name) => (parsed[name] !== null && typeof parsed[name] === 'object' ? parsed[name] : null)
+  return { present: true, keys: Object.keys(parsed).sort(), panes: pick(PANES_KEY), focus: pick(FOCUS_KEY), zones: pick(ZONES_KEY), raw, reason: '' }
+}
+/** **ONE BOUNDED SETTLE FOR EITHER FILE** — the same poll, so a `file` tier's landing is read the same way at both
+ *  crossings and a timed-out read is PRINTED as one rather than asserted away. A store write reaches its file at the
+ *  instance's own flush, which is not the caller's turn, so the wait is the measurement and never a sleep with a hope. */
+async function settleFile(readFn, profile, until, what) {
+  let read = readFn(profile)
   for (let polls = 1; polls <= FILE_POLL_MAX; polls += 1) {
     if (until(read)) return { read, polls, settled: true }
     await sleep(FILE_POLL_DELAY_MS)
-    read = readInstanceFile(profile)
+    read = readFn(profile)
   }
-  console.log(`  · note: the instance's file had not settled within ${FILE_POLL_MAX} reads waiting for ${what} — the last read stands`)
+  console.log(`  · note: ${what} had not settled within ${FILE_POLL_MAX} reads — the last read stands`)
   return { read, polls: FILE_POLL_MAX, settled: false }
 }
+const settleInstanceFile = (profile, until, what) => settleFile(readInstanceFile, profile, until, what)
 
 // ---- profiles and boots ----------------------------------------------------
 const liveBoots = []
@@ -535,7 +649,7 @@ async function teardownBoot(boot) {
 // ══════════════════════════════════════════════════════════════════════════════
 // THE RUN
 // ══════════════════════════════════════════════════════════════════════════════
-console.log('\nCROSSINGS — both `provident-storeroom` crossings over a process boundary (pending.md row 5, D-94)')
+console.log('\nCROSSINGS — both `provident-storeroom` crossings over a process boundary, and the view record\'s three families (pending.md row 5, D-94, D-95)')
 console.log('='.repeat(96))
 
 if (typeof process.env.DISPLAY !== 'string' || process.env.DISPLAY === '') {
@@ -815,6 +929,187 @@ try {
     `security read → ${JSON.stringify(secureAnswer)}; module read → ${JSON.stringify(registryAnswer)}`,
   )
   await teardownBoot(bootC)
+
+  // ══ BOOT D — THE VIEW RECORD'S THREE FAMILIES: existence, the push, and the three declared routes ══
+  const profileD = seededProfile('provident-crossings-view')
+  console.log(`\n--- BOOT D (the view record: \`['panes']\` file · \`['focus']\` mem · \`['zones']\` mem; driver envelope loaded) ---`)
+  console.log(`  · scratch profile: ${profileD}`)
+  const bootD = await connectBoot('D', profileD, { loadEnvelope: true })
+  console.log(`  · boot D pid ${bootD.child.pid}`)
+
+  // ── V-1: the `file` family's EXISTENCE AND REPAIR, read out of the STORE'S OWN BYTES ──
+  const profileFresh = await settleFile(
+    readProfileFile,
+    profileD,
+    (r) => r.panes !== null,
+    `the \`['${PANES_KEY}']\` family`,
+  )
+  const freshPanes = profileFresh.read.panes
+  const freshPaneA = freshPanes === null ? null : freshPanes[MEASURED_PANE_ID]
+  row(
+    'V-1',
+    `THE \`['${PANES_KEY}']\` FAMILY STANDS AT THE STORE'S OWN CREATION, read out of the app's profile file BY THIS PROCESS before any act: the creation repair (\`panes-must-stand\`) minted the MEASURED DEFAULT the tree states — pane \`${MEASURED_PANE_ID}\`, size ${MEASURED_PANE_SIZE}, bounds {${MEASURED_PANE_BOUNDS.min}, ${MEASURED_PANE_BOUNDS.max}} — and the file spells NEITHER \`${FOCUS_KEY}\` NOR \`${ZONES_KEY}\`, because a mem address has no file image`,
+    freshPaneA !== null &&
+      freshPaneA.size === MEASURED_PANE_SIZE &&
+      freshPaneA.bounds?.min === MEASURED_PANE_BOUNDS.min &&
+      freshPaneA.bounds?.max === MEASURED_PANE_BOUNDS.max &&
+      !profileFresh.read.keys.includes(FOCUS_KEY) &&
+      !profileFresh.read.keys.includes(ZONES_KEY),
+    `(${profileFresh.polls} read(s)${profileFresh.settled ? '' : ', NOT settled'}) file=${PROFILE_FILE} keys=[${profileFresh.read.keys.join(', ')}] · ${PANES_KEY}=${JSON.stringify(freshPanes)}`,
+  )
+
+  // ── V-2: the crossing's OWN READ, at a fresh profile, answers all three measured defaults ──
+  const freshRead = await drive(bootD.client, 'xv-read', 'view-read')
+  const freshShape = freshRead.answer
+  const freshShapePane = paneIn(freshShape, MEASURED_PANE_ID)
+  row(
+    'V-2',
+    `the view record's ONE READ answers the three families the creation repairs minted, over the boundary: \`['${PANES_KEY}']\` names \`${MEASURED_PANE_ID}\` at ${MEASURED_PANE_SIZE}/{${MEASURED_PANE_BOUNDS.min},${MEASURED_PANE_BOUNDS.max}}, the focus mirror is the DECLARED EMPTY PAIR (\`entries: []\`, \`activeId: null\`), the zone family is the family naming NO ZONE (\`[]\`) — and every family reports \`source: 'record'\`, because a repair and not a default made each one stand`,
+    freshRead.status === 'ok' &&
+      freshShape?.status === 'committed' &&
+      freshShapePane !== null &&
+      freshShapePane.size === MEASURED_PANE_SIZE &&
+      freshShapePane.bounds?.min === MEASURED_PANE_BOUNDS.min &&
+      freshShapePane.bounds?.max === MEASURED_PANE_BOUNDS.max &&
+      Array.isArray(freshShape?.focus?.entries) &&
+      freshShape.focus.entries.length === 0 &&
+      freshShape.focus.activeId === null &&
+      Array.isArray(freshShape?.zones) &&
+      freshShape.zones.length === 0 &&
+      freshShape?.source?.panes === 'record' &&
+      freshShape?.source?.focus === 'record' &&
+      freshShape?.source?.zones === 'record',
+    `(${freshRead.polls} read(s)) reading → ${JSON.stringify(freshShape)}`,
+  )
+
+  // ── V-3: THE SUBSCRIBER — installed through the app's own bridge member, before the write that must reach it ──
+  const subscribed = await drive(bootD.client, 'xv-subscribe', 'view-subscribe')
+  row(
+    'V-3',
+    "a SUBSCRIBER stands on the app's own bridge member before any write: `window.provident.view.onChanged(handler)` in the renderer realm answers a callable withdrawal, which is the route the app's own shape client registers on (`src/renderer/view-client.ts`'s `subscribe`). **The app's own subscriber is a no-op** (`startViewShape`'s `client.subscribe(() => undefined)`), so no authored node moves when the view does — this leg's handler is what makes a delivery observable, and the next row reads it",
+    subscribed.status === 'ok' && subscribed.answer?.subscribed === true && subscribed.answer?.withdrawal === 'function',
+    `(${subscribed.polls} read(s)) subscription answer → ${JSON.stringify(subscribed.answer)}`,
+  )
+
+  // ── V-4: the `file` route — `commitPane`, driven once, its effect read back through the crossing AND the file ──
+  const paneRoute = await drive(bootD.client, 'xv-commit-pane', 'view-commit-pane')
+  const paneAnswer = paneRoute.answer?.answer
+  const paneReadBack = paneIn(paneRoute.answer?.reading, MEASURED_PANE_ID)
+  const paneOnFile = await settleFile(
+    readProfileFile,
+    profileD,
+    (r) => r.panes?.[MEASURED_PANE_ID]?.size === DRIVEN_PANE_SIZE,
+    `the driven pane size ${DRIVEN_PANE_SIZE}`,
+  )
+  row(
+    'V-4',
+    `THE \`${PANES_KEY}\` ROUTE IS DRIVEN ONCE AND ITS EFFECT READ BACK: \`commitPane('${MEASURED_PANE_ID}', {size: ${DRIVEN_PANE_SIZE}})\` answers committed, the crossing's next read carries size ${DRIVEN_PANE_SIZE} with the standing bounds pair KEPT (the crossing composes the family over what stands), and the value is in the app's profile file — the \`file\` tier's landing-arm save, read by THIS process`,
+    paneAnswer?.status === 'committed' &&
+      paneReadBack !== null &&
+      paneReadBack.size === DRIVEN_PANE_SIZE &&
+      paneReadBack.bounds?.min === MEASURED_PANE_BOUNDS.min &&
+      paneReadBack.bounds?.max === MEASURED_PANE_BOUNDS.max &&
+      paneOnFile.read.panes?.[MEASURED_PANE_ID]?.size === DRIVEN_PANE_SIZE,
+    `(${paneRoute.polls} read(s)) route answer → ${JSON.stringify(paneAnswer)}; read back → ${JSON.stringify(paneReadBack)}; on file (${paneOnFile.polls} read(s)) → ${JSON.stringify(paneOnFile.read.panes)}`,
+  )
+
+  // ── V-5: THE PUSH — the write above crossed the boundary and fired the subscriber ──
+  const pushRead = await drive(bootD.client, 'xv-push', 'view-push')
+  const pushHits = pushRead.answer?.hits
+  const pushReadBack = paneIn(pushRead.answer?.reading, MEASURED_PANE_ID)
+  row(
+    'V-5',
+    `THE CHANGE PUSH CROSSES THE BOUNDARY AND REACHES A SUBSCRIBER: the handler V-3 installed on \`window.provident.view.onChanged\` has FIRED (at least once) for the write V-4 made — the crossing's own \`onChanged\` → the preload's \`provident:view:changed\` listener → this realm — and the re-read taken in that same turn carries the written size, so what arrived was a delivery and not a timer`,
+    pushRead.status === 'ok' &&
+      typeof pushHits === 'number' &&
+      pushHits >= 1 &&
+      pushReadBack !== null &&
+      pushReadBack.size === DRIVEN_PANE_SIZE,
+    `(${pushRead.polls} read(s)) deliveries observed = ${JSON.stringify(pushHits)}; re-read → ${JSON.stringify(pushRead.answer?.reading?.panes)}`,
+  )
+
+  // ── V-6: the `mem` route — `commitFocus`, driven once, its effect read back ──
+  const focusRoute = await drive(bootD.client, 'xv-commit-focus', 'view-commit-focus')
+  const focusAnswer = focusRoute.answer?.answer
+  const focusReadBack = focusRoute.answer?.reading?.focus
+  const focusEntries = Array.isArray(focusReadBack?.entries) ? focusReadBack.entries : []
+  row(
+    'V-6',
+    `THE \`${FOCUS_KEY}\` ROUTE IS DRIVEN ONCE AND ITS EFFECT READ BACK: \`commitFocus({entries: [{id: '${DRIVEN_FOCUS_ID}', target: '/alpha'}], activeId: '${DRIVEN_FOCUS_ID}'})\` answers committed, and the crossing's next read carries that ONE entry with the active id naming it — the whole mirror, handed through as one value and composed by nothing`,
+    focusAnswer?.status === 'committed' &&
+      focusEntries.length === 1 &&
+      String(focusEntries[0]?.id) === DRIVEN_FOCUS_ID &&
+      String(focusEntries[0]?.target) === '/alpha' &&
+      String(focusReadBack?.activeId) === DRIVEN_FOCUS_ID,
+    `(${focusRoute.polls} read(s)) route answer → ${JSON.stringify(focusAnswer)}; read back → ${JSON.stringify(focusReadBack)}`,
+  )
+
+  // ── V-7: the `mem` route — `commitZones`, driven once, its effect read back ──
+  const zoneRoute = await drive(bootD.client, 'xv-commit-zones', 'view-commit-zones')
+  const zoneAnswer = zoneRoute.answer?.answer
+  const zoneReadBack = zoneIn(zoneRoute.answer?.reading, DRIVEN_ZONE_ID)
+  row(
+    'V-7',
+    `THE \`${ZONES_KEY}\` ROUTE IS DRIVEN ONCE AND ITS EFFECT READ BACK: \`commitZones('${DRIVEN_ZONE_ID}', {slot, distance, size, display})\` answers committed, and the crossing's next read carries that zone with ALL FOUR members it was given — the family composed from what stands, so one act cannot erase a sibling zone`,
+    zoneAnswer?.status === 'committed' &&
+      zoneReadBack !== null &&
+      JSON.stringify(zoneReadBack.slot) === JSON.stringify(DRIVEN_ZONE.slot) &&
+      zoneReadBack.distance === DRIVEN_ZONE.distance &&
+      zoneReadBack.size === DRIVEN_ZONE.size &&
+      zoneReadBack.display === DRIVEN_ZONE.display,
+    `(${zoneRoute.polls} read(s)) route answer → ${JSON.stringify(zoneAnswer)}; read back → ${JSON.stringify(zoneReadBack)}`,
+  )
+  await teardownBoot(bootD)
+
+  // ══ BOOT E — a SECOND PROCESS on boot D's profile: the `file` family against the two `mem` ones ══
+  console.log(`\n--- BOOT E (a second process on boot D's scratch profile) ---`)
+  const bootE = await connectBoot('E', profileD, { loadEnvelope: true })
+  console.log(`  · boot E pid ${bootE.child.pid}`)
+  const survivedRead = await drive(bootE.client, 'xv-read', 'view-read')
+  const survivedShape = survivedRead.answer
+  const survivedPane = paneIn(survivedShape, MEASURED_PANE_ID)
+  const profileAtE = readProfileFile(profileD)
+
+  // ── V-8: the `file` family SURVIVED the process ──
+  row(
+    'V-8',
+    `THE \`${PANES_KEY}\` FAMILY SURVIVES THE PROCESS: a FRESH process on the same profile reads pane \`${MEASURED_PANE_ID}\` at the size the previous process wrote (${DRIVEN_PANE_SIZE}) with \`source: 'record'\`, and the value stands in the profile file's own bytes at this boot too — the \`file\` tier is the crossing's durable one`,
+    survivedRead.status === 'ok' &&
+      survivedPane !== null &&
+      survivedPane.size === DRIVEN_PANE_SIZE &&
+      survivedShape?.source?.panes === 'record' &&
+      profileAtE.panes?.[MEASURED_PANE_ID]?.size === DRIVEN_PANE_SIZE,
+    `(${survivedRead.polls} read(s)) pane → ${JSON.stringify(survivedPane)} (source ${JSON.stringify(survivedShape?.source?.panes)}); on file → ${JSON.stringify(profileAtE.panes)}`,
+  )
+
+  // ── V-9: the focus mirror was RE-MINTED, and never had a file image ──
+  const survivedFocus = survivedShape?.focus
+  const survivedFocusEntries = Array.isArray(survivedFocus?.entries) ? survivedFocus.entries : null
+  row(
+    'V-9',
+    `THE \`${FOCUS_KEY}\` MIRROR DOES NOT SURVIVE THE PROCESS: the fresh process reads the DECLARED EMPTY PAIR — no entry, no active id — and NOT the \`${DRIVEN_FOCUS_ID}\` mirror boot D ended holding, because a mem address can never come from a file and \`focus-must-stand\` re-mints it at every construction; the profile file spells no \`${FOCUS_KEY}\` key, which is the mechanism stated as a measurement`,
+    survivedRead.status === 'ok' &&
+      survivedFocusEntries !== null &&
+      survivedFocusEntries.length === 0 &&
+      survivedFocus?.activeId === null &&
+      survivedShape?.source?.focus === 'record' &&
+      !profileAtE.keys.includes(FOCUS_KEY),
+    `(${survivedRead.polls} read(s)) focus → ${JSON.stringify(survivedFocus)} (source ${JSON.stringify(survivedShape?.source?.focus)}); file keys=[${profileAtE.keys.join(', ')}]; a \`${FOCUS_KEY}\` key on file=${profileAtE.keys.includes(FOCUS_KEY)}`,
+  )
+
+  // ── V-10: the zone family was RE-MINTED, and never had a file image ──
+  const survivedZones = Array.isArray(survivedShape?.zones) ? survivedShape.zones : null
+  row(
+    'V-10',
+    `THE \`${ZONES_KEY}\` FAMILY DOES NOT SURVIVE THE PROCESS EITHER: the fresh process reads the family naming NO ZONE — \`[]\`, not the \`${DRIVEN_ZONE_ID}\` zone boot D ended holding — because that address is mem as well and \`zones-must-stand\` re-mints \`{}\` at every construction; the profile file spells no \`${ZONES_KEY}\` key, so the write never had a file image to survive in`,
+    survivedRead.status === 'ok' &&
+      survivedZones !== null &&
+      survivedZones.length === 0 &&
+      survivedShape?.source?.zones === 'record' &&
+      !profileAtE.keys.includes(ZONES_KEY),
+    `(${survivedRead.polls} read(s)) zones → ${JSON.stringify(survivedShape?.zones)} (source ${JSON.stringify(survivedShape?.source?.zones)}); a \`${ZONES_KEY}\` key on file=${profileAtE.keys.includes(ZONES_KEY)}`,
+  )
+  await teardownBoot(bootE)
 } catch (e) {
   failures += 1
   console.error(`\n  ✗ the leg could not complete: ${e instanceof Error ? e.message : String(e)}`)

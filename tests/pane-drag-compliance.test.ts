@@ -748,7 +748,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     expect(absent.register.census(), 'and no store was written on the way').toBe(0)
   })
 
-  it('F-8/throwing-shape-read: a shape whose SYNCHRONOUS READ THROWS is absorbed by every guarded turn — nothing propagates (re-grain of the as-filed "a tier-handle whose get THROWS"; the tier handle died with the store, `D-93`)', () => {
+  it('F-8/throwing-shape-read: a shape whose SYNCHRONOUS READ THROWS is absorbed by EVERY turn that reads it — the six that always did AND the pane read pair driven at the drag\'s start, each answering its own declared degradation and nothing propagating (re-grain of the as-filed "a tier-handle whose get THROWS"; the tier handle died with the store, `D-93`; the pair closed at `D-95`)', () => {
     // **THE HOSTILE SUPPLY IS NOW THE SHAPE ITSELF.** The deleted store's tier handle was the throwing read source; the
     // shape's members answer from an in-realm projection, and the composition still guards every turn that calls one — so
     // the term ("a hostile read supplier never throws out of a wiring turn") is driven at the members that hold it.
@@ -767,10 +767,37 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     expect(() => w.rightClick('g1'), 'nor does the erase turn').not.toThrow()
     expect(() => w.cancel('g1'), 'nor the cancel').not.toThrow()
     // THE CONTROL: an UNGUARDED turn would redden here — `release` reads the standing size through the same shape, and if
-    // the composition let a throw through this `expect` would fail instead of answering. (The pane read pair is NOT in this
-    // row: `startSizeOf`/`boundsOf` call the shape's pure projection directly, and the tier handle that could throw was
-    // deleted with the store — the pair's totality is driven at P-PD-TP-2's hostile-record shape instead.)
+    // the composition let a throw through this `expect` would fail instead of answering.
     expect(() => w.release('g1', 240, makeSink())).not.toThrow()
+    // **AND THE PANE READ PAIR IS NOW IN THIS ROW, WHICH IS WHERE `D-94`'s OPEN ITEM (e) SAID IT WAS NOT** (`D-95`). The
+    // note that stood here read *"the pane read pair is NOT in this row … the tier handle that could throw was deleted
+    // with the store"* — and the deletion of the handle did not make the pair total: `readPaneSize`/`readPaneBounds`
+    // called the shape's own read with NO guard, so a shape whose read threw propagated out of `startSizeOf`,
+    // `defaultSizeFor` and `boundsOf` while all six of the other turns absorbed it (`D-93`'s open item (e)). The pair is
+    // driven HERE, through the drag's START, and the term is the one every other guarded turn answers: what the ABSENT
+    // member answers — the measured default — and never a propagated throw. **THIS ASSERTION IS THE ROW'S BITE**: with
+    // the guard reverted it reds as `boom` out of `startSizeOf` (measured, `D-95`).
+    expect(() => w.startSizeOf(paneFixture, PANE_ID), 'the SIZE read absorbs the throw — the seventh turn').not.toThrow()
+    expect(w.startSizeOf(paneFixture, PANE_ID), 'and answers exactly what the absent member answers: the measured default').toBe(DEFAULT_PANE_SIZE)
+    expect(() => w.defaultSizeFor(paneFixture, PANE_ID), 'the reset arm is the SAME closure and absorbs it too').not.toThrow()
+    expect(w.defaultSizeFor(paneFixture, PANE_ID), 'and answers the same default').toBe(DEFAULT_PANE_SIZE)
+    expect(() => w.boundsOf(paneFixture, PANE_ID), 'the BOUNDS read absorbs the throw — the eighth turn').not.toThrow()
+    expect(w.boundsOf(paneFixture, PANE_ID), 'and answers the measured pair, a FRESH record').toEqual({
+      min: DEFAULT_PANE_BOUNDS.min,
+      max: DEFAULT_PANE_BOUNDS.max,
+    })
+    // AND THE GUARD IS NOT A BLANKET OVER THE PAIR: a shape that ANSWERS is still believed, so the two `expect`s above
+    // cannot be satisfied by a read that stopped reading. The control answers figures NO default could carry.
+    const answering = {
+      shape: () => ({ filled: true, panes: [], focus: { entries: [], activeId: null }, zones: [], source: { panes: 'default', focus: 'default', zones: 'default' } }),
+      zoneOf: () => null,
+      paneSizeOf: () => 250,
+      paneBoundsOf: () => ({ min: 10, max: 20 }),
+      commitPane: () => ({ status: 'committed' }),
+    } as unknown as ViewClient
+    const wa = wiring.createPaneDrag({ view: answering }, makeSource()) as PaneDragSurface
+    expect(wa.startSizeOf(paneFixture, PANE_ID), 'a shape that answers is NOT overridden by the default').toBe(250)
+    expect(wa.boundsOf(paneFixture, PANE_ID), 'nor is its pair').toEqual({ min: 10, max: 20 })
   })
 })
 

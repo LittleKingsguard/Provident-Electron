@@ -1304,23 +1304,43 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  the answer is the client's, READ SYNCHRONOUSLY and never awaited — the reason the shape exists. A pane the standing
    *  family does not name answers the MEASURED DEFAULT (100, the authored pane's `props.size`) instead of the `undefined`
    *  that made the release refuse `'unusable-default'`: the missing default was the frozen store's, and D-87's ground
-   *  measured it. **NO WRITE HAPPENS HERE** — a read that misses leaves the miss (`D-82` clause 4). */
+   *  measured it. **NO WRITE HAPPENS HERE** — a read that misses leaves the miss (`D-82` clause 4).
+   *
+   *  **AND IT IS TOTAL OVER A SHAPE WHOSE READ THROWS** (`D-95`): what an ABSENT shape answers, a THROWING one answers
+   *  too — the measured default — because a read that could throw out of `startSizeOf`/`boundsOf` was the one pair of the
+   *  seven turns that could (§3.2 F-8; `D-94`'s open item (e)). The other six guards were read to be copied, not widened:
+   *  each catches around its own shape call and answers the degradation IT declares (`[]` for `candidatesFor`, nothing for
+   *  the render turn), so this one answers the default IT declares. */
   const readPaneSize = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
-    if (view !== null) return view.paneSizeOf(id)
     // A REALM WITH NO CROSSING: the measured default stands, stated from the ONE shared declaration rather than invented.
-    return defaultPaneGeometry(id).size
+    const measured = defaultPaneGeometry(id).size
+    if (view === null) return measured
+    try {
+      return view.paneSizeOf(id)
+    } catch {
+      // A HOSTILE SHAPE MUST NEVER THROW OUT OF THE SIZE READ — the absent member's own answer, and no write.
+      return measured
+    }
   }
 
   /** §2.1 A's bounds read, also the shape's: the pair AS STORED, never a policy clamped here, and the measured default pair
    *  (`{min: 0, max: 200}`, the authored pane's `props.min`/`props.max`) where the family names no such pane. A pair whose
    *  members are not numbers is what `clampToBounds` turns into `NaN`, so the move is INVALID (§3.2 F-8) — that arm now
-   *  needs a shape the crossing's own admission refused, which is the boundary's business and not this read's. */
+   *  needs a shape the crossing's own admission refused, which is the boundary's business and not this read's.
+   *  **TOTAL BY THE SIZE READ'S OWN ARM** (`D-95`): a shape whose bounds read throws answers the measured pair, which is
+   *  what an absent shape answers — the pair is COPIED, so no caller holds `DEFAULT_PANE_BOUNDS`. */
   const readPaneBounds = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
-    if (view !== null) return view.paneBoundsOf(id)
     const measured = defaultPaneGeometry(id).bounds
-    return { min: measured.min, max: measured.max }
+    const fallback = { min: measured.min, max: measured.max }
+    if (view === null) return fallback
+    try {
+      return view.paneBoundsOf(id)
+    } catch {
+      // A HOSTILE SHAPE MUST NEVER THROW OUT OF THE BOUNDS READ — the absent member's own pair, and no write.
+      return { min: fallback.min, max: fallback.max }
+    }
   }
 
 

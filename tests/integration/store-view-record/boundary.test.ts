@@ -162,6 +162,16 @@ const DECLARED_SCOPE: readonly string[] = [
   'tests/focus-model.test.ts',
   'tests/container.test.ts',
   'tests/menu-template.test.ts',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-95` — THE `view` LEG, THE TOTAL PANE READS, AND TWO ITEMS ANSWERED BY FINDING. **Every path that pass writes
+  //    is ALREADY DECLARED ABOVE and NOT ONE is added here**, which is why this note is a comment and not four entries:
+  //    `src/renderer/renderer.ts` (the two pane reads made total), `tests/pane-drag-compliance.test.ts` (the `F-8` row
+  //    that proves it and reds without the guard), `tests/e2e/store-crossings/crossings-live.mjs` (the `view` leg's ten
+  //    rows — the instrument EXTENDED, not a second one, so no `scripts` key moved and none of the six key-set censuses
+  //    did) and `strata/brief.md` with `strata/decisions.md` (the figures and the row that owns them). **IT DELETES
+  //    NOTHING**: `src/shared/overlay.ts` and `src/shared/theme.ts` were measured to be no part of the deleted address
+  //    space and are left exactly where `D-93` left them, and `demo/pane-drag-demo/` is a path the corpus names, so
+  //    neither owes this row a path. A reader who expects an entry here is owed the reason it is absent — this is it.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
