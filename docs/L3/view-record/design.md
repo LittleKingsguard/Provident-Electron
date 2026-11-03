@@ -1,9 +1,13 @@
 # L3 — `view-record`: the module design
 
-- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 1 filed the crossing's second
-  declaration set (D-87); **rev 2 adds the THIRD FAMILY** — its address, declaration, route, client read and the file that
-  carries the shared vocabulary (D-91) — **and corrects the state §1 described**: the renderer's read path is the SHAPE's
-  now, not the frozen store's, because the swap landed (D-89). No rev-1 rule is withdrawn.
+- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 1 filed the crossing's second
+  declaration set (D-87); rev 2 added the THIRD FAMILY — its address, declaration, route, client read and the file that
+  carries the shared vocabulary (D-91) — and corrected the state §1 described, the renderer's read path being the SHAPE's
+  since the swap landed (D-89); **rev 3 states the wiring's own state**: ALL SIX of the drag composition's reads are the
+  shape's — `paneSizeOf`/`paneBoundsOf` for the pane geometry and `zoneOf` for the zone family — the composition's
+  `tierRead` helper and its `subscribe('temp.drag', …)` registration are DELETED, the render turn is a `renderZone` member
+  the shape's delivery calls, and the gesture's transient preview is CLOSURE STATE rather than a `temp`-tier name (D-92).
+  No rev-1 or rev-2 rule is withdrawn.
 - **Inputs:** `docs/L2/view-record/interface.md` rev 2 §0–§5; D-82 (the four clauses), D-83 (a creation-instant body's
   route and its address), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save), D-89 (the landed
   swap), D-90 (the enumeration that found the zone family homeless), D-71/D-72/D-73 (the listener's handle, the repair's
@@ -116,5 +120,6 @@ A pair that judges a **standing** family's members (a pane whose geometry is unu
 a declaration this module does not carry: each pair's arm is absence, and widening one would be a second declaration
 wearing the first one's sentence — the boundary D-84 drew for the secure crossing and D-83 drew when it gave the `order`
 seat a pair of its own. The admission answers such a member (the measured default, or the zone's absence), so nothing is
-lost; what is owed is the refusal, not the value. **AND THE ZONE FAMILY'S WIRING IS OWED TO THE DELETION PASS**: the drag
-composition's four frozen zone reads are moved to the shape, or the flow is ruled out of the tree, there (D-90, D-91).
+lost; what is owed is the refusal, not the value. **AND THE ZONE FAMILY'S WIRING IS LANDED** (`D-92`): the drag
+composition's four frozen zone reads are the shape's now, so what the deletion pass inherits is the DELETION and its
+evidence, not a wiring (D-90, D-91).

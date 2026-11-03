@@ -8,8 +8,8 @@
   creation-instant declaration's route), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save),
   D-90 (the enumeration that found the zone family homeless), D-63/D-65/D-71 (the tab record's arrangement).
 - **Ceiling:** 120 lines · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; a source cite
-  names its site (D-41) — `:1700-1722` and `:1823-1825` are `src/renderer/renderer.ts`'s pane reads and its release turn,
-  `:1104-1105`, `:1152-1153`, `:1967-1968` its focus mirror's, and `:1799-1805`, `:1935-1941` its two zone turns'.
+  names its site (D-41) — and the sites are NAMED rather than numbered since the renderer's regions moved (D-92):
+  `readPaneSize`/`readPaneBounds` and the `release` turn, `mirrorStateOf` and `persistTarget`, `renderZone`/`candidatesFor`.
 
 ## 0. Scope
 
@@ -21,10 +21,10 @@ runs, or the renderer's rendering (§3's L2 row; `modules.md` §1).
 
 The frozen graph store (`src/renderer/store-core-graph.ts`) held three data sets nothing else addressed, so the purge's
 last deletion could not go until each had one (D-87, D-91): the **pane geometry** — a pane's `size` and `bounds`, read at
-`renderer.ts:1700-1722` and written at `:1823-1825`; the **focus mirror** — the entries the focus model seats and the id
-that is active, read by `mirrorStateOf` and committed by `answerForCarrier` and `createFocusCarrier`'s `persistTarget`;
-and the **zone family** — per zone an opaque `slot`, a caller-measured `distance`, a `size` and a `display`, read by the
-composition's render turn (`:1799-1805`) and by `candidatesFor` (`:1935-1941`).
+`readPaneSize`/`readPaneBounds` and written by the `release` turn; the **focus mirror** — the entries the focus model
+seats and the id that is active, read by `mirrorStateOf` and committed by `answerForCarrier` and `createFocusCarrier`'s
+`persistTarget`; and the **zone family** — per zone an opaque `slot`, a caller-measured `distance`, a `size` and a
+`display`, read by the composition's `renderZone` turn and by `candidatesFor`.
 
 | Address | Tier | Holds |
 |---|---|---|
