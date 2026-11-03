@@ -89,7 +89,12 @@ function patchOf(record: OperatorSettingsRecord): { token?: string; groups: stri
   return { groups }
 }
 
-export function createSettingsSurface(options: { userDataDir: string; journalLength?: number }): SettingsSurface {
+export function createSettingsSurface(options: { userDataDir: string; journalLength?: number
+  /** **THE APP-STATE ROWS' CHANGE PUSH** (`D-104`): called INSIDE the instance's delivery body and never at a call site,
+   *  a poll or a boot-order re-read — the composition hands it a broadcast, the renderer's own listener re-reads, and no
+   *  file but this one's own instance knows which address delivered (the address constant is the instance's, `D-53`). It
+   *  is OPTIONAL and absent-able because a surface driven by a node test has no window to push to. */
+  onAppStateChanged?: () => void }): SettingsSurface {
   // THE INSTANCE IS CONSTRUCTED HERE, ONCE, AND HELD HERE: the operator path's single reference
   // (interface §5 `ASM-L2-8`; D-18). No second instance, no second `filePath`, no second name.
   const settings: OperatorSettings = createOperatorSettings(options)
@@ -119,6 +124,18 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
     const removed = appliedGroups.filter((name) => !record.enabled.includes(name))
     held.applyGatePatch({ ...patchOf(record), disable: removed })
     appliedGroups = [...record.enabled]
+  }
+
+  // **THE APP-STATE ROWS' OWN BODY** (`D-104`, closing `D-82`'s `V3`): the third address carries a WHOLE value the record's
+  // read does not project, so the only thing this body does is hand the change on — no store read, no gate call, no holder
+  // write, and no composed answer. The composition's broadcast is what reaches the renderer; a surface whose composition
+  // supplied none pushes to no one and still contains the delivery.
+  const onAppStateDelivery = (): void => {
+    try {
+      options.onAppStateChanged?.()
+    } catch {
+      /* the consumer's own throw is the consumer's: a push that failed is not a delivery the store should pay for */
+    }
   }
 
   const read = (): SettingsReadAnswer => {
@@ -211,8 +228,11 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
     // A second `attach` REPLACES the sink and registers no second listener, so the instance keeps
     // the one subscription D-17 declares (design §5 ASM-3).
     sink = heldSink
-    // SUBSCRIBE FIRST: no change can fall between the acts (design §5 ASM-3; guide §6.1).
-    if (off === null) off = settings.subscribe(onDelivery)
+    // SUBSCRIBE FIRST: no change can fall between the acts (design §5 ASM-3; guide §6.1). **THE ONE SUBSCRIPTION CARRIES
+    // TWO BODIES** (`D-104`): `onDelivery` for the record and the pair, and the app-state rows' push, which the instance
+    // routes by its OWN address constant — so this file names no address and an app-state delivery never re-patches the
+    // gate from a record that did not move.
+    if (off === null) off = settings.subscribe(onDelivery, onAppStateDelivery)
     const record = settings.read()
     // THE BOOT TERMINAL LANDS HERE: the holder is written from the boot reading, then the record is
     // re-patched onto the gate and the boot `mcp-enabled` is applied — a self-transition is lawful

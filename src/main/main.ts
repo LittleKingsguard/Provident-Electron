@@ -6,7 +6,7 @@ import {app, BrowserWindow, ipcMain} from 'electron'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {createHash} from 'node:crypto'
-import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload} from '../shared/types.js'
+import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, type RpcReply, type NotifyPayload} from '../shared/types.js'
 import {ProvidentMcpServer, RendererBackend, type McpTransportKind} from './mcp-server.js'
 import type {SettingsAppStateRow} from './settings-surface/index.js'
 import {createSettingsSurface} from './settings-surface/index.js'
@@ -135,7 +135,20 @@ async function main(): Promise<void> {
   // for one (the surface module owns the file names — C-4), and reads the boot record through the
   // surface's own `read()`. The holder's ONE writer is that module (ASM-4, settled at L1 rev 3);
   // `mcp.applyExclusion` now only ENFORCES.
-  const settingsSurface = createSettingsSurface({ userDataDir: app.getPath('userData') })
+  const settingsSurface = createSettingsSurface({
+    userDataDir: app.getPath('userData'),
+    // **THE APP-STATE ROWS' CHANGE PUSH** (`D-104`; `D-82`'s `V3`): the secure crossing's third address delivers inside
+    // `writeAppState`, the surface hands the change to this broadcast, and the renderer's own listener answers with a
+    // re-read — so a module row's change REACHES the renderer instead of waiting to be asked for. It carries NO value and
+    // NO address, exactly as the two crossing pushes beside it carry none: the push is a SIGNAL and the read is the
+    // consumer's. Every window is told, because every window is a realm that renders the registry (`IPC_MODULE_GET`'s own
+    // answer is per-window and this is what tells a window it is stale).
+    onAppStateChanged: () => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC_MODULE_CHANGED)
+      }
+    },
+  })
   // **THE BOOT ORDER (D-65), IN THREE ACTS.** (1) COLLECT: every module that imposes a constraint declares it — the tab
   // record's SIX are gathered here (`tabsConstraintDeclarations` returns six: `tabs-must-stand`, `order-names-its-tabs`,
   // `exactly-one-active`, `tab-has-title`, `tab-has-content`, `tab-has-lastActiveAt`), and a module that wanted a listener

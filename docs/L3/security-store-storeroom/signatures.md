@@ -1,6 +1,6 @@
 # L3 — `security-store-storeroom`: the declared signatures and the file layout
 
-- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 3 declares the surface the tree actually exports: both code blocks gain the app-state types and the two verbs per side, and the contract stops claiming a totality over a document that does not spell them (D-25, D-43) · **Artifact:** `security-store-storeroom-l3-design`
+- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 4 — the one subscription declares a second body for the third address (`D-104`), so §2's block and its two-address sentence are re-grained and one line is added for the type. Rev 3 — rev 3 declares the surface the tree actually exports: both code blocks gain the app-state types and the two verbs per side, and the contract stops claiming a totality over a document that does not spell them (D-25, D-43) · **Artifact:** `security-store-storeroom-l3-design`
 - **Status:** DECLARED SURFACE AND FILE LAYOUT ONLY — structure, private helpers, pseudocode and guardrails are `design.md` (the instance) and `design-settings-surface.md` (the surface), split by owner at the class ceiling (D-1)
 - **Contract:** every symbol below is an **export the tree carries at this head** — `src/main/operator-settings/index.ts`'s exports and `src/main/settings-surface/index.ts`'s, read off those files — declared to `docs/L2/security-store-storeroom/interface.md` §2/§2.1 and §5/§5.1 where that document settles them. Two groups are declared here **beyond those code blocks and are named as such**: the app-state types and the two app-state verbs per side, which `docs/L2/security-store-storeroom/interface.md` counts in its own `N` bullets and `A-4` but does not spell in §2's and §5's declarations, and whose contract is `docs/L3/settings-carrier-retirement/design.md` §2-§3 (L1 `settings-carrier-retirement` §2, §3 E-2/E-3; interface §7 `A-4`; D-1, D-43). **Nothing either file exports is dropped below, and no name is declared that neither the tree nor those rows carries** (D-1)
 - **Ceiling:** 150 lines, class max (D-1) · `guide §n` is `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
@@ -47,6 +47,7 @@ export type OperatorSettingsReceipt =
       message: string; address: OperatorSettingsAddress | null }
 
 export type OperatorSettingsListener = (address: OperatorSettingsAddress) => void
+export type OperatorAppStateListener = () => void                 // the third address's own body (D-104)
 
 export interface AppStateRow { name: string; value: unknown }
 export type AppStateLegacy = 'absent' | 'imported' | 'corrupt' | 'recorded'
@@ -62,7 +63,7 @@ export interface OperatorSettingsOptions { userDataDir: string; journalLength?: 
 export interface OperatorSettings {
   read(): OperatorSettingsRecord
   write(patch: OperatorSettingsPatch): OperatorSettingsReceipt
-  subscribe(listener: OperatorSettingsListener): () => void      // answers the withdrawal
+  subscribe(listener: OperatorSettingsListener, appStateListener?: OperatorAppStateListener): () => void   // answers the withdrawal
   readAppState(): AppStateAnswer                                  // the third address, no listener (D-25)
   writeAppState(rows: readonly AppStateRow[]): OperatorSettingsReceipt
 }
@@ -74,7 +75,7 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
 - **`N = 12`**, matching the map row: 6 package exports called + 6 value names exposed (the factory, its three verbs, and the app-state pair `readAppState`/`writeAppState` the retirement added — `docs/L1/settings-carrier-retirement.md` §2, §3 E-2) — 6 + 6 = **12** (interface §2; the `operator-settings` row of `strata/modules.json`, `endpoints` 12; D-14, D-28). The cap follows from the row and is never declared here (`platform.md` §4).
 - **`write`'s fourth position is never supplied**, so the class-test `TypeError` arm is unreachable and the refusal vocabulary is the store's alone (interface §2; guide §3.3).
 - **`subscribe` answers its own withdrawal** rather than exporting a fourth verb, so the module's own surface is **six value names** — the factory and five verbs — and no more (interface §2; `interface.md` §7 `A-4`).
-- **The app-state pair is the third address's whole surface, and it is the retirement unit's**: `readAppState`/`writeAppState` are one store read or one store write each, carry the sibling `OperatorSettingsReceipt` verbatim, and bind **no listener**, so `subscribe` stays the two-address subscription (D-25; `docs/L1/settings-carrier-retirement.md` §2, §3 E-2; `design.md` §2). Their arm-by-arm design is that unit's document and is cited here, never restated (D-43).
+- **The app-state pair is the third address's whole surface, and it is the retirement unit's**: `readAppState`/`writeAppState` are one store read or one store write each, carry the sibling `OperatorSettingsReceipt` verbatim, and **since `D-104` the one subscription binds their address too**, routing its deliveries to a SECOND body (`OperatorAppStateListener`) while the record's listener goes on hearing the other two (D-25; `D-82`'s `V3`; `docs/L1/settings-carrier-retirement.md` §2, §3 E-2; `design.md` §2). Their arm-by-arm design is that unit's document and is cited here, never restated (D-43).
 - **`unlisten` is the withdrawal and `removeListener` is never called**: it is a seventh export, so calling it would move `N` and the map's row, which is L1's to re-declare and not this layer's — and the module binds **one handle per address**, so `unlisten` is the arm the package silences (interface §2; `design.md` §8 `ASM-7`; guide §6.2; P-6).
 
 ## 3. `src/main/settings-surface/index.ts` — the declared surface

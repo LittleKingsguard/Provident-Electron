@@ -370,6 +370,26 @@ const ACTS = [
     label: 'module-read',
     act: `var moduleBridge = need('module'); moduleBridge.get().then(ok, no)`,
   },
+  // ── THE APP-STATE ROWS' DELIVERY (`D-104`; `D-82`'s `V3`) — the ONE subscription this leg needs to measure the push the
+  //    secure crossing's third address did not have. The subscriber is registered on the REALM (`window.__XM_HITS`) because
+  //    the bridge call that installs it and the delivery that fires it are two separate turns, and a counting handler is the
+  //    only place a delivery is observable at all: the app's own subscriber fills the pane graph, which is the ISOLATED
+  //    scope the MCP endpoints cannot read (`src/renderer/secure-panels.ts`), so no authored node of the app graph moves
+  //    when a module row does. The row says so rather than claiming a rendered surface.
+  {
+    id: 'xg-module-subscribe',
+    label: 'module-subscribe',
+    act: `var moduleBridge = need('module')
+    window.__XM_HITS = 0
+    window.__XM_WITHDRAW = moduleBridge.onChanged(function () { window.__XM_HITS = (window.__XM_HITS || 0) + 1 })
+    ok({ subscribed: true, withdrawal: typeof window.__XM_WITHDRAW })`,
+  },
+  {
+    id: 'xg-module-push',
+    label: 'module-push',
+    act: `var moduleBridge = need('module')
+    moduleBridge.get().then(function (registry) { ok({ hits: window.__XM_HITS || 0, registry: registry }) }, no)`,
+  },
   // ── THE VIEW RECORD'S THREE FAMILIES (`D-95`) — the same channel, one act per route, plus the ONE subscription this
   //    leg needs to measure the push. The subscriber is registered on the REALM (`window.__XV_HITS`) because the bridge
   //    call that installs it and the delivery that fires it are two separate turns, and the counting handler is the only
@@ -851,6 +871,10 @@ try {
   )
 
   // ── X-14: the secure crossing's APP-STATE address, through `module.setDisabled` ──
+  // THE SUBSCRIBER IS INSTALLED BEFORE THE WRITE (`D-104`): a delivery is observable only from a handler, and the handler has
+  // to stand when the crossing delivers — so the counter is put up here, the write below is the act that should fire it, and
+  // the row after this one reads the counter back out of the realm.
+  const moduleSub = await drive(bootB.client, 'xg-module-subscribe', 'module-subscribe')
   const disabled = await drive(bootB.client, 'xg-module-disable', 'module-disable')
   const registry = disabled.answer?.registry
   const moduleRow = (Array.isArray(registry?.modules) ? registry.modules : []).find((m) => m && m.name === DEMO_MODULE)
@@ -859,6 +883,18 @@ try {
     "the secure crossing's `['operator-app-state']` address is driven through the operator path: `module.setDisabled` re-commits the WHOLE rows list and the registry read back carries the seeded module with `disabled: true`",
     disabled.status === 'ok' && moduleRow?.disabled === true,
     `(${disabled.polls} read(s)) registry answer → ${JSON.stringify(registry)}`,
+  )
+
+  // ── X-14b: THE APP-STATE DELIVERY CROSSES THE BOUNDARY (`D-104`; `D-82`'s `V3`) ──
+  const pushed = await drive(bootB.client, 'xg-module-push', 'module-push')
+  const pushRegistry = pushed.answer?.registry
+  row(
+    'X-14b',
+    `THE APP-STATE DELIVERY CROSSES THE BOUNDARY AND REACHES A SUBSCRIBER: the handler this leg installed on \`window.provident.module.onChanged\` before the write has FIRED for the \`module.setDisabled\` act X-14 drove — the instance's one subscription bound \`['${APP_STATE_ADDRESS}']\`, the surface handed the change to the composition's broadcast, and \`provident:module:changed\` carried it into this realm — and the re-read taken beside the counter carries the disabled row, so what arrived was a delivery and not a timer. **IT IS MEASURED AT A SUBSCRIBER AND NOT AT A NODE, AND SAYS SO**: the app's own subscriber fills the ISOLATED pane graph, which the MCP endpoints cannot read`,
+    moduleSub.status === 'ok' && moduleSub.answer?.withdrawal === 'function' &&
+      pushed.status === 'ok' && (pushed.answer?.hits ?? 0) >= 1 &&
+      (Array.isArray(pushRegistry?.modules) ? pushRegistry.modules : []).some((m) => m && m.name === DEMO_MODULE && m.disabled === true),
+    `(${moduleSub.polls}+${pushed.polls} read(s)) subscribe → ${JSON.stringify(moduleSub.answer)}; hits=${JSON.stringify(pushed.answer?.hits)}; registry → ${JSON.stringify(pushRegistry)}`,
   )
 
   // ── X-15: BOTH FILE ADDRESSES, read from THIS process, out of the instance's own file ──

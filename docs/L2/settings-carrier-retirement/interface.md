@@ -1,6 +1,6 @@
 # L2 — `settings-carrier-retirement`: the interface
 
-- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — the standing sentence below no longer says the two modules are missing (they exist and carry the verbs this file declares, cited at their sites), §2's `set` is spelled with the shape the tree declares instead of an undeclared `SettingsPatch`, and §5's member count reads **six** — three reads, three writes — where it said seven. Rev 1 is read through this one · **Status:** DESIGN — `tests/integration/settings-carrier-retirement/` is filed against this file; the two modules it declares now carry the verbs, and the battery's own reading is `strata/brief.md` §6's instrument and is not restated here (D-1 §4, D-26, `examiner.md` §3)
+- **Layer:** L2 · **Unit:** `settings-carrier-retirement` · **Branch:** `strata` (D-6) · **Rev:** 3 — the third address gains the delivery that closes `D-82`'s `V3` (§1's table row and its new bullet, and the second body §2's block now declares). Rev 2 — the standing sentence below no longer says the two modules are missing (they exist and carry the verbs this file declares, cited at their sites), §2's `set` is spelled with the shape the tree declares instead of an undeclared `SettingsPatch`, and §5's member count reads **six** — three reads, three writes — where it said seven. Rev 1 is read through this one · **Status:** DESIGN — `tests/integration/settings-carrier-retirement/` is filed against this file; the two modules it declares now carry the verbs, and the battery's own reading is `strata/brief.md` §6's instrument and is not restated here (D-1 §4, D-26, `examiner.md` §3)
 - **Inputs:** `docs/L1/settings-carrier-retirement.md` §2–§9 (authoritative for this unit's design; this file declares the surface that design needs and **re-derives none of it**); D-5, D-10, D-13, D-14, D-16…D-22; `docs/L2/security-store-storeroom/interface.md` §1/§2/§2.1/§3/§5 (the sibling unit's surface, extended here and never re-spelled); the `operator-settings` and `settings-surface` rows of `strata/modules.json` (`endpoints` **12** and **19**); the tree at `e3b59d5`
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md` and **the declaration** is its `index.d.ts`; both are read and never edited (D-5)
 
@@ -16,8 +16,9 @@ The retired carrier's rows live at **`['operator-app-state']` on the `file` tier
 |---|---|---|---|
 | `['operator-settings']` | `file` | the security record, whole (sibling §1) | `write`, unchanged (D-16) |
 | `['operator-exclusion']` | `mem` | `{exclusion}`, never persisted (sibling §1) | `write`, unchanged (D-17) — **and the instance's one constraint repair, which MINTS the pair at the store's creation since D-84**; this unit's verbs are unmoved, and the value it reads at a boot is the same word it read before |
-| **`['operator-app-state']`** | `file` | `{rows}` — the carrier's rows, **whole** (L1 §3) | **`writeAppState`**, one commit per act (D-22) |
+| **`['operator-app-state']`** | `file` | `{rows}` — the carrier's rows, **whole** (L1 §3) | **`writeAppState`**, one commit per act (D-22) — **and since `D-104` the instance's one subscription BINDS this address, so each commit delivers** |
 
+- **The address is ALSO the one the realm listens to** (`D-104`, closing `D-82`'s `V3`): `subscribe` takes an optional second body that is called — inside the delivery, with nothing to read and nothing to name — whenever this address moves, so a module row's change reaches the renderer's shape as a DELIVERY. The consumer's request-time read is gone with it: the shape is filled by the delivery and by ONE stated boot read.
 - **Read and write are whole-record acts.** One `writeAppState` is one store write, one op, one cursor and one receipt, because the rows are one value at one address (L1 §3; `guide §4` arm `W-4`).
 - **The rows cross as an ordered list, never as a map** — `AppStateRow[]`, order preserved (`A-2`). The retired record's key order is the order the carrier held, and nothing in this unit is entitled to re-sort it (L1 §3).
 - **The record's value is `{ rows }`** — one declared member, so the read-back validates a shape rather than serving any object that happens to stand at the address (L1 §3; D-13).
@@ -38,7 +39,7 @@ export interface AppStateAnswer {
 export interface OperatorSettings {
   read(): OperatorSettingsRecord                                    // sibling §2, unmoved
   write(patch: OperatorSettingsPatch): OperatorSettingsReceipt       // sibling §2, unmoved
-  subscribe(listener: OperatorSettingsListener): () => void          // sibling §2, unmoved
+  subscribe(listener: OperatorSettingsListener, appStateListener?: OperatorAppStateListener): () => void   // sibling §2; the second body is this address's (D-104)
   readAppState(): AppStateAnswer                                    // NEW
   writeAppState(rows: readonly AppStateRow[]): OperatorSettingsReceipt   // NEW, one receipt
 }

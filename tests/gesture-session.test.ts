@@ -1605,6 +1605,17 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   //    name, and `src/main/security.ts` below is still charged to this unit.**
   'src/main/data/index.ts', // `D-103` — the module's entry, and the `DataLogEntry` it exports
   'src/main/storeroom.ts', // `D-103` — the one declared reader of the commit's log, and the census header it re-measures
+  // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-104`): THE APP-STATE DELIVERY PASS'S THREE PATHS.** The pass
+  //    that gives the secure crossing's third address a listener of its own (the user's rule, *"the renderer does not ask
+  //    state, it listens"*) writes one NEW renderer module and two main-side files: the shape the delivery fills
+  //    (`src/renderer/module-client.ts`), the instance's `subscribe` — which binds the third address and routes its
+  //    deliveries to a second body — and the surface that hands the change to the composition's broadcast. Each is a
+  //    SIBLING's declared artifact (`strata/decisions.md` `D-104`) and every one is excluded BY NAME like every other entry
+  //    here. **THE DENIED PREDICATE IS UNTOUCHED**: a `src/renderer/**` path this list does not name STILL fails the row, and
+  //    the positive control below still drives one.**
+  'src/renderer/module-client.ts', // `D-104` — the app-state rows' shape, held in this realm and filled by deliveries
+  'src/main/operator-settings/index.ts', // `D-104` — the third address joins the one subscription, with its own delivery body
+  'src/main/settings-surface/index.ts', // `D-104` — the app-state body the composition's broadcast rides
   // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a
   // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/security.ts`, or the synthetic
   // `src/renderer/gesture-session-panel.ts` the control two paragraphs down feeds to the same instrument — is STILL

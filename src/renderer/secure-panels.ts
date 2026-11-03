@@ -106,6 +106,11 @@ declare global {
       module?: {
         get(): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
         setDisabled(name: string, disabled: boolean): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
+        /** **THE APP-STATE ROWS' DELIVERY** (`D-104`): the crossing's third address moved, so the realm re-reads. Declared
+         *  here in LOCKSTEP with `src/main/preload.ts`'s `ProvidentBridge`, the rule the `security`, `tabs` and `view`
+         *  members already follow — a half-declaration of one member FAILS. It carries nothing and withdraws by the
+         *  returned function. */
+        onChanged(handler: () => void): () => void
       }
     }
   }
@@ -382,6 +387,13 @@ export class SecurePanels {
   // below is painted from that absence.
   private cfg: SecuritySettings & { exclusion?: EXCLUSION_STATE | null; read: Tier4ClosedRefusal | null | undefined } = { token: null, enabled: ['read', 'dispatch'], read: null }
   private debugValue = 'booting…'
+  /** **THE TWO APP-STATE LINES, AND THEY ARE FILLED BY A DELIVERY AND NEVER BY A READ OF THIS PANE** (`D-104`; the user's
+   *  rule, *"the renderer does not ask state, it listens"*). Until this pass `refresh()` read them out of
+   *  `window.provident.module.get()` on every boot, every authored click and every `dispatch()` seam — an on-demand ask at
+   *  request time, which is the class the rule condemns. They are written by `applyAppState` now, which the app's ONE
+   *  app-state subscription and its ONE stated boot fill call, and `refresh()` reads no module at all. The initial words are
+   *  the PANE's own no-reading state, exactly as `cfg.exclusion`'s `null` is: nothing is fabricated about a store the pane
+   *  has not heard from. */
   private moduleStatus = 'loading…'
   private moduleListText = ''
   /** G3 §2.5 (gate-4 finding 2, 2026-10-03) — the pane journal's declared cap:
@@ -531,8 +543,11 @@ export class SecurePanels {
     this.render()
   }
 
-  /** Re-fetch the security config over IPC, merge it into the pane graph nodes,
-   *  and re-render. Async (the bridge is async). */
+  /** Re-fetch the SECURITY config over IPC, merge it into the pane graph nodes, and re-render. Async (the bridge is
+   *  async). **IT READS NO MODULE ROW ANY MORE** (`D-104`): the app-state rows are the secure crossing's third address and
+   *  they reach this pane through `applyAppState` below, from the realm's ONE app-state subscription and its ONE stated boot
+   *  fill — so a click handler, a boot and the `dispatch()` seam all stop asking, and the class the rule condemns
+   *  (*"a click handler that asks"*) is gone from this file rather than standing beside a listener. */
   async refresh(): Promise<void> {
     const security = typeof window !== 'undefined' && window.provident?.security
     if (security) {
@@ -542,18 +557,21 @@ export class SecurePanels {
         // keep the last-known config on a bridge error
       }
     }
-    // U8 — read the module store status + list over the module bridge.
-    const moduleBridge = typeof window !== 'undefined' && window.provident?.module
-    if (moduleBridge) {
-      try {
-        const res = await moduleBridge.get()
-        this.moduleStatus = `corrupt: ${res.corrupt} · quarantined: [${res.quarantined.join(', ')}] · loaded: [${res.loaded.join(', ')}]`
-        this.moduleListText = res.modules
-          .map((m) => `${m.disabled ? '☐' : '☑'} ${m.name}@${m.version}${m.quarantined ? ' (quarantined)' : ''}`)
-          .join('\n')
-      } catch {
-        // keep the last-known module state on a bridge error
-      }
+    this.syncConfig()
+    this.render()
+  }
+
+  /** **THE DELIVERY'S TURN — THE APP-STATE ROWS REACH THE PANE HERE AND NOWHERE ELSE** (`D-104`). The argument is the
+   *  shape `src/renderer/module-client.ts` maintains, ADOPTED from a read the client performed INSIDE its own listener, so
+   *  this pane renders a value the crossing answered and never one it asked for. It writes the two authored nodes through
+   *  the managed channel (`syncConfig`) and re-renders: no element, class, attribute or text is authored here, and the
+   *  node ids are the envelope's. An unfilled shape is the pane's own `loading…` state and paints nothing new. */
+  applyAppState(shape: { filled: boolean; corrupt: boolean; quarantined: readonly string[]; loaded: readonly string[]; modules: readonly { name: string; version: string; disabled?: boolean; quarantined?: boolean }[] }): void {
+    if (shape.filled) {
+      this.moduleStatus = `corrupt: ${shape.corrupt} · quarantined: [${shape.quarantined.join(', ')}] · loaded: [${shape.loaded.join(', ')}]`
+      this.moduleListText = shape.modules
+        .map((m) => `${m.disabled ? '☐' : '☑'} ${m.name}@${m.version}${m.quarantined ? ' (quarantined)' : ''}`)
+        .join('\n')
     }
     this.syncConfig()
     this.render()

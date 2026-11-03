@@ -349,3 +349,10 @@ export const IPC_SECURITY_GET = 'provident:security:get'
 export const IPC_SECURITY_SET = 'provident:security:set'
 export const IPC_MODULE_GET = 'provident:module:get'
 export const IPC_MODULE_SET_DISABLED = 'provident:module:set-disabled'
+/** **THE APP-STATE ROWS' CHANGE PUSH** (`D-104`; closing `D-82`'s `V3`). It carries NO request, so it has no
+ *  `ipcMain.handle` site: it is the secure crossing's third address — the rows the module registry's leaves stand in —
+ *  crossing the boundary as a SIGNAL, exactly as `IPC_TABS_CHANGED` and `IPC_VIEW_CHANGED` carry theirs. The address and the
+ *  value stay on the main side and the renderer's listener answers with its own re-read. **THIS FILE NAMES NO ADDRESS**
+ *  (`ISO-5`/`ISO-6`: the MCP stack's import closure reaches this module, so an address spelled here would be an address
+ *  one MCP-reachable file could name). */
+export const IPC_MODULE_CHANGED = 'provident:module:changed'

@@ -11,6 +11,7 @@ import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState 
 import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, type TabsClient, type TabsClientReading, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
+import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
@@ -63,6 +64,23 @@ let viewClient: ViewClient | null = null
 export function getViewClient(): ViewClient {
   if (viewClient === null) viewClient = createViewClient()
   return viewClient
+}
+
+/** **THE APP-STATE ROWS' CLIENT — THE SHAPE THIS REALM RENDERS THE MODULE REGISTRY FROM** (`D-104`; `D-82`'s `V3`).
+ *  Constructed EXACTLY ONCE per realm, at the same lazy-on-demand point as `getViewClient()` and `getTabsClient()`, so a
+ *  node realm that reaches a role without `main()` still has one. **IT IS NOT A STORE**: it holds no address space, owns no
+ *  persistence, carries no constraint, takes no write route, and is REPLACED WHOLE by every delivery it is refilled from —
+ *  `src/renderer/module-client.ts`'s header states the discipline in the same terms the other two clients do. What is held
+ *  HERE is the CLIENT and never the shape: no module-level binding names a module row.
+ *  **AND IT REMOVES A PULL RATHER THAN ADDING A LISTEN BESIDE ONE**: `SecurePanels.refresh()` used to read
+ *  `window.provident.module.get()` at request time — on every boot, every authored click and every `dispatch()` seam — and
+ *  that read is GONE. The rows reach the pane from THIS client's shape, adopted from a read taken INSIDE its listener. */
+let moduleClient: ModuleClient | null = null
+
+/** THE APP-STATE SHAPE'S ONE PER-REALM CLIENT — the same identity on every call, the `getViewClient()` form. */
+export function getModuleClient(): ModuleClient {
+  if (moduleClient === null) moduleClient = createModuleClient()
+  return moduleClient
 }
 
 /** THE FOCUS CARRIER — `U-STORE-FOCUS`'s boot-constructed seam composition (`docs/specs/store-focus.md` §2.3 item 1):
@@ -894,6 +912,11 @@ async function main(): Promise<void> {
   // silence is THIS continuation's**: `fill()` ADOPTS and applies nothing, and `apply()` is reached from the DELIVERY's
   // subscription alone — so a standing record is DATA at a boot and never an application.
   startViewShape(themeApplication)
+  // ⟶ **THE APP-STATE ROWS' SHAPE (`D-104`; `D-82`'s `V3`)** — the pane that displays the module registry is filled from a
+  //    DELIVERY from here on, and the request-time read `panels.refresh()` used to make is deleted. Started LAST and never
+  //    awaited, for the reason the two sites above it are: every boot step including `bridge.ready()` has already run, so no
+  //    step's order moves and a slow or failing crossing cannot delay or fail the boot.
+  startAppStateShape(panels)
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
@@ -986,8 +1009,13 @@ function startTabsClientInstrument(runtime: Runtime): void {
 
 /** THE SHAPE'S SUBSCRIPTION — held for the P1-P7 release discipline exactly as `tabsClientSubscription` is: a registration
  *  is held so a teardown could withdraw it (this realm's teardown is the page's). **THESE TWO AND NO THIRD** (`D-93`: the
- *  Y-3 registration is gone, so the realm holds one registration per crossing it reads and nothing else). */
+ *  Y-3 registration is gone, so the realm holds one registration per crossing it reads and nothing else). **⟶ AND FROM
+ *  `D-104` THE COUNT IS THREE**: the app-state rows' own registration below, the secure crossing's third address reaching
+ *  the pane that displays the module rows. A fourth exists nowhere: the realm holds one registration per crossing it reads. */
 let viewSubscription: ViewSubscription | null = null
+
+/** THE APP-STATE SHAPE'S SUBSCRIPTION — the third registration, held for the same discipline and for the same reason. */
+let appStateSubscription: ModuleSubscription | null = null
 
 /** **THE SHAPE'S ONE BOOT SITE (`D-88`)** — ONE registration and ONE stated read, started from `main()` as its last
  *  statement and never awaited. The registration goes FIRST so a change that lands between the read and its continuation is
@@ -1016,6 +1044,48 @@ function startViewShape(theme: ThemeApplication | null): void {
       console.warn(`[provident-renderer] view shape: the boot read rejected — ${String(error)}`)
     },
   )
+}
+
+/** **THE APP-STATE SHAPE'S ONE BOOT SITE** (`D-104`; `D-82`'s `V3`) — ONE registration and ONE stated read, started from
+ *  `main()` beside the tab client's instrument and the view shape's, and never awaited, for the reason both of those are
+ *  not: every boot step including `bridge.ready()` has already run, so no step's order moves and a slow or failing crossing
+ *  cannot delay or fail the boot (`tests/e2e/bundle-boot-seam`'s `B-5` reads the trace's ORDER, not a duration).
+ *
+ *  **THE REGISTRATION GOES FIRST** so a change that lands between the read and its continuation is still delivered (a
+ *  delivery re-reads, so an extra delivery costs one read and can never lose a write). **AND THE DELIVERY IS WHERE THE PANE
+ *  IS FILLED**: the client re-reads inside its own listener and REPLACES the shape, and this body hands the shape to the one
+ *  consumer that displays the module rows — `SecurePanels.applyAppState`, which paints the two authored nodes. The boot read
+ *  above does the same thing once, and there is no third turn: nothing in this realm reads the app-state rows at request
+ *  time, because `SecurePanels.refresh()` no longer does.
+ *
+ *  **THE `release` IS HELD** (`appStateSubscription`) for the P1-P7 release discipline the realm's other two registrations
+ *  are held for; this realm's teardown is the page's. */
+function startAppStateShape(panels: SecurePanels | null): void {
+  const client = getModuleClient()
+  appStateSubscription = client.subscribe(() => {
+    // A DELIVERY IS A RE-READ (the client has already adopted it) and the shape is what the consumer paints.
+    panels?.applyAppState(client.shape())
+  })
+  void client.fill().then(
+    (reading) => {
+      panels?.applyAppState(client.shape())
+      console.info(`[provident-renderer] app state: ${describeModuleReading(client.shape(), reading)}`)
+    },
+    (error: unknown) => {
+      // THE DEFECT ARM, NOT AN ORDINARY ONE: `fill()` answers values, so a rejection here is a bug in the client. The shape
+      // keeps what it last read, which on a boot is the declared empty pair, and boot is over by the time this runs.
+      console.warn(`[provident-renderer] app state: the boot read rejected — ${String(error)}`)
+    },
+  )
+}
+
+/** **THE APP-STATE LINE** — what the delivery left: the count of rows the crossing answered, the diagnosis word, and the
+ *  reading's own arm. A `filled: false` shape says so rather than reading as an empty registry, which is the difference
+ *  between "nothing has been read" and "the store says no module stands". */
+function describeModuleReading(shape: { filled: boolean; corrupt: boolean; modules: readonly { name: string; version: string }[] }, reading: ModuleClientReading): string {
+  const names = shape.modules.map((m) => `${m.name}@${m.version}`)
+  const arm = reading.status === 'committed' ? 'read' : reading.status === 'absent' ? `absent (${reading.reason})` : `unread (${reading.reason})`
+  return `${arm}; filled=${String(shape.filled)}, corrupt=${String(shape.corrupt)}, modules=[${names.join(', ')}]`
 }
 
 /** THE ONE LINE'S TEXT — the arm, the per-family `source` words, and the two families' sizes. */

@@ -28,6 +28,10 @@ import { SecurePanels } from '../src/renderer/secure-panels.js'
 import type { ModuleStore } from '../src/main/mcp-server.js'
 import { createModuleRegistry } from './module-registry-fixture.js'
 import { IPC_MODULE_GET, IPC_MODULE_SET_DISABLED } from '../src/shared/types.js'
+// ⟶ **THE PANE'S APP-STATE FILL IS THE CLIENT'S SHAPE NOW** (`D-104`): `SecurePanels.refresh()` reads no module at request
+// time, so the two rows below drive the SAME path the app does — the client's one read, its adopted shape, and
+// `applyAppState` — against the same fake bridge this file has always installed.
+import { createModuleClient } from '../src/renderer/module-client.js'
 
 beforeAll(() => {
   installShim()
@@ -65,6 +69,9 @@ function fakeModuleBridge(store: ModuleStore) {
         })),
       }
     },
+    // THE DELIVERY ROUTE (`D-104`): declared on the fake so it satisfies the client's `ModuleClientBridge` — these rows
+    // drive the READ and the shape, and the subscription is `app-state-delivery.test.ts`'s subject. It registers nothing.
+    onChanged: (_handler: () => void) => (): void => undefined,
     setDisabled: async (name: string, disabled: boolean) => {
       store.setDisabled(name, disabled)
       const status = store.status()
@@ -141,7 +148,13 @@ describe('SecurePanels — the module management pane (§4)', () => {
       installModuleBridge(bridge)
       const mount = mountEl() as never
       const panels = new SecurePanels(mount as never)
-      await panels.refresh()
+      // RE-GRAINED UNDER `D-104`: the fill is the CLIENT's shape, adopted from its one read — the pane's own `refresh()`
+      // reads no module any more, because a request-time ask is the class the rule condemns. The claim is unmoved: the
+      // envelope carries the node and the pane paints the registry into it.
+      const client = createModuleClient({ bridge })
+      const reading = await client.fill()
+      expect(reading.status, 'the client’s one read committed').toBe('committed')
+      panels.applyAppState(client.shape())
       const html = (mount as unknown as { innerHTML: string }).innerHTML
       expect(html).toContain('module-list')
       expect(html).toContain('capture')
@@ -161,7 +174,10 @@ describe('SecurePanels — the module management pane (§4)', () => {
       installModuleBridge(bridge)
       const mount = mountEl() as never
       const panels = new SecurePanels(mount as never)
-      await panels.refresh()
+      // The same re-grain as row 3: the shape is what the pane paints, and the shape is what a read answered.
+      const client = createModuleClient({ bridge })
+      await client.fill()
+      panels.applyAppState(client.shape())
       const html = (mount as unknown as { innerHTML: string }).innerHTML
       expect(html).toContain('capture')
       expect(html).toContain('embed')

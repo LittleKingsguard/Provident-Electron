@@ -70,8 +70,14 @@ const LEG_ABSENT =
 /** §4.2 `ADD-1` — the composition's carrier AS LANDED (`src/main/main.ts:108`), the expression the
  *  seam must sit above and the landed `app.getPath('userData')` derivation the absent case keeps.
  *  The surface module owns the persisted-file names (§2 C-4), so this file spells no
- *  `provident-*.json` literal for the operator record. */
-const SETTINGS_CARRIER = "createSettingsSurface({ userDataDir: app.getPath('userData') })"
+ *  `provident-*.json` literal for the operator record.
+ *  **⟶ RE-GRAINED 2026-11-03 (`D-104`), AND THE CLAIM IS UNMOVED.** The constant was the ONE-LINE literal
+ *  `createSettingsSurface({ userDataDir: app.getPath('userData') })`; this pass gives that option object a SECOND member —
+ *  the app-state rows' change push — so the one-liner became a multi-line object and a byte-for-byte `toContain` over the
+ *  whole call would have measured the FORMATTING rather than the derivation. What `ADD-1`/`ADD-4` claim is that the carrier
+ *  is still constructed on the LANDED `app.getPath('userData')` derivation — the absent-case fallback the seam adds to and
+ *  never replaces — so the constant is now the derivation EXPRESSION alone, which survives any option the carrier gains. */
+const SETTINGS_CARRIER = "userDataDir: app.getPath('userData')"
 /* **THE SECOND LANDED DERIVATION IS THE PROFILE STORE'S (2026-11-02, `D-81`).** It was
  * `join(app.getPath('userData'), 'provident-modules.json')` — the deleted module registry's path. The
  * boot derives its ONE profile-store path the same way, from `PROFILE_FILE_NAME`, and that is what the

@@ -19,8 +19,10 @@
 // as `{rows: [{name, value}, …]}`, an ORDERED array and never a name→value map, because the
 // crossing does not preserve an object's member order while a genuine array's survives exactly
 // (persistence §3; interface §1). Its two verbs are `readAppState`/`writeAppState`: one store write
-// per act, the sibling's own receipt, and NO listener — `subscribe` binds the two addresses above
-// (design §2; L1 §3). Its second import-once arm reads the retired carrier and writes no byte of it,
+// per act, the sibling's own receipt — **and SINCE `D-104` A LISTENER OF ITS OWN**: `subscribe` binds this address beside
+// the two above and routes its deliveries to the subscriber's second body, so a module row's change is DELIVERED to the
+// consumer and never merely asked for by it (`D-82`'s `V3`, closed there; design §2; L1 §3). Its second import-once arm
+// reads the retired carrier and writes no byte of it,
 // and the diagnosis it answers is the BOOT's, served for the process's life (design §2.2;
 // interface §2) — **and since `D-85` the word rides the record, so a boot that finds the record
 // standing reads the arm that created it instead of asking the import again.**
@@ -92,6 +94,15 @@ export type OperatorSettingsReceipt =
 
 export type OperatorSettingsListener = (address: OperatorSettingsAddress) => void
 
+/** **THE APP-STATE ROWS' OWN DELIVERY, AND WHY IT IS A SECOND BODY RATHER THAN A SECOND SUBSCRIPTION** (`D-104`): the
+ *  third address' rows are a WHOLE VALUE the surface hands on rather than a member of the record it re-patches from, so
+ *  the subscriber that wants them names no address and reads no record — it is TOLD the rows moved. It is routed HERE,
+ *  where `APP_STATE_ADDRESS` is a constant of this module, so no other file spells the address (`D-53`; the `ISO-7`
+ *  census in `tests/e2e/settings-carrier-retirement/scenarios.test.ts` counts the spellings and requires exactly one
+ *  file). A subscriber that supplies no second body still hears every address through the first, which is what the
+ *  one-argument subscription has always done. */
+export type OperatorAppStateListener = () => void
+
 /** The app-state row: a name carried VERBATIM and the value under it, in the carrier's own order
  *  (`A-2`). A name is a member of a row and never a path segment, so nothing is interpreted. */
 export interface AppStateRow { name: string; value: unknown }
@@ -116,7 +127,7 @@ export interface OperatorSettingsOptions { userDataDir: string; journalLength?: 
 export interface OperatorSettings {
   read(): OperatorSettingsRecord
   write(patch: OperatorSettingsPatch): OperatorSettingsReceipt
-  subscribe(listener: OperatorSettingsListener): () => void      // answers the withdrawal
+  subscribe(listener: OperatorSettingsListener, appStateListener?: OperatorAppStateListener): () => void      // answers the withdrawal
   readAppState(): AppStateAnswer
   writeAppState(rows: readonly AppStateRow[]): OperatorSettingsReceipt
 }
@@ -833,18 +844,31 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     }
   }
 
-  const subscribe = (listener: OperatorSettingsListener): (() => void) => {
+  const subscribe = (listener: OperatorSettingsListener, appStateListener?: OperatorAppStateListener): (() => void) => {
     const standing = store
     // No instance stands, or the subscriber is no callable at all: a withdrawal that withdraws
     // nothing, and never a throw (design §4, §8; behaviour §5).
     if (standing === null || typeof listener !== 'function') return () => {}
     const handles: string[] = []
-    const addresses: readonly OperatorSettingsAddress[] = [RECORD_ADDRESS, EXCLUSION_ADDRESS]
+    // **THREE ADDRESSES, ONE SUBSCRIPTION** (`D-104`): the two the record and the pair occupy, and the app-state rows'
+    // own — which `D-82` clause 2 measured as delivering ZERO, so a module row's change reached its consumers only by
+    // their own request. The third handle is registered exactly as the other two are; what differs is the ROUTING below.
+    const addresses: readonly OperatorSettingsAddress[] = [RECORD_ADDRESS, EXCLUSION_ADDRESS, APP_STATE_ADDRESS]
     const body = (address: OperatorSettingsAddress): void => {
       // The delivery carries the address and nothing else, so the subscriber reads the record for
       // what moved; a THROW IS CONTAINED HERE and withdraws that subscriber WHOLE — both handles —
       // so the write that triggered it still answers its receipt (design §8; `ASM-L2-6`).
-      try { listener(detach(address) as OperatorSettingsAddress) } catch { withdraw(standing, handles) }
+      try {
+        // **THE APP-STATE ROWS GO TO THEIR OWN BODY AND NOWHERE ELSE** (`D-104`): this address carries a whole value the
+        // record's read does not project, so handing it to the record's listener would ask that listener to re-read a
+        // record that did not move. A subscriber that supplied no second body hears it through the first — the one-argument
+        // subscription's total reading, unchanged.
+        if (typeof appStateListener === 'function' && address[0] === APP_STATE_ADDRESS[0]) {
+          appStateListener()
+          return
+        }
+        listener(detach(address) as OperatorSettingsAddress)
+      } catch { withdraw(standing, handles) }
     }
     try {
       for (const address of addresses) {
