@@ -1,14 +1,14 @@
 # L3 — `view-record`: the module design
 
-- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — rev 1 filed the crossing's second
-  declaration set (D-87); rev 2 added the THIRD FAMILY (D-91) and corrected the renderer's read path to the shape's (D-89);
-  rev 3 stated the wiring's own state — all six drag reads are the shape's, the `tierRead` helper and the `temp.drag`
-  registration are deleted, the preview is closure state (D-92); **rev 4 adds the FOURTH FAMILY, the APPEARANCE RECORD**
-  (D-97): a `mem` root, a pair with a SECOND ARM no other pair has (staleness over a derivation), a route that writes the
-  caller's ACT and never a resolution, its reading and its client read. No earlier rule is withdrawn.
+- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — rev 1 filed the crossing's second
+  declaration set (D-87); rev 2 added the THIRD FAMILY (D-91) and corrected the renderer's read path (D-89); rev 3 stated the
+  wiring's own state — all six drag reads are the shape's, `tierRead` and the `temp.drag` registration deleted, the preview
+  closure state (D-92); rev 4 added the FOURTH FAMILY, the APPEARANCE RECORD (D-97): a pair with a SECOND ARM no other pair
+  has (staleness over a derivation), a route that writes the caller's ACT and never a resolution; **rev 5 moves that family
+  from `mem` to `file`** on the user's ruling that appearance preferences are durable (D-98). No earlier rule is withdrawn.
 - **Inputs:** `docs/L2/view-record/interface.md` rev 3 §0–§5; D-82 (the four clauses), D-83 (a creation-instant body's
   route and its address), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save), D-89 (the landed
-  swap), D-90 (the zone family's homeless enumeration), D-96 (the appearance mechanism's ruling), D-97 (this family),
+  swap), D-90 (the zone family's homeless enumeration), D-96 (the appearance mechanism's ruling), D-97 (this family), D-98 (its durable tier),
   D-71/D-72/D-73 (the listener's handle, the repair's credit, the repair's commit), D-45 (signatures are L4's contract).
 - **Ceiling:** 130 lines · **Status:** structure and guardrails. Every declared name and its exact text is L4's to
   transcribe; this file states what each piece must be and why, never a transcript of it.
@@ -31,13 +31,15 @@ renderer side imports neither the package nor a main-process module: its vocabul
 ## 2. The four address constants, and the tiers that are named once
 
 `VIEW_PANES_ADDRESS = ['panes']` (`file`), `VIEW_FOCUS_ADDRESS = ['focus']` (`mem`), `VIEW_ZONES_ADDRESS = ['zones']` (`mem`) and `VIEW_THEME_ADDRESS
-= ['theme']` (`mem`, D-97). **No root is a member of the crossing's reserved projection set** (`window · tabs · layout · settings · tracked ·
+= ['theme']` (`file`, D-98). **No root is a member of the crossing's reserved projection set** (`window · tabs · layout · settings · tracked ·
 modules`), so no `Y-2` projection can collide with any of them.
 
 **Each family's tier is named ONCE, in a constant, and the module's tier TYPE is derived from those constants** — not re-spelled from the package's
 `Tier` — so a fourth family ADDS its constant rather than widening a table, and no read, write or repair can half-move a family to the other tier.
-**THE APPEARANCE FAMILY TOOK THAT ROUTE AT `D-97`**, and its tier is the measurement: the app persists no appearance setting today, and a durable
-appearance preference is the ambient store the control's own prohibition row fails. **THE ZONE FAMILY'S TIER IS THE MEASUREMENT THAT DECIDED ITS BOOT
+**THE APPEARANCE FAMILY TOOK THAT ROUTE AT `D-97` AND ITS TIER MOVED AT `D-98`**: `D-97` set it to `mem` on two grounds — the app then persisted no
+appearance setting, and a durable appearance preference is what the control's own prohibition row denies — and **the user's ruling "Appearance preferences
+should be durable" answers the second, so the tier is `file`**, the prohibition superseded by pointer. `file`-tier registration repairs are SAVED by the
+installed package and `mem` ones are not (measured), so the creation placeholder is a durable write and a standing legal record survives a restart. **THE ZONE FAMILY'S TIER IS THE MEASUREMENT THAT DECIDED ITS BOOT
 SOURCE** (D-91): the frozen store's four members stood at `mem` and nowhere else — no `file` copy of any zone member exists in the tree — so there is
 no durable image to inherit, and a repair at the creation instant is the family's only lawful source (D-84).
 

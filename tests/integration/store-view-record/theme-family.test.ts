@@ -11,15 +11,24 @@
 // (`zone-family.test.ts`), because a family's four clauses are a battery and not a paragraph, and because the appearance
 // family carries ONE ARM NO OTHER FAMILY HAS — **STALENESS**, a constraint over a DERIVATION (`TH-4`/`TH-5` below).
 //
+// ⟶ **THE FAMILY'S TIER IS `file` FROM `D-98`** (it was `mem` at `D-97`, on the user's ruling **"Appearance preferences
+// should be durable"**), and the rows below were INVERTED to pin the durable shape rather than re-pointed quietly:
+// `TH-8` now measures the record SURVIVING a restart byte-identically with the pair answering `true` over it, its control
+// being the one place the placeholder repair still fires (an ABSENT address, on a seeded file); `TH-9` re-derives the
+// wrong-tier arm — `mem` and `temp` each answer `TierNotFound` and the store's own message names `file`; `TH-1` adds what a
+// fresh profile carries BEFORE any act, which at `file` is the creation repair's placeholder, itself a durable write; and
+// `TH-4`'s stale arm is measured a second time ON A RESTARTED STORE, over a file whose carried declaration is out of date.
+//
 // THE MEASUREMENTS THIS FILE RESTS ON WERE TAKEN BEFORE IT WAS WRITTEN, on the installed `provident-storeroom@1.9.1`, one
 // fresh instance per arm (the probe is recorded in `D-97`): a registration instant hands the body `{address, tier, value,
 // attempt, op}` with `value: undefined` where the address holds nothing and **no `write` member**; a LANDING instant hands it
-// `{address, id, tier, value, op, pending}` with the commit's `pending`, `tier: 'mem'` and still no `write`; the boundary
+// `{address, id, tier, value, op, pending}` with the commit's `pending`, `tier` reading the family's OWN tier (`mem` at
+// `D-97`'s head, `file` from `D-98`: the member is the address's tier and moves with it) and still no `write`; the boundary
 // REFUSES `null` (`ValueRefusedAtBoundary`), which is why every absent member of this record is written as ABSENCE; the
 // crossing NORMALISES a plain object's key order, which is why the pair's comparison is structural and not a serialisation;
 // and a landing repair that names its commit at `write`'s fourth position lands inside the same commit, causing EXACTLY ONE
 // delivery and never two.
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -117,27 +126,36 @@ afterEach(() => {
 // ═══════════════════ CLAUSE 1 — EXISTENCE + PLACEHOLDER AT THE CREATION INSTANT ═══════════════════
 
 describe('view-record · the appearance family, clause 1 — the address stands before any route runs', () => {
-  it('TH-1 · THE CREATION INSTANT: with the batch supplied the STORE\'S OWN READ answers the PLACEHOLDER before any route of the module runs, and a store carrying NO batch answers `AddressNotFound` at the same address — the absent arm the pair exists to repair', () => {
+  it('TH-1 · THE CREATION INSTANT, AT `file`: with the batch supplied the STORE\'S OWN READ answers the PLACEHOLDER before any route of the module runs AND THE FILE ALREADY CARRIES IT — a fresh profile\'s appearance record is the creation repair\'s placeholder, which is itself a durable write — while a store carrying NO batch answers `AddressNotFound` at the same address', () => {
     // THE CONTROL FIRST, ON ITS OWN PROFILE: without the batch the address does not stand at all.
     const bare = boot(join(dir, 'bare.json'), false)
     let absent = ''
     try {
-      bare.store.read(VIEW_THEME_ADDRESS, 'mem')
+      bare.store.read(VIEW_THEME_ADDRESS, 'file')
     } catch (caught) {
       absent = (caught as { status?: string }).status ?? ''
     }
     expect(absent, 'a store with no declaration holds NOTHING at `[\'theme\']` — the absent arm, measured').toBe('AddressNotFound')
     expect(bare.read().theme, 'and the record answers the declared placeholder rather than a minted resolution').toEqual(PLACEHOLDER)
     expect(bare.read().source.theme, 'and says that the placeholder and not the record answered').toBe('default')
+    expect(bare.bytes(), 'and the file it was given is still the EMPTY image its construction made: no repair ran, so no byte').toBe('')
 
     // AND THE BATCHED BOOT OVER A FRESH PROFILE: the family stands before any commit, read through the STORE.
-    const batched = boot(join(dir, 'batched.json'))
-    expect(batched.store.read(VIEW_THEME_ADDRESS, 'mem'), 'the pair minted the appearance record at construction').toEqual({
+    const batchedPath = join(dir, 'batched.json')
+    const batched = boot(batchedPath)
+    expect(batched.store.read(VIEW_THEME_ADDRESS, 'file'), 'the pair minted the appearance record at construction').toEqual({
       declaration: { value: '', removal: true },
     })
     const read = batched.read()
     expect(read.source.theme, 'the family STANDS — a repair put it there, and the read says which').toBe('record')
     expect(read.theme, 'and what it stands at is the placeholder: a declaration that names no attribute').toEqual(PLACEHOLDER)
+    // **WHAT A FRESH PROFILE CARRIES BEFORE ANY ACT, MEASURED ON THE FILE ITSELF** (D-98): the tier is `file`, so the
+    // creation repair's placeholder is a SAVED write — the profile names `theme` and its declaration, and no token.
+    const fresh = JSON.parse(batched.bytes()) as Record<string, unknown>
+    expect(Object.hasOwn(fresh, 'theme'), 'a fresh profile DOES carry the appearance family before any user act').toBe(true)
+    expect(fresh['theme'], 'at exactly the placeholder, with no `token` and no `attribute` member').toEqual({
+      declaration: { value: '', removal: true },
+    })
   })
 
   it('TH-2 · THE PLACEHOLDER IS THE MECHANISM\'S OWN ANSWER FOR THE ABSENT PAIR, not a second spelling of one — `applyThemeDeclaration(null, null)` equals the declaration member for member, and the shared constructor hands out a FRESH record every call so no caller can move it', () => {
@@ -177,7 +195,7 @@ describe('view-record · the appearance family, the arm no other family has — 
     }
   })
 
-  it('TH-4 · **THE STALE ARM**: a record carrying a resolution for a DIFFERENT token is judged STALE and REPAIRED to the resolution of the token it carries — the pair\'s own answer names the fault, and the standing value is corrected inside the write\'s commit', () => {
+  it('TH-4 · **THE STALE ARM, AND IT IS MEASURED AGAIN ON A RESTARTED STORE** (D-98): a record carrying a resolution for a DIFFERENT token is judged STALE and REPAIRED to the resolution of the token it carries — the pair\'s own answer names the fault, the standing value is corrected inside the write\'s commit, and a file whose carried declaration is out of date is refused and repaired by a FRESH INSTANCE over those bytes', () => {
     const here = boot(join(dir, 'stale.json'))
     // A RECORD WHOSE DECLARATION BELONGS TO ANOTHER TOKEN — the shape a caller's own `provident.data.write`, an older head, or a
     // concurrent act leaves. Its `declaration` says `dark` while its `token` says `light`: the record contradicts itself.
@@ -194,18 +212,45 @@ describe('view-record · the appearance family, the arm no other family has — 
     // leaves ONE WHOLE LEGAL VALUE — the derivation of the token it carries, and never the token it contradicted.
     const repaired = (answer as { repair: (context: unknown) => ViewRepairAnswer }).repair({ value: stale, pending: [] })
     expect((repaired as { ok: boolean }).ok, 'the repair reports the CREDITED arm (`D-72`)').toBe(true)
-    expect(here.store.write(VIEW_THEME_ADDRESS, 'mem', stale).op, 'the landing write landed').toBeTruthy()
+    expect(here.store.write(VIEW_THEME_ADDRESS, 'file', stale).op, 'the landing write landed').toBeTruthy()
     expect(here.read().theme, 'and what STANDS after it is the current resolution: the token kept, the declaration corrected').toEqual({
       token: 'light',
       attribute: 'theme',
       declaration: { name: 'theme', value: 'light', removal: false },
     })
+    // ── (c) **AND THE ARM IS MEASURED ON A RESTARTED STORE, NOT ONLY IN-PROCESS** (D-98): the tier is `file`, so a record
+    // can arrive stale FROM THE FILE — a profile written by an older head. The store is torn down, its bytes TAMPERED with
+    // so the carried declaration is a resolution for another token, and a FRESH instance is constructed over them.
+    const restartedPath = join(dir, 'stale-restarted.json')
+    const firstBoot = boot(restartedPath)
+    expect(firstBoot.record.commitTheme('light', 'theme').status).toBe('committed')
+    const tamperedValue = JSON.parse(readFileSync(restartedPath, 'utf8')) as Record<string, Record<string, unknown>>
+    tamperedValue['theme']!['declaration'] = { name: 'theme', value: 'dark', removal: false }
+    const tampered = JSON.stringify(tamperedValue)
+    writeFileSync(restartedPath, tampered)
+    expect(tampered.includes('"value":"dark"'), 'the file now carries a contradiction: `token: light` beside a `dark` resolution').toBe(true)
+    const restarted = boot(restartedPath)
+    expect(restarted.bytes() === tampered, 'the RESTARTED store repaired the stale record — its bytes moved').toBe(false)
+    expect(restarted.read().theme, 'and what stands after the restart is the resolution of the token the file carries').toEqual({
+      token: 'light',
+      attribute: 'theme',
+      declaration: { name: 'theme', value: 'light', removal: false },
+    })
+    // AND THE PAIR ITSELF, over the RESTARTED store, still refuses the stale value and still repairs it to that resolution.
+    const overRestart = pairOf(restarted.batch)({ value: stale }) as ViewConstraintAnswer
+    expect((overRestart as { message: string }).message, 'the restarted store answers the same fault sentence').toBe(THEME_STALE_MESSAGE)
+    const restartedRepair = (overRestart as { repair: (context: unknown) => ViewRepairAnswer }).repair({ value: stale, pending: [] })
+    expect((restartedRepair as { ok: boolean }).ok, 'and its repair is CREDITED over a real store, not a stub').toBe(true)
+    expect(
+      (restartedRepair as { op?: { tier?: string } }).op?.tier,
+      'the repair write names the family\'s own tier — `file`, so a restart cannot lose what a repair resolved',
+    ).toBe('file')
   })
 
   it('TH-5 · A LEGAL RECORD IS NOT REPAIRED, AND THE COMPARISON IS STRUCTURAL — the crossing NORMALISES key order, so a serialisation comparison would report every legal record STALE: a standing record passes the pair `true`, and the pair\'s own derivation of it is BYTE-DIFFERENT from the value it passes', () => {
     const here = boot(join(dir, 'legal.json'))
     here.record.commitTheme('light', 'theme')
-    const standing = here.store.read(VIEW_THEME_ADDRESS, 'mem') as Record<string, unknown>
+    const standing = here.store.read(VIEW_THEME_ADDRESS, 'file') as Record<string, unknown>
     const pair = pairOf(here.batch)
     expect(pair({ value: standing }), 'the standing record passes: the pair is not a rewrite of every write').toBe(true)
     // THE MEASURED GROUND FOR THE STRUCTURAL COMPARISON: the store handed the value back with the declaration's members in a
@@ -219,13 +264,13 @@ describe('view-record · the appearance family, the arm no other family has — 
     // A SECOND ACT IS A SECOND RESOLUTION AND STILL ONE LEGAL RECORD.
     expect(here.record.commitTheme('dark', 'theme').status).toBe('committed')
     expect(here.read().theme.declaration).toEqual({ name: 'theme', value: 'dark', removal: false })
-    expect(pair({ value: here.store.read(VIEW_THEME_ADDRESS, 'mem') }), 'and that one passes too').toBe(true)
+    expect(pair({ value: here.store.read(VIEW_THEME_ADDRESS, 'file') }), 'and that one passes too').toBe(true)
   })
 
   it('TH-6 · THE REMOVAL ARM: the EMPTY setting is not a token but an ABSENCE — the route carries it, the mechanism declares it `null`, and the record\'s declaration is the removal; `token` is written as ABSENCE because the crossing refuses `null`', () => {
     const here = boot(join(dir, 'removal.json'))
     expect(here.record.commitTheme('', 'theme')).toEqual({ status: 'committed' })
-    const standing = here.store.read(VIEW_THEME_ADDRESS, 'mem') as Record<string, unknown>
+    const standing = here.store.read(VIEW_THEME_ADDRESS, 'file') as Record<string, unknown>
     expect(Object.hasOwn(standing, 'token'), 'no `token` member stands — the absent setting is ABSENCE, never `null`').toBe(false)
     expect(here.read().theme, 'and the reading maps that absence back to the mechanism\'s own answer').toEqual({
       token: null,
@@ -235,7 +280,7 @@ describe('view-record · the appearance family, the arm no other family has — 
     // THE MEASUREMENT THAT FORCES THE SPELLING: a `null` in the value is refused by the crossing's own boundary.
     let refusal = ''
     try {
-      here.store.write(VIEW_THEME_ADDRESS, 'mem', { token: null, attribute: 'theme' })
+      here.store.write(VIEW_THEME_ADDRESS, 'file', { token: null, attribute: 'theme' })
     } catch (caught) {
       const shape = caught as { status?: string; message?: string }
       refusal = shape.status ?? shape.message ?? 'refused'
@@ -258,33 +303,67 @@ describe('view-record · the appearance family, the arm no other family has — 
 
 // ═══════════════════ CLAUSE 3 — BOOT DATA IS THE FILE OR A REPAIR ═══════════════════
 
-describe('view-record · the appearance family, clause 3 — a `mem` address is re-minted at every boot', () => {
-  it('TH-8 · BOOT DATA IS THE REPAIR AND NEVER THE FILE: two successive boots, the second handed the address ABSENT at its own registration instant and re-minting the placeholder, the setting a previous boot held NOT surviving — and the profile\'s bytes carry no appearance key at all and are byte-identical across both', () => {
+describe('view-record · the appearance family, clause 3 — a `file` address is the FILE, and the repair fires only on absence', () => {
+  it('TH-8 · BOOT DATA IS THE FILE: two successive boots, the second finding the record the first one WROTE — its declaration valid, not re-minted, the setting a previous boot held SURVIVING and the profile\'s bytes BYTE-IDENTICAL across both — while the placeholder repair fires in exactly ONE place, an ABSENT address, which the same row measures on a seeded file', () => {
     const path = join(dir, 'two-boots.json')
     const one = boot(path)
     expect(one.record.commitTheme('light', 'theme').status, 'the first boot carries an act').toBe('committed')
     expect(one.read().theme.token, 'and the record stands at it').toBe('light')
     const afterOne = one.bytes()
-    expect(afterOne.includes('theme'), 'the profile\'s bytes never carry the appearance family — this address is `mem` (D-84, D-97)').toBe(false)
-    expect(afterOne.includes('light'), 'nor the token it held').toBe(false)
+    // **THE INVERSION**: this row asserted the profile carried no appearance key at all, because the tier was `mem`.
+    // At `file` the profile DOES carry it, and the token with it — that is what durable means, measured on the bytes.
+    expect(afterOne.includes('"theme"'), 'the profile carries the appearance family — this address is `file` (D-98)').toBe(true)
+    expect(afterOne.includes('"token":"light"'), 'and the token it holds, as a stored member').toBe(true)
 
     const two = boot(path)
-    expect(two.read().theme, 'boot two stands at the placeholder again: a `mem` value can never come from a file').toEqual(PLACEHOLDER)
-    expect(two.read().source.theme, 'and a REPAIR — not a default — is what made it stand').toBe('record')
-    expect(two.read().theme.token, 'the previous boot\'s setting did NOT survive: a restart forgets it, which is what the app does today').toBe(null)
-    expect(two.bytes(), 'and the profile is byte-identical across the two boots').toBe(afterOne)
+    expect(two.read().source.theme, 'boot two reads the RECORD — a repair is not what made this one stand').toBe('record')
+    expect(two.read().theme, 'boot two stands at exactly what boot one wrote: the previous boot\'s setting SURVIVED').toEqual({
+      token: 'light',
+      attribute: 'theme',
+      declaration: { name: 'theme', value: 'light', removal: false },
+    })
+    // **AND THE PAIR FINDS IT VALID RATHER THAN RE-MINTING IT** — the standing value passes, so no repair write runs.
+    expect(
+      pairOf(two.batch)({ value: two.store.read(VIEW_THEME_ADDRESS, 'file') }),
+      'the record a boot reads back is a LEGAL record: the pair answers `true` and mints nothing',
+    ).toBe(true)
+    expect(two.bytes(), 'and the profile is BYTE-IDENTICAL across the two boots').toBe(afterOne)
+
+    // ── THE CONTROL, AND IT IS THE OTHER ARM OF THE SAME PAIR: the placeholder repair fires ONLY where the address is
+    // ABSENT. A file SEEDED WITHOUT `theme` gains the placeholder; a file CARRYING a record keeps it byte for byte.
+    const absentPath = join(dir, 'absent.json')
+    writeFileSync(absentPath, JSON.stringify({ panes: {} }))
+    const absent = boot(absentPath)
+    expect(absent.read().theme, 'an absent address is repaired to the placeholder').toEqual(PLACEHOLDER)
+    expect(JSON.parse(absent.bytes()), 'and that repair is SAVED — the absent address now stands in the file').toEqual({
+      panes: {},
+      theme: { declaration: { value: '', removal: true } },
+    })
+    const standingBefore = boot(path).bytes()
+    boot(path).read()
+    expect(boot(path).bytes(), 'while a STANDING legal record is never re-minted: two more boots move no byte').toBe(standingBefore)
   })
 
-  it('TH-9 · THE FAMILY IS `mem` AND THE TIER IS NAMED ONCE: `file` answers `TierNotFound` at this address, so a `file`-tier read cannot reach it and the family cannot half-move between tiers — the tier the whole-value write names is the tier the read names', () => {
+  it('TH-9 · THE FAMILY IS `file` AND THE TIER IS NAMED ONCE: `mem` and `temp` each answer `TierNotFound` at this address and the store\'s own message names `file` as where it stands, so a wrong-tier read cannot reach it and the family cannot half-move — the tier the whole-value write names is the tier the read names', () => {
     const here = boot(join(dir, 'tier.json'))
-    let wrongTier = ''
-    try {
-      here.store.read(VIEW_THEME_ADDRESS, 'file')
-    } catch (caught) {
-      wrongTier = (caught as { status?: string }).status ?? ''
+    for (const wrong of ['mem', 'temp'] as const) {
+      let wrongTier = ''
+      let named = ''
+      try {
+        here.store.read(VIEW_THEME_ADDRESS, wrong)
+      } catch (caught) {
+        const shape = caught as { status?: string; message?: string }
+        wrongTier = shape.status ?? ''
+        named = shape.message ?? ''
+      }
+      expect(wrongTier, `a \`${wrong}\`-tier read of an address that lives at \`file\` does not reach it`).toBe('TierNotFound')
+      expect(named, 'and the refusal NAMES the tier the address stands at, which is the fact this row is about').toContain('versions are at file')
     }
-    expect(wrongTier, 'the address lives at `mem` and nowhere else').toBe('TierNotFound')
     expect(here.read().source.theme, 'while the family itself stands at its own tier').toBe('record')
+    expect(
+      (commentElided(sourceOf('src/main/view-record/index.ts')).match(/const THEME_TIER = /g) ?? []).length,
+      'and the tier is NAMED ONCE in the module, so no read, write or repair can half-move it',
+    ).toBe(1)
   })
 })
 
@@ -323,7 +402,7 @@ describe('view-record · the appearance family, clause 4 — the write census, a
   it('TH-11 · WRITES ARE DRIVEN BY EXTERNAL EVENTS ONLY, AND A READ WRITES NOTHING: the route\'s shape arms answer BEFORE any store verb, the surface\'s read carries the family without minting it, and three reads over a standing record land no byte and no delivery', () => {
     const here = boot(join(dir, 'clause4.json'))
     // THE SHAPE ARMS, each answering the module's own token and sentence and touching no store.
-    const before = here.store.read(VIEW_THEME_ADDRESS, 'mem')
+    const before = here.store.read(VIEW_THEME_ADDRESS, 'file')
     expect(here.record.commitTheme(7 as never, 'theme'), 'a setting that is not a string is refused').toEqual({
       status: 'refused',
       reason: THEME_SHAPE_REASON,
@@ -336,7 +415,7 @@ describe('view-record · the appearance family, clause 4 — the write census, a
       message: THEME_SHAPE_MESSAGE,
       address: null,
     })
-    expect(here.store.read(VIEW_THEME_ADDRESS, 'mem'), 'and neither refusal touched the store').toEqual(before)
+    expect(here.store.read(VIEW_THEME_ADDRESS, 'file'), 'and neither refusal touched the store').toEqual(before)
     // A READ WRITES NOTHING: no byte on the file, no delivery, over three readings.
     const surface = createViewSurface({ store: here.store })
     let deliveries = 0
@@ -367,7 +446,7 @@ const themeVoidRepair: ViewRepairAnswer = undefined as unknown as void
 declare const anAppearanceStore: ViewRecordStore
 const appearanceCarrier = { pending: [] }
 // The positive control: a carrier IS accepted here, so the directives below are about the position and not the call.
-const appearanceJoinedWrite = (): unknown => writeJoinedAt(anAppearanceStore, appearanceCarrier, VIEW_THEME_ADDRESS, 'mem', PLACEHOLDER)
+const appearanceJoinedWrite = (): unknown => writeJoinedAt(anAppearanceStore, appearanceCarrier, VIEW_THEME_ADDRESS, 'file', PLACEHOLDER)
 
 // @ts-expect-error — A REPAIR WRITE WITH NO CARRIER DOES NOT COMPILE: the omission is an arity fault, not a convention
-const appearanceCarrierlessWrite = (): unknown => writeJoinedAt(anAppearanceStore, undefined, VIEW_THEME_ADDRESS, 'mem', PLACEHOLDER)
+const appearanceCarrierlessWrite = (): unknown => writeJoinedAt(anAppearanceStore, undefined, VIEW_THEME_ADDRESS, 'file', PLACEHOLDER)

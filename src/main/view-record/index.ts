@@ -123,20 +123,25 @@ export const VIEW_PANES_MUST_STAND_ID = 'panes-must-stand'
  *  caller's element and falls back to `zone-1`, which the render turn hard-codes), so this module cannot name a closed set
  *  and does not try — the family is one member per id the caller named, and the placeholder is the family carrying none. */
 export const VIEW_ZONES_ADDRESS: readonly string[] = ['zones']
-/** **THE APPEARANCE FAMILY'S ROOT — ONE WHOLE VALUE AT `mem`, AND `mem` IS THE MEASUREMENT RATHER THAN A PREFERENCE**
- *  (D-97). **WHAT THE APP DOES TODAY, MEASURED, IS THE TIER'S GROUND**: the appearance setting has NO durable image
- *  anywhere in this tree — it is the authored envelope's `content` (its one initial token constant, rewritten by the
- *  authored control's own handlers), re-authored at every boot, and no file under `src/` ever carried it: the address the deleted
- *  `src/renderer/theme-store.ts` projected (`file.settings.theme.token`) was the FROZEN STORE's, is deleted with it, and no
- *  writer of it survives (`grep` answers nothing). **AND A DURABLE APPEARANCE PREFERENCE IS BANNED BY THE CORPUS THAT OWNS
- *  THE CONTROL**: `U-THEME-CONTROL`'s own prohibition row R-2 fails any corpus carrying the browser's ambient storage of
- *  the appearance setting — named there, and deliberately not re-spelled in this file, which is why this sentence names the
- *  route instead of its token — and its F-8 falsifier names *"a token block outside the demo"* as the boundary it must not
- *  cross. A `file`-tier family would be exactly that: the app persisting an appearance preference that the spec places on
- *  the consumer's side. So this family is `mem`, it is RE-MINTED AT EVERY BOOT, and the profile's bytes never carry it —
- *  which is `focus-must-stand`'s and `zones-must-stand`'s shape, and clause 3 answered by a repair rather than deviated
- *  from (`D-84`). **The cost is stated rather than hidden**: a restart forgets the setting, which is what the app does
- *  today and is therefore not a behaviour change this pass invents. */
+/** **THE APPEARANCE FAMILY'S ROOT — ONE WHOLE VALUE AT `file`, BESIDE `['panes']`, BECAUSE APPEARANCE PREFERENCES ARE
+ *  DURABLE** (`D-98`, on the user's ruling **"Appearance preferences should be durable"**). **THIS TIER WAS `mem` AT
+ *  `D-97` AND THE `file` TIER IS THAT ROW OVERTURNED, NOT UNNOTICED**: `D-97` reasoned from *"the app persists no
+ *  appearance setting today"* and from the ambient store's prohibition row, and the RULING answers the second ground and
+ *  the ruling is the higher authority. **What that prohibition row says, precisely, and what is now false**: it denies
+ *  *"a store, a persisted preference, a cookie, `localStorage`, a file write or an ambient environment read"* as a
+ *  consequence of the demonstration card generalised into a shipped appearance UI, and **the clause that a durable
+ *  appearance preference must not exist is FALSE for this app** — superseded BY POINTER from `D-98`, its dated text
+ *  untouched (`D-46`). So the row's own words still stand where they bind, and the denial they carry no longer reaches
+ *  this address.
+ *
+ *  **AND THE TIER IS NOW THE ONE THE STORE SAVES**: `file`-tier registration repairs ARE saved by
+ *  `provident-storeroom@1.9.1` and `mem`-tier ones are not (measured, `D-97`), so the creation instant's placeholder
+ *  becomes a DURABLE write and the record a file's boot datum (`D-84`'s clause-3 shape, the same as `['panes']`).
+ *  **Measured on the installed package** (the probe `D-98` records): boot two answers the record a boot ONE wrote, its
+ *  bytes UNMOVED across the restart; the placeholder repair fires only where the address is ABSENT; and a record whose
+ *  carried declaration is out of date is still refused `stale-theme` and repaired over a restarted store. **A fresh
+ *  profile therefore carries an appearance record BEFORE any act** — the creation repair's placeholder, which names no
+ *  attribute and so applies nothing. */
 export const VIEW_THEME_ADDRESS: readonly string[] = ['theme']
 /** **THE APPEARANCE FAMILY'S EXISTENCE-AND-CONSISTENCY PAIR'S id** — the tenth of the boot's ONE namespace (the tab
  *  record's six and this module's four), minted against that batch and spelled nowhere else. */
@@ -198,7 +203,10 @@ export const THEME_STALE_MESSAGE =
 const PANES_TIER = 'file'
 const FOCUS_TIER = 'mem'
 const ZONES_TIER = 'mem'
-const THEME_TIER = 'mem'
+/** **THE APPEARANCE FAMILY'S TIER — `file`, THE USER'S RULING ON DURABILITY** (`D-98`; `mem` was `D-97`'s and is
+ *  superseded by pointer). It is the same tier as `['panes']` and the same crossing, so the address a fresh boot
+ *  repairs to the placeholder is the address a second boot reads back. */
+const THEME_TIER = 'file'
 /** **THE TIER UNION THIS MODULE USES, DERIVED FROM THE TWO CONSTANTS AND NOT RE-SPELLED FROM THE PACKAGE'S `Tier`.** The
  *  package's own domain is `'mem' | 'file' | 'temp'`; this module needs two of those words and needs them to be
  *  assignable to `write`'s `tier` position, so the type is taken from the constants themselves — one spelling of each

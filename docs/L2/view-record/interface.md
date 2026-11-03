@@ -1,14 +1,14 @@
 # L2 — `view-record`: the interface
 
-- **Layer:** L2 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 1 filed the crossing's second declaration set (D-87); rev 2 added the
-  THIRD FAMILY and re-derived §5 (D-91, D-89); **rev 3 adds the FOURTH FAMILY, the APPEARANCE RECORD, and re-derives §4 and §5**: its address, its declaration
-  with its second arm (staleness), its route, its client read, and the fact that its resolution is **produced by a constraint repair**, never computed by a
-  consumer (D-97). No earlier claim is withdrawn.
-- **Inputs:** D-87, D-91 and D-97 (this unit's records), D-89 (the landed swap), D-96 (the mechanism's ruling and the consumer it named), D-82 (the four-clause
-  convention), D-83 (a creation-instant declaration's route), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save), D-90 (the zone
-  family's homeless enumeration), D-63/D-65/D-71 (the tab record's arrangement).
-- **Ceiling:** 120 lines · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; a source cite names its site (D-41), and the sites
-  are NAMED rather than numbered since the renderer's regions moved (D-92): `readPaneSize`/`readPaneBounds` and the `release` turn, `mirrorStateOf` and
+- **Layer:** L2 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — rev 1 filed the crossing's second declaration set (D-87); rev 2 added the
+  THIRD FAMILY and re-derived §5 (D-91, D-89); rev 3 added the FOURTH FAMILY, the APPEARANCE RECORD, its second arm (staleness), its route and its client read,
+  its resolution **produced by a constraint repair** and never by a consumer (D-97); **rev 4 moves that family's TIER from `mem` to `file`**, because appearance
+  preferences are durable — the user's ruling, measured (D-98). No earlier claim is withdrawn.
+- **Inputs:** D-87, D-91, D-97 and D-98 (this unit's records), D-89 (the landed swap), D-96 (the mechanism's ruling and the consumer it named), D-82 (the
+  four-clause convention), D-83 (a creation-instant declaration's route), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save), D-90
+  (the zone family's homeless enumeration), D-63/D-65/D-71 (the tab record's arrangement).
+- **Ceiling:** 120 lines · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`; a source cite names its site (D-41), and the
+  sites are NAMED rather than numbered since the renderer's regions moved (D-92): `readPaneSize`/`readPaneBounds` and the `release` turn, `mirrorStateOf` and
   `persistTarget`, `renderZone`/`candidatesFor`.
 
 ## 0. Scope
@@ -29,7 +29,7 @@ it is the appearance record (D-97)**, which D-96's ruling made a consumer's obli
 | `['panes']` | `file` | one member per pane id, each `{ size: number; bounds: { min: number; max: number } }` |
 | `['focus']` | `mem` | `{ entries: ViewFocusEntry[]; activeId? }` — the absent active is spelled as **absence**, never `null` |
 | `['zones']` | `mem` | one member per **zone** id, each carrying any of `slot` (opaque), `distance`, `size`, `display` |
-| `['theme']` | `mem` | **one whole record** `{ token?, attribute?, declaration: { name?, value, removal } }`: the setting, the caller-held attribute name, and the declaration the mechanism computes for that pair |
+| `['theme']` | `file` | **one whole record** `{ token?, attribute?, declaration: { name?, value, removal } }`: the setting, the caller-held attribute name, and the declaration the mechanism computes for that pair |
 
 **FOUR ROOTS AND NOT ONE, MEASURED ON THE INSTALLED `provident-storeroom@1.9.1`** (D-87's ground, re-driven at the zone root by D-91 and at this one by D-97): a
 nested write does not create its parent — `write(['zones','zone-1'], 'mem', …)` over a fresh store answers `AddressNotFound` — so one root would need a
@@ -40,15 +40,15 @@ declaration minting a parent branch; and a root written at `file` answers its de
 '100'`, `min: '0'`, `max: '200'`, and the frozen store held **no** pane default, so a MISSed read answered `undefined` and the release refused
 `'unusable-default'` with zero writes. Zones (D-91): no `file` copy of any zone member exists, a MISS answered `undefined`, the render turn handed that to its
 layout call and `candidatesFor` answered `[]` — so a zone answers **its absence** and the placeholder names no zone. **Appearance (D-97): the placeholder is the
-MECHANISM'S OWN ANSWER for the absent pair** — `{name: null, value: '', removal: true}` — which names no attribute, so a boot applies nothing BY CONSTRUCTION.
-**ITS TIER IS `mem` BECAUSE THE APP PERSISTS NO APPEARANCE SETTING TODAY**: the setting is the authored envelope's own `content`, re-authored at every boot, and
-a durable appearance preference is the ambient store the control's own prohibition row fails.
+MECHANISM'S OWN ANSWER for the absent pair** — `{name: null, value: '', removal: true}` — which names no attribute, so nothing can be applied FROM IT; a boot's
+silence is the boot PATH's, not the value's (§4). **ITS TIER IS `file` FROM `D-98`, ON THE USER'S RULING "Appearance preferences should be durable"**: `D-97`
+reasoned it to `mem` from the app's then-silence and from the control's own prohibition row, and that second clause is now FALSE and superseded BY POINTER, its
+dated text untouched. The creation repair's placeholder is a SAVED write on a fresh profile, and a standing legal record survives a restart byte-identically.
 
 ## 2. The bridge member and its six routes
 
 `window.provident` carries **one** top-level member, `view`, shaped like the `tabs` member beside it — six routes and no seventh. Declared in
-`src/main/preload.ts` and re-declared in `src/renderer/secure-panels.ts`'s `declare global` as the **same text**; the battery compares the two blocks rather
-than citing them.
+`src/main/preload.ts` and re-declared in `src/renderer/secure-panels.ts`'s `declare global` as the **same text**, and the battery compares both blocks.
 
 | Route | Argument | Answer |
 |---|---|---|
@@ -100,11 +100,11 @@ so it is re-minted at **every** boot: measured, boot two is handed the address a
 legal value answering every zone exactly as the absent address answered it.
 
 **AND `theme-must-stand` AT `['theme']` IS THE ONE PAIR WHOSE SECOND ARM IS NOT ABSENCE (D-97).** Its first arm is the other three's: no plain record, repaired
-to the placeholder. **Its second is STALENESS** — a record that stands but whose carried declaration is not the mechanism's own answer for the setting and the
+to the placeholder. **Its second is STALENESS** — a record that stands but whose carried declaration is not the mechanism's own answer for the setting and
 attribute it carries — and its repair re-derives from the record's OWN two members and writes the current resolution. So **the resolution is produced by a
-constraint repair and by nothing else**, which is the instruction this family exists to answer. The comparison is STRUCTURAL and never a serialisation: the
-crossing normalises a value's key order (measured), so a byte comparison would report every legal record stale. Nothing is derived at a read, and a boot applies
-nothing: the placeholder names no attribute, so no `props.<name>` exists to write.
+constraint repair and by nothing else**, which is this family's whole instruction. The comparison is STRUCTURAL, never a serialisation: the crossing normalises
+key order (measured), so a byte comparison would call every legal record stale. Nothing is derived at a read, and **a boot applies nothing because the ONE
+stated `fill()` never applies — only a delivery does — so a `file` record standing at boot is DATA, never an application** (`D-98`, measured).
 
 **A FAMILY THAT STANDS BUT CARRIES AN UNUSABLE MEMBER IS NOT ANY PAIR'S ARM, and that is owed rather than invented** (D-87): each repair must leave ONE whole
 legal value, and a body judging each member would be a second declaration wearing this one's. The admission DROPS a member it cannot state and answers its

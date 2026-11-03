@@ -18,8 +18,11 @@
 //          reaches the AUTHORED node as `props.<name>`, and `renderedHtml` moves. **THE NAME IS THE RECORD'S**, which the row
 //          proves by driving a record whose declaration names a different attribute.
 //   · T-3  THE REMOVAL ARM is the record's `removal` member reaching the node as `undefined` — never an empty string.
-//   · T-4  **NOTHING IS APPLIED AT A BOOT** — measured twice: a boot read fills the shape and writes nothing, and the record a
-//          boot carries is the placeholder, whose declaration names no attribute at all.
+//   · T-4  **NOTHING IS APPLIED AT A BOOT** — measured three times: on a FRESH profile the record a boot carries is the
+//          placeholder and its declaration names no attribute; on a profile that ALREADY CARRIES a legal declaration naming an
+//          attribute the boot read STILL writes nothing, and applying that same record by hand proves it composes a real
+//          write. **FROM `D-98` THE SILENCE IS THE BOOT PATH'S AND NOT THE RECORD'S** — the tier is `file`, so a later boot's
+//          record can name an attribute, and what keeps a boot silent is that `fill()` adopts and never applies.
 //   · T-5  THE RENDERER COMPUTES NOTHING: over comment-elided code, `resolveTheme`/`applyThemeDeclaration` appear nowhere in
 //          the renderer, no hand-written DOM is written, and no timer or poll stands in the wiring.
 //   · T-6  TOTALITY: an unreadable carrier, a realm with no crossing, a record with no applicable declaration and a runtime
@@ -32,7 +35,7 @@
 // instruments are `npm run divergence` and the app itself.
 
 import { describe, it, expect, beforeAll } from 'vitest'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -65,11 +68,15 @@ interface Crossing {
   readonly close: () => void
 }
 
-function crossing(): Crossing {
+function crossing(seed?: (profilePath: string) => void): Crossing {
   const dir = mkdtempSync(join(tmpdir(), 'theme-application-'))
   const bound: { current: ViewRecordStore | null } = { current: null }
+  const profilePath = join(dir, 'provident-profile.json')
+  // **THE SEED IS WRITTEN BEFORE THE CONSTRUCTION** (`D-98`): a `file` family's boot datum is the FILE, so a row that needs a
+  // profile a PREVIOUS boot wrote has to hand the store its bytes, and a fresh profile is the seed's own absence.
+  if (seed !== undefined) seed(profilePath)
   const store = createProfileStore({
-    filePath: join(dir, 'provident-profile.json'),
+    filePath: profilePath,
     constraints: viewConstraintDeclarations(() => bound.current).map((declaration) => ({
       address: declaration.address,
       id: declaration.id,
@@ -332,21 +339,23 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
   // ─────────────────────────────────────────────────────────────────────────
   // T-4 — NOTHING IS APPLIED AT A BOOT, MEASURED TWICE
   // ─────────────────────────────────────────────────────────────────────────
-  it('T-4 — **NOTHING IS APPLIED AT A BOOT**: a boot read fills the shape and writes nothing, and the record a boot carries is the PLACEHOLDER, whose declaration names no attribute — so no `props.<name>` exists to write. Measured twice, and `npm run divergence` is the leg that would catch a boot application', async () => {
+  it('T-4 — **NOTHING IS APPLIED AT A BOOT, AND FROM `D-98` THAT IS THE BOOT PATH\'S AND NOT THE RECORD\'S**: on a FRESH profile the record a boot carries is the PLACEHOLDER and its declaration is not applicable anywhere; on a profile that ALREADY CARRIES a legal declaration naming an attribute, the boot read still writes nothing, because `fill()` adopts and never applies and `apply()` is reached from the delivery alone. Measured THREE times, and `npm run divergence` is the leg that would catch a boot application', async () => {
     const runtime = boot()
     const bridge = crossing()
     try {
       const application = startThemeApplication(runtime)
       const atBoot = runtime.renderedHtmlResult()
-      // (i) THE RECORD'S HALF: the creation repair mints the placeholder, and its declaration is not applicable anywhere.
+      // (i) THE RECORD'S HALF, ON A FRESH PROFILE: the creation repair mints the placeholder, and its declaration is not
+      // applicable anywhere. **THIS HALF NAMED THE TIER'S OWN SHAPE WHILE THE FAMILY WAS `mem`** (`D-97`); at `file` it is a
+      // statement about a FRESH PROFILE, which is what a first boot is, and (iv) measures the profile a LATER boot meets.
       expect(bridge.record.read().theme, 'a fresh crossing stands at the placeholder').toEqual(PLACEHOLDER)
       // **THE BOOT READ** — `startViewShape`'s ONE stated `fill()`, taken here as the row's own line.
       await realm().fill()
       expect(realm().shape().filled, 'the boot read filled the shape').toBe(true)
       expect(realm().themeRecord(), 'and the record it filled the shape with is the placeholder').toEqual(PLACEHOLDER)
-      const boot = application.apply()
+      const bootTurn = application.apply()
       expect(
-        [boot.declaration, boot.declared, boot.written, boot.status],
+        [bootTurn.declaration, bootTurn.declared, bootTurn.written, bootTurn.status],
         'and the delivery turn applied NOTHING: there is no attribute name to compose a write from',
       ).toEqual([null, false, false, null])
       // (ii) THE SURFACE'S HALF: neither the rendered HTML nor the SSR fragment moved.
@@ -377,6 +386,43 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
       expect(delivered.at(-1)?.written, 'a committed act is what makes the application write').toBe(true)
       subscription.release()
       expect(runtime.renderedHtmlResult().renderedHtml, 'and the surface moves then').not.toBe(atBoot.renderedHtml)
+
+      // (iv) **THE DURABLE HALF (`D-98`): A PROFILE THAT ALREADY CARRIES A LEGAL DECLARATION NAMING AN ATTRIBUTE.** The tier
+      // is `file`, so a second boot's record is the one a previous run persisted — and the boot read still writes nothing,
+      // because the boot PATH never applies. **THIS IS THE CLAUSE THE TIER CHANGE MADE NECESSARY**: at `mem` the placeholder
+      // made silence a property of the DATA, and at `file` it is a property of `startViewShape`'s two turns.
+      const persisted = { token: 'light', attribute: 'theme', declaration: { name: 'theme', value: 'light', removal: false } }
+      const durable = crossing((profilePath) => {
+        writeFileSync(profilePath, JSON.stringify({ theme: persisted }))
+      })
+      try {
+        // A FRESH RUNTIME, so the surface's own before-and-after is this boot's and not the earlier row's.
+        const secondRuntime = boot()
+        const secondApplication = startThemeApplication(secondRuntime)
+        const beforeSecond = secondRuntime.renderedHtmlResult()
+        await realm().fill()
+        expect(realm().themeRecord(), 'the shape a boot fills carries the STANDING record, not the placeholder').toEqual(persisted)
+        expect(
+          realm().themeRecord().declaration.name,
+          'and that record DOES name an attribute — so the guarantee cannot be the declaration\'s shape',
+        ).toBe('theme')
+        // THE BOOT'S OWN TWO TURNS: the fill wrote nothing, and no delivery exists to have written.
+        expect(secondRuntime.renderedHtmlResult().renderedHtml, 'the rendered surface is byte-identical across this boot too').toBe(
+          beforeSecond.renderedHtml,
+        )
+        expect(secondRuntime.renderedHtmlResult().ssrHtml, 'and so is the SSR fragment').toBe(beforeSecond.ssrHtml)
+        expect(renderedAttribute(secondRuntime, 'theme'), 'and no attribute stands on the authored node: a standing record is DATA at a boot').toBe(null)
+        // (v) **THE CONTROL THAT KEEPS (iv) FROM PASSING ON AN INERT RECORD**: the same standing record, APPLIED by hand,
+        // DOES write — so the silence above belongs to the boot path and not to a declaration that could never compose.
+        const appliedByHand = secondApplication.apply()
+        expect(
+          [appliedByHand.declaration?.name, appliedByHand.declaration?.value, appliedByHand.written],
+          'the record composes a real `props.<name>` write when a DELIVERY hands it over — which is what a boot must not do',
+        ).toEqual(['theme', 'light', true])
+        expect(renderedAttribute(secondRuntime, 'theme'), 'and the authored node then carries it').toBe('light')
+      } finally {
+        durable.close()
+      }
     } finally {
       bridge.close()
     }

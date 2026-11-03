@@ -111,8 +111,11 @@ export interface ViewThemeRecord {
  *  removal: true}`, which is this record's declaration member for member. It is the placeholder the creation repair mints
  *  and the declared default the read answers for a family that does not stand — ONE value at both sites, which is what keeps
  *  a placeholder from being a second authority beside the mechanism. **NOTHING CAN BE APPLIED FROM IT**: `name` is `null`,
- *  so there is no `props.<name>` for a renderer to write, which is what makes a boot silent BY CONSTRUCTION and not by a
- *  guard. */
+ *  so there is no `props.<name>` for a renderer to write. **THAT IS A PROPERTY OF THIS VALUE AND NO LONGER A CLAIM ABOUT
+ *  A BOOT** — `D-97` read it as what makes a boot silent, which held only while the family was `mem`; from `D-98` the tier
+ *  is `file`, a SECOND boot's record may name an attribute, and boot silence is the boot PATH's (`fill()` adopts and
+ *  applies nothing, and only a delivery applies). The placeholder still stands where the address is absent, which is
+ *  every fresh profile. */
 export const viewThemePlaceholder = (): ViewThemeRecord => ({
   token: null,
   attribute: null,

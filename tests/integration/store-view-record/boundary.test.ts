@@ -203,6 +203,31 @@ const DECLARED_SCOPE: readonly string[] = [
   //    spelling of one already in the union: `B-1`'s set assertion refuses a duplicate, which is how this comment was
   //    written: the first draft declared six corpus paths twice and the row reddened on it.
   'tests/integration/store-view-record/theme-family.test.ts',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-98` — THE TIER CHANGE ON THE USER'S RULING **"Appearance preferences should be durable"**: `['theme']` moves
+  //    from `mem` to `file`, so the appearance family's boot data is the FILE and its own rows are INVERTED to pin that.
+  //    **THE ONE NEW PATH IS THE CENSUS THAT MOVES WITH IT**, and it is named rather than admitted: no `.json` name is
+  //    added anywhere (the record joins `provident-profile.json`, already declared), but this file ASSERTS THE PROFILE'S
+  //    ROOTS AS A CLOSED SET, so a tier change is exactly the move it exists to catch — `['panes','tabs']` becomes
+  //    `['panes','tabs','theme']` with the third root's placeholder asserted beside it.
+  'tests/integration/central-data/profile-file.test.ts',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE, and each is named so a reader can check the claim
+  //    rather than trust it: `src/main/view-record/index.ts` (the tier constant and the address's declaration),
+  //    `src/shared/view-shape.ts` (the placeholder's note, corrected where it claimed the placeholder is what keeps a
+  //    boot silent), `src/renderer/renderer.ts` (three notes on the same point — boot silence is the boot PATH's) and
+  //    `tests/theme-declaration.test.ts` (`T-4`, RE-GRAINED: its durable half boots over a profile that already carries a
+  //    legal declaration and proves the boot read still writes nothing, with the control that the same record applied by
+  //    hand DOES write — the row that reds when an application is added to the fill's continuation),
+  //    `tests/integration/store-view-record/theme-family.test.ts` (`TH-1`, `TH-4`, `TH-8` and `TH-9`, inverted to the
+  //    durable shape with their controls kept), `tests/integration/store-view-record/crossing.test.ts` (two rows that
+  //    read the profile's roots and one control that compared whole bytes), `tests/integration/store-view-record/
+  //    boundary.test.ts` (this block), `strata/decisions.md` (the new row and the supersession pointer),
+  //    `strata/brief.md` (the families table's tier word), `docs/L2/view-record/interface.md` (the table row, the rev
+  //    block and §1's tier clause) and `docs/L3/view-record/design.md` (the rev block, the address line and §2's tier
+  //    paragraph). **THREE PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/marks.json` (no test
+  //    file is added or removed, so `strata-marks.mjs check` stays green unregenerated), `strata/modules.json` (no new
+  //    module, so no map row and no `endpoints` figure moves) and `strata/pending.md` (`D-96`'s `overlay` blocker is
+  //    untouched by a tier change) — so this block adds ONE path and no second spelling of one already in the union.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

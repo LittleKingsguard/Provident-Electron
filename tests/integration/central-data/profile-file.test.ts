@@ -90,7 +90,10 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     // **THE BATCH IS THE ENTRY'S OWN, AND IT MOVED FROM SIX TO EIGHT UNDER `D-87`**: the tab record's six and the view
     // record's two, spread into ONE `createProfileStore` call exactly as `src/main/main.ts` spreads them. The panes
     // pair's repair is a `file`-tier write too, so it is settled into the same file by the same landing arm — which is
-    // why this row's image carries TWO roots where it carried one.
+    // why this row's image carries TWO roots where it carried one. **AND IT CARRIES THREE FROM `D-98`**: the appearance
+    // family moved from `mem` to `file` on the user's ruling that appearance preferences are durable, so
+    // `theme-must-stand`'s creation repair is a SAVED write too, and the census below moves with it — the profile's
+    // CONTENTS are what this row asserts, so a tier change is exactly the kind of move it exists to catch.
     const store = createProfileStore({
       filePath: profilePath,
       constraints: [...tabsConstraintDeclarations(() => holder.current as never), ...viewConstraintDeclarations(() => holder.current as never)] as never,
@@ -98,7 +101,10 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     holder.current = store
     expect(readdirSync(profileDir), 'the one written name, as in every row here').toEqual([PROFILE_FILE])
     const image = JSON.parse(readFileSync(profilePath, 'utf8')) as Record<string, unknown>
-    expect(Object.keys(image), 'the boot wrote the pane family and the tab record, and nothing else at the root (the store’s image is key-ordered, so the reading is stable)').toEqual(['panes', 'tabs'])
+    expect(Object.keys(image), 'the boot wrote the pane family, the tab record and the appearance family, and nothing else at the root (the store’s image is key-ordered, so the reading is stable)').toEqual(['panes', 'tabs', 'theme'])
+    expect(image['theme'], 'and the third root is the appearance family\'s creation-instant PLACEHOLDER — no attribute name, no token, so nothing can be applied from a boot (D-98)').toEqual({
+      declaration: { value: '', removal: true },
+    })
     const tabs = image['tabs'] as { landing?: { id?: unknown; active?: unknown }; order?: unknown }
     expect({ landing: tabs.landing?.id, active: tabs.landing?.active, order: tabs.order }, 'the landing entry seated and active, and the order naming exactly it — the repair’s own value, whole').toEqual({ landing: 'landing', active: true, order: ['landing'] })
     expect(image['panes'], 'and the measured default family, whole: the one pane id the app addresses at the size and bounds the tree states (D-87)').toEqual({ 'pane-a': { size: 100, bounds: { min: 0, max: 200 } } })

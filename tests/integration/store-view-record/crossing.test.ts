@@ -280,7 +280,24 @@ describe('view-record · clause 1 — all FOUR addresses repaired at the CREATIO
       const stood = readFileSync(path, 'utf8')
       const booted = boot(path)
       try {
-        expect(booted.bytes(), 'the bytes the construction leaves are the bytes the file held').toBe(stood)
+        const before = JSON.parse(stood) as Record<string, unknown>
+        const after = JSON.parse(booted.bytes()) as Record<string, unknown>
+        // THE CLAIM THIS ROW OWNS, STATED SO THE TIER CHANGE CANNOT MASK IT: the panes family the file brought is the
+        // family the construction leaves — that pair passed it and wrote nothing of it.
+        expect(after['panes'], 'the panes family the construction leaves is the family the file held, member for member').toEqual(before['panes'])
+        expect(JSON.stringify(after['panes']), 'and its serialisation is unmoved, so this is not a re-mint that happens to agree').toBe(
+          JSON.stringify(before['panes']),
+        )
+        // AND THE ONE ROOT THE CONSTRUCTION DOES ADD IS NAMED HERE RATHER THAN LEFT FOR A READER TO FIND: the appearance
+        // family is a `file` family too (`D-98`), so its own creation repair SAVES its placeholder — a different pair's
+        // act, and the only byte this construction adds to this profile.
+        expect(
+          Object.keys(after).filter((key) => !Object.hasOwn(before, key)),
+          'exactly ONE root is added by the construction, and it is the appearance family\'s placeholder',
+        ).toEqual(['theme'])
+        expect(after['theme'], 'which names no attribute, so nothing can be applied from it').toEqual({
+          declaration: { value: '', removal: true },
+        })
         expect(booted.read().panes, 'and the reading is the seed\'s, not a re-mint of it').toEqual([{ id: DEFAULT_PANE_ID, size: 133, bounds: { min: 5, max: 300 } }])
       } finally {
         booted.close()
@@ -360,10 +377,15 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
       const first = one.read()
       const oneBytes = one.bytes()
       one.close()
-      // **BOOT ONE'S BYTES CARRY ONE ROOT AND NOT TWO**: `panes` is a `file` value and the repair's save rides the landing
-      // arm (`D-86`), while `focus` is a `mem` value and no save of it can reach a file at all.
-      expect(Object.keys(JSON.parse(oneBytes) as Record<string, unknown>), 'the boot wrote the pane family and no other root').toEqual(['panes'])
+      // **BOOT ONE'S BYTES CARRY THE TWO `file` ROOTS AND NEITHER `mem` ONE**: `panes` and, from `D-98`, `theme` are
+      // `file` values whose repairs' saves ride the landing arm (`D-86`), while `focus` is a `mem` value and no save of
+      // it can reach a file at all. The set is asserted BY NAME, so a third root arriving would red here rather than pass.
+      expect(Object.keys(JSON.parse(oneBytes) as Record<string, unknown>), 'the boot wrote the TWO `file` families and no other root').toEqual([
+        'panes',
+        'theme',
+      ])
       expect(oneBytes.includes('focus'), 'and the `mem` family is in NO byte of the profile').toBe(false)
+      expect(oneBytes.includes('zones'), 'nor is the second `mem` family').toBe(false)
 
       const two = boot(path)
       try {

@@ -886,9 +886,13 @@ async function main(): Promise<void> {
   // CHANGE, and a boot's own change — the crossing's creation load and its constraint/repair passes — happened in `main()`
   // BEFORE this realm could subscribe, while a cold profile changes nothing afterwards. So the first fill has no delivery
   // to ride and is ONE STATED READ; every later fill is a delivery's, and no timer, poll or interval exists anywhere in it.
-  // **AND IT APPLIES NOTHING** (`D-97`): the boot read fills the shape, whose appearance record is the placeholder the
-  // creation repair minted — `declaration.name` is `null`, so there is no `props.<name>` for this realm to write. The
-  // application rides the DELIVERY, and the delivery is what a committed act causes.
+  // **AND IT APPLIES NOTHING** (`D-97`) — **AND FROM `D-98` THAT IS A PROPERTY OF THIS PATH AND NO LONGER ONE OF THE DATA**.
+  // At `mem` the record a boot carried was always the placeholder, so `declaration.name` was `null` and there was no
+  // `props.<name>` to write. The tier is `file` now, so on a SECOND boot the record can be a real, legal declaration a
+  // previous run persisted — measured on this tree with the real app over a seeded profile: the record stood at
+  // `{token: 'light', declaration: {name: 'theme', …}}` and `get_rendered_html` carried NO `theme` attribute. **The
+  // silence is THIS continuation's**: `fill()` ADOPTS and applies nothing, and `apply()` is reached from the DELIVERY's
+  // subscription alone — so a standing record is DATA at a boot and never an application.
   startViewShape(themeApplication)
 }
 
@@ -1121,10 +1125,14 @@ export function themeWiringRole(runtime: Runtime): readonly [string, string] {
  *  crossing is asked by a USER ACTION — so between the boot and the first act no declaration exists at all. **THE BOOT'S ONE
  *  READ IS A BASELINE AND NEVER A DECLARATION**: it records the authored setting this realm found (the `D-96` seed, kept for a
  *  reason `npm run divergence` measured), so the first act is a CHANGE a user made and not the token an envelope authored. **NOTHING IS
- *  APPLIED AT A BOOT, AND IT IS NOT A GUARD THAT MAKES THAT TRUE**: at a boot the record stands at the placeholder the
- *  creation repair minted, whose `declaration.name` is `null` — no caller has ever named an attribute — and a declaration with
- *  no name has no `props.<name>` to write. The boot read (`startViewShape`'s ONE stated `fill()`) therefore fills the shape
- *  and applies nothing, and the delivery path is the only path that writes.
+ *  APPLIED AT A BOOT, AND IT IS NOT A GUARD THAT MAKES THAT TRUE — IT IS THE PATH, AND FROM `D-98` THAT DISTINCTION IS
+ *  LOAD-BEARING**: at `mem` the record a boot carried was always the placeholder, whose `declaration.name` is `null` and so
+ *  had no `props.<name>` to write; the tier is `file` from `D-98`, so a SECOND boot's record can carry a real declaration a
+ *  previous run persisted, and boot silence can no longer be claimed from the data's shape. It is claimed from the two
+ *  turns: `startViewShape`'s ONE stated `fill()` ADOPTS and applies nothing, and `apply()` is reached only from the
+ *  DELIVERY's subscription — measured on this tree over a seeded profile with the real app, the record standing at
+ *  `{token: 'light', declaration: {name: 'theme', value: 'light', removal: false}}` while `get_rendered_html` carried no
+ *  `theme` attribute. **A STANDING RECORD IS DATA AT A BOOT; THE DELIVERY IS THE ONLY PATH THAT WRITES.**
  *
  *  **WHY THAT MATTERS, MEASURED AND NOT ASSERTED**: an applied `props.<name>` lands in BOTH `renderedHtml` AND `ssrHtml`, and
  *  `npm run divergence` compares that `ssrHtml` between the REAL app and the headless battery host, which holds no renderer
@@ -1192,8 +1200,11 @@ function authoredSettingOf(
 }
 
 /** **THE DECLARATION THIS REALM WOULD APPLY, OR `null` WHERE THE RECORD OFFERS NONE.** A declaration with no attribute NAME
- *  is the placeholder, and a placeholder is not applicable: there is no `props.<name>` to compose. That is the whole of the
- *  boot-silence guarantee, and it is a property of the record rather than a guard in a turn. */
+ *  is the placeholder, and a placeholder is not applicable: there is no `props.<name>` to compose. **That is the whole of
+ *  what makes a DELIVERY that moved some other family cost one read and no appearance write** — and it is a property of
+ *  the record rather than a guard in a turn. **IT IS NOT, HOWEVER, WHAT KEEPS A BOOT SILENT** (`D-98`, correcting `D-97`'s
+ *  reading of this line): at `file` a boot's record can name an attribute, so boot silence is the boot PATH's — `fill()`
+ *  never calls `apply()` — and never this function's. */
 function applicableDeclaration(theme: ViewThemeRecord): { name: string; value: string; removal: boolean } | null {
   const name = theme.declaration.name
   if (name === null) return null
