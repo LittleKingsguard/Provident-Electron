@@ -53,21 +53,30 @@ function refused(receipt: OperatorSettingsReceipt): { status: 'refused'; reason:
 }
 
 describe('security-store-storeroom · the operator-settings instance at unit grain', () => {
-  it('the boot is read-only and the construction never truncates: read(), subscribe() and a second construction leave the file\'s bytes as they stood (interface.md §2.1; design.md §4; persistence.md §2)', () => {
+  it('the boot writes its two creation records ONCE, and neither a read, a subscribe nor a second construction moves a byte after it (interface.md §2.1; design.md §4; persistence.md §2)', () => {
     const settings = createOperatorSettings({ userDataDir })
+    expect(existsSync(at(FILE)), 'the store constructed its own file').toBe(true)
+    expect(readdirSync(userDataDir), 'and nothing stands beside it').toEqual([FILE])
+    // **THE BOOT WRITES, AND THE WRITE IS ITS REPAIRS': `guide §9.1`'s zero-length creation is the reading of its own
+    // date and is superseded by measurement** (2026-11-03, installed `1.9.1`). What the row keeps — and what the two
+    // rows below now measure as byte identity rather than as a length — is the half that never moved: NOTHING AFTER
+    // THE CONSTRUCTION MOVES THE BYTES.
+    const bootImage = bytesOf(FILE)
+    expect(bootImage.toString('utf8'), 'the two creation records, saved by the members that landed them').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
+
     settings.read()
     const off = settings.subscribe(() => {})
     off()
-    expect(existsSync(at(FILE)), 'the store constructed its own file').toBe(true)
-    expect(readdirSync(userDataDir), 'and nothing stands beside it').toEqual([FILE])
-    expect(bytesOf(FILE).length, 'a process that only reads writes no byte (guide §9.1)').toBe(0)
+    expect(bytesOf(FILE).equals(bootImage), 'a read, a subscribe and its withdrawal write no byte: the boot is the only writer here').toBe(true)
 
     committed(settings.write({ token: 'kept' }))
     const stood = bytesOf(FILE)
-    expect(stood.length, 'the first write is the store\'s first byte: the boot minted no op').toBeGreaterThan(0)
+    expect(stood.equals(bootImage), 'the first caller write DOES move them: the record it lands supersedes the placeholder the boot wrote').toBe(false)
 
     const second = createOperatorSettings({ userDataDir })
-    expect(bytesOf(FILE).equals(stood), 'an existing file is never truncated and never reset (guide §9.1)').toBe(true)
+    expect(bytesOf(FILE).equals(stood), 'and a second construction moves none of them: both `file` addresses stand, so it repairs only the `mem` pair and saves nothing (guide §9.1)').toBe(true)
     expect(second.read().token, 'so the record stands across the reconstruction').toBe('kept')
     expect(readdirSync(userDataDir), 'and the second construction adds no name either').toEqual([FILE])
   })

@@ -20,13 +20,17 @@
 //    Until one is, this seam constructs a store and hands it to whoever asked; it wires nothing.
 //
 // THE DECLARED SURFACE BELOW IS A CENSUS, NOT A DERIVATION. Every entry was measured against the
-// installed package (`provident-storeroom@1.9.0`, `Object.getOwnPropertyNames(store)` → 14 string
+// installed package (`provident-storeroom@1.9.1`, `Object.getOwnPropertyNames(store)` → 14 string
 // members in this order) — the same fourteen the `1.6.2` and `1.7.0` reviews read, so neither the
 // release that lifted the cross-kind address exclusion (`1.7.0`) nor `1.9.0` moved a member of the
 // store. **THE SYMBOL FIGURE IS THE ONE THAT MOVED WITH `1.9.0`, and it was RE-MEASURED rather than
-// carried**: `1.7.0` read 11 own symbols and `1.9.0` reads 12, the twelfth being
+// carried**: at that release `1.7.0` read 11 own symbols and `1.9.0` read 12, the twelfth being
 // `Symbol(provident-storeroom.repair-leg)` (measured 2026-11-02 on the installed bytes, at
-// construction; see `symbolCount` below for the read that comes after a write).
+// construction; see `symbolCount` below for the read that comes after a write). **AND IT MOVED
+// AGAIN WITH `1.9.1`, BY ONE, AND THE STRING LIST DID NOT MOVE WITH IT** (measured 2026-11-03 on
+// both installed trees, one fresh instance each): 12 at construction becomes **13**, the thirteenth
+// being `Symbol(provident-storeroom.registration-save)` — the marker of the release whose refusing
+// registration rolls its own landing back — and the two lists match member for member apart from it.
 // `tests/storeroom-surface.test.ts` pins the MEMBER list and the pin itself, and
 // `tests/e2e/central-data/scenarios.test.ts` `S-9` pins the two counts: a version bump that adds,
 // removes or re-orders a member reddens a row HERE and a count that moves reddens there, in a
@@ -62,15 +66,17 @@ export const STOREROOM_DECLARED_SURFACE = {
   memberCount: 14,
   /**
    * **Own symbols on the installed instance AT CONSTRUCTION; non-enumerable and internal, pinned as a count only.**
-   * `1.9.0` reads **12** where `1.7.0` read **11**, and the release's whole contribution is the one member between
-   * them: `Symbol(provident-storeroom.repair-leg)` (measured 2026-11-02 on both installed trees, one fresh instance
-   * each — the two symbol lists match member for member apart from it). **AND ONE WRITE INSTALLS A THIRTEENTH**,
-   * `Symbol(provident-storeroom.kernel)`, absent on a fresh store and present after the first `write` — on `1.7.0`
-   * as well (its 11 becomes 12 the same way), so that growth is the store's own and not this release's. The census
-   * is therefore read at **construction**, the one instant every construction path shares, and no string member
-   * moves either way.
+   * The figure was **12** under `1.9.0` where `1.7.0` read **11**, that release's whole contribution being
+   * `Symbol(provident-storeroom.repair-leg)` (measured 2026-11-02 on both trees then installed, one fresh instance
+   * each — the two symbol lists match member for member apart from it). **THE INSTALLED `1.9.1` READS 13**: the
+   * thirteenth, `Symbol(provident-storeroom.registration-save)`, is that release's own and sits fifth in
+   * `getOwnPropertySymbols`' order (measured 2026-11-03 on the `1.9.0` and `1.9.1` trees, one fresh instance each).
+   * **AND ONE WRITE INSTALLS ANOTHER**, `Symbol(provident-storeroom.kernel)`, absent on a fresh store and present
+   * after the first `write` — so the read after that act is **14** here, 13 under `1.9.0` and 12 under `1.7.0`, the
+   * one-member growth being the store's own and not either release's. The census is therefore read at
+   * **construction**, the one instant every construction path shares, and no string member moves either way.
    */
-  symbolCount: 12,
+  symbolCount: 13,
 } as const
 
 /** The journal length a profile store opens with when the caller does not decide. */

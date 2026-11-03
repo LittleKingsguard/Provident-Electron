@@ -53,7 +53,10 @@ describe('S-1 — the seam module is what the app imports', () => {
     + ' without a repo change', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as
       { dependencies: Record<string, string> }
-    expect(pkg.dependencies['provident-storeroom']).toBe('^1.9.0')
+    // **`1.9.1` IS THE PIN, AND THE PIN IS A CARET RANGE** — the release that settled a registration-instant repair
+    // into the file, rolled a refusing registration back and rebuilt a foreign image from the creation state. The
+    // figure moves here for the reason the row states: the pin follows the reviewed install, never the other way.
+    expect(pkg.dependencies['provident-storeroom']).toBe('^1.9.1')
   })
 
   it('S-1.2 — the store `createProfileStore` returns IS a storeroom store, member for member', () => {

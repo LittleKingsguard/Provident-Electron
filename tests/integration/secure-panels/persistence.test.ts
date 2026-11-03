@@ -10,11 +10,13 @@
 // (`persistence.md` §1, §5; D-17, D-22).
 //
 // EVERY READING IS A BYTE READING, NEVER AN EXISTENCE READING (`persistence.md` §3, `ASM-L2-10`).
-// The store's own CONSTRUCTION creates the file exclusively, zero-length and empty, where it is
-// absent — so "the file exists" is evidence of nothing: a first boot on a clean profile has a file
-// and NO RECORD AT ALL (`B-1`, `B-5`). Every row below therefore asserts what the bytes SAY: a
-// length of zero, or the record's own image (the store's spelling, never a projection this battery
-// composes — `D-13`). That is what makes the pair "no record yet" / "a record whose list is empty"
+// The store's own CONSTRUCTION creates the file exclusively where it is absent, and **from `1.9.1` the
+// creation repairs' writes are settled into it before the construction returns** — so "the file
+// exists" is evidence of nothing AND neither is a length: a first boot on a clean profile has a file
+// and a PLACEHOLDER RECORD, not an empty one (measured 2026-11-03; the zero-length creation `guide
+// §9.1` declares is the reading of its own date). Every row below therefore asserts what the bytes
+// SAY: the record's own image (the store's spelling, never a projection this battery composes —
+// `D-13`). That is what makes the pair "a first-run placeholder" / "a record whose list is empty"
 // two states rather than a slogan (`B-4`, §3).
 //
 // THE ROWS ARE THE DESIGN'S OWN MEASUREMENTS, RE-TAKEN AT THIS LEVEL: `persistence.md` §2 `B-1`…`B-4`
@@ -92,12 +94,18 @@ const bytesOf = (dir: string): Buffer => readFileSync(at(dir, OPERATOR_FILE))
 const writeSeed = (dir: string, seed: unknown = SEED): void => { writeFileSync(at(dir, SEED_FILE), JSON.stringify(seed)) }
 
 describe('secure-panels · the grant, as bytes', () => {
-  it('a boot on a seed-only profile serves the seed from memory and leaves the instance file at ZERO bytes (persistence.md §2 B-1, §3-§4)', () => {
+  it('a boot on a seed-only profile serves the seed and puts it on the disk: the record image `B-2` would write, before any caller act (persistence.md §2 B-1, §3-§4)', () => {
     writeSeed(userDataDir)
     const seedBytes = readFileSync(at(userDataDir, SEED_FILE))
     const surface = createSettingsSurface({ userDataDir })
 
-    expect(bytesOf(userDataDir).length, 'construction creates the store file exclusively and empty; the import writes NO byte, because what it carries is HELD until an ordinary write supersedes it (§4)').toBe(0)
+    // **THE BOOT'S OWN SAVE, AND IT IS THE SEED'S IMAGE RATHER THAN A PLACEHOLDER** (measured 2026-11-03 on the
+    // installed `1.9.1`): the record address's creation repair performs the import and writes `toStored(imported)` as
+    // ONE whole legal record, the save at that member puts it on the disk, and what the file holds at the end of
+    // construction is therefore exactly `REVOKED_IMAGE` — the seed's four groups in the store's own bytes, with the
+    // row-list record's absent arm beside them. `persistence.md` §2 `B-1`'s *"the import writes no byte"* is the reading
+    // of its own date and is superseded by this measurement, not softened: the whole image is asserted.
+    expect(bytesOf(userDataDir).toString('utf8'), 'the boot imported the seed INTO THE FILE: the seed’s own groups, the absent row list, and no header, no token member and no second name').toBe(REVOKED_IMAGE)
     const answer = surface.read()
     expect(answer.enabled, 'and the read serves the SEED, not a first-run default: the grant the sixth row gains beside is the operator’s own').toEqual(SEED.enabled)
     expect({ token: answer.token, read: answer.read, exclusion: answer.exclusion }, 'with the seed’s token absence and the boot’s safe pair riding the same answer').toEqual({ token: null, read: null, exclusion: 'mcp-enabled' })
@@ -152,12 +160,15 @@ describe('secure-panels · the grant, as bytes', () => {
     expect(bytesOf(userDataDir).toString('utf8'), 'and the bytes no longer name it either — a byte claim, not a count of anything (`behaviour.md` §1: the set difference is the claim)').toBe(REVOKED_IMAGE)
   })
 
-  it('every group revoked is a RECORD WITH AN EMPTY LIST, which is not the same state as NO RECORD (persistence.md §2 B-4, §3, ASM-L2-11)', () => {
-    // STATE ONE — NO RECORD. A profile nobody has written to: the file exists (construction made it)
-    // and is ZERO-LENGTH, and a read at the address is absent, so the instance answers its first-run
-    // default. This is the state `P-6` must not be readable as (`B-5`, §3).
+  it('every group revoked is a RECORD WITH AN EMPTY LIST, which is not the same state as the first-run placeholder record (persistence.md §2 B-4, §3, ASM-L2-11)', () => {
+    // STATE ONE — THE PLACEHOLDER RECORD. A profile nobody has written to: construction made the file AND,
+    // from `1.9.1`, saved the record its declaration repaired — `FIRST_RUN`'s image, which is the same two words the
+    // read substitutes. The state `P-6` must not be readable as (`B-5`, §3) is therefore no longer a zero-length file
+    // but a record carrying the first-run pair, and it is asserted whole for that reason (measured 2026-11-03).
     const cold = createSettingsSurface({ userDataDir })
-    expect(bytesOf(userDataDir).length, 'no record yet is a ZERO-LENGTH file — the mark of an unread record, not of a grant').toBe(0)
+    expect(bytesOf(userDataDir).toString('utf8'), 'no caller act yet is a file holding the placeholder record — the first-run pair, not an empty list and not a grant').toBe(
+      `{${APP_STATE_ABSENT_IMAGE},"operator-settings":{"enabled":["read","dispatch"]}}`,
+    )
     expect(cold.read().enabled, 'and the read over it is the first-run default, never a refusal').toEqual(['read', 'dispatch'])
 
     // STATE TWO — A RECORD WHOSE LIST IS EMPTY. The same gesture, one member further: every group off.

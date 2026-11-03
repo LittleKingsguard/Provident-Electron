@@ -7,7 +7,7 @@
 
 ## 1. Package findings — `provident-storeroom`, upstream-owned, never patched (D-5)
 
-- **No new package finding.** The zero-length boot is the sibling's, filed once as `P-1` of `docs/L2/security-store-storeroom/persistence.md` §9 and cited here, never re-filed.
+- **No new package finding.** The boot-over-non-image arm is the sibling's, filed once as `P-1` of `docs/L2/security-store-storeroom/persistence.md` §9 and cited here, never re-filed — **and it is DISCHARGED by the installed `1.9.1` (2026-11-03), so this unit now cites a closed row rather than an open one** (`D-86`).
 - **The asymmetry measured is the tree's composition, not a package defect:** a `set` while the tier-4 pair is closed **commits**, because
   `tier4-closed` is a `read` outcome and the set handler consults no tier state — which `src/main/preload.ts`'s `set` comment says at this head and
   `docs/L2/secure-panels/interface.md` carries, not a row against the package (D-16).

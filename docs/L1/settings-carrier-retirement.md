@@ -58,7 +58,7 @@ The unit's batteries are claimed by `operator-settings` — `tests/integration/s
 
 ## 4. The second import-once arm (D-19, D-22)
 
-Marker: **the absence of a record at `['operator-app-state']`**. The arm runs only while that record is absent, reads `<userData>/provident-settings.json` **at most once per boot and writes no byte** — of the retired file, of the instance's file, of anything: the rows stand in memory until an ordinary write supersedes them, as the security import's overlay does. Its validation is the **retired boot read's own**, so what the old code loaded is what the new one imports: a JSON object whose keys are `file.*` plus the single reserved `schemaVersion`, stamped `'1'`.
+Marker: **the absence of a record at `['operator-app-state']`**. The arm runs only while that record is absent, reads `<userData>/provident-settings.json` **at most once per profile and writes no byte of the retired file** — its result is what the repair that performed it writes at `['operator-app-state']`, and (from `1.9.1`) that write is saved with it, so the record it made stands at the next boot and the arm does not run again (`D-85`, `D-86`). Its validation is the **retired boot read's own**, so what the old code loaded is what the new one imports: a JSON object whose keys are `file.*` plus the single reserved `schemaVersion`, stamped `'1'`.
 
 | Arm | What it does | What is preserved / lost |
 |---|---|---|
@@ -102,7 +102,7 @@ ordering (`docs/L1/security-store-storeroom.md` §8; `strata/examiner.md` §3; D
 |---|---|---|
 | S-1 | the carrier is gone | exactly **one** occurrence of `provident-settings.json` in `src/**` — the import arm's own name in the instance, as `provident-security.json` is — and `src/main/main.ts` holds no read and no write of it |
 | S-2 | the rows are served by the instance | a seeded retired record's `file.*` rows answer Y-1 after one boot, names verbatim |
-| S-3 | the import writes no byte | the retired file's sha256 is identical after a boot and three commits |
+| S-3 | the import writes no byte **of the retired name** | the retired file's sha256 is identical after a boot and three commits (unmoved; the instance's own file is a different file and the repair writes there — `D-86`) |
 | S-4 | the absent arm | no retired file → `[]`, `legacy:'absent'`, no write, no throw |
 | S-5 | the corrupt arm | unparsable, non-object, foreign-keyed, wrong-stamp and directory files → no rows, bytes standing, `corrupt` reported, nothing thrown |
 | S-6 | the unrepresentable arm | a null-carrying row is answered by name while its siblings import; nothing dropped silently |

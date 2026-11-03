@@ -146,15 +146,21 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     expect(readFileSync(at(CARRIER_FILE), 'utf8'), 'and its bytes still carry the record it was seeded with, not the state that superseded it').toContain('file.settings.theme.token')
   })
 
-  it('S-4 · the absent arm: no retired file answers [], the legacy word `absent`, no write and no throw', () => {
+  it('S-4 · the absent arm: no retired file answers [], the legacy word `absent`, no byte of a retired name, and the instance’s own two records on the disk', () => {
     const settings = surface()
     let thrown: unknown
     let answer: ReturnType<SettingsSurface['state']> | undefined
     try { answer = settings.state() } catch (error) { thrown = error }
     expect(thrown, 'the absent arm throws nothing').toBeUndefined()
     expect(answer, 'the boot answered').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'standing' })
-    expect(names(userDataDir), 'and the boot wrote no second file: only the instance’s own, created empty by the store').toEqual([INSTANCE_FILE])
-    expect(readFileSync(at(INSTANCE_FILE)).length, 'the instance’s file is created exclusively and zero-length (guide §9.1)').toBe(0)
+    expect(names(userDataDir), 'and the boot wrote no second file: only the instance’s own, created by the store').toEqual([INSTANCE_FILE])
+    // **THE INSTANCE’S FILE IS NOT ZERO-LENGTH: THE BOOT SAVES ITS TWO CREATION RECORDS** (measured 2026-11-03 on the
+    // installed `1.9.1`; `guide §9.1`'s zero-length creation is the reading of its own date). The record address holds
+    // `FIRST_RUN`’s image and the row-list address the absent arm — the word this row asserts above, in the store’s own
+    // bytes — and NO retired name is created, which is the half of this row that never moved.
+    expect(readFileSync(at(INSTANCE_FILE), 'utf8'), 'the two creation records, whole').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
   })
 
   it('S-5 · the corrupt arm: five foreign shapes answer no rows, leave the bytes standing, report `corrupt` and throw nothing', () => {

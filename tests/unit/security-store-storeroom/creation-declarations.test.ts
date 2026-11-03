@@ -154,8 +154,15 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(created.read(EXCLUSION, 'mem'), 'the pair stands, and it is `SAFE_PAIR`’s own value written as ONE whole `{exclusion}`: `tier4` is derived at the read and is never stored (interface.md §1)').toEqual({ exclusion: 'mcp-enabled' })
     expect(created.read(RECORD, 'file'), 'the durable record stands, at `FIRST_RUN`’s own image: a profile holding no retired seed has nothing to import, so the repair writes the placeholder the read used to substitute (D-85)').toEqual({ enabled: ['read', 'dispatch'] })
     expect(created.read(APP_STATE, 'file'), 'and the row list stands with the arm the import ran in it — `absent`, because this profile carries no retired carrier (D-85)').toEqual({ rows: [], legacy: 'absent', unrepresentable: [] })
-    expect(statSync(join(userDataDir, FILE)).size, '**and the file is still ZERO bytes: a registration-instant repair LANDS AN OP AND IS SAVED BY NOTHING.** The package’s save producers are a `file`-tier write’s COMMIT and a restore that moved (`guide §9.3`, measured 2026-11-03), and a `cfg.constraints` repair is neither — so the records stand in the instance and reach the disk at the first save (CD-10 measures that transition). The zero-length file `guide §9.1` declares is therefore UNMOVED by this pass.').toBe(0)
-    expect(readFileSync(join(userDataDir, FILE), 'utf8'), 'its bytes carry no address spelling at all (persistence.md §6)').toBe('')
+    // **AND THE FILE CARRIES BOTH RECORDS BEFORE ANY CALLER ACT: A REGISTRATION-INSTANT REPAIR'S `file` WRITE IS
+    // SETTLED INTO THE FILE AT THE MEMBER THAT LANDS IT** (measured 2026-11-03 on the installed `1.9.1`, `125` bytes).
+    // `D-85`'s limit — *"a registration-instant repair LANDS AN OP AND IS SAVED BY NOTHING"* — is OVERTURNED BY
+    // MEASUREMENT and read through `D-86` by pointer: the save is the landing arm's, and the landing arm is the write
+    // the repair made. `CD-10` carries the instrument that settles it (a SECOND INSTANCE over the same `filePath`
+    // answering the repaired value) and the two-boot idempotence proof beside it.
+    expect(readFileSync(join(userDataDir, FILE), 'utf8'), 'the two records the three declarations wrote, at their own addresses, in the store’s own bytes').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
     expect({ token: settings.read().token, enabled: settings.read().enabled, exclusion: settings.read().exclusion }, 'and the module’s own reads answer the same words — which they did BEFORE these declarations too, and that is exactly why the rows above read the ADDRESSES and not the answers (D-84: absence was answered at the read, never repaired into the record)').toEqual({ token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled' })
     expect(settings.readAppState(), 'the third address’s read included: the rows, the arm and the two list members').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'standing' })
   })
@@ -186,16 +193,15 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(armed(userDataDir, batch).read(EXCLUSION, 'mem'), 'so at the second instance’s creation instant the address stands at the safe pair again — the whole of V5’s closing, measured over two boots rather than asserted').toEqual({ exclusion: 'mcp-enabled' })
     expect({ exclusion: second.read().exclusion, tier4: second.read().tier4 }, 'and the second boot’s read serves it, which is the value clause 3 now gets from a constraint repair and from no file (D-84)').toEqual({ exclusion: 'mcp-enabled', tier4: false })
 
-    // **AND ON THIS ARM ALL THREE LAND AGAIN, WHICH IS `D-85`'S LIMIT MEASURED RATHER THAN DESCRIBED** (CD-10 pins the
-    // other side): the first boot's only write was at `mem`, and a `mem` write takes no save, so the two `file` records
-    // its repairs wrote never reached the disk — the file is still zero-length here — and the second boot's repairs find
-    // both addresses absent again. **THE IMPORT IS THEREFORE READ ONCE PER BOOT UNTIL THE FIRST SAVE, AND ONCE PER
-    // PROFILE AFTER IT**: both retired carriers are read-only inputs this module never writes (D-19), so the answers are
-    // identical either way; what the op count discloses is that the marker is the RECORD, and a record the store has not
-    // saved is not one the next boot can find.
+    // **AND ON THIS ARM ONLY ONE REPAIR LANDS, WHICH IS THE OPPOSITE OF `D-85`'S LIMIT AND IS THAT LIMIT OVERTURNED**
+    // (CD-10 carries the instrument): the first boot's repairs wrote both `file` records and `1.9.1` SETTLES EACH AT THE
+    // MEMBER THAT LANDS IT, so the second boot finds both addresses standing and repairs only the `mem` pair — its first
+    // caller-visible receipt is the SECOND op, one repair and not three (measured 2026-11-03 on the installed tree,
+    // where `D-85` measured `4` and `D-84` measured `2` for a different reason). **THE IMPORT IS READ ONCE PER PROFILE**:
+    // the marker is the RECORD, and a record the boot saved is one the next boot finds.
     const secondReceipt = second.write({ token: 'after-the-second-boot' })
-    expect(secondReceipt.status === 'committed' ? secondReceipt.cursor : null, 'three repairs stand behind this write — one per address — because the first boot took no save at a `file` address and left the file zero-length').toBe(4)
-    expect(statSync(join(userDataDir, FILE)).size, 'and the byte reading that explains the count is the write’s own: the boot alone materialised nothing, and `secondReceipt` is the first save either boot has taken (guide §9.3; CD-10 measures the save the other way round)').toBeGreaterThan(0)
+    expect(secondReceipt.status === 'committed' ? secondReceipt.cursor : null, 'ONE repair stands behind this write — the `mem` pair’s — because the first boot’s two `file` records reached the disk before it returned').toBe(2)
+    expect(readFileSync(join(userDataDir, FILE), 'utf8').includes('"token":"after-the-second-boot"'), 'and the byte reading that explains the count: the caller write is what moved the file, not the boot (both boots left it standing)').toBe(true)
   })
 
   it('CD-4 · each body judges EXISTENCE and every other shape keeps its existing authority: a value that stands is passed through — a wrong member included — and each body refuses only the state its own read cannot serve (D-84, D-85)', () => {
@@ -351,7 +357,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     }
   })
 
-  it('CD-10 · TWO SUCCESSIVE BOOTS over the same profile: once a save has landed the records the second boot imports NOTHING and repairs NOTHING at either `file` address, and a creation repair’s DURABILITY is decided by a SECOND INSTANCE over the same bytes — which answers `AddressNotFound` until a save has run (D-85)', () => {
+  it('CD-10 · TWO SUCCESSIVE BOOTS over the same profile: the second imports NOTHING and repairs NOTHING at either `file` address, and a creation repair’s DURABILITY is decided by a SECOND INSTANCE over the same bytes — which ANSWERS THE REPAIRED VALUE (D-86, overturning D-85’s limit by measurement)', () => {
     writeFileSync(join(userDataDir, SEED), JSON.stringify({ token: 'tok', enabled: ['graph'], maxJournalLength: 9 }))
     writeFileSync(join(userDataDir, CARRIER), '{"schemaVersion":"1","file.tabs.order":["a"]}')
     const seededSeed = readFileSync(join(userDataDir, SEED), 'utf8')
@@ -382,40 +388,46 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(landed.read(RECORD, 'file'), 'a second instance over these bytes answers the record a CALLER’S save landed').toEqual({ token: 'second-boot', enabled: ['graph'], maxJournalLength: 9 })
     expect(landed.read(APP_STATE, 'file'), 'and the row-list record beside it — the `{rows}` a caller’s `writeAppState` composes, which is why the word above reads `recorded`').toEqual({ rows: [{ name: 'file.tabs.order', value: ['a'] }] })
 
-    // **THE DURABILITY OF A CREATION REPAIR, PINNED BY THE SAME INSTRUMENT AND NOT BY A SIZE: A BOOT THAT SAVES NOTHING
-    // LEAVES NOTHING A SECOND INSTANCE CAN READ, SO THE NEXT BOOT REPEATS THE IMPORT.** A registration-instant repair
-    // lands an op and is saved by nothing — not because a `file`-tier write is not durable, but because the SAVE IS THE
-    // TERMINAL ARM'S ACT and a registration's route performs no terminal act (`guide §9.2`'s *"the terminal arm performs the
-    // store's `commit_file` as its FIRST act on the PASSING arm"*, read with `§7.2` (4)'s *"THE WRITE RUNS NO PASS OF ITS
-    // OWN"* and the binding's own *"it appends … no terminal act"* at `kernel-registration.mjs:487`) — so a profile whose
-    // only act is the boot keeps the ZERO-LENGTH file `guide §9.1` declares. The import is therefore read ONCE PER BOOT
-    // until the first save, and once per PROFILE after it; the answers are identical either way, because both retired
-    // carriers are read-only inputs this module never writes (D-19).
+    // **THE DURABILITY OF A CREATION REPAIR, PINNED BY THE SAME INSTRUMENT AND NOT BY A SIZE — AND THE LIMIT `D-85`
+    // RECORDED HERE IS OVERTURNED BY MEASUREMENT** (`D-86`; the release's own summary, verbatim: *"A REVERSAL'S SAVE —
+    // THE FILE HOLDS THE STATE THE REVERSAL RESTORED, WRITTEN AFTER THE JUDGEMENT THAT JUDGED IT"*, whose mechanism is
+    // the one this row measures: **the save is the landing arm's, and a registration-instant repair's write IS that
+    // arm**). The instrument is unchanged and it is the one `D-85` used against itself: a SECOND STORE over the same
+    // `filePath` with NO constraint list, so no repair can answer for the disk. `D-85` measured `AddressNotFound` here;
+    // the installed `1.9.1` answers the repaired value, with no caller write between (measured 2026-11-03, one fresh
+    // process per arm, `158` bytes at the end of construction and byte-stable after a 200 ms tick).
     const unsaved = mkdtempSync(join(tmpdir(), 'creation-declarations-cd10-'))
     try {
       writeFileSync(join(unsaved, CARRIER), '{"schemaVersion":"1","file.first":1}')
       const unsavedBoot = createOperatorSettings({ userDataDir: unsaved })
-      // THE REPAIR DID WRITE: the value stands in the instance that minted it, so the byte reading below is "nothing was
-      // saved" and never "nothing happened" (CD-1's and CD-7's subject, quoted here as this row's own premise).
+      // THE REPAIR DID WRITE, AND IT IS THE DISK'S NOW: the value stands in the instance that minted it AND at the
+      // address a second instance reads, so the byte reading below is neither "nothing was saved" nor "nothing
+      // happened" — it is the save the repaired write took.
       expect(unsavedBoot.readAppState().rows, 'the boot’s repair wrote the imported row INTO THE INSTANCE').toEqual([{ name: 'file.first', value: 1 }])
-      expect(statSync(join(unsaved, FILE)).size, 'no save, no byte: the boot alone never materialises the file').toBe(0)
-      expect(readFileSync(join(unsaved, FILE), 'utf8'), 'and the bytes are empty, which is the size read the other way').toBe('')
-      // **THE DECISIVE READING, AND IT IS NOT A SIZE**: a second instance over the SAME file answers `AddressNotFound` at
-      // BOTH `file` addresses — the repaired records are the INSTANCE's and not the DISK's. This is the reading a claim of
-      // durability would have to survive, and the arm above shows the same instrument answering the same two addresses
-      // once a save has run (measured 2026-11-03, one fresh process per arm).
+      const firstBootBytes = statSync(join(unsaved, FILE))
+      expect(firstBootBytes.size, 'THE BOOT ALONE MATERIALISED THE FILE: the two creation records, saved at the members that landed them').toBe(158)
+      expect(readFileSync(join(unsaved, FILE), 'utf8'), 'and the bytes carry both, the imported row list included').toBe(
+        '{"operator-app-state":{"legacy":"imported","rows":[{"name":"file.first","value":1}],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+      )
+      // **THE DECISIVE READING, AND IT IS NOT A SIZE**: a second instance over the SAME file ANSWERS THE REPAIRED
+      // RECORD AT BOTH `file` ADDRESSES. That is the reading a claim of durability has to survive, and it survives it.
       const secondInstance = reopened(unsaved)
-      expect(refusalOf(() => secondInstance.read(RECORD, 'file')).status, 'a second instance does NOT answer the repaired record: the creation repair’s write never reached these bytes').toBe('AddressNotFound')
-      expect(refusalOf(() => secondInstance.read(APP_STATE, 'file')).status, 'nor the repaired row list at the other `file` address').toBe('AddressNotFound')
-      expect(secondInstance.read([]), 'and the register it re-booted from holds nothing at all').toEqual({})
+      expect(secondInstance.read(RECORD, 'file'), 'a second instance ANSWERS the repaired record: the creation repair’s write reached these bytes with no caller write between').toEqual({ enabled: ['read', 'dispatch'] })
+      expect(secondInstance.read(APP_STATE, 'file'), 'and the repaired row list, with the arm the import ran in, at the other `file` address').toEqual({ rows: [{ name: 'file.first', value: 1 }], legacy: 'imported', unrepresentable: [] })
+      expect(secondInstance.read([]), 'and the register it re-booted from holds exactly the two records the boot wrote').toEqual({
+        'operator-app-state': { legacy: 'imported', rows: [{ name: 'file.first', value: 1 }], unrepresentable: [] },
+        'operator-settings': { enabled: ['read', 'dispatch'] },
+      })
+      expect({ size: statSync(join(unsaved, FILE)).size, ino: statSync(join(unsaved, FILE)).ino }, 'and a tick moves neither the size nor the inode: the save is not a deferred act').toEqual({ size: firstBootBytes.size, ino: firstBootBytes.ino })
       // THE CARRIER IS REWRITTEN BETWEEN THE BOOTS, which is the instrument: a second boot that re-ran the import answers
       // the NEW row, and one that did not answers the old — a content test, not an atime one (this volume mounts with
       // `relatime`/`noatime` and an atime reading is not an instrument here, measured 2026-11-03).
       writeFileSync(join(unsaved, CARRIER), '{"schemaVersion":"1","file.second":2}')
       const secondBoot = createOperatorSettings({ userDataDir: unsaved })
-      expect(secondBoot.readAppState().rows, 'the second boot re-ran the import over the UNSAVED profile, so it answers the rewritten carrier: the marker is a RECORD, and this record never reached the disk').toEqual([{ name: 'file.second', value: 2 }])
+      expect(secondBoot.readAppState().rows, 'the second boot answers the FIRST boot’s imported row, not the rewritten carrier’s: the import did not re-run, because the record the first boot saved is the marker').toEqual([{ name: 'file.first', value: 1 }])
+      expect(readFileSync(join(unsaved, FILE), 'utf8').includes('file.second'), 'and not one byte of the rewritten carrier reached the instance file').toBe(false)
       const unsavedReceipt = secondBoot.write({ token: 'unsaved' })
-      expect(unsavedReceipt.status === 'committed' ? unsavedReceipt.cursor : null, 'and three repairs landed behind its first write — one per address — because both `file` addresses were absent again').toBe(4)
+      expect(unsavedReceipt.status === 'committed' ? unsavedReceipt.cursor : null, 'and ONE repair landed behind its first write — the `mem` pair’s — because both `file` addresses already stood on the disk').toBe(2)
     } finally {
       rmSync(unsaved, { recursive: true, force: true })
     }
@@ -435,7 +447,12 @@ describe('the instance’s declarations · measured at the store’s creation (D
         const settings = createOperatorSettings({ userDataDir: dir })
         expect(settings.readAppState(), `CD-11/${arm.why}: the corrupt arm still answers the same four members, nothing thrown`).toEqual({ rows: [], legacy: 'corrupt', unrepresentable: [], storage: 'standing' })
         expect(armed(dir, lastBatch()).read(APP_STATE, 'file'), `CD-11/${arm.why}: and the record STANDS carrying that word — the repair wrote the arm instead of falling through it`).toEqual({ rows: [], legacy: 'corrupt', unrepresentable: [] })
-        expect(statSync(join(dir, FILE)).size, `CD-11/${arm.why}: with no byte on the disk, the file being the store’s to save and no save having run`).toBe(0)
+        // THE RECORD IS ALSO ON THE DISK, carrying the same word: the repair's write is the save's own op
+        // (measured 2026-11-03 on the installed `1.9.1`; `CD-10`'s instrument). A corrupt carrier leaves the
+        // RECORD standing with its word, and no byte of the CARRIER is written — the two are different files.
+        expect(readFileSync(join(dir, FILE), 'utf8'), `CD-11/${arm.why}: the boot saved the record carrying that word`).toBe(
+          '{"operator-app-state":{"legacy":"corrupt","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+        )
       } finally {
         rmSync(dir, { recursive: true, force: true })
       }

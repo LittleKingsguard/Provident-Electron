@@ -99,14 +99,20 @@ function expectCorrupt(answer: AppStateAnswer, why: string): void {
 }
 
 describe('settings-carrier-retirement · the second import-once arm, its six arms and the bytes it never writes', () => {
-  it('IMP-1 · the absent arm: no retired file answers `absent` with no rows, and no byte is written (behaviour.md §7; persistence.md §2)', () => {
+  it('IMP-1 · the absent arm: no retired file answers `absent` with no rows, creates no retired name, and the boot’s own two records stand in the file (behaviour.md §7; persistence.md §2)', () => {
     const dir = profile()
     const settings = instance(dir)
     const answer = settings.readAppState()
     expect(answer, 'the cold answer over a profile holding no retired file').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'standing' })
     expect(existsSync(retiredPathOf(dir)), 'no retired name is created by the absent arm (L1 §8 S-4)').toBe(false)
     expect(readdirSync(dir), 'and the profile holds exactly the instance’s own file').toEqual([OPERATOR_FILE])
-    expect(readFileSync(join(dir, OPERATOR_FILE)).length, 'the boot writes no byte: the instance file stands zero-length (persistence.md §2)').toBe(0)
+    // **THE BOOT WRITES, AND WHAT IT WRITES IS THE RECORD THE ABSENT ARM COMPOSES** (measured 2026-11-03 on the installed
+    // `1.9.1`: `125` bytes). `persistence.md` §2's *"the boot writes no byte"* is the reading of its own date: the
+    // row-list address's creation repair writes `{rows: [], legacy: 'absent', unrepresentable: []}` as ONE record and the
+    // save at that member settles it, so the file holds the word this row asserts at the answer, in the store's bytes.
+    expect(readFileSync(join(dir, OPERATOR_FILE), 'utf8'), 'the absent arm’s own record, saved whole and alone').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
   })
 
   it('IMP-2 · the valid arm: every `file.*` row lands verbatim under its own name, `schemaVersion` does not become a row, and the diagnosis is `imported` (behaviour.md §7; L1 §4)', () => {
@@ -122,7 +128,12 @@ describe('settings-carrier-retirement · the second import-once arm, its six arm
     expect(answer.rows.map((row) => row.name), 'the `schemaVersion` stamp is the retired record’s format marker and is NOT carried as a row (L1 §4; D-13)').toEqual(['file.tabs.order', 'file.settings.theme.token'])
     expect(answer.rows.some((row) => row.name === 'schemaVersion'), 'so no `schemaVersion` row appears anywhere in the answer').toBe(false)
     expect(answer.unrepresentable, 'and nothing was named as uncarryable').toEqual([])
-    expect(readFileSync(join(dir, OPERATOR_FILE)).length, 'the import writes no byte of its own: the rows stand in memory until an ordinary write supersedes them (persistence.md §2)').toBe(0)
+    // **AND THE IMPORT'S ANSWER IS IN THE FILE AT THE MEMBER THAT LANDED IT** (measured 2026-11-03 on the installed
+    // `1.9.1`: `210` bytes). The rows, the named-uncarryable list and the word are the record the creation repair wrote;
+    // a repair that had merely minted a placeholder would leave `FIRST_RUN`'s image here instead.
+    expect(readFileSync(join(dir, OPERATOR_FILE), 'utf8'), 'the imported row list, the word and the placeholder record address beside it, in the store’s own bytes').toBe(
+      '{"operator-app-state":{"legacy":"imported","rows":[{"name":"file.tabs.order","value":["a","b"]},{"name":"file.settings.theme.token","value":"dark"}],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
   })
 
   it('IMP-3 · unparsable bytes answer the corrupt arm, throw nothing and leave the bytes byte-identical (behaviour.md §7; L1 §4)', () => {

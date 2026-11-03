@@ -280,16 +280,26 @@ describe('settings-carrier-retirement · the operator-settings instance at unit 
     expect(settings.readAppState(), 'and a read still answers the four declared members after all of it').toEqual({ rows: [{ name: 'file.tabs.order', value: ['a'] }], legacy: 'absent', unrepresentable: [], storage: 'standing' })
   })
 
-  it('OS-7 · the absent arm at the module: no retired file answers `absent` with no rows, creates no retired name, writes no byte — and with nothing written between, a second construction imports again (behaviour.md §7; persistence.md §4)', () => {
+  it('OS-7 · the absent arm at the module: no retired file answers `absent` with no rows, creates no retired name, and the boot’s own record — not an import — answers a second construction (behaviour.md §7; persistence.md §4)', () => {
     const dir = profile()
     const settings = instance(dir)
     expect(settings.readAppState(), 'the cold answer over a profile holding no retired file, and a store that stands').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'standing' })
     expect(existsSync(at(dir, RETIRED_CARRIER)), 'the absent arm creates no retired name (persistence.md §4)').toBe(false)
     expect(readdirSync(dir), 'and the profile holds exactly the instance’s own file').toEqual([OPERATOR_FILE])
-    expect(readFileSync(at(dir, OPERATOR_FILE)).length, 'the boot writes no byte: the instance file stands zero-length (persistence.md §2)').toBe(0)
+    // **THE BOOT WRITES, AND THE WRITE IS THE MARKER** (measured 2026-11-03 on the installed `1.9.1`: `125` bytes).
+    // `persistence.md` §2's *"the boot writes no byte"* is the reading of its own date; the row-list address's creation
+    // repair writes `{rows: [], legacy: 'absent', unrepresentable: []}` and the save at that member settles it.
+    expect(readFileSync(at(dir, OPERATOR_FILE), 'utf8'), 'the absent arm’s own record, saved by the member that landed it').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
 
+    // **AND THE CLAIM THIS ROW CARRIED UNTIL `1.9.1` IS DEAD: A SECOND CONSTRUCTION NO LONGER RE-RUNS THE IMPORT.**
+    // It answered the same cold answer because nothing wrote a marker; the marker now stands on the disk at the first
+    // boot, so the second construction's declaration finds a record, answers `true` and performs no import at all —
+    // measured across two processes with the retired carrier REWRITTEN between them, which is the only instrument this
+    // volume allows (its atime is dead). The answers are identical and the REASON is now the record.
     const again = instance(dir)
-    expect(again.readAppState(), 'the marker is a RECORD and nothing wrote one, so a second construction answers the same cold answer (persistence.md §4)').toEqual(settings.readAppState())
+    expect(again.readAppState(), 'a second construction answers the same cold answer, and it answers it off the RECORD the first boot saved rather than off a fresh import (persistence.md §4)').toEqual(settings.readAppState())
   })
 
   it('OS-8 · the valid arm at the module: every `file.*` row lands verbatim under its own name and in its own order, `schemaVersion` is not carried, and the arm writes no byte (behaviour.md §7; L1 §4)', () => {
@@ -307,7 +317,12 @@ describe('settings-carrier-retirement · the operator-settings instance at unit 
     ])
     expect(answer.rows.some((row) => row.name === 'schemaVersion'), 'the `schemaVersion` stamp is the retired record’s format marker and is never carried as a row (L1 §4; D-13)').toBe(false)
     expect(answer.unrepresentable, 'and nothing was named uncarryable').toEqual([])
-    expect(readFileSync(at(dir, OPERATOR_FILE)).length, 'the import writes no byte: the rows stand in memory until an ordinary write supersedes them (persistence.md §2)').toBe(0)
+    // **THE IMPORT'S ANSWER IS IN THE FILE AT THE MEMBER THAT LANDED IT** (measured 2026-11-03 on the installed `1.9.1`:
+    // `210` bytes). The rows, the word and the empty named-uncarryable list are the record the creation repair wrote; a
+    // repair that had only minted a placeholder would leave `FIRST_RUN`'s image here.
+    expect(readFileSync(at(dir, OPERATOR_FILE), 'utf8'), 'the imported row list and the word, in the store’s own bytes, beside the record address’s placeholder').toBe(
+      '{"operator-app-state":{"legacy":"imported","rows":[{"name":"file.tabs.order","value":["a","b"]},{"name":"file.settings.theme.token","value":"dark"}],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
     expect(sha256(at(dir, RETIRED_CARRIER)), 'and the retired seed’s digest is unmoved (persistence.md §4)').toBe(before)
 
     const held = settings.readAppState()

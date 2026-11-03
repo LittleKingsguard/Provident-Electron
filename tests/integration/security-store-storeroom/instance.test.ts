@@ -59,7 +59,7 @@ function refused(receipt: OperatorSettingsReceipt): { status: 'refused'; reason:
 }
 
 describe('security-store-storeroom · the instance through its declared surface', () => {
-  it('a first boot over no file serves the first-run default, leaves the new file zero-length and creates the retired name nowhere (interface.md §2.1, §2)', () => {
+  it('a first boot over no file serves the first-run default, leaves the two creation records on the disk and creates the retired name nowhere (interface.md §2.1, §2)', () => {
     const settings = createOperatorSettings({ userDataDir })
     const record = settings.read()
     expect(record.token, 'the first-run default token').toBeNull()
@@ -69,7 +69,15 @@ describe('security-store-storeroom · the instance through its declared surface'
     expect({ exclusion: record.exclusion, tier4: record.tier4 }, 'the exclusion pair boots to the safe pair').toEqual({ exclusion: 'mcp-enabled', tier4: false })
     expect(existsSync(filePath(OPERATOR_FILE)), 'construction creates the store file').toBe(true)
     expect(readdirSync(userDataDir), 'and nothing else stands beside it').toEqual([OPERATOR_FILE])
-    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'the file is created exclusively, zero-length and empty (guide §9.1)').toBe(0)
+    // **THE FILE IS NO LONGER ZERO-LENGTH, AND THE READING IS THE SAVE A CREATION REPAIR NOW TAKES** (`1.9.1`, item 5's
+    // sibling: the registration instant's write is settled into the file at the member that lands it). The two `file`
+    // records the boot's three declarations write are therefore ON THE DISK before any caller act, in the store's own
+    // bytes — measured 2026-11-03 against the installed tree, and asserted whole rather than by a length alone so a
+    // record that moved cannot pass on the figure. What this row keeps is the part that never moved: the retired name
+    // is created NOWHERE.
+    expect(bytesOf(OPERATOR_FILE).toString('utf8'), 'the boot saved both creation records: the record address at `FIRST_RUN`’s image and the row-list address at the absent arm').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
     expect(existsSync(filePath(LEGACY_FILE)), 'the retired name is not created by the absent import arm').toBe(false)
   })
 
@@ -112,19 +120,29 @@ describe('security-store-storeroom · the instance through its declared surface'
     expect(record.maxJournalLength, 'the cap survives').toBe(12)
     expect(record.entries, 'and a foreign key lands in `entries` verbatim').toEqual({ 'x-mine': { a: 1 } })
     expect(bytesOf(LEGACY_FILE).toString('utf8'), 'the retired name is read once and never written').toBe(seed)
-    // THE IMPORT DOES NOT PERSIST — `interface.md` §2.1: "the boot is read-only: the construction,
-    // the boot read, the import and `attach` write no byte". The imported record lives in the
-    // instance's memory until the operator's first committed write, which is why the import
-    // re-runs at every boot over a profile nobody has written to yet (`behaviour.md` §3, row 1;
-    // `persistence.md` §3). This row asserted the opposite until the L3 examiner's `L2-T1`.
-    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'the import writes no byte: the mark of a landed import is the record it serves, not a byte on disk (interface.md §2.1)').toBe(0)
+    // **THE IMPORT DOES PERSIST, AND THE MECHANISM IS THE REPAIR THAT PERFORMS IT** (`D-85`; settled into the file by
+    // `1.9.1`, whose registration instant saves what it lands). `interface.md` §2.1's *"the boot is read-only: the
+    // construction, the boot read, the import and `attach` write no byte"* is the reading of its own date and is
+    // superseded by measurement: the import runs INSIDE the record address's creation repair (`D-85`), the repair's
+    // write is the save the terminal arm takes, and the imported record is therefore in the file at the member that
+    // lands it — before any caller act, and before `read()`. Measured 2026-11-03 on the installed tree: `187` bytes, the
+    // imported token, grants, cap and foreign entry in the store's own bytes beside the row-list record.
+    expect(bytesOf(OPERATOR_FILE).toString('utf8'), 'the import reached the file: the record address carries the imported values, the row-list address the absent arm, and no placeholder stands over either').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["graph","read"],"entries":{"x-mine":{"a":1}},"maxJournalLength":12,"token":"tok"}}',
+    )
   })
 
-  it('the import’s absent arm serves the default and writes no byte', () => {
+  it('the import’s absent arm serves the default and writes the placeholder record — the boot’s own save, never a byte of the retired name', () => {
     const settings = createOperatorSettings({ userDataDir })
     expect(settings.read().token).toBeNull()
     expect(existsSync(filePath(LEGACY_FILE)), 'no retired name is created').toBe(false)
-    expect(readFileSync(filePath(OPERATOR_FILE)).length, 'and the absent arm writes nothing').toBe(0)
+    // **THE BOOT WRITES, AND WHAT IT WRITES IS `FIRST_RUN`’S OWN IMAGE** — the absent arm of the import answered
+    // `undefined` inside the record address's creation repair, the repair composed `toStored(undefined ?? FIRST_RUN)`,
+    // and the save at that member put it on the disk (measured 2026-11-03, installed `1.9.1`). The row's subject that
+    // never moved is the retired name: this arm reads no carrier and writes none.
+    expect(bytesOf(OPERATOR_FILE).toString('utf8'), 'the absent arm saves the placeholder record and the absent row list, and nothing else stands in the file').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
   })
 
   it('the import’s unparsable arm serves the default, throws nothing and leaves the bytes (L1 §5)', () => {

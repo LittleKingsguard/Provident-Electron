@@ -76,10 +76,13 @@ beforeAll(() => { installShim() })
 
 const backend: McpBackend = { invoke: async () => ({}) }
 
-/** **THE BOOT'S CONSTRUCTION, STOOD BY THE ROW** (`src/main/main.ts:132`): ONE store at the profile's
- *  one name, which brings that name into being exclusively and holds an empty register until a write
- *  lands. It is the only way to stand a surface at all — `DataSurfaceOptions.store` is required — so
- *  every row below begins here rather than at a bare directory (D-80). */
+/** **THE SURFACE'S INSTANCE, STOOD BY THE ROW** (`src/main/main.ts:132` hands the surface its store the same
+ *  way): ONE store at the profile's one name, which brings that name into being exclusively and, with no
+ *  constraint list, holds an empty register until a write lands. It is the only way to stand a surface at
+ *  all — `DataSurfaceOptions.store` is required — so every row below begins here rather than at a bare
+ *  directory (D-80). **IT IS NOT THE APP'S BOOT**: `main.ts` batches six tab-record declarations into that
+ *  construction, and `tabs-must-stand`'s repair writes (and, from `1.9.1`, saves) the landing record, so the
+ *  app's own profile is `160` bytes before any commit (measured 2026-11-03; `D-86`). */
 function boot(dir: string = profileDir) {
   return createProfileStore({ filePath: join(dir, PROFILE_FILE) })
 }
@@ -165,8 +168,14 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     // instance, that construction creates the name exclusively, and the reading therefore answers `occupied`.
     // What is still owed — and is the stronger reading of the same sentence — is that NOTHING HAS LANDED IN IT:
     // the name stands at zero length, so the "no path" above is an empty register and not a missing store.
-    expect(existsSync(at(PROFILE_FILE)), 'the boot’s own construction is what brings the one name into being (D-80)').toBe(true)
-    expect(statSync(at(PROFILE_FILE)).size, 'and it holds no byte: a first-ever profile’s store is open and empty, never absent').toBe(0)
+    expect(existsSync(at(PROFILE_FILE)), 'the construction is what brings the one name into being (D-80)').toBe(true)
+    // **THE DEATH OF THIS ROW'S OLD CLAIM, NAMED: `1.9.1` SETTLES A REGISTRATION INSTANT'S `file` WRITE INTO THE FILE, SO
+    // THE APP'S OWN BOOT NO LONGER LEAVES AN EMPTY PROFILE** (measured 2026-11-03: `160` bytes — the landing-seated tab
+    // record, written by `tabs-must-stand`'s repair while the store holder is still null). What stands here is the
+    // SURFACE'S OWN instance, stood by `boot()` with NO constraint list, and *for that construction* the reading is
+    // unmoved: an open register and no byte in it — which is the row's subject (the surface's answers), the boot's
+    // bytes being `tests/integration/central-data/profile-file.test.ts`'s `THE APP'S OWN BOOT` row.
+    expect(statSync(at(PROFILE_FILE)).size, 'and THIS bare instance holds no byte: an open register, never an absent store').toBe(0)
     expect(readdirSync(profileDir), 'no `.tmp`, no lock and no sidecar stands beside the one name (persistence.md §5)').toEqual([PROFILE_FILE])
 
     const { client, close } = await live(['read', 'dispatch'], surface)
@@ -337,10 +346,15 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(text.includes('file.kept'), 'and the durable row is the one it does carry').toBe(true)
   })
 
-  it('S-9 · the package is never modified: the seam’s census stands at fourteen members and twelve symbols, and the package is imported in exactly three files — the seam, the operator-settings instance and the tab record’s own instance — none of them under src/main/data/', () => {
+  it('S-9 · the package is never modified: the seam’s census stands at fourteen members and THIRTEEN symbols, and the package is imported in exactly three files — the seam, the operator-settings instance and the tab record’s own instance — none of them under src/main/data/', () => {
     expect(STOREROOM_DECLARED_SURFACE.memberCount, 'L1 §5 S-9 — the seam census row reads fourteen members').toBe(14)
     expect(STOREROOM_DECLARED_SURFACE.members.length, 'and the declared member list is that length, so a growth fails here rather than silently').toBe(14)
-    expect(STOREROOM_DECLARED_SURFACE.symbolCount, 'and twelve own symbols').toBe(12)
+    // **THE SYMBOL FIGURE MOVED WITH `1.9.1`: twelve at `1.9.0`, THIRTEEN at the installed tree, the thirteenth being
+    // `Symbol(provident-storeroom.registration-save)`** — the marker the release that rolls a refusing registration
+    // back mints at construction (measured 2026-11-03 on both installed trees, one fresh instance each; the two lists
+    // match member for member apart from it). The string list is unmoved, which is why the figure below is the only
+    // one this release moves here.
+    expect(STOREROOM_DECLARED_SURFACE.symbolCount, 'and thirteen own symbols at construction').toBe(13)
     const importers = walk(SRC).filter((file) => readFileSync(file, 'utf8').includes("from 'provident-storeroom'")).map(rel).sort()
     expect(importers, 'L1 §5 S-9 — the package is imported in exactly the seam, the operator-settings instance and (D-63) the tab record\'s own instance').toEqual(['main/operator-settings/index.ts', 'main/storeroom.ts', 'main/tabs-record/index.ts'])
     expect(importers.filter((file) => file.startsWith('main/data/')), 'and nowhere under src/main/data/: this module reaches the store through the seam').toEqual([])

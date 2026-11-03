@@ -92,11 +92,18 @@ function liveServer(): ProvidentMcpServer {
 }
 
 describe('security-store-storeroom · the twelve L1 scenarios through their declared entry points', () => {
-  it('S-1 · the instance boots over no file: the first-run default is served, its file exists zero-length, and no provident-security.json is written', () => {
+  it('S-1 · the instance boots over no file: the first-run default is served, its file carries the two creation records the boot saves, and no provident-security.json is written', () => {
     const settings = createOperatorSettings({ userDataDir })
     expect(view(settings.read()), 'the first-run default, and the safe pair beside it').toEqual(FIRST_RUN)
     expect(existsSync(at(OPERATOR_FILE)), 'the store’s construction created the instance’s own file (interface.md §2.1)').toBe(true)
-    expect(readFileSync(at(OPERATOR_FILE)).length, 'and created it exclusively, zero-length and empty (guide §9.1)').toBe(0)
+    // **THE FILE IS NO LONGER ZERO-LENGTH: THE BOOT SAVES WHAT ITS DECLARATIONS LAND** (measured 2026-11-03 on the
+    // installed `1.9.1`). `guide §9.1`'s zero-length creation is the reading of its own date and is superseded by
+    // measurement — the record address's creation repair writes `FIRST_RUN`'s image, the row-list address's writes the
+    // absent arm, and each write is settled into the file at the member that lands it. The whole image is asserted, so
+    // a record that drifted cannot pass on a length.
+    expect(readFileSync(at(OPERATOR_FILE), 'utf8'), 'and it carries exactly the two creation records, in the store’s own bytes').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
     expect(existsSync(at(RETIRED_FILE)), 'the retired name is not created by the absent import arm (D-19)').toBe(false)
     expect(readdirSync(userDataDir), 'and nothing stands beside the file: no `.tmp`, no lock, no sidecar (persistence.md §5)').toEqual([OPERATOR_FILE])
   })

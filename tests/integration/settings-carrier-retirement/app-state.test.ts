@@ -96,12 +96,17 @@ function refused(receipt: OperatorSettingsReceipt): { status: 'refused'; reason:
 }
 
 describe('settings-carrier-retirement · the third durable address, through the instance’s declared surface', () => {
-  it('AS-1 · a fresh profile answers the cold answer over a standing store: no rows, `absent`, an empty `unrepresentable`, `standing` — and the instance file exists, zero-length (interface.md §1, §2; persistence.md §2)', () => {
+  it('AS-1 · a fresh profile answers the cold answer over a standing store: no rows, `absent`, an empty `unrepresentable`, `standing` — and the instance file carries the two creation records the boot saves (interface.md §1, §2; persistence.md §2)', () => {
     const settings = instance(userDataDir)
     const answer = settings.readAppState()
     expect(answer, 'the cold answer is the whole declared shape, not a member of it').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'standing' })
     expect(existsSync(filePath(OPERATOR_FILE)), 'construction creates the instance’s own file (guide §9.1; persistence.md §2)').toBe(true)
-    expect(bytesOf(OPERATOR_FILE).length, 'and the boot is write-free: the file stands zero-length and empty').toBe(0)
+    // **THE BOOT IS NOT WRITE-FREE: IT SAVES WHAT ITS TWO `file` REPAIRS LAND** (measured 2026-11-03 on the installed
+    // `1.9.1`). The row-list record carries the word asserted above — `absent` — in the store's own bytes, beside the
+    // record address's `FIRST_RUN` image; `persistence.md` §2's zero-length creation is the reading of its own date.
+    expect(bytesOf(OPERATOR_FILE).toString('utf8'), 'and the boot saved both: the record at `FIRST_RUN` and the row list carrying the arm it ran in').toBe(
+      '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
+    )
     expect(settings.read().token, 'the sibling’s first-run answer is unmoved by this unit’s second read (D-16)').toBeNull()
   })
 

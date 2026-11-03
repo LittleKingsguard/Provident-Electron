@@ -24,6 +24,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createDataSurface, type DataSurface } from '../../../src/main/data'
 import { createProfileStore } from '../../../src/main/storeroom.js'
+import { tabsConstraintDeclarations } from '../../../src/main/tabs-record/index'
 
 const PROFILE_FILE = 'provident-profile.json'
 
@@ -42,17 +43,29 @@ afterEach(() => {
 const widened = (answer: unknown): Record<string, unknown> => answer as Record<string, unknown>
 const coldList = { status: 'read', prefix: null, paths: [], count: 0 }
 
-/** **THE BOOT'S CONSTRUCTION, STOOD BY THE BATTERY** (`src/main/main.ts:132`): one instance at the profile's one
- *  name, handed to the surface the way `:302` hands it (D-80). `dir` names the store's file; `reading` is the
- *  directory the READING is pointed at, which is the same one except in the row that measures the two apart. */
+/** THE SURFACE'S OWN INSTANCE: one store at the profile's one name, handed to the surface the way `:302` hands it
+ *  (D-80). `dir` names the store's file; `reading` is the directory the READING is pointed at, which is the same one
+ *  except in the row that measures the two apart.
+ *
+ *  **AND IT IS A BARE STORE, WHICH THE APP'S BOOT IS NOT — SAID HERE BECAUSE `1.9.1` MADE THE DIFFERENCE VISIBLE.**
+ *  `src/main/main.ts`'s construction batches `tabsConstraintDeclarations(() => storeHolder.current)` as its
+ *  `constraints`, and **`tabs-must-stand` ACTS AT THE REGISTRATION INSTANT** — it judges `context.value`, not a handle
+ *  — so over a fresh profile its repair writes the landing-seated record, and from `1.9.1` that write IS SAVED: the
+ *  app's own boot leaves `160` bytes before any commit (measured 2026-11-03, driven below by `the app's own boot`).
+ *  Every other row in this file measures the SURFACE over a bare store, which is the only instance this battery can
+ *  stand without a boot's holder; the difference is the boot's, and it is the row below's subject rather than a
+ *  premise these rows quietly assume. */
 function surfaceAt(dir: string = profileDir, reading: string = dir): DataSurface {
   return createDataSurface({ profileDir: reading, store: createProfileStore({ filePath: join(dir, PROFILE_FILE) }) })
 }
 
 describe('central-data · persistence and the profile\'s bytes', () => {
-  it('the single written name → the boot’s construction creates provident-profile.json at zero length, a read-only session writes no byte, and no .tmp, lock or sidecar ever stands beside it', () => {
+  it('the single written name → a BARE store’s construction creates provident-profile.json at zero length, a read-only session writes no byte, and no .tmp, lock or sidecar ever stands beside it', () => {
     const s = surfaceAt()
     expect(readdirSync(profileDir), 'the one name, and nothing beside it (persistence §1, §5)').toEqual([PROFILE_FILE])
+    // A BARE STORE: no constraint list, so no repair can land and nothing writes. The app's boot is NOT this
+    // construction — it batches six declarations whose `tabs-must-stand` repair writes the landing record — and the row
+    // below drives that one to its own reading (measured 2026-11-03).
     expect(statSync(profilePath).size, 'the construction’s empty image: the register is OPEN and holds nothing (D-80)').toBe(0)
     s.list({})
     s.read({ path: ['alpha'] })
@@ -60,6 +73,33 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     expect(readFileSync(profilePath, 'utf8'), 'a session that only reads lands no byte').toBe('')
     s.write({ path: ['alpha'], value: 'x' })
     expect(readdirSync(profileDir), 'persistence §1 — exactly one written name, before and after the commit').toEqual([PROFILE_FILE])
+  })
+
+  it('THE APP’S OWN BOOT: the six tab-record declarations batched as `src/main/main.ts` batches them put the landing record on the disk before any commit — `160` bytes, and the boot is the only writer until a caller acts (D-86; `1.9.1` item 1’s mechanism)', () => {
+    // **THIS ROW EXISTS BECAUSE EVERY OTHER ROW IN THIS FILE STANDS A BARE STORE** (`surfaceAt`), and the app's boot is
+    // a different construction: `tabsConstraintDeclarations(() => holder.current)` rides `cfg.constraints`, and
+    // `tabs-must-stand` judges `context.value` rather than reaching for a handle, so over a fresh profile its repair
+    // runs at the registration instant — while the holder is still null, which is exactly why that pair does not use
+    // the `body` wrapper. From `1.9.1` the repair's `file`-tier write is settled into the file at the member that lands
+    // it, so the profile carries `{tabs: {landing…, order:['landing']}}` when the constructor returns. Measured
+    // 2026-11-03 on the installed tree; the holder is bound after the construction, exactly as `main.ts` binds it.
+    const holder: { current: ReturnType<typeof createProfileStore> | null } = { current: null }
+    const store = createProfileStore({ filePath: profilePath, constraints: tabsConstraintDeclarations(() => holder.current) as never })
+    holder.current = store
+    expect(readdirSync(profileDir), 'the one written name, as in every row here').toEqual([PROFILE_FILE])
+    const image = JSON.parse(readFileSync(profilePath, 'utf8')) as Record<string, unknown>
+    expect(Object.keys(image), 'the boot wrote the tab record and nothing else at the root').toEqual(['tabs'])
+    const tabs = image['tabs'] as { landing?: { id?: unknown; active?: unknown }; order?: unknown }
+    expect({ landing: tabs.landing?.id, active: tabs.landing?.active, order: tabs.order }, 'the landing entry seated and active, and the order naming exactly it — the repair’s own value, whole').toEqual({ landing: 'landing', active: true, order: ['landing'] })
+    expect(statSync(profilePath).size, 'and the file stands at the byte length that value serialises to, before any caller act (the length is derived, not pinned: the stamp is a clock reading)').toBe(readFileSync(profilePath, 'utf8').length)
+    expect(statSync(profilePath).size, 'which is not zero: the boot’s own save is the difference this row exists to state').toBeGreaterThan(0)
+    // A READ ONLY SESSION MOVES NOTHING AFTER IT: the surface over the same instance answers and lands no byte.
+    const stood = readFileSync(profilePath)
+    const surface = createDataSurface({ profileDir, store })
+    surface.list({})
+    surface.read({ path: ['alpha'] })
+    surface.journal({})
+    expect(readFileSync(profilePath).equals(stood), 'a session that only reads writes no byte after the boot').toBe(true)
   })
 
   it('a profile seeded with the store\'s own empty image ({}) → list count 0, read absent, and the next write commits with the bytes then carrying that row', () => {

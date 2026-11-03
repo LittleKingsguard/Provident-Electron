@@ -9,11 +9,11 @@
 | Drive | Answer |
 |---|---|
 | `createOperatorSettings({ userDataDir })`, then `read()` | `token:null`, `enabled:['read','dispatch']`, no `maxJournalLength`, no `entries`, and the safe pair `{exclusion:'mcp-enabled', tier4:false}` (L1 §5; `guide §4`; `interface.md` §2) |
-| the same, over `userDataDir` holding nothing | `<userDataDir>/provident-operator-settings.json` **exists and is zero-length**: the store's construction created it, exclusively and empty (`guide §9.1`; `interface.md` §2.1) |
-| the same, with `<userDataDir>/provident-security.json` absent | no `provident-security.json` is created, and the boot writes no byte of the instance's file — its three creation repairs land journal ops and materialise nothing, the package saving at a `file`-tier write's commit alone (`guide §9.3`; D-19, D-85; `interface.md` §2.1) |
+| the same, over `userDataDir` holding nothing | `<userDataDir>/provident-operator-settings.json` **exists and carries the boot's two creation records** (`125` bytes): the store's construction created it exclusively, and the creation repairs' writes were saved at the members that landed them (`guide §9.1`; `interface.md` §2.1; measured 2026-11-03, `D-86`) |
+| the same, with `<userDataDir>/provident-security.json` absent | no `provident-security.json` is created, and the boot writes nothing of the RETIRED name: its three creation repairs land journal ops and the two `file` ones save the placeholder record and the absent row list — the retired carrier is read and never written (`guide §9.3`; D-19, D-85, D-86; `interface.md` §2.1) |
 | a second `createOperatorSettings` over the same directory, nothing written between | the same record; the boot still writes nothing (`guide §9.1`) |
 
-- **The boot writes no byte, but it is not order-free: its THREE creation repairs land the journal's first three ops, so the first caller write of a process is its FOURTH** — which is why the ordinal a commit answers is the store's own, is asserted by difference and never by its absolute value, and why the one figure a row pins absolutely is the creation instant's (`D-85`: `cursor` `1` absent the declarations, `2` under `D-84`'s one, `4` under all three; `interface.md` §2 `ASM-L2-7`; `guide §6.4`).
+- **The boot is not order-free: on a COLD profile its THREE creation repairs land the journal's first three ops, so the first caller write of that process is its FOURTH — and on a SECOND boot only the `mem` pair is repaired, so the first caller write is the SECOND** (measured 2026-11-03 on the installed `1.9.1`, the two `file` records having been saved by the first boot) — which is why the ordinal a commit answers is the store's own, is asserted by difference and never by its absolute value (`D-85`: `cursor` `1` absent the declarations, `2` under `D-84`'s one, `4` under all three on a cold profile; `interface.md` §2 `ASM-L2-7`; `guide §6.4`).
 
 ## 2. A committed write, and the read that re-serves it
 
@@ -34,7 +34,7 @@ The import runs **INSIDE the declaration at `['operator-settings']`, at the stor
 
 | Seed | What the first `read()` answers |
 |---|---|
-| absent | the first-run default written into the record; no byte on the disk until the first save; while unsaved, the next boot's repair reads again and answers the same (L1 §5; D-19, D-85) |
+| absent | the first-run default written into the record **and saved with it**, so the next boot finds the record standing, repairs nothing at that address and answers the same without reading a carrier again (L1 §5; D-19, D-85, D-86) |
 | `{token:'tok',enabled:['graph','read','graph','bogus'],maxJournalLength:12,'x-mine':{'a':1}}` | `token:'tok'`, **`enabled:['graph','read']`** (the seed's own order, deduplicated), the cap `12`, and `entries` carrying `x-mine` verbatim — **the operator's token, grants, cap and an arbitrary entry all survive** (D-19; L1 §5; `A-5`) |
 | unparsable bytes | the first-run default, nothing thrown, the seed's bytes byte-identical (L1 §5; the deleted `src/main/security-store.ts`'s unparsable-bytes arm) |
 | a non-object (`[1,2,3]`, a string, a number, a boolean) | the same: the first-run default, no throw, the bytes untouched (L1 §5) |
@@ -54,7 +54,7 @@ The import runs **INSIDE the declaration at `['operator-settings']`, at the stor
 | a `file`-tier save that cannot land | `reason:'FileCommitFailed'` with the store's own journal rollback already run, so the bytes are the bytes that stood before (L1 §3; `guide §9.4`) |
 | a status outside the three named spellings | **carried verbatim** under the escape arm, never narrowed to a false one (`interface.md` §3 `ASM-L2-3`; `guide §8.1`) |
 
-- **A refused write mints no cursor and adds no change**, and the record the next `read()` answers is the pre-write record, because the module's live state advances only on a committed receipt (`guide §9.4`; L1 §3). **`ContainerKindConflict` and `UnattributedFailure` are declared and unnamed by no row**: the first is reachable only through a boot arm the package does not declare (`persistence.md` §9 P-1), the second only through a throw site this module never supplies (`guide §3.3`, `§8.3`).
+- **A refused write mints no cursor and adds no change**, and the record the next `read()` answers is the pre-write record, because the module's live state advances only on a committed receipt (`guide §9.4`; L1 §3). **`ContainerKindConflict` and `UnattributedFailure` are declared and unnamed by no row**: the first is reachable only through a boot over bytes that are not the store's image — an arm the installed `1.9.1` declares and treats as NO image (`persistence.md` §9 P-1, discharged), the second only through a throw site this module never supplies (`guide §3.3`, `§8.3`).
 
 ## 5. The subscription is the change path
 
