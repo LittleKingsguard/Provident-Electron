@@ -1459,7 +1459,11 @@ describe('H1 U-STORE-FOCUS — §2.5 THE TOOL\'S ROUTE AND THE REPLY-SHAPE DETER
     expect(region.includes(HOLDER_READ)).toBe(false)
     expect(region.includes(HOLDER_MUTATION)).toBe(false)
     expect(region.includes('holder.state')).toBe(false)
-    expect(src.includes('mem.focus')).toBe(true) // the store-carried source is the wiring's state after the re-home
+    // **RE-GRAINED `D-89`, AND THE ROW WAS WEAKLY SATISFIED BEFORE**: `src.includes('mem.focus')` was true only of the focus
+    // region's COMMENTS once the read left the frozen store, so it would have stayed green through a revert. The claim is
+    // now read over comment-elided code: the answer's source is the SHAPE's read (`mirrorStateOf(`), which is the wiring's
+    // state after the swap and is NOT satisfied by prose.
+    expect(commentElided(src).includes('mirrorStateOf('), 'the answer is assembled from the SHAPE\'s read, in code').toBe(true)
   })
 
   it('S25-3a §2.5 item 3 (statics guard) — THE REPLY-SHAPE DETERMINATION, DECLARED BEHAVIOUR-PRESERVING: the FocusAnswer seam carries exactly { activeId, entries, opened, refused? } with NO FIFTH MEMBER (mcp-endpoint.md §3.8 item 2)', () => {
