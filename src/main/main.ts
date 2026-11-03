@@ -31,6 +31,14 @@ import {tabsConstraintDeclarations} from './tabs-record/index.js'
 import {createProfileStore} from './storeroom.js'
 import {PROFILE_FILE_NAME} from './data/store.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
+// `view-record` (D-87) — THE CROSSING'S SECOND DECLARATION SET, and the last address the frozen graph store was holding:
+// the pane geometry and the focus mirror. It enters the composition HERE and nothing else of this file's shape moves:
+// its two declarations are batched into the SAME `createProfileStore` call the tab record's six ride (D-65), its surface
+// is constructed beside the tab record's, and its three handlers stand beside the tab record's three. It constructs no
+// store and spells no `provident-*.json` literal for one.
+import {createViewSurface} from './view-surface/index.js'
+import {viewConstraintDeclarations} from './view-record/index.js'
+import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
 // names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
@@ -158,7 +166,15 @@ async function main(): Promise<void> {
   try {
     centralStore = createProfileStore({
       filePath: profileFilePath,
-      constraints: tabsConstraintDeclarations(() => storeHolder.current) as never,
+      // ═══ THE BATCH IS TWO MODULES' AND ONE CALL (D-65, D-87) ═══
+      // The tab record's six, and the view record's two — `panes-must-stand` and `focus-must-stand`. **NOTHING CONSTRUCTS
+      // A SECOND INSTANCE**: this is the app's one `createProfileStore`, and a module that declares a constraint hands
+      // its declaration HERE rather than building a store of its own. The two unwrapped pairs of the tab record's batch
+      // and both of the view record's are the ones that can act at the registration instant, because the holder below is
+      // bound only after this call answers — which is exactly why those four bodies judge `context.value` and reach for
+      // no handle. The order is each module's own and the two sets do not interleave: the ids are one namespace, and
+      // `viewConstraintDeclarations`' two carry a `-must-stand` suffix no tab-record id repeats.
+      constraints: [...tabsConstraintDeclarations(() => storeHolder.current), ...viewConstraintDeclarations(() => storeHolder.current)] as never,
     })
   } catch (refusal) {
     const shape = refusal as { status?: unknown; message?: unknown } | null
@@ -181,6 +197,16 @@ async function main(): Promise<void> {
     onChanged: () => {
       for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed()) win.webContents.send(IPC_TABS_CHANGED)
+      }
+    },
+  })
+  // **THE VIEW RECORD'S SURFACE (D-87)** — the same shape at the other family: one reference, over the ONE store this
+  // boot constructed, and one subscription that fires for either of its two roots. It constructs nothing.
+  const viewSurface = createViewSurface({
+    store: centralStore,
+    onChanged: () => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC_VIEW_CHANGED)
       }
     },
   })
@@ -424,6 +450,14 @@ async function main(): Promise<void> {
   ipcMain.handle(IPC_TABS_REMOVE, (_event, id: unknown) => tabsSurface.remove(id))
   // the change push: one subscription, taken here so the window's teardown can withdraw exactly what it took
   tabsSurface.attach()
+  // **THE VIEW RECORD'S THREE CHANNELS (D-87, L2 §2)**: a whole-view read takes no argument; a pane commit names a pane id
+  // and a geometry and never a path; a focus commit hands the whole mirror the model produced. The surface's shape arms
+  // answer `malformed-pane`/`malformed-focus` before any store verb; nothing here inspects an argument.
+  ipcMain.handle(IPC_VIEW_READ, () => viewSurface.read())
+  ipcMain.handle(IPC_VIEW_PANE_COMMIT, (_event, id: unknown, geometry: unknown) => viewSurface.commitPane(id, geometry))
+  ipcMain.handle(IPC_VIEW_FOCUS_COMMIT, (_event, mirror: unknown) => viewSurface.commitFocus(mirror))
+  // and its change push, taken at the same point and for the same reason as the tab record's
+  viewSurface.attach()
   ipcMain.handle(IPC_SECURITY_GET, () => settingsSurface.read())
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING reading, G3

@@ -25,6 +25,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createDataSurface, type DataSurface } from '../../../src/main/data'
 import { createProfileStore } from '../../../src/main/storeroom.js'
 import { tabsConstraintDeclarations } from '../../../src/main/tabs-record/index'
+import { viewConstraintDeclarations } from '../../../src/main/view-record/index'
 
 const PROFILE_FILE = 'provident-profile.json'
 
@@ -48,10 +49,12 @@ const coldList = { status: 'read', prefix: null, paths: [], count: 0 }
  *  except in the row that measures the two apart.
  *
  *  **AND IT IS A BARE STORE, WHICH THE APP'S BOOT IS NOT — SAID HERE BECAUSE `1.9.1` MADE THE DIFFERENCE VISIBLE.**
- *  `src/main/main.ts`'s construction batches `tabsConstraintDeclarations(() => storeHolder.current)` as its
- *  `constraints`, and **`tabs-must-stand` ACTS AT THE REGISTRATION INSTANT** — it judges `context.value`, not a handle
- *  — so over a fresh profile its repair writes the landing-seated record, and from `1.9.1` that write IS SAVED: the
- *  app's own boot leaves `160` bytes before any commit (measured 2026-11-03, driven below by `the app's own boot`).
+ *  `src/main/main.ts`'s construction batches the tab record's six declarations and (since `D-87`) the view record's two
+ *  as its `constraints`, and **`tabs-must-stand` ACTS AT THE REGISTRATION INSTANT** — it judges `context.value`, not a
+ *  handle — so over a fresh profile its repair writes the landing-seated record, and from `1.9.1` that write IS SAVED:
+ *  the app's own boot leaves `160` bytes before any commit (measured 2026-11-03, driven below by `the app's own boot`),
+ *  and **`panes-must-stand` IS THE SAME KIND OF PAIR ONE ROOT OVER**, so the boot's image carries both families since
+ *  `D-87` — `221` bytes over a fresh profile, measured the same way.
  *  Every other row in this file measures the SURFACE over a bare store, which is the only instance this battery can
  *  stand without a boot's holder; the difference is the boot's, and it is the row below's subject rather than a
  *  premise these rows quietly assume. */
@@ -75,7 +78,7 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     expect(readdirSync(profileDir), 'persistence §1 — exactly one written name, before and after the commit').toEqual([PROFILE_FILE])
   })
 
-  it('THE APP’S OWN BOOT: the six tab-record declarations batched as `src/main/main.ts` batches them put the landing record on the disk before any commit — `160` bytes, and the boot is the only writer until a caller acts (D-86; `1.9.1` item 1’s mechanism)', () => {
+  it('THE APP’S OWN BOOT: the two modules’ EIGHT declarations batched as `src/main/main.ts` batches them put both the landing record and the measured pane family on the disk before any commit, and the boot is the only writer until a caller acts (D-86; `1.9.1` item 1’s mechanism; D-87)', () => {
     // **THIS ROW EXISTS BECAUSE EVERY OTHER ROW IN THIS FILE STANDS A BARE STORE** (`surfaceAt`), and the app's boot is
     // a different construction: `tabsConstraintDeclarations(() => holder.current)` rides `cfg.constraints`, and
     // `tabs-must-stand` judges `context.value` rather than reaching for a handle, so over a fresh profile its repair
@@ -84,13 +87,21 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     // it, so the profile carries `{tabs: {landing…, order:['landing']}}` when the constructor returns. Measured
     // 2026-11-03 on the installed tree; the holder is bound after the construction, exactly as `main.ts` binds it.
     const holder: { current: ReturnType<typeof createProfileStore> | null } = { current: null }
-    const store = createProfileStore({ filePath: profilePath, constraints: tabsConstraintDeclarations(() => holder.current) as never })
+    // **THE BATCH IS THE ENTRY'S OWN, AND IT MOVED FROM SIX TO EIGHT UNDER `D-87`**: the tab record's six and the view
+    // record's two, spread into ONE `createProfileStore` call exactly as `src/main/main.ts` spreads them. The panes
+    // pair's repair is a `file`-tier write too, so it is settled into the same file by the same landing arm — which is
+    // why this row's image carries TWO roots where it carried one.
+    const store = createProfileStore({
+      filePath: profilePath,
+      constraints: [...tabsConstraintDeclarations(() => holder.current as never), ...viewConstraintDeclarations(() => holder.current as never)] as never,
+    })
     holder.current = store
     expect(readdirSync(profileDir), 'the one written name, as in every row here').toEqual([PROFILE_FILE])
     const image = JSON.parse(readFileSync(profilePath, 'utf8')) as Record<string, unknown>
-    expect(Object.keys(image), 'the boot wrote the tab record and nothing else at the root').toEqual(['tabs'])
+    expect(Object.keys(image), 'the boot wrote the pane family and the tab record, and nothing else at the root (the store’s image is key-ordered, so the reading is stable)').toEqual(['panes', 'tabs'])
     const tabs = image['tabs'] as { landing?: { id?: unknown; active?: unknown }; order?: unknown }
     expect({ landing: tabs.landing?.id, active: tabs.landing?.active, order: tabs.order }, 'the landing entry seated and active, and the order naming exactly it — the repair’s own value, whole').toEqual({ landing: 'landing', active: true, order: ['landing'] })
+    expect(image['panes'], 'and the measured default family, whole: the one pane id the app addresses at the size and bounds the tree states (D-87)').toEqual({ 'pane-a': { size: 100, bounds: { min: 0, max: 200 } } })
     expect(statSync(profilePath).size, 'and the file stands at the byte length that value serialises to, before any caller act (the length is derived, not pinned: the stamp is a clock reading)').toBe(readFileSync(profilePath, 'utf8').length)
     expect(statSync(profilePath).size, 'which is not zero: the boot’s own save is the difference this row exists to state').toBeGreaterThan(0)
     // A READ ONLY SESSION MOVES NOTHING AFTER IT: the surface over the same instance answers and lands no byte.

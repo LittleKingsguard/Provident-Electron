@@ -186,7 +186,10 @@ const DECLARED_APP_STATE_ADDRESS = 'operator-app-state'
 const OPERATOR_SETTINGS_MODULE = 'main/operator-settings/index.ts'
 const DECLARED_OPERATOR_SETTINGS_FILE = 'provident-operator-settings.json'
 /** §2.11 item 4 — the preload bridge's declared TOP-LEVEL member set, and the `store` sub-namespace's. */
-const DECLARED_TOP_LEVEL_BRIDGE_MEMBERS: readonly string[] = ['ready', 'onRequest', 'sendReply', 'notify', 'security', 'module', 'store', 'tabs'] // ⟶ D-63
+// ⟶ `D-87`: NINE. The view record's crossing lands its own bridge member beside the tab record's (D-63's eighth), so the
+// declared set gains `view` — and it is a SET assertion with its positive control, so a member that is added, missing or
+// renamed still fails the row.
+const DECLARED_TOP_LEVEL_BRIDGE_MEMBERS: readonly string[] = ['ready', 'onRequest', 'sendReply', 'notify', 'security', 'module', 'store', 'tabs', 'view'] // ⟶ D-63, D-87
 const DECLARED_STORE_SUB_MEMBERS: readonly string[] = ['get', 'put', 'onFileChanged']
 
 /* ───────────────────────────── THE DRIVE/PROBE LAYER ───────────────────────────── */

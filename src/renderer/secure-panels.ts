@@ -36,6 +36,9 @@ import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
 // and `SecuritySettings` itself is untouched (§1.3 item 5).
 import type { SecurityWriteReceipt, Tier4ClosedRefusal, Tier4WriteAnswer } from '../main/settings-surface/index.js'
 import type { TabsRecordRow } from '../shared/types.js'
+// THE VIEW RECORD'S SHAPES — TYPE-ONLY, on the `SecurityWriteReceipt` precedent above: erased at build, no runtime
+// coupling to the main side, and no value of `view-record` reaches the renderer bundle from here.
+import type { ViewFocusMirror, ViewPaneGeometry } from '../main/view-record/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
 // L3 (secure-panels E-1) — the group roster's binding to the gate's union: `ToolGroup` is
@@ -89,6 +92,15 @@ declare global {
         }>
         onChanged(handler: () => void): () => void
       },
+      // THE VIEW RECORD'S CROSSING (D-87; `docs/L2/view-record/interface.md` §2): ONE member, FOUR routes. This copy and
+      // `src/main/preload.ts`'s are the same text in both files — the lockstep rule the `store`, `security` and `tabs`
+      // members already follow, and the one a row reads back and compares rather than cites.
+      view?: {
+        read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; source: { panes: 'record' | 'default'; focus: 'record' | 'default' } }>
+        commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+        commitFocus(mirror: ViewFocusMirror): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+        onChanged(handler: () => void): () => void
+      },
       module?: {
         get(): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
         setDisabled(name: string, disabled: boolean): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
@@ -96,7 +108,6 @@ declare global {
     }
   }
 }
-
 // ONE author for the pane's group set: the gate's union types the table, and the table's own
 // key order IS the roster's order. A seventh gate group with no row is TS2741; a row naming
 // no group is TS2353; a misspelt key is TS2561 — all on `npm run typecheck`, the floor leg.

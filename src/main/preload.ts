@@ -8,6 +8,8 @@ import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, I
 import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
 import type { TabsRecordRow } from '../shared/types.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
+import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
+import type { ViewFocusMirror, ViewPaneGeometry } from './view-record/index.js'
 import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (erased at build; no runtime coupling). The WIDENING is an intersection at the declaration
@@ -78,6 +80,18 @@ export interface ProvidentBridge {
     read(): Promise<{ status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }>
     commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }>
     remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }>
+    onChanged(handler: () => void): () => void
+  },
+  // THE VIEW RECORD'S CROSSING (D-87, `docs/L2/view-record/interface.md` §2): ONE member, FOUR routes — the pane
+  // geometry and the focus mirror, over the boot's one store. `read` takes no argument because the view is one reading;
+  // `commitPane` names a pane and never a path, and `commitFocus` hands the whole mirror the model produced; `onChanged`
+  // delivers that the view moved and never its value. The declaration below and `src/renderer/secure-panels.ts`'s copy
+  // are the same text in both files — the lockstep rule the `store`, `security` and `tabs` members already follow, and
+  // this pair is the one a row reads back and compares rather than cites.
+  view: {
+    read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; source: { panes: 'record' | 'default'; focus: 'record' | 'default' } }>
+    commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+    commitFocus(mirror: ViewFocusMirror): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
     onChanged(handler: () => void): () => void
   },
   store: {
@@ -163,6 +177,24 @@ const bridge: ProvidentBridge = {
       ipcRenderer.on(IPC_TABS_CHANGED, listener)
       return () => {
         ipcRenderer.removeListener(IPC_TABS_CHANGED, listener)
+      }
+    },
+  },
+  view: {
+    read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; source: { panes: 'record' | 'default'; focus: 'record' | 'default' } }> {
+      return ipcRenderer.invoke(IPC_VIEW_READ)
+    },
+    commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }> {
+      return ipcRenderer.invoke(IPC_VIEW_PANE_COMMIT, id, geometry)
+    },
+    commitFocus(mirror: ViewFocusMirror): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }> {
+      return ipcRenderer.invoke(IPC_VIEW_FOCUS_COMMIT, mirror)
+    },
+    onChanged(handler: () => void): () => void {
+      const listener = (): void => handler()
+      ipcRenderer.on(IPC_VIEW_CHANGED, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC_VIEW_CHANGED, listener)
       }
     },
   },

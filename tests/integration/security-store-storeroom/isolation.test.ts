@@ -81,7 +81,7 @@ const RPC_METHODS = [
 const MUTATING = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'] as const
 
 /** The seven top-level `window.provident` members as filed (`src/main/preload.ts:42-75`). */
-const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs'] as const // ⟶ D-63: eight
+const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'store', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -367,14 +367,14 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     expect(names, 'the mutating set is seven, and no security write joins it').toEqual([...MUTATING])
   })
 
-  it('ISO-4 · no bridge channel carries a security write but the three, over a seven-member bridge, in both lockstep declarations', () => {
+  it('ISO-4 · no bridge channel carries a security write but the three, over a NINE-member bridge — the eighth is the tab record\'s (D-63) and the ninth the view record\'s (D-87) — in both lockstep declarations', () => {
     const preload = sourceOf('src/main/preload.ts')
     const start = preload.indexOf('export interface ProvidentBridge {')
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const block = preload.slice(start, end)
     const members = [...block.matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries seven top-level members and gains none (interface.md §5 A-1)').toEqual([...BRIDGE_MEMBERS])
+    expect(members, 'the bridge carries nine top-level members, and the row still asserts the set it declares (interface.md §5 A-1; D-87)').toEqual([...BRIDGE_MEMBERS])
     expect(preload.split("contextBridge.exposeInMainWorld('provident'").length - 1, 'one exposure of one bridge').toBe(1)
 
     // LIMB TWO — THE LOCKSTEP HALF. `preload.ts` and `secure-panels.ts` re-declare the same
