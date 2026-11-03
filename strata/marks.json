@@ -12,7 +12,7 @@
     },
     "integration": {
       "files": 18,
-      "sites": 152
+      "sites": 153
     },
     "unit": {
       "files": 15,
@@ -746,7 +746,7 @@
     },
     "onNotice": {
       "files": 111,
-      "sites": 2746
+      "sites": 2747
     },
     "retained": {
       "files": 5,
