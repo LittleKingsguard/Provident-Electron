@@ -765,15 +765,29 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     const lines = imported.split('\n').filter(Boolean)
     expect(lines.length, '§4.1 — the census has SUBJECTS (a dead scan FAILS): the two paths are mentioned in src/**').toBeGreaterThan(0)
     const offenders: string[] = []
+    const judged = new Set<string>()
     for (const line of lines) {
       const file = line.split(':')[0] ?? line
       if (file === 'src/renderer/store-core-graph.ts' || file === 'src/renderer/store-graph-references.ts') continue // the modules' OWN bytes
       if (file === 'src/renderer/renderer.ts') continue // THE DECLARED WIRING (field 6 row 1's single call site)
       if (/import\s+type\b/.test(line)) continue // a TYPE-ONLY import is erased at run time (overlay-store/theme-store's type-level reads)
       if (/^src\/renderer\/renderer\.ts:\d+:\s*\*/.test(line)) continue // the wiring's own prose
-      offenders.push(line)
+      if (judged.has(file)) continue
+      judged.add(file)
+      // **THE LINE IS THE SUBJECT; THE FILE'S CODE IS WHAT DECIDES, AND THE INSTRUMENT IS THIS FILE'S
+      // OWN `stripComments`** (`D-81`'s hollow-green class, met here in its OVER-STRICT direction):
+      // a `git grep` hit is a mention, and this row's subject is a VALUE-SURFACE IMPORTER. A docblock
+      // that NAMES the frozen store it is the successor address for — which every later purge row
+      // must be able to write — is prose, and a raw-line scan cannot tell it from an `import`.
+      const code = stripComments(readFileSync(`${REPO_ROOT}${file}`, 'utf8'))
+      if (/store-core-graph|store-graph-references/.test(code)) offenders.push(file)
     }
-    expect(offenders, '§4.1/§3.5 R-11 — every non-wiring, non-own-bytes, non-type-only mention of either path is a VALUE-surface importer outside the declared wiring and FAILS').toEqual([])
+    // THE POSITIVE CONTROL FOR THAT NARROWING: the elided instrument still FIRES on a mention in code and
+    // still IGNORES the same mention in prose, so the pass above is about comments and not about a scan
+    // that stopped finding anything.
+    expect(/store-core-graph/.test(stripComments("import { x } from './store-core-graph.js'")), 'a code mention is still a HIT').toBe(true)
+    expect(/store-core-graph/.test(stripComments("// the frozen store-core-graph.ts is the purge's last deletion")), 'and a prose mention is not').toBe(false)
+    expect(offenders, '§4.1/§3.5 R-11 — every non-wiring, non-own-bytes, non-type-only CODE mention of either path is a VALUE-surface importer outside the declared wiring and FAILS').toEqual([])
   })
 
   // [T] §4.1 RED branch — the unmoved counts.
