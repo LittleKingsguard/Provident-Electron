@@ -1614,6 +1614,14 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   //    here. **THE DENIED PREDICATE IS UNTOUCHED**: a `src/renderer/**` path this list does not name STILL fails the row, and
   //    the positive control below still drives one.**
   'src/renderer/module-client.ts', // `D-104` — the app-state rows' shape, held in this realm and filled by deliveries
+  // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-106`): THE SECURITY DELIVERY PASS'S ONE NEW RENDERER PATH.**
+  //    The pass that gives the secure crossing's record the delivery it never had (`strata/decisions.md` `D-106`; the rule
+  //    `D-104` read as the architecture, *"the renderer does not ask state, it listens"*) writes ONE new `src/renderer/`
+  //    module — the shape the delivery fills — beside four already-named files (`renderer.ts`, `secure-panels.ts`,
+  //    `preload.ts`, `main.ts`). It is a SIBLING's declared artifact and is excluded BY NAME like every other entry here.
+  //    **THE DENIED PREDICATE IS UNTOUCHED**: a `src/renderer/**` path this list does not name STILL fails the row, and the
+  //    positive control below still drives one.**
+  'src/renderer/security-client.ts', // `D-106` — the security record's shape, held in this realm and filled by deliveries
   'src/main/operator-settings/index.ts', // `D-104` — the third address joins the one subscription, with its own delivery body
   'src/main/settings-surface/index.ts', // `D-104` — the app-state body the composition's broadcast rides
   // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a

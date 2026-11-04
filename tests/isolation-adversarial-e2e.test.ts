@@ -9,6 +9,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { createSecurityClient } from '../src/renderer/security-client.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { translateLegacy, createLinkHub } from 'provident-ssr'
 import { createIsolatedScope, resolveNodeRef, DEFAULT_SCOPE } from 'provident-ssr/core/registry.js'
@@ -22,7 +23,11 @@ function fakeSecurity() {
   return {
     current: () => cfg,
     bridge: {
-      get: async () => ({ ...cfg }),
+      // **THE DECLARED ANSWER, MEMBER FOR MEMBER** (`D-106`): `IPC_SECURITY_GET` serves `settingsSurface.read()` — the two
+      // durable members PLUS the two additive ones (`exclusion`, and the tier-4 `read`, `null` iff the read was performed) —
+      // so a fake that omits them is not the route the pane reads, and the shape's admitted answer says so rather than
+      // deriving a record from a partial one.
+      get: async () => ({ ...cfg, exclusion: 'mcp-enabled' as const, read: null }),
       set: async (patch: { token?: string | null; groups?: string[]; disable?: string[] }) => {
         const next: typeof cfg = { ...cfg }
         if ('token' in patch) next.token = patch.token ?? null
@@ -35,6 +40,17 @@ function fakeSecurity() {
   }
 }
 
+/** **`D-106` — THE PANE'S `cfg` IS A DELIVERY'S NOW.** `SecurePanels.refresh()` used to open an IPC read of the security
+ *  record at REQUEST time; that read is deleted, so `refresh()` paints and this battery obtains the carrier's reading the
+ *  way the app does — the shape's ONE read (`src/renderer/security-client.ts`) and the pane's adopt step, which is exactly
+ *  what `startSecurityShape`'s delivery body and its ONE stated boot fill perform. No claim of any row below moves: the pane
+ *  still paints the carrier's answer, and the app Runtime still never sees it. */
+async function fillPane(panels: SecurePanels): Promise<void> {
+  const client = createSecurityClient()
+  await client.fill()
+  panels.applySecurity(client.shape())
+}
+
 async function makePair() {
   const fake = fakeSecurity()
   ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: fake.bridge } }
@@ -42,7 +58,8 @@ async function makePair() {
   app.bootstrap()
   const paneMount = document.createElement('div')
   const panels = new SecurePanels(paneMount)
-  await panels.refresh()
+  panels.refresh()
+  await fillPane(panels)
   return { app, panels, fake, paneMount }
 }
 
@@ -72,8 +89,10 @@ describe('isolation adversarial (real Runtime + SecurePanels) — MCP surface vs
 
   it('a pane mutation (token regenerate) is NOT visible to the app MCP surface', async () => {
     const { app, panels, fake, paneMount } = await makePair()
-    await panels.refresh()
+    panels.refresh()
     await panels.dispatch('token-gen')
+    // THE RECORD MOVED, SO THE PANE RE-READS: a delivery is a re-read (`D-106`), and this is the read it performs.
+    await fillPane(panels)
     // the pane graph + the IPC bridge reflect the new token
     expect(fake.current().token).toBeTruthy()
     expect((paneMount as unknown as { innerHTML: string }).innerHTML).toContain('••••')
@@ -91,6 +110,7 @@ describe('isolation adversarial (real Runtime + SecurePanels) — MCP surface vs
     expect((paneMount as unknown as { innerHTML: string }).innerHTML).toContain('Regenerate')
     // the pane graph is still functional
     await panels.dispatch('token-gen')
+    await fillPane(panels)
     expect((paneMount as unknown as { innerHTML: string }).innerHTML).toContain('••••')
   })
 

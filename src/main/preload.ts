@@ -4,7 +4,7 @@
 // and replies flow renderer → main (send). Exposed as a minimal `provident`
 // surface (no Node objects leak into the page).
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 // ⟶ **`STORE_FILE_GET` AND `STORE_FILE_PUT` LEAVE THIS IMPORT** (`D-93`): the `store` member they served is deleted with
 // the renderer's frozen graph store, so the preload reaches the channel file for `IPC_SECURITY_EXCLUSION` alone.
 import { IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
@@ -64,6 +64,12 @@ export interface ProvidentBridge {
     // site above (D-16), so a `set` consults no tier state and commits whatever the tier state is.
     set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: Tier4WriteAnswer }>
     setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
+    /** **THE SECURITY RECORD'S DELIVERY** (`D-106`): the secure crossing's record and its `mem` pair moved, so the realm
+     *  re-reads. It carries NOTHING — no address, no value — exactly as `tabs.onChanged`, `view.onChanged` and
+     *  `module.onChanged` carry nothing, and the returned function withdraws the registration. `src/renderer/secure-panels.ts`'s
+     *  `declare global` half declares the same member in lockstep (the rule the `module`, `tabs` and `view` members already
+     *  follow: a half-declaration FAILS). */
+    onChanged(handler: () => void): () => void
   }
   module: {
     get(): Promise<ModuleBridgeResult>
@@ -150,6 +156,15 @@ const bridge: ProvidentBridge = {
     // VALUE, never a throw.
     setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }> {
       return ipcRenderer.invoke(IPC_SECURITY_EXCLUSION, state)
+    },
+    // THE FOURTH MEMBER (`D-106`): the record's and the pair's push, delivered main→renderer by the composition's broadcast
+    // and withdrawn by the returned function. It reaches `ipcMain` nowhere — the channel carries no request.
+    onChanged(handler: () => void): () => void {
+      const listener = (): void => handler()
+      ipcRenderer.on(IPC_SECURITY_CHANGED, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC_SECURITY_CHANGED, listener)
+      }
     },
   },
   // U8 — the module management bridge (module-feature-list.md §4). Manual-UI

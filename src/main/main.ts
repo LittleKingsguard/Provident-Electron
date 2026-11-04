@@ -6,7 +6,7 @@ import {app, BrowserWindow, ipcMain} from 'electron'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {createHash} from 'node:crypto'
-import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, type RpcReply, type NotifyPayload} from '../shared/types.js'
+import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, type RpcReply, type NotifyPayload} from '../shared/types.js'
 import {ProvidentMcpServer, RendererBackend, type McpTransportKind} from './mcp-server.js'
 import type {SettingsAppStateRow} from './settings-surface/index.js'
 import {createSettingsSurface} from './settings-surface/index.js'
@@ -146,6 +146,16 @@ async function main(): Promise<void> {
     onAppStateChanged: () => {
       for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed()) win.webContents.send(IPC_MODULE_CHANGED)
+      }
+    },
+    // **THE SECURITY RECORD'S CHANGE PUSH** (`D-106`; the rule `D-104` read as the architecture): the surface's delivery body
+    // fires for `['operator-settings']` and for the `mem` `['operator-exclusion']` pair — the two addresses the instance's one
+    // subscription has always bound and whose deliveries never crossed to the renderer — and every window is told, so the
+    // operator's pane re-reads instead of being re-asked after every click. It carries NO value and NO address, exactly as the
+    // three pushes beside it carry none: the push is a SIGNAL and the read is the consumer's.
+    onSecurityChanged: () => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) win.webContents.send(IPC_SECURITY_CHANGED)
       }
     },
   })

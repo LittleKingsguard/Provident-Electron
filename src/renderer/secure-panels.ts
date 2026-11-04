@@ -44,6 +44,10 @@ import type { ViewFocusMirror, ViewPaneGeometry, ViewThemeRecord, ViewZone } fro
 // L3 (secure-panels E-1) — the group roster's binding to the gate's union: `ToolGroup` is
 // TYPE-ONLY here, on the `ExclusionState` precedent above (erased at build; no runtime edge).
 import type { ExclusionState as EXCLUSION_STATE, ToolGroup } from '../main/security.js'
+// **THE SECURITY SHAPE'S TYPE — TYPE-ONLY**, on the `SecurityWriteReceipt` precedent above: the client that maintains the
+// shape (`src/renderer/security-client.ts`, `D-106`) is a renderer module and this import is erased at build, so no value of
+// the secure crossing reaches the renderer bundle from here.
+import type { SecurityShape } from './security-client.js'
 
 declare global {
   interface Window {
@@ -66,6 +70,13 @@ declare global {
         // §2.4 item 4 / PAR-10 — the exclusion transition's OWN member. The control's
         // body calls it and NEVER throws; a malformed request answers `applied: false`.
         setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
+        /** **THE SECURITY RECORD'S DELIVERY** (`D-106`; the rule `D-104` read as the architecture — *"the renderer does not
+         *  ask state, it listens"*). The secure crossing has always bound `['operator-settings']` and the `mem`
+         *  `['operator-exclusion']` pair and acted on them; until this pass NO delivery crossed to this realm, so the record
+         *  was re-asked after every authored click. It carries NOTHING — no address, no value, exactly as `tabs.onChanged`,
+         *  `view.onChanged` and `module.onChanged` carry nothing — and the returned function withdraws the registration.
+         *  Declared here in LOCKSTEP with `src/main/preload.ts`'s `ProvidentBridge`: a half-declaration FAILS. */
+        onChanged(handler: () => void): () => void
       }
       // THE TAB RECORD'S CROSSING (D-63; `docs/L2/store-tabs-record/interface.md` §2): ONE member, FOUR routes.
       // This copy and `src/main/preload.ts`'s are the same text in both files — the lockstep rule the `store`
@@ -385,6 +396,12 @@ export class SecurePanels {
   // was performed": no reading was TAKEN this turn, never that the state flipped). BOTH additive
   // members are therefore `null`-OR-`undefined` before the first carrier answer, and NEITHER arm
   // below is painted from that absence.
+  //
+  // ⟶ AND FROM `D-106` **THIS BINDING IS WRITTEN BY A DELIVERY'S TURN AND BY NOTHING ELSE**: the read that filled it stood in
+  // `refresh()` and was made at request time from the boot, from every authored click and from the `dispatch()` seam. It is
+  // DELETED. `applySecurity(shape)` writes it from the realm's one subscription's shape and from that shape's ONE stated
+  // boot fill, so the pane asks the record nothing; `refresh()` paints what the last delivery left, exactly as it paints the
+  // app-state lines `applyAppState` hands it.
   private cfg: SecuritySettings & { exclusion?: EXCLUSION_STATE | null; read: Tier4ClosedRefusal | null | undefined } = { token: null, enabled: ['read', 'dispatch'], read: null }
   private debugValue = 'booting…'
   /** **THE TWO APP-STATE LINES, AND THEY ARE FILLED BY A DELIVERY AND NEVER BY A READ OF THIS PANE** (`D-104`; the user's
@@ -454,7 +471,7 @@ export class SecurePanels {
     this.supervisor.dispatchEvent(node.id, eventName, ...extra)
     void this.supervisor.flush().then(() => {
       this.render()
-      void this.refresh()
+      this.refresh()
     })
   }
 
@@ -466,7 +483,7 @@ export class SecurePanels {
     this.supervisor.dispatchEvent(node.id, 'click')
     await this.supervisor.flush()
     this.render()
-    await this.refresh()
+    this.refresh()
   }
 
   /** U-ENGINE-PIN §2.4a (ruling 2) — the ONE test-only injection point the
@@ -543,19 +560,32 @@ export class SecurePanels {
     this.render()
   }
 
-  /** Re-fetch the SECURITY config over IPC, merge it into the pane graph nodes, and re-render. Async (the bridge is
-   *  async). **IT READS NO MODULE ROW ANY MORE** (`D-104`): the app-state rows are the secure crossing's third address and
-   *  they reach this pane through `applyAppState` below, from the realm's ONE app-state subscription and its ONE stated boot
-   *  fill — so a click handler, a boot and the `dispatch()` seam all stop asking, and the class the rule condemns
-   *  (*"a click handler that asks"*) is gone from this file rather than standing beside a listener. */
-  async refresh(): Promise<void> {
-    const security = typeof window !== 'undefined' && window.provident?.security
-    if (security) {
-      try {
-        this.cfg = await security.get()
-      } catch {
-        // keep the last-known config on a bridge error
-      }
+  /** **THE PAINT, AND NOTHING ELSE — THE READ IS DELETED, NOT GUARDED** (`D-106`; `D-104`'s rule read as the architecture:
+   *  *"the renderer does not ask state, it listens. If it needs to ask, it does so within a listener."*). **BEFORE**: this
+   *  method opened with `const security = typeof window !== 'undefined' && window.provident?.security; if (security) { try {
+   *  this.cfg = await security.get() } catch { … } }` — ONE IPC read of the security record, made at REQUEST time from three
+   *  places: the boot (`renderer.ts`), `handleDomEvent` after EVERY authored click, and the `dispatch()` seam. That is
+   *  `D-104`'s audit class (iii), the class the rule condemns, and it stood there as what remained when the module rows'
+   *  ask was taken. **AFTER**: the method paints. The fields it used to write are written by `applySecurity` below, from a
+   *  shape the realm's ONE subscription fills INSIDE its listener (`src/renderer/security-client.ts`) — so a click's paint
+   *  shows what the last delivery said, and the delivery that click caused arrives as a delivery like any other. */
+  refresh(): void {
+    this.syncConfig()
+    this.render()
+  }
+
+  /** **THE DELIVERY'S TURN — THE SECURITY RECORD REACHES THE PANE HERE AND NOWHERE ELSE** (`D-106`). The argument is the
+   *  shape `src/renderer/security-client.ts` maintains, ADOPTED from a read the client performed INSIDE its own listener or
+   *  in its ONE stated boot fill, so this pane renders a value the crossing answered and never one it asked for. It writes
+   *  `cfg` — the ONE binding `syncConfig` paints from — and re-renders: no element, class, attribute or text is authored
+   *  here, and the node ids are the envelope's. **AN UNFILLED SHAPE WRITES NOTHING**, which is the same "no reading yet"
+   *  discipline `cfg.exclusion === null` already carried (`D-vi`): a pane that has heard no delivery fabricates no state. */
+  applySecurity(shape: SecurityShape): void {
+    if (shape.filled) {
+      const next: SecuritySettings & { exclusion?: EXCLUSION_STATE | null; read: Tier4ClosedRefusal | null | undefined } =
+        { token: shape.token, enabled: [...shape.enabled], exclusion: shape.exclusion, read: shape.read }
+      if (shape.maxJournalLength !== undefined) next.maxJournalLength = shape.maxJournalLength
+      this.cfg = next
     }
     this.syncConfig()
     this.render()

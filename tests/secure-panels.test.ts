@@ -22,6 +22,7 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { createSecurityClient } from '../src/renderer/security-client.js'
 
 beforeAll(() => {
   installShim()
@@ -36,7 +37,11 @@ function fakeSecurity() {
   return {
     current: () => cfg,
     bridge: {
-      get: async () => ({ ...cfg }),
+      // **THE DECLARED ANSWER, MEMBER FOR MEMBER** (`D-106`): `IPC_SECURITY_GET` serves `settingsSurface.read()` — the two
+      // durable members PLUS the two additive ones (`exclusion`, and the tier-4 `read`, `null` iff the read was performed) —
+      // so a fake that omits them is not the route the pane reads, and the shape's admitted answer says so rather than
+      // deriving a record from a partial one.
+      get: async () => ({ ...cfg, exclusion: 'mcp-enabled' as const, read: null }),
       set: async (patch: { token?: string | null; groups?: string[]; disable?: string[] }) => {
         const next: typeof cfg = { ...cfg }
         if ('token' in patch) next.token = patch.token ?? null
@@ -47,6 +52,14 @@ function fakeSecurity() {
       },
     },
   }
+}
+
+/** **`D-106`** — the shape's ONE read and the pane's adopt step: the two turns `startSecurityShape` performs at the boot and
+ *  on every delivery. `SecurePanels.refresh()` paints and reads nothing, so a row that wants a carrier reading takes this. */
+async function fillPane(panels: SecurePanels): Promise<void> {
+  const client = createSecurityClient()
+  await client.fill()
+  panels.applySecurity(client.shape())
 }
 
 function installBridge(fake: ReturnType<typeof fakeSecurity>) {
@@ -104,10 +117,16 @@ describe('SecurePanels — the isolated security/debug pane graph', () => {
     const fake = fakeSecurity()
     installBridge(fake)
     const panels = new SecurePanels(mount)
-    await panels.refresh()
+    panels.refresh()
+    // **`D-106` — THE ROW'S `data-on` IS THE CARRIER'S READING, AND THE CARRIER'S READING ARRIVES BY DELIVERY.** `refresh()`
+    // no longer reads the record, so each turn below is the app's own: the toggle's act, then the delivery's re-read (the
+    // shape's one read, adopted by the pane). The claim is unchanged — a click composes the opposite of the CARRIER's state,
+    // never the pane's prior intent.
+    await fillPane(panels)
     expect(fake.current().enabled).toEqual(['read', 'dispatch'])
     await panels.dispatch('toggle:graph')
     expect(fake.current().enabled).toContain('graph')
+    await fillPane(panels)
     await panels.dispatch('toggle:graph')
     expect(fake.current().enabled).not.toContain('graph')
   })

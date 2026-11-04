@@ -56,6 +56,7 @@
       "paths": [
         "src/main/operator-settings/",
         "src/renderer/module-client.ts",
+        "src/renderer/security-client.ts",
         "src/main/tier4-state.ts",
         "tests/unit/security-store-storeroom/",
         "tests/integration/security-store-storeroom/",
@@ -236,7 +237,7 @@
       "paths": [
         "src/shared/types.ts"
       ],
-      "endpoints": 9
+      "endpoints": 10
     },
     {
       "name": "harness",

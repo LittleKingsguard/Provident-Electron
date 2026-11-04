@@ -354,6 +354,26 @@ const ACTS = [
     moduleBridge.setDisabled('${DEMO_MODULE}', true)
       .then(function (result) { moduleBridge.get().then(function (registry) { ok({ result: result, registry: registry }) }, no) }, no)`,
   },
+  // ── THE SECURITY RECORD'S DELIVERY (`D-106`) — the ONE subscription this leg needs to measure the push the secure
+  //    crossing's record and pair never delivered. Same instrument as `X-14b`: the subscriber is registered on the REALM
+  //    (`window.__XS_HITS`) because the bridge call that installs it and the delivery that fires it are two separate turns,
+  //    and a counting handler is the only place a delivery is observable at all — the app's own subscriber fills the pane
+  //    graph, which is the ISOLATED scope the MCP endpoints cannot read (`src/renderer/secure-panels.ts`), so no authored node
+  //    of the app graph moves when the record does. The row says so rather than claiming a rendered surface.
+  {
+    id: 'xg-security-subscribe',
+    label: 'security-subscribe',
+    act: `var security = need('security')
+    window.__XS_HITS = 0
+    window.__XS_WITHDRAW = security.onChanged(function () { window.__XS_HITS = (window.__XS_HITS || 0) + 1 })
+    ok({ subscribed: true, withdrawal: typeof window.__XS_WITHDRAW })`,
+  },
+  {
+    id: 'xg-security-push',
+    label: 'security-push',
+    act: `var security = need('security')
+    security.get().then(function (record) { ok({ hits: window.__XS_HITS || 0, record: record }) }, no)`,
+  },
   {
     id: 'xg-security-exclusion',
     label: 'security-exclusion',
@@ -860,6 +880,10 @@ try {
   )
 
   // ── X-13: the secure crossing's RECORD address, through `security.set` ──
+  // THE SUBSCRIBER IS INSTALLED BEFORE THE WRITE (`D-106`, the `X-14b` discipline): a delivery is observable only from a
+  // handler, and the handler has to stand when the crossing delivers — so the counter goes up here, the `security.set` below
+  // is the act that fires it, and `X-13b` reads the counter back out of the realm.
+  const securitySub = await drive(bootB.client, 'xg-security-subscribe', 'security-subscribe')
   const setRecord = await drive(bootB.client, 'xg-security-set', 'security-set')
   const read13 = setRecord.answer?.reading
   row(
@@ -868,6 +892,21 @@ try {
     setRecord.status === 'ok' && setRecord.answer?.receipt?.write?.status === 'committed' && read13?.maxJournalLength === DRIVEN_MAX_JOURNAL &&
       Array.isArray(read13?.enabled) && SEEDED_GROUPS.every((g) => read13.enabled.includes(g)),
     `(${setRecord.polls} read(s)) set answer → ${JSON.stringify(setRecord.answer?.receipt)}; read answer → ${JSON.stringify(read13)}`,
+  )
+
+  // ── X-13b: THE SECURITY RECORD'S DELIVERY CROSSES THE BOUNDARY (`D-106`) ──
+  // **MEASURED AT A SUBSCRIBER AND NOT AT A NODE, AND SAYS SO**: the app's own subscriber paints the ISOLATED pane graph, which
+  // is the scope the MCP endpoints cannot read — so the delivery is counted where it arrives and the record is re-read
+  // beside the counter, which is the whole of what a delivery is.
+  const securityPush = await drive(bootB.client, 'xg-security-push', 'security-push')
+  const pushedRecord = securityPush.answer?.record
+  row(
+    'X-13b',
+    `THE SECURITY RECORD'S DELIVERY CROSSES THE BOUNDARY AND REACHES A SUBSCRIBER: the handler this leg installed on \`window.provident.security.onChanged\` BEFORE the write has FIRED for the \`security.set\` act X-13 drove — the instance's one subscription bound \`['${RECORD_ADDRESS}']\` and the pair, the surface handed each delivery to the composition's broadcast, and \`provident:security:changed\` carried it into this realm — and the re-read taken beside the counter carries the driven journal cap, so what arrived was a delivery and not a timer. **IT IS MEASURED AT A SUBSCRIBER AND NOT AT A NODE, AND SAYS SO**: the app's own subscriber fills the ISOLATED pane graph, which the MCP endpoints cannot read`,
+    securitySub.status === 'ok' && securitySub.answer?.withdrawal === 'function' &&
+      securityPush.status === 'ok' && (securityPush.answer?.hits ?? 0) >= 1 &&
+      pushedRecord?.maxJournalLength === DRIVEN_MAX_JOURNAL,
+    `(${securitySub.polls}+${securityPush.polls} read(s)) subscribe → ${JSON.stringify(securitySub.answer)}; hits=${JSON.stringify(securityPush.answer?.hits)}; record → ${JSON.stringify(pushedRecord)}`,
   )
 
   // ── X-14: the secure crossing's APP-STATE address, through `module.setDisabled` ──

@@ -68,6 +68,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { createSecurityClient } from '../src/renderer/security-client.js'
 import { SecurityGate } from '../src/main/security.js'
 import {
   DECLARED_CARRIER_MEMBERS, LANDED_CARRIER_MEMBERS, MAIN_SRC, MCP_SERVER_SRC, OPERATOR_SETTINGS_SRC,
@@ -119,6 +120,18 @@ function tier4HolderAbsent(where: string): Error {
 function carrierRecord(exclusion: string, read: unknown): Record<string, unknown> {
   return { token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120, exclusion, read }
 }
+/** **⟶ `D-106` — THE PANE'S `cfg` IS A DELIVERY'S NOW, SO THE CARRIER'S READING IS TAKEN THROUGH THE SHAPE.** Until this
+ *  pass `SecurePanels.refresh()` opened the read itself at request time (the boot, every authored click, the `dispatch()`
+ *  seam) and these rows obtained the carrier's answer by awaiting it. That read is DELETED — the pane paints what a delivery
+ *  left — so the fixture takes the app's own path: the shape's ONE read (`src/renderer/security-client.ts`) and the pane's
+ *  adopt step, which is exactly what `startSecurityShape`'s subscription body and its ONE stated boot fill perform. **NO
+ *  CLAIM BELOW MOVES**: every cell is still driven from the CARRIER's answer, never from the pane's prior value, and the
+ *  `reads()` counter still counts the carrier's one read. */
+async function fillPane(panels: SecurePanels): Promise<void> {
+  const client = createSecurityClient()
+  await client.fill()
+  panels.applySecurity(client.shape())
+}
 async function mountPaneFor(carrier: Record<string, unknown>): Promise<{ panels: SecurePanels; mount: unknown; reads: () => number }> {
   let reads = 0
   const bridge = {
@@ -127,7 +140,8 @@ async function mountPaneFor(carrier: Record<string, unknown>): Promise<{ panels:
   ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: bridge } }
   const mount = mountEl()
   const panels = new SecurePanels(mount as never)
-  await panels.refresh()
+  panels.refresh()
+  await fillPane(panels)
   return { panels, mount, reads: () => reads }
 }
 function paneTextOf(panels: SecurePanels, nodeId: string): string {
@@ -394,7 +408,7 @@ describe('S2 §2.6 THE PANE\'S TWO RE-SOURCED CELLS + THE ONE ADDITIVE SEGMENT',
     expect(paneTextOf(first.panels, 'security-status'), 'CONTROL: the probe can distinguish the two renderings').not.toContain('· MCP: enabled')
     const next = carrierRecord(STATE_MCP_ENABLED, { status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => ({ ...next }) } } }
-    await first.panels.refresh()
+    await fillPane(first.panels)
     const text = paneTextOf(first.panels, 'security-status')
     expect(text).toContain('· MCP: enabled')
     expect(text, 'the additive trailing segment is present iff `read` is non-null (`PAR-11`)').toContain(REFUSAL_SEGMENT)
@@ -443,7 +457,12 @@ describe('S2 REPAIR (gate 4\'s ruled repair contract) — THE SURVIVING ROWS: `D
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
     const mount = mountEl()
     const panels = new SecurePanels(mount as never)
-    await panels.refresh()
+    panels.refresh()
+    // **⟶ `D-106`: THE REJECTED READ IS DRIVEN THROUGH THE SHAPE.** `refresh()` no longer reads, so the rejecting route is
+    // taken where the app takes it — the shape's `fill()`, whose `unread` answer fills nothing and leaves the pane at its own
+    // no-reading state. The claim is unchanged and is now held one step further out: a rejection is a statement about the
+    // transport, never about the record, so nothing is painted from it.
+    await fillPane(panels)
     const text = paneTextOf(panels, 'security-status')
     expect(text, `the pane's own FIELD DEFAULT must paint NO \`· MCP:\` word when no carrier supplied a reading — measured text: "${text}"`).not.toMatch(/· MCP:/)
     expect(text, 'nor a refusal segment').not.toContain(REFUSAL_SEGMENT)
@@ -709,13 +728,15 @@ describe('S2 GATE-6 `F-1` — THE PANE\'S RE-SOURCE TO THE HOLDER IS TOTAL: no A
      * yet"). */
     ;(globalThis as unknown as { window?: unknown }).window = {}
     const s1 = new SecurePanels(mountEl() as never)
-    await s1.refresh()
+    s1.refresh()
+    await fillPane(s1)
     readOf('F1-S1', s1)
 
     /* `F1-S2` — A BRIDGE THAT REJECTS (`S2-ADV-01` limb (c)): no reading was TAKEN this turn. */
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
     const s2 = new SecurePanels(mountEl() as never)
-    await s2.refresh()
+    s2.refresh()
+    await fillPane(s2)
     readOf('F1-S2', s2)
 
     /* `F1-S3` — THE FIRST PAINT, DRIVEN SYNCHRONOUSLY: the `[T]` shape of the live sequence
@@ -776,7 +797,7 @@ describe('S2 GATE-6 `F-1` — THE PANE\'S RE-SOURCE TO THE HOLDER IS TOTAL: no A
      * driven, `CTL-5`'s own subject): the two cells move TOGETHER, and the segment leaves with the
      * refusal. */
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => ({ ...carrierRecord(STATE_MCP_DISABLED, null) }) } } }
-    await closed.panels.refresh()
+    await fillPane(closed.panels)
     expect(panePropOf(closed.panels, 'exclusion-toggle', 'data-state'), 'the pane re-sources from the CARRIER — never from its own prior value, never from a literal').toBe(STATE_MCP_DISABLED)
     expect(paneTextOf(closed.panels, 'security-status'), 'and BOTH cells moved together').toContain('· MCP: disabled')
     expect(paneTextOf(closed.panels, 'security-status'), '`read` is null again ⇒ the segment is gone').not.toContain(REFUSAL_SEGMENT)
@@ -789,7 +810,7 @@ describe('S2 GATE-6 `F-1` — THE PANE\'S RE-SOURCE TO THE HOLDER IS TOTAL: no A
      * LITERAL is not what stands there — the two admitted readings are the last CARRIER-SUPPLIED
      * value or an absent prop. */
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
-    await closed.panels.refresh()
+    await fillPane(closed.panels)
     expect(paneTextOf(closed.panels, 'security-status'), 'the last CARRIER-SUPPLIED reading stays on the line — and it is `mcp-disabled`, NOT the authored literal').toContain('· MCP: disabled')
     const retained = panePropOf(closed.panels, 'exclusion-toggle', 'data-state')
     expect([STATE_MCP_DISABLED, undefined], `the prop carries the last CARRIER-SUPPLIED value or is ABSENT — never the AUTHORED literal (measured: ${JSON.stringify(retained)}; the authored literal is ${STATE_MCP_ENABLED}, which is the value \`F-1\` measures in the no-answer states)`).toContain(retained)

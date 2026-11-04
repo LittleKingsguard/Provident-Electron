@@ -55,6 +55,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { installShim, mountEl } from '../../../src/shared/dom-shim.js'
 import { SecurePanels } from '../../../src/renderer/secure-panels.js'
+import { createSecurityClient } from '../../../src/renderer/security-client.js'
 import { createSettingsSurface, type SettingsGateSink } from '../../../src/main/settings-surface/index.js'
 
 const REPO = new URL('../../../', import.meta.url)
@@ -185,6 +186,19 @@ function recordingBridge(initial: { token: string | null; enabled: string[] }): 
   }
 }
 
+/** **`D-106` — THE PANE'S `cfg` IS A DELIVERY'S NOW, SO A ROW THAT WANTS A READING DRIVES THE SHAPE'S ONE BOOT
+ *  FILL.** `SecurePanels.refresh()` used to re-read the security record from the bridge after every click and at the boot;
+ *  that read is DELETED, so `refresh()` paints and a row can no longer obtain a carrier reading from it. This helper takes
+ *  the path the app takes: the shape's ONE read (`src/renderer/security-client.ts`), and the pane's adopt step — exactly the
+ *  two turns `startSecurityShape` performs at the boot and on every delivery. **THE CLAIM OF EVERY ROW BELOW IS UNCHANGED**:
+ *  the row's `data-on` is still read off the CARRIER's answer, which is what makes the direction the body composes the
+ *  carrier's and never the pane's prior intent. */
+async function fillPane(panels: SecurePanels): Promise<void> {
+  const client = createSecurityClient()
+  await client.fill()
+  panels.applySecurity(client.shape())
+}
+
 /** Boot the real pane under the layout-less shim with the carrier answer `initial` stands for, then
  *  click one authored row by its generated id (`props.id` = `toggle:<group>`, `interface.md` §4). */
 async function clickRow(group: string, initial: { token: string | null; enabled: string[] }): Promise<{ patches: SetPatch[] }> {
@@ -192,7 +206,8 @@ async function clickRow(group: string, initial: { token: string | null; enabled:
   const recorder = recordingBridge(initial)
   ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: recorder.bridge } }
   const panels = new SecurePanels(mountEl() as never)
-  await panels.refresh()
+  panels.refresh()
+  await fillPane(panels)
   await panels.dispatch(`toggle:${group}`)
   return { patches: recorder.patches }
 }
@@ -207,7 +222,7 @@ async function clickRowWithoutBridge(group: string): Promise<{ threw: unknown; b
   const panels = new SecurePanels(mountEl() as never)
   let threw: unknown = null
   try {
-    await panels.refresh()
+    panels.refresh()
     await panels.dispatch(`toggle:${group}`)
   } catch (caught) {
     threw = caught

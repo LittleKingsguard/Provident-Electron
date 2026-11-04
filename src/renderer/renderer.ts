@@ -12,6 +12,7 @@ import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, type TabsClient, type TabsClientReading, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
+import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
 import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
@@ -81,6 +82,24 @@ let moduleClient: ModuleClient | null = null
 export function getModuleClient(): ModuleClient {
   if (moduleClient === null) moduleClient = createModuleClient()
   return moduleClient
+}
+
+/** **THE SECURITY RECORD'S CLIENT — THE SHAPE THE PANE PAINTS FROM** (`D-106`; `D-104`'s rule read as the architecture:
+ *  *"the renderer does not ask state, it listens. If it needs to ask, it does so within a listener."*). Constructed EXACTLY
+ *  ONCE per realm, at the same lazy-on-demand point as the three clients above, so a node realm that reaches a role without
+ *  `main()` still has one. **IT IS NOT A STORE**: no address space, no persistence, no constraint, no write route, and the
+ *  shape is REPLACED WHOLE by every delivery it is refilled from — `src/renderer/security-client.ts`'s header states the
+ *  discipline in the same terms the other clients do. What is held HERE is the CLIENT and never the shape.
+ *  **AND IT REMOVES A PULL RATHER THAN ADDING A LISTEN BESIDE ONE**: `SecurePanels.refresh()` read
+ *  `window.provident.security.get()` at request time — at the boot, after EVERY authored click and at the `dispatch()`
+ *  seam — and that read is GONE. The record reaches the pane from THIS client's shape, adopted from a read taken INSIDE its
+ *  listener, exactly as the app-state rows do. */
+let securityClient: SecurityClient | null = null
+
+/** THE SECURITY SHAPE'S ONE PER-REALM CLIENT — the same identity on every call, the `getModuleClient()` form. */
+export function getSecurityClient(): SecurityClient {
+  if (securityClient === null) securityClient = createSecurityClient()
+  return securityClient
 }
 
 /** THE FOCUS CARRIER — `U-STORE-FOCUS`'s boot-constructed seam composition (`docs/specs/store-focus.md` §2.3 item 1):
@@ -861,7 +880,11 @@ async function main(): Promise<void> {
   // boot-read projection of tier 4, never re-read after boot.
   const panels = panesMount ? new SecurePanels(panesMount, { maxJournalLength }) : null
   if (panels) {
-    void panels.refresh()
+    // **THIS CALL IS A PAINT AND NO LONGER A READ** (`D-106`): it used to open an IPC read of the security record — the boot's
+    // own ask, `D-104`'s audit class (i) — and the record now reaches the pane from the shape `startSecurityShape` below
+    // starts, whose ONE stated boot fill is that read's successor. The paint stays because the constructor renders nothing: it
+    // is what puts the envelope's authored words on the page before any delivery exists.
+    panels.refresh()
     // the Debug pane's live census + SSR preview, sourced from the APP graph
     panels.refreshDebug(runtime)
   }
@@ -917,6 +940,10 @@ async function main(): Promise<void> {
   //    awaited, for the reason the two sites above it are: every boot step including `bridge.ready()` has already run, so no
   //    step's order moves and a slow or failing crossing cannot delay or fail the boot.
   startAppStateShape(panels)
+  // ⟶ **THE SECURITY RECORD'S SHAPE (`D-106`)** — the pane's `cfg` is filled from a DELIVERY from here on, and the
+  //    request-time read `panels.refresh()` made at the boot, after every authored click and at the `dispatch()` seam is
+  //    deleted. Started beside the three above and never awaited, for their reason.
+  startSecurityShape(panels)
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
@@ -1016,6 +1043,53 @@ let viewSubscription: ViewSubscription | null = null
 
 /** THE APP-STATE SHAPE'S SUBSCRIPTION — the third registration, held for the same discipline and for the same reason. */
 let appStateSubscription: ModuleSubscription | null = null
+
+/** **THE SECURITY SHAPE'S SUBSCRIPTION** (`D-106`) — the fourth registration, held for the P1-P7 release discipline the
+ *  realm's other three are held for; this realm's teardown is the page's. **THESE FOUR AND NO FIFTH**: the realm holds one
+ *  registration per crossing it reads — the tab record's, the view's, the app-state rows' and the security record's. */
+let securitySubscription: SecuritySubscription | null = null
+
+/** **THE SECURITY SHAPE'S ONE BOOT SITE** (`D-106`) — ONE registration and ONE stated read, started from `main()` beside the
+ *  three above and never awaited, for exactly their reason: every boot step including `bridge.ready()` has already run, so no
+ *  step's order moves and a slow or failing crossing cannot delay or fail the boot (`tests/e2e/bundle-boot-seam`'s `B-5`
+ *  reads the trace's ORDER, not a duration).
+ *
+ *  **THE REGISTRATION GOES FIRST** so a change that lands between the read and its continuation is still delivered (a
+ *  delivery re-reads, so an extra delivery costs one read and can never lose a write). **AND THE DELIVERY IS WHERE THE PANE
+ *  IS FILLED**: the client re-reads inside its own listener and REPLACES the shape, and this body hands the shape to the one
+ *  consumer that paints the record — `SecurePanels.applySecurity`, which writes `cfg` and re-renders through the managed
+ *  channel. The boot read below does the same thing once, and there is no third turn: nothing in this realm reads the
+ *  security record at request time, because `SecurePanels.refresh()` no longer does.
+ *
+ *  **THE ONE READ THIS FILE MAKES OUTSIDE THIS CLIENT IS NAMED AND IS NOT A COUNTERPART**: `main()`'s `bridge.security.get()`
+ *  above is the TIER-4 SNAPSHOT the app Runtime's Supervisor is constructed from — a value read ONCE before the first graph
+ *  load, consumed by a construction and never painted. It is `D-104`'s audit class (i), a boot fill, and it stays. */
+function startSecurityShape(panels: SecurePanels | null): void {
+  const client = getSecurityClient()
+  securitySubscription = client.subscribe(() => {
+    // A DELIVERY IS A RE-READ (the client has already adopted it) and the shape is what the consumer paints.
+    panels?.applySecurity(client.shape())
+  })
+  void client.fill().then(
+    (reading) => {
+      panels?.applySecurity(client.shape())
+      console.info(`[provident-renderer] security shape: ${describeSecurityReading(client.shape(), reading)}`)
+    },
+    (error: unknown) => {
+      // THE DEFECT ARM, NOT AN ORDINARY ONE: `fill()` answers values, so a rejection here is a bug in the client. The shape
+      // keeps what it last read, which on a boot is the declared empty record, and boot is over by the time this runs.
+      console.warn(`[provident-renderer] security shape: the boot read rejected — ${String(error)}`)
+    },
+  )
+}
+
+/** **THE SECURITY LINE** — the arm, whether anything has answered, and the two closed members the pane paints as WORDS
+ *  (`token: '••••'` for a standing token and never the token, the exclusion's word, and the tier-4 refusal's token). */
+function describeSecurityReading(shape: { filled: boolean; token: string | null; enabled: readonly string[]; exclusion: string | null; read: unknown }, reading: SecurityClientReading): string {
+  const arm = reading.status === 'committed' ? 'read' : reading.status === 'absent' ? `absent (${reading.reason})` : `unread (${reading.reason})`
+  return `${arm}; filled=${String(shape.filled)}, token=${shape.token === null ? '(none)' : '••••'}, enabled=[${shape.enabled.join(', ')}], `
+    + `exclusion=${String(shape.exclusion)}, refused=${String(shape.read !== null)}`
+}
 
 /** **THE SHAPE'S ONE BOOT SITE (`D-88`)** — ONE registration and ONE stated read, started from `main()` as its last
  *  statement and never awaited. The registration goes FIRST so a change that lands between the read and its continuation is

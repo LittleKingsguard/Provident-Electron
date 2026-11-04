@@ -347,6 +347,15 @@ export interface SecuritySettings {
 
 export const IPC_SECURITY_GET = 'provident:security:get'
 export const IPC_SECURITY_SET = 'provident:security:set'
+/** **THE SECURITY RECORD'S CHANGE PUSH** (`D-106`; the rule `D-104` read as the architecture — *"the renderer does not
+ *  ask state, it listens. If it needs to ask, it does so within a listener."*). It carries NO request, so it has no
+ *  `ipcMain.handle` site: the secure crossing's record and exclusion addresses — the two the instance's one subscription
+ *  has always bound — cross the boundary as a SIGNAL, exactly as `IPC_TABS_CHANGED`, `IPC_VIEW_CHANGED` and
+ *  `IPC_MODULE_CHANGED` carry theirs. The address and the value stay on the main side and the renderer's listener answers
+ *  with its own re-read. **ONE CHANNEL FOR BOTH ADDRESSES, BECAUSE IT CARRIES NEITHER**: which of the two moved is the
+ *  main side's business, and the realm's only correct answer to either is the whole record's read. **THIS FILE NAMES NO
+ *  ADDRESS** (`ISO-5`/`ISO-6`). */
+export const IPC_SECURITY_CHANGED = 'provident:security:changed'
 export const IPC_MODULE_GET = 'provident:module:get'
 export const IPC_MODULE_SET_DISABLED = 'provident:module:set-disabled'
 /** **THE APP-STATE ROWS' CHANGE PUSH** (`D-104`; closing `D-82`'s `V3`). It carries NO request, so it has no

@@ -94,7 +94,13 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
    *  a poll or a boot-order re-read — the composition hands it a broadcast, the renderer's own listener re-reads, and no
    *  file but this one's own instance knows which address delivered (the address constant is the instance's, `D-53`). It
    *  is OPTIONAL and absent-able because a surface driven by a node test has no window to push to. */
-  onAppStateChanged?: () => void }): SettingsSurface {
+  onAppStateChanged?: () => void
+  /** **THE SECURITY RECORD'S CHANGE PUSH** (`D-106`): called INSIDE the instance's delivery body and never at a call site,
+   *  a poll or a boot-order re-read — the composition hands it a broadcast, the renderer's own listener re-reads. It is one
+   *  callback for BOTH addresses the record's body answers, because it carries NEITHER: which of the two moved is this
+   *  module's business (it re-patches the gate from the same reading) and the realm's answer to either is the whole
+   *  record's re-read. Optional and absent-able for the `onAppStateChanged` reason. */
+  onSecurityChanged?: () => void }): SettingsSurface {
   // THE INSTANCE IS CONSTRUCTED HERE, ONCE, AND HELD HERE: the operator path's single reference
   // (interface §5 `ASM-L2-8`; D-18). No second instance, no second `filePath`, no second name.
   const settings: OperatorSettings = createOperatorSettings(options)
@@ -106,6 +112,16 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
   // site, a poll or a boot-order re-read, and the delivery's one argument is the address — never
   // the value and never which member moved (D-17; design §6; guide §6.4).
   const onDelivery = (address: readonly (string | number)[]): void => {
+    // **THE RECORD AND THE PAIR CROSS TOO** (`D-106`). This body is the crossing's ONLY delivery for `['operator-settings']`
+    // and `['operator-exclusion']` — the app-state rows are routed to `onAppStateDelivery` below by the instance's own
+    // address constant — so one call here is one delivery to the realm, whatever moved. It is made BEFORE the sink's arms
+    // and outside them: a surface with no sink attached (a composition whose gate was never built) still tells the realm,
+    // and a throw from the broadcast stops at the broadcast exactly as the app-state body's does.
+    try {
+      options.onSecurityChanged?.()
+    } catch {
+      /* the consumer's own throw is the consumer's: a push that failed is not a delivery the store should pay for */
+    }
     const held = sink
     const record = settings.read()
     // The holder is written from the SAME reading that feeds the carrier, at `attach` and on every

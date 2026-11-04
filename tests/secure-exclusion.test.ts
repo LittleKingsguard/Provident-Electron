@@ -260,6 +260,7 @@ import { ProvidentMcpServer, RendererBackend } from '../src/main/mcp-server.js'
 import { createOperatorSettings } from '../src/main/operator-settings/index.js'
 import { createSettingsSurface } from '../src/main/settings-surface/index.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { createSecurityClient } from '../src/renderer/security-client.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { installShim, mountEl, type ShimElement } from '../src/shared/dom-shim.js'
@@ -4895,12 +4896,18 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     const preload = sourceOrEmpty(PRELOAD_SRC)
     const securityBlock = /security:\s*\{[\s\S]*?\n  \}/.exec(preload)?.[0] ?? ''
     const members = [...securityBlock.matchAll(/^\s{4}([a-zA-Z]+)\(/gm)].map((m) => m[1])
+    /* ⟶ **RE-GRAINED `2026-11-03` (`D-106`, `D-38`'s annotate-beside): FOUR MEMBERS, AND THIS UNIT'S ADDITION IS STILL
+     * COUNTED ONCE.** `D-106` gives the security record a DELIVERY, so `onChanged` joins the member — a route that subscribes
+     * and writes nothing. **The `2 → 3` move this row asserts is unmoved and is still recoverable by SUBTRACTING THE ONE
+     * ADDITION THIS ROW OWNS, with the later pass's member EXCLUDED BY NAME so it is not double-counted as this unit's**; the
+     * bound is kept, not widened (a FIFTH member still fails the equality below), and the control beneath drives exactly
+     * that. */
     expect(members,
-      '§2.6 item 3 / §1.3 item 9 / §2.4 item 4 — the preload\'s `security` member set is EXACTLY the DECLARED post-landing `[\'get\',\'set\',\'setExclusion\']` (the `2 → 3` move: the two landed members PLUS the ONE new channel member). An as-filed `[\'get\',\'set\']` equality measured only the PRE-LANDING state and no conforming implementation could satisfy it.').toEqual(['get', 'set', 'setExclusion'])
+      '§2.6 item 3 / §1.3 item 9 / §2.4 item 4 — the preload\'s `security` member set is EXACTLY the DECLARED post-landing `[\'get\',\'set\',\'setExclusion\']` plus the record’s one delivery `onChanged` (`D-106`) (the `2 → 3` move: the two landed members PLUS the ONE new channel member). An as-filed `[\'get\',\'set\']` equality measured only the PRE-LANDING state and no conforming implementation could satisfy it.').toEqual(['get', 'set', 'setExclusion', 'onChanged'])
     expect(members.length,
-      '§2.6 item 3 / §1.3 item 9 — the member census reads the DECLARED POST-LANDING `3` (a before-value is printed as a before-value, never added into the `8`: this `3` is a SEPARATE reading)').toBe(3)
-    expect(members.length - terms.preloadMember,
-      '§1.3 item 9 — the move is `2 → 3` for the PRELOAD MEMBER SET (unmoved by `D-93`: the purge deletes the `store` namespace, not the `security` one): the post-landing member count MINUS the declared addition is the landed before-value `2`, so the addition is counted once and the before-value is read separately').toBe(2)
+      '§2.6 item 3 / §1.3 item 9 — the member census reads `4`: the DECLARED POST-LANDING `3` plus `D-106`’s delivery (a before-value is printed as a before-value, never added into the `8`: this figure is a SEPARATE reading)').toBe(4)
+    expect(members.filter((member) => member !== 'onChanged').length - terms.preloadMember,
+      '§1.3 item 9 — the move is `2 → 3` for the PRELOAD MEMBER SET (unmoved by `D-93`: the purge deletes the `store` namespace, not the `security` one): the three this unit lands MINUS the declared addition is the landed before-value `2`, the delivery the later pass adds being excluded BY NAME so the addition is counted once and the before-value is read separately').toBe(2)
   })
 
   /** **THE POSITIVE CONTROL FOR THE CENSUS ABOVE — `RCA-8(d)` ANNOTATE-BESIDE.**
@@ -4929,12 +4936,13 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     expect(fourthConstant.length === 1,
       'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 1`) is FALSIFIED by the undeclared constant: the bound bites').toBe(false)
 
-    // (ii) a FOURTH `security` member that `§2.6` item 3 does NOT declare.
+    /* (ii) a FIFTH `security` member that no pass declares. **⟶ `D-106`: the surplus the row must refuse is the FIFTH, not
+     * the fourth — the fourth is the record's delivery and it is declared.** */
     const fourthMember = [...members, 'resetExclusion']
     expect(fourthMember,
-      'CONTROL (ii) — the row\'s member equality is FALSIFIED by an undeclared fourth member: `[\'get\',\'set\',\'setExclusion\',\'resetExclusion\']` is NOT the declared post-landing member set').not.toEqual(['get', 'set', 'setExclusion'])
+      'CONTROL (ii) — the row\'s member equality is FALSIFIED by an undeclared extra member: `[\'get\',\'set\',\'setExclusion\',\'onChanged\',\'resetExclusion\']` is NOT the declared post-landing member set').not.toEqual(['get', 'set', 'setExclusion', 'onChanged'])
     expect(members,
-      'CONTROL (ii) POSITIVE HALF — the UNPERTURBED landed member set DOES equal the declared post-landing set, so control (ii) is not vacuous').toEqual(['get', 'set', 'setExclusion'])
+      'CONTROL (ii) POSITIVE HALF — the UNPERTURBED landed member set DOES equal the declared post-landing set (`D-106`’s delivery included), so control (ii) is not vacuous').toEqual(['get', 'set', 'setExclusion', 'onChanged'])
 
     // and the addition is still exactly ONE term of the 8 (never re-counted):
     expect(fourthConstant.length - 1,
@@ -5815,6 +5823,14 @@ async function liveBoundary(): Promise<LiveBoundary> {
   }
 }
 
+/** **`D-106` — the shape's ONE read and the pane's adopt step**, the two turns `startSecurityShape` performs at the boot and
+ *  on every delivery. `SecurePanels.refresh()` paints and reads nothing, so a row that wants a carrier reading takes this. */
+async function fillPane(panels: SecurePanels): Promise<void> {
+  const client = createSecurityClient()
+  await client.fill()
+  panels.applySecurity(client.shape())
+}
+
 /** The pane, wired to the SAME boundary `main.ts` uses: its bridge `get()` answers
  *  the LANDED handler's own `exclusion:` expression, and its `setExclusion` goes to
  *  `main.ts`'s OWN transition site (`IPC_SECURITY_EXCLUSION`'s handler calls
@@ -5858,7 +5874,12 @@ async function paneOnLiveBoundary(boundary: LiveBoundary): Promise<PaneBoundary>
   ;(globalThis as Record<string, unknown>).window = { provident: { security } }
   const mount = mountEl()
   const panels = new SecurePanels(mount as unknown as HTMLElement)
-  await panels.refresh()
+  panels.refresh()
+  // **⟶ `D-106` — THE PANE'S `cfg` IS A DELIVERY'S NOW.** `refresh()` no longer opens the read; the carrier's answer reaches
+  // the pane through the shape's ONE read (`src/renderer/security-client.ts`) and the pane's adopt step, exactly as
+  // `startSecurityShape`'s subscription body and its ONE stated boot fill do. Every claim of this battery is unchanged: the
+  // `reads` array still records each read the bridge answered, and `data-state` is still painted from THAT answer.
+  await fillPane(panels)
   return {
     panels,
     mount,
@@ -5973,7 +5994,10 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       // THE OPERATOR OPENS THE TIER — the app's own transition site, then the pane
       // refreshes from the read the bridge actually answers (the `G6-F1` source).
       boundary.settingsSurface.transition(STATE_MCP_DISABLED)
-      await pane.panels.refresh()
+      // **⟶ `D-106`: the pane's `cfg` is a DELIVERY's now** — `refresh()` paints and reads nothing, so the re-source is the
+      // shape's ONE read, adopted exactly as `startSecurityShape`'s delivery body adopts it. The claim is unchanged: the pane
+      // must re-source from the CARRIER's answer after the boundary moved, never from its own prior value.
+      await fillPane(pane.panels)
       expect(boundary.liveState(), 'the tier IS open (T-1 ran on the live gate)').toBe(STATE_MCP_DISABLED)
       const toggleBefore = paneNodeById(pane.panels, 'exclusion-toggle')
       expect(toggleBefore, '§2.4 item 2 — the control is authored in the pane graph (the drive below is measured against a pane that EXISTS)').toBeDefined()
@@ -6015,6 +6039,11 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       ).toBe(STATE_MCP_ENABLED)
       // and the U-6 operator-visible arm of the SAME press: the pane's own
       // `data-state`/affordance word must follow the transition it just caused.
+      // **⟶ `D-106`: THE PANE PAINTS ON THE PRESS'S DELIVERY, NOT ON A RE-ASK.** The affix used to arrive because
+      // `handleDomEvent` re-read the record; the read is deleted, so the app's path is the crossing's delivery — the surface's
+      // body broadcasts, the realm's listener re-reads, and the pane adopts the shape. That turn is driven here, and NOTHING
+      // is weakened: the word is still asserted to follow the state the press PRODUCED, read off the CARRIER.
+      await fillPane(pane.panels)
       expect(paneNodeById(pane.panels, 'exclusion-toggle')?.content, 'U-6 — the control\'s affordance word follows the state the press produced').toBe('Disable MCP')
     } finally {
       pane.restore()
@@ -6146,7 +6175,10 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       // THE ROW: the return through the DECLARED CONTROL — a real press on the pane's
       // own control, while the tier is open, must restore normal answers.
       boundary.settingsSurface.transition(STATE_MCP_DISABLED)
-      await pane.panels.refresh()
+      // **⟶ `D-106`: the pane's `cfg` is a DELIVERY's now** — `refresh()` paints and reads nothing, so the re-source is the
+      // shape's ONE read, adopted exactly as `startSecurityShape`'s delivery body adopts it. The claim is unchanged: the pane
+      // must re-source from the CARRIER's answer after the boundary moved, never from its own prior value.
+      await fillPane(pane.panels)
       const click = await clickRenderedControl(pane.mount, 'exclusion-toggle')
       const restored = await sdkCallTool(boundary.client, 'provident.get_markdown')
       process.stdout.write('\nG6-F4 — the operator\'s return through the DECLARED control:\n' +
@@ -6179,7 +6211,10 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       expect(bootRead, 'CONTROL — on the BOOT terminal the rendered pane and the live gate DO agree, so the reading below measures the transition and not a constant rendering').toBe(true)
 
       boundary.settingsSurface.transition(STATE_MCP_DISABLED)
-      await pane.panels.refresh()
+      // **⟶ `D-106`: the pane's `cfg` is a DELIVERY's now** — `refresh()` paints and reads nothing, so the re-source is the
+      // shape's ONE read, adopted exactly as `startSecurityShape`'s delivery body adopts it. The claim is unchanged: the pane
+      // must re-source from the CARRIER's answer after the boundary moved, never from its own prior value.
+      await fillPane(pane.panels)
       const live = boundary.liveState()
       expect(live, 'the tier IS open (the pane below is rendered over a REFUSING server — the exact live-battery condition)').toBe(STATE_MCP_DISABLED)
 
