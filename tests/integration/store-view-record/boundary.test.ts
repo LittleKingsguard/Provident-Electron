@@ -677,6 +677,25 @@ const DECLARED_SCOPE: readonly string[] = [
   //    **TWO PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/records/store-tabs-record-unit.md`
   //    (exactly `40`, and no clause of it is this pass's subject) and `strata/platform.md` (`60/60`, no platform fact moves).
   // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-114` — THE INSTRUMENT MEASURES `strata/records/` AND THE FOUR TRACKERS, THE FOUR REDS THAT COVERAGE RAISES ARE
+  //    DISPOSED IN PROSE, AND `strata/pending.md` ROW `4` LEAVES WITH ITS TABLE EMPTY. **ONE PATH IS NEW TO THIS UNION AND
+  //    IT IS NAMED, not admitted by a prefix**; every other path this pass writes is ALREADY DECLARED ABOVE and is named
+  //    below so a reader can check the claim.
+  //    THE RECORD THE NEW RECORD-PATTERN COVERAGE FIRST REDDENED AND THIS PASS REPAIRS: the bootstrap retrospective is the
+  //    `*-retrospective.md` shape — its `20`-line ceiling resolves from its PATH, which is exactly what the pattern table
+  //    exists for — and no earlier block of this union has ever carried it.
+  'strata/records/strata-bootstrap-retrospective.md',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE AND IS NAMED SO A READER CAN CHECK THE CLAIM:
+  //    `strata/decisions.md` (the row and nothing else), `strata/pending.md` (row `4`'s departure and its reason, the
+  //    preamble's empty-table sentence and its citation, and the removal of the row's own line — the file SHRINKS
+  //    `35` → `34`), `strata/next-steps.md` (the same statement about an empty list, at `35`), `strata/records/handover.md`
+  //    (the same statement for a fresh seat, at `39`), `strata/records/store-tabs-record-unit.md` (the `1.6.1` reading's
+  //    citation, exactly `40`), `strata/records/central-data-management-unit.md` (the assumption named by its HOME rather
+  //    than by bare id, `40/40`) and this file (this block). **THREE PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE
+  //    RECORD**: `strata/marks.json` (no test file is added or removed and no collected row moves, so
+  //    `strata-marks.mjs check` stays green UNREGENERATED), `strata/brief.md` (no §6 figure moves — no row, no file, no
+  //    `src/` byte) and `strata/platform.md` (`60/60`, no platform fact moves).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

@@ -28,8 +28,8 @@
   subject), `P-2` (the undeclared writer mechanism) and `P-3` (`register` with no call site) — are that document's, the last two under D-24.
 - **The test writer's set, moved and closed:** `E-2`'s re-grain set — `C-1`..`C-3` of `docs/L1/central-data-management.md` §8 —
   moved by one predicate (*a site is in the set iff it reads one of the moved numbers*); §8 holds both the rows it moved and the sites the predicate left green (exception §2/§3; D-10, D-31).
-- **The parked half went to its own unit:** `ASM-11`'s retirement — the one-time import and `provident-settings.json`'s write
-  site — was delivered by `settings-carrier-retirement` (D-22), which owns that record and its stage.
+- **The parked half went to its own unit:** the assumption filed at `docs/L1/central-data-management.md` §7 — the store's own file
+  the only new written name, the settings file imported once and then never written — was delivered by `settings-carrier-retirement` (D-22), which owns that record and its stage.
 - **Surfaced here, delivered by the pane's unit:** a fifth group name was enumerated in the pane, so the sixth group had no operator
   control and the group set's third reader stood outside `C-1`..`C-3`'s closure; `secure-panels` (D-35) bound the roster to a table typed by the gate's own union, so the pane cannot drift from the gate again (D-38; `docs/L1/secure-panels.md` §7 `E-1`).
 
