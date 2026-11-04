@@ -32,8 +32,10 @@
 // NON-ENUMERABLE and therefore survives no serialisation raw. **`read`, `list` and `journal` carry NEITHER**: a
 // read consults no constraint (the package's shipped reading, *"★ AND READS CHECK NO CONSTRAINT"*), so there is
 // no pass for it to report, and *"every act that ran a constraint pass"* is the reading this surface takes of the
-// instruction whose words were *"always"*. The refusal ledger carries no `log` either and that asymmetry is
-// named rather than hidden (`D-103`).
+// instruction whose words were *"always"*. **AND THE REFUSAL LEDGER CARRIES ONE TOO, WHERE A STORE ANSWERED IT**
+// (`D-107`): the package's refusal arm hands that arm a list on every arm measured, `mapper.ts` forwards it through
+// the seam's one reader, and an `[]` there means the refusal was composed before any pass ran — so the two arms now
+// speak ONE vocabulary with two different members' provenance, which is what `D-103`'s asymmetry was named for.
 
 import { commitLog } from '../storeroom.js'
 import { parseDelete, parseJournal, parseList, parseRead, parseWrite, pathText } from './args.js'

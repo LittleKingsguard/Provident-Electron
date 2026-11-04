@@ -518,6 +518,40 @@ const DECLARED_SCOPE: readonly string[] = [
   //    pass spends its last free line there — one bullet, the delivery that leaves this process and the surface as the site
   //    where it does (`149 → 150`, inside its ceiling).
   'docs/L3/security-store-storeroom/design.md',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-107` — THE REFUSAL LEDGER'S `log`, THE `data.*` CLAUSE-2 CELL RE-READ AS `N/A`, TWO PROSE CORRECTIONS AND
+  //    `ST-F1` RE-MEASURED AT `1.9.2`. **FOUR PATHS ARE NEW TO THIS UNION AND EACH IS NAMED, not admitted by a prefix;
+  //    every other path this pass writes is ALREADY DECLARED ABOVE.**
+  //    THE FOUR LAYER DOCUMENTS WHOSE CITATIONS NAMED FILES THAT NO LONGER STAND: each names a path `D-93` (or `D-89`)
+  //    deleted — `tests/store-persist.test.ts`, `tests/store-security.test.ts`, `src/renderer/store-core-graph.ts`, or
+  //    a row of a driver no leg runs — and each is RE-POINTED at a living subject (the settled profile's written-name
+  //    census, `RET-5` and the boot's own name census; the seven `scripts` key-set rows and the boundary row at its new
+  //    home; `writeAppState` and `AS-3`) with the deleted path kept and LABELLED as the reading of its own date. A
+  //    document that names a deleted file is a citation no `B-1` can measure, so the four are listed here path by path.
+  'docs/L1/central-data-management.md',
+  'docs/L1/central-data-census-exception.md',
+  'docs/L1/secure-panels.md',
+  'docs/L2/settings-carrier-retirement/behaviour.md',
+  //    AND THE MODULE'S OWN L3 SCOPE, which a member on the ledger reaches — `docs/L3/central-data/signatures.md`'s §1
+  //    `DataLedger` line, its rev block and §4's answer clause, traded IN PLACE so the file stays at `150`, because a
+  //    signatures document declaring the old ledger shape is the drift `D-53` keeps catching. **IT IS ALREADY DECLARED
+  //    ABOVE** (`D-101`) and is NOT re-listed: the first draft of this block declared it a second time and `B-1`
+  //    reddened on the duplicate, which is the row doing its job — the difference between a write and a claim.
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE AND IS NAMED SO A READER CAN CHECK THE CLAIM:
+  //    `src/main/data/mapper.ts`, `types.ts` and `surface.ts` (the forwarded member, the ledger's optional `log` and the
+  //    header clause that said the refusal arm carried none — all three declared at `D-101`), `src/main/storeroom.ts`
+  //    (the one accessor's docblock gains its fourth measured fact, declared at `D-103`),
+  //    `tests/integration/central-data/message-log.test.ts` (`L-7` and `L-8` join `D-103`'s six; declared at `D-103`),
+  //    `docs/L2/central-data/interface.md` (§2's ledger arm, §3's table row and bullet, and the rev block, traded IN
+  //    PLACE so the file stays at `149`), `strata/decisions.md` (this row, `D-106`'s pointer clause and `D-103`'s
+  //    supersession pointer), `strata/brief.md` (the stale sentence, the boundary row's new home and the `npm test`
+  //    figure), `strata/pending.md` (row 1's revival condition), `strata/records/store-tabs-record-unit.md` (`ST-F1`'s
+  //    re-read, one line spent and one freed), `strata/marks.json` (ALREADY DECLARED ABOVE at `D-93`, and written here
+  //    because its `readings` move with the two rows — `gating` reads `232 → 234` sites in the SAME `31` files, and
+  //    `index` is run because `check` reds on a `readings` disagreement and not on a marker drift; no test file is
+  //    added or removed) and this file (this block). **ONE PATH IS DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**:
+  //    `strata/modules.json` — no module is added, no path set changes and no `endpoints` figure moves.
+  //    `strata/next-steps.md` and `strata/platform.md` are untouched, at `29` and `60/60`.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

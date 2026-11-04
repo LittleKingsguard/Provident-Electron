@@ -5,6 +5,16 @@
 //
 // No sentence here carries a reversal word: nothing on this surface reverses, replays or repairs
 // a change (D-12; G4).
+//
+// **AND A REFUSAL A STORE ANSWERED CARRIES THE ENTRIES THAT PRODUCED IT** (`D-107`, taking the residue
+// `D-103` named): the package hands its refusal the same `{status, message, log, address}` shape it hands a
+// passing act, so the list is FORWARDED here rather than discarded — through the seam's ONE declared reader,
+// `commitLog`, and not through a `.log` read, because `D-103`'s narrowing is that no file under
+// `src/main/data/` reads the member itself (`tests/integration/central-data/message-log.test.ts` `L-6` pins
+// that, `mapper.ts` included). The refusal's own member is ENUMERABLE and the passing arm's is not — measured
+// on the installed `1.9.2` — so the same accessor serves both and no second one is minted.
+
+import { commitLog } from '../storeroom.js'
 
 import type { DataLedger, DataPath, DataRefusalReason } from './types.js'
 
@@ -64,15 +74,27 @@ function messageOf(caught: unknown): string | null {
 
 /** Map one caught store refusal to the ledger this module answers with. A thrown value carrying
  *  no string `status` answers `store-refused` with `storeStatus` absent and a fixed sentence
- *  (`signatures.md` §3; ASM-L3-5). */
+ *  (`signatures.md` §3; ASM-L3-5).
+ *
+ *  **`log` IS FORWARDED WHERE THE PACKAGE HANDED ONE, AND ABSENT WHERE IT DID NOT** (`D-107`). The store's
+ *  refusal arm carries `{status, message, log, address}` on every arm measured — a `ConstraintPassRefused`
+ *  from a family's value arm answers the pair's `constraint-check` and the refusal's own `outcome`, and a
+ *  refusal composed before any pass (`ParentAnchorMonotonicityViolation`, `AddressMalformed`) carries `[]`
+ *  — so `commitLog` never answers `null` for a thrown store refusal and the two arms the `??` would fold are
+ *  kept apart by the spread below. **THE ASSIGNMENT IS UNCONDITIONAL AND THE SPREAD IS NOT**: a caught value
+ *  that is not a package refusal at all (a `TypeError` from a malformed call) carries no list, and answering
+ *  `log: []` for it would say a pass ran and appended nothing. So the member appears exactly where a list
+ *  exists, which is the same rule `storeStatus` follows one member below it. */
 export function refusalLedger(caught: unknown, path?: DataPath): DataLedger {
   const status = statusOf(caught)
   const reason: DataRefusalReason = status === null ? 'store-refused' : (REASONS[status] ?? 'store-refused')
   const message = status === null ? sentence(reason) : (messageOf(caught) ?? sentence(reason))
+  const log = commitLog(caught)
   return {
     status: 'refused',
     reason,
     message,
+    ...(log !== null ? { log } : {}),
     ...(status !== null && reason === 'store-refused' ? { storeStatus: status } : {}),
     ...(path !== undefined ? { path: [...path] } : {}),
   }

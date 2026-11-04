@@ -161,6 +161,19 @@ export type { LogEntry }
  *    entries. **NOTHING IN THIS TREE READS `.log` OFF A REPAIR'S JOINED WRITE**: the tab record's `writeJoined`
  *    and the view record's `writeJoinedAt` are exactly that shape and neither reads it (`D-103`).
  *
+ * 4. **THE REFUSAL ARM IS THE SAME LIST AND NOT THE SAME MEMBER, AND THIS FUNCTION IS ITS READER TOO** (`D-107`,
+ *    taking `D-103`'s named residue). A store refusal is thrown as `{status, message, log, address}` — the same
+ *    shape the passing act answers with — and its `log` is an **ENUMERABLE** own array (measured on the installed
+ *    `1.9.2`: `enumerable:true`, `writable:true`, `configurable:true`, an array of the same five-member entries, and
+ *    `JSON.stringify(caught)` carries it), so the property read below finds it exactly as it finds the passing
+ *    arm's. A `ConstraintPassRefused` from a family's value arm carries TWO entries — the pair's own
+ *    `constraint-check` and the refusal's `outcome` — while `[]` is what a refusal composed BEFORE any pass
+ *    carries (`ParentAnchorMonotonicityViolation`, `AddressMalformed`). **SO `[]` HERE MEANS *"NO PASS RAN"***, and
+ *    that is the one reading that separates the two arms of this accessor: `null` is *"no record was handed a
+ *    list"*, `[]` is *"the record was handed an empty one"*, and the two are never folded. This is why NO SECOND
+ *    ACCESSOR IS MINTED: the member moved from non-enumerable to enumerable, and a property read is indifferent
+ *    to which (`D-107`).
+ *
  * `null` is also the answer for anything that is not an object or whose member is not an array, so a caller can
  * treat the return as total and never catch: this seam throws nothing, at any argument.
  */

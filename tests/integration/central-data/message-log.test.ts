@@ -289,4 +289,66 @@ describe('a passing act answers the commit’s log, and the two arms are disting
       expect(commentElided(sourceOf(`src/main/data/${file}`)).includes('.log'), `src/main/data/${file} reads no \`.log\` member either`).toBe(false)
     }
   })
+
+  it('L-7 · a `data.write` REFUSED by a family\'s value arm answers the entries that refused it — the pair\'s own `constraint-check` and the refusal\'s `outcome` — on the SAME member the passing arm uses', () => {
+    // **THE SECOND ARM OF `D-103`'S NAMED RESIDUE, TAKEN** (`D-107`). The package hands its refusal the same
+    // `{status, message, log, address}` shape it hands a pass, so the ledger forwards it: one vocabulary, one spelling,
+    // both arms. DROP `log` FROM `refusalLedger` AND THIS ROW IS RED, which is the whole of the requirement.
+    const one = stand()
+    const answer = one.surface.write({ path: ['panes'], tier: 'file', value: { junk: true } })
+    if (answer.status !== 'refused') throw new Error(`the corrupt geometry must be refused, and answered ${JSON.stringify(answer)}`)
+
+    expect(answer.storeStatus, 'the store\'s own status crosses verbatim, as it did before this pass').toBe('ConstraintPassRefused')
+    // THE MEMBER, AND ITS SHAPE: an array of the package's own five-member entries — the same shape the passing arm's
+    // `log` carries, so a caller reads ONE vocabulary off both arms.
+    expect(Array.isArray(answer.log), 'the refusal carries an ARRAY on the same member name the committed arm uses').toBe(true)
+    expect(Object.getOwnPropertyDescriptor(answer, 'log')?.enumerable, 'and it is an enumerable own member of the LEDGER').toBe(true)
+    // THE ENTRIES: the pair that refused, named by its own id, and the refusal's own `outcome`.
+    expect(kinds(answer.log ?? []), 'the pair was asked, then the pass closed as a refusal — no `commit`, because nothing committed').toEqual([
+      'constraint-check', 'outcome',
+    ])
+    expect((answer.log ?? []).map((entry) => entry.id), 'the `constraint-check` names the family\'s own pair').toEqual(['panes-must-stand', null])
+    expect((answer.log ?? [])[0]?.message, 'and its sentence is the pair\'s own, which is the same sentence the ledger carries').toBe(answer.message)
+    expect((answer.log ?? [])[1]?.state, 'the `outcome` entry carries the kernel\'s own KC token').toBe('KC-3')
+    for (const entry of answer.log ?? []) {
+      expect(Object.keys(entry), 'every entry carries the declaration\'s five members and no sixth').toEqual(['kind', 'id', 'opId', 'message', 'state'])
+    }
+    // **IT SURVIVES THE SERIALISATION A TOOL ANSWER GOES THROUGH** — the member the MCP caller actually receives, since
+    // `mcp-server.ts` answers `JSON.stringify(value, null, 2)`. A refusal built by spreading the store's thrown value
+    // would carry it anyway (the member is ENUMERABLE there), so this row pins the SURFACE's copy and not the store's.
+    const travelled = JSON.parse(JSON.stringify(answer)) as { log?: { kind?: string }[] }
+    expect(travelled.log?.map((entry) => entry.kind), 'the log crosses `JSON.stringify` intact on the refusal arm too').toEqual([
+      'constraint-check', 'outcome',
+    ])
+    // THE CONTROL THE OTHER WAY: the SAME store's PASSING write carries the passing arm's log, so the two arms are
+    // measured side by side rather than the refusal alone.
+    const stood = one.surface.read({ path: ['panes'] })
+    if (stood.status !== 'read') throw new Error(`the geometry was not readable: ${JSON.stringify(stood)}`)
+    const landed = landedWrite(one.surface.write({ path: ['panes'], tier: 'file', value: stood.value }))
+    expect(kinds(landed.log).slice(-1), 'the passing arm ends at the commit').toEqual(['commit'])
+    expect(kinds(answer.log ?? []).includes('commit'), 'and the refused one reaches no commit at all').toBe(false)
+  })
+
+  it('L-8 · the refusals THIS MODULE composes carry no `log` — a member is present exactly where a store handed a list, never blanket-added', () => {
+    // **THE OTHER HALF OF THE SAME RULE, AND IT IS WHAT KEEPS `log: []` FROM MEANING NOTHING** (`D-107`): a refusal the
+    // surface mints before any store act has no list to forward, and an `[]` there would be a claim about a pass that
+    // never began. Each of the module's own arms is driven, each measured by its own key set rather than by trust.
+    const one = stand()
+    const own: ReadonlyArray<readonly [string, unknown]> = [
+      ['malformed-arguments (a member outside the declared set)', one.surface.write({ path: ['panes'], value: 1, tier: 'file', extra: 1 })],
+      ['declared-tier (a declared root at a tier that is not the family\'s)', one.surface.write({ path: ['focus'], tier: 'file', value: { entries: [], activeId: null } })],
+      ['volatile-path (a volatile spelling)', one.surface.write({ path: ['mem.x'], tier: 'mem', value: 1 })],
+      ['root-not-writable (the empty address)', one.surface.write({ path: [], value: { whole: 1 } })],
+      ['cursor-unknown (a cursor outside the window)', one.surface.journal({ cursor: 9_999 })],
+    ]
+    for (const [label, answer] of own) {
+      expect((answer as { status?: unknown }).status, `${label} is refused`).toBe('refused')
+      expect(Object.hasOwn(answer as object, 'log'), `${label}: no \`log\` member stands, because no store answered`).toBe(false)
+    }
+    // THE CONTROL: the same surface DOES forward one where a store answered, so the absences above are the rule and not a
+    // fixture that never reaches a store.
+    const refused = one.surface.write({ path: ['panes'], tier: 'file', value: { junk: true } })
+    expect(Object.hasOwn(refused, 'log'), 'the store-answered refusal on the same surface carries the member').toBe(true)
+    expect((refused as { log?: unknown[] }).log?.length, 'and it carries entries, so the two arms are distinguishable').toBe(2)
+  })
 })

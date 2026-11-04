@@ -33,8 +33,23 @@ export type DataRefusalReason =
   | 'address-malformed' | 'parent-absent' | 'container-kind-conflict' | 'value-not-admitted' | 'write-failed'
   | 'declared-tier' | 'store-refused'
 
-/** The closed refusal ledger: a VALUE, never a throw (`interface.md` §3; D-11). `floor` and
- *  `through` ride the `cursor-unknown` arm alone, `storeStatus` the `store-refused` arm alone. */
+/**
+ * The closed refusal ledger: a VALUE, never a throw (`interface.md` §3; D-11). `floor` and
+ * `through` ride the `cursor-unknown` arm alone, `storeStatus` the `store-refused` arm alone.
+ *
+ * **AND `log` IS PRESENT ON EXACTLY THE REFUSALS A STORE ANSWERED** (`D-107`, taking `D-103`'s named residue).
+ * The package hands its refusal arm the same `{status, message, log, address}` shape it hands its passing arm,
+ * and the two members are NOT the same member twice: the passing arm's `log` is a NON-enumerable own property
+ * of the record (`Object.keys`, `JSON.stringify` and a spread all drop it, `D-103`), while the refusal's is an
+ * ENUMERABLE own array that survives every one of them — so both are forwarded through the seam's ONE declared
+ * reader (`commitLog`, `src/main/storeroom.ts`) and neither is forwarded raw. `[]` is an answer here and it
+ * means *"the refusal was composed before any pass ran"* — a `write` at a tier its parent anchor outranks is
+ * refused with `log: []` — and never *"a pass ran and appended nothing"*, which is the `D-103` reading of the
+ * passing arm kept intact on this one. **THE MEMBER IS ABSENT WHERE NO STORE ANSWERED**: `malformed-arguments`,
+ * `declared-tier`, `volatile-path`, `root-not-writable`, `cursor-unknown` and `store-unreachable` are this
+ * module's own sentences, composed before any store was consulted, so there is no list to carry — and an
+ * `[]` there would be this surface's claim about a pass that never began.
+ */
 export type DataLedger = {
   status: 'refused'
   reason: DataRefusalReason
@@ -43,6 +58,7 @@ export type DataLedger = {
   through?: number
   storeStatus?: string
   path?: DataPath
+  log?: readonly DataLogEntry[]
 }
 
 /**
