@@ -428,4 +428,214 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(healed.view.read().panes, 'with the family legal from that instant on').toEqual([{ id: 'pane-a', size: 12, bounds: { min: 0, max: 24 } }])
     expect(healed.bytes().includes('"junk":true'), 'and the corrupt member gone from the bytes').toBe(false)
   })
+
+  it('VA-14 · EVERY DECLARATION BOTH CROSSINGS REGISTER BUILDS ITS REFUSAL WITH OWN `message` AND OWN `repair` — driven over the very declaration objects the store adopted, at the registration batch and on the write path (`ST-F1`, `D-108`)', () => {
+    // **WHAT THIS ROW IS FOR.** `ST-F1`, re-read at the installed `1.9.2`, is the kernel's own TWO READERS DISAGREEING:
+    // a value whose `message` and `repair` are INHERITED (`Object.create({message, repair})`) REGISTERS — the
+    // registration path reads `'repair' in outcome`, a `[[HasProperty]]` that walks the chain — and then fails EVERY
+    // write, which the write path reads with `Object.hasOwn(outcome,'message')` and `ownMember(outcome,'repair')`, a
+    // `[[GetOwnProperty]]` that finds neither, so the write answers `ConstraintPassRefused` with *"returned a value
+    // outside the three declared outcome arms"* and the repair never runs. That is upstream-owned and not patched here
+    // (`D-5`, `D-52`) — **so the app must be provably outside it, and this row is the proof rather than the assurance.**
+    //
+    // **THE FORM IS A DRIVE AND NOT A SCAN**: the store is constructed with the app's REAL batch, the batch arrays are
+    // kept (so the declarations driven below are the very objects the store registered and not look-alikes rebuilt
+    // beside it), and each pair's refusal arm is EXERCISED and its ANSWER inspected for own members. A text census
+    // could not tell an object literal from a spread of a base whose prototype carries the two names; a drive can.
+    const where = dir()
+    const holder: { current: ViewRecordStore | null } = { current: null }
+    const tabsBatch = tabsConstraintDeclarations(() => holder.current)
+    const viewBatch = viewConstraintDeclarations(() => holder.current)
+    const store = createProfileStore({
+      filePath: at(where),
+      constraints: [...tabsBatch, ...viewBatch].map((declaration) => ({ address: declaration.address, id: declaration.id, constraint: declaration.constraint })) as never,
+    }) as unknown as ViewRecordStore
+    holder.current = store
+    // THE REGISTRATION INSTANT, ASSERTED BEFORE ANYTHING IS DRIVEN: the batch is SIX + FOUR over the two crossings and
+    // THREE at the secure instance, every one of them REGISTERED (a `ConstraintRefusedAtRegistration` would have thrown
+    // out of the construction above), and the ten ids are one namespace with no repeat.
+    expect(tabsBatch.length, 'the tab record declares SIX').toBe(6)
+    expect(viewBatch.length, 'the view record declares FOUR').toBe(4)
+    const centralIds = [...tabsBatch, ...viewBatch].map((declaration) => declaration.id)
+    expect(centralIds.slice().sort(), 'and the ten ids are the batch `src/main/main.ts` hands the one construction').toEqual([
+      'exactly-one-active',
+      'focus-must-stand',
+      'order-names-its-tabs',
+      'panes-must-stand',
+      'tab-has-content',
+      'tab-has-lastActiveAt',
+      'tab-has-title',
+      'tabs-must-stand',
+      'theme-must-stand',
+      'zones-must-stand',
+    ])
+    const secureDir = dir()
+    createOperatorSettings({ userDataDir: secureDir })
+    const secureBatch = (captured[captured.length - 1]?.['constraints'] ?? []) as ReadonlyArray<{ id: string; constraint: (context: unknown) => unknown }>
+    expect(secureBatch.length, 'the secure crossing declares THREE, and this is the list its own construction adopted').toBe(3)
+    const thirteen = centralIds.length + secureBatch.length
+    expect(thirteen, 'THIRTEEN declarations, and this row drives every one of them').toBe(13)
+
+    // **THE ONE ASSERTION THE WHOLE ROW IS** — made on the VALUE A BODY ANSWERED, which is the only form the kernel's
+    // two readers ever see. `Object.getPrototypeOf` is asserted FIRST and separately, because an answer built on a base
+    // would pass an own-`message`-only probe while failing the write instant, which is exactly the divergence.
+    const refusalForm = (label: string, answer: unknown, members: readonly string[]): void => {
+      expect(answer, `${label}: the body answered its REFUSAL arm, not the pass arm`).not.toBe(true)
+      const outcome = answer as Record<string, unknown>
+      expect(
+        Object.getPrototypeOf(outcome),
+        `${label}: the refusal is a PLAIN object — an \`Object.create({message, repair})\` answer REGISTERS and then answers every write with "outside the three declared outcome arms" (ST-F1)`,
+      ).toBe(Object.prototype)
+      expect(Object.getOwnPropertyNames(outcome).sort(), `${label}: its OWN property names are exactly the arm's declared members, so neither is inherited`).toEqual(members.slice().sort())
+      for (const member of members) expect(Object.hasOwn(outcome, member), `${label}: \`${member}\` is an OWN property at this instant`).toBe(true)
+      if (members.includes('repair')) expect(typeof outcome['repair'], `${label}: the repair is a function the kernel may invoke`).toBe('function')
+      // THE UNREPAIRABLE ARM'S WHOLE JOB: no `repair` at all — and "no" includes INHERITED, which a `'repair' in answer`
+      // probe would answer `true` for.
+      else expect('repair' in outcome, `${label}: and the unrepairable arm carries no \`repair\`, own or inherited`).toBe(false)
+    }
+
+    // **THE TEN CENTRAL DECLARATIONS, EACH AT ITS REPAIRABLE ARM.** Six answer `{message, repair}`; the four view
+    // families answer the same shape at their existence arm (`D-84`, `D-85`, `D-91`, `D-97`). The context is the
+    // REGISTRATION instant's — `{address, tier: null, value}` — which is the one instant at which the batch itself is
+    // asked, and it is the instant ST-F1 says is the permissive reader.
+    const byId = new Map([...tabsBatch, ...viewBatch].map((declaration) => [declaration.id, declaration]))
+    const central = (id: string, context: unknown): unknown => {
+      const declaration = byId.get(id)
+      if (declaration === undefined) throw new Error(`the batch carries no declaration for ${id}`)
+      return declaration.constraint(context)
+    }
+    refusalForm('tabs-must-stand', central('tabs-must-stand', { address: ['tabs'], tier: null, value: undefined }), ['message', 'repair'])
+    refusalForm('order-names-its-tabs', central('order-names-its-tabs', { address: ['tabs'], tier: null, value: { order: ['ghost'], entries: {} } }), ['message', 'repair'])
+    refusalForm('panes-must-stand', central('panes-must-stand', { address: ['panes'], tier: null, value: undefined }), ['message', 'repair'])
+    refusalForm('focus-must-stand', central('focus-must-stand', { address: ['focus'], tier: null, value: undefined }), ['message', 'repair'])
+    refusalForm('zones-must-stand', central('zones-must-stand', { address: ['zones'], tier: null, value: undefined }), ['message', 'repair'])
+    refusalForm('theme-must-stand', central('theme-must-stand', { address: ['theme'], tier: null, value: undefined }), ['message', 'repair'])
+    // **THE FOUR WHOSE ARM READS THE STANDING RECORD, AND WHY THEY ARE DRIVEN THROUGH THE HOLDER AND NOT THE STORE.** A
+    // violation these four judge can only STAND inside a commit — every write that would leave one is REPAIRED in that
+    // same commit (`VA-2`'s control, `D-105`'s measurement), and the package consumes the answer and never hands it
+    // back. So the handle the SAME declaration objects close over is pointed at the record such a commit would see, and
+    // the declarations driven are still the ones the store registered. Nothing is rebuilt: `holder` is the getter the
+    // batch was built with.
+    holder.current = { read: () => ({ order: ['t', 'u'], t: { label: '', target: '', lastActiveAt: '', active: true }, u: { active: true } }) } as never
+    refusalForm('exactly-one-active', central('exactly-one-active', { address: ['tabs'], tier: 'file', value: {} }), ['message', 'repair'])
+    refusalForm('tab-has-title', central('tab-has-title', { address: ['tabs'], tier: 'file', value: {} }), ['message', 'repair'])
+    refusalForm('tab-has-content', central('tab-has-content', { address: ['tabs'], tier: 'file', value: {} }), ['message', 'repair'])
+    refusalForm('tab-has-lastActiveAt', central('tab-has-lastActiveAt', { address: ['tabs'], tier: 'file', value: {} }), ['message', 'repair'])
+    holder.current = store
+
+    // **THE THREE SECURE DECLARATIONS, AT THE EXISTENCE ARM AND AT THE VALUE ARM (`D-105`).** Their own batch is the
+    // list the construction adopted, so the objects are the registered ones.
+    const secureById = new Map(secureBatch.map((declaration) => [declaration.id, declaration]))
+    const secureRefusal = (id: string, context: unknown): unknown => {
+      const declaration = secureById.get(id)
+      if (declaration === undefined) throw new Error(`the secure batch carries no declaration for ${id}`)
+      return declaration.constraint(context)
+    }
+    refusalForm('operator-record-must-stand', secureRefusal('operator-record-must-stand', { address: ['operator-settings'], tier: null, value: undefined }), ['message', 'repair'])
+    refusalForm('operator-exclusion-must-stand', secureRefusal('operator-exclusion-must-stand', { address: ['operator-exclusion'], tier: null, value: undefined }), ['message', 'repair'])
+    refusalForm('operator-app-state-must-stand', secureRefusal('operator-app-state-must-stand', { address: ['operator-app-state'], tier: null, value: undefined }), ['message', 'repair'])
+
+    // **AND THE SIX UNREPAIRABLE ARMS, WHICH ARE THE ONES A PROTOTYPE CHAIN WOULD BE MOST DANGEROUS ON**: an inherited
+    // `repair` on a `{message}` arm is invoked at the registration instant and IGNORED at the write instant, so the row
+    // asserts the member's ABSENCE and not merely its being non-own.
+    refusalForm('panes-must-stand (value arm)', central('panes-must-stand', { address: ['panes'], tier: 'file', value: { junk: true } }), ['message'])
+    refusalForm('focus-must-stand (value arm)', central('focus-must-stand', { address: ['focus'], tier: 'mem', value: { junk: true } }), ['message'])
+    refusalForm('zones-must-stand (value arm)', central('zones-must-stand', { address: ['zones'], tier: 'mem', value: { junk: true } }), ['message'])
+    refusalForm('operator-record-must-stand (value arm)', secureRefusal('operator-record-must-stand', { address: ['operator-settings'], tier: 'file', value: { junk: true } }), ['message'])
+    refusalForm('operator-exclusion-must-stand (value arm)', secureRefusal('operator-exclusion-must-stand', { address: ['operator-exclusion'], tier: 'mem', value: { junk: true } }), ['message'])
+    refusalForm('operator-app-state-must-stand (value arm)', secureRefusal('operator-app-state-must-stand', { address: ['operator-app-state'], tier: 'file', value: { rows: [{ name: 7, value: 'x' }] } }), ['message'])
+
+    // **THE WRITE PATH, WHERE THE KERNEL IS THE ONLY READER.** The answer object is not observable from a write, but the
+    // two things a chain-only answer destroys ARE: an own `repair` is INVOKED inside the caller's own commit, and an own
+    // `message` is the sentence the refusal carries. So the same batch's repair is made to run — the six tab pairs'
+    // `healRecord` through a corrupt whole-record write — and every value arm's refusal is read for ITS OWN sentence,
+    // with ST-F1's divergence sentence asserted absent from all of them.
+    const surface = createDataSurface({ profileDir: where, store: store as never, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
+    const repaired = surface.write({ path: ['tabs'], tier: 'file', value: { junk: true } })
+    if (repaired.status !== 'committed') throw new Error('the corrupt tab record is repaired inside the caller\'s own commit, and answered ' + JSON.stringify(repaired))
+    expect(repaired.repaired, 'a repair the kernel FOUND OWN ran inside the caller\'s commit — the write instant\'s half of the claim, for the six tab pairs').toBe(true)
+    const sentences: string[] = []
+    for (const [path, tier, value] of [
+      [['panes'], 'file', { junk: true }],
+      [['focus'], 'mem', { junk: true }],
+      [['zones'], 'mem', { junk: true }],
+    ] as ReadonlyArray<readonly [readonly string[], 'file' | 'mem', unknown]>) {
+      sentences.push(ledgerOf(surface.write({ path, tier, value })).message)
+    }
+    for (const message of sentences) expect(message, 'each refusal carries its own family\'s sentence, which only an OWN `message` can reach the kernel as').toMatch(/^the (pane geometry|focus mirror|zone family) (carries|holds)/)
+    for (const message of sentences) expect(message.includes('outside the three declared outcome arms'), 'and NONE of them is ST-F1\'s divergence sentence').toBe(false)
+  })
+
+  it('VA-15 · **THE INSTRUMENT CAN FAIL** — a planted declaration whose refusal is `Object.create({message, repair})` REGISTERS and then answers every write with ST-F1\'s divergence sentence, so the row above measures the fault it names; and over comment-elided code no module builds a refusal on a base at all', () => {
+    // (a) ST-F1, RE-DRIVEN HERE RATHER THAN QUOTED, because a row that cannot fail is a deleted row wearing a new name.
+    //     THE PLANT IS ONE DECLARATION — the arm a caller's own `provident.data.write` reaches — which refuses a record
+    //     carrying no `order` seat and REPAIRS it through the route its registration context lends, so the re-run it is
+    //     judged by passes and the batch stands. Its refusal is a value whose two members are INHERITED.
+    const where = dir()
+    const legal = { order: ['landing'], landing: { label: 'L', target: 'landing', lastActiveAt: 'now', active: true } }
+    const planted = {
+      message: 'the planted pair refuses a record with no order seat',
+      repair: (context: unknown) => {
+        const receipt = (context as { write: (address: readonly string[], tier: string, value: unknown) => { op?: unknown } }).write(['tabs'], 'file', legal)
+        // THE CREDITED ARM, because a registration repair is re-run over the op it landed and a repair that answered
+        // anything else would refuse the CONSTRUCTION — which is a different arm from the one this plant is about.
+        return { ok: true as const, op: receipt.op }
+      },
+    }
+    const plantedAnswer = Object.create(planted) as object
+    /** The body the plant registers: legal once the record it demands STANDS, and its inherited refusal otherwise. */
+    const plantedConstraint = (context: unknown): unknown => {
+      const held = (context as { value?: unknown } | null)?.value
+      const seat = typeof held === 'object' && held !== null ? (held as Record<string, unknown>)['order'] : undefined
+      return Array.isArray(seat) ? true : plantedAnswer
+    }
+    expect(Object.getPrototypeOf(plantedAnswer), 'the planted refusal\'s base is a shared object and not `Object.prototype`').toBe(planted)
+    expect(Object.hasOwn(plantedAnswer, 'message'), 'so neither member is OWN').toBe(false)
+    expect(Object.hasOwn(plantedAnswer, 'repair')).toBe(false)
+    let registered: unknown = null
+    type PlantedStore = { read: (address: readonly string[], tier: string) => unknown; write: (address: readonly string[], tier: string, value: unknown) => unknown }
+    let store: PlantedStore | null = null
+    try {
+      store = storeCreate({
+        journalLength: 64,
+        listeners: [],
+        filePath: at(where),
+        constraints: [{ address: ['tabs'], id: 'planted-inherited-pair', constraint: plantedConstraint }] as never,
+      }) as unknown as PlantedStore
+    } catch (caught) {
+      registered = caught
+    }
+    expect(registered, 'THE REGISTRATION INSTANT ACCEPTS IT — this is ST-F1\'s permissive reader, measured on the installed `1.9.2`, and the reason the app must be provably outside it').toBe(null)
+    let refused: unknown = null
+    try {
+      store?.write(['tabs'], 'file', { junk: true })
+    } catch (caught) {
+      refused = caught
+    }
+    expect((refused as { status?: string } | null)?.status, 'and the WRITE INSTANT refuses it, whatever the value written').toBe('ConstraintPassRefused')
+    expect((refused as { message?: string } | null)?.message, 'with the divergence sentence and not the pair\'s own — the repair never ran').toContain('outside the three declared outcome arms')
+    expect((refused as { log?: ReadonlyArray<{ kind?: string }> } | null)?.log?.some((entry) => entry.kind === 'repair-run') ?? false, 'and NO repair entry stands in the log: an inherited `repair` is invisible at the write instant').toBe(false)
+
+    // (b) THE STATIC HALF, OVER COMMENT-ELIDED CODE, so a base cannot arrive by a road the drive does not take. Every
+    //     `Object.create` in the three declaring modules is `Object.create(null)` — the caller-data copy map, whose whole
+    //     point is that it has NO chain — and no `setPrototypeOf` and no `__proto__` stands in any of their code.
+    const modules = {
+      'src/main/tabs-record/index.ts': commentElided(sourceOf('src/main/tabs-record/index.ts')),
+      'src/main/view-record/index.ts': commentElided(sourceOf('src/main/view-record/index.ts')),
+      'src/main/operator-settings/index.ts': commentElided(sourceOf('src/main/operator-settings/index.ts')),
+    }
+    let creates = 0
+    for (const [path, code] of Object.entries(modules)) {
+      for (const hit of code.matchAll(/Object\.create\(([^)]*)\)/g)) {
+        creates += 1
+        expect(hit[1].trim(), `${path}: every \`Object.create\` here is the NULL-prototype copy map, which carries nothing to inherit`).toBe('null')
+      }
+      expect(code.includes('setPrototypeOf'), `${path}: no answer is re-based`).toBe(false)
+      expect(code.includes('__proto__'), `${path}: and no \`__proto__\` key stands in its code`).toBe(false)
+    }
+    expect(creates, 'the census is not vacuous: the modules DO call `Object.create`, once in code (its second spelling is prose in a docblock, and the elision is what tells the two apart), and it is the null map').toBe(1)
+    // THE POSITIVE CONTROL ON THE SAME SCANNER: a planted base-built refusal IS reported by the clause above.
+    const plantedSource = commentElided('const refuse = () => Object.create({ message: m, repair: r })\n')
+    expect([...plantedSource.matchAll(/Object\.create\(([^)]*)\)/g)].map((hit) => (hit[1] ?? '').trim()), 'the control: a base-built refusal is what this clause reports').toEqual(['{ message: m, repair: r }'])
+  })
 })
