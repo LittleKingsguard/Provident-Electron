@@ -18,12 +18,15 @@ whole at `D-93`, and what they left owed LANDED at `D-94` as a leg — `npm run 
 | # | Work | Owner | Closed when |
 |---|---|---|---|
 
-Every other open item is `pending.md`'s — **all five rows**, each stating what it waits on: the `data.*` answer sites and
-D-22's second half wait on admission, one boot-battery process tree on a run on the machine that reported it,
-`strata-lint`'s record gap on the harness owner, and `src/shared/overlay.ts`'s absent overlay on a unit admitted to AUTHOR
-one — the one blocker whose subject is an act and not a repair. **`A-4`'s flake is no longer among them** — its cause was
-measured and its fix landed on 2026-11-02, and `pending.md` records both rather than letting a flake that stopped stand in
-for a cause that was found. **ST-F2 is no longer among them** — `pending.md` records why it was deleted rather than
+Every other open item is `pending.md`'s — **every row in that file, whatever the count, is the list**, each stating what it
+waits on: the five `data.*` members' answer sites on admission, `strata-lint`'s record gap on the harness owner,
+`src/shared/overlay.ts`'s absent overlay on a unit admitted to AUTHOR one — the one blocker whose subject is an act and not a
+repair — and the eleven unimported `src/shared/` modules on a ruling about what a declared-but-unreachable deliverable
+becomes. **`A-4`'s flake is no longer among them** — its cause was measured and its fix landed on 2026-11-02, and `pending.md`
+records both rather than letting a flake that stopped stand in for a cause that was found. **`D-22`'s parked second half and
+the unreproduced boot-battery process tree LEFT on 2026-11-04** — the first because both consumers it waited to admit are
+already on the instance, the second as a watch rather than blocked work, and `pending.md` records each with its measurement.
+**ST-F2 is no longer among them** — `pending.md` records why it was deleted rather than
 narrowed on 2026-11-02 — and **ST-F1** was DISCHARGED 2026-11-04 by the installed `1.9.3`, whose registration instant reads a returned outcome's `message` and `repair` as OWN members, with `strata/records/store-tabs-record-unit.md` §1 carrying the discharge; neither is pushed from
 here (D-5, D-24). **Row 2 is gone with its work, not deferred**: `docs/L3/store-tabs-record/signatures.md` rev 2 is
 regenerated from the three modules and pinned against them by `tests/unit/store-tabs-record/signatures.test.ts` — D-45's checking arm, which reds on a divergence in either direction.
