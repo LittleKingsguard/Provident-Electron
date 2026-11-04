@@ -570,7 +570,7 @@ const DECLARED_SCOPE: readonly string[] = [
   //    whose disposal is a DESIGN ACT is not actionable work), `strata/platform.md` (`60/60`, no platform fact moves)
   //    and **`src/` ITSELF, OF WHICH NOT ONE BYTE IS WRITTEN**: the census is an analysis whose instruments live outside
   //    the repository, and the immunity is a DRIVE over the modules as they stand. A pass that writes no `src/` path
-  //    owes the five Electron legs nothing, and their last readings stand at `b380ecd`'s head.
+  //    owes the five Electron legs nothing — they were driven anyway and read unmoved (`D-108`'s measurement clause).
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
