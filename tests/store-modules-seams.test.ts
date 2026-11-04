@@ -1606,7 +1606,7 @@ describe('§3.3 invariants (I-rows)', () => {
  * ════════════════════════════════════════════════════════════════════════════ */
 
 describe('§3.4 S-rows — overlay (S-OV-*), the caller half RE-GRAINED to the stronger true form (D-93)', () => {
-  test('S-OV-1 — (RE-GRAINED 2026-11-03, D-93) the overlay module\'s import census (ZERO imports, three views) PLUS the TREE census: NO file under src/ imports src/shared/overlay.js at all — its one admitted caller is DELETED', () => {
+  test('S-OV-1 — (RE-GRAINED 2026-11-05 by `D-113`; ZERO imports D-93) the overlay module\'s import census (ZERO imports, three views) PLUS the TREE census: src/shared/overlay.js has EXACTLY ONE importer under src/, `src/renderer/renderer.ts`, admitted BY NAME — a SECOND carrier is still a FINDING', () => {
     // module half — GREEN today (landed bytes, P-OV-4/I-4's force)
     for (const reading of censusReadings('shared/overlay.ts')) {
       expect(reading.hits, `${reading.reading} of overlay.ts`).toEqual([])
@@ -1621,19 +1621,22 @@ describe('§3.4 S-rows — overlay (S-OV-*), the caller half RE-GRAINED to the s
     // caller (`src/renderer/overlay-store.ts`). That file is DELETED with the frozen store, so the
     // honest post-purge reading is not "exactly one importer" but "NO importer at all", read over the
     // whole tree, comments elided.
+    // ⟶ **RE-GRAINED 2026-11-05 (`D-113`): THE TREE CENSUS ADMITS EXACTLY ONE CARRIER, BY NAME**
+    // (`ADMITTED_OVERLAY_CARRIER`, declared above). THE AS-FILED AND `D-93` READING, KEPT VISIBLE BESIDE — *"NO importer at
+    // all, over the tree"* — was TRUE while nothing consumed the mechanism and is FALSE now that the ruling's consumer
+    // exists; the closed SET is not weakened by naming its one member, and a SECOND carrier still fails below.
     const importers: string[] = []
+    const unadmittedReferences: string[] = []
     for (const f of srcFiles().filter((p) => p.includes('shared/overlay.ts') === false)) {
       const code = commentElided(readFileSync(f, 'utf8'))
       for (const hit of scanSpecifier(code, 'overlay')) importers.push(`${f}: ${hit}`)
+      if (isAdmittedOverlayCarrier(f)) continue
+      if (code.includes('overlayTransition')) unadmittedReferences.push(`${f}: overlayTransition`)
+      if (code.includes('overlayInertDeclaration')) unadmittedReferences.push(`${f}: overlayInertDeclaration`)
     }
-    expect(importers, 'the deleted caller left no successor: NO src/** file imports overlay.js').toEqual([])
-    // AND NO FILE NAMES ITS TWO VALUE EXPORTS EITHER (the census's second form, so an import spelled
-    // some other way is still caught by the names).
-    for (const f of srcFiles().filter((p) => p.includes('shared/overlay.ts') === false)) {
-      const code = commentElided(readFileSync(f, 'utf8'))
-      expect(code.includes('overlayTransition'), `${f} must not reference the module's values`).toBe(false)
-      expect(code.includes('overlayInertDeclaration'), `${f} must not reference the module's values`).toBe(false)
-    }
+    expect(unadmittedReferences, "no src/** file OUTSIDE the one admitted carrier references the module's values (D-113: the carrier is the app renderer's wiring, `src/renderer/renderer.ts`)").toEqual([])
+    expect(importers.filter((entry) => !entry.startsWith(ADMITTED_OVERLAY_CARRIER)), 'a SECOND importer is a FINDING: the admitted set is ONE path, by name — the app renderer, D-113').toEqual([])
+    expect(importers.length, 'and the ONE admitted carrier IS there — the exemption is a measured member, not a blanket strip').toBe(1)
     // THE CONTROL — a fixture line importing the module IS reported as an importer by the same scan,
     // so the two absences above are measurements.
     expect(scanSpecifier(`import { overlayTransition } from '../shared/overlay.js'\n`, 'overlay').length, 'a planted importer is caught').toBeGreaterThan(0)
@@ -1691,6 +1694,19 @@ describe('§3.4 S-rows — overlay (S-OV-*), the caller half RE-GRAINED to the s
  * re-grain honest rather than a blanket strip. The `D-93` reading these rows revert to if that import is removed is
  * *"NO importer at all, over the tree"*, and it is kept visible in each row's own note.
  */
+// ⟶ **RE-GRAINED 2026-11-05 (`D-113`) — THE OVERLAY'S ONE ADMITTED CARRIER, NAMED.** The as-filed row admitted
+// ONE consumer (`src/renderer/overlay-store.ts`); `D-93` deleted that and re-grained the rows to ZERO, honestly, because
+// nothing then consumed the mechanism. **The user's ruling — *"The overlay is used to contain UI elements that should
+// block general app access while open, ex. security tools and other configuration settings"* — makes the mechanism OWED a
+// consumer, and `D-113` lands it: `src/renderer/renderer.ts`'s `overlayWiringRole`/`startOverlayApplication`.** So the set is
+// CLOSED AT ONE NAMED MEMBER, exactly the form `D-96` took for `theme`; the planted-consumer controls are untouched, so a
+// SECOND carrier is still a FINDING.
+const ADMITTED_OVERLAY_CARRIER = join(SRC_ROOT, 'renderer/renderer.ts')
+/** Is this `src/**` path the overlay's admitted carrier? Exact membership, never a prefix and never a directory. */
+function isAdmittedOverlayCarrier(path: string): boolean {
+  return path === ADMITTED_OVERLAY_CARRIER
+}
+
 // ⟶ **RE-GRAINED 2026-11-03 (`D-97`) — THE ONE ADMITTED CARRIER MOVES TO THE CROSSING, BY NAME.** `D-96` admitted
 // `src/renderer/renderer.ts` (the renderer's `startThemeDeclaration`); this pass DELETES that drive because the instruction
 // it carries is *"no boot time declarations — use constraint repairs"*, so the mechanism's one in-tree consumer is now the
@@ -1838,21 +1854,31 @@ describe('§3.4 S-rows — the verification half (S-PDV-1)', () => {
  * ════════════════════════════════════════════════════════════════════════════ */
 
 describe('§3.5 existence rows (E-*)', () => {
-  test('E-OV-1 — (RE-GRAINED 2026-11-03 to the STRONGER TRUE FORM, D-93) the overlay module is referenced by NO file under src/ at all: overlayTransition/overlayInertDeclaration appear ONLY in the module itself; the positive control is a planted consumer that FAILS the probe (§3.5)', () => {
+  test('E-OV-1 — (RE-GRAINED 2026-11-05 by `D-113`; ZERO-consumer form D-93) the overlay module is referenced by NOTHING under src/ outside its ONE admitted consumer, `src/renderer/renderer.ts`: overlayTransition/overlayInertDeclaration appear ONLY in the module and there; the positive control is a planted consumer at ANY OTHER path, which still FAILS the probe (§3.5)', () => {
     // The as-filed row admitted ONE consumer — the unit's declared caller
     // `src/renderer/overlay-store.ts`, whose ADMISSION was the spec's §2.7 item 7 extension. That file
     // is DELETED with the frozen store, so the honest post-purge reading is the original one, in its
     // strongest form: ZERO consumers. Read over CODE with comments elided, so this headstone's own
     // prose cannot answer for the tree.
     const moduleFile = 'shared/overlay.ts'
+    // ⟶ **RE-GRAINED 2026-11-05 (`D-113`) — THE EXISTENCE ROW'S SUBJECT IS NOW "EXACTLY ONE CONSUMER, NAMED", NOT "NONE".**
+    // The as-filed row admitted ONE consumer (the unit's own caller `src/renderer/overlay-store.ts`); `D-93` deleted that and
+    // re-grained the row to ZERO, honestly, because nothing then consumed the mechanism. **The ruling makes the mechanism
+    // OWED a consumer and `D-113` lands it — the app renderer's wiring** — admitted here BY NAME
+    // (`ADMITTED_OVERLAY_CARRIER`) and bounded by the planted-consumer control at the end of this row, which still FAILS for
+    // any OTHER path.
     const importers: string[] = []
+    const unadmittedReferences: string[] = []
     for (const f of srcFiles().filter((p) => p.includes(moduleFile) === false)) {
       const code = commentElided(readFileSync(f, 'utf8'))
-      expect(code.includes('overlayTransition'), `${f} references the module's transition`).toBe(false)
-      expect(code.includes('overlayInertDeclaration'), `${f} references the module's declaration`).toBe(false)
       for (const hit of scanSpecifier(code, 'overlay')) importers.push(`${f}: ${hit}`)
+      if (isAdmittedOverlayCarrier(f)) continue
+      if (code.includes('overlayTransition')) unadmittedReferences.push(`${f}: overlayTransition`)
+      if (code.includes('overlayInertDeclaration')) unadmittedReferences.push(`${f}: overlayInertDeclaration`)
     }
-    expect(importers, 'NO src/** file imports overlay.js — the admitted caller is deleted, not replaced').toEqual([])
+    expect(unadmittedReferences, 'overlayTransition/overlayInertDeclaration appear ONLY in the module and its ONE admitted consumer — the app renderer, D-113').toEqual([])
+    expect(importers.filter((entry) => !entry.startsWith(ADMITTED_OVERLAY_CARRIER)), 'NO src/** file OUTSIDE the admitted carrier imports overlay.js').toEqual([])
+    expect(importers.length, 'the admitted carrier really is the one measured').toBe(1)
     // THE POSITIVE CONTROL — a planted consumer (any other src/** file gaining the import) MUST FAIL
     // the no-importer probe: the import form is detected AND its reference trips the same text probe.
     const plantedConsumer = `import { overlayTransition } from '../shared/overlay.js'\nimport { overlayInertDeclaration } from '../shared/overlay.js'\n`
@@ -2233,7 +2259,7 @@ function menuTpAnswers(mode: 'cold' | 'shadowing' | 'committed'): unknown[] {
 }
 
 describe('§5.5.1 THE REGISTER — the executed layer', () => {
-  test('P-SMS-OV-IM-1 (S-SMS-OV-IM-1, P-IM) — 7 attempts: the overlay module\'s import census UNCHANGED + the TREE census (NO importer, the stronger true form, D-93)', () => {
+  test('P-SMS-OV-IM-1 (S-SMS-OV-IM-1, P-IM) — 7 attempts: the overlay module\'s import census UNCHANGED + the TREE census (EXACTLY ONE importer, NAMED, D-113)', () => {
     const ctx = newAttemptContext()
     const readings = censusReadings('shared/overlay.ts')
     attempt(ctx, 'module-reading-raw', () => expect(readings[0]?.hits ?? []).toEqual([]))
@@ -2246,14 +2272,18 @@ describe('§5.5.1 THE REGISTER — the executed layer', () => {
     // form (`D-93`): the admitted caller `src/renderer/overlay-store.ts` is DELETED, so what the row
     // now drives is that NO file under `src/` imports or names the module.
     attempt(ctx, 'tree-census', () => {
+      // ⟶ RE-GRAINED 2026-11-05 (`D-113`): the same closed census, with its ONE admitted member NAMED
+      // (`ADMITTED_OVERLAY_CARRIER`). The attempts above are UNTOUCHED — the module's own import census is still EMPTY.
       const importers: string[] = []
       for (const f of srcFiles().filter((p) => p.includes('shared/overlay.ts') === false)) {
         const code = commentElided(readFileSync(f, 'utf8'))
         for (const hit of scanSpecifier(code, 'overlay')) importers.push(`${f}: ${hit}`)
+        if (isAdmittedOverlayCarrier(f)) continue
         expect(code.includes('overlayTransition')).toBe(false)
         expect(code.includes('overlayInertDeclaration')).toBe(false)
       }
-      expect(importers).toEqual([])
+      expect(importers.filter((entry) => !entry.startsWith(ADMITTED_OVERLAY_CARRIER))).toEqual([])
+      expect(importers.length).toBe(1)
       // the planted importer IS reported — the attempt's own control
       expect(scanSpecifier(`import { overlayTransition } from '../shared/overlay.js'`, 'overlay').length).toBeGreaterThan(0)
     })

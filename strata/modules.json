@@ -212,7 +212,8 @@
         "tests/theme-control.test.ts",
         "tests/overlay.test.ts",
         "tests/menu-template.test.ts",
-        "tests/theme-declaration.test.ts"
+        "tests/theme-declaration.test.ts",
+        "tests/integration/overlay-application.test.ts"
       ],
       "endpoints": 9
     },
@@ -230,7 +231,7 @@
       "paths": [
         "src/shared/demo-envelope.ts"
       ],
-      "endpoints": 7
+      "endpoints": 15
     },
     {
       "name": "ipc-contract",

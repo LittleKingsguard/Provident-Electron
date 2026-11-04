@@ -123,7 +123,12 @@ describe('Runtime code-CRUD (mcp-endpoint.md §4)', () => {
   it('codeGet reads a deep envelope path', () => {
     const runtime = r()
     runtime.load({ kind: 'envelope', envelope: demoEnvelope() })
-    const res = runtime.codeGet('template.root.children[1].children[2]')
+    // ⟶ RE-POINTED 2026-11-05 (`D-113`): the path used to be `template.root.children[1].children[2]`, and the
+    //    overlay this pass authors put the app's general surface (`APP_ROOT_ID`) at the root's FIRST child with the
+    //    modal layer beside it. The row's subject is a DEEP, DEFINED path through the loaded envelope; the path is
+    //    re-derived to the same card the old one reached (`counter-card`'s third child, the counter value node), so
+    //    the claim is unmoved and only the route to it moved.
+    const res = runtime.codeGet('template.root.children[0].children[1].children[2]')
     expect(res.value).toBeDefined()
   })
 

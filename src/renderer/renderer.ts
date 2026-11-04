@@ -2,7 +2,8 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
-import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID } from '../shared/demo-envelope.js'
+import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID } from '../shared/demo-envelope.js'
+import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
@@ -913,6 +914,14 @@ async function main(): Promise<void> {
   //    read is deleted with its drive (`D-97`) — and it adds no subscription, no timer and no boot step that
   //    `tests/e2e/bundle-boot-seam`'s `B-5` could read as an order move.
   const themeApplication = startThemeApplication(runtime)
+  // ⟶ **THE OVERLAY'S CONSUMER (`D-113`)** — the mechanism `src/shared/overlay.ts` was owed, constructed here for the
+  //    reason the appearance application above is: ONCE, after the first envelope load, so the authored app root, the
+  //    authored state carrier and the three authored controls all exist. **IT READS NOTHING AND WRITES NOTHING AT THIS
+  //    SITE** — `attach()` installs three listeners on graph-resolved elements and changes no node, so no boot step moves
+  //    and `npm run divergence` (which compares the two realms' SSR fragments before any act) cannot see it. The
+  //    transition and the inert declaration are the REPLY route's turn, beside the appearance act.
+  const overlayApplication = startOverlayApplication(runtime)
+  overlayApplication.attach()
   // ⟶ **THE Y-3 REGISTRATION IS DELETED FROM THIS SITE** (`D-93`; `D-90`'s clause (3), the legacy projection dying whole).
   // It was `bridge.store.onFileChanged(…)` — ONE registration at boot whose body was a DECLARED NO-OP ("a change SIGNAL
   // while a single window owns the realm"), plus the `releaseY3` binding held for the P1-P7 release discipline that the
@@ -959,6 +968,11 @@ async function main(): Promise<void> {
       //    has just written the setting, this turn reads it, and — only if it MOVED — hands it to the crossing's route, where
       //    the constraint repair resolves it. A reply that moved nothing sends nothing.
       themeApplication.commit()
+      // ⟶ **THE OVERLAY'S ACT RIDES THE SAME PUSH (`D-113`).** A dispatch at the authored opener, the close control, the
+      //    scrim or the dialog's escape handler has just written the caller's VERB token into the authored state node;
+      //    this turn reads it, hands it to `overlayTransition`, and — only when the state MOVED — writes the mechanism's
+      //    inert declaration to the authored app root as ONE `state-slice`. A reply that moved no token sends nothing.
+      overlayApplication.drive()
       bridge!.notify(p)
       panels?.refreshDebug(runtime)
     }).then((reply) => {
@@ -1506,6 +1520,274 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
     },
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * THE OVERLAY'S CONSUMER (`D-113`) — THE MECHANISM `src/shared/overlay.ts` WAS OWED, WIRED AT THE APP RENDERER.
+ *
+ * `D-96` stopped here because the app authored no overlay for the mechanism's declaration to land on, and `pending.md`
+ * row `5` carried that stop. The user's ruling, VERBATIM: *"The overlay is used to contain UI elements that should block
+ * general app access while open, ex. security tools and other configuration settings"* — so the app now AUTHORS that
+ * surface (`src/shared/demo-envelope.ts`'s overlay layer) and this file is the CONSUMER the mechanism needed.
+ *
+ * TWO OF THIS FILE'S ESTABLISHED FORMS, REUSED RATHER THAN RE-INVENTED:
+ *   · `overlayWiringRole` is the `themeWiringRole` form — the CALLER-held attribute name and the AUTHORED ids, held in
+ *     ONE place. **THE ATTRIBUTE NAME IS THE CALLER'S AND `overlay.ts` OWNS NONE**: the module takes it as an argument,
+ *     echoes it BY IDENTITY, and hands it back inside `{name, value, removal, target}`. The single spelling of it in this
+ *     tree is the `attributeName` constant below — no second site to drift from, which is exactly what `theme`'s role
+ *     already guarantees for the appearance attribute.
+ *   · `startOverlayApplication` is the `startThemeApplication` form — the mechanism COMPUTES (`overlayTransition`), the
+ *     wiring APPLIES (`overlayInertDeclaration` → ONE `runtime.applyCommand({kind:'state-slice', …})`), and the write lands
+ *     as `props.<name>` on an AUTHORED node. **NO HAND-WRITTEN DOM, NO ATTRIBUTE STAMPED ON `document.body`, NO INJECTED
+ *     CSS** (`AGENTS.md` § "UI authority"): the element is the graph's, so the declaration is visible to
+ *     `provident.get_rendered_html`, `get_markdown` and `get_node_state` because it IS the graph.
+ *
+ * **WHAT IS INERT, AND WHY THE MECHANISM'S `target` IS THE APP ROOT.** The declaration is written to `APP_ROOT_ID` — the
+ * authored node every general-app card stands inside — and NOT to the envelope root, because the overlay layer is a
+ * SIBLING of that node: `inert` on a root that contained the dialog would block the dialog's own close control and the
+ * ruling's subject would be unreachable. `held` is inert with `open` (the overlay is up); `closing` is not (it is on its
+ * way out); `closed` is the REMOVAL arm of the declaration, not an empty value.
+ *
+ * **TOTAL, AND NO THROW OUT OF A WIRING TURN**: an absent or renamed state node, a thrown graph read, a runtime that
+ * refuses the op and a callback that throws all answer a READING — the last of those is the mechanism's own absorption
+ * (`overlayTransition`'s `escape` arm), which this wiring relies on rather than duplicating.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** The wiring-held role: the caller's attribute name and the authored ids, in one place. */
+export interface OverlayWiringRole {
+  /** **THE CALLER-SUPPLIED ATTRIBUTE NAME** — the ONE spelling of it in this tree. `overlay.ts` owns no name. */
+  readonly attributeName: string
+  /** The authored node the declaration lands on (the app's general surface). */
+  readonly appRootId: string
+  /** The authored node carrying the caller's VERB token. */
+  readonly stateNodeId: string
+  /** The authored opener, close control and dialog — the three elements the wiring listens on. */
+  readonly openerId: string
+  readonly closeId: string
+  readonly dialogId: string
+}
+
+/** **THE ONE BOUNDED WIRING ROLE — THE ATTRIBUTE-NAME HOLDER** (`themeWiringRole`'s sibling, `docs/specs/overlay.md`
+ *  §2.5 item 2: *"the applied write is the CONSUMER's"*). It holds a VALUE and four AUTHORED ids taken from the envelope
+ *  module that declares them, so a rename in the envelope moves what this role resolves instead of leaving a second,
+ *  silently staling spelling behind. It writes nothing, dispatches nothing and holds no state. */
+export function overlayWiringRole(): OverlayWiringRole {
+  const attributeName = 'inert'
+  return {
+    attributeName,
+    appRootId: APP_ROOT_ID,
+    stateNodeId: OVERLAY_STATE_ID,
+    openerId: OVERLAY_OPEN_ID,
+    closeId: OVERLAY_CLOSE_ID,
+    dialogId: OVERLAY_DIALOG_ID,
+  }
+}
+
+/** ONE TURN OF THE CONSUMER — what the transition answered and what the declaration did. */
+export interface OverlayApplicationReading {
+  /** The machine's state AFTER this turn. */
+  readonly state: OverlayState
+  /** The caller's verb this turn consumed (`null` where the carrier was unreadable). */
+  readonly verb: string | null
+  /** Whether the transition MOVED the state. */
+  readonly changed: boolean
+  /** The declaration this turn produced, or `null` where no write was attempted. */
+  readonly declaration: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null
+  /** The runtime's OWN answer to the `state-slice` write, or `null` where no write was attempted. */
+  readonly status: string | null
+  /** Whether the declaration reached the authored app root (`status === 'applied'`). */
+  readonly written: boolean
+  /** Whether the mechanism's `escape` callback was invoked this turn. */
+  readonly escaped: boolean
+}
+
+/** The consumer's surface — the two turns and the two readings the batteries drive. */
+export interface OverlayApplication {
+  readonly attributeName: string
+  readonly appRootId: string
+  readonly stateNodeId: string
+  /** The machine's current state, as the wiring holds it. */
+  state(): OverlayState
+  /** **THE ACT'S TURN** — read the authored verb token and, only when it MOVED, transition and apply. */
+  drive(): OverlayApplicationReading
+  /** **A DIRECT VERB** — the turn the wiring's own listeners hand a verb to (the authored body has already recorded it). */
+  apply(verb: unknown): OverlayApplicationReading
+  /** Install the listeners on the authored controls. Returns how many of them it attached. */
+  attach(): { readonly attached: number }
+}
+
+/** **THE AUTHORED VERB TOKEN, AS THE GRAPH HOLDS IT** — the `authoredSettingOf` form, total over every shape: an absent
+ *  node, a renamed one, a null answer and a throwing read all answer the declared UNREADABLE reading, and a node that
+ *  carries no `content` at all is a READABLE absence. */
+function authoredOverlayToken(
+  runtime: Runtime,
+  nodeId: string,
+): { readonly readable: boolean; readonly token: string } {
+  if (nodeId === '') return { readable: false, token: '' }
+  try {
+    const answer = runtime.nodeState(nodeId) as { readonly states?: readonly unknown[] } | null | undefined
+    const states = answer?.states
+    if (!Array.isArray(states) || states.length === 0) return { readable: false, token: '' }
+    const content = (states[0] as { readonly content?: unknown } | null | undefined)?.content
+    if (typeof content === 'string') return { readable: true, token: content }
+    if (content === null || content === undefined) return { readable: true, token: '' }
+    return { readable: false, token: '' }
+  } catch {
+    return { readable: false, token: '' }
+  }
+}
+
+export function startOverlayApplication(runtime: Runtime): OverlayApplication {
+  const role = overlayWiringRole()
+  const { attributeName, appRootId, stateNodeId, openerId, closeId, dialogId } = role
+  /** **THE MACHINE'S STATE — CLOSURE STATE, AND IT IS SEEDED FROM THE GRAPH, NOT FROM A LITERAL.** The authored carrier
+   *  holds one of the machine's own four state words at boot (`closed`), so the mechanism's own total reader answers the
+   *  seed; an unreadable carrier falls to the mechanism's declared `closed` (`overlayTransition`'s first arm) rather than
+   *  to a second literal here. */
+  const boot = authoredOverlayToken(runtime, stateNodeId)
+  let state: OverlayState = overlayTransition(boot.token, 'noop').state
+  /** THE LAST VERB TOKEN THIS REALM CARRIED — the `theme` application's `lastCarried` form, so a carrier that did not
+   *  move is not an act. */
+  let lastCarried: string | null = boot.readable ? boot.token : null
+  /** THE LAST DECLARATION THAT LANDED — so a turn that produces the declaration already on the node writes nothing. */
+  let lastApplied: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null = null
+  /** THE ELEMENT THE DECLARATION NAMES — resolved through the graph, never a selector. Re-resolved per turn because a
+   *  graph load replaces the rendered nodes. */
+  const targetOf = (): unknown => {
+    try {
+      return runtime.elementForNodeId(appRootId)
+    } catch {
+      return null
+    }
+  }
+  /** **THE CALLER'S CALLBACK FOR THE MECHANISM'S `escape` VERB.** A modal's escape returns the operator's focus to the
+   *  control that opened it — the one behaviour the verb is FOR — and the MECHANISM absorbs its throw (so a realm whose
+   *  opener is gone cannot make `drive()` throw). It writes no graph node and creates no element. */
+  const restoreFocus = (): void => {
+    let opener: unknown = null
+    try {
+      opener = runtime.elementForNodeId(openerId)
+    } catch {
+      opener = null
+    }
+    const focus = (opener as { readonly focus?: unknown } | null | undefined)?.focus
+    if (typeof focus === 'function') (focus as () => void).call(opener)
+  }
+
+  const reading = (
+    base: {
+      readonly state: OverlayState
+      readonly verb: string | null
+      readonly changed: boolean
+      readonly declaration: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null
+      readonly status: string | null
+      readonly written: boolean
+      readonly escaped: boolean
+    },
+  ): OverlayApplicationReading => ({ ...base })
+
+  const apply = (verb: unknown): OverlayApplicationReading => {
+    let escaped = false
+    const answer = overlayTransition(state, verb, () => {
+      escaped = true
+      restoreFocus()
+    })
+    state = answer.state
+    const up = state === 'open' || state === 'held'
+    const declaration = overlayInertDeclaration(targetOf(), attributeName, up)
+    const verbWord = typeof verb === 'string' ? verb : null
+    if (declaration.name === null) {
+      return reading({ state, verb: verbWord, changed: answer.changed, declaration: null, status: null, written: false, escaped })
+    }
+    const composed: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } = {
+      name: declaration.name,
+      value: declaration.value,
+      removal: declaration.removal,
+    }
+    const same =
+      lastApplied !== null &&
+      lastApplied.name === composed.name &&
+      lastApplied.value === composed.value &&
+      lastApplied.removal === composed.removal
+    if (same && !answer.changed) {
+      return reading({ state, verb: verbWord, changed: answer.changed, declaration: composed, status: null, written: false, escaped })
+    }
+    let status: string
+    try {
+      const written = runtime.applyCommand({
+        kind: 'state-slice',
+        node: appRootId,
+        mutation: [
+          {
+            targetProp: `props.${composed.name}`,
+            mode: 'replace',
+            // THE REMOVAL ARM IS THE MECHANISM'S `removal` MEMBER — an `undefined` on `props.<key>` is the engine's
+            // declared attribute REMOVAL, never an empty string that happens to be falsy (`theme`'s own note).
+            value: composed.removal ? undefined : composed.value,
+          },
+        ],
+      })
+      status = typeof written?.status === 'string' ? written.status : 'no-answer'
+    } catch {
+      status = 'threw'
+    }
+    const landed = status === 'applied'
+    // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next turn rather than
+    // being swallowed by a seed that claims it was applied.
+    if (landed) lastApplied = composed
+    return reading({ state, verb: verbWord, changed: answer.changed, declaration: composed, status, written: landed, escaped })
+  }
+
+  return {
+    attributeName,
+    appRootId,
+    stateNodeId,
+    state: () => state,
+    drive(): OverlayApplicationReading {
+      const carried = authoredOverlayToken(runtime, stateNodeId)
+      if (!carried.readable) {
+        return reading({ state, verb: null, changed: false, declaration: null, status: null, written: false, escaped: false })
+      }
+      if (lastCarried !== null && lastCarried === carried.token) {
+        return reading({ state, verb: carried.token, changed: false, declaration: null, status: null, written: false, escaped: false })
+      }
+      lastCarried = carried.token
+      return apply(carried.token)
+    },
+    apply,
+    attach(): { readonly attached: number } {
+      let attached = 0
+      /** **THE DOM-ORIGINATED TURN — THE CALLER'S VERB IS READ FROM THE GRAPH, NEVER FROM THIS FILE.**
+       *  A real click on the opener runs the AUTHORED body first (provident registered its own listener at render, before
+       *  this one), and that body writes the caller's verb token into the authored carrier. So the listener does not need
+       *  to know which verb its element carries: it takes the token the graph now holds and hands THAT to the mechanism.
+       *  **THIS IS WHY NO VERB WORD IS SPELLED IN THIS FILE** — `overlay.ts` owns none, the envelope authors them, and the
+       *  wiring reads them; a second spelling here would be exactly the drift the attribute-name rule forbids. */
+      const turn = (): void => {
+        const carried = authoredOverlayToken(runtime, stateNodeId)
+        if (!carried.readable) return
+        lastCarried = carried.token
+        apply(carried.token)
+      }
+      const listen = (id: string, event: string): void => {
+        let element: unknown = null
+        try {
+          element = runtime.elementForNodeId(id)
+        } catch {
+          element = null
+        }
+        const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+        if (typeof add !== 'function') return
+        ;(add as (type: string, handler: () => void) => void).call(element, event, turn)
+        attached += 1
+      }
+      listen(openerId, 'click')
+      listen(closeId, 'click')
+      listen(dialogId, 'keydown')
+      return { attached }
+    },
+  }
+}
+
 
 /* ══════════════════════════════════════════════════════════════════════════════════
  * U-PANE-DRAG-COMPLIANCE — THE STORE-BACKED DRAG-CHAIN SEAM COMPOSITION

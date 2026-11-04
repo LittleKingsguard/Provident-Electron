@@ -1202,26 +1202,56 @@ describe('§3.5 X-1 / X-2 / X-3 / X-4 / X-5 / X-6 + §3.4 R-13 / R-3(config) / R
     ).toBe(false)
   })
 
-  it('X-5 (§3.5) — src/** carries NO overlay / dialog / modal / popover / focus-trap / portal surface of any kind, and NO DOM inert attribute', () => {
+  // ⟶ **X-5 RE-GRAINED 2026-11-05 (`D-113`) — THE SURFACE ITS ROW SAID DID NOT EXIST NOW DOES, BY RULING.** The row's
+  // own message says what a FAIL means: *"an overlay surface already exists and this unit's DENIED list must be
+  // re-derived"*. The user's ruling is *"The overlay is used to contain UI elements that should block general app access
+  // while open, ex. security tools and other configuration settings"*, so the app now AUTHORS one, and the two files that
+  // author and consume it are admitted BY NAME — the authored nodes (`src/shared/demo-envelope.ts`) and the wiring
+  // (`src/renderer/renderer.ts`). **THE ROW IS NOT RELAXED, IT IS SCOPED**: every other `src/**/*.ts` file is swept in
+  // FULL under the same five tokens, and the two admitted paths are asserted to be the ONLY carriers. The `inert`
+  // ATTRIBUTE-WRITE half is UNMOVED and unmoved on purpose: `D-113` writes it as provident data (`props.<name>` through
+  // one `state-slice`), never through `setAttribute`, so the sentence *"`inert` appears in src/** as DEGRADATION PROSE
+  // ONLY, NEVER as an applied attribute"* still holds where it was written.
+  const ADMITTED_OVERLAY_SURFACE: readonly string[] = [
+    '/src/shared/demo-envelope.ts', // the AUTHORED nodes: the scrim, the dialog card, the opener, the close control
+    '/src/renderer/renderer.ts', // the CONSUMER: `overlayWiringRole` + `startOverlayApplication`
+  ]
+  it('X-5 (§3.5) — `src/**` carries the overlay surface in EXACTLY the two paths `D-113` names, and NO DOM inert attribute anywhere', () => {
     const surfaceTokens = [t0('overlayFrame'), t0('dialog'), t0('modal'), t0('popover'), t0('portal')]
     const hits: string[] = []
     const inertFiles: string[] = []
+    const carriers = new Set<string>()
     const attributeWrites: string[] = []
     for (const p of srcTsFiles()) {
       const src = readFileSync(p, 'utf8')
       const rel = p.replace(ROOT, '.')
-      for (const v of surfaceTokens) if (scanForToken(src, v, false)) hits.push(`${rel}: ${v}`)
-      if (scanForToken(src, t0('inert'), false)) inertFiles.push(rel)
+      const admitted = ADMITTED_OVERLAY_SURFACE.some((suffix) => p.endsWith(suffix))
+      for (const v of surfaceTokens) if (scanForToken(src, v, false)) (admitted ? carriers.add(rel) : hits.push(`${rel}: ${v}`))
+      if (scanForToken(src, t0('inert'), false)) (admitted ? carriers.add(rel) : inertFiles.push(rel))
       for (const m of src.matchAll(new RegExp(`${t0('setAttribute')}|${t0('removeAttribute')}`, 'g'))) { // CORPUS-EXEMPT
         const around = src.slice(Math.max(0, (m.index ?? 0) - 40), (m.index ?? 0) + 80)
         if (around.includes(t0('inert'))) attributeWrites.push(`${rel}: ${around.replace(/\s+/g, ' ').trim()}`)
       }
     }
-    console.log(`X-5 readings :: overlay/dialog/modal/popover/portal token hits = ${JSON.stringify(hits)} · files carrying the inert token = ${JSON.stringify(inertFiles)}`)
+    console.log(`X-5 readings :: overlay/dialog/modal/popover/portal token hits OUTSIDE the two admitted paths = ${JSON.stringify(hits)} · the admitted carriers measured = ${JSON.stringify([...carriers])} · files carrying the inert token outside them = ${JSON.stringify(inertFiles)}`)
     expect(
       hits,
-      'X-5 — a src/**/*.ts search for the overlay / dialog / modal / popover / portal surface vocabulary returns ZERO matches. A FAIL here means an overlay surface already exists and this unit\'s DENIED list must be re-derived.',
+      'X-5 — a src/**/*.ts search for the overlay / dialog / modal / popover / portal surface vocabulary returns ZERO matches OUTSIDE the two paths `D-113` admits by name. A FAIL here means a THIRD file carries an overlay surface and this row\'s admission must be re-derived.',
     ).toEqual([])
+    // THE `inert` PROSE READING IS PRINTED AND NOT ASSERTED AS A COUNT, exactly as it was before this re-grain (§3.5
+    // X-5 carries that measurement from the gate-1 record without re-pinning it): the word appears in several modules as
+    // DEGRADATION PROSE ("the inert module", "an inert controller"), which is not a surface.
+    void inertFiles
+    expect(
+      [...carriers].sort(),
+      'X-5 POSITIVITY — the admission is BOUNDED and MEASURED: exactly the two named paths carry the surface, so an admission that admitted nothing (or a third carrier) reddens here rather than passing quietly',
+    ).toEqual(['.src/renderer/renderer.ts', '.src/shared/demo-envelope.ts'])
+    // THE BOUNDED-EXTENSION CONTROL: the same token in a THIRD `src/**` path is STILL a finding, so the admission is a
+    // scope and never a licence for the directory.
+    expect(
+      ADMITTED_OVERLAY_SURFACE.some((suffix) => '/src/shared/theme.ts'.endsWith(suffix)),
+      'X-5 CONTROL — a third path is NOT admitted: the same surface vocabulary anywhere else still fails the row above',
+    ).toBe(false)
     expect(
       attributeWrites,
       'X-5 — `inert` appears in src/** as DEGRADATION PROSE ONLY, NEVER as an applied attribute: no setAttribute/removeAttribute call site names it. (The prose files are PRINTED as a READING above and are not asserted as a count — §3.5 X-5 carries that measurement from the gate-1 record without re-pinning it.)', // CORPUS-EXEMPT
@@ -1271,10 +1301,17 @@ describe('§3.5 X-1 / X-2 / X-3 / X-4 / X-5 / X-6 + §3.4 R-13 / R-3(config) / R
     // the unit filed it in, which is now, again, the truth of the tree. **IT IS NOT A WEAKENING**: the as-filed reading is
     // STRIcter than the amended one — zero importers rather than one — and the bounded-extension control below still fails
     // any second importer.
+    // ⟶ **X-6 RE-GRAINED AGAIN 2026-11-05 (`D-113`) — THE CONSUMER THE RULING OWED IS HERE, AND IT IS NAMED.**
+    // The as-filed form (`zero importers`) held while nothing consumed the mechanism; the amended form (one member,
+    // `src/renderer/overlay-store.ts`) held while that deleted caller existed. `D-113` gives the mechanism its LAWFUL
+    // consumer — the app renderer's wiring — so the set is CLOSED AT ONE NAMED MEMBER again, exactly the form `D-96` took
+    // for `theme` when it wired that mechanism's consumer (`tests/theme.test.ts` `R-6`). **IT IS NOT A WEAKENING**: the
+    // bounded-extension control below still fails any SECOND importer, and the member is asserted by NAME rather than
+    // by count.
     expect(
-      importers.length,
-      `X-6 (AS-FILED FORM RESTORED, 2026-11-03 — the licence cell's own rollback, fired by the deletion of \`src/renderer/overlay-store.ts\` under \`D-93\`) — the src/** tree contains ZERO importers of this unit's module. A FAIL here admits an importer, FIRES the §7.1 predicate and VOIDS the three-part [U] refusal (§5.1's closing sentence). The AMENDED READING, KEPT VISIBLE BESIDE: "the importer set is EXACTLY ONE: the unit's own caller file \`src/renderer/overlay-store.ts\`", which held while that caller existed. Measured: ${JSON.stringify(importers)}`,
-    ).toBe(0)
+      importers.map((line) => line.split(':')[0]).sort(),
+      `X-6 (RE-GRAINED, 2026-11-05 — \`D-113\`) — the importer set is EXACTLY ONE and it is NAMED: the app renderer's wiring. A SECOND importer STILL FIRES the §7.1 predicate and VOIDS the three-part [U] refusal (§5.1's closing sentence), which is what the bounded-extension control below drives. THE TWO EARLIER READINGS, KEPT VISIBLE BESIDE: "ZERO importers" (as filed, and the form \`D-93\` restored) and "EXACTLY ONE: \`src/renderer/overlay-store.ts\`" (the 2026-10-03 amendment, which held while that caller existed). Measured: ${JSON.stringify(importers)}`,
+    ).toEqual(['.src/renderer/renderer.ts'])
     // THE BOUNDED-EXTENSION POSITIVE CONTROL (the licence's positive-control clause:
     // broadening the set BEYOND the one admitted path is a FINDING): the SAME
     // instrument MUST still flag a SECOND new path's import.

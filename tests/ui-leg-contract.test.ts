@@ -3043,7 +3043,11 @@ describe('§3.7 RT-2b + RT-5…RT-9 — recording, the labelled green, exhaustio
     const bootBExhaustedAt = stripped.indexOf('attempts failed (${retryConfig.attempts - 1} retries) for boot B')
     const exitZeroAt = stripped.indexOf('process.exit(0)')
     const rowSites = [...stripped.matchAll(/\brow\(\s*["']/g)].map((m) => m.index as number)
-    expect(rowSites.length, '§3.7 RT-6(b): the leg\'s row assertions are the ones the retried green must still satisfy').toBe(11)
+    // ⟶ RE-PINNED 2026-11-05 (`D-113`): `12`. The eleventh was `D-94`'s crossings-era arithmetic; the twelfth is the
+    //    OVERLAY row this pass adds to the leg — the one place the modal surface is observed at the boundary, open and
+    //    closed, over the EXISTING `provident.dispatch`/`provident.get_rendered_html` pair. The pin is a MEASURED count of
+    //    the leg's own `row(...)` call sites, so a row that leaves reddens here rather than shrinking the arithmetic.
+    expect(rowSites.length, '§3.7 RT-6(b): the leg\'s row assertions are the ones the retried green must still satisfy').toBe(12)
     for (const at of rowSites) {
       expect(
         at,

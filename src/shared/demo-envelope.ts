@@ -279,6 +279,83 @@ export function gutterSeamExample(): {
   }
 }
 
+// ---------------------------------------------------------------------------
+// ⟶ ADDED (`D-113`): THE OVERLAY — THE ONE MODAL SURFACE THIS APP AUTHORS, AND THE CONSUMER THE MECHANISM WAS OWED.
+//
+// The user's ruling, VERBATIM: "The overlay is used to contain UI elements that should block general app
+// access while open, ex. security tools and other configuration settings". `src/shared/overlay.ts` has carried
+// the mechanism since the gate corpus and had NO CONSUMER — `D-96` stopped on exactly that, because this app
+// authored no overlay for a declaration to land on. THIS IS THE SURFACE IT WAS OWED, authored the way every
+// other element of this file is: envelope nodes plus handler-body STRINGS, `props` for the attributes the
+// runtime emits, `css` for the declarations, and NO hand-written DOM anywhere.
+//
+// THE SHAPE IS THREE PARTS AND ONE STATE CARRIER:
+//   · THE AUTHORED APP ROOT (`APP_ROOT_ID`) — every general-app card this file already authored now stands
+//     inside it, and it is THE NODE the mechanism's inert declaration lands on (`props.<name>`, the route the
+//     overlay guide names in its own words: "`props: { inert: 'true' }` on an authored node — the project-wide
+//     UI-constraint route");
+//   · THE OVERLAY LAYER, deliberately a SIBLING of that root and never inside it — a scrim and the dialog card
+//     with its close control, so the modal's own controls stay operable while the app behind them is inert.
+//     THIS IS THE WHOLE OF THE DESIGN: `inert` on a root that CONTAINED the dialog would block the dialog too,
+//     and the ruling's subject — the tools the overlay is open FOR — would be unreachable;
+//   · THE STATE CARRIER (`OVERLAY_STATE_ID`) — the ONE graph-readable node carrying the caller's VERB token,
+//     exactly as `theme-setting` carries the appearance token. The authored bodies write the CALLER's verb and
+//     interpret nothing; the wiring reads the node and hands the verb to `overlayTransition`.
+//
+// NO CAPABILITY UI IS AUTHORED HERE, AND THAT IS MEASURED RATHER THAN ASSUMED: the Security pane and the Settings
+// surface are the ISOLATED pane graph's (`src/renderer/secure-panels.ts`), and
+// `tests/isolation-adversarial-e2e.test.ts` REFUSES their ids and their words inside the app graph's rendered
+// HTML — because an app-graph node is `provident.dispatch`-reachable and an agent must never be able to grant
+// itself capabilities. So the dialog hosts the FRAME those surfaces belong to and authors no route of its own.
+// ---------------------------------------------------------------------------
+
+/** **THE AUTHORED APP ROOT'S ID** — the node the consumer's inert declaration is written to. It is the app's
+ *  general surface: the counter, the gutter, the echo, the appearance card, the record's two terminal pages and
+ *  the overlay's own opener, and nothing that belongs to the modal. */
+export const APP_ROOT_ID = 'app-surface'
+/** THE OVERLAY LAYER'S FIVE AUTHORED IDS — the scrim, the dialog, its close control, the app root's opener and
+ *  the state carrier. All DATA, all dispatched the way any authored element is (`list_targets`-visible,
+ *  `provident.dispatch`-reachable). */
+export const OVERLAY_SCRIM_ID = 'overlay-scrim'
+export const OVERLAY_DIALOG_ID = 'overlay-dialog'
+export const OVERLAY_CLOSE_ID = 'overlay-close'
+export const OVERLAY_OPEN_ID = 'overlay-open'
+export const OVERLAY_STATE_ID = 'overlay-state'
+/** THE DIALOG'S TWO AUTHORED PANES. They are the modal's OWN sections and they carry the APP GRAPH's words; the
+ *  capability UI is the isolated pane graph's and is not authored here (see the block above). */
+export const OVERLAY_SECURITY_PANE_ID = 'overlay-security-pane'
+export const OVERLAY_SETTINGS_SURFACE_ID = 'overlay-settings-surface'
+
+/** THE AUTHORED INITIAL STATE TOKEN — one of the machine's own four state words, so the wiring's seed is the
+ *  GRAPH's rather than a literal of its own. Nothing here interprets it. */
+const OVERLAY_INITIAL_STATE = 'closed'
+
+/** **THE AUTHORED VERB TOKENS — the caller's verbs, spelled ONCE, as DATA.** `overlay.ts` owns no verb word and
+ *  no attribute name: both are the CONSUMER's, and this file is where the demo spells them. */
+const OVERLAY_VERB_TOGGLE = 'toggle'
+const OVERLAY_VERB_CLOSE = 'close'
+const OVERLAY_VERB_ESCAPE = 'escape'
+
+/** THE AUTHORED BASE STYLES — data, as every `css.style` object in this file is, and no geometry claim. */
+const appRootStyle: Record<string, string> = { display: 'block' }
+const overlayScrimStyle: Record<string, string> = { display: 'block' }
+const overlayDialogStyle: Record<string, string> = { display: 'block' }
+const overlayPaneStyle: Record<string, string> = { display: 'block' }
+
+/** **THE STATE CARRIER'S AUTHORED HANDLER BODY — the same `(ctx, value)` string form every handler in this file
+ *  uses.** It writes the CALLER'S verb token into the authored state node and interprets nothing: no transition,
+ *  no state word of its own, no attribute. The WIRING is what transitions (`overlayTransition`) and what applies
+ *  (`overlayInertDeclaration`); this body records the act and nothing else. */
+function overlayVerbBody(verb: string): string {
+  return `function (ctx) {
+  const all = ctx.tree.allNodes();
+  const node = all.find(function (n) { return n && n.props && n.props.id === '${OVERLAY_STATE_ID}'; });
+  if (!node) return;
+  try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: '${verb}' }]); } catch (e) { void e; }
+}`
+}
+
+
 /** The demo legacy envelope. */
 export function demoEnvelope() {
   /** The authored `css.style` OBJECTS are the two spots where the literal's inferred shape has to
@@ -294,210 +371,302 @@ export function demoEnvelope() {
         type: 'div',
         css: { classes: ['demo-shell'] },
         children: [
-          { type: 'h1', content: 'Provident-Electron — MCP endpoint demo' },
-          // ---- counter card ------------------------------------------------
+          // ---- THE AUTHORED APP ROOT (`D-113`) -------------------------------------------
+          // EVERY general-app card below stands INSIDE this node, and this node is what the overlay's inert
+          // declaration is written to. The opener is its LAST child on purpose: while the overlay is closed the
+          // root is not inert and the button is pressable; while it is open the root IS inert and the button is
+          // not — the modal's own controls live in the layer BELOW, outside this subtree.
           {
-            type: 'section',
-            css: { id: 'counter-card', classes: ['card'] },
+            type: 'div',
+            css: { id: APP_ROOT_ID, classes: ['app-surface'], style: appRootStyle },
+            props: { id: APP_ROOT_ID },
             children: [
-              { type: 'h2', content: 'Counter' },
+              { type: 'h1', content: 'Provident-Electron — MCP endpoint demo' },
+              // ---- counter card ------------------------------------------------
               {
-                type: 'div',
-                css: { id: 'counter', classes: ['counter-value'] },
-                props: { id: 'counter' },
-                content: '0',
-              },
-              {
-                type: 'button',
-                css: { id: 'inc', classes: ['btn'] },
-                content: 'Increment (+1)',
-                handlers: [{ name: 'inc', event: 'click', body: INC_BODY }],
-              },
-              {
-                type: 'button',
-                css: { id: 'dec', classes: ['btn'] },
-                content: 'Decrement (-1)',
-                handlers: [{ name: 'dec', event: 'click', body: DEC_BODY }],
-              },
-              {
-                type: 'button',
-                css: { id: 'reset', classes: ['btn'] },
-                content: 'Reset',
-                handlers: [{ name: 'reset', event: 'click', body: RESET_BODY }],
-              },
-            ],
-          },
-          // ---- gutter card (U-GUTTER-UI) ----------------------------------
-          // The affordance / target / status triple, authored as DATA: the handle the pointer is
-          // over (its own `pointerdown` handler keeps it `list_targets`-visible), the pane it
-          // resizes, and the read-out the wiring's ONE `state-slice` write patches.
-          {
-            type: 'section',
-            css: { id: 'gutter-card', classes: ['card'] },
-            children: [
-              { type: 'h2', content: 'Gutter (drag to resize)' },
-              {
-                type: 'div',
-                css: { id: 'gutter-pane', classes: ['gutter-pane'], style: paneStyle },
-                props: { id: 'gutter-pane', size: '100', min: '0', max: '200', resizable: 'true' },
+                type: 'section',
+                css: { id: 'counter-card', classes: ['card'] },
                 children: [
+                  { type: 'h2', content: 'Counter' },
                   {
-                    // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
-                    // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`
-                    // DECLARATION **AND NO GEOMETRY CLAIM**, an authored `props.id`, and the
-                    // authored `pointerdown` handler. L-3's live finding was exactly this missing
-                    // declaration: the element rendered `<div … class="gutter-handle"
-                    // data-node-id="node-12">` with NO `cursor` and no `style` attribute at all,
-                    // so `U-2`(a) could not be satisfied by any shipped instrument. The declared
-                    // degradation the module carries (no pointer CAPTURE) means a drag that leaves
-                    // the handle's own box loses its reading (`§2.6` item 4) — which is why the
-                    // handle's box must be a real, pressable strip: it STRETCHES to the row's own
-                    // height through the pane's authored flex declarations, and its own base size
-                    // declaration gives the strip its WIDTH. Measured live (L-2): without a width
-                    // the handle's rendered box was `w=0, h=44` — an empty `div` whose width comes
-                    // from its (empty) content — so hit-testing could not land on it at all and a
-                    // real CDP press at its centre produced ZERO effect. The TARGET's own base size
-                    // (item 7(b) below) is the pane the drag resizes and the node the preview
-                    // writes; the handle's is the pointer's landing strip, and it has to be WIDE
-                    // enough to hold a drag: this composition installs NO pointer capture (`§2.6`
-                    // item 4 — the capture opt-in is an `E3`-SIDE owed item), so the session's
-                    // tracking listeners are LOCAL to the element and a drag that leaves the
-                    // handle's box loses its reading (the spec's own honest UX consequence).
                     type: 'div',
-                    css: { id: GUTTER_AFFORDANCE_ID, classes: ['gutter-handle'], style: handleStyle },
-                    props: { id: GUTTER_AFFORDANCE_ID, axis: GUTTER_AFFORDANCE_ID },
-                    content: '',
-                    handlers: [{ name: 'gutter-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                    css: { id: 'counter', classes: ['counter-value'] },
+                    props: { id: 'counter' },
+                    content: '0',
                   },
                   {
-                    // (b) THE TARGET — `§2.1` item 7(b): an authored `css.id`, an authored
-                    // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id`. The
-                    // authored `props` below are the DRAG'S OWN DATA (`size` = the pre-drag size,
-                    // `min`/`max` = the bounds pair, `resizable` = the decision) and the runtime
-                    // emits them as BARE ATTRIBUTES on the element — which is what the demo seams
-                    // read (L-6/ADV-GU-7: they used to read `dataset[...]` and every read missed).
-                    type: 'div',
-                    css: { id: GUTTER_TARGET_ID, classes: ['gutter-target'], style: targetStyle },
-                    props: { id: GUTTER_TARGET_ID },
-                    content: 'resizable pane',
+                    type: 'button',
+                    css: { id: 'inc', classes: ['btn'] },
+                    content: 'Increment (+1)',
+                    handlers: [{ name: 'inc', event: 'click', body: INC_BODY }],
+                  },
+                  {
+                    type: 'button',
+                    css: { id: 'dec', classes: ['btn'] },
+                    content: 'Decrement (-1)',
+                    handlers: [{ name: 'dec', event: 'click', body: DEC_BODY }],
+                  },
+                  {
+                    type: 'button',
+                    css: { id: 'reset', classes: ['btn'] },
+                    content: 'Reset',
+                    handlers: [{ name: 'reset', event: 'click', body: RESET_BODY }],
                   },
                 ],
               },
+              // ---- gutter card (U-GUTTER-UI) ----------------------------------
+              // The affordance / target / status triple, authored as DATA: the handle the pointer is
+              // over (its own `pointerdown` handler keeps it `list_targets`-visible), the pane it
+              // resizes, and the read-out the wiring's ONE `state-slice` write patches.
               {
-                type: 'div',
-                css: { id: GUTTER_STATUS_ID, classes: ['gutter-status'] },
-                props: { id: GUTTER_STATUS_ID },
-                content: '100',
+                type: 'section',
+                css: { id: 'gutter-card', classes: ['card'] },
+                children: [
+                  { type: 'h2', content: 'Gutter (drag to resize)' },
+                  {
+                    type: 'div',
+                    css: { id: 'gutter-pane', classes: ['gutter-pane'], style: paneStyle },
+                    props: { id: 'gutter-pane', size: '100', min: '0', max: '200', resizable: 'true' },
+                    children: [
+                      {
+                        // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
+                        // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`
+                        // DECLARATION **AND NO GEOMETRY CLAIM**, an authored `props.id`, and the
+                        // authored `pointerdown` handler. L-3's live finding was exactly this missing
+                        // declaration: the element rendered `<div … class="gutter-handle"
+                        // data-node-id="node-12">` with NO `cursor` and no `style` attribute at all,
+                        // so `U-2`(a) could not be satisfied by any shipped instrument. The declared
+                        // degradation the module carries (no pointer CAPTURE) means a drag that leaves
+                        // the handle's own box loses its reading (`§2.6` item 4) — which is why the
+                        // handle's box must be a real, pressable strip: it STRETCHES to the row's own
+                        // height through the pane's authored flex declarations, and its own base size
+                        // declaration gives the strip its WIDTH. Measured live (L-2): without a width
+                        // the handle's rendered box was `w=0, h=44` — an empty `div` whose width comes
+                        // from its (empty) content — so hit-testing could not land on it at all and a
+                        // real CDP press at its centre produced ZERO effect. The TARGET's own base size
+                        // (item 7(b) below) is the pane the drag resizes and the node the preview
+                        // writes; the handle's is the pointer's landing strip, and it has to be WIDE
+                        // enough to hold a drag: this composition installs NO pointer capture (`§2.6`
+                        // item 4 — the capture opt-in is an `E3`-SIDE owed item), so the session's
+                        // tracking listeners are LOCAL to the element and a drag that leaves the
+                        // handle's box loses its reading (the spec's own honest UX consequence).
+                        type: 'div',
+                        css: { id: GUTTER_AFFORDANCE_ID, classes: ['gutter-handle'], style: handleStyle },
+                        props: { id: GUTTER_AFFORDANCE_ID, axis: GUTTER_AFFORDANCE_ID },
+                        content: '',
+                        handlers: [{ name: 'gutter-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                      },
+                      {
+                        // (b) THE TARGET — `§2.1` item 7(b): an authored `css.id`, an authored
+                        // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id`. The
+                        // authored `props` below are the DRAG'S OWN DATA (`size` = the pre-drag size,
+                        // `min`/`max` = the bounds pair, `resizable` = the decision) and the runtime
+                        // emits them as BARE ATTRIBUTES on the element — which is what the demo seams
+                        // read (L-6/ADV-GU-7: they used to read `dataset[...]` and every read missed).
+                        type: 'div',
+                        css: { id: GUTTER_TARGET_ID, classes: ['gutter-target'], style: targetStyle },
+                        props: { id: GUTTER_TARGET_ID },
+                        content: 'resizable pane',
+                      },
+                    ],
+                  },
+                  {
+                    type: 'div',
+                    css: { id: GUTTER_STATUS_ID, classes: ['gutter-status'] },
+                    props: { id: GUTTER_STATUS_ID },
+                    content: '100',
+                  },
+                ],
               },
-            ],
-          },
-          // ---- echo card ---------------------------------------------------
-          {
-            type: 'section',
-            css: { id: 'echo-card', classes: ['card'] },
-            children: [
-              { type: 'h2', content: 'Echo (input -> echo-out)' },
+              // ---- echo card ---------------------------------------------------
               {
-                type: 'input',
-                css: { id: 'echo-input' },
-                props: { id: 'echo-input' },
-                handlers: [{ name: 'echo', event: 'input', body: ECHO_BODY }],
+                type: 'section',
+                css: { id: 'echo-card', classes: ['card'] },
+                children: [
+                  { type: 'h2', content: 'Echo (input -> echo-out)' },
+                  {
+                    type: 'input',
+                    css: { id: 'echo-input' },
+                    props: { id: 'echo-input' },
+                    handlers: [{ name: 'echo', event: 'input', body: ECHO_BODY }],
+                  },
+                  {
+                    type: 'div',
+                    css: { id: 'echo-out', classes: ['echo-out'] },
+                    props: { id: 'echo-out' },
+                    content: '(nothing yet)',
+                  },
+                ],
+              },
+              // ---- theme card (U-THEME-CONTROL, docs/specs/theme-control.md §2.1) -------------------
+              // 'theme-card' — THE AUTHORED APPEARANCE CONTROL, and it is FIVE nodes: this section,
+              // its heading, the two setting-token buttons and the state node whose `content` carries
+              // the setting. THE TOKEN BLOCK IS CLOSED AT TWO and it is DEMO DATA: the repo asserts
+              // nothing about what either member MEANS, the authored handler CARRIES the caller's token
+              // and interprets nothing, the state node is the ONE graph-readable carrier, NO attribute
+              // is written, and no unit may generalise this card into a shipped appearance UI (§1
+              // item 7). Each button's handler carries its OWN authored block member; the value it
+              // WRITES is the CALLER's (`provident.dispatch theme-dark click` with the token as its
+              // argument), which is why the body declares its member and substitutes no default.
+              {
+                type: 'section',
+                css: { id: 'theme-card', classes: ['card'] },
+                children: [
+                  { type: 'h2', content: 'Appearance (demo)' },
+                  {
+                    type: 'button',
+                    css: { id: 'theme-dark', classes: ['btn'] },
+                    content: 'Dark',
+                    handlers: [
+                      {
+                        name: 'theme-set',
+                        event: 'click',
+                        body: `function (ctx, value) {
+      const authoredToken = 'dark';
+      void authoredToken;
+      const all = ctx.tree.allNodes();
+      const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
+      if (!node) return;
+      let carried = '';
+      try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
+      try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
+    }`,
+                      },
+                    ],
+                  },
+                  {
+                    type: 'button',
+                    css: { id: 'theme-light', classes: ['btn'] },
+                    content: 'Light',
+                    handlers: [
+                      {
+                        name: 'theme-set',
+                        event: 'click',
+                        body: `function (ctx, value) {
+      const authoredToken = 'light';
+      void authoredToken;
+      const all = ctx.tree.allNodes();
+      const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
+      if (!node) return;
+      let carried = '';
+      try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
+      try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
+    }`,
+                      },
+                    ],
+                  },
+                  {
+                    type: 'div',
+                    css: { id: 'theme-setting', classes: ['theme-setting'] },
+                    props: { id: 'theme-setting' },
+                    content: THEME_INITIAL_TOKEN,
+                  },
+                ],
+              },
+              // ---- the tab record's two authored terminal pages (U-STORE-TABS-RECORD) ---------
+              // THE LANDING PAGE and THE ERROR PAGE, `page`-roled TERMINALS rather than list rows
+              // (`§0A` item 5). They are the record's own terminals and they are AUTHORED HERE, one
+              // node each with its own authored structure, its own authored handler STRING and its
+              // own `data-*`-free declarative styling — the same envelope-data form the gutter and
+              // theme cards above use. NEITHER page carries state: each renders from the record, and
+              // the wiring's bounded role reads the record's witness and drives the node (`§3.5`
+              // items 1/3). The two ids are the declared pairs `PAR-9` names and `T1` must read from
+              // the contract rather than re-declare.
+              {
+                type: 'section',
+                css: { id: TABS_LANDING_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
+                props: { id: TABS_LANDING_PAGE_ID, role: 'page' },
+                content: 'Landing',
+                handlers: [{ name: 'tabs-landing-page-open', event: 'click', body: TABS_LANDING_PAGE_BODY }],
               },
               {
-                type: 'div',
-                css: { id: 'echo-out', classes: ['echo-out'] },
-                props: { id: 'echo-out' },
-                content: '(nothing yet)',
+                type: 'section',
+                css: { id: TABS_ERROR_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
+                props: { id: TABS_ERROR_PAGE_ID, role: 'page' },
+                content: 'Tab error',
+                handlers: [{ name: 'tabs-error-page-open', event: 'click', body: TABS_ERROR_PAGE_BODY }],
               },
-            ],
-          },
-          // ---- theme card (U-THEME-CONTROL, docs/specs/theme-control.md §2.1) -------------------
-          // 'theme-card' — THE AUTHORED APPEARANCE CONTROL, and it is FIVE nodes: this section,
-          // its heading, the two setting-token buttons and the state node whose `content` carries
-          // the setting. THE TOKEN BLOCK IS CLOSED AT TWO and it is DEMO DATA: the repo asserts
-          // nothing about what either member MEANS, the authored handler CARRIES the caller's token
-          // and interprets nothing, the state node is the ONE graph-readable carrier, NO attribute
-          // is written, and no unit may generalise this card into a shipped appearance UI (§1
-          // item 7). Each button's handler carries its OWN authored block member; the value it
-          // WRITES is the CALLER's (`provident.dispatch theme-dark click` with the token as its
-          // argument), which is why the body declares its member and substitutes no default.
-          {
-            type: 'section',
-            css: { id: 'theme-card', classes: ['card'] },
-            children: [
-              { type: 'h2', content: 'Appearance (demo)' },
+
+              // THE OPENER — an authored `button` with an authored `click` body, so it is `list_targets`-visible and
+              // `provident.dispatch`-reachable exactly as every other control in this file is.
               {
                 type: 'button',
-                css: { id: 'theme-dark', classes: ['btn'] },
-                content: 'Dark',
-                handlers: [
-                  {
-                    name: 'theme-set',
-                    event: 'click',
-                    body: `function (ctx, value) {
-  const authoredToken = 'dark';
-  void authoredToken;
-  const all = ctx.tree.allNodes();
-  const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
-  if (!node) return;
-  let carried = '';
-  try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
-  try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
-}`,
-                  },
-                ],
-              },
-              {
-                type: 'button',
-                css: { id: 'theme-light', classes: ['btn'] },
-                content: 'Light',
-                handlers: [
-                  {
-                    name: 'theme-set',
-                    event: 'click',
-                    body: `function (ctx, value) {
-  const authoredToken = 'light';
-  void authoredToken;
-  const all = ctx.tree.allNodes();
-  const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
-  if (!node) return;
-  let carried = '';
-  try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
-  try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
-}`,
-                  },
-                ],
-              },
-              {
-                type: 'div',
-                css: { id: 'theme-setting', classes: ['theme-setting'] },
-                props: { id: 'theme-setting' },
-                content: THEME_INITIAL_TOKEN,
+                css: { id: OVERLAY_OPEN_ID, classes: ['btn', 'overlay-open'] },
+                props: { id: OVERLAY_OPEN_ID },
+                content: 'Security & settings…',
+                handlers: [{ name: 'overlay-open', event: 'click', body: overlayVerbBody(OVERLAY_VERB_TOGGLE) }],
               },
             ],
           },
-          // ---- the tab record's two authored terminal pages (U-STORE-TABS-RECORD) ---------
-          // THE LANDING PAGE and THE ERROR PAGE, `page`-roled TERMINALS rather than list rows
-          // (`§0A` item 5). They are the record's own terminals and they are AUTHORED HERE, one
-          // node each with its own authored structure, its own authored handler STRING and its
-          // own `data-*`-free declarative styling — the same envelope-data form the gutter and
-          // theme cards above use. NEITHER page carries state: each renders from the record, and
-          // the wiring's bounded role reads the record's witness and drives the node (`§3.5`
-          // items 1/3). The two ids are the declared pairs `PAR-9` names and `T1` must read from
-          // the contract rather than re-declare.
+          // ---- THE OVERLAY LAYER (`D-113`) ------------------------------------------------
+          // A SIBLING of the authored app root, never a child of it: `inert` on the root blocks the app's general
+          // surface and leaves these three nodes operable. The scrim closes on a click and the dialog carries the
+          // close control, so the modal is escapable by the operator's own gesture and not only by a dispatch.
           {
-            type: 'section',
-            css: { id: TABS_LANDING_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
-            props: { id: TABS_LANDING_PAGE_ID, role: 'page' },
-            content: 'Landing',
-            handlers: [{ name: 'tabs-landing-page-open', event: 'click', body: TABS_LANDING_PAGE_BODY }],
+            type: 'div',
+            css: { id: OVERLAY_SCRIM_ID, classes: ['overlay-scrim'], style: overlayScrimStyle },
+            props: { id: OVERLAY_SCRIM_ID, role: 'presentation' },
+            content: '',
+            handlers: [{ name: 'overlay-scrim-close', event: 'click', body: overlayVerbBody(OVERLAY_VERB_CLOSE) }],
           },
           {
             type: 'section',
-            css: { id: TABS_ERROR_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
-            props: { id: TABS_ERROR_PAGE_ID, role: 'page' },
-            content: 'Tab error',
-            handlers: [{ name: 'tabs-error-page-open', event: 'click', body: TABS_ERROR_PAGE_BODY }],
+            css: { id: OVERLAY_DIALOG_ID, classes: ['card', 'overlay-dialog'], style: overlayDialogStyle },
+            props: { id: OVERLAY_DIALOG_ID, role: 'dialog', 'aria-modal': 'true' },
+            children: [
+              { type: 'h2', content: 'Security & settings' },
+              // THE DIALOG'S TWO AUTHORED PANES. They carry the APP GRAPH's words and no route: the capability UI is
+              // the isolated pane graph's, and `tests/isolation-adversarial-e2e.test.ts` refuses its ids and its words
+              // here by name. What the modal is FOR is the frame these two sections name, and the overlay's whole
+              // measurable achievement is that the app behind it is inert while they are up.
+              {
+                type: 'section',
+                css: { id: OVERLAY_SECURITY_PANE_ID, classes: ['overlay-pane'], style: overlayPaneStyle },
+                props: { id: OVERLAY_SECURITY_PANE_ID, role: 'pane' },
+                children: [
+                  { type: 'p', css: { classes: ['hint'] }, content: 'Security' },
+                  {
+                    type: 'div',
+                    css: { id: 'overlay-security-line', classes: ['overlay-status'] },
+                    props: { id: 'overlay-security-line' },
+                    content: 'operator panes — manual UI, never over MCP',
+                  },
+                ],
+              },
+              {
+                type: 'section',
+                css: { id: OVERLAY_SETTINGS_SURFACE_ID, classes: ['overlay-pane'], style: overlayPaneStyle },
+                props: { id: OVERLAY_SETTINGS_SURFACE_ID, role: 'pane' },
+                children: [
+                  { type: 'p', css: { classes: ['hint'] }, content: 'Settings' },
+                  {
+                    type: 'div',
+                    css: { id: 'overlay-settings-line', classes: ['overlay-status'] },
+                    props: { id: 'overlay-settings-line' },
+                    content: 'appearance and operator configuration',
+                  },
+                ],
+              },
+              // THE STATE CARRIER — the ONE graph-readable node carrying the caller's verb token, the
+              // `theme-setting` precedent. It is the node the wiring reads; it renders as its own word, as that
+              // node does.
+              {
+                type: 'div',
+                css: { id: OVERLAY_STATE_ID, classes: ['overlay-state'] },
+                props: { id: OVERLAY_STATE_ID },
+                content: OVERLAY_INITIAL_STATE,
+              },
+              {
+                type: 'button',
+                css: { id: OVERLAY_CLOSE_ID, classes: ['btn', 'overlay-close'] },
+                props: { id: OVERLAY_CLOSE_ID },
+                content: 'Close',
+                handlers: [
+                  { name: 'overlay-close', event: 'click', body: overlayVerbBody(OVERLAY_VERB_CLOSE) },
+                  { name: 'overlay-escape', event: 'keydown', body: overlayVerbBody(OVERLAY_VERB_ESCAPE) },
+                ],
+              },
+            ],
           },
         ],
       },

@@ -870,7 +870,15 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
     ).toBe(false)
   })
 
-  it('X-5/src-wide census — `src/**` contains NO menu, picker, dialog or accelerator surface', () => {
+  // ⟶ **X-5 RE-GRAINED 2026-11-05 (`D-113`) — ONE SPEC GAINS ONE NAMED EXEMPTION, AND THE OTHER FIVE SWEEP THE FILE IN FULL.**
+  // The row's claim is *"`src/**` contains NO menu, picker, dialog or accelerator surface"*, and the user's ruling makes the
+  // app AUTHOR one: *"The overlay is used to contain UI elements that should block general app access while open, ex.
+  // security tools and other configuration settings"*. The authored nodes live in `src/shared/demo-envelope.ts` and carry the
+  // ARIA role word `dialog` — the ONE token this row bans that a modal legitimately needs. So the `dialog` SPEC admits that ONE
+  // PATH BY NAME; the other five specs (`Menu`, `MenuItem`, `setApplicationMenu`, `picker`, `'darwin'`) still sweep the same
+  // file in FULL, the whole rest of `src/**` is unchanged, and the controls below prove both halves.
+  const DIALOG_ADMITTED_PATH = 'src/shared/demo-envelope.ts'
+  it('X-5/src-wide census — `src/**` contains NO menu, picker, dialog or accelerator surface, except the ONE authored overlay node tree `D-113` names', () => {
     const banned = [
       // ⟶ THE `Menu` SPEC IS CASE-INSENSITIVE HERE, AND THE PIN REQUIRES IT
       // (`§3.5 X-5`'s dated scope pin, clause (ii): *"a `Menu`/`MenuItem`/
@@ -922,12 +930,30 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
       "X-5 — the exclusion is asserted POSITIVITY-CHECKED (§3.5's pin): at most ONE path leaves the sweep, and it is this unit's own module when that module exists. At red time the module is ABSENT, so the sweep is the WHOLE tree and the exclusion removes nothing",
     ).toEqual([files.some((f) => f.endsWith(EXCLUDED_PATH)) ? 1 : 0, files.some((f) => f.endsWith(EXCLUDED_PATH))])
     const offenders: string[] = []
+    const dialogAdmitted: string[] = []
     for (const file of swept) {
       const src2 = readOrEmpty(file)
       for (const spec of banned) {
-        if (spec.re.test(stripComments(src2))) offenders.push(`${file} — ${spec.id}`)
+        if (!spec.re.test(stripComments(src2))) continue
+        if (spec.id === 'a dialog token' && file.endsWith(DIALOG_ADMITTED_PATH)) {
+          dialogAdmitted.push(`${file} — ${spec.id}`)
+          continue
+        }
+        offenders.push(`${file} — ${spec.id}`)
       }
     }
+    // THE EXEMPTION IS ONE SPEC × ONE PATH, AND IT IS MEASURED RATHER THAN ASSUMED: the admitted path really does carry the
+    // token (so an exemption that exempted nothing is caught), and it carries NO OTHER banned spelling (so the admission
+    // cannot become a licence for the file).
+    const admittedFile = swept.find((f) => f.endsWith(DIALOG_ADMITTED_PATH)) ?? ''
+    expect(
+      dialogAdmitted,
+      'X-5 (`D-113`) — the ONE exemption this re-grain makes is a MEASURED member: the authored overlay node tree carries the `dialog` token because it authors the modal ARIA role, and no other file does',
+    ).toEqual(admittedFile === '' ? [] : [`${admittedFile} — a dialog token`])
+    expect(
+      offenders.filter((entry) => entry.startsWith(admittedFile) && admittedFile !== ''),
+      'X-5 (`D-113`) — the admission is the `dialog` SPEC ONLY: the same file is still swept by the other five specs, so a `Menu`/`picker`/`darwin` spelling placed there still FAILS',
+    ).toEqual([])
     expect(
       offenders,
       'X-5 — the gate-1 record\'s step-1 fact re-measured: ZERO menu/picker/dialog/accelerator/darwin occurrences in `src/**` OUTSIDE this unit\'s own module. A FAIL means a menu surface already exists and this unit\'s DENIED set must be re-derived; the `template`/`platform`/`role` homonyms are NOT banned (they live in their own domains, §2.2(C) rows 3/4/9)',

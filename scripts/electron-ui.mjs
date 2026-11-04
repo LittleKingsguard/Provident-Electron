@@ -1374,6 +1374,63 @@ try {
 
   row('R0(a) tools/list identical across the two boots', toolsA === toolsB, `A=${toolsA === toolsB ? 'identical' : 'DIFFERS'}`)
 
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ⟶ **THE OVERLAY ROW (`D-113`) — THE MODAL SURFACE OBSERVED AT THE BOUNDARY, OPEN AND CLOSED.**
+  //
+  // This leg is the one that reads RENDERED HTML, so it is where the overlay can be seen as the operator and an agent see
+  // it: the authored opener is dispatched over MCP, the wiring's turn applies the mechanism's inert declaration to the
+  // AUTHORED app root, and the attribute comes back over `provident.get_rendered_html`. The close control is dispatched the
+  // same way and the attribute is gone. **IT IS NOT A SECOND MEASUREMENT** — `R2`'s cardinality rule (`§1` item 3: exactly ONE
+  // measurement, counted at its one call site) is about the LAYOUT PROBE, and this row takes none: it reads the rendered
+  // fragment, which is what this leg exists to read.
+  //
+  // WHAT IT SHOWS AND WHAT IT DOES NOT: it shows that the declaration LANDS ON THE AUTHORED NODE and that the graph, the
+  // rendered fragment and the MCP surface all see it. It CANNOT show what a browser does with `inert` — tab order and pointer
+  // targeting belong to the renderer's own event model and this leg has no hit-test or focus instrument (a second PROBE would
+  // break `R2`'s cardinality). That limit is stated, not papered over.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  /** The opening tag of the element whose `id` attribute is `id`, from the rendered fragment. */
+  const tagOfId = (html, id) => {
+    const at = html.indexOf(`id="${id}"`)
+    if (at < 0) return ''
+    const open = html.lastIndexOf('<', at)
+    const close = html.indexOf('>', at)
+    return open < 0 || close < 0 ? '' : html.slice(open, close + 1)
+  }
+  /** THE OVERLAY'S THREE FRAGMENTS, read off ONE client across one open-and-close pair. */
+  const driveOverlay = async (client) => {
+    const before = (await call(client, 'provident.get_rendered_html', {})).renderedHtml
+    await call(client, 'provident.dispatch', { target: { kind: 'cssId', cssId: 'overlay-open' }, event: 'click' })
+    const open = (await call(client, 'provident.get_rendered_html', {})).renderedHtml
+    await call(client, 'provident.dispatch', { target: { kind: 'cssId', cssId: 'overlay-close' }, event: 'click' })
+    const after = (await call(client, 'provident.get_rendered_html', {})).renderedHtml
+    return { before, open, after }
+  }
+  // **THE SAME TWO ACTS ARE TAKEN ON BOTH BOOTS, AND THE REASON IS MEASURED RATHER THAN TIDY.** `provident.dispatch` MINTS
+  // the dirtied node's compiled subtree (measured here: one dispatch on the app envelope moves the mint counter by `22`),
+  // and `R0(b)` compares the two boots' `list_targets` nodeId vocabularies on the SAME probe envelope. An act taken on ONE
+  // boot alone would therefore make the two vocabularies differ by exactly the mint count and red a row whose subject is the
+  // scratch profile and not this pass. So boot B is driven through the SAME pair of acts and its fragments are DISCARDED —
+  // it takes no measurement (`§1` item 3 is about the probe, and no probe is dispatched here) — and the two boots arrive at
+  // the probe in the same graph state, which is what `R0(b)` has always meant.
+  await driveOverlay(bootB.client)
+  const overlayFragments = await driveOverlay(bootA.client)
+  const overlayBeforeHtml = overlayFragments.before
+  const overlayOpenHtml = overlayFragments.open
+  const overlayAfterHtml = overlayFragments.after
+  const rootBefore = tagOfId(overlayBeforeHtml, 'app-surface')
+  const rootOpen = tagOfId(overlayOpenHtml, 'app-surface')
+  const rootAfter = tagOfId(overlayAfterHtml, 'app-surface')
+  row(
+    'OV-1 (`D-113`) the OVERLAY at the boundary: CLOSED the authored app root carries no `inert`, OPEN it carries the `inert` attribute and the authored dialog is in the fragment, CLOSED AGAIN the attribute is gone — the declaration reaches the rendered surface as provident data',
+    overlayBeforeHtml.includes('overlay-dialog') &&
+      !/\binert\b/.test(rootBefore) &&
+      /\binert\b/.test(rootOpen) &&
+      overlayOpenHtml.includes('overlay-close') &&
+      !/\binert\b/.test(rootAfter),
+    `root before=${rootBefore || '(not found)'} · root open=${rootOpen || '(not found)'} · root after=${rootAfter || '(not found)'} · fragment bytes ${overlayBeforeHtml.length} → ${overlayOpenHtml.length} → ${overlayAfterHtml.length}; the attribute is rendered as the BOOLEAN form the real adapter emits (\`inert=""\`), where the DOM shim writes \`inert="true"\`; NOT measured here: browser focus/tab-order/pointer semantics, for which this leg has no instrument`,
+  )
+
   // §3.0 `R0`(b) — boot A's isolation surface is read HERE, on the graph state
   // boot A holds BEFORE its measurement probe runs (the probe loads the probe
   // envelope, which mints further nodeIds). Boot B then loads the SAME envelope
