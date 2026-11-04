@@ -24,6 +24,6 @@ D-22's second half wait on admission, one boot-battery process tree on a run on 
 one — the one blocker whose subject is an act and not a repair. **`A-4`'s flake is no longer among them** — its cause was
 measured and its fix landed on 2026-11-02, and `pending.md` records both rather than letting a flake that stopped stand in
 for a cause that was found. **ST-F2 is no longer among them** — `pending.md` records why it was deleted rather than
-narrowed on 2026-11-02 — and **ST-F1** stays live in `strata/records/store-tabs-record-unit.md` §1; neither is pushed from
+narrowed on 2026-11-02 — and **ST-F1** was DISCHARGED 2026-11-04 by the installed `1.9.3`, whose registration instant reads a returned outcome's `message` and `repair` as OWN members, with `strata/records/store-tabs-record-unit.md` §1 carrying the discharge; neither is pushed from
 here (D-5, D-24). **Row 2 is gone with its work, not deferred**: `docs/L3/store-tabs-record/signatures.md` rev 2 is
 regenerated from the three modules and pinned against them by `tests/unit/store-tabs-record/signatures.test.ts` — D-45's checking arm, which reds on a divergence in either direction.

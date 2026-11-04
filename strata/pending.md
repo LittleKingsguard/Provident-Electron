@@ -20,7 +20,7 @@ both paths `docs/L1/security-store-storeroom-exception.md` §9 carried (fully di
 
 **The row that carried `ST-F1` — numbered `5` at that date — was deleted, not merged, on 2026-11-01: its blocker was the package's own
 documentation change, which `provident-storeroom@1.6.2` made (the repair arm ships in both artifacts the row named — guide §7.6 and
-`index.d.ts`'s `Constraint` docblock).** What it did **not** discharge — the two instants still disagree on an inherited `repair` — stays live in `strata/records/store-tabs-record-unit.md` §1.
+`index.d.ts`'s `Constraint` docblock).** What it did **not** discharge — the two instants disagreeing on an inherited `repair` — was **DISCHARGED 2026-11-04 by the installed `provident-storeroom@1.9.3`** (`RELEASE-NOTES.md` §1.9.3 item 2): the registration instant reads a returned outcome's `message` and `repair`, and a repair's return's `ok`, as OWN members and refuses a base-built value at the CONSTRUCTION — measured, `ConstraintRefusedAtRegistration` with `log: []` and the inherited repair invoked zero times, where `1.9.2` registered it and invoked it once — so the finding's §1 now carries that discharge, this row stays deleted, and `D-109` records both.
 
 **The row that carried `ST-F2` — numbered `5` today — was deleted, not narrowed, on 2026-11-02: it carried the repair's failure sentence naming the CALLER's
 address, and a return nothing types — and both halves are gone by measurement, so the row's blocker can never clear.**

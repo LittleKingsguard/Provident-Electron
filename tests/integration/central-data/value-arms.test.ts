@@ -430,13 +430,16 @@ describe('the value arms — a declaration that cannot be subverted by any calle
   })
 
   it('VA-14 · EVERY DECLARATION BOTH CROSSINGS REGISTER BUILDS ITS REFUSAL WITH OWN `message` AND OWN `repair` — driven over the very declaration objects the store adopted, at the registration batch and on the write path (`ST-F1`, `D-108`)', () => {
-    // **WHAT THIS ROW IS FOR.** `ST-F1`, re-read at the installed `1.9.2`, is the kernel's own TWO READERS DISAGREEING:
-    // a value whose `message` and `repair` are INHERITED (`Object.create({message, repair})`) REGISTERS — the
-    // registration path reads `'repair' in outcome`, a `[[HasProperty]]` that walks the chain — and then fails EVERY
-    // write, which the write path reads with `Object.hasOwn(outcome,'message')` and `ownMember(outcome,'repair')`, a
-    // `[[GetOwnProperty]]` that finds neither, so the write answers `ConstraintPassRefused` with *"returned a value
-    // outside the three declared outcome arms"* and the repair never runs. That is upstream-owned and not patched here
-    // (`D-5`, `D-52`) — **so the app must be provably outside it, and this row is the proof rather than the assurance.**
+    // **WHAT THIS ROW IS FOR.** `ST-F1` WAS the kernel's own TWO READERS DISAGREEING, and from the installed `1.9.3`
+    // they ANSWER THE SAME QUESTION — measured rather than assumed (`D-109`): a value whose `message` and `repair` are
+    // INHERITED (`Object.create({message, repair})`) REGISTERED at `1.9.2`, where the registration path read
+    // `'repair' in outcome`, a `[[HasProperty]]` that walks the chain, and then failed EVERY write, which the write path
+    // read with `Object.hasOwn(outcome,'message')` and `ownMember(outcome,'repair')`, a `[[GetOwnProperty]]` that found
+    // neither, so the write answered `ConstraintPassRefused` with *"returned a value outside the three declared outcome
+    // arms"* and the repair never ran. **The registration instant now asks that same own-member question**
+    // (`kernel-registration.mjs:399-400`) and refuses such a value at the CONSTRUCTION — `VA-15` drives it — so the
+    // divergence has no second instant left to describe. It was upstream-owned and never patched here (`D-5`, `D-52`);
+    // **the app is provably outside it, and this row is the proof rather than the assurance.**
     //
     // **THE FORM IS A DRIVE AND NOT A SCAN**: the store is constructed with the app's REAL batch, the batch arrays are
     // kept (so the declarations driven below are the very objects the store registered and not look-alikes rebuilt
@@ -484,20 +487,23 @@ describe('the value arms — a declaration that cannot be subverted by any calle
       const outcome = answer as Record<string, unknown>
       expect(
         Object.getPrototypeOf(outcome),
-        `${label}: the refusal is a PLAIN object — an \`Object.create({message, repair})\` answer REGISTERS and then answers every write with "outside the three declared outcome arms" (ST-F1)`,
+        `${label}: the refusal is a PLAIN object — an \`Object.create({message, repair})\` answer is REFUSED at the registration instant, which \`VA-15\` drives, so a refusal built on a base is the one shape this row exists to make impossible (ST-F1)`,
       ).toBe(Object.prototype)
       expect(Object.getOwnPropertyNames(outcome).sort(), `${label}: its OWN property names are exactly the arm's declared members, so neither is inherited`).toEqual(members.slice().sort())
       for (const member of members) expect(Object.hasOwn(outcome, member), `${label}: \`${member}\` is an OWN property at this instant`).toBe(true)
       if (members.includes('repair')) expect(typeof outcome['repair'], `${label}: the repair is a function the kernel may invoke`).toBe('function')
-      // THE UNREPAIRABLE ARM'S WHOLE JOB: no `repair` at all — and "no" includes INHERITED, which a `'repair' in answer`
-      // probe would answer `true` for.
+      // THE UNREPAIRABLE ARM'S WHOLE JOB: no `repair` at all — and "no" includes INHERITED, which `1.9.3` reads as
+      // absent at BOTH instants, so a prototype chain decides nothing here. The question stays `in` rather than
+      // `Object.hasOwn` because that is the weaker probe: what an own-only reader would miss, this one cannot.
       else expect('repair' in outcome, `${label}: and the unrepairable arm carries no \`repair\`, own or inherited`).toBe(false)
     }
 
     // **THE TEN CENTRAL DECLARATIONS, EACH AT ITS REPAIRABLE ARM.** Six answer `{message, repair}`; the four view
     // families answer the same shape at their existence arm (`D-84`, `D-85`, `D-91`, `D-97`). The context is the
     // REGISTRATION instant's — `{address, tier: null, value}` — which is the one instant at which the batch itself is
-    // asked, and it is the instant ST-F1 says is the permissive reader.
+    // asked. **AND FROM `1.9.3` IT IS THE STRICTER OF THE TWO INSTANTS, NOT THE PERMISSIVE ONE** `ST-F1` described: the
+    // reader demands an OWN `message` before it looks for a repair at all, and where no own `repair` answers it refuses
+    // the CONSTRUCTION, where the write instant's own-`message` question only decides its sentence (`D-109`).
     const byId = new Map([...tabsBatch, ...viewBatch].map((declaration) => [declaration.id, declaration]))
     const central = (id: string, context: unknown): unknown => {
       const declaration = byId.get(id)
@@ -535,9 +541,9 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     refusalForm('operator-exclusion-must-stand', secureRefusal('operator-exclusion-must-stand', { address: ['operator-exclusion'], tier: null, value: undefined }), ['message', 'repair'])
     refusalForm('operator-app-state-must-stand', secureRefusal('operator-app-state-must-stand', { address: ['operator-app-state'], tier: null, value: undefined }), ['message', 'repair'])
 
-    // **AND THE SIX UNREPAIRABLE ARMS, WHICH ARE THE ONES A PROTOTYPE CHAIN WOULD BE MOST DANGEROUS ON**: an inherited
-    // `repair` on a `{message}` arm is invoked at the registration instant and IGNORED at the write instant, so the row
-    // asserts the member's ABSENCE and not merely its being non-own.
+    // **AND THE SIX UNREPAIRABLE ARMS, WHICH ARE THE ONES A PROTOTYPE CHAIN WOULD BE MOST DANGEROUS ON**: at `1.9.2` a
+    // `{message}` arm's inherited `repair` was invoked at the registration instant and IGNORED at the write instant;
+    // from `1.9.3` NO instant reads one, so the row asserts the member's ABSENCE and not merely its being non-own.
     refusalForm('panes-must-stand (value arm)', central('panes-must-stand', { address: ['panes'], tier: 'file', value: { junk: true } }), ['message'])
     refusalForm('focus-must-stand (value arm)', central('focus-must-stand', { address: ['focus'], tier: 'mem', value: { junk: true } }), ['message'])
     refusalForm('zones-must-stand (value arm)', central('zones-must-stand', { address: ['zones'], tier: 'mem', value: { junk: true } }), ['message'])
@@ -566,55 +572,162 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     for (const message of sentences) expect(message.includes('outside the three declared outcome arms'), 'and NONE of them is ST-F1\'s divergence sentence').toBe(false)
   })
 
-  it('VA-15 · **THE INSTRUMENT CAN FAIL** — a planted declaration whose refusal is `Object.create({message, repair})` REGISTERS and then answers every write with ST-F1\'s divergence sentence, so the row above measures the fault it names; and over comment-elided code no module builds a refusal on a base at all', () => {
-    // (a) ST-F1, RE-DRIVEN HERE RATHER THAN QUOTED, because a row that cannot fail is a deleted row wearing a new name.
-    //     THE PLANT IS ONE DECLARATION — the arm a caller's own `provident.data.write` reaches — which refuses a record
-    //     carrying no `order` seat and REPAIRS it through the route its registration context lends, so the re-run it is
-    //     judged by passes and the batch stands. Its refusal is a value whose two members are INHERITED.
+  it('VA-15 · **THE INSTRUMENT IS INVERTED, NOT DELETED — AND IT CAN STILL FAIL** — the same planted `Object.create({message, repair})` declaration is now REFUSED at the REGISTRATION instant with the inherited repair invoked ZERO times, its two reverse probes and a class instance refused beside it, so the divergence it once measured has no second instant left; and over comment-elided code no module builds a refusal on a base at all (ST-F1, discharged upstream at `1.9.3` — `D-109`)', () => {
+    // (a) `ST-F1` WAS DISCHARGED UPSTREAM AT THE INSTALLED `1.9.3`, AND THIS ROW IS RE-DERIVED INTO ITS INVERSE rather than
+    //     deleted, because a row that cannot fail is a deleted row wearing a new name. **THE PLANT IS THE SAME PLANT AND
+    //     NOT A LOOK-ALIKE**: the same `Object.create({message, repair})` value, the same real declaration answering it,
+    //     the same scratch profile — what moved is the PACKAGE'S READING of it. At `1.9.2` the registration instant read
+    //     `'repair' in outcome`, a `[[HasProperty]]` that walks the chain, ACCEPTED that value and invoked the inherited
+    //     repair ONCE; from `1.9.3` it asks the same own-member question the write instant asks
+    //     (`kernel-registration.mjs:399-400`, `Object.hasOwn(outcome,'message')` then `ownMember(outcome,'repair')`), so
+    //     the construction is REFUSED. **AND THE DIVERGENCE'S SECOND INSTANT IS NOW UNREACHABLE — there is no store to
+    //     write to.** That is the release's whole claim, so this half asserts nothing about a store and nothing about a
+    //     write: a `null` store proves nothing, and the arm under test is the one that decides whether a store exists.
     const where = dir()
     const legal = { order: ['landing'], landing: { label: 'L', target: 'landing', lastActiveAt: 'now', active: true } }
-    const planted = {
+    /** **THE ONE DECLARATION EVERY ARM REGISTERS** — legal once the record it demands STANDS, and the arm's planted
+     *  refusal otherwise. It is the plant's own body: the arms vary the REFUSAL and never the declaration. */
+    const plantedConstraint = (refusal: unknown) => (context: unknown): unknown => {
+      const held = (context as { value?: unknown } | null)?.value
+      const seat = typeof held === 'object' && held !== null ? (held as Record<string, unknown>)['order'] : undefined
+      return Array.isArray(seat) ? true : refusal
+    }
+    type RegistrationRefusal = { status?: string; message?: string; log?: readonly unknown[] }
+    /** **THE REGISTRATION INSTANT, DRIVEN ONCE PER ARM OVER THE ONE SCRATCH PROFILE.** A refused construction lands no
+     *  byte (`1.9.1`'s own rollback), so every arm meets the same cold profile the plant met at `1.9.2` — and the
+     *  invocation count is the arm's own, which is the clause `1.9.2` could NOT assert because the inherited repair ran. */
+    const refusesAtRegistration = (label: string, refusal: unknown, zero: string, invocations: () => number): RegistrationRefusal => {
+      let caught: unknown = null
+      let threw = false
+      try {
+        storeCreate({
+          journalLength: 64,
+          listeners: [],
+          filePath: at(where),
+          constraints: [{ address: ['tabs'], id: 'planted-inherited-pair', constraint: plantedConstraint(refusal) }] as never,
+        })
+      } catch (error) {
+        threw = true
+        caught = error
+      }
+      expect(threw, `${label}: THE CONSTRUCTION IS REFUSED at the registration instant — this is the shape \`1.9.2\` ACCEPTED, and the refusal is the whole of what the release bought`).toBe(true)
+      const form = caught as RegistrationRefusal
+      expect(form.status, `${label}: and the refusal is the REGISTRATION instant's own status, never the write's`).toBe('ConstraintRefusedAtRegistration')
+      expect(Object.getOwnPropertyNames(form), `${label}: its own names are exactly the refusal's four-member literal`).toEqual(['status', 'message', 'log', 'address'])
+      expect(form.log, `${label}: with an EMPTY \`log\` — no pass ran, so no entry was appended`).toEqual([])
+      expect(invocations(), `${label}: ${zero}`).toBe(0)
+      return form
+    }
+
+    // ARM ONE — THE PLANT, UNMOVED. Its refusal's two members are INHERITED, and the counter stands on the BASE's
+    // `repair`, because that is the member `1.9.2`'s permissive reader reached and invoked once.
+    let plantRepairs = 0
+    const plant = {
       message: 'the planted pair refuses a record with no order seat',
       repair: (context: unknown) => {
+        plantRepairs += 1
         const receipt = (context as { write: (address: readonly string[], tier: string, value: unknown) => { op?: unknown } }).write(['tabs'], 'file', legal)
         // THE CREDITED ARM, because a registration repair is re-run over the op it landed and a repair that answered
         // anything else would refuse the CONSTRUCTION — which is a different arm from the one this plant is about.
         return { ok: true as const, op: receipt.op }
       },
     }
-    const plantedAnswer = Object.create(planted) as object
-    /** The body the plant registers: legal once the record it demands STANDS, and its inherited refusal otherwise. */
-    const plantedConstraint = (context: unknown): unknown => {
-      const held = (context as { value?: unknown } | null)?.value
-      const seat = typeof held === 'object' && held !== null ? (held as Record<string, unknown>)['order'] : undefined
-      return Array.isArray(seat) ? true : plantedAnswer
-    }
-    expect(Object.getPrototypeOf(plantedAnswer), 'the planted refusal\'s base is a shared object and not `Object.prototype`').toBe(planted)
+    const plantedAnswer = Object.create(plant) as object
+    expect(Object.getPrototypeOf(plantedAnswer), 'the planted refusal\'s base is a shared object and not `Object.prototype`').toBe(plant)
     expect(Object.hasOwn(plantedAnswer, 'message'), 'so neither member is OWN').toBe(false)
     expect(Object.hasOwn(plantedAnswer, 'repair')).toBe(false)
-    let registered: unknown = null
-    type PlantedStore = { read: (address: readonly string[], tier: string) => unknown; write: (address: readonly string[], tier: string, value: unknown) => unknown }
-    let store: PlantedStore | null = null
+    refusesAtRegistration('PLANT · `Object.create({message, repair})`', plantedAnswer, 'the INHERITED repair is invoked ZERO times — `1.9.2` invoked it ONCE, and that single invocation is the reading this clause replaces', () => plantRepairs)
+
+    // ARM TWO — THE FIRST REVERSE PROBE: an OWN `message` with an INHERITED `repair`. It is here because the fix is TWO
+    // members and not one: a narrowing of the `repair` probe ALONE leaves this shape registering, since its `message` is
+    // own, and the write instant would then read a `repair` it cannot see — the one-word half of the same fault. `1.9.2`
+    // measured it as a DIFFERENT symptom from the plant's (the constraint's own sentence at the write, still no repair).
+    let inheritedRepairRuns = 0
+    const ownMessage = Object.assign(
+      Object.create({
+        repair: (context: unknown) => {
+          inheritedRepairRuns += 1
+          const receipt = (context as { write: (address: readonly string[], tier: string, value: unknown) => { op?: unknown } }).write(['tabs'], 'file', legal)
+          return { ok: true as const, op: receipt.op }
+        },
+      }),
+      { message: 'own `message`, INHERITED `repair`' },
+    ) as object
+    expect(Object.hasOwn(ownMessage, 'message'), 'the first probe\'s `message` IS own').toBe(true)
+    expect(Object.hasOwn(ownMessage, 'repair'), 'and its `repair` is NOT').toBe(false)
+    refusesAtRegistration('PROBE A · own `message` + inherited `repair`', ownMessage, 'so the INHERITED repair is invoked ZERO times', () => inheritedRepairRuns)
+
+    // ARM THREE — THE SECOND REVERSE PROBE, and it is the one the finding's own proposed fix would have missed: an OWN
+    // `repair` with an INHERITED `message`. Narrowing the `repair` probe alone accepts it, and `1.9.2` measured exactly
+    // the plant's own symptom there — a store that registers and writes nothing the pair can answer. `1.9.3` refuses it,
+    // and the OWN repair it does carry is never reached: the count proves the kernel refused BEFORE running a member
+    // this shape really has.
+    let ownRepairRuns = 0
+    const ownRepair = Object.assign(Object.create({ message: 'INHERITED `message`, own `repair`' }), {
+      repair: (context: unknown) => {
+        ownRepairRuns += 1
+        const receipt = (context as { write: (address: readonly string[], tier: string, value: unknown) => { op?: unknown } }).write(['tabs'], 'file', legal)
+        return { ok: true as const, op: receipt.op }
+      },
+    }) as object
+    expect(Object.hasOwn(ownRepair, 'repair'), 'the second probe\'s `repair` IS own').toBe(true)
+    expect(Object.hasOwn(ownRepair, 'message'), 'and its `message` is NOT').toBe(false)
+    refusesAtRegistration('PROBE B · own `repair` + inherited `message`', ownRepair, 'and the OWN repair it does carry is invoked ZERO times — the kernel refused before reaching it', () => ownRepairRuns)
+
+    // ARM FOUR — THE CLASS INSTANCE, which was `1.9.2`'s QUIETEST ACCEPTANCE: a `get message()` on the PROTOTYPE and an
+    // own `repair`, a registration repair's landing standing beside it. An own-member question answers `message` absent
+    // where a descriptor walk would answer present, so the construction is refused — a class is not a plain object, and
+    // the release narrowed the QUESTION rather than the class.
+    let classRepairRuns = 0
+    class PlantedRefusal {
+      repair!: (context: unknown) => { readonly ok: true; readonly op: unknown }
+      constructor() {
+        this.repair = (context: unknown) => {
+          classRepairRuns += 1
+          const receipt = (context as { write: (address: readonly string[], tier: string, value: unknown) => { op?: unknown } }).write(['tabs'], 'file', legal)
+          return { ok: true as const, op: receipt.op }
+        }
+      }
+      get message(): string {
+        return 'a `get message()` on the prototype, own `repair`'
+      }
+    }
+    const instance = new PlantedRefusal()
+    expect(Object.hasOwn(instance, 'message'), 'the instance\'s `message` is the PROTOTYPE\'s accessor, so no own member of that name exists').toBe(false)
+    expect(Object.hasOwn(instance, 'repair'), 'and its `repair` is OWN').toBe(true)
+    expect(typeof instance.message, 'the accessor answers a string, which is why this shape read as an outcome at `1.9.2`').toBe('string')
+    refusesAtRegistration('CLASS INSTANCE · `get message()` on the prototype + own `repair`', instance, 'so the own repair is invoked ZERO times', () => classRepairRuns)
+
+    // ARM FIVE — THE THIRD NARROWED MEMBER, WHICH THE FINDING DID NOT PROPOSE: **an own `{message, repair}` whose
+    // REPAIR'S RETURN carries an INHERITED `ok`.** `1.9.3` reads that return's `ok` as an own member too, so the
+    // registration repair's answer is not credited, the re-run refuses, and the construction goes with it. This arm's
+    // log is NOT empty and its repair DOES run once — which is what distinguishes it from the four above, and is why it
+    // is asserted on its own rather than through the helper.
+    let inheritedOkRuns = 0
+    const inheritedOk = {
+      message: 'own pair, and the return\'s `ok` is INHERITED',
+      repair: (context: unknown) => {
+        inheritedOkRuns += 1
+        const receipt = (context as { write: (address: readonly string[], tier: string, value: unknown) => { op?: unknown } }).write(['tabs'], 'file', legal)
+        return Object.assign(Object.create({ ok: true as const }), { op: receipt.op })
+      },
+    }
+    expect(Object.hasOwn(inheritedOk, 'message') && Object.hasOwn(inheritedOk, 'repair'), 'this arm\'s outcome is own at BOTH members — it is the RETURN that is not').toBe(true)
+    let uncredited: unknown = null
     try {
-      store = storeCreate({
+      storeCreate({
         journalLength: 64,
         listeners: [],
         filePath: at(where),
-        constraints: [{ address: ['tabs'], id: 'planted-inherited-pair', constraint: plantedConstraint }] as never,
-      }) as unknown as PlantedStore
-    } catch (caught) {
-      registered = caught
+        constraints: [{ address: ['tabs'], id: 'planted-inherited-pair', constraint: plantedConstraint(inheritedOk) }] as never,
+      })
+    } catch (error) {
+      uncredited = error
     }
-    expect(registered, 'THE REGISTRATION INSTANT ACCEPTS IT — this is ST-F1\'s permissive reader, measured on the installed `1.9.2`, and the reason the app must be provably outside it').toBe(null)
-    let refused: unknown = null
-    try {
-      store?.write(['tabs'], 'file', { junk: true })
-    } catch (caught) {
-      refused = caught
-    }
-    expect((refused as { status?: string } | null)?.status, 'and the WRITE INSTANT refuses it, whatever the value written').toBe('ConstraintPassRefused')
-    expect((refused as { message?: string } | null)?.message, 'with the divergence sentence and not the pair\'s own — the repair never ran').toContain('outside the three declared outcome arms')
-    expect((refused as { log?: ReadonlyArray<{ kind?: string }> } | null)?.log?.some((entry) => entry.kind === 'repair-run') ?? false, 'and NO repair entry stands in the log: an inherited `repair` is invisible at the write instant').toBe(false)
+    const uncreditedForm = uncredited as { status?: string; log?: ReadonlyArray<{ kind?: string }> } | null
+    expect(uncreditedForm?.status, 'THE RETURN\'S `ok` IS READ AS OWN AT THE REGISTRATION INSTANT TOO: the construction is refused').toBe('ConstraintRefusedAtRegistration')
+    expect(inheritedOkRuns, 'and the repair DID run — once — because the outcome it answered with is own at both members').toBe(1)
+    expect((uncreditedForm?.log ?? []).map((entry) => entry.kind), 'with a log that is NOT empty: the pass ran, then the repair was attempted and refused').toEqual(['constraint-check', 'repair-run'])
 
     // (b) THE STATIC HALF, OVER COMMENT-ELIDED CODE, so a base cannot arrive by a road the drive does not take. Every
     //     `Object.create` in the three declaring modules is `Object.create(null)` — the caller-data copy map, whose whole

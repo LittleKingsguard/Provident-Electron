@@ -571,6 +571,26 @@ const DECLARED_SCOPE: readonly string[] = [
   //    and **`src/` ITSELF, OF WHICH NOT ONE BYTE IS WRITTEN**: the census is an analysis whose instruments live outside
   //    the repository, and the immunity is a DRIVE over the modules as they stand. A pass that writes no `src/` path
   //    owes the five Electron legs nothing — they were driven anyway and read unmoved (`D-108`'s measurement clause).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-109` — THE BUMP TO `provident-storeroom@1.9.3` AND `ST-F1` DISCHARGED UPSTREAM. **NOT ONE PATH IS NEW TO THIS
+  //    UNION**, which is why this note is a comment and not one entry: a claim that spells a path twice is not a claim,
+  //    and `B-1`'s set assertion refuses a duplicate — the row that reddened on exactly that while `D-97`'s and
+  //    `D-107`'s blocks were being written.
+  //    THE BUMP'S THREE PATHS ARE ALL DECLARED ABOVE: `package.json` (the pin, `D-94`), `package-lock.json` (the eleven
+  //    cells and the six nodes the install resolved, `D-103`) and `tests/storeroom-surface.test.ts` (the reviewed
+  //    version's own pin and the comment that carries its subject, `D-103`) — written AGAIN by this pass, which is the
+  //    difference this union keeps insisting on between a write and a claim.
+  //    THE SEAM is `src/main/storeroom.ts`, declared at `D-103`: the census header's version moves and no figure does.
+  //    THE INSTRUMENT is `tests/integration/central-data/value-arms.test.ts`, declared at `D-105`: `VA-15(a)` is
+  //    RE-DERIVED into its inverse in place and `VA-14`'s prose clauses corrected beside it, so no test file is added,
+  //    none is removed, and not one spec site moves.
+  //    AND THE CORPUS IS ALL DECLARED TOO: `strata/decisions.md` (the row and its two supersession pointers),
+  //    `strata/brief.md` (§2's pinned row and its reason sentence), `strata/pending.md` (the `ST-F1` sentence, inside its
+  //    ceiling of `40`), `strata/next-steps.md` (the same sentence at `29`), `strata/records/store-tabs-record-unit.md`
+  //    (the discharge, one line spent and one freed, `40 → 40`) and this file (this block). **TWO PATHS ARE DELIBERATELY
+  //    ABSENT AND THE ABSENCE IS THE RECORD**: `strata/marks.json` — no test file is added or removed and no spec site
+  //    moves, so `strata-marks.mjs check` is green UNREGENERATED — and `strata/platform.md` (`60/60`, no platform fact
+  //    moves). `src/` owes the five Electron legs nothing: no render path moves and `src/renderer/` is untouched.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
