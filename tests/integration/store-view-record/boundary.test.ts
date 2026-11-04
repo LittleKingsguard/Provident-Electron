@@ -591,6 +591,18 @@ const DECLARED_SCOPE: readonly string[] = [
   //    ABSENT AND THE ABSENCE IS THE RECORD**: `strata/marks.json` — no test file is added or removed and no spec site
   //    moves, so `strata-marks.mjs check` is green UNREGENERATED — and `strata/platform.md` (`60/60`, no platform fact
   //    moves). `src/` owes the five Electron legs nothing: no render path moves and `src/renderer/` is untouched.
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-111` — THE RULING ON THE ELEVEN UNIMPORTED `src/shared/` MODULES IS TAKEN (**carried as designs**) AND THIS
+  //    ROW GAINS NO ENTRY, WHICH IS THE WHOLE OF ITS CLAIM HERE. Every path that pass writes is ALREADY DECLARED ABOVE and
+  //    not one is admitted by a prefix: `src/renderer/renderer.ts` (the one false claim about the population, corrected in
+  //    `candidatesFor`'s own docblock), `strata/decisions.md` (the row), `strata/pending.md` (row six's departure and its
+  //    reason, in the deletions paragraph), `strata/next-steps.md` (the same departure on its own line),
+  //    `strata/records/handover.md` (the eleven struck from the blocked list it named) and this file (this block). **TWO
+  //    PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/marks.json` — no test file is added or removed
+  //    and no spec site joins an indexed file, so `strata-marks.mjs check` is green UNREGENERATED — and `strata/brief.md`,
+  //    which is absent for a MEASURED reason rather than by omission: §6 carries the five legs and no artifact byte figure,
+  //    so the `474`-byte move in the renderer bundle has no cell there to have changed and nothing there is rewritten.
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

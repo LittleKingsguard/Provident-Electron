@@ -1790,10 +1790,14 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     /** §2.1 A (defaultSizeFor) — the reset arm's read, the SAME size read at the reset
      *  turn (one closure). */
     defaultSizeFor: (element: unknown, token: unknown): unknown => readPaneSize(element, token),
-    /** §2.1 B (candidatesFor) — the candidate/slot read feeding the PURE `withinProximity` comparator, **NOW OFF THE
-     *  SHAPE'S `['zones']` FAMILY** (`D-92`): the candidate carries the zone's OPAQUE `slot` and its caller-measured
-     *  `distance`, and a zone whose `slot` the family does not name is admitted per the caller's own rule (no candidate) —
-     *  never a store decision, never a throw (M-11, P-PD-IM-2). **`slot` IS OPAQUE AND IS HANDED THROUGH BY IDENTITY.** */
+    /** §2.1 B (candidatesFor) — THE CANDIDATE PRODUCTION SEAM, AND IT IMPLEMENTS **THE SEAM SHAPE `src/shared/relocate.ts`
+     *  DECLARES WITHOUT IMPORTING IT** (`CandidateFor`, `{readonly candidate, readonly distance?}`), which is what this
+     *  surface's own docblock above already says. **NO `src/` FILE IMPORTS THAT MODULE**, so the pure comparator there has
+     *  no call site here and none is claimed: the record is produced and handed on by identity and the comparison is the
+     *  caller's — the only importer in the tree is a battery's own drive (`D-111`). **NOW OFF THE SHAPE'S `['zones']`
+     *  FAMILY** (`D-92`): the candidate carries the zone's OPAQUE `slot` and its caller-measured `distance`, and a zone
+     *  whose `slot` the family does not name is admitted per the caller's own rule (no candidate) — never a store
+     *  decision, never a throw (M-11, P-PD-IM-2). **`slot` IS OPAQUE AND IS HANDED THROUGH BY IDENTITY.** */
     candidatesFor: (element: unknown): readonly { readonly candidate: unknown; readonly distance?: unknown }[] => {
       try {
         const id = zoneIdOf(element)
