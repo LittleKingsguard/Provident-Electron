@@ -15,12 +15,15 @@
 //   B. `panes-must-stand` accepts any plain record, so `data.write({ path: ['panes'], value: { junk: true } })`
 //      durably erased the pane geometry while `source.panes` still said `'record'`.
 //
-// **WHAT THIS PASS CLOSES AND WHAT IT ONLY MEASURES.** `A` is closed at BOTH arms — the refusal and the lawful
-// write — because the fault was the tier and the tier is now the address's. `B` is closed at its TIER arm only:
-// the same write at `mem` or `temp` is refused, while the write at the family's OWN tier still lands and still
-// erases the geometry, because the pair enforces EXISTENCE and not shape (`D-87`) and narrowing it is a new
-// constraint, which is a design act and not this surface's. `D-5` below pins that residual half as the state the
-// product has, so it is named rather than left to be discovered — and so it reds the day somebody closes it.
+// **WHAT THIS PASS CLOSED, AND WHAT A LATER ONE HAS SINCE CLOSED — BOTH CLAUSES ARE KEPT RATHER THAN OVERWRITTEN**
+// (`D-46`): `A` is closed at BOTH arms — the refusal and the lawful write — because the fault was the tier and the
+// tier is the address's. `B` was closed at its TIER arm ONLY by `D-101`: the same write at `mem` or `temp` was
+// refused, while the write at the family's OWN tier still landed and still erased the geometry, because the pair
+// enforced EXISTENCE and not shape (`D-87`) and narrowing it was a new constraint — a design act and not this
+// surface's. `D-5` below pinned that residual half as the state the product had, so it was named rather than left to
+// be discovered, AND ITS OWN TEXT SAID IT WOULD RED THE DAY SOMEBODY CLOSED IT: `D-105` gave six families' pairs a VALUE
+// ARM, `D-5` was INVERTED in place with every control kept, and the corruption path this file exists to police is now
+// refused at every tier.
 //
 // **THE RESTART HERE IS A SECOND CONSTRUCTION, NOT A SECOND PROCESS** (`behaviour.md` §3, `D-98`'s own arm): a
 // store is the file plus its register, so a fresh `createProfileStore` over the same `filePath`, with the same
@@ -250,7 +253,7 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     expect(readFileSync(at(one.dir)).equals(stood), 'with the profile byte-identical across BOTH constructions').toBe(true)
   })
 
-  it('D-5 · defect B: [\'panes\'] at a mismatched tier is refused — and the write at its OWN tier still lands, still erases the geometry, and is what the root guard does NOT protect', () => {
+  it('D-5 · defect B, both arms: [\'panes\'] at a mismatched tier is refused BY THE ROOT GUARD, and the plain junk at its OWN tier is refused BY THE PAIR — the residual half this row was written to measure DIES at `D-105`, and its own text said its death would be this refusal', () => {
     const one = stand()
     const geometry = one.view.read().panes
     expect(geometry, 'the pane family stands with the measured default before any attempt').toEqual([{ id: 'pane-a', size: 100, bounds: { min: 0, max: 200 } }])
@@ -261,21 +264,27 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     }
     expect(one.view.read().panes, 'and the geometry is untouched by both refusals').toEqual(geometry)
 
-    // **THE RESIDUAL HALF, MEASURED AND NAMED — ITS OWN DEATH IS THE DAY THIS BECOMES A REFUSAL.** The guard is the
-    // TIER's; the VALUE is `panes-must-stand`'s, and that pair refuses a value that is not a plain record and
-    // nothing more (`D-87`, clause 1: an EXISTENCE pair). So a plain record of junk at the family's own tier lands,
-    // the geometry is gone and the family still reports `record`, because the record's source member answers
-    // whether a value STANDS and never whether it is the one the app wrote. Narrowing the pair to a shape is a new
-    // constraint — a design act, and no layer judges its own design (`D-78`, `D-82`).
+    // **THE RESIDUAL HALF IS CLOSED, AND THIS ROW IS RE-DERIVED RATHER THAN DELETED** (`D-105`). The guard is the
+    // TIER's and stays exactly where it stood; the VALUE is `panes-must-stand`'s, and `D-105` gave that pair a VALUE ARM
+    // — a refusal with no repair, so the store's own rollback leaves the standing record untouched. The residual half
+    // this row was written to measure (`D-101`'s defect B at its OWN tier) no longer lands, so the assertions below are
+    // inverted in place with every control kept.
+    const stood = readFileSync(at(one.dir))
     const landed = one.surface.write({ path: ['panes'], tier: 'file', value: { junk: true } })
-    expect(landed.status, 'the write at the family\'s own tier is admitted: the root guard protects the TIER and not the value').toBe('committed')
-    expect(one.view.read().panes, 'and the geometry is erased — the defect\'s own symptom, still reachable at the one tier the guard admits').toEqual([])
-    expect(one.view.read().source.panes, 'while the source still says the family is a record: a value STANDS, and it is not the app\'s').toBe('record')
-    expect(readFileSync(at(one.dir), 'utf8').includes('"junk":true'), 'and the junk is DURABLE — it is in the profile\'s bytes').toBe(true)
-    // THE CONTROL THAT KEEPS THIS ROW FROM BEING A SURRENDER: the same junk at either other tier is refused, and
-    // the geometry still stands where no wrong-tier write has touched it.
+    expect(landed.status, 'the plain junk at the family\'s own tier is now REFUSED — the value arm, not the root guard').toBe('refused')
+    expect(landed.status === 'refused' ? landed.reason : '', 'and its reason is the store status the pass answered, carried verbatim under the escape arm — no word is minted by the surface').toBe('store-refused')
+    expect(landed.status === 'refused' ? landed.storeStatus : '', 'the store\'s own status: a CONSTRAINT refused the pass, and the package rolled the write back').toBe('ConstraintPassRefused')
+    expect(landed.status === 'refused' ? landed.message : '', 'and the sentence is the pair\'s own, naming the fault').toContain('the pane geometry carries a member that is no geometry')
+    expect(one.view.read().panes, 'so the geometry SURVIVES — the defect\'s own symptom is no longer reachable at any tier').toEqual(geometry)
+    expect(one.view.read().source.panes, 'and the family is still the record the app wrote').toBe('record')
+    expect(readFileSync(at(one.dir)).equals(stood), 'and the junk is NOT durable: the profile is byte-identical across the refusal').toBe(true)
+    // THE CONTROL THAT KEEPS THIS ROW FROM BEING A SURRENDER: a LEGAL write at the same tier still lands, so the refusal
+    // above is the VALUE's and not a blanket on the address.
+    const legal = one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { size: 60, bounds: { min: 0, max: 120 } } } })
+    expect(legal.status, 'a legal family at the family\'s own tier still commits').toBe('committed')
+    expect(one.view.read().panes, 'and it is what the family reads').toEqual([{ id: 'pane-a', size: 60, bounds: { min: 0, max: 120 } }])
     const other = stand()
-    expect(other.surface.write({ path: ['panes'], tier: 'mem', value: { junk: true } }).status, 'a second profile: `mem` is still refused').toBe('refused')
+    expect(other.surface.write({ path: ['panes'], tier: 'mem', value: { junk: true } }).status, 'a second profile: `mem` is still refused by the guard').toBe('refused')
     expect(other.view.read().panes, 'and that profile keeps its geometry').toEqual(geometry)
   })
 

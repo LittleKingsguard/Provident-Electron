@@ -528,6 +528,151 @@ const APP_STATE_MUST_STAND_ID = 'operator-app-state-must-stand'
 const EXCLUSION_ABSENT_MESSAGE = "the operator exclusion does not stand at its address, so no 'mem' version of the pair exists"
 const RECORD_ABSENT_MESSAGE = 'no operator record stands at its address, so no durable settings exist to read'
 const APP_STATE_ABSENT_MESSAGE = 'no app-state row list stands at its address, so no tier-1 row can be read'
+/** **AND THE THREE THE VALUE ARMS ANSWER, IN THE SAME REGISTER AND FOR THE OTHER FAULT** (`D-105`): a value that STANDS
+ *  and carries something no read of this module can state. Each names the FAMILY and the fault, never the act — a write
+ *  refused here and a value standing in the file are one fault, whichever caller met it. **NO ROUTE OF THIS MODULE
+ *  ANSWERS ONE**: `write`, `writeAppState` and the transition each compose a value their own domain already admits
+ *  (interface §2), so only a caller naming the instance's own store address can meet these arms. */
+const RECORD_UNUSABLE_MESSAGE =
+  'the operator record stands but carries a member that is no member of it, or a member outside its own domain, so no durable setting can be read from the record that stands'
+const EXCLUSION_UNUSABLE_MESSAGE =
+  "the operator exclusion stands but names no state — 'exclusion' is absent, or it is neither 'mcp-enabled' nor 'mcp-disabled' — so the pair names nothing the gate can apply"
+const APP_STATE_UNUSABLE_MESSAGE =
+  'the app-state row list stands but carries a row that is no row, a name that is not a non-empty string, or no value at all, so the row it holds cannot be read back'
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE VALUE ARMS — A FAMILY THAT STANDS BUT CARRIES A VALUE ITS OWN READ CANNOT STATE IS REFUSED (D-105)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE INSTANT A BODY IS ASKED AT, READ OFF ITS OWN CONTEXT — MEASURED, NOT ASSUMED.** A REGISTRATION instant hands
+ *  the body `{address, tier, value, attempt, op}` with `tier`, `attempt` and `op` ALL NULL; a WRITE's landing instant
+ *  hands `{address, attempt, op, tier, value}` with all three SET (measured 2026-11-03 at this head, at these addresses).
+ *  **THE DISTINCTION IS LOAD-BEARING RATHER THAN TIDY**: a body answering the unrepairable arm at a registration
+ *  instant REFUSES THE CONSTRUCTION — `provident-storeroom@1.9.2` throws `ConstraintRefusedAtRegistration` before the
+ *  instance exists (measured, over this module's own batch) — so a value a caller or a hand-edited file left at one of
+ *  these addresses would leave the app with no instance at all. There is no standing record for a rollback to protect at
+ *  that instant, so the value arms answer `true` there and refuse only where a write's own rollback exists. */
+function atWrite(context: unknown): boolean {
+  const tier = plain(context) ? context['tier'] : undefined
+  return tier !== null && tier !== undefined
+}
+
+/** **THE NODE A PASS IS AT, RELATIVE TO THE FAMILY'S ADDRESS — a subtraction, and the measurement is why it is one.** A
+ *  pass is asked at the WRITE's own address (`context.address`), never at the pair's, so a write at
+ *  `['operator-settings','token']` hands the record's pair `{address: ['operator-settings','token'], tier: 'file', …}`
+ *  and the remainder names the node the value is. The store's address domain is THREE segments, so a remainder is at
+ *  most two long. `null` where the context names no address under this root: an arm no measured act reaches, and one
+ *  that must never refuse. */
+function nodeOf(context: unknown, root: OperatorSettingsAddress): readonly string[] | null {
+  const at = plain(context) ? context['address'] : undefined
+  if (!Array.isArray(at) || at.length < root.length) return null
+  for (let index = 0; index < root.length; index += 1) if (at[index] !== root[index]) return null
+  return at.slice(root.length) as readonly string[]
+}
+
+/** The record's four durable members — the closed set `toStored` composes and `fromStored` reads, so a fifth name is a
+ *  member the read never reads and the value is not the record that stands. */
+const RECORD_MEMBERS: ReadonlySet<string> = new Set(['token', 'enabled', 'maxJournalLength', 'entries'])
+/** The row list's three members (`toAppStateRecord` composes them, `fromAppState`/`legacyOf`/`unrepresentableOf` read
+ *  them) and the four words the diagnosis may stand as (`AppStateLegacy`). */
+const APP_STATE_MEMBERS: ReadonlySet<string> = new Set(['rows', 'legacy', 'unrepresentable'])
+const LEGACY_WORDS: ReadonlySet<string> = new Set(['absent', 'imported', 'corrupt', 'recorded'])
+
+/** `admitGroups`' rule as an ADMISSION rather than a filter: every member is a group name and no name repeats, so the
+ *  read states the list the value carries instead of silently dropping what it cannot admit. */
+function groupsAdmit(list: readonly unknown[]): boolean {
+  const seen = new Set<string>()
+  for (const name of list) {
+    if (typeof name !== 'string' || !VALID_GROUPS.has(name) || seen.has(name)) return false
+    seen.add(name)
+  }
+  return true
+}
+
+/** One record member's own domain, by the name it is carried under — **`fromStored`'s four rules, member for member**:
+ *  a non-empty token (a cleared one is written as ABSENCE), an array of group names, a POSITIVE INTEGER cap (the write
+ *  floors it, so a fraction would be read back floored — a loss), and a plain entries map. */
+function recordMemberAdmits(member: string, value: unknown): boolean {
+  if (member === 'token') return typeof value === 'string' && value !== ''
+  if (member === 'enabled') return Array.isArray(value) && groupsAdmit(value)
+  if (member === 'maxJournalLength') return typeof value === 'number' && Number.isFinite(value) && value > 0 && Number.isInteger(value)
+  return plain(value)
+}
+
+/** **THE RECORD AT ONE NODE OF ITS OWN SHAPE**: the root is the record whole — its member set CLOSED and every present
+ *  member in domain — a member is that member's own domain, and one level into a member is a group name or an entries
+ *  value, the only two the read looks inside. A record naming NO member (`{}`) is admitted: every member falls to
+ *  `fromStored`'s first-run value, which `D-84` measured as the state `{}` stands in. */
+function recordAdmitsAt(node: readonly string[], value: unknown): boolean {
+  if (node.length === 0) {
+    if (!plain(value)) return false
+    for (const member of Object.keys(value)) {
+      if (!RECORD_MEMBERS.has(member) || !recordMemberAdmits(member, value[member])) return false
+    }
+    return true
+  }
+  const member = node[0]
+  if (member === undefined || !RECORD_MEMBERS.has(member)) return false
+  if (node.length === 1) return recordMemberAdmits(member, value)
+  if (member === 'enabled') return typeof value === 'string' && VALID_GROUPS.has(value)
+  return member === 'entries'
+}
+
+/** The pair's one member and its two words — `fromStored`'s exclusion arm reads exactly this, and `SAFE_PAIR` answers
+ *  where it cannot, which is the substitution the arm refuses. */
+function pairAdmits(value: unknown): boolean {
+  return value === 'mcp-enabled' || value === 'mcp-disabled'
+}
+
+/** **THE PAIR AT ONE NODE**: the root is `{exclusion}` and nothing else, and a write at the member is one of the two
+ *  words. **A PAIR THAT NAMES NO MEMBER IS REFUSED TOO** — `{}` reads as `SAFE_PAIR.exclusion`, which OPENS the gate,
+ *  so a memberless pair is a state this family's read can only substitute for. */
+function exclusionAdmitsAt(node: readonly string[], value: unknown): boolean {
+  if (node.length === 0) {
+    if (!plain(value)) return false
+    const members = Object.keys(value)
+    return members.length === 1 && members[0] === 'exclusion' && pairAdmits(value['exclusion'])
+  }
+  return node.length === 1 && node[0] === 'exclusion' && pairAdmits(value)
+}
+
+/** One row of the list: a plain record naming a NON-EMPTY string and carrying its own `value` — `fromAppState`'s three
+ *  tests in its own order, and the third is `hasOwnProperty` because a row whose `value` is absent is a row the read
+ *  SKIPS, so the caller's row is gone while the receipt says `committed`. */
+function rowAdmits(value: unknown): boolean {
+  if (!plain(value)) return false
+  const name = value['name']
+  return typeof name === 'string' && name !== '' && Object.prototype.hasOwnProperty.call(value, 'value')
+}
+
+function namesAdmit(value: unknown): boolean {
+  return Array.isArray(value) && value.every((name) => typeof name === 'string')
+}
+
+/** **THE ROW LIST AT ONE NODE OF ITS OWN SHAPE**: the root is `{rows, legacy, unrepresentable}` — its member set closed,
+ *  the rows each a row, the word one of the four, the names a list of strings — and the nodes below it are `rows`, the
+ *  word, the names, one row, and a row's two members. */
+function appStateAdmitsAt(node: readonly string[], value: unknown): boolean {
+  if (node.length === 0) {
+    if (!plain(value)) return false
+    for (const member of Object.keys(value)) {
+      if (!APP_STATE_MEMBERS.has(member)) return false
+      if (member === 'rows' && !(Array.isArray(value[member]) && value[member].every(rowAdmits))) return false
+      if (member === 'legacy' && !(typeof value[member] === 'string' && LEGACY_WORDS.has(value[member] as string))) return false
+      if (member === 'unrepresentable' && !namesAdmit(value[member])) return false
+    }
+    return true
+  }
+  const member = node[0]
+  if (member === 'rows' && node.length === 1) return Array.isArray(value) && value.every(rowAdmits)
+  if (member === 'legacy' && node.length === 1) return typeof value === 'string' && LEGACY_WORDS.has(value)
+  if (member === 'unrepresentable' && node.length === 1) return namesAdmit(value)
+  if (member !== 'rows') return false
+  if (node.length === 2) return rowAdmits(value)
+  const field = node[2]
+  if (field === 'name') return typeof value === 'string' && value !== ''
+  return field === 'value'
+}
 
 /** **THE ONE PLACE A REPAIR'S ANSWER IS CONSTRUCTED** (`D-72`): a `repair` returns the op its own write landed, and the
  *  store's refusal arm is not swallowed — a receipt with no `op` answers `null`, which is the failed value the kernel
@@ -649,36 +794,56 @@ function mintAppState(context: unknown, userDataDir: string): RepairAnswer {
  *  needs. So no handle is wanted for the judgement; the write is the only thing that wants one, and the record the
  *  repair is handed lends it.
  *
- *  **ABSENCE IS THE WHOLE ARM, AND EVERY OTHER SHAPE IS LEFT WHERE IT ALREADY HAS AN AUTHORITY.** A pair that stands is
- *  passed through, INCLUDING one whose `exclusion` member is not a token: this body judges EXISTENCE, and the read's own
- *  admission (`plain(pair)` and one of the two words) remains the authority over the member — the split the tab record
- *  draws between `tabs-must-stand` and its three field pairs, which this instance has no field pair for. Repairing the
- *  member here would be the second authority over one value that the placeholder rule forbids (`D-84`). */
+ *  **ABSENCE IS THE FIRST ARM, AND THE SECOND IS THE VALUE'S (`D-105`).** A pair that does not stand is repaired to
+ *  `SAFE_PAIR`; **a pair that STANDS and names no state is REFUSED, with no repair** — before `D-105` such a value was
+ *  passed through and the read answered `SAFE_PAIR.exclusion` over it, so `{junk:true}` at this address silently reopened
+ *  the gate the operator had closed. The arm is a REFUSAL rather than a repair because a placeholder here would destroy
+ *  the state the caller wrote, and the store's own rollback already protects the pair that stood. **THE TWO ARMS ARE TOLD
+ *  APART BY `plain(value)` AND BY NOTHING ELSE.** */
 function exclusionMustStand(context: unknown): ConstraintAnswer {
   const value = plain(context) ? context['value'] : undefined
-  if (plain(value)) return true
-  return { message: EXCLUSION_ABSENT_MESSAGE, repair: mintExclusion }
+  if (!plain(value)) return { message: EXCLUSION_ABSENT_MESSAGE, repair: mintExclusion }
+  const node = nodeOf(context, EXCLUSION_ADDRESS)
+  if (node === null || exclusionAdmitsAt(node, value)) return true
+  if (!atWrite(context)) return true
+  return { message: EXCLUSION_UNUSABLE_MESSAGE }
 }
 
-/** **THE RECORD ADDRESS'S BODY REFUSES EXACTLY WHAT `read()` CANNOT READ, AND NOTHING WIDER** (`D-85`): `plain(value)` is
- *  the read's own admission — `read()` is `plain(durable) ? fromStored(durable) : …` — so refusing a non-plain value here
- *  is the read's test lifted into a repair and not a second authority over the record's members. A record that stands as
- *  `{}` still passes, exactly as `D-84` measured it (`{}` stays `{}`, and the per-member defaults are `fromStored`'s), so
- *  the only states this pair repairs are the ones in which NO record stands at all. */
+/** **THE FIRST ARM IS EXISTENCE** (`D-85`): `plain(value)` is the read's own admission — `read()` is
+ *  `plain(durable) ? fromStored(durable) : …` — and a non-plain value is repaired by the import that address's absence
+ *  used to key. **THE SECOND ARM IS THE VALUE'S (`D-105`)**: a record that STANDS and carries a member outside its four,
+ *  or a present member outside its own domain, is REFUSED with no repair — before `D-105` it was passed through and
+ *  `fromStored` answered the first-run defaults over it, so `{junk:true}` at this address erased the operator's token and
+ *  grants while `read()` served a first run as though one had happened. **A record that stands as `{}` still PASSES**,
+ *  exactly as `D-84` measured it (`{}` stays `{}`, and the per-member defaults are `fromStored`'s): this arm judges the
+ *  members a value NAMES, and `{}` names none. Repairing a named member instead of refusing it would be the second
+ *  authority over one value that the placeholder rule forbids. */
 function recordMustStand(context: unknown, userDataDir: string): ConstraintAnswer {
   const value = plain(context) ? context['value'] : undefined
-  if (plain(value)) return true
-  return { message: RECORD_ABSENT_MESSAGE, repair: (repairContext: unknown) => mintRecord(repairContext, userDataDir) }
+  if (!plain(value)) return { message: RECORD_ABSENT_MESSAGE, repair: (repairContext: unknown) => mintRecord(repairContext, userDataDir) }
+  const node = nodeOf(context, RECORD_ADDRESS)
+  if (node === null || recordAdmitsAt(node, value)) return true
+  if (!atWrite(context)) return true
+  return { message: RECORD_UNUSABLE_MESSAGE }
 }
 
 /** **THE APP-STATE ADDRESS'S BODY REFUSES AN ABSENT ROW LIST**, which is `recordedAt` — the very predicate the old
  *  construction used to decide whether to import (`D-85`; persistence §4). A value that stands without a `rows` array is
  *  a state the read cannot serve (`fromAppState` answers `undefined` for it) and the import is what the read fell back
- *  to, so it is repaired here with the record the import answers. */
+ *  to, so it is repaired here with the record the import answers.
+ *
+ *  **AND A LIST THAT STANDS WITH A ROW THE READ SKIPS IS REFUSED, WITH NO REPAIR (`D-105`).** `fromAppState` SKIPS a row
+ *  that is no record, names no non-empty string, or carries no `value` of its own — measured at this head: a write of
+ *  `{rows: [{name: 7, value: 'x'}]}` answered `committed` and `readAppState()` then answered `rows: []`, so the row list
+ *  the app had was gone and no member of the receipt said so. The existence arm above keeps a MISSING list its own — a
+ *  boot over such a value still imports, which is what that arm is for — and this one judges the rows that ARE there. */
 function appStateMustStand(context: unknown, userDataDir: string): ConstraintAnswer {
   const value = plain(context) ? context['value'] : undefined
-  if (recordedAt(value)) return true
-  return { message: APP_STATE_ABSENT_MESSAGE, repair: (repairContext: unknown) => mintAppState(repairContext, userDataDir) }
+  if (!recordedAt(value)) return { message: APP_STATE_ABSENT_MESSAGE, repair: (repairContext: unknown) => mintAppState(repairContext, userDataDir) }
+  const node = nodeOf(context, APP_STATE_ADDRESS)
+  if (node === null || appStateAdmitsAt(node, value)) return true
+  if (!atWrite(context)) return true
+  return { message: APP_STATE_UNUSABLE_MESSAGE }
 }
 
 /** **THE INSTANCE'S BATCH — THREE DECLARATIONS, ONE PER ADDRESS, AND THE CONSTRUCTION THAT ADOPTS THEM IS THE ONE

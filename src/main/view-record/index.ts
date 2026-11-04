@@ -263,9 +263,11 @@ export interface ViewRecordReading {
 /** **THE ANSWER A WRITE ROUTE GIVES — AND IT CARRIES NO `repaired` MEMBER, WHICH IS A DECISION AND NOT AN OMISSION**
  *  (`D-70`'s rule about a member that names nothing, read at this module's own routes). The tab record derives
  *  `repaired` because its six pairs can change a record INSIDE the commit that wrote it. This module's three pairs have
- *  ONE arm each — the address does not stand — and no route of this module can leave any address absent: a commit
- *  writes the whole family and a read writes nothing. So a repair cannot fire at a landing instant of THIS module's, and
- *  a `repaired` member here could only ever be `false` on a `true`-shaped claim. **The landing arm DOES exist and IS
+ *  TWO arms each — the address does not stand, and a standing value the read cannot state (`D-105`) — and NEITHER can
+ *  fire at a route of this module's: a route composes the whole family through the one composer, so what it writes is
+ *  always a value its own read admits, and a read writes nothing. A `repaired` member here could therefore only ever be
+ *  `false` on a `true`-shaped claim, which is why the member stays absent while the pair's second arm answers the store's
+ *  own status to a caller that names the address directly. **The landing arm DOES exist and IS
  *  reachable — a `provident.data.delete` at either root is a client act on the same instance — and it is implemented and
  *  driven rather than left to a second instance's assumption; what is absent is the member, because this module's own
  *  routes cannot produce the difference the member would report.** */
@@ -760,9 +762,159 @@ const composeMirror = (mirror: ViewFocusMirror): Record<string, unknown> => {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE VALUE ARMS — A FAMILY THAT STANDS BUT CARRIES A VALUE ITS OWN READ CANNOT STATE IS REFUSED (D-105)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE INSTANT A BODY IS ASKED AT, READ OFF ITS OWN CONTEXT — MEASURED, NOT ASSUMED.** A REGISTRATION instant hands
+ *  the body `{address, tier, value, attempt, op}` with `tier`, `attempt` and `op` ALL NULL; a WRITE's landing instant
+ *  hands `{address, attempt, op, tier, value}` with all three SET. So `tier` non-null is the write's own instant, and
+ *  **THE DISTINCTION IS LOAD-BEARING RATHER THAN TIDY**: a body answering the unrepairable arm at a registration
+ *  instant REFUSES THE CONSTRUCTION — `provident-storeroom@1.9.2` throws `ConstraintRefusedAtRegistration` before the
+ *  instance exists (measured 2026-11-03 at this head, over a profile seeded by hand with a value the arm refuses), so a
+ *  corrupt value in the profile's BYTES would make the app unable to start. There is no standing record for a rollback to
+ *  protect at that instant, so the value arms answer `true` there and refuse only where a write's own rollback exists. */
+const writeInstant = (context: unknown): boolean => plain(context) && context['tier'] !== null && context['tier'] !== undefined
+
+/** **THE NODE A PASS IS AT, RELATIVE TO ITS FAMILY'S ROOT — AND THE MEASUREMENT IS WHY THIS IS A SUBTRACTION AND NOT A
+ *  GUESS.** A pass is asked at the WRITE's own address (`context.address`), not at the pair's: a write at
+ *  `['panes','pane-a','size']` hands this family's pair the context `{address: ['panes','pane-a','size'], tier: 'file',
+ *  …}`, so the family's root is a PREFIX of it and the remainder names the node the value is. The store's own address
+ *  domain is THREE segments, so a remainder is at most two long (`['pane-a']`, `['pane-a','size']`): nothing deeper can
+ *  reach a body at all. `null` where the context names no address under this root, which is an arm no measured act
+ *  reaches and the one that must not refuse. */
+const nodeOf = (context: unknown, root: readonly string[]): readonly string[] | null => {
+  const at = plain(context) ? context['address'] : undefined
+  if (!Array.isArray(at) || at.length < root.length) return null
+  for (let index = 0; index < root.length; index += 1) if (at[index] !== root[index]) return null
+  return at.slice(root.length) as readonly string[]
+}
+
+/** The boundary pair a pane's `bounds` is, spelled once so the three nodes that carry it — the record, the member, its
+ *  two fields — cannot disagree: **this is `paneOf`'s own test, lifted onto the node a pass is handed**. */
+const boundsAdmit = (value: unknown): boolean => {
+  if (!plain(value)) return false
+  const min = value['min']
+  const max = value['max']
+  return finiteNumber(min) && finiteNumber(max) && min <= max
+}
+
+/** **ONE PANE AT ONE NODE OF ITS OWN SHAPE.** A pane's record carries `size` and `bounds` and nothing this module reads
+ *  (`paneOf`), and each is a node of its own — so a write AT the record is judged by `paneOf`, a write at `size` by
+ *  `paneOf`'s size rule, and a write at `bounds` (or at one of its two fields) by `boundsAdmit`. */
+const paneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
+  const id = node[0]
+  if (typeof id !== 'string' || id.length === 0) return false
+  if (node.length === 1) return paneOf(id, value) !== null
+  const member = node[1]
+  if (node.length === 2) return member === 'size' ? finiteNumber(value) && value >= 0 : member === 'bounds' ? boundsAdmit(value) : false
+  return member === 'bounds' && (node[2] === 'min' || node[2] === 'max') && finiteNumber(value)
+}
+
+/** **THE PANE FAMILY AT ONE NODE — the root's is the family WHOLE**, one member per pane id and every one of them a
+ *  record `paneOf` admits; every node below it is `paneNodeAdmits`' own. A value naming a member the read would DROP
+ *  is not this family, which is the fault the arm refuses: the read is total and answers the measured default for what
+ *  it cannot state, so a dropped member is a pane the app had and no longer has. */
+const panesAdmitAt = (node: readonly string[], value: unknown): boolean => {
+  if (node.length > 0) return paneNodeAdmits(node, value)
+  if (!plain(value)) return false
+  for (const id of Object.keys(value)) if (!paneNodeAdmits([id], value[id])) return false
+  return true
+}
+
+/** The three id types the mirror compares by value (`===`), and a finite number among them — `mirrorFrom`'s own
+ *  narrowing, spelled once for the entry, for the list and for the active id. */
+const comparableId = (value: unknown): value is string | number | boolean =>
+  typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))
+
+/** The ids an entry list names, or `null` where an entry is one the read cannot state or two entries share an id — the
+ *  two faults `commitFocus` refuses at its own route and `mirrorFrom` can only answer by DROPPING. */
+const entryIdsOf = (list: readonly unknown[]): Set<string> | null => {
+  const named = new Set<string>()
+  for (const candidate of list) {
+    const entry = focusEntryOf(candidate)
+    if (entry === null) return null
+    const key = String(entry.id)
+    if (named.has(key)) return null
+    named.add(key)
+  }
+  return named
+}
+
+/** **THE MIRROR AT ONE NODE OF ITS OWN SHAPE.** The family is ONE value with two members: `entries`, a list of the
+ *  entries the read states, and `activeId`, the id that is active — and a node below them is an entry, or one of an
+ *  entry's three members. **A DANGLING ACTIVE ID IS THE FAULT THIS ARM EXISTS FOR** (`mirrorFrom` can only null it,
+ *  and `commitFocus` already refuses it at its own route): a mirror naming an id it does not hold is a mirror naming a
+ *  tab the record does not have. */
+const mirrorAdmitAt = (node: readonly string[], value: unknown): boolean => {
+  if (node.length > 0) {
+    const [member, , field] = [node[0], node[1], node[2]]
+    if (node.length === 1) {
+      if (member === 'entries') return Array.isArray(value) && entryIdsOf(value) !== null
+      return member === 'activeId' && comparableId(value)
+    }
+    if (member !== 'entries') return false
+    if (node.length === 2) return focusEntryOf(value) !== null
+    if (field === 'id') return comparableId(value)
+    if (field === 'target') return isBoundary(value)
+    return field === 'label' && typeof value === 'string'
+  }
+  if (!plain(value)) return false
+  for (const member of Object.keys(value)) if (member !== 'entries' && member !== 'activeId') return false
+  const held = value['entries']
+  if (!Array.isArray(held)) return false
+  const named = entryIdsOf(held)
+  if (named === null) return false
+  const active = value['activeId']
+  if (active === undefined || active === null) return true
+  return comparableId(active) && named.has(String(active))
+}
+
+/** **ONE ZONE AT ONE NODE OF ITS OWN SHAPE** — the four members are independently OPTIONAL and each present one must be
+ *  usable (`zoneOf`'s own per-member rules), a record carrying none of them is still a zone, and `slot` is opaque to
+ *  this module but not to the crossing (`isBoundary`). */
+const zoneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
+  const id = node[0]
+  if (typeof id !== 'string' || id.length === 0) return false
+  if (node.length === 1) return zoneOf(id, value) !== null
+  const member = node[1]
+  if (node.length === 2) return zoneMemberAdmits(member, value)
+  return member === 'slot' && isBoundary(value)
+}
+
+/** One zone member's own domain, by the name it is carried under — `zoneOf`'s four rules, each at its own node. */
+const zoneMemberAdmits = (member: string | undefined, value: unknown): boolean => {
+  if (member === 'slot') return isBoundary(value)
+  if (member === 'distance') return finiteNumber(value)
+  if (member === 'size') return finiteNumber(value) && value >= 0
+  return member === 'display' && typeof value === 'string'
+}
+
+/** **THE ZONE FAMILY AT ONE NODE — the root's is the family WHOLE**, one member per zone id, each a record `zoneOf`
+ *  admits. The placeholder names no zone (`{}`), so the root's own test is TOTAL over the empty family: a family that
+ *  names nothing is a family whose every zone answers its absence, which is the value the creation repair writes. */
+const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
+  if (node.length > 0) return zoneNodeAdmits(node, value)
+  if (!plain(value)) return false
+  for (const id of Object.keys(value)) if (!zoneNodeAdmits([id], value[id])) return false
+  return true
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE FOUR DECLARATIONS — CLAUSE 1 OF THE CONVENTION: EXISTENCE, REPAIRED WITH A PLACEHOLDER — AND THE APPEARANCE
 // FAMILY'S SECOND ARM, CONSISTENCY, WHICH IS THE ONE THE INSTRUCTION NAMES (D-97)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE THREE SENTENCES THE VALUE ARMS ANSWER, IN THE REGISTER OF THE ROUTES' OWN** (`PANE_GEOMETRY_MESSAGE` and the
+ *  others above): each names the FAMILY and the FAULT a standing value carries, never the act — a write refused at this
+ *  arm and a value read back from the profile's bytes are one fault, wherever they came from (`D-105`). **THE ROUTES
+ *  ANSWER NONE OF THEM**: a route composes the family through the one composer, so only a caller that names the store's
+ *  own address — `provident.data.*`, or the crossing's raw surface — can meet these. */
+export const PANE_UNUSABLE_MESSAGE =
+  'the pane geometry carries a member that is no geometry — no finite non-negative size, or no bounds pair of two finite numbers whose min does not exceed its max'
+export const FOCUS_UNUSABLE_MESSAGE =
+  'the focus mirror carries an entry the read cannot state, two entries under one id, or an active id that is no entry of its own list, so the mirror names a tab it does not hold'
+export const ZONE_UNUSABLE_MESSAGE =
+  'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses'
 
 /** **`panes-must-stand` — THE PANE GEOMETRY IS AN ENFORCED INVARIANT, NOT A SIDE EFFECT OF THE FIRST DRAG.**
  *
@@ -774,20 +926,33 @@ const composeMirror = (mirror: ViewFocusMirror): Record<string, unknown> => {
  *  `tier: null` — so absence needs no handle, and the handle is wanted by the REPAIR alone, which runs at an instant where
  *  the route is on the record or one exists.
  *
- *  **THE ARM IS ABSENCE, AND ONLY ABSENCE**: a value that is not a plain record — the address holding nothing, a
- *  primitive, an array — is the fault this pair names and repairs. **A FAMILY THAT STANDS BUT CARRIES AN UNUSABLE
- *  GEOMETRY IS NOT THIS PAIR'S ARM** and is reported as owed rather than invented (`D-87`): this pair's repair must
- *  leave ONE WHOLE LEGAL VALUE, and a body that also judged each pane's members would be a second declaration wearing
- *  this one's sentence — which is the boundary `D-84` drew for `operator-exclusion-must-stand` and `D-83` drew when it
- *  gave the `order` seat a pair of its own instead of widening the field pairs. The read's admitted family answers the
- *  measured default for any pane it cannot state, so the state this pair leaves unrepaired is answered and not lost. */
+ *  **THE FIRST ARM IS ABSENCE**: a value that is not a plain record — the address holding nothing, a primitive, an
+ *  array — is the fault this pair names and REPAIRS, with the measured default family as one whole legal value.
+ *  **THE SECOND IS THE VALUE'S, AND IT IS `D-105`'s** (it was `D-87`'s owed clause): a value that STANDS and names a
+ *  member `paneOf` cannot state is REFUSED, with no repair, because the read would DROP that member and answer the
+ *  measured default while `source.panes` still said `'record'`. **IT IS ONE DECLARATION AT ONE NODE AND NOT A SECOND
+ *  DECLARATION WEARING THIS ONE'S SENTENCE** — the boundary `D-84` drew for `operator-exclusion-must-stand` and `D-83`
+ *  drew for the `order` seat's own pair: `panesAdmitAt` is the SAME admission the read uses, and the node it judges is
+ *  the write's own address, so a write at `['panes','pane-a']` is judged as that member. */
 const panesMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
-  if (plain(held)) return true
-  return {
-    message: 'the pane geometry does not stand',
-    repair: repairPanes(getStore),
+  if (!plain(held)) {
+    return {
+      message: 'the pane geometry does not stand',
+      repair: repairPanes(getStore),
+    }
   }
+  // **THE VALUE ARM (`D-105`), AND IT ANSWERS WITH NO REPAIR.** A value that STANDS but names a pane the read cannot
+  // state is refused, so the store's own rollback leaves the record that stood exactly as it stood: a placeholder here
+  // would destroy the geometry the caller had, which is the fault the convention's repair arm is NOT for (its subject
+  // is data that is MISSING, and this one is present and unusable). `nodeOf` makes the judgement at the node the write
+  // is at, so a write ONE LEVEL IN — `['panes','pane-a']`, `['panes','pane-a','size']` — is judged as that node and not
+  // as the family. **THE EXISTENCE ARM ABOVE STAYS FIRST AND IS UNCHANGED**: absence is a different fault with a
+  // different arm, and the two are told apart by `plain(held)` alone.
+  const node = nodeOf(context, VIEW_PANES_ADDRESS)
+  if (node === null || panesAdmitAt(node, held)) return true
+  if (!writeInstant(context)) return true
+  return { message: PANE_UNUSABLE_MESSAGE }
 }
 
 /** **THE PANES' REPAIR: THE MEASURED DEFAULT, AS ONE WHOLE LEGAL VALUE** — the pane the app has, at the size and the
@@ -810,11 +975,20 @@ const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRe
  *  file, which is clause 3 answered rather than deviated from. */
 const focusMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
-  if (plain(held)) return true
-  return {
-    message: 'the focus mirror does not stand',
-    repair: repairMirror(getStore),
+  if (!plain(held)) {
+    return {
+      message: 'the focus mirror does not stand',
+      repair: repairMirror(getStore),
+    }
   }
+  // **THE VALUE ARM (`D-105`) — THE DANGLING ACTIVE ID IS ITS SUBJECT.** `commitFocus` refuses that state at the route,
+  // and `mirrorFrom` can only NULL it at a read, so before this arm a `provident.data.write` at the family's own tier
+  // landed a mirror naming a tab the record does not hold and the read quietly answered `activeId: null`. A refusal with
+  // no repair leaves the standing mirror untouched; the existence arm above is unmoved.
+  const node = nodeOf(context, VIEW_FOCUS_ADDRESS)
+  if (node === null || mirrorAdmitAt(node, held)) return true
+  if (!writeInstant(context)) return true
+  return { message: FOCUS_UNUSABLE_MESSAGE }
 }
 
 /** **THE MIRROR'S REPAIR: THE DECLARED EMPTY PAIR, AS ONE WHOLE LEGAL VALUE** — `{entries: []}` with the absent active
@@ -835,16 +1009,27 @@ const repairMirror = (getStore: () => Store | null) => (context: unknown): ViewR
  *
  *  **IT JUDGES `context.value` AND NEVER REACHES FOR THE INSTANCE**, `panesMustStand`'s shape and its measured reason: at
  *  the construction instant the boot's holder is unassigned, so a handle-reading body would abstain at the one instant it
- *  is the only one that can act. **THE ARM IS ABSENCE, AND ONLY ABSENCE**: a family that STANDS but carries a member this
- *  module cannot admit is the read's dropped-member disposition, not a second declaration — and here the disposition is
- *  even cheaper than for panes, because the dropped member answers its absence, which is what it answered before. */
+ *  is the only one that can act. **THE SECOND ARM IS THE VALUE'S (`D-105`)**: a family that STANDS and carries a member
+ *  `zoneOf` cannot admit is REFUSED with no repair, where before it was the read's dropped-member disposition — and the
+ *  disposition is exactly why the arm is owed rather than cheap: the dropped member answers its absence, so the app lost
+ *  a zone it had while `source.zones` still said `'record'`. **A ZONE THAT CARRIES NOTHING IS STILL LEGAL** (`{}` at a
+ *  zone id), because that state is the family's own shape and not a fault. */
 const zonesMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
-  if (plain(held)) return true
-  return {
-    message: 'the zone family does not stand',
-    repair: repairZones(getStore),
+  if (!plain(held)) {
+    return {
+      message: 'the zone family does not stand',
+      repair: repairZones(getStore),
+    }
   }
+  // **THE VALUE ARM (`D-105`), AT THE NODE THE WRITE IS AT.** A zone whose `size` is a string, a member that is no
+  // record at all, or a `slot` the crossing refuses is a family the read can only answer by DROPPING the member — and a
+  // dropped member answers its absence, so the app loses a zone it had while `source` still says `'record'`. Refused
+  // with no repair, so the store's rollback leaves the standing family and the profile's bytes exactly as they were.
+  const node = nodeOf(context, VIEW_ZONES_ADDRESS)
+  if (node === null || zonesAdmitAt(node, held)) return true
+  if (!writeInstant(context)) return true
+  return { message: ZONE_UNUSABLE_MESSAGE }
 }
 
 /** **THE ZONES' REPAIR: THE FAMILY THAT NAMES NO ZONE, AS ONE WHOLE LEGAL VALUE** — `{}` at the family's own root and its

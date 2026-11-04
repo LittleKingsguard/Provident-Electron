@@ -204,7 +204,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(readFileSync(join(userDataDir, FILE), 'utf8').includes('"token":"after-the-second-boot"'), 'and the byte reading that explains the count: the caller write is what moved the file, not the boot (both boots left it standing)').toBe(true)
   })
 
-  it('CD-4 · each body judges EXISTENCE and every other shape keeps its existing authority: a value that stands is passed through — a wrong member included — and each body refuses only the state its own read cannot serve (D-84, D-85)', () => {
+  it('CD-4 · each body answers TWO arms: EXISTENCE repaired at the creation instant, and the VALUE refused at a WRITE — a wrong member stands where no write can roll it back and is refused where one can (D-84, D-85, D-105)', () => {
     const batch = (() => { createOperatorSettings({ userDataDir }); return lastBatch() })()
     const store = armed(userDataDir, batch)
     const exclusion = bodyAt(batch, EXCLUSION)
@@ -214,7 +214,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(exclusion(atCreation(EXCLUSION, undefined)), 'an address holding nothing is refused, with a sentence that names the pair and not the act').toMatchObject({ message: expect.stringContaining('operator exclusion') })
     expect(exclusion(atCreation(EXCLUSION, { exclusion: 'mcp-enabled' })), 'a pair that stands passes').toBe(true)
     expect(exclusion(atCreation(EXCLUSION, { exclusion: 'mcp-disabled' })), 'and so does the other word: existence is the arm, not the value').toBe(true)
-    expect(exclusion(atCreation(EXCLUSION, { exclusion: 7 })), 'AND A PRESENT PAIR WHOSE MEMBER IS NOT A TOKEN PASSES TOO — repairing the member here would be the second authority over one value the placeholder rule forbids, and the read’s own admission is the member’s (this file proves the SPLIT, not an omission)').toBe(true)
+    expect(exclusion(atCreation(EXCLUSION, { exclusion: 7 })), 'AND AT THE CREATION INSTANT A PRESENT PAIR WHOSE MEMBER IS NOT A TOKEN STILL PASSES — there is no standing record for a rollback to protect and a refusal there refuses the CONSTRUCTION, so the value arm answers this instant with `true` (D-105, measured both ways in the row below)').toBe(true)
 
     // THE RECORD'S ARM IS `plain`, WHICH IS `read()`'s OWN ADMISSION — `plain(durable) ? fromStored(durable) : …` — lifted
     // into a repair and nothing wider: a leaf where a record should stand is a state the read cannot serve.
@@ -228,10 +228,16 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(appState(atCreation(APP_STATE, { legacy: 'x' })), 'and a value standing WITHOUT a `rows` array is refused: `fromAppState` answers `undefined` for it, so the read has nothing to serve and the import is what it used to fall back to').toMatchObject({ message: expect.stringContaining('row list') })
     expect(appState(atCreation(APP_STATE, { rows: [] })), 'an empty row list passes — it is a record, and a legal one').toBe(true)
 
-    // THE LANDING INSTANT IS WHERE A VALUE STANDS, AND THE STORE IS WHERE THAT IS OBSERVED: a wrong-typed member written
-    // at a landing instant LANDS AND STANDS, because no repair ran over it.
-    store.write(EXCLUSION, 'mem', { exclusion: 7 })
-    expect(store.read(EXCLUSION, 'mem'), 'the wrong-typed member stands: this declaration did not rewrite it, which is the split asserted above and observed here on the store itself').toEqual({ exclusion: 7 })
+    // **THE OTHER INSTANT, AND IT IS THE ONE `D-105` MOVED**: at a LANDING instant a value STANDS, the store's own
+    // rollback protects it, and the arm REFUSES — so the wrong-typed member neither lands nor is repaired over, and the
+    // pair that stood is exactly the pair that still stands. THIS IS THE CONTROL FOR THE CREATION-INSTANT ARM ABOVE: the
+    // same value passes where no rollback exists and is refused where one does.
+    const stood = store.read(EXCLUSION, 'mem')
+    let refused: unknown = null
+    try { store.write(EXCLUSION, 'mem', { exclusion: 7 }) } catch (caught) { refused = caught }
+    expect({ status: (refused as { status?: unknown } | null)?.status }, 'the write is REFUSED by the pair, not by the boundary and not by the engine').toEqual({ status: 'ConstraintPassRefused' })
+    expect((refused as { message?: unknown } | null)?.message, 'in the pair’s own sentence, which names the fault and not the act').toContain('names nothing the gate can apply')
+    expect(store.read(EXCLUSION, 'mem'), 'and the pair that stood is untouched — no repair ran over it and no placeholder replaced it').toEqual(stood)
 
     // **AND `SAFE_PAIR` IS STILL LOAD-BEARING, WHICH IS THE ARM NO DECLARATION CAN REACH: A CONSTRUCTION THE PACKAGE
     // REFUSES HAS NO INSTANCE, SO NO BATCH IS ADOPTED AND NO REPAIR CAN RUN.** A DIRECTORY occupying the instance's own

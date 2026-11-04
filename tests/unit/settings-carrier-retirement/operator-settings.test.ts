@@ -218,19 +218,21 @@ describe('settings-carrier-retirement · the operator-settings instance at unit 
   })
 
   it('OS-5 · the read-back SKIP rule: a record row that fails the declared `{name, value}` shape is skipped and its siblings are served — never `[]` for the whole record (design.md §6 ASM-4; interface.md §2; guide §10)', () => {
-    const settings = instance(profile())
-    // A ROW WHOSE VALUE HAS NO IMAGE AS A MEMBER: `JSON.stringify` drops the `value` member of the row
-    // object, so the record holds `{name:'file.ghost'}` — a row that fails the declared `{name, value}`
-    // shape exactly as a record written by another writer could. It is admitted at the write (the
-    // argument's own shape is all this verb admits) and skipped at the read-back (design.md §6 ASM-4);
-    // the other malformations — a row that is not an object, a `name` that is not a non-empty string —
-    // are refused at admission, so a lost `value` member is the one shape failure a record can carry.
-    const receipt = committed(settings.writeAppState([
-      { name: 'file.tabs.order', value: ['a'] },
-      { name: 'file.ghost', value: undefined },
-      { name: 'file.layout.dock', value: 'left' },
-    ]))
-    expect(Number.isInteger(receipt.cursor), 'the commit committed: the image, not the store, dropped the member').toBe(true)
+    // **THE DOOR THAT CAN STILL CARRY SUCH A ROW IS THE PROFILE'S BYTES, AND `D-105` IS WHY.** The row below is the one
+    // this row always drove — a row whose `value` member `JSON.stringify` drops, so the record holds `{name:'file.ghost'}`
+    // — and since `D-105` the WRITE that used to admit it is REFUSED by the address's own declaration (the control at the
+    // bottom of this row), so the state is reachable only from a record an older head or another writer left in the file.
+    // Seeded there, the skip is measured exactly as before: the malformed row goes, its siblings stand in their order.
+    const dir = profile()
+    writeFileSync(at(dir, OPERATOR_FILE), JSON.stringify({
+      'operator-settings': { enabled: ['read', 'dispatch'] },
+      'operator-app-state': {
+        rows: [{ name: 'file.tabs.order', value: ['a'] }, { name: 'file.ghost' }, { name: 'file.layout.dock', value: 'left' }],
+        legacy: 'recorded',
+        unrepresentable: [],
+      },
+    }))
+    const settings = instance(dir)
 
     const answer = settings.readAppState()
     expect(answer.rows, 'the malformed row is SKIPPED and both siblings are served, in their order — the rejected alternative answered `[]` for the whole record (design.md §6 ASM-4)').toEqual([
@@ -239,6 +241,23 @@ describe('settings-carrier-retirement · the operator-settings instance at unit 
     ])
     expect(answer.rows.some((row) => row.name === 'file.ghost'), 'and the skipped name appears nowhere in `rows`').toBe(false)
     expect(answer.unrepresentable, '`unrepresentable` is the IMPORT arm’s list and does not collect a read-back skip (interface.md §2)').toEqual([])
+
+    // **THE CONTROL, AND IT IS `D-105`'S ARM**: the same list through the verb that used to admit it is refused, with no
+    // repair and no byte written — so the skip above is the READ's rule and the write's door is shut.
+    const before = sha256(at(dir, OPERATOR_FILE))
+    const refused = settings.writeAppState([
+      { name: 'file.tabs.order', value: ['a'] },
+      { name: 'file.ghost', value: undefined },
+      { name: 'file.layout.dock', value: 'left' },
+    ])
+    expect(refused.status, 'a row carrying no `value` is REFUSED at the write').toBe('refused')
+    expect(refused.status === 'refused' ? refused.reason : '', 'with the store’s own status verbatim: a CONSTRAINT refused the pass').toBe('ConstraintPassRefused')
+    expect(refused.status === 'refused' ? refused.message : '', 'in the declaration’s own sentence, naming the row and not the act').toContain('no value at all')
+    expect(sha256(at(dir, OPERATOR_FILE)), 'and the profile is byte-identical across the refusal — the rollback ran and nothing replaced it').toBe(before)
+    expect(settings.readAppState().rows, 'so the rows that stood are the rows that still stand').toEqual([
+      { name: 'file.tabs.order', value: ['a'] },
+      { name: 'file.layout.dock', value: 'left' },
+    ])
   })
 
   it('OS-6 · every verb answers rather than throws over hostile arguments: `null`, `undefined`, a primitive, a Proxy and a cycle each answer a refusal, and the record is unmoved (interface.md §2; design.md §2.1, §5)', () => {

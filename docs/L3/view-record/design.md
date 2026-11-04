@@ -1,11 +1,12 @@
 # L3 — `view-record`: the module design
 
-- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — rev 1 filed the crossing's second
+- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — rev 1 filed the crossing's second
   declaration set (D-87); rev 2 added the THIRD FAMILY (D-91) and corrected the renderer's read path (D-89); rev 3 stated the
   wiring's own state — all six drag reads are the shape's, `tierRead` and the `temp.drag` registration deleted, the preview
   closure state (D-92); rev 4 added the FOURTH FAMILY, the APPEARANCE RECORD (D-97): a pair with a SECOND ARM no other pair
   has (staleness over a derivation), a route that writes the caller's ACT and never a resolution; **rev 5 moves that family
-  from `mem` to `file`** on the user's ruling that appearance preferences are durable (D-98). No earlier rule is withdrawn.
+  from `mem` to `file`** on the user's ruling that appearance preferences are durable (D-98); **rev 6 gives the three earlier families a VALUE ARM** — a
+  refusal with no repair, judged at the node the pass is handed, so §7's owed clause is discharged (D-105). No earlier rule is withdrawn.
 - **Inputs:** `docs/L2/view-record/interface.md` rev 3 §0–§5; D-82 (the four clauses), D-83 (a creation-instant body's
   route and its address), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save), D-89 (the landed
   swap), D-90 (the zone family's homeless enumeration), D-96 (the appearance mechanism's ruling), D-97 (this family), D-98 (its durable tier),
@@ -36,12 +37,11 @@ modules`), so no `Y-2` projection can collide with any of them.
 
 **Each family's tier is named ONCE, in a constant, and the module's tier TYPE is derived from those constants** — not re-spelled from the package's
 `Tier` — so a fourth family ADDS its constant rather than widening a table, and no read, write or repair can half-move a family to the other tier.
-**THE APPEARANCE FAMILY TOOK THAT ROUTE AT `D-97` AND ITS TIER MOVED AT `D-98`**: `D-97` set it to `mem` on two grounds — the app then persisted no
-appearance setting, and a durable appearance preference is what the control's own prohibition row denies — and **the user's ruling "Appearance preferences
-should be durable" answers the second, so the tier is `file`**, the prohibition superseded by pointer. `file`-tier registration repairs are SAVED by the
-installed package and `mem` ones are not (measured), so the creation placeholder is a durable write and a standing legal record survives a restart. **THE ZONE FAMILY'S TIER IS THE MEASUREMENT THAT DECIDED ITS BOOT
-SOURCE** (D-91): the frozen store's four members stood at `mem` and nowhere else — no `file` copy of any zone member exists in the tree — so there is
-no durable image to inherit, and a repair at the creation instant is the family's only lawful source (D-84).
+**THE APPEARANCE FAMILY TOOK THAT ROUTE AT `D-97` AND ITS TIER MOVED AT `D-98`**: `D-97` set it to `mem` on two grounds — the app then persisted no appearance setting, and a durable appearance
+preference is what the control's own prohibition row denies — and **the user's ruling "Appearance preferences should be durable" answers the second, so the tier is `file`**, the prohibition superseded
+by pointer. `file`-tier registration repairs are SAVED by the installed package and `mem` ones are not (measured), so the creation placeholder is a durable write and a standing legal record survives a
+restart. **THE ZONE FAMILY'S TIER IS THE MEASUREMENT THAT DECIDED ITS BOOT SOURCE** (D-91): the frozen store's four members stood at `mem` and nowhere else — no `file` copy of any zone member exists
+in the tree — so there is no durable image to inherit, and a repair at the creation instant is the family's only lawful source (D-84).
 
 **NO ROOT IS NESTED, AND THAT IS THE ONE THING THIS MODULE'S ADDRESS SHAPE OWES THE MEASUREMENT** (D-87, re-driven at the zone root): a nested write
 does not create its parent (`AddressNotFound` over a fresh store), and a `file` root answers `TierNotFound` at `mem`. A parent branch would need a
@@ -54,10 +54,9 @@ and what `===` compares by value**; `ViewFocusMirror` is `FocusState` with the a
 record — **`slot` opaque, and `distance`/`size`/`display` individually OPTIONAL**, which is measured rather than lenient: the tree's own writers seed
 `size`+`display` for three zones and `slot` alone for another, and its two zone batteries write `slot`+`distance` with neither of the other two.
 
-**ONE PARSE PER FAMILY, FROM A VALUE AND NEVER FROM A HANDLE** (D-83's `viewFrom`, applied here): `panesFrom`, `mirrorFrom` and `zonesFrom` admit
-member by member and `null` an unreadable family. A member the value names and this parse cannot admit is **dropped** — and a dropped mirror entry
-**takes a dangling `activeId` with it**, so the read can never answer a mirror the write route would refuse. **A record carrying no admissible member
-is still a ZONE** (`paneOf` cannot admit that state because a pane's `size` and `bounds` are required; a zone's are not), so naming a zone and storing
+**ONE PARSE PER FAMILY, FROM A VALUE AND NEVER FROM A HANDLE** (D-83's `viewFrom`, applied here): `panesFrom`, `mirrorFrom` and `zonesFrom` admit member by member and `null` an unreadable family. A
+member the value names and this parse cannot admit is **dropped** — and a dropped mirror entry **takes a dangling `activeId` with it**, so the read can never answer a mirror the write route would
+refuse. **A record carrying no admissible member is still a ZONE** (`paneOf` cannot admit that state because a pane's `size` and `bounds` are required; a zone's are not), so naming a zone and storing
 nothing about it is a state the family holds.
 
 **AND THE APPEARANCE RECORD IS THREE MEMBERS WITH ONE DERIVED ONE** (D-97): `token` and `attribute` are the pair the act carried and `declaration` is
@@ -80,6 +79,13 @@ can act.
 **THE ZONE FAMILY'S PLACEHOLDER IS THE ONE THAT NAMES NO ZONE** (`{}`), and that is the whole of the pair's design: the family has no default value
 anywhere in the tree, so a repair minting a geometry would make the repair and the read two authorities over one question, while `{}` answers every
 zone exactly as the absent address answered it (D-91).
+
+**EACH OF THE THREE OLDER BODIES HAS A SECOND ARM, AND IT IS A REFUSAL — NO REPAIR** (`D-105`). `panesAdmitAt`/`paneNodeAdmits`/`boundsAdmit`, `mirrorAdmitAt`/`entryIdsOf`/`comparableId` and
+`zonesAdmitAt`/`zoneNodeAdmits`/`zoneMemberAdmits` judge the node the pass is handed against the SAME admission the read uses (`paneOf`, `focusEntryOf`/`mirrorFrom`, `zoneOf`), so no second answer to "what
+is legal" exists; `nodeOf` subtracts the family's root from `context.address` — measured: a pass is asked at the WRITE's own address, so a write at `['panes','pane-a']` is judged as that member and not as
+the family — and `writeInstant` reads the instant off the same context (`tier` is `null` at a registration and set at a write). **The arms are refusals because a standing value is not missing data**: the
+existence arm's placeholder would destroy what the caller had, while the store's own rollback leaves it exactly as it stood. **And the registration instant answers `true`**, measured: the unrepairable arm
+there refuses the CONSTRUCTION (`ConstraintRefusedAtRegistration`), so a corrupt value in the profile's bytes would make the app unable to start.
 
 **ONE REPAIR-WRITE PATH, AND ITS BRANCH IS THE RECORD'S OWN `write` MEMBER, NEVER THE INSTANT'S NAME**: a registration record carries a `write`
 function and takes the store's **three** positions with no fourth (supplying one is a `TypeError` before any store act); a landing record carries no
@@ -118,8 +124,8 @@ asserted over comment-elided code with a positive control.
 
 ## 7. Owed, and deliberately not built
 
-A pair that judges a **standing** family's members (a pane whose geometry is unusable, a zone whose `size` is a string) is a declaration this module
-does not carry: each pair's arm is absence, and widening one would be a second declaration wearing the first one's sentence — the boundary D-84 drew
-for the secure crossing and D-83 drew when it gave the `order` seat a pair of its own. The admission answers such a member (the measured default, or
-the zone's absence), so nothing is lost; what is owed is the refusal, not the value. **AND THE ZONE FAMILY'S WIRING IS LANDED** (`D-92`), and the
-appearance family's consumer is the renderer's application (`D-97`): what stands owed is the STANDING-member refusal above and nothing else.
+**THE STANDING-MEMBER REFUSAL THIS CHAPTER OWED IS BUILT (`D-105`), and it was built as the SECOND ARM of the three pairs rather than as a new pair** — the boundary D-84 drew for the secure crossing
+and D-83 drew when it gave the `order` seat a pair of its own is kept: each body judges one whole value at one node, and the sentence names the family. **What remains owed is the ARM THAT IS NOT A
+WRITE**: a corrupt value standing in the profile's bytes is not refused (a refusal at the registration instant refuses the construction, measured), so the first legal write at the root is what
+replaces it — stated in §4 and measured in this unit's `VA-13` rather than left to be discovered. **AND THE ZONE FAMILY'S WIRING IS LANDED** (`D-92`), and the appearance family's consumer is the
+renderer's application (`D-97`).
