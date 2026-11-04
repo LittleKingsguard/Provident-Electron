@@ -696,6 +696,25 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `strata-marks.mjs check` stays green UNREGENERATED), `strata/brief.md` (no §6 figure moves — no row, no file, no
   //    `src/` byte) and `strata/platform.md` (`60/60`, no platform fact moves).
   // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-115` AND `D-116` — THE HANDOVER'S CEILING IS `60`, AND THE GATE-INDEPENDENCE RULE IS ADOPTED WITH
+  //    `strata/modules.md` AS ITS CARRIER. **ONE PATH IS NEW TO THIS UNION AND IT IS NAMED, not admitted by a prefix**;
+  //    every other path this pass writes is ALREADY DECLARED ABOVE and is named below so a reader can check the claim.
+  //    THE CARRIER `D-116` NAMES: the procedure that owns the harness stood at exactly `40/40`, so its clause was paid
+  //    for — §1's second paragraph re-wrapped from three lines to two with not one word changed, the freed line
+  //    carrying the clause at the end of §5, the file holding at exactly `40` before and after — and no earlier block of
+  //    this union has ever carried it.
+  'strata/modules.md',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE AND IS NAMED SO A READER CAN CHECK THE CLAIM:
+  //    `strata/decisions.md` (the two rows and the pointer clause appended at `D-114`'s own row, which may not be
+  //    reworded), `strata/pending.md` (the three descriptions corrected in place against the instrument's shipped bytes —
+  //    the three forms over a site rule, the seven over-long register rows, the flat record discovery — the file holding
+  //    at `34`) and `strata/next-steps.md` (the same parser description at `35`). **THREE PATHS ARE DELIBERATELY ABSENT AND
+  //    THE ABSENCE IS THE RECORD**: `strata/marks.json` (no test file is added or removed and no collected row moves, so
+  //    `strata-marks.mjs check` stays green UNREGENERATED), `strata/brief.md` (no §6 figure moves — no row, no file, no
+  //    `src/` byte) and `strata/platform.md` (`60/60`, no platform fact moves). **AND `strata/records/handover.md` IS
+  //    ABSENT FOR A REASON OF ITS OWN**: `D-115` rules on its ceiling and its own bytes already say nothing of it — it
+  //    states no ceiling at all — so the file is not written and stands at `39` of `60`.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

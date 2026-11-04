@@ -6,9 +6,8 @@ Procedure for the isolation rule at and below L3 (D-1). Ceiling: 40 lines.
 
 Exactly one module: `docs/L3/<module>/`, that module's source subtree, `tests/unit/<module>/` (or
 the module's declared test paths), and the L2 interface document for that module. Nothing else.
-Folders are the unit of isolation — sibling modules are siblings, not parents of each other. A
-module agent that needs another module's surface reads the **L2 interface** and never that module's
-code or docs (D-1).
+Folders are the unit of isolation — sibling modules are siblings, not parents of each other. A module agent that
+needs another module's surface reads the **L2 interface** and never that module's code or docs (D-1).
 
 ## 2. Why it is a control, not hygiene
 
@@ -38,3 +37,4 @@ Isolation is **prompt-and-lint enforced, not sandbox-enforced**: every written p
 against the module's declared subtree, and reads outside it are not prevented (D-1, `platform.md` §2).
 A rooted seat per module — a workspace whose write boundary *is* the module — is deferred, not
 rejected; it returns if a module report cites an outside path or a module test crosses a boundary (D-1).
+**The harness's own gate is never built inside this corpus**: no layer judges its own design (D-116).

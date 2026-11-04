@@ -19,7 +19,7 @@ whole at `D-93`, and what they left owed LANDED at `D-94` as a leg — `npm run 
 |---|---|---|---|
 
 Every other open item WAS `pending.md`'s — **every row in that file, whatever the count, was the list**, each stating what it waited on — and **THAT TABLE IS EMPTY AT THIS HEAD, its last row having left with its work**:
-`strata-lint`'s record gap on the harness owner LEFT ON 2026-11-05, the instrument extended over `strata/records/` and the four trackers (the coverage, the two ceiling prose forms it now parses and the `52` → `124` reading are that file's deletions paragraph and `D-114`); and
+`strata-lint`'s record gap on the harness owner LEFT ON 2026-11-05, the instrument extended over `strata/records/` and the four trackers (the coverage, the three ceiling prose forms and their site rule, and the `52` → `124` reading are that file's deletions paragraph and `D-114`); and
 `src/shared/overlay.ts`'s absent overlay on a unit admitted to AUTHOR one — the one blocker whose subject was an act and not a
 repair. **IT LEFT ON 2026-11-05 BECAUSE THE ACT WAS TAKEN**: the user's ruling — *"The overlay is used to contain UI elements that
 should block general app access while open, ex. security tools and other configuration settings"* — is the design act the row
