@@ -4,7 +4,7 @@
 // and replies flow renderer → main (send). Exposed as a minimal `provident`
 // surface (no Node objects leak into the page).
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, IPC_DATA_READ, IPC_DATA_WRITE, IPC_DATA_DELETE, IPC_DATA_LIST, IPC_DATA_JOURNAL, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 // ⟶ **`STORE_FILE_GET` AND `STORE_FILE_PUT` LEAVE THIS IMPORT** (`D-93`): the `store` member they served is deleted with
 // the renderer's frozen graph store, so the preload reaches the channel file for `IPC_SECURITY_EXCLUSION` alone.
 import { IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
@@ -13,6 +13,10 @@ import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from 
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
 import type { ViewFocusMirror, ViewPaneGeometry, ViewThemeRecord, ViewZone } from './view-record/index.js'
 import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './settings-surface/index.js'
+// **THE `data` ROUTES' ANSWER SHAPES ARE THE MODULE'S OWN, TYPE-ONLY** (`D-112`): the adapter that answers them lives in
+// `src/main/data/` and this file declares what it answers rather than a second spelling of it (D-53). A type import is
+// erased at build, so nothing of the main process reaches the page through these five names.
+import type { DataDeleteAnswer, DataJournalAnswer, DataListAnswer, DataReadAnswer, DataWriteAnswer } from './data/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (erased at build; no runtime coupling). The WIDENING is an intersection at the declaration
 // sites below, never an edit to the shared `SecuritySettings` type (§1.3 item 9).
@@ -107,13 +111,30 @@ export interface ProvidentBridge {
     commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
     onChanged(handler: () => void): () => void
   },
+  // THE `data` ROUTES' CROSSING (`D-112`; `docs/L2/central-data/interface.md` §5): ONE member, FIVE routes, NO delivery.
+  // Each hands the caller's argument object to the boot's ONE profile store through the module's own adapter, and answers
+  // §2's shape verbatim — `read`'s row/branch/absent, `write`'s and `delete`'s `cursor` + `repaired` + `log`, `list`'s
+  // paths and `journal`'s window, each with the closed ledger's `refused` arm beside it. `onChanged` is DELIBERATELY
+  // ABSENT (`D-107` reads the `data.*` clause-2 cell `N/A` because no consumer of a `data.*` change exists, and a push
+  // here would be the first). The declaration below and `src/renderer/secure-panels.ts`'s copy are the same text in both
+  // files — the lockstep rule the `security`, `tabs`, `view` and `module` members already follow.
+  data: {
+    read(args: unknown): Promise<DataReadAnswer>
+    write(args: unknown): Promise<DataWriteAnswer>
+    delete(args: unknown): Promise<DataDeleteAnswer>
+    list(args: unknown): Promise<DataListAnswer>
+    journal(args: unknown): Promise<DataJournalAnswer>
+  },
   // ⟶ **THE `store` MEMBER IS DELETED** (`D-93`; `D-90`'s clause (3): "the two preload members"). It carried Y-1 the boot
   // hand-off, Y-2 the commit crossing and Y-3 the change-push registration, all three exclusively for the renderer's frozen
   // graph store — the file's own note above still describes that trio as it was filed, and this line is where it stopped
   // being true. **WHAT THE BRIDGE NOW CARRIES, AND NOTHING ELSE**: `ready` · `onRequest` · `sendReply` · `notify` ·
-  // `security` · `module` · `tabs` · `view` — eight top-level members, one per crossing surface the app actually reads or
-  // writes. The lockstep pair `store`/`security` is no longer a pair: `security` stands (the secure crossing's manual-UI
-  // surface) and `store` has no successor, because the thing it existed for has none.
+  // `security` · `module` · `tabs` · `view` · `data` — NINE top-level members, one per crossing surface the app actually
+  // reads or writes, the ninth being `D-112`'s five `data.*` routes. The lockstep pair `store`/`security` is no longer a
+  // pair: `security` stands (the secure crossing's manual-UI surface) and `store` has no successor, because the thing it
+  // existed for has none. **AND THIS COUNT IS NOT RESTATED FROM MEMORY**: two sibling rows (`ISO-4` in both `isolation`
+  // files) and `S-11` in `settings-carrier-retirement`'s e2e scenarios set-equality it against their own `BRIDGE_MEMBERS`,
+  // and each was moved with a dated note on this pass rather than left to disagree.
 }
 
 const bridge: ProvidentBridge = {
@@ -237,6 +258,26 @@ const bridge: ProvidentBridge = {
       return () => {
         ipcRenderer.removeListener(IPC_VIEW_CHANGED, listener)
       }
+    },
+  },
+  // THE `data` ROUTES (`D-112`): five requests over five channels, each passing the caller's argument object as it arrived
+  // and nothing else — no path, no tier, no value is read, defaulted or re-spelled on this side. The withdrawal member the
+  // crossings beside this one carry is absent with the push it would withdraw.
+  data: {
+    read(args: unknown): Promise<DataReadAnswer> {
+      return ipcRenderer.invoke(IPC_DATA_READ, args)
+    },
+    write(args: unknown): Promise<DataWriteAnswer> {
+      return ipcRenderer.invoke(IPC_DATA_WRITE, args)
+    },
+    delete(args: unknown): Promise<DataDeleteAnswer> {
+      return ipcRenderer.invoke(IPC_DATA_DELETE, args)
+    },
+    list(args: unknown): Promise<DataListAnswer> {
+      return ipcRenderer.invoke(IPC_DATA_LIST, args)
+    },
+    journal(args: unknown): Promise<DataJournalAnswer> {
+      return ipcRenderer.invoke(IPC_DATA_JOURNAL, args)
     },
   },
   // ⟶ **THE `store` MEMBER'S IMPLEMENTATION IS DELETED** (`D-93`): the three members above are gone with the frozen graph

@@ -6,7 +6,7 @@ import {app, BrowserWindow, ipcMain} from 'electron'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {createHash} from 'node:crypto'
-import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, type RpcReply, type NotifyPayload} from '../shared/types.js'
+import {IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, IPC_DATA_READ, IPC_DATA_WRITE, IPC_DATA_DELETE, IPC_DATA_LIST, IPC_DATA_JOURNAL, type RpcReply, type NotifyPayload} from '../shared/types.js'
 import {ProvidentMcpServer, RendererBackend, type McpTransportKind} from './mcp-server.js'
 import type {SettingsAppStateRow} from './settings-surface/index.js'
 import {createSettingsSurface} from './settings-surface/index.js'
@@ -394,7 +394,12 @@ async function main(): Promise<void> {
   // other instance wrote (measured 2026-11-02). Two instances are the ruling's whole number, so the handle is passed
   // and the surface constructs nothing — **and now it CANNOT**: `DataSurfaceOptions.store` is required and the
   // fallback construction is deleted, so this line is the surface's only source of an instance (D-80).
-  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface: createDataSurface({ profileDir: app.getPath('userData'), store: centralStore, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] }) })
+  const dataSurface = createDataSurface({ profileDir: app.getPath('userData'), store: centralStore, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
+  // **AND THE SURFACE IS NAMED ONCE HERE BECAUSE THE FIVE ROUTES ARE ANSWERED FROM IT** (`D-112`; `interface.md` §5): the
+  // handlers below and the server's option are the SAME object, so a bridge request and a `provident.data.*` tool call
+  // reach one adapter and cannot carry two answers. Nothing else about the options pass moves — it is still ONE line, the
+  // exception's `E-3` claim, with `dataSurface` passed by name instead of constructed in it.
+  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface })
   // `§0A` item 1 (the `A-1` ruling) — NO RE-POINT IS OWED HERE ANY MORE. The landed `R-2` re-point
   // existed because the store consulted a reader `main` had to keep aimed at the LIVE server
   // (`mcp-server.ts`'s `get gate()`). Neither half of that exists now: the retired store is gone
@@ -463,6 +468,24 @@ async function main(): Promise<void> {
   ipcMain.handle(IPC_VIEW_THEME_COMMIT, (_event, token: unknown, attributeName: unknown) => viewSurface.commitTheme(token, attributeName))
   // and its change push, taken at the same point and for the same reason as the tab record's
   viewSurface.attach()
+  // ═══ THE FIVE `data.*` ROUTES' ANSWER SITES (`D-112`; `docs/L2/central-data/interface.md` §5) ═══
+  // Each hands the caller's argument object to the module's adapter UNTOUCHED and answers §2's shape verbatim, so the
+  // bridge route and the `provident.data.*` tool of the same name are ONE answer site — the property the MCP
+  // registrations already state from their own side (`src/main/mcp-server.ts`'s five rows). Nothing here inspects an
+  // argument: the surface's own arms refuse a malformed call BY NAME, and a `main.ts` that validated first would be a
+  // second authority over the register's declared members (`interface.md` §1).
+  // **NO CHANGE PUSH IS TAKEN HERE, AND THAT IS THE ROUTE'S SHAPE RATHER THAN AN OMISSION** (`types.ts`'s constant block
+  // carries the reason): a write at a declared family root is delivered by THAT family's listener, and this module renders
+  // nothing, so no `data.*` delivery exists to register. **AND NO FRAME GUARD IS ADDED, WHICH IS THE SAME RULE READ ON THE
+  // SITES BESIDE THEM**: every handler in this file — the tab record's three, the view record's five, the secure crossing's
+  // four and the module registry's two — discards its `IpcMainInvokeEvent` and checks no sender, so a guard here would be
+  // the only one in the file and would make one crossing stricter than its siblings; `bridge-route.test.ts` asserts the
+  // absent member and the absent guard together, over comment-elided code.
+  ipcMain.handle(IPC_DATA_READ, (_event, args: unknown) => dataSurface.read(args))
+  ipcMain.handle(IPC_DATA_WRITE, (_event, args: unknown) => dataSurface.write(args))
+  ipcMain.handle(IPC_DATA_DELETE, (_event, args: unknown) => dataSurface.delete(args))
+  ipcMain.handle(IPC_DATA_LIST, (_event, args: unknown) => dataSurface.list(args))
+  ipcMain.handle(IPC_DATA_JOURNAL, (_event, args: unknown) => dataSurface.journal(args))
   ipcMain.handle(IPC_SECURITY_GET, () => settingsSurface.read())
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING reading, G3

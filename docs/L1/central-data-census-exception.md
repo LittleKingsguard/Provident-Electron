@@ -26,7 +26,7 @@ module's declared surface other than the census it names (D-4's precedent, D-11,
 **The map's one row moves, and only its count.** `central-data`'s N is **15**, not the 16 an earlier count carried:
 the sixth `provident-storeroom` export that count named, `register`, has no call site — the package publishes no route
 by which a caller restricted to `register` observes a change — so the surface consumed is 5 tools + 5 bridge routes **declared** (D-14
-counts the declaration, and no `data.*` arm answers one at this head — `docs/L1/central-data-management.md` §4) + 5 exports called
+counts the declaration, and `D-112` ANSWERS all five — five renderer arms and five `ipcMain.handle` sites, this figure unmoved — `docs/L1/central-data-management.md` §4) + 5 exports called
 (`storeCreate`, `read`, `readLiteral`, `write`, `delete`), measured by this unit's L2 examiner at `57c5825` (the `central-data` row of
 `strata/modules.json`; D-14, `strata/platform.md` §4). The cap follows: `50 + 10×15 = 200`, and `mcp-surface` keeps `30` — 22 tools + 3 resources + the five `data` tools it registers and gates (D-11).
 

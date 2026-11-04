@@ -237,7 +237,7 @@
       "paths": [
         "src/shared/types.ts"
       ],
-      "endpoints": 10
+      "endpoints": 15
     },
     {
       "name": "harness",

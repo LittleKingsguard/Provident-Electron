@@ -327,7 +327,12 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     // ⟶ **`9 -> 8` at `D-93`**: the `store` namespace — the frozen graph store's Y-1/Y-2/Y-3 trio — left the bridge with the
     // store itself. `D-63`'s tab-record crossing and `D-87`'s view-record crossing stand, and NO member replaced the one that
     // went, so this row's set-equality is still a set claim over what the bridge actually carries.
-    expect(bridge, 'ISO-4: EIGHT top-level members since D-63\'s tab-record crossing and D-87\'s view-record crossing, the `store` namespace having left at D-93, and this unit adds none (D-18)').toEqual(['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'])
+    // ⟶ **AND `8 -> 9` ON 2026-11-04 (`D-112`), STATED HERE BECAUSE THIS ROW READS THE SET**: the `data` member carries the
+    // five `data.*` routes the pass below answers, in lockstep with `src/renderer/secure-panels.ts`. **THIS UNIT ADDS NONE OF
+    // IT** — the claim this row makes is unchanged (nothing a bridge channel carries can grant the operator's capabilities
+    // to an agent, and a `data.*` route reaches the PROFILE store, not the security record: `ISO-1` drives all five tools and
+    // asserts no answer of theirs names `provident-operator-settings.json`, the record address or the exclusion address).
+    expect(bridge, 'ISO-4: NINE top-level members since D-63\'s tab-record crossing, D-87\'s view-record crossing and D-112\'s five `data.*` routes, the `store` namespace having left at D-93, and this unit adds none (D-18)').toEqual(['data', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'])
 
     // ISO-5 and ISO-6 — nothing the MCP stack's own import closure reaches names the instance, its
     // module or either retired name, and its allowed `provident-*.json` literal set has SHRUNK to the

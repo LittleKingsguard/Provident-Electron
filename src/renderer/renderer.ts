@@ -469,6 +469,38 @@ export function startGutterAffordance (runtime: Runtime): {
   return { attached, writes }
 }
 
+/** **THE FIVE `data.*` ROUTES' ANSWER SITE IN THIS REALM** (`D-112`; `docs/L2/central-data/interface.md` §5). The arm hands
+ *  the caller's payload — VERBATIM, unwrapped, no member read — to the preload member of the same name, so a bridge request
+ *  and the `provident.data.*` tool of that name reach ONE adapter (`src/main/data/surface.ts`) and can carry no two answers;
+ *  the shape that comes back is §2's, `repaired` and `log` included (D-103, D-105, D-107). **NOTHING IS COMPOSED HERE**: no
+ *  path, no tier and no value is read, defaulted or re-spelled, because a route that composed an address would be a second
+ *  authority over the register.
+ *
+ *  **A REALM WITH NO `data` MEMBER GETS A STATED REFUSAL AND NOT A THROW, AND IT MINTS NO THIRTEENTH REASON WORD.** The three
+ *  realms the client roles beside this one answer `absent` in — the node suite's layout-less shim, a page loaded without the
+ *  preload, an older bridge predating the crossing — are the same three that would reach these arms, and §2's closed
+ *  vocabulary has no `absent` arm for a route. So the arm answers the ledger's own `store-unreachable`, which is exactly
+ *  the claim being made (there is no store this realm can reach) and which is answered *before any store is consulted* in
+ *  its declared sense too (`interface.md` §1); the sentence names the missing member, so a reader is told which half is
+ *  absent. `bridge-route.test.ts` drives this arm beside the five. */
+function dataRoute(verb: 'read' | 'write' | 'delete' | 'list' | 'journal', payload: unknown): Promise<unknown> {
+  const member = typeof window === 'undefined' ? undefined : window.provident?.data
+  if (member === undefined) {
+    return Promise.resolve({
+      status: 'refused',
+      reason: 'store-unreachable',
+      message: 'no `data` member on the preload bridge: this realm has no route to the profile register, so no store was consulted',
+    })
+  }
+  switch (verb) {
+    case 'read': return member.read(payload)
+    case 'write': return member.write(payload)
+    case 'delete': return member.delete(payload)
+    case 'list': return member.list(payload)
+    case 'journal': return member.journal(payload)
+  }
+}
+
 export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: string }) => void): Promise<RpcReply> {
   return (async (): Promise<RpcReply> => {
     try {
@@ -542,6 +574,27 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
         // re-rendered and nothing is written to the graph.
         case 'focus':
           value = focusRoute(req.payload)
+          break
+        // ═══ THE FIVE `data.*` ARMS (`D-112`) ═══ Each hands off to the bridge and composes nothing (`dataRoute`'s own
+        // docblock carries the four clauses). **NONE OF THEM JOINS `MUTATING_METHODS`**: that predicate's declared meaning is
+        // "the MCP methods that mutate the APP GRAPH" and its consequence is ONE `mcp://provident/app` resource-updated push
+        // — a `data.*` write moves the PROFILE register and adds no graph node (`interface.md` §7), so a push here would
+        // announce a resource that did not change; and where a write lands at a root a crossing declares, THAT FAMILY's
+        // listener already delivers it, so a second signal would be a duplicate of the first.
+        case 'data.read':
+          value = await dataRoute('read', req.payload)
+          break
+        case 'data.write':
+          value = await dataRoute('write', req.payload)
+          break
+        case 'data.delete':
+          value = await dataRoute('delete', req.payload)
+          break
+        case 'data.list':
+          value = await dataRoute('list', req.payload)
+          break
+        case 'data.journal':
+          value = await dataRoute('journal', req.payload)
           break
         default:
           throw new Error(`unknown method: ${(req as { method: string }).method}`)

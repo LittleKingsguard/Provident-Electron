@@ -19,9 +19,9 @@ whole at `D-93`, and what they left owed LANDED at `D-94` as a leg — `npm run 
 |---|---|---|---|
 
 Every other open item is `pending.md`'s — **every row in that file, whatever the count, is the list**, each stating what it
-waits on: the five `data.*` members' answer sites on admission, `strata-lint`'s record gap on the harness owner,
+waits on: `strata-lint`'s record gap on the harness owner,
 `src/shared/overlay.ts`'s absent overlay on a unit admitted to AUTHOR one — the one blocker whose subject is an act and not a
-repair. **The eleven unimported `src/shared/` modules LEFT on 2026-11-04 with the ruling taken** — the USER'S, and it is
+repair. **THE FIVE `data.*` MEMBERS' ANSWER SITES LEFT THIS LIST ON 2026-11-04 BECAUSE THE WORK LANDED**: `D-112` answers all five at both ends — five renderer arms, five `ipcMain.handle` sites, one `data` member in lockstep in `preload.ts` and `secure-panels.ts`, eleven gating rows and no push — and `pending.md` records the departure with its reason, together with the ONE thing that must not depart with it, `D-82`'s clause-2 revival condition, which `D-112` now carries (a route is not a consumer; the cell stays `N/A`). **The eleven unimported `src/shared/` modules LEFT on 2026-11-04 with the ruling taken** — the USER'S, and it is
 **carried as designs**, `pending.md` recording that disposition with its three follow-ups discharged (`D-111`). **`A-4`'s flake
 is no longer among them** — its cause was measured and its fix landed on 2026-11-02, and `pending.md` records both rather
 than letting a flake that stopped stand in for a cause that was found. **`D-22`'s parked second half and the unreproduced

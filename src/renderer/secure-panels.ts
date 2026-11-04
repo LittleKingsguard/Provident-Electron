@@ -48,6 +48,10 @@ import type { ExclusionState as EXCLUSION_STATE, ToolGroup } from '../main/secur
 // shape (`src/renderer/security-client.ts`, `D-106`) is a renderer module and this import is erased at build, so no value of
 // the secure crossing reaches the renderer bundle from here.
 import type { SecurityShape } from './security-client.js'
+// **THE `data` ROUTES' ANSWER SHAPES — TYPE-ONLY**, on the `SecurityWriteReceipt` and `ViewPaneGeometry` precedent above:
+// `D-112` answers five routes over the boot's one profile store and this half declares what they answer rather than a
+// second spelling of it (D-53). Erased at build, so no value of the main process reaches this bundle through these names.
+import type { DataDeleteAnswer, DataJournalAnswer, DataListAnswer, DataReadAnswer, DataWriteAnswer } from '../main/data/index.js'
 
 declare global {
   interface Window {
@@ -122,6 +126,21 @@ declare global {
          *  members already follow — a half-declaration of one member FAILS. It carries nothing and withdraws by the
          *  returned function. */
         onChanged(handler: () => void): () => void
+      }
+      // THE `data` ROUTES' CROSSING (`D-112`; `docs/L2/central-data/interface.md` §5): ONE member, FIVE routes, NO
+      // delivery. Each hands the caller's argument object to the boot's ONE profile store through the module's own adapter,
+      // and answers §2's shape verbatim — `read`'s row/branch/absent, `write`'s and `delete`'s `cursor` + `repaired` +
+      // `log`, `list`'s paths and `journal`'s window, each with the closed ledger's `refused` arm beside it. `onChanged` is
+      // DELIBERATELY ABSENT (`D-107` reads the `data.*` clause-2 cell `N/A` because no consumer of a `data.*` change
+      // exists, and a push here would be the first). This copy and `src/main/preload.ts`'s are the same text in both files —
+      // the lockstep rule the `security`, `tabs`, `view` and `module` members already follow; the member is OPTIONAL here
+      // and required there, which is that rule's own asymmetry and not a second declaration.
+      data?: {
+        read(args: unknown): Promise<DataReadAnswer>
+        write(args: unknown): Promise<DataWriteAnswer>
+        delete(args: unknown): Promise<DataDeleteAnswer>
+        list(args: unknown): Promise<DataListAnswer>
+        journal(args: unknown): Promise<DataJournalAnswer>
       }
     }
   }

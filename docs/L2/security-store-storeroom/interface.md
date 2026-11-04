@@ -125,7 +125,7 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
 
 ## 6. The routed question: can the `data` group withhold a `data.*` route?
 
-**Settled: the group does not gate them — and no `data.*` arm answers one at this head.** The gate is an MCP-only control and the renderer is not an agent (D-18, L1 §4), so a group cannot withhold a route; the five members are **declared** bridge vocabulary whose answer site does not exist yet, which is central-data's own clause (`docs/L2/central-data/interface.md` §5; L1 rev 4 §2/§4) and is cited here, never restated (D-43). The measured mechanism, the five route spellings and the rejected gated arm are `behaviour.md` §9's `RQ-1` cell with `A-2`; nothing here restates those either (D-1 §4, D-26).
+**Settled: the group does not gate them — and the five answer sites now stand.** The gate is an MCP-only control and the renderer is not an agent (D-18, L1 §4), so a group cannot withhold a route; the five members are bridge vocabulary that answers whether or not the group is on, which is central-data's own clause (`docs/L2/central-data/interface.md` §5, ANSWERED at `D-112`; L1 rev 4 §2/§4) and is cited here, never restated (D-43). The measured mechanism, the five route spellings and the rejected gated arm are `behaviour.md` §9's `RQ-1` cell with `A-2`; nothing here restates those either (D-1 §4, D-26).
 
 ## 7. Assumptions, each with the alternative it rejected
 

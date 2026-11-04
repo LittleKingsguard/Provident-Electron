@@ -365,3 +365,19 @@ export const IPC_MODULE_SET_DISABLED = 'provident:module:set-disabled'
  *  (`ISO-5`/`ISO-6`: the MCP stack's import closure reaches this module, so an address spelled here would be an address
  *  one MCP-reachable file could name). */
 export const IPC_MODULE_CHANGED = 'provident:module:changed'
+/** **THE FIVE `data.*` ROUTES' CHANNEL NAMES** (`D-112`; `docs/L2/central-data/interface.md` §5). Five REQUESTS, each
+ *  carrying an argument object and each with its own `ipcMain.handle` site, exactly as the tab record's three and the view
+ *  record's five do — the routes `RpcMethod` has declared since `D-11` and that no realm could reach until this file named
+ *  the channels for them. **THE SIXTH NAME THE CROSSINGS BESIDE THEM CARRY IS DELIBERATELY ABSENT, AND THE ABSENCE IS THE
+ *  RECORD**: a `data.*` change push. A write at a root a crossing declares changes THAT FAMILY, whose own listener already
+ *  delivers (`IPC_TABS_CHANGED` / `IPC_VIEW_CHANGED`); a write anywhere else changes no family and no rendered surface at
+ *  all, because this module renders nothing (`interface.md` §7) — so a signal here would either duplicate one of those two
+ *  or tell a realm that nothing it can read moved. **AND IT WOULD BE A CONSUMER OF A `data.*` CHANGE, WHICH IS EXACTLY WHAT
+ *  `D-107` READ THE CELL `N/A` FOR NOT EXISTING**: the clause-2 revival condition is a new address in a family's listener
+ *  set, never a listener hung off `data.*`, so this pass adds the routes and adds no listener. `bridge-route.test.ts`
+ *  asserts the absence over comment-elided code. **THIS FILE NAMES NO ADDRESS** (`ISO-5`/`ISO-6`). */
+export const IPC_DATA_READ = 'provident:data:read'
+export const IPC_DATA_WRITE = 'provident:data:write'
+export const IPC_DATA_DELETE = 'provident:data:delete'
+export const IPC_DATA_LIST = 'provident:data:list'
+export const IPC_DATA_JOURNAL = 'provident:data:journal'

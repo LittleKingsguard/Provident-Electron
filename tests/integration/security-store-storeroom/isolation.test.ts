@@ -82,13 +82,20 @@ const RPC_METHODS = [
 /** The seven `MUTATING_METHODS` as filed (`src/renderer/renderer.ts:829`). */
 const MUTATING = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'] as const
 
-/** The seven top-level `window.provident` members as filed (`src/main/preload.ts:42-75`). */
+/** The nine top-level `window.provident` members, in the SORTED order the row compares against — seven at the date this
+ *  header was written, and each move below is dated rather than silent (`D-93`, `D-112`). */
 // ⟶ **THE MEMBER LEAVES THE LOCKSTEP PAIR AND THE SET MOVES `9 -> 8` (2026-11-03, `D-93`).** `'store'` was the frozen
 // graph store's THREE-member namespace (Y-1 · Y-2 · Y-3) and it is DELETED whole with the store it served; `D-90`'s clause
 // (3) named "the two preload members" as the only main-side surface that existed for the projection. **NO MEMBER REPLACES
 // IT** — the tab record's crossing and the view record's are the two that carry the data now, and both already stand. The
 // set-equality still bites: a ninth member of ANY name reddens this row.
-const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight
+// ⟶ **AND THE SET MOVES `8 -> 9` ON 2026-11-04 (`D-112`), WITH THE DATE STATED BESIDE THE ROW IT MOVES.** The pass that
+// answers the five `data.*` members of `RpcMethod` gives this realm a route to the boot's ONE profile store: `preload.ts`
+// gains ONE top-level `data` member carrying the five routes and `secure-panels.ts` declares the same text in lockstep. The
+// equality is a set claim over what the bridge CARRIES, so a TENTH member — or the `data` member losing one of its five
+// routes, which `ISO-4`'s route half reads — still reddens it. `D-112` adds no MCP tool, resource or group: `ISO-3`'s
+// 27-member union and seven-member `MUTATING_METHODS` are unmoved and say why in their own bytes.
+const BRIDGE_MEMBERS = ['data', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -390,14 +397,14 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     expect(names, 'the mutating set is seven, and no security write joins it').toEqual([...MUTATING])
   })
 
-  it('ISO-4 · no bridge channel carries a security write but the three, over a NINE-member bridge — the eighth is the tab record\'s (D-63) and the ninth the view record\'s (D-87) — in both lockstep declarations', () => {
+  it('ISO-4 · no bridge channel carries a security write but the three, over a NINE-member bridge — the eighth is the tab record\'s (D-63), the ninth the view record\'s (D-87) and the `data` member the five `data.*` routes\' (D-112) — in both lockstep declarations', () => {
     const preload = sourceOf('src/main/preload.ts')
     const start = preload.indexOf('export interface ProvidentBridge {')
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const block = preload.slice(start, end)
     const members = [...block.matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries EIGHT top-level members, and the row still asserts the set it declares: the `store` namespace left at D-93 and no member replaced it (interface.md §5 A-1; D-63, D-87, D-93)').toEqual([...BRIDGE_MEMBERS])
+    expect(members, 'the bridge carries NINE top-level members, and the row still asserts the set it declares: the `store` namespace left at D-93 and no member replaced it, and D-112\'s `data` member is a crossing this tree answers (interface.md §5 A-1; D-63, D-87, D-93, D-112)').toEqual([...BRIDGE_MEMBERS])
     expect(preload.split("contextBridge.exposeInMainWorld('provident'").length - 1, 'one exposure of one bridge').toBe(1)
 
     // LIMB TWO — THE LOCKSTEP HALF. `preload.ts` and `secure-panels.ts` re-declare the same

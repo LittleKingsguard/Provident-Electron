@@ -49,7 +49,8 @@ const RPC_METHODS = [
   'focus', 'data.read', 'data.write', 'data.delete', 'data.list', 'data.journal',
 ] as const
 
-/** The seven top-level `window.provident` members (`src/main/preload.ts:42-75`), `ISO-4`. */
+/** The nine top-level `window.provident` members, in the SORTED order the row compares against — the set was read as
+ *  seven at the date this header was written and each move below is dated rather than silent (`D-93`, `D-112`); `ISO-4`. */
 // ⟶ **THE MEMBER LEAVES THE LOCKSTEP PAIR AND THE SET MOVES `9 -> 8` (2026-11-03, `D-93`).** `'store'` was the
 // frozen graph store's THREE-member namespace (Y-1 the boot hand-off, Y-2 the commit crossing, Y-3 the change push) and
 // it is DELETED whole with the store it served: `D-90`'s clause (3) named "the two preload members" as the only main-side
@@ -57,7 +58,14 @@ const RPC_METHODS = [
 // crossing and the view record's are the two that carry the data now, and both already stand. So the bridge is
 // `module` · `notify` · `onRequest` · `ready` · `security` · `sendReply` · `tabs` · `view`, and the row's set-equality
 // still bites: a ninth member of ANY name reddens it.
-const BRIDGE_MEMBERS = ['module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight
+// ⟶ **AND THE SET MOVES `8 -> 9` ON 2026-11-04 (`D-112`), WHICH IS THE DATED NOTE THE LINE ABOVE IS OWED.** The pass that
+// answers the five `data.*` members of `RpcMethod` gives this realm a route to the boot's ONE profile store, so
+// `src/main/preload.ts` gains ONE top-level `data` member carrying the five routes and `src/renderer/secure-panels.ts`
+// declares the same text in lockstep. **THE CLAIM IS UNMOVED AND STILL BITES**: it is a set-equality over what the bridge
+// CARRIES, so a TENTH member of any name — or the `data` member losing one of its five routes — reddens it. The member is
+// here because it is a crossing this TREE answers, not because this unit wrote one: `D-112` adds no MCP tool, no resource
+// and no group, and `ISO-1` above still drives the five tools and asserts no answer of theirs names the security record.
+const BRIDGE_MEMBERS = ['data', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -272,14 +280,15 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
       await close()
     }
 
-    // ISO-4 — the bridge: NINE top-level members (D-63 added the tab record's crossing and D-87 the view record's), three security routes in BOTH lockstep halves, and
-    // `ipcRenderer` obtainable from no file but the bridge.
+    // ISO-4 — the bridge: NINE top-level members (D-63 added the tab record's crossing, D-87 the view record's and D-112
+    // the five `data.*` routes' member), three security routes in BOTH lockstep halves, and `ipcRenderer` obtainable from no
+    // file but the bridge.
     const preload = sourceOf('src/main/preload.ts')
     const start = preload.indexOf('export interface ProvidentBridge {')
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const members = [...preload.slice(start, end).matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries EIGHT top-level members — six plus the tab record\'s crossing (D-63) and the view record\'s (D-87); the `store` namespace left the set at D-93, with its own two members gone; interface.md §5 A-1').toEqual([...BRIDGE_MEMBERS])
+    expect(members, 'the bridge carries NINE top-level members — six base plus the tab record\'s crossing (D-63), the view record\'s (D-87) and the five `data.*` routes\' member (D-112); the `store` namespace left the set at D-93, with its own two members gone; interface.md §5 A-1').toEqual([...BRIDGE_MEMBERS])
     const preloadRoutes = securityRoutesOf(preload, 'src/main/preload.ts')
     /* ⟶ **RE-GRAINED `2026-11-03` (`D-106`): FOUR ROUTES, THREE OF THEM REQUESTS.** The set was exactly the three manual-UI
      * requests. `D-106` gives the record a DELIVERY, so `onChanged` joins it — a `security` member that carries a push and

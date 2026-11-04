@@ -603,6 +603,38 @@ const DECLARED_SCOPE: readonly string[] = [
   //    which is absent for a MEASURED reason rather than by omission: §6 carries the five legs and no artifact byte figure,
   //    so the `474`-byte move in the renderer bundle has no cell there to have changed and nothing there is rewritten.
   // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-112` — THE FIVE `data.*` ROUTES ARE ANSWERED, AND `strata/pending.md` ROW 1 LEAVES BECAUSE ITS WORK LANDED.
+  //    **TWO PATHS ARE NEW TO THIS UNION AND BOTH ARE NAMED, not admitted by a prefix**; every other path this pass
+  //    writes is ALREADY DECLARED ABOVE and is named below so a reader can check the claim rather than trust it.
+  //    THE BATTERY: eleven gating rows (`BR-1`..`BR-11`) driving each of the five arms through the REAL `handleRequest`,
+  //    the REAL preload-shaped member and the REAL `createDataSurface` over the REAL store — plus the refusal ledger, the
+  //    payload-identity arm, the seven-member `MUTATING_METHODS` with its `dispatch` control, the no-listener census, the
+  //    five `ipcMain.handle` sites beside the ABSENT frame guard, and the `unknown method` control.
+  'tests/integration/central-data/bridge-route.test.ts',
+  //    THE ONE LAYER DOCUMENT NEW TO THIS UNION: the secure crossing's `behaviour.md`, whose `RQ-1` cell carried *"whether
+  //    the route then answers is not this row's … no `data.*` arm stands at this head"* — a dated citation of
+  //    central-data's §5 clause that this pass makes false. It is corrected IN PLACE, keeping its claim and its cites and
+  //    staying inside its own `150`-line ceiling (`129` at this head).
+  'docs/L2/security-store-storeroom/behaviour.md',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE: `src/shared/types.ts` (the five `IPC_DATA_*`
+  //    constants and the block that says why no sixth exists), `src/main/main.ts` (the surface named once and the five
+  //    `ipcMain.handle` sites), `src/main/preload.ts` with `src/renderer/secure-panels.ts` (both lockstep halves of the
+  //    `data` member), `src/renderer/renderer.ts` (the five arms and `dataRoute`), `tests/e2e/security-store-storeroom/
+  //    isolation.test.ts`, `tests/integration/security-store-storeroom/isolation.test.ts` and `tests/e2e/
+  //    settings-carrier-retirement/scenarios.test.ts` (`ISO-4`/`S-11`: the bridge member census `8 → 9`, each moved with
+  //    its own dated note), `tests/e2e/store-crossings/crossings-live.mjs` (the route act and the row `X-31`), the four
+  //    `docs/` scopes whose clauses cited the unanswered routes (`docs/L1/central-data-management.md`'s map parenthetical
+  //    and its "unlanded" paragraph, `docs/L1/central-data-census-exception.md`'s `N` clause,
+  //    `docs/L2/security-store-storeroom/interface.md`'s settled clause and `docs/L2/central-data/interface.md`'s §5 and
+  //    rev block — each traded IN PLACE and each left inside its ceiling), `strata/decisions.md` (the row),
+  //    `strata/pending.md` (row 1's departure and its reason, in the deletions paragraph), `strata/next-steps.md` and
+  //    `strata/records/handover.md` (the same departure where each names its rows), `strata/modules.json`
+  //    (`ipc-contract` `10 → 15`, the five channel constants, cap `150 → 200`) and `strata/brief.md` (the `npm test`
+  //    figure, the crossings row and the mark census) — so no entry is added for any of them.
+  //    **TWO PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/records/store-tabs-record-unit.md`
+  //    (exactly `40`, and no clause of it is this pass's subject) and `strata/platform.md` (`60/60`, no platform fact
+  //    moves).
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

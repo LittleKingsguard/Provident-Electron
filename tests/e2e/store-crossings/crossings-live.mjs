@@ -103,6 +103,12 @@ const EXCLUSION_ADDRESS = 'operator-exclusion'
 const APP_STATE_ADDRESS = 'operator-app-state'
 /** The tab record's one address (`D-63`, `D-64`). */
 const TABS_ADDRESS = 'tabs'
+/** **THE ONE ROOT THIS LEG'S `data.*` ROUTE ROW WRITES AT, AND IT IS A CALLER-CHOSEN ADDRESS** (`D-112`;
+ *  `docs/L2/central-data/interface.md` §1). It is spelled here because the row asserts the SAME path coming back out of
+ *  `list` and `journal`; it is a name NO crossing declares, because a write at a declared root is that family's business
+ *  and could perturb the rows beside it — and it is written and DELETED inside one act, so the profile this leg leaves
+ *  behind carries no row of it. */
+const DATA_PROBE = 'bridge-probe'
 /** **THE APP'S OWN PROFILE FILE** — the normal crossing's one register, and the ONLY place a `file`-tier value can be
  *  read without asking the crossing (`src/main/data/store.ts`'s `PROFILE_FILE_NAME`). The `mem` tiers have no image
  *  here at all, which is what makes the fresh-boot reading decisive. */
@@ -453,6 +459,34 @@ const ACTS = [
     act: `var view = need('view')
     view.commitZones('${DRIVEN_ZONE_ID}', ${JSON.stringify(DRIVEN_ZONE)})
       .then(function (answer) { view.read().then(function (reading) { ok({ answer: answer, reading: reading }) }, no) }, no)`,
+  },
+  // ── THE FIVE `data.*` ROUTES, THROUGH THE BRIDGE (`D-112`) — THE ANSWER SITES `strata/pending.md` ROW 1 STOOD ON from the
+  //    `RpcMethod` declaration until this pass, and the one route of this leg that the NODE suite cannot measure: there the
+  //    renderer's arm and the module's adapter are driven with the `ipcRenderer.invoke` hop REPLACED
+  //    (`tests/integration/central-data/bridge-route.test.ts`), while here every call is the PRELOAD'S OWN MEMBER crossing
+  //    `ipcMain` into `createDataSurface` on the boot's one store. **ALL FIVE VERBS IN ONE ACT** because they are one route
+  //    set over one register: write, read, list, journal, delete, and a second read for the absence the delete leaves. The
+  //    probe root is written and removed inside this act, so nothing of it survives the row.
+  {
+    id: 'xg-data-route',
+    label: 'data-route',
+    act: `var data = need('data')
+    data.write({ path: ['${DATA_PROBE}'], value: 'x' })
+      .then(function (wrote) {
+        return data.read({ path: ['${DATA_PROBE}'] }).then(function (read) {
+          return data.list({}).then(function (list) {
+            return data.journal({}).then(function (journal) {
+              return data.delete({ path: ['${DATA_PROBE}'] }).then(function (deleted) {
+                return data.journal({}).then(function (journalAfter) {
+                  return data.read({ path: ['${DATA_PROBE}'] }).then(function (after) {
+                    ok({ wrote: wrote, read: read, list: list, journal: journal, deleted: deleted, journalAfter: journalAfter, after: after })
+                  })
+                })
+              })
+            })
+          })
+        })
+      }, no)`,
   },
 ]
 
@@ -867,6 +901,32 @@ try {
     removedTab.status === 'ok' && removedTab.answer?.receipt?.status === 'committed' &&
       JSON.stringify(view11.order) === JSON.stringify(['landing']) && !view11.rowIds.includes('alpha') && view11.active.length === 1 && view11.active[0] === 'landing',
     `(${removedTab.polls} read(s)) receipt → ${JSON.stringify(removedTab.answer?.receipt)}; reading → ${JSON.stringify(removedTab.answer?.reading)}`,
+  )
+
+  // ── X-31: THE FIVE `data.*` ROUTES ANSWER FROM THIS REALM (`D-112`) ──────
+  // **THE ONE ROW IN THIS TREE THAT STANDS ON THE FAR SIDE OF THE `ipcRenderer.invoke` HOP**, and it says so: the node
+  // battery drives the renderer's arm and the module's adapter with that hop replaced, and this row drives the PRELOAD'S
+  // OWN MEMBER instead — `window.provident.data.*` → `ipcMain.handle` → `createDataSurface` on the boot's one store. The
+  // row reads the whole route set in one act: the write's `committed` answer carrying `repaired` and a MATERIALIZED `log`
+  // (D-103), the read's `row` arm, the list's paths, the journal's own two entries, the delete's `removed`/`tiers`, and the
+  // `absent` the second read answers — the last one being what makes the probe leave nothing behind.
+  const dataRoute = await drive(bootB.client, 'xg-data-route', 'data-route')
+  const dataAnswer = dataRoute.answer
+  const listedPaths = Array.isArray(dataAnswer?.list?.paths) ? dataAnswer.list.paths : []
+  const journalEntries = Array.isArray(dataAnswer?.journal?.entries) ? dataAnswer.journal.entries : []
+  const journalled = Array.isArray(dataAnswer?.journalAfter?.entries) ? dataAnswer.journalAfter.entries : []
+  row(
+    'X-31',
+    `THE FIVE \`data.*\` ROUTES CROSS THE BOUNDARY: \`window.provident.data.write/read/list/journal/delete\` answer §2's shapes from the boot's own surface — the write committed with \`repaired:false\` and an enumerable \`log\`, the read a \`row\` carrying the value, the list naming \`['${DATA_PROBE}']\`, the journal carrying the write before the delete and the write then the delete after it, the delete \`removed:true\` at tier \`'file'\` — and the second read answers \`absent\`, so the probe leaves no row behind`,
+    dataRoute.status === 'ok' &&
+      dataAnswer?.wrote?.status === 'committed' && dataAnswer?.wrote?.repaired === false && Array.isArray(dataAnswer?.wrote?.log) && dataAnswer.wrote.log.length > 0 &&
+      dataAnswer?.read?.status === 'read' && dataAnswer.read.kind === 'row' && dataAnswer.read.value === 'x' &&
+      listedPaths.some((path) => JSON.stringify(path) === JSON.stringify([DATA_PROBE])) &&
+      journalEntries.length === 1 && journalEntries[0].kind === 'write' && JSON.stringify(journalEntries[0].path) === JSON.stringify([DATA_PROBE]) &&
+      journalled.length === 2 && journalled[1].kind === 'delete' && JSON.stringify(journalled[1].path) === JSON.stringify([DATA_PROBE]) &&
+      dataAnswer?.deleted?.status === 'committed' && dataAnswer.deleted.removed === true && JSON.stringify(dataAnswer.deleted.tiers) === JSON.stringify(['file']) &&
+      dataAnswer?.after?.status === 'absent',
+    `(${dataRoute.polls} read(s)) answer → ${JSON.stringify(dataAnswer)}`,
   )
 
   // ── X-12: a SECOND commit, kept for the restart ──────────────────────────
