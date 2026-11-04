@@ -714,7 +714,31 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `src/` byte) and `strata/platform.md` (`60/60`, no platform fact moves). **AND `strata/records/handover.md` IS
   //    ABSENT FOR A REASON OF ITS OWN**: `D-115` rules on its ceiling and its own bytes already say nothing of it — it
   //    states no ceiling at all — so the file is not written and stands at `39` of `60`.
-  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-117` — THE TWO LEFTOVERS: `src/main/tier4-state.ts` is RETIRED and the live pane drag is WIRED onto `['panes']`.
+  //    **TWO OF THE FOUR PATHS THIS BLOCK ADDS ARE `src/` PATHS AND BOTH ARE NAMED, not admitted by a prefix** — the
+  //    DELETED holder (a deletion is a path `git status` reports) and the two batteries whose holder rows had no subject
+  //    left or whose census term moved. `src/main/settings-surface/index.ts`, which carried one of the holder's two writer
+  //    sites, is already declared above.
+  'src/main/tier4-state.ts',
+  'tests/unit/settings-surface/surface.test.ts',
+  'tests/tier4-arbitrary-storage-register.ts',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE AND IS NAMED SO A READER CAN CHECK THE CLAIM:
+  //    `src/main/settings-surface/index.ts` (its two `setTier4OpenState` sites and the import leave), `src/main/main.ts`
+  //    (the ASM-4 note that named the holder), `src/renderer/renderer.ts` (the drag's four seams, `release` as the sink,
+  //    the `writes` array's deletion and `tabsClientReading`'s reader), `tests/tier4-arbitrary-storage.test.ts` (`FS-T4-09`
+  //    retired with its subject, `FS-T4-12` re-grained onto the whole tree), `tests/pane-drag-compliance.test.ts` (the
+  //    `D-117/LIVE-READ` row), `tests/fork-store-reads.test.ts` (`S-9`'s call-site term `1 → 2`),
+  //    `tests/gesture-session.test.ts` (`F-9(b)`'s sibling list gains the deleted holder), `strata/decisions.md` (the row),
+  //    `strata/brief.md` (§6's figures), `strata/marks.json` (two new `strata:gates` sites), `strata/modules.json` (the
+  //    `operator-settings` row loses the deleted path) and `strata/next-steps.md` (the focus-family gap). **ONE PATH IS NEW
+  //    TO THIS UNION BESIDE THE TWO ABOVE** and it is an L1 document no earlier block wrote: the exception's `§6` states
+  //    that the holder's retirement is PARKED, and this pass IS the retirement, so the parked clause is corrected in place.
+  'docs/L1/security-store-storeroom-exception.md',
+  //    **THREE PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/pending.md` (its table is empty and
+  //    `D-117` blocks nothing, so no row is added), `strata/records/handover.md` (`39` of `60`, untouched) and
+  //    `strata/records/store-tabs-record-unit.md` (exactly `40`, untouched).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

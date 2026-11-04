@@ -17,6 +17,7 @@ whole at `D-93`, and what they left owed LANDED at `D-94` as a leg — `npm run 
 
 | # | Work | Owner | Closed when |
 |---|---|---|---|
+| 2 | **THE FOCUS FAMILY'S MIRROR IS COMPOSED LOCALLY WHERE THE ZONES AND PANE FAMILIES COMPOSE AT THE CROSSING** (`D-117`): `answerForCarrier` composes the whole mirror in this realm off a ONE-DELIVERY-STALE shape — the shape the last delivery left — while `commitZones` and `commitPane` hand the crossing the caller's record and let IT compose the family (`D-88`, `D-91`). | `renderer-wiring`, with `operator-settings` owning the crossing-side route | a focus write composes AT the crossing behind a declaration of `focus-must-stand`'s shape, the carrier sends the ACT rather than a composed mirror, and `npm run crossings` drives both directions over a process boundary |
 
 Every other open item WAS `pending.md`'s — **every row in that file, whatever the count, was the list**, each stating what it waited on — and **THAT TABLE IS EMPTY AT THIS HEAD, its last row having left with its work**:
 `strata-lint`'s record gap on the harness owner LEFT ON 2026-11-05, the instrument extended over `strata/records/` and the four trackers (the coverage, the three ceiling prose forms and their site rule, and the `52` → `124` reading are that file's deletions paragraph and `D-114`); and

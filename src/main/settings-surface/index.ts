@@ -15,7 +15,6 @@
 // `electron`, no `provident-storeroom` import, no IPC handler registered here, no rendered element
 // and no MCP drive: the three handler registrations stay in `main.ts` (exception §2 E-3).
 import { TIER4_CLOSED, TIER4_CLOSED_MESSAGE } from '../mcp-server.js'
-import { setTier4OpenState } from '../tier4-state.js'
 import { createOperatorSettings, type AppStateLegacy, type AppStateRow, type OperatorSettings, type OperatorSettingsRecord, type OperatorSettingsReceipt } from '../operator-settings/index.js'
 
 import type { ExclusionState } from '../security.js'
@@ -124,9 +123,13 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
     }
     const held = sink
     const record = settings.read()
-    // The holder is written from the SAME reading that feeds the carrier, at `attach` and on every
-    // delivery — this module is its sole writer and reads it nowhere (exception §2 E-3; L1 §3 ASM-4).
-    setTier4OpenState(record.exclusion === 'mcp-disabled')
+    // **NO PROJECTION IS WRITTEN HERE ANY MORE** (`D-117`). This body and `attach` below used to copy
+    // the record's exclusion predicate into `src/main/tier4-state.ts`'s module-level holder, which no
+    // file under `src/` read: the ENFORCEMENT TRUTH is the gate's own record (`security.ts`'s
+    // `_exclusion`, patched by the sink's `applyExclusion` two arms down), and the holder duplicated
+    // it. The holder, its two writer sites and the rows whose only subject it was are retired; what this
+    // body does with the record — `read()` it ONCE and hand both additive members and the gate patch
+    // from it — is untouched (exception §2 E-3, corrected at `§6`; L1 `§3`).
     if (held === null) return
     // The exclusion branch RETURNS before the patch arm, which is what keeps one delivery to one
     // sink call; an unknown address applying both arms is the total reading of the domain.
@@ -155,9 +158,9 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
   }
 
   const read = (): SettingsReadAnswer => {
-    // ONE reading of the row feeds BOTH additive members, so the two cannot carry two states, and
-    // the reading is the INSTANCE's row rather than `tier4-state.ts`'s holder, which still carries
-    // its declared initial until `attach` flips it (design §2; interface §5; ASM-L2-2).
+    // ONE reading of the row feeds BOTH additive members, so the two cannot carry two states, and the
+    // reading is the INSTANCE's row — the only record either member is derived from (design §2;
+    // interface §5; ASM-L2-2). **THE HOLDER THIS NOTE USED TO CONTRAST WITH IS DELETED** (`D-117`).
     const record = settings.read()
     const open = record.exclusion === 'mcp-disabled'
     const answer: SettingsReadAnswer = {
@@ -250,10 +253,11 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
     // gate from a record that did not move.
     if (off === null) off = settings.subscribe(onDelivery, onAppStateDelivery)
     const record = settings.read()
-    // THE BOOT TERMINAL LANDS HERE: the holder is written from the boot reading, then the record is
-    // re-patched onto the gate and the boot `mcp-enabled` is applied — a self-transition is lawful
-    // (design §5; behaviour §10). Two sink calls at `attach`, one patch and one exclusion.
-    setTier4OpenState(record.exclusion === 'mcp-disabled')
+    // THE BOOT TERMINAL LANDS HERE: the record is re-patched onto the gate and the boot `mcp-enabled`
+    // is applied — a self-transition is lawful (design §5; behaviour §10). Two sink calls at `attach`,
+    // one patch and one exclusion. **AND THE HOLDER WRITE THAT STOOD HERE IS DELETED WITH THE HOLDER**
+    // (`D-117`): these two sink calls ARE the record's enforcement, and the gate's own `_exclusion` is
+    // what `mcp-server.ts`'s `exclusionTurn` asks at every turn.
     heldSink.applyGatePatch(patchOf(record))
     appliedGroups = [...record.enabled]
     heldSink.applyExclusion(record.exclusion)

@@ -16,7 +16,7 @@
     },
     "unit": {
       "files": 15,
-      "sites": 118
+      "sites": 117
     }
   },
   "marked": [
@@ -684,9 +684,19 @@
       "reason": "the script key set is a loop instrument, not module machinery (D-38)"
     },
     {
+      "file": "tests/pane-drag-compliance.test.ts",
+      "scenario": "D-117/LIVE-READ: for ONE element whose authored pane says `size 140`/`{20,260}` and whose `[\\",
+      "reason": "`D-117`: the wiring's own read, which no marked row in this file states"
+    },
+    {
       "file": "tests/theme.test.ts",
       "scenario": "R-3(config half) (§3.4) — package.json/package-lock.json carry the LANDED dependency and script sets: no new dependency, no new script key",
       "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/tier4-arbitrary-storage.test.ts",
+      "scenario": "FS-T4-12 RE-GRAINED (`D-117`, THE ONE-HOME ROW): `src/main/tier4-state.ts` IS DELETED and NO module-level mutable home for the boolean stands ANYWHERE under `src/` — neither exported half is even spelled — AND THE GATE IS UNMOVED, driven: `exclusionAllowsWork(gate.exclusionState())` answers the turn from the gate\\",
+      "reason": "`D-117`: the retirement's absence census and the gate's drive, which no marked row states"
     },
     {
       "file": "tests/ui-leg-contract.test.ts",
@@ -696,17 +706,17 @@
   ],
   "readings": {
     "gating": {
-      "files": 33,
-      "sites": 257
+      "files": 35,
+      "sites": 259
     },
     "onNotice": {
       "files": 106,
-      "sites": 2479
+      "sites": 2476
     },
     "retained": {
       "files": 5,
       "sites": 45
     },
-    "carveOut": 7
+    "carveOut": 9
   }
 }

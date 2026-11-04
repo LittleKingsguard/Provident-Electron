@@ -30,12 +30,11 @@
  *    beside `EXCLUSION_CLOSED` in `mcp-server.ts`; unmoved figures.
  *  · `M-11` — a self-transition is a lawful no-op and an outside value is refused AS A
  *    VALUE; the transition still lives in `security.ts` (`withExclusion`).  Unmoved.
- *  · `FS-T4-09` (RE-GRAINED, `C-3`) — THE HOLDER'S OWN ROW.  `src/main/tier4-state.ts`
- *    STAYS (`ASM-4`): the same two names, the same declared initial `STORE-OPEN`, still
- *    no absent arm.  Its SOLE WRITER is now `settings-surface/index.ts` (written at
- *    `attach` and on each committed exclusion write), and the STORE'S CONSULT IS GONE,
- *    so the row asserts the declared surface BESIDE that removal (zero readers under
- *    `src/**`).  The store-construction half of the as-filed row retires with the store.
+ *  · `FS-T4-09` — **RETIRED 2026-11-06 (`D-117`): ITS ONLY SUBJECT WAS THE HOLDER, AND THE
+ *    HOLDER IS DELETED.**  `src/main/tier4-state.ts`, its declared surface, its declared
+ *    initial `STORE-OPEN`, its sole writer and the "zero consults" census it carried all named
+ *    `src/main/tier4-state.ts`; the file is gone, so the row had no referent to re-grain onto.
+ *    WHAT REPLACES IT IS THE OTHER SIDE OF THE SAME QUESTION, and it is `FS-T4-12`'s now.
  *  · `FS-T4-12`, `FS-T4-13` — the one-home/one-writer census and the pane's refusal to
  *    paint a state the carrier never supplied; unmoved figures.
  *  · `§2.6`'s four rows, `D-VI`, and the gate-6 `F-1` pair — the pane's re-sourced cells,
@@ -69,11 +68,11 @@ import { fileURLToPath } from 'node:url'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
 import { createSecurityClient } from '../src/renderer/security-client.js'
-import { SecurityGate } from '../src/main/security.js'
+import { SecurityGate, exclusionAllowsWork } from '../src/main/security.js'
 import {
   DECLARED_CARRIER_MEMBERS, LANDED_CARRIER_MEMBERS, MAIN_SRC, MCP_SERVER_SRC, OPERATOR_SETTINGS_SRC,
   SECURE_PANELS_SRC, SETTINGS_SURFACE_SRC, STATE_MCP_DISABLED, STATE_MCP_ENABLED, TIER4_CLOSED,
-  TIER4_CLOSED_MESSAGE, TIER4_STATE_SRC, sourceOrEmpty,
+  TIER4_CLOSED_MESSAGE, TIER4_STATE_PATH, sourceOrEmpty,
 } from './tier4-arbitrary-storage-register.js'
 
 /* ═══════════════════════════ THE ONE SURVIVING `node:fs` BINDING ═══════════════════════════
@@ -82,39 +81,15 @@ import {
  * store they instrumented (`E-1`), and no row here owns a temp directory any more. */
 const fsModule = await import('node:fs')
 
-/* ═══════════════════════════ THE STATIC HOLDER (`A-1`'s `2026-10-11` RULING) ═══════════════
- * `src/main/tier4-state.ts` is the ONE main-side LEAF and it STAYS (`ASM-4`): its STATIC
- * module-level holder IS the one boolean, its declared INITIAL VALUE is STORE-OPEN, its ONE reader
- * is `tier4OpenState()` and its ONE writer is `setTier4OpenState()` — whose SOLE production caller
- * is now `src/main/settings-surface/index.ts` (written at `attach` and on each committed exclusion
- * write), the store's consult having retired with the store. The module is resolved by a
- * FRAGMENT-ASSEMBLED specifier (the sibling harness precedent), so its ABSENCE is DATA: a row that
- * ASSERTS the holder reddens with the declared absent symbol rather than throwing at collection. */
-const TIER4_STATE_SPEC = ['..', 'src', 'main', 'tier4-state.js'].join('/')
-interface Tier4StateModule {
-  tier4OpenState?: () => boolean
-  setTier4OpenState?: (open: boolean) => void
-}
-let tier4StateModule: Tier4StateModule | null = null
-let tier4StateReason = 'not loaded'
-async function loadTier4StateModule(): Promise<void> {
-  try {
-    const mod = (await import(/* @vite-ignore */ TIER4_STATE_SPEC)) as Tier4StateModule
-    if (typeof mod.tier4OpenState !== 'function') {
-      tier4StateModule = null
-      tier4StateReason = 'ABSENT: the leaf exports no `tier4OpenState`'
-      return
-    }
-    tier4StateModule = mod
-    tier4StateReason = ''
-  } catch (e) {
-    tier4StateModule = null
-    tier4StateReason = `ABSENT: ${e instanceof Error ? e.message : String(e)}`
-  }
-}
-function tier4HolderAbsent(where: string): Error {
-  return new Error(`S2-RED: the STATIC HOLDER is absent (${where}) — ${tier4StateReason}; \`src/main/tier4-state.ts\` must export \`tier4OpenState()\` (\`§0A\` item 1, the \`A-1\` ruling)`)
-}
+/* ═══════════ THE STATIC HOLDER IS DELETED, AND ITS LOADER GOES WITH IT (`D-117`) ═══════════
+ * WHAT STOOD HERE was the fragment-assembled dynamic import that resolved `src/main/tier4-state.ts`
+ * — its declared surface (`tier4OpenState()`/`setTier4OpenState(open)`), its declared initial
+ * `STORE-OPEN` and the absent-symbol error a holder row threw — so that the holder's own row could
+ * drive it and its ABSENCE could be DATA. **THE FILE IS DELETED**, so a loader would resolve nothing
+ * and its "absent" arm would be the only arm it ever answered: an existence probe whose subject does
+ * not exist is the vacuous green `examiner.md` §2 names. THE RETIREMENT'S EVIDENCE IS `FS-T4-12`
+ * below, re-grained onto the whole `src` tree: no module-level home for the boolean stands anywhere,
+ * and the GATE still closes from its own record without one. */
 
 /* ═══════════════════════════ THE PANE FIXTURE (`§2.6`) ═════════════════════ */
 function carrierRecord(exclusion: string, read: unknown): Record<string, unknown> {
@@ -207,9 +182,10 @@ function codeOnly(src: string): string {
   }
   return out
 }
-/** Every TypeScript module under `src/`, recursively — the read set of the ONE surviving HOLDER
- *  census (`FS-T4-09`: the writer's call sites and the store's REMOVED consult), read over the
- *  WHOLE tree so a second home in a module no other row names is still FOUND. */
+/** Every TypeScript module under `src/`, recursively — the read set of `FS-T4-12`'s ONE-HOME
+ *  census since `D-117`: the holder is deleted, so the row scans the WHOLE tree for a module-level
+ *  home that replaced it rather than `mcp-server.ts` alone, and a second home in a module no other
+ *  row names is still FOUND. */
 function listSourceFiles(root: string, out: string[] = []): string[] {
   for (const entry of fsModule.readdirSync(root, { withFileTypes: true })) {
     const full = join(root, entry.name)
@@ -261,7 +237,6 @@ const REPO_ROOT = fileURLToPath(new URL('./../', import.meta.url))
  * the pane rows mount into and resolves the STATIC HOLDER the one surviving holder row drives. */
 beforeAll(async () => {
   installShim()
-  await loadTier4StateModule()
 })
 
 describe('S2 §2.1/§2.4 THE DECLARED TOKEN\'S HOME (`P-T4-CENSUS`, `P-T4-OPTIONS`, `P-T4-EXPORTS` and `P-T4-TYPES` measure the DELETED store and retire with `E-1`)', () => {
@@ -284,92 +259,54 @@ describe('S2 §3.1 THE HAPPY STATES (`M-11` alone holds; `M-1`…`M-10` drove th
   })
 })
 
-describe('S2 §3.2 THE FAIL-STATES (`FS-T4-09` · `FS-T4-12` · `FS-T4-13`; `FS-T4-01`…`FS-T4-08`, `FS-T4-10` and `FS-T4-11` drove the deleted store and retire with `E-1`)', () => {
-  it('FS-T4-09 RE-GRAINED (`C-3`, THE HOLDER\'S OWN ROW): `src/main/tier4-state.ts` still declares the TWO names with the declared initial `STORE-OPEN` and no absent arm, its SOLE WRITER is now `settings-surface/index.ts` (written at `attach` and on each committed exclusion write), and the STORE\'S CONSULT IS REMOVED — no `src/**` file reads it for a decision', async () => {
-    /* ── RE-GRAINED from the as-filed `FS-T4-09` (`2026-10-11`, the `A-1` ruling) — `RCA-8(d)`:
-     * annotate BESIDE, never over, and KEEP A ROW WHOSE SUBJECT STANDS. The as-filed row asserted
-     * two things: (i) the store's option census `{ path }` and (ii) that a BARE
-     * `createSecurityStore({ path })` reads the holder — OPEN ⇒ the write commits, CLOSED ⇒ the
-     * closed refusal VALUE. **BOTH OF THOSE ARE `E-1`'s SUBJECT AND BOTH RETIRE WITH IT**: there is
-     * no store to construct and no consult left to drive. WHAT STANDS IS THE HOLDER ITSELF — its
-     * declared surface (two names, and nothing else), its declared initial value `STORE-OPEN`
-     * (`D-19`'s window), its TOTAL reader with no absent arm — plus the two facts the rebuild moved
-     * onto it: **its SOLE WRITER IS NOW `src/main/settings-surface/index.ts`** (at `attach` and on
-     * each committed exclusion write) and **NO `src/**` FILE READS IT FOR A DECISION ANY MORE**
-     * (`C-3`; L1 §3 `ASM-4`). Those are the re-grained figures; the subject is the holder's, and it
-     * is not deleted. */
-    if (tier4StateModule === null) throw tier4HolderAbsent('FS-T4-09')
-    const leaf = sourceOrEmpty(TIER4_STATE_SRC)
-    expect(leaf, 'the STATIC HOLDER is a main-side leaf (`src/main/tier4-state.ts`)').not.toBe('')
-    /* (1) THE DECLARED SURFACE IS TWO NAMES AND NOTHING ELSE — read off the leaf's own EXPORT
-     *     CENSUS (comments stripped), so a third export reddens this row. */
-    const leafExports = [...codeOnly(leaf).matchAll(/^export\s+(?:function|const|let|var|type|interface)\s+([\w$]+)/gm)].map((m) => m[1])
-    expect(leafExports, `the holder's declared surface is EXACTLY the two declared names — measured [${leafExports.join(', ')}]`).toEqual(['tier4OpenState', 'setTier4OpenState'])
-    expect(/export function tier4OpenState\s*\(\s*\)\s*:\s*boolean\s*\{/.test(codeOnly(leaf)), 'its ONE reader is `tier4OpenState(): boolean` — TOTAL, never `boolean | undefined` (there is no absent arm)').toBe(true)
-    expect(/export function setTier4OpenState\s*\(\s*\w+\s*:\s*boolean\s*\)\s*:\s*void\s*\{/.test(codeOnly(leaf)), 'its ONE writer is `setTier4OpenState(open: boolean): void`').toBe(true)
-    expect(/return\s+tier4Open\b/.test(codeOnly(leaf)), 'and the reader answers the holder DIRECTLY — no fail-safe default, nothing to fall back to').toBe(true)
-    /* (2) THE DECLARED INITIAL VALUE IS `STORE-OPEN` (`true`) — `D-19`'s window. */
-    const declaredInitial = /^(?:let|var)\s+([\w$]+)\s*(?::\s*boolean)?\s*=\s*(true|false)\s*;?\s*$/m.exec(leaf)
-    expect(declaredInitial?.[2], `the holder's DECLARED INITIAL VALUE is \`STORE-OPEN\` (\`true\`) — D-19's window; measured initializer: ${String(declaredInitial?.[2])}`).toBe('true')
-    /* (3) AND IT IS TOTAL AT ITS OWN TURN, not only on the bytes: the ONE reader answers a boolean,
-     *     the ONE writer moves the holder and moves it back, and neither throws. */
-    const holder = tier4StateModule as Required<Tier4StateModule>
-    expect(typeof holder.tier4OpenState(), 'the ONE reader answers a boolean at its own turn').toBe('boolean')
-    expect(holder.tier4OpenState(), 'and no writer has run in this process, so it still stands at its DECLARED INITIAL `STORE-OPEN`').toBe(true)
-    try {
-      holder.setTier4OpenState(false)
-      expect(holder.tier4OpenState(), 'the ONE writer moves the holder').toBe(false)
-      holder.setTier4OpenState(true)
-      expect(holder.tier4OpenState(), 'and moves it back — one value, one writer, no second home').toBe(true)
-    } finally {
-      holder.setTier4OpenState(true)
-    }
-    /* (4) THE SOLE WRITER IS THE SURFACE MODULE (`C-3`; `setTier4OpenState` at
-     *     `settings-surface/index.ts:88,200`): TWO call sites, BOTH there, and NONE anywhere else
-     *     under `src/**` — `operator-settings/` owns the record and must not reach the projection,
-     *     and `main.ts` supplies STATE and never takes the DECISION (`F-11`). */
-    const writerSitesIn = (src: string): number => (codeOnly(src).match(/setTier4OpenState\s*\(/g) ?? []).length
-    expect(writerSitesIn('void setTier4OpenState(true)'), 'CONTROL: the writer-sites counter FIRES on a bare call').toBe(1)
-    expect(writerSitesIn("import { setTier4OpenState } from './tier4-state.js'\n"), 'CONTROL (negative): an IMPORT is not a call site').toBe(0)
-    const surface = sourceOrEmpty(SETTINGS_SURFACE_SRC)
-    expect(surface, 'the surface module exists').not.toBe('')
-    expect(writerSitesIn(surface), 'THE SOLE WRITER holds BOTH sites — the committed delivery and `attach` (`settings-surface/index.ts:88,200`)').toBe(2)
-    const sourceFiles = listSourceFiles(join(REPO_ROOT, 'src'))
-    expect(sourceFiles.length, 'CONTROL: the declared scope is the WHOLE TypeScript tree under `src/`, not three hard-coded modules').toBeGreaterThan(20)
-    expect(writerSitesIn(leaf), 'CONTROL: the leaf\'s own DECLARATION matches the same detector (one occurrence), which is why the census excludes the leaf by NAME rather than by a cleverer regex').toBe(1)
-    const foreignWriters = sourceFiles
-      .filter((p) => p !== SETTINGS_SURFACE_SRC && p !== TIER4_STATE_SRC && writerSitesIn(sourceOrEmpty(p)) > 0)
-      .map((p) => p.replace(REPO_ROOT, ''))
-    expect(foreignWriters, `NO second writer ANYWHERE in \`src/**\` — measured [${foreignWriters.join(', ')}]`).toEqual([])
-    expect(writerSitesIn(sourceOrEmpty(OPERATOR_SETTINGS_SRC)), 'the INSTANCE writes no projection: the record is its own subject (`D-17`, `D-18`)').toBe(0)
-    expect(writerSitesIn(sourceOrEmpty(MAIN_SRC)), 'and `main.ts` writes the holder NOWHERE (`F-11`)').toBe(0)
-    /* … AND EACH SITE WRITES THE TRANSITION'S OWN DERIVATION, never a constant: the holder is a
-     * PROJECTION of the instance's `exclusion` row, so a bare `true`/`false` here would be a
-     * decision taken at the wrong layer. */
-    const writerArguments = [...codeOnly(surface).matchAll(/setTier4OpenState\s*\(\s*([^)]*)\)/g)].map((m) => m[1].trim())
-    expect(writerArguments, 'both declared sites pass an argument').toHaveLength(2)
-    expect(/^(?:true|false)$/.test('true'), 'CONTROL: the constant-argument detector FIRES on a bare `true`').toBe(true)
-    for (const argument of writerArguments) {
-      expect(/^(?:true|false)$/.test(argument), `no site writes a bare constant — measured \`${argument}\``).toBe(false)
-      expect(argument, `and each writes the ONE derived predicate \`record.exclusion === 'mcp-disabled'\` — measured \`${argument}\``).toBe("record.exclusion === 'mcp-disabled'")
-    }
-    /* (5) THE STORE'S CONSULT IS REMOVED (`E-1` removed the store, `E-3` the carrier's route through
-     *     it): the ONE reader is declared and TOTAL, and it is consulted NOWHERE under `src/**` — so
-     *     the projection cannot be re-introduced as a decision anywhere else. */
-    const consultSitesIn = (src: string): number => (codeOnly(src).match(/tier4OpenState\s*\(\s*\)/g) ?? []).length
-    expect(consultSitesIn('const open = tier4OpenState()'), 'CONTROL: the consult counter FIRES on a call').toBe(1)
-    expect(consultSitesIn('// tier4OpenState() is consulted here\n'), 'CONTROL (negative): a COMMENTED mention is not a consult — the detector reads code, never prose').toBe(0)
-    expect(consultSitesIn(leaf), 'CONTROL: the leaf\'s own DECLARATION matches the same detector (one occurrence), which is why the census excludes the leaf by NAME rather than by a cleverer regex').toBe(1)
-    const foreignConsults = sourceFiles
-      .filter((p) => p !== TIER4_STATE_SRC && consultSitesIn(sourceOrEmpty(p)) > 0)
-      .map((p) => p.replace(REPO_ROOT, ''))
-    expect(foreignConsults, `the STORE'S CONSULT is removed: NO \`src/**\` file reads the holder for a decision any more — measured [${foreignConsults.join(', ')}]`).toEqual([])
-  })
-
-  it('FS-T4-12 a second home or a second writer for the boolean is a FAILING row', () => {
+describe('S2 §3.2 THE FAIL-STATES (`FS-T4-12` · `FS-T4-13`; `FS-T4-09` retired with its only subject at `D-117`; `FS-T4-01`…`FS-T4-08`, `FS-T4-10` and `FS-T4-11` drove the deleted store and retire with `E-1`)', () => {
+  // `D-117` re-grains this row onto the RETIREMENT it now states: the holder is deleted, no module-level
+  // home replaces it anywhere under `src/`, and the gate is driven to prove it still closes from its own record. The
+  // as-filed row scanned `mcp-server.ts` alone for a second home; the subject is now the WHOLE tree, which is why it gates.
+  // strata:gates — `D-117`: the retirement's absence census and the gate's drive, which no marked row states
+  it('FS-T4-12 RE-GRAINED (`D-117`, THE ONE-HOME ROW): `src/main/tier4-state.ts` IS DELETED and NO module-level mutable home for the boolean stands ANYWHERE under `src/` — neither exported half is even spelled — AND THE GATE IS UNMOVED, driven: `exclusionAllowsWork(gate.exclusionState())` answers the turn from the gate\'s own `_exclusion` and `toolAllowed` from its own `_config`, with no holder in the process', async () => {
     const src = sourceOrEmpty(MCP_SERVER_SRC)
     const assignments = [...src.matchAll(/^\s*(?!\/\/|\*)(?:let|var)\s+(\w*(?:exclusion|storeOpen|tier4Open)\w*)\s*=/gm)].map((m) => m[1])
     expect(assignments, `NO module-level mutable home for the boolean — measured [${assignments.join(', ')}]`).toEqual([])
+    /* ── (1) THE HOLDER IS GONE, BY TWO INDEPENDENT READINGS. `existsSync` answers the path, and the
+     *     MODULE SPECIFIER is un-resolvable — a row that only greps for a name would pass over a file
+     *     that still stood, so both are taken and the existsSync detector is driven on a live path. */
+    const holderPath = join(REPO_ROOT, TIER4_STATE_PATH)
+    expect(fsModule.existsSync(join(REPO_ROOT, 'src/main/security.ts')), 'CONTROL: the existence probe FIRES on a file that stands').toBe(true)
+    expect(fsModule.existsSync(holderPath), `the holder's file is DELETED — measured exists(${TIER4_STATE_PATH})`).toBe(false)
+    const unresolvable = await import(/* @vite-ignore */ ['..', 'src', 'main', 'tier4-state.js'].join('/'))
+      .then(() => false, () => true)
+    expect(unresolvable, 'and the module is not merely unused — its specifier CANNOT BE RESOLVED, which is what makes an absent-symbol probe impossible rather than merely absent').toBe(true)
+    /* ── (2) NEITHER EXPORTED HALF IS SPELLED ANYWHERE UNDER the whole `src` tree, read over CODE with comment
+     *     lines ELIDED (the discipline: a headstone that names what it deleted must not measure its
+     *     own explanation), and the detector is driven both ways so it cannot be vacuous. */
+    const halfSitesIn = (source: string): number => (codeOnly(source).match(/(?:set)?Tier4OpenState|tier4OpenState/g) ?? []).length
+    expect(halfSitesIn('void setTier4OpenState(open === \'mcp-disabled\')'), 'CONTROL: the half-name detector FIRES on a live call').toBe(1)
+    expect(halfSitesIn('// tier4OpenState() used to be consulted here\n'), 'CONTROL (negative): a COMMENTED mention is not a site — the detector reads code, never prose').toBe(0)
+    const sourceFiles = listSourceFiles(join(REPO_ROOT, 'src'))
+    expect(sourceFiles.length, 'CONTROL: the declared scope is the WHOLE TypeScript tree under `src/`, not one module').toBeGreaterThan(20)
+    /* **A MODULE-LEVEL `let`/`var` IS ONE AT COLUMN ZERO** — a declaration indented inside a function body is a
+     * local, and the tree holds one (`operator-settings/index.ts`'s `let exclusion: unknown`, a local of the
+     * read-back arm). The detector is therefore anchored, and both arms of that anchor are controlled below. */
+    const homePattern = /^(?:let|var)\s+(\w*(?:exclusion|storeOpen|tier4Open)\w*)\s*[=:]/
+    const moduleHomeIn = (source: string): string[] => [...codeOnly(source).matchAll(new RegExp(homePattern.source, 'gm'))].map((m) => m[1]!)
+    expect(moduleHomeIn('let storeOpen = true\n'), 'CONTROL: the module-home detector FIRES on a column-zero declaration').toEqual(['storeOpen'])
+    expect(moduleHomeIn('    let exclusion: unknown\n'), 'CONTROL (negative): an INDENTED declaration is a function local, not a module-level home — `operator-settings/index.ts` holds one').toEqual([])
+    const foreignHomes = sourceFiles
+      .filter((p) => halfSitesIn(sourceOrEmpty(p)) > 0 || moduleHomeIn(sourceOrEmpty(p)).length > 0)
+      .map((p) => p.replace(REPO_ROOT, ''))
+    expect(foreignHomes, `NO home and NO reference anywhere under the whole \`src\` tree — measured [${foreignHomes.join(', ')}]`).toEqual([])
+    /* ── (3) AND THE GATE STILL CLOSES, FROM ITS OWN RECORD, DRIVEN. The turn is
+     *     `mcp-server.ts`'s `exclusionTurn`: `exclusionAllowsWork(gate().exclusionState())`, the one
+     *     shared check the tool closure and the resource callback call. It is driven here against a
+     *     REAL gate, and the grant is read off `_config` in the same turn — the pair and the groups
+     *     are two records and neither answers for the other. */
+    const gate = new SecurityGate({ token: null, enabled: ['read', 'dispatch'] })
+    expect(exclusionAllowsWork(gate.exclusionState()), 'the boot pair allows work').toBe(true)
+    const closed = gate.withExclusion('mcp-disabled')
+    expect(exclusionAllowsWork(closed.exclusionState()), 'THE TURN REFUSES on the gate\'s own record — no holder is consulted, and none exists to consult').toBe(false)
+    expect(closed.toolAllowed('provident.get_rendered_html'), 'and the GRANT is unmoved by the pair: `toolAllowed` answers from its own `_config`, so closing the store does not silently empty the group set').toBe(true)
+    expect(exclusionAllowsWork(closed.withExclusion('mcp-enabled').exclusionState()), 'and the transition back re-opens the turn').toBe(true)
     // THE ONE WRITER (`§2.5` item 2): `withExclusion` lives in `security.ts` and is called
     // from exactly ONE production site. The detector is COUNTABLE (a second writer means a
     // `withExclusion(` occurrence appearing in a module that today holds none), and it is
@@ -537,9 +474,9 @@ describe('S2 REPAIR (gate 4\'s ruled repair contract) — THE SURVIVING ROWS: `D
      * delegation — and the answer is minted in `src/main/settings-surface/index.ts`'s `read()` verb,
      * where ONE `settings.read()` feeds `token`, `enabled`, `read` and `exclusion`. THE PROPERTY IS
      * UNMOVED IN KIND (one reading, two members, never two states); the SITES are the surface
-     * module's. THE HOLDER IS STILL WRITTEN BY THAT SAME MODULE FROM THAT SAME READING, at `attach`
-     * and on each committed delivery (`setTier4OpenState`, `settings-surface/index.ts:88,200`) —
-     * `FS-T4-09` owns that census, this row owns the reading. */
+     * module's. **AND THAT MODULE NO LONGER WRITES A HOLDER** (`D-117`): the projection this note
+     * used to place beside the reading is deleted with `src/main/tier4-state.ts`, so the reading has
+     * ONE product — the answer — and `FS-T4-12` owns the census that says so. */
     const handler = getHandlerBody(sourceOrEmpty(MAIN_SRC))
     expect(handler.length, 'the GET handler exists in `main.ts`').toBeGreaterThan(0)
     const handlerCode = codeOnly(handler)

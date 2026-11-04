@@ -52,13 +52,15 @@ const REPO = new URL('./../', TESTS_DIR)
 export const SRC = (rel: string): string => fileURLToPath(new URL('./src/' + rel, REPO))
 export const TEST = (rel: string): string => fileURLToPath(new URL('./' + rel, TESTS_DIR))
 
-/** THE STATIC HOLDER'S OWN MODULE (`§0A` item 1, the architect's `A-1` ruling) — UNMOVED by `E-1`:
- *  the ONE main-side LEAF that holds the one boolean, with the declared surface
- *  `tier4OpenState()` / `setTier4OpenState(open)` and the declared initial value `STORE-OPEN`
- *  (`true`). ITS SOLE WRITER MOVED (`C-3`): it is now `src/main/settings-surface/index.ts`, written
- *  at `attach` and on each committed exclusion write, and NO `src/**` file reads it for a decision
- *  any more — the store's consult is gone with the store (`FS-T4-09`). */
-export const TIER4_STATE_SRC = SRC('main/tier4-state.ts')
+/** **THE RETIRED HOLDER — NAMED AS A PATH AND NOT AS AN `SRC(…)` LOOKUP (`D-117`).** It used to resolve
+ *  `src/main/tier4-state.ts` and hand its readers a live file: the ONE main-side LEAF holding the one
+ *  boolean, its declared surface `tier4OpenState()` / `setTier4OpenState(open)` and its declared initial
+ *  `STORE-OPEN`. **THE FILE IS DELETED** — the gate's own `_exclusion` is the enforcement truth and the
+ *  holder duplicated it, read by no `src/**` file — so a `SRC(…)` constant for it would hand its readers a
+ *  path that resolves to nothing and every `sourceOrEmpty`/`existsSync` over it would answer a sentinel
+ *  rather than a claim. What the retirement's row still needs is the PATH itself — to assert that nothing
+ *  stands there — so this constant is a plain path, `STORE_CORE_PATH`'s form. */
+export const TIER4_STATE_PATH = 'src/main/tier4-state.ts'
 /** ⟶ ADDED (`C-3`): THE SURFACE (`src/main/settings-surface/index.ts`) — the operator path's ONE
  *  reference to the instance, the four verbs `main.ts` delegates its three security routes to, the
  *  carrier's own `read()` and the holder's sole writer. It is where the GET answer's TWO additive

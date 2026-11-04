@@ -1624,6 +1624,14 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   'src/renderer/security-client.ts', // `D-106` — the security record's shape, held in this realm and filled by deliveries
   'src/main/operator-settings/index.ts', // `D-104` — the third address joins the one subscription, with its own delivery body
   'src/main/settings-surface/index.ts', // `D-104` — the app-state body the composition's broadcast rides
+  // **⟶ ADDED 2026-11-06 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-117`): THE TWO-LEFTOVERS PASS'S ONE `src/` PATH.** The pass
+  //    that retires `src/main/tier4-state.ts` and wires the live pane drag onto the crossing DELETES that holder — a
+  //    deletion is a path `git status` reports like any other write — so the row charged a SIBLING's retired file to THIS
+  //    unit. It is excluded BY NAME like every other entry here, and its two editor files
+  //    (`settings-surface/index.ts` and `renderer.ts`) were already named above. **THE DENIED PREDICATE IS UNTOUCHED**: a
+  //    `src/renderer/**` or `src/main/**` path this list does not name STILL fails the row, and the positive control below
+  //    still drives one.**
+  'src/main/tier4-state.ts', // `D-117` — DELETED; the module-level projection no file under `src/` read
   // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a
   // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/security.ts`, or the synthetic
   // `src/renderer/gesture-session-panel.ts` the control two paragraphs down feeds to the same instrument — is STILL

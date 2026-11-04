@@ -445,8 +445,10 @@ async function main(): Promise<void> {
   // pair stands at `mcp-enabled`, the closed refusal otherwise) and `exclusion` cannot carry two
   // states in one response. They remain mutual inverses on one axis and NEITHER is substituted for
   // the other (`§3.4`). THIS FILE NOW READS NO STORE AND NO HOLDER: the surface module holds the
-  // one reference and writes `src/main/tier4-state.ts` as the gate's projection (ASM-4), while
-  // `mcp.gate` remains the ENFORCEMENT path's accessor. `main` supplies STATE, never the DECISION.
+  // one reference and patches the gate through this file's own sink methods (ASM-4 — and the HOLDER
+  // that clause named, `src/main/tier4-state.ts`, is DELETED at `D-117`, its projection having been
+  // read by no file under `src/`), while `mcp.gate` remains the ENFORCEMENT path's accessor. `main`
+  // supplies STATE, never the DECISION.
   // THE TAB RECORD'S TWO CHANNELS (L2 §2): a whole-record read takes no argument, and a commit names its tab.
   // The surface's shape arm answers `malformed-row` before any store verb; nothing here inspects the argument.
   ipcMain.handle(IPC_TABS_READ, () => tabsSurface.read())

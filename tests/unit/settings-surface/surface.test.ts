@@ -8,8 +8,9 @@
 // unit's own and not the L2 battery's restatement (`tests/integration/security-store-storeroom/
 // surface.test.ts`): the re-patch's **removal set** (design §6 ASM-5), the **delivery count** on
 // the declared sink (design §6), the transition's **totality** over outside values and the gate's
-// epoch (design §4, §6), the holder in `src/main/tier4-state.ts` (design §5 ASM-4, exception §2
-// E-3), and the store that cannot stand with a sink already attached (interface.md §2.1, §5.1).
+// epoch (design §4, §6), and the store that cannot stand with a sink already attached (interface.md
+// §2.1, §5.1). THE HOLDER ROW IS GONE (`D-117`): `src/main/tier4-state.ts` is deleted and its row's
+// only subject went with it, so the writer census that row carried is measured at `FS-T4-12`.
 //
 // THE GATE IS THE REAL `ProvidentMcpServer` (D-17, D-18): the one sink helper below is the
 // **structural seam** `signatures.md` §3 declares, and every row that asserts gate state points it
@@ -23,7 +24,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { ProvidentMcpServer, type McpBackend } from '../../../src/main/mcp-server.js'
 import { createSettingsSurface } from '../../../src/main/settings-surface'
-import { tier4OpenState } from '../../../src/main/tier4-state.js'
 
 const FILE = 'provident-operator-settings.json' // persistence.md §1: the instance's one written name
 
@@ -57,8 +57,8 @@ interface RecordingSink {
 }
 
 /** THE DECLARED STRUCTURAL SINK (`signatures.md` §3): it records every delivery, and delegates to
- *  a live server where one is supplied — so a row can count the surface's deliveries, and the
- *  holder row can attach a sink that touches no gate, without a stub standing in for either
+ *  a live server where one is supplied — so a row can count the surface's deliveries, and a row
+ *  can attach a sink that touches no gate, without a stub standing in for either
  *  (design-settings-surface.md §5, §6). */
 function recordingSink(server?: ProvidentMcpServer): RecordingSink {
   const calls: Delivered[] = []
@@ -194,19 +194,12 @@ describe('security-store-storeroom · the settings surface at unit grain', () =>
     expect(surface.read().read?.reason, 'the closed token stays a READ token and is never a write outcome (D-16)').toBe('tier4-closed')
   })
 
-  it('the surface is the holder\'s writer: attach and every committed pair write reach tier4OpenState(), from the record and never from the sink (design §5, §6 ASM-4; exception §2 E-3)', () => {
-    const surface = createSettingsSurface({ userDataDir })
-    surface.attach(recordingSink())
-    expect(tier4OpenState(), 'attach writes the holder from the boot record, and this sink has touched no gate').toBe(false)
-    surface.transition('mcp-disabled')
-    expect(tier4OpenState(), 'and a committed mem write writes it from the listener').toBe(true)
-    surface.transition('mcp-enabled')
-    expect(tier4OpenState()).toBe(false)
-
-    const second = createSettingsSurface({ userDataDir })
-    second.attach(recordingSink())
-    expect(tier4OpenState(), 'a fresh surface boots the safe pair again and writes the holder back from it, so the writer is the surface').toBe(false)
-  })
+  /* ── THE HOLDER'S WRITER ROW IS RETIRED WHOLE (`D-117`), AND ITS SUBJECT IS THE REASON: this row
+   * asserted that `attach` and every committed pair write reached `tier4OpenState()`, the module-level
+   * projection in `src/main/tier4-state.ts`. That FILE IS DELETED, so the row had no referent — its
+   * subject was the holder and nothing else — and what it was proving about the SURFACE is proved by
+   * the rows around it: the gate is the real `ProvidentMcpServer` and the two `applyExclusion` calls at
+   * `attach` and on each delivery are `FS-T4-12`'s census, beside the gate's own record. */
 
   it('a store that cannot stand refuses the write as a value and the transition as `applied:false` with no reason, with the boot terminal already landed (interface.md §2.1, §5.1)', () => {
     mkdirSync(join(userDataDir, FILE))

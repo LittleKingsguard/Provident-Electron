@@ -17,6 +17,11 @@
  *   NOT imported here — the store-backed seam implementations land at the WIRING side
  *   (`src/renderer/renderer.ts`, §5.1 row 1, §2.1's "the CALLER'S CLOSURE … holding the
  *   store handle").  The seams are driven through the wiring composition below.
+ *   **⟶ AND FROM `D-117` THE EXAMPLE'S PAIR IS IMPORTED, FOR ONE ROW ONLY**: the live gesture's
+ *   pre-drag size and bounds pair moved OFF `gutterSeamExample()`'s element-attribute read and ONTO
+ *   the composition's, so `D-117/LIVE-READ` below can only state that difference by driving both
+ *   over the same element. It is a CONTROL, never a subject: no row here asserts the example is
+ *   anything the app should use.
  *
  * ── WHAT THIS PASS CHANGED, AND WHY (`D-93`) ─────────────────────────────────────────────
  * THE PURGE DELETED `src/renderer/store-core-graph.ts` AND `src/renderer/store-graph-references.ts`
@@ -134,6 +139,8 @@ import {
   paneGeometryIn,
 } from '../src/shared/view-shape'
 import { withinProximity as familyWithinProximity } from '../src/shared/relocate'
+/** `D-117`'s CONTROL only — see the header note: the example seam is the path the live gesture LEFT. */
+import { gutterSeamExample } from '../src/shared/demo-envelope'
 
 /* ─────────────────────────────── local drive surface ─────────────────────────────── */
 
@@ -2151,6 +2158,73 @@ describe('§3.4 R-4 — THE ONE-SINK/ONE-CLAMP ROW', () => {
       //**THE CONTROL** — the scan bites on a planted clamp, so the absence above is a fact about the function.
       expect(commentElided('const repaired = clamp(value, min, max)'), 'the positive control').toContain('clamp')
     }
+  })
+})
+
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * PART VI-b — THE LIVE GESTURE'S READ IS THE CROSSING'S (`D-117`)
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'panes\']`\'S AND NOT THE AUTHORED ELEMENT\'S', () => {
+  /** **THE ELEMENT PAIR THE OLD PATH READ**: a handle whose `id` is the pane's, and a `parentElement`
+   *  carrying the authored `props` the runtime emits as bare attributes — which is what
+   *  `gutterSeamExample().startSizeOf`/`boundsOf` read, with `100`/`{0…200}` as their own fallbacks. */
+  const authoredPane = (attributes: Record<string, string>) => ({
+    getAttribute: (name: string): string | null => (name in attributes ? attributes[name]! : null),
+  })
+  const handleIn = (id: string, authored: Record<string, string>) => ({ id, parentElement: authoredPane(authored) })
+
+  // `D-117` wires the live gesture onto the composition, and THIS ROW is the wiring's own evidence: the pre-drag size
+  // and the bounds pair answer `['panes']` where the element's attributes say something else. It gates because the row
+  // is authored after the `D-30` sweep and states what the wiring must do, not what the old path did.
+  // strata:gates — `D-117`: the wiring's own read, which no marked row in this file states
+  it('D-117/LIVE-READ: for ONE element whose authored pane says `size 140`/`{20,260}` and whose `[\'panes\']` record says `320`/`{10,400}`, the COMPOSITION answers the record and the example seam answers the attribute — and a pane the family does not name answers the crossing\'s MEASURED DEFAULT rather than the attribute, which is the whole of what moved off the element', () => {
+    const { w, crossing } = compose()
+    // THE DELIVERY: a pane the family now names, at figures the authored attributes do not carry.
+    crossing.seed('gutter-pane', { size: 320, bounds: { min: 10, max: 400 } })
+    const element = handleIn('gutter-pane', { size: '140', min: '20', max: '260', resizable: 'true' })
+    const seams = gutterSeamExample()
+
+    // (1) THE TWO ANSWERS, OVER THE SAME ELEMENT, AND THEY DISAGREE ON PURPOSE.
+    expect(seams.startSizeOf(element), 'CONTROL: the EXAMPLE seam still answers the authored attribute — the path this pass took the gesture off').toBe(140)
+    expect(w.startSizeOf(element, undefined), 'and the COMPOSITION answers the family\'s record').toBe(320)
+    expect(seams.boundsOf(element), 'CONTROL: the example seam\'s pair is the authored one').toEqual({ min: 20, max: 260 })
+    expect(w.boundsOf(element, undefined), 'and the composition\'s pair is the record\'s, handed through AS STORED').toEqual({ min: 10, max: 400 })
+
+    // (2) THE MISS ARM IS THE CROSSING'S DEFAULT AND NOT THE ELEMENT'S FALLBACK: the ids differ, so the two
+    //     paths answer DIFFERENT figures for one gesture — 100 here, 140 there.
+    const unnamed = handleIn('gutter-vertical', { size: '140', min: '20', max: '260', resizable: 'true' })
+    expect(seams.startSizeOf(unnamed), 'CONTROL: the element still declares 140').toBe(140)
+    expect(w.startSizeOf(unnamed, undefined), 'and the composition answers the MEASURED DEFAULT — the family names no such pane, and the default is the crossing\'s (`DEFAULT_PANE_SIZE`)').toBe(DEFAULT_PANE_SIZE)
+    expect(w.boundsOf(unnamed, undefined), 'the same arm for the pair').toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
+
+    // (3) THE ID IS THE CALLER\'S OWN MAPPING (`paneIdOf`): an element with no id falls back to the TOKEN, and
+    //     that id reaches the family — so the read is not keyed by an element lookup this wiring invented.
+    expect(w.startSizeOf({ parentElement: authoredPane({ size: '140' }) }, 'gutter-pane'), 'the token names the pane the family records').toBe(320)
+
+    // (4) AND THE COMMIT IS THE CROSSING\'S ROUTE, with the authored status write as its SINK, in that order.
+    //     The sink is the harness's own recorder, so the invocation is COUNTED rather than inferred from the route.
+    const sink = makeSink()
+    w.release('gesture-1', 220, sink)
+    expect(sink.record, 'the SINK was invoked exactly once, with the final value').toEqual([220])
+    expect(sink.stats().sinkCalls, 'and the sink\'s own count agrees — ONE sink write per gesture end (E10/SINK-1)').toBe(1)
+    expect(crossing.calls.length, 'and ONE route call followed it').toBeGreaterThan(0)
+    const last = crossing.calls[crossing.calls.length - 1]!
+    expect(last.id, 'the route names the pane the composition addresses (`DEFAULT_PANE_ID`, `D-87`)').toBe(DEFAULT_PANE_ID)
+    expect(last.geometry, 'and carries the ONE whole member, the clamped value').toEqual({ size: 220 })
+
+    // (5) THE WIRING BINDS THESE AND NOT THE EXAMPLE\'S PAIR — read off `renderer.ts`\'s CODE, comment lines
+    //     ELIDED, because the headstone above the wiring names both spellings and would otherwise satisfy
+    //     every one of these detectors by itself.
+    const wiringCode = commentElided(readModuleSource('src/renderer/renderer.ts'))
+    const bindingOf = (member: string): boolean => new RegExp(`${member}:\\s*\\([^)]*\\)\\s*:[^{]*=>\\s*drag\\.${member}\\(`).test(wiringCode)
+    expect(/startSizeOf:\s*\([^)]*\)\s*:[^{]*=>\s*seams\.startSizeOf\(/.test('startSizeOf: (el, token): unknown => seams.startSizeOf(el)'), 'CONTROL: the binding detector FIRES on the seam this pass removed').toBe(true)
+    expect(bindingOf('startSizeOf'), 'the affordance\'s `startSizeOf` is the composition\'s').toBe(true)
+    expect(bindingOf('boundsOf'), 'and so is its `boundsOf`').toBe(true)
+    expect(/commit:\s*\([^)]*\)\s*:\s*void\s*=>\s*\{[^}]*drag\.release\(/.test(wiringCode), 'the `commit` seam is `release` — the sink and the route in one ordered turn').toBe(true)
+    expect(/seams\.startSizeOf/.test(wiringCode), 'and the element-attribute read is GONE from the wiring\'s code (the CONTROL above proves the detector can see it)').toBe(false)
+    expect(/seams\.boundsOf/.test(wiringCode), 'both halves of the pair, not one').toBe(false)
+    expect((wiringCode.match(/createPaneDrag\(/g) ?? []).length, 'the composition is CONSTRUCTED in the wiring — one site, plus none in prose after the elision').toBe(2)
   })
 })
 

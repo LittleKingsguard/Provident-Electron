@@ -788,6 +788,15 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     // is `tests/pane-drag-compliance.test.ts`. So these reads redden no row because
     // (a) no agent-addressed path reaches them at all, and (b) they feed a graph commit
     // (`§2.4` item 2). The row asserts (a) and (b) — not the false premise.
+    //
+    // **⟶ RE-GRAINED AT `D-117`, AND THE TERM THAT MOVES IS THE CALL-SITE COUNT.** The audit's reading
+    // ("its ONLY caller in this tree is `tests/pane-drag-compliance.test.ts`") is SPENT: this pass wires
+    // the live gesture, so `src/renderer/renderer.ts` now constructs the composition ONCE inside
+    // `startGutterAffordance`. **WHAT DOES NOT MOVE IS (a)**, which is the row's actual claim: the
+    // drag is not an ANSWERING route — `handleRequest`'s switch still carries no drag case, so no
+    // MCP-addressed path reaches these reads — and `store` is not in the composition's closure at all
+    // any more (`D-93`), so (b) is now read as its successor: the reads' product is the crossing's
+    // `commitPane` route, one write per gesture end, which is `§2.4` item 2's conforming form.
     expect(
       src ?? '',
       'S-9 — THE CORRECTED PREMISE, ASSERTED: `createPaneDrag` is NOT reachable from `handleRequest` (`§2.1` `GCR-1` reaches "an MCP tool HANDLER or any main-process function reachable from one" — a function no route calls is not on that path). The route switch is the finding surface; the drag closure is not.',
@@ -798,10 +807,18 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
       /createPaneDrag/.test(switchBody),
       'S-9 — `handleRequest`\'s own route body does NOT call `createPaneDrag`: the drag closure is not an answering route, and this row no longer claims it is',
     ).toBe(false)
+    // **THE COUNT READS CODE, WITH COMMENT LINES ELIDED** — the discipline every absence row here already
+    // takes, and here it is a PRESENCE count that could otherwise pass on prose: a headstone that explains
+    // what wired the composition must not be counted as a construction site. The detector is driven both
+    // ways so the elision is controlled rather than assumed.
+    const dragSitesIn = (text: string): number => (stripComments(text).match(/createPaneDrag\(/g) ?? []).length
+    expect(dragSitesIn('  const drag = createPaneDrag({ view }, source)'), 'CONTROL: the call-site counter FIRES on a construction').toBe(1)
+    expect(dragSitesIn('// `createPaneDrag({ view })` is the composition\n'), 'CONTROL (negative): a LINE-commented mention is not a call site').toBe(0)
+    expect(dragSitesIn('/** `createPaneDrag({ view })` is the composition */\n'), 'CONTROL (negative): a BLOCK-commented mention is not a call site either — the form this file\'s own headstones use').toBe(0)
     expect(
-      (raw.match(/createPaneDrag\(/g) ?? []).length,
-      'S-9 — and `createPaneDrag`\'s call sites are the DECLARATION plus nothing else in this file (its one caller lives in the pane-drag test, not on a live route) — the corrected premise the audit measured',
-    ).toBe(1)
+      dragSitesIn(raw),
+      'S-9 RE-GRAINED (`D-117`) — `createPaneDrag`\'s call sites in `src/renderer/renderer.ts` are the DECLARATION plus the ONE construction the live gesture now makes inside `startGutterAffordance` (the term was `1` while the composition had no `src/` caller at all): the app\'s drag reads `[\'panes\']` and commits through `commitPane`, and NEITHER site is an answering route, which is the half of this row that did not move',
+    ).toBe(2)
 
     // ── THE DECLARED CONFORMING MEMBER, ADMITTED. The store-focus spec §2.5 item 5 declares,
     // verbatim: "the routed answer is store-carried, which is the compliance criterion's OWN

@@ -352,40 +352,46 @@ const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.lo
  *   (ii) the affordance, target and status ELEMENTS are resolved through
  *       `Runtime.elementForNodeId` — the graph read, never a selector, a lookup or a created
  *       element;
- *   (iii) `createGutterAffordance(...)` + `.attach()` with the eleven seams of THIS REPO'S ONE
- *       EXAMPLE IMPLEMENTATION (`demo-envelope.ts`'s `gutterSeamExample`);
+ *   (iii) `createGutterAffordance(...)` + `.attach()` — and **ITS GEOMETRY SEAMS ARE THE CROSSING'S**
+ *       (`D-117`): the pre-drag size, the bounds pair and the default-size turn are
+ *       `createPaneDrag({view: getViewClient()})`'s, so the live gesture reads `['panes']` and commits
+ *       through `commitPane`, where it used to read the authored pane element's own attributes and
+ *       write nothing but the status node. `gutterSeamExample()` still supplies the four seams that
+ *       are the EXAMPLE's and not the record's — the pointer-to-size mapping, the pointer resolver,
+ *       the axis producer whose token the cursor maps, and the resizability the authored pane declares;
  *   (iv) the PREVIEW write: the DECLARED TRANSIENT INLINE-STYLE WRITE ON THE LIVE TARGET
  *       (`§2.5` item 4 — the target's rendered geometry follows the pointer during a drag and
  *       reverts on every revert arm), never a graph write and never the affinity's own node;
  *   (v) the CURSOR write: the handle's own style member, with the declaration the module
  *       resolved (never a vocabulary of the wiring's own).
- *  The `commit` route is EXACTLY ONE `Runtime.applyCommand` `state-slice` write to the AUTHORED
- *  STATUS NODE carrying the CLAMPED value — no preview write, no style write, no handler
- *  dispatch and no rebind. */
-/** ONE RECORDED COMMIT WRITE — the reading this wiring keeps so a REFUSED write is never a silent
- *  no-op (see `startGutterAffordance`'s own return contract below). */
-export interface GutterWriteReading {
-  /** The authored node the op names, as the id string the runtime resolves. */
-  readonly node: string
-  /** The carried value, in the same string form the `state-slice` mutation writes. */
-  readonly value: string
-  /** The RUNTIME'S OWN ANSWER (`applyCommand`'s `{status}`), never an assumption: `'applied'` is
-   *  the only success reading, and a `'rejected'` one is the visible refusal L-5 required. */
-  readonly status: string
-}
+ *  The `commit` seam is `createPaneDrag`'s `release`, and it does TWO things in the order release's
+ *  own contract states: ONE `Runtime.applyCommand` `state-slice` write to the AUTHORED STATUS NODE
+ *  carrying the CLAMPED value (the SINK, invoked first, so the recorded reading is unchanged), then
+ *  ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing — no preview write, no style write,
+ *  no handler dispatch and no rebind. */
 
 export function startGutterAffordance (runtime: Runtime): {
+  /** **THE ONE READING THIS WIRING NOW RETURNS, AND IT HAS A READER** (`D-117`). A REFUSED `attach()`
+   *  is the DECLARED silent failure the affordance cannot report itself: it returns `false`, the drag
+   *  is INERT, and every later gesture is a no-op nobody hears. `main()` reads this member to say so.
+   *  **THE `writes` ARRAY THIS SIGNATURE ALSO CARRIED IS DELETED** (`D-117`): it recorded every commit
+   *  with the runtime's own status so a refusal would be a visible reading, and `main()` discarded the
+   *  whole return value, so the record had NO reader and the visibility it existed for was never
+   *  delivered — `write`'s own `console.error` is what makes a refusal visible, and it always was. */
   readonly attached: boolean
-  /** **EVERY COMMIT WRITE THIS WIRING MADE, WITH THE RUNTIME'S OWN ANSWER** — the recorded reading
-   *  that makes a refused write VISIBLE instead of silent (`§2.1` item 8(v); L-5/ADV-GU-1: the
-   *  as-filed `write()` discarded `applyCommand`'s returned status outright). The live MCP-visible
-   *  reading of a successful write is the authored status node's own `content` in the graph. */
-  readonly writes: readonly GutterWriteReading[]
 } {
   const element = runtime.elementForNodeId(GUTTER_AFFORDANCE_ID)
   const target = runtime.elementForNodeId(GUTTER_TARGET_ID)
   const seams = gutterSeamExample()
   const source = domEventSource()
+  /** **THE LIVE GESTURE'S GEOMETRY, BUILT ONCE FROM THE CROSSING** (`D-117`). `createPaneDrag` is the
+   *  composition that reads `view.paneSizeOf`/`paneBoundsOf` and writes with `commitPane`; until this
+   *  pass it had NO caller under `src/` and the app's live gesture went round it, reading the authored
+   *  pane element's attributes through `gutterSeamExample`'s pair. The `source` is this wiring's own
+   *  event source, which carries no `layout` member, so the composition's `renderZone` turn — a member
+   *  the SHAPE's delivery calls — stays the declared no-op it is on a realm with no layout consumer.
+   *  CONSTRUCTED HERE AND NOT PER GESTURE, and it reads nothing: every read is a caller turn. */
+  const drag = createPaneDrag({ view: getViewClient() }, source)
   const session = createGestureSession({
     source: source as never,
     // (i) THE NON-FORWARDING RECORDER: the session's own channel records and writes nothing, so
@@ -400,11 +406,13 @@ export function startGutterAffordance (runtime: Runtime): {
    *  landed on the graph and nothing said so. THE FIX IS TWO HALVES: (a) the `node` handed to
    *  `applyCommand` is the AUTHORED STATUS NODE'S OWN ID, resolved through the same graph-read
    *  surface the elements were resolved through (`Runtime.elementForNodeId`'s own id space, never
-   *  a selector, a lookup or a created element); (b) the returned reading is KEPT on the record
-   *  below, so a refusal is a visible reading instead of a silent no-op. The write stays ONE
-   *  `state-slice` write to the authored status node carrying the CLAMPED value, with no preview
-   *  write, no style write, no rebind and no second writer. */
-  const writes: Array<{ readonly node: string; readonly value: string; readonly status: string }> = []
+   *  a selector, a lookup or a created element); (b) **A REFUSAL IS MADE VISIBLE AT THE TURN THAT TOOK
+   *  IT**, by the `console.error` below. **THE ARRAY THE AS-FILED FIX ALSO BUILT IS DELETED** (`D-117`):
+   *  it recorded every write with the runtime's own status and NOBODY READ IT — `main()` discarded this
+   *  function's whole return value — so a "recorded reading" that nothing reads is the same silent
+   *  no-op one level further from the fault, which is `D-70`'s rule applied to a binding rather than to
+   *  a member. The write stays ONE `state-slice` write to the authored status node carrying the CLAMPED
+   *  value, with no preview write, no style write, no rebind and no second writer. */
   const write = (value: unknown): string => {
     const carried = typeof value === 'string' ? value : String(value)
     const answer = runtime.applyCommand({
@@ -413,7 +421,6 @@ export function startGutterAffordance (runtime: Runtime): {
       mutation: [{ targetProp: 'content', mode: 'replace', value: carried }],
     })
     const status = answer.status
-    writes.push({ node: GUTTER_STATUS_ID, value: carried, status })
     if (status !== 'applied') {
       // A REFUSAL IS A RECORDED READING, NEVER A SILENT NO-OP (L-5/ADV-GU-1). The demo's MCP
       // surface is the app graph itself (`provident.get_rendered_html`, `get_node_state`), so
@@ -441,6 +448,15 @@ export function startGutterAffordance (runtime: Runtime): {
     if (typeof value !== 'number' || !Number.isFinite(value)) return
     ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
   }
+  /** **THE HANDLE'S OWN ID, WHERE IT CARRIES ONE, AND `''` WHERE IT DOES NOT.** `release` takes a gesture
+   *  id and IGNORES it (`void gestureId`): the pane it commits is the composition's own `DEFAULT_PANE_ID`
+   *  and never the gesture's (`D-87`'s measurement — the release turn hard-codes the id it addresses).
+   *  So this is a TOTAL read of a value no turn consumes, and it invents no spelling: a handle with no id
+   *  is the empty string, never a fabricated `gesture-1`. */
+  const gestureIdOf = (gesture: unknown): string => {
+    const held = (gesture as { readonly id?: unknown } | null | undefined)?.id
+    return typeof held === 'string' ? held : ''
+  }
   const affordance = createGutterAffordance({
     session: session as never,
     source,
@@ -456,18 +472,35 @@ export function startGutterAffordance (runtime: Runtime): {
       if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
       holder.style['cursor'] = declaration === undefined ? '' : declaration
     },
-    startSizeOf: seams.startSizeOf,
-    boundsOf: seams.boundsOf,
+    /** **THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE THE SHAPE'S, NOT THE ELEMENT'S** (`D-117`). They were
+     *  `seams.startSizeOf`/`seams.boundsOf` — the authored pane's `size`/`min`/`max` attributes with the
+     *  seam's own `100`/`{0…200}` fallbacks — and NOTHING in this path read `['panes']`. They are the
+     *  composition's now: `readPaneSize`/`readPaneBounds`, answered off the crossing's shape at the pane
+     *  id `paneIdOf` derives from THIS element, with the crossing's MEASURED DEFAULT for a pane the
+     *  family does not name. **AND `startSizeOf` IS THE DEFAULT-SIZE TURN TOO**: the affordance's own
+     *  controller reads its `defaultSizeFor` seam from the establishment answer this one seam produced
+     *  (`P-GU-IM-2`: `startSizeOf` exactly once per gesture), so handing `drag.startSizeOf` hands both
+     *  turns, and `createPaneDrag.defaultSizeFor` — the same `readPaneSize` closure under the family's
+     *  own name for that turn — has no separate consumer here for exactly that reason.
+     *  `resizableOf` STAYS the example's: resizability is the authored pane's declaration, not a member
+     *  of the panes family, and the family declares none to read. */
+    startSizeOf: (el: unknown, token: unknown): unknown => drag.startSizeOf(el, token),
+    boundsOf: (el: unknown, token: unknown): unknown => drag.boundsOf(el, token),
     resizableOf: seams.resizableOf,
     moveTypeOf: (): unknown => POINTER_TYPES.move,
-    // (v) THE COMPOSITION'S SINGLE SINK WRITER — one managed-channel write to the AUTHORED
-    // STATUS node, and nothing else.
-    commit: (_gesture, value): void => {
-      write(value)
+    /** **THE COMPOSITION'S SINGLE SINK WRITER IS `release`, AND IT WRITES TWICE IN ONE ORDERED TURN**
+     *  (`D-117`): the SINK first — one managed-channel write to the AUTHORED STATUS node and nothing
+     *  else — then ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing. That is `release`'s own
+     *  contract, unmoved: the sink is invoked BEFORE the route is sent, so the recorded sink trace is
+     *  what it was, and the route's receipt lands in the client's `writeOutcome()` a tick later. The
+     *  gesture id it takes is IGNORED by that turn and is read off the handle where the handle carries
+     *  one, so nothing is invented for it. */
+    commit: (gesture, value): void => {
+      drag.release(gestureIdOf(gesture), value, write)
     },
   })
   const attached = affordance.attach()
-  return { attached, writes }
+  return { attached }
 }
 
 /** **THE FIVE `data.*` ROUTES' ANSWER SITE IN THIS REALM** (`D-112`; `docs/L2/central-data/interface.md` §5). The arm hands
@@ -904,10 +937,17 @@ async function main(): Promise<void> {
   //    boot's ONE read and every `onChanged` delivery of the record call it, at the END of `main()` beside the instrument
   //    below. **NOTHING BETWEEN THE HAND-OFF AND `bridge.ready()` MOVES** (`tests/e2e/bundle-boot-seam`'s `B-5` reads that
   //    order), and the boot gains nothing that can delay or fail it. This region authors NO element, NO class and NO text.
-  // ⟶ THE GUTTER WIRING (`U-GUTTER-UI`): attaches AFTER the first envelope load — its
-  // pre-drag read now hits an in-realm tier (NO crossing, §2.9 item 1). It is part of the
+  // ⟶ THE GUTTER WIRING (`U-GUTTER-UI`): attaches AFTER the first envelope load — its pre-drag read
+  // now hits an in-realm tier (NO crossing, §2.9 item 1). It is part of the
   // APP UI and exists with or without the preload bridge (only the MCP endpoints need it).
-  startGutterAffordance(runtime)
+  // **AND ITS ONE RETURNED READING IS READ HERE** (`D-117`): a REFUSED `attach()` returns `false` and the
+  // affordance is then INERT — every later gesture is a no-op — so the failure is said out loud at the
+  // one site that can say it. Before this pass the call's value was discarded whole and the `writes`
+  // array it also returned had no reader at all.
+  const gutter = startGutterAffordance(runtime)
+  if (!gutter.attached) {
+    console.error(`[provident-renderer] the gutter affordance did NOT attach — the pane drag is inert (handle ${GUTTER_AFFORDANCE_ID})`)
+  }
   // ⟶ **THE APPEARANCE APPLICATION (`D-97`)** — constructed here, ONCE, after the first envelope load so the authored state
   //    node exists: `themeWiringRole` derives the caller-held attribute name and the authored carrier's id, and the returned
   //    pair of turns is the app's ONE application site. **IT READS NOTHING AND WRITES NOTHING AT THIS SITE** — `D-96`'s boot
@@ -1072,10 +1112,17 @@ let tabsClientSubscription: TabsSubscription | null = null
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the
  *  push carries an address and not a value), so the client has already re-read when this runs; what is left is to hold
- *  the answer and to let the record drive the two authored terminals. Nothing else in this file reads either binding. */
+ *  the answer and to let the record drive the two authored terminals. **THE HELD READING IS THE DRIVE'S INPUT**
+ *  (`D-117`): the pages are driven FROM `tabsClientReading`, so the binding has a reader here rather than being a copy of
+ *  the argument that shadowed it, and nothing else in this file writes either one. */
 function holdTabsReading(reading: TabsClientReading, runtime: TabsPageRuntime | null): void {
   tabsClientReading = reading
-  tabsPagesReading = driveTabsLandingPage(reading, runtime)
+  // **THE DRIVE IS MADE FROM THE HELD READING AND NOT FROM ITS ARGUMENT** (`D-117`). The two were the same
+  // value, but only one of them had a reader: `tabsClientReading` was written here and at the defect arm
+  // below and READ NOWHERE, so it named nothing (`D-70`). Reading the binding here is what the comment
+  // above the declaration already claimed — "`tabsPagesReading` is what the drive made of the LAST
+  // READING" — and it makes the two statements about a read one pair rather than a pairing and a copy.
+  tabsPagesReading = driveTabsLandingPage(tabsClientReading, runtime)
 }
 
 /** THE ONE SITE — called from `main()` as its last statement, never awaited (see above). ONE read and ONE registration,
@@ -1096,7 +1143,11 @@ function startTabsClientInstrument(runtime: Runtime): void {
       // THE DEFECT ARM, NOT AN ORDINARY ONE: `read()` answers values, so a rejection here is a bug in
       // the instrument. It is held as the client's own `unread` value and never re-thrown — boot is over
       // by the time this runs, and a rejected promise nobody caught would surface as a page error.
+      // **AND IT IS SAID OUT LOUD** (`D-117`): this arm's only effect used to be a write to a binding
+      // nothing read, so a rejected boot read was silent everywhere — the held value is now described
+      // through the SAME reader the boot's info line uses, which is what makes the arm observable.
       tabsClientReading = { status: 'unread', reason: 'route-threw', detail: String(error) }
+      console.error(`[provident-renderer] tabs client: ${describeTabsReading(tabsClientReading)}`)
     },
   )
 }

@@ -57,7 +57,6 @@
         "src/main/operator-settings/",
         "src/renderer/module-client.ts",
         "src/renderer/security-client.ts",
-        "src/main/tier4-state.ts",
         "tests/unit/security-store-storeroom/",
         "tests/integration/security-store-storeroom/",
         "tests/e2e/security-store-storeroom/",
