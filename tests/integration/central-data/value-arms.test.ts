@@ -26,7 +26,7 @@
 // **THE RESTART HERE IS A SECOND CONSTRUCTION, NOT A SECOND PROCESS** (`behaviour.md` §3; `D-98`'s own arm): a store is
 // the file plus its register, so a fresh `createProfileStore` over the same `filePath`, with the same batch, is what a
 // new process meets. The `mem` tier's real process boundary is the `crossings` leg's and no row here claims it.
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -475,11 +475,12 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const secureDir = dir()
     createOperatorSettings({ userDataDir: secureDir })
     const secureBatch = (captured[captured.length - 1]?.['constraints'] ?? []) as ReadonlyArray<{ id: string; constraint: (context: unknown) => unknown }>
-    // ⟶ **THE SECURE CROSSING'S BATCH MOVES `3 → 5` AT `D-123`**: the pane family's existence pair and the one invariant over
-    // two addresses, both elements of the same construction's list — so this row now drives FIFTEEN declarations.
-    expect(secureBatch.length, 'the secure crossing declares FIVE, and this is the list its own construction adopted').toBe(5)
-    const fifteen = centralIds.length + secureBatch.length
-    expect(fifteen, 'FIFTEEN declarations, and this row drives every one of them').toBe(15)
+    // ⟶ **THE SECURE CROSSING'S BATCH MOVES `3 → 5 → 6`**: `D-123` added the pane family's existence pair and the invariant,
+    // and `D-124` declares that invariant at EACH half it judges instead of once at the store's root — one more element of
+    // the same construction's list, and no second store. So this row now drives SIXTEEN declarations.
+    expect(secureBatch.length, 'the secure crossing declares SIX, and this is the list its own construction adopted').toBe(6)
+    const sixteen = centralIds.length + secureBatch.length
+    expect(sixteen, 'SIXTEEN declarations, and this row drives every one of them').toBe(16)
 
     // **THE ONE ASSERTION THE WHOLE ROW IS** — made on the VALUE A BODY ANSWERED, which is the only form the kernel's
     // two readers ever see. `Object.getPrototypeOf` is asserted FIRST and separately, because an answer built on a base
@@ -542,6 +543,32 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     refusalForm('operator-record-must-stand', secureRefusal('operator-record-must-stand', { address: ['operator-settings'], tier: null, value: undefined }), ['message', 'repair'])
     refusalForm('operator-exclusion-must-stand', secureRefusal('operator-exclusion-must-stand', { address: ['operator-exclusion'], tier: null, value: undefined }), ['message', 'repair'])
     refusalForm('operator-app-state-must-stand', secureRefusal('operator-app-state-must-stand', { address: ['operator-app-state'], tier: null, value: undefined }), ['message', 'repair'])
+    // **AND THE THIRD SECURE FAMILY, WHICH THIS ROW DID NOT DRIVE UNTIL `D-124` RE-DERIVED ITS OWN COUNT** — `D-123` added
+    // `operator-pane-must-stand` beside the other three and the row's census grew to five while its drive list stayed at
+    // three, so its claim that it drove every declaration was the one thing in it that was not true. It is driven now.
+    refusalForm('operator-pane-must-stand', secureRefusal('operator-pane-must-stand', { address: ['operator-pane'], tier: null, value: undefined }), ['message', 'repair'])
+
+    // **THE INVARIANT'S TWO SEATS (`D-124`), AND WHAT THEIR ARMS ARE REACHABLE AT — SAID RATHER THAN ASSUMED.** Both seats
+    // READ both halves through the handle whenever one stands, and a live instance's store can never hold the illegal pair
+    // (`CD-13`/`CD-14` are that reading through the module's own verbs), so a live batch's seat passes over every state it
+    // can stand on. **THE SEATS' REFUSAL FORM IS THEREFORE DRIVEN OVER A BATCH WHOSE HANDLE DOES NOT STAND** — the list a
+    // REFUSED construction built, whose `standing()` closure answers `null` for the process's life (`CD-12` is that arm's
+    // own measurement): there the pane's seat judges its own half from `context.value` and an illegal one answers the
+    // repairable arm. **AND THE PORTS' SEAT CANNOT REFUSE AT THAT INSTANT AT ALL** — the pane's half is not in its context
+    // and no handle exists to read it, and an absent half is the closed pane — so it PASSES there, and its refusal arm is
+    // measured where it is reachable: at a LANDING instant, which `CD-14` drives (the enable refused and repaired inside
+    // its own commit). Both answers come from ONE object literal in ONE function, so the form is one form.
+    const deadDir = dir()
+    mkdirSync(join(deadDir, 'provident-operator-settings.json'))
+    createOperatorSettings({ userDataDir: deadDir })
+    const deadBatch = (captured[captured.length - 1]?.['constraints'] ?? []) as ReadonlyArray<{ id: string; constraint: (context: unknown) => unknown }>
+    const deadRefusal = (id: string, context: unknown): unknown => {
+      const declaration = deadBatch.find((entry) => entry.id === id)
+      if (declaration === undefined) throw new Error(`the refused construction's batch carries no declaration for ${id}`)
+      return declaration.constraint(context)
+    }
+    refusalForm('no-open-pane-over-open-ports', deadRefusal('no-open-pane-over-open-ports', { address: ['operator-pane'], tier: null, value: { open: true } }), ['message', 'repair'])
+    expect(deadRefusal('no-open-ports-under-an-open-pane', { address: ['operator-exclusion'], tier: null, value: { exclusion: 'mcp-enabled' } }), 'the ports` seat passes at a registration instant, because the half it cannot read is judged as the closed pane — an absent half, which is the state that instant always holds').toBe(true)
 
     // **AND THE SIX UNREPAIRABLE ARMS, WHICH ARE THE ONES A PROTOTYPE CHAIN WOULD BE MOST DANGEROUS ON**: at `1.9.2` a
     // `{message}` arm's inherited `repair` was invoked at the registration instant and IGNORED at the write instant;

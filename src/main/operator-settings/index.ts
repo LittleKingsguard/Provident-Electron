@@ -44,8 +44,8 @@
 // **ALL FOUR ADDRESSES' EXISTENCE IS AN ENFORCED INVARIANT OF THE INSTANCE AND NO LONGER A READ-SIDE DEFAULT** (D-84,
 // D-85, D-123): one declaration rides the construction's `constraints` batch at each of them — `operator-exclusion-must-stand` at
 // `['operator-exclusion']`, `operator-record-must-stand` at `['operator-settings']`, `operator-app-state-must-stand` at
-// `['operator-app-state']`, `operator-pane-must-stand` at `['operator-pane']` — plus the ONE pair that judges two of them
-// together, `no-open-pane-over-open-ports` at the store's root `[]` (D-123), and **EACH REPAIR PERFORMS WHAT THAT ADDRESS'S ABSENCE USED TO KEY**: the `mem` pair's repair
+// `['operator-app-state']`, `operator-pane-must-stand` at `['operator-pane']` — plus the ONE invariant that judges two of
+// them together, `no-open-pane-over-open-ports`, declared TWICE, once at each half's address (D-124), and **EACH REPAIR PERFORMS WHAT THAT ADDRESS'S ABSENCE USED TO KEY**: the `mem` pair's repair
 // mints `SAFE_PAIR`'s own value at creation on EVERY boot, because a `mem` address can never come from a file (D-84); the
 // two `file` addresses' repairs perform their own IMPORT-ONCE ARM and write what it answered as ONE whole legal record —
 // the record as `toStored(imported ?? FIRST_RUN)`, the rows as `{rows, legacy, unrepresentable}` (D-85).
@@ -162,13 +162,6 @@ const APP_STATE_ADDRESS: OperatorSettingsAddress = ['operator-app-state']
  *  overlay's four-state machine is the RENDERER's and is seeded from the AUTHORED state carrier on every boot, so a
  *  persisted `open` would be a second authority over a surface that does not exist at the next boot. */
 const PANE_ADDRESS: OperatorSettingsAddress = ['operator-pane']
-/** The address the invariant pair stands at: THE STORE'S OWN ROOT. It is a MEASURED choice and not a tidy one — a
- *  pair is asked only where the act touches its address (`D-56`/`D-66`; `guide §7.6`), so a pair at either half's
- *  address would see ONE of the two landing ops; at `[]` every act in this instance is at or below it, so ONE body
- *  judges both edges. Measured 2026-11-05 over the installed `provident-storeroom@1.9.3`: a construction carrying a
- *  pair at `[]` is accepted, the pair is asked at its registration and at every write this instance makes, and a
- *  write at `['operator-pane']` and a write at `['operator-exclusion']` are BOTH asked of it. */
-const ROOT_ADDRESS: OperatorSettingsAddress = []
 const FILE_NAME = 'provident-operator-settings.json'
 const RETIRED_NAME = 'provident-security.json'
 /** The retired tier-1 carrier, spelled ONCE in `src/**`: read by the second import-once arm and
@@ -563,11 +556,20 @@ const APP_STATE_MUST_STAND_ID = 'operator-app-state-must-stand'
  *  red row rather than a silent one, and exported nowhere for the exclusion's reason — the instance is its own only
  *  consumer. */
 const PANE_MUST_STAND_ID = 'operator-pane-must-stand'
-/** **THE INVARIANT'S OWN PAIR, AND IT IS THE ONE PAIR IN THIS BATCH THAT JUDGES TWO ADDRESSES** (`D-123`): it stands
- *  at the store's root `[]` so BOTH landing ops are asked of it — the pane opening while the ports stand open, and
- *  the ports being enabled while the pane stands open — and it reads both halves rather than the act's own value
- *  (`guide §7.6`: *"If your constraint cares about the state at any other location … IT READS THAT LOCATION"*). */
-const EXCLUSIVITY_ID = 'no-open-pane-over-open-ports'
+/** **THE INVARIANT'S TWO PAIRS, ONE AT EACH HALF'S ADDRESS, AND EACH ID NAMES THE SEAT THAT SPEAKS** (`D-124`, corrected
+ *  from `D-123`'s one pair at the store's root). **THE PAIR IS ASKED WHERE ITS ADDRESS IS TOUCHED AND NOWHERE ELSE**
+ *  (`guide §7.6`'s membership rule: *"your pair is asked when THE ACT CHANGES THE VALUE AT YOUR PAIR'S ADDRESS"*), and a
+ *  write at one half's address is a SIBLING of the other half, which no act touches — measured 2026-11-05 over the
+ *  installed `provident-storeroom@1.9.3`, both directions: `write(['operator-exclusion'])` asked
+ *  `["operator-exclusion-must-stand"]` and `write(['operator-pane'])` asked `["operator-pane-must-stand"]`, neither
+ *  reaching the other half. **SO TWO PAIRS, AND THE BODY READS THE HALF ITS OWN ADDRESS DOES NOT CARRY** — which is the
+ *  capability `D-123`'s root pair was compensating for and need not have been: *"If a constraint needs to look for the
+ *  data at a given location, it can read()"* (`guide §7.6`; `D-50`), and that read is non-bracketing — it opens no
+ *  attempt, fires no listener and runs no check (`guide §7.6`'s measured clause). **A BATCH MAY NOT NAME ONE HANDLE
+ *  TWICE** — measured the same day, the construction refuses it — so the two seats carry two ids: the pane's seat names
+ *  the fault it can raise, and the ports' seat names the same state from its own side. */
+const PANE_EXCLUSIVITY_ID = 'no-open-pane-over-open-ports'
+const PORTS_EXCLUSIVITY_ID = 'no-open-ports-under-an-open-pane'
 /** **THE SENTENCE NAMES THE FAULT AND NOT THE ACT** — the register of L2 §3 and of the tab record's five: the address
  *  holds no version of the pair, which is why nothing can be read there, and `tier4` is a DERIVED member and never part
  *  of what is missing (interface §1). The two `file` addresses' sentences hold the same line: what is missing is the
@@ -928,8 +930,13 @@ function exclusionMustStand(context: unknown, standing: Store | null): Constrain
  *  closed pane; the second REFUSES a record that stands and carries no boolean `open`, with no repair — a placeholder
  *  there would overwrite the state the realm wrote, and the store's rollback already protects the record that stood.
  *  `paneAdmitsAt`'s docblock is the ground for why `{}` and a non-boolean `open` are refused and not repaired. */
-/** The store's own value at one address, or `undefined` where no store stands or the read refuses — the shape a body that
- *  must judge a value OTHER than the act's uses (`guide §7.6`: *"a pair that judges its own address READS it"*). */
+/** **THE STORE'S OWN VALUE AT ONE ADDRESS, OR `undefined` WHERE NO STORE STANDS OR THE READ REFUSES** (`D-123`) — the
+ *  verb that lets a constraint body see a half its own address does not carry, which is the whole of what `D-124` uses it
+ *  for at BOTH halves: *"If a constraint needs to look for the data at a given location, it can read()"* (`guide §7.6`;
+ *  `D-50`). **A READ IS NON-BRACKETING**: it opens no attempt, fires no listener and runs no check (that clause is
+ *  `guide §7.6`'s, measured there and re-measured here 2026-11-05), so a body may take it inside the pass's own window
+ *  without disturbing it — and it is taken only where `context['value']` cannot answer, which at a landing instant is
+ *  every half once a repair may have landed. */
 function readAt(standing: Store | null, address: OperatorSettingsAddress, tier: 'mem' | 'file' | 'temp'): unknown {
   if (standing === null) return undefined
   try {
@@ -957,40 +964,50 @@ function paneMustStand(context: unknown, standing: Store | null): ConstraintAnsw
   return { message: PANE_UNUSABLE_MESSAGE }
 }
 
-/** **THE INVARIANT — THE ONE PAIR IN THIS BATCH THAT JUDGES TWO ADDRESSES, AND THE WHOLE OF THE PASS IS ITS TWO ARMS**
- *  (`D-123`; the instruction verbatim: *"Enforce that the security pane cannot be open while the MCP ports are open"*).
- *  **IT STANDS AT THE STORE'S ROOT** because a pair is asked only where an act touches its address (`guide §7.6`;
- *  `D-56`/`D-66`) — measured 2026-11-05 at this package: a pair at one half's address is asked for that half's landing op
- *  and NOT for the other's, so one pair at either address would see one edge. At `[]` every act of this instance is at or
- *  below the pair, and both edges are caught by ONE body.
+/** **THE INVARIANT — ONE PREDICATE, TWO SEATS, AND THE WHOLE OF THE PASS IS ITS TWO ARMS** (`D-124`, correcting
+ *  `D-123`; the instruction verbatim: *"Enforce that the security pane cannot be open while the MCP ports are open"*).
+ *  **EACH SEAT JUDGES THE HALF ITS OWN ADDRESS CARRIES AND READS THE OTHER HALF**, because a pair is asked ONLY where an
+ *  act touches its address (`guide §7.6`'s measured membership rule; `D-56`/`D-66`) — so a sibling write never reaches
+ *  the other seat, measured 2026-11-05 at this package both directions, and the pair that is asked is the one that must
+ *  see both halves. **THE READ IS WHAT MAKES THAT POSSIBLE, AND `D-123` DID NOT NEED THE ROOT IT TOOK**: *"If a
+ *  constraint needs to look for the data at a given location, it can read()"* (`guide §7.6`; `D-50`), the body is this
+ *  module's own code, it closes over the store handle, and `store.read(address)` is a published verb. **THE READ IS NOT A
+ *  WRITE PATH AND NOT A DELIVERY**: it brackets no attempt (measured: the count during the body is the attempt's own
+ *  `1`, and `attempt-opened` fires `0` times for it), runs no check, refuses nothing and fires no listener (measured `0`
+ *  deliveries over a body's read of a listened address) — data, never a verdict.
  *
- *  **WHAT IT JUDGES, AND THE TWO INSTANTS ARE TOLD APART BY `atWrite` AND BY NOTHING ELSE.** At a LANDING instant the
- *  context's `value` is the ACT'S value — the pane's on one edge, the pair's on the other, and **THE REPAIR'S LANDED VALUE
- *  on the re-run** (measured: the re-run hands the body the value the repair's op landed, at the act's address, *not* the
- *  object its own address holds) — so the body READS both addresses through the store handle instead of trusting it
- *  (`guide §7.6`'s own rule, which is what makes the re-run pass on a repaired state rather than refuse it again). At a
- *  REGISTRATION instant the context's `value` IS THE WHOLE REGISTER, so the same judgement is made off `context.value`
- *  with no handle at all — which is also the instant where both halves are ABSENT before the family pairs beside this one
- *  have run, and an absent half is judged exactly as a closed pane and as enabled ports, i.e. no fault.
+ *  **WHAT IT JUDGES, AND THE ONE DISCRIMINATOR BETWEEN THE TWO INSTANTS IS WHETHER A HANDLE STANDS.** At a LANDING
+ *  instant the body READS BOTH HALVES through the handle, and that includes its OWN: the context's `value` is the value
+ *  the write verb returned, **and on a re-run that is the repair's last landing at the address the REPAIR wrote while
+ *  `context.address` still names the PAIR's own address** — measured 2026-11-05: a write at `['operator-pane']` whose
+ *  repair landed `{exclusion:'mcp-disabled'}` at `['operator-exclusion']` handed the pane's seat
+ *  `{address: ['operator-pane'], value: {exclusion:'mcp-disabled'}}`, so the pair's address and its value DISAGREE and
+ *  only a read answers for the pair's own half. At a REGISTRATION instant no handle exists at all (`standing()` is
+ *  `null` until the construction returns, measured — and it is still `null` on the registration's own re-run, whose
+ *  `tier` IS set), the context's `value` IS the value at THIS pair's address, so the own half is judged from it and the
+ *  other half is judged as ABSENT — which is the state that instant always holds: both halves are `mem`, no file can
+ *  carry either, and the only registration-instant write is a sibling's mint of the closed pane.
  *
  *  **AND THE READING IS TOTAL OVER A FAILED READ**: a `Store` that refuses a read (a tier word the store does not hold)
  *  answers `undefined`, which the two predicates treat as absence — so a read this body could not perform can never
  *  *manufacture* the fault. It can only miss it, and the second boot's creation repairs re-establish both halves. */
-function paneAndPortsAreExclusive(context: unknown, standing: Store | null): ConstraintAnswer {
+function paneAndPortsAreExclusive(own: 'pane' | 'ports', context: unknown, standing: Store | null): ConstraintAnswer {
   let pane: unknown
   let pair: unknown
-  if (atWrite(context) && standing !== null) {
+  if (standing !== null) {
     pane = readAt(standing, PANE_ADDRESS, 'mem')
     pair = readAt(standing, EXCLUSION_ADDRESS, 'mem')
+  } else if (own === 'pane') {
+    pane = plain(context) ? context['value'] : undefined
   } else {
-    const register = plain(context) ? context['value'] : undefined
-    pane = plain(register) ? register[PANE_ADDRESS[0] as string] : undefined
-    pair = plain(register) ? register[EXCLUSION_ADDRESS[0] as string] : undefined
+    pair = plain(context) ? context['value'] : undefined
   }
   if (!bothStandOpen(pane, pair)) return true
-  // THE REPAIR SETTLES THE PORTS AND LEAVES THE PANE ALONE (`D-123`): closing the ports is the safe half — the pane is
-  // what the operator is doing — and it is expressible: the crossing's own answer is `{applied, state}` and the realm
-  // paints it, while the pane's authored open state is already the user's.
+  // THE REPAIR SETTLES THE PORTS AND LEAVES THE PANE ALONE, AT EITHER SEAT (`D-123`, unchanged at `D-124`): closing the
+  // ports is the safe half — the pane is what the operator is doing — and it is expressible: the crossing's own answer is
+  // `{applied, state}` and the realm paints it, while the pane's authored open state is already the user's. Both seats
+  // route it through the module's ONE repair-write path, so the ports' seat writes at its own address and the pane's
+  // seat writes at the other, and neither composes a value of its own.
   return { message: EXCLUSIVITY_MESSAGE, repair: (repairContext: unknown) => writeExclusion(repairContext, PORTS_CLOSED, standing) }
 }
 
@@ -1031,24 +1048,26 @@ function appStateMustStand(context: unknown, userDataDir: string): ConstraintAns
   return { message: APP_STATE_UNUSABLE_MESSAGE }
 }
 
-/** **THE INSTANCE'S BATCH — FIVE DECLARATIONS IN ONE CONSTRUCTION: FOUR FAMILIES' EXISTENCE AND ONE INVARIANT OVER TWO
- *  OF THEM** (`D-84`, `D-85`, `D-123`). The list rides `StoreConfig['constraints']` at the `storeCreate` call below, so
- *  every address is ARMED before anything can write and is asked again at every later instant it is touched (`guide §7.2`;
- *  `D-65`'s batching, applied to an instance that constructs itself rather than being handed a store). **IT IS STILL ONE
- *  BATCH AND ONE INSTANCE**: the fifth declaration is an element of the list the one `storeCreate` call adopts, never a
- *  second store and never a second registration site.
+/** **THE INSTANCE'S BATCH — SIX DECLARATIONS IN ONE CONSTRUCTION: FOUR FAMILIES' EXISTENCE AND ONE INVARIANT DECLARED AT
+ *  EACH HALF IT JUDGES** (`D-84`, `D-85`, `D-124`). The list rides `StoreConfig['constraints']` at the `storeCreate` call
+ *  below, so every address is ARMED before anything can write and is asked again at every later instant it is touched
+ *  (`guide §7.2`; `D-65`'s batching, applied to an instance that constructs itself rather than being handed a store). **IT
+ *  IS STILL ONE BATCH AND ONE INSTANCE**: the fifth and sixth declarations are elements of the list the one `storeCreate`
+ *  call adopts — never a second store, never a second registration site, and never a pair at an address no act of this
+ *  instance writes.
  *
  *  **IT IS BUILT PER CONSTRUCTION, AND THAT IS THE `D-85` CHANGE TO `D-84`'s MODULE-LEVEL LIST**: the two `file`
  *  addresses' repairs must reach the profile directory the construction was handed — the path is the only thing that says
  *  WHERE the retired carriers stand — and `cfg.constraints`' act is taken while the caller holds no handle (`guide §7.2`
  *  (1)), so a body cannot read it off the instance. Two instances in one process therefore adopt two lists with the same
- *  five ids, and each store's registry is its own (`guide §6.2`).
+ *  six ids, and each store's registry is its own (`guide §6.2`).
  *
- *  **AND SINCE `D-123` THE LIST ALSO CARRIES A READER**: `standing` answers the store this same construction is building,
- *  which is `null` at the registration instant (the instance does not exist yet) and the live handle at every landing one.
- *  That is what lets ONE body judge two addresses: at a write it READS both halves (`guide §7.6`), and at creation it
- *  judges the whole register the context hands it. Nothing here reads the store through a module-level binding — the
- *  closure is per construction, which is `D-85`'s rule read at a third route.
+ *  **AND THE LIST CARRIES A READER, WHICH IS WHAT LETS EACH SEAT SEE THE OTHER HALF** (`D-123`, re-pointed at `D-124`):
+ *  `standing` answers the store this same construction is building, which is `null` at the registration instant (the
+ *  instance does not exist yet, and it is still `null` on that instant's own re-run) and the live handle at every landing
+ *  one — so at a write the seat READS both halves (`guide §7.6`) and at creation it judges the half its own address
+ *  carries. Nothing here reads the store through a module-level binding — the closure is per construction, which is
+ *  `D-85`'s rule read at a third route.
  *
  *  **NO LISTENER COLLIDES WITH AN `id`, AND THAT IS A PROPERTY OF THE SPELLING**: this module mints
  *  `operator-settings:<n>@<address>` for a handle while the ids are the literals above, and the cross-kind rule `1.7.0`
@@ -1060,9 +1079,13 @@ function declarationsFor(userDataDir: string, standing: () => Store | null): rea
     { address: APP_STATE_ADDRESS, id: APP_STATE_MUST_STAND_ID, constraint: (context: unknown) => appStateMustStand(context, userDataDir) },
     { address: EXCLUSION_ADDRESS, id: EXCLUSION_MUST_STAND_ID, constraint: (context: unknown) => exclusionMustStand(context, standing()) },
     { address: PANE_ADDRESS, id: PANE_MUST_STAND_ID, constraint: (context: unknown) => paneMustStand(context, standing()) },
-    // THE INVARIANT STANDS LAST, AND THE POSITION IS LOAD-BEARING: at the creation instant each pair is asked in this
-    // list's own order, so the two family halves are minted BEFORE the one body that judges them together is asked.
-    { address: ROOT_ADDRESS, id: EXCLUSIVITY_ID, constraint: (context: unknown) => paneAndPortsAreExclusive(context, standing()) },
+    // THE INVARIANT'S TWO SEATS STAND LAST, AND THE POSITION IS LOAD-BEARING: at the creation instant each pair is asked in
+    // this list's own order, so both family halves are minted BEFORE the two bodies that judge them together are asked.
+    // **AND THE TWO SEATS STAND AT THE TWO HALVES' OWN ADDRESSES, NEVER AT THE ROOT** (`D-124`): the address is what makes
+    // the package ask a pair, so a pair at one half's address is asked for that half's landing op and reads the other,
+    // while an address no act of this instance writes would be asked for nothing and would judge nothing.
+    { address: PANE_ADDRESS, id: PANE_EXCLUSIVITY_ID, constraint: (context: unknown) => paneAndPortsAreExclusive('pane', context, standing()) },
+    { address: EXCLUSION_ADDRESS, id: PORTS_EXCLUSIVITY_ID, constraint: (context: unknown) => paneAndPortsAreExclusive('ports', context, standing()) },
   ]
 }
 

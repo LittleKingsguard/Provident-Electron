@@ -18,7 +18,13 @@
 // name — the hollow-green class this corpus keeps meeting. Every absence asserted below is asserted against a runtime
 // registry, not against bytes.
 //
-// **⟶ RE-DERIVED UNDER `D-85`, AND THE TWO ROWS THAT DIE DIE HONESTLY.** `D-84` declared ONE pair — the `mem` one — and
+// **⟶ RE-DERIVED UNDER `D-124` TOO, AND THE ROW THAT ASSERTED THE ROOT IS INVERTED RATHER THAN SOFTENED** (`D-46`): this
+// file's `CD-16` asserted that the invariant stands at the store's root `[]`, and it now measures that NO batch element stands
+// there, that each of the invariant's TWO SEATS stands at its own half, and — the measurement that makes two seats necessary
+// — that a write at one half asks no pair standing at the other. `CD-18` and `CD-19` are its own new claims: a seat judges
+// what it READS rather than the value the pass hands it, and one act is repaired exactly once.
+//
+// RE-DERIVED UNDER `D-85`, AND THE TWO ROWS THAT DIE DIE HONESTLY. `D-84` declared ONE pair — the `mem` one — and
 // left the two `file` addresses stopped, because each is the marker of an import-once arm a creation repair would
 // retire: measured there as `54` rows red over `16` files. `D-85` puts the absence-keyed action INSIDE the repair, so all
 // three addresses carry a declaration and every import still runs. Three figures of `D-84` therefore move and are
@@ -58,11 +64,10 @@ import { createOperatorSettings } from '../../../src/main/operator-settings'
 const EXCLUSION: readonly string[] = ['operator-exclusion']
 const RECORD: readonly string[] = ['operator-settings']
 const APP_STATE: readonly string[] = ['operator-app-state']
-/** **THE FOURTH ADDRESS AND THE ONE PAIR THAT STANDS NOWHERE BUT THE ROOT** (`D-123`): the pane family's `mem` record and
- *  the invariant over it and the exclusion. The root is spelled as an EMPTY segment array, which is what the batch carries
- *  — a pair at `[]` is asked for every act of the store and for nothing else's (`guide §7.6`, measured 2026-11-05). */
+/** **THE FOURTH ADDRESS, AND THE INVARIANT'S TWO SEATS AT THE TWO HALVES' OWN ADDRESSES** (`D-123`, re-grained at
+ *  `D-124`): the pane family's `mem` record, and the two declarations that judge it together with the exclusion. **NO
+ *  ROOT ADDRESS IS SPELLED HERE ANY MORE** — the batch names none, and `CD-16` is the row that measures that. */
 const PANE: readonly string[] = ['operator-pane']
-const ROOT: readonly string[] = []
 const FILE = 'provident-operator-settings.json'
 const SEED = 'provident-security.json'
 const CARRIER = 'provident-settings.json'
@@ -70,9 +75,11 @@ const CARRIER = 'provident-settings.json'
 const EXCLUSION_ID = 'operator-exclusion-must-stand'
 const RECORD_ID = 'operator-record-must-stand'
 const APP_STATE_ID = 'operator-app-state-must-stand'
-/** The two `D-123` ids, spelled here so a rename is a RED row and never a silent one. */
+/** The invariant's two seat ids (`D-123`, split into two at `D-124` because a batch may not name one handle twice —
+ *  measured 2026-11-05: the construction refuses it), spelled here so a rename is a RED row and never a silent one. */
 const PANE_ID = 'operator-pane-must-stand'
-const EXCLUSIVITY_ID = 'no-open-pane-over-open-ports'
+const PANE_EXCLUSIVITY_ID = 'no-open-pane-over-open-ports'
+const PORTS_EXCLUSIVITY_ID = 'no-open-ports-under-an-open-pane'
 
 let userDataDir: string
 beforeEach(() => { userDataDir = mkdtempSync(join(tmpdir(), 'creation-declarations-')) })
@@ -138,6 +145,25 @@ const atCreation = (address: readonly string[], value: unknown): Record<string, 
 const atLanding = (address: readonly string[], value: unknown): Record<string, unknown> =>
   ({ address, attempt: { id: 'attempt-x' }, op: { opId: 'op-x' }, tier: 'mem', value })
 
+/** The body at one DECLARED ID, read off the batch the module handed the package — by id and not by address, because
+ *  the two invariant seats stand at the two addresses the existence pairs stand at too (`D-124`). */
+function seatAt(batch: readonly Record<string, unknown>[], id: string): (context: unknown) => unknown {
+  const pair = batch.find((element) => element['id'] === id)
+  if (pair === undefined) throw new Error(`no pair stands under ${id}`)
+  return pair['constraint'] as (context: unknown) => unknown
+}
+
+/** The batch's own pairs wrapped in a COUNTER and handed to a real store, so an ASK is recorded under the pair's id:
+ *  the package's membership rule read at THIS instance's addresses rather than argued from a guide (`D-124`). */
+function armedCounting(batch: readonly Record<string, unknown>[], log: string[]): ReturnType<typeof storeCreate> {
+  const wrapped = batch.map((pair) => ({
+    address: pair['address'],
+    id: pair['id'],
+    constraint: (context: unknown) => { log.push(String(pair['id'])); return (pair['constraint'] as (c: unknown) => unknown)(context) },
+  }))
+  return storeCreate({ journalLength: 256, listeners: [], filePath: join(userDataDir, FILE), constraints: wrapped as never })
+}
+
 describe('the instance’s declarations · measured at the store’s creation (D-84, D-85)', () => {
   it('CD-1 · the creation instant: all FOUR addresses stand BEFORE any act, where the same construction without the batch refuses `AddressNotFound` at each of them (D-84, D-85, D-123; D-69’s `tabsMustStand` shape)', () => {
     // THE CONTROL FIRST, over its own directory so the two stores share no register: a construction with the SAME keys
@@ -156,15 +182,16 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // THE INSTANCE ITSELF: one construction, whose batch is captured at the package boundary.
     const settings = createOperatorSettings({ userDataDir })
     const batch = lastBatch()
-    // ⟶ **FIVE ELEMENTS SINCE `D-123`, AND THE ORDER IS PART OF THE CLAIM**: the four families' existence pairs, then the
-    // one invariant at the store's root — LAST, because at the creation instant each pair is asked in this list's own order
-    // and the invariant must see the two halves its own siblings have just minted.
-    expect(batch.map((pair) => [pair['address'], pair['id']]), 'the batch is FIVE pairs: one per address under the ids this file spells, plus the invariant at the root — the census of what the instance imposes, read off the configuration and not off the source').toEqual([
+    // ⟶ **SIX ELEMENTS SINCE `D-124`, AND THE ORDER IS PART OF THE CLAIM**: the four families' existence pairs, then the
+    // invariant's TWO seats at the two halves' OWN addresses — LAST, because at the creation instant each pair is asked in
+    // this list's own order and each seat must see the halves its siblings have just minted.
+    expect(batch.map((pair) => [pair['address'], pair['id']]), 'the batch is SIX pairs: one existence pair per address under the ids this file spells, plus the invariant at EACH half it judges — the census of what the instance imposes, read off the configuration and not off the source').toEqual([
       [RECORD, RECORD_ID],
       [APP_STATE, APP_STATE_ID],
       [EXCLUSION, EXCLUSION_ID],
       [PANE, PANE_ID],
-      [ROOT, EXCLUSIVITY_ID],
+      [PANE, PANE_EXCLUSIVITY_ID],
+      [EXCLUSION, PORTS_EXCLUSIVITY_ID],
     ])
 
     // THE SAME BATCH, adopted by a real store: every address stands at the creation instant, with no verb of any
@@ -214,7 +241,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // can put a value back — and it does, inside the construction, before the module reads anything.
     const second = createOperatorSettings({ userDataDir })
     const batch = lastBatch()
-    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'the second construction hands the package the same five pairs, at the same four addresses and the root (`D-123`)').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0], PANE[0], undefined])
+    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'the second construction hands the package the same six pairs: the four existence pairs and the invariant at each half it judges (`D-124`)').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0], PANE[0], PANE[0], EXCLUSION[0]])
     expect(armed(userDataDir, batch).read(EXCLUSION, 'mem'), 'so at the second instance’s creation instant the address stands at the safe pair again — the whole of V5’s closing, measured over two boots rather than asserted').toEqual({ exclusion: 'mcp-enabled' })
     expect({ exclusion: second.read().exclusion, tier4: second.read().tier4 }, 'and the second boot’s read serves it, which is the value clause 3 now gets from a constraint repair and from no file (D-84)').toEqual({ exclusion: 'mcp-enabled', tier4: false })
 
@@ -296,13 +323,13 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect({ cursor: receipt.cursor, opId: typeof receipt.opId === 'string' && receipt.opId.length > 0 }, 'exactly four ops stand behind the first caller write, and they are the four existence repairs’ — the invariant’s repair ran zero times').toEqual({ cursor: 5, opId: true })
   })
 
-  it('CD-6 · the batch’s membership is a census: all FOUR addresses carry an existence declaration and the invariant stands at the root, and each `file` declaration performs the import its address’s absence used to key — which is the half `D-84` stopped and `D-85` builds (D-84, D-85, D-123; D-82’s V1)', () => {
+  it('CD-6 · the batch’s membership is a census: all FOUR addresses carry an existence declaration, the invariant stands at EACH half it judges and at no other address, and each `file` declaration performs the import its address’s absence used to key — which is the half `D-84` stopped and `D-85` builds (D-84, D-85, D-124; D-82’s V1)', () => {
     createOperatorSettings({ userDataDir })
     const batch = lastBatch()
     // READ OFF THE CONFIGURATION THE MODULE HANDS THE PACKAGE, never off `src/**`: a comment naming an address cannot
     // satisfy this row, which is the hollow-green class D-84's row is written against.
-    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'five pairs, one per address and one at the root — the two `mem` families, the two `file` ones whose imports move INSIDE their repairs, and the invariant').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0], PANE[0], undefined])
-    expect(batch.map((pair) => pair['id']), 'under the five ids, so a declaration cannot be dropped or renamed silently').toEqual([RECORD_ID, APP_STATE_ID, EXCLUSION_ID, PANE_ID, EXCLUSIVITY_ID])
+    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'six pairs over FOUR addresses and no fifth: the two `mem` families, the two `file` ones whose imports move INSIDE their repairs, and the invariant at each `mem` half').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0], PANE[0], PANE[0], EXCLUSION[0]])
+    expect(batch.map((pair) => pair['id']), 'under the six ids, so a declaration cannot be dropped or renamed silently').toEqual([RECORD_ID, APP_STATE_ID, EXCLUSION_ID, PANE_ID, PANE_EXCLUSIVITY_ID, PORTS_EXCLUSIVITY_ID])
     expect(batch.every((pair) => typeof pair['constraint'] === 'function'), 'and every element carries its function — the batch’s own three-member rule').toBe(true)
 
     // **AND THE IMPORTS STILL RUN, WHICH IS WHAT THE THREE DECLARATIONS WOULD HAVE RETIRED IF THEIR REPAIRS HAD ONLY MINTED
@@ -378,34 +405,83 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // so `read()` falls back to `SAFE_PAIR` and the control's `before` reads `mcp-enabled` — both assertions red.
   })
 
-  it('CD-16 · ONE BODY, BOTH EDGES — the invariant stands at the store ROOT, so the SAME declaration is asked for a write at EITHER half`s address, and it answers the same sentence (D-123; `guide §7.6`)', () => {
-    // THE ADDRESS IS THE MEASUREMENT: a pair at one half's address is asked only for that half's landing op, so the root
-    // is where a pair that judges BOTH halves must stand. The batch says so, read off the configuration.
+  it('CD-16 · TWO SEATS, ONE PREDICATE, AND NO ROOT ADDRESS — the batch names no `[]`, each seat stands at the half whose landing op it is asked for, and a write at one half NEVER reaches the other (measured both ways); the reason two seats exist is that read (`D-124`, re-deriving `D-123`’s root-address census)', () => {
+    // **THE ROW THAT ASSERTED THE ROOT IS RE-DERIVED RATHER THAN SOFTENED (D-46).** `D-123` put ONE pair at `[]` because it
+    // held that "a pair at either half's address is asked for that half's landing op only, so only the root catches both
+    // edges with one body". The second half of that premise is the part that was wrong: a body can READ the other half
+    // (`guide §7.6`), so the root was compensating for a limitation that does not exist.
     createOperatorSettings({ userDataDir })
     const batch = lastBatch()
-    const invariant = batch.find((pair) => pair['id'] === EXCLUSIVITY_ID)
-    expect(invariant, 'the invariant is in the construction`s own batch, under the id this file spells').toBeDefined()
-    expect(invariant?.['address'], 'and it stands at the store`s ROOT — the one address every act of this instance is at or below').toEqual([])
 
-    // AND THE BODY ANSWERS AT BOTH LANDING ADDRESSES, driven directly over an instance whose pane stands open and whose
-    // ports stand closed (the state edge one left): the SAME refusal, from the SAME function, whichever half moved.
+    // (1) THE CENSUS — NO ROOT, AND BOTH SEATS AT THEIR OWN HALF'S ADDRESS. A root address is an EMPTY segment array, and
+    // that is what the batch no longer contains anywhere in it.
+    expect(batch.every((pair) => (pair['address'] as readonly string[]).length > 0), 'no element of the batch stands at the store`s root: the address is what makes the package ask a pair, and `[]` is an address no act of this instance writes').toBe(true)
+    expect(batch.filter((pair) => pair['id'] === PANE_EXCLUSIVITY_ID).map((pair) => pair['address']), 'the pane`s seat stands at the pane`s address, under the id that names the fault it can raise').toEqual([PANE])
+    expect(batch.filter((pair) => pair['id'] === PORTS_EXCLUSIVITY_ID).map((pair) => pair['address']), 'and the ports` seat stands at the ports` address, under the id that names the same state from its own side').toEqual([EXCLUSION])
+
+    // (2) THE MEASUREMENT THAT MAKES TWO SEATS NECESSARY — THE TRIGGERED SETS, BOTH DIRECTIONS. The module's own batch,
+    // wrapped in a counter and adopted by a real store, over the profile this instance already stands on (whose halves are
+    // the legal boot state, so every pair passes and no repair perturbs the set).
+    const asked: string[] = []
+    const store = armedCounting(batch, asked)
+    asked.length = 0
+    const atPane = store.write(PANE, 'mem', { open: false }) as unknown as { triggered: Array<{ address: readonly string[] }> }
+    expect(asked, 'A WRITE AT THE PANE`S ADDRESS asks the pairs standing AT that address and no pair at the other half — the ports` seat is not in this list').toEqual([PANE_ID, PANE_EXCLUSIVITY_ID])
+    expect(atPane.triggered.map((entry) => entry.address), 'and the act`s own `triggered` set carries that one address and nothing beside it').toEqual([PANE, PANE])
+
+    asked.length = 0
+    const atPorts = store.write(EXCLUSION, 'mem', { exclusion: 'mcp-enabled' }) as unknown as { triggered: Array<{ address: readonly string[] }> }
+    expect(asked, 'AND THE REVERSE: a write at the ports` address asks the pairs standing there and never the pane`s seat — a sibling write reaches NEITHER seat, whichever half moved').toEqual([EXCLUSION_ID, PORTS_EXCLUSIVITY_ID])
+    expect(atPorts.triggered.map((entry) => entry.address), 'and its `triggered` set is that one address too').toEqual([EXCLUSION, EXCLUSION])
+
+    // (3) ONE BATCH, ONE CONSTRUCTION, NO SECOND STORE: the six declarations ride ONE `createProfileStore` call.
+    const before = captured.length
+    createOperatorSettings({ userDataDir })
+    expect(captured.length - before, 'one construction hands the package exactly ONE configuration, so the six declarations are one batch in one store and never a second instance').toBe(1)
+    expect(batch.length, 'and the batch a reader counts is six elements long — the four existence pairs and the two seats').toBe(6)
+
+    // (4) BOTH SEATS CATCH THEIR OWN EDGE, THROUGH THE MODULE'S OWN VERBS (`CD-13`/`CD-14` are the same two edges read row
+    // by row; this is the census row's own sight of them).
+    const both = createOperatorSettings({ userDataDir })
+    expect(both.read().exclusion).toBe('mcp-enabled')
+    expect(both.writePane(true).status, 'the pane opens, and the pane seat`s repair settles the ports inside that write').toBe('committed')
+    expect(both.read().exclusion, 'so the instance cannot hold the illegal pair at the pane`s edge').toBe('mcp-disabled')
+    expect(both.write({ exclusion: 'mcp-enabled' }).status, 'and at the ports` edge the enable commits while the repair settles the same half').toBe('committed')
+    expect(both.read().exclusion, 'and the record still says the ports are closed').toBe('mcp-disabled')
+  })
+
+  it('CD-18 · EACH SEAT READS BOTH HALVES AND FOLLOWS THE STORE — the re-run hands a seat the repair`s landed value at ANOTHER address while `context.address` still names its own, so the seat judges what it READS (`D-124`; `guide §7.6`: *"If a constraint needs to look for the data at a given location, it can read()"*)', () => {
+    // **THE MEASUREMENT THE DESIGN RESTS ON, TAKEN 2026-11-05 ON THE INSTALLED `provident-storeroom@1.9.3`**: a write at
+    // `['operator-pane']` whose repair landed `{exclusion:'mcp-disabled'}` at `['operator-exclusion']` handed the pane`s seat
+    // `{address: ['operator-pane'], value: {exclusion:'mcp-disabled'}}` on the re-run — the pair`s address and its value
+    // DISAGREE, so `context.value` answers for the repair`s landing and not for the seat`s own half. That is why the seat
+    // reads BOTH halves through the store, and this row drives the consequence: a value at its own address that the store
+    // does not hold loses to what the store holds.
+    createOperatorSettings({ userDataDir })
+    const batch = lastBatch()
+    const paneSeat = seatAt(batch, PANE_EXCLUSIVITY_ID)
+    const portsSeat = seatAt(batch, PORTS_EXCLUSIVITY_ID)
+
+    // THE BOOT STATE: the pane record stands CLOSED and the pair stands ENABLED (`CD-1` measures both). So the ports stand
+    // OPEN and the pane stands closed — a legal state, and the one the readings below are taken against.
+    // (1) THE RE-RUN'S OWN SHAPE — a pair`s address carrying the OTHER address`s object passes, because the seat reads.
+    expect(paneSeat(atLanding(PANE, { exclusion: 'mcp-disabled' })), 'handed the repair`s landed pair at the PANE`s address, the pane`s seat answers for the pane it reads and not for the object it was handed').toBe(true)
+    // (2) THE DISCRIMINATING DRIVE — an OPEN-PANE value at the pane`s address that the store does NOT hold. A body trusting
+    //     `context.value` would judge an open pane over the ENABLED ports it reads and fault; the store says the pane is
+    //     closed, and the store is what this seat answers to.
+    expect(paneSeat(atLanding(PANE, { open: true })), 'a value the store does not hold cannot manufacture the fault: the pane stands closed at the address, so the seat passes').toBe(true)
+    // (3) AND THE MIRROR AT THE PORTS` SEAT: handed the PANE`s object at the PORTS` address, it does not mistake one half for
+    //     the other — it reads both, and the state it reads is legal.
+    expect(portsSeat(atLanding(EXCLUSION, { open: true })), 'the ports` seat handed the pane`s object still answers for the two halves it reads').toBe(true)
+    expect(portsSeat(atLanding(EXCLUSION, { exclusion: 'mcp-enabled' })), 'and handed its own half`s open word — which the store also holds, since the boot`s pair stands enabled — it passes, because the pane it reads stands closed').toBe(true)
+
+    // (4) THE OTHER DIRECTION IS UNREACHABLE, AND THAT IS THE INVARIANT`S OWN DOING: a store holding BOTH halves open is the
+    // state the two seats exist to make unholdable, so no act reaches a seat that must fault on what it reads. The faulting
+    // edge is therefore measured where it is reachable — through the surface, at `CD-13` and `CD-14`.
     const settings = createOperatorSettings({ userDataDir })
-    expect(settings.writePane(true).status).toBe('committed')
-    const body = bodyAt(batch, ROOT) as (context: unknown) => unknown
-    // the pair is not open and the pane is, so a LEGAL state passes at either address:
-    expect(body(atLanding(PANE, { open: true })), 'a legal state passes at the pane`s own landing').toBe(true)
-    expect(body(atLanding(EXCLUSION, { exclusion: 'mcp-disabled' })), 'and at the pair`s').toBe(true)
-
-    // now the ILLEGAL one, at each address, off the module's own instance:
-    const illegal = createOperatorSettings({ userDataDir })
-    expect(illegal.read().exclusion).toBe('mcp-enabled')
-    // drive the pane open WITHOUT the invariant's help is impossible through the surface — so the illegal state is built
-    // the only way the surface allows (the pane opens, the pair is repaired closed, and then the pair is FORCED open by a
-    // direct store write is not a route this module has). The illegal arm is therefore driven over the pure predicate the
-    // body judges, through a second body call at a synthetic context whose reads land on the same instance:
-    expect(illegal.writePane(true).status).toBe('committed')
-    expect(illegal.read().exclusion, 'the instance cannot hold the illegal pair, which is the whole claim').toBe('mcp-disabled')
-    expect(EXCLUSIVITY_ID, 'and the id names the fault rather than the act').toBe('no-open-pane-over-open-ports')
+    expect(settings.writePane(true).status, 'the pane opens, and its own seat`s repair closes the ports inside that write').toBe('committed')
+    expect(settings.read().exclusion, 'so the store cannot hold the pair the seat would have to fault on').toBe('mcp-disabled')
+    expect(paneSeat(atLanding(PANE, { exclusion: 'mcp-enabled' })), 'and handed the OPEN pair at its own address, the pane`s seat still passes: the store it reads holds the ports closed, and the read is the authority').toBe(true)
   })
 
   it('CD-17 · THE PANE FAMILY`S TWO ARMS — existence repaired at creation, and the value refused BEFORE any store verb by the module`s own write, which is the only route this module has to the record (D-105 read at the fourth address; D-123)', () => {
@@ -632,5 +708,57 @@ describe('the instance’s declarations · measured at the store’s creation (D
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
+  })
+
+  it('CD-19 · ONE ACT, ONE REPAIR — the two seats never settle one act twice: a repaired act lands EXACTLY two ops (its own write and one repair) and delivers on exactly the handles those two writes fired, an ordinary act lands one, and no act reaches the restart budget (`D-124`; `D-123`\u2019s repair direction, unchanged)', () => {
+    // **THE CONTROL THE PASS OWES ITSELF** (`D-124`): two pairs now judge one invariant, so the question a reader must be able
+    // to answer is whether ONE act can be repaired TWICE. It cannot, and the reason is the state and not a guard: whichever
+    // seat is asked first settles the PORTS, and the second seat then reads a legal state and passes. The two observables
+    // this row takes are the store's own ordinals and the instance's own deliveries.
+    const settings = createOperatorSettings({ userDataDir })
+    const delivered: string[] = []
+    settings.subscribe((address) => { delivered.push((address as readonly string[]).join('/')) })
+
+    // (1) A REPAIRED ACT: `writePane(true)` over the boot`s ENABLED ports — the pane`s write lands, its seat`s repair lands
+    //     the ports, and ONE re-run passes. Two landings and two deliveries, one per handle each of the two writes fired.
+    delivered.length = 0
+    const opened = settings.writePane(true)
+    expect(opened.status === 'committed' ? opened.cursor : null, 'the receipt names the SECOND op, because the repair`s landing is the commit`s last op — the caller`s own write is one behind it').toBe(6)
+    expect(delivered, 'and the instance delivers on the TWO handles those two writes fired, and on no third: one act, one repair').toEqual(['operator-exclusion', 'operator-exclusion'])
+    expect(settings.read().exclusion, 'the state the two landings leave is legal: the pane open and the ports closed').toBe('mcp-disabled')
+
+    // (2) THE SECOND EDGE, ONE REPAIR: the enable is the caller`s write and the ports` seat settles the same half.
+    delivered.length = 0
+    const enabled = settings.write({ exclusion: 'mcp-enabled' })
+    expect(enabled.status === 'committed' ? enabled.cursor : null, 'two landings again — the enable and the repair that overwrites it inside the same commit').toBe(8)
+    expect(delivered, 'and one delivery, because both writes fired the ports’ own handle').toEqual(['operator-exclusion'])
+    expect(settings.read().exclusion, 'and the ports are still closed under the open pane').toBe('mcp-disabled')
+
+    // (3) THE CONTROL — AN ORDINARY ACT IS NOT REPAIRED AT ALL: with the pane closed the same enable is one op and one
+    //     delivery, so every figure above is the invariant's and not a constant of the surface.
+    expect(settings.writePane(false).status, 'the pane closes').toBe('committed')
+    const before = settings.read().exclusion
+    expect(before, 'and the ports were closed when it closed').toBe('mcp-disabled')
+    delivered.length = 0
+    const ordinary = settings.write({ exclusion: 'mcp-enabled' })
+    expect(ordinary.status === 'committed' ? ordinary.cursor : null, 'an ordinary exclusion change lands ONE op: no seat is asked to fault, so no repair rides it').toBe(10)
+    expect(delivered, 'and delivers once').toEqual(['operator-exclusion'])
+    expect(settings.read().exclusion, 'and the caller`s own state stands').toBe('mcp-enabled')
+
+    // (4) AND THE BUDGET IS NEVER REACHED: ten alternating acts, each of which faults one seat and is repaired once, all
+    //     COMMIT — where a repair that re-fired would cross `ConstraintPassRefused` with the budget`s own clause (§7.7's
+    //     bound is three restarts per terminal act and this row spends one re-run per act, ten times over).
+    let ordinal = 10
+    for (let turn = 0; turn < 10; turn += 1) {
+      const openArm = settings.writePane(turn % 2 === 0)
+      expect(openArm.status, `CD-19/turn ${turn}: the pane act commits — a spent budget answers a refusal, never a commit`).toBe('committed')
+      ordinal += 1
+      const portsArm = settings.write({ exclusion: turn % 2 === 0 ? 'mcp-enabled' : 'mcp-disabled' })
+      if (portsArm.status === 'committed') ordinal += 1
+      expect(portsArm.status, `CD-19/turn ${turn}: and so does the ports act`).toBe('committed')
+      expect(settings.read().exclusion, `CD-19/turn ${turn}: no act leaves both halves open`).toBe('mcp-disabled')
+      ordinal += 1
+    }
+    expect(ordinal > 10, 'and the ten turns really moved the store, so the four claims above are a live pass and not a quiet one').toBe(true)
   })
 })
