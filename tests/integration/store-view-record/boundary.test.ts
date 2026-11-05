@@ -739,6 +739,37 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `D-117` blocks nothing, so no row is added), `strata/records/handover.md` (`39` of `60`, untouched) and
   //    `strata/records/store-tabs-record-unit.md` (exactly `40`, untouched).
   // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-118` — THE PANE-DRAG DEMO IS REBUILT FROM SOURCE AND GETS A GENERATOR, A STALENESS ROW AND A LIVE DRIVE.
+  //    **THE NEW SOURCE, ITS GENERATOR AND ITS BATTERY ARE NAMED ONE BY ONE** (not admitted by a prefix): `demo.ts` and
+  //    `README.md` are ALREADY DECLARED above (from `D-94`, where `demo.ts` was a deletion) and are NOT re-listed — this
+  //    pass writes both again, which is the difference between a write and a claim.
+  'demo/pane-drag-demo/stub-view.ts',
+  'demo/pane-drag-demo/build.mjs',
+  'demo/pane-drag-demo/demo.mjs',
+  'demo/pane-drag-demo/index.html',
+  'demo/pane-drag-demo/run-live.mjs',
+  //    THE OLD ARTIFACT'S IMAGES: three screenshots OF the retired store-backed demo (the drag ghost among them), removed
+  //    with the artifact they depicted. A deletion is a path `git status` reports like any other write.
+  'demo/pane-drag-demo/shot-boot.png',
+  'demo/pane-drag-demo/shot-committed.png',
+  'demo/pane-drag-demo/shot-ghost.png',
+  //    THE BATTERY: four gating rows (the staleness check, its fail-able control, the import-not-transcription census and
+  //    the retired mechanism's absence). It is a NEW test file, so `strata/marks.json` is REGENERATED for it below.
+  'tests/demo-bundle.test.ts',
+  //    THE TWO FILES OUTSIDE `demo/` THIS PASS WRITES: the typecheck leg is made to READ the demo's source (`D-94`'s
+  //    latent defect was a source no leg compiled), and the pointer file's `demo/` row names the demo's new shape.
+  'tsconfig.json',
+  'AGENTS.md',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE AND IS NAMED SO A READER CAN CHECK THE CLAIM:
+  //    `demo/pane-drag-demo/demo.ts`, `demo/pane-drag-demo/README.md` (both above), `strata/decisions.md` (the row),
+  //    `strata/brief.md` (§6's `npm test` figure and the test-file count), `strata/marks.json` (REGENERATED — a test file
+  //    is added), `strata/modules.json` (the `demo-panes` row gains the battery's path; `mapRows` stays `21`) and
+  //    `tests/integration/store-view-record/boundary.test.ts` (this block). **NO `src/` PATH IS WRITTEN** — which is why
+  //    the five Electron legs are not owed — and **THREE PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**:
+  //    `package.json` (NO `scripts` key is added: the build is the literal `node demo/pane-drag-demo/build.mjs`, so none
+  //    of the six key-set censuses moves), `strata/platform.md` (`60/60`, no platform fact moves) and
+  //    `strata/records/store-tabs-record-unit.md` (exactly `40`, untouched).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

@@ -2,65 +2,81 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Provident Pane-Drag Demo — store-backed drag, ghost preview, minimized-zone drop</title>
+<title>Provident pane-drag demo — the app's own gesture, on a stub shape</title>
+<!--
+  demo/pane-drag-demo/index.html — THE DEMO PAGE (D-118).
+
+  THIS FILE AUTHORS NO MECHANISM AND NO BEHAVIOUR. It is a container for five elements the demo's source resolves by name,
+  and every one of them stands for an element the app resolves from the producing graph through `Runtime.elementForNodeId`:
+
+    [data-gutter-handle]  the affordance element — the HANDLE the gesture is installed on. It carries NO `id` (so
+                          `createPaneDrag`'s `paneIdOf` derives the pane from the AXIS TOKEN `pane-a`, the id the stub
+                          family names) and its parent — #gutter-track — carries the DECOY `size`/`min`/`max` attributes
+                          the pre-`D-117` wiring read and the composition does not.
+    [data-gutter-target]  the preview target — the declared transient inline-style write lands here (§2.5 item 4).
+    #gutter-status        THE SINK (`D-117`'s `write` role): the one node a release writes through.
+    #stub-reading/etc.    the demo's readouts, filled by `demo.ts` from module counters and the stub's family.
+
+  The four control buttons are the demo's OWN — the app authors its controls as provident data, and this page cannot
+  (no graph, no runtime). They exist so the demo can show the SHAPE'S authority: change the stub, and the next drag starts
+  from the new value.
+-->
 <style>
-:root { --zone-border: #c9d1d9; --zone-bg: #0d1117; --pane-bg: #161b22; --ghost-opacity: 0.45; }
-* { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, sans-serif; background: #010409; color: #e6edf3; }
-#app { display: grid; grid-template-columns: 220px 200px 10px minmax(0, 1fr); grid-template-rows: calc(100vh - 6rem) 3.5rem auto; height: 100vh; gap: 6px; padding: 6px; }
-#gutter { grid-column: 3; grid-row: 1; width: 10px; cursor: col-resize; background: #21262d; border-radius: 3px; display: flex; align-items: stretch; position: relative; z-index: 5; }
-#gutter .gutter-grip { flex: 1; background: #30363d; margin: 2px 0; border-radius: 2px; }
-.pane-size { font-size: 10px; color: #8b949e; padding: 2px 8px; }
-.zone.zone-minimized { flex-direction: row; align-items: center; gap: 6px; }
-.zone.zone-minimized.zone-empty { border-style: dashed; opacity: 0.55; min-height: 2rem; }
-.zone.zone-minimized.zone-empty .pane-stack { display: none; }
-.zone.zone-minimized:not(.zone-empty) .pane-stack { display: flex; flex-direction: row; gap: 6px; min-height: 1.5rem; }
-.zone-minimized .zone-title { display: none; }
-.zone-tab { font-size: 11px; padding: 2px 8px; background: #21262d; border: 1px solid #30363d; border-radius: 3px; color: #c9d1d9; cursor: pointer; }
-.zone-expand-btn { font-size: 10px; padding: 2px 8px; background: #1f6feb; border: none; border-radius: 3px; color: #fff; cursor: pointer; }
-.tab-bar { display: flex; gap: 6px; margin-bottom: 6px; }
-.tab-btn { font-size: 11px; padding: 3px 10px; background: #21262d; border: 1px solid #30363d; border-radius: 3px; color: #c9d1d9; cursor: pointer; position: relative; padding-right: 22px; }
-.tab-close { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #8b949e; cursor: pointer; font-size: 12px; padding: 0 3px; }
-.tab-close:hover { color: #f85149; }
-.tab-btn.tab-new { padding-right: 10px; background: #21262d; border-style: dashed; }
-.tab-btn.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
-.tab-content { margin-top: 8px; font-size: 12px; }
-.tab-info { white-space: pre-wrap; color: #c9d1d9; }
-#tab-modify { margin-top: 6px; font-size: 11px; padding: 3px 10px; background: #238636; border: none; border-radius: 3px; color: #fff; cursor: pointer; }
-#app > .zone, #app > .statusbar { min-width: 0; min-height: 0; }
-.statusbar { grid-column: 1 / 5; grid-row: 3; }
-#zone-sidebar, #zone-main { height: 100%; min-height: 0; }
-#zone-main { grid-column: 2; grid-row: 1; min-width: 0; overflow: hidden; }
-#zone-footer { grid-column: 1 / 5; }
-.zone { border: 1px dashed var(--zone-border); background: var(--zone-bg); border-radius: 6px; padding: 6px; min-height: 0; display: flex; flex-direction: column; }
-.pane-stack { flex: 1; min-height: 0; overflow-y: auto; }
-.zone-title { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 6px; pointer-events: none; }
-#zone-footer .pane-stack { min-height: 1.5rem; }
-.pane-frame { background: var(--pane-bg); border: 1px solid #30363d; border-radius: 4px; margin-bottom: 6px; overflow: hidden; position: relative; z-index: 1; }
-.pane-frame.dragging { outline: 2px solid #58a6ff; }
-.pane-frame.ghost { opacity: var(--ghost-opacity); box-shadow: 0 0 0 1px #58a6ff inset; }
-.pane-head { display: flex; align-items: stretch; gap: 6px; padding: 4px 8px; background: #1c2128; cursor: grab; user-select: none; min-height: 26px; }
-.pane-head:active { cursor: grabbing; }
-.pane-handle { width: 10px; align-self: stretch; background: #30363d; border-radius: 2px; min-height: 18px; }
-.pane-title { font-size: 12px; }
-.pane-body { padding: 8px; font-size: 12px; color: #c9d1d9; min-height: 48px; }
-.statusbar { grid-column: 1 / 3; grid-row: 3; display:flex; gap: 12px; align-items:center; font-size: 11px; color:#8b949e; padding: 0 6px; }
-#log { overflow-y: auto; max-height: 60px; }
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; background: #010409; color: #e6edf3; }
+  #app { padding: 10px 12px 18px; }
+  h1 { font-size: 13px; font-weight: 600; color: #c9d1d9; margin: 0 0 2px; }
+  .sub { color: #8b949e; margin: 0 0 10px; }
+  /* THE TRACK is a flex row: the pane, then the HANDLE beside it, so the handle is never clipped by the pane and it
+     follows the pane's width in the layout (no script moves it). The handle's parent carries the DECOY attributes. */
+  #gutter-track { display: flex; align-items: stretch; height: 132px; margin: 0 0 12px; }
+  #gutter-pane { width: 100px; height: 100%; background: #161b22; border: 1px solid #30363d;
+                 border-radius: 4px; padding: 6px 8px; overflow: hidden; }
+  #gutter-pane .label { color: #8b949e; display: block; }
+  #gutter-pane .width { color: #58a6ff; display: block; margin-top: 4px; }
+  [data-gutter-handle] { flex: 0 0 14px; width: 14px; height: 100%; background: #30363d; border-radius: 3px;
+                         cursor: default; }
+  #gutter-status { margin: 0 0 12px; padding: 6px 8px; background: #0d1117; border: 1px dashed #30363d; border-radius: 4px;
+                   color: #7ee787; white-space: pre; }
+  .panel { border-top: 1px solid #21262d; padding-top: 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  button { font: inherit; padding: 3px 9px; background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #30363d; }
+  pre { margin: 0 0 8px; padding: 6px 8px; background: #0d1117; border: 1px solid #21262d; border-radius: 4px; overflow-x: auto; }
+  .note { color: #8b949e; }
 </style>
 </head>
 <body>
 <div id="app">
-  <section id="zone-sidebar" class="zone" data-zone="zone-1"><p class="zone-title">Zone 1 (source)</p><div class="pane-stack"></div><div class="pane-size" data-size-for="pane-a"></div></section>
-  <div id="gutter" class="gutter" data-gutter-for="zone-2"><div class="gutter-grip"></div></div>
-  <section id="zone-main" class="zone" data-zone="zone-2"><p class="zone-title">Zone 2 (target)</p>
-  <div class="tab-bar" id="tab-bar"></div>
-  <div class="pane-stack"></div>
-  <div class="tab-content" id="tab-content"><div class="tab-info" id="tab-info"></div><button id="tab-modify">modify active tab</button></div>
-</section>
-  <section id="zone-footer" class="zone" data-zone="zone-3"><p class="zone-title">Zone 3 (minimized at drag start)</p><div class="pane-stack"></div></section>
-</div>
-<div class="statusbar">
-  <span id="drag-state">idle</span><span id="store-state"></span><span id="log"></span>
+  <h1>Pane-drag demo — the app's own gesture session, affordance and pane-drag composition</h1>
+  <p class="sub">The handle below is the affordance element. Drag it: the size you see is the <em>stub shape's</em> record, never an attribute.</p>
+
+  <section id="gutter-track" size="999" min="0" max="999" resizable="true">
+    <div id="gutter-pane" data-gutter-target>
+      <span class="label">pane-a</span>
+      <span class="width" id="pane-width">100px</span>
+    </div>
+    <div data-gutter-handle axis="pane-a" title="drag me — horizontal resize"></div>
+  </section>
+
+  <p id="gutter-status">release: none yet</p>
+
+  <section class="panel">
+    <div class="row">
+      <button id="ctl-size-inc">stub size +40</button>
+      <button id="ctl-size-dec">stub size −40</button>
+      <button id="ctl-bounds-tight">stub bounds {20,180}</button>
+      <button id="ctl-bounds-default">stub bounds {0,200}</button>
+      <button id="ctl-reset">reset to the measured defaults</button>
+    </div>
+    <pre id="stub-reading"></pre>
+    <pre id="drag-reading"></pre>
+    <pre id="zone-reading"></pre>
+    <p class="note">The track's attributes read <code>size="999" min="0" max="999"</code> on purpose: the pre-<code>D-117</code>
+      wiring read them, and the composition this page calls reads <code>['panes']</code> instead. A drag that starts at 999
+      would mean the defect is back.</p>
+  </section>
 </div>
 <script type="module" src="./demo.mjs"></script>
 </body>

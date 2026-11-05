@@ -40,7 +40,7 @@ procedure — where the two could be confused, the row decides.
 | `strata/` | the live corpus: brief, decisions, six procedures, platform facts, unit state |
 | `docs/L1/`, `docs/L2/<module>/`, `docs/L3/<module>/` | layer design scopes, written by their layers only |
 | `src/main/`, `src/renderer/`, `src/shared/` | the app: MCP server + IPC bridge, producing process, shared modules |
-| `tests/`, `scripts/`, `demo/` | the suite, the Electron legs and MCP CLI, the live pane-drag demo |
+| `tests/`, `scripts/`, `demo/` | the suite, the Electron legs and MCP CLI, the pane-drag demo — `demo/pane-drag-demo/demo.ts` built by `node demo/pane-drag-demo/build.mjs`, with a suite row that reds when the bundle falls behind its sources (`D-118`) |
 | `archive/gate-corpus-2026-10-29/` | the retired gate corpus; `docs/<x>` resolves here as `<x>` |
 
 ## Current state

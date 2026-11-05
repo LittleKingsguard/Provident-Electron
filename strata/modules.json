@@ -260,7 +260,8 @@
     {
       "name": "demo-panes",
       "paths": [
-        "demo/pane-drag-demo/"
+        "demo/pane-drag-demo/",
+        "tests/demo-bundle.test.ts"
       ],
       "endpoints": 0
     },
