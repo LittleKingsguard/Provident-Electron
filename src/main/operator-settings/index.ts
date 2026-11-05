@@ -15,6 +15,13 @@
 // (guide §10.1; persistence §4). `tier4` is derived at the read and never stored, so the illegal
 // pair is unspellable (interface §1).
 //
+// **THE PAIR GAINED ITS SECOND MEMBER AT `D-125` — `wanted`, THE STATE THE OPERATOR ASKED FOR, BESIDE `exclusion`, THE STATE
+// THE PORTS STAND IN — AND THE INVARIANT BECAME ONE TWO-DIRECTIONAL RULE**: `exclusion` must stand at `wanted` while no pane is
+// open and at `mcp-disabled` while one is, so the OPEN edge settles the ports closed and PRESERVES the intent it read while the
+// CLOSE edge settles them back to it. Before that member the repair overwrote the only datum that could have answered "were the
+// ports supposed to be open?", so closing a pane could not re-open them — `D-123`'s own limit, superseded here by pointer.
+// **BOTH MEMBERS ARE STORED; `tier4` IS STILL DERIVED AT THE READ.**
+//
 // **THE FOURTH ADDRESS — `['operator-pane']` on `mem` — CARRIES THE OPERATOR PANE'S OPEN STATE, AND IT IS THE
 // OTHER HALF OF THE ONE INVARIANT THIS INSTANCE NOW HOLDS** (`D-123`): `{open: boolean}` alone, written by the
 // realm's own act (`writePane`, one `mem` write), and read by the constraint that refuses a store holding an open
@@ -68,8 +75,8 @@ import { storeCreate } from 'provident-storeroom'
  *  itself; `readLiteral`, `delete`, `rollback` and the four constraint members are never called. */
 type Store = ReturnType<typeof storeCreate>
 
-/** The durable row: the record minus the pair and the flag it derives (interface §1). */
-type Row = Omit<OperatorSettingsRecord, 'exclusion' | 'tier4'>
+/** The durable row: the record minus the pair and the members it derives (interface §1). */
+type Row = Omit<OperatorSettingsRecord, 'exclusion' | 'tier4' | 'pane'>
 
 /** The second import arm's answer as it is HELD: the four members an answer carries minus `storage`,
  *  which is the read's own member and never an arm's (signatures §3; design §2.2). */
@@ -84,6 +91,10 @@ export interface OperatorSettingsRecord {
   entries?: Readonly<Record<string, unknown>>
   exclusion: 'mcp-enabled' | 'mcp-disabled'
   tier4: boolean
+  /** **THE PANE'S OPEN STATE, READ FROM ITS OWN ADDRESS** (`D-125`): the one member a realm renders the operator surface
+   *  from. It is the FOURTH address's value and nothing else — the crossing's datum is `{open}`, and the four-state word
+   *  the overlay mechanism carries stays the renderer's (`CLOSED_PANE`'s docblock). */
+  pane: { open: boolean }
 }
 
 export interface OperatorSettingsPatch {
@@ -178,6 +189,9 @@ const FIRST_RUN: Row = { token: null, enabled: ['read', 'dispatch'] }
 /** What a boot, a crash, a torn record and a corrupt file all resolve to, because the pair is
  *  `mem` and is never persisted (interface §1 `ASM-L2-2`; behaviour §7). */
 const SAFE_PAIR: { exclusion: 'mcp-enabled' | 'mcp-disabled'; tier4: boolean } = { exclusion: 'mcp-enabled', tier4: false }
+/** **THE PAIR'S TWO WORDS ARE ONE VOCABULARY, SPELLED ONCE** (`D-125`): the state the ports STAND in and the state the
+ *  OPERATOR ASKED FOR. `tier4` is derived from the first and is never stored (interface §1). */
+type PortsWord = 'mcp-enabled' | 'mcp-disabled'
 /** **THE PANE FAMILY'S ONE WHOLE LEGAL VALUE, AND ITS ONE AUTHORITY** (`D-123`): `{open: false}`. The creation
  *  repair writes exactly this, the absence arms read exactly this, and the invariant treats an absent record as it
  *  treats a closed one — so no second literal answers "what is a closed pane". It is `{open}` ALONE: the four-state
@@ -186,9 +200,49 @@ const SAFE_PAIR: { exclusion: 'mcp-enabled' | 'mcp-disabled'; tier4: boolean } =
  *  'held'` — and a four-state word here would make `closing` a third half-open state this instance would have to
  *  decide about, which is a second authority over the mechanism (D-123). */
 const CLOSED_PANE: { open: boolean } = { open: false }
-/** The pair's other state, spelled once: the value the invariant's repair writes, which is the DIRECTION it settles
- *  (`D-123` — closing the ports is the safe half, because the pane is what the user is doing). */
-const PORTS_CLOSED: 'mcp-enabled' | 'mcp-disabled' = 'mcp-disabled'
+/** The pair's other state, spelled once: the value the settlement rule writes while a pane stands open, which is the
+ *  DIRECTION it settles (`D-123` — closing the ports is the safe half, because the pane is what the user is doing). */
+const PORTS_CLOSED: PortsWord = 'mcp-disabled'
+
+/** **THE PAIR'S ONE VALUE COMPOSITION — BOTH WORDS IN ONE WRITE, WHICH IS WHY THEY CANNOT BE TORN APART** (`D-125`).
+ *  `exclusion` is what the ports STAND in and `wanted` what the operator last ASKED for; a transition states both (the
+ *  operator's act IS both), and a repair states the effective word while PRESERVING the intent it read. One value, one
+ *  op, no window in which the record holds an intent it cannot state. */
+function portsValue(exclusion: PortsWord, wanted: PortsWord): { exclusion: PortsWord; wanted: PortsWord } {
+  return { exclusion, wanted }
+}
+
+/** **THE OPERATOR'S INTENT, READ OFF THE PAIR** (`D-125`): `wanted` where the pair names it, else the pair's own effective
+ *  word — a pair that names no intent states that what stands is what was asked, which is the total reading and the one
+ *  this module's own two writers always compose past. An ABSENT pair (and a pair whose two words are unreadable, which
+ *  `exclusionMustStand` refuses at a write instant) answers the boot's own safe word. */
+function wantedOf(pair: unknown): PortsWord {
+  if (plain(pair)) {
+    const wanted = pair['wanted']
+    if (pairAdmits(wanted)) return wanted
+    const effective = pair['exclusion']
+    if (pairAdmits(effective)) return effective
+  }
+  return SAFE_PAIR.exclusion
+}
+
+/** The pair's EFFECTIVE word, read off the value the store holds — `read()`'s own admission, spelled once. */
+function effectiveOf(pair: unknown): PortsWord {
+  if (plain(pair)) {
+    const effective = pair['exclusion']
+    if (pairAdmits(effective)) return effective
+  }
+  return SAFE_PAIR.exclusion
+}
+
+/** **THE ONE SPELLING OF THE SETTLEMENT RULE — THE WHOLE INVARIANT, IN ONE LINE** (`D-125`, which is `D-123`'s rule with
+ *  the edge `D-123` could not reach): *the ports stand what the operator asked for, unless the pane stands open over
+ *  them.* So the pair can never hold both halves open — the pane's half is a factor of the product — **and the close edge
+ *  has something to settle to**: the intent the open edge preserved. It is derived from the two halves' WORDS and from
+ *  nothing else, so a body may ask it of a read, of a landing or of a creation instant alike. */
+function settledPorts(wanted: PortsWord, paneOpen: boolean): PortsWord {
+  return wanted === 'mcp-enabled' && !paneOpen ? 'mcp-enabled' : PORTS_CLOSED
+}
 
 /** The one monotonic source of handle names, so no two subscriptions share an identity (design §8). */
 let issuance = 0
@@ -585,7 +639,7 @@ const APP_STATE_ABSENT_MESSAGE = 'no app-state row list stands at its address, s
 const RECORD_UNUSABLE_MESSAGE =
   'the operator record stands but carries a member that is no member of it, or a member outside its own domain, so no durable setting can be read from the record that stands'
 const EXCLUSION_UNUSABLE_MESSAGE =
-  "the operator exclusion stands but names no state — 'exclusion' is absent, or it is neither 'mcp-enabled' nor 'mcp-disabled' — so the pair names nothing the gate can apply"
+  "the operator exclusion stands but names no state — 'exclusion' is absent, or it is neither 'mcp-enabled' nor 'mcp-disabled', or 'wanted' is present and no such word — so the pair names nothing the gate can apply"
 const APP_STATE_UNUSABLE_MESSAGE =
   'the app-state row list stands but carries a row that is no row, a name that is not a non-empty string, or no value at all, so the row it holds cannot be read back'
 /** **THE PANE FAMILY'S TWO SENTENCES, AND THE TWO THE INVARIANT ANSWERS** (`D-123`). The first pair is the `mem` half's
@@ -597,6 +651,11 @@ const PANE_UNUSABLE_MESSAGE =
   "the operator pane record stands but carries no boolean 'open' — a member that is no member of it, a non-boolean value, or a memberless record — so the pane's open state cannot be read"
 const EXCLUSIVITY_MESSAGE =
   'the operator pane stands open while the MCP ports stand open, so the agent can read and dispatch from under the surface the pane was opened to configure'
+/** **THE OTHER EDGE'S SENTENCE** (`D-125`): the fault a CLOSED pane meets when the pair holds the ports against the
+ *  intent the record itself carries — named as the fault it is, because a write refused or repaired here is the operator
+ *  reading back a port state nobody asked for. */
+const PORTS_SETTLE_MESSAGE =
+  'the operator asked for the MCP ports to stand open, and no pane stands open over them, but the pair records them closed — so the ports are held shut against the operator\'s own recorded intent'
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE VALUE ARMS — A FAMILY THAT STANDS BUT CARRIES A VALUE ITS OWN READ CANNOT STATE IS REFUSED (D-105)
@@ -678,20 +737,30 @@ function recordAdmitsAt(node: readonly string[], value: unknown): boolean {
 
 /** The pair's one member and its two words — `fromStored`'s exclusion arm reads exactly this, and `SAFE_PAIR` answers
  *  where it cannot, which is the substitution the arm refuses. */
-function pairAdmits(value: unknown): boolean {
+function pairAdmits(value: unknown): value is PortsWord {
   return value === 'mcp-enabled' || value === 'mcp-disabled'
 }
 
-/** **THE PAIR AT ONE NODE**: the root is `{exclusion}` and nothing else, and a write at the member is one of the two
- *  words. **A PAIR THAT NAMES NO MEMBER IS REFUSED TOO** — `{}` reads as `SAFE_PAIR.exclusion`, which OPENS the gate,
- *  so a memberless pair is a state this family's read can only substitute for. */
+/** **THE PAIR AT ONE NODE**: the root is `{exclusion}` or `{exclusion, wanted}` and nothing else, and a write at either
+ *  member is one of the two words. **A PAIR THAT NAMES NO MEMBER IS REFUSED TOO** — `{}` reads as `SAFE_PAIR.exclusion`,
+ *  which OPENS the gate, so a memberless pair is a state this family's read can only substitute for. **AND `wanted` IS
+ *  ADMITTED RATHER THAN REQUIRED** (`D-125`): a pair that names no intent has made a total, derivable statement — what
+ *  stands is what was asked (`wantedOf`) — while a pair that names one has its word read. What is REFUSED is a member
+ *  outside the two, and an `exclusion` that is not a word: those are states no read of this module can state. */
 function exclusionAdmitsAt(node: readonly string[], value: unknown): boolean {
   if (node.length === 0) {
     if (!plain(value)) return false
     const members = Object.keys(value)
-    return members.length === 1 && members[0] === 'exclusion' && pairAdmits(value['exclusion'])
+    if (!members.includes('exclusion')) return false
+    for (const member of members) {
+      if (member !== 'exclusion' && member !== 'wanted') return false
+      if (!pairAdmits(value[member])) return false
+    }
+    return true
   }
-  return node.length === 1 && node[0] === 'exclusion' && pairAdmits(value)
+  if (node.length !== 1) return false
+  if (node[0] === 'exclusion' || node[0] === 'wanted') return pairAdmits(value)
+  return false
 }
 
 /** **THE PANE AT ONE NODE** (`D-123`): the root is `{open}` and nothing else, and a write at the member is one boolean.
@@ -709,19 +778,12 @@ function paneAdmitsAt(node: readonly string[], value: unknown): boolean {
   return node.length === 1 && node[0] === 'open' && typeof value === 'boolean'
 }
 
-/** **THE INVARIANT'S TWO HALVES, EACH READ OFF A VALUE AND NOT OFF AN ACT** (`D-123`): an absent record is a closed
- *  pane and an absent pair is enabled ports — which is the state BEFORE the family declarations run, and the state the
- *  invariant must not refuse at any instant but a landing one. **THE CONJUNCTION IS THE WHOLE PREDICATE**, and it has
- *  exactly one spelling in this file. */
+/** **THE INVARIANT'S PANE HALF, READ OFF A VALUE AND NOT OFF AN ACT** (`D-123`): an absent record is a closed pane,
+ *  which is the state BEFORE the family declarations run, and the state the rule must not fault at. **THE PREDICATE HAS
+ *  EXACTLY ONE SPELLING IN THIS FILE**, and since `D-125` the rule it feeds reads the PORTS half through
+ *  `effectiveOf`/`wantedOf` rather than through a second pair of tests here. */
 function paneStandsOpen(pane: unknown): boolean {
   return plain(pane) && pane['open'] === true
-}
-function portsStandOpen(pair: unknown): boolean {
-  return !(plain(pair) && pair['exclusion'] === PORTS_CLOSED)
-}
-/** The one spelling of the fault: `true` where the store holds both halves open at once. */
-function bothStandOpen(pane: unknown, pair: unknown): boolean {
-  return paneStandsOpen(pane) && portsStandOpen(pair)
 }
 
 /** One row of the list: a plain record naming a NON-EMPTY string and carrying its own `value` — `fromAppState`'s three
@@ -797,8 +859,8 @@ function registrationRoute(context: unknown): ((address: OperatorSettingsAddress
  *  commit — a caller's write IS its own commit (`signatures.md` §2's claim, re-grained there).
  *  The failed arm below is stated rather than fallen into, because a repair that reaches no lawful write says so in its
  *  own two members instead of answering `void`, which carries "no op". */
-function writeExclusion(context: unknown, exclusion: 'mcp-enabled' | 'mcp-disabled', standing: Store | null): RepairAnswer {
-  const value = { exclusion }
+function writeExclusion(context: unknown, exclusion: PortsWord, wanted: PortsWord, standing: Store | null): RepairAnswer {
+  const value = portsValue(exclusion, wanted)
   const routeWrite = registrationRoute(context)
   if (routeWrite !== undefined) return repairAnswer(routeWrite(EXCLUSION_ADDRESS, 'mem', value))
   if (standing === null) {
@@ -819,9 +881,10 @@ function writeExclusion(context: unknown, exclusion: 'mcp-enabled' | 'mcp-disabl
   }
 }
 
-/** **THE `mem` PAIR'S EXISTENCE REPAIR: `SAFE_PAIR`'S OWN VALUE, ONE WHOLE LEGAL VALUE, AT THE ONE ADDRESS** (`D-84`). */
+/** **THE `mem` PAIR'S EXISTENCE REPAIR: `SAFE_PAIR`'S OWN WORD, AS ONE WHOLE LEGAL VALUE, AT THE ONE ADDRESS** (`D-84`;
+ *  both members since `D-125`, because a pair minted with one member would come up with an intent nobody asked for). */
 function mintExclusion(context: unknown, standing: Store | null): RepairAnswer {
-  return writeExclusion(context, SAFE_PAIR.exclusion, standing)
+  return writeExclusion(context, SAFE_PAIR.exclusion, SAFE_PAIR.exclusion, standing)
 }
 
 /** **THE PANE FAMILY'S EXISTENCE REPAIR: THE SAME SHAPE AT THE FOURTH ADDRESS** (`D-123`), and it writes
@@ -1002,13 +1065,23 @@ function paneAndPortsAreExclusive(own: 'pane' | 'ports', context: unknown, stand
   } else {
     pair = plain(context) ? context['value'] : undefined
   }
-  if (!bothStandOpen(pane, pair)) return true
+  // **THE RULE IS ONE LINE AND IT IS ASKED AT BOTH EDGES** (`D-125`): the ports stand what the operator asked for unless
+  // the pane stands open over them. An OPEN PANE settles the ports closed — the fault `D-123` made unholdable — and a
+  // CLOSED PANE settles them back to the intent the open edge preserved, which is the edge that row could not reach
+  // because the intent it would have read had been overwritten by its own repair.
+  const wanted = wantedOf(pair)
+  const required = settledPorts(wanted, paneStandsOpen(pane))
+  if (effectiveOf(pair) === required) return true
+  // THE SENTENCE NAMES THE FAULT THE SEAT ACTUALLY MET, and the two faults are the two edges: a pane standing open over
+  // ports that stand open, or ports held closed against an operator who asked for them with no pane open at all.
+  const message = paneStandsOpen(pane) ? EXCLUSIVITY_MESSAGE : PORTS_SETTLE_MESSAGE
   // THE REPAIR SETTLES THE PORTS AND LEAVES THE PANE ALONE, AT EITHER SEAT (`D-123`, unchanged at `D-124`): closing the
   // ports is the safe half — the pane is what the operator is doing — and it is expressible: the crossing's own answer is
   // `{applied, state}` and the realm paints it, while the pane's authored open state is already the user's. Both seats
   // route it through the module's ONE repair-write path, so the ports' seat writes at its own address and the pane's
-  // seat writes at the other, and neither composes a value of its own.
-  return { message: EXCLUSIVITY_MESSAGE, repair: (repairContext: unknown) => writeExclusion(repairContext, PORTS_CLOSED, standing) }
+  // seat writes at the other, and neither composes a value of its own — **AND THE INTENT IT SETTLES AGAINST IS THE ONE
+  // IT JUST READ**, written back beside the effective word so a repair can never consume what it settles.
+  return { message, repair: (repairContext: unknown) => writeExclusion(repairContext, required, wanted, standing) }
 }
 
 /** **THE FIRST ARM IS EXISTENCE** (`D-85`): `plain(value)` is the read's own admission — `read()` is
@@ -1124,22 +1197,26 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     const standing = store
     let durable: unknown
     let pair: unknown
+    let pane: unknown
     if (standing !== null) {
-      // Two reads in ONE synchronous turn with no `await` between them, and `AddressNotFound` /
+      // Three reads in ONE synchronous turn with no `await` between them, and `AddressNotFound` /
       // `TierNotFound` / any other failure resolving to the defaults: a read is never a refusal
       // and this surface has no channel for one (design §5; interface §2).
       try { durable = standing.read(RECORD_ADDRESS, 'file') } catch { durable = undefined }
       try { pair = standing.read(EXCLUSION_ADDRESS, 'mem') } catch { pair = undefined }
+      try { pane = standing.read(PANE_ADDRESS, 'mem') } catch { pane = undefined }
     }
     // **NO IMPORT STANDS ON THIS PATH ANY MORE** (D-85): the record address's absence is repaired at the creation
     // instant, so `durable` is the imported-or-placeholder record the store itself holds. `FIRST_RUN` remains as the
     // answer for the ONE arm no declaration can reach — a refused construction, whose read has no store behind it and
     // whose `FIRST_RUN` is therefore not a substituted placeholder but the only value there is (measured, D-84).
     const row = plain(durable) ? fromStored(durable) : FIRST_RUN
-    const exclusion: 'mcp-enabled' | 'mcp-disabled' = plain(pair) && (pair.exclusion === 'mcp-disabled' || pair.exclusion === 'mcp-enabled')
-      ? pair.exclusion
-      : SAFE_PAIR.exclusion
-    const answer: OperatorSettingsRecord = { token: row.token, enabled: [...row.enabled], exclusion, tier4: exclusion === 'mcp-disabled' }
+    const exclusion = effectiveOf(pair)
+    // THE PANE'S WORD IS THE STORE'S, with the closed record as the answer for the arm no declaration reaches — the same
+    // arm and the same reason as `FIRST_RUN`'s (`CLOSED_PANE` is the constant the creation repair writes, so the
+    // substitution and the repair cannot disagree).
+    const paneWord = plain(pane) && typeof pane['open'] === 'boolean' ? { open: pane['open'] } : { open: CLOSED_PANE.open }
+    const answer: OperatorSettingsRecord = { token: row.token, enabled: [...row.enabled], exclusion, tier4: exclusion === 'mcp-disabled', pane: paneWord }
     if (row.maxJournalLength !== undefined) answer.maxJournalLength = row.maxJournalLength
     if (row.entries !== undefined) answer.entries = detach(row.entries) as Readonly<Record<string, unknown>>
     return answer
@@ -1184,7 +1261,12 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     if (!hasExclusion && !durable) return refuse('the patch names no member of either tier')
     if (hasExclusion) {
       if (exclusion !== 'mcp-enabled' && exclusion !== 'mcp-disabled') return refuse('exclusion is mcp-enabled or mcp-disabled')
-      try { return receiptOf(standing.write(EXCLUSION_ADDRESS, 'mem', { exclusion })) } catch (caught) { return refusalOf(caught, EXCLUSION_ADDRESS) }
+      // **THE OPERATOR'S ACT STATES BOTH WORDS** (`D-125`): what the ports stand in and what the operator asked for are
+      // the same word at this act, so ONE write carries both and the settle rule has nothing to repair on a lawful edge.
+      // (Under an open pane this lands `{exclusion:'mcp-enabled', wanted:'mcp-enabled'}` and the invariant's repair settles
+      // the effective word back to closed INSIDE this write — the row `D-123` measured as edge two, now with the intent
+      // preserved rather than overwritten.)
+      try { return receiptOf(standing.write(EXCLUSION_ADDRESS, 'mem', portsValue(exclusion, exclusion))) } catch (caught) { return refusalOf(caught, EXCLUSION_ADDRESS) }
     }
     try {
       // The whole record value is composed from `read()`'s durable row overridden by the supplied

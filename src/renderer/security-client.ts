@@ -48,6 +48,13 @@ export interface SecurityCommittedReading {
   readonly maxJournalLength?: number
   readonly exclusion: ExclusionState
   readonly read: Tier4ClosedRefusal | null
+  /** **THE PANE'S OPEN STATE, MEMBER FOR MEMBER WITH `IPC_SECURITY_GET`'s ANSWER** (`D-125`): the crossing's fourth
+   *  address, which the realm now RENDERS from. **IT IS OPTIONAL AND THE OTHER MEMBERS ARE NOT, WHICH IS THE ANSWER'S OWN
+   *  SHAPE AND NOT AN INDULGENCE**: a bridge that predates this member has simply not answered about the pane, and the
+   *  shape then says `pane: null` — the same statement the client already makes about a record it has not heard from —
+   *  while a member that IS present and is not the crossing's `{open: boolean}` is `answer-not-declared` exactly as an
+   *  unreadable exclusion is. Nothing is fabricated either way. */
+  readonly pane?: { readonly open: boolean }
 }
 
 /** **THE CLIENT'S READING — the committed arm plus the TWO STATEMENTS this module can make and must never hide**: the
@@ -71,6 +78,9 @@ export interface SecurityShape {
   readonly maxJournalLength?: number
   readonly exclusion: ExclusionState | null
   readonly read: Tier4ClosedRefusal | null
+  /** **THE PANE'S WORD, OR `null` BEFORE ANYTHING HAS ANSWERED** — never a fabricated `false`, which would be a pane state
+   *  this realm invented. The overlay renders from it and writes the boolean beside it (`D-125`). */
+  readonly pane: { readonly open: boolean } | null
 }
 
 /** THE SUBSCRIPTION'S OWN ANSWER — the `tabs-client` shape: whether it installed, why it did not, and a withdrawal that is
@@ -110,7 +120,7 @@ export interface SecurityClient {
 /** The shape before anything has answered: the empty pair, `filled: false`, and the two additive members at the `null` the
  *  pane's `D-vi` reading gives them. **IT IS NOT A SUBSTITUTION AT THE READ**: a consumer that has heard nothing paints
  *  nothing about the record, which is exactly what the pane did with `refresh()`'s never-answered arm. */
-const emptyShape = (): SecurityShape => ({ filled: false, token: null, enabled: [], exclusion: null, read: null })
+const emptyShape = (): SecurityShape => ({ filled: false, token: null, enabled: [], exclusion: null, read: null, pane: null })
 
 /** THE AMBIENT MEMBER, READ AT CALL TIME — never at construction, so a bridge installed after the client was built is still
  *  found, and a realm with no `window` at all is the absent case rather than a `ReferenceError`. TOTAL: every step is a
@@ -136,6 +146,15 @@ function stringsIn(held: unknown): readonly string[] | null {
  *  painted as `· MCP: enabled` by the pane's `=== 'mcp-disabled'` test, which is a state the carrier never supplied. */
 function exclusionIn(held: unknown): ExclusionState | null {
   return held === 'mcp-enabled' || held === 'mcp-disabled' ? held : null
+}
+
+/** **THE PANE'S ONE WORD, ADMITTED BY ITS OWN DOMAIN** (`D-125`): `{open: boolean}` is the fourth address's whole value,
+ *  so a member that is not a plain object carrying one boolean is not the crossing's datum — an answer is then
+ *  `answer-not-declared`, exactly as an unreadable exclusion is, and the pane renders nothing rather than a guess. */
+function paneIn(held: unknown): { readonly open: boolean } | null {
+  if (!isObject(held) || Array.isArray(held)) return null
+  const open = (held as Record<string, unknown>)['open']
+  return typeof open === 'boolean' ? { open } : null
 }
 
 /** THE TIER-4 REFUSAL, admitted by its token — the pane paints the TOKEN alone (`· refused: tier4-closed`), never the
@@ -167,7 +186,14 @@ function committedOrDivergence(raw: unknown): { readonly reading: SecurityCommit
   if (exclusion === null) return { detail: 'exclusion is not one of the pair’s two words' }
   const refusal = refusalArm(raw['read'])
   if ('detail' in refusal) return { detail: refusal.detail }
-  const reading: { status: 'committed'; token: string | null; enabled: readonly string[]; maxJournalLength?: number; exclusion: ExclusionState; read: Tier4ClosedRefusal | null } = { status: 'committed', token, enabled, exclusion, read: refusal.refusal }
+  // **THE PANE'S MEMBER IS READ WHERE IT IS PRESENT AND IS NOT INVENTED WHERE IT IS ABSENT**: `undefined` is a bridge that
+  // has not answered about the pane (`null` on the shape, and the overlay renders nothing from it), while any other
+  // non-`{open: boolean}` value is a divergence this row refuses.
+  const heldPane = raw['pane']
+  const pane = heldPane === undefined ? undefined : paneIn(heldPane)
+  if (pane === null) return { detail: 'pane is not the crossing’s `{open: boolean}`' }
+  const reading: { status: 'committed'; token: string | null; enabled: readonly string[]; maxJournalLength?: number; exclusion: ExclusionState; read: Tier4ClosedRefusal | null; pane?: { open: boolean } } = { status: 'committed', token, enabled, exclusion, read: refusal.refusal }
+  if (pane !== undefined) reading.pane = pane
   if (heldCap !== undefined) reading.maxJournalLength = heldCap
   return { reading }
 }
@@ -192,12 +218,13 @@ export function createSecurityClient(options: SecurityClientOptions = {}): Secur
   function adopt(reading: SecurityClientReading): void {
     lastReading = reading
     if (reading.status !== 'committed') return
-    const next: { filled: boolean; token: string | null; enabled: readonly string[]; maxJournalLength?: number; exclusion: ExclusionState | null; read: Tier4ClosedRefusal | null } = {
+    const next: { filled: boolean; token: string | null; enabled: readonly string[]; maxJournalLength?: number; exclusion: ExclusionState | null; read: Tier4ClosedRefusal | null; pane: { open: boolean } | null } = {
       filled: true,
       token: reading.token,
       enabled: reading.enabled,
       exclusion: reading.exclusion,
       read: reading.read,
+      pane: reading.pane === undefined ? null : { open: reading.pane.open },
     }
     if (reading.maxJournalLength !== undefined) next.maxJournalLength = reading.maxJournalLength
     shape = next
@@ -239,7 +266,7 @@ export function createSecurityClient(options: SecurityClientOptions = {}): Secur
   return {
     shape(): SecurityShape {
       // A COPY OF THE ONE LIST, so no caller can move the shape the next delivery replaces.
-      const held: SecurityShape = { filled: shape.filled, token: shape.token, enabled: [...shape.enabled], exclusion: shape.exclusion, read: shape.read }
+      const held: SecurityShape = { filled: shape.filled, token: shape.token, enabled: [...shape.enabled], exclusion: shape.exclusion, read: shape.read, pane: shape.pane === null ? null : { open: shape.pane.open } }
       return shape.maxJournalLength === undefined ? held : { ...held, maxJournalLength: shape.maxJournalLength }
     },
 

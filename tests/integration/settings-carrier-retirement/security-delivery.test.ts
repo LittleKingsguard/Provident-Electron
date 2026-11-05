@@ -243,13 +243,20 @@ describe('settings-carrier-retirement · THE SECURITY RECORD’S DELIVERY (D-106
     //     function (`startSecurityShape`), because the wiring module holds three other clients whose own boot fills are not
     //     this subject.
     const wiring = code.get('src/renderer/renderer.ts') as string
-    expect((wiring.match(/startSecurityShape\(panels\)/g) ?? []).length, 'the shape is started at ONE boot site').toBe(1)
+    // ⟶ **THE BOOT SITE NAMES THE OVERLAY APPLICATION TOO SINCE `D-125`**: the pane is a LISTENER'S PRODUCT, so the very
+    // subscription this row counts is the one whose delivery renders it — one registration, two consumers, and no second
+    // `security.onChanged` anywhere for the pane to listen on.
+    expect((wiring.match(/startSecurityShape\(panels, overlayApplication\)/g) ?? []).length, 'the shape is started at ONE boot site').toBe(1)
+    expect((wiring.match(/client\.subscribe\(/g) ?? []).length, 'and the module takes ONE subscription per crossing and never a second for the pane: FOUR in all — the tab record, the view shape, the app-state rows and this one — so the overlay renders from THIS delivery rather than registering again').toBe(4)
     const at = wiring.indexOf('function startSecurityShape(')
     expect(at, 'the boot site is one function, named').toBeGreaterThan(-1)
     const shapeBody = wiring.slice(at, wiring.indexOf('\nfunction ', at + 1) === -1 ? undefined : wiring.indexOf('\nfunction ', at + 1))
     expect((shapeBody.match(/client\.subscribe\(/g) ?? []).length, 'that function takes ONE subscription').toBe(1)
     expect((shapeBody.match(/client\.fill\(\)/g) ?? []).length, 'and performs the ONE stated boot read, never a second').toBe(1)
     expect((shapeBody.match(/panels\?\.applySecurity\(/g) ?? []).length, 'and the ONLY two turns that reach the consumer are the delivery’s and the boot fill’s').toBe(2)
+    // **AND THE DELIVERY'S BODY IS WHERE THE PANE RENDERS** (`D-125`): one `overlay?.render()`, inside the same subscription
+    // body, after the panels are painted — the store's word is what the render reads, and this is the turn it reads it in.
+    expect((shapeBody.match(/overlay\?\.render\(\)/g) ?? []).length, 'the overlay’s render ride the delivery, exactly once').toBe(1)
 
     // (e) **THE ONE READ THIS REALM MAKES OUTSIDE THE CLIENT IS NAMED AND IS NOT A COUNTERPART** (`D-104`’s audit class (i)):
     //     `main()`’s `bridge.security.get()` is the TIER-4 SNAPSHOT the app Runtime’s Supervisor is constructed from — a boot

@@ -40,7 +40,11 @@ export interface SettingsGateSink {
 export type SettingsSetAnswer = { token: string | null; enabled: string[]; maxJournalLength?: number
   write: SecurityWriteReceipt; exclusion: ExclusionState }
 export type SettingsReadAnswer = { token: string | null; enabled: string[]; maxJournalLength?: number
-  read: Tier4ClosedRefusal | null; exclusion: ExclusionState }
+  read: Tier4ClosedRefusal | null; exclusion: ExclusionState
+  /** **THE PANE'S OPEN STATE, ON THE READ THE REALM ALREADY TAKES** (`D-125`; `D-82` clause 2). The renderer renders the
+   *  operator surface from a DELIVERY, and a delivery is a re-read — so the datum it renders from has to be on this answer.
+   *  It is the fourth address's value as the instance read it, and this module composes nothing: the crossing owns `{open}`. */
+  pane: { open: boolean } }
 export type SettingsTransitionAnswer =
   | { applied: true; state: ExclusionState }
   | { applied: false; state: ExclusionState; reason?: 'malformed-state' }
@@ -198,6 +202,8 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
       enabled: [...record.enabled],
       read: open ? TIER4_CLOSED_REFUSAL : null,
       exclusion: record.exclusion,
+      // ONE reading of the instance's row feeds all three additive members, so they cannot carry three states.
+      pane: { open: record.pane.open },
     }
     if (record.maxJournalLength !== undefined) answer.maxJournalLength = record.maxJournalLength
     return answer

@@ -40,6 +40,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 /** **THE CAPTURE IS HOISTED BECAUSE `vi.mock` IS**: a factory closing over a plain module-level binding would run before
  *  that binding exists, and the wrapper below must be in place before `src/main/operator-settings` is imported. */
 const captured = vi.hoisted(() => [] as Array<Record<string, unknown>>)
+/** **THE INSTANCES THE MODULE CONSTRUCTED, IN ORDER** (`D-125`): a `mem` address lives in ONE store instance and in no
+ *  file, so the live pair — `{exclusion, wanted}` — is readable only off the store the module itself holds. `armed()`
+ *  cannot answer it: that store is a second instance whose own creation repairs mint the boot value, which is what `CD-1`
+ *  measures and what these rows must NOT mistake for the act's landing. */
+const constructed = vi.hoisted(() => [] as unknown[])
 vi.mock('provident-storeroom', async (importOriginal) => {
   const real = await importOriginal<typeof import('provident-storeroom')>()
   const realCreate = real.storeCreate as unknown as (config: Record<string, unknown>) => unknown
@@ -49,7 +54,9 @@ vi.mock('provident-storeroom', async (importOriginal) => {
     // real instance, so the module under test behaves exactly as it does in the boot.
     storeCreate: (config: Record<string, unknown>) => {
       captured.push(config)
-      return realCreate(config)
+      const instance = realCreate(config)
+      constructed.push(instance)
+      return instance
     },
   }
 })
@@ -95,6 +102,14 @@ function lastBatch(): readonly Record<string, unknown>[] {
   if (config === undefined) throw new Error('the module constructed no store')
   const batch = config['constraints']
   return Array.isArray(batch) ? (batch as Record<string, unknown>[]) : []
+}
+
+/** **THE INSTANCE'S OWN PAIR, READ WHERE IT LIVES** (`D-125`): the last store the module constructed, read at the
+ *  exclusion address's `mem` tier. It is the ONLY instrument that answers the operator's intent, because a `mem` value is
+ *  in no file and the module's record does not carry it. */
+function livePair(): Record<string, unknown> {
+  const instance = constructed[constructed.length - 1] as { read(address: readonly string[], tier: string): unknown }
+  return instance.read(EXCLUSION, 'mem') as Record<string, unknown>
 }
 
 /** A REAL store over a SCRATCH file, built with the batch the module hands the package — the creation instant, stood
@@ -197,7 +212,10 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // THE SAME BATCH, adopted by a real store: every address stands at the creation instant, with no verb of any
     // caller's having run, on a profile whose file is empty.
     const created = armed(userDataDir, batch)
-    expect(created.read(EXCLUSION, 'mem'), 'the pair stands, and it is `SAFE_PAIR`’s own value written as ONE whole `{exclusion}`: `tier4` is derived at the read and is never stored (interface.md §1)').toEqual({ exclusion: 'mcp-enabled' })
+    // ⟶ **THE PAIR'S VALUE GAINS ITS SECOND WORD AT `D-125`, AND BOTH ARE MINTED IN ONE WRITE**: `exclusion` is what the
+    // ports STAND in and `wanted` what the operator ASKED for — the datum the close edge reads back, which `D-123`'s
+    // repair was overwriting. `tier4` is still derived at the read and stored nowhere (interface.md §1).
+    expect(created.read(EXCLUSION, 'mem'), 'the pair stands, and it is `SAFE_PAIR`’s own word written as ONE whole `{exclusion, wanted}`: both members, because a pair minted with one would come up with an intent nobody asked for').toEqual({ exclusion: 'mcp-enabled', wanted: 'mcp-enabled' })
     expect(created.read(RECORD, 'file'), 'the durable record stands, at `FIRST_RUN`’s own image: a profile holding no retired seed has nothing to import, so the repair writes the placeholder the read used to substitute (D-85)').toEqual({ enabled: ['read', 'dispatch'] })
     expect(created.read(APP_STATE, 'file'), 'and the row list stands with the arm the import ran in it — `absent`, because this profile carries no retired carrier (D-85)').toEqual({ rows: [], legacy: 'absent', unrepresentable: [] })
     // **THE FOURTH ADDRESS STANDS CLOSED, AND THE INVARIANT IT HALVES HOLDS AT THE CREATION INSTANT**: an open pane over
@@ -224,9 +242,10 @@ describe('the instance’s declarations · measured at the store’s creation (D
     const standing = armed(userDataDir, lastBatch()).read(EXCLUSION, 'mem') as Record<string, unknown>
     // THE DERIVATION THE READ PERFORMS, REPEATED OVER THE REPAIRED RECORD: `tier4` is `exclusion === 'mcp-disabled'` and
     // the two words the member may carry are the pair's whole domain (interface.md §1).
-    expect(Object.keys(standing).sort(), 'the repaired value carries the pair’s one stored member and no derived one').toEqual(['exclusion'])
+    expect(Object.keys(standing).sort(), 'the repaired value carries the pair’s two stored members and no derived one: the state the ports stand in, the state the operator asked for').toEqual(['exclusion', 'wanted'])
     expect(standing['exclusion'], 'and it is the constant the read substitutes over an absent address — a placeholder that disagreed with the read-side default would be two authorities for one value').toBe(settings.read().exclusion)
     expect(standing['exclusion'] === 'mcp-disabled', 'so `tier4`, derived from the repaired record, is the boolean the module answers').toBe(settings.read().tier4)
+    expect(standing['wanted'], 'and the intent the repair wrote is the same word — a boot mints what the operator asked for, because on a fresh profile nobody asked for anything else').toBe(standing['exclusion'])
     // AND A TRANSITION MOVES BOTH TOGETHER: the read is not substituting a constant over a record that says otherwise.
     expect(settings.write({ exclusion: 'mcp-disabled' }).status, 'the transition commits').toBe('committed')
     expect({ exclusion: settings.read().exclusion, tier4: settings.read().tier4 }, 'and the pair the store holds is what the read answers').toEqual({ exclusion: 'mcp-disabled', tier4: true })
@@ -242,7 +261,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     const second = createOperatorSettings({ userDataDir })
     const batch = lastBatch()
     expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'the second construction hands the package the same six pairs: the four existence pairs and the invariant at each half it judges (`D-124`)').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0], PANE[0], PANE[0], EXCLUSION[0]])
-    expect(armed(userDataDir, batch).read(EXCLUSION, 'mem'), 'so at the second instance’s creation instant the address stands at the safe pair again — the whole of V5’s closing, measured over two boots rather than asserted').toEqual({ exclusion: 'mcp-enabled' })
+    expect(armed(userDataDir, batch).read(EXCLUSION, 'mem'), 'so at the second instance’s creation instant the address stands at the safe pair again — the whole of V5’s closing, measured over two boots rather than asserted').toEqual({ exclusion: 'mcp-enabled', wanted: 'mcp-enabled' })
     expect({ exclusion: second.read().exclusion, tier4: second.read().tier4 }, 'and the second boot’s read serves it, which is the value clause 3 now gets from a constraint repair and from no file (D-84)').toEqual({ exclusion: 'mcp-enabled', tier4: false })
 
     // **AND ON THIS ARM ONLY ONE REPAIR LANDS, WHICH IS THE OPPOSITE OF `D-85`'S LIMIT AND IS THAT LIMIT OVERTURNED**
@@ -393,14 +412,19 @@ describe('the instance’s declarations · measured at the store’s creation (D
     //     does not stand, so the pane is still open and the pair is what was settled.
     expect(settings.write({ exclusion: 'mcp-enabled' }).status, 'the enable commits (the repair lands)').toBe('committed')
     expect(settings.read().exclusion, 'and the record still says the ports are closed — the pane stands open, so the repair settled the PAIR and left the pane alone').toBe('mcp-disabled')
-    // (3) THE CONTROL — AN ORDINARY EXCLUSION CHANGE STILL WORKS: with the pane closed the same enable is the caller's own
-    //     write, it lands at the pair's own address and NOTHING repairs it.
+    // (3) THE CONTROL — AN ORDINARY EXCLUSION CHANGE STILL WORKS, **AND SINCE `D-125` IT IS DRIVEN FROM A DISABLED
+    //     INTENT**: closing the pane now settles the ports to the intent the open edge preserved (`CD-21` measures that
+    //     edge), so the close below RE-OPENS them; the control therefore states the intent first and then makes the change
+    //     the caller owns.
     expect(settings.writePane(false).status, 'the pane closes').toBe('committed')
+    expect(settings.read().exclusion, 'and the ports follow the intent it carried out with it — enabled, because (2)`s enable was recorded as one').toBe('mcp-enabled')
+    expect(settings.write({ exclusion: 'mcp-disabled' }).status, 'the intent is disabled with the pane closed — an ordinary act').toBe('committed')
     const before = settings.read().exclusion
     const ordinary = settings.write({ exclusion: 'mcp-enabled' })
     expect(ordinary.status, 'and the exclusion change commits').toBe('committed')
     expect(settings.read().exclusion, 'THE CONTROL: the caller`s own state stands, so the row above is the invariant at work and not a blanket close').toBe('mcp-enabled')
     expect(before, 'and it was closed before this write, so the control measured a move and not a coincidence').toBe('mcp-disabled')
+    expect(ordinary.status === 'committed' ? ordinary.cursor : null, 'AND NOTHING REPAIRED IT — one op, where each of the two edges above landed two (the act and the seat`s repair)').toBe(13)
     // the control's own red-on-revert: remove the pair's existence declaration and this write has no `mem` version to move,
     // so `read()` falls back to `SAFE_PAIR` and the control's `before` reads `mcp-enabled` — both assertions red.
   })
@@ -513,6 +537,107 @@ describe('the instance’s declarations · measured at the store’s creation (D
     } finally {
       rmSync(unusable, { recursive: true, force: true })
     }
+  })
+
+  /** ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   *  `D-125` — THE OPERATOR'S INTENT, AND THE EDGE THE INVARIANT COULD NOT REACH. The instruction, verbatim: *"On close, it
+   *  then deactivates the security pane, the constraint checks if the MCP settings are enabled, and then re-opens the MCP
+   *  ports if so."* The four rows below are that sentence's parts, each driven through the instance's own verbs: the intent
+   *  the open edge must PRESERVE, the close edge that READS it, the second seat that honours it, and the value arm that
+   *  admits it. **THE OBSERVABLE IS THE PAIR'S OWN VALUE AT ITS ADDRESS** — `{exclusion, wanted}` — read off a store the
+   *  module's own batch armed, because the intent is not on the record's read: it is the repair's input and no consumer of
+   *  the declared surface paints it.
+   *  ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+  it('CD-20 · THE INTENT READ — THE OPEN EDGE PRESERVES THE OPERATOR’S INTENT AND THE CLOSE EDGE READS IT BACK: after `writePane(true)` the pair stands `{exclusion: closed, wanted: enabled}`, and the SAME WORD is what the close settles to (`D-125`)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    // THE BOOT: the intent and the effective word are the same, because on a fresh profile nobody has asked for anything.
+    const boot = livePair()
+    expect({ exclusion: boot['exclusion'], wanted: boot['wanted'] }, 'the creation repair mints ONE word as BOTH members').toEqual({ exclusion: 'mcp-enabled', wanted: 'mcp-enabled' })
+
+    // THE OPEN EDGE: the repair writes the effective word CLOSED and writes back the intent it read — ONE value, so no
+    // observer can see an intent the record has lost.
+    expect(settings.writePane(true).status, 'the pane opens').toBe('committed')
+    const opened = livePair()
+    expect(opened, 'the repair settles `exclusion` and PRESERVES `wanted` — the two halves of one write, which is the whole of why the close edge has something to read').toEqual({ exclusion: 'mcp-disabled', wanted: 'mcp-enabled' })
+    expect(settings.read().exclusion, 'and the record reads the effective word, as every consumer of it always did').toBe('mcp-disabled')
+
+    // THE CONTROL, AND IT IS THE DISCRIMINATOR: the same two members are read after an ordinary exclusion change with the
+    // pane CLOSED, where the operator's own act states both words — so `wanted` tracks an ACT and is not a constant.
+    expect(settings.writePane(false).status, 'the pane closes (the intent enables the ports again inside that write)').toBe('committed')
+    expect(settings.write({ exclusion: 'mcp-disabled' }).status, 'and the operator disables the ports with no pane open').toBe('committed')
+    const shutPair = livePair()
+    expect(shutPair, 'so the pair names the operator’s own act in both members — the constant it is not').toEqual({ exclusion: 'mcp-disabled', wanted: 'mcp-disabled' })
+    // RED ON REVERT: make `writeExclusion`'s repair write `wanted` from the word it SETTLES to instead of the word it READ
+    // and the first pair above reads `{exclusion:'mcp-disabled', wanted:'mcp-disabled'}` — the intent destroyed by the act
+    // that was supposed to carry it, which is exactly the state `D-123` shipped and this row exists to refuse.
+  })
+
+  it('CD-21 · THE CLOSE-DIRECTION REPAIR — THE PORTS RE-OPEN IFF THE INTENT SAID ENABLED: the same `writePane(false)` lands TWO ops when it has something to settle and ONE when it has not, and the two intents leave the two different records (`D-125`)', () => {
+    // THE FIGURES ARE DIFFERENCES BETWEEN CURSORS INSIDE EACH ARM, never absolute ordinals: the two arms boot over profiles
+    // of different warmth (the `file` records stand from the arm before), and a row that pinned the journal's absolute
+    // position would be measuring the profile rather than the edge.
+    const cursorOf = (receipt: { status: string; cursor?: number }): number | null => (receipt.status === 'committed' ? receipt.cursor ?? null : null)
+
+    // ARM (i) — THE INTENT IS ENABLED, so the close edge has something to settle.
+    const enabled = createOperatorSettings({ userDataDir })
+    const baseI = cursorOf(enabled.write({ exclusion: 'mcp-enabled' }))
+    const openedI = cursorOf(enabled.writePane(true))
+    expect(enabled.read().exclusion, 'the pane opens over enabled ports, which closes them').toBe('mcp-disabled')
+    const closedI = cursorOf(enabled.writePane(false))
+    expect(enabled.read().exclusion, 'AND THE PORTS RE-OPEN: the close edge settles them to the intent the open edge preserved').toBe('mcp-enabled')
+    expect({ open: (openedI ?? 0) - (baseI ?? 0), close: (closedI ?? 0) - (openedI ?? 0) }, 'TWO OPS at each edge — the pane’s own write and the settle that follows it, in one commit apiece').toEqual({ open: 2, close: 2 })
+
+    // ARM (ii) — THE INTENT IS DISABLED, and neither edge has anything to settle.
+    const disabled = createOperatorSettings({ userDataDir })
+    const baseII = cursorOf(disabled.write({ exclusion: 'mcp-disabled' }))
+    const openedII = cursorOf(disabled.writePane(true))
+    const closedII = cursorOf(disabled.writePane(false))
+    expect(disabled.read().exclusion, 'AND THE PORTS STAY SHUT: the constraint checked the intent, found it disabled, and re-opened nothing').toBe('mcp-disabled')
+    expect({ open: (openedII ?? 0) - (baseII ?? 0), close: (closedII ?? 0) - (openedII ?? 0) }, 'ONE OP at each edge: the ports already stand where the rule requires, so no repair rides either act').toEqual({ open: 1, close: 1 })
+    // THE DISCRIMINATOR, IN ONE LINE: the same act, the same route, two intents, two records — which is the reading the
+    // correction turns on and the one `D-123` could not make, because its repair had overwritten the intent.
+    expect([enabled.read().exclusion, disabled.read().exclusion], 'the two arms end in the two different states').toEqual(['mcp-enabled', 'mcp-disabled'])
+    // RED ON REVERT: restore `D-124`'s arm (`if (!bothStandOpen(pane, pair)) return true`) in `paneAndPortsAreExclusive` and
+    // arm (i) reads `mcp-disabled` after the close with `close` landing 1 op, while arm (ii) is unmoved — one red assertion
+    // and one correct one, which is how a reader tells the EDGE from the constant.
+  })
+
+  it('CD-22 · THE SECOND SEAT STAYS AND ITS REPAIR HONOURS THE SAME INTENT — a write at `[‘operator-exclusion’]` under an open pane is settled to the word the intent allows AND the intent survives it (`D-124`’s seat, `D-125`’s rule)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.writePane(true).status, 'the pane opens, closing the ports and preserving the intent').toBe('committed')
+    // THE SIBLING WRITE: a caller writes the pair's own address directly — the route `D-124` measured as NEVER reaching the
+    // pane's seat, which is why the ports' seat exists at all.
+    expect(settings.write({ exclusion: 'mcp-enabled' }).status, 'the enable commits: the seat repairs rather than refuses, so the caller is not reversed').toBe('committed')
+    expect(settings.read().exclusion, 'but the record still reads closed: the store cannot hold an open pane over open ports').toBe('mcp-disabled')
+    const settled = livePair()
+    expect(settled, 'AND THE REPAIR HONOURS THE INTENT IT READ: the effective word is the one the rule allows, and `wanted` is the operator’s — the same two halves `CD-20` reads at the other edge').toEqual({ exclusion: 'mcp-disabled', wanted: 'mcp-enabled' })
+    expect(settings.writePane(false).status, 'so closing the pane re-opens the ports from THIS route too').toBe('committed')
+    expect(settings.read().exclusion, 'and the intent the sibling write recorded is what the close settles to').toBe('mcp-enabled')
+    // RED ON REVERT: remove the ports' seat from the batch and this write lands `mcp-enabled` over an open pane — `CD-14`'s
+    // own red, measured again here because `D-125` changed the seat's body rather than only its address.
+  })
+
+  it('CD-23 · THE PAIR’S VALUE ARM ADMITS `wanted` — a pair that NAMES none has made a total statement (what stands is what was asked), a pair naming a word outside the two is refused with NO repair, and the refusal leaves the pair that stood untouched (`D-105` read at the second member)', () => {
+    createOperatorSettings({ userDataDir })
+    const batch = lastBatch()
+    const exclusion = bodyAt(batch, EXCLUSION)
+    // (i) THE ABSENT INTENT IS ADMITTED, at both instants: `wantedOf` answers the effective word, so the read is total and
+    // the arm judges what the value states rather than what it omits.
+    expect(exclusion(atCreation(EXCLUSION, { exclusion: 'mcp-enabled' })), 'a pair naming no intent passes at the creation instant').toBe(true)
+    expect(exclusion(atLanding(EXCLUSION, { exclusion: 'mcp-disabled' })), 'and at a landing instant — a caller naming only the effective word states that the two agree').toBe(true)
+    // (ii) A PAIR NAMING BOTH WORDS PASSES, which is what every writer of this module composes.
+    expect(exclusion(atCreation(EXCLUSION, { exclusion: 'mcp-enabled', wanted: 'mcp-disabled' })), 'both members, each a word of the pair’s own domain').toBe(true)
+    // (iii) AND A `wanted` OUTSIDE THE TWO IS REFUSED AT A WRITE INSTANT, WITH NO REPAIR — the `D-105` arm at the new member:
+    // the store's own rollback protects the pair that stood, so a refusal is the honest answer and a placeholder would be a
+    // second authority over the operator's intent.
+    const refused = exclusion(atLanding(EXCLUSION, { exclusion: 'mcp-enabled', wanted: 'enabled' })) as Record<string, unknown>
+    expect(typeof refused, 'the body answers an object at this arm and never `true`').toBe('object')
+    expect(refused['message'], 'with the pair’s own sentence naming the fault').toContain('names nothing the gate can apply')
+    expect('repair' in refused, 'AND NO REPAIR: a repair here would overwrite the intent the operator wrote').toBe(false)
+    expect(exclusion(atCreation(EXCLUSION, { exclusion: 'mcp-enabled', wanted: 'enabled' })), 'while the same value PASSES at the creation instant, for the reason every family’s value arm does: a refusal there refuses the construction and there is no standing record for a rollback to protect').toBe(true)
+    // RED ON REVERT: drop `wanted` from `exclusionAdmitsAt`'s member set and (ii) reddens while (iii) still passes — so the
+    // row measures the member and not a blanket strictness.
   })
 
   it('CD-7 · the record’s creation instant is the IMPORT, and its placeholder is `FIRST_RUN`: the imported-or-placeholder value stands at the address before any act, in the shape `read()` parses (D-85)', () => {
@@ -734,21 +859,30 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(delivered, 'and one delivery, because both writes fired the ports’ own handle').toEqual(['operator-exclusion'])
     expect(settings.read().exclusion, 'and the ports are still closed under the open pane').toBe('mcp-disabled')
 
-    // (3) THE CONTROL — AN ORDINARY ACT IS NOT REPAIRED AT ALL: with the pane closed the same enable is one op and one
-    //     delivery, so every figure above is the invariant's and not a constant of the surface.
-    expect(settings.writePane(false).status, 'the pane closes').toBe('committed')
-    const before = settings.read().exclusion
-    expect(before, 'and the ports were closed when it closed').toBe('mcp-disabled')
+    // (3) **THE OTHER EDGE IS REPAIRED TOO, AND THIS IS `D-125`'s NEW FIGURE** (`D-123` measured one edge because the
+    //     intent it would have read had been overwritten): (2)`s enable RECORDED the intent, so closing the pane settles
+    //     the ports back to it inside that write — two landings again, on the same handle.
+    expect(delivered.length, 'the two landings of (2) delivered once, on the ports’ own handle').toBe(1)
     delivered.length = 0
-    const ordinary = settings.write({ exclusion: 'mcp-enabled' })
-    expect(ordinary.status === 'committed' ? ordinary.cursor : null, 'an ordinary exclusion change lands ONE op: no seat is asked to fault, so no repair rides it').toBe(10)
-    expect(delivered, 'and delivers once').toEqual(['operator-exclusion'])
-    expect(settings.read().exclusion, 'and the caller`s own state stands').toBe('mcp-enabled')
+    const closed = settings.writePane(false)
+    expect(closed.status === 'committed' ? closed.cursor : null, 'the close edge lands TWO ops: the pane`s own write and the settle that re-opens the ports').toBe(10)
+    expect(delivered, 'and two deliveries, one per write — the pane`s handle and the ports`').toEqual(['operator-exclusion', 'operator-exclusion'])
+    expect(settings.read().exclusion, 'so the ports follow the intent out of the pane').toBe('mcp-enabled')
 
-    // (4) AND THE BUDGET IS NEVER REACHED: ten alternating acts, each of which faults one seat and is repaired once, all
+    // (4) THE CONTROL — AN ORDINARY ACT IS NOT REPAIRED AT ALL: with the pane closed and the intent DISABLED, a disable is
+    //     one op and one delivery, so every figure above is the invariant's and not a constant of the surface.
+    const before = settings.read().exclusion
+    expect(before, 'the ports stood enabled after the close edge').toBe('mcp-enabled')
+    delivered.length = 0
+    const ordinary = settings.write({ exclusion: 'mcp-disabled' })
+    expect(ordinary.status === 'committed' ? ordinary.cursor : null, 'an ordinary exclusion change lands ONE op: no seat is asked to fault, so no repair rides it').toBe(11)
+    expect(delivered, 'and delivers once').toEqual(['operator-exclusion'])
+    expect(settings.read().exclusion, 'and the caller`s own state stands').toBe('mcp-disabled')
+
+    // (5) AND THE BUDGET IS NEVER REACHED: ten alternating acts, each of which faults one seat and is repaired once, all
     //     COMMIT — where a repair that re-fired would cross `ConstraintPassRefused` with the budget`s own clause (§7.7's
     //     bound is three restarts per terminal act and this row spends one re-run per act, ten times over).
-    let ordinal = 10
+    let ordinal = 11
     for (let turn = 0; turn < 10; turn += 1) {
       const openArm = settings.writePane(turn % 2 === 0)
       expect(openArm.status, `CD-19/turn ${turn}: the pane act commits — a spent budget answers a refusal, never a commit`).toBe('committed')

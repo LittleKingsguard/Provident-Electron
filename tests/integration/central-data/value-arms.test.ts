@@ -382,7 +382,10 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     // are the repairs' own writes — which are what the file carries when the constructor returns (D-86).
     const where = dir()
     const instance = createOperatorSettings({ userDataDir: where })
-    expect(instance.read(), 'the record and the pair, over a cold profile').toEqual({ token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled', tier4: false })
+    // ⟶ **THE RECORD GAINS THE PANE'S WORD AT `D-125`**: the crossing's fourth address is read on the same row that carries
+    // the pair, because the realm renders the operator surface from one re-read — `{open: false}` is the creation repair's
+    // own mint, so the boot's record and the address cannot disagree.
+    expect(instance.read(), 'the record and the pair, over a cold profile').toEqual({ token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled', tier4: false, pane: { open: false } })
     expect(instance.readAppState(), 'and the row list, with the word that says no import applied').toEqual({ rows: [], legacy: 'absent', unrepresentable: [], storage: 'standing' })
     const file = JSON.parse(readFileSync(at(where, OPERATOR_FILE), 'utf8')) as Record<string, unknown>
     expect(Object.keys(file).sort(), 'with both file records in the instance\'s own bytes before any caller act').toEqual(['operator-app-state', 'operator-settings'])

@@ -960,12 +960,18 @@ async function main(): Promise<void> {
   //    SITE** — `attach()` installs three listeners on graph-resolved elements and changes no node, so no boot step moves
   //    and `npm run divergence` (which compares the two realms' SSR fragments before any act) cannot see it. The
   //    transition and the inert declaration are the REPLY route's turn, beside the appearance act.
-  //  **AND ITS SINK IS THE CROSSING'S OWN MEMBER** (`D-123`): the pane's open state is written by the realm's act over
-  //  `security.setPane`, one boolean at a time and only on a move. The write's answer is NOT read here — what the record
-  //  holds reaches this realm as `security.onChanged`'s delivery, which is the same signal every other crossing's change
-  //  rides — and a realm with no bridge reports to no one, which is the honest arm for a page with no crossing.
+  //  **AND ITS CROSSING IS THE STORE'S, IN BOTH DIRECTIONS** (`D-125`, correcting `D-124`'s direction): the user's act
+  //  writes ONE boolean at `['operator-pane']` over `security.setPane`, and the pane RENDERS from the store's word as the
+  //  realm's ONE security subscription delivers it (`startSecurityShape`'s body below, which is the same subscription the
+  //  record's own re-read rides). **THE WRITE'S ANSWER IS NOT READ HERE AND NO LOCAL MACHINE MOVES FIRST**: the store's
+  //  constraint settles the ports, its delivery closes the socket and re-patches the gate, and the pane's own delivery is
+  //  what this realm renders. A realm with no bridge has no crossing to read or write, which is the honest arm for a page
+  //  with none.
   const overlayApplication = startOverlayApplication(runtime, {
-    reportPane: (open) => { void bridge?.security?.setPane(open) },
+    pane: {
+      open: () => { const shape = getSecurityClient().shape(); return shape.filled && shape.pane !== null ? shape.pane.open : null },
+      write: (open) => { void bridge?.security?.setPane(open) },
+    },
   })
   overlayApplication.attach()
   // ⟶ **THE Y-3 REGISTRATION IS DELETED FROM THIS SITE** (`D-93`; `D-90`'s clause (3), the legacy projection dying whole).
@@ -1056,7 +1062,7 @@ async function main(): Promise<void> {
   // ⟶ **THE SECURITY RECORD'S SHAPE (`D-106`)** — the pane's `cfg` is filled from a DELIVERY from here on, and the
   //    request-time read `panels.refresh()` made at the boot, after every authored click and at the `dispatch()` seam is
   //    deleted. Started beside the three above and never awaited, for their reason.
-  startSecurityShape(panels)
+  startSecurityShape(panels, overlayApplication)
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
@@ -1188,11 +1194,20 @@ let securitySubscription: SecuritySubscription | null = null
  *  **THE ONE READ THIS FILE MAKES OUTSIDE THIS CLIENT IS NAMED AND IS NOT A COUNTERPART**: `main()`'s `bridge.security.get()`
  *  above is the TIER-4 SNAPSHOT the app Runtime's Supervisor is constructed from — a value read ONCE before the first graph
  *  load, consumed by a construction and never painted. It is `D-104`'s audit class (i), a boot fill, and it stays. */
-function startSecurityShape(panels: SecurePanels | null): void {
+function startSecurityShape(panels: SecurePanels | null, overlay?: OverlayApplication | null): void {
   const client = getSecurityClient()
   securitySubscription = client.subscribe(() => {
     // A DELIVERY IS A RE-READ (the client has already adopted it) and the shape is what the consumer paints.
     panels?.applySecurity(client.shape())
+    // **AND IT IS THE OVERLAY'S RENDER** (`D-125`): the pane is a LISTENER'S PRODUCT, so the turn that applies the
+    // mechanism's `inert` declaration is this one — the delivery that carried the store's `{open}` word. The wiring holds
+    // no subscription of its own: one consumer per push is the rule the drag composition states (`D-92`), and a second
+    // registration would be a second read per delivery for a value this one already carries.
+    try {
+      overlay?.render()
+    } catch {
+      /* the consumer's own throw is the consumer's: a failed render is not a failed delivery */
+    }
   })
   void client.fill().then(
     (reading) => {
@@ -1586,6 +1601,14 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
  * general app access while open, ex. security tools and other configuration settings"* — so the app now AUTHORS that
  * surface (`src/shared/demo-envelope.ts`'s overlay layer) and this file is the CONSUMER the mechanism needed.
  *
+ * **⟶ AND SINCE `D-125` THE DIRECTION IS THE OTHER WAY ROUND, WHICH IS THE CORRECTION THIS BLOCK CARRIES.** `D-124` had this
+ * wiring HOLD the four-state machine, move it from the authored token and REPORT the predicate it computed — the renderer
+ * was the machine and the store followed it, so the incompatibility between an open pane and open ports was enforced by a
+ * SEQUENCE and not by the state machine. Now the user's act is ONE write at `['operator-pane']`, the crossing's constraint
+ * repairs the ports and its delivery closes the socket, and THIS file renders what the store's delivery says: `open` and
+ * `closed` are DERIVED from the store, `closing` is this wiring's one transient, and `held` has no producer here. The
+ * mechanism still owns the verb vocabulary — it is handed the STORE'S word as its state — and the wiring owns nothing.
+ *
  * TWO OF THIS FILE'S ESTABLISHED FORMS, REUSED RATHER THAN RE-INVENTED:
  *   · `overlayWiringRole` is the `themeWiringRole` form — the CALLER-held attribute name and the AUTHORED ids, held in
  *     ONE place. **THE ATTRIBUTE NAME IS THE CALLER'S AND `overlay.ts` OWNS NONE**: the module takes it as an argument,
@@ -1639,35 +1662,59 @@ export function overlayWiringRole(): OverlayWiringRole {
   }
 }
 
-/** ONE TURN OF THE CONSUMER — what the transition answered and what the declaration did. */
+/** **ONE TURN OF THE CONSUMER — WHAT THE ACT ASKED THE STORE FOR, AND WHAT THE DELIVERY THEN RENDERED** (`D-125`).
+ *  The two halves are separate members because they happen in separate turns: an act asks (`asked`/`wrote`) and the pane
+ *  moves only when the crossing's delivery says so (`state`/`written`). */
 export interface OverlayApplicationReading {
-  /** The machine's state AFTER this turn. */
+  /** The word this wiring holds AFTER the turn: the store's derived `open`/`closed`, or a transient while a write is in
+   *  flight. It is never the boolean the act asked for, which is the whole of the correction. */
   readonly state: OverlayState
   /** The caller's verb this turn consumed (`null` where the carrier was unreadable). */
   readonly verb: string | null
-  /** Whether the transition MOVED the state. */
+  /** Whether the RENDER moved the machine's state — the delivery's product, never the act's. */
   readonly changed: boolean
+  /** The boolean this turn asked the store for (`null` where the verb is no act, or where it asked for the state the
+   *  store already reported — a write with no external cause behind it is not made). */
+  readonly asked: boolean | null
+  /** Whether the act reached the crossing's write route at all. */
+  readonly wrote: boolean
   /** The declaration this turn produced, or `null` where no write was attempted. */
   readonly declaration: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null
   /** The runtime's OWN answer to the `state-slice` write, or `null` where no write was attempted. */
   readonly status: string | null
   /** Whether the declaration reached the authored app root (`status === 'applied'`). */
   readonly written: boolean
-  /** Whether the mechanism's `escape` callback was invoked this turn. */
+  /** Whether the `escape` verb's focus return ran this turn (`D-125`: the verb's semantics are the mechanism's, and the
+   *  focus return is this realm's act). */
   readonly escaped: boolean
 }
 
-/** The consumer's surface — the two turns and the two readings the batteries drive. */
+/** **THE CROSSING THE WIRING READS AND WRITES — TWO MEMBERS AND NO THIRD** (`D-125`). `open` is the store's LAST DELIVERED
+ *  word and `write` is the ONE write the user's act makes, at `['operator-pane']`. **THE WIRING DECIDES NOTHING**: it does
+ *  not transition, does not close a port, does not write an exclusion, and does not render what it asked for. What the
+ *  store does with the write — the invariant's repair, the port following the exclusion's delivery, the pane's own
+ *  delivery — arrives back through `open` on the realm's ONE security subscription, and `render()` is its consumer. */
+export interface OverlayPaneCrossing {
+  readonly open: () => boolean | null
+  readonly write: (open: boolean) => void
+}
+
+/** The consumer's surface — the turns and the readings the batteries drive. */
 export interface OverlayApplication {
   readonly attributeName: string
   readonly appRootId: string
   readonly stateNodeId: string
-  /** The machine's current state, as the wiring holds it. */
+  /** The machine's current word: `open`/`closed` DERIVED from the store, or `held`/`closing` while a write is in flight. */
   state(): OverlayState
-  /** **THE ACT'S TURN** — read the authored verb token and, only when it MOVED, transition and apply. */
+  /** **THE REPLY ROUTE'S TURN** (`D-125`): read the authored verb token, and only when it MOVED hand the verb to the
+   *  mechanism's translation and write the store. It renders what the store's last word says and never what it asked for. */
   drive(): OverlayApplicationReading
-  /** **A DIRECT VERB** — the turn the wiring's own listeners hand a verb to (the authored body has already recorded it). */
+  /** **A DIRECT VERB** — the turn the wiring's own listeners hand a verb to (the authored body has already recorded it).
+   *  It ACTS and renders nothing: the pane is the store's product, which is the whole of the correction. */
   apply(verb: unknown): OverlayApplicationReading
+  /** **THE DELIVERY'S TURN — THE RENDERER IS A LISTENER** (`D-125`; `D-82` clause 2): called from the realm's ONE security
+   *  subscription after the client has re-read, it renders the pane from the store's word and applies the declaration. */
+  render(): OverlayApplicationReading
   /** Install the listeners on the authored controls. Returns how many of them it attached. */
   attach(): { readonly attached: number }
 }
@@ -1693,37 +1740,67 @@ function authoredOverlayToken(
   }
 }
 
-/** **WHAT THE CONSUMER IS HANDED BESIDE THE RUNTIME** (`D-123`): the sink the pane's open state crosses on, and NOTHING
- *  else. It is optional because a realm with no preload bridge has no crossing to write to — the pane still opens, and the
- *  absence of the crossing is a fact the caller already warns about. */
+/** **WHAT THE CONSUMER IS HANDED BESIDE THE RUNTIME** (`D-125`): the crossing the pane's open state is read from and
+ *  written to, and NOTHING else. It is optional because a realm with no preload bridge has no crossing — the pane then
+ *  renders nothing, and no act reaches a store, which is the honest arm for a page that has none. */
 export interface OverlayApplicationOptions {
-  /** **THE USER'S ACT, RECORDED AND NOT INTERPRETED** (`D-82` clause 4): called with the mechanism's own predicate
-   *  (`state === 'open' || state === 'held'`) whenever that predicate MOVES. This wiring decides nothing with it: the
-   *  secure crossing's constraint refuses an open pane over open ports and repairs the pair, and the port follows the
-   *  exclusion's delivery. **AND IT IS CALLED ON A MOVE AND NEVER PER TURN**, because a write per turn would be a write
-   *  with no external cause behind it. */
-  readonly reportPane?: (open: boolean) => void
+  readonly pane?: OverlayPaneCrossing
+}
+
+/** ONE ACT'S OWN ANSWER, before any render: what the verb asked for and whether it reached the crossing. */
+interface OverlayActAnswer {
+  readonly verb: string | null
+  readonly asked: boolean | null
+  readonly wrote: boolean
+  readonly escaped: boolean
 }
 
 export function startOverlayApplication(runtime: Runtime, options?: OverlayApplicationOptions): OverlayApplication {
-  const role = overlayWiringRole()
-  const { attributeName, appRootId, stateNodeId, openerId, closeId, dialogId } = role
-  /** **THE MACHINE'S STATE — CLOSURE STATE, AND IT IS SEEDED FROM THE GRAPH, NOT FROM A LITERAL.** The authored carrier
-   *  holds one of the machine's own four state words at boot (`closed`), so the mechanism's own total reader answers the
-   *  seed; an unreadable carrier falls to the mechanism's declared `closed` (`overlayTransition`'s first arm) rather than
-   *  to a second literal here. */
-  const boot = authoredOverlayToken(runtime, stateNodeId)
-  let state: OverlayState = overlayTransition(boot.token, 'noop').state
+  const { attributeName, appRootId, stateNodeId, openerId, closeId, dialogId } = overlayWiringRole()
+  const crossing = options?.pane ?? null
+  /** **THE STORE'S LAST DELIVERED WORD, READ THROUGH THE CROSSING** — `null` where no crossing stands or its reader
+   *  throws, which is the arm the render answers with nothing rather than with a fabricated `false`. */
+  const storedOpen = (): boolean | null => {
+    if (crossing === null) return null
+    try {
+      return crossing.open()
+    } catch {
+      return null
+    }
+  }
+  /** **THE ONE TRANSIENT THIS REALM PRODUCES, AND IT RENDERS NOTHING** (`D-90`'s judgement, read at this mechanism). A
+   *  transient is closure state: one writer (this file), no persistence, no crossing, no second reader, and it outlives no
+   *  delivery — the terms the pane drag's preview was judged by. **`closing` IS PRODUCED AND `held` IS NOT, AND THE
+   *  DIFFERENCE IS THE MECHANISM'S OWN MEANING**: `closing` is a pane that is up and on its way out, which is exactly the
+   *  window between a close ACT and the delivery that answers it; `held` is a pane that is UP AND HELD, and after this
+   *  inversion there is no such moment — a pane is up when the store says `open` and not before, so a word meaning "up but
+   *  not confirmed" has no state left to name. `held` therefore stays a member of the mechanism's closed set (`held × open`
+   *  stays `held`, driven by that module's own rows) and this app never produces it. **AND NEITHER WORD MAY RENDER**:
+   *  `up` below is the STORE's word alone, so a transient can neither open a pane the store has not opened nor close one
+   *  the store has not closed. */
+  let transient: OverlayState | null = null
   /** THE LAST VERB TOKEN THIS REALM CARRIED — the `theme` application's `lastCarried` form, so a carrier that did not
    *  move is not an act. */
+  const boot = authoredOverlayToken(runtime, stateNodeId)
   let lastCarried: string | null = boot.readable ? boot.token : null
-  /** THE LAST DECLARATION THAT LANDED — so a turn that produces the declaration already on the node writes nothing. */
-  let lastApplied: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null = null
-  /** **THE LAST PREDICATE THIS REALM REPORTED** (`D-123`), seeded from the BOOT's own reading and never from a literal:
-   *  the crossing's creation repair mints a closed pane every boot, so the boot's `closed`/`closing` carrier agrees with
-   *  it and the first report is the first MOVE. A carrier that booted `open` would agree only after its first act, which
-   *  is stated rather than papered over — the authored carrier's initial token is `closed` (`demo-envelope.ts`). */
-  let lastReported: boolean = state === 'open' || state === 'held'
+  /** **THE LAST DECLARATION THE RENDERED SURFACE HOLDS — SEEDED WITH THE ONE THE AUTHORED ENVELOPE ALREADY CARRIES**, which
+   *  is the REMOVAL arm: the app root is authored with no `inert` prop, so a boot's closed pane is already rendered and the
+   *  first delivery that says `open` is the first write. A boot therefore declares nothing, which is `OV-6`'s claim and is
+   *  kept rather than restated. */
+  let lastApplied: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null = {
+    name: attributeName,
+    value: false,
+    removal: true,
+  }
+  /** THE DERIVED WORD THE LAST RENDER LEFT — what `changed` is measured against, and the machine's only durable memory. */
+  let derived: OverlayState = 'closed'
+  /** **THE ONE SPELLING OF THE PANE'S PREDICATE** — `D-123`'s own (`state === 'open' || state === 'held'`), read here for
+   *  the ask and for the render alike, so a verb and a delivery can never mean two different panes. */
+  function paneIsUp(word: OverlayState): boolean {
+    return word === 'open' || word === 'held'
+  }
+  /** **WHAT THE WIRING HOLDS: THE STORE'S WORD, WITH THE ONE TRANSIENT ON TOP WHILE A CLOSE IS IN FLIGHT.** */
+  const heldState = (): OverlayState => transient ?? derived
   /** THE ELEMENT THE DECLARATION NAMES — resolved through the graph, never a selector. Re-resolved per turn because a
    *  graph load replaces the rendered nodes. */
   const targetOf = (): unknown => {
@@ -1733,9 +1810,9 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
       return null
     }
   }
-  /** **THE CALLER'S CALLBACK FOR THE MECHANISM'S `escape` VERB.** A modal's escape returns the operator's focus to the
-   *  control that opened it — the one behaviour the verb is FOR — and the MECHANISM absorbs its throw (so a realm whose
-   *  opener is gone cannot make `drive()` throw). It writes no graph node and creates no element. */
+  /** **THE FOCUS RETURN THE `escape` VERB ASKS FOR.** A modal's escape returns the operator's focus to the control that
+   *  opened it — the one behaviour the verb is FOR. The MECHANISM says WHEN (its `escape` arm invokes the callback it is
+   *  handed, and absorbs a throw); the act is this realm's, and it is total: an absent opener cannot make an act throw. */
   const restoreFocus = (): void => {
     let opener: unknown = null
     try {
@@ -1752,6 +1829,8 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
       readonly state: OverlayState
       readonly verb: string | null
       readonly changed: boolean
+      readonly asked: boolean | null
+      readonly wrote: boolean
       readonly declaration: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null
       readonly status: string | null
       readonly written: boolean
@@ -1759,30 +1838,57 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
     },
   ): OverlayApplicationReading => ({ ...base })
 
-  const apply = (verb: unknown): OverlayApplicationReading => {
-    let escaped = false
-    const answer = overlayTransition(state, verb, () => {
-      escaped = true
+  /** **THE ACT — ONE WRITE AT `['operator-pane']` AND NOTHING ELSE** (`D-125`, and `D-82` clause 4: a write is the
+   *  operator's own act). The verb is translated by the MECHANISM against the STORE's word, so this file spells no verb,
+   *  and the write carries the one boolean the crossing's fourth address holds. **NO LOCAL MACHINE MOVES FIRST**: the word
+   *  this wiring holds is still the store's, and the render happens when the store's delivery arrives. A verb that asks
+   *  for the state the store already reports is not a write at all — a write with no external cause behind it is the
+   *  `D-82` clause-4 fault, and `D-123`'s note against a per-turn write is the same rule. */
+  const act = (verb: unknown): OverlayActAnswer => {
+    const before = storedOpen()
+    let focused = false
+    // **THE MECHANISM IS HANDED THE STORE'S OWN WORD AS ITS STATE** — that is the direction this pass inverts, and the
+    // whole of it: `D-124` fed `overlayTransition` the AUTHORED TOKEN as its state and kept the answer as the state this
+    // wiring held, so the renderer was the machine and the store followed it. Here the state argument is the store's, the
+    // answer is used as the ASK alone, and the word this wiring holds is re-derived from the store at every delivery.
+    const answer = overlayTransition(before === true ? 'open' : 'closed', verb, () => {
+      focused = true
       restoreFocus()
     })
-    state = answer.state
-    const up = state === 'open' || state === 'held'
-    // **THE PANE'S OPEN STATE CROSSES HERE, ON THE ACT AND ON A MOVE** (`D-123`; `D-82` clause 4). It is reported BEFORE
-    // the declaration is applied and its answer is not read: the crossing's own delivery is what tells this realm what the
-    // record now holds, and a report whose write was repaired (the ports closing under an open pane) is a commit whose
-    // consequence arrives on `security.onChanged`. A sink that throws is contained — a failed report is not a failed turn.
-    if (up !== lastReported) {
-      lastReported = up
+    const verbWord = typeof verb === 'string' ? verb : null
+    // THE MECHANISM'S OWN `changed` IS THE NO-ACT ARM: `open` on an open pane, `close` on a closed one and `toggle` from
+    // `held` all answer `changed:false`, and a write with no external cause behind it is the `D-82` clause-4 fault.
+    if (!answer.changed) return { verb: verbWord, asked: null, wrote: false, escaped: focused }
+    const asked = paneIsUp(answer.state)
+    let wrote = false
+    if (crossing !== null) {
       try {
-        options?.reportPane?.(up)
+        crossing.write(asked)
+        wrote = true
       } catch {
-        /* the sink's own throw is the sink's: the overlay's turn is not a store's act */
+        // THE SINK'S OWN THROW IS THE SINK'S: the overlay's turn is not a store's act, and a failed ask is not a failed act
+        wrote = false
       }
     }
+    // THE ONE TRANSIENT (`D-90`'s judgement): a pane that is UP and on its way out is `closing` until the delivery answers.
+    if (wrote && !asked) transient = 'closing'
+    return { verb: verbWord, asked, wrote, escaped: focused }
+  }
+
+  /** **THE RENDER — WHAT THE DELIVERY SAYS, APPLIED AS ONE `state-slice` ON THE AUTHORED APP ROOT** (`D-125`; `D-113`'s
+   *  declaration site, unchanged). `clear` is the DELIVERY's own turn: the store has answered, so a transient is over. A
+   *  word that has not arrived (`null`) renders nothing at all — nothing is fabricated about a pane the realm has not heard
+   *  of — and the RENDER PREDICATE IS THE STORE'S WORD ALONE, never a transient and never the boolean an act asked for. */
+  const renderTurn = (clear: boolean): OverlayApplicationReading => {
+    const before = derived
+    const word = storedOpen()
+    if (clear) transient = null
+    if (word !== null) derived = word ? 'open' : 'closed'
+    const up = paneIsUp(derived)
     const declaration = overlayInertDeclaration(targetOf(), attributeName, up)
-    const verbWord = typeof verb === 'string' ? verb : null
-    if (declaration.name === null) {
-      return reading({ state, verb: verbWord, changed: answer.changed, declaration: null, status: null, written: false, escaped })
+    const state = heldState()
+    if (word === null || declaration.name === null) {
+      return reading({ state, verb: null, changed: state !== before, asked: null, wrote: false, declaration: null, status: null, written: false, escaped: false })
     }
     const composed: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } = {
       name: declaration.name,
@@ -1794,8 +1900,8 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
       lastApplied.name === composed.name &&
       lastApplied.value === composed.value &&
       lastApplied.removal === composed.removal
-    if (same && !answer.changed) {
-      return reading({ state, verb: verbWord, changed: answer.changed, declaration: composed, status: null, written: false, escaped })
+    if (same) {
+      return reading({ state, verb: null, changed: state !== before, asked: null, wrote: false, declaration: composed, status: null, written: false, escaped: false })
     }
     let status: string
     try {
@@ -1817,27 +1923,43 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
       status = 'threw'
     }
     const landed = status === 'applied'
-    // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next turn rather than
+    // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next delivery rather than
     // being swallowed by a seed that claims it was applied.
     if (landed) lastApplied = composed
-    return reading({ state, verb: verbWord, changed: answer.changed, declaration: composed, status, written: landed, escaped })
+    return reading({ state, verb: null, changed: state !== before, asked: null, wrote: false, declaration: composed, status, written: landed, escaped: false })
+  }
+
+  const apply = (verb: unknown): OverlayApplicationReading => {
+    const acted = act(verb)
+    return reading({
+      state: heldState(),
+      verb: acted.verb,
+      changed: false,
+      asked: acted.asked,
+      wrote: acted.wrote,
+      declaration: null,
+      status: null,
+      written: false,
+      escaped: acted.escaped,
+    })
   }
 
   return {
     attributeName,
     appRootId,
     stateNodeId,
-    state: () => state,
+    state: heldState,
+    /** THE DELIVERY'S TURN — the renderer as a listener. It is the app's ONE security subscription body that calls it, and
+     *  no second registration is taken for the pane (a second consumer of one push is a second read per delivery). */
+    render: () => renderTurn(true),
     drive(): OverlayApplicationReading {
       const carried = authoredOverlayToken(runtime, stateNodeId)
-      if (!carried.readable) {
-        return reading({ state, verb: null, changed: false, declaration: null, status: null, written: false, escaped: false })
-      }
-      if (lastCarried !== null && lastCarried === carried.token) {
-        return reading({ state, verb: carried.token, changed: false, declaration: null, status: null, written: false, escaped: false })
-      }
+      if (!carried.readable) return renderTurn(false)
+      if (lastCarried !== null && lastCarried === carried.token) return renderTurn(false)
       lastCarried = carried.token
-      return apply(carried.token)
+      const acted = act(carried.token)
+      const rendered = renderTurn(false)
+      return { ...rendered, verb: carried.token, asked: acted.asked, wrote: acted.wrote, escaped: acted.escaped }
     },
     apply,
     attach(): { readonly attached: number } {
@@ -1845,9 +1967,10 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
       /** **THE DOM-ORIGINATED TURN — THE CALLER'S VERB IS READ FROM THE GRAPH, NEVER FROM THIS FILE.**
        *  A real click on the opener runs the AUTHORED body first (provident registered its own listener at render, before
        *  this one), and that body writes the caller's verb token into the authored carrier. So the listener does not need
-       *  to know which verb its element carries: it takes the token the graph now holds and hands THAT to the mechanism.
-       *  **THIS IS WHY NO VERB WORD IS SPELLED IN THIS FILE** — `overlay.ts` owns none, the envelope authors them, and the
-       *  wiring reads them; a second spelling here would be exactly the drift the attribute-name rule forbids. */
+       *  to know which verb its element carries: it takes the token the graph now holds, hands it to the act, and THE ACT
+       *  IS ONE STORE WRITE. **THIS IS WHY NO VERB WORD IS SPELLED IN THIS FILE** — `overlay.ts` owns none, the envelope
+       *  authors them, the mechanism translates them, and the wiring reads them; a second spelling here would be exactly
+       *  the drift the attribute-name rule forbids. */
       const turn = (): void => {
         const carried = authoredOverlayToken(runtime, stateNodeId)
         if (!carried.readable) return
@@ -1873,7 +1996,6 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
     },
   }
 }
-
 
 /* ══════════════════════════════════════════════════════════════════════════════════
  * U-PANE-DRAG-COMPLIANCE — THE STORE-BACKED DRAG-CHAIN SEAM COMPOSITION

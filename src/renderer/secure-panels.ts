@@ -66,7 +66,7 @@ declare global {
         // SAME `SecuritySettings & { exclusion }` superset (a half-widening FAILS), and
         // `tier4-arbitrary-storage.md` `§2.4` item 8 adds the ONE further additive member
         // `read` at BOTH sites together (the pane's refusal segment is sourced from it).
-        get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null }>
+        get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null; pane: { open: boolean } }>
         // G3 §2.3 item 2 — the pane's declared `security.set` follows the same
         // superset as the preload's (the receipt's additive `write` member), with the holder's
         // type following the store's own declared answer superset (`Tier4WriteAnswer`).

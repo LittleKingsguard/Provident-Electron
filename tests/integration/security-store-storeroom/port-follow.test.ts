@@ -130,16 +130,27 @@ describe('the port follows the record (D-123)', () => {
       // times. A consumer that reconciles a socket is idempotent by construction (`followExclusion` compares against the
       // listener's own record), and a row counting one delivery per act would be pinning the wrong fact.
       expect(seen, 'SO THE CROSSING`S REPAIR REACHED THE SAME CALLBACK, with the state it landed as — the port is driven by the DELIVERY and not by the verb').toEqual(['mcp-disabled', 'mcp-enabled', 'mcp-disabled', 'mcp-disabled'])
-      // (iii) THE CONTROL — a legal pane move changes no half, so the callback fires for the pane's own delivery and the
-      //       state it hands is the one that already stood: the consumer is told, and reconciles nothing.
-      expect(surface.pane(false), 'the pane closes, which faults nothing').toEqual({ status: 'committed' })
-      // **AND NO EXCLUSION DELIVERY FOLLOWS IT, WHICH IS THE OTHER HALF OF THE SPLIT**: the pane's own address delivers (the
-      // family is bound in the one subscription, so the realm re-reads — clause 2), but `onExclusionChanged` is the
-      // EXCLUSION's delivery and this act moved no pair, so the port's consumer is not called at all. **CLOSING A PANE DOES
-      // NOT RE-OPEN THE PORTS**: that is `D-122`'s auto-re-enable, which the invariant does not state and this pass does not
-      // build (`D-123`).
-      expect(seen.length, 'so the port`s consumer heard nothing from the closing act').toBe(4)
-      expect(surface.read().exclusion, 'with the pair unmoved: closing a pane does not re-open the ports, which is `D-122``s auto-re-enable and is NOT part of the invariant (`D-123`)').toBe('mcp-disabled')
+      // (iii) **THE CLOSING EDGE — RE-DERIVED AT `D-125`, AND IT IS THE FIGURE `D-123` GOT THE OTHER WAY ROUND.** That row
+      //       recorded *"CLOSING A PANE DOES NOT RE-OPEN THE PORTS: that is `D-122`’s auto-re-enable, which the invariant
+      //       does not state"*, and it was right about the invariant it had: its repair had OVERWRITTEN the operator's
+      //       intent, so the close edge had nothing to settle back to. Now the pair carries `wanted`, (ii)'s enable recorded
+      //       it, and the close edge settles the ports to it — the same delivery, two handles, on the exclusion's own
+      //       address. The port's consumer hears it exactly as it hears every other change, which is what makes the socket a
+      //       LISTENER'S consequence and never a toggle's (`D-82` clause 2).
+      expect(surface.pane(false), 'the pane closes, and the close edge settles the ports to the intent the open edge preserved').toEqual({ status: 'committed' })
+      expect(seen.slice(4), 'so the port`s consumer IS called on the closing act — twice, on the same per-handle rule as above, with the state the record now holds').toEqual(['mcp-enabled', 'mcp-enabled'])
+      expect(surface.read().exclusion, 'and the record holds the intent: `D-122`’s auto re-enable arrives through the CONSTRAINT now, and not through a toggle beside it').toBe('mcp-enabled')
+      // AND THE OTHER ARM, WHICH IS THE DISCRIMINATOR: with the intent DISABLED the same closing act settles nothing, so the
+      // consumer is not called and the ports stay shut. Both arms are driven because the intent is the only thing that
+      // tells them apart.
+      const quiet: string[] = []
+      const shut = createSettingsSurface({ userDataDir: dir, onExclusionChanged: (state) => { quiet.push(state) } })
+      shut.attach(sink)
+      expect(shut.transition('mcp-disabled').applied, 'the operator disables the ports, with no pane open').toBe(true)
+      expect(shut.pane(true).status, 'the pane opens').toBe('committed')
+      expect(shut.pane(false).status, 'and closes').toBe('committed')
+      expect(quiet, 'and the consumer heard the ONE ordinary transition alone: neither pane act moved the pair, because the intent it settles to is the state the pair already stands in — the two arms of this edge, side by side').toEqual(['mcp-disabled'])
+      expect(shut.read().exclusion, 'with the ports still shut, which is the arm the intent decided').toBe('mcp-disabled')
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }

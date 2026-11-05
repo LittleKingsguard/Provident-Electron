@@ -125,18 +125,43 @@ function nodeById(id: string): WalkedNode | null {
   return walkEnvelope().find((entry) => propsIdOf(entry.node) === id) ?? null
 }
 
-/** A booted app realm with the consumer constructed over it — the `startThemeApplication` shape. */
+/** **THE STORE'S STAND-IN — A CROSSING THE WIRING READS AND WRITES, AND THE FILE'S WHOLE INSTRUMENT** (`D-125`). It holds the
+ *  two things the real crossing holds and nothing else: the LAST DELIVERED WORD (`open()`, the store's) and the ONE WRITE
+ *  (`write(open)`, the act's, recorded and answered by nothing). `deliver()` is the STORE'S OWN TURN: it changes the word
+ *  and runs the wiring's `render()`, which is the only way a pane appears in this file. So every row below can tell an ASK
+ *  from an OUTCOME, and a wiring that opened the pane from what it asked for would redden here rather than pass. */
+interface RealmCrossing {
+  open(): boolean | null
+  write(open: boolean): void
+}
 interface Realm {
   readonly runtime: Runtime
   readonly mount: unknown
   readonly app: OverlayApplication
+  /** Every boolean the act asked the store for, in order: the ASK, never the outcome. */
+  readonly asks: boolean[]
+  /** **THE STORE'S TURN** — the word arrives. It renders NOTHING by itself: the render is the wiring's own turn, and every
+   *  row below calls `app.render()` explicitly so the two halves of the chain are separately observable. */
+  deliver(open: boolean): void
 }
 function realm(): Realm {
   const mount = mountEl()
   const runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() as never })
   runtime.bootstrap()
-  const app = startOverlayApplication(runtime)
-  return { runtime, mount, app }
+  const asks: boolean[] = []
+  let delivered: boolean | null = null
+  const pane: RealmCrossing = {
+    open: () => delivered,
+    write: (open: boolean) => { asks.push(open) },
+  }
+  const app = startOverlayApplication(runtime, { pane })
+  return {
+    runtime,
+    mount,
+    app,
+    asks,
+    deliver: (open: boolean) => { delivered = open },
+  }
 }
 
 /** The rendered HTML of the app graph — what `provident.get_rendered_html` answers. */
@@ -168,34 +193,57 @@ beforeAll(() => {
 })
 
 describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provident data', () => {
-  it('OV-1 · the TRANSITION MACHINE, through all four verbs: `open`/`close`/`toggle`/`escape` land the four-state set and report `changed` — the wiring consumes the mechanism rather than re-spelling it', () => {
-    const { app } = realm()
-    // THE CONSUMER'S SEED IS THE GRAPH'S: the authored carrier holds one of the machine's own four state words.
-    expect(app.state(), 'the authored carrier seeds the machine (`closed`), so the wiring holds no literal of its own').toBe('closed')
+  it('OV-1 · **THE ACT ASKS AND THE DELIVERY ANSWERS** — `open`/`close`/`toggle`/`escape` each become ONE write at the store, the wiring\'s own word does not move until the store delivers, and a verb asking for the state the store already reports is no write at all (`D-125`, re-deriving `D-113`)', () => {
+    const { app, asks, deliver } = realm()
+    // THE WIRING'S WORD BEFORE ANYTHING: nothing has been delivered, so the pane stands closed — the `mem` record's own
+    // minted value, never a state this realm invented.
+    expect(app.state(), 'no delivery yet, so the wiring holds the crossing’s closed word').toBe('closed')
 
+    // (1) THE OPEN ACT — one ask, and NOTHING moves until the store answers.
     const opened = app.apply('open')
-    expect(opened.state, '`open` lands `open`').toBe('open')
-    expect(opened.changed, 'and it MOVED').toBe(true)
-
-    const heldThenOpen = app.apply('open')
-    expect(heldThenOpen.changed, 'an `open` on an already-open overlay moves nothing — the same state, `changed:false`').toBe(false)
-
-    const closed = app.apply('close')
-    expect(closed.state).toBe('closed')
-    expect(closed.changed).toBe(true)
-
+    expect(asks, '`open` asks the store for ONE thing: a boolean at the pane’s address').toEqual([true])
+    expect({ asked: opened.asked, wrote: opened.wrote }, 'and the reading says so, in the act’s own members').toEqual({ asked: true, wrote: true })
+    expect(opened.changed, 'the act does NOT move the wiring’s word — the render has not happened and cannot').toBe(false)
+    expect(app.state(), 'so the pane still stands closed after the ask: NO LOCAL MACHINE MOVES FIRST').toBe('closed')
+    // (2) THE STORE'S TURN — the delivery, and only now is the pane up.
+    deliver(true)
+    app.render()
+    expect(app.state(), 'the delivery is what opens the pane').toBe('open')
+    // (3) A SECOND `open` ASKS FOR THE STATE THE STORE ALREADY REPORTS: the mechanism answers `changed:false`, and this
+    //     wiring makes no write — a write with no external cause behind it is the `D-82` clause-4 fault.
+    const again = app.apply('open')
+    expect({ asked: again.asked, wrote: again.wrote }, 'an `open` over an open pane is NO WRITE').toEqual({ asked: null, wrote: false })
+    expect(asks, 'and the ask log proves it: unchanged').toEqual([true])
+    // (4) THE CLOSE ACT, the transient, and the delivery that ends it.
+    const closing = app.apply('close')
+    expect(asks, '`close` asks for the other boolean').toEqual([true, false])
+    expect(closing.state, 'and while that write is in flight the wiring holds its ONE transient — a pane up and on its way out').toBe('closing')
+    expect(closing.changed, 'which is not a render and is not a move of the store’s word').toBe(false)
+    deliver(false)
+    app.render()
+    expect(app.state(), 'the delivery closes it, and the transient is over').toBe('closed')
+    // (5) `toggle` AND `escape` THROUGH THE SAME ROUTE: `toggle` asks for the opposite of the STORE's word, `escape` asks for
+    //     closed and hands the mechanism the caller callback (OV-2 drives the callback itself).
+    deliver(false)
+    app.render()
     const toggled = app.apply('toggle')
-    expect(toggled.state, '`toggle` from `closed` opens').toBe('open')
-    const toggledBack = app.apply('toggle')
-    expect(toggledBack.state, '`toggle` from `open` closes').toBe('closed')
-
-    // THE THIRD AND FOURTH STATES ARE THE MECHANISM'S OWN AND REACH THE CONSUMER UNFOLDED: a state the wiring holds is
-    // passed THROUGH, never normalised by it.
-    expect(overlayTransition('held', 'open').state, '`held` × `open` stays `held` — the mechanism’s own cell').toBe('held')
+    expect(toggled.asked, '`toggle` from a closed store asks for open').toBe(true)
+    deliver(true)
+    app.render()
+    expect(app.state()).toBe('open')
+    const escaped = app.apply('escape')
+    expect({ asked: escaped.asked, wrote: escaped.wrote }, '`escape` from an open store asks for closed').toEqual({ asked: false, wrote: true })
+    deliver(false)
+    app.render()
+    expect(app.state(), 'and the store closes it').toBe('closed')
+    // (6) THE FOUR-STATE SET IS CLOSED AND ONLY TWO OF ITS MEMBERS ARE THE STORE'S: `open`/`closed` are derived from the
+    //     crossing, and `held`/`closing` are the mechanism's transients — `closing` produced by this wiring above, `held` a
+    //     member of the set that this app produces nowhere (a pane is up when the store says so, so "up but unconfirmed"
+    //     names no state here).
+    expect(overlayTransition('held', 'open').state, '`held` × `open` stays `held` — the mechanism’s own cell, unmoved').toBe('held')
     expect(overlayTransition('closing', 'toggle').state, '`closing` × `toggle` opens').toBe('open')
-    // THE FOUR-STATE SET IS CLOSED: every answer the machine gave above is a member of it.
-    const seen = new Set([opened.state, closed.state, toggled.state, toggledBack.state, 'held', 'closing'])
-    expect([...seen].sort(), 'every state the consumer held is one of the machine’s own four').toEqual(['closed', 'closing', 'held', 'open'])
+    const seen = new Set([app.state(), 'held', 'closing', 'open'])
+    expect([...seen].sort(), 'every word the consumer can hold is one of the machine’s own four').toEqual(['closed', 'closing', 'held', 'open'])
   })
 
   it('OV-2 · the `escape` verb INVOKES the caller’s callback once and ABSORBS its throw — the transition still lands, and the consumer reports the invocation', () => {
@@ -252,21 +300,28 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     // declaration carries on both arms.
     const role = overlayWiringRole()
     expect(role.attributeName, 'the caller’s name is `inert` — held ONCE, in the role').toBe('inert')
-    const { app } = realm()
+    const { app, deliver } = realm()
     expect(app.attributeName, 'the application carries that one spelling').toBe(role.attributeName)
-    const open = app.apply('open')
-    expect(open.declaration, 'the OPEN declaration is the set arm').toEqual({ name: role.attributeName, value: 'true', removal: false })
-    const close = app.apply('close')
+    // THE DECLARATION IS THE DELIVERY'S PRODUCT (`D-125`): the act writes the store and produces NO declaration at all.
+    const asked = app.apply('open')
+    expect(asked.declaration, 'the ACT declares nothing — it asks the store and waits').toBe(null)
+    deliver(true)
+    const open = app.render()
+    expect(open.declaration, 'the OPEN declaration is the set arm, and it arrives on the render').toEqual({ name: role.attributeName, value: 'true', removal: false })
+    deliver(false)
+    const close = app.render()
     expect(close.declaration, 'the CLOSE declaration is the removal arm').toEqual({ name: role.attributeName, value: false, removal: true })
   })
 
   it('OV-4 · **THE AUTHORED SURFACE IS A PROVIDENT NODE** — `get_rendered_html` shows the dialog and the attribute lands on the AUTHORED app root; a hand-written element is the POSITIVE CONTROL and the graph cannot address it', async () => {
-    const { runtime, mount, app } = realm()
+    const { runtime, mount, app, deliver } = realm()
     const before = htmlOf(runtime)
     expect(before, 'the CLOSED surface: the authored app root carries no `inert` attribute').not.toContain('inert')
 
-    const open = app.apply('open')
-    expect(open.written, 'the declaration LANDED: the runtime answered `applied`').toBe(true)
+    app.apply('open')
+    deliver(true)
+    const open = app.render()
+    expect(open.written, 'the declaration LANDED on the delivery: the runtime answered `applied`').toBe(true)
     expect(open.status).toBe('applied')
 
     const html = htmlOf(runtime)
@@ -358,8 +413,8 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     }
   })
 
-  it('OV-7 · the DRIVE THROUGH THE PRODUCING GRAPH — the authored opener writes the caller’s verb token, the wiring reads it and applies the declaration; the authored close control reverses it', () => {
-    const { runtime, app } = realm()
+  it('OV-7 · the DRIVE THROUGH THE PRODUCING GRAPH — the authored opener writes the caller’s verb token, the wiring reads it and WRITES THE STORE, and the authored close control reverses it; the render rides the delivery (`D-125`)', () => {
+    const { runtime, app, deliver } = realm()
     // THE ACT, AS AN ACT: `provident.dispatch` on the authored opener runs the authored handler body, which writes the
     // CALLER'S token into the authored state carrier. Nothing about a transition happens in the body.
     return runtime
@@ -369,16 +424,23 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
           (runtime.listTargets().nodes.find((n) => n.propsId === OVERLAY_STATE_ID) as { nodeId: string }).nodeId,
         )
         expect(textOf(htmlOf(runtime), OVERLAY_STATE_ID), 'the carrier now holds the caller’s VERB token, not a state word').toBe('toggle')
-        // THE CONSUMER'S TURN — the same turn the reply route takes beside the appearance act.
+        // THE CONSUMER'S TURN — the same turn the reply route takes beside the appearance act. **IT ASKS THE STORE AND
+        // RENDERS NOTHING** (`D-125`): the word it holds is still the store's, and the pane appears when the store answers.
         const driven = app.drive()
         expect(driven.verb, 'the turn consumed the token the graph holds').toBe('toggle')
-        expect(driven.state, 'and the machine opened').toBe('open')
-        expect(driven.written, 'and the inert declaration landed on the authored app root').toBe(true)
-        expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'which `get_rendered_html` shows').toMatch(/inert="true"/)
+        expect({ asked: driven.asked, wrote: driven.wrote }, 'and it became ONE write at the pane’s address').toEqual({ asked: true, wrote: true })
+        expect(driven.state, 'the wiring’s word did not move: the store has not answered').toBe('closed')
+        expect(driven.written, 'and no declaration was applied, because nothing has been rendered').toBe(false)
+        expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'so `get_rendered_html` still shows a surface with no key').not.toMatch(/\binert\b/)
+        // THE STORE'S TURN: the delivery, and the render it drives.
+        deliver(true)
+        const rendered = app.render()
+        expect(rendered.written, 'and the inert declaration lands on the authored app root').toBe(true)
+        expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'which `get_rendered_html` now shows').toMatch(/inert="true"/)
         // A SECOND `drive()` ON AN UNMOVED CARRIER IS NOT AN ACT.
         const again = app.drive()
-        expect(again.changed, 'an unmoved token moves nothing').toBe(false)
-        expect(again.written, 'and writes nothing').toBe(false)
+        expect(again.wrote, 'an unmoved token writes nothing').toBe(false)
+        expect(again.written, 'and declares nothing new').toBe(false)
 
         return runtime.dispatch({ target: { kind: 'cssId', cssId: OVERLAY_CLOSE_ID }, event: 'click' })
       })
@@ -386,8 +448,12 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
         expect(result.dirtied, 'the authored close control’s body RAN').toContain(
           (runtime.listTargets().nodes.find((n) => n.propsId === OVERLAY_STATE_ID) as { nodeId: string }).nodeId,
         )
-        const closed = app.drive()
-        expect(closed.verb).toBe('close')
+        const closingAsk = app.drive()
+        expect(closingAsk.verb).toBe('close')
+        expect({ asked: closingAsk.asked, wrote: closingAsk.wrote }, 'the close is ONE write of the other boolean').toEqual({ asked: false, wrote: true })
+        expect(closingAsk.state, 'and the wiring holds its transient while the write is in flight').toBe('closing')
+        deliver(false)
+        const closed = app.render()
         expect(closed.state).toBe('closed')
         expect(closed.written).toBe(true)
         expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the REMOVAL arm took the attribute back off the authored app root').not.toMatch(/\binert\b/)
@@ -395,8 +461,10 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
   })
 
   it('OV-8 · **WHAT THE INERT ROOT DOES AND DOES NOT BLOCK, MEASURED** — the app’s own `provident.dispatch` STILL reaches nodes under it, and no code on that path consults `inert` at all', () => {
-    const { runtime, app } = realm()
+    const { runtime, app, deliver } = realm()
     app.apply('open')
+    deliver(true)
+    app.render()
     expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the root IS inert for this measurement').toMatch(/inert="true"/)
     // THE MEASUREMENT: a node UNDER the inert root — the counter's increment control — is dispatched with the overlay
     // open, and it still runs. `inert` is a RENDERED-DOM semantic; the MCP dispatch path resolves a node id in the
@@ -421,8 +489,10 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
   })
 
   it('OV-9 · the GESTURE SESSION and the PANE DRAG are untouched by the declaration — the commit route still applies under an inert root, and neither mechanism names `inert`', () => {
-    const { runtime, app } = realm()
+    const { runtime, app, deliver } = realm()
     app.apply('open')
+    deliver(true)
+    app.render()
     // THE COMMIT ROUTE the drag's end turn uses is ONE `state-slice` on the authored status node. Under an inert root it
     // still applies, because it is a graph write and the graph has no idea what the DOM is doing.
     const answer = runtime.applyCommand({
@@ -529,7 +599,7 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
   })
 
   it('OV-12 · THE GEOMETRY REACHES THE DOM AND THE VISIBILITY IS THE MECHANISM’S ALONE: the rendered dialog tag carries the authored declarations, neither authored style carries a `display` that could pin a CLOSED overlay open, and the page sheet’s one key is the `inert` attribute the consumer applies', () => {
-    const { runtime, app } = realm()
+    const { runtime, app, deliver } = realm()
     // (a) THE AUTHORED CSS IS IN THE RENDERED FRAGMENT — the `get_rendered_html` reading, not a stylesheet reading.
     const dialogTag = tagOf(htmlOf(runtime), OVERLAY_DIALOG_ID)
     expect(dialogTag, 'the authored dialog renders').toContain('position: fixed')
@@ -557,14 +627,110 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     // THE CONTROL: a key that names something other than the mechanism's product is refused by the same reading.
     expect(`#${APP_ROOT_ID}[data-overlay] ~ #${OVERLAY_SCRIM_ID} { display: block; }`.includes('#app-surface[inert]'), 'a rule keyed on another attribute is NOT the key this row reads').toBe(false)
 
-    // (d) AND THE STATE MACHINE STILL DECIDES IT: `closed` removes the key, `open` sets it — the sheet follows, it does
-    // not lead.
+    // (d) AND THE STORE DECIDES IT (`D-125`): the act writes, the DELIVERY renders, `closed` removes the key and `open`
+    // sets it — the sheet follows, it does not lead, and neither does the wiring's own ask.
     expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'closed: no key, so the layer is not shown').not.toMatch(/\binert\b/)
-    const opened = app.apply('open')
-    expect(opened.written, 'open: the declaration lands').toBe(true)
+    app.apply('open')
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the ASK alone sets nothing: the act has written the store and no delivery has arrived').not.toMatch(/\binert\b/)
+    deliver(true)
+    const opened = app.render()
+    expect(opened.written, 'the delivery renders: the declaration lands').toBe(true)
     expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'and the key the sheet reads is present').toMatch(/\binert\b/)
-    const closed = app.apply('close')
+    app.apply('close')
+    deliver(false)
+    const closed = app.render()
     expect(closed.written, 'close: the removal arm lands').toBe(true)
     expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'and the key is gone again, so the layer hides with it').not.toMatch(/\binert\b/)
+  })
+
+  it('OV-13 · **THE WRITE-FIRST INVERSION, OVER COMMENT-ELIDED CODE** — the open path WRITES THE STORE and does not set the machine from the authored token first: the region\'s ONE `overlayTransition` call is handed the STORE\'s word as its state, no assignment takes a transition answer as the word the wiring holds, and the write precedes every move of that word (`D-125`)', () => {
+    const region = consumerRegion()
+    expect(region.length, 'the consumer’s region was located, so every census below reads CODE and not prose').toBeGreaterThan(2000)
+
+    // (1) THE TRACKED TOKEN IS NEVER THE MACHINE'S STATE. `D-124`'s form was `state = overlayTransition(state, verb)` inside
+    //     `apply()`, with `state` seeded from the AUTHORED carrier — the renderer as the machine, the store following it.
+    expect(/overlayTransition\(state\b/.test(region), 'no call hands the wiring’s own word to the mechanism as its state').toBe(false)
+    expect(/overlayTransition\(boot\.token/.test(region), 'and none is seeded from the AUTHORED carrier').toBe(false)
+    expect(/overlayTransition\(carried\.token/.test(region), 'nor is the authored token ever the state argument — that is the direction this pass removes').toBe(false)
+    expect(/\bstate\s*=\s*overlayTransition\(/.test(region), 'and no assignment takes a transition answer as the state this wiring holds').toBe(false)
+    expect(/\bstate\s*=\s*answer\.state/.test(region), 'nor as a member of one').toBe(false)
+
+    // (2) THE ONE CALL THAT STANDS IS HANDED THE STORE'S WORD — the act's whole direction, in one expression.
+    const calls = region.match(/overlayTransition\(/g) ?? []
+    expect(calls.length, 'exactly ONE `overlayTransition` call stands in the consumer').toBe(1)
+    expect(/overlayTransition\(before === true \? 'open' : 'closed', verb/.test(region), 'and its STATE argument is the store’s last delivered word, translated to the mechanism’s own vocabulary').toBe(true)
+
+    // (3) THE MACHINE'S WORD IS DERIVED FROM THE STORE, in one place, and the transient is the only other writer.
+    expect((region.match(/derived = word \? 'open' : 'closed'/g) ?? []).length, 'the rendered word is DERIVED from the crossing’s word, once').toBe(1)
+    // **AND IT IS ASSIGNED NOWHERE ELSE** — one writer, and that writer is the store. `D-124`'s form assigned it from the
+    // transition's answer inside the ACT, which is the direction this pass removes and the assertion a reader needs.
+    expect((region.match(/derived = /g) ?? []).length, 'the machine’s word has ONE assignment in the whole consumer, and it reads the store — a second one, from a transition answer, is the direction this pass removes').toBe(1)
+    // TWO WRITES AND NO MORE: one PRODUCTION (`if (wrote && !asked) transient = 'closing'`) and one CLEARING (`if (clear)
+    // transient = null`) — the transient has one writer in one realm and outlives no delivery, which is `D-90`'s judgement
+    // read as a count.
+    expect((region.match(/transient = /g) ?? []).length, 'the ONE transient is written exactly twice: produced by the act and cleared by the delivery').toBe(2)
+
+    // (4) THE WRITE PRECEDES EVERY MOVE OF THE WORD: the crossing is written in the act, and the act's block stands BEFORE
+    //     the render block that derives it. A wiring that moved its word first would have the indices the other way round.
+    const writeAt = region.indexOf('crossing.write(')
+    const deriveAt = region.indexOf("derived = word ? 'open' : 'closed'")
+    expect(writeAt, 'the act reaches the crossing’s write route').toBeGreaterThan(-1)
+    expect(deriveAt, 'and the render derives the word').toBeGreaterThan(-1)
+    expect(writeAt < deriveAt, 'so the WRITE is written before the DERIVATION in the consumer’s own code — the order the correction asks for, read off the bytes rather than claimed').toBe(true)
+    // (5) AND THE ACT DECLARES NOTHING: an act's reading carries no declaration, which is what makes the render the pane's
+    //     only source. The one `declaration:` member in the act's answer is the `null`.
+    const applyStart = region.indexOf('const apply = (')
+    const applyEnd = region.indexOf('return {', applyStart)
+    const applyBody = applyStart < 0 || applyEnd < 0 ? '' : region.slice(applyStart, applyEnd)
+    expect(applyBody.includes('declaration: null'), 'the ACT’s answer carries `declaration: null` — it asks the store and renders nothing').toBe(true)
+    expect(/overlayInertDeclaration\(/.test(applyBody), 'and the act calls the declaration mechanism NOWHERE').toBe(false)
+
+    // (6) THE ELISION CONTROL: the same identifiers DO stand in the file's prose, so a reader that did not elide comments
+    //     would find them and this row would be measuring the explanation instead of the code.
+    const raw = readFileSync(CONSUMER_PATH, 'utf8')
+    expect((raw.match(/overlayTransition/g) ?? []).length, 'the raw bytes name `overlayTransition` in prose as well as in code').toBeGreaterThan(calls.length)
+    expect(codeOf(raw).includes('hands it to `overlayTransition`'), 'and the eliding reader removes that prose — this is the control that makes (1)–(5) measurements of CODE').toBe(false)
+    // RED ON REVERT: restore `D-124`'s `const answer = overlayTransition(state, verb, …); state = answer.state` inside `apply`
+    // and (1) reddens on three assertions at once while (2) still passes — the mechanism is still called, it is the
+    // AUTHORITY that moved.
+  })
+
+  it('OV-14 · **THE RENDER IS THE DELIVERY\'S PRODUCT AND NEVER THE ASK\'S** — a delivery with NO act behind it opens the rendered pane, and an act with no delivery renders nothing at all (`D-125`; `D-82` clause 2)', () => {
+    const { runtime, app, deliver, asks } = realm()
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the boot: no key on the authored app root').not.toMatch(/\binert\b/)
+
+    // (a) THE STORE CHANGES WITH NO ACT AT ALL — the case a listener exists for: the pane appears because the crossing's
+    //     word moved, and NOTHING in this realm asked for it.
+    deliver(true)
+    const rendered = app.render()
+    expect(asks, 'no act stood behind this delivery: the ask log is empty').toEqual([])
+    expect(rendered.written, 'and the declaration still lands, because the render reads the store and not the ask').toBe(true)
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'so `get_rendered_html` shows the pane up with no user act anywhere').toMatch(/inert="true"/)
+    expect(app.state(), 'and the machine’s word is the store’s').toBe('open')
+
+    // (b) THE MIRROR: an act with no delivery changes NOTHING that is rendered — the pane cannot appear from an ask.
+    deliver(false)
+    app.render()
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'closed again by a delivery alone').not.toMatch(/\binert\b/)
+    const asked = app.apply('open')
+    expect(asked.wrote, 'the act wrote the crossing').toBe(true)
+    const idle = app.render()
+    expect(idle.written, 'and the render that follows it lands nothing: the store has not answered, so the declaration is already the one on the node').toBe(false)
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the rendered surface is unmoved by the ask alone, which is the whole of the correction').not.toMatch(/\binert\b/)
+    // AND THE DELIVERY THAT ANSWERS IT IS WHAT MOVES THE SURFACE.
+    deliver(true)
+    expect(app.render().written, 'the answering delivery renders the pane').toBe(true)
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'and the key is present').toMatch(/inert="true"/)
+    // (c) A TRANSIENT RENDERS NOTHING AND CANNOT: while a close is in flight the pane is still up and on its way out, and
+    //     the word the wiring holds is `closing` — but the RENDER PREDICATE is the store's word, which still says open.
+    const closing = app.apply('close')
+    expect(closing.state, 'the transient names the window the act opened').toBe('closing')
+    app.render()
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'and the rendered pane is STILL UP: a transient is not a state and cannot close what the store has not closed').toMatch(/inert="true"/)
+    deliver(false)
+    app.render()
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the delivery is what takes it down').not.toMatch(/\binert\b/)
+    // RED ON REVERT: make `renderTurn` apply from the verb's ask (or from `transient`) instead of from the crossing's word and
+    // (a) reddens first — a delivery with no act behind it would render nothing — and (c) after it.
   })
 })

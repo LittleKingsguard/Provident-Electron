@@ -488,6 +488,17 @@ const DECLARED_SCOPE: readonly string[] = [
   //    composes is still read off the CARRIER's answer), `tests/isolation-adversarial-e2e.test.ts` and
   //    `tests/secure-panels.test.ts` (the same drive, on the same three arms, with their token/group assertions unmoved).
   'tests/integration/secure-panels/roster.test.ts',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-125` — THE STORE DRIVES AND THE RENDERER RENDERS. **ONE PATH IS NEW TO THIS UNION AND IT IS A BATTERY**; the rest of
+  //    this pass's edits stand on paths the declarations above already own, named here so a reader can see which they were:
+  //    the two secure-crossing modules (`src/main/operator-settings/index.ts`, `src/main/settings-surface/index.ts`) and the
+  //    renderer's client (`src/renderer/security-client.ts`), the wiring (`src/renderer/renderer.ts`) and both lockstep
+  //    halves of the `get()` declaration (`src/main/preload.ts`, `src/renderer/secure-panels.ts`), the four batteries
+  //    re-derived row by row (`value-arms`, `security-delivery`, `creation-declarations`, `port-follow`), the overlay
+  //    consumer's own file, the demo bundle the source change rebuilds (`demo/pane-drag-demo/demo.mjs`), and the three
+  //    `security-store-storeroom` documents. **THE ONE NEW PATH IS THIS ROW'S OWN SUBJECT**: the secure pane battery that
+  //    counts the read answer's members, because that answer gained the pane's word.
+  'tests/integration/secure-panels/persistence.test.ts',
   'tests/isolation-adversarial-e2e.test.ts',
   'tests/secure-panels.test.ts',
   //    THE FOURTH ROW RE-GRAINED: `tests/tier4-arbitrary-storage.test.ts`'s pane fixture took the carrier's reading by

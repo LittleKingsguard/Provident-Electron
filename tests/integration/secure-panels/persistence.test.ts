@@ -190,7 +190,10 @@ describe('secure-panels · the grant, as bytes', () => {
     // …and the CARRIER never carries one either: the read answer is the grant and the two additive
     // members, so a roster cannot be reconstructed from what the pane is served (`S-5`, §6).
     const answer = warm.read()
-    expect(Object.keys(answer).sort(), 'the read answer’s declared members are the token, the grant, the refusal reading and the pair — and no roster member').toEqual(['enabled', 'exclusion', 'read', 'token'])
+    // ⟶ **THE ANSWER'S FIFTH MEMBER IS THE PANE'S WORD** (`D-125`), and it cannot answer a roster either: `{open: boolean}`
+    // is one boolean at the crossing's fourth address.
+    expect(Object.keys(answer).sort(), 'the read answer’s declared members are the token, the grant, the refusal reading, the pair and the pane’s word — and no roster member').toEqual(['enabled', 'exclusion', 'pane', 'read', 'token'])
+    expect(answer.pane, 'and the pane member is the crossing’s one boolean, which names no group and no roster').toEqual({ open: false })
     expect(answer.enabled, 'an empty grant list is a LEGAL answer').toEqual([])
   })
 

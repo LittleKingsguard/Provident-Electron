@@ -57,7 +57,7 @@ export interface ProvidentBridge {
     // blanking the operator's only reader). `SecuritySettings` ITSELF stays unmoved (§1.3 item 5)
     // and this site MUST move in LOCKSTEP with `secure-panels.ts`'s `declare global` re-declaration
     // (a half-widening FAILS).
-    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null }>
+    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null; pane: { open: boolean } }>
     // THE RECEIPT'S ADDITIVE DELIVERY (G3 §2.3 item 2): `security.set`'s
     // resolution is re-declared as the SUPERSET — the post-state settings
     // extended by the declared member `write` (the receipt of THIS write).
@@ -172,7 +172,7 @@ const bridge: ProvidentBridge = {
     // `SecuritySettings` ITSELF is unmoved (§1.3 item 9): the widening is an INTERSECTION applied
     // at this declaration site and at the renderer's `declare global` re-declaration, which MUST
     // move in LOCKSTEP (a half-widening FAILS).
-    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null }> {
+    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null; pane: { open: boolean } }> {
       return ipcRenderer.invoke(IPC_SECURITY_GET)
     },
     set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: Tier4WriteAnswer }> {
