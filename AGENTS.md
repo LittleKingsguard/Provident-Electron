@@ -45,9 +45,11 @@ procedure — where the two could be confused, the row decides.
 
 ## Current state
 
-Branch `strata` carries the work; `main` is frozen until the user grants merge permission (`strata/decisions.md`
-D-6). **Which units are landed, open or closed is state, not prose**: read `strata/.strata/units/*.json` and the
-map's `strata/modules.json`, and take the counts from `strata/brief.md` §6 — never from this file (D-26, D-43).
+`main` carries the work: branch `strata` was fast-forwarded into it on 2026-11-06 on the user's merge permission
+(`strata/decisions.md` D-6's pointer clause, which names the commit, and D-119, which records the act), so the two
+refs agree at one commit. **The freeze is lifted, and nothing is pushed.** **Which units are landed, open or closed is
+state, not prose**: read `strata/.strata/units/*.json` and the map's `strata/modules.json`, and take the counts from
+`strata/brief.md` §6 — never from this file (D-26, D-43).
 
 ## Commands
 

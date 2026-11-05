@@ -1,4 +1,4 @@
-# handover — branch `strata` (`main` still `28e9ac1`, unmerged by D-6)
+# handover — `main` carries `strata`'s work (fast-forwarded from `28e9ac1` on 2026-11-06 by the user's merge permission, D-6's pointer clause; D-119; nothing pushed)
 
 Read `strata/brief.md` first, then `strata/decisions.md` in full — its last row is the current one.
 
@@ -30,7 +30,7 @@ So the first act is still a **SURVEY** — every unit's state, every row in `pen
 - **A run is only trustworthy on a clean tree.** The boundary row asserts the worktree against a declared edit set, so a dirty tree reddens it **by construction** — commit, then measure (`tests/integration/store-view-record/boundary.test.ts`; brief §6).
 - **The layer wall is prompt-level in this seat**: without the preset's `role_*` tools the L1/L2/L3 seats are plain delegations carrying the role's persona and procedure, so only the instruction and the diff hold scope.
 - **A disposition is not a landing**: a `routed` finding is not fixed, and a fix over prose must be re-read rather than substituted — a commit hash once ate a row count in two L1 documents (D-3).
-- **Instruments before prose** (D-29, D-30, D-44): `strata-walkthrough.mjs` stages, checks and pins; `strata-marks.mjs` keeps markers and index agreeing — a finding a script should have caught indicts it. **Commit per gate**, never merge or push (D-6); four legs and `strata-lint`, run from `strata/`.
+- **Instruments before prose** (D-29, D-30, D-44): `strata-walkthrough.mjs` stages, checks and pins; `strata-marks.mjs` keeps markers and index agreeing — a finding a script should have caught indicts it. **Commit per gate and never push** — the one merge D-6 reserved was taken on the user's instruction of 2026-11-06, and `main` and `strata` stood at ONE commit when it landed (D-6's pointer clause, D-119), so a later pass either commits on `main` or re-cuts `strata` from it; four legs and `strata-lint`, run from `strata/`.
 - **`npm test` — not only the Electron legs — can leave process trees**: the boot battery spawns Electron and a teardown lives only as long as
   its vitest hooks, so check `ps -eo pid,etime,args | grep -E 'node_modules/electron/dist|dist/main/main.mjs'` after a run and expect it empty.
   The teardown now SIGKILLs a boot's whole tree by process-tree walk, never by SIGTERM — the main process ignores it — and **proves zero**, failing loudly with every survivor listed; `reapProfile`'s cmdline-only match saw neither `--type=zygote` child (D-74).

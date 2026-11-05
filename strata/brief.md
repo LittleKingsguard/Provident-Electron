@@ -1,6 +1,6 @@
 # Provident-Electron — strata design brief
 
-- **Layer:** L0 · **Rev:** 3 · **Date:** 2026-10-30 · **Branch:** `strata` (D-6)
+- **Layer:** L0 · **Rev:** 3 · **Date:** 2026-10-30 · **Branch:** `strata`, merged into `main` 2026-11-06 (D-6's pointer clause, D-119)
 - **Status:** the bootstrap corpus — filed with `decisions.md` D-1..D-7; `ASM-1`..`ASM-3` (§8) stand open in
   `strata/.strata/units/strata-bootstrap.json`'s `assumptions`, and only the user closes one (D-1)
 - **Scope:** the strata bootstrap and the archive of the gate corpus; no module design, no code
