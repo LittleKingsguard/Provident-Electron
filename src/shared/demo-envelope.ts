@@ -336,10 +336,42 @@ const OVERLAY_VERB_TOGGLE = 'toggle'
 const OVERLAY_VERB_CLOSE = 'close'
 const OVERLAY_VERB_ESCAPE = 'escape'
 
-/** THE AUTHORED BASE STYLES — data, as every `css.style` object in this file is, and no geometry claim. */
+/** **THE AUTHORED STYLES — data, as every `css.style` object in this file is.** `appRootStyle` and `overlayPaneStyle` are
+ *  flow declarations and claim nothing else. THE TWO OVERLAY-LAYER STYLES BELOW ARE THE GEOMETRY (`D-120`), and they
+ *  are the surface's HOME FOR POSITION because these are AUTHORED provident nodes: a scrim's backdrop and a dialog's
+ *  centring are the node's own presentation, so they ride `css` as data rather than a hand-written rule in the shell's
+ *  stylesheet (`AGENTS.md` § "UI authority"). What each one carries, and what it deliberately does NOT:
+ *   · `overlayScrimStyle` — `position: fixed` over all four insets, i.e. a FULL-VIEWPORT backdrop, translucent and dark so
+ *     the app behind it stays visible. It stood at `{display: 'block'}`, which left the scrim IN FLOW at zero height and
+ *     so painted nothing at all;
+ *   · `overlayDialogStyle` — `position: fixed` with the `top/left: 50%` + `translate(-50%, -50%)` pair, i.e. a CARD
+ *     CENTRED OVER the app, bounded so a long dialog never leaves the viewport. It stood at `{display: 'block'}` and
+ *     measured IN FLOW BELOW the app cards.
+ *  **NEITHER CARRIES `display`, AND THAT IS THE ONE DELIBERATE OMISSION**: whether the layer is shown is the four-state
+ *  machine's decision, and the consumer's declared product of it is the `inert` attribute on the AUTHORED app root —
+ *  the shell's page CSS keys the layer's `display` on exactly that attribute. An INLINE `display` here would outrank the
+ *  keyed rule and pin a CLOSED overlay open, so the authored data carries geometry and the mechanism keeps visibility. */
 const appRootStyle: Record<string, string> = { display: 'block' }
-const overlayScrimStyle: Record<string, string> = { display: 'block' }
-const overlayDialogStyle: Record<string, string> = { display: 'block' }
+const overlayScrimStyle: Record<string, string> = {
+  position: 'fixed',
+  top: '0',
+  right: '0',
+  bottom: '0',
+  left: '0',
+  background: 'rgba(10, 14, 20, 0.55)',
+  'z-index': '10',
+}
+const overlayDialogStyle: Record<string, string> = {
+  position: 'fixed',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 'min(420px, 90vw)',
+  'max-height': '80vh',
+  'overflow': 'auto',
+  'z-index': '11',
+  'box-shadow': '0 18px 48px rgba(0, 0, 0, 0.35)',
+}
 const overlayPaneStyle: Record<string, string> = { display: 'block' }
 
 /** **THE STATE CARRIER'S AUTHORED HANDLER BODY — the same `(ctx, value)` string form every handler in this file

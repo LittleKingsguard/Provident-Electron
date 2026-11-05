@@ -4,7 +4,7 @@
   "suites": {
     "flat": {
       "files": 84,
-      "sites": 2306
+      "sites": 2308
     },
     "e2e": {
       "files": 5,
@@ -12,7 +12,7 @@
     },
     "integration": {
       "files": 30,
-      "sites": 271
+      "sites": 273
     },
     "unit": {
       "files": 15,
@@ -707,7 +707,7 @@
   "readings": {
     "gating": {
       "files": 36,
-      "sites": 263
+      "sites": 267
     },
     "onNotice": {
       "files": 106,

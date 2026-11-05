@@ -5,8 +5,21 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'" />
   <title>Provident-Electron</title>
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; background: #f4f6f8; }
+    /* THE SHELL'S OWN PAGE CSS — Electron chrome, not authored provident data (`AGENTS.md` § "UI authority"), which is
+       why it may carry style directly. `color-scheme: light` PINS the one arm this design is painted for: the page's
+       backgrounds are `#f4f6f8`/`#fff` and most of its text carries no foreground of its own, so the UA's second arm
+       (the `light dark` pair this rule used to declare) painted WHITE text on those light backgrounds whenever the
+       desktop's own preference was dark — measured on the real window: the h1, every card h2, the counter's value and
+       the group labels all computed `rgb(255, 255, 255)` on `rgb(244, 246, 248)`/`rgb(255, 255, 255)`. `body`'s explicit
+       `color` is the SECOND half and not a duplicate of the first: every element that sets no colour of its own inherits
+       this one, so the page stays legible even in a realm that ignores `color-scheme` (an older Chromium, a UA stylesheet
+       that differs), and the pin keeps the UA's form controls and scrollbars on the light arm with it.
+       THE COST, STATED: a user who prefers dark gets light form controls and a light scrollbar. The app's own dark pair
+       is the authored control's (`[theme="dark"]` below), never the desktop preference — the repo reads no environment
+       for it (`D-97`), and an arm driven by the desktop's own preference would be the ambient surface that
+       `tests/theme.test.ts` X-5 refuses. */
+    :root { color-scheme: light; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; background: #f4f6f8; color: #1b2430; }
     header h1 { font-size: 1.25rem; margin: 0 0 0.25rem; }
     header p { margin: 0 0 1rem; color: #556; font-size: 0.85rem; }
     .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -28,6 +41,41 @@
     .group-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; }
     .group-row label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
     .error { color: #c0392b; font-size: 0.8rem; margin-top: 0.5rem; }
+
+    /* THE THEME RULES — PRESENTATION KEYED ON THE AUTHORED ATTRIBUTE, AND THE NAME AND VALUES ARE THE DECLARATION'S,
+       NOT THIS STYLESHEET'S CHOICE. `src/shared/theme.ts`'s `applyThemeDeclaration` echoes the CALLER-held name that
+       `themeWiringRole` in `src/renderer/renderer.ts` holds, and the consumer applies it as `props.<name>` on the
+       AUTHORED state node — so the rendered marker is `[theme="dark"]` on that node, a DESCENDANT of the app surface.
+       `:has()` is the one way a stylesheet can restyle that node's ANCESTORS, which is what "the toggle restyles the
+       window" means; the selector names the ATTRIBUTE and never the envelope's node id, because the attribute is the
+       interface the graph publishes and the shell has no business pinning a provident node's spelling.
+       The light design is the BASE and needs no rule, so `[theme="light"]` — and the boot, where the attribute does not
+       exist at all — falls through to it. Layout, spacing and type are untouched: only colours move, in the proportions
+       the light design already uses. The operator panes column is the ISOLATED pane graph's surface, styled by the
+       explicit colours below, and the dark pair re-states exactly those so nothing drops to illegible. */
+    body:has([theme="dark"]) { background: #12161c; color: #e8edf4; }
+    body:has([theme="dark"]) .card { background: #1b222b; border-color: #2c3642; }
+    body:has([theme="dark"]) .btn { background: #2b3542; color: #e8edf4; border: 1px solid #3a4654; }
+    body:has([theme="dark"]) .counter-value { color: #ffffff; }
+    body:has([theme="dark"]) input { background: #10151b; color: #e8edf4; border: 1px solid #2c3642; }
+    body:has([theme="dark"]) .echo-out { border-color: #3a4654; }
+    body:has([theme="dark"]) header p,
+    body:has([theme="dark"]) #status,
+    body:has([theme="dark"]) #panes .hint,
+    body:has([theme="dark"]) #panes #security-status,
+    body:has([theme="dark"]) #panes #security-token label { color: #9aa7b8; }
+
+    /* THE OVERLAY LAYER'S VISIBILITY — PRESENTATION KEYED ON THE MECHANISM'S OWN PRODUCT, NEVER A SECOND STATE. The
+       four-state machine (`src/shared/overlay.ts`) decides when the surface is up, and its DECLARED product on this
+       tree is the `inert` attribute the consumer applies to the AUTHORED app root (`startOverlayApplication`: `open`
+       and `held` are inert, `closed` and `closing` are the removal arm). So the layer is shown exactly while the root
+       carries that attribute and never by a state re-derived here — one key, no transition words, no fourth state
+       invented in CSS. THE GEOMETRY IS NOT IN THIS SHEET: it is the envelope's own `css` on the two authored nodes,
+       which is why their authored style objects carry no `display` (an inline declaration would outrank this rule and
+       pin a closed overlay open). */
+    #overlay-scrim, #overlay-dialog { display: none; }
+    #app-surface[inert] ~ #overlay-scrim,
+    #app-surface[inert] ~ #overlay-dialog { display: block; }
   </style>
 </head>
 <body>

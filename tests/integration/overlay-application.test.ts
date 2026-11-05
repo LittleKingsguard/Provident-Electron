@@ -27,6 +27,12 @@
 //           dispatch path's code.
 //   · OV-9  the gesture session's commit route is untouched by the declaration, and neither mechanism names `inert`.
 //   · OV-10 no hand-written DOM, no stamped attribute, no injected CSS in the consumer — and ONE spelling of the name.
+//   · OV-11 **THE AUTHORED `css` CARRIES THE LAYER'S GEOMETRY** (`D-120`): the scrim a full-viewport backdrop, the dialog
+//           a centred card, read off the authored provident nodes rather than the stylesheet, with a control object that
+//           omits `position` failing the same predicate.
+//   · OV-12 **THE GEOMETRY REACHES THE DOM AND VISIBILITY IS THE MECHANISM'S ALONE** (`D-120`): the rendered dialog tag
+//           carries the declarations, neither authored style claims a `display`, and the page sheet's one key is the
+//           `inert` attribute the consumer applies — with the control that a key on another attribute is not that key.
 //
 // A node-suite green is ENVELOPE-green and never app-green (`AGENTS.md` § "non-negotiables"): every row below runs under
 // the layout-less DOM shim, and the LIVE instruments are `npm run ui`'s overlay row, `npm run divergence` and the app.
@@ -455,5 +461,110 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     const envelopeCode = codeOf(readFileSync(ENVELOPE_PATH, 'utf8'))
     expect(envelopeCode.includes('createElement'), 'the envelope authors no element by hand').toBe(false)
     expect(envelopeCode.includes('outerHTML'), 'and no markup string').toBe(false)
+  })
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ⟶ `D-120` — THE LAYER'S GEOMETRY AND ITS VISIBILITY, EACH AT ITS OWN HOME.
+  //
+  // MEASURED BEFORE THIS PASS, on the real window: the scrim was `position: static`, full-width, ZERO HEIGHT and painted
+  // nothing; the dialog was `position: static` at `y=908` — IN FLOW BELOW the app cards, off the bottom of a `692`-high
+  // viewport — and it was VISIBLE while the machine said `closed`, because nothing on this surface carried a `display`
+  // that any state moved. The `inert` declaration landed on the app root and came off it, and the modal itself never
+  // floated. **TWO HOMES, AND THEY ARE NOT INTERCHANGEABLE**: the GEOMETRY is the AUTHORED nodes' own `css` (provident
+  // data, `AGENTS.md` § "UI authority"), and the VISIBILITY is the shell page CSS keyed on the `inert` attribute the
+  // consumer already applies — the mechanism's own declared product, never a second copy of the four-state machine.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+  /** A node's authored `css.style` map, or `null` where the node carries none. */
+  function styleOf(id: string): Record<string, string> | null {
+    const entry = nodeById(id)
+    if (entry === null) return null
+    const css = entry.node['css'] as Record<string, unknown> | undefined
+    const style = css === undefined ? undefined : css['style']
+    return style !== undefined && style !== null && typeof style === 'object' ? (style as Record<string, string>) : null
+  }
+
+  /** **THE PREDICATE THIS ROW GATES ON — `position: fixed` PLUS THE INSET/PAIR THAT MAKES IT A BACKDROP OR A CENTRED
+   *  CARD.** Written once and driven over real objects, so both controls below read the same instrument as the row. */
+  function floatsAs(style: Record<string, string> | null, wanted: readonly string[]): readonly string[] {
+    if (style === null) return ['(no authored style object)']
+    const missing: string[] = []
+    for (const prop of wanted) {
+      const value = style[prop]
+      if (typeof value !== 'string' || value.trim() === '') missing.push(prop)
+    }
+    return missing
+  }
+  const SCRIM_SHAPE = ['position', 'top', 'right', 'bottom', 'left', 'background', 'z-index']
+  const DIALOG_SHAPE = ['position', 'top', 'left', 'transform', 'z-index']
+
+  it('OV-11 · THE AUTHORED `css` CARRIES THE LAYER’S GEOMETRY: the scrim is a FULL-VIEWPORT BACKDROP and the dialog a CENTRED CARD, both read off the AUTHORED provident nodes and not off the stylesheet — with a control object that omits `position` failing the same predicate', () => {
+    const scrim = styleOf(OVERLAY_SCRIM_ID)
+    const dialog = styleOf(OVERLAY_DIALOG_ID)
+    expect(scrim, 'the scrim is an AUTHORED node carrying a `css.style` object').not.toBe(null)
+    expect(dialog, 'and so is the dialog').not.toBe(null)
+
+    // THE SCRIM: out of flow, pinned to all four viewport edges, translucent, above the app.
+    expect(floatsAs(scrim, SCRIM_SHAPE), 'the scrim carries every declaration a full-viewport backdrop needs').toEqual([])
+    expect((scrim as Record<string, string>)['position'], 'the scrim is `position: fixed` — it was `{display: block}` and measured IN FLOW at zero height').toBe('fixed')
+    for (const edge of ['top', 'right', 'bottom', 'left']) {
+      expect((scrim as Record<string, string>)[edge], `the scrim's \`${edge}\` inset is 0, so it covers the VIEWPORT and not the flow box`).toBe('0')
+    }
+    expect((scrim as Record<string, string>)['background'], 'and it paints a translucent backdrop the app stays visible behind').toMatch(/rgba\(/)
+
+    // THE DIALOG: out of flow, centred by the 50%/50% + translate pair, above the scrim's own layer.
+    expect(floatsAs(dialog, DIALOG_SHAPE), 'the dialog carries every declaration a centred card needs').toEqual([])
+    expect((dialog as Record<string, string>)['position'], 'the dialog is `position: fixed` — it measured `static` at `y=908`, below the app cards').toBe('fixed')
+    expect((dialog as Record<string, string>)['top'], 'the dialog is anchored at the vertical mid-point').toBe('50%')
+    expect((dialog as Record<string, string>)['left'], 'and at the horizontal mid-point').toBe('50%')
+    expect((dialog as Record<string, string>)['transform'], 'with the half-size offset that makes 50%/50% a CENTRE rather than a corner').toBe('translate(-50%, -50%)')
+    expect(Number((dialog as Record<string, string>)['z-index']), 'the dialog paints ABOVE the scrim').toBeGreaterThan(Number((scrim as Record<string, string>)['z-index']))
+
+    // THE TWO CONTROLS — the predicate is not vacuous: an object missing `position` FAILS it, and so does a null style.
+    const flat = { ...(dialog as Record<string, string>) }
+    delete flat['position']
+    expect(floatsAs(flat, DIALOG_SHAPE), 'a node whose geometry omits `position` FAILS this row — which is exactly the state the two nodes were measured in').toEqual(['position'])
+    expect(floatsAs(null, DIALOG_SHAPE), 'and a node with no authored style fails it too').toEqual(['(no authored style object)'])
+    expect(floatsAs({ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', 'z-index': '11' }, DIALOG_SHAPE), 'while a complete one passes, so the term is satisfiable').toEqual([])
+  })
+
+  it('OV-12 · THE GEOMETRY REACHES THE DOM AND THE VISIBILITY IS THE MECHANISM’S ALONE: the rendered dialog tag carries the authored declarations, neither authored style carries a `display` that could pin a CLOSED overlay open, and the page sheet’s one key is the `inert` attribute the consumer applies', () => {
+    const { runtime, app } = realm()
+    // (a) THE AUTHORED CSS IS IN THE RENDERED FRAGMENT — the `get_rendered_html` reading, not a stylesheet reading.
+    const dialogTag = tagOf(htmlOf(runtime), OVERLAY_DIALOG_ID)
+    expect(dialogTag, 'the authored dialog renders').toContain('position: fixed')
+    expect(dialogTag, 'with its centring pair in the rendered `style` attribute').toContain('translate(-50%, -50%)')
+    expect(tagOf(htmlOf(runtime), OVERLAY_SCRIM_ID), 'and the scrim renders its own full-viewport inset').toContain('position: fixed')
+
+    // (b) NEITHER AUTHORED STYLE CARRIES `display`, AND THAT IS WHAT LEAVES VISIBILITY TO THE MECHANISM: an inline
+    // declaration outranks the sheet's keyed rule, so a `display` here would pin the layer visible in the closed state.
+    for (const id of [OVERLAY_SCRIM_ID, OVERLAY_DIALOG_ID]) {
+      expect(Object.hasOwn(styleOf(id) as Record<string, string>, 'display'), `the authored ${id} style claims no \`display\``).toBe(false)
+    }
+    // THE CONTROL: the same reading over a node that DOES carry one reports it, so this absence is a measurement.
+    expect(Object.hasOwn({ display: 'block', position: 'fixed' }, 'display'), 'a style object carrying `display` is reported by the same instrument').toBe(true)
+
+    // (c) THE PAGE SHEET'S ONE KEY IS THE MECHANISM'S PRODUCT: the layer's rules key on the AUTHORED app root's `inert`
+    // attribute — the declaration `startOverlayApplication` applies — and the sheet spells no state word of its own.
+    const sheet = readFileSync(`${REPO_ROOT}/src/renderer/index.html`, 'utf8')
+    const layerRules = sheet.split('\n').filter((line) => /#overlay-(scrim|dialog)/.test(line))
+    expect(layerRules.length, 'the sheet carries rules for the layer').toBeGreaterThan(0)
+    expect(layerRules.some((line) => line.includes('display: none')), 'the CLOSED state is the default: the layer is not shown unless the key says so').toBe(true)
+    expect(
+      layerRules.some((line) => new RegExp(`#${APP_ROOT_ID}\\[inert\\]\\s*~\\s*#${OVERLAY_SCRIM_ID}`).test(line)),
+      'and it is SHOWN only while the authored app root carries the `inert` attribute the consumer applied',
+    ).toBe(true)
+    // THE CONTROL: a key that names something other than the mechanism's product is refused by the same reading.
+    expect(`#${APP_ROOT_ID}[data-overlay] ~ #${OVERLAY_SCRIM_ID} { display: block; }`.includes('#app-surface[inert]'), 'a rule keyed on another attribute is NOT the key this row reads').toBe(false)
+
+    // (d) AND THE STATE MACHINE STILL DECIDES IT: `closed` removes the key, `open` sets it — the sheet follows, it does
+    // not lead.
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'closed: no key, so the layer is not shown').not.toMatch(/\binert\b/)
+    const opened = app.apply('open')
+    expect(opened.written, 'open: the declaration lands').toBe(true)
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'and the key the sheet reads is present').toMatch(/\binert\b/)
+    const closed = app.apply('close')
+    expect(closed.written, 'close: the removal arm lands').toBe(true)
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'and the key is gone again, so the layer hides with it').not.toMatch(/\binert\b/)
   })
 })

@@ -44,6 +44,10 @@ import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { getViewClient, startThemeApplication, themeWiringRole, type ThemeApplication, type ThemeApplicationReading } from '../src/renderer/renderer.js'
+// ⟶ `D-120`: the mechanism itself, so the SHELL'S RULES are gated against the declaration it produces rather than against
+// a spelling this row re-types. The renderer still imports neither name (T-5 measures that), and this file's own licence
+// to run them is the mechanism's, not the wiring's.
+import { applyThemeDeclaration, resolveTheme } from '../src/shared/theme.js'
 import { createViewClient, type ViewClient, type ViewClientBridge } from '../src/renderer/view-client.js'
 import { createProfileStore } from '../src/main/storeroom.js'
 import { createViewRecord, viewConstraintDeclarations, type ViewRecordStore } from '../src/main/view-record/index.js'
@@ -594,5 +598,132 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
     } finally {
       delete (globalThis as Record<string, unknown>).window
     }
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ⟶ `D-120` — THE DECLARATION'S NAME AND VALUE ARE WHAT THE SHELL'S RULES KEY ON, AND THE SHELL'S PAGE PINS ONE ARM
+  //
+  // MEASURED BEFORE THIS PASS, on the real window: `theme="light"` and `theme="dark"` both landed on the AUTHORED state
+  // node (and reached `ssrHtml`), and the two screenshots taken either side of the toggle were BYTE-IDENTICAL
+  // (`md5 0063049f0275f08410045376b8c9e745cd` for both) — the toggle changed data and not appearance, because no
+  // stylesheet in the tree consumed the attribute. **THE FIX IS PRESENTATION, AND THE KEY IS THE DECLARATION'S**: the
+  // name and the values below are TAKEN FROM THE MECHANISM at run time, never typed into the row, so a rename in
+  // `themeWiringRole` (or in the two authored verbs' tokens) reddens here instead of drifting the stylesheet silently.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** The shell's page sheet, split into `selector -> declarations` — the `src/renderer/index.html` `<style>` block, read
+   *  as DATA. Comments are elided FIRST, so a selector quoted inside prose can never satisfy this row. */
+  function shellRules(): Array<{ selector: string; declarations: Map<string, string> }> {
+    const html = readFileSync(join(ROOT, 'src', 'renderer', 'index.html'), 'utf8')
+    const block = /<style>([\s\S]*?)<\/style>/.exec(html)
+    const css = (block === null ? '' : block[1]).replace(/\/\*[\s\S]*?\*\//g, '')
+    const rules: Array<{ selector: string; declarations: Map<string, string> }> = []
+    for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const declarations = new Map<string, string>()
+      for (const part of match[2].split(';')) {
+        const colon = part.indexOf(':')
+        if (colon > 0) declarations.set(part.slice(0, colon).trim(), part.slice(colon + 1).trim())
+      }
+      for (const selector of match[1].split(',')) rules.push({ selector: selector.trim().replace(/\s+/g, ' '), declarations })
+    }
+    return rules
+  }
+
+  it('T-8 — THE SHELL’S THEME RULES KEY ON THE DECLARATION’S OWN NAME AND VALUE: the mechanism run over both authored tokens produces `{name, value, removal}`, the attribute lands on the AUTHORED state node, and the page sheet’s dark rules are keyed on exactly THAT pair — with the control that a key naming another attribute is refused', async () => {
+    const runtime = boot()
+    const bridge = crossing()
+    try {
+      // (a) THE DECLARATION, RUN — and the attribute name taken from the corpus's own holder, not from this row.
+      const [attributeName] = themeWiringRole(runtime)
+      expect(attributeName, 'the wiring holds the caller-supplied name the declaration echoes').toBe('theme')
+      const declarations = ['light', 'dark'].map((token) => applyThemeDeclaration(attributeName, resolveTheme(token, undefined).setting))
+      expect(declarations, 'both authored tokens resolve to a SET declaration of that one name').toEqual([
+        { name: attributeName, value: 'light', removal: false },
+        { name: attributeName, value: 'dark', removal: false },
+      ])
+      expect(
+        applyThemeDeclaration(attributeName, resolveTheme('', undefined).setting),
+        'and the EMPTY setting is the mechanism’s removal arm, not a third token',
+      ).toEqual({ name: attributeName, value: '', removal: true })
+
+      // (b) THE ATTRIBUTE REACHES THE AUTHORED STATE NODE — the rendered reading, which is where a stylesheet can see it.
+      const application = startThemeApplication(runtime)
+      const subscription = realm().subscribe(() => {
+        application.apply()
+      })
+      try {
+        for (const token of ['light', 'dark']) {
+          await dispatchTheme(runtime, `theme-${token}`, token)
+          application.commit()
+          await settle()
+          const declaration = declarations.find((entry) => entry.value === token)
+          expect(renderedAttribute(runtime, attributeName), `\`${token}\` renders \`${attributeName}="${token}"\` on the authored node`).toBe(token)
+          // AND IT LANDS THERE AND NOT ON THE APP ROOT: the row states the measured subject, because the sheet's key has to
+          // name the node the declaration actually reaches.
+          const rootTag = /<div[^>]*id="app-surface"[^>]*>/.exec(runtime.renderedHtmlResult().renderedHtml)?.[0] ?? ''
+          expect(rootTag.includes(`${attributeName}="`), 'the app root carries NO appearance attribute — the declaration is the state node’s').toBe(false)
+          expect(declaration, 'and the declaration the record carries is the mechanism’s, member for member').toEqual({ name: attributeName, value: token, removal: false })
+        }
+      } finally {
+        subscription.release()
+      }
+
+      // (c) THE SHEET CONSUMES THAT PAIR, AND ITS KEY IS BUILT FROM (a) RATHER THAN RE-TYPED HERE.
+      const darkKey = `[${attributeName}="dark"]`
+      const darkRules = shellRules().filter((rule) => rule.selector.includes(darkKey))
+      expect(darkRules.length, `the page sheet carries rules keyed on \`${darkKey}\`, the pair the declaration produces`).toBeGreaterThan(0)
+      // A DARK PAIR MEANS A BACKGROUND *AND* A FOREGROUND: one without the other is the white-on-white defect one level in.
+      const pairs = darkRules.filter((rule) => rule.declarations.has('background') && rule.declarations.has('color'))
+      expect(pairs.length, 'and at least one of them declares a background/foreground PAIR, which is what makes the toggle visible').toBeGreaterThan(0)
+      // **THE SHEET NAMES THE ATTRIBUTE AND NOT THE AUTHORED NODE**: the key is the interface the graph publishes, so a
+      // rename of the state node in the envelope cannot strand a selector — and the sheet needs no envelope id at all.
+      expect(
+        shellRules().some((rule) => rule.selector.includes(STATE_NODE)),
+        'the page sheet pins NO authored node id — the appearance key is the attribute, which is the graph’s own interface',
+      ).toBe(false)
+
+      // THE CONTROL — the same reading over a key naming another attribute finds nothing, so this is a measurement and not
+      // a substring that happens to be present.
+      const foreign = shellRules().filter((rule) => rule.selector.includes('[data-theme="dark"]'))
+      expect(foreign, 'a rule keyed on an attribute the declaration never produces is not admitted by this reading').toEqual([])
+    } finally {
+      bridge.close()
+    }
+  })
+
+  it('T-9 — THE SHELL’S PAGE PINS ONE COLOUR-SCHEME ARM AND CARRIES ITS OWN FOREGROUND: the `:root` declaration is the single `light` arm (the two-arm form is what painted white on white), the `body` rule sets an explicit text colour, and that pair clears AA contrast against the page background — with each arm failing its own control', () => {
+    const rules = shellRules()
+    // (a) ONE ARM, PINNED. The two-arm form hands the UA the choice, and on a dark-preference desktop that choice is white text.
+    const rootRule = rules.find((rule) => rule.selector === ':root')
+    expect(rootRule, 'the page declares a `:root` rule').toBeTruthy()
+    expect((rootRule as { declarations: Map<string, string> }).declarations.get('color-scheme'), 'and it names the LIGHT arm alone').toBe('light')
+    const pinIsOneArm = (value: string | undefined): boolean => typeof value === 'string' && value.trim() === 'light'
+    expect(pinIsOneArm('light dark'), 'CONTROL — the two-arm form this pass replaces FAILS the same predicate').toBe(false)
+    expect(pinIsOneArm('dark'), 'CONTROL — and so does the dark arm').toBe(false)
+
+    // (b) THE PAGE'S OWN FOREGROUND, and the contrast it buys against the background that same rule paints.
+    const bodyRule = rules.find((rule) => rule.selector === 'body')
+    expect(bodyRule, 'the page declares a `body` rule').toBeTruthy()
+    const body = (bodyRule as { declarations: Map<string, string> }).declarations
+    const ink = body.get('color')
+    const paper = body.get('background')
+    expect(ink, 'the body sets an explicit text colour, which every unset element inherits').toBeTruthy()
+    expect(paper, 'over the light background the design is painted on').toBeTruthy()
+    const rgb = (hex: string): [number, number, number] => {
+      const value = hex.trim().replace('#', '')
+      const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value
+      return [0, 2, 4].map((at) => parseInt(full.slice(at, at + 2), 16) / 255) as [number, number, number]
+    }
+    const luminance = (hex: string): number => {
+      const [r, g, b] = rgb(hex).map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const contrast = (a: string, b: string): number => {
+      const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+      return (hi + 0.05) / (lo + 0.05)
+    }
+    expect(contrast(ink as string, paper as string), 'the inherited foreground clears AA (4.5:1) on the page background').toBeGreaterThanOrEqual(4.5)
+    // THE CONTROL — the defect this pass measured was WHITE ON WHITE, and the same instrument reads it as a failure.
+    expect(contrast('#ffffff', '#f4f6f8'), 'CONTROL — the measured defect (white text on `#f4f6f8`) fails the same contrast reading').toBeLessThan(4.5)
   })
 })
