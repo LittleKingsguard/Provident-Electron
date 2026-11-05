@@ -6,8 +6,8 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, IPC_DATA_READ, IPC_DATA_WRITE, IPC_DATA_DELETE, IPC_DATA_LIST, IPC_DATA_JOURNAL, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 // ⟶ **`STORE_FILE_GET` AND `STORE_FILE_PUT` LEAVE THIS IMPORT** (`D-93`): the `store` member they served is deleted with
-// the renderer's frozen graph store, so the preload reaches the channel file for `IPC_SECURITY_EXCLUSION` alone.
-import { IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
+// the renderer's frozen graph store, so the preload reaches the channel file for the secure crossing's two channels alone.
+import { IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE } from '../main/store-channels.js'
 import type { TabsRecordRow } from '../shared/types.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
@@ -36,7 +36,7 @@ type SecurityReadBase = Promise<SecuritySettings>
  * existed anyway. **THE SIGNAL HAD NO CONSUMER THAT DID ANYTHING**: its one registration at boot was a declared no-op
  * ("a change SIGNAL while a single window owns the realm", `renderer.ts`), and it is deleted with the store. **NO LITERAL
  * SURVIVES**: the channel name appears nowhere in `src/`, `tests/` or `scripts/` after this pass, and `store-channels.ts`
- * carries exactly the ONE constant its own surface needs (`IPC_SECURITY_EXCLUSION`). */
+ * carries exactly the TWO constants its own surface needs (`IPC_SECURITY_EXCLUSION`, `IPC_SECURITY_PANE`). */
 
 export interface ModuleBridgeResult {
   corrupt: boolean
@@ -74,6 +74,13 @@ export interface ProvidentBridge {
      *  `declare global` half declares the same member in lockstep (the rule the `module`, `tabs` and `view` members already
      *  follow: a half-declaration FAILS). */
     onChanged(handler: () => void): () => void
+    /** **THE PANE'S OPEN STATE** (`D-123`; `D-82` clause 4): the realm's own act, recorded at the secure crossing's fourth
+     *  address. The answer is the `commit` shape — `{status:'committed'}` or the store's refused arm verbatim — and this
+     *  member decides nothing: the crossing's constraint refuses an open pane over open ports, and the port follows the
+     *  exclusion's delivery. `src/renderer/secure-panels.ts`'s `declare global` half declares the same member in lockstep
+     *  (the rule the `security`, `tabs`, `view` and `module` members already follow: a half-declaration FAILS). */
+    setPane(open: boolean): Promise<{ status: 'committed' } | { status: 'refused'; reason: string; message: string
+      address: readonly (string | number)[] | null }>
   }
   module: {
     get(): Promise<ModuleBridgeResult>
@@ -186,6 +193,13 @@ const bridge: ProvidentBridge = {
       return () => {
         ipcRenderer.removeListener(IPC_SECURITY_CHANGED, listener)
       }
+    },
+    // THE FIFTH MEMBER (`D-123`): the pane's open state over its OWN channel, distinguishable from a settings write and
+    // from a transition exactly as the transition is distinguishable from the write (`T-5`). A malformed payload is
+    // REFUSED AS A VALUE by the surface, never thrown.
+    setPane(open: boolean): Promise<{ status: 'committed' } | { status: 'refused'; reason: string; message: string
+      address: readonly (string | number)[] | null }> {
+      return ipcRenderer.invoke(IPC_SECURITY_PANE, open)
     },
   },
   // U8 — the module management bridge (module-feature-list.md §4). Manual-UI

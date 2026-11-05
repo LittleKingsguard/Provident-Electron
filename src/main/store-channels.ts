@@ -17,9 +17,18 @@
 // a caller left to reach. **`IPC_SECURITY_EXCLUSION` IS NOT THE PURGE'S**: it belongs to the SECURE CROSSING's
 // manual-UI surface — one member of the operator's `security` namespace, delivered to `main.ts`'s handler and
 // `preload.ts`'s `setExclusion` — and it has nothing to do with the frozen store. It stands, and it is now the
-// whole file.
+// whole file, and `D-123` makes it two.
 
 /** `docs/specs/secure-exclusion.md` §1.5 item 4 / §2.4 item 4 — the exclusion transition's OWN
  *  channel. It reaches `main.ts` (the handler) and `preload.ts` (the `setExclusion` member) by
  *  IMPORT from THIS file and is never re-spelled; it does NOT enter `src/shared/types.ts`. */
 export const IPC_SECURITY_EXCLUSION = 'provident:security:exclusion'
+
+/** **THE PANE'S OPEN STATE'S OWN CHANNEL** (`D-123`). It is the exclusion channel's sibling for the exclusion channel's
+ *  reason: one member of the operator's `security` namespace, reaching `main.ts`'s handler and `preload.ts`'s `setPane`
+ *  by IMPORT from this file and never by a literal. **IT ENTERS `src/shared/types.ts` NOWHERE**, exactly as its sibling
+ *  does not — the file is imported by the MCP-reachable stack, and an address spelled there would be an address one
+ *  MCP-reachable file could name (`ISO-5`/`ISO-6`). **AND THE CENSUS MOVES `1 → 2` WITH IT**: `D-93` left this file one
+ *  constant wide, and `D-123` adds the second because a crossing's verb that no realm could reach is a verb no realm
+ *  can drive. */
+export const IPC_SECURITY_PANE = 'provident:security:pane'

@@ -481,6 +481,12 @@ export class ProvidentMcpServer {
   /** M1: the (possibly single) long-lived stdio server, so `applyGatePatch`
    *  can re-gate it in place. */
   private stdioServer: McpServer | null = null
+  /** **WHETHER THE HTTP LISTENER STANDS, AND THE QUEUE THAT KEEPS A FOLLOW'S TWO DIRECTIONS IN ORDER** (`D-123`). The
+   *  bit is `start()`'s and `close()`'s own record of their act — never a caller's claim about it — and the queue is what
+   *  makes an open and a close that arrive inside one turn land in the order they arrived instead of interleaving two
+   *  awaits. */
+  private listening = false
+  private settling: Promise<void> = Promise.resolve()
 
   constructor(opts: McpServerOptions) {
     this.backend = opts.backend
@@ -1256,7 +1262,49 @@ export class ProvidentMcpServer {
       void this.handleHttp(req, res)
     })
     await new Promise<void>((resolve) => this.httpServer!.listen(this.port, '127.0.0.1', () => resolve()))
+    this.listening = true
     console.error(`[provident-mcp] http transport ready on http://127.0.0.1:${this.port}/mcp`)
+  }
+
+  /** **THE PORT FOLLOWS THE EXCLUSION — A LISTENER'S CONSEQUENCE AND NEVER A CONSTRAINT'S ACT** (`D-123`; `D-82` clause 2:
+   *  *"listeners carry data back to renderer or other consumers on change"*). The MCP server IS that consumer: the secure
+   *  crossing's exclusion delivery reaches the surface's own delivery body, and the composition hands the state it landed as
+   *  to this member. **WHAT IT DOES AND WHAT IT REFUSES TO DO:**
+   *
+   *   · ON `http` IT RECONCILES THE LISTENER TO THE STATE — `close()` on a pair that stands closed, `start()` on one that
+   *     stands enabled — and it is IDEMPOTENT, because the bit it compares against is `start()`'s and `close()`'s own
+   *     record. The pair is measured RE-ENTRANT (`D-122`): `close()` stops accepting and drains, `start()` re-listens on
+   *     the SAME port.
+   *   · ON `stdio` IT DOES NOTHING AT ALL, AND THAT IS THE MEASURED BOUND RATHER THAN AN OMISSION: closing that transport
+   *     is FATAL — the client's next `ping` never returns — and the corpus already refuses it for the exclusion
+   *     (*"closing it would destroy the operator's ability to re-enable"*). So on stdio the exclusion alone is the wall,
+   *     and the refusal is answered at the invocation turn as it always was.
+   *   · IT NEVER THROWS INTO THE DELIVERY, and it never reports success it did not have: a `start()` that cannot bind (a
+   *     foreign process on the port, a `TIME_WAIT` collision) is logged as a VALUE and retried on the next delivery, while
+   *     the exclusion still stands closed — which is the right direction for the ruling and the wrong one for usability,
+   *     said rather than mitigated (`D-122`).
+   *
+   *  **IT IS NOT A CONSTRAINT'S REPAIR AND IT COULD NOT BE ONE**: a repair writes a VALUE and returns the op it landed —
+   *  it cannot reach a socket — so the invariant is the record's and the socket is this listener's, which is the whole
+   *  split this member exists to state. */
+  followExclusion(state: 'mcp-enabled' | 'mcp-disabled'): Promise<void> {
+    if (this.transport !== 'http') return Promise.resolve()
+    const wanted = state === 'mcp-enabled'
+    if (wanted === this.listening) return this.settling
+    this.listening = wanted
+    this.settling = this.settling.then(async () => {
+      try {
+        if (wanted) await this.start()
+        else await this.close()
+      } catch (caught) {
+        // A FAILED FOLLOW IS A RECORDED VALUE AND NOT A THROW: the exclusion is the invariant and it still stands.
+        const message = caught instanceof Error ? caught.message : String(caught)
+        console.error(`[provident-mcp] the port could NOT follow the exclusion to '${state}': ${message}`)
+      }
+    })
+    // THE QUEUED SETTLE IS ANSWERED, so a caller (and a row) can await the socket rather than poll for it: the boot's own
+    // compose ignores it, and the direction is already recorded in the bit above before any await begins.
+    return this.settling
   }
 
   private async handleHttp(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -1333,6 +1381,7 @@ export class ProvidentMcpServer {
       await new Promise<void>((resolve) => this.httpServer!.close(() => resolve()))
       this.httpServer = null
     }
+    this.listening = false
   }
 }
 

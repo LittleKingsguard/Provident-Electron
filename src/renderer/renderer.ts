@@ -960,7 +960,13 @@ async function main(): Promise<void> {
   //    SITE** — `attach()` installs three listeners on graph-resolved elements and changes no node, so no boot step moves
   //    and `npm run divergence` (which compares the two realms' SSR fragments before any act) cannot see it. The
   //    transition and the inert declaration are the REPLY route's turn, beside the appearance act.
-  const overlayApplication = startOverlayApplication(runtime)
+  //  **AND ITS SINK IS THE CROSSING'S OWN MEMBER** (`D-123`): the pane's open state is written by the realm's act over
+  //  `security.setPane`, one boolean at a time and only on a move. The write's answer is NOT read here — what the record
+  //  holds reaches this realm as `security.onChanged`'s delivery, which is the same signal every other crossing's change
+  //  rides — and a realm with no bridge reports to no one, which is the honest arm for a page with no crossing.
+  const overlayApplication = startOverlayApplication(runtime, {
+    reportPane: (open) => { void bridge?.security?.setPane(open) },
+  })
   overlayApplication.attach()
   // ⟶ **THE Y-3 REGISTRATION IS DELETED FROM THIS SITE** (`D-93`; `D-90`'s clause (3), the legacy projection dying whole).
   // It was `bridge.store.onFileChanged(…)` — ONE registration at boot whose body was a DECLARED NO-OP ("a change SIGNAL
@@ -1687,7 +1693,19 @@ function authoredOverlayToken(
   }
 }
 
-export function startOverlayApplication(runtime: Runtime): OverlayApplication {
+/** **WHAT THE CONSUMER IS HANDED BESIDE THE RUNTIME** (`D-123`): the sink the pane's open state crosses on, and NOTHING
+ *  else. It is optional because a realm with no preload bridge has no crossing to write to — the pane still opens, and the
+ *  absence of the crossing is a fact the caller already warns about. */
+export interface OverlayApplicationOptions {
+  /** **THE USER'S ACT, RECORDED AND NOT INTERPRETED** (`D-82` clause 4): called with the mechanism's own predicate
+   *  (`state === 'open' || state === 'held'`) whenever that predicate MOVES. This wiring decides nothing with it: the
+   *  secure crossing's constraint refuses an open pane over open ports and repairs the pair, and the port follows the
+   *  exclusion's delivery. **AND IT IS CALLED ON A MOVE AND NEVER PER TURN**, because a write per turn would be a write
+   *  with no external cause behind it. */
+  readonly reportPane?: (open: boolean) => void
+}
+
+export function startOverlayApplication(runtime: Runtime, options?: OverlayApplicationOptions): OverlayApplication {
   const role = overlayWiringRole()
   const { attributeName, appRootId, stateNodeId, openerId, closeId, dialogId } = role
   /** **THE MACHINE'S STATE — CLOSURE STATE, AND IT IS SEEDED FROM THE GRAPH, NOT FROM A LITERAL.** The authored carrier
@@ -1701,6 +1719,11 @@ export function startOverlayApplication(runtime: Runtime): OverlayApplication {
   let lastCarried: string | null = boot.readable ? boot.token : null
   /** THE LAST DECLARATION THAT LANDED — so a turn that produces the declaration already on the node writes nothing. */
   let lastApplied: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null = null
+  /** **THE LAST PREDICATE THIS REALM REPORTED** (`D-123`), seeded from the BOOT's own reading and never from a literal:
+   *  the crossing's creation repair mints a closed pane every boot, so the boot's `closed`/`closing` carrier agrees with
+   *  it and the first report is the first MOVE. A carrier that booted `open` would agree only after its first act, which
+   *  is stated rather than papered over — the authored carrier's initial token is `closed` (`demo-envelope.ts`). */
+  let lastReported: boolean = state === 'open' || state === 'held'
   /** THE ELEMENT THE DECLARATION NAMES — resolved through the graph, never a selector. Re-resolved per turn because a
    *  graph load replaces the rendered nodes. */
   const targetOf = (): unknown => {
@@ -1744,6 +1767,18 @@ export function startOverlayApplication(runtime: Runtime): OverlayApplication {
     })
     state = answer.state
     const up = state === 'open' || state === 'held'
+    // **THE PANE'S OPEN STATE CROSSES HERE, ON THE ACT AND ON A MOVE** (`D-123`; `D-82` clause 4). It is reported BEFORE
+    // the declaration is applied and its answer is not read: the crossing's own delivery is what tells this realm what the
+    // record now holds, and a report whose write was repaired (the ports closing under an open pane) is a commit whose
+    // consequence arrives on `security.onChanged`. A sink that throws is contained — a failed report is not a failed turn.
+    if (up !== lastReported) {
+      lastReported = up
+      try {
+        options?.reportPane?.(up)
+      } catch {
+        /* the sink's own throw is the sink's: the overlay's turn is not a store's act */
+      }
+    }
     const declaration = overlayInertDeclaration(targetOf(), attributeName, up)
     const verbWord = typeof verb === 'string' ? verb : null
     if (declaration.name === null) {

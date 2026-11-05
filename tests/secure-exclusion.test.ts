@@ -4885,8 +4885,13 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
      * (`D-90`'s clause (3), `D-93`), so the file now carries the ONE constant this unit added and nothing else. **THE
      * ADDITION IS STILL EXACTLY ONE TERM OF THE `8` AND IS STILL COUNTED ONCE**, as the membership witness below; what
      * moved is the BEFORE-VALUE, `2 -> 0`, and with it the post-landing census. `RCA-8(d)`: the `3` is recorded beside it. */
+    /* ⟶ **THE CONSTANT CENSUS MOVES `1 -> 2` (2026-11-05, `D-123`).** `D-93` left the file one constant wide — this
+     * unit's own addition — and `D-123` adds the pane's channel because a crossing verb no realm can reach is a verb no
+     * realm can drive. **THIS ROW'S ADDITION IS STILL EXACTLY ONE TERM OF THE `8` AND IS STILL COUNTED ONCE**, as the
+     * membership witness below; `IPC_SECURITY_PANE` is EXCLUDED BY NAME from the before-value arithmetic for `onChanged`'s
+     * reason, and the control beneath is re-aimed at the THIRD constant. */
     expect(landedConstants.length,
-      '§2.6 item 3 / §1.3 item 9 — the `store-channels.ts` constant census reads `1` (`D-93`: the file\'s own two starting constants were deleted with the frozen store\'s projection, so the declared `2 -> 3` move is now the `2 -> 1` move and the surviving member is this unit\'s own addition). NOT the addition counted again').toBe(1)
+      '§2.6 item 3 / §1.3 item 9 — the `store-channels.ts` constant census reads `2` (`D-93` left this unit\'s addition alone in the file; `D-123`\'s pane channel is the second and is excluded by name below). NOT the addition counted again').toBe(2)
     expect(landedConstants.includes('IPC_SECURITY_EXCLUSION'),
       '§2.6 item 3 / §1.3 item 9 — the ONE surviving constant IS this unit\'s declared addition: `IPC_SECURITY_EXCLUSION` (the addition is PRESENT, and it is counted ONCE, as this membership witness)').toBe(true)
     // the ADDITION itself is still one term of the 8, and it is still exactly 1:
@@ -4902,12 +4907,16 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
      * ADDITION THIS ROW OWNS, with the later pass's member EXCLUDED BY NAME so it is not double-counted as this unit's**; the
      * bound is kept, not widened (a FIFTH member still fails the equality below), and the control beneath drives exactly
      * that. */
+    /* ⟶ **RE-GRAINED AGAIN `2026-11-05` (`D-123`): FIVE MEMBERS.** `setPane` joins the member as the crossing's fourth
+     * address's one verb — a security write exactly as the other three are — and it is EXCLUDED BY NAME from the
+     * before-value arithmetic for `onChanged`'s reason, so this unit's addition is still counted ONCE and the `2 → 3`
+     * move it asserts is still recoverable. **THE BOUND IS KEPT**: a SIXTH member fails the equality below. */
     expect(members,
-      '§2.6 item 3 / §1.3 item 9 / §2.4 item 4 — the preload\'s `security` member set is EXACTLY the DECLARED post-landing `[\'get\',\'set\',\'setExclusion\']` plus the record’s one delivery `onChanged` (`D-106`) (the `2 → 3` move: the two landed members PLUS the ONE new channel member). An as-filed `[\'get\',\'set\']` equality measured only the PRE-LANDING state and no conforming implementation could satisfy it.').toEqual(['get', 'set', 'setExclusion', 'onChanged'])
+      '§2.6 item 3 / §1.3 item 9 / §2.4 item 4 — the preload\'s `security` member set is EXACTLY the DECLARED post-landing `[\'get\',\'set\',\'setExclusion\']` plus `D-106`’s one delivery `onChanged` and `D-123`’s one request `setPane` (the `2 → 3` move: the two landed members PLUS the ONE new channel member). An as-filed `[\'get\',\'set\']` equality measured only the PRE-LANDING state and no conforming implementation could satisfy it.').toEqual(['get', 'set', 'setExclusion', 'onChanged', 'setPane'])
     expect(members.length,
-      '§2.6 item 3 / §1.3 item 9 — the member census reads `4`: the DECLARED POST-LANDING `3` plus `D-106`’s delivery (a before-value is printed as a before-value, never added into the `8`: this figure is a SEPARATE reading)').toBe(4)
-    expect(members.filter((member) => member !== 'onChanged').length - terms.preloadMember,
-      '§1.3 item 9 — the move is `2 → 3` for the PRELOAD MEMBER SET (unmoved by `D-93`: the purge deletes the `store` namespace, not the `security` one): the three this unit lands MINUS the declared addition is the landed before-value `2`, the delivery the later pass adds being excluded BY NAME so the addition is counted once and the before-value is read separately').toBe(2)
+      '§2.6 item 3 / §1.3 item 9 — the member census reads `5`: the DECLARED POST-LANDING `3` plus `D-106`’s delivery and `D-123`’s second request (a before-value is printed as a before-value, never added into the `8`: this figure is a SEPARATE reading)').toBe(5)
+    expect(members.filter((member) => member !== 'onChanged' && member !== 'setPane').length - terms.preloadMember,
+      '§1.3 item 9 — the move is still `2 → 3` for the PRELOAD MEMBER SET (unmoved by `D-93`: the purge deletes the `store` namespace, not the `security` one): the three this unit lands MINUS the declared addition is the landed before-value `2`, BOTH later passes’ members being excluded BY NAME so this unit’s addition is counted once and the before-value is read separately').toBe(2)
   })
 
   /** **THE POSITIVE CONTROL FOR THE CENSUS ABOVE — `RCA-8(d)` ANNOTATE-BESIDE.**
@@ -4927,26 +4936,26 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     const securityBlock = /security:\s*\{[\s\S]*?\n  \}/.exec(preload)?.[0] ?? ''
     const members = [...securityBlock.matchAll(/^\s{4}([a-zA-Z]+)\(/gm)].map((m) => m[1])
 
-    // (i) an UNDECLARED SECOND constant. The addition is NOT re-counted: the census is the landed count, and a constant
-    // the spec does not declare makes it `2 != 1`. **⟶ `D-93`: the control's arithmetic follows the row's, `4 -> 2`** — the
-    // file carries ONE declared constant now, so the surplus the row must refuse is the SECOND, not the fourth.
+    // (i) an UNDECLARED THIRD constant. The addition is NOT re-counted: the census is the landed count, and a constant
+    // the spec does not declare makes it `3 != 2`. **⟶ `D-123`: the control's arithmetic follows the row's, and the surplus
+    // the row must refuse is the THIRD, not the second.**
     const fourthConstant = [...landedConstants, 'IPC_SECURITY_UNSPECIFIED']
     expect(fourthConstant.length,
-      'CONTROL (i) — an UNDECLARED extra `store-channels.ts` constant makes the census `2`, and the row\'s `toBe(1)` then FAILS (the pre-landing instrument, by contrast, would have read `2 + 1 = 3` and failed for the WRONG reason — the census was unreachable in BOTH directions)').toBe(2)
-    expect(fourthConstant.length === 1,
-      'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 1`) is FALSIFIED by the undeclared constant: the bound bites').toBe(false)
+      'CONTROL (i) — an UNDECLARED extra `store-channels.ts` constant makes the census `3`, and the row\'s `toBe(2)` then FAILS (the pre-landing instrument, by contrast, would have read `2 + 1 = 3` and failed for the WRONG reason — the census was unreachable in BOTH directions)').toBe(3)
+    expect(fourthConstant.length === 2,
+      'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 2`) is FALSIFIED by the undeclared constant: the bound bites').toBe(false)
 
     /* (ii) a FIFTH `security` member that no pass declares. **⟶ `D-106`: the surplus the row must refuse is the FIFTH, not
      * the fourth — the fourth is the record's delivery and it is declared.** */
     const fourthMember = [...members, 'resetExclusion']
     expect(fourthMember,
-      'CONTROL (ii) — the row\'s member equality is FALSIFIED by an undeclared extra member: `[\'get\',\'set\',\'setExclusion\',\'onChanged\',\'resetExclusion\']` is NOT the declared post-landing member set').not.toEqual(['get', 'set', 'setExclusion', 'onChanged'])
+      'CONTROL (ii) — the row\'s member equality is FALSIFIED by an undeclared extra member: the five declared plus `resetExclusion` are NOT the declared post-landing member set').not.toEqual(['get', 'set', 'setExclusion', 'onChanged', 'setPane'])
     expect(members,
-      'CONTROL (ii) POSITIVE HALF — the UNPERTURBED landed member set DOES equal the declared post-landing set (`D-106`’s delivery included), so control (ii) is not vacuous').toEqual(['get', 'set', 'setExclusion', 'onChanged'])
+      'CONTROL (ii) POSITIVE HALF — the UNPERTURBED landed member set DOES equal the declared post-landing set (`D-106`’s delivery and `D-123`’s `setPane` included), so control (ii) is not vacuous').toEqual(['get', 'set', 'setExclusion', 'onChanged', 'setPane'])
 
     // and the addition is still exactly ONE term of the 8 (never re-counted):
-    expect(fourthConstant.length - 1,
-      'CONTROL — the declared addition is subtracted ONCE from the post-landing census to recover the before-value; counting it twice (the as-filed defect) would read `2 - 1 = 1` where the before-value is `0` (`D-93`: the file two starting constants were deleted with the frozen store projection)').toBe(1)
+    expect(fourthConstant.length - 2,
+      'CONTROL — the declared addition is subtracted ONCE from the post-landing census to recover the before-value, the later pass\'s constant being excluded by name; counting it twice (the as-filed defect) would read `3 - 2 = 1` where the before-value is `0` (`D-93`: the file\'s two starting constants were deleted with the frozen store projection)').toBe(1)
   })
 
   it('the PAR-13 declaration-site widening: `1` declared-return widening at `2` declaration sites — the two MUST move together (§1.5 item 5)', () => {

@@ -18,7 +18,7 @@ import type {ModuleStore, ModuleRecord, ModuleStoreStatus} from './mcp-server.js
 // ⟶ **TWO CONSTANTS LEAVE THIS IMPORT AND THE FILE KEEPS ONE** (`D-93`): `STORE_FILE_GET` and `STORE_FILE_PUT` are
 // deleted with the projection they carried, and `IPC_SECURITY_EXCLUSION` — the exclusion transition's own channel — stands
 // because its surface is the SECURE CROSSING's and has nothing to do with the renderer's frozen store.
-import {IPC_SECURITY_EXCLUSION} from './store-channels.js'
+import {IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE} from './store-channels.js'
 import {CapabilityRouter} from '../renderer/extensions.js'
 import {syncModuleRouter} from './mcp-server.js'
 import {SecurityGate, type ToolGroup} from './security.js'
@@ -158,6 +158,13 @@ async function main(): Promise<void> {
         if (!win.isDestroyed()) win.webContents.send(IPC_SECURITY_CHANGED)
       }
     },
+    // **THE PORT IS THE EXCLUSION'S DELIVERY'S CONSEQUENCE** (`D-123`; `D-82` clause 2). This callback is called INSIDE the
+    // instance's delivery body, after the gate has been re-patched from the same reading, and it hands the state it landed
+    // as to the ONE consumer that owns a socket. **IT IS NOT THE TRANSITION'S EDGE AND THAT IS THE POINT**: the invariant's
+    // repair writes the pair from inside a write that never passes through `transition`, so a hook at the transition site
+    // would miss exactly the landing the invariant exists for. `followExclusion` reconciles an HTTP listener and touches
+    // no stdio transport — measured fatal there (`D-122`).
+    onExclusionChanged: (state) => { mcp.followExclusion(state) },
   })
   // **THE BOOT ORDER (D-65), IN THREE ACTS.** (1) COLLECT: every module that imposes a constraint declares it — the tab
   // record's SIX are gathered here (`tabsConstraintDeclarations` returns six: `tabs-must-stand`, `order-names-its-tabs`,
@@ -519,6 +526,12 @@ async function main(): Promise<void> {
   // `write` is declared on `set` alone (ASM-L2-4).
   ipcMain.handle(IPC_SECURITY_EXCLUSION, (_event, state: unknown) => settingsSurface.transition(state))
 
+  // **THE PANE'S OWN CHANNEL** (`D-123`; `D-82` clause 4 — *client-driven writes are driven by external events*). The realm
+  // writes what its own overlay did — one boolean, the predicate the mechanism already computes — and NOTHING HERE DECIDES
+  // ANYTHING: no port is touched on this path, no exclusion is written here, and a malformed argument is refused as a value
+  // by the surface. The lockout is the crossing's constraint, and the port is the exclusion's delivery's consequence.
+  ipcMain.handle(IPC_SECURITY_PANE, (_event, open: unknown) => settingsSurface.pane(open))
+
   // U8 → Q-5 — the module management IPC (module-feature-list.md §4). Manual-UI only: the
   // module registry is operator-owned (the settings-backed surface above); an agent never
   // reaches it over MCP.
@@ -623,6 +636,10 @@ async function main(): Promise<void> {
   // `D-19` STEP 4 — ENABLE: the MCP is enabled LAST, with the close already landed above, so no
   // reader ever observes the pre-flip value (`D-vii`).
   await mcp.start()
+  // **AND THE LISTENER IS RECONCILED TO THE RECORD IT NOW SERVES** (`D-123`): the boot's start above is the enable's act,
+  // and this one line makes the port a CONSEQUENCE of the record rather than a fact beside it — so a boot whose exclusion
+  // already stands closed (an operator's transition inside the window-load gap) lands a closed port and not an open one.
+  mcp.followExclusion(settingsSurface.read().exclusion)
 
   win.on('closed', () => {
     void mcp.close()

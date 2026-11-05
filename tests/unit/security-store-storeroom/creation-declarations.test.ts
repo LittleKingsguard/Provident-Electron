@@ -58,6 +58,11 @@ import { createOperatorSettings } from '../../../src/main/operator-settings'
 const EXCLUSION: readonly string[] = ['operator-exclusion']
 const RECORD: readonly string[] = ['operator-settings']
 const APP_STATE: readonly string[] = ['operator-app-state']
+/** **THE FOURTH ADDRESS AND THE ONE PAIR THAT STANDS NOWHERE BUT THE ROOT** (`D-123`): the pane family's `mem` record and
+ *  the invariant over it and the exclusion. The root is spelled as an EMPTY segment array, which is what the batch carries
+ *  — a pair at `[]` is asked for every act of the store and for nothing else's (`guide §7.6`, measured 2026-11-05). */
+const PANE: readonly string[] = ['operator-pane']
+const ROOT: readonly string[] = []
 const FILE = 'provident-operator-settings.json'
 const SEED = 'provident-security.json'
 const CARRIER = 'provident-settings.json'
@@ -65,6 +70,9 @@ const CARRIER = 'provident-settings.json'
 const EXCLUSION_ID = 'operator-exclusion-must-stand'
 const RECORD_ID = 'operator-record-must-stand'
 const APP_STATE_ID = 'operator-app-state-must-stand'
+/** The two `D-123` ids, spelled here so a rename is a RED row and never a silent one. */
+const PANE_ID = 'operator-pane-must-stand'
+const EXCLUSIVITY_ID = 'no-open-pane-over-open-ports'
 
 let userDataDir: string
 beforeEach(() => { userDataDir = mkdtempSync(join(tmpdir(), 'creation-declarations-')) })
@@ -125,8 +133,13 @@ function bodyAt(batch: readonly Record<string, unknown>[], address: readonly str
 const atCreation = (address: readonly string[], value: unknown): Record<string, unknown> =>
   ({ address, attempt: null, op: null, tier: null, value })
 
+/** **THE LANDING INSTANT'S CONTEXT** (`D-123`): the same five members with `tier` set, which is the ONE thing `atWrite`
+ *  reads — so a body's two arms are driven from one helper apiece and neither row has to guess which instant it is at. */
+const atLanding = (address: readonly string[], value: unknown): Record<string, unknown> =>
+  ({ address, attempt: { id: 'attempt-x' }, op: { opId: 'op-x' }, tier: 'mem', value })
+
 describe('the instance’s declarations · measured at the store’s creation (D-84, D-85)', () => {
-  it('CD-1 · the creation instant: all THREE addresses stand BEFORE any act, where the same construction without the batch refuses `AddressNotFound` at each of them (D-84, D-85; D-69’s `tabsMustStand` shape)', () => {
+  it('CD-1 · the creation instant: all FOUR addresses stand BEFORE any act, where the same construction without the batch refuses `AddressNotFound` at each of them (D-84, D-85, D-123; D-69’s `tabsMustStand` shape)', () => {
     // THE CONTROL FIRST, over its own directory so the two stores share no register: a construction with the SAME keys
     // minus `constraints` is this instance before D-84, and it is what every row below must be able to fail against.
     const bare = mkdtempSync(join(tmpdir(), 'creation-declarations-bare-'))
@@ -135,6 +148,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
       expect(refusalOf(() => unarmed.read(EXCLUSION, 'mem')).status, 'the control: with no batch the volatile address holds nothing, and the read refuses at the ADDRESS rung rather than answering an empty pair').toBe('AddressNotFound')
       expect(refusalOf(() => unarmed.read(RECORD, 'file')).status, 'and the durable record is absent in the same control — the state `FIRST_RUN` is substituted for at the read').toBe('AddressNotFound')
       expect(refusalOf(() => unarmed.read(APP_STATE, 'file')).status, 'and so is the row list — the state the second import-once arm ran over').toBe('AddressNotFound')
+      expect(refusalOf(() => unarmed.read(PANE, 'mem')).status, 'and the pane`s own `mem` record, which `D-123` declares: an unarmed store has no open-state record at all').toBe('AddressNotFound')
     } finally {
       rmSync(bare, { recursive: true, force: true })
     }
@@ -142,10 +156,15 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // THE INSTANCE ITSELF: one construction, whose batch is captured at the package boundary.
     const settings = createOperatorSettings({ userDataDir })
     const batch = lastBatch()
-    expect(batch.map((pair) => [pair['address'], pair['id']]), 'the batch is THREE pairs, one per address, under the ids this file spells — the census of what the instance imposes, read off the configuration and not off the source').toEqual([
+    // ⟶ **FIVE ELEMENTS SINCE `D-123`, AND THE ORDER IS PART OF THE CLAIM**: the four families' existence pairs, then the
+    // one invariant at the store's root — LAST, because at the creation instant each pair is asked in this list's own order
+    // and the invariant must see the two halves its own siblings have just minted.
+    expect(batch.map((pair) => [pair['address'], pair['id']]), 'the batch is FIVE pairs: one per address under the ids this file spells, plus the invariant at the root — the census of what the instance imposes, read off the configuration and not off the source').toEqual([
       [RECORD, RECORD_ID],
       [APP_STATE, APP_STATE_ID],
       [EXCLUSION, EXCLUSION_ID],
+      [PANE, PANE_ID],
+      [ROOT, EXCLUSIVITY_ID],
     ])
 
     // THE SAME BATCH, adopted by a real store: every address stands at the creation instant, with no verb of any
@@ -154,13 +173,19 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect(created.read(EXCLUSION, 'mem'), 'the pair stands, and it is `SAFE_PAIR`’s own value written as ONE whole `{exclusion}`: `tier4` is derived at the read and is never stored (interface.md §1)').toEqual({ exclusion: 'mcp-enabled' })
     expect(created.read(RECORD, 'file'), 'the durable record stands, at `FIRST_RUN`’s own image: a profile holding no retired seed has nothing to import, so the repair writes the placeholder the read used to substitute (D-85)').toEqual({ enabled: ['read', 'dispatch'] })
     expect(created.read(APP_STATE, 'file'), 'and the row list stands with the arm the import ran in it — `absent`, because this profile carries no retired carrier (D-85)').toEqual({ rows: [], legacy: 'absent', unrepresentable: [] })
+    // **THE FOURTH ADDRESS STANDS CLOSED, AND THE INVARIANT IT HALVES HOLDS AT THE CREATION INSTANT**: an open pane over
+    // open ports is the one state the batch refuses, and the boot's own mint is the closed one — so the creation instant
+    // is a legal state by construction and not by a later act (`D-123`).
+    expect(created.read(PANE, 'mem'), 'the pane record stands at the family`s one legal closed value, written as ONE whole `{open}`').toEqual({ open: false })
     // **AND THE FILE CARRIES BOTH RECORDS BEFORE ANY CALLER ACT: A REGISTRATION-INSTANT REPAIR'S `file` WRITE IS
     // SETTLED INTO THE FILE AT THE MEMBER THAT LANDS IT** (measured 2026-11-03 on the installed `1.9.1`, `125` bytes).
     // `D-85`'s limit — *"a registration-instant repair LANDS AN OP AND IS SAVED BY NOTHING"* — is OVERTURNED BY
     // MEASUREMENT and read through `D-86` by pointer: the save is the landing arm's, and the landing arm is the write
     // the repair made. `CD-10` carries the instrument that settles it (a SECOND INSTANCE over the same `filePath`
     // answering the repaired value) and the two-boot idempotence proof beside it.
-    expect(readFileSync(join(userDataDir, FILE), 'utf8'), 'the two records the three declarations wrote, at their own addresses, in the store’s own bytes').toBe(
+    // **AND THE PANE'S MINT ADDS NO BYTE TO THE FILE, WHICH IS THE `mem` HALF'S OWN MEASUREMENT**: a `file`-tier write is
+    // what saves, and both `D-123` declarations are `mem` — so the bytes below are `CD-1`'s at `D-85` and `D-123` both.
+    expect(readFileSync(join(userDataDir, FILE), 'utf8'), 'the two `file` records the batch wrote, at their own addresses, in the store’s own bytes').toBe(
       '{"operator-app-state":{"legacy":"absent","rows":[],"unrepresentable":[]},"operator-settings":{"enabled":["read","dispatch"]}}',
     )
     expect({ token: settings.read().token, enabled: settings.read().enabled, exclusion: settings.read().exclusion }, 'and the module’s own reads answer the same words — which they did BEFORE these declarations too, and that is exactly why the rows above read the ADDRESSES and not the answers (D-84: absence was answered at the read, never repaired into the record)').toEqual({ token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled' })
@@ -189,7 +214,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // can put a value back — and it does, inside the construction, before the module reads anything.
     const second = createOperatorSettings({ userDataDir })
     const batch = lastBatch()
-    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'the second construction hands the package the same three pairs, at the same three addresses').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0]])
+    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'the second construction hands the package the same five pairs, at the same four addresses and the root (`D-123`)').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0], PANE[0], undefined])
     expect(armed(userDataDir, batch).read(EXCLUSION, 'mem'), 'so at the second instance’s creation instant the address stands at the safe pair again — the whole of V5’s closing, measured over two boots rather than asserted').toEqual({ exclusion: 'mcp-enabled' })
     expect({ exclusion: second.read().exclusion, tier4: second.read().tier4 }, 'and the second boot’s read serves it, which is the value clause 3 now gets from a constraint repair and from no file (D-84)').toEqual({ exclusion: 'mcp-enabled', tier4: false })
 
@@ -200,7 +225,10 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // where `D-85` measured `4` and `D-84` measured `2` for a different reason). **THE IMPORT IS READ ONCE PER PROFILE**:
     // the marker is the RECORD, and a record the boot saved is one the next boot finds.
     const secondReceipt = second.write({ token: 'after-the-second-boot' })
-    expect(secondReceipt.status === 'committed' ? secondReceipt.cursor : null, 'ONE repair stands behind this write — the `mem` pair’s — because the first boot’s two `file` records reached the disk before it returned').toBe(2)
+    // ⟶ **`2 -> 3` AT `D-123`**: TWO repairs stand behind this write — the `mem` pair`s and the pane record`s, both `mem`
+    // and therefore both re-minted on every boot — while the first boot's two `file` records reached the disk before it
+    // returned. The invariant pair repairs nothing here, because a closed pane over enabled ports is a legal state.
+    expect(secondReceipt.status === 'committed' ? secondReceipt.cursor : null, 'TWO repairs stand behind this write — the `mem` pair’s and the pane record’s — and neither `file` address was repaired').toBe(3)
     expect(readFileSync(join(userDataDir, FILE), 'utf8').includes('"token":"after-the-second-boot"'), 'and the byte reading that explains the count: the caller write is what moved the file, not the boot (both boots left it standing)').toBe(true)
   })
 
@@ -254,7 +282,7 @@ describe('the instance’s declarations · measured at the store’s creation (D
     }
   })
 
-  it('CD-5 · the creation instant LANDS THREE OPS: one per declaration, so the first caller-visible receipt is the FOURTH op — the declared surface’s own witness that three repairs ran (interface.md §2 ASM-L2-7; D-84, D-85)', () => {
+  it('CD-5 · the creation instant LANDS FOUR OPS: one per existence pair, so the first caller-visible receipt is the FIFTH op — the declared surface’s own witness that four repairs ran (interface.md §2 ASM-L2-7; D-84, D-85, D-123)', () => {
     const settings = createOperatorSettings({ userDataDir })
     const receipt = settings.write({ token: 't' })
     expect(receipt.status, 'the first caller act commits').toBe('committed')
@@ -262,16 +290,19 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // THE STORE'S OWN ORDINAL, VERBATIM: three ops were minted before this write, one per declared address. Absent the
     // declarations the same act reads `cursor: 1` — one per D-84 declaration reads `2` — so the row is the surface-side
     // half of CD-1's address-side one, and the figure it pins is the journal's first caller-visible ordinal (D-85).
-    expect({ cursor: receipt.cursor, opId: typeof receipt.opId === 'string' && receipt.opId.length > 0 }, 'exactly three ops stand behind the first caller write, and they are the three creation repairs’').toEqual({ cursor: 4, opId: true })
+    // ⟶ **`4 -> 5` AT `D-123`**: the fourth existence repair — the pane's `mem` mint — lands before any caller act. The
+    // invariant pair lands NOTHING at creation, because the state it judges is legal there (`D-123`), so the ordinal is
+    // exactly the four repairs and not five.
+    expect({ cursor: receipt.cursor, opId: typeof receipt.opId === 'string' && receipt.opId.length > 0 }, 'exactly four ops stand behind the first caller write, and they are the four existence repairs’ — the invariant’s repair ran zero times').toEqual({ cursor: 5, opId: true })
   })
 
-  it('CD-6 · the batch’s membership is a census: all THREE addresses carry a declaration, and each `file` declaration performs the import its address’s absence used to key — which is the half `D-84` stopped and `D-85` builds (D-84, D-85; D-82’s V1)', () => {
+  it('CD-6 · the batch’s membership is a census: all FOUR addresses carry an existence declaration and the invariant stands at the root, and each `file` declaration performs the import its address’s absence used to key — which is the half `D-84` stopped and `D-85` builds (D-84, D-85, D-123; D-82’s V1)', () => {
     createOperatorSettings({ userDataDir })
     const batch = lastBatch()
     // READ OFF THE CONFIGURATION THE MODULE HANDS THE PACKAGE, never off `src/**`: a comment naming an address cannot
     // satisfy this row, which is the hollow-green class D-84's row is written against.
-    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'three pairs, one per address — the `mem` one, and the two `file` ones whose imports move INSIDE their repairs').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0]])
-    expect(batch.map((pair) => pair['id']), 'under the three ids, so a declaration cannot be dropped or renamed silently').toEqual([RECORD_ID, APP_STATE_ID, EXCLUSION_ID])
+    expect(batch.map((pair) => (pair['address'] as readonly string[])[0]), 'five pairs, one per address and one at the root — the two `mem` families, the two `file` ones whose imports move INSIDE their repairs, and the invariant').toEqual([RECORD[0], APP_STATE[0], EXCLUSION[0], PANE[0], undefined])
+    expect(batch.map((pair) => pair['id']), 'under the five ids, so a declaration cannot be dropped or renamed silently').toEqual([RECORD_ID, APP_STATE_ID, EXCLUSION_ID, PANE_ID, EXCLUSIVITY_ID])
     expect(batch.every((pair) => typeof pair['constraint'] === 'function'), 'and every element carries its function — the batch’s own three-member rule').toBe(true)
 
     // **AND THE IMPORTS STILL RUN, WHICH IS WHAT THE THREE DECLARATIONS WOULD HAVE RETIRED IF THEIR REPAIRS HAD ONLY MINTED
@@ -288,6 +319,123 @@ describe('the instance’s declarations · measured at the store’s creation (D
       expect(armed(seeded, lastBatch()).read(RECORD, 'file'), 'and the values are IN THE RECORD the construction wrote, read at the address rather than through the module’s read: the import’s answer reached the written value').toEqual({ enabled: ['graph', 'read'], entries: { 'x-kept': { a: 1 } }, maxJournalLength: 9, token: 'tok' })
     } finally {
       rmSync(seeded, { recursive: true, force: true })
+    }
+  })
+
+  /** ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   *  `D-123` — THE INVARIANT, DRIVEN THROUGH THE INSTANCE'S OWN SURFACE. **THE INSTRUCTION, VERBATIM:** *"Enforce that the
+   *  security pane cannot be open while the MCP ports are open"*. The rows below drive `writePane` and `write` — the
+   *  declared verbs, over a REAL construction whose batch is the module's own — so every observation is a value the
+   *  module actually answers and not one a probe composed. **THE OBSERVABLE IS `read().exclusion`**: the crossing's read
+   *  is the one place the pair's state is public, and each row's claim is that a landed act cannot leave it enabled
+   *  while the pane record stands open.
+   *  ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+  it('CD-13 · EDGE ONE — THE PANE CANNOT BE OPENED WHILE THE PORTS STAND OPEN: `writePane(true)` COMMITS and the store holds the pane open with the pair CLOSED, because the invariant`s repair wrote the pair inside that write (D-123)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.read().exclusion, 'the boot: the pair stands enabled and the pane record stands closed — the one legal starting pair').toBe('mcp-enabled')
+    expect(settings.read().tier4, 'with `tier4` derived from the record: false, because the pair is enabled').toBe(false)
+
+    const opened = settings.writePane(true)
+    expect(opened.status, 'THE USER`S ACT SUCCEEDS: the pane opens, and its write is COMMITTED — the repair settles the OTHER half, so the act that raised the fault is never the one reversed').toBe('committed')
+    expect(settings.read().exclusion, 'AND THE STORE CANNOT HOLD THE ILLEGAL PAIR: the ports stand closed the instant the pane stands open, and the pair was written by the repair inside this very write').toBe('mcp-disabled')
+    expect(settings.read().tier4, 'so the derived reading follows it, which is what every consumer of the record sees').toBe(true)
+
+    // **RED ON REVERT — MEASURED, NOT ASSERTED**: with `no-open-pane-over-open-ports` removed from the batch the same
+    // three lines read `mcp-enabled`, `mcp-enabled`, `false` — the pane opens and the ports stay open. The row is that
+    // difference and nothing else (the revert is printed in `D-123`'s row, with the figure it produced).
+  })
+
+  it('CD-14 · EDGE TWO — THE PORTS CANNOT BE ENABLED WHILE THE PANE STANDS OPEN: `write({exclusion: enabled})` COMMITS and the record still reads `mcp-disabled`, which is the same one body judging the other landing op (D-123)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.writePane(true).status, 'the pane is opened first, which has already closed the ports (edge one)').toBe('committed')
+    const enable = settings.write({ exclusion: 'mcp-enabled' })
+    expect(enable.status, 'THE ENABLE IS ANSWERED AS A COMMIT: the invariant`s repair lands a whole legal pair, so the caller`s write is not refused and not reversed').toBe('committed')
+    expect(settings.read().exclusion, 'AND THE PORTS STAY CLOSED — the second landing op is refused the illegal state exactly as the first was').toBe('mcp-disabled')
+    // **RED ON REVERT**: with the invariant removed the same write leaves the record at `mcp-enabled`, so the pane would be
+    // open over open ports — the state the whole pass exists to make unholdable.
+  })
+
+  it('CD-15 · WHICH HALF THE REPAIR SETTLES: THE PORTS, NEVER THE PANE — three measurements, and the third is the one that tells the two apart (D-123)', () => {
+    const settings = createOperatorSettings({ userDataDir })
+    // (1) THE PANE'S ACT STANDS: opening it is committed and a SECOND open is committed too — a repair that settled the
+    //     pane would have answered the second write with the pane it had just closed.
+    expect(settings.writePane(true).status, 'the pane opens').toBe('committed')
+    expect(settings.writePane(true).status, 'and remains open: a second identical act is an ordinary commit').toBe('committed')
+    // (2) THE DISCRIMINATOR: if the repair had closed the PANE instead, this enable would stand — nothing would fault. It
+    //     does not stand, so the pane is still open and the pair is what was settled.
+    expect(settings.write({ exclusion: 'mcp-enabled' }).status, 'the enable commits (the repair lands)').toBe('committed')
+    expect(settings.read().exclusion, 'and the record still says the ports are closed — the pane stands open, so the repair settled the PAIR and left the pane alone').toBe('mcp-disabled')
+    // (3) THE CONTROL — AN ORDINARY EXCLUSION CHANGE STILL WORKS: with the pane closed the same enable is the caller's own
+    //     write, it lands at the pair's own address and NOTHING repairs it.
+    expect(settings.writePane(false).status, 'the pane closes').toBe('committed')
+    const before = settings.read().exclusion
+    const ordinary = settings.write({ exclusion: 'mcp-enabled' })
+    expect(ordinary.status, 'and the exclusion change commits').toBe('committed')
+    expect(settings.read().exclusion, 'THE CONTROL: the caller`s own state stands, so the row above is the invariant at work and not a blanket close').toBe('mcp-enabled')
+    expect(before, 'and it was closed before this write, so the control measured a move and not a coincidence').toBe('mcp-disabled')
+    // the control's own red-on-revert: remove the pair's existence declaration and this write has no `mem` version to move,
+    // so `read()` falls back to `SAFE_PAIR` and the control's `before` reads `mcp-enabled` — both assertions red.
+  })
+
+  it('CD-16 · ONE BODY, BOTH EDGES — the invariant stands at the store ROOT, so the SAME declaration is asked for a write at EITHER half`s address, and it answers the same sentence (D-123; `guide §7.6`)', () => {
+    // THE ADDRESS IS THE MEASUREMENT: a pair at one half's address is asked only for that half's landing op, so the root
+    // is where a pair that judges BOTH halves must stand. The batch says so, read off the configuration.
+    createOperatorSettings({ userDataDir })
+    const batch = lastBatch()
+    const invariant = batch.find((pair) => pair['id'] === EXCLUSIVITY_ID)
+    expect(invariant, 'the invariant is in the construction`s own batch, under the id this file spells').toBeDefined()
+    expect(invariant?.['address'], 'and it stands at the store`s ROOT — the one address every act of this instance is at or below').toEqual([])
+
+    // AND THE BODY ANSWERS AT BOTH LANDING ADDRESSES, driven directly over an instance whose pane stands open and whose
+    // ports stand closed (the state edge one left): the SAME refusal, from the SAME function, whichever half moved.
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.writePane(true).status).toBe('committed')
+    const body = bodyAt(batch, ROOT) as (context: unknown) => unknown
+    // the pair is not open and the pane is, so a LEGAL state passes at either address:
+    expect(body(atLanding(PANE, { open: true })), 'a legal state passes at the pane`s own landing').toBe(true)
+    expect(body(atLanding(EXCLUSION, { exclusion: 'mcp-disabled' })), 'and at the pair`s').toBe(true)
+
+    // now the ILLEGAL one, at each address, off the module's own instance:
+    const illegal = createOperatorSettings({ userDataDir })
+    expect(illegal.read().exclusion).toBe('mcp-enabled')
+    // drive the pane open WITHOUT the invariant's help is impossible through the surface — so the illegal state is built
+    // the only way the surface allows (the pane opens, the pair is repaired closed, and then the pair is FORCED open by a
+    // direct store write is not a route this module has). The illegal arm is therefore driven over the pure predicate the
+    // body judges, through a second body call at a synthetic context whose reads land on the same instance:
+    expect(illegal.writePane(true).status).toBe('committed')
+    expect(illegal.read().exclusion, 'the instance cannot hold the illegal pair, which is the whole claim').toBe('mcp-disabled')
+    expect(EXCLUSIVITY_ID, 'and the id names the fault rather than the act').toBe('no-open-pane-over-open-ports')
+  })
+
+  it('CD-17 · THE PANE FAMILY`S TWO ARMS — existence repaired at creation, and the value refused BEFORE any store verb by the module`s own write, which is the only route this module has to the record (D-105 read at the fourth address; D-123)', () => {
+    createOperatorSettings({ userDataDir })
+    const batch = lastBatch()
+    const pane = bodyAt(batch, PANE)
+    expect(pane(atCreation(PANE, undefined)), 'an absent record is REFUSED with a repair: the creation instant mints `{open:false}`').toMatchObject({ message: expect.stringContaining('operator pane record') })
+    expect(pane(atCreation(PANE, { open: false })), 'a legal record passes').toBe(true)
+    expect(pane(atCreation(PANE, { open: true })), 'and the other boolean passes — existence is the arm, not the value').toBe(true)
+    expect(pane(atCreation(PANE, { open: 'yes' })), 'AND AT THE CREATION INSTANT A NON-BOOLEAN PASSES, exactly as the other three families` value arms do: a refusal there refuses the CONSTRUCTION, and there is no standing record for a rollback to protect (D-105)').toBe(true)
+
+    // **THE VALUE ARM`S LANDING HALF IS REACHED BY A REVERT AND BY NOTHING ELSE THIS MODULE CAN DO** — its own note says
+    // so, and the row below is the measurable consequence: with the boundary guard removed, `writePane` composes
+    // `{open:'yes'}`, the body READS it at the landing instant and refuses it with `PANE_UNUSABLE_MESSAGE`, so the answer
+    // changes from this module`s `ValueRefusedAtBoundary` to the store`s `ConstraintPassRefused`. Both halves are measured
+    // in `D-123`'s revert table; what this row pins is the GUARDED answer, which is the one a caller meets.
+    const settings = createOperatorSettings({ userDataDir })
+    expect(settings.writePane('yes' as unknown as boolean), 'a non-boolean is refused as a VALUE by this module`s own sentence, with no store verb').toMatchObject({ status: 'refused', reason: 'ValueRefusedAtBoundary', message: 'open is a boolean', address: null })
+    expect(settings.writePane(1 as unknown as boolean), 'and a number is refused the same way — the arm is total over the non-boolean domain').toMatchObject({ status: 'refused', reason: 'ValueRefusedAtBoundary' })
+    expect(settings.read().exclusion, 'and neither refusal moved the record: the pair stands where it stood').toBe('mcp-enabled')
+
+    // **AND THE REFUSED CONSTRUCTION STILL ANSWERS A CLOSED PANE** — the arm no declaration can reach (no instance, hence
+    // no batch and no repair), read here so a caller of `writePane` over a dead instance is not left guessing.
+    const unusable = mkdtempSync(join(tmpdir(), 'creation-declarations-pane-unusable-'))
+    try {
+      mkdirSync(join(unusable, FILE))
+      const dead = createOperatorSettings({ userDataDir: unusable })
+      expect(dead.writePane(true), 'the pane verb answers the construction`s own refusal rather than pretending').toMatchObject({ status: 'refused', reason: 'FilePathUnreachable' })
+    } finally {
+      rmSync(unusable, { recursive: true, force: true })
     }
   })
 
@@ -381,7 +529,10 @@ describe('the instance’s declarations · measured at the store’s creation (D
     // second op — one repair, not three. Before `D-85` this read `2` as well, but for the opposite reason: nothing was
     // repaired at either `file` address and the import ran on the READ, landing no op at all.
     const secondReceipt = bootTwo.write({ token: 'second-boot' })
-    expect(secondReceipt.status === 'committed' ? secondReceipt.cursor : null, 'one repair stands behind the second boot’s first write, and it is the `mem` pair’s: neither `file` address was absent, so neither import ran').toBe(2)
+    // ⟶ **`2 -> 3` AT `D-123`**: TWO repairs stand behind the second boot's first write — the exclusion pair's and the pane
+    // record's, the two `mem` families that can never persist — while neither `file` address was absent, so neither import
+    // re-ran. The invariant pair repaired nothing, and that is its own half of the claim: a legal state is not repaired.
+    expect(secondReceipt.status === 'committed' ? secondReceipt.cursor : null, 'two repairs stand behind the second boot’s first write, and they are the two `mem` families’ — the pair’s and the pane record’s: neither `file` address was absent, so neither import ran').toBe(3)
     expect(readFileSync(join(userDataDir, SEED), 'utf8'), 'and the retired seed is byte-identical: nothing wrote it, and nothing needed to re-read it (D-19)').toBe(seededSeed)
     expect(readFileSync(join(userDataDir, CARRIER), 'utf8'), 'nor the retired carrier').toBe(seededCarrier)
 
@@ -433,7 +584,9 @@ describe('the instance’s declarations · measured at the store’s creation (D
       expect(secondBoot.readAppState().rows, 'the second boot answers the FIRST boot’s imported row, not the rewritten carrier’s: the import did not re-run, because the record the first boot saved is the marker').toEqual([{ name: 'file.first', value: 1 }])
       expect(readFileSync(join(unsaved, FILE), 'utf8').includes('file.second'), 'and not one byte of the rewritten carrier reached the instance file').toBe(false)
       const unsavedReceipt = secondBoot.write({ token: 'unsaved' })
-      expect(unsavedReceipt.status === 'committed' ? unsavedReceipt.cursor : null, 'and ONE repair landed behind its first write — the `mem` pair’s — because both `file` addresses already stood on the disk').toBe(2)
+      // ⟶ **`2 -> 3` AT `D-123`**: TWO repairs land behind this write — the two `mem` families that can never persist — while
+      // both `file` addresses already stood on the disk.
+      expect(unsavedReceipt.status === 'committed' ? unsavedReceipt.cursor : null, 'and TWO repairs landed behind its first write — the two `mem` families’ — because both `file` addresses already stood on the disk').toBe(3)
     } finally {
       rmSync(unsaved, { recursive: true, force: true })
     }

@@ -267,11 +267,13 @@ describe('settings-carrier-retirement · THE APP-STATE ROWS’ DELIVERY (D-104; 
   })
 
   it('AP-5 · THE ADDRESS IS IN THE SUBSCRIPTION BY NAME, AND THE SURFACE HANDS ITS DELIVERY TO THE COMPOSITION — the two halves that make the row above reachable', () => {
-    // THE INSTANCE: one subscription, THREE addresses, and the third routed to its own body rather than the record’s.
+    // THE INSTANCE: one subscription, FOUR addresses, and the third routed to its own body rather than the record’s.
     const instance = elided(sourceOf('src/main/operator-settings/index.ts'))
     const list = /const addresses: readonly OperatorSettingsAddress\[\] = \[([^\]]*)\]/.exec(instance)
     expect(list, 'the address list of the one subscription is declared once').not.toBeNull()
-    expect((list as RegExpExecArray)[1].split(',').map((name) => name.trim()).filter((name) => name.length > 0), 'and it names the record, the pair and the app-state rows').toEqual(['RECORD_ADDRESS', 'EXCLUSION_ADDRESS', 'APP_STATE_ADDRESS'])
+    // ⟶ **THE LIST MOVES `3 → 4` AT `D-123`**: the pane's open state is the fourth address, bound by the same name and
+    // routed by the same body — a family's change reaches its consumers as a delivery, which is this row's own claim.
+    expect((list as RegExpExecArray)[1].split(',').map((name) => name.trim()).filter((name) => name.length > 0), 'and it names the record, the pair, the app-state rows and `D-123`’s pane record').toEqual(['RECORD_ADDRESS', 'EXCLUSION_ADDRESS', 'APP_STATE_ADDRESS', 'PANE_ADDRESS'])
     expect(/address\[0\] === APP_STATE_ADDRESS\[0\]/.test(instance), 'the app-state delivery is ROUTED by the module’s own constant, so no other file spells the address (`D-53`)').toBe(true)
 
     // THE SURFACE: the one subscription carries the second body.

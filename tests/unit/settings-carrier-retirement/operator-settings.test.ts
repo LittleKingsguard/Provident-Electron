@@ -447,10 +447,13 @@ describe('settings-carrier-retirement · the operator-settings instance at unit 
     expect(source.includes("'operator-app-state'"), 'and the third durable address stands in this module: `APP_STATE_ADDRESS`, beside the record’s and the pair’s (signatures.md §3; interface.md §1)').toBe(true)
   })
 
-  it('OS-13 · the declared member sets, read at RUN TIME off the real objects: the product’s five and the module entry’s one factory value — this row is what keeps the contract cast honest (signatures.md §1, §2)', () => {
+  // ⟶ **THE PRODUCT'S SET MOVES `5 → 6` AT `D-123`, AND THE CLAIM IS UNMOVED IN KIND**: the fourth address's one verb is
+  // `writePane`, the sibling receipt's, and it stands in `signatures.md` §2's declaration block — so this row's
+  // set-equality is still a claim over what the module actually hands a caller, one member wider.
+  it('OS-13 · the declared member sets, read at RUN TIME off the real objects: the product’s six and the module entry’s one factory value — this row is what keeps the contract cast honest (signatures.md §1, §2)', () => {
     const dir = profile()
     const settings = instance(dir)
-    expect(membersOf(settings), 'the product’s own members are EXACTLY the five signatures.md §2 declares: the sibling’s three and this unit’s two, and no sixth').toEqual(['read', 'readAppState', 'subscribe', 'write', 'writeAppState'])
+    expect(membersOf(settings), 'the product’s own members are EXACTLY the six signatures.md §2 declares: the sibling’s three, this unit’s two and `D-123`’s one, and no seventh').toEqual(['read', 'readAppState', 'subscribe', 'write', 'writeAppState', 'writePane'])
     expect(Object.keys(operatorSettingsModule).sort(), 'and the module entry mints one VALUE name — the factory; every type signatures.md §2 declares erases at build, and this unit adds no exported value (signatures.md §1, §2)').toEqual(['createOperatorSettings'])
   })
 })

@@ -6,7 +6,7 @@
 // `mintExclusion`, `exclusionMustStand` and the batch itself, all named in that table (the one L4 exception:
 // `plain`, reported at L4).
 //
-// THREE ADDRESSES, and the measurement is why: a `file`-tier write purges the versions it outranks
+// FOUR ADDRESSES (three at `D-84`–`D-85`, the fourth at `D-123`), and the measurement is why: a `file`-tier write purges the versions it outranks
 // AT ITS OWN KEY, so one address would let a settings commit reset the operator's exclusion pair
 // (guide §5.1; design.md §2). `['operator-settings']` carries the durable record
 // WHOLE — `enabled` always, `token` and `maxJournalLength` only while they stand, `entries` iff it
@@ -14,6 +14,16 @@
 // written as its ABSENCE and the package's walk refuses `null`/`undefined` anywhere in a value
 // (guide §10.1; persistence §4). `tier4` is derived at the read and never stored, so the illegal
 // pair is unspellable (interface §1).
+//
+// **THE FOURTH ADDRESS — `['operator-pane']` on `mem` — CARRIES THE OPERATOR PANE'S OPEN STATE, AND IT IS THE
+// OTHER HALF OF THE ONE INVARIANT THIS INSTANCE NOW HOLDS** (`D-123`): `{open: boolean}` alone, written by the
+// realm's own act (`writePane`, one `mem` write), and read by the constraint that refuses a store holding an open
+// pane over open ports. It is `mem` because a pane is not a durable fact: the overlay's state machine is the
+// renderer's and is seeded from the AUTHORED carrier at every boot (`startOverlayApplication`), so a persisted
+// `open` would be a second authority over a surface that no longer exists at the next boot — and `D-122`'s own
+// failure clause (`the exclusion is not persisted either`) is the same property read at the other half. Its
+// existence declaration is the `mem` pair's shape for the `mem` pair's reason: a `mem` address has one lawful
+// source under the convention's clause 3, a repair at creation (D-84).
 //
 // THE THIRD ADDRESS — `['operator-app-state']` on `file` — carries the retired carrier's rows WHOLE
 // as `{rows: [{name, value}, …]}`, an ORDERED array and never a name→value map, because the
@@ -31,10 +41,11 @@
 // verbatim — no offset, no renumbering, and `write`'s fourth position never supplied, so its
 // class-test arm is unreachable (guide §3.3, §6.4; interface §2 `ASM-L2-7`).
 //
-// **ALL THREE ADDRESSES' EXISTENCE IS AN ENFORCED INVARIANT OF THE INSTANCE AND NO LONGER A READ-SIDE DEFAULT** (D-84,
-// D-85): one declaration rides the construction's `constraints` batch at each of them — `operator-exclusion-must-stand` at
+// **ALL FOUR ADDRESSES' EXISTENCE IS AN ENFORCED INVARIANT OF THE INSTANCE AND NO LONGER A READ-SIDE DEFAULT** (D-84,
+// D-85, D-123): one declaration rides the construction's `constraints` batch at each of them — `operator-exclusion-must-stand` at
 // `['operator-exclusion']`, `operator-record-must-stand` at `['operator-settings']`, `operator-app-state-must-stand` at
-// `['operator-app-state']` — and **EACH REPAIR PERFORMS WHAT THAT ADDRESS'S ABSENCE USED TO KEY**: the `mem` pair's repair
+// `['operator-app-state']`, `operator-pane-must-stand` at `['operator-pane']` — plus the ONE pair that judges two of them
+// together, `no-open-pane-over-open-ports` at the store's root `[]` (D-123), and **EACH REPAIR PERFORMS WHAT THAT ADDRESS'S ABSENCE USED TO KEY**: the `mem` pair's repair
 // mints `SAFE_PAIR`'s own value at creation on EVERY boot, because a `mem` address can never come from a file (D-84); the
 // two `file` addresses' repairs perform their own IMPORT-ONCE ARM and write what it answered as ONE whole legal record —
 // the record as `toStored(imported ?? FIRST_RUN)`, the rows as `{rows, legacy, unrepresentable}` (D-85).
@@ -130,6 +141,10 @@ export interface OperatorSettings {
   subscribe(listener: OperatorSettingsListener, appStateListener?: OperatorAppStateListener): () => void      // answers the withdrawal
   readAppState(): AppStateAnswer
   writeAppState(rows: readonly AppStateRow[]): OperatorSettingsReceipt
+  /** **THE FOURTH ADDRESS'S ONE VERB** (`D-123`): one `mem` write of `{open}` at `['operator-pane']`, the sibling
+   *  receipt verbatim. It is the realm's act recorded — never a decision: the constraint this instance holds is what
+   *  refuses an open pane over open ports, and this verb only says what the operator's pane did. */
+  writePane(open: boolean): OperatorSettingsReceipt
 }
 
 /** The group set's SECOND LIVE COPY (D-11, D-15; exception §2 E-1): six members, re-homed with the
@@ -142,6 +157,18 @@ const EXCLUSION_ADDRESS: OperatorSettingsAddress = ['operator-exclusion']
  *  purges at its own key, so a module write can never compose a value carrying the token
  *  (interface §1; design §2; L1 §3 `ASM-1`). */
 const APP_STATE_ADDRESS: OperatorSettingsAddress = ['operator-app-state']
+/** **THE FOURTH ADDRESS — THE OPERATOR PANE'S OPEN STATE, AND THE OTHER HALF OF THE INVARIANT THE LAST PAIR BELOW
+ *  JUDGES** (`D-123`). It is `mem` for the pair's own reason and one more: a pane is not a durable fact — the
+ *  overlay's four-state machine is the RENDERER's and is seeded from the AUTHORED state carrier on every boot, so a
+ *  persisted `open` would be a second authority over a surface that does not exist at the next boot. */
+const PANE_ADDRESS: OperatorSettingsAddress = ['operator-pane']
+/** The address the invariant pair stands at: THE STORE'S OWN ROOT. It is a MEASURED choice and not a tidy one — a
+ *  pair is asked only where the act touches its address (`D-56`/`D-66`; `guide §7.6`), so a pair at either half's
+ *  address would see ONE of the two landing ops; at `[]` every act in this instance is at or below it, so ONE body
+ *  judges both edges. Measured 2026-11-05 over the installed `provident-storeroom@1.9.3`: a construction carrying a
+ *  pair at `[]` is accepted, the pair is asked at its registration and at every write this instance makes, and a
+ *  write at `['operator-pane']` and a write at `['operator-exclusion']` are BOTH asked of it. */
+const ROOT_ADDRESS: OperatorSettingsAddress = []
 const FILE_NAME = 'provident-operator-settings.json'
 const RETIRED_NAME = 'provident-security.json'
 /** The retired tier-1 carrier, spelled ONCE in `src/**`: read by the second import-once arm and
@@ -158,6 +185,17 @@ const FIRST_RUN: Row = { token: null, enabled: ['read', 'dispatch'] }
 /** What a boot, a crash, a torn record and a corrupt file all resolve to, because the pair is
  *  `mem` and is never persisted (interface §1 `ASM-L2-2`; behaviour §7). */
 const SAFE_PAIR: { exclusion: 'mcp-enabled' | 'mcp-disabled'; tier4: boolean } = { exclusion: 'mcp-enabled', tier4: false }
+/** **THE PANE FAMILY'S ONE WHOLE LEGAL VALUE, AND ITS ONE AUTHORITY** (`D-123`): `{open: false}`. The creation
+ *  repair writes exactly this, the absence arms read exactly this, and the invariant treats an absent record as it
+ *  treats a closed one — so no second literal answers "what is a closed pane". It is `{open}` ALONE: the four-state
+ *  word the overlay's mechanism carries (`closed`/`open`/`held`/`closing`) is the RENDERER's vocabulary and stays
+ *  there, because the crossing's datum is the one predicate the invariant judges — `state === 'open' || state ===
+ *  'held'` — and a four-state word here would make `closing` a third half-open state this instance would have to
+ *  decide about, which is a second authority over the mechanism (D-123). */
+const CLOSED_PANE: { open: boolean } = { open: false }
+/** The pair's other state, spelled once: the value the invariant's repair writes, which is the DIRECTION it settles
+ *  (`D-123` — closing the ports is the safe half, because the pane is what the user is doing). */
+const PORTS_CLOSED: 'mcp-enabled' | 'mcp-disabled' = 'mcp-disabled'
 
 /** The one monotonic source of handle names, so no two subscriptions share an identity (design §8). */
 let issuance = 0
@@ -521,6 +559,15 @@ const EXCLUSION_MUST_STAND_ID = 'operator-exclusion-must-stand'
 /** The two `file` addresses' ids, exported nowhere for the exclusion's own reason: the instance is the only consumer. */
 const RECORD_MUST_STAND_ID = 'operator-record-must-stand'
 const APP_STATE_MUST_STAND_ID = 'operator-app-state-must-stand'
+/** **THE PANE FAMILY'S EXISTENCE PAIR** (`D-123`): the `mem` half's shape, under an id of its own so a rename is a
+ *  red row rather than a silent one, and exported nowhere for the exclusion's reason — the instance is its own only
+ *  consumer. */
+const PANE_MUST_STAND_ID = 'operator-pane-must-stand'
+/** **THE INVARIANT'S OWN PAIR, AND IT IS THE ONE PAIR IN THIS BATCH THAT JUDGES TWO ADDRESSES** (`D-123`): it stands
+ *  at the store's root `[]` so BOTH landing ops are asked of it — the pane opening while the ports stand open, and
+ *  the ports being enabled while the pane stands open — and it reads both halves rather than the act's own value
+ *  (`guide §7.6`: *"If your constraint cares about the state at any other location … IT READS THAT LOCATION"*). */
+const EXCLUSIVITY_ID = 'no-open-pane-over-open-ports'
 /** **THE SENTENCE NAMES THE FAULT AND NOT THE ACT** — the register of L2 §3 and of the tab record's five: the address
  *  holds no version of the pair, which is why nothing can be read there, and `tier4` is a DERIVED member and never part
  *  of what is missing (interface §1). The two `file` addresses' sentences hold the same line: what is missing is the
@@ -539,6 +586,15 @@ const EXCLUSION_UNUSABLE_MESSAGE =
   "the operator exclusion stands but names no state — 'exclusion' is absent, or it is neither 'mcp-enabled' nor 'mcp-disabled' — so the pair names nothing the gate can apply"
 const APP_STATE_UNUSABLE_MESSAGE =
   'the app-state row list stands but carries a row that is no row, a name that is not a non-empty string, or no value at all, so the row it holds cannot be read back'
+/** **THE PANE FAMILY'S TWO SENTENCES, AND THE TWO THE INVARIANT ANSWERS** (`D-123`). The first pair is the `mem` half's
+ *  register — the family and the fault, never the act. **THE THIRD IS THE INVARIANT'S AND IT NAMES THE ACTUAL FAULT**:
+ *  not "an illegal state" but what the state lets happen — the agent's dispatch path standing open over the surface the
+ *  operator opened the crossing TO configure — because that is the sentence an operator reads off a refused write. */
+const PANE_ABSENT_MESSAGE = "no operator pane record stands at its address, so no 'mem' version of the pane's open state exists"
+const PANE_UNUSABLE_MESSAGE =
+  "the operator pane record stands but carries no boolean 'open' — a member that is no member of it, a non-boolean value, or a memberless record — so the pane's open state cannot be read"
+const EXCLUSIVITY_MESSAGE =
+  'the operator pane stands open while the MCP ports stand open, so the agent can read and dispatch from under the surface the pane was opened to configure'
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE VALUE ARMS — A FAMILY THAT STANDS BUT CARRIES A VALUE ITS OWN READ CANNOT STATE IS REFUSED (D-105)
@@ -636,6 +692,36 @@ function exclusionAdmitsAt(node: readonly string[], value: unknown): boolean {
   return node.length === 1 && node[0] === 'exclusion' && pairAdmits(value)
 }
 
+/** **THE PANE AT ONE NODE** (`D-123`): the root is `{open}` and nothing else, and a write at the member is one boolean.
+ *  **A RECORD THAT NAMES NO MEMBER IS REFUSED TOO** — `{}` would read as a closed pane under the invariant's own
+ *  tolerance, which is exactly the substitution this family refuses to make: the crossing's datum IS the record, so a
+ *  record naming nothing is a state no invariant can state (`D-105`'s rule, read at the fourth address). A standing
+ *  `open` that is not a boolean is refused for the same reason — the invariant would judge a word it cannot read and
+ *  pass the store, which is the fail-open this whole pass exists to close. */
+function paneAdmitsAt(node: readonly string[], value: unknown): boolean {
+  if (node.length === 0) {
+    if (!plain(value)) return false
+    const members = Object.keys(value)
+    return members.length === 1 && members[0] === 'open' && typeof value['open'] === 'boolean'
+  }
+  return node.length === 1 && node[0] === 'open' && typeof value === 'boolean'
+}
+
+/** **THE INVARIANT'S TWO HALVES, EACH READ OFF A VALUE AND NOT OFF AN ACT** (`D-123`): an absent record is a closed
+ *  pane and an absent pair is enabled ports — which is the state BEFORE the family declarations run, and the state the
+ *  invariant must not refuse at any instant but a landing one. **THE CONJUNCTION IS THE WHOLE PREDICATE**, and it has
+ *  exactly one spelling in this file. */
+function paneStandsOpen(pane: unknown): boolean {
+  return plain(pane) && pane['open'] === true
+}
+function portsStandOpen(pair: unknown): boolean {
+  return !(plain(pair) && pair['exclusion'] === PORTS_CLOSED)
+}
+/** The one spelling of the fault: `true` where the store holds both halves open at once. */
+function bothStandOpen(pane: unknown, pair: unknown): boolean {
+  return paneStandsOpen(pane) && portsStandOpen(pair)
+}
+
 /** One row of the list: a plain record naming a NON-EMPTY string and carrying its own `value` — `fromAppState`'s three
  *  tests in its own order, and the third is `hasOwnProperty` because a row whose `value` is absent is a row the read
  *  SKIPS, so the caller's row is gone while the receipt says `committed`. */
@@ -689,34 +775,63 @@ function registrationRoute(context: unknown): ((address: OperatorSettingsAddress
   return typeof route === 'function' ? route as (address: OperatorSettingsAddress, tier: string, value: unknown) => unknown : undefined
 }
 
-/** **THE REPAIR MINTS THE PAIR FROM `SAFE_PAIR` AND WRITES ONE WHOLE LEGAL VALUE AT THE ONE ADDRESS** (`D-84`). The value
- *  is `{exclusion}` ALONE — the same shape the module's own transition write composes — because `tier4` is derived at the
- *  read and is never stored, so a repair carrying it would be a second authority over a member no write may hold
- *  (interface §1; design §2). **AND IT IS `SAFE_PAIR`'S OWN SPELLING, NOT A SECOND LITERAL**: a placeholder that disagreed
- *  with the read-side default would be two authorities for one value, which is the failure `D-84` closes at the record
- *  address by reading `FIRST_RUN` — so the constant stays the source and the repair is one arm over it.
+/** **ONE WHOLE LEGAL PAIR VALUE WRITTEN THROUGH THE MODULE'S ONE REPAIR-WRITE PATH, AT WHICHEVER INSTANT THE REPAIR WAS
+ *  ASKED** (`D-84`'s `mintExclusion`, re-derived at `D-123` because a second caller arrived). The value is `{exclusion}`
+ *  ALONE — the same shape the module's own transition write composes — because `tier4` is derived at the read and is
+ *  never stored, so a repair carrying it would be a second authority over a member no write may hold (interface §1;
+ *  design §2). **AND EACH CALLER PASSES A CONSTANT THIS MODULE ALREADY OWNS, NOT A SECOND LITERAL**: the existence
+ *  repair writes `SAFE_PAIR.exclusion` and the invariant's repair writes `PORTS_CLOSED`, both spelled once above.
  *
- *  **IT WRITES THROUGH THE REGISTRATION'S OWN ROUTE AND NEVER AT A LANDING INSTANT, WHICH IS A MEASURED BOUND AND NOT AN
- *  OMISSION.** A repair at a registration instant is handed a record carrying a `write` MEMBER — the store's own three
- *  positions, the commit being the registration's own — so the write NAMES that commit the only way that instant allows
- *  (`D-73`; a supplied fourth position there is a `TypeError` thrown before any store act). At a LANDING instant the
- *  record is the six-member one with no `write`, and the commit MUST be named at `write`'s fourth position — **and this
- *  module supplies that position nowhere** (`signatures.md` §2: *"`write`'s fourth position is never supplied, so the
- *  class-test `TypeError` arm is unreachable"*). The two are reconciled by the reachability of the arm, measured
- *  2026-11-02: every store write this module makes at that address composes `{ exclusion }` at the literal in
- *  `write`'s exclusion arm, and `delete` — the only route that could leave the address absent — is called by no line of this
- *  file (`signatures.md` §2's call census), so **no route of this instance can hand a landing instant an absent pair**.
+ *  **THE TWO INSTANTS ROUTE DIFFERENTLY, AND `D-123` IS WHERE THE SECOND ROUTE ARRIVED — SUPPLYING `write`'S FOURTH
+ *  POSITION, WHICH THIS MODULE SUPPLIED NOWHERE UNTIL THEN.** A repair at a REGISTRATION instant is handed a record
+ *  carrying a `write` MEMBER — the store's own three positions, the commit being the registration's own — so the write
+ *  NAMES that commit the only way that instant allows (`D-73`; a supplied fourth position there is a `TypeError` thrown
+ *  before any store act). At a LANDING instant the record is the six-member one with no `write`, and the commit MUST be
+ *  named at `write`'s fourth position — **which is the one supported route for a repair that writes anywhere other than
+ *  the address its own pair judges** (`guide §7.6`'s worked example; `D-103`: *"Writing a repair function that does not
+ *  pass the commit in is unsupported"*). The repair's own record carries that commit at its `pending` member, so the
+ *  route is `standing.write(address, tier, value, context)` and nothing else. **THE ROUTE IS STILL ONE PATH**: both
+ *  instants compose the same value through this one function, and neither `write` verb a CALLER reaches ever names a
+ *  commit — a caller's write IS its own commit (`signatures.md` §2's claim, re-grained there).
  *  The failed arm below is stated rather than fallen into, because a repair that reaches no lawful write says so in its
  *  own two members instead of answering `void`, which carries "no op". */
-function mintExclusion(context: unknown): RepairAnswer {
+function writeExclusion(context: unknown, exclusion: 'mcp-enabled' | 'mcp-disabled', standing: Store | null): RepairAnswer {
+  const value = { exclusion }
   const routeWrite = registrationRoute(context)
-  if (routeWrite === undefined) {
+  if (routeWrite !== undefined) return repairAnswer(routeWrite(EXCLUSION_ADDRESS, 'mem', value))
+  if (standing === null) {
     return {
       ok: false,
-      message: 'the exclusion does not stand, and this repair was handed no registration route to create it through',
+      message: 'the exclusion does not stand, and this repair was handed neither a registration route nor a store to create it through',
     }
   }
-  return repairAnswer(routeWrite(EXCLUSION_ADDRESS, 'mem', { exclusion: SAFE_PAIR.exclusion }))
+  try {
+    // THE COMMIT IS THE REPAIR'S OWN RECORD, at `write`'s DECLARED FOURTH POSITION (`guide §7.6`; `D-103`).
+    return repairAnswer(standing.write(EXCLUSION_ADDRESS, 'mem', value, context as never))
+  } catch (caught) {
+    const shape = caught as { message?: unknown } | null
+    return {
+      ok: false,
+      message: typeof shape?.message === 'string' ? shape.message : 'the exclusion could not be written through the repair route',
+    }
+  }
+}
+
+/** **THE `mem` PAIR'S EXISTENCE REPAIR: `SAFE_PAIR`'S OWN VALUE, ONE WHOLE LEGAL VALUE, AT THE ONE ADDRESS** (`D-84`). */
+function mintExclusion(context: unknown, standing: Store | null): RepairAnswer {
+  return writeExclusion(context, SAFE_PAIR.exclusion, standing)
+}
+
+/** **THE PANE FAMILY'S EXISTENCE REPAIR: THE SAME SHAPE AT THE FOURTH ADDRESS** (`D-123`), and it writes
+ *  `CLOSED_PANE` for the pair's own reason — the value a `mem` address can never get from a file is minted by a repair
+ *  at creation, and the closed pane is the value the invariant can never fault (an open pane over open ports is the
+ *  state the whole batch refuses). */
+function mintPane(context: unknown): RepairAnswer {
+  const routeWrite = registrationRoute(context)
+  if (routeWrite === undefined) {
+    return { ok: false, message: 'the operator pane record does not stand, and this repair was handed no registration route to create it through' }
+  }
+  return repairAnswer(routeWrite(PANE_ADDRESS, 'mem', { open: CLOSED_PANE.open }))
 }
 
 /** **`['operator-settings']`'s REPAIR PERFORMS THE IMPORT ITS ABSENCE USED TO KEY, AND WRITES WHAT IT ANSWERED AS ONE WHOLE
@@ -800,13 +915,83 @@ function mintAppState(context: unknown, userDataDir: string): RepairAnswer {
  *  the gate the operator had closed. The arm is a REFUSAL rather than a repair because a placeholder here would destroy
  *  the state the caller wrote, and the store's own rollback already protects the pair that stood. **THE TWO ARMS ARE TOLD
  *  APART BY `plain(value)` AND BY NOTHING ELSE.** */
-function exclusionMustStand(context: unknown): ConstraintAnswer {
+function exclusionMustStand(context: unknown, standing: Store | null): ConstraintAnswer {
   const value = plain(context) ? context['value'] : undefined
-  if (!plain(value)) return { message: EXCLUSION_ABSENT_MESSAGE, repair: mintExclusion }
+  if (!plain(value)) return { message: EXCLUSION_ABSENT_MESSAGE, repair: (repairContext: unknown) => mintExclusion(repairContext, standing) }
   const node = nodeOf(context, EXCLUSION_ADDRESS)
   if (node === null || exclusionAdmitsAt(node, value)) return true
   if (!atWrite(context)) return true
   return { message: EXCLUSION_UNUSABLE_MESSAGE }
+}
+
+/** **THE PANE FAMILY'S EXISTENCE BODY, IN THE PAIR'S SHAPE** (`D-123`): the first arm repairs an absent record to the
+ *  closed pane; the second REFUSES a record that stands and carries no boolean `open`, with no repair — a placeholder
+ *  there would overwrite the state the realm wrote, and the store's rollback already protects the record that stood.
+ *  `paneAdmitsAt`'s docblock is the ground for why `{}` and a non-boolean `open` are refused and not repaired. */
+/** The store's own value at one address, or `undefined` where no store stands or the read refuses — the shape a body that
+ *  must judge a value OTHER than the act's uses (`guide §7.6`: *"a pair that judges its own address READS it"*). */
+function readAt(standing: Store | null, address: OperatorSettingsAddress, tier: 'mem' | 'file' | 'temp'): unknown {
+  if (standing === null) return undefined
+  try {
+    return standing.read(address, tier)
+  } catch {
+    return undefined
+  }
+}
+
+function paneMustStand(context: unknown, standing: Store | null): ConstraintAnswer {
+  // **THE PANE'S BODY READS ITS OWN ADDRESS AT A LANDING INSTANT, AND THAT IS A MEASUREMENT AND NOT A PREFERENCE.** A
+  // RE-RUN HANDS EVERY PAIR IN THE PASS'S SET THE VALUE THE REPAIR'S OP LANDED — at the ACT's address, not at the pair's —
+  // measured 2026-11-05: a write at `['operator-pane']` whose invariant repair landed `{exclusion:'mcp-disabled'}` at
+  // `['operator-exclusion']` handed THIS body `{exclusion:'mcp-disabled'}` at the pane's own address, and the body refused
+  // it as a pane record naming no member, so the whole write crossed `ConstraintPassRefused` as *"violated a re-run"*.
+  // Reading its own address makes the re-run judge the pane that actually stands — which is what the store holds after
+  // the repair, and the pass then agrees with the repair instead of fighting it.
+  const value = atWrite(context) && standing !== null
+    ? readAt(standing, PANE_ADDRESS, 'mem')
+    : (plain(context) ? context['value'] : undefined)
+  if (!plain(value)) return { message: PANE_ABSENT_MESSAGE, repair: mintPane }
+  const node = nodeOf(context, PANE_ADDRESS)
+  if (node === null || paneAdmitsAt(node, value)) return true
+  if (!atWrite(context)) return true
+  return { message: PANE_UNUSABLE_MESSAGE }
+}
+
+/** **THE INVARIANT — THE ONE PAIR IN THIS BATCH THAT JUDGES TWO ADDRESSES, AND THE WHOLE OF THE PASS IS ITS TWO ARMS**
+ *  (`D-123`; the instruction verbatim: *"Enforce that the security pane cannot be open while the MCP ports are open"*).
+ *  **IT STANDS AT THE STORE'S ROOT** because a pair is asked only where an act touches its address (`guide §7.6`;
+ *  `D-56`/`D-66`) — measured 2026-11-05 at this package: a pair at one half's address is asked for that half's landing op
+ *  and NOT for the other's, so one pair at either address would see one edge. At `[]` every act of this instance is at or
+ *  below the pair, and both edges are caught by ONE body.
+ *
+ *  **WHAT IT JUDGES, AND THE TWO INSTANTS ARE TOLD APART BY `atWrite` AND BY NOTHING ELSE.** At a LANDING instant the
+ *  context's `value` is the ACT'S value — the pane's on one edge, the pair's on the other, and **THE REPAIR'S LANDED VALUE
+ *  on the re-run** (measured: the re-run hands the body the value the repair's op landed, at the act's address, *not* the
+ *  object its own address holds) — so the body READS both addresses through the store handle instead of trusting it
+ *  (`guide §7.6`'s own rule, which is what makes the re-run pass on a repaired state rather than refuse it again). At a
+ *  REGISTRATION instant the context's `value` IS THE WHOLE REGISTER, so the same judgement is made off `context.value`
+ *  with no handle at all — which is also the instant where both halves are ABSENT before the family pairs beside this one
+ *  have run, and an absent half is judged exactly as a closed pane and as enabled ports, i.e. no fault.
+ *
+ *  **AND THE READING IS TOTAL OVER A FAILED READ**: a `Store` that refuses a read (a tier word the store does not hold)
+ *  answers `undefined`, which the two predicates treat as absence — so a read this body could not perform can never
+ *  *manufacture* the fault. It can only miss it, and the second boot's creation repairs re-establish both halves. */
+function paneAndPortsAreExclusive(context: unknown, standing: Store | null): ConstraintAnswer {
+  let pane: unknown
+  let pair: unknown
+  if (atWrite(context) && standing !== null) {
+    pane = readAt(standing, PANE_ADDRESS, 'mem')
+    pair = readAt(standing, EXCLUSION_ADDRESS, 'mem')
+  } else {
+    const register = plain(context) ? context['value'] : undefined
+    pane = plain(register) ? register[PANE_ADDRESS[0] as string] : undefined
+    pair = plain(register) ? register[EXCLUSION_ADDRESS[0] as string] : undefined
+  }
+  if (!bothStandOpen(pane, pair)) return true
+  // THE REPAIR SETTLES THE PORTS AND LEAVES THE PANE ALONE (`D-123`): closing the ports is the safe half — the pane is
+  // what the operator is doing — and it is expressible: the crossing's own answer is `{applied, state}` and the realm
+  // paints it, while the pane's authored open state is already the user's.
+  return { message: EXCLUSIVITY_MESSAGE, repair: (repairContext: unknown) => writeExclusion(repairContext, PORTS_CLOSED, standing) }
 }
 
 /** **THE FIRST ARM IS EXISTENCE** (`D-85`): `plain(value)` is the read's own admission — `read()` is
@@ -846,26 +1031,38 @@ function appStateMustStand(context: unknown, userDataDir: string): ConstraintAns
   return { message: APP_STATE_UNUSABLE_MESSAGE }
 }
 
-/** **THE INSTANCE'S BATCH — THREE DECLARATIONS, ONE PER ADDRESS, AND THE CONSTRUCTION THAT ADOPTS THEM IS THE ONE
- *  CONSUMER THEY HAVE.** The list rides `StoreConfig['constraints']` at the `storeCreate` call below, so every address is
- *  ARMED before anything can write and is asked again at every later instant it is touched (`guide §7.2`; `D-65`'s
- *  batching, applied to an instance that constructs itself rather than being handed a store).
+/** **THE INSTANCE'S BATCH — FIVE DECLARATIONS IN ONE CONSTRUCTION: FOUR FAMILIES' EXISTENCE AND ONE INVARIANT OVER TWO
+ *  OF THEM** (`D-84`, `D-85`, `D-123`). The list rides `StoreConfig['constraints']` at the `storeCreate` call below, so
+ *  every address is ARMED before anything can write and is asked again at every later instant it is touched (`guide §7.2`;
+ *  `D-65`'s batching, applied to an instance that constructs itself rather than being handed a store). **IT IS STILL ONE
+ *  BATCH AND ONE INSTANCE**: the fifth declaration is an element of the list the one `storeCreate` call adopts, never a
+ *  second store and never a second registration site.
  *
  *  **IT IS BUILT PER CONSTRUCTION, AND THAT IS THE `D-85` CHANGE TO `D-84`'s MODULE-LEVEL LIST**: the two `file`
  *  addresses' repairs must reach the profile directory the construction was handed — the path is the only thing that says
  *  WHERE the retired carriers stand — and `cfg.constraints`' act is taken while the caller holds no handle (`guide §7.2`
  *  (1)), so a body cannot read it off the instance. Two instances in one process therefore adopt two lists with the same
- *  three ids, and each store's registry is its own (`guide §6.2`).
+ *  five ids, and each store's registry is its own (`guide §6.2`).
+ *
+ *  **AND SINCE `D-123` THE LIST ALSO CARRIES A READER**: `standing` answers the store this same construction is building,
+ *  which is `null` at the registration instant (the instance does not exist yet) and the live handle at every landing one.
+ *  That is what lets ONE body judge two addresses: at a write it READS both halves (`guide §7.6`), and at creation it
+ *  judges the whole register the context hands it. Nothing here reads the store through a module-level binding — the
+ *  closure is per construction, which is `D-85`'s rule read at a third route.
  *
  *  **NO LISTENER COLLIDES WITH AN `id`, AND THAT IS A PROPERTY OF THE SPELLING**: this module mints
  *  `operator-settings:<n>@<address>` for a handle while the ids are the literals above, and the cross-kind rule `1.7.0`
  *  keeps reads the HANDLE — so a live listener and a pair stand at `['operator-settings']` or `['operator-exclusion']` at
  *  once, which is what `subscribe` does (D-71; guide §7.3's clause of 2026-11-01). */
-function declarationsFor(userDataDir: string): readonly ConstraintDeclaration[] {
+function declarationsFor(userDataDir: string, standing: () => Store | null): readonly ConstraintDeclaration[] {
   return [
     { address: RECORD_ADDRESS, id: RECORD_MUST_STAND_ID, constraint: (context: unknown) => recordMustStand(context, userDataDir) },
     { address: APP_STATE_ADDRESS, id: APP_STATE_MUST_STAND_ID, constraint: (context: unknown) => appStateMustStand(context, userDataDir) },
-    { address: EXCLUSION_ADDRESS, id: EXCLUSION_MUST_STAND_ID, constraint: exclusionMustStand },
+    { address: EXCLUSION_ADDRESS, id: EXCLUSION_MUST_STAND_ID, constraint: (context: unknown) => exclusionMustStand(context, standing()) },
+    { address: PANE_ADDRESS, id: PANE_MUST_STAND_ID, constraint: (context: unknown) => paneMustStand(context, standing()) },
+    // THE INVARIANT STANDS LAST, AND THE POSITION IS LOAD-BEARING: at the creation instant each pair is asked in this
+    // list's own order, so the two family halves are minted BEFORE the one body that judges them together is asked.
+    { address: ROOT_ADDRESS, id: EXCLUSIVITY_ID, constraint: (context: unknown) => paneAndPortsAreExclusive(context, standing()) },
   ]
 }
 
@@ -879,7 +1076,7 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     // `mem` pair's repair mints the value a `mem` address can never get from a file, and the two `file` repairs perform
     // the imports their addresses' absence used to key. The list is minted PER CONSTRUCTION because a repair must know
     // where the retired carriers stand and no handle exists at that instant (`guide §7.2` (1); `declarationsFor`).
-    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [], filePath: join(options.userDataDir, FILE_NAME), constraints: declarationsFor(options.userDataDir) })
+    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [], filePath: join(options.userDataDir, FILE_NAME), constraints: declarationsFor(options.userDataDir, () => store) })
   } catch (caught) {
     // A refused construction throws nothing across this boundary: no instance stands and every
     // later write answers this value (design §4 `ASM-4`; interface §2.1; guide §8.2).
@@ -1018,7 +1215,7 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     // **THREE ADDRESSES, ONE SUBSCRIPTION** (`D-104`): the two the record and the pair occupy, and the app-state rows'
     // own — which `D-82` clause 2 measured as delivering ZERO, so a module row's change reached its consumers only by
     // their own request. The third handle is registered exactly as the other two are; what differs is the ROUTING below.
-    const addresses: readonly OperatorSettingsAddress[] = [RECORD_ADDRESS, EXCLUSION_ADDRESS, APP_STATE_ADDRESS]
+    const addresses: readonly OperatorSettingsAddress[] = [RECORD_ADDRESS, EXCLUSION_ADDRESS, APP_STATE_ADDRESS, PANE_ADDRESS]
     const body = (address: OperatorSettingsAddress): void => {
       // The delivery carries the address and nothing else, so the subscriber reads the record for
       // what moved; a THROW IS CONTAINED HERE and withdraws that subscriber WHOLE — both handles —
@@ -1102,5 +1299,22 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     }
   }
 
-  return { read, write, subscribe, readAppState, writeAppState }
+  // THE FOURTH ADDRESS'S ONE WRITE (`D-123`): one `mem` write of `{open}` and the sibling receipt verbatim — no
+  // composition, no condition and no second verb. **IT REFUSES A NON-BOOLEAN FIRST**, and the arm is this module's own
+  // `ValueRefusedAtBoundary` with `address:null`, exactly as `writeAppState`'s shape arms answer (interface §2): the
+  // pane's record is `{open: boolean}` alone, so any other word is a value no invariant can judge.
+  const writePane = (open: boolean): OperatorSettingsReceipt => {
+    const standing = store
+    if (refusal !== null) return refusal
+    if (standing === null) return { status: 'refused', reason: 'FilePathUnreachable', message: 'no instance stands behind this module', address: null }
+    if (typeof open !== 'boolean') return { status: 'refused', reason: 'ValueRefusedAtBoundary', message: 'open is a boolean', address: null }
+    try {
+      // ONE write at the one address, and the fourth position never supplied: a CALLER's write is its own commit.
+      return receiptOf(standing.write(PANE_ADDRESS, 'mem', { open }))
+    } catch (caught) {
+      return refusalOf(caught, PANE_ADDRESS)
+    }
+  }
+
+  return { read, write, subscribe, readAppState, writeAppState, writePane }
 }

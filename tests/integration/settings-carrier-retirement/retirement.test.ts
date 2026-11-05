@@ -256,8 +256,11 @@ describe('settings-carrier-retirement · the retirement’s absences, the census
      * RE-AIMED AT WHAT THIS UNIT'S OWN CONTRACT IS ABOUT**: the exclusion channel's constant, BY VALUE, and the one
      * remaining handler/`invoke` pair, which is `IPC_SECURITY_EXCLUSION`'s. The F-8 single-source rule is unchanged and
      * still bites. */
-    expect(Object.keys(storeChannels).sort(), 'the channel-name file carries the ONE landed constant and mints no second (store-channels.ts\'s own census, `D-93`: the frozen store\'s two names were deleted with its projection)').toEqual(['IPC_SECURITY_EXCLUSION'])
+    // ⟶ **THE FILE'S CENSUS MOVES `1 → 2` AT `D-123`, AND THE CLAIM IS UNMOVED IN KIND**: a second crossing verb — the pane's
+    // open state — reaches its two ends by IMPORT from this file, and the F-8 single-source rule still bites on both names.
+    expect(Object.keys(storeChannels).sort(), 'the channel-name file carries the two constants the secure crossing’s surface needs and mints no third (store-channels.ts\'s own census: `D-93` left it one wide, `D-123` adds the pane’s)').toEqual(['IPC_SECURITY_EXCLUSION', 'IPC_SECURITY_PANE'])
     expect(storeChannels.IPC_SECURITY_EXCLUSION, 'the exclusion channel keeps its spelling BY VALUE').toBe('provident:security:exclusion')
+    expect(storeChannels.IPC_SECURITY_PANE, 'and the pane channel’s spelling, BY VALUE, is the one its two ends import').toBe('provident:security:pane')
     expect(Object.values(storeChannels), 'and the two purged names are GONE from the module, not merely unreferenced').not.toContain('provident:store:file:get')
     expect(Object.values(storeChannels), 'and so is the second one').not.toContain('provident:store:file:put')
 

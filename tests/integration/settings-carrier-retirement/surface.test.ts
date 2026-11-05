@@ -205,12 +205,14 @@ describe('settings-carrier-retirement · the two delegating verbs, the channel a
     expect(readFileSync(join(userDataDir, OPERATOR_FILE), 'utf8').includes('exclusion'), 'and no byte of the instance’s file carries the exclusion spelling (persistence.md §6)').toBe(false)
   })
 
-  it('SUR-5 · the declared member sets, read at RUN TIME off the real objects: the surface’s six and the instance’s five — this row is what keeps the contract cast honest (interface.md §2, §3)', () => {
+  it('SUR-5 · the declared member sets, read at RUN TIME off the real objects: the surface’s seven and the instance’s six — this row is what keeps the contract cast honest (interface.md §2, §3)', () => {
     const settings = surface(userDataDir)
-    expect(membersOf(settings), 'the surface’s own members are EXACTLY the six interface.md §3 declares: the sibling’s four and this unit’s two, and no seventh').toEqual(['attach', 'commit', 'read', 'set', 'state', 'transition'])
+    // ⟶ **THE SURFACE'S SET MOVES `6 → 7` AT `D-123`**: the pane's open state's one verb, declared in the same member
+    // block as the other six — still a set claim over the real object, one member wider.
+    expect(membersOf(settings), 'the surface’s own members are EXACTLY the seven interface.md §3 declares, `pane` included since `D-123`, and no eighth').toEqual(['attach', 'commit', 'pane', 'read', 'set', 'state', 'transition'])
 
     const settingsInstance = createOperatorSettings({ userDataDir }) as unknown as object
-    expect(membersOf(settingsInstance), 'and the instance’s are EXACTLY the five interface.md §2 declares: the sibling’s three and this unit’s two').toEqual(['read', 'readAppState', 'subscribe', 'write', 'writeAppState'])
+    expect(membersOf(settingsInstance), 'and the instance’s are EXACTLY the six interface.md §2 declares: the sibling’s three, this unit’s two and `D-123`’s `writePane`').toEqual(['read', 'readAppState', 'subscribe', 'write', 'writeAppState', 'writePane'])
   })
 
   it('SUR-6 · a refusal crosses the surface as the STORE’S OWN STATUS verbatim — the AS-5 drive, read at the delegating verb (interface.md §3, §6; behaviour.md §3)', () => {

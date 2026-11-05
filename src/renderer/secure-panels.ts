@@ -81,6 +81,13 @@ declare global {
          *  `view.onChanged` and `module.onChanged` carry nothing — and the returned function withdraws the registration.
          *  Declared here in LOCKSTEP with `src/main/preload.ts`'s `ProvidentBridge`: a half-declaration FAILS. */
         onChanged(handler: () => void): () => void
+        /** **THE PANE'S OPEN STATE** (`D-123`; `D-82` clause 4). The app realm's overlay reports what its own mechanism did —
+         *  one boolean, the predicate `startOverlayApplication` already computes — and the secure crossing's constraint is
+         *  what refuses an open pane over open ports. It carries no reading back: the delivery that matters is
+         *  `security.onChanged`'s, and the port is the exclusion delivery's consequence, never this member's. Declared here
+         *  in LOCKSTEP with `src/main/preload.ts`'s `ProvidentBridge`: a half-declaration FAILS. */
+        setPane(open: boolean): Promise<{ status: 'committed' } | { status: 'refused'; reason: string; message: string
+          address: readonly (string | number)[] | null }>
       }
       // THE TAB RECORD'S CROSSING (D-63; `docs/L2/store-tabs-record/interface.md` §2): ONE member, FOUR routes.
       // This copy and `src/main/preload.ts`'s are the same text in both files — the lockstep rule the `store`

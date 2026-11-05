@@ -1,6 +1,6 @@
 # L3 — `src/main/settings-surface/`: the surface
 
-- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 3 · **Artifact:** `security-store-storeroom-l3-design`
+- **Layer:** L3 · **Unit:** `security-store-storeroom` · **Branch:** `strata` (D-6) · **Rev:** 4 — `D-123` adds the SEVENTH verb `pane` and the third callback `onExclusionChanged`, and §7's *six verbs and no more* clause is re-grained to seven in place, no line freed and none added · **Artifact:** `security-store-storeroom-l3-design`
 - **Status:** DESIGN — structure, private helpers, pseudocode and guardrail notes for one owner; the declared surface is `signatures.md` §3, the contract is `docs/L2/security-store-storeroom/interface.md` §5/§5.1 and `behaviour.md` §9/§10. §2-§6 design the **four bridge verbs**; the app-state pair `state()`/`commit()` is E-3's and is designed in `docs/L3/settings-carrier-retirement/design.md` §3, cited here and never restated (D-43; rev 3)
 - **Charter:** D-17 the surface is a separate module, seeing the instance through read, write and listeners alone · D-18 one operator-only reference, tested by absence · D-14 its `N` counts both sides
 - **Ceiling:** 150 lines, class max (D-1) · `guide §n` is `node_modules/provident-storeroom/README.guide.md`, read and never edited (D-5)
@@ -111,7 +111,7 @@ onDelivery(address):
 
 ## 7. Guardrails for L4
 
-- **The declared surface is six verbs and no more** — `read`, `set`, `transition`, `attach` designed here, plus E-3's `state`/`commit` — beside the factory and the types; no seventh member and no second export path (interface §5; `interface.md` §7 `A-4`; `docs/L3/settings-carrier-retirement/design.md` §3).
+- **The declared surface is seven verbs and no more** — `read`, `set`, `transition`, `attach` designed here, E-3's `state`/`commit`, and `D-123`'s `pane` (the crossing's fourth address's one verb, the `commit` answer form) — beside the factory, the types and the third callback `onExclusionChanged`, which the exclusion's own delivery calls; no eighth member and no second export path (interface §5; `interface.md` §7 `A-4`; `docs/L3/settings-carrier-retirement/design.md` §3).
 - **No rendered element and no MCP drive**: `window.provident` gains no member, its seven top-level members stand, and the three security routes keep their declared answers (D-18; L1 §6 ISO-4; interface §5).
 - **No second instance, no second `filePath`, no second `userDataDir`-derived name**: one instance per surface, for the process's life (persistence §8; D-16; D-18).
 - **No `node:fs`, no `electron`, no `ipcMain`, no `provident-storeroom` import**: the instance is the only seam, and the three channel bodies are delegated to, never registered here (interface §5; exception §2 E-3; D-18).

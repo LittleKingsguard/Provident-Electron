@@ -189,13 +189,15 @@ describe('settings-carrier-retirement · the settings surface at unit grain (E-3
     expect(source.includes('readFileSync'), 'and it reads no file at all: the only file reader is the instance module (design.md §5)').toBe(false)
   })
 
-  it('SC-5 · the declared member sets, read at RUN TIME off the real objects: the surface’s six and the instance’s five — this row is what keeps the contract cast honest (signatures.md §4, §2)', () => {
+  it('SC-5 · the declared member sets, read at RUN TIME off the real objects: the surface’s seven and the instance’s six — this row is what keeps the contract cast honest (signatures.md §4, §2)', () => {
     const profileDir = dir()
     const settings = surface(profileDir)
-    expect(membersOf(settings), 'the surface’s own members are EXACTLY the six signatures.md §4 declares: the landed four and this unit’s two, and no seventh').toEqual(['attach', 'commit', 'read', 'set', 'state', 'transition'])
+    // ⟶ **THE SURFACE'S SET MOVES `6 → 7` AT `D-123`**: the pane's open state's one verb, declared in the same member
+    // block as the other six — still a set claim over the real object, one member wider.
+    expect(membersOf(settings), 'the surface’s own members are EXACTLY the seven signatures.md §4 declares, `pane` included since `D-123`, and no eighth').toEqual(['attach', 'commit', 'pane', 'read', 'set', 'state', 'transition'])
 
     const settingsInstance = createOperatorSettings({ userDataDir: profileDir }) as unknown as object
-    expect(membersOf(settingsInstance), 'and the instance it delegates to is exactly the five its own signatures declare, so `state()`/`commit()` cannot be standing on a private extra').toEqual(['read', 'readAppState', 'subscribe', 'write', 'writeAppState'])
+    expect(membersOf(settingsInstance), 'and the instance it delegates to is exactly the six its own signatures declare (`writePane` the sixth, `D-123`), so `state()`/`commit()`/`pane()` cannot be standing on a private extra').toEqual(['read', 'readAppState', 'subscribe', 'write', 'writeAppState', 'writePane'])
   })
 
   it('SC-6 · neither verb validates a name or a value and neither throws: a hostile argument reaches the instance’s own refusal unchanged, and `state()` is unmoved (interface.md §3, §6 ASM-L2-5; design.md §3)', () => {

@@ -62,6 +62,15 @@ export type SettingsCommitAnswer =
   | { status: 'refused'; reason: string; message: string
       address: readonly (string | number)[] | null }
 
+/** **THE PANE'S ANSWER, AND IT IS THE `commit` FORM RATHER THAN A NEW VOCABULARY** (`D-123`): the instance hands this
+ *  module the store's own receipt, so the committed arm says `{status:'committed'}` and the refused arm carries the
+ *  store's three members verbatim. Its own input arm — a non-boolean — answers this module's `ValueRefusedAtBoundary`
+ *  with `address:null`, the shape every shape arm of this crossing already answers. */
+export type SettingsPaneAnswer =
+  | { status: 'committed' }
+  | { status: 'refused'; reason: string; message: string
+      address: readonly (string | number)[] | null }
+
 export interface SettingsSurface {
   read(): SettingsReadAnswer
   set(patch: { token?: string | null; groups?: string[]; disable?: string[]
@@ -70,6 +79,10 @@ export interface SettingsSurface {
   attach(sink: SettingsGateSink): void
   state(): SettingsAppStateAnswer
   commit(rows: readonly SettingsAppStateRow[]): SettingsCommitAnswer
+  /** **THE PANE'S OPEN STATE, WRITTEN BY THE REALM'S ACT** (`D-123`; `D-82` clause 4): one `mem` write at the instance's
+   *  fourth address, and NOTHING ELSE — this verb decides no lockout, closes no port and reads no pair. The invariant is
+   *  the constraint the instance holds, and the port is the exclusion's delivery's consequence. */
+  pane(open: unknown): SettingsPaneAnswer
 }
 
 /** The carrier's closed read token: `tier4-closed` is a READ outcome and never a write outcome, and
@@ -99,7 +112,14 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
    *  callback for BOTH addresses the record's body answers, because it carries NEITHER: which of the two moved is this
    *  module's business (it re-patches the gate from the same reading) and the realm's answer to either is the whole
    *  record's re-read. Optional and absent-able for the `onAppStateChanged` reason. */
-  onSecurityChanged?: () => void }): SettingsSurface {
+  onSecurityChanged?: () => void
+  /** **THE EXCLUSION'S OWN DELIVERY, HANDED THE STATE IT LANDED AS** (`D-123`; `D-82` clause 2 — *"listeners carry data back
+   *  to renderer or other consumers on change"*). It is called INSIDE `onDelivery`'s exclusion branch, AFTER the gate has
+   *  been patched from the same reading, so the consumer sees the state the enforcement already holds. **IT IS THE PORT'S
+   *  OWN EDGE AND NOT THE TRANSITION'S**: the constraint's repair writes the pair from inside a `write` that never passes
+   *  through `transition`, so a hook at the transition site would miss exactly the landing that the invariant exists for.
+   *  Optional and absent-able for the two callbacks' reason above. */
+  onExclusionChanged?: (state: ExclusionState) => void }): SettingsSurface {
   // THE INSTANCE IS CONSTRUCTED HERE, ONCE, AND HELD HERE: the operator path's single reference
   // (interface §5 `ASM-L2-8`; D-18). No second instance, no second `filePath`, no second name.
   const settings: OperatorSettings = createOperatorSettings(options)
@@ -133,8 +153,18 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
     if (held === null) return
     // The exclusion branch RETURNS before the patch arm, which is what keeps one delivery to one
     // sink call; an unknown address applying both arms is the total reading of the domain.
+    // **AND THE PORT FOLLOWS THE RECORD HERE, BEFORE THE SINK ARM RETURNS** (`D-123`): the exclusion's delivery is the
+    // ONE site every route reaches — an operator transition, the constraint's repair writing the pair from a pane write,
+    // and a boot's own attach — so the listener that must drop is driven from here and never from a call site. The
+    // consumer's own throw is contained exactly as the broadcast's is, because a port that failed to drop is not a
+    // delivery the store should pay for.
     if (address[0] === 'operator-exclusion') {
-      held.applyExclusion(record.exclusion)
+      if (held !== null) held.applyExclusion(record.exclusion)
+      try {
+        options.onExclusionChanged?.(record.exclusion)
+      } catch {
+        /* the consumer's own throw is the consumer's */
+      }
       return
     }
     // The removal set is THIS module's own last-applied list, because the gate's `applyPatch` adds
@@ -278,5 +308,17 @@ export function createSettingsSurface(options: { userDataDir: string; journalLen
     return { status: 'refused', reason: receipt.reason, message: receipt.message, address: receipt.address }
   }
 
-  return { read, set, transition, attach, state, commit }
+  // **THE PANE'S ONE VERB** (`D-123`): the input arm is this module's and total over every outside value — a number, a
+  // string, `null`, `undefined`, an object and an array all refuse BY NAME with no store call — and the store's answer is
+  // handed on in the `commit` shape. It reads no record and composes no value: the instance owns `{open}`.
+  const pane = (open: unknown): SettingsPaneAnswer => {
+    if (typeof open !== 'boolean') {
+      return { status: 'refused', reason: 'ValueRefusedAtBoundary', message: 'open is a boolean', address: null }
+    }
+    const receipt = settings.writePane(open)
+    if (receipt.status === 'committed') return { status: 'committed' }
+    return { status: 'refused', reason: receipt.reason, message: receipt.message, address: receipt.address }
+  }
+
+  return { read, set, transition, attach, state, commit, pane }
 }

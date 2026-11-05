@@ -416,9 +416,12 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
      * requests, and this row's claim is that no bridge channel carries a security WRITE but the three. `D-106` gives the
      * record a DELIVERY, so `onChanged` joins the member — it subscribes and writes nothing, so the claim is unmoved and the
      * set is one wider. **THE BOUND IS KEPT, NOT WIDENED**: a FIFTH route, or a fourth request, still fails this equality. */
-    expect(preloadRoutes, 'the security member carries exactly the three manual-UI requests plus the record’s one delivery').toEqual(['get', 'onChanged', 'set', 'setExclusion'])
-    expect(preloadRoutes.filter((route) => route !== 'onChanged'), 'and the request set is unmoved: three routes, name for name — no channel carries a security write but these').toEqual(['get', 'set', 'setExclusion'])
-    expect(panelsRoutes, 'and the renderer’s `declare global` half carries the SAME four — a half-widening or a fifth route fails').toEqual(preloadRoutes)
+    // ⟶ **RE-GRAINED AGAIN `2026-11-05` (`D-123`): FIVE ROUTES, FOUR OF THEM REQUESTS.** `setPane` is the crossing's fourth
+    // address's one verb and a security write exactly as the other three are, so the claim — no bridge channel carries a
+    // security write but these — is unmoved in kind and the set is one wider. **A SIXTH route still fails this equality.**
+    expect(preloadRoutes, 'the security member carries exactly the four manual-UI requests plus the record’s one delivery').toEqual(['get', 'onChanged', 'set', 'setExclusion', 'setPane'])
+    expect(preloadRoutes.filter((route) => route !== 'onChanged'), 'and the request set is one wider by name: four routes, each spelled once — no channel carries a security write but these').toEqual(['get', 'set', 'setExclusion', 'setPane'])
+    expect(panelsRoutes, 'and the renderer’s `declare global` half carries the SAME five — a half-widening or a sixth route fails').toEqual(preloadRoutes)
 
     // LIMB THREE — THE RAW-CALL SITE. `ipcRenderer` is obtainable only from `electron`, so the one
     // file in `src/**` that imports it is the bridge: any other file able to `invoke` a channel
@@ -435,7 +438,9 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     /* ⟶ **RE-GRAINED `2026-11-03` (`D-106`)**: four, not three — the three request channels and the record's own DELIVERY,
      * which carries no request and is answered by no `ipcMain.handle` site. The claim this limb makes is that the vocabulary
      * is CLOSED, so a fifth is still a finding. */
-    expect(securityChannels, 'the shared channel vocabulary carries exactly four security channels — the three requests and the one delivery — and no fifth').toEqual(['provident:security:changed', 'provident:security:exclusion', 'provident:security:get', 'provident:security:set'])
+    /* ⟶ **RE-GRAINED AGAIN `2026-11-05` (`D-123`)**: FIVE — the pane's open state is a request of the same crossing, so the
+     * closed-vocabulary claim is unmoved in kind and a SIXTH is still a finding. */
+    expect(securityChannels, 'the shared channel vocabulary carries exactly five security channels — the four requests and the one delivery — and no sixth').toEqual(['provident:security:changed', 'provident:security:exclusion', 'provident:security:get', 'provident:security:pane', 'provident:security:set'])
   })
 
   it('ISO-5 · no file in the MCP stack’s import closure REFERENCES the instance, its module or its constructor, and exactly one construction site stands outside each module', () => {

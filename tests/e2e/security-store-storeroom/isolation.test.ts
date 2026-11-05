@@ -294,15 +294,18 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
      * requests. `D-106` gives the record a DELIVERY, so `onChanged` joins it — a `security` member that carries a push and
      * still carries no security write: the three request routes are unmoved, name for name, and the fourth subscribes and
      * writes nothing. **THE BOUND IS KEPT, NOT WIDENED**: a FIFTH route, or a fourth request, still fails this equality. */
-    expect(preloadRoutes, 'the security member carries exactly the three manual-UI requests plus the record’s one delivery').toEqual(['get', 'onChanged', 'set', 'setExclusion'])
-    expect(preloadRoutes.filter((route) => route !== 'onChanged'), 'and the request set is unmoved: three routes, name for name').toEqual(['get', 'set', 'setExclusion'])
-    expect(securityRoutesOf(sourceOf('src/renderer/secure-panels.ts'), 'src/renderer/secure-panels.ts'), 'and the renderer’s `declare global` half carries the same four').toEqual(preloadRoutes)
+    // ⟶ **RE-GRAINED AGAIN `2026-11-05` (`D-123`): FIVE ROUTES, FOUR OF THEM REQUESTS.** `setPane` joins the member as the
+    // crossing's fourth address's one verb — a security write exactly as the three are, so the claim this row makes is
+    // unmoved in kind and the set is one wider. **THE BOUND IS STILL KEPT, NOT WIDENED**: a SIXTH route fails this equality.
+    expect(preloadRoutes, 'the security member carries exactly the four manual-UI requests plus the record’s one delivery').toEqual(['get', 'onChanged', 'set', 'setExclusion', 'setPane'])
+    expect(preloadRoutes.filter((route) => route !== 'onChanged'), 'and the request set is one wider by name: four routes, spelled once each').toEqual(['get', 'set', 'setExclusion', 'setPane'])
+    expect(securityRoutesOf(sourceOf('src/renderer/secure-panels.ts'), 'src/renderer/secure-panels.ts'), 'and the renderer’s `declare global` half carries the same five').toEqual(preloadRoutes)
     expect(ALL_SRC.filter((file) => /\bipcRenderer\b/.test(commentElided(textOf(file)))).map(rel).sort(), 'only the preload bridge can reach a channel: no file invokes one behind its back').toEqual(['main/preload.ts'])
     const vocabulary: unknown[] = [...Object.values(sharedTypes), ...Object.values(storeChannels)]
     expect(
       vocabulary.filter((value): value is string => typeof value === 'string' && /security/i.test(value)).sort(),
-      'the shared channel vocabulary carries exactly four security channels, by constant value — the three requests (D-11, D-15) and the one delivery `D-106` adds; a fifth is a finding',
-    ).toEqual(['provident:security:changed', 'provident:security:exclusion', 'provident:security:get', 'provident:security:set'])
+      'the shared channel vocabulary carries exactly five security channels, by constant value — the four requests (D-11, D-15, D-123’s pane) and the one delivery `D-106` adds; a sixth is a finding',
+    ).toEqual(['provident:security:changed', 'provident:security:exclusion', 'provident:security:get', 'provident:security:pane', 'provident:security:set'])
 
     // ISO-5 — nothing in the MCP stack's closure names the instance, its module or its constructor,
     // and exactly one construction site stands outside each module (D-18; interface.md §5 ASM-L2-8).

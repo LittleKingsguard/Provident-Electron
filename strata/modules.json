@@ -71,7 +71,7 @@
         "tests/store-compliance-live.mjs",
         "tests/store-tabs-record-live.mjs"
       ],
-      "endpoints": 12
+      "endpoints": 13
     },
     {
       "name": "settings-surface",
@@ -79,7 +79,7 @@
         "src/main/settings-surface/",
         "tests/unit/settings-surface/"
       ],
-      "endpoints": 19
+      "endpoints": 21
     },
     {
       "name": "central-data",

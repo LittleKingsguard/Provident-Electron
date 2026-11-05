@@ -475,9 +475,11 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const secureDir = dir()
     createOperatorSettings({ userDataDir: secureDir })
     const secureBatch = (captured[captured.length - 1]?.['constraints'] ?? []) as ReadonlyArray<{ id: string; constraint: (context: unknown) => unknown }>
-    expect(secureBatch.length, 'the secure crossing declares THREE, and this is the list its own construction adopted').toBe(3)
-    const thirteen = centralIds.length + secureBatch.length
-    expect(thirteen, 'THIRTEEN declarations, and this row drives every one of them').toBe(13)
+    // ⟶ **THE SECURE CROSSING'S BATCH MOVES `3 → 5` AT `D-123`**: the pane family's existence pair and the one invariant over
+    // two addresses, both elements of the same construction's list — so this row now drives FIFTEEN declarations.
+    expect(secureBatch.length, 'the secure crossing declares FIVE, and this is the list its own construction adopted').toBe(5)
+    const fifteen = centralIds.length + secureBatch.length
+    expect(fifteen, 'FIFTEEN declarations, and this row drives every one of them').toBe(15)
 
     // **THE ONE ASSERTION THE WHOLE ROW IS** — made on the VALUE A BODY ANSWERED, which is the only form the kernel's
     // two readers ever see. `Object.getPrototypeOf` is asserted FIRST and separately, because an answer built on a base
