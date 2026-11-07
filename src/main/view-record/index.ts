@@ -2,22 +2,23 @@
 //
 // THE THREE DATA SETS THIS MODULE EXISTS FOR, AND WHY THEY COULD NOT LEAVE THE FROZEN GRAPH STORE BEFORE IT DID
 // (`src/renderer/store-core-graph.ts`, the purge's last deletion): the app's PANE GEOMETRY — a pane's `size` and
-// `bounds`, read at `src/renderer/renderer.ts`'s `readPaneSize`/`readPaneBounds` and written at its `release` — the
-// FOCUS MIRROR — the entries the focus model seats and the id that is active, read by `mirrorStateOf` and committed by
-// `answerForCarrier` and by `createFocusCarrier`'s `persistTarget` — and the ZONE FAMILY, the drag flow's four stored
-// members per zone, read by the composition's render turn (`:1799-1805`) and by `candidatesFor` (`:1935-1941`). Nothing
-// outside that store held any of them, so the store could not be deleted until each had an address; this module is the
-// address.
+// `bounds`, read at `src/renderer/renderer.ts`'s `readPaneSize`/`readPaneBounds` and written at its `release` — the ZONE
+// FAMILY, the drag flow's four stored members per zone, read by the composition's render turn (`:1799-1805`) and by
+// `candidatesFor` (`:1935-1941`) — and the APPEARANCE RECORD, the mechanism's own answer for the setting the authored
+// control produced (D-97, D-98). Nothing outside that store held any of them, so the store could not be deleted until
+// each had an address; this module is the address. **A FOURTH SET, THE FOCUS MIRROR, LEFT WITH `D-142`**: it was a SECOND
+// SPELLING of a fact `['tabs']` already owns, so the address table is three roots and every site it took with it is gone
+// rather than defaulted.
 //
 // IT CONSTRUCTS NOTHING, OPENS NO FILE AND OWNS NO INSTANCE (D-63, D-64): the boot hands it the central store it already
 // built the tab record's six declarations into (D-65), and this module reads and writes THREE of that instance's roots
 // through it.
 //
-// **THREE ROOTS, `['panes']`, `['focus']` AND `['zones']`, AND NOT ONE ROOT WITH THREE MEMBERS — MEASURED, NOT PREFERRED
-// (D-87, D-91).**
+// **THREE ROOTS, `['panes']`, `['zones']` AND `['theme']`, AND NOT ONE ROOT WITH THREE MEMBERS — MEASURED, NOT PREFERRED
+// (D-87, D-91, D-97).**
 // The tab record's pattern is ONE root with members (`['tabs']`, `['tabs','order']`, `['tabs','landing']`), and it was
 // followed until the TIER decided it: a value at an address lives at ONE tier and a read can name it, so a single root
-// could carry the pane geometry at `file` only by also carrying the focus mirror there — and a `mem` family can never
+// could carry the pane geometry at `file` only by also carrying a `mem` family there — and a `mem` family can never
 // come from a file (`D-84`'s own measurement, restated at clause 3 below). The measured mechanics, on the installed
 // `provident-storeroom@1.9.1`, one fresh instance per arm:
 //   · a nested write does NOT create its parent — `write(['view','panes'], 'file', …)` over a fresh store answers
@@ -50,8 +51,6 @@ import {
   paneGeometryIn,
   viewThemePlaceholder,
   zoneIn,
-  type ViewFocusEntry,
-  type ViewFocusMirror,
   type ViewGeometrySource,
   type ViewPaneGeometry,
   type ViewThemeDeclaration,
@@ -65,8 +64,6 @@ export {
   paneGeometryIn,
   viewThemePlaceholder,
   zoneIn,
-  type ViewFocusEntry,
-  type ViewFocusMirror,
   type ViewGeometrySource,
   type ViewPaneGeometry,
   type ViewThemeDeclaration,
@@ -104,11 +101,6 @@ export type ViewRecordStore = Store
  *  more — `['panes']` is simply the address this family declares, and a `file` root that no projection reads cannot
  *  collide with one. The reason is recorded rather than deleted, because it is why the spelling was chosen. */
 export const VIEW_PANES_ADDRESS: readonly string[] = ['panes']
-/** **THE FOCUS MIRROR'S ROOT — ONE WHOLE VALUE AT `mem`.** A `mem` address can never come from a file (`D-84`): its
- *  only lawful source is a repair at the creation instant, and `provident-storeroom@1.9.1` saves a `file`-tier
- *  registration repair and no `mem` one (measured, this pass) — so this family is RE-MINTED AT EVERY BOOT and the
- *  profile's bytes never carry it. That is clause 3 answered for it, and it is `operator-exclusion-must-stand`'s shape. */
-export const VIEW_FOCUS_ADDRESS: readonly string[] = ['focus']
 /** **THE PANES' EXISTENCE PAIR'S id** — exported beside the tab record's six so the boot's batch is a census a reader
  *  can name, and so no caller spells an id. */
 export const VIEW_PANES_MUST_STAND_ID = 'panes-must-stand'
@@ -117,8 +109,8 @@ export const VIEW_PANES_MUST_STAND_ID = 'panes-must-stand'
  *  `candidatesFor`, with **no `file` copy anywhere in the tree** (`grep -rn "settings\.zone\|file\.[a-z.]*zone" src/`
  *  answers nothing) — so there is no durable image to inherit and no ascending read to collapse. A `mem` address can never
  *  come from a file (`D-84`, unmoved), which makes **a repair at the creation instant its only lawful boot source**: the
- *  family is RE-MINTED AT EVERY BOOT and the profile's bytes never carry it. That is `focus-must-stand`'s shape, and the
- *  third clause of the convention is answered by the repair rather than deviated from.
+ *  family is RE-MINTED AT EVERY BOOT and the profile's bytes never carry it. That is the shape `panes-must-stand` gave at
+ *  `file`, and the third clause of the convention is answered by the repair rather than deviated from.
  *  **ITS IDS ARE OPEN AND ITS PLACEHOLDER NAMES NO ZONE**: a zone id is the caller's own (`zoneIdOf` reads it off the
  *  caller's element and falls back to `zone-1`, which the render turn hard-codes), so this module cannot name a closed set
  *  and does not try — the family is one member per id the caller named, and the placeholder is the family carrying none. */
@@ -143,15 +135,10 @@ export const VIEW_ZONES_ADDRESS: readonly string[] = ['zones']
  *  profile therefore carries an appearance record BEFORE any act** — the creation repair's placeholder, which names no
  *  attribute and so applies nothing. */
 export const VIEW_THEME_ADDRESS: readonly string[] = ['theme']
-/** **THE APPEARANCE FAMILY'S EXISTENCE-AND-CONSISTENCY PAIR'S id** — the tenth of the boot's ONE namespace (the tab
- *  record's six and this module's four), minted against that batch and spelled nowhere else. */
+/** **THE APPEARANCE FAMILY'S EXISTENCE-AND-CONSISTENCY PAIR'S id** — one of the boot's ONE namespace (the tab
+ *  record's six and this module's three), minted against that batch and spelled nowhere else. */
 export const VIEW_THEME_MUST_STAND_ID = 'theme-must-stand'
-/** **THE FOCUS MIRROR'S EXISTENCE PAIR'S id.** `panes-must-stand`, `focus-must-stand` and the tab record's six are ONE
- *  namespace (`guide §7.2`: a repeated id in one supplied list is REJECTED), and this module's three are minted against
- *  that batch's six — neither spelling occurs in `tabsConstraintDeclarations`, and the listener handles below carry a
- *  third prefix again (`D-71`'s one cross-kind rule reads the HANDLE). */
-export const VIEW_FOCUS_MUST_STAND_ID = 'focus-must-stand'
-/** **THE ZONE FAMILY'S EXISTENCE PAIR'S id** — the ninth of the boot's ONE namespace (the tab record's six and this
+/** **THE ZONE FAMILY'S EXISTENCE PAIR'S id** — one of the boot's ONE namespace (the tab record's six and this
  *  module's three), minted against that batch and spelled nowhere else. */
 export const VIEW_ZONES_MUST_STAND_ID = 'zones-must-stand'
 
@@ -167,8 +154,6 @@ export const VIEW_ZONES_MUST_STAND_ID = 'zones-must-stand'
  *  member that cannot be a value of the family. */
 export const PANE_SHAPE_REASON = 'malformed-pane'
 export const PANE_GEOMETRY_REASON = 'malformed-geometry'
-export const FOCUS_SHAPE_REASON = 'malformed-focus'
-export const DANGLING_ACTIVE_REASON = 'dangling-active'
 export const ZONE_SHAPE_REASON = 'malformed-zone'
 export const ZONE_MEMBER_REASON = 'malformed-zone-member'
 /** **THE APPEARANCE FAMILY'S TWO TOKENS, AND THE SECOND ONE IS WHAT MAKES THE PAIR A *REPAIR* RATHER THAN A PRESENCE CHECK**
@@ -185,10 +170,6 @@ export const THEME_STALE_REASON = 'stale-theme'
 export const PANE_SHAPE_MESSAGE = 'the pane family names no pane id, or carries no plain geometry record'
 export const PANE_GEOMETRY_MESSAGE =
   'the pane geometry carries no finite size, or no bounds pair of two finite numbers whose min does not exceed its max'
-export const FOCUS_SHAPE_MESSAGE =
-  'the focus mirror carries no entry list, or an entry whose id is not a string, number or boolean, or whose target is no value the store carries'
-export const DANGLING_ACTIVE_MESSAGE =
-  'the focus mirror names an active id that is no entry of its own list, so the mirror names a tab it does not hold'
 export const ZONE_SHAPE_MESSAGE = 'the zone family names no zone id, or carries no plain zone record'
 export const ZONE_MEMBER_MESSAGE =
   'the zone carries a size that is not a finite non-negative number, a distance that is not a finite number, a display that is not a string, or a slot no value the store carries'
@@ -197,29 +178,30 @@ export const THEME_SHAPE_MESSAGE =
 export const THEME_STALE_MESSAGE =
   'the appearance record carries a declaration the mechanism would not produce for the setting and the attribute it carries, so the record and its own resolution contradict each other'
 
-/** **THE TWO FAMILIES' OWN TIERS, EACH NAMED ONCE.** A value's tier is the address's (`guide §3.1`), and these two
+/** **THE THREE FAMILIES' OWN TIERS, EACH NAMED ONCE.** A value's tier is the address's (`guide §3.1`), and these
  *  constants are the whole of what says which — so no read, no write and no repair of this module spells a tier
  *  literal, and a family cannot half-move to the other tier. */
 const PANES_TIER = 'file'
-const FOCUS_TIER = 'mem'
 const ZONES_TIER = 'mem'
 /** **THE APPEARANCE FAMILY'S TIER — `file`, THE USER'S RULING ON DURABILITY** (`D-98`; `mem` was `D-97`'s and is
  *  superseded by pointer). It is the same tier as `['panes']` and the same crossing, so the address a fresh boot
  *  repairs to the placeholder is the address a second boot reads back. */
 const THEME_TIER = 'file'
-/** **THE TIER UNION THIS MODULE USES, DERIVED FROM THE TWO CONSTANTS AND NOT RE-SPELLED FROM THE PACKAGE'S `Tier`.** The
+/** **THE TIER UNION THIS MODULE USES, DERIVED FROM THE TIER CONSTANTS AND NOT RE-SPELLED FROM THE PACKAGE'S `Tier`.** The
  *  package's own domain is `'mem' | 'file' | 'temp'`; this module needs two of those words and needs them to be
  *  assignable to `write`'s `tier` position, so the type is taken from the constants themselves — one spelling of each
- *  word in this file, and a third family would have to add its constant rather than widen a table. */
-type ViewTier = typeof PANES_TIER | typeof FOCUS_TIER | typeof ZONES_TIER | typeof THEME_TIER
+ *  word in this file, and a fourth family would have to add its constant rather than widen a table. */
+type ViewTier = typeof PANES_TIER | typeof ZONES_TIER | typeof THEME_TIER
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE RECORD'S SHAPES
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-// **THE FOUR SHAPE DECLARATIONS ARE `src/shared/view-shape.ts`'S AND ARE RE-EXPORTED ABOVE** (D-88): `ViewPaneGeometry`,
-// `ViewFocusEntry`, `ViewFocusMirror` and `ViewGeometrySource`, with the measured ground each carries — the boundary's
-// domain for a focus entry, the absent active spelled as ABSENCE, and `'record'`/`'default'` naming a real difference.
+// **THE SHAPE DECLARATIONS ARE `src/shared/view-shape.ts`'S AND ARE RE-EXPORTED ABOVE** (D-88): `ViewPaneGeometry`,
+// `ViewZone`, `ViewThemeRecord` and `ViewGeometrySource`, with the measured ground each carries — the boundary's domain
+// for a zone's opaque `slot`, the appearance record's stored derivation, and `'record'`/`'default'` naming a real
+// difference. **THE MIRROR'S TWO TYPES LEFT WITH THE FAMILY** (`D-142`): a type carries no `tsc` flag, so the leftover a
+// deletion must not leave is exactly the kind this line names.
 
 export interface ViewPaneReading {
   readonly status: 'committed'
@@ -227,34 +209,27 @@ export interface ViewPaneReading {
   readonly source: ViewGeometrySource
 }
 
-export interface ViewFocusReading {
-  readonly status: 'committed'
-  readonly focus: ViewFocusMirror
-  readonly source: ViewGeometrySource
-}
-
 /** **ONE ZONE OUT OF A READING — and the absent arm is `null`, the measured answer `zoneIn` gives** (D-91). This reading
- *  is the crossing's counterpart of the focus one: a family read WHOLE, and then one member of it. */
+ *  is a family read WHOLE, and then one member of it. */
 export interface ViewZoneReading {
   readonly status: 'committed'
   readonly zone: ViewZone | null
   readonly source: ViewGeometrySource
 }
 
-/** **THE WHOLE VIEW: the pane family as the record admits it, the mirror as it stands, the zone family as the record
- *  admits that, and the appearance family as the mechanism's own answer stands** (D-97). **THE `source` MEMBERS ARE PER
- *  FAMILY AND NOT PER MEMBER**: a family is one value, so it either stands (and each member it names is the record's) or it
+/** **THE WHOLE VIEW: the pane family as the record admits it, the zone family as the record admits that, and the
+ *  appearance family as the mechanism's own answer stands** (D-97). **THE `source` MEMBERS ARE PER FAMILY AND NOT PER
+ *  MEMBER**: a family is one value, so it either stands (and each member it names is the record's) or it
  *  does not (and every pane answers the measured default, every zone answers its absence, and the appearance family answers
- *  the placeholder that has no attribute name to apply). */
+ *  the placeholder that has no attribute name to apply). **THREE FAMILIES AND THREE `source` WORDS, WITH NO FOURTH MEMBER
+ *  ON EITHER SIDE OF THE WIRE** (D-142). */
 export interface ViewRecordReading {
   readonly status: 'committed'
   readonly panes: readonly ViewPaneGeometry[]
-  readonly focus: ViewFocusMirror
   readonly zones: readonly ViewZone[]
   readonly theme: ViewThemeRecord
   readonly source: {
     readonly panes: ViewGeometrySource
-    readonly focus: ViewGeometrySource
     readonly zones: ViewGeometrySource
     readonly theme: ViewGeometrySource
   }
@@ -283,12 +258,13 @@ export interface ViewRecordOptions {
   readonly store: Store
 }
 
-/** **THE ROUTES A CLIENT NEEDS, AND SIX OF THEM — one per act, and no act without one** (the appearance route is D-97's).
- *  The renderer reads a pane's geometry (`:1700-1722`), writes one (`:1823-1825`), reads the mirror (`:1104-1105`), writes it
- *  (`:1152-1153`, `:1967-1968`), reads a zone's four members twice (`:1799-1805`, `:1935-1941`) and commits the appearance
- *  act its authored control produced. `read` is ONE route because all four families are read at once by the one consumer,
- *  and `subscribe` is the push's own — so no route of this module stands without an answer site, which is the defect
- *  `docs/L2/central-data/interface.md` §2 records against a bridge member nothing calls. */
+/** **THE ROUTES A CLIENT NEEDS, AND FIVE OF THEM — one per act, and no act without one** (the appearance route is D-97's).
+ *  The renderer reads a pane's geometry (`:1700-1722`), writes one (`:1823-1825`), reads a zone's four members twice
+ *  (`:1799-1805`, `:1935-1941`) and commits the appearance act its authored control produced. `read` is ONE route
+ *  because all three families are read at once by the one consumer, and `subscribe` is the push's own — so no route of
+ *  this module stands without an answer site, which is the defect `docs/L2/central-data/interface.md` §2 records against a
+ *  bridge member nothing calls. **THE FOURTH ROUTE THAT STOOD HERE LEFT WITH ITS FAMILY AND NOTHING REPLACES IT** (`D-142`):
+ *  a route that left one side alone would be a channel with a handler and no caller. */
 export interface ViewRecord {
   read(): ViewRecordReading
   /** **WRITE ONE PANE'S GEOMETRY, AND NEVER A PATH**: the id names a MEMBER of the family at the one root, so a caller
@@ -296,9 +272,6 @@ export interface ViewRecord {
    *  taken from what stands, and then from the measured default, so a caller writing a size alone does not erase the
    *  pane's bounds. */
   commitPane(id: string, geometry: unknown): ViewRecordAnswer
-  /** **WRITE THE WHOLE MIRROR.** The mirror is one value and the model hands out the whole of it on every transition
-   *  (`persist(seam, state)`), so the route takes the whole of it and composes nothing of its own. */
-  commitFocus(mirror: unknown): ViewRecordAnswer
   /** **WRITE ONE ZONE, AND NEVER A PATH** (D-91): the id names a MEMBER of the family at the one root and the supplied
    *  members are composed over what stands, so a caller cannot compose an address and cannot erase a sibling zone — the
    *  `commitPane` rule, family for family. It takes one zone and not the whole family because the drag's turn names ONE
@@ -427,10 +400,9 @@ const finiteNumber = (value: unknown): value is number => typeof value === 'numb
 
 /** **THE STORE'S BOUNDARY DOMAIN, SPELLED HERE BECAUSE A REPAIR'S VALUE IS REFUSED AT IT** (measured on the installed
  *  `1.9.1`: `ValueRefusedAtBoundary`, *"the crossing carries strings, booleans, finite numbers, plain objects and
- *  arrays"*). A member of the mirror — an entry's `target` — is opaque to the focus model but not to the crossing, so a
- *  target carrying a `null` or a `undefined` anywhere would make the WHOLE mirror unwritable and the refusal would
- *  arrive as a thrown boundary form rather than as this module's own sentence. The predicate is total and walks the
- *  value once. */
+ *  arrays"*). A zone's `slot` is opaque to this module but not to the crossing, so a slot carrying a `null` or an
+ *  `undefined` anywhere would make the WHOLE family unwritable and the refusal would arrive as a thrown boundary form
+ *  rather than as this module's own sentence. The predicate is total and walks the value once. */
 const isBoundary = (value: unknown): boolean => {
   if (typeof value === 'string' || typeof value === 'boolean') return true
   if (typeof value === 'number') return Number.isFinite(value)
@@ -468,44 +440,6 @@ const panesFrom = (whole: unknown): ViewPaneGeometry[] | null => {
     if (geometry !== null) panes.push(geometry)
   }
   return panes
-}
-
-/** The focus entry as the mirror carries it, or `null` — the id narrowed to the three primitives `===` compares by
- *  value, the target carried opaquely through the boundary's own domain, the label the model's optional string. */
-const focusEntryOf = (held: unknown): ViewFocusEntry | null => {
-  if (!plain(held)) return null
-  const id = held['id']
-  if (typeof id !== 'string' && typeof id !== 'number' && typeof id !== 'boolean') return null
-  if (typeof id === 'number' && !Number.isFinite(id)) return null
-  const target = held['target']
-  if (!isBoundary(target)) return null
-  const entry: { id: string | number | boolean; target: unknown; label?: string } = { id, target }
-  if (typeof held['label'] === 'string') entry.label = held['label']
-  return entry
-}
-
-/** **THE MIRROR AS ONE VALUE, OR `null`.** A value that is not a plain record, or whose `entries` is not a list, is not
- *  this family; an entry this module cannot admit is DROPPED (the `panesFrom` disposition); and **A DROPPED ENTRY TAKES
- *  A DANGLING `activeId` WITH IT** — a mirror whose active id names an entry it no longer carries is the state
- *  `dangling-active` refuses at the write route, so the read cannot answer one and then refuse to write it back. */
-const mirrorFrom = (whole: unknown): ViewFocusMirror | null => {
-  if (!plain(whole)) return null
-  const held = whole['entries']
-  if (!Array.isArray(held)) return null
-  const entries: ViewFocusEntry[] = []
-  const named = new Set<string>()
-  for (const candidate of held) {
-    const entry = focusEntryOf(candidate)
-    if (entry === null) continue
-    const key = String(entry.id)
-    if (named.has(key)) continue
-    named.add(key)
-    entries.push(entry)
-  }
-  const active = whole['activeId']
-  const activeId = typeof active === 'string' || typeof active === 'number' || typeof active === 'boolean' ? active : null
-  if (activeId !== null && !named.has(String(activeId))) return { entries, activeId: null }
-  return { entries, activeId }
 }
 
 /** **ONE ZONE, ADMITTED MEMBER BY MEMBER, OR `null` — and every member is OPTIONAL, which is the measurement and not a
@@ -631,8 +565,8 @@ const derivedTheme = (held: Record<string, unknown>): ViewThemeRecord => {
 }
 
 /** **THE RECORD AS THE CROSSING MUST CARRY IT: EVERY `null` MEMBER IS WRITTEN AS ABSENCE.** `null` is refused at the
- *  boundary (`measured`, and `composeMirror`'s own reason for the empty active), so the placeholder's three-member
- *  declaration is written as `{value: '', removal: true}` with no `name`, and a record naming no setting writes no `token`.
+ *  boundary (`measured`), so the placeholder's three-member declaration is written as `{value: '', removal: true}` with
+ *  no `name`, and a record naming no setting writes no `token`.
  *  The admission maps both absences back to `null`, so the value standing at the address and the reading are one fact. */
 const composeTheme = (record: ViewThemeRecord): Record<string, unknown> => {
   const whole: Record<string, unknown> = {}
@@ -710,19 +644,9 @@ const zonesOf = (store: Store): { zones: ViewZone[]; source: ViewGeometrySource 
   return { zones: [], source: 'default' }
 }
 
-const mirrorOf = (store: Store): { focus: ViewFocusMirror; source: ViewGeometrySource } => {
-  try {
-    const read = mirrorFrom(store.read(VIEW_FOCUS_ADDRESS, FOCUS_TIER))
-    if (read !== null) return { focus: read, source: 'record' }
-  } catch {
-    // as above: the declared empty pair answers, and nothing is repaired at a read
-  }
-  return { focus: { entries: [], activeId: null }, source: 'default' }
-}
-
 /** **THE APPEARANCE FAMILY'S READ — AND ITS DECLARED DEFAULT IS THE PLACEHOLDER, WHICH HAS NO ATTRIBUTE NAME TO APPLY.** The
  *  default answers only where the family does not stand at all, which the creation repair makes unreachable on any boot
- *  whose batch carried the pair; it exists so the read is total, exactly as the other three families' defaults do. */
+ *  whose batch carried the pair; it exists so the read is total, exactly as the other two families' defaults do. */
 const themeOf = (store: Store): { theme: ViewThemeRecord; source: ViewGeometrySource } => {
   try {
     const read = themeFrom(store.read(VIEW_THEME_ADDRESS, THEME_TIER))
@@ -748,16 +672,6 @@ const composePanes = (panes: readonly ViewPaneGeometry[], id: string, supplied: 
     size: supplied.size ?? base.size,
     bounds: { min: supplied.bounds?.min ?? base.bounds.min, max: supplied.bounds?.max ?? base.bounds.max },
   }
-  return whole
-}
-
-/** **THE MIRROR AS THE STORE MUST CARRY IT: THE ABSENT ACTIVE IS SPELLED AS ABSENCE.** `null` is refused at the
- *  crossing's boundary and `undefined` with it (measured), so the empty-active arm writes NO member and the read maps
- *  that absence back to `null` (`mirrorFrom`). The `entries` list is copied, so the caller keeps ownership of the array
- *  it handed in. */
-const composeMirror = (mirror: ViewFocusMirror): Record<string, unknown> => {
-  const whole: Record<string, unknown> = { entries: mirror.entries.map((entry) => ({ ...entry })) }
-  if (mirror.activeId !== null) whole['activeId'] = mirror.activeId
   return whole
 }
 
@@ -821,54 +735,6 @@ const panesAdmitAt = (node: readonly string[], value: unknown): boolean => {
   return true
 }
 
-/** The three id types the mirror compares by value (`===`), and a finite number among them — `mirrorFrom`'s own
- *  narrowing, spelled once for the entry, for the list and for the active id. */
-const comparableId = (value: unknown): value is string | number | boolean =>
-  typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))
-
-/** The ids an entry list names, or `null` where an entry is one the read cannot state or two entries share an id — the
- *  two faults `commitFocus` refuses at its own route and `mirrorFrom` can only answer by DROPPING. */
-const entryIdsOf = (list: readonly unknown[]): Set<string> | null => {
-  const named = new Set<string>()
-  for (const candidate of list) {
-    const entry = focusEntryOf(candidate)
-    if (entry === null) return null
-    const key = String(entry.id)
-    if (named.has(key)) return null
-    named.add(key)
-  }
-  return named
-}
-
-/** **THE MIRROR AT ONE NODE OF ITS OWN SHAPE.** The family is ONE value with two members: `entries`, a list of the
- *  entries the read states, and `activeId`, the id that is active — and a node below them is an entry, or one of an
- *  entry's three members. **A DANGLING ACTIVE ID IS THE FAULT THIS ARM EXISTS FOR** (`mirrorFrom` can only null it,
- *  and `commitFocus` already refuses it at its own route): a mirror naming an id it does not hold is a mirror naming a
- *  tab the record does not have. */
-const mirrorAdmitAt = (node: readonly string[], value: unknown): boolean => {
-  if (node.length > 0) {
-    const [member, , field] = [node[0], node[1], node[2]]
-    if (node.length === 1) {
-      if (member === 'entries') return Array.isArray(value) && entryIdsOf(value) !== null
-      return member === 'activeId' && comparableId(value)
-    }
-    if (member !== 'entries') return false
-    if (node.length === 2) return focusEntryOf(value) !== null
-    if (field === 'id') return comparableId(value)
-    if (field === 'target') return isBoundary(value)
-    return field === 'label' && typeof value === 'string'
-  }
-  if (!plain(value)) return false
-  for (const member of Object.keys(value)) if (member !== 'entries' && member !== 'activeId') return false
-  const held = value['entries']
-  if (!Array.isArray(held)) return false
-  const named = entryIdsOf(held)
-  if (named === null) return false
-  const active = value['activeId']
-  if (active === undefined || active === null) return true
-  return comparableId(active) && named.has(String(active))
-}
-
 /** **ONE ZONE AT ONE NODE OF ITS OWN SHAPE** — the four members are independently OPTIONAL and each present one must be
  *  usable (`zoneOf`'s own per-member rules), a record carrying none of them is still a zone, and `slot` is opaque to
  *  this module but not to the crossing (`isBoundary`). */
@@ -900,19 +766,18 @@ const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// THE FOUR DECLARATIONS — CLAUSE 1 OF THE CONVENTION: EXISTENCE, REPAIRED WITH A PLACEHOLDER — AND THE APPEARANCE
+// THE THREE DECLARATIONS — CLAUSE 1 OF THE CONVENTION: EXISTENCE, REPAIRED WITH A PLACEHOLDER — AND THE APPEARANCE
 // FAMILY'S SECOND ARM, CONSISTENCY, WHICH IS THE ONE THE INSTRUCTION NAMES (D-97)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-/** **THE THREE SENTENCES THE VALUE ARMS ANSWER, IN THE REGISTER OF THE ROUTES' OWN** (`PANE_GEOMETRY_MESSAGE` and the
+/** **THE TWO SENTENCES THE VALUE ARMS ANSWER, IN THE REGISTER OF THE ROUTES' OWN** (`PANE_GEOMETRY_MESSAGE` and the
  *  others above): each names the FAMILY and the FAULT a standing value carries, never the act — a write refused at this
  *  arm and a value read back from the profile's bytes are one fault, wherever they came from (`D-105`). **THE ROUTES
  *  ANSWER NONE OF THEM**: a route composes the family through the one composer, so only a caller that names the store's
- *  own address — `provident.data.*`, or the crossing's raw surface — can meet these. */
+ *  own address — `provident.data.*`, or the crossing's raw surface — can meet these. **THE THIRD SENTENCE LEFT WITH THE
+ *  FAMILY IT NAMED** (`D-142`), because no declaration stands at that address to answer it. */
 export const PANE_UNUSABLE_MESSAGE =
   'the pane geometry carries a member that is no geometry — no finite non-negative size, or no bounds pair of two finite numbers whose min does not exceed its max'
-export const FOCUS_UNUSABLE_MESSAGE =
-  'the focus mirror carries an entry the read cannot state, two entries under one id, or an active id that is no entry of its own list, so the mirror names a tab it does not hold'
 export const ZONE_UNUSABLE_MESSAGE =
   'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses'
 
@@ -965,38 +830,6 @@ const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRe
   return writeWholeValue(getStore)(context, VIEW_PANES_ADDRESS, PANES_TIER, whole)
 }
 
-/** **`focus-must-stand` — THE MIRROR'S EXISTENCE, AND IT IS THE `mem` FAMILY'S WHOLE CLAUSE-3 ANSWER.**
- *
- *  A `mem` address can never come from a file (`D-84`'s measurement, unmoved): the register a store keeps at `mem` is
- *  the instance's and `provident-storeroom@1.9.1` settles only a `file`-tier registration repair into the file
- *  (measured, this pass: a `mem` repair leaves the profile's bytes exactly as they stood and the next boot's context
- *  answers the address ABSENT). So this pair is asked at EVERY construction and re-mints the mirror every boot, which is
- *  `operator-exclusion-must-stand`'s shape at the other crossing — and the family's boot data is a REPAIR and never the
- *  file, which is clause 3 answered rather than deviated from. */
-const focusMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
-  const held = plain(context) ? context['value'] : undefined
-  if (!plain(held)) {
-    return {
-      message: 'the focus mirror does not stand',
-      repair: repairMirror(getStore),
-    }
-  }
-  // **THE VALUE ARM (`D-105`) — THE DANGLING ACTIVE ID IS ITS SUBJECT.** `commitFocus` refuses that state at the route,
-  // and `mirrorFrom` can only NULL it at a read, so before this arm a `provident.data.write` at the family's own tier
-  // landed a mirror naming a tab the record does not hold and the read quietly answered `activeId: null`. A refusal with
-  // no repair leaves the standing mirror untouched; the existence arm above is unmoved.
-  const node = nodeOf(context, VIEW_FOCUS_ADDRESS)
-  if (node === null || mirrorAdmitAt(node, held)) return true
-  if (!writeInstant(context)) return true
-  return { message: FOCUS_UNUSABLE_MESSAGE }
-}
-
-/** **THE MIRROR'S REPAIR: THE DECLARED EMPTY PAIR, AS ONE WHOLE LEGAL VALUE** — `{entries: []}` with the absent active
- *  spelled as ABSENCE, so the read answers `activeId: null` (`mirrorFrom`) and the mirror's default is the model's own
- *  (`mirrorStateOf`'s declared empty pair) rather than a fourth spelling of it. */
-const repairMirror = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer =>
-  writeWholeValue(getStore)(context, VIEW_FOCUS_ADDRESS, FOCUS_TIER, composeMirror({ entries: [], activeId: null }))
-
 /** **`zones-must-stand` — THE ZONE FAMILY'S EXISTENCE, AND ITS PLACEHOLDER IS THE FAMILY THAT NAMES NO ZONE (D-91).**
  *
  *  **THE PLACEHOLDER IS MEASURED AND NOT INVENTED, WHICH IS THE WHOLE OF THIS PAIR'S DESIGN.** The zone family has NO
@@ -1005,7 +838,8 @@ const repairMirror = (getStore: () => Store | null) => (context: unknown): ViewR
  *  read of this tree gives for a zone nothing names is ABSENCE, and a repair minting a geometry (`{size: 100}` or the
  *  demo's `160`) would make the repair and the read two authorities over one question. The placeholder is therefore the
  *  family carrying NO member — `{}` — which is the ONE whole legal value that answers every zone exactly as the absent
- *  address answered it before, and the `focus-must-stand` precedent in its exact shape (the declared empty pair).
+ *  address answered it before, and `panes-must-stand`'s shape, with an empty family where that family's placeholder is
+ *  the measured default.
  *
  *  **IT JUDGES `context.value` AND NEVER REACHES FOR THE INSTANCE**, `panesMustStand`'s shape and its measured reason: at
  *  the construction instant the boot's holder is unassigned, so a handle-reading body would abstain at the one instant it
@@ -1041,7 +875,7 @@ const repairZones = (getStore: () => Store | null) => (context: unknown): ViewRe
 
 /** **`theme-must-stand` — THE APPEARANCE RECORD HAS TWO ARMS, AND THE SECOND IS THE WHOLE OF THE INSTRUCTION (D-97).**
  *
- *  **THE FIRST ARM IS EXISTENCE**, `tabs-must-stand`'s and `focus-must-stand`'s: a value that is not a plain record — the
+ *  **THE FIRST ARM IS EXISTENCE**, `tabs-must-stand`'s and `panes-must-stand`'s: a value that is not a plain record — the
  *  address holding nothing, a primitive, an array — is the fault the pair names, and the repair writes the PLACEHOLDER,
  *  which is the mechanism's own answer for the absent pair and carries no attribute name, so nothing can be applied from
  *  it.
@@ -1084,45 +918,50 @@ const repairTheme = (getStore: () => Store | null) => (context: unknown): ViewRe
 /** **THE BATCHED DECLARATIONS, COLLECTED BY THE BOOT** (D-65's first act; D-87's second set; D-91's third family). The boot gathers these
  *  beside the tab record's six and constructs the central store ONCE with the whole batch, so a constraint is a
  *  DECLARATION here rather than a constructor call, and the two modules' ids stand in ONE namespace without a repeated
- *  spelling. **THE ORDER IS THE DEPENDENCY ORDER OF THE TWO FAMILIES AND NOTHING MORE**: neither pair's subject is the
- *  other's, so the panes pair stands first only because its root is the one the app writes most.
+ *  spelling. **THE ORDER IS THE DEPENDENCY ORDER OF THE THREE FAMILIES AND NOTHING MORE**: no pair's subject is
+ *  another's, so the panes pair stands first only because its root is the one the app writes most.
  *
  *  **THE RETURN IS TYPED** where the package's own licence would admit `void` (`D-72`): every element is a
- *  `ViewConstraintDeclaration`, so a body or a repair that answers nothing is a COMPILE ERROR here. */
+ *  `ViewConstraintDeclaration`, so a body or a repair that answers nothing is a COMPILE ERROR here. **THREE ROWS STAND,
+ *  AND THE FOURTH LEFT WITH ITS FAMILY**, nothing having been re-ordered in its place (`D-142`). */
 export function viewConstraintDeclarations(getStore: () => Store | null): readonly ViewConstraintDeclaration[] {
   return [
     { address: VIEW_PANES_ADDRESS, id: VIEW_PANES_MUST_STAND_ID, constraint: panesMustStand(getStore) },
-    { address: VIEW_FOCUS_ADDRESS, id: VIEW_FOCUS_MUST_STAND_ID, constraint: focusMustStand(getStore) },
     { address: VIEW_ZONES_ADDRESS, id: VIEW_ZONES_MUST_STAND_ID, constraint: zonesMustStand(getStore) },
     { address: VIEW_THEME_ADDRESS, id: VIEW_THEME_MUST_STAND_ID, constraint: themeMustStand(getStore) },
   ]
 }
 
 /** **ONE DECLARED ROOT AS ANOTHER MODULE READS IT — THE ADDRESS AND THE FAMILY'S OWN TIER** (`D-101`). The tier
- *  is the one the address is pinned to (`guide §3.1`), and this module is its authority: the four `*_TIER`
- *  constants above are the only spelling of any of those three words in this file, so a pair here cannot
+ *  is the one the address is pinned to (`guide §3.1`), and this module is its authority: the tier
+ *  constants above are the only spelling of any of those two words in this file, so a pair here cannot
  *  disagree with what this module's own reads, writes and repairs actually do. */
 export interface ViewDeclaredRoot {
   readonly address: readonly string[]
   readonly tier: ViewTier
 }
 
-/** **THE FOUR ROOTS `viewConstraintDeclarations` DECLARES, EACH WITH THE TIER IT IS DECLARED AT, AND NOTHING ELSE.**
+/** **THE THREE ROOTS `viewConstraintDeclarations` DECLARES, EACH WITH THE TIER IT IS DECLARED AT, AND NOTHING ELSE.**
  *
  *  **IT IS NOT A SECOND SPELLING OF THE ADDRESSES**: every `address` below is the exported constant the batch
  *  above uses, and every `tier` is the constant that batch's own pair writes at — so a family that moves tier
  *  moves here without a word, and `tests/integration/central-data/declared-root.test.ts`'s set row refuses the
  *  day one of the two lists gains an entry the other does not have (`D-101`).
  *
+ *  **THE TWO LISTS ARE ONE EDIT** (`D-142`, `D-101`): a declaration and its entry leave in the same hunk, because an
+ *  entry outliving its declaration hands the guard a tier for a family that is gone, and a declaration outliving its
+ *  entry leaves the family standing undeclared with no root for the guard's sentence to name.
+ *
  *  **ITS CALLER IS THE `data.*` SURFACE, AND THE REASON IS ONE DEFECT.** While the surface wrote a tier of its
- *  own, `data.write({ path: ['focus'], … })` created a `file` version of a root this file declares at `mem`:
- *  the family's `read()` answered `source.focus: 'default'` from that instant on, a restart did not heal it and
+ *  own, a `data.write` at a root this file declares at one tier created a version of it at the other:
+ *  the family's `read()` answered that family's `default` word from that instant on, a restart did not heal it and
  *  a `data.delete` at the root removed nothing. The surface can refuse that only where it can be TOLD which
- *  roots are declared and at which tier, and this is that telling — the module's own, from its own constants. */
+ *  roots are declared and at which tier, and this is that telling — the module's own, from its own constants. A root
+ *  NO crossing declares is admitted to the store verb and judged by the store's own constraints and nothing else, which
+ *  is the arm the deleted address is measured at. */
 export function viewDeclaredRoots(): readonly ViewDeclaredRoot[] {
   return [
     { address: VIEW_PANES_ADDRESS, tier: PANES_TIER },
-    { address: VIEW_FOCUS_ADDRESS, tier: FOCUS_TIER },
     { address: VIEW_ZONES_ADDRESS, tier: ZONES_TIER },
     { address: VIEW_THEME_ADDRESS, tier: THEME_TIER },
   ]
@@ -1135,36 +974,33 @@ export function viewDeclaredRoots(): readonly ViewDeclaredRoot[] {
 /** **ONE HANDLE PER SUBSCRIPTION PER ADDRESS, MINTED HERE — MEASURED, NOT PREFERRED** (the tab record's `handleFor`, whose
  *  reading is that `register` REPLACES the function under a handle and `unlisten` withdraws the handle WHOLE, so one
  *  spelled name starves a second subscriber). **AND THE SPELLING CAN NEVER EQUAL A CONSTRAINT `id`**, which is the one
- *  cross-kind rule that survives (`D-71`): this module's three are `panes-must-stand`, `focus-must-stand` and
- *  `zones-must-stand`, and the tab
- *  record's six are its own, while these handles carry a FIXED `view-record:` prefix no id has, a MINTED ORDINAL that
- *  only grows, and the address the handle is bound at. **THIS MODULE'S FOUR ARE `panes-must-stand`, `focus-must-stand`,
- *  `zones-must-stand` AND `theme-must-stand`** (D-97 added the fourth, and its spelling carries the `-must-stand` suffix
- *  no tab-record id repeats). */
+ *  cross-kind rule that survives (`D-71`): this module's three are `panes-must-stand`, `zones-must-stand` and
+ *  `theme-must-stand`, and the tab record's six are its own, while these handles carry a FIXED `view-record:` prefix no
+ *  id has, a MINTED ORDINAL that only grows, and the address the handle is bound at. **EACH OF THIS MODULE'S THREE
+ *  CARRIES THE `-must-stand` SUFFIX NO TAB-RECORD ID REPEATS** (D-97's is the third), and the fourth that stood here
+ *  left with its family (`D-142`). */
 let issuance = 0
 const handleFor = (address: readonly string[]): string => {
   issuance += 1
   return 'view-record:' + String(issuance) + '@' + address.join('/')
 }
 
-/** **THE VIEW RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65, D-87; the appearance family and a fourth root at D-97): this
- *  module constructs nothing and owns no file — it is handed the app's one store and reads and writes its FOUR roots
+/** **THE VIEW RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65, D-87; the appearance family is D-97's): this
+ *  module constructs nothing and owns no file — it is handed the app's one store and reads and writes its THREE roots
  *  through it. */
 export function createViewRecord(options: ViewRecordOptions): ViewRecord {
   const standing: Store = options.store
 
   const reading = (): ViewRecordReading => {
     const panes = panesOf(standing)
-    const mirror = mirrorOf(standing)
     const zones = zonesOf(standing)
     const theme = themeOf(standing)
     return {
       status: 'committed',
       panes: panes.panes,
-      focus: mirror.focus,
       zones: zones.zones,
       theme: theme.theme,
-      source: { panes: panes.source, focus: mirror.source, zones: zones.source, theme: theme.source },
+      source: { panes: panes.source, zones: zones.source, theme: theme.source },
     }
   }
 
@@ -1212,57 +1048,6 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       } catch (caught) {
         const refused = refusalOfThrown(caught)
         return { status: 'refused', reason: refused.reason, message: refused.message, address: [VIEW_PANES_ADDRESS[0] as string, id] }
-      }
-    },
-
-    commitFocus(mirror: unknown): ViewRecordAnswer {
-      const value: unknown = mirror
-      if (!plain(value)) {
-        return { status: 'refused', reason: FOCUS_SHAPE_REASON, message: FOCUS_SHAPE_MESSAGE, address: null }
-      }
-      const held = value['entries']
-      if (!Array.isArray(held)) {
-        return { status: 'refused', reason: FOCUS_SHAPE_REASON, message: FOCUS_SHAPE_MESSAGE, address: null }
-      }
-      const entries: ViewFocusEntry[] = []
-      const named = new Set<string>()
-      for (const candidate of held) {
-        const entry = focusEntryOf(candidate)
-        if (entry === null) {
-          return { status: 'refused', reason: FOCUS_SHAPE_REASON, message: FOCUS_SHAPE_MESSAGE, address: null }
-        }
-        // **ONE MEMBER PER ID, AND A REPEAT IS REFUSED RATHER THAN DEDUPED**: the model's `open` answers
-        // `duplicate-id` and never creates this state, so a mirror arriving with one is a caller's own composition —
-        // and a dedupe here would silently drop an entry the caller asked to keep.
-        if (named.has(String(entry.id))) {
-          return { status: 'refused', reason: FOCUS_SHAPE_REASON, message: FOCUS_SHAPE_MESSAGE, address: null }
-        }
-        named.add(String(entry.id))
-        entries.push(entry)
-      }
-      const active = value['activeId']
-      let activeId: ViewFocusMirror['activeId'] = null
-      if (active !== null && active !== undefined) {
-        if (typeof active !== 'string' && typeof active !== 'number' && typeof active !== 'boolean') {
-          return { status: 'refused', reason: FOCUS_SHAPE_REASON, message: FOCUS_SHAPE_MESSAGE, address: null }
-        }
-        if (typeof active === 'number' && !Number.isFinite(active)) {
-          return { status: 'refused', reason: FOCUS_SHAPE_REASON, message: FOCUS_SHAPE_MESSAGE, address: null }
-        }
-        // **THE DANGLING ARM, AND IT IS THIS MODULE'S OWN TOKEN** (the `seat-name` precedent, D-76): a mirror whose active
-        // id names no entry of its own list is a mirror naming a tab it does not hold, which is the `order` seat's fault
-        // at the other family — so it is refused under a token and a sentence naming the FAULT, never `malformed-focus`.
-        if (!named.has(String(active))) {
-          return { status: 'refused', reason: DANGLING_ACTIVE_REASON, message: DANGLING_ACTIVE_MESSAGE, address: [VIEW_FOCUS_ADDRESS[0] as string, 'activeId'] }
-        }
-        activeId = active
-      }
-      try {
-        standing.write(VIEW_FOCUS_ADDRESS, FOCUS_TIER, composeMirror({ entries, activeId }))
-        return { status: 'committed' }
-      } catch (caught) {
-        const refused = refusalOfThrown(caught)
-        return { status: 'refused', reason: refused.reason, message: refused.message, address: [VIEW_FOCUS_ADDRESS[0] as string, 'activeId'] }
       }
     },
 
@@ -1362,7 +1147,7 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
         }
       }
       const handles: string[] = []
-      for (const address of [VIEW_PANES_ADDRESS, VIEW_FOCUS_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]) {
+      for (const address of [VIEW_PANES_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]) {
         const handle = handleFor(address)
         try {
           standing.listen(handle, [address])

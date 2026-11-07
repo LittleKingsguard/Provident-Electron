@@ -1,8 +1,8 @@
 // src/shared/view-shape.ts — THE VIEW RECORD'S DECLARED SHAPE, ONE SPELLING FOR BOTH REALMS (D-88).
 //
-// WHY THIS FILE EXISTS AT ALL, AND WHY IT IS `shared/` RATHER THAN `main/`. The crossing declares the view record's FOUR
+// WHY THIS FILE EXISTS AT ALL, AND WHY IT IS `shared/` RATHER THAN `main/`. The crossing declares the view record's THREE
 // families in `src/main/view-record/index.ts` (D-87, D-91; the appearance family is `D-97`'s and its vocabulary is at the
-// end of this file), and the RENDERER reads the same four through the same member
+// end of this file), and the RENDERER reads the same three through the same member
 // (`src/renderer/view-client.ts`). Two realm-local copies of the shapes, the measured defaults and the per-pane and
 // per-zone derivations would be two answers to "what is a pane geometry" and to "what is a zone" — the one-spelling rule
 // (`D-73`) applied to a vocabulary rather than to a function. So the vocabulary is here, `main` re-exports every name from
@@ -29,26 +29,6 @@ export interface ViewPaneGeometry {
   readonly id: string
   readonly size: number
   readonly bounds: { readonly min: number; readonly max: number }
-}
-
-/** **THE FOCUS ENTRY, AS THE MIRROR CARRIES IT — `src/shared/focus-model.ts`'s `FocusEntry`, narrowed to what the store's
- *  boundary admits and to what one identity test can compare.** The model declares `id` and `target` as `unknown` and
- *  compares ids with `===`; the crossing carries strings, booleans, finite numbers, plain objects and arrays and refuses
- *  `null` and `undefined` at the boundary. So `id` is narrowed to the three primitives `===` compares BY VALUE, while
- *  `target` stays opaque because the model never consults it, and `label` stays the model's own optional string. */
-export interface ViewFocusEntry {
-  readonly id: string | number | boolean
-  readonly target: unknown
-  readonly label?: string
-}
-
-/** **THE MIRROR ITSELF — `FocusState` with the absent active spelled as ABSENCE.** The model's `activeId` is
- *  `FocusId | null` and `null` is not a value the store's boundary admits, so a mirror with nothing active is a record
- *  carrying NO `activeId` member at all; every read maps that absence back to `null`, which is exactly the declared empty
- *  pair the focus model already answers for a MISS. */
-export interface ViewFocusMirror {
-  readonly entries: readonly ViewFocusEntry[]
-  readonly activeId: string | number | boolean | null
 }
 
 /** **ONE ZONE, AS THE DRAG'S TWO ZONE TURNS READ IT (D-91) — AND ITS FOUR MEMBERS ARE THE FROZEN STORE'S, MEASURED, NOT
@@ -97,7 +77,7 @@ export interface ViewThemeDeclaration {
  *
  *  **`token` AND `attribute` ARE WRITTEN AS ABSENCE WHEN THEY ARE `null`**, which is the crossing's boundary's rule and not
  *  this file's taste: the store carries strings, booleans, finite numbers, plain objects and arrays and REFUSES `null`
- *  (measured, `D-87`; `D-91` writes the focus mirror's empty active the same way). So a record read back answers `null` for
+ *  (measured, `D-87`, `D-91`). So a record read back answers `null` for
  *  both through the admission, while the value standing at the address simply does not name them. */
 export interface ViewThemeRecord {
   readonly token: string | null

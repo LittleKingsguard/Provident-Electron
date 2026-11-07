@@ -18,8 +18,8 @@
 // and `read` each take an optional `tier` from the store's own three tokens; a `write` that omits it
 // gets `file`, the tier this surface has always written, and a read or a delete that omits it gets
 // the store's own unqualified verb (`args.ts`). AND THE ONE THING THE CALLER CANNOT CHOOSE is a
-// DECLARED root's tier: the roots the two crossings declare — `['tabs']`, `['panes']`, `['focus']`,
-// `['zones']` and the view record's fourth, which `D-98` moved to the durable tier — are split between
+// DECLARED root's tier: the roots the two crossings declare — `['tabs']`, `['panes']`,
+// `['zones']` and the view record's third, which `D-98` moved to the durable tier — are split between
 // the two tiers, and this file SPELLS none of them in code: the pairs arrive as
 // `DataSurfaceOptions.declaredRoots`, so a write or a delete at one of those roots is admitted only
 // at the family's own tier and is refused `declared-tier` otherwise, ahead of the reading and of any

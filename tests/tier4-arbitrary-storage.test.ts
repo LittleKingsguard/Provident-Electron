@@ -701,7 +701,12 @@ describe('S2 GATE-6 `F-1` — THE PANE\'S RE-SOURCE TO THE HOLDER IS TOTAL: no A
      * `statusText` VERBATIM (`docs/specs/tier4-arbitrary-storage-live-battery.md` `§3` `U-1`), so
      * the four readings below are the same paint the live observer caught, measured one layer
      * down. */
-    expect(readings[0].status, 'THE FIDELITY ANCHOR: `F1-S1` reproduces the live record\'s pre-carrier `statusText` VERBATIM — the same paint, read at the node layer').toBe('token: (none) · enabled: [read, dispatch] · journal: ∞')
+    // **RE-GRAINED AT `D-129`, AND THE ANCHOR IS THE REASON THIS ROW NOW BITES TWICE.** It reproduced the live record's
+    // pre-carrier `statusText` VERBATIM, which carried `enabled: [read, dispatch]` — and that member is THE SAME DEFECT this
+    // row is about: an authored value standing in for a reading the carrier never supplied (`D-vi`'s own clause, and
+    // `recordMustStand` already enforces the real shape at the record address). Re-taken so the anchor keeps its job — proving
+    // the paint is faithful apart from the defects under test — over the honest arm.
+    expect(readings[0].status, 'THE FIDELITY ANCHOR, RE-TAKEN AT `D-129`: the pre-carrier `statusText` names BOTH absences in words (`D-vi`) and paints no group set').toBe('token: (none) · enabled: (no reading) · journal: ∞')
 
     /* ── THE RED (all FOUR no-answer states measured in ONE reading, so a first failure hides
      * none of them): NO `data-state` PROP BEFORE A CARRIER ANSWER. The expected reading is the

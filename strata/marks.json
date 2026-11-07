@@ -3,16 +3,16 @@
   "instrument": "scripts/strata-marks.mjs",
   "suites": {
     "flat": {
-      "files": 84,
-      "sites": 2308
+      "files": 85,
+      "sites": 2229
     },
     "e2e": {
-      "files": 5,
-      "sites": 45
+      "files": 7,
+      "sites": 58
     },
     "integration": {
       "files": 31,
-      "sites": 279
+      "sites": 274
     },
     "unit": {
       "files": 15,
@@ -525,12 +525,6 @@
       "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
     },
     {
-      "file": "tests/store-focus.test.ts",
-      "scope": "file",
-      "kind": "rework",
-      "reason": "pins today's module machinery; the storeroom rework replaces it whole (D-30)"
-    },
-    {
       "file": "tests/store-modules-bytes.test.ts",
       "scope": "file",
       "kind": "rework",
@@ -706,16 +700,16 @@
   ],
   "readings": {
     "gating": {
-      "files": 37,
-      "sites": 284
+      "files": 41,
+      "sites": 303
     },
     "onNotice": {
-      "files": 106,
-      "sites": 2476
+      "files": 105,
+      "sites": 2386
     },
     "retained": {
-      "files": 5,
-      "sites": 45
+      "files": 7,
+      "sites": 58
     },
     "carveOut": 9
   }

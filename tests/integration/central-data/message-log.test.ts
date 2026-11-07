@@ -113,6 +113,32 @@ function commentElided(source: string): string {
 }
 const sourceOf = (path: string): string => readFileSync(new URL(path, REPO), 'utf8')
 
+/** **§2a'S NODE, READ OFF AN ANSWER WITHOUT WIDENING IT** (§2a; `D-134`): `_tier` is the node's OWN token, an OBJECT
+ *  node's members are INLINE, and a LEAF carries its literal under `value`. Typed over `unknown` on purpose — the answer's
+ *  `value` is `unknown` until `L4` lands `DataReadNode` — and the rows below are the act `E-7`/`E-8` land at their own
+ *  sites: a consumer unwraps the DELIVERY rather than asking the store a second question. */
+function nodeOf(value: unknown): Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`\`tier-readout\`'s composition has not landed: the delivery's \`value\` is a primitive or a bare array (${JSON.stringify(value)}) where §2a declares a node`)
+  }
+  return value as Record<string, unknown>
+}
+
+/** **THE READER'S OWN UNWRAP** (§2a's last rule): a stored value compiled back out of the readout — an OBJECT node's
+ *  members minus `_tier`, an ARRAY node's dense list, a LEAF's literal. It exists because an answer handed straight back
+ *  to `write` is stored as ORDINARY DATA, `_tier` members and `value` wrappers included, so every row that writes back
+ *  what stood must unwrap first; this is that act and nothing else. */
+function unwrap(value: unknown): unknown {
+  const node = nodeOf(value)
+  const members = Object.keys(node).filter((key) => key !== '_tier')
+  const carried = node['value']
+  if (members.length === 1 && members[0] === 'value' && Array.isArray(carried)) return carried.map(unwrap)
+  if (members.length === 1 && members[0] === 'value' && (carried === null || typeof carried !== 'object')) return carried
+  const object: Record<string, unknown> = {}
+  for (const member of members) object[member] = unwrap(node[member])
+  return object
+}
+
 describe('a passing act answers the commit’s log, and the two arms are distinguishable (D-103)', () => {
   it('L-1 · a `data.write` at `[\'tabs\']` that TRIGGERS repairs answers `repaired:true`, and its `log` NAMES THE PAIR — the member and the derivation, both load-bearing', () => {
     const one = stand()
@@ -135,9 +161,14 @@ describe('a passing act answers the commit’s log, and the two arms are disting
     // the caller sent ACTIVE stands inactive, and the stamp the caller never sent stands on both rows.
     const record = one.surface.read({ path: ['tabs'] })
     if (record.status !== 'read') throw new Error(`the record was not readable: ${JSON.stringify(record)}`)
-    const value = record.value as Record<string, { active?: boolean; lastActiveAt?: string }>
-    expect(value['pane-b']?.active, 'the pair the log names deactivated the second active tab — the value that STANDS is not the value the caller sent').toBe(false)
-    expect(typeof value['pane-a']?.lastActiveAt, 'and a member the caller never supplied stands, written by the same repair').toBe('string')
+    // **THE ANSWER'S `value` IS THE NODE** (§2a; `D-134`): the record's members are INLINE and each is a node of its own, so
+    // a member is read off the record node and its literal off THAT member's node — never off a bare value the arm no longer
+    // carries, and never through a widened local view of the answer.
+    const node = nodeOf(record.value)
+    expect(node['_tier'], 'the record node names the tier the record stands at, which is the family\'s own — `file`').toBe('file')
+    expect(nodeOf(node['pane-b'])['_tier'], 'and every member is a node carrying its OWN tier, not its parent\'s').toBe('file')
+    expect(nodeOf(nodeOf(node['pane-b'])['active']).value, 'the pair the log names deactivated the second active tab — the value that STANDS is not the value the caller sent').toBe(false)
+    expect(typeof nodeOf(nodeOf(node['pane-a'])['lastActiveAt']).value, 'and a member the caller never supplied stands, written by the same repair').toBe('string')
 
     // THE ENTRY SHAPE IS THE PACKAGE'S OWN, FIVE MEMBERS AND NO SIXTH (`the declaration`'s `LogEntry`, its set closed).
     for (const entry of answer.log) {
@@ -153,7 +184,10 @@ describe('a passing act answers the commit’s log, and the two arms are disting
     const repairedArm = landedWrite(one.surface.write({ path: ['tabs'], value: twoActive }))
     const stood = one.surface.read({ path: ['tabs'] })
     if (stood.status !== 'read') throw new Error(`the record was not readable: ${JSON.stringify(stood)}`)
-    const clean = landedWrite(one.surface.write({ path: ['tabs'], value: stood.value }))
+    // **THE CLEAN ARM WRITES BACK WHAT STANDS, AND THAT IS THE UNWRAPPED RECORD** (§2a's last rule): handing the delivery's
+    // node straight to `write` would store `_tier` members as ORDINARY DATA — the declared consequence of the readout — so
+    // the reader unwraps first and the six pairs judge the record the store actually holds.
+    const clean = landedWrite(one.surface.write({ path: ['tabs'], value: unwrap(stood.value) }))
 
     expect(clean.repaired, 'nothing was repaired on this arm').toBe(false)
     // **`[]` IS NOT THIS ARM'S ANSWER** — the correction `D-102` gets wrong (`D-46`): the clean write over a store whose
@@ -182,8 +216,9 @@ describe('a passing act answers the commit’s log, and the two arms are disting
     const one = stand()
     // **A LITERAL ADDRESS CARRYING ONE PAIR** is what a delete needs to reach the store at all: the surface probes the
     // address first and answers the empty receipt where the probe finds a BRANCH (it asks for a literal, and every one
-    // of the app's five declared roots holds a whole value). So this row states its own fixture — one pair at an
-    // ordinary literal address — and says plainly that it is the row's and not the app's.
+    // of the crossings' declared roots holds a whole value — the set and its count are `declared-root.test.ts`'s, D-43).
+    // So this row states its own fixture — one pair at an ordinary literal address — and says plainly that it is the
+    // row's and not the app's.
     const store = one.store as unknown as {
       addConstraint: (declaration: unknown, body: unknown) => void
       write: (...positions: unknown[]) => { op: unknown }
@@ -208,8 +243,8 @@ describe('a passing act answers the commit’s log, and the two arms are disting
       'constraint-check', 'repair-run', 'constraint-check', 'commit',
     ])
     expect(repairIds(removed.log), 'and the repair entry names the pair').toEqual(['ledger-must-stand'])
-    expect(one.surface.read({ path: ['ledger'] }), 'the record the repair wrote STANDS where the delete left nothing — which is what `removed:true` beside `repaired:true` tells a caller').toEqual({
-      status: 'read', kind: 'branch', path: ['ledger'], value: { minted: true },
+    expect(one.surface.read({ path: ['ledger'] }), 'the record the repair wrote STANDS where the delete left nothing — which is what `removed:true` beside `repaired:true` tells a caller — and its `branch` answer is §2a\'s node').toEqual({
+      status: 'read', kind: 'branch', path: ['ledger'], value: { _tier: 'file', minted: { _tier: 'file', value: true } },
     })
 
     // **THE OTHER ARM, AND IT IS THE ONE THE APP'S OWN DECLARED ROOTS REACH**: a delete at a whole-value root is
@@ -324,7 +359,9 @@ describe('a passing act answers the commit’s log, and the two arms are disting
     // measured side by side rather than the refusal alone.
     const stood = one.surface.read({ path: ['panes'] })
     if (stood.status !== 'read') throw new Error(`the geometry was not readable: ${JSON.stringify(stood)}`)
-    const landed = landedWrite(one.surface.write({ path: ['panes'], tier: 'file', value: stood.value }))
+    // AND THE CONTROL'S VALUE IS THE UNWRAPPED FAMILY, for the reason `L-2` states: the pair judges a stored value, never a
+    // delivery's `_tier` members (§2a).
+    const landed = landedWrite(one.surface.write({ path: ['panes'], tier: 'file', value: unwrap(stood.value) }))
     expect(kinds(landed.log).slice(-1), 'the passing arm ends at the commit').toEqual(['commit'])
     expect(kinds(answer.log ?? []).includes('commit'), 'and the refused one reaches no commit at all').toBe(false)
   })
@@ -336,7 +373,7 @@ describe('a passing act answers the commit’s log, and the two arms are disting
     const one = stand()
     const own: ReadonlyArray<readonly [string, unknown]> = [
       ['malformed-arguments (a member outside the declared set)', one.surface.write({ path: ['panes'], value: 1, tier: 'file', extra: 1 })],
-      ['declared-tier (a declared root at a tier that is not the family\'s)', one.surface.write({ path: ['focus'], tier: 'file', value: { entries: [], activeId: null } })],
+      ['declared-tier (a declared root at a tier that is not the family\'s)', one.surface.write({ path: ['zones'], tier: 'file', value: {} })],
       ['volatile-path (a volatile spelling)', one.surface.write({ path: ['mem.x'], tier: 'mem', value: 1 })],
       ['root-not-writable (the empty address)', one.surface.write({ path: [], value: { whole: 1 } })],
       ['cursor-unknown (a cursor outside the window)', one.surface.journal({ cursor: 9_999 })],

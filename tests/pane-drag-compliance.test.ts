@@ -359,10 +359,9 @@ function clientHolding(panes: readonly unknown[], zones: readonly unknown[]): Vi
   client.adopt({
     status: 'committed',
     panes: panes as never,
-    focus: { entries: [], activeId: null },
     zones: zones as never,
     theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
-    source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
+    source: { panes: 'record', zones: 'record', theme: 'record' },
   })
   return client
 }
@@ -509,9 +508,11 @@ function crossingOf(key?: object): PaneCrossing {
       const held = family[id]!
       return { id, size: held.size, bounds: { min: held.bounds.min, max: held.bounds.max } }
     }),
-    focus: { entries: [], activeId: null },
-    // THE THIRD FAMILY (D-91): the reading carries all three, and this double drives the panes AND the zones while the
-    // mirror stays at its declared empty pair.
+    // **THE MIRROR IS NO LONGER A FAMILY OF THIS READING** (`D-142`, `E-12`): `['focus']` is deleted whole and
+    // `ViewCommittedReading` carries no `focus` member and no `source.focus`, so this reading carries the
+    // SURVIVING families and nothing else — the strictness `view-client.ts` states (member for member) is what
+    // makes a stale member here an excess-property error rather than a harmless extra.
+    // THE ZONE FAMILY (D-91): this double drives the panes AND the zones.
     zones: Object.keys(zones).map((id) => {
       const held = zones[id]!
       const record: { id: string; slot?: unknown; distance?: number; size?: number; display?: string } = { id }
@@ -522,7 +523,7 @@ function crossingOf(key?: object): PaneCrossing {
       return record
     }),
     theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
-    source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
+    source: { panes: 'record', zones: 'record', theme: 'record' },
   })
   const bridge = {
     read: async (): Promise<unknown> => reading(),
@@ -537,8 +538,10 @@ function crossingOf(key?: object): PaneCrossing {
       refill()
       return { status: 'committed' }
     },
-    commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
-    // **THE APPEARANCE ROUTE** (D-97): the bridge's fifth route, present so the member set matches the bridge's. This file
+    // **THE FOCUS ROUTE IS NOT ON THIS BRIDGE ANY MORE** (`D-142`, `E-12`): `ViewClientBridge` declares the four
+    // surviving routes (`read`, `commitPane`, `commitZones`, `commitTheme`) and the push, so a `commitFocus` member
+    // here would be an excess member on the very interface this literal is typed by.
+    // **THE APPEARANCE ROUTE** (D-97): present so the member set matches the bridge's. This file
     // drives no appearance act — the fixture's record stands at the placeholder, which names no attribute to apply.
     commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
     // **THE FAMILY IS COMPOSED AT THE CROSSING** (`composeZones`, D-91): the members supplied are written over what the
@@ -765,7 +768,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     // shape's members answer from an in-realm projection, and the composition still guards every turn that calls one — so
     // the term ("a hostile read supplier never throws out of a wiring turn") is driven at the members that hold it.
     const hostile = {
-      shape: () => ({ filled: true, panes: [], focus: { entries: [], activeId: null }, zones: [], theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }, source: { panes: 'default', focus: 'default', zones: 'default', theme: 'default' } }),
+      shape: () => ({ filled: true, panes: [], zones: [], theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }, source: { panes: 'default', zones: 'default', theme: 'default' } }),
       zoneOf(): never { throw new Error('boom') },
       paneSizeOf(): never { throw new Error('boom') },
       paneBoundsOf(): never { throw new Error('boom') },
@@ -801,7 +804,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     // AND THE GUARD IS NOT A BLANKET OVER THE PAIR: a shape that ANSWERS is still believed, so the two `expect`s above
     // cannot be satisfied by a read that stopped reading. The control answers figures NO default could carry.
     const answering = {
-      shape: () => ({ filled: true, panes: [], focus: { entries: [], activeId: null }, zones: [], theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }, source: { panes: 'default', focus: 'default', zones: 'default', theme: 'default' } }),
+      shape: () => ({ filled: true, panes: [], zones: [], theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }, source: { panes: 'default', zones: 'default', theme: 'default' } }),
       zoneOf: () => null,
       paneSizeOf: () => 250,
       paneBoundsOf: () => ({ min: 10, max: 20 }),

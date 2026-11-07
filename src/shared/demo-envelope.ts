@@ -68,6 +68,22 @@ const GUTTER_DRAG_BODY = `function (ctx) {
 // graph and nowhere else (`§1` item 6, `P-TC-4`): a re-boot reconstructs THIS value.
 const THEME_INITIAL_TOKEN = 'dark'
 
+// **THE TWO CONTROLS' OWN TOKENS, DECLARED ONCE AND REFERENCED — NOT RE-QUOTED IN THE CARD** (`D-126`). Each
+// `theme-set` control now authors its token as `props.value`, because on the DOM path THE CALLER IS THE BROWSER AND A
+// BROWSER SUPPLIES NO ARGUMENT: `HTMLButtonElement.value` is `''` unless the control authors one, so a real click
+// handed the handler `''` and the carrier recorded the EMPTY setting while the store was never asked at all. The
+// handler may not repair that itself — `theme-control.md` §2.3 item 2 FAILS a body that substitutes a default for an
+// absent argument, and `''` is itself a token outside the declared closed block (§2.2(D)) — so the token has to come
+// from the control as DATA, which is what `props.value` is: the runtime's own DOM bridge reads exactly it
+// (`src/renderer/runtime.ts`: `'value' in target ? [String(target.value)] : []`).
+//
+// **AND IT IS SPELLED BY REFERENCE SO THE CARD'S VOCABULARY DOES NOT MOVE.** `§3.4` R-6 and `§3.2` F-1 read the card
+// region's QUOTED literals and require them to be EXACTLY the two handler bodies' — a second `'dark'` in the card
+// would red both. An identifier is not a quoted literal, so the pair stays spelled once here and once in each body,
+// and the closed two-member block stays closed at two.
+const THEME_DARK_TOKEN = 'dark'
+const THEME_LIGHT_TOKEN = 'light'
+
 // Echo: args[0] (the synthetic input event's value) into the echo-out node.
 const ECHO_BODY = `function (ctx, value) {
   const all = ctx.tree.allNodes();
@@ -332,7 +348,10 @@ const OVERLAY_INITIAL_STATE = 'closed'
 
 /** **THE AUTHORED VERB TOKENS — the caller's verbs, spelled ONCE, as DATA.** `overlay.ts` owns no verb word and
  *  no attribute name: both are the CONSUMER's, and this file is where the demo spells them. */
-const OVERLAY_VERB_TOGGLE = 'toggle'
+/** **`open` IS NOW A VERB THE ENVELOPE WRITES AND `toggle` IS NOT** (`D-131`): the opener resolves the state itself and
+ *  asks for a TARGET, so no authored body writes a toggle word any more. The mechanism keeps `toggle` as a member of its
+ *  closed verb set (`overlay.ts`) — it is simply not what this surface sends. */
+const OVERLAY_VERB_OPEN = 'open'
 const OVERLAY_VERB_CLOSE = 'close'
 const OVERLAY_VERB_ESCAPE = 'escape'
 
@@ -378,6 +397,29 @@ const overlayPaneStyle: Record<string, string> = { display: 'block' }
  *  uses.** It writes the CALLER'S verb token into the authored state node and interprets nothing: no transition,
  *  no state word of its own, no attribute. The WIRING is what transitions (`overlayTransition`) and what applies
  *  (`overlayInertDeclaration`); this body records the act and nothing else. */
+/** **THE TOGGLE BODY READS THE STATE AND WRITES THE TARGET — IT DOES NOT REPEAT A VERB** (`D-131`, `D-126`'s finding
+ *  `F2`). The opener's handler used to write the literal `toggle` on every click, so an agent's SECOND
+ *  `provident.dispatch` at that control found the carrier holding the word it already held, and the wiring's `changed`
+ *  guard — rightly — refused to ask the store the same question twice. The store's pane was left open and the act was
+ *  silently dropped. **The carrier is kept TRUTHFUL BY THE DELIVERY** (the consumer writes the store's own word into it on
+ *  every delivery), so reading it is reading the PANE'S STATE, and the body writes the state the click ASKS FOR: `close`
+ *  when the pane is up and `open` when it is not. The carrier therefore MOVES on every click that would change something,
+ *  and a click that would change nothing reads the same word twice and still writes it — the guard stays the only judge. */
+function overlayToggleBody(): string {
+  return `function (ctx) {
+  const all = ctx.tree.allNodes();
+  const node = all.find(function (n) { return n && n.props && n.props.id === '${OVERLAY_STATE_ID}'; });
+  if (!node) return;
+  let held = '';
+  try {
+    const states = ctx.tree.getState(node.id);
+    const first = states && states.length ? states[0] : null;
+    held = first && first.content != null ? String(first.content) : '';
+  } catch (ignored) { return; }
+  try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: held === 'open' ? '${OVERLAY_VERB_CLOSE}' : '${OVERLAY_VERB_OPEN}' }]); } catch (e) { void e; }
+}`
+}
+
 function overlayVerbBody(verb: string): string {
   return `function (ctx) {
   const all = ctx.tree.allNodes();
@@ -548,6 +590,7 @@ export function demoEnvelope() {
                   {
                     type: 'button',
                     css: { id: 'theme-dark', classes: ['btn'] },
+                    props: { value: THEME_DARK_TOKEN },
                     content: 'Dark',
                     handlers: [
                       {
@@ -569,6 +612,7 @@ export function demoEnvelope() {
                   {
                     type: 'button',
                     css: { id: 'theme-light', classes: ['btn'] },
+                    props: { value: THEME_LIGHT_TOKEN },
                     content: 'Light',
                     handlers: [
                       {
@@ -626,7 +670,7 @@ export function demoEnvelope() {
                 css: { id: OVERLAY_OPEN_ID, classes: ['btn', 'overlay-open'] },
                 props: { id: OVERLAY_OPEN_ID },
                 content: 'Security & settings…',
-                handlers: [{ name: 'overlay-open', event: 'click', body: overlayVerbBody(OVERLAY_VERB_TOGGLE) }],
+                handlers: [{ name: 'overlay-open', event: 'click', body: overlayToggleBody() }],
               },
             ],
           },
@@ -679,9 +723,11 @@ export function demoEnvelope() {
                   },
                 ],
               },
-              // THE STATE CARRIER — the ONE graph-readable node carrying the caller's verb token, the
-              // `theme-setting` precedent. It is the node the wiring reads; it renders as its own word, as that
-              // node does.
+              // THE STATE CARRIER — the ONE graph-readable node carrying A WORD ABOUT THE PANE, the `theme-setting`
+              // precedent. **IT HAS TWO AUTHORS AND THE SPLIT IS THE DESIGN** (`D-131`): an ACT's body writes the state
+              // the operator ASKED FOR (`open`/`close`) and the DELIVERY writes the state the STORE HOLDS
+              // (`open`/`closed`), so between the two the node always reads what was last true and the toggle body can
+              // resolve the next target from it. It renders as its own word, as that node does.
               {
                 type: 'div',
                 css: { id: OVERLAY_STATE_ID, classes: ['overlay-state'] },

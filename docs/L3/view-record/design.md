@@ -1,131 +1,118 @@
 # L3 — `view-record`: the module design
 
-- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — rev 1 filed the crossing's second
-  declaration set (D-87); rev 2 added the THIRD FAMILY (D-91) and corrected the renderer's read path (D-89); rev 3 stated the
-  wiring's own state — all six drag reads are the shape's, `tierRead` and the `temp.drag` registration deleted, the preview
-  closure state (D-92); rev 4 added the FOURTH FAMILY, the APPEARANCE RECORD (D-97): a pair with a SECOND ARM no other pair
-  has (staleness over a derivation), a route that writes the caller's ACT and never a resolution; **rev 5 moves that family
-  from `mem` to `file`** on the user's ruling that appearance preferences are durable (D-98); **rev 6 gives the three earlier families a VALUE ARM** — a
-  refusal with no repair, judged at the node the pass is handed, so §7's owed clause is discharged (D-105). No earlier rule is withdrawn.
-- **Inputs:** `docs/L2/view-record/interface.md` rev 3 §0–§5; D-82 (the four clauses), D-83 (a creation-instant body's
-  route and its address), D-84 (a `mem` address's only lawful source), D-86 (`1.9.1`'s landing-arm save), D-89 (the landed
-  swap), D-90 (the zone family's homeless enumeration), D-96 (the appearance mechanism's ruling), D-97 (this family), D-98 (its durable tier),
-  D-71/D-72/D-73 (the listener's handle, the repair's credit, the repair's commit), D-45 (signatures are L4's contract).
-- **Ceiling:** 130 lines · **Status:** structure and guardrails. Every declared name and its exact text is L4's to
-  transcribe; this file states what each piece must be and why, never a transcript of it.
+- **Layer:** L3 · **Unit:** `view-record` · **Branch:** `strata` (D-6) · **Rev:** 8 — a CURRENCY pass at the landed tree: the page's previous revision stated the `focus` family's removal as an instruction to L4, and rev 8 states it as the bytes that carry it, each by site and never by offset (D-41, D-1, D-143). **THE `focus` FAMILY IS GONE WHOLE** on `D-142`'s ruling: the address table, the declaration set, `read()`'s answer and every write path are THREE families, and every symbol the family took with it is named in §2 with the site its absence is measured at (D-142, D-101, D-9). No earlier rule is withdrawn.
+- **Inputs:** `docs/L2/view-record/interface.md` rev 6 — this module's own interface, re-grained to three roots, a four-route-plus-push member (the read and the three commits) and an answer carrying no `focus` member — read against the landed `src/` and `D-142`, `D-143`, `D-101`, `D-14`, `D-140`, `D-141`, `D-105`, `D-97`, `D-98`, `D-91`, `D-87`, `D-76`, `D-129`, `D-18`, `D-26`, `D-43`, `D-45` (signatures were L4's contract and are the tree's now).
+- **Ceiling:** 150 lines · **Status:** structure and guardrails over a LANDED unit. Every name this page states is the tree's own and is cited at its site; this file states what each piece IS and why, never a transcript of it (D-45).
 
 ## 1. The structure — five files, one owner each
 
+Three families, three declarations, five routes: the module is the crossing's second declaration set over the APP'S ONE STORE, and it constructs nothing, opens no file and names the package nowhere (D-87, D-91, D-97, D-142).
+
 | File | Holds | Why it is separate |
 |---|---|---|
-| `src/main/view-record/index.ts` | the record over the APP'S ONE STORE: **four** address constants, **four** batched declarations and **six** routes — no instance, no file (D-87, D-91, D-97) — and the ONLY site in the tree that calls the appearance mechanism | every write is one whole family at its own root, so the surface holds no store verb and `main.ts` holds no address |
-| `src/main/view-surface/index.ts` | the surface module: the one reference to the record, the one subscription over all four roots, and the shape arms | the record is held once at boot, and this module is the only file a channel handler reaches it through (the `tabs-surface` arrangement) |
-| `src/shared/view-channels.ts` | the **six** channel constants, single-sourced | a name spelled in two files is a rename that half-lands (`tabs-channels.ts`'s precedent) |
-| `src/shared/view-shape.ts` | the four families' vocabulary, the measured pane defaults, the appearance placeholder and the pure per-pane and per-zone derivations — ONE spelling for both realms | two realm-local copies would be two answers to "what is a zone" (D-88's `D-73` rule) |
-| `src/renderer/view-client.ts` | the shape the RENDERER reads: filled by deliveries, read synchronously, written through the routes | it holds no address space, no persistence, no constraint and no instance — a projection, never a store (D-78's ruling 3) |
+| `src/main/view-record/index.ts` | the record over the app's one store: **three** address constants, **three** batched declarations and **five** routes (`read`, `commitPane`, `commitZones`, `commitTheme`, `subscribe`) — no instance, no file (D-87, D-91, D-97) — and the ONLY site in the tree that calls the appearance mechanism | every write is one whole family at its own root, so the surface holds no store verb and `main.ts` holds no address (D-142) |
+| `src/main/view-surface/index.ts` | the surface module: the one reference to the record, the one subscription over the three surviving roots, and the shape arms | the record is held once at boot, and this module is the only file a channel handler reaches it through (D-87) |
+| `src/shared/view-channels.ts` | the **five** channel constants, single-sourced — the constants block exports `IPC_VIEW_READ`, `IPC_VIEW_PANE_COMMIT`, `IPC_VIEW_ZONES_COMMIT`, `IPC_VIEW_THEME_COMMIT` and `IPC_VIEW_CHANGED` | a name spelled in two files is a rename that half-lands; **this file's header reads "the view record's FIVE channel names" and "Four carry a request and have an `ipcMain.handle` site"** (D-87, D-41) |
+| `src/shared/view-shape.ts` | the three families' vocabulary, the measured pane defaults, the appearance placeholder and the pure per-pane and per-zone derivations — ONE spelling for both realms | two realm-local copies would be two answers to "what is a zone" (D-88, D-91) |
+| `src/renderer/view-client.ts` | the shape the RENDERER reads: filled by deliveries, read synchronously, written through the routes | it holds no address space, no persistence, no constraint and no instance — a projection, never a store (D-89, D-137) |
 
-**One construction site, and it is the boot's**: no file here constructs an instance, and none spells a `provident-*.json` name. **The `src/main/`
-module also names the `provident-storeroom` PACKAGE NOWHERE** — its handle type is `TabsRecordStore`'s, re-exported as `ViewRecordStore` — because
-`tests/e2e/central-data/scenarios.test.ts` `S-9` pins the importing FILES at exactly three and a fourth import would red a gating row (D-87). The
-renderer side imports neither the package nor a main-process module: its vocabulary is `shared/`'s and its bridge is narrowed structurally.
+## 2. The three addresses, and the family that left
 
-## 2. The four address constants, and the tiers that are named once
+`VIEW_PANES_ADDRESS` (`file`), `VIEW_ZONES_ADDRESS` (`mem`) and `VIEW_THEME_ADDRESS` (`file`), each ONE whole value at its own root — the three constants the record's address block exports; `ViewTier` is their three tier constants' union, and no read, write or repair spells a tier literal (D-87, D-91, D-97, D-98, D-105).
 
-`VIEW_PANES_ADDRESS = ['panes']` (`file`), `VIEW_FOCUS_ADDRESS = ['focus']` (`mem`), `VIEW_ZONES_ADDRESS = ['zones']` (`mem`) and `VIEW_THEME_ADDRESS
-= ['theme']` (`file`, D-98). **No root is a member of the crossing's reserved projection set** (`window · tabs · layout · settings · tracked ·
-modules`), so no `Y-2` projection can collide with any of them.
+| Address | Tier constant | Declaration id | Holds |
+|---|---|---|---|
+| `['panes']` | `PANES_TIER` = `file` | `VIEW_PANES_MUST_STAND_ID` (`panes-must-stand`) | one member per pane id, each `{ size, bounds }` (D-87) |
+| `['zones']` | `ZONES_TIER` = `mem` | `VIEW_ZONES_MUST_STAND_ID` (`zones-must-stand`) | one member per zone id, four independently optional members (D-91) |
+| `['theme']` | `THEME_TIER` = `file` | `VIEW_THEME_MUST_STAND_ID` (`theme-must-stand`) | one whole record `{ token?, attribute?, declaration }` (D-97, D-98) |
 
-**Each family's tier is named ONCE, in a constant, and the module's tier TYPE is derived from those constants** — not re-spelled from the package's
-`Tier` — so a fourth family ADDS its constant rather than widening a table, and no read, write or repair can half-move a family to the other tier.
-**THE APPEARANCE FAMILY TOOK THAT ROUTE AT `D-97` AND ITS TIER MOVED AT `D-98`**: `D-97` set it to `mem` on two grounds — the app then persisted no appearance setting, and a durable appearance
-preference is what the control's own prohibition row denies — and **the user's ruling "Appearance preferences should be durable" answers the second, so the tier is `file`**, the prohibition superseded
-by pointer. `file`-tier registration repairs are SAVED by the installed package and `mem` ones are not (measured), so the creation placeholder is a durable write and a standing legal record survives a
-restart. **THE ZONE FAMILY'S TIER IS THE MEASUREMENT THAT DECIDED ITS BOOT SOURCE** (D-91): the frozen store's four members stood at `mem` and nowhere else — no `file` copy of any zone member exists
-in the tree — so there is no durable image to inherit, and a repair at the creation instant is the family's only lawful source (D-84).
+**THE FOURTH ROOT IS GONE, AND EVERY SYMBOL IS NAMED WITH THE SITE ITS ABSENCE IS MEASURED AT** — a family is not one file, and an absence stated without a site is an absence a reader has to re-measure (D-142, D-9, D-101, D-41).
 
-**NO ROOT IS NESTED, AND THAT IS THE ONE THING THIS MODULE'S ADDRESS SHAPE OWES THE MEASUREMENT** (D-87, re-driven at the zone root): a nested write
-does not create its parent (`AddressNotFound` over a fresh store), and a `file` root answers `TierNotFound` at `mem`. A parent branch would need a
-third declaration whose own body is handed `undefined` at the registration instant, and would still not carry two tiers.
+| Deleted symbol (old site) | What it was | The landed reading — where the absence is measured |
+|---|---|---|
+| `VIEW_FOCUS_ADDRESS` (`['focus']`, `src/main/view-record/index.ts`) | the family's root constant | gone: the address block exports three roots, and `crossing.test.ts`'s batch-and-roots row asserts `focus@mem` is not published by `viewDeclaredRoots()` (D-142) |
+| `FOCUS_TIER` (same file) | the family's one tier spelling, `mem` | gone: the tier-constant block holds `PANES_TIER`/`ZONES_TIER`/`THEME_TIER` and `ViewTier` is their union, and the same battery's `THE ENUMERATION` row asserts `FOCUS_TIER` absent over comment-elided bytes (D-87, D-142) |
+| `VIEW_FOCUS_MUST_STAND_ID` (`focus-must-stand`) | the pair's id in the boot's one namespace | gone: the id block exports three, and `crossing.test.ts`'s batch row asserts `focus-must-stand` is not among `viewConstraintDeclarations()`' ids (D-71, D-142) |
+| `focusMustStand(getStore)` with `repairMirror(getStore)` | the family's existence-and-value arm and its repair | gone: the declaration batch names `panesMustStand`, `zonesMustStand` and `themeMustStand` only, and `repairTheme` is the one repair writing the appearance value (D-105, D-142) |
+| the `viewDeclaredRoots()` entry `{ address: VIEW_FOCUS_ADDRESS, tier: FOCUS_TIER }` | the guard's telling | gone: `viewDeclaredRoots()` returns three `{address, tier}` pairs, and `tests/integration/central-data/declared-root.test.ts`'s set row is the comparator between the two lists (D-101, D-142) |
+| the `viewConstraintDeclarations` row naming that pair | one of four declared entries | gone: the batch returns three entries, asserted by presence and never by a count restated here (D-43, D-142) |
+| `mirrorFrom(whole)` | the family's one parse, dropping a dangling `activeId` | gone, and `focusEntryOf(held)` with it: the admission block holds `panesFrom`, `zonesFrom` and `themeFrom` — one parse per surviving family (D-142, D-87) |
+| `mirrorOf(store)` | the family's read and its declared empty arm | gone: the read block holds `panesOf`, `zonesOf` and `themeOf`, which are the three `reading()` binds (D-142) |
+| `composeMirror(mirror)` | the absent active spelled as ABSENCE | gone: `composePanes`, `composeZones` and `composeTheme` are the three composers and none spells an active (D-140, D-142) |
+| `ViewFocusReading`, `ViewRecordReading.focus`, `source.focus` | the reading's fourth member | gone: `ViewRecordReading`, the surface's `ViewReadAnswer` and the client's `ViewCommittedReading` each declare three families and three `source` words (D-142, L2 §3) |
+| `commitFocus(mirror)` on `ViewRecord`, with `FOCUS_SHAPE_REASON`, `FOCUS_SHAPE_MESSAGE`, `DANGLING_ACTIVE_REASON`, `DANGLING_ACTIVE_MESSAGE` | the record's fourth route and its two tokens | gone: `ViewRecord` declares five members, and the reason-token block holds the six tokens of the three survivors (D-142, D-9) |
+| `comparableId`, `entryIdsOf`, `mirrorAdmitAt`, `FOCUS_UNUSABLE_MESSAGE` | the family's value arm (D-105) | gone all four; `nodeOf` and `writeInstant` stay because the panes and zones value arms read them, and `writeWholeValue`/`repairAnswer` because the three repairs write through them — the value-arm block and `panesAdmitAt`/`zonesAdmitAt` with their node admissions (D-105) |
+| `subscribe`'s address list | four addresses in one loop | three: the loop in `createViewRecord`'s `subscribe` ranges over `[VIEW_PANES_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]`, and the handle spelling, the containment and the withdrawal did not move (D-71, D-137) |
+| `commitFocus` on `src/main/view-surface/index.ts`, its `FOCUS_SHAPE_*` import specifiers, and `ViewReadAnswer.focus` with `source.focus` | the surface's shape arm, its route, and the read answer it spells INLINE | gone: `ViewSurface` declares `read`, `commitPane`, `commitZones`, `commitTheme`, `attach` and `detach`, `ViewReadAnswer` carries three families and three `source` words, and `crossing.test.ts`'s one-edit row asserts `commitFocus` absent from that file (D-14, D-112) |
+| `IPC_VIEW_FOCUS_COMMIT` (`src/shared/view-channels.ts`) | one of six channel constants | **gone: the constants block exports FIVE names and that file's header reads "the view record's FIVE channel names" / "Four carry a request"** — five published, four carrying a request; `crossing.test.ts`'s one-edit row asserts `focus` absent from the comment-elided bytes and its lockstep row pins the five names (D-41, D-142) |
+| `commitFocus`, `focusState()`, `ViewFocusState`, `entryOf` on `src/renderer/view-client.ts`, with the `focus` and `source.focus` members of `ViewCommittedReading`, `ViewShape`, `emptyShape`, `committedOrDivergence` and `adopt` | the client's route and every focus read | gone: `ViewClient` holds the three routes beside `fill`/`subscribe`/`adopt`/`reading`/`writeOutcome`, `ViewClientBridge` the four request routes beside `onChanged`, `routeOf`'s name union is the four request names, and `send`/`outcomeOf`/`ViewWriteOutcome.route` are `'pane' \| 'zone' \| 'theme'` (D-14, D-142) |
+| `ViewFocusEntry`, `ViewFocusMirror` (`src/shared/view-shape.ts`) | the family's vocabulary | gone, with every specifier of them: that file declares `ViewPaneGeometry`, `ViewZone`, `ViewThemeRecord`, `ViewThemeDeclaration`, the placeholder and the derivations, and neither the client's import block nor the record's import and re-export blocks name the family — a type carries no `tsc` flag, so the specifier is the leftover a deletion must not leave (D-129, D-142) |
+| the module's own prose census | counts and precedents the family owned | re-grained at five sites — the record's header ("THREE ROOTS …"), both id docblocks ("this module's three"), the declaration batch's docblock ("THREE ROWS STAND, AND THE FOURTH LEFT WITH ITS FAMILY") and the handle block ("the fourth that stood here left with its family") — **and two rank spellings were not**: `view-shape.ts`'s `ViewThemeRecord` docblock still reads "THE FOURTH FAMILY" and the record's read block "THE FOUR FAMILIES' ONE READ EACH", comment-only and so no symbol a reader can reach for (D-26, D-142, D-9) |
 
-## 3. The shapes, and the three admissions
+## 3. The same-edit rule, stated as the guard's own arms
 
-`ViewPaneGeometry` is one pane's admitted geometry; `ViewFocusEntry` is the focus model's `FocusEntry` **narrowed to what the store's boundary admits
-and what `===` compares by value**; `ViewFocusMirror` is `FocusState` with the absent active spelled as absence; and `ViewZone` is one zone's admitted
-record — **`slot` opaque, and `distance`/`size`/`display` individually OPTIONAL**, which is measured rather than lenient: the tree's own writers seed
-`size`+`display` for three zones and `slot` alone for another, and its two zone batteries write `slot`+`distance` with neither of the other two.
+The declaration and its `viewDeclaredRoots()` entry are ONE hunk, and the reason is the guard's shape rather than tidiness: the `data.*` surface's `declaredTierLedger` keys on the address's ROOT, answers `declared-tier` only where a root it was HANDED disagrees with the call's tier, and otherwise returns no refusal at all — so an undeclared root is ADMITTED to the store verb and judged by the store's own constraints and nothing else (D-101, D-105). **THE PAIR LEFT AS ONE HUNK** — `D-143` records it as one edit of the record module — and three pairs stand where four did.
 
-**ONE PARSE PER FAMILY, FROM A VALUE AND NEVER FROM A HANDLE** (D-83's `viewFrom`, applied here): `panesFrom`, `mirrorFrom` and `zonesFrom` admit member by member and `null` an unreadable family. A
-member the value names and this parse cannot admit is **dropped** — and a dropped mirror entry **takes a dangling `activeId` with it**, so the read can never answer a mirror the write route would
-refuse. **A record carrying no admissible member is still a ZONE** (`paneOf` cannot admit that state because a pane's `size` and `bounds` are required; a zone's are not), so naming a zone and storing
-nothing about it is a state the family holds.
+- **An entry outliving its declaration** would hand the guard `'focus' → 'mem'` while no pair stands at that address, so a `file` write there would be refused `declared-tier` against a tier belonging to a family that is gone — the guard refusing where no declaration stands; nothing stands there now, and `declared-root.test.ts`'s set row is what refuses the day one list gains an entry the other does not (D-101, D-142).
+- **A declaration outliving its entry** would leave the family standing undeclared, and the guard's sentence would have no root to name — the wrong-tier shadow `D-101` measured returning through the one door the entry exists to close; the batch and the root list name the same three, so the door is shut (D-101, D-142).
+- **They were one edit of one file**, so the hunk was one hunk: the address constant, the tier constant, the id, the body, its repair and the entry left together, and the two lists are re-read as a pair by `crossing.test.ts`'s presence rows and `declared-root.test.ts`'s set row (D-142, D-14).
+- **The deleted address is measured at the guard's admitting arm**: a `data.write` at `['focus']` reaches the store verb because no crossing declares anything there — the arm `tests/e2e/focus-retirement/`'s `F-4` drives (D-142, D-101).
 
-**AND THE APPEARANCE RECORD IS THREE MEMBERS WITH ONE DERIVED ONE** (D-97): `token` and `attribute` are the pair the act carried and `declaration` is
-the mechanism's own answer for it — `{name, value, removal}` — so the record is SELF-DESCRIBING and the pair below judges exactly that agreement.
-`themeFrom` requires the declaration and DEFAULTS NOTHING: a value carrying no readable `{value, removal}` pair is not this family and answers the
-declared placeholder through the read's default arm, never a substituted one.
+## 4. `read()`'s answer, as landed
 
-**THE BOUNDARY'S DOMAIN IS SPELLED ONCE** (`isBoundary`): the crossing carries strings, booleans, finite numbers, plain objects and arrays and
-**refuses `null` and `undefined`** (measured: `ValueRefusedAtBoundary`). It is used where a value is opaque to this module but not to the store — an
-entry's `target`, a zone's `slot` — and it is why every `null` member of the appearance record (a setting nothing has named, an attribute no caller
-has held, a declaration's `name` at the placeholder) is written as ABSENCE by `composeTheme`.
+`read()` answers `{ status: 'committed'; panes; zones; theme; source: { panes; zones; theme } }` — `reading()` in `createViewRecord` is the body — and the three families' admitted values plus one `source` word per family, `'record'` or `'default'`, are the whole answer: the word names a real difference, never a placeholder substituted at a read and called a record (D-84, D-87, D-142).
 
-## 4. The four declarations, and the repair's two routes
+- **No `focus` member survives on either side of the wire**: `ViewRecordReading`, the surface's `ViewReadAnswer`, the client's `ViewCommittedReading`, its `ViewShape` and the cold shape `emptyShape` starts from carry the same three members and no fourth (D-142, L2 §3).
+- **The client's parse requires all three**: `committedOrDivergence` walks panes → zones → theme → source and refuses an answer it cannot state, which is the crossing's own admission applied on this side of the boundary; a fourth member is simply not consulted, so an answer still carrying a mirror is not a shape this design declares (D-89, D-142).
+- **The read is total, with no refused arm and no `repaired` member** — a measurement, not an omission: a read that misses answers the declared arm and a refused read is caught at the same place, and no route here can produce the difference a `repaired` member would report (D-84, D-70, D-105).
+- `paneGeometryIn(panes, id)` and `zoneIn(zones, id)` stay the pure derivations over one reading, with their differing missing arms — the measured default geometry, and `null` (D-87, D-91).
 
-`panes-must-stand`, `focus-must-stand`, `zones-must-stand` and `theme-must-stand`, gathered by `viewConstraintDeclarations(getStore)` for the boot's
-batch. **All four bodies judge `context.value` and none is wrapped by a null-store guard** — `tabsMustStand`'s shape, for the same measured reason:
-the boot binds its holder only after `createProfileStore` returns, so a handle-reading body would abstain at the exact instant it is the only one that
-can act.
+## 5. The three declarations, and the repair's two routes
 
-**THE ZONE FAMILY'S PLACEHOLDER IS THE ONE THAT NAMES NO ZONE** (`{}`), and that is the whole of the pair's design: the family has no default value
-anywhere in the tree, so a repair minting a geometry would make the repair and the read two authorities over one question, while `{}` answers every
-zone exactly as the absent address answered it (D-91).
+`panes-must-stand`, `zones-must-stand` and `theme-must-stand`, gathered by `viewConstraintDeclarations(getStore)` for the boot's ONE batch; each body judges `context.value` and none is wrapped by a null-store guard, because the boot binds its holder only after `createProfileStore` returns (D-65, D-87, D-91, D-97).
 
-**EACH OF THE THREE OLDER BODIES HAS A SECOND ARM, AND IT IS A REFUSAL — NO REPAIR** (`D-105`). `panesAdmitAt`/`paneNodeAdmits`/`boundsAdmit`, `mirrorAdmitAt`/`entryIdsOf`/`comparableId` and
-`zonesAdmitAt`/`zoneNodeAdmits`/`zoneMemberAdmits` judge the node the pass is handed against the SAME admission the read uses (`paneOf`, `focusEntryOf`/`mirrorFrom`, `zoneOf`), so no second answer to "what
-is legal" exists; `nodeOf` subtracts the family's root from `context.address` — measured: a pass is asked at the WRITE's own address, so a write at `['panes','pane-a']` is judged as that member and not as
-the family — and `writeInstant` reads the instant off the same context (`tier` is `null` at a registration and set at a write). **The arms are refusals because a standing value is not missing data**: the
-existence arm's placeholder would destroy what the caller had, while the store's own rollback leaves it exactly as it stood. **And the registration instant answers `true`**, measured: the unrepairable arm
-there refuses the CONSTRUCTION (`ConstraintRefusedAtRegistration`), so a corrupt value in the profile's bytes would make the app unable to start.
+- **Existence, repaired with a placeholder, per family**: the constraint bodies answer their repairs — `panesMustStand`→`repairPanes`, `zonesMustStand`→`repairZones` — and `repairTheme` is the appearance family's; each writes one whole legal value — the measured default pane, the family that names no zone (`{}`) and the mechanism's answer for the absent pair — through the module's one repair-write path, `writeWholeValue` (D-87, D-91, D-97).
+- **A second arm that is a REFUSAL with no repair, for panes and zones**: `panesAdmitAt`/`paneNodeAdmits`/`boundsAdmit` and `zonesAdmitAt`/`zoneNodeAdmits`/`zoneMemberAdmits` judge the node the pass is handed against the SAME admission the read uses, and the registration instant `writeInstant` answers `true` because a refusal there refuses the construction (D-105).
+- **`theme-must-stand`'s staleness arm is that family's whole reason**: `themeMustStand` derives the record from its OWN two members through `derivedTheme`, compares structurally with `sameThemeValue` (key order never consulted — the crossing normalises it), and repairs through `repairTheme`; it is the tree's only call of `resolveTheme`/`applyThemeDeclaration` (D-97, D-98).
+- **The landing arm is reachable and implemented**: a `provident.data.delete` at any root is a client act on the same instance, so a deleted family is repaired inside its own commit and answers one notification — `crossing.test.ts`'s landing-instant row drives it (D-79, D-80, D-105).
 
-**ONE REPAIR-WRITE PATH, AND ITS BRANCH IS THE RECORD'S OWN `write` MEMBER, NEVER THE INSTANT'S NAME**: a registration record carries a `write`
-function and takes the store's **three** positions with no fourth (supplying one is a `TypeError` before any store act); a landing record carries no
-`write` and its commit **must** be named at `write`'s **fourth**, which `writeJoinedAt`'s required second position makes an arity error to omit. **All
-arms answer through `repairAnswer`** — the credited arm's one constructor (D-72) — and the failed arm is stated, never fallen into.
+## 6. What is structurally untouched
 
-**`theme-must-stand` HAS A SECOND ARM AND IT IS THE ONE THIS FAMILY EXISTS FOR** (D-97). Its first arm is the other three's — no plain record,
-repaired to the placeholder, which is the mechanism's answer for `(null, null)` and therefore the value no renderer can apply. **Its second is
-STALENESS**: a record that stands but whose carried declaration is not the one the mechanism would produce for the setting and the attribute it
-carries is INTERNALLY CONTRADICTORY — it names a resolution for a token it no longer carries — so the pair answers `stale-theme` and its repair
-re-derives from the value's OWN two members. **That is what makes the resolution a REPAIR's product rather than a boot's**, and it is why the module
-holds the tree's ONLY call of `resolveTheme`/`applyThemeDeclaration`: one derivation (`derivedTheme`), one composer (`composeTheme`), and a STRUCTURAL
-comparison (`sameThemeValue`) because the crossing normalises key order and a serialisation comparison would report every legal record stale
-(measured). **THE RULE ABOVE IS NOT WIDENED BY IT**: the pair still judges ONE whole value's legality, and the derived member is not a MEMBER
-judgement but the declaration's whole subject. **THE LANDING ARM IS REACHABLE AND THEREFORE IMPLEMENTED RATHER THAN ASSUMED**: a
-`provident.data.delete` at any root is a client act on the same instance (D-79/D-80), so a deleted family is repaired inside its own commit, answering
-one notification and not two — measured at each of the three earlier roots, and at the appearance root the ROUTE's own write is a landing write
-(`TH-3` of this family's battery). This module's own routes cannot produce the arm for the other three, which is why the answer carries no
-`repaired` member.
+- **The appearance family's constraint-repair product and its `file` tier**: the route carries the caller's ACT and never a declaration, and no consumer computes one (D-97, D-98).
+- **The zones family as built**: its address and `mem` tier, its pair, its route, `commitZones`' composition over what stands (`composeZones`), and `zoneOf`'s four independently optional members (D-91).
+- **The panes family**: the measured default family, `panes-must-stand` and `paneGeometryIn`'s default arm (D-87).
+- **The three survivors' tier constants and the union derived from them** (D-105), and **`isBoundary`**, which stayed because the zone family's `slot` still needs it — `zoneOf`'s slot member, `zoneNodeAdmits` and `zoneMemberAdmits` read it (D-91).
+- **The creation-instant pair per family** and the boot's ONE `createProfileStore` batch, whose ids share one namespace with the tab record's own and whose listener handles carry a `view-record:` prefix no constraint id has (`handleFor`) (D-71, D-87, D-97).
+- **The subscription and the push**: one listener per surviving root, and a delivery carrying a signal and no value, so the consumer's only correct answer is a re-read (D-137).
 
-## 5. Every write path, enumerated
+## 7. Pseudocode — every body that landed or left
 
-Eight, and there is no ninth: `commitPane`, `commitFocus`, `commitZones` and `commitTheme` (an IPC route — a UI act each; the appearance route writes
-the caller's PAIR and composes no declaration), and the four creation-instant repairs (a constraint repair each, and the landing arm the engine asks
-through the same helper). **A READ WRITES NOTHING**: a family that misses answers its declared empty arm and the repair that makes it stand is the
-CREATION instant's — the arm clause 4 of D-82 forbids a re-derivation on, measured both ways (the file's bytes unmoved over a standing family, and an
-absent `mem` family still absent after three reads). **No timer, no interval, no poll and no `queueMicrotask` stands in the module or its surface**,
-asserted over comment-elided code with a positive control.
+- `reading()` (landed): bind `panes = panesOf(standing)`, `zones = zonesOf(standing)`, `theme = themeOf(standing)`; return `{ status: 'committed', panes: panes.panes, zones: zones.zones, theme: theme.theme, source: { panes: panes.source, zones: zones.source, theme: theme.source } }` — the `mirror` binding and both `focus` members left the literal in the same edit (D-142).
+- `viewConstraintDeclarations(getStore)` (landed): returns three entries — panes, zones, theme — each `{ address, id, constraint }`; the focus row is gone and nothing was re-ordered, its order never having been a dependency (D-105, D-142).
+- `viewDeclaredRoots()` (landed): returns three pairs, each an exported address constant with the tier constant its own batch's pair writes at — the focus pair left in the hunk §3 fixes (D-101).
+- `subscribe(handler)` (landed): the loop ranges over `[VIEW_PANES_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]`; the body, the per-address `listen`+`register`, the containment of the caller's throw and the idempotent withdrawal are unchanged (D-71, D-137).
+- **The record's returned object**: `read`, `commitPane`, `commitZones`, `commitTheme` and `subscribe` stand and `commitFocus` is gone WHOLE — its `plain` guard, its entries walk, its duplicate-id refusal, its active-id arms, its `dangling-active` refusal and the `['focus', 'activeId']` address in its catch — and no caller needed re-pointing, every caller of it having been a member deleted with it; `crossing.test.ts`'s one-edit row measures the absence over comment-elided bytes (D-14, D-142).
+- **The record's private focus layer**: `focusEntryOf`, `mirrorFrom`, `mirrorOf`, `composeMirror`, `comparableId`, `entryIdsOf`, `mirrorAdmitAt`, `focusMustStand`, `repairMirror` and the three exported sentences are gone, and what the surrounding code still reads survived: `isBoundary` (the zone family's slot), `nodeOf`/`writeInstant` (the two surviving value arms) and `writeWholeValue`/`repairAnswer` (the three repairs' one write path) — a helper left with no reader is a dead body, and `tsc` flags none behind an `export` (D-105, D-129).
+- **The surface**: `read()` returns `{ status: 'committed', panes: answer.panes, zones: answer.zones, theme: answer.theme, source: answer.source }`; `ViewSurface` declares `read`, `commitPane`, `commitZones`, `commitTheme`, `attach`, `detach`; the `commitFocus` arm, its body and its two imported tokens left together (D-14).
+- **The client**: `ViewClientBridge` keeps `read`, `commitPane`, `commitZones`, `commitTheme`, `onChanged`; `ViewClient` keeps `shape`, `paneSizeOf`, `paneBoundsOf`, `themeRecord`, `zoneOf`, `commitPane`, `commitZones`, `commitTheme`, `fill`, `subscribe`, `adopt`, `reading`, `writeOutcome`; `committedOrDivergence` parses panes → zones → theme → source with no step between them, and `emptyShape`/`adopt` carry three members and three source words (D-89, D-142).
+- **The vocabulary and the channels**: `src/shared/view-shape.ts` lost `ViewFocusEntry` and `ViewFocusMirror`, and their specifiers left THREE blocks — `src/renderer/view-client.ts`'s import block, and the record's import and re-export blocks — so no `view-client` `TS2305` stands; `src/shared/view-channels.ts` lost `IPC_VIEW_FOCUS_COMMIT` and its header re-counts FIVE names and Four requests (D-41, D-129, D-112).
 
-## 6. Guardrails
+## 8. Guardrails, read against the landed tree
 
-- **The listener's handle is minted per subscription per address** (`view-record:<n>@<address>`): `register` replaces the function under a handle and `unlisten` withdraws the handle whole, so one spelled name starves a second subscriber. **It can never equal a constraint `id`** — a fixed `view-record:` prefix no id carries, a minted ordinal, and the address it is bound at (D-71).
-- **The body is a notification and nothing else, and the caller's throw is contained**: a listener's write opens its own commit, and a body's throw crosses every hop back into the write that fired it. **A registration that could not stand leaves nothing behind** — the entry `listen` wrote is withdrawn where `register` fails.
-- **The mirror's composition writes no `activeId` member when nothing is active**, **the zone family's composition keeps every sibling zone and every member the caller did not supply**, and **the appearance record writes no `null` member at all** (`composeTheme`, D-97): `null` cannot cross the boundary, and a whole-value write that dropped a sibling would be a second writer of state the caller never touched.
-- **The SIX channels are constants, imported by `main.ts`, `preload.ts` and the surface; no literal is re-spelled.**
+- **No `mem` family was re-minted to keep the route alive, and no replacement route, member, channel, pair or root exists**: the act the tool needs lives in the renderer (`focusActRoute` in `src/renderer/renderer.ts`) and is booked at `pending.md` row `2`, so this module owes no replacement (D-142, D-18, D-136).
+- **`landingOf`, `exactly-one-active` and the tab record are untouched**: the normalisation the ruling asks for is already that record's own repair, and no file under `src/main/tabs-record/` is this module's write (D-140, D-142, D-76).
+- **The declared-tier guard, its imported set and the option the composition hands it are unchanged** — `src/main/data/` is not this module's file, and the only change at `viewDeclaredRoots()` is the entry that is no longer there (D-101, D-18).
+- **No declaration's body was left behind**: no `focus` function, type, constant, id, re-export specifier or channel name survives in the module's five files — `crossing.test.ts`'s one-edit row measures four of them (record, surface, client, channels) over comment-elided bytes, `view-shape.ts` is measured by no row and the two shared types are absent by reading, and §2's last row records the prose rank survivals, which are comments and not names (D-142, D-129, D-105).
+- **No other row's files were written**: `src/main/main.ts`, `src/main/preload.ts`, `src/renderer/secure-panels.ts`, `src/renderer/renderer.ts` and `src/main/mcp-server.ts` are `E-3`/`E-4`/`E-1`/`E-5`'s (L1 §6, D-3). **The one cross-file consequence landed with them**: those two lockstep halves spell this module's read answer INLINE, so they lost the `focus` result member, its `source.focus` and the type-only `ViewFocusMirror` specifier in the same edit — which is why the whole-tree `TS2305` those specifiers would have raised at `src/main/preload.ts` and `src/renderer/secure-panels.ts` is not in the tree, and why `crossing.test.ts`'s lockstep row now compares the two blocks member for member (D-14, D-112, D-142).
+- **No count is restated**: the declarations and roots are asserted BY PRESENCE in this module's batteries, and the two counts are `central-data`'s rows (L1 §4, D-43, D-26).
+- **No other document was written**: `docs/L1/`, `docs/L2/`, another module's layer documents, `strata/decisions.md` and `strata/modules.json` are their own layers' (`D-3`, `D-30`) — this page is view-record's, and §2's last row is the residue it owes rather than a pass over another file.
 
-## 7. Owed, and deliberately not built
+## 9. The commands, their readings at this head, and the unit row
 
-**THE STANDING-MEMBER REFUSAL THIS CHAPTER OWED IS BUILT (`D-105`), and it was built as the SECOND ARM of the three pairs rather than as a new pair** — the boundary D-84 drew for the secure crossing
-and D-83 drew when it gave the `order` seat a pair of its own is kept: each body judges one whole value at one node, and the sentence names the family. **What remains owed is the ARM THAT IS NOT A
-WRITE**: a corrupt value standing in the profile's bytes is not refused (a refusal at the registration instant refuses the construction, measured), so the first legal write at the root is what
-replaces it — stated in §4 and measured in this unit's `VA-13` rather than left to be discovered. **AND THE ZONE FAMILY'S WIRING IS LANDED** (`D-92`), and the appearance family's consumer is the
-renderer's application (`D-97`).
+- `npm run typecheck` — whole-tree, `src/**/*.ts`: exit 0 at the landing (`D-143`), because the module's five files and the two lockstep halves carry no `ViewFocusMirror` specifier and no removed member (brief §6, D-112).
+- `npx vitest run tests/integration/store-view-record/` — the module's batteries under that path, re-grained at `E-9`; their rows are the acceptance, and a green here is envelope-green under the layout-less shim and never app-green (brief §6, D-40, D-142).
+- `npx vitest run tests/integration/store-view-record/crossing.test.ts` — the one command that proves the module's own shape: three pairs and three roots by presence, `FOCUS_TIER` and `commitFocus` absent from comment-elided code, exactly three `.write(VIEW_` sites, a read carrying no `focus` member, and the lockstep pair's five-member text (D-142, D-41).
+- `npm run typecheck:tests` — required only if a test file moves, and this pass moved none: the five batteries under `tests/integration/store-view-record/` were re-grained at `E-9` and their bridge literals cross the boundary behind casts, so the leg reads 0 at `D-143`, and a red that forces a further test edit makes that edit the writer's (brief §6, D-3).
+- **No red persists at this head**: the two `crossing.test.ts` rows measured at the lockstep pair are green because `E-3`/`E-4` landed with `E-2` (`D-143`), and `boundary.test.ts`'s `B-1` reds only against a path outside its `DECLARED_SCOPE` — `docs/L3/view-record/design.md` is declared there, which is what keeps this currency pass's own edit green (D-14, D-112, D-30, D-41).
+- **No `signatures.md` was owed, and none stands**: `docs/L3/view-record/` holds this page alone (D-43) — the module published no new public signature and only lost names, each named in §2, and a stubs file for a surface that only shrinks is a copy that cannot be kept true.
+- **No unit row was owed, and none stands**: there is no `tests/unit/store-view-record/`; the deletion's observable claims are gating rows — `crossing.test.ts`'s one-edit, three-write-site and roots-by-presence rows, `client.test.ts`'s `C-` rows (`C-7`'s id left unspent with its referent) and the e2e `F-1`–`F-5` — so a unit row would duplicate an integration row and be no evidence; **the ONE claim no row names is the dead-export census** (the private helpers and the two shared types), which §8 states as a reading and `crossing.test.ts` does not measure (D-9, D-40, D-7, D-30).

@@ -355,9 +355,11 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(text.includes('file.kept'), 'and the durable row is the one it does carry').toBe(true)
   })
 
-  it('S-9 · the package is never modified: the seam’s census stands at fourteen members and THIRTEEN symbols, and the package is imported in exactly three files — the seam, the operator-settings instance and the tab record’s own instance — none of them under src/main/data/', () => {
-    expect(STOREROOM_DECLARED_SURFACE.memberCount, 'L1 §5 S-9 — the seam census row reads fourteen members').toBe(14)
-    expect(STOREROOM_DECLARED_SURFACE.members.length, 'and the declared member list is that length, so a growth fails here rather than silently').toBe(14)
+  it('S-9 · the package is never modified: the seam’s census stands at FIFTEEN members and THIRTEEN symbols, and the package is imported in exactly three files — the seam, the operator-settings instance and the tab record’s own instance — none of them under src/main/data/', () => {
+    // **FIFTEEN AT `1.10.0`** (`D-134`): the third read verb `readTiered` is the first name that release has added since
+    // the seam was pinned, and the census is the row that makes a silent growth fail here rather than pass.
+    expect(STOREROOM_DECLARED_SURFACE.memberCount, 'L1 §5 S-9 — the seam census row reads fifteen members').toBe(15)
+    expect(STOREROOM_DECLARED_SURFACE.members.length, 'and the declared member list is that length, so a growth fails here rather than silently').toBe(15)
     // **THE SYMBOL FIGURE MOVED WITH `1.9.1`: twelve at `1.9.0`, THIRTEEN at the installed tree, the thirteenth being
     // `Symbol(provident-storeroom.registration-save)`** — the marker the release that rolls a refusing registration
     // back mints at construction (measured 2026-11-03 on both installed trees, one fresh instance each; the two lists

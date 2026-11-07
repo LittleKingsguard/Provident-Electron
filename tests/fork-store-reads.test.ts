@@ -739,7 +739,7 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     expect(tierStoreReads, `S-9 — NO TIER-STORE read on a tool-handler path — a tier-store read answering an agent IS a \`GCR-3\` FINDING (§2.1 GCR-1; §2.2's four-tier table is the relation's own subject, and §2.2's store-axis closure does NOT reach a tier payload). TIER-STORE HITS: ${JSON.stringify(tierStoreReads)}; ALL HITS: ${JSON.stringify(hits)}`).toEqual([])
   })
 
-  it('S-9: `src/renderer/renderer.ts` — every answering route reaches its answer through the app Runtime or a wiring-held carrier; the renderer\'s store reads are `§2.4` item 2\'s commit-feeding pane-drag closure (not on a live route) AND the focus route\'s `mem.focus.*` mirror read — the LATTER the store-focus spec\'s DECLARED CONFORMING member (the compliance criterion\'s OWN mandated store-carried read: `store-focus.md` §2.5 item 5, §0A note 4, §0A.3 edge S-2, §5.1 row 5), ADMITTED under this unit\'s landing; any OTHER store read on an answering route stays a `GCR-3` finding (§2.1 `GCR-1`; `§2.4` item 2; `§7.1` `AMB-3`)', () => {
+  it('S-9: `src/renderer/renderer.ts` — every answering route reaches its answer through the app Runtime or a wiring-held client; the renderer\'s store reads are `§2.4` item 2\'s commit-feeding pane-drag closure (not on a live route) AND — from `D-142` — NOTHING ELSE, because the `focus` act\'s read is the TAB RECORD\'s own committed reading taken through `src/renderer/tabs-client.ts` and its write is the `data.write` passthrough at `[\'tabs\']`/`file`; the `mem.focus.*` mirror read this row once ADMITTED as the store-focus spec\'s DECLARED CONFORMING member is RETIRED WITH THE FAMILY (D-142, `E-2`, `E-12`); any OTHER store read on an answering route stays a `GCR-3` finding (§2.1 `GCR-1`; `§2.4` item 2; `§7.1` `AMB-3`)', () => {
     const src = readOrNull('src/renderer/renderer.ts')
     expect(src, 'S-9 — the renderer request-route site the spec names (`§3.2` row 9\'s sibling wiring; the route table the MCP surface answers through) exists at `src/renderer/renderer.ts`').not.toBeNull()
     const raw = src ?? ''
@@ -820,28 +820,39 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
       'S-9 RE-GRAINED (`D-117`) — `createPaneDrag`\'s call sites in `src/renderer/renderer.ts` are the DECLARATION plus the ONE construction the live gesture now makes inside `startGutterAffordance` (the term was `1` while the composition had no `src/` caller at all): the app\'s drag reads `[\'panes\']` and commits through `commitPane`, and NEITHER site is an answering route, which is the half of this row that did not move',
     ).toBe(2)
 
-    // ── THE DECLARED CONFORMING MEMBER, ADMITTED. The store-focus spec §2.5 item 5 declares,
-    // verbatim: "the routed answer is store-carried, which is the compliance criterion's OWN
-    // mandated shape (§0A note 4). A static scan that still forbids a store read in the
-    // ROUTE's bytes after this unit lands is a stale scan and is the landing pass's amendment
-    // target, never a reason to leave the §Q flip un-landed" (also §0A.3 edge S-2: H1 IS the
-    // carrier answer this spec's §2.4 non-case 5 routes to it; §5.1 row 5's amendment set).
-    // **THE FOCUS ROUTE'S STORE-CARRIED READ IS THEREFORE ADMITTED HERE.** The renderer's
-    // `store.resolve(` sites are ENTIRELY that mirror: (a) the boot-mint's cold-home probe on
-    // the literal `'mem.focus.entries'` (store-focus §2.3 item 2) and (b) the `readMirrorRef`
-    // helper's ONE dynamic resolve, whose ONLY call sites pass the two FIXED references
-    // `mem.focus.entries` / `mem.focus.activeId` (store-focus §2.3 item 3's read turn).
-    // **⟶ RE-GRAINED BY `D-89`: THE ADMISSION IS NO LONGER NEEDED, AND ITS ABSENCE IS NOW THE CLAIM.** The mirror's read
-    // LEFT THE FROZEN STORE when the renderer was pointed at the crossing's successor addresses (`D-88`): the route reads
-    // `mirrorStateOf(view)` — the shape — so there is no `store.resolve('mem.focus.*')` site left to admit, and no
-    // `readMirrorRef` helper to hold a dynamic one. **THE ROW IS STRONGER, NOT WEAKER**: the renderer's store-resolve
-    // surface is EMPTY, and a pass that reintroduced one would redden this row rather than being waved through by an
-    // admission that had outlived its subject.
+    // ── THE DECLARED CONFORMING MEMBER, ADMITTED — AND FROM `D-142` THE MIRROR IT ADMITTED IS GONE AND ITS
+    // SITE IS REPLACED. The store-focus spec §2.5 item 5 declared that a static scan still forbidding a store
+    // read in the ROUTE's bytes was a stale scan; `D-89` then took the mirror's read off the frozen store, so
+    // there was no `store.resolve('mem.focus.*')` site left to admit, and the row got STRONGER: the renderer's
+    // store-resolve surface is EMPTY, and a pass that reintroduced one reddens this row.
+    // **⟶ RE-GRAINED BY `D-142`: THE SITE THAT REPLACED BOTH HELPER AND ADMISSION IS THE TAB RECORD'S OWN READ.**
+    // `['focus']` is deleted whole — address, tier, declaration, route and mirror (`E-2`) — and the `focus` act
+    // becomes a whole-record write at `['tabs']` at `file` made from the tab client's committed reading through
+    // the `data.write` passthrough (`D-142`, `D-136`, `D-141`). So the row's subject is UNMOVED and its site is
+    // re-grained: the renderer still reaches NO store, and the four statements below name what stands where the
+    // admitted mirror read stood — measured over comment-elided code, because every headstone in this file's
+    // subject names what it deleted and a prose mention is not a site (`R-1`-family discipline above).
+    const code = stripComments(raw)
     const literalFocusSites = (raw.match(/store\.resolve\(\s*'mem\.focus\./g) ?? []).length
     const helperBodySites = (raw.match(/function readMirrorRef[\s\S]*?store\.resolve\(/g) ?? []).length
-    expect(literalFocusSites, 'S-9 — the focus mirror has NO store-resolve site left: its read is the shape\'s (`mirrorStateOf(view)`), so no admission is owed and none is made').toBe(0)
+    expect(literalFocusSites, 'S-9 — the focus mirror has NO store-resolve site left: its read was the view shape\'s and the family is now deleted whole, so no admission is owed and none is made').toBe(0)
     expect(helperBodySites, 'S-9 — and the mirror-read helper that held the one dynamic resolve is gone with it').toBe(0)
-    expect(raw, 'S-9 — the site that replaced both: the shape\'s read, named so the absence above is over a REAL subject').toMatch(/function mirrorStateOf\(view/)
+    expect(
+      code.includes('mirrorStateOf('),
+      'S-9 — `mirrorStateOf` is DELETED with the carrier it fed (`D-142` names it): the mirror\'s shape read has no subject once `[\'focus\']` is gone, so a pass that left it behind would be reading a family nothing writes',
+    ).toBe(false)
+    expect(
+      /composeRecord\s*\(/.test(code),
+      'S-9 — and the site that replaced it exists, so the absence above is over a REAL subject: the ONE whole-record composition (`composeRecord`, `pending.md` row `2`) that seats the active tab in the tab record\'s own terms',
+    ).toBe(true)
+    expect(
+      /'tabs'/.test(code) && /'file'/.test(code),
+      'S-9 — and the value reaches the record through the EXISTING passthrough and no new crossing (`D-18`): `data.write` at `[\'tabs\']` at `file`, whose handler forwards to the store\'s write verb and transforms nothing (`D-142`). The two tokens are asserted rather than one argument literal, so a legal spelling of the same call is not the thing this row measures',
+    ).toBe(true)
+    expect(
+      code.includes('commitFocus'),
+      'S-9 — the route the family carried is GONE from this renderer: `commitFocus` leaves both halves of the lockstep pair (`E-2`, `E-3`), so no byte here may still ask the view record for it',
+    ).toBe(false)
     const resolveHits = hits.filter((h) => h === 'store.resolve(')
     expect(
       resolveHits.length,
@@ -849,10 +860,10 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     ).toBe(0)
 
     // The live failure signal: an UNQUALIFIED store read (the plain `GCR-3` (b) form) that is
-    // NEITHER the commit-feeding tier-qualified form (§2.4 item 2) NOR the focus mirror's
-    // admitted store-carried read (store-focus §2.5 item 5) — anywhere in this renderer.
+    // NEITHER the commit-feeding tier-qualified form (§2.4 item 2) NOR a read on a route that
+    // reaches the record through its own crossing — anywhere in this renderer.
     const nonWiring = hits.filter((h) => !/tiers\s*\[/.test(h) && h !== 'store.resolve(')
-    expect(nonWiring, `S-9 — a store read on a renderer route that is NOT the commit-feeding tier-qualified form and NOT the focus route's DECLARED store-carried read (store-focus §2.5 item 5's admitted conforming member) is a \`GCR-3\` finding unless it feeds a graph commit (§2.4 item 2). NON-WIRING HITS: ${JSON.stringify(nonWiring)}; ALL HITS: ${JSON.stringify(hits)}`).toEqual([])
+    expect(nonWiring, `S-9 — a store read on a renderer route that is NOT the commit-feeding tier-qualified form and NOT the tab record's own read is a \`GCR-3\` finding unless it feeds a graph commit (§2.4 item 2). NON-WIRING HITS: ${JSON.stringify(nonWiring)}; ALL HITS: ${JSON.stringify(hits)}`).toEqual([])
 
     // ── THE TIER-QUALIFIED SITE, DISPOSITIONED BY ITS ACTUAL SHAPE (`§2.4` item 2),
     // with the disposition ATTRIBUTED TO A SITE rather than to an `Array.isArray`

@@ -89,9 +89,10 @@
         "tests/storeroom-surface.test.ts",
         "tests/integration/central-data/",
         "tests/unit/central-data/",
-        "tests/e2e/central-data/"
+        "tests/e2e/central-data/",
+        "tests/e2e/tier-readout/"
       ],
-      "endpoints": 15
+      "endpoints": 16
     },
     {
       "name": "producing-runtime",
@@ -124,7 +125,10 @@
         "src/renderer/index.html",
         "tests/op-command-unwrap.test.ts",
         "tests/pane-drag-compliance.test.ts",
-        "tests/fork-store-reads.test.ts"
+        "tests/fork-store-reads.test.ts",
+        "tests/theme-act.test.ts",
+        "tests/renderer-delivery-compliance.test.ts",
+        "tests/e2e/focus-retirement/"
       ],
       "endpoints": 22
     },
@@ -220,8 +224,7 @@
       "name": "focus-model",
       "paths": [
         "src/shared/focus-model.ts",
-        "tests/focus-model.test.ts",
-        "tests/store-focus.test.ts"
+        "tests/focus-model.test.ts"
       ],
       "endpoints": 4
     },
@@ -274,6 +277,8 @@
         "src/renderer/tabs-client.ts",
         "tests/integration/store-tabs-record/crossing.test.ts",
         "tests/integration/store-tabs-record/tabs-client.test.ts",
+        "tests/integration/store-tabs-record/surface.test.ts",
+        "tests/unit/store-tabs-record/signatures.test.ts",
         "tests/e2e/store-crossings/"
       ],
       "endpoints": 4
@@ -292,7 +297,7 @@
         "tests/integration/store-view-record/zone-family.test.ts",
         "tests/integration/store-view-record/theme-family.test.ts"
       ],
-      "endpoints": 6
+      "endpoints": 5
     }
   ]
 }

@@ -71,7 +71,9 @@ function commentElided(source: string): string {
 
 const sourceOf = (path: string): string => readFileSync(new URL(path, REPO), 'utf8')
 
-/** The batch a boot supplies: this module's FOUR declarations, mapped the way `src/main/main.ts` maps them. */
+/** The batch a boot supplies: this module's surviving declarations, mapped the way `src/main/main.ts` maps them — spread
+ *  rather than enumerated, so the batch is whatever `viewConstraintDeclarations` declares (`D-142` retired the `focus`
+ *  pair; no row in this file counts the batch, because the counts are `central-data`'s, `D-43`). */
 const batchOf = (getStore: () => ViewRecordStore | null) =>
   viewConstraintDeclarations(getStore).map((declaration) => ({
     address: declaration.address,

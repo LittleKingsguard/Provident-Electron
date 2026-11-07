@@ -117,7 +117,7 @@ async function through(id: number, method: string, payload: unknown): Promise<{ 
 }
 
 describe('central-data · the five `data.*` bridge routes (D-112)', () => {
-  it('BR-1 · `data.read` ANSWERS THROUGH THE BRIDGE: a row written through the surface is read back through the renderer\'s own arm, in §2\'s `row` arm, and an address holding nothing answers `absent` rather than an empty success', async () => {
+  it('BR-1 · `data.read` ANSWERS THROUGH THE BRIDGE: a row written through the surface is read back through the renderer\'s own arm in §2\'s `row` arm WITH §2a\'s LEAF NODE, an address holding nothing answers `absent` rather than an empty success AND GAINS NOTHING, and a stored `_tier` is shadowed by the minted one', async () => {
     const { surface } = boot()
     expect(surface.write({ path: ['bridge-probe'], value: 'x' }).status, 'the row the read is aimed at stands').toBe('committed')
     const bridge = installBridge(surface)
@@ -125,12 +125,24 @@ describe('central-data · the five `data.*` bridge routes (D-112)', () => {
       const row = await through(1, 'data.read', { path: ['bridge-probe'] })
       expect(row.reply.ok, `the arm answered a reply: ${JSON.stringify(row.reply)}`).toBe(true)
       expect(row.reply.id).toBe(1)
-      expect(row.reply.value, 'the answer is §2\'s `read`/`row` arm, path and value and no fourth member').toEqual({ status: 'read', kind: 'row', path: ['bridge-probe'], value: 'x' })
+      // **THE ANSWER IS §2'S `row` ARM AND ITS `value` IS §2a'S LEAF NODE** (`D-134`): the readout rides IN the node, so the
+      // arm keeps its four members and a member beside the node carrying the tier would red here as well as on the next line.
+      expect(row.reply.value, 'the answer is §2\'s `read`/`row` arm: the path and the seam\'s own node, and no fourth member').toEqual({ status: 'read', kind: 'row', path: ['bridge-probe'], value: { _tier: 'file', value: 'x' } })
+      expect(Object.keys(row.reply.value as object).sort(), 'and the arm\'s own key set is UNMOVED — no member beside the node names a tier (D-53, D-133)').toEqual(['kind', 'path', 'status', 'value'])
 
       const absent = await through(2, 'data.read', { path: ['nothing-stands-here'] })
       expect(absent.reply.ok).toBe(true)
       expect(absent.reply.value, 'absence is ANSWERED explicitly, never an empty success (interface.md §3)').toEqual({ status: 'absent', path: ['nothing-stands-here'] })
-      expect(bridge.calls, 'both requests reached the same ONE route and the arm composed nothing').toEqual(['read', 'read'])
+      expect(Object.keys(absent.reply.value as object).sort(), 'AND THIS ARM GAINS NOTHING (ASM-3, D-107): a refusal or an absence states a fact about the caller\'s own argument, and no store answered a node there').toEqual(['path', 'status'])
+
+      // **AND THE ONE SHADOWED NAME, DRIVEN THROUGH THE ROUTE** (§2a's rule): a member STORED at `_tier` is NOT delivered by
+      // the read verb — the minted field wins on the node that carries it — while its sibling member arrives untouched.
+      expect(surface.write({ path: ['tier-lossy'], value: { _tier: 'not-a-tier', label: 'kept' } }).status, 'the write stores the member as ORDINARY DATA').toBe('committed')
+      const lossy = await through(3, 'data.read', { path: ['tier-lossy'] })
+      expect(lossy.reply.value, 'the minted `_tier` wins over the stored one, and the sibling member is delivered untouched').toEqual({
+        status: 'read', kind: 'branch', path: ['tier-lossy'], value: { _tier: 'file', label: { _tier: 'file', value: 'kept' } },
+      })
+      expect(bridge.calls, 'every request reached the same ONE route and the arm composed nothing').toEqual(['read', 'read', 'read'])
     } finally {
       bridge.restore()
     }
@@ -223,7 +235,7 @@ describe('central-data · the five `data.*` bridge routes (D-112)', () => {
     }
   })
 
-  it('BR-6 · A REFUSAL CROSSES AS A VALUE AND NOT AS A THROW: a volatile spelling and a malformed argument each answer the closed ledger, and — `D-107`\'s split — the six refusals this module composes itself carry NO `log`, because no store was consulted', async () => {
+  it('BR-6 · A REFUSAL CROSSES AS A VALUE AND NOT AS A THROW: a volatile spelling and a malformed argument each answer the closed ledger — `D-107`\'s split — the six refusals this module composes itself carry NO `log` because no store was consulted, and NO arm of the ledger carries a readout', async () => {
     const { surface } = boot()
     const bridge = installBridge(surface)
     try {
@@ -238,6 +250,12 @@ describe('central-data · the five `data.*` bridge routes (D-112)', () => {
 
       const root = await through(3, 'data.delete', { path: [] })
       expect(expectRefusal(root.reply.value).reason, 'the whole register is not deletable in one call').toBe('root-not-writable')
+      // **AND A REFUSAL CARRIES NO READOUT** (§2a; `ASM-3`, D-133): the ledger's member set is §3's vocabulary, and a `tier`
+      // or a `_tier` on it would be the superseded echo — naming an ARGUMENT rather than an answer a store gave.
+      for (const [label, value] of [['volatile', volatile.reply.value], ['malformed', malformed.reply.value], ['root', root.reply.value]] as const) {
+        expect(Object.hasOwn(value as object, '_tier'), `${label}: no \`_tier\` member stands on a refusal`).toBe(false)
+        expect(Object.hasOwn(value as object, 'tier'), `${label}: and no \`tier\` member either`).toBe(false)
+      }
     } finally {
       bridge.restore()
     }

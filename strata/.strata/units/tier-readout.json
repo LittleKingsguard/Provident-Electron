@@ -1,0 +1,37 @@
+{
+  "unit": "tier-readout",
+  "layer": "L1",
+  "stage": "design",
+  "artifacts": [
+    "l1-design"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-1",
+      "text": "the answer's value carries the release's TieredNode form unchanged, so a leaf answers {_tier, value} under the answer's own value",
+      "alternative": "flattening the node into the arm as {status, kind, path, _tier, value}, which collides with the answer's own members for an object node and gives the surface a SECOND spelling of a shape the package already declares (D-53, D-134)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-2",
+      "text": "the seam gains no byte: the typed verb reaches src/main/data/ through ProfileStore and the S-9 census is the pin",
+      "alternative": "a declared seam accessor mirroring commitLog, which existed because that member was UNTYPED — a typed member removes an assertion and not a function (D-103, D-134)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-3",
+      "text": "the absent and DataLedger arms gain nothing",
+      "alternative": "carrying the caller's tier on them as D-133 first proposed, which states the ARGUMENT rather than the answer and makes every refusal claim something about a store it never reached (D-107, D-134)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-4",
+      "text": "only T-6's boot waits for the renderer realm, because the other seven rows read what main answers over stdio and that surface stands before the window does",
+      "alternative": "a renderer wait on every boot, which binds a fact those rows do not claim and spends the bound's whole margin per row (D-27, D-94)",
+      "status": "reviewed"
+    }
+  ],
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-11-07T05:28:41.612Z"
+}

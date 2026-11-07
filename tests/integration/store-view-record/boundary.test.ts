@@ -27,8 +27,14 @@
  * added by a future pass WITHOUT naming it here reddens rather than sliding through.
  *
  * **IT IS RED ON A DIRTY TREE BY CONSTRUCTION** — that is the instrument working, not a defect:
- * the reading is `git status --porcelain` over the whole repository, and the supervisor commits
- * at the gate boundary. Nothing in this file may be weakened to make a dirty tree green.
+ * the reading is `git status --porcelain --untracked-files=all` over the whole repository, and the
+ * supervisor commits at the gate boundary. Nothing in this file may be weakened to make a dirty tree
+ * green. **THE FLAG IS NOT DECORATION, AND `focus-retirement` MEASURED WHY**: a bare `--porcelain`
+ * collapses a wholly untracked directory into ONE line that names no file (`docs/L2/app-shell/`), so
+ * a scope written to satisfy that reading has to declare the DIRECTORY — and a declared directory
+ * admits every file a later pass drops under it, which is a path that measures nothing. Enumerated,
+ * each new file is its own offender until it is declared by name, and the near-miss arm of `B-2`
+ * bites on a new filename in a directory this union already carries.
  * ============================================================================
  */
 
@@ -42,6 +48,9 @@ const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
  * **THE DECLARED SCOPE — THE PATHS THIS PASS AND THIS UNIT OWN**, each with the reason it is
  * admissible. A SUBSET ASSERTION OVER THIS SET IS THE WHOLE CLAIM: nothing outside it may be
  * edited, and the reasons are what make a path's presence reviewable rather than habitual.
+ *
+ * **AN EDIT AT A PATH OUTSIDE THIS UNION MUST STILL RED** — that is the row, and it is why every
+ * entry below is a FILE carrying its own reason: never a directory, never a prefix, never a glob.
  */
 const DECLARED_SCOPE: readonly string[] = [
   // ── THE UNIT'S OWN SOURCE: the shape's vocabulary (both realms), the crossing module that
@@ -872,6 +881,163 @@ const DECLARED_SCOPE: readonly string[] = [
   //    cap moves) and `strata/platform.md` (`60`; no platform fact moves — the read's non-bracketing is the package's own
   //    declared behaviour and is cited, never restated).
   // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-126` — THE HUMAN'S CLICK BECOMES AN ACT THAT REACHES THE STORE, in the appearance family (`D-125`'s correction,
+  //    which ruled it for the pane). **TWO PATHS JOIN THIS UNION AND NEITHER IS ADMITTED BY A PREFIX**: the AUTHORED
+  //    ENVELOPE, because the token has to come from the control as DATA — `§2.3` item 2 forbids the handler substituting one
+  //    for an absent argument — and the battery that measures the new turn. `src/renderer/renderer.ts` is ALREADY DECLARED
+  //    above (the drag's reads at `D-88`) AND SO IS `src/shared/demo-envelope.ts` (the overlay's authored surface at
+  //    `D-113`), so neither is appended and a second spelling of either would be the duplicate that reddens `B-1` itself.
+  'tests/theme-act.test.ts',
+  'tests/renderer-delivery-compliance.test.ts',
+  // ── `D-129` — THE AUDIT'S `F4`, THE PANE'S FABRICATED GATE CONFIGURATION, and the four rows that pinned it. **THE PATHS JOIN
+  //    THIS UNION BECAUSE THEY ARE THE ONES THAT MOVED**: `src/renderer/secure-panels.ts` (the `cfg` member's `null` arm), and
+  //    the two batteries that asserted the default by name — `tests/host-guard-panes.test.ts` (`PF-6`/`PF-7`'s premise and both
+  //    siblings' boot state) and `tests/tier4-arbitrary-storage.test.ts` (the `F1-S1` fidelity anchor). `src/renderer/renderer.ts`
+  //    and the audit's own battery are already declared, as are `src/renderer/secure-panels.ts` (the overlay's lockstep half at
+  //    `D-113`) and `tests/tier4-arbitrary-storage.test.ts` (the pane channel at `D-101`), so ONE path is appended and a second
+  //    spelling of either of those would be the duplicate that reddens `B-1` itself.
+  'tests/host-guard-panes.test.ts',
+  //    **THE TOKENS ARE SPELLED BY REFERENCE AND THAT IS WHY `src/shared/demo-envelope.ts` MOVES AT ALL**: the card authors
+  //    `props.value`, and `§3.4` R-6 / `§3.2` F-1 read the card region's QUOTED literals — so the pair is declared once
+  //    beside `THEME_INITIAL_TOKEN` and referenced there, and the closed two-member block stays closed at two.
+  //    **THE ABSENCES ARE THE RECORD**: `src/shared/dom-shim.ts` is NOT here and MUST NOT BE — `engine-pin` §2.2.4 closes its
+  //    member set, and three other units' `R-6`/`R-7` rows assert this pass's change set never touches it — so the platform's
+  //    `value` REFLECTION is supplied by the battery's own click rather than by growing the shim.
+  //    ── `D-127` ADDS `tests/renderer-delivery-compliance.test.ts`, THE AUDIT'S OWN BATTERY, where each of `D-126`'s eleven
+  //    findings lands as a row as it is closed; `src/renderer/renderer.ts` is already declared, so the tab terminals' drive
+  //    appends nothing for it. **`docs/L2/store-tabs-record/interface.md` AND `strata/brief.md` ARE ABSENT AND THE ABSENCE IS
+  //    THE RECORD**: the drive is the WIRING's role and not the module's, so no declared shape moves, and `brief.md`'s `npm
+  //    test` figures move IN PLACE on the lines that already carry them.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-141`/`D-142` — THE `focus-retirement` UNIT: the `focus` tool's act moves INTO the tab record and the `['focus']`
+  //    mirror family goes WHOLE (`strata/next-steps.md` row `2`, closed). **EIGHTEEN PATHS JOIN THIS UNION AND EACH IS
+  //    NAMED WITH THE ARTIFACT IT IS, not admitted by a prefix**: the L1 design, the two state files the instrument writes,
+  //    the SEVEN layer documents this unit CREATED, the FIVE it REPLACED IN PLACE, the two `focus` tool batteries it
+  //    re-grained, and the ONE e2e battery. **`src/` ADDS NOTHING HERE**, which is a measurement and not an omission: the
+  //    TEN files this unit's five passes land (`E-1`…`E-5`) are ALREADY DECLARED ABOVE and are named below so a reader can
+  //    check the claim rather than trust it.
+  //    THE L1 DESIGN: this unit's own scope — the order neither half may land alone in (§1), the module map claim with the
+  //    five map defects it repairs (§2), the `§5.U`-style matrix `F-1`…`F-5` (§4) and the licensed edit list `E-1`…`E-12`
+  //    (§6) — whose rev 2 amends §1, §2, §4 and §6 on the two L2 passes' measurement. Every entry below cites it, so it is
+  //    declared first (D-141, D-142, D-3).
+  'docs/L1/focus-retirement.md',
+  //    THE UNIT'S STATE, WRITTEN BY THE INSTRUMENT AND BY NOTHING ELSE (D-99's discipline): the unit file the loop's
+  //    instrument creates and advances, and the return envelope its `l1-design` artifact answered with. Neither is hand-
+  //    edited from this seat, and both are paths `git status` reports like any other write.
+  'strata/.strata/units/focus-retirement.json',
+  'strata/.strata/returns/focus-retirement-l1-design.json',
+  //    THE FOUR L2 SCOPES THIS UNIT CREATED — one per module whose arrangement the deletion moves, and each named rather
+  //    than admitted by a directory prefix (`docs/L2/` carries sixteen other modules' documents this unit never wrote):
+  //    `app-shell` (the `view` member's THREE removals in ONE edit — `commitFocus` beside the two ENTAILMENTS the ruling's
+  //    own member drags with it, D-112's lockstep rule, `E-3`); `renderer-wiring` (the `focus` route's ONE new body that
+  //    composes the record from the tabs client's committed reading and hands it to `window.provident.data.write`, the
+  //    four-member carrier's deletion, and `composeRecord` BOOKED rather than hidden — `E-1`, D-136, D-142's settled `(b)`);
+  //    `mcp-surface` (the tool keeps its name, its shape and its one invoke seam, and its DESCRIPTION stops naming "the
+  //    renderer's focus model" — `E-5`, D-18, D-141); and `focus-model` (the model RETAINED as a design with no `src/`
+  //    reader — the disposition row `D-141` left open, D-111).
+  'docs/L2/app-shell/interface.md',
+  'docs/L2/renderer-wiring/interface.md',
+  'docs/L2/mcp-surface/interface.md',
+  'docs/L2/focus-model/interface.md',
+  //    THE THREE L3 SCOPES THIS UNIT CREATED: `app-shell`'s structure and the exact edit of a two-file surface subtraction
+  //    (`E-3`), and `renderer-wiring`'s design with its signatures document beside it — rev 3 being the amendment an L4
+  //    `D-45` FAIL forced, because only L3 may name a symbol its own document does not.
+  'docs/L3/app-shell/design.md',
+  'docs/L3/renderer-wiring/design.md',
+  'docs/L3/renderer-wiring/signatures.md',
+  //    THE FIVE LAYER DOCUMENTS REPLACED IN PLACE, each for the sentence the deletion falsifies and each traded inside its
+  //    own ceiling: the secure crossing's L2 rev 7 (§4's bridge surface route by route with `commitFocus` STRUCK, and the
+  //    `read` line that spells the whole answer losing `focus`/`source.focus` with it — `E-4`'s entailment, D-142) with its
+  //    L3 design and signatures re-derived beside it; and `store-tabs-record`'s L2 rev 5 with its L3 rev 12, which stop
+  //    FORBIDDING the arrangement `D-142` lands — the `data.*` write at `['tabs']`, the client's `order`, and a write
+  //    outside `commit`/`remove` (`E-11`, D-136, D-3). Neither document may go on forbidding what the ruling settles.
+  'docs/L2/secure-panels/interface.md',
+  'docs/L3/secure-panels/design.md',
+  'docs/L3/secure-panels/signatures.md',
+  'docs/L2/store-tabs-record/interface.md',
+  'docs/L3/store-tabs-record/design.md',
+  //    THE `focus` TOOL'S OWN TWO BATTERY FILES, RE-GRAINED AND NOT RETIRED: they pin the tool's ROLE BYTES and its ANSWER
+  //    SHAPE, and the shape is what moves when the act stops answering the deleted model's `{activeId, entries, opened}`
+  //    (`E-5`, `ASM-2`, D-18, D-141). Their terms — the declared arguments, the one invoke seam and the refusals — are
+  //    UNMOVED, so each file keeps its claim and can still fail.
+  'tests/focus-tool.test.ts',
+  'tests/focus-tool-register.ts',
+  //    THE E2E BATTERY (§4's matrix): FIVE rows, each an agent-or-drive exchange at a process boundary — the durable act
+  //    across a restart, `exactly-one-active` judging the write, the renderer following the tab record's own push, the
+  //    deleted family's absence at BOTH its address and its bridge member, and totality over the other three families.
+  //    Authored AFTER the `D-30` sweep, so it carries no marker and GATES (D-40). **IT IS THE FILE AND NOT THE DIRECTORY**:
+  //    `tests/e2e/focus-retirement/` as a prefix would admit a second battery nobody declared, which is the widening this
+  //    row's own header forbids.
+  'tests/e2e/focus-retirement/focus-retirement.test.ts',
+  //    AND EVERY OTHER PATH THIS UNIT WRITES IS ALREADY DECLARED ABOVE AND IS NAMED SO A READER CAN CHECK THE CLAIM: the
+  //    TEN `src/` files its five passes land — `E-1` `src/renderer/renderer.ts`; `E-2` `src/main/view-record/index.ts`,
+  //    `src/main/view-surface/index.ts`, `src/shared/view-channels.ts`, `src/renderer/view-client.ts` and
+  //    `src/shared/view-shape.ts`; `E-3` `src/main/main.ts` with `src/main/preload.ts` (ONE edit, never two: the `view`
+  //    member is declared TWICE); `E-4` `src/renderer/secure-panels.ts` (its lockstep half, in that same edit); and
+  //    `E-5` `src/main/mcp-server.ts` — and `src/shared/focus-model.ts` is NOT written at all, because the model is
+  //    retained (§7, D-141);
+  //    the FIVE `store-view-record` batteries `E-9`'s L2 pass re-grains (`client`, `crossing`, `theme-family`, `zone-family`
+  //    and THIS FILE, which takes the module's THREE-root statement and this block); `tests/store-focus.test.ts`, DELETED
+  //    WHOLE with the carrier it pinned (`E-6`, D-9's retire-with-its-referent class — a deletion is a path `git status`
+  //    reports); `tests/theme-declaration.test.ts`, `tests/theme-act.test.ts`, `tests/pane-drag-compliance.test.ts` and
+  //    `tests/fork-store-reads.test.ts`, the four shapes carrying `commitFocus`/`focus` or pinning `mirrorStateOf`
+  //    (`E-12`); the three `central-data` batteries (`E-7`, the gating `['focus']` arms re-grained or retired with their
+  //    subject) with `docs/L2/central-data/interface.md` (`E-10`, rev 11: the declared-root sentence stops naming a root
+  //    that no longer stands); `tests/e2e/store-crossings/crossings-live.mjs` (`E-8`: `V-2`, `V-6` and `V-9` retire with
+  //    the family and `V-1`'s prose is re-grained to a DELETED address); `docs/L2/view-record/interface.md` with
+  //    `docs/L3/view-record/design.md` (`E-9`) and `docs/L3/store-tabs-record/signatures.md` (the `D-45` comparator's
+  //    rev 11 → 12 transcription); the demo bundle the source change rebuilds by its own generator
+  //    (`demo/pane-drag-demo/demo.mjs`, D-118); and the corpus — `strata/decisions.md` (`D-141`, `D-142`),
+  //    `strata/next-steps.md` (row `2`'s narrowing), `strata/pending.md`, `strata/records/handover.md`,
+  //    `strata/marks.json` (REGENERATED by `strata-marks.mjs index`, because a test file is added),
+  //    `strata/modules.json` (the `renderer-wiring` row gains the battery's path and §2's five map defects are repaired)
+  //    and this file.
+  //    **AND THE TREE CARRIES EARLIER PASSES' WRITES THAT ARE NOT THIS UNIT'S, NAMED SO NOT ONE IS ABSORBED SILENTLY.** The
+  //    uncommitted set this row reads is the WHOLE LOOP'S since the last gate commit, so nine of its paths belong to rows
+  //    that landed before this one: `D-126`'s authored theme tokens (`src/shared/demo-envelope.ts`), `D-127`'s audit battery
+  //    (`tests/renderer-delivery-compliance.test.ts`), `D-129`'s pane gate (`tests/host-guard-panes.test.ts`,
+  //    `tests/tier4-arbitrary-storage.test.ts`), `D-131`'s overlay toggle (`tests/integration/overlay-application.test.ts`)
+  //    and `D-134`'s `1.10.0` bump (`package.json`, `package-lock.json`, `src/main/storeroom.ts`,
+  //    `tests/storeroom-surface.test.ts`, `tests/e2e/central-data/scenarios.test.ts`). **EVERY ONE OF THEM IS ALREADY
+  //    DECLARED ABOVE** (its own block names it), so the decision here is the one this file's header states: a path already
+  //    in the union needs no second spelling, and a second spelling is the duplicate that reddens `B-1`'s set assertion.
+  //    None is absorbed by a prefix, none is widened, and not one is declared here for the first time.
+  //    **TWO PATHS ARE DELIBERATELY ABSENT AND THE ABSENCE IS THE RECORD**: `strata/proposals.md` (nothing this unit did is
+  //    an unasked idea) and `strata/platform.md` (`60/60`, no platform fact moves — the package is read and never modified,
+  //    D-5). `strata/records/focus-retirement-unit.md` did not stand at THIS block's head either, and that was a measurement
+  //    rather than an omission: the unit's state file read `stage: design` then, so the record its close owed was not yet
+  //    written — **THE CLOSE HAS SINCE WRITTEN IT, AND THE `D-143` BLOCK BELOW DECLARES IT**, which is why this sentence
+  //    speaks in the past tense and the path is not spelled a second time here (a second spelling is the duplicate that
+  //    reddens `B-1`'s own set assertion).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-143` — THE CLOSE-OUT: the unit's own record and the exit walkthrough's record, both written by L0 at the close that
+  //    lands `D-141`/`D-142` (`D-143`, `walkthrough.md` §6). **TWO PATHS JOIN THIS UNION AND NEITHER IS ADMITTED BY A PREFIX**;
+  //    every other path the close writes is ALREADY DECLARED ABOVE and is named below so a reader can check the claim rather
+  //    than trust it. **THIS BLOCK EXISTS BECAUSE THE ROW DID ITS JOB**: both paths were red in `B-1`'s offender list until they
+  //    stood here — a path this unit's own record pins is still a path, and an undeclared one is an edit nobody named.
+  //    THE UNIT'S OWN RECORD: the artifact `D-5`/`D-52` make the owner of an upstream-owned finding and that this unit's close
+  //    owes — §1's one line per module against `E-1`…`E-12`, §2's readings at this head (`npm test` `2,904 passed / 2 skipped`
+  //    of `2,906` over `137` files, `typecheck`/`typecheck:tests` `0`, `build` exit `0`, `crossings` `28` rows and `0` failures,
+  //    `strata-marks.mjs check` exit `0`), §3's `STALE` walkthrough verdict and the four residuals it names by their owners
+  //    (`D-143`). It is declared HERE rather than above because the `D-141`/`D-142` block recorded it as NOT YET WRITTEN at its
+  //    own head (`stage: design`), and a record that now stands is a write this union must carry.
+  'strata/records/focus-retirement-unit.md',
+  //    THE EXIT WALKTHROUGH'S RECORD (`walkthrough.md` §6, §5's verdict): twelve blind documentation steps with their citations
+  //    and a `resolved · outcome · guessed` row each, the `docs-insufficient` / `undocumented` / `docs-stale` classes, and the
+  //    routing of the currency defect to the OWNING LAYERS with `L0 editing none` — the record of a run that had seen neither
+  //    the code nor the design work, which is why it is a file of its own beside the unit's and why the unit is presented as
+  //    landed-and-green with the walkthrough still owed rather than as ready (`D-143`, `D-1` §4.1).
+  'strata/records/focus-retirement-walkthrough.md',
+  //    AND EVERY OTHER PATH THIS CLOSE WRITES IS ALREADY DECLARED ABOVE AND IS NAMED HERE SO A READER CAN CHECK THE CLAIM:
+  //    `strata/decisions.md` (the `D-143` row itself), `strata/brief.md` and `strata/proposals.md` (the two citations the
+  //    walkthrough's §2 finds — an off-by-one in §6's source count and row `1`'s dead subject — which `D-143` says are L0's
+  //    and are closed in its own edits), with `strata/pending.md`, `strata/next-steps.md`, `strata/records/handover.md`,
+  //    `strata/marks.json` (regenerated by `strata-marks.mjs index` while a battery is added and one retired, `E-6`) and
+  //    `strata/modules.json` each declared on its own block above — so no entry is added for any of them, and
+  //    `strata/platform.md` stays absent for the reason the block above gives (`60/60`, no platform fact moves, `D-5`).
+  //    **NOTHING THE CLOSE WROTE IS ABSORBED SILENTLY**: the two entries above are the whole of what `B-1` reported outside this
+  //    union, and the battery itself is not a new entry because it already stands above — a write is not a claim.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
@@ -897,11 +1063,19 @@ function editSetIsSubset(changed: readonly string[], scope: readonly string[]): 
  *  `" M tests/…"`, and trimming before the slice shifted the path by one byte — the
  *  `RCA-8(d)` defect the retired register kept visible). A RENAME carries `old -> new`; the
  *  destination is the path that must be declared, and a DELETION is a path this pass removed,
- *  which is exactly as much of an edit as a write. */
+ *  which is exactly as much of an edit as a write.
+ *
+ *  **`--untracked-files=all` IS PART OF THE INSTRUMENT** (`focus-retirement`'s measurement): without
+ *  it git collapses a wholly untracked directory into one line that names no FILE
+ *  (`docs/L2/app-shell/`), and the only scope that can satisfy such a reading is one that declares
+ *  the DIRECTORY — which would admit every file a later pass drops under it, measured by nothing.
+ *  With it, each new file is its own entry: a `focus-retirement` pass that creates seven documents
+ *  in five directories owes seven declarations, and a NEW filename in a directory this union already
+ *  carries reds by name rather than sliding in behind a prefix. */
 function editSetFromWorkingTree(): readonly string[] {
   let out: string
   try {
-    out = execFileSync('git', ['status', '--porcelain'], { cwd: REPO_ROOT, encoding: 'utf8' }) as unknown as string
+    out = execFileSync('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: REPO_ROOT, encoding: 'utf8' }) as unknown as string
   } catch {
     return ['__GIT_READING_FAILED__']
   }
@@ -938,11 +1112,16 @@ describe('store-view-record · THE WORKTREE BOUNDARY (re-homed from `tests/store
     //     `src/main/view-record/` being declared cannot admit a fourth module in that directory.
     expect(editSetIsSubset(['src/main/view-record/extra.ts'], DECLARED_SCOPE).ok, 'the scope admits no undeclared sibling').toBe(false)
     expect(editSetIsSubset(['src/renderer/view-client2.ts'], DECLARED_SCOPE).ok, 'and no near-miss of a declared name').toBe(false)
+    //     AND THE SAME BITE ONE LEVEL OUT, ON THE FORM `focus-retirement` WAS TEMPTED BY: a DIRECTORY carries no entry
+    //     here, so a second document dropped beside the four this unit declares is an offender by name — which is what
+    //     `--untracked-files=all` makes visible and what a declared `docs/L2/app-shell/` prefix would have hidden.
+    expect(editSetIsSubset(['docs/L2/app-shell/protocol.md'], DECLARED_SCOPE).ok, 'a declared FILE admits no undeclared sibling').toBe(false)
+    expect(editSetIsSubset(['docs/L2/app-shell/'], DECLARED_SCOPE).ok, 'and no directory spelling of a declared file is admissible either').toBe(false)
     // (c) THE DECLARED SET IS ADMITTED WHOLE — the instrument is not simply always-red, which is how a boundary row lies.
     expect(editSetIsSubset(DECLARED_SCOPE, DECLARED_SCOPE).ok, 'every declared path is admissible, so the assertion has two arms').toBe(true)
   })
 
-  it('B-3 · THE READING IS THE TREE\'S AND NOT A LIST — the edit set is read from `git status --porcelain` over the whole repository, so a pass that edits a path and forgets to declare it reddens `B-1` rather than reporting a clean scope', () => {
+  it('B-3 · THE READING IS THE TREE\'S AND NOT A LIST — the edit set is read from `git status --porcelain --untracked-files=all` over the whole repository, so a pass that edits a path and forgets to declare it reddens `B-1` rather than reporting a clean scope', () => {
     const changed = editSetFromWorkingTree()
     // (a) The instrument answers a LIST (possibly empty, on a committed tree) and never a placeholder, unless the READ
     //     itself failed — in which case the sentinel is returned and the subset assertion FAILS, which is the honest arm.

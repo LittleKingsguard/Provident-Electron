@@ -8,9 +8,8 @@ import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
-import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState } from '../shared/focus-model.js'
 import { clampToBounds } from '../shared/gutter.js'
-import { createTabsClient, type TabsClient, type TabsClientReading, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
+import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCommittedAnswer, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
@@ -19,8 +18,8 @@ import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../s
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
  *  to keep `npm run divergence` green. **The resolution is now PRODUCED BY A CONSTRAINT REPAIR at the crossing**
- *  (`theme-must-stand`, `src/main/view-record/index.ts`) and STORED on the view record beside the pane geometry, the mirror
- *  and the zone family; this file READS that record over the bridge and APPLIES `props.<name>` from it. So the mechanism has
+ *  (`theme-must-stand`, `src/main/view-record/index.ts`) and STORED on the view record beside the pane geometry and the
+ *  zone family; this file READS that record over the bridge and APPLIES `props.<name>` from it. So the mechanism has
  *  one in-tree consumer, it is `src/main/`'s, and the renderer computes no declaration at all — it cannot, because
  *  `resolveTheme` and `applyThemeDeclaration` are not in scope here.
  *
@@ -52,8 +51,8 @@ import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../s
  *  crossing — are `src/main/`'s and are reached only over the bridge. */
 
 /** **THE VIEW RECORD'S CLIENT — THE SHAPE THIS REALM RENDERS FROM (`D-88`).** Constructed EXACTLY ONCE per realm, at the
- *  same boot point the deleted frozen store's was, and lazily in a realm where `main()` never runs (the W4 form), so the focus
- *  route an MCP call reaches works in a node realm too. **IT IS NOT A STORE**: it holds no address space, owns no
+ *  same boot point the deleted frozen store's was, and lazily in a realm where `main()` never runs (the W4 form), so a node
+ *  realm that reaches it reads a client and never a null binding. **IT IS NOT A STORE**: it holds no address space, owns no
  *  persistence, carries no constraint and is REPLACED WHOLE by every delivery it is refilled from —
  *  `src/renderer/view-client.ts`'s header states the distinction in the convention's own terms. What is held HERE is the
  *  CLIENT and never the shape: no module-level binding names a pane size or a mirror. **ITS ONE STATED BOOT READ IS
@@ -102,12 +101,6 @@ export function getSecurityClient(): SecurityClient {
   if (securityClient === null) securityClient = createSecurityClient()
   return securityClient
 }
-
-/** THE FOCUS CARRIER — `U-STORE-FOCUS`'s boot-constructed seam composition (`docs/specs/store-focus.md` §2.3 item 1):
- *  a WIRING-HELD binding, set at boot from `getViewClient()` (and lazily in a node realm where `main()` never runs — the W4
- *  form), with the client living in the factory's argument + the closures. **THE FOCUS STATE ITSELF IS NEVER HELD HERE**:
- *  it is the client's shape, refilled by deliveries, never a module-level focus-state carrier (`D-88`). */
-let focusCarrier: FocusCarrierSurface | null = null
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
  * THE TAB MACHINERY, ON THE CROSSING'S CLIENT (`D-92`) — the frozen store's tab region is GONE from this file.
@@ -228,8 +221,10 @@ export function closeTab(member: unknown, tabId: string): TabsCloseOutcome {
 export interface TabsPageDrive {
   /** The ENVELOPE's node id, never this file's spelling. */
   readonly nodeId: string
-  /** The record's witness for this terminal (L2 §6's derivation, off the reading's rows). */
-  readonly witness: boolean
+  /** **THE RECORD'S witness for this terminal** (L2 §6's derivation, off the reading's rows) — and `null` where there was no
+   *  record to derive it from. **THE NULL IS NOT A `false`**: a terminal nobody read about is not a terminal the record says
+   *  does not stand, and collapsing the two is what let a fault blank both authored pages (`D-127`). */
+  readonly witness: boolean | null
   /** What `Runtime.elementForNodeId` answered — the resolution, which is NOT a drive. */
   readonly resolved: unknown
   /** Whether the runtime's own answer to this terminal's `state-slice` write was `'applied'`. */
@@ -267,22 +262,32 @@ function drivePageDisplay(runtime: TabsPageRuntime | null, nodeId: string, shown
 }
 
 export function driveTabsLandingPage(reading: TabsClientReading, runtime: TabsPageRuntime | null): TabsPagesReading {
-  const witness = reading.status === 'committed' ? reading.witness : null
+  // **A READING THAT IS NOT `committed` IS NOT A RECORD, AND IT SUPPLIES NO BOOT DATA** (`D-127`; `D-82` clause 3, "boot
+  // data comes from file or constraint repairs"). `absent` is a route that answered *there is no such member* and `unread`
+  // is a transport fault or a throw; neither is a record saying *neither terminal stands*. Driving from them painted
+  // `display: 'none'` over a record this realm never saw — so on a realm with NO BRIDGE AT ALL (a plain page) both authored
+  // pages were hidden for the life of the page, and a single blip blanked them until something else re-drove them, since a
+  // fault delivers no correction. **THE DRIVE IS TAKEN ON `committed` ALONE**: every other arm writes NOTHING and reports
+  // `status: null`, so the surface keeps the envelope's authored `display: 'block'` (or the last record's word), and the
+  // reading still REPORTS what it could not read instead of converting it into a state. It is the same rule the appearance
+  // family follows (`D-126`): a realm that has heard nothing renders nothing it was not authored with.
+  const witnessed = reading.status === 'committed'
+  const witness = witnessed ? reading.witness : null
   const landingWitness = witness?.landing.witness === true
   const errorWitness = witness?.error.witness === true
-  const landingStatus = drivePageDisplay(runtime, TABS_LANDING_PAGE_ID, landingWitness)
-  const errorStatus = drivePageDisplay(runtime, TABS_ERROR_PAGE_ID, errorWitness)
+  const landingStatus = witnessed ? drivePageDisplay(runtime, TABS_LANDING_PAGE_ID, landingWitness) : null
+  const errorStatus = witnessed ? drivePageDisplay(runtime, TABS_ERROR_PAGE_ID, errorWitness) : null
   return {
     landing: {
       nodeId: TABS_LANDING_PAGE_ID,
-      witness: landingWitness,
+      witness: witnessed ? landingWitness : null,
       resolved: witness?.landing.resolved ?? null,
       driven: landingStatus === 'applied',
       status: landingStatus,
     },
     error: {
       nodeId: TABS_ERROR_PAGE_ID,
-      witness: errorWitness,
+      witness: witnessed ? errorWitness : null,
       tabId: witness?.error.tabId ?? null,
       resolved: witness?.error.resolved ?? null,
       driven: errorStatus === 'applied',
@@ -599,15 +604,13 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
         case 'journal':
           value = runtime.journal((req.payload as { action?: 'undo' | 'redo' | 'replay' } | null)?.action as 'undo' | 'redo' | 'replay')
           break
-        // U-FOCUS-TOOL (`F3`, docs/specs/focus-tool.md §2.1 item 6, the layer map's
-        // site 6) — THE CASE BODY READS THE RENDERER'S OWN WIRING-HELD FOCUS STATE,
-        // not a graph slice. The call LANDS here: the case hands the caller's own
-        // payload to the wiring role below, which drives the focus model F2 owns and
-        // returns its own answer. Nothing is pushed (the notify predicate stays keyed
-        // on `MUTATING_METHODS` and this method is absent from that set), nothing is
-        // re-rendered and nothing is written to the graph.
+        // U-FOCUS-TOOL (`F3`) — **THE ACT'S ONE ENTRY** (`D-142`, L2 §1): the case keeps its quoted label and its `RpcMethod`
+        // member and its whole body is the route below — AWAITED, because the act reads, writes and re-reads. The route
+        // writes the TAB RECORD through the existing `data.write` passthrough, so the record's own listener delivers the
+        // change (`IPC_TABS_CHANGED` → `tabs.onChanged` → the client re-reads) and this method still adds nothing to
+        // `MUTATING_METHODS`: the app-graph push predicate is unchanged and no second signal is invented (`D-137`, `D-112`).
         case 'focus':
-          value = focusRoute(req.payload)
+          value = await focusActRoute(req.payload)
           break
         // ═══ THE FIVE `data.*` ARMS (`D-112`) ═══ Each hands off to the bridge and composes nothing (`dataRoute`'s own
         // docblock carries the four clauses). **NONE OF THEM JOINS `MUTATING_METHODS`**: that predicate's declared meaning is
@@ -652,205 +655,203 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
   })
 }
 
-/** **`U-FOCUS-TOOL` (`F3`) + `U-STORE-FOCUS` (`H1`) — THE RE-HOMED FOCUS ROUTE**
- *  (`docs/specs/focus-tool.md` §2.1 item 6, §2.3 items 1/2/3; `docs/specs/store-focus.md`
- *  §2.3 — the layer map's site 6).
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * THE `focus` ACT — THE CARRIER'S SUCCESSOR (`D-142`; `docs/L3/renderer-wiring/design.md` §2/§3).
  *
- *  **THE FOCUS STATE'S CARRIER IS THE STORE MIRROR**: `mem.focus.entries` /
- *  `mem.focus.activeId` (tier `mem`, the caller's own declarable spellings). THE
- *  MODULE-LEVEL `const holder` IS GONE (the re-home's first observable) and the
- *  mirrored state is read THROUGH THE STORE (`resolve`), never a module variable
- *  and never a second carrier (`store-focus.md` §2.3 item 3, §2.5 item 2). It is
- *  NEVER a graph slice, so `provident.list_targets` / `get_rendered_html` /
- *  `get_markdown` / `get_node_state` never observe a focus call's effect (§2.5
- *  item 5, UNCHANGED). The mirror holds the IDS the model seated and the
- *  caller-order entry ids it echoed, and NOTHING ELSE: no id is minted here (the
- *  caller's own string IS the legal entry id), no sort, no dedupe and no id
- *  policy lives here, and no comparison of `target` is made here — the
- *  `===`-on-target activation rule and the duplicate rules stay the CONSUMED
- *  MODULE'S, which is why this role calls `focusTransition` instead of
- *  re-deriving that rule (§2.3 items 1/5 — the caller's arguments pass through
- *  UNINTERPRETED: no entry is built beyond the caller's own members, no verb is
- *  chosen beyond the caller's `newTab` flag, no refusal is derived).
+ * WHAT STOOD HERE, AND WHY IT WENT WHOLE (L2 §4, `D-142`): the `focus` route with its mirror read
+ * (`mirrorStateOf`), its payload-carried projection arm (`tabListProjectionOf` / `projectionAnswerOf`), the retained
+ * model's transition call (`focusTransition`), the `focusOrder` echo (`carriedEntryIds`), the holder's own resolution
+ * (`resolveForHolder`) and the whole answer assembly (`answerForCarrier`, `standingAnswer`, the route's own body) — every
+ * one of them reading the `['focus']` mirror at `mem`, a family this unit DELETES WHOLE. **NONE OF THEM IS RE-DECLARED**:
+ * the act is `focusActRoute`, the composition is `composeRecord`, and the answer is the tab client's own reading
+ * (`signatures.md` §5 — a name L4 finds inconvenient is a design finding, never a local invention, `D-45`).
  *
- *  **THE AUTHORITY IS TIER 1'S TAB LIST** (`store-focus.md` §2.2, `Q-9`
- *  SUPERSEDED): the mirror is a working copy, never a second authority, and THIS
- *  REGION WRITES NO TIER-1 DATA — on the divergence row a payload that itself
- *  carries the FIXTURE tab-list projection (`{entries, activeId}`) is answered
- *  FROM THE PROJECTION (the answer is the projection's own projection, and
- *  NOTHING is written).
- *
- *  **THE WRITE-THROUGH TURN** (`§2.3` item 4) calls the module's own
- *  `persist(seamTarget, nextState)` with the carrier's STORE-BACKED seam target:
- *  an ACCEPTED and CHANGED transition commits `mem.focus.entries` AND
- *  `mem.focus.activeId` (tier `mem`, `{onRepeat:'edit'}`, EXACTLY ONE commit per
- *  reference); a REFUSED or accepted NO-OP transition writes NOTHING.
- *
- *  **THE ANSWER ASSEMBLY IS UNCHANGED IN SHAPE**: `carriedEntryIds` echoes the
- *  entry ids through the module's own `focusOrder` (no sort, no dedupe, no
- *  re-key), `refused` becomes an own key exactly when the refusal record carries
- *  a reason, and NO MEMBER EVER EMITS AS `undefined` (the `§0A`-note-8 defect-3
- *  rule, carried verbatim). A consumer refusal is NEVER a throw — it is the
- *  declared shape with `refused` carrying the model's own refusal record.
- *
- *  **THE SUBSCRIPTION IS THE CONSUMER CHANNEL, NOT THE ROUTE'S DATA SOURCE**
- *  (`§2.5` item 2): the route reads the mirror; the two exact-reference store
- *  subscriptions (rule 2) live in the carrier factory (post-main), and this
- *  region registers NONE. This route emits NO notification, forces NO
- *  re-render and authors NO surface — no element, no text, no class, no
- *  attribute and no style is touched here (§2.4 rows 2/3/4, `§5.U` rows 3/4). */
+ * THE ACT, IN ONE LINE: take the realm's ONE committed reading of `['tabs']` through `getTabsClient()`, seat the caller's
+ * row in the RECORD's own terms, write the WHOLE record at `['tabs']` at `file` through the EXISTING `dataRoute`
+ * passthrough, and answer the record as RE-READ after the write with the store's judgement beside it (`ASM-2`, `D-136`,
+ * `D-137`). **THE RENDERER CLEARS NO OLDER ACTIVE ROW**: two actives are lawful in the value it writes, and
+ * `exactly-one-active` — the record's own repair — settles the pair inside the commit (`ASM-3`, `D-129`, `D-142`).
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/** THE ANSWER THIS SURFACE OWNS (`§2.1` item 5): the THREE required members, plus `refused`
- *  exactly when the outcome carries one, and never a member present as `undefined`. */
-interface FocusAnswer {
-  readonly activeId: unknown
-  readonly entries: unknown[]
-  readonly opened: boolean
-  readonly refused?: { readonly reason: unknown }
+/** **THE ACT'S ANSWER (`ASM-2`, `D-142`)**: the record as re-read after the write, with the store's judgement beside it.
+ *  **IT IS FLAT, AND THAT IS THE POINT**: the reading's own members (`status`, `order`, `landing`, `rows`, `witness`) carry
+ *  the record and `refused` rides BESIDE them, so the two `status` members cannot collide on one key. */
+export type FocusActAnswer = TabsClientReading & { readonly refused?: FocusRefusal }
+
+/** **`refused` IS PRESENT ON EVERY ARM THAT ANSWERS A REFUSAL, AND ON NO OTHER — absent exactly where NOTHING was refused**
+ *  (`D-136`, `D-127`, L2 §2): S3, S5 and S7 answer `withRefusal(...)` and S11 puts the store's arm beside the re-read, while S4
+ *  answers the bare reading and a landed write answers `after` — a write is what this member may REPORT, never what puts it there. */
+export interface FocusRefusal {
+  readonly status: 'refused'
+  readonly reason: string
+  readonly message: string
+  readonly storeStatus?: string
+  readonly path?: readonly (string | number)[]
+  readonly log?: readonly unknown[]
 }
 
-/** THE TAB-LIST PROJECTION READ — the divergence row's FIXTURE supply
- *  (`store-focus.md` §2.2 item 3): a payload that itself carries the authority's
- *  projection (`{entries, activeId}`) IS the fixture tab list (the real tier-1
- *  record is the deferred units'). The answer is computed FROM THE TAB LIST —
- *  the mirror's value is never the answer's authority. */
-function tabListProjectionOf(payload: unknown): { readonly entries: readonly FocusEntry[]; readonly activeId: unknown } | null {
-  const record = (payload ?? null) as Record<string, unknown> | null
-  if (record === null || typeof record !== 'object' || !('entries' in record)) return null
-  const entries = record['entries']
-  if (!Array.isArray(entries)) return null
-  return { entries: entries as readonly FocusEntry[], activeId: 'activeId' in record ? record['activeId'] : null }
+/** **THE SEAT THE ROUTE RESOLVED, IN THE RECORD'S OWN TERMS** (`ASM-1`, `D-142`): a standing row (`seat` — the caller's
+ *  string named a row's own `target`), the row an OPEN mints (`open`, carrying the caller's `target`), or no row at all
+ *  (`unresolved`, S7's arm). */
+export type FocusSeat =
+  | { readonly kind: 'seat'; readonly id: string }
+  | { readonly kind: 'open'; readonly id: string; readonly target: string }
+  | { readonly kind: 'unresolved' }
+
+/** THE THREE ARMS THAT ARE NOT A RECORD (`D-127`, L2 `ASM-6`): `reason` exists on each, which is why S3's parameter is
+ *  NARROWED and never `TabsClientReading` whole — the committed arm carries no `reason` (`tabs-client.ts:56`). */
+type UnreadableReading = Exclude<TabsClientReading, { readonly status: 'committed' }>
+
+/** **`composeRecord` — THE RENDERER'S ONE WHOLE-RECORD COMPOSITION** (`pending.md` row `2`, `D-136`, `D-139`, `D-142`).
+ *  It receives ONE committed reading of `['tabs']` and S6's seat; it reads no store, calls no route and holds nothing
+ *  between calls, so the value it answers is a function of its two arguments alone.
+ *
+ *  WHAT IT DOES, AND WHAT IT REFUSES TO DO (`design.md` §3, `C1`–`C4`):
+ *   · `order` is COPIED, never invented — the reading's own sequence, moved by no seat, extended by EXACTLY ONE id where the
+ *     act opens, never re-sorted (`ASM-1`, `D-140`);
+ *   · every row is copied WHOLE under its own id — `error`, `label` and `lastActiveAt` travel exactly as carried
+ *     (`ASM-4`, `D-76`), and the value is the member-keyed `{order, <id>: row}` and NEVER the read answer's
+ *     `{order, landing, rows}`, because `landing` is DERIVED and its address is the landing entry's own row;
+ *   · the ONE row whose bytes move is the target's: `active` reads `true` and `lastActiveAt` is stamped now, for the
+ *     `tab-has-lastActiveAt` pair — and an OPENED row carries no `label` and no `error`, those being the record's repairs
+ *     (a local default for a shape a repair supplies is a SECOND AUTHORITY);
+ *   · **the row that stood active is LEFT EXACTLY AS THE READING CARRIED IT** — no `active: false` is written here, because
+ *     `exactly-one-active` normalises the pair inside the commit and a clear here would be the authority that repair exists
+ *     to be (`ASM-3`, `D-129`, `D-142`);
+ *   · **and NOTHING ELSE**: no `landing` member, no stored active id, no invented key (`ASM-3`, `D-76`, `D-140`).
+ *
+ *  Why the whole-record write is lawful at all is `D-138`/`D-139`'s: the one test asks whether the write is a LEAF of an
+ *  enforced structure, and this is a whole-record write at an enforced ROOT — which is why it is BOOKED as row `2`'s
+ *  `composeRecord` rather than hidden in a route body. Whether a per-tab address with enforced ancestry replaces it is row
+ *  `2`'s own review; this function neither takes nor forecloses it. */
+export function composeRecord(reading: TabsCommittedAnswer, seat: FocusSeat): Record<string, unknown> {
+  // C1 — THE ORDER SEAT: the reading's own sequence, copied and (where the act opens) extended by EXACTLY ONE id.
+  const value: Record<string, unknown> = { order: seat.kind === 'open' ? [...reading.order, seat.id] : [...reading.order] }
+  // C2 — EVERY ROW, WHOLE, under its own id.
+  for (const row of reading.rows) value[row.id] = { ...row }
+  // S7's arm answers before the write, so the route never hands this function an unresolved seat; the guard states that
+  // rather than asserting it, and answers the copy it has already made.
+  if (seat.kind === 'unresolved') return value
+  // C3/C4 — THE ONE ROW WHOSE BYTES MOVE, and the standing active row untouched beside it.
+  const lastActiveAt = new Date().toISOString()
+  value[seat.id] = seat.kind === 'open'
+    ? { id: seat.id, target: seat.target, active: true, lastActiveAt }
+    : { ...(value[seat.id] as Record<string, unknown>), active: true, lastActiveAt }
+  return value
 }
 
-/** THE PROJECTION'S OWN ANSWER — assembled from the tab list, written to NOTHING. */
-function projectionAnswerOf(projection: { readonly entries: readonly FocusEntry[]; readonly activeId: unknown }): FocusAnswer {
+/** **S6 — THE SEAT, IN THE RECORD'S OWN TERMS** (`D-142`, `ASM-1`): the FIRST row in `reading.order` whose `target`
+ *  matches the caller's string is the seat (`{kind:'seat', id}`), and nothing about that row's identity moves — the
+ *  caller's string names a row's CONTENT REFERENCE and never an id, so there is no second identity rule here. No row
+ *  matches and `newTab === true` OPENS one; no row matches and `newTab` is not `true` is `unresolved` (S7), because
+ *  opening a row there would empty `newTab: true` of its declared meaning (`D-18`, `ASM-5`).
+ *
+ *  **THE OPENED ROW'S ID IS MINTED, NEVER THE CALLER'S TARGET** (`ASM-1`, `D-142`): candidate `tab-<n>` from
+ *  `n = order.length + 1` upward, accepted by the EXISTING `mintTabId(order, candidate)` — whose three reasons
+ *  (`malformed-row`, `seat-name`, `duplicate-id`) are REUSED and never re-spelled. Termination is by argument:
+ *  `tab-<n>` is never the record's seat name, and only finitely many candidates are members of a finite `order`. */
+function seatOf(reading: TabsCommittedAnswer, target: string, opens: boolean): FocusSeat {
+  for (const id of reading.order) {
+    const row = reading.rows.find((candidate) => candidate.id === id)
+    if (row !== undefined && row.target === target) return { kind: 'seat', id }
+  }
+  if (!opens) return { kind: 'unresolved' }
+  for (let n = reading.order.length + 1; ; n += 1) {
+    const mint = mintTabId(reading.order, `tab-${String(n)}`)
+    if (mint.ok && mint.id !== null) return { kind: 'open', id: mint.id, target }
+  }
+}
+
+/** **A READING WITH THE STORE'S JUDGEMENT BESIDE IT** (`ASM-2`, `signatures.md` §1): the record that stands, and `refused`
+ *  riding BESIDE it — never a success converted out of a refusal and never a refusal of the record. */
+function withRefusal(reading: TabsClientReading, refusal: FocusRefusal): FocusActAnswer {
+  return { ...reading, refused: refusal }
+}
+
+/** **S3 — A READING THAT IS NOT `committed` IS NOT A RECORD** (`D-127`, L2 `ASM-6`): `absent`, `unread` and `refused`
+ *  supply no rows, so the route refuses rather than composing over a state the realm never read — and it MINTS NO WORD:
+ *  this carries the READING's OWN `reason`, from the client's closed set (`tabs-client.ts`'s `TabsClientReading`:
+ *  `no-tabs-member`, `no-read-route`, `route-threw`, `answer-not-declared`, or the store's own on a `refused` arm), and the
+ *  reading travels as the answer's report of what it could not read. */
+function unreadableOf(reading: UnreadableReading): FocusRefusal {
   return {
-    activeId: projection.activeId,
-    entries: carriedEntryIds({ entries: projection.entries, activeId: projection.activeId }),
-    opened: false,
+    status: 'refused',
+    reason: reading.reason,
+    message: `the tab record answered '${reading.status}', so this realm holds no record to compose over`,
   }
 }
 
-/** **THE MIRROR-STATE READ — AND IT IS THE SHAPE'S, NOT THE STORE'S (D-88).** It read `mem.focus.entries` and
- *  `mem.focus.activeId` through two `resolve` calls on the frozen store and consumed a MISS/refusal as the DECLARED EMPTY
- *  PAIR; it now reads the one `mem` root's projection off `src/renderer/view-client.ts`, SYNCHRONOUSLY, and the declared
- *  empty pair still answers everything the shape cannot state (nothing read yet, an empty mirror, an unreadable answer).
- *  The absent active crosses as ABSENCE and reads back as `null` (the crossing refuses `null` at its boundary, D-87's
- *  inherited fact (ii)), so the model's `FocusState` is answered without a fourth spelling of "no active". */
-function mirrorStateOf(view: ViewClient | null): FocusState {
-  if (view === null) return { entries: [] as readonly FocusEntry[], activeId: null }
-  const shape = view.focusState()
-  return { entries: shape.entries as readonly FocusEntry[], activeId: shape.activeId }
-}
-
-/** THE ECHOED ENTRY IDS, IN THE CALLER'S OWN ORDER — read out of the state the model seated,
- *  read by the model's own `focusOrder` so nothing here orders, dedupes or re-keys them. */
-function carriedEntryIds(state: FocusState): unknown[] {
-  return focusOrder(state.entries).map((entry: FocusEntry): unknown => (entry as { readonly id?: unknown }).id)
-}
-
-/** THE HOLDER'S OWN RESOLUTION OF ONE CALL, and it resolves nothing the caller did not supply:
- *  the verb is read off the caller's own `newTab` (`§2.3` item 2: the flag is passed through, no
- *  default is applied) and the identity the attempt carries is THE CALLER'S OWN VALUE — nobody
- *  here mints one (`§2.3` item 1: the caller's own string IS the legal entry id). The entry built
- *  here is the caller's own entry, handed to the consumed module, whose `===`-on-target
- *  activation rule and duplicate rules then decide which entry it finds and which is active
- *  (`§2.3` item 4) — the SECOND ID POLICY and the SECOND ACTIVATION AUTHORITY the route carried
- *  are gone with it (`§0A` note 8, defect 2). */
-function resolveForHolder(payload: unknown): { readonly present: boolean; readonly verb: unknown; readonly arg: { readonly id?: unknown; readonly entry?: FocusEntry } } {
-  const caller = (payload ?? {}) as Record<string, unknown>
-  if (!('target' in caller)) return { present: false, verb: null, arg: {} }
-  const identity: unknown = caller['target']
+/** **S5 — A `target` THAT IS NOT A STRING IS THE TOOL'S OWN REFUSAL** (`D-112`, `D-105`): a row's `target` is a string
+ *  (`TabsRecordRow`), so no other value can be written as a row and NO STORE IS ASKED. Its word is the `data` ledger's own
+ *  (`malformed-arguments`, `src/main/data/types.ts`). The parameter states the arm's subject and is read nowhere below: the
+ *  declared sentence names the RULE and echoes no caller value. */
+function malformed(target: unknown): FocusRefusal {
+  void target
   return {
-    present: true,
-    verb: caller['newTab'] === true ? 'open' : 'activate',
-    arg: { id: identity, entry: { id: identity, target: identity } },
+    status: 'refused',
+    reason: 'malformed-arguments',
+    message: "provident.focus: a tab row's `target` is a string, so a non-string target can be no row",
   }
 }
 
-/** THE ANSWER FOR A RESOLVED ATTEMPT — the declared members carried through AS
- *  MEMBERS, nothing dropped and nothing collapsed into the refusal record, and NO MEMBER EVER
- *  EMITTED WITH THE VALUE `undefined` (`§0A` note 8, defect 3): `refused` becomes an own key
- *  exactly when the refusal record carries a reason, so a record without one ships
- *  WITHOUT the key rather than as `{ reason: undefined }` (`§0A` note 4; `I-6`/`RS-1`).
- *  ON AN ACCEPTED AND CHANGED TRANSITION THE WRITE-THROUGH TURN RUNS: the route calls the
- *  module's own `persist(seamTarget, nextState)` whose STORE-BACKED seam target commits
- *  `mem.focus.entries` = `nextState.entries` AND `mem.focus.activeId` = `nextState.activeId`
- *  (tier `mem`, `{onRepeat:'edit'}`, EXACTLY ONE commit per reference); a REFUSED or accepted
- *  NO-OP transition writes NOTHING (`store-focus.md` §2.3 item 4). */
-function answerForCarrier(view: ViewClient | null, result: ReturnType<typeof focusTransition>): FocusAnswer {
-  if (result.accepted) {
-    if (result.changed) {
-      // **THE WRITE-THROUGH TURN — ONE ROUTE, AND ITS RECEIPT ARRIVES A TICK LATER (D-88).** The frozen store's TWO
-      // synchronous commits (`mem.focus.entries` then `mem.focus.activeId`, each `{onRepeat:'edit'}`) become ONE
-      // `commitFocus` carrying the WHOLE mirror the model produced — the crossing composes nothing, and the absent active
-      // crosses as ABSENCE because the module writes it that way. **THE ANSWER BELOW IS NOT DERIVED FROM THE RECEIPT** and
-      // never was: `result.state` is the model's own next state, in hand before the write, so the delivery landing a tick
-      // later moves the SHAPE and not this answer. What the late arrival CAN change is observable elsewhere: a mirror the
-      // crossing's boundary refuses (an id that is not a string/number/boolean, a `target` carrying `null`) is recorded in
-      // `writeOutcome()` as a refusal where the frozen store would have taken it — the crossing's vocabulary, stated rather
-      // than hidden.
-      persist(
-        (next: FocusState): unknown => {
-          if (view === null) return null
-          return view.commitFocus({ entries: next.entries, activeId: next.activeId })
-        },
-        result.state,
-      )
-    }
-    return { activeId: result.state.activeId, entries: carriedEntryIds(result.state), opened: result.changed }
+/** **S7 — NO STANDING ROW CARRIES THE TARGET AND NO OPEN WAS ASKED FOR** (`ASM-5`): the route writes NOTHING and answers the
+ *  record as read beside a reason of its OWN, `target-absent` — L2 §2 and L2 §7's `ASM-5` fix that the route answers "a
+ *  refusal reason of its own" and name none, so `signatures.md` §3 names it. */
+function absentTarget(target: string): FocusRefusal {
+  return {
+    status: 'refused',
+    reason: 'target-absent',
+    message: `provident.focus: no standing row carries '${target}' and newTab is not true, so no row is opened`,
   }
-  const reason: unknown = result.refusals.length > 0 ? result.refusals[0].code : undefined
-  const answer: { activeId: unknown; entries: unknown[]; opened: boolean; refused?: { reason: unknown } } = {
-    activeId: result.state.activeId,
-    entries: carriedEntryIds(result.state),
-    opened: false,
-  }
-  if (reason !== undefined) answer.refused = { reason }
-  return answer
 }
 
-/** THE STANDING ANSWER WHEN THE CALLER NAMED NO TARGET — the mirror state read,
- *  unchanged (`S-1`: no special case is applied and the consumer is simply asked
- *  with no target). */
-function standingAnswer(view: ViewClient | null): FocusAnswer {
-  const state = mirrorStateOf(view)
-  return { activeId: state.activeId, entries: carriedEntryIds(state), opened: false }
+/** **S10/S11 — THE STORE'S JUDGEMENT, CARRIED MEMBER FOR MEMBER, OR `null`**: a `data.write` answer's refusal arm
+ *  (`status`, `reason`, `message`, plus `storeStatus`/`path`/`log` where the writer answered them — `DataLedger`, `src/main/data/types.ts`) passes THROUGH, member for member, nothing minted;
+ *  every other answer — the `committed` receipt, and a realm with no `data` member alike — answers `null`, because a write
+ *  that was not refused is not a refusal. */
+function refusalOf(written: unknown): FocusRefusal | null {
+  if (written === null || typeof written !== 'object') return null
+  const answer = written as Record<string, unknown> ; if (answer['status'] !== 'refused') return null
+  const { reason, message, storeStatus, path, log } = answer
+  if (typeof reason !== 'string' || typeof message !== 'string') return null
+  return { status: 'refused', reason, message,
+    ...(typeof storeStatus === 'string' ? { storeStatus } : {}), ...(Array.isArray(path) ? { path: path as readonly (string | number)[] } : {}),
+    ...(Array.isArray(log) ? { log } : {}) }
 }
 
-/** THE ROUTE OVER A GIVEN STORE — THE CALLER'S ARGUMENTS PASS THROUGH
- *  UNINTERPRETED (`§0A` note 8, defect 2): no member is read here, no verb is
- *  chosen here, no entry is built here, no id is minted here and no refusal is
- *  derived here. The route resolves the call, the consumed module executes the
- *  transition over the STORE-CARRIED mirror state, and the answer is assembled
- *  from the transition's result + the mirror (`store-focus.md` §2.5 item 2). The
- *  carrier's `focusRoute` member and the case's entry both route through this
- *  shape. TOTAL for EVERY payload; a refusal is never a throw. */
-function focusRouteImpl(view: ViewClient | null, payload: unknown): FocusAnswer {
-  const projection = tabListProjectionOf(payload)
-  if (projection !== null) return projectionAnswerOf(projection)
-  const resolved = resolveForHolder(payload)
-  if (!resolved.present) return standingAnswer(view)
-  const result = focusTransition(mirrorStateOf(view), resolved.verb, resolved.arg)
-  return answerForCarrier(view, result)
-}
-
-/** THE ROUTE — THE CASE'S ENTRY (`focusRoute(req.payload)`): the carrier is
- *  boot-constructed once from `getViewClient()` (lazily in a realm where
- *  `main()` never ran) and this route reads THE MIRROR THROUGH THE SHAPE —
- *  never a module-level variable, never a second carrier, and never the
- *  subscription (the subscription is the CONSUMER channel, not the route's data
- *  source). THE HOLDER'S OWN ANSWER IS WHAT SHIPS. (`D-88` moved the mirror off
- *  the frozen store; `D-93` deletes the store, so there is no third source.) */
-function focusRoute(payload: unknown): FocusAnswer {
-  const view = getViewClient()
-  if (focusCarrier === null) focusCarrier = createFocusCarrier(view)
-  const projection = tabListProjectionOf(payload)
-  if (projection !== null) return projectionAnswerOf(projection)
-  const resolved = resolveForHolder(payload)
-  if (!resolved.present) return standingAnswer(view)
-  const result = focusTransition(mirrorStateOf(view), resolved.verb, resolved.arg)
-  return answerForCarrier(view, result)
+/** **THE ACT — THIS MODULE'S ONE BODY FOR `provident.focus`** (`D-142`, `docs/L3/renderer-wiring/design.md` §2). It is
+ *  TOTAL: every arm answers a value and none throws, so no caller wraps an IPC turn in a `try` (`D-127`, L2 §2).
+ *
+ *  S1  the argument space, and its shape GUARDED rather than trusted: `caller` is an object and `hasTarget` reads it, so
+ *      `'target' in <non-object>` is never attempted; `opens` is `newTab === true` with no default and no coercion (a third
+ *      own key and a non-object payload are `focusHandler`'s refusal BEFORE the seam, `D-18`, `D-137`);
+ *  S2  ONE reading, through the realm's own client (`getTabsClient()`) — never a direct `window.provident.tabs.read()`;
+ *  S3  a reading that is not `committed` refuses and writes NOTHING (`D-127`);
+ *  S4  an act naming no row has no act: the record as it stands IS the answer, and no write is attempted;
+ *  S5  a `target` that can be no row is the tool's own refusal, and no store is asked;
+ *  S6  the seat;
+ *  S7  no standing row carries it and no open was asked for: refusal of the route's own, and no write (`ASM-5`);
+ *  S8  ONE composition, ONE passthrough, NO RETRY: the args object is handed on verbatim and no member of it is read,
+ *      defaulted or re-spelled — `['tabs']` is the record's own address and `file` its own tier, the one the declared-root
+ *      guard admits (`D-101`, `D-112`, `D-136`);
+ *  S9  the record as RE-READ after the write: what STANDS is the repair's answer, not the value sent nor its ledger, and
+ *      this re-read is the ANSWER's — it is NOT a delivery and does not feed `holdTabsReading` (`ASM-2`, `D-137`);
+ *  S10/S11  the store's judgement rides beside it as `refused`, carried verbatim and never converted into a success. */
+async function focusActRoute(payload: unknown): Promise<FocusActAnswer> {
+  const caller = payload !== null && typeof payload === 'object' ? (payload as Record<string, unknown>) : {}
+  const hasTarget = 'target' in caller
+  const target: unknown = caller['target']
+  const opens = caller['newTab'] === true
+  const reading = await getTabsClient().read()
+  if (reading.status !== 'committed') return withRefusal(reading, unreadableOf(reading))
+  if (!hasTarget) return reading
+  if (typeof target !== 'string') return withRefusal(reading, malformed(target))
+  const seat = seatOf(reading, target, opens)
+  if (seat.kind === 'unresolved') return withRefusal(reading, absentTarget(target))
+  const written = await dataRoute('write', { path: ['tabs'], tier: 'file', value: composeRecord(reading, seat) })
+  const after = await getTabsClient().read()
+  const refusal = refusalOf(written)
+  return refusal === null ? after : withRefusal(after, refusal)
 }
 
 async function main(): Promise<void> {
@@ -892,8 +893,9 @@ async function main(): Promise<void> {
   // `src/renderer/view-client.ts` (`fill()` + deliveries). Nothing consumed the hydration's minted nodes and nothing read
   // the store it minted them into. **THE BOOT ORDER THE GATE READS IS UNCHANGED IN SEQUENCE AND SHORTER IN STEPS**:
   // `tests/e2e/bundle-boot-seam`'s `B-5` pins the trace's order against `bridge.ready()`, and the steps that leave are
-  // three that ran strictly between the operator-config read and the focus carrier — so every step that remains keeps its
-  // relative order.
+  // three that ran strictly between the operator-config read and the runtime's own construction — so every step that
+  // remains keeps its relative order, and the boot anchor the notes above name is the step that still STANDS
+  // (`new Runtime(...)` and `bootstrap()` below), never a carrier (`D-142`).
   //
   // **THE FIRST ENVELOPE STILL LOADS AFTER THE ONE OPERATOR-CONFIG READ ABOVE** (`bridge.security.get()`, tier 4's own
   // snapshot, a DIFFERENT channel that is not this pass's subject): that read is the only awaited bridge call left before
@@ -905,8 +907,11 @@ async function main(): Promise<void> {
   // `evaluateTabsBootStep(wired, handedTabsOrder)`, whose whole act was `wired.commit(TABS_ORDER_NAME, [...handed])`
   // whenever the hand-off carried a non-empty membership sequence. **THE NAME IS NOT RE-SPELLED HERE ON PURPOSE**:
   // `TABS_ORDER_NAME` is the one constant that carries it, and a second literal of it below `main()`'s boundary puts a
-  // tab-record name OUTSIDE `T2` §5.1 item 1's declared record region, which `tests/store-focus.test.ts`'s `S22-1`
-  // attributes and reds on (measured 2026-11-02: the literal here was the ONE reference outside that region). **WHY IT IS GONE, IN ONE PARAGRAPH.** A boot step is an IMPERATIVE WRITE, and D-82's clause 3
+  // tab-record name OUTSIDE `T2` §5.1 item 1's declared record region. **THE BATTERY THAT ONCE READ THAT RULE IS RETIRED
+  // WITH ITS REFERENT** (`D-9`): `tests/store-focus.test.ts` and its `S22-1` row (measured 2026-11-02: the literal here was
+  // the ONE reference outside that region) are gone from this tree, so the claim now rests on `TABS_SEAT_NAME`'s own
+  // docblock above — the file's one spelling of the record's seat — and on no citation of a file that does not exist
+  // (`D-142`). **WHY IT IS GONE, IN ONE PARAGRAPH.** A boot step is an IMPERATIVE WRITE, and D-82's clause 3
   // admits boot data only from a file or from a constraint's repair; the audit measured this commit as the
   // one write in the app with no external event behind it — the frozen store pushes every `file`-tier commit
   // through `crossing.put` into `STORE_FILE_PUT`, so the step re-projected file data back into the file,
@@ -920,11 +925,11 @@ async function main(): Promise<void> {
   // and evaluates no pair, and the next evaluation is the first caller's own write — exactly the relation this
   // region had before the step existed, one boot step lighter, and `G-5`/`B-8`/`H-3`/`H-4`'s subject is deleted
   // with it rather than left dangling (see the headstone above the declarations).
-  // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 item 1) — **CONSTRUCTED OVER THE SHAPE, NOT OVER A STORE (`D-88`)**. The
-  // boot MINT-DECLARES nothing and registers no subscription: `focus-must-stand` is a creation-instant declaration at the
-  // crossing (`D-87`), and the one delivery channel is the client's `onChanged`. The CARRIER is what an MCP `focus` call
-  // reaches, so it must exist before the first request, and the client it holds is the realm's one (`getViewClient()`).
-  focusCarrier = createFocusCarrier(getViewClient())
+  // ⟶ **THE FOCUS CARRIER'S BOOT CONSTRUCTION IS DELETED HERE AND NOTHING REPLACES IT** (`D-142`, L2 §4). The carrier was
+  //    what an MCP `focus` call reached; the act is reached by NO boot step now — it takes the tab client the realm holds
+  //    (`getTabsClient()`, constructed on demand, exactly as this file's other clients are) and writes the record through
+  //    the existing `data.write` passthrough. So the boot mints nothing, registers nothing and its step list only SHORTENS:
+  //    no traced step moves (`tests/e2e/bundle-boot-seam`'s `B-5` reads the trace's ORDER against `bridge.ready()`).
   // ⟶ THE RUNTIME + FIRST ENVELOPE (`U-STORE-CORE`'s realm construction + G2 §2.9):
   // created and loaded ONLY AFTER the hand-off answered — a boot whose first envelope
   // loads before the Y-1 answer FAILS the starting-order gate (§2.9 consequence (1)).
@@ -954,6 +959,16 @@ async function main(): Promise<void> {
   //    read is deleted with its drive (`D-97`) — and it adds no subscription, no timer and no boot step that
   //    `tests/e2e/bundle-boot-seam`'s `B-5` could read as an order move.
   const themeApplication = startThemeApplication(runtime)
+  // **AND ITS DOM-ORIGINATED TURN IS ATTACHED HERE (`D-126`)** — the same site and for the same reason the overlay's
+  // `attach()` is called below: after the first envelope load, so the authored controls exist. It installs two listeners
+  // and changes no node, so no boot step moves and `npm run divergence` (which compares the two realms' SSR fragments
+  // before any act) cannot see it. **ITS ONE RETURNED READING IS READ, the gutter's own rule above (`D-117`)**: a control
+  // this realm could not resolve is an act a human cannot perform, and the failure is said out loud at the one site that
+  // can say it, rather than left to be inferred from a click that did nothing.
+  const appearanceAttached = themeApplication.attach()
+  if (appearanceAttached.attached === 0) {
+    console.error('[provident-renderer] the appearance controls did NOT attach — a real click on the theme card reaches no store (an agent\'s dispatch still rides the reply path)')
+  }
   // ⟶ **THE OVERLAY'S CONSUMER (`D-113`)** — the mechanism `src/shared/overlay.ts` was owed, constructed here for the
   //    reason the appearance application above is: ONCE, after the first envelope load, so the authored app root, the
   //    authored state carrier and the three authored controls all exist. **IT READS NOTHING AND WRITES NOTHING AT THIS
@@ -1082,9 +1097,11 @@ async function main(): Promise<void> {
  * their ids, their role props and their base style are the envelope's (`src/shared/demo-envelope.ts`).
  *
  * **WHY THE READ SITS AT THE END OF `main()` AND IS NOT AWAITED (`D-77`).** The boot order this head ships is a measured
- * one, and it is a GATE's: `wired.hydrate(bootHandoff)` → `focusCarrier` (the boot step that stood between them is
- * DELETED, `D-83`) → `new Runtime(...)`/`bootstrap()` → `startGutterAffordance` → the Y-3 registration → `bridge.ready()`,
- * with `tests/e2e/bundle-boot-seam/`'s `B-5` asserting the bundle-boot trace's ORDER rather than a duration. An `await`
+ * one, and it is a GATE's: `new Runtime(...)`/`bootstrap()` → `startGutterAffordance` → the appearance application and the
+ * overlay's `attach()` → `bridge.ready()`, with `tests/e2e/bundle-boot-seam/`'s `B-5` asserting the bundle-boot trace's
+ * ORDER rather than a duration. **The anchor is the step that still STANDS** (`D-142`): the deleted `hydrate`/carrier
+ * steps of the frozen-store boot are named nowhere here, so a reader is never sent looking for a boot step this file no
+ * longer runs. An `await`
  * placed anywhere between the hand-off and `bridge.ready()` would sit INSIDE that order — a slow or failing bridge would
  * delay the first graph load or the ready signal. So the read is STARTED after `bridge.ready()` and its promise is not
  * awaited: **no boot step's order moves, and a bridge that never answers, answers slowly, or rejects cannot delay boot,
@@ -1306,7 +1323,6 @@ function describeViewReading(reading: ViewClientReading): string {
   if (reading.status === 'committed') {
     const panes = reading.panes.map((pane) => `${pane.id}=${String(pane.size)}[${String(pane.bounds.min)}…${String(pane.bounds.max)}]`)
     return `read; panes=[${panes.join(', ')}] (source ${reading.source.panes}), `
-      + `focus entries=${String(reading.focus.entries.length)} active=${JSON.stringify(reading.focus.activeId)} (source ${reading.source.focus}), `
       + `zones=${String(reading.zones.length)} (source ${reading.source.zones}), `
       + `theme=${JSON.stringify(reading.theme.declaration)} (source ${reading.source.theme})`
   }
@@ -1334,7 +1350,7 @@ function describeTabsReading(reading: TabsClientReading): string {
 function describeTabsPages(pages: TabsPagesReading | null): string {
   if (pages === null) return 'pages: not driven (no reading)'
   const one = (terminal: TabsPageDrive): string =>
-    `${terminal.nodeId}: witness=${terminal.witness} resolved=${terminal.resolved === null ? 'no' : 'yes'} `
+    `${terminal.nodeId}: witness=${terminal.witness === null ? 'none' : terminal.witness} resolved=${terminal.resolved === null ? 'no' : 'yes'} `
     + `drive=${terminal.status === null ? 'none' : terminal.status}`
   return `pages: ${one(pages.landing)} · ${one(pages.error)}`
 }
@@ -1388,6 +1404,52 @@ export function themeWiringRole(runtime: Runtime): readonly [string, string] {
   const stateNodeId = stateProps === undefined ? '' : String(stateProps['id'])
   void runtime.elementForNodeId(stateNodeId)
   return [attributeName, stateNodeId]
+}
+
+/** **THE AUTHORED CONTROLS' IDS, DERIVED AND NEVER RE-SPELLED AT THE WIRING** (`D-126`) — `themeWiringRole`'s own
+ *  discipline, applied to the pair the DOM-originated turn attaches to. A rename in the envelope therefore moves the ids
+ *  this returns instead of leaving a second, silently staling spelling behind (`§3.4` R-4, `§2.4` item 2, ADV-TC-3).
+ *
+ *  **THE MARKER IS THE AUTHORED STRUCTURE AND NOT A NAME**: the controls are the `button` children of the card that
+ *  carries the state node, that author a `props.value` — which is exactly what a control needs to hand the DOM bridge a
+ *  token at all (`D-126`), so a control that could not carry its token is not one this turn can attach to. The walk
+ *  keeps the PARENT because the card is the envelope's own grouping; nothing here counts, indexes or assumes order
+ *  beyond the authored child order, and an envelope carrying neither returns `[]` rather than a fabricated id. */
+function themeControlIds(): readonly string[] {
+  interface Located {
+    readonly node: Record<string, unknown>
+    readonly parent: Record<string, unknown> | null
+  }
+  const queue: Located[] = [{ node: demoEnvelope().template.root as unknown as Record<string, unknown>, parent: null }]
+  while (queue.length > 0) {
+    const here = queue.shift() as Located
+    const node = here.node
+    const props = node['props'] as Record<string, unknown> | undefined
+    const css = node['css'] as Record<string, unknown> | undefined
+    const content = node['content']
+    const isStateNode =
+      props !== undefined && css !== undefined && props['id'] !== undefined && props['id'] === css['id'] &&
+      (content === 'dark' || content === 'light')
+    if (isStateNode) {
+      const card = here.parent
+      const kids = card === null ? undefined : card['children']
+      if (!Array.isArray(kids)) return []
+      const ids: string[] = []
+      for (const kid of kids as Record<string, unknown>[]) {
+        if (kid['type'] !== 'button') continue
+        const kidProps = kid['props'] as Record<string, unknown> | undefined
+        const kidCss = kid['css'] as Record<string, unknown> | undefined
+        const value = kidProps === undefined ? undefined : kidProps['value']
+        const id = kidCss === undefined ? undefined : kidCss['id']
+        if (typeof value !== 'string' || typeof id !== 'string' || id === '') continue
+        ids.push(id)
+      }
+      return ids
+    }
+    const kids = node['children']
+    if (Array.isArray(kids)) for (const kid of kids as Record<string, unknown>[]) queue.push({ node: kid, parent: node })
+  }
+  return []
 }
 
 /** **THE APPEARANCE DECLARATION'S APPLICATION — THE RECORD'S DECLARATION, APPLIED AS PROVIDENT DATA, AND NOTHING COMPUTED**
@@ -1460,6 +1522,9 @@ export interface ThemeApplication {
   commit(): ThemeApplicationReading
   /** **THE DELIVERY'S TURN** — apply the declaration the crossing's record carries, when it moved. */
   apply(): ThemeApplicationReading
+  /** **THE DOM-ORIGINATED TURN** (`D-126`) — install the listeners that make a REAL CLICK the same act `commit()`
+   *  carries. Returns the count installed, so the one site that can say a failure out loud can say it. */
+  attach(): { readonly attached: number }
 }
 
 /** The authored setting as the graph holds it, or the declared UNREADABLE answer when the state node is absent, was
@@ -1525,70 +1590,131 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
     readonly written: boolean
   }): ThemeApplicationReading => ({ nodeId, attributeName, ...base })
 
+  // THE TWO TURNS ARE `const`s RATHER THAN OBJECT-LITERAL METHODS, because `attach()` below installs a listener
+  // whose whole job is the FIRST of them: a DOM listener has to reach the same turn the reply path calls, and
+  // capturing it is what keeps ONE implementation of the act instead of two that can drift.
+  /** **THE ACT ITSELF, keyed on the SETTING it carries** — the one body both causes reach: the reply path's turn reads
+   *  the setting off the AUTHORED CARRIER, and the DOM-originated turn is handed the setting the CLICK carried. Neither
+   *  composes a declaration and neither awaits a receipt; the `changed` guard is what keeps a second cause from asking
+   *  the crossing a question the first already answered. */
+  const commitSetting = (setting: string): ThemeApplicationReading => {
+    const changed = lastCarried === null || lastCarried.setting !== setting
+    if (!changed) {
+      return reading({ setting, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
+    }
+    // **THE ACT, SENT AS THE ACT** — the setting and the caller-held name, and no declaration: the crossing's pair
+    // resolves it inside the commit this causes. The answer is the client's `sent`/`absent` statement; nothing is awaited
+    // and no receipt composes a decision.
+    const sent = getViewClient().commitTheme(setting, attributeName).status === 'sent'
+    if (sent) lastCarried = { setting }
+    return reading({ setting, changed: true, sent, declaration: null, declared: false, status: null, written: false })
+  }
+
+  const commitTurn = (): ThemeApplicationReading => {
+    const read = authoredSettingOf(runtime, nodeId)
+    // AN UNREADABLE CARRIER IS A READING, NOT AN ACT: nothing is sent, and no status word is fabricated.
+    if (!read.readable) {
+      return reading({ setting: null, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
+    }
+    return commitSetting(read.setting)
+  }
+
+  /** **THE DELIVERY'S TURN** — read the record the crossing's answer now carries and write `props.<declaration.name>`
+   *  on the AUTHORED state node, as ONE `state-slice`. */
+  const applyTurn = (): ThemeApplicationReading => {
+    const theme = getViewClient().themeRecord()
+    const declaration = applicableDeclaration(theme)
+    // NO APPLICABLE DECLARATION: the placeholder, which names no attribute. Nothing is written and nothing is claimed.
+    if (declaration === null) {
+      return reading({ setting: theme.token, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
+    }
+    const declared =
+      lastApplied === null ||
+      lastApplied.name !== declaration.name ||
+      lastApplied.value !== declaration.value ||
+      lastApplied.removal !== declaration.removal
+    if (!declared) {
+      return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: false, status: null, written: false })
+    }
+    if (nodeId === '') {
+      return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: true, status: null, written: false })
+    }
+    let status: string
+    try {
+      const answer = runtime.applyCommand({
+        kind: 'state-slice',
+        node: nodeId,
+        mutation: [
+          {
+            targetProp: `props.${declaration.name}`,
+            mode: 'replace',
+            // THE REMOVAL ARM IS THE MECHANISM'S `removal` MEMBER — an `undefined` on `props.<key>` is the engine's
+            // declared attribute REMOVAL, and never an empty string that happens to be falsy.
+            value: declaration.removal ? undefined : declaration.value,
+          },
+        ],
+      })
+      status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    } catch {
+      status = 'threw'
+    }
+    const written = status === 'applied'
+    // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next delivery rather than
+    // being swallowed by a seed that claims it was applied.
+    if (written) lastApplied = declaration
+    return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: true, status, written })
+  }
+
   return {
     attributeName,
     nodeId,
-
-    commit(): ThemeApplicationReading {
-      const read = authoredSettingOf(runtime, nodeId)
-      // AN UNREADABLE CARRIER IS A READING, NOT AN ACT: nothing is sent, and no status word is fabricated.
-      if (!read.readable) {
-        return reading({ setting: null, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
+    commit: commitTurn,
+    apply: applyTurn,
+    /** **THE DOM-ORIGINATED TURN (`D-126`) — THE ACT THE SURFACE WAS MISSING.** Until this member existed the
+     *  appearance family had exactly ONE cause: `commit()` reached from the reply path's notify, gated on a MUTATING
+     *  reply. A human clicking the authored control therefore wrote the AUTHORED CARRIER and reached the crossing
+     *  NEVER — the store was not in the path at all, and no delivery existed to reconcile the two surfaces, because
+     *  no delivery was ever caused. **`npm run divergence` cannot see this class** (it compares the realms before any
+     *  act) and **neither can any unit row** (it dispatches, which is the agent's path). `D-125` rules the direction for
+     *  the pane — the operator's act writes the store and the render is a listener's product — and this is the same
+     *  correction for the appearance family.
+     *
+     *  **THE LISTENER SPELLS NO TOKEN.** A real click runs the AUTHORED handler first (provident registered its own
+     *  listener at render, before this one), and that handler writes the caller's token into the AUTHORED carrier. So
+     *  the turn reads the token the EVENT carries and hands it to `commitSetting`, which is the same act the reply
+     *  path performs, with the same `changed` guard: a click that moved nothing sends nothing, and the crossing is asked
+     *  once per real change rather than once per click. The ids are the ROLE's — derived from the envelope by
+     *  `themeControlIds`, never re-spelled here. */
+    attach(): { readonly attached: number } {
+      /** **THE CLICK'S TOKEN IS READ FROM THE EVENT, AND THAT IS MEASURED RATHER THAN PREFERRED.** The authored handler
+       *  runs first and writes the carrier, but ITS WRITE LANDS ON A LATER TURN — measured on this tree: synchronously
+       *  after the dispatch the carrier still held the PREVIOUS token and it moved on the first microtask — so a listener
+       *  that read the carrier here would act on the value the click was REPLACING, and on the very first act of a session
+       *  would send nothing at all. The event carries the token because the CONTROL authors it (`props.value`) and the
+       *  runtime's DOM bridge reads exactly that (`src/renderer/runtime.ts`:
+       *  `'value' in target ? [String(target.value)] : []`), which is the same expression, taken from the same place. **A
+       *  CONTROL THAT CARRIES NO TOKEN IS NOT AN ACT**: an empty or absent `value` sends nothing rather than writing the
+       *  empty setting, because the empty setting is ABSENCE and a click on a labelled control never means it. */
+      const turn = (event: unknown): void => {
+        const target = (event as { readonly target?: unknown } | null | undefined)?.target
+        const carried = (target as { readonly value?: unknown } | null | undefined)?.value
+        if (typeof carried !== 'string' || carried === '') return
+        commitSetting(carried)
       }
-      const changed = lastCarried === null || lastCarried.setting !== read.setting
-      if (!changed) {
-        return reading({ setting: read.setting, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
+      let attached = 0
+      for (const id of themeControlIds()) {
+        let element: unknown = null
+        try {
+          element = runtime.elementForNodeId(id)
+        } catch {
+          element = null
+        }
+        const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+        if (typeof add !== 'function') continue
+        ;(add as (type: string, handler: (event: unknown) => void) => void).call(element, 'click', turn)
+        attached += 1
       }
-      // **THE ACT, SENT AS THE ACT** — the setting and the caller-held name, and no declaration: the crossing's pair
-      // resolves it inside the commit this causes. The answer is the client's `sent`/`absent` statement; nothing is awaited
-      // and no receipt composes a decision.
-      const sent = getViewClient().commitTheme(read.setting, attributeName).status === 'sent'
-      if (sent) lastCarried = { setting: read.setting }
-      return reading({ setting: read.setting, changed: true, sent, declaration: null, declared: false, status: null, written: false })
-    },
-
-    apply(): ThemeApplicationReading {
-      const theme = getViewClient().themeRecord()
-      const declaration = applicableDeclaration(theme)
-      // NO APPLICABLE DECLARATION: the placeholder, which names no attribute. Nothing is written and nothing is claimed.
-      if (declaration === null) {
-        return reading({ setting: theme.token, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
-      }
-      const declared =
-        lastApplied === null ||
-        lastApplied.name !== declaration.name ||
-        lastApplied.value !== declaration.value ||
-        lastApplied.removal !== declaration.removal
-      if (!declared) {
-        return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: false, status: null, written: false })
-      }
-      if (nodeId === '') {
-        return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: true, status: null, written: false })
-      }
-      let status: string
-      try {
-        const answer = runtime.applyCommand({
-          kind: 'state-slice',
-          node: nodeId,
-          mutation: [
-            {
-              targetProp: `props.${declaration.name}`,
-              mode: 'replace',
-              // THE REMOVAL ARM IS THE MECHANISM'S `removal` MEMBER — an `undefined` on `props.<key>` is the engine's
-              // declared attribute REMOVAL, and never an empty string that happens to be falsy.
-              value: declaration.removal ? undefined : declaration.value,
-            },
-          ],
-        })
-        status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
-      } catch {
-        status = 'threw'
-      }
-      const written = status === 'applied'
-      // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next delivery rather than
-      // being swallowed by a seed that claims it was applied.
-      if (written) lastApplied = declaration
-      return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: true, status, written })
+      return { attached }
     },
   }
 }
@@ -1885,6 +2011,32 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
     if (clear) transient = null
     if (word !== null) derived = word ? 'open' : 'closed'
     const up = paneIsUp(derived)
+    // **THE STATE MIRROR — THE DELIVERY KEEPS THE AUTHORED CARRIER TRUTHFUL** (`D-131`, `D-126`'s finding `F2`). The
+    // carrier used to hold only a VERB, written by whichever control was clicked, so the toggle control's body had no
+    // state to read and wrote the same word every time — and the `changed` guard in `drive()` then refused an agent's
+    // second dispatch, leaving the store's pane open with the act silently dropped. **THIS TURN IS WHAT MAKES READING THE
+    // CARRIER A READING OF THE STATE**: it writes the store's own word here, on the DELIVERY and on nothing else, so the
+    // body's next read resolves the next target and the carrier MOVES on every click that would change something.
+    // **IT RUNS ON `clear` AND NOT ON EVERY TURN** because `clear` is exactly the delivery's call (`render()`), while
+    // `drive()`'s turn runs BEFORE the store has answered — mirroring there would overwrite the target the body just
+    // wrote with the state that target exists to change. **`lastCarried` MOVES WITH IT**, so the wiring never mistakes
+    // its own mirror for an act, and it moves ONLY IF THE MIRROR LANDED: a refused write leaves the carrier holding the
+    // target, which is what makes the next click re-ask rather than suppress. */
+    if (clear && word !== null) {
+      const stateWord = up ? 'open' : 'closed'
+      let mirrored = false
+      try {
+        const answer = runtime.applyCommand({
+          kind: 'state-slice',
+          node: stateNodeId,
+          mutation: [{ targetProp: 'content', mode: 'replace', value: stateWord }],
+        })
+        mirrored = typeof answer?.status === 'string' && answer.status === 'applied'
+      } catch {
+        mirrored = false
+      }
+      if (mirrored) lastCarried = stateWord
+    }
     const declaration = overlayInertDeclaration(targetOf(), attributeName, up)
     const state = heldState()
     if (word === null || declaration.name === null) {
@@ -2361,84 +2513,3 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
   }
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════════
- * U-STORE-FOCUS — THE CARRIER (`docs/specs/store-focus.md` §2.3)
- * (`H1` — the focus state's re-home onto the store: the `mem.focus.*` mirror, the
- * store-backed `persist(seam, state)` SEAM TARGET, and the rule-2 STORE SUBSCRIPTION).
- *
- * THE FACTORY'S `store` ARGUMENT IS REQUIRED and is the SOLE store-access path: the
- * store handle is a WIRING-HELD ARGUMENT passed into this composition's closures —
- * never a module-scope binding of the focus state (`§3.4 R-2`, `§5.5.1 P-SF-IM-2`).
- *
- * THE BOOT MINT (`§2.3` item 2): construction MINT-DECLARES the root — `commit(
- * 'mem.focus', undefined)` + `clear('mem.focus')` where the mirror is COLD — so the
- * register's row pre-exists the first write and a cold read answers the DECLARED MISS,
- * never a refusal (`§0A` note 6). Where the mirror already answers a HIT (a later
- * carrier over an already-declared root), the mint is a no-op. A hostile store absorbs
- * every step (`§2.3` item 6).
- *
- * THE TWO EXACT-REFERENCE SUBSCRIPTIONS (`§2.4` item 1) register at the same
- * construction point — the CONSUMER channel (rule 2); the listener body forwards and
- * never writes the store from inside. `dispose()` releases every registration —
- * UNSUBSCRIBE-ON-DISPOSE, the H2a pattern (`§2.4` item 3): each held handle's
- * `unsubscribe()` is called EXACTLY ONCE (registration order), idempotent, non-throwing,
- * emits NO store event and leaves the mirror's records in place (post-conditions P1–P7).
- * ══════════════════════════════════════════════════════════════════════════════════ */
-
-/** THE CARRIER SURFACE — EXACTLY FOUR members (state · focusRoute · persistTarget ·
- *  dispose), the ONE exported seam surface of this unit (`store-focus.md` §2.3 item 1). */
-export interface FocusCarrierSurface {
-  /** the mirror-state read: `{ entries, activeId }` — the `FocusState` members,
-   *  `unknown`-typed at the seam. */
-  readonly state: () => { readonly entries: unknown; readonly activeId: unknown }
-  /** the re-homed route — the same answer shape the current `focusRoute` answers. */
-  readonly focusRoute: (payload: unknown) => FocusAnswer
-  /** the STORE-BACKED SEAM TARGET — commits `mem.focus.entries` and `mem.focus.activeId`
-   *  (tier `mem`, `{onRepeat:'edit'}`); its return is the store's declared return. */
-  readonly persistTarget: (state: FocusState) => unknown
-  /** the release — UNSUBSCRIBE-ON-DISPOSE, the H2a pattern (`§2.4` item 3). */
-  readonly dispose: () => void
-}
-
-/** **THE CARRIER FACTORY — the boot calls it with the SHAPE (D-88), not with a store.** It registers NOTHING and mints
- *  NOTHING, and both of those are the crossing's acts now rather than omissions:
- *    · **THE BOOT MINT IS GONE.** The carrier used to `commit('mem.focus')` + `clear('mem.focus')` when the mirror was
- *      cold, because the frozen store's register needed a row before the first write. `focus-must-stand` is a DECLARATION
- *      tested at the crossing's creation (`D-87`), so the mirror stands at the instance's first instant and a `mem` family
- *      is re-minted at every boot by the repair — the carrier has nothing to mint and must not become a second writer.
- *    · **THE TWO SUBSCRIPTIONS ARE GONE.** The carrier held two exact-reference subscriptions on the frozen store as the
- *      CONSUMER channel; the delivery is the CLIENT's now (`view-client.ts`'s `onChanged` → re-read → `adopt`), one
- *      registration over both roots, and a second registration here would be a second consumer of one push.
- *  So `dispose()` releases what this carrier took — nothing — and says so rather than pretending to a registration it never
- *  made. **THE FACTORY'S ONE DECLARED THROW IS KEPT AND ITS SUBJECT IS THE SHAPE**: an absent/non-client argument is refused
- *  at construction with a typed `Error`, which is the same arm the frozen-store argument had. Every turn is TOTAL: a null
- *  client, a hostile client and a throwing route all land the DECLARED degradation and never let a throw escape a wiring
- *  turn. */
-export function createFocusCarrier(view: ViewClient | null): FocusCarrierSurface {
-  if (view === null || view === undefined || typeof (view as { focusState?: unknown }).focusState !== 'function') {
-    throw new Error('U-STORE-FOCUS: createFocusCarrier requires the view client (the shape) as its argument')
-  }
-
-  let released = false
-  return {
-    /** THE MIRROR-STATE READ — the shape's, synchronously; the declared empty pair where nothing has been read. */
-    state: (): { readonly entries: unknown; readonly activeId: unknown } => {
-      const state = mirrorStateOf(view)
-      return { entries: state.entries, activeId: state.activeId }
-    },
-    /** THE RE-HOMED ROUTE — the same answer shape the current `focusRoute` answers (BEHAVIOUR-PRESERVING). */
-    focusRoute: (payload: unknown): FocusAnswer => focusRouteImpl(view, payload),
-    /** **THE SEAM TARGET — ONE `commitFocus`, SENT (D-88).** It used to commit the mirror's two references and hand the
-     *  second receipt back by identity; the crossing takes the WHOLE mirror as one value, so the seam's return is the
-     *  client's own `ViewWriteStatement` — `{status:'sent'}`, or the `absent` arm on a realm with no crossing. **NO CALLER
-     *  READS IT FOR A RECEIPT**: the focus model's `persist` answers `{present, value}` and every caller here discards
-     *  `value`; the receipt lands in `view.writeOutcome()` a tick later. */
-    persistTarget: (state: FocusState): unknown => view.commitFocus({ entries: state.entries, activeId: state.activeId }),
-    /** THE RELEASE — kept for the four-member surface, and it releases NOTHING, which is the statement: the boot mint and
-     *  the two registrations this member used to unwind are the crossing's and the client's. Idempotent, non-throwing. */
-    dispose: (): void => {
-      released = true
-      void released
-    },
-  }
-}

@@ -1,0 +1,145 @@
+# L2 — `mcp-surface`: the `provident.focus` tool's interface, and `data.read`'s answer sentence (§9)
+
+- **Layer:** L2 · **Module:** `mcp-surface` · **Unit:** `focus-retirement` (rev 1–4), `tier-readout` (§9) · **Branch:** `strata` (D-6) · **Rev:** 5 — §9 is NEW and is a LICENCE and not a claim: the `provident.data.read` description's answer sentence, given verbatim before and after so `mcp-surface`'s L4 transcribes it without judgement, with no member, tool, group or count moving (D-18, D-133, D-134); rev 5 also CORRECTS §5's "read by NEITHER" clause, since `focusRouteSource()` spans the schema's two `.describe()` strings and `P-FT-RS-1` drive (3) reads them (D-18, D-30, §7); rev 3 is the SEAM ADJUDICATION: the `refused` arm is re-grained to the WIDENED shape the implementation layer transcribed, because D-142's "no transformation" governs members as well as values (`ASM-10`); **rev 4 is a CURRENCY pass and no claim moves** — the prose bytes, the docblock and the widened shape all LANDED, so each is restated as a site rather than as a licence (D-143)
+- **Ceiling:** 150 lines (class max); at the ceiling it splits by owner and is never appended (D-1, D-2)
+- **Charter:** the tool keeps its name, its declared `{target?, newTab?}` shape, its gate group and its ONE invoke seam, and
+  its act moves off the deleted `['focus']` mirror at `mem` onto the tab record at `['tabs']` at `file` (D-18, D-141,
+  D-142); what it publishes is the record as the renderer re-read it after the write — the L1 document's `ASM-2`,
+  confirmed by the user in this session (L1 §8)
+- **Write scope:** `docs/L2/mcp-surface/` and this module's two batteries, `tests/focus-tool.test.ts` and its register
+  `tests/focus-tool-register.ts` (brief §3, L1 §6 `E-5`). `src/**` is read-only at this layer (D-3)
+
+## 1. The tool as it publishes itself — before and after
+
+Sites are named, never offsets (D-41). Unless a path is given, a site is in `src/main/mcp-server.ts`.
+
+| Contract member | Before | After | Cite |
+|---|---|---|---|
+| **name** | `provident.focus`, one `ALL_TOOLS` member | **unmoved** — no tool is added, removed or renamed to carry this change | D-18, D-141 |
+| **title** | `Focus a target` | **unmoved**: it names the act the tool performs, not the model it used to ask | D-18 |
+| **declared input shape** | `{ target?, newTab? }`, both optional, a `passthrough` schema so a bad call reaches the declared refusal instead of being stripped | **unmoved**; `target` is `z.unknown()` and no `typeof` test exists on this surface (§4) | D-141, D-142 |
+| **gate group** | `dispatch` — the existing group, resolved as DATA by `TOOL_GROUPS` at `src/main/security.ts`, with no branch of its own | **unmoved**; no seventh group appears | D-18, D-142 |
+| **the one invoke seam** | `focusHandler`'s `backend.invoke('focus', passed)` | **unmoved**, and it stays the tool's ONLY seam: one handler, one call, no queue and no second route | D-18, D-41 |
+| **the wrapper** | the registration's `guarded(…)` arm, which answers the invocation-turn refusal VALUE while the exclusion tier is open, before the handler runs | **unmoved** — the tier's judgement is the gate's, never the tool's | D-18 |
+| **the act** | `['focus'].activeId` at `mem`: a proxy spelling of a derived fact, in the one tier that persists nothing | `['tabs']` at `file`, in the record's own terms | D-141, D-142 |
+| **the description** | it asks "the renderer's focus model" and names the focus model the renderer holds | §5's wording, **landed whole**: the top-level string AND both `.describe()` strings put the act in the tab record's terms (the registration's `description` and its `inputSchema`) | D-18, D-141, D-142 |
+
+## 2. What the surface does with a call
+
+- **Three steps and no more**: validate the declared argument shape, make ONE invoke over the seam, answer what the renderer answered, verbatim (D-18); a second identical call is a second invoke and never a cache hit (D-18).
+- **The act itself is not here**: the renderer's `focus` route composes the record from its own committed reading and hands it to the existing `data.write` route (renderer-wiring §2, §3); this surface hands the caller's two members through and transforms nothing (D-136, D-142).
+- **The tier is not decided here either**: the renderer names `file`, the declared-root guard judges the request and the record's own `exactly-one-active` repair judges the value, so the tool neither names a tier nor answers for one (D-101, D-142, D-140).
+- **Nothing is held between calls**: no state, no map, no registry, no minted id and no memo of the last answer (D-18).
+
+## 3. The answer shape — the reading the route answered, member by member
+
+`focusHandler` answers whatever the seam answered, and the seam answers the renderer's `focusActRoute`, whose declared type is `TabsClientReading & { refused?: FocusRefusal }` — FLAT, so a reading's `status` and a refusal's cannot collide on one key (renderer-wiring §2 `ASM-2`, site `src/renderer/renderer.ts`'s `FocusActAnswer`). One object, three arms:
+
+| Arm | Members | What each one is | Cite |
+|---|---|---|---|
+| **the act landed, or named no row** | `status`, `order`, `landing`, `rows`, `witness` | the CLIENT'S committed reading, copied verbatim (`src/renderer/tabs-client.ts`): `status:'committed'`, `order` the record's stored seat, `landing` the DERIVED active-tab id, `rows` one row per tab as re-read (store-tabs-record §2), and `witness` the client's own derivation over those rows — `landing.witness`/`activeIds` and `error.witness`/`tabId`, each terminal's `resolved` being what `Runtime.elementForNodeId` answered, `null` where the witness is false or no resolver was supplied | D-141, D-142, D-76 |
+| **the act's write was refused, or the route declined to write** | the five above, plus `refused` | `refused` is the WRITER'S LEDGER, carried MEMBER FOR MEMBER (`FocusRefusal`, now six): ALWAYS `{status:'refused', reason, message}` — the writer's `reason` and `message` where the store refused (`src/main/data/types.ts`'s `DataLedger`), or the route's own word where the route declined to write at all — **plus `storeStatus`, `path` and `log` WHEREVER THE WRITER CARRIED THEM**, each spread in only where answered, so no own `undefined` key is minted; **the excluded members are `floor` and `through`**, which ride the ledger's `cursor-unknown` arm alone, an arm this route's `write` composes on none. `log` is an enumerable array of plain records, which is exactly why a tool answer can carry it (D-103, D-107). **Dropping any member the writer sent would be the surface SELECTING which of the store's members an agent may see — a transformation at the surface, which D-142's *"no transformation"* forbids as much for MEMBERS as for VALUES, that extension to members being `ASM-10`'s own reading of the sentence and not a clause D-142 spells** (`ASM-10`). The route's own two refusals (`malformed-arguments`, `target-absent`) and `unreadableOf` carry the three always-present members and NO carried member, because no store answered them. **The widened shape IS what the bytes declare**: `FocusRefusal` at `src/renderer/renderer.ts` carries exactly these six members, and `refusalOf` spreads the three carried ones in only where the writer answered them | D-142, D-103, D-107, D-136, L1 §8 `ASM-2`, `ASM-10`, L3 rev 4 §7 |
+| **no record stands to answer with** | the reading's OWN members, plus `refused` | the arm answered when the reading is not `committed`, carried UNCHANGED — `absent` `{status, reason}`, `unread` `{status, reason, detail}`, `refused` `{status, reason, message, address}` — with ONE object minted BESIDE it: `{status:'refused', reason: <the reading's own>, message: "the tab record answered '<status>', so this realm holds no record to compose over"}` (`unreadableOf`). The surface re-spells and drops none of the reading's members; that sentence is the route's, not this tool's | D-127, D-142, renderer-wiring §7 `ASM-6` |
+
+- **`refused` is present on EVERY arm that refuses or declines, and ABSENT exactly where nothing was refused** — the arm that supplies no `target` (no write attempted at all) and the arm whose write LANDED (`refusalOf` answers `null` on a `committed` receipt); a writer's refusal, the route's two own reasons (`malformed-arguments`, `target-absent`) and a reading that is not `committed` all carry it, never as `undefined` (`ASM-7`). **The docblock above `interface FocusRefusal` states this same rule in its own words** — "PRESENT ON EVERY ARM THAT ANSWERS A REFUSAL, AND ON NO OTHER — absent exactly where NOTHING was refused" (`src/renderer/renderer.ts`) — and the route's bodies agree: `withRefusal` on S3, S5 and S7, the bare reading on S4, and `after` on a write that landed, so `refusalOf` answers `null` and puts nothing there.
+- **The write's landed ledger is NOT the answer**: `repaired`, `cursor` and `log` are not echoed on a landed act, because echoing `data.write`'s ledger would couple an MCP answer's shape to a `data.*` write's members (L1 §8 `ASM-2`) — the ledger rides `refused` ONLY, where it IS the judgement an agent is owed and a whole one, never a selection from it (`ASM-10`).
+- **`witness` is EVIDENCE and not the record**: a caller reads `landing`/`order`/`rows` for the state, and `witness` only to learn whether the two authored terminals stand — each terminal's `resolved` records the ENVELOPE's answer and never that a page was driven; the driving role is `driveTabsLandingPage`, which is not on this answer's path (`deriveTabsWitness`).
+- **The deleted model's three members do not survive**: `activeId`, `entries` and `opened` appear in no arm, and the surface's bytes name none of them — the schema's `newTab` prose reads "Open one new tab row carrying the same target…", in the record's vocabulary and not the mirror's (the registration's `inputSchema`, §5).
+- **The arms' key sets are asserted separately**, because `status` is what tells them apart and a single key-set equality over both would be satisfiable only by an answer the contract does not declare (§3, D-142).
+
+**The two failure classes, and the third that is neither:**
+
+1. **The writing realm's refusals pass through as a VALUE** — `parent-absent`, `store-refused` and the store's own mapped words are the STORE's judgement, while `declared-tier` is the DATA SURFACE's own word composed before any store was consulted (`src/main/data/types.ts`'s `DataLedger` docblock, D-101): both arrive as `refused.reason` with a sentence beside it, and this surface mints neither (D-136, D-142).
+2. **The tool's own refusal is its ARGUMENTS', and it is the ONLY class this surface mints** — a `TypeError` naming the rejected key or the rejected form, raised in `focusHandler` (`plainArguments`, `keyAllowed`) BEFORE any invoke. **It judges the argument HOLDER, never a member's VALUE**: no `typeof target` test exists here (D-141, D-142).
+3. **The renderer's own statements travel as VALUES, not as this tool's words** — a reading that is not `committed` answers the third arm, and an act whose target no row carries answers the record as read with the route's own reason (`target-absent`; a non-string target, `malformed-arguments` — §4) (renderer-wiring §2, §7 `ASM-5`, D-142).
+
+## 4. `newTab`, and a target that names no standing row
+
+- **`newTab: true` opens one new record row carrying the caller's `target` and seats it active** — one row, added once, and
+  no standing row's bytes moved (L1 §8 `ASM-1`, D-142). The id is the renderer's mint (`tab-<n>`, through the existing
+  `mintTabId`) and never the caller's target, so the tool invents no identity (renderer-wiring §3, D-117).
+- **An act that names no row is no act**: no `target` means no write at all, and the answer is the record as read with NO
+  `refused` member (renderer-wiring §2, D-142).
+- **A `target` no standing row carries, with `newTab` not `true`, writes nothing** and answers the RECORD AS READ with the
+  route's own `target-absent` in `refused`: opening a row for every unresolved target would empty `newTab: true` of its
+  declared meaning (renderer-wiring §7 `ASM-5`, D-18).
+- **A `target` a standing row carries** seats that row and moves `order` not at all; the record's own `exactly-one-active`
+  settles the pair (D-142, D-76, D-129).
+- **`newTab` is carried uninterpreted BY THE TOOL**: `false`, `0` and a string reach the seam as the caller sent them — no
+  default and no `Boolean()` (`focusHandler`'s `passed[key] = args[key]`) — while the ROUTE's own read is `newTab === true`,
+  so only the boolean opens one (renderer-wiring §2 `S1`, D-141, D-18).
+- **A `target` that is not a string writes nothing, and its refusal is the ROUTE'S VALUE, never a throw**: the answer is the
+  record as read beside `refused` `{status:'refused', reason:'malformed-arguments', message:"provident.focus: a tab row's
+  \`target\` is a string, so a non-string target can be no row"}` (`src/renderer/renderer.ts`'s `malformed`, whose word is
+  the `data` ledger's own). Nothing refuses it earlier: the schema member is `z.unknown()` and `focusHandler` applies no
+  `typeof` test, so the member travels BY IDENTITY to the route (renderer-wiring §2 `S5`, D-112, D-105).
+
+## 5. The description and the schema's prose, as contract statements
+
+- **What the words now say**: that the tool sets the ACTIVE TAB in the tab record, in the record's own terms and
+  durably; that a repeated target activates its standing row and `newTab: true` opens one; that the answer is the record as
+  re-read; and that the act mutates no graph node, emits no notification and renders no surface — each sentence the live
+  description carries (D-141, D-142).
+- **What no sentence in the block says, BY SENSE**: any sentence describing the tool as ASKING a focus model, or naming a focus model as the HOLDER of the target — the sense in which "the focus model" was the deleted mirror family's route (address, tier, declaration, route — D-142), of which the two phrases §1's table quotes as the before-state are the spellings (D-142, L1 §6 `E-5`). **The sense that MAY stay**: `the focus model` naming the RETAINED module `src/shared/focus-model.ts`, which D-141 leaves OPEN — a model that *may* be worth exercising over the tab record's state, imported by no `src/` file — so a sentence about it has another subject, and this tool consults neither (D-141, L1 §7).
+- **All three strings landed, and they read the record's terms**: the `target` member reads "The opaque target the act seats — passed through uninterpreted. A non-string can be no tab row, so the route writes nothing and answers the refusal in `refused`." and `newTab`'s reads "Open one new tab row carrying the same target — carried uninterpreted; only the boolean true opens one, and no default is applied." (the registration's `inputSchema`); each replaced one string and moved no schema member's type, so no battery and no behaviour moved with them (D-18, D-30).
+- **The surface's durability claim is the tier's, not a wish**: the act lands at `file`, the one durable tier, and the words
+  say so because the record's own declaration is what holds it there (D-141, D-101).
+- **The prose is not a battery's subject, but two things about the block ARE read**: the token scan for the three deleted names (`deletedShapeSites`), and — in `P-FT-RS-1` control (e) — the live description's own opening sentence as the ANCHOR the names are re-inserted into, so that one sentence must not move while the description's prose may. The schema's two `.describe()` strings sit inside that same block and inside the token scan's own region — `focusRouteSource()` spans the block's inner bytes plus the handler, so a `.describe()` that kept the deleted vocabulary WOULD have redded `P-FT-RS-1` drive (3), whose message names the schema as its subject — so the writer's word moved them ahead of the scan, not ahead of a test (D-18, D-30, §7, L1 §6 `E-5`).
+
+## 6. What this surface does not do
+
+- **No new MCP tool, resource, resource template, gate group or bridge member** appears to prove anything, and the
+  `tabs` bridge member is not widened by this module (D-18, D-142).
+- **No composition at the crossing**: the whole record is composed in the renderer, and this surface reads no path, no
+  tier and no value on the way (D-136, D-142).
+- **No tier decision and no invariant of its own**: the record's declared roots admit `file`, `exactly-one-active`
+  judges the value, and the tool adds no rule beside either (D-101, D-140).
+- **No notification and no re-render**: the tool emits no resource update and forces nothing; the renderer follows the
+  tab record's own change push, which exists already (D-137, D-142).
+- **No mirror**: this surface reads nothing at `['focus']` and writes nothing there, because the family and its route
+  are deleted whole (D-142).
+
+## 7. This module's two batteries — dispositions, and the marks they carry
+
+Both files are this module's own evidence for the tool's ROLE BYTES and its ANSWER SHAPE (L1 §6 `E-5`).
+
+| Rows | File | Disposition after this pass | Cite |
+|---|---|---|---|
+| `P-FT-RT-1`…`RT-5`, `P-FT-RS-2`, `G4-D1`/`D2`, `X-1`/`X-1b`/`X-3`/`X-6`/`X-6b`/`X-7`/`X-8` | register, test | **re-grained fixtures only**: the name, the listing, the group, the `RpcMethod` member, the renderer's `'focus'` case, the one-call rule and the argument-refusal class are unmoved, so each row keeps its claim and its term | D-18, D-141 |
+| `P-FT-AR-1`…`AR-4`, `I-1`…`I-13` | register, test | **re-grained**: the argument space, the pass-through by identity, the hostile-shape totality and the route-region scans keep their claims; only the answers they read are the reading's now | D-141, D-142 |
+| `P-FT-ID-1`, `P-FT-ID-2` | register | **re-grained**: the identity a caller reads is the record's derived `landing`, and the tool still compares nothing, mints nothing and holds nothing | D-140, D-76 |
+| `P-FT-ID-3` | register | **re-grained from the `entries` echo to the record's `rows` echo**: the same ten container shapes, asserted by identity on the member that survives | D-142 |
+| `P-FT-ID-4` | register | **re-grained onto the deletion**: `opened` has no member in any arm, opening is read off `order` growing by ONE, the answer's key set is drive (1)'s five-name equality, and the deletion's falsifier is the canary control proving the SAME reader hits the three names where they exist | D-142 |
+| `P-FT-RF-1`, `G4-C1`…`C3` | register, test | **re-grained, with its seam named**: `refused` carries the writer's ledger member for member and is never converted into a success; its own key set is asserted EQUAL to what the fixture's writer sent, and the fixtures carry `storeStatus`, `path` **and `log`** to prove the TOOL drops and invents nothing — the WIDENED shape is what they pin (§3, `ASM-10`; the declared bytes are `src/renderer/renderer.ts`'s `FocusRefusal` and `refusalOf`), so a fixture that sent the ledger whole and read its own key set back unchanged reds the moment one member is dropped or an own `undefined` key is minted | D-136, D-142, D-103, D-107, L3 rev 4 §7 |
+| `P-FT-RS-1`, `R-5`, `I-6`, `§5.U` row 5 | register, test | **re-grained onto the READING**: the returned key set is the client's committed members — `status`, `order`, `landing`, `rows`, `witness` — plus `refused` IFF, and the register's record-arm fixture now carries `witness` so the equality is the reading's and not the bare record answer; its static drive reads the FOCUS REGISTRATION BLOCK's own bytes — bounded at that block's closing brace, so its description and schema are inside and a sibling tool's registrations are outside — plus the handler span, naming none of the deleted three, the bound driven BOTH WAYS over the live file (names re-inserted RED, absent green) | D-142, D-18 |
+| `R-1` | test | **re-grained to the HANDLER span**: a scan over the whole region would forbid the very words `D-141` asks for, so the consumer-noun ban is asserted over the handler's own bytes and the description stays outside it | D-141, D-30 |
+| `G4-B1`…`B4` | test | **re-grained off the retained focus model onto the record**: the caller's members reach the seam by identity, the answer is the record re-read rather than a construction, a standing row is seated without an append, and `newTab: true` opens exactly one row in `order` | D-142, L1 §8 `ASM-1` |
+| `G4-E1`…`E4` | test | **headstones**: the renderer's focus-carrier route is deleted whole, so the region reader answers nothing and the replacement site — the record's write through `data.write` — is what the row locates, with a control that the reader can still find a present marker | D-142 |
+| no row id retires | both | every row keeps its id, its strategy id and its declared term, so no count is orphaned by this pass | D-30 |
+
+**The marks statement.** `tests/focus-tool.test.ts` carries the file-scope `rework` marker, and the register is executed
+only from it, so **every row of both files reports ON NOTICE and nothing here gates** (D-30). No row is retired by name:
+each keeps its id under a re-grain or a headstone, so the register's declared terms are unmoved (D-30, D-40). The rows
+that gate this change are the L1 battery's at `tests/e2e/focus-retirement/`, authored after the sweep (D-40, L1 §4) —
+which of them gate is the mark index's fact and is cited here, never counted (D-26, D-43).
+
+## 8. Assumptions, each with the alternative it rejected (D-1 §8)
+
+`ASM-1`…`ASM-3` are the L1 document's and `ASM-4`…`ASM-6` are `renderer-wiring`'s, cited as theirs throughout; the four below continue the numbering so no id carries a second claim (D-1 §8) — `ASM-10` is RE-GROUNDED IN PLACE at rev 3 rather than renumbered, so its id keeps ONE claim at a time and its rejected alternative names the reading it replaced.
+
+| id | Assumption | Rejected alternative |
+|---|---|---|
+| ASM-7 | a refusal rides the accepted arm as a `refused` member while `status` keeps reporting the RECORD's read, so a caller learns both the standing record and the act's outcome from one answer (D-136, D-142) | making the refusal the answer's whole body — `status: 'refused'` with the record members gone — which loses the re-read the settled shape promises and gives one answer two incompatible bodies (L1 §8) |
+| ASM-8 | the deleted shape's absence is pinned as a ROLE-BYTES claim over the tool's route region, its words included, and never as a row asserting what the description SAYS — the one sentence a row pins is `P-FT-RS-1` control (e)'s injection anchor, which is a falsifier of the scan and not a claim about the prose (D-18, D-142) | a row asserting what the description says about the tab record, which makes prose a battery's subject and reds every future wording edit (D-30, L1 §6 `E-5`) |
+| ASM-9 | the three deletion headstones that scan the WRITING REALM's whole file read it for the deleted model's tokens rather than for a named-site list, because `renderer-wiring` §4 removes "the payload-carried projection arm" as a class and does not enumerate its sites (D-142) | a named-site list, which would leave an unnamed site of the same class unread and let a half-deletion pass (D-18) |
+| ASM-10 | the answer's `refused` is the WRITER'S LEDGER **carried whole**: `{status, reason, message}` always, plus `storeStatus`, `path` and `log` wherever the writer carried them and spread in only where answered, so no own `undefined` key is minted and nothing outside the ledger's declared set (`floor`/`through` ride `cursor-unknown` alone) appears — ground: D-142's *"'transparent' means no transformation and not no refusal"* read as governing **MEMBERS as well as VALUES**, since electing which of the store's members an agent may see is the surface's decision the ruling forbids, and `log` is enumerable precisely so an answer can carry it (D-142, D-103, D-107) | **the narrow reading — rebuilding `{status, reason, message}` — is REJECTED, and its cost is stated**: an agent loses the store's own `storeStatus`, so it cannot tell WHICH store arm refused it, and loses `path` and `log`, so a refused pass's address and evidence are gone; the answer then stops being the store's judgement and becomes the surface's summary of it, and every member `DataLedger` gains is silently dropped at this crossing (D-136, L1 §8 `ASM-2`, L3 rev 4 §7) |
+
+## 9. The `tier-readout` licence — `provident.data.read`'s answer sentence, transcribed and not judged (D-18, D-133, D-134)
+
+**One of the five data registrations moves, and nothing else on this surface does**: one DESCRIPTION stops promising a bare value and says what the answer now carries — each node's own readout `_tier` — with no member, no second tool, no group and no count moving (D-18, D-133, D-134). **THIS description is PROSE AND NO BATTERY'S SUBJECT**: `P-FT-RS-1`'s scan is bounded before the `provident.data.*` registrations and `tests/e2e/tier-readout/` reads no description at all, so no row reds while it stands stale and none clears when it moves — which is why the licence is given whole rather than judged (D-18, D-30, §5, L1 §4).
+
+- **`E-4` is L1 §7's id, and the site is ONE member**: `src/main/mcp-server.ts`'s `dataTools` array, the `provident.data.read` entry's `description` — its `title`, its `path`/`tier` `.describe()` strings, its `run` adapter, the tool's name, its two-member argument schema, its `data` group and every count around it are unmoved; both strings below are that member's value with its own quotes and without the comma that follows it (D-18, D-41, L1 §2).
+- **BEFORE, verbatim**: `'Read one address of the app\'s data profile. A literal standing at the address answers kind:"row" with the value; a container answers kind:"branch" with its assembled value; an address holding nothing answers status:"absent". The addresses are the register\'s own key space: an array of string keys and non-negative indices, and [] names the whole register. An omitted tier reads across the tiers — the lowest persistence present — and a named one narrows the read to that tier alone, where nothing standing there answers "absent".'`
+- **AFTER, verbatim**: `'Read one address of the app\'s data profile. A literal standing at the address answers kind:"row"; a container answers kind:"branch"; an address holding nothing answers status:"absent". The answer\'s value is the node read, and EVERY node inside it names its own _tier — "file", "mem" or "temp", one token and never a set — minted at the node and never echoed once for the call, so one call can answer nodes at DIFFERENT tiers: a literal is {_tier, value}, an array is {_tier, value:[…]}, and a container carries its members inline beside _tier with no value wrapper. A readout is what the store answered at that node, never an echo of the tier the call asked for, and the status:"absent" arm answers no node and carries no _tier. The addresses are the register\'s own key space: an array of string keys and non-negative indices, and [] names the whole register. An omitted tier reads across the tiers — the lowest persistence present — and a named one narrows the read to that tier alone, where nothing standing there answers "absent".'`
+- **The four verbs beside it owe no edit, and `list`'s description names no node to name**: `DataListAnswer` is `{status, prefix, paths, count}` — addresses and a count, no `value` and no `_tier` — so the readout reaches no member of it and no sentence of its description can be false; `write`, `delete` and `journal` name their own receipt members (a write's `cursor`/`repaired`/`log`, a delete's `removed`/`tiers`, the journal's `{cursor, kind, path, changedTo}` window and its `from`/`floor`/`through`) and none claims a read's `value`; all four were read whole at this head, so `E-4` is the only edit owed (central-data §2, §3, D-103, D-107, D-134).
+- **`E-4` lands in `E-1`/`E-2`'s edit and never ahead of them — L1 §7's rows for `central-data`'s `types.ts` and `surface.ts`** — a description naming a shape the tree has not reached is the stale-literal class `D-137` names — and its batteries are `npx vitest run tests/focus-tool.test.ts tests/focus-tool-register.ts`, `npm run typecheck` and `npm run build` (D-41, D-137, L1 §7).

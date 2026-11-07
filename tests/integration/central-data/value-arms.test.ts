@@ -11,14 +11,16 @@
 //   CLAIM 2 · The pass runs on every write, whatever the caller: a `provident.data.write` at a declared root answers the
 //             COMMIT'S LOG, and that log names the family's own constraint pair on the write path (`VA-2`).
 //   CLAIM 3 · So a family a legal-tier write can break is a family whose DECLARATION is too weak — and the fix is a value
-//             arm in the body, not a guard on the surface. `VA-3`…`VA-10` measure every one of the app's EIGHT families
+//             arm in the body, not a guard on the surface. `VA-3` and `VA-5`…`VA-10` measure each of the app's families
 //             at its own store, `VA-11`/`VA-12` re-prove the existence arms and the restarts, and `VA-13` states the one
-//             arm the value arms deliberately do not take.
+//             arm the value arms deliberately do not take. **`VA-4` RETIRED WHOLE WITH THE FAMILY IT MEASURED** (`D-142`,
+//             `D-9`): its subject was the view record's `mem` mirror at `data.*` and `commitFocus`'s own route, and the
+//             ruling deleted both — so the family CLASS it covered is `VA-5`'s, over the sibling that survives.
 //
-// **THE EIGHT, ENUMERATED RATHER THAN ASSUMED**: the five roots of the NORMAL crossing (`['tabs']`'s six declarations,
-// and `['panes']`, `['focus']`, `['zones']`, `['theme']` with one each — `D-87`, `D-91`, `D-97`, `D-98`) and the three
-// addresses of the SECURE crossing (`['operator-settings']`, `['operator-exclusion']`, `['operator-app-state']` — `D-84`,
-// `D-85`). **The three secure addresses are NOT reachable from `data.*`** (`D-80`: that surface acts on the central store
+// **THE FAMILIES, ENUMERATED RATHER THAN ASSUMED AND NEVER COUNTED** (`D-43`, `D-26`): the normal crossing's — the tab
+// record's `['tabs']` with its six declarations, and the view record's three, `['panes']`, `['zones']` and `['theme']`,
+// with one each (`D-87`, `D-91`, `D-97`, `D-98`) — and the three addresses of the SECURE crossing
+// (`['operator-settings']`, `['operator-exclusion']`, `['operator-app-state']` — `D-84`, `D-85`). **The three secure addresses are NOT reachable from `data.*`** (`D-80`: that surface acts on the central store
 // and on nothing else, measured in `VA-1` below), so their arm is driven at the store the module itself constructs — the
 // same package surface, a different instance, which is what "whatever the caller" means for a family `data.*` cannot
 // address.
@@ -140,12 +142,15 @@ function ledgerOf(answer: DataWriteAnswer | DataDeleteAnswer): { reason: string;
 }
 
 describe('the value arms — a declaration that cannot be subverted by any caller (D-105)', () => {
-  it('VA-1 · CLAIM ONE: `data.*` IS a package-surface tool — its whole store verb census is `write`, `delete`, `read` and `readLiteral`, and it constructs no instance, registers no pair and repairs nothing (D-105)', () => {
+  it('VA-1 · CLAIM ONE: `data.*` IS a package-surface tool — its whole store verb census is `write`, `delete`, `read`, `readLiteral` AND `readTiered`, and it constructs no instance, registers no pair and repairs nothing (D-105, D-134)', () => {
     const code = commentElided(sourceOf('src/main/data/surface.ts'))
     const store = commentElided(sourceOf('src/main/data/store.ts'))
     // THE VERBS, AS A CENSUS OVER COMMENT-ELIDED CODE: every one of the store's own, and not one member of the surface's
-    // own composition over them.
-    for (const verb of ['store.write(', 'store.delete(', 'store.read(', 'store.readLiteral(']) {
+    // own composition over them. **`store.readTiered(` IS THE FOURTH READ AND THE READOUT'S ONLY SOURCE** (`D-134`): the
+    // read verb composes the release's third read rather than composing a tier of its own, while `read` and `readLiteral`
+    // keep their other callers — `list`'s walk and `delete`'s standing probe — so a body that answered `_tier` out of the
+    // caller's own argument instead would red HERE, and so would a read that stopped being the store's.
+    for (const verb of ['store.write(', 'store.delete(', 'store.read(', 'store.readLiteral(', 'store.readTiered(']) {
       expect(code.includes(verb), `the surface calls the store's own verb: ${verb}`).toBe(true)
     }
     for (const forbidden of ['addConstraint(', 'constraintOn(', 'constraintOff(', 'rollback(', 'storeCreate(']) {
@@ -176,15 +181,14 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const pairs: ReadonlyArray<readonly [string, readonly string[], unknown]> = [
       ['tabs', ['tabs'], one.store.read(['tabs'], 'file')],
       ['panes', ['panes'], one.store.read(['panes'], 'file')],
-      ['focus', ['focus'], one.store.read(['focus'], 'mem')],
       ['zones', ['zones'], one.store.read(['zones'], 'mem')],
       ['theme', ['theme'], one.store.read(['theme'], 'file')],
     ]
     const expected: Record<string, string> = {
-      tabs: 'tabs-must-stand', panes: 'panes-must-stand', focus: 'focus-must-stand', zones: 'zones-must-stand', theme: 'theme-must-stand',
+      tabs: 'tabs-must-stand', panes: 'panes-must-stand', zones: 'zones-must-stand', theme: 'theme-must-stand',
     }
     for (const [label, path, value] of pairs) {
-      const tier = path[0] === 'focus' || path[0] === 'zones' ? 'mem' : 'file'
+      const tier = path[0] === 'zones' ? 'mem' : 'file'
       const answer = one.surface.write({ path, tier, value })
       if (answer.status !== 'committed') throw new Error(`${label}: the legal write must commit, and answered ${JSON.stringify(answer)}`)
       const named = answer.log.filter((entry) => entry.kind === 'constraint-check').map((entry) => entry.id)
@@ -223,25 +227,6 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(one.view.read().panes).toEqual([{ id: 'pane-a', size: 60, bounds: { min: 0, max: 120 } }])
     expect(one.view.commitPane('pane-a', { size: 20 }), 'and the family\'s own route, which composes the family through the one composer').toEqual({ status: 'committed' })
     expect(one.view.read().panes, 'with the member it did not supply kept from what stood').toEqual([{ id: 'pane-a', size: 20, bounds: { min: 0, max: 120 } }])
-  })
-
-  it('VA-4 · THE FOCUS MIRROR: a DANGLING `activeId` is refused, junk is refused, a repeated id is refused — and the mirror that stood survives, because `commitFocus` already refused the same states at its own route', () => {
-    const one = stand()
-    expect(one.view.commitFocus({ entries: [{ id: 'a', target: 't' }], activeId: 'a' }), 'a legal mirror lands through the route').toEqual({ status: 'committed' })
-    const mirror = one.view.read().focus
-    expect(mirror).toEqual({ entries: [{ id: 'a', target: 't' }], activeId: 'a' })
-    for (const value of [{ entries: [], activeId: 'ghost' }, { junk: true }, { entries: [{ id: 'a', target: 't' }, { id: 'a', target: 'u' }], activeId: 'a' }, { entries: 'x' }]) {
-      const refused = ledgerOf(one.surface.write({ path: ['focus'], tier: 'mem', value }))
-      expect(refused, `the corrupt mirror ${JSON.stringify(value)} is refused, and the sentence names the fault`).toEqual({
-        reason: 'store-refused', storeStatus: 'ConstraintPassRefused', message: expect.stringContaining('the focus mirror carries an entry the read cannot state'),
-      })
-    }
-    expect(one.view.read().focus, 'so the mirror that stood is the mirror that still stands').toEqual(mirror)
-    expect(one.store.read(['focus'], 'mem'), 'and the store\'s own register carries no dangling id behind it').toEqual({ entries: [{ id: 'a', target: 't' }], activeId: 'a' })
-    expect(one.surface.write({ path: ['focus'], tier: 'mem', value: { entries: [{ id: 'b', target: 't' }], activeId: 'b' } }).status, 'a legal mirror lands through `data.*`').toBe('committed')
-    expect(one.view.read().focus).toEqual({ entries: [{ id: 'b', target: 't' }], activeId: 'b' })
-    expect(one.view.commitFocus({ entries: [], activeId: null }), 'and the route still commits, at the absence of every entry').toEqual({ status: 'committed' })
-    expect(one.view.read().focus).toEqual({ entries: [], activeId: null })
   })
 
   it('VA-5 · THE ZONE FAMILY: a member that is no record, and a zone carrying a `size` the read cannot state, are refused — while a zone that carries NOTHING stays legal, because that is a state the family holds (D-91, D-105)', () => {
@@ -369,15 +354,14 @@ describe('the value arms — a declaration that cannot be subverted by any calle
 
   it('VA-11 · THE EXISTENCE ARMS STILL WORK, ON EVERY FAMILY: a cold profile carries every placeholder at the creation instant, and the operator instance carries its three', () => {
     const one = stand()
-    // THE FIVE CENTRAL ROOTS, each at its creation-instant value: `['panes']`, `['tabs']` and `['theme']` are `file` and
-    // carry the repair's write in the profile's own bytes; `['focus']` and `['zones']` are `mem` and are re-minted at
-    // every boot, so their placeholder is the register's and no byte of it is a file's (D-84).
+    // THE CENTRAL ROOTS, each at its creation-instant value: `['panes']`, `['tabs']` and `['theme']` are `file` and
+    // carry the repair's write in the profile's own bytes; `['zones']` is `mem` and is re-minted at every boot, so its
+    // placeholder is the register's and no byte of it is a file's (D-84; the other `mem` root left with `D-142`).
     expect(one.store.read(['panes'], 'file'), 'panes-must-stand\'s placeholder').toEqual({ 'pane-a': { size: 100, bounds: { min: 0, max: 200 } } })
     expect(one.tabs.read(), 'tabs-must-stand\'s landing row').toMatchObject({ order: ['landing'], landing: 'landing' })
     expect(one.store.read(['theme'], 'file'), 'theme-must-stand\'s placeholder declaration').toEqual({ declaration: { value: '', removal: true } })
-    expect(one.store.read(['focus'], 'mem'), 'focus-must-stand\'s declared empty pair').toEqual({ entries: [] })
     expect(one.store.read(['zones'], 'mem'), 'zones-must-stand\'s family that names no zone').toEqual({})
-    expect(one.view.read().source, 'and every family reads as a RECORD and never as a substituted default').toEqual({ panes: 'record', focus: 'record', zones: 'record', theme: 'record' })
+    expect(one.view.read().source, 'and every family reads as a RECORD and never as a substituted default').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // THE SECURE CROSSING'S THREE: `['operator-exclusion']` is the `mem` pair its repair mints, and the two `file` records
     // are the repairs' own writes — which are what the file carries when the constructor returns (D-86).
     const where = dir()
@@ -391,18 +375,16 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(Object.keys(file).sort(), 'with both file records in the instance\'s own bytes before any caller act').toEqual(['operator-app-state', 'operator-settings'])
   })
 
-  it('VA-12 · THE PREVIOUS LEGAL VALUE SURVIVES A RESTART, family by family: the three `file` families are the file\'s and come back member for member, and the two `mem` families are re-minted at their placeholder — which is what a `mem` address is for (D-84)', () => {
+  it('VA-12 · THE PREVIOUS LEGAL VALUE SURVIVES A RESTART, family by family: the three `file` families are the file\'s and come back member for member, and the `mem` family is re-minted at its placeholder — which is what a `mem` address is for (D-84)', () => {
     const one = stand()
     expect(one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { size: 61, bounds: { min: 1, max: 121 } } } }).status).toBe('committed')
     expect(one.surface.write({ path: ['theme'], tier: 'file', value: { token: 'dark', attribute: 'data-theme' } }).status).toBe('committed')
-    expect(one.surface.write({ path: ['focus'], tier: 'mem', value: { entries: [{ id: 'a', target: 't' }], activeId: 'a' } }).status).toBe('committed')
     expect(one.surface.write({ path: ['zones'], tier: 'mem', value: { 'zone-1': { size: 7 } } }).status).toBe('committed')
     const next = one.restart()
     expect(next.view.read().panes, 'the pane geometry comes back off the bytes, exactly as it was written').toEqual([{ id: 'pane-a', size: 61, bounds: { min: 1, max: 121 } }])
     expect(next.view.read().theme, 'and so does the appearance record').toEqual({ token: 'dark', attribute: 'data-theme', declaration: { name: 'data-theme', value: 'dark', removal: false } })
-    expect(next.view.read().focus, 'while a `mem` mirror is the instance\'s: the next process meets the declared empty pair').toEqual({ entries: [], activeId: null })
-    expect(next.view.read().zones, 'and a `mem` zone family meets its placeholder').toEqual([])
-    expect(next.view.read().source, 'and every one of the four still reads as a record, because a repair is a lawful boot source').toEqual({ panes: 'record', focus: 'record', zones: 'record', theme: 'record' })
+    expect(next.view.read().zones, 'while a `mem` zone family is the instance\'s: the next process meets its placeholder').toEqual([])
+    expect(next.view.read().source, 'and every one of them still reads as a record, because a repair is a lawful boot source').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // **AND THE PREVIOUS LEGAL VALUE SURVIVES A CORRUPT ATTEMPT AT THE NEW HEAD — THE SURVIVAL IS ASSERTED BEFORE THE
     // VERDICT**, so a body that answered this state with a REPAIR (instead of the refusal it owes) reds HERE: the
     // placeholder would have replaced the family the file carried, and this row is where that is measured.
@@ -457,33 +439,36 @@ describe('the value arms — a declaration that cannot be subverted by any calle
       constraints: [...tabsBatch, ...viewBatch].map((declaration) => ({ address: declaration.address, id: declaration.id, constraint: declaration.constraint })) as never,
     }) as unknown as ViewRecordStore
     holder.current = store
-    // THE REGISTRATION INSTANT, ASSERTED BEFORE ANYTHING IS DRIVEN: the batch is SIX + FOUR over the two crossings and
-    // THREE at the secure instance, every one of them REGISTERED (a `ConstraintRefusedAtRegistration` would have thrown
-    // out of the construction above), and the ten ids are one namespace with no repeat.
-    expect(tabsBatch.length, 'the tab record declares SIX').toBe(6)
-    expect(viewBatch.length, 'the view record declares FOUR').toBe(4)
+    // THE REGISTRATION INSTANT, ASSERTED BEFORE ANYTHING IS DRIVEN — and **BY PRESENCE AND SPREAD, NEVER BY A COUNT**
+    // (`D-43`, `D-26`): the two batches are the arrays the construction adopted, so each id is looked for in the set
+    // the crossing actually handed the store rather than in a figure this battery would owe keeping true. **THE ROOTS'
+    // COUNT IS NOT HERE AT ALL**: it is `declared-root.test.ts`'s equality row, and it is that row's alone (`D-101`).
     const centralIds = [...tabsBatch, ...viewBatch].map((declaration) => declaration.id)
-    expect(centralIds.slice().sort(), 'and the ten ids are the batch `src/main/main.ts` hands the one construction').toEqual([
+    for (const id of [
       'exactly-one-active',
-      'focus-must-stand',
       'order-names-its-tabs',
-      'panes-must-stand',
       'tab-has-content',
       'tab-has-lastActiveAt',
       'tab-has-title',
       'tabs-must-stand',
-      'theme-must-stand',
+      'panes-must-stand',
       'zones-must-stand',
-    ])
+      'theme-must-stand',
+    ]) {
+      expect(centralIds, `${id} is declared by the crossing that owns it, in the batch the construction adopted`).toContain(id)
+    }
+    // **AND THE RETIRED FAMILY'S PAIR IS DECLARED BY NOTHING** (`D-142`, `D-9`): the deletion took the declaration, the
+    // address constant and the declared-root entry in one edit, so this arm reds the instant any of them is left behind.
+    expect(centralIds, 'the family `D-142` deleted has no declaration in either batch any more').not.toContain('focus-must-stand')
     const secureDir = dir()
     createOperatorSettings({ userDataDir: secureDir })
     const secureBatch = (captured[captured.length - 1]?.['constraints'] ?? []) as ReadonlyArray<{ id: string; constraint: (context: unknown) => unknown }>
-    // ⟶ **THE SECURE CROSSING'S BATCH MOVES `3 → 5 → 6`**: `D-123` added the pane family's existence pair and the invariant,
-    // and `D-124` declares that invariant at EACH half it judges instead of once at the store's root — one more element of
-    // the same construction's list, and no second store. So this row now drives SIXTEEN declarations.
-    expect(secureBatch.length, 'the secure crossing declares SIX, and this is the list its own construction adopted').toBe(6)
-    const sixteen = centralIds.length + secureBatch.length
-    expect(sixteen, 'SIXTEEN declarations, and this row drives every one of them').toBe(16)
+    // ⟶ **THE SECURE CROSSING'S BATCH IS READ OFF THE LIST ITS OWN CONSTRUCTION ADOPTED** (`D-123`, `D-124`): the pane
+    // family's existence pair and the invariant, declared at EACH half it judges instead of once at the store's root —
+    // one more element of the same construction's list, and no second store. **ITS SIZE IS NOT STATED HERE** (`D-43`,
+    // `D-26`): what this row owes is that every declaration the batch carries is DRIVEN below, which the closing arm
+    // takes off the batch itself, and the non-empty control keeps that arm from passing vacuously.
+    expect(secureBatch.length, 'the list is not empty, so the drives below are a measurement and not a vacuous pass').toBeGreaterThan(0)
 
     // **THE ONE ASSERTION THE WHOLE ROW IS** — made on the VALUE A BODY ANSWERED, which is the only form the kernel's
     // two readers ever see. `Object.getPrototypeOf` is asserted FIRST and separately, because an answer built on a base
@@ -504,22 +489,25 @@ describe('the value arms — a declaration that cannot be subverted by any calle
       else expect('repair' in outcome, `${label}: and the unrepairable arm carries no \`repair\`, own or inherited`).toBe(false)
     }
 
-    // **THE TEN CENTRAL DECLARATIONS, EACH AT ITS REPAIRABLE ARM.** Six answer `{message, repair}`; the four view
-    // families answer the same shape at their existence arm (`D-84`, `D-85`, `D-91`, `D-97`). The context is the
-    // REGISTRATION instant's — `{address, tier: null, value}` — which is the one instant at which the batch itself is
-    // asked. **AND FROM `1.9.3` IT IS THE STRICTER OF THE TWO INSTANTS, NOT THE PERMISSIVE ONE** `ST-F1` described: the
-    // reader demands an OWN `message` before it looks for a repair at all, and where no own `repair` answers it refuses
-    // the CONSTRUCTION, where the write instant's own-`message` question only decides its sentence (`D-109`).
+    // **THE CENTRAL DECLARATIONS, EACH AT ITS REPAIRABLE ARM — the tab record's six and the view record's three.** The
+    // tab record's answer `{message, repair}`; the view families answer the same shape at their existence arm (`D-84`,
+    // `D-85`, `D-91`, `D-97`). The context is the REGISTRATION instant's — `{address, tier: null, value}` — which is
+    // the one instant at which the batch itself is asked. **AND FROM `1.9.3` IT IS THE STRICTER OF THE TWO INSTANTS,
+    // NOT THE PERMISSIVE ONE** `ST-F1` described: the reader demands an OWN `message` before it looks for a repair at
+    // all, and where no own `repair` answers it refuses the CONSTRUCTION, where the write instant's own-`message`
+    // question only decides its sentence (`D-109`). **AND EVERY DRIVE IS COUNTED** so the row's claim about itself is
+    // mechanical rather than asserted: `driven` collects each id below, and the closing arm reads it against the batches.
+    const driven: string[] = []
     const byId = new Map([...tabsBatch, ...viewBatch].map((declaration) => [declaration.id, declaration]))
     const central = (id: string, context: unknown): unknown => {
       const declaration = byId.get(id)
       if (declaration === undefined) throw new Error(`the batch carries no declaration for ${id}`)
+      driven.push(id)
       return declaration.constraint(context)
     }
     refusalForm('tabs-must-stand', central('tabs-must-stand', { address: ['tabs'], tier: null, value: undefined }), ['message', 'repair'])
     refusalForm('order-names-its-tabs', central('order-names-its-tabs', { address: ['tabs'], tier: null, value: { order: ['ghost'], entries: {} } }), ['message', 'repair'])
     refusalForm('panes-must-stand', central('panes-must-stand', { address: ['panes'], tier: null, value: undefined }), ['message', 'repair'])
-    refusalForm('focus-must-stand', central('focus-must-stand', { address: ['focus'], tier: null, value: undefined }), ['message', 'repair'])
     refusalForm('zones-must-stand', central('zones-must-stand', { address: ['zones'], tier: null, value: undefined }), ['message', 'repair'])
     refusalForm('theme-must-stand', central('theme-must-stand', { address: ['theme'], tier: null, value: undefined }), ['message', 'repair'])
     // **THE FOUR WHOSE ARM READS THE STANDING RECORD, AND WHY THEY ARE DRIVEN THROUGH THE HOLDER AND NOT THE STORE.** A
@@ -541,6 +529,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const secureRefusal = (id: string, context: unknown): unknown => {
       const declaration = secureById.get(id)
       if (declaration === undefined) throw new Error(`the secure batch carries no declaration for ${id}`)
+      driven.push(id)
       return declaration.constraint(context)
     }
     refusalForm('operator-record-must-stand', secureRefusal('operator-record-must-stand', { address: ['operator-settings'], tier: null, value: undefined }), ['message', 'repair'])
@@ -568,6 +557,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const deadRefusal = (id: string, context: unknown): unknown => {
       const declaration = deadBatch.find((entry) => entry.id === id)
       if (declaration === undefined) throw new Error(`the refused construction's batch carries no declaration for ${id}`)
+      driven.push(id)
       return declaration.constraint(context)
     }
     refusalForm('no-open-pane-over-open-ports', deadRefusal('no-open-pane-over-open-ports', { address: ['operator-pane'], tier: null, value: { open: true } }), ['message', 'repair'])
@@ -577,11 +567,17 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     // `{message}` arm's inherited `repair` was invoked at the registration instant and IGNORED at the write instant;
     // from `1.9.3` NO instant reads one, so the row asserts the member's ABSENCE and not merely its being non-own.
     refusalForm('panes-must-stand (value arm)', central('panes-must-stand', { address: ['panes'], tier: 'file', value: { junk: true } }), ['message'])
-    refusalForm('focus-must-stand (value arm)', central('focus-must-stand', { address: ['focus'], tier: 'mem', value: { junk: true } }), ['message'])
     refusalForm('zones-must-stand (value arm)', central('zones-must-stand', { address: ['zones'], tier: 'mem', value: { junk: true } }), ['message'])
     refusalForm('operator-record-must-stand (value arm)', secureRefusal('operator-record-must-stand', { address: ['operator-settings'], tier: 'file', value: { junk: true } }), ['message'])
     refusalForm('operator-exclusion-must-stand (value arm)', secureRefusal('operator-exclusion-must-stand', { address: ['operator-exclusion'], tier: 'mem', value: { junk: true } }), ['message'])
     refusalForm('operator-app-state-must-stand (value arm)', secureRefusal('operator-app-state-must-stand', { address: ['operator-app-state'], tier: 'file', value: { rows: [{ name: 7, value: 'x' }] } }), ['message'])
+
+    // **AND THE ROW'S CLAIM ABOUT ITSELF, TAKEN OFF THE BATCHES AND NOT OFF A FIGURE** (`D-43`, `D-26`): every
+    // declaration either crossing's construction adopted was DRIVEN above — a declaration added to a batch and left
+    // undriven reds HERE, and nothing in this row has to be re-numbered when one moves.
+    for (const declaration of [...tabsBatch, ...viewBatch, ...secureBatch]) {
+      expect(driven.includes(declaration.id), `${declaration.id}: the batch carries it and this row drove it`).toBe(true)
+    }
 
     // **THE WRITE PATH, WHERE THE KERNEL IS THE ONLY READER.** The answer object is not observable from a write, but the
     // two things a chain-only answer destroys ARE: an own `repair` is INVOKED inside the caller's own commit, and an own
@@ -595,12 +591,11 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const sentences: string[] = []
     for (const [path, tier, value] of [
       [['panes'], 'file', { junk: true }],
-      [['focus'], 'mem', { junk: true }],
       [['zones'], 'mem', { junk: true }],
     ] as ReadonlyArray<readonly [readonly string[], 'file' | 'mem', unknown]>) {
       sentences.push(ledgerOf(surface.write({ path, tier, value })).message)
     }
-    for (const message of sentences) expect(message, 'each refusal carries its own family\'s sentence, which only an OWN `message` can reach the kernel as').toMatch(/^the (pane geometry|focus mirror|zone family) (carries|holds)/)
+    for (const message of sentences) expect(message, 'each refusal carries its own family\'s sentence, which only an OWN `message` can reach the kernel as').toMatch(/^the (pane geometry|zone family) (carries|holds)/)
     for (const message of sentences) expect(message.includes('outside the three declared outcome arms'), 'and NONE of them is ST-F1\'s divergence sentence').toBe(false)
   })
 

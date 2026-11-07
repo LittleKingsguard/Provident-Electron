@@ -35,13 +35,13 @@ import {createProfileStore} from './storeroom.js'
 import {PROFILE_FILE_NAME} from './data/store.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 // `view-record` (D-87) — THE CROSSING'S SECOND DECLARATION SET, and the last address the frozen graph store was holding:
-// the pane geometry and the focus mirror. It enters the composition HERE and nothing else of this file's shape moves:
-// its two declarations are batched into the SAME `createProfileStore` call the tab record's six ride (D-65), its surface
-// is constructed beside the tab record's, and its three handlers stand beside the tab record's three. It constructs no
+// the pane geometry, the zone family and the appearance record. It enters the composition HERE and nothing else of this file's shape moves:
+// its three declarations are batched into the SAME `createProfileStore` call the tab record's six ride (D-65), its surface
+// is constructed beside the tab record's, and its four handlers stand beside the tab record's three. It constructs no
 // store and spells no `provident-*.json` literal for one.
 import {createViewSurface} from './view-surface/index.js'
 import {viewConstraintDeclarations, viewDeclaredRoots} from './view-record/index.js'
-import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
+import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
 // names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
@@ -200,14 +200,14 @@ async function main(): Promise<void> {
     centralStore = createProfileStore({
       filePath: profileFilePath,
       // ═══ THE BATCH IS TWO MODULES' AND ONE CALL (D-65, D-87, D-91, D-97) ═══
-      // The tab record's six, and the view record's four — `panes-must-stand`, `focus-must-stand`, `zones-must-stand` and
-      // `theme-must-stand` — TEN declarations in ONE construction. **NOTHING CONSTRUCTS A SECOND INSTANCE**: this is the
+      // The tab record's six, and the view record's three — `panes-must-stand`, `zones-must-stand` and
+      // `theme-must-stand` — NINE declarations in ONE construction. **NOTHING CONSTRUCTS A SECOND INSTANCE**: this is the
       // app's one `createProfileStore`, and a module that declares a constraint hands its declaration HERE rather than
-      // building a store of its own. The two unwrapped pairs of the tab record's batch and ALL FOUR of the view
+      // building a store of its own. The two unwrapped pairs of the tab record's batch and ALL THREE of the view
       // record's are the ones that can act at the registration instant, because the holder below is bound only after this
-      // call answers — which is exactly why those six bodies judge `context.value` and reach for no handle. The order is
+      // call answers — which is exactly why those five bodies judge `context.value` and reach for no handle. The order is
       // each module's own and the two sets do not interleave: the ids are one namespace, and `viewConstraintDeclarations`'
-      // four carry a `-must-stand` suffix no tab-record id repeats.
+      // three carry a `-must-stand` suffix no tab-record id repeats.
       constraints: [...tabsConstraintDeclarations(() => storeHolder.current), ...viewConstraintDeclarations(() => storeHolder.current)] as never,
     })
   } catch (refusal) {
@@ -235,7 +235,7 @@ async function main(): Promise<void> {
     },
   })
   // **THE VIEW RECORD'S SURFACE (D-87)** — the same shape at the other family: one reference, over the ONE store this
-  // boot constructed, and one subscription that fires for either of its two roots. It constructs nothing.
+  // boot constructed, and one subscription that fires for any of its three roots. It constructs nothing.
   const viewSurface = createViewSurface({
     store: centralStore,
     onChanged: () => {
@@ -463,16 +463,15 @@ async function main(): Promise<void> {
   ipcMain.handle(IPC_TABS_REMOVE, (_event, id: unknown) => tabsSurface.remove(id))
   // the change push: one subscription, taken here so the window's teardown can withdraw exactly what it took
   tabsSurface.attach()
-  // **THE VIEW RECORD'S FIVE CHANNELS (D-87, D-91, D-97, L2 §2)**: a whole-view read takes no argument; a pane commit names
-  // a pane id and a geometry and never a path; a focus commit hands the whole mirror the model produced; a zone commit names
+  // **THE VIEW RECORD'S FOUR CHANNELS (D-87, D-91, D-97, L2 §2)**: a whole-view read takes no argument; a pane commit names
+  // a pane id and a geometry and never a path; a zone commit names
   // a zone id and the members it carries, and the crossing composes the family; **the appearance commit hands the ACT —
   // the setting the authored control produced and the caller-held attribute name — and composes NOTHING**, because the
   // crossing's own pair resolves it inside that commit and the declaration never crosses this channel. The surface's shape
-  // arms answer `malformed-pane`/`malformed-focus`/`malformed-zone`/`malformed-theme` before any store verb; nothing here
+  // arms answer `malformed-pane`/`malformed-zone`/`malformed-theme` before any store verb; nothing here
   // inspects an argument.
   ipcMain.handle(IPC_VIEW_READ, () => viewSurface.read())
   ipcMain.handle(IPC_VIEW_PANE_COMMIT, (_event, id: unknown, geometry: unknown) => viewSurface.commitPane(id, geometry))
-  ipcMain.handle(IPC_VIEW_FOCUS_COMMIT, (_event, mirror: unknown) => viewSurface.commitFocus(mirror))
   ipcMain.handle(IPC_VIEW_ZONES_COMMIT, (_event, id: unknown, zone: unknown) => viewSurface.commitZones(id, zone))
   ipcMain.handle(IPC_VIEW_THEME_COMMIT, (_event, token: unknown, attributeName: unknown) => viewSurface.commitTheme(token, attributeName))
   // and its change push, taken at the same point and for the same reason as the tab record's
@@ -486,7 +485,7 @@ async function main(): Promise<void> {
   // **NO CHANGE PUSH IS TAKEN HERE, AND THAT IS THE ROUTE'S SHAPE RATHER THAN AN OMISSION** (`types.ts`'s constant block
   // carries the reason): a write at a declared family root is delivered by THAT family's listener, and this module renders
   // nothing, so no `data.*` delivery exists to register. **AND NO FRAME GUARD IS ADDED, WHICH IS THE SAME RULE READ ON THE
-  // SITES BESIDE THEM**: every handler in this file — the tab record's three, the view record's five, the secure crossing's
+  // SITES BESIDE THEM**: every handler in this file — the tab record's three, the view record's four, the secure crossing's
   // four and the module registry's two — discards its `IpcMainInvokeEvent` and checks no sender, so a guard here would be
   // the only one in the file and would make one crossing stricter than its siblings; `bridge-route.test.ts` asserts the
   // absent member and the absent guard together, over comment-elided code.

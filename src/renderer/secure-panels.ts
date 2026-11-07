@@ -38,7 +38,7 @@ import type { SecurityWriteReceipt, Tier4ClosedRefusal, Tier4WriteAnswer } from 
 import type { TabsRecordRow } from '../shared/types.js'
 // THE VIEW RECORD'S SHAPES — TYPE-ONLY, on the `SecurityWriteReceipt` precedent above: erased at build, no runtime
 // coupling to the main side, and no value of `view-record` reaches the renderer bundle from here.
-import type { ViewFocusMirror, ViewPaneGeometry, ViewThemeRecord, ViewZone } from '../main/view-record/index.js'
+import type { ViewPaneGeometry, ViewThemeRecord, ViewZone } from '../main/view-record/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
 // L3 (secure-panels E-1) — the group roster's binding to the gate's union: `ToolGroup` is
@@ -118,9 +118,8 @@ declare global {
       // copy and `src/main/preload.ts`'s are the same text in both files — the lockstep rule the `store`, `security` and
       // `tabs` members already follow, and the one a row reads back and compares rather than cites.
       view?: {
-        read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>
+        read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>
         commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
-        commitFocus(mirror: ViewFocusMirror): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         onChanged(handler: () => void): () => void
@@ -428,7 +427,22 @@ export class SecurePanels {
   // DELETED. `applySecurity(shape)` writes it from the realm's one subscription's shape and from that shape's ONE stated
   // boot fill, so the pane asks the record nothing; `refresh()` paints what the last delivery left, exactly as it paints the
   // app-state lines `applyAppState` hands it.
-  private cfg: SecuritySettings & { exclusion?: EXCLUSION_STATE | null; read: Tier4ClosedRefusal | null | undefined } = { token: null, enabled: ['read', 'dispatch'], read: null }
+  private cfg: Omit<SecuritySettings, 'enabled'> & {
+    /** **`null` IS "NO READING YET" AND IT IS NOT AN EMPTY SET** (`D-129`, `D-126`'s finding `F4`). This member began at the
+     *  crossing's own first-run pair — `['read', 'dispatch']` — so the pane's FIRST PAINT, made at boot before any delivery
+     *  exists, asserted a GATE CONFIGURATION the store had never stated, and six authored toggles painted `☐` over it; on a
+     *  realm with no bridge that fabrication was permanent. **THE STORE ALREADY ENFORCES THE SHAPE, WHICH IS THE WHOLE
+     *  ARGUMENT**: `recordMustStand` (`src/main/operator-settings/index.ts`) writes `toStored(importOnce() ?? FIRST_RUN)` at
+     *  the record address, so the group set exists from creation and a delivery follows — **a local default is therefore a
+     *  SECOND AUTHORITY for a shape a constraint/repair already guarantees**, which is what this member was. **AND THE
+     *  MEMBER NOW MATCHES ITS OWN QUOTED RULE** (the note at `refresh`, which always said the initial words are "the PANE's
+     *  own no-reading state, exactly as `cfg.exclusion`'s `null` is"): with `null` the status line says
+     *  `enabled: (no reading)` and NO toggle is painted at all, so the pane's authored `data-on="false"` and its plain label
+     *  stand as the envelope's words rather than as the pane's claim. */
+    enabled: readonly string[] | null
+    exclusion?: EXCLUSION_STATE | null
+    read: Tier4ClosedRefusal | null | undefined
+  } = { token: null, enabled: null, read: null }
   private debugValue = 'booting…'
   /** **THE TWO APP-STATE LINES, AND THEY ARE FILLED BY A DELIVERY AND NEVER BY A READ OF THIS PANE** (`D-104`; the user's
    *  rule, *"the renderer does not ask state, it listens"*). Until this pass `refresh()` read them out of
@@ -608,7 +622,7 @@ export class SecurePanels {
    *  discipline `cfg.exclusion === null` already carried (`D-vi`): a pane that has heard no delivery fabricates no state. */
   applySecurity(shape: SecurityShape): void {
     if (shape.filled) {
-      const next: SecuritySettings & { exclusion?: EXCLUSION_STATE | null; read: Tier4ClosedRefusal | null | undefined } =
+      const next: Omit<SecuritySettings, 'enabled'> & { enabled: readonly string[] | null; exclusion?: EXCLUSION_STATE | null; read: Tier4ClosedRefusal | null | undefined } =
         { token: shape.token, enabled: [...shape.enabled], exclusion: shape.exclusion, read: shape.read }
       if (shape.maxJournalLength !== undefined) next.maxJournalLength = shape.maxJournalLength
       this.cfg = next
@@ -661,7 +675,10 @@ export class SecurePanels {
         // above are fed by the carrier's BOOLEAN-sourced `exclusion` member — never by a
         // store-derived value and never by this pane's own prior state.
         const refused = this.cfg.read === null || this.cfg.read === undefined ? '' : ' · refused: tier4-closed'
-        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}${excl}${refused}` })
+        // **THE GROUP SET IS A READING AND NEVER A DEFAULT** (`D-129`): with none delivered the line names the absence
+        // in a WORD, the same way the `excl` and `refused` segments below carry `null` as a word and never as a value.
+        const enabledWord = this.cfg.enabled === null ? '(no reading)' : `[${this.cfg.enabled.join(', ')}]`
+        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: ${enabledWord}${jl}${excl}${refused}` })
       } else if (id === 'status') {
         mutation.push({ targetProp: 'content', value: this.debugText() })
       } else if (id === 'token-input') {
@@ -673,7 +690,12 @@ export class SecurePanels {
         // `GROUP_LABELS[id.slice('toggle:'.length) as ToolGroup]` would paint `☐ undefined`.
         const g = GROUPS.find((k) => `toggle:${k}` === id)
         if (g === undefined) continue
-        const on = this.cfg.enabled.includes(g)
+        // **A TOGGLE NOBODY HAS READ IS NOT PAINTED, AND ITS AUTHORED WORDS STAND** (`D-129`): the envelope authors
+        // `data-on="false"` and the plain label on every row, so leaving the node alone is this pane saying NOTHING about
+        // the gate — where a `☐` would say the group is off, which is a configuration and not an absence.
+        const enabled = this.cfg.enabled
+        if (enabled === null) continue
+        const on = enabled.includes(g)
         mutation.push({ targetProp: 'props.data-on', mode: 'replace', value: on ? 'true' : 'false' })
         mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${GROUP_LABELS[g]}` })
       } else if (id === 'exclusion-toggle') {

@@ -14,7 +14,9 @@
  * the ZONE family had none: `candidatesFor` reads `mem.layout.zone.<id>.slot` / `.distance` and the composition's render
  * turn reads `.size` / `.display`, and no crossing address, declaration, client member or shared vocabulary carried a
  * zone. The user's ruling was to give it one, and this battery drives the four clauses of `D-82`'s convention at that
- * address the way `crossing.test.ts` drives them at the other two.
+ * address the way `crossing.test.ts` drives them at the panes family. (`D-142` has since retired the `['focus']` family
+ * whole, so this is one of the TWO families the crossing's own battery and this one cover between them; that battery's
+ * `Z-5` citation in the re-grain is this file's creation-instant/re-mint pair — `Z-1` and `Z-5`.)
  *
  * THE SUBJECT IS THE FAMILY, NOT THE MACHINERY: every row below is a measurement of what the store and the record
  * ACTUALLY answer — a construction, a read, a committed write, a delivery count, a file's bytes — and the two rows that
@@ -185,12 +187,13 @@ describe('view-record · the zone family, clause 2 — one delivery per committe
     let pushes = 0
     const surface = createViewSurface({ store: bound.current, onChanged: () => { pushes += 1 } })
     surface.attach()
-    // THE BRIDGE, AS THE PRELOAD DECLARES IT: five routes, each answering what the surface answers.
+    // THE BRIDGE, AS THE PRELOAD DECLARES IT: the member's surviving routes, each answering what the surface answers.
+    // **`commitFocus` IS NOT HERE AND THAT IS THE RE-GRAIN** (`D-142`): the route leaves both sides in the same edit, so a
+    // literal still carrying it would model a wire this module no longer declares.
     const handlers: Array<() => void> = []
     const bridge = {
       read: async (): Promise<unknown> => surface.read(),
       commitPane: async (id: string, geometry: unknown): Promise<unknown> => surface.commitPane(id, geometry),
-      commitFocus: async (mirror: unknown): Promise<unknown> => surface.commitFocus(mirror),
       commitZones: async (id: string, zone: unknown): Promise<unknown> => surface.commitZones(id, zone),
       onChanged: (handler: () => void): (() => void) => {
         handlers.push(handler)
@@ -285,22 +288,21 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     // THE POSITIVE CONTROL — the instrument fires on a synthetic timer, so the absence above is about this code and not
     // about a scan that could never have matched anything.
     expect(/\bsetTimeout\s*\(/.test('const t = setTimeout(fn, 0)'), 'the instrument fires on a synthetic timer').toBe(true)
-    // THE FIVE WRITERS, ENUMERATED: FOUR caller routes write at their own root and the ONE repair path writes through
-    // `writeJoinedAt`, so a fifth caller route (or a repair that reached the store directly) reds the census below.
-    // **THE FOURTH ROUTE IS THE APPEARANCE ACT'S (`D-97`)** and its write is the caller's pair — the setting and the
-    // attribute name — which the crossing's own repair resolves; the count moves three → four HERE because the census is
-    // the MODULE's and not the zone family's, which is exactly what it is for.
+    // THE WRITERS, ENUMERATED: THREE caller routes write at their own root and the ONE repair path writes through
+    // `writeJoinedAt`, so a fourth caller route (or a repair that reached the store directly) reds the census below.
+    // **THE CENSUS IS THE MODULE'S AND NOT THE ZONE FAMILY'S** — which is exactly what it is for — and it moves `four →
+    // three` HERE because the focus route leaves the module with its family (`D-142`, `D-9`).
     expect(
       (module.match(/\.write\(VIEW_/g) ?? []).length,
-      'exactly FOUR routes write a whole family — the panes, the mirror, the zones and the appearance act',
-    ).toBe(4)
+      'exactly THREE routes write a whole family — the panes, the zones and the appearance act',
+    ).toBe(3)
     expect((module.match(/writeJoinedAt\(/g) ?? []).length, 'and the ONE repair path names its commit at exactly one call site').toBe(1)
     expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'the zone route writes its family whole').toBe(true)
     // AND THE ROUTE HAS A HANDLER AT THE BRIDGE'S OWN SITE, which is what makes it an IPC route rather than a member
     // nothing calls — the defect L2's central-data §2 records against such a member.
     expect(main.includes('ipcMain.handle(IPC_VIEW_ZONES_COMMIT'), 'the zone route is registered at the boot').toBe(true)
     expect(IPC_VIEW_ZONES_COMMIT, 'and it is one of the module\'s single-sourced channel names').toBe('provident:view:zones-commit')
-    expect(IPC_VIEW_CHANGED, 'and the push is the same one the other two families deliver on').toBe('provident:view:changed')
+    expect(IPC_VIEW_CHANGED, 'and the push is the same one the other surviving families deliver on').toBe('provident:view:changed')
   })
 
   it('Z-7 · NO WRITE ON READ, MEASURED BOTH WAYS: three reads land no byte over a standing family, and a read over a store whose batch NEVER RAN answers the empty family WITHOUT minting it', () => {

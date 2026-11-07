@@ -1068,9 +1068,11 @@ export class ProvidentMcpServer {
     // between calls (a second identical call is a second renderer call, never a
     // cache hit — §2.3 item 5), mints NO id (§2.3 items 1/2), keeps no map, no
     // registry and no counter, sorts nothing, dedupes nothing, re-keys nothing and
-    // re-derives no model rule (§2.3 items 3/4): the LIVE AUTHORITY for
-    // `{entries, activeId}` is the RENDERER's own wiring-held state (§2.1 item 6),
-    // never a graph slice and never a second authority inside this tool.
+    // re-derives no model rule (§2.3 items 3/4): the LIVE AUTHORITY for the answer
+    // is the RENDERER's own re-read of the tab record — `status`, `order`, `landing`
+    // and `rows`, plus `refused` IFF the write was refused (`docs/L2/mcp-surface/
+    // interface.md` §3; D-141, D-142) — never a graph slice and never a second
+    // authority inside this tool.
     // THE ARGUMENT SHAPE IS DECLARED, NOT ENFORCED BY A SCHEMA PARSER: the two
     // declared members are carried and NO schema strips a malformed call's keys
     // before the declared validation THROW names the rejected one (§0A note 3(a)/(d),
@@ -1080,13 +1082,15 @@ export class ProvidentMcpServer {
       registered.set('provident.focus', server.registerTool('provident.focus', {
         title: 'Focus a target',
         description:
-          "Ask the renderer's focus model to activate an entry for an opaque target " +
-          'on the focus model the renderer holds. Both members of `{ target?, newTab? }` ' +
-          'are optional and pass through uninterpreted: a repeated target activates its ' +
-          'existing entry, and newTab: true opens a new entry for the same target. The ' +
-          'answer echoes the renderer\'s own { activeId, entries, opened } by identity ' +
-          '(plus refused: { reason } exactly when the consumer refused the target). ' +
-          'This tool mutates no graph node, emits no notification and renders no surface.',
+          'Set the active tab in the app\'s tab record, in the record\'s own terms ' +
+          'and durably: the write lands at the record\'s own durable tier, and the ' +
+          'record\'s exactly-one-active normalisation settles any older active row. ' +
+          'Both members of `{ target?, newTab? }` are optional and pass through ' +
+          'uninterpreted: a repeated target activates its standing row, and ' +
+          'newTab: true opens one new row carrying the target and seats it. The ' +
+          'answer is the tab record as re-read after the write, with a store ' +
+          'refusal carried as `refused`. This tool mutates no graph node, emits ' +
+          'no notification and renders no surface.',
         // THE SCHEMA DECLARES THE TWO NAMED MEMBERS, ACCEPTS AN OMITTED ARGUMENTS
         // MEMBER AND PASSES EVERY OTHER MEMBER THROUGH BY IDENTITY: an omitted
         // arguments member is the SAME CALL as `{}` (§0A note 3(a), `S-1`), and a schema
@@ -1096,8 +1100,8 @@ export class ProvidentMcpServer {
         inputSchema: z.preprocess(
           (carried) => (carried ?? {}),
           z.object({
-            target: z.unknown().optional().describe('The opaque target the focus model is asked with — passed through uninterpreted'),
-            newTab: z.unknown().optional().describe('Open a new entry for the same target — carried uninterpreted, no default applied'),
+            target: z.unknown().optional().describe('The opaque target the act seats — passed through uninterpreted. A non-string can be no tab row, so the route writes nothing and answers the refusal in `refused`.'),
+            newTab: z.unknown().optional().describe('Open one new tab row carrying the same target — carried uninterpreted; only the boolean true opens one, and no default is applied.'),
           }).passthrough(),
         ),
       }, guarded(async (args: unknown) => focusHandler(args, backend) as never)))

@@ -89,10 +89,14 @@ function crossing(seed?: (profilePath: string) => void): Crossing {
   })
   bound.current = store as unknown as ViewRecordStore
   const record = createViewRecord({ store: bound.current })
+  // **THE FIVE SURVIVING MEMBERS, AND `commitFocus` IS NOT ONE OF THEM** (`D-142`; L1 §2's `chrome` row, §6 `E-12`): the
+  // `['focus']` family goes whole — address, tier, declaration, declared-root entry, route and mirror — so this literal
+  // carried a member the bridge no longer declares and the record no longer answers. Re-grained in the deletion's own pass,
+  // because a literal that spells the old surface is a compile-time red in `typecheck:tests` the moment `E-1`/`E-2`/`E-3`/`E-4`
+  // land. No row here ever drove that member: every row below is the APPEARANCE declaration's.
   const bridge: ViewClientBridge = {
     read: async () => record.read(),
     commitPane: async (id: string, geometry: unknown) => record.commitPane(id, geometry),
-    commitFocus: async (mirror: unknown) => record.commitFocus(mirror),
     commitZones: async (id: string, zone: unknown) => record.commitZones(id, zone),
     // **THE ACT'S ROUTE, AS THE BRIDGE DECLARES IT** — the crossing's own `commitTheme`, called with the caller's pair.
     commitTheme: async (token: string, attributeName: string) => record.commitTheme(token, attributeName),
@@ -266,18 +270,19 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
     // The record is driven WITHOUT a crossing — a client over a bridge that answers one prepared reading — because the claim
     // under test is the wiring's and not the crossing's: the application composes `props.<record.declaration.name>`.
     const runtime = boot()
+    // **THE READING'S THREE SURVIVING FAMILIES** (`D-142`; the answer's re-grain is `store-view-record`'s `E-9` and
+    // `E-12`'s own shape): `focus` and `source.focus` left with the family, so the literal below carries panes, zones and
+    // the appearance record — and their three `source` words — and nothing else.
     const prepared = {
       status: 'committed' as const,
       panes: [],
-      focus: { entries: [], activeId: null },
       zones: [],
       theme: { token: 'light', attribute: 'data-x', declaration: { name: 'data-x', value: 'light', removal: false } },
-      source: { panes: 'record' as const, focus: 'record' as const, zones: 'record' as const, theme: 'record' as const },
+      source: { panes: 'record' as const, zones: 'record' as const, theme: 'record' as const },
     }
     const member = {
       read: async (): Promise<unknown> => prepared,
       commitPane: async (): Promise<unknown> => ({ status: 'committed' }),
-      commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
       commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
       commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
       onChanged: (): (() => void) => (): void => undefined,
@@ -532,17 +537,17 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
       'a state this realm cannot read carries nothing',
     ).toEqual([false, false])
     // (a2) AND THE SAME FOR THE DELIVERY'S TURN: a record that offers no applicable declaration — the placeholder, which is
-    // what a crossing with nothing committed stands at — writes nothing, and the turn is total over it.
+    // what a crossing with nothing committed stands at — writes nothing, and the turn is total over it. **THE READING IS
+    // THE THREE SURVIVING FAMILIES** (`D-142`, `E-12`): `focus` and `source.focus` left with the family.
     const placeholderBridge = {
       provident: {
         view: {
           read: async (): Promise<unknown> => ({
             status: 'committed',
             panes: [],
-            focus: { entries: [], activeId: null },
             zones: [],
             theme: PLACEHOLDER,
-            source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
+            source: { panes: 'record', zones: 'record', theme: 'record' },
           }),
           commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
           onChanged: (): (() => void) => (): void => undefined,
@@ -563,14 +568,13 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
     }
 
     // (b) A RUNTIME WHOSE WRITE THROWS IS REPORTED, NOT ESCAPED — driven through a structural double, with a client whose
-    // reading carries an applicable declaration.
+    // reading carries an applicable declaration. The reading is the THREE surviving families (`D-142`, `E-12`).
     const prepared = {
       status: 'committed',
       panes: [],
-      focus: { entries: [], activeId: null },
       zones: [],
       theme: { token: 'light', attribute: 'theme', declaration: { name: 'theme', value: 'light', removal: false } },
-      source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
+      source: { panes: 'record', zones: 'record', theme: 'record' },
     }
     const double = {
       elementForNodeId: (): null => null,

@@ -8,10 +8,13 @@
 // and the one that still stands.
 //
 //   A. `const FILE_TIER: DataTier = 'file'` was a constant of the module and never a property of the address, so
-//      ONE `data.write({ path: ['focus'], value })` created a `file` version of a root `view-record` declares at
-//      `mem`. From that instant `store.read(['focus'], 'mem')` threw `TierNotFound`, `viewRecord.read()` answered
-//      `source.focus: 'default'` forever, a restart did not heal it and `data.delete(['focus'])` answered
-//      `removed:false` over a row that stood. Same at `['zones']`.
+//      ONE `data.write({ path: ['zones'], value })` created a `file` version of a root `view-record` declares at
+//      `mem`. From that instant `store.read(['zones'], 'mem')` threw `TierNotFound`, `viewRecord.read()` answered
+//      `source.zones: 'default'` forever, a restart did not heal it and `data.delete(['zones'])` answered
+//      `removed:false` over a row that stood. The defect was measured at the view record's OTHER `mem` root too, and
+//      `D-142` deleted that family WHOLE — address, declaration, declared-root entry and route — so this battery's
+//      `mem` arms are RE-GRAINED onto the sibling that SURVIVES, the same guard over the same tier and the same
+//      family class (`D-9`, `D-101`, `D-142`).
 //   B. `panes-must-stand` accepts any plain record, so `data.write({ path: ['panes'], value: { junk: true } })`
 //      durably erased the pane geometry while `source.panes` still said `'record'`.
 //
@@ -125,13 +128,15 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     }
     const published = [...tabsDeclaredRoots(), ...viewDeclaredRoots()]
     expect(published.map((root) => rootOf(root.address)).sort(), 'the published roots are exactly the declared roots, root for root').toEqual([...batchRoots.keys()].sort())
-    // THE CONTROL THAT MAKES THE SET A MEASUREMENT: five roots, and four of them are the view record's.
-    expect([...batchRoots.keys()].sort(), 'the declared roots are the five the app declares, and no sixth').toEqual(['focus', 'panes', 'tabs', 'theme', 'zones'])
-    expect(published.length, 'and the publication is one pair per root, not one per declaration').toBe(5)
-    // THE TIERS, READ OFF THE TWO MODULES' OWN CONSTANTS AND NOT OFF THIS FILE: the two `mem` roots are the two
-    // families whose boot data can never come from a file (`D-84`), and everything else is durable.
+    // **THE CONTROL THAT MAKES THE SET A MEASUREMENT — AND THE ONE PLACE THE COUNT LIVES** (`D-43`, `D-101`): the
+    // publication is the set, root for root, and no other document or battery restates how many roots there are.
+    expect([...batchRoots.keys()].sort(), 'the declared roots are the four the app declares, and no fifth').toEqual(['panes', 'tabs', 'theme', 'zones'])
+    expect(published.length, 'and the publication is one pair per root, not one per declaration').toBe(4)
+    // THE TIERS, READ OFF THE TWO MODULES' OWN CONSTANTS AND NOT OFF THIS FILE: the one `mem` root is the family
+    // that can never come from a file (`D-84`), and everything else is durable — `D-142` took the other `mem` root
+    // with the family it belonged to, and the publication lost the pair with the declaration.
     expect(Object.fromEntries(published.map((root) => [rootOf(root.address), root.tier])), 'each root at the tier its own module writes it at').toEqual({
-      tabs: 'file', panes: 'file', focus: 'mem', zones: 'mem', theme: 'file',
+      tabs: 'file', panes: 'file', zones: 'mem', theme: 'file',
     })
 
     // **AND THE SURFACE ITSELF SPELLS NONE OF THEM.** The guard is a READ of the published pairs, so the code that
@@ -139,66 +144,70 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // is what proves the elision is doing the work rather than the file being silent anyway.
     const code = commentElided(sourceOf('src/main/data/surface.ts'))
     const raw = sourceOf('src/main/data/surface.ts')
-    for (const spelling of ['focus', 'panes', 'zones', 'tabs']) {
+    for (const spelling of ['panes', 'zones', 'tabs']) {
       expect(code.includes(`'${spelling}'`), `the surface's CODE names no root: '${spelling}'`).toBe(false)
       expect(raw.includes(spelling), `the control: the same name DOES stand in its prose, so the elision above is what removed it: '${spelling}'`).toBe(true)
     }
-    // **THE FIFTH ROOT'S TOKEN IS ABSENT FROM BOTH READINGS, AND THAT IS ANOTHER UNIT'S CENSUS RATHER THAN A HOLE
-    // HERE**: `tests/theme.test.ts`'s `X-5` asserts that the appearance vocabulary appears in `src/**/*.ts` outside
-    // its own exempt paths in ZERO files, so this module's prose does not spell it — the row is RE-WORDED around it
-    // rather than the census widened, which is what `D-97` did with three rows of its own. The guard covers it all the
-    // same, because the set above is the modules' and not this file's: `['theme']` at `file` is driven in `D-3`.
-    expect(raw.includes('theme'), 'the control for the elision is taken on the four roots the file\'s prose names').toBe(false)
+    // **THE APPEARANCE ROOT'S TOKEN IS ABSENT FROM BOTH READINGS, AND THAT IS ANOTHER UNIT'S CENSUS RATHER THAN A
+    // HOLE HERE**: `tests/theme.test.ts`'s `X-5` asserts that the appearance vocabulary appears in `src/**/*.ts`
+    // outside its own exempt paths in ZERO files, so this module's prose does not spell it — the row is RE-WORDED
+    // around it rather than the census widened, which is what `D-97` did with three rows of its own. The guard covers
+    // it all the same, because the set above is the modules' and not this file's: `['theme']` at `file` is driven in
+    // `D-3`.
+    expect(raw.includes('theme'), 'the control for the elision is taken on the three roots the file\'s prose names').toBe(false)
     for (const tier of ["'file'", "'mem'", "'temp'"]) {
       expect(code.includes(tier), `and no tier literal of its own: ${tier} — the domain and the two defaults are args.ts's, the type is types.ts's`).toBe(false)
     }
     expect(code.includes('options.declaredRoots'), 'and the one member it DOES read for the set is the option its caller hands it').toBe(true)
   })
 
-  it('D-2 · defect A, first arm: a write at [\'focus\'] asking for `file` is REFUSED, and the family’s `mem` register is untouched behind it', () => {
+  it('D-2 · defect A, first arm: a write at [\'zones\'] asking for `file` is REFUSED, and the family’s `mem` register is untouched behind it', () => {
     const one = stand()
     const stood = readFileSync(at(one.dir))
-    const before = one.store.read(['focus'], 'mem')
-    expect(before, 'the family stands at `mem` before the attempt, so the reading after it is not a reading of nothing').toEqual({ entries: [] })
-    expect(one.view.read().source.focus, 'and the record reads its family as a RECORD — the state the defect destroyed').toBe('record')
+    const before = one.store.read(['zones'], 'mem')
+    expect(before, 'the family stands at `mem` before the attempt, so the reading after it is not a reading of nothing').toEqual({})
+    expect(one.view.read().source.zones, 'and the record reads its family as a RECORD — the state the defect destroyed').toBe('record')
 
-    const refused = one.surface.write({ path: ['focus'], tier: 'file', value: { entries: [{ id: 'x', target: 't' }], activeId: 'x' } })
+    const refused = one.surface.write({ path: ['zones'], tier: 'file', value: { 'zone-1': { size: 10 } } })
     expect(refused.status, 'A CROSSING\'S ROOT IS WRITTEN ONLY AT ITS FAMILY\'S TIER').toBe('refused')
     expect(refused.status === 'refused' ? refused.reason : '', 'and the reason word is the twelfth, minted by this pass').toBe('declared-tier')
     const message = refused.status === 'refused' ? refused.message : ''
-    expect(message.includes("'focus' is declared at 'mem'"), 'the sentence names the ROOT and the tier the family declares').toBe(true)
+    expect(message.includes("'zones' is declared at 'mem'"), 'the sentence names the ROOT and the tier the family declares').toBe(true)
     expect(message.includes("this write asks for 'file'"), 'and the tier this call asked for, so a caller corrects it without reading a document').toBe(true)
 
     // NOTHING MOVED, ON ALL FOUR READINGS THE DEFECT MOVED:
-    expect(one.store.read(['focus'], 'mem'), 'the store still answers at the family\'s own tier — no `TierNotFound`, which was the defect\'s first symptom').toEqual({ entries: [] })
-    expect(one.view.read().source.focus, 'the record still reads a RECORD and never the default the defect left behind').toBe('record')
-    expect(one.view.read().focus, 'and its value is the empty pair, not the caller\'s mirror').toEqual({ entries: [], activeId: null })
+    expect(one.store.read(['zones'], 'mem'), 'the store still answers at the family\'s own tier — no `TierNotFound`, which was the defect\'s first symptom').toEqual({})
+    expect(one.view.read().source.zones, 'the record still reads a RECORD and never the default the defect left behind').toBe('record')
+    expect(one.view.read().zones, 'and its value is the family that names no zone, not the caller\'s zones').toEqual([])
     expect(readFileSync(at(one.dir)).equals(stood), 'the profile is byte-identical: a refusal lands no byte').toBe(true)
     expect(one.surface.journal({}), 'and mints no cursor and adds no journal entry (D-12)').toEqual({ status: 'read', from: 0, through: 0, floor: 0, entries: [], count: 0 })
 
     // THE RESTART HEALS NOTHING BECAUSE NOTHING WAS BROKEN — the arm the defect made permanent.
     const next = one.restart()
-    expect(next.view.read().source.focus, 'and a restart has nothing to heal, because no `file` version was ever created').toBe('record')
-    expect(next.store.read(['focus'], 'mem'), 'the family is re-minted at its placeholder, as it is at every boot').toEqual({ entries: [] })
+    expect(next.view.read().source.zones, 'and a restart has nothing to heal, because no `file` version was ever created').toBe('record')
+    expect(next.store.read(['zones'], 'mem'), 'the family is re-minted at its placeholder, as it is at every boot').toEqual({})
   })
 
   it('D-3 · defect A’s silent default: the two calls the defect was MADE of — a `write` and a `delete` that name no tier — are refused the same way', () => {
     const one = stand()
-    // THE TWO CALLS, VERBATIM FROM THE DEFECT: `data.write({ path: ['focus'], value })` and `data.delete(['focus'])`.
+    // THE TWO CALLS, VERBATIM FROM THE DEFECT: `data.write({ path: ['zones'], value })` and `data.delete(['zones'])`.
     // Both are driven by an agent that never heard of a tier, which is exactly the caller the module constant was
     // invisible to. A default that quietly resolved to `file` is how the defect happened, so the guard runs on the
     // RESOLVED tier and refuses both — `delete`'s second half included, where the defect answered `removed:false`
     // over a row that stood.
     for (const [label, answer] of [
-      ['write', one.surface.write({ path: ['focus'], value: { entries: [] } })],
-      ['delete', one.surface.delete({ path: ['focus'] })],
+      ['write', one.surface.write({ path: ['zones'], value: {} })],
+      ['delete', one.surface.delete({ path: ['zones'] })],
     ] as const) {
-      expect(answer.status, `${label} at ['focus'] with no tier is refused`).toBe('refused')
+      expect(answer.status, `${label} at ['zones'] with no tier is refused`).toBe('refused')
       expect(answer.status === 'refused' ? answer.reason : '', `${label}: and the reason is the declared root's`).toBe('declared-tier')
       expect(answer.status === 'refused' ? answer.message.endsWith(`this ${label} asks for 'file'`) : '', `${label}: the default is named in the sentence, so an omitted member is not silent`).toBe(true)
     }
     // AND THE SAME GUARD AT EVERY DECLARED ROOT, EACH AT BOTH WRONG TIERS: this is the set, driven rather than read.
-    const wrong = { tabs: ['mem', 'temp'], panes: ['mem', 'temp'], theme: ['mem', 'temp'], focus: ['file', 'temp'], zones: ['file', 'temp'] } as const
+    // **THE FAMILY `D-142` DELETED IS NOT IN IT**, because the set is the crossings' and no crossing declares that
+    // address any more — and an UNDECLARED root is ADMITTED, which is the arm driven by this row's own control below
+    // and by the e2e row that measures the deleted address directly (`D-101`, `D-142`).
+    const wrong = { tabs: ['mem', 'temp'], panes: ['mem', 'temp'], theme: ['mem', 'temp'], zones: ['file', 'temp'] } as const
     for (const [root, tiers] of Object.entries(wrong)) {
       for (const tier of tiers) {
         const answer = one.surface.write({ path: [root], tier, value: { a: 1 } })
@@ -217,39 +226,43 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
   it('D-4 · defect A, second arm: the SAME write at `mem` commits, the family’s own read() sees it, and a restart takes it away — a `mem` write is this process’s and persists nowhere', () => {
     const one = stand()
     const stood = readFileSync(at(one.dir))
-    const mirror = { entries: [{ id: 'x', target: 't' }], activeId: 'x' }
+    const family = { 'zone-1': { size: 10 } }
 
-    const landed = one.surface.write({ path: ['focus'], tier: 'mem', value: mirror })
-    // **AND THE ANSWER NAMES THE PASS THAT JUDGED IT** (`D-103`): one pair was asked at `['focus']` and it PASSED, so the
+    const landed = one.surface.write({ path: ['zones'], tier: 'mem', value: family })
+    // **AND THE ANSWER NAMES THE PASS THAT JUDGED IT** (`D-103`): one pair was asked at `['zones']` and it PASSED, so the
     // log is two entries with no `repair-run` among them and `repaired:false` — which is the arm `D-9` does not reach.
     expect(landed, 'a write at the family\'s own tier is admitted, and the answer names the pass that admitted it').toEqual({
-      status: 'committed', path: ['focus'], cursor: 1, repaired: false,
+      status: 'committed', path: ['zones'], cursor: 1, repaired: false,
       log: [
-        { kind: 'constraint-check', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'constraint-check', id: 'zones-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
         { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
       ],
     })
     // THE FAMILY'S OWN READ IS THE OBSERVABLE, and it is the one the defect broke: `viewRecord.read()` serves what
     // the surface wrote because the two now address the same tier.
-    expect(one.view.read().focus, 'the record reads the caller\'s mirror, member for member').toEqual(mirror)
-    expect(one.view.read().source.focus, 'and still reports the family as a RECORD').toBe('record')
+    expect(one.view.read().zones, 'the record reads the caller\'s family, member for member').toEqual([{ id: 'zone-1', size: 10 }])
+    expect(one.view.read().source.zones, 'and still reports the family as a RECORD').toBe('record')
     // **THE ARM IS `branch` AND NOT `row`, WHICH IS A MEASUREMENT AND NOT A PREFERENCE** (D-11's `ASM-L2-2`): a `row`
-    // is a LITERAL at an exact address and the mirror is a container, so `readLiteral` answers `ReadTargetIsBranch`
+    // is a LITERAL at an exact address and the family is a container, so `readLiteral` answers `ReadTargetIsBranch`
     // and the surface serves the assembled branch — exactly what `['tabs']` answers for the same reason.
-    expect(one.surface.read({ path: ['focus'], tier: 'mem' }), 'the surface reads it back at its own tier, as the container the mirror is').toEqual({ status: 'read', kind: 'branch', path: ['focus'], value: mirror })
-    expect(one.surface.read({ path: ['focus'] }), 'and an unqualified read serves it too — the store\'s own lowest-persistence-present, which is `mem` where only `mem` stands').toEqual({ status: 'read', kind: 'branch', path: ['focus'], value: mirror })
+    // **AND THE ANSWER'S `value` IS §2a'S NODE** (`D-134`): the family is an OBJECT node with its members INLINE, each
+    // member a node of its own and the leaf's `size` carrying its literal under `value` — so the container's shape and the
+    // readout are ONE claim here, and neither can be asserted apart from the other.
+    const familyNode = { _tier: 'mem', 'zone-1': { _tier: 'mem', size: { _tier: 'mem', value: 10 } } }
+    expect(one.surface.read({ path: ['zones'], tier: 'mem' }), 'the surface reads it back at its own tier, as the container the family is').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: familyNode })
+    expect(one.surface.read({ path: ['zones'] }), 'and an unqualified read serves it too — the store\'s own lowest-persistence-present, which is `mem` where only `mem` stands').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: familyNode })
     // **AND NO BYTE OF IT IS IN THE PROFILE**: a `mem` write is the instance's register, which `D-84` measured and
     // this row re-measures at this address — the family whose boot data can never come from a file.
     expect(readFileSync(at(one.dir)).equals(stood), 'the profile is byte-identical across a `mem` write').toBe(true)
-    expect(readFileSync(at(one.dir), 'utf8').includes('"activeId"'), 'and carries no member of the mirror').toBe(false)
+    expect(Object.keys(JSON.parse(readFileSync(at(one.dir), 'utf8')) as Record<string, unknown>), 'and carries no `zones` root at all').not.toContain('zones')
 
     // THE RESTART: a second construction over the same bytes. The `mem` register is the INSTANCE's, so the caller's
-    // mirror is GONE and the family's pair re-mints the placeholder at the registration instant (`D-84`, `D-87`).
+    // family is GONE and the family's pair re-mints the placeholder at the registration instant (`D-84`, `D-91`).
     const next = one.restart()
-    expect(next.store.read(['focus'], 'mem'), 'the next process\'s family register is the placeholder again, not the caller\'s mirror').toEqual({ entries: [] })
-    expect(next.view.read().focus, 'so the record answers the empty pair').toEqual({ entries: [], activeId: null })
-    expect(next.view.read().source.focus, 'and reads its family as a RECORD, because a repair is its lawful source').toBe('record')
-    expect(next.surface.read({ path: ['focus'] }), 'and the surface answers the placeholder, never the value it committed before the restart').toEqual({ status: 'read', kind: 'branch', path: ['focus'], value: { entries: [] } })
+    expect(next.store.read(['zones'], 'mem'), 'the next process\'s family register is the placeholder again, not the caller\'s family').toEqual({})
+    expect(next.view.read().zones, 'so the record answers the family that names no zone').toEqual([])
+    expect(next.view.read().source.zones, 'and reads its family as a RECORD, because a repair is its lawful source').toBe('record')
+    expect(next.surface.read({ path: ['zones'] }), 'and the surface answers the placeholder, never the value it committed before the restart — the empty family is the node `{_tier}` and no member').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: { _tier: 'mem' } })
     expect(readFileSync(at(one.dir)).equals(stood), 'with the profile byte-identical across BOTH constructions').toBe(true)
   })
 
@@ -321,7 +334,7 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     expect(one.surface.journal({}).status, 'and on journal').toBe('read')
   })
 
-  it('D-7 · an ordinary path lands at all three tiers, each reads back at its own, and only the `file` one survives a restart', () => {
+  it('D-7 · an ordinary path lands at all three tiers, each reads back at its own WITH ITS NODE NAMING THAT TIER — ONE address, THREE `_tier`s — and only the `file` one survives a restart', () => {
     const one = stand()
     // THE THREE WRITES, EACH AT ITS OWN TIER AND EACH READ BACK AT THAT TIER — the same address `['alpha']`, three
     // versions in three tiers, which is what a tier being the caller's means at a path no crossing owns.
@@ -331,21 +344,24 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // A WRITE AT A LOWER TIER DOES NOT DESTROY THE HIGHER ONE (`guide §5.1`: the more persistent version is SHADOWED,
     // not replaced) — so each tier is still readable at its own address, and this is the reading the surface's
     // `tier` member exists to make possible.
-    expect(one.surface.read({ path: ['alpha'], tier: 'file' }), 'the `file` version stands at `file`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'durable' })
-    expect(one.surface.read({ path: ['alpha'], tier: 'mem' }), 'the `mem` version stands at `mem`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'session' })
-    expect(one.surface.read({ path: ['alpha'], tier: 'temp' }), 'the `temp` version stands at `temp`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'transient' })
+    // **AND EACH ANSWER'S LEAF NODE NAMES THE TIER THAT VERSION STANDS AT** (`D-134`): three versions at one address, one
+    // read each, and three different `_tier`s — which is the reading a per-call echo of the argument could never give, and
+    // why `D-133`'s echo is superseded BY POINTER (D-46) before it was built.
+    expect(one.surface.read({ path: ['alpha'], tier: 'file' }), 'the `file` version stands at `file`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'durable' } })
+    expect(one.surface.read({ path: ['alpha'], tier: 'mem' }), 'the `mem` version stands at `mem`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'mem', value: 'session' } })
+    expect(one.surface.read({ path: ['alpha'], tier: 'temp' }), 'the `temp` version stands at `temp`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'temp', value: 'transient' } })
     // **AN UNQUALIFIED READ ANSWERS THE LOWEST PERSISTENCE PRESENT, WHICH IS THE STORE'S OWN DECLARED RULE AND NOT THE
     // MOST DURABLE ONE** (`guide §5.2`'s `read` row: *"legal — the lowest persistence present"*, against the tier
     // order `file > mem > temp`). So it is the `temp` version that answers here, and that is what makes the
     // member's absence a READING and not a default: a caller that wants the durable row names it.
-    expect(one.surface.read({ path: ['alpha'] }), 'an unqualified read answers the lowest persistence present').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'transient' })
+    expect(one.surface.read({ path: ['alpha'] }), 'an unqualified read answers the lowest persistence present, and the node says WHICH tier that was').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'temp', value: 'transient' } })
 
     // THE RESTART, PER TIER, AND IT IS THE WHOLE POINT OF THE MEMBER: `file` is durable, `mem` and `temp` are not.
     const next = one.restart()
-    expect(next.surface.read({ path: ['alpha'], tier: 'file' }), '`file` survives the restart').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'durable' })
+    expect(next.surface.read({ path: ['alpha'], tier: 'file' }), '`file` survives the restart, and its node still names `file`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'durable' } })
     expect(next.surface.read({ path: ['alpha'], tier: 'mem' }), '`mem` does not: it was this process\'s register').toEqual({ status: 'absent', path: ['alpha'] })
     expect(next.surface.read({ path: ['alpha'], tier: 'temp' }), '`temp` does not either — it is the transient tier, shadowed by `mem` and never durable').toEqual({ status: 'absent', path: ['alpha'] })
-    expect(next.surface.read({ path: ['alpha'] }), 'and the unqualified read is the durable one, alone').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'durable' })
+    expect(next.surface.read({ path: ['alpha'] }), 'and the unqualified read is the durable one, alone — its node names `file`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'durable' } })
     expect(readFileSync(at(one.dir), 'utf8').includes('"durable"'), 'the profile carries the durable value').toBe(true)
     for (const gone of ['"session"', '"transient"']) {
       expect(readFileSync(at(one.dir), 'utf8').includes(gone), `and no byte of ${gone}, at any point`).toBe(false)
@@ -357,48 +373,49 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // answers `removed:false` only where no row stands at the tier it named.
     expect(one.surface.delete({ path: ['alpha'], tier: 'mem' }), 'a delete at `mem` of a row that stands commits, and its answer carries the pass that removed it').toEqual({ status: 'committed', path: ['alpha'], removed: true, tiers: ['mem'], cursor: 4, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
     expect(next.surface.delete({ path: ['alpha'], tier: 'temp' }), 'a delete at `temp` of a row the restart took away is the empty receipt, not a refusal — and its `log` is EMPTY because no store act was reached, which is not the clean arm\'s shape (`D-103`)').toEqual({ status: 'committed', path: ['alpha'], removed: false, tiers: [], cursor: null, repaired: false, log: [] })
-    expect(next.surface.read({ path: ['alpha'], tier: 'file' }), 'and the `file` row is untouched by both').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'durable' })
+    expect(next.surface.read({ path: ['alpha'], tier: 'file' }), 'and the `file` row is untouched by both — its node still reads `file`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'durable' } })
   })
 
   it('D-9 · a value the family’s pair REFUSES is repaired inside the caller’s own commit, and the answer NAMES the repair — `V4`’s receipt member landed at `D-103`, so this row is its evidence no longer a case for it', () => {
     const one = stand()
-    // THE ARM `D-5` DOES NOT REACH: there the pair PASSED a plain record of junk, so nothing repaired anything.
-    // Here the value is not a plain record, so the pair REFUSES it and its repair writes the placeholder — inside the very
-    // commit the caller named. **AND THE ANSWER NOW SAYS SO** (`D-103`): `repaired:true` beside a `log` whose second entry
-    // is the `repair-run` naming `focus-must-stand` is `D-82`'s `V2` and `V4` paid at this surface, which is the member
-    // `D-79` proposed and `D-102` blocked. **THE ROW IS RE-DERIVED AND ITS OLD CLAIM WAS TRUE OF ITS OWN DATE**: it
-    // asserted that no member of the receipt named the repair, and that assertion INVERTED here rather than being deleted.
-    const landed = one.surface.write({ path: ['focus'], tier: 'mem', value: 'not-a-record' })
+    // THE ARM `D-5` DOES NOT REACH: there the pair passed a record it admits, so nothing repaired anything.
+    // Here the value is not a plain record at all, so the family's EXISTENCE arm names the fault and its repair writes
+    // the placeholder — inside the very commit the caller named. **AND THE ANSWER SAYS SO** (`D-103`): `repaired:true`
+    // beside a `log` whose second entry is the `repair-run` naming `zones-must-stand` is `D-82`'s `V2` and `V4` paid at
+    // this surface, which is the member `D-79` proposed and `D-102` blocked. **THE ROW IS RE-DERIVED AND ITS OLD CLAIM
+    // WAS TRUE OF ITS OWN DATE**: it asserted that no member of the receipt named the repair, and that assertion
+    // INVERTED here rather than being deleted.
+    const landed = one.surface.write({ path: ['zones'], tier: 'mem', value: 'not-a-record' })
     expect(landed, 'the caller is told a change LANDED, what stood is the family’s own value, and the pass that replaced it is named').toEqual({
-      status: 'committed', path: ['focus'], cursor: 1, repaired: true,
+      status: 'committed', path: ['zones'], cursor: 1, repaired: true,
       log: [
-        { kind: 'constraint-check', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
-        { kind: 'repair-run', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
-        { kind: 'constraint-check', id: 'focus-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'constraint-check', id: 'zones-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'repair-run', id: 'zones-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'constraint-check', id: 'zones-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
         { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
       ],
     })
-    expect(one.store.read(['focus'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER, and the caller’s value is nowhere').toEqual({ entries: [] })
-    expect(one.view.read().focus, 'the record answers the empty pair, never the value that was written').toEqual({ entries: [], activeId: null })
+    expect(one.store.read(['zones'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER, and the caller’s value is nowhere').toEqual({})
+    expect(one.view.read().zones, 'the record answers the family that names no zone, never the value that was written').toEqual([])
     expect(JSON.stringify(landed).includes('"repaired":true'), 'and the verdict SURVIVES JSON, which the store\'s own member does not — so the member a tool answer carries is the one that says it').toBe(true)
-    // THE CONTROL: the same write with a value the pair ADMITS leaves the caller's own value standing, so the reading above
+    // THE CONTROL: the same write with a value the family ADMITS leaves the caller's own value standing, so the reading above
     // is the repair and not the tier.
-    const admitted = one.surface.write({ path: ['focus'], tier: 'mem', value: { entries: [{ id: 'x', target: 't' }] } })
+    const admitted = one.surface.write({ path: ['zones'], tier: 'mem', value: { 'zone-1': { size: 4 } } })
     expect(admitted.status, 'a value the family admits commits too').toBe('committed')
-    expect(one.view.read().focus, 'and THAT one the record serves member for member').toEqual({ entries: [{ id: 'x', target: 't' }], activeId: null })
+    expect(one.view.read().zones, 'and THAT one the record serves member for member').toEqual([{ id: 'zone-1', size: 4 }])
   })
 
   it('D-8 · a `mem` write is visible to THIS instance and to no other: a second store over the same bytes never serves it', () => {
     const one = stand()
     one.surface.write({ path: ['alpha'], value: 'this-process', tier: 'mem' })
-    expect(one.surface.read({ path: ['alpha'], tier: 'mem' }), 'the writing instance serves its own register').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'this-process' })
+    expect(one.surface.read({ path: ['alpha'], tier: 'mem' }), 'the writing instance serves its own register, and the node names `mem`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'mem', value: 'this-process' } })
     // A SECOND INSTANCE IN THE SAME PROCESS IS ALREADY A SECOND REGISTER — the `mem` tier is the INSTANCE's, not the
     // process's, and `D-79` measured two instances over one file discarding each other's writes. The row states it
     // at the surface: a surface stood over the second instance answers absence, and the first instance is unmoved.
     const second = createProfileStore({ filePath: at(one.dir) }) as unknown as ViewRecordStore
     const beside = createDataSurface({ profileDir: one.dir, store: second as never, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
     expect(beside.read({ path: ['alpha'], tier: 'mem' }), 'so "this process only" is stated more narrowly still: the INSTANCE is the unit').toEqual({ status: 'absent', path: ['alpha'] })
-    expect(one.surface.read({ path: ['alpha'], tier: 'mem' }), 'and the writing instance still holds it').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'this-process' })
+    expect(one.surface.read({ path: ['alpha'], tier: 'mem' }), 'and the writing instance still holds it, its node naming `mem`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'mem', value: 'this-process' } })
     expect(readFileSync(at(one.dir), 'utf8').includes('this-process'), 'with no byte of it in the profile at any point').toBe(false)
   })
 })

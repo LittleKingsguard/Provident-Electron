@@ -49,6 +49,9 @@ import { storeCreate, type LogEntry, type StoreConfig, type StoreInstance } from
 const MEMBERS = [
   'read',
   'readLiteral',
+  // `1.10.0`'s own name, and the FIRST release since the seam was pinned to ADD one: the third read verb, which answers
+  // the durability tier at every node it returns (`D-134`).
+  'readTiered',
   'write',
   'delete',
   'rollback',
@@ -69,7 +72,7 @@ const MEMBERS = [
  */
 export const STOREROOM_DECLARED_SURFACE = {
   members: MEMBERS,
-  memberCount: 14,
+  memberCount: 15,
   /**
    * **Own symbols on the installed instance AT CONSTRUCTION; non-enumerable and internal, pinned as a count only.**
    * The figure was **12** under `1.9.0` where `1.7.0` read **11**, that release's whole contribution being

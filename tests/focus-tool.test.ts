@@ -1,21 +1,46 @@
 // strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
-// tests/focus-tool.test.ts — THE RED SET for `U-FOCUS-TOOL` (`F3`), wave F.
+// tests/focus-tool.test.ts — THE RE-GRAINED BATTERY for `provident.focus`, wave F, after the focus retirement.
 //
-// CONTRACT (the only source of truth): `docs/specs/focus-tool.md` — `§2.1` (the surface
-// exact), `§2.2`(A)/(B)/(C)/(D) (the prohibition table, the collision table BY TOKEN, the
-// semantics table `S-1`…`S-7`, the id/`newTab` collision rows), `§2.3` (value/identity),
-// `§2.4` (THE FIVE NEGATIVE CLAIMS), `§2.5` (the derived ALLOW/DENY set, entry-point `YES`),
-// `§3.1 M-1`…`M-6`, `§3.2 F-1`…`F-6`, `§3.3 I-1`…`I-13`, `§3.4 R-1`…`R-10`, `§3.5 X-1`…`X-7`,
-// `§4` (the red), `§5.1` (the diff scope), `§5.2` item 4 (THE CENSUS AS A LIST), `§5.U` (the
-// SEVEN-ROW MATRIX), `§5.5.1` (THE REGISTER), `§5.5.2` (the honesty block), `§5.5.3` (the
-// attempt arithmetic), `§7`/`§7a`/`§7a.1`. Gate-1 record: `docs/specs/focus-tool-review.md`.
+// CONTRACT NOW (the only source of truth): `docs/L2/mcp-surface/interface.md` — `§1` (the tool's
+// published role bytes, before and after), `§2` (what the surface does with a call: validate the
+// declared shape, make ONE invoke, answer verbatim), `§3` (THE ANSWER SHAPE — the record as the
+// renderer re-read it after the write: `status`/`order`/`landing`/`rows`, plus the store's own
+// `refused` member IFF the act's write was refused, plus the SEPARATE refusal arm
+// `status`/`reason`/`message`/`address`), `§4` (`newTab`, and a target that names no standing row),
+// `§5` (the description — prose, and not a battery's subject), `§6` (what the surface does not do)
+// and `§7` (THE DISPOSITIONS, row by row). The record's own read answer is
+// `docs/L2/store-tabs-record/interface.md` §2 and its refusal vocabulary is §3.
 //
-// THE REGISTER (`§5.5.1` + `§5.5.4`) RIDES THIS SUITE (`§5.2` leg 1): its TWENTY typed rows
-// (the contract's full table — the row-set settlement `§5.5.4` executes `P-FT-AR-2`,
-// `P-FT-AR-3` and `P-FT-RF-3` rather than withdrawing them, so the declared total is the
-// TWENTY-CELL SUM `73` and the superseded seventeen-cell `67` is kept VISIBLE and WITHDRAWN)
-// and the harness that executes them live in `tests/focus-tool-register.ts` — a NON-test
-// module, so it is never collected as a suite — and `REGISTER-EXEC-1` below EXECUTES them.
+// THE ARCHIVED `docs/specs/focus-tool.md` (filed at `archive/gate-corpus-2026-10-29/specs/
+// focus-tool.md`) IS THE GATE-ERA RECORD: every `§2.x`/`§3.x`/`§0A`/`§5.U` cite below names ITS
+// clause so a reader can audit where a claim came from, and NO row reads its sentences as its
+// subject.
+//
+// THE DELETION (D-141, D-142). The answer shape that was the renderer focus model's
+// `{ activeId, entries, opened }` DOES NOT SURVIVE. The act is the TAB RECORD's, at `['tabs']` on
+// the `file` tier, and the answer is the record as the renderer re-read it after the write. The
+// three deleted names appear in NO answer fixture and in NO assertion about an answer, and the
+// one-to-one reading is fixed here once: `activeId` → `landing` (the record's DERIVED landing
+// entry, D-76), `entries` → `order` (and `rows` for row content), and `opened` → NOTHING — an
+// opening is read off `order` GROWING BY ONE, because no arm carries an opening witness.
+//
+// THE ROLE BYTES ARE UNMOVED: the name `provident.focus`, the title `Focus a target`, the declared
+// `{ target?, newTab? }` shape, the `dispatch` gate group and the ONE invoke seam.
+//
+// THE MARK, AND WHAT IT MEANS (D-30, D-40): this file carries the file-scope `rework` mark, so
+// EVERY row here reports ON NOTICE and nothing in it gates. The rows that pin the DELETION are
+// named rather than left to a reader's inference, and EACH NAMES ITS OWN EDIT: this file's
+// `G4-E1`…`G4-E4` headstones read `src/renderer/renderer.ts` and are RED until L1 §6 `E-1`
+// lands — the renderer's focus-carrier route, its transition call, its verb choice and its
+// refusal derivation are deleted whole, and the record's `['tabs']`/`file` write route stands in
+// their place — while the register's `P-FT-RS-1` drive (3) scans `src/main/mcp-server.ts` and is
+// RED until `E-5`, the registration's DESCRIPTION edit, lands.
+//
+// THE REGISTER (`§5.5.1` + `§5.5.4` of the archived record) RIDES THIS SUITE (leg 1):
+// `tests/focus-tool-register.ts` — a NON-test module, so it is never collected as a suite —
+// carries the TWENTY typed rows / TWENTY terms / declared total `73`, and `REGISTER-EXEC-1` below
+// EXECUTES them. Every row id, strategy id, term and cap is UNMOVED by this re-grain: the ids keep
+// their cells under a RE-GRAIN or a HEADSTONE, never a retirement, so no count is orphaned.
 //
 // AUTHORING ORDER (`§4.2`): (a) the EXISTENCE rows → (b) the ROUTE rows → (c) the SHAPE rows
 // → (d) the REFUSAL/READINESS and NEGATIVE rows → (e) the IDENTITY and SEMANTICS rows →
@@ -24,12 +49,12 @@
 // ===========================================================================
 // STATE ENUMERATION (the states this file drives), BEFORE a single assertion
 // ===========================================================================
-// HAPPY STATES (`§3.1`): M-1 a target with the consumer accepting · M-2 `newTab: true` ·
-//   M-3 no arguments at all · M-4 the consumer refuses · M-5 a second identical call ·
+// HAPPY STATES (`§3.1`): M-1 a target the record seats · M-2 `newTab: true` (one row opened) ·
+//   M-3 no arguments at all · M-4 the act's write REFUSED · M-5 a second identical call ·
 //   M-6 the registration path.
 // FAIL-STATES (`§3.2`): F-1 an own enumerable key outside `{target,newTab}` · F-2 the
-//   renderer NOT READY · F-3 a consumer refusal (never a throw) · F-4 the group disabled ·
-//   F-5 a malformed renderer answer passed through · F-6 an `id`-valued argument refused.
+//   renderer NOT READY · F-3 the store's refusal, carried as a VALUE (never a throw) · F-4 the
+//   group disabled · F-5 a malformed answer passed through · F-6 an `id`-valued argument refused.
 // ARGUMENT STATES (`§2.2`(C) `S-1`…`S-7`): target absent · target present · `newTab` absent ·
 //   `newTab: true` · refusal · NOT READY · unknown key · `newTab` present and not `true`.
 // INVARIANTS (`§3.3 I-1`…`I-13`), the STATIC rows (`§3.4 R-1`…`R-10`), the FIVE NEGATIVE
@@ -48,24 +73,32 @@ import { SecurityGate, groupForTool } from '../src/main/security.js'
 import type { RpcMethod } from '../src/shared/types.js'
 import {
   REGISTER, STOP_RULE_PROBE, DECLARED_TERMS, EXPECTED_ALL_TOOLS, EXPECTED_GROUPS,
-  EXPECTED_MUTATING, DECLARED_MEMBERS, REQUIRED_MEMBERS, OPTIONAL_MEMBER, CAP_PER_ROW, CAP_TOTAL,
+  EXPECTED_MUTATING, DECLARED_MEMBERS, REQUIRED_MEMBERS, OPTIONAL_MEMBER, REFUSAL_ARM_MEMBERS,
+  REFUSED_ALWAYS_MEMBERS, REFUSED_CARRIED_MEMBERS,
+  DELETED_SHAPE_MEMBERS, CAP_PER_ROW, CAP_TOTAL,
   DECLARED_TOTAL, AS_FILED_TOTAL, AS_FILED_DECLARED_TERMS, EXECUTED_CELLS_SUM_AT_SETTLEMENT,
   DECLARED_TERM_CHAIN, DECLARED_DOMAIN_SUBTOTALS, DECLARED_TYPE_SUBTOTALS,
   DECLARED_BOUNDED_ROWS, DECLARED_READING_CLASSES, ENUMERATED_ROW_IDS, EXECUTED_CELLS_SUM,
   runRegister, reportDiagnostics, read, stripComments, scanLines, modelRuleSites, liveAllTools, liveRpcMethods,
   liveMutatingMethods, liveValidGroups, focusRouteSource, routeRegion, routeMarkerExtent,
-  routeHandlerExtent, inRouteRegion, assertDeclaredShape, assertOptionalMember, keysOf,
+  routeHandlerExtent, inRouteRegion, assertDeclaredShape, assertOptionalMember, assertRefusalArm,
+  assertRefusedLedger, keysOf,
   recorder, newServer, callTool, callHandler, assertOneFocusCall, thrown,
-  consumerResolution, holderResolution, shapeOf, guardedKeysOf, consumerVerbOf,
-  wiringSource, wiringFocusRegion, wiringIdPolicySites, wiringVerbChoiceSites,
-  wiringRefusalDerivationSites,
-  type ConsumerResolutionCall,
+  recordAnswer, refusalAnswer, storeRefused, recordRow, readingArm, deletedShapeSites,
+  guardedKeysOf,
+  wiringSource, wiringFocusRegion, wiringVerbChoiceSites, wiringRefusalDerivationSites,
+  wiringTabsWriteSites,
 } from './focus-tool-register.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const TOOL_NAME = 'provident.focus'
 const METHOD = 'focus'
 const TEST_REL = 'tests/focus-tool.test.ts'
+/** **THE BATTERY'S CONTRACT NOW** — `docs/L2/mcp-surface/interface.md` (`X-3`). */
+const CONTRACT_REL = 'docs/L2/mcp-surface/interface.md'
+/** **THE ARCHIVED GATE-ERA RECORD** — cited by the `§2.x`/`§3.x`/`§0A` clauses below so a reader
+ *  can audit a claim's provenance; pinned as FILED by `X-6b` and never read as this tool's
+ *  answer (`docs/L2/mcp-surface/interface.md` §7). */
 const SPEC_REL = 'archive/gate-corpus-2026-10-29/specs/focus-tool.md'
 const RENDERER_REL = 'src/renderer/renderer.ts'
 
@@ -105,8 +138,14 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     expect(read(RENDERER_REL), `the layer map's site 6 — case '${METHOD}': must exist, or the union and the switch disagree.`).toMatch(new RegExp("case[ ]+'" + METHOD + "'[ ]*:"))
   })
 
-  it('X-3 — the contract itself EXISTS at the pinned path', () => {
-    expect(existsSync(join(ROOT, SPEC_REL)), `§5.1 row 10 — the contract must be filed at <${SPEC_REL}>.`).toBe(true)
+  it('X-3 — the battery\'s contract document EXISTS at its pinned path', () => {
+    // THE RE-GRAIN: the subject of this row is the document the battery's claims are now read
+    // against — `docs/L2/mcp-surface/interface.md` (§3 the answer shape, §5 the description,
+    // §7 the dispositions). The gate-era spec is the ARCHIVED record `X-6b` pins, cited and not
+    // asserted; it is no longer the contract of this tool's answer (`docs/L2/mcp-surface/
+    // interface.md` §7, D-141/D-142).
+    expect(existsSync(join(ROOT, CONTRACT_REL)), `X-3 — the battery's contract must be filed at <${CONTRACT_REL}>; its §3 is the answer shape every row below reads.`).toBe(true)
+    expect(existsSync(join(ROOT, SPEC_REL)), `X-3 — and the ARCHIVED gate-era record is still filed at <${SPEC_REL}>: cited, never asserted.`).toBe(true)
   })
 
   it('X-6 — this file is in the diff scope (`§5.1` row 5) and is non-empty', () => {
@@ -147,6 +186,15 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     // SENSE THE CONTRACT STATES: the marker LINE is outside it, and THE TOOL'S OWN ROUTE BYTES —
     // its schema, its handler and its guards — are INSIDE it. The claim is now a READING of the
     // handler span, asserted below, rather than a description of it.
+    //
+    // AND THE FOURTH DEFECT, THE PASS AFTER (measured `1 failed / 89 passed`): the region's END was
+    // the next POSITIVE `if (allowed.includes(…))` marker, which cannot see the `provident.data.*`
+    // registrations' own gate (`if (!allowed.includes(name)) continue`) — so the region ran THROUGH
+    // the `dataTools` literal into a sibling's descriptions and `P-FT-RS-1`'s scan for the deleted
+    // three names hit `provident.data.write`'s `entries`, a DATA-JOURNAL word. **THE ROW WAS RED ON A
+    // SIBLING'S PROSE**, and the repair is the REGION's, never that description's: a battery that
+    // greens by editing its subject's neighbours is the one thing this row's own comment forbids.
+    // The region now ENDS at the marker block's own closing brace, and the assertion below says so.
     const region = routeRegion()
     expect(region, `RT-5(b) — the contract-named region must be LOCATABLE: the tool's own \`allowed.includes('${TOOL_NAME}')\` registration block is its marker.`).not.toBe(null)
     const marked = region as NonNullable<ReturnType<typeof routeRegion>>
@@ -162,7 +210,7 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     const src = read('src/main/mcp-server.ts')
     expect(marked.end, 'RT-5(b) — the region ENDS before the NEXT registration block (never at end-of-file), so a sibling tool\'s bytes are not scanned as this route.').toBeLessThan(src.length)
     expect(marked.end, 'RT-5(b) — and the region is BOUNDED at its end (end > start) rather than empty.').toBeGreaterThan(marked.start)
-    expect(marked.end, 'RT-5(b) — the region ends at the MARKER BLOCK\'S END (`§5.5.2` item 4b): the next `if (allowed.includes(...))` block\'s own line, the first byte outside the tool\'s block.').toBe(m.blockEnd)
+    expect(marked.end, 'RT-5(b) — the region ends at the MARKER BLOCK\'S OWN CLOSING BRACE (`§5.5.2` item 4b): the block the marker introduces is the tool\'s bytes, and the next POSITIVE marker is not a bound — it cannot see a `!allowed.includes(…)` group gate, which is how the region once ran into a sibling\'s descriptions.').toBe(m.blockEnd)
     const body = focusRouteSource() ?? ''
     expect(body.length, 'RT-5(b) — the bounded region is NON-VACUOUS: non-empty, so every scan row still reads real bytes at green time.').toBeGreaterThan(0)
     // THE TOOL'S OWN BYTES ARE INSIDE THE REGION (conflict 2, asserted as a READING): the handler
@@ -187,6 +235,12 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     for (const foreign of ["if (allowed.includes('provident.get_rendered_html'))", "if (allowed.includes('provident.get_node_state'))"]) {
       expect(body.includes(foreign), `RT-5(b) — the region must NOT reach a SIBLING registration block ('${foreign}' is outside it).`).toBe(false)
     }
+    // THE MEASURED DEFECT THIS ROW NOW ALSO FENCES (the fourth): the sibling registrations below the
+    // focus block are gated by a NEGATIVE read, so a next-positive-marker bound ran past them and
+    // `P-FT-RS-1` read `provident.data.write`'s own description (`entries` as a JOURNAL word). The
+    // region must end at the focus block, or a scan row reports on a tool that is not this one.
+    expect(body.includes('provident.data.'), 'RT-5(b) — the region ENDS at the focus block: NO `provident.data.*` registration is inside the bytes every scan row reads, so no sibling tool\'s description can red or green this route.').toBe(false)
+    expect(marked.bound, 'RT-5(b) — and the bound is the BLOCK\'S OWN CLOSE (read as a brace match), not a marker scan of any polarity.').toBe('block-close')
     // THE SCAN'S OWN READING, OVER THE WHOLE REGION (the tool's own bytes INCLUDED): the region is
     // free of a `===\s*`, an `.includes(` or an `.indexOf(` SITE. THIS READING IS DELIBERATELY NOT
     // ASSERTED HERE AS A PASS — the region now carries the tool's own guard, so it is a MEASUREMENT
@@ -202,33 +256,45 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
 // 2. THE HAPPY STATES (`§3.1 M-1`…`M-6`)
 // ===========================================================================
 describe('§3.1 M-1..M-6 — one row per valid/happy state', () => {
-  it('M-1 (a) a target with the consumer accepting: the declared shape, identity members, `refused` ABSENT', async () => {
-    const answer = { activeId: 'node-1', entries: ['node-1', 'node-2'], opened: false }
+  it('M-1 (a) a target the record seats: the record arm, `landing` naming it, `refused` ABSENT', async () => {
+    // THE RE-GRAINED ANSWER (`docs/L2/mcp-surface/interface.md` §3): the record as the renderer
+    // re-read it after the write — `status`/`order`/`landing`/`rows`. `landing` is the record's
+    // DERIVED landing entry (`docs/L2/store-tabs-record/interface.md` §1, D-76), never a member
+    // this tool computed.
+    const answer = recordAnswer(['node-1', 'node-2'], 'node-1', [recordRow('node-1', { active: true }), recordRow('node-2')])
     const rec = recorder([answer])
     const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 'node-1' })) as Record<string, unknown>
     assertOneFocusCall(rec, 'M-1')
-    expect(got, "M-1 — entries/activeId are the renderer's own values (`§3.3 I-5`).").toEqual(answer)
+    expect(got, 'M-1 — the record members are the record\'s own values, copied VERBATIM (`§3.3 I-5`).').toEqual(answer)
     assertDeclaredShape(got, 'M-1')
     assertOptionalMember(got, false, 'M-1')
-    expect(Object.keys(got).sort(), "M-1 / `§3.3 I-6` — the three REQUIRED members, in any order; `refused` ABSENT (not `undefined`).").toEqual([...REQUIRED_MEMBERS].sort())
-    expect('refused' in got, 'M-1 — no `refused` own key outside a refusal (`§0A` note 4).').toBe(false)
+    expect(got['landing'], 'M-1 — the identity the answer refers to is the record\'s DERIVED landing.').toBe('node-1')
+    expect(got['order'], 'M-1 — the record\'s stored seat, in its own order.').toEqual(['node-1', 'node-2'])
+    expect(Object.keys(got).sort(), 'M-1 / `§3.3 I-6` — the five REQUIRED members, in any order; `refused` ABSENT (not `undefined`).').toEqual([...REQUIRED_MEMBERS].sort())
+    expect('refused' in got, 'M-1 — no `refused` own key outside a refused write (`§0A` note 4).').toBe(false)
+    expect(deletedShapeSites(JSON.stringify(got)), 'M-1 — and NO deleted-shape member (`activeId`/`entries`/`opened`) is anywhere in the answer.').toEqual([])
   })
 
   it('M-1 (b) the arguments reach the renderer BY IDENTITY (`§2.3` item 3)', async () => {
-    const rec = recorder([{ activeId: null, entries: [], opened: false }])
+    const rec = recorder([recordAnswer([], '', [])])
     await callTool(newServer(rec.backend), TOOL_NAME, { target: 'a b ', newTab: false })
     const passed = assertOneFocusCall(rec, 'M-1(b)') as Record<string, unknown>
     expect(passed, "M-1(b) — the caller's own values: no trim, no coercion, no re-keying.").toEqual({ target: 'a b ', newTab: false })
   })
 
-  it('M-2 `newTab: true`: the flag is passed through, no id is minted, no member added', async () => {
-    const answer = { activeId: 'a', entries: ['a', 'a'], opened: true }
+  it('M-2 `newTab: true`: the flag is passed through, the record opens ONE row, no member added', async () => {
+    // `newTab: true` opens ONE new record row carrying the caller's target and seats it active
+    // (`docs/L2/mcp-surface/interface.md` §4, L1 §8 `ASM-1`); the id that row carries is the
+    // RENDERER's mint, so the tool invents no identity and the answer simply reports it.
+    const answer = recordAnswer(['a', 'a-2'], 'a-2', [recordRow('a'), recordRow('a-2', { target: 'a', active: true })])
     const rec = recorder([answer])
     const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 'a', newTab: true })) as Record<string, unknown>
     const passed = assertOneFocusCall(rec, 'M-2') as Record<string, unknown>
     expect(passed['newTab'], 'M-2 — the flag reaches the renderer by identity.').toBe(true)
-    expect(got, "M-2 — the consumer's own answer, verbatim (`§2.3` item 2).").toEqual(answer)
-    expect(Object.keys(got).sort(), 'M-2 — no member added by the tool; `refused` ABSENT on this accepted arm.').toEqual([...REQUIRED_MEMBERS].sort())
+    expect(got, "M-2 — the record's own answer, verbatim (`§2.3` item 2).").toEqual(answer)
+    expect((got['order'] as unknown[]).length, 'M-2 — the opening is read off `order`: it carries the standing row and the one the act opened.').toBe(2)
+    expect(got['landing'], 'M-2 — and the landing is the row the record derived as active.').toBe('a-2')
+    expect(Object.keys(got).sort(), 'M-2 — no member added by the tool; `refused` ABSENT on this landed act.').toEqual([...REQUIRED_MEMBERS].sort())
     assertOptionalMember(got, false, 'M-2')
   })
 
@@ -238,34 +304,50 @@ describe('§3.1 M-1..M-6 — one row per valid/happy state', () => {
       { label: 'the arguments member OMITTED', args: undefined, omit: true },
     ]
     for (const shape of shapes) {
-      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const rec = recorder([recordAnswer([], '', [])])
       const got = (await callTool(newServer(rec.backend), TOOL_NAME, shape.args, { omitArguments: shape.omit })) as Record<string, unknown>
       assertOneFocusCall(rec, `M-3 (${shape.label})`)
-      expect(Object.keys(got).sort(), `M-3 (${shape.label}) — the declared shape, no special case: the three required members, \`refused\` ABSENT.`).toEqual([...REQUIRED_MEMBERS].sort())
+      expect(Object.keys(got).sort(), `M-3 (${shape.label}) — the declared shape, no special case: the five required members, \`refused\` ABSENT.`).toEqual([...REQUIRED_MEMBERS].sort())
       assertOptionalMember(got, false, `M-3 (${shape.label})`)
     }
   })
 
-  it('M-4 the consumer REFUSES: the declared shape WITH `refused` and NO fifth member', async () => {
-    const answer = { activeId: null, entries: [], opened: false, refused: { reason: 'not mine' } }
+  it('M-4 the act\'s write was REFUSED: the record arm WITH the store\'s `refused` and NO sixth member', async () => {
+    // THE STORE'S REFUSAL RIDES THE SAME OBJECT (`docs/L2/mcp-surface/interface.md` §3, ASM-7):
+    // `refused` is the store surface's own refusal answer carried UNCHANGED — `status` included —
+    // and the record members beside it are the record as it still stands.
+    // THE WIDENED FIXTURE (`docs/L2/mcp-surface/interface.md` §3 rev 3, ASM-10): the writer here
+    // sends ALL THREE carried members, so the surface dropping any one of them is a red, and the
+    // `log` is an array of plain `DataLogEntry` records (`src/main/data/types.ts`, D-103, D-107).
+    const refused = storeRefused('declared-tier', "the tab record stands at 'file'", {
+      storeStatus: 'ConstraintPassRefused',
+      path: ['tabs'],
+      log: [
+        { kind: 'constraint-check', id: 'tabs-must-stand', opId: null, message: "the tab record stands at 'file'", state: null },
+        { kind: 'outcome', id: null, opId: null, message: 'the pass closed as a refusal', state: 'KC-3' },
+      ],
+    })
+    const answer = recordAnswer(['x'], 'x', [recordRow('x', { active: true })], refused)
     const rec = recorder([answer])
     const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
     assertOneFocusCall(rec, 'M-4')
-    expect(got, "M-4 — `reason` is the CONSUMER's own string, carried VERBATIM.").toEqual(answer)
+    expect(got, "M-4 — the store's own refusal member, carried VERBATIM (`§0A` note 4).").toEqual(answer)
     assertDeclaredShape(got, 'M-4')
     assertOptionalMember(got, true, 'M-4')
-    expect(Object.keys(got).sort(), 'M-4 — the three required members plus the optional `refused` the outcome carries; no fifth member.').toEqual([...DECLARED_MEMBERS].sort())
-    expect(Object.keys(got['refused'] as Record<string, unknown>), "M-4 — `refused`'s own key set is exactly ['reason'].").toEqual(['reason'])
+    expect(Object.keys(got).sort(), 'M-4 — the five reading members plus the optional `refused` the refused write carries; no sixth member.').toEqual([...DECLARED_MEMBERS].sort())
+    expect(Object.keys(got['refused'] as Record<string, unknown>).sort(), "M-4 — `refused`'s own key set is EXACTLY what the store sent: no member invented, none dropped.").toEqual(Object.keys(refused).sort())
+    assertRefusedLedger(got['refused'], refused, 'M-4 refused member')
+    expect(got['status'], "M-4 — `status` keeps reporting the RECORD's read: a refused write is not converted into a success, nor the success into a refusal.").toBe('committed')
   })
 
   it('M-5 a SECOND identical call is a SECOND renderer call (`§2.3` item 5)', async () => {
-    const rec = recorder([{ activeId: 'n', entries: ['n'], opened: false }, { activeId: 'n', entries: ['n'], opened: false }])
+    const settled = recordAnswer(['n'], 'n', [recordRow('n', { active: true })])
+    const rec = recorder([settled, settled])
     const server = newServer(rec.backend)
     await callTool(server, TOOL_NAME, { target: 'n' })
     await callTool(server, TOOL_NAME, { target: 'n' })
     expect(rec.calls.map((c) => c.method), 'M-5 — two calls, two renderer calls (a cache hit would show ONE).').toEqual([METHOD, METHOD])
   })
-
   it('M-6 the registration path: registered ONCE under the EXISTING `dispatch` group, ON by default', () => {
     const allowed = newServer(recorder([{}]).backend).allowedToolNames()
     expect(allowed, 'M-6 — registered under the default gate (no human grant, `§2.1` item 2).').toContain(TOOL_NAME)
@@ -279,7 +361,7 @@ describe('§3.1 M-1..M-6 — one row per valid/happy state', () => {
 // ===========================================================================
 describe('§3.2 F-1..F-6 — one fail-safe row per documented fail-state', () => {
   it('F-1 an own enumerable key outside `{target,newTab}`: an error NAMING the key, BEFORE any renderer call', async () => {
-    const rec = recorder([{ activeId: null, entries: [], opened: false }])
+    const rec = recorder([recordAnswer([], '', [])])
     const message = await thrown(() => callHandler(newServer(rec.backend), TOOL_NAME, { id: 'x' }))
     expect(message, 'F-1 / `§0A` note 3(d) — the malformed call does NOT return a `refused` record and does NOT succeed.').not.toBe(null)
     expect(message, `F-1 — the error names the REJECTED KEY. Measured: ${String(message)}`).toContain('id')
@@ -294,10 +376,19 @@ describe('§3.2 F-1..F-6 — one fail-safe row per documented fail-state', () =>
     expect(rec.calls.map((c) => c.method), 'F-2 — exactly ONE attempt: nothing queued, no retry, no fallback.').toEqual([METHOD])
   })
 
-  it('F-3 a consumer refusal is NOT a throw — it is a returned record', async () => {
-    const rec = recorder([{ activeId: null, entries: [], opened: false, refused: { reason: 'no' } }])
+  it("F-3 a STORE refusal is a VALUE carried as `refused` — never a throw", async () => {
+    // THE RE-GRAINED CLAIM (`docs/L2/mcp-surface/interface.md` §3, class 1): the store's refusals
+    // (`declared-tier`, `parent-absent` and the store's own statuses) are the STORE's judgement
+    // travelling through a surface that transforms nothing. They arrive as the `refused` member —
+    // a value, on the answer — and are NEVER converted into this tool's throw: the tool mints one
+    // refusal class only, and that class is its ARGUMENTS' (`docs/L2/mcp-surface/interface.md` §3,
+    // class 2; `§3.3 I-13`).
+    const refused = storeRefused('parent-absent', 'the tab record does not stand')
+    const rec = recorder([recordAnswer([], '', [], refused)])
     const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, { target: 'no' }))
-    expect(message, 'F-3 — only TWO throw classes are declared (`§3.3 I-13`).').toBe(null)
+    expect(message, 'F-3 — a refusal is a VALUE: only TWO throw classes are declared, and this is not one of them (`§3.3 I-13`).').toBe(null)
+    const got = (await callHandler(newServer(recorder([recordAnswer([], '', [], refused)]).backend), TOOL_NAME, { target: 'no' })) as Record<string, unknown>
+    expect(got['refused'], 'F-3 — and the refusal is CARRIED, verbatim, as the answer\'s own `refused` member.').toEqual(refused)
   })
 
   it("F-4 the group is DISABLED: not registered / not listed — the endpoint's existing semantics", () => {
@@ -307,9 +398,14 @@ describe('§3.2 F-1..F-6 — one fail-safe row per documented fail-state', () =>
   })
 
   it('F-5 a MALFORMED renderer answer is passed through — no shape guard, nothing coerced (the FENCE)', async () => {
-    const malformed = { somethingElse: 1 }
+    // **A RECORD-SHAPED BUT WRONG FIXTURE**: the members are four of the record arm's names, and every
+    // value is the wrong sort — `order` a number, `landing` an array, `rows` a string. The tool is a
+    // thin adapter and NOT a validation boundary over the ANSWER (`§0A` note 5), so the malformed
+    // object passes through untouched, member for member.
+    const malformed = { status: 'committed', order: 5, landing: ['not-an-id'], rows: 'not-a-row-array' }
     const got = (await callHandler(newServer(recorder([malformed]).backend), TOOL_NAME, {})) as Record<string, unknown>
-    expect(got, 'F-5 / `§0A` note 5 — the tool is NOT a validation boundary.').toEqual(malformed)
+    expect(got, 'F-5 / `§0A` note 5 — the tool is NOT a validation boundary: it guards nothing and coerces nothing.').toEqual(malformed)
+    expect(Object.keys(got).sort(), 'F-5 — the malformed answer keeps its own key set: nothing added, nothing dropped, nothing re-keyed.').toEqual(Object.keys(malformed).sort())
   })
 
   it("F-6 a caller supplies an `id`-valued argument: refused by F-1's rule (the SHAPE FENCE)", async () => {
@@ -327,18 +423,24 @@ describe('§2.2(C) S-1..S-7 — every ANSWERED argument state', () => {
   it('S-2 `target` present: passed through UNINTERPRETED', async () => {
     const probes: unknown[] = ['plain', ' padded ', 'unicode-pad', '', 0, null, { nested: true }, ['a']]
     for (const target of probes) {
-      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const rec = recorder([recordAnswer([], '', [])])
       await callTool(newServer(rec.backend), TOOL_NAME, { target })
       const passed = assertOneFocusCall(rec, `S-2 (target=${JSON.stringify(target)})`) as Record<string, unknown>
       expect(passed['target'], 'S-2 — the target reaches the renderer BY IDENTITY.').toEqual(target)
     }
   })
 
-  it('S-3 `newTab: true` opens a new entry for the same target: the tool mints nothing', async () => {
-    const rec = recorder([{ activeId: 't', entries: ['t', 't'], opened: true }])
+  it('S-3 `newTab: true` opens ONE record row for the same target: the tool mints nothing', async () => {
+    // THE ANALOGUE READING (`docs/L2/mcp-surface/interface.md` §4): there is no `opened` member in
+    // any arm, so an opening is read off `order` GROWING BY ONE and off `landing` naming the row the
+    // act seated. The id that row carries is the RENDERER's mint — the tool invents no identity.
+    const answer = recordAnswer(['t', 't-2'], 't-2', [recordRow('t'), recordRow('t-2', { target: 't', active: true })])
+    const rec = recorder([answer])
     const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 't', newTab: true })) as Record<string, unknown>
-    expect(got['opened'], "S-3 — `opened` reflects the CONSUMER's own answer.").toBe(true)
-    expect(got['activeId'], "S-3 — the returned identity is the consumer's own value.").toBe('t')
+    expect(got['order'], 'S-3 — the record\'s own order, with the opened row appended and nothing else moved.').toEqual(['t', 't-2'])
+    expect(got['landing'], "S-3 — the returned identity is the record's own DERIVED landing: the row the act seated.").toBe('t-2')
+    expect(Object.hasOwn(got, 'opened'), 'S-3 — and NO `opened` member exists to reflect: the opening is the `order` delta, not a boolean.').toBe(false)
+    expect(got, "S-3 — the record's answer, verbatim: the tool adds nothing to report the opening.").toEqual(answer)
   })
 
   it('S-5 NOT READY crosses every argument state (`S-1`…`S-4`)', async () => {
@@ -359,7 +461,7 @@ describe('§2.2(C) S-1..S-7 — every ANSWERED argument state', () => {
 
   it('S-7 `newTab` present and NOT `true`: no default, nothing re-derived', async () => {
     for (const value of [false, 0, '', null, 'yes']) {
-      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const rec = recorder([recordAnswer([], '', [])])
       await callTool(newServer(rec.backend), TOOL_NAME, { target: 'a', newTab: value })
       const passed = assertOneFocusCall(rec, `S-7 (newTab=${JSON.stringify(value)})`) as Record<string, unknown>
       expect(passed['newTab'], 'S-7 — the value reaches the renderer uninterpreted.').toEqual(value)
@@ -381,11 +483,13 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
 
   it('I-2 the handler makes EXACTLY ONE renderer call for each valid state driven here', async () => {
     const valid: Array<Record<string, unknown>> = [{}, { target: 'a' }, { target: 'a', newTab: true }, { target: 'r' }]
+    // THE FOUR ANSWERS ARE THE RECORD'S (`docs/L2/mcp-surface/interface.md` §3): the empty reading,
+    // a seated row, an opening (one row added, `order` grown by one) and a refused write.
     const answers = [
-      { activeId: null, entries: [], opened: false },
-      { activeId: 'a', entries: ['a'], opened: false },
-      { activeId: 'a', entries: ['a', 'a'], opened: true },
-      { activeId: null, entries: [], opened: false, refused: { reason: 'r' } },
+      recordAnswer([], '', []),
+      recordAnswer(['a'], 'a', [recordRow('a', { active: true })]),
+      recordAnswer(['a', 'a-2'], 'a-2', [recordRow('a'), recordRow('a-2', { target: 'a', active: true })]),
+      recordAnswer([], '', [], storeRefused('declared-tier', "the tab record stands at 'file'")),
     ]
     for (let i = 0; i < valid.length; i += 1) {
       const rec = recorder([answers[i]])
@@ -401,31 +505,54 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
   })
 
   it('I-4 / `ID-1` the tool MINTS NO ID', async () => {
-    const got = (await callTool(newServer(recorder([{ activeId: 'k', entries: ['k'], opened: false }]).backend), TOOL_NAME, { target: 'k' })) as Record<string, unknown>
-    expect(got['activeId'], "I-4 — the identity is the CONSUMER's own value (`§2.3` item 1).").toBe('k')
+    const got = (await callTool(newServer(recorder([recordAnswer(['k'], 'k', [recordRow('k', { active: true })])]).backend), TOOL_NAME, { target: 'k' })) as Record<string, unknown>
+    expect(got['landing'], "I-4 — the identity is the RECORD's own DERIVED landing (`§2.3` item 1; `docs/L2/store-tabs-record/interface.md` §1): the tool minted nothing.").toBe('k')
     expect(scanLines(stripComments(focusRouteSource() ?? ''), /randomUUID|\bcounter\b|\buuid\b/i), 'I-4 — no minting site on the route.').toEqual([])
   })
 
   it('I-5 every passed value travels BY IDENTITY on input and on output', async () => {
-    const answer = { activeId: 'b', entries: ['z', 'a', 'z'], opened: 0 }
+    // THE UNNORMALISED ANSWER: `order` is unsorted and carries the SAME id twice, `rows` repeats that
+    // id, `landing` is not one of `order`'s ids, and `newTab` on the way IN is a string. Nothing is
+    // sorted, deduped, trimmed, validated or re-derived on either side (`§2.3` item 3).
+    const answer = recordAnswer(['z', 'a', 'z'], 'not-in-order', [recordRow('z'), recordRow('a'), recordRow('z', { label: 'dup' })])
     const rec = recorder([answer])
     const got = (await callHandler(newServer(rec.backend), TOOL_NAME, { target: ' b ', newTab: 'no' })) as Record<string, unknown>
-    expect(got, 'I-5 — the unsorted duplicate list and the non-boolean `opened` are NOT normalised.').toEqual(answer)
+    expect(got, 'I-5 — the unsorted duplicate `order`, the repeated row id and the off-`order` landing are NOT normalised.').toEqual(answer)
+    expect((got['order'] as unknown[]).length, 'I-5 — no dedupe: three ids, two of them the same.').toBe(3)
     expect(rec.calls[0]?.args, 'I-5 — the input members travel uninterpreted too.').toEqual({ target: ' b ', newTab: 'no' })
   })
 
-  it('I-6 the four declared members, `refused` present exactly on a refusal, never `refused: undefined`', async () => {
+  it('I-6 the five reading members, `refused` present exactly on a refused write, never `refused: undefined`', async () => {
     const drives: Array<{ label: string; answer: Record<string, unknown> }> = [
-      { label: 'accepted', answer: { activeId: null, entries: [], opened: false } },
-      { label: 'refusal', answer: { activeId: null, entries: [], opened: false, refused: { reason: '' } } },
+      { label: 'landed', answer: recordAnswer([], '', []) },
+      { label: 'refused', answer: recordAnswer([], '', [], storeRefused('declared-tier', "the tab record stands at 'file'")) },
     ]
     for (const d of drives) {
       const got = (await callTool(newServer(recorder([d.answer]).backend), TOOL_NAME, {})) as Record<string, unknown>
       assertDeclaredShape(got, `I-6 (${d.label})`)
-      assertOptionalMember(got, d.label === 'refusal', `I-6 (${d.label})`)
-      expect(Object.keys(got).sort(), `I-6 (${d.label}) — the three required members, plus \`refused\` IFF the outcome carries one.`).toEqual((d.label === 'refusal' ? [...DECLARED_MEMBERS] : [...REQUIRED_MEMBERS]).sort())
-      expect(Object.prototype.hasOwnProperty.call(got, 'refused'), `I-6 (${d.label}) — presence matches the consumer's answer.`).toBe(d.label === 'refusal')
+      assertOptionalMember(got, d.label === 'refused', `I-6 (${d.label})`)
+      expect(Object.keys(got).sort(), `I-6 (${d.label}) — the five required members, plus \`refused\` IFF the act's write was refused.`).toEqual((d.label === 'refused' ? [...DECLARED_MEMBERS] : [...REQUIRED_MEMBERS]).sort())
+      expect(Object.prototype.hasOwnProperty.call(got, 'refused'), `I-6 (${d.label}) — presence matches the store's own answer.`).toBe(d.label === 'refused')
       expect(Object.values(got).every((v) => v !== undefined), `I-6 (${d.label}) — no member is present as undefined.`).toBe(true)
+    }
+    // **THE TWO ARMS ARE ASSERTED SEPARATELY** (`docs/L2/mcp-surface/interface.md` §3): the arm with
+    // no record to answer with is its OWN key set, and it is not the record arm's. `status` is what
+    // tells them apart, so a single key-set equality over both would be satisfiable only by an
+    // answer the contract does not declare.
+    const arm = refusalAnswer('parent-absent', 'the tab record does not stand', null)
+    const gotArm = (await callHandler(newServer(recorder([arm]).backend), TOOL_NAME, {})) as Record<string, unknown>
+    assertRefusalArm(gotArm, 'I-6 (refusal arm)')
+    expect(gotArm, 'I-6 (refusal arm) — a reading the client itself REFUSED is carried unchanged, member for member.').toEqual(arm)
+    expect(Object.keys(gotArm).sort(), 'I-6 (refusal arm) — the refused reading carries EXACTLY its own four declared names.').toEqual([...REFUSAL_ARM_MEMBERS].sort())
+    expect(Object.keys(gotArm).sort(), 'I-6 — and the two arms are NOT one key set: the refusal arm is never read as the record arm.').not.toEqual([...REQUIRED_MEMBERS].sort())
+    expect(deletedShapeSites(JSON.stringify(gotArm)), 'I-6 — the refusal arm names none of the three deleted members.').toEqual([])
+    // AND THE OTHER TWO NON-RECORD READINGS KEEP THE CLIENT'S OWN MEMBERS: `absent` is
+    // `{status, reason}` and `unread` is `{status, reason, detail}` (`src/renderer/tabs-client.ts`),
+    // so an answer that re-spelt either into the four-member refusal shape FAILS here.
+    for (const reading of [readingArm('absent', 'no-tabs-member'), readingArm('unread', 'answer-not-declared', 'order is not an array')]) {
+      const gotReading = (await callHandler(newServer(recorder([reading]).backend), TOOL_NAME, {})) as Record<string, unknown>
+      expect(gotReading, `I-6 (${String(reading['status'])}) — carried BY IDENTITY: no status rewritten and no member minted.`).toEqual(reading)
+      expect(Object.keys(gotReading).sort(), `I-6 (${String(reading['status'])}) — and its OWN key set is kept, never the refusal arm's four.`).not.toEqual([...REFUSAL_ARM_MEMBERS].sort())
     }
   })
 
@@ -452,9 +579,10 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
   })
 
   it('I-10 the tool re-derives NO model rule', async () => {
-    const rec = recorder([{ activeId: 'same', entries: ['same'], opened: false }])
+    const rec = recorder([recordAnswer(['same'], 'same', [recordRow('same', { active: true })])])
     const got = (await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'same' })) as Record<string, unknown>
-    expect(got['entries'], "I-10 — the answer is the consumer's; the tool compared nothing.").toEqual(['same'])
+    expect(got['order'], 'I-10 — the answer is the RECORD\'s; the tool compared nothing and re-derived nothing.').toEqual(['same'])
+    expect(got['landing'], 'I-10 — and the landing is the record\'s derived one, not a value this tool settled.').toBe('same')
     // ⟶ 2026-09-27 RE-SCOPE (`§0A` note 7, defect 2) — THE AS-FILED INSTRUMENT IS KEPT VISIBLE
     // BESIDE ITS REPLACEMENT, because it was OVER-BROAD: `/===\s*|\.sort\s*\(|\.includes\s*\(|
     // \.indexOf\s*\(/` FLAGS THE TOOL'S MANDATORY UNKNOWN-KEY GUARD
@@ -498,8 +626,8 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
     expect(bad, 'I-13 — the validation arm throws.').not.toBe(null)
     const notReady = await thrown(() => callTool(newServer(recorder([], 'renderer not ready (timeout 7ms)').backend), TOOL_NAME, {}))
     expect(notReady, "I-13 — the readiness arm rejects with the backend's own error.").toMatch(/renderer not ready \(timeout \d+ms\)/)
-    const refused = await thrown(() => callTool(newServer(recorder([{ activeId: null, entries: [], opened: false, refused: { reason: 'x' } }]).backend), TOOL_NAME, {}))
-    expect(refused, 'I-13 — a consumer refusal is NEVER a throw: no third class exists.').toBe(null)
+    const refused = await thrown(() => callTool(newServer(recorder([recordAnswer([], '', [], storeRefused('declared-tier', 'x'))]).backend), TOOL_NAME, {}))
+    expect(refused, 'I-13 — a STORE refusal is a VALUE carried as `refused`, NEVER a throw: no third class exists.').toBe(null)
   })
 })
 
@@ -507,16 +635,28 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
 // 6. THE STATIC ROWS (`§3.4 R-1`…`R-10`)
 // ===========================================================================
 describe('§3.4 R-1..R-10 — the static rows', () => {
-  it('R-1 THE VOCABULARY SCAN — no tab/pane/zone/region noun, the exemptions NAMED', () => {
-    // TWO NAMED EXEMPTIONS AND NO OTHERS (`§2.2`(B)'s closing paragraph): (i) the tool/method
-    // NAME `focus`; (ii) the endpoint's own member names. The scan stands VACUOUS of every
-    // tab/pane/zone/region token.
-    const src = focusRouteSource()
-    expect(src, 'R-1 — the route must exist for the scan to be non-vacuous.').not.toBe(null)
-    for (const token of [/\btab\b/i, /\bpane\b/i, /\bzone\b/i, /\bregion\b/i]) {
-      expect(scanLines(stripComments(src ?? ''), token), `R-1 / P-FT-1 — a consumer noun on the route FAILS: ${String(token)}`).toEqual([])
+  it('R-1 THE VOCABULARY SCAN over the HANDLER SPAN — no tab/pane/zone/region noun, the exemptions NAMED', () => {
+    // **THE SCAN REGION IS RE-GRAINED TO THE HANDLER SPAN** (`docs/L2/mcp-surface/interface.md`
+    // §5, §7): `routeHandlerExtent()?.body` — `focusHandler` + `DECLARED_ARGUMENTS` + `keyAllowed`,
+    // the tool's own route bytes, where the caller's two members are validated and passed on.
+    //
+    // WHY NOT THE WHOLE REGION: the registration's DESCRIPTION now legitimately names the tab
+    // record — that is exactly the wording change D-141 asks for — so a scan over the whole region
+    // would FORBID the required edit and red on the very sentence the contract requires. The
+    // description is PROSE, and the contract says prose is not a battery's subject
+    // (`docs/L2/mcp-surface/interface.md` §5; ASM-8; D-30, L1 §6 `E-5`). The ban this row carries
+    // is the HANDLER's own vocabulary, and it is what is read.
+    const handler = routeHandlerExtent()
+    expect(handler, 'R-1 — the handler span must be LOCATABLE (`function focusHandler` … the key guard\'s close), or the scan reads nothing of the tool\'s.').not.toBe(null)
+    const body = stripComments((handler as NonNullable<ReturnType<typeof routeHandlerExtent>>).body)
+    expect(body.length, 'R-1 — and the span is non-empty, so the scan is non-vacuous.').toBeGreaterThan(0)
+    for (const need of ['function focusHandler', 'DECLARED_ARGUMENTS', 'function keyAllowed']) {
+      expect(body.includes(need), `R-1 — the scanned span carries the tool's own byte '${need}' (the handler, its declared set and its guard).`).toBe(true)
     }
-    expect(scanLines('const tab = 1', /\btab\b/i), 'R-1 control — the scan is a real scan.').not.toEqual([])
+    for (const token of [/\btab\b/i, /\bpane\b/i, /\bzone\b/i, /\bregion\b/i]) {
+      expect(scanLines(body, token), `R-1 / P-FT-1 — a consumer noun in the HANDLER SPAN FAILS: ${String(token)}`).toEqual([])
+    }
+    expect(scanLines('const tab = 1', /\btab\b/i), 'R-1 control — the scan CAN hit: a line carrying the noun is reported, so the emptiness above is a reading and not a vacuous scan.').not.toEqual([])
   })
 
   it('R-3 THE MINTING-SITE SCAN', () => {
@@ -534,22 +674,22 @@ describe('§3.4 R-1..R-10 — the static rows', () => {
     expect(Object.keys(RPC_METHOD_CENSUS).sort(), 'R-4 / E-b — this record is exhaustive over the 27 declared members.').toEqual([...liveRpcMethods(), METHOD].sort().filter((v, i, a) => a.indexOf(v) === i))
   })
 
-  it("R-5 THE SHAPE ROW — the three required members always present, `refused` IFF the outcome carries one, no fifth member", async () => {
-    const got = (await callTool(newServer(recorder([{ activeId: 'x', entries: ['x'], opened: true }]).backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
+  it("R-5 THE SHAPE ROW — the five reading members always present, `refused` IFF the write was refused, no sixth member", async () => {
+    const got = (await callTool(newServer(recorder([recordAnswer(['x'], 'x', [recordRow('x', { active: true })])]).backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
     assertDeclaredShape(got, 'R-5')
     assertOptionalMember(got, false, 'R-5')
-    expect(Object.keys(got).sort(), 'R-5 / `§0A` note 4 — the required names on an accepted outcome, nothing added or re-keyed.').toEqual([...REQUIRED_MEMBERS].sort())
-    // THE TWO FALSIFIERS, BOTH DRIVEN HERE (the consolidation adjudication, conflict 2 — the
-    // accepted arm and the optionality claim cannot be asserted as one four-name equality):
+    expect(Object.keys(got).sort(), 'R-5 / `§0A` note 4 — the reading\'s own five names on a landed act, nothing added or re-keyed.').toEqual([...REQUIRED_MEMBERS].sort())
+    // THE TWO FALSIFIERS, BOTH DRIVEN HERE (the accepted arm and the optionality claim cannot be
+    // asserted as one five-name equality):
     // (a) a record MISSING A REQUIRED MEMBER fails the shape read, and (b) a record CARRYING
-    // `refused` when there is no such outcome fails the optionality read.
-    expect(keysOf({ activeId: null, opened: false }), 'R-5 control (a) — a record missing `entries` FAILS the required-member half (the falsifier is real, not a relaxation).').not.toEqual([...REQUIRED_MEMBERS].sort())
-    expect(keysOf({ activeId: null, entries: [], opened: false, refused: { reason: 'r' } }), 'R-5 control (b) — a record carrying `refused` with NO such outcome FAILS the absence half.').not.toEqual([...REQUIRED_MEMBERS].sort())
+    // `refused` when the act's write was not refused fails the optionality read.
+    expect(keysOf({ status: 'committed', order: [], landing: '' }), 'R-5 control (a) — a record arm missing `rows` FAILS the required-member half (the falsifier is real, not a relaxation).').not.toEqual([...REQUIRED_MEMBERS].sort())
+    expect(keysOf(recordAnswer([], '', [], storeRefused('declared-tier', 'r'))), 'R-5 control (b) — a record arm carrying `refused` with NO refused write FAILS the absence half.').not.toEqual([...REQUIRED_MEMBERS].sort())
   })
 
   it('R-6 THE NO-THROW ROW — no throw escapes on any ACCEPTED shape', async () => {
     for (const args of [{}, { target: 'a' }, { target: 'a', newTab: true }, { newTab: false }]) {
-      const message = await thrown(() => callTool(newServer(recorder([{ activeId: null, entries: [], opened: false }]).backend), TOOL_NAME, args))
+      const message = await thrown(() => callTool(newServer(recorder([recordAnswer([], '', [])]).backend), TOOL_NAME, args))
       expect(message, `R-6 (${JSON.stringify(args)}) — an accepted shape must not throw.`).toBe(null)
     }
   })
@@ -648,38 +788,60 @@ describe('§5.U — the seven matrix rows (node-side halves; rows 3/4 LABELLED)'
     expect(liveMutatingMethods(), '§5.U row 4 — "the name sets are unchanged".').not.toContain(METHOD)
   })
 
-  it('§5.U row 5 — a refusal returns the declared shape and changes nothing', async () => {
+  it('§5.U row 5 — a REFUSED WRITE returns the record arm with the store\'s `refused` and changes nothing', async () => {
+    // THE RE-GRAINED CLAIM (`docs/L2/mcp-surface/interface.md` §3, §7): the refusal is the STORE's
+    // own answer travelling through, carried as the `refused` member — its `reason` untrimmed and
+    // uninvented, its own members unchanged — with the reading's five members standing beside it.
+    // THE WIDENED FIXTURE (§3 rev 3, ASM-10): all three carried members ride it here, `path` keeping
+    // this row's own `['tabs', 'order']`, so the member is read against a whole ledger and not
+    // against whatever a single-field fixture happened to send.
     const reason = '  refused: unicode-pad  '
-    const got = (await callTool(newServer(recorder([{ activeId: null, entries: [], opened: false, refused: { reason } }]).backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
+    const refused = storeRefused(reason, '  message-pad  ', {
+      storeStatus: 'ConstraintPassRefused',
+      path: ['tabs', 'order'],
+      log: [
+        { kind: 'constraint-check', id: 'tabs-must-stand', opId: null, message: '  message-pad  ', state: null },
+        { kind: 'outcome', id: null, opId: null, message: 'the pass closed as a refusal', state: 'KC-3' },
+      ],
+    })
+    const got = (await callTool(newServer(recorder([recordAnswer([], '', [], refused)]).backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
     assertDeclaredShape(got, '§5.U row 5')
     assertOptionalMember(got, true, '§5.U row 5')
-    expect(Object.keys(got).sort(), "§5.U row 5 — the asserted object is the returned object's own key set: three required members + the optional one the refusal carries.").toEqual([...DECLARED_MEMBERS].sort())
-    expect((got['refused'] as Record<string, unknown>)['reason'], "§5.U row 5 — the reason is the consumer's own string, untrimmed and uninvented.").toBe(reason)
+    expect(Object.keys(got).sort(), "§5.U row 5 — the asserted object is the returned object's own key set: the five reading members + the optional one the refused write carries.").toEqual([...DECLARED_MEMBERS].sort())
+    expect((got['refused'] as Record<string, unknown>)['reason'], "§5.U row 5 — the reason is the STORE's own string, untrimmed and uninvented.").toBe(reason)
+    expect(Object.keys(got['refused'] as Record<string, unknown>).sort(), "§5.U row 5 — and refused's own members are exactly the store's, `path` included.").toEqual(Object.keys(refused).sort())
+    assertRefusedLedger(got['refused'], refused, '§5.U row 5 refused member')
   })
 
   it('§5.U row 6 — the not-ready rejection: the readiness gate is crossed BEFORE dispatch', async () => {
     const rec = recorder([], 'renderer not ready (timeout 9ms)')
     const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, {}))
     expect(message, '§5.U row 6 — falsifiers: a pre-ready success, a silent no-op, a queued mutation.').toMatch(/renderer not ready \(timeout \d+ms\)/)
-    const okRec = recorder([{ activeId: 'z', entries: ['z'], opened: false }])
+    const okRec = recorder([recordAnswer(['z'], 'z', [recordRow('z', { active: true })])])
     expect(await thrown(() => callTool(newServer(okRec.backend), TOOL_NAME, {})), '§5.U row 6 — the SAME call services once READY.').toBe(null)
   })
 
-  it('§5.U row 7 — a repeated target activates BY IDENTITY with NO APPEND, and the tool compared nothing', async () => {
+  it('§5.U row 7 — a repeated target seats its STANDING ROW with NO APPEND, and the tool compared nothing', async () => {
+    // THE RE-GRAINED READING (`docs/L2/mcp-surface/interface.md` §4, §7): the record's own answers,
+    // three calls deep. The first is the record BEFORE the seating (nothing reads active, so its
+    // derived landing is the empty spelling), the second seats the standing row without appending,
+    // and the third is the APPEND CONTROL — `newTab: true` opens one row.
     const answers = [
-      { activeId: '', entries: ['e'], opened: false },
-      { activeId: 'e', entries: ['e'], opened: false },
-      { activeId: 'e', entries: ['e', 'other'], opened: true },
+      recordAnswer(['e'], '', [recordRow('e')]),
+      recordAnswer(['e'], 'e', [recordRow('e', { active: true })]),
+      recordAnswer(['e', 'other'], 'other', [recordRow('e'), recordRow('other', { target: 'other', active: true })]),
     ]
     const rec = recorder(answers)
     const server = newServer(rec.backend)
     const first = (await callTool(server, TOOL_NAME, { target: 'e' })) as Record<string, unknown>
     const second = (await callTool(server, TOOL_NAME, { target: 'e' })) as Record<string, unknown>
-    const third = (await callTool(server, TOOL_NAME, { target: 'other' })) as Record<string, unknown>
-    expect(first, "§5.U row 7 — the consumer's own first answer, echoed.").toEqual(answers[0])
-    expect(second['activeId'], "§5.U row 7 — activation BY IDENTITY: the existing entry's own id.").toBe('e')
-    expect((second['entries'] as unknown[]).length, '§5.U row 7 — NO APPEND on a repeated target.').toBe(1)
-    expect(third['entries'] as unknown[], '§5.U row 7 — the APPEND CONTROL: a distinct target appends, as declared.').toEqual(['e', 'other'])
+    const third = (await callTool(server, TOOL_NAME, { target: 'other', newTab: true })) as Record<string, unknown>
+    expect(first, "§5.U row 7 — the record's own first answer, echoed.").toEqual(answers[0])
+    expect(second['landing'], "§5.U row 7 — the seating is BY IDENTITY: the standing row's own id, as the record derived it.").toBe('e')
+    expect((second['order'] as unknown[]).length, '§5.U row 7 — NO APPEND on a repeated target.').toBe(1)
+    expect(third['order'] as unknown[], '§5.U row 7 — the APPEND CONTROL: `newTab: true` opens exactly one row, as declared.').toEqual(['e', 'other'])
+    expect((third['order'] as unknown[]).length - (second['order'] as unknown[]).length, '§5.U row 7 — opening is the `order` delta: ONE id, and nothing else.').toBe(1)
+    expect(Object.hasOwn(third, 'opened'), '§5.U row 7 — and there is no `opened` member to read: the opening is the delta, not a boolean.').toBe(false)
     expect(rec.calls.map((c) => c.method), '§5.U row 7 — three calls, three renderer calls: nothing is held between calls.').toEqual([METHOD, METHOD, METHOD])
   })
 })
@@ -688,25 +850,37 @@ describe('§5.U — the seven matrix rows (node-side halves; rows 3/4 LABELLED)'
 // 9. THE SHAPE ROW'S THREE DRIVES (`§2.1` item 5; `§3.2 F-5`'s fence)
 // ===========================================================================
 describe("§2.1 item 5 / §3.2 F-5 — the shape row's three declared drives", () => {
-  it("RS-1(a) a serviced call with the consumer's well-formed answer", async () => {
-    const got = (await callTool(newServer(recorder([{ activeId: 'a', entries: ['a'], opened: false }]).backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
+  it("RS-1(a) a serviced call with the record's own well-formed answer", async () => {
+    const answer = recordAnswer(['a'], 'a', [recordRow('a', { active: true })])
+    const got = (await callTool(newServer(recorder([answer]).backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
     assertDeclaredShape(got, 'RS-1(a)')
     assertOptionalMember(got, false, 'RS-1(a)')
-    expect(Object.keys(got).sort(), 'RS-1(a) — the three required members on the serviced arm; `refused` ABSENT.').toEqual([...REQUIRED_MEMBERS].sort())
+    expect(Object.keys(got).sort(), 'RS-1(a) — the five required members on the landed arm; `refused` ABSENT.').toEqual([...REQUIRED_MEMBERS].sort())
+    expect(got, 'RS-1(a) — the record\'s answer, verbatim, member for member.').toEqual(answer)
   })
 
-  it("RS-1(b) a refusal answer: four names with `refused`, and `refused`'s own key set is exactly ['reason']", async () => {
-    const got = (await callTool(newServer(recorder([{ activeId: null, entries: [], opened: false, refused: { reason: 'r' } }]).backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
+  it("RS-1(b) a REFUSED WRITE: five names with the store's `refused`, and `refused`'s own key set is exactly what the store sent", async () => {
+    // THE OTHER DIRECTION OF THE WIDENING, DRIVEN HERE (`docs/L2/mcp-surface/interface.md` §3 rev 3,
+    // ASM-10): the writer sends NONE of `storeStatus`/`path`/`log`, so the member carries the bare
+    // three and no own `undefined` key stands in their place — the "absent where not carried" half.
+    const refused = storeRefused('declared-tier', "the tab record stands at 'file'")
+    const got = (await callTool(newServer(recorder([recordAnswer(['a'], 'a', [recordRow('a', { active: true })], refused)]).backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
     assertDeclaredShape(got, 'RS-1(b)')
     assertOptionalMember(got, true, 'RS-1(b)')
-    expect(Object.keys(got).sort(), 'RS-1(b) — three required members with the optional `refused` the refusal carries; no fifth member.').toEqual([...DECLARED_MEMBERS].sort())
-    expect(Object.keys(got['refused'] as Record<string, unknown>), 'RS-1(b) — the tool invents NO code and adds NO member inside `refused`.').toEqual(['reason'])
+    expect(Object.keys(got).sort(), 'RS-1(b) — the five reading members with the optional `refused` the refused write carries; no sixth member.').toEqual([...DECLARED_MEMBERS].sort())
+    expect(Object.keys(got['refused'] as Record<string, unknown>).sort(), 'RS-1(b) — the tool invents NO code and adds NO member inside `refused`: its key set is the store\'s own.').toEqual(Object.keys(refused).sort())
+    assertRefusedLedger(got['refused'], refused, 'RS-1(b) refused member')
+    expect(got['status'], 'RS-1(b) — and `status` still reports the RECORD\'s read: the refused write is not the answer\'s whole body.').toBe('committed')
   })
 
-  it("RS-1(c) a MALFORMED consumer answer is passed through and the tool adds nothing (`§3.2 F-5`'s fence)", async () => {
-    const malformed = { activeId: 5, entries: 'not-an-array', opened: 'yes' }
+  it("RS-1(c) a MALFORMED, RECORD-SHAPED answer is passed through and the tool adds nothing (`§3.2 F-5`'s fence)", async () => {
+    // A RECORD-SHAPED BUT WRONG fixture: the member NAMES are the record arm's, the VALUES are all
+    // the wrong sort. The fence is the claim — the tool guards nothing and coerces nothing — and it
+    // is asserted on the shape a record answer would have, not on an arbitrary object.
+    const malformed = { status: 'committed', order: 'not-an-id-list', landing: 42, rows: { not: 'an array' } }
     const got = (await callHandler(newServer(recorder([malformed]).backend), TOOL_NAME, {})) as Record<string, unknown>
     expect(got, 'RS-1(c) — the tool guards nothing and coerces nothing.').toEqual(malformed)
+    expect(Object.keys(got).sort(), 'RS-1(c) — the malformed answer keeps its own key set: no member is repaired, added or dropped.').toEqual(Object.keys(malformed).sort())
   })
 })
 
@@ -769,8 +943,10 @@ describe('§5.5.1 / §5.5.4 — THE EXECUTED PROPERTY REGISTER (20 typed rows / 
     // THE READINGS, PRINTED WHETHER OR NOT THEY PASS (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-
     // TERMS`): the declared total WITH its terms, the executed total, each row's own
     // attempts/held/broken, and the un-run rows NAMED as FAILURES. This file pins NO expected
-    // per-row state: the register is RED here precisely because the tool does not exist yet,
-    // and its un-run rows must be reported as failures rather than absorbed.
+    // per-row state: both deletions the register's static rows pin have landed (`E-5`'s
+    // registration description and `E-1`'s renderer route), and a row that reds here is reporting
+    // its SUBJECT rather than an expected count — while an un-run row must be reported as a
+    // failure rather than absorbed.
     REGISTER_DIAGNOSTICS = reportDiagnostics(report)
     // THE READINGS, PRINTED ONE LINE AT THE EXECUTION SITE (`REGISTER-ATTEMPT-TOTALS-
     // PRINT-THEIR-TERMS`): the declared total WITH its twenty terms, `rowsExecuted`,
@@ -926,27 +1102,32 @@ describe('§5.5.1 / §5.5.4 — THE EXECUTED PROPERTY REGISTER (20 typed rows / 
 // ===========================================================================
 // 12. THE GATE-4 REGRESSION ROWS (`§0A` note 8, obligations (i)/(ii)) — RED-FIRST
 // ===========================================================================
-// THE FIVE DISPOSITIONS ARE THE AUTHORITY (`§0A` note 8): (1) a NON-OBJECT
-// arguments member IS REFUSED, never routed as an empty call; (2) the RENDERER
-// WIRING HOLDER IS THE ENTRY-RESOLUTION AUTHORITY — the route passes the caller's
-// value THROUGH UNINTERPRETED, the HOLDER resolves whether an entry exists and
-// what the active id is, and ONLY THE CONSUMER'S OWN ANSWER MAY PRODUCE A REFUSAL;
-// (3) the REFUSAL MAPPING is NON-LOSSY on the declared members and NEVER emits a
-// member whose value is `undefined`; (4) the THROW-CLASS claim is STABLE FOR
-// OWN-KEY VIOLATIONS ONLY (the wider reading is WITHDRAWN); (5) the reprints are
-// contract arithmetic, not a host behaviour.
+// THE FIVE DISPOSITIONS ARE THE AUTHORITY (`§0A` note 8, as re-grained by D-142): (1) a
+// NON-OBJECT arguments member IS REFUSED, never routed as an empty call; (2) **THE TAB RECORD
+// IS THE ENTRY-RESOLUTION AUTHORITY** — the route passes the caller's value THROUGH
+// UNINTERPRETED, the RECORD seats the standing row or opens one, and the answer is THE RECORD AS
+// THE RENDERER RE-READ IT, never a construction of the tool's (the deleted holder harness is
+// D-142's, and `G4-B1`…`B4` now read the record); (3) the REFUSAL is the STORE'S and is CARRIED
+// unchanged as the `refused` member, NON-LOSSY and NEVER `undefined`-valued; (4) the THROW-CLASS
+// claim is STABLE FOR OWN-KEY VIOLATIONS ONLY (the wider reading is WITHDRAWN); (5) the reprints
+// are contract arithmetic, not a host behaviour.
 //
 // ROW STATES ENUMERATED FIRST (one happy path per state, one fail-safe per
 // documented fail-state), THEN the rows:
 //   G4-A  the six non-object arguments forms: number · boolean · string · Date ·
 //         Map · function — each REFUSED, naming its rejected form, NO renderer call.
-//   G4-B  the holder's own resolution: an EXISTING entry ACTIVATED BY IDENTITY ·
-//         the seeded-state divergence · the execution of the activation transition.
-//   G4-C  the refusal mapping: the declared members survive; no member is `undefined`.
+//   G4-B  the RECORD's own answer: the caller's members through the seam by identity ·
+//         the answer as the record re-read it · a standing row seated with no append ·
+//         `newTab: true` opening exactly ONE row in `order`.
+//   G4-C  the store's `refused` member: its own members survive; no member is `undefined`.
 //   G4-D  the throw class: stable for OWN-KEY violations; the engine's own error may
 //         cross otherwise (the withdrawn wider claim is NOT re-asserted).
 // EVERY row drives the LIVE route (`tools/call`), never a handler call, so the
 // schema path is live and the renderer-call count is the tool's own behaviour.
+// ===========================================================================
+// THE `§0A`/`§2.x`/`§3.x` CITES BELOW NAME THE ARCHIVED GATE-ERA RECORD
+// (`archive/gate-corpus-2026-10-29/specs/focus-tool.md`): they say where a claim came from.
+// What the claims are read AGAINST is `docs/L2/mcp-surface/interface.md` §3/§4/§7.
 // ===========================================================================
 /** The rejected-form descriptor, read out of the message: a refusal that does not
  *  NAME its rejected form is a refusal this row FAILS. THE FORM IS ITS OWN WORD
@@ -975,7 +1156,7 @@ describe('§0A note 8, defect 1 — a NON-OBJECT arguments member IS REFUSED, NE
       { form: 'a function', args: (): unknown => undefined, descriptor: 'function' },
     ]
     for (const drive of forms) {
-      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const rec = recorder([recordAnswer([], '', [])])
       const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, drive.args))
       expect(message, `G4-A1 [${drive.form}] — \`§0A\` notes 3/8, defect 1: a NON-OBJECT arguments member is REFUSED (a throw), NEVER ROUTED as an empty call. A returned value here is the malformed call LOOKING like a legal no-argument call.`).not.toBe(null)
       expect(message, `G4-A1 [${drive.form}] — and the refusal NAMES ITS REJECTED FORM (\`number\`/\`boolean\`/\`string\`/\`Date\`/\`Map\`/\`function\`); a refusal that does not name what it rejected FAILS. Measured: ${String(message)}`).toContain('argument')
@@ -995,7 +1176,7 @@ describe('§0A note 8, defect 1 — a NON-OBJECT arguments member IS REFUSED, NE
 
   it('G4-A2 — the OMITTED arguments member and `{}` stay the SAME legal call (the fence is on a NON-OBJECT member, not on emptiness)', async () => {
     for (const shape of [{ label: 'the arguments member OMITTED', args: undefined, omit: true }, { label: 'the empty arguments object', args: {}, omit: false }]) {
-      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const rec = recorder([recordAnswer([], '', [])])
       const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, shape.args, { omitArguments: shape.omit }))
       expect(message, `G4-A2 [${shape.label}] — \`§0A\` note 3(a): an omitted arguments member is the SAME CALL as \`{}\`, and neither is refused.`).toBe(null)
       assertOneFocusCall(rec, `G4-A2 [${shape.label}]`)
@@ -1027,7 +1208,7 @@ describe('§0A note 8, defect 1 — a NON-OBJECT arguments member IS REFUSED, NE
     // dispatches an EMPTY argument set*). The row's claim is the contract's: the
     // malformed member must be REFUSED, so a serviced call FAILS here.
     for (const form of [{ label: 'a `Date`', args: new Date(0) }, { label: 'a `Map`', args: new Map<string, string>([['target', 'a']]) }]) {
-      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const rec = recorder([recordAnswer([], '', [])])
       const message = await thrown(() => callHandler(newServer(rec.backend), TOOL_NAME, form.args))
       expect(message, `G4-A4 [${form.label}] — a non-object arguments member is REFUSED, never routed as an empty call (\`§0A\` note 8, defect 1; \`§0A\` note 3(d)/(f)). A serviced call here is the malformed call LOOKING LIKE a legal no-argument call. Measured: ${String(message)}`).not.toBe(null)
       expect(rejectedForm(String(message), form.label.includes('Date') ? 'date' : 'map'), `G4-A4 [${form.label}] — and the refusal NAMES its rejected form. Measured: ${String(message)}`).toBe(true)
@@ -1036,118 +1217,137 @@ describe('§0A note 8, defect 1 — a NON-OBJECT arguments member IS REFUSED, NE
   })
 
   it('G4-A5 — the refusal is thrown BEFORE any renderer call, driven live (the schema path is LIVE, never a handler call)', async () => {
-    const rec = recorder([{ activeId: 'a', entries: ['a'], opened: false }])
+    const rec = recorder([recordAnswer(['a'], 'a', [recordRow('a', { active: true })])])
     const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, 7))
     expect(message, 'G4-A4 — the live route (`tools/call`) refuses the non-object member too: the schema path is what this row measures.').not.toBe(null)
     expect(rec.calls, 'G4-A4 — and the malformed call crosses NO IPC boundary.').toEqual([])
-    const okRec = recorder([{ activeId: null, entries: [], opened: false }])
+    const okRec = recorder([recordAnswer([], '', [])])
     expect(await thrown(() => callTool(newServer(okRec.backend), TOOL_NAME, { target: 'a' })), 'G4-A4 — the SAME route services a declared shape: the refusal is about the member\'s form, not about the call.').toBe(null)
     assertOneFocusCall(okRec, 'G4-A4')
   })
 })
 
-describe('§0A note 8, defect 2 — the holder is the ENTRY-RESOLUTION AUTHORITY; the route hands the caller\'s value through UNINTERPRETED', () => {
-  it('G4-B1 — the caller\'s own members are handed through UNINTERPRETED: the consumer never learns an id the CALLER did not supply', async () => {
-    const consumer = consumerResolution()
-    // THE CONTROL HALF: the consumer's resolution is itself driven once, so the
-    // reading below is about the FORWARDED PAYLOAD rather than about an answer the
-    // harness assumed.
-    const controlAnswer = (await consumer.backend.invoke(METHOD, { target: 'a' })) as Record<string, unknown>
-    expect(Object.keys(controlAnswer).sort(), 'G4-B1 control — the consumer\'s own resolution REFUSES this call (an id the caller never supplied against an empty holder), so the payload read below is not vacuous.').toEqual([...DECLARED_MEMBERS].sort())
-    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
-    expect(Object.keys(got).sort(), 'G4-B1 — the route returned the consumer\'s own answer shape for the same call, unaltered.').toEqual(Object.keys(controlAnswer).sort())
-    const forwarded = consumer.calls[1]?.payload
-    expect(forwarded, 'G4-B1 — the second recorded call is the LIVE route\'s own forwarding.').not.toBe(undefined)
-    expect(Object.keys(forwarded as object).sort(), 'G4-B1 falsifier (a) — THE ROUTE MAY NOT CONSTRUCT AN ID: a forwarded `id` the caller never supplied is a SECOND ID POLICY (`§2.3` item 1) and FAILS. Measured: ' + JSON.stringify(forwarded)).toEqual(['target'])
-    expect((forwarded as Record<string, unknown>)['target'], 'G4-B1 — the caller\'s own `target`, uninterpreted (no trim, no coercion, no substitution, no lookup).').toBe('a')
+describe('§0A note 8, defect 2 (re-grained by D-142) — the TAB RECORD is the ENTRY-RESOLUTION AUTHORITY; the route hands the caller\'s value through UNINTERPRETED and answers the record it re-read', () => {
+  it('G4-B1 — the caller\'s two members reach the seam BY IDENTITY and NOTHING ELSE is forwarded: the tool constructs no id', async () => {
+    // **THE RE-GRAIN** (`docs/L2/mcp-surface/interface.md` §2, §7): the question is no longer what a
+    // deleted holder resolved, it is what the SEAM actually received. The caller sent `{target,
+    // newTab}`; the seam must be handed exactly those two members, by identity, and no `id` — a
+    // `id` in the forwarded payload would be a SECOND ID POLICY, minted by this tool (D-142).
+    const answer = recordAnswer(['a'], 'a', [recordRow('a', { active: true })])
+    const rec = recorder([answer])
+    const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 'a', newTab: true })) as Record<string, unknown>
+    const forwarded = assertOneFocusCall(rec, 'G4-B1') as Record<string, unknown>
+    expect(Object.keys(forwarded).sort(), 'G4-B1 falsifier (a) — THE ROUTE MAY NOT CONSTRUCT AN ID: the forwarded payload carries the caller\'s two members and NOTHING ELSE, so an `id` the caller never supplied FAILS here. Measured: ' + JSON.stringify(forwarded)).toEqual(['newTab', 'target'])
+    expect(Object.hasOwn(forwarded, 'id'), 'G4-B1 — spelled out: there is NO `id` member on the forwarded payload (`docs/L2/mcp-surface/interface.md` §4: the id a new row carries is the RENDERER\'s mint, not this surface\'s).').toBe(false)
+    expect(forwarded['target'], 'G4-B1 — the caller\'s own `target`, uninterpreted (no trim, no coercion, no substitution, no lookup).').toBe('a')
+    expect(forwarded['newTab'], 'G4-B1 — and the caller\'s own `newTab`, uninterpreted (no default, no `Boolean()`).').toBe(true)
+    expect(got, 'G4-B1 — the answer is the record the seam answered, verbatim: the tool adds no member to the forwarded payload and no member to the answer.').toEqual(answer)
+    // THE CONTROL, SO THE FALSIFIER IS REAL: the same read on a payload carrying a constructed id
+    // DOES fail, and the tool's own forwarded payload is what passes it.
+    expect(Object.keys({ target: 'a', newTab: true, id: 'minted-by-the-route' }).sort(), 'G4-B1 control — a constructed `id` in the forwarded payload FAILS the two-member read above; the falsifier is real, not a vacuous key list.').not.toEqual(['newTab', 'target'])
   })
 
-  it('G4-B2 — a seeded holder state makes the DIVERGENCE observable: the route is handed a member the caller never supplied', async () => {
-    // THE SEEDED STATE (the consumed module's own record shape) makes the two
-    // readings differ, so this row is not a tautology:
-    //   a route that handed `{ target: 42 }` through → the holder's own resolution
-    //     takes the OPEN arm under `§2.3` item 1 (the caller's own value IS the
-    //     legal entry id) and the entry is ADDED;
-    //   the landed route hands `{ id: 42, target: 42 }` → the consumer's
-    //     resolution refuses `unknown-id`, because `42` is an id the caller never
-    //     supplied.
-    const consumer = consumerResolution({ entries: [{ id: 'a', target: 'a' }], activeId: null })
-    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 42 })) as Record<string, unknown>
-    const decided = consumer.calls[0] as ConsumerResolutionCall
-    const expected = shapeOf(holderResolution(consumer.priorState(0), decided.payload, consumerVerbOf(decided.verb, decided.payload)))
-    expect(got['activeId'], 'G4-B2 — the route\'s returned identity must be the identity the HOLDER\'S OWN RESOLUTION decided, never an id constructed from the target and never a refusal the route derived itself (`§0A` note 8, defect 2).').toBe(expected.activeId)
-    expect(got['entries'], 'G4-B2 — and the entries the holder\'s own resolution produced: no entry was added or dropped by the route.').toEqual(expected.entries)
-    expect(Object.keys(decided.payload as object).sort(), 'G4-B2 falsifier (a) — THE CONSTRUCTED ID, observed at the forwarding seam: the payload carries a member the caller never supplied. Measured: ' + JSON.stringify(decided.payload)).toEqual(['target'])
-    expect(decided.id, 'G4-B2 falsifier (a) — and the identity the consumer was asked with is the ROUTE\'S construction, not a value the caller supplied. Measured: ' + JSON.stringify(decided.id)).toBe(42)
+  it('G4-B2 — the answer is the RECORD the seam re-read: a `landing` the caller never named proves the tool re-derives nothing', async () => {
+    // **THE DIVERGENCE IS OBSERVABLE** (`docs/L2/mcp-surface/interface.md` §3, §7): the caller names
+    // `a-target-the-record-never-carried`, and the answer's `landing` names a row the caller never
+    // supplied. A tool that derived an identity from the target, or that looked anything up, would
+    // diverge from this fixture — and the assertion is MEMBER FOR MEMBER, not a spot check.
+    const reRead = recordAnswer(
+      ['standing-a', 'standing-b'],
+      'standing-b',
+      [recordRow('standing-a'), recordRow('standing-b', { active: true })],
+    )
+    const rec = recorder([reRead])
+    const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 'a-target-the-record-never-carried' })) as Record<string, unknown>
+    expect(got, 'G4-B2 — the LIVE route\'s answer IS the record the seam answered: a re-derived id or a refusal the route derived itself would diverge right here.').toEqual(reRead)
+    for (const member of REQUIRED_MEMBERS) {
+      expect(got[member], `G4-B2 — member '${member}' is the record's own value, copied, never composed.`).toEqual(reRead[member])
+    }
+    expect(got['landing'], 'G4-B2 — and the landing is a row the CALLER never named: the identity is the record\'s derived fact (`§2.3` item 1, D-76).').toBe('standing-b')
+    expect(got['landing'], 'G4-B2 falsifier (a) — the answer does NOT echo the caller\'s target as an identity: that equality is exactly what a constructing tool would produce.').not.toBe('a-target-the-record-never-carried')
+    expect(Object.keys(got).sort(), 'G4-B2 — the answer is the record arm and nothing else: no member the fixture did not carry.').toEqual([...REQUIRED_MEMBERS].sort())
+    expect(deletedShapeSites(JSON.stringify(got)), 'G4-B2 — and no deleted-shape member appears anywhere in it.').toEqual([])
   })
 
-  it('G4-B3 — an EXISTING entry is ACTIVATED BY IDENTITY: the tool compared nothing and appended nothing', async () => {
-    const consumer = consumerResolution({ entries: [{ id: 'a', target: 'a' }], activeId: null })
-    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
-    const decided = consumer.calls[0] as ConsumerResolutionCall
-    const expected = shapeOf(holderResolution(consumer.priorState(0), decided.payload, consumerVerbOf(decided.verb, decided.payload)))
-    expect(got['activeId'], `G4-B3 — the existing entry's own id, read out of the state the holder carries: the route looked nothing up. Measured: ${JSON.stringify(got)}`).toBe('a')
-    expect(got['entries'], 'G4-B3 — and NO APPEND: the existing entry is activated, never duplicated.').toEqual(['a'])
-    expect(got, 'G4-B3 — the answer is the holder\'s own: the route returned no member the holder\'s resolution did not produce.').toEqual(expected)
-    // AND THE FALSIFIER THE IDENTITY CLAIM NEEDS: an ACTIVE-BY-IDENTITY call must
-    // be asked with the identity the HOLDER\'S OWN resolution decides — a route that
-    // constructed its own id is observable right here even when the two answers
-    // coincide, because the identity is read at the forwarding seam.
-    expect(decided.id, 'G4-B3 — the identity the consumer was asked with is the existing entry\'s own id, read out of the holder\'s state.').toBe(expected.activeId)
-    expect(Object.keys(decided.payload as object).sort(), 'G4-B3 falsifier (a) — and the payload carries the caller\'s own members only: a constructed id is a SECOND ID POLICY. Measured: ' + JSON.stringify(decided.payload)).toEqual(['target'])
+  it('G4-B3 — a STANDING ROW is seated and `order` gains NOTHING: the record\'s own answer, member for member', async () => {
+    // `docs/L2/mcp-surface/interface.md` §4: a target a standing row carries seats that row and moves
+    // `order` not at all. Two calls, two answers: the record before the seating (nothing reads active,
+    // so its derived landing is the empty spelling) and the record after it.
+    const before = recordAnswer(['s'], '', [recordRow('s')])
+    const after = recordAnswer(['s'], 's', [recordRow('s', { active: true })])
+    const rec = recorder([before, after])
+    const server = newServer(rec.backend)
+    const first = (await callTool(server, TOOL_NAME, { target: 's' })) as Record<string, unknown>
+    const second = (await callTool(server, TOOL_NAME, { target: 's' })) as Record<string, unknown>
+    expect(first['landing'], 'G4-B3 — the record BEFORE the seating: its derived landing is the empty spelling, because no row reads active.').toBe('')
+    expect(second, 'G4-B3 — the answer is the record re-read after the write, verbatim: the route returned no member the record did not answer with.').toEqual(after)
+    expect(second['landing'], `G4-B3 — the standing row's own id, as the record DERIVED it: the tool looked nothing up. Measured: ${JSON.stringify(second)}`).toBe('s')
+    expect(second['order'], 'G4-B3 — and NO APPEND: `order` is the SAME seat, byte for byte, before and after the seating.').toEqual(first['order'])
+    expect((second['order'] as unknown[]).length, 'G4-B3 — still one id.').toBe(1)
+    expect(Object.hasOwn(second, 'opened'), 'G4-B3 — and no `opened` member: a seating is `landing` moving, not a flag.').toBe(false)
+    expect(rec.calls.map((c) => c.method), 'G4-B3 — two calls, two renderer calls (no cache, nothing held between them).').toEqual([METHOD, METHOD])
   })
 
-  it("G4-B4 — THE ACTIVATION TRANSITION IS EXECUTED: the holder's OWN resolution decided the answer (the PBT audit's over-strength finding)", async () => {
-    // THE ROW THE PBT AUDIT SAID WAS MISSING: the activation claim had NO EXECUTED
-    // ROW THAT REACHES THE TRANSITION. This row DRIVES an existing entry through the
-    // LIVE route and asserts the holder's own resolution decided it — the resolution
-    // is run on the state the surface carries, and the route's verb is then checked
-    // against the answer the HOLDER'S OWN resolution gives for the SAME payload.
-    const consumer = consumerResolution({ entries: [{ id: 'a', target: 'a' }], activeId: null })
-    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
-    const decided = consumer.calls[0] as ConsumerResolutionCall
-    expect(decided.accepted, 'G4-B4 — the holder\'s resolution ACCEPTED the call: the transition EXECUTED (an un-run row is a FAILURE, never a pass — `AGENTS.md` item 11(b)).').toBe(true)
-    expect(consumer.state().activeId, 'G4-B4 — and the transition SEATED the entry in the state the holder itself carries (`§2.3` item 6(c)).').toBe('a')
-    expect(decided.verb, 'G4-B4 falsifier (b) — THE SELF-CHOSEN VERB: the consumer resolved the verb from the CALLER\'S OWN `newTab` (`open`/`activate`, `§0A` note 8, defect 2).').toBe('activate')
-    const expected = shapeOf(holderResolution(consumer.priorState(0), decided.payload, consumerVerbOf(decided.verb, decided.payload)))
-    expect(got, 'G4-B4 — the LIVE route\'s answer is the answer the HOLDER\'S OWN resolution produced for its own payload: a verb the route chose itself diverges here.').toEqual(expected)
-    expect(Object.keys(decided.payload as object).sort(), 'G4-B4 falsifier (a) — the constructed id, in the same drive: the payload must carry the caller\'s own members only. Measured: ' + JSON.stringify(decided.payload)).toEqual(['target'])
+  it('G4-B4 — `newTab: true` opens EXACTLY ONE row: `order` grows by one id and NO deleted-shape member appears', async () => {
+    // `docs/L2/mcp-surface/interface.md` §4 and L1 §8 `ASM-1`: one row, added once, and no standing
+    // row's bytes moved. **THE OPENING IS READ OFF `order`** — there is no `opened` member in any arm,
+    // and `DELETED_SHAPE_MEMBERS` is driven here so the absence is a reading of this answer.
+    const before = recordAnswer(['x'], 'x', [recordRow('x', { target: 'x', active: true })])
+    const after = recordAnswer(['x', 'x-2'], 'x-2', [recordRow('x', { target: 'x' }), recordRow('x-2', { target: 'x', active: true })])
+    const rec = recorder([before, after])
+    const server = newServer(rec.backend)
+    const first = (await callTool(server, TOOL_NAME, { target: 'x' })) as Record<string, unknown>
+    const second = (await callTool(server, TOOL_NAME, { target: 'x', newTab: true })) as Record<string, unknown>
+    const firstOrder = first['order'] as readonly string[]
+    const secondOrder = second['order'] as readonly string[]
+    expect(secondOrder.length, 'G4-B4 — the opening grows `order` by EXACTLY ONE id.').toBe(firstOrder.length + 1)
+    expect(secondOrder.filter((id) => !firstOrder.includes(id)), 'G4-B4 — and the id it gains is exactly ONE, the row the act opened.').toHaveLength(1)
+    expect(secondOrder.filter((id) => firstOrder.includes(id)), 'G4-B4 — no standing id was dropped or reseated: the ones that stood still stand.').toEqual([...firstOrder])
+    expect(second['landing'], 'G4-B4 — and the landing is the row the act seated, as the record derived it.').toBe('x-2')
+    expect(((second['rows'] as Array<{ target?: unknown }>) ?? []).filter((r) => r.target === 'x'), 'G4-B4 — the opened row carries the CALLER\'s target; its id is the renderer\'s mint and the tool invented nothing.').toHaveLength(2)
+    for (const gone of DELETED_SHAPE_MEMBERS) {
+      expect(Object.hasOwn(second, gone), `G4-B4 — NO deleted-shape member: '${gone}' is absent from the answer (opening is the \`order\` delta).`).toBe(false)
+    }
+    expect(deletedShapeSites(JSON.stringify(second)), 'G4-B4 — and the deleted-shape reader finds none of the three names anywhere in the opening answer.').toEqual([])
+    expect(Object.keys(second).sort(), 'G4-B4 — the answer is the reading\'s five members and nothing else.').toEqual([...REQUIRED_MEMBERS].sort())
   })
 })
 
-describe('§0A note 8, defect 3 — the refusal mapping is NON-LOSSY and NEVER `undefined`-valued', () => {
-  it('G4-C1 — a well-formed refusal keeps the DECLARED members and carries no member whose value is `undefined`', async () => {
-    const answer = { activeId: null, entries: [], opened: false, refused: { reason: 'unknown-id' } }
+describe('§0A note 8, defect 3 (re-grained by D-142) — the store\'s `refused` member is NON-LOSSY and NEVER `undefined`-valued', () => {
+  it('G4-C1 — a well-formed store refusal keeps the record\'s members and its OWN members, and carries no member whose value is `undefined`', async () => {
+    const refused = storeRefused('declared-tier', "the tab record stands at 'file'", { storeStatus: 'declared-tier' })
+    const answer = recordAnswer([], '', [], refused)
     const got = (await callTool(newServer(recorder([answer]).backend), TOOL_NAME, { target: 'z' })) as Record<string, unknown>
-    expect(got, "G4-C1 — every declared member survives the mapping, `reason` is the CONSUMER's own string carried VERBATIM (`§0A` note 4).").toEqual(answer)
-    expect(Object.keys(got['refused'] as object), 'G4-C1 — and `refused`\'s own key set is exactly the declared one.').toEqual(['reason'])
+    expect(got, "G4-C1 — every declared member survives, and `refused` is the STORE's own answer carried VERBATIM (`§0A` note 4; D-136, D-142).").toEqual(answer)
+    expect(Object.keys(got['refused'] as object).sort(), 'G4-C1 — and `refused`\'s own key set is EXACTLY the store\'s: nothing invented, nothing dropped.').toEqual(Object.keys(refused).sort())
+    assertRefusedLedger(got['refused'], refused, 'G4-C1 refused member')
     expect((got['refused'] as Record<string, unknown>)['reason'], 'G4-C1 — never `refused: { reason: undefined }`.').not.toBe(undefined)
+    expect(Object.values(got['refused'] as Record<string, unknown>).every((v) => v !== undefined), 'G4-C1 — nor is any OTHER member of it present as `undefined`.').toBe(true)
   })
 
-  it('G4-C2 — a refusal whose source LACKS a member never yields an own key with an `undefined` value, and drops no declared member', async () => {
-    const answer = { activeId: null, entries: [], opened: false, refused: {} }
+  it('G4-C2 — a store refusal whose source LACKS a member never yields an own key with an `undefined` value, and drops no declared member', async () => {
+    // THE EMPTY REFUSAL RECORD: the store answered a refusal carrying no member at all. The tool
+    // neither invents `reason` for it nor collapses a record member into it.
+    const answer = recordAnswer([], '', [], {})
     const got = (await callTool(newServer(recorder([answer]).backend), TOOL_NAME, { target: 'z' })) as Record<string, unknown>
     const nested = got['refused'] as Record<string, unknown>
-    expect(Object.keys(got).sort(), 'G4-C2 — the DECLARED members of the returned object survive the mapping: no declared member is collapsed into, or dropped by, the refusal record.').toEqual([...DECLARED_MEMBERS].sort())
+    expect(Object.keys(got).sort(), 'G4-C2 — the RECORD\'s declared members survive: no declared member is collapsed into, or dropped by, the refusal record.').toEqual([...DECLARED_MEMBERS].sort())
     expect(Object.prototype.hasOwnProperty.call(nested, 'reason'), 'G4-C2 — A REFUSAL WHOSE SOURCE LACKS A MEMBER MUST NOT GAIN THAT MEMBER: no own key with an `undefined` value. Measured: ' + JSON.stringify(got)).toBe(false)
     expect(Object.values(nested).every((v) => v !== undefined), 'G4-C2 — and no member of the refusal record is present as `undefined`.').toBe(true)
     expect(Object.values(got).every((v) => v !== undefined), 'G4-C2 — nor of the returned object itself (`I-6`; `RS-1`; `§6` item 5).').toBe(true)
-    // THE DECLARED-MEMBER SURVIVAL, DRIVEN ON `reason` ITSELF: the refusal record
-    // the consumer supplied is what ships — nothing is dropped and no substitute is
-    // minted (`§0A` note 4: the tool re-derives NOTHING from the refusal).
-    expect(nested, 'G4-C2 — the consumer\'s own refusal record survives the mapping BY VALUE: the route neither drops a member it carries nor invents one it does not.').toEqual({})
+    expect(nested, 'G4-C2 — the store\'s own refusal record survives BY VALUE: the route neither drops a member it carries nor invents one it does not.').toEqual({})
     expect('reason' in nested, 'G4-C2 — and `reason` is NOT invented for a refusal whose source lacks it. Measured: ' + JSON.stringify(got)).toBe(false)
   })
 
   it('G4-C3 THE FALSIFIERS — a lossy mapping and an `undefined`-valued mapping each FAIL these reads (both halves)', () => {
-    const source = { activeId: null, entries: [], opened: false, refused: {} }
+    const source = recordAnswer([], '', [], {})
     const lossy = (answer: Record<string, unknown>): Record<string, unknown> => {
       const { refused: _dropped, ...rest } = answer
       return rest
     }
-    const undefinedValued = (): Record<string, unknown> => ({ activeId: null, entries: [], opened: false, refused: { reason: undefined } })
+    const undefinedValued = (): Record<string, unknown> => recordAnswer([], '', [], { reason: undefined })
     expect(Object.keys(lossy(source)).sort(), 'G4-C3 falsifier (a) — A LOSSY MAPPING drops a declared member and FAILS the survival read.').not.toEqual([...DECLARED_MEMBERS].sort())
-    expect(Object.prototype.hasOwnProperty.call(undefinedValued()['refused'] as object, 'reason'), 'G4-C3 falsifier (b) — A MAPPING THAT EMITS `refused` WITH AN `undefined` VALUE FAILS the own-key read: the key is PRESENT.').toBe(true)
+    expect(Object.hasOwn(undefinedValued()['refused'] as object, 'reason'), 'G4-C3 falsifier (b) — A MAPPING THAT EMITS `refused` WITH AN `undefined` VALUE FAILS the own-key read: the key is PRESENT.').toBe(true)
     expect(Object.values(undefinedValued()['refused'] as Record<string, unknown>).every((v) => v !== undefined), 'G4-C3 falsifier (b) — and it FAILS the no-undefined read too, so neither half is vacuous.').toBe(false)
   })
 })
@@ -1161,7 +1361,7 @@ describe('§0A note 8, defect 4 — the throw-class claim AT ITS NARROWED READIN
       { label: 'an unknown key supplied last', args: { target: 'a', newTab: true, zz: null } },
     ]
     for (const drive of drives) {
-      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const rec = recorder([recordAnswer([], '', [])])
       const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, drive.args))
       expect(message, `G4-D1 [${drive.label}] — an OWN-ENUMERABLE KEY outside `+ '`{target, newTab}`' + ` is REFUSED (\`§0A\` note 3(d)).`).not.toBe(null)
       expect(validationError(String(message)), `G4-D1 [${drive.label}] — the class is STABLE for OWN-KEY violations: the tool's own validation error, not the engine's. Measured: ${String(message)}`).toBe(true)
@@ -1193,45 +1393,125 @@ describe('§0A note 8, defect 4 — the throw-class claim AT ITS NARROWED READIN
 })
 
 // ===========================================================================
-// 13. THE GATE-4 ROWS AT THE WIRING'S OWN SITE (`§0A` note 8, defect 2) — RED-FIRST
+// 13. THE HEADSTONE ROWS — THE FOCUS-CARRIER WIRING IS DELETED WHOLE (D-142) — RED-FIRST
 // ===========================================================================
-// WHY THESE ROWS READ THE WIRING'S BYTES, STATED PLAINLY: THE ROUTE SEAM IS NOT
-// WHERE THE DEFECT LIVES. The main-side handler forwards the caller\'s value and
-// returns the consumer\'s answer verbatim (measured live in G4-B1/G4-C1), so the
-// id-minting, the verb choice and the refusal derivation the gate-4 pass measured
-// are in THE RENDERER WIRING\'S holder call site — `focusRoute` in
-// `src/renderer/renderer.ts` — which the node suite cannot reach as a live drive
-// (no Electron boot; `§5.2` offers no `[U]`/`[D]` leg). The LIVE rows above keep the
-// route seam\'s own invariant; THESE rows pin the wiring\'s own decision, and they
-// are the ones RED against the landed wiring.
-describe('§0A note 8, defect 2 — the holder is the ENTRY-RESOLUTION AUTHORITY: the wiring mints no id, chooses no verb, derives no refusal', () => {
-  it('G4-E1 — the wiring region is LOCATABLE and NON-VACUOUS (the rows below read the tool\'s own role bytes, not a description of them)', () => {
-    const region = wiringFocusRegion()
-    expect(region, 'G4-E1 — the wiring\'s holder call site must be LOCATABLE: `function focusRoute(` is its marker (`§2.1` item 6, the layer map\'s site 6).').not.toBe(null)
-    const body = region as string
-    expect(body.length, 'G4-E1 — and the region is non-empty, so every reading below is non-vacuous.').toBeGreaterThan(50)
-    expect(body.includes('focusTransition'), 'G4-E1 — the region carries the model call site the holder role owns (`§2.1` item 7): the rows below measure a real region.').toBe(true)
-    expect(body.includes('focusRoute('), 'G4-E1 — the region STARTS at the tool\'s own function, never at a sibling\'s bytes.').toBe(true)
+// WHY THESE ROWS READ THE WIRING'S BYTES, STATED PLAINLY: THE ROUTE SEAM IS NOT WHERE THE
+// DEFECT LIVES. The main-side handler forwards the caller's value and returns the record's
+// answer verbatim (measured live in `G4-B1`…`B4`, `G4-C1`…`C3`), so the id-minting, the verb
+// choice and the refusal derivation the gate-4 pass measured were in THE RENDERER WIRING'S
+// carrier call site — `focusRoute` in `src/renderer/renderer.ts` — which the node suite cannot
+// reach as a live drive (no Electron boot; the suite offers no `[U]`/`[D]` leg).
+//
+// **AND THAT SUBJECT IS NOW DELETED WHOLE** (`docs/L2/mcp-surface/interface.md` §7, D-142; L1
+// §6 `E-1`): the renderer composes the record from its own committed reading and hands it to
+// the existing `data.write` route at `['tabs']` / `file`
+// (`docs/L2/store-tabs-record/interface.md` §5, renderer-wiring §2/§3). So the four rows below
+// are HEADSTONES: each asserts that the deleted thing is GONE from the file, and each locates
+// its REPLACEMENT — or, where the replacement is not the same reading, asserts the deletion.
+// **EVERY ONE OF THEM REDS UNTIL L4'S `E-1` LANDS**, and that is by design: a headstone that
+// could pass before the deletion would be measuring a file that still carries the carrier.
+// Each row keeps a CONTROL proving its own scan can hit, so no absence here is a vacuous scan.
+describe('D-142 / §0A note 8, defect 2 — the focus-carrier wiring is DELETED: no carrier route, no transition call, no verb choice, no derived refusal', () => {
+  it('G4-E1 — THE CARRIER ROUTE IS GONE and the RECORD\'S WRITE ROUTE is what stands in its place', () => {
+    // THE CARRIER ROUTE (`§2.1` item 6, the layer map's site 6) was `function focusRoute(` in
+    // `src/renderer/renderer.ts`. D-142 deletes it whole, so the region reader must answer
+    // NOTHING — and the replacement the contract names is the renderer's whole-record write at
+    // `['tabs']` / `file` (`docs/L2/store-tabs-record/interface.md` §5).
+    expect(
+      wiringFocusRegion(),
+      'G4-E1 — THE DELETION IS D-142\'s: the renderer\'s focus-carrier route is deleted whole, so `wiringFocusRegion()` must answer `null` (`function focusRoute(` no longer exists in src/renderer/renderer.ts). This row REDS until L4\'s `E-1` lands.',
+    ).toBe(null)
+    const source = wiringSource()
+    const replacement = wiringTabsWriteSites(source)
+    expect(
+      replacement,
+      'G4-E1 — and the REPLACEMENT site is LOCATED: the renderer\'s whole-record write route at `[\'tabs\']` / `\'file\'` (the `data.write` route the record is handed to) must exist where the carrier stood. This row REDS until L4\'s `E-1` lands.',
+    ).not.toEqual([])
+    // THE CONTROLS: the replacement reader CAN hit a present site, and does NOT hit an unrelated
+    // line — so the non-emptiness above is a reading of this file and not a match-everything scan.
+    expect(
+      wiringTabsWriteSites("  const written = await dataRoute('write', { path: ['tabs'], tier: 'file', value })"),
+      'G4-E1 control (a) — the replacement-site reader CAN hit the record\'s write route (`dataRoute(\'write\'` + `[\'tabs\']` + `\'file\'`), so the absence above would be a reading.',
+    ).not.toEqual([])
+    expect(
+      wiringTabsWriteSites("  const written = await (window.provident as any).data.write({ path: ['tabs'], tier: 'file', value })"),
+      'G4-E1 control (a) — and it is TOLERANT of the spellings L4 may land: a `data.write(` call carrying `[\'tabs\']` and `\'file\'` is a site too.',
+    ).not.toEqual([])
+    expect(
+      wiringTabsWriteSites('  const unrelated = 1'),
+      'G4-E1 control (b) — the reader does NOT hit a line that is not the record\'s write route.',
+    ).toEqual([])
+    // AND PROSE IS NOT A SITE (the reader's own narrowing, driven rather than described): two
+    // adjacent COMMENT lines carrying the address and the tier state no call, so they locate
+    // nothing — otherwise "the replacement site is located" could be satisfied by a docblock.
+    expect(
+      wiringTabsWriteSites("  // the record root ['tabs']\n  // is written at the tier 'file' by the act\n"),
+      'G4-E1 control (c) — two adjacent PROSE lines carrying the address and the tier are NOT a site: the reader excludes comments from both candidacy and its window.',
+    ).toEqual([])
+    expect(
+      wiringTabsWriteSites("  // what the act does\n  const written = await dataRoute('write', { path: ['tabs'], tier: 'file', value })"),
+      'G4-E1 control (c) — and a comment beside a REAL call does not stop the call being found.',
+    ).not.toEqual([])
   })
 
-  it('G4-E2 — THE ROUTE MAY NOT CONSTRUCT AN ID: the wiring builds no entry whose id is a value the CALLER never supplied', () => {
-    const body = wiringFocusRegion() as string
-    expect(wiringIdPolicySites(body), `G4-E2 falsifier (a) — THE CONSTRUCTED ID: the wiring must not build the entry the model is asked with (\`§2.3\` item 1: the caller\'s own string IS the legal entry id, and the HOLDER resolves it). Measured: ${JSON.stringify(wiringIdPolicySites(body))}`).toEqual([])
-    expect(wiringIdPolicySites("  const entry = { id: attempt.target, target: attempt.target }"), 'G4-E2 control — the id-policy pattern CAN hit: the falsifier is real, not a vacuous scan.').not.toEqual([])
-    expect(wiringIdPolicySites("  const answer = { activeId: state.activeId, entries: ids, opened: false }"), 'G4-E2 control — and ordinary ANSWER construction is NOT an id policy: the pattern is not over-broad.').toEqual([])
+  it('G4-E2 — THE TRANSITION CALL IS GONE: `src/renderer/renderer.ts` carries no `focusTransition` at all', () => {
+    // THE SECOND HALF OF THE SAME DELETION (D-142): the retained focus model's transition was the
+    // renderer's activation authority. It has no counterpart now — the record's own
+    // `exactly-one-active` repair judges the value (`docs/L2/store-tabs-record/interface.md` §4) —
+    // so the file must carry no call to it, anywhere.
+    // **THE SCAN IS OVER COMMENT-ELIDED CODE** (`stripComments`): the claim is that no CALL remains,
+    // and a prose line that merely names the deleted function is not a call — a reading that reddened
+    // on a comment would keep the row red against a conformant deletion.
+    const sites = scanLines(stripComments(read(RENDERER_REL)), /focusTransition/)
+    expect(
+      sites,
+      `G4-E2 — THE DELETION IS D-142's: src/renderer/renderer.ts no longer carries the focus model's transition call. This row REDS until L4's \`E-1\` lands. Measured: ${JSON.stringify(sites)}`,
+    ).toEqual([])
+    expect(
+      scanLines('const result = focusTransition(state, verb, arg)', /focusTransition/),
+      'G4-E2 control — the scan CAN hit the token where it exists, so the emptiness above is a reading and not a vacuous scan.',
+    ).not.toEqual([])
+    expect(
+      scanLines('const result = view.focusRoute(payload)', /focusTransition/),
+      'G4-E2 control — and it does NOT hit an unrelated call: the pattern is the transition\'s own name, not the word "focus".',
+    ).toEqual([])
   })
 
-  it('G4-E3 — THE ROUTE MAY NOT CHOOSE A VERB: the open/activate decision is the HOLDER\'S', () => {
-    const body = wiringFocusRegion() as string
-    expect(wiringVerbChoiceSites(body), `G4-E3 falsifier (b) — THE SELF-CHOSEN VERB: the wiring must not decide between \`open\` and \`activate\` itself (\`§2.1\` item 7, \`§0A\` note 8, defect 2). Measured: ${JSON.stringify(wiringVerbChoiceSites(body))}`).toEqual([])
-    expect(wiringVerbChoiceSites("  const verb = attempt.newTab === true ? 'open' : 'activate'"), 'G4-E3 control — the verb-choice pattern CAN hit.').not.toEqual([])
-    expect(wiringVerbChoiceSites("  const opened = result.changed"), 'G4-E3 control — and reading the holder\'s own answer is NOT a verb choice: the pattern is not over-broad.').toEqual([])
+  it('G4-E3 — NO VERB CHOICE: the wiring decides between `open` and `activate` NOWHERE', () => {
+    // A THIRD READING, OVER THE WHOLE FILE: the open/activate decision was the deleted carrier's
+    // (`§2.1` item 7, `§0A` note 8, defect 2), a SECOND ACTIVATION AUTHORITY the record now owns.
+    const sites = wiringVerbChoiceSites(stripComments(wiringSource()))
+    expect(
+      sites,
+      `G4-E3 — THE DELETION IS D-142's: no verb choice remains in src/renderer/renderer.ts. This row REDS until L4's \`E-1\` lands. Measured: ${JSON.stringify(sites)}`,
+    ).toEqual([])
+    expect(
+      wiringVerbChoiceSites("  const verb = attempt.newTab === true ? 'open' : 'activate'"),
+      'G4-E3 control — the verb-choice pattern CAN hit, so the emptiness above is a reading.',
+    ).not.toEqual([])
+    expect(
+      wiringVerbChoiceSites('  const landing = reading.landing'),
+      'G4-E3 control — and reading the record\'s own answer is NOT a verb choice: the pattern is not over-broad.',
+    ).toEqual([])
   })
 
-  it('G4-E4 — THE ROUTE MAY NOT DERIVE A REFUSAL: the consumer\'s own answer is what ships', () => {
-    const body = wiringFocusRegion() as string
-    expect(wiringRefusalDerivationSites(body), `G4-E4 falsifier (c) — THE TOOL-DERIVED REFUSAL: the wiring must not extract a code out of the model\'s refusal record and ship it as the consumer\'s \`reason\` (\`§0A\` note 4: \`reason\` is the CONSUMER\'s own string, carried verbatim; \`§0A\` note 8, defect 2). Measured: ${JSON.stringify(wiringRefusalDerivationSites(body))}`).toEqual([])
-    expect(wiringRefusalDerivationSites('  refused: { reason: (result.refusals[0] as { code?: unknown })?.code }'), 'G4-E4 control — the refusal-derivation pattern CAN hit: the falsifier is real.').not.toEqual([])
-    expect(wiringRefusalDerivationSites("  const refused = answer['refused'] ?? null"), 'G4-E4 control — and passing the consumer\'s own refusal through is NOT a derivation.').toEqual([])
+  it('G4-E4 — NO MODEL-REFUSAL DERIVATION: the wiring extracts no refusal out of a model record', () => {
+    // A FOURTH READING, OVER THE WHOLE FILE: the tool may not derive a refusal (`§0A` note 4 — the
+    // `reason` is the STORE's own string, carried verbatim). The store's refusals travel as VALUES
+    // (`docs/L2/mcp-surface/interface.md` §3), so nothing in the renderer may mine a code out of a
+    // refusal list to ship as one.
+    const sites = wiringRefusalDerivationSites(stripComments(wiringSource()))
+    expect(
+      sites,
+      `G4-E4 — THE DELETION IS D-142's: no model-refusal derivation remains in src/renderer/renderer.ts. This row REDS until L4's \`E-1\` lands. Measured: ${JSON.stringify(sites)}`,
+    ).toEqual([])
+    expect(
+      wiringRefusalDerivationSites('  refused: { reason: (result.refusals[0] as { code?: unknown })?.code }'),
+      'G4-E4 control — the refusal-derivation pattern CAN hit, so the emptiness above is a reading.',
+    ).not.toEqual([])
+    expect(
+      wiringRefusalDerivationSites("  const refused = answer['refused'] ?? null"),
+      'G4-E4 control — and passing the store\'s own refusal through is NOT a derivation: the pattern is not over-broad.',
+    ).toEqual([])
   })
 })

@@ -413,51 +413,66 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     }
   })
 
-  it('OV-7 · the DRIVE THROUGH THE PRODUCING GRAPH — the authored opener writes the caller’s verb token, the wiring reads it and WRITES THE STORE, and the authored close control reverses it; the render rides the delivery (`D-125`)', () => {
+  it('OV-7 · the DRIVE THROUGH THE PRODUCING GRAPH — the authored opener READS THE STATE THE DELIVERY MIRRORED and writes the TARGET, the wiring writes the store, and **A REPEATED DISPATCH AT THE SAME CONTROL RESOLVES THE OTHER TARGET INSTEAD OF BEING DROPPED** (`D-131`, closing `D-126`\'s finding `F2`)', async () => {
     const { runtime, app, deliver } = realm()
-    // THE ACT, AS AN ACT: `provident.dispatch` on the authored opener runs the authored handler body, which writes the
-    // CALLER'S token into the authored state carrier. Nothing about a transition happens in the body.
-    return runtime
-      .dispatch({ target: { kind: 'cssId', cssId: OVERLAY_OPEN_ID }, event: 'click' })
-      .then((result) => {
-        expect(result.dirtied, 'the authored opener’s body RAN: the dispatch reports the node it dirtied').toContain(
-          (runtime.listTargets().nodes.find((n) => n.propsId === OVERLAY_STATE_ID) as { nodeId: string }).nodeId,
-        )
-        expect(textOf(htmlOf(runtime), OVERLAY_STATE_ID), 'the carrier now holds the caller’s VERB token, not a state word').toBe('toggle')
-        // THE CONSUMER'S TURN — the same turn the reply route takes beside the appearance act. **IT ASKS THE STORE AND
-        // RENDERS NOTHING** (`D-125`): the word it holds is still the store's, and the pane appears when the store answers.
-        const driven = app.drive()
-        expect(driven.verb, 'the turn consumed the token the graph holds').toBe('toggle')
-        expect({ asked: driven.asked, wrote: driven.wrote }, 'and it became ONE write at the pane’s address').toEqual({ asked: true, wrote: true })
-        expect(driven.state, 'the wiring’s word did not move: the store has not answered').toBe('closed')
-        expect(driven.written, 'and no declaration was applied, because nothing has been rendered').toBe(false)
-        expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'so `get_rendered_html` still shows a surface with no key').not.toMatch(/\binert\b/)
-        // THE STORE'S TURN: the delivery, and the render it drives.
-        deliver(true)
-        const rendered = app.render()
-        expect(rendered.written, 'and the inert declaration lands on the authored app root').toBe(true)
-        expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'which `get_rendered_html` now shows').toMatch(/inert="true"/)
-        // A SECOND `drive()` ON AN UNMOVED CARRIER IS NOT AN ACT.
-        const again = app.drive()
-        expect(again.wrote, 'an unmoved token writes nothing').toBe(false)
-        expect(again.written, 'and declares nothing new').toBe(false)
+    const dispatchAt = (cssId: string) => runtime.dispatch({ target: { kind: 'cssId', cssId }, event: 'click' })
+    const carrier = () => textOf(htmlOf(runtime), OVERLAY_STATE_ID)
+    const stateNode = () => (runtime.listTargets().nodes.find((n) => n.propsId === OVERLAY_STATE_ID) as { nodeId: string }).nodeId
 
-        return runtime.dispatch({ target: { kind: 'cssId', cssId: OVERLAY_CLOSE_ID }, event: 'click' })
-      })
-      .then((result) => {
-        expect(result.dirtied, 'the authored close control’s body RAN').toContain(
-          (runtime.listTargets().nodes.find((n) => n.propsId === OVERLAY_STATE_ID) as { nodeId: string }).nodeId,
-        )
-        const closingAsk = app.drive()
-        expect(closingAsk.verb).toBe('close')
-        expect({ asked: closingAsk.asked, wrote: closingAsk.wrote }, 'the close is ONE write of the other boolean').toEqual({ asked: false, wrote: true })
-        expect(closingAsk.state, 'and the wiring holds its transient while the write is in flight').toBe('closing')
-        deliver(false)
-        const closed = app.render()
-        expect(closed.state).toBe('closed')
-        expect(closed.written).toBe(true)
-        expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the REMOVAL arm took the attribute back off the authored app root').not.toMatch(/\binert\b/)
-      })
+    // 1 — THE FIRST ACT. The body reads the carrier (authored `closed`) and writes the TARGET, not a verb.
+    const first = await dispatchAt(OVERLAY_OPEN_ID)
+    expect(first.dirtied, 'the authored opener’s body RAN: the dispatch reports the node it dirtied').toContain(stateNode())
+    expect(carrier(), 'the carrier holds the TARGET the click asked for, RESOLVED from the state it read').toBe('open')
+    const driven = app.drive()
+    expect(driven.verb, 'the turn consumed the target the graph holds').toBe('open')
+    expect({ asked: driven.asked, wrote: driven.wrote }, 'and it became ONE write at the pane’s address').toEqual({ asked: true, wrote: true })
+    expect(driven.state, 'the wiring’s word did not move: the store has not answered').toBe('closed')
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'so `get_rendered_html` still shows a surface with no key').not.toMatch(/\binert\b/)
+    deliver(true)
+    const rendered = app.render()
+    expect(rendered.written, 'and the inert declaration lands on the authored app root').toBe(true)
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'which `get_rendered_html` now shows').toMatch(/inert="true"/)
+    // **THE MIRROR**: the DELIVERY wrote the store's own word into the carrier — that is what makes the next read a read
+    // of the STATE rather than of whoever clicked last.
+    expect(carrier(), 'the delivery mirrored the store’s word into the carrier').toBe('open')
+    // A SECOND `drive()` ON AN UNMOVED CARRIER IS NOT AN ACT.
+    const again = app.drive()
+    expect(again.wrote, 'an unmoved carrier writes nothing').toBe(false)
+
+    // 2 — **THE ARM `F2` WAS ABOUT**: the SAME control, dispatched again, with the pane open.
+    await dispatchAt(OVERLAY_OPEN_ID)
+    expect(
+      carrier(),
+      'the SAME opener now asks for the OTHER target, because it read the state the delivery mirrored — before `D-131` it wrote `toggle` again here and the `changed` guard dropped the act, leaving the pane open',
+    ).toBe('close')
+    const closingAsk = app.drive()
+    expect(closingAsk.verb).toBe('close')
+    expect({ asked: closingAsk.asked, wrote: closingAsk.wrote }, 'so the repeat is ONE write of the other boolean').toEqual({ asked: false, wrote: true })
+    expect(closingAsk.state, 'and the wiring holds its transient while the write is in flight').toBe('closing')
+    deliver(false)
+    const closed = app.render()
+    expect(closed.state).toBe('closed')
+    expect(closed.written).toBe(true)
+    expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the REMOVAL arm took the attribute back off the authored app root').not.toMatch(/\binert\b/)
+    expect(carrier(), 'and the mirror now holds the closed state').toBe('closed')
+
+    // 3 — THE CLOSE CONTROL, ON A PANE THE STORE REPORTS CLOSED: the body still writes its target, and the MECHANISM is
+    // what refuses the act — a close on a closed pane is `changed: false`, which is `D-82` clause 4 kept at its own seat.
+    await dispatchAt(OVERLAY_CLOSE_ID)
+    const nothingToDo = app.drive()
+    // `asked` is `null` and not `false`: the mechanism's no-act arm reports that NO ASK WAS MADE, which is a different
+    // statement from an ask that resolved to `false`.
+    expect({ asked: nothingToDo.asked, wrote: nothingToDo.wrote }, 'a close on a closed pane asks nothing and writes nothing').toEqual({ asked: null, wrote: false })
+
+    // 4 — AND THE CLOSE CONTROL DOES REVERSE AN OPEN PANE: the same control, one state away from the one above.
+    await dispatchAt(OVERLAY_OPEN_ID)
+    app.drive()
+    deliver(true)
+    app.render()
+    await dispatchAt(OVERLAY_CLOSE_ID)
+    const reversing = app.drive()
+    expect(reversing.verb, 'the close control’s own target').toBe('close')
+    expect({ asked: reversing.asked, wrote: reversing.wrote }, 'and it becomes ONE write of the other boolean').toEqual({ asked: false, wrote: true })
   })
 
   it('OV-8 · **WHAT THE INERT ROOT DOES AND DOES NOT BLOCK, MEASURED** — the app’s own `provident.dispatch` STILL reaches nodes under it, and no code on that path consults `inert` at all', () => {

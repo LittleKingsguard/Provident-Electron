@@ -6,8 +6,9 @@
 // that sentence fixes is **store acts (creation load, constraint/repair passes) → listener deliveries → the read → the
 // data shape → the rendering engine renders it**. This module is the fourth link and nothing else: it holds THE DATA SHAPE,
 // it is refilled by DELIVERIES (`onChanged` → re-read → `adopt`), and it is read SYNCHRONOUSLY by the paths that cannot
-// await — the pane drag's `startSizeOf`/`boundsOf` (`renderer.ts:1700-1722` before this pass) and the focus model's
-// mirror read (`:1104-1105`).
+// await — the pane drag's `startSizeOf`/`boundsOf` (`renderer.ts:1700-1722` before this pass) and its zone turns.
+// **THE FOCUS MIRROR'S READ LEFT WITH ITS FAMILY** (`D-142`): no member here answers one, and the shape carries three
+// families and no fourth.
 //
 // **IT IS NOT A STORE, AND THE DISTINCTION IS THE WHOLE POINT OF THE PURGE (`D-78`, and `D-82` clause 3).** A store is a
 // `provident-storeroom` instance, and there are to be exactly two — the normal crossing and the secure crossing. This
@@ -25,7 +26,7 @@
 //     therefore ALWAYS one delivery stale at worst, and the delivery is exactly what the store's own commit caused.
 //   · WRITES are SENT and their receipt arrives a tick later (`writeOutcome()` is where it lands). No caller's answer is
 //     composed from a receipt: the pane drag's `release` returns `void` (it already did — the old receipts were
-//     discarded), and the focus route's answer is the MODEL's next state, which it already had in hand before writing.
+//     discarded), so the drag's next read is the shape a delivery refilled.
 //   · NOTHING HERE POLLS, TIMES, RETRIES OR WRITES ON A READ (`D-82` clause 4). There is exactly ONE stated boot read
 //     (`fill()`), because a boot's own store acts happened before this realm subscribed and a cold profile changes nothing
 //     afterwards — so no delivery exists to carry the first fill — and every later fill is a delivery's.
@@ -42,35 +43,25 @@ import {
   defaultPaneGeometry,
   viewThemePlaceholder,
   zoneIn,
-  type ViewFocusEntry,
-  type ViewFocusMirror,
   type ViewGeometrySource,
   type ViewPaneGeometry,
   type ViewThemeRecord,
   type ViewZone,
 } from '../shared/view-shape.js'
 
-/** THE FOCUS MODEL'S OWN STATE SHAPE, AS THE RENDERER ALREADY CONSUMES IT (`src/shared/focus-model.ts`'s `FocusState`).
- *  Declared here rather than imported so this module's read is narrowed to what the routes carry: `entries` is the mirror's
- *  own list and `activeId` is `FocusId | null`, the absent active mapped back from the crossing's ABSENCE. */
-export interface ViewFocusState {
-  readonly entries: readonly ViewFocusEntry[]
-  readonly activeId: string | number | boolean | null
-}
-
 /** **THE READING'S COMMITTED ARM — `docs/L2/view-record/interface.md` §2's declared answer, verbatim**: the THREE families
  *  and the per-family `source` that says whether the record answered or the declared default did. It is required member
  *  for required member, so an answer that carries two families and not the third reaches the caller as `unread` rather
- *  than as a shape derived from a partial record — the strictness this file states once, applied to the whole reading. */
+ *  than as a shape derived from a partial record — the strictness this file states once, applied to the whole reading.
+ *  **NO FOURTH MEMBER STANDS ON EITHER SIDE OF THE WIRE** (D-142): the answer is three families and three `source`
+ *  words. */
 export interface ViewCommittedReading {
   readonly status: 'committed'
   readonly panes: readonly ViewPaneGeometry[]
-  readonly focus: ViewFocusMirror
   readonly zones: readonly ViewZone[]
   readonly theme: ViewThemeRecord
   readonly source: {
     readonly panes: ViewGeometrySource
-    readonly focus: ViewGeometrySource
     readonly zones: ViewGeometrySource
     readonly theme: ViewGeometrySource
   }
@@ -87,17 +78,15 @@ export type ViewClientReading =
 
 /** **THE SHAPE — WHAT THE RENDERING ENGINE'S PATHS READ.** `filled` is the honest statement of whether ANY delivery or boot
  *  read has answered yet: `false` means the three families are the declared empty/default pair because nothing has been
- *  read, never because a store said so. `panes`/`focus`/`zones` are the last reading's admitted families, REPLACED whole
+ *  read, never because a store said so. `panes`/`zones`/`theme` are the last reading's admitted families, REPLACED whole
  *  on every `adopt`. */
 export interface ViewShape {
   readonly filled: boolean
   readonly panes: readonly ViewPaneGeometry[]
-  readonly focus: ViewFocusMirror
   readonly zones: readonly ViewZone[]
   readonly theme: ViewThemeRecord
   readonly source: {
     readonly panes: ViewGeometrySource
-    readonly focus: ViewGeometrySource
     readonly zones: ViewGeometrySource
     readonly theme: ViewGeometrySource
   }
@@ -115,7 +104,7 @@ export type ViewWriteStatement =
  *  `unread` where the route threw or answered a shape L2 does not declare. It is held so a REFUSED write is a reading
  *  rather than a silent no-op; nothing composes a decision from it. */
 export interface ViewWriteOutcome {
-  readonly route: 'pane' | 'focus' | 'zone' | 'theme'
+  readonly route: 'pane' | 'zone' | 'theme'
   readonly answer: unknown
   readonly status: 'committed' | 'refused' | 'unread'
   readonly reason: string | null
@@ -137,7 +126,6 @@ export interface ViewSubscription {
 export interface ViewClientBridge {
   read(): Promise<unknown>
   commitPane(id: string, geometry: unknown): Promise<unknown>
-  commitFocus(mirror: unknown): Promise<unknown>
   commitZones(id: string, zone: unknown): Promise<unknown>
   commitTheme(token: string, attributeName: string): Promise<unknown>
   onChanged(handler: () => void): () => void
@@ -150,7 +138,7 @@ export interface ViewClientOptions {
   readonly bridge?: ViewClientBridge | null
 }
 
-/** **THE CLIENT — the shape, the two synchronous reads the drag and the focus model need, and the two routes.** */
+/** **THE CLIENT — the shape, the synchronous reads the drag needs, and the three routes.** */
 export interface ViewClient {
   /** THE SHAPE AS IT STANDS — `filled: false` before anything has answered. */
   shape(): ViewShape
@@ -161,9 +149,6 @@ export interface ViewClient {
   /** **THE DRAG'S BOUNDS READ — SYNCHRONOUS.** The pair AS STORED, never a clamped policy; a fresh copy on the default arm
    *  so no caller can move the measured constant. */
   paneBoundsOf(id: string): unknown
-  /** **THE FOCUS MODEL'S MIRROR READ — SYNCHRONOUS.** The declared empty pair where nothing has been read or where the
-   *  mirror is empty; the absent active is `null`. */
-  focusState(): ViewFocusState
   /** **THE APPEARANCE READ — SYNCHRONOUS, AND IT ANSWERS THE CROSSING'S OWN RECORD** (D-97): the setting it carries, the
    *  attribute name the last act supplied, and **THE DECLARATION THE MECHANISM COMPUTED FOR THE PAIR**. This module never
    *  computes one: `resolveTheme` and `applyThemeDeclaration` are the crossing's (`src/main/view-record/index.ts`) and this
@@ -178,8 +163,6 @@ export interface ViewClient {
   zoneOf(id: string): ViewZone | null
   /** **THE PANE ROUTE.** Sent, never awaited; the shape is refilled by the delivery the commit causes. */
   commitPane(id: string, geometry: unknown): ViewWriteStatement
-  /** **THE FOCUS ROUTE.** The whole mirror the model produced, sent as one value — the crossing composes nothing. */
-  commitFocus(mirror: unknown): ViewWriteStatement
   /** **THE ZONE ROUTE.** One zone id and the members this caller has, sent; the crossing composes the family from what
    *  stands, so a client one delivery stale cannot erase a zone it has not read. */
   commitZones(id: string, zone: unknown): ViewWriteStatement
@@ -210,10 +193,9 @@ export interface ViewClient {
 const emptyShape = (): ViewShape => ({
   filled: false,
   panes: [],
-  focus: { entries: [], activeId: null },
   zones: [],
   theme: viewThemePlaceholder(),
-  source: { panes: 'default', focus: 'default', zones: 'default', theme: 'default' },
+  source: { panes: 'default', zones: 'default', theme: 'default' },
 })
 
 /** THE AMBIENT MEMBER, READ AT CALL TIME — never at construction, so a bridge installed after the client was built is still
@@ -305,25 +287,11 @@ function themeOfWire(held: unknown): ViewThemeRecord | null {
   return { token, attribute, declaration: { name, value, removal } }
 }
 
-/** **ONE FOCUS ENTRY, ADMITTED FROM THE WIRE** — the id narrowed to the three primitives `===` compares by value, `target`
- *  carried opaquely, `label` the model's optional string. */
-function entryOf(held: unknown): ViewFocusEntry | null {
-  if (!isObject(held) || Array.isArray(held)) return null
-  const id = held['id']
-  if (typeof id !== 'string' && typeof id !== 'number' && typeof id !== 'boolean') return null
-  if (typeof id === 'number' && !Number.isFinite(id)) return null
-  if (!('target' in held)) return null
-  const entry: { id: string | number | boolean; target: unknown; label?: string } = { id, target: held['target'] }
-  if (typeof held['label'] === 'string') entry.label = held['label']
-  return entry
-}
-
 /** L2 §2's TWO ARMS, CHECKED RATHER THAN ASSUMED. A `committed` answer must carry ALL THREE families and all three
  *  `source` words; anything else is this module's own `answer-not-declared` with the divergence named, NEVER a shape
- *  derived from a partial record. **NO ROW AND NO ENTRY IS INVENTED AND NONE IS SILENTLY KEPT**: an unadmitted member is dropped exactly
- *  where the crossing drops one, and a dangling `activeId` — an id naming no entry of the list — is read back as the
- *  absent active, which is the state the crossing's own `dangling-active` refusal exists to prevent a caller from
- *  writing. */
+ *  derived from a partial record. **NO ROW IS INVENTED AND NONE IS SILENTLY KEPT**: an unadmitted member is dropped exactly
+ *  where the crossing drops one. A fourth member is simply not consulted, so an answer still carrying one is not a shape
+ *  this design declares (D-142). */
 function committedOrDivergence(raw: unknown): { readonly reading: ViewCommittedReading } | { readonly detail: string } {
   if (!isObject(raw)) return { detail: `answer is ${raw === null ? 'null' : typeof raw}` }
   const status = raw['status']
@@ -335,20 +303,6 @@ function committedOrDivergence(raw: unknown): { readonly reading: ViewCommittedR
     const pane = paneOf(candidate)
     if (pane !== null) panes.push(pane)
   }
-  const heldFocus = raw['focus']
-  if (!isObject(heldFocus) || Array.isArray(heldFocus)) return { detail: 'focus is not a plain record' }
-  const heldEntries = heldFocus['entries']
-  if (!Array.isArray(heldEntries)) return { detail: 'focus.entries is not an array' }
-  const entries: ViewFocusEntry[] = []
-  for (const candidate of heldEntries) {
-    const entry = entryOf(candidate)
-    if (entry !== null) entries.push(entry)
-  }
-  const activeRaw = heldFocus['activeId']
-  let activeId: ViewFocusMirror['activeId'] =
-    typeof activeRaw === 'string' || typeof activeRaw === 'number' || typeof activeRaw === 'boolean' ? activeRaw : null
-  if (typeof activeId === 'number' && !Number.isFinite(activeId)) activeId = null
-  if (activeId !== null && !entries.some((entry) => entry.id === activeId)) activeId = null
   const heldZones = raw['zones']
   if (!Array.isArray(heldZones)) return { detail: 'zones is not an array' }
   const zones: ViewZone[] = []
@@ -361,21 +315,18 @@ function committedOrDivergence(raw: unknown): { readonly reading: ViewCommittedR
   const sourceRaw = raw['source']
   if (!isObject(sourceRaw) || Array.isArray(sourceRaw)) return { detail: 'source is not a plain record' }
   const panesSource = sourceRaw['panes']
-  const focusSource = sourceRaw['focus']
   const zonesSource = sourceRaw['zones']
   const themeSource = sourceRaw['theme']
   if (panesSource !== 'record' && panesSource !== 'default') return { detail: 'source.panes is not record|default' }
-  if (focusSource !== 'record' && focusSource !== 'default') return { detail: 'source.focus is not record|default' }
   if (zonesSource !== 'record' && zonesSource !== 'default') return { detail: 'source.zones is not record|default' }
   if (themeSource !== 'record' && themeSource !== 'default') return { detail: 'source.theme is not record|default' }
   return {
     reading: {
       status: 'committed',
       panes,
-      focus: { entries, activeId },
       zones,
       theme,
-      source: { panes: panesSource, focus: focusSource, zones: zonesSource, theme: themeSource },
+      source: { panes: panesSource, zones: zonesSource, theme: themeSource },
     },
   }
 }
@@ -404,14 +355,14 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
    *  the ambient `window.provident.view` otherwise. */
   const memberFor = (): unknown => (options.bridge === undefined ? ambientViewMember() : options.bridge)
 
-  const routeOf = (member: unknown, name: 'read' | 'commitPane' | 'commitFocus' | 'commitZones' | 'commitTheme'): ((...args: unknown[]) => Promise<unknown>) | null => {
+  const routeOf = (member: unknown, name: 'read' | 'commitPane' | 'commitZones' | 'commitTheme'): ((...args: unknown[]) => Promise<unknown>) | null => {
     if (member === null) return null
     const route = (member as Record<string, unknown>)[name]
     return typeof route === 'function' ? (route as (...args: unknown[]) => Promise<unknown>).bind(member) : null
   }
 
   /** ONE WRITE, SENT — the receipt is recorded when it lands and composes nothing. */
-  function send(route: 'pane' | 'focus' | 'zone' | 'theme', call: ((...args: unknown[]) => Promise<unknown>) | null, args: unknown[]): ViewWriteStatement {
+  function send(route: 'pane' | 'zone' | 'theme', call: ((...args: unknown[]) => Promise<unknown>) | null, args: unknown[]): ViewWriteStatement {
     if (call === null) return { status: 'absent', reason: memberFor() === null ? 'no-view-member' : 'no-route' }
     void call(...args).then(
       (answer: unknown) => {
@@ -430,10 +381,9 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
     shape = {
       filled: true,
       panes: reading.panes,
-      focus: reading.focus,
       zones: reading.zones,
       theme: reading.theme,
-      source: { panes: reading.source.panes, focus: reading.source.focus, zones: reading.source.zones, theme: reading.source.theme },
+      source: { panes: reading.source.panes, zones: reading.source.zones, theme: reading.source.theme },
     }
   }
 
@@ -482,10 +432,6 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
       return { min: pane.bounds.min, max: pane.bounds.max }
     },
 
-    focusState(): ViewFocusState {
-      return { entries: shape.focus.entries, activeId: shape.focus.activeId }
-    },
-
     themeRecord(): ViewThemeRecord {
       // THE SHAPE'S OWN RECORD, HANDED OUT AS A FRESH VALUE so no caller can move the shape the next delivery replaces
       // (`paneBoundsOf`'s reason, applied to a record with one nested object in it).
@@ -507,11 +453,6 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
     commitPane(id: string, geometry: unknown): ViewWriteStatement {
       const member = memberFor()
       return send('pane', routeOf(member, 'commitPane'), [id, geometry])
-    },
-
-    commitFocus(mirror: unknown): ViewWriteStatement {
-      const member = memberFor()
-      return send('focus', routeOf(member, 'commitFocus'), [mirror])
     },
 
     commitZones(id: string, zone: unknown): ViewWriteStatement {
@@ -583,7 +524,7 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
 /** **A WRITE'S DECLARED ANSWER, AS IT ARRIVED** — `committed`, the crossing's own refusal record (`status: 'refused'` with
  *  its `reason`/`message`), or `unread` for a shape L2 §2 does not declare. The refusal vocabulary stays the store's: this
  *  module mints no word of its own. */
-function outcomeOf(route: 'pane' | 'focus' | 'zone' | 'theme', answer: unknown): ViewWriteOutcome {
+function outcomeOf(route: 'pane' | 'zone' | 'theme', answer: unknown): ViewWriteOutcome {
   if (!isObject(answer)) return { route, answer, status: 'unread', reason: 'answer-not-declared', message: null }
   const status = answer['status']
   if (status === 'committed') return { route, answer, status: 'committed', reason: null, message: null }

@@ -5,14 +5,12 @@
 // **IT CONSTRUCTS NOTHING** — not the record's store, and (unlike `tabs-surface`, whose `createTabsRecord` call is its own
 // construction) not even an instance-owning object: `createViewRecord` is handed the boot's store and owns no file, so
 // this surface is a reference to the boot's store plus the one subscription the push needs. **THE SHAPE ARMS ARE THIS
-// FILE'S AND THEY ARE ITS FIRST ACT**: `commitPane` and `commitFocus` take `unknown` on purpose, because a typed
-// parameter would move the check into the type system where the renderer's boundary cannot reach it
+// FILE'S AND THEY ARE ITS FIRST ACT**: `commitPane`, `commitZones` and `commitTheme` take `unknown` on purpose, because a
+// typed parameter would move the check into the type system where the renderer's boundary cannot reach it
 // (`docs/L3/store-tabs-record/signatures.md` §3). A malformed id or value never reaches a store verb, and each arm
 // reuses the module's own reason token and sentence rather than minting a second vocabulary.
 import {
   createViewRecord,
-  FOCUS_SHAPE_MESSAGE,
-  FOCUS_SHAPE_REASON,
   PANE_SHAPE_MESSAGE,
   PANE_SHAPE_REASON,
   THEME_SHAPE_MESSAGE,
@@ -28,16 +26,15 @@ import {
 /** **THE READ IS TOTAL AND CARRIES NO REFUSED ARM**, which is the module's own measurement and not an omission: a read
  *  that MISSes answers the family's declared default and one that refuses is caught at the same place, so there is no
  *  value this route can answer that is not a reading. The tab record's read keeps a refused arm because its `read` is
- *  handed the store's own refusal; this one composes its answer from two admissions that are total. */
+ *  handed the store's own refusal; this one composes its answer from admissions that are total. **AND IT ANSWERS THE
+ *  THREE SURVIVING FAMILIES AND NO FOURTH**, with one `source` word per family (D-142). */
 export type ViewReadAnswer = {
   readonly status: 'committed'
   readonly panes: readonly import('../view-record/index.js').ViewPaneGeometry[]
-  readonly focus: import('../view-record/index.js').ViewFocusMirror
   readonly zones: readonly import('../view-record/index.js').ViewZone[]
   readonly theme: ViewThemeRecord
   readonly source: {
     readonly panes: 'record' | 'default'
-    readonly focus: 'record' | 'default'
     readonly zones: 'record' | 'default'
     readonly theme: 'record' | 'default'
   }
@@ -46,7 +43,6 @@ export type ViewReadAnswer = {
 export interface ViewSurface {
   read(): ViewReadAnswer
   commitPane(id: unknown, geometry: unknown): ViewRecordAnswer
-  commitFocus(mirror: unknown): ViewRecordAnswer
   commitZones(id: unknown, zone: unknown): ViewRecordAnswer
   commitTheme(token: unknown, attributeName: unknown): ViewRecordAnswer
   attach(): void
@@ -72,7 +68,6 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
       return {
         status: 'committed',
         panes: answer.panes,
-        focus: answer.focus,
         zones: answer.zones,
         theme: answer.theme,
         source: answer.source,
@@ -85,14 +80,6 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
         return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
       }
       return record.commitPane(id, geometry)
-    },
-
-    commitFocus(mirror: unknown): ViewRecordAnswer {
-      // the shape arm before any store verb, as `commitPane`'s is
-      if (mirror === null || typeof mirror !== 'object' || Array.isArray(mirror)) {
-        return { status: 'refused', reason: FOCUS_SHAPE_REASON, message: FOCUS_SHAPE_MESSAGE, address: null }
-      }
-      return record.commitFocus(mirror)
     },
 
     commitZones(id: unknown, zone: unknown): ViewRecordAnswer {
@@ -118,7 +105,7 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
       return record.commitTheme(token, attributeName)
     },
 
-    /** The change push: ONE subscription over ALL FOUR roots, held here so `detach` can withdraw exactly what `attach`
+    /** The change push: ONE subscription over ALL THREE roots, held here so `detach` can withdraw exactly what `attach`
      *  took. */
     attach(): void {
       if (off !== null) return

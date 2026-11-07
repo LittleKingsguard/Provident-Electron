@@ -249,8 +249,13 @@ describe('the pane channel — the fixture rows PF-1..PF-8 (spec §2.4a, §4.1 R
     expect(html).toContain('settings-pane')
     expect(html).toContain('journal-length')
     expect(html).toContain('group-toggles')
-    expect(attrsOfPropsId(html, PANE_NODES.toggleRead).get('data-on'), 'toggle:read is read-enabled at boot').toBe('true')
-    expect(attrsOfPropsId(html, PANE_NODES.siblingToggle).get('data-on'), 'the sibling pane toggle').toBe('true')
+    // **`D-129` — THE AUTHORED WORDS, NOT A READING.** These two assertions used to require `data-on="true"` at boot, which
+    // the pane obtained by STARTING `cfg.enabled` at the crossing's first-run pair: a gate configuration no delivery had
+    // stated, for a shape `recordMustStand` ALREADY ENFORCES at the record address. The pane now paints a toggle only from a
+    // delivery, so at boot the envelope's own `data-on="false"` stands — which is what makes the PF rows below measurements
+    // of the CHANNEL rather than of a local default.
+    expect(attrsOfPropsId(html, PANE_NODES.toggleRead).get('data-on'), 'toggle:read carries the AUTHORED state before any delivery (D-129)').toBe('false')
+    expect(attrsOfPropsId(html, PANE_NODES.siblingToggle).get('data-on'), 'and so does the sibling pane toggle').toBe('false')
     // A precondition, not a PF-row: every observable the PF-rows read must be
     // reachable by the id the fixture addresses.
     expect(nodeIdOf(panels, PANE_NODES.journalLengthInput)).toBeTruthy()
@@ -420,10 +425,10 @@ describe('the pane channel — the fixture rows PF-1..PF-8 (spec §2.4a, §4.1 R
     // Proves the fixture drives the REAL channel and not only the removal path.
     const { panels, mount } = await bootPanes()
     const id = nodeIdOf(panels, PANE_NODES.toggleRead)
-    // The pane's boot state: 'read' is an enabled group, so the shipped write's
-    // `on` half is 'true' at this point — asserted so the row's literal is not
-    // taken on faith.
-    expect(attrsOfPropsId(htmlOf(mount), PANE_NODES.toggleRead).get('data-on')).toBe('true')
+    // **THE PANE'S BOOT STATE IS THE AUTHORED ONE (`D-129`)**: no delivery has painted this toggle, so the shipped write's
+    // `on` half starts at the envelope's `data-on="false"` — asserted so the row's literal is not taken on faith, and the
+    // row now measures the CHANNEL from a known authored state instead of from a fabricated first-run reading.
+    expect(attrsOfPropsId(htmlOf(mount), PANE_NODES.toggleRead).get('data-on'), 'the authored state, before any delivery (D-129)').toBe('false')
 
     let res!: PaneApplyResult
     expect(() => {
@@ -475,7 +480,7 @@ describe('the pane channel — the fixture rows PF-1..PF-8 (spec §2.4a, §4.1 R
         siblingAttrsBefore,
       )
       // The third node, in the same pane as the target, is untouched too.
-      expect(attrsOfPropsId(htmlOf(mount), PANE_NODES.toggleRead).get('data-on')).toBe('true')
+      expect(attrsOfPropsId(htmlOf(mount), PANE_NODES.toggleRead).get('data-on'), 'still the authored state — a nullish write on a sibling moves nothing (D-129)').toBe('false')
       // The nullish node's OWN other props are unchanged (no collateral damage).
       expect(attrsOfPropsId(htmlOf(mount), PANE_NODES.journalLengthInput).get('type')).toBe('number')
     }

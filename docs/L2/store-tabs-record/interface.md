@@ -1,150 +1,149 @@
 # L2 — `store-tabs-record`: the interface
 
-- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — the crossing D-63 decided; rev 2
-  moved the record onto the central instance (D-64, §1), rev 3 put the change push at the record's own address (D-71, §2),
-  and rev 4 declares the renderer's client role (§6).
-- **Inputs:** `docs/L1/store-tabs-record.md` rev 1 §1–§4 (the record family, the constraint, the `§5.U` matrix); D-62
-  (the unit and its `N = 4`), D-63 (the crossing), D-32 (no path or route claimed twice), D-26/D-39 (a count has one
-  home), D-30/D-40 (the marked surface), D-43 (cite, never restate).
-- **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`;
-  a source cite names its site (D-41).
+- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — the write paths after D-142: the
+  renderer composes the record from its own committed reading and hands it whole to `data.write` at `['tabs']`/`file`, and
+  this document no longer forbids that; rev 4 declared the client role (§6), rev 3 put the change push at the record's own
+  address (D-71, §2), rev 2 moved the record onto the central instance (D-64, §1).
+- **Inputs:** `docs/L1/focus-retirement.md` §2, §3 and §6 `E-11`; D-142 (the settled shape `(b)`, a transparent
+  passthrough), D-136, D-141, D-140, D-137, D-129, D-103, D-105, D-101, D-94, D-76, D-62, D-3; D-26/D-43 (a count, a path
+  or a stage is read from its owner and never restated here); D-41 (a source cite names its site, never an offset).
+- **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
 ## 0. Scope
 
-This document fixes the crossing's I/O surface — the bridge member, its routes, their arguments and answers, the refusal
-vocabulary — and the instance behind it. It never fixes the store's internals, the renderer's rendering, or the engine
-`provident-storeroom` runs (§3's L2 row; `modules.md` §1).
+This document fixes the crossing's I/O surface — the record's address shape, the bridge member, its routes and answers, the
+refusal vocabulary, the declarations behind them, and **who may write the record** — and the instance behind it. It never
+fixes the store's internals, the renderer's rendering, or the engine `provident-storeroom` runs (§3's L2 row; `modules.md` §1).
 
-## 1. Where the record lives, and why it is a third instance
+## 1. Where the record lives, and the shape its leaves take
 
-**Rev 2** — *D-64 supersedes this section's first reading.* The record lives in the app's **one central
-`provident-storeroom` instance**, at the `['tabs']` addresses inside `provident-profile.json`, beside the profile rows it
-already hosts — **not** in an instance of its own. D-32 governs two units claiming one path in the map, not two surfaces
-reading one store at different addresses, and the app keeps one store rather than three. The routes below are unchanged;
-only whose instance answers them is.
-
-**And D-65 fixes the boot order that makes it possible**: the central instance is constructed **at boot, unconditionally**,
-with the **batched `cfg.constraints`** every module declares — this module contributes
-`{ address: ['tabs'], id: 'exactly-one-active', constraint }` as a declaration, not as a constructor call — and then
-**listeners drive the rest of the data flow**. So this module declares its constraint and its change push and constructs
-nothing; the third instance and `provident-tabs-record.json` go, and the written name set returns to two. The lazy
-construction `central-data` documented is superseded by D-65, which that unit's L2 revises.
-
-Its addresses are the L1 §1 family, unchanged by the crossing:
+The record lives in the app's **one central `provident-storeroom` instance**, at `['tabs']` inside `provident-profile.json`,
+beside the profile rows it already hosts — not in an instance of its own (D-64, D-65). This module constructs nothing, opens
+no file and owns no instance: it DECLARES its six constraints and one change push and the boot batches them (§4, D-65).
 
 | Address | Tier | Holds |
 |---|---|---|
-| `['tabs']` (the central instance's) | `file` | the record root: the `order` seat plus **one flat leaf per tab** whose name is the tab id — the landing entry's among them, so `file.tabs.landing` is its leaf and no second seat is stored (D-76) |
-| `['tabs-exclusion']` | `mem` | the volatile pair the renderer's landing witness reads, never persisted |
+| `['tabs']` — `TABS_RECORD_ADDRESS` | `file`, the one tier `tabsDeclaredRoots` publishes | the record root: the `order` seat plus **one flat leaf per tab, named by the tab id** — the landing ENTRY among them, so `['tabs','landing']` is its leaf and no second seat is stored (D-76) |
+| `['tabs','order']` — `TABS_ORDER_ADDRESS` | `file` | **THE ONE SINGLETON SEAT**: the ordered place of every tab id, and the sequence every judgement is seated from; an entry id spelling it is unrepresentable and is refused `seat-name` (§3, D-76) |
 
-The `file`-tier write is `provident-storeroom`'s, not this module's: the module writes no byte and parses no file
-(§2, `persistence.md`).
+**THE ACTIVE ID IS DERIVED, NOT STORED** (D-76, D-140): `landingOf` answers the landing ENTRY's row where that row reads
+active, else `order`'s first row reading active, else `null`, which `read()` spells `''`. A writer therefore hands the family
+`order` and one member per tab and **no witness member at all**, and `exactly-one-active` (§4) is what makes the derivation
+total — the id of the row reading active IS the shown tab, and a second spelling is exactly what `['focus']` was and why it
+goes (D-76, D-140, D-142). **THE RECORD IS ONE ROOT AT ONE TIER**: `tabsDeclaredRoots` publishes `['tabs']`/`file` and nothing
+else, which is what admits a `file`-tier write there and refuses any other tier (§5, D-101).
 
 ## 2. The bridge member and its four routes
 
-`window.provident` gains **one** top-level member, `tabs`, shaped like the tier-1 `store` bridge it sits beside — four
-routes, no fifth:
+`window.provident.tabs` — one member of the bridge — carries **four routes, no fifth**, and the ruling of §5 adds none to it
+(D-142). `src/renderer/tabs-client.ts`'s `TabsClientBridge` declares two of the four (`read`, `onChanged`), because the
+renderer's one write does not travel here at all; `commit` and `remove` remain the crossing's own verbs (§5, D-142).
 
 | Route | Argument | Answer |
 |---|---|---|
-| `tabs.read()` | none | `{ status: 'committed'; rows: readonly TabRow[]; order: readonly string[]; landing: string }` or the refusal arm |
-| `tabs.commit(row: TabRow)` | one tab's whole record, by name | `{ status: 'committed' }`, carrying **`repaired: true`** where a repair changed the record, or the refusal arm — `'seat-name'` where the id spells the record's own seat (§3) |
-| `tabs.remove(id: string)` | one tab's id | `{ status: 'committed' }`, carrying **`repaired: true`** on the same condition, or the refusal arm — `'seat-name'` on the same id rule (§3) |
-| `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else |
+| `tabs.read()` | none | `{ status: 'committed'; rows; order; landing }` — a TOTAL route: a read that fails answers an empty or partial view, and the refusal type it is declared against is never minted (§1) |
+| `tabs.commit(row)` | one tab's whole row, by name | `{ status: 'committed' }`, carrying `repaired: true` where a repair changed the record, or the refusal arm (§3) |
+| `tabs.remove(id)` | one tab's id | the same two arms, on the same rule (§3) |
+| `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else (`guide §6.2`; §6) |
 
-**`read()`'s `landing` MEMBER IS DERIVED, NOT A STORED POINTER** (D-76): the id of the row reading active — `'landing'` when that entry is the shown tab, `''` on a record no legal act has left — so a client reads it and never composes it.
-**THE COMMITTED ARM OF `commit` AND `remove` IS `{ status: 'committed' }` AND NOTHING ELSE, EXCEPT `repaired`.** **Measured
-2026-11-01, and the two answer declarations above consequently carry no `cursor`**: the store's write receipt is `{op,
-watched, triggered}` and its declaration carries no `cursor` at all (`grep -n 'cursor'
-node_modules/provident-storeroom/index.d.ts` is empty), so the member was read off a receipt that never held it and no act
-could have produced it — a name with nothing behind it, removed as a contract deletion (D-70). **`repaired` is the member
-that was declared and never produced, and it is present EXACTLY when the record that STANDS is not the record the act
-intended**: the engine's repair ran in the act's own commit, the module derived it by comparing the written intent with the
-standing record, and the renderer therefore re-reads and renders what the store says (§3). **It is ABSENT on a clean act and
-never answered `false`** — the member is a signal, and `false` would be a second spelling of its absence.
+**`read()`'s `landing` IS §1's DERIVATION AND NOT A STORED POINTER**, so a client reads it and never composes it (D-76).
+**`repaired` IS DERIVED, NEVER PREDICTED**: `commit` and `remove` compose the record they intend, write it, and compare it
+with the record that STANDS, so the member is present exactly where a repair changed it — absent on a clean act and never
+answered `false`, because `false` would be a second spelling of its absence (D-70, D-103).
 
-**`tabs.onChanged` is the event generator**: the instance's own listener delivers the triggered address, and the renderer
-re-reads rather than being handed the value — the delivery argument is an address, not a payload (`guide §6.4`).
-**The listener is REGISTERED, not merely listened for** (`guide §6.2`: `listen(handle, addresses)` installs the entry and
-`register(handle, listener)` installs the function under it — the store invokes nothing it was not registered with), and
-**Rev 3 — it installs at `['tabs']` ITSELF, the record's own address, beside all six of the record's pairs** (D-71, D-83): from
-the consumed `provident-storeroom 1.7.0` a constraint pair and a listener **may stand at one address** — the pair ASKED by
-the pass, the listener DELIVERED after it — and **the only cross-kind restriction is the HANDLE**, a listener's handle
-equal to a pair's `id` being refused `AddressMalformed`, which this module's minted `tabs-record:<n>@tabs` can never spell
-(design §5; `guide §7.3`'s clause of 2026-11-01). **The client's duty is therefore unchanged and says nothing about
-addressing: RE-READ AFTER EVERY `onChanged`** — the push carries no value, and a write a pair REFUSES delivers nothing at
-all. A `subscribe` that installed one act and not two was a push that existed in name only (D-70).
+**`tabs.onChanged` CARRIES NOTHING — no address and no value** — while the record's OWN listener is REGISTERED at `['tabs']`
+itself, beside all six pairs, and is delivered an ADDRESS there and never a payload (D-71, `guide §6.2`, `guide §6.4`). **The
+client's duty is therefore one line — RE-READ AFTER EVERY DELIVERY** — and a write a pair REFUSES delivers nothing at all, so
+the push is never a client's only signal (D-71, D-137).
 
 ## 3. The refusal vocabulary — closed, and the store's own words
 
-Every refusal is a **value**, never a throw, and its `reason` is the store's own status verbatim under an open escape arm;
-the module mints no status of its own beyond the two arms below:
+Every refusal is a **value**, never a throw, and its `reason` is the store's own status verbatim under one open arm; the only
+words this module mints are the two arms below and ONE fallback — `'refused'`, answered where a thrown value carries no string
+status — so the vocabulary stays the store's (D-76, D-105):
 
 | Arm | `reason` | When |
 |---|---|---|
-| shape | `'malformed-row'` | the commit's argument is not a plain object, or its `id` is not a non-empty string — refused **before** any store verb |
-| seat | `'seat-name'` | the `id` spells the record's own `order` seat, by `commit` **and** `remove` — refused **before** any store verb, because a member and a seat are one name in this family (D-76) |
-| store | the instance's status verbatim | any refusal the instance answers: a write that did not land, an address that is not the record's |
+| shape | `'malformed-row'` | the argument is not a plain object, its `id` is not a non-empty string, or its `target` is not a string — refused before any store verb, which is why the record is untouched when it answers (§2) |
+| seat | `'seat-name'` | the `id` spells the record's own `order` seat, by `commit` **and** `remove` — refused before any store verb, because a member and a seat are one name in this family (D-76) |
+| store | the instance's status verbatim | any refusal the instance answers: a write that did not land, an address that is not the record's (§1) |
 
-**And `'constraint-repaired'` is removed, never renamed into one of these.** It was minted *on a committed answer*, **nothing in `src/main/` ever produced it** (`grep -rn 'constraint-repaired' src/` is empty), and a repair is the `repaired` member of a `committed` answer (§2).
+**A repaired act is `committed`, never `refused`** — the repair is the engine working (§4), and a caller that read it as a
+failure would refuse a write the store accepted (D-103, D-105). **The sentences a caller can receive**, each repaired and
+never left standing, are the six declarations' own: *the tab record does not stand*; the `order` seat's *carries no sequence
+of its own tabs, once each*; `exactly-one-active`'s three — *holds no tab at all*, *carries no active tab*, *carries more than
+one active tab*; and the field pairs' *a tab carries no title*, *a tab contains no data object*, *a tab carries no last-active
+stamp* (D-83, §4). `'constraint-repaired'` is NOT one of them: it was minted on a committed answer that nothing produced, and
+a repair is the `repaired` member of §2 (D-70).
 
-**A repaired commit is `committed`, never `refused`** — the repair is the engine working (L1 §2), and a renderer that treats
-it as a failure would refuse a write the store accepted. **And the act does not GUESS that a repair ran**: the answer
-carries `repaired: true` only where the record that stands is not the record the act intended, derived by the module and
-never read from the store, whose write record has no member for a repair inside its own commit (`guide §6.4`).
+## 4. The six declarations, and the normalisation the ruling leans on
 
-**The six constraint sentences a caller can receive** (each repaired, never left standing): *the tab record does not
-stand* · *the tab record's `'order'` seat carries no sequence of its own tabs, once each* · *the tab record carries more
-than one active tab* · *a tab carries no title* · *a tab contains no data object* · *a tab carries no last-active stamp*.
-Each names the thing it is about, because that is how a caller learns what broke; the **first** names the record's
-**existence**, the **second** names its `order` SEAT — the sixth pair, `order-names-its-tabs`, whose subject is the seat
-every other judgement is seated from, and which is the second of the two tested at the STORE'S CREATION rather than at a
-write (D-83; its states are D-83's). The first is the one a caller does not read from a `commit` or a `delete`: a write at
-`['tabs']` creates what it writes, and a `delete` at the root is answered as the store's own success while the repair
-re-creates the record in the same commit (measured 2026-11-01: `tiers: ['file']`, and the read after it holds the landing
-page again). Either of the first two reaches a caller as a refusal only where the registration's own repair could not land
-the record.
+`tabsConstraintDeclarations` exports SIX declarations, every one of them at `['tabs']`: `tabs-must-stand` (existence), then
+`order-names-its-tabs` (the seat every other judgement is seated from), then `exactly-one-active` (`TABS_CONSTRAINT_ID`), then
+`tab-has-title`, `tab-has-content` and `tab-has-lastActiveAt` (D-65, D-83). The boot batches them into the instance's
+construction; this module registers no second authority over any of them (D-65).
 
-## 4. The constraint moves to the instance
+**AND `exactly-one-active`'S REPAIR ALREADY SETTLES A TWO-ACTIVE WRITE, WHICH IS WHAT MAKES D-142 A DELETION AND NOT A
+BUILD.** A value seating two active rows is normalised down to one inside the write's own commit: the survivor is the WRITTEN
+referent where it survives, else the removed entry's pre-position, else the first active, and the rest are deactivated in the
+same object so the re-run reads one corrected record (D-142, D-140). **THE CALLER NEVER CLEARS THE OLDER FLAG**: doing so
+would make the caller the authority the repair exists to be (D-142, D-129). **AND THE REPAIR'S ANSWER IS THE WRITE'S OWN** —
+`committed`, with `repaired` on this module's verbs (§2) and `repaired` + `log` on the `data.*` route that carried the value
+(§5) — never a refusal that would leave the older row standing (D-103, D-105).
 
-`TABS_CONSTRAINT` is a `GraphConstraint` the renderer evaluates today (L1 §2). Under D-63 it becomes the **instance's**
-constraint: `exactly-one-active` over the `tabs` matched set, evaluated on `set`/`commit`/`remove`, with the corrective
-write the engine applies rather than a value the renderer applies. The renderer loses the constraint registration and
-gains a client's duty: **re-read after every `onChanged`**.
+## 5. The write paths, after the ruling
 
-## 5. What the crossing costs, named rather than absorbed
+| Path | Who composes | Who judges | What passes through unchanged |
+|---|---|---|---|
+| `tabs.commit(row)` / `tabs.remove(id)` — the module's own verbs | this module: `composeRecord` writes `order` plus one member per seated id, and `remove` rewrites the seat without the id (§1) | the six declarations at `['tabs']` (§4) | the caller's row, admitted field by field and written as admitted: no member is invented and no successor is chosen — and the engine's repairs may still correct the standing record, which is what `repaired` reports (§4, D-140, D-142) |
+| the renderer's whole-record write — `window.provident.data.write({path:['tabs'], tier:'file', value})` → `ipcMain.handle(IPC_DATA_WRITE)` → `createDataSurface().write` → the store's write verb | the renderer, from its own committed `tabs.read()` reading: `order` plus one member per tab, and nothing invented — D-136's seat, which is where formatting belongs | `exactly-one-active`, at the address it is registered at: the write is JUDGED and its repair run, not refused by this surface (§4, D-142) | the value, byte for byte: the handler forwards to the store's write verb and transforms nothing (D-136, D-142) |
 
-- **The bridge grows to eight top-level members.** Three gating batteries assert the seven-member census by set equality
-  (`tests/integration/security-store-storeroom/isolation.test.ts`'s `BRIDGE_MEMBERS`, and the two `tests/e2e/` isolation
-  batteries), and `docs/L1/security-store-storeroom.md` §6 and `docs/L3/security-store-storeroom/signatures.md` state it.
-  Those move **in the landing pass**, as a named census move (D-11, D-13, D-31) — never as a silent widening.
-- **`N` re-derives.** The map row's four operative spellings do not change; what changes is the route count the census
-  counts (D-39: the figure is read from the row, never counted here).
-- **The five `data.*` members stay unanswered.** The tab record does not ride them: they are `central-data`'s surface over the profile store, and a second unit over one route is what D-32 forbids. Their own debt is `strata/pending.md`'s.
-- **`src/renderer/store.ts` is not involved.** It is renderer-side and unwired (ASM-7); D-63 decoupled this rework from it — **and it no longer exists: D-78's purge stage 1 DELETED it 2026-11-02, so this line now means "no module of that name is in the closure at all".**
+**"TRANSPARENT" MEANS NO TRANSFORMATION, NOT NO REFUSAL** (D-142). `data.write` still answers `malformed-arguments`,
+`declared-tier`, `parent-absent` and the store's own refusals, because those are the STORE'S judgement passing THROUGH rather
+than this surface's decision — and `['tabs']` being a declared root at `file` is what admits the legal tier and refuses every
+other (§1, D-101, D-142). **AND THE WHOLE-RECORD COMPOSITIONS THAT REMAIN ARE BOOKED, NOT HIDDEN**: `strata/pending.md` row
+`2` books `composeRecord` — this module's own whole-record composer — and D-142 books the renderer's new composition under that
+same entry. The renderer's is a RENDERER fact: it adds no composing route to `tabs`, and it licenses no composition of a
+caller's value here, while `commit`/`remove` compose the record they write because a nested write creates no parent (D-142,
+D-136). **AND THE RENDERER'S PATH IS DECIDED, NOT YET LANDED**: `docs/L1/focus-retirement.md` §6 `E-1` takes it, and this rev
+fixes the surface that route writes, never the landing (D-142, D-3).
 
 ## 6. The renderer's client role — it reads this record, and it owns none
 
-**A CLIENT, HOLDING NO SECOND RECORD** (D-63's client role; D-64's one instance): it reads through `tabs.read()`, re-reads after
-every `tabs.onChanged`, and changes the record only through `tabs.commit(row)` and `tabs.remove(id)` — §2's four routes, no fifth.
+**A CLIENT, HOLDING NO SECOND RECORD** (D-63's client role; D-64's one instance): it reads through `tabs.read()`, re-reads
+after every `onChanged`, and changes the record through §5's `data.write` path, composed from the reading it holds (§2, §5).
 
-- **What it reads.** `read()` answers `order`, `landing` and `rows`, and every witness a client needs comes from those three members alone: the landing terminal stands where `landing` names a row reading `active: true` and no other row does, the
-  error terminal where a row carries `error`. Both page nodes are the ENVELOPE's (`src/shared/demo-envelope.ts`'s
-  `TABS_LANDING_PAGE_ID` / `TABS_ERROR_PAGE_ID`), resolved through `Runtime.elementForNodeId`; it authors no element and no text.
-- **When it re-reads.** After every `onChanged` delivery, which carries an ADDRESS and not a value (`guide §6.4`), and after
-  every act of its OWN, because `repaired` is exactly the case where the record that stands is not the one the act intended
-  (§3). A write a pair REFUSED delivers nothing (D-71), so the push is never a client's only signal.
-- **What it commits.** One tab's whole row, by name, in `TabsRecordRow`'s own fields — or one id's removal. **No SEAT**: `order`
-  is the one composed member a client must not spell, and `landing` is derived, written by no act at all (D-76, §4).
-- **What it must never do.** Hold, construct or persist a second record — the graph store's `file.tabs.*` root family is the
-  renderer-owned copy this role retires. Register a constraint at `['tabs']`, or any second authority on
-  `exactly-one-active`: the six pairs are this module's and the boot's batch (D-65, D-83). Write outside `commit`/`remove` — no
-  `put`, no file, no channel of its own — and never notify by writing: a listener runs in its own commit (`guide §6.5`), so an
-  `onChanged` body that committed would be a second writer inside the one that fired it (D-71).
-- **DECIDED, AND SPELLED (D-75, D-76):** the landing ENTRY's id is the renderer's `'landing'` in this record too — the seat that
-  made it unrepresentable is DERIVED away, `TABS_LANDING_ID` is exported so a client reads one spelling, and a tab id equal to the
-  remaining seat (`order`) is refused. **No migration** (the carrier's rows are dropped, not moved); **OPEN:** boot order.
+- **What it reads.** `read()` answers `order`, `landing` and `rows`, and every witness comes from those three members alone:
+  the landing terminal stands where `landing` names a row reading `active: true` and no other row does, the error terminal
+  where a row carries `error` (D-76, D-137). Both page nodes are the ENVELOPE's, and it authors no element and no text (D-127).
+- **When it re-reads.** After every delivery, which carries NOTHING — no address, no value — and after every act of its OWN,
+  because a repair may have changed what it wrote (§2, §4). A refused write delivers nothing, so the push is never its only
+  signal (D-71, D-137).
+- **What it writes.** A WHOLE RECORD IT READ — `order` plus one member per tab, with the target row's `active` set and its
+  `lastActiveAt` stamped — handed to `data.write` at `file` (§5). **It never clears the older flag**, because the repair,
+  not the caller, is what settles the pair (§4, D-142).
+- **What it must never do.** Hold, construct or persist a SECOND record — a mirror, a cache, a renderer-side copy of the
+  family — while the one composition it makes per write is a copy of a record it READ, handed straight to that write: the
+  family is a set of `file`-tier rows in the app's one store, never a second store (D-62, D-142). Register a constraint at
+  `['tabs']` or any second authority on `exactly-one-active`: the six pairs are this module's and the boot's batch (§4, D-65).
+  **And `order` is never a client's invention** — the member written is the one the reading carried, so the composition is a
+  copy of a record it READ and never a sequence it made up (D-140, D-142). Never notify by writing: a listener runs in its own
+  commit, so an `onChanged` body that committed would be a second writer inside the one that fired it (D-71, `guide §6.5`).
 
-## 7. What this document does not decide
+## 7. The `focus` retirement, seen from this module's side
 
-The battery's rows (`tests/integration/store-tabs-record/`, claimed before it is authored — D-36 `F-1`), the landing pass's diff scope, and the `§5.U` matrix's operator rows, which stay `PARKED` until a human is at the window (L1 §3).
+**NOTHING OF THIS RECORD MOVES** (D-142): `['focus']` was never a family this module declared, wrote, read or judged — its
+address, tier, declaration, body and route are `store-view-record`'s and go whole with that unit's own licensed edit, `E-2`,
+which this document neither takes nor assumes landed (§6 `E-2` of `docs/L1/focus-retirement.md`). The six declarations, the
+`exactly-one-active` invariant and its normalisation, the `file` tier, the per-tab leaf shape and `order`'s role all stand as
+§1–§4 state them (D-142, D-140). **THE CROSSINGS LEG'S `['focus']` ROWS ARE RE-GRAINED BY THAT UNIT'S OWN L1 PASS** (`E-8`) in
+the same edit as the deletion, and its `exactly-one-active` row already measures the repaired two-active write (D-94, D-3). No
+battery of this module is any pass's subject here: its rows measure the four routes, the witness and the six declarations,
+none of which this rev alters (D-3, D-94).
+
+## 8. What this document does not decide
+
+The battery's rows, already authored under `tests/integration/store-tabs-record/` and not re-grained by this rev (D-36 `F-1`,
+D-3), the landing pass's diff scope, and the `§5.U` matrix's operator rows, which stay `PARKED` until a human is at the
+window (L1 §3). It also does not decide the `['focus']` deletion's own sites: they carry one writer each, and none of them is
+this module's (§7, D-3).

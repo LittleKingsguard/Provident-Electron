@@ -22,6 +22,7 @@ const ctxOf = (ctx: unknown): PairContext => ctx as PairContext
 const MEMBERS = [
   'read',
   'readLiteral',
+  'readTiered',
   'write',
   'delete',
   'rollback',
@@ -46,28 +47,33 @@ describe('S-1 — the seam module is what the app imports', () => {
   it('S-1.1 — `src/main/storeroom.ts` exposes `createProfileStore` and the declared surface census', () => {
     expect(typeof createProfileStore).toBe('function')
     expect(STOREROOM_DECLARED_SURFACE.members).toEqual([...MEMBERS])
-    expect(STOREROOM_DECLARED_SURFACE.memberCount).toBe(14)
+    expect(STOREROOM_DECLARED_SURFACE.memberCount).toBe(15)
   })
 
   it('S-1.3 — package.json pins the reviewed package, and the pin is a caret RANGE so a patch fix lands'
     + ' without a repo change', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as
       { dependencies: Record<string, string> }
-    // **`1.9.3` IS THE PIN, AND THE PIN IS A CARET RANGE** — the release that makes the kernel's TWO instants
+    // **`1.10.0` IS THE PIN, AND THE PIN IS A CARET RANGE** (`D-134`) — the release whose ONE addition is the third read
+    // verb `readTiered`, which answers the durability tier at every node it returns. **THE MEMBER COUNTS ABOVE DID MOVE
+    // WITH IT, WHICH `1.9.3`'s DID NOT**: the fourteen became fifteen and `readTiered` sits THIRD in the instance's own
+    // order (measured: `read`, `readLiteral`, `readTiered`, `write`, …), so `S-1.1` and `S-1.2` read fifteen now. The
+    // figure moves here for the reason the row states: the pin follows the reviewed install, never the other way.
+    // *What stood before, kept as the reading it was*: **`1.9.3` IS THE PIN** — the release that makes the kernel's TWO instants
     // agree: the registration instant reads a returned outcome's `message` and `repair`, and a repair's return's
     // `ok`, as OWN members, exactly as the write's own evaluation reads them, so a member carried on a prototype
     // is a member neither instant reads — the divergence this repo filed as `ST-F1`, never patched here (`D-5`)
     // and discharged upstream at that release (`D-109`). The figure moves here for the reason the row states: the
     // pin follows the reviewed install, never the other way. **AND THE TWO MEMBER COUNTS ABOVE DID NOT MOVE WITH
     // IT** — `1.9.3` adds no name and no symbol, which is why `S-1.1` and `S-1.2` read the same fourteen (`D-109`).
-    expect(pkg.dependencies['provident-storeroom']).toBe('^1.9.3')
+    expect(pkg.dependencies['provident-storeroom']).toBe('^1.10.0')
   })
 
   it('S-1.2 — the store `createProfileStore` returns IS a storeroom store, member for member', () => {
     const store = createProfileStore()
     const own = Object.getOwnPropertyNames(store)
     expect(own).toEqual([...MEMBERS])
-    expect(own).toHaveLength(14)
+    expect(own).toHaveLength(15)
   })
 })
 

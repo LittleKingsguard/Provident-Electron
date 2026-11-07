@@ -14,11 +14,15 @@
  * HAVE A ROW THAT PROVES THE SUBSCRIPTION DOES SOMETHING**, or the count is a decoration:
  * this file is that row's subject, driven against a boundary double that models the wire.
  *
- * THE DOUBLE IS A BOUNDARY AND NOT A STORE: `read`/`commitPane`/`commitFocus`/`onChanged`
- * are the four members L2 §2 declares (`docs/L2/view-record/interface.md`), each recording
- * what it was handed. Nothing here opens an instance, and nothing here asserts the crossing's
- * own behaviour — that is `tests/integration/store-view-record/crossing.test.ts`'s, which
- * drives the real `provident-storeroom` instance.
+ * THE DOUBLE IS A BOUNDARY AND NOT A STORE: `read`/`commitPane`/`commitZones`/`commitTheme`/`onChanged` are the
+ * members L2 §2 declares (`docs/L2/view-record/interface.md`), each recording what it was handed. Nothing here opens an
+ * instance, and nothing here asserts the crossing's own behaviour — that is
+ * `tests/integration/store-view-record/crossing.test.ts`'s, which drives the real `provident-storeroom` instance.
+ *
+ * **THE FOCUS MEMBER AND ITS ROUTE ARE GONE WITH THE FAMILY** (`D-142`): this file spoke `commitFocus`, `focusState()` and
+ * a `focus` member of every answer, and the wire it models no longer has any of the three. So `C-7` — *"the focus route
+ * takes the whole mirror"* — RETIRES WITH ITS REFERENT (`D-9`), its id left unspent; `C-1`…`C-4`, `C-9` and `C-10` are
+ * RE-GRAINED onto the three surviving families, and `C-5`, `C-6` and `C-8` are UNTOUCHED because nothing they drive moved.
  *
  * WHAT IS CLAIMED: the shape is filled FROM A READ and never invented; a delivery costs
  * exactly one re-read and ZERO writes; a write is SENT and its receipt lands later; a
@@ -65,12 +69,12 @@ interface WirePane {
   readonly bounds: { readonly min: number; readonly max: number }
 }
 
-/** **THE BOUNDARY DOUBLE** — the four declared members, each recording what it was handed,
+/** **THE BOUNDARY DOUBLE** — the member's surviving routes, each recording what it was handed,
  *  with the routes' answers deferred so the caller's-turn/sent distinction is drivable. */
 interface BoundaryDouble {
   readonly member: unknown
   readonly reads: () => number
-  readonly writes: () => readonly { readonly route: 'pane' | 'focus' | 'theme'; readonly args: readonly unknown[] }[]
+  readonly writes: () => readonly { readonly route: 'pane' | 'zone' | 'theme'; readonly args: readonly unknown[] }[]
   readonly registrations: () => number
   readonly withdrawals: () => number
   /** Fire the one push the crossing sends after a committed write. */
@@ -81,10 +85,10 @@ interface BoundaryDouble {
   readonly nextRouteAnswer: (answer: Promise<unknown>) => void
   /** Make the next reads REJECT — a transport fault, which is a statement about the wire and never about the record. */
   readonly failReads: () => void
-  /** The reading the double's `read` answers when nothing else was installed. **THE THIRD FAMILY IS A PARAMETER WITH AN
+  /** The reading the double's `read` answers when nothing else was installed. **THE ZONE FAMILY IS A PARAMETER WITH AN
    *  EMPTY DEFAULT** (D-91): every row that does not drive a zone states the family's DECLARED EMPTY arm, and the one row
    *  that does supplies it — so no row can pass while the wire silently omitted the family, because the parse requires it. */
-  readonly committed: (panes: readonly WirePane[], entries: readonly unknown[], activeId: unknown, zones?: readonly WireZone[]) => ViewCommittedReading
+  readonly committed: (panes: readonly WirePane[], zones?: readonly WireZone[]) => ViewCommittedReading
 }
 
 /** The double's member, narrowed at the ONE place it crosses into the client's option type — a test double is a boundary,
@@ -94,17 +98,16 @@ const asBridge = (member: unknown): never => member as never
 function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?: boolean } = {}): BoundaryDouble {
   let reads = 0
   let withdrawals = 0
-  const writes: Array<{ route: 'pane' | 'focus' | 'theme'; args: readonly unknown[] }> = []
+  const writes: Array<{ route: 'pane' | 'zone' | 'theme'; args: readonly unknown[] }> = []
   const handlers: Array<() => void> = []
   let answer: unknown = {
     status: 'committed',
     panes: [{ id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } }],
-    focus: { entries: [], activeId: null },
     zones: [],
-    // **THE FOURTH FAMILY, AT THE PLACEHOLDER THE CREATION REPAIR MINTS** (D-97): a declaration whose `name` is absent,
+    // **THE APPEARANCE FAMILY, AT THE PLACEHOLDER THE CREATION REPAIR MINTS** (D-97): a declaration whose `name` is absent,
     // which is the one record that can be applied nowhere — so a row that drives the appearance family supplies its own.
     theme: PLACEHOLDER,
-    source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
+    source: { panes: 'record', zones: 'record', theme: 'record' },
   }
   let routeAnswer: Promise<unknown> = Promise.resolve({ status: 'committed' })
   let failing = false
@@ -113,8 +116,9 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
       writes.push({ route: 'pane', args: [id, geometry] })
       return routeAnswer
     },
-    commitFocus: (mirror: unknown): Promise<unknown> => {
-      writes.push({ route: 'focus', args: [mirror] })
+    // **THE ZONE ROUTE** (D-91): one id and the members the caller has, recorded as sent.
+    commitZones: (id: unknown, zone: unknown): Promise<unknown> => {
+      writes.push({ route: 'zone', args: [id, zone] })
       return routeAnswer
     },
     // **THE APPEARANCE ROUTE, ON THE MEMBER AND NOT ON THE DOUBLE** (D-97): it records the ACT it was handed — the setting
@@ -144,7 +148,7 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
   return {
     member,
     reads: (): number => reads,
-    writes: (): readonly { readonly route: 'pane' | 'focus' | 'theme'; readonly args: readonly unknown[] }[] => writes,
+    writes: (): readonly { readonly route: 'pane' | 'zone' | 'theme'; readonly args: readonly unknown[] }[] => writes,
     registrations: (): number => handlers.length,
     withdrawals: (): number => withdrawals,
     deliver: (): void => {
@@ -159,13 +163,12 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
     nextRouteAnswer: (next: Promise<unknown>): void => {
       routeAnswer = next
     },
-    committed: (panes: readonly WirePane[], entries: readonly unknown[], activeId: unknown, zones: readonly WireZone[] = []): ViewCommittedReading => ({
+    committed: (panes: readonly WirePane[], zones: readonly WireZone[] = []): ViewCommittedReading => ({
       status: 'committed',
       panes,
-      focus: { entries: entries as ViewCommittedReading['focus']['entries'], activeId: activeId as ViewCommittedReading['focus']['activeId'] },
       zones: zones as ViewCommittedReading['zones'],
       theme: PLACEHOLDER,
-      source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
+      source: { panes: 'record', zones: 'record', theme: 'record' },
     }),
   }
 }
@@ -189,14 +192,15 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
       min: DEFAULT_PANE_BOUNDS.min,
       max: DEFAULT_PANE_BOUNDS.max,
     })
-    expect(client.focusState(), 'the declared empty pair').toEqual({ entries: [], activeId: null })
     expect(client.zoneOf('zone-1'), 'and a zone answers its ABSENCE — the family has no measured default to give it (D-91)').toBeNull()
   })
 
   it('C-2 · `fill()` IS THE ONE STATED BOOT READ: it reads ONCE, adopts the answer WHOLE, and the shape then answers the record\'s own values with the crossing\'s two `source` words', async () => {
     const double = doubleOf()
     const client = createViewClient({ bridge: asBridge(double.member) })
-    double.answerWith(double.committed([pane('pane-a', 240), pane('pane-b', 90, 10, 400)], [{ id: 'a', target: 'page://a' }], 'a'))
+    double.answerWith(
+      double.committed([pane('pane-a', 240), pane('pane-b', 90, 10, 400)], [{ id: 'zone-1', size: 160, display: 'normal' }]),
+    )
     const reading = await client.fill()
     expect(double.reads(), 'exactly one read — the boot read is stated and single').toBe(1)
     expect(reading.status, 'the committed arm is the answer').toBe('committed')
@@ -205,12 +209,12 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
     expect(client.paneSizeOf('pane-a'), 'and the read is the record\'s value').toBe(240)
     expect(client.paneBoundsOf('pane-b'), 'the pair AS STORED, never a clamped policy').toEqual({ min: 10, max: 400 })
     expect(client.paneSizeOf('pane-never-written'), 'a pane the family does not name answers the measured default').toBe(DEFAULT_PANE_SIZE)
-    expect(client.focusState(), 'the mirror as the wire carried it').toEqual({ entries: [{ id: 'a', target: 'page://a' }], activeId: 'a' })
+    expect(client.zoneOf('zone-1'), 'the zone the wire carried, member for member').toEqual({ id: 'zone-1', size: 160, display: 'normal' })
     expect(
       client.shape().source,
-      'the record answered all four families — the appearance record included, whose `source` is the crossing\'s own word (D-97)',
-    ).toEqual({ panes: 'record', focus: 'record', zones: 'record', theme: 'record' })
-    expect(client.zoneOf('zone-1'), 'and a zone the empty family does not name answers its ABSENCE, not a geometry').toBeNull()
+      'the record answered all three families — the appearance record included, whose `source` is the crossing\'s own word (D-97)',
+    ).toEqual({ panes: 'record', zones: 'record', theme: 'record' })
+    expect(client.zoneOf('zone-never-written'), 'and a zone the family does not name answers its ABSENCE, not a geometry').toBeNull()
   })
 
   it('C-3 · THE ONE SUBSCRIPTION, AND THE DELIVERY\'S ONLY CORRECT ANSWER IS A FRESH READ: one registration, one push → exactly ONE re-read, and the shape is REPLACED WHOLE by what that read answered', async () => {
@@ -222,15 +226,15 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
     const subscription: ViewSubscription = client.subscribe((reading) => readings.push(reading.status))
     expect(subscription.subscribed, 'the push route exists, so the registration installs').toBe(true)
     expect(subscription.reason).toBeNull()
-    expect(double.registrations(), 'ONE registration over both families — the count the registers were re-grained to').toBe(1)
+    expect(double.registrations(), 'ONE registration over the families — the count the registers were re-grained to').toBe(1)
     // THE WRITE HAPPENS ELSEWHERE (the crossing's store) AND THE PUSH CARRIES AN ADDRESS, NOT A VALUE — so the only correct
     // answer to it is a re-read, and that read is what refills the shape.
-    double.answerWith(double.committed([pane('pane-a', 260)], [], null))
+    double.answerWith(double.committed([pane('pane-a', 260)]))
     double.deliver()
     await settle()
     expect(double.reads() - before, 'one delivery costs exactly one read').toBe(1)
     expect(client.paneSizeOf('pane-a'), 'and the shape is the new family — REPLACED, never amended in place').toBe(260)
-    expect(client.shape().focus.activeId, 'a family the read no longer carries is gone, not remembered').toBeNull()
+    expect(client.shape().zones, 'a family the read no longer carries is gone, not remembered').toEqual([])
     expect(readings, 'the caller\'s handler is handed the reading').toEqual(['committed'])
   })
 
@@ -243,7 +247,8 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
     await settle()
     client.paneSizeOf(DEFAULT_PANE_ID)
     client.paneBoundsOf(DEFAULT_PANE_ID)
-    client.focusState()
+    client.zoneOf('zone-1')
+    client.themeRecord()
     client.shape()
     expect(double.writes(), 'a read that misses leaves the miss; the repair that makes a family stand is the crossing\'s declaration at creation, never this side').toEqual([])
   })
@@ -276,12 +281,11 @@ describe('view client · the write is SENT, and its receipt is not the answer', 
     expect(outcome?.route).toBe('pane')
   })
 
-  it('C-7 · THE FOCUS ROUTE TAKES THE WHOLE MIRROR: `commitFocus` is sent one value and this side composes nothing', () => {
-    const double = doubleOf()
-    const client = createViewClient({ bridge: asBridge(double.member) })
-    client.commitFocus({ entries: [{ id: 'a', target: 'page://a' }], activeId: 'a' })
-    expect(double.writes()).toEqual([{ route: 'focus', args: [{ entries: [{ id: 'a', target: 'page://a' }], activeId: 'a' }] }])
-  })
+  // ── RETIRED WITH ITS REFERENT (`D-9`, `D-142`): `C-7`, 'THE FOCUS ROUTE TAKES THE WHOLE MIRROR' ──
+  // The row sent a whole mirror through `commitFocus` and read the route log. **THAT ROUTE, THAT MEMBER AND THE MIRROR'S
+  // WHOLE-VALUE COMPOSITION ALL LEAVE THE MODULE** (`D-142`), so the row has no subject and its id stays UNSPENT rather
+  // than being handed to another claim — a re-used id would make a prior reading unresolvable. The surviving routes'
+  // sent-write behaviour is `C-5`'s (panes) and `C-10`'s double (`commitZones`' log), which drive the same claim.
 })
 
 describe('view client · the release, and the arms that are VALUES', () => {
@@ -316,7 +320,7 @@ describe('view client · the release, and the arms that are VALUES', () => {
     // (c) A THROWING READ is a statement about the TRANSPORT: the shape keeps what it last read and the arm says so.
     const throwing = doubleOf()
     const throwingClient = createViewClient({ bridge: asBridge(throwing.member) })
-    throwing.answerWith(throwing.committed([pane('pane-a', 320)], [], null))
+    throwing.answerWith(throwing.committed([pane('pane-a', 320)]))
     await throwingClient.fill()
     throwing.failReads()
     const unread = await throwingClient.fill()
@@ -324,7 +328,8 @@ describe('view client · the release, and the arms that are VALUES', () => {
     expect(unread.status === 'unread' ? unread.detail : null, 'the transport\'s own message is carried, never swallowed').toBe('ipc boom')
     expect(throwingClient.shape().filled, 'and the shape KEEPS what it last read — a fault is not an empty record').toBe(true)
     expect(throwingClient.paneSizeOf('pane-a'), 'the last good family still answers').toBe(320)
-    // (d) AN UNDECLARED ANSWER IS NEVER A SHAPE DERIVED FROM A PARTIAL RECORD.
+    // (d) AN UNDECLARED ANSWER IS NEVER A SHAPE DERIVED FROM A PARTIAL RECORD. The answer below carries a `focus` member
+    // the wire no longer has AND omits the zone family the parse requires, so it is refused on the declared members.
     const partial = doubleOf()
     const partialClient = createViewClient({ bridge: asBridge(partial.member) })
     partial.answerWith({ status: 'committed', panes: 'not-an-array', focus: { entries: [] }, source: { panes: 'record', focus: 'record' } })
@@ -337,27 +342,25 @@ describe('view client · the release, and the arms that are VALUES', () => {
     expect(await refusedClient.fill()).toMatchObject({ status: 'unread', reason: 'answer-not-declared' })
   })
 
-  it('C-10 · THE SHAPE ADMITS WHAT IT READ: a member the boundary admits field-by-field is kept, a malformed pane is DROPPED, and a DANGLING active reads back as the absent active — the crossing\'s own dispositions, applied on this side of the wire', async () => {
+  it('C-10 · THE SHAPE ADMITS WHAT IT READ: a member the boundary admits field-by-field is kept, a malformed pane is DROPPED, and a malformed zone is dropped while an opaque slot is carried — the crossing\'s own dispositions, applied on this side of the wire', async () => {
     const double = doubleOf()
     const client = createViewClient({ bridge: asBridge(double.member) })
     double.answerWith({
       status: 'committed',
       panes: [pane('pane-a', 240), { id: 'pane-broken', size: 'x', bounds: { min: 0, max: 1 } }],
-      focus: { entries: [{ id: 'a', target: 'page://a' }], activeId: 'not-an-entry' },
       zones: [
         { id: 'zone-1', size: 160, display: 'normal', slot: 'doc-nav' },
         { id: 'zone-broken', size: 'x' },
         { id: 'zone-opaque', slot: { token: [1, 'two'] }, distance: 37 },
       ],
-      // the appearance record is the fourth REQUIRED member (D-97), and this row is about the three that admit member by
+      // the appearance record is a REQUIRED member (D-97), and this row is about the families that admit member by
       // member — so it is the placeholder, stated from the one spelling both realms read.
       theme: PLACEHOLDER,
-      source: { panes: 'record', focus: 'record', zones: 'record', theme: 'record' },
+      source: { panes: 'record', zones: 'record', theme: 'record' },
     } as unknown)
     await client.fill()
     expect(client.shape().panes.map((held) => held.id), 'the malformed member is not a pane the family names').toEqual(['pane-a'])
     expect(client.paneSizeOf('pane-broken'), 'and it answers the measured default rather than a partial record').toBe(DEFAULT_PANE_SIZE)
-    expect(client.focusState().activeId, 'an active naming no entry is the absent active, never a fourth spelling of "no active"').toBeNull()
     expect(client.shape().zones.map((held) => held.id), 'the malformed zone is DROPPED and the opaque slot is KEPT').toEqual(['zone-1', 'zone-opaque'])
     expect(client.zoneOf('zone-broken'), 'so the zone the family could not state answers its ABSENCE').toBeNull()
     expect(client.zoneOf('zone-1'), 'and the admitted one answers exactly the members the wire carried').toEqual({

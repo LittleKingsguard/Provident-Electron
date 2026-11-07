@@ -1,10 +1,20 @@
 // tests/integration/store-view-record/crossing.test.ts — THE L2/L3 BATTERY for `view-record`: the crossing's second
 // declaration set, over the central instance (D-87).
 //
-// THE CONTRACT: `docs/L3/view-record/design.md` §4 — TWO registered pairs, one at each root (`panes-must-stand` at
-// `['panes']` and `focus-must-stand` at `['focus']`), each answering `true` or `{ message, repair }`, where the repair
-// leaves ONE whole legal family and RETURNS the op its write landed (`{ ok: true, op }`, the shape the kernel credits
-// through `landedOp`); and `docs/L2/view-record/interface.md` §2 — four routes, and §3 — the change push.
+// **RE-GRAINED FOR `D-142`, WHICH DROPS THE `focus` FAMILY WHOLE**: this module declares THREE pairs now — at `['panes']`
+// (`file`), `['zones']` (`mem`) and `['theme']` (`file`) — and the bridge member carries `read`, `commitPane`,
+// `commitZones`, `commitTheme` and `onChanged`. **FOUR `['focus']` ROWS RETIRE WITH THEIR REFERENT** (`D-9`): the
+// creation-instant mirror row, the `mem`-family re-mint row, the focus route's shape arms and the whole-mirror round trip,
+// because the address, the pair, the route and its two reason tokens leave `src/main/view-record/index.ts` in the same
+// edit (`D-142`). The clauses those rows carried keep owners — the `mem` family's creation instant and re-mint at
+// `zone-family.test.ts`'s `Z-1`/`Z-5`, and the surviving routes' shape arms at the panes row below and at `Z-8`/`TH-11` —
+// so nothing this file measured is left unowned. **ONE ROW IS NEW AND IT MEASURES THE DELETION ITSELF** — the last row of
+// the wiring block — because a route leaving one side alone is the defect this change could ship.
+//
+// THE CONTRACT: `docs/L3/view-record/design.md` §4 — ONE registered pair per surviving root, each answering `true` or
+// `{ message, repair }`, where the repair leaves ONE whole legal family and RETURNS the op its write landed (`{ ok: true,
+// op }`, the shape the kernel credits through `landedOp`); and `docs/L2/view-record/interface.md` §2 — the member's
+// surviving routes, and §3 — the change push (`D-142`, `D-87`, `D-91`, `D-97`).
 //
 // **THE FOUR CLAUSES OF THE CONVENTION (`D-82`), DRIVEN PER ADDRESS AND NEVER ASSERTED IN PROSE** (§5 below):
 //  1. EXISTENCE + PLACEHOLDER REPAIR, DRIVEN AT THE CREATION INSTANT — the batch supplied, the address absent, the
@@ -12,19 +22,17 @@
 //  2. A LISTENER CARRIES THE CHANGE — once per committed change of that family, ZERO on a write that touches nothing,
 //     and it reaches the bridge;
 //  3. BOOT DATA FROM FILE OR FROM A REPAIR — two successive boots answer the same state, and the `mem` family is
-//     re-minted at every boot because a `mem` value can never come from a file (`D-84`);
+//     re-minted at every boot because a `mem` value can never come from a file (`D-84`; that arm is `Z-5`'s now, `D-142`);
 //  4. WRITES DRIVEN BY EXTERNAL EVENTS ONLY — every write path is an IPC route or a constraint repair, and no timer,
 //     no poll and no write-on-read stands anywhere in the module.
 //
 // **THE MEASUREMENTS THIS FILE RESTS ON WERE TAKEN BEFORE IT WAS WRITTEN**, on the installed
 // `provident-storeroom@1.9.1`, one fresh instance per arm: a nested write does NOT create its parent
 // (`AddressNotFound: 'view' does not exist in ''`), which is why each family is ONE WHOLE VALUE at its own root; a root
-// written at `file` answers its descendants at `file` and answers `TierNotFound` at `mem`, which is why the two families
-// do not share one root; a registration-instant repair's record is `{address, id, tier, value, op, pending, write}` with
-// `write` a FUNCTION and `tier: null`; `null` and `undefined` are REFUSED at the crossing's boundary
-// (`ValueRefusedAtBoundary`), which is why the empty active id is written as ABSENCE rather than as `null`; and a
-// registration-instant `file`-tier repair IS in the file when the constructor returns while a `mem` one is not
-// (`D-86`'s release read at these two addresses).
+// written at `file` answers its descendants at `file` and answers `TierNotFound` at `mem`, which is why the families do
+// not share one root; a registration-instant repair's record is `{address, id, tier, value, op, pending, write}` with
+// `write` a FUNCTION and `tier: null`; and a registration-instant `file`-tier repair IS in the file when the constructor
+// returns while a `mem` one is not (`D-86`'s release read at these addresses).
 //
 // This authority this repo's (`docs/L2`, `docs/L3`) and the package's own guide, never the package's internals.
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
@@ -39,13 +47,9 @@ import {
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
-  DANGLING_ACTIVE_REASON,
-  FOCUS_SHAPE_REASON,
   paneGeometryIn,
   PANE_GEOMETRY_REASON,
   PANE_SHAPE_REASON,
-  VIEW_FOCUS_ADDRESS,
-  VIEW_FOCUS_MUST_STAND_ID,
   VIEW_PANES_ADDRESS,
   VIEW_PANES_MUST_STAND_ID,
   VIEW_THEME_ADDRESS,
@@ -53,12 +57,12 @@ import {
   VIEW_ZONES_ADDRESS,
   VIEW_ZONES_MUST_STAND_ID,
   viewConstraintDeclarations,
+  viewDeclaredRoots,
   writeJoinedAt,
 } from '../../../src/main/view-record'
 import type {
   ViewConstraintAnswer,
   ViewConstraintDeclaration,
-  ViewFocusMirror,
   ViewRecord,
   ViewRecordStore,
   ViewRepairAnswer,
@@ -66,7 +70,6 @@ import type {
 import { createViewSurface } from '../../../src/main/view-surface'
 import {
   IPC_VIEW_CHANGED,
-  IPC_VIEW_FOCUS_COMMIT,
   IPC_VIEW_PANE_COMMIT,
   IPC_VIEW_READ,
   IPC_VIEW_THEME_COMMIT,
@@ -89,7 +92,8 @@ function commentElided(source: string): string {
 
 const sourceOf = (path: string): string => readFileSync(new URL(path, REPO), 'utf8')
 
-/** The batch a boot supplies: the two declarations, mapped the way `src/main/main.ts` maps them. */
+/** The batch a boot supplies: this module's surviving declarations, spread as `src/main/main.ts` maps them — never
+ *  enumerated here, because a count of the batch is `central-data`'s row to state (`D-43`, `D-142`). */
 const batchOf = (getStore: () => ViewRecordStore | null) =>
   viewConstraintDeclarations(getStore).map((declaration) => ({
     address: declaration.address,
@@ -118,7 +122,7 @@ const voidRepairDeclaration: ViewConstraintDeclaration = {
 }
 
 // @ts-expect-error — and a BODY that answers nothing is not a `ViewConstraintAnswer` either
-const voidConstraintBody: ViewConstraintDeclaration = { address: ['focus'], id: 'a-void-body', constraint: (): void => undefined }
+const voidConstraintBody: ViewConstraintDeclaration = { address: ['zones'], id: 'a-void-body', constraint: (): void => undefined }
 
 declare const aStore: ViewRecordStore
 const aCarrier = { pending: [] }
@@ -131,13 +135,13 @@ const joinedRepairWrite = (): unknown => writeJoinedAt(aStore, aCarrier, VIEW_PA
 const carrierlessRepairWrite = (): unknown => writeJoinedAt(aStore, undefined, VIEW_PANES_ADDRESS, 'file', anIntendedFamily)
 
 // @ts-expect-error — `null` is not a commit: the position admits a non-null object, and naming nothing is not naming one
-const nullCarrierRepairWrite = (): unknown => writeJoinedAt(aStore, null, VIEW_FOCUS_ADDRESS, 'mem', { entries: [] })
+const nullCarrierRepairWrite = (): unknown => writeJoinedAt(aStore, null, VIEW_ZONES_ADDRESS, 'mem', {})
 
 let dir: string
 let holder: ViewRecordStore | null = null
 let record: ViewRecord
 
-/** A record over a real store built the way the boot builds it: the two declarations batched at construction (D-65). */
+/** A record over a real store built the way the boot builds it: the surviving declarations batched at construction (D-65). */
 const open = (): void => {
   dir = mkdtempSync(join(tmpdir(), 'view-crossing-'))
   holder = null
@@ -166,7 +170,7 @@ const boot = (path: string): { store: ViewRecordStore; read: () => ReturnType<Vi
 
 // ═══════════════ CLAUSE 1 — EXISTENCE + PLACEHOLDER REPAIR AT THE CREATION INSTANT, PER ADDRESS ═══════════════
 
-describe('view-record · clause 1 — all FOUR addresses repaired at the CREATION INSTANT, each to its measured placeholder', () => {
+describe('view-record · clause 1 — all THREE surviving addresses repaired at the CREATION INSTANT, each to its measured placeholder', () => {
   it('THE CREATION INSTANT: `panes-must-stand` writes the MEASURED default family BEFORE ANY ROUTE OF THE MODULE RUNS — the store\'s own read answers it, and the record reads `source: record` — while a store carrying NO batch answers `AddressNotFound` at the same address, which is the absent arm this pair exists to repair', () => {
     // THE ABSENCE→REPAIR PATH, DRIVEN FROM ITS OWN STORE so the row measures the CONSTRUCTION rather than a store this
     // file already opened: nothing is committed and no route of the module has been called when the store is read.
@@ -200,53 +204,28 @@ describe('view-record · clause 1 — all FOUR addresses repaired at the CREATIO
 
       const fresh = createViewRecord({ store: bound.current })
       const read = fresh.read()
-      expect(read.source, 'all four families stand because a repair put them there, and the read says which').toEqual({
+      expect(read.source, 'all three surviving families stand because a repair put them there, and the read says which').toEqual({
         panes: 'record',
-        focus: 'record',
         zones: 'record',
         theme: 'record',
       })
       expect(read.panes, 'and the record reads the family the repair wrote').toEqual([
         { id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
       ])
-      expect(read.focus, 'the mirror stands at the model\'s own declared empty pair').toEqual({ entries: [], activeId: null })
+      // **AND THE ANSWER CARRIES NO `focus` MEMBER AT ALL** (D-142): the mirror's root, pair and read are deleted with the
+      // family, so an answer that still named one would be a shape this module's document does not declare.
+      expect(Object.hasOwn(read, 'focus'), 'the read carries no mirror: the family is gone, not defaulted').toBe(false)
+      expect(Object.hasOwn(read.source, 'focus'), 'and no `source` word stands for it either').toBe(false)
     } finally {
       rmSync(instant, { recursive: true, force: true })
     }
   })
 
-  it('THE FOCUS MIRROR AT THE CREATION INSTANT: `focus-must-stand` mints it at the `mem` root — the same absent-arm control as the panes pair, and the same `source: record` once the batch is supplied', () => {
-    const instant = mkdtempSync(join(tmpdir(), 'view-focus-construction-'))
-    try {
-      const bare = createProfileStore({ filePath: join(instant, 'bare.json') })
-      let absent = ''
-      try {
-        bare.read(VIEW_FOCUS_ADDRESS, 'mem')
-      } catch (caught) {
-        absent = (caught as { status?: string }).status ?? ''
-      }
-      expect(absent, 'a store with no declaration holds NOTHING at `[\'focus\']`').toBe('AddressNotFound')
-
-      const bound: { current: ViewRecordStore | null } = { current: null }
-      const store = createProfileStore({ filePath: join(instant, PROFILE_FILE), constraints: batchOf(() => bound.current) as never })
-      bound.current = store as unknown as ViewRecordStore
-      expect(store.read(VIEW_FOCUS_ADDRESS, 'mem'), 'the mirror stands, and the absent active is spelled as ABSENCE').toEqual({ entries: [] })
-      // **THE SPELLING IS MEASURED AND NOT STYLISTIC**: `null` is refused at the crossing's own boundary, so a mirror
-      // carrying one could not be written at all. The proof is the boundary itself, driven here rather than asserted.
-      let refused = ''
-      try {
-        store.write(VIEW_FOCUS_ADDRESS, 'mem', { entries: [], activeId: null })
-      } catch (caught) {
-        refused = (caught as { status?: string }).status ?? ''
-      }
-      expect(refused, '`null` is not a value the crossing admits, which is why the empty active is written as absence').toBe('ValueRefusedAtBoundary')
-      const read = createViewRecord({ store: bound.current }).read()
-      expect(read.focus, 'the read maps the absence back to the model\'s `null` and says the repair is why').toEqual({ entries: [], activeId: null })
-      expect(read.source.focus).toBe('record')
-    } finally {
-      rmSync(instant, { recursive: true, force: true })
-    }
-  })
+  // ── RETIRED WITH ITS REFERENT (`D-9`, `D-142`): 'THE FOCUS MIRROR AT THE CREATION INSTANT' ──
+  // The row drove `focus-must-stand` at `['focus']` at `mem`, its absent-arm control and the `null`-refused-at-boundary
+  // proof that forced the absence spelling. **THE ADDRESS, THE PAIR AND THE READ ALL LEAVE THE MODULE** (`D-142`), so the
+  // row's subject does not exist to be measured; the `mem` family that survives has the same creation-instant arm measured
+  // at its own address by `zone-family.test.ts`'s `Z-1`/`Z-5`, which is where a reader should look for it (D-9).
 
   it('THE PLACEHOLDER IS IN THE RECORD AND NOT SUBSTITUTED AT THE READ: a profile seeded with a pane family the file brought is UNTOUCHED, and the family the record reads is the FILE\'S — `pane-b` at 240 — not the placeholder', () => {
     // WITHOUT THIS ROW the pair above could pass by overwriting every family it is asked about, which would make the
@@ -311,7 +290,7 @@ describe('view-record · clause 1 — all FOUR addresses repaired at the CREATIO
 // ═══════════════ CLAUSE 2 — A LISTENER CARRIES THE CHANGE, ONCE PER COMMITTED CHANGE, ZERO ELSEWHERE ═══════════════
 
 describe('view-record · clause 2 — the push, measured per family and against a control that keeps a zero from being dead', () => {
-  it('ONE DELIVERY PER COMMITTED CHANGE OF EITHER FAMILY — a pane commit is 1, a second pane commit is 2, a focus commit is 3, and the withdrawal is the answer — a counter, because a listener the store never registered fires nothing, silently', () => {
+  it('ONE DELIVERY PER COMMITTED CHANGE OF EITHER FAMILY — a pane commit is 1, a second pane commit is 2, a ZONE commit is 3, and the withdrawal is the answer — a counter, because a listener the store never registered fires nothing, silently', () => {
     let delivered = 0
     const off = record.subscribe(() => {
       delivered += 1
@@ -320,8 +299,8 @@ describe('view-record · clause 2 — the push, measured per family and against 
     expect(delivered, 'a committed change of the PANES family delivers exactly one notification').toBe(1)
     expect(record.commitPane(DEFAULT_PANE_ID, { size: 140 }).status).toBe('committed')
     expect(delivered, 'a second committed change delivers exactly one more — never one per family standing at a root').toBe(2)
-    expect(record.commitFocus({ entries: [{ id: 'a', target: 'a' }], activeId: 'a' }).status, 'the focus commit commits').toBe('committed')
-    expect(delivered, 'a committed change of the FOCUS family delivers exactly one more').toBe(3)
+    expect(record.commitZones('zone-1', { size: 160, display: 'normal' }).status, 'the zone commit commits').toBe('committed')
+    expect(delivered, 'a committed change of the ZONES family delivers exactly one more').toBe(3)
     off()
     expect(record.commitPane(DEFAULT_PANE_ID, { size: 160 }).status, 'a commit after the withdrawal still commits').toBe('committed')
     expect(delivered, 'the withdrawal is the answer: no delivery follows it').toBe(3)
@@ -349,8 +328,8 @@ describe('view-record · clause 2 — the push, measured per family and against 
     surface.attach()
     expect(surface.commitPane(DEFAULT_PANE_ID, { size: 111 }).status).toBe('committed')
     expect(bridged, 'the main-side half: one committed pane change reaches the broadcast').toBe(1)
-    expect(surface.commitFocus({ entries: [], activeId: null }).status).toBe('committed')
-    expect(bridged, 'and one committed focus change reaches it too, over the one subscription').toBe(2)
+    expect(surface.commitZones('zone-1', { size: 140, display: 'normal' }).status, 'a committed change of a second family').toBe('committed')
+    expect(bridged, 'and one committed zone change reaches it too, over the one subscription').toBe(2)
     surface.detach()
     expect(surface.commitPane(DEFAULT_PANE_ID, { size: 112 }).status).toBe('committed')
     expect(bridged, '`detach` withdraws exactly what `attach` took').toBe(2)
@@ -378,19 +357,22 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
       const oneBytes = one.bytes()
       one.close()
       // **BOOT ONE'S BYTES CARRY THE TWO `file` ROOTS AND NEITHER `mem` ONE**: `panes` and, from `D-98`, `theme` are
-      // `file` values whose repairs' saves ride the landing arm (`D-86`), while `focus` is a `mem` value and no save of
-      // it can reach a file at all. The set is asserted BY NAME, so a third root arriving would red here rather than pass.
+      // `file` values whose repairs' saves ride the landing arm (`D-86`), while `zones` is a `mem` value and no save of it
+      // can reach a file at all. The set is asserted BY NAME, so a third root arriving would red here rather than pass.
       expect(Object.keys(JSON.parse(oneBytes) as Record<string, unknown>), 'the boot wrote the TWO `file` families and no other root').toEqual([
         'panes',
         'theme',
       ])
-      expect(oneBytes.includes('focus'), 'and the `mem` family is in NO byte of the profile').toBe(false)
-      expect(oneBytes.includes('zones'), 'nor is the second `mem` family').toBe(false)
+      // **AND THE DELETED ADDRESS HAS NO FILE IMAGE EITHER** (`D-142`): this arm survives the retirement because it asks
+      // the same question of a gone family that it asked of a `mem` one — a deleted address cannot reach a profile.
+      expect(oneBytes.includes('focus'), 'the retired `[\'focus\']` address is in NO byte of the profile').toBe(false)
+      expect(oneBytes.includes('zones'), 'nor is the surviving `mem` family').toBe(false)
 
       const two = boot(path)
       try {
         expect(two.read().panes, 'boot two answers boot one\'s family').toEqual(first.panes)
-        expect(two.read().focus, 'and the same mirror').toEqual(first.focus)
+        expect(two.read().theme, 'and the same appearance record, which is the second `file` family').toEqual(first.theme)
+        expect(two.read().zones, 'while the `mem` family is re-minted rather than carried').toEqual([])
         expect(two.bytes(), 'the file is byte-identical across the two boots (nothing re-wrote it)').toBe(oneBytes)
       } finally {
         two.close()
@@ -400,45 +382,15 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
     }
   })
 
-  it('AND THE `mem` FAMILY IS RE-MINTED AT EACH BOOT, MEASURED AT THE PAIR\'S OWN CONTEXT: boot two is handed the address ABSENT and its repair writes it again — which is clause 3 answered for a family a file can never carry', () => {
-    const instant = mkdtempSync(join(tmpdir(), 'view-remint-'))
-    const path = join(instant, PROFILE_FILE)
-    try {
-      // A FIRST BOOT, so the profile is the product's own image.
-      const one = boot(path)
-      expect(one.read().source.focus).toBe('record')
-      one.close()
-      // **THE INSTRUMENT IS THE PAIR WRAPPED, NOT A PROBE BESIDE IT** — the `D-84` shape: every context the engine hands
-      // `focus-must-stand` is recorded, so the ABSENCE at the creation instant and the RE-RUN over the repaired value
-      // are both read at the site they happen rather than inferred from the record the boot leaves.
-      const seen: unknown[] = []
-      const bound: { current: ViewRecordStore | null } = { current: null }
-      const second = createProfileStore({
-        filePath: path,
-        constraints: viewConstraintDeclarations(() => bound.current)
-          .map((declaration) => ({
-            address: declaration.address,
-            id: declaration.id,
-            constraint: (context: unknown) => {
-              if (declaration.id === VIEW_FOCUS_MUST_STAND_ID) seen.push((context as { value?: unknown }).value)
-              return declaration.constraint(context)
-            },
-          })) as never,
-      })
-      bound.current = second as unknown as ViewRecordStore
-      expect(seen.length, 'the engine ASKS the mirror\'s pair at the creation instant — a pair the batch does not carry is asked nowhere, and this row reds on that revert').toBeGreaterThan(0)
-      expect(seen[0], 'boot two is handed NOTHING at `[\'focus\']`: a `mem` value never came from a file').toBeUndefined()
-      expect(seen[seen.length - 1], 'and the registration\'s own RE-RUN reads the mirror the repair landed, in the same instant').toEqual({ entries: [] })
-      const read = createViewRecord({ store: bound.current }).read()
-      expect(read.focus, 'so the mirror stands, at the model\'s declared empty pair').toEqual({ entries: [], activeId: null })
-      expect(read.source.focus, 'because a repair put it there, at this boot as at the last').toBe('record')
-      expect(readFileSync(path, 'utf8').includes('focus'), 'and not one byte of it reached the profile').toBe(false)
-    } finally {
-      rmSync(instant, { recursive: true, force: true })
-    }
-  })
+  // ── THE SECOND CLAUSE-3 ROW IS RETIRED WITH ITS REFERENT (`D-9`, `D-142`) ──
+  // 'AND THE `mem` FAMILY IS RE-MINTED AT EACH BOOT' wrapped `focus-must-stand` to read the creation instant's absent
+  // value and the registration's own re-run, at `['focus']`. **THE PAIR, THE ADDRESS AND THE READ ARE DELETED WITH THE
+  // FAMILY**, and the same clause for the `mem` family that SURVIVES is `zone-family.test.ts`'s `Z-5`, which wraps
+  // `zones-must-stand` in exactly this shape — absent at the creation instant, the repaired value at the re-run, not one
+  // byte in the profile. So the claim keeps an owner and this row, whose subject is gone, retires rather than being
+  // re-pointed at a family another file already measures.
 
-  it('THE LANDING INSTANT IS REACHABLE AND ITS REPAIR NAMES THE COMMIT AT `write`\'s FOURTH POSITION: a `delete` of either root is re-minted inside the SAME commit, answering a credited arm and delivering ONE notification — not two', () => {
+  it('THE LANDING INSTANT IS REACHABLE AND ITS REPAIR NAMES THE COMMIT AT `write`\'s FOURTH POSITION: a `delete` of a root is re-minted inside the SAME commit, answering a credited arm and delivering ONE notification — not two', () => {
     // THE ARM THIS MODULE'S OWN ROUTES CANNOT PRODUCE, DRIVEN WHERE IT CAN BE: `provident.data.delete` is a client act on
     // the SAME instance (D-79/D-80 pinned it there), so a deleted family is repaired at a LANDING instant. The row
     // measures the second of the two routes `writeWholeValue` carries, which is the one `D-73` requires a carrier for.
@@ -453,11 +405,18 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
     expect(delivered, 'the delete is ONE committed change, its repair\'s joined write being no second delivery').toBe(1)
     expect((receipt.triggered ?? []).map((entry) => entry.handle)).toContain(VIEW_PANES_MUST_STAND_ID)
     expect(record.read().panes, 'and the family stands again, at the measured placeholder').toEqual(before)
-    // THE OTHER ROOT, THE SAME WAY.
+    // THE OTHER SURVIVING ROOT, THE SAME WAY: the `mem` family's landing arm, which the retired focus row used to carry.
     delivered = 0
-    expect(store.write(VIEW_FOCUS_ADDRESS as never, 'mem', { entries: [{ id: 'x', target: 'x' }], activeId: 'x' }).op).toBeDefined()
-    expect(delivered, 'a focus commit delivers once').toBe(1)
-    expect(record.read().focus).toEqual({ entries: [{ id: 'x', target: 'x' }], activeId: 'x' })
+    expect(store.write(VIEW_ZONES_ADDRESS as never, 'mem', { 'zone-1': { size: 160, display: 'normal' } }).op).toBeDefined()
+    expect(delivered, 'a zone write delivers once').toBe(1)
+    expect(record.read().zones).toEqual([{ id: 'zone-1', size: 160, display: 'normal' }])
+    delivered = 0
+    const zonesReceipt = store.delete(VIEW_ZONES_ADDRESS as never) as { triggered?: readonly { handle: string }[] }
+    expect(delivered, 'and its delete is ONE committed change, its repair re-minting the family inside that commit').toBe(1)
+    expect((zonesReceipt.triggered ?? []).map((entry) => entry.handle), 'the pair that answered is the zone family\'s').toContain(
+      VIEW_ZONES_MUST_STAND_ID,
+    )
+    expect(record.read().zones, 'leaving the placeholder that names no zone').toEqual([])
     off()
   })
 })
@@ -465,7 +424,7 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
 // ═══════════════ CLAUSE 4 — WRITES DRIVEN BY EXTERNAL EVENTS ONLY ═══════════════
 
 describe('view-record · clause 4 — every write path is an IPC route or a constraint repair, and a read writes nothing', () => {
-  it('THE ENUMERATION, AND IT IS EXHAUSTIVE BY CONSTRUCTION: the module\'s only `write` calls sit inside `commitPane`, `commitFocus` and the one repair path — and NO TIMER, NO POLL AND NO INTERVAL stands in it, read over comment-elided code', () => {
+  it('THE ENUMERATION, AND IT IS EXHAUSTIVE BY CONSTRUCTION: the module\'s only `write` calls sit inside `commitPane`, `commitZones`, `commitTheme` and the one repair path — and NO TIMER, NO POLL AND NO INTERVAL stands in it, read over comment-elided code', () => {
     const module = commentElided(sourceOf('src/main/view-record/index.ts'))
     const surface = commentElided(sourceOf('src/main/view-surface/index.ts'))
     for (const forbidden of ['setTimeout', 'setInterval', 'setImmediate', 'requestAnimationFrame', 'queueMicrotask']) {
@@ -476,15 +435,17 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     expect(/\bsetTimeout\s*\(/.test('const t = setTimeout(fn, 0)'), 'the instrument fires on a synthetic timer').toBe(true)
     // AND THE WRITE SITES ARE COUNTABLE: `store.write(` occurs exactly as often as there are write paths. The repair path
     // names it once (through `writeJoinedAt`), so the census is stated as a figure a new path would break.
-    expect((module.match(/\.write\(/g) ?? []).length, 'the module reaches a write through exactly ONE helper (`writeJoinedAt`) plus the two caller routes').toBeGreaterThan(0)
+    expect((module.match(/\.write\(/g) ?? []).length, 'the module reaches a write through exactly ONE helper (`writeJoinedAt`) plus the caller routes').toBeGreaterThan(0)
     expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'the pane route writes the family whole').toBe(true)
-    expect(/\.write\(VIEW_FOCUS_ADDRESS, FOCUS_TIER/.test(module), 'the focus route writes the mirror whole').toBe(true)
     expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'and the zone route writes its family whole (D-91)').toBe(true)
     expect(/\.write\(VIEW_THEME_ADDRESS, THEME_TIER/.test(module), 'and the appearance route writes its act whole (D-97)').toBe(true)
+    // **THE FOCUS ROUTE'S WRITE SITE IS GONE WITH THE ROUTE** (`D-142`) — the census below is the module's own and a
+    // deleted route leaves it; a family re-added at a fifth site would red here rather than arrive unnoticed.
+    expect(/FOCUS_TIER/.test(module), 'no tier constant stands for the retired family').toBe(false)
     expect(
       (module.match(/\.write\(VIEW_/g) ?? []).length,
-      'FOUR routes write, and the ONE repair path writes through ONE helper — a fifth write site would be a write path clause 4 has not seen',
-    ).toBe(4)
+      'THREE routes write, and the ONE repair path writes through ONE helper — a fourth write site would be a write path clause 4 has not seen',
+    ).toBe(3)
   })
 
   it('NO WRITE ON READ, MEASURED BOTH WAYS: a read lands no byte over a standing family, and a read over a store whose batch NEVER RAN answers the declared defaults WITHOUT minting either family', () => {
@@ -502,20 +463,18 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     const barePath = join(dir, 'bare.json')
     const bare = createProfileStore({ filePath: barePath })
     const overBare = createViewRecord({ store: bare as unknown as ViewRecordStore }).read()
-    expect(overBare.source, 'no declaration ran, so no family of the FOUR stands').toEqual({
+    expect(overBare.source, 'no declaration ran, so no family of the THREE stands').toEqual({
       panes: 'default',
-      focus: 'default',
       zones: 'default',
       theme: 'default',
     })
     expect(overBare.panes, 'the pane family answers the measured default through the declared arm, never a minted record').toEqual([])
-    expect(overBare.focus, 'and the mirror the declared empty pair').toEqual({ entries: [], activeId: null })
     expect(overBare.zones, 'and the zone family at the arm that names no zone — never a geometry minted at a read').toEqual([])
     expect(
       overBare.theme,
       'and the appearance record at the placeholder, whose declaration names no attribute — never a resolution minted at a read (D-97)',
     ).toEqual({ token: null, attribute: null, declaration: { name: null, value: '', removal: true } })
-    for (const address of [VIEW_PANES_ADDRESS, VIEW_FOCUS_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]) {
+    for (const address of [VIEW_PANES_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]) {
       for (const tier of ['file', 'mem'] as const) {
         let absent = ''
         try {
@@ -556,41 +515,12 @@ describe('view-record · the routes', () => {
     expect(record.read().panes.map((pane) => pane.id).sort(), 'both panes stand').toEqual(['pane-a', 'pane-z'])
   })
 
-  it('THE FOCUS ROUTE\'S ARMS: a non-record, an entry list that is not a list, an entry with no comparable id, an id repeated, and an active id that names no entry — each refused under its own reason, the last one under the token this module mints for it', () => {
-    const before = record.read()
-    expect(record.commitFocus(null), 'no mirror').toMatchObject({ status: 'refused', reason: FOCUS_SHAPE_REASON })
-    expect(record.commitFocus({ entries: 7 }), 'an entry list that is not a list').toMatchObject({ status: 'refused', reason: FOCUS_SHAPE_REASON })
-    expect(record.commitFocus({ entries: [{ target: 'x' }] }), 'an entry with no id').toMatchObject({ status: 'refused', reason: FOCUS_SHAPE_REASON })
-    expect(record.commitFocus({ entries: [{ id: {}, target: 'x' }] }), 'an id `===` cannot compare by value').toMatchObject({ status: 'refused', reason: FOCUS_SHAPE_REASON })
-    expect(record.commitFocus({ entries: [{ id: 'a', target: null }] }), 'a target the crossing would refuse').toMatchObject({ status: 'refused', reason: FOCUS_SHAPE_REASON })
-    expect(record.commitFocus({ entries: [{ id: 'a', target: 'a' }, { id: 'a', target: 'b' }] }), 'one id twice').toMatchObject({ status: 'refused', reason: FOCUS_SHAPE_REASON })
-    // **THE DANGLING ARM, UNDER ITS OWN TOKEN** — the `order` seat's fault at the other family (D-83), and the sentence
-    // names the mirror's own membership rather than a shape.
-    expect(record.commitFocus({ entries: [{ id: 'a', target: 'a' }], activeId: 'b' }), 'an active id the mirror does not hold').toMatchObject({
-      status: 'refused',
-      reason: DANGLING_ACTIVE_REASON,
-    })
-    expect(record.read(), 'and the mirror stands exactly as it stood').toEqual(before)
-  })
-
-  it('THE MIRROR ROUTE CARRIES THE MODEL\'S STATE WHOLE, WITH THE ABSENT ACTIVE SPELLED AS ABSENCE: a two-entry mirror with one active round-trips, and the same mirror with nothing active writes NO `activeId` member at all', () => {
-    const mirror: ViewFocusMirror = {
-      entries: [
-        { id: 'a', target: 'page://a', label: 'one' },
-        { id: 'b', target: 'page://b' },
-      ],
-      activeId: 'b',
-    }
-    expect(record.commitFocus(mirror).status, 'the whole mirror lands').toBe('committed')
-    expect(record.read().focus, 'and reads back as it was written').toEqual(mirror)
-    expect(record.commitFocus({ entries: mirror.entries, activeId: null }).status).toBe('committed')
-    const store = holder
-    if (store === null) throw new Error('the battery needs the instance it opened')
-    expect(store.read(VIEW_FOCUS_ADDRESS as never, 'mem'), 'nothing active is NO member, because `null` cannot cross the boundary').toEqual({
-      entries: [{ id: 'a', target: 'page://a', label: 'one' }, { id: 'b', target: 'page://b' }],
-    })
-    expect(record.read().focus.activeId, 'and the read answers the model\'s `null` for it').toBeNull()
-  })
+  // ── TWO ROWS RETIRED WITH THEIR REFERENT (`D-9`, `D-142`) ──
+  // 'THE FOCUS ROUTE'S ARMS' drove `commitFocus`'s shape arms and its two reason tokens — `malformed-focus` and
+  // `dangling-active` — and 'THE MIRROR ROUTE CARRIES THE MODEL'S STATE WHOLE' drove its whole-value round trip and the
+  // absent-active spelling. **`commitFocus`, both tokens and the mirror's read all leave the module in the same edit**
+  // (`D-142`), so neither row has a subject; the surviving routes' shape arms are the row above (panes) and
+  // `zone-family.test.ts`'s `Z-8` (zones), and the appearance route's are `theme-family.test.ts`'s `TH-11`.
 
   it('THE PURE DEFAULT, OUT OF A READING AND WITH NO STORE VERB: `paneGeometryIn` answers the measured geometry for a pane the family does not name, says so, and answers the record\'s own when it does', () => {
     const panes = record.read().panes
@@ -610,24 +540,36 @@ describe('view-record · the routes', () => {
 // ═══════════════ THE WIRING: ONE BATCH, ONE CONSTRUCTION, ONE PAIR OF LOCKSTEP DECLARATIONS ═══════════════
 
 describe('view-record · the boot\'s wiring, read as code and never as prose', () => {
-  it('THE BATCH IS THE TAB RECORD\'S SIX AND THIS MODULE\'S FOUR, IN THE ONE `createProfileStore` CALL — over comment-elided code, with the raw bytes carrying the names as the positive control', () => {
+  it('THE BATCH IS THE TAB RECORD\'S SIX AND THIS MODULE\'S SURVIVING PAIRS, IN THE ONE `createProfileStore` CALL — and each surviving declaration and each surviving root is asserted BY PRESENCE, never by a count (the counts are `central-data`\'s, D-43)', () => {
     const main = commentElided(sourceOf('src/main/main.ts'))
     expect(main.includes('...tabsConstraintDeclarations('), 'the tab record\'s six are spread into the batch').toBe(true)
-    expect(main.includes('...viewConstraintDeclarations('), 'and this module\'s four into the SAME array').toBe(true)
+    expect(main.includes('...viewConstraintDeclarations('), 'and this module\'s pairs into the SAME array').toBe(true)
+    // **THE DECLARATIONS, BY PRESENCE** (`D-142`, `D-43`): every surviving pair is named, and no pair stands at the deleted
+    // address. **NO COUNT IS ASSERTED** — the batch's size is `central-data`'s equality row's business, not this module's.
+    const declared = viewConstraintDeclarations(() => null).map((declaration) => declaration.id)
+    for (const id of [VIEW_PANES_MUST_STAND_ID, VIEW_ZONES_MUST_STAND_ID, VIEW_THEME_MUST_STAND_ID]) {
+      expect(declared, `the batch declares \`${id}\``).toContain(id)
+    }
+    expect(declared, 'and no pair stands at the address the family took with it').not.toContain('focus-must-stand')
+    // **THE ROOTS, BY PRESENCE TOO**: each surviving address at its own tier, and none at the deleted one.
+    const published = viewDeclaredRoots().map((root) => `${root.address.join('/')}@${root.tier}`)
+    for (const root of ['panes@file', 'zones@mem', 'theme@file']) {
+      expect(published, `the published roots carry \`${root}\``).toContain(root)
+    }
+    expect(published, 'and publish nothing at the deleted address').not.toContain('focus@mem')
     // ONE CONSTRUCTION SITE, AND IT IS THE BOOT'S: a second `createProfileStore(` in the entry would be the third instance
     // the purge refuses (D-78, D-79). The count is stated as a figure a new site would break.
     expect((main.match(/createProfileStore\s*\(/g) ?? []).length, 'the entry constructs the profile store exactly once').toBe(1)
     expect(main.includes('viewSurface.attach()'), 'and the push is attached where the tab record\'s is').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_READ'), 'the read handler is registered').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_PANE_COMMIT'), 'the pane route\'s handler is registered').toBe(true)
-    expect(main.includes('ipcMain.handle(IPC_VIEW_FOCUS_COMMIT'), 'the focus route\'s').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_ZONES_COMMIT'), 'and the zone route\'s (D-91)').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_THEME_COMMIT'), 'and the appearance route\'s (D-97)').toBe(true)
-    // THE POSITIVE CONTROL: the RAW bytes carry the names too, so the four assertions above are about code that exists.
+    // THE POSITIVE CONTROL: the RAW bytes carry the names too, so the assertions above are about code that exists.
     expect(sourceOf('src/main/main.ts').includes('viewConstraintDeclarations'), 'the raw bytes name it').toBe(true)
   })
 
-  it('THE BRIDGE MEMBER IS ONE DECLARATION IN TWO FILES, AND THE TWO ARE COMPARED RATHER THAN CITED: `src/main/preload.ts`\'s `view` block and `src/renderer/secure-panels.ts`\'s `view?` block are the same FIVE routes, member for member', () => {
+  it('THE BRIDGE MEMBER IS ONE DECLARATION IN TWO FILES, AND THE TWO ARE COMPARED RATHER THAN CITED: `src/main/preload.ts`\'s `view` block and `src/renderer/secure-panels.ts`\'s `view?` block carry the same surviving routes, member for member', () => {
     const routesOf = (path: string, opener: RegExp): string[] => {
       const lines = sourceOf(path).split('\n')
       const start = lines.findIndex((line) => opener.test(line))
@@ -651,23 +593,42 @@ describe('view-record · the boot\'s wiring, read as code and never as prose', (
     const panels = routesOf('src/renderer/secure-panels.ts', /^\s*view\?\s*:\s*\{\s*$/)
     // THE LOCKSTEP IS A COMPARISON AND NOT A PROMISE: the two blocks are read at whatever their own indent is, so a
     // half-widening (a member added at one site only) reds here with the two texts in hand.
-    expect(panels, 'the renderer\'s `declare global` half carries the SAME six routes as the preload\'s').toEqual(preload)
-    expect(preload, 'which are the module\'s six: read, commitPane, commitFocus, commitZones, commitTheme, onChanged').toEqual([
-      "read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; focus: ViewFocusMirror; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; focus: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>",
+    expect(panels, 'the renderer\'s `declare global` half carries the SAME routes as the preload\'s').toEqual(preload)
+    expect(preload, 'which are the member\'s surviving routes: read, commitPane, commitZones, commitTheme, onChanged').toEqual([
+      "read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>",
       "commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
-      "commitFocus(mirror: ViewFocusMirror): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       "commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       "commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       'onChanged(handler: () => void): () => void',
     ])
-    expect([IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_FOCUS_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED], 'and the six channel names are single-sourced in one shared module').toEqual([
+    expect([IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED], 'and the surviving channel names are single-sourced in one shared module').toEqual([
       'provident:view:read',
       'provident:view:pane-commit',
-      'provident:view:focus-commit',
       'provident:view:zones-commit',
       'provident:view:theme-commit',
       'provident:view:changed',
     ])
+  })
+
+  it('**THE ROUTE LEAVES BOTH SIDES IN ONE EDIT** (`D-14`, `D-142`): no `commitFocus` member stands on the bridge at either lockstep site, the record and the surface declare none, the client reaches no `focus` route, and the channel constant is gone from the single-sourced module — each read over COMMENT-ELIDED code, with the raw bytes as the positive control', () => {
+    // A route that leaves one side alone is either a channel with a handler and no caller or a member no handler answers,
+    // so every site below is asserted at once and each assertion can fail on its own.
+    const preload = commentElided(sourceOf('src/main/preload.ts'))
+    const panels = commentElided(sourceOf('src/renderer/secure-panels.ts'))
+    const recordModule = commentElided(sourceOf('src/main/view-record/index.ts'))
+    const surface = commentElided(sourceOf('src/main/view-surface/index.ts'))
+    const client = commentElided(sourceOf('src/renderer/view-client.ts'))
+    const channels = commentElided(sourceOf('src/shared/view-channels.ts'))
+    expect(preload.includes('commitFocus'), 'the preload\'s `view` member carries no `commitFocus`').toBe(false)
+    expect(panels.includes('commitFocus'), 'nor does the `declare global` half it must agree with').toBe(false)
+    expect(recordModule.includes('commitFocus'), 'the record declares no `commitFocus` route').toBe(false)
+    expect(surface.includes('commitFocus'), 'and the surface exposes none').toBe(false)
+    expect(client.includes('commitFocus'), 'and the client reaches no such route').toBe(false)
+    expect(channels.includes('focus'), 'and the channel constant left the single-sourced module').toBe(false)
+    // THE POSITIVE CONTROLS, on the same readings: the surviving route's name and its channel DO stand, so the absences
+    // above are about a deleted member and not about a scan that could never have matched.
+    expect(preload.includes('commitPane'), 'the same block still carries the surviving routes').toBe(true)
+    expect(channels.includes('IPC_VIEW_PANE_COMMIT'), 'and the channel module still carries theirs').toBe(true)
   })
 
   it('THE MODULE NAMES THE PACKAGE NOWHERE, WHICH IS A CENSUS FACT AND NOT A STYLE ONE: `S-9` pins the importing files at three, so this module reaches the store through the tab record\'s own handle type', () => {

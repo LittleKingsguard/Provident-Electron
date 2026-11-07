@@ -25,7 +25,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "provident-ssr": "^0.5.1",
-    "provident-storeroom": "^1.9.3"
+    "provident-storeroom": "^1.10.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

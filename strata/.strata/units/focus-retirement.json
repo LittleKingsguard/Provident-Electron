@@ -1,0 +1,36 @@
+{
+  "unit": "focus-retirement",
+  "layer": "L4",
+  "stage": "design",
+  "artifacts": [
+    "l1-design",
+    "l4-implementation"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-1",
+      "text": "newTab:true opens one new record row carrying the caller's target and seats it active",
+      "alternative": "keeping newTab as a no-op, which leaves a declared argument of a product-need tool meaning nothing (D-141, D-18)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-2",
+      "text": "the tool's answer is the record as the renderer re-read it after the write",
+      "alternative": "echoing the store's data.write ledger verbatim, which couples an MCP tool's answer shape to a data.* write's members (D-136)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-3",
+      "text": "the act's composition leaves the standing active row as it read it, so the repair is what settles the pair",
+      "alternative": "clearing the older flag in the renderer, which would make the renderer the authority the repair exists to be (D-142, D-129)",
+      "status": "reviewed"
+    }
+  ],
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-11-07T01:57:23.538Z",
+  "lastFailure": {
+    "artifact": "l1-design",
+    "reason": "red"
+  }
+}

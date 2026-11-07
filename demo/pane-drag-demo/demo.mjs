@@ -6,7 +6,7 @@
 // generated body itself. A source that moved, an import that appeared, or a hand-edited body makes --check exit 1
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
-// @source-count 40
+// @source-count 39
 // @body-sha256 ed83de9c083ef4f350e3c9a2c766c1508da06aee1931833181ae7d74356f40de
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source 96210ffe545ef66f0805ea4ac9820a32f64bfba7c03e3fda58d2e669ee2d1dd4 demo/pane-drag-demo/demo.ts
@@ -35,19 +35,18 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 228b933dc32e7df08d89ff8e8ed1e91e6b9312f597ed6f9703ccfb6d8e07e114 src/renderer/renderer.ts
+// @source d964762d6eb86366b069431bcf9efaf352fbbf2aef0a23f85f98d2978ea236fd src/renderer/renderer.ts
 // @source 7815658c5a9687d6dd7ee4f47b8fa40827440dd9b0b97b7a754e70cab013e797 src/renderer/runtime.ts
-// @source 5f86897b4b0d8709775c1d3f8dd2c05a9374377c90241fd987868a5d1722cb05 src/renderer/secure-panels.ts
+// @source 1403e68129c1604d898f1e69fd33c90060081b2a4dcc5f4238a1d99901b0a979 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source f83e54243983045a2eaee0c86d7c77d636b9976792d30d3d35f41f48f3194745 src/renderer/tabs-client.ts
-// @source 566ac85a2810bbf2cdc6376db831833086b1389c5d770e9c10f4922821a985f7 src/renderer/view-client.ts
-// @source 0e4cbd982207eb4bf3d875a60432a374c8f1d556420c27d24a781be67a05b42e src/shared/demo-envelope.ts
-// @source 5ad0ef114a7f27350c9be5dea0be31b8a76b07112eb4118b44fa59044bdc1058 src/shared/focus-model.ts
+// @source 12f42eca8dde7f42dbf4526a6215bffc1b3c01243ed8ab1afb82a1f0dc42e754 src/renderer/view-client.ts
+// @source 9cab75ffd47d4d56c62b7d89eff7365130b17eedae8a0a5de1f13e93062deba2 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source 553fb0c33b899f615b82347d1d574b5a281ae1917e1711430fe573b658e58676 src/shared/view-shape.ts
+// @source 1fb30754440dd8033cc46955a3c4c8380a2fde2d43aa2cab8dfe12427dcf9136 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({
