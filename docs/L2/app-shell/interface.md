@@ -2,8 +2,9 @@
 
 - **Layer:** L2 · **Module:** `app-shell` — `src/main/main.ts`, `src/main/preload.ts`, `src/main/store-channels.ts`
   and the module's battery `tests/ui-leg-seam.test.ts` (`strata/modules.json`'s row; brief §3, D-7).
-- **Unit:** `pane-drag-temp` · **Artifact:** `l2-interface` · **Rev:** 3 — re-grained to the drag pair this unit lands;
-  rev 2 was `focus-retirement`'s landed head and rev 1 the pre-deletion surface (`docs/L1/pane-drag-temp.md` §2, §5 `R-3`, §7 `E-3`).
+- **Unit:** `pane-drag-temp` · **Artifact:** `l2-interface` · **Rev:** 4 — the pair's landing read back off the tree and the page's
+  present tense re-grained to it (§2's seven, §3's twenty-site census, §4's pair); rev 3 re-grained rev 2 to the drag pair; rev 2 was
+  `focus-retirement`'s landed head (`docs/L1/pane-drag-temp.md` §2, §5 `R-3`, §7 `E-3`; D-145, D-1).
 - **Ceiling:** 150 lines (class max), replaced on revision and never annotated (brief §1; D-1, D-2).
 - **Write scope:** `docs/L2/app-shell/` (brief §3); `src/**` is read-only here and no package is modified (D-5).
 
@@ -32,10 +33,10 @@
 | `view` | 7 | 6 request + 1 delivery | the six `IPC_VIEW_*` handles (`READ`, `PANE_COMMIT`, `ZONES_COMMIT`, `THEME_COMMIT`, `DRAG_COMMIT`, `DRAG_CLEAR`); `IPC_VIEW_CHANGED` sent by the view surface's `onChanged` | D-87, D-112, D-142, D-132 |
 | `data` | 5 | 5 request, NO delivery | `IPC_DATA_READ`/`_WRITE`/`_DELETE`/`_LIST`/`_JOURNAL`, each forwarding the caller's argument object untouched to the boot's one `dataSurface` | D-112, D-107 |
 
-- The `view` member's declared list, in the order BOTH halves spell it **once this edit lands** — **SEVEN**, of which
-  **FIVE** stand at this head: `read` · `commitPane` · `commitZones` · `commitTheme` · **`commitDrag`** · **`clearDrag`** ·
-  `onChanged` — `src/main/preload.ts`'s text and `src/renderer/secure-panels.ts`'s `declare global` copy of it, whence each
-  member's route and tier (D-87, D-91, D-97, D-132, D-112, D-142; D-41: the sites):
+- The `view` member's declared list, in the order BOTH halves spell it — **SEVEN, at BOTH halves at this head** (the drag pair
+  landed at each in one edit, and the crossing's comparison row is the witness): `read` · `commitPane` · `commitZones` ·
+  `commitTheme` · `commitDrag` · `clearDrag` · `onChanged` — `src/main/preload.ts`'s text and `src/renderer/secure-panels.ts`'s
+  `declare global` copy of it, whence each member's route and tier (D-87, D-91, D-97, D-132, D-112, D-142, D-145; D-41: the sites):
 
 | Member | Route | Tier | Cite |
 |---|---|---|---|
@@ -56,16 +57,16 @@
   registered in `main()` and nowhere else under `src/`, the deliveries being sent from the callbacks `main()` hands the
   crossings at its construction (D-87, D-132, D-137, D-41, D-65).
 
-## 3. The edit: two handle sites, and the text both halves transcribe
+## 3. The landing: two handle sites, and the text both halves carry
 
-- `E-3` is TWO `ipcMain.handle` sites in `main()` and TWO members in the preload's `view` block — and it lands in ONE edit
-  WITH `E-4`'s copy in `src/renderer/secure-panels.ts`, or one half answers a route the other cannot reach (§5 `R-3`; D-112).
-- The two sites stand beside the four `IPC_VIEW_*` handles `main()` already registers, ahead of `viewSurface.attach()`, and
-  neither inspects its `_event`. The file's handler count is a MEASUREMENT: **eighteen** at this head, **twenty** after (§6).
+- `E-3` was TWO `ipcMain.handle` sites in `main()` and TWO members in the preload's `view` block — and it landed in ONE edit
+  WITH `E-4`'s copy in `src/renderer/secure-panels.ts`, because one half alone answers a route the other cannot reach (§5 `R-3`;
+  D-112, D-145).
+- The two sites stand beside the four `IPC_VIEW_*` handles `main()` already registered, ahead of `viewSurface.attach()`,
+  and neither inspects its `_event`. The file's handler count is a MEASUREMENT: **twenty** at this head (§6).
 - The surface's options, its store and its push are UNMOVED: both routes reach the same record over the same
   `centralStore`, so `createViewSurface` gains no option and `main()` gains no construction; and both imports take the SEVEN
-  names from `src/shared/view-channels.ts`, which gains the two drag constants in `E-2`'s edit and not this one's
-  (D-112, D-132, D-87, D-41; no byte of `store-channels.ts` moves, D-123).
+  names from `src/shared/view-channels.ts` (D-112, D-132, D-87, D-41; no byte of `store-channels.ts` moves, D-123).
 
 ```ts
 // (1) THE IMPORT — main.ts and preload.ts alike (was five names from the same file):
@@ -87,23 +88,23 @@ clearDrag(): Promise<{ status: 'committed' | 'refused'; reason?: string; message
 onChanged(handler: () => void): () => void
 ```
 
-- The three comment figures move with this block, in the same edit: the preload's `ONE member, FIVE routes` and
+- The three comment figures moved with this block, in the same edit and all as landed: the preload's `ONE member, FIVE routes` and
   `secure-panels.ts`'s `SIX routes` both read **SEVEN**, and `main()`'s `THE VIEW RECORD'S FOUR CHANNELS` reads **SIX** —
-  the secure half's being stale already is corrected here rather than carried (D-41: a cite names a site).
+  the secure half's having been stale already was corrected in that edit rather than carried (D-41: a cite names a site).
 
 ## 4. The lockstep rule, as it now reads
 
 - The `view` member's type exists **twice in this tree**: `src/main/preload.ts` declares it and
-  `src/renderer/secure-panels.ts` carries a `declare global` copy. The two halves must agree member for member — **SEVEN
-  each once this edit lands**, in one order — or the crossing's own comparison row reds (`tests/integration/store-view-record/crossing.test.ts`;
-  D-112's lockstep rule, D-142's precedent).
+  `src/renderer/secure-panels.ts` carries a `declare global` copy. The two halves agree member for member — **SEVEN
+  each at this head**, in one order — or the crossing's own comparison row reds (`tests/integration/store-view-record/crossing.test.ts`;
+  D-112's lockstep rule, D-142's precedent, D-145).
 - The comparison is a COMPARISON, not a promise: it finds each block by its own opener, reads at that block's own indent,
   skips comment and blank lines, strips a trailing comma, and holds the seven lines' exact text **and its order** — so a
   member landing at one site only reds with both texts in hand, and a pair carrying both members out of order reds too.
-- **The pair is ONE edit** (`E-3` with `E-4`): a half alone is red by construction and, worse, SILENT in the app — a
-  preload answering a route the pane's copy cannot name, or a member no handler answers (§5 `R-3`; D-112, D-142).
-- That row is `store-view-record`'s and is RED at this head until the halves land: the red is the pair's ABSENCE, not a defect here (§7).
-
+- **The pair is ONE edit** (`E-3` with `E-4`), and it landed as one: a half alone is red by construction and, worse, SILENT in the
+  app — a preload answering a route the pane's copy cannot name, or a member no handler answers (§5 `R-3`; D-112, D-142).
+- That row is `store-view-record`'s and is **GREEN at this head**, its comparison reading seven against seven: the red it carried was
+  the pair's ABSENCE, never a defect here (§7, D-145).
 ## 5. What the edit does not touch
 
 - The **declared roots** line and the boot's ONE `createProfileStore` batch are unmoved: `main()` still passes
@@ -117,11 +118,11 @@ onChanged(handler: () => void): () => void
 - The map's `endpoints` figure for this row is **CARRIED and never derived**: L1 §2 reads it UNMOVED, no count at this head
   yields it, and this document neither predicts nor restates it (D-26, D-43).
 
-## 6. The sender guard, and the sites this edit adds
+## 6. The sender guard, and the sites this landing added
 
 - **No handler in `main()` inspects its `IpcMainInvokeEvent`**: the invoke parameter is spelled `_event` or omitted across
-  all eighteen `ipcMain.handle` sites at this head — and all twenty after this edit — no handler reads `sender` or
-  `senderFrame`, and `permitted(` occurs nowhere under `src/`, asserted over comment-elided code (D-121, D-112).
+  all twenty `ipcMain.handle` sites at this head — no handler reads `sender` or `senderFrame`, and `permitted(` occurs
+  nowhere under `src/`, asserted over comment-elided code (D-121, D-112).
 - The drag pair adds no guard, no channel file and no second authority: its two sites discard their event exactly as the
   four `IPC_VIEW_*` sites beside them do, so no crossing becomes stricter than a sibling (D-121).
 - The one privilege class that owes a guard the rest lack — the window-control group — is a later unit's, named so the
@@ -145,5 +146,5 @@ onChanged(handler: () => void): () => void
 | id | Assumption | Rejected alternative |
 |---|---|---|
 | ASM-L2-4 | the two drag members land INSIDE the existing `view` member — no tenth top-level member — because the act is the view record's and the crossing already fronts it (D-18, D-112, D-132) | a top-level `drag` member of its own, which would be a bridge member added to the app to prove a unit — the surface D-18 refuses |
-| ASM-L2-5 | §3's block gives all SEVEN member lines VERBATIM in order, so neither half transcribes from memory or from the five it finds standing | naming only the two new members and leaving the five that stand to the reader, which is the improvisation the comparison row catches |
+| ASM-L2-5 | §3's block gives all SEVEN member lines VERBATIM in order, so neither half transcribes from memory or from the five it found standing | naming only the two new members and leaving the five that stood to the reader, which is the improvisation the comparison row catches |
 | ASM-L2-6 | `tests/ui-leg-seam.test.ts` is left byte-unmoved, for §7's measurement | adding a row here asserting the pair's arrival, which duplicates the crossing's comparison row in a file whose subject is the leg's boot seam (D-40) |

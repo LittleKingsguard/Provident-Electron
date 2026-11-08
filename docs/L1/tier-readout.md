@@ -87,15 +87,15 @@ Neither wait moves a row's bound, subject or count. **Every row is GREEN at this
 
 Row `6`'s `Closed when` ends with a clause whose artefact is ROW `5`'s, so the split is stated rather than assumed (D-132, D-133):
 
-- **REACHABLE AT THIS UNIT'S CLOSE — the readout the ghost WILL ASK.** `data.read`'s answer names each node's own tier, so
+- **REACHABLE AT THIS UNIT'S CLOSE — the readout the ghost ASKS.** `data.read`'s answer names each node's own tier, so
   *"is this pane's reading at `temp`?"* is answered by the DELIVERY and no client member is invented for one consumer — the
-  question `D-133` puts there. §4 `T-4` drives that exact question through the agent's own route: a `temp` write at an
+  question `D-133` puts there. §4 `T-4` drove that exact question through the agent's own route: a `temp` write at an
   undeclared root answers `_tier:'temp'`, and a `mem` write at the same address moves the readout to `mem` (D-101, D-133).
-- **WAITS ON ROW `5` — the GHOST ITSELF.** No `temp` tier is written anywhere under `src/` today, so no app family stands at
-  `temp`, the pane renderer asks nothing, and the `temp` address, its tier constant, its `viewDeclaredRoots` entry, its route,
-  its client method and its joining the record's subscription array are row `5`'s to land (D-132, D-137, D-101).
-- **So neither row claims the other's work**: row `6` supplies the ANSWER and row `5` the ASKER, and `T-4` measures the answer
-  at the tier row `5` will use without pretending the asker exists (D-133, D-132, D-30).
+- **AND ROW `5` HAS LANDED THE ASKER** (`D-145`): `['drag']` at `temp` stands with its tier constant, its declared-and-UNPAIRED
+  `viewDeclaredRoots` entry, its two routes, both bridge halves and its root in the record's subscription array — so the ghost is
+  ONE `data.read({path:['drag']})` per delivery, `data-ghost="temp"` painted iff the standing node's `_tier` is `temp` (D-132, D-137).
+- **AND THE SPLIT IS KEPT AS THE RECORD IT WAS**: at this unit's close no `temp` tier was written anywhere under `src/`, so row `6`
+  supplied the ANSWER and row `5` the ASKER, and `T-4` then measured the answer without pretending the asker existed (D-133, D-30).
 
 ## 6. Closed when — verbatim from `strata/next-steps.md` row `6`
 
@@ -104,8 +104,8 @@ Row `6`'s `Closed when` ends with a clause whose artefact is ROW `5`'s, so the s
 
 The first clause is `D-134`'s landed half; the second is §4's rows `T-1`…`T-3` and `T-5`…`T-8`; the third is §7's `E-1`…`E-4`
 green on the four node legs with the reached Electron leg re-taken beside them — and that leg is `crossings`, whose `E-8`
-pass reads 28 rows and `0` failures, so THE THIRD CLAUSE IS DISCHARGED AT THIS HEAD; the fourth splits as §5 states, its
-answer half here and its asker half on row `5` (D-134, D-133).
+pass reads 28 rows and `0` failures, so THE THIRD CLAUSE IS DISCHARGED AT THIS HEAD; the fourth split as §5 states, its
+answer half here and its asker half on row `5` — **both halves now landed**, `D-145` closing row `5` (D-134, D-133).
 
 ## 7. The licensed edit list, by path — one writer each (D-3, D-4)
 
@@ -129,8 +129,8 @@ precondition, whose original subject is the row-`5` `temp` root).
 
 - **No new MCP tool, resource, group or bridge member**, and no `src/renderer/` byte: the renderer's `data.read` arm already
   passes the answer through, so a sixth `data` member would be a surface this answer never needed (D-18, D-112).
-- **The ghost is not this unit's**: §5 assigns the asker to row `5` and this unit supplies only the answer it will ask for
-  (D-132, D-133).
+- **The ghost is not this unit's**: §5 assigns the asker to row `5` — which has since landed it (`D-145`) — and this unit
+  supplies only the answer that asker reads (D-132, D-133).
 - **No package change**, at any layer: `provident-storeroom` is read and never modified, and the verb was adopted from the
   registry at `D-134` (D-5).
 - **The reached batteries were re-grained WITH the shape, never ahead of it** — a re-grain that runs first measures a state

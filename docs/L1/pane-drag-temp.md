@@ -17,9 +17,9 @@
   *"the drag-update, release-commit style stays"* (`D-138`, unamended from `D-132`), and the reading becomes an
   **ADDRESSABLE FACT at a tier that persists nowhere**: one family at **`['drag']` at `temp`**, keyed by pane id,
   `{ [paneId]: { size } }` — `D-90`'s judgement is **superseded by pointer** (`D-132`, `D-46`).
-- **No `temp` tier is written anywhere under `src/` today** (measured, `D-132`), so this is a whole family's surface: an
+- **No `temp` tier was written anywhere under `src/` when this design was taken** (measured, `D-132`) — **and the whole family's surface now stands**: an
   address and tier constant, a `viewDeclaredRoots` entry, two routes, two channels, two handlers, both bridge halves, two
-  client methods — and one existing array gains an entry (§5 `R-2`). **The root is DECLARED and not CONSTRAINTED**: the
+  client methods, and one existing array gained an entry (§5 `R-2`, D-145). **The root is DECLARED and not CONSTRAINTED**: the
   entry makes the guard refuse a `file` or `mem` shadow of a `temp` family, and there is **no `viewConstraintDeclarations`
   row**, because a repair whose subject is "no drag has started" mints a placeholder for data whose absence is the product
   (`D-132`, `D-101`).
@@ -71,8 +71,8 @@ the sibling spawning batteries derive, from spawn to proved-zero teardown, and w
 (D-94, D-74). **THAT LOCK'S REACH IS STATED, NOT CLAIMED AWAY**: `tests/e2e/bundle-boot-seam/` spawns Electron too and
 holds none, so contention with that battery is a corpus gap named here and owned by the file it belongs to (D-27, D-43).
 **A REAL POINTER GESTURE IS NOT THIS BATTERY'S**: a vitest row cannot synthesise one on the app's own page, so every row
-drives the ROUTES the gesture's turns send and the gesture stays `npm run panes`'s (D-37). **ALL SIX ROWS ARE RED UNTIL L4
-LANDS**, each red the absence it names.
+drives the ROUTES the gesture's turns send and the gesture stays `npm run panes`'s (D-37). **ALL SIX ROWS ARE GREEN AT THIS
+HEAD**, over seven real boots — each was red for exactly the absence it names until the landing (D-145).
 
 | Id | What it drives | What it measures | The boundary it stands on | Its declared failure mode |
 |---|---|---|---|---|
@@ -113,8 +113,8 @@ member for member and `central-data`'s roots census are those rows' L2/L3 passes
 
 `P-1` stands the first clause; `P-2` the second and the THIRD-AS-A-ROUTE (the address answers `absent` once `clearDrag` has
 been sent — that the erase MEMBER and the release TURN send it is `pane-drag-compliance`'s, `E-7`); `P-6` durability,
-`P-5` the tier's guard; `P-3`/`P-4` the delivery and the ghost `D-137` makes a precondition; the fourth is §7 `E-7` — why
-this unit is not closed by its battery alone (D-132, D-137).
+`P-5` the tier's guard; `P-3`/`P-4` the delivery and the ghost `D-137` makes a precondition; the fourth is §7 `E-7` — and
+**it landed too**, so every clause of the quote stands and row `5` closed (D-132, D-137, D-145).
 
 ## 7. The licensed edit list, by path — one writer each (D-3, D-4, `modules.md` §1)
 

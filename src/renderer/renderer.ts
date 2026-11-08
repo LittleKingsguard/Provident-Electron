@@ -799,10 +799,12 @@ function unreadableOf(reading: UnreadableReading): FocusRefusal {
   }
 }
 
-/** **S5 — A `target` THAT IS NOT A STRING IS THE TOOL'S OWN REFUSAL** (`D-112`, `D-105`): a row's `target` is a string
- *  (`TabsRecordRow`), so no other value can be written as a row and NO STORE IS ASKED. Its word is the `data` ledger's own
- *  (`malformed-arguments`, `src/main/data/types.ts`). The parameter states the arm's subject and is read nowhere below: the
- *  declared sentence names the RULE and echoes no caller value. */
+/** **S5 — A `target` THAT IS NOT A STRING IS THIS ROUTE'S OWN REFUSAL, AND THE TOOL'S OWN CLASS IS ITS ARGUMENT HOLDER'S**
+ *  (`D-112`, `D-105`, `D-142`): a row's `target` is a string (`TabsRecordRow`), so no other value can be written as a row and
+ *  NO STORE IS ASKED. **THE TOOL'S OWN REFUSAL IS ITS ARGUMENTS'** — a `TypeError` raised in `focusHandler`'s argument holder
+ *  BEFORE any invoke, judging the HOLDER and never a member's VALUE — so the word this arm answers is the ROUTE's, borrowed
+ *  from the `data` ledger (`malformed-arguments`, `src/main/data/types.ts`). The parameter states the arm's subject and is read
+ *  nowhere below: the declared sentence names the RULE and echoes no caller value. */
 function malformed(target: unknown): FocusRefusal {
   void target
   return {
@@ -846,7 +848,8 @@ function refusalOf(written: unknown): FocusRefusal | null {
  *  S2  ONE reading, through the realm's own client (`getTabsClient()`) — never a direct `window.provident.tabs.read()`;
  *  S3  a reading that is not `committed` refuses and writes NOTHING (`D-127`);
  *  S4  an act naming no row has no act: the record as it stands IS the answer, and no write is attempted;
- *  S5  a `target` that can be no row is the tool's own refusal, and no store is asked;
+ *  S5  a `target` that can be no row is THIS ROUTE's own refusal, and no store is asked — the tool's own class is its
+ *      argument holder's (`focusHandler`), which judges the holder and never a member's value;
  *  S6  the seat;
  *  S7  no standing row carries it and no open was asked for: refusal of the route's own, and no write (`ASM-5`);
  *  S8  ONE composition, ONE passthrough, NO RETRY: the args object is handed on verbatim and no member of it is read,

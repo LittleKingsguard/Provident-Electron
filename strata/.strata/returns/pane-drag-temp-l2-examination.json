@@ -1,0 +1,43 @@
+{
+  "unit": "pane-drag-temp",
+  "from": "L2",
+  "to": "L1",
+  "verdict": "FAIL",
+  "artifact": "l3-design",
+  "testIds": [
+    "tests/renderer-delivery-compliance.test.ts DC-8(a) — the row PASSES; its own description is what fails (rootCause (c))",
+    "tests/unit/central-data/read-node-readout.test.ts R-1, R-2, R-3 — all three PASS; their file header still asserts each is red (rootCause (e))"
+  ],
+  "rootCause": "ONE ROOT CAUSE, MEASURED AT SIX SITES: the currency pass re-grained the `design.md` pages and the corpus rows to the landed state and stopped there, so the sibling `signatures.md` pages, the gating row's own description, the unit battery's header and the landed `src` docblock still state the PRE-LANDING reading — and not one site is a code or battery failure (the batteries were validated FIRST, examiner.md §1). (a) `src/renderer/renderer.ts`'s ghost-turn docblock, which D-145 itself added above `settleGhost`, asserts that a target that will not take an attribute REMOVES the declaration and throws nothing, while the landed body returns at its `setAttribute` gate AHEAD of the paint and removes nothing. (b) `docs/L3/renderer-wiring/signatures.md` §1 states both answers at once: its `ghostTarget` docblock says such a target means the turn 'paints nothing, removes nothing', while its `renderGhost` docblock two lines above says 'the declaration REMOVED on every other arm'. (c) `tests/renderer-delivery-compliance.test.ts`'s `DC-8(a)` description lists 'a target that cannot take attributes' among the arms on which it REMOVES the declaration, while that row's own body drives the arm for totality alone and its own comment says 'nothing to remove'. (d) `docs/L3/renderer-wiring/design.md` rev 9's claim that the exception was 'read off `renderer.ts`'s `settleGhost` ... so the page and the code agree', and that `signatures.md` §1 'already spells it', is therefore FALSE at this head: the code's prose and the very section it cites both state the negation, so the page's agreement claim is a second finding and not a citation. (e) `tests/unit/central-data/read-node-readout.test.ts`'s header (D-144's text, unmodified since) states each row is RED at this head and names three absences — `read` answering 'a BARE value with no `_tier` anywhere', `kind:'branch'` with `value:{}` at the occupied empty address, and the cold empty address answering 'a `read` BRANCH carrying `{}`' — while all three rows pass and `src/main/data/surface.ts`'s `read` makes the one `readTiered` call they assert. (f) `docs/L3/secure-panels/signatures.md`'s crossing command still annotates the pair's row 'RED until BOTH halves land', while `src/main/preload.ts`'s `view` and `src/renderer/secure-panels.ts`'s `view?` carry seven members each, `main()` registers twenty handlers, and `crossing.test.ts` reads seven against seven. ROOT CAUSE, ONE LINE: D-145's currency rule was applied to the design pages and the corpus rows and not to the same pass's signatures pages, test headers and landed docblock, so the artifact set still asserts a red and a removal the tree measures away. NOT A REBUILD: every site is prose inside a landed artifact, the behaviour is correct everywhere it is stated in code, and the subject is one pass's re-grain scope.",
+  "assumptions": [
+    {
+      "id": "ASM-L2E-1",
+      "text": "the uncommitted currency pass in the worktree is the artifact set under examination, read at its own head",
+      "alternative": "refusing to verdict an uncommitted tree and returning an ADJUDICATION for a named unit — but every one of the 19 dirty paths is INSIDE `boundary.test.ts`'s DECLARED_SCOPE (measured, 19 of 19 admitted) and the whole floor is green, so the pass is measurable as it stands"
+    },
+    {
+      "id": "ASM-L2E-2",
+      "text": "the primary unit is `pane-drag-temp`, because four of the five re-grained L3 `design.md` pages are its and D-145 is the head landing",
+      "alternative": "naming `tier-readout`, whose `docs/L3/central-data/design.md` and unit battery carry (e) — the split is stated in the notes so the parent can route it without a second return"
+    }
+  ],
+  "citations": [
+    "strata/examiner.md §1–§5 (battery validated before code; diagnoses only; where a failure goes)",
+    "strata/envelope.md §2–§3 (the closed verdict set; a non-PASS verdict carries rootCause)",
+    "docs/L3/renderer-wiring/design.md rev 9 §4 (the exception sentence and its claim of agreement) and its signatures.md §1 (the two docblocks that disagree)",
+    "docs/L3/secure-panels/design.md rev 4 §6 (the crossing's green) and its signatures.md (the command annotation at the crossing row)",
+    "docs/L3/central-data/design.md rev 7 §5 (the three rows green)",
+    "docs/L3/app-shell/design.md rev 4 §2/§3 (twenty handlers; both halves seven)",
+    "src/renderer/renderer.ts — the ghost turn's closure header and `settleGhost`'s `setAttribute` gate",
+    "src/main/data/surface.ts — `read`: one `readTiered` call, `kind` compiled from the node",
+    "src/main/view-record/index.ts — four address constants, four tier constants, three batched declarations, four `.write(VIEW_` sites and one `.delete(` site, the four-root subscription array",
+    "src/main/preload.ts and src/renderer/secure-panels.ts — the `view` member at seven members each, both prose lines reading SEVEN routes",
+    "src/shared/view-channels.ts — seven names, six carrying a request",
+    "src/main/storeroom.ts — the seam census at 15 members / 13 symbols",
+    "tests/unit/central-data/read-node-readout.test.ts and tests/renderer-delivery-compliance.test.ts (DC-8)",
+    "tests/e2e/pane-drag-temp/, tests/e2e/tier-readout/, tests/integration/store-view-record/, tests/integration/central-data/ — all green",
+    "measurements: npm test 2,928 passed / 2 skipped of 2,930 over 140 files exit 0; typecheck 0; typecheck:tests 0; build 0 (five artifacts); battery 184 checks 0 failures; divergence 9 checks 0 failures + 4 extension checks; targeted batteries 342 rows green; strata-walkthrough pins flat 85 / nested 55 / total 140, srcTypeScriptFiles 51, mapRows 21; strata-marks check exit 0 (319 gating sites in 43 files, 2,386 on notice, 9 carve-outs)",
+    "strata/decisions.md D-1, D-14, D-26, D-30, D-37, D-40, D-41, D-44, D-143, D-144, D-145"
+  ],
+  "notes": "THE ASSIGNMENT WAS EMPTY — the task text received was the single word 'placeholder', with no unit, artifact or battery named — so this return is a REVIEW MEASUREMENT of the one artifact set the head actually puts in front of this seat: the uncommitted currency pass (19 paths, all inside `boundary.test.ts`'s DECLARED_SCOPE) read against the L3 documents, their batteries and the code they cite. Per `strata/README.md` a review task may leave a return with NO unit state row, and none was written: this decides nothing about any unit's progress. ROUTED AND NOT MINE TO FIX (examiner.md §4: no snippets, no diffs, no ordered list): (i) `strata/brief.md` §6's node-suite cell reports '`85` flat + `54` nested' over 140 files while `node scripts/strata-walkthrough.mjs pins` reads flat 85, nested 55, total 140 — an L0-owned count row, D-26's own class; (ii) six battery headers still assert the pre-landing red at this head while every row in them is green — `tests/e2e/pane-drag-temp/pane-drag-temp.test.ts` (L1's battery), and `tests/integration/store-view-record/crossing.test.ts`, `tests/integration/store-view-record/client.test.ts`, `tests/integration/central-data/registration.test.ts`, `tests/integration/central-data/surface.test.ts` and `tests/integration/central-data/profile-file.test.ts` (L2's batteries) — the same root cause as (a)–(f) at the files this seat does not examine, listed so L1 can route them to L2 in one pass rather than re-deriving the class. NOT MEASURED AND THEREFORE NOT CLAIMED: `ui`, `panes` and `crossings` were not re-taken (outside the four-leg floor, D-37), and `strata-lint` is not runnable from this checkout — `../Agent Harness/strata/lint/strata-lint.mjs` is absent there (MODULE_NOT_FOUND, measured), so the standing exit-1-with-one-accepted-register-FAIL reading remains the corpus's and not this pass's (D-110). THE FLOOR WAS VALIDATED FIRST AND IS GREEN, which is what makes this a currency failure and not a code one: `npm test` is green on the dirty tree because every dirty path is declared, not because the boundary row was weakened."
+}

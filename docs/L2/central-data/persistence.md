@@ -1,6 +1,6 @@
 # L2 — `central-data`: the persistence
 
-- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 10 — §2's key space and §5's atomicity rows now say which tier a row is written at and that a `mem` one reaches no byte of the file, so the one written name is the `file` tier's alone (D-101); Rev 9 — §1's construction clause and §7's "no second store" row now say that **NO caller** takes a construction: `DataSurfaceOptions.store` is required and the fallback is deleted, so the one name's creation is the boot's alone and `src/main/data/` opens no profile file at all (D-80); Rev 8 — §7's "no second store" row and §1's construction clause now say that the app supplies the boot's instance and takes no construction, the construction standing only for a caller that supplies none (D-79); Rev 7 — §9's `P-3` demand reads "declare" where it read "publish", so no row of this unit's filings asks the package for code (D-24). Rev 6 — §1's and §7's retired-seed sentences now say **at most once per boot** (read at every construction whose record address carries nothing) rather than once per profile, keeping the half that holds: the import never writes the seed. Rev 5 — §1's and §8's test-row sentences now say **marked, not re-grained** (D-31): the marked rows are replaced whole, the unmarked legs are the ones maintained. Rev 4 — §1's construction clause is re-grained to the measured rule: the store is built at the first operation whose reading answered `occupied` (`write` unconditionally, `journal` never), not at the first write — a read over a standing file constructs. Rev 3 — one cite re-grained, no claim moved: the package's version names the `dependencies` block of `package.json` instead of a line range the later `panes` key moved (D-41); rev 2 and behind are read through this one
+- **Layer:** L2 · **Unit:** `central-data-management` · **Branch:** `strata` (D-6) · **Rev:** 11 — **three figures re-taken at the tree and no claim of the module's moved**: §3 states that `read` copies the written value back INSIDE the store's own node, §4 carries the installed pin (`^1.10.0`) and the seam's census as it reads (`15` members over `13` symbols), and §9's close reads the row's called set as `16` with `register` off it (D-134, D-145, D-143). Rev 10 — §2's key space and §5's atomicity rows now say which tier a row is written at and that a `mem` one reaches no byte of the file, so the one written name is the `file` tier's alone (D-101); Rev 9 — §1's construction clause and §7's "no second store" row now say that **NO caller** takes a construction: `DataSurfaceOptions.store` is required and the fallback is deleted, so the one name's creation is the boot's alone and `src/main/data/` opens no profile file at all (D-80); Rev 8 — §7's "no second store" row and §1's construction clause now say that the app supplies the boot's instance and takes no construction, the construction standing only for a caller that supplies none (D-79); Rev 7 — §9's `P-3` demand reads "declare" where it read "publish", so no row of this unit's filings asks the package for code (D-24). Rev 6 — §1's and §7's retired-seed sentences now say **at most once per boot** (read at every construction whose record address carries nothing) rather than once per profile, keeping the half that holds: the import never writes the seed. Rev 5 — §1's and §8's test-row sentences now say **marked, not re-grained** (D-31): the marked rows are replaced whole, the unmarked legs are the ones maintained. Rev 4 — §1's construction clause is re-grained to the measured rule: the store is built at the first operation whose reading answered `occupied` (`write` unconditionally, `journal` never), not at the first write — a read over a standing file constructs. Rev 3 — one cite re-grained, no claim moved: the package's version names the `dependencies` block of `package.json` instead of a line range the later `panes` key moved (D-41); rev 2 and behind are read through this one
 - **Status:** DESIGN — the store's own on-disk shape as this unit constrains it, and nothing else (D-13)
 - **Inputs:** `docs/L2/central-data/interface.md`, `behaviour.md`; L1 rev 4 §4; `docs/L1/central-data-census-exception.md` §1/§2/§5/§7; D-5, D-12, D-13, D-15; the package's shipped declaration, README and guide at this head (read, never edited — D-5)
 - **Ceiling:** 150 lines, class max (D-1)
@@ -35,8 +35,10 @@
 - A row is the store's **admitted tree and nothing else**: a string with no lone surrogate, a finite number, a boolean, a
   dense array, or a plain object — with `null` and `undefined` refused as a whole value, nesting depth over `126` refused,
   and more than `1,000,000` visited nodes refused, neither ceiling having a knob (`guide §10.1, §10.3`; D-13).
-- This module adds **no wrapper, envelope or marker** around a value: what a caller writes is what `read` copies back, and the
-  crossing's deep copy is the store's (`guide §10`; D-13).
+- This module adds **no wrapper, envelope or marker** around a value: what a caller writes is what the store holds, and the
+  crossing's deep copy is the store's (`guide §10`; D-13). **WHAT `read` COPIES BACK IS THAT VALUE INSIDE THE STORE'S OWN NODE** —
+  a leaf answering `{_tier, value}`, a container its members inline beside `_tier` — so the read's compilation adds the tier and
+  nothing else, and no member of the written value is dropped (D-134, D-145).
 - The row's on-disk spelling is the store's own and is never produced, parsed or repaired by this module (`guide §9.1`; D-13).
 
 ## 4. Stamping — there is no `schemaVersion` here
@@ -45,8 +47,8 @@
   (`guide §9.1`; D-13).
 - The retired projection's `schemaVersion: '1'` was that projection's, and the projection is gone from `src/main/main.ts` (which stamps no `schemaVersion` and holds no store); it has no counterpart in this
   file, and D-13 makes it no compatibility constraint (D-13).
-- The format's version is the **package's** — `provident-storeroom ^1.6.1` (the `dependencies` block of `package.json`) — and the seam's census pins
-  the fourteen-member instance this unit calls into (`src/main/storeroom.ts:45-50`; D-5).
+- The format's version is the **package's** — `provident-storeroom ^1.10.0` (the `dependencies` block of `package.json`) — and the seam's census pins
+  the fifteen-member instance over thirteen own symbols (`src/main/storeroom.ts`'s `STOREROOM_DECLARED_SURFACE`; D-5, D-134).
 - A change to the shape is the store's to make; the unit that makes one records it in that unit's record, and no migration
   obligation stands (`D-13`).
 
@@ -115,6 +117,7 @@
   finding is unchanged in kind, because what the package owes is the **declaration** and the tree supplies only the observed
   arm (D-5). P-2 is unmoved: the mechanism is undeclared whether or not the outcome holds. These are this unit's D-5 filings for
   its own record; the package side is filed once, upstream-owned, in `docs/L1/central-data-census-exception.md` §7, and no
-  clause of this document patches or proxies a package behaviour (D-5). **P-3 is also the reason this unit's map row reads
-  `endpoints: 15` and not the 16 an earlier count carried** — the five exports called, and `register` off the called set
-  (exception §1; D-14).
+  clause of this document patches or proxies a package behaviour (D-5). **P-3 is also why the row's called set carries no
+  `register`**: the figure reads **`16`** since `tier-readout` added `readTiered` as the sixth called export — five tools + five
+  routes + six called exports — and `register`, published with no route a restricted consumer could reach alone, stays OFF that
+  set (exception §1; D-14, D-134).

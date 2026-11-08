@@ -5,10 +5,10 @@
   member for member (§1-§3; `E-4`, `docs/L1/pane-drag-temp.md` §7). **It REPLACES `focus-retirement`'s rev 2 and annotates none of
   it** (D-2): what that pass left at the bytes is read from the file, and the roster arrangement is L2's and moves nothing here
   · **Artifact:** `l3-secure-panels-design`
-- **Status:** LANDED and read back — the two regions are `signatures.md` §2's text, L4's one shot, and §6's readings were taken at this
-  head after it. The twin half (`E-3`, `app-shell`), the address and the two routes with their channels
-  (`E-1`/`E-2`, `store-view-record`), the composition (`E-8`, `renderer-wiring`) and the pair's expected text (`E-5`) are other
-  rows' and are NAMED, never claimed (D-3)
+- **Status:** LANDED and read back — the two regions are `signatures.md` §2's text, L4's one shot, and §6's readings were re-taken at this
+  head after the TWIN landed, so the pair reads seven against seven (D-145). The twin half (`E-3`, `app-shell`), the address and the two
+  routes with their channels (`E-1`/`E-2`, `store-view-record`), the composition (`E-8`, `renderer-wiring`) and the pair's expected text
+  (`E-5`) are other rows' and are NAMED, never claimed (D-3)
 - **Inputs:** `docs/L1/pane-drag-temp.md` §2, §5 `R-3`, §7 `E-4`; `docs/L2/secure-panels/interface.md` §4 (the post-edit seven, the
   pair rule, the no-store-route subtlety), §7, §8 `R-9`, §9 `ASM-L2-15`; `docs/L2/app-shell/interface.md` §3-§4 (the transcription
   this half transcribes); `strata/decisions.md` D-1, D-3, D-9, D-14, D-18, D-26, D-30, D-41, D-43, D-44, D-63, D-88, D-104, D-106,
@@ -68,17 +68,16 @@ addition**, and no comment line inside the fence is part of the file's text.
 - **The pair has ONE reader, and it is `store-view-record`'s**: `crossing.test.ts` finds each block by its own opener, reads it at its
   own indent, drops comment and blank lines, strips a trailing comma, and asserts the two lists equal — then pins the expected SEVEN
   texts below that assertion. That row is another module's (`E-5`), named here and edited nowhere (L2 §8 `R-9`; L1 §5 `R-3`).
-- **Direction 1 — THIS half alone (seven here, five there).** The comparison reds with both texts in hand — measured
-  `expected [ …(7) ] to deeply equal [ …(5) ]` — and **because it throws there, the pinned-seven assertion BELOW it never executes**:
-  the pinned arm is unmeasured while the halves disagree, not wrong. `typecheck`, `typecheck:tests` and `build` stay at 0, because the
-  block is erased and no literal in the tree is typed against it; at the running app `window.provident.view.commitDrag` resolves to
-  `undefined`, which is L1's `P-1` and no compiler leg.
+- **Direction 1 — THIS half alone (seven here, five there).** The comparison reds with both texts in hand — measured while this
+  half was the only one landed, `expected [ …(7) ] to deeply equal [ …(5) ]` — and **because it throws there, the pinned-seven
+  assertion BELOW it never executes**: the pinned arm is unmeasured while the halves disagree, not wrong. `typecheck`,
+  `typecheck:tests` and `build` stayed at 0 through that state, and the running app's `commitDrag` resolved to `undefined` until the twin landed (D-145).
 - **Direction 2 — THE TWIN alone (five here, seven there).** The same comparison reds identically, and `typecheck` compiles `src/**`
   (the demo's entries included) while comparing no declaration at all — so it reds there **iff** `E-2` has not landed: the preload's
   two `ipcRenderer.invoke(IPC_VIEW_DRAG_*)` arms and `main()`'s two `ipcMain.handle` sites name constants `view-channels.ts` must
   export. With `E-2` landed, direction 2 is invisible to every compiler leg too — a stale declaration is what no caller can see.
-- **So the one instrument for the halves' disagreement is that comparison**, and the red both directions produce is the PAIR'S
-  absence, never a defect in the half that landed (§6; L2 §8 `R-9`; AS §4).
+- **So the one instrument for the halves' disagreement is that comparison**, and the red both directions produced was the PAIR'S
+  absence, never a defect in the half that landed — and both halves are landed at this head, so it reads seven against seven (§6; L2 §8 `R-9`; AS §4).
 
 ## 4. What must not move, so the landed diff can be read against it
 
@@ -109,8 +108,8 @@ addition**, and no comment line inside the fence is part of the file's text.
 | `npm run typecheck` | the SHELL's half only (`src/**`); this half is erased, so a green says the tree compiles, not that the halves agree | **0 errors** |
 | `npm run typecheck:tests` | the whole `tests/**/*.ts` tree — and no literal in it is typed against the `Window.provident` global, so a stale half is caught by neither leg | **0 errors** |
 | `npm run build` | the declaration is erased at build (D-44): the five artifacts are produced, and the edit's only artifact-level trace is the demo bundle's provenance digest, its body byte-identical | **exit 0** |
-| `npx vitest run tests/integration/store-view-record/crossing.test.ts` | **the pair's ONE reader** (§3), another module's row | **5 of its 20 rows red, and NOT ONE is this half's**: four are `E-1`'s (the delivery the `temp` root must cause, the drag write census, the published `drag@temp` root, the 14-site census) and one is `E-3`'s — the comparison itself, `[7]` against `[5]` |
-| `npm test` | the floor's fourth leg, TAKEN and not waived: its reds are the measure of how much of the unit is still out | **exit 1 — 42 rows in seven files, each another row's** (`E-1`, `E-2`, `E-3`, `E-8`). **This pass's OWN one is cured**: `tests/demo-bundle.test.ts` DB-1/DB-2 red because the checked-in bundle's manifest named `src/renderer/secure-panels.ts` as the only moved input, and green after `node demo/pane-drag-demo/build.mjs` — the provenance digest moves and the body does not, a type-only edit (D-118) |
+| `npx vitest run tests/integration/store-view-record/crossing.test.ts` | **the pair's ONE reader** (§3), another module's row | **GREEN at this head, all of its rows**: the comparison reads seven against seven, and the four reds it carried while only this half stood (the `temp` root's delivery, the drag write census, the published `drag@temp` root, the 14-site census) went with `E-1`/`E-3` (D-145) |
+| `npm test` | the floor's fourth leg, TAKEN and not waived | **GREEN — `2,928 passed / 2 skipped` of `2,930` over `140` files, exit `0`** (D-145's reading). While the pair was half-landed this leg read exit `1` with 42 rows in seven files, every one another row's; **this pass's OWN one was cured at its own landing**: `tests/demo-bundle.test.ts` `DB-1`/`DB-2` were red until `node demo/pane-drag-demo/build.mjs` re-stamped the bundle's provenance digest over the type-only edit (D-118) |
 | `node "../Agent Harness/strata/lint/strata-lint.mjs" strata` | the CORPUS's ceilings, citations and provenance — and it reads `strata/` ONLY, so **no leg instruments these two documents**: their 150-line ceiling and their cites are held by hand (measured: 29 such targets, none under `docs/`) | **exit 1 — 137 PASS / 1 FAIL / 4 INFO**, the FAIL the accepted `register` row-length check this corpus may not cure (D-110) |
 
 ## 7. The unit battery: none, and where L3's exit condition is discharged
@@ -128,7 +127,8 @@ addition**, and no comment line inside the fence is part of the file's text.
 ## 8. Routed to their own owners, and the residue named (D-3: named, never edited)
 
 - **The twin half is `app-shell`'s `E-3`** — its two `ipcMain.handle` sites, its two bridge arms and its own count (`FIVE routes` →
-  SEVEN): this module writes none of it, and the comparison red of §6 is that row's absence (AS §3-§4).
+  SEVEN): this module wrote none of it, and the comparison red §6 now records as history was that row's absence; both halves stand at
+  this head, seven each (AS §3-§4; D-145).
 - **The pair's expected text is `store-view-record`'s `E-5`**, which already pins the seven; this document writes TO it (L2 §8 `R-9`).
 - **A stale double still spells what `D-142` deleted** — `tests/store-modules-seams.test.ts`'s view double — and no leg of this edit
   reds on it (the claiming row's re-grain, D-3). **The boundary row needs no entry**: `boundary.test.ts`'s `DECLARED_SCOPE` already

@@ -1,6 +1,6 @@
 # L3 — `renderer-wiring`: signatures
 
-- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 7 — re-grained WHOLE with
+- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 8 — **the currency pass AFTER the landing** (D-145): §1's `renderGhost` docblock stops claiming a removal on EVERY other arm and states the one arm that removes nothing — the attribute-less target, which returns ahead of the paint — which is what this page's own `ghostTarget` docblock already said and what `renderer.ts`'s `settleGhost` does (D-41). Rev 7 — re-grained WHOLE with
   `design.md` rev 7 §2–§5: the composition's surface, the wiring's ONE seat and constant key, the ghost turn, and the deletions, transcribed as
   stubs for L4. **Rev 6's `focus-retirement` stubs are LANDED in the file and are not re-declared** — `FocusActAnswer`, `FocusRefusal`,
   `FocusSeat`, `composeRecord`, `refusalOf` stand byte-for-byte as rev 6 left them, because a name stated twice is a second authority (D-53, D-45).
@@ -21,7 +21,8 @@ export interface PaneDragSurface {
   renderZone(): void                                       // UNMOVED: the shape's delivery calls it beside the ghost turn
   /** **THE GHOST TURN** (design §4 G1–G9) — the shape's ONE delivery calls it: ONE `data.read` at `['drag']`, then a declared transient on
    *  the backing's `ghostTarget` — `data-ghost="temp"` iff the answer's node is a branch standing at `temp` whose `DEFAULT_PANE_ID` member
-   *  carries a finite non-negative `size`; the declaration REMOVED on every other arm, and nothing thrown. */
+   *  carries a finite non-negative `size`; the declaration REMOVED on every other arm THAT REACHES A REMOVAL — the attribute-less target's
+   *  arm returns ahead of the paint and removes nothing (`ghostTarget` below; design §4 `G9`) — and nothing thrown. */
   renderGhost(): void
   // `previewOf(gestureId): unknown` IS DELETED (§4): the address is the storage, and a member no caller uses is the `D-70` class (ASM-RW-4).
 }

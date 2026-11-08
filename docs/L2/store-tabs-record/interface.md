@@ -105,8 +105,9 @@ other (§1, D-101, D-142). **AND THE WHOLE-RECORD COMPOSITIONS THAT REMAIN ARE B
 `2` books `composeRecord` — this module's own whole-record composer — and D-142 books the renderer's new composition under that
 same entry. The renderer's is a RENDERER fact: it adds no composing route to `tabs`, and it licenses no composition of a
 caller's value here, while `commit`/`remove` compose the record they write because a nested write creates no parent (D-142,
-D-136). **AND THE RENDERER'S PATH IS DECIDED, NOT YET LANDED**: `docs/L1/focus-retirement.md` §6 `E-1` takes it, and this rev
-fixes the surface that route writes, never the landing (D-142, D-3).
+D-136). **AND THE RENDERER'S PATH IS LANDED, NOT DECIDED**: `docs/L1/focus-retirement.md` §6 `E-1` took it as the `focus` case's
+whole body (`focusActRoute`), which reads the tab record, composes it once and hands it to `data.write` at `['tabs']`/`file` — so
+the surface this rev fixes is the one that route writes (D-142, D-143, D-3).
 
 ## 6. The renderer's client role — it reads this record, and it owns none
 
@@ -134,7 +135,7 @@ after every `onChanged`, and changes the record through §5's `data.write` path,
 
 **NOTHING OF THIS RECORD MOVES** (D-142): `['focus']` was never a family this module declared, wrote, read or judged — its
 address, tier, declaration, body and route are `store-view-record`'s and go whole with that unit's own licensed edit, `E-2`,
-which this document neither takes nor assumes landed (§6 `E-2` of `docs/L1/focus-retirement.md`). The six declarations, the
+which this document neither takes nor assumes — **it landed** (`src/renderer/renderer.ts`'s `focusActRoute`, D-143), `E-2` of `docs/L1/focus-retirement.md`. The six declarations, the
 `exactly-one-active` invariant and its normalisation, the `file` tier, the per-tab leaf shape and `order`'s role all stand as
 §1–§4 state them (D-142, D-140). **THE CROSSINGS LEG'S `['focus']` ROWS ARE RE-GRAINED BY THAT UNIT'S OWN L1 PASS** (`E-8`) in
 the same edit as the deletion, and its `exactly-one-active` row already measures the repaired two-active write (D-94, D-3). No
