@@ -4,15 +4,15 @@
   "suites": {
     "flat": {
       "files": 85,
-      "sites": 2229
+      "sites": 2232
     },
     "e2e": {
-      "files": 7,
-      "sites": 58
+      "files": 8,
+      "sites": 64
     },
     "integration": {
       "files": 31,
-      "sites": 274
+      "sites": 278
     },
     "unit": {
       "files": 16,
@@ -700,16 +700,16 @@
   ],
   "readings": {
     "gating": {
-      "files": 42,
-      "sites": 306
+      "files": 43,
+      "sites": 319
     },
     "onNotice": {
       "files": 105,
       "sites": 2386
     },
     "retained": {
-      "files": 7,
-      "sites": 58
+      "files": 8,
+      "sites": 64
     },
     "carveOut": 9
   }

@@ -115,10 +115,10 @@ const sourceOf = (path: string): string => readFileSync(new URL(path, REPO), 'ut
 const rootOf = (address: readonly string[]): string => String(address[0])
 
 describe('the tier is the caller’s, and a declared root’s tier is not (D-101)', () => {
-  it('D-1 · the guarded set IS the two crossings’ own declaration batches, and src/main/data/surface.ts spells neither a root nor a tier', () => {
+  it('D-1 · the guarded set IS the two crossings’ own publications — the declaration batches PLUS the one root declared with no pair — and src/main/data/surface.ts spells neither a root nor a tier', () => {
     // THE SET, BOTH DIRECTIONS. The surface imports its roots from the modules that own them (`D-53`'s rule: a
     // second spelling is the drift this corpus keeps catching), so what is guarded HERE cannot disagree with what
-    // the batches DECLARE — and the day one list gains an entry the other has not, this row reddens.
+    // the modules PUBLISH — and the day one list gains an entry the other has not, this row reddens.
     const batchRoots = new Map<string, string>()
     for (const declaration of [...tabsConstraintDeclarations(() => null), ...viewConstraintDeclarations(() => null)]) {
       const root = rootOf(declaration.address)
@@ -126,17 +126,31 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
       // twice is one entry and not two (`D-87`).
       if (!batchRoots.has(root)) batchRoots.set(root, declaration.id)
     }
+    // **THIS IS THE ROOT DECLARED AND UNPAIRED, AND IT IS NAMED HERE SO THAT A SECOND ONE REDS** (`D-101`;
+    // `pane-drag-temp` `R-1`, L1 §1): `['drag']` at `temp` carries an address, a tier constant and a
+    // `viewDeclaredRoots()` entry, and NO `viewConstraintDeclarations` row — no invariant holds the family, and a
+    // repair whose subject is *"no drag has started"* would mint a placeholder for data whose ABSENCE IS THE
+    // PRODUCT. **THAT IS LAWFUL AND IT IS NOT A GAP TO BE CLOSED BY MINTING A PAIR**: the guard keys on the roots it
+    // is HANDED and not on the batch (`declaredTierLedger`), so the entry ALONE buys the `temp` family the one
+    // judgement it has — a `file` or `mem` write at it is refused `declared-tier`, which is the arm `D-3` drives at
+    // this root. The equality below is the batch PLUS this literal, so an entry that arrives without a declaration
+    // reds here rather than being absorbed, and a pair minted at `['drag']` reds here too, because the literal would
+    // then stand beside a declaration that already names the root.
+    const unpaired = ['drag']
     const published = [...tabsDeclaredRoots(), ...viewDeclaredRoots()]
-    expect(published.map((root) => rootOf(root.address)).sort(), 'the published roots are exactly the declared roots, root for root').toEqual([...batchRoots.keys()].sort())
+    const publishedRoots = published.map((root) => rootOf(root.address)).sort()
+    expect(publishedRoots, 'the published roots are the declared roots plus the one declared without a pair, root for root').toEqual([...batchRoots.keys(), ...unpaired].sort())
     // **THE CONTROL THAT MAKES THE SET A MEASUREMENT — AND THE ONE PLACE THE COUNT LIVES** (`D-43`, `D-101`): the
     // publication is the set, root for root, and no other document or battery restates how many roots there are.
-    expect([...batchRoots.keys()].sort(), 'the declared roots are the four the app declares, and no fifth').toEqual(['panes', 'tabs', 'theme', 'zones'])
-    expect(published.length, 'and the publication is one pair per root, not one per declaration').toBe(4)
+    expect([...batchRoots.keys()].sort(), 'the roots a constraint DECLARES are four — the drag root is published and declares nothing, so it is not one of them').toEqual(['panes', 'tabs', 'theme', 'zones'])
+    expect(publishedRoots.filter((root) => !batchRoots.has(root)), 'and exactly ONE published root carries no declaration, so the unpaired arm above cannot absorb a second').toEqual(['drag'])
+    expect(published.length, 'and the publication is FIVE roots — the four declared and the one declared without a pair — one pair per root, not one per declaration').toBe(5)
     // THE TIERS, READ OFF THE TWO MODULES' OWN CONSTANTS AND NOT OFF THIS FILE: the one `mem` root is the family
-    // that can never come from a file (`D-84`), and everything else is durable — `D-142` took the other `mem` root
-    // with the family it belonged to, and the publication lost the pair with the declaration.
-    expect(Object.fromEntries(published.map((root) => [rootOf(root.address), root.tier])), 'each root at the tier its own module writes it at').toEqual({
-      tabs: 'file', panes: 'file', zones: 'mem', theme: 'file',
+    // that can never come from a file (`D-84`), `temp` is the one root whose tier persists nowhere, and everything
+    // else is durable — `D-142` took the other `mem` root with the family it belonged to, and the publication lost
+    // the pair with the declaration.
+    expect(Object.fromEntries(published.map((root) => [rootOf(root.address), root.tier])), 'each root at the tier its own module writes it at, the temp one included').toEqual({
+      tabs: 'file', panes: 'file', zones: 'mem', theme: 'file', drag: 'temp',
     })
 
     // **AND THE SURFACE ITSELF SPELLS NONE OF THEM.** The guard is a READ of the published pairs, so the code that
@@ -153,7 +167,9 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // outside its own exempt paths in ZERO files, so this module's prose does not spell it — the row is RE-WORDED
     // around it rather than the census widened, which is what `D-97` did with three rows of its own. The guard covers
     // it all the same, because the set above is the modules' and not this file's: `['theme']` at `file` is driven in
-    // `D-3`.
+    // `D-3`. **AND THE DRAG ROOT'S TOKEN IS ABSENT FROM BOTH READINGS FOR THE SAME REASON** — the surface's bytes name
+    // it nowhere at all (prose included, measured), so it cannot be a spelling CONTROL and is covered the same way:
+    // `['drag']` at `file` and at `mem` is driven in `D-3`.
     expect(raw.includes('theme'), 'the control for the elision is taken on the three roots the file\'s prose names').toBe(false)
     for (const tier of ["'file'", "'mem'", "'temp'"]) {
       expect(code.includes(tier), `and no tier literal of its own: ${tier} — the domain and the two defaults are args.ts's, the type is types.ts's`).toBe(false)
@@ -207,13 +223,23 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // **THE FAMILY `D-142` DELETED IS NOT IN IT**, because the set is the crossings' and no crossing declares that
     // address any more — and an UNDECLARED root is ADMITTED, which is the arm driven by this row's own control below
     // and by the e2e row that measures the deleted address directly (`D-101`, `D-142`).
-    const wrong = { tabs: ['mem', 'temp'], panes: ['mem', 'temp'], theme: ['mem', 'temp'], zones: ['file', 'temp'] } as const
+    // **AND `['drag']` IS IN IT, WHICH IS THE ARM ITS UNPAIRED ENTRY BUYS** (`D-1`, `pane-drag-temp` `R-1`): a root
+    // declared with NO constraint row is still a declared root to this guard, because `declaredTierLedger` keys on the
+    // roots the surface is HANDED and not on the batch — so a `file` or `mem` shadow of the `temp` family is refused
+    // exactly as the three paired roots' shadows are. **ITS OWN TIER IS NOT A WRONG TIER AND IS NOT LISTED**: `temp`
+    // is the tier the entry DECLARES, and the control below drives a write there to prove the refusals above are the
+    // TIER's and not a refusal of the address.
+    const wrong = { tabs: ['mem', 'temp'], panes: ['mem', 'temp'], theme: ['mem', 'temp'], zones: ['file', 'temp'], drag: ['file', 'mem'] } as const
     for (const [root, tiers] of Object.entries(wrong)) {
       for (const tier of tiers) {
         const answer = one.surface.write({ path: [root], tier, value: { a: 1 } })
         expect({ root, tier, status: answer.status, reason: answer.status === 'refused' ? answer.reason : null }, `['${root}'] at '${tier}' is refused`).toEqual({ root, tier, status: 'refused', reason: 'declared-tier' })
       }
     }
+    // THE OTHER ARM AT THE UNPAIRED ROOT: the tier the entry declares is ADMITTED, so the two refusals above are the
+    // declared tier's boundary and no blanket over `['drag']` — and nothing judges the value, because no pair stands
+    // at this root (`D-105`, `D-132`).
+    expect(one.surface.write({ path: ['drag'], tier: 'temp', value: { 'pane-a': { size: 120 } } }).status, 'the unpaired root\'s OWN tier is admitted, so the guard refuses a crossing and never the family').toBe('committed')
     // AND THE GUARD IS BELOW THE ROOT TOO: a family is ONE value at its root, so every address under it is that
     // root's tier — a descendant write at another tier is the same lie one segment down.
     expect(one.surface.write({ path: ['panes', 'pane-a', 'size'], value: 1, tier: 'mem' }).status, 'a descendant of a declared root is guarded by its ROOT').toBe('refused')

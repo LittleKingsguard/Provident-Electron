@@ -1,16 +1,17 @@
 # L3 — `secure-panels`: the declared signatures and the exact landing text
 
-- **Layer:** L3 · **Unit:** `focus-retirement` · **Branch:** `strata` (D-6) · **Rev:** 2 — **CURRENCY only, no claim moves (D-143): the edit
-  LANDED**, so §2's two regions are the text `src/renderer/secure-panels.ts` carries at this head, five members and three import specifiers.
-  Rev 1 wrote them for the three removals of `docs/L1/focus-retirement.md` §6 `E-4` (D-142), the module's published surface beside them,
-  signatures only; the landed roster text is read from that file and not reprinted here (D-41, D-2) · **Artifact:** `l3-secure-panels-signatures`
-- **Status:** DECLARED NAMES AND EXACT TEXT ONLY — the structure, the pair rule, the guardrails and the routed notes are `design.md`;
-  this file carries every name the landing exposes or consumes and the exact text each of its two regions carries at this head (D-3)
-- **Contract:** the edit removed three names and minted nothing — no member, no route, no alias, no export, no file (D-18, D-142)
-- **Ceiling:** 150 lines, class max (D-1) · **Citations:** `L2 §n` is `docs/L2/secure-panels/interface.md`'s, `E-n` is
-  `docs/L1/focus-retirement.md` §6's, `G-n` is `design.md` §5's
+- **Layer:** L3 · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 1 — this module's half of the drag pair's ONE
+  edit: the `view?` block gains `commitDrag` and `clearDrag`, and the count above it moves to seven (§2). **It REPLACES
+  `focus-retirement`'s rev 2** and reprints none of it (D-2); the structure, the pair rule and the guardrails are `design.md`
+  · **Artifact:** `l3-secure-panels-signatures`
+- **Status:** DECLARED NAMES AND EXACT TEXT ONLY — every name this landing exposes or consumes, and the exact text its two regions
+  carry, are here; the reasoning is `design.md`'s (D-3, `examiner.md` §4). **Contract:** the edit adds TWO members and one word and
+  mints nothing — no route, channel, import, alias, export or file (D-18, D-112)
+- **Ceiling:** 150 lines, class max (D-1) · **Citations:** `L2 §n` is `docs/L2/secure-panels/interface.md`'s, `AS §n` is
+  `docs/L2/app-shell/interface.md`'s, `G-n` is `design.md` §5's, `E-n`/`R-n` are `docs/L1/pane-drag-temp.md`'s; a cite into `src/**`
+  names the **site** and never an offset (D-41)
 
-## 1. The module's published surface — one export, listed rather than transcribed, and it does not move
+## 1. The module's published surface — one export, and it does not move (D-14)
 
 ```ts
 export class SecurePanels {
@@ -33,11 +34,12 @@ export class SecurePanels {
   `GROUP_LABELS: Record<ToolGroup, string>` and `GROUPS: readonly ToolGroup[]`, with `paneEnvelope(): LegacyInitialData`,
   `paneMutationValid(mutation: unknown[]): boolean` and the five body templates `TOKEN_GEN_BODY`, `TOKEN_CLEAR_BODY`, `TOGGLE_BODY`,
   `JOURNAL_LENGTH_BODY`, `EXCLUSION_TOGGLE_BODY`, each `string` (L2 §1, §5; D-14).
-- **This unit writes none of them**: `E-4`'s lines are the `view` member's and one import's (D-142; `design.md` §1).
+- **This pass writes none of them**: its regions are the `view` member's (§2) — the class, the roster table and every handler body are
+  byte-unmoved (`design.md` §4).
 
 ## 2. The declared bridge surface — `declare global`, `Window.provident`
 
-### 2.1 `view?` — the post-edit member, as the file carries it (region 2 of the edit)
+### 2.1 `view?` — the post-edit block, SEVEN members (region 1 of the edit; the copy authority)
 
 ```ts
       view?: {
@@ -45,88 +47,86 @@ export class SecurePanels {
         commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+        commitDrag(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+        clearDrag(): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         onChanged(handler: () => void): () => void
       },
 ```
 
-- **Five members, in that order**, each byte-identical to the line the file carries today; the answer's `read` line carries three families and a `source` of the same three keys (L2 §4, §9 `ASM-L2-14`; D-142; `design.md` §1-§2).
-- **The member's three comment lines above it are carried unchanged** and are no part of the edit — the "SIX routes" they still count is
-  **prose residue** at that site, read by no instrument and repaired nowhere here (`design.md` §5 `G-5`, §8; D-41).
+- **Seven members, in that order, one line each**, at the block's own eight-space indent, no trailing comma on `onChanged` and no
+  wrapping anywhere — the text `src/main/preload.ts`'s `view` block must carry too, member for member (AS §3-§4; D-112, D-142).
+- **The two additions are the fifth and sixth members**, between the appearance act and the push: that position is what
+  `tests/integration/store-view-record/crossing.test.ts` pins, and it is not this document's to choose (L2 §8 `R-9`).
+- **`commitDrag` names an `id` and a `geometry` and never a path**, answers the commits' own inline text byte for byte, and takes
+  `unknown` geometry because the boundary knows no shape (AS §3; D-88, D-132).
+- **`clearDrag` takes NOTHING** — the erase is a DELETE at the family's own tier, and the `null` arm `D-140` removed stands nowhere
+  here (L1 §9 `ASM-2`, `ASM-4`).
+- **The `read` line is unmoved**, member and `source` key for key: the temp reading is read through `provident.data.read({path:
+  ['drag']})`, whose node carries its own `_tier`, so no `drag` member joins this answer (L2 §4; D-133, D-144).
 
-### 2.2 The type-only imports the declaration consumes — one specifier left (region 1 of the edit)
+### 2.2 The count above the block — `SIX` becomes `SEVEN` (region 2 of the edit)
+
+- The three-line comment above `view?: {` opens with this line, and only its last-word count moves; the two lines below it stay byte
+  identical, `store` mention and all (D-11, D-41):
+
+      // THE VIEW RECORD'S CROSSING (D-87, D-91, D-97; `docs/L2/view-record/interface.md` §2): ONE member, SEVEN routes. This
+
+### 2.3 The type-only imports the declaration consumes — NO specifier moves
 
 ```ts
 import type { ViewPaneGeometry, ViewThemeRecord, ViewZone } from '../main/view-record/index.js'
 ```
 
-- **`ViewFocusMirror` left this specifier set and no other specifier moved**; the statement, its string, its `import type` keyword
-  and the comment block above it are carried as they stand (`E-4` (iii); L2 §4).
-- **The declaration's other type-only imports are untouched**, specifier for specifier: `SecuritySettings`, `RpcRequest` and
-  `RpcReply` and `TabsRecordRow` from `../shared/types.js`; `SecurityWriteReceipt`, `Tier4ClosedRefusal`, `Tier4WriteAnswer` from
+- **The line is byte-unmoved**, because the pair's geometry is `unknown` and its answer inline: no type of the drag's reaches this
+  file, exactly as `D-88` kept the three (AS §3; `G-3`).
+- **The declaration's other type-only imports are untouched**, specifier for specifier: `SecuritySettings`, `RpcRequest`, `RpcReply`
+  and `TabsRecordRow` from `../shared/types.js`; `SecurityWriteReceipt`, `Tier4ClosedRefusal`, `Tier4WriteAnswer` from
   `../main/settings-surface/index.js`; `EXCLUSION_STATE` and `ToolGroup` from `../main/security.js`; `SecurityShape` from
   `./security-client.js`; `DataDeleteAnswer`, `DataJournalAnswer`, `DataListAnswer`, `DataReadAnswer`, `DataWriteAnswer` from
   `../main/data/index.js` (D-112, D-16, D-18).
+- **No channel constant is named anywhere in this file**, so `src/shared/view-channels.ts`'s `IPC_VIEW_DRAG_COMMIT` and
+  `IPC_VIEW_DRAG_CLEAR` are imported by `preload.ts` and `main.ts` only (`E-2`/`E-3`; D-87, D-41).
 
-### 2.3 The members this edit does not touch — declared signatures, their text read from the file
+### 2.4 The members this pass does not touch — named, their text read from the file
 
-**Only §2.1 and §2.2 are copy authorities.** This subsection lists the surviving sub-members so a reader sees the whole declared
-surface; their signatures are the file's, spelled here in single-line form — members joined with `;`, no trailing comma, `tabs.read`'s
-union arms collapsed — so no member, type or answer is re-decided here, and the file's own wrapping is the text wherever it differs (D-41; `design.md` §5 `G-2`/`G-5`).
+**Only §2.1-§2.3 are copy authorities.** Each member below keeps the file's own text, re-decided by nothing here (D-41, D-2).
 
-```ts
-      ready(): void
-      onRequest(handler: (req: RpcRequest) => void): void
-      sendReply(reply: RpcReply): void
-      notify(payload: { uri: string }): void
-      security?: {
-        get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null; pane: { open: boolean } }>
-        set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: Tier4WriteAnswer }>
-        setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
-        onChanged(handler: () => void): () => void
-        setPane(open: boolean): Promise<{ status: 'committed' } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }>
-      }
-      tabs?: {
-        read(): Promise<{ status: 'committed'; order: readonly string[]; landing: string; rows: readonly TabsRecordRow[] } | { status: 'refused'; reason: string; message: string; address: readonly (string | number)[] | null }>
-        commit(row: TabsRecordRow): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }>
-        remove(id: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null; repaired?: boolean }>
-        onChanged(handler: () => void): () => void
-      }
-      module?: {
-        get(): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
-        setDisabled(name: string, disabled: boolean): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
-        onChanged(handler: () => void): () => void
-      }
-      data?: {
-        read(args: unknown): Promise<DataReadAnswer>
-        write(args: unknown): Promise<DataWriteAnswer>
-        delete(args: unknown): Promise<DataDeleteAnswer>
-        list(args: unknown): Promise<DataListAnswer>
-        journal(args: unknown): Promise<DataJournalAnswer>
-      }
-```
+| Member | Its routes, by name | Cite |
+|---|---|---|
+| `security?` | `get`, `set`, `setExclusion`, `onChanged`, `setPane` — untouched, and the record's delivery still reaches the pane through the second of the two `onChanged`s' subscription, never a read | L2 §4; D-104, D-106, D-123 |
+| `tabs?` | `read`, `commit`, `remove`, `onChanged` | L2 §4; D-63, D-112 |
+| `module?` | `get`, `setDisabled`, `onChanged` | L2 §4; D-104 |
+| `data?` | `read`, `write`, `delete`, `list`, `journal` — **and no `onChanged`**, deliberately absent | L2 §4; D-107, D-112 |
+| `ready`, `onRequest`, `sendReply`, `notify` | the four top-level members, untouched | D-112 |
 
-- **`security`'s five routes, `tabs`' four, `module`'s three and `data`'s five are listed by signature only, re-decided by nothing**
-  (L2 §4; D-16, D-17, D-63, D-104, D-107, D-112, D-123; `design.md` §4).
-
-## 3. What the edit removed, and what it did not mint
+## 3. What this pass adds, and what it does not mint
 
 | Name | Disposition | Cite |
 |---|---|---|
-| `commitFocus(mirror: ViewFocusMirror)` | **removed** from `view?`; nothing stands in its place | `E-4` (i); D-142 |
-| `focus: ViewFocusMirror`, `source.focus: 'record' \| 'default'` | **removed** from the `read` line, member and source key together | `E-4` (ii); L2 §9 `ASM-L2-14` |
-| `ViewFocusMirror` | **removed** from the `view-record` import's specifier set | `E-4` (iii); L2 §4 |
-| anything else | **not minted**: no member, route, alias, type, export, file, channel or script key | D-18, D-14; `design.md` §5 |
+| `commitDrag(id: string, geometry: unknown)` | **added** to `view?`, fifth member | §2.1; D-132, D-137 |
+| `clearDrag()` | **added** to `view?`, sixth member, an act taking nothing | §2.1; L1 §9 `ASM-4` |
+| the comment's count | **moved** `SIX → SEVEN` | §2.2; `G-6` |
+| a route, channel, `ipcMain.handle`, client method, store verb | **not minted here**: the secure realm gains **no store route** while this declaration carries both members, `['drag']` joining the NORMAL crossing instead | `G-1`, `G-2`; D-132, D-123, D-112 |
+| an import, type, alias, export, file, MCP tool or resource | **not minted**: the block declares and nothing is added beside it | `G-3`, `G-7`; D-18, D-14 |
 
 ## 4. The commands
 
 ```sh
-npm run typecheck        # the shell's half of the pair (direction 1)
-npm run typecheck:tests  # direction 2's leg
-npm run build            # the declaration is erased at build (D-44)
-npm test                 # the floor's fourth leg (D-1)
-npx vitest run tests/integration/store-view-record/crossing.test.ts   # another module's row
+npm run typecheck        # the SHELL's half of the pair; this half is erased
+npm run build            # a `declare global` block is erased at build (D-44)
+npx vitest run tests/integration/store-view-record/crossing.test.ts   # another module's row — RED until BOTH halves land
+node "../Agent Harness/strata/lint/strata-lint.mjs" strata            # exit 1: the ONE accepted `register` FAIL
 ```
 
 - **No unit battery and no map claim**: `design.md` §7's verdict, with its reason and its instrument (D-9, D-30; L2 §7).
+- **That third line's red is NOT this half's, and the attribution is the measurement**: five of its rows fail and each has an owner —
+  four are `E-1`'s (the delivery the `temp` root must cause, the drag write census, the published `drag@temp` root and the 14-site
+  census) and one is `E-3`'s, the comparison itself, `[7]` against `[5]`; no crossing red CHARGES this file (the comparison's title
+  and the census's list name it, and neither fails on it) (`design.md` §3, §6; L2 §8 `R-9`).
+- **The readings at this head, taken after the landing**: `typecheck` 0, `typecheck:tests` 0, `build` exit 0, and `npm test` exit 1
+  with seven files red — every one another row's (`E-1`, `E-2`, `E-3`, `E-8`) once this pass's OWN red was cured: `tests/demo-bundle.test.ts`
+  red on the checked-in bundle's stale manifest and green after `node demo/pane-drag-demo/build.mjs` (D-118). The lint is exit 1 with
+  the accepted `register` FAIL and nothing else — and it reads `strata/` only, so neither document's ceiling is instrumented by it
+  (`design.md` §6).
 - **No census figure, cap, script key or map row is stated here**, all being read from the `secure-panels` row and `brief.md` §6
   (D-14, D-26, D-39).

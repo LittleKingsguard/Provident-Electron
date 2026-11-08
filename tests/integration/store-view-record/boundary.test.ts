@@ -1099,6 +1099,74 @@ const DECLARED_SCOPE: readonly string[] = [
   //    **unverifiable, never falsified**. It is the record of a run that had seen neither the code nor the design work, which is
   //    why it stands as a file of its own beside the unit's and why the unit is presented landed-and-green with the currency pass
   //    owed rather than as ready (`D-144`, `walkthrough.md` §5/§6, `D-1` §4.1).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── REV 7 OF `store-view-record` — THE `pane-drag-temp` UNIT'S `temp` FAMILY (`D-132`, `D-137`, `D-101`). **FOUR PATHS JOIN
+  //    THIS UNION AND NOT ONE IS ADMITTED BY A PREFIX**; the unit's `src/` writes and the five `store-view-record` batteries it
+  //    re-grains are ALREADY DECLARED ABOVE (`src/main/view-record/index.ts`, `src/main/view-surface/index.ts`,
+  //    `src/shared/view-channels.ts`, `src/renderer/view-client.ts`, `src/main/main.ts`, `src/main/preload.ts`,
+  //    `src/renderer/secure-panels.ts` and every file under `tests/integration/store-view-record/`), so no second spelling of
+  //    any of them is added here — `B-1`'s set assertion refuses a duplicate, which is the difference between a write and a claim.
+  //
+  //    **AND THE ROW HAD ALREADY REDDENED ON ALL FOUR**, which is why they are here rather than left to a later pass: the four
+  //    paths below are what `git status --porcelain --untracked-files=all` reported OUTSIDE this union when this pass opened it.
+  //    THE UNIT'S OWN L1 SCOPE: the design this pass transcribes — the two-phase gesture kept, the in-process reading made an
+  //    addressable fact at `['drag']` at `temp`, the root DECLARED with no declaration, the six-row e2e matrix and the eight
+  //    licensed edits (`D-132`, `D-137`, `D-138`, `D-101`). It is declared by NAME, never as `docs/L1/`, because a prefix admits
+  //    every design a later unit drops beside it.
+  'docs/L1/pane-drag-temp.md',
+  //    THE UNIT'S E2E BATTERY, THE FILE AND NEVER THE DIRECTORY (`P-1`…`P-6`'s six agent-or-drive rows at a process boundary).
+  //    A `tests/e2e/pane-drag-temp/` prefix would admit a second battery nobody declared — and a `tests/e2e/` file is NEVER
+  //    marked, so this one gates (D-30, D-40, D-10, D-27).
+  'tests/e2e/pane-drag-temp/pane-drag-temp.test.ts',
+  //    THE UNIT'S STATE, WRITTEN BY THE LOOP'S INSTRUMENT AND BY NOTHING ELSE (`D-99`'s discipline): the unit file the
+  //    instrument creates and advances, and the return envelope its `l1-design` artifact answered with. Neither is hand-edited
+  //    from this seat, and both are paths `git status` reports like any other write.
+  'strata/.strata/units/pane-drag-temp.json',
+  'strata/.strata/returns/pane-drag-temp-l1-design.json',
+  //    AND EVERY OTHER PATH THIS PASS WRITES IS ALREADY DECLARED ABOVE: `docs/L2/view-record/interface.md` (rev 7 in place — the
+  //    fourth family row, the two routes, the four published roots and §8's ten-hunk licence, inside its `150`-line ceiling), the
+  //    five batteries (the crossing's THREE new and THREE re-grained rows — the unpaired root, the outside-`temp` delivery, the
+  //    seven-site route census, the write census `three → four`, the published set and the lockstep pair — the client's `C-11`, the
+  //    zone family's `Z-6` census and this block), `strata/decisions.md` and `strata/modules.json` (the row and the `endpoints`
+  //    figure the unit's L1 already moved to `7` — both already dirty at this head and both declared above). **AND
+  //    `strata/marks.json` IS ABSENT FOR A MEASURED REASON RATHER THAN BY OMISSION**: no test file is added or removed and no
+  //    marker moves, but FOUR gating `it(` rows are (three in `crossing.test.ts`, `C-11` in `client.test.ts`), so the index's
+  //    `readings` move — MEASURED at this head: `node scripts/strata-marks.mjs check` exits `1` with `FAIL index readings
+  //    disagrees with the sources — run \`index\``, `316` gating sites in `43` files against the index's `312` in `43`. That is a
+  //    corpus act this pass does not own and the unit's close owes (`node scripts/strata-marks.mjs index`, `D-107`'s lesson).
+  //    `strata/brief.md` is absent because this pass does not write it.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-145` — THE `pane-drag-temp` CLOSE'S OWN TWO RECORDS, AND THEY ARE THE WHOLE OF WHAT THIS ROW REPORTED. **TWO PATHS
+  //    JOIN THIS UNION AND NEITHER IS ADMITTED BY A PREFIX OF ITS NEIGHBOURS**: `strata/records/` carries three other units'
+  //    records that this unit never wrote, so a declared directory would admit every record a later close drops beside them,
+  //    and `B-2`'s undeclared-sibling arm is what would then bite on a file nobody named.
+  //    **THIS BLOCK EXISTS BECAUSE THE ROW DID ITS JOB**: both paths stood red in `B-1`'s offender list, ALONE, after the
+  //    unit's own writes and its re-grains (`docs/L1/pane-drag-temp.md`, the e2e battery, the two `strata/.strata/` state
+  //    files, `strata/decisions.md`, `strata/modules.json` and the re-grained batteries) had all been declared — the unit
+  //    discipline `D-143`/`D-144` state, that a unit owns what its own close writes and that a record which now stands is a
+  //    write this union must carry rather than one a reader is asked to assume.
+  //    THE UNIT'S OWN RECORD: the artifact `D-5`/`D-52` make the owner of an upstream-owned finding and that this close owes
+  //    — §1's one line per module against `E-1`…`E-8` (`store-view-record`, `app-shell`/`secure-panels`, `renderer-wiring`,
+  //    `central-data`, `demo-panes` and the leaf-node deviation recorded rather than smoothed), §2's readings at this head
+  //    (`npm test` `2,928 passed / 2 skipped` of `2,930` over `140` files, all three other legs `0`, `crossings` `0`
+  //    failures over `28` rows, marks `319` gating sites in `43` files) and §3's `STALE` walkthrough verdict with the row
+  //    its own arm names (`D-145`).
+  'strata/records/pane-drag-temp-unit.md',
+  //    THE EXIT WALKTHROUGH'S RECORD (`walkthrough.md` §1–§3): ten blind documentation steps with their `goal · expected ·
+  //    source` citations, §2's report — whose substance agreed with `src/` and `dist/` byte for byte and whose `docs-stale`
+  //    class names five L2/L3 pages plus two corpus rows still asserting the pair's absence, the `view` member at five,
+  //    `main()` at eighteen handlers, `viewDeclaredRoots()` at three/four and `G8`'s bare-number predicate — and §3's
+  //    **`STALE`** verdict on CURRENCY and never on substance, routed to the owning layers with the loop recommendation
+  //    made a rule of the close. It is the record of a run that had seen neither the code nor the design work, which is why
+  //    it stands as a file of its own beside the unit's (`D-145`, `walkthrough.md` §3, `D-1` §4.1).
+  'strata/records/pane-drag-temp-walkthrough.md',
+  //    AND EVERY OTHER PATH THIS CLOSE WRITES IS ALREADY DECLARED ABOVE AND IS NAMED HERE SO A READER CAN CHECK THE CLAIM:
+  //    `strata/decisions.md` (the row), `strata/brief.md`, `strata/pending.md`, `strata/next-steps.md`, `strata/marks.json`
+  //    (REGENERATED by `strata-marks.mjs index`) and `strata/modules.json` each stand on a block above, so no second
+  //    spelling of any is added — a second spelling is the duplicate that reddens `B-1`'s own set assertion.
+  //    **NOTHING THE CLOSE WROTE IS ABSORBED SILENTLY**: the two entries above are the whole of what `B-1` reported outside
+  //    this union at this head, and `docs/L1/pane-drag-temp.md`, `docs/L2/view-record/interface.md`, the re-grained batteries
+  //    and the two `strata/.strata/` state files are not new entries because they already stand above — a write is not a claim.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

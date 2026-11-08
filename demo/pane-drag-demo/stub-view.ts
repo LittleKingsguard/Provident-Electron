@@ -18,12 +18,22 @@
  * and not the stub's invention, and the `source` word (`'record'` / `'default'`) is the derivation's, not this file's.
  * The zone family is EMPTY, and its read is `zoneIn`'s own missing arm (`null`, `D-91`) rather than a geometry.
  *
+ * **AND IT STANDS FOR THE DRAG FAMILY TOO** (`D-132`; `docs/L2/view-record/interface.md` §1): the composition's `move`
+ * turn writes the gesture's in-process placement at `['drag']` at `temp` through the client's `commitDrag`, and its ending
+ * (`release`/`cancel`/`rightClick`) deletes that family through `clearDrag`. So the stub answers BOTH the drag routes and
+ * holds the one family they write, and `drag()` is the demo's READ of it — the address is the storage, so this page reads
+ * what the composition wrote instead of keeping a copy beside it (the closure member `D-132` deleted). The family's
+ * ABSENCE is a state of its own here as it is in the store: `clearDrag` DELETES it whole, never a placeholder.
+ *
  * **THE ONE THING THAT IS NOT THE APP'S, STATED PLAINLY.** The app's `commitPane` SENDS a route across the bridge and the
  * shape is refilled by the delivery that commit causes a tick later (`D-88`). There is no bridge here, so the stub
  * composes the write into its own family at the moment of the call — the same "a supplied member is written over what
  * stands, every other member is kept" rule the crossing's `composePane` applies (`D-87`) — records it in `writes()`, and
  * answers the SAME declared statement the client answers (`{status: 'sent'}`, `ViewWriteStatement`). **IT IS NOT A
  * CROSSING AND CLAIMS NOTHING ACROSS A BOUNDARY**: it is the demo's own status the release writes to, held in this page.
+ * `commitDrag` is the same stand-in one family over — the placement lands where the address would hold it, and the
+ * delivery the app's commit would cause has no stand-in — so `drag()` reads this page's own write, which is the point
+ * the demo exists to show.
  *
  * **WHY THE MEMBERS ARE TYPED OFF THE APP'S CLIENT AND NOT DECLARED HERE.** `StubViewMembers` is a `Pick` of the app's
  * `ViewClient`. That is the whole anti-drift mechanism: if the composition starts reading a member the stub does not
@@ -40,8 +50,12 @@ import {
   type ViewZone,
 } from '../../src/shared/view-shape.js'
 
-/** THE FOUR MEMBERS THE COMPOSITION READS AND WRITES — taken from the client's own declaration, never re-spelled. */
-export type StubViewMembers = Pick<ViewClient, 'paneSizeOf' | 'paneBoundsOf' | 'zoneOf' | 'commitPane'>
+/** **THE SIX MEMBERS THE COMPOSITION READS AND WRITES — taken from the client's own declaration, never re-spelled**: the
+ *  panes family's four (`D-117`) and the drag pair the composition's `move` and its ending turn route through (`D-132`). */
+export type StubViewMembers = Pick<
+  ViewClient,
+  'paneSizeOf' | 'paneBoundsOf' | 'zoneOf' | 'commitPane' | 'commitDrag' | 'clearDrag'
+>
 
 /** One write the release sent through the route, kept so the demo can show it happened (the stub is the only reader). */
 export interface StubPaneWrite {
@@ -49,12 +63,25 @@ export interface StubPaneWrite {
   readonly geometry: unknown
 }
 
+/** **THE DRAG FAMILY'S READING — THE ADDRESS THE COMPOSITION WRITES, AS THIS PAGE CAN SEE IT** (`D-132`, L2 §1). `present`
+ *  carries the store's own distinction rather than a convenience: the family is DELETED by the gesture's ending, so "no
+ *  gesture in process" is an ABSENT address and never an empty family, and the demo cannot confuse the two either. */
+export interface StubDragReading {
+  /** THE ONE SPELLING of the address this page reads — `['drag']`, the root `D-132` gave the in-process placement. */
+  readonly address: readonly string[]
+  readonly present: boolean
+  /** One member per pane id carrying the placement ALONE — `{size}`, never a geometry (`docs/L2/view-record/interface.md` §1). */
+  readonly members: readonly { readonly id: string; readonly size: number }[]
+}
+
 /** The stub, and the controls the demo's panel drives it with. `members` is what `createPaneDrag` is handed. */
 export interface StubView {
-  /** THE SHAPE AS THE COMPOSITION SEES IT — the four members, and nothing else, so a fifth read cannot be answered by luck. */
+  /** THE SHAPE AS THE COMPOSITION SEES IT — the six members, and nothing else, so a seventh read cannot be answered by luck. */
   readonly members: StubViewMembers
   /** THE STANDING FAMILY, as a fresh array of copies. */
   panes(): readonly ViewPaneGeometry[]
+  /** **THE DRAG FAMILY AS THE COMPOSITION LEFT IT** — the demo's read of the address the moves write and the ending deletes. */
+  drag(): StubDragReading
   /** ONE PANE THROUGH THE APP'S OWN DERIVATION — `source` says whether the family named it. */
   geometryOf(id: string): ReturnType<typeof paneGeometryIn>
   /** THE CONTROL'S WRITE: a new size for one pane, CLAMPED by the caller (`clampToBounds`, `gutter.ts`) into its own pair. */
@@ -69,6 +96,11 @@ export interface StubView {
 
 /** The zone family the stub stands for: EMPTY, which is what a realm that never read `['zones']` holds (`D-95`'s `V-2`). */
 const ZONES: readonly ViewZone[] = []
+
+/** **THE DRAG ADDRESS, SPELLED ONCE IN THIS FILE** — `docs/L2/view-record/interface.md` §1's fourth root (`D-132`). Its
+ *  constant lives in the crossing (`src/main/view-record/index.ts`), which this page has no process for and cannot import,
+ *  so the one spelling stands here and the readout shows THIS value rather than a second string written beside it. */
+const DRAG_ADDRESS: readonly string[] = ['drag']
 
 /** A fresh copy of one geometry, so no caller of `panes()` can move the stub's record. */
 const copyOf = (pane: ViewPaneGeometry): ViewPaneGeometry => ({
@@ -85,6 +117,20 @@ const copyOf = (pane: ViewPaneGeometry): ViewPaneGeometry => ({
 export function createStubView(): StubView {
   const family = new Map<string, ViewPaneGeometry>()
   const logged: StubPaneWrite[] = []
+  /** **THE DRAG FAMILY, AND `null` IS THE ABSENT READING** (`D-132`): one member per pane id while a gesture is in process,
+   *  and NO family at all once its ending deleted it — the store's own distinction, kept here so the demo reads a truth and
+   *  not an empty placeholder. `move` writes it through `commitDrag`, the ending turns delete it through `clearDrag`. */
+  let dragFamily: Map<string, number> | null = null
+
+  /** THE READ OF THAT ADDRESS — a fresh copy on every call, so no holder can alias the standing family. */
+  const drag = (): StubDragReading => {
+    const standing = dragFamily
+    return {
+      address: [...DRAG_ADDRESS],
+      present: standing !== null,
+      members: standing === null ? [] : [...standing.entries()].map(([id, size]) => ({ id, size })),
+    }
+  }
 
   /** The family as an array, derived from the map on every read so no holder can alias it. */
   const panes = (): readonly ViewPaneGeometry[] => [...family.values()].map(copyOf)
@@ -140,11 +186,30 @@ export function createStubView(): StubView {
       logged.push({ id, geometry })
       return { status: 'sent' }
     },
+    /** **THE DRAG'S MOVE ROUTE — ONE WHOLE VALUE THE CALLER FORMATTED** (`D-132`, `D-135`, `D-136`): the placement the
+     *  composition's `move` read, `{size}`, written as the family's single member because the composition drags one pane.
+     *  A pair its own shape arms cannot read (no id, a size that is not a finite non-negative number) writes NOTHING and
+     *  leaves what stands standing — the crossing's judgement, answered here from the same two facts and added to. */
+    commitDrag(id: string, geometry: unknown): { readonly status: 'sent' } {
+      const record = (geometry ?? null) as { readonly size?: unknown } | null
+      const size = record === null || record === undefined ? undefined : record.size
+      if (id.length > 0 && typeof size === 'number' && Number.isFinite(size) && size >= 0) {
+        dragFamily = new Map([[id, size]])
+      }
+      return { status: 'sent' }
+    },
+    /** **THE DRAG'S END — THE FAMILY IS DELETED WHOLE** (`D-132`, `D-140`): the act carries NO argument, and the address
+     *  answers absent afterwards whether or not it stood — never a placeholder written to stand in for a gesture's end. */
+    clearDrag(): { readonly status: 'sent' } {
+      dragFamily = null
+      return { status: 'sent' }
+    },
   }
 
   return {
     members,
     panes,
+    drag,
     geometryOf: (id: string) => paneGeometryIn(panes(), id),
     setSize,
     setBounds,

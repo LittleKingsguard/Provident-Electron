@@ -11,6 +11,15 @@
 // so nothing this file measured is left unowned. **ONE ROW IS NEW AND IT MEASURES THE DELETION ITSELF** — the last row of
 // the wiring block — because a route leaving one side alone is the defect this change could ship.
 //
+// **RE-GRAINED FOR REV 7, WHICH ADDS THE DRAG'S IN-PROCESS FAMILY** (`docs/L2/view-record/interface.md` §1–§8): `['drag']` at `temp`, DECLARED and
+// UNPAIRED — an address, a tier constant, a `viewDeclaredRoots()` entry and **no `viewConstraintDeclarations` row** — with `commitDrag`/`clearDrag` on the
+// record, the surface, both lockstep halves and the client, and the address joining `subscribe`'s array in the same edit (`D-132`, `D-137`, `D-101`).
+// **FOUR ROWS ARE NEW AND TWO ARE RE-GRAINED**: the unpaired root's own arm (clause 1), the delivery an outside `temp` write must cause (clause 2 — the
+// root-keying `D-137` makes a precondition, `P-3`'s instrument at the crossing), the seven-site route census, and the drag root in the published set and in
+// the lockstep pair; while the clause-4 write census moves `three → four`, because the drag route is a fourth whole-family write and the clear is a delete.
+// **EVERY ROW THAT READS `src/` IS RED UNTIL L4 LANDS**, each red the absence it names; the unpaired-root row is the one exception and it is a CONTROL —
+// it is green at this head by construction and reds the moment L4 mints a placeholder at the temp root.
+//
 // THE CONTRACT: `docs/L3/view-record/design.md` §4 — ONE registered pair per surviving root, each answering `true` or
 // `{ message, repair }`, where the repair leaves ONE whole legal family and RETURNS the op its write landed (`{ ok: true,
 // op }`, the shape the kernel credits through `landedOp`); and `docs/L2/view-record/interface.md` §2 — the member's
@@ -285,6 +294,25 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
       rmSync(instant, { recursive: true, force: true })
     }
   })
+
+  it('THE DRAG ROOT IS DECLARED AND UNPAIRED — a CONTROL, green at this head by construction and red the moment a repair mints here: no pair is declared at `[\'drag\']`, the address answers NOTHING once the batch has run, and no byte of the profile names it, so a gesture that has not started is an ABSENCE and not a placeholder (D-132, D-101)', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    // (a) THE BATCH NAMES NO ADDRESS UNDER THE DRAG ROOT: the family is DECLARED without a declaration, which is the one place this module's usual
+    // shape is narrower (L2 §1). A `drag` id arriving in this list is the placeholder-for-absence fault, and it reds here rather than passing.
+    const declared = viewConstraintDeclarations(() => null).map((declaration) => declaration.address.join('/'))
+    expect(declared, 'no pair is declared at the drag root').not.toContain('drag')
+    // (b) THE ADDRESS ANSWERS NOTHING ON THE VERY STORE THE BATCH BUILT — the constructor ran every repair this module declares and none wrote here.
+    let absent = ''
+    try {
+      store.read(['drag'] as never, 'temp' as never)
+    } catch (caught) {
+      absent = (caught as { status?: string }).status ?? ''
+    }
+    expect(absent, 'the temp root holds no boot datum: a repair there would mint a placeholder for data whose absence IS the product (D-132)').toBe('AddressNotFound')
+    // (c) AND THE PROFILE CARRIES NO `drag` KEY EITHER, so the absence is the store's state and not one read's arm: `temp` persists nowhere.
+    expect(readFileSync(join(dir, PROFILE_FILE), 'utf8').includes('drag'), 'not one byte of the profile names the temp root').toBe(false)
+  })
 })
 
 // ═══════════════ CLAUSE 2 — A LISTENER CARRIES THE CHANGE, ONCE PER COMMITTED CHANGE, ZERO ELSEWHERE ═══════════════
@@ -342,6 +370,27 @@ describe('view-record · clause 2 — the push, measured per family and against 
     // THE POSITIVE CONTROL: the RAW bytes DO carry the channel's own letters, so the absence above is about the
     // re-spelling and not about a scan that could not have found it.
     expect(sourceOf('src/shared/view-channels.ts').includes("'provident:view:changed'"), 'the single source carries it').toBe(true)
+  })
+
+  it('THE SUBSCRIPTION ARRAY COVERS THE FOURTH ROOT: a write at `[\'drag\']` at `temp` made OUTSIDE the record delivers to the same subscription — `D-137`\'s precondition measured where it can fail silently, `P-3`\'s instrument at the crossing', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    let delivered = 0
+    const off = record.subscribe(() => {
+      delivered += 1
+    })
+    // **THE WRITE THE DRAG DID NOT MAKE** — an outside `temp` write at the family's own address, which is the only form this precondition can be
+    // measured in (`D-137`): a temp root the array omits is a write the renderer never hears, and a listener bound per address is TIER-BLIND, so the
+    // delivery is the root's and not the writer's. `['drag']` is a root, so the write lands without a repair (L2 §1).
+    store.write(['drag'] as never, 'temp', { [DEFAULT_PANE_ID]: { size: 180 } })
+    expect(
+      delivered,
+      'the delivery fired: an array without the temp root answers ZERO here while every temp write reaches the store unspoken',
+    ).toBeGreaterThan(0)
+    // AND THE POSITIVE HALF ON THE SAME SUBSCRIPTION, so a zero above could never be read as a dead registration.
+    expect(record.commitPane(DEFAULT_PANE_ID, { size: 122 }).status).toBe('committed')
+    expect(delivered, 'and the same subscription still delivers for the file family').toBeGreaterThan(1)
+    off()
   })
 })
 
@@ -424,7 +473,7 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
 // ═══════════════ CLAUSE 4 — WRITES DRIVEN BY EXTERNAL EVENTS ONLY ═══════════════
 
 describe('view-record · clause 4 — every write path is an IPC route or a constraint repair, and a read writes nothing', () => {
-  it('THE ENUMERATION, AND IT IS EXHAUSTIVE BY CONSTRUCTION: the module\'s only `write` calls sit inside `commitPane`, `commitZones`, `commitTheme` and the one repair path — and NO TIMER, NO POLL AND NO INTERVAL stands in it, read over comment-elided code', () => {
+  it('THE ENUMERATION, AND IT IS EXHAUSTIVE BY CONSTRUCTION: the module\'s only `write` calls sit inside `commitPane`, `commitZones`, `commitTheme` and `commitDrag`, its one `delete` inside `clearDrag`, and the rest in the one repair path — and NO TIMER, NO POLL AND NO INTERVAL stands in it, read over comment-elided code', () => {
     const module = commentElided(sourceOf('src/main/view-record/index.ts'))
     const surface = commentElided(sourceOf('src/main/view-surface/index.ts'))
     for (const forbidden of ['setTimeout', 'setInterval', 'setImmediate', 'requestAnimationFrame', 'queueMicrotask']) {
@@ -439,13 +488,17 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'the pane route writes the family whole').toBe(true)
     expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'and the zone route writes its family whole (D-91)').toBe(true)
     expect(/\.write\(VIEW_THEME_ADDRESS, THEME_TIER/.test(module), 'and the appearance route writes its act whole (D-97)').toBe(true)
+    // **THE DRAG PAIR IS THE FOURTH AND FIFTH WRITE PATH, AND THEY ARE ONE OF EACH KIND** (`D-132`): the move writes a whole value at the `temp` root,
+    // and the clear is a DELETE at the same address — never a `write` of an empty family, because the address must answer `absent` once the gesture ends.
+    expect(/\.write\(VIEW_DRAG_ADDRESS, DRAG_TIER/.test(module), 'the drag route writes the in-process reading whole at `temp`').toBe(true)
+    expect(/\.delete\(VIEW_DRAG_ADDRESS, DRAG_TIER/.test(module), 'and the clear route ENDS the family rather than writing a placeholder').toBe(true)
     // **THE FOCUS ROUTE'S WRITE SITE IS GONE WITH THE ROUTE** (`D-142`) — the census below is the module's own and a
     // deleted route leaves it; a family re-added at a fifth site would red here rather than arrive unnoticed.
     expect(/FOCUS_TIER/.test(module), 'no tier constant stands for the retired family').toBe(false)
     expect(
       (module.match(/\.write\(VIEW_/g) ?? []).length,
-      'THREE routes write, and the ONE repair path writes through ONE helper — a fourth write site would be a write path clause 4 has not seen',
-    ).toBe(3)
+      'FOUR whole-family writes stand — the panes, the zones, the appearance act and the drag move — the ONE repair path writing through its own helper, so a fifth would be a write path clause 4 has not seen',
+    ).toBe(4)
   })
 
   it('NO WRITE ON READ, MEASURED BOTH WAYS: a read lands no byte over a standing family, and a read over a store whose batch NEVER RAN answers the declared defaults WITHOUT minting either family', () => {
@@ -551,9 +604,10 @@ describe('view-record · the boot\'s wiring, read as code and never as prose', (
       expect(declared, `the batch declares \`${id}\``).toContain(id)
     }
     expect(declared, 'and no pair stands at the address the family took with it').not.toContain('focus-must-stand')
-    // **THE ROOTS, BY PRESENCE TOO**: each surviving address at its own tier, and none at the deleted one.
+    // **THE ROOTS, BY PRESENCE TOO**: each address at its own tier, and none at the deleted one. The drag root is a FOURTH, published at `temp` with
+    // no pair behind it — an entry the guard reads and a declaration the batch does not carry (L2 §1, §4; D-132, D-101).
     const published = viewDeclaredRoots().map((root) => `${root.address.join('/')}@${root.tier}`)
-    for (const root of ['panes@file', 'zones@mem', 'theme@file']) {
+    for (const root of ['panes@file', 'zones@mem', 'theme@file', 'drag@temp']) {
       expect(published, `the published roots carry \`${root}\``).toContain(root)
     }
     expect(published, 'and publish nothing at the deleted address').not.toContain('focus@mem')
@@ -594,11 +648,15 @@ describe('view-record · the boot\'s wiring, read as code and never as prose', (
     // THE LOCKSTEP IS A COMPARISON AND NOT A PROMISE: the two blocks are read at whatever their own indent is, so a
     // half-widening (a member added at one site only) reds here with the two texts in hand.
     expect(panels, 'the renderer\'s `declare global` half carries the SAME routes as the preload\'s').toEqual(preload)
-    expect(preload, 'which are the member\'s surviving routes: read, commitPane, commitZones, commitTheme, onChanged').toEqual([
+    expect(preload, 'which are the member\'s routes: read, commitPane, commitZones, commitTheme, commitDrag, clearDrag, onChanged').toEqual([
       "read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>",
       "commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       "commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       "commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
+      // **THE DRAG PAIR, IN THE SAME INLINE SPELLING AS THE THREE COMMITS AND IN THIS ORDER** (`D-132`, L2 §2): a pane id and a placement, and an act
+      // that takes NOTHING — the `null` arm `D-140` spent a row removing.
+      "commitDrag(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
+      "clearDrag(): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>",
       'onChanged(handler: () => void): () => void',
     ])
     expect([IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED], 'and the surviving channel names are single-sourced in one shared module').toEqual([
@@ -608,6 +666,38 @@ describe('view-record · the boot\'s wiring, read as code and never as prose', (
       'provident:view:theme-commit',
       'provident:view:changed',
     ])
+    // **AND THE DRAG PAIR'S TWO CHANNELS ARE IN THE SAME FILE, READ AS CODE** (`D-87`, `D-132`): a name spelled in the handler and again in the preload
+    // is the rename that half-lands, so both are asserted where they are declared — with the raw bytes as the positive control on the same reading.
+    const channels = commentElided(sourceOf('src/shared/view-channels.ts'))
+    expect(channels.includes("'provident:view:drag-commit'"), 'the move\'s channel is single-sourced here').toBe(true)
+    expect(channels.includes("'provident:view:drag-clear'"), 'and the clear\'s, beside it').toBe(true)
+    expect(sourceOf('src/shared/view-channels.ts').includes('IPC_VIEW_PANE_COMMIT'), 'the positive control: the same text carries a constant that stands').toBe(true)
+  })
+
+  it('**THE TWO DRAG ROUTES STAND AT EVERY SITE, IN ONE EDIT** (`D-14`, `D-112`, `D-132`): the record, the surface, the single-sourced channels, the boot\'s two handlers, both lockstep halves and the client — a member one site short is either a channel with a handler and no caller or a method that writes nowhere, which is the class `D-132` refused to half-land', () => {
+    const sites: readonly (readonly [string, string])[] = [
+      ['src/main/view-record/index.ts', 'commitDrag'],
+      ['src/main/view-record/index.ts', 'clearDrag'],
+      ['src/main/view-surface/index.ts', 'commitDrag'],
+      ['src/main/view-surface/index.ts', 'clearDrag'],
+      ['src/shared/view-channels.ts', 'IPC_VIEW_DRAG_COMMIT'],
+      ['src/shared/view-channels.ts', 'IPC_VIEW_DRAG_CLEAR'],
+      ['src/main/main.ts', 'IPC_VIEW_DRAG_COMMIT'],
+      ['src/main/main.ts', 'IPC_VIEW_DRAG_CLEAR'],
+      ['src/main/preload.ts', 'commitDrag'],
+      ['src/main/preload.ts', 'clearDrag'],
+      ['src/renderer/secure-panels.ts', 'commitDrag'],
+      ['src/renderer/secure-panels.ts', 'clearDrag'],
+      ['src/renderer/view-client.ts', 'commitDrag'],
+      ['src/renderer/view-client.ts', 'clearDrag'],
+    ]
+    for (const [path, name] of sites) {
+      expect(commentElided(sourceOf(path)).includes(name), `${path} carries \`${name}\``).toBe(true)
+    }
+    // THE POSITIVE CONTROL, on the same readings: a route that DOES stand is found by the same instrument, so the assertions above are about the drag
+    // pair and not about a scan that could never have matched.
+    expect(commentElided(sourceOf('src/main/view-record/index.ts')).includes('commitPane'), 'the instrument finds a route that stands').toBe(true)
+    expect(commentElided(sourceOf('src/main/main.ts')).includes('ipcMain.handle(IPC_VIEW_PANE_COMMIT'), 'and a handler that stands').toBe(true)
   })
 
   it('**THE ROUTE LEAVES BOTH SIDES IN ONE EDIT** (`D-14`, `D-142`): no `commitFocus` member stands on the bridge at either lockstep site, the record and the surface declare none, the client reaches no `focus` route, and the channel constant is gone from the single-sourced module — each read over COMMENT-ELIDED code, with the raw bytes as the positive control', () => {

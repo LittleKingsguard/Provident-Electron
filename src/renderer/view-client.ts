@@ -102,9 +102,11 @@ export type ViewWriteStatement =
 
 /** **THE LAST WRITE'S DECLARED ANSWER, AS IT ARRIVED** — `{status:'committed'}` or the crossing's own refusal record, or
  *  `unread` where the route threw or answered a shape L2 does not declare. It is held so a REFUSED write is a reading
- *  rather than a silent no-op; nothing composes a decision from it. */
+ *  rather than a silent no-op; nothing composes a decision from it. **`route` NAMES THE FAMILY THE RECEIPT BELONGS TO**,
+ *  and `'drag'` is the fourth word: the `temp` family has no member on a reading, so this word is how a caller tells a
+ *  drag's receipt from the three commits' (D-132). */
 export interface ViewWriteOutcome {
-  readonly route: 'pane' | 'zone' | 'theme'
+  readonly route: 'pane' | 'zone' | 'theme' | 'drag'
   readonly answer: unknown
   readonly status: 'committed' | 'refused' | 'unread'
   readonly reason: string | null
@@ -119,15 +121,18 @@ export interface ViewSubscription {
   readonly release: () => void
 }
 
-/** **THE BRIDGE MEMBER THIS CLIENT USES — FIVE ROUTES, `docs/L2/view-record/interface.md` §2's whole set.** Every answer
+/** **THE BRIDGE MEMBER THIS CLIENT USES — SEVEN ROUTES, `docs/L2/view-record/interface.md` §2's whole set.** Every answer
  *  is `unknown` on purpose: a bridge is a TRUST BOUNDARY, so a shape that arrived is checked before it is read, and a
  *  member answering a value its own declaration does not admit reaches the caller as `unread` rather than as a shape
- *  derived from a partial record. */
+ *  derived from a partial record. **THE DRAG PAIR IS THE SIXTH AND SEVENTH AND ITS TEXT IS THE `view` MEMBER'S OWN**
+ *  (`D-132`, D-112): the clear takes NOTHING, which is the `null` arm `D-140` spent a row removing. */
 export interface ViewClientBridge {
   read(): Promise<unknown>
   commitPane(id: string, geometry: unknown): Promise<unknown>
   commitZones(id: string, zone: unknown): Promise<unknown>
   commitTheme(token: string, attributeName: string): Promise<unknown>
+  commitDrag(id: string, geometry: unknown): Promise<unknown>
+  clearDrag(): Promise<unknown>
   onChanged(handler: () => void): () => void
 }
 
@@ -138,7 +143,7 @@ export interface ViewClientOptions {
   readonly bridge?: ViewClientBridge | null
 }
 
-/** **THE CLIENT — the shape, the synchronous reads the drag needs, and the three routes.** */
+/** **THE CLIENT — the shape, the synchronous reads the drag needs, and the FIVE routes.** */
 export interface ViewClient {
   /** THE SHAPE AS IT STANDS — `filled: false` before anything has answered. */
   shape(): ViewShape
@@ -171,6 +176,15 @@ export interface ViewClient {
    *  declaration inside the same commit and the change push carries it back, which is why nothing here awaits an answer:
    *  the shape is refilled by the delivery the commit causes. */
   commitTheme(token: string, attributeName: string): ViewWriteStatement
+  /** **THE DRAG'S MOVE — ONE PANE'S IN-PROCESS PLACEMENT, SENT** (D-132): a pane **id** and the placement the gesture read,
+   *  and never a path and never a tier — the address is the crossing's. The shape is refilled by the delivery the commit
+   *  causes, so nothing here awaits an answer, and **nothing here composes the value**: the placement the caller formatted
+   *  is the value the crossing writes (D-135, D-136). */
+  commitDrag(id: string, geometry: unknown): ViewWriteStatement
+  /** **THE DRAG'S END — SENT WITH NO ARGUMENT AT ALL** (D-132, D-140): the crossing DELETES the `temp` family, so the
+   *  address answers `absent` once the gesture is over. A `null` argument is the spelling `D-140` removed, so this member
+   *  carries none. */
+  clearDrag(): ViewWriteStatement
   /** **THE ONE STATED BOOT READ** (`D-78`'s chain, `D-88`): the answer is ADOPTED into the shape, and every later fill is a
    *  delivery's. Total: every arm is a value. */
   fill(): Promise<ViewClientReading>
@@ -355,14 +369,16 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
    *  the ambient `window.provident.view` otherwise. */
   const memberFor = (): unknown => (options.bridge === undefined ? ambientViewMember() : options.bridge)
 
-  const routeOf = (member: unknown, name: 'read' | 'commitPane' | 'commitZones' | 'commitTheme'): ((...args: unknown[]) => Promise<unknown>) | null => {
+  const routeOf = (member: unknown, name: 'read' | 'commitPane' | 'commitZones' | 'commitTheme' | 'commitDrag' | 'clearDrag'): ((...args: unknown[]) => Promise<unknown>) | null => {
     if (member === null) return null
     const route = (member as Record<string, unknown>)[name]
     return typeof route === 'function' ? (route as (...args: unknown[]) => Promise<unknown>).bind(member) : null
   }
 
-  /** ONE WRITE, SENT — the receipt is recorded when it lands and composes nothing. */
-  function send(route: 'pane' | 'zone' | 'theme', call: ((...args: unknown[]) => Promise<unknown>) | null, args: unknown[]): ViewWriteStatement {
+  /** ONE WRITE, SENT — the receipt is recorded when it lands and composes nothing. **THE ROUTE WORD NAMES THE FAMILY AND
+   *  `'drag'` IS THE FOURTH**: a `temp` reading has no member on any reading, so the receipt is the one place a caller can
+   *  see which family a write belonged to (D-132). */
+  function send(route: 'pane' | 'zone' | 'theme' | 'drag', call: ((...args: unknown[]) => Promise<unknown>) | null, args: unknown[]): ViewWriteStatement {
     if (call === null) return { status: 'absent', reason: memberFor() === null ? 'no-view-member' : 'no-route' }
     void call(...args).then(
       (answer: unknown) => {
@@ -467,6 +483,19 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
       return send('theme', routeOf(member, 'commitTheme'), [token, attributeName])
     },
 
+    commitDrag(id: string, geometry: unknown): ViewWriteStatement {
+      // THE PLACEMENT, SENT (D-132): the pane id and the value the caller formatted, and nothing else — no path, no tier,
+      // and no composition here (`D-135`, `D-136`). The crossing's own arms answer a fault; this realm only says `sent`.
+      const member = memberFor()
+      return send('drag', routeOf(member, 'commitDrag'), [id, geometry])
+    },
+
+    clearDrag(): ViewWriteStatement {
+      // **NO ARGUMENT AT ALL** (`D-132`, `D-140`): the act is the gesture's end, and the crossing deletes the family there.
+      const member = memberFor()
+      return send('drag', routeOf(member, 'clearDrag'), [])
+    },
+
     fill,
 
     subscribe(handler: (reading: ViewClientReading) => void): ViewSubscription {
@@ -524,7 +553,7 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
 /** **A WRITE'S DECLARED ANSWER, AS IT ARRIVED** — `committed`, the crossing's own refusal record (`status: 'refused'` with
  *  its `reason`/`message`), or `unread` for a shape L2 §2 does not declare. The refusal vocabulary stays the store's: this
  *  module mints no word of its own. */
-function outcomeOf(route: 'pane' | 'zone' | 'theme', answer: unknown): ViewWriteOutcome {
+function outcomeOf(route: 'pane' | 'zone' | 'theme' | 'drag', answer: unknown): ViewWriteOutcome {
   if (!isObject(answer)) return { route, answer, status: 'unread', reason: 'answer-not-declared', message: null }
   const status = answer['status']
   if (status === 'committed') return { route, answer, status: 'committed', reason: null, message: null }

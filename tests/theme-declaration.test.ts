@@ -24,7 +24,11 @@
 //          write. **FROM `D-98` THE SILENCE IS THE BOOT PATH'S AND NOT THE RECORD'S** — the tier is `file`, so a later boot's
 //          record can name an attribute, and what keeps a boot silent is that `fill()` adopts and never applies.
 //   · T-5  THE RENDERER COMPUTES NOTHING: over comment-elided code, `resolveTheme`/`applyThemeDeclaration` appear nowhere in
-//          the renderer, no hand-written DOM is written, and no timer or poll stands in the wiring.
+//          the renderer, no hand-written DOM is written, and no timer or poll stands in the wiring. **AND THE DELIVERY'S
+//          HAND-OFF IS READ STRUCTURALLY** — `main()`'s ONE call to `startViewShape` hands it the appearance application as
+//          its FIRST argument (whatever a second, drag-owned turn is handed beside it), and the shape's ONE subscription body
+//          calls both turns it was handed. The row re-grains from the literal to the hand-off, so the next turn given a seat
+//          in that call reds this file no more (`docs/L3/renderer-wiring/design.md` §4/§6; `signatures.md` §6's same edit).
 //   · T-6  TOTALITY: an unreadable carrier, a realm with no crossing, a record with no applicable declaration and a runtime
 //          whose write throws all answer a READING — never an exception.
 //
@@ -89,7 +93,8 @@ function crossing(seed?: (profilePath: string) => void): Crossing {
   })
   bound.current = store as unknown as ViewRecordStore
   const record = createViewRecord({ store: bound.current })
-  // **THE FIVE SURVIVING MEMBERS, AND `commitFocus` IS NOT ONE OF THEM** (`D-142`; L1 §2's `chrome` row, §6 `E-12`): the
+  // **THE SEVEN MEMBERS THE BRIDGE NOW DECLARES, AND `commitFocus` IS NOT ONE OF THEM** (`D-142`; L1 §2's `chrome` row, §6
+  // `E-12`; the count moved five → seven with the drag pair, L2 app-shell §3's block, D-132): the
   // `['focus']` family goes whole — address, tier, declaration, declared-root entry, route and mirror — so this literal
   // carried a member the bridge no longer declares and the record no longer answers. Re-grained in the deletion's own pass,
   // because a literal that spells the old surface is a compile-time red in `typecheck:tests` the moment `E-1`/`E-2`/`E-3`/`E-4`
@@ -100,6 +105,14 @@ function crossing(seed?: (profilePath: string) => void): Crossing {
     commitZones: async (id: string, zone: unknown) => record.commitZones(id, zone),
     // **THE ACT'S ROUTE, AS THE BRIDGE DECLARES IT** — the crossing's own `commitTheme`, called with the caller's pair.
     commitTheme: async (token: string, attributeName: string) => record.commitTheme(token, attributeName),
+    // **THE GESTURE'S PAIR, AND IT IS CARRIED RATHER THAN DRIVEN** (`D-132`, L2 §3's SEVEN-line block, D-112): the `view`
+    // member widened to seven in BOTH halves (`src/main/preload.ts`, `src/renderer/secure-panels.ts`), so this literal — the
+    // third copy that must agree — names them too, in the block's order and with the block's own parameter text. **NO ROW IN
+    // THIS FILE DRIVES EITHER**: every row below is the APPEARANCE declaration's, and the gesture's own rows are
+    // `pane-drag-temp`'s. They are transcribed from the record's own verbs, so a rename in `src/main/view-record/index.ts`
+    // reddens here rather than drifting silently.
+    commitDrag: async (id: string, geometry: unknown) => record.commitDrag(id, geometry),
+    clearDrag: async () => record.clearDrag(),
     // **THE PUSH, MODELLED AT THE CROSSING AND NOWHERE ELSE**: the record's own subscription, so a committed act reaches the
     // client the moment the crossing commits it — which is what makes the rows below the app's chain rather than a script.
     onChanged: (handler: () => void): (() => void) => record.subscribe(handler),
@@ -173,6 +186,80 @@ function regionOf(src: string, declaration: string): string {
     }
   }
   return ''
+}
+
+/** The top-level comma-separated parts of an argument or parameter list — PARENTHESIS, BRACKET and BRACE balance only, so a
+ *  nested call, an array literal or an object literal stays ONE part instead of splitting the list in the wrong place. */
+function listParts(list: string): readonly string[] {
+  const parts: string[] = []
+  let depth = 0
+  let from = 0
+  for (let i = 0; i < list.length; i += 1) {
+    if (list[i] === '(' || list[i] === '[' || list[i] === '{') depth += 1
+    else if (list[i] === ')' || list[i] === ']' || list[i] === '}') depth = depth > 0 ? depth - 1 : 0
+    else if (list[i] === ',' && depth === 0) {
+      parts.push(list.slice(from, i))
+      from = i + 1
+    }
+  }
+  parts.push(list.slice(from))
+  return parts.map((part) => part.trim()).filter((part) => part !== '')
+}
+
+/** **THE ARGUMENT LIST OF EVERY CALL TO `name`, sliced by its OWN parenthesis balance** — a source probe that reads the
+ *  HAND-OFF (a call's arguments) rather than a literal spelling, so a turn added beside the ones a row cares about cannot red
+ *  it. A declaration's head (`function name(`) is NOT a call and is skipped by its keyword. */
+function callArgumentsOf(src: string, name: string): readonly string[] {
+  const calls: string[] = []
+  const needle = `${name}(`
+  let at = src.indexOf(needle)
+  while (at >= 0) {
+    const open = at + needle.length - 1
+    let depth = 0
+    let close = -1
+    for (let i = open; i < src.length; i += 1) {
+      if (src[i] === '(') depth += 1
+      else if (src[i] === ')') {
+        depth -= 1
+        if (depth === 0) {
+          close = i
+          break
+        }
+      }
+    }
+    if (close > open && !/(?:function|const|let|var)\s+$/.test(src.slice(Math.max(0, at - 12), at))) {
+      calls.push(src.slice(open + 1, close))
+    }
+    at = src.indexOf(needle, open + 1)
+  }
+  return calls
+}
+
+/** The FIRST argument of one argument list — the hand-off's own subject, read independently of what is handed beside it. */
+function firstArgumentOf(args: string): string {
+  return listParts(args)[0] ?? ''
+}
+
+/** The parameter NAMES of one declaration, read off its head's own list, so a body can be asked what it CALLS without this
+ *  file re-typing the name: a rename in the declaration moves both sides of the probe together. */
+function parameterNamesOf(src: string, declaration: string): readonly string[] {
+  const at = src.indexOf(declaration)
+  if (at < 0) return []
+  const open = src.indexOf('(', at)
+  if (open < 0) return []
+  let depth = 0
+  for (let i = open; i < src.length; i += 1) {
+    if (src[i] === '(') depth += 1
+    else if (src[i] === ')') {
+      depth -= 1
+      if (depth === 0) {
+        return listParts(src.slice(open + 1, i))
+          .map((part) => part.split(/[:\s]/)[0].replace(/\?$/, ''))
+          .filter((parameter) => parameter !== '')
+      }
+    }
+  }
+  return []
 }
 
 function boot(): Runtime {
@@ -285,6 +372,12 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
       commitPane: async (): Promise<unknown> => ({ status: 'committed' }),
       commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
       commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
+      // **THE GESTURE'S PAIR — SEVEN MEMBERS HERE TOO** (`D-132`, D-112): the bridge's `view` widened in both halves, and this
+      // stub is the third copy that must agree, so it names the pair in the block's own order. Neither is called by this row:
+      // the reading below is the appearance record's, and a bridge member the row does not drive answers `{'committed'}` as
+      // its three siblings here do.
+      commitDrag: async (id: string, geometry: unknown): Promise<unknown> => ({ status: 'committed' }),
+      clearDrag: async (): Promise<unknown> => ({ status: 'committed' }),
       onChanged: (): (() => void) => (): void => undefined,
     }
     // The wiring reads the record through the realm's ONE client, so the prepared answer is installed on that client.
@@ -475,9 +568,38 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
     const replyRegion = regionOf(code, 'const replyRoute =')
     expect(replyRegion.includes('themeApplication.commit()'), 'the USER ACTION\'s turn rides the reply notify').toBe(true)
     expect(replyRegion.includes('themeDeclaration'), 'and the deleted drive is gone from it').toBe(false)
-    expect(code.includes('startViewShape(themeApplication)'), 'the DELIVERY\'s turn is handed to the shape\'s one registration').toBe(true)
+    // **THE DELIVERY'S TURN IS HANDED TO THE SHAPE'S ONE REGISTRATION — RE-GRAINED FROM THE LITERAL ONTO THE HAND-OFF**
+    // (`D-138`, `D-144`; design §4's "the delivery is the only driver", §3's second argument, §6's one-probe note — the
+    // same-edit re-grain `signatures.md` §6 names). This row's claim was never the sixteen-character spelling
+    // `startViewShape(themeApplication)`: it is that `main()` hands the shape's ONE registration the APPEARANCE APPLICATION.
+    // The ghost's hand-out put `gutter.renderGhost` BESIDE it, which is nobody's declaration but the drag unit's, so the probe
+    // now reads the call's FIRST ARGUMENT by name out of the call itself: `startViewShape(themeApplication,
+    // gutter.renderGhost)` satisfies it, a THIRD turn handed beside them tomorrow cannot red it again, and a call that hands
+    // anything else first still does. The declaration's own head is not a call and is skipped by its keyword.
+    const shapeCalls = callArgumentsOf(code, 'startViewShape')
+    expect(shapeCalls.length, 'the shape is started from `main()` — its ONE call site, beside the boot read').toBe(1)
+    expect(
+      firstArgumentOf(shapeCalls[0]),
+      'the APPEARANCE application is the turn the shape\'s ONE registration is handed, whatever is handed beside it',
+    ).toBe('themeApplication')
+    // THE TWO CONTROLS THAT MAKE THAT A MEASUREMENT: the same reading over a call handing ANOTHER turn first answers that turn
+    // (so this is about the hand-off and not the name appearing anywhere in the call), and a third argument leaves the first
+    // where it is (so the re-grain is not a second arity to be re-grained again).
+    expect(firstArgumentOf('otherApplication, gutter.renderGhost'), 'the control: another turn handed first reads as itself').toBe('otherApplication')
+    expect(firstArgumentOf('themeApplication, gutter.renderGhost, aThirdTurn'), 'and a third turn beside them leaves the first argument alone').toBe('themeApplication')
+    // …AND THE BODY CALLS WHAT IT WAS HANDED, in the ONE subscription and never at the boot read. The turn names are taken
+    // from the declaration's own head (`parameterNamesOf`), so this pins the HAND-OFF and no spelling: a rename moves both
+    // sides, and the appearance application's `theme?.apply()` is the row's own subject, held by literal as it always was.
     const shapeRegion = regionOf(code, 'function startViewShape(')
+    expect(shapeRegion.length, 'and the slice is the WHOLE body, not the head\'s two lines').toBeGreaterThan(200)
     expect(shapeRegion.includes('theme?.apply()'), 'whose body applies the record\'s declaration').toBe(true)
+    const shapeTurns = parameterNamesOf(code, 'function startViewShape(')
+    expect(shapeTurns.length, 'the shape is handed TWO turns, since the ghost\'s delivery rides the same body').toBe(2)
+    const ghostTurn = shapeTurns[1] ?? ''
+    expect(
+      new RegExp(`${ghostTurn}\\s*(?:\\?\\.)?\\(`).test(shapeRegion),
+      'and the turn handed beside the application is CALLED in that same body, so one delivery drives both',
+    ).toBe(true)
     // (d) THE RENDERER NO LONGER HOLDS A DECLARATION RECORD AT ALL — the deleted `changed` seed is gone by name.
     expect(code.includes('startThemeDeclaration'), 'the deleted role is spelled nowhere in code').toBe(false)
     expect(code.includes('ThemeDeclarationDrive'), 'and neither is its interface').toBe(false)

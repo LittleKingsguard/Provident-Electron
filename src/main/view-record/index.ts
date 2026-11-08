@@ -7,15 +7,18 @@
 // `candidatesFor` (`:1935-1941`) — and the APPEARANCE RECORD, the mechanism's own answer for the setting the authored
 // control produced (D-97, D-98). Nothing outside that store held any of them, so the store could not be deleted until
 // each had an address; this module is the address. **A FOURTH SET, THE FOCUS MIRROR, LEFT WITH `D-142`**: it was a SECOND
-// SPELLING of a fact `['tabs']` already owns, so the address table is three roots and every site it took with it is gone
-// rather than defaulted.
+// SPELLING of a fact `['tabs']` already owns, so the address table was three roots and every site it took with it is gone
+// rather than defaulted. **AND THE DRAG'S IN-PROCESS READING IS THE FOURTH ROOT THAT STANDS NOW** (`D-132`): `['drag']` at
+// `temp`, DECLARED and UNPAIRED — an address, a tier constant and a `viewDeclaredRoots()` entry, with no declaration
+// behind it, because a repair whose subject is "no drag has started" would mint a placeholder for data whose absence IS
+// the product.
 //
 // IT CONSTRUCTS NOTHING, OPENS NO FILE AND OWNS NO INSTANCE (D-63, D-64): the boot hands it the central store it already
-// built the tab record's six declarations into (D-65), and this module reads and writes THREE of that instance's roots
-// through it.
+// built the tab record's six declarations into (D-65), and this module reads and writes FOUR of that instance's roots
+// through it — three paired, and the drag's `temp` root DECLARED AND UNPAIRED (D-132, D-101).
 //
-// **THREE ROOTS, `['panes']`, `['zones']` AND `['theme']`, AND NOT ONE ROOT WITH THREE MEMBERS — MEASURED, NOT PREFERRED
-// (D-87, D-91, D-97).**
+// **FOUR ROOTS, `['panes']`, `['zones']`, `['theme']` AND `['drag']`, AND NOT ONE ROOT WITH FOUR MEMBERS — MEASURED, NOT
+// PREFERRED (D-87, D-91, D-97, D-132).**
 // The tab record's pattern is ONE root with members (`['tabs']`, `['tabs','order']`, `['tabs','landing']`), and it was
 // followed until the TIER decided it: a value at an address lives at ONE tier and a read can name it, so a single root
 // could carry the pane geometry at `file` only by also carrying a `mem` family there — and a `mem` family can never
@@ -141,6 +144,24 @@ export const VIEW_THEME_MUST_STAND_ID = 'theme-must-stand'
 /** **THE ZONE FAMILY'S EXISTENCE PAIR'S id** — one of the boot's ONE namespace (the tab record's six and this
  *  module's three), minted against that batch and spelled nowhere else. */
 export const VIEW_ZONES_MUST_STAND_ID = 'zones-must-stand'
+/** **THE DRAG'S IN-PROCESS READING'S ROOT — ONE WHOLE VALUE AT `temp`, AND THIS IS THE ONE FAMILY THAT IS DECLARED AND
+ *  UNPAIRED** (D-132, D-101). Its family is one member per pane id, each `{ size }` — the placement the gesture read —
+ *  present while a drag is in process and **ABSENT once it ends** (L2 §1, §6).
+ *
+ *  **WHY NO PAIR STANDS HERE, IN TWO CLAUSES.** No invariant holds the family, a `temp` reading being a gesture's
+ *  transient fact that nothing else needs; and a repair's subject would be *"no drag has started"*, so a pair could only
+ *  mint a placeholder for data whose ABSENCE IS THE PRODUCT. The root therefore carries an address, a tier constant and a
+ *  `viewDeclaredRoots()` entry, and `viewConstraintDeclarations` gains no row.
+ *
+ *  **WHAT THE ENTRY BUYS IS THE FAMILY'S ONE JUDGEMENT, AND IT IS THE TIER'S**: `declaredTierLedger` keys on the roots it is
+ *  HANDED rather than on the batch, so a `file` or `mem` write at this root is refused `declared-tier` ahead of any store
+ *  verb — which is the whole of what a `temp` family needs (D-101).
+ *
+ *  **IT IS ALSO THE ONLY FAMILY WITH NEITHER A COMPOSER NOR A BOOT DATUM** (D-135, D-138): `['drag']` is a root holding one
+ *  member and no sibling, so nothing is left to preserve and the first move writes the root itself. The gesture's durable
+ *  half is `['panes']`' own value, written by the release's unchanged `commitPane`. **AND NO PLACEHOLDER VALUE IS EVER
+ *  WRITTEN HERE**: the gesture ends with a DELETE, so the address answers `absent` once a drag is over. */
+export const VIEW_DRAG_ADDRESS: readonly string[] = ['drag']
 
 // **THE THREE MEASURED DEFAULTS ARE `src/shared/view-shape.ts`'S AND ARE RE-EXPORTED ABOVE** (D-88): the same figures the
 // authored pane states, read by this module's repair (`panes-must-stand`) and by the renderer's pane read alike. Their
@@ -178,20 +199,25 @@ export const THEME_SHAPE_MESSAGE =
 export const THEME_STALE_MESSAGE =
   'the appearance record carries a declaration the mechanism would not produce for the setting and the attribute it carries, so the record and its own resolution contradict each other'
 
-/** **THE THREE FAMILIES' OWN TIERS, EACH NAMED ONCE.** A value's tier is the address's (`guide §3.1`), and these
+/** **THE FAMILIES' OWN TIERS, EACH NAMED ONCE.** A value's tier is the address's (`guide §3.1`), and these
  *  constants are the whole of what says which — so no read, no write and no repair of this module spells a tier
- *  literal, and a family cannot half-move to the other tier. */
+ *  literal, and a family cannot half-move to the other tier. **FOUR CONSTANTS AND FOUR FAMILIES**: the drag root's word is
+ *  the fourth, and the union below is derived from all of them (D-132). */
 const PANES_TIER = 'file'
 const ZONES_TIER = 'mem'
 /** **THE APPEARANCE FAMILY'S TIER — `file`, THE USER'S RULING ON DURABILITY** (`D-98`; `mem` was `D-97`'s and is
  *  superseded by pointer). It is the same tier as `['panes']` and the same crossing, so the address a fresh boot
  *  repairs to the placeholder is the address a second boot reads back. */
 const THEME_TIER = 'file'
+/** **THE DRAG FAMILY'S TIER — `temp`, THE TIER THAT PERSISTS NOWHERE** (D-132). A drag is a gesture's transient fact: it is
+ *  present while the gesture is in process and must be ABSENT once it ends, so a restart cannot resurrect one and a fresh
+ *  profile carries no `drag` key (L2 §6). It is spelled here and nowhere else, so this family spells no tier literal. */
+const DRAG_TIER = 'temp'
 /** **THE TIER UNION THIS MODULE USES, DERIVED FROM THE TIER CONSTANTS AND NOT RE-SPELLED FROM THE PACKAGE'S `Tier`.** The
- *  package's own domain is `'mem' | 'file' | 'temp'`; this module needs two of those words and needs them to be
+ *  package's own domain is `'mem' | 'file' | 'temp'`; this module needs those words and needs them to be
  *  assignable to `write`'s `tier` position, so the type is taken from the constants themselves — one spelling of each
  *  word in this file, and a fourth family would have to add its constant rather than widen a table. */
-type ViewTier = typeof PANES_TIER | typeof ZONES_TIER | typeof THEME_TIER
+type ViewTier = typeof PANES_TIER | typeof ZONES_TIER | typeof THEME_TIER | typeof DRAG_TIER
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE RECORD'S SHAPES
@@ -292,6 +318,21 @@ export interface ViewRecord {
    *  module spells no attribute name anywhere, the caller hands its own, and the mechanism echoes it by identity into the
    *  declaration the record carries. */
   commitTheme(token: string, attributeName: string): ViewRecordAnswer
+  /** **THE DRAG'S MOVE — ONE PANE'S IN-PROCESS PLACEMENT, AND NEVER A PATH** (D-132, D-135, D-136). The id names a MEMBER of
+   *  the `temp` family at the one root, so a caller cannot compose an address, and the value is ONE whole family the CALLER
+   *  formatted: nothing stands at a sibling to preserve, so no composer touches it. **A `size` IS REQUIRED HERE, WHICH IS
+   *  THE ONE PLACE THIS ARM IS STRICTER THAN `commitPane`'S**: a pane commit may supply a member alone because the missing
+   *  one is merged from what stands, while the drag family's member IS the placement — and `undefined` is not a value the
+   *  crossing carries (`isBoundary`, at this file). **NOTHING JUDGES THE VALUE AT `temp`** (D-105): the shape arms are the
+   *  whole gate and the store's own boundary is the rest, and no token of this family's own is minted — its two faults ARE
+   *  the panes' two. */
+  commitDrag(id: string, geometry: unknown): ViewRecordAnswer
+  /** **THE DRAG'S CLEAR — THE GESTURE'S END, AND A DELETE RATHER THAN A PLACEHOLDER** (D-132, ASM-2). The address must answer
+   *  `absent` once a drag is over, so no empty family is written and no boot datum is left standing. **IT TAKES NOTHING**:
+   *  a `null` argument is the spelling `D-140` spent a row removing. **AND IT IS `committed` WHETHER OR NOT THE FAMILY
+   *  STOOD**, which needs no arm of its own: a delete that removes nothing is the store's own success (`tiers: []`), the
+   *  fact the tab record's `remove` relies on at its own already-absent branch (D-53). */
+  clearDrag(): ViewRecordAnswer
   subscribe(handler: () => void): () => void
 }
 
@@ -941,16 +982,23 @@ export interface ViewDeclaredRoot {
   readonly tier: ViewTier
 }
 
-/** **THE THREE ROOTS `viewConstraintDeclarations` DECLARES, EACH WITH THE TIER IT IS DECLARED AT, AND NOTHING ELSE.**
+/** **THE THREE PAIRED ROOTS `viewConstraintDeclarations` DECLARES, EACH WITH THE TIER IT IS DECLARED AT, PLUS THE ONE ROOT
+ *  THAT IS DECLARED AND UNPAIRED** (`D-101`, `D-132`).
  *
  *  **IT IS NOT A SECOND SPELLING OF THE ADDRESSES**: every `address` below is the exported constant the batch
  *  above uses, and every `tier` is the constant that batch's own pair writes at — so a family that moves tier
  *  moves here without a word, and `tests/integration/central-data/declared-root.test.ts`'s set row refuses the
- *  day one of the two lists gains an entry the other does not have (`D-101`).
+ *  day one of the two lists gains an entry the other does not have (`D-101`). **THE FOURTH ENTRY IS THE DRAG ROOT AND IT
+ *  HAS NO PAIR BEHIND IT, WHICH IS LAWFUL RATHER THAN AN OMISSION**: no invariant holds a `temp` reading, and a repair whose
+ *  subject is "no drag has started" could only mint a placeholder for data whose ABSENCE is the product — so the entry is
+ *  the whole of it, and what it buys is the family's ONE judgement, which is the tier's (`declaredTierLedger` keys on the
+ *  roots it is HANDED rather than on the batch, so a `file` or `mem` write at `['drag']` is refused `declared-tier` ahead
+ *  of any store verb).
  *
  *  **THE TWO LISTS ARE ONE EDIT** (`D-142`, `D-101`): a declaration and its entry leave in the same hunk, because an
  *  entry outliving its declaration hands the guard a tier for a family that is gone, and a declaration outliving its
- *  entry leaves the family standing undeclared with no root for the guard's sentence to name.
+ *  entry leaves the family standing undeclared with no root for the guard's sentence to name. **AND AN ENTRY WITHOUT A
+ *  DECLARATION IS THE ONE LAWFUL ASYMMETRY**, stated here so a reader does not read the rule as forbidding it.
  *
  *  **ITS CALLER IS THE `data.*` SURFACE, AND THE REASON IS ONE DEFECT.** While the surface wrote a tier of its
  *  own, a `data.write` at a root this file declares at one tier created a version of it at the other:
@@ -964,6 +1012,7 @@ export function viewDeclaredRoots(): readonly ViewDeclaredRoot[] {
     { address: VIEW_PANES_ADDRESS, tier: PANES_TIER },
     { address: VIEW_ZONES_ADDRESS, tier: ZONES_TIER },
     { address: VIEW_THEME_ADDRESS, tier: THEME_TIER },
+    { address: VIEW_DRAG_ADDRESS, tier: DRAG_TIER },
   ]
 }
 
@@ -986,8 +1035,8 @@ const handleFor = (address: readonly string[]): string => {
 }
 
 /** **THE VIEW RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65, D-87; the appearance family is D-97's): this
- *  module constructs nothing and owns no file — it is handed the app's one store and reads and writes its THREE roots
- *  through it. */
+ *  module constructs nothing and owns no file — it is handed the app's one store and reads and writes its FOUR roots
+ *  through it, the drag's `temp` root among them (D-132). */
 export function createViewRecord(options: ViewRecordOptions): ViewRecord {
   const standing: Store = options.store
 
@@ -1040,8 +1089,12 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
         }
         supplied.bounds = { min, max }
       }
-      // **ONE WRITE OF ONE WHOLE FAMILY AT ITS ROOT** — a nested write does not create its parent (measured), so the
-      // family is composed whole and written where the pair stands.
+      // **ONE WRITE OF ONE WHOLE FAMILY AT ITS ROOT, AND THE REASON IS MEMBER MERGE RATHER THAN PARENT EXISTENCE** (`D-135`).
+      // A nested write does not create its parent (measured), but the parent is not this body's to make: `panes-must-stand`
+      // repairs the family at `['panes']` whenever the address does not stand, so the ROOT'S EXISTENCE IS THE DECLARATION'S
+      // GUARANTEE and a caller may trust it. What the composer is for is the two things only a root write needs — keeping the
+      // SIBLING panes (`panesOf`' answer is the family, so a root write would otherwise replace them) and merging the members
+      // this act did not supply over what the pane stands at (`supplied.size ?? base.size`). **THE MERGE IS THE REAL REASON.**
       try {
         standing.write(VIEW_PANES_ADDRESS, PANES_TIER, composePanes(panesOf(standing).panes, id, supplied))
         return { status: 'committed' }
@@ -1128,6 +1181,55 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       }
     },
 
+    commitDrag(id: string, geometry: unknown): ViewRecordAnswer {
+      // ── THE SHAPE ARMS, BEFORE ANY STORE VERB — `commitPane`'s rule, at the `temp` family (D-132) ──
+      // **THE TWO TOKENS ARE THE PANES' OWN AND NO THIRD ARRIVES**: no pane id or no plain geometry record is
+      // `malformed-pane`, and a `size` no placement can be is `malformed-geometry` — the vocabulary §5 declares for the
+      // panes family, reused rather than re-minted for a family that mints none of its own.
+      if (typeof id !== 'string' || id.length === 0) {
+        return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
+      }
+      const value: unknown = geometry
+      if (!plain(value)) {
+        return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
+      }
+      // **THE `size` IS REQUIRED HERE, AND THAT IS THE ONE PLACE THIS ARM IS STRICTER THAN `commitPane`'S** (L2 §2, D-135):
+      // a pane commit may supply a member alone because the missing one is merged from what stands, while the drag family's
+      // member IS the placement — there is no sibling to preserve and nothing to merge. An `undefined` is not a value the
+      // crossing carries (`isBoundary`), so a member without a usable size is a fault and not an omission.
+      const size = value['size']
+      if (!finiteNumber(size) || size < 0) {
+        return { status: 'refused', reason: PANE_GEOMETRY_REASON, message: PANE_GEOMETRY_MESSAGE, address: [VIEW_DRAG_ADDRESS[0] as string, id] }
+      }
+      // **ONE WHOLE VALUE THE CALLER FORMATTED, AND NO COMPOSER** (D-135, D-136, D-138): `['drag']` is a root holding one
+      // member and no sibling, so the first move writes the root itself and nothing is left to preserve. **AND NOTHING
+      // JUDGES THE VALUE AT `temp`** (D-105): no pair stands here, so these arms are the whole gate and the store's own
+      // boundary is the rest.
+      try {
+        standing.write(VIEW_DRAG_ADDRESS, DRAG_TIER, { [id]: { size } })
+        return { status: 'committed' }
+      } catch (caught) {
+        const refused = refusalOfThrown(caught)
+        return { status: 'refused', reason: refused.reason, message: refused.message, address: [VIEW_DRAG_ADDRESS[0] as string, id] }
+      }
+    },
+
+    clearDrag(): ViewRecordAnswer {
+      // **THE GESTURE'S END IS A DELETE AND NEVER A PLACEHOLDER** (D-132, ASM-2): an empty family written at the root would
+      // leave a `temp` node STANDING and make "the drag is over" weaker than the absence it is. At the family's own tier, so
+      // the address answers `absent` afterwards and no other tier's version is touched (`guide §5.3`).
+      // **AND IT IS `committed` WHETHER OR NOT THE FAMILY STOOD** — a delete that removes nothing is the store's own success
+      // (`tiers: []`), which needs no arm of this body (`D-53`, the reading the tab record's `remove` makes at its
+      // already-absent branch). **NO ARGUMENT AND NO SHAPE CHECK**: the act carries nothing, so there is nothing to refuse.
+      try {
+        standing.delete(VIEW_DRAG_ADDRESS, DRAG_TIER)
+        return { status: 'committed' }
+      } catch (caught) {
+        const refused = refusalOfThrown(caught)
+        return { status: 'refused', reason: refused.reason, message: refused.message, address: [VIEW_DRAG_ADDRESS[0] as string] }
+      }
+    },
+
     subscribe(handler: () => void): () => void {
       // **THE REGISTRATION IS TWO ACTS PER ADDRESS, NOT ONE** (`guide §6.2`, `§6.3`): `listen` installs the ENTRY and
       // `register` installs the FUNCTION under it; an entry `listen` wrote and `register` never filled is a lawful, silent
@@ -1147,7 +1249,12 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
         }
       }
       const handles: string[] = []
-      for (const address of [VIEW_PANES_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS]) {
+      // **EVERY ROOT THIS MODULE DECLARES, IN ONE ARRAY** (`D-137`, `R-2`): the fourth entry is the `temp` root, and a root
+      // the array omits is a write the renderer NEVER HEARS — the one place this can fail silently. **AND THE LISTENER IS
+      // TIER-BLIND**: `listen(handle, [address])` binds an ADDRESS and no tier (the store's own `listen` takes addresses and
+      // never a tier), so an outside `provident.data.write({path: ['drag'], tier: 'temp'})` fires the same delivery the
+      // drag's own commit does — and the consumer's only correct answer is a re-read (`P-3`).
+      for (const address of [VIEW_PANES_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS, VIEW_DRAG_ADDRESS]) {
         const handle = handleFor(address)
         try {
           standing.listen(handle, [address])

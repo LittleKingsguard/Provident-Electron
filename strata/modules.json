@@ -128,7 +128,8 @@
         "tests/fork-store-reads.test.ts",
         "tests/theme-act.test.ts",
         "tests/renderer-delivery-compliance.test.ts",
-        "tests/e2e/focus-retirement/"
+        "tests/e2e/focus-retirement/",
+        "tests/e2e/pane-drag-temp/"
       ],
       "endpoints": 22
     },
@@ -297,7 +298,7 @@
         "tests/integration/store-view-record/zone-family.test.ts",
         "tests/integration/store-view-record/theme-family.test.ts"
       ],
-      "endpoints": 5
+      "endpoints": 7
     }
   ]
 }

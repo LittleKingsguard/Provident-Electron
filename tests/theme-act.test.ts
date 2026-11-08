@@ -56,6 +56,15 @@ const LIGHT_ID = 'theme-light'
 
 interface Crossing {
   readonly record: ReturnType<typeof createViewRecord>
+  /** **THE APP'S ONE STORE, AS THE ROW THAT READS AN ADDRESS NEEDS IT** (`A-5`): the record's routes are the writers, and
+   *  the store is where the family they wrote can be read back at its own path and tier — `store.read(['drag'], 'temp')`.
+   *  Nothing else in this file touches it. */
+  readonly store: ReturnType<typeof createProfileStore>
+  /** The bridge literal this realm is handed, kept so a row can state its MEMBER CENSUS rather than re-spelling it. */
+  readonly bridge: ViewClientBridge
+  /** Every `commitDrag`/`clearDrag` the client sent, in order — the literal's own call log (`A-5`). A `clearDrag()` has no
+   *  id and no geometry, and its entry says so rather than borrowing a pane id. */
+  readonly dragCalls: { readonly id: string; readonly geometry: unknown }[]
   readonly close: () => void
 }
 
@@ -75,7 +84,16 @@ function crossing(): Crossing {
   })
   bound.current = store as unknown as ViewRecordStore
   const record = createViewRecord({ store: bound.current })
-  const bridge: ViewClientBridge = {
+  const dragCalls: { id: string; geometry: unknown }[] = []
+  // **THE DRAG PAIR ARRIVES WITH THE RECORD'S OWN IMPLEMENTATION, AND THE CAST KEEPS THIS FILE COMPILING ON BOTH SIDES OF
+  // THAT LANDING** (`ViewClientBridge` declares FIVE members today: `read`, `commitPane`, `commitZones`, `commitTheme`,
+  // `onChanged`). The two members below delegate to the record through a narrowed view of it, so a record that has not
+  // grown the routes yet answers `undefined` rather than throwing and the client records the `absent` statement.
+  const routes = record as unknown as {
+    commitDrag?: (id: string, geometry: unknown) => unknown
+    clearDrag?: () => unknown
+  }
+  const bridge = {
     read: async () => record.read(),
     commitPane: async (id: string, geometry: unknown) => record.commitPane(id, geometry),
     // **THE `commitFocus` MEMBER IS GONE FROM THIS LITERAL AND FROM BOTH HALVES OF THE LOCKSTEP PAIR**
@@ -84,11 +102,25 @@ function crossing(): Crossing {
     // the whole-tree typecheck leg (`typecheck:tests`) for a route nothing reaches any more.
     commitZones: async (id: string, zone: unknown) => record.commitZones(id, zone),
     commitTheme: async (token: string, attributeName: string) => record.commitTheme(token, attributeName),
+    // **THE TWO ROUTES THE DRAG'S ADDRESS NEEDS**: `commitDrag(paneId, geometry)` writes `{[paneId]: {size}}` whole at
+    // `['drag']`/`temp`, and `clearDrag()` ends the family. Each records the call before delegating, so a row can state
+    // that the client SENT it and that the record then wrote the address.
+    commitDrag: async (id: string, geometry: unknown) => {
+      dragCalls.push({ id, geometry })
+      return routes.commitDrag?.(id, geometry) ?? { status: 'committed' }
+    },
+    clearDrag: async () => {
+      dragCalls.push({ id: '', geometry: null })
+      return routes.clearDrag?.() ?? { status: 'committed' }
+    },
     onChanged: (handler: () => void): (() => void) => record.subscribe(handler),
-  }
+  } as unknown as ViewClientBridge
   ;(globalThis as Record<string, unknown>).window = { provident: { view: bridge } }
   return {
     record,
+    store,
+    bridge,
+    dragCalls,
     close: () => {
       delete (globalThis as Record<string, unknown>).window
       bound.current = null
@@ -358,5 +390,77 @@ describe('D-126 · the appearance act, from a REAL CLICK to the store and back',
       application.attributeName,
       application.nodeId,
     ])
+  })
+})
+
+// ───────────────────────────────────────────────────────────────────────────
+// A-5 — THE DRAG FAMILY'S TWO ROUTES, AND THE ADDRESS THEY WRITE
+// ───────────────────────────────────────────────────────────────────────────
+
+/** **THE ADDRESS AS THE STORE ANSWERS IT** — the family's value where it stands, and `null` where the address does not
+ *  stand at all. The store THROWS its `AddressNotFound` refusal for a path it holds no keys for (it does not answer an
+ *  empty family), so `null` here is a MEASURED absence rather than a swallowed failure: the refusal's own status word is
+ *  the same one every arm below produces, and the two arms a row asks about — standing and gone — are never folded. */
+function addressIn(store: ReturnType<typeof createProfileStore>, address: readonly string[], tier: string): unknown {
+  try {
+    return store.read(address as never, tier as never)
+  } catch {
+    return null
+  }
+}
+
+/** The two routes the drag's address needs, as the client's OWN members — `ViewClient` does not declare them yet, and this
+ *  narrowed view is how the row states what it drives without pretending the declaration is already there. */
+interface DragRoutes {
+  commitDrag(id: string, geometry: unknown): unknown
+  clearDrag(): unknown
+}
+
+describe('A-5 · the drag route pair: ONE member per pane at `[\'drag\']`/`temp`, and the erase that ends it', () => {
+  it('A-5 — **THE DRAG\'S VALUE IS AN ADDRESS**: the client\'s bridge carries `commitDrag`/`clearDrag` beside the five landed routes, `commitDrag(\'pane-a\', {size: 220})` reaches the literal and the record writes the family WHOLE at `[\'drag\']`/`temp` (`{\'pane-a\': {size: 220}}`), and `clearDrag()` leaves the address ABSENT while nothing was ever written at `file`', async () => {
+    const live = crossing()
+    try {
+      // THE MEMBER CENSUS OF THE LITERAL THIS REALM HANDS THE CLIENT — the five landed routes and the drag pair, nothing
+      // else. Stated as a sorted list so a member that appears or vanishes reddens here rather than at a call site.
+      expect(
+        Object.keys(live.bridge).sort(),
+        'A-5 — the bridge literal carries the drag pair beside the five landed routes',
+      ).toEqual(['clearDrag', 'commitDrag', 'commitPane', 'commitTheme', 'commitZones', 'onChanged', 'read'])
+
+      const client = createViewClient({ bridge: live.bridge }) as unknown as Record<string, unknown>
+      const commitDrag = client['commitDrag']
+      expect(
+        typeof commitDrag,
+        'A-5 — the view client carries `commitDrag(paneId, geometry)`: the drag family has no writer until the record routes one',
+      ).toBe('function')
+      ;(commitDrag as (id: string, geometry: unknown) => unknown).call(client, 'pane-a', { size: 220 })
+
+      // THE CALL REACHED THE LITERAL, and the literal delegated to the record.
+      expect(live.dragCalls, 'A-5 — the client sent `commitDrag` with the pane id and the geometry it was handed').toEqual([
+        { id: 'pane-a', geometry: { size: 220 } },
+      ])
+      // **THE ADDRESS, READ AT ITS OWN PATH AND TIER**: one member per pane id, `{size}`, whole.
+      expect(
+        addressIn(live.store, ['drag'], 'temp'),
+        'A-5 — the record wrote the family whole at `[\'drag\']` and `temp`',
+      ).toEqual({ 'pane-a': { size: 220 } })
+
+      const clearDrag = client['clearDrag']
+      expect(typeof clearDrag, 'A-5 — and the client carries `clearDrag()`: the family\'s end, whether or not it stood').toBe('function')
+      ;(clearDrag as () => unknown).call(client)
+      // THE ERASE LEAVES THE ADDRESS ABSENT — the store answers no keys for it, which is the same state a fresh profile is in.
+      expect(addressIn(live.store, ['drag'], 'temp'), 'A-5 — the family is absent at that address after the erase').toBeNull()
+      // AND NOTHING WAS EVER WRITTEN AT `file`: the drag is a transient reading of the gesture, never a persisted setting.
+      expect(addressIn(live.store, ['drag'], 'file'), 'A-5 — no member of the drag family reaches `file`').toBeNull()
+      // THE CONTROL: the store DOES answer a family that stands, so the two `null`s above are about the address and not
+      // about a read that never works — the same read at the same path answers after the record writes it again.
+      const again = client['commitDrag'] as (id: string, geometry: unknown) => unknown
+      again.call(client, 'pane-a', { size: 240 })
+      expect(addressIn(live.store, ['drag'], 'temp'), 'A-5 CONTROL — the read works; the family simply was not there').toEqual({
+        'pane-a': { size: 240 },
+      })
+    } finally {
+      live.close()
+    }
   })
 })

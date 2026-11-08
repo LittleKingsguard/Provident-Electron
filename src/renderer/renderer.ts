@@ -384,6 +384,12 @@ export function startGutterAffordance (runtime: Runtime): {
    *  whole return value, so the record had NO reader and the visibility it existed for was never
    *  delivered — `write`'s own `console.error` is what makes a refusal visible, and it always was. */
   readonly attached: boolean
+  /** **THE GHOST TURN, HANDED OUT** (`D-138`, `D-144`; design §1): the composition's `renderGhost` member,
+   *  RETURNED rather than called here, because the delivery that drives it is the SHAPE's —
+   *  `startViewShape`'s ONE subscription body calls it beside `theme?.apply()`, and `main()` is what
+   *  hands it over. The composition registers NO subscriber of its own, so this return value is the
+   *  whole of the wiring between the delivery and the declared transient. */
+  readonly renderGhost: () => void
 } {
   const element = runtime.elementForNodeId(GUTTER_AFFORDANCE_ID)
   const target = runtime.elementForNodeId(GUTTER_TARGET_ID)
@@ -395,8 +401,12 @@ export function startGutterAffordance (runtime: Runtime): {
    *  pane element's attributes through `gutterSeamExample`'s pair. The `source` is this wiring's own
    *  event source, which carries no `layout` member, so the composition's `renderZone` turn — a member
    *  the SHAPE's delivery calls — stays the declared no-op it is on a realm with no layout consumer.
-   *  CONSTRUCTED HERE AND NOT PER GESTURE, and it reads nothing: every read is a caller turn. */
-  const drag = createPaneDrag({ view: getViewClient() }, source)
+   *  CONSTRUCTED HERE AND NOT PER GESTURE, and it reads nothing: every read is a caller turn.
+   *  **AND IT IS HANDED THE PANE ELEMENT THE GHOST'S DECLARATION LANDS ON** (`D-144`): `target` is this
+   *  function's own `elementForNodeId(GUTTER_TARGET_ID)` reading, the element the inline preview writes
+   *  to, so the declared transient and the preview's style write land on ONE element and no second
+   *  resolution exists. */
+  const drag = createPaneDrag({ view: getViewClient(), ghostTarget: target }, source)
   const session = createGestureSession({
     source: source as never,
     // (i) THE NON-FORWARDING RECORDER: the session's own channel records and writes nothing, so
@@ -434,16 +444,29 @@ export function startGutterAffordance (runtime: Runtime): {
     }
     return status
   }
+  /** **THE SEAT'S ONE KEY** (`D-138`, ASM-L3-2): ONE closure constant, handed to BOTH drag writes — the
+   *  `commit` seam's `release` and the preview seam's two arms — so the app's ONE gesture is keyed ONE
+   *  way and its ending is reached exactly once. It is the affordance ELEMENT's authored id, the id this
+   *  closure already resolves; the HANDLE the `commit` seam is handed carries a NUMBER `id`, which is why
+   *  the old `gestureIdOf` read retired rather than answering `''`. */
+  const GESTURE_KEY: string = GUTTER_AFFORDANCE_ID
   /** **THE PREVIEW — THE DECLARED TRANSIENT INLINE-STYLE WRITE ON THE LIVE TARGET** (`§2.5` item 4,
-   *  `§3.1` M-12; ADV-GU-2). The as-filed form dispatched the affordance's OWN node through
-   *  `write(element, …)` — a GRAPH WRITE on the handle the pointer is over, which is the NAMED
-   *  HAZARD of `§2.5` item 5 (a preview-by-dispatch re-renders the graph mid-gesture), and it made
-   *  the `target` option of this module read by NOTHING. The ruled form: one transient `style`
-   *  declaration on the target element, so the target's rendered geometry follows the pointer
-   *  during a drag; a non-finite value is never written (the module's own gate answers `null`
-   *  before this seam is reached) and every revert arm (`reset`, `cancel`, the drop) calls the
-   *  same seam with the PRE-DRAG size, so the target's geometry reverts with it. No element is
-   *  created, no provident data is authored and the graph is not re-rendered. */
+   *  `§3.1` M-12; ADV-GU-2) **AND THE GESTURE'S ONE PREVIEW SEAM** (`D-138`; design §2 `P1`–`P5`). The
+   *  as-filed form dispatched the affordance's OWN node through `write(element, …)` — a GRAPH WRITE on
+   *  the handle the pointer is over, which is the NAMED HAZARD of `§2.5` item 5 (a preview-by-dispatch
+   *  re-renders the graph mid-gesture), and it made the `target` option of this module read by NOTHING.
+   *  The ruled form: one transient `style` declaration on the target element, so the target's rendered
+   *  geometry follows the pointer during a drag; a non-finite value is never written (the module's own
+   *  gate answers `null` before this seam is reached) and every revert arm (`reset`, `cancel`, the drop)
+   *  calls the same seam with the PRE-DRAG size, so the target's geometry reverts with it. No element is
+   *  created, no provident data is authored and the graph is not re-rendered.
+   *  **THE STYLE WRITE IS ON EVERY ARM AND THE ROUTES ARE ADDED, NEVER SUBSTITUTED**: `P3` is this
+   *  wiring's own presentation, then `P4`/`P5` read the AFFORDANCE'S OWN `valid` flag — `true` is an
+   *  observed move's placement change and goes to `drag.move` (whose `M3` sends the ONE `commitDrag`),
+   *  `false` is the revert `revertStateFor` builds for all three abandon arms and goes to `drag.cancel`
+   *  (whose `E3` sends the ONE `clearDrag`). `valid` is a boolean, so there is no third arm, and no
+   *  second listener on the gesture's events is registered here (`D-126`). **THE ORDER IS THE GATE**:
+   *  `P1`/`P2` precede the routes, so a target with no usable `style` sends no route either. */
   const applyPreview = (state: unknown): void => {
     const holder = target as { readonly style?: { setProperty?: unknown } } | null | undefined
     if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
@@ -452,15 +475,9 @@ export function startGutterAffordance (runtime: Runtime): {
     const value = (state as { readonly value?: unknown } | null | undefined)?.value
     if (typeof value !== 'number' || !Number.isFinite(value)) return
     ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
-  }
-  /** **THE HANDLE'S OWN ID, WHERE IT CARRIES ONE, AND `''` WHERE IT DOES NOT.** `release` takes a gesture
-   *  id and IGNORES it (`void gestureId`): the pane it commits is the composition's own `DEFAULT_PANE_ID`
-   *  and never the gesture's (`D-87`'s measurement — the release turn hard-codes the id it addresses).
-   *  So this is a TOTAL read of a value no turn consumes, and it invents no spelling: a handle with no id
-   *  is the empty string, never a fabricated `gesture-1`. */
-  const gestureIdOf = (gesture: unknown): string => {
-    const held = (gesture as { readonly id?: unknown } | null | undefined)?.id
-    return typeof held === 'string' ? held : ''
+    const stateRecord = state as { readonly valid?: unknown } | null | undefined
+    if (stateRecord?.valid === true) drag.move(GESTURE_KEY, state)
+    if (stateRecord?.valid === false) drag.cancel(GESTURE_KEY)
   }
   const affordance = createGutterAffordance({
     session: session as never,
@@ -493,19 +510,20 @@ export function startGutterAffordance (runtime: Runtime): {
     boundsOf: (el: unknown, token: unknown): unknown => drag.boundsOf(el, token),
     resizableOf: seams.resizableOf,
     moveTypeOf: (): unknown => POINTER_TYPES.move,
-    /** **THE COMPOSITION'S SINGLE SINK WRITER IS `release`, AND IT WRITES TWICE IN ONE ORDERED TURN**
-     *  (`D-117`): the SINK first — one managed-channel write to the AUTHORED STATUS node and nothing
-     *  else — then ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing. That is `release`'s own
-     *  contract, unmoved: the sink is invoked BEFORE the route is sent, so the recorded sink trace is
-     *  what it was, and the route's receipt lands in the client's `writeOutcome()` a tick later. The
-     *  gesture id it takes is IGNORED by that turn and is read off the handle where the handle carries
-     *  one, so nothing is invented for it. */
+    /** **THE COMPOSITION'S SINGLE SINK WRITER IS `release`, AND IT WRITES THRICE IN ONE ORDERED TURN**
+     *  (`D-117`, `D-138`): the SINK first — one managed-channel write to the AUTHORED STATUS node and
+     *  nothing else — then ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing, then its OWN
+     *  ending of the drag family the moves wrote. That is `release`'s own contract (`R3`/`R4`/`R5`), and
+     *  this seam CHANGES IN ONE PLACE ONLY: the gesture id it hands the turn is the closure's ONE
+     *  constant `GESTURE_KEY`, never a read of the handle's numeric `id` (`gestureIdOf` is RETIRED). It
+     *  stays an INLINE PROPERTY of this literal on purpose: `tests/pane-drag-compliance.test.ts`'s
+     *  `D-117/LIVE-READ` probes this exact form, so hoisting it to a `const` would red a gating row. */
     commit: (gesture, value): void => {
-      drag.release(gestureIdOf(gesture), value, write)
+      drag.release(GESTURE_KEY, value, write)
     },
   })
   const attached = affordance.attach()
-  return { attached }
+  return { attached, renderGhost: drag.renderGhost }
 }
 
 /** **THE FIVE `data.*` ROUTES' ANSWER SITE IN THIS REALM** (`D-112`; `docs/L2/central-data/interface.md` §5). The arm hands
@@ -1068,7 +1086,11 @@ async function main(): Promise<void> {
   // `{token: 'light', declaration: {name: 'theme', …}}` and `get_rendered_html` carried NO `theme` attribute. **The
   // silence is THIS continuation's**: `fill()` ADOPTS and applies nothing, and `apply()` is reached from the DELIVERY's
   // subscription alone — so a standing record is DATA at a boot and never an application.
-  startViewShape(themeApplication)
+  // **AND THE SECOND ARGUMENT IS THE GHOST TURN** (`D-138`, `D-144`): `gutter` is `startGutterAffordance(runtime)`'s
+  // reading above, and its `renderGhost` member is the composition's own turn — handed HERE so the ONE delivery calls it
+  // beside the appearance application. No new registration, no new boot step and nothing awaited: the turn runs inside the
+  // subscription body the shape already owns.
+  startViewShape(themeApplication, gutter.renderGhost)
   // ⟶ **THE APP-STATE ROWS' SHAPE (`D-104`; `D-82`'s `V3`)** — the pane that displays the module registry is filled from a
   //    DELIVERY from here on, and the request-time read `panels.refresh()` used to make is deleted. Started LAST and never
   //    awaited, for the reason the two sites above it are: every boot step including `bridge.ready()` has already run, so no
@@ -1255,14 +1277,23 @@ function describeSecurityReading(shape: { filled: boolean; token: string | null;
  *  **AND THE DELIVERY IS WHERE THE APPEARANCE DECLARATION IS APPLIED** (`D-97`): the body hands the turn to the application
  *  the boot constructed, and NOTHING is applied by the boot read above — the two are different turns of one chain, and the
  *  difference is the one `D-96` had to key a `changed` record on. A committed appearance act reaches this body through the
- *  crossing's push, the client re-reads, and the record's declaration lands on the authored node then. */
-function startViewShape(theme: ThemeApplication | null): void {
+ *  crossing's push, the client re-reads, and the record's declaration lands on the authored node then.
+ *
+ *  **AND THE SECOND ARGUMENT IS THE GHOST'S DELIVERY** (`D-138`, `D-144`; design §3, `DC-8(b)`): the body calls the
+ *  composition's `renderGhost` turn BESIDE `theme?.apply()`, so one delivery re-reads the record once and then repaints
+ *  the drag's declared transient from `['drag']`'s own node. The turn is a MEMBER the wiring handed out —
+ *  `startGutterAffordance`'s return value — because THIS function is the shape's ONE subscription and the composition
+ *  registers no second consumer of the push (`D-92` `M-4`, `D-126`). A realm whose gutter did not attach still holds a
+ *  turn; it answers the declared degradation and paints nothing. */
+function startViewShape(theme: ThemeApplication | null, ghost: (() => void) | null): void {
   const client = getViewClient()
   viewSubscription = client.subscribe(() => {
-    // A DELIVERY IS A RE-READ (the client has already adopted it) and its appearance turn. A record with no applicable
-    // declaration — the placeholder, which names no attribute — writes nothing, so a delivery that moved another family
-    // costs one read and no appearance write.
+    // A DELIVERY IS A RE-READ (the client has already adopted it) and its appearance turn, then the ghost's. A record with
+    // no applicable declaration — the placeholder, which names no attribute — writes nothing, so a delivery that moved
+    // another family costs one read and no appearance write; the ghost turn is the drag address's own transient and asks
+    // its own route once.
     theme?.apply()
+    ghost?.()
   })
   void client.fill().then(
     (reading) => {
@@ -2155,17 +2186,18 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * names + §2.5's terminal table; the WIRING role, §5.1 row 1 of the diff scope).
  *
  * THE WIRING'S OWN CLOSURE, per `GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`, RE-GRAINED BY THE PURGE
- * (`D-92`): every value of the flow is a READ of the record the crossing holds — the PANE GEOMETRY at `['panes']` and the
- * ZONE FAMILY at `['zones']`, both read through `src/renderer/view-client.ts`'s shape — the gesture's TEMP PREVIEW is not
- * a value of the record at all and is held as PLAIN CLOSURE STATE (see `move`), and the client is a WIRING-HELD ARGUMENT
- * passed into closures, NEVER a module-scope binding (§3.4 R-2). The composition registers NO SUBSCRIBER of its own: the
- * render turn is the `renderZone` member below, called by the shape's ONE delivery. NO byte of the four mechanism modules
- * moves (§3.4 R-1/R-5).
+ * (`D-92`) AND AGAIN BY THE ADDRESS (`D-132`, `D-138`, `D-144`): every value of the flow is a READ of the record the
+ * crossing holds — the PANE GEOMETRY at `['panes']`, the ZONE FAMILY at `['zones']` and now the DRAG'S OWN VALUE at
+ * `['drag']`, whose node stands at `temp` — read through `src/renderer/view-client.ts`'s shape or, for `['drag']`, through
+ * the realm's own `data.read` route; the client is a WIRING-HELD ARGUMENT passed into closures, NEVER a module-scope
+ * binding (§3.4 R-2). The composition registers NO SUBSCRIBER of its own: the render turn is the `renderZone` member
+ * below and the ghost turn the `renderGhost` member beside it, both called by the shape's ONE delivery. NO byte of the four
+ * mechanism modules moves (§3.4 R-1/R-5).
  *
  * THE SEAM SURFACE (`PaneDragSurface`) satisfies the family's EXPORTED seam types of
  * §2.1 — `StartSizeOf`, `BoundsOf`, the relocate candidate production — plus the
- * §2.1 C temp-write turns (`move`/`release`/`rightClick`/`cancel`) AND the render turn. The composition's
- * per-gesture state (the preview, whether erased) lives in THIS closure, never at
+ * §2.1 C temp-write turns (`move`/`release`/`rightClick`/`cancel`), the render turn and the ghost turn. The
+ * composition's ONE per-gesture binding (whether the family's ending was SENT) lives in THIS closure, never at
  * module scope. The `<id>` segments are the CALLER'S OWN spellings, derived by the
  * caller's own element/token mapping (§2.1 A); the gesture-end writes bind to the
  * wiring's own pane id (§2.4 names 1/2/9), carried verbatim.
@@ -2177,17 +2209,22 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * names answers `null` (`D-91`'s measured missing arm) and `candidatesFor` answers `[]`, which is what the frozen store's
  * `undefined` answered.
  *
- * **THE TEMP PREVIEW IS CLOSURE STATE, NOT DATA — AND THAT IS `D-90`'s JUDGEMENT, LANDED HERE.** `temp.drag.<gestureId>
- * .placement` had ONE writer (this `move`), NO READER outside the rows asserting the write, NO address the crossing
- * declares, and NO persistence: it outlives no gesture and crosses no boundary. It was a name in the frozen store's
- * register because the store had a `temp` tier, not because anything needed it stored. It is now a `Map` in this closure,
- * written by `move` and erased by the erase turn, and NOTHING reads it — the preview's only consumer was the store's own
- * newsletter, which is replaced by the shape's delivery below. The release turn's write and the SINK are untouched.
+ * **THE TEMP PREVIEW IS AN ADDRESS NOW, AND WHAT THE CLOSURE KEEPS IS ONE FLAG** (`D-132` superseding `D-90` by pointer;
+ * `D-138`; design §5). It was `temp.drag.<gestureId>.placement` in the frozen store, and then a `Map` in this closure with
+ * a `previewOf` member so the erase rule was OBSERVABLE rather than assumed. **BOTH ARE DELETED**: the drag's value is
+ * `['drag']` at `temp`, whose WRITER is the client's `commitDrag` (one whole member per placement change, `{size}`), whose
+ * READ is the ghost turn below, and whose END is the client's `clearDrag` (a tier-scoped delete, never a placeholder). What
+ * remains here is `gestures` — ONE bookkeeping `Map` holding the ENDING FLAG and no value, because `['drag']` is keyed by
+ * PANE ID and is GESTURE-BLIND. The release turn's write and the SINK are untouched, and **THE TWO PHASES STAY DISTINCT**:
+ * `move` writes at `temp` and commits nothing, `release` is the ONLY `file` writer. `D-137`'s "one event" was about
+ * COLLISION, never about collapsing them.
  *
  * THE ZONE-RENDER TURN (`renderZone`) is a MEMBER of the surface, and **the shape's own delivery calls it** — this
  * composition registers NOTHING on the client, the bridge or the store, because a second `onChanged` registration would be
  * a second consumer of one push and a second read per delivery. Every read is guarded: an absent client, an absent shape
  * and a throwing read all land the DECLARED degradation, and never a throw escapes a wiring turn (§3.2 F-8, P-PD-TP-2).
+ * **AND THE GHOST TURN (`renderGhost`) IS ITS SIBLING** — the same delivery calls it, it asks the same address's own read
+ * and paints the declared transient the address has no other way to show.
  * ══════════════════════════════════════════════════════════════════════════════════ */
 
 /** The composition's surface — §2.1's A/B/C seam implementations plus the temperature
@@ -2206,11 +2243,14 @@ export interface PaneDragSurface {
    *  registration: the layout input is a pure function of the zone family's `size`/`display` as the last delivery left
    *  them, so the event that changes them IS the event that renders them. */
   renderZone(): void
-  /** **THE PREVIEW'S OWN READ — DECLARED SO THE ERASE RULE IS OBSERVABLE RATHER THAN ASSUMED** (`D-92`). It answers what
-   *  the closure holds for one gesture, or `undefined` where nothing does. **IT IS NOT AN ADDRESS**: it names a gesture
-   *  id, crosses no boundary, writes nothing, persists nothing and is the closure's own member — the same question the
-   *  frozen store's tier-qualified read answered, asked of the thing that now holds the value. */
-  previewOf(gestureId: string): unknown
+  /** **THE GHOST TURN — THE SHAPE'S ONE DELIVERY CALLS IT BESIDE `renderZone`** (`D-138`, `D-144`; design §4 `G1`–`G9`).
+   *  The drag's in-process value became an ADDRESS (`['drag']` at `temp`), so the transient a human sees mid-gesture is
+   *  a READ of that address painted as a DECLARED TRANSIENT: ONE `data.read({path: ['drag']})`, its answer checked
+   *  against the realm's own `_tier` readout, and `data-ghost="temp"` declared on the backing's `ghostTarget` IFF the
+   *  node is a branch standing at `temp` whose `DEFAULT_PANE_ID` member carries a finite non-negative `size` — the
+   *  declaration REMOVED on every other arm, and nothing thrown out of the turn. **NO POLL, NO TIMER, NO RETRY**: the
+   *  one read rides the delivery's turn, and a lost delivery is a stale declaration rather than a fabricated one. */
+  renderGhost(): void
 }
 
 /** The caller's own minimize marker — ZERO IS THE MINIMIZE VERB and never a smaller
@@ -2291,16 +2331,26 @@ export function zoneSizeRepair(min: number, max: number): (
 export interface PaneDragBacking {
   /** THE SHAPE (D-88, D-92) — every read the flow makes, synchronous; the writes are the crossing's routes. */
   readonly view?: ViewClient | null
+  /** **THE PANE ELEMENT THE GHOST'S DECLARATION LANDS ON** (`D-144`; design §4): the wiring's own
+   *  `runtime.elementForNodeId(GUTTER_TARGET_ID)`, handed at the ONE construction site beside `view` — the same
+   *  element `startGutterAffordance`'s inline preview writes, so the transient and the preview agree.
+   *  **STRUCTURAL, AND TOTAL OVER EVERY SHAPE**: anything carrying `setAttribute`/`removeAttribute` is used; absent,
+   *  hostile or attribute-less means the ghost turn paints nothing, removes nothing and throws nothing (ASM-RW-3). */
+  readonly ghostTarget?: unknown
 }
 
 /** THE WIRED COMPOSITION (§2.1 A/B/C + the shape's delivery turn + §7a.1 item 1's reconcile turns), bound to the
  *  caller-supplied BACKINGS above and the RECORDING SOURCE DOUBLE. Every read is the shape's; the temp preview is this
  *  closure's; the render turn is a member the shape's one delivery calls. */
 export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurface {
-  const backingRecord = (backing ?? null) as { readonly view?: unknown } | null
+  const backingRecord = (backing ?? null) as { readonly view?: unknown; readonly ghostTarget?: unknown } | null
   /** THE SHAPE, where the caller supplied one. `null` is a realm with no crossing: the reads answer the measured default
    *  and every write is the client's `absent` statement, which is the declared degradation and never a throw. */
   const view = (backingRecord?.view ?? null) as ViewClient | null
+  /** **THE ELEMENT THE GHOST'S DECLARATION LANDS ON** (`D-144`; design §4): the wiring's pane element, handed beside the
+   *  shape at the ONE construction site. STRUCTURAL and never inspected at construction — the ghost turn reads the two
+   *  members it needs, per call, and a target carrying neither paints nothing. */
+  const ghostTarget = backingRecord?.ghostTarget ?? null
   const sourceRecord = (source ?? null) as { readonly layout?: unknown } | null
 
   /** THE CALLER'S OWN ELEMENT/TOKEN MAPPING (§2.1 A): `<id>` is derived from the caller's
@@ -2356,31 +2406,31 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  **AND `temp.drag` WAS NEVER A ROOT OF THE FAMILY'S**: `D-90`'s clause (2) measured the preview as ONE writer with NO
    *  reader outside the rows asserting the write, holding no address, outliving no gesture, crossing no boundary. */
 
-  /** **THE TEMP PREVIEW — PLAIN CLOSURE STATE, AND `D-90`'s JUDGEMENT IS THE REASON** (`D-92`).
-   *
-   *  WHAT IT WAS: `temp.drag.<gestureId>.placement` — a name in the frozen store's `temp` tier, minted by a `commit` on
-   *  the gesture's first move and replaced by a `set` on each later one, erased by AT MOST ONE `remove` per gesture.
-   *  WHAT D-90 MEASURED ABOUT IT: ONE writer (this `move`), NO READER outside the rows that assert the write, NO address
-   *  any crossing declares, NO persistence, and no life beyond its gesture. **That is not data, it is closure state**: a
-   *  thing stored because a store had a tier for it, not because anything needed to find it there. So it is held here, in
-   *  this composition's own closure, in ONE `Map` this object alone writes and erases. **NOBODY OUTSIDE READS IT** — the
-   *  preview's only external consumer was the store's newsletter, which the shape's delivery replaces — and the surface's
-   *  `previewOf` member exists so the erase rule is OBSERVABLE rather than assumed, not so a caller can use it as state.
-   *  The `minted`/`erased` flags stay, because "the preview is resident" and "the erase has already happened" are the two
-   *  facts the turns ask; the store's own `commit`-versus-`set` vocabulary does not survive, and nothing depended on it.
+  /** **THE STORAGE IS AN ADDRESS NOW, AND WHAT THIS CLOSURE KEEPS IS ONE FLAG** (`D-132` superseding `D-90` by pointer;
+   *  design §5). The preview used to be a `Map` in this closure — `previews`, with `previewOf` answering it so the erase
+   *  rule was observable rather than assumed. **BOTH ARE DELETED**: the placement is `['drag']` at `temp`, whose writer is
+   *  the client's `commitDrag` and whose end is its `clearDrag`, so the value has an address and this closure has nothing
+   *  to hold. `gestures` REMAINS and is NOT storage: `['drag']` is keyed by PANE ID and is GESTURE-BLIND, so the address
+   *  cannot say "this gesture has already ended" and ONE flag must. It is keyed by the key each turn is handed (total over
+   *  any string), `move` CLEARS it, `endReading` SETS it before its route is sent, and no other line writes it.
    *
    *  ZERO SINK WRITES ARE MADE BY ANY OF THESE TURNS (SINK-1): the sink is the release turn's alone. */
-  const previews = new Map<string, unknown>()
   const gestures = new Map<string, { readonly erased: boolean }>()
 
-  /** §2.1 C's temp-write turn — the wiring's per-move turn: the preview is WRITTEN INTO THIS CLOSURE, the sink is never
-   *  touched (SINK-1), and NO move ⇒ NO write. */
-  const move = (gestureId: string, preview: unknown): void => {
+  /** **THE PER-MOVE TURN — ONE WRITE TO THE ADDRESS, AND `M1` IS THE TURN'S OWN TOTALITY** (design §2 `M1`–`M3`, `D-138`).
+   *  The affordance's `PreviewState` carries a CLAMPED `value`; this turn reads it and sends ONE `commitDrag(DEFAULT_PANE_ID,
+   *  {size})` naming the composition's pane — no tier, no path, no composer, and no second judgement: a preview whose value
+   *  is not a finite non-negative number sends NOTHING and leaves whatever last stood standing (§3.2 F-8). `M2` clears the
+   *  ending flag FIRST, so a first move RE-OPENS the gesture and the erase gates the ERASE and never the gesture. The sink
+   *  is never touched (SINK-1). */
+  const move = (key: string, preview: unknown): void => {
     try {
-      previews.set(gestureId, preview)
-      gestures.set(gestureId, { erased: false })
+      const size = (preview as { readonly value?: unknown } | null | undefined)?.value
+      if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) return
+      gestures.set(key, { erased: false })
+      if (view !== null) view.commitDrag(DEFAULT_PANE_ID, { size })
     } catch {
-      // a hostile key must never throw out of the move turn
+      // a hostile key, preview or view must never throw out of the move turn
     }
   }
 
@@ -2430,18 +2480,17 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
   }
 
 
-  /** **THE RELEASE/RESET TERMINAL — and it is now the CROSSING'S ROUTE, WHICH IS ASYNCHRONOUS (D-88).** The E10-single-sink
-   *  discipline is unmoved (`final` is EXACTLY the value the sink received, the sink is invoked once), and the E3 gate is
-   *  unmoved (a non-useful `final` — a non-number or `NaN` — is NEVER sent, ZERO writes). **WHAT CHANGED, SAID PLAINLY:**
-   *  the frozen store's TWO synchronous commits (`file.settings.pane.<id>.size` then `mem.layout.pane.<id>.size`, the same
-   *  `final` to both tiers) collapse to ONE `commitPane` on the one `file` address, and its receipt does NOT come back in
-   *  this turn — it lands in the client's `writeOutcome()` a tick later. **NO CALLER DEPENDS ON THE OLD TIMING**: this
-   *  member returns `void` (it always did), the SINK is invoked BEFORE the route is sent so the recorded sink trace is
-   *  unchanged, and the next read of the size is the shape's — refilled by the delivery the write itself causes, which is
-   *  `D-78`'s chain running in the order it names. The pre-write validation keeps its arm: a standing geometry the clamp
-   *  answers `NaN` for refuses with ZERO sink sends (§3.2 F-8, §2.1 A). */
+  /** **THE RELEASE/RESET TERMINAL — the sink, then the `file` commit, then the `temp` ending** (design §3 `R1`–`R5`;
+   *  `D-138`, `D-144`). The E10-single-sink discipline is unmoved (`final` is EXACTLY the value the sink received, the sink
+   *  is invoked once), and the E3 gate is unmoved (a non-useful `final` — a non-number or `NaN` — is NEVER sent, ZERO
+   *  writes). The frozen store's TWO synchronous commits (`file.settings.pane.<id>.size` then `mem.layout.pane.<id>.size`)
+   *  collapsed to ONE `commitPane` on the one `file` address, and its receipt does NOT come back in this turn — it lands
+   *  in the client's `writeOutcome()` a tick later. **AND THE RELEASE NOW ENDS THE DRAG FAMILY ITSELF** (`R5`): ONE
+   *  `clearDrag()` AFTER the sink and AFTER the file commit, so the gesture's two PHASES stay distinct — `move` is the
+   *  drag-update phase at `temp`, `release` is the release phase at `file` — and the ending is a THIRD statement that
+   *  writes no placement, carries no geometry and judges no value (L2 §5). The two refusing arms (`R1`/`R2`) send NOTHING
+   *  at all: no sink, no route, no ending. `R5` is NEVER suppressed by the flag — the flag gates the ERASE route alone. */
   const release = (gestureId: string, final: unknown, sink: unknown): void => {
-    void gestureId
     try {
       if (typeof final !== 'number' || Number.isNaN(final)) return
       const standing = readPaneSize({}, DEFAULT_PANE_ID)
@@ -2454,25 +2503,111 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
       }
       // ONE ROUTE, ONE WHOLE MEMBER: the id names the pane and the crossing composes the family (D-87's `commitPane`).
       if (view !== null) view.commitPane(DEFAULT_PANE_ID, { size: final })
+      endReading(gestureId)
     } catch {
       // a hostile view or sink must never throw out of the release turn
     }
   }
 
-  /** **THE ERASE TURN (RIGHT-CLICK and CANCEL) — THE CLOSURE'S OWN, AT MOST ONCE PER GESTURE** (`D-92`). It performed
-   *  ONE `remove('temp.drag.<gestureId>.placement')` on the frozen store (§2.1 C's right-click row, §7a.1 item 2 reading
-   *  (i)); the preview is closure state now, so the erase deletes the entry and the `erased` flag keeps the AT-MOST-ONE
-   *  rule. **ZERO SINK WRITES, AND NO STORE ACT AT ALL**: an erase on a gesture with no preview is a declared no-op — the
-   *  `F-4` arm — and the "FILE original reasserts on the read" reading has no subject left, because there is no tier the
-   *  preview shadowed. */
-  const erasePreview = (gestureId: string): void => {
+  /** **THE ERASE — THE DRAG FAMILY'S END, AT MOST ONCE PER GESTURE, AND `D-132` RE-GRAINED IT UNDER THIS NAME** (design §2
+   *  `E1`–`E3`, §5). It performed ONE `remove('temp.drag.<gestureId>.placement')` on the frozen store, then deleted the
+   *  closure's entry; the placement is an ADDRESS now, so the erase is the client's `clearDrag()` and the flag says the
+   *  ROUTE WAS SENT. **`E1`'s other arm is lawful and required** (`M-6`, `F-4`): a gesture that never moved has no entry,
+   *  so an erase sends exactly ONE `clearDrag` — the store answers `committed` whether or not the family stood, and this
+   *  composition decides nothing about that answer. A second ending for the SAME gesture sends nothing. **ZERO SINK WRITES
+   *  AND NO PLACEMENT WRITE**: an abandon terminal ends the family and commits nothing. Reached from `rightClick`, `cancel`
+   *  and the release (`R5`), so whichever ending turn ends the reading FIRST is the one that sends the route. */
+  const endReading = (key: string): void => {
     try {
-      const prior = gestures.get(gestureId)
+      const prior = gestures.get(key)
       if (prior?.erased === true) return
-      previews.delete(gestureId)
-      gestures.set(gestureId, { erased: true })
+      gestures.set(key, { erased: true })
+      if (view !== null) view.clearDrag()
     } catch {
-      // a hostile key must never throw out of the erase turn
+      // a hostile key or view must never throw out of the ending turn
+    }
+  }
+
+  /** **THE GHOST TURN — THE DRAG'S ADDRESS, READ ONCE PER DELIVERY AND PAINTED AS A DECLARED TRANSIENT** (design §4
+   *  `G1`–`G9`; `D-138`, `D-144`, `D-112`). The ONLY caller is `startViewShape`'s ONE subscription body, which this
+   *  closure hands the turn OUT to (`startGutterAffordance`'s return): the composition registers NO subscriber, so there is
+   *  no second consumer of the push and no poll, timer or retry anywhere in it (`D-82` clause 4).
+   *
+   *  **THE ASK IS THE REALM'S EXISTING PASS-THROUGH** — ONE `dataRoute('read', {path: ['drag']})`, the same `data.read`
+   *  route every `data.*` arm of this file uses, with no member invented and no tier argument. The answer's own node carries
+   *  its `_tier` readout (`tier-readout` landed it), and THAT node's tier is what the declaration states — one token, never
+   *  a set. **EVERY ARM IS CLOSED**: a `_tier` that is not `temp`, a node naming another pane, a non-finite size, an
+   *  `absent`/ledger arm, a route that throws or rejects, no `data` member at all, and a target that will not take an
+   *  attribute each REMOVE the declaration and throw nothing. The staleness is stated, not hidden: a delivery that never
+   *  arrives paints nothing, and no retry stands here (`D-117`'s bounded staleness, measured by `P-3`/`P-4`). */
+  let ghostEpoch = 0
+
+  /** THE DECLARATION'S ONE REMOVAL (`ASM-3`) — total over the target too: a closed element is not a throw. */
+  const clearGhost = (): void => {
+    try {
+      const holder = ghostTarget as { readonly removeAttribute?: unknown } | null | undefined
+      if (holder === null || holder === undefined) return
+      if (typeof holder.removeAttribute !== 'function') return
+      ;(holder.removeAttribute as (name: string) => void).call(holder, 'data-ghost')
+    } catch {
+      /* the target is closed too, not only the route */
+    }
+  }
+
+  /** THE SETTLE — one answer, checked against the epoch it was ASKED under (`G3`): a superseded turn mutates NOTHING,
+   *  neither a paint nor a removal. `G5`–`G9` are the answer's own node, field by field, and every failing arm clears. */
+  const settleGhost = (epoch: number, answer: unknown): void => {
+    if (epoch !== ghostEpoch) return
+    try {
+      const record = answer as { readonly status?: unknown; readonly value?: unknown } | null | undefined
+      const node = record !== null && record !== undefined && typeof record === 'object' && record.status === 'read' ? record.value : null
+      if (node === null || typeof node !== 'object' || Array.isArray(node)) {
+        clearGhost()
+        return
+      }
+      const branch = node as Record<string, unknown>
+      if (branch['_tier'] !== 'temp') {
+        clearGhost()
+        return
+      }
+      const member = branch[DEFAULT_PANE_ID]
+      if (member === null || typeof member !== 'object' || Array.isArray(member)) {
+        clearGhost()
+        return
+      }
+      // **THE MEMBER'S `size` IS A LEAF NODE ON THE LIVE ROUTE** (`D-134`'s node contract): `data.read` answers every node
+      // as the store's own `{_tier, …}` — an object node with its members INLINE, a LEAF as `{_tier, value:<literal>}` — so
+      // the placement's size arrives as `{_tier, value: 200}` and a bare number is the same fact stated without a node (which
+      // is the shape a double may answer). BOTH ARE READ; anything else is the closed arm. Nothing is judged here: the leaf
+      // is unwrapped to the value it carries and no tier is re-derived (the branch's own `_tier` above is the one fact).
+      const carried = (member as { readonly size?: unknown }).size
+      const size = carried !== null && typeof carried === 'object' && !Array.isArray(carried)
+        ? (carried as { readonly value?: unknown }).value
+        : carried
+      if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) {
+        clearGhost()
+        return
+      }
+      const holder = ghostTarget as { readonly setAttribute?: unknown } | null | undefined
+      if (holder === null || holder === undefined || typeof holder.setAttribute !== 'function') return
+      ;(holder.setAttribute as (name: string, value: string) => void).call(holder, 'data-ghost', 'temp')
+    } catch {
+      // nothing escapes the delivery: a hostile answer clears the declaration rather than propagating
+      clearGhost()
+    }
+  }
+
+  const renderGhost = (): void => {
+    ghostEpoch += 1
+    const epoch = ghostEpoch
+    try {
+      void dataRoute('read', { path: ['drag'] }).then(
+        (answer: unknown) => { settleGhost(epoch, answer) },
+        () => { settleGhost(epoch, null) },
+      )
+    } catch {
+      // A SYNCHRONOUS THROW FROM THE ROUTE IS CLOSED HERE, not only a rejection
+      clearGhost()
     }
   }
 
@@ -2506,10 +2641,10 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     },
     move,
     release,
-    rightClick: (gestureId: string): void => erasePreview(gestureId),
-    cancel: (gestureId: string): void => erasePreview(gestureId),
+    rightClick: (gestureId: string): void => endReading(gestureId),
+    cancel: (gestureId: string): void => endReading(gestureId),
     renderZone,
-    previewOf: (gestureId: string): unknown => previews.get(gestureId),
+    renderGhost,
   }
 }
 

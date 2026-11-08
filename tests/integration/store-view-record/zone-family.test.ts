@@ -288,14 +288,19 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     // THE POSITIVE CONTROL — the instrument fires on a synthetic timer, so the absence above is about this code and not
     // about a scan that could never have matched anything.
     expect(/\bsetTimeout\s*\(/.test('const t = setTimeout(fn, 0)'), 'the instrument fires on a synthetic timer').toBe(true)
-    // THE WRITERS, ENUMERATED: THREE caller routes write at their own root and the ONE repair path writes through
-    // `writeJoinedAt`, so a fourth caller route (or a repair that reached the store directly) reds the census below.
-    // **THE CENSUS IS THE MODULE'S AND NOT THE ZONE FAMILY'S** — which is exactly what it is for — and it moves `four →
-    // three` HERE because the focus route leaves the module with its family (`D-142`, `D-9`).
+    // THE WRITERS, ENUMERATED: FOUR caller routes write at their own root and the ONE repair path writes through
+    // `writeJoinedAt`, so a fifth caller route (or a repair that reached the store directly) reds the census below.
+    // **THE CENSUS IS THE MODULE'S AND NOT THE ZONE FAMILY'S** — which is exactly what it is for — and it moved `four →
+    // three` when the focus route left with its family (`D-142`, `D-9`) and now reads FOUR, because the drag family's own
+    // route writes a whole value at `['drag']` at `temp` (`D-132`, L2 §8's hunks 1–3). **THE CLEAR IS NOT COUNTED HERE AND
+    // THAT IS THE MEASUREMENT**: it is a `delete` at the family's own tier, so it is a fifth WRITE PATH and not a fifth
+    // whole-family `write` — asserting the count alone would let the clear land as an empty-family write, which is the
+    // placeholder `D-132`'s ruling refuses.
     expect(
       (module.match(/\.write\(VIEW_/g) ?? []).length,
-      'exactly THREE routes write a whole family — the panes, the zones and the appearance act',
-    ).toBe(3)
+      'exactly FOUR routes write a whole family — the panes, the zones, the appearance act and the drag move',
+    ).toBe(4)
+    expect(/\.delete\(VIEW_DRAG_ADDRESS, DRAG_TIER/.test(module), 'and the drag family\'s fifth path ENDS the reading rather than writing a placeholder').toBe(true)
     expect((module.match(/writeJoinedAt\(/g) ?? []).length, 'and the ONE repair path names its commit at exactly one call site').toBe(1)
     expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'the zone route writes its family whole').toBe(true)
     // AND THE ROUTE HAS A HANDLER AT THE BRIDGE'S OWN SITE, which is what makes it an IPC route rather than a member

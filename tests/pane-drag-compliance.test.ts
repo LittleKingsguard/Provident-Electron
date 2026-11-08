@@ -41,7 +41,7 @@
  * STORE and nothing more; its whole job here is to prove the composition leaves a store ALONE.
  * `sever` THROWS if called, so the deletion of the seam is MEASURED rather than assumed. Rows
  * whose subject was the store's own machinery are re-pointed at what replaced it — the shape,
- * the closure's `previewOf`, and the two `zoneSize*` factories — and the residue that has no
+ * the drag's ADDRESS, and the two `zoneSize*` factories — and the residue that has no
  * subject left is retired IN PLACE under a dated headstone comment, never silently dropped.
  *
  * From `src/renderer/renderer`     (the wiring role, §5.1 row 1 of the diff scope):
@@ -69,19 +69,27 @@
  *                                    the caller-measured `distance` (§2.1 B); the proximity
  *                                    decision is `withinProximity(distance, threshold)`'s
  *                                    answer
- *     move(gestureId, preview)     — PLAIN CLOSURE STATE (`D-92`): ONE `Map` written here,
- *                                    with no store act at all
- *     release(gestureId, final, sink) — the RELEASE terminal (valid end AND invalid reset):
- *                                    ONE `view.commitPane(pane, {size: final})` riding INSIDE
- *                                    the single sink invocation (SINK-2, §2.1 C/§2.5)
- *     rightClick(gestureId)        — erases the closure's preview, AT MOST once per gesture,
- *                                    ZERO sink writes, ZERO store acts
+ *     move(gestureId, preview)     — **THE DRAG'S VALUE IS AN ADDRESS** (2026-11-08): `preview` is
+ *                                    the affordance's `PreviewState` and ONE
+ *                                    `view.commitDrag(DEFAULT_PANE_ID, {size: preview.value})` is
+ *                                    sent per call — NOTHING when `value` is not a finite
+ *                                    non-negative number. `['drag']` at `temp` is the storage.
+ *     release(gestureId, final, sink) — the RELEASE terminal (valid end AND invalid reset), in ONE
+ *                                    ORDER: the sink, then ONE
+ *                                    `view.commitPane(pane, {size: final})`, then its OWN
+ *                                    `view.clearDrag()` ending the temp reading (SINK-2, §2.1 C/§2.5)
+ *     rightClick(gestureId)        — THE ERASE: AT MOST ONE `view.clearDrag()` per gesture, never a
+ *                                    throw, no `commitPane`, ZERO sink writes
  *     cancel(gestureId)            — the abandon terminal (pointercancel/cancel): the same
  *                                    erase, at most once per gesture (§7a.1 item 2, (i))
  *     renderZone()                 — the render turn, a SURFACE MEMBER the shape's delivery
  *                                    calls; the composition registers no subscriber
- *     previewOf(gestureId)         — the closure's own read, declared so the erase rule is
- *                                    observable (`D-92`)
+ *     renderGhost()                — the GHOST turn: ONE `window.provident.data.read({path:['drag']})`
+ *                                    per call, painting `data-ghost` on `backing.ghostTarget` iff
+ *                                    the family stands at `temp` for `DEFAULT_PANE_ID`, and
+ *                                    REMOVING it on every other arm (total, fail-closed)
+ *   **`previewOf` IS DELETED** with the closure value it read: the address is the storage, so there
+ *   is nothing for a closure read to answer and no member pretending there is.
  *   The composition's bank of top-level roots: §7a.1 item 4 reading (i)'s
  *   `storeGraphReferences([…])` naming `layout` (mem) · `drag` (temp) · `settings` (file) is
  *   RETIRED with the store (`D-93`): the composition has no address space to declare, and the
@@ -110,7 +118,7 @@
  * `createGraphStore` no longer exists, so every row that seeded `mem.layout.*`, read a
  * `temp.drag.*` tier handle, asserted a `GraphWriteReceipt` or counted a `GraphEvent` has lost
  * its subject. Those rows are re-pointed at the three things that replaced the store — the
- * shape (`ViewClient`), the closure (`previewOf`), and the two PURE factories — and the residue
+ * shape (`ViewClient`), the drag's ADDRESS (`['drag']` at `temp`), and the two PURE factories — and the residue
  * is retired under a dated headstone naming exactly which claim died and why. **THE COUNT DID
  * NOT MOVE: 8 register rows / 91 drives, the same terms.**
  *
@@ -130,7 +138,7 @@ import { readFileSync } from 'node:fs'
 import * as wiring from '../src/renderer/renderer'
 // **THE SHAPE'S CLIENT (`D-88`)** — all six of the flow's reads answer it, so this file's fixtures build one over a CROSSING
 // DOUBLE that projects the doubled families and writes them back the way the route does.
-import { createViewClient, type ViewClient } from '../src/renderer/view-client'
+import { createViewClient, type ViewClient, type ViewClientBridge } from '../src/renderer/view-client'
 import {
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
@@ -202,8 +210,12 @@ interface PaneDragSurface {
   /** **THE RENDER TURN — THE SHAPE'S DELIVERY CALLS IT** (`D-92`): the successor of the `subscribe('temp.drag', …)`
    *  registration, and the only thing that makes the layout call. */
   renderZone(): void
-  /** **THE PREVIEW'S OWN READ** (`D-92`): the closure's member, declared so the erase rule is observable. */
-  previewOf(gestureId: string): unknown
+  /** **THE GHOST TURN — THE SHAPE'S DELIVERY CALLS IT BESIDE `renderZone`.** `previewOf` IS DELETED AND THIS IS WHY:
+   *  the drag's in-process value became an ADDRESS — `['drag']` at `temp`, one member per pane id, each `{size}` — so
+   *  the storage is the view record and the ghost's declaration is a READ of that address, painted on the pane element
+   *  the backing carries. There is no closure value left for a `previewOf` to answer, and this declaration is the
+   *  surface's own statement that the turn exists. */
+  renderGhost(): void
 }
 
 const PANE_ID = 'pane-a'
@@ -321,10 +333,52 @@ function makeRegister(): RegisterDouble {
   }
 }
 
-/** **THE COMPOSITION UNDER TEST — `createPaneDrag({ view }, source)` and NOTHING ELSE** (`D-93`: the backing's `frozen`
- *  member is deleted, so the harness has no store to hand it). Every row that wants to prove the composition left a
- *  store alone doubles one BESIDE the composition through `register`; the double is never a member of the backing, so
- *  the only way it can see an act is if the composition went looking for a store it does not have. */
+/** **THE PANE ELEMENT'S DOUBLE — WHERE THE GHOST'S DECLARED TRANSIENT LANDS.** The backing's `ghostTarget` is the pane
+ *  ELEMENT (the contract says "anything carrying `setAttribute`/`removeAttribute`"), so the double carries exactly those
+ *  two members and records each call. The members are ARROWS on purpose: nothing in this composition may depend on the
+ *  receiver, and a double that needed `this` would be a fixture that could pass for the wrong reason.
+ *
+ *  `declared()` answers the attribute's standing value (`null` = not declared), so a row reads the DECLARATION rather than
+ *  the call log — a turn that removed the attribute and then re-set it would read as standing, which is the honest
+ *  question ("what does the element carry after the turn?"). */
+interface GhostDeclaration {
+  readonly op: 'set' | 'remove'
+  readonly name: string
+  readonly value?: string
+}
+
+interface GhostTargetDouble {
+  readonly calls: GhostDeclaration[]
+  readonly declared: () => string | null
+  readonly setAttribute: (name: string, value: string) => void
+  readonly removeAttribute: (name: string) => void
+}
+
+function ghostTarget(): GhostTargetDouble {
+  const held = new Map<string, string>()
+  const calls: GhostDeclaration[] = []
+  return {
+    calls,
+    declared: (): string | null => held.get('data-ghost') ?? null,
+    setAttribute: (name: string, value: string): void => {
+      calls.push({ op: 'set', name, value })
+      held.set(name, value)
+    },
+    removeAttribute: (name: string): void => {
+      calls.push({ op: 'remove', name })
+      held.delete(name)
+    },
+  }
+}
+
+/** **THE COMPOSITION UNDER TEST — `createPaneDrag({ view, ghostTarget }, source)` and NOTHING ELSE** (`D-93`: the
+ *  backing's `frozen` member is deleted, so the harness has no store to hand it). Every row that wants to prove the
+ *  composition left a store alone doubles one BESIDE the composition through `register`; the double is never a member of
+ *  the backing, so the only way it can see an act is if the composition went looking for a store it does not have.
+ *
+ *  **AND THE BACKING NOW CARRIES THE GHOST'S TARGET**: the drag's value is an ADDRESS (`['drag']` at `temp`), so the
+ *  declaration a human sees during the drag is a transient painted on the pane ELEMENT — the second backing member, and
+ *  the reason `compose` hands one out: a row can read what the ghost turn declared. */
 function compose(options: {
   view?: ViewClient | null
   source?: SourceDouble
@@ -336,17 +390,20 @@ function compose(options: {
   register: RegisterDouble
   view: ViewClient | null
   crossing: PaneCrossing
+  ghost: GhostTargetDouble
 } {
   const source = options.source ?? makeSource()
   const register = options.register ?? makeRegister()
   const crossing = options.crossing ?? crossingOf(register)
   const view = options.view === undefined ? crossing.client : options.view
+  const ghost = ghostTarget()
   return {
-    w: wiring.createPaneDrag({ view }, source) as PaneDragSurface,
+    w: wiring.createPaneDrag({ view, ghostTarget: ghost }, source) as unknown as PaneDragSurface,
     source,
     register,
     view,
     crossing,
+    ghost,
   }
 }
 
@@ -453,6 +510,22 @@ interface PaneCrossing {
   /** A zone member left OUT of a seed is DROPPED from the family's record — the crossing's `composeZones` keeps what the
    *  caller supplied and what otherwise stands, so a row that wants a member gone supplies none of it. */
   readonly zoneCalls: ZoneRouteCall[]
+  /** **THE DRAG ROUTE'S LOG — EVERY `commitDrag(paneId, geometry)` THE COMPOSITION SENT, IN ORDER.** The drag's value is
+   *  an ADDRESS now (`['drag']` at `temp`, one member per pane id, each `{size}`), so the per-move write is a ROUTE CALL
+   *  and this log is where a row reads it: the member the call named and the geometry it carried. */
+  readonly dragCalls: { readonly id: string; readonly geometry: unknown }[]
+  /** **EVERY `clearDrag()` THE COMPOSITION SENT — one entry per call.** The erase is the family's end at the store, so the
+   *  count is what "at most one per gesture" is measured on, and the log is what "not even at the release" was measured on
+   *  before the release grew its own ending. */
+  readonly clears: unknown[]
+  /** **THE DRAG FAMILY AS THE CROSSING'S STORE HOLDS IT — AND `null` IS "THE ADDRESS DOES NOT STAND"**, which is the state
+   *  before any drag, and the state an erase leaves. A whole-family write: `commitDrag(id, {size})` writes `{[id]: {size}}`
+   *  and nothing else, so the family holds one member per pane id and the last write wins. */
+  readonly dragFamily: () => Readonly<Record<string, { readonly size: number }>> | null
+  /** **ONE ORDERED LOG ACROSS ALL THREE ROUTE DOUBLES** — `'commitDrag'` / `'clearDrag'` / `'commitPane'`, in the order
+   *  the composition sent them. The release's contract is an ORDER (the sink, then the file commit, then its own ending),
+   *  and two separate logs cannot state an order between them. */
+  readonly acts: string[]
 }
 
 /** ONE ZONE AS THE RECORD HOLDS IT (D-91): all four members optional, `slot` opaque. */
@@ -499,9 +572,15 @@ function crossingOf(key?: object): PaneCrossing {
   // so a zone nothing seeded answers `null` and `candidatesFor` answers `[]` — the answer the frozen store's `undefined`
   // gave. A row that wants a zone seeds it, which is a DELIVERY and not this composition's write.
   let zones: Record<string, HeldZone> = {}
+  // **THE DRAG FAMILY'S ADDRESS** — `['drag']` at `temp`, ONE MEMBER PER PANE ID, each `{size}`. `null` is the family's
+  // absence, which is the state before any gesture wrote and the state every erase turn leaves.
+  let dragFamily: Record<string, { size: number }> | null = null
   const handlers: Array<() => void> = []
   const calls: PaneRouteCall[] = []
   const zoneCalls: ZoneRouteCall[] = []
+  const dragCalls: Array<{ readonly id: string; readonly geometry: unknown }> = []
+  const clears: unknown[] = []
+  const acts: string[] = []
   const reading = (): unknown => ({
     status: 'committed',
     panes: Object.keys(family).map((id) => {
@@ -525,6 +604,11 @@ function crossingOf(key?: object): PaneCrossing {
     theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
     source: { panes: 'record', zones: 'record', theme: 'record' },
   })
+  // **THE LITERAL IS BUILT AS A PLAIN OBJECT AND CAST ONCE** (`ViewClientBridge` declares FIVE members today —
+  // `read`, `commitPane`, `commitZones`, `commitTheme`, `onChanged` — and the drag pair `commitDrag`/`clearDrag` arrives
+  // with the record's own implementation). The cast keeps this harness compiling on BOTH sides of that landing: before it,
+  // the two members are this file's own additions to a literal the interface does not yet name; after it, the interface
+  // declares them and the literal satisfies it member for member.
   const bridge = {
     read: async (): Promise<unknown> => reading(),
     commitPane: async (id: string, geometry: unknown): Promise<unknown> => {
@@ -535,7 +619,28 @@ function crossingOf(key?: object): PaneCrossing {
       // THE WHOLE FAMILY, ONE ACT — the sibling panes are kept (`composePanes`).
       family = { ...family, [id]: { size, bounds: { min: bounds.min, max: bounds.max } } }
       calls.push({ id, geometry })
+      acts.push('commitPane')
       refill()
+      return { status: 'committed' }
+    },
+    // **THE DRAG ROUTE — `commitDrag(paneId, geometry)` WRITES THE FAMILY WHOLE AT `['drag']`/`temp`.** The record's route
+    // composes nothing with what stands: the drag's value IS the address, and one write is one member, so the family holds
+    // `{[id]: {size}}` and the last write wins. A non-finite size is DROPPED rather than stored (the store's own admission,
+    // and the reason a hostile preview can never reach it: the composition sends nothing at all for one).
+    commitDrag: async (id: string, geometry: unknown): Promise<unknown> => {
+      const size = (geometry as { readonly size?: unknown } | null | undefined)?.size
+      dragCalls.push({ id, geometry })
+      acts.push('commitDrag')
+      dragFamily = typeof size === 'number' && Number.isFinite(size) ? { [id]: { size } } : {}
+      return { status: 'committed' }
+    },
+    // **THE ERASE — `clearDrag()` DELETEs THE FAMILY AND ANSWERS `committed` WHETHER OR NOT IT STOOD.** The store refuses a
+    // delete at an address that does not stand (`AddressNotFound`); the route absorbs that and answers the same receipt,
+    // which is why the erase is idempotent at the store and a gesture that never moved still asks exactly once.
+    clearDrag: async (): Promise<unknown> => {
+      clears.push({ op: 'clearDrag' })
+      acts.push('clearDrag')
+      dragFamily = null
       return { status: 'committed' }
     },
     // **THE FOCUS ROUTE IS NOT ON THIS BRIDGE ANY MORE** (`D-142`, `E-12`): `ViewClientBridge` declares the four
@@ -561,7 +666,7 @@ function crossingOf(key?: object): PaneCrossing {
         if (at >= 0) handlers.splice(at, 1)
       }
     },
-  }
+  } as unknown as ViewClientBridge
   const client = createViewClient({ bridge })
   /** THE DELIVERY, MODELLED AT THE CROSSING — the shape is REPLACED WHOLE by what a read answers, then the push fires. */
   function refill(): void {
@@ -598,6 +703,10 @@ function crossingOf(key?: object): PaneCrossing {
       refill()
     },
     zoneCalls,
+    dragCalls,
+    clears,
+    dragFamily: (): Readonly<Record<string, { readonly size: number }>> | null => dragFamily,
+    acts,
   }
   if (key !== undefined && key !== null) crossingOfStore.set(key, crossing)
   return crossing
@@ -635,7 +744,7 @@ describe('§3.1 M-2 — a MISS answers the DECLARED FALLBACK, never a silent def
     expect(paneSourceOf(crossing, PANE_ID), 'while the pane the family names is the record\'s').toBe('record')
   })
 
-  it('M-2/E3-gate: the DEGRADATION moves onto the value the terminal is HANDED — the read cannot answer a non-number any more (the boundary admits none), so the E3 gate is driven at the release: a non-number `final` is never sent, ZERO sink writes and ZERO route calls (gutter.md §2.5 item 5)', () => {
+  it('M-2/E3-gate: the DEGRADATION moves onto the value the terminal is HANDED — the read cannot answer a non-number any more (the boundary admits none), so the E3 gate is driven at the release: a non-number `final` is never sent, ZERO sink writes, ZERO route calls and NOT EVEN the release\'s own ending (gutter.md §2.5 item 5)', () => {
     const { w, crossing } = compose()
     // (a) THE READ IS ALWAYS A NUMBER NOW, and that is the swap\'s stated change: the frozen store\'s MISS answered
     // `undefined`, which made the release refuse `\'unusable-default\'` with zero writes. The shape answers the measured
@@ -649,6 +758,11 @@ describe('§3.1 M-2 — a MISS answers the DECLARED FALLBACK, never a silent def
     w.release('g-r', 'not-a-size', sink)
     expect(sink.stats().sinkCalls).toBe(0)
     expect(crossing.calls, 'a refused final sends nothing to the crossing').toEqual([])
+    // **THE REFUSAL RETURNS BEFORE THE ENDING TOO**: the release\'s own `clearDrag` comes AFTER its file commit, so a
+    // `final` the terminal cannot use sends NO route at all — neither the commit nor the family\'s end.
+    expect(crossing.clears, 'a refused final sends NO route at all, the ending included').toEqual([])
+    expect(crossing.dragCalls, 'and nothing to the drag address either').toEqual([])
+    expect(crossing.acts, 'the whole refused turn is silent on the wire').toEqual([])
   })
 })
 
@@ -708,7 +822,7 @@ describe('§3.3 I-3 — the comparator stays pure', () => {
 })
 
 describe('§3.2 F-5 — a release with NO preview data commits NOTHING but a normal file write', () => {
-  it('F-5: ONE `commitPane(pane, {size})` with no lower copy to clear, never a refusal, never a removal, never a second write — the sink\'s record and the route log agree at 1, and the doubled store sees ZERO acts (`D-93`: the construction-time bootstrap of `mem.layout`/`temp.drag`/`file.settings` is deleted)', () => {
+  it('F-5: ONE `commitPane(pane, {size})` with no lower copy to clear, never a refusal, never a removal, never a second write — the sink\'s record and the route log agree at 1, the drag address was never written, the release ends it ONCE, and the doubled store sees ZERO acts (`D-93`: the construction-time bootstrap of `mem.layout`/`temp.drag`/`file.settings` is deleted)', () => {
     const { w, register, crossing } = compose()
     // **THE CONSTRUCTION ISSUED NOTHING** — this is the assertion the deleted bootstrap used to fail: three roots were
     // `commit`/`clear`-declared before the first turn, and the double's census would have read 6.
@@ -716,12 +830,19 @@ describe('§3.2 F-5 — a release with NO preview data commits NOTHING but a nor
     const sink = makeSink()
     const final = 260
     expect(stored(register, 'temp.drag.g1.placement').found, 'no preview was ever stored').toBe(false)
+    // AND NO DRAG FAMILY STANDS: the address is absent before any move, which is the state the release finds.
+    expect(crossing.dragFamily(), 'no move means the drag family does not stand').toBeNull()
     w.release('g1', final, sink)
     expect(sink.stats().sinkCalls).toBe(1)
     expect(sink.record).toEqual([final])
     // THE WRITE, AS THE ROUTE CARRIES IT: ONE call, one whole member, the pane NAMED and never a path or a tier.
     expect(crossing.calls, 'one route call — the two-tier commit spelling is gone').toEqual([{ id: PANE_ID, geometry: { size: final } }])
     expect(crossing.family()[PANE_ID]?.size, 'and what the crossing holds is the sink\'s own argument').toBe(final)
+    // **AND THE RELEASE ENDS THE TEMP READING ITSELF**: no move wrote the family, and the ending is still sent once — the
+    // store\'s `delete` answers the same receipt whether or not the address stood, so the call is idempotent there.
+    expect(crossing.dragCalls, 'no move ⇒ no drag write at all').toEqual([])
+    expect(crossing.clears.length, 'the release\'s own ending fires once over an absent family').toBe(1)
+    expect(crossing.acts, 'the release: its file commit, then its own ending').toEqual(['commitPane', 'clearDrag'])
     expect(register.census(), 'and the release wrote no store either').toBe(0)
   })
 })
@@ -774,7 +895,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
       paneBoundsOf(): never { throw new Error('boom') },
       commitPane(): never { throw new Error('boom') },
     } as unknown as ViewClient
-    const w = wiring.createPaneDrag({ view: hostile }, makeSource()) as PaneDragSurface
+    const w = wiring.createPaneDrag({ view: hostile }, makeSource()) as unknown as PaneDragSurface
     expect(() => w.candidatesFor(zoneFixture), 'the candidate read absorbs the throw').not.toThrow()
     expect(w.candidatesFor(zoneFixture), 'and lands the declared degradation — no candidate').toEqual([])
     expect(() => w.renderZone(), 'the render turn absorbs the throw').not.toThrow()
@@ -810,7 +931,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
       paneBoundsOf: () => ({ min: 10, max: 20 }),
       commitPane: () => ({ status: 'committed' }),
     } as unknown as ViewClient
-    const wa = wiring.createPaneDrag({ view: answering }, makeSource()) as PaneDragSurface
+    const wa = wiring.createPaneDrag({ view: answering }, makeSource()) as unknown as PaneDragSurface
     expect(wa.startSizeOf(paneFixture, PANE_ID), 'a shape that answers is NOT overridden by the default').toBe(250)
     expect(wa.boundsOf(paneFixture, PANE_ID), 'nor is its pair').toEqual({ min: 10, max: 20 })
   })
@@ -863,7 +984,7 @@ describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the shape-backed size/bounds REA
     // node shim's own case and the honest statement of "no delivery has arrived".
     if (state === 'unfilled') {
       const cold = createViewClient({ bridge: null })
-      const coldSurface = wiring.createPaneDrag({ view: cold }, makeSource()) as PaneDragSurface
+      const coldSurface = wiring.createPaneDrag({ view: cold }, makeSource()) as unknown as PaneDragSurface
       expect(cold.shape().filled, 'nothing has been read, and the shape SAYS so').toBe(false)
       const answer = readOf(coldSurface, paneFixture, PANE_ID)
       if (isBounds) {
@@ -989,10 +1110,10 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the SHAPE-BACKED seam implemen
     // THE COLD SHAPE, HELD SO THE ROW CAN READ ITS OWN `filled` FLAG rather than build a second one to look at.
     const cold = createViewClient({ bridge: null })
     function surfaceFor(shapeName: string): PaneDragSurface {
-      if (shapeName === 'no-backing') return wiring.createPaneDrag(null, source) as PaneDragSurface
-      if (shapeName === 'view-null') return wiring.createPaneDrag({ view: null }, source) as PaneDragSurface
-      if (shapeName === 'unfilled-shape') return wiring.createPaneDrag({ view: cold }, source) as PaneDragSurface
-      if (shapeName === 'hostile-backing') return wiring.createPaneDrag(42 as never, source) as PaneDragSurface
+      if (shapeName === 'no-backing') return wiring.createPaneDrag(null, source) as unknown as PaneDragSurface
+      if (shapeName === 'view-null') return wiring.createPaneDrag({ view: null }, source) as unknown as PaneDragSurface
+      if (shapeName === 'unfilled-shape') return wiring.createPaneDrag({ view: cold }, source) as unknown as PaneDragSurface
+      if (shapeName === 'hostile-backing') return wiring.createPaneDrag(42 as never, source) as unknown as PaneDragSurface
       // THE HOSTILE RECORD: a shape a delivery could have left, holding members the read cannot use.
       return wiring.createPaneDrag(
         {
@@ -1002,7 +1123,7 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the SHAPE-BACKED seam implemen
           ),
         },
         source,
-      ) as PaneDragSurface
+      ) as unknown as PaneDragSurface
     }
 
     const surface = surfaceFor(shape)
@@ -1084,11 +1205,16 @@ describe('§3.1 M-4 — the SHAPE\'S DELIVERY is the render turn\'s trigger', ()
 })
 
 describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the two readings AGREE at 1', () => {
-  it('M-5: the sink\'s own record reads 1 and stats().sinkCalls reads 1 (they AGREE), and the crossing received exactly ONE `commitPane(pane, {size: final})` whose value EQUALS the sink\'s argument — the reconcile that used to refresh a second tier OUTSIDE the gesture count has no second tier to refresh', () => {
+  it('M-5: the sink\'s own record reads 1 and stats().sinkCalls reads 1 (they AGREE), the crossing received exactly ONE `commitPane(pane, {size: final})` whose value EQUALS the sink\'s argument, the move before it WROTE THE ADDRESS (`commitDrag` at `{size: 120}`), and the release ends that reading with ONE `clearDrag` — the reconcile that used to refresh a second tier OUTSIDE the gesture count has no second tier to refresh', () => {
     const { w, crossing } = compose()
     const sink = makeSink()
     const clamped = 240
-    w.move('g1', { placement: 120 }) // a preview
+    w.move('g1', { value: 120 }) // the preview — the drag's value, which IS the address's `size`
+    // THE MOVE WROTE THE ADDRESS: `['drag']` at `temp`, one member for the composition's pane, `{size}` whole.
+    expect(crossing.dragCalls, 'the move sends ONE `commitDrag` naming the pane, carrying the preview\'s value').toEqual([
+      { id: DEFAULT_PANE_ID, geometry: { size: 120 } },
+    ])
+    expect(crossing.dragFamily(), 'and the family stands at what the move wrote').toEqual({ [PANE_ID]: { size: 120 } })
     w.release('g1', clamped, sink)
 
     expect(sink.record).toEqual([clamped]) // the sink\'s own record
@@ -1096,22 +1222,36 @@ describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the t
     // THE ONE WRITE: the route carries the sink\'s own argument to the ONE family at the ONE address.
     expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: clamped } }])
     expect(crossing.family()[PANE_ID]?.size).toBe(clamped)
+    // **AND THE RELEASE'S OWN ENDING**: the temp reading the moves wrote is ended by the release itself, ONCE, AFTER its
+    // file commit — the family does not stand afterwards.
+    expect(crossing.clears.length, 'the release ends the temp reading it inherited').toBe(1)
+    expect(crossing.dragFamily(), 'so no drag family stands once the gesture is over').toBeNull()
     // THE §7a.1 ITEM 1 RECONCILE IS GONE WITH THE SECOND TIER: there is no `mem` copy to refresh, so the gesture\'s write
     // count is exactly the sink\'s and nothing happens behind it.
     expect(sink.stats().sinkCalls, 'still exactly one write inside the gesture').toBe(1)
   })
 })
 
-describe('§3.1 M-10 — the temp preview is RESIDENT IN THE COMPOSITION\'S CLOSURE while active', () => {
-  it('M-10: a move\'s preview is held by the composition itself and answers its own `previewOf` — and the DOUBLED STORE\'S `temp` TIER IS UNTOUCHED, which is `D-90`\'s judgement landed: `temp.drag.*` had one writer, no reader, no address and no persistence, so it is closure state and NOT data', () => {
-    const { w, register } = compose()
-    const preview = { placement: 'preview-1' }
-    expect(w.previewOf('g1'), 'nothing is held before the first move').toBeUndefined()
-    w.move('g1', preview)
-    // THE PREVIEW IS RESIDENT — in the closure that wrote it, read back by its own declared member.
-    expect(w.previewOf('g1')).toEqual(preview)
-    // **AND NO STORE ACT WAS MADE**: a store doubled beside the composition carries no node for the gesture at all, so
-    // the name `temp.drag.<gestureId>.placement` does not exist anywhere but this closure. That is the whole difference
+describe('§3.1 M-10 — the temp preview is the ADDRESS `[\'drag\']` at `temp` while the gesture is active', () => {
+  it('M-10: a move\'s preview is WRITTEN THROUGH `commitDrag` at the family\'s address — ONE call naming the composition\'s pane, the family holding one member per pane id with the last write winning — the surface carries NO `previewOf` (the closure\'s read is deleted with the value it read), a move whose `value` is not a finite non-negative number sends NOTHING, and the DOUBLED STORE\'S `temp` TIER IS UNTOUCHED', () => {
+    const { w, register, crossing } = compose()
+    // **THE SURFACE'S OWN STATEMENT THAT THE STORAGE MOVED** — the drag's in-process value became an ADDRESS, so the
+    // composition holds no preview to answer and the member that read it is gone rather than left returning `undefined`.
+    expect(
+      typeof (w as unknown as Record<string, unknown>).previewOf,
+      'the surface carries NO `previewOf`: the address is the storage now, and the closure read was deleted with the value',
+    ).toBe('undefined')
+    // **NOTHING STANDS BEFORE THE FIRST MOVE** — the family is the state, and its absence is the state before any drag.
+    expect(crossing.dragFamily(), 'nothing is held before the first move').toBeNull()
+    expect(crossing.dragCalls, 'and no route call was made').toEqual([])
+    w.move('g1', { value: 120 })
+    // THE MOVE WROTE THE ADDRESS — ONE call, the composition's pane, the preview's own `value` as the size.
+    expect(crossing.dragCalls, 'ONE `commitDrag` naming DEFAULT_PANE_ID with the preview\'s value').toEqual([
+      { id: DEFAULT_PANE_ID, geometry: { size: 120 } },
+    ])
+    expect(crossing.dragFamily(), 'and the family holds it').toEqual({ [PANE_ID]: { size: 120 } })
+    // **AND NO STORE ACT WAS MADE**: a store doubled beside the composition carries no node for the gesture at all, so the
+    // name `temp.drag.<gestureId>.placement` does not exist anywhere but the crossing. That is the whole difference
     // between a value held as state and a value stored as data, and here it is MEASURED — the double would have recorded
     // the act, and it recorded none.
     expect(stored(register, 'temp.drag.g1.placement').found).toBe(false)
@@ -1120,135 +1260,168 @@ describe('§3.1 M-10 — the temp preview is RESIDENT IN THE COMPOSITION\'S CLOS
     register.commit('temp.drag.g9.placement', 'planted')
     expect(stored(register, 'temp.drag.g9.placement').found, 'the census would have caught the mint had there been one').toBe(true)
     expect(register.census()).toBe(1)
-    // a SECOND gesture is independent state, never a second entry in one record.
-    w.move('g2', { placement: 'preview-2' })
-    expect(w.previewOf('g1')).toEqual(preview)
-    expect(w.previewOf('g2')).toEqual({ placement: 'preview-2' })
-    expect(register.census(), 'and the second gesture wrote nothing either').toBe(1)
+    // A SECOND GESTURE IS A SECOND WRITE TO THE SAME PANE MEMBER — the family holds ONE member per pane id, and the last
+    // write wins; a gesture id is not a member of the family and never becomes one.
+    w.move('g2', { value: 140 })
+    expect(crossing.dragCalls.length, 'one route call per move').toBe(2)
+    expect(crossing.dragCalls[1], 'and the second names the same pane').toEqual({ id: DEFAULT_PANE_ID, geometry: { size: 140 } })
+    expect(Object.keys(crossing.dragFamily() ?? {}), 'the family holds ONE member per pane').toEqual([PANE_ID])
+    expect(crossing.dragFamily(), 'and the last write wins').toEqual({ [PANE_ID]: { size: 140 } })
+    expect(register.census(), 'and the second gesture wrote no store either').toBe(1)
+    // **A MOVE WHOSE `value` IS NOT A FINITE NON-NEGATIVE NUMBER SENDS NOTHING** — no route, and the family keeps what the
+    // last usable move wrote rather than being erased by a hostile preview.
+    const before = crossing.dragCalls.length
+    for (const hostile of [Number.NaN, Number.POSITIVE_INFINITY, -1, 'x', null, undefined]) {
+      w.move('g3', { value: hostile })
+      w.move('g3', {})
+      expect(crossing.dragCalls.length, `a ${String(hostile)} preview sends nothing to the drag address`).toBe(before)
+    }
+    expect(crossing.dragFamily(), 'and the standing family is untouched by every one of them').toEqual({ [PANE_ID]: { size: 140 } })
   })
 })
 
-describe('§3.1 M-6 — right-click erases the closure\'s preview; the reassert\'s subject is retired', () => {
-  it('M-6: the erase turn erases the CLOSURE\'s preview with AT MOST ONE erase per gesture, and the composition makes ZERO store acts (the as-filed "ONE remove(\'temp.drag.<gestureId>.placement\')" and the FILE-original reassert are RETIRED — see the headstone)', () => {
-    const { w, register } = compose()
-    // ── HEADSTONE (2026-10-05, `D-93`) ────────────────────────────────────────────────────────────────────────────────
+describe('§3.1 M-6 — right-click ENDS the drag family at its address; the reassert\'s subject is retired', () => {
+  it('M-6: the erase turn sends exactly ONE `clearDrag()` — the family answers ABSENT afterwards — a second right-click for the SAME gesture sends ZERO, a gesture that never moved then right-clicked sends exactly ONE (the family\'s end is idempotent at the store, whether or not it stood), and the composition makes ZERO store acts', () => {
+    const { w, register, crossing } = compose()
+    // ── HEADSTONE (2026-10-05, `D-93`; RE-GRAINED 2026-11-08) ──────────────────────────────────────────────────────
     // THIS ROW USED TO ASSERT THREE THINGS: (1) ONE `remove('temp.drag.<gestureId>.placement')` on the frozen store, (2)
     // that the `temp` tier read MISSed afterwards, and (3) that the FILE original — a `file.settings.drag.<gid>.placement`
-    // copy seeded beside the preview — REASSERTED on the read once the preview was gone. (1) and (2) died when the preview
-    // became closure state (`D-92`: a `Map` in the composition, erased here); (3) died with them, because a reassert needs
-    // a tier the preview SHADOWED, and the shape has none — the renderer's own note says so: "the 'FILE original reasserts
-    // on the read' reading has no subject left, because there is no tier the preview shadowed." What survives is what the
-    // row was really guarding — the erase is SINGLE, and it writes no store — and that is what is asserted below.
+    // copy seeded beside the preview — REASSERTED on the read once the preview was gone. (3) died with the store. What
+    // SURVIVES IS (1) AND (2), ASKED OF THE THING THAT HOLDS THE VALUE NOW: the drag's value is an ADDRESS (`['drag']` at
+    // `temp`), so the erase is `clearDrag()` — the store\'s delete of that family — and "the temp tier read MISSes" is the
+    // family answering `null`. The row is therefore no longer a headstone over a deleted subject: it is the address\'s own
+    // erase, measured on the route log and on the family.
     // ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
     expect(register.census(), 'nothing at construction').toBe(0)
-    w.move('g1', { placement: 'preview-1' })
-    expect(w.previewOf('g1'), 'the preview is resident').toEqual({ placement: 'preview-1' })
+    w.move('g1', { value: 120 })
+    expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { size: 120 } })
     w.rightClick('g1')
-    // THE ERASE — the closure's entry is gone, and the doubled store never held it:
-    expect(w.previewOf('g1'), 'the closure no longer holds the preview').toBeUndefined()
+    // THE ERASE — exactly ONE call, and the family is ABSENT:
+    expect(crossing.clears.length, 'the erase sends exactly ONE `clearDrag()`').toBe(1)
+    expect(crossing.dragFamily(), 'and the family no longer stands').toBeNull()
     expect(stored(register, 'temp.drag.g1.placement').found, 'and no store ever held it').toBe(false)
-    // AT-MOST-ONE-ERASE per gesture (§7a.1 item 2 reading (i)) — a second erase is a no-op:
+    expect(crossing.calls, 'an abandon terminal sends no `commitPane`').toEqual([])
+    // AT-MOST-ONE-ERASE per gesture (§7a.1 item 2 reading (i)) — a second erase for the SAME gesture sends nothing:
     w.rightClick('g1')
-    expect(w.previewOf('g1')).toBeUndefined()
-    // **THE CONTROL**: a gesture whose erase had NOT happened still answers, so `undefined` above is the erase and not a
-    // read that never worked.
-    w.move('g2', { placement: 'preview-2' })
-    expect(w.previewOf('g2')).toEqual({ placement: 'preview-2' })
+    expect(crossing.clears.length, 'a second right-click for the same gesture sends ZERO').toBe(1)
+    // **THE CONTROL THAT THE ERASE TURN REALLY SENDS**: a gesture whose erase had NOT happened asks ONCE, even where it
+    // never wrote the address — the store\'s delete answers the same receipt whether or not the family stood.
+    const before = crossing.clears.length
+    w.rightClick('g-never')
+    expect(crossing.clears.length, 'a gesture that never moved then right-clicked sends exactly ONE').toBe(before + 1)
+    expect(crossing.dragCalls, 'and no move means no drag write at all').toEqual([{ id: DEFAULT_PANE_ID, geometry: { size: 120 } }])
     expect(register.census(), 'the whole row made not one store act').toBe(0)
   })
 })
 
-describe('§3.2 F-4 — right-click during a NON-EXISTENT drag is a NO-OP — MISS, never a refusal', () => {
-  it('F-4: the erase turn on a gesture with NO preview is a declared no-op — NEVER a throw, NEVER a second write, and never a store act (the file-original half is RETIRED — see the headstone)', () => {
-    // ── HEADSTONE (2026-10-05, `D-93`) ────────────────────────────────────────────────────────────────────────────────
+describe('§3.2 F-4 — right-click during a NON-EXISTENT drag ends an ABSENT family, never a refusal', () => {
+  it('F-4: the erase turn on a gesture with NO move is never a throw and sends exactly ONE `clearDrag()` (NOT zero — the family\'s end is idempotent at the store, and the store answers `AddressNotFound` for a family that does not stand), a repeat for the SAME gesture sends none, and never a store act; the control is the same turn on a gesture that DID move, which also sends exactly one and ends the family', () => {
+    const { w, register, crossing } = compose()
+    // ── HEADSTONE (2026-10-05, `D-93`; RE-GRAINED 2026-11-08) ──────────────────────────────────────────────────────
     // THE AS-FILED ROW seeded a `file.drag.<gid>.placement` original into a store whose `drag` root was DECLARED, drove a
-    // right-click on a path with NO temp node, and asserted that the store's `remove` answered `'undeclared-name'` at the
-    // walk while the file original kept answering the unqualified resolve. **THERE IS NO STORE TO WALK, NO ROOT TO
-    // DECLARE AND NO `remove` TO ABSORB**: the erase turn deletes an entry from the composition's own `Map` and the
-    // no-temp-node case is a bare `delete` on a key that is absent — a no-op by construction. What survives, and what is
-    // asserted, is the part the row was guarding: an erase on nothing is SILENT and WRITES NOWHERE.
+    // right-click on a path with NO temp node, and asserted that the store\'s `remove` answered `'undeclared-name'` at the
+    // walk while the file original kept answering the unqualified resolve. **THERE IS NO STORE TO WALK AND NO ROOT TO
+    // DECLARE**, but there IS an address: `['drag']` at `temp`. Its erase on a family that does not stand is exactly the
+    // case the old `remove` had to absorb — and the record\'s route absorbs the store\'s `AddressNotFound` and answers
+    // `committed`, so the CALL still happens once. That is what is asserted here: silence from the composition would be a
+    // composition deciding what the store\'s answer is.
     // ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-    const { w, register } = compose()
-    expect(w.previewOf('g-miss'), 'no preview, and none is claimed').toBeUndefined()
+    expect(crossing.dragFamily(), 'nothing stands, and none is claimed').toBeNull()
     expect(() => w.rightClick('g-miss'), 'never a throw').not.toThrow()
+    expect(crossing.clears.length, 'the erase asks the store exactly ONCE even where nothing stood').toBe(1)
+    expect(crossing.dragFamily(), 'and the address answers absent, which is the state the erase leaves').toBeNull()
     expect(() => w.rightClick('g-miss'), 'and idempotent').not.toThrow()
-    expect(w.previewOf('g-miss'), 'still nothing').toBeUndefined()
-    expect(register.census(), 'and never a write — the whole point of the deleted `remove`').toBe(0)
-    // THE CONTROL: the same turn on a gesture that DOES hold a preview erases it, so the silence above is about absence
-    // and not about a turn that never ran.
-    w.move('g-present', { placement: 'held' })
-    expect(w.previewOf('g-present'), 'the control gesture really holds a preview first').toEqual({ placement: 'held' })
+    expect(crossing.clears.length, 'a repeat for the SAME gesture sends none').toBe(1)
+    expect(register.census(), 'and never a store act').toBe(0)
+    // THE CONTROL: the same turn on a gesture that DID move also sends exactly one, and ends the family it finds.
+    w.move('g-present', { value: 140 })
+    expect(crossing.dragFamily(), 'the control gesture really wrote the address first').toEqual({ [PANE_ID]: { size: 140 } })
+    const before = crossing.clears.length
     w.rightClick('g-present')
-    expect(w.previewOf('g-present')).toBeUndefined()
+    expect(crossing.clears.length, 'and the same turn sends exactly one more').toBe(before + 1)
+    expect(crossing.dragFamily(), 'leaving the family absent').toBeNull()
   })
 })
 
 describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, driven twice over)', () => {
-  it('F-6/valid-release: EXACTLY the ONE route call — never a per-move store write, never a temp erase at the release terminal — and the whole gesture makes NO store act at all (re-grain of the temp-tier event count, `D-92`/`D-93`)', () => {
+  it('F-6/valid-release: TWO `commitDrag`s (the second one 140), then EXACTLY the ONE `commitPane`, then the release\'s OWN `clearDrag` — in that ORDER — one sink call, the family absent afterwards, and NO store act at all (re-grain of the temp-tier event count, `D-92`/`D-93`; the release\'s ending, 2026-11-08)', () => {
     const { w, register, crossing } = compose()
     const sink = makeSink()
-    // **THE OBSERVED SURFACE IS "DID A STORE MOVE AT ALL"**: the preview is closure state and the release's one write is the
-    // crossing route, so the whole gesture must leave a store doubled beside it CENSUS-EMPTY — a STRONGER claim than the
-    // as-filed "one temp commit and zero temp removes", and the one the bootstrap's deletion made true.
+    // **THE OBSERVED SURFACE IS "DID A STORE MOVE AT ALL"**: the drag's value is the ADDRESS and the release's one write is
+    // the crossing route, so the whole gesture must leave a store doubled beside it CENSUS-EMPTY.
     expect(register.census(), 'nothing at construction').toBe(0)
     const tempEvents: RegisterAct[] = []
     register.subscribe('temp.drag.g1.placement', (e) => tempEvents.push(e))
-    w.move('g1', { placement: 100 })
-    w.move('g1', { placement: 140 })
+    w.move('g1', { value: 100 })
+    w.move('g1', { value: 140 })
     w.release('g1', 240, sink)
     expect(sink.stats().sinkCalls).toBe(1) // never two, never a per-move write
-    expect(tempEvents, 'not one store event: the preview is the closure\'s').toEqual([])
+    expect(tempEvents, 'not one store event: the drag\'s value is the crossing\'s address').toEqual([])
     expect(register.census(), 'and the store was never written, so the subscriber could not have fired either').toBe(0)
-    expect(w.previewOf('g1'), 'and the preview is still the closure\'s, untouched by the release turn').toEqual({ placement: 140 })
-    // THE GESTURE END'S ONE WRITE IS THE ROUTE CALL — counted on the route's own log, which is where the write now lands.
-    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    // THE TWO MOVES ARE TWO WHOLE-MEMBER WRITES TO THE ADDRESS, and the last one wins:
+    expect(crossing.dragCalls, 'two moves, two `commitDrag`s, the last 140').toEqual([
+      { id: DEFAULT_PANE_ID, geometry: { size: 100 } },
+      { id: DEFAULT_PANE_ID, geometry: { size: 140 } },
+    ])
+    // **THE ORDER IS THE CONTRACT**: the sink is not on this log (it is the harness\'s), and the three ROUTE acts are the
+    // release\'s file commit and then its OWN ending of the temp reading — never the ending before the commit.
+    expect(crossing.acts, 'the release: its file commit, THEN its own `clearDrag`').toEqual(['commitDrag', 'commitDrag', 'commitPane', 'clearDrag'])
+    expect(crossing.clears.length, 'the ending is sent ONCE, by the release').toBe(1)
+    expect(crossing.calls, 'and the file commit is the sink\'s own value').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    expect(crossing.dragFamily(), 'and no drag family stands once the release has ended it').toBeNull()
   })
 
-  it('F-6/right-click: EXACTLY ONE erase of the closure\'s preview, ZERO sink writes, and NOT ONE store act — never a commit at the same terminal', () => {
+  it('F-6/right-click: EXACTLY ONE `clearDrag`, ZERO sink writes, ZERO `commitPane`, and NOT ONE store act — never a commit at the same terminal', () => {
     const { w, register, crossing } = compose()
     const tempEvents: RegisterAct[] = []
     const fileEvents: RegisterAct[] = []
     register.subscribe('temp.drag.g1.placement', (e) => tempEvents.push(e))
     register.subscribe(`file.settings.pane.${PANE_ID}.size`, (e) => fileEvents.push(e))
-    w.move('g1', { placement: 100 })
+    w.move('g1', { value: 100 })
     w.rightClick('g1')
-    expect(w.previewOf('g1'), 'the preview is ERASED from the closure').toBeUndefined()
-    expect(tempEvents, 'no store remove: the preview never was a store node').toEqual([])
+    expect(crossing.clears.length, 'the abandon terminal ends the family exactly once').toBe(1)
+    expect(crossing.dragFamily(), 'and the family is absent afterwards').toBeNull()
+    expect(crossing.calls, 'and no `commitPane` at an abandon terminal').toEqual([])
+    expect(crossing.acts, 'the whole gesture: one move write, one ending, nothing else').toEqual(['commitDrag', 'clearDrag'])
+    expect(tempEvents, 'no store remove: the drag never was a store node').toEqual([])
     expect(fileEvents, 'no store commit at the terminal').toEqual([])
     expect(register.census(), 'and the census agrees with the two recorders').toBe(0)
-    expect(crossing.calls, 'and no route call at an abandon terminal').toEqual([])
   })
 
-  it('F-6/§7a.1.2-cancel: the cancel/pointercancel terminal erases the closure\'s preview with AT MOST ONE erase per gesture (reading (i)); ZERO sink writes (E10)', () => {
+  it('F-6/§7a.1.2-cancel: the cancel/pointercancel terminal ends the family with AT MOST ONE `clearDrag` per gesture (reading (i)), ZERO sink writes (E10), and a fresh move after a cancel RE-MINTS the address', () => {
     const { w, crossing } = compose()
-    w.move('g1', { placement: 100 }) // the preview is resident
-    expect(w.previewOf('g1')).toEqual({ placement: 100 })
+    w.move('g1', { value: 100 }) // the address stands
+    expect(crossing.dragFamily(), 'the control: the family really stands before the cancel').toEqual({ [PANE_ID]: { size: 100 } })
     w.cancel('g1')
-    expect(w.previewOf('g1'), 'the cancel ERASES it — reading (i), not reading (ii)').toBeUndefined()
-    // AT MOST ONE ERASE: a second cancel is the declared MISS no-op — nothing to erase, nothing to throw (F-4\'s class).
+    expect(crossing.clears.length, 'the cancel sends exactly one `clearDrag` — reading (i), not reading (ii)').toBe(1)
+    expect(crossing.dragFamily(), 'and the family is gone').toBeNull()
+    // AT MOST ONE ERASE: a second cancel is the declared no-op — nothing more to end, nothing to throw (F-4\'s class).
     expect(() => w.cancel('g1')).not.toThrow()
-    expect(w.previewOf('g1')).toBeUndefined()
+    expect(crossing.clears.length, 'and a second cancel for the SAME gesture sends none').toBe(1)
     expect(crossing.calls, 'ZERO route calls at the abandon terminal').toEqual([])
-    // AND THE GESTURE MAY BEGIN AGAIN: a fresh move re-mints it, so `erased` gates the ERASE and never the gesture.
-    w.move('g1', { placement: 140 })
-    expect(w.previewOf('g1')).toEqual({ placement: 140 })
+    // AND THE GESTURE MAY BEGIN AGAIN: a fresh move re-mints the address, so the erase gates the ERASE and never the gesture.
+    w.move('g1', { value: 140 })
+    expect(crossing.dragCalls.length, 'the fresh move is a fresh write').toBe(2)
+    expect(crossing.dragFamily(), 'and the address stands again at the new value').toEqual({ [PANE_ID]: { size: 140 } })
   })
 
-  it('F-6/invalid-release (reset): ONE route call holding the clamped PRE-DRAG size (the persistent original RESTORED BY THE CALL)', () => {
+  it('F-6/invalid-release (reset): ONE route call holding the clamped PRE-DRAG size (the persistent original RESTORED BY THE CALL), AND the release\'s own `clearDrag`', () => {
     const { w, crossing } = compose()
     const sink = makeSink()
     crossing.seed(PANE_ID, { size: 220 }) // the pre-drag size the reset restores
-    w.move('g1', { placement: 100 })
+    w.move('g1', { value: 100 })
     w.release('g1', 220, sink) // 220 = the clamped pre-drag size
     expect(sink.stats().sinkCalls).toBe(1)
     expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 220 } }])
     expect(crossing.family()[PANE_ID]?.size).toBe(220)
+    expect(crossing.clears.length, 'and the release ends the temp reading it inherited, once').toBe(1)
+    expect(crossing.dragFamily(), 'so no family stands after the reset either').toBeNull()
   })
 })
 
 /* ─── THE REGISTER ROW P-PD-SM-1 (S-PD-GESTURE-1, 9 = 3×2 + 3) ─── */
 
-describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move writes and the ONE-write-per-gesture-end rule, with the closure\'s own delta (`D-92`: the subscriber delta has no subject, because there is no registration)', () => {
+describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move writes at the ADDRESS, the ONE-write-per-gesture-end rule, and the release\'s own ending (`D-92`: the subscriber delta has no subject, because there is no registration)', () => {
   const cases: Array<[string, string]> = [
     ['01', 'valid release — sink record reading'],
     ['02', 'valid release — stats().sinkCalls reading (AGREE)'],
@@ -1256,9 +1429,9 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
     ['04', 'invalid release — stats().sinkCalls reading (AGREE)'],
     ['05', 'right-click — sink record reading'],
     ['06', 'right-click — stats().sinkCalls reading (AGREE)'],
-    ['07', 'move-turn drive: the FIRST preview write lands in the closure (the mint\'s successor)'],
-    ['08', 'move-turn drive: a SUBSEQUENT move replaces the preview in place'],
-    ['09', 'move-turn drive: NO move ⇒ NO preview'],
+    ['07', 'move-turn drive: the FIRST move writes `[\'drag\']` at `temp` through `commitDrag`, ONCE'],
+    ['08', 'move-turn drive: a SUBSEQUENT move replaces it — one route call per move, and the family holds the last'],
+    ['09', 'move-turn drive: NO move ⇒ NO drag write, and the release ends an absent family'],
   ]
 
   it.each(cases)('P-PD-SM-1/%s — %s', drive('P-PD-SM-1', (id: string) => {
@@ -1268,7 +1441,7 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
       const sink = makeSink()
       const endPath = Math.ceil(n / 2)
       if (endPath === 1 || endPath === 2) {
-        w.move('g1', { placement: 100 })
+        w.move('g1', { value: 100 })
         w.release('g1', endPath === 1 ? 240 : 220, sink)
         const expected = endPath === 1 ? 1 : 1
         if (n % 2 === 1) {
@@ -1282,39 +1455,63 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
           expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: endPath === 1 ? 240 : 220 } }])
           expect(crossing.family()[PANE_ID]?.size).toBe(endPath === 1 ? 240 : 220)
         }
+        // **AND THE DRAG/ENDING COUNTS, ON EVERY CELL OF THE PAIR** (`D-92` re-grained 2026-11-08): the move wrote the
+        // address once, the release ended it once, and the family does not stand afterwards.
+        expect(crossing.dragCalls, 'the move wrote the address once, with the preview\'s value').toEqual([
+          { id: DEFAULT_PANE_ID, geometry: { size: 100 } },
+        ])
+        expect(crossing.clears.length, 'the release ends the temp reading it inherited, exactly once').toBe(1)
+        expect(crossing.dragFamily(), 'and the family is absent afterwards').toBeNull()
       } else {
-        w.move('g1', { placement: 100 })
+        w.move('g1', { value: 100 })
         w.rightClick('g1')
         if (n % 2 === 1) expect(sink.record.length).toBe(0) // ZERO sink writes
         else expect(sink.stats().sinkCalls).toBe(0)
+        // THE ABANDON TERMINAL: one move write, one ending, no file commit at all.
+        expect(crossing.dragCalls.length, 'the move wrote the address once').toBe(1)
+        expect(crossing.clears.length, 'and the erase ended it exactly once').toBe(1)
+        expect(crossing.calls, 'never a `commitPane` at an abandon terminal').toEqual([])
+        expect(crossing.dragFamily(), 'and the abandon terminal ended the family it inherited').toBeNull()
       }
       return
     }
     if (n === 7) {
-      // **RE-GRAINED `D-92`**: the FIRST preview write lands in the composition\'s own closure, and the assertion is that
-      // the closure is EMPTY before it and holds the preview after — read by the surface\'s declared `previewOf`. The
-      // store\'s `commit`-versus-`set` vocabulary (a mint against a later in-place replace) has no successor, because the
-      // two arms wrote the same `Map` either way.
-      const { w, register } = compose()
-      expect(w.previewOf('g1'), 'no preview before the first write').toBeUndefined()
-      w.move('g1', { placement: 100 })
-      expect(w.previewOf('g1')).toEqual({ placement: 100 })
+      // **RE-GRAINED ONTO THE ADDRESS (2026-11-08)**: the FIRST move writes `['drag']` at `temp` through ONE `commitDrag`
+      // naming the composition's pane — the family is EMPTY before it and holds the member after. The store's
+      // `commit`-versus-`set` vocabulary (a mint against a later in-place replace) has no successor: the route composes the
+      // family whole, so one write is one member either way.
+      const { w, register, crossing } = compose()
+      expect(crossing.dragFamily(), 'the address does not stand before the first write').toBeNull()
+      w.move('g1', { value: 100 })
+      expect(crossing.dragCalls, 'ONE `commitDrag` names DEFAULT_PANE_ID with the preview\'s value').toEqual([
+        { id: DEFAULT_PANE_ID, geometry: { size: 100 } },
+      ])
+      expect(crossing.dragFamily(), 'and the family holds it').toEqual({ [PANE_ID]: { size: 100 } })
       expect(stored(register, 'temp.drag.g1.placement').found, 'and the doubled store\'s temp tier is untouched').toBe(false)
-      expect(register.census(), 'zero writes — the mint is a `Map.set` and not a store act').toBe(0)
+      expect(register.census(), 'zero store writes — the address is the crossing\'s').toBe(0)
     } else if (n === 8) {
-      const { w } = compose()
-      w.move('g1', { placement: 100 })
-      w.move('g1', { placement: 140 })
-      // THE SUBSEQUENT MOVE REPLACES THE WHOLE PREVIEW VALUE IN PLACE:
-      expect(w.previewOf('g1')).toEqual({ placement: 140 })
+      const { w, crossing } = compose()
+      w.move('g1', { value: 100 })
+      w.move('g1', { value: 140 })
+      // ONE ROUTE CALL PER MOVE, AND THE FAMILY HOLDS THE LAST — a whole-family write replaces the member, it does not
+      // accumulate a second one for a second gesture.
+      expect(crossing.dragCalls.length, 'one route call per move').toBe(2)
+      expect(crossing.dragCalls[1], 'and the second carries the later value').toEqual({ id: DEFAULT_PANE_ID, geometry: { size: 140 } })
+      expect(Object.keys(crossing.dragFamily() ?? {}), 'one member per pane id').toEqual([PANE_ID])
+      expect(crossing.dragFamily(), 'and the family holds the LAST write').toEqual({ [PANE_ID]: { size: 140 } })
     } else {
-      const { w, register } = compose()
+      const { w, register, crossing } = compose()
       w.release('g1', 240, makeSink()) // a whole gesture with NO move at all
-      expect(w.previewOf('g99'), 'NO move ⇒ NO preview, for any gesture id').toBeUndefined()
+      expect(crossing.dragCalls, 'NO move ⇒ NO drag write, for any gesture id').toEqual([])
       expect(stored(register, 'temp.drag.g99.placement').found).toBe(false)
       expect(register.resolve('drag.g99.placement').found, 'and no unqualified name either').toBe(false)
       expect(register.census(), 'and the release wrote no store').toBe(0)
-      // THE CONTROL: the same two reads DO find a name this row plants, so the `false`s above are about ABSENCE.
+      // **AND THE RELEASE ENDS AN ABSENT FAMILY**: one `clearDrag`, because the store's delete answers `committed` whether
+      // or not the address stood — the composition does not decide what the store\'s answer is.
+      expect(crossing.dragFamily(), 'nothing stood at the address').toBeNull()
+      expect(crossing.clears.length, 'the release ends the absent family exactly once').toBe(1)
+      expect(crossing.dragFamily(), 'and it is absent afterwards too').toBeNull()
+      // THE CONTROL: the same store read DOES find a name this row plants, so the `false`s above are about ABSENCE.
       register.commit('temp.drag.g99.placement', 'planted')
       expect(stored(register, 'temp.drag.g99.placement').found, 'the read works; the composition simply never wrote').toBe(true)
     }
@@ -1323,22 +1520,25 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
 
 /* ─── THE REGISTER ROW P-PD-SM-3 (S-PD-REASSERT-1, 8 = 4 states × 2 readings) ─── */
 
-describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cycle, re-grained onto the CLOSURE and the CENSUS', () => {
-  /* **RE-GRAINED `D-93` — FOUR STATES, TWO READINGS, AND BOTH READINGS NOW HAVE A LIVE SUBJECT.**
+describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cycle, re-grained onto the ADDRESS and the ROUTE LOG', () => {
+  /* **RE-GRAINED (2026-11-08) — FOUR STATES, TWO READINGS, AND BOTH READINGS ARE THE ADDRESS\'S.**
    *
    * The as-filed readings were `unqualified-read` (a tier-qualified `resolve` of the FILE original that "reasserted") and
-   * `receipt-event-reading` (a `commit`/`remove` receipt's event). **NEITHER EXISTS**: the FILE original shadowed a tier
-   * the preview no longer occupies, and the receipts went with the store. What the four states still describe is the
-   * closure's own state machine — resident, erased, never-minted, erased-twice — and it can be read two honest ways:
+   * `receipt-event-reading` (a `commit`/`remove` receipt's event). The readings that replaced them when the preview was
+   * closure state were `closure-read`/`store-census` — and the CLOSURE went with the value: the drag's value is an
+   * ADDRESS now (`['drag']` at `temp`, one member per pane id, each `{size}`), so what the four states describe is the
+   * address's own state machine — standing, ended, never-written, ended-twice — read two honest ways:
    *
-   *   · **`closure-read`** — the surface's declared `previewOf(gestureId)`: what the composition holds for that gesture.
-   *   · **`store-census`** — the doubled register's `census()`: not one write, in any state, ever. That is the successor of
-   *     "never a second write" and it is measured against a store that could have answered had the composition asked.
+   *   · **`route-log`** — the `dragCalls`/`clears` sequence the state produced, in order: the ONE `commitDrag` a move sends
+   *     and the ONE `clearDrag` an erase sends. That is the successor of "the write the reassert exposed".
+   *   · **`address-read`** — `crossing.dragFamily()`: what stands at `['drag']`/`temp` after the state ran, with `null`
+   *     for the absent family. That is the successor of "the tier read that MISSed".
    *
-   * **ALL EIGHT CELLS STILL BITE**: a composition that leaves the preview resident after an erase reddens the odd cells,
-   * and one that writes a store at all reddens the even ones. */
+   * **ALL EIGHT CELLS STILL BITE**: a composition that leaves the family standing after an erase reddens every
+   * `address-read`, one that sends nothing at all reddens every `route-log`, and one that sends a second write for a
+   * second erase reddens the `second-remove` cell. */
   const states = ['active-rightclick', 'no-active-rightclick', 'release-without-preview', 'second-remove'] as const
-  const readings = ['closure-read', 'store-census'] as const
+  const readings = ['route-log', 'address-read'] as const
   const cases: Array<[string, string, string]> = []
   let n = 0
   for (const state of states) {
@@ -1351,53 +1551,52 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
   it.each(cases)('P-PD-SM-3/%s — %s × %s', drive('P-PD-SM-3', (_id: string, state: string, reading: string) => {
     const { w, register, crossing } = compose()
     if (state === 'active-rightclick') {
-      // THE STATE THE ROW IS NAMED FOR: a gesture with a resident preview, erased by the right-click turn.
-      w.move('g1', { placement: 'preview' })
-      expect(w.previewOf('g1'), 'the control: the preview really is resident before the erase').toEqual({ placement: 'preview' })
+      // THE STATE THE ROW IS NAMED FOR: a gesture that wrote the address, ended by the right-click turn.
+      w.move('g1', { value: 120 })
+      expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { size: 120 } })
       w.rightClick('g1')
-      if (reading === 'closure-read') {
-        // THE ERASE, read at the closure — the reading the FILE-original reassert used to occupy, now asked of the thing
-        // that actually holds the value.
-        expect(w.previewOf('g1'), 'the closure no longer holds it').toBeUndefined()
+      if (reading === 'route-log') {
+        // THE SEQUENCE, in the order the composition sent it: the move's write, then the erase's ending.
+        expect(crossing.acts, 'the route log is the move\'s ONE `commitDrag` then the erase\'s ONE `clearDrag`').toEqual(['commitDrag', 'clearDrag'])
       } else {
-        // AND THE ERASE IS NOT A STORE REMOVE: the doubled register saw nothing, and holds nothing at the old spelling.
-        expect(register.census(), 'the erase performed no store act').toBe(0)
-        expect(stored(register, 'temp.drag.g1.placement').found, 'and there is no node to have removed').toBe(false)
+        expect(crossing.dragFamily(), 'the address no longer stands').toBeNull()
       }
     } else if (state === 'no-active-rightclick') {
       expect(() => w.rightClick('g-miss'), 'never a throw').not.toThrow()
-      if (reading === 'closure-read') {
-        expect(w.previewOf('g-miss'), 'MISS, never a refusal — and the closure simply holds nothing').toBeUndefined()
+      if (reading === 'route-log') {
+        // THE ERASE IS STILL A CALL: the family's end is idempotent at the store, so an erase over an absent family sends
+        // exactly one `clearDrag` — and no `commitPane` ever rides an abandon terminal.
+        expect(crossing.clears.length, 'MISS, never a refusal — and the ending is still asked once').toBe(1)
+        expect(crossing.calls, 'and no file commit at an abandon terminal').toEqual([])
       } else {
-        // THE CONTROL: the store CAN hold the name — so the empty census is a fact about the composition, not about the
-        // double. (This plant is the row's own, made after the turn under test.)
-        expect(register.census(), 'nothing before the control').toBe(0)
-        register.commit('temp.drag.g-miss.placement', 'orig')
-        expect(register.census(), 'the double does record a write when one happens').toBe(1)
+        expect(crossing.dragFamily(), 'the address was absent before the turn and is absent after it').toBeNull()
+        // THE CONTROL: the doubled store CAN hold a wrote value — so the empty census is a fact about the composition.
+        expect(register.census(), 'and the turn performed no store act').toBe(0)
       }
     } else if (state === 'release-without-preview') {
       const sink = makeSink()
       w.release('g-free', 240, sink)
-      if (reading === 'closure-read') {
-        // RE-GRAINED (`D-89`): a NORMAL write — one route call carrying the value, never a removal and never a second
-        // write. The store-tier spelling this read used to consult no longer exists.
-        expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
-        expect(crossing.family()[PANE_ID]?.size).toBe(240)
+      if (reading === 'route-log') {
+        // THE RELEASE'S OWN SEQUENCE: its file commit, then its own ending of the temp reading it inherited — and no drag
+        // write, because no move ran.
+        expect(crossing.acts, 'the release: its file commit, THEN its own `clearDrag`').toEqual(['commitPane', 'clearDrag'])
+        expect(crossing.dragCalls, 'and NO move ⇒ NO drag write').toEqual([])
       } else {
-        expect(stored(register, 'temp.drag.g-free.placement').found).toBe(false) // never a removal, never a second write
-        expect(register.census(), 'and the release wrote no store at all').toBe(0)
+        expect(crossing.family()[PANE_ID]?.size, 'the file commit landed').toBe(240)
+        expect(crossing.dragFamily(), 'while the drag family never stood and does not stand now').toBeNull()
       }
     } else {
       // THE SECOND-REMOVE STATE: a second right-click hits the erase turn's own at-most-one-erase gate (the gesture is
-      // already erased) — a no-op, never a second write, never a throw (F-4's class).
-      w.move('g1', { placement: 'preview' })
+      // already erased) — no second call, never a throw (F-4's class).
+      w.move('g1', { value: 120 })
       w.rightClick('g1')
       expect(() => w.rightClick('g1'), 'the second erase is a declared no-op').not.toThrow()
-      if (reading === 'closure-read') {
-        expect(w.previewOf('g1'), 'still erased, and never re-minted by the second turn').toBeUndefined()
+      if (reading === 'route-log') {
+        expect(crossing.clears.length, 'AT MOST ONE `clearDrag` per gesture: the second turn sends none').toBe(1)
+        expect(crossing.dragCalls.length, 'and one move is one write').toBe(1)
       } else {
+        expect(crossing.dragFamily(), 'still absent, and never re-minted by the second turn').toBeNull()
         expect(register.census(), 'and neither erase was a store act').toBe(0)
-        expect(stored(register, 'temp.drag.g1.placement').found).toBe(false)
       }
     }
   }))
@@ -1871,7 +2070,7 @@ describe('REGISTER P-PD-SM-4 (S-PD-LISTENER-1) — the render turn: no registrat
     } else if (shape === 'throwing-layout-sink') {
       // a layout sink that THROWS is the caller's own failure, and it must not escape the turn (`F-8`'s class).
       const throwing = { layout: (): void => { throw new Error('sink-throws') } }
-      const withThrow = wiring.createPaneDrag({ view: crossing.client }, throwing) as PaneDragSurface
+      const withThrow = wiring.createPaneDrag({ view: crossing.client }, throwing) as unknown as PaneDragSurface
       crossing.seedZone(ZONE_ID, zoneFor(300))
       expect(() => withThrow.renderZone()).not.toThrow()
       // and THIS composition\'s own turn still answers afterwards — the throw stopped at the sink.
@@ -1880,7 +2079,7 @@ describe('REGISTER P-PD-SM-4 (S-PD-LISTENER-1) — the render turn: no registrat
     } else {
       // a NON-CALLABLE layout sink: the turn refuses to call it and lands the declared degradation — never a throw.
       const nonCallable = { layout: 42 as never }
-      const refused = wiring.createPaneDrag({ view: crossing.client }, nonCallable) as PaneDragSurface
+      const refused = wiring.createPaneDrag({ view: crossing.client }, nonCallable) as unknown as PaneDragSurface
       crossing.seedZone(ZONE_ID, zoneFor(300))
       expect(() => refused.renderZone()).not.toThrow()
       expect(source.calls.length, 'nothing reaches a sink that is not a function').toBe(0)
@@ -1893,7 +2092,7 @@ describe('REGISTER P-PD-SM-4 (S-PD-LISTENER-1) — the render turn: no registrat
  * ══════════════════════════════════════════════════════════════════════════════════ */
 
 describe('§3.1 M-12 — the composition holds end-to-end over the SHAPE, with a store doubled beside it', () => {
-  it('M-12: the boot wiring shape driven end-to-end — a real ViewClient over the crossing double, a REAL doubled register standing beside the composition, and a recording source double — every turn of the lifecycle runs with NO throw, the doubled store\'s CENSUS stays at ZERO, and the constraint/repair pair supplied to the flow still lands its invariant when driven directly', () => {
+  it('M-12: the boot wiring shape driven end-to-end — a real ViewClient over the crossing double, a REAL doubled register standing beside the composition, and a recording source double — every turn of the lifecycle runs with NO throw, the doubled store\'s CENSUS stays at ZERO, and the constraint/repair pair supplied to the flow still lands its invariant when driven directly', async () => {
     // ── HEADSTONE (2026-10-05, `D-93`) ────────────────────────────────────────────────────────────────────────────────
     // THE AS-FILED CELL read "driven with a real `createGraphStore`": the DECLARED roots via `storeGraphReferences`, the
     // register's `rows` naming `layout`/`drag`/`settings`, and a `mem.layout.size` write repaired to the minimize marker on
@@ -1907,7 +2106,8 @@ describe('§3.1 M-12 — the composition holds end-to-end over the SHAPE, with a
     const source = makeSource()
     const register = makeRegister()
     const crossing = crossingOf(register)
-    const w = wiring.createPaneDrag({ view: crossing.client }, source) as PaneDragSurface
+    const ghost = ghostTarget()
+    const w = wiring.createPaneDrag({ view: crossing.client, ghostTarget: ghost }, source) as unknown as PaneDragSurface
 
     // **THE DECLARED ROOTS' SUCCESSOR IS THE EMPTY CENSUS**: §7a.1 item 4 (i)'s "the register's rows pre-exist the first
     // write" is now "there are no rows, because there is no address space" — the composition declares nothing because it
@@ -1916,11 +2116,24 @@ describe('§3.1 M-12 — the composition holds end-to-end over the SHAPE, with a
 
     const sink = makeSink()
     crossing.seedZone(ZONE_ID, { size: 300 })
-    w.move('g1', { placement: 120 }) // first preview write — into the composition's closure
-    w.move('g1', { placement: 140 }) // subsequent move — replaces the preview in place
-    w.release('g1', 240, sink) // release: ONE route call inside the single sink invocation
+    w.move('g1', { value: 120 }) // first move — ONE write to the drag address
+    w.move('g1', { value: 140 }) // subsequent move — replaces it (a whole-family write)
+    w.release('g1', 240, sink) // release: ONE route call inside the single sink invocation, then its own ending
     expect(sink.stats().sinkCalls, 'one sink invocation, no throw').toBe(1)
     expect(crossing.calls, 'the release\'s write is the route call').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    // **THE DRAG ADDRESS ACROSS THE WHOLE GESTURE**: two whole-member writes, the last one winning, and the release's own
+    // ending after its file commit — the family absent once the gesture is over.
+    expect(crossing.dragCalls, 'two moves, two `commitDrag`s naming the composition\'s pane').toEqual([
+      { id: DEFAULT_PANE_ID, geometry: { size: 120 } },
+      { id: DEFAULT_PANE_ID, geometry: { size: 140 } },
+    ])
+    expect(crossing.acts, 'and the release: the file commit, THEN its own `clearDrag`').toEqual([
+      'commitDrag',
+      'commitDrag',
+      'commitPane',
+      'clearDrag',
+    ])
+    expect(crossing.dragFamily(), 'no drag family stands once the gesture has ended').toBeNull()
     // THE READS ALL ANSWER THE SHAPE, SYNCHRONOUSLY, WITHIN THE SAME TURN AS THE WRITE THAT CAUSED THE DELIVERY.
     expect(w.startSizeOf(paneFixture, PANE_ID), 'the read follows the route call').toBe(240)
     expect(w.boundsOf(paneFixture, PANE_ID)).toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
@@ -1932,12 +2145,28 @@ describe('§3.1 M-12 — the composition holds end-to-end over the SHAPE, with a
     // no throw escapes ANY turn (the whole lifecycle above ran without one — asserted turn by turn; a second gesture
     // exercises the candidate read, right-click and cancel):
     expect(w.candidatesFor(zoneFixture), 'no slot was delivered, so no candidate').toEqual([])
-    w.move('g2', { placement: 90 })
+    w.move('g2', { value: 90 })
+    expect(crossing.dragFamily(), 'the second gesture wrote the address').toEqual({ [PANE_ID]: { size: 90 } })
     w.rightClick('g2')
-    expect(w.previewOf('g2'), 'the erase turn emptied the closure, not a store tier').toBeUndefined()
-    w.move('g3', { placement: 80 })
+    expect(crossing.dragFamily(), 'the erase turn ended the family at its address, not a closure value').toBeNull()
+    w.move('g3', { value: 80 })
+    expect(crossing.dragFamily(), 'and a third gesture writes it again').toEqual({ [PANE_ID]: { size: 80 } })
     w.cancel('g3')
-    expect(w.previewOf('g3'), 'and the cancel terminal empties it too').toBeUndefined()
+    expect(crossing.dragFamily(), 'and the cancel terminal ends it too').toBeNull()
+    expect(crossing.clears.length, 'one ending per terminal: the release\'s own, then one per abandon turn — three').toBe(3)
+    // **AND THE GHOST TURN RAN, AGAINST A STATED REALM** — the address it reads is the view record's, so the turn is
+    // driven with a `data` member that answers the family ABSENT: one read, no declaration, and never a throw out of the
+    // lifecycle above. The stub is this row's own and is withdrawn in the same breath, because this file's other rows
+    // expect a realm with no ambient member at all.
+    const ambient = globalThis as Record<string, unknown>
+    ambient['window'] = { provident: { data: { read: async () => ({ status: 'absent', path: ['drag'] }) } } }
+    try {
+      w.renderGhost()
+      for (let n = 0; n < 4; n += 1) await Promise.resolve()
+    } finally {
+      delete ambient['window']
+    }
+    expect(ghost.declared(), 'the absent arm REMOVES the declaration and throws nothing').toBeNull()
 
     // **AND NOT ONE STORE ACT, ANYWHERE IN THE LIFECYCLE** — the census is the whole of §7a.1 item 4's successor.
     expect(register.census(), 'the doubled store saw ZERO acts across the entire lifecycle').toBe(0)
@@ -2144,13 +2373,21 @@ describe('§3.4 R-3 — THE FROZEN-SESSION ROW', () => {
 })
 
 describe('§3.4 R-4 — THE ONE-SINK/ONE-CLAMP ROW', () => {
-  it('R-4: the composition lands the single sink channel (SINK-2) and the family\'s ONE clamp site stands — the release turn performs ONE sink invocation and the route call rides inside it (the two readings agree at 1); the repair function bytes contain no clamp', () => {
+  it('R-4: the composition lands the single sink channel (SINK-2) and the family\'s ONE clamp site stands — the release turn performs ONE sink invocation, the file commit rides inside it, and the release\'s own `clearDrag` follows as the second (and last) route act; the repair function bytes contain no clamp', () => {
     const { w, crossing } = compose()
     const sink = makeSink()
-    w.move('g1', { placement: 100 })
+    w.move('g1', { value: 100 })
     w.release('g1', 240, sink)
     expect(sink.stats().sinkCalls).toBe(1) // one sink invocation
     expect(crossing.calls, 'and ONE route call, made inside that invocation').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    // **THE ONE ORDERED TURN, READ ON THE ROUTE LOG**: the move's write to the ADDRESS, then the file commit, then the
+    // release's own ending — and no second file commit anywhere.
+    expect(crossing.dragCalls, 'the move wrote the drag address once').toEqual([{ id: DEFAULT_PANE_ID, geometry: { size: 100 } }])
+    expect(crossing.acts, 'the release: commitPane, then its own `clearDrag` — never a second file write').toEqual([
+      'commitDrag',
+      'commitPane',
+      'clearDrag',
+    ])
     // the family's one clamp site: no seam wrapper, reset path or repair function adds a
     // clamp — the REPAIR's own CODE (the caller-supplied function, comment lines ELIDED so prose cannot make this row
     // green or red) must not clamp:
@@ -2205,16 +2442,31 @@ describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'pa
     //     that id reaches the family — so the read is not keyed by an element lookup this wiring invented.
     expect(w.startSizeOf({ parentElement: authoredPane({ size: '140' }) }, 'gutter-pane'), 'the token names the pane the family records').toBe(320)
 
-    // (4) AND THE COMMIT IS THE CROSSING\'S ROUTE, with the authored status write as its SINK, in that order.
-    //     The sink is the harness's own recorder, so the invocation is COUNTED rather than inferred from the route.
+    // (4) AND THE COMMIT IS THE CROSSING\'S ROUTE, with the authored status write as its SINK, in that order — and the
+    //     release then ends the drag\'s OWN reading of the address.
+    //     **SINK-1 IS RE-READ AND NEVER RETIRED**: the sink is the harness\'s own recorder, so the invocation is COUNTED
+    //     rather than inferred from the route, and it is counted with TWO DRAG TURNS already run.
+    //     **THE STRUCTURE THAT MAKES THAT A MEASUREMENT**: `move(gestureId, preview)`, `rightClick(gestureId)` and
+    //     `cancel(gestureId)` take NO SINK ARGUMENT — the surface declares no sink on any of them (see the local
+    //     `PaneDragSurface` above, and `renderer.ts`\'s own exported interface) — so no drag turn can be handed one, and a
+    //     second sink write could only come from a second release.
     const sink = makeSink()
+    w.move('gesture-1', { value: 180 }) // a drag turn: no sink, and one write to the address
     w.release('gesture-1', 220, sink)
     expect(sink.record, 'the SINK was invoked exactly once, with the final value').toEqual([220])
-    expect(sink.stats().sinkCalls, 'and the sink\'s own count agrees — ONE sink write per gesture end (E10/SINK-1)').toBe(1)
-    expect(crossing.calls.length, 'and ONE route call followed it').toBeGreaterThan(0)
-    const last = crossing.calls[crossing.calls.length - 1]!
-    expect(last.id, 'the route names the pane the composition addresses (`DEFAULT_PANE_ID`, `D-87`)').toBe(DEFAULT_PANE_ID)
-    expect(last.geometry, 'and carries the ONE whole member, the clamped value').toEqual({ size: 220 })
+    expect(sink.stats().sinkCalls, 'and it is NEVER RETIRED: ONE sink write per gesture end (E10/SINK-1)').toBe(1)
+    expect(crossing.calls, 'and the file commit is the ONE `commitPane` carrying `{size: 220}`').toEqual([
+      { id: DEFAULT_PANE_ID, geometry: { size: 220 } },
+    ])
+    expect(crossing.dragCalls, 'the move before it wrote the address').toEqual([{ id: DEFAULT_PANE_ID, geometry: { size: 180 } }])
+    // **THE RELEASE\'S OWN ENDING LANDS AFTER THE FILE COMMIT** — the order the contract states, read on one log.
+    expect(crossing.acts, 'the release: its file commit, THEN its own `clearDrag`').toEqual(['commitDrag', 'commitPane', 'clearDrag'])
+    expect(crossing.clears.length, 'exactly one ending').toBe(1)
+    expect(crossing.dragFamily(), 'and the address is absent once the gesture is over').toBeNull()
+    // TWO MORE DRAG TURNS RUN, AND THE SINK IS STILL AT ONE:
+    w.move('gesture-2', { value: 160 })
+    w.cancel('gesture-2')
+    expect(sink.stats().sinkCalls, 'two drag turns already ran and no surface turn but `release` can be handed the sink').toBe(1)
 
     // (5) THE WIRING BINDS THESE AND NOT THE EXAMPLE\'S PAIR — read off `renderer.ts`\'s CODE, comment lines
     //     ELIDED, because the headstone above the wiring names both spellings and would otherwise satisfy

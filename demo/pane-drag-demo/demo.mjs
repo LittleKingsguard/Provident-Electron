@@ -7,10 +7,10 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 ed83de9c083ef4f350e3c9a2c766c1508da06aee1931833181ae7d74356f40de
+// @body-sha256 92232cb71a4996da84d0b0de11ff3ce8f27a451926480fe7b5e2865ebbd7ce6d
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
-// @source 96210ffe545ef66f0805ea4ac9820a32f64bfba7c03e3fda58d2e669ee2d1dd4 demo/pane-drag-demo/demo.ts
-// @source 0b24bc3a9c743c8d46123b743aab66da32055e4335cf7a2ddd4430f1ae328000 demo/pane-drag-demo/stub-view.ts
+// @source b6f960a27fdf571a26992b061d9f3e2aa604847e5c668c52869bf40a84bda70c demo/pane-drag-demo/demo.ts
+// @source a3cdc0510a78080e253b5df3cef4e30c103296990063a644a29a80f7f58c2bc7 demo/pane-drag-demo/stub-view.ts
 // @source 75b6817e000498d6d9b5eb36d74def28d20202c5ce1af4ee155e2b99bfbe87fe node_modules/provident-ssr/dist/core/adapters.js
 // @source 4bd7c4c2528b8422835abd1ee4e3e51bab329691aac63d25e78933240d594f04 node_modules/provident-ssr/dist/core/body-runs.js
 // @source d399540bae257c5a3775132148d06867e9169265bfbd2eec98aee6504c7fa1bb node_modules/provident-ssr/dist/core/client.js
@@ -35,12 +35,12 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source d964762d6eb86366b069431bcf9efaf352fbbf2aef0a23f85f98d2978ea236fd src/renderer/renderer.ts
+// @source c977951c969222619d0b2ce813502c38d8fc60ef021da7cf77e2265672e638b0 src/renderer/renderer.ts
 // @source 7815658c5a9687d6dd7ee4f47b8fa40827440dd9b0b97b7a754e70cab013e797 src/renderer/runtime.ts
-// @source 1403e68129c1604d898f1e69fd33c90060081b2a4dcc5f4238a1d99901b0a979 src/renderer/secure-panels.ts
+// @source 64c60c5c62a8e77c6515f0e323fd2e044ef02d77187f6e095f4a67a961c2dcb5 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source f83e54243983045a2eaee0c86d7c77d636b9976792d30d3d35f41f48f3194745 src/renderer/tabs-client.ts
-// @source 12f42eca8dde7f42dbf4526a6215bffc1b3c01243ed8ab1afb82a1f0dc42e754 src/renderer/view-client.ts
+// @source a5c6a8e968207614f711ea250cd1b8bd8f46e95d56f1c708b19a6272bcea6991 src/renderer/view-client.ts
 // @source 9cab75ffd47d4d56c62b7d89eff7365130b17eedae8a0a5de1f13e93062deba2 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
@@ -1220,6 +1220,28 @@ var zoneIn = (zones, id) => {
 };
 
 // src/renderer/renderer.ts
+function dataRoute(verb, payload) {
+  const member = typeof window === "undefined" ? void 0 : window.provident?.data;
+  if (member === void 0) {
+    return Promise.resolve({
+      status: "refused",
+      reason: "store-unreachable",
+      message: "no `data` member on the preload bridge: this realm has no route to the profile register, so no store was consulted"
+    });
+  }
+  switch (verb) {
+    case "read":
+      return member.read(payload);
+    case "write":
+      return member.write(payload);
+    case "delete":
+      return member.delete(payload);
+    case "list":
+      return member.list(payload);
+    case "journal":
+      return member.journal(payload);
+  }
+}
 if (false) {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => void main());
@@ -1230,6 +1252,7 @@ if (false) {
 function createPaneDrag(backing, source2) {
   const backingRecord = backing ?? null;
   const view = backingRecord?.view ?? null;
+  const ghostTarget = backingRecord?.ghostTarget ?? null;
   const sourceRecord = source2 ?? null;
   const paneIdOf = (element, token) => {
     const viaElement = element?.id;
@@ -1255,12 +1278,13 @@ function createPaneDrag(backing, source2) {
     } catch {
     }
   };
-  const previews = /* @__PURE__ */ new Map();
   const gestures = /* @__PURE__ */ new Map();
-  const move = (gestureId, preview) => {
+  const move = (key, preview) => {
     try {
-      previews.set(gestureId, preview);
-      gestures.set(gestureId, { erased: false });
+      const size = preview?.value;
+      if (typeof size !== "number" || !Number.isFinite(size) || size < 0) return;
+      gestures.set(key, { erased: false });
+      if (view !== null) view.commitDrag(DEFAULT_PANE_ID, { size });
     } catch {
     }
   };
@@ -1286,7 +1310,6 @@ function createPaneDrag(backing, source2) {
     }
   };
   const release = (gestureId, final, sink) => {
-    void gestureId;
     try {
       if (typeof final !== "number" || Number.isNaN(final)) return;
       const standing = readPaneSize({}, DEFAULT_PANE_ID);
@@ -1299,16 +1322,75 @@ function createPaneDrag(backing, source2) {
         sink.call(null, final);
       }
       if (view !== null) view.commitPane(DEFAULT_PANE_ID, { size: final });
+      endReading(gestureId);
     } catch {
     }
   };
-  const erasePreview = (gestureId) => {
+  const endReading = (key) => {
     try {
-      const prior = gestures.get(gestureId);
+      const prior = gestures.get(key);
       if (prior?.erased === true) return;
-      previews.delete(gestureId);
-      gestures.set(gestureId, { erased: true });
+      gestures.set(key, { erased: true });
+      if (view !== null) view.clearDrag();
     } catch {
+    }
+  };
+  let ghostEpoch = 0;
+  const clearGhost = () => {
+    try {
+      const holder = ghostTarget;
+      if (holder === null || holder === void 0) return;
+      if (typeof holder.removeAttribute !== "function") return;
+      holder.removeAttribute.call(holder, "data-ghost");
+    } catch {
+    }
+  };
+  const settleGhost = (epoch, answer) => {
+    if (epoch !== ghostEpoch) return;
+    try {
+      const record = answer;
+      const node = record !== null && record !== void 0 && typeof record === "object" && record.status === "read" ? record.value : null;
+      if (node === null || typeof node !== "object" || Array.isArray(node)) {
+        clearGhost();
+        return;
+      }
+      const branch = node;
+      if (branch["_tier"] !== "temp") {
+        clearGhost();
+        return;
+      }
+      const member = branch[DEFAULT_PANE_ID];
+      if (member === null || typeof member !== "object" || Array.isArray(member)) {
+        clearGhost();
+        return;
+      }
+      const carried = member.size;
+      const size = carried !== null && typeof carried === "object" && !Array.isArray(carried) ? carried.value : carried;
+      if (typeof size !== "number" || !Number.isFinite(size) || size < 0) {
+        clearGhost();
+        return;
+      }
+      const holder = ghostTarget;
+      if (holder === null || holder === void 0 || typeof holder.setAttribute !== "function") return;
+      holder.setAttribute.call(holder, "data-ghost", "temp");
+    } catch {
+      clearGhost();
+    }
+  };
+  const renderGhost = () => {
+    ghostEpoch += 1;
+    const epoch = ghostEpoch;
+    try {
+      void dataRoute("read", { path: ["drag"] }).then(
+        (answer) => {
+          settleGhost(epoch, answer);
+        },
+        () => {
+          settleGhost(epoch, null);
+        }
+      );
+    } catch {
+      clearGhost();
     }
   };
   return {
@@ -1340,15 +1422,16 @@ function createPaneDrag(backing, source2) {
     },
     move,
     release,
-    rightClick: (gestureId) => erasePreview(gestureId),
-    cancel: (gestureId) => erasePreview(gestureId),
+    rightClick: (gestureId) => endReading(gestureId),
+    cancel: (gestureId) => endReading(gestureId),
     renderZone,
-    previewOf: (gestureId) => previews.get(gestureId)
+    renderGhost
   };
 }
 
 // demo/pane-drag-demo/stub-view.ts
 var ZONES = [];
+var DRAG_ADDRESS = ["drag"];
 var copyOf = (pane) => ({
   id: pane.id,
   size: pane.size,
@@ -1357,6 +1440,15 @@ var copyOf = (pane) => ({
 function createStubView() {
   const family = /* @__PURE__ */ new Map();
   const logged = [];
+  let dragFamily = null;
+  const drag2 = () => {
+    const standing = dragFamily;
+    return {
+      address: [...DRAG_ADDRESS],
+      present: standing !== null,
+      members: standing === null ? [] : [...standing.entries()].map(([id, size]) => ({ id, size }))
+    };
+  };
   const panes = () => [...family.values()].map(copyOf);
   const seed = (id) => {
     family.set(id, copyOf(paneGeometryIn([], id).pane));
@@ -1401,11 +1493,30 @@ function createStubView() {
       if (typeof size === "number" && Number.isFinite(size)) setSize(id, size);
       logged.push({ id, geometry });
       return { status: "sent" };
+    },
+    /** **THE DRAG'S MOVE ROUTE — ONE WHOLE VALUE THE CALLER FORMATTED** (`D-132`, `D-135`, `D-136`): the placement the
+     *  composition's `move` read, `{size}`, written as the family's single member because the composition drags one pane.
+     *  A pair its own shape arms cannot read (no id, a size that is not a finite non-negative number) writes NOTHING and
+     *  leaves what stands standing — the crossing's judgement, answered here from the same two facts and added to. */
+    commitDrag(id, geometry) {
+      const record = geometry ?? null;
+      const size = record === null || record === void 0 ? void 0 : record.size;
+      if (id.length > 0 && typeof size === "number" && Number.isFinite(size) && size >= 0) {
+        dragFamily = /* @__PURE__ */ new Map([[id, size]]);
+      }
+      return { status: "sent" };
+    },
+    /** **THE DRAG'S END — THE FAMILY IS DELETED WHOLE** (`D-132`, `D-140`): the act carries NO argument, and the address
+     *  answers absent afterwards whether or not it stood — never a placeholder written to stand in for a gesture's end. */
+    clearDrag() {
+      dragFamily = null;
+      return { status: "sent" };
     }
   };
   return {
     members,
     panes,
+    drag: drag2,
     geometryOf: (id) => paneGeometryIn(panes(), id),
     setSize,
     setBounds,
@@ -1465,6 +1576,7 @@ var gestureIdOf = (gesture) => {
   const held = gesture?.id;
   return typeof held === "string" ? held : "";
 };
+var GESTURE_KEY = gestureIdOf(handle);
 var applyPreview = (state) => {
   const held = state;
   const value = held?.value;
@@ -1472,6 +1584,8 @@ var applyPreview = (state) => {
   observed.previews += 1;
   observed.lastPreview = { value, token: held?.token, valid: held?.valid === true, resizable: held?.resizable === true };
   target.style.width = `${String(value)}px`;
+  if (held?.valid === true) drag.move(GESTURE_KEY, state);
+  if (held?.valid === false) drag.cancel(GESTURE_KEY);
   renderReadouts();
 };
 var affordance = createGutterAffordance({
@@ -1545,7 +1659,7 @@ function renderReadouts() {
       `  affordance  ${JSON.stringify(affordanceStats)}`,
       `  controller  ${JSON.stringify(controllerStats)}`,
       `  preview     ${JSON.stringify(observed.lastPreview)}   previews written=${String(observed.previews)}`,
-      `  surface     previewOf('') = ${JSON.stringify(drag.previewOf("") ?? null)}  (the composition's temp preview is NOT written: the preview is the wiring's inline-style write, D-117)`,
+      `  address     ['drag'] = ${JSON.stringify(stub.drag())}   (the composition's ONE write per move and its ending's delete, read at the address the record holds it \u2014 D-132: the surface keeps no member for it)`,
       `  releases    ${JSON.stringify(observed.releases)}   sink writes=${JSON.stringify(observed.sinkWrites)}`
     ].join("\n");
   }
@@ -1603,7 +1717,7 @@ window["__pgdemo"] = {
       sinkWrites: [...observed.sinkWrites],
       previews: observed.previews,
       preview: observed.lastPreview,
-      surfacePreview: drag.previewOf("") ?? null,
+      surfaceDrag: stub.drag(),
       attachRefusals: observed.attachRefusals,
       status: statusNode.textContent
     },

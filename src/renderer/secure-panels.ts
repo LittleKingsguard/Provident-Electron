@@ -114,7 +114,7 @@ declare global {
         }>
         onChanged(handler: () => void): () => void
       },
-      // THE VIEW RECORD'S CROSSING (D-87, D-91, D-97; `docs/L2/view-record/interface.md` §2): ONE member, SIX routes. This
+      // THE VIEW RECORD'S CROSSING (D-87, D-91, D-97; `docs/L2/view-record/interface.md` §2): ONE member, SEVEN routes. This
       // copy and `src/main/preload.ts`'s are the same text in both files — the lockstep rule the `store`, `security` and
       // `tabs` members already follow, and the one a row reads back and compares rather than cites.
       view?: {
@@ -122,6 +122,8 @@ declare global {
         commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+        commitDrag(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
+        clearDrag(): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
         onChanged(handler: () => void): () => void
       },
       module?: {

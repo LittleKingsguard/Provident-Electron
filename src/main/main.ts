@@ -37,11 +37,11 @@ import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from 
 // `view-record` (D-87) — THE CROSSING'S SECOND DECLARATION SET, and the last address the frozen graph store was holding:
 // the pane geometry, the zone family and the appearance record. It enters the composition HERE and nothing else of this file's shape moves:
 // its three declarations are batched into the SAME `createProfileStore` call the tab record's six ride (D-65), its surface
-// is constructed beside the tab record's, and its four handlers stand beside the tab record's three. It constructs no
+// is constructed beside the tab record's, and its six handlers stand beside the tab record's three. It constructs no
 // store and spells no `provident-*.json` literal for one.
 import {createViewSurface} from './view-surface/index.js'
 import {viewConstraintDeclarations, viewDeclaredRoots} from './view-record/index.js'
-import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
+import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_DRAG_COMMIT, IPC_VIEW_DRAG_CLEAR, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
 // names), so the module scope is a file URL rather than a CommonJS directory global: `here` is the
@@ -463,17 +463,20 @@ async function main(): Promise<void> {
   ipcMain.handle(IPC_TABS_REMOVE, (_event, id: unknown) => tabsSurface.remove(id))
   // the change push: one subscription, taken here so the window's teardown can withdraw exactly what it took
   tabsSurface.attach()
-  // **THE VIEW RECORD'S FOUR CHANNELS (D-87, D-91, D-97, L2 §2)**: a whole-view read takes no argument; a pane commit names
+  // **THE VIEW RECORD'S SIX CHANNELS (D-87, D-91, D-97, D-132, L2 §2)**: a whole-view read takes no argument; a pane commit names
   // a pane id and a geometry and never a path; a zone commit names
   // a zone id and the members it carries, and the crossing composes the family; **the appearance commit hands the ACT —
   // the setting the authored control produced and the caller-held attribute name — and composes NOTHING**, because the
-  // crossing's own pair resolves it inside that commit and the declaration never crosses this channel. The surface's shape
+  // crossing's own pair resolves it inside that commit and the declaration never crosses this channel; and the drag pair
+  // hands the gesture's placement and its ending — one whole value at `temp`, and a delete that ends it. The surface's shape
   // arms answer `malformed-pane`/`malformed-zone`/`malformed-theme` before any store verb; nothing here
   // inspects an argument.
   ipcMain.handle(IPC_VIEW_READ, () => viewSurface.read())
   ipcMain.handle(IPC_VIEW_PANE_COMMIT, (_event, id: unknown, geometry: unknown) => viewSurface.commitPane(id, geometry))
   ipcMain.handle(IPC_VIEW_ZONES_COMMIT, (_event, id: unknown, zone: unknown) => viewSurface.commitZones(id, zone))
   ipcMain.handle(IPC_VIEW_THEME_COMMIT, (_event, token: unknown, attributeName: unknown) => viewSurface.commitTheme(token, attributeName))
+  ipcMain.handle(IPC_VIEW_DRAG_COMMIT, (_event, id: unknown, geometry: unknown) => viewSurface.commitDrag(id, geometry))
+  ipcMain.handle(IPC_VIEW_DRAG_CLEAR, () => viewSurface.clearDrag())
   // and its change push, taken at the same point and for the same reason as the tab record's
   viewSurface.attach()
   // ═══ THE FIVE `data.*` ROUTES' ANSWER SITES (`D-112`; `docs/L2/central-data/interface.md` §5) ═══
@@ -485,7 +488,7 @@ async function main(): Promise<void> {
   // **NO CHANGE PUSH IS TAKEN HERE, AND THAT IS THE ROUTE'S SHAPE RATHER THAN AN OMISSION** (`types.ts`'s constant block
   // carries the reason): a write at a declared family root is delivered by THAT family's listener, and this module renders
   // nothing, so no `data.*` delivery exists to register. **AND NO FRAME GUARD IS ADDED, WHICH IS THE SAME RULE READ ON THE
-  // SITES BESIDE THEM**: every handler in this file — the tab record's three, the view record's four, the secure crossing's
+  // SITES BESIDE THEM**: every handler in this file — the tab record's three, the view record's six, the secure crossing's
   // four and the module registry's two — discards its `IpcMainInvokeEvent` and checks no sender, so a guard here would be
   // the only one in the file and would make one crossing stricter than its siblings; `bridge-route.test.ts` asserts the
   // absent member and the absent guard together, over comment-elided code.

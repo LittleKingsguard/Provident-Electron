@@ -462,6 +462,18 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = [], zones: readonly Wi
     commitFocus: async (): Promise<unknown> => ({ status: 'committed' }),
     commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
     commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
+    // **THE DRAG PAIR (`D-132`) — THE `view` MEMBER'S FIFTH AND SIXTH ROUTES, in the declared order** — transcribed from
+    // `src/main/preload.ts`'s `view` block (`docs/L2/app-shell/interface.md` §3): `commitDrag` names a pane and the
+    // placement alone, `clearDrag` takes NOTHING. This stand-in is a COMPLETE bridge, not a partial one: the rows that
+    // measure a missing route are `store-view-record`'s (`client.test.ts`'s `asBridge`/`partialClient`), while every row
+    // below builds the client over this fixture to drive the PANE and ZONE reads — so the pair answers `committed` exactly
+    // as its three siblings do, and no row here sends either route.
+    commitDrag: async (id: string, geometry: unknown): Promise<unknown> => {
+      void id
+      void geometry
+      return { status: 'committed' }
+    },
+    clearDrag: async (): Promise<unknown> => ({ status: 'committed' }),
     onChanged: (handler: () => void): (() => void) => {
       handlers.push(handler)
       return (): void => {

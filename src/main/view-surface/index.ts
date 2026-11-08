@@ -5,10 +5,11 @@
 // **IT CONSTRUCTS NOTHING** — not the record's store, and (unlike `tabs-surface`, whose `createTabsRecord` call is its own
 // construction) not even an instance-owning object: `createViewRecord` is handed the boot's store and owns no file, so
 // this surface is a reference to the boot's store plus the one subscription the push needs. **THE SHAPE ARMS ARE THIS
-// FILE'S AND THEY ARE ITS FIRST ACT**: `commitPane`, `commitZones` and `commitTheme` take `unknown` on purpose, because a
-// typed parameter would move the check into the type system where the renderer's boundary cannot reach it
-// (`docs/L3/store-tabs-record/signatures.md` §3). A malformed id or value never reaches a store verb, and each arm
-// reuses the module's own reason token and sentence rather than minting a second vocabulary.
+// FILE'S AND THEY ARE ITS FIRST ACT**: `commitPane`, `commitZones`, `commitTheme` and `commitDrag` take `unknown` on
+// purpose, because a typed parameter would move the check into the type system where the renderer's boundary cannot reach
+// it (`docs/L3/store-tabs-record/signatures.md` §3). A malformed id or value never reaches a store verb, and each arm
+// reuses the module's own reason token and sentence rather than minting a second vocabulary. **AND `clearDrag` TAKES
+// NOTHING AND CHECKS NOTHING** (D-132, D-140): the act carries no argument, so its whole body is the record's delete.
 import {
   createViewRecord,
   PANE_SHAPE_MESSAGE,
@@ -45,6 +46,13 @@ export interface ViewSurface {
   commitPane(id: unknown, geometry: unknown): ViewRecordAnswer
   commitZones(id: unknown, zone: unknown): ViewRecordAnswer
   commitTheme(token: unknown, attributeName: unknown): ViewRecordAnswer
+  /** **THE DRAG'S MOVE — the `temp` family's one write** (D-132): `unknown` on `commitPane`'s reason, because a typed
+   *  parameter would move the check into the type system where the renderer's boundary cannot reach it — so this arm
+   *  answers its shape arms before any store verb exactly as the three above do. */
+  commitDrag(id: unknown, geometry: unknown): ViewRecordAnswer
+  /** **THE DRAG'S END — the act that ENDS the family** (D-132): it takes nothing, and the record's `clearDrag` is a DELETE
+   *  rather than a placeholder, so the address answers `absent` once the gesture is over. */
+  clearDrag(): ViewRecordAnswer
   attach(): void
   detach(): void
 }
@@ -105,8 +113,29 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
       return record.commitTheme(token, attributeName)
     },
 
-    /** The change push: ONE subscription over ALL THREE roots, held here so `detach` can withdraw exactly what `attach`
-     *  took. */
+    commitDrag(id: unknown, geometry: unknown): ViewRecordAnswer {
+      // the drag's two arms ARE the panes' two (`D-132`, L2 §5): no pane id, and no plain geometry record — `commitPane`'s
+      // shape arms, at the family whose member IS the placement. The `size`-required arm is the RECORD's, because it needs
+      // `finiteNumber`'s own domain and the record is where `isBoundary` and the crossing's boundary are read.
+      if (typeof id !== 'string' || id.length === 0) {
+        return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
+      }
+      if (geometry === null || typeof geometry !== 'object' || Array.isArray(geometry)) {
+        return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
+      }
+      return record.commitDrag(id, geometry)
+    },
+
+    clearDrag(): ViewRecordAnswer {
+      // NOTHING IS CHECKED HERE BECAUSE THE ACT CARRIES NOTHING (`D-132`, D-140): the record's clear is a DELETE at the
+      // family's own tier, so this arm is the delegation and no second vocabulary.
+      return record.clearDrag()
+    },
+
+    /** The change push: ONE subscription over EVERY root the record declares, held here so `detach` can withdraw exactly
+     *  what `attach` took. **THE FOURTH ROOT IS COVERED BY CONSTRUCTION** (`D-137`): `record.subscribe` ranges over the
+     *  record's own four addresses, so the drag's `temp` family needs no arm here — and the listener is TIER-BLIND, so an
+     *  outside `temp` write delivers the same signal the drag's own commit does. */
     attach(): void {
       if (off !== null) return
       off = record.subscribe(() => options.onChanged?.())

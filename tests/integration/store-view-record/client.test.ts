@@ -24,6 +24,12 @@
  * takes the whole mirror"* — RETIRES WITH ITS REFERENT (`D-9`), its id left unspent; `C-1`…`C-4`, `C-9` and `C-10` are
  * RE-GRAINED onto the three surviving families, and `C-5`, `C-6` and `C-8` are UNTOUCHED because nothing they drive moved.
  *
+ * **RE-GRAINED AGAIN FOR REV 7: THE DRAG FAMILY'S TWO ROUTES** (`docs/L2/view-record/interface.md` §2, `D-132`). The member L2 declares carries
+ * `commitDrag(paneId, geometry)` and `clearDrag()` beside the three commits, so the double below models both and `C-11` drives them: a placement sent with
+ * the pane id, a clear sent with NO argument at all, and a receipt whose `route` word is `drag`. **`C-1`…`C-6` AND `C-8`…`C-10` STAY UNTOUCHED** — nothing
+ * they drive moved — and **`C-11` IS RED AT THIS HEAD BY CONSTRUCTION**: the client does not carry the two members until L4 lands, so the row's first
+ * assertion names the absence rather than a behaviour (D-40).
+ *
  * WHAT IS CLAIMED: the shape is filled FROM A READ and never invented; a delivery costs
  * exactly one re-read and ZERO writes; a write is SENT and its receipt lands later; a
  * release withdraws the one registration; and every arm of the client is a VALUE. **NO TIMING
@@ -39,6 +45,7 @@ import {
   type ViewClient,
   type ViewCommittedReading,
   type ViewSubscription,
+  type ViewWriteStatement,
 } from '../../../src/renderer/view-client'
 import {
   DEFAULT_PANE_BOUNDS,
@@ -74,7 +81,7 @@ interface WirePane {
 interface BoundaryDouble {
   readonly member: unknown
   readonly reads: () => number
-  readonly writes: () => readonly { readonly route: 'pane' | 'zone' | 'theme'; readonly args: readonly unknown[] }[]
+  readonly writes: () => readonly { readonly route: 'pane' | 'zone' | 'theme' | 'drag'; readonly args: readonly unknown[] }[]
   readonly registrations: () => number
   readonly withdrawals: () => number
   /** Fire the one push the crossing sends after a committed write. */
@@ -98,7 +105,7 @@ const asBridge = (member: unknown): never => member as never
 function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?: boolean } = {}): BoundaryDouble {
   let reads = 0
   let withdrawals = 0
-  const writes: Array<{ route: 'pane' | 'zone' | 'theme'; args: readonly unknown[] }> = []
+  const writes: Array<{ route: 'pane' | 'zone' | 'theme' | 'drag'; args: readonly unknown[] }> = []
   const handlers: Array<() => void> = []
   let answer: unknown = {
     status: 'committed',
@@ -127,6 +134,17 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
       writes.push({ route: 'theme', args: [token, attributeName] })
       return routeAnswer
     },
+    // **THE DRAG FAMILY'S TWO ROUTES** (`D-132`): the placement the gesture read, sent with the pane id, and the clear — sent with NO argument, which is
+    // the `null` arm `D-140` spent a row removing. Each is recorded as a write, because a route whose call the double never sees is a route the client
+    // did not send.
+    commitDrag: (id: unknown, geometry: unknown): Promise<unknown> => {
+      writes.push({ route: 'drag', args: [id, geometry] })
+      return routeAnswer
+    },
+    clearDrag: (): Promise<unknown> => {
+      writes.push({ route: 'drag', args: [] })
+      return routeAnswer
+    },
   }
   if (options.withRead !== false) {
     member['read'] = (): Promise<unknown> => {
@@ -148,7 +166,7 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
   return {
     member,
     reads: (): number => reads,
-    writes: (): readonly { readonly route: 'pane' | 'zone' | 'theme'; readonly args: readonly unknown[] }[] => writes,
+    writes: (): readonly { readonly route: 'pane' | 'zone' | 'theme' | 'drag'; readonly args: readonly unknown[] }[] => writes,
     registrations: (): number => handlers.length,
     withdrawals: (): number => withdrawals,
     deliver: (): void => {
@@ -279,6 +297,30 @@ describe('view client · the write is SENT, and its receipt is not the answer', 
     expect(outcome?.reason).toBe('malformed-geometry')
     expect(outcome?.message).toBe('the supplied size is not a finite non-negative number')
     expect(outcome?.route).toBe('pane')
+  })
+
+  it('C-11 · THE DRAG ROUTES ARE SENT LIKE ANY OTHER WRITE: `commitDrag` hands the member a pane **id** and a placement, `clearDrag` hands it NOTHING, each answers `{status:\'sent\'}` in the caller\'s turn, and both receipts land with the route word `drag` — never a path and never a tier (D-132)', async () => {
+    const double = doubleOf()
+    const client = createViewClient({ bridge: asBridge(double.member) })
+    // **THE INSTRUMENT, AND WHY IT IS A CAST**: L2 §2 declares the two members on the member and on the client, and the client is compiled before L4
+    // lands — so the row reads the two names off the object L2 declares and answers a red whose message IS the absence (`drag.commitDrag is not a
+    // function`), rather than a `tsc` error that would stop the whole leg from compiling the battery (D-40).
+    const drag = client as unknown as {
+      commitDrag?: (id: string, geometry: unknown) => ViewWriteStatement
+      clearDrag?: () => ViewWriteStatement
+    }
+    expect(typeof drag.commitDrag, 'the client carries the temp family\'s move route').toBe('function')
+    expect(typeof drag.clearDrag, 'and its clear route').toBe('function')
+    const sent = drag.commitDrag as (id: string, geometry: unknown) => ViewWriteStatement
+    const clear = drag.clearDrag as () => ViewWriteStatement
+    expect(sent('pane-a', { size: 180 }), 'the same turn: the placement was handed to the route').toEqual({ status: 'sent' })
+    expect(clear(), 'and the clear is sent with NO argument at all').toEqual({ status: 'sent' })
+    await settle()
+    expect(double.writes(), 'TWO calls at the member\'s drag routes, the second carrying no argument — the `null` arm stays unspent').toEqual([
+      { route: 'drag', args: ['pane-a', { size: 180 }] },
+      { route: 'drag', args: [] },
+    ])
+    expect(client.writeOutcome()?.route as string, 'and the receipt names the drag family, as the three commits name theirs').toBe('drag')
   })
 
   // ── RETIRED WITH ITS REFERENT (`D-9`, `D-142`): `C-7`, 'THE FOCUS ROUTE TAKES THE WHOLE MIRROR' ──

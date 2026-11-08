@@ -1,0 +1,37 @@
+{
+  "unit": "pane-drag-temp",
+  "layer": "L1",
+  "stage": "design",
+  "artifacts": [
+    "l1-design"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-1",
+      "text": "the temp family is keyed by PANE id and carries the placement alone — { [paneId]: { size } } — so the ghost's question is asked at the node that names the pane",
+      "alternative": "keying it by GESTURE id (the gate-era temp.drag.<gestureId>.placement), which makes the address name a gesture the ghost cannot ask about and leaves the reading with no reader (D-132, D-133)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-2",
+      "text": "ending the reading is a DELETE at the family's own tier, so the address answers absent after the gesture",
+      "alternative": "clearing it by writing an empty family, which leaves a temp node standing and makes 'gone' weaker than row 5's word (D-101, row 5)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-3",
+      "text": "the ghost is a DECLARED TRANSIENT declaration on the pane element the wiring already holds — spelled data-ghost=\"temp\", present while the reading names the pane at temp and removed otherwise — observed through provident.get_rendered_html",
+      "alternative": "a graph props write, which re-renders the pane mid-gesture — the re-render hazard D-117's declared transient style write exists to avoid (D-117)",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-4",
+      "text": "two routes (commitDrag, clearDrag) rather than one carrying a null arm",
+      "alternative": "one route with a null argument for the erase, which the store's boundary refuses (measured) and which is the spelling D-140 spent a row removing (D-140)",
+      "status": "reviewed"
+    }
+  ],
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-11-08T05:11:34.420Z"
+}

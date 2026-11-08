@@ -22,7 +22,10 @@
  *         `boundsOf` are `createPaneDrag(...)`'s, so the gesture reads the SHAPE (`paneGeometryIn` over a stub standing for
  *         `['panes']`) and commits through `release` — where before `D-117` it read the authored element's `size`/`min`/`max`
  *         attributes;
- *   (iv)  the PREVIEW write — the declared transient inline-style write on the target (`§2.5` item 4), never a graph write;
+ *   (iv)  the PREVIEW write — the declared transient inline-style write on the target (`§2.5` item 4), never a graph write,
+ *         and THE TWO ROUTES THE APP'S OWN SEAM ADDS AFTER IT (`D-117`, `D-132`): `drag.move` on a valid state, whose `M3`
+ *         sends the ONE `commitDrag` writing the placement at `['drag']`, and `drag.cancel` on an invalid one, whose ending
+ *         deletes that family;
  *   (v)   the CURSOR write — the example's own (`gutterSeamExample().applyCursor`).
  *
  * **THE SEAMS SPLIT EXACTLY WHERE `D-117` SAYS THEY DO.** `gutterSeamExample()` supplies the FOUR that are the EXAMPLE's
@@ -31,6 +34,12 @@
  * The demo supplies the THREE that belong to a caller's own channel: `sizeFromPointer` (see below), `cursorOf` (the
  * example's cursor table is keyed by the example's own axis tokens) and `applyPreview` (the wiring's declared transient
  * write). The SINK is the demo's status node; the ROUTE is `createPaneDrag`'s `release`, writing into `stub-view.ts`.
+ *
+ * **AND THE IN-PROCESS VALUE IS READ AT ITS ADDRESS, WHICH IS WHY NO MEMBER READS IT** (`D-132`; L2 §1): the preview while
+ * the pointer moves is `['drag']` at `temp` — one member per pane id, `{size}` — written by the composition's `move` and
+ * deleted whole by the gesture's ending. This file therefore reads it through the demo's own seam (`stub.drag()`, the
+ * page's stand-in for that family) and NOT through the surface: the `previewOf` member that read a closure copy is
+ * deleted with the copy it read, and a member re-added here would be a second value that could disagree with the address.
  *
  * **THE ONE ARITHMETIC THIS FILE OWNS, STATED SO IT IS NOT MISTAKEN FOR THE APP'S.** `sizeFromPointer` is a CALLER SEAM.
  * The example's form is `pointer.x − start` — a raw magnitude, which reads a sensible size only from a layout whose pane
@@ -128,6 +137,12 @@ const gestureIdOf = (gesture: unknown): string => {
   return typeof held === 'string' ? held : ''
 }
 
+/** **THE DEMO'S ONE GESTURE KEY** — the app's closure keeps one (`GESTURE_KEY`) and hands it to every routed turn, because
+ *  the composition's ending flag is keyed by whatever string it is handed and is total over any string (`renderer.ts`'s
+ *  `gestures`). This page's handle authors no `id`, so the key is the `''` the sink's readout already records, and the
+ *  preview's two routes and the release's sink reading all speak it. */
+const GESTURE_KEY = gestureIdOf(handle)
+
 /** THE PREVIEW — the DECLARED TRANSIENT INLINE-STYLE WRITE on the live target (`§2.5` item 4), never a graph write. */
 const applyPreview = (state: unknown): void => {
   const held = state as { readonly value?: unknown; readonly token?: unknown; readonly valid?: unknown; readonly resizable?: unknown } | null | undefined
@@ -137,6 +152,11 @@ const applyPreview = (state: unknown): void => {
   observed.lastPreview = { value, token: held?.token, valid: held?.valid === true, resizable: held?.resizable === true }
   // THE PREVIEW IS THE TARGET'S OWN WRITE — the readouts follow it, and the RECORD is NOT re-rendered over it.
   target.style.width = `${String(value)}px`
+  // **AND THE ROUTES ARE ADDED, NEVER SUBSTITUTED** (`D-117`'s own seam form): a valid move sends the composition's ONE
+  // `commitDrag` — so the placement lands at `['drag']` and the readout below reads what the composition wrote — and an
+  // invalid one sends its ending, exactly as the app's `applyPreview` does. The style write precedes both.
+  if (held?.valid === true) drag.move(GESTURE_KEY, state)
+  if (held?.valid === false) drag.cancel(GESTURE_KEY)
   renderReadouts()
 }
 
@@ -225,7 +245,7 @@ function renderReadouts(): void {
       `  affordance  ${JSON.stringify(affordanceStats)}`,
       `  controller  ${JSON.stringify(controllerStats)}`,
       `  preview     ${JSON.stringify(observed.lastPreview)}   previews written=${String(observed.previews)}`,
-      `  surface     previewOf('') = ${JSON.stringify(drag.previewOf('') ?? null)}  (the composition's temp preview is NOT written: the preview is the wiring's inline-style write, D-117)`,
+      `  address     ['drag'] = ${JSON.stringify(stub.drag())}   (the composition's ONE write per move and its ending's delete, read at the address the record holds it — D-132: the surface keeps no member for it)`,
       `  releases    ${JSON.stringify(observed.releases)}   sink writes=${JSON.stringify(observed.sinkWrites)}`,
     ].join('\n')
   }
@@ -291,7 +311,7 @@ render()
       sinkWrites: [...observed.sinkWrites],
       previews: observed.previews,
       preview: observed.lastPreview,
-      surfacePreview: drag.previewOf('') ?? null,
+      surfaceDrag: stub.drag(),
       attachRefusals: observed.attachRefusals,
       status: statusNode.textContent,
     },

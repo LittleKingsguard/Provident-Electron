@@ -23,8 +23,10 @@
 //     and the tool's own refusal confined to its arguments (`D-142`, `D-136`, `D-127`). **THE RETARGET LANDED** (`E-1`): the arms these rows drive exist at this head, and each row says which one it is.
 
 import { afterEach, describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
 
 import {
+  createPaneDrag,
   driveTabsLandingPage,
   handleRequest,
   type TabsPageRuntime,
@@ -431,5 +433,235 @@ describe('D-142 — the act, its composition round trip, and the subscriber that
       'DC-7 — a `target` that is not a string can be no row (a tab id is a member key and `TabsRecordRow`\'s `target` a string), so the tool refuses its own argument and no store is asked',
     ).toEqual([])
     expect(typeof bad.ok, 'DC-7 — and the refusal is an answer, not a throw').toBe('boolean')
+  })
+})
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * `DC-8` — THE GHOST'S DELIVERY TURN. The drag's in-process value became an ADDRESS (`['drag']` at `temp`, one member
+ * per pane id, each `{size}`), so the transient a human sees while dragging is no longer a closure value: it is a READ
+ * of that address, painted as the declared `data-ghost` attribute on the pane ELEMENT. Both halves are measured here —
+ * THE TURN (`renderGhost()` over every arm of the read) and THE DELIVERY (the wiring that calls it), because a turn
+ * nothing calls is a turn that paints nothing.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** **THE PANE ELEMENT'S DOUBLE** — `setAttribute`/`removeAttribute` and no more, because that is exactly what the backing
+ *  promises the ghost turn ("anything carrying them"). `declared()` answers what the element carries AFTER the turn, so a
+ *  removal is measured as an absence rather than as a call. */
+interface GhostElementDouble {
+  readonly calls: Array<{ readonly op: 'set' | 'remove'; readonly name: string; readonly value?: string }>
+  readonly declared: () => string | null
+  readonly setAttribute: (name: string, value: string) => void
+  readonly removeAttribute: (name: string) => void
+}
+
+function ghostElement(): GhostElementDouble {
+  const held = new Map<string, string>()
+  const calls: GhostElementDouble['calls'] = []
+  return {
+    calls,
+    declared: (): string | null => held.get('data-ghost') ?? null,
+    setAttribute: (name: string, value: string): void => {
+      calls.push({ op: 'set', name, value })
+      held.set(name, value)
+    },
+    removeAttribute: (name: string): void => {
+      calls.push({ op: 'remove', name })
+      held.delete(name)
+    },
+  }
+}
+
+/** **THE REALM THE GHOST TURN ASKS** — the `data.read` route this process installs as the ambient member, plus a count of
+ *  the reads it answered, so "ONCE per call, no timer, no poll, no retry" is measured rather than assumed. */
+function ghostRealm(answer: () => Promise<unknown>): { reads: () => number } {
+  let reads = 0
+  ;(globalThis as Record<string, unknown>)['window'] = {
+    provident: {
+      data: {
+        read: async (): Promise<unknown> => {
+          reads += 1
+          return answer()
+        },
+      },
+    },
+  }
+  return { reads: (): number => reads }
+}
+
+/** **THE ONE READING THE GHOST PAINTS FOR** — L2's committed branch at the drag's own address, the family standing at
+ *  `temp` for the composition's pane with a usable `size`. */
+const GHOST_STANDS = (): unknown => ({
+  status: 'read',
+  kind: 'branch',
+  path: ['drag'],
+  value: { _tier: 'temp', 'pane-a': { _tier: 'temp', size: 220 } },
+})
+
+/** The microtask settle the turn's `void read(...).then(...)` continuation needs — a handful of turns, no timer. */
+const microtasks = async (): Promise<void> => {
+  for (let n = 0; n < 8; n += 1) await Promise.resolve()
+}
+
+/** **COMMENT-ELIDED SOURCE** — the same discipline `tests/pane-drag-compliance.test.ts` applies, local to this file so a
+ *  prose mention of `ghostTarget`/`renderGhost` can neither make the delivery rows green nor redden them. A line whose
+ *  first non-space characters open a `//`, and every stretch inside `/* … *&#47;`, is dropped. */
+function commentElided(source: string): string {
+  const kept: string[] = []
+  let inBlock = false
+  for (const raw of source.split('\n')) {
+    let line = raw
+    if (inBlock) {
+      const close = line.indexOf('*/')
+      if (close < 0) continue
+      line = line.slice(close + 2)
+      inBlock = false
+    }
+    let out = ''
+    let rest = line
+    for (;;) {
+      const block = rest.indexOf('/*')
+      const slash = rest.indexOf('//')
+      if (slash >= 0 && (block < 0 || slash < block)) {
+        out += rest.slice(0, slash)
+        break
+      }
+      if (block < 0) {
+        out += rest
+        break
+      }
+      out += rest.slice(0, block)
+      const close = rest.indexOf('*/', block + 2)
+      if (close < 0) {
+        inBlock = true
+        break
+      }
+      rest = rest.slice(close + 2)
+    }
+    if (out.trim().length > 0) kept.push(out)
+  }
+  return kept.join('\n')
+}
+
+/** ONE top-level function's CODE, from its header to the next top-level `function` — the region a static row can speak
+ *  about without the whole module's prose. */
+function functionRegion(source: string, header: string): string {
+  const at = source.indexOf(header)
+  if (at < 0) return ''
+  const rest = source.slice(at + header.length)
+  const next = rest.search(/\n(?:export )?(?:async )?function /)
+  return next < 0 ? rest : rest.slice(0, next)
+}
+
+describe('DC-8 — the ghost\'s delivery: `[\'drag\']` at `temp`, read once and painted as a declared transient', () => {
+  it('DC-8(a) — **THE TURN**: `renderGhost()` asks the realm\'s `data.read` ONCE for `{path: [\'drag\']}` and declares `data-ghost="temp"` on the backing\'s target IFF the answer is a committed reading whose node stands at `temp` for the composition\'s pane with a usable `size` — and REMOVES the declaration, throwing nothing, on every other arm: no `data` member at all, a route that throws, the `absent` arm, a node at `file`, a node naming another pane, a non-finite size, and a target that cannot take attributes', async () => {
+    const target = ghostElement()
+    const surface = createPaneDrag({ view: null, ghostTarget: target }, null) as unknown as Record<string, unknown>
+    expect(
+      typeof surface['renderGhost'],
+      'DC-8(a) — the composition carries `renderGhost()`: without the turn the drag\'s address has no transient and the pane nothing to show',
+    ).toBe('function')
+    const ghost = (): void => (surface['renderGhost'] as () => void).call(surface)
+
+    // (1) THE STANDING ARM — ONE read, and the declaration is the family's tier word.
+    const standing = ghostRealm(async () => GHOST_STANDS())
+    ghost()
+    await microtasks()
+    expect(standing.reads(), 'DC-8(a) — ONE `data.read` per call, never a poll and never a retry').toBe(1)
+    expect(target.declared(), 'DC-8(a) — the declared transient names the tier the family stands at').toBe('temp')
+    expect(target.calls, 'DC-8(a) — and it is the ONE member the contract names').toEqual([
+      { op: 'set', name: 'data-ghost', value: 'temp' },
+    ])
+
+    // (2) THE REMOVAL ARMS, EACH ON A TARGET THAT IS STANDING FIRST — so a removal is a REMOVAL and not a turn that never ran.
+    const arms: Array<{ readonly label: string; readonly install: () => () => number }> = [
+      {
+        label: 'no `data` member at all',
+        install: (): (() => number) => {
+          ;(globalThis as Record<string, unknown>)['window'] = {}
+          return (): number => 0
+        },
+      },
+      {
+        label: 'a route that throws',
+        install: (): (() => number) =>
+          ghostRealm(async (): Promise<unknown> => {
+            throw new Error('the route threw (DC-8a)')
+          }).reads,
+      },
+      { label: 'the `absent` arm', install: (): (() => number) => ghostRealm(async () => ({ status: 'absent', path: ['drag'] })).reads },
+      {
+        label: 'a node standing at `file`',
+        install: (): (() => number) =>
+          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'file', 'pane-a': { _tier: 'file', size: 220 } } })).reads,
+      },
+      {
+        label: 'a node naming only another pane',
+        install: (): (() => number) =>
+          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'temp', 'pane-b': { _tier: 'temp', size: 220 } } })).reads,
+      },
+      {
+        label: 'a non-finite size',
+        install: (): (() => number) =>
+          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'temp', 'pane-a': { _tier: 'temp', size: Number.NaN } } })).reads,
+      },
+      { label: 'a ledger arm', install: (): (() => number) => ghostRealm(async () => ({ status: 'refused', reason: 'parent-absent', message: 'no family stands' })).reads },
+    ]
+    for (const arm of arms) {
+      // THE CONTROL: every arm starts with the declaration STANDING, so a removal below is a removal.
+      ghostRealm(async () => GHOST_STANDS())
+      ghost()
+      await microtasks()
+      expect(target.declared(), `DC-8(a) — the control: the declaration stands before the \`${arm.label}\` arm runs`).toBe('temp')
+      const reads = arm.install()
+      expect(() => ghost(), `DC-8(a) — \`${arm.label}\` throws nothing out of the turn`).not.toThrow()
+      await microtasks()
+      expect(target.declared(), `DC-8(a) — \`${arm.label}\` REMOVES the declaration: a transient is painted from a standing family and from nothing else`).toBeNull()
+      expect(reads(), `DC-8(a) — and \`${arm.label}\` was asked AT MOST ONCE: the turn polls, retries and times nothing`).toBeLessThanOrEqual(1)
+    }
+
+    // (3) A TARGET THAT CANNOT TAKE ATTRIBUTES: the turn is TOTAL over its backing too — no throw, and nothing to remove.
+    const inert = createPaneDrag({ view: null, ghostTarget: {} as never }, null) as unknown as Record<string, unknown>
+    ghostRealm(async () => GHOST_STANDS())
+    expect(() => (inert['renderGhost'] as () => void).call(inert), 'DC-8(a) — a target with no `setAttribute`/`removeAttribute` throws nothing').not.toThrow()
+    await microtasks()
+  })
+
+  it('DC-8(b) — **THE DELIVERY**: the ghost turn is what paints the declaration, and the DELIVERY is what drives it — `startViewShape`\'s ONE `client.subscribe(…)` body calls the ghost turn beside `theme?.apply()`, `main()` hands that turn to `startViewShape`, and the composition is constructed with a `ghostTarget`; the composition itself registers NO subscriber, so a turn the delivery does not call is never called at all', () => {
+    const code = commentElided(readFileSync(new URL('../src/renderer/renderer.ts', import.meta.url), 'utf8'))
+    expect(code.length, 'DC-8(b) — the elided source is not empty: the elider did not swallow the module').toBeGreaterThan(0)
+
+    // (1) THE SUBSCRIPTION BODY CARRIES THE GHOST TURN — the region is `startViewShape`'s own code, up to the next
+    //     top-level function, so a call anywhere else in the file cannot answer for it.
+    const region = functionRegion(code, 'function startViewShape(')
+    expect(region.length, 'DC-8(b) — `startViewShape` is a top-level function in the wiring').toBeGreaterThan(0)
+    expect(
+      /theme\?\.apply\(\)/.test(region),
+      'DC-8(b) — the region really is the delivery body: it carries the appearance turn this row reads beside the ghost',
+    ).toBe(true)
+    expect(
+      /renderGhost\s*\(|\bghost\b[^\n]{0,60}\(/.test(region),
+      'DC-8(b) — THE DELIVERY IS WHAT DRIVES THE GHOST: the ONE `client.subscribe(…)` body must call the ghost turn beside `theme?.apply()`, and the composition registers no subscriber of its own — a ghost turn nothing calls paints nothing',
+    ).toBe(true)
+
+    // (2) `main()` HANDS THAT TURN TO `startViewShape`.
+    expect(
+      /startViewShape\(\s*themeApplication\s*,/.test(code),
+      'DC-8(b) — `main()` calls `startViewShape(themeApplication, <the ghost turn>)`: the boot builds the shape AND the turn its delivery runs',
+    ).toBe(true)
+
+    // (3) THE COMPOSITION IS CONSTRUCTED WITH A `ghostTarget` — the pane ELEMENT the declaration lands on, beside the
+    //     shape it reads. The window below the `createPaneDrag(` line is what a multi-line construction needs.
+    const lines = code.split('\n')
+    const sites = lines
+      .map((line, index) => ({ line, index }))
+      .filter((site) => /createPaneDrag\(/.test(site.line) && !/function\s+createPaneDrag/.test(site.line))
+    expect(sites.length, 'DC-8(b) — ONE construction site in the wiring (the declaration is excluded)').toBe(1)
+    const construction = lines.slice(sites[0]!.index, sites[0]!.index + 4).join('\n')
+    expect(
+      /ghostTarget/.test(construction),
+      'DC-8(b) — the composition is constructed with a `ghostTarget`: the declaration has a pane element to land on, and a composition with none could paint nothing',
+    ).toBe(true)
+    // AND THE SHAPE STILL RIDES IT — the read the ghost turn follows is the same client's.
+    expect(/view\s*:\s*getViewClient\(\)/.test(construction), 'DC-8(b) — and the shape is still handed with it').toBe(true)
   })
 })
