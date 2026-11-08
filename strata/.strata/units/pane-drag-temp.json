@@ -1,9 +1,10 @@
 {
   "unit": "pane-drag-temp",
-  "layer": "L1",
+  "layer": "L4",
   "stage": "design",
   "artifacts": [
-    "l1-design"
+    "l1-design",
+    "l4-implementation"
   ],
   "assumptions": [
     {
@@ -33,5 +34,5 @@
   ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-11-08T05:11:34.420Z"
+  "updated": "2026-11-08T19:19:06.535Z"
 }
