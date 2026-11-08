@@ -18,13 +18,20 @@
 // and `read` each take an optional `tier` from the store's own three tokens; a `write` that omits it
 // gets `file`, the tier this surface has always written, and a read or a delete that omits it gets
 // the store's own unqualified verb (`args.ts`). AND THE ONE THING THE CALLER CANNOT CHOOSE is a
-// DECLARED root's tier: the roots the two crossings declare — `['tabs']`, `['panes']`,
-// `['zones']` and the view record's third, which `D-98` moved to the durable tier — are split between
-// the two tiers, and this file SPELLS none of them in code: the pairs arrive as
-// `DataSurfaceOptions.declaredRoots`, so a write or a delete at one of those roots is admitted only
-// at the family's own tier and is refused `declared-tier` otherwise, ahead of the reading and of any
-// byte. **THE ROOT NAMES AND THE TIER WORDS STAND IN THE MODULES THAT DECLARE THEM AND NOWHERE HERE**:
-// a family that moves tier moves in one place, and this guard cannot drift from it (D-53).
+// DECLARED root's tier: the TWO crossings declare FIVE of them — the tab record's ONE, `['tabs']`, and
+// the view record's FOUR: `['panes']`, `['zones']`, the third, which `D-98` moved to the durable tier
+// and which this file therefore does not name, and the fourth, the gesture record's own transient
+// family, declared at the tier that persists nowhere and the ONE entry with NO CONSTRAINT behind it
+// (`D-145`) — split across the store's three tokens, and this file SPELLS none of them in code: the
+// pairs arrive as `DataSurfaceOptions.declaredRoots`, so a write or a delete at one of those roots is
+// admitted only at the family's own tier and is refused `declared-tier` otherwise, ahead of the
+// reading and of any byte. **THE ROOT NAMES AND THE TIER WORDS STAND IN THE MODULES THAT DECLARE THEM
+// AND NOWHERE HERE**: a family that moves tier moves in one place, and this guard cannot drift from it
+// (D-53). **AND THE UNPAIRED ENTRY IS LAWFUL RATHER THAN AN OMISSION, AND STILL BUYS THE FAMILY'S ONE
+// JUDGEMENT**: no invariant holds a gesture transient, and a repair whose subject is "no gesture has
+// started" would only mint a placeholder for data whose ABSENCE is the product — yet the guard keys on
+// the roots it is HANDED and not on the declared batch, so a `file` or a `mem` write at that transient
+// root is refused `declared-tier` ahead of any store verb (`D-145`, `D-101`).
 //
 // **A PASSING `write` AND A PASSING `delete` ANSWER WITH THE COMMIT'S LOG, AND NOTHING ELSE DOES (D-103).**
 // `repaired` says whether a declared pair rewrote the value inside the caller's own commit, and `log` is the

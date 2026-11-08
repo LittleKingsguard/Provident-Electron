@@ -143,7 +143,7 @@ export interface ViewClientOptions {
   readonly bridge?: ViewClientBridge | null
 }
 
-/** **THE CLIENT — the shape, the synchronous reads the drag needs, and the FIVE routes.** */
+/** **THE CLIENT — the shape, the synchronous reads the drag needs, and the FIVE WRITE routes it SENDS (`commitPane`/`commitZones`/`commitTheme`/`commitDrag`/`clearDrag`); the BRIDGE's SEVEN are those five plus `read` and `onChanged`, which this client reaches as `fill()` and `subscribe()`.** */
 export interface ViewClient {
   /** THE SHAPE AS IT STANDS — `filled: false` before anything has answered. */
   shape(): ViewShape

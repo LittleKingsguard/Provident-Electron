@@ -1167,6 +1167,15 @@ const DECLARED_SCOPE: readonly string[] = [
   //    **NOTHING THE CLOSE WROTE IS ABSORBED SILENTLY**: the two entries above are the whole of what `B-1` reported outside
   //    this union at this head, and `docs/L1/pane-drag-temp.md`, `docs/L2/view-record/interface.md`, the re-grained batteries
   //    and the two `strata/.strata/` state files are not new entries because they already stand above — a write is not a claim.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── THE DRAG'S SEAT — `tests/unit/renderer-wiring/preview-seat.test.ts`, AND IT JOINS THIS UNION AS ONE PATH AND NEVER AS A
+  //    PREFIX (`tests/unit/renderer-wiring/` would admit every file a later pass drops beside it, and a directory measures
+  //    nothing). **THE FILE IS THIS UNIT'S EVEN THOUGH IT SITS UNDER ANOTHER MODULE'S UNIT PATH**: `docs/L3/renderer-wiring/
+  //    design.md` §8 records that the drag's seat is measured by NOTHING AT ALL and names this row as the one OWED for it, so
+  //    `store-view-record` declares it here rather than leaving the pass that writes it to widen a scope it does not own. A
+  //    file no entry above carries is exactly what `B-1` reports as an offender, which is why the entry is added WITH the file
+  //    and not after it.
+  'tests/unit/renderer-wiring/preview-seat.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
