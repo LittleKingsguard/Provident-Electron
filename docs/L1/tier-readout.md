@@ -1,11 +1,11 @@
 # L1 — `tier-readout`: `data.read` answers each node's own tier, composed over `readTiered`
 
-- **Layer:** L1 · **Unit:** `tier-readout` · **Branch:** `strata` (D-6) · **Rev:** 1 — rev 1 carries row `6` of
-  `strata/next-steps.md` on the adoption `D-133`/`D-134` already landed, and states the reachability split against row `5` (§5)
+- **Layer:** L1 · **Unit:** `tier-readout` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 2 records `E-8`'s landing at
+  `npm run crossings` (28/28 rows, `0` failures); rev 1 carried row `6` of `strata/next-steps.md` and the reachability split (§5)
 - **Charter:** the user's finding, verbatim — *"The returned object should already include the tier data. If it doesn't that
   is a defect."* — answered by `1.10.0`'s `readTiered`: ONE `_tier` at EVERY node the read returns (D-133, D-134)
-- **Status:** DESIGN — the unit is admitted at L1 and `src/**` is read-only in this pass. Every row of §4 is RED until L4
-  lands, and each red is the absence its row NAMES, never an authoring error (§4, D-40)
+- **Status:** LANDED — the answer shape is in `src/**` (`E-1`…`E-4`) and the three e2e sites' re-grain sits in
+  `tests/e2e/` (`E-5`, `E-7`, `E-8`) at this head, so no edit of this unit is owed (§7, §8, D-134)
 - **Ceiling:** 150 lines (class max), split by owner, never appended (D-1, D-2)
 - **Write scope:** `docs/L1/`, `tests/e2e/`, `strata/modules.json`, `strata/marks.json` (brief §3, D-30).
   `provident-storeroom` is READ AND NEVER MODIFIED (D-5)
@@ -42,21 +42,20 @@ is a summary that cannot be kept true (D-43, D-26). The paths below are the ones
 
 | Row | What this unit's design lands on it | The row's paths this design reaches |
 |---|---|---|
-| `central-data` | **THE OWNER row `6` names.** The answer shape (§3); **`tests/e2e/tier-readout/` is FILED on this row** (§4, D-10); and the map's `endpoints` moves `15 → 16` for the ONE call `E-2` adds: when the composition lands, `readTiered` JOINS the called package exports, and `read` and `readLiteral` keep their own call sites (`list`'s walk, `delete`'s standing probe, `src/main/data/surface.ts`) — so the figure rises by one and falls by none under `D-14`'s `N` convention. At this head `grep -rn "readTiered" src/` answers the seam's census line and no caller, which is the composition this unit is (D-14, D-101, D-41) | `src/main/data/types.ts`, `src/main/data/surface.ts`, `src/main/data/index.ts`, `tests/e2e/tier-readout/` (filed by this unit), `tests/e2e/central-data/`, `tests/integration/central-data/{bridge-route,value-arms,declared-root,message-log}.test.ts` — and **`src/main/storeroom.ts` is claimed and gains NO byte** (§1, D-134) |
-| `mcp-surface` | the tool's NAME, its two-member argument schema and its registration are UNMOVED; **its DESCRIPTION** stops promising a bare value — one sentence, that row's L4's edit and named here, not taken (D-18) | `src/main/mcp-server.ts` |
+| `central-data` | **THE OWNER row `6` names.** The answer shape (§3); **`tests/e2e/tier-readout/` is FILED on this row** (§4, D-10); and the map's `endpoints` moved `15 → 16` for the ONE call `E-2` adds: `readTiered` JOINS the called package exports, and `read` and `readLiteral` keep their own call sites (`list`'s walk, `delete`'s standing probe, `src/main/data/surface.ts`) — so the figure rises by one and falls by none under `D-14`'s `N` convention. **THE CALL STANDS AT THIS HEAD**: the map reads `16`, and `grep -rn "readTiered" src/` answers the seam's census line, this module's `DataReadNode` alias (`types.ts`) and `surface.ts`'s ONE call — which is the composition this unit is (D-14, D-101, D-41, D-134) | `src/main/data/types.ts`, `src/main/data/surface.ts`, `src/main/data/index.ts`, `tests/e2e/tier-readout/` (filed by this unit), `tests/e2e/central-data/`, `tests/integration/central-data/{bridge-route,value-arms,declared-root,message-log}.test.ts` — and **`src/main/storeroom.ts` is claimed and gains NO byte** (§1, D-134) |
+| `mcp-surface` | the tool's NAME, its two-member argument schema and its registration are UNMOVED; **its DESCRIPTION** stops promising a bare value — one sentence, LANDED by that row's L4 (`E-4`) and named here, L1 taking no byte of it (D-18) | `src/main/mcp-server.ts` |
 | `renderer-wiring` | no `src/renderer/` byte: the `data.read` arm is a pass-through, so what moves is its battery's record READER, which unwraps the answer's `value` | `tests/e2e/focus-retirement/` |
 | `store-tabs-record` | no `src/main/tabs-record/` byte: the leg's `recordView` reader and `X-31`'s `row` arm read `data.read`'s answer | `tests/e2e/store-crossings/` |
 
-`app-shell` is named and NOT claimed: the five `ipcMain.handle` sites and the preload's five members carry the answer as a
-value and move no member, so this unit adds no route and no bridge surface (D-112, D-18). `central-data`'s `S-9` row stays
-GREEN: it pins the seam's census, which `D-134` already re-grained (D-134).
+`app-shell` is named and NOT claimed: the five `ipcMain.handle` sites and the preload's five members carry the answer as a value and move no member, so this unit adds no route and no bridge surface
+(D-112, D-18). `central-data`'s `S-9` row stays GREEN: it pins the seam's census, which `D-134` already re-grained (D-134).
 
 ## 3. The module-interaction table
 
 | Question | The answer this unit fixes | Cite |
 |---|---|---|
 | Who asks? | an agent's `provident.data.read` over either transport, and the renderer's own `window.provident.data.read` — the five arms and five `ipcMain.handle` sites `D-112` landed | D-112, D-18 |
-| Who answers? | `createDataSurface().read` in main, over the boot's ONE instance: `store.readTiered(address, tier?)`, ONE call per read — the `readLiteral`-then-`read` pair the two passing arms compose today is what the composition replaces | D-134, D-80 |
+| Who answers? | `createDataSurface().read` in main, over the boot's ONE instance: `store.readTiered(address, tier?)`, ONE call per read — so the `readLiteral`-then-`read` pair the two passing arms composed until THIS unit replaced it survives only in `list`'s walk and `delete`'s standing probe | D-134, D-80 |
 | At which tier? | the caller's `tier` when one is named, and the store's unqualified walk across every tier when none is — which is exactly why the readout is per node and not per call | D-101, D-134 |
 | Which arms gain a readout? | both PASSING arms — `kind:'row'` and `kind:'branch'` — and every node inside them, at every depth | D-134 |
 | Which arms gain NOTHING? | `absent` and every `DataLedger` arm: an absence states a fact about the caller's own argument, and a refusal that never reached a store has no node to name — the same reading that keeps `log` off those arms | D-133, D-107 |
@@ -66,15 +65,16 @@ GREEN: it pins the seam's census, which `D-134` already re-grained (D-134).
 
 ## 4. The `§5.T`-style e2e matrix — `tests/e2e/tier-readout/`
 
-Every row is an **agent-or-drive exchange at a process boundary**: an MCP call over the built bundle's stdio, a drive of the
-app's own `window.provident.data` member inside its renderer realm, the app's own profile file read by this process, or a
-second boot on the same profile. No row imports `src/**` — the internals it would name are the ones this design moves — and no
-row is skipped, conditionally disabled or softened (D-30, D-40, D-27). **Every row is RED at this head and red for the absence
-it names**: today's answer is `{status, kind, path, value}` with a bare value and no `_tier` anywhere (D-133, D-134).
+Every row is an **agent-or-drive exchange at a process boundary**: an MCP call over the built bundle's stdio, a drive of the app's own `window.provident.data` member inside its renderer realm,
+the app's own profile file read by this process, or a second boot on the same profile. No row imports `src/**` — the internals it would name are the ones this design moves — and no row is
+skipped, conditionally disabled or softened (D-30, D-40, D-27). **THE LIVE BOOTS ARE SERIALISED, AND THIS MATRIX OWES THE FACT** (D-1, D-43): `tests/e2e/focus-retirement/` spawns the same bundle,
+so each boot holds a host-wide live-boot lock from spawn to proved-zero teardown — the rule `npm run crossings` keeps by awaiting five boots in ONE process (D-94) — and waits for the WHOLE
+artifact set `npm run build` produces, main bundle, preload and the renderer's page and bundle together, because three sibling files run that build and its first arm deletes `dist/`.
+Neither wait moves a row's bound, subject or count. **Every row is GREEN at this head**, and each was red for exactly the absence it names until the composition landed: the answer that carried a bare value with no `_tier` anywhere is the state `D-134`'s verb supersedes, and `D-133`'s echo shape was superseded BY POINTER before it was built (D-46, D-134).
 
 | Id | What it drives | What it measures | The boundary it stands on | Its declared failure mode |
 |---|---|---|---|---|
-| `T-1` | one scratch profile, one boot: seed `['tier-shape']` at `file` with a value carrying a scalar, a boolean, a number, a dense array and a nested object, then `provident.data.read` at the object address and at one leaf address | **the readout is a TOTAL FUNCTION OF NODE KIND**: the object address answers `kind:'branch'` with `{_tier:'file', …members}` inline and no `value` wrapper, its array member is `{_tier, value:[…]}` with each element its own node, and the leaf address answers `kind:'row'` with `{_tier:'file', value:<the literal>}` — asserted by EQUALITY, so a fifth node form or a bare value reds | an agent's `data.write` and `data.read` over stdio | the value stands plain (today's shape), or the wrapper is applied to an object node, or a leaf's literal is wrapped twice, or `kind` disagrees with the node |
+| `T-1` | one scratch profile, one boot: seed `['tier-shape']` at `file` with a value carrying a scalar, a boolean, a number, a dense array and a nested object, then `provident.data.read` at the object address and at one leaf address | **the readout is a TOTAL FUNCTION OF NODE KIND**: the object address answers `kind:'branch'` with `{_tier:'file', …members}` inline and no `value` wrapper, its array member is `{_tier, value:[…]}` with each element its own node, and the leaf address answers `kind:'row'` with `{_tier:'file', value:<the literal>}` — asserted by EQUALITY, so a fifth node form or a bare value reds | an agent's `data.write` and `data.read` over stdio | the value stands plain (the shape this unit replaced), or the wrapper is applied to an object node, or a leaf's literal is wrapped twice, or `kind` disagrees with the node |
 | `T-2` | one boot: seed `['tier-file']` at `file` and `['tier-mem']` at `mem`, then ONE `provident.data.read({path:[]})` with no tier | **ONE CALL RETURNS NODES AT DIFFERENT TIERS, EACH NAMED BY ITSELF**: the register node's `tier-file` member answers `_tier:'file'` and its `tier-mem` member `_tier:'mem'`, in the same answer — and the register node itself carries one `_tier` in the three-token domain, asserted as a member of the set and not pinned to a token | an agent's two writes and one read over stdio | one tier repeated across the answer, a set or an array at `_tier`, or no `_tier` at the register node |
 | `T-3` | one boot: a seeding `provident.data.write` at `['tier-file']`, then `provident.data.read` at that address naming `tier:'file'`, then at the SAME address naming `tier:'mem'`, then at a volatile spelling | **THE READOUT IS IN THE NODE AND THE ARMS THAT GAIN NOTHING GAIN NOTHING**: the narrowed read's node answers `_tier:'file'` and its answer's key set is exactly `['kind','path','status','value']`; the read at `mem` answers `status:'absent'` with keys exactly `['path','status']` — no `_tier` and no `tier`; the volatile refusal is a ledger carrying neither | one seeding write and three reads — four agent acts over stdio | a `tier` member on either the passing or the absent arm (the superseded echo), or an absence answering a node, or a narrowed read naming the wrong tier |
 | `T-4` | one boot: seed `['tier-temp']` at `temp`, read it, then seed the SAME address at `mem` and read it again — **the tier row `5`'s drag will write, reached through the agent's own route** (§5) | **`temp` IS READABLE AND ITS READOUT FOLLOWS THE WINNING VERSION**: the first read answers `_tier:'temp'`, the second `_tier:'mem'` carrying the later value, so a `mem` write shadows a `temp` one and the readout says which won | two writes and two reads — four agent acts over stdio | `temp` refused or unreachable through the agent's route, the readout naming the first tier after the shadowing write, or the value and the tier disagreeing |
@@ -103,7 +103,8 @@ Row `6`'s `Closed when` ends with a clause whose artefact is ROW `5`'s, so the s
 > the bump, and the pane renderer's ghost asks the DELIVERY for the tier instead of the client inventing a member
 
 The first clause is `D-134`'s landed half; the second is §4's rows `T-1`…`T-3` and `T-5`…`T-8`; the third is §7's `E-1`…`E-4`
-landing green on all four node legs with the reached Electron leg re-taken beside them; and the fourth splits as §5 states, its
+green on the four node legs with the reached Electron leg re-taken beside them — and that leg is `crossings`, whose `E-8`
+pass reads 28 rows and `0` failures, so THE THIRD CLAUSE IS DISCHARGED AT THIS HEAD; the fourth splits as §5 states, its
 answer half here and its asker half on row `5` (D-134, D-133).
 
 ## 7. The licensed edit list, by path — one writer each (D-3, D-4)
@@ -119,10 +120,10 @@ precondition, whose original subject is the row-`5` `temp` root).
 | `E-2` | `src/main/data/surface.ts` (`central-data`) | `read`'s ONE call to the tiered verb through the boot's instance, and its `kind` derived from the node it received; `list`'s walk and `delete`'s probe unmoved (D-101) | its L4, one shot |
 | `E-3` | `src/main/data/index.ts` (`central-data`) | the export of the node type the answer now names — a TYPE re-export, so no value joins the module's one entry and no second spelling of the shape appears (D-53) | its L4, one shot |
 | `E-4` | `src/main/mcp-server.ts` (`mcp-surface`) | the `provident.data.read` description's answer sentence; no member, no tool, no group, no count (D-18) | that row's L4, one shot |
-| `E-5` | `tests/e2e/central-data/scenarios.test.ts` (`central-data`) | `S-3`, `S-4`, `S-5`, `S-6`, `S-12`'s read literals re-grained to the tiered value; `S-9`'s census row unmoved (D-134) | this unit's L1 battery pass, with `E-1`/`E-2` |
-| `E-6` | `tests/integration/central-data/{bridge-route,value-arms,declared-root,message-log}.test.ts` (`central-data`) | the same re-grain across the integration battery — gating and unmarked, so a stale literal reds a leg (D-40) | its L2 test pass, with `E-1`/`E-2` |
-| `E-7` | `tests/e2e/focus-retirement/focus-retirement.test.ts` (`renderer-wiring`) | `readAddress`/`recordOf` unwrap the node before the record readers run; no row's claim moves | L1's battery pass, with `E-1`/`E-2` |
-| `E-8` | `tests/e2e/store-crossings/crossings-live.mjs` (`store-tabs-record`) | `recordView` and `X-31`'s `row` arm read the node; the leg's row COUNT is unmoved (D-94) | L1's battery pass, with `E-1`/`E-2` |
+| `E-5` | `tests/e2e/central-data/scenarios.test.ts` (`central-data`) | `S-3`, `S-5`, `S-6`, `S-12`'s SIX read literals re-grained to the leaf node `{_tier:'file', value}` — the same six answers, pinned BY EQUALITY; `S-4` compares one answer with another and takes no grain, `S-9`'s census row is unmoved (D-134) | LANDED — this unit's L1 battery pass |
+| `E-6` | `tests/integration/central-data/{bridge-route,declared-root,message-log}.test.ts` (`central-data`) | the same re-grain across the integration battery — gating and unmarked, so a stale literal reds a leg (D-40); `value-arms` is that battery's fourth unmarked gating file and pins no `data.read` answer, and its other three (`surface`, `profile-file`, `registration`, each `strata:marked-file`) carry it as `SF-1`…`SF-6`, `PF-1`…`PF-3` and `RG-1` under that module's own L2 pass (`interface.md` rev 15 names them by id) | LANDED — its L2 test pass, with `E-1`/`E-2` |
+| `E-7` | `tests/e2e/focus-retirement/focus-retirement.test.ts` (`renderer-wiring`) | `plainOf`, beside `recordOf`, projects the node ONCE before the record readers run — so `F-1`/`F-2`/`F-5` keep their subject, id and gating status; `F-3`/`F-4` read the bridge and an absence and move no byte | LANDED — L1's battery pass |
+| `E-8` | `tests/e2e/store-crossings/crossings-live.mjs` (`store-tabs-record`) | `recordView` requires the answer's node, keeps its `_tier` and projects it ONCE (`plainOf`) for the record's readers; `X-1` pins `kind`/`_tier` and `X-31` the leaf node beside the `absent` arm's member set; the six rows the shape moved are `X-1`/`X-3`/`X-5`/`X-6`/`X-7`/`X-31`, and the leg's row COUNT is unmoved at 28 (D-94) | LANDED — that leg's own pass: `npm run crossings` reads 28 rows, `0` failures |
 
 ## 8. What this unit does not do
 
@@ -132,8 +133,8 @@ precondition, whose original subject is the row-`5` `temp` root).
   (D-132, D-133).
 - **No package change**, at any layer: `provident-storeroom` is read and never modified, and the verb was adopted from the
   registry at `D-134` (D-5).
-- **The reached batteries are NOT re-grained in this pass**: `E-5`…`E-8` land with the shape, because a re-grain ahead of it is
-  a battery measuring a state the tree has not reached (D-137, D-30).
+- **The reached batteries were re-grained WITH the shape, never ahead of it** — a re-grain that runs first measures a state
+  the tree has not reached: `E-5`/`E-6`/`E-7` landed beside it, and `E-8` at that leg's own sites (D-137, D-94, D-37).
 - **`docs/L1/central-data-management.md` §5's `S-9` row still reads "(14 members / 11 symbols)"** and is that LANDED document's
   dated row; the live figure is the seam's own census and `D-134`, re-measured at `tests/e2e/central-data/`'s `S-9`. Named here
   and not edited, because a landed unit's document is re-grained by the pass that owns its number (D-43, D-26, D-3).

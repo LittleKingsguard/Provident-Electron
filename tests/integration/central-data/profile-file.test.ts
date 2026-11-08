@@ -16,6 +16,17 @@
 // reading answers `absent` and which the supplied instance re-creates on its next save — and arm one
 // measures the reading on a name that cannot be occupied, with the store supplied from the boot so that
 // the refusal is provably the READING's and not a store's.
+//
+// DISPOSITION UNDER THE READOUT (`D-134`, `D-30`, `D-143`) — THREE SITES, ALL THREE RE-GRAINED IN PLACE AND NONE
+// RETIRED. `PF-1` and `PF-2` move to the LEAF node `{_tier:'file', value:'x'}` that a passing read now answers — `PF-1`
+// after a seeded `{}` image, `PF-2` after a foreign image the boot replaced by declaration. `PF-3` is the one site here
+// whose CLAIM moves and not only its grain: the profile's name is REMOVED under the live store, so the empty address
+// answers `absent` at `[]` — the arm §2a declares, no store having answered and this module spelling no tier of its own
+// to mint a node with. Every other row of this file — the one written name, the app's own boot image, the two
+// unreachability arms, and the delete across a fresh surface — is UNTOUCHED: their subject is the profile's BYTES or
+// an absence, and neither carries a node.
+// **EACH RE-GRAINED SITE IS RED AT THIS HEAD FOR THE ABSENCE IT NAMES** until L4 lands `interface.md` §9's H-2, and the
+// marker above stays, for the reason `surface.test.ts`'s header block states (D-30, D-31, D-134, `D-143`).
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -126,7 +137,9 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     expect(s.list({})).toEqual(coldList)
     expect(s.read({ path: ['alpha'] })).toEqual({ status: 'absent', path: ['alpha'] })
     expect(s.write({ path: ['alpha'], value: 'x' })).toMatchObject({ status: 'committed', path: ['alpha'] })
-    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
+    // PF-1 — RE-GRAINED IN PLACE (§2a): the seeded image held no row, so the commit's version is the only one and its
+    // node names `file`, the tier the write defaulted to.
+    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'x' } })
     expect(readFileSync(profilePath, 'utf8').includes('alpha'), 'the bytes now describe the state the act left').toBe(true)
   })
 
@@ -144,7 +157,8 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     const text = readFileSync(profilePath, 'utf8')
     expect(text === foreign, 'the foreign image is replaced, not preserved').toBe(false)
     expect(text.includes('alpha')).toBe(true)
-    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
+    // PF-2 — RE-GRAINED IN PLACE (§2a): the row the recovering write landed is served as its LEAF node.
+    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'x' } })
   })
 
   it('a profileDir whose name cannot be occupied → store-unreachable on every tool, the store never consulted, and nothing created', () => {
@@ -183,7 +197,11 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     rmSync(profilePath)
     expect(s.list({}), 'list answers the cold tier, not a refusal').toEqual(coldList)
     expect(s.read({ path: ['alpha'] }), 'and NOT the row the instance still holds: the reading is taken first').toEqual({ status: 'absent', path: ['alpha'] })
-    expect(s.read({ path: [] })).toEqual({ status: 'read', kind: 'branch', path: [], value: {} })
+    // PF-3 — RE-GRAINED, AND THIS ROW'S CLAIM MOVES WITH THE SHAPE (§2a). The name does NOT stand, so the reading
+    // answers the COLD tier ahead of any store: no store answered, there is no node to compile a readout from, and this
+    // module spells no tier of its own to mint one with — so the empty address answers `absent` at `[]`, never the
+    // `{kind:'branch', value:{}}` the surface used to compose (D-80, D-101, D-134).
+    expect(s.read({ path: [] })).toEqual({ status: 'absent', path: [] })
     expect(s.delete({ path: ['alpha'] }), 'the empty receipt §6 declares, reached with no store refusal leaving this module').toEqual({ status: 'committed', path: ['alpha'], removed: false, tiers: [], cursor: null, repaired: false, log: [] })
     expect(s.journal({}), 'journal is not refused and not emptied: the name is merely absent, so the window answers as it stood').toEqual({
       status: 'read',

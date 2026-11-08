@@ -5,9 +5,10 @@
 // storeroom `1.10.0` `TieredNode`: an OBJECT node is `{_tier, …members}` (members INLINE, no `value` wrapper), an
 // ARRAY node is `{_tier, value: [ <node>, … ]}` and a LEAF node is `{_tier, value: <literal>}`, and every `_tier` is
 // THAT node's OWN tier — one of `mem`/`file`/`temp`, never a set (D-133, D-134, `index.d.ts`'s `TieredNode`).
-// **So every row below is RED at this head, and red for the absence it NAMES**: today's passing answer is
-// `{status, kind, path, value}` with `value` plain and no `_tier` anywhere. That is the correct reading before L4
-// lands; it is also the only thing that makes these rows evidence (`strata/examiner.md` §2-§3, D-27, D-40).
+// **So every row below WAS RED at this head until the shape landed, and each red was the absence it NAMED**: the answer
+// then was `{status, kind, path, value}` with `value` plain and no `_tier` anywhere. The shape has LANDED (`E-1`/`E-2`), so
+// the eight are GREEN at this head and the paragraph is kept as the red-first record — the thing that makes them evidence
+// (`strata/examiner.md` §2-§3, D-27, D-40).
 //
 // THE GRAIN IS THE BUILT APP AND THE APP'S OWN EXTERNAL SURFACE (D-27): every row spawns the bundle `npm run build`
 // produces, on ITS OWN scratch profile, handshakes the MCP client over its stdio transport, and drives
@@ -36,7 +37,7 @@
 // assertion answer; and `afterAll` SIGKILLs every process tree this file spawned, PROVES zero survivors and only then
 // removes the profiles (`D-74`).
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -238,12 +239,136 @@ function reap(profiles: string[], seeds: number[]): ReapReport {
   return { killed, passes: REAP_PASSES, survivors: rows.filter((row) => still.has(row.pid)) }
 }
 
+// ---- ONE LIVE BOOT AT A TIME, HOST-WIDE --------------------------------------
+/** **THE LIVE BOOTS ARE SERIALISED, AND THIS MATRIX SAYS SO** (`D-1`, `D-43`; §4 of `docs/L1/tier-readout.md`). Two
+ *  batteries of this kind may not stand in two FILES at once: `npm test` runs the suite's files in parallel workers, and
+ *  this battery and `tests/e2e/focus-retirement/` each SPAWN the built bundle, so two Electron trees on one host red each
+ *  other's rows. The contention is the MACHINE's — never a port and never a profile, because every boot here already
+ *  carries its own `mkdtemp` profile and its own stdio pipe. The corpus's own live boots never overlap BY CONSTRUCTION:
+ *  `npm run crossings` drives FIVE boots on THREE scratch profiles IN ONE PROCESS and awaits each (`D-94`), and each of
+ *  the four Electron legs holds one boot at a time — so that rule is kept here as a LOCK around the boot window rather
+ *  than as a runner knob, because the knob would serialise every file the suite carries while a lock serialises the live
+ *  boots and nothing else. **No row is skipped, softened or re-bounded for it**: a row that waits for the lock measures
+ *  exactly what it measured with the machine to itself (`D-30`, `D-40`). */
+const BOOT_LOCK = join(tmpdir(), `provident-electron-live-boot-${repoRoot.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(-60)}.lock`)
+const BOOT_LOCK_OWNER = join(BOOT_LOCK, 'owner')
+const BOOT_LOCK_POLL_MS = 100
+/** How long an UNOWNED lock directory is left alone before it is read as a holder that died between its `mkdir` and its
+ *  own owner write: that window is microseconds wide, and sweeping it early would seat two boots at once. */
+const BOOT_LOCK_SETTLE_MS = 2_000
+/** **The wait is BOUNDED, because a harness that waits forever measures nothing.** One peer's boot is the whole of a
+ *  wait — only two files in the suite spawn — and a boot's own worst case is its row's bound plus its teardown. */
+const BOOT_LOCK_BOUND_MS = 120_000
+/** A pid that answers signal `0` is alive; `EPERM` is a live process this seat may not signal, which is still alive. */
+function pidAlive(pid: number): boolean {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'EPERM'
+  }
+}
+interface LockHolder { pid: number; since: number; why: string }
+/** Who is holding the lock, read off the owner file — `null` where the directory carries no readable owner. */
+function lockHolder(): LockHolder | null {
+  try {
+    const [pid, since, ...why] = readFileSync(BOOT_LOCK_OWNER, 'utf8').trim().split(' ')
+    const held = Number(pid)
+    return Number.isSafeInteger(held) && held > 0 ? { pid: held, since: Number(since), why: why.join(' ') } : null
+  } catch {
+    return null
+  }
+}
+/** The lock directory's own age, and `Infinity` where it is gone: a stat that threw is not an age of zero. */
+function lockAgeMs(): number {
+  try {
+    return Date.now() - statSync(BOOT_LOCK).mtimeMs
+  } catch {
+    return Number.POSITIVE_INFINITY
+  }
+}
+const liveBootReleases: Array<() => void> = []
+/** **TAKE THE HOST-WIDE LIVE-BOOT LOCK, OR RED WITH THE HOLDER NAMED.** A holder that was SIGKILLed ran no release, so it
+ *  is read off its own pid (and off the lock's age, because a pid is reused) rather than waited out to the bound. */
+async function acquireLiveBoot(why: string): Promise<() => void> {
+  const started = Date.now()
+  for (;;) {
+    try {
+      mkdirSync(BOOT_LOCK)
+      writeFileSync(BOOT_LOCK_OWNER, `${process.pid} ${started} ${why}`)
+      let released = false
+      const release = (): void => {
+        if (released) return
+        released = true
+        // A lock naming ANOTHER pid is that holder's: this release has been overtaken and must not remove it.
+        const holder = lockHolder()
+        if (holder !== null && holder.pid !== process.pid) return
+        try {
+          rmSync(BOOT_LOCK, { recursive: true, force: true })
+        } catch {
+          /* the exit net sweeps again */
+        }
+      }
+      liveBootReleases.push(release)
+      return release
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
+        throw new Error(
+          `the live-boot lock could not be taken at \`${BOOT_LOCK}\`: ${error instanceof Error ? error.message : String(error)}. ` +
+            `The spawning batteries are serialised so their boots cannot overlap, so a lock path that cannot be created is a ` +
+            `harness fault and never a row's reading.`,
+        )
+      }
+    }
+    const holder = lockHolder()
+    if (holder === null) {
+      if (lockAgeMs() < BOOT_LOCK_SETTLE_MS) {
+        await sleep(BOOT_LOCK_POLL_MS)
+        continue
+      }
+      try {
+        rmSync(BOOT_LOCK, { recursive: true, force: true })
+      } catch {
+        /* somebody else swept it first */
+      }
+      continue
+    }
+    if (!pidAlive(holder.pid) || Date.now() - holder.since > BOOT_LOCK_BOUND_MS * 2) {
+      try {
+        rmSync(BOOT_LOCK, { recursive: true, force: true })
+      } catch {
+        /* somebody else swept it first */
+      }
+      continue
+    }
+    if (Date.now() - started > BOOT_LOCK_BOUND_MS) {
+      throw new Error(
+        `the live-boot lock at \`${BOOT_LOCK}\` is still held by pid ${holder.pid} after ${BOOT_LOCK_BOUND_MS} ms — holder ` +
+          `"${holder.why}", since ${new Date(holder.since).toISOString()}. The spawning batteries are SERIALISED (one live boot ` +
+          `at a time, host-wide) so their trees cannot contend, and this wait is bounded and stated, never silent. Fix: a holder ` +
+          `that outlives the bound is a boot that wedged — \`${BOOT_LOCK}\` names it, and SIGKILLing it releases the lock at once.`,
+      )
+    }
+    await sleep(BOOT_LOCK_POLL_MS)
+  }
+}
+
 const scratchProfiles: string[] = []
 const livePids: number[] = []
 /** The net for a teardown that never runs: a rejected hook, a killed worker or an interrupted run leaves the tree
  *  alive otherwise. A SIGKILLed worker gets no net at all, and that limit is stated rather than hidden (`D-74`). */
 process.on('exit', () => {
   reap(scratchProfiles, livePids)
+  // The lock is released only AFTER the tree is proven gone, and a net that never releases it would wedge the sibling
+  // spawning battery for the bound (`D-94`'s teardown order, `D-74`).
+  for (const release of [...liveBootReleases]) {
+    try {
+      release()
+    } catch {
+      /* a release that threw has still run its own removal */
+    }
+  }
   for (const dir of scratchProfiles) {
     try {
       rmSync(dir, { recursive: true, force: true })
@@ -282,17 +407,47 @@ async function withBound<T>(work: Promise<T>, label: string, trace: () => string
     if (timer !== undefined) clearInterval(timer)
   }
 }
-/** **A BUILT ARTIFACT, WAITED FOR INSIDE THE BOUND — because a snapshot of it is not a reading**: a sibling worker's
- *  `npm run clean` can land between a `build` and this file's `existsSync`. */
-async function artifactWithin(file: string): Promise<void> {
+/** **THE WHOLE ARTIFACT SET A BOOT LOADS, AND NOT ONLY ITS ENTRY POINT** — because a boot is not a reading of one file and
+ *  a snapshot of one file is not a snapshot of the build. `npm run build`'s FIRST arm is `npm run clean`, which deletes
+ *  `dist/`, and three files of this suite run that build from other workers (`tests/e2e/bundle-boot-seam/`,
+ *  `tests/integration/bundle-boot-seam/`, `tests/unit/bundle-boot-seam/`), so waiting on `main.mjs` alone let a boot start
+ *  in the window where the main bundle was back and the renderer was not — MEASURED: a `T-2` boot answered
+ *  `ERR_FILE_NOT_FOUND` on `dist/renderer/index.html` instead of measuring its row. Every member below is a file this
+ *  boot's ELECTRON LOAD reads (`npm run build`'s `outfile`/`outdir`/`cp` arms), and the wait is inside `BOUND_MS`, so an
+ *  absent member is a named prerequisite failure and never a silent one (D-27, `strata/brief.md` §6). */
+const BOOT_ARTIFACTS = [
+  join(repoRoot, 'dist', 'main', 'main.mjs'),
+  join(repoRoot, 'dist', 'main', 'preload.cjs'),
+  join(repoRoot, 'dist', 'renderer', 'index.html'),
+  join(repoRoot, 'dist', 'renderer', 'renderer.js'),
+]
+/** Wait for the whole set above, inside the bound: a `statSync` that threw is not a reading, it is a file still being
+ *  written, so every member is polled again on the same tick. */
+async function artifactsWithin(): Promise<void> {
   const started = Date.now()
   while (Date.now() - started < BOUND_MS) {
-    if (existsSync(file) && statSync(file).size > 0) return
+    const seen = BOOT_ARTIFACTS.map((file) => {
+      try {
+        return existsSync(file) && statSync(file).size > 0
+      } catch {
+        return false
+      }
+    })
+    if (seen.every(Boolean)) return
     await sleep(20)
   }
+  const absent = BOOT_ARTIFACTS.filter((file) => {
+    try {
+      return !(existsSync(file) && statSync(file).size > 0)
+    } catch {
+      return true
+    }
+  })
   throw new Error(
-    `the built bundle is absent at ${file} within the ${BOUND_MS} ms bound. This battery boots the ARTIFACT \`npm run build\` ` +
-      `produces and never builds one (D-27, strata/brief.md §6): run \`npm run build\` first.`,
+    `the built artifacts are absent at [${absent.join(', ')}] within the ${BOUND_MS} ms bound. This battery boots the ` +
+      `ARTIFACT \`npm run build\` produces — the main bundle, its preload, and the renderer's bundle and page — and never ` +
+      `builds one (D-27, strata/brief.md §6): run \`npm run build\` first, and note that a sibling worker's ` +
+      `\`npm run clean\` deletes \`dist/\` while it runs.`,
   )
 }
 
@@ -443,7 +598,10 @@ interface Boot {
  *  **A RENDERER WAIT IS `T-6`'s ALONE**: the seven other rows' subject is the surface main answers over stdio, which
  *  stands before the window does (the store is the boot's second act, the window its eleventh, `D-19`), so a wait for
  *  a rendered node would bind a fact those rows do not claim. `T-6` drives the preload's member INSIDE the renderer
- *  realm, so its boot asks for one and a `DISPLAY` is that row's prerequisite. */
+ *  realm, so its boot asks for one and a `DISPLAY` is that row's prerequisite.
+ *
+ *  **THE BOOT WINDOW IS HELD UNDER THE HOST-WIDE LIVE-BOOT LOCK**: taken after the artifact is seen and released only
+ *  once this boot's tree is proven gone, so no two spawning batteries' Electron trees contend (`D-94`, `D-74`). */
 async function boot(profile: string, options: { renderer?: boolean } = {}): Promise<Boot> {
   const display = process.env['DISPLAY']
   if (typeof display !== 'string' || display === '') {
@@ -453,12 +611,22 @@ async function boot(profile: string, options: { renderer?: boolean } = {}): Prom
         'or wrap the run in xvfb-run. This is a RED and never a skip (tests/e2e/secure-panels/panes-live.mjs:46).',
     )
   }
-  await artifactWithin(mainEntry)
-  const child = spawn(electronBin, [mainEntry, ...BASE_ARGS, `--user-data-dir=${profile}`, `--provident-user-data=${profile}`], {
-    cwd: repoRoot,
-    stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...stringEnv(), DISPLAY: display, ELECTRON_DISABLE_SANDBOX: '1' },
-  })
+  await artifactsWithin()
+  const releaseBootLock = await acquireLiveBoot(`tier-readout boot on ${profile}`)
+  let child: ChildProcess
+  try {
+    child = spawn(electronBin, [mainEntry, ...BASE_ARGS, `--user-data-dir=${profile}`, `--provident-user-data=${profile}`], {
+      cwd: repoRoot,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...stringEnv(), DISPLAY: display, ELECTRON_DISABLE_SANDBOX: '1' },
+    })
+  } catch (error) {
+    // A spawn that threw created no child: the lock is released at once and never left to the bound.
+    releaseBootLock()
+    throw new Error(
+      `this boot could not spawn ${electronBin}: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
   if (child.pid !== undefined) livePids.push(child.pid)
   let trace = ''
   child.stderr?.on('data', (chunk: unknown) => {
@@ -466,7 +634,20 @@ async function boot(profile: string, options: { renderer?: boolean } = {}): Prom
   })
   const transport = new ChildStdioTransport(child)
   const client = new Client({ name: 'tier-readout-e2e', version: '0.1.0' })
-  await withBound(client.connect(transport), `initialize over stdio on ${profile}`, () => trace)
+  try {
+    await withBound(client.connect(transport), `initialize over stdio on ${profile}`, () => trace)
+  } catch (error) {
+    // A handshake that never settled still left a tree behind: it is reaped, PROVED gone, and only then is the lock
+    // released — the order `D-74` fixes, kept on the failure path too.
+    try {
+      transport.close()
+    } catch {
+      /* already gone */
+    }
+    reap([profile], [child.pid ?? 0])
+    releaseBootLock()
+    throw error
+  }
   const stop = async (): Promise<void> => {
     try {
       await client.close()
@@ -480,9 +661,19 @@ async function boot(profile: string, options: { renderer?: boolean } = {}): Prom
     }
     reap([profile], [child.pid ?? 0])
     await sleep(300)
+    releaseBootLock()
   }
   const booted: Boot = { client, profile, trace: () => trace, stop }
-  if (options.renderer === true) await waitForRenderer(booted)
+  if (options.renderer === true) {
+    // A row whose renderer never answers has still spawned a tree: it is withdrawn here rather than left for a teardown
+    // that will not run, because this boot is not yet in `boots` (`D-74`).
+    try {
+      await waitForRenderer(booted)
+    } catch (error) {
+      await stop()
+      throw error
+    }
+  }
   return booted
 }
 /** **THE RENDERER READY, MEASURED AND NOT ASSUMED**: `T-6` drives a handler body in the page, and a dispatch before
@@ -644,6 +835,15 @@ afterAll(() => {
       rmSync(dir, { recursive: true, force: true })
     } catch {
       /* best effort; the assert below is the guarantee */
+    }
+  }
+  // The host-wide live-boot lock is released here whatever this file measured — before the survivors assert, because a
+  // lock held past a throwing teardown would wedge the sibling spawning battery for its whole bound (`D-74`).
+  for (const release of liveBootReleases.splice(0)) {
+    try {
+      release()
+    } catch {
+      /* a release that threw has still run its own removal */
     }
   }
   if (report.survivors.length > 0) {
@@ -1015,7 +1215,7 @@ describe('tier-readout — `data.read` answers each node\'s own `_tier` (D-133, 
       expect(
         tabsTier ?? '(no _tier member)',
         `T-8 — ['${TABS}'] must answer the tier its OWN DECLARATION writes at, 'file': the tab record is a durable family. A ` +
-          `missing _tier is the absence this row names at this head. Observed answer: ${trunc(tabs.text)}`,
+          `missing _tier is the absence this row names — the node T-1 pins, gone. Observed answer: ${trunc(tabs.text)}`,
       ).toBe('file')
 
       const zones = await readAt(booted.client, [ZONES])

@@ -10,7 +10,19 @@
 // unreachability rows were re-derived by D-80**: with `DataSurfaceOptions.store` required the surface
 // cannot be stood without an instance, so the two arms are now measured on a LIVE store whose profile
 // name stops being occupiable — the only way the product can reach them (see the describe block below).
-// Red until `src/main/data/` exists (D-1 §4).
+//
+// DISPOSITION UNDER THE READOUT (`interface.md` §2a; D-134, D-30, D-143) — FIVE BARE-VALUE SITES IN THIS FILE, ALL FIVE
+// RE-GRAINED IN PLACE AND NONE RETIRED. Four are the LEAF node a passing read now answers, and each row's `value` moves
+// to it and NOTHING ELSE does — the subject, the id and the marker stand: `RC-1` and `RC-2` the row a refused write left
+// standing, at the row's first and its second malformed call; `RC-3` the row a refused whole-register write and delete
+// left standing; `RC-4` the CONTROL of the cold-tier row, read before the profile's name goes — each of the four is
+// `{_tier:'file', value:'x'}`, `file` being §1's default for a `write` that names no `tier`. **`RC-5` IS THE ONE SITE WHOSE
+// CLAIM MOVES WITH THE SHAPE AND NOT ONLY ITS GRAIN**: the cold arm at `[]` — the same empty address under a name that no
+// longer stands — answered a `read` BRANCH carrying `{}` this module composed, and it answers `absent` now, because no
+// store answered it and this module spells no tier of its own to mint a node with (§2a; D-80, D-101). Every refusal
+// ledger, status word, byte-equality assertion and every other answer this file drives stands exactly as filed — and no
+// row is added, removed, skipped or softened: `RC-5`'s row still measures the WHOLE cold tier's answer set under a
+// removed name, its absence included. **AND THE MARKER ABOVE STAYS** (`D-30`; D-134, D-143).
 
 import { existsSync, mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
@@ -48,11 +60,12 @@ describe('malformed arguments are refused by name and change nothing', () => {
     expect(ledger.reason).toBe('malformed-arguments')
     expect(ledger.message).toContain('value')
     expect(profileBytes(profileDir)).toBe(bytes)
+    // RC-1 — RE-GRAINED IN PLACE (§2a; §1's `file` default): the row the refused write left standing is the LEAF node.
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',
       kind: 'row',
       path: ['alpha'],
-      value: 'x',
+      value: { _tier: 'file', value: 'x' },
     })
   })
 
@@ -65,11 +78,13 @@ describe('malformed arguments are refused by name and change nothing', () => {
     expect(ledger.reason).toBe('malformed-arguments')
     expect(ledger.message).toContain('extra')
     expect(profileBytes(profileDir)).toBe(bytes)
+    // RC-2 — RE-GRAINED IN PLACE (§2a): the same LEAF node after the SECOND malformed call — the refused own key moved
+    // neither the bytes above nor the node this row is served.
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',
       kind: 'row',
       path: ['alpha'],
-      value: 'x',
+      value: { _tier: 'file', value: 'x' },
     })
   })
 
@@ -175,11 +190,13 @@ describe('the empty path is readable and never writable', () => {
     surface.write({ path: ['alpha'], value: 'x' })
     expect(expectRefusal(surface.write({ path: [], value: 1 })).reason).toBe('root-not-writable')
     expect(expectRefusal(surface.delete({ path: [] })).reason).toBe('root-not-writable')
+    // RC-3 — RE-GRAINED IN PLACE (§2a): the row both refused whole-register calls left standing is the LEAF node, and the
+    // `list` below is unmoved: a refusal that never reached a store moved no node.
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',
       kind: 'row',
       path: ['alpha'],
-      value: 'x',
+      value: { _tier: 'file', value: 'x' },
     })
     expect(surface.list({})).toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
   })
@@ -203,11 +220,13 @@ describe('a profile name that cannot be occupied answers store-unreachable on al
     const profileDir = newProfileDir()
     const surface = surfaceAt(profileDir)
     surface.write({ path: ['alpha'], value: 'x' })
+    // RC-4 — RE-GRAINED IN PLACE (§2a): the CONTROL — the row the store holds before the name goes — is the LEAF node,
+    // and it is what makes the row below evidence: the same address answers a node now and an ABSENCE after the removal.
     expect(surface.read({ path: ['alpha'] }), 'the control: the store holds the row before the name goes').toEqual({
       status: 'read',
       kind: 'row',
       path: ['alpha'],
-      value: 'x',
+      value: { _tier: 'file', value: 'x' },
     })
     rmSync(profileFilePath(profileDir))
     // The reading is `absent`: the name does not stand and nothing forbids it. Every reading operation answers the
@@ -215,7 +234,12 @@ describe('a profile name that cannot be occupied answers store-unreachable on al
     // still holds it (`behaviour.md` §9; ASM-L3-2).
     expect(surface.list({})).toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
     expect(surface.read({ path: ['alpha'] })).toEqual({ status: 'absent', path: ['alpha'] })
-    expect(surface.read({ path: [] })).toEqual({ status: 'read', kind: 'branch', path: [], value: {} })
+    // RC-5 — RE-GRAINED IN PLACE AND ITS CLAIM MOVED WITH THE SHAPE (§2a; D-80, D-101): the cold arm at `[]` answers
+    // `absent` at `[]` and mints no tier at all. The `read` BRANCH carrying `{}` was this module's own composition for an
+    // address no store answered; the answered shape now states the absence the reading already took, so no node and no
+    // tier crosses the boundary here — and the row's subject is unmoved: the WHOLE cold tier's answer set, the absence at
+    // this address included.
+    expect(surface.read({ path: [] }), 'RC-5 — the cold arm at []: an absence, no node and no tier').toEqual({ status: 'absent', path: [] })
     expect(surface.delete({ path: ['alpha'] })).toEqual({
       status: 'committed',
       path: ['alpha'],

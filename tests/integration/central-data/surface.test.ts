@@ -12,6 +12,21 @@
 // names are the members that arm declares — `floor`/`through` on the `cursor-unknown` ledger
 // alone (§3). A refusal where the row needs an arm is a named FAILURE, never a skip. The
 // subject is the real `createDataSurface` over the real store: no mock, no stub, no `todo`.
+//
+// DISPOSITION UNDER THE READOUT (`D-134`, `D-30`, `D-143`) — SIX BARE-VALUE SITES IN THIS BATTERY, ALL SIX RE-GRAINED
+// IN PLACE AND NONE RETIRED. The shape this unit adopts puts a node where every passing `read` answer used to carry a
+// bare `value`, so each row's own `value` moves to the release's node and NOTHING ELSE does: `SF-1` this row's OCCUPIED
+// empty register answers the store's own `{_tier}` node, its single token read through the three-token domain and never
+// pinned to one of them (§2a); `SF-2`, `SF-3`, `SF-5` and `SF-6` a written literal answers the LEAF `{_tier:'file',
+// value}` — `file` being §1's default for a `write` that omits `tier`; `SF-4` a written container answers the OBJECT
+// node with its members INLINE, the nested array as `{_tier, value:[…]}` and each element a node of its own (§2a, and
+// this file's row 2 repair). The status word, the `kind`, the `path`, every `list` and `journal` answer and every
+// refusal ledger stand exactly as filed.
+// **EACH OF THE SIX IS RED AT THIS HEAD FOR THE ABSENCE IT NAMES AND NEVER FOR AN AUTHORING ERROR** (L1 `E-6`): the
+// read still answers a BARE value until L4 lands `interface.md` §9's H-2, so each site reds by EQUALITY on the missing
+// node. **AND THE MARKER ABOVE STAYS** (`D-30`): the mark reports on notice, and this edit is not the maintenance
+// `D-31` removes, because the answer it states is the release's own — the bare value is not a pin with a shelf life
+// but the previous release's answer, which this tree can no longer give (D-134, `D-143`).
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -48,12 +63,17 @@ function surfaceAt(dir: string = profileDir): DataSurface {
 }
 
 describe('central-data · the five operations through createDataSurface', () => {
-  it('a first-ever profile is read → list {paths:[],count:0}, read {absent}, read [] {kind:"branch",value:{}}, journal {from:0,through:0,count:0}, and a BARE store’s one name holds no byte', () => {
+  it('a first-ever profile is read → list {paths:[],count:0}, read {absent}, read [] {kind:"branch",value:{_tier}}, journal {from:0,through:0,count:0}, and a BARE store’s one name holds no byte', () => {
     const s = surfaceAt()
     expect(s.list({})).toEqual(coldList)
     expect(s.list(undefined), 'interface §1 — an omitted `arguments` is the same call as `{}`').toEqual(coldList)
     expect(s.read({ path: ['never'] })).toEqual({ status: 'absent', path: ['never'] })
-    expect(s.read({ path: [] })).toEqual({ status: 'read', kind: 'branch', path: [], value: {} })
+    // SF-1 — RE-GRAINED IN PLACE (§1, §2a): the OCCUPIED empty register is a BRANCH whose node is the STORE's own,
+    // `{_tier}` ALONE — one token from the three, never a set and never the `{}` this module used to compose — and the
+    // token is read through that domain here, never pinned to one of the three (§2a: the register node's own token is
+    // measured). The row's claim is unmoved: absence is answered `absent` above, and this is the one address that
+    // answers a BRANCH with no row under it.
+    expect(s.read({ path: [] }), 'SF-1 — the occupied empty register answers the STORE’s own node: `_tier` alone, and that token is one of the three, never a set').toEqual({ status: 'read', kind: 'branch', path: [], value: { _tier: expect.stringMatching(/^(file|mem|temp)$/) } })
     const j = s.journal(undefined)
     if (j.status !== 'read') throw new Error(`the journal must answer a reading on a first-ever profile; it answered ${JSON.stringify(j)}`)
     expect({ from: j.from, through: j.through, floor: j.floor, entries: j.entries, count: j.count })
@@ -72,11 +92,15 @@ describe('central-data · the five operations through createDataSurface', () => 
   it('a literal is written → write {committed, cursor:1} then read {kind:"row", value}; a second write serves the new value at cursor 2 with list.count unchanged', () => {
     const s = surfaceAt()
     expect(s.write({ path: ['alpha'], value: 'x' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
-    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
+    // SF-2 — RE-GRAINED IN PLACE (§2a; §1's `file` default): a literal is §2a's LEAF node `{_tier, value}`, its ONE tier
+    // being the tier of the version the read selected — the write named no `tier`, so that is `file` — and the row's own
+    // `kind:'row'` is compiled from that node being a leaf.
+    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'x' } })
     expect(existsSync(profilePath), 'the one name stands').toBe(true)
     expect(s.list({}), 'a `row` is a literal standing at that exact address, so `list` names that one path').toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
     expect(s.write({ path: ['alpha'], value: 'y' })).toEqual({ status: 'committed', path: ['alpha'], cursor: 2, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
-    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'y' })
+    // SF-3 — RE-GRAINED IN PLACE (§2a): the SECOND write's version is the one this read selects, at its own `file` tier.
+    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'y' } })
     expect(s.list({}), 'a second write at the same path adds no row').toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
   })
 
@@ -89,7 +113,10 @@ describe('central-data · the five operations through createDataSurface', () => 
     const s = surfaceAt()
     expect(readFileSync(profilePath, 'utf8'), 'the fresh directory’s store is open and holds no row before the write (D-80)').toBe('')
     expect(s.write({ path: ['alpha'], value: { nested: [1, true] } })).toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
-    expect(s.read({ path: ['alpha'] }), 'a container is a BRANCH, and the assembled value is served as it was written').toEqual({ status: 'read', kind: 'branch', path: ['alpha'], value: { nested: [1, true] } })
+    // SF-4 — RE-GRAINED IN PLACE (§2a, and this file's row 2 repair): the container is an OBJECT node with its member
+    // INLINE, that member is an object node, its member is a dense ARRAY node `{_tier, value:[…]}` in index order, and
+    // each element is its own LEAF node. Every token is `file`: the write named no `tier` and no other version stands.
+    expect(s.read({ path: ['alpha'] }), 'a container is a BRANCH whose node carries its members INLINE, each a node of its own').toEqual({ status: 'read', kind: 'branch', path: ['alpha'], value: { _tier: 'file', nested: { _tier: 'file', value: [{ _tier: 'file', value: 1 }, { _tier: 'file', value: true }] } } })
     expect(s.list({}), '`list` answers the paths that hold a ROW (ASM-L2-2): the two literals beneath the container, and never the branch itself').toEqual({
       status: 'read',
       prefix: null,
@@ -114,7 +141,9 @@ describe('central-data · the five operations through createDataSurface', () => 
     const first = surfaceAt()
     first.write({ path: ['alpha'], value: 'kept' })
     const second = surfaceAt()
-    expect(second.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'kept' })
+    // SF-5 — RE-GRAINED IN PLACE (§2a): the re-entered surface serves the same row as the same LEAF node, its token the
+    // tier the write landed at.
+    expect(second.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'kept' } })
     expect(second.list({})).toEqual({ status: 'read', prefix: null, paths: [['alpha']], count: 1 })
     const j = second.journal({})
     if (j.status !== 'read') throw new Error(`a fresh surface's journal must answer a reading; it answered ${JSON.stringify(j)}`)
@@ -134,7 +163,8 @@ describe('central-data · the five operations through createDataSurface', () => 
     if (extra.status !== 'refused') throw new Error(`a write carrying an undeclared key must answer the ledger; it answered ${JSON.stringify(extra)}`)
     expect({ status: extra.status, reason: extra.reason }).toEqual({ status: 'refused', reason: 'malformed-arguments' })
     expect(extra.message, 'an own key outside the declared set is refused BY NAME, never ignored').toContain('extra')
-    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
+    // SF-6 — RE-GRAINED IN PLACE (§2a): the row a refused write left standing is still served, now as its LEAF node.
+    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'x' } })
     expect(readFileSync(profilePath).equals(before), 'a refused write moves no byte').toBe(true)
   })
 

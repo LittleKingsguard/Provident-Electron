@@ -5,7 +5,17 @@
 // (`behaviour.md` §6; D-11), a delete where no row stands — nothing there, or only rows beneath
 // it — answers the empty receipt with no refusal and no throw (ASM-L2-6; G7), and the journal
 // window is this process's own, minted from 1, with `cursor-unknown` carrying both bounds so a
-// caller re-anchors (`persistence.md` §6; D-12). Red until `src/main/data/` exists (D-1 §4).
+// caller re-anchors (`persistence.md` §6; D-12).
+//
+// DISPOSITION UNDER THE READOUT (`interface.md` §2a; D-134, D-30, D-143) — TWO BARE-VALUE SITES IN THIS FILE, BOTH
+// RE-GRAINED IN PLACE AND NONE RETIRED. Each row's `value` moves to the release's node and NOTHING ELSE does — the
+// subject, the id and the marker stand: `DJ-1` the row the empty-receipt row leaves standing is the LEAF
+// `{_tier:'file', value:'x'}`, `file` being §1's default for a `write` that names no `tier`; `DJ-2` the element beneath
+// the container that no delete removed is the LEAF `{_tier:'file', value:1}`, one node of the dense array node the write
+// landed. Both rows are the CONTROL for a delete's own claim — that it removed what it named and nothing else — so
+// neither measures the receipt, and neither receipt, `tiers`, `cursor`, `list` answer nor `journal` window moves.
+// **AND THE MARKER ABOVE STAYS** (`D-30`): a bare value is the previous release's answer, not a pin with a shelf life
+// (D-134, D-143).
 
 import { afterEach, describe, expect, it } from 'vitest'
 import {
@@ -63,11 +73,13 @@ describe('a delete names one row', () => {
       repaired: false,
       log: [],
     })
+    // DJ-1 — RE-GRAINED IN PLACE (§2a; §1's `file` default): the row the empty receipt left standing is the LEAF node
+    // `{_tier, value}`, its one tier the tier of the version the read selected — the write named no `tier`, so `file`.
     expect(surface.read({ path: ['alpha'] })).toEqual({
       status: 'read',
       kind: 'row',
       path: ['alpha'],
-      value: 'x',
+      value: { _tier: 'file', value: 'x' },
     })
     expect(surface.journal({})).toEqual(journal)
   })
@@ -84,11 +96,13 @@ describe('a delete names one row', () => {
       repaired: false,
       log: [],
     })
+    // DJ-2 — RE-GRAINED IN PLACE (§2a): the element a delete of the address ABOVE it must leave intact is the LEAF node
+    // `{_tier:'file', value:1}` — one node of the dense array node the write landed, never a bare literal.
     expect(surface.read({ path: ['alpha', 'nested', 0] })).toEqual({
       status: 'read',
       kind: 'row',
       path: ['alpha', 'nested', 0],
-      value: 1,
+      value: { _tier: 'file', value: 1 },
     })
     expect(surface.list({})).toEqual({
       status: 'read',

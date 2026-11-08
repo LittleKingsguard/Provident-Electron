@@ -1038,6 +1038,67 @@ const DECLARED_SCOPE: readonly string[] = [
   //    **NOTHING THE CLOSE WROTE IS ABSORBED SILENTLY**: the two entries above are the whole of what `B-1` reported outside this
   //    union, and the battery itself is not a new entry because it already stands above — a write is not a claim.
   // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-133`/`D-134` — THE `tier-readout` UNIT, LANDED: a passing `provident.data.read` answer stops carrying a BARE value and
+  //    carries the release's own `TieredNode` at EVERY node it returns — an object node `{_tier, …members}` with its members
+  //    INLINE, an array node `{_tier, value:[…]}`, a leaf `{_tier, value:<literal>}` — `read` composing `store.readTiered` at ONE
+  //    call site, `kind` compiled FROM the node, the `absent` and `DataLedger` arms gaining nothing, and the seam gaining no byte.
+  //    `D-133` is the defect row (the user's finding, verbatim — *"The returned object should already include the tier data. If it
+  //    doesn't that is a defect."*) and `D-134` is the adoption that answers it at `1.10.0`. **THREE PATHS JOIN THIS UNION AND
+  //    NOT ONE IS ADMITTED BY A PREFIX**; every other path this unit writes is ALREADY DECLARED ABOVE and is named at the end of
+  //    this block so a reader can check the claim rather than trust it.
+  //    THE UNIT'S OWN L1 SCOPE: `docs/L1/tier-readout.md` — the artifact `D-3` files with L1 and no earlier block of this union has
+  //    ever carried. Its Status moves DESIGN → LANDED against the composition, §4's `T-1`…`T-8` matrix stops reading RED, §7's
+  //    licensed edit list takes each `E`-row's disposition (`E-5`/`E-6`/`E-7` landed, `E-8` OWED at the crossings leg) and §8 stops
+  //    forbidding the re-grain it now records as done. It is declared HERE rather than above because the unit was admitted RED-FIRST
+  //    at the last gate commit, so its design document was not a path this union had a write to carry (D-133, D-134, D-40).
+  'docs/L1/tier-readout.md',
+  //    THE UNIT'S E2E BATTERY: `tests/e2e/tier-readout/tier-readout.test.ts` — the eight rows §4 declares (`T-1`…`T-8`), each an
+  //    agent-or-drive exchange AT A PROCESS BOUNDARY (an MCP call over the built bundle's stdio, the app's own profile bytes read by
+  //    this process, a SECOND boot on the same profile, and once the renderer's own `window.provident.data` member driven inside its
+  //    realm), re-grained at this head from the red-first record of the bare-value answer to the node shape. **IT IS THE FILE AND
+  //    NEVER THE DIRECTORY**: a declared `tests/e2e/tier-readout/` prefix would admit every battery a later pass drops beside it, and
+  //    a `tests/e2e/` file is NEVER marked, so this one gates (D-30, D-40, D-10, D-27).
+  'tests/e2e/tier-readout/tier-readout.test.ts',
+  //    THE UNIT BATTERY, FILED BY ITS L3 AT THE UNIT GRAIN (`D-143`'s unit discipline, `D-3`'s split): the THREE rows no gating
+  //    row drives at a process boundary and therefore not a second reading of one claim — `R-1` the object node whose own member is
+  //    named `value` (the shape a key-count discriminator misreads as a leaf, which is why `kind` is compiled from the node's KIND),
+  //    `R-2` an open register holding nothing answering the STORE's own `{_tier}` node and never a `{}` this module composed, and
+  //    `R-3` the cold arm answering `absent` at `[]` with no tier minted. It is a NEW unmarked file, so it gates; `tests/unit/` is
+  //    L3's, which is exactly why this unit's L2 could not file it and this union must carry it by name (D-143, D-3, D-40).
+  'tests/unit/central-data/read-node-readout.test.ts',
+  //    AND EVERY OTHER PATH THIS UNIT WRITES IS ALREADY DECLARED ABOVE AND IS NAMED SO A READER CAN CHECK THE CLAIM:
+  //    `src/main/data/surface.ts` and `src/main/data/types.ts` (the ONE `readTiered` call, the `kind` derivation and the read node's
+  //    alias; `D-101`), `src/main/data/index.ts` (the type re-export; `D-103`), `src/main/mcp-server.ts` (`E-4`'s one description
+  //    sentence; `D-101`), `tests/e2e/central-data/scenarios.test.ts` (`E-5`'s six leaf-node literals; `D-101`),
+  //    `tests/integration/central-data/surface.test.ts`, `tests/integration/central-data/profile-file.test.ts` and
+  //    `tests/integration/central-data/registration.test.ts` (`SF-1`…`SF-6`, `PF-1`…`PF-3`, `RG-1`; `D-101`, `D-98`),
+  //    `tests/unit/central-data/cold-and-write.test.ts`, `delete-and-journal.test.ts`, `refusals.test.ts` and
+  //    `surface-and-profile.test.ts` (the fourteen marked sites re-grained in place; `D-103`), `tests/e2e/focus-retirement/
+  //    focus-retirement.test.ts` with `docs/L1/focus-retirement.md` (`E-7`'s `plainOf`, and the same reading inside its own unit's
+  //    block above), `docs/L2/central-data/interface.md` (§2's node table, §2a, §9's `H-1`…`H-4` and rev 15's disposition block),
+  //    `docs/L3/central-data/design.md` (§1's census, §3's pseudocode and §4's `G13`/`G14`) and `docs/L3/central-data/signatures.md`
+  //    (`D-45`'s declared node), all three declared at `D-101`; `strata/marks.json` (`D-93`) and this file (this block).
+  //    **NO `strata/.strata/` PATH IS DECLARED HERE BECAUSE `B-1` REPORTED NONE**, which is a measurement and not an omission: the
+  //    unit's state file and its `l1-design` return envelope were written EARLIER in this loop and both stand at the LAST GATE
+  //    COMMIT, so neither is an uncommitted edit and a declaration for either would be a claim about a path this pass did not write.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-144` — THE `tier-readout` CLOSE'S OWN RECORD, AND IT IS THE WHOLE OF WHAT THIS ROW REPORTED. **ONE PATH JOINS THIS UNION
+  //    AND IT IS NOT ADMITTED BY A PREFIX OF ITS NEIGHBOURS**; every other path the close writes is ALREADY DECLARED ABOVE — the
+  //    `D-133`/`D-134` block carries the unit's own writes (`docs/L1/tier-readout.md`, its e2e battery, its unit battery and every
+  //    re-grained file it names path by path) — so no entry is added for any of them. **THIS BLOCK EXISTS BECAUSE THE ROW DID ITS JOB**:
+  //    the path stood red in `B-1`'s offender list, ALONE, and a path THIS UNIT'S OWN RECORD pins is still a path — the unit
+  //    discipline `D-143` states, that a unit owns what its own close writes. It is declared HERE rather than inside the unit block
+  //    because that block was written at its own head, before the close had run, and a record that now stands is a write this union
+  //    must carry rather than one a reader is asked to assume.
+  'strata/records/tier-readout-walkthrough.md',
+  //    THE UNIT'S EXIT WALKTHROUGH RECORD, and each clause of it is why the file is a path and not a courtesy: §1's ten-step set
+  //    with `goal · expected · source` and its citation to the layer document that states it; §2's report, whose
+  //    `docs-stale`/`docs-insufficient`/`undocumented` classes name `central-data`'s four documents as the currency debt; §3's
+  //    verdict **`STALE`** — the contract is right and the set that states it is not — with its routing to those OWNING layers'
+  //    own passes and `L0 editing none`; and §5's instrument note recording what the staged root could not EXECUTE as
+  //    **unverifiable, never falsified**. It is the record of a run that had seen neither the code nor the design work, which is
+  //    why it stands as a file of its own beside the unit's and why the unit is presented landed-and-green with the currency pass
+  //    owed rather than as ready (`D-144`, `walkthrough.md` §5/§6, `D-1` §4.1).
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

@@ -51,6 +51,7 @@ import type {
   DataLogEntry,
   DataPath,
   DataReadAnswer,
+  DataReadNode,
   DataSurface,
   DataSurfaceOptions,
   DataTier,
@@ -156,6 +157,21 @@ function passRepaired(log: readonly DataLogEntry[] | null): boolean {
   return log !== null && log.some((entry) => entry.kind === 'repair-run')
 }
 
+/** **THE ONE DERIVATION OF `kind`, AND IT IS THE NODE'S KIND AND NEVER ITS KEY COUNT** (`signatures.md` §2;
+ *  `interface.md` §2a; ASM-L3-U4; D-134). A LEAF is the node the store mints at a row — `{_tier, value:<the
+ *  literal>}`, two own keys with `value` among them and `value` a PRIMITIVE — and it answers `row`; every other
+ *  node answers `branch`, which is an OBJECT `{_tier, …members}` with its members INLINE (an own member named
+ *  `value` included, its `value` being a NODE), an ARRAY `{_tier, value:[…]}` (its `value` an ARRAY) and the
+ *  empty register node `{_tier}`. A key-count discriminator (`Object.keys(n).length === 2`) would read that
+ *  object node as a `row` and serve a node where the answer promises a literal. */
+function kindOf(node: DataReadNode): 'row' | 'branch' {
+  const own = node as unknown as Record<string, unknown>
+  const keys = Object.keys(own)
+  const held = own['value']
+  const scalar = typeof held === 'string' || typeof held === 'number' || typeof held === 'boolean'
+  return keys.length === 2 && keys.includes('value') && scalar ? 'row' : 'branch'
+}
+
 /** The row paths beneath a value: a scalar IS a row, a branch is composed from its children, and
  *  an empty container emits nothing — so a branch is never reported as a row (ASM-L2-2; `guide §4`,
  *  arms `R-2`/`R-3`/`W-4`). */
@@ -192,42 +208,30 @@ export function createDataSurface(options: DataSurfaceOptions): DataSurface {
       if (!parsed.ok) return parsed.ledger
       const path = parsed.value.path
       // **A READ'S TIER IS A NARROWING AND NEVER A DEFAULT** (`D-101`): `null` is the store's own unqualified
-      // read, which is what this surface has always asked for, and a named token narrows it to that one tier —
-      // where an address holding nothing AT THAT TIER answers `absent` like any other absence (`mapper.ts`).
-      // A read crosses no family's ownership, so the declared-root guard is a write's and a delete's alone.
+      // read, and a named token narrows it to that one tier — where an address holding nothing AT THAT TIER
+      // answers `absent` like any other absence (`mapper.ts`). A read crosses no family's ownership, so the
+      // declared-root guard is a write's and a delete's alone.
       const tier = parsed.value.tier
       const reading = port().probe()
       if (reading.kind === 'unreachable') return reading.ledger
-      // An absent name is the cold tier: the register holds nothing, and no store is constructed
-      // for a profile that is merely new (`behaviour.md` §1; ASM-L3-U2).
-      if (reading.kind === 'absent') {
-        return path.length === 0
-          ? { status: 'read', kind: 'branch', path: [], value: {} }
-          : { status: 'absent', path: copy(path) }
-      }
+      // **THE COLD ARM ANSWERS AN ABSENCE AND MINTS NOTHING** (§2a; `behaviour.md` §1, §9; ASM-L3-U2): the name
+      // does not stand, so no store answered — there is no node, and this module spells no tier of its own to
+      // compose one with. The `[]` arm is this arm like any other address (D-80, D-134).
+      if (reading.kind === 'absent') return { status: 'absent', path: copy(path) }
       const store = port().store()
-      if (path.length === 0) {
-        return { status: 'read', kind: 'branch', path: [], value: tier === null ? store.read([]) : store.read([], tier) }
-      }
+      // **ONE CALL TO THE STORE'S TIERED VERB, WHICH READS EVERY NODE KIND** (`interface.md` §2a, §9 `H-2`;
+      // D-134): a leaf, an object and an array all arrive as the release's own node carrying its own `_tier`,
+      // so the `readLiteral`-then-`read` pair is gone and `ReadTargetIsBranch` is not a refusal this call can
+      // meet. **THE TIER POSITION IS OMITTED WHERE NO TIER WAS NAMED — never a supplied `undefined`** (G11),
+      // and a named token NARROWS the read: the node names what the STORE answered, never what the caller asked.
       try {
-        return {
-          status: 'read',
-          kind: 'row',
-          path: copy(path),
-          value: tier === null ? store.readLiteral(path) : store.readLiteral(path, tier),
-        }
+        const node = tier === null ? store.readTiered(path) : store.readTiered(path, tier)
+        return { status: 'read', kind: kindOf(node), path: copy(path), value: node }
       } catch (caught) {
+        // A caught refusal is classified once, and the `branch` arm is another verb's: `list`'s walk and
+        // `delete`'s standing probe still ask `read`/`readLiteral` (`interface.md` §9 `H-4`).
         const outcome = readOutcome(caught)
-        if (outcome.kind === 'branch') {
-          return {
-            status: 'read',
-            kind: 'branch',
-            path: copy(path),
-            value: tier === null ? store.read(path) : store.read(path, tier),
-          }
-        }
-        if (outcome.kind === 'absent') return { status: 'absent', path: copy(path) }
-        return outcome.ledger
+        return outcome.kind === 'ledger' ? outcome.ledger : { status: 'absent', path: copy(path) }
       }
     } catch (caught) {
       return refusalLedger(caught)

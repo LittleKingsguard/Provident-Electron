@@ -9,7 +9,14 @@
 // `<profileDir>/provident-profile.json` (`persistence.md` §1; G3), a
 // fresh surface serves the same rows while its own journal starts empty (`behaviour.md` §3;
 // D-12), and a `file`-tier delete stays deleted across a boot (`persistence.md` §5; guide §9.3).
-// Red until `src/main/data/` exists (D-1 §4).
+//
+// DISPOSITION UNDER THE READOUT (`interface.md` §2a; D-134, D-30, D-143) — ONE BARE-VALUE SITE IN THIS FILE, RE-GRAINED
+// IN PLACE AND NOT RETIRED: `SP-1` the row a SECOND surface serves off the profile's own bytes is the LEAF node
+// `{_tier:'file', value:'x'}`, `file` being §1's default for a `write` that names no `tier` — so the row's subject, that
+// the re-entered surface serves the same row, is unmoved and is now read as the same NODE. Every answer this file drives
+// elsewhere — the five tool names, the operation set, the no-reversal scan over a spread of answers, the one written
+// name's zero length, the `list` beneath the second surface, the fresh journal and the file-tier delete — stands exactly
+// as filed, and the marker above stays (`D-30`; D-134, D-143).
 
 import { afterEach, describe, expect, it } from 'vitest'
 import { DATA_TOOL_NAMES, type DataSurface } from '../../../src/main/data'
@@ -118,11 +125,13 @@ describe('a fresh surface over the same profile', () => {
     first.write({ path: ['alpha'], value: 'x' })
     first.write({ path: ['beta'], value: { nested: [1, true] } })
     const second = surfaceAt(profileDir)
+    // SP-1 — RE-GRAINED IN PLACE (§2a): the second surface serves the SAME row as the same LEAF node, its one tier the
+    // tier the write landed at — `file`, the default the write named no token for.
     expect(second.read({ path: ['alpha'] })).toEqual({
       status: 'read',
       kind: 'row',
       path: ['alpha'],
-      value: 'x',
+      value: { _tier: 'file', value: 'x' },
     })
     expect(second.list({})).toEqual({
       status: 'read',

@@ -15,11 +15,22 @@
 // FINDING against the implementation or the design, never evidence about ordering (`strata/
 // examiner.md` §3). No row is skipped, conditionally disabled or softened.
 //
+// **THE READ'S PASSING `value` IS THE RELEASE'S OWN NODE, AND THIS BATTERY PINS THAT NODE** (`D-134`): `data.read`
+// answers `{status, kind, path, value}` with `value` a `TieredNode` — a LEAF `{_tier, value:<literal>}` (and
+// `kind:'row'` with it), an OBJECT `{_tier, …members}` with its members INLINE and no `value` wrapper, and an
+// ARRAY `{_tier, value:[…]}` whose elements are nodes — so the four rows that serve a stood row (`S-3`, `S-5`,
+// `S-6`, `S-12`) expect it BY EQUALITY, and a bare literal, a wrapper on the object node, a double-wrapped leaf
+// or a missing `_tier` reds them. `S-4` compares one answer with another and takes no grain of its own; the
+// `absent` arm carries NO node, so every absence below (`S-1`, `S-7`, `S-12`) is unmoved; and `S-9`'s census row
+// is unmoved. **NO ROW'S CLAIM MOVES WITH THE GRAIN** — the six pinned answers are the same six answers, now
+// naming the node the release declares — so no row is re-subjected and none needs a re-titled claim.
+//
 // EVERY ROW STANDS THE BOOT FIRST, BECAUSE THE PRODUCT HAS NO SURFACE WITHOUT ONE (D-80). `store` is
 // a REQUIRED member of `DataSurfaceOptions` and the surface's fallback construction is deleted, so a
 // row that handed the surface a directory and no instance would be measuring a shape the product no
-// longer has. `boot()` below is `src/main/main.ts:132`'s construction — one instance at the profile's
-// one name — and `surfaceAt()` is `:302`'s pass of it. **WHAT THAT MOVED, AND WHAT IT DID NOT**: a
+// longer has. `boot()` below is the boot's own construction (`src/main/main.ts`'s `createProfileStore` site) —
+// one instance at the profile's one name — and `surfaceAt()` is that instance's pass into `createDataSurface`
+// at the composition's own call site (D-80, D-41: the sites, not an offset). **WHAT THAT MOVED, AND WHAT IT DID NOT**: a
 // constructed store creates its `filePath` at its own construction, so the reading answers `occupied`
 // over an EMPTY register. Claims that a first-ever profile serves NO PATH and that an unwritten path
 // answers `absent` therefore stand unchanged — `read` distinguishes a name that holds no row from a
@@ -28,14 +39,16 @@
 // to the state it does have (the one name stands and is EMPTY, and no `.tmp`, lock or sidecar stands
 // beside it), never dropped and never loosened (D-80).
 //
-// AUTHORED FROM THE DOCUMENTS: L1 §3-§5 read on `interface.md` §1-§7, `behaviour.md` §1-§9 and
+// AUTHORED FROM THE DOCUMENTS: L1 §3-§5 read on `interface.md` §1-§6, `behaviour.md` §1-§9 and
 // `persistence.md` §1-§9. The implementation was read only for exported names and call shapes
-// (`src/main/data/index.ts`, `surface.ts`, `store.ts`, `mcp-server.ts`). THE TWO LIMITS THIS HEAD
-// IMPOSES, each named where it bites: (a) the five `provident.data.*` BRIDGE ROUTES have no answer
-// site — `interface.md` §5 records them as Unlanded — so no row drives a renderer-side `data.*`
-// route, and the route's one declared answer site is the `DataSurface` operation it names; (b) the
-// Electron main bundle cannot boot, so no row depends on a real boot, a real IPC hop, a real socket
-// transport or a layout-ful rendered view (`brief.md` §6).
+// (`src/main/data/index.ts`, `surface.ts`, `store.ts`, `mcp-server.ts`). **THE TWO LIMITS THIS
+// BATTERY WAS AUTHORED UNDER HAVE BOTH LIFTED, AND WHAT REMAINS IS A SCOPE AND NOT A GAP**: the five
+// `provident.data.*` BRIDGE ROUTES are ANSWERED at this head (`D-112`), so no row here drives a
+// renderer-side `data.*` route because that boundary is `tests/integration/central-data/
+// bridge-route.test.ts`'s — gating and unmarked (`D-40`); and the Electron main bundle BOOTS, so no
+// row here depends on a real boot, a real IPC hop, a real socket transport or a layout-ful rendered
+// view because those are `tests/e2e/bundle-boot-seam/`'s and the two spawning batteries' — a boot
+// green is a process green, never a rendered-surface one (`brief.md` §6, D-27).
 import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -78,8 +91,9 @@ beforeAll(() => { installShim() })
 
 const backend: McpBackend = { invoke: async () => ({}) }
 
-/** **THE SURFACE'S INSTANCE, STOOD BY THE ROW** (`src/main/main.ts:132` hands the surface its store the same
- *  way): ONE store at the profile's one name, which brings that name into being exclusively and, with no
+/** **THE SURFACE'S INSTANCE, STOOD BY THE ROW** (`src/main/main.ts`'s `createProfileStore` site hands the surface
+ *  its store the same way, at the composition's own call site — D-41: the sites): ONE store at the profile's one
+ *  name, which brings that name into being exclusively and, with no
  *  constraint list, holds an empty register until a write lands. It is the only way to stand a surface at
  *  all — `DataSurfaceOptions.store` is required — so every row below begins here rather than at a bare
  *  directory (D-80). **IT IS NOT THE APP'S BOOT**: `main.ts` batches six tab-record declarations into that
@@ -89,7 +103,8 @@ function boot(dir: string = profileDir) {
   return createProfileStore({ filePath: join(dir, PROFILE_FILE) })
 }
 
-/** The composition `src/main/main.ts:374` performs: the directory the reading names, the instance the caller
+/** The composition `src/main/main.ts`'s `createDataSurface` call site performs (D-41: the site): the directory the
+ *  reading names, the instance the caller
  *  already owns, and **the declared roots the two crossings publish** (`D-101`) — three arguments, two of them
  *  required, and no fourth way in. The roots are the app's own, imported from the modules that declare them and
  *  never re-spelled here (`D-53`), so every row below drives the address space the product has (D-80, D-101). */
@@ -234,7 +249,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(existsSync(at(PROFILE_FILE)), 'persistence.md §1 — the one written name this module adds stands at the declared name').toBe(true)
     const image = JSON.parse(bytesOf(PROFILE_FILE).toString('utf8')) as unknown
     expect(typeof image === 'object' && image !== null, 'the store’s own JSON image, never a hand-written shape (persistence.md §3)').toBe(true)
-    expect(surface.read({ path: ['alpha'] }), 'the read serves what the commit landed, as a row').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
+    expect(surface.read({ path: ['alpha'] }), 'the read serves what the commit landed, as a row — the LEAF node the release declares, the literal wrapped exactly once (D-134)').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'x' } })
     expect(readdirSync(profileDir), 'no `.tmp`, no lock and no sidecar after a commit (persistence.md §5)').toEqual([PROFILE_FILE])
   })
 
@@ -288,7 +303,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       expect(answer.status, `S-5/${arm.label}: refused as a value, never a throw (interface.md §6)`).toBe('refused')
       expect(reasonOf(answer).length, `S-5/${arm.label}: the receipt carries a reason word`).toBeGreaterThan(0)
       expect(String(answer.message ?? '').length, `S-5/${arm.label}: and its own sentence beside it`).toBeGreaterThan(0)
-      expect(surface.read({ path: ['alpha'] }), `S-5/${arm.label}: the read is unchanged`).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'prev' })
+      expect(surface.read({ path: ['alpha'] }), `S-5/${arm.label}: the read is unchanged — the same standing LEAF node, and a refusal mints none`).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'prev' } })
       expect(bytesOf(PROFILE_FILE).equals(stood), `S-5/${arm.label}: the file is byte-identical — a refusal mints no cursor and adds no change`).toBe(true)
       expect(readdirSync(profileDir), `S-5/${arm.label}: and leaves no residue`).toEqual([PROFILE_FILE])
     }
@@ -304,7 +319,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(orphan.status, 'the write beneath an absent parent is refused').toBe('refused')
     expect(reasonOf(orphan).length, 'with a reason word').toBeGreaterThan(0)
     expect(bytesOf(PROFILE_FILE).equals(stood), 'and nothing lands: the bytes are byte-identical').toBe(true)
-    expect(surface.read({ path: ['alpha'] }), 'the standing row is untouched by the refusal').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'prev' })
+    expect(surface.read({ path: ['alpha'] }), 'the standing row is untouched by the refusal — asserted as the node, so a refusal that re-minted one reads here').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'prev' } })
     expect(readdirSync(profileDir), 'no `.tmp` stands beside the profile').toEqual([PROFILE_FILE])
     // THE SECOND FAILING POINT — the profile's name can no longer back a save: the write is refused
     // rather than torn, and the previous bytes still stand.
@@ -316,7 +331,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       expect(bytesOf(PROFILE_FILE).equals(stood), 'the previous bytes are intact: the store’s own rollback ran (persistence.md §5)').toBe(true)
       expect(readdirSync(profileDir), 'and no `.tmp`, no lock and no sidecar is left behind').toEqual([PROFILE_FILE])
     } finally { chmodSync(at(PROFILE_FILE), 0o644) }
-    expect(surface.read({ path: ['alpha'] }), 'afterwards the profile still serves the row that stood').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'prev' })
+    expect(surface.read({ path: ['alpha'] }), 'afterwards the profile still serves the row that stood — the same LEAF node, still at `file`').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'prev' } })
   })
 
   it('S-7 · delete and journal are observable and nothing reverses: the delete answers a receipt, the journal shows the write then the delete with cursors, and no tool reverses', () => {
@@ -394,7 +409,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     // THE RULING THIS ROW CARRIES (L1 §7 ASM-12): this unit's e2e surface declares NO rendered data
     // view. D-11 gives the unit five tools that answer values; D-12 keeps every operator-visible
     // surface — the undo unit's provident-authored UI — for a unit of its own, with its own surface
-    // decision; `interface.md` §7 measures the same. The rendered data pane is OWED, not built, so
+    // decision; `interface.md` §6's "AND IT RENDERS NOTHING" bullet measures the same. The rendered data pane is OWED, not built, so
     // the observable here is the invariance the landed module owes: a commit through
     // `provident.data.write` adds no graph node and moves no rendered reading, while the app's own
     // producing graph — the only road a data view may ever ride (UI authority, `brief.md` §2) —
@@ -420,7 +435,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       expect(written.answer.status, 'a landed change is measured, so the readings below are taken against a committed row (D-11)').toBe('committed')
 
       const after = await reading()
-      expect(after.rendered, 'interface.md §7 — a commit adds no graph node, so the rendered reading is byte-identical across it').toBe(before.rendered)
+      expect(after.rendered, 'interface.md §6 — a commit adds no graph node, so the rendered reading is byte-identical across it').toBe(before.rendered)
       expect(carriersOf(after.rendered), 'and no element carrying data-node-id was added: the store mints no node (D-11)').toBe(carriersOf(before.rendered))
       expect(after.markdown, 'the markdown reading is unmoved: nothing renders the profile, so no commit reaches it').toBe(before.markdown)
       expect(after.markdown.includes('no-view-in-this-unit'), 'the committed value is absent from get_markdown because no view carries it — the owed pane, never a hidden one (ASM-12)').toBe(false)
@@ -465,7 +480,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       const a = surfaceAt()
       const b = surfaceAt(other)
       expect(a.write({ path: ['alpha'], value: 'only-a' }).status, 'the first profile commits its own row').toBe('committed')
-      expect(a.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'only-a' })
+      expect(a.read({ path: ['alpha'] }), 'the first profile serves its own row as the LEAF node the read now names (D-134)').toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'only-a' } })
       expect(b.read({ path: ['alpha'] }), 'and the second profile never serves it (behaviour.md §9)').toEqual({ status: 'absent', path: ['alpha'] })
       const bList = b.list({})
       expect({ status: bList.status, count: bList.status === 'read' ? bList.count : null }, 'their lists are disjoint').toEqual({ status: 'read', count: 0 })
@@ -498,7 +513,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
         expect(surface.read({ path: ['alpha'] }), `S-12/${seed.label}: absence is the answer`).toEqual({ status: 'absent', path: ['alpha'] })
         expect(readFileSync(join(dir, PROFILE_FILE), 'utf8'), `S-12/${seed.label}: the foreign bytes stand untouched until a commit`).toBe(seed.bytes)
         expect(surface.write({ path: ['alpha'], value: 'recovered' }).status, `S-12/${seed.label}: the next commit commits`).toBe('committed')
-        expect(surface.read({ path: ['alpha'] }), `S-12/${seed.label}: and serves the row it landed`).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'recovered' })
+        expect(surface.read({ path: ['alpha'] }), `S-12/${seed.label}: and serves the row it landed, as the leaf node over the bytes it replaced`).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'recovered' } })
         expect(readFileSync(join(dir, PROFILE_FILE), 'utf8'), `S-12/${seed.label}: the commit replaced the bytes`).not.toBe(seed.bytes)
       } finally { rmSync(dir, { recursive: true, force: true }) }
     }

@@ -8,6 +8,7 @@ export type {
   DataRefusalReason,
   DataLedger,
   DataLogEntry,
+  DataReadNode,
   DataReadAnswer,
   DataWriteAnswer,
   DataDeleteAnswer,

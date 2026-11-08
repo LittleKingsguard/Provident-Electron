@@ -13,6 +13,15 @@
 // six groups, the default-grant subset unmoved at 8, thirteen names with `data` enabled). This file
 // executes no census row of its own: it reads the listing the gate drives and the answers the five
 // registrations return.
+//
+// DISPOSITION UNDER THE READOUT (`D-134`, `D-30`, `D-143`) — ONE SITE, RE-GRAINED IN PLACE, NONE RETIRED. `RG-1` is the
+// `read` the second row drives over the REAL transport: the answer arrives as the tool's own JSON text and carries
+// §2a's LEAF node whole — `{_tier:'file', value:'x'}` — because the readout is a value INSIDE the answer and this
+// surface adds no member to it (§2a's rule that the answer's member set is unmoved). Every other answer this file
+// drives — both listings, the absent reading, the receipt, the `list` and `journal` readings and both refusals — is
+// UNTOUCHED.
+// **THE ONE RE-GRAINED SITE IS RED AT THIS HEAD FOR THE ABSENCE IT NAMES** until L4 lands `interface.md` §9's H-2, and
+// the marker above stays, for the reason `surface.test.ts`'s header block states (D-30, D-31, D-134, `D-143`).
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -132,7 +141,8 @@ describe('central-data · the group, the gate and the registration surface', () 
       const committed = await call(client, 'provident.data.write', { path: ['alpha'], value: 'x' })
       expect(committed.answer).toEqual({ status: 'committed', path: ['alpha'], cursor: 1, repaired: false, log: [{ kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null }] })
       const read = await call(client, 'provident.data.read', { path: ['alpha'] })
-      expect(read.answer).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: 'x' })
+      // RG-1 — RE-GRAINED IN PLACE (§2a): the same LEAF node crosses the MCP tool boundary as JSON text, `_tier` and all.
+      expect(read.answer).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'x' } })
       const list = await call(client, 'provident.data.list', {})
       expect({ status: list.answer.status, paths: list.answer.paths, count: list.answer.count })
         .toEqual({ status: 'read', paths: [['alpha']], count: 1 })

@@ -44,6 +44,21 @@
 //     `<profile>/provident-profile.json` BY THIS PROCESS as well as through the crossing, which is what makes
 //     "the repair's placeholder stands" a reading of the store's bytes rather than of the crossing's opinion.
 //
+// **THIS LEG WAS RE-GRAINED FOR THE TIERED ANSWER, AND SWEPT RATHER THAN PATCHED AT SIX SITES** (`D-134`, `E-8`): the ONE
+// surface whose passing answer moved is `provident.data.read` — main's `createDataSurface().read` composes its `value` over
+// the store's `readTiered`, so the answer carries the release's `TieredNode` (an OBJECT node `{_tier, …members}` with its
+// members inline, an ARRAY `{_tier, value:[<node>, …]}`, a LEAF `{_tier, value:<literal>}`) and the `absent` arm carries
+// none. **THE OTHER ANSWERS THIS LEG READS DID NOT MOVE, AND THAT IS THE TREE'S ARRANGEMENT AND NOT THIS FILE'S HOPE**: the
+// preload's `tabs`/`view`/`security`/`module` members are composed in main from the store's own `read`/`readLiteral` verbs
+// (`src/main/tabs-record/index.ts`, `src/main/view-record/index.ts`, `src/main/operator-settings/index.ts`; the tiered
+// verb's ONE call site is `src/main/data/surface.ts`), and the two profile files this process reads are the store's
+// persisted BYTES, which the readout compiles and never rewrites (the `_tier`-free-file reading `tests/e2e/tier-readout/`'s
+// `T-5` takes). So `X-2`, `X-4`, `X-8`, `X-9`…`X-18`, `V-1`, `V-3`…`V-5`, `V-7`, `V-8` and `V-10` pin exactly what
+// they pinned — the bridge's own reading, the rendered node, and the store's bytes. **The SIX rows that DO pin a
+// `data.read` answer are `X-1`, `X-3`, `X-5`, `X-6`, `X-7` and `X-31`**, and each is re-grained AT ITS OWN ROW below: none
+// is skipped, none is made conditional, none is softened, and NO ID IS RETIRED — the leg's row count is unmoved, and the
+// two rows whose subject IS the answer's own shape (`X-1`, `X-31`) now pin the NODE rather than a projection of it.
+//
 // FIVE BOOTS, ONE PER SUBJECT, on three scratch profiles. Boot A loads NO driver envelope and reads the
 // untouched app graph (the page drive is the app's own writing — loading an envelope would REPLACE that
 // graph, whichever crossing is being measured, which is why the TAB record's push is measured here); boot B
@@ -112,6 +127,14 @@ const TABS_ADDRESS = 'tabs'
  *  and could perturb the rows beside it — and it is written and DELETED inside one act, so the profile this leg leaves
  *  behind carries no row of it. */
 const DATA_PROBE = 'bridge-probe'
+/** **THE PROBE'S TWO ANSWERS, SPELLED AS THE RELEASE'S NODES** (`D-134`, `E-8`): the write names tier `'file'`, so the
+ *  read at that address answers a LEAF node — `{_tier:'file', value:'x'}`, the literal wrapped exactly ONCE — and the
+ *  second read, at the address the delete emptied, answers the `absent` arm, WHICH CARRIES NO NODE AND NO `_tier` at all
+ *  (ASM-3): an empty address answers a fact about the caller's own argument, so its member set is exactly
+ *  `{status, path}`. Both are pinned BY EQUALITY in `X-31`, so a bare value, a missing `_tier`, a node minted onto an
+ *  absence or a fifth member on either arm reds there. */
+const DATA_PROBE_NODE = { _tier: 'file', value: 'x' }
+const DATA_PROBE_ABSENT = { status: 'absent', path: [DATA_PROBE] }
 /** **THE APP'S OWN PROFILE FILE** — the normal crossing's one register, and the ONLY place a `file`-tier value can be
  *  read without asking the crossing (`src/main/data/store.ts`'s `PROFILE_FILE_NAME`). The `mem` tiers have no image
  *  here at all, which is what makes the fresh-boot reading decisive. */
@@ -258,24 +281,92 @@ const termsText = (t) =>
   `tabs-must-stand=${t.stands} order-names-its-tabs=${t.orderNamesItsTabs} exactly-one-active=${t.exactlyOneActive} ` +
   `tab-has-title=${t.tabHasTitle} tab-has-content=${t.tabHasContent} tab-has-lastActiveAt=${t.tabHasLastActiveAt}`
 
-/** The record as the crossing's `read` answers it (`order`/`landing`/`rows`) OR as the store's value
- *  carries it (`order` + one member per tab). ONE reader for both, so no row compares oranges. */
+/** **THE RELEASE'S NODE, RECOGNISED BY ITS OWN MINTED FIELD** (`D-134`; `index.d.ts`'s `TieredNode`): a node is an OBJECT
+ *  carrying ONE `_tier` in the store's three-token domain — never an array, never a set, which is why the DOMAIN test
+ *  stands where a bare string test would not: a stored `_tier` naming anything else is the caller's own member (the
+ *  release's one lossy name) and not the minted field. The tab record this leg reads carries no `_tier` member of its
+ *  own, so the strict test excludes nothing here and a BARE value answers `false` instead of being taken for a node. */
+const TIER_TOKENS = ['file', 'mem', 'temp']
+const isNode = (value) =>
+  value !== null && typeof value === 'object' && !Array.isArray(value) && TIER_TOKENS.includes(value._tier)
+
+/** **ONE NODE PROJECTED BACK TO THE STORE'S OWN VALUE** — the projection `tests/e2e/focus-retirement/` established beside
+ *  its `recordOf` (`E-7`), at THIS leg's grain. A passing `data.read` answers `{status, kind, path, value}` with `value`
+ *  the release's node, so the WRAPPER arm is the two-member own set `['_tier','value']` (a leaf and an array alike) and
+ *  every other node carries its members inline. **IT IS RUN ONCE, AND IT IS SAID HERE AND AT EVERY ROW THAT LEANS ON
+ *  IT**: the record rows measure the SEAT, the rows and the invariants the declarations own — a VALUE and not the
+ *  answer's shape — so the node is projected here and the readers below keep reading the record itself. The shape is
+ *  pinned where it IS the subject (`X-1`'s own node, kind and tier; `X-31`'s leaf), never assumed here. No member of the
+ *  tab record this leg reads is named `value`, so no object node of it can be taken for the wrapper; a value that is no
+ *  node at all — a leaf's own literal — is handed back exactly as it stands. */
+function plainOf(node) {
+  if (Array.isArray(node)) return node.map(plainOf)
+  if (!isNode(node)) return node
+  const keys = Object.keys(node)
+  if (keys.length === 2 && keys.includes('value')) {
+    const held = node.value
+    return Array.isArray(held) ? held.map(plainOf) : plainOf(held)
+  }
+  const plain = {}
+  for (const key of keys) if (key !== '_tier') plain[key] = plainOf(node[key])
+  return plain
+}
+
+/** **TWO ANSWERS PINNED BY EQUALITY WITHOUT DEPENDING ON MEMBER ORDER**: the surface builds its answers in a fixed member
+ *  order, and a row that compared `JSON.stringify` of two objects would be pinning that order as well — so both sides are
+ *  sorted by key, recursively, and the comparison is the SET of members and their values, which is the claim the rows
+ *  make (every arm's member set, `T-3`'s style, and the absence's emptiness). */
+function sameJson(left, right) {
+  const sort = (value) => {
+    if (Array.isArray(value)) return value.map(sort)
+    if (value === null || typeof value !== 'object') return value
+    const out = {}
+    for (const key of Object.keys(value).sort()) out[key] = sort(value[key])
+    return out
+  }
+  return JSON.stringify(sort(left)) === JSON.stringify(sort(right))
+}
+
+/** The record as the crossing answers it — ONE reader for the TWO answers this leg's record rows reach, so no row
+ *  compares oranges. **THE ARMS ARE TOLD APART BY THE ANSWER AND NOT BY A GUESS, AND THEY CARRY DIFFERENT GRAINS**: the
+ *  preload's `tabs.read()` answers `TabsRecordReading` (`{status:'committed', order, landing, rows}`), composed by
+ *  `src/main/tabs-record/` from the store's OWN `read` verb — which this unit did not move — so it carries NO `_tier` and
+ *  nothing is projected for it; `provident.data.read` answers `{status, kind, path, value}` with `value` the release's
+ *  node, so THAT arm is the node's: `node` is the node itself, `tier` its own `_tier` (kept, for the one row whose
+ *  subject is the family's durability), and `value`/`order`/`active`/`terms` are the node projected ONCE by `plainOf`.
+ *  **AN ANSWER WITH NO NODE ANSWERS NO RECORD**: the `absent` and ledger arms carry none (ASM-3), and a passing answer
+ *  whose `value` is not a node — the bare value this unit replaced — answers `node: null`/`value: null`, so a record row
+ *  REDS instead of passing on a shape the tree no longer has. */
 function recordView(reading) {
-  if (reading === null || typeof reading !== 'object') return { status: null, order: null, landing: null, active: [] }
+  const noRecord = { status: null, kind: null, node: null, tier: null, value: null, order: null, landing: null, active: [], rowIds: null, terms: null }
+  if (reading === null || typeof reading !== 'object') return noRecord
   if (Array.isArray(reading.rows) && Array.isArray(reading.order)) {
-    // the bridge's `read()`: rows are objects carrying their own `id`.
+    // the bridge's `read()`: rows are objects carrying their own `id`, and the reading names no tier at all.
     return {
+      ...noRecord,
       status: reading.status ?? null,
       order: reading.order.map(String),
       landing: typeof reading.landing === 'string' ? reading.landing : null,
       active: reading.rows.filter((r) => r && r.active === true).map((r) => String(r.id)),
       rowIds: reading.rows.map((r) => String(r && r.id)),
-      terms: null,
     }
   }
-  const value = reading && Object.prototype.hasOwnProperty.call(reading, 'value') ? reading.value : reading
+  const node = reading.status === 'read' && isNode(reading.value) ? reading.value : null
+  if (node === null) return { ...noRecord, status: reading.status ?? null, kind: reading.kind ?? null }
+  const value = plainOf(node)
   const t = declaredTerms(value)
-  return { status: reading?.status ?? null, order: t.order, landing: null, active: t.active, rowIds: t.ids, terms: t, value }
+  return {
+    ...noRecord,
+    status: reading.status ?? null,
+    kind: reading.kind ?? null,
+    node,
+    tier: node._tier,
+    value,
+    order: t.order,
+    active: t.active,
+    rowIds: t.ids,
+    terms: t,
+  }
 }
 
 // ---- the view record's families, read off its own answer ---------------------
@@ -755,13 +846,19 @@ try {
   console.log(`  · boot A pid ${bootA.child.pid}`)
 
   // ── X-1: the landing entry stands at the boot, over the boundary ────────────
+  // **THE ROW PINS THE NODE, AND READS THE RECORD OFF IT** (`D-134`, `E-8`): `provident.data.read`'s passing answer
+  // carries `{status, kind, path, value}` with `value` the release's node, so the answer's OWN shape is asserted here —
+  // `kind:'branch'` (the family is an object node) at `_tier:'file'`, the tier `['tabs']` is declared at, kept because
+  // this row is the crossing STANDING at a fresh boot — and the record's terms are then read off that node projected
+  // ONCE by `plainOf`. A bare value answers no node, and this row reds rather than passing on the shape it replaced.
   const bootRead = await call(bootA.client, 'provident.data.read', { path: [TABS_ADDRESS] })
   const bootView = recordView(bootRead)
   row(
     'X-1',
-    'the normal crossing holds `[\'tabs\']` at the boot, before any act: the record stands, its `order` seat names its own tabs once each, exactly one row is active — and that row is the LANDING entry the creation repair minted',
-    bootView.terms !== null && termsPassed(bootView.terms) && bootView.active.length === 1 && bootView.active[0] === 'landing',
-    `provident.data.read → ${JSON.stringify(bootRead).slice(0, 420)}; terms: ${bootView.terms === null ? 'no record' : termsText(bootView.terms)}; active=[${bootView.active.join(', ')}]`,
+    'the normal crossing holds `[\'tabs\']` at the boot, before any act: the answer is the store\'s NODE for the family — `kind:\'branch\'` at the `_tier` the declaration puts it at, `file` — and the record projected ONCE off that node stands, its `order` seat naming its own tabs once each, exactly one row active, and that row the LANDING entry the creation repair minted',
+    bootView.kind === 'branch' && bootView.tier === 'file' && bootView.node !== null &&
+      bootView.terms !== null && termsPassed(bootView.terms) && bootView.active.length === 1 && bootView.active[0] === 'landing',
+    `provident.data.read → ${JSON.stringify(bootRead).slice(0, 420)}; answer kind=${JSON.stringify(bootView.kind)} · node._tier=${JSON.stringify(bootView.tier)}; terms: ${bootView.terms === null ? 'no record' : termsText(bootView.terms)}; active=[${bootView.active.join(', ')}]`,
   )
 
   // ── X-2: the push at the boot, read off the authored pages ─────────────────
@@ -782,7 +879,11 @@ try {
   }
   const wroteError = await call(bootA.client, 'provident.data.write', { path: [TABS_ADDRESS], value: errorRecord })
   const afterErrorWrite = recordView(await call(bootA.client, 'provident.data.read', { path: [TABS_ADDRESS] }))
+  // **THIS ROW'S SUBJECT IS A VALUE — THE RECORD THE WRITE LEFT STANDING — AND IT SAYS SO**: the standing record is
+  // read off the answer's node projected ONCE by `plainOf`, and the row requires that node to be there at all, so the
+  // projection is of a readout and never of a shape this leg is willing to see again (`D-134`, `E-8`).
   const errorRowLanded =
+    afterErrorWrite.node !== null &&
     afterErrorWrite.value !== null &&
     afterErrorWrite.value.landing !== null &&
     typeof afterErrorWrite.value.landing === 'object' &&
@@ -790,9 +891,9 @@ try {
     afterErrorWrite.value.landing.active === true
   row(
     'X-3',
-    "a whole-record WRITE at `['tabs']` through `provident.data.write` lands on the normal crossing: the standing record is the one the driver wrote, error field included",
+    "a whole-record WRITE at `['tabs']` through `provident.data.write` lands on the normal crossing: the standing record — read off the answer's node, projected ONCE, because this row's subject is a VALUE and not the readout's shape — is the one the driver wrote, error field included",
     wroteError?.status === 'committed' && errorRowLanded,
-    `data.write → ${JSON.stringify(wroteError)}; standing record → ${JSON.stringify(afterErrorWrite.value)}`,
+    `data.write → ${JSON.stringify(wroteError)}; standing record (node._tier=${JSON.stringify(afterErrorWrite.tier)} projected once) → ${JSON.stringify(afterErrorWrite.value)}`,
   )
 
   // ── X-4: the change PUSH crossed the boundary and reached a subscriber ─────
@@ -811,13 +912,18 @@ try {
   )
 
   // ── X-5: the six declarations fire on an empty value ─────────────────────
+  // **X-5, X-6 AND X-7 ALL REACH THE STANDING RECORD THROUGH THE SAME NODE**: each answers `provident.data.read` at
+  // `['tabs']`, and `recordView` requires that answer to carry the release's node before it projects the record ONCE —
+  // so `terms !== null` here is also the shape's presence, and a bare value reds these rows instead of silently
+  // satisfying them. Their subjects stay the RECORD's (the invariants the six declarations own), which is why the
+  // projection and not the node is what they assert (`D-134`, `E-8`).
   const wroteEmpty = await call(bootA.client, 'provident.data.write', { path: [TABS_ADDRESS], value: {} })
   const afterEmpty = recordView(await call(bootA.client, 'provident.data.read', { path: [TABS_ADDRESS] }))
   row(
     'X-5',
-    "the six declarations fire inside the crossing's own commit: a WRITE of `{}` is answered committed, and what STANDS is a legal record — root standing, the seat naming its own tabs once each, exactly one active, and all three field pairs present, with the LANDING entry minted back",
+    "the six declarations fire inside the crossing's own commit: a WRITE of `{}` is answered committed, and what STANDS — read off the answer's node, projected ONCE — is a legal record: root standing, the seat naming its own tabs once each, exactly one active, and all three field pairs present, with the LANDING entry minted back",
     wroteEmpty?.status === 'committed' && afterEmpty.terms !== null && termsPassed(afterEmpty.terms) && afterEmpty.active.length === 1 && afterEmpty.active[0] === 'landing',
-    `data.write({}) → ${JSON.stringify(wroteEmpty)}; standing record → ${JSON.stringify(afterEmpty.value)}; terms: ${afterEmpty.terms === null ? 'no record' : termsText(afterEmpty.terms)}`,
+    `data.write({}) → ${JSON.stringify(wroteEmpty)}; standing record (node._tier=${JSON.stringify(afterEmpty.tier)}, projected once) → ${JSON.stringify(afterEmpty.value)}; terms: ${afterEmpty.terms === null ? 'no record' : termsText(afterEmpty.terms)}`,
   )
 
   // ── X-6: the two-active arm keeps the most recent ────────────────────────
@@ -832,9 +938,9 @@ try {
   const afterTwo = recordView(await call(bootA.client, 'provident.data.read', { path: [TABS_ADDRESS] }))
   row(
     'X-6',
-    'a record naming TWO actives is repaired by the crossing: exactly one row stands active afterwards and it is the most recently active one (`beta`), which is the referent discipline the repair carries',
+    'a record naming TWO actives is repaired by the crossing: exactly one row stands active afterwards and it is the most recently active one (`beta`), which is the referent discipline the repair carries — read off the answer\'s node, projected ONCE',
     wroteTwo?.status === 'committed' && afterTwo.terms !== null && afterTwo.terms.exactlyOneActive && afterTwo.active.length === 1 && afterTwo.active[0] === 'beta' && afterTwo.terms.orderNamesItsTabs,
-    `data.write(two actives) → ${JSON.stringify(wroteTwo)}; standing record → ${JSON.stringify(afterTwo.value)}; terms: ${afterTwo.terms === null ? 'no record' : termsText(afterTwo.terms)}`,
+    `data.write(two actives) → ${JSON.stringify(wroteTwo)}; standing record (node._tier=${JSON.stringify(afterTwo.tier)}, projected once) → ${JSON.stringify(afterTwo.value)}; terms: ${afterTwo.terms === null ? 'no record' : termsText(afterTwo.terms)}`,
   )
 
   // ── X-7: the record cannot be REMOVED ────────────────────────────────────
@@ -842,9 +948,9 @@ try {
   const afterDelete = recordView(await call(bootA.client, 'provident.data.read', { path: [TABS_ADDRESS] }))
   row(
     'X-7',
-    "`\\['tabs'\\]` is an ENFORCED INVARIANT: a DELETE at the record's own address removes nothing and the record still stands, legal, afterwards",
+    "`\\['tabs'\\]` is an ENFORCED INVARIANT: a DELETE at the record's own address removes nothing and the record still stands, legal, afterwards — the record read off the answer's node, projected ONCE, and the standing record's legal terms asserted by the six declarations' own names",
     removed?.status === 'committed' && removed?.removed === false && afterDelete.terms !== null && termsPassed(afterDelete.terms),
-    `data.delete(['tabs']) → ${JSON.stringify(removed)}; standing record → ${JSON.stringify(afterDelete.value)}`,
+    `data.delete(['tabs']) → ${JSON.stringify(removed)}; standing record (node._tier=${JSON.stringify(afterDelete.tier)}, projected once) → ${JSON.stringify(afterDelete.value)}`,
   )
 
   // ── X-8: the push is TWO-SIDED ───────────────────────────────────────────
@@ -911,6 +1017,14 @@ try {
   // row reads the whole route set in one act: the write's `committed` answer carrying `repaired` and a MATERIALIZED `log`
   // (D-103), the read's `row` arm, the list's paths, the journal's own two entries, the delete's `removed`/`tiers`, and the
   // `absent` the second read answers — the last one being what makes the probe leave nothing behind.
+  //
+  // **BOTH READS ARE PINNED BY EQUALITY AND BOTH MOVED WITH THE TIERED ANSWER (`D-134`, `E-8`)**: the first read answers
+  // the family's LEAF NODE at the tier the write named — `{_tier:'file', value:'x'}` — which is strictly MORE than the
+  // `read.value === 'x'` this row pinned before, because the value and its durability are now one node and the row checks
+  // the node's member set as well as its literal. **AND THE SECOND READ'S CLAIM MOVED, WHICH THIS ROW SAYS RATHER THAN
+  // ABSORBS**: the address the delete emptied answers `absent`, and the `absent` arm carries NO node — its member set is
+  // exactly `{status, path}` — so "the probe leaves no row behind" is now also "and no node, no `_tier` and no fifth
+  // member is minted onto an absence", which is a stronger claim than the one the row made before the shape moved (ASM-3).
   const dataRoute = await drive(bootB.client, 'xg-data-route', 'data-route')
   const dataAnswer = dataRoute.answer
   const listedPaths = Array.isArray(dataAnswer?.list?.paths) ? dataAnswer.list.paths : []
@@ -918,15 +1032,15 @@ try {
   const journalled = Array.isArray(dataAnswer?.journalAfter?.entries) ? dataAnswer.journalAfter.entries : []
   row(
     'X-31',
-    `THE FIVE \`data.*\` ROUTES CROSS THE BOUNDARY: \`window.provident.data.write/read/list/journal/delete\` answer §2's shapes from the boot's own surface — the write committed with \`repaired:false\` and an enumerable \`log\`, the read a \`row\` carrying the value, the list naming \`['${DATA_PROBE}']\`, the journal carrying the write before the delete and the write then the delete after it, the delete \`removed:true\` at tier \`'file'\` — and the second read answers \`absent\`, so the probe leaves no row behind`,
+    `THE FIVE \`data.*\` ROUTES CROSS THE BOUNDARY: \`window.provident.data.write/read/list/journal/delete\` answer §2's shapes from the boot's own surface — the write committed with \`repaired:false\` and an enumerable \`log\`, the read the LEAF NODE \`{_tier:'file', value:'x'}\` (\`kind:'row'\`, the literal wrapped once and its own tier beside it), the list naming \`['${DATA_PROBE}']\`, the journal carrying the write before the delete and the write then the delete after it, the delete \`removed:true\` at tier \`'file'\` — and the second read answers \`absent\` with NO node, its member set exactly \`{status, path}\`, so the probe leaves no row and no readout behind`,
     dataRoute.status === 'ok' &&
       dataAnswer?.wrote?.status === 'committed' && dataAnswer?.wrote?.repaired === false && Array.isArray(dataAnswer?.wrote?.log) && dataAnswer.wrote.log.length > 0 &&
-      dataAnswer?.read?.status === 'read' && dataAnswer.read.kind === 'row' && dataAnswer.read.value === 'x' &&
+      sameJson(dataAnswer?.read, { status: 'read', kind: 'row', path: [DATA_PROBE], value: DATA_PROBE_NODE }) &&
       listedPaths.some((path) => JSON.stringify(path) === JSON.stringify([DATA_PROBE])) &&
       journalEntries.length === 1 && journalEntries[0].kind === 'write' && JSON.stringify(journalEntries[0].path) === JSON.stringify([DATA_PROBE]) &&
       journalled.length === 2 && journalled[1].kind === 'delete' && JSON.stringify(journalled[1].path) === JSON.stringify([DATA_PROBE]) &&
       dataAnswer?.deleted?.status === 'committed' && dataAnswer.deleted.removed === true && JSON.stringify(dataAnswer.deleted.tiers) === JSON.stringify(['file']) &&
-      dataAnswer?.after?.status === 'absent',
+      sameJson(dataAnswer?.after, DATA_PROBE_ABSENT),
     `(${dataRoute.polls} read(s)) answer → ${JSON.stringify(dataAnswer)}`,
   )
 

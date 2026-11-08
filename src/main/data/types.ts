@@ -71,8 +71,17 @@ export type DataLedger = {
  */
 export type DataLogEntry = LogEntry
 
+/**
+ * **THE RELEASE'S OWN NODE, AND THE ONE SPELLING OF IT** (`D-134`, `interface.md` §2a; S-9): a passing `read`
+ * answers the node its store returned, so this alias is the seam's typed verb's RETURN and never a second
+ * statement of the shape — `ProfileStore` is `store.ts`'s `ReturnType<typeof createProfileStore>`, so the
+ * package's own type arrives here with no file spelling the package, no seam byte and no seam member minted.
+ * `TierSet` is the ARGUMENT's type; the answer never carries a set, each node naming ONE token in `_tier`.
+ */
+export type DataReadNode = ReturnType<ProfileStore['readTiered']>
+
 export type DataReadAnswer =
-  | { status: 'read'; kind: 'row' | 'branch'; path: DataPath; value: unknown }
+  | { status: 'read'; kind: 'row' | 'branch'; path: DataPath; value: DataReadNode }
   | { status: 'absent'; path: DataPath }
   | DataLedger
 
