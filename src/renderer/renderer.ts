@@ -716,7 +716,7 @@ export type FocusSeat =
   | { readonly kind: 'open'; readonly id: string; readonly target: string }
   | { readonly kind: 'unresolved' }
 
-/** THE THREE ARMS THAT ARE NOT A RECORD (`D-127`, L2 `ASM-6`): `reason` exists on each, which is why S3's parameter is
+/** THE THREE ARMS THAT ARE NOT A RECORD (`D-127`, L2 §3's third arm): `reason` exists on each, which is why S3's parameter is
  *  NARROWED and never `TabsClientReading` whole — the committed arm carries no `reason` (`tabs-client.ts:56`). */
 type UnreadableReading = Exclude<TabsClientReading, { readonly status: 'committed' }>
 
@@ -762,7 +762,7 @@ export function composeRecord(reading: TabsCommittedAnswer, seat: FocusSeat): Re
  *  matches the caller's string is the seat (`{kind:'seat', id}`), and nothing about that row's identity moves — the
  *  caller's string names a row's CONTENT REFERENCE and never an id, so there is no second identity rule here. No row
  *  matches and `newTab === true` OPENS one; no row matches and `newTab` is not `true` is `unresolved` (S7), because
- *  opening a row there would empty `newTab: true` of its declared meaning (`D-18`, `ASM-5`).
+ *  opening a row there would empty `newTab: true` of its declared meaning (`D-18`, L2 §4).
  *
  *  **THE OPENED ROW'S ID IS MINTED, NEVER THE CALLER'S TARGET** (`ASM-1`, `D-142`): candidate `tab-<n>` from
  *  `n = order.length + 1` upward, accepted by the EXISTING `mintTabId(order, candidate)` — whose three reasons
@@ -786,7 +786,7 @@ function withRefusal(reading: TabsClientReading, refusal: FocusRefusal): FocusAc
   return { ...reading, refused: refusal }
 }
 
-/** **S3 — A READING THAT IS NOT `committed` IS NOT A RECORD** (`D-127`, L2 `ASM-6`): `absent`, `unread` and `refused`
+/** **S3 — A READING THAT IS NOT `committed` IS NOT A RECORD** (`D-127`, L2 §3's third arm): `absent`, `unread` and `refused`
  *  supply no rows, so the route refuses rather than composing over a state the realm never read — and it MINTS NO WORD:
  *  this carries the READING's OWN `reason`, from the client's closed set (`tabs-client.ts`'s `TabsClientReading`:
  *  `no-tabs-member`, `no-read-route`, `route-threw`, `answer-not-declared`, or the store's own on a `refused` arm), and the
@@ -814,9 +814,9 @@ function malformed(target: unknown): FocusRefusal {
   }
 }
 
-/** **S7 — NO STANDING ROW CARRIES THE TARGET AND NO OPEN WAS ASKED FOR** (`ASM-5`): the route writes NOTHING and answers the
- *  record as read beside a reason of its OWN, `target-absent` — L2 §2 and L2 §7's `ASM-5` fix that the route answers "a
- *  refusal reason of its own" and name none, so `signatures.md` §3 names it. */
+/** **S7 — NO STANDING ROW CARRIES THE TARGET AND NO OPEN WAS ASKED FOR** (`D-18`, L2 §4): the route writes NOTHING and answers the
+ *  record as read beside a reason of its OWN, `target-absent` — L2 §4 fixes that the route answers "a refusal reason of its
+ *  own", so `signatures.md` §3 names it. */
 function absentTarget(target: string): FocusRefusal {
   return {
     status: 'refused',
@@ -851,7 +851,7 @@ function refusalOf(written: unknown): FocusRefusal | null {
  *  S5  a `target` that can be no row is THIS ROUTE's own refusal, and no store is asked — the tool's own class is its
  *      argument holder's (`focusHandler`), which judges the holder and never a member's value;
  *  S6  the seat;
- *  S7  no standing row carries it and no open was asked for: refusal of the route's own, and no write (`ASM-5`);
+ *  S7  no standing row carries it and no open was asked for: refusal of the route's own, and no write (`D-18`, L2 §4);
  *  S8  ONE composition, ONE passthrough, NO RETRY: the args object is handed on verbatim and no member of it is read,
  *      defaulted or re-spelled — `['tabs']` is the record's own address and `file` its own tier, the one the declared-root
  *      guard admits (`D-101`, `D-112`, `D-136`);

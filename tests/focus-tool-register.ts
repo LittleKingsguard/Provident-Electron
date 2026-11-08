@@ -452,8 +452,8 @@ export function recordAnswer(
 }
 
 /** **THE THIRD ARM'S REFUSED READING** — `{ status: 'refused', reason, message, address }`, the arm
- *  answered when the reading is a REFUSED one (`docs/L2/mcp-surface/interface.md` §3's third arm:
- *  a reading that is not a record, carried verbatim — `renderer-wiring` §7 `ASM-6`). These four
+ *  answered when the reading is a REFUSED one (`D-127`, `docs/L2/mcp-surface/interface.md` §3's
+ *  third arm: a reading that is not a record, carried verbatim). These four
  *  members are the tab client's own `TabsRefusedAnswer` (`src/renderer/tabs-client.ts`) and
  *  `reason` is the reading's own word, so nothing here is the tool's invention. THE OTHER TWO
  *  NON-RECORD READINGS ARE NOT THIS SHAPE AND ARE NOT BUILT HERE: `absent` is `{status, reason}`
@@ -463,8 +463,9 @@ export function recordAnswer(
  *  **AND THE TWO NO-ACT CASES ARE THIS ARM'S NEITHER**: an act that names no row writes nothing
  *  and answers the RECORD AS READ (`renderer-wiring` §2: "an act that names no row has no act"),
  *  and an act whose target no standing row carries with `newTab` not `true` answers the record as
- *  read BESIDE the route's own reason in the `refused` member (`renderer-wiring` §7 `ASM-5`) —
- *  i.e. the record arm with `refused` present, never this arm. */
+ *  read BESIDE the route's own reason in the `refused` member (`D-18`,
+ *  `docs/L2/mcp-surface/interface.md` §4) — i.e. the record arm with `refused` present,
+ *  never this arm. */
 export function refusalAnswer(
   reason: unknown, message: unknown, address: readonly (string | number)[] | null,
 ): Record<string, unknown> {
@@ -493,9 +494,10 @@ export function readingArm(status: 'absent' | 'unread', reason: string, detail?:
  *  did not answer; **`floor` and `through` are EXCLUDED**, because they ride the ledger's
  *  `cursor-unknown` arm alone and this route's `write` composes on none. `log` is an enumerable
  *  array of plain `DataLogEntry` records (`src/main/data/types.ts`), which is why an MCP answer can
- *  carry it at all. A ROUTE-side refusal without a write (`ASM-5`) rides the same member with the
- *  route's own reason and NO carried member; the surface re-spells neither, drops nothing and
- *  invents nothing — `assertRefusedLedger` is the reading of that. */
+ *  carry it at all. A ROUTE-side refusal without a write (`D-18`,
+ *  `docs/L2/mcp-surface/interface.md` §4) rides the same member with the route's own reason and NO
+ *  carried member; the surface re-spells neither, drops nothing and invents nothing —
+ *  `assertRefusedLedger` is the reading of that. */
 export function storeRefused(
   reason: unknown, message: unknown, extra?: Record<string, unknown>,
 ): Record<string, unknown> {

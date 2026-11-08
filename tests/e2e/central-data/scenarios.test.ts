@@ -409,7 +409,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     // THE RULING THIS ROW CARRIES (L1 §7 ASM-12): this unit's e2e surface declares NO rendered data
     // view. D-11 gives the unit five tools that answer values; D-12 keeps every operator-visible
     // surface — the undo unit's provident-authored UI — for a unit of its own, with its own surface
-    // decision; `interface.md` §6's "AND IT RENDERS NOTHING" bullet measures the same. The rendered data pane is OWED, not built, so
+    // decision; `interface.md` §7's "AND IT RENDERS NOTHING" bullet measures the same. The rendered data pane is OWED, not built, so
     // the observable here is the invariance the landed module owes: a commit through
     // `provident.data.write` adds no graph node and moves no rendered reading, while the app's own
     // producing graph — the only road a data view may ever ride (UI authority, `brief.md` §2) —
@@ -435,7 +435,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       expect(written.answer.status, 'a landed change is measured, so the readings below are taken against a committed row (D-11)').toBe('committed')
 
       const after = await reading()
-      expect(after.rendered, 'interface.md §6 — a commit adds no graph node, so the rendered reading is byte-identical across it').toBe(before.rendered)
+      expect(after.rendered, 'interface.md §7 — a commit adds no graph node, so the rendered reading is byte-identical across it').toBe(before.rendered)
       expect(carriersOf(after.rendered), 'and no element carrying data-node-id was added: the store mints no node (D-11)').toBe(carriersOf(before.rendered))
       expect(after.markdown, 'the markdown reading is unmoved: nothing renders the profile, so no commit reaches it').toBe(before.markdown)
       expect(after.markdown.includes('no-view-in-this-unit'), 'the committed value is absent from get_markdown because no view carries it — the owed pane, never a hidden one (ASM-12)').toBe(false)
