@@ -235,7 +235,7 @@ async function main(): Promise<void> {
     },
   })
   // **THE VIEW RECORD'S SURFACE (D-87)** — the same shape at the other family: one reference, over the ONE store this
-  // boot constructed, and one subscription that fires for any of its three roots. It constructs nothing.
+  // boot constructed, and one subscription that fires for any of its four roots. It constructs nothing.
   const viewSurface = createViewSurface({
     store: centralStore,
     onChanged: () => {

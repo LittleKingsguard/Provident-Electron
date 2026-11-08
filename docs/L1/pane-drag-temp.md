@@ -71,8 +71,7 @@ the sibling spawning batteries derive, from spawn to proved-zero teardown, and w
 (D-94, D-74). **THAT LOCK'S REACH IS STATED, NOT CLAIMED AWAY**: `tests/e2e/bundle-boot-seam/` spawns Electron too and
 holds none, so contention with that battery is a corpus gap named here and owned by the file it belongs to (D-27, D-43).
 **A REAL POINTER GESTURE IS NOT THIS BATTERY'S**: a vitest row cannot synthesise one on the app's own page, so every row
-drives the ROUTES the gesture's turns send and the gesture stays `npm run panes`'s (D-37). **ALL SIX ROWS ARE GREEN AT THIS
-HEAD**, over seven real boots — each was red for exactly the absence it names until the landing (D-145).
+drives the ROUTES the gesture's turns send — and **NO `npm run` LEG CARRIES A COORDINATE GESTURE**, which is `docs/L3/renderer-wiring/design.md` §7's reading: `npm run panes` is `tests/e2e/secure-panels/panes-live.mjs`, a `secure-panels` toggle battery whose own header states a body-issued `click` is NOT a coordinate gesture, so the sentence *"the gesture stays `npm run panes`'s"* is FALSE at this head. **TWO FILES DO DISPATCH REAL POINTER INPUT OVER CDP, AND NEITHER IS A LEG** — the DEMO's `demo/pane-drag-demo/run-live.mjs` (`D-118`) and `tests/secure-exclusion-live.mjs`, which drives the APP's own painted toggle — so §7's wider clause "no file dispatches a pointer event at a DOM element or on a live leg" is FALSE too, and what stands is narrower: no battery and no leg constructs `startGutterAffordance`, so **THE SEAT THIS UNIT LANDS HAS NO INSTRUMENT YET** — the row that would drive it is OWED and named (`tests/unit/renderer-wiring/preview-seat.test.ts`), not written (`design.md` §7/§8, D-27, D-37, D-118). **ALL SIX ROWS ARE GREEN AT THIS HEAD**, over seven real boots — each was red for exactly the absence it names until the landing (D-145).
 
 | Id | What it drives | What it measures | The boundary it stands on | Its declared failure mode |
 |---|---|---|---|---|

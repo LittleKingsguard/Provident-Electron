@@ -1,6 +1,6 @@
 # L3 — `renderer-wiring`: signatures
 
-- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 8 — **the currency pass AFTER the landing** (D-145): §1's `renderGhost` docblock stops claiming a removal on EVERY other arm and states the one arm that removes nothing — the attribute-less target, which returns ahead of the paint — which is what this page's own `ghostTarget` docblock already said and what `renderer.ts`'s `settleGhost` does (D-41). Rev 7 — re-grained WHOLE with
+- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 9 — the residual-currency pass: the two re-grains rev 8 still carried as **owed** — §2's `T-5` and §6's two `demo.ts` `previewOf` calls — are **LANDED**, each with its site (D-145, D-41). Rev 8 — **the currency pass AFTER the landing** (D-145): §1's `renderGhost` docblock stops claiming a removal on EVERY other arm and states the one arm that removes nothing — the attribute-less target, which returns ahead of the paint — which is what this page's own `ghostTarget` docblock already said and what `renderer.ts`'s `settleGhost` does (D-41). Rev 7 — re-grained WHOLE with
   `design.md` rev 7 §2–§5: the composition's surface, the wiring's ONE seat and constant key, the ghost turn, and the deletions, transcribed as
   stubs for L4. **Rev 6's `focus-retirement` stubs are LANDED in the file and are not re-declared** — `FocusActAnswer`, `FocusRefusal`,
   `FocusSeat`, `composeRecord`, `refusalOf` stand byte-for-byte as rev 6 left them, because a name stated twice is a second authority (D-53, D-45).
@@ -68,8 +68,8 @@ const renderGhost = (): void => { /* G1–G9 */ }
  *  SPELLS `function startViewShape(` WITH NO SPACE, because two probes in `tests/theme-declaration.test.ts` search that exact text. */
 function startViewShape(theme: ThemeApplication | null, ghost: (() => void) | null): void
 //   startViewShape(themeApplication, gutter.renderGhost)      // `gutter` is `startGutterAffordance(runtime)`'s reading
-// AND `T-5` in that same `chrome`-owned file asserts the OLD literal `startViewShape(themeApplication)`, so its re-grain is owed in
-// the SAME edit by that row's writer (design §6); no other byte of `startViewShape` or of `main()` moves.
+// AND `T-5`'s re-grain IS LANDED, not owed (design §6, D-145): that `chrome`-owned row no longer asserts the OLD literal
+// `startViewShape(themeApplication)` — `tests/theme-declaration.test.ts` reads the call's FIRST ARGUMENT by name (`firstArgumentOf`), which this unit's two-argument `main()` call satisfies; no other byte of `startViewShape` or of `main()` moves.
 ```
 
 ## 3. The exact texts, and what the wiring READS from another module's surface
@@ -124,5 +124,5 @@ Every name above keeps its SIGNATURE and its body, with ONE stated exception: `c
 ## 6. What this file does NOT declare
 
 - **The two client routes, the address, its tier, the `viewDeclaredRoots` entry, the two channel constants, both `ipcMain.handle` sites, the preload's and `secure-panels`' lockstep halves, and the subscription array's fourth address** — ten hunks, `docs/L2/view-record/interface.md` §8's and `app-shell`/`secure-panels`' (`L1 §5 R-1`…`R-4`). `commitDrag`/`clearDrag` are READ here and landed there, in the SAME pass (D-112, D-3).
-- **`chrome`'s `tests/theme-declaration.test.ts`** — its two `ViewClientBridge` literals AND the ONE probe this change REDS: `T-5`'s `startViewShape(themeApplication)` literal, deleted by the second argument; the file's two `'function startViewShape('` region probes are SATISFIED by §2's header spelling — `chrome`'s re-grain in the SAME edit (design §6, D-40). **AND `demo/pane-drag-demo/demo.ts`'s two `previewOf` calls**, `demo-panes`' row: their re-grain is owed too, because `npm run typecheck` reaches `demo/` and `DB-1` follows (`D-118`, D-3).
+- **`chrome`'s `tests/theme-declaration.test.ts`** — its two `ViewClientBridge` literals AND the ONE probe this change REDS: `T-5`'s `startViewShape(themeApplication)` literal, deleted by the second argument; the file's two `'function startViewShape('` region probes are SATISFIED by §2's header spelling — and that re-grain **IS LANDED** at `T-5`, which now reads the call's FIRST ARGUMENT by name and is satisfied by this unit's two-argument call (design §6, D-40, D-145). **AND `demo/pane-drag-demo/demo.ts`'s two `previewOf` calls**, `demo-panes`' row: **LANDED too** — both are `stub.drag()` reads at the address now (its `address` readout and its `surfaceDrag` field), `previewOf` survives in no `src/` byte but `src/renderer/renderer.ts`'s two deletion headstones (the composition region's and `gestures`'), so `npm run typecheck` reaches `demo/` with nothing to re-grain and `DB-1` is green (`D-118`, `D-132`, D-3).
 - **No MCP tool, resource, group, `data` member or secure-store byte** (D-18, D-112, D-123): the ghost asks an EXISTING route and paints a declaration on an element the envelope already authors.

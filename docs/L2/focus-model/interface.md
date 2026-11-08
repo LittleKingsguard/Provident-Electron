@@ -1,8 +1,8 @@
 # L2 — `focus-model`: the interface
 
-- **Layer:** L2 · **Unit:** `focus-model` · **Branch:** `strata` (D-6) · **Rev:** 1 — filed by the `focus-retirement`
-  unit's L2 pass, which owes §4's disposition row and retires the carrier's battery (`E-6`) in the same pass (D-141,
-  D-142, D-9).
+- **Layer:** L2 · **Unit:** `focus-model` · **Branch:** `strata` (D-6) · **Rev:** 2 — the pass AFTER the carrier's deletion: §1's
+  reader column and §2's census state the MEASUREMENT (no `src/` import, no `src/` call; the reader that reached it is the deleted
+  carrier's, six of its eight names surviving only in a headstone) and §3 is the authority; Rev 1 was the `focus-retirement` L2 pass that owed §4 and retired `E-6` (D-111, D-142, D-145, D-9).
 - **Inputs:** `D-141` (the model may be exercised over the tab record's state, and a model reading `['tabs']` needs no
   carrier) · `D-142` (the family and its carrier go, in that order) · `D-111` (the ruling on an unimported `src/shared/`
   module: **carried as designs**) · `D-9` (a battery retires with its referent) · `D-140`/`D-76` (the active tab is a
@@ -18,49 +18,47 @@ surface (D-3).
 
 ## 1. The surface as it stands — four value exports, five type declarations, with their sites
 
-| Export | Argument | Answer | Its `src/` call site |
+| Export | Argument | Answer | Its `src/` reader — the DELETED carrier's (§2, §3) |
 |---|---|---|---|
-| `focusTransition(state, verb, arg?)` | the caller's state, an unknown verb token, an optional `{entry?, id?, refuse?, onChange?}` | a **seven-member** result — `state`, `accepted`, `verb`, `refusals`, `seated`, `changed`, `persisted`; a refusal is a VALUE, and a refused attempt hands the prior state back by identity | `src/renderer/renderer.ts`'s `focusRoute`, its two `focusTransition(` arms (D-41) |
-| `focusOrder(entries)` | the caller's sequence | the SAME array, in the caller's order — nothing sorted, deduped or copied | `renderer.ts`'s `carriedEntryIds` (D-41) |
-| `focusIndex(state, id)` | the caller's state and an id | the owned index, or the `-1` sentinel | **none**: no `src/` file calls it (measured, §2; D-111) |
-| `persist(seam, state)` | a caller-supplied seam and the state | `{present, value}` — the seam's return handed back by identity; **it calls no storage** | `renderer.ts`'s `answerForCarrier` (D-41) |
+| `focusTransition(state, verb, arg?)` | the caller's state, an unknown verb token, an optional `{entry?, id?, refuse?, onChange?}` | a **seven-member** result — `state`, `accepted`, `verb`, `refusals`, `seated`, `changed`, `persisted`; a refusal is a VALUE, and a refused attempt hands the prior state back by identity | **none**: the carrier's `focusRoute` and its two `focusTransition(` arms, both deleted — `focusRoute` is spelled in no `src/` byte at all (D-142, §2) |
+| `focusOrder(entries)` | the caller's sequence | the SAME array, in the caller's order — nothing sorted, deduped or copied | **none**: the carrier's `carriedEntryIds`, DELETED (D-142, §2) |
+| `focusIndex(state, id)` | the caller's state and an id | the owned index, or the `-1` sentinel | **none**: no `src/` file ever calls it (measured, §2; D-111) |
+| `persist(seam, state)` | a caller-supplied seam and the state | `{present, value}` — the seam's return handed back by identity; **it calls no storage** | **none**: the carrier's `answerForCarrier`, DELETED (D-142, §2) |
 
-| Type | Members | Its `src/` use |
+| Type | Members | Its `src/` use — the DELETED carrier's (§2, §3) |
 |---|---|---|
 | `FocusId` | `unknown` — opacity declared as a TYPE, so no coercion or structural comparison is available | through `FocusState`/`FocusEntry` below (D-141) |
-| `FocusEntry` | closed: `id`, `target`, `label?` | `renderer.ts`'s `tabListProjectionOf`, `projectionAnswerOf`, `mirrorStateOf`, `carriedEntryIds`, `resolveForHolder` (D-41) |
+| `FocusEntry` | closed: `id`, `target`, `label?` | **none**: the carrier's `tabListProjectionOf`, `projectionAnswerOf`, `mirrorStateOf`, `carriedEntryIds`, `resolveForHolder` — DELETED (D-142) |
 | `FocusVerb` | closed five: `open`, `activate`, `close`, `next`, `prev` | passed through, never named by a route (D-141) |
 | `FocusRefusalCode` | closed five: `unknown-verb`, `duplicate-id`, `unknown-id`, `no-next`, `no-previous` | read off a result, never minted by a caller (D-141) |
-| `FocusState` | `entries` then `activeId` — **the CALLER's record** | `renderer.ts`'s `mirrorStateOf`, `answerForCarrier` and the carrier's `persistTarget` (D-141, D-140) |
+| `FocusState` | `entries` then `activeId` — **the CALLER's record** | **none**: the carrier's `mirrorStateOf`, `answerForCarrier` and its `persistTarget` — DELETED (D-142, D-140) |
 
 **The model holds no state, opens no address, calls no store and mints no vocabulary**: a pure ordered-entry reducer over
 opaque ids and targets, its own bytes declaring that (`src/shared/focus-model.ts`'s header and its `FocusState`/`FocusEntry`
 declarations; D-141, D-140).
 
-**Two `src/` shapes CITE it without importing it**, and both are the deleted mirror's: `src/shared/view-shape.ts` declares
+**Two `src/` shapes CITE it without importing it, and both went with the deleted mirror**: `src/shared/view-shape.ts` declared
 `ViewFocusEntry`/`ViewFocusMirror` as the model's first two shapes narrowed to what the crossing's boundary admits, and
-`src/renderer/view-client.ts`'s held-shape note does the same for `FocusState`; they leave with the family and assert
-nothing about the model (D-142, `E-2`, D-9).
+`src/renderer/view-client.ts`'s held-shape note did the same for `FocusState`; no `src/` byte spells either name at this head, and
+neither ever asserted anything about the model (D-142, `E-2`, D-9).
 
-## 2. Who imports it under `src/` — the measurement, not an assumption
+## 2. Who imports it under `src/` — the measurement, and the census is EMPTY
 
-**One statement, and it is the carrier's**: `src/renderer/renderer.ts`'s import block —
-`import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState } from '../shared/focus-model.js'`
-(D-41: the site). Every use of it sits in the region `D-142` deletes: `tabListProjectionOf`, `projectionAnswerOf`,
-`mirrorStateOf`, `carriedEntryIds`, `resolveForHolder`, `answerForCarrier`, the `focusRoute` arms and the carrier's
-`persistTarget` (D-142, `E-1`).
+**NO statement under `src/` imports it. ONE did, and it was the carrier's**: `src/renderer/renderer.ts`'s import block —
+`import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState } from '../shared/focus-model.js'` (`D-41`: the
+site) — deleted by `D-142` with the region every use of it sat in: `tabListProjectionOf`, `projectionAnswerOf`, `mirrorStateOf`,
+`carriedEntryIds`, `resolveForHolder`, `answerForCarrier`, the `focusRoute` arms and the carrier's `persistTarget` (`D-142`, `E-1`).
 
-**No other `src/` file reaches it** — measured over `src/**` in all four import forms (value, type-only, `import(`,
-`require(`): that statement is the whole census, and `focusIndex` has no caller under `src/` (D-108's instrument class).
+**The census is empty, measured over `src/**` in all four import forms** (value, type-only, `import(`, `require(`): not one
+statement, and `focusIndex` never had a caller (`D-108`'s instrument class). **What survives of that one reader is a HEADSTONE, not a
+reader**: `renderer.ts`'s `focus`-act region note names SIX of the eight sites `D-142` deleted — `mirrorStateOf`, `tabListProjectionOf`,
+`projectionAnswerOf`, `carriedEntryIds`, `resolveForHolder`, `answerForCarrier` — while `focusRoute` and `persistTarget` are spelled in no `src/` byte at this head (`D-41`, `D-142`, §3).
 
-**What the one reader puts in a built artifact**: `demo/pane-drag-demo/demo.mjs`'s provenance block carries a
-`@source … src/shared/focus-model.ts` line because that import reaches it, so the bundle is REBUILT when the import goes
-(`node demo/pane-drag-demo/build.mjs`) or the freshness row reds — a rebuild, not a model change (D-118).
+**What the deleted reader left in a built artifact, and no longer does**: `demo/pane-drag-demo/demo.mjs`'s provenance carried a
+`@source … src/shared/focus-model.ts` row while that import reached it; the pass that deleted the import REBUILT it, so the row is gone and `DB-1` stays green (`D-118`).
 
 **The battery-side readers**, so none is counted missing: `tests/focus-model.test.ts` (type-only, plus the
-computed-specifier dynamic read its red boundary needs); `tests/focus-tool-register.ts`, the tool's register, whose use of
-`focusTransition`/`focusOrder` belongs to `mcp-surface`'s answer-shape change (D-141, `E-5`, `ASM-2`); and
-`tests/store-focus.test.ts`, the carrier's battery, retired by §5 (D-9, `E-6`).
+computed-specifier dynamic read its red boundary needs); and `tests/store-focus.test.ts`, the carrier's battery, retired by §5 (D-9, `E-6`). **`tests/focus-tool-register.ts` holds NO claim about it**: that register's `focusTransition`/`focusOrder`/`FocusState` import went with the answer shape it served, so the tool's authority is the tab record (D-142, `E-5`, `ASM-2`).
 
 ## 3. The disposition — RETAINED AS A DESIGN, with no `src/` reader
 
@@ -130,18 +128,18 @@ write there is ADMITTED as an undeclared root rather than refused — the arm th
 
 | Instrument | What it carries of the retired path | Whose edit |
 |---|---|---|
-| `strata/modules.json`'s `focus-model` row | its `paths` claim `tests/store-focus.test.ts` | **L1's**: the map is L1-owned, and this pass names the claim without touching it (D-30, D-3) |
-| `strata/marks.json` | the file's `strata:marked-file` entry | regenerated by `strata-marks.mjs index`, never hand-edited; `check` reds until it is (D-30) |
-| `tests/integration/store-view-record/boundary.test.ts` | its declared scope already carries the retired path, so a deletion is admitted; this DOCUMENT's path is not in it | that row is `store-view-record`'s: an entry is owed for `docs/L2/focus-model/interface.md` (D-30, D-3) |
-| `src/renderer/renderer.ts`'s boot-region note | it cites `tests/store-focus.test.ts`'s `S22-1` as the row that attributed a literal; a deletion reds no row on a comment | `renderer-wiring`'s L4 pass re-grains it (D-41, D-3) |
-| `demo/pane-drag-demo/demo.mjs` | its provenance carries the model through the renderer's import | rebuilt by the pass that deletes that import (D-118) |
+| `strata/modules.json`'s `focus-model` row | its `paths` claimed `tests/store-focus.test.ts` | **L1's** — LANDED: the row's `paths` are `src/shared/focus-model.ts` and `tests/focus-model.test.ts`, so a deleted path is claimed by nothing (D-7, D-30, D-3) |
+| `strata/marks.json` | the file's `strata:marked-file` entry | REGENERATED by `strata-marks.mjs index`, never hand-edited: no `store-focus` row stands and `check` is green (D-30) |
+| `tests/integration/store-view-record/boundary.test.ts` | its declared scope already carried the retired path, so the deletion is admitted | that row is `store-view-record`'s — LANDED: its `DECLARED_SCOPE` names `docs/L2/focus-model/interface.md` (D-30, D-3) |
+| `src/renderer/renderer.ts`'s boot-region note | it cited `tests/store-focus.test.ts`'s `S22-1` as the row that attributed a literal; a deletion reds no row on a comment | `renderer-wiring`'s L4 pass — COMMENT-ONLY re-grain LANDED: the note names the battery as retired and gone from the tree (D-41, D-3) |
+| `demo/pane-drag-demo/demo.mjs` | its provenance carried the model through the renderer's import | REBUILT by the pass that deleted that import: no `focus-model` `@source` row stands and `DB-1` is green (D-118) |
 
 ## 6. Marks, for every row this pass touches (D-30, D-40)
 
 | Path | Marker it carries | Its reading after this pass |
 |---|---|---|
 | `tests/focus-model.test.ts` | `strata:marked-file` (rework, D-30) plus two `strata:gates` carve-outs — `I-9` and `R-3`'s config half, both being the script key set, an instrument (D-38) | UNMOVED: on notice, with those two carve-outs gating; no row is edited (§3) |
-| `tests/store-focus.test.ts` | `strata:marked-file` (rework, D-30) and no carve-out | RETIRED whole; the index still CARRIES its entry until `strata-marks.mjs index` runs (§5; D-30, D-9) |
+| `tests/store-focus.test.ts` | `strata:marked-file` (rework, D-30) and no carve-out | RETIRED whole and OUT of the index: no entry stands and `strata-marks.mjs check` is green (§5; D-30, D-9) |
 
 ## 7. What this document does not decide
 
