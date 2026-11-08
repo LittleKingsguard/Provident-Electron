@@ -2251,7 +2251,9 @@ export interface PaneDragSurface {
    *  a READ of that address painted as a DECLARED TRANSIENT: ONE `data.read({path: ['drag']})`, its answer checked
    *  against the realm's own `_tier` readout, and `data-ghost="temp"` declared on the backing's `ghostTarget` IFF the
    *  node is a branch standing at `temp` whose `DEFAULT_PANE_ID` member carries a finite non-negative `size` — the
-   *  declaration REMOVED on every other arm, and nothing thrown out of the turn. **NO POLL, NO TIMER, NO RETRY**: the
+   *  declaration REMOVED on every other arm THAT REACHES A REMOVAL, while the ATTRIBUTE-LESS target's arm RETURNS AHEAD of
+   *  the paint, so it removes nothing and paints nothing (`ghostTarget` below; design §4 `G9`) — and nothing thrown out of
+   *  the turn. **NO POLL, NO TIMER, NO RETRY**: the
    *  one read rides the delivery's turn, and a lost delivery is a stale declaration rather than a fabricated one. */
   renderGhost(): void
 }
@@ -2539,10 +2541,30 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  **THE ASK IS THE REALM'S EXISTING PASS-THROUGH** — ONE `dataRoute('read', {path: ['drag']})`, the same `data.read`
    *  route every `data.*` arm of this file uses, with no member invented and no tier argument. The answer's own node carries
    *  its `_tier` readout (`tier-readout` landed it), and THAT node's tier is what the declaration states — one token, never
-   *  a set. **EVERY ARM IS CLOSED**: a `_tier` that is not `temp`, a node naming another pane, a non-finite size, an
-   *  `absent`/ledger arm, a route that throws or rejects, no `data` member at all, and a target that will not take an
-   *  attribute each REMOVE the declaration and throw nothing. The staleness is stated, not hidden: a delivery that never
-   *  arrives paints nothing, and no retry stands here (`D-117`'s bounded staleness, measured by `P-3`/`P-4`). */
+   *  a set.
+   *
+   *  **THE PAINT IS THE ONE POSITIVE ARM, AND ITS PREDICATE IS TWO FACTS**: `data-ghost="temp"` is declared IFF the answer
+   *  names a committed reading whose node stands at `_tier: 'temp'` AND that same node's `DEFAULT_PANE_ID` member — the
+   *  composition's pane — carries a usable `size`. The size is read as the LEAF NODE it is on the live route: `data.read`
+   *  answers every node as the store's own `{_tier, …}` (`D-134`), so the number arrives as `member.size.value`, and a bare
+   *  number is the same fact stated without its node (the shape a double may answer). Nothing else is judged here and no
+   *  tier is re-derived from the leaf.
+   *
+   *  **EVERY OTHER ARM FAILS CLOSED — IT REMOVES THE DECLARATION AND THROWS NOTHING** (ASM-RW-3): a realm with no `data`
+   *  member at all (this file's own `store-unreachable` refusal), a route that throws synchronously or rejects, an answer
+   *  that is not a committed reading (`absent`, a ledger arm), a `_tier` that is not `temp`, a node naming another pane, and
+   *  a `size` that is not a finite non-negative number each reach the ONE removal, `clearGhost`. A SUPERSEDED turn's answer
+   *  mutates NOTHING, neither a paint nor a removal (`G3`, the epoch), because it answers for a reading this turn never
+   *  asked for.
+   *
+   *  **THE ATTRIBUTE-LESS TARGET IS THE ONE ARM THAT IS NOT A REMOVAL, AND IT IS STATED APART** (`G9`): a target whose
+   *  `setAttribute` is not a function RETURNS **AHEAD OF THE PAINT** — no declaration is set and `clearGhost` is NEVER
+   *  called, so the arm removes NOTHING and paints NOTHING. Nothing is owed there: this turn paints only onto a target that
+   *  can take the attribute, so an attribute-less target never carried the declaration and has none to lose. (Its neighbour,
+   *  read per call: a target answering `setAttribute` but not `removeAttribute` paints and can never thereafter be cleared —
+   *  `clearGhost`'s own gate.) The staleness is stated, not hidden: a delivery that never arrives paints nothing, a
+   *  declaration already standing when one is lost stays standing, and no retry stands here — a lost delivery leaves a STALE
+   *  declaration, never a fabricated one (`D-117`'s bounded staleness, measured by `P-3`/`P-4`). */
   let ghostEpoch = 0
 
   /** THE DECLARATION'S ONE REMOVAL (`ASM-3`) — total over the target too: a closed element is not a throw. */
@@ -2558,7 +2580,12 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
   }
 
   /** THE SETTLE — one answer, checked against the epoch it was ASKED under (`G3`): a superseded turn mutates NOTHING,
-   *  neither a paint nor a removal. `G5`–`G9` are the answer's own node, field by field, and every failing arm clears. */
+   *  neither a paint nor a removal. `G5`–`G9` are the answer's own node, field by field, and EVERY FAILING ARM OF THE
+   *  ANSWER CLEARS — a status that is not `read`, a node that is not an object, a `_tier` that is not `temp`, a node
+   *  naming another pane and a `size` that is not a finite non-negative number each reach the ONE `clearGhost()`, as a
+   *  hostile answer's `catch` does. **THE TARGET ARM IS NOT ONE OF THEM** (`G9`): a target whose `setAttribute` is not a
+   *  function RETURNS AHEAD OF THE PAINT, so it sets nothing and clears nothing — that target never carried the
+   *  declaration, and has none to lose. */
   const settleGhost = (epoch: number, answer: unknown): void => {
     if (epoch !== ghostEpoch) return
     try {

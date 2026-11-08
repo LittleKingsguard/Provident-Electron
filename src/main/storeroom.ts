@@ -32,9 +32,11 @@
 // the thirteenth being `Symbol(provident-storeroom.registration-save)` — the marker of the release
 // whose refusing registration rolls its own landing back — and the two lists match member for member
 // apart from it. **`1.9.2` MOVED NEITHER LIST AND `1.9.3` MOVES NEITHER**, which is the reading this
-// header is re-measured at rather than an assumption: 14 string members in this order and the same 13
-// own symbols at construction, one fresh instance each (2026-11-03 at `D-103`, 2026-11-04 at `D-109`).
-// **WHAT THAT RELEASE ADDED IS IN NEITHER LIST, AND ITS ABSENCE FROM BOTH IS THE WHOLE OF THE
+// header is re-measured at rather than an assumption: 15 string members in this order — `1.10.0`'s
+// `readTiered` being the fifteenth, the ONE addition since the pin (`D-134`) — and the same 13 own
+// symbols at construction, one fresh instance each (2026-11-03 at `D-103`, 2026-11-04 at `D-109`,
+// the member re-read at `1.10.0`).
+// **WHAT `1.9.2` ADDED IS IN NEITHER LIST, AND ITS ABSENCE FROM BOTH IS THE WHOLE OF THE
 // NARROWING BELOW**: a passing act's record now answers with the commit's log, carried
 // NON-ENUMERABLY, so it moves no name and no symbol — see `commitLog`, the one declared reader.
 // `tests/storeroom-surface.test.ts` pins the MEMBER list and the pin itself, and

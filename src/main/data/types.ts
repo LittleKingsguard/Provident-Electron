@@ -177,8 +177,9 @@ export interface DataSurfaceOptions {
   /**
    * **THE ONE STORE THIS SURFACE ACTS THROUGH, AND IT IS REQUIRED** (D-80). In the app the boot's one instance is
    * passed here (`src/main/main.ts:132` → `:374`), so `data.*` acts through the NORMAL CROSSING — the instance
-   * carrying the tab record's six declarations and the view record's four — and one register stands over the one
-   * `provident-profile.json`.
+   * carrying the tab record's six DECLARATIONS and the view record's **four PUBLISHED ROOTS**, THREE of which a
+   * declaration stands behind (`viewConstraintDeclarations` declares three, `viewDeclaredRoots` publishes four: the
+   * fourth is a root no pair holds, `D-145`) — and one register stands over the one `provident-profile.json`.
    *
    * **THE OPTIONAL FORM WAS THE DEFECT THIS TYPING REMOVES.** While `store` could be omitted, this module owned a
    * construction that opened its own instance on the boot's own file — a third register and a third journal over one

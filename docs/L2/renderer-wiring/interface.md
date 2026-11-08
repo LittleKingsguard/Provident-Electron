@@ -1,6 +1,6 @@
-# L2 — `renderer-wiring`: the drag's two phases at an address, and the ghost the delivery paints
+# L2 — `renderer-wiring`: the tab record's own drive, the drag's two phases at an address, and the ghost the delivery paints
 
-- **Layer:** L2 · **Module:** `renderer-wiring` · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 5 — **the currency pass AFTER the landing** (D-145, D-1): §3 states the ONE ghost arm that removes NOTHING, §4 defines the sink this page names and never spelled, and `ASM-RW-3` carries the exception — each read off `renderer.ts`'s `settleGhost` and `startGutterAffordance`'s `write`, and off `signatures.md` §1, which already says it (D-129, D-117). Rev 4 — §6's battery table re-grained to the LANDING: every row it carried as a red is green at this head and every file's mark status is read as it stands (D-145, D-1). Rev 3 re-grained the whole document onto `L1 §3`/§7 `E-8`: the per-move turn WRITES `['drag']` at `temp`, the gesture's end ENDS that family, the release keeps `commitPane` then ends the reading, and the ghost is painted from the DELIVERY's reading (`D-132`, `D-137`, `D-138`, `D-144`). Rev 2 was `focus-retirement`'s landed head; no earlier claim about the tab drive, the appearance application or the zone render turn is withdrawn.
+- **Layer:** L2 · **Module:** `renderer-wiring` · **Units:** `focus-retirement` and `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 6 — **the page's SECOND SUBJECT RESTORED BESIDE THE DRAG'S, never instead of it** (D-147 finding `(b)`): §5 is re-grained from the drag's two phases to **the tab record's own push, the re-read and the terminals it drives** — the subject this page carried at rev 2 and the whole re-grain onto the drag at rev 3 REPLACED — while every drag claim §5 held moves to §2.1 unchanged in substance, and §2's lead-in names the page's TWO READERS (`renderer.ts`'s `startTabsClientInstrument`/`holdTabsReading`/`driveTabsLandingPage`, D-137, D-142). Rev 5 — **the currency pass AFTER the landing** (D-145, D-1): §3 states the ONE ghost arm that removes NOTHING, §4 defines the sink this page names and never spelled, and `ASM-RW-3` carries the exception — each read off `renderer.ts`'s `settleGhost` and `startGutterAffordance`'s `write`, and off `signatures.md` §1, which already says it (D-129, D-117). Rev 3 re-grained the whole document onto `L1 §3`/§7 `E-8`: the per-move turn WRITES `['drag']` at `temp`, the gesture's end ENDS that family, the release keeps `commitPane` then ends the reading, and the ghost is painted from the DELIVERY's reading (`D-132`, `D-137`, `D-138`, `D-144`). Rev 2 was `focus-retirement`'s landed head, and no claim of it is withdrawn at rev 6.
 - **Ceiling:** 150 lines (class max); at the ceiling it splits by owner and is never appended (D-1, D-2)
 - **Charter:** the user's ruling as this module transcribes it — *"Gutter and pane drag should write to temp while in process
   and commit to file during the sink on release"* — so the gesture keeps its TWO PHASES and its in-process value becomes an
@@ -19,14 +19,14 @@ Sites are named, never offsets (D-41). Unless a path is given, the site is `src/
 | `dataRoute` | the five `case 'data.*'` arms, the `focus` act — and, from this change, the GHOST's one read | forwards to `window.provident.data`'s five routes and composes nothing (D-112, D-132) |
 | `startGutterAffordance` | `main()`, once, after the first envelope load | `{attached}`, **and from this change the ghost turn** the shape's delivery calls: it holds the affordance, the pane ELEMENT (`elementForNodeId(GUTTER_TARGET_ID)`) and the composition `createPaneDrag({view, ghostTarget}, source)` (§2, §3) |
 | `startViewShape` | `main()`'s last steps, one registration plus ONE stated `fill()`, and now the ghost turn as its second argument | the appearance application on every delivery — **and the ghost turn beside it**, in the same subscription body (D-97, D-137) |
-| `startTabsClientInstrument`, `driveTabsLandingPage`, `themeWiringRole`, `overlayWiringRole`, `zoneSizeConstraint`, `zoneSizeRepair`, `mintTabId`, `closeTab` | their own callers | **untouched by this unit** (D-127, D-142, D-131) |
+| `startTabsClientInstrument`, `driveTabsLandingPage`, `themeWiringRole`, `overlayWiringRole`, `zoneSizeConstraint`, `zoneSizeRepair`, `mintTabId`, `closeTab` | their own callers — the first two are DRIVEN, by the tab record's own push and the boot's one read (§5) | **untouched by this unit**, and the tab drive is this page's second subject (D-127, D-142, D-131) |
 
 The clients this module holds are `getTabsClient()`, `getViewClient()`, `getModuleClient()` and `getSecurityClient()`, each one per-realm
 reading a delivery replaces whole (D-88, D-92); the view client gains the record's two drag routes — `commitDrag(paneId, {size})` and `clearDrag()` — and gains no read (§3; D-144, D-133).
 
 ## 2. The composition's turns, after the change
 
-`createPaneDrag` keeps ONE closure binding (the wiring-held view client) and one bookkeeping `Map` (§4); every turn below is total over an absent or throwing shape — the declared degradation, never a throw (`D-95`, `§3.2 F-8`).
+`createPaneDrag` keeps ONE closure binding (the wiring-held view client) and one bookkeeping `Map` (§4); every turn below is total over an absent or throwing shape — the declared degradation, never a throw (`D-95`, `§3.2 F-8`). **AND THIS PAGE HAS TWO READERS, WHICH IS WHY IT CARRIES TWO SUBJECTS** (D-147): the turns below are the DRAG composition's, while the write the `focus` act makes and everything that follows it — the record's own push, the re-read, the terminals it drives — is §5's, because it is ONE subscription body and no turn of this composition (D-142, D-137).
 
 | Turn | The seam the wiring hands it | The route it sends | Address · tier | What answers once the turn is over |
 |---|---|---|---|---|
@@ -55,6 +55,7 @@ it and the release still commit; every later gesture re-opens the flag at its fi
 suppressed** (SINK-1, `F-5`), the seam KEEPS its inline-style preview write on every arm (the routes are added, never
 substituted), and a revert reading that is `null` (`§3.2 F-10`, non-finite) reaches the seam as nothing at all — no route, no
 flag, and no standing reading to lose, because the same gates keep `move` from writing one.
+**AND `D-138`'S TWO PHASES STAY** (transcribed here since §5 is the tab record's): the drag-update phase writes `temp` once per placement change and commits nothing, the release phase commits `file` exactly once through the sink's own turn, one OWNER holds the datum (`['panes']` at `file`) with the transient ended by the FIRST ending turn, and *"the drag-update, release-commit style should stay"* — the instruction behind "one event updating the pane location data" was about COLLISION, never about removing a turn; **the ending is not a second commit** (`clearDrag` writes no placement, judges no value, carries no geometry) and any other writer's change reaches this realm through the same push (`D-138`, correcting `D-137`).
 
 **WHAT THE CROSSING JUDGES, AND WHAT IT DOES NOT.** The record's shape arms answer `malformed-pane` and
 `malformed-geometry` for the two drag routes; **nothing judges a VALUE at `temp`** — no declaration and no pair stand there,
@@ -72,7 +73,7 @@ alone (`D-101`). No turn of this module touches the secure crossing (D-132, D-12
   `data-ghost="temp"` (ASM-3's spelling) — set and removed on that live element, exactly the class `applyPreview`'s style write is: no graph write, no element created, no re-render mid-gesture, and `get_rendered_html` serialises the live mount.
 - **Which delivery drives it.** `IPC_VIEW_CHANGED` → `view.onChanged` → the client re-reads and adopts → `startViewShape`'s
   ONE subscription body calls the ghost turn beside `theme.apply()`. The composition registers no subscriber, and the root is
-  covered because the record's subscription array gained `['drag']` in the same edit as the address (`D-137`, `§5 R-2`).
+  covered because the record's subscription array gained `['drag']` in the same edit as the address (`D-137`, `L1 §5 R-2`).
 - **Fail-safety, with no delivery and with a broken one.** EVERY arm is CLOSED BUT ONE, and the exception is stated rather than
   smoothed (`signatures.md` §1, which already spells it: *"paints nothing, removes nothing"*): no `data` member (this realm's own
   `store-unreachable`), a thrown or rejected route, `absent`, a ledger arm, a `_tier` that is not `temp`, a node naming another
@@ -93,20 +94,17 @@ alone (`D-101`). No turn of this module touches the secure crossing (D-132, D-12
   address cannot say it, because `['drag']` is keyed by PANE ID and is GESTURE-BLIND (`F-6`).
 - **Nothing else is added**: no MCP tool, resource, group or bridge member; no tenth `view` member; no secure-store address, declaration, route or member (D-132, D-123, D-18).
 - **The `release`'s sink and file commit are UNMOVED** in form and order: the sink is invoked first, `commitPane` follows,
-  and the ending of the reading is a third statement AFTER both (§5; D-132, `D-138`). **AND THE SINK, named in this document
+  and the ending of the reading is a third statement AFTER both (`§2.1`'s `D-138` transcription; D-132, `D-138`). **AND THE SINK, named in this document
   and never defined, IS ONE `applyCommand` `state-slice` WRITE ON THE AUTHORED STATUS NODE** (`GUTTER_STATUS_ID`, carrying the
   clamped value, `console.error`ing any status but `'applied'`) — the release's ONLY managed-channel write, so **the read-out is
   written by the sink and by nothing else**: the second authority `D-129`'s `F3` books (`startGutterAffordance`'s `write`; `D-117`).
 
-## 5. The two phases STAY — `D-138`'s statement, transcribed
+## 5. The renderer follows the write — the tab record's own push, the re-read, the terminals driven
 
-- **The drag-update phase** writes `temp` once per placement change and commits nothing; **the release phase** commits `file`
-  exactly once, through the sink's own turn. *"The drag-update, release-commit style should stay"* — the instruction behind
-  "one event updating the pane location data" was about COLLISION, not about removing a turn (`D-138`, correcting `D-137`).
-- **One OWNER for the datum and two phases for the gesture**: the datum's owner is `['panes']` at `file`, and the in-process
-  reading is a transient at `temp` ended by the FIRST ending turn — the release's where nothing ended it earlier and where
-  neither refusing arm above fired — with any other writer's change reaching this realm through the same push (`D-137`).
-- **The ending is not a second commit**: `clearDrag` writes no placement, judges no value and carries no geometry, and a release whose `final` the E3 gate refuses sends no route at all (`§3.2 F-8`).
+- **ONE subscription body takes the push, and the push carries an ADDRESS and never a value**: `startTabsClientInstrument` registers `client.subscribe((reading) => holdTabsReading(reading, runtime))`, and its ONE stated boot read hands the same holder its first reading (`void client.read().then(…)`, started last and never awaited) — so the record lands in ONE place whichever way it arrives, and because a delivery is an address the client has already RE-READ the record when the body runs (`src/renderer/tabs-client.ts`'s `subscribe` site says it in one line): **the re-read is the only correct answer to it**, and this body composes nothing, holds no record and writes no byte (`D-137`, `D-142`).
+- **The re-read drives the tab terminals**: `holdTabsReading` holds the reading and calls `driveTabsLandingPage(tabsClientReading, runtime)`, which gives each authored terminal ONE `css.style` state-slice — `display: 'block'` where the record's own witness stands and `'none'` where it does not — for the landing page and the error page alike, resolved through `Runtime.elementForNodeId` and authored by the envelope, never here: no element, no class, no text (`D-92`, `D-76`).
+- **What is driven is the REPAIR's answer, never the value the renderer sent**: `exactly-one-active` normalises the pair inside the act's own commit, so the record the push delivers is the record that STANDS; the witness is derived from that record's ROWS, a reading that is not `committed` drives NOTHING (the envelope's authored `display`, or the last record's word, stands), and the act's own re-read is the ANSWER's and never a delivery — it does not feed this holder (`D-127`, `D-129`, `D-142`).
+- **Nothing else follows it**: the composition registers no subscriber, the drive authors no node, and the registration is held only for the P1-P7 release discipline — a delivery that never arrives leaves what already stood in place, never a blank it invented (`D-92`, `D-127`).
 
 ## 6. This module's batteries — dispositions, all LANDED and green at this head
 
@@ -126,10 +124,11 @@ alone (`D-101`). No turn of this module touches the secure crossing (D-132, D-12
 | its literal, `A-5` | `tests/theme-act.test.ts` | **re-grained, and one row ADDED**: the literal carries the SEVEN routes, and `A-5` drives `commitDrag`/`clearDrag` through it to the store's `['drag']` family at `temp` and to `absent` after the clear | the two routes' round trip through the client's own literal |
 | `DC-8(a)`, `DC-8(b)` | `tests/renderer-delivery-compliance.test.ts` | **added — the ghost's delivery turn**: `(a)` the declaration appears for a `temp` node naming the pane and is removed by the SEVEN arms that reach a removal, while a target that cannot take attributes is driven for its TOTALITY alone — it throws nothing and removes nothing (§3); `(b)` the shape's subscription body CALLS the turn, beside `theme?.apply()`, and the one construction carries `ghostTarget` | the paint, the removal arms, the attribute-less totality probe and the call site |
 | its own rows | `tests/op-command-unwrap.test.ts` | **untouched** — `handleRequest`'s `op` and `load` cases and no reading this change reaches | 6 rows, unchanged |
+| `PS-1`…`PS-4` | `tests/unit/renderer-wiring/preview-seat.test.ts` | **added — the SEAT** (`D-146`): unmarked and gating, driving `startGutterAffordance(runtime)` over a stub runtime and a stub `window.provident` — a valid observed move sends ONE `commitDrag` and no `clearDrag`, a revert ONE `clearDrag` and no `commitDrag`, a second ending turn nothing, and the ghost turn is RETURNED with ONE key at both seats | the seat's two routes, its ending flag and its hand-out (`design.md` §8) |
 
 **THE FILES AND THEIR MARK STATUS, AS LANDED**: `pane-drag-compliance` is MARKED and its 130 rows are green, reporting **on notice**
-(D-30); `A-5`, `DC-8(a)` and `DC-8(b)` stand in two **unmarked GATING** files, a row authored after the `D-30` sweep gating by construction —
-and all three are green, so the reds this pass recorded were the landing's absence and nothing else (D-40, D-144, D-145).
+(D-30); `A-5`, `DC-8(a)`, `DC-8(b)` and `PS-1`…`PS-4` stand in three **unmarked GATING** files, every row authored after the `D-30` sweep gating by construction —
+and all are green, so the reds this pass recorded were the landing's absence and nothing else (D-40, D-144, D-145, D-146).
 
 `tests/e2e/pane-drag-temp/` is L1's battery and not this module's own: `P-2` measures the erase ROUTE and `P-4` the ghost's
 appearance and disappearance, one layer above this document (D-40, L1 §4). **AND TWO ROWS THIS CHANGE MOVES ARE NOT THIS

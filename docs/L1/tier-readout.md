@@ -1,7 +1,7 @@
 # L1 — `tier-readout`: `data.read` answers each node's own tier, composed over `readTiered`
 
-- **Layer:** L1 · **Unit:** `tier-readout` · **Branch:** `strata` (D-6) · **Rev:** 2 — rev 2 records `E-8`'s landing at
-  `npm run crossings` (28/28 rows, `0` failures); rev 1 carried row `6` of `strata/next-steps.md` and the reachability split (§5)
+- **Layer:** L1 · **Unit:** `tier-readout` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 3 names WHICH `read` §1's lossy-name
+  means (the store's own verb, at no `data.*` route) and re-grains §8's `S-9` line; rev 2's `E-8` landing and rev 1's row `6` stand (§5, §6, D-147)
 - **Charter:** the user's finding, verbatim — *"The returned object should already include the tier data. If it doesn't that
   is a defect."* — answered by `1.10.0`'s `readTiered`: ONE `_tier` at EVERY node the read returns (D-133, D-134)
 - **Status:** LANDED — the answer shape is in `src/**` (`E-1`…`E-4`) and the three e2e sites' re-grain sits in
@@ -24,8 +24,8 @@
   nodes standing at DIFFERENT tiers, which an echo of the caller's argument cannot say — and `D-133`'s echo shape was
   superseded BY POINTER, before it was built, by the release the user pointed at (D-133, D-134, D-46).
 - **The notes' own lossy name, cited rather than rediscovered**: a caller's stored `_tier` is SHADOWED by the minted field at
-  every node, and the default `read` at the same address still answers it; nothing under `src/` stores a `_tier` today, so the
-  name costs this tree nothing and a future writer would shadow itself (D-134; §4 `T-7` measures both halves).
+  every node, and **the STORE'S OWN `read` VERB** still answers it there — no `data.*` tool routes a caller to it, the passing
+  read composing `readTiered` (§3); nothing under `src/` stores a `_tier` today, so a future writer would shadow itself (D-134; §4 `T-7`).
 - The read's TIER ARGUMENT is unmoved: an omitted `tier` is the store's unqualified walk and a named token narrows the read —
   the readout names what the store ANSWERED and never what the caller ASKED, which is the one reading `D-134` fixes (D-101).
 - `read` and `readLiteral` are unchanged byte for byte, so `list`'s walk and `delete`'s standing probe stay on them; the
@@ -135,9 +135,9 @@ precondition, whose original subject is the row-`5` `temp` root).
   registry at `D-134` (D-5).
 - **The reached batteries were re-grained WITH the shape, never ahead of it** — a re-grain that runs first measures a state
   the tree has not reached: `E-5`/`E-6`/`E-7` landed beside it, and `E-8` at that leg's own sites (D-137, D-94, D-37).
-- **`docs/L1/central-data-management.md` §5's `S-9` row still reads "(14 members / 11 symbols)"** and is that LANDED document's
-  dated row; the live figure is the seam's own census and `D-134`, re-measured at `tests/e2e/central-data/`'s `S-9`. Named here
-  and not edited, because a landed unit's document is re-grained by the pass that owns its number (D-43, D-26, D-3).
+- **`docs/L1/central-data-management.md` §5's `S-9` row NOW READS THE CENSUS AT THIS HEAD** — `15` members / `13` symbols and
+  THREE importing files — re-grained by the pass that owned its number rather than left as the dated `(14 members / 11 symbols)`
+  it carried; the live figure is the seam's own census, re-measured at `tests/e2e/central-data/`'s `S-9` (D-43, D-26, D-134, D-147).
 
 ## 9. Assumptions, each with the alternative it rejected (D-1 §8)
 

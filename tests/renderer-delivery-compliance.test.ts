@@ -553,7 +553,7 @@ function functionRegion(source: string, header: string): string {
 }
 
 describe('DC-8 — the ghost\'s delivery: `[\'drag\']` at `temp`, read once and painted as a declared transient', () => {
-  it('DC-8(a) — **THE TURN**: `renderGhost()` asks the realm\'s `data.read` ONCE for `{path: [\'drag\']}` and declares `data-ghost="temp"` on the backing\'s target IFF the answer is a committed reading whose node stands at `temp` for the composition\'s pane with a usable `size` — and REMOVES the declaration, throwing nothing, on every other arm: no `data` member at all, a route that throws, the `absent` arm, a node at `file`, a node naming another pane, a non-finite size, and a target that cannot take attributes', async () => {
+  it('DC-8(a) — **THE TURN**: `renderGhost()` asks the realm\'s `data.read` ONCE for `{path: [\'drag\']}` and declares `data-ghost="temp"` on the backing\'s target IFF the answer is a committed reading whose node stands at `temp` for the composition\'s pane with a usable `size` — and, throwing nothing, behaves closed on every other arm, in TWO CLASSES: the arms that REMOVE a standing declaration (no `data` member at all, a route that throws, the `absent` arm, the ledger arm, a node at `file`, a node naming another pane, a non-finite size) and the attribute-less target, which RETURNS AHEAD OF THE PAINT and REMOVES NOTHING — it never carried the declaration, so there is none to remove — painting nothing either', async () => {
     const target = ghostElement()
     const surface = createPaneDrag({ view: null, ghostTarget: target }, null) as unknown as Record<string, unknown>
     expect(
