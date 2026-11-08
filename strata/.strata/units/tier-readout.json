@@ -1,7 +1,7 @@
 {
   "unit": "tier-readout",
   "layer": "L4",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
     "l1-design",
     "l4-implementation"
@@ -34,5 +34,5 @@
   ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-11-08T19:19:06.482Z"
+  "updated": "2026-11-08T23:29:13.849Z"
 }

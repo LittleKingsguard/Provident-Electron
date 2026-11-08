@@ -17,13 +17,9 @@ whole at `D-93`, and what they left owed LANDED at `D-94` as a leg — `npm run 
 
 | # | Work | Owner | Closed when |
 |---|---|---|---|
+| 1 | **THE THREE CITATION DEFECTS RUN `5` RECORDED AS RESIDUE** (`D-149`, `D-26`, `D-41`) — each a cite landing one section or one page off the text it names, with no claim hidden: **(i)** `docs/L2/mcp-surface/interface.md` §3/§8 cite `renderer-wiring` §7's `ASM-5`/`ASM-6`, which that page renamed `ASM-RW-1`…`4` (`ASM-4` is `docs/L1/pane-drag-temp.md` §9's); **(ii)** `docs/L2/central-data/interface.md` carries **no §7** although five carriers cite one (`docs/L1/central-data-management.md` §6 twice, `src/renderer/renderer.ts`'s licence block, `src/shared/types.ts`, `D-112`'s row) — the cited sentence stands at §6; **(iii)** `pane-drag-temp`'s steps 8 and 10 cite `view-record` §4/§5 for text that page carries at §7, and at `docs/L1/pane-drag-temp.md` §4 `P-4` → `docs/L3/central-data/design.md` §3 | `mcp-surface`, `central-data` and `view-record`'s L2s, one cite each | every cite lands on the section that carries its claim, and `renderer-wiring`'s assumption ids are spelled as that page now spells them |
 
-**ROWS `6` AND `5` LEFT WITH THEIR WORK LANDED** (`D-61`, `D-144`, `D-145`) — **THE QUEUE IS EMPTY** — the readout answers each node's tier,
-the drag writes `['drag']` at `temp` and commits `file` at the sink, the floor is green, and both units' walkthroughs read `STALE` on currency
-(`records/tier-readout-walkthrough.md`, `records/pane-drag-temp-walkthrough.md`).
-
-**ROW `2` LEFT ON 2026-11-07 WITH ITS WORK LANDED** (`D-61`): `D-143` lands `D-141`/`D-142`, so **the queue is `6` then `5`**; that
-unit's walkthrough read `STALE` on document currency only (`strata/records/focus-retirement-walkthrough.md`, `D-143`).
+**ROWS `6`, `5` AND `2` LEFT WITH THEIR WORK LANDED** (`D-61`, `D-143`, `D-144`, `D-145`) — the readout answers each node's tier, the drag writes `['drag']` at `temp` and commits `file` at the sink, and `D-143` lands `D-141`/`D-142`. **ALL THREE WALKTHROUGHS NOW READ `PASS`** (`D-149`): `focus-retirement` 12/12, `tier-readout` 10/10 and `pane-drag-temp` 10/10, each against a staged root of its own, and **all three units are CLOSED** — so the currency blocks those departure notes used to carry are discharged, and what they left is row `1` above.
 
 Every other open item WAS `pending.md`'s — **every row in that file, whatever the count, was the list**, each stating what it waited on — and **THAT TABLE IS EMPTY AT THIS HEAD, its last row having left with its work**:
 `strata-lint`'s record gap on the harness owner LEFT ON 2026-11-05, the instrument extended over `strata/records/` and the four trackers (the coverage, the three ceiling prose forms and their site rule, and the `52` → `124` reading are that file's deletions paragraph and `D-114`); and

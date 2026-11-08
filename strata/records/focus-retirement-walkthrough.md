@@ -1,7 +1,7 @@
 # `focus-retirement` — the L0 exit walkthrough (`walkthrough.md` §1–§6, D-1 §4.1)
 
-- **Run 4 of 4** · 2026-11-08 · staged root `/tmp/fw4-focus` (HEAD `ad25910`, 169 files, `scripts/strata-walkthrough.mjs stage`) · runner: a fresh delegation that had seen neither the code nor the design work · **verdict `STALE`** — the surface is right and one live sentence says it is not (`D-146`, `D-147`)
-- **Instrument note** (§5): `tests/`, `scripts/`, `node_modules/` are out by design, so no battery, leg or package claim could be EXECUTED — **unverifiable**, never falsified; step 2's second-process leg is one of those halves. The three `panes-layout` cites in `strata/decisions.md` name documents that row describes as a future unit's OWED re-issue, so the instrument's `check` exit `1` on them is its forward-cite limit, not a defect of those documents.
+- **Run 5 of 5** · 2026-11-08 · staged root `/tmp/fw5-focus` (HEAD `4a9add3`, 169 files, `scripts/strata-walkthrough.mjs stage`) · runner: a fresh delegation that had seen neither the code nor the design work · **verdict `PASS`** — twelve of twelve steps resolved from the named pages, none guessed, and no page contradicts the tree (`D-148`, `D-149`)
+- **Instrument notes** (§5): `tests/`, `scripts/`, `node_modules/` are out by design, so no battery, leg or package claim could be EXECUTED — **unverifiable**, never falsified; step 2's second-process leg and step 12's half-landed red are those halves. **AND THIS ROOT EXCLUDED THIS UNIT'S OWN PRIOR RECORD**, which would otherwise have carried run 4's findings as a ready-made checklist; that is L0's instrument and not a corpus edit.
 ## 1. The scenario set (12 steps; `goal · expected · source`, §2)
 1. an agent moves the UI to a tab · the act sets the active tab in the tab record durably, answering the record as re-read · `docs/L2/mcp-surface/interface.md` §1, §3
 2. the move survives a restart · a durable tier named, a second process on the same profile reading the same active row · `docs/L1/focus-retirement.md` §4, `docs/L2/store-tabs-record/interface.md`
@@ -15,23 +15,8 @@
 10. who owns the normalisation · the record's repair; the renderer may seat two actives on purpose · `docs/L3/renderer-wiring/design.md` §2, §6
 11. the one composition's contract · `order` preserved, rows whole, no invented member, no `landing` · `docs/L3/renderer-wiring/design.md` §3
 12. the two declaration halves stay one edit · twice declared, one edit, the half-landed failure stated · `docs/L2/app-shell/interface.md` §4, `docs/L3/secure-panels/design.md` §3
-## 2. Report — run 4
-**Nine of twelve steps settled YES from the sections they name**, each checked against `src/` and `dist/` (the act at
-`['tabs']`/`file` answering the post-write re-read; the repair honouring the written referent and never refused by a
-guard; zero hits for all six deleted symbols in both trees; **five** declared roots with the drag one unpaired; one new
-`tab-<n>` row and no new tool; the refusal answered before any route; the seven-member lockstep pair at both halves).
-**`docs-stale` — one, and it is this pass's own landing**: `docs/L2/central-data/interface.md` §1a still says
-`surface.ts`'s root header "still reads **four**" and that "That comment is OWED and not taken here", where the bytes
-read FIVE and name the unpaired entry — `D-146` took exactly that repair and did not re-grain the page that called it owed.
-**`docs-insufficient`** — steps 6, 10 and 11: their named sections cannot answer them, the rev-5/rev-7 `renderer-wiring`
-pages having been re-grained WHOLE onto `pane-drag-temp`, so the material now lives only in `docs/L1/focus-retirement.md`
-§3/§4, a unit record and the `src/` docblocks. **`undocumented`** — the composition's `C1`–`C4` contract has no live design
-section, and `src/main/data/types.ts`'s "the view record's four" does not say whether it counts the publication or the batch.
+## 2. Report — run 5
+**All twelve steps resolved and NONE was guessed**, each checked against `src/` and `dist/`: the act writing `['tabs']`/`file` and answering the post-write re-read; the durable tier named and the one published root; `exactlyOneActive` rejecting and `healedFamily` normalising inside the caller's own commit with the caller clearing nothing; **zero** occurrences of `commitFocus`, `ViewFocusMirror`, `FOCUS_TIER` and `IPC_VIEW_FOCUS*` outside headstones, in `src/` and `dist/` alike; **five** declared roots with the drag entry alone unpaired and both guard arms as the code has them; the push an ADDRESS with the client re-reading and the terminals driven through `css.style`; one `tab-<n>` row joining `order` and none added to the tool set; the `unresolved` arm returning before any write; `FocusRefusal`'s six members carried member for member; `C1`–`C4` matching the code member for member (`order` copied, rows whole, no `landing`); and the seven-member lockstep pair identical at both halves.
+**`docs-stale`, `docs-insufficient` and `undocumented` are ALL EMPTY.** **Residual, provenance only and not verdict-driving**: `docs/L2/mcp-surface/interface.md` §3/§8 cite `renderer-wiring` §7 `ASM-5`/`ASM-6`, which that page renamed `ASM-RW-1`…`4`, and `ASM-4` is `docs/L1/pane-drag-temp.md` §9's — a misdirected cite that costs a reader a grep, never the knowledge, because §3 states both step-9 claims in full.
 ## 3. Verdict, routing and the loop recommendation (§5)
-**`STALE`** — not `PASS` (three steps are not resolvable from the pages they name, and one sentence tells a reader to
-expect a state the surface has left), not `DOC-GAP` (the renderer-wiring silence alone would be that; the contradiction
-is what tips it), not `UNUSABLE` (nothing is fabricated and the corpus can settle every step). Routing (`D-3`): §1a to
-`central-data`'s L2 pass; the two `renderer-wiring` pages to that module's L2/L3; the `types.ts` count to its licence.
-**The unit is NOT presented as ready.** The loop recommendation applies `D-145`'s rule to this pass's own landing: a
-repair taken in a pass must re-grain the page that recorded it as owed IN THAT PASS, and a page re-grained "whole" onto a
-new unit must carry its predecessor's subject forward rather than replace it.
+**`PASS`** — not `DOC-GAP` (no step lacked supplied knowledge), not `STALE` (no document statement is untrue of the files), not `UNUSABLE` (every citation opened and resolved). **THE UNIT IS RECOMMENDED AS READY** and is closed on this record at `D-149`. Routing (`D-3`): the `ASM-5`/`ASM-6` provenance defect to `mcp-surface`'s L2 as a one-cite correction, carried in `strata/pending.md` rather than in this verdict. **The loop recommendation stands as `D-145`'s and `D-148`'s rule, now satisfied and so retired**: a unit's landing re-grains its own pages in the same pass, and a page that records a repair as owed is re-grained by the pass that takes the repair.

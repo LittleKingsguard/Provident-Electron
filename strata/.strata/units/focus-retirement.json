@@ -1,7 +1,7 @@
 {
   "unit": "focus-retirement",
   "layer": "L4",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
     "l1-design",
     "l4-implementation"
@@ -28,7 +28,7 @@
   ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-11-07T01:57:23.538Z",
+  "updated": "2026-11-08T23:29:13.836Z",
   "lastFailure": {
     "artifact": "l1-design",
     "reason": "red"
