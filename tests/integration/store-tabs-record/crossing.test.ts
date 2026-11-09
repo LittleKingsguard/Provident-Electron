@@ -11,7 +11,9 @@
 // **THE FOUR MACHINERY RULES THIS FILE PINS, EACH MEASURED AND NOT ASSUMED (the first three 2026-11-01; the fourth on the
 // package's own clause stamped 2026-11-02, measured here 2026-11-01):**
 //  1. a nested write does not create its parent, so the record is written WHOLE at `['tabs']` — one value that mints the
-//     root, the `order` seat and every tab member in the same call;
+//     root, the `order` seat and every tab member in the same call — **which is `commit`'s act and the three repairs';
+//     `remove` DOES NOT write a value at all** (`D-156`, design §3/§8): it is ONE `delete(['tabs', id], 'file')`, and the
+//     record that stands afterwards is the two repairs' — the seat's membership, then `exactly-one-active`'s;
 //  2. a repair may write at the attempt's OWN address when it names the commit it was handed at `write`'s fourth
 //     position — without it the same write is refused `KC-7` *"a constraint attempt is already open"*;
 //  3. a repair that returns `void` is refused *"the repair … produced no op"* (`ST-F2`, filed upstream) — **THAT WAS THE
@@ -29,8 +31,10 @@
 // **AND THREE FACTS ABOUT THE DELIVERY, PINNED HERE (D-70, D-71):** from the consumed `provident-storeroom 1.7.0` a
 // constraint pair and a LIVE LISTENER may stand at ONE address — the pair asked by the pass, the listener delivered after
 // it, the only cross-kind restriction being the HANDLE — so the push installs at `['tabs']` itself, beside all six of this
-// module's pairs; `repaired` is DERIVED by comparing the written intent with the record that stands, because the store's
-// write record carries no member for the repair that ran in its own commit; and **a write a pair REFUSES delivers
+// module's pairs; `repaired` is DERIVED by comparing the intent this act MEANT with the record that stands, because the
+// store's write record carries no member for the repair that ran in its own commit — **and on `remove` that intent is an
+// EXPECTATION that is never written at all: the pre reading's `order` and rows minus the id, every flag untouched** (§8,
+// D-156); and **a write a pair REFUSES delivers
 // nothing**, the pair asked and the pass thrown with the delivery window never opened.
 //
 // This authority is this repo's (`docs/L3`, `docs/L2`) and the package's own guide, never the package's internals.
@@ -512,19 +516,49 @@ describe('store-tabs-record · the crossing', () => {
       // also the HANDLE rule's second demonstration: it is added at `['tabs']` WHERE A LIVE LISTENER STANDS, and it is
       // accepted because its `id` is not that listener's handle (`guide §7.3` item (ii): multiple pairs at one address are
       // lawful).
-      store.addConstraint({ address: ['tabs'] as never, id: 'no-marked-record' } as never, ((context: unknown) => {
-        const value = (context as { value?: { note?: unknown } }).value
-        return value?.note === 'refuse-me' ? { message: 'the record may not carry a marked note' } : true
+      //
+      // **THE INSTRUMENT'S FAULT HAS TO BE ONE NO REPAIR TOUCHES, AND THAT IS WHAT DECIDES WHICH FAULT IT IS** (`D-156`).
+      // This row used to mark the record with a STRAY OWN KEY — `note: 'refuse-me'` — and rely on nothing repairing it,
+      // which was true until the seat pair gained its SIXTH CLAUSE: that clause refuses a key the seat does not name AND
+      // its repair DROPS it, so the pair was asked, the repair landed inside the caller's own commit, the re-run read the
+      // corrected record, this instrument passed, NOTHING THREW and the delivery count below was measuring a write that
+      // had been ANSWERED. **THE GENERAL FORM OF THAT TRAP IS THE POINT OF THE RE-GRAIN: every one of the six clauses has
+      // a repair, so a REPAIRED fault is not a REFUSED write, and no fault this module can name is unrepairable** — only a
+      // pair outside the module can refuse.
+      //
+      // So the marker moves INSIDE a row, into a member the record's own admission carries and NO repair rewrites: a
+      // `label`. `tab-has-title` passes it because it is a non-blank string, and `healedFamily` copies every row member
+      // through, so the marker survives every repair that could run and this instrument still refuses on the re-run. **AND
+      // THE INSTRUMENT'S OWN ARM IS THE UNREPAIRABLE ONE — `{message}` WITH NO `repair`** (`guide §7.6`'s closed three-arm
+      // set), which is what makes the store REFUSE the write instead of correcting it; the count below is then a
+      // measurement of zero rather than of a repair.
+      store.addConstraint({ address: ['tabs'] as never, id: 'no-marked-title' } as never, ((context: unknown) => {
+        const value = (context as { value?: unknown }).value
+        const held = value !== null && typeof value === 'object' ? Object.values(value as Record<string, unknown>) : []
+        const marked = held.some((row) => row !== null && typeof row === 'object' && !Array.isArray(row) && (row as Record<string, unknown>)['label'] === 'refuse-me')
+        return marked ? { message: 'no tab of this record may be titled "refuse-me"' } : true
       }) as never)
       let refusal: unknown = null
+      // THE WRITE IS OTHERWISE THE ONE THAT WAS JUST COMMITTED: the marker is the ONLY difference, so the refusal is about
+      // the instrument's sentence and not about a record some other pair would have corrected.
+      const markedIntent = {
+        ...intent,
+        'tab-1': { ...intent['tab-1'], label: 'refuse-me' },
+      }
       try {
-        store.write(['tabs'] as never, 'file', { ...intent, note: 'refuse-me' })
+        store.write(['tabs'] as never, 'file', markedIntent)
       } catch (caught) {
         refusal = caught
       }
       expect((refusal as { status?: string }).status, 'the pair REFUSES, and the pass throws the store\'s own form').toBe('ConstraintPassRefused')
       expect(delivered, 'and the listener standing at that same address delivers NOTHING: the pair is asked, then the thrown form, and no delivery follows a refused write').toBe(1)
       expect(recordHere.read().status, 'while the record stands exactly as the committed write left it').toBe('committed')
+      // AND THE MARKER DID NOT LAND: a refused write moves no state (`guide §5.4`), so the row still carries the title the
+      // committed write gave it. Without this half the count above would be consistent with a write that had silently
+      // landed and been re-read.
+      const after = recordHere.read()
+      if (!('rows' in after)) throw new Error('the refused write must leave a record that reads')
+      expect(after.rows.find((each) => each.id === 'tab-1')?.label, 'the refused title landed nowhere').toBe('one')
       off()
     } finally {
       bound = null
@@ -562,9 +596,17 @@ describe('store-tabs-record · the crossing', () => {
   })
 
   it('AND THE SAME DERIVATION ON `remove`: a removal whose repair seats a survivor carries `repaired`, while a removal nothing repairs is `{ status: \'committed\' }` alone', () => {
-    // BOTH HALVES IN ONE ROW because it is ONE derivation applied at the module's other write site: removing an INACTIVE
-    // tab leaves exactly the intent (`landing` untouched, one active already), while removing the ACTIVE tab leaves zero
-    // active and the repair's survivor re-seats the `landing` member this act omitted.
+    // BOTH HALVES IN ONE ROW because it is ONE derivation applied at the module's other write site. **THE GLOSS IS
+    // RE-GRAINED AND THE ASSERTIONS ARE NOT** (`D-156`, §8): what this row used to describe was the act's own COMPOSED
+    // intent — "removing the ACTIVE tab leaves zero active and the repair's survivor re-seats the `landing` member this act
+    // omitted". The removal composes NOTHING now: it is one `delete(['tabs', id])`, so `standsAsIntended`'s expectation is
+    // the DELETE-ONLY one — the pre reading's `order` and rows MINUS the id, every flag untouched. Read through that: an
+    // INACTIVE tab's removal leaves exactly the expectation, because the seat repair's correction (`order` without the id,
+    // flags as they stood) IS what the removal meant; the ACTIVE tab's removal leaves ONE ACTIVE ROW WHERE THE EXPECTATION
+    // HAS NONE, and that difference is the whole signal. **Which survivor the engine re-seats is §7's choice and not this
+    // act's** — the single survivor here makes the assertion name a membership and no precedence (§7's precedence is
+    // measured where its subject is that choice: `remove` of the active tab, chosen by the removed entry's pre-position,
+    // in the crossing describe above).
     record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
     record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
     const clean = record.remove('tab-2')
@@ -785,12 +827,29 @@ describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)',
 
   // ═══════════════ THE STATES THE FIVE DECLARATIONS LEFT STANDING (D-83's ground measurement) ═══════════════
 
-  it('A RECORD ARRIVING WITH NO `order` AT ALL is repaired at the creation instant: the seat becomes a sequence of the record’s own tabs — here the landing floor, because nothing in the file says which member was a tab', () => {
+  it('A RECORD ARRIVING WITH NO `order` AT ALL is repaired at the creation instant INTO ITS OWN ROWS: the seat becomes a sequence of the record’s own tabs — parsed by the record’s OWN KEYS, so `[\'tab-1\']` and not the landing floor — and the seed’s `active: false` is PRESERVED, so ZERO rows read active at the registration instant', () => {
+    // **THE RE-GRAIN, AND WHICH CLAUSE MOVES IT** (`D-156`'s H3): rev 13's seat repair parsed the record through
+    // `viewFrom`, which walks `order` — so a file holding a row and NO seat parsed to the EMPTY view and the repair took
+    // `healedFamily`'s floor branch, minting the landing entry. **That is what this row used to assert, and the reason it
+    // gave — "nothing in the file says which member was a tab" — is exactly the clause the BIJECTION falsifies**: under
+    // `order ≡ rows` a plain row under an own key IS a tab, and `seatViewFrom` reads the record by its own keys, so the
+    // repair SEATS `tab-1` instead of replacing the file's row with the floor. The floor now appears only where NO row
+    // survives at all, which is the branch it was always meant to be.
     const seated = seatedOn({ 'tab-1': fileTabRow })
     try {
-      expect(seated.read().order, 'the seat stands, and it names a row the record holds').toEqual(['landing'])
-      expect((seated.standing() as Record<string, unknown>)['order'], 'the FILE is what moved: the store holds the corrected seat').toEqual(['landing'])
-      expect(seated.read().rows.filter((each) => each.active === true), 'one active').toHaveLength(1)
+      expect(seated.read().order, 'the seat stands, and it names the row the file holds — not the floor').toEqual(['tab-1'])
+      expect((seated.standing() as Record<string, unknown>)['order'], 'the FILE is what moved: the store holds the corrected seat').toEqual(['tab-1'])
+      expect((seated.standing() as Record<string, unknown>)['landing'], 'and NO floor was minted beside it: the key a floor would take is absent').toBeUndefined()
+      expect(seated.read().rows.map((each) => each.id), 'the row survives under the seat the repair built — it is the row the file held, not a re-mint').toEqual(['tab-1'])
+      expect(seated.read().rows[0]?.label, 'carrying its own label').toBe('one')
+      expect(seated.read().rows[0]?.active, 'and its own flag, exactly as the file spelled it').toBe(false)
+      // **THE SECOND ASSERTION MOVED WITH THE FIRST, AND FOR THE SAME REASON.** Rev 13's floor row was minted ACTIVE, and was
+      // then the record's one active row; `fileTabRow` carries `active: false` and the `'seat'` scope PRESERVES every flag
+      // verbatim, so the record now arrives with ZERO actives — which is `exactly-one-active`'s fault and no longer the
+      // seat's, the repair-ownership split itself. Nothing has asked that pair yet: at the registration instant the wrapped
+      // bodies abstain (the boot binds its holder only after `createProfileStore` answers), which is why the state is
+      // readable here rather than already healed.
+      expect(seated.read().rows.filter((each) => each.active === true), 'the seed is INACTIVE and the seat scope preserves the flag: ZERO rows read active').toHaveLength(0)
     } finally {
       seated.close()
     }
@@ -915,5 +974,150 @@ describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)',
     } finally {
       fresh.close()
     }
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * THE BIJECTION AND THE REMOVAL — the five rows `docs/L3/store-tabs-record/design.md` rev 14 §11 owes with `D-156`'s
+ * hunks. **FOUR OF THE FIVE ARE RED ON THE BODY THAT REPLACED IT AND NOT MERELY ABSENT** — the two leaf-write rows, the
+ * stray key and the descendant delete each fail on the pre-landing bodies of `D-156`'s H2/H3/H5 — while the fifth (the delete
+ * direction) PINS the act's contract at the route: its two `repaired` arms hold on either comparator, and its NON-ACTIVE arm
+ * is the one whose bare answer SURVIVES the change, which is exactly why §8 states that case rather than assuming it.
+ *
+ * **THE RULING IS THE USER'S AND ITS SHAPE IS ONE SENTENCE**: `order` must hold EXACTLY the record's rows, so the seat pair
+ * gains its sixth clause, the two repairs split their ownership (the seat's MEMBERSHIP, `healedFamily`'s `'seat'` scope;
+ * `exactly-one-active`'s ACTiveness, `'family'`), and the removal stops composing — it is ONE `delete(['tabs', id])`.
+ * **THE THREE FAULTS BEHIND IT ARE WHY THESE ROWS EXIST, AND ALL THREE WERE MEASURED**: a descendant delete handed
+ * `tabs-must-stand` `value: undefined`, so it minted the floor over the siblings and ERASED them (the row below, `'the
+ * descendant delete'`); a leaf row write handed the seat pair THE ROW, so a repair taking its view from the act's value
+ * replaced the family with one row (the two leaf-write rows below, which measure the seating AND its hazard control); and
+ * the empty-view floor had to survive the registration instant or `storeCreate` refuses (measured by the creation-instant
+ * battery above, unchanged).
+ *
+ * **THE ACTS THESE ROWS DRIVE ARE THE STORE'S AND NOT THE MODULE'S, ON PURPOSE**: `commit` composes the record it writes, so
+ * the two shapes the ruling opens — a leaf row write and a descendant delete — are reached at the store itself. Every
+ * assertion is read at the record afterwards, through the module where the claim is about the module's reading.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+describe('store-tabs-record · the membership bijection and the removal (D-156)', () => {
+  it('A LEAF ROW WRITE SEATS: `write([\'tabs\', newId], \'file\', row)` leaves the row AND the seat NAMING it — the seat repair parses the record by its OWN KEYS — which is the creation-side shape the ruling opens even though `commit` is not changed in this pass', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    // THE ACT IS THE STORE'S OWN, because this module has no route for it: `commit` composes the record it writes (§8), and
+    // the creation-side shape the ruling opens is the one a caller — the renderer's whole-record write, or any later
+    // row-write route — reaches at a LEAF.
+    store.write(['tabs', 'tab-9'] as never, 'file', row('tab-9', { active: false, label: 'nine', lastActiveAt: SEAT_STAMP }))
+    // **THE SEAT IS THE MEASUREMENT.** Rev 13's repair parsed through `viewFrom`, which walks `order`, so a row the seat did
+    // not name was INVISIBLE to it: this write would have left `order: ['landing']` over two rows, answered `committed`, and
+    // lost the tab from every reading while the store's own bytes still held it (`D-156`'s H3, the own-key parse).
+    expect((store.read(['tabs'] as never) as Record<string, unknown>)['order'], 'the repair APPENDS the id it found a row under').toEqual(['landing', 'tab-9'])
+    const after = reading()
+    expect(after.order, 'and the module\'s own reading names it too').toEqual(['landing', 'tab-9'])
+    expect(after.rows.map((each) => each.id), 'the row stands, admitted field by field').toEqual(['landing', 'tab-9'])
+    expect(after.rows.find((each) => each.id === 'tab-9')?.label, 'with the members the caller wrote').toBe('nine')
+    // AND THE BIJECTION IS WHAT THE RE-RUN JUDGED: the record the repair left names exactly the rows it holds, so the pair
+    // that refused the unseated write passes on the record its own repair wrote — which is why the act answers at all.
+    expect(Object.keys(store.read(['tabs'] as never) as Record<string, unknown>).sort(), 'the root holds the seat and its two rows, and nothing else').toEqual(['landing', 'order', 'tab-9'])
+  })
+
+  it('THE LEAF-WRITE HAZARD CONTROL: a leaf row write must NOT wipe the family — after `write([\'tabs\', id], row)` the OTHER rows still stand, member for member (red on a body taking its view from the act\'s value, `D-156` fault (b))', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
+    record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: SEAT_STAMP }))
+    const before = store.read(['tabs'] as never) as Record<string, unknown>
+    store.write(['tabs', 'tab-9'] as never, 'file', row('tab-9', { active: false, label: 'nine', lastActiveAt: SEAT_STAMP }))
+    const after = store.read(['tabs'] as never) as Record<string, unknown>
+    // **THE HAZARD, AT ITS OWN SHAPE** (measured on the installed `1.10.0`): a leaf write hands the pair at `['tabs']` the
+    // act's OWN VALUE — THE ROW, not the record (`ctx.address` `['tabs','tab-9']`, `ctx.value` the row) — so a seat repair
+    // that took its view from that value composed the family out of ONE row and ERASED the two it did not carry. Measured,
+    // two tab rows both gone; the act still answered `committed`.
+    expect(after['tab-1'], 'the row the leaf write did not carry still stands, member for member').toEqual(before['tab-1'])
+    expect(after['tab-2'], 'and so does the second one it did not carry').toEqual(before['tab-2'])
+    expect(after['order'], 'the seat holds the ids that stood, in the order they stood, with the new one appended').toEqual(['landing', 'tab-1', 'tab-2', 'tab-9'])
+    expect(reading().rows.map((each) => each.id), 'the record READS four rows, where the measured fault left one').toEqual(['landing', 'tab-1', 'tab-2', 'tab-9'])
+    expect(actives(), 'and the act moved no flag: the one active the commits left is still the only one').toEqual(['tab-1'])
+  })
+
+  it('A STRAY KEY IS DROPPED: an own key outside the seat is REMOVED by the seat repair — the sixth clause, the half of `order ≡ rows` nothing measured before it — and the family\'s OTHER rows survive it', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
+    record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: SEAT_STAMP }))
+    const read = store.read(['tabs'] as never) as Record<string, unknown>
+    // THE WRITE CARRIES THE RECORD IT JUST READ PLUS ONE KEY THE SEAT DOES NOT NAME — the shape a legacy install's string
+    // seat takes, and the shape any caller's composition can take: a SCALAR under an own key. **A PLAIN OBJECT THERE WOULD
+    // BE A ROW**, and the same repair would SEAT it instead of dropping it (the row above), which is why the stray value
+    // here is a scalar and the claim is a DROP.
+    store.write(['tabs'] as never, 'file', { ...read, note: 'a key the seat does not name' })
+    const after = store.read(['tabs'] as never) as Record<string, unknown>
+    expect('note' in after, 'the stray key is GONE from the record the store holds').toBe(false)
+    expect(Object.keys(after).sort(), 'and the root is the seat and its own rows, nothing else').toEqual(['landing', 'order', 'tab-1', 'tab-2'])
+    expect(after['order'], 'the seat is untouched: a stray key was never a member').toEqual(read['order'])
+    expect(after['tab-1'], 'and every row that stood still stands, member for member').toEqual(read['tab-1'])
+    expect(after['tab-2'], 'the second one too — the drop took the stray key and nothing else').toEqual(read['tab-2'])
+    expect(actives(), 'with the flags exactly as the commits left them').toEqual(['tab-1'])
+  })
+
+  it('A DESCENDANT DELETE MUST NOT MINT: `delete([\'tabs\', id], \'file\')` does not make `tabs-must-stand` write the landing floor over the siblings — the surviving rows stand, and the seat repair has dropped the id', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
+    record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: SEAT_STAMP }))
+    const before = store.read(['tabs'] as never) as Record<string, unknown>
+    // **THE ACT THE REMOVAL NOW IS, DRIVEN AT THE STORE** (§3, §8). Under the six pairs as they stood, this delete handed
+    // `tabs-must-stand` `value: undefined`, its present arm refused, and its repair MINTED THE LANDING FLOOR OVER THE
+    // RECORD — measured: one delete of one tab erased the sibling row and re-stamped the floor, and the act answered
+    // `committed` (`D-156`'s fault (a)). Absence is now the ROOT's alone to refuse (H5), so a descendant act is not this
+    // pair's to judge at all.
+    store.delete(['tabs', 'tab-2'] as never, 'file')
+    const after = store.read(['tabs'] as never) as Record<string, unknown>
+    expect('tab-2' in after, 'the row the act deleted is gone').toBe(false)
+    expect(after['order'], 'and the seat the membership repair owns no longer names it').toEqual(['landing', 'tab-1'])
+    // **THE FLOOR IS THE THING THAT MUST NOT APPEAR**: a minted record holds ONE row — the landing entry, with the floor's
+    // own label and a fresh stamp — so a sibling that survived, member for member, is the whole measurement, and the row
+    // count is the same fact read coarsely.
+    expect(after['tab-1'], 'the sibling the floor would have ERASED still stands, member for member').toEqual(before['tab-1'])
+    expect((after['tab-1'] as Record<string, unknown>)['label'], 'which is its own label and not the floor\'s').toBe('one')
+    expect(reading().rows.map((each) => each.id), 'two rows stand where a floor-minting repair would have left one').toEqual(['landing', 'tab-1'])
+    expect(actives(), 'and the active row is the one that stood').toEqual(['tab-1'])
+  })
+
+  it('THE DELETE DIRECTION, END TO END, WITH THE THREE `repaired` CASES OF §8: a NON-ACTIVE tab\'s removal is BARE `committed` (the seat repair ran and left exactly what the removal meant), the ACTIVE tab\'s removal with a survivor answers `repaired: true`, and the LAST tab\'s removal answers `repaired: true` with the floor standing', () => {
+    // **(i) THE NON-ACTIVE TAB — AND THIS IS THE SHARPEST OF THE THREE.** The seat repair RUNS (the `order` seat loses the
+    // id inside the same commit) and the answer is STILL bare, because the comparator is the DELETE-ONLY expectation: the
+    // pre reading's `order` and rows MINUS the id, every flag untouched. A repair whose correction IS the removal's own
+    // meaning is not something `D-70`'s member reports, and reading the member as "did a repair run" would make it say
+    // nothing on this arm.
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
+    record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: SEAT_STAMP }))
+    const clean = record.remove('tab-2')
+    expect(clean.status, 'a removal is a committed act').toBe('committed')
+    expect(Object.keys(clean), 'and NOTHING had to change beyond it: the member is ABSENT, never `false`').toEqual(['status'])
+    expect(reading().order, 'the seat is the pre reading\'s minus the id, which is the whole of the expectation').toEqual(['landing', 'tab-1'])
+    expect(reading().rows.map((each) => each.id), 'the row left and nothing else did').toEqual(['landing', 'tab-1'])
+
+    // **(ii) THE ACTIVE TAB, WITH A SURVIVOR.** The delete leaves ZERO active rows, so `exactly-one-active` is asked on the
+    // record the seat repair left — the arm (ii) invocation the two-repair split exists for — and re-seats one. The
+    // expectation has no active row at all, so the record that stands is one the removal did NOT name and the member says so.
+    const repaired = record.remove('tab-1')
+    expect(repaired.status, 'the removal of the ACTIVE tab is `committed` all the same: a repaired act is never refused').toBe('committed')
+    expect('repaired' in repaired && repaired.repaired === true, 'one active row stands where the delete-only expectation has none, and that is the signal').toBe(true)
+    // **WHICH SURVIVOR IS §7's CHOICE AND NOT THIS ROW'S** (`D-70`, `D-156`): putting the successor in the expectation would
+    // be a second copy of the precedence inside the act. The record holds exactly one survivor here, so the assertion below
+    // names a MEMBERSHIP and predicts no choice; the precedence itself is measured where its subject IS that choice, in `remove`
+    // of the active tab with a pre-position arm, in the crossing describe above.
+    expect(reading().rows.map((each) => each.id), 'the removed row is gone and the survivors stand').toEqual(['landing'])
+    expect(actives(), 'and exactly one row reads active after it').toEqual(['landing'])
+
+    // **(iii) THE LAST TAB.** The removal empties the sequence, so the seat repair's FLOOR branch — the one row either scope
+    // creates, and no row it chooses — re-mints the landing entry. That record differs from the empty expectation, so the
+    // member fires again and the record never stands empty.
+    const last = record.remove('landing')
+    expect(last.status).toBe('committed')
+    expect('repaired' in last && last.repaired === true, 'the floor that re-mints the landing entry is not the empty record the removal meant').toBe(true)
+    expect(reading().order, 'the record never stands empty').toEqual(['landing'])
+    expect(reading().rows[0]?.label, 'and the row is the MINTED floor, not the row the last removal took').toBe('landing')
+    expect(actives()).toEqual(['landing'])
   })
 })
