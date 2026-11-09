@@ -17,10 +17,22 @@
 //   · `DC-5`…`DC-7` — THE `focus` ACT'S NEW BODY (`D-141`, `D-142`), and the TWO ROWS the L1 document's §4 books as this
 //     module's: `DC-5` is the app's OWN SUBSCRIBER after the act — the arm `F-3` cannot carry, because a pure active-tab
 //     change leaves both authored witnesses invariant, `landing` being DERIVED from the active row and the error witness
-//     reading rows' error tokens (`D-76`, `D-127`); `DC-6` is `composeRecord`'s round trip (`order` preserved, every row
-//     copied whole, no member invented, the standing active row left exactly as the reading carried it, `newTab: true`
-//     opening exactly one row and seating it); `DC-7` is the passthrough's refusals — the store's judgement passing THROUGH
-//     and the tool's own refusal confined to its arguments (`D-142`, `D-136`, `D-127`). **THE RETARGET LANDED** (`E-1`): the arms these rows drive exist at this head, and each row says which one it is.
+//     reading rows' error tokens (`D-76`, `D-127`); `DC-7` is the passthrough's refusals — the store's judgement passing
+//     THROUGH and the tool's own refusal confined to its arguments (`D-142`, `D-136`, `D-127`). **THE RETARGET LANDED**
+//     (`E-1`): the arms these rows drive exist at this head, and each row says which one it is.
+//
+//   · `DC-6`, RE-GRAINED AND NOT RETIRED (`D-158`, `D-159`, `D-160`): its subject is still the act's ROUND TRIP, and the round
+//     trip now spans TWO objects instead of one — the SENT VALUE proves *one row, no member invented, no whole record*, and
+//     the ANSWER proves *`order` preserved, one active, the older row deactivated*. `composeRecord` is DELETED WHOLE from
+//     `src/renderer/renderer.ts`: the act writes ONE ROW at `['tabs', row.id]` at `file`, so every clause the old row
+//     measured has a successor AT THE ROW, and the row names which one it is.
+//
+//   · `DC-9`…`DC-12` — THE FOUR ROWS `D-160` BOOKS FOR THE LEAF WRITE, the sharper edge of what `DC-6` states once:
+//     `DC-9` the ADDRESS (`['tabs', <id>]` at `file`, never `['tabs']`), `DC-10` the ONE-ROW KEY SET (the value carries the
+//     row's own members and nothing of the record's), `DC-11` the OPEN ROW'S MINIMALITY (no `label`, no `error`, because
+//     those are the record's repairs and a local default would be a second authority, `D-158`), and `DC-12` the TWO-READ
+//     COUNT (`D-70`: one read before the write and one after, and the AFTER one is what the answer reports). **A row that
+//     cannot fail is a deleted row wearing a new name**: each carries a control, and each control is named in its message.
 
 import { afterEach, describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -178,8 +190,12 @@ describe('D-127 · F7 — the tab terminals are driven by a RECORD and by nothin
  * `D-142` — THE `focus` ACT'S NEW BODY, AND THE APP'S OWN SUBSCRIBER AFTER IT.
  * One fixture pair and one realm double below, so both sides of the act are measured on ONE record rather than on two
  * stories: `BEFORE_ACT` is what the act finds, `AFTER_ACT` is what the record's own repair leaves, and the double's
- * `write` applies `exactly-one-active` the way `src/main/tabs-record/index.ts` does — the WRITTEN referent survives and
- * every other active row is dropped (`D-142`, `D-140`).
+ * `write` is a LEAF ROW WRITE that applies the record's TWO repairs the way `src/main/tabs-record/index.ts` does — the
+ * `'seat'` scope APPENDS the written row's id to `order` where the seat does not name it, and `exactly-one-active` keeps
+ * the WRITTEN referent, deactivating every other active row (`D-142`, `D-140`, `D-157`, `D-159`). **AND WHY THE DOUBLE HAD
+ * TO MOVE IN THE SAME EDIT** (`D-160`): the writing it replaced rebuilt the record from `value['order']`, so a bare ROW
+ * would have made it ERASE the record (`order: []`, `rows: []`) — and a row measuring the leaf write over an erasing
+ * double would pass for the wrong reason, its answer over a record no store ever leaves.
  * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /** **THE RECORD THE ACT FINDS.** The landing entry active, a second tab waiting and a third carrying an `error` token —
@@ -218,10 +234,20 @@ function readingOf(rows: readonly TabsRecordRow[], runtime: TabsPageRuntime | nu
  *  `tabs.read()` answers the record this double holds, `data.write(args)` RECORDS the argument it was handed and answers
  *  as the store answers (the crossing's `committed` receipt, or a refusal that writes nothing). The value the renderer
  *  SENT and the record that then STANDS are therefore two different facts, which is what lets `DC-6` tell the
- *  composition from the store's judgement (`D-142`, `D-136`). */
+ *  composition from the store's judgement (`D-142`, `D-136`). **`readings` IS THE THIRD FACT, AND IT IS `DC-12`'s
+ *  SUBJECT**: one entry per `tabs.read()` call, in the order they happened, so "one read before the write and one after"
+ *  is a SEQUENCE this double recorded rather than a count a message claims (`D-70`, `D-82` clause 4). */
+interface ActReading {
+  readonly order: readonly string[]
+  readonly landing: string
+  readonly activeIds: readonly string[]
+  readonly rows: readonly TabsRecordRow[]
+}
+
 interface ActRealm {
   readonly writes: unknown[]
   readonly reads: number
+  readonly readings: readonly ActReading[]
   readonly notified: unknown[]
   readonly record: () => { readonly order: readonly string[]; readonly landing: string; readonly rows: readonly TabsRecordRow[] }
   readonly act: (payload: unknown) => Promise<RpcReply>
@@ -230,6 +256,7 @@ interface ActRealm {
 function actRealm(options: { readonly refuse?: { readonly reason: string; readonly message: string }; readonly tabs?: boolean } = {}): ActRealm {
   const writes: unknown[] = []
   const notified: unknown[] = []
+  const readings: ActReading[] = []
   let reads = 0
   let rows: TabsRecordRow[] = BEFORE_ACT.map((row) => ({ ...row }))
   let order: string[] = ORDER_OF(BEFORE_ACT)
@@ -239,22 +266,43 @@ function actRealm(options: { readonly refuse?: { readonly reason: string; readon
   }
   const read = async (): Promise<unknown> => {
     reads += 1
-    return { status: 'committed', order: [...order], landing: activeId(), rows: rows.map((row) => ({ ...row })) }
+    const state = { order: [...order], landing: activeId(), rows: rows.map((row) => ({ ...row })) }
+    readings.push({ ...state, activeIds: state.rows.filter((row) => row.active === true).map((row) => row.id) })
+    return { status: 'committed', ...state }
   }
+  /** **THE STORE'S ONE VERB, AS THE RECORD'S PAIR REALLY ANSWERS IT — A LEAF ROW WRITE, NOT A WHOLE-RECORD REPLACEMENT**
+   *  (`D-157`, `D-159`, `D-160`). Two repairs are applied to the record this double HOLDS, exactly as
+   *  `src/main/tabs-record/index.ts` applies them inside the caller's own commit:
+   *   · the `'seat'` scope of `order-names-its-tabs` — the written row IS seated, so an id the seat does not yet name is
+   *     APPENDED to `order` and every standing id keeps its position (the append position is the REPAIR's answer, never
+   *     the act's promise, `D-159`);
+   *   · `exactly-one-active`'s `'family'` scope — the WRITTEN referent is the survivor and every other active row is
+   *     deactivated in the same object (`D-129`, `D-142`);
+   *   · and NOTHING ELSE: a leaf write cannot drop a sibling, so every row the act does not name travels untouched.
+   *  **WHAT THE OLD DOUBLE DID, AND WHY IT HAD TO GO** (`D-160`): it read `value['order']` and rebuilt the record from it,
+   *  so handed the act's bare ROW it would set `order = []` and `rows = []` — the record ERASED, the act's re-read
+   *  answering an empty record, and every clause of the row below passing or failing for a reason no store produces. A
+   *  write it cannot place is therefore REFUSED here rather than silently destructive. */
   const write = async (args: unknown): Promise<unknown> => {
     writes.push(args)
+    const given = (args ?? {}) as { readonly path?: unknown; readonly value?: unknown }
+    const at = (Array.isArray(given.path) ? given.path : []) as readonly (string | number)[]
     if (options.refuse !== undefined) {
-      return { status: 'refused', reason: options.refuse.reason, message: options.refuse.message, address: ['tabs'], path: ['tabs'] }
+      // THE STORE'S OWN REFUSAL NAMES THE ADDRESS IT WAS GIVEN AND WRITES NOTHING (`guide §5.4`, `D-157`).
+      return { status: 'refused', reason: options.refuse.reason, message: options.refuse.message, address: ['tabs'], path: at }
     }
-    const value = ((args ?? {}) as { value?: unknown }).value as Record<string, unknown>
-    const sent = (((value ?? {})['order'] ?? []) as string[])
-    const held = sent.map((id) => ({ ...((value ?? {})[id] as TabsRecordRow) }))
-    // THE RECORD'S OWN REPAIR: the written referent is the row whose `active` MOVED to true; every other active is dropped.
-    const moved = held.filter((row) => row.active === true && rows.find((was) => was.id === row.id)?.active !== true)
-    const keep = moved.length > 0 ? moved[moved.length - 1]!.id : (held.find((row) => row.active === true)?.id ?? '')
-    order = sent
-    rows = held.map((row) => (row.active === true ? { ...row, active: row.id === keep } : { ...row }))
-    return { status: 'committed', path: ['tabs'], cursor: null, repaired: moved.length > 0, log: [] }
+    const id = at[0] === 'tabs' && typeof at[1] === 'string' && at[1].length > 0 ? at[1] : null
+    const value = given.value
+    if (id === null || value === null || typeof value !== 'object' || Array.isArray(value)) {
+      return { status: 'refused', reason: 'malformed-row', message: 'the write names no row of this record', address: ['tabs'], path: at }
+    }
+    const row = { ...(value as Record<string, unknown>), id } as unknown as TabsRecordRow
+    const appended = !order.includes(id)
+    if (appended) order = [...order, id]
+    const standing = rows.filter((was) => was.active === true && was.id !== id)
+    const seated = rows.some((was) => was.id === id) ? rows.map((was) => (was.id === id ? row : { ...was })) : [...rows.map((was) => ({ ...was })), row]
+    rows = seated.map((held) => (held.active === true ? { ...held, active: held.id === id } : { ...held }))
+    return { status: 'committed', path: at, cursor: null, repaired: appended || standing.length > 0, log: [] }
   }
   const provident: Record<string, unknown> = {
     data: { read: async () => ({}), write, delete: async () => ({}), list: async () => ({}), journal: async () => ({}) },
@@ -264,6 +312,7 @@ function actRealm(options: { readonly refuse?: { readonly reason: string; readon
   return {
     writes,
     get reads(): number { return reads },
+    readings,
     notified,
     record: () => ({ order: [...order], landing: activeId(), rows: rows.map((row) => ({ ...row })) }),
     act: (payload: unknown): Promise<RpcReply> =>
@@ -277,8 +326,8 @@ afterEach(() => {
   delete (globalThis as Record<string, unknown>)['window']
 })
 
-describe('D-142 — the act, its composition round trip, and the subscriber that follows it', () => {
-  it('DC-5 — **THE APP\'S OWN SUBSCRIBER AFTER THE ACT**: `driveTabsLandingPage` drives BOTH authored terminals from the post-act record — the arm `F-3` cannot carry, because a pure active-tab change leaves both written values IDENTICAL (`landing` is DERIVED from the active row and the error witness reads rows\' error tokens), so the terminals are invariant while the record moved. The control beside it proves the drive is not inert: the composed value BEFORE the repair seats two actives, and that record drives the landing terminal `none` naming both ids', () => {
+describe('D-142/D-160 — the act, its leaf row write and round trip, and the subscriber that follows it', () => {
+  it('DC-5 — **THE APP\'S OWN SUBSCRIBER AFTER THE ACT**: `driveTabsLandingPage` drives BOTH authored terminals from the post-act record — the arm `F-3` cannot carry, because a pure active-tab change leaves both written values IDENTICAL (`landing` is DERIVED from the active row and the error witness reads rows\' error tokens), so the terminals are invariant while the record moved. The control beside it proves the drive is not inert: a record seating TWO actives — the state the act\'s ONE row write leaves if no repair settled it, which is why `exactly-one-active` does so inside the caller\'s own commit (`D-129`) — drives the landing terminal `none` naming both ids', () => {
     const before = runtimeRecorder()
     const after = runtimeRecorder()
     const pre = driveTabsLandingPage(readingOf(BEFORE_ACT, before.runtime), before.runtime)
@@ -310,14 +359,15 @@ describe('D-142 — the act, its composition round trip, and the subscriber that
       'DC-5 — and the record DID move: the reading the delivery carried names the TARGET active, which is the whole of what the act changed',
     ).toBe('alpha')
 
-    // THE CONTROL: the value the composition writes BEFORE the repair seats two actives, and that record is no landing.
+    // THE CONTROL: a record seating TWO actives — the pair the RECORD's repair settles, so the act's one row write never
+    // leaves it standing — is no landing.
     const two = runtimeRecorder()
-    const composed: readonly TabsRecordRow[] = [
+    const twoActives: readonly TabsRecordRow[] = [
       { id: 'landing', target: '/home', active: true, label: 'home', lastActiveAt: '2026-11-06T00:00:00.000Z' },
       { id: 'alpha', target: '/alpha', active: true, label: 'alpha', lastActiveAt: '2026-11-06T00:00:01.000Z' },
       BEFORE_ACT[2]!,
     ]
-    const twoReading = readingOf(composed, two.runtime)
+    const twoReading = readingOf(twoActives, two.runtime)
     expect(
       twoReading.status === 'committed' ? twoReading.witness.landing.activeIds : null,
       'DC-5 CONTROL — a two-active record names BOTH ids, so the failing case is readable instead of merely red',
@@ -330,69 +380,105 @@ describe('D-142 — the act, its composition round trip, and the subscriber that
     ).toEqual({ display: 'none' })
   })
 
-  it('DC-6 — **`composeRecord`\'S ROUND TRIP, THROUGH THE ACT**: one `data.write` at `[\'tabs\']` at `file` carries the WHOLE record — `order` preserved, every row copied whole, no member invented, the target row seated with `lastActiveAt` stamped, and the standing active row left EXACTLY as the reading carried it — and the tool answers the record as the store stands after the repair, never the value it sent. `newTab: true` opens exactly ONE row carrying the caller\'s target and seats it (ASM-1)', async () => {
+  it('DC-6 — **THE ACT\'S ROUND TRIP, RE-GRAINED TO THE LEAF ROW WRITE**: ONE `data.write` at `[\'tabs\', <id>]` at `file` carries the target\'s ONE ROW — the value\'s keys are that ROW\'s own, with no `order`, no `landing` and no member invented — the row that STOOD active is ABSENT from the write and reads `active: false` in the ANSWER, `order` is read off the ANSWER with an opened id appended LAST, and exactly TWO `tabs.read()` calls stand. `composeRecord` is DELETED from this realm (`D-160`), so the round trip spans the SENT ROW and the RE-READ RECORD, and both halves are measured here (ASM-1, `D-158`, `D-159`)', async () => {
     const realm = actRealm()
     const reply = await realm.act({ target: '/alpha' })
 
-    // ONE WRITE, AT THE ONE ADDRESS AND TIER THE PASSTHROUGH DECLARES (`D-142`, `D-112`).
-    expect(realm.writes.length, 'DC-6 — the act writes the record ONCE: one composition, one passthrough, no retry').toBe(1)
+    // (1) ONE WRITE, AT THE ROW'S OWN ADDRESS AND THE RECORD'S OWN TIER (`D-142`, `D-158`, `D-112`).
+    expect(realm.writes.length, 'DC-6 — the act writes ONCE: one row, one passthrough, no retry').toBe(1)
     const written = realm.writes[0] as { readonly path?: unknown; readonly tier?: unknown; readonly value?: unknown }
-    expect(written.path, 'DC-6 — the address is the tab record\'s own').toEqual(['tabs'])
+    expect(
+      written.path,
+      'DC-6 — the address is the ROW\'S OWN LEAF `[\'tabs\', row.id]` and never the record\'s root: `composeRecord` is deleted whole from `src/renderer/renderer.ts`, so a `[\'tabs\']` path here is the whole-record composition returning (`D-160` §6)',
+    ).toEqual(['tabs', 'alpha'])
     expect(written.tier, 'DC-6 — at the tab record\'s own tier, which the declared-root guard admits and no other').toBe('file')
     const value = written.value as Record<string, unknown>
 
-    // `order` IS PRESERVED — a seat moves no member of it.
-    expect(value['order'], 'DC-6 — `order` is copied in the reading\'s own order and a SEAT moves nothing in it').toEqual(['landing', 'alpha', 'broken'])
-    // NO MEMBER IS INVENTED — the keys are the `order` seat and the ids the reading named, and no `landing` member.
+    // (2) THE VALUE IS ONE ROW — its keys are the row's own, and the record's two members are ABSENT.
     expect(
       Object.keys(value).sort(),
-      'DC-6 — the value\'s keys are the `order` seat and the ids the reading named, and NOTHING else: no `landing` member, because `landing` is DERIVED from the rows (`D-76`, ASM-4)',
-    ).toEqual(['alpha', 'broken', 'landing', 'order'])
-    // EVERY ROW IS COPIED WHOLE — the two the act does not touch are byte-identical to the reading's.
-    expect(value['landing'], 'DC-6 — the standing active row is left EXACTLY as the reading carried it (ASM-3): the renderer may seat two actives on purpose and NEVER clears the older one itself').toEqual(BEFORE_ACT[0])
-    expect(value['broken'], 'DC-6 — and a row the act does not name is copied whole, its `error` token included').toEqual(BEFORE_ACT[2])
-    // THE TARGET ROW SEATED: `active` true and `lastActiveAt` stamped, its identity and target untouched.
-    const seated = value['alpha'] as TabsRecordRow
-    expect([seated.id, seated.target, seated.active], 'DC-6 — the target row is SEATED in the record\'s own terms').toEqual(['alpha', '/alpha', true])
-    expect(typeof seated.lastActiveAt, 'DC-6 — and stamped now for the `tab-has-lastActiveAt` pair (`D-142`)').toBe('string')
-
-    // THE ANSWER IS THE RECORD AS RE-READ AFTER THE WRITE (ASM-2), NOT THE VALUE SENT.
-    expect(reply.ok, 'DC-6 — the act answers `ok` and carries a value').toBe(true)
-    const answer = reply.value as { readonly status?: unknown; readonly order?: unknown; readonly rows?: unknown }
-    expect(answer.status, 'DC-6 — the answer is a record, in the tabs client\'s committed arm').toBe('committed')
-    expect(answer.order, 'DC-6 — and it is the record as the store stands, read back AFTER the write').toEqual(realm.record().order)
-    expect(answer.rows, 'DC-6 — row for row, the answer is the re-read record').toEqual(realm.record().rows)
+      'DC-6 — the value\'s keys are the ROW\'s own: `id`, `target`, `active`, `lastActiveAt`, plus the `label` the reading carried whole (`D-76`) — no `order`, no `landing`, and no member the record did not hold',
+    ).toEqual(['active', 'id', 'label', 'lastActiveAt', 'target'])
     expect(
-      ((answer.rows ?? []) as readonly TabsRecordRow[]).filter((row) => row.active === true).map((row) => row.id),
-      'DC-6 — the repair settled the pair the act seated (`D-140`, `D-142`): exactly one row reads active and it is the target\'s',
-    ).toEqual(['alpha'])
-    expect(realm.reads, 'DC-6 — and the act read the record at least once, which is where its composition came from').toBeGreaterThan(0)
-    expect(realm.notified, 'DC-6 — the act emits NO app-graph push: the record\'s own listener is what delivers the change (`D-137`, `D-112`)').toEqual([])
+      [Object.prototype.hasOwnProperty.call(value, 'order'), Object.prototype.hasOwnProperty.call(value, 'landing')],
+      'DC-6 — and the record\'s own two members are ABSENT from the sent value: `order` is the `\'seat\'` repair\'s to append to (`D-157`) and `landing` is DERIVED from the rows, never written (`D-76`)',
+    ).toEqual([false, false])
+    // THE TARGET ROW SEATED: `active` true and `lastActiveAt` stamped, its identity and target untouched.
+    expect([value['id'], value['target'], value['active']], 'DC-6 — the target row is SEATED in the record\'s own terms').toEqual(['alpha', '/alpha', true])
+    expect(typeof value['lastActiveAt'], 'DC-6 — and stamped now for the `tab-has-lastActiveAt` pair (`D-142`)').toBe('string')
 
-    // `newTab: true` OPENS EXACTLY ONE ROW, CARRYING THE CALLER'S TARGET, AND SEATS IT (ASM-1).
+    // (3) THE ROW THAT STOOD ACTIVE IS ABSENT FROM THE WRITE — the act names no other row at all.
+    expect(
+      (written.path as readonly unknown[]).slice(1),
+      'DC-6 — the address names the TARGET\'s id and no other, so the standing active row (`landing`) is not named by this act: a leaf write cannot drop a sibling (`D-138`) and the renderer clears no flag (`D-142`)',
+    ).toEqual(['alpha'])
+
+    // (4) AND IT READS `active: false` IN THE ANSWER — the property the round trip now measures beside the act.
+    expect(reply.ok, 'DC-6 — the act answers `ok` and carries a value').toBe(true)
+    const answer = reply.value as { readonly status?: unknown; readonly order?: unknown; readonly rows?: readonly TabsRecordRow[] }
+    expect(answer.status, 'DC-6 — the answer is a record, in the tabs client\'s committed arm').toBe('committed')
+    const answeredRows = answer.rows ?? []
+    const standing = answeredRows.find((row) => row.id === 'landing')
+    expect(standing, 'DC-6 — the answer still HOLDS the row that stood active: a leaf write deactivates it and never deletes it (`D-129`)').toBeDefined()
+    expect(
+      (standing as TabsRecordRow).active,
+      'DC-6 — **the row that stood active reads `active: false` in the ANSWER**: `healRecord` settled `exactly-one-active` inside the caller\'s own commit, so the act neither wrote the flag nor needed to (`D-129`, `D-158`)',
+    ).toBe(false)
+    expect(
+      { ...(standing as TabsRecordRow), active: true },
+      'DC-6 — and every OTHER byte the reading carried travelled: the deactivation is the repair\'s and no member was dropped (`D-76`)',
+    ).toEqual(BEFORE_ACT[0])
+    expect(
+      answer.rows,
+      'DC-6 — row for row, the answer is the re-read record — and the two rows the act does not name are still there, which is what a leaf write cannot lose (`D-138`)',
+    ).toEqual(realm.record().rows)
+    expect(
+      answeredRows.filter((row) => row.active === true).map((row) => row.id),
+      'DC-6 — exactly ONE row reads active and it is the target\'s (`D-140`, `D-142`)',
+    ).toEqual(['alpha'])
+
+    // (5) `order` IS READ OFF THE ANSWER — the sent value carries none at all (clause 2) — AND A SEAT MOVES NOTHING IN IT.
+    expect(
+      answer.order,
+      'DC-6 — `order` is read off the ANSWER and not off the value sent: a SWITCH seats a row the seat already names, so no member of `order` moves',
+    ).toEqual(['landing', 'alpha', 'broken'])
+
+    // (6) `newTab: true` OPENS EXACTLY ONE ROW, AND THE `'seat'` REPAIR APPENDS ITS ID LAST *IN THE ANSWER* (`D-159`).
     const opened = actRealm()
     const openReply = await opened.act({ target: '/delta', newTab: true })
     expect(opened.writes.length, 'DC-6 — an OPEN is one write too').toBe(1)
-    const openedValue = (opened.writes[0] as { readonly value?: unknown }).value as Record<string, unknown>
-    const openedOrder = openedValue['order'] as string[]
-    expect(openedOrder.length, 'DC-6 — `newTab: true` adds EXACTLY ONE row to `order`').toBe(BEFORE_ACT.length + 1)
-    expect(openedOrder.slice(0, BEFORE_ACT.length), 'DC-6 — and it appends it: no standing id is reordered by an open').toEqual(ORDER_OF(BEFORE_ACT))
-    const newId = openedOrder[BEFORE_ACT.length]!
+    const openedWrite = opened.writes[0] as { readonly path?: readonly unknown[]; readonly tier?: unknown; readonly value?: unknown }
+    expect([openedWrite.tier, openedWrite.path?.[0]], 'DC-6 — the open writes at the same family and the same tier as the switch').toEqual(['file', 'tabs'])
+    const newId = openedWrite.path?.[1] as string
+    expect(typeof newId, 'DC-6 — the leaf names the id the act minted, so the row and its address are ONE spelling').toBe('string')
     expect(
       ORDER_OF(BEFORE_ACT).includes(newId),
-      'DC-6 — the opened row\'s id is one the record did not carry, so the act minted rather than reused an id',
+      'DC-6 — the opened row\'s id is one the record did not carry, so the act minted rather than reused an id (ASM-1)',
     ).toBe(false)
-    const newRow = openedValue[newId] as TabsRecordRow
-    expect([newRow.target, newRow.active], 'DC-6 — the opened row carries the CALLER\'S target and is seated').toEqual(['/delta', true])
+    const openedValue = openedWrite.value as Record<string, unknown>
     expect(
-      (openedValue['landing'] as TabsRecordRow).active,
-      'DC-6 — and no standing row\'s bytes move (ASM-3): the older active is still active in the value this renderer wrote',
-    ).toBe(true)
-    const openAnswer = openReply.value as { readonly rows?: readonly TabsRecordRow[] }
+      [openedValue['id'], openedValue['target'], openedValue['active']],
+      'DC-6 — the opened row carries the CALLER\'S target and is seated, under the id its own address names',
+    ).toEqual([newId, '/delta', true])
+    expect(typeof openedValue['lastActiveAt'], 'DC-6 — and an instant, so the `tab-has-lastActiveAt` pair is the act\'s and not a default').toBe('string')
+    const openAnswer = openReply.value as { readonly order?: readonly string[]; readonly rows?: readonly TabsRecordRow[] }
     expect(
-      ((openAnswer.rows ?? []) as readonly TabsRecordRow[]).filter((row) => row.active === true).map((row) => row.id),
-      'DC-6 — and the answer names the opened row as the one active, the repair having dropped the older one',
+      openAnswer.order,
+      'DC-6 — **the opened id is appended LAST in the ANSWER**: the act writes one row and the `\'seat\'` repair seats it, so the position is the repair\'s answer and never the act\'s promise (`D-159`)',
+    ).toEqual([...ORDER_OF(BEFORE_ACT), newId])
+    expect(openAnswer.order?.slice(0, BEFORE_ACT.length), 'DC-6 — and no standing id is reordered by an open').toEqual(ORDER_OF(BEFORE_ACT))
+    expect(
+      (openAnswer.rows ?? []).filter((row) => row.active === true).map((row) => row.id),
+      'DC-6 — and the answer names the opened row as the one active, the repair having deactivated the older one inside the same commit (`D-159`)',
     ).toEqual([newId])
+
+    // (7) EXACTLY TWO READS: the seat's committed reading and the answer's re-read, never a poll and never a retry.
+    expect(
+      realm.reads,
+      'DC-6 — the act reads the record EXACTLY TWICE — `S6`\'s reading and the `S9` answer\'s re-read (`D-82` clause 4, `D-70`)',
+    ).toBe(2)
+    expect(opened.reads, 'DC-6 — and the open arm is the same two').toBe(2)
+    expect(realm.notified, 'DC-6 — the act emits NO app-graph push: the record\'s own listener is what delivers the change (`D-137`, `D-112`)').toEqual([])
   })
 
   it('DC-7 — **THE PASSTHROUGH\'S REFUSALS ARE THE STORE\'S AND THE TOOL\'S ARE ITS ARGUMENTS\'**: a store refusal (`parent-absent`) reaches the tool\'s answer as the store\'s own word and changes nothing, a reading that is not a record writes nothing at all (`D-127`), an act naming no target writes nothing, and a `target` that is not a string can be no row and writes nothing — each arm answering rather than throwing', async () => {
@@ -433,6 +519,142 @@ describe('D-142 — the act, its composition round trip, and the subscriber that
       'DC-7 — a `target` that is not a string can be no row (a tab id is a member key and `TabsRecordRow`\'s `target` a string), so the tool refuses its own argument and no store is asked',
     ).toEqual([])
     expect(typeof bad.ok, 'DC-7 — and the refusal is an answer, not a throw').toBe('boolean')
+  })
+
+  /* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   * `D-160` — THE FOUR ROWS THE LEAF ROW WRITE IS BOOKED WITH. `DC-6` states each of them once, inside the round trip;
+   * these four measure them ONE AT A TIME, each with the control that shows the measurement can fail, because the property
+   * `composeRecord`'s deletion leaves behind is not "a different address" but "ONE ROW and nothing of the record" — and a
+   * row that cannot fail is a deleted row wearing a new name.
+   * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+  it('DC-9 — **THE LEAF ADDRESS: the act writes at `[\'tabs\', <id>]` at `file` and NEVER at `[\'tabs\']`**, on BOTH arms that write — a SWITCH and an OPEN. The predicate is driven both ways first, so an address this row calls a leaf is a measurement and not a scanner blind spot (`D-158`, `D-160` §6)', async () => {
+    // THE PREDICATE, DRIVEN BOTH WAYS — the falsifier belongs AHEAD of the green (`R-1`-family discipline).
+    const leafOf = (path: unknown): string | null => {
+      if (!Array.isArray(path) || path.length !== 2) return null
+      if (path[0] !== 'tabs' || typeof path[1] !== 'string' || path[1].length === 0) return null
+      return path[1] as string
+    }
+    expect(
+      leafOf(['tabs']),
+      'DC-9 CONTROL — a write at the RECORD\'S ROOT is NOT a leaf: the instrument this row passes on can fail, which is what the whole-record composition would have been',
+    ).toBeNull()
+    expect(leafOf(['tabs', 'alpha']), 'DC-9 CONTROL — and a row\'s own address IS one, so the green below is a measurement').toBe('alpha')
+
+    const arms: ReadonlyArray<{ readonly label: string; readonly payload: unknown }> = [
+      { label: 'a SWITCH', payload: { target: '/alpha' } },
+      { label: 'an OPEN', payload: { target: '/delta', newTab: true } },
+    ]
+    for (const arm of arms) {
+      const realm = actRealm()
+      await realm.act(arm.payload)
+      expect(realm.writes.length, `DC-9 — \`${arm.label}\` is ONE write`).toBe(1)
+      const write = realm.writes[0] as { readonly path?: unknown; readonly tier?: unknown }
+      const id = leafOf(write.path)
+      expect(id, `DC-9 — **\`${arm.label}\` writes at the ROW'S OWN LEAF** \`['tabs', <id>]\`: the act names the one row it seats and no other (\`D-158\`)`).not.toBeNull()
+      expect(write.path, `DC-9 — and NEVER at the record's root: \`['tabs']\` is the address the deleted \`composeRecord\` wrote, and a pass that wrote it again would be this defect returning (\`D-160\`)`).not.toEqual(['tabs'])
+      expect(write.tier, `DC-9 — at \`file\`, the record's own tier, which the declared-root guard admits and no other (\`D-101\`, \`D-112\`)`).toBe('file')
+      expect(
+        (realm.readings[1]?.order ?? []).includes(id as string),
+        `DC-9 — and the record answers that address: the id the leaf named is IN \`order\` in the answer's own reading, which is the '\`seat\`' repair's append (\`D-157\`)`,
+      ).toBe(true)
+    }
+  })
+
+  it('DC-10 — **THE ONE-ROW KEY SET: the written value carries the ROW\'S OWN members and NOTHING of the record\'s** — exactly the four on an OPEN, and on a SWITCH the reading\'s row WHOLE beside them, with no `order`, no `landing` and no member the record did not hold (`D-76`, `D-158`)', async () => {
+    /** THE FOUR MEMBERS `TabsRecordRow` declares as its own, the two OPTIONAL ones excluded — the row a record can hold. */
+    const ROW_KEYS = ['active', 'id', 'lastActiveAt', 'target']
+    /** THE RECORD'S OWN MEMBERS — none of which may appear in a row's value (`D-76`: `landing` is DERIVED, `order` is the seat). */
+    const RECORD_KEYS = ['order', 'landing', 'rows', 'witness', 'status']
+
+    // THE OPEN ARM: EXACTLY the four — a row the reading did not carry can bring nothing else.
+    const opened = actRealm()
+    await opened.act({ target: '/delta', newTab: true })
+    const openValue = (opened.writes[0] as { readonly value?: unknown }).value as Record<string, unknown>
+    expect(
+      Object.keys(openValue).sort(),
+      'DC-10 — an OPENED row\'s value is EXACTLY the four members of `TabsRecordRow`: `id`, `target`, `active`, `lastActiveAt`, and no fifth',
+    ).toEqual(ROW_KEYS)
+    for (const member of RECORD_KEYS) {
+      expect(
+        Object.prototype.hasOwnProperty.call(openValue, member),
+        `DC-10 — and the RECORD's \`${member}\` member is ABSENT: the value is ONE ROW, so there is no whole record to carry it (\`D-160\`)`,
+      ).toBe(false)
+    }
+
+    // THE SWITCH ARM IS THE CONTROL: the row comes back WHOLE (`D-76`), so the reading's own `label` travels and NOTHING
+    // is added beside it — a key set that ignored what the reading carried would answer the four on both arms and could
+    // not tell a whole row from an invented one.
+    const switched = actRealm()
+    await switched.act({ target: '/alpha' })
+    const switchValue = (switched.writes[0] as { readonly value?: unknown }).value as Record<string, unknown>
+    expect(
+      Object.keys(switchValue).sort(),
+      'DC-10 — the SWITCH arm carries the reading\'s row WHOLE plus the ONE member the act stamps: a dropped member is `D-76`\'s own failure and an invented one is the key the act forbids',
+    ).toEqual(['active', 'id', 'label', 'lastActiveAt', 'target'])
+    expect(
+      Object.keys(switchValue).filter((key) => !ROW_KEYS.includes(key)),
+      'DC-10 — and the one member beyond the four is `label`, which the READING carried — so the four-key set above is the act\'s product and not a constant this instrument cannot see past',
+    ).toEqual(['label'])
+  })
+
+  it('DC-11 — **THE OPEN ROW\'S MINIMALITY: an opened row carries NO `label` and NO `error`** — because the record\'s three field pairs fill the title in BOTH `healedFamily` scopes and nobody fills an `error`, so a local default here would be the SECOND AUTHORITY the repairs exist to be (`D-158`, `D-76`)', async () => {
+    // THE CONTROL FIRST: the SWITCH arm carries the reading's row whole, so the two optional members DO travel where the
+    // record holds them. An absence measured on an instrument that never carries them at all would prove nothing.
+    const carrying = actRealm()
+    await carrying.act({ target: '/broken' })
+    const carried = (carrying.writes[0] as { readonly value?: unknown }).value as Record<string, unknown>
+    expect(
+      [carried['label'], carried['error']],
+      'DC-11 CONTROL — a SWITCH carries the reading\'s row WHOLE (`D-76`): `label` and `error` reach the write where the record holds them, so the row below measures a DELIBERATE absence and not a blind one',
+    ).toEqual(['broken', 'e-1'])
+
+    const opened = actRealm()
+    await opened.act({ target: '/delta', newTab: true })
+    const value = (opened.writes[0] as { readonly value?: unknown }).value as Record<string, unknown>
+    expect(
+      [Object.prototype.hasOwnProperty.call(value, 'label'), Object.prototype.hasOwnProperty.call(value, 'error')],
+      'DC-11 — **an OPENED row carries NO `label` and NO `error`**: `tab-has-title` fills the title inside the record\'s own `healRecord`, and `error` is an OPTIONAL member no arm fills — a local default would be a key `C4` forbids and a second authority beside the repair (`D-158`)',
+    ).toEqual([false, false])
+    expect(
+      Object.keys(value).sort(),
+      'DC-11 — and no member stands in their place: the opened row is exactly `{id, target, active, lastActiveAt}`',
+    ).toEqual(['active', 'id', 'lastActiveAt', 'target'])
+  })
+
+  it('DC-12 — **THE TWO-READ COUNT: exactly ONE read before the write and ONE after, and the AFTER one is what the answer reports** (`D-70`; `D-82` clause 4) — the two reads are a SEQUENCE this realm recorded, not a number a message claims, and an act that writes nothing takes one, which is the control', async () => {
+    const realm = actRealm()
+    const reply = await realm.act({ target: '/alpha' })
+    expect(realm.writes.length, 'DC-12 — one write stands between the two reads').toBe(1)
+    expect(
+      realm.readings.length,
+      'DC-12 — **exactly TWO `tabs.read()` calls**: the seat\'s committed reading (`S6`) and the answer\'s re-read (`S9`) — never a poll, a retry or a timer (`D-82` clause 4)',
+    ).toBe(2)
+    expect(
+      realm.readings[0]?.activeIds,
+      'DC-12 — the FIRST read is the record BEFORE the write: the landing entry is the one active row, and the target row is not yet seated',
+    ).toEqual(['landing'])
+    expect(
+      realm.readings[1]?.activeIds,
+      'DC-12 — the SECOND is taken AFTER it: the repair has settled the pair and the target is the one active row, which a reading taken before the write could not report (`D-129`)',
+    ).toEqual(['alpha'])
+    // `D-70`'s OWN CLAUSE: the answer is the record that STANDS — the after-read — and never the one the act found.
+    const answer = reply.value as { readonly rows?: readonly TabsRecordRow[] }
+    expect(
+      answer.rows,
+      'DC-12 — **the answer reports what the AFTER read answered** (`D-70`): the record that stands, read back after the write',
+    ).toEqual(realm.readings[1]?.rows)
+    expect(
+      answer.rows,
+      'DC-12 — and the control: the answer is NOT the pre-write reading, so this row measures WHICH read the answer is and not merely that two happened',
+    ).not.toEqual(realm.readings[0]?.rows)
+    // AND THE COUNT IS NOT A CONSTANT: an act that writes nothing (S4's arm) reads ONCE.
+    const noAct = actRealm()
+    await noAct.act({})
+    expect(
+      [noAct.reads, noAct.writes.length],
+      'DC-12 CONTROL — an act naming no target takes ONE reading and writes nothing (`D-142`\'s S4), so the counter can read `1` and the `2` above is the write arm\'s own count',
+    ).toEqual([1, 0])
   })
 })
 

@@ -739,7 +739,7 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     expect(tierStoreReads, `S-9 — NO TIER-STORE read on a tool-handler path — a tier-store read answering an agent IS a \`GCR-3\` FINDING (§2.1 GCR-1; §2.2's four-tier table is the relation's own subject, and §2.2's store-axis closure does NOT reach a tier payload). TIER-STORE HITS: ${JSON.stringify(tierStoreReads)}; ALL HITS: ${JSON.stringify(hits)}`).toEqual([])
   })
 
-  it('S-9: `src/renderer/renderer.ts` — every answering route reaches its answer through the app Runtime or a wiring-held client; the renderer\'s store reads are `§2.4` item 2\'s commit-feeding pane-drag closure (not on a live route) AND — from `D-142` — NOTHING ELSE, because the `focus` act\'s read is the TAB RECORD\'s own committed reading taken through `src/renderer/tabs-client.ts` and its write is the `data.write` passthrough at `[\'tabs\']`/`file`; the `mem.focus.*` mirror read this row once ADMITTED as the store-focus spec\'s DECLARED CONFORMING member is RETIRED WITH THE FAMILY (D-142, `E-2`, `E-12`); any OTHER store read on an answering route stays a `GCR-3` finding (§2.1 `GCR-1`; `§2.4` item 2; `§7.1` `AMB-3`)', () => {
+  it('S-9: `src/renderer/renderer.ts` — every answering route reaches its answer through the app Runtime or a wiring-held client; the renderer\'s store reads are `§2.4` item 2\'s commit-feeding pane-drag closure (not on a live route) AND — from `D-142` — NOTHING ELSE, because the `focus` act\'s read is the TAB RECORD\'s own committed reading taken through `src/renderer/tabs-client.ts` and its write is the `data.write` passthrough at `[\'tabs\', row.id]`/`file` (`D-160`: ONE ROW, the composer deleted); the `mem.focus.*` mirror read this row once ADMITTED as the store-focus spec\'s DECLARED CONFORMING member is RETIRED WITH THE FAMILY (D-142, `E-2`, `E-12`); any OTHER store read on an answering route stays a `GCR-3` finding (§2.1 `GCR-1`; `§2.4` item 2; `§7.1` `AMB-3`)', () => {
     const src = readOrNull('src/renderer/renderer.ts')
     expect(src, 'S-9 — the renderer request-route site the spec names (`§3.2` row 9\'s sibling wiring; the route table the MCP surface answers through) exists at `src/renderer/renderer.ts`').not.toBeNull()
     const raw = src ?? ''
@@ -841,13 +841,36 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
       code.includes('mirrorStateOf('),
       'S-9 — `mirrorStateOf` is DELETED with the carrier it fed (`D-142` names it): the mirror\'s shape read has no subject once `[\'focus\']` is gone, so a pass that left it behind would be reading a family nothing writes',
     ).toBe(false)
+    // **⟶ RE-GRAINED BY `D-160`, AND THE ANCHOR IS NOW TWO FACTS RATHER THAN ONE: THE LEAF ADDRESS AND THE COMPOSER'S
+    // ABSENCE.** The renderer still reaches NO store, and the site this block admits is `focusActRoute`'s ONE ROW — but the
+    // shape it writes CHANGED in the landing this row's subject outlived: the renderer's `composeRecord(reading, seat)` —
+    // the whole-record composition written at `['tabs']`, which is what this assertion used to find — is DELETED WHOLE
+    // (`D-158`, `D-159`, `D-160`), and the act writes `path: ['tabs', row.id]` at `file` through the same passthrough.
+    // **THE ABSENCE IS ASSERTED FIRST AND THE POSITIVE CONTROL BENEATH IT CARRIES THE ROW**: an absence whose replacement
+    // is missing would make the four absences above VACUOUS rather than stronger, which is why this anchor is re-grained
+    // and never retired (`D-160` §8) — the two words are *leaf address* and *absence*, and each has its own control.
     expect(
       /composeRecord\s*\(/.test(code),
-      'S-9 — and the site that replaced it exists, so the absence above is over a REAL subject: the ONE whole-record composition (`composeRecord`, `pending.md` row `2`) that seats the active tab in the tab record\'s own terms',
+      'S-9 — **`composeRecord` IS ABSENT from this renderer**: the ONE whole-record composition (`pending.md` row `2`) that seated the active tab in the tab record\'s own terms is DELETED — the renderer\'s namesake, not the module\'s private nine-line one — and the act writes ONE ROW instead (`D-160`). A call here would be the whole-record write returning',
+    ).toBe(false)
+    expect(
+      /composeRecord\s*\(/.test('const value = composeRecord(reading, seat)'),
+      'S-9 CONTROL — the scanner that answers `absent` above can answer `present`: the SAME expression FIRES on the form the deleted composer was called in, so the absence is a measurement and not a blind spot',
+    ).toBe(true)
+    /** **THE LEAF ADDRESS THE ACT REPLACED IT WITH** (`D-160` §3): a `path:` whose second segment is an identifier chain —
+     *  `row.id`, the row the seat resolved — where `['tabs']` alone is the root the composer wrote. */
+    const LEAF_ADDRESS = /path:\s*\[\s*'tabs'\s*,\s*[A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*\s*\]/
+    expect(
+      LEAF_ADDRESS.test(code),
+      'S-9 — **AND THE SITE THAT REPLACED IT EXISTS**: the leaf row address `path: [\'tabs\', row.id]` at `file`, so the absences above are over a REAL subject — a renderer that wrote nothing at all would satisfy every one of them and mean nothing',
     ).toBe(true)
     expect(
+      [LEAF_ADDRESS.test("path: ['tabs']"), LEAF_ADDRESS.test("path: ['tabs', row.id]")],
+      'S-9 CONTROL — the leaf predicate DISTINGUISHES the record\'s root from a row\'s own address: it answers `false` for `[\'tabs\']`, so a pass that returned to the whole-record write could not pass this half',
+    ).toEqual([false, true])
+    expect(
       /'tabs'/.test(code) && /'file'/.test(code),
-      'S-9 — and the value reaches the record through the EXISTING passthrough and no new crossing (`D-18`): `data.write` at `[\'tabs\']` at `file`, whose handler forwards to the store\'s write verb and transforms nothing (`D-142`). The two tokens are asserted rather than one argument literal, so a legal spelling of the same call is not the thing this row measures',
+      'S-9 — and the value reaches the record through the EXISTING passthrough and no new crossing (`D-18`): `data.write` at `[\'tabs\', row.id]` at `file`, whose handler forwards to the store\'s write verb and transforms nothing (`D-142`, `D-160`). The two tokens are asserted rather than one argument literal, so a legal spelling of the same call is not the thing this row measures',
     ).toBe(true)
     expect(
       code.includes('commitFocus'),

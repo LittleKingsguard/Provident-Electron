@@ -7,7 +7,7 @@ import { overlayTransition, overlayInertDeclaration, type OverlayState } from '.
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
-import type { RpcRequest, RpcReply } from '../shared/types.js'
+import type { RpcRequest, RpcReply, TabsRecordRow } from '../shared/types.js'
 import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCommittedAnswer, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
@@ -681,14 +681,16 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
  * model's transition call (`focusTransition`), the `focusOrder` echo (`carriedEntryIds`), the holder's own resolution
  * (`resolveForHolder`) and the whole answer assembly (`answerForCarrier`, `standingAnswer`, the route's own body) — every
  * one of them reading the `['focus']` mirror at `mem`, a family this unit DELETES WHOLE. **NONE OF THEM IS RE-DECLARED**:
- * the act is `focusActRoute`, the composition is `composeRecord`, and the answer is the tab client's own reading
+ * the act is `focusActRoute`, the ONE ROW it writes is `rowForSeat`'s, and the answer is the tab client's own reading
  * (`signatures.md` §5 — a name L4 finds inconvenient is a design finding, never a local invention, `D-45`).
  *
  * THE ACT, IN ONE LINE: take the realm's ONE committed reading of `['tabs']` through `getTabsClient()`, seat the caller's
- * row in the RECORD's own terms, write the WHOLE record at `['tabs']` at `file` through the EXISTING `dataRoute`
- * passthrough, and answer the record as RE-READ after the write with the store's judgement beside it (`ASM-2`, `D-136`,
- * `D-137`). **THE RENDERER CLEARS NO OLDER ACTIVE ROW**: two actives are lawful in the value it writes, and
- * `exactly-one-active` — the record's own repair — settles the pair inside the commit (`ASM-3`, `D-129`, `D-142`).
+ * row in the RECORD's own terms, write the ONE ROW `rowForSeat` answers at `['tabs', row.id]` at `file` through the
+ * EXISTING `dataRoute` passthrough, and answer the record as RE-READ after the write with the store's judgement beside it
+ * (`ASM-2`, `D-136`, `D-137`). **THE ACT NAMES NO OTHER ROW AT ALL, WHICH IS WHY NO `active: false` IS WRITTEN HERE**: one
+ * leaf row write at the row's own address cannot drop a sibling (`D-138`), the `'seat'` repair appends an opened id to
+ * `order` and `healRecord` deactivates the standing active row — both inside the caller's own commit (`ASM-3`, `D-129`,
+ * `D-142`, `D-158`, `D-159`).
  * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /** **THE ACT'S ANSWER (`ASM-2`, `D-142`)**: the record as re-read after the write, with the store's judgement beside it.
@@ -709,10 +711,12 @@ export interface FocusRefusal {
 }
 
 /** **THE SEAT THE ROUTE RESOLVED, IN THE RECORD'S OWN TERMS** (`ASM-1`, `D-142`): a standing row (`seat` — the caller's
- *  string named a row's own `target`), the row an OPEN mints (`open`, carrying the caller's `target`), or no row at all
- *  (`unresolved`, S7's arm). */
+ *  string named a row's own `target`, and the arm CARRIES THE ROW it resolved), the row an OPEN mints (`open`, carrying
+ *  the caller's `target`), or no row at all (`unresolved`, S7's arm). **THE SEAT ARM CARRIES THE ROW AND NOT ITS ID**
+ *  (`D-158`, `signatures.md` §3): `seatOf` found the row in `reading.rows`, so a second lookup could miss a row the record
+ *  does not hold and no default could be invented for one — the id is the row's own rather than a second spelling of it. */
 export type FocusSeat =
-  | { readonly kind: 'seat'; readonly id: string }
+  | { readonly kind: 'seat'; readonly row: TabsRecordRow }
   | { readonly kind: 'open'; readonly id: string; readonly target: string }
   | { readonly kind: 'unresolved' }
 
@@ -720,49 +724,35 @@ export type FocusSeat =
  *  NARROWED and never `TabsClientReading` whole — the committed arm carries no `reason` (`tabs-client.ts:56`). */
 type UnreadableReading = Exclude<TabsClientReading, { readonly status: 'committed' }>
 
-/** **`composeRecord` — THE RENDERER'S ONE WHOLE-RECORD COMPOSITION** (`pending.md` row `2`, `D-136`, `D-139`, `D-142`).
- *  It receives ONE committed reading of `['tabs']` and S6's seat; it reads no store, calls no route and holds nothing
- *  between calls, so the value it answers is a function of its two arguments alone.
- *
- *  WHAT IT DOES, AND WHAT IT REFUSES TO DO (`design.md` §3, `C1`–`C4`):
- *   · `order` is COPIED, never invented — the reading's own sequence, moved by no seat, extended by EXACTLY ONE id where the
- *     act opens, never re-sorted (`ASM-1`, `D-140`);
- *   · every row is copied WHOLE under its own id — `error`, `label` and `lastActiveAt` travel exactly as carried
- *     (`ASM-4`, `D-76`), and the value is the member-keyed `{order, <id>: row}` and NEVER the read answer's
- *     `{order, landing, rows}`, because `landing` is DERIVED and its address is the landing entry's own row;
- *   · the ONE row whose bytes move is the target's: `active` reads `true` and `lastActiveAt` is stamped now, for the
- *     `tab-has-lastActiveAt` pair — and an OPENED row carries no `label` and no `error`, those being the record's repairs
- *     (a local default for a shape a repair supplies is a SECOND AUTHORITY);
- *   · **the row that stood active is LEFT EXACTLY AS THE READING CARRIED IT** — no `active: false` is written here, because
- *     `exactly-one-active` normalises the pair inside the commit and a clear here would be the authority that repair exists
- *     to be (`ASM-3`, `D-129`, `D-142`);
- *   · **and NOTHING ELSE**: no `landing` member, no stored active id, no invented key (`ASM-3`, `D-76`, `D-140`).
- *
- *  Why the whole-record write is lawful at all is `D-138`/`D-139`'s: the one test asks whether the write is a LEAF of an
- *  enforced structure, and this is a whole-record write at an enforced ROOT — which is why it is BOOKED as row `2`'s
- *  `composeRecord` rather than hidden in a route body. Whether a per-tab address with enforced ancestry replaces it is row
- *  `2`'s own review; this function neither takes nor forecloses it. */
-export function composeRecord(reading: TabsCommittedAnswer, seat: FocusSeat): Record<string, unknown> {
-  // C1 — THE ORDER SEAT: the reading's own sequence, copied and (where the act opens) extended by EXACTLY ONE id.
-  const value: Record<string, unknown> = { order: seat.kind === 'open' ? [...reading.order, seat.id] : [...reading.order] }
-  // C2 — EVERY ROW, WHOLE, under its own id.
-  for (const row of reading.rows) value[row.id] = { ...row }
-  // S7's arm answers before the write, so the route never hands this function an unresolved seat; the guard states that
-  // rather than asserting it, and answers the copy it has already made.
-  if (seat.kind === 'unresolved') return value
-  // C3/C4 — THE ONE ROW WHOSE BYTES MOVE, and the standing active row untouched beside it.
+/** **S7's ARM, MADE UNREPRESENTABLE RATHER THAN GUARDED** (`signatures.md` §3, `D-45`): the route answers an unresolved seat
+ *  BEFORE any write, so the row builder takes this narrowed pair — the `UnreadableReading` idiom — and the composition's
+ *  third arm has no subject left. */
+export type ActedSeat = Exclude<FocusSeat, { readonly kind: 'unresolved' }>
+
+/** **THE ONE SURVIVING FUNCTION OF THE COMPOSITION — THE ROW THIS ACT WRITES, AND NOTHING ELSE** (`D-158`, `D-159`,
+ *  `design.md` §3). It reads no store, calls no route and holds nothing between calls; **its ONE input beside its argument
+ *  is the CLOCK, read ONCE per call** — `lastActiveAt` is `new Date().toISOString()` at the call, the third input the
+ *  composition that stood here never admitted while `C3` read it.
+ *   · the SWITCH arm — `{...seat.row, active: true, lastActiveAt}`: the reading's row WHOLE, so `error`/`label` travel exactly
+ *     as carried and no member of it can be dropped (`D-76`), with the instant stamped for the `tab-has-lastActiveAt` pair;
+ *   · the OPEN arm — `{id: seat.id, target: seat.target, active: true, lastActiveAt}`: NO `label`, because the record's three
+ *     field pairs fill it in BOTH `healedFamily` scopes, and NO `error`, because nobody fills one — `error` is an OPTIONAL
+ *     member, so a tab that has not failed carries none and a local default would be a key the act forbids (`D-158`);
+ *   · and NOTHING ELSE: NO third arm, NO `order`, NO `landing`, no seat id, no standing active row and no other row — the
+ *     value is the record's own `TabsRecordRow`, written at `['tabs', seat.row.id]`, one address, one row (`D-136`, `D-142`). */
+export function rowForSeat(seat: ActedSeat): TabsRecordRow {
   const lastActiveAt = new Date().toISOString()
-  value[seat.id] = seat.kind === 'open'
+  return seat.kind === 'open'
     ? { id: seat.id, target: seat.target, active: true, lastActiveAt }
-    : { ...(value[seat.id] as Record<string, unknown>), active: true, lastActiveAt }
-  return value
+    : { ...seat.row, active: true, lastActiveAt }
 }
 
 /** **S6 — THE SEAT, IN THE RECORD'S OWN TERMS** (`D-142`, `ASM-1`): the FIRST row in `reading.order` whose `target`
- *  matches the caller's string is the seat (`{kind:'seat', id}`), and nothing about that row's identity moves — the
- *  caller's string names a row's CONTENT REFERENCE and never an id, so there is no second identity rule here. No row
- *  matches and `newTab === true` OPENS one; no row matches and `newTab` is not `true` is `unresolved` (S7), because
- *  opening a row there would empty `newTab: true` of its declared meaning (`D-18`, L2 §4).
+ *  matches the caller's string is the seat (`{kind:'seat', row}` — **and it answers THE ROW IT RESOLVED**, so no lookup is
+ *  repeated downstream and no default is invented for a row the record does not hold, `D-158`), and nothing about that
+ *  row's identity moves — the caller's string names a row's CONTENT REFERENCE and never an id, so there is no second
+ *  identity rule here. No row matches and `newTab === true` OPENS one; no row matches and `newTab` is not `true` is
+ *  `unresolved` (S7), because opening a row there would empty `newTab: true` of its declared meaning (`D-18`, L2 §4).
  *
  *  **THE OPENED ROW'S ID IS MINTED, NEVER THE CALLER'S TARGET** (`ASM-1`, `D-142`): candidate `tab-<n>` from
  *  `n = order.length + 1` upward, accepted by the EXISTING `mintTabId(order, candidate)` — whose three reasons
@@ -771,7 +761,7 @@ export function composeRecord(reading: TabsCommittedAnswer, seat: FocusSeat): Re
 function seatOf(reading: TabsCommittedAnswer, target: string, opens: boolean): FocusSeat {
   for (const id of reading.order) {
     const row = reading.rows.find((candidate) => candidate.id === id)
-    if (row !== undefined && row.target === target) return { kind: 'seat', id }
+    if (row !== undefined && row.target === target) return { kind: 'seat', row }
   }
   if (!opens) return { kind: 'unresolved' }
   for (let n = reading.order.length + 1; ; n += 1) {
@@ -850,13 +840,15 @@ function refusalOf(written: unknown): FocusRefusal | null {
  *  S4  an act naming no row has no act: the record as it stands IS the answer, and no write is attempted;
  *  S5  a `target` that can be no row is THIS ROUTE's own refusal, and no store is asked — the tool's own class is its
  *      argument holder's (`focusHandler`), which judges the holder and never a member's value;
- *  S6  the seat;
+ *  S6  the seat in the RECORD's own terms — `seatOf` answers the row it resolved, never a second lookup (`D-158`);
  *  S7  no standing row carries it and no open was asked for: refusal of the route's own, and no write (`D-18`, L2 §4);
- *  S8  ONE composition, ONE passthrough, NO RETRY: the args object is handed on verbatim and no member of it is read,
- *      defaulted or re-spelled — `['tabs']` is the record's own address and `file` its own tier, the one the declared-root
- *      guard admits (`D-101`, `D-112`, `D-136`);
+ *  S8  ONE ROW, ONE passthrough, NO RETRY: `rowForSeat(seat)` is the act's WHOLE product and it is handed on VERBATIM —
+ *      `['tabs', row.id]` is the row's own address, `file` the record's own tier, the one the declared-root guard admits
+ *      (`D-101`, `D-112`, `D-136`) — so one store verb, one commit, one delivery, and no member re-spelled;
  *  S9  the record as RE-READ after the write: what STANDS is the repair's answer, not the value sent nor its ledger, and
- *      this re-read is the ANSWER's — it is NOT a delivery and does not feed `holdTabsReading` (`ASM-2`, `D-137`);
+ *      this re-read is the ANSWER's — it is NOT a delivery and does not feed `holdTabsReading` (`ASM-2`, `D-137`) — and it
+ *      is owed MORE than before, because the act can predict neither the `'seat'` repair's append position nor the survivor
+ *      `exactly-one-active` keeps (`D-158`, `D-159`);
  *  S10/S11  the store's judgement rides beside it as `refused`, carried verbatim and never converted into a success. */
 async function focusActRoute(payload: unknown): Promise<FocusActAnswer> {
   const caller = payload !== null && typeof payload === 'object' ? (payload as Record<string, unknown>) : {}
@@ -869,7 +861,8 @@ async function focusActRoute(payload: unknown): Promise<FocusActAnswer> {
   if (typeof target !== 'string') return withRefusal(reading, malformed(target))
   const seat = seatOf(reading, target, opens)
   if (seat.kind === 'unresolved') return withRefusal(reading, absentTarget(target))
-  const written = await dataRoute('write', { path: ['tabs'], tier: 'file', value: composeRecord(reading, seat) })
+  const row = rowForSeat(seat)
+  const written = await dataRoute('write', { path: ['tabs', row.id], tier: 'file', value: row })
   const after = await getTabsClient().read()
   const refusal = refusalOf(written)
   return refusal === null ? after : withRefusal(after, refusal)
