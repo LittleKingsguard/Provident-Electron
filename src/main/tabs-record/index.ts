@@ -621,6 +621,32 @@ const landingRow = (stamp: string): TabsRecordRow => ({
   lastActiveAt: stamp,
 })
 
+/** **THE SEATED PAIRS: THE SEAT DECIDES WHICH ROWS EXIST** (`D-156`, `D-160`). For each id the seat `order` names, in seat
+ *  order, that id's row **IF the entries map holds one** — so the value this answers can never carry an id the seat does
+ *  not name, whatever the map holds, and **that is the reason a record composed from it is bijective by construction**
+ *  rather than by a caller's care: `order-names-its-tabs` demands the seat and the rows name one another, this answers
+ *  exactly one half of that sentence, and the assembly below takes its members from here, so the two halves cannot be
+ *  spelled apart.
+ *
+ *  **IT IS THE ONE ELEMENT OF THE COMPOSER THAT IS PROMOTED, AND THE MEASUREMENT IS WHY** (`D-160` §11): no call site uses
+ *  the seat COPY, the seat-FIRST placement or this DROP alone — every one of the five takes the whole value, and the copy
+ *  is dead defence at all of them — so a function per element would be three indirections bought for a nine-line body.
+ *  What survives is the relation this module spells four times (`viewFrom`'s entries build, `canonicalRecord`'s rows
+ *  projection and `healedFamily`'s rows build beside this one) and negates once on purpose (`seatViewFrom`'s own-key tail,
+ *  which APPENDS a row the seat does not name, because a caller's just-written leaf must not vanish). A name is a second
+ *  copy of a rule to keep right, so exactly one is promoted and no second name stands beside it (D-1, `D-155`). */
+const rowsSeatedUnder = (
+  order: readonly string[],
+  entries: Record<string, TabsRecordRow>,
+): [string, TabsRecordRow][] => {
+  const seated: [string, TabsRecordRow][] = []
+  for (const id of order) {
+    const row = entries[id]
+    if (row !== undefined) seated.push([id, row])
+  }
+  return seated
+}
+
 /** **THE RECORD IS COMPOSED FROM `order` AND THE ROWS IT NAMES, AND NOT EVERY SITE OF IT IS AN ACT** (`D-155`, `D-156`).
  *
  *  1. **A NESTED WRITE DOES NOT CREATE ITS PARENT** (`guide §2`'s fifth rule: *"write a whole structured value at the
@@ -650,15 +676,19 @@ const landingRow = (stamp: string): TabsRecordRow => ({
  *  delete-only one, and both are values that are COMPARED by `standsAsIntended` and never stored (§3, §8).
  *
  *  **AND THE VALUE IT COMPOSES CARRIES NO `landing` SEAT, WHICH IS THE WHOLE OF D-76's DERIVATION.** The family it writes is
- *  the `order` array and one member per seated id — the landing ENTRY among them, keyed by its own id — so nothing here can
- *  overwrite a tab's member with a witness string: measured 2026-11-02, the composer that emitted `whole['landing']` after
- *  the members wrote the construction instant as `{"landing":"landing","order":["landing"],…}` once the id was `'landing'`, and a
- *  `commit({id:'landing',…})` on a healthy record was answered `{status:'committed'}` while `order` gained a `landing`
- *  member the object did not hold (`docs/L2/store-tabs-record/interface.md` §1). The witness is now DERIVED at read
- *  (`landingOf`) and never written, so an entry id and a seat name are no longer one namespace.
+ *  the `order` array and one member per pair `rowsSeatedUnder` answers — the landing ENTRY among them, keyed by its own id —
+ *  so nothing here can overwrite a tab's member with a witness string: measured 2026-11-02, the composer that emitted
+ *  `whole['landing']` after the members wrote the construction instant as `{"landing":"landing","order":["landing"],…}`
+ *  once the id was `'landing'`, and a `commit({id:'landing',…})` on a healthy record was answered `{status:'committed'}`
+ *  while `order` gained a `landing` member the object did not hold (`docs/L2/store-tabs-record/interface.md` §1). The
+ *  witness is now DERIVED at read (`landingOf`) and never written, so an entry id and a seat name are no longer one
+ *  namespace.
  *
  *  **AND ITS `order` IS THE MEMBERSHIP ITSELF NOW** (`D-156`): the value it composes names exactly the ids it writes a row
- *  for, which is the bijection `order-names-its-tabs` demands. **AND BOTH ACTS' USES OF IT ARE EXPECTATIONS, NOT
+ *  for, which is the bijection `order-names-its-tabs` demands — **and it writes a row for exactly the pairs
+ *  `rowsSeatedUnder` answers, so the membership is the named relation's and not a loop of this function's own** (`D-160`).
+ *  What remains here is the assembly, and it is two expressions rather than nine indivisible lines: the seat **copied**
+ *  and placed **first**, then one member per seated pair. **AND BOTH ACTS' USES OF IT ARE EXPECTATIONS, NOT
  *  WRITES** (rev 15, `D-158`): the membership is the seat repair's to keep inside a caller's commit, so no value composed
  *  here has to satisfy §4 by construction — `commit`'s creation expectation and `remove`'s delete-only one are COMPARED
  *  and never stored (§3, §8). */
@@ -667,10 +697,7 @@ const composeRecord = (
   entries: Record<string, TabsRecordRow>,
 ): Record<string, unknown> => {
   const whole: Record<string, unknown> = { order: [...order] }
-  for (const id of order) {
-    const row = entries[id]
-    if (row !== undefined) whole[id] = row
-  }
+  for (const [id, row] of rowsSeatedUnder(order, entries)) whole[id] = row
   return whole
 }
 
@@ -1437,11 +1464,15 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       // 2026-11-09 on the installed `1.10.0` — so the arm is this one and not the store's own empty success.
       if (!pre.order.includes(id)) return { status: 'committed' }
       // **THE DELETE-ONLY EXPECTATION, COMPOSED AND NEVER WRITTEN** (§3, §8): the pre reading's `order` and its rows MINUS
-      // the id, with every `active` flag untouched. It is what the removal MEANT, so the `repaired` member says exactly one
-      // thing — that something other than the removal changed the record — and nothing here predicts a successor: the
-      // successor is `§7`'s precedence at `healedFamily`, and a second copy of it in the act would erase the renderer's one
-      // signal (D-70). **THE `landing === id` ARM IS GONE WITH THE SEAT** (D-76): a removal of the active tab leaves no
-      // active row, and which survivor takes the seat is the engine's answer at the next read.
+      // the id, with every `active` flag untouched. **AND `pre.entries` IS PASSED WHOLE, STILL HOLDING THE REMOVED ROW**:
+      // `rowsSeatedUnder` is the site that excludes it — the seat this call hands over is the pre `order` FILTERED, so the
+      // assembly walks a seat that no longer names the id and the map's row is never seated (`D-160`). Filtering the map
+      // here instead would be a second spelling of a decision the seat has already made. It is what the removal MEANT, so
+      // the `repaired` member says exactly one thing — that something other than the removal changed the record — and
+      // nothing here predicts a successor: the successor is `§7`'s precedence at `healedFamily`, and a second copy of it
+      // in the act would erase the renderer's one signal (D-70). **THE `landing === id` ARM IS GONE WITH THE SEAT**
+      // (D-76): a removal of the active tab leaves no active row, and which survivor takes the seat is the engine's
+      // answer at the next read.
       const expectation = composeRecord(
         pre.order.filter((other) => other !== id),
         pre.entries,
