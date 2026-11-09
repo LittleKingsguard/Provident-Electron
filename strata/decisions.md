@@ -3805,3 +3805,29 @@ export function rowForSeat(seat: ActedSeat): TabsRecordRow {
 **`pending.md` ROW `1` NARROWS AGAIN: SIX OF ELEVEN, THEN FIVE, NOW FOUR.** `F6` **closes**; what remains is **`F3`'s second-boot arm** (routed, not closable here), and the three **deletions** — **`F8`** (five members with no caller, *and a docblock claiming a caller that does not exist*), **`F10`** (`writeOutcome()` with no reader) and **`F11`** (`#gutter-pane`'s authored `size`/`min`/`max`). The row is re-grained to say four.
 
 **ITS REGISTER IS `D-71` TO `D-166`** as prose, unchanged and extended by this row only. **This row records a transient that is no longer a delivery's to clear alone, a refusal and a loss both settled through one existing site, a brief corrected by the layer that read the design, and a gating row with six arms each proved able to fail — including the tree's first assertion about what the console says.**
+
+## D-168 — `F8`'S OWN LIST IS STALE IN THREE OF ITS FIVE, AND THE MEASUREMENT IS THE REGISTRATION: `move` is LIVE, `previewOf` was ALREADY DELETED, `rightClick` is DEAD AND UNLISTED — so the deletion set is four members the row does not name, and the row is re-grained before a byte moves
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `pending.md` row `1`'s `F8`, measured member by member before any deletion, because *a deletion performed against a stale list is the class this corpus keeps finding*.
+
+**THE ROW SAID** *"`F8` five members with no caller (`renderZone`, `move`, `candidatesFor`, `previewOf`, `defaultSizeFor` — ONE interface block …, returned at …)"*. **Measured at this head, three of those five are not what the row says.** The census, taken call-site by call-site over `src/` **and** `demo/`:
+
+| member | declared | defined / returned | call sites | verdict |
+|---|---|---|---|---|
+| **`renderZone`** | `:2453` | def `:2613`, returned `:2898` | **none** | **DEAD**, with **two docblocks asserting the delivery calls it** (`:2422`, `:2453`) |
+| **`candidatesFor`** | `:2437` | returned `:2883` | **none** | **DEAD** |
+| **`defaultSizeFor`** | `:2436` | returned `:2874` | **none** — the affordance has its **own** seam (`gutter.ts:159`, supplied at `gutter-affordance.ts:748`), and this file's own docblock already admits *"has no separate consumer here"* | **DEAD** |
+| **`rightClick`** | `:2448` | returned `:2896` | **none** | **DEAD, AND UNLISTED BY THE ROW** |
+| **`move`** | `:2438` | — | `renderer.ts:512` (**the affordance's `applyPreview` seam**) **and** `demo.ts:158` | **LIVE — the row lists it as dead** |
+| **`cancel`** | `:2449` | — | `renderer.ts:513` and `demo.ts:159` | **LIVE** |
+| **`previewOf`** | — | — | — | **ALREADY DELETED** — `:2414` says *"BOTH ARE DELETED"*; the row still names it |
+
+**THE FINDING SURVIVES AND ITS EXAMPLES DO NOT.** `move`'s caller is the affordance's **`applyPreview` seam**, which arrived with `D-117`/`D-132`/`D-138` — **after the audit measured**, so the row's list drifted while the class it names (a surface member with no consumer) stayed real. **`previewOf` died with the closure `Map` it read**, and the code says so in the same breath. **And `rightClick` is dead in exactly the way the finding describes and the row never noticed** — it and `cancel` are *the same call* (`endReading(gestureId)`), and the affordance only ever reaches `cancel`.
+
+**SO THE DELETION SET IS FOUR MEMBERS AND IT IS NOT THE FOUR THE ROW NAMES: `renderZone`, `candidatesFor`, `defaultSizeFor`, `rightClick`.** Each with its interface declaration and its return site — and **`renderZone` with its two false docblocks**, which is the half of `F8` that is a *claim* rather than a member: `startViewShape(theme, ghost)` takes two parameters and calls `theme?.apply()` then `ghost?.()`; it has never called `renderZone`, and `D-92`'s sentence saying it does has stood in documented surface since.
+
+**TWO CONSEQUENCES STATED BEFORE A BYTE MOVES.** **(i)** `PaneDragSurface` is **exported** and `demo/pane-drag-demo/demo.ts` imports the type, so trimming it is a **contract change**: the demo must still compile and its bundle will be stale until rebuilt (`D-118`). **(ii)** **The rows that measured these members must be re-taken in the same pass** — `pending.md` names `D-92`'s `renderZone` claim and `gutter-ui`'s authored-prop rows for `F8`/`F11`, and a deletion whose own instrument is left standing is the `D-147` defect again. A row that asserts `renderZone` exists **cannot survive a pass that deletes it**, and what replaces the property it measured must be said, not assumed.
+
+**THE GATE, AND THIS ROW IS IT.** Nothing in `src/` has moved and `pending.md`'s `F8` sentence is re-grained to the measured four in the same commit. **This row registers the deletion and its authority**, so `renderer-wiring`'s L3 may state it on the pages and its L4 may land it: the four members' declarations and returns, `renderZone`'s definition, and the two false docblocks. **`F10` and `F11` are NOT in this pass** — `F10` waits on `store-view-record` `C-5` and would also re-grain the `docs/L2/view-record/interface.md` §9 that `D-148` wrote; `F11` is `app-envelope`'s and `gutter-ui`'s.
+
+**ITS REGISTER IS `D-71` TO `D-167`** as prose, unchanged and extended by this row only. **This row records a finding whose class held while three of its five examples had drifted, a member the audit never listed, two docblocks that are the real half of the finding, and a queue re-grained before its subject was touched.**
