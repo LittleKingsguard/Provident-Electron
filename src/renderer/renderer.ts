@@ -1029,14 +1029,16 @@ async function main(): Promise<void> {
   //  **AND ITS CROSSING IS THE STORE'S, IN BOTH DIRECTIONS** (`D-125`, correcting `D-124`'s direction): the user's act
   //  writes ONE boolean at `['operator-pane']` over `security.setPane`, and the pane RENDERS from the store's word as the
   //  realm's ONE security subscription delivers it (`startSecurityShape`'s body below, which is the same subscription the
-  //  record's own re-read rides). **THE WRITE'S ANSWER IS NOT READ HERE AND NO LOCAL MACHINE MOVES FIRST**: the store's
-  //  constraint settles the ports, its delivery closes the socket and re-patches the gate, and the pane's own delivery is
-  //  what this realm renders. A realm with no bridge has no crossing to read or write, which is the honest arm for a page
-  //  with none.
+  //  record's own re-read rides). **THE WRITE'S ANSWER IS RETURNED AND NOT READ HERE, AND NO LOCAL MACHINE MOVES FIRST**
+  //  (`D-166`'s `F6`, design §4): the store's constraint settles the ports, its delivery closes the socket and re-patches
+  //  the gate, and the pane's own delivery is what this realm renders — while the member's own answer is the ONE signal that
+  //  can tell *not yet processed* from *refused*, so this site RETURNS it rather than `void`-ing it (not awaited, not
+  //  `.then`-ed here) and the act settles it. A realm with no bridge has no member to ask, so the answer is `undefined` and
+  //  the delivery stays the only clearer — the arm a crossing that answers nothing has.
   const overlayApplication = startOverlayApplication(runtime, {
     pane: {
       open: () => { const shape = getSecurityClient().shape(); return shape.filled && shape.pane !== null ? shape.pane.open : null },
-      write: (open) => { void bridge?.security?.setPane(open) },
+      write: (open) => bridge?.security?.setPane(open),
     },
   })
   overlayApplication.attach()
@@ -1957,10 +1959,15 @@ export interface OverlayApplicationReading {
  *  word and `write` is the ONE write the user's act makes, at `['operator-pane']`. **THE WIRING DECIDES NOTHING**: it does
  *  not transition, does not close a port, does not write an exclusion, and does not render what it asked for. What the
  *  store does with the write — the invariant's repair, the port following the exclusion's delivery, the pane's own
- *  delivery — arrives back through `open` on the realm's ONE security subscription, and `render()` is its consumer. */
+ *  delivery — arrives back through `open` on the realm's ONE security subscription, and `render()` is its consumer.
+ *  **AND `write` HANDS BACK THAT MEMBER'S OWN ANSWER** (`D-166`'s `F6`, design §4): `Promise<unknown> | void`, because the
+ *  answer is the ONLY signal that can tell *not yet processed* from *refused* — a store read answers `open` for both — and
+ *  a `void` answer could not carry it even if `main()` kept it. It is read STRUCTURALLY for its `{status:'refused'}` arm,
+ *  as every boundary answer in this module is; a crossing that answers NOTHING (`undefined`) is a realm with no
+ *  `security.setPane`, a bridge older than `D-123` or a battery's double, and then the DELIVERY stays the only clearer. */
 export interface OverlayPaneCrossing {
   readonly open: () => boolean | null
-  readonly write: (open: boolean) => void
+  readonly write: (open: boolean) => Promise<unknown> | void
 }
 
 /** The consumer's surface — the turns and the readings the batteries drive. */
@@ -2034,14 +2041,15 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
   }
   /** **THE ONE TRANSIENT THIS REALM PRODUCES, AND IT RENDERS NOTHING** (`D-90`'s judgement, read at this mechanism). A
    *  transient is closure state: one writer (this file), no persistence, no crossing, no second reader, and it outlives no
-   *  delivery — the terms the pane drag's preview was judged by. **`closing` IS PRODUCED AND `held` IS NOT, AND THE
-   *  DIFFERENCE IS THE MECHANISM'S OWN MEANING**: `closing` is a pane that is up and on its way out, which is exactly the
-   *  window between a close ACT and the delivery that answers it; `held` is a pane that is UP AND HELD, and after this
-   *  inversion there is no such moment — a pane is up when the store says `open` and not before, so a word meaning "up but
-   *  not confirmed" has no state left to name. `held` therefore stays a member of the mechanism's closed set (`held × open`
-   *  stays `held`, driven by that module's own rows) and this app never produces it. **AND NEITHER WORD MAY RENDER**:
-   *  `up` below is the STORE's word alone, so a transient can neither open a pane the store has not opened nor close one
-   *  the store has not closed. */
+   *  delivery — **BY A DELIVERY OR BY THE ANSWER THAT REFUSES IT** (`D-166`'s `F6`, design §4): the terms the pane drag's
+   *  preview was judged by. **`closing` IS PRODUCED AND `held` IS NOT, AND THE DIFFERENCE IS THE MECHANISM'S OWN MEANING**:
+   *  `closing` is a pane that is up and on its way out, which is exactly the window between a close ACT and the word that
+   *  ends it — the DELIVERY, or a `refused`/LOST ANSWER from the crossing when no delivery is owed at all; `held` is a pane
+   *  that is UP AND HELD, and after this inversion there is no such moment — a pane is up when the store says `open` and not
+   *  before, so a word meaning "up but not confirmed" has no state left to name. `held` therefore stays a member of the
+   *  mechanism's closed set (`held × open` stays `held`, driven by that module's own rows) and this app never produces it.
+   *  **AND NEITHER WORD MAY RENDER**: `up` below is the STORE's word alone, so a transient can neither open a pane the
+   *  store has not opened nor close one the store has not closed. */
   let transient: OverlayState | null = null
   /** THE LAST VERB TOKEN THIS REALM CARRIED — the `theme` application's `lastCarried` form, so a carrier that did not
    *  move is not an act. */
@@ -2087,6 +2095,67 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
     if (typeof focus === 'function') (focus as () => void).call(opener)
   }
 
+  /** **THE ASK'S ORDINAL — THE SETTLE'S ONLY GUARD** (`G1`'s supersession idiom, read at this transient; `D-166`, design
+   *  §4). It counts the writes this act has SENT at the crossing, so an answer that arrives after a LATER ask settles
+   *  nothing: a superseded answer may never end a newer window. */
+  let lastAsk = 0
+
+  /** **THE SETTLE — THE WRITE'S OWN ANSWER IS THE ONLY SIGNAL THAT CAN END A `closing` NO DELIVERY IS COMING FOR**
+   *  (`D-166`'s `F6`; `D-127` refused the read-keyed attempt on measurement, design §4). ONE continuation, and its arms are
+   *  the answer's own vocabulary read STRUCTURALLY: a `committed` answer settles NOTHING — the store processed the write and
+   *  the pane's DELIVERY is still owed — while a `refused` answer and a LOST one (a rejection, or an answer carrying no
+   *  status at all) REPORT (`console.error`/`console.warn`, `D-117`'s register, the console being this fact's only
+   *  observability) and then end the transient through `renderTurn`'s ONE clearing site, the turn the delivery itself runs.
+   *  **A CROSSING THAT ANSWERS NOTHING SETTLES NOTHING**: a `void` `write` hands back no thenable, so the DELIVERY stays the
+   *  only clearer there. **AND A STALE ORDINAL SETTLES NOTHING**, checked at the ask and again at the answer, because a
+   *  thenable answers later than the act that sent it. */
+  const settle = (ordinal: number, answer: unknown): void => {
+    if (ordinal !== lastAsk) return
+    const thenable = answer as { readonly then?: unknown } | null | undefined
+    if (thenable === null || thenable === undefined) return
+    if (typeof thenable.then !== 'function') return
+    try {
+      // BOTH ARMS ARE HANDLED, so no rejection is left unhandled: an unhandled one is this damage surfacing as a page error
+      // instead of as a word (`D-166`).
+      void (thenable as PromiseLike<unknown>).then(
+        (settled: unknown) => { settleAnswer(ordinal, settled) },
+        (rejected: unknown) => { settleLost(ordinal, `the ask was rejected: ${String(rejected)}`) },
+      )
+    } catch {
+      settleLost(ordinal, 'the answer could not be subscribed')
+    }
+  }
+
+  /** THE ANSWER'S THREE ARMS, member by member — `committed` settles nothing, `refused` reports, and anything else is LOST. */
+  const settleAnswer = (ordinal: number, answer: unknown): void => {
+    if (ordinal !== lastAsk) return
+    const record = answer !== null && typeof answer === 'object'
+      ? (answer as { readonly status?: unknown; readonly reason?: unknown; readonly message?: unknown })
+      : null
+    const status = typeof record?.status === 'string' ? record.status : ''
+    // A `committed` ANSWER SETTLES NOTHING: the store has processed the write, so the pane's DELIVERY is still owed —
+    // clearing here would read the shape before that delivery refilled it and claim a pane is up over a closed store.
+    if (status === 'committed') return
+    if (status !== 'refused') {
+      settleLost(ordinal, `the answer carried no status (status=${status === '' ? 'none' : status})`)
+      return
+    }
+    const reason = typeof record?.reason === 'string' ? record.reason : 'unspecified'
+    const message = typeof record?.message === 'string' ? record.message : 'no message'
+    console.error(`[provident-renderer] overlay write REFUSED (status=${status} reason=${reason}): ${message}`)
+    // THE CLEARING SITE IS `renderTurn`'s AND STAYS ONE (`D-166`, design §4): the pane the store still holds comes back with
+    // it, and with the carrier mirror the next click at the same control resolves its target again.
+    void renderTurn(true)
+  }
+
+  /** A LOST ANSWER — the ask never reached the store, so no delivery is owed either, and this is the boot reads' register:
+   *  a fault is not a state (`D-127`, `D-117`). */
+  const settleLost = (ordinal: number, detail: string): void => {
+    if (ordinal !== lastAsk) return
+    console.warn(`[provident-renderer] overlay write LOST its answer (${detail}): no delivery is owed, so the transient is over and the store's word stands`)
+    void renderTurn(true)
+  }
+
   const reading = (
     base: {
       readonly state: OverlayState
@@ -2124,24 +2193,37 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
     if (!answer.changed) return { verb: verbWord, asked: null, wrote: false, escaped: focused }
     const asked = paneIsUp(answer.state)
     let wrote = false
+    // **THE ANSWER IS KEPT, NOT THROWN AWAY** (`D-166`'s `F6`, design §4): `crossing.write` now HANDS BACK the crossing
+    // member's own answer, and it is settled below rather than `void`-ed — the ONE signal that can tell *not yet processed*
+    // from *refused*, since a store read answers `open` to both.
+    let ordinal = 0
+    let settled: unknown = undefined
     if (crossing !== null) {
+      lastAsk += 1
+      ordinal = lastAsk
       try {
-        crossing.write(asked)
+        settled = crossing.write(asked)
         wrote = true
       } catch {
         // THE SINK'S OWN THROW IS THE SINK'S: the overlay's turn is not a store's act, and a failed ask is not a failed act
         wrote = false
       }
     }
-    // THE ONE TRANSIENT (`D-90`'s judgement): a pane that is UP and on its way out is `closing` until the delivery answers.
+    // THE ONE TRANSIENT (`D-90`'s judgement): a pane that is UP and on its way out is `closing` until a DELIVERY, or the
+    // ANSWER THAT REFUSES IT, says otherwise. The SET stays synchronous and unmoved (`wrote && !asked`); the settle follows
+    // it, so no answer — a thenable's included — can arrive ahead of the window it may end.
     if (wrote && !asked) transient = 'closing'
+    if (wrote) settle(ordinal, settled)
     return { verb: verbWord, asked, wrote, escaped: focused }
   }
 
   /** **THE RENDER — WHAT THE DELIVERY SAYS, APPLIED AS ONE `state-slice` ON THE AUTHORED APP ROOT** (`D-125`; `D-113`'s
-   *  declaration site, unchanged). `clear` is the DELIVERY's own turn: the store has answered, so a transient is over. A
-   *  word that has not arrived (`null`) renders nothing at all — nothing is fabricated about a pane the realm has not heard
-   *  of — and the RENDER PREDICATE IS THE STORE'S WORD ALONE, never a transient and never the boolean an act asked for. */
+   *  declaration site, unchanged). `clear` is the DELIVERY's own turn — **AND, ON A `refused` OR LOST ANSWER, THE SETTLE'S**
+   *  (`D-166`'s `F6`, design §4): a refused close has no delivery coming to correct it, so the answer that refuses it runs
+   *  this SAME turn and this same `if (clear) transient = null` is the transient's ONE clearing site, reached twice and
+   *  written once. A word that has not arrived (`null`) renders nothing at all — nothing is fabricated about a pane the
+   *  realm has not heard of — and the RENDER PREDICATE IS THE STORE'S WORD ALONE, never a transient and never the boolean
+   *  an act asked for. */
   const renderTurn = (clear: boolean): OverlayApplicationReading => {
     const before = derived
     const word = storedOpen()
@@ -2152,13 +2234,14 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
     // carrier used to hold only a VERB, written by whichever control was clicked, so the toggle control's body had no
     // state to read and wrote the same word every time — and the `changed` guard in `drive()` then refused an agent's
     // second dispatch, leaving the store's pane open with the act silently dropped. **THIS TURN IS WHAT MAKES READING THE
-    // CARRIER A READING OF THE STATE**: it writes the store's own word here, on the DELIVERY and on nothing else, so the
-    // body's next read resolves the next target and the carrier MOVES on every click that would change something.
-    // **IT RUNS ON `clear` AND NOT ON EVERY TURN** because `clear` is exactly the delivery's call (`render()`), while
-    // `drive()`'s turn runs BEFORE the store has answered — mirroring there would overwrite the target the body just
-    // wrote with the state that target exists to change. **`lastCarried` MOVES WITH IT**, so the wiring never mistakes
-    // its own mirror for an act, and it moves ONLY IF THE MIRROR LANDED: a refused write leaves the carrier holding the
-    // target, which is what makes the next click re-ask rather than suppress. */
+    // CARRIER A READING OF THE STATE**: it writes the store's own word here, on the DELIVERY and on the SETTLE that answers
+    // a refused or lost ask — a second OCCASION and never a second author (`D-131`, `D-166`) — so the body's next read
+    // resolves the next target and the carrier MOVES on every click that would change something.
+    // **IT RUNS ON `clear` AND NOT ON EVERY TURN** because `clear` is exactly the delivery's call (`render()`) — and now the
+    // settle's, which is the same call — while `drive()`'s turn runs BEFORE the store has answered: mirroring there would
+    // overwrite the target the body just wrote with the state that target exists to change. **`lastCarried` MOVES WITH IT**,
+    // so the wiring never mistakes its own mirror for an act, and it moves ONLY IF THE MIRROR LANDED: a refused write leaves
+    // the carrier holding the target, which is what makes the next click re-ask rather than suppress. */
     if (clear && word !== null) {
       const stateWord = up ? 'open' : 'closed'
       let mirrored = false

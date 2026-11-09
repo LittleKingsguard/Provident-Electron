@@ -1,5 +1,5 @@
 // tests/unit/renderer-wiring/state-checked-paint.test.ts — **THE STATE CHECK, DRIVEN** (`D-163`; `docs/L3/renderer-wiring/design.md`
-// §4, §6 and §8's owed `RS-1`…`RS-5`).
+// §4, §6 and §8's owed `RS-1`…`RS-6`).
 //
 // THE SUBJECT, AND WHY NOTHING ELSE IN THIS TREE COULD MEASURE IT. `D-163` replaces three `lastApplied`-shaped CHANGE GUARDS with a
 // check of the node the write would LAND ON, and rev 13 corrects that check's arm: the paint is owed unless the surface answers a
@@ -28,12 +28,21 @@
 //   · `RS-4` — an UNREADABLE surface fails open: it paints, and its refusal does not throw out of either turn.
 //   · `RS-5` — a removal delivery takes NO `nodeState` read (the operand order decides it first), while a positive-wanted site
 //     takes exactly ONE per delivery.
+//   · `RS-6` — **THE WRITE'S OWN ANSWER ENDS THE TRANSIENT, AND ONLY THE RIGHT ANSWER DOES** (`D-166`'s `F6`, design §4/§8):
+//     a `refused` close CLEARS `closing` and leaves the STORE's word (the refusal moves no `derived`, and the pane stays up);
+//     a SUPERSEDED answer settles nothing; a LOST answer (a rejection, or a thenable carrying no usable `status`) clears by
+//     the same path; a NON-THENABLE settles nothing, so the DELIVERY stays the only clearer — the clause that keeps
+//     `OV-1(4)`, `OV-7` and `OV-14(c)` green — and a `committed` answer settles nothing either, the arm that reds the moment a
+//     fix settles on ANY answer; and the two registers are `console.error` for a refusal and `console.warn` for a
+//     loss, each carrying its own reason. **THIS ROW IS THE TREE'S FIRST CONSOLE READING**: both members are spied and MUTED,
+//     the messages collected, and the spies restored in a `finally` — the row then reads `vi.isMockFunction` to prove the
+//     globals are the real functions again, because a spy left behind would silence every later file's report.
 //
 // WHAT THIS GREEN IS WORTH (`AGENTS.md`, D-27): the node suite runs under a layout-less DOM shim, so this is ENVELOPE-green — three
 // wiring turns' decisions over a stub surface, never a rendered one. The rendered-surface instruments are `npm run ui`'s overlay
 // row and `npm run divergence`.
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   getViewClient,
@@ -41,6 +50,7 @@ import {
   startOverlayApplication,
   startThemeApplication,
   type OverlayApplicationReading,
+  type OverlayPaneCrossing,
   type ThemeApplicationReading,
 } from '../../../src/renderer/renderer.js'
 import type { Runtime } from '../../../src/renderer/runtime.js'
@@ -52,7 +62,7 @@ import {
   type ViewPaneGeometry,
   type ViewThemeDeclaration,
 } from '../../../src/shared/view-shape.js'
-import { APP_ROOT_ID, GUTTER_STATUS_ID } from '../../../src/shared/demo-envelope.js'
+import { APP_ROOT_ID, GUTTER_STATUS_ID, OVERLAY_STATE_ID } from '../../../src/shared/demo-envelope.js'
 
 /** One `state-slice` mutation, as the stub reads it back: the members the two applications compose and nothing else. */
 interface Mutation {
@@ -244,7 +254,95 @@ function crossingOf(word: boolean): { open(): boolean; write(): void } {
   return { open: () => word, write: (): void => undefined }
 }
 
-describe('D-163 · `docs/L3/renderer-wiring/design.md` §4/§6 — the state-checked paint, `RS-1`…`RS-5`', () => {
+/** **A DEFERRED ANSWER — THE ONE THING A `write` THAT ANSWERS LATE NEEDS** (`D-166`, design §4). The crossing's member hands
+ *  back this promise and the ROW decides when, and with what, it settles — which is the only way a superseded answer can be
+ *  resolved AFTER a newer ask, and the only way a rejection can be delivered on cue. */
+interface Deferred {
+  readonly promise: Promise<unknown>
+  settle(answer: unknown): void
+  fail(reason: unknown): void
+}
+
+function deferred(): Deferred {
+  let fulfil: (answer: unknown) => void = () => undefined
+  let fail: (reason: unknown) => void = () => undefined
+  const promise = new Promise<unknown>((resolve, reject) => {
+    fulfil = resolve
+    fail = reject
+  })
+  return {
+    promise,
+    settle: (answer: unknown): void => {
+      fulfil(answer)
+    },
+    fail: (reason: unknown): void => {
+      fail(reason)
+    },
+  }
+}
+
+interface AnsweringCrossing {
+  readonly crossing: OverlayPaneCrossing
+  /** Every boolean the act asked the crossing for, in order — the ASK, never the outcome. */
+  readonly asks: boolean[]
+}
+
+/** **THE SETTLE'S INSTRUMENT — A CROSSING WHOSE `write` HANDS BACK WHAT THE ROW TELLS IT TO** (`D-166`, design §4). `open()`
+ *  is the store's LAST DELIVERED WORD (the row moves the store by calling `render()` after the word has moved, never by a
+ *  write) and `write(open)` records the ask and returns the row's own answer: a deferred promise, a settled one, a rejection,
+ *  or one of the shapes the declared member `Promise<unknown> | void` does NOT admit — `null`, a bare answer object carrying
+ *  no `then`. That is why the literal is CAST, once, here and only here: the settle reads the answer STRUCTURALLY, so its
+ *  non-thenable arm can only be driven by handing back something the type forbids, and a double is where such a shape
+ *  belongs. */
+function answeringCrossing(word: boolean | null, answer: (open: boolean) => unknown): AnsweringCrossing {
+  const asks: boolean[] = []
+  const crossing = {
+    open: (): boolean | null => word,
+    write: (open: boolean): unknown => {
+      asks.push(open)
+      return answer(open)
+    },
+  } as unknown as OverlayPaneCrossing
+  return { crossing, asks }
+}
+
+interface ConsoleCapture {
+  readonly errors: string[]
+  readonly warns: string[]
+  restore(): void
+}
+
+/** **THE TREE'S FIRST CONSOLE READING** (design §8) — a helper rather than five inline spies, because a spy that is not
+ *  restored is a GLOBAL patched for every file after it, silently swallowing their reports. The two channels are collected
+ *  with the spies MUTED (an expected refusal must not print into the run) and `restore()` is called from a `try/finally`,
+ *  while the row's last assertion reads `vi.isMockFunction` rather than trusting the `finally` to have run. */
+function captureConsole(): ConsoleCapture {
+  const errors: string[] = []
+  const warns: string[] = []
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+    errors.push(args.map((arg) => String(arg)).join(' '))
+  })
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    warns.push(args.map((arg) => String(arg)).join(' '))
+  })
+  return {
+    errors,
+    warns,
+    restore(): void {
+      errorSpy.mockRestore()
+      warnSpy.mockRestore()
+    },
+  }
+}
+
+/** **FLUSH THE MICROTASK QUEUE** — the settle's continuation runs off the promise the crossing handed back, so a row that has
+ *  just resolved one must let the queue drain before it reads the transient. No timer, no fake clock, no sleep: a microtask
+ *  drain is exactly what that continuation is. */
+async function flushAnswers(): Promise<void> {
+  for (let turn = 0; turn < 6; turn += 1) await Promise.resolve()
+}
+
+describe('D-163 · `docs/L3/renderer-wiring/design.md` §4/§6 — the state-checked paint, `RS-1`…`RS-6`', () => {
   it('RS-1 — **THE PAINT IS OWED IFF THE FAMILY ARM READS `\'record\'`**: a `[\'panes\']` delivery carrying `140` over a `\'record\'` family paints `content` `140` on `GUTTER_STATUS_ID`, a SECOND delivery of the same size writes NOTHING (the state check), and a `\'default\'` panes arm paints NOTHING even though its figure is the same `140` — the gate is the FAMILY and never `filled` (`D-127`)', () => {
     const stub = stubRuntime()
     // THE ENVELOPE'S AUTHORED FIGURE — what the read-out carries before any delivery paints it.
@@ -468,5 +566,219 @@ describe('D-163 · `docs/L3/renderer-wiring/design.md` §4/§6 — the state-che
       'RS-5 — and it costs exactly one read of the app root — the positive arm, at the same site',
     ).toBe(1)
     expect(openStub.reads[openStub.reads.length - 1], 'RS-5 — the read names the AUTHORED app root and no other node').toBe(APP_ROOT_ID)
+  })
+
+  it('RS-6 — **THE WRITE\'S OWN ANSWER ENDS THE TRANSIENT, AND ONLY THE RIGHT ANSWER DOES**: a `refused` close clears `closing` and leaves the STORE\'s word (the refusal moves no `derived`, and the pane stays up), a SUPERSEDED answer settles nothing, a LOST answer (a rejection, or a thenable carrying no usable `status`) clears by the same path, a NON-THENABLE settles nothing so the DELIVERY stays the only clearer — the clause that keeps `OV-1(4)`/`OV-7`/`OV-14(c)` green — and the two registers are `console.error` for a refusal and `console.warn` for a loss, each carrying its own reason (`D-166`\'s `F6`, design §4/§8)', async () => {
+    const reports = captureConsole()
+    try {
+      // ══ (1) A REFUSED CLOSE — THE STATE NOTHING IN THIS TREE MEASURED BEFORE THIS ROW (`D-166`). The crossing's `write`
+      //    hands back a pending promise, so the ACT sets the transient and the ANSWER — not a delivery — is what must end it.
+      const stub = stubRuntime()
+      const refusal = deferred()
+      const answering = answeringCrossing(true, () => refusal.promise)
+      const overlay = startOverlayApplication(stub.runtime, { pane: answering.crossing })
+      // THE STORE'S WORD FIRST, THROUGH THE DELIVERY: `derived` stands at `open` and the pane is UP on the app root before any
+      // act — the state a refusal must LEAVE STANDING, which is what makes `open` below the store's word and not a default.
+      overlay.render()
+      expect(overlay.state(), 'RS-6 — the boot word is the STORE\'s: the crossing says the pane is up (`D-125`)').toBe('open')
+      expect(
+        stub.surfaceOf(APP_ROOT_ID).props['inert'],
+        'RS-6 — and the delivery declared it, so the pane is UP on the app root — the state a refused close must not undo',
+      ).toBe('true')
+
+      const closing: OverlayApplicationReading = overlay.apply('close')
+      expect(
+        { asked: closing.asked, wrote: closing.wrote, state: closing.state },
+        'RS-6 — the act ASKS for a close (`asked: false`) and sets the transient SYNCHRONOUSLY, before any answer exists — the window this row is about',
+      ).toEqual({ asked: false, wrote: true, state: 'closing' })
+      expect(answering.asks, 'RS-6 — ONE write reached the crossing, carrying the boolean the act asked for').toEqual([false])
+
+      const beforeRefusal = stub.commands.length
+      const errorsBeforeRefusal = reports.errors.length
+      refusal.settle({ status: 'refused', reason: 'locked-by-repair', message: 'the operator pane is held by a repair' })
+      await flushAnswers()
+      expect(
+        overlay.state(),
+        'RS-6 — **A REFUSED CLOSE CLEARS THE TRANSIENT**: the pane is not left `closing` over a store that refused it, and the word it falls back to is the STORE\'S — `open` — because `derived` has one assignment and that assignment reads `storedOpen()` (`D-166`)',
+      ).toBe('open')
+      expect(
+        stub.commands.slice(beforeRefusal),
+        'RS-6 — and the settle ran `renderTurn(true)`, the SAME clearing site the delivery runs and the ONLY one: the carrier mirror is written on `clear` alone and it carries the STORE\'s word, so there is no second clearing site and no fifth state word',
+      ).toEqual([
+        { kind: 'state-slice', node: OVERLAY_STATE_ID, mutation: [{ targetProp: 'content', mode: 'replace', value: 'open' }] },
+      ])
+      expect(
+        stub.surfaceOf(APP_ROOT_ID).props['inert'],
+        'RS-6 — **THE REFUSAL MOVES NO `derived` AND LEAVES THE PANE UP**: the clearing turn finds a positive settled match (`inert` already `true`) and skips, so a refusal paints no removal and the surface still says what the store says',
+      ).toBe('true')
+      const after: OverlayApplicationReading = overlay.render()
+      expect(
+        [after.changed, after.written],
+        'RS-6 — and the next delivery reports NO change and paints NOTHING: the word and the surface already stand where the store has them, where a refusal-derived word — `closed`, or a failure state of the wiring\'s own — would report a change here',
+      ).toEqual([false, false])
+      expect(
+        reports.errors.length - errorsBeforeRefusal,
+        'RS-6 — **THE REFUSAL REGISTER**: a refused close reports ONCE, through `console.error` (`D-117`\'s register — the console is this fact\'s only observability, since an MCP client cannot see a realm)',
+      ).toBe(1)
+      expect(reports.warns.length, 'RS-6 — and NOT through `console.warn`: a refusal is not a lost ask, and the two registers are told apart').toBe(0)
+      const refusalMessage = reports.errors[errorsBeforeRefusal] ?? ''
+      expect(refusalMessage, 'RS-6 — the answer\'s own `reason` reaches the message').toContain('locked-by-repair')
+      expect(
+        refusalMessage,
+        'RS-6 — and so does its `message`: an operator can tell WHICH refusal this was, which is the whole point of reporting it',
+      ).toContain('the operator pane is held by a repair')
+
+      // ══ (2) A SUPERSEDED ANSWER SETTLES NOTHING — TWO ACTS, AND THE FIRST ONE'S ANSWER ARRIVES **LAST**.
+      const supersededStub = stubRuntime()
+      const first = deferred()
+      const second = deferred()
+      let asked = 0
+      const queued = answeringCrossing(true, () => {
+        asked += 1
+        return asked === 1 ? first.promise : second.promise
+      })
+      const racing = startOverlayApplication(supersededStub.runtime, { pane: queued.crossing })
+      racing.render()
+      racing.apply('close')
+      expect(racing.state(), 'RS-6 — the FIRST act opens a window of its own').toBe('closing')
+      racing.apply('close')
+      expect(
+        [queued.asks, racing.state()],
+        'RS-6 — and a SECOND act is a REAL act (the store still says `open`, so this close has its own external cause) that re-sets the transient and owns the newer ordinal',
+      ).toEqual([[false, false], 'closing'])
+      const errorsBeforeStale = reports.errors.length
+      first.settle({ status: 'refused', reason: 'locked-by-repair', message: 'the operator pane is held by a repair' })
+      await flushAnswers()
+      expect(
+        racing.state(),
+        'RS-6 — **A SUPERSEDED ANSWER SETTLES NOTHING**: an answer for an EARLIER act must not clear the transient a LATER act set — the ask\'s ordinal is the settle\'s only guard (`G1`\'s supersession idiom)',
+      ).toBe('closing')
+      expect(reports.errors.length - errorsBeforeStale, 'RS-6 — and it reports nothing either: a stale answer is not this window\'s news').toBe(0)
+      second.settle({ status: 'refused', reason: 'locked-by-repair', message: 'the operator pane is held by a repair' })
+      await flushAnswers()
+      expect(
+        racing.state(),
+        'RS-6 — while the CURRENT answer DOES clear it, so the guard above is an ordinal and not a settlement refused altogether',
+      ).toBe('open')
+      expect(reports.errors.length - errorsBeforeStale, 'RS-6 — exactly ONE report for the two answers: the superseded one was silent').toBe(1)
+
+      // ══ (3) A LOST ANSWER — CLEARED BY THE SAME PATH, IN THE OTHER REGISTER. First a REJECTION: the ask never reached the
+      //    store, so no delivery is owed either and the transient cannot stand waiting for one.
+      const lostStub = stubRuntime()
+      const rejected = deferred()
+      const lost = answeringCrossing(true, () => rejected.promise)
+      const losing = startOverlayApplication(lostStub.runtime, { pane: lost.crossing })
+      losing.render()
+      losing.apply('close')
+      expect(losing.state(), 'RS-6 — the window is open before the ask is lost').toBe('closing')
+      const errorsBeforeLoss = reports.errors.length
+      const warnsBeforeLoss = reports.warns.length
+      rejected.fail(new Error('the bridge is gone'))
+      await flushAnswers()
+      expect(
+        losing.state(),
+        'RS-6 — **A LOST ANSWER CLEARS BY THE SAME PATH**: a rejection is a lost ask, so the pane the store still holds comes back rather than staying `closing` forever',
+      ).toBe('open')
+      expect(
+        [reports.warns.length - warnsBeforeLoss, reports.errors.length - errorsBeforeLoss],
+        'RS-6 — **THE LOST REGISTER**: ONE `console.warn` and NO `console.error` — a fault is not a state (`D-127`)',
+      ).toEqual([1, 0])
+      expect(reports.warns[warnsBeforeLoss] ?? '', 'RS-6 — and the rejection\'s own words reach it, so a lost ask is diagnosable').toContain('the bridge is gone')
+
+      // …THEN A THENABLE THAT CARRIES NO USABLE `status`: a RESOLVED promise is not a `committed` answer, and a `status` the
+      // settle does not know is not one either — both are LOST, and both clear by the same turn.
+      const shapelessCases: { readonly name: string; readonly answer: unknown }[] = [
+        { name: 'a `status` the settle does not know', answer: { status: 'pending' } },
+        { name: 'no `status` at all', answer: undefined },
+      ]
+      for (const shape of shapelessCases) {
+        const shapelessStub = stubRuntime()
+        const shapeless = answeringCrossing(true, () => Promise.resolve(shape.answer))
+        const app = startOverlayApplication(shapelessStub.runtime, { pane: shapeless.crossing })
+        app.render()
+        app.apply('close')
+        expect(app.state(), `RS-6 — the window is open before the shapeless answer (${shape.name})`).toBe('closing')
+        const warnsBefore = reports.warns.length
+        const errorsBefore = reports.errors.length
+        await flushAnswers()
+        expect(
+          app.state(),
+          `RS-6 — **A THENABLE CARRYING NO USABLE \`status\` IS LOST AND CLEARS** (${shape.name}): a resolved promise is not a committed one, so it may not leave the transient standing either`,
+        ).toBe('open')
+        expect(
+          [reports.warns.length - warnsBefore, reports.errors.length - errorsBefore],
+          `RS-6 — reported in the LOST register and not the refusal one (${shape.name})`,
+        ).toEqual([1, 0])
+      }
+
+      // ══ (4) A NON-THENABLE SETTLES NOTHING — THE CLAUSE THAT KEEPS `OV-1(4)`, `OV-7` AND `OV-14(c)` GREEN. Their crossings
+      //    answer NOTHING, so if a settle read any answer at all those three rows would have been measuring nothing.
+      const silentCases: { readonly name: string; readonly answer: () => unknown }[] = [
+        { name: 'the declared `void` arm (`undefined`)', answer: () => undefined },
+        { name: '`null`', answer: () => null },
+        { name: 'a bare answer object carrying no `then`', answer: () => ({ status: 'refused', reason: 'locked-by-repair', message: 'not a promise' }) },
+      ]
+      for (const silent of silentCases) {
+        const quietStub = stubRuntime()
+        const quiet = answeringCrossing(true, silent.answer)
+        const app = startOverlayApplication(quietStub.runtime, { pane: quiet.crossing })
+        app.render()
+        const errorsBefore = reports.errors.length
+        const warnsBefore = reports.warns.length
+        app.apply('close')
+        expect(app.state(), `RS-6 — (${silent.name}) the transient stands while the ask is in flight`).toBe('closing')
+        await flushAnswers()
+        expect(
+          app.state(),
+          `RS-6 — **A NON-THENABLE SETTLES NOTHING** (${silent.name}): a crossing that answers nothing leaves the DELIVERY as the ONLY clearer — a settle that read any answer, or that treated a bare \`{status:'refused'}\` object as one, would clear HERE, and the three gating rows resting on this arm would have been measuring nothing`,
+        ).toBe('closing')
+        expect(
+          [reports.errors.length - errorsBefore, reports.warns.length - warnsBefore],
+          `RS-6 — and nothing is reported: there is no answer to report (${silent.name})`,
+        ).toEqual([0, 0])
+        const cleared: OverlayApplicationReading = app.render()
+        expect(
+          cleared.state,
+          `RS-6 — the DELIVERY clears it, and only the delivery (${silent.name}): this is the arm \`OV-1(4)\`, \`OV-7\` and \`OV-14(c)\` drive`,
+        ).toBe('open')
+      }
+
+      // ══ (4b) AND A `committed` ANSWER SETTLES NOTHING EITHER — the arm design §8 names as the one that reds the moment a
+      //    fix settles on ANY answer at all: the store has processed the write, so the pane's DELIVERY is still owed, and
+      //    clearing here would claim a pane is up over a store whose own delivery has not refilled the shape yet.
+      const committedStub = stubRuntime()
+      const committed = answeringCrossing(true, () => Promise.resolve({ status: 'committed' }))
+      const settled = startOverlayApplication(committedStub.runtime, { pane: committed.crossing })
+      settled.render()
+      settled.apply('close')
+      expect(settled.state(), 'RS-6 — the transient is set by the act, as on every other arm').toBe('closing')
+      const errorsBeforeCommitted = reports.errors.length
+      const warnsBeforeCommitted = reports.warns.length
+      const commandsBeforeCommitted = committedStub.commands.length
+      await flushAnswers()
+      expect(
+        settled.state(),
+        'RS-6 — **A `committed` ANSWER SETTLES NOTHING**: the store processed the write, so the pane\'s DELIVERY is still owed and `closing` stands until it arrives — a settle that ended the window on ANY answer reads `open` here',
+      ).toBe('closing')
+      expect(
+        [reports.errors.length - errorsBeforeCommitted, reports.warns.length - warnsBeforeCommitted, committedStub.commands.length - commandsBeforeCommitted],
+        'RS-6 — and it neither reports nor clears: a `committed` answer is not news, and it is not a clearing turn',
+      ).toEqual([0, 0, 0])
+      const deliveredCommitted: OverlayApplicationReading = settled.render()
+      expect(deliveredCommitted.state, 'RS-6 — the DELIVERY is what ends this window, and the only thing that does').toBe('open')
+
+      // ══ (5) THE TWO REGISTERS, COUNTED ONCE FOR THE WHOLE ROW: every arm above wrote into ONE channel and none into the
+      //    other, so the registers are not merely two names for the same report.
+      expect(
+        [reports.errors.length, reports.warns.length],
+        'RS-6 — **TWO REFUSALS THROUGH `console.error`** (the refused close and the racing pair\'s current answer) **and THREE LOSSES THROUGH `console.warn`** (the rejection and the two shapeless answers)',
+      ).toEqual([2, 3])
+    } finally {
+      reports.restore()
+    }
+    expect(
+      [vi.isMockFunction(console.error), vi.isMockFunction(console.warn)],
+      'RS-6 — **THE GLOBALS ARE NOT LEFT PATCHED**: both members are the REAL functions again, so the next file\'s reports land where they always did — the restore is measured here rather than trusted to the `finally`',
+    ).toEqual([false, false])
   })
 })
