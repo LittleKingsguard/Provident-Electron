@@ -47,12 +47,13 @@ import type { TabsRecordStore } from '../tabs-record/index.js'
 // per-pane derivation would be two answers to one question. Every name below keeps its site of use in this file; only its
 // DECLARATION moved, which is why no cite into this module changes.
 import {
+  DECLARED_PANE_IDS,
   DECLARED_ZONE_IDS,
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
-  defaultPaneGeometry,
   paneGeometryIn,
+  viewPanesPlaceholder,
   viewThemePlaceholder,
   viewZonesPlaceholder,
   zoneIn,
@@ -63,11 +64,13 @@ import {
   type ViewZone,
 } from '../../shared/view-shape.js'
 export {
+  DECLARED_PANE_IDS,
   DECLARED_ZONE_IDS,
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
   paneGeometryIn,
+  viewPanesPlaceholder,
   viewThemePlaceholder,
   viewZonesPlaceholder,
   zoneIn,
@@ -184,8 +187,11 @@ export const VIEW_DRAG_ADDRESS: readonly string[] = ['drag']
 
 /** **THE REASON TOKENS THIS MODULE MINTS, AND THEY ARE THIS MODULE'S AND NOT THE STORE'S** (the `SEAT_NAME_REASON`
  *  precedent, D-76): a shape arm answers one of these before ANY store verb, so the store never answers a word this
- *  module invented. Two per family, because each family has two distinguishable faults — the record's own shape, and a
- *  member that cannot be a value of the family. */
+ *  module invented. **THE BLOCK'S OLD SENTENCE — *"two per family, because each family has two distinguishable faults"* —
+ *  IS SUPERSEDED IN FACT AND NOT REWORDED AWAY** (`D-46`): the two closed ID DOMAINS have each handed their family a THIRD
+ *  distinguishable fault since `D-152` (zones) and since rev 13 (panes), and that fault is neither a PAYLOAD's shape nor a
+ *  MEMBER's domain but the id's own DOMAIN — so the block now carries the two DOMAIN tokens beside the shape and member
+ *  ones, and a reader counting three per paired id domain is reading it correctly (`D-151`, D-138). */
 export const PANE_SHAPE_REASON = 'malformed-pane'
 export const PANE_GEOMETRY_REASON = 'malformed-geometry'
 export const ZONE_SHAPE_REASON = 'malformed-zone'
@@ -199,6 +205,15 @@ export const ZONE_MEMBER_REASON = 'malformed-zone-member'
  *  every value a `data.write` can land — a route-only closure would leave an outside writer free to mint the zone it
  *  refuses. */
 export const UNDECLARED_ZONE_REASON = 'undeclared-zone'
+/** **THE THIRD PANE TOKEN, AND IT IS THE CLOSED ID DOMAIN'S — THE ZONE ONE READ ONE FAMILY OVER** (D-138, `ASM-12`,
+ *  `docs/L2/view-record/interface.md` §5). `malformed-pane` names a PAYLOAD's shape and `malformed-geometry` a MEMBER's
+ *  domain, while a WELL-FORMED pane id this record does not declare is NEITHER: it is a fault of the id's DOMAIN, so the
+ *  same reading that gave the zone family a third token gives this family one. The domain is judged AFTER the id's shape
+ *  and BEFORE any payload, so an undeclared id answers this and never `malformed-pane`, and the act it closes is the one
+ *  that would have silently created a pane. **THE SET CLOSES AT TWO SEATS AND THIS IS ONE OF THEM** (`ASM-14`): here at the
+ *  route, and at `paneNodeAdmits` for every value a `data.write` can land — a route-only closure would leave an outside
+ *  writer free to mint the pane it refuses. */
+export const UNDECLARED_PANE_REASON = 'undeclared-pane'
 /** **THE APPEARANCE FAMILY'S TWO TOKENS, AND THE SECOND ONE IS WHAT MAKES THE PAIR A *REPAIR* RATHER THAN A PRESENCE CHECK**
  *  (D-97). `malformed-theme` is the route's shape arm — no token that can be a setting, or no attribute name a caller can
  *  hold. `stale-theme` is the CONSTRAINT's own arm and it is not a refusal a caller can make: a record carrying a
@@ -218,6 +233,8 @@ export const ZONE_MEMBER_MESSAGE =
   'the zone carries a size that is not a finite non-negative number, a distance that is not a finite number, a display that is not a string, or a slot no value the store carries'
 export const UNDECLARED_ZONE_MESSAGE =
   'the zone id names no zone this record declares, and the zone family is addressed only by its declared ids'
+export const UNDECLARED_PANE_MESSAGE =
+  'the pane id names no pane this record declares, and the pane family is addressed only by its declared ids'
 export const THEME_SHAPE_MESSAGE =
   'the appearance act carries no setting token that can be an appearance setting, or no attribute name that can be one — a route of this module writes the pair those two name and nothing else'
 export const THEME_STALE_MESSAGE =
@@ -289,9 +306,10 @@ export interface ViewRecordReading {
  *  (`D-70`'s rule about a member that names nothing, read at this module's own routes). The tab record derives
  *  `repaired` because its six pairs can change a record INSIDE the commit that wrote it. This module's three pairs have
  *  TWO arms each — the address does not stand, and a standing value the read cannot state (`D-105`) — and NEITHER can
- *  fire at a route of this module's: a route writes a value its own read admits — the panes act and the appearance act
- *  compose the whole family through their one composer each, and **the zone route's leaves are each judged by the family's
- *  own predicate before the first store verb** (`D-151`, `ASM-8`) — and a read writes nothing. A `repaired` member here
+ *  fire at a route of this module's: a route writes a value its own read admits — **at rev 13 BOTH PAIRED GEOMETRY ROUTES
+ *  WRITE LEAVES, one per supplied member, judged by the family's own predicate before the first store verb** (`D-151`,
+ *  `ASM-8`; `D-138`, `ASM-13`), **and the appearance act composes the whole family through its ONE composer, which is a
+ *  DERIVATION and stays** (`D-136`'s split) — and a read writes nothing. A `repaired` member here
  *  could therefore only ever be `false` on a `true`-shaped claim, which is why the member stays absent while the pair's
  *  second arm answers the store's own status to a caller that names the address directly. **The landing arm DOES exist and
  *  IS
@@ -319,10 +337,14 @@ export interface ViewRecordOptions {
  *  a route that left one side alone would be a channel with a handler and no caller. */
 export interface ViewRecord {
   read(): ViewRecordReading
-  /** **WRITE ONE PANE'S GEOMETRY, AND NEVER A PATH**: the id names a MEMBER of the family at the one root, so a caller
-   *  cannot compose an address — the tab record's `commit` rule, rule for rule. A member the caller does not supply is
-   *  taken from what stands, and then from the measured default, so a caller writing a size alone does not erase the
-   *  pane's bounds. */
+  /** **WRITE ONE PANE'S SUPPLIED MEMBERS, AND NEVER A PATH** (D-138; `D-87`'s member rule, at the closed domain): the id
+   *  names a MEMBER of the family at the one root — a DECLARED one and no other, the domain being judged after the id's
+   *  shape and before any payload — and each supplied member lands as ONE LEAF WRITE of its own, in `ViewPaneGeometry`'s
+   *  order, so no composer touches the family: a leaf write cannot erase a sibling member, cannot erase a sibling pane,
+   *  and needs no copy of the family to be one delivery stale. **A MEMBER THE CALLER DOES NOT SUPPLY IS NOT WRITTEN AT
+   *  ALL**, so it keeps what stands by not being touched — the standing value is no longer read, merged and rewritten, and
+   *  the measured default now answers only a pane the family does not name at all (`paneGeometryIn`'s own arm, which is the
+   *  read's and not this route's). */
   commitPane(id: string, geometry: unknown): ViewRecordAnswer
   /** **WRITE ONE ZONE'S SUPPLIED MEMBERS, AND NEVER A PATH** (D-151; `D-91`'s composition is superseded by pointer): the
    *  id names a MEMBER of the family at the one root — a DECLARED one and no other, the domain being judged after the id's
@@ -350,8 +372,9 @@ export interface ViewRecord {
   /** **THE DRAG'S MOVE — ONE PANE'S IN-PROCESS PLACEMENT, AND NEVER A PATH** (D-132, D-135, D-136). The id names a MEMBER of
    *  the `temp` family at the one root, so a caller cannot compose an address, and the value is ONE whole family the CALLER
    *  formatted: nothing stands at a sibling to preserve, so no composer touches it. **A `size` IS REQUIRED HERE, WHICH IS
-   *  THE ONE PLACE THIS ARM IS STRICTER THAN `commitPane`'S**: a pane commit may supply a member alone because the missing
-   *  one is merged from what stands, while the drag family's member IS the placement — and `undefined` is not a value the
+   *  THE ONE PLACE THIS ARM IS STRICTER THAN `commitPane`'S**: a pane commit may supply ONE member and only one, because
+   *  each supplied member is a leaf write of its own and the member it does not name is simply never touched, while the
+   *  drag family's member IS the placement — and `undefined` is not a value the
    *  crossing carries (`isBoundary`, at this file). **NOTHING JUDGES THE VALUE AT `temp`** (D-105): the shape arms are the
    *  whole gate and the store's own boundary is the rest, and no token of this family's own is minted — its two faults ARE
    *  the panes' two. */
@@ -483,7 +506,8 @@ const isBoundary = (value: unknown): boolean => {
 
 /** **ONE PANE'S GEOMETRY, ADMITTED FIELD BY FIELD, OR `null`.** A record with no usable `size` or no usable bounds pair
  *  is not a geometry: this is the same admission `rowOf` performs for a tab, and its answer feeds both the READ (a
- *  member it cannot admit is not a pane the family names) and the FAMILY COMPOSITION a caller's write leaves. */
+ *  member it cannot admit is not a pane the family names) and the FAMILY JUDGE — `panesAdmitAt` at a record's own node,
+ *  never a composition, because rev 13's route writes LEAVES and composes nothing (`D-138`). */
 const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
   if (!plain(held)) return null
   const size = held['size']
@@ -567,8 +591,11 @@ const zonesFrom = (whole: unknown): ViewZone[] | null => {
  *  writes ONE LEAF PER SUPPLIED MEMBER (`[VIEW_ZONES_ADDRESS[0], id, member]`), and a leaf write cannot drop a sibling
  *  member, cannot drop a sibling zone, and needs no copy of the family to be anything: so nothing is composed, nothing can
  *  be one delivery stale, and this helper has no reader after it (`D-135`, `D-138`). **`zoneOf`/`zonesFrom` keep their
- *  readers** (the read and the admission) and `composePanes` is untouched, its own leaf write being `D-138`'s and not this
- *  module's. */
+ *  readers** (the read and the admission). **AND THE SENTENCE THIS TOMBSTONE ONCE ENDED WITH — *"`composePanes` is
+ *  untouched, its own leaf write being `D-138`'s and not this module's"* — IS ITSELF SUPERSEDED AND CORRECTED IN PLACE**
+ *  (`D-46`, `D-138`): the panes family's own leaf write landed at rev 13, `composePanes` is deleted at the tombstone
+ *  below, and a reader asking whether any composer still stands in this file should find this sentence instead of the old
+ *  one — the file must not deny its own body. */
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE APPEARANCE FAMILY — THE MECHANISM CONSUMED ONCE, THE DERIVATION STORED, AND THE PAIR THAT JUDGES AGREEMENT
@@ -702,23 +729,21 @@ const themeOf = (store: Store): { theme: ViewThemeRecord; source: ViewGeometrySo
   return { theme: viewThemePlaceholder(), source: 'default' }
 }
 
-/** **THE WHOLE FAMILY A CALLER'S WRITE LEAVES: ONE LEGAL VALUE, COMPOSED FROM WHAT STANDS.** The pane the caller named
- *  takes the members it supplied, each missing member falling to what that pane stands at and then to the measured
- *  default; every OTHER pane the family holds is admitted field by field and kept, so one act cannot erase a sibling's
- *  geometry. This is the `healedFamily` role (`D-83`) for a family with no seat to salvage. */
-const composePanes = (panes: readonly ViewPaneGeometry[], id: string, supplied: { size?: number; bounds?: { min: number; max: number } }): Record<string, unknown> => {
-  const whole: Record<string, unknown> = {}
-  const standing = panes.find((pane) => pane.id === id)
-  for (const pane of panes) {
-    if (pane.id !== id) whole[pane.id] = { size: pane.size, bounds: { min: pane.bounds.min, max: pane.bounds.max } }
-  }
-  const base = standing ?? defaultPaneGeometry(id)
-  whole[id] = {
-    size: supplied.size ?? base.size,
-    bounds: { min: supplied.bounds?.min ?? base.bounds.min, max: supplied.bounds?.max ?? base.bounds.max },
-  }
-  return whole
-}
+/** **THE PANE FAMILY HAS NO COMPOSER EITHER, AND THE COMPOSER THAT STOOD HERE IS DELETED WHOLE** (`composePanes`,
+ *  `D-138` H16, `D-135`, `D-139`). It took the family as the read answered it, kept every SIBLING pane and merged the
+ *  caller's two members over what the named pane stood at, because ONE write at `['panes']` replaces the family whole and
+ *  a size-only act would otherwise have dropped the standing `bounds`. **THE ROUTE NOW WRITES ONE LEAF PER SUPPLIED
+ *  MEMBER** — `[VIEW_PANES_ADDRESS[0], id, 'size']`, then the same leaf with `'bounds'` carrying its PAIR — so a leaf
+ *  write cannot drop a sibling member, cannot drop a sibling pane, and needs no copy of the family to be anything:
+ *  nothing is composed, nothing can be one delivery stale, and this composer has no reader after it (`D-135`, `D-138`).
+ *  **NOTHING DIES WITH IT**, unlike the zone composer's helper: it had no helper of its own. `paneOf`/`panesFrom` (the
+ *  admission and the family parse), `panesOf` (the read), `defaultPaneGeometry` (the derivation, `viewPanesPlaceholder`
+ *  above and `paneIdOf`'s default) and `nodeOf`/`writeInstant`/`writeWholeValue`/`repairAnswer` (the two value arms and
+ *  the one repair path) all keep their readers. **AND IT IS A HUNK AND NOT A COMPILER'S REMINDER**: `tsc` does not flag
+ *  a leftover here because `noUnusedLocals` is off at this checkout, the fact the zone deletion records for its own
+ *  (`D-9`, `D-152`). **THE ONE MOVEMENT IT LEAVES IS UNDER THE READ AND NOT IN IT** (`ASM-13`): a member `paneOf` ignores
+ *  used to be DROPPED by the next commit's whole-family rewrite and now SURVIVES one, because nothing re-writes the
+ *  family from a read copy any more. */
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE VALUE ARMS — A FAMILY THAT STANDS BUT CARRIES A VALUE ITS OWN READ CANNOT STATE IS REFUSED (D-105)
@@ -759,10 +784,16 @@ const boundsAdmit = (value: unknown): boolean => {
 
 /** **ONE PANE AT ONE NODE OF ITS OWN SHAPE.** A pane's record carries `size` and `bounds` and nothing this module reads
  *  (`paneOf`), and each is a node of its own — so a write AT the record is judged by `paneOf`, a write at `size` by
- *  `paneOf`'s size rule, and a write at `bounds` (or at one of its two fields) by `boundsAdmit`. */
+ *  `paneOf`'s size rule, and a write at `bounds` (or at one of its two fields) by `boundsAdmit`. **AND THE ID'S DOMAIN IS
+ *  JUDGED HERE AT EVERY DEPTH** (`D-138` H14, `D-151` H5 one family over): beside the id's SHAPE test, an id outside
+ *  `DECLARED_PANE_IDS` answers `false`, so `panesAdmitAt` refuses a family NAMING an undeclared pane exactly as it refuses
+ *  a write AT one. **THAT IS THE CLOSURE'S SECOND SEAT AND IT IS DELIBERATE** (`ASM-14`): closing the route alone would
+ *  leave a `data.write` free to mint the very pane the ruling refuses, and the family's own judge is the only thing an
+ *  outside writer meets. */
 const paneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
   const id = node[0]
   if (typeof id !== 'string' || id.length === 0) return false
+  if (!DECLARED_PANE_IDS.includes(id)) return false
   if (node.length === 1) return paneOf(id, value) !== null
   const member = node[1]
   if (node.length === 2) return member === 'size' ? finiteNumber(value) && value >= 0 : member === 'bounds' ? boundsAdmit(value) : false
@@ -826,12 +857,14 @@ const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
 
 /** **THE TWO SENTENCES THE VALUE ARMS ANSWER, IN THE REGISTER OF THE ROUTES' OWN** (`PANE_GEOMETRY_MESSAGE` and the
  *  others above): each names the FAMILY and the FAULT a standing value carries, never the act — a write refused at this
- *  arm and a value read back from the profile's bytes are one fault, wherever they came from (`D-105`). **THE ROUTES
- *  ANSWER NONE OF THEM**: a route composes the family through the one composer, so only a caller that names the store's
- *  own address — `provident.data.*`, or the crossing's raw surface — can meet these. **THE THIRD SENTENCE LEFT WITH THE
+ *  arm and a value read back from the profile's bytes are one fault, wherever they came from (`D-105`). **NO ROUTE OF
+ *  THIS MODULE ANSWERS EITHER** — and since rev 13 that is true of the pane one for the leaf writes' reason and not a
+ *  composer's (`D-138`, `D-151`): a route writes leaves, each judged by the same predicate this arm applies at that node,
+ *  so only a caller that names the store's own address — `provident.data.*`, or the crossing's raw surface — can meet
+ *  these. **THE THIRD SENTENCE LEFT WITH THE
  *  FAMILY IT NAMED** (`D-142`), because no declaration stands at that address to answer it. */
 export const PANE_UNUSABLE_MESSAGE =
-  'the pane geometry carries a member that is no geometry — no finite non-negative size, or no bounds pair of two finite numbers whose min does not exceed its max'
+  'the pane geometry carries a member that is no geometry — no finite non-negative size, or no bounds pair of two finite numbers whose min does not exceed its max, or a pane id this record does not declare'
 export const ZONE_UNUSABLE_MESSAGE =
   'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses, or a zone id this record does not declare'
 
@@ -845,44 +878,55 @@ export const ZONE_UNUSABLE_MESSAGE =
  *  `tier: null` — so absence needs no handle, and the handle is wanted by the REPAIR alone, which runs at an instant where
  *  the route is on the record or one exists.
  *
- *  **THE FIRST ARM IS ABSENCE**: a value that is not a plain record — the address holding nothing, a primitive, an
- *  array — is the fault this pair names and REPAIRS, with the measured default family as one whole legal value.
+ *  **THE FIRST ARM IS ABSENCE, AND IT IS THE FAMILY ROOT'S** (`D-138` H13, `D-151` H4 one family over) — this is the hunk
+ *  without which the per-member write cannot land at all. `context.value` is the value the act LANDED (`guide §7.6`) and
+ *  the pair asked here sits at an ANCESTOR of the act's address (`D-56`), so a LEAF write hands this body a SCALAR:
+ *  answering that as absence would write the measured default AT THE ROOT and REPLACE the whole pane family — the caller's
+ *  own value and every sibling pane with it — inside a commit that still answers `committed`. So absence is answered only
+ *  at `node === null || node.length === 0`, and a write AT or BELOW a pane id is judged at its own node and NEVER
+ *  REPAIRED.
  *  **THE SECOND IS THE VALUE'S, AND IT IS `D-105`'s** (it was `D-87`'s owed clause): a value that STANDS and names a
  *  member `paneOf` cannot state is REFUSED, with no repair, because the read would DROP that member and answer the
  *  measured default while `source.panes` still said `'record'`. **IT IS ONE DECLARATION AT ONE NODE AND NOT A SECOND
  *  DECLARATION WEARING THIS ONE'S SENTENCE** — the boundary `D-84` drew for `operator-exclusion-must-stand` and `D-83`
  *  drew for the `order` seat's own pair: `panesAdmitAt` is the SAME admission the read uses, and the node it judges is
- *  the write's own address, so a write at `['panes','pane-a']` is judged as that member. */
+ *  the write's own address, so a write at `['panes','pane-a']` is judged as that member.
+ *
+ *  **AND THE SENTENCE THAT ONCE STOOD IN THIS BODY — *"THE EXISTENCE ARM ABOVE STAYS FIRST AND IS UNCHANGED"* — IS
+ *  SUPERSEDED, NOT ANNOTATED** (`D-46` covers `D-n` rows; this is a comment in code, so it is rewritten in place): it was
+ *  true only while every panes act wrote the family whole, and it became FALSE the moment `commitPane` wrote a leaf,
+ *  because the arm it protected is exactly the one a leaf write falsifies. */
 const panesMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
-  if (!plain(held)) {
+  const node = nodeOf(context, VIEW_PANES_ADDRESS)
+  // **ABSENCE IS JUDGED AT THE ROOT** (D-138 H13): only the family's own address holding nothing is the fault the repair
+  // answers. A value landed at or below a pane id is a member of the family, and a scalar there is the shape a leaf write
+  // legitimately carries — never the absence of the family.
+  if ((node === null || node.length === 0) && !plain(held)) {
     return {
       message: 'the pane geometry does not stand',
       repair: repairPanes(getStore),
     }
   }
-  // **THE VALUE ARM (`D-105`), AND IT ANSWERS WITH NO REPAIR.** A value that STANDS but names a pane the read cannot
-  // state is refused, so the store's own rollback leaves the record that stood exactly as it stood: a placeholder here
-  // would destroy the geometry the caller had, which is the fault the convention's repair arm is NOT for (its subject
-  // is data that is MISSING, and this one is present and unusable). `nodeOf` makes the judgement at the node the write
-  // is at, so a write ONE LEVEL IN — `['panes','pane-a']`, `['panes','pane-a','size']` — is judged as that node and not
-  // as the family. **THE EXISTENCE ARM ABOVE STAYS FIRST AND IS UNCHANGED**: absence is a different fault with a
-  // different arm, and the two are told apart by `plain(held)` alone.
-  const node = nodeOf(context, VIEW_PANES_ADDRESS)
+  // **THE VALUE ARM (`D-105`), AT THE NODE THE WRITE IS AT.** A pane whose `size` is a string, a member that is no record
+  // at all, a bounds pair whose `min` exceeds its `max`, or an id this record does not declare is a family the read can
+  // only answer by DROPPING the member — and a dropped member answers the measured default, so the app loses the geometry
+  // it had while `source` still says `'record'`. Refused with no repair, so the store's rollback leaves the standing
+  // family and the profile's bytes exactly as they were.
   if (node === null || panesAdmitAt(node, held)) return true
   if (!writeInstant(context)) return true
   return { message: PANE_UNUSABLE_MESSAGE }
 }
 
-/** **THE PANES' REPAIR: THE MEASURED DEFAULT, AS ONE WHOLE LEGAL VALUE** — the pane the app has, at the size and the
- *  bounds pair the tree states, written at the family's own root and its own tier. It is the analogue of
- *  `mintRecord`'s landing row and it is composed by the ONE family composer, so a family the engine re-runs sees a value
- *  this module's own read admits. */
-const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer => {
-  const seed = defaultPaneGeometry(DEFAULT_PANE_ID)
-  const whole = composePanes([], DEFAULT_PANE_ID, { size: seed.size, bounds: { min: seed.bounds.min, max: seed.bounds.max } })
-  return writeWholeValue(getStore)(context, VIEW_PANES_ADDRESS, PANES_TIER, whole)
-}
+/** **THE PANES' REPAIR: EVERY DECLARED PANE ID WITH ITS MEASURED DEFAULT GEOMETRY, AS ONE WHOLE LEGAL VALUE** —
+ *  `{'pane-a': { size: 100, bounds: { min: 0, max: 200 } }}` at the family's own root and its own tier, written through
+ *  this module's ONE repair-write path. **IT PERFORMS THE THING IT KEYS** (the `D-85` pattern): the repair does not
+ *  assert that a pane record stands, it CREATES the declared one with its geometry, which is the node a leaf write at
+ *  `['panes', id, member]` stands under (`D-138`). The value is built from `DECLARED_PANE_IDS` rather than composed, so
+ *  the set and the placeholder cannot drift — and **THE BYTES DO NOT MOVE**: this is the very family the tree has written
+ *  since `D-87`, so no read consequence follows, unlike the zone family's. */
+const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer =>
+  writeWholeValue(getStore)(context, VIEW_PANES_ADDRESS, PANES_TIER, viewPanesPlaceholder())
 
 /** **`zones-must-stand` — THE ZONE FAMILY'S EXISTENCE, AND ITS PLACEHOLDER IS EVERY DECLARED ZONE ID WITH AN EMPTY
  *  RECORD** (D-151; `D-91`'s *"the family that names no zone"* is SUPERSEDED BY POINTER and not reworded, `D-46`).
@@ -1091,17 +1135,32 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
     },
 
     commitPane(id: string, geometry: unknown): ViewRecordAnswer {
-      // ── THE SHAPE ARMS, BEFORE ANY STORE VERB (`docs/L3/store-tabs-record/signatures.md` §3's rule at this module) ──
+      // ── THE ID'S SHAPE ARM AND THEN ITS DOMAIN ARM, BEFORE ANY PAYLOAD AND BEFORE ANY STORE VERB (`D-138` H11) ──
       if (typeof id !== 'string' || id.length === 0) {
         return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
+      }
+      // **THE ID'S DOMAIN IS PART OF WHAT AN ID MUST BE, SO IT IS JUDGED HERE AND BEFORE THE PAYLOAD** (`ASM-12`): a
+      // well-formed id this record does not declare is refused rather than silently creating a pane. A leaf write needs
+      // `['panes', id]` to STAND and the store creates no parent, so the declared set is the whole of what the route may be
+      // handed — and this is one of the closure's TWO seats, the other being `paneNodeAdmits` (`ASM-14`). `commitZones`' arm,
+      // one family over.
+      if (!DECLARED_PANE_IDS.includes(id)) {
+        return {
+          status: 'refused',
+          reason: UNDECLARED_PANE_REASON,
+          message: UNDECLARED_PANE_MESSAGE,
+          address: [VIEW_PANES_ADDRESS[0] as string, id],
+        }
       }
       const value: unknown = geometry
       if (!plain(value)) {
         return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
       }
-      // **A SUPPLIED MEMBER MUST BE USABLE; AN ABSENT ONE KEEPS WHAT STANDS** — the renderer's release turn writes a size
-      // and nothing else, and its own gate is *"a non-useful `final` (a non-number or `NaN`) is NEVER written"*. An absent
-      // member is not that act: it is a caller naming one member of a value, which the whole-value write fills in.
+      // **A SUPPLIED MEMBER MUST BE USABLE, AND AN ABSENT ONE SIMPLY IS NOT WRITTEN** — the renderer's release turn writes a
+      // size and nothing else, and its own gate is *"a non-useful `final` (a non-number or `NaN`) is NEVER written"*. An
+      // absent member is neither that act nor a fault: it is a caller naming the members this act carries, and the member
+      // it does not name keeps what STANDS because no leaf write below touches it at all. EVERY SUPPLIED MEMBER IS JUDGED
+      // HERE, BEFORE THE FIRST STORE VERB, which is what keeps a data fault from splitting an act.
       const supplied: { size?: number; bounds?: { min: number; max: number } } = {}
       if (Object.hasOwn(value, 'size')) {
         const size = value['size']
@@ -1119,19 +1178,40 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
         }
         supplied.bounds = { min, max }
       }
-      // **ONE WRITE OF ONE WHOLE FAMILY AT ITS ROOT, AND THE REASON IS MEMBER MERGE RATHER THAN PARENT EXISTENCE** (`D-135`).
-      // A nested write does not create its parent (measured), but the parent is not this body's to make: `panes-must-stand`
-      // repairs the family at `['panes']` whenever the address does not stand, so the ROOT'S EXISTENCE IS THE DECLARATION'S
-      // GUARANTEE and a caller may trust it. What the composer is for is the two things only a root write needs — keeping the
-      // SIBLING panes (`panesOf`' answer is the family, so a root write would otherwise replace them) and merging the members
-      // this act did not supply over what the pane stands at (`supplied.size ?? base.size`). **THE MERGE IS THE REAL REASON.**
-      try {
-        standing.write(VIEW_PANES_ADDRESS, PANES_TIER, composePanes(panesOf(standing).panes, id, supplied))
-        return { status: 'committed' }
-      } catch (caught) {
-        const refused = refusalOfThrown(caught)
-        return { status: 'refused', reason: refused.reason, message: refused.message, address: [VIEW_PANES_ADDRESS[0] as string, id] }
+      // **ONE LEAF WRITE PER SUPPLIED MEMBER, IN THE SHAPE'S OWN ORDER — `ViewPaneGeometry`'s, and not an order of
+      // importance** (`D-138` H11, `D-151`'s shape one family over): `size`, then `bounds`, each at the family's own tier
+      // and each handing THAT MEMBER's own value. A leaf write cannot drop a sibling member and cannot drop a sibling pane,
+      // so nothing is composed and nothing can be one delivery stale (`D-135`, `D-138`) — which is why `composePanes` is
+      // deleted whole, and why **NO `panesOf` READ STANDS ON THIS PATH**. **`BOUNDS` IS ONE MEMBER AND NOT TWO FIELD
+      // WRITES** (`ASM-13`): the pair goes as the pair, so a mixed `{min: 300}` over a standing `max: 200` is unreachable —
+      // `paneNodeAdmits` admits `['panes', id, 'bounds']` through `boundsAdmit`, the same pair `paneOf` applies, and the
+      // payload's own arm above requires both members with `min ≤ max`.
+      //
+      // **A REFUSAL AFTER THE FIRST LEAF LEAVES THE FIRST LANDED, AND THAT IS ADMISSIBLE RATHER THAN ATOMISM MISSED**
+      // (`D-138` H12): (i) every supplied member is judged above, by the same predicate the pair applies at that node
+      // (`paneNodeAdmits`), so no DATA fault can split an act; (ii) the arm that can still refuse is the store's OWN
+      // BOUNDARY — the pane's node removed by an outside writer between the two writes — and a landed leaf is a state the
+      // pair ADMITS, `paneOf` requiring both members and both standing whichever order they land in; (iii) the answer names
+      // the LEAF that refused, so a caller reads back what landed; and (iv) **THE INTERMEDIATE IS THE STATE THE DRAG
+      // PRODUCES ON PURPOSE** — `{size: new, bounds: old}` IS every size-only act's landing, the release turn being the
+      // only producer under `src/`, so a split act and a complete one are indistinguishable to a reader. **ATOMICITY WOULD
+      // COST THE COMPOSER**: one write at `['panes', id]` REPLACES the pane whole (`D-135`), so it would have to merge over
+      // a copy of what stands — `composePanes` under a new name.
+      //
+      // **ZERO SUPPLIED MEMBERS WRITES NOTHING AND ANSWERS `committed`**: the declared pane's node already stands with its
+      // geometry, which IS the state that act names — the tab record's "a delete that removes nothing is the store's own
+      // success" (`D-53`) read at this family, and the drag's own `clearDrag` reading.
+      for (const member of ['size', 'bounds'] as const) {
+        if (!Object.hasOwn(supplied, member)) continue
+        const leaf = [VIEW_PANES_ADDRESS[0] as string, id, member]
+        try {
+          standing.write(leaf, PANES_TIER, supplied[member])
+        } catch (caught) {
+          const refused = refusalOfThrown(caught)
+          return { status: 'refused', reason: refused.reason, message: refused.message, address: leaf }
+        }
       }
+      return { status: 'committed' }
     },
 
     commitZones(id: string, zone: unknown): ViewRecordAnswer {
@@ -1257,8 +1337,9 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
         return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
       }
       // **THE `size` IS REQUIRED HERE, AND THAT IS THE ONE PLACE THIS ARM IS STRICTER THAN `commitPane`'S** (L2 §2, D-135):
-      // a pane commit may supply a member alone because the missing one is merged from what stands, while the drag family's
-      // member IS the placement — there is no sibling to preserve and nothing to merge. An `undefined` is not a value the
+      // a pane commit may supply one member and only one, each supplied member being a leaf write of its own, so the member
+      // it does not name is never touched at all, while the drag family's member IS the placement — there is no sibling to
+      // preserve and nothing to merge. An `undefined` is not a value the
       // crossing carries (`isBoundary`), so a member without a usable size is a fault and not an omission.
       const size = value['size']
       if (!finiteNumber(size) || size < 0) {

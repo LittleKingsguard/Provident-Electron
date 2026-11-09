@@ -8,9 +8,9 @@
 // (`D-73`) applied to a vocabulary rather than to a function. So the vocabulary is here, `main` re-exports every name from
 // its own module (no cite moves), and the renderer imports it instead of reaching into a main-process module.
 //
-// IT IS THE SHAPE AND NOT A STORE (D-78's ruling 3, D-88). Nothing here holds anything: these are type declarations, FIVE
-// constants (the measured pane defaults, the zone the app has, and the declared zone ids derived from it) and FIVE PURE
-// functions (the two placeholders and the three derivations). No address space, no persistence, no constraint, no
+// IT IS THE SHAPE AND NOT A STORE (D-78's ruling 3, D-88). Nothing here holds anything: these are type declarations, SIX
+// constants (the measured pane defaults, the zone the app has, and the declared pane and zone id sets derived from them) and
+// SIX PURE functions (the three placeholders and the three derivations). No address space, no persistence, no constraint, no
 // listener, no instance — a value of these types is thrown away and rebuilt on every delivery, which is exactly what makes
 // it a projection rather than a record.
 //
@@ -123,6 +123,16 @@ export const DEFAULT_PANE_SIZE = 100
 /** **THE MEASURED DEFAULT BOUNDS PAIR** — the authored pane's `props.min`/`props.max`. A VALUE, copied into a fresh record
  *  by `defaultPaneGeometry` rather than handed out by reference, so no caller can move this file's own constant. */
 export const DEFAULT_PANE_BOUNDS: { readonly min: number; readonly max: number } = { min: 0, max: 200 }
+/** **THE PANE FAMILY'S ID DOMAIN, CLOSED — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-138; `DECLARED_ZONE_IDS`
+ *  below is the same closure one family over, `D-151`). `['panes', id]` must be GUARANTEED to stand for every id the route
+ *  is handed, and the store creates no parent (measured at this node), so an OPEN id set can guarantee nothing: the domain
+ *  closes, and the creation repair writes exactly these ids, each with its measured default geometry. **IT IS DERIVED FROM
+ *  `DEFAULT_PANE_ID` AND NOT SPELLED BESIDE IT**, for the reason `DECLARED_ZONE_IDS` is derived from `DEFAULT_ZONE_ID` —
+ *  the fallback and the declared set cannot drift. **ONE ID IS A MEASUREMENT AND NOT A NARROWING CHOSEN HERE**: the only
+ *  producer of a pane act under `src/` is the release turn's `view.commitPane(DEFAULT_PANE_ID, { size: final })` — ONE
+ *  member, ONE id — while `paneIdOf`'s element and token ids reach READS alone, where `paneGeometryIn`'s default arm
+ *  answers any id the family does not name, so declaring more would mint records nothing writes (`ASM-11`). */
+export const DECLARED_PANE_IDS: readonly string[] = [DEFAULT_PANE_ID]
 
 /** **THE ZONE THE APP HAS, MEASURED AND NOT CHOSEN** — `DEFAULT_PANE_ID`'s pattern applied to the zone family (D-151): the
  *  id the drag composition's render turn hard-codes and the id `zoneIdOf` falls back to when a caller's element carries
@@ -149,6 +159,26 @@ export const DECLARED_ZONE_IDS: readonly string[] = [DEFAULT_ZONE_ID]
 export const viewZonesPlaceholder = (): Record<string, unknown> => {
   const family: Record<string, unknown> = {}
   for (const id of DECLARED_ZONE_IDS) family[id] = {}
+  return family
+}
+
+/** **THE PANE FAMILY'S PLACEHOLDER: EVERY DECLARED PANE ID WITH ITS MEASURED DEFAULT GEOMETRY** —
+ *  `{'pane-a': { size: 100, bounds: { min: 0, max: 200 } }}` — and **A FRESH RECORD ON EVERY CALL**, both for the family
+ *  and for each pane in it, so no caller can move this file's constants or the set it is built from
+ *  (`viewThemePlaceholder`'s rule). **ITS VALUE DOES NOT MOVE** (`ASM-12`, D-138): the creation repair has written this
+ *  very family since `D-87`, so what the closed domain adds is the GUARANTEE — a declared set plus an `undeclared-pane`
+ *  refusal at the route — and never the node a leaf write stands under. **THAT IS WHERE THIS FAMILY DIVERGES FROM THE
+ *  ZONE ONE RATHER THAN REPEATING IT**: `viewZonesPlaceholder` above had to change its value because the family it
+ *  replaced created NO zone record at all, while this one has always created the pane's — so what the pane placeholder
+ *  owes is a RE-SPELLING forced by the composer's deletion and by the set it must be built from, and not a new value. The
+ *  shape it answers is `defaultPaneGeometry`'s `{size, bounds}`, with the derivation's `id` member left off because the
+ *  key is the id here. */
+export const viewPanesPlaceholder = (): Record<string, unknown> => {
+  const family: Record<string, unknown> = {}
+  for (const id of DECLARED_PANE_IDS) {
+    const geometry = defaultPaneGeometry(id)
+    family[id] = { size: geometry.size, bounds: { min: geometry.bounds.min, max: geometry.bounds.max } }
+  }
   return family
 }
 

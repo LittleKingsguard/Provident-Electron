@@ -66,6 +66,7 @@ import {
   paneGeometryIn,
   PANE_GEOMETRY_REASON,
   PANE_SHAPE_REASON,
+  UNDECLARED_PANE_REASON,
   VIEW_PANES_ADDRESS,
   VIEW_PANES_MUST_STAND_ID,
   VIEW_THEME_ADDRESS,
@@ -243,20 +244,28 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
   // row's subject does not exist to be measured; the `mem` family that survives has the same creation-instant arm measured
   // at its own address by `zone-family.test.ts`'s `Z-1`/`Z-5`, which is where a reader should look for it (D-9).
 
-  it('THE PLACEHOLDER IS IN THE RECORD AND NOT SUBSTITUTED AT THE READ: a profile seeded with a pane family the file brought is UNTOUCHED, and the family the record reads is the FILE\'S — `pane-b` at 240 — not the placeholder', () => {
+  it('THE PLACEHOLDER IS IN THE RECORD AND NOT SUBSTITUTED AT THE READ: a profile seeded with a pane family the file brought is UNTOUCHED, and the family the record reads is the FILE\'S — `DEFAULT_PANE_ID` at 240 — not the placeholder', () => {
     // WITHOUT THIS ROW the pair above could pass by overwriting every family it is asked about, which would make the
     // placeholder a rewrite rather than a repair.
+    // **AND THE SEEDED ID IS A DECLARED ONE, BECAUSE THE ROW'S OWN SUBJECT IS A LEGAL FAMILY** (`D-138`'s leaf landing,
+    // `ASM-11`, `ASM-12`): the pane id domain is CLOSED to `DECLARED_PANE_IDS` — one id, `DEFAULT_PANE_ID` — and
+    // `paneNodeAdmits` answers `false` for any other at EVERY depth, so a family naming an undeclared pane is a family the
+    // pair REFUSES. At this row's own REGISTRATION instant that refusal cannot fire — `writeInstant` abstains while
+    // `tier` is `null`, so a seed at an undeclared id would be passed by ABSTENTION and the row would measure that silence
+    // instead of the claim its title carries. The id is the declared one for that reason, and **THE FIGURES ARE THE ROW'S
+    // OWN, UNCHANGED**: 240 with `10..400` is not the placeholder's 100 with `0..200`, which is what makes a substitution at
+    // the read visible at all.
     const instant = mkdtempSync(join(tmpdir(), 'view-seeded-'))
     const path = join(instant, PROFILE_FILE)
     try {
-      createProfileStore({ filePath: path }).write(VIEW_PANES_ADDRESS, 'file', { 'pane-b': { size: 240, bounds: { min: 10, max: 400 } } })
+      createProfileStore({ filePath: path }).write(VIEW_PANES_ADDRESS, 'file', { [DEFAULT_PANE_ID]: { size: 240, bounds: { min: 10, max: 400 } } })
       const booted = boot(path)
       try {
         expect(booted.store.read(VIEW_PANES_ADDRESS as never, 'file'), 'the file\'s own family, byte for byte').toEqual({
-          'pane-b': { size: 240, bounds: { min: 10, max: 400 } },
+          [DEFAULT_PANE_ID]: { size: 240, bounds: { min: 10, max: 400 } },
         })
         const read = booted.read()
-        expect(read.panes, 'and the record reads what the file brought').toEqual([{ id: 'pane-b', size: 240, bounds: { min: 10, max: 400 } }])
+        expect(read.panes, 'and the record reads what the file brought').toEqual([{ id: DEFAULT_PANE_ID, size: 240, bounds: { min: 10, max: 400 } }])
         expect(read.source.panes, 'from the RECORD: the pair passed it and wrote nothing').toBe('record')
       } finally {
         booted.close()
@@ -498,7 +507,16 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     // AND THE WRITE SITES ARE COUNTABLE: `store.write(` occurs exactly as often as there are write paths. The repair path
     // names it once (through `writeJoinedAt`), so the census is stated as a figure a new path would break.
     expect((module.match(/\.write\(/g) ?? []).length, 'the module reaches a write through exactly ONE helper (`writeJoinedAt`) plus the caller routes').toBeGreaterThan(0)
-    expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'the pane route writes the family whole').toBe(true)
+    // **AND THE PANE ROUTE WRITES NO WHOLE FAMILY EITHER** (`D-138`): `composePanes` is DELETED WHOLE, so the form this
+    // row's control used to assert PRESENT is the form a route no longer carries — the assertion INVERTS rather than
+    // leaving. A root write here would be the composer rebuilt under the route's name, and one write at
+    // `['panes', id]` REPLACES the pane whole, which is exactly the erasure the per-member leaves remove.
+    expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'no whole-family write at the pane root remains in the module').toBe(false)
+    // **AND THE POSITIVE CONTROL IS THE FORM THAT DOES STAND**: `commitPane` writes ONE LEAF PER SUPPLIED MEMBER at
+    // `[VIEW_PANES_ADDRESS[0], id, member]` — `size` carrying the scalar, then `bounds` carrying the PAIR (`ASM-13`) — so
+    // the absence above is about the ROOT write and not about a route that writes nothing at all. The zone route's own
+    // form is asserted in the same way one bullet down, which is the re-grain `D-152` gave that route.
+    expect(/\[VIEW_PANES_ADDRESS\[0\] as string, id, member\]/.test(module), 'the pane route writes one leaf per supplied member').toBe(true)
     // **AND THE ZONE ROUTE WRITES NO WHOLE FAMILY AT ALL** (`D-151`): `composeZones` left with the composition, so the route
     // writes ONE LEAF PER SUPPLIED MEMBER at `[VIEW_ZONES_ADDRESS[0], id, member]` — a root write here would be the composer
     // rebuilt under the route's name, and it would replace the zone whole (measured), which is the fault the leaves remove.
@@ -514,8 +532,8 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     expect(/FOCUS_TIER/.test(module), 'no tier constant stands for the retired family').toBe(false)
     expect(
       (module.match(/\.write\(VIEW_/g) ?? []).length,
-      'THREE whole-family writes stand — the panes, the appearance act and the drag move — the ONE repair path writing through its own helper and the zone route writing LEAVES (`D-151`), so a fourth would be a write path clause 4 has not seen',
-    ).toBe(3)
+      'TWO whole-family writes stand — the appearance act and the drag move — the ONE repair path writing through its own helper and BOTH paired geometry families writing LEAVES (`D-151`, `D-138`), so a third would be a write path clause 4 has not seen',
+    ).toBe(2)
   })
 
   it('NO WRITE ON READ, MEASURED BOTH WAYS: a read lands no byte over a standing family, and a read over a store whose batch NEVER RAN answers the declared defaults WITHOUT minting either family', () => {
@@ -573,16 +591,37 @@ describe('view-record · the routes', () => {
     expect(record.read(), 'no refused act moved either family').toEqual(before)
   })
 
-  it('ONE MEMBER IS FILLED, NOT ERASED: a commit naming a size alone keeps the pane\'s standing bounds — the renderer\'s release turn writes a size and nothing else', () => {
+  it('ONE MEMBER IS FILLED, NOT ERASED: a commit naming a size alone keeps the pane\'s standing bounds — now the LEAF WRITE\'s own guarantee and no longer a composer\'s — and an id this record does not declare is REFUSED, which is the arm that replaced this row\'s sibling-pane half', () => {
     expect(record.commitPane(DEFAULT_PANE_ID, { size: 250, bounds: { min: 5, max: 500 } }).status).toBe('committed')
     expect(record.commitPane(DEFAULT_PANE_ID, { size: 260 }).status, 'the size alone').toBe('committed')
     expect(record.read().panes, 'the bounds the family stood at survive the narrower act').toEqual([
       { id: DEFAULT_PANE_ID, size: 260, bounds: { min: 5, max: 500 } },
     ])
-    // AND A SIBLING PANE IS NOT ERASED BY AN ACT ON ANOTHER — the family is composed, not replaced by one member.
-    expect(record.commitPane('pane-z', { size: 90, bounds: { min: 0, max: 200 } }).status).toBe('committed')
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 261 }).status).toBe('committed')
-    expect(record.read().panes.map((pane) => pane.id).sort(), 'both panes stand').toEqual(['pane-a', 'pane-z'])
+    // **WHY THIS HALF SURVIVES THE COMPOSER'S DELETION, SAID HERE BECAUSE A READER WILL ASK IT OF THE ROW'S TITLE**: the
+    // claim is the same one the row always measured — a one-member act does not erase the member it did not name — and
+    // the INSTRUMENT under it got narrower and stronger. `commitPane` writes ONE LEAF PER SUPPLIED MEMBER, at
+    // `['panes', id, 'size']` and at `['panes', id, 'bounds']` (`D-138` H11, `ASM-13`), so a size-only act never reaches
+    // the `bounds` leaf at all: what `composePanes` bought by copying the family and merging over the copy, the ADDRESS
+    // buys by not touching the sibling member. Nothing was weakened to keep it green — the expected value is the same
+    // value, and the act below is the release turn's own shape.
+    // ── THE RETIRED HALF, RECORDED WITH ITS REASON (this corpus's habit, `D-142`'s style, `D-9`) ──
+    // 'AND A SIBLING PANE IS NOT ERASED BY AN ACT ON ANOTHER' drove `commitPane('pane-z', { size: 90, bounds: … })` and
+    // read the TWO panes back: the composer carried every SIBLING pane along, because one whole-family write at the root
+    // replaces the family and nothing else would have preserved it. **THAT HALF HAS NO SUBJECT AT THIS HEAD**
+    // (2026-11-09, `D-138`'s leaf landing, `D-151`'s ruling one family over): the pane ID DOMAIN IS CLOSED to
+    // `DECLARED_PANE_IDS`, which is ONE id (`DEFAULT_PANE_ID`, `ASM-11`), so with one declared pane there IS no sibling
+    // pane to preserve — and a caller naming `pane-z` is refused at the route's own DOMAIN arm, before any store verb,
+    // rather than silently creating a pane (`ASM-12`). The composer's sibling-pane loop was therefore work no reachable
+    // state needed, which is `D-138`'s removal arrived at by a second road (`D-139` judged it removable once the ancestry
+    // was enforced). **So the arm below asserts the REFUSAL — the new contract — and the sibling half retires here with its
+    // reason rather than being re-pointed at a state that cannot be represented** (`Z-9`'s rule, `D-152`).
+    expect(
+      record.commitPane('pane-z', { size: 90, bounds: { min: 0, max: 200 } }),
+      'a well-formed id this record does not declare is REFUSED before any store verb: the closure at the route\'s seat',
+    ).toMatchObject({ status: 'refused', reason: UNDECLARED_PANE_REASON, address: ['panes', 'pane-z'] })
+    expect(record.read().panes, 'and nothing the refused act named reached the family: its one declared pane stands exactly as it stood').toEqual([
+      { id: DEFAULT_PANE_ID, size: 260, bounds: { min: 5, max: 500 } },
+    ])
   })
 
   // ── TWO ROWS RETIRED WITH THEIR REFERENT (`D-9`, `D-142`) ──

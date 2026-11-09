@@ -2358,14 +2358,19 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
   const ghostTarget = backingRecord?.ghostTarget ?? null
   const sourceRecord = (source ?? null) as { readonly layout?: unknown } | null
 
-  /** THE CALLER'S OWN ELEMENT/TOKEN MAPPING (§2.1 A): `<id>` is derived from the caller's
-   *  own element/token pair; the wiring's own pane id stands for the gesture-end turns
-   *  (§2.4 names 1/2/9) where no element is in hand. */
+  /** **THE CALLER'S OWN PANE ID, AND ITS FALLBACK IS THE *DECLARED* ONE — NEVER A LITERAL OF THIS FILE'S** (`D-138`,
+   *  `D-152`). `<id>` is the caller's element/token mapping (§2.1 A) where the element carries an `id` or the token is a
+   *  non-empty string; absent both, the gesture-end turns (§2.4 names 1/2/9) address `DEFAULT_PANE_ID`, imported from
+   *  `src/shared/view-shape.ts`. **THE RECORD DECLARES THE PANE IDS IN THAT FILE AND THIS REALM MUST NOT SPELL ITS OWN**:
+   *  the id domain is CLOSED to `DECLARED_PANE_IDS` (derived from that constant) and the route refuses an id it does not
+   *  declare (`undeclared-pane`), so a literal here would be a second answer to "which pane does this app address" — and
+   *  the two could disagree about it, the failure landing as a gesture turn writing a pane the record no longer declares.
+   *  **THE VALUE IS UNCHANGED** (`DEFAULT_PANE_ID` is `'pane-a'`), so this is one spelling and no behaviour. */
   const paneIdOf = (element: unknown, token: unknown): string => {
     const viaElement = (element as { readonly id?: unknown } | null | undefined)?.id
     if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
     if (typeof token === 'string' && token.length > 0) return token
-    return 'pane-a'
+    return DEFAULT_PANE_ID
   }
   /** **THE CALLER'S OWN ZONE ID, AND ITS FALLBACK IS THE *DECLARED* ONE — NEVER A LITERAL OF THIS FILE'S** (`D-151`,
    *  `D-152`). `<id>` is the caller's element/token mapping where the element carries a `zoneId`; absent one, the read

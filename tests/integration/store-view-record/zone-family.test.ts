@@ -302,21 +302,25 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     // THE POSITIVE CONTROL — the instrument fires on a synthetic timer, so the absence above is about this code and not
     // about a scan that could never have matched anything.
     expect(/\bsetTimeout\s*\(/.test('const t = setTimeout(fn, 0)'), 'the instrument fires on a synthetic timer').toBe(true)
-    // THE WRITERS, ENUMERATED: THREE caller routes write a whole family at its ROOT — the panes, the appearance act and the
-    // drag move — while the ZONE route writes ONE LEAF PER SUPPLIED MEMBER, at `[VIEW_ZONES_ADDRESS[0], id, member]`, and
-    // the ONE repair path writes through `writeJoinedAt`, so a fourth root write (or a repair that reached the store
-    // directly) reds the census below.
+    // THE WRITERS, ENUMERATED: TWO caller routes write a whole family at its ROOT — the appearance act and the drag move
+    // — while the ZONE route writes ONE LEAF PER SUPPLIED MEMBER, at `[VIEW_ZONES_ADDRESS[0], id, member]`, and the ONE
+    // repair path writes through `writeJoinedAt`, so a third root write (or a repair that reached the store directly)
+    // reds the census below.
     // **THE CENSUS IS THE MODULE'S AND NOT THE ZONE FAMILY'S** — which is exactly what it is for — and its history is the
     // measurement: it read `three` when the focus route left with its family (`D-142`, `D-9`), then FOUR when the drag
-    // family's own route arrived writing a whole value at `['drag']` at `temp` (`D-132`, L2 §8's hunks 1–3), and reads
-    // THREE again at this head because the ZONE route's whole-family write goes with `composeZones` (`D-151`, `D-139`).
+    // family's own route arrived writing a whole value at `['drag']` at `temp` (`D-132`, L2 §8's hunks 1–3), read THREE
+    // at `D-152` because the ZONE route's whole-family write went with `composeZones` (`D-151`, `D-139`), and reads TWO at
+    // this head because the PANE route's whole-family write goes with `composePanes` — the same removal, one family over
+    // (`D-138`, `D-151`). **THE SENTENCE THAT STOOD HERE — *"exactly THREE routes write a whole family"* — WAS TRUE OF A
+    // TREE IN WHICH THE PANES ROUTE WAS ONE OF THEM, AND IT IS FALSE AT THIS HEAD**: the count and the sentence move
+    // together, because a figure re-grained alone would leave this row describing a module that no longer exists.
     // **THE CLEAR IS NOT COUNTED HERE AND THAT IS THE MEASUREMENT**: it is a `delete` at the family's own tier, so it is a
     // WRITE PATH and not a whole-family `write` — asserting the count alone would let the clear land as an empty-family
     // write, which is the placeholder `D-132`'s ruling refuses.
     expect(
       (module.match(/\.write\(VIEW_/g) ?? []).length,
-      'exactly THREE routes write a whole family at its root — the panes, the appearance act and the drag move — and the zone route is not one of them',
-    ).toBe(3)
+      'exactly TWO routes write a whole family at its root — the appearance act and the drag move — and NEITHER paired geometry family is one of them, the zone route writing LEAVES and the pane route writing LEAVES',
+    ).toBe(2)
     expect(/\.delete\(VIEW_DRAG_ADDRESS, DRAG_TIER/.test(module), 'and the drag family\'s fifth path ENDS the reading rather than writing a placeholder').toBe(true)
     expect((module.match(/writeJoinedAt\(/g) ?? []).length, 'and the ONE repair path names its commit at exactly one call site').toBe(1)
     // **AND THE ZONE FAMILY'S TWO WRITERS ARE ITS LEAVES AND ITS ONE REPAIR** (`D-151`, `D-82` clause 4): NO whole-family
@@ -325,6 +329,13 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     // is what a caller's member lands at, while the repair keeps writing the whole family through `writeJoinedAt`.
     expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'no whole-family write at the zone root remains in the module').toBe(false)
     expect(/\[VIEW_ZONES_ADDRESS\[0\] as string, id, member\]/.test(module), 'and the zone route writes ONE LEAF PER SUPPLIED MEMBER at that form').toBe(true)
+    // **AND THE PANE FAMILY'S, THE SAME PAIR OF ASSERTIONS ONE FAMILY OVER** (`D-138`, `ASM-13`): the census above states
+    // how many ROOT writes stand and which routes are not among them; this pair states WHICH FORM took the pane route's
+    // root write's place, so a `commitPane` that went back to composing the family — or one that stopped writing at all —
+    // reds here rather than passing a count that only says "not a root write". The form is the module's own:
+    // `[VIEW_PANES_ADDRESS[0], id, member]`, one leaf per supplied member, `size` then `bounds`.
+    expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'no whole-family write at the pane root remains in the module either: `composePanes` is DELETED WHOLE').toBe(false)
+    expect(/\[VIEW_PANES_ADDRESS\[0\] as string, id, member\]/.test(module), 'and the pane route writes ONE LEAF PER SUPPLIED MEMBER at that form, the zone route\'s form one family over').toBe(true)
     // AND THE ROUTE HAS A HANDLER AT THE BRIDGE'S OWN SITE, which is what makes it an IPC route rather than a member
     // nothing calls — the defect L2's central-data §2 records against such a member.
     expect(main.includes('ipcMain.handle(IPC_VIEW_ZONES_COMMIT'), 'the zone route is registered at the boot').toBe(true)

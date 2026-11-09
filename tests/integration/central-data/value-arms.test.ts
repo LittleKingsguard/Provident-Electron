@@ -226,8 +226,36 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     // THE LEGAL ARMS: the surface's, and the module's own route.
     expect(one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { size: 60, bounds: { min: 0, max: 120 } } } }).status, 'a legal family lands through `data.*`').toBe('committed')
     expect(one.view.read().panes).toEqual([{ id: 'pane-a', size: 60, bounds: { min: 0, max: 120 } }])
-    expect(one.view.commitPane('pane-a', { size: 20 }), 'and the family\'s own route, which composes the family through the one composer').toEqual({ status: 'committed' })
+    // **AND THE ROUTE'S LABEL SAID A THING THE LANDING FALSIFIED, SO THE LABEL MOVES AND NOTHING ELSE DOES**: it read *"which
+    // composes the family through the one composer"*, and `composePanes` is DELETED WHOLE — `D-138`'s leaf landing, `ASM-13`
+    // — so no composer stands in the pane write path at all. What `commitPane` does now is write ONE LEAF PER SUPPLIED
+    // MEMBER, `['panes', id, 'size']` and then `['panes', id, 'bounds']`, each at `PANES_TIER` and each handing that member's
+    // own value, so the member the act does not name keeps what STANDS because no leaf write touches it — which is exactly
+    // why the arm below still measures what it measured, and its assertion is untouched: the same call, the same
+    // `committed`, and the same carried member read back on the arm after it.
+    expect(one.view.commitPane('pane-a', { size: 20 }), 'and the family\'s own route, which writes ONE LEAF PER SUPPLIED MEMBER — no composer stands in the pane write path, `composePanes` being DELETED at `D-138`\'s leaf landing').toEqual({ status: 'committed' })
     expect(one.view.read().panes, 'with the member it did not supply kept from what stood').toEqual([{ id: 'pane-a', size: 20, bounds: { min: 0, max: 120 } }])
+    // **AND THE CLOSURE'S SECOND SEAT, THE INVERT `VA-5` CARRIES ONE FAMILY OVER** (`D-138` H14, `ASM-14`; `VA-5`'s zone
+    // arm is this row's own model): a `data.write` naming a pane id the record does NOT declare is refused BY THE
+    // FAMILY'S OWN JUDGE — `paneNodeAdmits`'s declared-id check, at EVERY depth — because closing the route alone would
+    // leave `data.write` free to mint the very pane the ruling refuses, and the family's own judge is the only thing an
+    // outside writer meets. **THIS IS THE ARM THE DESIGN NAMES AND NO ROW MEASURED UNTIL NOW**: the route's seat is driven
+    // in the view record's own batteries, and this is the seat a `provident.data.write` caller meets.
+    expect(
+      ledgerOf(one.surface.write({ path: ['panes', 'pane-z'], tier: 'file', value: { size: 90, bounds: { min: 0, max: 200 } } })),
+      'an undeclared pane id is refused at the family\'s ADMISSION, with the pair\'s own sentence naming the fault',
+    ).toEqual({
+      reason: 'store-refused',
+      storeStatus: 'ConstraintPassRefused',
+      message: expect.stringContaining('a pane id this record does not declare'),
+    })
+    expect(one.view.read().panes, 'and no undeclared pane arrived: the declared one stands alone, exactly as it stood').toEqual([
+      { id: 'pane-a', size: 20, bounds: { min: 0, max: 120 } },
+    ])
+    // THE CONTROL THAT KEEPS THIS ARM FROM BEING A BLANKET (`VA-5`'s own shape): the SAME write at the id the record
+    // declares lands, so the refusal above is about the ID'S DOMAIN and not about a write at a member node.
+    expect(one.surface.write({ path: ['panes', 'pane-a', 'size'], tier: 'file', value: 33 }).status, 'a declared pane\'s own leaf still lands through `data.*`').toBe('committed')
+    expect(one.view.read().panes).toEqual([{ id: 'pane-a', size: 33, bounds: { min: 0, max: 120 } }])
   })
 
   it('VA-5 · THE ZONE FAMILY: a member that is no record, and a zone carrying a `size` the read cannot state, are refused — a zone that carries NOTHING stays legal at a DECLARED id, because that is a state the family holds (`D-91`, `D-105`) — and an id the record does not declare is refused at BOTH seats, which is the INVERT this row carries since `D-151` closed the id domain', () => {

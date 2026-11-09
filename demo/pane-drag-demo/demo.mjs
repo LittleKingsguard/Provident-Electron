@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 a02c14ef9fd53f13d1b5674653c11a6ecca6c8ec83bba8891a3c7e794800b10a
+// @body-sha256 220c363f51a007396549f19d3e269f3606b03fab72b299ce7486090c4ae70654
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6f960a27fdf571a26992b061d9f3e2aa604847e5c668c52869bf40a84bda70c demo/pane-drag-demo/demo.ts
 // @source a3cdc0510a78080e253b5df3cef4e30c103296990063a644a29a80f7f58c2bc7 demo/pane-drag-demo/stub-view.ts
@@ -35,7 +35,7 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 1e2fcab31b10c8a43d71f83e9c5311ce203ea2e9ed9e14ab6ef31269447cb77a src/renderer/renderer.ts
+// @source 4dafff72d051f454dddcac959721cb24d221ca0a8faa0335ece81c76e829ac95 src/renderer/renderer.ts
 // @source 7815658c5a9687d6dd7ee4f47b8fa40827440dd9b0b97b7a754e70cab013e797 src/renderer/runtime.ts
 // @source 64c60c5c62a8e77c6515f0e323fd2e044ef02d77187f6e095f4a67a961c2dcb5 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
@@ -46,7 +46,7 @@
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source 582fff626431e1197986d799dd12cb542073d60127344df03d38567aa8aecfa1 src/shared/view-shape.ts
+// @source 70b49460099287d79f2497fd97f399c504f250caa0026d53bd4e3dcdb9150f94 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({
@@ -1259,7 +1259,7 @@ function createPaneDrag(backing, source2) {
     const viaElement = element?.id;
     if (typeof viaElement === "string" && viaElement.length > 0) return viaElement;
     if (typeof token === "string" && token.length > 0) return token;
-    return "pane-a";
+    return DEFAULT_PANE_ID;
   };
   const zoneIdOf = (element) => {
     const viaElement = element?.zoneId;
