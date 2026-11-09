@@ -1,11 +1,11 @@
 # L2 — `store-tabs-record`: the interface
 
-- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 8 — **rev 8 re-grains §2 and §5 to the CREATION
-  as a WRITE at `docs/L3/store-tabs-record/design.md` rev 15: `commit` writes ONE row at the tab's own leaf, the seat repair APPENDS
-  it, and `repaired` on it compares against the creation expectation — the mirror of rev 7, which turned `remove` into ONE targeted
-  delete with a delete-only expectation (D-157, D-156, D-83, D-70)**; rev 6 took §5's composer judgement (D-139, D-135, D-73); rev 5 the write paths after D-142, rev 4 the client role.
-- **Inputs:** `docs/L3/store-tabs-record/design.md` rev 15 §3–§8 and §10; `docs/L1/focus-retirement.md` §2, §3 and §6 `E-11`; D-157
-  (the removal landing and the creation debt it books), D-156, D-142 (the settled shape `(b)`, a transparent passthrough), D-136, D-141, D-140, D-137, D-129, D-103, D-105, D-101, D-94, D-83, D-76,
+- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 9 — **rev 9 moves NOTHING at the crossing: design rev 16
+  separates the record's PRIVATE composer into a named drop (`rowsSeatedUnder`) and the assembly that keeps the name `composeRecord`
+  (design §11), so no route, `reason`, address, tier, export or answer moves, §2 stands byte-for-byte and §5's table stands — one sentence joins §5's composition paragraph and moves none of those**;
+  rev 8 re-grained §2 and §5 to the CREATION as a WRITE at design rev 15 (`commit` ONE row at the leaf, the seat repair APPENDING it, `repaired` against the creation expectation — the mirror of rev 7's ONE `delete` with its delete-only expectation; D-157, D-156, D-83, D-70); rev 6 took §5's composer judgement (D-139, D-135, D-73); rev 5 the write paths after D-142, rev 4 the client role.
+- **Inputs:** `docs/L3/store-tabs-record/design.md` rev 16 §3–§8, §10 and §11; `docs/L1/focus-retirement.md` §2, §3 and §6 `E-11`; D-159 (the creation landing these clauses now state), D-158, D-157
+  (the removal landing), D-156, D-155 (the composer judgement design §11 cuts one element out of), D-142 (the settled shape `(b)`, a transparent passthrough), D-136, D-141, D-140, D-137, D-129, D-103, D-105, D-101, D-94, D-83, D-76,
   D-70, D-62, D-3; D-26/D-43 (a count, a path or a stage is read from its owner); D-41 (a source cite names its site, never an offset).
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
@@ -104,7 +104,7 @@ would make the caller the authority the repair exists to be (D-142, D-129). **AN
 `declared-tier`, `parent-absent` and the store's own refusals, because those are the STORE'S judgement passing THROUGH rather
 than this surface's decision — and `['tabs']` being a declared root at `file` is what admits the legal tier and refuses every
 other (§1, D-101, D-142). **AND THE WHOLE-RECORD COMPOSITIONS THAT REMAIN ARE SETTLED, NOT MERELY BOOKED**: row `2` booked
-`composeRecord` — this module's own whole-record composer — and **§10 KEEPS it, re-graining TWO of its three grounds** (D-139, D-83, D-73);
+`composeRecord` — this module's own whole-record composer — and **§10 KEEPS it, re-graining TWO of its three grounds** (D-139, D-83, D-73), and **design §11 then measures its THREE ELEMENTS against all five call sites and promotes the drop alone (`rowsSeatedUnder`), a private name that moves no route, `reason`, address, tier or export**;
 D-142 books the renderer's under that same entry, a RENDERER fact that adds no composing route to `tabs` and licenses no
 composition of a caller's value here, while **NEITHER act writes a composed value at this rev — `commit` ONE row and
 `remove` ONE delete — and both compose only the EXPECTATION their `repaired` member is judged against** (D-142, D-136, §10). **AND THE RENDERER'S PATH IS LANDED, NOT DECIDED**:
@@ -143,7 +143,7 @@ LEG'S `['focus']` ROWS ARE THAT UNIT'S OWN L1 PASS** (`E-8`), and no battery of 
 
 ## 8. What this document does not decide
 
-The battery's rows — authored under `tests/integration/store-tabs-record/` and moving with this rev: FOUR new rows, THREE
-re-grains and ONE routing are NAMED at `docs/L3/store-tabs-record/design.md` §11 and are the landing pass's to author, per
+The battery's rows — authored under `tests/integration/store-tabs-record/`, and moved at `D-159` by FOUR new rows, THREE
+re-grains and ONE routing, NAMED at `docs/L3/store-tabs-record/design.md` §12 — are LANDED and this document's diff scope is spent on them; rev 9's ONE outstanding item, the `S-9` re-grain of a stale `pending.md` citation (`D-155`), is the landing pass's, per
 D-36's `F-1` and D-3 — also the landing pass's diff scope, and the `§5.U` matrix's operator rows, which stay `PARKED` until a
 human is at the window (L1 §3). It does not decide the `['focus']` deletion's own sites either: one writer each, none this module's (§7, D-3).

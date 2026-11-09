@@ -1,9 +1,7 @@
 # L3 — `renderer-wiring`: signatures
 
-- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 9 — the residual-currency pass: the two re-grains rev 8 still carried as **owed** — §2's `T-5` and §6's two `demo.ts` `previewOf` calls — are **LANDED**, each with its site (D-145, D-41). Rev 8 — **the currency pass AFTER the landing** (D-145): §1's `renderGhost` docblock stops claiming a removal on EVERY other arm and states the one arm that removes nothing — the attribute-less target, which returns ahead of the paint — which is what this page's own `ghostTarget` docblock already said and what `renderer.ts`'s `settleGhost` does (D-41). Rev 7 — re-grained WHOLE with
-  `design.md` rev 7 §2–§5: the composition's surface, the wiring's ONE seat and constant key, the ghost turn, and the deletions, transcribed as
-  stubs for L4. **Rev 6's `focus-retirement` stubs are LANDED in the file and are not re-declared** — `FocusActAnswer`, `FocusRefusal`,
-  `FocusSeat`, `composeRecord`, `refusalOf` stand byte-for-byte as rev 6 left them, because a name stated twice is a second authority (D-53, D-45).
+- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `pane-drag-temp` and the tab act's one row · **Branch:** `strata` (D-6) · **Rev:** 10 — **the row the tab act writes, transcribing `design.md` rev 11** (`D-158`, `D-159`; the user's instruction: *"Break out the elements of the composer that are needed for the repairs and make them separate functions"*): §3 gains the ONE surviving declaration (`rowForSeat` and `ActedSeat`) and **RE-STATES `FocusSeat` WHOLE**, because rev 11 moves its seat arm from `{kind:'seat', id}` to `{kind:'seat', row}` and a name stated twice is a second authority (D-53, D-45); §4 gains `composeRecord` as REMOVED; §5 loses it from the list of names that stand; §6 names the route this file may not take. Rev 9 — the residual-currency pass (D-145, D-41): `T-5` and the two `demo.ts` `previewOf` calls are LANDED, each with its site. Rev 8 — the one ghost arm that removes nothing. Rev 7 — re-grained WHOLE with `design.md` rev 7 §2–§5: the composition's surface, the wiring's ONE seat and constant key, the ghost turn and the deletions, transcribed as stubs for L4.
+- **Rev 6's `focus-retirement` stubs stand and are NOT re-declared, with TWO stated exceptions** — `FocusActAnswer`, `FocusRefusal` and `refusalOf` stand byte-for-byte as rev 6 left them, while **`FocusSeat` is re-stated whole in §3** (its seat arm carries the row it resolved) and **`composeRecord` is DELETED** (§4), which is the one name this unit removes rather than re-declares (D-45, `D-53`).
 - **Ceiling:** 150 lines, class max (D-1) · **Site:** `src/renderer/renderer.ts` unless a path is given (D-41) · **Status:** stubs for L4, one shot.
 
 ## 1. The composition's surface after the change — `PaneDragSurface` and its backing
@@ -68,8 +66,7 @@ const renderGhost = (): void => { /* G1–G9 */ }
  *  SPELLS `function startViewShape(` WITH NO SPACE, because two probes in `tests/theme-declaration.test.ts` search that exact text. */
 function startViewShape(theme: ThemeApplication | null, ghost: (() => void) | null): void
 //   startViewShape(themeApplication, gutter.renderGhost)      // `gutter` is `startGutterAffordance(runtime)`'s reading
-// AND `T-5`'s re-grain IS LANDED, not owed (design §6, D-145): that `chrome`-owned row no longer asserts the OLD literal
-// `startViewShape(themeApplication)` — `tests/theme-declaration.test.ts` reads the call's FIRST ARGUMENT by name (`firstArgumentOf`), which this unit's two-argument `main()` call satisfies; no other byte of `startViewShape` or of `main()` moves.
+// AND `T-5`'s re-grain IS LANDED, not owed (design §6, D-145): `tests/theme-declaration.test.ts` reads the call's FIRST ARGUMENT by name (`firstArgumentOf`), which this two-argument `main()` call satisfies; no other byte of `startViewShape` or `main()` moves.
 ```
 
 ## 3. The exact texts, and what the wiring READS from another module's surface
@@ -84,6 +81,29 @@ view.clearDrag()                             // the family ENDS with a tier-scop
 
 // THE DECLARATION'S ONE SPELLING (`ASM-3`, and `P-4` reads the rendered surface for THIS attribute only):
 ghostTarget.setAttribute('data-ghost', 'temp') ; ghostTarget.removeAttribute('data-ghost')
+
+// ═══ THE TAB ACT'S ONE ROW (`D-158`, `D-159`; design §3) — the whole of what this unit declares, and the whole of what the act writes ═══
+// `FocusSeat` IS RE-STATED WHOLE (design §3, D-158, D-45): the SEAT ARM CARRIES THE ROW IT RESOLVED, because `seatOf` found it in
+// `reading.rows` and a second lookup could miss a row the record does not hold. The id is the row's own, not a second spelling.
+export type FocusSeat =
+  | { readonly kind: 'seat'; readonly row: TabsRecordRow }
+  | { readonly kind: 'open'; readonly id: string; readonly target: string }
+  | { readonly kind: 'unresolved' }
+/** **S7's ARM, MADE UNREPRESENTABLE RATHER THAN GUARDED** (design §3, D-45): the route answers an unresolved seat BEFORE any write, so the builder takes the narrowed pair — the `UnreadableReading` idiom — and the composer's third arm has no subject. */
+export type ActedSeat = Exclude<FocusSeat, { readonly kind: 'unresolved' }>
+/** **THE ONE SURVIVING FUNCTION OF THE COMPOSER** (design §3): the row this act writes and NOTHING else.
+ *  · the SWITCH arm — `{...seat.row, active: true, lastActiveAt}`: the reading's row WHOLE, so `error`/`label` travel as carried and
+ *    no member of it can be dropped (`D-76`), with the instant stamped for the `tab-has-lastActiveAt` pair;
+ *  · the OPEN arm — `{id: seat.id, target: seat.target, active: true, lastActiveAt}`: NO `label` (the record's three field pairs fill
+ *    it in BOTH `healedFamily` scopes) and NO `error` (an OPTIONAL member no repair supplies, so a tab that has not failed carries
+ *    none — `D-158`); its id is `mintTabId`'s (`S6`); · NO third arm, NO `order`, NO `landing`, no seat id, no other row (design §3,
+ *    `D-76`) — answering the record's own `TabsRecordRow`, so THIS FILE imports that type · and the CLOCK IS ITS ONE READ: `lastActiveAt`
+ *    is `new Date().toISOString()` at the call, the composer's unadmitted third input, STATED here as it was not there. */
+export function rowForSeat (seat: ActedSeat): TabsRecordRow
+
+// THE ONE WRITE — the address is the ROW'S OWN, the tier the record's, the value the row, nothing re-spelled (D-136, D-142), and NEVER two
+// leaves (design §3): `['tabs',id,'active']` beside `['tabs',id,'lastActiveAt']` is two commits, two passes and two logs for one act, and a landed `active` with a refused stamp is a state no pair refuses and no repair heals.
+dataRoute('write', { path: ['tabs', row.id], tier: 'file', value: row })
 ```
 
 ## 4. Removed — stated as removed, and never re-declared
@@ -95,6 +115,7 @@ ghostTarget.setAttribute('data-ghost', 'temp') ; ghostTarget.removeAttribute('da
 | `const gestureIdOf = (gesture: unknown): string` | a total read of a handle `id` that is a NUMBER, feeding the release's ignored parameter (`void gestureId`) | `GESTURE_KEY` (§2) | design §5 |
 | `const erasePreview = (gestureId: string): void` — the NAME and its claim | "the closure's entry was deleted", the `erased` flag keeping the at-most-one rule | `endReading`: the flag now says `clearDrag` was SENT, and it is set by whichever ending turn ends the reading first | design §2, L2 §4 |
 | the composition's region headstone and `move`'s docblock (their `D-90` closure-state claim) | prose asserting the preview IS closure state, and `previewOf`'s reason for existing | **COMMENT-ONLY re-grain** in the SAME edit, to the two-phase/address reading `D-132`/`D-138` fix | D-41, D-132, D-143 |
+| `export function composeRecord(reading: TabsCommittedAnswer, seat: FocusSeat): Record<string, unknown>` — **THIS FILE'S, and NOT the module's nine-line namesake at `src/main/tabs-record/index.ts`** | this realm's ONE whole-record composition: `C1` the order seat, `C2` every row, `C3`/`C4` the seated row, written at `['tabs']` | `rowForSeat(seat)` (§3) and ONE `dataRoute('write', …)` at `['tabs', row.id]` — the `'seat'` repair appends, `healRecord` settles the pair — **and the THREE docblocks that name it re-grain in the SAME edit** (`focusActRoute`'s region headstone, its one-line act statement, the function's own), the treatment `previewOf` got above | design §3, `D-142`'s settled `(b)`, `D-156`, `D-157` |
 
 `gestures` REMAINS with a re-grained claim — ONE bookkeeping `Map`, keyed by the key each turn is handed, holding the ending flag and no value; it is not storage, because `['drag']` is keyed by pane id and is gesture-blind (`F-6`). **No name above is replaced by a local invention**: a stub L4 finds inconvenient is a design finding routed to L3 (D-45).
 
@@ -114,15 +135,15 @@ export function getSecurityClient(): SecurityClient
 export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurface
 export function zoneSizeConstraint(min: number, max: number): (changed: unknown, current: unknown, next: unknown, feedback?: { reason?: string; message?: string }) => boolean
 export function zoneSizeRepair(min: number, max: number): (data: unknown, feedback?: { reason?: string; message?: string }) => boolean
-export type FocusActAnswer · FocusRefusal · FocusSeat · export function composeRecord   // LANDED by `focus-retirement`; unmoved here (D-143)
+export type FocusActAnswer · FocusRefusal · FocusSeat · ActedSeat · export function rowForSeat   // `focus-retirement`'s, and `FocusSeat`/`ActedSeat`/`rowForSeat` are §3's (rev 11; `composeRecord` is §4's DELETION, D-143, D-158)
 export interface TabsPageDrive · TabsPagesReading · TabsPageRuntime
 // NOT in this list, and never stated as unchanged: `PaneDragSurface` and `PaneDragBacking` are §1's subject and §4's deletions touch them.
 ```
 
-Every name above keeps its SIGNATURE and its body, with ONE stated exception: `createPaneDrag`'s signature stands (`backing: unknown, source: unknown`) while its `PaneDragSurface` (§1) and its body (§2–§4) are exactly what this unit rewrites. Nothing beyond the composition's turns, the ONE seat, the ghost turn and the deletions moves (L2 §1, D-142, D-132).
+Every name above keeps its SIGNATURE and its body, with TWO stated exceptions: `createPaneDrag`'s signature stands (`backing: unknown, source: unknown`) while its `PaneDragSurface` (§1) and its body (§2–§4) are exactly what this unit rewrites; and **`composeRecord` is GONE** (§4), its one element surviving as §3's `rowForSeat`. Nothing beyond the composition's turns, the ONE seat, the ghost turn, the act's ONE ROW and the deletions moves (L2 §1, D-142, D-132, D-158).
 
 ## 6. What this file does NOT declare
 
 - **The two client routes, the address, its tier, the `viewDeclaredRoots` entry, the two channel constants, both `ipcMain.handle` sites, the preload's and `secure-panels`' lockstep halves, and the subscription array's fourth address** — ten hunks, `docs/L2/view-record/interface.md` §8's and `app-shell`/`secure-panels`' (`L1 §5 R-1`…`R-4`). `commitDrag`/`clearDrag` are READ here and landed there, in the SAME pass (D-112, D-3).
 - **`chrome`'s `tests/theme-declaration.test.ts`** — its two `ViewClientBridge` literals AND the ONE probe this change REDS: `T-5`'s `startViewShape(themeApplication)` literal, deleted by the second argument; the file's two `'function startViewShape('` region probes are SATISFIED by §2's header spelling — and that re-grain **IS LANDED** at `T-5`, which now reads the call's FIRST ARGUMENT by name and is satisfied by this unit's two-argument call (design §6, D-40, D-145). **AND `demo/pane-drag-demo/demo.ts`'s two `previewOf` calls**, `demo-panes`' row: **LANDED too** — both are `stub.drag()` reads at the address now (its `address` readout and its `surfaceDrag` field), `previewOf` survives in no `src/` byte but `src/renderer/renderer.ts`'s two deletion headstones (the composition region's and `gestures`'), so `npm run typecheck` reaches `demo/` with nothing to re-grain and `DB-1` is green (`D-118`, `D-132`, D-3).
-- **No MCP tool, resource, group, `data` member or secure-store byte** (D-18, D-112, D-123): the ghost asks an EXISTING route and paints a declaration on an element the envelope already authors.
+- **No MCP tool, resource, group, `data` member or secure-store byte** (D-18, D-112, D-123): the ghost asks an EXISTING route and paints a declaration on an element the envelope already authors. **AND NO ROUTE ON THE `tabs` SURFACE**: `tabs.commit(row)` is the ONE-ROW verb `D-159` lands and it keeps **NO RENDERER CALLER** — its only caller is `tests/e2e/store-crossings/`'s driver — because `D-142`'s settled `(b)` fixes the act's write as the `data.write` passthrough; retiring or re-pointing that member is `app-shell`'s adjudication, **routed here and not taken** (D-3).
