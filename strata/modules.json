@@ -129,6 +129,7 @@
         "tests/theme-act.test.ts",
         "tests/renderer-delivery-compliance.test.ts",
         "tests/unit/renderer-wiring/preview-seat.test.ts",
+        "tests/unit/renderer-wiring/state-checked-paint.test.ts",
         "tests/e2e/focus-retirement/",
         "tests/e2e/pane-drag-temp/"
       ],

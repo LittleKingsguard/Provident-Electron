@@ -594,7 +594,10 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
     expect(shapeRegion.length, 'and the slice is the WHOLE body, not the head\'s two lines').toBeGreaterThan(200)
     expect(shapeRegion.includes('theme?.apply()'), 'whose body applies the record\'s declaration').toBe(true)
     const shapeTurns = parameterNamesOf(code, 'function startViewShape(')
-    expect(shapeTurns.length, 'the shape is handed TWO turns, since the ghost\'s delivery rides the same body').toBe(2)
+    expect(
+      shapeTurns.length,
+      'the shape is handed THREE turns, since ONE delivery body drives all three paints: the appearance application, the ghost\'s declared transient, and the read-out the deleted sink used to author (`D-129`; design §1, §4 `S1`–`S4`) — the third was added under `F3` and this arity assertion is the edge that names it',
+    ).toBe(3)
     const ghostTurn = shapeTurns[1] ?? ''
     expect(
       new RegExp(`${ghostTurn}\\s*(?:\\?\\.)?\\(`).test(shapeRegion),

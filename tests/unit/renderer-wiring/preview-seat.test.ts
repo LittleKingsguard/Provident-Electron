@@ -26,7 +26,8 @@
 //
 //   · `PS-1` — a VALID observed move sends ONE `commitDrag(DEFAULT_PANE_ID, {size})` and NO `clearDrag`.
 //   · `PS-2` — a REVERT sends ONE `clearDrag` and NO `commitDrag`.
-//   · `PS-3` — a SECOND ending turn sends NOTHING.
+//   · `PS-3` — a SECOND ending turn sends NOTHING — the ONE `clearDrag` the flag owns, and NO `applyCommand` at all: the app
+//     hands the release no sink (`D-129`), so this row's `commands` reading is `0` where the seat's one sink write used to be.
 //   · `PS-4` — the ghost turn is RETURNED, and BOTH seats carry the SAME key.
 
 import { afterEach, describe, expect, it } from 'vitest'
@@ -114,7 +115,9 @@ interface Routes {
 interface Seat {
   readonly started: { readonly attached: boolean; readonly renderGhost: () => void }
   readonly routes: Routes
-  /** Every `applyCommand` the SINK made — the release's first statement (`R3`), and the seat's only sink writer. */
+  /** **EVERY `applyCommand` THE WIRING MADE** — and after `D-129` that is the READ-OUT'S turn (`renderPaneSize`, this file's
+   *  sibling `RS-1`) and nothing in the gesture: the seat's `commit` seam omits `release`'s third argument, so `R3` sends no
+   *  write and this counter is the row's statement that the deleted second authority has not come back. */
   readonly commands: unknown[]
   /** Every id the wiring resolved through `elementForNodeId`, in order: the graph read, never a selector. */
   readonly resolved: string[]
@@ -263,7 +266,7 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
     ).toEqual([])
   })
 
-  it('PS-3 — **A SECOND ENDING TURN SENDS NOTHING**: one gesture, TWO ending turns — this envelope\'s unusable pointer makes an observed move INVALID, so the affordance takes its reset arm, which drives the session\'s committing terminal (the RELEASE seat, whose `R5` sends the one `clearDrag`) and THEN the same turn\'s revert (the PREVIEW seat, `P5`) — and the closure flag gates the SECOND to the route alone, so exactly one ending is sent and the sink and the `file` commit are never skipped by it', () => {
+  it('PS-3 — **A SECOND ENDING TURN SENDS NOTHING**: one gesture, TWO ending turns — this envelope\'s unusable pointer makes an observed move INVALID, so the affordance takes its reset arm, which drives the session\'s committing terminal (the RELEASE seat, whose `R5` sends the one `clearDrag`) and THEN the same turn\'s revert (the PREVIEW seat, `P5`) — and the closure flag gates the SECOND to the route alone, so exactly one ending is sent, the `file` commit is never skipped by it, and the sink is not handed at all', () => {
     const live = seat()
     live.press()
     live.moveAt(250)
@@ -288,8 +291,8 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
     ).toBe(1)
     expect(
       live.commands.length,
-      'PS-3 — the flag skips the ERASE ROUTE ALONE: the sink still ran once, and an ending that suppressed it would be a refusal the operator never hears (`D-117`)',
-    ).toBe(1)
+      'PS-3 — and NO `applyCommand` stands in the gesture at all: the seat hands `release` NO SINK (`D-129`; design §5), so the release\'s `R3` sends nothing and the read-out it used to author is `renderPaneSize`\'s now, painted from the DELIVERY (this row\'s sibling file, `RS-1`). The flag\'s whole property — it skips the ERASE ROUTE ALONE — is carried by the two readings above and below instead of by this one: the `file` commit ran (`commitPane`, one) and the route was suppressed (`clearDrag`, one for two ending turns), which is the same pair a sink write would have had to prove by its own count. A `1` here would be the deleted second authority returning, and a `0` that came from an UNREACHED release is excluded by `commitPane`\'s `1`',
+    ).toBe(0)
     expect(
       live.routes.clearDrag,
       'PS-3 — EXACTLY ONE `clearDrag` for the gesture, though two ending turns ran: the erase is gated by the closure flag `E1`, and a second route here would be a second ending of a family already gone',

@@ -369,11 +369,14 @@ const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.lo
  *       reverts on every revert arm), never a graph write and never the affinity's own node;
  *   (v) the CURSOR write: the handle's own style member, with the declaration the module
  *       resolved (never a vocabulary of the wiring's own).
- *  The `commit` seam is `createPaneDrag`'s `release`, and it does TWO things in the order release's
- *  own contract states: ONE `Runtime.applyCommand` `state-slice` write to the AUTHORED STATUS NODE
- *  carrying the CLAMPED value (the SINK, invoked first, so the recorded reading is unchanged), then
- *  ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing — no preview write, no style write,
- *  no handler dispatch and no rebind. */
+ *  The `commit` seam is `createPaneDrag`'s `release`, and **THE APP HANDS IT NO SINK** (`D-129`; design §5): the
+ *  seam's THIRD ARGUMENT IS DELETED, so the turn makes ONE `commitPane(DEFAULT_PANE_ID, {size})` across the
+ *  crossing and then its own ending — no sink write, no preview write, no style write, no handler dispatch and
+ *  no rebind. **THE READ-OUT THE SINK USED TO AUTHOR IS `renderPaneSize`'s NOW**, painted from the DELIVERY that
+ *  carries the record's stored size (returned below and called by the shape's one subscription body), while
+ *  `release`'s `R3` keeps its position and its signature for `demo/pane-drag-demo/demo.ts` — a realm with no
+ *  crossing and no delivery to paint from (`D-118`). A clamped gesture figure written into a rendered node
+ *  beside `['panes']` at `file` was the SECOND AUTHORITY; the record wins every arm the two can disagree in. */
 
 export function startGutterAffordance (runtime: Runtime): {
   /** **THE ONE READING THIS WIRING NOW RETURNS, AND IT HAS A READER** (`D-117`). A REFUSED `attach()`
@@ -382,7 +385,8 @@ export function startGutterAffordance (runtime: Runtime): {
    *  **THE `writes` ARRAY THIS SIGNATURE ALSO CARRIED IS DELETED** (`D-117`): it recorded every commit
    *  with the runtime's own status so a refusal would be a visible reading, and `main()` discarded the
    *  whole return value, so the record had NO reader and the visibility it existed for was never
-   *  delivered — `write`'s own `console.error` is what makes a refusal visible, and it always was. */
+   *  delivered — a refusal is made visible AT THE TURN THAT TOOK IT, and that turn is `renderPaneSize`'s
+   *  `console.error` now (the sink closure's ONE surviving virtue), as it always was. */
   readonly attached: boolean
   /** **THE GHOST TURN, HANDED OUT** (`D-138`, `D-144`; design §1): the composition's `renderGhost` member,
    *  RETURNED rather than called here, because the delivery that drives it is the SHAPE's —
@@ -390,6 +394,14 @@ export function startGutterAffordance (runtime: Runtime): {
    *  hands it over. The composition registers NO subscriber of its own, so this return value is the
    *  whole of the wiring between the delivery and the declared transient. */
   readonly renderGhost: () => void
+  /** **THE READ-OUT'S TURN, HANDED OUT** (`D-129`; design §4 `S1`–`S4`): the DELETED sink's successor, and
+   *  `#gutter-status`'s one writer from here on. It is RETURNED for the ghost turn's reason — the delivery
+   *  that drives it is the shape's — and `main()` hands it to `startViewShape` as its THIRD turn, so ONE
+   *  subscription body repaints the appearance, the transient and the read-out and no second subscription
+   *  is taken (`D-90`, `D-126`). **IT READS THE SHAPE AND NEVER THE GESTURE**: the value is the record's
+   *  stored `paneSizeOf(DEFAULT_PANE_ID)`, the same member `startSizeOf` answers, so the read-out and the
+   *  next gesture's start figure cannot disagree (`D-117`). */
+  readonly renderPaneSize: () => void
 } {
   const element = runtime.elementForNodeId(GUTTER_AFFORDANCE_ID)
   const target = runtime.elementForNodeId(GUTTER_TARGET_ID)
@@ -413,36 +425,57 @@ export function startGutterAffordance (runtime: Runtime): {
     // no second writer exists (`docs/specs/gutter.md` §0 ruling 1, `§4.4` S-11).
     commit: (): void => undefined,
   })
-  /** **THE COMMIT ROUTE — ONE `state-slice` WRITE ON THE AUTHORED STATUS NODE, AND ITS REFUSAL IS
-   *  NEVER DISCARDED** (`§2.1` item 8(v), `§2.5` item 5, `§3.1` M-19; L-5/ADV-GU-1). The as-filed
-   *  form passed the DOM ELEMENT it had resolved as `applyCommand`'s `node`, so the runtime's F5
-   *  guard (`typeof cmd.node === 'object' && !this.isRegisteredNode(cmd.node)`) refused the op
-   *  WHOLE with `{status:'rejected'}` — and the returned status was thrown away, so NO write ever
-   *  landed on the graph and nothing said so. THE FIX IS TWO HALVES: (a) the `node` handed to
-   *  `applyCommand` is the AUTHORED STATUS NODE'S OWN ID, resolved through the same graph-read
-   *  surface the elements were resolved through (`Runtime.elementForNodeId`'s own id space, never
-   *  a selector, a lookup or a created element); (b) **A REFUSAL IS MADE VISIBLE AT THE TURN THAT TOOK
-   *  IT**, by the `console.error` below. **THE ARRAY THE AS-FILED FIX ALSO BUILT IS DELETED** (`D-117`):
-   *  it recorded every write with the runtime's own status and NOBODY READ IT — `main()` discarded this
-   *  function's whole return value — so a "recorded reading" that nothing reads is the same silent
-   *  no-op one level further from the fault, which is `D-70`'s rule applied to a binding rather than to
-   *  a member. The write stays ONE `state-slice` write to the authored status node carrying the CLAMPED
-   *  value, with no preview write, no style write, no rebind and no second writer. */
-  const write = (value: unknown): string => {
-    const carried = typeof value === 'string' ? value : String(value)
-    const answer = runtime.applyCommand({
-      kind: 'state-slice',
-      node: GUTTER_STATUS_ID,
-      mutation: [{ targetProp: 'content', mode: 'replace', value: carried }],
-    })
-    const status = answer.status
-    if (status !== 'applied') {
-      // A REFUSAL IS A RECORDED READING, NEVER A SILENT NO-OP (L-5/ADV-GU-1). The demo's MCP
-      // surface is the app graph itself (`provident.get_rendered_html`, `get_node_state`), so
-      // this console reading is the operator/Debug-pane half of the same fact.
-      console.error(`[provident-renderer] gutter commit REFUSED (status=${status}) for node ${GUTTER_STATUS_ID}`)
+  /** **THE READ-OUT'S TURN — `#gutter-status` PAINTED FROM THE DELIVERY, WHICH IS THE WHOLE OF `D-129`'S `F3`**
+   *  (`D-129`, `D-126`; design §4 `S1`–`S4`). It replaces the `write` closure this seat used to hand
+   *  `release`, and the difference is AUTHORSHIP rather than shape: the sink wrote the GESTURE's CLAMPED
+   *  figure into a rendered node beside `['panes']` at `file` — the read-out's SECOND AUTHORITY, which the
+   *  record can falsify at a second boot, at a refused commit, at another writer's act and at a refusing
+   *  release — while this turn reads the SHAPE and paints the figure the record itself carries. **THE APP
+   *  HANDS `release` NO SINK AT ALL** (the seam's third argument is deleted below), and `R3` keeps its
+   *  position for the demo realm's sake.
+   *  `S1` — **NO PAINT WHERE THE FAMILY DID NOT ANSWER**: the gate is `shape().source.panes === 'record'`,
+   *  the FAMILY's own arm and NOT `filled`, because `filled` only says that SOME reading landed while a
+   *  `'default'` panes arm is a family the record did not answer — painting its figure would be `D-127`'s
+   *  *failed read turned into a state*. The envelope's authored `content` then stands.
+   *  `S2` — **THE VALUE IS THE RECORD'S, AND IT IS THE SAME MEMBER THE GESTURE READS**:
+   *  `String(getViewClient().paneSizeOf(DEFAULT_PANE_ID))`, which is what `startSizeOf` answers, so the
+   *  read-out and the next gesture's start figure cannot disagree (`D-117`). Its per-id default arm is
+   *  not a second authority one level below `S1`: a `'record'` family that does not name the pane answers
+   *  `paneGeometryIn`'s declared figure — the same derivation the gesture reads.
+   *  `S3` — **THE STATE CHECK**: `authoredSettingOf(runtime, GUTTER_STATUS_ID)` — this realm's own authored
+   *  read, the relation the appearance act's baseline already uses — asks whether the node already carries
+   *  that `content`, and the write is SKIPPED where it does, so "not owed" means "the write would be a
+   *  no-op" by construction and no binding remembers a paint.
+   *  `S4` — ONE `state-slice` `content` write on the AUTHORED STATUS NODE, and a status but `'applied'`
+   *  `console.error`ed: the deleted closure's ONE surviving virtue (`D-117`'s own visible-refusal half).
+   *  **IT WRITES THE RECORD AT NO TIER, OPENS NO ROUTE, COMPOSES NO MEMBER AND ADDS NO SUBSCRIPTION**: it
+   *  is a RENDER write of a value the delivery already carries, the class `theme?.apply()` is. */
+  const renderPaneSize = (): void => {
+    try {
+      const client = getViewClient()
+      // S1 — the family's own arm, never `filled`: a `'default'` panes family is one the record did not answer.
+      if (client.shape().source.panes !== 'record') return
+      // S2 — the record's stored figure, spelled exactly as the drag's `startSizeOf` reads it.
+      const value = String(client.paneSizeOf(DEFAULT_PANE_ID))
+      // S3 — the surface is asked, and nothing is remembered: a node already carrying this content owes no write.
+      const authored = authoredSettingOf(runtime, GUTTER_STATUS_ID)
+      if (authored.readable && authored.setting === value) return
+      // S4 — ONE `state-slice` on the AUTHORED status node, and a refusal said out loud rather than swallowed.
+      const answer = runtime.applyCommand({
+        kind: 'state-slice',
+        node: GUTTER_STATUS_ID,
+        mutation: [{ targetProp: 'content', mode: 'replace', value }],
+      })
+      const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+      if (status !== 'applied') {
+        // A REFUSAL IS A RECORDED READING, NEVER A SILENT NO-OP (L-5/ADV-GU-1). The demo's MCP
+        // surface is the app graph itself (`provident.get_rendered_html`, `get_node_state`), so
+        // this console reading is the operator/Debug-pane half of the same fact.
+        console.error(`[provident-renderer] gutter read-out REFUSED (status=${status}) for node ${GUTTER_STATUS_ID}`)
+      }
+    } catch {
+      // NOTHING ESCAPES THE DELIVERY: a hostile shape or runtime is the reading such a turn leaves standing
     }
-    return status
   }
   /** **THE SEAT'S ONE KEY** (`D-138`, ASM-L3-2): ONE closure constant, handed to BOTH drag writes — the
    *  `commit` seam's `release` and the preview seam's two arms — so the app's ONE gesture is keyed ONE
@@ -510,20 +543,24 @@ export function startGutterAffordance (runtime: Runtime): {
     boundsOf: (el: unknown, token: unknown): unknown => drag.boundsOf(el, token),
     resizableOf: seams.resizableOf,
     moveTypeOf: (): unknown => POINTER_TYPES.move,
-    /** **THE COMPOSITION'S SINGLE SINK WRITER IS `release`, AND IT WRITES THRICE IN ONE ORDERED TURN**
-     *  (`D-117`, `D-138`): the SINK first — one managed-channel write to the AUTHORED STATUS node and
-     *  nothing else — then ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing, then its OWN
-     *  ending of the drag family the moves wrote. That is `release`'s own contract (`R3`/`R4`/`R5`), and
-     *  this seam CHANGES IN ONE PLACE ONLY: the gesture id it hands the turn is the closure's ONE
-     *  constant `GESTURE_KEY`, never a read of the handle's numeric `id` (`gestureIdOf` is RETIRED). It
-     *  stays an INLINE PROPERTY of this literal on purpose: `tests/pane-drag-compliance.test.ts`'s
-     *  `D-117/LIVE-READ` probes this exact form, so hoisting it to a `const` would red a gating row. */
+    /** **THE COMPOSITION'S ONE END-TURN IS `release`, AND THE APP HANDS IT NO SINK** (`D-117`, `D-138`,
+     *  `D-129`): ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing, then its OWN ending of the
+     *  drag family the moves wrote. That is `release`'s own contract at `R4`/`R5` — **`R3` IS STILL THERE AND
+     *  IS STILL FIRST, but this realm passes it NOTHING**, because the read-out it used to author is
+     *  `renderPaneSize`'s now, painted from the delivery (design §5). `release`'s STEPS are unmoved and its third
+     *  parameter is widened to OPTIONAL at `PaneDragSurface`'s own declaration, which is what lets THIS call omit it
+     *  while `demo/pane-drag-demo/demo.ts` — a realm with no crossing and no delivery to paint from — still supplies
+     *  one and still compiles (`D-118`). Two changes and only two: the gesture id it hands the turn is the closure's
+     *  ONE constant `GESTURE_KEY`, never a read of the handle's numeric `id` (`gestureIdOf` is RETIRED), and
+     *  the THIRD ARGUMENT is gone. It stays an INLINE PROPERTY of this literal on purpose:
+     *  `tests/pane-drag-compliance.test.ts`'s `D-117/LIVE-READ` probes this exact form, so hoisting it to a
+     *  `const` would red a gating row. */
     commit: (gesture, value): void => {
-      drag.release(GESTURE_KEY, value, write)
+      drag.release(GESTURE_KEY, value)
     },
   })
   const attached = affordance.attach()
-  return { attached, renderGhost: drag.renderGhost }
+  return { attached, renderGhost: drag.renderGhost, renderPaneSize }
 }
 
 /** **THE FIVE `data.*` ROUTES' ANSWER SITE IN THIS REALM** (`D-112`; `docs/L2/central-data/interface.md` §5). The arm hands
@@ -1086,7 +1123,11 @@ async function main(): Promise<void> {
   // reading above, and its `renderGhost` member is the composition's own turn — handed HERE so the ONE delivery calls it
   // beside the appearance application. No new registration, no new boot step and nothing awaited: the turn runs inside the
   // subscription body the shape already owns.
-  startViewShape(themeApplication, gutter.renderGhost)
+  // **AND THE THIRD ARGUMENT IS THE READ-OUT'S TURN** (`D-129`; design §1, §4 `S1`–`S4`): `gutter.renderPaneSize` is the
+  // DELETED sink's successor — the delivery paints `#gutter-status` from the record's stored size instead of the gesture
+  // writing its clamped figure into a rendered node. One hand-over, one subscription body, three rendered values; the
+  // composition registers nothing and no second subscription is taken (`D-90`, `D-92` `M-4`).
+  startViewShape(themeApplication, gutter.renderGhost, gutter.renderPaneSize)
   // ⟶ **THE APP-STATE ROWS' SHAPE (`D-104`; `D-82`'s `V3`)** — the pane that displays the module registry is filled from a
   //    DELIVERY from here on, and the request-time read `panels.refresh()` used to make is deleted. Started LAST and never
   //    awaited, for the reason the two sites above it are: every boot step including `bridge.ready()` has already run, so no
@@ -1280,16 +1321,28 @@ function describeSecurityReading(shape: { filled: boolean; token: string | null;
  *  the drag's declared transient from `['drag']`'s own node. The turn is a MEMBER the wiring handed out —
  *  `startGutterAffordance`'s return value — because THIS function is the shape's ONE subscription and the composition
  *  registers no second consumer of the push (`D-92` `M-4`, `D-126`). A realm whose gutter did not attach still holds a
- *  turn; it answers the declared degradation and paints nothing. */
-function startViewShape(theme: ThemeApplication | null, ghost: (() => void) | null): void {
+ *  turn; it answers the declared degradation and paints nothing.
+ *
+ *  **AND THE THIRD ARGUMENT IS THE READ-OUT'S TURN, CALLED THIRD IN THE ONE BODY** (`D-129`; design §1, §4 `S1`–`S4`):
+ *  `gutter.renderPaneSize` paints `#gutter-status` from the record's stored size when the panes family answered, and the
+ *  sink that used to write it keeps no write at all. **NO SECOND SUBSCRIPTION IS TAKEN** (`D-90`): one body drives the
+ *  appearance, the transient and the read-out, in that order, and each turn is total — a hostile shape is a reading each
+ *  of them leaves standing, never an exception out of the delivery.
+ *
+ *  **THE HEADER SPELLS `function startViewShape(` WITH NO SPACE**, because two probes in
+ *  `tests/theme-declaration.test.ts` search that exact text; its `parameterNamesOf` arity row is `chrome`'s same-edit
+ *  re-grain (`D-3`, `D-128`) — the third turn makes the count three. */
+function startViewShape(theme: ThemeApplication | null, ghost: (() => void) | null, readout: (() => void) | null): void {
   const client = getViewClient()
   viewSubscription = client.subscribe(() => {
-    // A DELIVERY IS A RE-READ (the client has already adopted it) and its appearance turn, then the ghost's. A record with
-    // no applicable declaration — the placeholder, which names no attribute — writes nothing, so a delivery that moved
-    // another family costs one read and no appearance write; the ghost turn is the drag address's own transient and asks
-    // its own route once.
+    // A DELIVERY IS A RE-READ (the client has already adopted it) and its appearance turn, then the ghost's, then the
+    // read-out's. A record with no applicable declaration — the placeholder, which names no attribute — writes nothing,
+    // so a delivery that moved another family costs one read and no appearance write; the ghost turn is the drag
+    // address's own transient and asks its own route once; the read-out's turn paints the panes family's stored size
+    // and skips the write where the authored status node already carries it.
     theme?.apply()
     ghost?.()
+    readout?.()
   })
   void client.fill().then(
     (reading) => {
@@ -1533,7 +1586,9 @@ export interface ThemeApplicationReading {
   readonly sent: boolean
   /** The declaration the crossing's record carried at this turn, as applied, or `null` where nothing was applicable. */
   readonly declaration: { readonly name: string; readonly value: string; readonly removal: boolean } | null
-  /** Whether THAT declaration moved since the last one applied here. */
+  /** **Whether a paint was OWED** — the authored surface did not already carry this declaration's own mutation
+   *  (`D-129`; the member read *"moved since the last one applied"* while `lastApplied` stood, and that copy of a paint is
+   *  what this pass deletes). */
   readonly declared: boolean
   /** The runtime's OWN answer to the `state-slice` write, or `null` where no write was attempted. */
   readonly status: string | null
@@ -1554,7 +1609,7 @@ export interface ThemeApplication {
   attach(): { readonly attached: number }
 }
 
-/** The authored setting as the graph holds it, or the declared UNREADABLE answer when the state node is absent, was
+/** **THE AUTHORED SETTING AS THE GRAPH HOLDS IT, OR THE DECLARED UNREADABLE ANSWER** when the state node is absent, was
  *  renamed, or the read throws. A node that carries no `content` at all is a READABLE absence — the empty setting. */
 function authoredSettingOf(
   runtime: Runtime,
@@ -1571,6 +1626,46 @@ function authoredSettingOf(
     return { readable: false, setting: '' }
   } catch {
     return { readable: false, setting: '' }
+  }
+}
+
+/** **THE SURFACE'S OWN MEMBER, ASKED AND NOT REMEMBERED** (`D-129`, `D-126`'s `F5`/`F9`; design §4) — `authoredSettingOf`'s
+ *  twin, and the relation the two state-checked paints read instead of a copy of what they last wrote. It answers
+ *  `runtime.nodeState(nodeId)`'s `states[0].props[name]` as `{readable, held}`, and it is **TOTAL**: a `''` node id, an
+ *  absent node, an answer with no `states`, a `states[0]` carrying no `props` object, and a read that THROWS
+ *  (`resolveTarget`'s own *unresolved target*) all answer `readable: false` and never propagate. A readable surface that
+ *  simply lacks the member answers `held: undefined`, which is the fact a removal write would leave behind.
+ *  **WHY IT IS NOT A SECOND AUTHORITY**: a copy of what was WRITTEN is a claim about the PAST that a graph-touching
+ *  reply which REBUILDS the node falsifies, while this reads the state itself — the check stores nothing, and after this
+ *  pass no binding in either application remembers a write. **AN ABSENCE-KEYED SKIP IS UNSOUND ON EVERY SURFACE** (`D-163`;
+ *  design §6): an absent `held` is what a REBUILT node, a store-projected state AND a NOT-YET-APPLIED REMOVAL all look
+ *  like, so a member's ABSENCE establishes nothing — only a POSITIVE SETTLED MATCH (`held.held === wanted`) may license a
+ *  skip, and each site decides its removal arm BEFORE it calls this relation. **IT IS FAILED OPEN**: an unreadable surface
+ *  paints, and the engine's own refusal then returns as the reading's `status` rather than as silence — the fail-open rule
+ *  read at the arm where no match can be established at all. **THE COST IS NAMED, NOT HIDDEN**: where `wanted` is a VALUE,
+ *  one `nodeState` read per site per delivery — the read-out asks one on every delivery its family allows, and each
+ *  declaration asks one whenever its arm is the positive one — and each `nodeState` projects one node's states AND builds a
+ *  whole-graph `census()`, so it is one graph walk per such site per delivery. **A REMOVAL
+ *  DELIVERY TAKES NO READ AND COSTS ONE REDUNDANT IDEMPOTENT `state-slice`**, and it cannot loop because a renderer graph
+ *  write raises no view push: it is a PRICE, not a defect, because the alternative is a pane the record closed with a DOM
+ *  still carrying `inert` (`OV-12`, `OV-14`). The cheaper DOM read was refused on `D-130`'s measurement — the DOM is a
+ *  flush BEHIND the `props` a write sets, so it could skip an owed paint — and that sentence is the same one that convicts
+ *  a `props` read in the REMOVAL direction: the instrument was never the fault, the SKIP was too wide. */
+function authoredPropOf(
+  runtime: Runtime,
+  nodeId: string,
+  name: string,
+): { readonly readable: boolean; readonly held: unknown } {
+  if (nodeId === '') return { readable: false, held: undefined }
+  try {
+    const answer = runtime.nodeState(nodeId) as { readonly states?: readonly unknown[] } | null | undefined
+    const states = answer?.states
+    if (!Array.isArray(states) || states.length === 0) return { readable: false, held: undefined }
+    const props = (states[0] as { readonly props?: unknown } | null | undefined)?.props
+    if (props === null || typeof props !== 'object' || Array.isArray(props)) return { readable: false, held: undefined }
+    return { readable: true, held: (props as Record<string, unknown>)[name] }
+  } catch {
+    return { readable: false, held: undefined }
   }
 }
 
@@ -1603,9 +1698,12 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
   let lastCarried: { readonly setting: string } | null = null
   const boot = authoredSettingOf(runtime, nodeId)
   if (boot.readable) lastCarried = { setting: boot.setting }
-  /** **THE LAST DECLARATION THIS REALM APPLIED** — the same kind of closure state, and the reason a delivery that changed
-   *  another family writes nothing: the record's declaration is compared with the one already on the node. */
-  let lastApplied: { readonly name: string; readonly value: string; readonly removal: boolean } | null = null
+  /** **`lastApplied` IS DELETED HERE** (`D-129`, `D-126`'s `F5`; design §4): it was a copy of the last declaration this
+   *  realm WROTE — a claim about the past that a graph-touching reply which REBUILDS the authored node falsifies, because
+   *  the node loses the declaration and the copy still says it was applied, so NOTHING repaints. What `applyTurn` asks
+   *  instead is the SURFACE, through `authoredPropOf`: the check stores nothing, and after this pass no binding in this
+   *  application remembers a write. **`lastCarried` STAYS** — it guards an ACT (whether the crossing has been asked the
+   *  setting this realm read), which is a store question and never a copy of a paint. */
 
   const reading = (base: {
     readonly setting: string | null
@@ -1647,7 +1745,9 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
   }
 
   /** **THE DELIVERY'S TURN** — read the record the crossing's answer now carries and write `props.<declaration.name>`
-   *  on the AUTHORED state node, as ONE `state-slice`. */
+   *  on the AUTHORED state node, as ONE `state-slice`, **WHEN THE SURFACE DOES NOT ALREADY CARRY IT** (`D-129`, `D-126`'s
+   *  `F5`; design §4). What decides the paint is the node the write would LAND ON — `authoredPropOf(runtime, nodeId,
+   *  declaration.name)` — asked for **the very expression this turn's mutation carries**. */
   const applyTurn = (): ThemeApplicationReading => {
     const theme = getViewClient().themeRecord()
     const declaration = applicableDeclaration(theme)
@@ -1655,11 +1755,22 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
     if (declaration === null) {
       return reading({ setting: theme.token, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
     }
-    const declared =
-      lastApplied === null ||
-      lastApplied.name !== declaration.name ||
-      lastApplied.value !== declaration.value ||
-      lastApplied.removal !== declaration.removal
+    // **ONLY A POSITIVE SETTLED MATCH MAY SKIP THE PAINT** (`D-163`'s corrected rule; design §4, §6): `wanted` is the
+    // mutation's OWN expression (`removal ? undefined : value`), so the paint is owed UNLESS the surface already holds
+    // THAT value — `declared = wanted === undefined || !held.readable || held.held !== wanted`, i.e. it skips only where
+    // `wanted !== undefined && held.readable && held.held === wanted`.
+    // **THE OPERANDS ARE ORDERED SO A REMOVAL IS DECIDED BEFORE ANY READ IS TAKEN**: absence in `props` is what a REBUILT
+    // node, a store-projected state AND a NOT-YET-APPLIED REMOVAL all look like, so an absent member establishes nothing
+    // and a removal ALWAYS PAINTS — it is ONE redundant idempotent `state-slice` (`OV-12`, `OV-14`), a price paid per
+    // delivery and never a budget, because the alternative is a node the record closed with a DOM still carrying the
+    // attribute. **A REMOVAL DELIVERY THEREFORE COSTS NO READ AT ALL**: the read is taken only where `wanted !== undefined`.
+    // An unreadable surface FAILS OPEN on the POSITIVE arm alone and paints, its refusal returning as `status`.
+    const wanted = declaration.removal ? undefined : declaration.value
+    let declared = true
+    if (wanted !== undefined) {
+      const held = authoredPropOf(runtime, nodeId, declaration.name)
+      declared = !held.readable || held.held !== wanted
+    }
     if (!declared) {
       return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: false, status: null, written: false })
     }
@@ -1676,8 +1787,9 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
             targetProp: `props.${declaration.name}`,
             mode: 'replace',
             // THE REMOVAL ARM IS THE MECHANISM'S `removal` MEMBER — an `undefined` on `props.<key>` is the engine's
-            // declared attribute REMOVAL, and never an empty string that happens to be falsy.
-            value: declaration.removal ? undefined : declaration.value,
+            // declared attribute REMOVAL, and never an empty string that happens to be falsy. IT IS THE SAME EXPRESSION
+            // THE CHECK ABOVE COMPARES WITH, which is why the two cannot drift.
+            value: wanted,
           },
         ],
       })
@@ -1686,9 +1798,8 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
       status = 'threw'
     }
     const written = status === 'applied'
-    // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next delivery rather than
-    // being swallowed by a seed that claims it was applied.
-    if (written) lastApplied = declaration
+    // **NOTHING IS REMEMBERED HERE** (`D-129`): a refused write is retried by the next delivery because the SURFACE
+    // still does not carry it, not because a seed says so.
     return reading({ setting: theme.token, changed: false, sent: false, declaration, declared: true, status, written })
   }
 
@@ -1936,15 +2047,14 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
    *  move is not an act. */
   const boot = authoredOverlayToken(runtime, stateNodeId)
   let lastCarried: string | null = boot.readable ? boot.token : null
-  /** **THE LAST DECLARATION THE RENDERED SURFACE HOLDS — SEEDED WITH THE ONE THE AUTHORED ENVELOPE ALREADY CARRIES**, which
-   *  is the REMOVAL arm: the app root is authored with no `inert` prop, so a boot's closed pane is already rendered and the
-   *  first delivery that says `open` is the first write. A boot therefore declares nothing, which is `OV-6`'s claim and is
-   *  kept rather than restated. */
-  let lastApplied: { readonly name: string; readonly value: 'true' | false; readonly removal: boolean } | null = {
-    name: attributeName,
-    value: false,
-    removal: true,
-  }
+  /** **`lastApplied` IS DELETED HERE, AND ITS SEED WITH IT** (`D-129`, `D-126`'s `F9`; design §4). It was a copy of the
+   *  last declaration this application WROTE — a claim about the past that a graph-touching reply which REBUILDS the app
+   *  root falsifies, so the surface lost the declaration and the copy still said it stood and NOTHING repainted. **THE
+   *  SEED WENT FURTHER AND WAS `D-129` CASE (b) EXACTLY**: `{name: attributeName, value: false, removal: true}` asserted
+   *  that the authored root already carried the removal arm WITHOUT ASKING — a local DEFAULT standing in for a reading.
+   *  What `renderTurn` asks instead is the SURFACE, through `authoredPropOf(runtime, appRootId, composed.name)`; the check
+   *  stores nothing, so after this pass no binding in this application remembers a write. **`derived` STAYS**: it repeats
+   *  the STORE's last delivered word — the reading — and is not a memory of what this realm wrote. */
   /** THE DERIVED WORD THE LAST RENDER LEFT — what `changed` is measured against, and the machine's only durable memory. */
   let derived: OverlayState = 'closed'
   /** **THE ONE SPELLING OF THE PANE'S PREDICATE** — `D-123`'s own (`state === 'open' || state === 'held'`), read here for
@@ -2074,11 +2184,22 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
       value: declaration.value,
       removal: declaration.removal,
     }
-    const same =
-      lastApplied !== null &&
-      lastApplied.name === composed.name &&
-      lastApplied.value === composed.value &&
-      lastApplied.removal === composed.removal
+    // **ONLY A POSITIVE SETTLED MATCH MAY SKIP THE PAINT** (`D-163`'s corrected rule; design §4, §6) — asked of the
+    // SURFACE, through the same relation the appearance application uses, and asked for the very expression the mutation
+    // below carries (`removal ? undefined : value`). The predicate is `same = wanted !== undefined && held.readable &&
+    // held.held === wanted`, so the paint is owed on `wanted === undefined || !held.readable || held.held !== wanted`.
+    // **THE OPERANDS ARE ORDERED SO A REMOVAL IS DECIDED BEFORE ANY READ IS TAKEN**: absence in `props` is what a REBUILT
+    // root, a store-projected state AND a NOT-YET-APPLIED REMOVAL all look like, so an absent member establishes nothing
+    // and a removal ALWAYS PAINTS — ONE redundant idempotent `state-slice`, a price paid per delivery and never a budget,
+    // because the alternative is a pane the record closed with a DOM still carrying `inert`. **A REMOVAL DELIVERY
+    // THEREFORE COSTS NO READ AT ALL**: the read is taken only where `wanted !== undefined`. An unreadable root FAILS OPEN
+    // on the POSITIVE arm alone and paints, its refusal returning as `status`.
+    const wanted = composed.removal ? undefined : composed.value
+    let same = false
+    if (wanted !== undefined) {
+      const held = authoredPropOf(runtime, appRootId, composed.name)
+      same = held.readable && held.held === wanted
+    }
     if (same) {
       return reading({ state, verb: null, changed: state !== before, asked: null, wrote: false, declaration: composed, status: null, written: false, escaped: false })
     }
@@ -2092,8 +2213,9 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
             targetProp: `props.${composed.name}`,
             mode: 'replace',
             // THE REMOVAL ARM IS THE MECHANISM'S `removal` MEMBER — an `undefined` on `props.<key>` is the engine's
-            // declared attribute REMOVAL, never an empty string that happens to be falsy (`theme`'s own note).
-            value: composed.removal ? undefined : composed.value,
+            // declared attribute REMOVAL, never an empty string that happens to be falsy (`theme`'s own note). IT IS THE
+            // SAME EXPRESSION THE CHECK ABOVE COMPARES WITH.
+            value: wanted,
           },
         ],
       })
@@ -2102,9 +2224,8 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
       status = 'threw'
     }
     const landed = status === 'applied'
-    // THE RECORD MOVES ONLY ON A DECLARATION THAT LANDED, so a refused write is retried by the next delivery rather than
-    // being swallowed by a seed that claims it was applied.
-    if (landed) lastApplied = composed
+    // **NOTHING IS REMEMBERED HERE** (`D-129`): a refused write is retried by the next delivery because the SURFACE still
+    // does not carry it, not because a seed says so.
     return reading({ state, verb: null, changed: state !== before, asked: null, wrote: false, declaration: composed, status, written: landed, escaped: false })
   }
 
@@ -2232,7 +2353,15 @@ export interface PaneDragSurface {
   defaultSizeFor(element: unknown, token: unknown): unknown
   candidatesFor(element: unknown): readonly { readonly candidate: unknown; readonly distance?: unknown }[]
   move(gestureId: string, preview: unknown): void
-  release(gestureId: string, final: unknown, sink: unknown): void
+  /** **THE END-TURN, AND THE THIRD PARAMETER IS OPTIONAL BECAUSE THE APP HANDS NO SINK** (`D-129`; design §3 `R1`–`R5`,
+   *  §5). `R3` keeps its POSITION and its meaning — a sink, when one is supplied, is invoked exactly once, FIRST, before
+   *  the `file` commit and before the ending — and `demo/pane-drag-demo/demo.ts` still supplies one, a realm with no
+   *  crossing and no delivery to paint from (`D-118`). This realm supplies NONE: the read-out it used to author is
+   *  `renderPaneSize`'s now. **THE OPTIONALITY IS THE ONE THING THE TWO DESIGN STATEMENTS COULD NOT BOTH SPELL**: the
+   *  seam's exact form `drag.release(GESTURE_KEY, value)` and a strict three-argument declaration are unsatisfiable at
+   *  `tsc` (TS2554), so the parameter is widened to optional rather than the call carrying a token the design deletes —
+   *  `release`'s order, its three steps and every existing caller are unmoved. */
+  release(gestureId: string, final: unknown, sink?: unknown): void
   rightClick(gestureId: string): void
   cancel(gestureId: string): void
   /** **THE ZONE-RENDER TURN — THE SHAPE'S DELIVERY CALLS IT** (`D-92`). It replaces the `subscribe('temp.drag', …)`
@@ -2505,7 +2634,7 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  drag-update phase at `temp`, `release` is the release phase at `file` — and the ending is a THIRD statement that
    *  writes no placement, carries no geometry and judges no value (L2 §5). The two refusing arms (`R1`/`R2`) send NOTHING
    *  at all: no sink, no route, no ending. `R5` is NEVER suppressed by the flag — the flag gates the ERASE route alone. */
-  const release = (gestureId: string, final: unknown, sink: unknown): void => {
+  const release = (gestureId: string, final: unknown, sink?: unknown): void => {
     try {
       if (typeof final !== 'number' || Number.isNaN(final)) return
       const standing = readPaneSize({}, DEFAULT_PANE_ID)

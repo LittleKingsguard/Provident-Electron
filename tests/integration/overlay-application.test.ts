@@ -730,7 +730,10 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     const asked = app.apply('open')
     expect(asked.wrote, 'the act wrote the crossing').toBe(true)
     const idle = app.render()
-    expect(idle.written, 'and the render that follows it lands nothing: the store has not answered, so the declaration is already the one on the node').toBe(false)
+    expect(
+      idle.written,
+      'and the render that follows it still LANDS — a REDUNDANT, IDEMPOTENT REMOVAL WRITE, which is the price of never skipping an owed paint: the surface already lacks `inert`, and under the change-guard this arm was skipped because the declaration had not moved since the last one applied (`D-129`\'s `lastApplied`, and this very assertion read `false`). The skip is gone for a MEASURED reason: an ABSENT `props.<name>` is what a REBUILT node, a store-projected state AND a NOT-YET-APPLIED REMOVAL all look like, so `held === wanted === undefined` cannot establish that the removal reached the render — under `D-163`\'s pre-correction predicate `OV-12`\'s close arm read `written: false` while this row\'s own tag still carried `inert="true"` over a pane the record had closed. The write is idempotent and cannot loop (a renderer graph write raises no view push), so the redundancy is a price paid per removal delivery and never a budget — the alternative is that pane: a record closed and a DOM still carrying its attribute',
+    ).toBe(true)
     expect(tagOf(htmlOf(runtime), APP_ROOT_ID), 'the rendered surface is unmoved by the ask alone, which is the whole of the correction').not.toMatch(/\binert\b/)
     // AND THE DELIVERY THAT ANSWERS IT IS WHAT MOVES THE SURFACE.
     deliver(true)

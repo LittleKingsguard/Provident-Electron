@@ -1176,6 +1176,15 @@ const DECLARED_SCOPE: readonly string[] = [
   //    file no entry above carries is exactly what `B-1` reports as an offender, which is why the entry is added WITH the file
   //    and not after it.
   'tests/unit/renderer-wiring/preview-seat.test.ts',
+  // ── THE STATE CHECK'S OWN BATTERY — `tests/unit/renderer-wiring/state-checked-paint.test.ts`, AND IT JOINS THIS UNION AS ITS OWN
+  //    ENTRY WITH ITS OWN REASON, NEVER AS A PREFIX OF THE NEIGHBOUR ABOVE (`tests/unit/renderer-wiring/` would admit every file a
+  //    later pass drops beside them, and a directory measures nothing). **THE FILE IS `renderer-wiring`'s AND IS DECLARED HERE FOR
+  //    THE REASON THE SEAT ABOVE IS**: this row asserts the worktree's edit set against a scope, so every path a pass writes is a
+  //    path this union must carry whatever module authored it — and `B-1` reports a new file no entry names as an offender rather
+  //    than letting it slide in behind a directory. It is created WITH this entry in the SAME pass and not after it (`D-146`'s
+  //    precedent): `D-163`'s battery, `RS-1`…`RS-5`, the first `props.<name>` read-back in the tree and the row that would have
+  //    caught `OV-12`/`OV-14`.
+  'tests/unit/renderer-wiring/state-checked-paint.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
