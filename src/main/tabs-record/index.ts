@@ -8,9 +8,10 @@
 // was the family's second singleton seat is an ordinary member keyed by its id, and `read()`'s `landing` member is the id
 // of the row reading active. **THE `order` SEAT IS A BIJECTION WITH THE ROWS** (D-156): every id it names holds a plain
 // row and every own key besides the seat is named, so a dangling id, an unseated row and a stray key are ONE fault with
-// ONE sentence and ONE repair. **`commit` writes ONE WHOLE VALUE at `['tabs']` — its membership change is a seat and a
-// member in one act — while `remove` writes NO value at all**: it deletes the row and lets the two repairs settle the
-// seat and the activeness (§3, §4).
+// ONE sentence and ONE repair. **NEITHER ACT WRITES A WHOLE VALUE** (D-156, D-158): `commit` writes ONE ROW at the tab's
+// own leaf, the seat pair refuses that stray key INSIDE the commit and its `'seat'` repair APPENDS the id to `order`,
+// and `remove` is ONE `delete` of the row — so the act that settles the seat and the activeness is the engine's, and each
+// act composes only the expectation its `repaired` member is judged against (§3, §4).
 //
 // THE INVARIANTS ARE THE ENGINE'S (design §4): `exactly-one-active`, the three field pairs, the EXISTENCE pair that mints
 // the root and the SEAT pair that names the record's own tabs are DECLARATIONS this module exports
@@ -66,6 +67,22 @@ export interface TabsRecordOptions {
 
 export interface TabsRecord {
   read(): TabsRecordReading | TabsRecordAnswer
+  /** **CREATE OR UPDATE A TAB, AND THE ACT WRITES ONE ROW** (L2 §2's second route; D-158): one
+   *  `write(['tabs', row.id], TABS_RECORD_TIER, row)` at the tab's own leaf — the caller's row as admitted, and no
+   *  composed record at all. **THE KEY IT LEAVES UNSEATED IS WHAT IS REFUSED INSIDE THE COMMIT**: `order-names-its-tabs`
+   *  answers *carries no sequence of exactly its own tabs, once each* and its `'seat'` repair APPENDS the id it found a
+   *  row under, preserving every `active` flag — so the append position is the repair's answer and never the act's
+   *  promise (§4). The act fills no field either: `healedFamily` lands the three defaults in BOTH scopes, and a second
+   *  authority here would suppress `repaired` (§7). Its `repaired` member compares the record that stands against the
+   *  CREATION EXPECTATION — the pre reading's `order` plus the id the seat did not already name, and its rows plus this
+   *  admitted row — composed and never written (§8). An id the record ALREADY seats is an UPDATE: no stray key, the
+   *  bijection holds, the seat pair passes and no repair runs.
+   *
+   *  **THE TWO ARMS BEFORE ANY STORE VERB ARE UNCHANGED**: `malformed-row` twice, and the `namesASeat` arm — which is now
+   *  the ONLY guard standing there and is therefore structural rather than tidy, because a leaf write at
+   *  `['tabs','order']` would replace the seat and the `'seat'` repair would DROP the row the caller wrote (D-76, D-158).
+   *  A legal unseated row is never refused here: **that write IS the creation**, the pair refuses it inside the commit,
+   *  and its repair seats it. */
   commit(row: TabsRecordRow): TabsRecordAnswer
   /** **REMOVE A TAB** (L2 §2's fourth route): THE ROW IS DELETED AND NOTHING IS COMPOSED (D-156) — one
    *  `delete(['tabs', id], TABS_RECORD_TIER)` at the tab's own leaf, no value written at all. The record that stands
@@ -362,9 +379,14 @@ export const writeJoined = (store: Store, commit: TabsCommitCarrier, value: unkn
   store.write(TABS_RECORD_ADDRESS, TABS_RECORD_TIER, value, commit)
 
 /** One tab's record, admitted field by field: an unknown member is dropped, never carried. **EVERY MEMBER OF
- *  `TabsRecordRow` IS CARRIED**, because this is the same admission the module writes back: a member dropped here is a
- *  member `read` cannot report AND a member `commit` silently erases from every OTHER tab when it rebuilds the record
- *  from `rowsNow` — which is how `lastActiveAt` was lost on the first pass of this battery. */
+ *  `TabsRecordRow` IS CARRIED**, because this is the same admission `read` reports through and the one `commit` writes
+ *  back: the row it lands at the tab's own leaf IS this admitted row (`D-158`), so a member dropped here is a member
+ *  `read` cannot report AND a member `commit` cannot land. **AND THE TAB-AT-LARGE ERASURE THIS SENTENCE ONCE WARNED OF
+ *  IS `commit`'s NO LONGER**: it writes ONE row and rebuilds no record at all, so it cannot take a member from any
+ *  OTHER tab — the whole-record rebuild is the THREE REPAIRS' (`healedFamily`, composed by `composeRecord` and written
+ *  by `writeWholeRecord`) and the TWO COMPARATORS' (`remove`'s delete-only and `commit`'s creation expectation, composed
+ *  and never written), and both rebuild from a RAW SPREAD of the record rather than through this admission. Which is how
+ *  `lastActiveAt` was lost on the first pass of this battery: the omission is here, in what this function carries. */
 const rowOf = (value: Record<string, unknown>): TabsRecordRow | null => {
   const id = value['id']
   const target = value['target']
@@ -606,8 +628,11 @@ const landingRow = (stamp: string): TabsRecordRow => ({
  *     store and was answered `AddressNotFound` with an EMPTY `log`, so that refusal came from the address rung and not
  *     from a verdict. **THAT MEASUREMENT STANDS AND IS NO LONGER THIS COMPOSER'S REASON**: `tabs-must-stand` mints the
  *     root at the construction instant and `viewOf` reads `['tabs', id]` per id, so the parent is ENFORCED and trusted
- *     present here (`D-135`'s rule at this family, `design.md` §10). What remains is the REPAIRS' reason (`D-83`: a
- *     repair must write the rows it names) and `commit`'s, and `remove` writes no value at all any more (§3).
+ *     present here (`D-135`'s rule at this family, `design.md` §10). **WHAT REMAINS IS THE THREE REPAIRS' REASON**
+ *     (`D-83`: a repair must write the rows it names) **AND THE TWO COMPARATORS'** (`D-158`): `remove`'s delete-only
+ *     expectation and `commit`'s creation expectation are this function's only other callers, and each is COMPOSED,
+ *     COMPARED by `standsAsIntended` and NEVER WRITTEN — no act writes a composed value any more (§3, §8), so no act of
+ *     either kind is a writer among this composer's reasons.
  *  2. **A REPAIR MAY WRITE AT THE ATTEMPT'S OWN ADDRESS — IF IT NAMES THE COMMIT IT WAS GIVEN.** A repair is handed
  *     `{address, id, op, tier, value, pending}`, whose `pending` is the commit's own member (`surface.md §2.11` clause
  *     6: the repair *"should be using the package surface functions … so that they can make their own write call use
@@ -620,8 +645,9 @@ const landingRow = (stamp: string): TabsRecordRow => ({
  *
  *  A repair must also RETURN the op its write landed — `{ok: true, op: receipt.op}` — because the kernel credits a repair
  *  only through `landedOp`, and a `void` return carries "no op" (`ST-F2`, `strata/records/store-tabs-record-unit.md` §1).
- *  Together: **every repair writes one whole record, joined, and returns its op; of the two acts `commit` writes one whole
- *  record and `remove` writes none** — the removal's product is the COMPARATOR's expectation, never a written value (§8).
+ *  Together: **every repair writes one whole record, joined, and returns its op — and NEITHER ACT WRITES A COMPOSED
+ *  VALUE** (rev 15, `D-158`): `commit`'s product from this function is the CREATION expectation and `remove`'s the
+ *  delete-only one, and both are values that are COMPARED by `standsAsIntended` and never stored (§3, §8).
  *
  *  **AND THE VALUE IT COMPOSES CARRIES NO `landing` SEAT, WHICH IS THE WHOLE OF D-76's DERIVATION.** The family it writes is
  *  the `order` array and one member per seated id — the landing ENTRY among them, keyed by its own id — so nothing here can
@@ -632,8 +658,10 @@ const landingRow = (stamp: string): TabsRecordRow => ({
  *  (`landingOf`) and never written, so an entry id and a seat name are no longer one namespace.
  *
  *  **AND ITS `order` IS THE MEMBERSHIP ITSELF NOW** (`D-156`): the value it composes names exactly the ids it writes a row
- *  for, which is the bijection `order-names-its-tabs` demands — so `commit`'s intent satisfies §4 by construction, and
- *  `remove`'s use of this function is a value that is COMPARED and never stored (§3, §8). */
+ *  for, which is the bijection `order-names-its-tabs` demands. **AND BOTH ACTS' USES OF IT ARE EXPECTATIONS, NOT
+ *  WRITES** (rev 15, `D-158`): the membership is the seat repair's to keep inside a caller's commit, so no value composed
+ *  here has to satisfy §4 by construction — `commit`'s creation expectation and `remove`'s delete-only one are COMPARED
+ *  and never stored (§3, §8). */
 const composeRecord = (
   order: readonly string[],
   entries: Record<string, TabsRecordRow>,
@@ -680,9 +708,13 @@ const canonicalRecord = (record: Record<string, unknown>): string => {
 
 /** **WHETHER A REPAIR RAN IS A FACT OF THE STORE, SO IT IS READ BACK AND NOT PREDICTED.** The engine's repairs write
  *  inside the commit this module opened (`design.md` §4), and the write's own record carries no member saying one did
- *  (`guide §6.4`): so the ONE honest derivation is to hold the record this act INTENDED, write it, and compare it with the
- *  record that STANDS afterwards. **A difference means a repair changed it** — the answer then carries `repaired: true`
- *  and the renderer re-reads, rendering what the store says rather than what this module thought (L2 §3).
+ *  (`guide §6.4`): so the ONE honest derivation is to hold the record this act EXPECTED THE REPAIRS TO LEAVE, **DO NOT
+ *  WRITE IT**, and compare it with the record that STANDS afterwards. **THE EXPECTATION IS COMPOSED IN MEMORY AND NEVER
+ *  WRITTEN AT EITHER CALL SITE** (`D-156`, `D-157`, `D-158`): `remove` is ONE `delete` and writes no value, `commit`
+ *  writes ONE ROW and no record, so neither act has a written value of its own for this comparison — the record that
+ *  stands is the two repairs', and the expectation is what this module meant those repairs to leave standing. **A
+ *  difference means a repair changed the OUTCOME** — the answer then carries `repaired: true` and the renderer re-reads,
+ *  rendering what the store says rather than what this module thought (L2 §3).
  *
  *  **An unreadable standing record answers DIFFERING, not equal**: the claim `repaired` would suppress is "the record that
  *  stands is the one I intended", and a read that refuses has established no such thing. That is the one arm this
@@ -1293,9 +1325,10 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
   // seated and active. So the observed view starts from what the store already holds on both counts at once: a fresh
   // profile's landing entry and a record carried over from a previous run, which is the PRE side of the first evaluation
   // alike. **NOTHING IN THIS MODULE DEPENDS ON THE OLD EMPTINESS** — `seats()` reads the order seat, `landingOf` DERIVES the
-  // witness from the active row (D-76), and every write composes the whole record from what stands — so the
-  // one thing that changes is that the first `commit` now APPENDS to a record holding the landing entry instead of
-  // creating the root, and `read()` answers a landing-seated record before any commit.
+  // witness from the active row (D-76), and neither act composes a value: `commit` writes ONE ROW at the tab's own leaf and
+  // the seat repair APPENDS it, `remove` is ONE delete (D-158) — so the one thing that changes is that a first `commit`
+  // now APPENDS to a record holding the landing entry instead of creating the root, and `read()` answers a
+  // landing-seated record before any commit.
   lastView = viewOf(standing)
 
   /** The order seat, and the landing witness DERIVED from the rows rather than read off a seat (D-76). */
@@ -1341,30 +1374,39 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       if (namesASeat(row.id)) {
         return { status: 'refused', reason: SEAT_NAME_REASON, message: SEAT_NAME_MESSAGE, address: ['tabs', row.id] }
       }
-      // **ONE WRITE OF ONE WHOLE RECORD** — and that single value mints the record root, the `order` seat and this tab's
-      // member in the same call (the rule at `composeRecord`), which is why there is no seed and no per-seat ordering.
-      // **NO CORRECTIVE WRITE HERE** (`D-65`): the caller's row is written as the caller asked for it, and the engine's
-      // evaluations make the state legal inside the same commit. One home for every invariant, and it is the engine's.
-      const { order } = seats()
-      const next = order.includes(row.id) ? order : [...order, row.id]
-      const entries: Record<string, TabsRecordRow> = Object.fromEntries(rowsNow(next).map((seated) => [seated.id, seated]))
-      entries[row.id] = row
-      // **THE RECORD THIS ACT INTENDS, COMPOSED ONCE AND WRITTEN ONCE.** What the engine's repairs then do to it is
-      // measured, not guessed: the record that stands is read back and compared with this intent (`standsAsIntended`),
-      // which is how a commit that triggered a repair came to answer `{status: 'committed'}` and nothing else — the
-      // member `docs/L3/store-tabs-record/design.md` §4 declares and no code produced (D-70). **AND THE INTENT CARRIES NO
-      // WITNESS MEMBER**: which tab is the landing is DERIVED at the next read from the rows themselves (D-76), so this
-      // act composes the family — `order` and one member per seated id — and nothing about it can collide with a tab id.
-      const intent = composeRecord(next, entries)
+      // **THE PRE VIEW, TAKEN ONCE AND USED TWICE** (`D-158`, §7 of `design.md`): it is the base of the creation
+      // expectation below AND the observation the next evaluation compares against — and **THE SECOND USE IS
+      // LOAD-BEARING, NOT SYMMETRY**. `viewFrom` builds `entries` by WALKING `order`, so an unseated row is invisible to
+      // every view taken through the handle; a STALE `lastView` that still carried this id's row (a whole-record write
+      // through `data.write` never refreshes the observation) would make `exactly-one-active`'s `before !== undefined`,
+      // its `written` referent would fall to `null`, and `healedFamily`'s default (`keep = standing[0]`) would DEACTIVATE
+      // the tab the caller just created. Refreshing here is the whole difference between the creation taking the seat and
+      // losing it.
+      const pre = viewOf(standing)
+      lastView = pre
+      // **THE CREATION EXPECTATION, COMPOSED AND NEVER WRITTEN** (§8): the pre reading's `order` with the id APPENDED
+      // where the seat did not already name it — an id it does name is an UPDATE and moves no seat — and its rows plus
+      // this admitted row. **IT NAMES NO POSITION AND NO SUCCESSOR**: the append is the seat repair's, the survivor is
+      // §7's precedence, and a second copy of either here would erase the one signal `repaired` carries (D-70).
+      const expectation = composeRecord(
+        pre.order.includes(row.id) ? pre.order : [...pre.order, row.id],
+        { ...pre.entries, [row.id]: row },
+      )
       try {
-        standing.write(TABS_RECORD_ADDRESS, TABS_RECORD_TIER, intent)
-        // THE OBSERVED VIEW MOVES WITH THE WRITE: a commit is a write this module made and saw, so the constraint's PRE
-        // side must be the record as it stands afterwards — otherwise the next evaluation compares against a record two
-        // acts old and reads the caller's own change as a removal.
+        // **ONE STORE ACT, ONE LEAF, ONE ROW** (`D-158`, §3): the caller's admitted row at the TAB'S OWN LEAF, and no
+        // composed record at all. The key it leaves unseated is what `order-names-its-tabs` refuses INSIDE this commit,
+        // whose `'seat'` repair APPENDS the id and preserves every `active` flag — so the record that stands afterwards is
+        // the two repairs' and never a value this act spelled. **A LEAF WRITE IS LAWFUL HERE BECAUSE THE PARENT IS
+        // ENFORCED AND TRUSTED PRESENT** (`tabs-must-stand` mints it at construction, §4): a vanished root therefore
+        // reaches the caller as the store's own `AddressNotFound` through the refusal arm below rather than as a silent
+        // re-mint, and the `namesASeat` arm above is what keeps this write off the seat's own key.
+        standing.write(['tabs', row.id], TABS_RECORD_TIER, row)
+        // THE OBSERVED VIEW IS REFRESHED AGAIN, AFTER THE ATTEMPT (both arms, §3): the next evaluation's PRE side is the
+        // record that stands, repairs included, so a later act is not compared against a record two acts old.
         lastView = viewOf(standing)
         // THE MEMBER IS OMITTED ON A CLEAN ACT AND NEVER ANSWERED `false`: a repair that ran is the only thing that makes
-        // the standing record differ from the intent, so its presence IS the signal (L2 §3).
-        return standsAsIntended(standing, intent)
+        // the standing record differ from the creation expectation, so its presence IS the signal (L2 §2, §8).
+        return standsAsIntended(standing, expectation)
           ? { status: 'committed' }
           : { status: 'committed', repaired: true }
       } catch (caught) {

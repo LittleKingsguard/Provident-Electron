@@ -10,10 +10,12 @@
 //
 // **THE FOUR MACHINERY RULES THIS FILE PINS, EACH MEASURED AND NOT ASSUMED (the first three 2026-11-01; the fourth on the
 // package's own clause stamped 2026-11-02, measured here 2026-11-01):**
-//  1. a nested write does not create its parent, so the record is written WHOLE at `['tabs']` — one value that mints the
-//     root, the `order` seat and every tab member in the same call — **which is `commit`'s act and the three repairs';
-//     `remove` DOES NOT write a value at all** (`D-156`, design §3/§8): it is ONE `delete(['tabs', id], 'file')`, and the
-//     record that stands afterwards is the two repairs' — the seat's membership, then `exactly-one-active`'s;
+//  1. a nested write does not create its parent, so a value is written WHOLE at `['tabs']` — one value that mints the
+//     root, the `order` seat and every tab member in the same call — **which is the THREE REPAIRS' act and no act's**
+//     (`D-156`, `D-158`, design §3/§8): `remove` writes no value at all, being ONE `delete(['tabs', id], 'file')`, and
+//     `commit` writes ONE ROW at the tab's own leaf, whose unseated key the seat pair refuses so that its `'seat'` repair
+//     APPENDS the id to `order` inside the same commit — so on either act the record that stands afterwards is the two
+//     repairs' — the seat's membership, then `exactly-one-active`'s;
 //  2. a repair may write at the attempt's OWN address when it names the commit it was handed at `write`'s fourth
 //     position — without it the same write is refused `KC-7` *"a constraint attempt is already open"*;
 //  3. a repair that returns `void` is refused *"the repair … produced no op"* (`ST-F2`, filed upstream) — **THAT WAS THE
@@ -31,10 +33,12 @@
 // **AND THREE FACTS ABOUT THE DELIVERY, PINNED HERE (D-70, D-71):** from the consumed `provident-storeroom 1.7.0` a
 // constraint pair and a LIVE LISTENER may stand at ONE address — the pair asked by the pass, the listener delivered after
 // it, the only cross-kind restriction being the HANDLE — so the push installs at `['tabs']` itself, beside all six of this
-// module's pairs; `repaired` is DERIVED by comparing the intent this act MEANT with the record that stands, because the
-// store's write record carries no member for the repair that ran in its own commit — **and on `remove` that intent is an
-// EXPECTATION that is never written at all: the pre reading's `order` and rows minus the id, every flag untouched** (§8,
-// D-156); and **a write a pair REFUSES delivers
+// module's pairs; `repaired` is DERIVED by comparing the record this act MEANT with the record that stands, because the
+// store's write record carries no member for the repair that ran in its own commit — **and FROM `D-158` NEITHER ACT
+// WRITES WHAT IT MEANT: each composes an EXPECTATION that is compared and never stored** — on `remove` the pre reading's
+// `order` and rows minus the id, every flag untouched (§8, D-156), and on `commit` the CREATION expectation: that same
+// reading PLUS the admitted row PLUS a seat naming it, composed from the `order` the reading carried and never from a
+// position the act predicts (§8, D-158); and **a write a pair REFUSES delivers
 // nothing**, the pair asked and the pass thrown with the delivery window never opened.
 //
 // This authority is this repo's (`docs/L3`, `docs/L2`) and the package's own guide, never the package's internals.
@@ -569,6 +573,14 @@ describe('store-tabs-record · the crossing', () => {
   // ═══════════════ `repaired` — DERIVED FROM THE STANDING RECORD, NOT PREDICTED (L2 §3, design §4; D-70) ═══════════════
 
   it('`repaired: true` — a commit that makes TWO tabs active is answered `committed` WITH `repaired`, and the record shows what the repair did: the second active tab deactivated and the active seat moved to the caller\'s own referent', () => {
+    // **THE GLOSS IS RE-GRAINED AND EVERY ASSERTION BELOW STANDS** (`D-158`, design §8/§11): what `standsAsIntended`
+    // compares is no longer the composed record this act used to write — it is the CREATION EXPECTATION, the pre
+    // reading's `order` plus the id the seat did not already name and its rows plus the admitted row, composed and never
+    // written (§4, §8). The trace that makes the answer `repaired` is the batch's contract read at its sites: the leaf
+    // write leaves `tab-2` UNSEATED, so only the seat pair can refuse first — `exactly-one-active` would pass, because an
+    // unseated row is invisible to a seat-seated view — its `'seat'` repair APPENDS the id preserving both flags, and on
+    // that record `exactly-one-active` refuses and keeps §7's arm (i), the WRITTEN referent. **Which tab the engine keeps
+    // is therefore §7's choice and not this act's**: the assertion below reads the record the repair left.
     record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
     const answer = record.commit(row('tab-2', { label: 'two', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
     expect(answer.status, 'a repaired commit is `committed`, never `refused`').toBe('committed')
@@ -583,16 +595,21 @@ describe('store-tabs-record · the crossing', () => {
   })
 
   it('AND ON THE SAME BATTERY, A CLEAN COMMIT CARRIES NO `repaired` AT ALL: `commit` answers `{ status: \'committed\' }` and nothing else — the member is OMITTED, never answered `false`', () => {
-    // THE ROW THAT STOPS THE ONE ABOVE FROM BEING VACUOUS. Nothing repairs the second act: one tab is active, and every
-    // row carries all three fields, so the record that stands IS the record the act intended (`standsAsIntended`). A
-    // derivation that answered `repaired` unconditionally — or that compared the two records by raw `JSON.stringify` and
-    // so reported a difference in MEMBER ORDER — fails here.
+    // THE ROW THAT STOPS THE ONE ABOVE FROM BEING VACUOUS. **AND ITS GLOSS MOVED WITH THE COMPARATOR, NOT WITH ITS
+    // ASSERTIONS** (`D-158`): this act is a CREATION of a new id, so the seat repair DOES run — the leaf write leaves
+    // `tab-2` unseated and the repair appends it — and the answer is bare anyway, because that append IS what the
+    // creation expectation names: the pre reading's `order` plus this id, its rows plus this admitted row. **A repair
+    // whose correction is the act's own meaning is not something `D-70`'s member reports**; the member appears where a
+    // FIELD DEFAULT had to be filled or a flag or a stray the act did not name moved. The row supplies all three fields
+    // on purpose, so nothing else can be the difference. A derivation that answered `repaired` unconditionally — or that
+    // compared the two records by raw `JSON.stringify` and so reported a difference in MEMBER ORDER — fails here.
     record.commit(row('tab-1', { label: 'one', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
     const answer = record.commit(row('tab-2', { active: false, label: 'two', lastActiveAt: '2026-11-01T00:00:00.000Z' }))
     expect(answer.status).toBe('committed')
     expect(Object.keys(answer), 'the clean arm is exactly `status`').toEqual(['status'])
     expect('repaired' in answer, 'and the member is absent, not `false`').toBe(false)
-    expect(actives(), 'the control half: the clean act left the record as it intended').toEqual(['tab-1'])
+    expect(reading().order, 'the control half: the seat repair appended the id, and the record is the creation the act meant').toEqual(['landing', 'tab-1', 'tab-2'])
+    expect(actives(), 'and the active row is the one that stood: the act named no successor and needed none').toEqual(['tab-1'])
   })
 
   it('AND THE SAME DERIVATION ON `remove`: a removal whose repair seats a survivor carries `repaired`, while a removal nothing repairs is `{ status: \'committed\' }` alone', () => {
@@ -994,18 +1011,24 @@ describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)',
  * the empty-view floor had to survive the registration instant or `storeCreate` refuses (measured by the creation-instant
  * battery above, unchanged).
  *
- * **THE ACTS THESE ROWS DRIVE ARE THE STORE'S AND NOT THE MODULE'S, ON PURPOSE**: `commit` composes the record it writes, so
- * the two shapes the ruling opens — a leaf row write and a descendant delete — are reached at the store itself. Every
- * assertion is read at the record afterwards, through the module where the claim is about the module's reading.
+ * **THE ACTS THESE ROWS DRIVE ARE DRIVEN AT THE STORE — AND FROM `D-158` ONE OF THEM IS THE MODULE'S OWN ACT, NOT A
+ * SHAPE A CALLER MIGHT ONE DAY REACH.** Through rev 14 the reason was that `commit` composed the record it writes, so the
+ * two shapes `D-156`'s ruling opens — a leaf row write and a descendant delete — were the store's and no route's. **The
+ * act IS that write now**: `commit` is ONE `write(['tabs', row.id], 'file', row)` (§3), `remove` is ONE delete, and a row
+ * driven through the module could pass on a module that composed something else beside it — which is why each is driven
+ * here at the store, at the exact address the module uses, and the module's own route is measured by the creation block
+ * below. Every assertion is read at the record afterwards, through the module where the claim is about the module's reading.
  * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 describe('store-tabs-record · the membership bijection and the removal (D-156)', () => {
-  it('A LEAF ROW WRITE SEATS: `write([\'tabs\', newId], \'file\', row)` leaves the row AND the seat NAMING it — the seat repair parses the record by its OWN KEYS — which is the creation-side shape the ruling opens even though `commit` is not changed in this pass', () => {
+  it('A LEAF ROW WRITE SEATS: `write([\'tabs\', newId], \'file\', row)` leaves the row AND the seat NAMING it — the seat repair parses the record by its OWN KEYS — which is the act `commit` NOW IS (D-158): one leaf row write at the tab\'s own leaf, driven here at the store so no composed value can stand in for it', () => {
     const store = holder
     if (store === null) throw new Error('the battery needs the instance it opened')
-    // THE ACT IS THE STORE'S OWN, because this module has no route for it: `commit` composes the record it writes (§8), and
-    // the creation-side shape the ruling opens is the one a caller — the renderer's whole-record write, or any later
-    // row-write route — reaches at a LEAF.
+    // **THE ACT IS DRIVEN AT THE STORE ON PURPOSE, AND THE GLOSS THAT SAID WHY IS RE-GRAINED** (`D-158`, design §11):
+    // through rev 14 this row's reason was that the module had no route for a leaf write — "`commit` composes the record
+    // it writes". **It has one now**: `commit` is ONE `write(['tabs', row.id], 'file', row)` and nothing else (§3, §8),
+    // so this address is the module's own. Reaching it here keeps the row measuring the STORE's behaviour at that
+    // address — a row driven through `commit` would pass on a module that composed something else beside it.
     store.write(['tabs', 'tab-9'] as never, 'file', row('tab-9', { active: false, label: 'nine', lastActiveAt: SEAT_STAMP }))
     // **THE SEAT IS THE MEASUREMENT.** Rev 13's repair parsed through `viewFrom`, which walks `order`, so a row the seat did
     // not name was INVISIBLE to it: this write would have left `order: ['landing']` over two rows, answered `committed`, and
@@ -1021,6 +1044,9 @@ describe('store-tabs-record · the membership bijection and the removal (D-156)'
   })
 
   it('THE LEAF-WRITE HAZARD CONTROL: a leaf row write must NOT wipe the family — after `write([\'tabs\', id], row)` the OTHER rows still stand, member for member (red on a body taking its view from the act\'s value, `D-156` fault (b))', () => {
+    // **THE HAZARD IS THE ACT'S NOW, NOT A SHAPE A CALLER MIGHT ONE DAY USE** (`D-158`): every `commit` in this tree is
+    // this leaf write, so a seat repair that took its view from the act's own value would erase the siblings on every
+    // creation rather than on some future route. The assertions are unchanged; only the reason they matter sharpened.
     const store = holder
     if (store === null) throw new Error('the battery needs the instance it opened')
     record.commit(row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
@@ -1119,5 +1145,134 @@ describe('store-tabs-record · the membership bijection and the removal (D-156)'
     expect(reading().order, 'the record never stands empty').toEqual(['landing'])
     expect(reading().rows[0]?.label, 'and the row is the MINTED floor, not the row the last removal took').toBe('landing')
     expect(actives()).toEqual(['landing'])
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * THE CREATION IS ONE LEAF ROW WRITE AND THE SEAT REPAIR APPENDS IT — the four rows `docs/L3/store-tabs-record/design.md`
+ * rev 15 §11 owes with `D-158`'s hunks (H9–H11).
+ *
+ * **CREATE IS THE MIRROR OF REMOVE** (`D-156`, `D-158`): `commit` writes ONE ROW at `['tabs', row.id]` and no composed
+ * record at all; the key that write leaves UNSEATED is what `order-names-its-tabs` refuses INSIDE the same commit, whose
+ * `'seat'` repair APPENDS that id to `order`. So `order` stops being the act's to spell, the append position stops being
+ * the act's to promise (§4's order finding), and the answer stops being the act's to predict: `repaired` compares the
+ * record that stands against a CREATION EXPECTATION — the pre reading's `order` plus the id the seat did not already name,
+ * its rows plus the caller's admitted row — composed and never written (§4, §8, `D-70`).
+ *
+ * **THE FOURTH ROW IS NOT THE CONTROL REV 15 ASKED FOR, AND THE REASON IS STRUCTURAL — IT IS MEASURED, NOT ARGUED.**
+ * Rev 15 §11 owed "the stale-observation control", a row that would red if `commit`'s PRE `lastView` refresh (H9) were
+ * removed. **`D-158`'s landing pass built it, deleted the refresh, and it stayed GREEN** — and that result was reproduced
+ * here before this row was written, by deleting the same line and re-running: the `exactly-one-active` body assigns
+ * `lastView = post` at the TOP OF ITS OWN BODY on every ask, and the pairs are asked inside a bypassing whole-record write
+ * too, so **the observation is never stale at the ask** and a row asserting that it is cannot fail. This corpus does not
+ * keep a row that cannot fail, so the row below states the invariant that DOES hold and is falsifiable — **the activeness
+ * pair resolves its referent from the record it is judging, because its own ask refreshes the capture** — and it was
+ * proved RED with that refresh removed (the pair's own `lastView = post`), the same edit that leaves the design's shape
+ * green. **A control asserting a falsifiability this tree does not have would be the only row here that measures nothing.**
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+describe('store-tabs-record · the creation is one leaf row write (D-158)', () => {
+  it('A CREATION THROUGH THE ROUTE: `commit` of a NEW row leaves the SEAT naming it — `[\'landing\', \'tab-1\']`, APPENDED by the seat repair and not by the act — the row admitted field by field, EXACTLY ONE active, the derived `landing` on the new tab, and ONE delivery for the act', () => {
+    // THE DELIVERY IS COUNTED BECAUSE THE ACT IS NOW TWO WRITES INSIDE ONE COMMIT: the leaf row write, and the seat
+    // repair's whole-record write joined to it — plus `exactly-one-active`'s repair, which this creation runs too. A
+    // second delivery, or a lost row, reds HERE and nowhere else in the battery.
+    let delivered = 0
+    record.subscribe(() => {
+      delivered += 1
+    })
+    const answer = record.commit(row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
+    expect(answer.status, 'a creation is a committed act').toBe('committed')
+    const { order, landing, rows } = reading()
+    // THE SEAT IS THE REPAIR'S ANSWER AND NOT A SEQUENCE THE ACT WROTE. It is the weakest assertion here on purpose: a
+    // body that spelled the seat itself — the pre-landing composition — would satisfy it, and so would a seat repair that
+    // appended the id and then DROPPED the row. What makes it a measurement is the rest of the row: the row's own members
+    // read back THROUGH the module under that seat, which only a repair that kept the row it found under the unseated key
+    // can leave standing, and the act's own write being the store's value at `['tabs', 'tab-1']`.
+    expect(order, 'the seat holds the pre reading\'s ids plus the one the repair appended').toEqual(['landing', 'tab-1'])
+    expect(rows.map((each) => each.id), 'the row stands admitted, under the seat the repair built').toEqual(['landing', 'tab-1'])
+    const seated = rows.find((each) => each.id === 'tab-1')
+    expect(seated?.label, 'field by field: the label the caller wrote, not a default the repair filled').toBe('one')
+    expect(seated?.target, 'the target the caller wrote').toBe('page://tab-1')
+    expect(seated?.lastActiveAt, 'and the stamp the caller wrote').toBe(SEAT_STAMP)
+    expect(actives(), 'exactly ONE active, and it is the tab the caller just created').toEqual(['tab-1'])
+    expect(landing, 'and the DERIVED witness names it — nothing stored, the active row is the answer (D-76)').toBe('tab-1')
+    expect(delivered, 'ONE delivery for the act: the leaf write and its two repairs are ONE committed change (§5)').toBe(1)
+    // AND THE STORE'S OWN VALUE, so "the seat" is the record's and not this module's reading of it: the root holds the
+    // seat and two rows, and the caller's write is what the store kept.
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    const standing = store.read(['tabs'] as never) as Record<string, unknown>
+    expect(standing['order'], 'the store\'s own seat names the new id').toEqual(['landing', 'tab-1'])
+    expect(Object.keys(standing).sort(), 'and the root is the seat plus its rows, no second seat and no stray').toEqual(['landing', 'order', 'tab-1'])
+  })
+
+  it('THE ONE `repaired` CASE NOTHING STATED BEFORE: a NEW row carrying `active: false` is answered BARE `committed` — the seat repair RAN (the id is in `order`) and left EXACTLY the creation expectation, so nothing reports a repair', () => {
+    const answer = record.commit(row('tab-1', { active: false, label: 'one', lastActiveAt: SEAT_STAMP }))
+    expect(answer.status, 'a repaired act is `committed`, never `refused` (D-103)').toBe('committed')
+    // THE BARE ANSWER IS THE WHOLE CLAIM: this is the mirror of the removal's non-active arm (§8), where a repair whose
+    // correction IS the act's own meaning must not carry `D-70`'s member — read as "did a repair run" that member would
+    // say nothing here. Every field is supplied, so a FILLED DEFAULT cannot be the difference either: the member appears
+    // where a field default had to be filled, and nowhere else (§8).
+    expect(reading().order, 'the seat repair ran: the seat names the id the leaf write left unseated').toEqual(['landing', 'tab-1'])
+    expect(Object.keys(answer), 'and the arm is exactly `status`: the creation expectation is what stands').toEqual(['status'])
+    expect('repaired' in answer, 'the member is ABSENT, never `false`').toBe(false)
+    expect(reading().rows.find((each) => each.id === 'tab-1')?.active, 'the flag the caller wrote is the flag the record holds').toBe(false)
+    expect(actives(), 'so the active row is the one that stood, untouched by the creation').toEqual(['landing'])
+  })
+
+  it('THE APPEND POSITION AT THE ROUTE: three creations land at the END in creation order — `[\'landing\', \'tab-1\', \'tab-2\', \'tab-3\']` — and a re-`commit` of an id the seat already names MOVES NOTHING', () => {
+    for (const id of ['tab-1', 'tab-2', 'tab-3']) {
+      expect(record.commit(row(id, { active: false, label: id, lastActiveAt: SEAT_STAMP })).status, `the creation of ${id} commits`).toBe('committed')
+    }
+    // **THE POSITION IS THE PARSE'S ANSWER AND THE ACT'S OLD APPEND AGREES WITH IT FOR EVERY CREATION THE ACT CAN MAKE**
+    // (§4): the seat parse's tail is the record's own keys minus the seat's, so one stray row — and one is all a leaf
+    // write of a legal record can make — lands last, which is the `[...order, row.id]` the composed act used to spell.
+    // **THIS ROW PINS THE READING, NOT A LAW**: with TWO OR MORE strays at once the tail is the STORE'S key-ordered image
+    // (a tab id spelled `'7'` enumerates FIRST whatever the image says), which is why a caller may rely on the seat's own
+    // sequence and on nothing else, and why the comparator reports a stray it did not name instead of the act pretending
+    // to have chosen a rank.
+    expect(reading().order, 'three creations, in creation order, each appended last').toEqual(['landing', 'tab-1', 'tab-2', 'tab-3'])
+    expect(reading().rows.map((each) => each.id), 'and the rows are seated in that same sequence').toEqual(['landing', 'tab-1', 'tab-2', 'tab-3'])
+    // THE UPDATE ARM, AT THE ROUTE: a row for an id the record ALREADY seats leaves no stray key, so the bijection holds
+    // and NO repair runs — an append implemented unconditionally would move the id to the tail here.
+    const updated = record.commit(row('tab-2', { active: false, label: 'again', lastActiveAt: SEAT_STAMP }))
+    expect(updated.status, 'an update is a committed act').toBe('committed')
+    expect(Object.keys(updated), 'and it is BARE `committed` (§8 case (i)): no stray key, so no repair ran and nothing differs').toEqual(['status'])
+    expect(reading().order, 'and it did not move: the seat is the same sequence').toEqual(['landing', 'tab-1', 'tab-2', 'tab-3'])
+    expect(reading().rows.find((each) => each.id === 'tab-2')?.label, 'while the member it names took the new value').toBe('again')
+  })
+
+  it('THE OBSERVATION IS REFRESHED AT THE ASK, SO THE REFERENT IS RESOLVED FROM THE RECORD THE PAIR IS JUDGING: `exactly-one-active` keeps the row whose VALUE MOVED in that record — never one a capture two acts old had to treat as new (RED with the pair\'s own `lastView = post` removed; green with `commit`\'s PRE refresh removed, which is why the design\'s control could not fail)', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    // (1) THE MODULE'S OWN ACT, so the capture every later ask is judged against starts here.
+    record.commit(row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
+    const committed = store.read(['tabs'] as never) as Record<string, unknown>
+    // (2) A WRITE THE MODULE NEVER MADE — the renderer's second door, at the store: a whole record at `['tabs']` that
+    // `data.write` hands through byte for byte (§8). ONE active, so all six pairs PASS it, and the activeness pair is
+    // asked on the record the write left — which is what moves the observation to it.
+    store.write(['tabs'] as never, 'file', {
+      ...committed,
+      'order': ['landing', 'tab-1', 'tab-2'],
+      'tab-1': { ...(committed['tab-1'] as Record<string, unknown>), active: false },
+      'tab-2': { id: 'tab-2', target: 'page://tab-2', active: true, label: 'two', lastActiveAt: SEAT_STAMP },
+    })
+    const bypassed = store.read(['tabs'] as never) as Record<string, unknown>
+    expect(bypassed['order'], 'the bypassing write STANDS — one active, so no pair refused or repaired it').toEqual(['landing', 'tab-1', 'tab-2'])
+    // (3) A SECOND WHOLE-RECORD WRITE THAT MAKES TWO ACTIVES: `tab-1` comes BACK active while `tab-2` is byte-unchanged.
+    // In the record THE PAIR IS JUDGING the only row whose value moved is therefore `tab-1`; in a capture two acts old
+    // (`tab-1` active, no `tab-2` at all — the shape H9's removed refresh would leave standing) `tab-1` is unchanged and
+    // `tab-2` looks newly written, so the same precedence names `tab-2`. The two answers differ, which is the whole
+    // reason this row can fail where the design's control could not.
+    store.write(['tabs'] as never, 'file', {
+      ...bypassed,
+      'tab-1': { ...(bypassed['tab-1'] as Record<string, unknown>), active: true },
+    })
+    const healed = reading()
+    expect(actives(), 'the repair left exactly one active row').toHaveLength(1)
+    expect(actives(), 'AND IT IS THE ROW WHOSE VALUE MOVED in the record the ask judged — §7\'s arm (i) read off the record, not off a stale capture').toEqual(['tab-1'])
+    expect(healed.rows.find((each) => each.id === 'tab-2')?.active, 'while the row a stale capture would have kept is the one deactivated').toBe(false)
+    expect(healed.order, 'the seat is the bypassing write\'s, unchanged by the repair').toEqual(['landing', 'tab-1', 'tab-2'])
+    expect(healed.landing, 'and the derived witness follows the survivor').toBe('tab-1')
   })
 })
