@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 220c363f51a007396549f19d3e269f3606b03fab72b299ce7486090c4ae70654
+// @body-sha256 206b66cc91988ec789845b2edd55ab814a062cc95f00f491dc9d538a25802641
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6f960a27fdf571a26992b061d9f3e2aa604847e5c668c52869bf40a84bda70c demo/pane-drag-demo/demo.ts
 // @source a3cdc0510a78080e253b5df3cef4e30c103296990063a644a29a80f7f58c2bc7 demo/pane-drag-demo/stub-view.ts
@@ -35,7 +35,7 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 8f95726f616f96348596b67ed109141eb84a11452431b2419990e8bea2ea63d1 src/renderer/renderer.ts
+// @source 1784b93e42838281f9025cb0e83fc6951255a3d9165ed981cd99fdf2925215e9 src/renderer/renderer.ts
 // @source 7815658c5a9687d6dd7ee4f47b8fa40827440dd9b0b97b7a754e70cab013e797 src/renderer/runtime.ts
 // @source 64c60c5c62a8e77c6515f0e323fd2e044ef02d77187f6e095f4a67a961c2dcb5 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
@@ -1195,7 +1195,6 @@ var GROUPS = Object.keys(GROUP_LABELS);
 var DEFAULT_PANE_ID = "pane-a";
 var DEFAULT_PANE_SIZE = 100;
 var DEFAULT_PANE_BOUNDS = { min: 0, max: 200 };
-var DEFAULT_ZONE_ID = "zone-1";
 var defaultPaneGeometry = (id) => ({
   id,
   size: DEFAULT_PANE_SIZE,
@@ -1254,30 +1253,11 @@ function createPaneDrag(backing, source2) {
   const backingRecord = backing ?? null;
   const view = backingRecord?.view ?? null;
   const ghostTarget = backingRecord?.ghostTarget ?? null;
-  const sourceRecord = source2 ?? null;
   const paneIdOf = (element, token) => {
     const viaElement = element?.id;
     if (typeof viaElement === "string" && viaElement.length > 0) return viaElement;
     if (typeof token === "string" && token.length > 0) return token;
     return DEFAULT_PANE_ID;
-  };
-  const zoneIdOf = (element) => {
-    const viaElement = element?.zoneId;
-    if (typeof viaElement === "string" && viaElement.length > 0) return viaElement;
-    return DEFAULT_ZONE_ID;
-  };
-  const zoneOf = (id) => {
-    if (view === null) return null;
-    return view.zoneOf(id);
-  };
-  const renderZone = () => {
-    const layout = sourceRecord?.layout;
-    if (typeof layout !== "function") return;
-    try {
-      const zone = zoneOf(DEFAULT_ZONE_ID);
-      layout(DEFAULT_ZONE_ID, zone?.size, zone?.display);
-    } catch {
-    }
   };
   const gestures = /* @__PURE__ */ new Map();
   const move = (key, preview) => {
@@ -1400,32 +1380,9 @@ function createPaneDrag(backing, source2) {
     /** §2.1 A (boundsOf) — the shape's bounds read; the pair is handed through AS
      *  STORED, never a policy clamped here (M-3). */
     boundsOf: (element, token) => readPaneBounds(element, token),
-    /** §2.1 A (defaultSizeFor) — the reset arm's read, the SAME size read at the reset
-     *  turn (one closure). */
-    defaultSizeFor: (element, token) => readPaneSize(element, token),
-    /** §2.1 B (candidatesFor) — THE CANDIDATE PRODUCTION SEAM, AND IT IMPLEMENTS **THE SEAM SHAPE `src/shared/relocate.ts`
-     *  DECLARES WITHOUT IMPORTING IT** (`CandidateFor`, `{readonly candidate, readonly distance?}`), which is what this
-     *  surface's own docblock above already says. **NO `src/` FILE IMPORTS THAT MODULE**, so the pure comparator there has
-     *  no call site here and none is claimed: the record is produced and handed on by identity and the comparison is the
-     *  caller's — the only importer in the tree is a battery's own drive (`D-111`). **NOW OFF THE SHAPE'S `['zones']`
-     *  FAMILY** (`D-92`): the candidate carries the zone's OPAQUE `slot` and its caller-measured `distance`, and a zone
-     *  whose `slot` the family does not name is admitted per the caller's own rule (no candidate) — never a store
-     *  decision, never a throw (M-11, P-PD-IM-2). **`slot` IS OPAQUE AND IS HANDED THROUGH BY IDENTITY.** */
-    candidatesFor: (element) => {
-      try {
-        const id = zoneIdOf(element);
-        const zone = zoneOf(id);
-        if (zone === null || zone.slot === void 0) return [];
-        return [{ candidate: zone.slot, distance: zone.distance }];
-      } catch {
-        return [];
-      }
-    },
     move,
     release,
-    rightClick: (gestureId) => endReading(gestureId),
     cancel: (gestureId) => endReading(gestureId),
-    renderZone,
     renderGhost
   };
 }

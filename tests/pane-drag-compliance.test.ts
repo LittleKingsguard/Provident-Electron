@@ -31,8 +31,19 @@
  * hand-off, `hydrate` and the `crossing:{put}` seam. `createPaneDrag`'s backing lost its `frozen`
  * member in the same pass, its construction-time `commit`/`clear` bootstrap of `mem.layout` /
  * `temp.drag` / `file.settings` is DELETED, and the composition now issues ZERO store acts — at
- * construction or in any turn. `renderZone()` is a MEMBER of the surface the shape's delivery
- * calls, and the composition registers no subscriber.
+ * construction or in any turn. **NO ZONE TURN STANDS ON THIS SURFACE AND NONE EVER RAN** (`D-168`): `renderZone` is
+ * DELETED, the shape's ONE delivery body is `theme?.apply(); ghost?.(); readout?.()` — the ghost turn among them and
+ * nothing else — no zone layout is rendered anywhere in this tree, and the composition registers no subscriber.
+ *
+ * ── WHAT `D-168` DELETED, AND WHY THIS FILE MOVED WITH IT ─────────────────────────────────────────────────────────
+ * FOUR surface members left `PaneDragSurface` with no call site in `src/` or `demo/` — `renderZone`, `candidatesFor`,
+ * `defaultSizeFor` and `rightClick` — plus the two docblocks claiming the delivery calls the first, and the four private
+ * bindings whose only reader a deleted member was (`sourceRecord`, `zoneOf`, `zoneIdOf`, the `DEFAULT_ZONE_ID` import).
+ * `move` is LIVE through the affordance's `applyPreview` seam and `previewOf` was already gone; `rightClick` and `cancel`
+ * were always the SAME call (`endReading`), so ONE abandon terminal is named here and `contextmenu` occurs nowhere else.
+ * Thirteen rows below are RE-GRAINED IN PLACE (the property survives on a surviving seam) and FOUR ARE RETIRED BY NAME —
+ * `M-9`, `F-10`, `I-4`, `P-PD-SM-4` — because their whole subject IS that zone-layout turn: it does not exist in this
+ * tree at all, so nothing moved and nothing replaced it.
  *
  * **SO THIS FILE NO LONGER BUILDS A STORE.** The harness declares ONE inline REGISTER DOUBLE
  * (`makeRegister()` below) — a plain object over a `Map` keyed by the dotted name, carrying
@@ -48,27 +59,25 @@
  *   `createPaneDrag(backing, source) => PaneDragSurface`  — the wired composition
  *     (§2.1 A/B/C + the shape's ONE delivery + §7a.1 item 1's reconcile turns), bound to the
  *     caller-supplied BACKING and the RECORDING SOURCE DOUBLE. The backing is
- *     `{ view?: ViewClient | null }` ONLY (the `frozen` member is DELETED): all six of the
- *     flow's reads answer the SHAPE synchronously (`view.zoneOf`, `view.paneSizeOf`,
- *     `view.paneBoundsOf`) and every write is the crossing's route (`view.commitPane`).
+ *     `{ view?: ViewClient | null, ghostTarget?: unknown }` ONLY (the `frozen` member is
+ *     DELETED): BOTH of the flow's reads answer the SHAPE synchronously (`view.paneSizeOf`,
+ *     `view.paneBoundsOf`) and every write is the crossing's route (`commitDrag`, `clearDrag`,
+ *     `commitPane`). **`D-168` LEFT THE `source` PARAMETER STANDING AND ITS BINDING GONE**: the
+ *     surface's only reader of it was `renderZone`'s `layout` guard, so the double below is now
+ *     the ABSENCE's recorder — a source that COULD log a layout call and never sees one.
  *   `zoneSizeConstraint(min, max)` — §2.2's size-band predicate (factory over the
  *     caller's OWN configured min/max closure; "the configured minimum is the CALLER'S
  *     DATA, captured in the caller's closure").
  *   `zoneSizeRepair(min, max)`     — §2.2's two-arm repair (the pin is `min/2` = arm (a);
  *     below `min/2` = arm (b), the minimize marker is `0` — ZERO = the MINIMIZE verb,
  *     `ZONE-SIZE-DOMAIN-…` clause 2, never a smaller width).
- *   `PaneDragSurface` members (this red's local type, matching the family's exported
- *     seam types §2.1 — `StartSizeOf`, `BoundsOf`, `RelocateTargetFor`'s candidate
- *     production, plus the §2.1 C turns):
+ *   `PaneDragSurface` members (**SIX TURNS, AND SIX IS THE WHOLE SURFACE** — `D-168` deleted the
+ *     other four, so this local type is the family's exported seam types §2.1 A plus the §2.1 C
+ *     turns and the ghost turn; `Object.keys(createPaneDrag(…))` is asserted against exactly these
+ *     six in `P-PD-TP-2`, so a re-added member cannot slip in unreported):
  *     startSizeOf(element, token)  — the shape's `view.paneSizeOf(id)` (§2.1 A)
  *     boundsOf(element, token)     — the shape's `view.paneBoundsOf(id)`, hands the
  *                                    RECEIVED pair through AS STORED (§2.1 A, §0 ruling 9)
- *     defaultSizeFor(element, token) — the reset arm's read, the same closure read
- *                                    at the reset turn (§2.1 A)
- *     candidatesFor(element)       — the shape's `view.zoneOf(id)`: the OPAQUE `slot` +
- *                                    the caller-measured `distance` (§2.1 B); the proximity
- *                                    decision is `withinProximity(distance, threshold)`'s
- *                                    answer
  *     move(gestureId, preview)     — **THE DRAG'S VALUE IS AN ADDRESS** (2026-11-08): `preview` is
  *                                    the affordance's `PreviewState` and ONE
  *                                    `view.commitDrag(DEFAULT_PANE_ID, {size: preview.value})` is
@@ -78,18 +87,25 @@
  *                                    ORDER: the sink, then ONE
  *                                    `view.commitPane(pane, {size: final})`, then its OWN
  *                                    `view.clearDrag()` ending the temp reading (SINK-2, §2.1 C/§2.5)
- *     rightClick(gestureId)        — THE ERASE: AT MOST ONE `view.clearDrag()` per gesture, never a
- *                                    throw, no `commitPane`, ZERO sink writes
- *     cancel(gestureId)            — the abandon terminal (pointercancel/cancel): the same
- *                                    erase, at most once per gesture (§7a.1 item 2, (i))
- *     renderZone()                 — the render turn, a SURFACE MEMBER the shape's delivery
- *                                    calls; the composition registers no subscriber
+ *     cancel(gestureId)            — THE ONE ABANDON TERMINAL (pointercancel/cancel): AT MOST ONE
+ *                                    `view.clearDrag()` per gesture, never a throw, no `commitPane`,
+ *                                    ZERO sink writes (§7a.1 item 2, (i)). **`rightClick` WAS THIS
+ *                                    SAME CALL AND IS DELETED** (`D-168`): the affordance's three
+ *                                    abandon arms all reach the preview seam with `valid: false`,
+ *                                    which the wiring sends here
  *     renderGhost()                — the GHOST turn: ONE `window.provident.data.read({path:['drag']})`
  *                                    per call, painting `data-ghost` on `backing.ghostTarget` iff
  *                                    the family stands at `temp` for `DEFAULT_PANE_ID`, and
  *                                    REMOVING it on every other arm (total, fail-closed)
- *   **`previewOf` IS DELETED** with the closure value it read: the address is the storage, so there
- *   is nothing for a closure read to answer and no member pretending there is.
+ *   **DELETED MEMBERS, NAMED ONCE (`D-168`)**: `defaultSizeFor` (a second name over the same
+ *   `readPaneSize` closure — the affordance's own `options.defaultSizeFor` seam reads it, and
+ *   `interaction`'s `P-GU-IM-2` is its measurement), `candidatesFor` (the relocate-candidate
+ *   production — `src/shared/relocate.ts` declares the seam and has NO `src/` importer, so no
+ *   implementation of it exists anywhere in `src/` after this pass; the ZONE READ keeps its
+ *   owner, `store-view-record`'s `view.zoneOf`), `rightClick` (the same call as `cancel`) and
+ *   `renderZone` (see the header: no zone layout is rendered in this tree).
+ *   **`previewOf` WAS ALREADY DELETED** with the closure value it read: the address is the storage,
+ *   so there is nothing for a closure read to answer and no member pretending there is.
  *   The composition's bank of top-level roots: §7a.1 item 4 reading (i)'s
  *   `storeGraphReferences([…])` naming `layout` (mem) · `drag` (temp) · `settings` (file) is
  *   RETIRED with the store (`D-93`): the composition has no address space to declare, and the
@@ -100,15 +116,15 @@
  * From `src/shared/relocate` (LANDED, green): `withinProximity` — the PURE two-scalar
  * comparator, UNMOVED (`relocate.md` §2.1 item 1; §2.1 B / §3.3 I-3).
  *
- * ── THE REGISTER (§5.5.1) — 8 rows / 91 drives / terms 12+9+9+8+8+12+18+15 ────────────
- * P-PD-IM-1 S-PD-READS-1  12 = 2 read seams × 3 store states × 2 gesture turns
- * P-PD-IM-2 S-PD-ZONE-1    9 = 3 stored zone states × 3 comparator operand shapes
+ * ── THE REGISTER (§5.5.1) — 7 rows / 79 drives / terms 12+9+9+8+8+18+15 ─────────────
+ * P-PD-IM-1 S-PD-READS-1  12 = 2 read seams × 3 shape states × 2 gesture turns
+ * P-PD-IM-2 S-PD-ZONE-1    9 = 3 shape zone states × 3 comparator operand shapes
  * P-PD-SM-1 S-PD-GESTURE-1 9 = 3 end paths × 2 readings + 3 move-turn drives
  * P-PD-SM-2 S-PD-REPAIR-1  8 = 3 bands × 2 sources + 2 refusal-via-feedback drives
  * P-PD-SM-3 S-PD-REASSERT-1 8 = 4 states × 2 readings
- * P-PD-SM-4 S-PD-LISTENER-1 12 = 4 listener shapes × 3 event arms
  * P-PD-TP-1 S-PD-FUNCTIONS-1 18 = 6 hostile supply shapes × 3 evaluation points
- * P-PD-TP-2 S-PD-DEGRADE-1   15 = 3 implementations × 5 degradation shapes
+ * P-PD-TP-2 S-PD-DEGRADE-1   15 = 3 implementation groups × 5 degradation shapes (the SIX survivors)
+ * `P-PD-SM-4 S-PD-LISTENER-1` (12 = 4 listener shapes × 3 event arms) IS RETIRED BY NAME (`D-168`).
  * Each drive is a deterministic vitest table cell; totals are printed (with their
  * terms) at the file end per REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS.
  *
@@ -119,8 +135,8 @@
  * `temp.drag.*` tier handle, asserted a `GraphWriteReceipt` or counted a `GraphEvent` has lost
  * its subject. Those rows are re-pointed at the three things that replaced the store — the
  * shape (`ViewClient`), the drag's ADDRESS (`['drag']` at `temp`), and the two PURE factories — and the residue
- * is retired under a dated headstone naming exactly which claim died and why. **THE COUNT DID
- * NOT MOVE: 8 register rows / 91 drives, the same terms.**
+ * is retired under a dated headstone naming exactly which claim died and why. **`D-93` MOVED NO COUNT
+ * (8 rows / 91 drives); `D-168` MOVES IT BY `P-PD-SM-4` ALONE: 7 rows / 79 drives.**
  *
  * ── THE RETIRED ROWS, NAMED (`D-93`) ──
  *   · §3.4 R‑5 "createGraphStore is called with the LANDED options only" — the store is deleted,
@@ -130,6 +146,17 @@
  *   · The `GraphWriteReceipt` / `GraphEvent` halves of F-2 / F-3 / M-7 / M-8 / F-9 / P-PD-SM-2 /
  *     P-PD-TP-1 — refusal records and repair events are the deleted store's vocabulary; what
  *     survives is the factories' own return values and the invariant they land.
+ *
+ * ── THE RETIRED ROWS, NAMED AGAIN (`D-168`, 2026-11-09) — FOUR, BECAUSE THE ZONE-LAYOUT RENDER
+ *    TURN DOES NOT EXIST IN THIS TREE AT ALL: `M-9`, `F-10`, `I-4` and `P-PD-SM-4`. Each measured
+ *    the input, the differential, the read authority or the listener of `renderZone` — a member
+ *    with no call site anywhere, whose `layout` consumer the app's only `source` never carried
+ *    (`domEventSource()` has no `layout` member) and whose subject ("the render's input is the
+ *    recorded zone") is therefore a claim about a turn that never ran. **NOTHING REPLACED THEM AND
+ *    NOTHING SHOULD**: `['zones']` keeps its declaration, its `commitZones` route (itself with no
+ *    UI caller, `D-151`) and the client's `zoneOf` — and NO renderer. Their headstones stand where
+ *    they stood, and the collected count moves by exactly four (`P-PD-SM-4`'s TWELVE cells leaving
+ *    the `79 = …` literal with them). ──
  */
 
 import { afterAll, describe, expect, it } from 'vitest'
@@ -152,13 +179,6 @@ import { gutterSeamExample } from '../src/shared/demo-envelope'
 
 /* ─────────────────────────────── local drive surface ─────────────────────────────── */
 
-/** The candidate shape a `candidatesFor` closure produces (§2.1 B — "the opaque
- *  candidate + its caller-supplied distance"). Keys pinned by this red set. */
-interface CandidateForShape {
-  readonly candidate: unknown
-  readonly distance: unknown
-}
-
 /** The §2.1 C release sink — E3's commit seam double (a NON-FORWARDING recorder, R-3). */
 interface ReleaseSink {
   (value: unknown): { readonly status: 'committed' | 'refused' }
@@ -178,8 +198,11 @@ function makeSink(): ReleaseSink {
 }
 
 /** The recording source double — the DOM-backed source's stand-in (leg 1: "a recording
- *  source double in place of the DOM-backed source"). The zone-render listener's layout
- *  call lands here, so the render's inputs are observable (§2.3 item 4, §3.1 M-9). */
+ *  source double in place of the DOM-backed source"). **ITS ONE MEMBER IS NOW THE ABSENCE'S
+ *  RECORDER** (`D-168`): the deleted `renderZone` was the surface's only reader of a source, and
+ *  its `layout` call was the one thing a delivery could make. The double keeps the member so a
+ *  pass that re-introduces a layout consumer has somewhere to land — and every row below reads
+ *  `calls` as ZERO, which is a measurement only because the double could hold one. */
 interface SourceDouble {
   readonly calls: ReadonlyArray<{ readonly zoneId: string; readonly size: unknown; readonly display: unknown }>
   layout(zoneId: string, size: unknown, display: unknown): void
@@ -196,25 +219,25 @@ function makeSource(): SourceDouble {
 }
 
 /** The composed surface the red set drives — pinned by this red set; the Implementer's
- *  `createPaneDrag` satisfies it. Every seam signature mirrors the family's EXPORTED seam
- *  types (§2.1: `StartSizeOf`, `BoundsOf`, the relocate candidate production). */
+ *  `createPaneDrag` satisfies it. **SIX MEMBERS, AND THE SIX ARE THE WHOLE SURFACE** (`D-168`):
+ *  the four `D-168` deleted (`renderZone`, `candidatesFor`, `defaultSizeFor`, `rightClick`) are
+ *  named in the file header and asserted ABSENT by `M-4`, `M-11` and `P-PD-IM-2`; `P-PD-TP-2`
+ *  reads the real composition's own key set against this list, so this declaration cannot drift
+ *  from the source without reddening. */
 interface PaneDragSurface {
   startSizeOf(element: unknown, token: unknown): unknown
   boundsOf(element: unknown, token: unknown): unknown
-  defaultSizeFor(element: unknown, token: unknown): unknown
-  candidatesFor(element: unknown): readonly CandidateForShape[]
   move(gestureId: string, preview: unknown): void
   release(gestureId: string, final: unknown, sink: ReleaseSink): void
-  rightClick(gestureId: string): void
+  /** **THE ONE ABANDON TERMINAL** (`D-168`): `rightClick` was this same call (`endReading`), and
+   *  the affordance only ever reaches `cancel` — so one name stands and a re-added second one does
+   *  not exist to be driven. */
   cancel(gestureId: string): void
-  /** **THE RENDER TURN — THE SHAPE'S DELIVERY CALLS IT** (`D-92`): the successor of the `subscribe('temp.drag', …)`
-   *  registration, and the only thing that makes the layout call. */
-  renderZone(): void
-  /** **THE GHOST TURN — THE SHAPE'S DELIVERY CALLS IT BESIDE `renderZone`.** `previewOf` IS DELETED AND THIS IS WHY:
-   *  the drag's in-process value became an ADDRESS — `['drag']` at `temp`, one member per pane id, each `{size}` — so
-   *  the storage is the view record and the ghost's declaration is a READ of that address, painted on the pane element
-   *  the backing carries. There is no closure value left for a `previewOf` to answer, and this declaration is the
-   *  surface's own statement that the turn exists. */
+  /** **THE GHOST TURN — THE SHAPE'S ONE DELIVERY CALLS IT, AND IT IS THE DELIVERY'S ONLY DRAG
+   *  TURN** (`D-138`, `D-144`, `D-168`). `previewOf` IS DELETED AND THIS IS WHY: the drag's
+   *  in-process value became an ADDRESS — `['drag']` at `temp`, one member per pane id, each
+   *  `{size}` — so the storage is the view record and the ghost's declaration is a READ of that
+   *  address, painted on the pane element the backing carries. */
   renderGhost(): void
 }
 
@@ -225,7 +248,9 @@ const ZONE_ID = 'zone-1'
  *  element/token mapping (§2.1 A); these fixtures carry the id verbatim so any mapping
  *  over `element.id` / `token` derives the intended stored name. */
 const paneFixture = { id: PANE_ID }
-const zoneFixture = { zoneId: ZONE_ID }
+// **`zoneFixture` IS DELETED WITH ITS ONE READER** (`D-168`): it was the element a `candidatesFor` call was handed, and that
+// member is gone — the zone read keeps its owner at the CLIENT (`view.zoneOf`), which takes a bare id and no element.
+// `ZONE_ID` survives on its own, because the rows that seed the family and read it by id still name it.
 
 /* ───────────────────────── THE REGISTER DOUBLE (`D-93`) ─────────────────────────
  *
@@ -576,12 +601,14 @@ function crossingOf(key?: object): PaneCrossing {
   // "the family that names no zone" is SUPERSEDED BY POINTER and stands unrewritten, `D-46`): `zones-must-stand` repairs to
   // `viewZonesPlaceholder()` = `{'zone-1': {}}` — one entry per id in `DECLARED_ZONE_IDS`, derived from `DEFAULT_ZONE_ID` in
   // `src/shared/view-shape.ts` (ONE id at this head) — so a DECLARED zone nothing has written answers a MEMBERLESS zone
-  // (`{id}`) rather than `null`, and `null` now answers only an id the record does not declare; `candidatesFor` still answers
-  // `[]` on both arms and the render turn's `size`/`display` are `undefined` on both (`D-152` (b)), which is the answer the
-  // frozen store's `undefined` gave. A row that wants a zone WITH members seeds it, and that seed is a DELIVERY and not this
-  // composition's write. **THE `let zones` BELOW SEEDS NO ZONE** (measured, not repaired): it stands `{}` where the repair now
-  // creates `{'zone-1': {}}`, so a row wanting the placeholder's memberless arm must seed `{}` for the declared id itself —
-  // both arms answer alike, so no row here depends on the gap.
+  // (`{id}`) rather than `null`, and `null` now answers only an id the record does not declare. **NOTHING ON THIS COMPOSITION
+  // READS THE ZONE FAMILY ANY MORE** (`D-168`: `candidatesFor` and `renderZone` were its two readers and both are DELETED —
+  // the read keeps its owner, `store-view-record`'s `view.zoneOf`, which the rows drive on the CLIENT), so a zone `size`/
+  // `display` has no consumer to be `undefined` for (`D-152` (b)'s answer stands, unread). A row that wants a zone WITH
+  // members seeds it, and that seed is a DELIVERY and not this composition's write. **THE `let zones` BELOW SEEDS NO ZONE**
+  // (measured, not repaired): it stands `{}` where the repair now creates `{'zone-1': {}}`, so a row wanting the
+  // placeholder's memberless arm must seed `{}` for the declared id itself — both arms answer alike, so no row here depends
+  // on the gap.
   let zones: Record<string, HeldZone> = {}
   // **THE DRAG FAMILY'S ADDRESS** — `['drag']` at `temp`, ONE MEMBER PER PANE ID, each `{size}`. `null` is the family's
   // absence, which is the state before any gesture wrote and the state every erase turn leaves.
@@ -802,20 +829,50 @@ describe('§3.1 M-3 — boundsOf hands the RECEIVED pair through — never a pol
   })
 })
 
-describe('§3.1 M-11 — the candidate reads reach the PURE comparator as scalars', () => {
-  it('M-11: the candidate carries the OPAQUE recorded slot and the recorded caller-measured distance, READ OFF THE SHAPE\'S `[\'zones\']` FAMILY (`D-92`); withinProximity decides — no geometry read, no element read, the composition never handed an element', () => {
-    const { w, crossing } = compose()
-    // THE RECORD ARM, delivered the way a commit of the zone family delivers: no route call is sent by this composition.
+describe('§3.1 M-11 — the candidate production is ABSENT, and the zone read keeps its owner', () => {
+  // ── RE-GRAINED 2026-11-09 (`D-168`) ──────────────────────────────────────────────────────────────
+  // THIS ROW USED TO DRIVE `candidatesFor(element)` AND ASSERT THE CANDIDATE IT PRODUCED — the OPAQUE
+  // `slot` and the caller-measured `distance`, read off the shape's `['zones']` family, with
+  // `withinProximity` deciding. **THE PRODUCTION IS GONE**: `D-168` deleted the member, because
+  // `src/shared/relocate.ts` declares the `candidatesFor?` seam and has NO `src/` importer (`D-111`'s
+  // census; its only importer is a battery's own drive), so after this pass NO implementation of that
+  // seam exists anywhere in `src/`. **WHAT SURVIVES, AND WHERE**: the zone READ keeps its owner —
+  // `store-view-record`'s `view.zoneOf` at `['zones']`, measured by
+  // `tests/integration/store-view-record/zone-family.test.ts` — and the DECISION keeps its own pure
+  // function, `src/shared/relocate`'s `withinProximity`, which this row still drives as a scalar
+  // comparator (`I-3` below is its purity). **THE ROW IS NOT WEAKER: IT NOW ASSERTS THE ABSENCE AND
+  // ITS OWN CONTROL, AND NAMES THE TWO SURVIVORS BY OWNER.**
+  // ────────────────────────────────────────────────────────────────────────────────────────────────
+  it('M-11: the surface exposes NO candidate production at all (`D-168`: `candidatesFor` is DELETED, and no `src/` file implements `relocate.ts`\'s seam) — the ZONE READ keeps its owner, `store-view-record`\'s `view.zoneOf` over the shape\'s `[\'zones\']` family, and the DECISION keeps `withinProximity`, which answers its two scalars alone', () => {
+    const { w, crossing, source } = compose()
+    // **THE ABSENCE, ASSERTED WITH ITS OWN CONTROL.** `typeof` is `'undefined'` for the deleted member —
+    // and the control is that the SAME reading finds the surviving members, so the absence above is a
+    // fact about the surface and not about a probe that answers `undefined` for everything.
+    const surfaceAsRecord = w as unknown as Record<string, unknown>
+    expect(typeof surfaceAsRecord.candidatesFor, 'the candidate production is DELETED, not stubbed').toBe('undefined')
+    for (const survivor of ['startSizeOf', 'boundsOf', 'move', 'release', 'cancel', 'renderGhost']) {
+      expect(typeof surfaceAsRecord[survivor], `CONTROL: ${survivor} IS on the surface, so the probe can see a member`).toBe('function')
+    }
+    // **THE ZONE READ'S OWNER, NAMED AND DRIVEN**: the family is delivered the way a commit delivers it —
+    // no route call from this composition — and the CLIENT answers it. `zoneOf` is
+    // `store-view-record`'s member; this file reads it to show the read was not lost with the
+    // production, and never claims to own it.
     crossing.seedZone(ZONE_ID, { slot: 'slot-7', distance: 40 })
     expect(crossing.zoneCalls, 'the seed is not this composition\'s write').toEqual([])
-    const candidates = w.candidatesFor(zoneFixture)
-    expect(candidates.length).toBeGreaterThan(0)
-    const c = candidates[0]!
-    expect(c.candidate).toBe('slot-7') // OPAQUE — returned as-is
-    expect(c.distance).toBe(40) // the caller-measured scalar the store merely stored
-    // The proximity DECISION is the pure comparator's:
-    expect(familyWithinProximity(c.distance, 50)).toBe(true)
-    expect(familyWithinProximity(c.distance, 30)).toBe(false)
+    const zone = crossing.client.zoneOf(ZONE_ID)
+    expect(zone, 'the zone read keeps its owner and answers the delivered family').toEqual({ id: ZONE_ID, slot: 'slot-7', distance: 40 })
+    // **THE DECISION IS STILL THE PURE COMPARATOR'S**, driven over the distance the record carries: this
+    // half of the as-filed row is unmoved, because `withinProximity` never had anything to do with the
+    // deleted member.
+    expect(familyWithinProximity(zone?.distance, 50)).toBe(true)
+    expect(familyWithinProximity(zone?.distance, 30)).toBe(false)
+    // AND NOTHING RENDERED ANY OF IT: the composition's own source double, which COULD record a layout
+    // call, saw none — the zone family's delivery reached no renderer anywhere in this tree (`D-168`).
+    expect(source.calls, 'the source double records a layout call when one is made, and none was').toEqual([])
+    // CONTROL: the double really does record one — the empty reading above is a measurement and not an
+    // inert fixture (`D-93`'s discipline, applied to the absence this pass created).
+    source.layout(ZONE_ID, 300, 'block')
+    expect(source.calls.length, 'the recorder is live').toBe(1)
   })
 })
 
@@ -882,25 +939,34 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 42 } }])
   })
 
-  it('F-8/absent-closure: the value-reading seams driven with NO SHAPE AT ALL answer the declared degradation — never a throw out of the wiring turn (`D-93`: the "store absent from the closure" arm is the backing\'s own `view: null`, because there is no store in the closure to be absent)', () => {
+  it('F-8/absent-closure: the SIX SURVIVING TURNS driven with NO SHAPE AT ALL answer the declared degradation — never a throw out of the wiring turn (`D-93`: the "store absent from the closure" arm is the backing\'s own `view: null`, because there is no store in the closure to be absent; `D-168`: SIX is the surface, and the deleted four are not driven here or anywhere) — re-grain 2026-11-09', () => {
     const absent = compose({ view: null })
     // The composition must itself land the degradation (NO shape is in its closure) — the family seam rules bind the
-    // implementations exactly as they bind a fork's (gutter-ui.md §R.3): the measured default answers, and a zone nothing
-    // names is NO candidate.
+    // implementations exactly as they bind a fork's (gutter-ui.md §R.3): the measured default answers.
     expect(() => absent.w.startSizeOf(paneFixture, PANE_ID)).not.toThrow()
     expect(() => absent.w.boundsOf(paneFixture, PANE_ID)).not.toThrow()
-    expect(() => absent.w.candidatesFor(zoneFixture)).not.toThrow()
+    // **THE OTHER FOUR SURVIVORS ARE TOTALLY DRIVEN TOO**: a realm with no crossing still has a gesture, an ending and a
+    // ghost turn, and none of them may throw. The ghost turn's own answer is the DECLARATION's (there is no `data` member
+    // on this realm either), and it is checked after the turn — a rejected read is settled on the microtask queue.
+    expect(() => absent.w.move('g-a', { value: 120 }), 'a move with no shape is silent and total').not.toThrow()
+    expect(() => absent.w.release('g-a', 240, makeSink()), 'a release with no shape is silent and total').not.toThrow()
+    expect(() => absent.w.cancel('g-a'), 'and the abandon terminal with it').not.toThrow()
+    expect(() => absent.w.renderGhost(), 'the ghost turn with no shape and no `data` member is total').not.toThrow()
+    expect(absent.ghost.declared(), 'and it declares nothing: there is nothing to read, so nothing is painted').toBeNull()
     // AND THE DECLARED DEGRADATION IS A VALUE, NOT A WITHDRAWAL — the arm the frozen store's `undefined` used to leave.
     expect(absent.w.startSizeOf(paneFixture, PANE_ID), 'the measured default size').toBe(DEFAULT_PANE_SIZE)
     expect(absent.w.boundsOf(paneFixture, PANE_ID), 'the measured default pair').toEqual({
       min: DEFAULT_PANE_BOUNDS.min,
       max: DEFAULT_PANE_BOUNDS.max,
     })
-    expect(absent.w.candidatesFor(zoneFixture), 'a realm with no shape names no zone').toEqual([])
+    // **AND THE ABSENT REALM SENT NOTHING TO THE CROSSING**: a null `view` is a realm with no route, so no write — and the
+    // store doubled beside the composition saw nothing either.
+    expect(absent.crossing.calls, 'no shape means no file commit').toEqual([])
+    expect(absent.crossing.clears, 'and no drag ending reached a crossing that is not there').toEqual([])
     expect(absent.register.census(), 'and no store was written on the way').toBe(0)
   })
 
-  it('F-8/throwing-shape-read: a shape whose SYNCHRONOUS READ THROWS is absorbed by EVERY turn that reads it — the six that always did AND the pane read pair driven at the drag\'s start, each answering its own declared degradation and nothing propagating (re-grain of the as-filed "a tier-handle whose get THROWS"; the tier handle died with the store, `D-93`; the pair closed at `D-95`)', () => {
+  it('F-8/throwing-shape-read: a shape whose SYNCHRONOUS READ THROWS is absorbed by EVERY one of the SIX SURVIVING turns that reads it — the pane read pair and the release\'s own standing read each answering its own declared degradation, and nothing propagating (re-grain of the as-filed "a tier-handle whose get THROWS"; the tier handle died with the store, `D-93`; the pair closed at `D-95`; **the totality is now over SIX and not over the ten the pre-`D-168` surface carried**) — re-grain 2026-11-09', () => {
     // **THE HOSTILE SUPPLY IS NOW THE SHAPE ITSELF.** The deleted store's tier handle was the throwing read source; the
     // shape's members answer from an in-realm projection, and the composition still guards every turn that calls one — so
     // the term ("a hostile read supplier never throws out of a wiring turn") is driven at the members that hold it.
@@ -912,32 +978,30 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
       commitPane(): never { throw new Error('boom') },
     } as unknown as ViewClient
     const w = wiring.createPaneDrag({ view: hostile }, makeSource()) as unknown as PaneDragSurface
-    expect(() => w.candidatesFor(zoneFixture), 'the candidate read absorbs the throw').not.toThrow()
-    expect(w.candidatesFor(zoneFixture), 'and lands the declared degradation — no candidate').toEqual([])
-    expect(() => w.renderZone(), 'the render turn absorbs the throw').not.toThrow()
     expect(() => w.move('g1', { placement: 1 }), 'the move turn is the closure\'s and never reads the shape').not.toThrow()
-    expect(() => w.rightClick('g1'), 'nor does the erase turn').not.toThrow()
-    expect(() => w.cancel('g1'), 'nor the cancel').not.toThrow()
+    expect(() => w.cancel('g1'), 'the abandon terminal absorbs it and writes nothing else').not.toThrow()
     // THE CONTROL: an UNGUARDED turn would redden here — `release` reads the standing size through the same shape, and if
     // the composition let a throw through this `expect` would fail instead of answering.
     expect(() => w.release('g1', 240, makeSink())).not.toThrow()
     // **AND THE PANE READ PAIR IS NOW IN THIS ROW, WHICH IS WHERE `D-94`'s OPEN ITEM (e) SAID IT WAS NOT** (`D-95`). The
     // note that stood here read *"the pane read pair is NOT in this row … the tier handle that could throw was deleted
     // with the store"* — and the deletion of the handle did not make the pair total: `readPaneSize`/`readPaneBounds`
-    // called the shape's own read with NO guard, so a shape whose read threw propagated out of `startSizeOf`,
-    // `defaultSizeFor` and `boundsOf` while all six of the other turns absorbed it (`D-93`'s open item (e)). The pair is
-    // driven HERE, through the drag's START, and the term is the one every other guarded turn answers: what the ABSENT
-    // member answers — the measured default — and never a propagated throw. **THIS ASSERTION IS THE ROW'S BITE**: with
-    // the guard reverted it reds as `boom` out of `startSizeOf` (measured, `D-95`).
-    expect(() => w.startSizeOf(paneFixture, PANE_ID), 'the SIZE read absorbs the throw — the seventh turn').not.toThrow()
+    // called the shape's own read with NO guard, so a shape whose read threw propagated out of `startSizeOf` and
+    // `boundsOf` while the other turns absorbed it (`D-93`'s open item (e)). The pair is driven HERE, through the drag's
+    // START, and the term is the one every other guarded turn answers: what the ABSENT member answers — the measured
+    // default — and never a propagated throw. **THIS ASSERTION IS THE ROW'S BITE**: with the guard reverted it reds as
+    // `boom` out of `startSizeOf` (measured, `D-95`).
+    expect(() => w.startSizeOf(paneFixture, PANE_ID), 'the SIZE read absorbs the throw — one of the SIX').not.toThrow()
     expect(w.startSizeOf(paneFixture, PANE_ID), 'and answers exactly what the absent member answers: the measured default').toBe(DEFAULT_PANE_SIZE)
-    expect(() => w.defaultSizeFor(paneFixture, PANE_ID), 'the reset arm is the SAME closure and absorbs it too').not.toThrow()
-    expect(w.defaultSizeFor(paneFixture, PANE_ID), 'and answers the same default').toBe(DEFAULT_PANE_SIZE)
-    expect(() => w.boundsOf(paneFixture, PANE_ID), 'the BOUNDS read absorbs the throw — the eighth turn').not.toThrow()
+    expect(() => w.boundsOf(paneFixture, PANE_ID), 'the BOUNDS read absorbs the throw — another of the SIX').not.toThrow()
     expect(w.boundsOf(paneFixture, PANE_ID), 'and answers the measured pair, a FRESH record').toEqual({
       min: DEFAULT_PANE_BOUNDS.min,
       max: DEFAULT_PANE_BOUNDS.max,
     })
+    // **AND THE SIXTH TURN — THE GHOST — IS DRIVEN LAST, BECAUSE ITS ANSWER IS ASYNCHRONOUS**: it reads `['drag']` through
+    // the realm's `data` route and not through the shape, so a throwing SHAPE is not its hostile supply; its own totality is
+    // driven where its supply lives (`P-PD-TP-2`'s `ghostTurn` group and `M-12`'s stated realm).
+    expect(() => w.renderGhost(), 'the ghost turn never throws out of the surface either').not.toThrow()
     // AND THE GUARD IS NOT A BLANKET OVER THE PAIR: a shape that ANSWERS is still believed, so the two `expect`s above
     // cannot be satisfied by a read that stopped reading. The control answers figures NO default could carry.
     const answering = {
@@ -953,13 +1017,11 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
   })
 })
 
-/* ─── THE REGISTER ROW P-PD-IM-1 (S-PD-READS-1, 12 = 2 seams × 3 states × 2 turns) ─── */
-
 /* ─── THE REGISTER ROW P-PD-IM-1 (S-PD-READS-1, 12 = 2 read seams × 3 shape states × 2 turns) ───
  *
  * **RE-GRAINED BY `D-89` ONTO WHAT THE SWAPPED SIDE ACTUALLY DOES.** The declared term is UNMOVED at twelve — two read
- * seams (`startSizeOf`/`defaultSizeFor` and `boundsOf`) times THREE STATES times two gesture turns — and the three states
- * are no longer the frozen store's tiers. They are the SHAPE's three:
+ * seams times THREE STATES times two gesture turns — and the three states are no longer the frozen store's tiers. They are
+ * the SHAPE's three:
  *
  *   1. **record** — the family NAMES the pane, and the read answers the family's own value;
  *   2. **default** — the family stands but does not name this pane, so the MEASURED DEFAULT answers and the derivation says
@@ -969,77 +1031,177 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
  *      a cold mirror is now the crossing's creation repair's business and never the read's, so the read states it plainly
  *      rather than writing anything (`D-82` clause 4).
  *
- * **THE ROW STILL BITES, ON ALL TWELVE CELLS**: move a measured default, drop the `filled` flag, or let the family's value
- * go unread, and the cell reddens. */
+ * **RE-GRAINED AGAIN BY `D-168`, AND THE COLUMN THAT LEFT IS `defaultSizeFor`'s.** The declared term is UNMOVED at twelve
+ * — two read seams (`startSizeOf`/`boundsOf`) times THREE STATES times the TWO GESTURE TURNS that read them: the PRE-DRAG
+ * read (`startSizeOf`/`boundsOf` at the drag's start) and the TERMINAL read (`release`'s own standing-figure read, `R2` in
+ * design §3, which reads `readPaneSize`/`readPaneBounds` for `DEFAULT_PANE_ID` before it commits). The third member this
+ * row used to drive for the size seam, `defaultSizeFor`, is DELETED: the reset arm's read is the AFFORDANCE's own seam
+ * (`options.defaultSizeFor`, `src/shared/gutter.ts`, supplied by `gutter-affordance.ts`), and its measurement is
+ * `interaction`'s `P-GU-IM-2` — **the property did not leave, its OWNER did, so this file names it and does not restate
+ * it**. The three states are the SHAPE's, unmoved since `D-89`; what the terminal cells now measure is that the turn that
+ * ends a gesture reads the SAME shape member the start read does, once, naming the composition's pane.
+ *
+ * **THE ROW STILL BITES, ON ALL TWELVE CELLS**: move a measured default, drop the `filled` flag, let the family's value go
+ * unread, or give the terminal a pair it cannot clamp, and the cell reddens. */
 
-describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the shape-backed size/bounds READS: record / measured default / unfilled', () => {
+/** **THE COUNTING SHAPE** — a `ViewClient` that answers everything the real one does and records the two READS this row is
+ *  about, so "the terminal read the shape" is a counted fact rather than an inferred one. Every other member is forwarded
+ *  bound to the real client, so the composition sees exactly the member set it would see unwrapped. */
+interface CountingView {
+  readonly view: ViewClient
+  readonly reads: Array<{ readonly member: string; readonly id: unknown }>
+}
+
+function countingView(inner: ViewClient): CountingView {
+  const reads: Array<{ member: string; id: unknown }> = []
+  const view = new Proxy(inner, {
+    get(target, property, receiver): unknown {
+      const value = Reflect.get(target, property, receiver) as unknown
+      if (typeof value !== 'function') return value
+      if (property === 'paneSizeOf' || property === 'paneBoundsOf') {
+        return (id: unknown): unknown => {
+          reads.push({ member: String(property), id })
+          return (value as (id: unknown) => unknown).call(target, id)
+        }
+      }
+      return (value as (...args: unknown[]) => unknown).bind(target)
+    },
+  })
+  return { view, reads }
+}
+
+/** WHICH ARM ANSWERED ONE PANE'S READ, over any shape — `paneSourceOf`'s body for a client this row built itself. */
+function sourceArmOf(view: ViewClient, id: string): string {
+  return paneGeometryIn(view.shape().panes, id).source
+}
+
+describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the shape-backed size/bounds READS at the drag\'s TWO turns: record / measured default / unfilled', () => {
   const cases: Array<[string, string]> = [
-    ['01', 'size-read RECORD (the family names the pane), onStart read'],
-    ['02', 'size-read RECORD (the family names the pane), terminal read'],
-    ['03', 'size-read MEASURED DEFAULT (the family names no such pane), onStart read'],
-    ['04', 'size-read MEASURED DEFAULT (the family names no such pane), terminal read'],
-    ['05', 'size-read UNFILLED (nothing has been read), onStart read'],
-    ['06', 'size-read UNFILLED (nothing has been read), terminal read'],
-    ['07', 'bounds-read RECORD (the family names the pane), onStart read'],
-    ['08', 'bounds-read RECORD (the family names the pane), terminal read'],
-    ['09', 'bounds-read MEASURED DEFAULT (the family names no such pane), onStart read'],
-    ['10', 'bounds-read MEASURED DEFAULT (the family names no such pane), terminal read'],
-    ['11', 'bounds-read UNFILLED (nothing has been read), onStart read'],
-    ['12', 'bounds-read UNFILLED (nothing has been read), terminal read'],
+    ['01', 'size-read RECORD (the family names the pane), the drag\'s start read'],
+    ['02', 'size-read RECORD (the family names the pane), the TERMINAL read (the release\'s own standing read)'],
+    ['03', 'size-read MEASURED DEFAULT (the family names no such pane), the drag\'s start read'],
+    ['04', 'size-read MEASURED DEFAULT (the family names no such pane), the TERMINAL read (the release\'s own standing read)'],
+    ['05', 'size-read UNFILLED (nothing has been read), the drag\'s start read'],
+    ['06', 'size-read UNFILLED (nothing has been read), the TERMINAL read (the release\'s own standing read)'],
+    ['07', 'bounds-read RECORD (the family names the pane), the drag\'s start read'],
+    ['08', 'bounds-read RECORD (the family names the pane), the TERMINAL read (the release\'s own standing read)'],
+    ['09', 'bounds-read MEASURED DEFAULT (the family names no such pane), the drag\'s start read'],
+    ['10', 'bounds-read MEASURED DEFAULT (the family names no such pane), the TERMINAL read (the release\'s own standing read)'],
+    ['11', 'bounds-read UNFILLED (nothing has been read), the drag\'s start read'],
+    ['12', 'bounds-read UNFILLED (nothing has been read), the TERMINAL read (the release\'s own standing read)'],
   ]
 
+  // RE-GRAINED 2026-11-09 (`D-168`): the `defaultSizeFor` column leaves this register row (its property's owner is
+  // `interaction`'s `P-GU-IM-2`), and the second "turn" of each seam is the TERMINAL read the release itself makes.
   it.each(cases)('P-PD-IM-1/%s — %s', drive('P-PD-IM-1', (id: string) => {
     const n = parseInt(id, 10)
     const onStartRead = n % 2 === 1
     const isBounds = n > 6
     const state = n <= 2 || (n >= 7 && n <= 8) ? 'record' : n <= 4 || (n >= 9 && n <= 10) ? 'default' : 'unfilled'
-    const readOf = (surface: PaneDragSurface, element: unknown, token: unknown): unknown =>
-      isBounds ? surface.boundsOf(element, token) : onStartRead ? surface.startSizeOf(element, token) : surface.defaultSizeFor(element, token)
 
-    // THE UNFILLED ARM IS A REALM WHOSE SHAPE NOTHING HAS FILLED — the client with no crossing member at all, which is the
-    // node shim's own case and the honest statement of "no delivery has arrived".
-    if (state === 'unfilled') {
-      const cold = createViewClient({ bridge: null })
-      const coldSurface = wiring.createPaneDrag({ view: cold }, makeSource()) as unknown as PaneDragSurface
-      expect(cold.shape().filled, 'nothing has been read, and the shape SAYS so').toBe(false)
-      const answer = readOf(coldSurface, paneFixture, PANE_ID)
-      if (isBounds) {
-        expect(answer, 'the measured default pair, answered rather than withheld').toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
+    /** THE SHAPE THE STATE NAMES, as a client the composition can be handed.
+     *  · record — a filled shape NAMING the pane, at figures no default carries;
+     *  · default — a FILLED shape naming no pane at all (`filled: true`, `panes: []`), so the derivation names the
+     *    default arm while the shape still says a reading landed;
+     *  · unfilled — a client nothing has ever filled.
+     *  **THE TERMINAL READS `DEFAULT_PANE_ID` AND NOT THE ELEMENT'S ID** (`R2`: `readPaneSize({}, DEFAULT_PANE_ID)`), so the
+     *  states are built for that id — which is the same pane the record arm seeds, and the pane `paneFixture` names. */
+    const clientFor = (): ViewClient => {
+      if (state === 'unfilled') return createViewClient({ bridge: null })
+      if (state === 'record') {
+        return clientHolding(
+          [{ id: DEFAULT_PANE_ID, size: 240, bounds: { min: 40, max: 800 } }],
+          [],
+        )
+      }
+      return clientHolding([], [])
+    }
+    const client = clientFor()
+    expect(client.shape().filled, 'the state is the one this cell names').toBe(state !== 'unfilled')
+
+    if (onStartRead) {
+      // ── THE DRAG'S START READ — the surface's own two read members, over the state's shape.
+      const surface = wiring.createPaneDrag({ view: client }, makeSource()) as unknown as PaneDragSurface
+      const element = state === 'default' ? { id: 'pane-unwritten' } : paneFixture
+      const token = state === 'default' ? 'pane-unwritten' : PANE_ID
+      const readId = state === 'default' ? 'pane-unwritten' : DEFAULT_PANE_ID
+      const answer = isBounds ? surface.boundsOf(element, token) : surface.startSizeOf(element, token)
+      if (state === 'record') {
+        expect(answer, 'the family\'s own figure, BY VALUE').toEqual(isBounds ? { min: 40, max: 800 } : 240)
+        expect(sourceArmOf(client, readId), 'and the derivation names the record arm').toBe('record')
       } else {
-        expect(answer, 'the measured default size').toBe(DEFAULT_PANE_SIZE)
+        expect(answer, 'the MEASURED default, answered rather than withheld').toEqual(
+          isBounds ? { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } : DEFAULT_PANE_SIZE,
+        )
+        expect(sourceArmOf(client, readId), 'and the derivation names the default arm, never a record').toBe('default')
       }
       return
     }
 
-    const { w, crossing } = compose()
+    // ── THE TERMINAL READ — `release` reads the standing size AND the bounds pair through the same two members, for
+    // `DEFAULT_PANE_ID`, before its sink and its route. The COUNTING client makes that a measured fact: the seam this cell
+    // is about was read exactly once, at the composition's own pane, and the release then proceeded on a usable figure.
+    const counted = countingView(client)
+    const surface = wiring.createPaneDrag({ view: counted.view }, makeSource()) as unknown as PaneDragSurface
+    const sink = makeSink()
+    const released = 240
+    surface.release('g-terminal', released, sink)
+    const seam = isBounds ? 'paneBoundsOf' : 'paneSizeOf'
+    const seamReads = counted.reads.filter((entry) => entry.member === seam)
+    expect(seamReads.length, `the terminal reads the shape's \`${seam}\` exactly ONCE`).toBe(1)
+    expect(seamReads[0]?.id, 'and it reads the COMPOSITION\'s pane, not the element the start read was handed').toBe(DEFAULT_PANE_ID)
+    // THE FIGURE THE TERMINAL READ IS THE STATE'S OWN — taken off the SHAPE, so this row's own reading does not add to the
+    // count above (the counting client would record it, and the count is exactly what this cell measures).
+    const geometry = paneGeometryIn(client.shape().panes, DEFAULT_PANE_ID)
     if (state === 'record') {
-      if (isBounds) {
-        crossing.seed(PANE_ID, { bounds: { min: 40, max: 800 } })
-        expect(readOf(w, paneFixture, PANE_ID)).toEqual({ min: 40, max: 800 })
-      } else {
-        crossing.seed(PANE_ID, { size: 240 })
-        expect(readOf(w, paneFixture, PANE_ID)).toBe(240) // the FAMILY'S value by value
-      }
-      expect(paneSourceOf(crossing, PANE_ID), 'and the derivation names the record arm').toBe('record')
-      return
-    }
-
-    // THE MEASURED-DEFAULT ARM — a pane id the family does not name (the creation repair minted only the one pane the app
-    // has, so any other id is this arm), read through the same two turns.
-    const other = { id: 'pane-unwritten' }
-    if (isBounds) {
-      expect(readOf(w, other, 'pane-unwritten')).toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
+      expect(isBounds ? geometry.pane.bounds : geometry.pane.size, 'the family\'s own figure, read AT THE TERMINAL').toEqual(
+        isBounds ? { min: 40, max: 800 } : 240,
+      )
+      expect(geometry.source, 'and the derivation names the record arm at the terminal too').toBe('record')
     } else {
-      expect(readOf(w, other, 'pane-unwritten')).toBe(DEFAULT_PANE_SIZE)
+      expect(isBounds ? geometry.pane.bounds : geometry.pane.size, 'the MEASURED default at the terminal').toEqual(
+        isBounds ? { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } : DEFAULT_PANE_SIZE,
+      )
+      expect(geometry.source, 'and the derivation names the default arm').toBe('default')
     }
-    expect(paneSourceOf(crossing, 'pane-unwritten'), 'and the derivation names the default arm, never a record').toBe('default')
+    // AND THE TERMINAL PROCEEDED ON IT — one sink invocation, so the read above is the one its own `R2` consumed rather
+    // than a read taken by this row for its own amusement; and `R2` reads BOTH standing members, so both are counted once.
+    expect(sink.stats().sinkCalls, 'the release ran: the standing figure was usable').toBe(1)
+    expect(counted.reads.filter((entry) => entry.member === (isBounds ? 'paneSizeOf' : 'paneBoundsOf')).length,
+      'and the OTHER standing read ran once too: `R2` reads the size and the pair').toBe(1)
+    // **THE CONTROL THAT MAKES THE BOUNDS TERMINAL CELL BITE** — the same turn over a shape whose pair CANNOT be clamped
+    // sends NOTHING at all (`R2`'s refusing arm): a composition that never read the shape could not tell the two apart.
+    if (isBounds && state === 'record') {
+      const hostile = clientHolding([{ id: DEFAULT_PANE_ID, size: 240, bounds: { min: 'x', max: 'y' } }], [])
+      const refusing = wiring.createPaneDrag({ view: hostile }, makeSource()) as unknown as PaneDragSurface
+      const refusingSink = makeSink()
+      expect(() => refusing.release('g-refused', released, refusingSink), 'and it does not throw doing it').not.toThrow()
+      expect(refusingSink.stats().sinkCalls, 'an unclampable standing pair is REFUSED: no sink, no route').toBe(0)
+    }
   }))
 })
 
 
 /* ─── THE REGISTER ROW P-PD-IM-2 (S-PD-ZONE-1, 9 = 3 zone states × 3 operand shapes) ─── */
 
-describe('REGISTER P-PD-IM-2 (S-PD-ZONE-1) — the candidate/slot read reaches the pure comparator as scalars', () => {
+describe('REGISTER P-PD-IM-2 (S-PD-ZONE-1) — the candidate production is ABSENT in every zone state; the zone READ and the pure comparator are its survivors', () => {
+  /* **RE-GRAINED 2026-11-09 (`D-168`) — THE TERM IS UNMOVED AT NINE, AND THE SUBJECT OF EACH CELL IS NOW TWO-FOLD.**
+   *
+   * The as-filed nine were "3 zone states × 3 comparator operand shapes", each driving `candidatesFor(element)` and reading
+   * the candidate it produced. **THE PRODUCTION IS DELETED** (`H2`: `src/shared/relocate.ts` declares the seam and has NO
+   * `src/` importer, so no implementation of it exists anywhere in `src/` after this pass), so a cell that drove it would be
+   * a cell about nothing. What each of the nine asserts instead, in the SAME three zone states and over the SAME three
+   * operand shapes:
+   *
+   *   · **THE ABSENCE** — the surface carries no candidate production, in that zone state, and the control is that the six
+   *     survivors ARE there (a probe that answered `undefined` for everything could not report both);
+   *   · **THE ZONE READ'S OWNER** — `store-view-record`'s `view.zoneOf` answers the state the family stands at (both
+   *     members / `slot` alone / a zone the family does not name), so the read was not lost with the production; and
+   *   · **THE DECISION** — `withinProximity`', the pure two-scalar comparator, still answers from its arguments over the
+   *     operand shape, which is the half of the as-filed row that never depended on the deleted member.
+   *
+   * **THE EIGHT CELLS STILL BITE**: a re-added `candidatesFor`, a zone read that stopped answering its family, or a
+   * comparator that began consulting anything but its two scalars each reddens its own cells. */
   const cases: Array<[string, string, string]> = [
     ['01', 'both', 'usable-within'],
     ['02', 'both', 'usable-outside'],
@@ -1052,40 +1214,35 @@ describe('REGISTER P-PD-IM-2 (S-PD-ZONE-1) — the candidate/slot read reaches t
     ['09', 'neither', 'hostile-negative'],
   ]
 
-  it.each(cases)('P-PD-IM-2/%s — zone %s, operand %s', drive('P-PD-IM-2', (id: string, _zoneState: string, _shape: string) => {
-    // **RE-GRAINED `D-92`**: the three "stored zone states" are the three states of the SHAPE'S `['zones']` FAMILY, which
-    // the crossing delivers — (1) both members, (2) `slot` alone, (3) a zone the family does not name. The frozen store's
-    // `mem.layout.zone.<id>.*` writes answered the same three states through machinery this composition no longer reads.
-    const { w, crossing } = compose()
-    const n = parseInt(id, 10)
-    const zoneState = ((n - 1) % 3) + 1
-    const shape = Math.ceil(n / 3)
+  it.each(cases)('P-PD-IM-2/%s — zone %s, operand %s', drive('P-PD-IM-2', (id: string, zoneState: string, shape: string) => {
+    const { w, crossing, source } = compose()
+    // THE STATE, DELIVERED THE WAY A COMMIT OF THE ZONE FAMILY DELIVERS IT — no route call is this composition's.
+    if (zoneState === 'both') crossing.seedZone(ZONE_ID, { slot: 'slot-7', distance: 40 })
+    if (zoneState === 'slot-only') crossing.seedZone(ZONE_ID, { slot: 'slot-7' })
+    expect(crossing.zoneCalls, 'the seed is not this composition\'s write').toEqual([])
 
-    if (zoneState === 1) {
-      crossing.seedZone(ZONE_ID, { slot: 'slot-7', distance: 40 })
-      const candidates = w.candidatesFor(zoneFixture)
-      expect(candidates.length).toBeGreaterThan(0)
-      const c = candidates[0]!
-      expect(c.candidate).toBe('slot-7')
-      expect(c.distance).toBe(40)
-      const d = c.distance as number
-      if (shape === 1) expect(familyWithinProximity(d, 50)).toBe(true)
-      if (shape === 2) expect(familyWithinProximity(d, 30)).toBe(false)
-      if (shape === 3) expect(familyWithinProximity(-1, 50)).toBe(false)
+    // (1) THE ABSENCE, WITH ITS CONTROL: no candidate production, on a surface that demonstrably HAS its six members.
+    const surfaceAsRecord = w as unknown as Record<string, unknown>
+    expect(typeof surfaceAsRecord.candidatesFor, `zone ${zoneState}: no candidate production exists to drive`).toBe('undefined')
+    expect(typeof surfaceAsRecord.startSizeOf, 'CONTROL: the surface is a surface, and its six members are readable').toBe('function')
+
+    // (2) THE ZONE READ'S OWNER — the CLIENT's `zoneOf`, which is `store-view-record`'s member and answers the state.
+    const zone = crossing.client.zoneOf(ZONE_ID)
+    if (zoneState === 'both') {
+      expect(zone, 'both members, as the record carries them').toEqual({ id: ZONE_ID, slot: 'slot-7', distance: 40 })
+    } else if (zoneState === 'slot-only') {
+      expect(zone, 'the slot alone — the record named no distance').toEqual({ id: ZONE_ID, slot: 'slot-7' })
     } else {
-      if (zoneState === 2) crossing.seedZone(ZONE_ID, { slot: 'slot-7' })
-      // A zone whose `slot` the family does not name is admitted per the CALLER's declared rule — never a
-      // record decision, never a throw; the comparator still answers boolean from its
-      // arguments (a MISS distance is the unusable class ⇒ false where it participates).
-      expect(() => w.candidatesFor(zoneFixture)).not.toThrow()
-      if (zoneState === 2) {
-        // THE `slot`-ALONE ARM IS A CANDIDATE WITH NO DISTANCE — the record named the slot and not the measure.
-        expect(w.candidatesFor(zoneFixture).length).toBe(1)
-        expect(w.candidatesFor(zoneFixture)[0]?.distance).toBeUndefined()
-      }
-      if (zoneState === 3) expect(w.candidatesFor(zoneFixture), 'a zone nothing names is NO candidate').toEqual([])
-      if (shape === 3) expect(familyWithinProximity(-1, 50)).toBe(false)
+      expect(zone, 'a zone the family does not name answers `null`, and invents no geometry').toBeNull()
     }
+
+    // (3) THE DECISION — the pure comparator, over the operand this cell names.
+    if (shape === 'usable-within') expect(familyWithinProximity(40, 50)).toBe(true)
+    if (shape === 'usable-outside') expect(familyWithinProximity(40, 30)).toBe(false)
+    if (shape === 'hostile-negative') expect(familyWithinProximity(-1, 50)).toBe(false)
+
+    // (4) AND NOTHING RENDERED, ANYWHERE: the source double could have recorded a layout call and recorded none.
+    expect(source.calls, `zone ${zoneState}: no renderer consumed the zone family`).toEqual([])
   }))
 })
 
@@ -1107,10 +1264,16 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the SHAPE-BACKED seam implemen
    *      the crossing's, one realm away, so totality means "the hostile value is answered or degraded, never thrown".
    *   5. **hostile-backing** — `createPaneDrag(42, …)`: a backing that is not even an object.
    *
-   * **THE ROW STILL BITES ON ALL FIFTEEN CELLS**: an implementation that throws on any of the five reddens, and the three
-   * precise cells (2, 3, 5) additionally pin the DECLARED answer, so a "returns `undefined` quietly" degradation reddens
-   * too. */
-  const impls = ['startSizeOf', 'boundsOf', 'candidateReads'] as const
+   * **RE-GRAINED AGAIN 2026-11-09 (`D-168`), AND THE GROUPS ARE THE SIX SURVIVORS.** The term is UNMOVED at fifteen, and the
+   * three "implementations" are now the three GROUPS the six surviving turns fall into — `readPair` (`startSizeOf` +
+   * `boundsOf`), `gestureTurns` (`move` + `release` + `cancel`) and `ghostTurn` (`renderGhost`) — over the same five hostile
+   * shapes. **THE GROUPING CANNOT SILENTLY OMIT A MEMBER**: every cell first reads the real composition's OWN KEY SET and
+   * asserts it is EXACTLY these six, so a re-added member (the deleted four) reddens all fifteen and a member that left
+   * unreported reddens them too. The deleted `candidateReads` group is gone with its subject (`D-168`).
+   *
+   * **THE ROW BITES ON ALL FIFTEEN CELLS**: a turn that throws on any of the five reddens, and the precise cells pin the
+   * DECLARED answer where one exists, so a "returns `undefined` quietly" degradation reddens too. */
+  const impls = ['readPair', 'gestureTurns', 'ghostTurn'] as const
   const shapes = ['no-backing', 'view-null', 'unfilled-shape', 'hostile-record', 'hostile-backing'] as const
   const cases: Array<[string, string, string]> = []
   let n = 0
@@ -1143,41 +1306,56 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the SHAPE-BACKED seam implemen
     }
 
     const surface = surfaceFor(shape)
+
+    // (0) THE SURFACE IS SIX MEMBERS AND NOTHING ELSE — the structural half `D-168` owes, on every cell of all three groups.
+    // `Object.keys` reads the REAL composition's return, so this is the source's own statement and not this file's.
+    expect(Object.keys(surface).sort(), `${shape}: the surface is the SIX survivors, member for member`).toEqual([
+      'boundsOf',
+      'cancel',
+      'move',
+      'release',
+      'renderGhost',
+      'startSizeOf',
+    ])
+
     const readSize = (): unknown => surface.startSizeOf(paneFixture, PANE_ID)
     const readBounds = (): unknown => surface.boundsOf(paneFixture, PANE_ID)
-    const readCandidates = (): readonly CandidateForShape[] => surface.candidatesFor(zoneFixture)
 
-    // (a) NOTHING THROWS, ON ANY IMPL × ANY SHAPE — the total half, which is the row's term.
-    expect(() => readSize(), `${impl} × ${shape} answers`).not.toThrow()
-    expect(() => readBounds(), `${impl} × ${shape} answers`).not.toThrow()
-    expect(() => readCandidates(), `${impl} × ${shape} answers`).not.toThrow()
+    // (a) NOTHING THROWS, ON ANY GROUP × ANY SHAPE — the total half, which is the row's term. Each group drives EVERY member
+    // it names, so "the group is total" is a statement about all six turns and not about a representative.
+    if (impl === 'readPair') {
+      expect(() => readSize(), `${impl} × ${shape}: startSizeOf answers`).not.toThrow()
+      expect(() => readBounds(), `${impl} × ${shape}: boundsOf answers`).not.toThrow()
+    } else if (impl === 'gestureTurns') {
+      expect(() => surface.move('g-tp', { value: 120 }), `${impl} × ${shape}: move answers`).not.toThrow()
+      expect(() => surface.release('g-tp', 240, makeSink()), `${impl} × ${shape}: release answers`).not.toThrow()
+      expect(() => surface.cancel('g-tp'), `${impl} × ${shape}: cancel answers`).not.toThrow()
+    } else {
+      expect(() => surface.renderGhost(), `${impl} × ${shape}: renderGhost answers`).not.toThrow()
+    }
 
     // (b) THE DECLARED ANSWER, PINNED WHERE IT HAS ONE — so "answers `undefined` quietly" is not mistaken for degradation.
-    if (shape === 'hostile-record') {
+    if (shape === 'hostile-record' && impl === 'readPair') {
       // **LANDED BY VALUE OR THE DECLARED DEGRADATION, NEVER A THROW** — the record's hostile members are answered as the
       // shape holds them (the read is the shape's, and the boundary that would have refused them is the crossing's, one
       // realm away). So the degradation here is TOTALITY, not silence: every member still comes back.
       expect(readSize(), 'the hostile size is handed through by value').toBe('not-a-size')
       expect(readBounds(), 'and so is the hostile pair').toEqual({ min: 800, max: 40 })
-      const hostileCandidates = readCandidates()
-      expect(hostileCandidates.length, 'and the hostile distance with it: the zone IS named').toBe(1)
-      expect(hostileCandidates[0]!.distance).toBe('not-a-distance')
       return
     }
-    if (impl === 'candidateReads') {
-      expect(readCandidates(), 'no zone is named ⇒ NO candidate, never a throw').toEqual([])
-      return
-    }
-    if (impl === 'boundsOf') {
+    if (impl === 'readPair') {
+      if (shape === 'hostile-record') return
+      expect(readSize(), 'the measured default size, and it is a USABLE number').toBe(DEFAULT_PANE_SIZE)
       expect(readBounds(), 'the measured default pair, and it is a USABLE pair').toEqual({
         min: DEFAULT_PANE_BOUNDS.min,
         max: DEFAULT_PANE_BOUNDS.max,
       })
-    } else {
-      expect(readSize(), 'the measured default size, and it is a USABLE number').toBe(DEFAULT_PANE_SIZE)
-    }
-    if (shape === 'unfilled-shape') {
-      expect(cold.shape().filled, 'a cold shape SAYS it is cold, and the read is the default arm rather than a guess').toBe(false)
+    } else if (impl === 'gestureTurns') {
+      // A HOSTILE BACKING HAS NO CROSSING TO WRITE TO, so the turns are silent — which is their declared degradation, and the
+      // whole of what these cells can pin without a crossing: no throw and no source call.
+      expect(source.calls, `${shape}: no gesture turn reaches a layout sink`).toEqual([])
+    } else if (shape === 'unfilled-shape') {
+      expect(cold.shape().filled, 'a cold shape SAYS it is cold, and the ghost turn reads its own address rather than guessing').toBe(false)
     }
   }))
 })
@@ -1187,36 +1365,46 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the SHAPE-BACKED seam implemen
  * F-4/F-5/F-6; register P-PD-SM-1/3; §7a.1 items 1/2 working defaults)
  * ══════════════════════════════════════════════════════════════════════════════════ */
 
-describe('§3.1 M-4 — the SHAPE\'S DELIVERY is the render turn\'s trigger', () => {
-  it('M-4: the composition registers NO subscriber at all (the `subscribe(\'temp.drag\', …, {subtree:true})` registration is DELETED, `D-92`); the render turn is the surface\'s own `renderZone` member, the shape\'s ONE delivery calls it, and the layout input tracks the DELIVERED zone — re-grain of the as-filed "a move\'s temp write fires the ancestor subscriber"', () => {
+describe('§3.1 M-4 — the SHAPE\'S DELIVERY registers nothing, and NO ZONE TURN STANDS ON THE SURFACE TO BE CALLED', () => {
+  it('M-4: the composition registers NO subscriber at all (the `subscribe(\'temp.drag\', …, {subtree:true})` registration is DELETED, `D-92`), AND THE HALF THAT SAID "the delivery calls `renderZone`" INVERTS (`D-168`): the surface carries NO render turn, so a delivery has nothing of that kind to call, and a source that COULD record a layout call records NONE across a delivery and a gesture — re-grain of the as-filed "a move\'s temp write fires the ancestor subscriber"', () => {
     const { w, register, crossing, source } = compose()
+    // **THE INVERSION, FIRST AND WITH ITS CONTROL.** The member the as-filed row asserted was the delivery's trigger does
+    // not exist: `renderZone` is DELETED (`H1`: no call site in `src/` or `demo/`, and the app's only `source` is
+    // `domEventSource()`, which carries no `layout` member at all). The control is that the same reading FINDS the ghost
+    // turn the shape's ONE delivery actually calls — `theme?.apply(); ghost?.(); readout?.()` and nothing else.
+    const surfaceAsRecord = w as unknown as Record<string, unknown>
+    expect(typeof surfaceAsRecord.renderZone, 'NO render turn stands here: the delivery has nothing of the kind to call').toBe('undefined')
+    expect(typeof surfaceAsRecord.renderGhost, 'CONTROL: and the ghost turn — the delivery\'s ONE drag turn — IS here').toBe('function')
+    // A DELIVERY, THEN EVERY DRAG TURN A GESTURE CAN TAKE: not one of them reaches the source, which is what a layout
+    // call would have had to do.
     crossing.seedZone(ZONE_ID, { size: 300, display: 'block' })
-    // THE TRIGGER IS THE DELIVERY'S TURN, CALLED BY THE CONSUMER — never a registration of this composition's.
-    w.renderZone()
-    const latest = source.calls[source.calls.length - 1]
-    expect(latest).toBeDefined()
-    expect(latest!.zoneId).toBe(ZONE_ID)
-    expect(latest!.size).toBe(300)
-    expect(latest!.display).toBe('block')
-    // NOTHING IS REGISTERED ANYWHERE: not on the doubled store, not on the shape (`M-PDV-4`'s count, driven here as the
-    // doubled store's subscription count and the shape's own `onChanged` count).
+    w.renderGhost()
+    w.move('g-m4', { value: 120 })
+    w.cancel('g-m4')
+    expect(source.calls, 'no turn on this surface renders a zone: the source double saw nothing').toEqual([])
+    // CONTROL: the double records a layout call the moment one is made, so the reading above is a measurement — the
+    // deleted turn would have filled exactly this array.
+    source.layout(ZONE_ID, 300, 'block')
+    expect(source.calls, 'the recorder is live, so the zero above is a fact about the surface').toEqual([
+      { zoneId: ZONE_ID, size: 300, display: 'block' },
+    ])
+    // NOTHING IS REGISTERED ANYWHERE: not on the doubled store, not on the shape (`M-PDV-4`\'s count, driven here as the
+    // doubled store\'s subscription count and the shape\'s own `onChanged` count).
     expect(crossing.registrations(), 'the composition takes no subscription of its own').toBe(0)
     expect(register.subscriptions(), 'and none on a store either — there is no store in the backing to take one on').toBe(0)
-
-    // THE DELIVERED-VALUE DIFFERENTIAL: a second delivery changes the record and the render turn follows IT.
-    crossing.seedZone(ZONE_ID, { size: 260, display: 'block' })
-    w.renderZone()
-    let saw260 = false
-    for (const call of source.calls) if (call.size === 260) saw260 = true
-    expect(saw260).toBe(true)
-    // **AND THE DOUBLED STORE IS NOT CONSULTED**: a `mem.layout.zone.*` write nothing delivers changes nothing — the
-    // composition reads the SHAPE only, so a store standing beside it with a contradicting figure is invisible.
+    // **AND THE DELIVERED ZONE IS STILL DELIVERED, TO ITS OWN OWNER**: the shape carries it and the client answers it —
+    // the `['zones']` family was not deleted with the turn that once (never) rendered it (`D-151`, `D-168`).
+    expect(crossing.client.zoneOf(ZONE_ID), 'the zone family is delivered and readable; it is simply not rendered').toEqual({
+      id: ZONE_ID,
+      slot: undefined,
+      distance: undefined,
+      size: 300,
+      display: 'block',
+    })
+    // **AND THE DOUBLED STORE IS NOT CONSULTED**: a `mem.layout.zone.*` write nothing delivers changes nothing.
     expect(register.commit(`mem.layout.zone.${ZONE_ID}.size`, 999).status).toBe('committed')
-    w.renderZone()
-    expect(source.calls[source.calls.length - 1]!.size, 'a store tier is not a read authority any more').toBe(260)
-    expect(source.calls[source.calls.length - 1]!.size, 'and the doubled store really does hold the contradiction').not.toBe(
-      stored(register, `mem.layout.zone.${ZONE_ID}.size`).value,
-    )
+    expect(stored(register, `mem.layout.zone.${ZONE_ID}.size`).value, 'the contradicting value really is in the store').toBe(999)
+    expect(crossing.client.zoneOf(ZONE_ID)?.size, 'and the shape does not follow it').toBe(300)
   })
 })
 
@@ -1296,44 +1484,46 @@ describe('§3.1 M-10 — the temp preview is the ADDRESS `[\'drag\']` at `temp` 
   })
 })
 
-describe('§3.1 M-6 — right-click ENDS the drag family at its address; the reassert\'s subject is retired', () => {
-  it('M-6: the erase turn sends exactly ONE `clearDrag()` — the family answers ABSENT afterwards — a second right-click for the SAME gesture sends ZERO, a gesture that never moved then right-clicked sends exactly ONE (the family\'s end is idempotent at the store, whether or not it stood), and the composition makes ZERO store acts', () => {
+describe('§3.1 M-6 — the ONE abandon terminal (`cancel`) ENDS the drag family at its address; the reassert\'s subject is retired', () => {
+  it('M-6: the erase turn sends exactly ONE `clearDrag()` — the family answers ABSENT afterwards — a second cancel for the SAME gesture sends ZERO, a gesture that never moved then cancelled sends exactly ONE (the family\'s end is idempotent at the store, whether or not it stood), and the composition makes ZERO store acts. **RE-GRAINED 2026-11-09 (`D-168`): THE DRIVE IS `cancel`, THE TERMINAL THE AFFORDANCE ACTUALLY REACHES** — `rightClick` was the same call and is DELETED, so this row would otherwise drive a member that does not exist', () => {
     const { w, register, crossing } = compose()
-    // ── HEADSTONE (2026-10-05, `D-93`; RE-GRAINED 2026-11-08) ──────────────────────────────────────────────────────
+    // ── HEADSTONE (2026-10-05, `D-93`; RE-GRAINED 2026-11-08; DRIVE MOVED 2026-11-09 BY `D-168`) ────────────────────
     // THIS ROW USED TO ASSERT THREE THINGS: (1) ONE `remove('temp.drag.<gestureId>.placement')` on the frozen store, (2)
     // that the `temp` tier read MISSed afterwards, and (3) that the FILE original — a `file.settings.drag.<gid>.placement`
     // copy seeded beside the preview — REASSERTED on the read once the preview was gone. (3) died with the store. What
     // SURVIVES IS (1) AND (2), ASKED OF THE THING THAT HOLDS THE VALUE NOW: the drag's value is an ADDRESS (`['drag']` at
     // `temp`), so the erase is `clearDrag()` — the store\'s delete of that family — and "the temp tier read MISSes" is the
     // family answering `null`. The row is therefore no longer a headstone over a deleted subject: it is the address\'s own
-    // erase, measured on the route log and on the family.
+    // erase, measured on the route log and on the family. **AND THE TURN THAT SENDS IT IS `cancel`**: `rightClick` and
+    // `cancel` were always `endReading(key)`, the affordance's three abandon arms all reach the preview seam with
+    // `valid: false` (which the wiring sends to `cancel`), and `contextmenu` occurs nowhere in `src/` or `tests/`.
     // ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
     expect(register.census(), 'nothing at construction').toBe(0)
     w.move('g1', { value: 120 })
     expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { size: 120 } })
-    w.rightClick('g1')
+    w.cancel('g1')
     // THE ERASE — exactly ONE call, and the family is ABSENT:
     expect(crossing.clears.length, 'the erase sends exactly ONE `clearDrag()`').toBe(1)
     expect(crossing.dragFamily(), 'and the family no longer stands').toBeNull()
     expect(stored(register, 'temp.drag.g1.placement').found, 'and no store ever held it').toBe(false)
     expect(crossing.calls, 'an abandon terminal sends no `commitPane`').toEqual([])
     // AT-MOST-ONE-ERASE per gesture (§7a.1 item 2 reading (i)) — a second erase for the SAME gesture sends nothing:
-    w.rightClick('g1')
-    expect(crossing.clears.length, 'a second right-click for the same gesture sends ZERO').toBe(1)
+    w.cancel('g1')
+    expect(crossing.clears.length, 'a second cancel for the same gesture sends ZERO').toBe(1)
     // **THE CONTROL THAT THE ERASE TURN REALLY SENDS**: a gesture whose erase had NOT happened asks ONCE, even where it
     // never wrote the address — the store\'s delete answers the same receipt whether or not the family stood.
     const before = crossing.clears.length
-    w.rightClick('g-never')
-    expect(crossing.clears.length, 'a gesture that never moved then right-clicked sends exactly ONE').toBe(before + 1)
+    w.cancel('g-never')
+    expect(crossing.clears.length, 'a gesture that never moved then cancelled sends exactly ONE').toBe(before + 1)
     expect(crossing.dragCalls, 'and no move means no drag write at all').toEqual([{ id: DEFAULT_PANE_ID, geometry: { size: 120 } }])
     expect(register.census(), 'the whole row made not one store act').toBe(0)
   })
 })
 
-describe('§3.2 F-4 — right-click during a NON-EXISTENT drag ends an ABSENT family, never a refusal', () => {
-  it('F-4: the erase turn on a gesture with NO move is never a throw and sends exactly ONE `clearDrag()` (NOT zero — the family\'s end is idempotent at the store, and the store answers `AddressNotFound` for a family that does not stand), a repeat for the SAME gesture sends none, and never a store act; the control is the same turn on a gesture that DID move, which also sends exactly one and ends the family', () => {
+describe('§3.2 F-4 — the abandon terminal during a NON-EXISTENT drag ends an ABSENT family, never a refusal', () => {
+  it('F-4: the erase turn on a gesture with NO move is never a throw and sends exactly ONE `clearDrag()` (NOT zero — the family\'s end is idempotent at the store, and the store answers `AddressNotFound` for a family that does not stand), a repeat for the SAME gesture sends none, and never a store act; the control is the same turn on a gesture that DID move, which also sends exactly one and ends the family. **RE-GRAINED 2026-11-09 (`D-168`): THE TURN IS `cancel`** — `rightClick` was this same call and is DELETED, and a gesture with no move is exactly the case `E1`\'s other arm is lawful for', () => {
     const { w, register, crossing } = compose()
-    // ── HEADSTONE (2026-10-05, `D-93`; RE-GRAINED 2026-11-08) ──────────────────────────────────────────────────────
+    // ── HEADSTONE (2026-10-05, `D-93`; RE-GRAINED 2026-11-08; DRIVE MOVED 2026-11-09 BY `D-168`) ────────────────────
     // THE AS-FILED ROW seeded a `file.drag.<gid>.placement` original into a store whose `drag` root was DECLARED, drove a
     // right-click on a path with NO temp node, and asserted that the store\'s `remove` answered `'undeclared-name'` at the
     // walk while the file original kept answering the unqualified resolve. **THERE IS NO STORE TO WALK AND NO ROOT TO
@@ -1343,17 +1533,17 @@ describe('§3.2 F-4 — right-click during a NON-EXISTENT drag ends an ABSENT fa
     // composition deciding what the store\'s answer is.
     // ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
     expect(crossing.dragFamily(), 'nothing stands, and none is claimed').toBeNull()
-    expect(() => w.rightClick('g-miss'), 'never a throw').not.toThrow()
+    expect(() => w.cancel('g-miss'), 'never a throw').not.toThrow()
     expect(crossing.clears.length, 'the erase asks the store exactly ONCE even where nothing stood').toBe(1)
     expect(crossing.dragFamily(), 'and the address answers absent, which is the state the erase leaves').toBeNull()
-    expect(() => w.rightClick('g-miss'), 'and idempotent').not.toThrow()
+    expect(() => w.cancel('g-miss'), 'and idempotent').not.toThrow()
     expect(crossing.clears.length, 'a repeat for the SAME gesture sends none').toBe(1)
     expect(register.census(), 'and never a store act').toBe(0)
     // THE CONTROL: the same turn on a gesture that DID move also sends exactly one, and ends the family it finds.
     w.move('g-present', { value: 140 })
     expect(crossing.dragFamily(), 'the control gesture really wrote the address first').toEqual({ [PANE_ID]: { size: 140 } })
     const before = crossing.clears.length
-    w.rightClick('g-present')
+    w.cancel('g-present')
     expect(crossing.clears.length, 'and the same turn sends exactly one more').toBe(before + 1)
     expect(crossing.dragFamily(), 'leaving the family absent').toBeNull()
   })
@@ -1387,14 +1577,14 @@ describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, 
     expect(crossing.dragFamily(), 'and no drag family stands once the release has ended it').toBeNull()
   })
 
-  it('F-6/right-click: EXACTLY ONE `clearDrag`, ZERO sink writes, ZERO `commitPane`, and NOT ONE store act — never a commit at the same terminal', () => {
+  it('F-6/right-click: EXACTLY ONE `clearDrag`, ZERO sink writes, ZERO `commitPane`, and NOT ONE store act — never a commit at the same terminal. **RE-GRAINED 2026-11-09 (`D-168`): ITS DRIVE IS NOW `cancel`, WHICH IS THE TERMINAL THE AFFORDANCE ACTUALLY REACHES** — `rightClick` was the same `endReading` call and is DELETED, so this row keeps the id the design names it by and drives the member that exists ("right-click" is the as-filed name of the abandon arm, not a member); `F-6/§7a.1.2-cancel` below is the OTHER cancel arm (reading (i) and the re-mint), so both survive and neither copies the other', () => {
     const { w, register, crossing } = compose()
     const tempEvents: RegisterAct[] = []
     const fileEvents: RegisterAct[] = []
     register.subscribe('temp.drag.g1.placement', (e) => tempEvents.push(e))
     register.subscribe(`file.settings.pane.${PANE_ID}.size`, (e) => fileEvents.push(e))
     w.move('g1', { value: 100 })
-    w.rightClick('g1')
+    w.cancel('g1')
     expect(crossing.clears.length, 'the abandon terminal ends the family exactly once').toBe(1)
     expect(crossing.dragFamily(), 'and the family is absent afterwards').toBeNull()
     expect(crossing.calls, 'and no `commitPane` at an abandon terminal').toEqual([])
@@ -1443,13 +1633,15 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
     ['02', 'valid release — stats().sinkCalls reading (AGREE)'],
     ['03', 'invalid release — sink record reading'],
     ['04', 'invalid release — stats().sinkCalls reading (AGREE)'],
-    ['05', 'right-click — sink record reading'],
-    ['06', 'right-click — stats().sinkCalls reading (AGREE)'],
+    ['05', 'cancel (the abandon terminal) — sink record reading'],
+    ['06', 'cancel (the abandon terminal) — stats().sinkCalls reading (AGREE)'],
     ['07', 'move-turn drive: the FIRST move writes `[\'drag\']` at `temp` through `commitDrag`, ONCE'],
     ['08', 'move-turn drive: a SUBSEQUENT move replaces it — one route call per move, and the family holds the last'],
     ['09', 'move-turn drive: NO move ⇒ NO drag write, and the release ends an absent family'],
   ]
 
+  // RE-GRAINED 2026-11-09 (`D-168`): cells 05/06 drive `cancel`, the ONE abandon terminal the affordance reaches —
+  // `rightClick` was the same call and is DELETED, so the as-filed label named a member that no longer exists.
   it.each(cases)('P-PD-SM-1/%s — %s', drive('P-PD-SM-1', (id: string) => {
     const n = parseInt(id, 10)
     if (n <= 6) {
@@ -1480,7 +1672,9 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
         expect(crossing.dragFamily(), 'and the family is absent afterwards').toBeNull()
       } else {
         w.move('g1', { value: 100 })
-        w.rightClick('g1')
+        // **THE ABANDON TERMINAL IS `cancel`** (`D-168`: `rightClick` was this same call and is DELETED; the affordance's
+        // three abandon arms all reach it).
+        w.cancel('g1')
         if (n % 2 === 1) expect(sink.record.length).toBe(0) // ZERO sink writes
         else expect(sink.stats().sinkCalls).toBe(0)
         // THE ABANDON TERMINAL: one move write, one ending, no file commit at all.
@@ -1536,7 +1730,7 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
 
 /* ─── THE REGISTER ROW P-PD-SM-3 (S-PD-REASSERT-1, 8 = 4 states × 2 readings) ─── */
 
-describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cycle, re-grained onto the ADDRESS and the ROUTE LOG', () => {
+describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the abandon terminal / reassert cycle, re-grained onto the ADDRESS and the ROUTE LOG', () => {
   /* **RE-GRAINED (2026-11-08) — FOUR STATES, TWO READINGS, AND BOTH READINGS ARE THE ADDRESS\'S.**
    *
    * The as-filed readings were `unqualified-read` (a tier-qualified `resolve` of the FILE original that "reasserted") and
@@ -1553,7 +1747,9 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
    * **ALL EIGHT CELLS STILL BITE**: a composition that leaves the family standing after an erase reddens every
    * `address-read`, one that sends nothing at all reddens every `route-log`, and one that sends a second write for a
    * second erase reddens the `second-remove` cell. */
-  const states = ['active-rightclick', 'no-active-rightclick', 'release-without-preview', 'second-remove'] as const
+  // **THE STATE NAMES MOVED WITH THE MEMBER** (`D-168`): the drives are `cancel`, the terminal the affordance reaches, and the
+  // names say so — the as-filed `*-rightclick` ids named a member that is deleted.
+  const states = ['active-cancel', 'no-active-cancel', 'release-without-preview', 'second-remove'] as const
   const readings = ['route-log', 'address-read'] as const
   const cases: Array<[string, string, string]> = []
   let n = 0
@@ -1564,21 +1760,23 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
     }
   }
 
+  // RE-GRAINED 2026-11-09 (`D-168`): the two `*-rightclick` states are renamed and DRIVEN by `cancel` — `rightClick` was the
+  // same `endReading` call and is DELETED, and `cancel` is the terminal the affordance's three abandon arms reach.
   it.each(cases)('P-PD-SM-3/%s — %s × %s', drive('P-PD-SM-3', (_id: string, state: string, reading: string) => {
     const { w, register, crossing } = compose()
-    if (state === 'active-rightclick') {
-      // THE STATE THE ROW IS NAMED FOR: a gesture that wrote the address, ended by the right-click turn.
+    if (state === 'active-cancel') {
+      // THE STATE THE ROW IS NAMED FOR: a gesture that wrote the address, ended by the abandon terminal (`cancel`, `D-168`).
       w.move('g1', { value: 120 })
       expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { size: 120 } })
-      w.rightClick('g1')
+      w.cancel('g1')
       if (reading === 'route-log') {
         // THE SEQUENCE, in the order the composition sent it: the move's write, then the erase's ending.
         expect(crossing.acts, 'the route log is the move\'s ONE `commitDrag` then the erase\'s ONE `clearDrag`').toEqual(['commitDrag', 'clearDrag'])
       } else {
         expect(crossing.dragFamily(), 'the address no longer stands').toBeNull()
       }
-    } else if (state === 'no-active-rightclick') {
-      expect(() => w.rightClick('g-miss'), 'never a throw').not.toThrow()
+    } else if (state === 'no-active-cancel') {
+      expect(() => w.cancel('g-miss'), 'never a throw').not.toThrow()
       if (reading === 'route-log') {
         // THE ERASE IS STILL A CALL: the family's end is idempotent at the store, so an erase over an absent family sends
         // exactly one `clearDrag` — and no `commitPane` ever rides an abandon terminal.
@@ -1602,11 +1800,11 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
         expect(crossing.dragFamily(), 'while the drag family never stood and does not stand now').toBeNull()
       }
     } else {
-      // THE SECOND-REMOVE STATE: a second right-click hits the erase turn's own at-most-one-erase gate (the gesture is
+      // THE SECOND-REMOVE STATE: a second `cancel` hits the erase turn's own at-most-one-erase gate (the gesture is
       // already erased) — no second call, never a throw (F-4's class).
       w.move('g1', { value: 120 })
-      w.rightClick('g1')
-      expect(() => w.rightClick('g1'), 'the second erase is a declared no-op').not.toThrow()
+      w.cancel('g1')
+      expect(() => w.cancel('g1'), 'the second erase is a declared no-op').not.toThrow()
       if (reading === 'route-log') {
         expect(crossing.clears.length, 'AT MOST ONE `clearDrag` per gesture: the second turn sends none').toBe(1)
         expect(crossing.dragCalls.length, 'and one move is one write').toBe(1)
@@ -1981,127 +2179,39 @@ describe('REGISTER P-PD-TP-1 (S-PD-FUNCTIONS-1) — the passed-function surface 
 })
 
 /* ══════════════════════════════════════════════════════════════════════════════════
- * PART IV — THE ZONE-RENDER LISTENER (§4.2 item 4: M-9, F-10, I-4; register P-PD-SM-4)
+ * PART IV — THE ZONE-RENDER LISTENER: FOUR ROWS RETIRED BY NAME (`D-168`, 2026-11-09)
+ *
+ * **THEIR WHOLE SUBJECT IS THE ZONE-LAYOUT RENDER TURN, AND THAT TURN DOES NOT EXIST IN THIS TREE AT ALL.** The four rows
+ * this section used to carry are named here, one by one, with the reason each has no subject — this corpus's habit for a
+ * retirement (`Z-9` at `D-152`, the sibling-pane half at `D-154`, the `focus` route rows at `D-142`): a recorded
+ * retirement, never a silent deletion. **NOTHING REPLACED THEM, AND NOTHING SHOULD.** `renderZone` was a surface member
+ * with NO call site in `src/` or `demo/`, the app's only `source` is `domEventSource()` — which carries no `layout` member
+ * at all, so even a call would have returned at its own `typeof layout !== 'function'` gate — and **NO ZONE LAYOUT IS
+ * RENDERED ANYWHERE IN THIS TREE**: `['zones']` keeps its declaration, its `commitZones` route (itself with no UI caller,
+ * `D-151`) and the client's `zoneOf`, and has no renderer, because no layout consumer exists in `src/`, no authored node
+ * declares a zone (the word `zone` occurs ZERO times in the envelope) and no zone→panes membership exists at all. The
+ * properties these rows measured were never true of anything that ran, which is why they are RETIRED and not re-grained.
+ *
+ *   · **`M-9`** — "the zone-render turn reads the RECORDED zone values for its layout call". Its subject IS that call: the
+ *     turn, its input and the sink it wrote. All three are gone together; the record it was to read from still stands,
+ *     unrendered. **Replaced by nothing.**
+ *   · **`F-10`** — "the render turn reads the record, not a module-held variable": the differential was the RENDER's
+ *     answer changing with the delivered family. With no render there is no answer to differ. **Replaced by nothing** —
+ *     the same property over the turns that DO run is `M-10`'s and the ghost's (`D-132`, `D-144`), and it is already
+ *     measured there.
+ *   · **`I-4`** — "the render reads the record (one read authority per zone reference)": an authority claim about a read
+ *     no line makes. **Replaced by nothing** — the zone family's ONE read authority is `store-view-record`'s and is
+ *     measured in `tests/integration/store-view-record/zone-family.test.ts` (`Z-8`/`Z-9`), which is where that
+ *     property's owner always was.
+ *   · **`P-PD-SM-4`** (the register row `S-PD-LISTENER-1`, 12 = 4 listener shapes × 3 event arms) — the listener delta,
+ *     the fan-out and the delivered-values read of the same turn. With it leave its TWELVE cells: the file's register
+ *     literal moves `91 = 12+9+9+8+8+12+18+15` → `79 = 12+9+9+8+8+18+15` and its row count `8` → `7`. The composition's
+ *     "registers nothing" half — the only half that was ever a property of the composition rather than of the turn — is
+ *     driven by `M-4` and by `M-PDV-4` in `tests/store-modules-seams.test.ts` (`hosts`'), which keep it.
+ *
+ * **AND THE COUNT MOVES BY EXACTLY FOUR** — the four collected rows (three `it`s and one `it.each`), with the twelve
+ * table cells they carried — which is the number `D-168`'s authority books and §8 of the design states.
  * ══════════════════════════════════════════════════════════════════════════════════ */
-
-describe('§3.1 M-9 — the zone-render turn reads the RECORDED zone values for its layout call', () => {
-  it('M-9: the layout input is derived from the shape\'s `[\'zones\']` family — a fixture that substitutes a module-held variable FAILS (`D-92`: the frozen store\'s `mem.layout.zone.<id>.size`/`.display` reads are the shape\'s now)', () => {
-    const { w, crossing, source } = compose()
-    crossing.seedZone(ZONE_ID, { size: 320, display: 'block' })
-    w.renderZone()
-    const latest = source.calls[source.calls.length - 1]!
-    expect(latest.zoneId).toBe(ZONE_ID)
-    expect(latest.size).toBe(320) // the RECORDED size — never host geometry
-    expect(latest.display).toBe('block') // the RECORDED display — never a module-held variable
-    // recorded VALUES CHANGED ⇒ the render\'s answer CHANGES (the differential):
-    crossing.seedZone(ZONE_ID, { size: 240, display: 'block' })
-    w.renderZone()
-    const again = source.calls[source.calls.length - 1]!
-    expect(again.size).toBe(240)
-  })
-})
-
-describe('§3.2 F-10 — the render turn reads the record, not a module-held variable', () => {
-  it('F-10: the render\'s answer CHANGES when the DELIVERED family changes and a module-held variable does NOT — the row asserts the render\'s input is the record\'s (the P-PD-SM-4 differential)', () => {
-    const { w, crossing, source } = compose()
-    crossing.seedZone(ZONE_ID, { size: 300 })
-    // a fixture module-held `let preview = 300` that a non-compliant render would read:
-    let moduleHeld = 300
-    w.renderZone()
-    moduleHeld = 999 // the module variable mutates; the record does NOT
-    w.renderZone()
-    // if the render had read the module variable, the later calls would record 999:
-    const recorded = source.calls.map((c) => c.size)
-    expect(recorded.every((v) => v === 999)).toBe(false)
-    expect(recorded[recorded.length - 1]).toBe(300)
-  })
-})
-
-describe('§3.3 I-4 — the render reads the record (one read authority per zone reference)', () => {
-  it('I-4: the render turn\'s layout input is a function of the RECORDED zone size/display — never host geometry, never a controller callback into host state, and never a store\'s tier', () => {
-    const { w, register, crossing, source } = compose()
-    crossing.seedZone(ZONE_ID, { size: 280, display: 'normal' })
-    w.renderZone()
-    expect(source.calls[source.calls.length - 1]!.size).toBe(280)
-    // **THE DOUBLED STORE IS NOT A SECOND AUTHORITY**: a `mem.layout.zone.<id>.size` write beside the composition changes
-    // nothing the render reads, and the contradiction is really there to be read.
-    expect(register.commit(`mem.layout.zone.${ZONE_ID}.size`, 999).status).toBe('committed')
-    expect(stored(register, `mem.layout.zone.${ZONE_ID}.size`).value, 'the contradiction stands in the store').toBe(999)
-    w.renderZone()
-    expect(source.calls[source.calls.length - 1]!.size, 'one read authority: the shape\'s family').toBe(280)
-    expect(crossing.zoneFamily()[ZONE_ID]?.size).toBe(280)
-  })
-})
-
-/* ─── THE REGISTER ROW P-PD-SM-4 (S-PD-LISTENER-1, 12 = 4 listener shapes × 3 arms) ─── */
-
-describe('REGISTER P-PD-SM-4 (S-PD-LISTENER-1) — the render turn: no registration of its own, and the delivered family is its input', () => {
-  // **RE-GRAINED `D-92` — THE SUBJECT MOVED, THE CELL COUNT DID NOT.** The as-filed row drove the FROZEN STORE'S newsletter:
-  // four subscriber shapes × three write arms, all of them about a registration this composition has now DELETED. Its term
-  // was "the listener: subscriber delta, fan-out, stored-values read"; the composition registers NOTHING, so the delta is
-  // ZERO by construction and the fan-out is the CLIENT'S (driven in `tests/integration/store-view-record/client.test.ts`).
-  // What is left — and what the composition actually owns — is the TURN: four delivery shapes × three zone-member arms,
-  // each asking whether the layout input is the delivered family's and whether the turn is total.
-  const shapes = ['one-delivery-one-render', 'three-deliveries-registration-order', 'throwing-layout-sink', 'non-callable-layout-sink'] as const
-  const arms = ['size', 'display', 'both'] as const
-  const cases: Array<[string, string, string]> = []
-  let n = 0
-  for (const shape of shapes) {
-    for (const arm of arms) {
-      n += 1
-      cases.push([String(n).padStart(2, '0'), shape, arm])
-    }
-  }
-
-  it.each(cases)('P-PD-SM-4/%s — %s × %s', drive('P-PD-SM-4', (_id: string, shape: string, arm: string) => {
-    const { w, crossing, source } = compose()
-    /** THE DELIVERED MEMBERS PER ARM — `slot`/`distance` ride the same family and are not this turn's input. */
-    const zoneFor = (size: number): { readonly size?: number; readonly display?: string } => {
-      if (arm === 'size') return { size }
-      if (arm === 'display') return { display: size === 300 ? 'block' : 'normal' }
-      return { size, display: 'block' }
-    }
-
-    if (shape === 'one-delivery-one-render') {
-      crossing.seedZone(ZONE_ID, zoneFor(300))
-      const before = source.calls.length
-      w.renderZone()
-      // ONE DELIVERY, ONE RENDER TURN — and the input is the delivered family, member for member.
-      expect(source.calls.length).toBe(before + 1)
-      const latest = source.calls[source.calls.length - 1]!
-      expect(latest.size).toBe(arm === 'display' ? undefined : 300)
-      expect(latest.display).toBe(arm === 'size' ? undefined : 'block')
-      // THE DELTA IS ZERO: the composition took NO registration, on the store or on the shape.
-      expect(crossing.registrations()).toBe(0)
-    } else if (shape === 'three-deliveries-registration-order') {
-      // three deliveries in order, three turns in order, and the LAST answer is the last delivery's — the turn carries no
-      // memory of its own, so a stale value could only come from the record.
-      for (const size of [100, 200, 300]) {
-        crossing.seedZone(ZONE_ID, zoneFor(size))
-        w.renderZone()
-      }
-      const sizes = source.calls.map((c) => c.size)
-      expect(sizes.slice(-3)).toEqual(arm === 'display' ? [undefined, undefined, undefined] : [100, 200, 300])
-      expect(crossing.registrations()).toBe(0)
-    } else if (shape === 'throwing-layout-sink') {
-      // a layout sink that THROWS is the caller's own failure, and it must not escape the turn (`F-8`'s class).
-      const throwing = { layout: (): void => { throw new Error('sink-throws') } }
-      const withThrow = wiring.createPaneDrag({ view: crossing.client }, throwing) as unknown as PaneDragSurface
-      crossing.seedZone(ZONE_ID, zoneFor(300))
-      expect(() => withThrow.renderZone()).not.toThrow()
-      // and THIS composition\'s own turn still answers afterwards — the throw stopped at the sink.
-      w.renderZone()
-      expect(source.calls.length).toBeGreaterThan(0)
-    } else {
-      // a NON-CALLABLE layout sink: the turn refuses to call it and lands the declared degradation — never a throw.
-      const nonCallable = { layout: 42 as never }
-      const refused = wiring.createPaneDrag({ view: crossing.client }, nonCallable) as unknown as PaneDragSurface
-      crossing.seedZone(ZONE_ID, zoneFor(300))
-      expect(() => refused.renderZone()).not.toThrow()
-      expect(source.calls.length, 'nothing reaches a sink that is not a function').toBe(0)
-    }
-  }))
-})
 
 /* ══════════════════════════════════════════════════════════════════════════════════
  * PART V — THE COMPOSITION END-TO-END (§5.2 leg 5; §3.1 M-12; §7a.1 item 4)
@@ -2153,23 +2263,27 @@ describe('§3.1 M-12 — the composition holds end-to-end over the SHAPE, with a
     // THE READS ALL ANSWER THE SHAPE, SYNCHRONOUSLY, WITHIN THE SAME TURN AS THE WRITE THAT CAUSED THE DELIVERY.
     expect(w.startSizeOf(paneFixture, PANE_ID), 'the read follows the route call').toBe(240)
     expect(w.boundsOf(paneFixture, PANE_ID)).toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
-    // THE RENDER TURN RAN, ON THE DELIVERED FAMILY (`D-92`: it used to run off the store's temp newsletter).
-    w.renderZone()
-    expect(source.calls.length).toBeGreaterThan(0)
-    expect(source.calls[source.calls.length - 1]!.size).toBe(300)
+    // **NO RENDER TURN RAN, ON THE DELIVERED FAMILY OR ANYTHING ELSE** (`D-168`): the surface has none to run, and the
+    // source double — which could record a layout call — records none for the whole lifecycle. That is the absence this
+    // row now measures where it used to measure a render, and the CONTROL is that the recorder is live.
+    expect(source.calls, 'no turn in this lifecycle rendered a zone').toEqual([])
+    source.layout(ZONE_ID, 300, 'block')
+    expect(source.calls.length, 'CONTROL: the source double does record a layout call when one is made').toBe(1)
 
-    // no throw escapes ANY turn (the whole lifecycle above ran without one — asserted turn by turn; a second gesture
-    // exercises the candidate read, right-click and cancel):
-    expect(w.candidatesFor(zoneFixture), 'no slot was delivered, so no candidate').toEqual([])
+    // no throw escapes ANY turn (the whole lifecycle above ran without one — asserted turn by turn; two more gestures
+    // exercise the abandon terminal twice):
     w.move('g2', { value: 90 })
     expect(crossing.dragFamily(), 'the second gesture wrote the address').toEqual({ [PANE_ID]: { size: 90 } })
-    w.rightClick('g2')
+    // **THE ABANDON TERMINAL IS `cancel`** (`D-168`: `rightClick` was the same call and is DELETED).
+    w.cancel('g2')
     expect(crossing.dragFamily(), 'the erase turn ended the family at its address, not a closure value').toBeNull()
     w.move('g3', { value: 80 })
     expect(crossing.dragFamily(), 'and a third gesture writes it again').toEqual({ [PANE_ID]: { size: 80 } })
     w.cancel('g3')
     expect(crossing.dragFamily(), 'and the cancel terminal ends it too').toBeNull()
     expect(crossing.clears.length, 'one ending per terminal: the release\'s own, then one per abandon turn — three').toBe(3)
+    // AND THE READS ANSWER THE SHAPE, NEVER THE DOUBLED STORE: two more gestures later, the family's figure is still 240.
+    expect(w.startSizeOf(paneFixture, PANE_ID), 'the shape is the ONE read authority across the whole lifecycle').toBe(240)
     // **AND THE GHOST TURN RAN, AGAINST A STATED REALM** — the address it reads is the view record's, so the turn is
     // driven with a `data` member that answers the family ABSENT: one read, no declaration, and never a throw out of the
     // lifecycle above. The stub is this row's own and is withdrawn in the same breath, because this file's other rows
@@ -2525,20 +2639,21 @@ describe('§3.4 R-5 — THE NO-NEW-STORE-SURFACE ROW (RETIRED — see the headst
  * PART VII — THE REGISTER TOTALS (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS, §5.5.3)
  * ══════════════════════════════════════════════════════════════════════════════════ */
 
-describe('THE REGISTER TOTALS — 91 declared attempts, printed with their terms', () => {
-  it('the register rows\' drive tables sum to the declared 91 = 12 + 9 + 9 + 8 + 8 + 12 + 18 + 15', () => {
+describe('THE REGISTER TOTALS — 79 declared attempts, printed with their terms', () => {
+  it('the register rows\' drive tables sum to the declared 79 = 12 + 9 + 9 + 8 + 8 + 18 + 15 — `P-PD-SM-4`\'s TWELVE cells retired with its subject (`D-168`, 2026-11-09), which is the whole of what this literal moved', () => {
     const declared: Record<string, number> = {
       'P-PD-IM-1': 12,
       'P-PD-IM-2': 9,
       'P-PD-SM-1': 9,
       'P-PD-SM-2': 8,
       'P-PD-SM-3': 8,
-      'P-PD-SM-4': 12,
       'P-PD-TP-1': 18,
       'P-PD-TP-2': 15,
     }
     const sum = Object.values(declared).reduce((a, b) => a + b, 0)
-    expect(sum).toBe(91)
+    expect(sum).toBe(79)
+    expect(Object.keys(declared).length, 'SEVEN register rows: the eighth retired with its subject').toBe(7)
+    expect(Object.keys(declared).includes('P-PD-SM-4'), 'and the retired id is not a row here (`D-168`)').toBe(false)
     expect(Math.max(...Object.values(declared))).toBeLessThanOrEqual(100) // per-row cap
     expect(sum).toBeLessThanOrEqual(400) // total cap
   })
@@ -2551,17 +2666,16 @@ afterAll(() => {
     'P-PD-SM-1': 'S-PD-GESTURE-1',
     'P-PD-SM-2': 'S-PD-REPAIR-1',
     'P-PD-SM-3': 'S-PD-REASSERT-1',
-    'P-PD-SM-4': 'S-PD-LISTENER-1',
     'P-PD-TP-1': 'S-PD-FUNCTIONS-1',
     'P-PD-TP-2': 'S-PD-DEGRADE-1',
   }
   const declaredTerms: Record<string, number> = {
     'P-PD-IM-1': 12, 'P-PD-IM-2': 9, 'P-PD-SM-1': 9, 'P-PD-SM-2': 8,
-    'P-PD-SM-3': 8, 'P-PD-SM-4': 12, 'P-PD-TP-1': 18, 'P-PD-TP-2': 15,
+    'P-PD-SM-3': 8, 'P-PD-TP-1': 18, 'P-PD-TP-2': 15,
   }
   // eslint-disable-next-line no-console
   console.log(
-    'REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS: 91 = 12 (P-PD-IM-1) + 9 (P-PD-IM-2) + 9 (P-PD-SM-1) + 8 (P-PD-SM-2) + 8 (P-PD-SM-3) + 12 (P-PD-SM-4) + 18 (P-PD-TP-1) + 15 (P-PD-TP-2)'
+    'REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS: 79 = 12 (P-PD-IM-1) + 9 (P-PD-IM-2) + 9 (P-PD-SM-1) + 8 (P-PD-SM-2) + 8 (P-PD-SM-3) + 18 (P-PD-TP-1) + 15 (P-PD-TP-2) — P-PD-SM-4 retired with its subject (D-168)'
   )
   let grandAttempts = 0
   let grandFailures = 0

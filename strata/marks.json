@@ -4,7 +4,7 @@
   "suites": {
     "flat": {
       "files": 85,
-      "sites": 2236
+      "sites": 2232
     },
     "e2e": {
       "files": 8,
@@ -705,7 +705,7 @@
     },
     "onNotice": {
       "files": 105,
-      "sites": 2386
+      "sites": 2382
     },
     "retained": {
       "files": 8,

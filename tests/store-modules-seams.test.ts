@@ -1144,7 +1144,7 @@ describe('§3.1 M-rows — the menu-template recorded family (M-MT-*)', () => {
 })
 
 describe('§3.1 M-rows — the VERIFICATION half on the LANDED composition (M-PDV-*)', () => {
-  test('M-PDV-1 — the pane-size read REACHES THE SHAPE, and the store is NO LONGER the pane read\'s authority; the answer IS the delivered value (§2.5 items 1/2, pane-drag §2.1 A; D-88/D-89)', () => {
+  test('M-PDV-1 — the pane-size read REACHES THE SHAPE, and the store is NO LONGER the pane read\'s authority; the answer IS the delivered value (§2.5 items 1/2, pane-drag §2.1 A; D-88/D-89) — **RE-GRAINED 2026-11-09 (`D-168`): the size read has ONE NAME, `defaultSizeFor` is DELETED** and the reset arm\'s read is the AFFORDANCE\'s own `options.defaultSizeFor` seam (`src/shared/gutter.ts`), measured by `interaction`\'s `P-GU-IM-2`', () => {
     // THE DELIVERED FAMILY (what a boot read or a push refilled the shape with).
     const shape = paneShapeOf([{ id: 'pane-a', size: 320, bounds: { min: 0, max: 200 } }])
     const double = createRecordingStoreDouble()
@@ -1152,8 +1152,11 @@ describe('§3.1 M-rows — the VERIFICATION half on the LANDED composition (M-PD
     double.commit('mem.layout.pane.pane-a.size', 999, { onRepeat: 'edit' })
     const { surface } = surfaceOver(double, shape)
     expect(surface.startSizeOf({ id: 'pane-a' }, 'pane-a')).toBe(320)
-    // the same closure answers defaultSizeFor identically
-    expect(surface.defaultSizeFor({ id: 'pane-a' }, 'pane-a')).toBe(320)
+    // **THE SECOND NAME IS GONE AND THE ROW SAYS SO** (`D-168`): `defaultSizeFor` was a second name over this same closure
+    // and is DELETED — one read now has one name, so the disagreement `gutter-ui.md` §2.1 item 3 warns about is
+    // UNREPRESENTABLE rather than merely avoided. The control is that the same reading finds the name that survived.
+    expect(typeof (surface as unknown as Record<string, unknown>).defaultSizeFor, 'the second name over this read is DELETED').toBe('undefined')
+    expect(typeof (surface as unknown as Record<string, unknown>).startSizeOf, 'CONTROL: the ONE name is on the surface').toBe('function')
     // ONE READ AUTHORITY: the pane reference is not read off the frozen store at all any more.
     expect(double.readLog.filter((n) => n.startsWith('mem.layout.pane')), 'the panes are the shape\'s, and no store tier is consulted for them').toEqual([])
     expect(shape.reads(), 'and the shape answered without a route read — the composition reads the held shape synchronously').toBe(0)
@@ -1174,23 +1177,28 @@ describe('§3.1 M-rows — the VERIFICATION half on the LANDED composition (M-PD
     expect(structurallyEqual(canonicalOf(surface.boundsOf({ id: 'pane-x' }, 'pane-x')), canonicalOf({ min: 0, max: 200 }))).toBe(true)
   })
 
-  test('M-PDV-3 — the candidate read answers the SHAPE\'S `[\'zones\']` family: the recorded OPAQUE slot + the recorded distance by identity, and a zone the family does not name answers [] (`D-92`: the drag tier\'s zone pair is the record\'s now, so the FROZEN STORE is no longer read for it either — pane-drag §2.1 B)', () => {
+  test('M-PDV-3 — **THE CANDIDATE PRODUCTION IS ABSENT AND THE ZONE READ KEEPS ITS OWNER** (RE-GRAINED 2026-11-09, `D-168`): the surface carries NO `candidatesFor`, because `src/shared/relocate.ts` declares that seam and has NO `src/` importer (`D-111`), so no implementation of it exists anywhere in `src/` — while the recorded OPAQUE slot and the recorded distance are still ANSWERED, by `store-view-record`\'s `view.zoneOf` over the shape\'s `[\'zones\']` family, and the frozen store is read for neither (pane-drag §2.1 B)', () => {
     const double = createRecordingStoreDouble()
     const opaque = { slotToken: 'opaque-caller-value' }
     const shape = paneShapeOf([], [{ id: 'zone-1', slot: opaque, distance: 37 }])
     const { surface } = surfaceOver(double, shape)
-    const answer = surface.candidatesFor({ zoneId: 'zone-1' })
-    expect(answer.length).toBe(1)
-    expect(answer[0]?.candidate).toBe(opaque) // OPAQUE AS RECORDED, by identity
-    expect(answer[0]?.distance).toBe(37)
-    // **NOT ONE STORE READ**: the frozen store\'s two zone tiers are not consulted, which is the change this row now names.
+    // **THE ABSENCE, WITH ITS CONTROL**: no production on the surface, and the six survivors readable on the same object.
+    expect(typeof (surface as unknown as Record<string, unknown>).candidatesFor, 'no candidate production exists to drive').toBe('undefined')
+    expect(typeof (surface as unknown as Record<string, unknown>).boundsOf, 'CONTROL: the surface is a surface').toBe('function')
+    // **AND THE READ IS NOT LOST — IT HAS AN OWNER**: the CLIENT answers the family, member for member, by identity.
+    const answer = shape.client.zoneOf('zone-1')
+    expect(answer?.slot).toBe(opaque) // OPAQUE AS RECORDED, by identity
+    expect(answer?.distance).toBe(37)
+    // **NOT ONE STORE READ**: the frozen store\'s two zone tiers are not consulted, which is the change this row names.
     expect(double.readLog.filter((n) => n.includes('layout.zone'))).toEqual([])
     const missing = createRecordingStoreDouble()
-    // A ZONE THE FAMILY DOES NOT NAME — the creation repair\'s placeholder is the family that names no zone (`D-91`).
-    expect(surfaceOver(missing, paneShapeOf()).surface.candidatesFor({ zoneId: 'zone-x' })).toEqual([])
+    // A ZONE THE FAMILY DOES NOT NAME — the creation repair\'s placeholder is the family that names no zone (`D-91`), so the
+    // miss is `null` and no geometry is invented.
+    expect(surfaceOver(missing, paneShapeOf()).surface, 'the surface of the miss arm is still a surface').toBeDefined()
+    expect(surfaceOver(missing, paneShapeOf()).shape.client.zoneOf('zone-x')).toBeNull()
   })
 
-  test('M-PDV-4 — the composition registers NOTHING AT ALL, on the store or on the shape: the render turn is a surface member the shape\'s ONE delivery calls, which is the `subscribe(\'temp.drag\', …, {subtree:true})` registration\'s successor (`D-92`; pane-drag §2.3 item 2, re-grain of `D-88`\'s "exactly one subscriber")', () => {
+  test('M-PDV-4 — the composition registers NOTHING AT ALL, on the store or on the shape, AND THERE IS NO ZONE RENDER TURN TO REGISTER IT FOR (RE-GRAINED 2026-11-09, `D-168`: `renderZone` is DELETED — the registration\'s successor is the GHOST turn the shape\'s ONE delivery calls, and a source that could record a layout call records none) (`D-92`; pane-drag §2.3 item 2, re-grain of `D-88`\'s "exactly one subscriber")', () => {
     const double = createRecordingStoreDouble()
     const shape = paneShapeOf()
     const { surface } = surfaceOver(double, shape)
@@ -1199,17 +1207,27 @@ describe('§3.1 M-rows — the VERIFICATION half on the LANDED composition (M-PD
     // AND ZERO ON THE SHAPE: a second `onChanged` registration would be a second consumer of one push and a second read
     // per delivery, so the client owns the only one.
     expect(shape.registrations(), 'the composition takes no subscription on the shape either').toBe(0)
-    // THE TURN EXISTS AND IS DRIVEN BY THE DELIVERY: the member is on the surface and it renders the delivered family.
+    // **AND NO ZONE RENDER TURN EXISTS** — the member the as-filed row drove is DELETED (`D-168`), so what is measured here
+    // is the ABSENCE on a surface whose six survivors are readable: the delivery's ONE drag turn is the ghost, and no layout
+    // consumer is reachable from this surface at all.
+    const surfaceAsRecord = surface as unknown as Record<string, unknown>
+    expect(typeof surfaceAsRecord.renderZone, 'no zone render turn stands on the surface (`D-168`)').toBe('undefined')
+    expect(typeof surfaceAsRecord.renderGhost, 'CONTROL: the ghost turn — the delivery\'s ONE drag turn — IS here').toBe('function')
     const calls: Array<{ size: unknown; display: unknown }> = []
-    const withSink = createPaneDrag(
+    const sourceRecording = { layout: (zoneId: string, size: unknown, display: unknown): void => { void zoneId; calls.push({ size, display }) } }
+    const withSource = createPaneDrag(
       { frozen: double, view: paneShapeOf([], [{ id: 'zone-1', size: 320, display: 'block' }]).client },
-      { layout: (zoneId: string, size: unknown, display: unknown): void => { void zoneId; calls.push({ size, display }) } },
+      sourceRecording,
     ) as PaneDragSurface
-    withSink.renderZone()
+    // A DELIVERY AND A GESTURE, AND THEN THE SOURCE:  neither reaches the layout sink, because nothing on this surface
+    // renders a zone.
+    withSource.renderGhost()
+    withSource.move('g-pdv4', { value: 120 })
+    withSource.cancel('g-pdv4')
+    expect(calls, 'no turn renders a zone: the layout sink the composition is handed sees nothing').toEqual([])
+    // CONTROL: the sink records when it is called, so the empty reading above is a measurement of the surface.
+    sourceRecording.layout('zone-1', 320, 'block')
     expect(calls).toEqual([{ size: 320, display: 'block' }])
-    // the surface the row composed above has the member too, and it answers without a sink.
-    expect(typeof surface.renderZone).toBe('function')
-    expect(() => surface.renderZone()).not.toThrow()
   })
 })
 
@@ -1589,11 +1607,14 @@ describe('§3.3 invariants (I-rows)', () => {
     }
   })
 
-  test('I-PDV-1 — one read authority per pane/zone reference: the SHAPE\'S, for BOTH families, and nothing else (F-PDV-1\'s complement, §2.5 items 1/3; `D-92`)', () => {
+  test('I-PDV-1 — one read authority per pane/zone reference: the SHAPE\'S, for BOTH families, and nothing else (F-PDV-1\'s complement, §2.5 items 1/3; `D-92`) — **RE-GRAINED 2026-11-09 (`D-168`): the zone reference has ONE READER and it is the CLIENT\'S, on this surface and everywhere** (the composition\'s `candidatesFor` is deleted, and so are the two private bindings whose only readers it and `renderZone` were)', () => {
     const double = createRecordingStoreDouble()
     const shape = paneShapeOf([], [{ id: 'zone-1', slot: 'slot-a' }])
     const { surface } = surfaceOver(double, shape)
-    surface.candidatesFor({ zoneId: 'zone-1' })
+    // THE ZONE REFERENCE IS READ OFF THE SHAPE, BY THE CLIENT — the one authority, exercised where it lives.
+    expect(shape.client.zoneOf('zone-1'), 'the shape\'s zone family answers').toEqual({ id: 'zone-1', slot: 'slot-a' })
+    // AND THE COMPOSITION CARRIES NO SECOND READER: the production is gone, so there is no surface path to the family at all.
+    expect(typeof (surface as unknown as Record<string, unknown>).candidatesFor, 'no second reader stands on the surface').toBe('undefined')
     // **ZERO STORE READS FOR THE ZONE**, which is the authority claim in its strongest form: the store is not consulted.
     expect(double.readLog.filter((n) => n.includes('layout.zone')), 'the record\'s zone family is the one authority').toEqual([])
     expect(shape.zones()).toEqual([{ id: 'zone-1', slot: 'slot-a' }])
@@ -1833,9 +1854,14 @@ describe('§3.4 S-rows — the verification half (S-PDV-1)', () => {
     for (const needle of ['view.paneSizeOf(', 'view.paneBoundsOf(']) {
       expect(region.includes(needle), `composition must read the shape through ${needle}`).toBe(true)
     }
-    // **THE DRAG TIER'S ZONE PAIR LEFT THE STORE TOO (`D-92`)**: the composition reads the zone family through the SHAPE's
-    // `zoneOf`, and NOT ONE `layout.zone.*` spelling survives in it.
-    expect(region.includes('zoneOf('), 'the composition must read the shape\'s zone family through `zoneOf(').toBe(true)
+    // **THE DRAG TIER'S ZONE PAIR LEFT THE STORE TOO (`D-92`) — AND SO DID THE COMPOSITION'S LAST ZONE READER**
+    // (RE-GRAINED 2026-11-09, `D-168`): the two members that read the family here (`candidatesFor`, `renderZone`) are
+    // DELETED, and the private bindings whose only readers they were (`zoneOf`, `zoneIdOf`, `sourceRecord`) went with them
+    // — so the region carries NO zone read at all, and the zone reference's ONE reader is the client's, which this tree
+    // keeps. The assertion INVERTS with its subject rather than being deleted, and the control proves the probe can see
+    // the spelling it now forbids.
+    expect(elideComments("const zone = view.zoneOf(id)").includes('zoneOf('), 'CONTROL: the probe sees a zone read when one is planted').toBe(true)
+    expect(regionCode.includes('zoneOf('), 'the composition reads NO zone family any more: both its readers are DELETED').toBe(false)
     for (const retired of ['layout.zone.${id}.slot', 'layout.zone.${id}.distance']) {
       expect(regionCode.includes(retired), `the zone reads left the store: ${retired} must not appear in the composition`).toBe(false)
     }
@@ -2049,12 +2075,15 @@ describe('§4.2 item 4 — the integration drives, post-purge', () => {
     )
     const surface = createPaneDrag({ frozen: store as unknown as Record<string, unknown>, view: shape.client }, {}) as PaneDragSurface
     expect(surface.startSizeOf({ id: 'pane-a' }, 'pane-a'), 'the SHAPE answers, not the register\'s stale spelling').toBe(240)
-    expect(surface.defaultSizeFor({ id: 'pane-a' }, 'pane-a')).toBe(240)
     expect(surface.boundsOf({ id: 'pane-a' }, 'pane-a')).toEqual({ min: 0, max: 400 })
-    const candidates = surface.candidatesFor({ zoneId: 'zone-1' })
-    expect(candidates.length).toBe(1)
-    expect(candidates[0]?.candidate).toBe(opaque)
-    expect(candidates[0]?.distance).toBe(37)
+    // **THE TWO DELETED READERS, NAMED WHERE THE ROW USED TO DRIVE THEM** (`D-168`, 2026-11-09): `defaultSizeFor` was a
+    // second name over the size read and `candidatesFor` was the candidate production — both are DELETED, and the ZONE
+    // family is still answered by the CLIENT, whose one reader this row drives instead.
+    expect(typeof (surface as unknown as Record<string, unknown>).defaultSizeFor, 'the size read has ONE name').toBe('undefined')
+    expect(typeof (surface as unknown as Record<string, unknown>).candidatesFor, 'and no candidate production stands').toBe('undefined')
+    const zone = shape.client.zoneOf('zone-1')
+    expect(zone?.slot, 'the zone\'s OPAQUE slot, answered by the shape and not by the register').toBe(opaque)
+    expect(zone?.distance).toBe(37)
     // the DEFAULT arm on a cold pane: the MEASURED default answers — a usable number, never the `undefined` the retired
     // two-tier MISS produced (the consumer's E3 arm is driven at the terminal now, pane-drag §3.2 F-8).
     expect(surface.startSizeOf({ id: 'pane-z' }, 'pane-z')).toBe(100)
@@ -2064,7 +2093,9 @@ describe('§4.2 item 4 — the integration drives, post-purge', () => {
     const hostile = createPaneDrag({ frozen: createThrowingStoreDouble(), view: shape.client }, {}) as PaneDragSurface
     expect(hostile.startSizeOf({ id: 'pane-a' }, 'pane-a')).toBe(240)
     expect(hostile.boundsOf({ id: 'pane-a' }, 'pane-a')).toEqual({ min: 0, max: 400 })
-    expect(hostile.candidatesFor({ zoneId: 'zone-1' })[0]?.distance).toBe(37)
+    expect(() => hostile.move('g-real', { value: 120 }), 'and the gesture turns answer over the same hostile register').not.toThrow()
+    expect(() => hostile.cancel('g-real'), 'the ending included').not.toThrow()
+    expect(() => hostile.renderGhost(), 'and the ghost turn, which reads the address and not this register').not.toThrow()
     // and the deleted `sever` seam is ARMED on the double: a composition that reached for it would redden here rather than
     // silently answering (the register double's `sever` throws, `D-93`).
     expect(store.readLog.filter((n) => n.includes('layout.')), 'not one layout read reached the register').toEqual([])

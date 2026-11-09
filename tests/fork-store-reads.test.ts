@@ -762,9 +762,16 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
       `S-9 control — a PLANTED unqualified direct-store-read FAILS this row (it is neither the tier-qualified form nor the commit-feeding closure). PLANTED HITS: ${JSON.stringify(directStoreReads(plantedUnqualified))}`,
     ).not.toEqual([])
 
+    // **RE-GRAINED 2026-11-09 (`D-168`) — THE PLANTING SITE MOVED TO A MEMBER THAT EXISTS.** This control planted the
+    // tier-qualified read into `"const renderZone = (): void => {"`, and `renderZone` is DELETED (`D-168`: four surface
+    // members with no call site, of which that one carried two docblocks claiming the shape's delivery called it), so the
+    // literal no longer occurs and `replace` would be a no-op — the control would have gone on "passing" over a file it
+    // never patched. It plants into the GHOST turn's own header instead: a member that DOES stand and that the shape's ONE
+    // delivery really calls. The two-planting discipline is unmoved, and so is `D-117`'s comment-elided `createPaneDrag(`
+    // call-site count below.
     const plantedTier = raw.replace(
-      "const renderZone = (): void => {",
-      "const renderZone = (): void => {\n    const probe = tiers['mem'].get('layout.pane.probe.size')",
+      "const renderGhost = (): void => {",
+      "const renderGhost = (): void => {\n    const probe = tiers['mem'].get('layout.pane.probe.size')",
     )
     expect(plantedTier, 'S-9 control — the second planting site resolves in this file').not.toBe(raw)
     expect(
@@ -913,7 +920,17 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     // reads CODE, and this block's own prose names the deleted helper.
     const elided = raw.replace(/^\s*(\/\/|\*|\/\*).*$/gm, '')
     expect(elided.includes('tierRead('), 'S-9 — the tier-qualified store read closure is GONE from the renderer, measured over comment-elided code').toBe(false)
-    expect(raw, 'S-9 — and the site that replaced it exists, so the absence above is over a REAL subject: the shape\'s zone read').toMatch(/const zoneOf = \(id: string\)/)
+    // **AND THE SITE THAT REPLACED IT MOVED WITH THE PRIVATE BINDING (`D-168`, 2026-11-09)**: this control used to name
+    // `const zoneOf = (id: string)` — one of the FOUR private bindings whose only readers were `renderZone` and
+    // `candidatesFor`, both DELETED, so the binding went with them and the literal no longer occurs. What stands is what the
+    // control was really asserting: the composition still reads the SHAPE through its own named members, and the ZONE
+    // reference's one reader is the client's, in `src/renderer/view-client.ts`. The absence above is therefore still read
+    // over a real subject rather than over a file whose replacement site silently disappeared.
+    expect(raw, 'S-9 — and the site that replaced it exists: the shape reads the composition still makes').toMatch(/view\.paneSizeOf\(/)
+    expect(
+      readOrNull('src/renderer/view-client.ts') ?? '',
+      'S-9 — and the zone read\'s ONE reader is the client\'s own `zoneOf`, which is where the deleted private binding\'s subject lives now',
+    ).toMatch(/zoneOf\(id: string\): ViewZone \| null/)
     // **⟶ RE-GRAINED BY `D-89`**: the closure's product reached the frozen store's TWO commit spellings; it reaches the
     // crossing's ONE `commitPane` route now (`D-88`), which is still "the graph carries its result" and is still the
     // conforming shape — but the spelling this assertion looks for is the route's, not the tier's.

@@ -13,7 +13,7 @@ import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCom
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DEFAULT_PANE_ID, DEFAULT_ZONE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -411,8 +411,10 @@ export function startGutterAffordance (runtime: Runtime): {
    *  composition that reads `view.paneSizeOf`/`paneBoundsOf` and writes with `commitPane`; until this
    *  pass it had NO caller under `src/` and the app's live gesture went round it, reading the authored
    *  pane element's attributes through `gutterSeamExample`'s pair. The `source` is this wiring's own
-   *  event source, which carries no `layout` member, so the composition's `renderZone` turn — a member
-   *  the SHAPE's delivery calls — stays the declared no-op it is on a realm with no layout consumer.
+   *  event source, which carries no `layout` member: **NO ZONE TURN STANDS ON THE SURFACE AT ALL**
+   *  (`renderZone` is DELETED — `D-168`), no zone turn was ever called, and **no zone layout is rendered
+   *  anywhere in this tree**, because the delivery's ONE body is `theme?.apply(); ghost?.(); readout?.()`
+   *  and it calls nothing else.
    *  CONSTRUCTED HERE AND NOT PER GESTURE, and it reads nothing: every read is a caller turn.
    *  **AND IT IS HANDED THE PANE ELEMENT THE GHOST'S DECLARATION LANDS ON** (`D-144`): `target` is this
    *  function's own `elementForNodeId(GUTTER_TARGET_ID)` reading, the element the inline preview writes
@@ -535,8 +537,9 @@ export function startGutterAffordance (runtime: Runtime): {
      *  family does not name. **AND `startSizeOf` IS THE DEFAULT-SIZE TURN TOO**: the affordance's own
      *  controller reads its `defaultSizeFor` seam from the establishment answer this one seam produced
      *  (`P-GU-IM-2`: `startSizeOf` exactly once per gesture), so handing `drag.startSizeOf` hands both
-     *  turns, and `createPaneDrag.defaultSizeFor` — the same `readPaneSize` closure under the family's
-     *  own name for that turn — has no separate consumer here for exactly that reason.
+     *  turns — and **`createPaneDrag`'s own `defaultSizeFor` member is DELETED** (`D-168`) rather than kept
+     *  as a second name over the same closure: the affordance's `options.defaultSizeFor` seam IS the reset
+     *  arm's read, so after the deletion ONE read has ONE name.
      *  `resizableOf` STAYS the example's: resizability is the authored pane's declaration, not a member
      *  of the panes family, and the family declares none to read. */
     startSizeOf: (el: unknown, token: unknown): unknown => drag.startSizeOf(el, token),
@@ -2390,24 +2393,27 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * crossing holds — the PANE GEOMETRY at `['panes']`, the ZONE FAMILY at `['zones']` and now the DRAG'S OWN VALUE at
  * `['drag']`, whose node stands at `temp` — read through `src/renderer/view-client.ts`'s shape or, for `['drag']`, through
  * the realm's own `data.read` route; the client is a WIRING-HELD ARGUMENT passed into closures, NEVER a module-scope
- * binding (§3.4 R-2). The composition registers NO SUBSCRIBER of its own: the render turn is the `renderZone` member
- * below and the ghost turn the `renderGhost` member beside it, both called by the shape's ONE delivery. NO byte of the four
+ * binding (§3.4 R-2). The composition registers NO SUBSCRIBER of its own: the ghost turn is the `renderGhost` member
+ * below, handed OUT to the shape's ONE delivery — whose whole body is `theme?.apply(); ghost?.(); readout?.()` — and the
+ * composition registers nothing on the client, the bridge or the store. NO byte of the four
  * mechanism modules moves (§3.4 R-1/R-5).
  *
  * THE SEAM SURFACE (`PaneDragSurface`) satisfies the family's EXPORTED seam types of
- * §2.1 — `StartSizeOf`, `BoundsOf`, the relocate candidate production — plus the
- * §2.1 C temp-write turns (`move`/`release`/`rightClick`/`cancel`), the render turn and the ghost turn. The
+ * §2.1 — `StartSizeOf`, `BoundsOf` — plus the §2.1 C temp-write turns
+ * (`move`/`release`/`cancel`) and the ghost turn. **THE RELOCATE CANDIDATE PRODUCTION AND THE
+ * RENDER TURN ARE DELETED AND HAVE NO SUCCESSOR** (`D-168`): `src/shared/relocate.ts` has no
+ * `src/` importer (`D-111`) and no layout consumer exists here. The
  * composition's ONE per-gesture binding (whether the family's ending was SENT) lives in THIS closure, never at
  * module scope. The `<id>` segments are the CALLER'S OWN spellings, derived by the
  * caller's own element/token mapping (§2.1 A); the gesture-end writes bind to the
  * wiring's own pane id (§2.4 names 1/2/9), carried verbatim.
  *
- * **THE READS ARE THE SHAPE'S, ALL SIX OF THEM** (`D-88` for the pane geometry, `D-92` for the zone family): the pane's
- * `size`/`bounds` and the zone's `slot`/`distance`/`size`/`display` are answered SYNCHRONOUSLY by `view.zoneOf`/
- * `paneSizeOf`/`paneBoundsOf` off the shape a delivery filled. The frozen store's tier-qualified `mem.layout.*` route —
- * `tierRead` — is DELETED from this composition, and with it the last `mem.layout.*` spelling under `src/`. A zone nothing
- * names answers `null` (`D-91`'s measured missing arm) and `candidatesFor` answers `[]`, which is what the frozen store's
- * `undefined` answered.
+ * **THE READS ARE THE SHAPE'S, AND THE FLOW'S OWN ARE THE PANE GEOMETRY'S** (`D-88`; `D-168` for the zone family's): the
+ * pane's `size`/`bounds` are answered SYNCHRONOUSLY by `paneSizeOf`/`paneBoundsOf` off the shape a delivery filled. The
+ * frozen store's tier-qualified `mem.layout.*` route — `tierRead` — is DELETED from this composition, and with it the last
+ * `mem.layout.*` spelling under `src/`. **NO ZONE READ STANDS HERE ANY MORE**: the closure's `zoneOf`/`zoneIdOf` had exactly
+ * two readers, `renderZone` and `candidatesFor`, and both are DELETED (`D-168`), so the zone family's read keeps its owner —
+ * `store-view-record`'s `view.zoneOf` at `['zones']` — and no caller of it stands in this file.
  *
  * **THE TEMP PREVIEW IS AN ADDRESS NOW, AND WHAT THE CLOSURE KEEPS IS ONE FLAG** (`D-132` superseding `D-90` by pointer;
  * `D-138`; design §5). It was `temp.drag.<gestureId>.placement` in the frozen store, and then a `Map` in this closure with
@@ -2419,22 +2425,25 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * `move` writes at `temp` and commits nothing, `release` is the ONLY `file` writer. `D-137`'s "one event" was about
  * COLLISION, never about collapsing them.
  *
- * THE ZONE-RENDER TURN (`renderZone`) is a MEMBER of the surface, and **the shape's own delivery calls it** — this
+ * **THE DELIVERY'S ONE BODY IS `theme?.apply(); ghost?.(); readout?.()` AND IT CALLS NOTHING ELSE** (`D-168`): this
  * composition registers NOTHING on the client, the bridge or the store, because a second `onChanged` registration would be
- * a second consumer of one push and a second read per delivery. Every read is guarded: an absent client, an absent shape
- * and a throwing read all land the DECLARED degradation, and never a throw escapes a wiring turn (§3.2 F-8, P-PD-TP-2).
- * **AND THE GHOST TURN (`renderGhost`) IS ITS SIBLING** — the same delivery calls it, it asks the same address's own read
+ * a second consumer of one push and a second read per delivery. **NO ZONE TURN STANDS ON THIS SURFACE TO BE CALLED**:
+ * `renderZone` is DELETED from the surface, the app's only `source` is `domEventSource()` and carries no `layout` member,
+ * and **NO ZONE LAYOUT IS RENDERED ANYWHERE IN THIS TREE** — `['zones']` keeps its declaration and its client reader, and
+ * no renderer in `src/` consumes them. Every read is guarded: an absent client, an absent shape
+ * and a throwing read all land the DECLARED degradation, and never a throw escapes a wiring turn (§3.2 F-8).
+ * **AND THE GHOST TURN (`renderGhost`) IS THE ONE TURN THE DELIVERY REACHES HERE** — it asks the address's own read
  * and paints the declared transient the address has no other way to show.
  * ══════════════════════════════════════════════════════════════════════════════════ */
 
 /** The composition's surface — §2.1's A/B/C seam implementations plus the temperature
- *  turns, matching the family's EXPORTED seam types (`StartSizeOf`, `BoundsOf`, the
- *  relocate candidate production) — and the render turn the shape's delivery calls. */
+ *  turns, matching the family's EXPORTED seam types (`StartSizeOf`, `BoundsOf`) — and the
+ *  ghost turn the shape's ONE delivery calls. **NO RENDER TURN AND NO RELOCATE-CANDIDATE
+ *  PRODUCTION STAND HERE** (`D-168`): both are DELETED, and nothing in this tree renders a
+ *  zone layout or produces a candidate. */
 export interface PaneDragSurface {
   startSizeOf(element: unknown, token: unknown): unknown
   boundsOf(element: unknown, token: unknown): unknown
-  defaultSizeFor(element: unknown, token: unknown): unknown
-  candidatesFor(element: unknown): readonly { readonly candidate: unknown; readonly distance?: unknown }[]
   move(gestureId: string, preview: unknown): void
   /** **THE END-TURN, AND THE THIRD PARAMETER IS OPTIONAL BECAUSE THE APP HANDS NO SINK** (`D-129`; design §3 `R1`–`R5`,
    *  §5). `R3` keeps its POSITION and its meaning — a sink, when one is supplied, is invoked exactly once, FIRST, before
@@ -2445,13 +2454,8 @@ export interface PaneDragSurface {
    *  `tsc` (TS2554), so the parameter is widened to optional rather than the call carrying a token the design deletes —
    *  `release`'s order, its three steps and every existing caller are unmoved. */
   release(gestureId: string, final: unknown, sink?: unknown): void
-  rightClick(gestureId: string): void
   cancel(gestureId: string): void
-  /** **THE ZONE-RENDER TURN — THE SHAPE'S DELIVERY CALLS IT** (`D-92`). It replaces the `subscribe('temp.drag', …)`
-   *  registration: the layout input is a pure function of the zone family's `size`/`display` as the last delivery left
-   *  them, so the event that changes them IS the event that renders them. */
-  renderZone(): void
-  /** **THE GHOST TURN — THE SHAPE'S ONE DELIVERY CALLS IT BESIDE `renderZone`** (`D-138`, `D-144`; design §4 `G1`–`G9`).
+  /** **THE GHOST TURN — THE SHAPE'S ONE DELIVERY CALLS IT** (`D-138`, `D-144`, `D-168`; design §4 `G1`–`G9`).
    *  The drag's in-process value became an ADDRESS (`['drag']` at `temp`), so the transient a human sees mid-gesture is
    *  a READ of that address painted as a DECLARED TRANSIENT: ONE `data.read({path: ['drag']})`, its answer checked
    *  against the realm's own `_tier` readout, and `data-ghost="temp"` declared on the backing's `ghostTarget` IFF the
@@ -2551,7 +2555,10 @@ export interface PaneDragBacking {
 
 /** THE WIRED COMPOSITION (§2.1 A/B/C + the shape's delivery turn + §7a.1 item 1's reconcile turns), bound to the
  *  caller-supplied BACKINGS above and the RECORDING SOURCE DOUBLE. Every read is the shape's; the temp preview is this
- *  closure's; the render turn is a member the shape's one delivery calls. */
+ *  closure's; the ghost turn is a member the shape's one delivery calls. **NO TURN READS `source` ANY MORE** (`D-168`):
+ *  the surface's only reader of it was `renderZone`'s `layout` guard, and that turn is DELETED — so this closure holds no
+ *  source binding at all, and the parameter stands because `backing, source` is the signature both callers (the wiring's
+ *  ONE construction, the demo's) are written against, and `domEventSource()` carries no `layout` member to read anyway. */
 export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurface {
   const backingRecord = (backing ?? null) as { readonly view?: unknown; readonly ghostTarget?: unknown } | null
   /** THE SHAPE, where the caller supplied one. `null` is a realm with no crossing: the reads answer the measured default
@@ -2561,7 +2568,6 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  shape at the ONE construction site. STRUCTURAL and never inspected at construction — the ghost turn reads the two
    *  members it needs, per call, and a target carrying neither paints nothing. */
   const ghostTarget = backingRecord?.ghostTarget ?? null
-  const sourceRecord = (source ?? null) as { readonly layout?: unknown } | null
 
   /** **THE CALLER'S OWN PANE ID, AND ITS FALLBACK IS THE *DECLARED* ONE — NEVER A LITERAL OF THIS FILE'S** (`D-138`,
    *  `D-152`). `<id>` is the caller's element/token mapping (§2.1 A) where the element carries an `id` or the token is a
@@ -2576,49 +2582,6 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
     if (typeof token === 'string' && token.length > 0) return token
     return DEFAULT_PANE_ID
-  }
-  /** **THE CALLER'S OWN ZONE ID, AND ITS FALLBACK IS THE *DECLARED* ONE — NEVER A LITERAL OF THIS FILE'S** (`D-151`,
-   *  `D-152`). `<id>` is the caller's element/token mapping where the element carries a `zoneId`; absent one, the read
-   *  addresses `DEFAULT_ZONE_ID`, imported beside `DEFAULT_PANE_ID` from `src/shared/view-shape.ts`. **THE RECORD DECLARES
-   *  THE ZONE IDS IN THAT FILE AND THIS REALM MUST NOT SPELL ITS OWN**: the id domain is CLOSED to `DECLARED_ZONE_IDS`
-   *  (derived from that constant) and the route refuses an id it does not declare (`undeclared-zone`), so a literal here
-   *  would be a second answer to "which zone does this app address" — and the two could disagree about it, the failure
-   *  landing as a render turn reading a zone the record no longer declares. **THE VALUE IS UNCHANGED** (`DEFAULT_ZONE_ID`
-   *  is `'zone-1'`), so this is one spelling and no behaviour. */
-  const zoneIdOf = (element: unknown): string => {
-    const viaElement = (element as { readonly zoneId?: unknown } | null | undefined)?.zoneId
-    if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
-    return DEFAULT_ZONE_ID
-  }
-
-  /** **THE ZONE FAMILY'S ONE READ — THE SHAPE'S, AND THE `tierRead` HELPER IS DELETED** (`D-92`). What stood here was a
-   *  tier-qualified store read (`resolve('mem.layout.zone.<id>.size')` then the tier handle's own `get`), used by the
-   *  render turn and by `candidatesFor`. The family now has an address of its own — `['zones']` at `mem` (`D-91`) — and a
-   *  client member that answers one zone SYNCHRONOUSLY (`view-client.ts`'s `zoneOf`, over the shared `zoneIn` derivation).
-   *  **NOTHING IS INVENTED FOR A ZONE THE FAMILY DOES NOT NAME**: `zoneIn`'s missing arm is `null`, which is what the
-   *  frozen store's `undefined` was, and every caller below degrades exactly as it degraded. */
-  const zoneOf = (id: string): { readonly slot?: unknown; readonly distance?: number; readonly size?: unknown; readonly display?: unknown } | null => {
-    if (view === null) return null
-    return view.zoneOf(id)
-  }
-
-  /** **THE ZONE-READ CLOSURE FOR THE RENDER'S LAYOUT CALL (§2.3 item 4), NOW OFF THE SHAPE** (`D-92`): the layout input is
-   *  a pure function of the zone family's `size` / `display` as the last delivery left them — never a module-held variable,
-   *  never host geometry, never a controller callback. A zone nothing names hands `undefined` to the layout call, which is
-   *  exactly what the frozen store's missing read handed it. **THE ID READ AND THE ID HANDED ON ARE BOTH
-   *  `DEFAULT_ZONE_ID`** (`D-151`, `D-152`): the record declares its zone ids in `src/shared/view-shape.ts` and this realm
-   *  must not spell its own, so one constant names the zone at the read and at the layout call — a literal at either would
-   *  let the turn and the declared set drift about which zone the app addresses. **THE VALUE IS UNCHANGED**
-   *  (`DEFAULT_ZONE_ID` is `'zone-1'`), and the arguments are the same `undefined`/figure pair as before. */
-  const renderZone = (): void => {
-    const layout = sourceRecord?.layout
-    if (typeof layout !== 'function') return
-    try {
-      const zone = zoneOf(DEFAULT_ZONE_ID)
-      ;(layout as (zoneId: string, size: unknown, display: unknown) => void)(DEFAULT_ZONE_ID, zone?.size, zone?.display)
-    } catch {
-      // a hostile shape must never throw out of the render turn
-    }
   }
 
   /* **THE BOOT BOOTSTRAP IS DELETED FROM THIS SITE** (`D-93`, by `D-90`'s clause (3) and `D-92`'s head, which named it
@@ -2661,19 +2624,20 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     }
   }
 
-  /** **THE SIZE READ — §2.1 A's `startSizeOf`/`defaultSizeFor` closure (ONE closure for both turns, `gutter-ui.md` §2.1
-   *  item 3), AND IT IS NOW THE SHAPE'S READ (D-88).** It was `mem.layout.pane.<id>.size` then `file.settings.pane.<id>.size`
-   *  through two `tierRead` calls; the two tiers COLLAPSE to one `file` address (`['panes']`, D-87's inherited fact (i)) and
-   *  the answer is the client's, READ SYNCHRONOUSLY and never awaited — the reason the shape exists. A pane the standing
-   *  family does not name answers the MEASURED DEFAULT (100, the authored pane's `props.size`) instead of the `undefined`
-   *  that made the release refuse `'unusable-default'`: the missing default was the frozen store's, and D-87's ground
-   *  measured it. **NO WRITE HAPPENS HERE** — a read that misses leaves the miss (`D-82` clause 4).
+  /** **THE SIZE READ — §2.1 A's `startSizeOf`, the ONE name the flow has for it since `defaultSizeFor` was DELETED
+   *  (`D-168`; `gutter-ui.md` §2.1 item 3), AND IT IS NOW THE SHAPE'S READ (D-88).** It was `mem.layout.pane.<id>.size` then
+   *  `file.settings.pane.<id>.size` through two `tierRead` calls; the two tiers COLLAPSE to one `file` address (`['panes']`,
+   *  D-87's inherited fact (i)) and the answer is the client's, READ SYNCHRONOUSLY and never awaited — the reason the shape
+   *  exists. A pane the standing family does not name answers the MEASURED DEFAULT (100, the authored pane's `props.size`)
+   *  instead of the `undefined` that made the release refuse `'unusable-default'`: the missing default was the frozen
+   *  store's, and D-87's ground measured it. **NO WRITE HAPPENS HERE** — a read that misses leaves the miss (`D-82`
+   *  clause 4).
    *
    *  **AND IT IS TOTAL OVER A SHAPE WHOSE READ THROWS** (`D-95`): what an ABSENT shape answers, a THROWING one answers
    *  too — the measured default — because a read that could throw out of `startSizeOf`/`boundsOf` was the one pair of the
-   *  seven turns that could (§3.2 F-8; `D-94`'s open item (e)). The other six guards were read to be copied, not widened:
-   *  each catches around its own shape call and answers the degradation IT declares (`[]` for `candidatesFor`, nothing for
-   *  the render turn), so this one answers the default IT declares. */
+   *  surface's surviving turns that could (§3.2 F-8; `D-94`'s open item (e)). The other guards were read to be copied, not
+   *  widened: each catches around its own shape call and answers the degradation IT declares (the ghost turn's removal, the
+   *  ending and release turns' silence), so this one answers the default IT declares. */
   const readPaneSize = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
     // A REALM WITH NO CROSSING: the measured default stands, stated from the ONE shared declaration rather than invented.
@@ -2742,8 +2706,10 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  ROUTE WAS SENT. **`E1`'s other arm is lawful and required** (`M-6`, `F-4`): a gesture that never moved has no entry,
    *  so an erase sends exactly ONE `clearDrag` — the store answers `committed` whether or not the family stood, and this
    *  composition decides nothing about that answer. A second ending for the SAME gesture sends nothing. **ZERO SINK WRITES
-   *  AND NO PLACEMENT WRITE**: an abandon terminal ends the family and commits nothing. Reached from `rightClick`, `cancel`
-   *  and the release (`R5`), so whichever ending turn ends the reading FIRST is the one that sends the route. */
+   *  AND NO PLACEMENT WRITE**: an abandon terminal ends the family and commits nothing. Reached from `cancel`
+   *  and the release (`R5`) — and from NOTHING ELSE, because `rightClick` was THIS SAME CALL and is DELETED (`D-168`):
+   *  the affordance's three abandon arms all reach `cancel`, so ONE terminal is named once — and whichever of the two
+   *  ending turns ends the reading FIRST is the one that sends the route. */
   const endReading = (key: string): void => {
     try {
       const prior = gestures.get(key)
@@ -2869,33 +2835,9 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     /** §2.1 A (boundsOf) — the shape's bounds read; the pair is handed through AS
      *  STORED, never a policy clamped here (M-3). */
     boundsOf: (element: unknown, token: unknown): unknown => readPaneBounds(element, token),
-    /** §2.1 A (defaultSizeFor) — the reset arm's read, the SAME size read at the reset
-     *  turn (one closure). */
-    defaultSizeFor: (element: unknown, token: unknown): unknown => readPaneSize(element, token),
-    /** §2.1 B (candidatesFor) — THE CANDIDATE PRODUCTION SEAM, AND IT IMPLEMENTS **THE SEAM SHAPE `src/shared/relocate.ts`
-     *  DECLARES WITHOUT IMPORTING IT** (`CandidateFor`, `{readonly candidate, readonly distance?}`), which is what this
-     *  surface's own docblock above already says. **NO `src/` FILE IMPORTS THAT MODULE**, so the pure comparator there has
-     *  no call site here and none is claimed: the record is produced and handed on by identity and the comparison is the
-     *  caller's — the only importer in the tree is a battery's own drive (`D-111`). **NOW OFF THE SHAPE'S `['zones']`
-     *  FAMILY** (`D-92`): the candidate carries the zone's OPAQUE `slot` and its caller-measured `distance`, and a zone
-     *  whose `slot` the family does not name is admitted per the caller's own rule (no candidate) — never a store
-     *  decision, never a throw (M-11, P-PD-IM-2). **`slot` IS OPAQUE AND IS HANDED THROUGH BY IDENTITY.** */
-    candidatesFor: (element: unknown): readonly { readonly candidate: unknown; readonly distance?: unknown }[] => {
-      try {
-        const id = zoneIdOf(element)
-        const zone = zoneOf(id)
-        if (zone === null || zone.slot === undefined) return []
-        return [{ candidate: zone.slot, distance: zone.distance }]
-      } catch {
-        // a hostile shape must never throw out of the candidate read
-        return []
-      }
-    },
     move,
     release,
-    rightClick: (gestureId: string): void => endReading(gestureId),
     cancel: (gestureId: string): void => endReading(gestureId),
-    renderZone,
     renderGhost,
   }
 }
