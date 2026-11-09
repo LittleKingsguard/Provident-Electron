@@ -1,6 +1,6 @@
 # L3 — `store-tabs-record`: signatures
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — every declared name and its exact text, transcribing `design.md` rev 14 — **AND NO NAME MOVES: the membership bijection re-grains ONE SENTENCE, splits the repairs' scope and retargets `remove`'s one store act, and not one of the three is an exported name** — regenerated from the landed modules on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 7 — every declared name and its exact text, transcribing `design.md` rev 15 — **AND NO NAME MOVES AGAIN: the creation becomes ONE leaf row write and its comparator becomes the creation expectation, and neither is a declared name, an exported member or a route — so §2's block is BYTE-UNMOVED and this rev token is the only byte this page moves** — regenerated from the landed modules on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
 - **Ceiling:** 150 lines, class max (D-1). `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
 ## 1. `src/shared/tabs-channels.ts` — the four channel names
