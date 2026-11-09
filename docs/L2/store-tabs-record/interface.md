@@ -1,12 +1,12 @@
 # L2 — `store-tabs-record`: the interface
 
-- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — **rev 6 takes §5's composer
-  judgement, which row `2` withheld: `composeRecord`, `writeJoined` and `TabsCommitCarrier` are KEPT at
-  `docs/L3/store-tabs-record/design.md` §10 (D-139, D-135, D-83, D-73)**; rev 5 gave the write paths after D-142, rev 4 the
-  client role (§6), rev 3 the change push at the record's own address (D-71, §2), rev 2 the move onto the central instance (D-64, §1).
-- **Inputs:** `docs/L1/focus-retirement.md` §2, §3 and §6 `E-11`; D-142 (the settled shape `(b)`, a transparent
-  passthrough), D-136, D-141, D-140, D-137, D-129, D-103, D-105, D-101, D-94, D-76, D-62, D-3; D-26/D-43 (a count, a path
-  or a stage is read from its owner and never restated here); D-41 (a source cite names its site, never an offset).
+- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 7 — **rev 7 re-grains §1, §2, §3, §4 and §5 to
+  the MEMBERSHIP BIJECTION at `docs/L3/store-tabs-record/design.md` rev 14: the `order` seat holds exactly the record's rows,
+  `remove` is ONE targeted delete rather than a composed write, and `repaired` on it compares against the delete-only expectation
+  (D-83, D-70)**; rev 6 took §5's composer judgement (D-139, D-135, D-73); rev 5 the write paths after D-142, rev 4 the client role.
+- **Inputs:** `docs/L3/store-tabs-record/design.md` rev 14 §3–§8 and §10; `docs/L1/focus-retirement.md` §2, §3 and §6 `E-11`; D-142
+  (the settled shape `(b)`, a transparent passthrough), D-136, D-141, D-140, D-137, D-129, D-103, D-105, D-101, D-94, D-83, D-76,
+  D-70, D-62, D-3; D-26/D-43 (a count, a path or a stage is read from its owner); D-41 (a source cite names its site, never an offset).
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
 ## 0. Scope
@@ -43,13 +43,15 @@ renderer's one write does not travel here at all; `commit` and `remove` remain t
 |---|---|---|
 | `tabs.read()` | none | `{ status: 'committed'; rows; order; landing }` — a TOTAL route: a read that fails answers an empty or partial view, and the refusal type it is declared against is never minted (§1) |
 | `tabs.commit(row)` | one tab's whole row, by name | `{ status: 'committed' }`, carrying `repaired: true` where a repair changed the record, or the refusal arm (§3) |
-| `tabs.remove(id)` | one tab's id | the same two arms, on the same rule (§3) |
+| `tabs.remove(id)` | one tab's id | the same two arms, on the same rule (§3) — the act DELETES the row and the repairs settle the record (§5) |
 | `tabs.onChanged(handler)` | one listener | the withdrawal, and nothing else (`guide §6.2`; §6) |
 
 **`read()`'s `landing` IS §1's DERIVATION AND NOT A STORED POINTER**, so a client reads it and never composes it (D-76).
-**`repaired` IS DERIVED, NEVER PREDICTED**: `commit` and `remove` compose the record they intend, write it, and compare it
-with the record that STANDS, so the member is present exactly where a repair changed it — absent on a clean act and never
-answered `false`, because `false` would be a second spelling of its absence (D-70, D-103).
+**`repaired` IS DERIVED, NEVER PREDICTED**: each act compares the record it MEANT with the record that STANDS, so the member
+is present exactly where a repair left something the act did not name — absent on a clean act and never answered `false`,
+because `false` would be a second spelling of its absence (D-70, D-103). **ON `remove` THE MEANT RECORD IS THE DELETE-ONLY
+EXPECTATION** — the reading's `order` and rows MINUS the id, activeness untouched — so a removal of a non-active tab is clean,
+while one that re-seats a survivor or re-mints the empty floor carries the member (L3 design §8).
 
 **`tabs.onChanged` CARRIES NOTHING — no address and no value** — while the record's OWN listener is REGISTERED at `['tabs']`
 itself, beside all six pairs, and is delivered an ADDRESS there and never a payload (D-71, `guide §6.2`, `guide §6.4`). **The
@@ -71,7 +73,7 @@ status — so the vocabulary stays the store's (D-76, D-105):
 **A repaired act is `committed`, never `refused`** — the repair is the engine working (§4), and a caller that read it as a
 failure would refuse a write the store accepted (D-103, D-105). **The sentences a caller can receive**, each repaired and
 never left standing, are the six declarations' own: *the tab record does not stand*; the `order` seat's *carries no sequence
-of its own tabs, once each*; `exactly-one-active`'s three — *holds no tab at all*, *carries no active tab*, *carries more than
+of exactly its own tabs, once each*; `exactly-one-active`'s three — *holds no tab at all*, *carries no active tab*, *carries more than
 one active tab*; and the field pairs' *a tab carries no title*, *a tab contains no data object*, *a tab carries no last-active
 stamp* (D-83, §4). `'constraint-repaired'` is NOT one of them: it was minted on a committed answer that nothing produced, and
 a repair is the `repaired` member of §2 (D-70).
@@ -79,7 +81,7 @@ a repair is the `repaired` member of §2 (D-70).
 ## 4. The six declarations, and the normalisation the ruling leans on
 
 `tabsConstraintDeclarations` exports SIX declarations, every one of them at `['tabs']`: `tabs-must-stand` (existence), then
-`order-names-its-tabs` (the seat every other judgement is seated from), then `exactly-one-active` (`TABS_CONSTRAINT_ID`), then
+`order-names-its-tabs` (the seat every other judgement is seated from, and the record's MEMBERSHIP in BOTH directions — a seat naming a row the record does not hold and a row the seat does not name are ONE fault, one sentence and one repair, L3 design §4), then `exactly-one-active` (`TABS_CONSTRAINT_ID`), then
 `tab-has-title`, `tab-has-content` and `tab-has-lastActiveAt` (D-65, D-83). The boot batches them into the instance's
 construction; this module registers no second authority over any of them (D-65).
 
@@ -95,17 +97,17 @@ would make the caller the authority the repair exists to be (D-142, D-129). **AN
 
 | Path | Who composes | Who judges | What passes through unchanged |
 |---|---|---|---|
-| `tabs.commit(row)` / `tabs.remove(id)` — the module's own verbs | this module: `composeRecord` writes `order` plus one member per seated id, and `remove` rewrites the seat without the id (§1) | the six declarations at `['tabs']` (§4) | the caller's row, admitted field by field and written as admitted: no member is invented and no successor is chosen — and the engine's repairs may still correct the standing record, which is what `repaired` reports (§4, D-140, D-142) |
-| the renderer's whole-record write — `window.provident.data.write({path:['tabs'], tier:'file', value})` → `ipcMain.handle(IPC_DATA_WRITE)` → `createDataSurface().write` → the store's write verb | the renderer, from its own committed `tabs.read()` reading: `order` plus one member per tab, and nothing invented — D-136's seat, which is where formatting belongs | `exactly-one-active`, at the address it is registered at: the write is JUDGED and its repair run, not refused by this surface (§4, D-142) | the value, byte for byte: the handler forwards to the store's write verb and transforms nothing (D-136, D-142) |
+| `tabs.commit(row)` / `tabs.remove(id)` — the module's own verbs | `commit`: this module — `composeRecord` writes `order` plus one member per SEATED id; `remove`: NOBODY — one `delete(['tabs', id], TABS_RECORD_TIER)` and no value at all (§2) | the six declarations at `['tabs']` (§4) | `commit`: the caller's row, admitted field by field, no member invented and no successor chosen; `remove`: the row leaves, and the TWO REPAIRS own the seat and the activeness (§4, D-140, D-142) |
+| the renderer's whole-record write — `window.provident.data.write({path:['tabs'], tier:'file', value})` → `ipcMain.handle(IPC_DATA_WRITE)` → `createDataSurface().write` → the store's write verb | the renderer, from its own committed `tabs.read()` reading: `order` plus one member per tab, and nothing invented — D-136's seat, which is where formatting belongs | **ALL SIX**, at `['tabs']` where they are registered — `order-names-its-tabs` included, which is what makes a stray key or an unseated row this path's business too: the write is JUDGED and its repairs run, not refused by this surface (§4, D-142) | the value, byte for byte: the handler forwards to the store's write verb and transforms nothing (D-136, D-142) |
 
 **"TRANSPARENT" MEANS NO TRANSFORMATION, NOT NO REFUSAL** (D-142). `data.write` still answers `malformed-arguments`,
 `declared-tier`, `parent-absent` and the store's own refusals, because those are the STORE'S judgement passing THROUGH rather
 than this surface's decision — and `['tabs']` being a declared root at `file` is what admits the legal tier and refuses every
 other (§1, D-101, D-142). **AND THE WHOLE-RECORD COMPOSITIONS THAT REMAIN ARE SETTLED, NOT MERELY BOOKED**: row `2` booked
-`composeRecord` — this module's own whole-record composer — and **§10 KEEPS it with the reason beside it** (D-139, D-83, D-73);
+`composeRecord` — this module's own whole-record composer — and **§10 KEEPS it, re-graining ONE of its three grounds** (D-139, D-83, D-73);
 D-142 books the renderer's under that same entry, a RENDERER fact that adds no composing route to `tabs` and licenses no
-composition of a caller's value here, while `commit`/`remove` compose the record they write because a membership change is a
-SEAT and a MEMBER in one act, in an order each act forces (D-142, D-136, §10). **AND THE RENDERER'S PATH IS LANDED, NOT DECIDED**:
+composition of a caller's value here, while **`commit` still composes the record it writes — its change is a SEAT and a MEMBER in one act
+— and `remove` composes NOTHING**: one targeted delete, and the two repairs own the rest (D-142, D-136, §10). **AND THE RENDERER'S PATH IS LANDED, NOT DECIDED**:
 `docs/L1/focus-retirement.md` §6 `E-1` took it as the `focus` case's whole body (`focusActRoute`), which reads the tab record,
 composes it once and hands it to `data.write` at `['tabs']`/`file` — so the surface this rev fixes is the one that route writes (D-142, D-143, D-3).
 
@@ -134,17 +136,14 @@ after every `onChanged`, and changes the record through §5's `data.write` path,
 ## 7. The `focus` retirement, seen from this module's side
 
 **NOTHING OF THIS RECORD MOVES** (D-142): `['focus']` was never a family this module declared, wrote, read or judged — its
-address, tier, declaration, body and route are `store-view-record`'s and go whole with that unit's own licensed edit, `E-2`,
-which this document neither takes nor assumes — **it landed** (`src/renderer/renderer.ts`'s `focusActRoute`, D-143), `E-2` of `docs/L1/focus-retirement.md`. The six declarations, the
-`exactly-one-active` invariant and its normalisation, the `file` tier, the per-tab leaf shape and `order`'s role all stand as
-§1–§4 state them (D-142, D-140). **THE CROSSINGS LEG'S `['focus']` ROWS ARE RE-GRAINED BY THAT UNIT'S OWN L1 PASS** (`E-8`) in
-the same edit as the deletion, and its `exactly-one-active` row already measures the repaired two-active write (D-94, D-3). No
-battery of this module is any pass's subject here: its rows measure the four routes, the witness and the six declarations,
-none of which this rev alters (D-3, D-94).
+address, tier, declaration, body and route are `store-view-record`'s and went whole with that unit's own licensed edit, `E-2`
+(it landed: `src/renderer/renderer.ts`'s `focusActRoute`, D-143). The six declarations, `exactly-one-active` and its
+normalisation, the `file` tier, the leaf shape and `order`'s role stand as §1–§4 state them (D-142, D-140). **THE CROSSINGS
+LEG'S `['focus']` ROWS ARE THAT UNIT'S OWN L1 PASS** (`E-8`), and no battery of this module is any pass's subject here (D-3, D-94).
 
 ## 8. What this document does not decide
 
-The battery's rows, already authored under `tests/integration/store-tabs-record/` and not re-grained by this rev (D-36 `F-1`,
-D-3), the landing pass's diff scope, and the `§5.U` matrix's operator rows, which stay `PARKED` until a human is at the
-window (L1 §3). It also does not decide the `['focus']` deletion's own sites: they carry one writer each, and none of them is
-this module's (§7, D-3).
+The battery's rows — authored under `tests/integration/store-tabs-record/` and moving with this rev: FIVE new rows, TWO
+re-grains and ONE routing are NAMED at `docs/L3/store-tabs-record/design.md` §11 and are the landing pass's to author, per
+D-36's `F-1` and D-3 — also the landing pass's diff scope, and the `§5.U` matrix's operator rows, which stay `PARKED` until a
+human is at the window (L1 §3). It does not decide the `['focus']` deletion's own sites either: one writer each, none this module's (§7, D-3).

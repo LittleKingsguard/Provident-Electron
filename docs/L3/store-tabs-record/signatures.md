@@ -1,6 +1,6 @@
 # L3 — `store-tabs-record`: signatures
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — every declared name and its exact text, transcribing `design.md` rev 13 — **AND THE BLOCK IS UNCHANGED, because §10 settles a judgement and declares no name** — regenerated from the landed modules on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — every declared name and its exact text, transcribing `design.md` rev 14 — **AND NO NAME MOVES: the membership bijection re-grains ONE SENTENCE, splits the repairs' scope and retargets `remove`'s one store act, and not one of the three is an exported name** — regenerated from the landed modules on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
 - **Ceiling:** 150 lines, class max (D-1). `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
 ## 1. `src/shared/tabs-channels.ts` — the four channel names
@@ -143,7 +143,7 @@ and `onChanged(handler)`. This document names the sites instead of copying the b
 
 **There is no construction arm.** Measured 2026-11-02, `grep -rn 'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/`
 is empty: D-64/D-65 hand this module a store the boot already constructed, and a root the existence pair has created (design §2). **The sixth constraint's sentence —
-`"the tab record's 'order' seat carries no sequence of its own tabs, once each"` — is a REFUSAL a caller reads at the store's creation and never at a route**, so it is not in the table above and it mints no `reason` (L2 §3, D-83).
+`"the tab record's 'order' seat carries no sequence of exactly its own tabs, once each"` (rev 14's re-grain: ONE sentence for BOTH directions, because one repair answers both, design §4) — is a REFUSAL a caller reads at the store's creation and never at a route**, so it is not in the table above and it mints no `reason` (L2 §3, D-83).
 
 ## 6. What L4 must not transcribe
 
