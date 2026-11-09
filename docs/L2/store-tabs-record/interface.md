@@ -1,9 +1,9 @@
 # L2 — `store-tabs-record`: the interface
 
-- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — the write paths after D-142: the
-  renderer composes the record from its own committed reading and hands it whole to `data.write` at `['tabs']`/`file`, and
-  this document no longer forbids that; rev 4 declared the client role (§6), rev 3 put the change push at the record's own
-  address (D-71, §2), rev 2 moved the record onto the central instance (D-64, §1).
+- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 6 — **rev 6 takes §5's composer
+  judgement, which row `2` withheld: `composeRecord`, `writeJoined` and `TabsCommitCarrier` are KEPT at
+  `docs/L3/store-tabs-record/design.md` §10 (D-139, D-135, D-83, D-73)**; rev 5 gave the write paths after D-142, rev 4 the
+  client role (§6), rev 3 the change push at the record's own address (D-71, §2), rev 2 the move onto the central instance (D-64, §1).
 - **Inputs:** `docs/L1/focus-retirement.md` §2, §3 and §6 `E-11`; D-142 (the settled shape `(b)`, a transparent
   passthrough), D-136, D-141, D-140, D-137, D-129, D-103, D-105, D-101, D-94, D-76, D-62, D-3; D-26/D-43 (a count, a path
   or a stage is read from its owner and never restated here); D-41 (a source cite names its site, never an offset).
@@ -101,13 +101,13 @@ would make the caller the authority the repair exists to be (D-142, D-129). **AN
 **"TRANSPARENT" MEANS NO TRANSFORMATION, NOT NO REFUSAL** (D-142). `data.write` still answers `malformed-arguments`,
 `declared-tier`, `parent-absent` and the store's own refusals, because those are the STORE'S judgement passing THROUGH rather
 than this surface's decision — and `['tabs']` being a declared root at `file` is what admits the legal tier and refuses every
-other (§1, D-101, D-142). **AND THE WHOLE-RECORD COMPOSITIONS THAT REMAIN ARE BOOKED, NOT HIDDEN**: `strata/pending.md` row
-`2` books `composeRecord` — this module's own whole-record composer — and D-142 books the renderer's new composition under that
-same entry. The renderer's is a RENDERER fact: it adds no composing route to `tabs`, and it licenses no composition of a
-caller's value here, while `commit`/`remove` compose the record they write because a nested write creates no parent (D-142,
-D-136). **AND THE RENDERER'S PATH IS LANDED, NOT DECIDED**: `docs/L1/focus-retirement.md` §6 `E-1` took it as the `focus` case's
-whole body (`focusActRoute`), which reads the tab record, composes it once and hands it to `data.write` at `['tabs']`/`file` — so
-the surface this rev fixes is the one that route writes (D-142, D-143, D-3).
+other (§1, D-101, D-142). **AND THE WHOLE-RECORD COMPOSITIONS THAT REMAIN ARE SETTLED, NOT MERELY BOOKED**: row `2` booked
+`composeRecord` — this module's own whole-record composer — and **§10 KEEPS it with the reason beside it** (D-139, D-83, D-73);
+D-142 books the renderer's under that same entry, a RENDERER fact that adds no composing route to `tabs` and licenses no
+composition of a caller's value here, while `commit`/`remove` compose the record they write because a membership change is a
+SEAT and a MEMBER in one act, in an order each act forces (D-142, D-136, §10). **AND THE RENDERER'S PATH IS LANDED, NOT DECIDED**:
+`docs/L1/focus-retirement.md` §6 `E-1` took it as the `focus` case's whole body (`focusActRoute`), which reads the tab record,
+composes it once and hands it to `data.write` at `['tabs']`/`file` — so the surface this rev fixes is the one that route writes (D-142, D-143, D-3).
 
 ## 6. The renderer's client role — it reads this record, and it owns none
 

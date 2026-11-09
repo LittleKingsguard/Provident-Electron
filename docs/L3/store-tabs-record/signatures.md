@@ -1,6 +1,6 @@
 # L3 — `store-tabs-record`: signatures
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 4 — every declared name and its exact text, transcribing `design.md` rev 12, **regenerated from the landed modules** on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 5 — every declared name and its exact text, transcribing `design.md` rev 13 — **AND THE BLOCK IS UNCHANGED, because §10 settles a judgement and declares no name** — regenerated from the landed modules on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
 - **Ceiling:** 150 lines, class max (D-1). `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
 ## 1. `src/shared/tabs-channels.ts` — the four channel names
