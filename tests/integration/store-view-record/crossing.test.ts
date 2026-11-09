@@ -20,6 +20,13 @@
 // **EVERY ROW THAT READS `src/` IS RED UNTIL L4 LANDS**, each red the absence it names; the unpaired-root row is the one exception and it is a CONTROL —
 // it is green at this head by construction and reds the moment L4 mints a placeholder at the temp root.
 //
+// **RE-GRAINED FOR `D-151`, WHICH CLOSES THE ZONE ID DOMAIN AND WRITES ONE LEAF PER SUPPLIED MEMBER**: a zone commit is no
+// longer ONE whole-family write, so the zone root's `.write(VIEW_ZONES_ADDRESS, ZONES_TIER` leaves the module and the clause-4
+// census moves `four → three` again, while the route's leaves are `[VIEW_ZONES_ADDRESS[0], id, member]`. **AND A ZONE ACT NOW
+// DELIVERS ONCE PER SUPPLIED MEMBER** — each landed leaf is a state the pair admits, so the clause-2 figures move by the member
+// count and not by a fault. The `mem` family's placeholder is `{'zone-1': {}}` — every DECLARED id with an EMPTY record — so
+// the read names one memberless zone where it answered none, and the clause-3 rows say so (`docs/L3/view-record/design.md` §9).
+//
 // THE CONTRACT: `docs/L3/view-record/design.md` §4 — ONE registered pair per surviving root, each answering `true` or
 // `{ message, repair }`, where the repair leaves ONE whole legal family and RETURNS the op its write landed (`{ ok: true,
 // op }`, the shape the kernel credits through `landedOp`); and `docs/L2/view-record/interface.md` §2 — the member's
@@ -318,7 +325,7 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
 // ═══════════════ CLAUSE 2 — A LISTENER CARRIES THE CHANGE, ONCE PER COMMITTED CHANGE, ZERO ELSEWHERE ═══════════════
 
 describe('view-record · clause 2 — the push, measured per family and against a control that keeps a zero from being dead', () => {
-  it('ONE DELIVERY PER COMMITTED CHANGE OF EITHER FAMILY — a pane commit is 1, a second pane commit is 2, a ZONE commit is 3, and the withdrawal is the answer — a counter, because a listener the store never registered fires nothing, silently', () => {
+  it('ONE DELIVERY PER COMMITTED CHANGE OF EITHER FAMILY — a pane commit is 1, a second pane commit is 2, a ZONE commit is 4 because it is TWO LEAF WRITES (`D-151`, one per supplied member), and the withdrawal is the answer — a counter, because a listener the store never registered fires nothing, silently', () => {
     let delivered = 0
     const off = record.subscribe(() => {
       delivered += 1
@@ -328,10 +335,13 @@ describe('view-record · clause 2 — the push, measured per family and against 
     expect(record.commitPane(DEFAULT_PANE_ID, { size: 140 }).status).toBe('committed')
     expect(delivered, 'a second committed change delivers exactly one more — never one per family standing at a root').toBe(2)
     expect(record.commitZones('zone-1', { size: 160, display: 'normal' }).status, 'the zone commit commits').toBe('committed')
-    expect(delivered, 'a committed change of the ZONES family delivers exactly one more').toBe(3)
+    expect(
+      delivered,
+      'a committed ZONE act delivers ONE PER SUPPLIED MEMBER — `size` and `display` are two leaf writes, so two more: one route call is no longer one delivery (`D-151`)',
+    ).toBe(4)
     off()
     expect(record.commitPane(DEFAULT_PANE_ID, { size: 160 }).status, 'a commit after the withdrawal still commits').toBe('committed')
-    expect(delivered, 'the withdrawal is the answer: no delivery follows it').toBe(3)
+    expect(delivered, 'the withdrawal is the answer: no delivery follows it').toBe(4)
   })
 
   it('THE CONTROL FOR THAT ROW: a store write that touches NEITHER family does not notify, and the SAME subscription then delivers on a pane commit — so the zero is not a dead subscription', () => {
@@ -357,10 +367,13 @@ describe('view-record · clause 2 — the push, measured per family and against 
     expect(surface.commitPane(DEFAULT_PANE_ID, { size: 111 }).status).toBe('committed')
     expect(bridged, 'the main-side half: one committed pane change reaches the broadcast').toBe(1)
     expect(surface.commitZones('zone-1', { size: 140, display: 'normal' }).status, 'a committed change of a second family').toBe('committed')
-    expect(bridged, 'and one committed zone change reaches it too, over the one subscription').toBe(2)
+    expect(
+      bridged,
+      'and this zone act reaches it too, over the one subscription — twice, because its two supplied members are two leaf writes (D-151)',
+    ).toBe(3)
     surface.detach()
     expect(surface.commitPane(DEFAULT_PANE_ID, { size: 112 }).status).toBe('committed')
-    expect(bridged, '`detach` withdraws exactly what `attach` took').toBe(2)
+    expect(bridged, '`detach` withdraws exactly what `attach` took').toBe(3)
 
     // THE RENDERER-SIDE HALF, READ AS CODE WITH ITS COMMENTS ELIDED (so a comment naming the channel cannot pass):
     expect(IPC_VIEW_CHANGED, 'the channel constant both halves register').toBe('provident:view:changed')
@@ -421,7 +434,7 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
       try {
         expect(two.read().panes, 'boot two answers boot one\'s family').toEqual(first.panes)
         expect(two.read().theme, 'and the same appearance record, which is the second `file` family').toEqual(first.theme)
-        expect(two.read().zones, 'while the `mem` family is re-minted rather than carried').toEqual([])
+        expect(two.read().zones, 'while the `mem` family is re-minted rather than carried — the declared zone, memberless (`D-151`)').toEqual([{ id: 'zone-1' }])
         expect(two.bytes(), 'the file is byte-identical across the two boots (nothing re-wrote it)').toBe(oneBytes)
       } finally {
         two.close()
@@ -465,7 +478,7 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
     expect((zonesReceipt.triggered ?? []).map((entry) => entry.handle), 'the pair that answered is the zone family\'s').toContain(
       VIEW_ZONES_MUST_STAND_ID,
     )
-    expect(record.read().zones, 'leaving the placeholder that names no zone').toEqual([])
+    expect(record.read().zones, 'leaving the placeholder that names every DECLARED zone with an empty record').toEqual([{ id: 'zone-1' }])
     off()
   })
 })
@@ -486,19 +499,23 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     // names it once (through `writeJoinedAt`), so the census is stated as a figure a new path would break.
     expect((module.match(/\.write\(/g) ?? []).length, 'the module reaches a write through exactly ONE helper (`writeJoinedAt`) plus the caller routes').toBeGreaterThan(0)
     expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'the pane route writes the family whole').toBe(true)
-    expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'and the zone route writes its family whole (D-91)').toBe(true)
+    // **AND THE ZONE ROUTE WRITES NO WHOLE FAMILY AT ALL** (`D-151`): `composeZones` left with the composition, so the route
+    // writes ONE LEAF PER SUPPLIED MEMBER at `[VIEW_ZONES_ADDRESS[0], id, member]` — a root write here would be the composer
+    // rebuilt under the route's name, and it would replace the zone whole (measured), which is the fault the leaves remove.
+    expect(/\.write\(VIEW_ZONES_ADDRESS, ZONES_TIER/.test(module), 'no whole-family write at the zone root remains in the module').toBe(false)
+    expect(/\[VIEW_ZONES_ADDRESS\[0\] as string, id, member\]/.test(module), 'the zone route writes one leaf per supplied member').toBe(true)
     expect(/\.write\(VIEW_THEME_ADDRESS, THEME_TIER/.test(module), 'and the appearance route writes its act whole (D-97)').toBe(true)
     // **THE DRAG PAIR IS THE FOURTH AND FIFTH WRITE PATH, AND THEY ARE ONE OF EACH KIND** (`D-132`): the move writes a whole value at the `temp` root,
     // and the clear is a DELETE at the same address — never a `write` of an empty family, because the address must answer `absent` once the gesture ends.
     expect(/\.write\(VIEW_DRAG_ADDRESS, DRAG_TIER/.test(module), 'the drag route writes the in-process reading whole at `temp`').toBe(true)
     expect(/\.delete\(VIEW_DRAG_ADDRESS, DRAG_TIER/.test(module), 'and the clear route ENDS the family rather than writing a placeholder').toBe(true)
     // **THE FOCUS ROUTE'S WRITE SITE IS GONE WITH THE ROUTE** (`D-142`) — the census below is the module's own and a
-    // deleted route leaves it; a family re-added at a fifth site would red here rather than arrive unnoticed.
+    // deleted route leaves it; a family re-added at a fourth site would red here rather than arrive unnoticed.
     expect(/FOCUS_TIER/.test(module), 'no tier constant stands for the retired family').toBe(false)
     expect(
       (module.match(/\.write\(VIEW_/g) ?? []).length,
-      'FOUR whole-family writes stand — the panes, the zones, the appearance act and the drag move — the ONE repair path writing through its own helper, so a fifth would be a write path clause 4 has not seen',
-    ).toBe(4)
+      'THREE whole-family writes stand — the panes, the appearance act and the drag move — the ONE repair path writing through its own helper and the zone route writing LEAVES (`D-151`), so a fourth would be a write path clause 4 has not seen',
+    ).toBe(3)
   })
 
   it('NO WRITE ON READ, MEASURED BOTH WAYS: a read lands no byte over a standing family, and a read over a store whose batch NEVER RAN answers the declared defaults WITHOUT minting either family', () => {
@@ -522,7 +539,7 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
       theme: 'default',
     })
     expect(overBare.panes, 'the pane family answers the measured default through the declared arm, never a minted record').toEqual([])
-    expect(overBare.zones, 'and the zone family at the arm that names no zone — never a geometry minted at a read').toEqual([])
+    expect(overBare.zones, 'and the zone family at the arm NO declaration reached — never a geometry minted at a read, and never a declared zone a repair never wrote').toEqual([])
     expect(
       overBare.theme,
       'and the appearance record at the placeholder, whose declaration names no attribute — never a resolution minted at a read (D-97)',

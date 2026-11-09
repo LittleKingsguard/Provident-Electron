@@ -59,6 +59,7 @@ import { createProfileStore } from '../../../src/main/storeroom.js'
 import { createTabsRecord, tabsConstraintDeclarations, tabsDeclaredRoots, type TabsRecord } from '../../../src/main/tabs-record'
 import {
   createViewRecord,
+  UNDECLARED_ZONE_REASON,
   viewConstraintDeclarations,
   viewDeclaredRoots,
   type ViewRecord,
@@ -229,7 +230,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(one.view.read().panes, 'with the member it did not supply kept from what stood').toEqual([{ id: 'pane-a', size: 20, bounds: { min: 0, max: 120 } }])
   })
 
-  it('VA-5 · THE ZONE FAMILY: a member that is no record, and a zone carrying a `size` the read cannot state, are refused — while a zone that carries NOTHING stays legal, because that is a state the family holds (D-91, D-105)', () => {
+  it('VA-5 · THE ZONE FAMILY: a member that is no record, and a zone carrying a `size` the read cannot state, are refused — a zone that carries NOTHING stays legal at a DECLARED id, because that is a state the family holds (`D-91`, `D-105`) — and an id the record does not declare is refused at BOTH seats, which is the INVERT this row carries since `D-151` closed the id domain', () => {
     const one = stand()
     expect(one.view.commitZones('zone-1', { slot: { a: 1 }, distance: 3, size: 10, display: 'left' }), 'a legal zone lands through the route').toEqual({ status: 'committed' })
     const zones = one.view.read().zones
@@ -242,10 +243,28 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     }
     expect(one.view.read().zones, 'and the family that stood is the family that still stands').toEqual(zones)
     // **THE LEGAL ARM A STRICT ARM COULD HAVE BROKEN**: a zone record carrying NO member is the state "the caller named a
-    // zone and stored nothing about it yet", which `zoneOf` admits and `D-91` measured as the family\'s own shape.
-    expect(one.surface.write({ path: ['zones', 'zone-2'], tier: 'mem', value: {} }).status, 'a zone carrying nothing still lands').toBe('committed')
-    expect(one.view.read().zones, 'and it reads as the zone it names, with no member').toEqual([...zones, { id: 'zone-2' }])
-    expect(one.view.commitZones('zone-3', { size: 5 }), 'and the family\'s own route still commits').toEqual({ status: 'committed' })
+    // zone and stored nothing about it yet", which `zoneOf` admits and `D-91` measured as the family's own shape — and it
+    // is driven at the id the record DECLARES, because `D-151` closed the domain and the repair created that node.
+    expect(one.surface.write({ path: ['zones', 'zone-1'], tier: 'mem', value: {} }).status, 'a declared zone carrying nothing still lands').toBe('committed')
+    expect(one.view.read().zones, 'and it reads as the zone it names, with no member — no geometry invented for it').toEqual([{ id: 'zone-1' }])
+    // **AND THE INVERT (`ASM-9`, the design's §9)**: the same write at an id the record does NOT declare is refused BY THE
+    // FAMILY'S OWN JUDGE, which is the closure's second seat — closing the route alone would leave `data.write` free to
+    // mint the very zone the ruling refuses, and this is the seat an outside writer meets.
+    expect(
+      ledgerOf(one.surface.write({ path: ['zones', 'zone-2'], tier: 'mem', value: {} })),
+      'an undeclared zone id is refused at the family\'s ADMISSION, with the pair\'s own sentence',
+    ).toEqual({
+      reason: 'store-refused',
+      storeStatus: 'ConstraintPassRefused',
+      message: expect.stringContaining('a zone id this record does not declare'),
+    })
+    expect(one.view.read().zones, 'and no undeclared zone arrived: the declared one stands alone').toEqual([{ id: 'zone-1' }])
+    // THE ROUTE'S SEAT, THE OTHER HALF OF THE SAME CLOSURE (`ASM-9`): a well-formed id outside the set is refused before
+    // any store verb under the closed vocabulary's own token — and the route still commits at the id it declares.
+    expect(one.view.commitZones('zone-3', { size: 5 }), 'the route refuses an id this record does not declare').toMatchObject({
+      status: 'refused', reason: UNDECLARED_ZONE_REASON,
+    })
+    expect(one.view.commitZones('zone-1', { size: 5 }), 'and the family\'s own route still commits at its declared id').toEqual({ status: 'committed' })
   })
 
   it('VA-6 · THE APPEARANCE FAMILY\'S SECOND ARM IS A DIFFERENT CLASS: it is a REPAIR, not a refusal — a corrupt appearance record is RE-DERIVED inside the caller\'s own commit and the answer says so, so `D-105` leaves its semantics alone', () => {
@@ -360,7 +379,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(one.store.read(['panes'], 'file'), 'panes-must-stand\'s placeholder').toEqual({ 'pane-a': { size: 100, bounds: { min: 0, max: 200 } } })
     expect(one.tabs.read(), 'tabs-must-stand\'s landing row').toMatchObject({ order: ['landing'], landing: 'landing' })
     expect(one.store.read(['theme'], 'file'), 'theme-must-stand\'s placeholder declaration').toEqual({ declaration: { value: '', removal: true } })
-    expect(one.store.read(['zones'], 'mem'), 'zones-must-stand\'s family that names no zone').toEqual({})
+    expect(one.store.read(['zones'], 'mem'), 'zones-must-stand\'s placeholder: every DECLARED zone id with an EMPTY record (`D-151`)').toEqual({ 'zone-1': {} })
     expect(one.view.read().source, 'and every family reads as a RECORD and never as a substituted default').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // THE SECURE CROSSING'S THREE: `['operator-exclusion']` is the `mem` pair its repair mints, and the two `file` records
     // are the repairs' own writes — which are what the file carries when the constructor returns (D-86).
@@ -383,7 +402,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const next = one.restart()
     expect(next.view.read().panes, 'the pane geometry comes back off the bytes, exactly as it was written').toEqual([{ id: 'pane-a', size: 61, bounds: { min: 1, max: 121 } }])
     expect(next.view.read().theme, 'and so does the appearance record').toEqual({ token: 'dark', attribute: 'data-theme', declaration: { name: 'data-theme', value: 'dark', removal: false } })
-    expect(next.view.read().zones, 'while a `mem` zone family is the instance\'s: the next process meets its placeholder').toEqual([])
+    expect(next.view.read().zones, 'while a `mem` zone family is the instance\'s: the next process meets its placeholder — the declared zone, memberless (`D-151`)').toEqual([{ id: 'zone-1' }])
     expect(next.view.read().source, 'and every one of them still reads as a record, because a repair is a lawful boot source').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // **AND THE PREVIOUS LEGAL VALUE SURVIVES A CORRUPT ATTEMPT AT THE NEW HEAD — THE SURVIVAL IS ASSERTED BEFORE THE
     // VERDICT**, so a body that answered this state with a REPAIR (instead of the refusal it owes) reds HERE: the

@@ -507,8 +507,12 @@ interface PaneCrossing {
    *  window, or the crossing's own `commitZones` from another consumer). It refills the shape and pushes, exactly as a
    *  route call does, and records nothing on the route log. */
   readonly seedZone: (id: string, zone: HeldZone) => void
-  /** A zone member left OUT of a seed is DROPPED from the family's record — the crossing's `composeZones` keeps what the
-   *  caller supplied and what otherwise stands, so a row that wants a member gone supplies none of it. */
+  /** **A SEED IS A DELIVERY AND REPLACES THE ZONE WHOLE**, so a zone member left OUT of a seed is DROPPED from the
+   *  family's record and a row that wants a member gone supplies none of it. **THE ROUTE CANNOT DROP ONE AND NO LONGER
+   *  COMPOSES ANYTHING** (`D-151`, `D-152`): `composeZones` is DELETED, `commitZones` writes ONE LEAF PER SUPPLIED MEMBER
+   *  (`['zones', id, 'slot']`, `['zones', id, 'distance']`, `['zones', id, 'size']`, `['zones', id, 'display']`), so a
+   *  member the caller omits is never written and keeps standing, and an id outside the record's DECLARED set is REFUSED
+   *  `undeclared-zone` rather than silently creating a zone. */
   readonly zoneCalls: ZoneRouteCall[]
   /** **THE DRAG ROUTE'S LOG — EVERY `commitDrag(paneId, geometry)` THE COMPOSITION SENT, IN ORDER.** The drag's value is
    *  an ADDRESS now (`['drag']` at `temp`, one member per pane id, each `{size}`), so the per-move write is a ROUTE CALL
@@ -568,9 +572,16 @@ function crossingOf(key?: object): PaneCrossing {
   let family: Record<string, { size: number; bounds: { min: number; max: number } }> = {
     [DEFAULT_PANE_ID]: defaultGeometryFor(DEFAULT_PANE_ID),
   }
-  // **THE ZONE FAMILY'S CREATION PLACEHOLDER IS THE ONE THAT NAMES NO ZONE** (`D-91`): `zones-must-stand` repairs to `{}`,
-  // so a zone nothing seeded answers `null` and `candidatesFor` answers `[]` — the answer the frozen store's `undefined`
-  // gave. A row that wants a zone seeds it, which is a DELIVERY and not this composition's write.
+  // **THE ZONE FAMILY'S CREATION PLACEHOLDER NAMES EVERY DECLARED ID WITH AN EMPTY RECORD** (`D-151`, `D-152`; `D-91`'s
+  // "the family that names no zone" is SUPERSEDED BY POINTER and stands unrewritten, `D-46`): `zones-must-stand` repairs to
+  // `viewZonesPlaceholder()` = `{'zone-1': {}}` — one entry per id in `DECLARED_ZONE_IDS`, derived from `DEFAULT_ZONE_ID` in
+  // `src/shared/view-shape.ts` (ONE id at this head) — so a DECLARED zone nothing has written answers a MEMBERLESS zone
+  // (`{id}`) rather than `null`, and `null` now answers only an id the record does not declare; `candidatesFor` still answers
+  // `[]` on both arms and the render turn's `size`/`display` are `undefined` on both (`D-152` (b)), which is the answer the
+  // frozen store's `undefined` gave. A row that wants a zone WITH members seeds it, and that seed is a DELIVERY and not this
+  // composition's write. **THE `let zones` BELOW SEEDS NO ZONE** (measured, not repaired): it stands `{}` where the repair now
+  // creates `{'zone-1': {}}`, so a row wanting the placeholder's memberless arm must seed `{}` for the declared id itself —
+  // both arms answer alike, so no row here depends on the gap.
   let zones: Record<string, HeldZone> = {}
   // **THE DRAG FAMILY'S ADDRESS** — `['drag']` at `temp`, ONE MEMBER PER PANE ID, each `{size}`. `null` is the family's
   // absence, which is the state before any gesture wrote and the state every erase turn leaves.
@@ -649,9 +660,14 @@ function crossingOf(key?: object): PaneCrossing {
     // **THE APPEARANCE ROUTE** (D-97): present so the member set matches the bridge's. This file
     // drives no appearance act — the fixture's record stands at the placeholder, which names no attribute to apply.
     commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
-    // **THE FAMILY IS COMPOSED AT THE CROSSING** (`composeZones`, D-91): the members supplied are written over what the
-    // zone stands at, the ones the caller did not supply are KEPT, and every sibling zone survives — one act cannot erase
-    // a zone it never read. This double drives no row through it; it stands here so the member set matches the bridge's.
+    // **THE CROSSING COMPOSES NO ZONE FAMILY ANY MORE, AND THIS DOUBLE STANDS FOR THE MEMBER SET** (`D-151`, `D-152`):
+    // `composeZones` is DELETED — `commitZones` writes ONE LEAF PER SUPPLIED MEMBER (`['zones', id, 'slot']`,
+    // `['zones', id, 'distance']`, `['zones', id, 'size']`, `['zones', id, 'display']`), so the members supplied are
+    // written, the ones the caller did not supply are never touched and keep standing, and an id the record does not
+    // declare is REFUSED `undeclared-zone` rather than creating a zone — the id domain is CLOSED to `DECLARED_ZONE_IDS`
+    // (derived from `DEFAULT_ZONE_ID`, one id at this head) and the repair CREATES each declared record, which is what a
+    // leaf write needs standing under it. This double drives no row through it; it stands here so the member set matches
+    // the bridge's.
     commitZones: async (id: string, zone: unknown): Promise<unknown> => {
       const supplied = (zone ?? {}) as HeldZone
       zones = { ...zones, [id]: { ...(zones[id] ?? {}), ...supplied } }

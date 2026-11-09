@@ -91,7 +91,9 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
     },
 
     commitZones(id: unknown, zone: unknown): ViewRecordAnswer {
-      // the same two arms for the third family: an id that names no zone, and a record that is not one (D-91)
+      // the same two arms for the third family: an id that names no zone, and a record that is not one (D-91). The id's
+      // DECLARED domain is the RECORD's arm and not this one (`D-151`): a well-formed id outside `DECLARED_ZONE_IDS` — `zone-2`
+      // — passes both arms here and comes back `undeclared-zone`, because the declared set is read where the family is judged
       if (typeof id !== 'string' || id.length === 0) {
         return { status: 'refused', reason: ZONE_SHAPE_REASON, message: ZONE_SHAPE_MESSAGE, address: null }
       }

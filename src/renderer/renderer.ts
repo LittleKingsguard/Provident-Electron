@@ -13,7 +13,7 @@ import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCom
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DEFAULT_PANE_ID, DEFAULT_ZONE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -2367,10 +2367,18 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     if (typeof token === 'string' && token.length > 0) return token
     return 'pane-a'
   }
+  /** **THE CALLER'S OWN ZONE ID, AND ITS FALLBACK IS THE *DECLARED* ONE — NEVER A LITERAL OF THIS FILE'S** (`D-151`,
+   *  `D-152`). `<id>` is the caller's element/token mapping where the element carries a `zoneId`; absent one, the read
+   *  addresses `DEFAULT_ZONE_ID`, imported beside `DEFAULT_PANE_ID` from `src/shared/view-shape.ts`. **THE RECORD DECLARES
+   *  THE ZONE IDS IN THAT FILE AND THIS REALM MUST NOT SPELL ITS OWN**: the id domain is CLOSED to `DECLARED_ZONE_IDS`
+   *  (derived from that constant) and the route refuses an id it does not declare (`undeclared-zone`), so a literal here
+   *  would be a second answer to "which zone does this app address" — and the two could disagree about it, the failure
+   *  landing as a render turn reading a zone the record no longer declares. **THE VALUE IS UNCHANGED** (`DEFAULT_ZONE_ID`
+   *  is `'zone-1'`), so this is one spelling and no behaviour. */
   const zoneIdOf = (element: unknown): string => {
     const viaElement = (element as { readonly zoneId?: unknown } | null | undefined)?.zoneId
     if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
-    return 'zone-1'
+    return DEFAULT_ZONE_ID
   }
 
   /** **THE ZONE FAMILY'S ONE READ — THE SHAPE'S, AND THE `tierRead` HELPER IS DELETED** (`D-92`). What stood here was a
@@ -2387,13 +2395,17 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
   /** **THE ZONE-READ CLOSURE FOR THE RENDER'S LAYOUT CALL (§2.3 item 4), NOW OFF THE SHAPE** (`D-92`): the layout input is
    *  a pure function of the zone family's `size` / `display` as the last delivery left them — never a module-held variable,
    *  never host geometry, never a controller callback. A zone nothing names hands `undefined` to the layout call, which is
-   *  exactly what the frozen store's missing read handed it. */
+   *  exactly what the frozen store's missing read handed it. **THE ID READ AND THE ID HANDED ON ARE BOTH
+   *  `DEFAULT_ZONE_ID`** (`D-151`, `D-152`): the record declares its zone ids in `src/shared/view-shape.ts` and this realm
+   *  must not spell its own, so one constant names the zone at the read and at the layout call — a literal at either would
+   *  let the turn and the declared set drift about which zone the app addresses. **THE VALUE IS UNCHANGED**
+   *  (`DEFAULT_ZONE_ID` is `'zone-1'`), and the arguments are the same `undefined`/figure pair as before. */
   const renderZone = (): void => {
     const layout = sourceRecord?.layout
     if (typeof layout !== 'function') return
     try {
-      const zone = zoneOf('zone-1')
-      ;(layout as (zoneId: string, size: unknown, display: unknown) => void)('zone-1', zone?.size, zone?.display)
+      const zone = zoneOf(DEFAULT_ZONE_ID)
+      ;(layout as (zoneId: string, size: unknown, display: unknown) => void)(DEFAULT_ZONE_ID, zone?.size, zone?.display)
     } catch {
       // a hostile shape must never throw out of the render turn
     }

@@ -8,10 +8,11 @@
 // (`D-73`) applied to a vocabulary rather than to a function. So the vocabulary is here, `main` re-exports every name from
 // its own module (no cite moves), and the renderer imports it instead of reaching into a main-process module.
 //
-// IT IS THE SHAPE AND NOT A STORE (D-78's ruling 3, D-88). Nothing here holds anything: these are type declarations, three
-// measured constants and three PURE functions. No address space, no persistence, no constraint, no listener, no instance —
-// a value of these types is thrown away and rebuilt on every delivery, which is exactly what makes it a projection rather
-// than a record.
+// IT IS THE SHAPE AND NOT A STORE (D-78's ruling 3, D-88). Nothing here holds anything: these are type declarations, FIVE
+// constants (the measured pane defaults, the zone the app has, and the declared zone ids derived from it) and FIVE PURE
+// functions (the two placeholders and the three derivations). No address space, no persistence, no constraint, no
+// listener, no instance — a value of these types is thrown away and rebuilt on every delivery, which is exactly what makes
+// it a projection rather than a record.
 //
 // **THE MEASURED DEFAULTS ARE THE TREE'S OWN AND NOT THIS FILE'S INVENTION** (D-87's ground, quoted rather than re-derived):
 // the authored pane's `props` read `size '100'`, `min '0'`, `max '200'`, and `gutterSeamExample`'s `startSizeOf`/`boundsOf`
@@ -19,10 +20,12 @@
 // MISSed at both of its tiers answered `undefined` — an unusable value that made the release refuse `'unusable-default'`
 // with ZERO writes and made every move INVALID. The default is therefore the placeholder a REPAIR mints at the store's
 // creation (`panes-must-stand`), and the same value this file's derivation answers for a pane the standing family does not
-// name — one authority read from both sides. **THE ZONE FAMILY HAS NO SUCH DEFAULT AND THIS FILE INVENTS NONE** (D-91):
-// its members are the frozen store's four, the read that MISSed them answered `undefined`, and so its derivation's missing
-// arm is `null` rather than a geometry — the repair's placeholder is the family that names no zone, which is the value the
-// app's own reads give today.
+// name — one authority read from both sides. **THE ZONE FAMILY HAS NO SUCH DEFAULT MEMBER AND THIS FILE INVENTS NONE**
+// (D-91): its members are the frozen store's four, the read that MISSed them answered `undefined`, and so its derivation's
+// missing arm is `null` rather than a geometry. **AND ITS PLACEHOLDER IS NO LONGER *"THE FAMILY THAT NAMES NO ZONE"***:
+// that sentence is SUPERSEDED BY POINTER and not reworded (`D-46`) — the creation repair now writes EVERY DECLARED ZONE ID
+// WITH AN EMPTY RECORD (`{'zone-1': {}}`, `viewZonesPlaceholder` below), because a leaf write needs the zone's OWN NODE to
+// stand under it and an open id set could not guarantee one (`D-151`, `D-139`).
 
 /** One pane's geometry, admitted field by field: an unknown member is dropped, never carried. */
 export interface ViewPaneGeometry {
@@ -121,6 +124,34 @@ export const DEFAULT_PANE_SIZE = 100
  *  by `defaultPaneGeometry` rather than handed out by reference, so no caller can move this file's own constant. */
 export const DEFAULT_PANE_BOUNDS: { readonly min: number; readonly max: number } = { min: 0, max: 200 }
 
+/** **THE ZONE THE APP HAS, MEASURED AND NOT CHOSEN** — `DEFAULT_PANE_ID`'s pattern applied to the zone family (D-151): the
+ *  id the drag composition's render turn hard-codes and the id `zoneIdOf` falls back to when a caller's element carries
+ *  none. It is spelled ONCE, so the two zone turns' fallback and the declared set below cannot drift apart — and the
+ *  renderer's two literals becoming this name is a finding routed to that module, not a byte of this one (D-3, D-87). */
+export const DEFAULT_ZONE_ID = 'zone-1'
+/** **THE ZONE FAMILY'S ID DOMAIN, CLOSED — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-151, D-139). `['zones', id]`
+ *  must be GUARANTEED to stand for every id the route is handed, and the store creates no parent (measured at this node):
+ *  an OPEN id set can guarantee nothing, so the domain closes and the creation repair writes exactly these ids, each with
+ *  an EMPTY record. **IT IS DERIVED FROM `DEFAULT_ZONE_ID` AND NOT SPELLED BESIDE IT**, which is the same reason
+ *  `defaultPaneGeometry` copies `DEFAULT_PANE_BOUNDS` rather than sharing it. **ONE ID IS A MEASUREMENT AND NOT A
+ *  NARROWING CHOSEN HERE**: the render turn names `zone-1` literally, `zoneIdOf` falls back to it, no authored element
+ *  under `src/` carries a `zoneId`, and no file of `src/` spells another id FOR THIS FAMILY — so declaring more would mint
+ *  records nothing reads (`ASM-10`). */
+export const DECLARED_ZONE_IDS: readonly string[] = [DEFAULT_ZONE_ID]
+
+/** **THE ZONE FAMILY'S PLACEHOLDER: EVERY DECLARED ZONE ID WITH AN EMPTY RECORD** — `{'zone-1': {}}`, and **A FRESH RECORD
+ *  ON EVERY CALL**, both for the family and for each zone in it, so no caller can move this file's constant or the set it
+ *  is built from (`viewThemePlaceholder`'s rule). **IT REPLACES `D-91`'S *"THE FAMILY THAT NAMES NO ZONE"* BY POINTER AND
+ *  NOT BY REWORDING** (`D-46`, `D-151`): that value cannot satisfy the leaf write's precondition, while `{}` IS a zone
+ *  this file's vocabulary admits (`zoneIn` names a memberless zone and `main`'s `zoneOf` answers `{id}` for one), and the
+ *  record it creates is the NODE a leaf write stands under. A route supplying no member therefore writes nothing and
+ *  answers `committed`: the declared empty record IS the state that act names (`D-53`'s reading, at this family). */
+export const viewZonesPlaceholder = (): Record<string, unknown> => {
+  const family: Record<string, unknown> = {}
+  for (const id of DECLARED_ZONE_IDS) family[id] = {}
+  return family
+}
+
 /** The measured default geometry for one pane — a FRESH record every call, so no caller holds the constant above. */
 export const defaultPaneGeometry = (id: string): ViewPaneGeometry => ({
   id,
@@ -154,9 +185,14 @@ export const paneGeometryIn = (
  *  family has **no measured placeholder for the derivation to give**: the frozen store held no zone default at all, a
  *  read that MISSed at its one tier answered `undefined`, the render turn handed that `undefined` straight to its layout
  *  call (`renderer.ts:1799-1805`), and `candidatesFor` answered `[]` (`:1935-1941`). So `null` here IS the answer the
- *  app's own paths give today for a zone nothing names, and the creation repair's placeholder is the family that **names
- *  no zone** — not a geometry this file invented. A derivation that answered `{size: 100}` would be a second authority
- *  beside the read, which is exactly the fault `D-91` refuses.
+ *  app's own paths give today for a zone nothing names, and the creation repair mints no geometry — **it writes every
+ *  DECLARED zone id with an EMPTY record, and `D-91`'s *"the family that names no zone"* is SUPERSEDED BY POINTER and not
+ *  reworded** (`D-46`, `D-151`) — so this derivation's two absent-looking arms are told apart by THIS function: a declared
+ *  zone nothing has written yet answers a MEMBERLESS record (`{id}`), and `null` answers only for an id this record does
+ *  not declare. A derivation that answered `{size: 100}` would be a second authority beside the read, which is exactly the
+ *  fault `D-91` refuses. **AND ITS OUTPUT DOES NOT MOVE WITH THE CLOSED DOMAIN**: the two zone readers' layouts are
+ *  `undefined` on both arms and `candidatesFor` answers `[]` on both, so what moves is the VOCABULARY and not a reader
+ *  (`D-151` (b), (c)).
  *
  *  **PURE OVER A VALUE, AND IT COPIES**: the four members are handed out on a fresh record per call, so no caller holds
  *  the shape the client will replace on the next delivery — `defaultPaneGeometry`'s reason, applied to a family whose

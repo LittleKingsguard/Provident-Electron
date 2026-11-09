@@ -47,12 +47,14 @@ import type { TabsRecordStore } from '../tabs-record/index.js'
 // per-pane derivation would be two answers to one question. Every name below keeps its site of use in this file; only its
 // DECLARATION moved, which is why no cite into this module changes.
 import {
+  DECLARED_ZONE_IDS,
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
   defaultPaneGeometry,
   paneGeometryIn,
   viewThemePlaceholder,
+  viewZonesPlaceholder,
   zoneIn,
   type ViewGeometrySource,
   type ViewPaneGeometry,
@@ -61,11 +63,13 @@ import {
   type ViewZone,
 } from '../../shared/view-shape.js'
 export {
+  DECLARED_ZONE_IDS,
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
   paneGeometryIn,
   viewThemePlaceholder,
+  viewZonesPlaceholder,
   zoneIn,
   type ViewGeometrySource,
   type ViewPaneGeometry,
@@ -114,9 +118,18 @@ export const VIEW_PANES_MUST_STAND_ID = 'panes-must-stand'
  *  come from a file (`D-84`, unmoved), which makes **a repair at the creation instant its only lawful boot source**: the
  *  family is RE-MINTED AT EVERY BOOT and the profile's bytes never carry it. That is the shape `panes-must-stand` gave at
  *  `file`, and the third clause of the convention is answered by the repair rather than deviated from.
- *  **ITS IDS ARE OPEN AND ITS PLACEHOLDER NAMES NO ZONE**: a zone id is the caller's own (`zoneIdOf` reads it off the
- *  caller's element and falls back to `zone-1`, which the render turn hard-codes), so this module cannot name a closed set
- *  and does not try — the family is one member per id the caller named, and the placeholder is the family carrying none. */
+ *  **ITS ID DOMAIN IS CLOSED, AND ITS PLACEHOLDER NAMES EVERY DECLARED ZONE — THIS DOCBLOCK'S OWN EARLIER CLAIM IS
+ *  SUPERSEDED BY POINTER AND NOT REWORDED** (`D-46`, `D-151`, `D-139`). It read *"ITS IDS ARE OPEN AND ITS PLACEHOLDER
+ *  NAMES NO ZONE: a zone id is the caller's own … so this module cannot name a closed set and does not try"*, and that
+ *  premise is exactly what `D-139` assumed and `D-151` measured this module forbidding. The set is
+ *  `src/shared/view-shape.ts`'s `DECLARED_ZONE_IDS` — derived from `DEFAULT_ZONE_ID`'s one spelling of the id the app's
+ *  two zone turns name, so the fallback and the declared set cannot drift — the creation repair writes each declared id
+ *  with an EMPTY record (`viewZonesPlaceholder`), and a caller naming any other id is REFUSED (`UNDECLARED_ZONE_REASON`)
+ *  rather than silently creating a zone. **WHY IT HAD TO CLOSE**: the store creates no parent (measured at this node, and
+ *  even an EMPTY family is not enough — the ZONE'S OWN NODE must stand), so `['zones', id]` must be GUARANTEED to stand
+ *  for every id the route is handed, and only a closed set can guarantee one. **AND A WRITE MAY LAND AT A LEAF INSIDE THE
+ *  VALUE** — a fact about the address and not about the family's identity (D-151), which is what the route's per-member
+ *  leaves below are. */
 export const VIEW_ZONES_ADDRESS: readonly string[] = ['zones']
 /** **THE APPEARANCE FAMILY'S ROOT — ONE WHOLE VALUE AT `file`, BESIDE `['panes']`, BECAUSE APPEARANCE PREFERENCES ARE
  *  DURABLE** (`D-98`, on the user's ruling **"Appearance preferences should be durable"**). **THIS TIER WAS `mem` AT
@@ -177,6 +190,15 @@ export const PANE_SHAPE_REASON = 'malformed-pane'
 export const PANE_GEOMETRY_REASON = 'malformed-geometry'
 export const ZONE_SHAPE_REASON = 'malformed-zone'
 export const ZONE_MEMBER_REASON = 'malformed-zone-member'
+/** **THE THIRD ZONE TOKEN, AND IT IS THE CLOSED ID DOMAIN'S** (D-151, `docs/L2/view-record/interface.md` §5):
+ *  `malformed-zone` names a PAYLOAD's shape and `malformed-zone-member` a MEMBER's domain, while a WELL-FORMED id this
+ *  record does not declare is NEITHER — it is a fault of the id's DOMAIN, which is why the closed set gains a member
+ *  rather than an arm. The domain is judged AFTER the id's shape and BEFORE any payload, so an undeclared id answers this
+ *  and never `malformed-zone`, and the act it closes is the one that would have silently created a zone (`ASM-7`).
+ *  **THE SET CLOSES AT TWO SEATS AND THIS IS ONE OF THEM** (`ASM-9`): here at the route, and at `zoneNodeAdmits` for
+ *  every value a `data.write` can land — a route-only closure would leave an outside writer free to mint the zone it
+ *  refuses. */
+export const UNDECLARED_ZONE_REASON = 'undeclared-zone'
 /** **THE APPEARANCE FAMILY'S TWO TOKENS, AND THE SECOND ONE IS WHAT MAKES THE PAIR A *REPAIR* RATHER THAN A PRESENCE CHECK**
  *  (D-97). `malformed-theme` is the route's shape arm — no token that can be a setting, or no attribute name a caller can
  *  hold. `stale-theme` is the CONSTRAINT's own arm and it is not a refusal a caller can make: a record carrying a
@@ -194,6 +216,8 @@ export const PANE_GEOMETRY_MESSAGE =
 export const ZONE_SHAPE_MESSAGE = 'the zone family names no zone id, or carries no plain zone record'
 export const ZONE_MEMBER_MESSAGE =
   'the zone carries a size that is not a finite non-negative number, a distance that is not a finite number, a display that is not a string, or a slot no value the store carries'
+export const UNDECLARED_ZONE_MESSAGE =
+  'the zone id names no zone this record declares, and the zone family is addressed only by its declared ids'
 export const THEME_SHAPE_MESSAGE =
   'the appearance act carries no setting token that can be an appearance setting, or no attribute name that can be one — a route of this module writes the pair those two name and nothing else'
 export const THEME_STALE_MESSAGE =
@@ -265,10 +289,12 @@ export interface ViewRecordReading {
  *  (`D-70`'s rule about a member that names nothing, read at this module's own routes). The tab record derives
  *  `repaired` because its six pairs can change a record INSIDE the commit that wrote it. This module's three pairs have
  *  TWO arms each — the address does not stand, and a standing value the read cannot state (`D-105`) — and NEITHER can
- *  fire at a route of this module's: a route composes the whole family through the one composer, so what it writes is
- *  always a value its own read admits, and a read writes nothing. A `repaired` member here could therefore only ever be
- *  `false` on a `true`-shaped claim, which is why the member stays absent while the pair's second arm answers the store's
- *  own status to a caller that names the address directly. **The landing arm DOES exist and IS
+ *  fire at a route of this module's: a route writes a value its own read admits — the panes act and the appearance act
+ *  compose the whole family through their one composer each, and **the zone route's leaves are each judged by the family's
+ *  own predicate before the first store verb** (`D-151`, `ASM-8`) — and a read writes nothing. A `repaired` member here
+ *  could therefore only ever be `false` on a `true`-shaped claim, which is why the member stays absent while the pair's
+ *  second arm answers the store's own status to a caller that names the address directly. **The landing arm DOES exist and
+ *  IS
  *  reachable — a `provident.data.delete` at either root is a client act on the same instance — and it is implemented and
  *  driven rather than left to a second instance's assumption; what is absent is the member, because this module's own
  *  routes cannot produce the difference the member would report.** */
@@ -298,11 +324,14 @@ export interface ViewRecord {
    *  taken from what stands, and then from the measured default, so a caller writing a size alone does not erase the
    *  pane's bounds. */
   commitPane(id: string, geometry: unknown): ViewRecordAnswer
-  /** **WRITE ONE ZONE, AND NEVER A PATH** (D-91): the id names a MEMBER of the family at the one root and the supplied
-   *  members are composed over what stands, so a caller cannot compose an address and cannot erase a sibling zone — the
-   *  `commitPane` rule, family for family. It takes one zone and not the whole family because the drag's turn names ONE
-   *  zone (the render turn reads `zone-1` and the candidate turn reads the caller's own id), and a whole-family write
-   *  composed by a client one delivery stale could drop a zone a concurrent act had just written. */
+  /** **WRITE ONE ZONE'S SUPPLIED MEMBERS, AND NEVER A PATH** (D-151; `D-91`'s composition is superseded by pointer): the
+   *  id names a MEMBER of the family at the one root — a DECLARED one and no other, the domain being judged after the id's
+   *  shape and before any payload — and each supplied member lands as ONE LEAF WRITE of its own, in `ViewZone`'s order, so
+   *  no composer touches the family: a leaf write cannot erase a sibling member, cannot erase a sibling zone, and needs no
+   *  copy of the family to be one delivery stale. It takes one zone and not the whole family because the drag's turn names
+   *  ONE zone (the render turn reads the declared `zone-1` and the candidate turn reads the caller's own id). **A SUPPLIED
+   *  MEMBER IS JUDGED BEFORE THE FIRST VERB AND AN ABSENT ONE IS NOT WRITTEN AT ALL**, so the members that stand are the
+   *  members that remain; and a zone supplying NONE writes nothing and answers `committed`. */
   commitZones(id: string, zone: unknown): ViewRecordAnswer
   /** **THE APPEARANCE ROUTE — THE USER ACTION'S ONE WRITE, AND IT WRITES THE ACT AND NOT ITS RESOLUTION** (D-97). It takes
    *  the setting TOKEN the app's authored control produced and the caller-held attribute NAME, both as the caller supplied
@@ -532,39 +561,14 @@ const zonesFrom = (whole: unknown): ViewZone[] | null => {
   return zones
 }
 
-/** The value the store carries for ONE zone — the id is the family's KEY and never a member of the value, so it is dropped
- *  here (`composePanes`' rule, which writes `{size, bounds}` under an id and nothing else). */
-const zoneValueOf = (zone: ViewZone): Record<string, unknown> => {
-  const whole: Record<string, unknown> = {}
-  if (zone.slot !== undefined) whole['slot'] = zone.slot
-  if (zone.distance !== undefined) whole['distance'] = zone.distance
-  if (zone.size !== undefined) whole['size'] = zone.size
-  if (zone.display !== undefined) whole['display'] = zone.display
-  return whole
-}
-
-/** **THE WHOLE FAMILY A CALLER'S WRITE LEAVES: ONE LEGAL VALUE, COMPOSED FROM WHAT STANDS.** The zone the caller named
- *  takes the members it supplied, each missing member kept from what that zone stands at; every OTHER zone the family
- *  holds is admitted member by member and kept, so one act cannot erase a sibling's slot or its size. This is `composePanes`
- *  applied to a family whose members are optional — and **it is the family's ONE composer**, so the repair below and the
- *  route above cannot disagree about what a legal family is. */const composeZones = (
-  zones: readonly ViewZone[],
-  id: string,
-  supplied: { slot?: unknown; distance?: number; size?: number; display?: string },
-): Record<string, unknown> => {
-  const whole: Record<string, unknown> = {}
-  for (const zone of zones) {
-    if (zone.id !== id) whole[zone.id] = zoneValueOf(zone)
-  }
-  const standing = zones.find((zone) => zone.id === id)
-  const merged: Record<string, unknown> = standing === undefined ? {} : zoneValueOf(standing)
-  if (Object.hasOwn(supplied, 'slot')) merged['slot'] = supplied.slot
-  if (Object.hasOwn(supplied, 'distance')) merged['distance'] = supplied.distance
-  if (Object.hasOwn(supplied, 'size')) merged['size'] = supplied.size
-  if (Object.hasOwn(supplied, 'display')) merged['display'] = supplied.display
-  whole[id] = merged
-  return whole
-}
+/** **THE ZONE FAMILY HAS NO COMPOSER, AND THE COMPOSER THAT STOOD HERE IS DELETED WHOLE WITH ITS ONLY HELPER**
+ *  (`composeZones`/`zoneValueOf`, `D-151` H7, `D-139`). It merged a caller's members over what the zone stood at and
+ *  carried every SIBLING zone along, because one write at the family's root replaces the family whole. The route now
+ *  writes ONE LEAF PER SUPPLIED MEMBER (`[VIEW_ZONES_ADDRESS[0], id, member]`), and a leaf write cannot drop a sibling
+ *  member, cannot drop a sibling zone, and needs no copy of the family to be anything: so nothing is composed, nothing can
+ *  be one delivery stale, and this helper has no reader after it (`D-135`, `D-138`). **`zoneOf`/`zonesFrom` keep their
+ *  readers** (the read and the admission) and `composePanes` is untouched, its own leaf write being `D-138`'s and not this
+ *  module's. */
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE APPEARANCE FAMILY — THE MECHANISM CONSUMED ONCE, THE DERIVATION STORED, AND THE PAIR THAT JUDGES AGREEMENT
@@ -778,10 +782,15 @@ const panesAdmitAt = (node: readonly string[], value: unknown): boolean => {
 
 /** **ONE ZONE AT ONE NODE OF ITS OWN SHAPE** — the four members are independently OPTIONAL and each present one must be
  *  usable (`zoneOf`'s own per-member rules), a record carrying none of them is still a zone, and `slot` is opaque to
- *  this module but not to the crossing (`isBoundary`). */
+ *  this module but not to the crossing (`isBoundary`). **AND THE ID'S DOMAIN IS JUDGED HERE AT EVERY DEPTH** (D-151
+ *  H5): beside the id's SHAPE test, an id outside `DECLARED_ZONE_IDS` answers `false`, so `zonesAdmitAt` refuses a family
+ *  NAMING an undeclared zone exactly as it refuses a write AT one. **THAT IS THE CLOSURE'S SECOND SEAT AND IT IS
+ *  DELIBERATE** (`ASM-9`): closing the route alone would leave a `data.write` free to mint the very zone the ruling
+ *  refuses, and the family's own judge is the only thing an outside writer meets. */
 const zoneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
   const id = node[0]
   if (typeof id !== 'string' || id.length === 0) return false
+  if (!DECLARED_ZONE_IDS.includes(id)) return false
   if (node.length === 1) return zoneOf(id, value) !== null
   const member = node[1]
   if (node.length === 2) return zoneMemberAdmits(member, value)
@@ -797,8 +806,12 @@ const zoneMemberAdmits = (member: string | undefined, value: unknown): boolean =
 }
 
 /** **THE ZONE FAMILY AT ONE NODE — the root's is the family WHOLE**, one member per zone id, each a record `zoneOf`
- *  admits. The placeholder names no zone (`{}`), so the root's own test is TOTAL over the empty family: a family that
- *  names nothing is a family whose every zone answers its absence, which is the value the creation repair writes. */
+ *  admits. The declared ids each stand as an EMPTY record after the repair (`viewZonesPlaceholder`), so a family the
+ *  repair wrote is admitted member by member; the root's own test is TOTAL over an empty family, which is the arm `ASM-9`
+ *  keeps: **a `data.write` that replaces the family with a record naming NONE of the declared ids is ADMITTED**, because
+ *  the family is judged by the ids it NAMES and the record's existence is the REPAIR's subject and not the value's — so
+ *  what the closure buys is the creation plus an honest `AddressNotFound` at the next leaf write (`D-135`), never a
+ *  silently wrong value. */
 const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
   if (node.length > 0) return zoneNodeAdmits(node, value)
   if (!plain(value)) return false
@@ -820,7 +833,7 @@ const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
 export const PANE_UNUSABLE_MESSAGE =
   'the pane geometry carries a member that is no geometry — no finite non-negative size, or no bounds pair of two finite numbers whose min does not exceed its max'
 export const ZONE_UNUSABLE_MESSAGE =
-  'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses'
+  'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses, or a zone id this record does not declare'
 
 /** **`panes-must-stand` — THE PANE GEOMETRY IS AN ENFORCED INVARIANT, NOT A SIDE EFFECT OF THE FIRST DRAG.**
  *
@@ -871,48 +884,65 @@ const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRe
   return writeWholeValue(getStore)(context, VIEW_PANES_ADDRESS, PANES_TIER, whole)
 }
 
-/** **`zones-must-stand` — THE ZONE FAMILY'S EXISTENCE, AND ITS PLACEHOLDER IS THE FAMILY THAT NAMES NO ZONE (D-91).**
+/** **`zones-must-stand` — THE ZONE FAMILY'S EXISTENCE, AND ITS PLACEHOLDER IS EVERY DECLARED ZONE ID WITH AN EMPTY
+ *  RECORD** (D-151; `D-91`'s *"the family that names no zone"* is SUPERSEDED BY POINTER and not reworded, `D-46`).
  *
- *  **THE PLACEHOLDER IS MEASURED AND NOT INVENTED, WHICH IS THE WHOLE OF THIS PAIR'S DESIGN.** The zone family has NO
- *  default value anywhere in the tree: the frozen store held none, a read that MISSed its tier answered `undefined`, the
- *  render turn handed that `undefined` straight to its layout call, and `candidatesFor` answered `[]` — so the value every
- *  read of this tree gives for a zone nothing names is ABSENCE, and a repair minting a geometry (`{size: 100}` or the
- *  demo's `160`) would make the repair and the read two authorities over one question. The placeholder is therefore the
- *  family carrying NO member — `{}` — which is the ONE whole legal value that answers every zone exactly as the absent
- *  address answered it before, and `panes-must-stand`'s shape, with an empty family where that family's placeholder is
- *  the measured default.
+ *  **THE PLACEHOLDER MINTS NO MEMBER, WHICH IS THE HALF OF `D-91` THAT STANDS.** The zone family has NO default value
+ *  anywhere in the tree: the frozen store held none, a read that MISSed its tier answered `undefined`, the render turn
+ *  handed that `undefined` straight to its layout call, and `candidatesFor` answered `[]` — so a repair minting a geometry
+ *  (`{size: 100}` or the demo's `160`) would make the repair and the read two authorities over one question. What it
+ *  writes is therefore `{'zone-1': {}}` and not `{}`: each DECLARED id with an EMPTY record, because `{}` IS a zone this
+ *  module admits (`zoneOf(id, {})` answers `{id}`) and the record it creates is the node a LEAF write needs standing under
+ *  it. `panes-must-stand`'s shape, with a declared-empty family where that family's placeholder is the measured default.
+ *
+ *  **THE EXISTENCE ARM IS THE FAMILY ROOT'S, AND `nodeOf` IS TAKEN FIRST** (D-151 H4) — this is the hunk without which the
+ *  per-member write cannot land at all. `context.value` is the value the act LANDED (`guide §7.6`) and the pair asked
+ *  here sits at an ANCESTOR of the act's address (`D-56`), so a LEAF write hands this body a SCALAR: answering that as
+ *  absence would write the placeholder AT THE ROOT and REPLACE the whole family — the caller's own value included —
+ *  inside a commit that still answers `committed`. So absence is answered only at `node === null || node.length === 0`,
+ *  and a write AT or BELOW a zone id is judged at its own node and NEVER REPAIRED.
  *
  *  **IT JUDGES `context.value` AND NEVER REACHES FOR THE INSTANCE**, `panesMustStand`'s shape and its measured reason: at
  *  the construction instant the boot's holder is unassigned, so a handle-reading body would abstain at the one instant it
- *  is the only one that can act. **THE SECOND ARM IS THE VALUE'S (`D-105`)**: a family that STANDS and carries a member
- *  `zoneOf` cannot admit is REFUSED with no repair, where before it was the read's dropped-member disposition — and the
- *  disposition is exactly why the arm is owed rather than cheap: the dropped member answers its absence, so the app lost
- *  a zone it had while `source.zones` still said `'record'`. **A ZONE THAT CARRIES NOTHING IS STILL LEGAL** (`{}` at a
- *  zone id), because that state is the family's own shape and not a fault. */
+ *  is the only one that can act. **THE SECOND ARM IS THE VALUE'S (`D-105`, and now the DOMAIN'S too)**: a family that
+ *  STANDS and carries a member `zoneOf` cannot admit — or names an undeclared zone id — is REFUSED with no repair, where
+ *  before it was the read's dropped-member disposition, and the disposition is exactly why the arm is owed rather than
+ *  cheap: the dropped member answers its absence, so the app lost a zone it had while `source.zones` still said
+ *  `'record'`. **A ZONE THAT CARRIES NOTHING IS STILL LEGAL** (`{}` at a declared zone id), because that state is the
+ *  family's own shape and not a fault. */
 const zonesMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
-  if (!plain(held)) {
+  const node = nodeOf(context, VIEW_ZONES_ADDRESS)
+  // **ABSENCE IS JUDGED AT THE ROOT** (D-151 H4): only the family's own address holding nothing is the fault the repair
+  // answers. A value landed at or below a zone id is a member of the family, and a scalar there is the shape a leaf write
+  // legitimately carries — never the absence of the family.
+  if ((node === null || node.length === 0) && !plain(held)) {
     return {
       message: 'the zone family does not stand',
       repair: repairZones(getStore),
     }
   }
   // **THE VALUE ARM (`D-105`), AT THE NODE THE WRITE IS AT.** A zone whose `size` is a string, a member that is no
-  // record at all, or a `slot` the crossing refuses is a family the read can only answer by DROPPING the member — and a
-  // dropped member answers its absence, so the app loses a zone it had while `source` still says `'record'`. Refused
-  // with no repair, so the store's rollback leaves the standing family and the profile's bytes exactly as they were.
-  const node = nodeOf(context, VIEW_ZONES_ADDRESS)
+  // record at all, a `slot` the crossing refuses, or an id this record does not declare is a family the read can only
+  // answer by DROPPING the member — and a dropped member answers its absence, so the app loses a zone it had while
+  // `source` still says `'record'`. Refused with no repair, so the store's rollback leaves the standing family and the
+  // profile's bytes exactly as they were.
   if (node === null || zonesAdmitAt(node, held)) return true
   if (!writeInstant(context)) return true
   return { message: ZONE_UNUSABLE_MESSAGE }
 }
 
-/** **THE ZONES' REPAIR: THE FAMILY THAT NAMES NO ZONE, AS ONE WHOLE LEGAL VALUE** — `{}` at the family's own root and its
- *  own tier, through the module's one repair-write path. It writes what the read would have answered for every zone (its
- *  absence), which is what keeps this repair from being a second authority; and because the tier is `mem`, nothing of it
- *  reaches the profile (D-84, measured at this address). */
+/** **THE ZONES' REPAIR: EVERY DECLARED ZONE ID WITH AN EMPTY RECORD, AS ONE WHOLE LEGAL VALUE** — `{'zone-1': {}}` at the
+ *  family's own root and its own tier, through the module's one repair-write path. **IT PERFORMS THE THING IT KEYS** (the
+ *  `D-85` pattern): the repair does not assert that a zone record stands, it CREATES each declared one, which is what makes
+ *  `['zones', id]` a node the route's leaf writes can land under (D-151). It mints no MEMBER, so it is not a second
+ *  authority beside the read; and because the tier is `mem`, nothing of it reaches the profile (D-84, measured at this
+ *  address). **AND THE READ VOCABULARY MOVES WITH IT** (D-151 (b)): `read().zones` now names the declared zone where the
+ *  family answered none, while `zoneIn`'s `null` starts meaning *"an id this record does not declare"* — the two states
+ *  told apart with NO new member on the reading, and no reader's output moved (both zone readers answer `undefined`/`[]`
+ *  on a memberless zone exactly as they did on an absent one). */
 const repairZones = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer =>
-  writeWholeValue(getStore)(context, VIEW_ZONES_ADDRESS, ZONES_TIER, {})
+  writeWholeValue(getStore)(context, VIEW_ZONES_ADDRESS, ZONES_TIER, viewZonesPlaceholder())
 
 /** **`theme-must-stand` — THE APPEARANCE RECORD HAS TWO ARMS, AND THE SECOND IS THE WHOLE OF THE INSTRUCTION (D-97).**
  *
@@ -1105,16 +1135,29 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
     },
 
     commitZones(id: string, zone: unknown): ViewRecordAnswer {
-      // ── THE SHAPE ARMS, BEFORE ANY STORE VERB — `commitPane`'s rule, at this family ──
+      // ── THE ID'S SHAPE ARM AND THEN ITS DOMAIN ARM, BEFORE ANY PAYLOAD AND BEFORE ANY STORE VERB (`D-151`, H2) ──
       if (typeof id !== 'string' || id.length === 0) {
         return { status: 'refused', reason: ZONE_SHAPE_REASON, message: ZONE_SHAPE_MESSAGE, address: null }
+      }
+      // **THE ID'S DOMAIN IS PART OF WHAT AN ID MUST BE, SO IT IS JUDGED HERE AND BEFORE THE PAYLOAD**: a well-formed id
+      // this record does not declare is refused rather than silently creating a zone (`ASM-7`). A leaf write needs
+      // `['zones', id]` to STAND and the store creates no parent, so the declared set is the whole of what the route may be
+      // handed — and this is one of the closure's TWO seats, the other being `zoneNodeAdmits` (`ASM-9`).
+      if (!DECLARED_ZONE_IDS.includes(id)) {
+        return {
+          status: 'refused',
+          reason: UNDECLARED_ZONE_REASON,
+          message: UNDECLARED_ZONE_MESSAGE,
+          address: [VIEW_ZONES_ADDRESS[0] as string, id],
+        }
       }
       const value: unknown = zone
       if (!plain(value)) {
         return { status: 'refused', reason: ZONE_SHAPE_REASON, message: ZONE_SHAPE_MESSAGE, address: null }
       }
-      // **A SUPPLIED MEMBER MUST BE USABLE AND AN ABSENT ONE KEEPS WHAT STANDS** — the four members are independently
-      // optional in this family (measured), so the arm is per member and the refusal names the member's own fault.
+      // **A SUPPLIED MEMBER MUST BE USABLE AND AN ABSENT ONE SIMPLY IS NOT WRITTEN** — the four members are independently
+      // optional in this family (measured), so the arm is per member and the refusal names the member's own fault. EVERY
+      // SUPPLIED MEMBER IS JUDGED HERE, BEFORE THE FIRST STORE VERB, which is what keeps a data fault from splitting an act.
       const memberAddress = [VIEW_ZONES_ADDRESS[0] as string, id]
       const supplied: { slot?: unknown; distance?: number; size?: number; display?: string } = {}
       if (Object.hasOwn(value, 'slot')) {
@@ -1145,15 +1188,35 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
         }
         supplied.display = display
       }
-      // **ONE WRITE OF ONE WHOLE FAMILY AT ITS ROOT**: a nested write does not create its parent (measured at this address
-      // too), so the family is composed whole and written where the pair stands.
-      try {
-        standing.write(VIEW_ZONES_ADDRESS, ZONES_TIER, composeZones(zonesOf(standing).zones, id, supplied))
-        return { status: 'committed' }
-      } catch (caught) {
-        const refused = refusalOfThrown(caught)
-        return { status: 'refused', reason: refused.reason, message: refused.message, address: memberAddress }
+      // **ONE LEAF WRITE PER SUPPLIED MEMBER, IN THE SHAPE'S OWN ORDER — `ViewZone`'s, and not an order of importance**
+      // (`D-151`, `ASM-8`): `slot`, then `distance`, then `size`, then `display`, each at the family's own tier and each
+      // handing THAT MEMBER's own value. A leaf write cannot drop a sibling member and cannot drop a sibling zone, so
+      // nothing is composed and nothing can be one delivery stale (`D-135`, `D-138`) — which is why `composeZones` and its
+      // helper are deleted whole, and why **NO `zonesOf` READ STANDS ON THIS PATH**.
+      //
+      // **A REFUSAL AFTER THE FIRST LEAF LEAVES THE FIRST LANDED, AND THAT IS ADMISSIBLE RATHER THAN ATOMISM MISSED**
+      // (`D-151` H3): (i) every supplied member is judged above, by the same predicate the pair applies at that node, so no
+      // DATA fault can split an act; (ii) the arm that can still refuse is the store's own boundary — a declared zone's
+      // node removed by an outside writer — and a landed leaf is a state the pair ADMITS, a zone carrying any subset of
+      // the four being the family's measured shape (`ViewZone`'s members are each optional); and (iii) the answer names the
+      // LEAF that refused, so a caller reads back what landed. **ATOMICITY WOULD COST THE COMPOSER**: one write at
+      // `['zones', id]` REPLACES the zone whole (measured), so it would have to merge over a copy of what stands —
+      // `composeZones` under a new name.
+      //
+      // **ZERO SUPPLIED MEMBERS WRITES NOTHING AND ANSWERS `committed`**: the declared zone already stands as `{}`, which
+      // IS the state that act names — the tab record's "a delete that removes nothing is the store's own success"
+      // (`D-53`) read at this family.
+      for (const member of ['slot', 'distance', 'size', 'display'] as const) {
+        if (!Object.hasOwn(supplied, member)) continue
+        const leaf = [VIEW_ZONES_ADDRESS[0] as string, id, member]
+        try {
+          standing.write(leaf, ZONES_TIER, supplied[member])
+        } catch (caught) {
+          const refused = refusalOfThrown(caught)
+          return { status: 'refused', reason: refused.reason, message: refused.message, address: leaf }
+        }
       }
+      return { status: 'committed' }
     },
 
     commitTheme(token: string, attributeName: string): ViewRecordAnswer {

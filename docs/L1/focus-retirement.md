@@ -1,6 +1,6 @@
 # L1 — `focus-retirement`: the `focus` act lands on the tab record, and the mirror family goes
 
-- **Layer:** L1 · **Unit:** `focus-retirement` · **Branch:** `strata` (D-6) · **Rev:** 4 — **the currency pass AFTER the landing** (D-145, D-1): §1's root count, §2's `store-view-record` row and §6's `E-2` state THREE, five and four as THIS unit's OWN head and carry the tree's four roots, seven channel names and six request routes beside them, `pane-drag-temp` having landed after this page was written; rev 1 carried row `2` of
+- **Layer:** L1 · **Unit:** `focus-retirement` · **Branch:** `strata` (D-6) · **Rev:** 5 — **the ONE clause `D-151`'s landing falsified, re-grained IN PLACE at no line cost** (D-148's rule: the pass that takes a repair re-grains the page that recorded its subject as unlanded): §7's composers clause reports that `composeZones` LEFT — the row is `D-151`, the composer and its helper `zoneValueOf` gone whole for per-member leaf writes with the id domain closed to `DECLARED_ZONE_IDS` — while `composeRecord`'s review and `toStored` remain `pending.md` row `2`'s (D-151, D-1); rev 4 — **the currency pass AFTER the landing** (D-145, D-1): §1's root count, §2's `store-view-record` row and §6's `E-2` state THREE, five and four as THIS unit's OWN head and carry the tree's four roots, seven channel names and six request routes beside them, `pane-drag-temp` having landed after this page was written; rev 1 carried row `2` of
   `strata/next-steps.md` (D-141, D-142); rev 2 amended §1, §2, §4 and §6 on the two L2 passes' measurement; rev 3
   re-grains §1, §2, §3, §4, §6 and the map to the LANDED tree — a delivered edit list that still reads as a plan is a
   stale artifact (D-1) · **Ceiling:** 150 lines (class max), split by owner, never appended (D-1, D-2)
@@ -136,7 +136,7 @@ reader counts them missing — **and ALL FIVE `F-1`…`F-5` ARE GREEN AT THIS HE
 - **The crossings leg IS re-grained, and it was the edit that mattered**: `E-8` landed with the deletion, because a row
   re-grained against an address that still stood would have redded a green leg for a state the tree had not reached — and
   a leg left driving a deleted route is an instrument measuring nothing (D-142's order, D-94).
-- **`pending.md` row `2`'s other composers are not this unit's** — `composeZones`, `composeRecord`'s review and `toStored` stay where that row puts them; only the focus family's composition left (D-139, D-142).
+- **`pending.md` row `2`'s other composers are not this unit's** — `composeRecord`'s review and `toStored` stay where that row puts them, and **`composeZones` has LEFT it**: `D-151`'s removal is LANDED at this head, the composer and its one helper `zoneValueOf` gone whole from `src/main/view-record/index.ts` for ONE LEAF WRITE PER SUPPLIED MEMBER at `['zones', id, <member>]`, with the id domain closed to `src/shared/view-shape.ts`'s `DECLARED_ZONE_IDS` and the creation repair writing each declared id — so only the focus family's composition left WITH THIS UNIT (D-139, D-142, D-151).
 - **No package changes**: `provident-storeroom` and `provident-ssr` are read and never modified (D-5).
 
 ## 8. Assumptions, each with the alternative it rejected (D-1 §8)

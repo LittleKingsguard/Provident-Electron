@@ -181,7 +181,7 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     const one = stand()
     const stood = readFileSync(at(one.dir))
     const before = one.store.read(['zones'], 'mem')
-    expect(before, 'the family stands at `mem` before the attempt, so the reading after it is not a reading of nothing').toEqual({})
+    expect(before, 'the family stands at `mem` before the attempt, so the reading after it is not a reading of nothing — every DECLARED zone id with an empty record (`D-151`)').toEqual({ 'zone-1': {} })
     expect(one.view.read().source.zones, 'and the record reads its family as a RECORD — the state the defect destroyed').toBe('record')
 
     const refused = one.surface.write({ path: ['zones'], tier: 'file', value: { 'zone-1': { size: 10 } } })
@@ -192,16 +192,16 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     expect(message.includes("this write asks for 'file'"), 'and the tier this call asked for, so a caller corrects it without reading a document').toBe(true)
 
     // NOTHING MOVED, ON ALL FOUR READINGS THE DEFECT MOVED:
-    expect(one.store.read(['zones'], 'mem'), 'the store still answers at the family\'s own tier — no `TierNotFound`, which was the defect\'s first symptom').toEqual({})
+    expect(one.store.read(['zones'], 'mem'), 'the store still answers at the family\'s own tier — no `TierNotFound`, which was the defect\'s first symptom').toEqual({ 'zone-1': {} })
     expect(one.view.read().source.zones, 'the record still reads a RECORD and never the default the defect left behind').toBe('record')
-    expect(one.view.read().zones, 'and its value is the family that names no zone, not the caller\'s zones').toEqual([])
+    expect(one.view.read().zones, 'and its value is the declared zone, memberless, not the caller\'s zones').toEqual([{ id: 'zone-1' }])
     expect(readFileSync(at(one.dir)).equals(stood), 'the profile is byte-identical: a refusal lands no byte').toBe(true)
     expect(one.surface.journal({}), 'and mints no cursor and adds no journal entry (D-12)').toEqual({ status: 'read', from: 0, through: 0, floor: 0, entries: [], count: 0 })
 
     // THE RESTART HEALS NOTHING BECAUSE NOTHING WAS BROKEN — the arm the defect made permanent.
     const next = one.restart()
     expect(next.view.read().source.zones, 'and a restart has nothing to heal, because no `file` version was ever created').toBe('record')
-    expect(next.store.read(['zones'], 'mem'), 'the family is re-minted at its placeholder, as it is at every boot').toEqual({})
+    expect(next.store.read(['zones'], 'mem'), 'the family is re-minted at its placeholder, as it is at every boot — the declared zone with an empty record').toEqual({ 'zone-1': {} })
   })
 
   it('D-3 · defect A’s silent default: the two calls the defect was MADE of — a `write` and a `delete` that name no tier — are refused the same way', () => {
@@ -283,12 +283,13 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     expect(Object.keys(JSON.parse(readFileSync(at(one.dir), 'utf8')) as Record<string, unknown>), 'and carries no `zones` root at all').not.toContain('zones')
 
     // THE RESTART: a second construction over the same bytes. The `mem` register is the INSTANCE's, so the caller's
-    // family is GONE and the family's pair re-mints the placeholder at the registration instant (`D-84`, `D-91`).
+    // family is GONE and the family's pair re-mints the placeholder at the registration instant (`D-84`, `D-91`) — the
+    // placeholder being every DECLARED zone id with an EMPTY record (`D-151`).
     const next = one.restart()
-    expect(next.store.read(['zones'], 'mem'), 'the next process\'s family register is the placeholder again, not the caller\'s family').toEqual({})
-    expect(next.view.read().zones, 'so the record answers the family that names no zone').toEqual([])
+    expect(next.store.read(['zones'], 'mem'), 'the next process\'s family register is the placeholder again, not the caller\'s family').toEqual({ 'zone-1': {} })
+    expect(next.view.read().zones, 'so the record answers the declared zone, memberless').toEqual([{ id: 'zone-1' }])
     expect(next.view.read().source.zones, 'and reads its family as a RECORD, because a repair is its lawful source').toBe('record')
-    expect(next.surface.read({ path: ['zones'] }), 'and the surface answers the placeholder, never the value it committed before the restart — the empty family is the node `{_tier}` and no member').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: { _tier: 'mem' } })
+    expect(next.surface.read({ path: ['zones'] }), 'and the surface answers the placeholder, never the value it committed before the restart — the node is `{_tier}` and the zone\'s own record is `{_tier}` with no member').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: { _tier: 'mem', 'zone-1': { _tier: 'mem' } } })
     expect(readFileSync(at(one.dir)).equals(stood), 'with the profile byte-identical across BOTH constructions').toBe(true)
   })
 
@@ -421,8 +422,8 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
         { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
       ],
     })
-    expect(one.store.read(['zones'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER, and the caller’s value is nowhere').toEqual({})
-    expect(one.view.read().zones, 'the record answers the family that names no zone, never the value that was written').toEqual([])
+    expect(one.store.read(['zones'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER — the declared zone with an empty record (`D-151`) — and the caller’s value is nowhere').toEqual({ 'zone-1': {} })
+    expect(one.view.read().zones, 'the record answers the declared zone, memberless, never the value that was written').toEqual([{ id: 'zone-1' }])
     expect(JSON.stringify(landed).includes('"repaired":true'), 'and the verdict SURVIVES JSON, which the store\'s own member does not — so the member a tool answer carries is the one that says it').toBe(true)
     // THE CONTROL: the same write with a value the family ADMITS leaves the caller's own value standing, so the reading above
     // is the repair and not the tier.
