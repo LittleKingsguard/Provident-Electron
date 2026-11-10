@@ -216,8 +216,8 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
     const client: ViewClient = createViewClient({ bridge: asBridge(doubleOf().member) })
     expect(client.shape().filled, 'nothing has answered yet').toBe(false)
     expect(client.reading(), 'and no reading stands').toBeNull()
-    expect(client.paneSizeOf(DEFAULT_PANE_ID), 'the measured default, which is the authored pane\'s `props.size`').toBe(DEFAULT_PANE_SIZE)
-    expect(client.paneBoundsOf('any-pane'), 'and the authored `props.min`/`props.max` pair').toEqual({
+    expect(client.paneSizeOf(DEFAULT_PANE_ID), 'the measured default — the figure `D-87` measured off the authored pane\'s `props.size`, which the node NO LONGER CARRIES (`F11`, `D-129`)').toBe(DEFAULT_PANE_SIZE)
+    expect(client.paneBoundsOf('any-pane'), 'and the measured bounds pair, measured the same way and carried by nothing in the envelope since `F11`').toEqual({
       min: DEFAULT_PANE_BOUNDS.min,
       max: DEFAULT_PANE_BOUNDS.max,
     })

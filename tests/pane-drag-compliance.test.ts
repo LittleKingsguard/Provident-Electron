@@ -174,8 +174,6 @@ import {
   paneGeometryIn,
 } from '../src/shared/view-shape'
 import { withinProximity as familyWithinProximity } from '../src/shared/relocate'
-/** `D-117`'s CONTROL only — see the header note: the example seam is the path the live gesture LEFT. */
-import { gutterSeamExample } from '../src/shared/demo-envelope'
 
 /* ─────────────────────────────── local drive surface ─────────────────────────────── */
 
@@ -779,8 +777,9 @@ describe('§3.1 M-2 — a MISS answers the DECLARED FALLBACK, never a silent def
   it('M-2/DEFAULT-arm: a pane THE FAMILY DOES NOT NAME answers the MEASURED DEFAULT — the swap\'s ONE stated behaviour change, and the two-tier fallback it replaces no longer exists to fall through (D-87\'s collapsed precedence, D-88)', () => {
     const { w, crossing } = compose()
     // THE ONE ADDRESS: the geometry is ONE family at `file` (D-87\'s inherited fact (i)), so there is no second tier for a
-    // MISS to ascend to. The declared fallback is the MEASURED DEFAULT — the authored pane\'s `props.size` — and the read
-    // says which arm answered, so a placeholder is never passed off as a record.
+    // MISS to ascend to. The declared fallback is the MEASURED DEFAULT — the figure `D-87` measured off the authored pane\'s
+    // `props.size`, which the node NO LONGER CARRIES (`F11`, `D-129`) — and the read says which arm answered, so a
+    // placeholder is never passed off as a record.
     expect(Object.keys(crossing.family()), 'the creation repair minted the one pane the app has, and nothing else').toEqual([PANE_ID])
     expect(w.startSizeOf({ id: 'pane-unwritten' }, 'pane-unwritten'), 'the measured default, not `undefined` and not a refusal').toBe(DEFAULT_PANE_SIZE)
     expect(paneSourceOf(crossing, 'pane-unwritten'), 'and the read NAMES the arm that answered').toBe('default')
@@ -2537,8 +2536,11 @@ describe('§3.4 R-4 — THE ONE-SINK/ONE-CLAMP ROW', () => {
 
 describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'panes\']`\'S AND NOT THE AUTHORED ELEMENT\'S', () => {
   /** **THE ELEMENT PAIR THE OLD PATH READ**: a handle whose `id` is the pane's, and a `parentElement`
-   *  carrying the authored `props` the runtime emits as bare attributes — which is what
-   *  `gutterSeamExample().startSizeOf`/`boundsOf` read, with `100`/`{0…200}` as their own fallbacks. */
+   *  carrying the authored `props` the runtime emits as bare attributes — `140`/`{20,260}` here, figures the
+   *  `['panes']` record below does NOT carry. **IT IS NOW A COUNTER-FIGURE AND NO LONGER A SECOND ANSWER**
+   *  (`F11`, `D-129`): the example seams that read these attributes (`startSizeOf`, `boundsOf`) were deleted
+   *  with the props they read, so the element states a size the gesture cannot consult at all — which is the
+   *  property clause (1) measures by ABSENCE, over the module's own code. */
   const authoredPane = (attributes: Record<string, string>) => ({
     getAttribute: (name: string): string | null => (name in attributes ? attributes[name]! : null),
   })
@@ -2548,23 +2550,38 @@ describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'pa
   // and the bounds pair answer `['panes']` where the element's attributes say something else. It gates because the row
   // is authored after the `D-30` sweep and states what the wiring must do, not what the old path did.
   // strata:gates — `D-117`: the wiring's own read, which no marked row in this file states
-  it('D-117/LIVE-READ: for ONE element whose authored pane says `size 140`/`{20,260}` and whose `[\'panes\']` record says `320`/`{10,400}`, the COMPOSITION answers the record and the example seam answers the attribute — and a pane the family does not name answers the crossing\'s MEASURED DEFAULT rather than the attribute, which is the whole of what moved off the element', () => {
+  it('D-117/LIVE-READ: for ONE element whose authored pane says `size 140`/`{20,260}` and whose `[\'panes\']` record says `320`/`{10,400}`, the COMPOSITION answers the record, a pane the family does not name answers the crossing\'s MEASURED DEFAULT rather than the attribute, and the EXAMPLE-SEAM read of those attributes is GONE — `startSizeOf`, `boundsOf` and their one private reader `numberFrom` occur nowhere in `demo-envelope.ts`\'s code (`F11`)', () => {
     const { w, crossing } = compose()
     // THE DELIVERY: a pane the family now names, at figures the authored attributes do not carry.
     crossing.seed('gutter-pane', { size: 320, bounds: { min: 10, max: 400 } })
     const element = handleIn('gutter-pane', { size: '140', min: '20', max: '260', resizable: 'true' })
-    const seams = gutterSeamExample()
 
-    // (1) THE TWO ANSWERS, OVER THE SAME ELEMENT, AND THEY DISAGREE ON PURPOSE.
-    expect(seams.startSizeOf(element), 'CONTROL: the EXAMPLE seam still answers the authored attribute — the path this pass took the gesture off').toBe(140)
-    expect(w.startSizeOf(element, undefined), 'and the COMPOSITION answers the family\'s record').toBe(320)
-    expect(seams.boundsOf(element), 'CONTROL: the example seam\'s pair is the authored one').toEqual({ min: 20, max: 260 })
+    // (1) THE COMPOSITION\'S TWO ANSWERS OVER THAT ELEMENT — the property `D-117` moved — AND THE RETIRED CONTROL
+    //     INVERTED INTO THE ABSENCE IT MEASURED. The pair of `seams.startSizeOf`/`seams.boundsOf` assertions that
+    //     stood here retired WITH THEIR SUBJECT (`F11` deleted both members and the props they read), and what
+    //     replaces them is the claim they were the control FOR: no reader of the authored attributes survives in
+    //     the module, read over COMMENT-ELIDED code so a docblock that merely NAMES the retired pair can neither
+    //     satisfy nor redden it (`D-93`'s rule, `D-169`'s `M-4` form, `D-29`).
+    expect(w.startSizeOf(element, undefined), 'the COMPOSITION answers the family\'s record').toBe(320)
     expect(w.boundsOf(element, undefined), 'and the composition\'s pair is the record\'s, handed through AS STORED').toEqual({ min: 10, max: 400 })
+    const envelopeCode = commentElided(readModuleSource('src/shared/demo-envelope.ts'))
+    expect(envelopeCode.length, 'the elided module is not empty — the elider is not swallowing the file').toBeGreaterThan(0)
+    for (const gone of ['startSizeOf', 'boundsOf', 'numberFrom']) {
+      expect(scanForToken(envelopeCode, gone), `the example carries no \`${gone}\` any more — the authored attributes have no reader left to answer them (\`F11\`)`).toBe(false)
+    }
+    // **THE PLANTABLE CONTROL, IN THE FORM THE ROW ALREADY CARRIES AT CLAUSE (5)**: the same scanner over a synthetic
+    // string spelling the DELETED shapes — the two seams and the `numberFrom` fallbacks they read — fires on all
+    // three, so each `false` above is a fact about the module and not a detector that cannot see anything.
+    const plantedDeletedPair = "startSizeOf: (el) => numberFrom(paneOf(el), 'size', 100), boundsOf: (el) => ({ min: numberFrom(paneOf(el), 'min', 0) })"
+    for (const gone of ['startSizeOf', 'boundsOf', 'numberFrom']) {
+      expect(scanForToken(commentElided(plantedDeletedPair), gone), `the positive control for \`${gone}\``).toBe(true)
+    }
+    expect(scanForToken(commentElided(`// ${plantedDeletedPair}`), 'numberFrom'), 'and a comment is not a member (the elision control)').toBe(false)
 
-    // (2) THE MISS ARM IS THE CROSSING'S DEFAULT AND NOT THE ELEMENT'S FALLBACK: the ids differ, so the two
-    //     paths answer DIFFERENT figures for one gesture — 100 here, 140 there.
+    // (2) THE MISS ARM IS THE CROSSING'S DEFAULT AND NOT THE ELEMENT'S FALLBACK: the ids differ, so the element's own
+    //     `140` — a figure no reader in the tree consults any more (clause (1)) — cannot answer, and the composition
+    //     answers `100` instead.
     const unnamed = handleIn('gutter-vertical', { size: '140', min: '20', max: '260', resizable: 'true' })
-    expect(seams.startSizeOf(unnamed), 'CONTROL: the element still declares 140').toBe(140)
     expect(w.startSizeOf(unnamed, undefined), 'and the composition answers the MEASURED DEFAULT — the family names no such pane, and the default is the crossing\'s (`DEFAULT_PANE_SIZE`)').toBe(DEFAULT_PANE_SIZE)
     expect(w.boundsOf(unnamed, undefined), 'the same arm for the pair').toEqual({ min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max })
 

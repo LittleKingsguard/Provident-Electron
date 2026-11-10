@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 ccc1d0ddc5700e509321a5e3c34f72120f0a6fdd89a4efaa34eba36870c05c1d
+// @body-sha256 88415d893f95ea33ca6efe67017d1b44da4adea861b63a024247ea06f9743952
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6f960a27fdf571a26992b061d9f3e2aa604847e5c668c52869bf40a84bda70c demo/pane-drag-demo/demo.ts
 // @source a3cdc0510a78080e253b5df3cef4e30c103296990063a644a29a80f7f58c2bc7 demo/pane-drag-demo/stub-view.ts
@@ -41,12 +41,12 @@
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source f83e54243983045a2eaee0c86d7c77d636b9976792d30d3d35f41f48f3194745 src/renderer/tabs-client.ts
 // @source 71b0efdf19c1c82177ed120b070afc29e94c2c72bc1003e7bddc41ba19e5459b src/renderer/view-client.ts
-// @source 9cab75ffd47d4d56c62b7d89eff7365130b17eedae8a0a5de1f13e93062deba2 src/shared/demo-envelope.ts
+// @source b8a8a82823f73c33eb10bef025fcf45e9f821627f6caf6a197f6e34d501ae6cd src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source 70b49460099287d79f2497fd97f399c504f250caa0026d53bd4e3dcdb9150f94 src/shared/view-shape.ts
+// @source dc083cf11508f26c7fd2a8695eda8ca8f59800cf87c918e6e9f2eb194953653b src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({
@@ -1095,7 +1095,6 @@ function createGutterAffordance(options) {
 
 // src/shared/demo-envelope.ts
 var GUTTER_CURSORS = { "gutter-vertical": "col-resize", "gutter-horizontal": "row-resize" };
-var GUTTER_MOVE_TYPE = void 0;
 var GUTTER_AFFORDANCE_ID = "gutter-vertical";
 function gutterSeamExample() {
   const attributeOf = (element, key) => {
@@ -1116,11 +1115,6 @@ function gutterSeamExample() {
     const authored = attributeOf(element, "axis");
     return authored !== null ? authored : GUTTER_AFFORDANCE_ID;
   };
-  const numberFrom = (element, key, fallback) => {
-    const raw = attributeOf(element, key);
-    const parsed = raw === null ? Number.NaN : Number(raw);
-    return Number.isFinite(parsed) ? parsed : fallback;
-  };
   const paneOf = (element) => element?.parentElement;
   return {
     /** THE SIZE the drag asks for: the pointer's own coordinate minus the pre-drag size, which
@@ -1130,23 +1124,11 @@ function gutterSeamExample() {
     axisOf,
     /** THE CURSOR the axis token maps to — a VALUE in this DATA file, never in the module. */
     cursorOf: (token) => ({ cursor: GUTTER_CURSORS[String(token)] }),
-    /** THE VISIBLE PREVIEW: the concrete form is the WIRING's (`src/renderer/renderer.ts` — a
-     *  transient inline-style write on the live provident-rendered TARGET element, `§2.5` item 4),
-     *  so this example carries no presentation write of its own and hands the state straight on. */
-    applyPreview: (_state) => void 0,
     /** THE CURSOR: the handle's own declaration is written through its style member. */
     applyCursor: (element, declaration) => {
       const holder = element;
       if (holder === null || holder === void 0 || holder.style === null || holder.style === void 0) return;
       holder.style["cursor"] = declaration === void 0 ? "" : declaration;
-    },
-    /** THE PRE-DRAG SIZE: the pane's authored starting size, read from the attribute the runtime
-     *  emits for `props.size`. */
-    startSizeOf: (element) => numberFrom(paneOf(element), "size", 100),
-    /** THE BOUNDS PAIR: the pane's authored minimum and maximum, read the same way. */
-    boundsOf: (element) => {
-      const pane = paneOf(element);
-      return { min: numberFrom(pane, "min", 0), max: numberFrom(pane, "max", 200) };
     },
     /** THE RESIZABILITY: the authored pane declares it (`props.resizable` → the bare
      *  `resizable` attribute); an ABSENT attribute is the demo's own "no veto" reading. */
@@ -1173,10 +1155,7 @@ function gutterSeamExample() {
       if (typeof x !== "number" || typeof y !== "number") return null;
       if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
       return Object.freeze({ x, y });
-    },
-    /** THE OPTIONAL MOVE TYPE: `undefined`, so the affordance module registers ITS OWN fallback —
-     *  the session's exported token it already value-imports (`POINTER_TYPES.move`). */
-    moveTypeOf: () => GUTTER_MOVE_TYPE
+    }
   };
 }
 

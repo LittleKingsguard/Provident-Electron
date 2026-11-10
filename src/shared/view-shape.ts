@@ -15,8 +15,10 @@
 // it a projection rather than a record.
 //
 // **THE MEASURED DEFAULTS ARE THE TREE'S OWN AND NOT THIS FILE'S INVENTION** (D-87's ground, quoted rather than re-derived):
-// the authored pane's `props` read `size '100'`, `min '0'`, `max '200'`, and `gutterSeamExample`'s `startSizeOf`/`boundsOf`
-// fall back to the same three figures. The frozen store the view record replaces held NO pane default at all, so a read that
+// MEASURED 2026-11-03, the reading `D-87` took: the authored pane's `props` read `size '100'`, `min '0'`, `max '200'`, and
+// `gutterSeamExample`'s `startSizeOf`/`boundsOf` fell back to the same three figures. **NEITHER IS CARRIED ANY MORE** — the
+// node's three props and the two seam readers went together at `F11` (`D-129`, `D-169`), so the figures above are a dated
+// reading and no longer a site. The frozen store the view record replaces held NO pane default at all, so a read that
 // MISSed at both of its tiers answered `undefined` — an unusable value that made the release refuse `'unusable-default'`
 // with ZERO writes and made every move INVALID. The default is therefore the placeholder a REPAIR mints at the store's
 // creation (`panes-must-stand`), and the same value this file's derivation answers for a pane the standing family does not
@@ -118,10 +120,14 @@ export type ViewGeometrySource = 'record' | 'default'
  *  its release turn hard-codes. The AUTHORED DOM PANE IS A DIFFERENT NAME (`demo-envelope.ts` authors `gutter-pane`): the
  *  store's family is keyed by the id the COMPOSITION addresses, and that is the rendering's business, not the address's. */
 export const DEFAULT_PANE_ID = 'pane-a'
-/** **THE MEASURED DEFAULT SIZE** — the authored pane's `props.size`, and the value `panes-must-stand` repairs to. */
+/** **THE MEASURED DEFAULT SIZE** — the figure `D-87` measured off the authored pane's `props.size` (MEASURED 2026-11-03),
+ *  which the node NO LONGER CARRIES (`F11`: the prop and the two seam readers that read it went together), and the value
+ *  `panes-must-stand` repairs to. */
 export const DEFAULT_PANE_SIZE = 100
-/** **THE MEASURED DEFAULT BOUNDS PAIR** — the authored pane's `props.min`/`props.max`. A VALUE, copied into a fresh record
- *  by `defaultPaneGeometry` rather than handed out by reference, so no caller can move this file's own constant. */
+/** **THE MEASURED DEFAULT BOUNDS PAIR** — the pair `D-87` measured off the authored pane's `props.min`/`props.max`
+ *  (MEASURED 2026-11-03), which the node NO LONGER CARRIES (`F11`), and the pair `panes-must-stand` repairs to. A VALUE,
+ *  copied into a fresh record by `defaultPaneGeometry` rather than handed out by reference, so no caller can move this
+ *  file's own constant. */
 export const DEFAULT_PANE_BOUNDS: { readonly min: number; readonly max: number } = { min: 0, max: 200 }
 /** **THE PANE FAMILY'S ID DOMAIN, CLOSED — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-138; `DECLARED_ZONE_IDS`
  *  below is the same closure one family over, `D-151`). `['panes', id]` must be GUARANTEED to stand for every id the route

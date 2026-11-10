@@ -214,8 +214,10 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
         [DEFAULT_PANE_ID]: { size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
       })
       // **AND THE DEFAULT IS THE MEASURED ONE, NOT AN INVENTED ONE**: the pane the app's store-backed drag composition
-      // addresses, at the size and bounds pair `src/shared/demo-envelope.ts` authors and `gutterSeamExample` falls back
-      // to. A repair writing any other figure would pass a `toBeDefined`-shaped row and lose the whole point.
+      // addresses, at the size and bounds pair `D-87` MEASURED off `src/shared/demo-envelope.ts`'s authored pane — a
+      // reading the node no longer carries (`F11`, `D-129`: the `props` and the two example seams that read them are
+      // gone), so what stands here is the record's figure and never a figure copied off an element. A repair writing any
+      // other number would pass a `toBeDefined`-shaped row and lose the whole point.
       expect(DEFAULT_PANE_ID, 'the one pane id the app addresses').toBe('pane-a')
       expect({ size: DEFAULT_PANE_SIZE, ...DEFAULT_PANE_BOUNDS }, 'the geometry the tree states, and no other').toEqual({ size: 100, min: 0, max: 200 })
 

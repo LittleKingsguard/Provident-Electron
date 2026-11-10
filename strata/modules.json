@@ -234,7 +234,8 @@
     {
       "name": "app-envelope",
       "paths": [
-        "src/shared/demo-envelope.ts"
+        "src/shared/demo-envelope.ts",
+        "tests/unit/app-envelope/live-seams.test.ts"
       ],
       "endpoints": 15
     },

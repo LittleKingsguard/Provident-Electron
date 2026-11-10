@@ -149,9 +149,10 @@ const PANES_KEY = 'panes'
 const FOCUS_KEY = 'focus'
 const ZONES_KEY = 'zones'
 /** **THE MEASURED DEFAULTS, SPELLED BECAUSE THIS FILE IMPORTS NO TYPESCRIPT** (`src/shared/view-shape.ts`'s
- *  `DEFAULT_PANE_SIZE` / `DEFAULT_PANE_BOUNDS` / `DEFAULT_PANE_ID`): the authored pane's `props`, the figures
- *  `panes-must-stand`'s repair mints at the store's creation and the figures `paneGeometryIn` answers for a pane the
- *  family does not name. They are the row's EXPECTED values and not this leg's invention. */
+ *  `DEFAULT_PANE_SIZE` / `DEFAULT_PANE_BOUNDS` / `DEFAULT_PANE_ID`): the figures `D-87` MEASURED off the authored
+ *  pane's `props` — a reading the node NO LONGER CARRIES (`F11`, `D-129`) — the figures `panes-must-stand`'s repair
+ *  mints at the store's creation and the figures `paneGeometryIn` answers for a pane the family does not name. They
+ *  are the row's EXPECTED values and not this leg's invention. */
 const MEASURED_PANE_ID = 'pane-a'
 const MEASURED_PANE_SIZE = 100
 const MEASURED_PANE_BOUNDS = { min: 0, max: 200 }

@@ -1185,6 +1185,18 @@ const DECLARED_SCOPE: readonly string[] = [
   //    precedent): `D-163`'s battery, `RS-1`…`RS-5`, the first `props.<name>` read-back in the tree and the row that would have
   //    caught `OV-12`/`OV-14`.
   'tests/unit/renderer-wiring/state-checked-paint.test.ts',
+  // ── THE `app-envelope` SEAM CENSUS — `tests/unit/app-envelope/live-seams.test.ts`, AND IT JOINS THIS UNION AS ITS OWN ENTRY
+  //    WITH ITS OWN REASON, NEVER AS A PREFIX (`tests/unit/app-envelope/` would admit every file a later pass drops beside it,
+  //    and a directory measures nothing). **THE FILE IS `app-envelope`'s AND IS DECLARED HERE FOR THE REASON THE TWO ENTRIES
+  //    ABOVE ARE**: this row asserts the worktree's edit set against a scope, so EVERY path a pass writes is a path this union
+  //    must carry whatever module authored it — and `B-1` reports a new file no entry names as an offender rather than letting
+  //    it slide in behind a directory. It is created WITH this entry in the SAME pass and not after it (`D-146`'s precedent).
+  //    **ITS SUBJECT IS THE ONE INSTRUMENT `docs/L3/app-envelope/design.md` §5 NAMED AS OWED**: `gutterSeamExample()`'s six
+  //    members set-equal to the declared six by name, each one reached through a binding DERIVED from its consumer's call
+  //    site (`renderer.ts` five, `demo.ts` four), `dead === []`, and the census's own plantable control — the property that
+  //    makes a fourth dead member unrepresentable rather than a hand census taken after the fact (`F8`, `D-168`, `D-169`).
+  //    `strata/modules.json`'s `app-envelope` row claims the path in the same pass, so the map and this union agree.
+  'tests/unit/app-envelope/live-seams.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

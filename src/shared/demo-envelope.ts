@@ -96,7 +96,8 @@ const ECHO_BODY = `function (ctx, value) {
 // ---------------------------------------------------------------------------
 // ⟶ ADDED 2026-09-27 (`U-GUTTER-UI`, `docs/specs/gutter-ui.md` §2.1 item 7): THE GUTTER CARD —
 // the authored affordance / target / status nodes, plus THIS REPO'S ONE EXAMPLE IMPLEMENTATION
-// of the eleven caller seams the affordance's wiring passes in. EVERY element below is
+// of the caller seams the affordance's wiring passes in (SIX, measured — see the example's own
+// docblock). EVERY element below is
 // provident DATA (envelope nodes + handler-body strings); the renderer-side wiring resolves the
 // elements from the producing graph and passes these closures in. IT IS AN IMPLEMENTATION,
 // NEVER THE CONTRACT — the contract is the affordance module's exported seam types.
@@ -109,16 +110,6 @@ const ECHO_BODY = `function (ctx, value) {
 /** The gutter handle's own axis mapping, keyed by the AUTHORED axis token the affordance's
  *  axis seam answers for the handle (`gutter-vertical`). */
 const GUTTER_CURSORS: Readonly<Record<string, string>> = { 'gutter-vertical': 'col-resize', 'gutter-horizontal': 'row-resize' }
-/** **THE MOVE-EVENT TYPE IS THE SESSION'S OWN TOKEN, NOT A LITERAL.** `§2.1` item 9 / `§R.2`
- *  `R-11` (condition `C-3`): *"the type the module registers for its own move listener must BE
- *  the type the session itself dispatches"*, and the affordance module already carries the
- *  session's exported constant as a `VALUE` import (`POINTER_TYPES.move`) for exactly that
- *  reason. The example therefore returns **the module's own fallback** by answering nothing at
- *  all: this is not a degradation (the module's fallback IS `POINTER_TYPES.move`), it is the
- *  example declining to hand-spell a token the session owns — a literal here would be the
- *  `B-9`/`P-9` false-green class (`§3.1 M-18`: the registered TYPE must match the session's). */
-const GUTTER_MOVE_TYPE: undefined = undefined
-
 /** The authored status node's engine id — the ONE node the wiring's `commit` route writes. It is
  *  deliberately OUTSIDE the affordance's own node, so the write patches a peer and never the
  *  handle the listeners are attached to (`§2.3` row 15, `§2.6` item 5). */
@@ -179,32 +170,33 @@ const TABS_ERROR_PAGE_BODY = `function (ctx) {
   void ctx;
 }`
 
-/** THIS REPO'S ONE EXAMPLE IMPLEMENTATION OF THE ELEVEN CALLER SEAMS. Each closure is the
- *  shape the affordance's own option set names (`GutterAffordanceOptions`); the wiring reads the
- *  handle's authored axis token, maps it to a cursor declaration, and supplies the pane's own
- *  bounds, pre-drag size and resizability. The example holds NO geometry of its own — it reads
- *  the handle's authored data attributes, which are DATA, and never a rendered measurement. */
+/** THIS REPO'S ONE EXAMPLE IMPLEMENTATION OF THE **SIX** CALLER SEAMS ITS TWO CONSUMERS TAKE — a count
+ *  MEASURED, never remembered (`docs/L3/app-envelope/design.md` §2): `src/renderer/renderer.ts` reads
+ *  five (`sizeFromPointer`, `pointerOf`, `axisOf`, `cursorOf`, `resizableOf`) and
+ *  `demo/pane-drag-demo/demo.ts` four (`pointerOf`, `axisOf`, `applyCursor`, `resizableOf`), six in
+ *  UNION, `applyCursor` being the demo's alone. Each closure is the shape the affordance's own option
+ *  set names (`GutterAffordanceOptions`); the wiring reads the handle's authored axis token, maps it to
+ *  a cursor declaration, and supplies the pane's RESIZABILITY decision. The example holds NO geometry
+ *  of its own: the pre-drag size and the bounds pair left it with the props they read — `['panes']`'s
+ *  since `D-117`, and the props gone from the node at `F11` (`D-129`) — and it reads the handle's
+ *  authored data attributes, which are DATA, and never a rendered measurement. */
 export function gutterSeamExample(): {
   readonly sizeFromPointer: (pointer: { readonly x: number }, start: number) => number
   readonly axisOf: (element: unknown) => unknown
   readonly cursorOf: (token: unknown) => unknown
-  readonly applyPreview: (state: unknown) => void
   readonly applyCursor: (element: unknown, declaration: string | undefined) => void
-  readonly startSizeOf: (element: unknown) => number
-  readonly boundsOf: (element: unknown) => { readonly min: number; readonly max: number }
   readonly resizableOf: (element: unknown) => boolean
   readonly pointerOf: (event: unknown) => { readonly x: number; readonly y: number } | null
-  readonly moveTypeOf: () => undefined
 } {
   /** **L-6/ADV-GU-7 — THE READ IS THE BARE ATTRIBUTE, BECAUSE THAT IS WHAT THE RUNTIME EMITS.**
    *  An authored `props` entry is rendered by the `DomAdapter` through its `css:<key>` /
-   *  bare-attribute op path, so `props: {size: '100', min: '0', …}` lands on the element as the
-   *  attributes `size="100" min="0" …` and NOT as `data-size="…"`. The example used to read
-   *  `dataset['size']` there, which MISSES EVERY TIME, so every seam answered its hard-coded
-   *  fallback and the card's authored data drove nothing. This helper reads the attribute the
-   *  runtime actually emits, falls back to a `dataset` entry when a caller has one (the same
-   *  value under the `data-*` spelling), and is TOTAL: a null / non-object / attribute-less /
-   *  throwing-accessor holder answers `null` and never throws. */
+   *  bare-attribute op path, so `props: {resizable: 'true'}` lands on the pane element as the bare
+   *  `resizable="true"` and the handle's `props: {axis: …}` as its `axis` attribute — and NOT as
+   *  `data-resizable="…"`. The example used to read `dataset['resizable']` there, which MISSES EVERY
+   *  TIME, so every seam answered its hard-coded fallback and the card's authored data drove nothing.
+   *  This helper reads the attribute the runtime actually emits, falls back to a `dataset` entry when
+   *  a caller has one (the same value under the `data-*` spelling), and is TOTAL: a null / non-object /
+   *  attribute-less / throwing-accessor holder answers `null` and never throws. */
   const attributeOf = (element: unknown, key: string): string | null => {
     if (element === null || element === undefined || typeof element !== 'object') return null
     try {
@@ -226,14 +218,10 @@ export function gutterSeamExample(): {
     const authored = attributeOf(element, 'axis')
     return authored !== null ? authored : GUTTER_AFFORDANCE_ID
   }
-  const numberFrom = (element: unknown, key: string, fallback: number): number => {
-    const raw = attributeOf(element, key)
-    const parsed = raw === null ? Number.NaN : Number(raw)
-    return Number.isFinite(parsed) ? parsed : fallback
-  }
-  /** THE PANE the handle and the target live in: the authored geometry carrier (its `props`
-   *  carry the pre-drag size, the bounds pair and the resizability decision), reached as the
-   *  handle's own parent — never a lookup, a selector or a created element. */
+  /** THE PANE the handle lives in: the authored element whose ONE surviving geometry claim is the
+   *  RESIZABILITY decision (`props.resizable` → the bare attribute), reached as the handle's own
+   *  parent — never a lookup, a selector or a created element. The size and the bounds pair are
+   *  `['panes']`'s since `D-117` and are gone from this node at `F11` (`D-129`). */
   const paneOf = (element: unknown): unknown =>
     (element as { readonly parentElement?: unknown } | null | undefined)?.parentElement
   return {
@@ -245,23 +233,11 @@ export function gutterSeamExample(): {
     axisOf,
     /** THE CURSOR the axis token maps to — a VALUE in this DATA file, never in the module. */
     cursorOf: (token: unknown): unknown => ({ cursor: GUTTER_CURSORS[String(token)] }),
-    /** THE VISIBLE PREVIEW: the concrete form is the WIRING's (`src/renderer/renderer.ts` — a
-     *  transient inline-style write on the live provident-rendered TARGET element, `§2.5` item 4),
-     *  so this example carries no presentation write of its own and hands the state straight on. */
-    applyPreview: (_state: unknown): void => undefined,
     /** THE CURSOR: the handle's own declaration is written through its style member. */
     applyCursor: (element: unknown, declaration: string | undefined): void => {
       const holder = element as { readonly style?: Record<string, unknown> } | null | undefined
       if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
       holder.style['cursor'] = declaration === undefined ? '' : declaration
-    },
-    /** THE PRE-DRAG SIZE: the pane's authored starting size, read from the attribute the runtime
-     *  emits for `props.size`. */
-    startSizeOf: (element: unknown): number => numberFrom(paneOf(element), 'size', 100),
-    /** THE BOUNDS PAIR: the pane's authored minimum and maximum, read the same way. */
-    boundsOf: (element: unknown): { readonly min: number; readonly max: number } => {
-      const pane = paneOf(element)
-      return { min: numberFrom(pane, 'min', 0), max: numberFrom(pane, 'max', 200) }
     },
     /** THE RESIZABILITY: the authored pane declares it (`props.resizable` → the bare
      *  `resizable` attribute); an ABSENT attribute is the demo's own "no veto" reading. */
@@ -289,9 +265,6 @@ export function gutterSeamExample(): {
       if (!Number.isFinite(x) || !Number.isFinite(y)) return null
       return Object.freeze({ x, y })
     },
-    /** THE OPTIONAL MOVE TYPE: `undefined`, so the affordance module registers ITS OWN fallback —
-     *  the session's exported token it already value-imports (`POINTER_TYPES.move`). */
-    moveTypeOf: (): undefined => GUTTER_MOVE_TYPE,
   }
 }
 
@@ -500,7 +473,7 @@ export function demoEnvelope() {
                   {
                     type: 'div',
                     css: { id: 'gutter-pane', classes: ['gutter-pane'], style: paneStyle },
-                    props: { id: 'gutter-pane', size: '100', min: '0', max: '200', resizable: 'true' },
+                    props: { id: 'gutter-pane', resizable: 'true' },
                     children: [
                       {
                         // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
@@ -532,11 +505,14 @@ export function demoEnvelope() {
                       },
                       {
                         // (b) THE TARGET — `§2.1` item 7(b): an authored `css.id`, an authored
-                        // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id`. The
-                        // authored `props` below are the DRAG'S OWN DATA (`size` = the pre-drag size,
-                        // `min`/`max` = the bounds pair, `resizable` = the decision) and the runtime
-                        // emits them as BARE ATTRIBUTES on the element — which is what the demo seams
-                        // read (L-6/ADV-GU-7: they used to read `dataset[...]` and every read missed).
+                        // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id` —
+                        // and NOTHING ELSE. The pre-drag size and the bounds pair that once stood on
+                        // the PANE's `props` as `size`/`min`/`max` are `['panes']`'s since `D-117` and
+                        // left the node at `F11` (`D-129`), so no seam reads a geometry off an element
+                        // any more. An authored `props` entry still renders as a BARE ATTRIBUTE (the
+                        // pane's `resizable`, the handle's `axis`), which is what the surviving seams
+                        // read (L-6/ADV-GU-7: those reads used to go through `dataset[...]` and every
+                        // one missed).
                         type: 'div',
                         css: { id: GUTTER_TARGET_ID, classes: ['gutter-target'], style: targetStyle },
                         props: { id: GUTTER_TARGET_ID },
