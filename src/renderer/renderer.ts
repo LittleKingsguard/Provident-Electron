@@ -10,7 +10,7 @@ import { createGutterAffordance, domEventSource } from '../shared/gutter-afforda
 import type { RpcRequest, RpcReply, TabsRecordRow } from '../shared/types.js'
 import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCommittedAnswer, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
-import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription } from './view-client.js'
+import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
 import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
@@ -1131,7 +1131,7 @@ async function main(): Promise<void> {
   // **AND THE THIRD ARGUMENT IS THE READ-OUT'S TURN** (`D-129`; design §1, §4 `S1`–`S4`): `gutter.renderPaneSize` is the
   // DELETED sink's successor — the delivery paints `#gutter-status` from the record's stored size instead of the gesture
   // writing its clamped figure into a rendered node. One hand-over, one subscription body, three rendered values; the
-  // composition registers nothing and no second subscription is taken (`D-90`, `D-92` `M-4`).
+  // composition registers no subscriber of its own and no second subscription is taken (`D-90`, `D-92` `M-4`).
   startViewShape(themeApplication, gutter.renderGhost, gutter.renderPaneSize)
   // ⟶ **THE APP-STATE ROWS' SHAPE (`D-104`; `D-82`'s `V3`)** — the pane that displays the module registry is filled from a
   //    DELIVERY from here on, and the request-time read `panels.refresh()` used to make is deleted. Started LAST and never
@@ -2395,7 +2395,10 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * the realm's own `data.read` route; the client is a WIRING-HELD ARGUMENT passed into closures, NEVER a module-scope
  * binding (§3.4 R-2). The composition registers NO SUBSCRIBER of its own: the ghost turn is the `renderGhost` member
  * below, handed OUT to the shape's ONE delivery — whose whole body is `theme?.apply(); ghost?.(); readout?.()` — and the
- * composition registers nothing on the client, the bridge or the store. NO byte of the four
+ * composition takes NO `onChanged`/`subscribe` registration, on the bridge, on the store or on the client, so the push
+ * still has exactly one consumer in this realm. **THE ONE REGISTRATION IT DOES TAKE IS THE RECEIPT'S PUSH**
+ * (`onWriteOutcome`, once at construction — design §2 `N2`): a write's answer is not a delivery, a refusal produces none
+ * at all, and a reader of it therefore cannot be the shape's subscription. NO byte of the four
  * mechanism modules moves (§3.4 R-1/R-5).
  *
  * THE SEAM SURFACE (`PaneDragSurface`) satisfies the family's EXPORTED seam types of
@@ -2426,8 +2429,11 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * COLLISION, never about collapsing them.
  *
  * **THE DELIVERY'S ONE BODY IS `theme?.apply(); ghost?.(); readout?.()` AND IT CALLS NOTHING ELSE** (`D-168`): this
- * composition registers NOTHING on the client, the bridge or the store, because a second `onChanged` registration would be
- * a second consumer of one push and a second read per delivery. **NO ZONE TURN STANDS ON THIS SURFACE TO BE CALLED**:
+ * composition takes NO `onChanged` registration — on the client, the bridge or the store — because a second one would be
+ * a second consumer of one push and a second read per delivery. **ITS ONE REGISTRATION IS THE RECEIPT'S PUSH**
+ * (`onWriteOutcome`, taken once at construction, `reportReceipt`): a write's answer is not a delivery and a refusal
+ * produces none at all, so the two registrations answer two different signals and neither is a second consumer of the
+ * other. **NO ZONE TURN STANDS ON THIS SURFACE TO BE CALLED**:
  * `renderZone` is DELETED from the surface, the app's only `source` is `domEventSource()` and carries no `layout` member,
  * and **NO ZONE LAYOUT IS RENDERED ANYWHERE IN THIS TREE** — `['zones']` keeps its declaration and its client reader, and
  * no renderer in `src/` consumes them. Every read is guarded: an absent client, an absent shape
@@ -2584,6 +2590,81 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     return DEFAULT_PANE_ID
   }
 
+  /** **A `null` `view` REPORTS ONCE, AT CONSTRUCTION, AND THE THREE PER-TURN GUARDS STAY SILENT BY DESIGN** (design §2
+   *  `N1`/`N2`; `D-167`'s routing of the three discarding routes). It is ONE fact known before any gesture — this
+   *  composition's writes reach no crossing and the gesture is presentational — so it is said here, once, and **the three
+   *  guards carry the pointer to this one word** instead of repeating it: a per-move repetition at pointer frequency is
+   *  not a reading but noise, on the one realm where the console is the only observability. **AND NO "LAST REPORTED" FLAG
+   *  BOUNDS IT**: a flag remembering what was written is exactly the copy `D-129` forbids. */
+  if (view === null) {
+    console.warn('[provident-renderer] the pane drag has NO view client — this composition\'s writes reach no crossing (said ONCE here; the three per-turn statements stay silent while this stands)')
+  }
+
+  /** **THE STATEMENT'S READER — `reportUnreached(what, statement)`, ONE PRIVATE TOTAL RELATION AT THE THREE ROUTES**
+   *  (design §2 `N1`; `D-167`'s routing, `D-126`'s `F10`). Each drag turn is handed a SYNCHRONOUS statement and, until this
+   *  pass, discarded it. A `{status:'absent'}` statement is a write that went NOWHERE — there is no receipt to come, so
+   *  this is the only reading that write will ever have — and it is reported in `D-117`'s register as **`console.warn`**,
+   *  the LOST class and never the refused one, with its `reason` spelled VERBATIM: `no-view-member` is the absence
+   *  `:1056` states for a missing preload, and **`no-route` is a `warn` too** because `C-9`(b) calls that realm *an older
+   *  preload* — a lawful degradation of the realm and NOT a defect this tree owns.
+   *  **A `{status:'sent'}` STATEMENT SAYS NOTHING** (that receipt is the push's, `reportReceipt` below) **and so does
+   *  anything that is not a statement at all**, because a total relation invents no fault. */
+  const reportUnreached = (what: string, statement: unknown): void => {
+    if (statement === null || typeof statement !== 'object') return
+    const held = statement as { readonly status?: unknown; readonly reason?: unknown }
+    if (held.status !== 'absent') return
+    const reason = typeof held.reason === 'string' ? held.reason : 'no reason stated'
+    console.warn(`[provident-renderer] ${what}: the write went NOWHERE (reason=${reason}) — no receipt is owed, so nothing else will report it`)
+  }
+
+  /** **THE RECEIPT'S READER — THE PUSH'S HANDLER, SCOPED TO THE TWO ROUTE WORDS THIS CLOSURE SENDS** (design §2 `N2`;
+   *  `docs/L2/view-record/interface.md` §9). The client pushes each write's answer from the very continuation that holds
+   *  it, so this body rides the answer's own arrival: **`refused` → `console.error`** (a fault this tree owns — an answer
+   *  that said no), **`unread` → `console.warn`** (a boundary that did not speak), **`committed` → SILENCE**, because the
+   *  store processed the write and the pane's DELIVERY is still owed.
+   *  **`'zone'` AND `'theme'` ARE NOT THIS REALM'S NEWS AND ARE NOT REPORTED**: this file sends the `pane` and `drag`
+   *  routes — the release turn's `commitPane`, the move turn's `commitDrag`, the ending turn's `clearDrag` — and sends
+   *  neither `commitZones` nor `commitTheme`, so those receipts belong to the callers that sent them (the zone family's
+   *  has no UI caller at all, `D-151`) and reporting them here would be a second realm claiming another act's answer.
+   *  **IT REPORTS AND COMPOSES NOTHING**: `release` still returns `void`, no caller's answer is built from a receipt, and
+   *  the two registers are `D-117`'s — `error` for a fault this tree owns, `warn` for a degradation the realm declares or
+   *  a boundary that did not speak. */
+  const reportReceipt = (receipt: ViewWriteOutcome): void => {
+    const outcome = receipt as unknown as
+      | { readonly route?: unknown; readonly status?: unknown; readonly reason?: unknown; readonly message?: unknown }
+      | null
+      | undefined
+    if (outcome === null || outcome === undefined) return
+    if (outcome.route !== 'pane' && outcome.route !== 'drag') return
+    if (outcome.status === 'refused') {
+      const reason = typeof outcome.reason === 'string' ? outcome.reason : 'unspecified'
+      const message = typeof outcome.message === 'string' ? outcome.message : 'no message'
+      console.error(`[provident-renderer] ${String(outcome.route)} write REFUSED (reason=${reason}): ${message}`)
+      return
+    }
+    if (outcome.status === 'unread') {
+      const reason = typeof outcome.reason === 'string' ? outcome.reason : 'unspecified'
+      console.warn(`[provident-renderer] ${String(outcome.route)} write LOST its answer (reason=${reason}) — a boundary that did not speak is no state of the record`)
+    }
+  }
+
+  /** **THE REGISTRATION — ONCE, AT CONSTRUCTION, AND STRUCTURALLY TOLERANT THE OTHER WAY TOO** (design §2 `N2`): a `view`
+   *  carrying no `onWriteOutcome` — a battery's `Pick`, the demo's stub — registers NOTHING, so those realms keep exactly
+   *  the silence they have today, a missing member being the declared degradation here and never a fault (the
+   *  `subscribe` `subscribed: false` idiom). The withdrawal is NOT kept: this closure lives as long as the realm, and a
+   *  binding no turn reads is the class `D-70` names. A registration that threw installed nothing, and nothing is owed
+   *  for it: the receipt keeps its hold at `writeOutcome()` either way. */
+  if (view !== null) {
+    const register = (view as { readonly onWriteOutcome?: unknown }).onWriteOutcome
+    if (typeof register === 'function') {
+      try {
+        ;(register as (handler: (outcome: ViewWriteOutcome) => void) => unknown).call(view, reportReceipt)
+      } catch {
+        // a registration that threw installed nothing: no receipt reaches this realm and none is claimed
+      }
+    }
+  }
+
   /* **THE BOOT BOOTSTRAP IS DELETED FROM THIS SITE** (`D-93`, by `D-90`'s clause (3) and `D-92`'s head, which named it
    *  "the ONE write still made to it"). It was three `commit`/`clear` pairs mint-declaring `mem.layout`, `temp.drag` and
    *  `file.settings` in the FROZEN STORE's register — §7a.1 items 1/4's boot-seeding reading. **EVERY ROOT IT SEEDED HAD
@@ -2618,7 +2699,8 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
       const size = (preview as { readonly value?: unknown } | null | undefined)?.value
       if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) return
       gestures.set(key, { erased: false })
-      if (view !== null) view.commitDrag(DEFAULT_PANE_ID, { size })
+      // THE STATEMENT IS READ (`N1`), and the per-turn silence on a null `view` is the construction's one word above.
+      if (view !== null) reportUnreached('the drag move', view.commitDrag(DEFAULT_PANE_ID, { size }))
     } catch {
       // a hostile key, preview or view must never throw out of the move turn
     }
@@ -2675,8 +2757,10 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  `D-138`, `D-144`). The E10-single-sink discipline is unmoved (`final` is EXACTLY the value the sink received, the sink
    *  is invoked once), and the E3 gate is unmoved (a non-useful `final` — a non-number or `NaN` — is NEVER sent, ZERO
    *  writes). The frozen store's TWO synchronous commits (`file.settings.pane.<id>.size` then `mem.layout.pane.<id>.size`)
-   *  collapsed to ONE `commitPane` on the one `file` address, and its receipt does NOT come back in this turn — it lands
-   *  in the client's `writeOutcome()` a tick later. **AND THE RELEASE NOW ENDS THE DRAG FAMILY ITSELF** (`R5`): ONE
+   *  collapsed to ONE `commitPane` on the one `file` address, and its receipt does NOT come back in this turn — it is
+   *  **PUSHED** to this composition's `reportReceipt` by the client's `onWriteOutcome`, registered once at construction,
+   *  so the report rides the answer's own arrival and no turn polls for one (design §2 `N2`).
+   *  **AND THE RELEASE NOW ENDS THE DRAG FAMILY ITSELF** (`R5`): ONE
    *  `clearDrag()` AFTER the sink and AFTER the file commit, so the gesture's two PHASES stay distinct — `move` is the
    *  drag-update phase at `temp`, `release` is the release phase at `file` — and the ending is a THIRD statement that
    *  writes no placement, carries no geometry and judges no value (L2 §5). The two refusing arms (`R1`/`R2`) send NOTHING
@@ -2693,7 +2777,9 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
         ;(sink as (value: unknown) => unknown).call(null, final)
       }
       // ONE ROUTE, ONE WHOLE MEMBER: the id names the pane and the crossing composes the family (D-87's `commitPane`).
-      if (view !== null) view.commitPane(DEFAULT_PANE_ID, { size: final })
+      // THE STATEMENT IS READ (`N1`) — a write that went nowhere is the only reading this turn will ever have of it. The
+      // per-turn silence on a null `view` is the construction's one word above, pointed at rather than repeated.
+      if (view !== null) reportUnreached('the pane commit', view.commitPane(DEFAULT_PANE_ID, { size: final }))
       endReading(gestureId)
     } catch {
       // a hostile view or sink must never throw out of the release turn
@@ -2715,7 +2801,9 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
       const prior = gestures.get(key)
       if (prior?.erased === true) return
       gestures.set(key, { erased: true })
-      if (view !== null) view.clearDrag()
+      // THE STATEMENT IS READ (`N1`): the ending turn's write went nowhere is a fact somebody must be told. The per-turn
+      // silence on a null `view` is the construction's one word above, pointed at rather than repeated.
+      if (view !== null) reportUnreached('the drag clear', view.clearDrag())
     } catch {
       // a hostile key or view must never throw out of the ending turn
     }

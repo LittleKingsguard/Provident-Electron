@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 206b66cc91988ec789845b2edd55ab814a062cc95f00f491dc9d538a25802641
+// @body-sha256 ccc1d0ddc5700e509321a5e3c34f72120f0a6fdd89a4efaa34eba36870c05c1d
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6f960a27fdf571a26992b061d9f3e2aa604847e5c668c52869bf40a84bda70c demo/pane-drag-demo/demo.ts
 // @source a3cdc0510a78080e253b5df3cef4e30c103296990063a644a29a80f7f58c2bc7 demo/pane-drag-demo/stub-view.ts
@@ -35,12 +35,12 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 1784b93e42838281f9025cb0e83fc6951255a3d9165ed981cd99fdf2925215e9 src/renderer/renderer.ts
+// @source 155366ff8a49042f741944c4adbada7b6dd5b6c608b1a6430ffcf53842825322 src/renderer/renderer.ts
 // @source 7815658c5a9687d6dd7ee4f47b8fa40827440dd9b0b97b7a754e70cab013e797 src/renderer/runtime.ts
 // @source 64c60c5c62a8e77c6515f0e323fd2e044ef02d77187f6e095f4a67a961c2dcb5 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source f83e54243983045a2eaee0c86d7c77d636b9976792d30d3d35f41f48f3194745 src/renderer/tabs-client.ts
-// @source 4d84ef0852ec03bdb0de54150254b91161eb24df3d5022a61fd4f80cc92eac0d src/renderer/view-client.ts
+// @source 71b0efdf19c1c82177ed120b070afc29e94c2c72bc1003e7bddc41ba19e5459b src/renderer/view-client.ts
 // @source 9cab75ffd47d4d56c62b7d89eff7365130b17eedae8a0a5de1f13e93062deba2 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
@@ -1259,13 +1259,48 @@ function createPaneDrag(backing, source2) {
     if (typeof token === "string" && token.length > 0) return token;
     return DEFAULT_PANE_ID;
   };
+  if (view === null) {
+    console.warn("[provident-renderer] the pane drag has NO view client \u2014 this composition's writes reach no crossing (said ONCE here; the three per-turn statements stay silent while this stands)");
+  }
+  const reportUnreached = (what, statement) => {
+    if (statement === null || typeof statement !== "object") return;
+    const held = statement;
+    if (held.status !== "absent") return;
+    const reason = typeof held.reason === "string" ? held.reason : "no reason stated";
+    console.warn(`[provident-renderer] ${what}: the write went NOWHERE (reason=${reason}) \u2014 no receipt is owed, so nothing else will report it`);
+  };
+  const reportReceipt = (receipt) => {
+    const outcome = receipt;
+    if (outcome === null || outcome === void 0) return;
+    if (outcome.route !== "pane" && outcome.route !== "drag") return;
+    if (outcome.status === "refused") {
+      const reason = typeof outcome.reason === "string" ? outcome.reason : "unspecified";
+      const message = typeof outcome.message === "string" ? outcome.message : "no message";
+      console.error(`[provident-renderer] ${String(outcome.route)} write REFUSED (reason=${reason}): ${message}`);
+      return;
+    }
+    if (outcome.status === "unread") {
+      const reason = typeof outcome.reason === "string" ? outcome.reason : "unspecified";
+      console.warn(`[provident-renderer] ${String(outcome.route)} write LOST its answer (reason=${reason}) \u2014 a boundary that did not speak is no state of the record`);
+    }
+  };
+  if (view !== null) {
+    const register = view.onWriteOutcome;
+    if (typeof register === "function") {
+      try {
+        ;
+        register.call(view, reportReceipt);
+      } catch {
+      }
+    }
+  }
   const gestures = /* @__PURE__ */ new Map();
   const move = (key, preview) => {
     try {
       const size = preview?.value;
       if (typeof size !== "number" || !Number.isFinite(size) || size < 0) return;
       gestures.set(key, { erased: false });
-      if (view !== null) view.commitDrag(DEFAULT_PANE_ID, { size });
+      if (view !== null) reportUnreached("the drag move", view.commitDrag(DEFAULT_PANE_ID, { size }));
     } catch {
     }
   };
@@ -1302,7 +1337,7 @@ function createPaneDrag(backing, source2) {
         ;
         sink.call(null, final);
       }
-      if (view !== null) view.commitPane(DEFAULT_PANE_ID, { size: final });
+      if (view !== null) reportUnreached("the pane commit", view.commitPane(DEFAULT_PANE_ID, { size: final }));
       endReading(gestureId);
     } catch {
     }
@@ -1312,7 +1347,7 @@ function createPaneDrag(backing, source2) {
       const prior = gestures.get(key);
       if (prior?.erased === true) return;
       gestures.set(key, { erased: true });
-      if (view !== null) view.clearDrag();
+      if (view !== null) reportUnreached("the drag clear", view.clearDrag());
     } catch {
     }
   };

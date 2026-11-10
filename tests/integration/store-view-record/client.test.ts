@@ -35,6 +35,16 @@
  * release withdraws the one registration; and every arm of the client is a VALUE. **NO TIMING
  * FIGURE IS CLAIMED ANYWHERE** — "a tick later" is an ORDER (the receipt is not the answer),
  * never a duration.
+ *
+ * **RE-GRAINED AGAIN FOR REV 14 §9: THE RECEIPT GAINS ITS SECOND HALF, AND THE ROW IS `C-12`**
+ * (`docs/L2/view-record/interface.md` §9, `docs/L3/renderer-wiring/design.md` §2 `N2`; the user's ruling
+ * verbatim *"Give the three routes a reader"*, `D-126`'s `F10`). §9 gains ONE member beside the getter —
+ * `onWriteOutcome(handler)`, the receipt PUSHED from the very continuation in `send` that assigns the hold —
+ * so this file gains ONE row measuring the pair the section states: **`writeOutcome()` is the STATE and
+ * `onWriteOutcome` the EVENT**, the relation `reading()`/`subscribe()` already are one register up. The row
+ * is a COMPANION and not a replacement: **`C-5`, `C-6` AND `C-11` ARE BYTE-IDENTICAL THROUGH THIS PASS** —
+ * they are the getter's rows, the member they drive is unchanged, and a re-grain there would be a claim the
+ * landing did not make.
  * ============================================================================
  */
 
@@ -45,6 +55,7 @@ import {
   type ViewClient,
   type ViewCommittedReading,
   type ViewSubscription,
+  type ViewWriteOutcome,
   type ViewWriteStatement,
 } from '../../../src/renderer/view-client'
 import {
@@ -416,5 +427,148 @@ describe('view client · the release, and the arms that are VALUES', () => {
       slot: { token: [1, 'two'] },
       distance: 37,
     })
+  })
+})
+
+/**
+ * ============================================================================
+ * `C-12` — THE RECEIPT'S TWO HALVES: THE PUSH IS THE *EVENT* AND THE GETTER IS THE
+ * *STATE* (`docs/L2/view-record/interface.md` §9; `docs/L3/renderer-wiring/design.md`
+ * §2 `N2`; the user's ruling verbatim *"Give the three routes a reader"*).
+ *
+ * WHY THIS ROW EXISTS AND WHY IT IS NOT `C-5`'s. `D-126`'s `F10` measured that `writeOutcome()`
+ * had no `src/` reader, and the ruling closed it by GIVING THE MEMBER A READER rather than by
+ * deleting it. So §9 now states a PAIR: the getter HOLDS the last SENT write's answer, and
+ * `onWriteOutcome` PUSHES that same record from the very continuation in `send` that assigns the
+ * hold. **`C-5`, `C-6` AND `C-11` ARE THE GETTER'S ROWS AND CHANGE NO BYTE** — the member is
+ * unchanged — so this is a COMPANION row and the only one here that reads the push at all.
+ *
+ * WHAT EACH CLAUSE CANNOT LET THROUGH:
+ *   (a) a push that fires TWICE for one write, or that mints a SECOND record — the row asserts
+ *       the exact count AND identity with what the getter then answers, on BOTH arms;
+ *   (b) a handler that throws taking the write path or its neighbour with it — the record is
+ *       assigned BEFORE any handler runs, and each call is contained;
+ *   (c) a withdrawal that is not idempotent, or one that leaves the handler receiving — and the
+ *       STATE it does not touch, because the withdrawal takes the EVENT;
+ *   (d) **THE SHARPEST FACT IN §9**: `send` records NOTHING for an `absent` statement, so a
+ *       getter-only reader STRUCTURALLY cannot see a write that went nowhere — it would answer
+ *       an OLDER receipt instead. The clause drives both `absent` reasons and proves the
+ *       silence, with the older receipt standing beside it.
+ * ============================================================================
+ */
+describe('view client · the receipt is a STATE and an EVENT — `writeOutcome()` holds it, `onWriteOutcome()` pushes it (L2 §9)', () => {
+  it('C-12 — **A REGISTERED HANDLER RECEIVES THE SAME RECORD THE GETTER THEN ANSWERS**, once per write, on the `committed` arm AND the `refused` one; a THROWING handler breaks neither the write path nor its neighbour; the WITHDRAWAL is idempotent and ends the event while the state stands; and an `absent` statement publishes NOTHING at all', async () => {
+    // ══ (a) THE PAIR, ON BOTH ARMS. The push and the hold are ONE record: `publish` assigns the hold first and
+    //    then hands that very object out, so a row that saw two different records would have caught a second mint.
+    const double = doubleOf()
+    const client = createViewClient({ bridge: asBridge(double.member) })
+    const pushed: ViewWriteOutcome[] = []
+    client.onWriteOutcome((outcome) => pushed.push(outcome))
+    expect(client.writeOutcome(), 'C-12 — before any write the STATE is `null`, and the event has nothing to carry').toBeNull()
+    expect(pushed, 'C-12 — and nothing is pushed at registration: the member subscribes and holds nothing').toEqual([])
+
+    expect(client.commitPane('pane-a', { size: 260 }), 'C-12 — the caller\'s turn still answers the STATEMENT, not the receipt').toEqual({
+      status: 'sent',
+    })
+    expect(pushed, 'C-12 — the push is not the caller\'s turn either: the answer has not arrived').toEqual([])
+    await settle()
+    expect(pushed.length, 'C-12 — **ONE write, ONE push**: a second publish for one continuation would read `2`').toBe(1)
+    expect(pushed[0], 'C-12 — **and the record handed out IS the record held** (`toBe`: the same object, never a copy that could disagree)').toBe(
+      client.writeOutcome(),
+    )
+    expect(pushed[0]?.status, 'C-12 — the first arm: the crossing committed it').toBe('committed')
+
+    // THE REFUSED ARM, driven through the same register: a refusal produces NO delivery, which is exactly why a
+    // reader of the shape's subscription could not be this reader at all.
+    double.nextRouteAnswer(
+      Promise.resolve({ status: 'refused', reason: 'malformed-geometry', message: 'the supplied size is not a finite non-negative number' }),
+    )
+    client.commitPane('pane-a', { size: -1 })
+    await settle()
+    expect(pushed.length, 'C-12 — the second write is the second push, and never a re-push of the first').toBe(2)
+    const refused = pushed[1]
+    expect(refused, 'C-12 — and the refusal is the same record the getter holds').toBe(client.writeOutcome())
+    expect(
+      [refused?.route, refused?.status, refused?.reason, refused?.message],
+      'C-12 — carrying the family word and the crossing\'s own `reason`/`message`, VERBATIM: the reader a refusal is given is the whole point of the row (`F10`)',
+    ).toEqual(['pane', 'refused', 'malformed-geometry', 'the supplied size is not a finite non-negative number'])
+
+    // ══ (b) A THROWING HANDLER IS CONTAINED. It is registered FIRST, so a publish that let it out would skip the
+    //    handler behind it — the reading below is the neighbour's call count, not merely "nothing crashed".
+    const contained = doubleOf()
+    const containedClient = createViewClient({ bridge: asBridge(contained.member) })
+    const neighbours: ViewWriteOutcome[] = []
+    containedClient.onWriteOutcome(() => {
+      throw new Error('the caller\'s handler, the caller\'s error')
+    })
+    const withdrawNeighbour = containedClient.onWriteOutcome((outcome) => neighbours.push(outcome))
+    expect(containedClient.commitPane('pane-a', { size: 10 }), 'C-12 — the write path is unmoved by the handler ahead of the answer').toEqual({
+      status: 'sent',
+    })
+    await settle()
+    expect(neighbours.length, 'C-12 — **the second handler is still called**: a throw that escaped its own call would stop the loop here').toBe(1)
+    expect(
+      containedClient.writeOutcome()?.status,
+      'C-12 — and the record is HELD, because it is assigned before any handler runs: a throwing handler loses only its own report',
+    ).toBe('committed')
+    expect(neighbours[0], 'C-12 — the neighbour is handed the same record the getter answers, on a register that also threw').toBe(
+      containedClient.writeOutcome(),
+    )
+
+    // ══ (c) THE WITHDRAWAL: IDEMPOTENT, AND IT TAKES THE EVENT AND NOT THE STATE.
+    expect(() => {
+      withdrawNeighbour()
+      withdrawNeighbour()
+    }, 'C-12 — **a SECOND withdrawal is not an error**: this realm\'s registration has no bridge half to refuse, so the withdrawal is `() => void` and total').not.toThrow()
+    containedClient.commitPane('pane-a', { size: 12 })
+    await settle()
+    expect(neighbours.length, 'C-12 — and after the withdrawal the handler receives NOTHING, though the write was sent and answered').toBe(1)
+    expect(
+      containedClient.writeOutcome()?.status,
+      'C-12 — **the STATE stands**: the withdrawal ends the event, and the getter keeps answering the last SENT write\'s answer (L2 §9)',
+    ).toBe('committed')
+
+    // ══ (d) THE `absent` ARM PUBLISHES NOTHING — AND THE GETTER STILL ANSWERS AN OLDER RECEIPT. This is the fact
+    //    §9 calls the sharpest in the section: there is no route behind an `absent` statement, so there is no
+    //    answer to push, and a reader of the hold alone would report the previous write as though it were this one.
+    const absent = createViewClient({ bridge: null })
+    const absentPushes: ViewWriteOutcome[] = []
+    absent.onWriteOutcome((outcome) => absentPushes.push(outcome))
+    expect(absent.commitPane('pane-a', { size: 1 }), 'C-12 — `no-view-member`: the realm states for itself that it has no crossing').toEqual({
+      status: 'absent',
+      reason: 'no-view-member',
+    })
+    expect(absent.commitDrag('pane-a', { size: 1 }), 'C-12 — and the drag route answers the same arm').toEqual({
+      status: 'absent',
+      reason: 'no-view-member',
+    })
+    await settle()
+    expect(absentPushes, 'C-12 — **NOTHING is pushed for an `absent` statement**: a write that went nowhere has no receipt').toEqual([])
+    expect(absent.writeOutcome(), 'C-12 — and the STATE stands empty, rather than holding a receipt this write never earned').toBeNull()
+
+    // THE SECOND `absent` REASON, AND THE CLAUSE THAT MAKES THE ROW BITE: a SENT write first, so a hold stands, and
+    // then the member loses the route — an older preload, `C-9`(b)'s lawful degradation. The push is silent for it,
+    // and the getter answers the FIRST write's record: the stale reading a getter-only reader would present as news.
+    const older = doubleOf()
+    const member = older.member as Record<string, unknown>
+    const olderClient = createViewClient({ bridge: asBridge(older.member) })
+    const olderPushes: ViewWriteOutcome[] = []
+    olderClient.onWriteOutcome((outcome) => olderPushes.push(outcome))
+    olderClient.commitPane('pane-a', { size: 20 })
+    await settle()
+    expect(olderPushes.length, 'C-12 — the control: one sent write, one push').toBe(1)
+    const standing = olderClient.writeOutcome()
+    expect(standing?.status, 'C-12 — and the hold the next clause is read against').toBe('committed')
+    delete member['commitDrag']
+    expect(olderClient.commitDrag('pane-a', { size: 21 }), 'C-12 — `no-route`: the member answered and the route is not there').toEqual({
+      status: 'absent',
+      reason: 'no-route',
+    })
+    await settle()
+    expect(olderPushes.length, 'C-12 — **`send` publishes NOTHING for the `absent` arm, on either reason**').toBe(1)
+    expect(
+      olderClient.writeOutcome(),
+      'C-12 — **and the getter answers the OLDER receipt, unchanged**: this is why a getter-only reader structurally cannot see a write that went nowhere, and why the push is not a convenience',
+    ).toBe(standing)
   })
 })

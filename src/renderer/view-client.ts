@@ -24,7 +24,11 @@
 // asynchronous, so:
 //   · READS are answered from the shape and stay SYNCHRONOUS — that is the reason the shape exists at all. A read is
 //     therefore ALWAYS one delivery stale at worst, and the delivery is exactly what the store's own commit caused.
-//   · WRITES are SENT and their receipt arrives a tick later (`writeOutcome()` is where it lands). No caller's answer is
+//   · WRITES are SENT and their receipt arrives a tick later, at ONE REGISTER'S TWO ADJACENT MEMBERS (L2 §9): the STATE
+//     is `writeOutcome()`, which HOLDS the last sent write's declared answer, and the EVENT is
+//     `onWriteOutcome(handler)`, which PUSHES that same record from the very continuation that assigns the hold — the
+//     place the answer's arrival already is, so nothing is asked twice and nothing is read on a turn of its own. There
+//     is no poll, no timer, no retry and no getter-instead-of-push here (`D-82` clause 4). No caller's answer is
 //     composed from a receipt: the pane drag's `release` returns `void` (it already did — the old receipts were
 //     discarded), so the drag's next read is the shape a delivery refilled.
 //   · NOTHING HERE POLLS, TIMES, RETRIES OR WRITES ON A READ (`D-82` clause 4). There is exactly ONE stated boot read
@@ -92,19 +96,26 @@ export interface ViewShape {
   }
 }
 
-/** **A WRITE'S SENT ARM.** `sent` says the route was handed the write and the receipt is not the answer — it lands in
- *  `writeOutcome()` a tick later. `absent` is a realm with no crossing member or no such route: the write went NOWHERE, and
- *  a caller can say so instead of assuming it landed (the gutter's `L-5` lesson, applied to a route that no longer answers
- *  in the caller's turn). */
+/** **A WRITE'S SYNCHRONOUS STATEMENT — THE WHOLE ANSWER THIS REALM CAN GIVE IN THE CALLER'S OWN TURN, AND NEVER THE
+ *  COMMIT'S OUTCOME.** `sent` says the route was handed the write; the receipt is a tick later, and it arrives at BOTH
+ *  halves of ONE register — HELD at `writeOutcome()` (the state) and PUSHED to `onWriteOutcome()`'s handlers (the event).
+ *  `absent` is a realm with no crossing member or no such route: **the write went NOWHERE**, nothing was sent, so NO
+ *  RECEIPT WILL EVER ARRIVE and `send` records nothing for it. **THAT ASYMMETRY IS THE SHARPEST FACT ABOUT THE PAIR**:
+ *  a reader of the getter alone STRUCTURALLY CANNOT SEE a write that went nowhere — it would be handed an older receipt,
+ *  or `null` — which is why this statement is read by its own synchronous reader and why the push is not a substitute
+ *  for it either. A caller can say so instead of assuming it landed (the gutter's `L-5` lesson, applied to a route that
+ *  no longer answers in the caller's turn). */
 export type ViewWriteStatement =
   | { readonly status: 'sent' }
   | { readonly status: 'absent'; readonly reason: 'no-view-member' | 'no-route' }
 
 /** **THE LAST WRITE'S DECLARED ANSWER, AS IT ARRIVED** — `{status:'committed'}` or the crossing's own refusal record, or
  *  `unread` where the route threw or answered a shape L2 does not declare. It is held so a REFUSED write is a reading
- *  rather than a silent no-op; nothing composes a decision from it. **`route` NAMES THE FAMILY THE RECEIPT BELONGS TO**,
- *  and `'drag'` is the fourth word: the `temp` family has no member on a reading, so this word is how a caller tells a
- *  drag's receipt from the three commits' (D-132). */
+ *  rather than a silent no-op; nothing composes a decision from it. **THE SAME RECORD IS ALSO PUSHED, AND THAT IS THE
+ *  POINT OF HOLDING IT** (L2 §9): `send`'s TWO continuations — the resolve arm that mints this record and the reject arm
+ *  that mints the `route-threw` one — hand it to every `onWriteOutcome()` handler, so the two registers cannot disagree
+ *  about one receipt. **`route` NAMES THE FAMILY THE RECEIPT BELONGS TO**, and `'drag'` is the fourth word: the `temp`
+ *  family has no member on a reading, so this word is how a caller tells a drag's receipt from the three commits' (D-132). */
 export interface ViewWriteOutcome {
   readonly route: 'pane' | 'zone' | 'theme' | 'drag'
   readonly answer: unknown
@@ -143,7 +154,7 @@ export interface ViewClientOptions {
   readonly bridge?: ViewClientBridge | null
 }
 
-/** **THE CLIENT — the shape, the synchronous reads the drag needs, and the FIVE WRITE routes it SENDS (`commitPane`/`commitZones`/`commitTheme`/`commitDrag`/`clearDrag`); the BRIDGE's SEVEN are those five plus `read` and `onChanged`, which this client reaches as `fill()` and `subscribe()`.** */
+/** **THE CLIENT — the shape, the synchronous reads the drag needs, the FIVE WRITE routes it SENDS (`commitPane`/`commitZones`/`commitTheme`/`commitDrag`/`clearDrag`), and the TWO RECEIPT members that stand beside them (`writeOutcome()`'s HOLD and `onWriteOutcome()`'s PUSH, one register's state and event — L2 §9); the BRIDGE's SEVEN are those five plus `read` and `onChanged`, which this client reaches as `fill()` and `subscribe()`.** */
 export interface ViewClient {
   /** THE SHAPE AS IT STANDS — `filled: false` before anything has answered. */
   shape(): ViewShape
@@ -199,6 +210,22 @@ export interface ViewClient {
   reading(): ViewClientReading | null
   /** The last write's declared answer, or `null` before the first. */
   writeOutcome(): ViewWriteOutcome | null
+  /** **THE RECEIPT'S EVENT — THE PUSH THAT STANDS BESIDE `writeOutcome()`'S HOLD** (L2 §9, `D-167`'s routing of the three
+   *  drag routes). Each receipt is handed to every registered handler FROM `send`'s OWN CONTINUATION, which is the place
+   *  the answer arrives and the place `lastWrite` is assigned — so nothing is asked twice, nothing is read on a turn of
+   *  its own, and the handler is handed THE SAME RECORD the getter holds.
+   *
+   *  **IT CANNOT FAIL AND IT ANSWERS THE WITHDRAWAL**: this realm's registration has no bridge half to refuse, so it is
+   *  `() => void` and not a `ViewSubscription`. The withdrawal is IDEMPOTENT — calling it twice is not an error — and it
+   *  never throws. **A THROWING HANDLER IS CONTAINED**: it stops at its own call and affects neither the write path nor
+   *  the record, which is already held.
+   *
+   *  **WHY A PUSH AT ALL**: a promise handed back from a route would re-grain `ViewWriteStatement` and every statement
+   *  battery, and a read on a later turn would be a poll for a turn that never comes — a refusal produces NO delivery,
+   *  so the shape's subscription cannot be this reader. **THE GETTER IS NOT A SUBSTITUTE FOR IT**: `send` records nothing
+   *  for an `absent` statement, so a getter-only reader structurally cannot see a write that went nowhere. `writeOutcome()`
+   *  is the STATE and this is the EVENT — the relation `reading()`/`subscribe()` already are, one register up. */
+  onWriteOutcome(handler: (outcome: ViewWriteOutcome) => void): () => void
 }
 
 /** The shape before anything has answered: the declared empty pair and the measured-default source. **IT IS NOT A
@@ -365,6 +392,10 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
   let shape: ViewShape = emptyShape()
   let lastReading: ViewClientReading | null = null
   let lastWrite: ViewWriteOutcome | null = null
+  /** **THE RECEIPT'S HANDLERS — THE EVENT BESIDE THE STATE** (L2 §9): ONE array, registered beside the one hold, so the
+   *  two members of this register cannot drift apart. It is written by `onWriteOutcome` and by its withdrawal and by
+   *  nothing else, and `publish` is its only reader. */
+  const writeHandlers: Array<(outcome: ViewWriteOutcome) => void> = []
   /** The member, at THIS call: an injected one where the caller supplied one (including `null`, the stated absent case),
    *  the ambient `window.provident.view` otherwise. */
   const memberFor = (): unknown => (options.bridge === undefined ? ambientViewMember() : options.bridge)
@@ -375,17 +406,38 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
     return typeof route === 'function' ? (route as (...args: unknown[]) => Promise<unknown>).bind(member) : null
   }
 
-  /** ONE WRITE, SENT — the receipt is recorded when it lands and composes nothing. **THE ROUTE WORD NAMES THE FAMILY AND
-   *  `'drag'` IS THE FOURTH**: a `temp` reading has no member on any reading, so the receipt is the one place a caller can
-   *  see which family a write belonged to (D-132). */
+  /** **ONE RECEIPT, HELD AND PUSHED — the register's ONE write, so the state and the event can never disagree about one
+   *  answer** (L2 §9). The hold is assigned FIRST, before any handler runs: **EACH HANDLER CALL IS CONTAINED**, so a
+   *  throwing handler can neither break the write path nor swallow the record — it loses only its own report, exactly as
+   *  a throwing delivery handler does one register up. The array is copied before the loop, so a handler that withdraws
+   *  itself (or its neighbour) during the push cannot skip a handler or shorten the iteration. */
+  function publish(outcome: ViewWriteOutcome): void {
+    lastWrite = outcome
+    for (const handler of [...writeHandlers]) {
+      try {
+        handler(outcome)
+      } catch {
+        /* the caller's handler, the caller's error */
+      }
+    }
+  }
+
+  /** ONE WRITE, SENT — the receipt is published when it lands and composes nothing. **BOTH CONTINUATIONS PUBLISH THE SAME
+   *  RECORD this getter will answer** (L2 §9): the resolve arm mints it through `outcomeOf` and the reject arm mints the
+   *  `route-threw` one, and each hands it to `publish`, which is where the answer's arrival already is — so no reader
+   *  needs a poll, a timer, a retry or a second read, and `writeOutcome()` is not a substitute for the push. **NOTHING IS
+   *  RECORDED FOR `absent`**: a statement that never reached a route has no receipt, so a getter-only reader structurally
+   *  cannot see a write that went nowhere and would answer an OLDER receipt instead. **THE ROUTE WORD NAMES THE FAMILY
+   *  AND `'drag'` IS THE FOURTH**: a `temp` reading has no member on any reading, so the receipt is the one place a
+   *  caller can see which family a write belonged to (D-132). */
   function send(route: 'pane' | 'zone' | 'theme' | 'drag', call: ((...args: unknown[]) => Promise<unknown>) | null, args: unknown[]): ViewWriteStatement {
     if (call === null) return { status: 'absent', reason: memberFor() === null ? 'no-view-member' : 'no-route' }
     void call(...args).then(
       (answer: unknown) => {
-        lastWrite = outcomeOf(route, answer)
+        publish(outcomeOf(route, answer))
       },
       (error: unknown) => {
-        lastWrite = { route, answer: null, status: 'unread', reason: 'route-threw', message: detailOf(error) }
+        publish({ route, answer: null, status: 'unread', reason: 'route-threw', message: detailOf(error) })
       },
     )
     return { status: 'sent' }
@@ -546,6 +598,23 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
 
     writeOutcome(): ViewWriteOutcome | null {
       return lastWrite
+    },
+
+    /** **THE RECEIPT'S REGISTRATION — TOTAL IN BOTH DIRECTIONS** (L2 §9): a handler that is not a function registers
+     *  nothing and still receives a callable withdrawal, and the withdrawal is IDEMPOTENT by construction — a `withdrawn`
+     *  flag is set on the first call and the second returns at it, so a handler already gone is never looked for twice
+     *  and a double withdrawal is not an error. Nothing here throws and nothing here reads a receipt. */
+    onWriteOutcome(handler: (outcome: ViewWriteOutcome) => void): () => void {
+      const noop = (): void => undefined
+      if (typeof handler !== 'function') return noop
+      writeHandlers.push(handler)
+      let withdrawn = false
+      return (): void => {
+        if (withdrawn) return
+        withdrawn = true
+        const at = writeHandlers.indexOf(handler)
+        if (at >= 0) writeHandlers.splice(at, 1)
+      }
     },
   }
 }

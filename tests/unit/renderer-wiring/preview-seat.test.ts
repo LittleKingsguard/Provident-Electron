@@ -29,10 +29,25 @@
 //   · `PS-3` — a SECOND ending turn sends NOTHING — the ONE `clearDrag` the flag owns, and NO `applyCommand` at all: the app
 //     hands the release no sink (`D-129`), so this row's `commands` reading is `0` where the seat's one sink write used to be.
 //   · `PS-4` — the ghost turn is RETURNED, and BOTH seats carry the SAME key.
+//   · `PS-5` — **THE STATEMENT'S READER, SYNCHRONOUS** (`docs/L3/renderer-wiring/design.md` §2 `N1`; `D-126`'s `F10`,
+//     `D-167`'s routing): the three routes' `{status:'absent'}` is a write that went NOWHERE, so `move`, `release` and
+//     `endReading` each `console.warn` once, with the `reason` verbatim and the turn's own `what` spelling; a
+//     `sent`-answering member warns nothing; and a `null` `view` says it ONCE at construction, the three per-turn
+//     statements staying silent by design.
+//   · `PS-6` — **THE RECEIPT'S PUSH, ASYNCHRONOUS** (§2 `N2`; L2 §9): the one register a construction takes reports
+//     `refused` as an error carrying `reason`/`message`, `unread` as a warning, and stays silent on `committed` — and it
+//     is SCOPED to the `pane` and `drag` route words, so a `zone` and a `theme` refusal of the same shape is not this
+//     realm's news.
+//
+// **THE CONSOLE IS READ THROUGH A SPY AND NOT THROUGH A REDIRECT** (`RS-6`'s idiom, followed rather than re-invented): both
+// members are spied and MUTED, the messages collected, and the spies restored in a `finally` — each row then reads
+// `vi.isMockFunction` to prove the globals are the real functions again, because a spy left behind would silence every
+// later file's report.
 
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { startGutterAffordance } from '../../../src/renderer/renderer.js'
+import { createPaneDrag, startGutterAffordance } from '../../../src/renderer/renderer.js'
+import { createViewClient } from '../../../src/renderer/view-client.js'
 import type { Runtime } from '../../../src/renderer/runtime.js'
 import { DEFAULT_PANE_ID } from '../../../src/shared/view-shape.js'
 import { GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID } from '../../../src/shared/demo-envelope.js'
@@ -112,6 +127,13 @@ interface Routes {
   readonly dragReads: unknown[]
 }
 
+/** **THE ONE DEGRADATION `PS-5` DRIVES, AND NOTHING ELSE**: the member that answered while the three write routes are
+ *  NOT THERE — `no-route`, which `C-9`(b) calls *an older preload*. Absent by default, so `PS-1`…`PS-4` construct exactly
+ *  the member they always did. */
+interface SeatOptions {
+  readonly withoutWriteRoutes?: boolean
+}
+
 interface Seat {
   readonly started: { readonly attached: boolean; readonly renderGhost: () => void }
   readonly routes: Routes
@@ -133,29 +155,31 @@ interface Seat {
 
 /** **THE HARNESS §8 FIXES, IN ONE PLACE**: the stub runtime, the stub bridge, the three doubles, and the construction.
  *  It is built per row so each row's counters start at zero and no row inherits another's gesture. */
-function seat(): Seat {
+function seat(options: SeatOptions = {}): Seat {
   const routes: Routes = { commitDrag: [], clearDrag: 0, commitPane: [], dragReads: [] }
   /** **THE `view` MEMBER — seven routes, each counted.** The client reads the ambient member AT CALL TIME, so this object
    *  is the app's own bridge and not an injected one; the reads the drag needs (`paneSizeOf`/`paneBoundsOf`) are the
    *  shape's and answer the MEASURED DEFAULT on a shape nothing has filled — which is why the arithmetic below is the
    *  envelope's own `100` and not a number this file invented. */
-  const view = {
+  const view: Record<string, unknown> = {
     read: async (): Promise<unknown> => ({ status: 'committed' }),
-    commitPane: async (id: string, geometry: unknown): Promise<unknown> => {
-      routes.commitPane.push([id, geometry])
-      return { status: 'committed' }
-    },
     commitZones: async (): Promise<unknown> => ({ status: 'committed' }),
     commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
-    commitDrag: async (id: string, geometry: unknown): Promise<unknown> => {
+    onChanged: (): (() => void) => (): void => undefined,
+  }
+  if (options.withoutWriteRoutes !== true) {
+    view['commitPane'] = async (id: string, geometry: unknown): Promise<unknown> => {
+      routes.commitPane.push([id, geometry])
+      return { status: 'committed' }
+    }
+    view['commitDrag'] = async (id: string, geometry: unknown): Promise<unknown> => {
       routes.commitDrag.push([id, geometry])
       return { status: 'committed' }
-    },
-    clearDrag: async (): Promise<unknown> => {
+    }
+    view['clearDrag'] = async (): Promise<unknown> => {
       routes.clearDrag += 1
       return { status: 'committed' }
-    },
-    onChanged: (): (() => void) => (): void => undefined,
+    }
   }
   /** **THE `data` MEMBER** — the ghost turn's ONE read route (`D-112`'s pass-through). It answers a ledger arm, so the
    *  turn's own painting decision stays `DC-8(a)`'s subject and this file measures only that the RETURNED member is what
@@ -206,6 +230,35 @@ function seat(): Seat {
     moveAt: (clientX: number): void => affordance.fire('pointermove', { clientX, clientY: 0 }),
     end: (): void => affordance.fire('pointerup', { clientX: 250, clientY: 0 }),
     cancel: (): void => affordance.fire('pointercancel', {}),
+  }
+}
+
+/** **THE CONSOLE, SPYED AND MUTED, WITH ITS RESTORE MEASURED** (`RS-6`'s idiom — this tree's first console reading, followed
+ *  rather than re-invented): the two messages a report can be, and a `restore` the caller owes in a `finally`. The rows
+ *  below then read `vi.isMockFunction` to prove the globals are the REAL functions again — a spy left standing would
+ *  silence every later file's report, and a row that did not check would never know. */
+interface ConsoleCapture {
+  readonly errors: string[]
+  readonly warns: string[]
+  restore(): void
+}
+
+function captureConsole(): ConsoleCapture {
+  const errors: string[] = []
+  const warns: string[] = []
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+    errors.push(args.map((arg) => String(arg)).join(' '))
+  })
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    warns.push(args.map((arg) => String(arg)).join(' '))
+  })
+  return {
+    errors,
+    warns,
+    restore(): void {
+      errorSpy.mockRestore()
+      warnSpy.mockRestore()
+    },
   }
 }
 
@@ -354,5 +407,243 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
       live.routes.clearDrag,
       'PS-4 — BOTH SEATS CARRIED THE SAME KEY: the commit seat\'s ending and the preview seat\'s ending met on ONE flag entry, so the second was skipped and the reading stands at ONE route for two ending turns. A seat keyed by the handle\'s numeric `id` would name a key no entry answers, find nothing erased, and send a second `clearDrag`',
     ).toBe(1)
+  })
+
+  it('PS-5 — **THE STATEMENT IS READ: an `absent` WRITE WENT NOWHERE AND IS WARNED ONCE PER TURN**, with the `reason` VERBATIM and the turn\'s own `what` spelling — a `sent`-answering member warns NOTHING, and a NULL `view` says it ONCE AT CONSTRUCTION while the three per-turn statements stay silent (`D-126`\'s `F10`, design §2 `N1`)', async () => {
+    const reports = captureConsole()
+    try {
+      // ══ (a) A MEMBER THAT ANSWERED AND ROUTES THAT ARE NOT THERE — `no-route`, `C-9`(b)'s *older preload*. The
+      //    wiring's own `view` is the CLIENT and is never null here, so all three turns reach their statement and the
+      //    statement is what says the write went nowhere.
+      const degraded = seat({ withoutWriteRoutes: true })
+      expect(
+        degraded.started.attached,
+        'PS-5 — the wiring is LIVE (its listeners installed): a seat refused at `attach()` would be silent for a reason this row is not about',
+      ).toBe(true)
+      degraded.press()
+      degraded.moveAt(250)
+      expect(
+        reports.warns.length,
+        'PS-5 — **the MOVE turn warns ONCE for its one write**: `M3` reads the statement it was always handed and reports the LOST class, never the refused one (`D-117`\'s register)',
+      ).toBe(1)
+      expect(
+        reports.warns[0],
+        'PS-5 — with the turn\'s OWN `what` spelling and the statement\'s `reason` VERBATIM: a message that re-worded either would pass a text-blind row and fail a reader',
+      ).toContain('the drag move')
+      expect(reports.warns[0]).toContain('reason=no-route')
+      expect(degraded.routes.commitDrag, 'PS-5 — and the route really was ABSENT: the member was never handed the write, so this is the `absent` arm and not a refusal').toEqual([])
+
+      degraded.end()
+      expect(
+        reports.warns.length,
+        'PS-5 — the release reaches TWO turns, so it warns twice: `R4` the `file` commit and `R5` the ending, each with its own word — one line per WRITE the gesture lost',
+      ).toBe(3)
+      expect(reports.warns[1], 'PS-5 — the commit seat\'s word is its own').toContain('the pane commit')
+      expect(reports.warns[1]).toContain('reason=no-route')
+      expect(reports.warns[2], 'PS-5 — and the ending turn\'s, which is a different write and a different sentence').toContain('the drag clear')
+      expect(reports.warns[2]).toContain('reason=no-route')
+      expect(
+        [degraded.routes.commitPane.length, degraded.routes.clearDrag],
+        'PS-5 — the control that keeps the count above from being noise: NO route was handed anything, so all three statements were `absent`',
+      ).toEqual([0, 0])
+      expect(reports.errors, 'PS-5 — **and none of them is an ERROR**: an `absent` statement is a DEGRADATION the realm declares, not a fault this tree owns').toEqual([])
+
+      // ══ (b) A `sent` STATEMENT SAYS NOTHING — the receipt is the push's, and a synchronous reader that reported a sent
+      //    write would double every answer `PS-6` measures.
+      const sent = seat()
+      expect(sent.started.attached, 'PS-5 — the control\'s precondition').toBe(true)
+      sent.press()
+      sent.moveAt(250)
+      sent.end()
+      expect(
+        [sent.routes.commitDrag.length, sent.routes.commitPane.length, sent.routes.clearDrag],
+        'PS-5 — all three turns SENT their write, so the silence below is the STATEMENT\'s arm and not an unreached seat',
+      ).toEqual([1, 1, 1])
+      expect(
+        reports.warns.length,
+        'PS-5 — **a `{status:\'sent\'}` statement says NOTHING**: the answer is not in the caller\'s turn, and the receipt that will arrive is `PS-6`\'s',
+      ).toBe(3)
+      expect(reports.errors.length, 'PS-5 — and nothing is an error here either').toBe(0)
+
+      // ══ (c) A NULL `view` IS ONE FACT, SAID ONCE: the composition's writes reach no crossing and the gesture is
+      //    presentational, so a per-move repetition at pointer frequency would be noise on the one realm where the
+      //    console is the only observability. **THE COUNT IS THE CLAUSE**, not only the text.
+      const noView = createPaneDrag({ view: null }, {})
+      expect(
+        reports.warns.length,
+        'PS-5 — **exactly ONE word at construction**, where the three per-turn statements used to be able to fire on every turn of every gesture',
+      ).toBe(4)
+      expect(
+        reports.warns[3],
+        'PS-5 — and it is the construction word, naming the ONE fact and the ONE place it is said',
+      ).toContain('the pane drag has NO view client')
+      expect(reports.warns[3], 'PS-5 — carrying its own note that it is said here and that the three guards stay silent (`design.md` §2 `N1`)').toContain(
+        'said ONCE here',
+      )
+      noView.move('gutter', { value: 150 })
+      noView.release('gutter', 150, undefined)
+      noView.cancel('gutter')
+      expect(
+        reports.warns.length,
+        'PS-5 — **and the three per-turn statements stay SILENT while it stands**: a null `view` reaching `M3`/`R4`/`E3` reports nothing, so a guard that warned per turn reads `7` here',
+      ).toBe(4)
+      expect(reports.errors.length, 'PS-5 — the whole row reports on ONE channel and it is `warn`').toBe(0)
+    } finally {
+      reports.restore()
+    }
+    expect(
+      [vi.isMockFunction(console.error), vi.isMockFunction(console.warn)],
+      'PS-5 — **THE GLOBALS ARE NOT LEFT PATCHED**: both members are the REAL functions again, so the next file\'s reports land where they always did — the restore is measured here rather than trusted to the `finally`',
+    ).toEqual([false, false])
+  })
+
+  it('PS-6 — **THE RECEIPT IS PUSHED, AND THE REPORT IS SCOPED TO THE TWO ROUTE WORDS THIS REALM SENDS**: the ONE register a construction takes reports `refused` as an ERROR carrying `reason`/`message` and `unread` as a WARNING, stays SILENT on `committed`, and ignores a `zone` and a `theme` receipt of the very same shape (design §2 `N2`, L2 §9)', async () => {
+    const reports = captureConsole()
+    try {
+      // **WHY THIS ROW BUILDS ITS OWN CLIENT AND DRIVES `createPaneDrag` DIRECTLY, STATED RATHER THAN LEFT TO LOOK LIKE A
+      // SHORTCUT.** The two relations `PS-5`/`PS-6` measure are `createPaneDrag`'s PRIVATE ones (`signatures.md` §2), and
+      // the register is taken ONCE per CONSTRUCTION — while `getViewClient()` is the realm's singleton, so every `seat()`
+      // in this file registers one more handler on the SAME client and each receipt is then reported once per handler.
+      // A count over that singleton would measure this file's row order, not the wiring: so the row constructs the
+      // client itself, `createPaneDrag` takes it as its `view`, and **ONE registration is then readable as a 1:1 count of
+      // lines to writes** — a register re-taken per turn would read `1 + 2 + 3 + 4 = 10` for the four writes below.
+      const routes = {
+        commitPane: [] as [string, unknown][],
+        commitDrag: [] as [string, unknown][],
+        commitZones: [] as [string, unknown][],
+        commitTheme: [] as [string, string][],
+        clearDrag: 0,
+      }
+      const answers = {
+        commitPane: { status: 'committed' } as unknown,
+        commitDrag: { status: 'committed' } as unknown,
+        clearDrag: { status: 'committed' } as unknown,
+        commitZones: { status: 'committed' } as unknown,
+        commitTheme: { status: 'committed' } as unknown,
+      }
+      const member = {
+        read: async (): Promise<unknown> => ({ status: 'committed' }),
+        commitPane: async (id: string, geometry: unknown): Promise<unknown> => {
+          routes.commitPane.push([id, geometry])
+          return answers.commitPane
+        },
+        commitDrag: async (id: string, geometry: unknown): Promise<unknown> => {
+          routes.commitDrag.push([id, geometry])
+          return answers.commitDrag
+        },
+        clearDrag: async (): Promise<unknown> => {
+          routes.clearDrag += 1
+          return answers.clearDrag
+        },
+        commitZones: async (id: string, zone: unknown): Promise<unknown> => {
+          routes.commitZones.push([id, zone])
+          return answers.commitZones
+        },
+        commitTheme: async (token: string, attributeName: string): Promise<unknown> => {
+          routes.commitTheme.push([token, attributeName])
+          return answers.commitTheme
+        },
+        onChanged: (): (() => void) => (): void => undefined,
+      }
+      const client = createViewClient({ bridge: member as never })
+      const drag = createPaneDrag({ view: client }, {})
+      expect(
+        typeof drag.move,
+        'PS-6 — the surface `createPaneDrag` returns is where §2 `N2`\'s register is taken, so this is the declared entry point and not a private one reached around',
+      ).toBe('function')
+
+      // ══ (a) `refused` → `console.error`, carrying the crossing\'s own `reason` and `message` VERBATIM — and ONE line for
+      //    ONE write, which is the registration\'s count read through the only surface it has.
+      answers.commitDrag = { status: 'refused', reason: 'malformed-geometry', message: 'the supplied size is not a finite non-negative number' }
+      drag.move('gutter', { value: 150 })
+      await flushed()
+      expect(routes.commitDrag.length, 'PS-6 — the route WAS handed the write, so the report below is an answer\'s and not a missing call').toBe(1)
+      expect(
+        reports.errors.length,
+        'PS-6 — **one refusal, ONE error**: the register is taken once at construction, so a second registration would read `2` here for one write',
+      ).toBe(1)
+      expect(reports.errors[0], 'PS-6 — the refusal\'s own `reason` travels in the sentence, spelled as the crossing spelled it').toContain('malformed-geometry')
+      expect(
+        reports.errors[0],
+        'PS-6 — with its `message` beside it: a refusal reported without its sentence is a word a reader cannot act on',
+      ).toContain('the supplied size is not a finite non-negative number')
+      expect(reports.warns, 'PS-6 — and a REFUSAL is never the LOST class (`D-117`: `error` for a fault this tree owns)').toEqual([])
+
+      // ══ (b) `committed` → SILENCE. The store processed the write, so the pane\'s DELIVERY is still owed: a receipt that
+      //    reported a commit would be an answer pretending to be a state.
+      answers.commitDrag = { status: 'committed' }
+      const sentBefore = routes.commitDrag.length
+      drag.move('gutter', { value: 160 })
+      await flushed()
+      expect(routes.commitDrag.length - sentBefore, 'PS-6 — the control: the move sent its write, so the silence below is the ARM\'s').toBe(1)
+      expect(
+        [reports.errors.length, reports.warns.length],
+        'PS-6 — **a `committed` receipt reports NOTHING**, unchanged from the refusal above, on both channels: the delivery is the one thing that will speak',
+      ).toEqual([1, 0])
+
+      // ══ (c) `unread` → `console.warn`, ON BOTH CONTINUATIONS: an answer no route of L2 declares, and a rejection.
+      answers.commitDrag = { status: 'sealed' }
+      const sealedBefore = routes.commitDrag.length
+      drag.move('gutter', { value: 170 })
+      await flushed()
+      expect(routes.commitDrag.length - sealedBefore, 'PS-6 — the control: the second `unread` write was sent').toBe(1)
+      expect(reports.warns.length, 'PS-6 — **an answer no route declares is a LOST one**: the boundary spoke, and it said a word L2 does not mint').toBe(1)
+      expect(reports.warns[0]).toContain('answer-not-declared')
+      answers.commitDrag = Promise.reject(new Error('ipc boom'))
+      const throwingBefore = routes.commitDrag.length
+      drag.move('gutter', { value: 180 })
+      await flushed()
+      expect(routes.commitDrag.length - throwingBefore, 'PS-6 — the control: the rejecting route was reached').toBe(1)
+      expect(
+        reports.warns.length,
+        'PS-6 — and the route\'s THROW lands in the same register: `send`\'s reject arm mints `route-threw` and pushes it exactly as the resolve arm does',
+      ).toBe(2)
+      expect(reports.warns[1]).toContain('route-threw')
+      expect(reports.errors.length, 'PS-6 — neither `unread` arm is an error: a boundary that did not speak is no state of the record').toBe(1)
+
+      // ══ (d) THE SCOPE, DRIVEN ONE ROUTE WORD AT A TIME. `zone` and `theme` belong to the senders that sent them — the
+      //    zone family has no UI caller at all (`D-151`) — so this realm may not report another act\'s answer. The control
+      //    is the SAME refusal shape on a route word this realm DOES send: a report that did not read the route word would
+      //    find the two pairs indistinguishable.
+      answers.commitZones = { status: 'refused', reason: 'malformed-zone', message: 'the commit carries no zone id' }
+      answers.commitTheme = { status: 'refused', reason: 'malformed-theme', message: 'the commit carries no setting token' }
+      const beforeForeign = [reports.errors.length, reports.warns.length]
+      client.commitZones('zone-1', { size: 10 })
+      client.commitTheme('dark', 'data-theme')
+      await flushed()
+      expect(
+        [routes.commitZones.length, routes.commitTheme.length],
+        'PS-6 — the control that makes the silence mean something: BOTH foreign routes were handed their write, through the client\'s own members — the SAME client this register stands on — and both ANSWERED a refusal',
+      ).toEqual([1, 1])
+      expect(
+        [reports.errors.length, reports.warns.length],
+        'PS-6 — **a `zone` and a `theme` refusal are NOT this realm\'s news**: the register is scoped to `pane` and `drag`, and a report that ignored the route word would read `3` and `0` here',
+      ).toEqual(beforeForeign)
+
+      // THE SAME REGISTER, THE SAME SHAPE, A ROUTE WORD THIS REALM SENDS (`pane`, the release\'s one `file` commit).
+      answers.commitPane = { status: 'refused', reason: 'undeclared-pane', message: 'the pane id names no pane this record declares' }
+      drag.release('gutter', 150, undefined)
+      await flushed()
+      expect(routes.commitPane.length, 'PS-6 — the release seat sent the `file` commit, so the route word below is `pane` and not an inferred one').toBe(1)
+      expect(
+        [reports.errors.length - beforeForeign[0], reports.warns.length - beforeForeign[1]],
+        'PS-6 — **and THAT refusal IS reported, on the error channel**: the scope is the route word, and not the silence of a register that never fired',
+      ).toEqual([1, 0])
+      expect(reports.errors[reports.errors.length - 1]).toContain('undeclared-pane')
+
+      // ══ AND THE CENSUS THAT KEEPS CLAUSE (a) FROM BEING AN ACCIDENT: FIVE writes travelled through this ONE register
+      //    above — one refusal, one commit, two losses and this one — and they produced FIVE lines, one each. A register
+      //    taken per turn would read 15; a register taken twice, 10.
+      expect(
+        [reports.errors.length, reports.warns.length],
+        'PS-6 — **the register is ONE, and its lines are one per write**: the whole row\'s two channels, counted once',
+      ).toEqual([2, 2])
+    } finally {
+      reports.restore()
+    }
+    expect(
+      [vi.isMockFunction(console.error), vi.isMockFunction(console.warn)],
+      'PS-6 — **THE GLOBALS ARE NOT LEFT PATCHED**: both members are the REAL functions again, so the next file\'s reports land where they always did — the restore is measured here rather than trusted to the `finally`',
+    ).toEqual([false, false])
   })
 })
