@@ -1197,6 +1197,18 @@ const DECLARED_SCOPE: readonly string[] = [
   //    makes a fourth dead member unrepresentable rather than a hand census taken after the fact (`F8`, `D-168`, `D-169`).
   //    `strata/modules.json`'s `app-envelope` row claims the path in the same pass, so the map and this union agree.
   'tests/unit/app-envelope/live-seams.test.ts',
+  // ── `renderer-wiring`'S TRANSCRIPTION PIN — `tests/unit/renderer-wiring/signatures.test.ts`, AND IT JOINS THIS UNION AS ITS OWN
+  //    ENTRY WITH ITS OWN REASON, NEVER AS A PREFIX OF THE TWO ENTRIES ABOVE (`tests/unit/renderer-wiring/` would admit every file a
+  //    later pass drops beside them, and a directory measures nothing — `B-2`'s undeclared-sibling arm is what bites when one is
+  //    dropped without a name). **THE FILE IS `renderer-wiring`'s AND IS DECLARED HERE FOR THE REASON `preview-seat` AND
+  //    `state-checked-paint` ARE**: this row asserts the worktree's edit set against a scope, so EVERY path a pass writes is a path
+  //    this union must carry whatever module authored it, and it is created WITH this entry in the same pass (`D-146`'s precedent),
+  //    never after it. **ITS SUBJECT IS THE INSTRUMENT GAP `D-170` NAMED**: no row pinned this module's signature transcription —
+  //    `C-7` pins the *tabs* page and nothing pinned this one — so `signatures.md`'s `transcribing \`design.md\` rev N` claim and
+  //    `design.md`'s `**Rev:** N` are compared, with a synthetic control in both directions and a parse control that answers `null`
+  //    rather than comparing equal (`D-45`, `D-46`, `D-26`). `strata/modules.json`'s `renderer-wiring` row claims the same path in
+  //    the same pass, so the map and this union agree.
+  'tests/unit/renderer-wiring/signatures.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
