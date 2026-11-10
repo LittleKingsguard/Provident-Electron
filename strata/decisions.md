@@ -4523,3 +4523,27 @@ stderr tail:
 **THE READINGS AT THIS STAGE.** `typecheck` **0**; `typecheck:tests` **0**; the demo bundle **current** at `39` inputs; the module rows **18/18** and the full suite green apart from `B-1`, which reds **by construction on the dirty tree** and clears on the commit taken with it.
 
 **ITS REGISTER IS `D-71` TO `D-199`** as prose, unchanged and extended by this row only. **This row records a def restored to the shape a spike measured, a resolution proved by reading the engine's own warnings, a census whose fourth category was invisible while it was zero, and a control moved to the arm that could actually fail.**
+
+## D-201 — THE MINT WORKS, AND ITS OWN MEASUREMENT REFUTES TWO RULINGS: the **label rides the datum** and needs no `state-slice`, while the **active marker FREEZES under `keyField` reuse** — so `D-191`'s "required" and `D-194`'s "one listener per row, ever" are both superseded
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `S-4`'s landing (`src/renderer/renderer.ts`, `+78/−1`) and the rendered-HTML measurement it was required to take.
+
+**THE TURN, AND IT IS ONE TURN WITH ONE TRIGGER.** `driveTabsRows(reading, runtime)` is a private call **from `holdTabsReading`**, so its trigger is **a `['tabs']` delivery and the boot read**, **on a `'committed'` reading alone** — an `unread`/`absent` reading mints nothing (`D-127`). Its operands: `target` the tabs-row id **as a string** (resolved by `S-1`), `hookName` **the same string the envelope declares** (not re-spelled), `mintKind: 'placement'`, `prototypeName` the prototype constant, **`placementName` spelled with a comment saying it names nothing** (the engine requires it and this app authors no container — a reader must not have to rediscover that), and **`keyField: 'id'`**.
+
+**AND THE LABEL DOES NOT NEED WHAT THE DESIGN SAID IT NEEDED.** Measured: the minted row renders
+
+```
+<div data-wire="node-147" data-node-id="node-147" id="preempt-node-node-147" class="tab-row">First</div>
+```
+
+**The engine renders a minted row's text from its FIRST SCALAR SOURCE-ANCHOR BINDING** — so **placing `label` first in the datum composes it**, and a second delivery `{status:'applied', minted:[], dirtied:['node-77']}` **re-renders the reused node as `First · renamed`**. **So the label rides the DATUM, survives `keyField` reuse from the datum, and needs NO `state-slice`, no key→id map, and no second mechanism.** **`D-194` owed (3) is ANSWERED for the label, by measurement, in the direction the design page did not predict** — and the page's turn 1 and L2's §2, which both paint the label as a `state-slice` on the minted row, **are wrong and owe a re-grain.**
+
+**BUT THE ACTIVE MARKER IS THE OPPOSITE, AND IT IS A REAL FORK RATHER THAN A GAP.** Measured: **a plain `active` member reaches no prop**; **`props.active` reaches the attribute AT MINT and then FREEZES** — with the record's flag moved, **reused nodes still read `active="true"`/`active="false"` under two `rows-reuse-shape-ignored` warnings.** **So a marker that MOVES cannot ride the datum under keyed reuse**, and **the turn cannot write it as a `state-slice` either**, because a keyed re-mint answers **`minted: []`** and a key→id map is `D-129`'s copy. **The design's two halves cannot both hold.**
+
+**SO TWO RULINGS ARE SUPERSEDED, AND THE MEASUREMENT IS THE AUTHORITY.** **`D-191`'s "`keyField` REQUIRED"** and **`D-194`'s "one listener per row, EVER"** were both reasoned from **`D-182`'s id-churn measurement** — whose premise was **that a churning id is a cost because something must address the row afterwards.** **The measurement here shows the reverse trade**: **with `keyField`, the label is re-applied but the marker freezes; without it, every node is minted fresh, so the label AND the marker are correct at mint — and nothing needs to address a row afterwards if the ATTACH turn re-attaches per mint**, which it can, because the old nodes are destroyed and their listeners die with them (no leak, no map, no stale id). **So the coherent shape is: mint fresh every delivery, attach fresh beside it, and let both the label and the marker ride the datum — with `keyField` NOT declared.** **The cost is DOM churn on each tabs delivery for N tabs, which is the cheaper of the two failures and the only one that leaves the marker correct.**
+
+**WHAT IS OWED NOW.** **`S-5` (the attach turn) must re-attach per mint rather than once ever** — one `attach` per row per delivery, dying with the node — and **`S-4`'s `keyField` operand must be removed** when that lands, **in the same edit**, or the marker stays frozen. **The design page's turn 1 and L2's §2 owe the label re-grain**, and turn 2 owes the re-attach.
+
+**THE READINGS.** `typecheck` **0**; `typecheck:tests` **0**; **`130/130` green** across `tests/unit/renderer-wiring/`, `tests/integration/store-tabs-record/` and `tests/theme-control.test.ts` — **identical to the pre-edit baseline**, because nothing yet addresses the minted rows; the demo bundle rebuilt. **The mint itself is measured working**, which is what `S-4` owed.
+
+**ITS REGISTER IS `D-71` TO `D-200`** as prose, unchanged and extended by this row only. **This row records a label that rides the data it describes, a marker that freezes under the mechanism chosen to keep ids stable, two rulings superseded by the measurement that tested them, and a trade stated as a trade rather than a defect.**

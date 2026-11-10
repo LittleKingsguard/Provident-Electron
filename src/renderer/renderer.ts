@@ -2,7 +2,7 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
-import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID } from '../shared/demo-envelope.js'
+import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID } from '../shared/demo-envelope.js'
 import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
@@ -1207,6 +1207,79 @@ let tabsPagesReading: TabsPagesReading | null = null
  *  registration that stood beside it in `main()` is deleted with the store it fed). */
 let tabsClientSubscription: TabsSubscription | null = null
 
+/** **THE DELIVERY'S OTHER TURN — THE MINT, BESIDE THE PAGES' DRIVE** (`S-4`; `D-179`'s spike, `D-182`'s five measurements,
+ *  `D-198`'s string `target`, `D-200`'s resolvable prototype; `docs/L2/renderer-wiring/interface.md` §2 turn 1). ONE
+ *  in-process `runtime.applyCommand({kind:'rows-mint', …})` per `['tabs']` DELIVERY — and **ON A `'committed'` READING ALONE**,
+ *  the gate `driveTabsLandingPage` already keeps for the same reason: `order` and `rows` exist on that arm only, so a mint
+ *  driven from an `unread` or `absent` reading would REPLACE the row set with nothing (`D-127`).
+ *
+ *  **THE DATUM IS THE WHOLE PAINT, BECAUSE A KEYED RE-MINT MINTS NOTHING** (`D-182` m5, `D-194` owed (3)): a keyed re-mint
+ *  answers `minted: []` — the engine REUSES each matched row's node — so this turn never learns an id it could write a
+ *  `state-slice` to, and a key→id map would be the copy `D-129` forbids. What the keyed path DOES re-apply is each source
+ *  anchor's value (`node_modules/provident-ssr/dist/core/ops.js`'s `reconcileRowFields`), so the datum is the paint. **AND
+ *  THE DATUM'S KEY ORDER IS LOAD-BEARING, MEASURED**: the engine renders a minted row's text from its FIRST SCALAR
+ *  source-anchor binding (`dist/core/render-helpers.js`'s `scalarBinding`, read at the plain-node emit), so `label` is
+ *  composed BEFORE the record's own row — a datum whose `id` came first renders the TAB ID as the label, which is what
+ *  `D-182`'s spike saw (`r1`, `r2`). `content` is not that slot: a datum's `content` is a SHAPE field the mint freezes on
+ *  reuse and the scalar binding still wins, so this turn carries none.
+ *
+ *  **WHAT EACH DATUM IS, AND WHAT `keyField` NAMES** (`docs/L2/store-tabs-record/interface.md` §1): one datum per
+ *  `['tabs'].order` entry, being the record's own row for that id (`reading.rows`) WHOLE, so no member of it is dropped
+ *  (`D-76`), with `label` first and **the tab's own id as its fallback** — the one member every row has (`D-194`).
+ *  `keyField: 'id'` is **`TabsRecordRow`'s identifying member** (`src/shared/types.ts`): the name the record's flat family is
+ *  keyed by, and the member `seatOf` matches a row through. Unkeyed, a re-mint churns row ids; keyed, the nodes are reused and
+ *  every surviving row keeps its id (`D-182` m4/m5, `D-179`).
+ *
+ *  **AND THE THREE OPERANDS THAT NAME THINGS THIS APP DOES NOT AUTHOR**: `target` and `hookName` are **`TABS_ROWS_ID`** — the
+ *  row node's own id and the name the envelope DECLARES its hook under (`hooks: [TABS_ROWS_ID]`, `hooksKind` `'placement'`),
+ *  read from that source so neither is re-spelled here — and the target is handed as a **STRING** which the runtime's own arm
+ *  resolves, because a mint's target must be a live Node and `applyCommand` resolves `node`/`source` and never `target`
+ *  (`S-1`, `D-198`). **`placementName` NAMES NOTHING IN THIS TREE, AND THAT IS WHY IT IS PASSED AS AN OPERAND AND NOTHING
+ *  MORE**: the engine requires one on a `'placement'` mint (`rows-placement-name-missing` refuses a silent no-placement),
+ *  while this app authors NO placement container at all — `D-182`'s one negative, where a post-bootstrap mint renders at its
+ *  target's family path and never inside a container (ASM-RW-5) — so the value handed over is the row's own name and no line
+ *  of this file ever reads a placement back.
+ *
+ *  **AND THE ACTIVE MARKER DOES NOT RIDE THE DATUM — MEASURED, AND SAID RATHER THAN GUESSED AT**: a datum's `active` becomes a
+ *  source anchor and reaches NO rendered prop, and a `props.active` member in the datum reaches one on the FIRST mint only,
+ *  because the mint freezes a row's `props` on reuse (`rows-reuse-shape-ignored`). A marker that MOVES is therefore the
+ *  design's `state-slice` on the row node, which this turn cannot address without the key→id map `D-129` forbids — recorded
+ *  here rather than smoothed, and the datum still carries the record's own `active` because the datum IS that row WHOLE. */
+function driveTabsRows(reading: TabsClientReading, runtime: TabsPageRuntime | null): void {
+  if (reading.status !== 'committed' || runtime === null) return
+  const recordById = new Map<string, TabsRecordRow>()
+  for (const row of reading.rows) recordById.set(row.id, row)
+  const rows = reading.order.map((id) => {
+    const record = recordById.get(id)
+    // `label` FIRST — see this turn's own note: it is the binding the engine renders the row's text from, and the tab id is
+    // the fallback where the record carries no title (`D-194`). The record's row follows WHOLE, so `id` (the `keyField`),
+    // `target`, `active` and every other member travel as the reading gave them (`D-76`).
+    return { label: record?.label ?? id, ...(record ?? {}) }
+  })
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'rows-mint',
+      target: TABS_ROWS_ID,
+      hookName: TABS_ROWS_ID,
+      mintKind: 'placement',
+      prototypeName: TABS_ROW_PROTOTYPE_ID,
+      placementName: TABS_ROWS_ID,
+      keyField: 'id',
+      rows,
+    })
+    // **A REFUSED MINT IS REPORTED, NEVER SILENT** (`D-179`: the four refusals are the ENGINE's — `hook-kind-mismatch`,
+    // `rows-prototype-unresolved`, `rows-placement-name-missing`, `rows-shape-invalid` — and a `rejected` is this realm's own
+    // unresolved target). The applied arm says nothing: the rows are the markup's to report (`AL-2`, `AL-4`).
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    if (status !== 'applied') {
+      console.error(`[provident-renderer] tabs rows: the mint answered ${status}; ${rows.length} row(s) stand unrendered`)
+    }
+  } catch (error) {
+    // A throw is a defect in the runtime's own totality, held here rather than left to surface as a page error.
+    console.error(`[provident-renderer] tabs rows: the mint threw; ${rows.length} row(s) stand unrendered`, error)
+  }
+}
+
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the
  *  push carries an address and not a value), so the client has already re-read when this runs; what is left is to hold
  *  the answer and to let the record drive the two authored terminals. **THE HELD READING IS THE DRIVE'S INPUT**
@@ -1220,6 +1293,10 @@ function holdTabsReading(reading: TabsClientReading, runtime: TabsPageRuntime | 
   // above the declaration already claimed — "`tabsPagesReading` is what the drive made of the LAST
   // READING" — and it makes the two statements about a read one pair rather than a pairing and a copy.
   tabsPagesReading = driveTabsLandingPage(tabsClientReading, runtime)
+  // **AND THE MINT IS MADE FROM THE SAME HELD READING** (`S-4`, `D-179`): one `rows-mint` per delivery, in the one body that
+  // already holds it, after the pages' drive and never before it. It writes no page, resolves nothing through a map and
+  // holds no record: a delivery that is not `'committed'` mints nothing at all (that gate is the turn's own).
+  driveTabsRows(tabsClientReading, runtime)
 }
 
 /** THE ONE SITE — called from `main()` as its last statement, never awaited (see above). ONE read and ONE registration,
