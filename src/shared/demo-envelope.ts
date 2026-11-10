@@ -191,8 +191,13 @@ export const TABS_ROWS_ID = 'tab-rows'
  *  child of `template.root`. Without it the mint answers `rows-prototype-unresolved` and a row has no shape
  *  (`D-179`, `D-182` measurement 1).
  *  **ITS READER, IN ONE LINE**: the engine's mint, by name and never by id — which is why the node carries
- *  `component.reference` equal to this string and NO `css.id` (a node nothing addresses does not publish
- *  an address). */
+ *  `component.reference` equal to this string and NO `css.id` (the mint reaches it by name, so nothing about
+ *  it is an address).
+ *  **IT IS THE PROVIDER AS WELL AS THE NAME** (`D-199`): the node carries this string as `props.id` AND as the
+ *  `component.value`'s inline def, so the def-root prototype `defRootPrototypeFor` answers is the one the mint
+ *  copies a row's `type` and `css` off. A reference WITHOUT that value binds a consumer with no provider, which
+ *  is exactly the `unresolved-reference` every load emitted and the `rows-prototype-unresolved` the mint
+ *  refused — measured, then corrected here. */
 export const TABS_ROW_PROTOTYPE_ID = 'tab-row'
 /** **THE RECEIPT CARRIER'S AUTHORED ID — THE ONE NODE A MENUS ANSWER IS WRITTEN INTO** (`D-129`): the
  *  `GUTTER_STATUS_ID` form exactly, resolved BY ID by the menus turn, and it authors NO `content` — what
@@ -1199,18 +1204,40 @@ export function demoEnvelope() {
               },
             ],
           },
-          // ---- THE ROW PROTOTYPE (`D-179`, `D-182`; design §4) ----------------------------------
-          // **A DEF-ROOT `component` NODE, AND `template.root`'s LAST CHILD.** The engine's mint resolves it BY
-          // NAME — `component.reference` IS `TABS_ROW_PROTOTYPE_ID` — and without it the mint answers
-          // `rows-prototype-unresolved` and a row has no shape at all. It authors NO `css.id` (a node nothing
-          // addresses publishes no address), NO `content` (a row's label is PAINTED off the record), and it
-          // stands OUTSIDE the app root, in the region the modal's `inert` write cannot reach — the same choice
-          // the overlay layer makes below, for the same reason (`D-113`, `D-178` §3). **ITS READER, IN ONE LINE**:
-          // the engine's mint, by name (`AL-2`'s first measurement).
+          // ---- THE ROW PROTOTYPE (`D-179`, `D-182`, `D-199`; design §4) -------------------------
+          // **A DEF-ROOT `component` NODE, AND `template.root`'s LAST CHILD** — the position is load-bearing and
+          // does not move. The engine's mint resolves it BY NAME — `component.reference` IS
+          // `TABS_ROW_PROTOTYPE_ID` — and without it the mint answers `rows-prototype-unresolved` and a row has no
+          // shape at all. It authors NO `css.id` (the mint reaches it by NAME, never by address), NO `content` (a
+          // row's label is PAINTED off the record), and it stands OUTSIDE the app root, in the region the modal's
+          // `inert` write cannot reach — the same choice the overlay layer makes below, for the same reason
+          // (`D-113`, `D-178` §3). **ITS READER, IN ONE LINE**: the engine's mint, by name (`AL-2`'s first
+          // measurement).
+          //
+          // **`D-199`'s CORRECTION, AND BOTH HALVES OF IT ARE LOAD-BEARING.** A REFERENCE ALONE BINDS A CONSUMER:
+          // it publishes a `target` anchor, and with nothing in the tree providing that name every load emitted
+          // `unresolved-reference` and the mint refused `rows-prototype-unresolved` (`D-199` measured both). The
+          // PROVIDER half `D-179`'s spike carried and this shape lacked is the INLINE `component.value` — *the def
+          // that makes the name resolvable*, resolved on the path `D-179` recorded: the def-ROOT prototype
+          // `defRootPrototypeFor` answers, the node the mint copies a row's `type` and `css` off. So the `value`
+          // is ONE ROW's def, spelled in THIS app's vocabulary and not the spike's: a **`div`** — the tabs row is
+          // a `div` in the top-bar's flex row and the app's other authored click targets (the menu items) are
+          // `div`s, so no `li` and no list the app does not author — carrying the one **`tab-row`** class this
+          // prototype and design §2 already spell. **IT AUTHORS NO `props`**, and that is measured rather than
+          // stylistic: the mint takes only `type` and `css` off the shape, so a row's label, its `props.active`
+          // marker and its `keyField` datum are the PAINT's and the row DATUM's, and an authored `props` here
+          // would be dead data.
+          // AND THE PROVIDER IS ADDRESSABLE: `props.id` is the prototype's own name (`D-179`'s
+          // `prototype-provider` precedent, and `D-199`'s other half), so the def-root has an address a
+          // diagnostic can name — beside the `css` it still declares, and with no `css.id` added.
           {
             type: 'div',
-            component: { reference: TABS_ROW_PROTOTYPE_ID },
             css: { classes: ['tab-row'] },
+            props: { id: TABS_ROW_PROTOTYPE_ID },
+            component: {
+              reference: TABS_ROW_PROTOTYPE_ID,
+              value: { type: 'div', css: { classes: ['tab-row'] } },
+            },
           },
         ],
       },

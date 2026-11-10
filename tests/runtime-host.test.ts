@@ -208,7 +208,32 @@ describe('renderer Runtime — host-capability hardening (spec runtime-host.md �
     runtime.teardown()
     const c = runtime.renderedHtmlResult().census
     expect(c.inTree).toBe(1) // graph is root-only
-    expect(c.destroyed + c.unplaced + c.inTree).toBe(c.registered) // every child is gone from in-tree
+    // THE CENSUS CARRIES FOUR CATEGORIES, NOT THREE — and until `D-199` this row summed three.
+    // The fourth is `prototypes`: it counts the engine's OUT-OF-TREE def-root prototype, minted from
+    // the tabs-row prototype's inline `component.value` (`src/shared/demo-envelope.ts`, `D-199`; the
+    // shape `D-179`'s spike carried). That node is NOT a child of the app tree, so it is neither
+    // `destroyed` nor `unplaced` — it stands at `state === 'prototype'` with `isInTree` false — and a
+    // three-term sum therefore reads `71` against `registered 72` and can never close. Measured
+    // against the real runtime on this file's own shim: after `bootstrap()`
+    // `73 = 72 inTree + 0 unplaced + 0 destroyed + 1 prototypes`; after `teardown()`
+    // `72 = 1 inTree + 70 unplaced + 0 destroyed + 1 prototypes`. The arithmetic closes WITH the
+    // fourth category; what was wrong was the sum, never the teardown.
+    expect(c.destroyed + c.unplaced + c.inTree + c.prototypes).toBe(c.registered) // every registered node is a child, a torn-down, a destroyed, or the prototype
+    // THE FOURTH CATEGORY'S OWN CONTROL — the term above must not become a place where a real tree
+    // node hides, so the prototype's own id is held to the SAME address space as the torn-down
+    // children: it must not be a resolvable TARGET either, and `listTargets()` carries no `tab-row`.
+    // TWO ARMS, because this name is held in two address spaces and only one of them is live. The
+    // census counts the ENGINE's def-root, which authors no `css.id` at all (`D-199`: addressed by
+    // `props.id`, "with no `css.id` added"), so the cssId arm measures an address the prototype never
+    // occupies — it guards that deliberate absence and would stay green under a pure index
+    // regression. THE BITE IS THE SECOND ARM: the authored prototype node carries
+    // `props.id === 'tab-row'` — the very string the mint resolves by name — and a string target
+    // reaches the props space, measured `resolved` on this same graph BEFORE `teardown()` and
+    // `unresolved` after. So the arm fails the moment a torn-down or prototype-held node stays
+    // addressable, i.e. exactly when this fourth term is covering a ghost.
+    for (const target of [{ kind: 'cssId', cssId: 'tab-row' } as const, 'tab-row']) {
+      expect(() => runtime.nodeState(target)).toThrow(/unresolved target/)
+    }
     // A5: a torn-down css.id must NOT resolve via the index (ghost tree gone)
     expect(() => runtime.nodeState({ kind: 'cssId', cssId: 'counter' })).toThrow(/unresolved target/)
     expect(() => runtime.nodeState({ kind: 'cssId', cssId: 'inc' })).toThrow(/unresolved target/)
