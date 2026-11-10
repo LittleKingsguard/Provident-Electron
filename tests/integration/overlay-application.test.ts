@@ -508,8 +508,10 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     app.apply('open')
     deliver(true)
     app.render()
-    // THE COMMIT ROUTE the drag's end turn uses is ONE `state-slice` on the authored status node. Under an inert root it
-    // still applies, because it is a graph write and the graph has no idea what the DOM is doing.
+    // THE COMMIT ROUTE the drag's end turn uses is ONE `commitPane` on `['panes']` at `file`, across the crossing — NOT a
+    // `state-slice` on the status node: `D-164` DELETED that sink write, and the read-out beside it is `renderPaneSize`'s,
+    // painted from the delivery (`F3`, `D-129`). The `state-slice` below is this row's OWN direct write of the node, and
+    // under an inert root it still applies, because it is a graph write and the graph has no idea what the DOM is doing.
     const answer = runtime.applyCommand({
       kind: 'state-slice',
       node: 'gutter-status',

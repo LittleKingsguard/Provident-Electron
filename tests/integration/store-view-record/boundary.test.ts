@@ -1209,6 +1209,36 @@ const DECLARED_SCOPE: readonly string[] = [
   //    rather than comparing equal (`D-45`, `D-46`, `D-26`). `strata/modules.json`'s `renderer-wiring` row claims the same path in
   //    the same pass, so the map and this union agree.
   'tests/unit/renderer-wiring/signatures.test.ts',
+  // ── THE CASUALTY'S OWN INSTRUMENT — `tests/e2e/bundle-boot-seam/boot-contract.test.ts`, AND IT JOINS THIS UNION AS ITS OWN
+  //    ENTRY WITH ITS OWN REASON, NEVER AS A PREFIX (`tests/e2e/bundle-boot-seam/` would admit every battery a later pass drops
+  //    beside it, and a directory measures nothing; a `tests/e2e/` file is NEVER marked, so this one gates — `D-30`, `D-40`).
+  //    **THE BATTERY IS `bundle-boot-seam`'s AND IS DECLARED HERE FOR THE REASON THE THREE ENTRIES ABOVE ARE**: this row asserts
+  //    the worktree's edit set against a scope, so EVERY path a pass writes is a path this union must carry whatever module
+  //    authored it — and `B-1` reports a path no entry names as an offender rather than letting it slide in behind a directory
+  //    (`D-146`'s precedent: the entry is added WITH the edit that dirtied the path, never after it).
+  //    **ITS SUBJECT IS `D-173`'S FIRST RECOMMENDATION, TAKEN** — that row measured that the booting batteries cannot diagnose
+  //    their own casualties: stderr is piped and then DROPPED on the connect path, and the child's exit code and signal are
+  //    computed and swallowed by the SDK, so `-32000` cannot tell an OOM `SIGKILL` from an `exit 1`. The four booting files now
+  //    set `transport.onerror` BEFORE `connect` (so the SDK's wrapper preserves it), record the child's `close` `{code,
+  //    signal}`, and throw a `cause`-carrying error naming the stderr tail; and THIS file's unconditional `npm run build` in
+  //    `beforeAll` became CONDITIONAL on the artifact set being ABSENT, the form its two siblings already use — the change
+  //    that stops this battery opening the `~54 ms` `dist/` window `arrangement.test.ts:90`–`:105` measures.
+  //    **NO PRODUCT BYTE MOVES AND NO ASSERTION MOVES**: this is the instrument being made able to speak, not the app.
+  'tests/e2e/bundle-boot-seam/boot-contract.test.ts',
+  // ── THE RESIDUE PAGE'S OWN DISCHARGE — `docs/L3/app-envelope/design.md`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH ITS OWN
+  //    REASON, NEVER AS A PREFIX OF THE NEIGHBOUR ABOVE (`docs/L3/` would admit every design a later pass drops beside it, and a
+  //    directory measures nothing). **THE FILE IS `app-envelope`'s AND IS DECLARED HERE FOR THE REASON THE FOUR ENTRIES ABOVE ARE**:
+  //    this row asserts the worktree's edit set against a scope, so EVERY path a pass writes is a path this union must carry whatever
+  //    module authored it — and the entry is added WITH the edit that dirtied the path, never after it (`D-146`'s precedent).
+  //    **ITS SUBJECT IS THE ONE ROW `D-174`'S FOLLOW-UP PASS RE-GRAINED, AND NOTHING ELSE MOVES ON THE PAGE**: §5's row that listed
+  //    `docs/L3/renderer-wiring/design.md:108` as **OWED** now reads **DISCHARGED AT THAT PAGE'S REV 17**, because that page's rev 17
+  //    re-grained the sentence to what the tree measures and cited `D-171` at the site — so the obligation the row carried was met by
+  //    the page that owned it, and the row states the discharge instead of an instruction (`D-171`, `D-174`'s residue (iii), `D-46`).
+  //    The page's own rev moved to `4` for that one row; no export, id, count, hunk or guardrail of the module moves with it, and no
+  //    `strata/` byte does either — which is why this is a DOCUMENT's entry and not a module's. **IT IS THE LAST ENTRY THIS UNION IS
+  //    OWED**: `B-1` reported this path as its ONE offender on this tree, so the row is green on the dirty tree only because the path
+  //    stands here, and a prefix declared in its place would admit a page nobody named.
+  'docs/L3/app-envelope/design.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

@@ -366,7 +366,7 @@ describe('D-163 · `docs/L3/renderer-wiring/design.md` §4/§6 — the state-che
     started.renderPaneSize()
     expect(
       stub.commands.length,
-      'RS-1 — one `state-slice` for the delivery: the surface carried the authored `100` and the record says `140`',
+      'RS-1 — one `state-slice` for the delivery: the surface carried this stub\'s OWN seed `100` (the envelope authors no `content` on this node, `D-174`) and the record says `140`',
     ).toBe(before + 1)
     expect(
       stub.commands[before],
@@ -401,9 +401,9 @@ describe('D-163 · `docs/L3/renderer-wiring/design.md` §4/§6 — the state-che
     started.renderPaneSize()
     expect(
       stub.commands.length,
-      'RS-1 — NOTHING is painted on the `\'default\'` arm: the envelope\'s authored `content` stands, because a panes family the record did not answer carries no figure this realm may call a state (`D-127`)',
+      'RS-1 — NOTHING is painted on the `\'default\'` arm: the surface keeps this stub\'s OWN seed `999` — the envelope authors no `content` on this node, so no authored figure stands (`D-174`) — because a panes family the record did not answer carries no figure this realm may call a state (`D-127`)',
     ).toBe(before + 1)
-    expect(stub.surfaceOf(GUTTER_STATUS_ID).content, 'RS-1 — and the authored surface is untouched, which is the reading the arm leaves').toBe('999')
+    expect(stub.surfaceOf(GUTTER_STATUS_ID).content, 'RS-1 — and the surface this stub seeded stands untouched at `999`, which is the reading the arm leaves').toBe('999')
   })
 
   it('RS-2 — **A POSITIVE SETTLED MATCH SKIPS**: `readable && held === wanted` paints NOTHING — the surface already carries the very value the mutation would replace, so the write would be a no-op by construction', () => {

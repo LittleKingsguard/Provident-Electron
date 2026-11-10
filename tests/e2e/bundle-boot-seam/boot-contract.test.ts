@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
@@ -244,6 +245,53 @@ let buildFailure: string | null = null
 
 const tail = (text: string, lines = 14): string => text.split('\n').slice(-lines).join('\n')
 
+// ---- the casualty's instrument ----------------------------------------------
+/** **WHAT A FAILED CONNECT NOW REPORTS, WHICH `D-173` MEASURED THAT THIS FILE COULD NOT.** stderr IS piped into `trace`
+ *  and the child's exit code and signal ARE computed — the SDK's `StdioClientTransport` hands them to
+ *  `transport.onerror` — and both facts were then DROPPED on the connect path, so a casualty could only ever read
+ *  `McpError -32000: Connection closed`, which cannot separate an OOM `SIGKILL` from an `exit 1` on a missing bundle.
+ *  The two facts are recorded beside the trace and attached to the connect-path throw, so a red row names the child's
+ *  exit code, its signal and the tail of what it published. `bootApp`'s own spawn path records the same two facts.
+ *
+ *  **`transport.onerror` IS SET BEFORE `client.connect`, AND THAT ORDER IS THE WHOLE MECHANISM**: `Protocol.connect`
+ *  captures whatever handler stands on the transport and wraps it as `_onerror?.(error); this._onerror(error)`
+ *  (`node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js`), so a handler set BEFORE the connect survives
+ *  the re-wrap; one set after it is replaced by that wrapper and reaches nobody. And `new Client({name, version})` passes
+ *  no `onerror`, so before this the transport's `child exited (code X, signal Y)` was a no-op. */
+interface ChildEnd { code: number | null; signal: NodeJS.Signals | null }
+interface Observed { ended: ChildEnd | null; error: string | null }
+const observed = (): Observed => ({ ended: null, error: null })
+/** The connect-path throw, carrying what the child did; the SDK's own error stays the `cause`, never swallowed. */
+function diagnose(label: string, caught: unknown, seen: Observed, trace: string): Error {
+  const ended = seen.ended === null
+    ? "the child's `close` was NOT observed, so it was still running when this was thrown"
+    : `the child closed: code ${String(seen.ended.code)}, signal ${String(seen.ended.signal)}`
+  return new Error(
+    `${label}: ${caught instanceof Error ? caught.message : String(caught)}\n${ended}` +
+      `${seen.error === null ? '' : `\n\`transport.onerror\` recorded: ${seen.error}`}` +
+      `\nstderr tail:\n${tail(trace)}`,
+    { cause: caught },
+  )
+}
+
+/** **ONE CONNECT PATH, INSTRUMENTED, FOR EVERY TRANSPORT THIS FILE CONNECTS** (`D-173`). The handler is set BEFORE
+ *  `client.connect` because the SDK's wrapper preserves the one standing there and nothing else; and the child is
+ *  caught on the SAME TICK, because `connect()` calls `start()`, which assigns the spawned process synchronously, while
+ *  the transport clears that handle BEFORE it calls `onclose` — so the exit code and the signal are readable only from
+ *  the handle itself. A private field read through a stated shape: an SDK that moves it costs this file the exit facts,
+ *  never the row. The bound, the label and the trace are `withBound`'s, unchanged. */
+async function connectWatched(client: Client, transport: Transport, label: string, seen: Observed, trace: () => string): Promise<void> {
+  transport.onerror = (error: Error) => { seen.error = error.message }
+  const connecting = client.connect(transport)
+  const spawned = (transport as unknown as { _process?: ChildProcess })._process
+  spawned?.on('close', (code, signal) => { seen.ended = { code, signal } })
+  try {
+    await withBound(connecting, label, trace)
+  } catch (error) {
+    throw diagnose(label, error, seen, trace())
+  }
+}
+
 /** The reason a process published, verbatim: the first `…Error: …` / `…Error [code]: …` line. A
  *  failure report that carries no reason is the shape this battery exists to retire (`F-2`). */
 const reasonOf = (text: string): string => {
@@ -321,15 +369,15 @@ function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string
   /** The two facts a bound cannot supply on its own: did the SPAWN itself fail, and has the process
    *  ENDED? Without them a row cannot tell an empty stderr read from a process that never existed. */
   let spawnFailure: string | null = null
-  let ended: { code: number | null; signal: NodeJS.Signals | null } | null = null
+  const seen = observed()
   child.on('error', (error: Error) => { spawnFailure = `${error.name}: ${error.message}` })
-  child.on('close', (code, signal) => { ended = { code, signal } })
+  child.on('close', (code, signal) => { seen.ended = { code, signal } })
 
   /** What the row can say about the process at the moment it gives up. */
   const state = (): string => {
     const published = trace.trim() === '' ? 'nothing' : `${trace.trim().split('\n').length} stderr line(s)`
     if (spawnFailure !== null) return `the spawn failed (${spawnFailure}), so the observable never had a process to come from — "never", not "too slow"`
-    if (ended !== null) return `the process EXITED (code ${String(ended.code)}, signal ${String(ended.signal)}) after publishing ${published} — "never", not "too slow"`
+    if (seen.ended !== null) return `the process EXITED (code ${String(seen.ended.code)}, signal ${String(seen.ended.signal)}) after publishing ${published} — "never", not "too slow"`
     return `the process was still ALIVE (pid ${String(child.pid)}) and had published ${published} — "too slow", not "never"`
   }
 
@@ -399,7 +447,9 @@ async function handshake(entry: string, extra: string[] = ['--mcp-transport=stdi
   let trace = ''
   transport.stderr?.on('data', (chunk) => { trace += String(chunk) })
   const client = new Client({ name: 'bundle-boot-seam-e2e', version: '0.1.0' })
-  await withBound(client.connect(transport), `initialize over the ${extra.join(' ') || 'default'} transport`, () => trace)
+  // The child's own end and the transport's own error are recorded beside the trace, and the throw carries them: this
+  // is the path a casualty took to report a bare `-32000: Connection closed` (`D-173`).
+  await connectWatched(client, transport, `initialize over the ${extra.join(' ') || 'default'} transport`, observed(), () => trace)
   const stop = async (): Promise<void> => {
     await client.close().catch(() => undefined)
     reap([profile], [])
@@ -412,7 +462,43 @@ const toolNames = async (client: Client, label: string, trace: () => string): Pr
   return listed.tools.map((tool) => tool.name)
 }
 
-beforeAll(() => {
+/** **THE ARTIFACT SET EVERY BOOT IN THIS FILE LOADS**, and `npm run build`'s arms produce it: the two bundles `B-7`
+ *  boots, this app's entry, its preload, and the renderer's bundle and page. */
+const BUILT_ARTIFACTS = [
+  mainEntry,
+  join(repoRoot, 'dist', 'main', 'preload.cjs'),
+  join(repoRoot, 'dist', 'main', 'standalone.mjs'),
+  join(repoRoot, 'dist', 'main', 'battery-host.mjs'),
+  join(repoRoot, 'dist', 'renderer', 'index.html'),
+  join(repoRoot, 'dist', 'renderer', 'renderer.js'),
+]
+/** A `stat` that threw is a file still being written, which is not a reading: `false`, never an exception. */
+const artifactReady = (file: string): boolean => {
+  try {
+    return existsSync(file) && statSync(file).size > 0
+  } catch {
+    return false
+  }
+}
+/** **HOW LONG AN ABSENT ARTIFACT IS GIVEN TO APPEAR BEFORE THIS FILE BUILDS IT ITSELF** — ~4x the measured worst build
+ *  (`240-500 ms`), the same grace `arrangement.test.ts` and `emission.test.ts` hold, because a sibling worker's build
+ *  is IN FLIGHT exactly when the artifact is at its most absent. */
+const BUILD_GRACE_MS = 2_000
+
+beforeAll(async () => {
+  /** **THIS HOOK NO LONGER BUILDS UNCONDITIONALLY, AND THAT IS `D-173`'S WINDOW CLOSED WHERE IT WAS OPENED.**
+   *  `npm run build`'s FIRST arm is `npm run clean` (`rmSync('dist')`), so `dist/main/` is absent for ~`54 ms` and
+   *  rewritten over `240-500 ms`; run on EVERY `npm test` by this hook, unconditionally, it opened that window under
+   *  every boot in the suite — including the boots of its own later rows. This file now takes the conditional form
+   *  its two siblings already use: build ONLY when the artifact set is absent after the grace, which on a tree the
+   *  suite has already built means **no `npm run clean` runs at all**, and on a cold checkout means it still builds
+   *  exactly the way it always did. Nothing this battery MEASURES moves: `B-1` still asserts the built entry and
+   *  `buildFailure`, and a build that fails still reds it with the reason. */
+  const started = Date.now()
+  while (Date.now() - started < BUILD_GRACE_MS) {
+    if (BUILT_ARTIFACTS.every(artifactReady)) return
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  }
   try {
     execFileSync('npm', ['run', 'build'], { cwd: repoRoot, stdio: 'pipe', timeout: 600_000 })
   } catch (error) {
@@ -527,7 +613,7 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
       const client = new Client({ name: 'bundle-boot-seam-e2e', version: '0.1.0' })
       const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`))
       try {
-        await withBound(client.connect(transport), 'B-6 initialize over Streamable HTTP', boot.trace)
+        await connectWatched(client, transport, 'B-6 initialize over Streamable HTTP', observed(), boot.trace)
         const names = await toolNames(client, 'B-6', boot.trace)
         expect(names).toContain('provident.get_rendered_html')
         const offRoute = await fetch(`http://127.0.0.1:${port}/mcp`)
@@ -555,7 +641,7 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
       transport.stderr?.on('data', (chunk) => { trace += String(chunk) })
       const client = new Client({ name: 'bundle-boot-seam-e2e', version: '0.1.0' })
       try {
-        await withBound(client.connect(transport), `B-7 ${file}: initialize`, () => trace)
+        await connectWatched(client, transport, `B-7 ${file}: initialize`, observed(), () => trace)
         const names = await toolNames(client, `B-7 ${file}`, () => trace)
         expect(names.length).toBeGreaterThan(0)
       } finally {

@@ -438,7 +438,11 @@ export function startGutterAffordance (runtime: Runtime): {
    *  `S1` — **NO PAINT WHERE THE FAMILY DID NOT ANSWER**: the gate is `shape().source.panes === 'record'`,
    *  the FAMILY's own arm and NOT `filled`, because `filled` only says that SOME reading landed while a
    *  `'default'` panes arm is a family the record did not answer — painting its figure would be `D-127`'s
-   *  *failed read turned into a state*. The envelope's authored `content` then stands.
+   *  *failed read turned into a state*. **AND THE READ-OUT IS EMPTY UNTIL A `'record'` DELIVERY PAINTS IT**, on a
+   *  first boot and on a second alike: `demo-envelope.ts` no longer authors `content` on `#gutter-status` — a local
+   *  default over a shape `panesMustStand` already enforces, `D-129`'s case (b) — so the node authors no figure at
+   *  all and `authoredSettingOf` reads that absence as a readable `''`, which no size string can equal (`D-174`:
+   *  an empty reading that is never wrong, rather than a `'100'` that was right on one boot and false on the next).
    *  `S2` — **THE VALUE IS THE RECORD'S, AND IT IS THE SAME MEMBER THE GESTURE READS**:
    *  `String(getViewClient().paneSizeOf(DEFAULT_PANE_ID))`, which is what `startSizeOf` answers, so the
    *  read-out and the next gesture's start figure cannot disagree (`D-117`). Its per-id default arm is

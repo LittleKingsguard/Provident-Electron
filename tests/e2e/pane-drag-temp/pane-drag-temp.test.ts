@@ -129,6 +129,36 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 const stringEnv = (): Record<string, string> =>
   Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined))
 const tail = (text: string, lines = 12): string => text.split('\n').slice(-lines).join('\n')
+
+// ---- the casualty's instrument ----------------------------------------------
+/** **WHAT A FAILED CONNECT NOW REPORTS, WHICH `D-173` MEASURED THAT THIS FILE COULD NOT.** stderr IS piped into `trace`
+ *  and the child's exit code and signal ARE computed — the transport hands them to `transport.onerror` — and both facts
+ *  were then DROPPED on the connect path (`reap(); releaseBootLock(); throw error`), so a casualty could only ever read
+ *  `McpError -32000: Connection closed`, which cannot separate an OOM from an `exit 1` on a missing bundle. The two
+ *  facts are recorded beside the trace and attached to the connect-path throw, so a red row names the child's exit
+ *  code, its signal and the tail of what it published.
+ *
+ *  **`transport.onerror` IS SET BEFORE `client.connect`, AND THAT ORDER IS THE WHOLE MECHANISM**: `Protocol.connect`
+ *  captures whatever handler stands on the transport and wraps it as `_onerror?.(error); this._onerror(error)`
+ *  (`node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js`), so a handler set BEFORE the connect survives
+ *  the re-wrap; one set after it is replaced by that wrapper and reaches nobody. And `new Client({name, version})` passes
+ *  no `onerror`, so before this the transport's `child exited (code X, signal Y)` was a no-op. */
+interface ChildEnd { code: number | null; signal: NodeJS.Signals | null }
+interface Observed { ended: ChildEnd | null; error: string | null }
+const observed = (): Observed => ({ ended: null, error: null })
+/** The connect-path throw, carrying what the child did; the SDK's own error stays the `cause`, never swallowed. */
+function diagnose(label: string, caught: unknown, seen: Observed, trace: string): Error {
+  const ended = seen.ended === null
+    ? "the child's `close` was NOT observed, so it was still running when this was thrown"
+    : `the child closed: code ${String(seen.ended.code)}, signal ${String(seen.ended.signal)}`
+  return new Error(
+    `${label}: ${caught instanceof Error ? caught.message : String(caught)}\n${ended}` +
+      `${seen.error === null ? '' : `\n\`transport.onerror\` recorded: ${seen.error}`}` +
+      `\nstderr tail:\n${tail(trace)}`,
+    { cause: caught },
+  )
+}
+
 /** The observed answer as a bounded string: every assertion message carries one, so a reader can tell a missing route
  *  from a missing `_tier` from a prerequisite failure without re-running the row. */
 const trunc = (text: string, max = 420): string => (text.length > max ? `${text.slice(0, max)}…` : text)
@@ -720,8 +750,17 @@ async function boot(profile: string, options: { renderer?: boolean } = {}): Prom
         '(tests/e2e/secure-panels/panes-live.mjs:46).',
     )
   }
-  await artifactsWithin()
   const releaseBootLock = await acquireLiveBoot(`pane-drag-temp boot on ${profile}`)
+  /** **THE ARTIFACT CHECK IS INSIDE THE LOCK, WHICH IS THE ONLY PLACE IT MEASURES ANYTHING** (`D-173`): taken BEFORE the
+   *  lock, the "artifacts are here" reading is stale by the whole lock-queue wait (bounded `120 s`), and `npm run build`'s
+   *  first arm is `npm run clean` — so a boot could spawn into the ~`54 ms` window in which `dist/` is absent. */
+  try {
+    await artifactsWithin()
+  } catch (error) {
+    // An artifact set that never arrived spawns nothing: the lock is released here, never left for the bound.
+    releaseBootLock()
+    throw error
+  }
   let child: ChildProcess
   try {
     child = spawn(electronBin, [mainEntry, ...BASE_ARGS, `--user-data-dir=${profile}`, `--provident-user-data=${profile}`], {
@@ -741,13 +780,19 @@ async function boot(profile: string, options: { renderer?: boolean } = {}): Prom
   child.stderr?.on('data', (chunk: unknown) => {
     trace += String(chunk)
   })
+  // What the child did when it died, kept beside the trace (`D-173`): `close` is the event that carries both facts.
+  const seen = observed()
+  child.on('close', (code, signal) => { seen.ended = { code, signal } })
   const transport = new ChildStdioTransport(child)
   const client = new Client({ name: 'pane-drag-temp-e2e', version: '0.1.0' })
+  // SET BEFORE `client.connect`, because the SDK's wrapper preserves the handler standing there and nothing else.
+  transport.onerror = (error: Error) => { seen.error = error.message }
   try {
     await withBound(client.connect(transport), `initialize over stdio on ${profile}`, () => trace)
   } catch (error) {
     // A handshake that never settled still left a tree behind: it is reaped, PROVED gone, and only then is the lock
-    // released — the order `D-74` fixes, kept on the failure path too.
+    // released — the order `D-74` fixes, kept on the failure path too. **AND THE THROW CARRIES WHAT THE CHILD DID**
+    // (`D-173`): the exit code, the signal and the stderr tail, with the SDK's own error kept as the `cause`.
     try {
       transport.close()
     } catch {
@@ -755,7 +800,7 @@ async function boot(profile: string, options: { renderer?: boolean } = {}): Prom
     }
     reap([profile], [child.pid ?? 0])
     releaseBootLock()
-    throw error
+    throw diagnose(`initialize over stdio on ${profile}`, error, seen, trace)
   }
   const stop = async (): Promise<void> => {
     try {
