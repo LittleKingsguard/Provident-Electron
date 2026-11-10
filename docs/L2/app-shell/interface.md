@@ -1,150 +1,89 @@
-# L2 — `app-shell`: the shell's surface, and the `view` member the drag pair widens
+# L2 — `app-shell`: the platform's chrome, the role route, and the shell's surface as it stands
 
-- **Layer:** L2 · **Module:** `app-shell` — `src/main/main.ts`, `src/main/preload.ts`, `src/main/store-channels.ts`
-  and the module's battery `tests/ui-leg-seam.test.ts` (`strata/modules.json`'s row; brief §3, D-7).
-- **Unit:** `pane-drag-temp` · **Artifact:** `l2-interface` · **Rev:** 4 — the pair's landing read back off the tree and the page's
-  present tense re-grained to it (§2's seven, §3's twenty-site census, §4's pair); rev 3 re-grained rev 2 to the drag pair; rev 2 was
-  `focus-retirement`'s landed head (`docs/L1/pane-drag-temp.md` §2, §5 `R-3`, §7 `E-3`; D-145, D-1).
+- **Layer:** L2 · **Module:** `app-shell` — `src/main/main.ts`, `src/main/preload.ts`, `src/main/store-channels.ts`, the battery `tests/ui-leg-seam.test.ts` and now `tests/e2e/app-layout/` (`strata/modules.json`'s row; brief §3, D-7).
+- **Unit:** `app-layout` · **Artifact:** `l2-interface` · **Rev:** 5 — **THE WINDOW BECOMES THE PAGE'S AND THE MENU LEAVES, IN ONE EDIT WITH THE ONE ROUTE THAT REPLACES ITS ELEVEN SAFE ROLES** (`docs/L1/app-layout.md` rev 2 §2's row for this module, §3's `S-3`/`S-10`, §4's `C-1`/`C-6`): §3 states **`titleBarStyle:'hidden'` + `titleBarOverlay`** on the ONE `new BrowserWindow` — measured working, and stated as the platform's own contract rather than as a picture (§3, `D-179`) — §4 states **`Menu.setApplicationMenu(null)`** and **exactly which accelerators are re-bound (none) and which are simply GONE**, §5 states the role route's channel surface: **one constant, one preload member, one `ipcMain.handle` admitting eleven roles and refusing seven by name**, §7 states the battery `tests/e2e/app-layout/` the map now files here **and the three bridge-census rows the tenth member moves (`OWED-3`)**. **THE `view` MEMBER, its SEVEN routes and the drag pair are UNMOVED** — rev 4's landing stands — and the exact member text is now the design's hunk while this page states the SET AND ITS ORDER (§2's `OWED-1` note; D-112).
 - **Ceiling:** 150 lines (class max), replaced on revision and never annotated (brief §1; D-1, D-2).
 - **Write scope:** `docs/L2/app-shell/` (brief §3); `src/**` is read-only here and no package is modified (D-5).
+- **Inputs:** `docs/L1/app-layout.md` rev 2; `D-176` `D-177` `D-178` `D-179` `D-180` `D-181` `D-182` `D-183`; `D-121` (no handler inspects its event), `D-112` (the lockstep rule), `D-123` (a channel that must not enter `types.ts`), `D-18` (no surface added to prove a unit), `D-26`/`D-43` (counts are their owners'), `D-41` (sites).
 
 ## 1. What this module is
 
-- The composition: one Electron main entry that constructs the crossings and the app's ONE profile store, arms the
-  MCP gate, registers every IPC handler the renderer can reach and creates the window (`main()`; D-65, D-97).
-- The bridge: ONE `contextBridge.exposeInMainWorld('provident', bridge)` call, an interface `ProvidentBridge` and its
-  implementation object in one file, so a declared route and its arm are read off one file (D-112).
-- The channel registry: `store-channels.ts` holds channel-name constants and nothing else — the secure crossing's TWO at
-  this head — and the shared channel files hold the rest (its own header; D-41, D-123).
-- Two kinds of entry: a REQUEST handled at an `ipcMain.handle` site and answered to its caller, or a DELIVERY sent
-  main→renderer by the broadcast shape the crossings share, carrying no value and no address (D-104, D-106, D-137).
+- The composition: one Electron main entry that constructs the crossings and the app's ONE profile store, arms the MCP gate, registers every IPC handler the renderer can reach and creates the window (`main()`; D-65, D-97).
+- The bridge: ONE `contextBridge.exposeInMainWorld('provident', bridge)` call, an interface `ProvidentBridge` and its implementation object in one file, so a declared route and its arm are read off one file (D-112). **This rev takes it from NINE top-level members to TEN** (§2, §5).
+- The channel registry: `store-channels.ts` holds channel-name constants and nothing else — the secure crossing's TWO at this head, and **the role route's becomes a THIRD** (§5) — while the shared channel files hold the rest (its own header; D-41, D-123).
+- Two kinds of entry: a REQUEST handled at an `ipcMain.handle` site and answered to its caller, or a DELIVERY sent main→renderer by the broadcast shape the crossings share, carrying no value and no address (D-104, D-106, D-137). **The role route is a third shape and it is the narrowest**: one request, no delivery, no address and no tier (§5).
 
 ## 2. The surface as it stands
 
-- The bridge's top-level members — NINE, the ninth `D-112`'s five `data.*` routes — each with the site that answers it
-  (D-41: the sites). **The drag pair adds no tenth member**: it widens the one that already fronts the view record (D-18).
-
-| Member | Routes as declared | Kind | The sites that answer it | Cite |
+| Member | Routes | Kind | What answers it | Cite |
 |---|---|---|---|---|
-| `ready` · `onRequest` · `sendReply` · `notify` | 1 each | signal · delivery in · reply · reply | `IPC_READY`→`ipcMain.on(IPC_READY)`→`backend.markReady()`; `ipcRenderer.on(IPC_INVOKE, …)` (the send is the main side's push); `IPC_REPLY`→`backend.handleReply`; `IPC_NOTIFY`→`mcp.notifyGraphChanged()` | D-41 |
-| `security` | 5 | 4 request + 1 delivery | `IPC_SECURITY_GET`/`_SET` handles, `IPC_SECURITY_EXCLUSION` and `IPC_SECURITY_PANE` (both from `store-channels.ts`), and `IPC_SECURITY_CHANGED` sent by `onSecurityChanged` | D-104, D-106, D-123 |
-| `module` | 3 | 2 request + 1 delivery | `IPC_MODULE_GET`, `IPC_MODULE_SET_DISABLED`; `IPC_MODULE_CHANGED` sent by `onAppStateChanged` | D-104 |
-| `tabs` | 4 | 3 request + 1 delivery | `IPC_TABS_READ`/`_COMMIT`/`_REMOVE`; `IPC_TABS_CHANGED` sent by the tabs surface's `onChanged` | D-112, D-137 |
-| `view` | 7 | 6 request + 1 delivery | the six `IPC_VIEW_*` handles (`READ`, `PANE_COMMIT`, `ZONES_COMMIT`, `THEME_COMMIT`, `DRAG_COMMIT`, `DRAG_CLEAR`); `IPC_VIEW_CHANGED` sent by the view surface's `onChanged` | D-87, D-112, D-142, D-132 |
-| `data` | 5 | 5 request, NO delivery | `IPC_DATA_READ`/`_WRITE`/`_DELETE`/`_LIST`/`_JOURNAL`, each forwarding the caller's argument object untouched to the boot's one `dataSurface` | D-112, D-107 |
+| `ready` · `onRequest` · `sendReply` · `notify` | 1 each | signal · delivery in · reply · reply | `ipcMain.on(IPC_READY)`; `ipcRenderer.on(IPC_INVOKE, …)`; `IPC_REPLY`→`backend.handleReply`; `IPC_NOTIFY`→`mcp.notifyGraphChanged()` | D-41 |
+| `security` | 5 | 4 request + 1 delivery | `IPC_SECURITY_GET`/`_SET` handles, `IPC_SECURITY_EXCLUSION` and `IPC_SECURITY_PANE` (`store-channels.ts`), `IPC_SECURITY_CHANGED` sent by `onSecurityChanged` | D-104, D-106, D-123 |
+| `module` | 3 | 2 request + 1 delivery | `IPC_MODULE_GET`, `IPC_MODULE_SET_DISABLED`; `IPC_MODULE_CHANGED` | D-104 |
+| `tabs` | 4 | 3 request + 1 delivery | `IPC_TABS_READ`/`_COMMIT`/`_REMOVE`; `IPC_TABS_CHANGED` | D-112, D-137 |
+| `view` | 7 | 6 request + 1 delivery | the six `IPC_VIEW_*` handles (`READ`, `PANE_COMMIT`, `ZONES_COMMIT`, `THEME_COMMIT`, `DRAG_COMMIT`, `DRAG_CLEAR`); `IPC_VIEW_CHANGED` | D-87, D-112, D-132, D-142 |
+| `data` | 5 | 5 request, NO delivery | the five `IPC_DATA_*`, each forwarding its argument object untouched to the boot's one `dataSurface` | D-112, D-107 |
+| **`menu` (NEW)** | **1** | **1 request, NO delivery** | **one channel constant (§5), one `ipcMain.handle` admitting ELEVEN roles and refusing SEVEN by name** | `D-181`, L1 `S-10` |
 
-- The `view` member's declared list, in the order BOTH halves spell it — **SEVEN, at BOTH halves at this head** (the drag pair
-  landed at each in one edit, and the crossing's comparison row is the witness): `read` · `commitPane` · `commitZones` ·
-  `commitTheme` · `commitDrag` · `clearDrag` · `onChanged` — `src/main/preload.ts`'s text and `src/renderer/secure-panels.ts`'s
-  `declare global` copy of it, whence each member's route and tier (D-87, D-91, D-97, D-132, D-112, D-142, D-145; D-41: the sites):
+- **The `view` member is SEVEN members at BOTH halves** — `read` · `commitPane` · `commitZones` · `commitTheme` · `commitDrag` · `clearDrag` · `onChanged` — declared in `src/main/preload.ts` and copied into `src/renderer/secure-panels.ts`'s `declare global`, and **`store-view-record`'s comparison row holds the two texts member for member and in order** (D-112, D-145). Tiers, unchanged: `read` none of its own (one reading across `panes`/`zones`/`theme` with a `source` arm each), `commitPane` `['panes']`·`file`, `commitZones` `['zones']`·`mem`, `commitTheme` `['theme']`·`file`, `commitDrag` `['drag']`·`temp`, `clearDrag` `['drag']`·`temp` (a DELETE that ENDS the family), `onChanged` no tier — a delivery, no value. **It gains NO drag member and NO zone-placement member**: the `zone` member landing on `['panes']` is a record shape and moves no route, no channel and no address (`C-8`, `S-8`).
+- **`OWED-1`, carried rather than hidden**: the SEVEN member lines' exact text — which rev 4 gave verbatim as `ASM-L2-5` — is now `docs/L3/app-shell/design.md`'s hunk, and this page states the set and the order. The comparison row compares the two `src/` halves, not this page, so nothing it measures moves; what a reader loses here is the copy-paste text, and the L3 hunk is where a landing reads it.
 
-| Member | Route | Tier | Cite |
-|---|---|---|---|
-| `read()` | `IPC_VIEW_READ` → `viewSurface.read()` | none of its own: one reading across the three declared families at their tiers | D-87, D-112 |
-| `commitPane(id, geometry)` | `IPC_VIEW_PANE_COMMIT` → `viewSurface.commitPane` | `['panes']` at `file` | D-87, brief §2 |
-| `commitZones(id, zone)` | `IPC_VIEW_ZONES_COMMIT` → `viewSurface.commitZones` | `['zones']` at `mem` | D-91, brief §2 |
-| `commitTheme(token, attributeName)` | `IPC_VIEW_THEME_COMMIT` → `viewSurface.commitTheme` | `['theme']` at `file` | D-97, D-98 |
-| `commitDrag(id, geometry)` | `IPC_VIEW_DRAG_COMMIT` → `viewSurface.commitDrag` | `['drag']` at `temp` — the gesture's in-process reading, one whole value per pane id | D-132, D-137 |
-| `clearDrag()` | `IPC_VIEW_DRAG_CLEAR` → `viewSurface.clearDrag` | `['drag']` at `temp` — a DELETE that ENDS the family, answering `committed` whether or not it stood | D-132, §9 `ASM-2` |
-| `onChanged(handler)` | `IPC_VIEW_CHANGED`, main→renderer | no tier: a delivery, and no request crosses it — it fires for `['drag']` too, because the record's subscription array gained that root (D-137) | D-137 |
+## 3. The window: the platform draws the controls, the page owns the window (D-179, `C-1`)
 
-- `read` takes no argument and answers one reading of **three families — `panes`, `zones`, `theme` — with three `source`
-  arms** (`source: {panes, zones, theme}`, each `'record' | 'default'`), spelled INLINE at both declaration sites. **IT
-  GAINS NO DRAG MEMBER**: the temp reading is read where the tiers are read — `provident.data.read({path: ['drag']})`,
-  whose node carries its own `_tier` — so a consumer asks the readout and no `dragOf` is minted (D-144, D-133, D-142).
-- Each write member names a pane id, a zone id, the appearance act's pair or a placement, and **never a path** — the
-  crossing composes the address; `onChanged` delivers that the view moved and never its value; and every request above is
-  registered in `main()` and nowhere else under `src/`, the deliveries being sent from the callbacks `main()` hands the
-  crossings at its construction (D-87, D-132, D-137, D-41, D-65).
+- **ONE option pair on the ONE `new BrowserWindow`**: `titleBarStyle: 'hidden'` with `titleBarOverlay`. That is the whole of this module's window change — **no authored control, no `frame: false`, no new IPC, and no window option beyond the pair** (`D-178` §2, `C-1`).
+- **What it buys, MEASURED rather than assumed** (`D-179`, on a throwaway probe of `44.4.5` — the same binary the app builds against): with the pair, `navigator.windowControlsOverlay.visible` is **`true`**, `getTitlebarAreaRect()` returns **`[0, 0, 607, 36]`** — the free area the page may draw in, with the platform's three controls occupying the rest of a `720`-wide window — and the **page owns the whole window** (`innerHeight` equals the requested `220`, where the default frame gave it `192`). The envelope then puts the logo at that strip's left, the tabs row inside the same strip and the pane below it (`C-1`, `C-10`).
+- **NO FIGURE OF THE PROBE TRANSFERS, AND THIS PAGE DOES NOT INVENT ONE**: the app's own window is `980 × 720` (`new BrowserWindow`'s measured options), not the probe's `720`-wide one, so the free rect is the window's width less the platform's controls and **its height is the platform's**. `AL-9` is the reading that matters — it drives `navigator.windowControlsOverlay` on the BUILT app and asserts `visible === true` and a **non-empty** rect; a `visible:false` there means the option never reached the window and the fork goes back to the user, never to authored buttons (`D-178` §2).
+- **It is proven by CONTRACT and never by a picture** (`D-179`): `capturePage()` returns the web contents only, and `desktopCapturer` hung on this Wayland session — so no screenshot confirms the buttons' appearance, and this page says so rather than implying one.
+- **The drag region is NOT this module's** (`C-10`): the top-bar's `-webkit-app-region: drag`, the tabs row's `no-drag` and the controls' strip's deliberate nothing are `app-envelope`'s authored `css`. **This module's part is the option without which nobody could move the window at all.**
 
-## 3. The landing: two handle sites, and the text both halves carry
+## 4. The native menu leaves, and here is exactly what it costs (`D-180`, `D-181`, `C-6`)
 
-- `E-3` was TWO `ipcMain.handle` sites in `main()` and TWO members in the preload's `view` block — and it landed in ONE edit
-  WITH `E-4`'s copy in `src/renderer/secure-panels.ts`, because one half alone answers a route the other cannot reach (§5 `R-3`;
-  D-112, D-145).
-- The two sites stand beside the four `IPC_VIEW_*` handles `main()` already registered, ahead of `viewSurface.attach()`,
-  and neither inspects its `_event`. The file's handler count is a MEASUREMENT: **twenty** at this head (§6).
-- The surface's options, its store and its push are UNMOVED: both routes reach the same record over the same
-  `centralStore`, so `createViewSurface` gains no option and `main()` gains no construction; and both imports take the SEVEN
-  names from `src/shared/view-channels.ts` (D-112, D-132, D-87, D-41; no byte of `store-channels.ts` moves, D-123).
+- **`Menu.setApplicationMenu(null)` in `main()`, in the SAME edit as §5's route** (`S-10`): a pane that contains the menus implies the native menu bar is not also drawn, and a pane beside a live native menu would draw the menu twice (`D-180` §iii). The pane's eighteen items are authored NODES; the template `src/shared/menu-template.ts` builds is for the menu this act REMOVES, so `chrome` gains no consumer here.
+- **RE-BOUND BY THIS UNIT: *none*.** **GONE, and not re-bound**: `Ctrl+Q` (quit) · `Ctrl+W` (close) · `Ctrl+R` (reload) · `Shift+Ctrl+R` (force reload) · `Ctrl+Shift+I` (devtools) · `Ctrl+M` (minimize) — every accelerator that was a menu binding — **and `Ctrl+0`, `Ctrl+=`, `Ctrl+−` and `F11` too**, because zoom and fullscreen are MENU roles and not Chromium content behaviour. **Until a keyboard surface exists, `Ctrl+Q` does nothing** (`D-181`, `C-6`).
+- **SURVIVING, because they were never the menu's**: `Ctrl+Z` · redo · `Ctrl+X` · `Ctrl+C` · `Ctrl+V` · `Ctrl+A` — the renderer handles them over a focused element, menu or no menu (`D-181`). **AND THE REDO KEY IS SPELLED TWO WAYS IN THE CORPUS, WHICH THIS PAGE RECORDS RATHER THAN PICKS**: `D-180`'s measured table gives `Shift+Ctrl+Z` and `D-181`'s prose gives `Ctrl+Y`; both rows agree the EDIT keys survive, which is the only claim this page makes.
+- **The consequence stated plainly rather than discovered later**: the app's own quit paths left are the platform's overlay close button (which is the WINDOW's, not authored), `win.on('closed')` and `window-all-closed`. **And this silence is UNMEASURABLE by the four legs** — no row reads `Menu.getApplicationMenu()` and no leg sends a keystroke — so it is a **recorded gap** beside the drag region and the internal scrolling, not an implied guarantee (`C-6`, L1 §6).
+- **A keyboard re-binding surface is a later unit's and NOT this one's** (`C-6`): this module states the loss because it is the price of §5, and it adds no accelerator, no global shortcut and no key listener.
 
-```ts
-// (1) THE IMPORT — main.ts and preload.ts alike (was five names from the same file):
-import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_DRAG_COMMIT, IPC_VIEW_DRAG_CLEAR, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
-// (2) main()'s TWO HANDLE SITES — after the IPC_VIEW_THEME_COMMIT line, before `viewSurface.attach()`:
-ipcMain.handle(IPC_VIEW_DRAG_COMMIT, (_event, id: unknown, geometry: unknown) => viewSurface.commitDrag(id, geometry))
-ipcMain.handle(IPC_VIEW_DRAG_CLEAR, () => viewSurface.clearDrag())
-// (3) THE PRELOAD'S TWO ARMS in the bridge object's `view`, beside `commitTheme`'s; the declared text is (4)'s, verbatim:
-//   commitDrag(id: string, geometry: unknown) { return ipcRenderer.invoke(IPC_VIEW_DRAG_COMMIT, id, geometry) }
-//   clearDrag() { return ipcRenderer.invoke(IPC_VIEW_DRAG_CLEAR) }
-// (4) THE MEMBER — these SEVEN lines, in this order, in BOTH halves; preload.ts opens `view: {` at four spaces' indent,
-// secure-panels.ts opens `view?: {` at eight, and the comparison reads each block at its own indent (D-112):
-read(): Promise<{ status: 'committed'; panes: readonly ViewPaneGeometry[]; zones: readonly ViewZone[]; theme: ViewThemeRecord; source: { panes: 'record' | 'default'; zones: 'record' | 'default'; theme: 'record' | 'default' } }>
-commitPane(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
-commitZones(id: string, zone: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
-commitTheme(token: string, attributeName: string): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
-commitDrag(id: string, geometry: unknown): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
-clearDrag(): Promise<{ status: 'committed' | 'refused'; reason?: string; message?: string; address?: readonly (string | number)[] | null }>
-onChanged(handler: () => void): () => void
-```
+## 5. The role route — one channel, one member, one handler, eleven roles in and seven out
 
-- The three comment figures moved with this block, in the same edit and all as landed: the preload's `ONE member, FIVE routes` and
-  `secure-panels.ts`'s `SIX routes` both read **SEVEN**, and `main()`'s `THE VIEW RECORD'S FOUR CHANNELS` reads **SIX** —
-  the secure half's having been stale already was corrected in that edit rather than carried (D-41: a cite names a site).
+- **THE SEAT WHERE THE GRANT STOPS** (`D-181`, L1 §2): the pane renders eighteen and **the route admits eleven**. The refusal is enforced HERE because an authored `disabled` is a rendering, and a renderer-side guard is a guard an agent's `provident.dispatch` could bypass; **an admitted set in `main()` cannot be**.
+- **One channel constant, in `src/main/store-channels.ts`** — the file that holds channel names and nothing else, and that exists precisely for a channel which must **NOT** enter `src/shared/types.ts`: that file is imported by the MCP-reachable stack, so an address spelled there is an address an MCP-reachable file could name (`D-123`, `ISO-5`/`ISO-6`). The file's own census therefore moves **2 → 3** in that edit, and **`ipc-contract` gains no member** (L1 §2's named-and-not-claimed line).
+- **One preload member** (the bridge's tenth, §2) **and one `ipcMain.handle`** in `main()`, registered beside the `view`/`security` handlers and **inspecting no `_event`** — `D-121`'s absence is the rule for every handler in this file, and this route is not the exception that makes one crossing stricter than a sibling.
+- **What it answers**: one receipt naming the role it applied, or a refusal naming the role it refused — **by name, never silently**, so `AL-7` can read an admitted answer for each of the eleven and a refusal for each of the seven, and **the app still answers on its transport afterwards**. An unknown or malformed role is refused, never thrown.
+- **What it must not be relied on to do**: reach a node, a record, a tier or another module's channel (it touches none); to be reachable from an authored handler body (it cannot be — a body `apply`s props and reaches no main-process command, `D-177`); or to widen: **the eleven are `D-181`'s and this page does not adjust the split**.
+- **The map's `endpoints` figure is CARRIED and never derived** (D-26, D-43): it reads **`8`** in `strata/modules.json`, and L1 §2 records the move `7 → 8` as this one new bridge route.
 
-## 4. The lockstep rule, as it now reads
+## 6. What this pass does not touch
 
-- The `view` member's type exists **twice in this tree**: `src/main/preload.ts` declares it and
-  `src/renderer/secure-panels.ts` carries a `declare global` copy. The two halves agree member for member — **SEVEN
-  each at this head**, in one order — or the crossing's own comparison row reds (`tests/integration/store-view-record/crossing.test.ts`;
-  D-112's lockstep rule, D-142's precedent, D-145).
-- The comparison is a COMPARISON, not a promise: it finds each block by its own opener, reads at that block's own indent,
-  skips comment and blank lines, strips a trailing comma, and holds the seven lines' exact text **and its order** — so a
-  member landing at one site only reds with both texts in hand, and a pair carrying both members out of order reds too.
-- **The pair is ONE edit** (`E-3` with `E-4`), and it landed as one: a half alone is red by construction and, worse, SILENT in the
-  app — a preload answering a route the pane's copy cannot name, or a member no handler answers (§5 `R-3`; D-112, D-142).
-- That row is `store-view-record`'s and is **GREEN at this head**, its comparison reading seven against seven: the red it carried was
-  the pair's ABSENCE, never a defect here (§7, D-145).
-## 5. What the edit does not touch
+- **The declared roots** line and the boot's ONE `createProfileStore` batch are unmoved, and the two widened families (`DECLARED_ZONE_IDS`, `DECLARED_PANE_IDS`) are the record's hunk, admitted by that line alone (D-101, `S-7`/`S-8`).
+- **The secure store gains nothing** (D-132/D-123): no address, no declaration, no route and no member — the role route is not a store route, and not one byte of the `security` member moves.
+- **The transport setup, the MCP options pass, the three `ipcMain.on` sites, `mcp.start()` and the window's other options**: unmoved (D-121, brief §2).
+- **The `view` member's SEVEN routes, both halves' lockstep and the drag pair**: unmoved by this unit (§2; `D-112`, `D-145`).
 
-- The **declared roots** line and the boot's ONE `createProfileStore` batch are unmoved: `main()` still passes
-  `declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()]` and gains no entry — the `['drag']` entry is the record's
-  hunk, admitted by that line alone — and the drag family declares nothing, so no pair joins the batch (D-101, D-132).
-- **THE SECURE STORE GAINS NOTHING** (D-132): no address, no declaration, no route and no member, and not one byte of the
-  `security` member moves — the gesture's geometry crosses the NORMAL store through `view`, while `['operator-pane']` at
-  `mem` holds the operator pane's OPEN state, a different fact in a different crossing (D-123).
-- The transport setup (`transportFromArgs`/`portFromArgs`), the one `new ProvidentMcpServer({…})` options pass, the three
-  `ipcMain.on` sites, `mcp.start()`, the window and its options: unmoved (brief §2's Transports row; D-121).
-- The map's `endpoints` figure for this row is **CARRIED and never derived**: L1 §2 reads it UNMOVED, no count at this head
-  yields it, and this document neither predicts nor restates it (D-26, D-43).
+## 7. The battery the map now files here
 
-## 6. The sender guard, and the sites this landing added
+- **`tests/e2e/app-layout/`** — its `paths` claim this directory and **`endpoints` reads `8`**; **the battery is the unit's to AUTHOR, so these nine rows do not exist at this head** — they land with the steps that green them (`S-2`…`S-10`), and when they do every one is an **agent-or-drive exchange at a process boundary** (an MCP call over the built bundle's transport, a drive of the app's OWN bridge inside its renderer realm, or the profile file this process reads), **no row imports `src/**`**, and every row is **unmarked and gating** — authored after the `D-30` sweep (`D-40`, L1 §5). The live boots are serialised against their siblings' by the same lock file the spawning batteries derive (`D-94`).
 
-- **No handler in `main()` inspects its `IpcMainInvokeEvent`**: the invoke parameter is spelled `_event` or omitted across
-  all twenty `ipcMain.handle` sites at this head — no handler reads `sender` or `senderFrame`, and `permitted(` occurs
-  nowhere under `src/`, asserted over comment-elided code (D-121, D-112).
-- The drag pair adds no guard, no channel file and no second authority: its two sites discard their event exactly as the
-  four `IPC_VIEW_*` sites beside them do, so no crossing becomes stricter than a sibling (D-121).
-- The one privilege class that owes a guard the rest lack — the window-control group — is a later unit's, named so the
-  absence is read as a decision rather than as an omission (D-121).
+| Row (L1 §5) | What it measures, in this module's terms |
+|---|---|
+| `AL-1` | the skeleton is the design's: **the top-bar node carrying the logo TEXT** and the tabs-row node, the four zone nodes and the stage present and ordered, each carrying its `data-node-id`, the overlay opener still the root's LAST authored control |
+| `AL-2` · `AL-4` | the minted row count equals `order`'s length, each row carries **its own label**, the active marker stands on exactly one row, and **ids hold stable across a re-mint** — `keyField`'s row |
+| `AL-3` | the row is a CONTROL: a click moves the record's active member and the stage repaints |
+| `AL-5` | the stage obeys the ACTIVE TAB: the target's page shown and the other hidden, one body deciding both |
+| `AL-6` · `AL-7` | eighteen items carrying **`D-180`'s labels** with the seven refused marked `disabled` (the MENU count `AL-6` asserts is `app-envelope` `OWED-2`'s: the enumeration gives four, L1's line five); then **eighteen dispatches, eleven answered, each refused role REFUSED BY NAME, and the agent's own transport still answering after every one** — the row whose failure mode is its own death |
+| `AL-8` | both domains widened and the two placements told apart, through three `data` calls and the profile file |
+| `AL-9` | **`navigator.windowControlsOverlay.visible === true` and a non-empty `getTitlebarAreaRect()` on the BUILT app** (§3) |
 
-## 7. The module's battery, and why this pass re-grains none of it
-
-- `tests/ui-leg-seam.test.ts` pins the shell↔`ui`-leg seam — the boot's user-data override and its argv scan, the two path
-  derivations, the group vocabulary's second live copy and the leg's own operator-profile witness — and it is a **marked
-  file reporting on notice**, never gating evidence (`SEAM-1`…`SEAM-4`, `R0(c)`; brief §6's `ui` row, D-30).
-- **It is BYTE-UNMOVED, and the reason is measured**: the file carries no `ipcMain`, no `IPC_` name, no `provident.`
-  member and no whole-word `view` at all, so not one row names this member, `commitDrag`, `clearDrag` or a channel literal;
-  and every ordering relation it computes (`SEAM_AT > MAIN_FN_AT`, `SEAM_AT < SETTINGS_CARRIER_AT`, `SEAM_AT <
-  PROFILE_STORE_AT`, `scanAt > MAIN_FN_AT`, the `scanAt`…carrier slice) has both endpoints ABOVE the two new handler lines,
-  so each shifts equally and none moves (D-41).
-- The pair's ARRIVAL and its absence are measured elsewhere and not duplicated here: the crossing's comparison row above and
-  the L1 battery's `P-1`…`P-6` — a bridge claim in a leg-seam file is a subject this battery does not hold (D-40, D-142).
+- **`tests/ui-leg-seam.test.ts`** pins the shell↔`ui`-leg seam (the boot's user-data override and its argv scan, the two path derivations, the group vocabulary's second live copy, the leg's operator-profile witness) and is a **marked file reporting on notice**, never gating evidence (`SEAM-1`…`SEAM-4`; brief §6, D-30). **This pass adds no row there**: a bridge claim in a leg-seam file is a subject that file does not hold, and the map's own claim on this module now carries the boundary rows (D-40).
+- **`OWED-2` — one typed copy is another module's file**: a renderer that reads the tenth member as a TYPED `window.provident.menu` needs `src/renderer/secure-panels.ts`'s `declare global` copy widened, and that file is `secure-panels`'. `renderer-wiring`'s menus turn therefore narrows structurally — the `window.provident as unknown as …` cast the focus route's own bridge read already uses — and **whether the copy is widened anyway is its owner's call, stated here so nobody discovers it at `typecheck`** (D-112, D-3).
+- **`OWED-3` — THREE SET-EQUALITY ROWS COUNT THE BRIDGE, AND THE TENTH MEMBER MOVES THAT COUNT `9 → 10`.** Measured at this head, each against its own census of the same nine names (`preload.ts`'s own note names them and cites these rows): **`ISO-4` in `tests/integration/security-store-storeroom/isolation.test.ts` and in `tests/e2e/security-store-storeroom/isolation.test.ts`** — both holding a `BRIDGE_MEMBERS` constant and set-equalitying it against the bridge — and **`S-11` in `tests/e2e/settings-carrier-retirement/scenarios.test.ts`**, which carries no constant and **derives the nine by scanning `preload.ts`** instead. **Every one of them is another module's file** (`operator-settings`' two, the retirement battery's third), so this page states the re-grain and does not take it: they move in the SAME edit as the member lands, by the set — `D-152`'s precedent that a row counting a widened domain is re-grained, never quietly satisfied by a rename, and the derived one needs its SCAN widened and not only its literal (D-43, D-26).
+- **`OWED-4` — ONE ARM OF THE ROUTE HAS NO ROW: an UNKNOWN or MALFORMED role.** `AL-7` drives `D-181`'s eighteen and reads the seven refusals; **nothing published drives a role that is neither** — the arm §5 states as "refused, never thrown", which is the arm that keeps a bad caller from taking the app down. **It is a new boundary row (`AL-11`, the number AFTER the paint row `renderer-wiring` books as `AL-10`)**, named here so the route's totality is not merely asserted (D-40, `D-181`).
 
 ## 8. Assumptions, each with the alternative it rejected (D-1)
 
 | id | Assumption | Rejected alternative |
 |---|---|---|
-| ASM-L2-4 | the two drag members land INSIDE the existing `view` member — no tenth top-level member — because the act is the view record's and the crossing already fronts it (D-18, D-112, D-132) | a top-level `drag` member of its own, which would be a bridge member added to the app to prove a unit — the surface D-18 refuses |
-| ASM-L2-5 | §3's block gives all SEVEN member lines VERBATIM in order, so neither half transcribes from memory or from the five it found standing | naming only the two new members and leaving the five that stood to the reader, which is the improvisation the comparison row catches |
-| ASM-L2-6 | `tests/ui-leg-seam.test.ts` is left byte-unmoved, for §7's measurement | adding a row here asserting the pair's arrival, which duplicates the crossing's comparison row in a file whose subject is the leg's boot seam (D-40) |
+| ASM-L2-4 | the drag pair lands INSIDE the existing `view` member — no tenth member for it — because the act is the view record's and the crossing already fronts it | a top-level `drag` member of its own, which would be a bridge member added to prove a unit — the surface `D-18` refuses |
+| ASM-L2-7 | the role route's channel constant lives in `store-channels.ts` and **not** in `src/shared/types.ts` | putting it in `types.ts` beside the `IPC_DATA_*`/`IPC_SECURITY_*` names, which would spell an address in a file the MCP-reachable stack imports and would give `ipc-contract` a member this unit's scope says it does not get (D-123) |
+| ASM-L2-8 | the route's admitted set is **the guard**, and no event inspection, sender check or renderer-side veto is added beside it | a `permitted(`-style sender guard at this one site, which would make this crossing stricter than every sibling handler for a capability the admitted set already bounds (D-121, `D-181`) |
+| ASM-L2-9 | the role route is a **TENTH TOP-LEVEL bridge member**, and the three census rows move `9 → 10` in its edit (`OWED-3`) | folding it into an existing member (`security`'s or `data`'s), which would hang a window capability off a surface that owns another crossing — and a request route cannot ride `onRequest`, which is main→renderer (`D-112`, `S-10`) |
