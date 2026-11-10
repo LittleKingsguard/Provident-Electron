@@ -878,7 +878,27 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
   // PATH BY NAME; the other five specs (`Menu`, `MenuItem`, `setApplicationMenu`, `picker`, `'darwin'`) still sweep the same
   // file in FULL, the whole rest of `src/**` is unchanged, and the controls below prove both halves.
   const DIALOG_ADMITTED_PATH = 'src/shared/demo-envelope.ts'
-  it('X-5/src-wide census — `src/**` contains NO menu, picker, dialog or accelerator surface, except the ONE authored overlay node tree `D-113` names', () => {
+  // ⟶ **X-5 RE-GRAINED AGAIN 2026-11-09 (`D-195`) — A SECOND NAMED EXEMPTION, AND IT IS THE NULL FORM.** `D-181` removes the
+  // native menubar because a pane now CONTAINS the menus, so the design's one act is `Menu.setApplicationMenu(null)` in
+  // `src/main/main.ts` — which reds this row on TWO specs at once, `Menu` and `setApplicationMenu`. **THE ROW'S SUBJECT IS A
+  // MENU BEING AUTHORED, AND THIS CALL AUTHORS NOTHING: IT REMOVES.** So the exemption takes `D-113`'s shape exactly — ONE
+  // PATH (`main.ts`) admits ONE FORM (the named import binding the call needs and the ONE `null` call) — and the ban on
+  // `MenuItem`, on `picker`, on the `'darwin'` literal and on any NON-NULL `setApplicationMenu` stands unmoved over the WHOLE
+  // of `src/**`, that file included. The admission is MEASURED, never assumed (it reports what the bytes carry, so an
+  // exemption that exempted nothing is caught), and the controls below prove both halves through THIS row's own predicate.
+  const MENU_REMOVAL_ADMITTED_PATH = 'src/main/main.ts'
+  const MENU_TOKEN = ccOf([77, 101, 110, 117])
+  const SET_APPLICATION_MENU_TOKEN = ccOf([115, 101, 116, 65, 112, 112, 108, 105, 99, 97, 116, 105, 111, 110, 77, 101, 110, 117])
+  const ELECTRON_TOKEN = ccOf([101, 108, 101, 99, 116, 114, 111, 110])
+  const MENU_ITEM_TOKEN = ccOf([109, 101, 110, 117, 105, 116, 101, 109])
+  const PICKER_TOKEN = ccOf([112, 105, 99, 107, 101, 114])
+  const DARWIN_TOKEN = ccOf([100, 97, 114, 119, 105, 110])
+  /** **THE ADMITTED FORM, AS THE TWO OCCURRENCES THE RULING NAMES** — the named binding the call consumes, and the removal
+   *  call with a `null` argument. Both are BLANKED out of the view before any spec runs, and NOTHING ELSE is: a second call,
+   *  a non-null argument, a `new`-ed template or any other spelling of the two tokens stays in the view and reds. */
+  const MENU_REMOVAL_FORM = new RegExp(`\\b${MENU_TOKEN}\\s*\\.\\s*${SET_APPLICATION_MENU_TOKEN}\\s*\\(\\s*null\\s*\\)`, 'g')
+  const MENU_BINDING_FORM = new RegExp(`\\{[^{}]*\\b${MENU_TOKEN}\\b[^{}]*\\}\\s*from\\s*(?:'|")${ELECTRON_TOKEN}(?:'|")`, 'g')
+  it('X-5/src-wide census — `src/**` contains NO menu, picker, dialog or accelerator surface, except the ONE authored overlay node tree `D-113` names and the ONE NULL removal, on the ONE path, that `D-195` admits', () => {
     const banned = [
       // ⟶ THE `Menu` SPEC IS CASE-INSENSITIVE HERE, AND THE PIN REQUIRES IT
       // (`§3.5 X-5`'s dated scope pin, clause (ii): *"a `Menu`/`MenuItem`/
@@ -929,18 +949,44 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
       [files.length - swept.length, files.some((f) => f.endsWith(EXCLUDED_PATH))],
       "X-5 — the exclusion is asserted POSITIVITY-CHECKED (§3.5's pin): at most ONE path leaves the sweep, and it is this unit's own module when that module exists. At red time the module is ABSENT, so the sweep is the WHOLE tree and the exclusion removes nothing",
     ).toEqual([files.some((f) => f.endsWith(EXCLUDED_PATH)) ? 1 : 0, files.some((f) => f.endsWith(EXCLUDED_PATH))])
-    const offenders: string[] = []
-    const dialogAdmitted: string[] = []
-    for (const file of swept) {
-      const src2 = readOrEmpty(file)
+    /** **THE ROW'S OWN ADJUDICATION, FACTORED SO THE CONTROLS DRIVE THE SAME PREDICATE THE SWEEP USES** — a control that
+     *  re-implements the scan proves nothing about the scan (`D-113`'s shape). Two admissions, each ONE SPEC PAIR × ONE
+     *  PATH, and the second one is ONE FORM: the `dialog` token on `demo-envelope.ts` (`D-113`) and the NULL removal, with
+     *  the one binding it needs, on `main.ts` (`D-195`). */
+    const sweepSrcFile = (file: string, source: string): { offenders: string[]; dialogAdmitted: string[]; menuAdmitted: string[] } => {
+      const view = stripComments(source)
+      const offenders: string[] = []
+      const dialogAdmitted: string[] = []
+      const menuAdmitted: string[] = []
+      let sweptView = view
+      if (file.endsWith(MENU_REMOVAL_ADMITTED_PATH)) {
+        const calls = view.match(MENU_REMOVAL_FORM) ?? []
+        const bindings = view.match(MENU_BINDING_FORM) ?? []
+        // THE REMOVAL IS BLANKED BECAUSE IT AUTHORS NOTHING; everything it does not account for stays in the view.
+        sweptView = view.replace(MENU_REMOVAL_FORM, ' ').replace(MENU_BINDING_FORM, ' ')
+        if (calls.length > 0) menuAdmitted.push(`${file} — a ${SET_APPLICATION_MENU_TOKEN} call: the NULL form, which removes a menu and authors none`)
+        if (bindings.length > 0) menuAdmitted.push(`${file} — the ${MENU_TOKEN} binding that one call needs`)
+        if (calls.length > 1) offenders.push(`${file} — a ${SET_APPLICATION_MENU_TOKEN} call: a SECOND removal, and the ruling admits exactly ONE`)
+        if (bindings.length > 1) offenders.push(`${file} — a ${MENU_TOKEN} binding: a SECOND one, where the one removal needs one`)
+      }
       for (const spec of banned) {
-        if (!spec.re.test(stripComments(src2))) continue
+        if (!spec.re.test(sweptView)) continue
         if (spec.id === 'a dialog token' && file.endsWith(DIALOG_ADMITTED_PATH)) {
           dialogAdmitted.push(`${file} — ${spec.id}`)
           continue
         }
         offenders.push(`${file} — ${spec.id}`)
       }
+      return { offenders, dialogAdmitted, menuAdmitted }
+    }
+    const offenders: string[] = []
+    const dialogAdmitted: string[] = []
+    const menuAdmitted: string[] = []
+    for (const file of swept) {
+      const result = sweepSrcFile(file, readOrEmpty(file))
+      offenders.push(...result.offenders)
+      dialogAdmitted.push(...result.dialogAdmitted)
+      menuAdmitted.push(...result.menuAdmitted)
     }
     // THE EXEMPTION IS ONE SPEC × ONE PATH, AND IT IS MEASURED RATHER THAN ASSUMED: the admitted path really does carry the
     // token (so an exemption that exempted nothing is caught), and it carries NO OTHER banned spelling (so the admission
@@ -954,6 +1000,44 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
       offenders.filter((entry) => entry.startsWith(admittedFile) && admittedFile !== ''),
       'X-5 (`D-113`) — the admission is the `dialog` SPEC ONLY: the same file is still swept by the other five specs, so a `Menu`/`picker`/`darwin` spelling placed there still FAILS',
     ).toEqual([])
+    // ⟶ **THE SECOND ADMISSION, MEASURED THE SAME WAY (`D-195`): ONE SPEC PAIR × ONE PATH × ONE FORM, AND THE OTHER FOUR
+    // SPECS SWEEP THAT FILE IN FULL.** `${MENU_REMOVAL_ADMITTED_PATH}` is NOT a licence: a non-null call, a second call, a
+    // `MenuItem`, a `picker` spelling or the `'darwin'` literal placed there still reds, and the count below tracks the
+    // bytes — ZERO before `S-10` lands and TWO (the binding and the one call) after it.
+    const admittedMenuFile = swept.find((f) => f.endsWith(MENU_REMOVAL_ADMITTED_PATH)) ?? ''
+    expect(
+      offenders.filter((entry) => entry.startsWith(admittedMenuFile) && admittedMenuFile !== ''),
+      `X-5 (\`D-195\`) — the admission is the NULL FORM ONLY: ${MENU_REMOVAL_ADMITTED_PATH} is still swept for a NON-NULL ${SET_APPLICATION_MENU_TOKEN}, for ${MENU_ITEM_TOKEN}, for ${PICKER_TOKEN}, for the ${DARWIN_TOKEN} literal, and for a SECOND removal`,
+    ).toEqual([])
+    const admittedMenuBytes = admittedMenuFile === '' ? '' : stripComments(readOrEmpty(admittedMenuFile))
+    expect(
+      menuAdmitted.length,
+      'X-5 (`D-195`) — the admission EXACTLY tracks the bytes, so an exemption that exempted nothing is caught: zero while the route is unlanded, two once the binding and the one null call are in `main.ts`',
+    ).toBe((admittedMenuBytes.match(MENU_REMOVAL_FORM) === null ? 0 : 1) + (admittedMenuBytes.match(MENU_BINDING_FORM) === null ? 0 : 1))
+    // THE TWO CONTROLS THE RE-GRAIN OWES, each driven through `sweepSrcFile` — the same predicate above, never a copy.
+    const REMOVAL_BYTES = `import { ${MENU_TOKEN} } from '${ELECTRON_TOKEN}'\n${MENU_TOKEN}.${SET_APPLICATION_MENU_TOKEN}(null)\n`
+    expect(
+      sweepSrcFile(`/repo/${MENU_REMOVAL_ADMITTED_PATH}`, REMOVAL_BYTES).offenders,
+      'X-5 CONTROL (`D-195`, positive half) — the admitted form PASSES on the admitted path, so the exemption is a real reading and not a dead branch',
+    ).toEqual([])
+    expect(
+      sweepSrcFile(`/repo/${MENU_REMOVAL_ADMITTED_PATH}`, `import { ${MENU_TOKEN} } from '${ELECTRON_TOKEN}'\n${MENU_TOKEN}.${SET_APPLICATION_MENU_TOKEN}(template)\n`).offenders.map((entry) => entry.split(' — ')[1]),
+      'X-5 CONTROL (`D-195`, the half that GATES) — a NON-NULL call AUTHORS a menu and is therefore NOT the removal: it reds on BOTH specs exactly as it did before the re-grain, so the admission never becomes a licence for the call',
+    ).toEqual(['a Menu reference', `a ${SET_APPLICATION_MENU_TOKEN} call`])
+    expect(
+      sweepSrcFile(`/repo/${MENU_REMOVAL_ADMITTED_PATH}`, `${REMOVAL_BYTES}${MENU_TOKEN}.${SET_APPLICATION_MENU_TOKEN}(null)\n`).offenders.map((entry) => entry.split(' — ')[1])[0],
+      'X-5 CONTROL (`D-195`) — the ruling admits exactly ONE call: a SECOND removal is refused, so "once" is measured rather than described',
+    ).toBe(`a ${SET_APPLICATION_MENU_TOKEN} call: a SECOND removal, and the ruling admits exactly ONE`)
+    expect(
+      sweepSrcFile('/repo/src/main/elsewhere.ts', REMOVAL_BYTES).offenders.map((entry) => entry.split(' — ')[1]),
+      'X-5 CONTROL (`D-195`, the other half) — the SAME bytes on ANY OTHER `src/**` path are NOT admitted: the exemption is ONE PATH, never the directory, never the filename and never the class',
+    ).toEqual(['a Menu reference', `a ${SET_APPLICATION_MENU_TOKEN} call`])
+    // …and the other FOUR specs still sweep the admitted path itself, one spelling each: the file is not exempt, the form is.
+    const plantedOnAdmittedPath = `const item = new ${MENU_ITEM_TOKEN}()\nconst p = '${PICKER_TOKEN}'\nconst d = '${DARWIN_TOKEN}'\n`
+    expect(
+      sweepSrcFile(`/repo/${MENU_REMOVAL_ADMITTED_PATH}`, REMOVAL_BYTES + plantedOnAdmittedPath).offenders.map((entry) => entry.split(' — ')[1]),
+      'X-5 CONTROL (`D-195`) — a `MenuItem`, a `picker` spelling and a `darwin` literal placed in the admitted path STILL FAIL: the exemption is the removal FORM and the other four specs are unmoved over the whole tree',
+    ).toEqual(['a MenuItem reference', 'a picker token', `a ${DARWIN_TOKEN} literal`])
     expect(
       offenders,
       'X-5 — the gate-1 record\'s step-1 fact re-measured: ZERO menu/picker/dialog/accelerator/darwin occurrences in `src/**` OUTSIDE this unit\'s own module. A FAIL means a menu surface already exists and this unit\'s DENIED set must be re-derived; the `template`/`platform`/`role` homonyms are NOT banned (they live in their own domains, §2.2(C) rows 3/4/9)',

@@ -65,7 +65,15 @@ const RPC_METHODS = [
 // CARRIES, so a TENTH member of any name — or the `data` member losing one of its five routes — reddens it. The member is
 // here because it is a crossing this TREE answers, not because this unit wrote one: `D-112` adds no MCP tool, no resource
 // and no group, and `ISO-1` above still drives the five tools and asserts no answer of theirs names the security record.
-const BRIDGE_MEMBERS = ['data', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine
+// ⟶ **AND THE SET MOVES `9 -> 10` ON 2026-11-09 (`D-181`, `D-195`), WITH THE TENTH MEMBER NAMED.** `app-layout`'s `app-shell`
+// route gives the realm a menus member — `window.provident.menu(role)`, ONE preload member behind ONE channel constant
+// (`IPC_MENU_ROLE`, in `src/main/store-channels.ts`, whose own census moves `2 -> 3`) and ONE `ipcMain.handle` admitting the
+// eleven Chromium roles and refusing the seven. **THE TENTH IS `'menu'`.** This file GATES (`tests/e2e/**` is never marked,
+// `D-30`), and the row is re-grained BEFORE the member lands because it is a PRECONDITION of that unit's floor: so the state
+// is MEASURED — the declared tenth is the ONE member the tree may still be missing, and a member the declaration does not
+// carry reddens in EITHER state.
+const MENUS_BRIDGE_MEMBER = 'menu'
+const BRIDGE_MEMBERS = ['data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine; D-181: ten
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -280,15 +288,26 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
       await close()
     }
 
-    // ISO-4 — the bridge: NINE top-level members (D-63 added the tab record's crossing, D-87 the view record's and D-112
-    // the five `data.*` routes' member), three security routes in BOTH lockstep halves, and `ipcRenderer` obtainable from no
-    // file but the bridge.
+    // ISO-4 — the bridge: TEN top-level members from the menus route (`D-181`; D-63 added the tab record's crossing, D-87 the
+    // view record's and D-112 the five `data.*` routes' member), three security routes in BOTH lockstep halves, and
+    // `ipcRenderer` obtainable from no file but the bridge.
     const preload = sourceOf('src/main/preload.ts')
     const start = preload.indexOf('export interface ProvidentBridge {')
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const members = [...preload.slice(start, end).matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries NINE top-level members — six base plus the tab record\'s crossing (D-63), the view record\'s (D-87) and the five `data.*` routes\' member (D-112); the `store` namespace left the set at D-93, with its own two members gone; interface.md §5 A-1').toEqual([...BRIDGE_MEMBERS])
+    /* ⟶ **RE-GRAINED `2026-11-09` (`D-181`, `D-195`): THE CENSUS MOVES `9 -> 10` AND THE TENTH MEMBER IS NAMED.** The set is
+     * the TEN the declaration carries, and the row MEASURES the one state in which the tree can still be short of it — the
+     * menus member is a declared, named pre-landing absence and it is the ONLY one. **THE BOUND IS KEPT**: a member the
+     * declaration does not carry fails in either state, and so does a declared member missing after the route lands. */
+    const declared: readonly string[] = [...BRIDGE_MEMBERS]
+    const declaredMissing = declared.filter((member) => !members.includes(member))
+    expect(
+      members.filter((member) => !declared.includes(member)),
+      'the bridge carries NO top-level member the TEN-member declaration does not name — six base plus the tab record\'s crossing (D-63), the view record\'s (D-87), the five `data.*` routes\' member (D-112) and the menus route\'s `menu` (D-181); the `store` namespace left the set at D-93, with its own two members gone (interface.md §5 A-1)',
+    ).toEqual([])
+    expect(declaredMissing.filter((member) => member !== MENUS_BRIDGE_MEMBER), 'the bridge carries every declared member but the TENTH, which is the menus route\'s `menu` (D-181) and is missing only until that member lands').toEqual([])
+    expect([9, 10].includes(members.length), 'and the carried count reads NINE until the menus member lands and TEN after it, and no other figure: the widening is the menus route\'s alone').toBe(true)
     const preloadRoutes = securityRoutesOf(preload, 'src/main/preload.ts')
     /* ⟶ **RE-GRAINED `2026-11-03` (`D-106`): FOUR ROUTES, THREE OF THEM REQUESTS.** The set was exactly the three manual-UI
      * requests. `D-106` gives the record a DELIVERY, so `onChanged` joins it — a `security` member that carries a push and

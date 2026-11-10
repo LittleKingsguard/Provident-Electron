@@ -1239,6 +1239,21 @@ const DECLARED_SCOPE: readonly string[] = [
   //    OWED**: `B-1` reported this path as its ONE offender on this tree, so the row is green on the dirty tree only because the path
   //    stands here, and a prefix declared in its place would admit a page nobody named.
   'docs/L3/app-envelope/design.md',
+  // ── `app-shell`'S TRANSCRIPTION PAGE — `docs/L3/app-shell/signatures.md`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH ITS
+  //    OWN REASON, NEVER AS A PREFIX OF THE NEIGHBOUR ABOVE (`docs/L3/app-shell/` would admit every page a later pass drops
+  //    beside it, and a directory measures nothing — `B-2`'s undeclared-sibling arm is what bites when one is dropped without a
+  //    name). **THE FILE IS `app-shell`'s AND IS DECLARED HERE FOR THE REASON THE FIVE ENTRIES ABOVE ARE**: this row asserts
+  //    the worktree's edit set against a scope, so EVERY path a pass writes is a path this union must carry whatever module
+  //    authored it — and the entry is added WITH the edit that dirtied the path, never after it (`D-146`'s precedent; the
+  //    sentence above that called `app-envelope`'s page *"the last entry this union is owed"* is that page's own reading at
+  //    its date and is read THROUGH this entry rather than reworded, `D-46`).
+  //    **ITS SUBJECT IS THE MODULE'S FIRST TRANSCRIPTION PAGE**: `app-shell`'s design went to rev 5 for the window and the
+  //    menus route's main half and this page was CREATED (`D-45`'s declared-names form) because the pass mints a signature of
+  //    its own — the bridge's tenth member `menu`, the one channel constant `IPC_MENU_ROLE` in `src/main/store-channels.ts`
+  //    whose own census moves `2 → 3`, the two role sets and the ONE `ipcMain.handle` admitting eleven and refusing seven
+  //    (`D-195`, `D-196`). `docs/L3/app-shell/design.md` stands declared above; this page did not, so `B-1` red the path BY
+  //    NAME until this entry did (`D-195`'s OWED-8) — which is the precondition, not a defect.
+  'docs/L3/app-shell/signatures.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

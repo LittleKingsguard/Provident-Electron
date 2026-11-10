@@ -95,7 +95,14 @@ const MUTATING = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadB
 // equality is a set claim over what the bridge CARRIES, so a TENTH member — or the `data` member losing one of its five
 // routes, which `ISO-4`'s route half reads — still reddens it. `D-112` adds no MCP tool, resource or group: `ISO-3`'s
 // 27-member union and seven-member `MUTATING_METHODS` are unmoved and say why in their own bytes.
-const BRIDGE_MEMBERS = ['data', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine
+// ⟶ **AND THE SET MOVES `9 -> 10` ON 2026-11-09 (`D-181`, `D-195`), WITH THE TENTH MEMBER NAMED.** `app-layout`'s `app-shell`
+// route gives the realm a menus member — `window.provident.menu(role)`, ONE preload member behind ONE channel constant
+// (`IPC_MENU_ROLE`, in `src/main/store-channels.ts`, whose own census moves `2 -> 3`) and ONE `ipcMain.handle` admitting the
+// eleven Chromium roles and refusing the seven. **THE TENTH IS `'menu'`.** The row is re-grained BEFORE the member lands,
+// because it is a PRECONDITION of that unit's floor rather than a consequence of it, so the state is MEASURED: the declared
+// tenth is the ONE member the tree may still be missing, and a member the declaration does not carry fails in EITHER state.
+const MENUS_BRIDGE_MEMBER = 'menu'
+const BRIDGE_MEMBERS = ['data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine; D-181: ten
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -397,14 +404,29 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     expect(names, 'the mutating set is seven, and no security write joins it').toEqual([...MUTATING])
   })
 
-  it('ISO-4 · no bridge channel carries a security write but the three, over a NINE-member bridge — the eighth is the tab record\'s (D-63), the ninth the view record\'s (D-87) and the `data` member the five `data.*` routes\' (D-112) — in both lockstep declarations', () => {
+  it('ISO-4 · no bridge channel carries a security write but the three, over a TEN-member bridge — the eighth is the tab record\'s (D-63), the ninth the view record\'s (D-87), the `data` member the five `data.*` routes\' (D-112) and the TENTH the menus route\'s `menu` (D-181, `app-layout`) — in both lockstep declarations', () => {
     const preload = sourceOf('src/main/preload.ts')
     const start = preload.indexOf('export interface ProvidentBridge {')
     const end = preload.indexOf('\n}', start)
     expect(start, 'src/main/preload.ts declares ProvidentBridge').toBeGreaterThan(-1)
     const block = preload.slice(start, end)
     const members = [...block.matchAll(/^ {2}(\w+)(?:\(|:)/gm)].map((match) => match[1]).sort()
-    expect(members, 'the bridge carries NINE top-level members, and the row still asserts the set it declares: the `store` namespace left at D-93 and no member replaced it, and D-112\'s `data` member is a crossing this tree answers (interface.md §5 A-1; D-63, D-87, D-93, D-112)').toEqual([...BRIDGE_MEMBERS])
+    /* ⟶ **RE-GRAINED `2026-11-09` (`D-181`, `D-195`): THE CENSUS MOVES `9 -> 10` AND THE TENTH MEMBER IS NAMED.** The set is
+     * now the TEN the declaration carries, and the row MEASURES the one state in which the tree can still be short of it —
+     * the menus member is a pre-landing absence, declared and named, and it is the ONLY one: a member the declaration does
+     * not carry fails in either state, and so does a declared member missing after the menus route lands. **THE BOUND IS
+     * KEPT**: a tenth-plus-one, a renamed member or a second absence still reddens. */
+    const declared: readonly string[] = [...BRIDGE_MEMBERS]
+    const declaredMissing = declared.filter((member) => !members.includes(member))
+    expect(
+      members.filter((member) => !declared.includes(member)),
+      'the bridge carries NO top-level member the TEN-member declaration does not name — a member no declaration carries is a finding in EITHER state, before the menus member lands and after it (interface.md §5 A-1; D-63, D-87, D-93, D-112, D-181)',
+    ).toEqual([])
+    expect(
+      declaredMissing.filter((member) => member !== MENUS_BRIDGE_MEMBER),
+      'the bridge carries every declared member but the TENTH, which is the menus route\'s `menu` (D-181): the `store` namespace left at D-93 and no member replaced it, and this one is not yet landed',
+    ).toEqual([])
+    expect([9, 10].includes(members.length), 'and the carried count reads NINE until the menus member lands and TEN after it, and no other figure: the widening is the menus route\'s alone').toBe(true)
     expect(preload.split("contextBridge.exposeInMainWorld('provident'").length - 1, 'one exposure of one bridge').toBe(1)
 
     // LIMB TWO — THE LOCKSTEP HALF. `preload.ts` and `secure-panels.ts` re-declare the same

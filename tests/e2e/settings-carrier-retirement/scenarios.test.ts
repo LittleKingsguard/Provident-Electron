@@ -332,7 +332,28 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     // IT** — the claim this row makes is unchanged (nothing a bridge channel carries can grant the operator's capabilities
     // to an agent, and a `data.*` route reaches the PROFILE store, not the security record: `ISO-1` drives all five tools and
     // asserts no answer of theirs names `provident-operator-settings.json`, the record address or the exclusion address).
-    expect(bridge, 'ISO-4: NINE top-level members since D-63\'s tab-record crossing, D-87\'s view-record crossing and D-112\'s five `data.*` routes, the `store` namespace having left at D-93, and this unit adds none (D-18)').toEqual(['data', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'])
+    expect(bridge.length === 9 || bridge.length === 10, 'ISO-4: the carried count reads NINE until the menus route\'s member lands and TEN after it, and no other figure').toBe(true)
+    /* ⟶ **RE-GRAINED `2026-11-09` (`D-181`, `D-195`): THE BRIDGE'S CENSUS MOVES `9 -> 10` AND THE TENTH MEMBER IS NAMED.**
+     * `app-layout`'s `app-shell` route gives the realm a menus member — `window.provident.menu(role)`, ONE preload member
+     * behind ONE channel constant (`IPC_MENU_ROLE`, in `src/main/store-channels.ts`, whose own census moves `2 -> 3`) and ONE
+     * `ipcMain.handle` admitting eleven roles and refusing seven. The set this row compares against is now the TEN, and it is
+     * MEASURED against the one state in which the tree can still be short of it, because this row is a PRECONDITION of that
+     * unit's floor rather than a consequence of it: the menus member is a declared, named pre-landing absence and it is the
+     * ONLY one. **THE CLAIM IS UNMOVED** — nothing a bridge channel carries can grant the operator's capabilities to an
+     * agent, and the menus member reaches `main`'s admitted role set, not the security record (`ISO-1` above drives all five
+     * `data.*` tools and asserts no answer of theirs names `provident-operator-settings.json`, the record address or the
+     * exclusion address). **THE BOUND IS KEPT**: a member the declaration does not carry fails in either state, and so does
+     * a declared member missing after the route lands. */
+    const declaredBridge = ['data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view']
+    const menusBridgeMember = 'menu'
+    expect(
+      bridge.filter((member) => !declaredBridge.includes(member)),
+      'ISO-4: the bridge carries NO top-level member the TEN-member declaration does not name — the tab record\'s crossing (D-63), the view record\'s (D-87), the five `data.*` routes\' member (D-112), the `store` namespace having left at D-93, and the menus route\'s `menu` (D-181) being the tenth',
+    ).toEqual([])
+    expect(
+      declaredBridge.filter((member) => !bridge.includes(member)).filter((member) => member !== menusBridgeMember),
+      'ISO-4: and it carries every declared member but the TENTH — the menus route\'s `menu` — which is missing only until that member lands, and this unit adds none of it (D-18)',
+    ).toEqual([])
 
     // ISO-5 and ISO-6 — nothing the MCP stack's own import closure reaches names the instance, its
     // module or either retired name, and its allowed `provident-*.json` literal set has SHRUNK to the
