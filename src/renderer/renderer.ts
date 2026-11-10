@@ -13,7 +13,7 @@ import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCom
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DEFAULT_PANE_ID, defaultPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DEFAULT_PANE_ID, defaultPaneGeometry, zoneIn, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -411,10 +411,11 @@ export function startGutterAffordance (runtime: Runtime): {
    *  composition that reads `view.paneSizeOf`/`paneBoundsOf` and writes with `commitPane`; until this
    *  pass it had NO caller under `src/` and the app's live gesture went round it, reading the authored
    *  pane element's attributes through `gutterSeamExample`'s pair. The `source` is this wiring's own
-   *  event source, which carries no `layout` member: **NO ZONE TURN STANDS ON THE SURFACE AT ALL**
-   *  (`renderZone` is DELETED — `D-168`), no zone turn was ever called, and **no zone layout is rendered
-   *  anywhere in this tree**, because the delivery's ONE body is `theme?.apply(); ghost?.(); readout?.()`
-   *  and it calls nothing else.
+   *  event source, which carries no `layout` member: **NO ZONE TURN STANDS ON THIS SURFACE** (`renderZone` is DELETED —
+   *  `D-168`), no zone turn was ever called, and **no layout PROJECTION is rendered anywhere in this tree** — the
+   *  delivery's ONE body is `theme?.apply(); ghost?.(); readout?.(); paint?.()` and it calls nothing else, where the FOURTH
+   *  member is the LAYOUT PAINT (`D-185`, `D-194`): it reads the view record and writes four authored nodes' `css.style`,
+   *  which is not `renderZone` returning and needs no `layout` member to do it.
    *  CONSTRUCTED HERE AND NOT PER GESTURE, and it reads nothing: every read is a caller turn.
    *  **AND IT IS HANDED THE PANE ELEMENT THE GHOST'S DECLARATION LANDS ON** (`D-144`): `target` is this
    *  function's own `elementForNodeId(GUTTER_TARGET_ID)` reading, the element the inline preview writes
@@ -1136,7 +1137,14 @@ async function main(): Promise<void> {
   // DELETED sink's successor — the delivery paints `#gutter-status` from the record's stored size instead of the gesture
   // writing its clamped figure into a rendered node. One hand-over, one subscription body, three rendered values; the
   // composition registers no subscriber of its own and no second subscription is taken (`D-90`, `D-92` `M-4`).
-  startViewShape(themeApplication, gutter.renderGhost, gutter.renderPaneSize)
+  // **AND THE FOURTH IS THE LAYOUT PAINT** (`S-6`; `D-185`, `D-194`): the turn reads the shape the client has just adopted —
+  // `getViewClient().reading()`, the same client and the same reading the three turns above were handed beside — and writes
+  // the four zones' fixed dimension and the panes' adjustable member. It is a CALL rather than a stored value, so the turn
+  // reads the delivery's own answer and never a reading captured at boot; a realm that has read nothing hands it `null` and
+  // it writes nothing (`D-127`).
+  startViewShape(themeApplication, gutter.renderGhost, gutter.renderPaneSize, () => {
+    driveLayoutRegions(getViewClient().reading(), runtime)
+  })
   // ⟶ **THE APP-STATE ROWS' SHAPE (`D-104`; `D-82`'s `V3`)** — the pane that displays the module registry is filled from a
   //    DELIVERY from here on, and the request-time read `panels.refresh()` used to make is deleted. Started LAST and never
   //    awaited, for the reason the two sites above it are: every boot step including `bridge.ready()` has already run, so no
@@ -1461,6 +1469,154 @@ function describeSecurityReading(shape: { filled: boolean; token: string | null;
     + `exclusion=${String(shape.exclusion)}, refused=${String(shape.read !== null)}`
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * TURN 3 — THE LAYOUT PAINT, THE DELIVERY'S FOURTH HAND-OUT (`S-6`; `D-185`, `D-187`, `D-189`, `D-191`, `D-194`;
+ * `docs/L2/renderer-wiring/interface.md` §2 turn 3, `docs/L3/renderer-wiring/design.md` §1).
+ *
+ * **IT IS NOT `renderZone` RETURNING** (`D-168`, `D-185`): that turn took a `source.layout` member no source in this tree
+ * carries and resolved a layout PROJECTION, while this one reads the view record and writes four authored nodes'
+ * `css.style` through the runtime's one write surface — which is how `['zones']` gets its first reader since `D-169` with no
+ * projection module pressed into service.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** **THE FOUR AUTHORED ZONE NODES, AND THE ONE AXIS EACH ONE FIXES** (`D-185`; L1 §3 `S-6(a)`): `top` and `bottom` fix the
+ *  HEIGHT, `left` and `right` the WIDTH, and the figure for every one of them is `['zones', <id>, 'size']`.
+ *  **THE FOUR IDS ARE SPELLED HERE BECAUSE THE ENVELOPE SPELLS THEM**: `src/shared/demo-envelope.ts` authors the four zone
+ *  nodes with these four LITERALS on `css.id` and `props.id` and publishes no constant for any of them — five more exports
+ *  would move that module's surface past the `19` its map row counts (§9 there), so the literal is the one spelling both
+ *  sides carry. **THE EQUALITY IS `AL-10`'s TO MEASURE AND NOTHING DERIVES IT** (`D-188` debt 2): an id here that the
+ *  envelope does not author writes into nothing. */
+const LAYOUT_ZONE_AXES: readonly { readonly id: string; readonly member: 'height' | 'width' }[] = [
+  { id: 'top', member: 'height' },
+  { id: 'bottom', member: 'height' },
+  { id: 'left', member: 'width' },
+  { id: 'right', member: 'width' },
+]
+
+/** **THE PANE'S TWO AXIS MEMBERS, AND THE PANE'S `zone` IS WHAT SELECTS WHICH ONE IT PAINTS** (`D-186`'s axis rule as
+ *  `D-189`/`D-191` settled it; `D-194`); in `top`/`bottom` the zone fixes the height, so the pane's own member is its
+ *  **`width`**; in `left`/`right` the zone fixes the width, so the pane's own member is its **`height`**; and **with no
+ *  `zone` the pane stands in the STAGE** (`C-9`'s absence rule), which is derived and fixes no axis at all, so **both**
+ *  members are the pane's own — a stage pane behaving as a sidebar pane, and nothing overriding either figure.
+ *  **THE MEMBER THIS RETURNS NOTHING FOR IS MEMORY AND NOT A SECOND AUTHORITY**: it stays stored, it is never written here,
+ *  and it is read again the moment the pane's `zone` changes (`D-189`). **A `zone` that is none of the four names no axis**,
+ *  and that answers `[]`: an axis no zone of the closed four declares is not a figure this turn may write (`D-129` — absent
+ *  is lawful, an invented axis is not). */
+function paneAxisMembers(zone: unknown): readonly ('width' | 'height')[] {
+  if (zone === undefined) return ['width', 'height']
+  if (zone === 'top' || zone === 'bottom') return ['width']
+  if (zone === 'left' || zone === 'right') return ['height']
+  return []
+}
+
+/** **ONE `css.style` WRITE ON ONE AUTHORED NODE — THE FORM `drivePageDisplay` ALREADY USES** (`:250`): one `state-slice`
+ *  whose single mutation replaces that key. **THE ENGINE COMPOSES `css` PER KEY, SO ONE `css.style` LAYER REPLACES THE
+ *  STANDING STYLE OBJECT WHOLE** — which is why a zone's dimension and its `display` are composed into ONE object here and
+ *  written once, never as two members (`D-194`: one style value, not two writes), and why the value handed over is the whole
+ *  style this paint wants on that node. **THE COLLISION THAT LEAVES IS `app-envelope`'s AND IS ROUTED, NOT TAKEN** (design §6):
+ *  a region's authored `overflow`/fill cannot stand BESIDE a painted dimension, so a region's static layout must move to a
+ *  class or to a child this paint never writes.
+ *  It answers `true` only where the runtime said `applied`; every other arm — a refusal, a `'threw'`, a hostile runtime — is
+ *  `false`, and the CALLER reports it in `D-117`'s register rather than letting a refusal read as a paint. */
+function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<string, string>): boolean {
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: nodeId,
+      mutation: [{ targetProp: 'css.style', mode: 'replace', value: style }],
+    })
+    return (typeof answer?.status === 'string' ? answer.status : 'no-answer') === 'applied'
+  } catch {
+    return false
+  }
+}
+
+/** **TURN 3 — THE LAYOUT PAINT: THE DELIVERY'S FOURTH HAND-OUT** (`S-6`; `D-185`, `D-187`, `D-189`, `D-191`, `D-194`).
+ *  Three `css.style` subjects and no fourth:
+ *
+ *   (a) **THE FOUR ZONES' FIXED DIMENSION**, each read from `['zones', id, 'size']` through the client's own family — a
+ *       **height** for `top`/`bottom`, a **width** for `left`/`right` — with the zone's participation (`display`) composed
+ *       into the SAME style value. **A ZONE STATING NO `size` IS WRITTEN NOTHING**: no fallback, no default, no authored
+ *       height, so such a zone renders on its authored `css` alone until a writer speaks (`D-191`'s `OWED-4` answer, `D-174`).
+ *   (b) **THE PANE'S ADJUSTABLE MEMBER — AND ONLY THAT ONE.** The member the pane's `zone` makes adjustable is written, and
+ *       only where the record STATES it; its other stored member is retained-but-unpainted and is never written, because at
+ *       any instant exactly one figure is painted per axis and a leaf cannot reach a sibling (`D-189`/`D-191`). **A STAGE PANE
+ *       HAS NO ZONE, SO BOTH ITS MEMBERS ARE ITS OWN** — and still only the ones the record states.
+ *   (c) **THE STAGE'S CONTENT**: the active tab's `target`, resolved to an authored node and driven through
+ *       `drivePageDisplay`'s existing form (one `state-slice` per authored page, the member the landing/error witnesses
+ *       already write). **THE STAGE'S OWN DIMENSIONS ARE DERIVED FROM THE REMAINDER AND ARE NEVER WRITTEN** (`D-185`): it
+ *       carries no record, no member and no write, and this turn paints its CHILDREN and no dimension of it.
+ *
+ *  **NOTHING IS WRITTEN FROM A READING THAT IS NOT `committed`** — the gate `driveTabsLandingPage` keeps, for its own
+ *  reason: `absent` and `unread` are not a record saying the regions carry no figure, and a fault delivers no correction
+ *  (`D-127`).
+ *
+ *  **AND THE RECORD IT READS IS NOT IN THE TREE AT THIS HEAD, SAID RATHER THAN PAPERED OVER**: `src/shared/view-shape.ts`
+ *  still carries `ViewPaneGeometry`'s `size`/`bounds` with no `width`, no `height` and no `zone`, and one declared pane id,
+ *  so (b) is INERT until `store-view-record`'s `S-8` lands in the same pass — and its rule is exactly that inertness: **a
+ *  member the record does not state writes NOTHING**. (a) is live the moment a writer states a zone's `size`, and (c) the
+ *  moment a tab's `target` names an authored node.
+ *
+ *  **IT IS PRIVATE AND ANSWERS NOTHING**, the form `driveTabsRows` landed in (`D-201`): `signatures.md` §3 declares
+ *  `{written: number}` and no caller reads such a count, so the count would be a name with no reader (`D-70`) — the refusals
+ *  are REPORTED here instead, and the answer `AL-10` reads is the markup. */
+function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPageRuntime | null): void {
+  if (runtime === null) return
+  if (reading === null || reading.status !== 'committed') return
+  // (a) THE FOUR ZONES' FIXED DIMENSION — ONE `css.style` VALUE PER NODE, ONE WRITE (`D-185`, `D-194`).
+  for (const zone of LAYOUT_ZONE_AXES) {
+    // THE CLIENT'S OWN DERIVATION, NOT A SECOND ONE: `zoneIn` answers `null` for an id the family does not declare and the
+    // members it carries for one the record wrote — so a memberless zone (the creation repair's `{}`) states no `size`.
+    const held = zoneIn(reading.zones, zone.id)
+    if (held === null || held.size === undefined) continue
+    if (!Number.isFinite(held.size) || held.size < 0) continue
+    const style: Record<string, string> = { [zone.member]: `${String(held.size)}px` }
+    // THE PARTICIPATION COMPOSES INTO THAT SAME VALUE, and only where the record states one — an unstated `display` is not
+    // authored here either.
+    if (held.display !== undefined) style['display'] = held.display
+    if (!paintStyle(runtime, zone.id, style)) {
+      console.error(`[provident-renderer] layout paint: the ${zone.id} zone refused its ${zone.member} (${String(held.size)})`)
+    }
+  }
+  // (b) EVERY DECLARED PANE, THE MEMBER ITS `zone` MAKES ADJUSTABLE — read STRUCTURALLY, because the record's pane shape is
+  // `store-view-record`'s and this turn may not invent a member the record does not carry.
+  for (const pane of reading.panes) {
+    const record = pane as unknown as Record<string, unknown>
+    const style: Record<string, string> = {}
+    for (const member of paneAxisMembers(record['zone'])) {
+      const figure = record[member]
+      if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
+      style[member] = `${String(figure)}px`
+    }
+    // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted.
+    if (Object.keys(style).length === 0) continue
+    if (!paintStyle(runtime, pane.id, style)) {
+      console.error(`[provident-renderer] layout paint: the pane ${pane.id} refused its ${Object.keys(style).join('/')}`)
+    }
+  }
+  // (c) THE STAGE'S CONTENT — THE ACTIVE TAB'S `target` THROUGH `drivePageDisplay`'s FORM, so a page's `display` keeps its ONE
+  // author (`D-129`, `C-4`). The rows are the realm's HELD statement about the tab record: `holdTabsReading` writes that
+  // binding and this turn reads it, so no second subscription, no second read route and no poll is added (`D-82` clause 4).
+  const tabs = tabsClientReading
+  if (tabs === null || tabs.status !== 'committed') return
+  for (const row of tabs.rows) {
+    if (row.target === '') continue
+    // RESOLVED FIRST: an authored node is what a page's `display` can be written to at all, and a target naming none is
+    // written NOTHING rather than refused — `driveTabsLandingPage`'s own resolution arm, one level down (`D-127`).
+    let resolved: unknown = null
+    try {
+      resolved = runtime.elementForNodeId(row.target)
+    } catch {
+      resolved = null
+    }
+    if (resolved === null || resolved === undefined) continue
+    const status = drivePageDisplay(runtime, row.target, row.active === true)
+    if (status !== 'applied') {
+      console.error(`[provident-renderer] layout paint: the page ${row.target} answered ${String(status)}`)
+    }
+  }
+}
+
 /** **THE SHAPE'S ONE BOOT SITE (`D-88`)** — ONE registration and ONE stated read, started from `main()` as its last
  *  statement and never awaited. The registration goes FIRST so a change that lands between the read and its continuation is
  *  still delivered (the delivery re-reads, so an extra delivery costs one read and can never lose a write). The read's
@@ -1484,20 +1640,34 @@ function describeSecurityReading(shape: { filled: boolean; token: string | null;
  *  appearance, the transient and the read-out, in that order, and each turn is total — a hostile shape is a reading each
  *  of them leaves standing, never an exception out of the delivery.
  *
+ *  **AND THE FOURTH ARGUMENT IS THE LAYOUT PAINT, CALLED FOURTH IN THAT SAME BODY** (`S-6`; `D-185`, `D-194`): the four
+ *  authored zones' fixed dimension from `['zones']`, the panes' adjustable member from `['panes']`, and the stage's content
+ *  through `drivePageDisplay`'s form — ONE subscription writing four rendered values and no fifth. It is the turn
+ *  `driveLayoutRegions` above declares, and it is **NOT `renderZone` returning** (`D-168`, `D-185`): no layout projection, no
+ *  `source.layout` member, no zone turn on any surface.
+ *
  *  **THE HEADER SPELLS `function startViewShape(` WITH NO SPACE**, because two probes in
- *  `tests/theme-declaration.test.ts` search that exact text; its `parameterNamesOf` arity row is `chrome`'s same-edit
- *  re-grain (`D-3`, `D-128`) — the third turn makes the count three. */
-function startViewShape(theme: ThemeApplication | null, ghost: (() => void) | null, readout: (() => void) | null): void {
+ *  `tests/theme-declaration.test.ts` search that exact text. **ITS `parameterNamesOf` ARITY ROW STILL READS `.toBe(3)` AND
+ *  THIS FOURTH PARAMETER REDS IT** — `chrome`'s same-edit re-grain to `4`, named here and routed rather than taken (`D-3`,
+ *  `D-128`; design §6: the count is three at that head, and this is the hand-out that makes it four). */
+function startViewShape(
+  theme: ThemeApplication | null,
+  ghost: (() => void) | null,
+  readout: (() => void) | null,
+  paint: (() => void) | null,
+): void {
   const client = getViewClient()
   viewSubscription = client.subscribe(() => {
     // A DELIVERY IS A RE-READ (the client has already adopted it) and its appearance turn, then the ghost's, then the
-    // read-out's. A record with no applicable declaration — the placeholder, which names no attribute — writes nothing,
-    // so a delivery that moved another family costs one read and no appearance write; the ghost turn is the drag
-    // address's own transient and asks its own route once; the read-out's turn paints the panes family's stored size
-    // and skips the write where the authored status node already carries it.
+    // read-out's, then the layout paint's. A record with no applicable declaration — the placeholder, which names no
+    // attribute — writes nothing, so a delivery that moved another family costs one read and no appearance write; the ghost
+    // turn is the drag address's own transient and asks its own route once; the read-out's turn paints the panes family's
+    // stored size and skips the write where the authored status node already carries it; and the paint writes the four
+    // zones' dimension and the panes' adjustable member from the record, writing NOTHING where the record states no figure.
     theme?.apply()
     ghost?.()
     readout?.()
+    paint?.()
   })
   void client.fill().then(
     (reading) => {
@@ -2544,7 +2714,8 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * `['drag']`, whose node stands at `temp` — read through `src/renderer/view-client.ts`'s shape or, for `['drag']`, through
  * the realm's own `data.read` route; the client is a WIRING-HELD ARGUMENT passed into closures, NEVER a module-scope
  * binding (§3.4 R-2). The composition registers NO SUBSCRIBER of its own: the ghost turn is the `renderGhost` member
- * below, handed OUT to the shape's ONE delivery — whose whole body is `theme?.apply(); ghost?.(); readout?.()` — and the
+ * below, handed OUT to the shape's ONE delivery — whose whole body is `theme?.apply(); ghost?.(); readout?.(); paint?.()` —
+ * and the
  * composition takes NO `onChanged`/`subscribe` registration, on the bridge, on the store or on the client, so the push
  * still has exactly one consumer in this realm. **THE ONE REGISTRATION IT DOES TAKE IS THE RECEIPT'S PUSH**
  * (`onWriteOutcome`, once at construction — design §2 `N2`): a write's answer is not a delivery, a refusal produces none
@@ -2564,9 +2735,10 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * **THE READS ARE THE SHAPE'S, AND THE FLOW'S OWN ARE THE PANE GEOMETRY'S** (`D-88`; `D-168` for the zone family's): the
  * pane's `size`/`bounds` are answered SYNCHRONOUSLY by `paneSizeOf`/`paneBoundsOf` off the shape a delivery filled. The
  * frozen store's tier-qualified `mem.layout.*` route — `tierRead` — is DELETED from this composition, and with it the last
- * `mem.layout.*` spelling under `src/`. **NO ZONE READ STANDS HERE ANY MORE**: the closure's `zoneOf`/`zoneIdOf` had exactly
+ * `mem.layout.*` spelling under `src/`. **NO ZONE READ STANDS IN THIS CLOSURE ANY MORE**: its `zoneOf`/`zoneIdOf` had exactly
  * two readers, `renderZone` and `candidatesFor`, and both are DELETED (`D-168`), so the zone family's read keeps its owner —
- * `store-view-record`'s `view.zoneOf` at `['zones']` — and no caller of it stands in this file.
+ * `store-view-record`'s `view.zoneOf` at `['zones']`, whose derivation `driveLayoutRegions` reuses as `zoneIn` off the
+ * reading it is handed. **THE FILE'S ONE CALLER OF THAT FAMILY IS THE PAINT** (`D-185`), and it is not this composition's.
  *
  * **THE TEMP PREVIEW IS AN ADDRESS NOW, AND WHAT THE CLOSURE KEEPS IS ONE FLAG** (`D-132` superseding `D-90` by pointer;
  * `D-138`; design §5). It was `temp.drag.<gestureId>.placement` in the frozen store, and then a `Map` in this closure with
@@ -2578,15 +2750,18 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * `move` writes at `temp` and commits nothing, `release` is the ONLY `file` writer. `D-137`'s "one event" was about
  * COLLISION, never about collapsing them.
  *
- * **THE DELIVERY'S ONE BODY IS `theme?.apply(); ghost?.(); readout?.()` AND IT CALLS NOTHING ELSE** (`D-168`): this
+ * **THE DELIVERY'S ONE BODY IS `theme?.apply(); ghost?.(); readout?.(); paint?.()` AND IT CALLS NOTHING ELSE** (`D-168`;
+ * FOUR members from `D-194`, the fourth being the LAYOUT PAINT above): this
  * composition takes NO `onChanged` registration — on the client, the bridge or the store — because a second one would be
  * a second consumer of one push and a second read per delivery. **ITS ONE REGISTRATION IS THE RECEIPT'S PUSH**
  * (`onWriteOutcome`, taken once at construction, `reportReceipt`): a write's answer is not a delivery and a refusal
  * produces none at all, so the two registrations answer two different signals and neither is a second consumer of the
  * other. **NO ZONE TURN STANDS ON THIS SURFACE TO BE CALLED**:
  * `renderZone` is DELETED from the surface, the app's only `source` is `domEventSource()` and carries no `layout` member,
- * and **NO ZONE LAYOUT IS RENDERED ANYWHERE IN THIS TREE** — `['zones']` keeps its declaration and its client reader, and
- * no renderer in `src/` consumes them. Every read is guarded: an absent client, an absent shape
+ * and **NO LAYOUT PROJECTION IS RENDERED ANYWHERE IN THIS TREE**. **`['zones']` HAS A READER AGAIN, AND IT IS THE PAINT'S**
+ * (`D-185`): the zone family's `size`/`display` are read by `driveLayoutRegions` above and written to the four authored
+ * nodes' `css.style` through `applyCommand` — a record read and a render write, which revives no projection, no `layout`
+ * member and no `renderZone` (`D-168`'s deletion stands whole). Every read is guarded: an absent client, an absent shape
  * and a throwing read all land the DECLARED degradation, and never a throw escapes a wiring turn (§3.2 F-8).
  * **AND THE GHOST TURN (`renderGhost`) IS THE ONE TURN THE DELIVERY REACHES HERE** — it asks the address's own read
  * and paints the declared transient the address has no other way to show.

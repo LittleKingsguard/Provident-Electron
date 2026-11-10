@@ -4576,3 +4576,28 @@ data.write { path: ['tabs', 'tab-1'], tier: 'file', value.target: 'page-one' }
 **THE READINGS.** `npm test` **`2,946 passed / 2 skipped` of `2,948`** over **`144`** files; `typecheck` **0**; `typecheck:tests` **0**; the demo bundle rebuilt and **current** at `39` inputs; the module rows **`130/130`** — **identical to the baseline**, because **nothing yet asserts the mint**; that row is owed to the battery (`AL-4`'s `row-is-N` and `AL-3`'s switch-act), not to this pass.
 
 **ITS REGISTER IS `D-71` TO `D-201`** as prose, unchanged and extended by this row only. **This row records a picture of a store becoming a control, a reversed ruling signposted where it was reversed, a per-delivery cost measured as nil, and a success stated with its own two limits.**
+
+## D-203 — **`css.style` WRITTEN AS AN OBJECT IS A SILENT NO-OP IN THE REAL RENDERER**: the shim serialises it as JSON text that *looks* applied, the browser writes **an empty attribute**, and so **every `display` the app has ever driven has never reached the screen** — including the tabs terminals since `D-92`
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `S-6`'s paint measurement, pursued to the engine. **This row is the most consequential finding of the unit and it is not about the layout at all.**
+
+**THE MEASUREMENT, TAKEN IN A REAL ELECTRON DOM AGAINST THE APP'S OWN `Runtime` AND A TRIVIAL ENVELOPE.** One node, two `state-slice` writes to `css.style`, the computed style read afterwards:
+
+| write | the answer | `style` attribute after | computed `display` | computed `height` |
+|---|---|---|---|---|
+| **object** `{ display:'none', height:'40px' }` | **`applied`** | **`""` — EMPTY** | **`block`** | **`18px`** |
+| **CSS text** `'display:block;height:40px'` | `applied` | `display: block; height: 40px;` | `block` | **`40px`** |
+
+**So an OBJECT value on `css.style` reports success and writes NOTHING.** The answer is `applied`; the attribute is empty; the browser applies nothing. **CSS TEXT works.** And a bare browser confirms the shape of the failure independently: an attribute literally carrying `{"display":"none"}` computes as `display: block` — **invalid CSS is ignored whole, not partially**.
+
+**AND THE SHIM IS WHY NOBODY EVER SAW IT.** `renderedHtml()` under the DOM shim serialises the same object value **as JSON text into the attribute** — so a row reading the shim's HTML sees `style="{"height":"40px"}"`, which **looks like a style was written**, while the real renderer leaves the attribute **empty**. **That is a divergence between the shim and the real DOM on a property the `divergence` leg does not pin** — its `N = 9` structural properties do not include `css.style`'s serialisation — **so the one leg built to catch shim/real divergence could not catch this.**
+
+**THE CONSEQUENCE IS NOT HYPOTHETICAL AND IT PREDATES THIS UNIT.** `drivePageDisplay` (`src/renderer/renderer.ts:256`) writes `value: { display: shown ? 'block' : 'none' }` — **an object** — and it is the **only** thing that shows or hides the two authored tabs terminals. **So the landing page and the error page have never been shown or hidden in the running app.** The rows that measure them (`DC-*`, `T-2`/`T-3`, the witness drives) all read the shim, where the write *appears* to land — **so every one of them passes while the surface does nothing.** **`S-6`'s paint writes objects too**, so the zones' dimensions and the pane's width would have joined it.
+
+**THE FIX IS ONE LINE PER SITE AND IT IS A SPELLING, NOT A MECHANISM.** Write **CSS text**: `display: block` / `none` for the terminal drive, and `kebab: value;` for the paint's record. **Neither changes a single operand, a guard, or a route.** **The engine's object handling is upstream-owned** (`D-5`): it accepts a record on `css.style` and then bakes it to nothing in the real adapter — **a defect with a symptom, a reproduction (this probe), a suspected root cause (`adapters.js`'s `bakeValue` path writes the object through a serializer that produces an invalid `cssText`) and a proposed fix shape (stringify to CSS text, as `translate` already does for authored records)** — **recorded, not patched.**
+
+**AND THE BATTERY GAP IS NAMED WITH IT: NOTHING GATES A RENDERED STYLE.** Every row reads markup; a style that is written-but-inert is invisible to all of them. **So this row asks for the one thing the corpus does not have — a row that reads a COMPUTED style rather than a serialised one** — and it belongs on a leg that gates (`D-37` puts the real-DOM leg outside the four-leg floor, which is why this survived).
+
+**THE READINGS AT THIS HEAD ARE `D-202`'S** — this row moves no byte; its product is the measurement, the two sites, and the gap.
+
+**ITS REGISTER IS `D-71` TO `D-202`** as prose, unchanged and extended by this row only. **This row records a write that reports success and does nothing, a shim that made it look like it worked, a leg that could not see the divergence, and every terminal the app has ever hidden on a screen where it was never hidden.**
