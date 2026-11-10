@@ -140,13 +140,33 @@ const PRE_CENSUS = 18 // §3.5 X-1 — the filing-time authored census
  *  and other configuration settings"*. The nodes are: the authored app root, its opener, the scrim, the dialog card,
  *  the dialog's heading, its TWO authored panes with one hint and one status node each, the state carrier and the
  *  close control — **THIRTEEN objects, and the census moved by EXACTLY that number: `25 + 13 = 38`.**
- *  **THE BITE IS KEPT AS IT WAS MADE:** the delta is still asserted as the SUM OF ITS THREE DECLARED TERMS, so a
- *  count that moves for an UNDECLARED reason — an element authored into the envelope by nothing at all — reddens
- *  here as well as at the figure. THE AS-FILED FORM (`18 -> 23`, then `-> 25`) stays visible above and beside. */
-const POST_CENSUS = 38 // as filed `23`; `25` at T2; measured `38` = 18 + 5 + 2 + 13 (the overlay's nodes)
+ *  **THE BITE IS KEPT AS IT WAS MADE:** the delta was asserted as the SUM OF ITS THREE DECLARED TERMS at `D-113`'s
+ *  landing (it is FOUR at this head — the block below adds the interface inventory's `34`), so a count that moves for
+ *  an UNDECLARED reason — an element authored into the envelope by nothing at all — reddens here as well as at the
+ *  figure. THE AS-FILED FORM (`18 -> 23`, then `-> 25`) stays visible above and beside. */
+const POST_CENSUS = 72 // as filed `23`; `25` at T2; `38` at D-113; measured `72` = 18 + 5 + 2 + 13 + 34
 const CENSUS_DELTA = 5 // the theme card's own FIVE authored nodes (UNMOVED by this re-grain)
 /** **THE OVERLAY'S DECLARED AUTHORED-OBJECT DELTA** (`D-113`) — the thirteen nodes named in the block above. */
 const OVERLAY_AUTHORED_DELTA = 13
+/* ── ⟶ THE FOURTH TERM, LANDED (`D-176`–`D-193`; `docs/L3/app-envelope/design.md` rev 5 §1/§2): THE INTERFACE
+ *  INVENTORY'S THIRTY-FOUR AUTHORED NODES. ──────
+ *  **`D-193` PREDICTED THIS BILL BEFORE IT REDDENED, verbatim:** *"§2's inventory makes it `72`: the row needs a
+ *  FOURTH DECLARED TERM of `34` before it can be green"*. The authored skeleton (`S-2`/`S-9`) is **THIRTY-FOUR new
+ *  nodes** and this constant is that figure, named for what it counts: the top-bar, the tabs row, the row
+ *  prototype, the four zone nodes, the arrangement container, the stage, the menus pane, its handle, the four
+ *  menus, the eighteen items and the receipt carrier — `design.md` §2's table, node for node.
+ *  **THE FIGURE IS COUNTED OFF THE TREE, NEVER QUOTED FROM THE DESIGN** (`D-26`: every figure its owner's): the
+ *  `demoEnvelope()` traversal reads `72` = root `1` + the overlay layer `11` (scrim `1` + dialog `10`) + the row
+ *  prototype `1` + `app-surface`'s `59`, and `app-surface`'s `59` is itself `1` (the root) + the top-bar `2` (bar +
+ *  tabs row) + the `top` zone `26` (zone `1` + the menus pane `1` + its handle `1` + the four menus `4` + the
+ *  eighteen items `18` + the receipt carrier `1`) + the arrangement `28` (container `1` + `left` `1` + the stage `25`,
+ *  which holds the landing page with the `h1` and the four cards and the error page + `right` `1`) + `bottom` `1` +
+ *  the opener `1`. `72 - 38 = 34`, and the four terms sum to the figure: `18 + 5 + 2 + 13 + 34 = 72`.
+ *  **THE BITE IS KEPT AS IT WAS MADE:** the drift is still asserted as the SUM OF ITS DECLARED TERMS — now FOUR — so
+ *  a node authored into the envelope by NOTHING reddens at the figure AND at the sum, and `M-2`'s / `X-1`'s residue
+ *  rows still name the one term each of them leaves standing. THE EARLIER FORMS (`18 -> 23`, `-> 25`, `-> 38`) stay
+ *  visible above and beside. */
+const INTERFACE_INVENTORY_NODE_DELTA = 34 // the interface inventory's own THIRTY-FOUR authored nodes (design §2)
 /** THE `T2` PAGE-NODE DELTA (`docs/specs/store-tabs-record.md` `§5.1` item 2 / `§0A` item 5):
  *  the TWO authored page nodes `tabs-landing-page` and `tabs-error-page`.
  *
@@ -873,11 +893,11 @@ describe('§3.1 M-* — valid / happy states', () => {
     ).toBe(STATE_ID)
   })
 
-  it('M-2 (§2.1 item 1, §3.5 X-1/X-2) — the AUTHORED object census moves 18 -> 38 (AS FILED 18 -> 23; 25 at T2; 38 at D-113), and it is the authored noun', () => {
+  it('M-2 (§2.1 item 1, §3.5 X-1/X-2) — the AUTHORED object census moves 18 -> 72 (AS FILED 18 -> 23; 25 at T2; 38 at D-113; 72 once the interface inventory landed), and it is the authored noun', () => {
     const measured = authoredCensus()
     expect(
       measured,
-      `§3.1 M-2 — the AUTHORED OBJECT census of \`demoEnvelope()\` must read ${POST_CENSUS}; measured ${measured} (${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} + ${OVERLAY_AUTHORED_DELTA} = ${POST_CENSUS}). AS FILED the post figure was 23 (18 + 5): \`T2\`'s two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), and \`D-113\`'s overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}.`,
+      `§3.1 M-2 — the AUTHORED OBJECT census of \`demoEnvelope()\` must read ${POST_CENSUS}; measured ${measured} (${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} + ${OVERLAY_AUTHORED_DELTA} + ${INTERFACE_INVENTORY_NODE_DELTA} = ${POST_CENSUS}). AS FILED the post figure was 23 (18 + 5): \`T2\`'s two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), \`D-113\`'s overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}, and the interface inventory's ${INTERFACE_INVENTORY_NODE_DELTA} authored nodes (docs/L3/app-envelope/design.md §2) move it by exactly that \`D-193\` predicted.`,
     ).toBe(POST_CENSUS)
     // ── THE ATTRIBUTED DRIFT (`RCA-8(d)`; `C-6`): the delta is asserted as the SUM OF ITS
     //    DECLARED TERMS, not as one bare figure — a count that moves for an UNDECLARED reason
@@ -886,9 +906,9 @@ describe('§3.1 M-* — valid / happy states', () => {
     //    visible in the constants block above and is re-grained, not deleted.
     expect(
       measured - PRE_CENSUS,
-      '§2.1 item 1 / §3.1 M-2 — the drift is EXACTLY the three declared terms WITH their terms: the five authored card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes',
-    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA)
-    expect(measured - PRE_CENSUS - CENSUS_DELTA - OVERLAY_AUTHORED_DELTA, 'T2 §5.1 item 2 — with the overlay\'s thirteen taken out, the residue is EXACTLY this unit\'s two declared page nodes').toBe(T2_PAGE_NODE_CENSUS_DELTA)
+      '§2.1 item 1 / §3.1 M-2 — the drift is EXACTLY the four declared terms WITH their terms: the five authored card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes PLUS the interface inventory\'s thirty-four authored nodes',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + INTERFACE_INVENTORY_NODE_DELTA)
+    expect(measured - PRE_CENSUS - CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - INTERFACE_INVENTORY_NODE_DELTA, 'T2 §5.1 item 2 — with the overlay\'s thirteen AND the interface inventory\'s thirty-four taken out, the residue is EXACTLY this unit\'s two declared page nodes').toBe(T2_PAGE_NODE_CENSUS_DELTA)
   })
 
   it('M-3 (§2.1 item 2) — both buttons carry `theme-set`/`click`, as a function STRING, with one token each', () => {
@@ -1273,16 +1293,16 @@ describe('§3.3 I-* — invariants that hold in every state', () => {
     }
   })
 
-  it('I-10 (§3.5 X-1/X-2, §5.U U-7) — the AUTHORED census is reconciled as 38 (AS FILED 23; 25 at T2), and no live reading is claimed here', () => {
+  it('I-10 (§3.5 X-1/X-2, §5.U U-7) — the AUTHORED census is reconciled as 72 (AS FILED 23; 25 at T2; 38 at D-113; 72 once the interface inventory landed), and no live reading is claimed here', () => {
     const authored = authoredCensus()
     expect(
       authored,
-      `§3.3 I-10 — the AUTHORED OBJECT census is the only census this [T] half measures; it must read ${POST_CENSUS} (measured ${authored}). AS FILED it read 23 (18 + 5): T2's two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), and D-113's overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}. The LOADED census belongs to the live app and its own command (§5.U U-7) and is NEVER re-quoted for this figure.`,
+      `§3.3 I-10 — the AUTHORED OBJECT census is the only census this [T] half measures; it must read ${POST_CENSUS} (measured ${authored}). AS FILED it read 23 (18 + 5): T2's two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), D-113's overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}, and the interface inventory's ${INTERFACE_INVENTORY_NODE_DELTA} authored nodes (docs/L3/app-envelope/design.md §2) move it by exactly that. The LOADED census belongs to the live app and its own command (§5.U U-7) and is NEVER re-quoted for this figure.`,
     ).toBe(POST_CENSUS)
     expect(
       authored - PRE_CENSUS,
-      '§3.3 I-10 / C-6 — the drift is ATTRIBUTED, never re-spelled: the five card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes',
-    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA)
+      '§3.3 I-10 / C-6 — the drift is ATTRIBUTED, never re-spelled: the five card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes PLUS the interface inventory\'s thirty-four authored nodes',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + INTERFACE_INVENTORY_NODE_DELTA)
     const titles = thisFileTitles()
     expect(
       titles.filter((t) => /loaded census|targets reading|rendered html reading/i.test(t)),
@@ -1481,7 +1501,7 @@ describe('§3.4 R-* — the static rows', () => {
 // §3.5 — the EXISTENCE rows, each with its probe
 // ===========================================================================
 describe('§3.5 X-* — the existence rows', () => {
-  it('X-1 (§2.1 item 1) — the authored census: 18 at filing time, 38 at this head (AS FILED 23 once the card landed; 25 at T2)', () => {
+  it('X-1 (§2.1 item 1) — the authored census: 18 at filing time, 72 at this head (AS FILED 23 once the card landed; 25 at T2; 38 at D-113; 72 once the interface inventory landed)', () => {
     const spec = sourceOrEmpty(SPEC_PATH)
     expect(
       spec.includes('`18`') && spec.includes('`23`'),
@@ -1500,11 +1520,11 @@ describe('§3.5 X-* — the existence rows', () => {
     ).toBe(POST_CENSUS)
     expect(
       measured - PRE_CENSUS,
-      'C-6 / §3.5 X-1 — the drift is ATTRIBUTED: the five card nodes PLUS T2\'s two declared page nodes PLUS D-113\'s thirteen overlay nodes, with the undeclared residue asserted at ZERO',
-    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA)
+      'C-6 / §3.5 X-1 — the drift is ATTRIBUTED: the five card nodes PLUS T2\'s two declared page nodes PLUS D-113\'s thirteen overlay nodes PLUS the interface inventory\'s thirty-four authored nodes, with the undeclared residue asserted at ZERO',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + INTERFACE_INVENTORY_NODE_DELTA)
     expect(
-      measured - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA - OVERLAY_AUTHORED_DELTA,
-      'C-6 — an UNDECLARED mover of the authored census: the delta is not the sum of its three declared terms',
+      measured - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - INTERFACE_INVENTORY_NODE_DELTA,
+      'C-6 — an UNDECLARED mover of the authored census: the delta is not the sum of its four declared terms',
     ).toBe(0)
   })
 
@@ -1903,8 +1923,9 @@ function im2Attempt(shape: 1 | 2 | 3 | 4, config: 'object' | 'scan'): AttemptRes
         [
           { label: '§5.5.1 P-TC-IM-2 shape (1) — the authored id set is CLOSED at the four declared ids', ok: idSetClauseHolds(card.section) },
           { label: '§5.5.1 P-TC-IM-2 shape (1) — the state node carries BOTH `css.id` and `props.id`', ok: propsClauseHolds(card.section) },
-          { label: `§5.5.1 P-TC-IM-2 shape (1) — the authored census moves ${PRE_CENSUS} -> ${POST_CENSUS} (AS FILED 18 -> 23; T2's two page nodes, docs/specs/store-tabs-record.md §5.1 item 2; D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes)`, ok: authoredCensus() === POST_CENSUS },
-          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the drift is ATTRIBUTED: measured - pre === the five card nodes + T2's ${T2_PAGE_NODE_CENSUS_DELTA} page nodes + D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes (an UNDECLARED mover reddens here)`, ok: authoredCensus() - PRE_CENSUS === CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) — the authored census moves ${PRE_CENSUS} -> ${POST_CENSUS} (AS FILED 18 -> 23; T2's two page nodes, docs/specs/store-tabs-record.md §5.1 item 2; D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes; the interface inventory's ${INTERFACE_INVENTORY_NODE_DELTA} authored nodes, docs/L3/app-envelope/design.md §2)`, ok: authoredCensus() === POST_CENSUS },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the drift is ATTRIBUTED: measured - pre === the five card nodes + T2's ${T2_PAGE_NODE_CENSUS_DELTA} page nodes + D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes + the interface inventory's ${INTERFACE_INVENTORY_NODE_DELTA} authored nodes (an UNDECLARED mover reddens here)`, ok: authoredCensus() - PRE_CENSUS === CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + INTERFACE_INVENTORY_NODE_DELTA },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the UNDECLARED residue is ZERO: neither the figure nor the sum is re-spelled to absorb a mover`, ok: authoredCensus() - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - INTERFACE_INVENTORY_NODE_DELTA === 0 },
         ],
         4,
       )

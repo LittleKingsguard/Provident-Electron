@@ -407,8 +407,12 @@ describe('overlay · THE CONSUMER (`D-113`) — the mechanism applied as provide
     expect(setting, 'the authored appearance carrier still resolves').toBeTruthy()
     expect(htmlOf(runtime), 'the overlay writes no `theme` attribute').not.toMatch(/\btheme="/)
     // THE RECORD'S TWO TERMINAL PAGES AND THE GUTTER'S THREE NODES ARE UNMOVED AND STILL RESOLVE.
+    // RE-GRAINED (`A-2`, `D-193`): the handle's authored id is `'gutter-horizontal'`, not `'gutter-vertical'` — a NAME
+    // correction and no behaviour change, because `D-189` puts a vertical pane's handle at the pane's TOP-RIGHT, so the
+    // bar it carries now spans the horizontal. The row's SUBJECT SURVIVES the rename intact: it is the SAME authored
+    // handle node, still resolving under its own id while the overlay is closed — and its name now says which bar it is.
     const ids = runtime.listTargets().nodes.flatMap((n) => [n.cssId, n.propsId])
-    for (const id of ['tabs-landing-page', 'tabs-error-page', 'gutter-vertical', 'gutter-target', 'gutter-status', 'counter', 'echo-input']) {
+    for (const id of ['tabs-landing-page', 'tabs-error-page', 'gutter-horizontal', 'gutter-target', 'gutter-status', 'counter', 'echo-input']) {
       expect(ids, `the authored node \`${id}\` still resolves while the overlay is closed`).toContain(id)
     }
   })

@@ -123,12 +123,23 @@ describe('Runtime code-CRUD (mcp-endpoint.md §4)', () => {
   it('codeGet reads a deep envelope path', () => {
     const runtime = r()
     runtime.load({ kind: 'envelope', envelope: demoEnvelope() })
-    // ⟶ RE-POINTED 2026-11-05 (`D-113`): the path used to be `template.root.children[1].children[2]`, and the
-    //    overlay this pass authors put the app's general surface (`APP_ROOT_ID`) at the root's FIRST child with the
-    //    modal layer beside it. The row's subject is a DEEP, DEFINED path through the loaded envelope; the path is
-    //    re-derived to the same card the old one reached (`counter-card`'s third child, the counter value node), so
-    //    the claim is unmoved and only the route to it moved.
-    const res = runtime.codeGet('template.root.children[0].children[1].children[2]')
+    // ⟶ RE-POINTED 2026-11-05 (`D-113`), then AGAIN for the authored skeleton (`D-176`–`D-193`, `docs/L3/app-envelope/
+    //    design.md` rev 5 §2). The row's subject is a DEEP, DEFINED path through the loaded envelope; the path is
+    //    re-derived to the SAME NODE the earlier routes reached — **the counter card's THIRD child, the `inc`
+    //    button** (`css.id: 'inc'`, `content: 'Increment (+1)'`) — so the claim is unmoved and only the route moved.
+    //    THE ROUTE, NAMED NODE BY NODE so this is not re-pointed by trial and error:
+    //      template.root                     the demo shell
+    //        .children[0]                    `APP_ROOT_ID`, `app-surface` (the overlay's inert target)
+    //          .children[2]                  the ARRANGEMENT container (`S-2`)
+    //            .children[1]                the STAGE
+    //              .children[0]              `TABS_LANDING_PAGE_ID`, the landing page (`A-5`'s re-parent)
+    //                .children[1]            `counter-card`
+    //                  .children[2]          `inc` — the node this row reaches
+    //    **WHAT MOVED IT**: the skeleton inserted the top-bar, the top zone (`children[1]`) and the arrangement
+    //    container above the cards, and `A-5` then put `counter-card` inside the landing page inside the stage — so
+    //    the old path's `children[1]` now lands on the TOP ZONE, whose one child is the menus pane and whose
+    //    `children[2]` does not exist (`codeGet` answers `undefined`, never a throw, for an unresolvable leaf).
+    const res = runtime.codeGet('template.root.children[0].children[2].children[1].children[0].children[1].children[2]')
     expect(res.value).toBeDefined()
   })
 

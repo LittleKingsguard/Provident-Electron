@@ -415,13 +415,14 @@ describe('R6 — placement-routed loads path-enumerate (H1)', () => {
 })
 
 describe('R7 — code-CRUD (mcp-endpoint.md §4)', () => {
-  // ⟶ RE-POINTED 2026-11-05 (`D-113`): the path was `template.root.children[1].children[2]`; `D-113` authors the
-  //    overlay, so the root's FIRST child is the app's general surface (`APP_ROOT_ID`) and the modal layer stands
-  //    beside it. The row's subject — a defined value at a DEEP envelope path — is unmoved; only the route moved.
-  it('29. codeGet("template.root.children[0].children[1].children[2]") → a defined value', () => {
+  // ⟶ RE-POINTED 2026-11-05 (`D-113`), then AGAIN for the authored skeleton (`D-176`–`D-193`). The row's subject — a
+  //    defined value at a DEEP envelope path — is unmoved; only the route moved, and it is re-derived to the SAME NODE
+  //    the earlier routes reached: the counter card's THIRD child, the `inc` button. The skeleton (top-bar, top zone,
+  //    arrangement container) and `A-5`'s re-parent put that card inside the landing page inside the stage.
+  it('29. codeGet("template.root.children[0].children[2].children[1].children[0].children[1].children[2]") → a defined value', () => {
     const runtime = freshRuntime()
     ;(runtime as any).loadEnvelope(demoEnvelope())
-    const res = (runtime as any).codeGet('template.root.children[0].children[1].children[2]')
+    const res = (runtime as any).codeGet('template.root.children[0].children[2].children[1].children[0].children[1].children[2]')
     expect(res.value).toBeDefined()
   })
 

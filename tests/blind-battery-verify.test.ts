@@ -267,13 +267,14 @@ describe('B4 — SSR survives a graph reload (R13 stale-adapter regression)', ()
 })
 
 describe('C1 — code-CRUD (unit C, mcp-endpoint.md §4)', () => {
-  // ⟶ RE-POINTED 2026-11-05 (`D-113`): the path was `template.root.children[1].children[2]`; `D-113` authors the overlay,
-  //    so the root's FIRST child is the app's general surface (`APP_ROOT_ID`) and the modal layer stands beside it. The
-  //    row's subject — a defined value at a DEEP envelope path — is unmoved; only the route to it moved.
-  it('21. codeGet("template.root.children[0].children[1].children[2]") → a defined value', () => {
+  // ⟶ RE-POINTED 2026-11-05 (`D-113`), then AGAIN for the authored skeleton (`D-176`–`D-193`). The row's subject — a
+  //    defined value at a DEEP envelope path — is unmoved; only the route to it moved, and it is re-derived to the SAME
+  //    NODE the earlier routes reached: the counter card's THIRD child, the `inc` button. The skeleton (top-bar, top
+  //    zone, arrangement container) and `A-5`'s re-parent put that card inside the landing page inside the stage.
+  it('21. codeGet("template.root.children[0].children[2].children[1].children[0].children[1].children[2]") → a defined value', () => {
     const r = withEnvelope()
     r.load({ kind: 'envelope', envelope: demoEnvelope() })
-    const got = r.codeGet('template.root.children[0].children[1].children[2]')
+    const got = r.codeGet('template.root.children[0].children[2].children[1].children[0].children[1].children[2]')
     expect(got.value).toBeDefined()
   })
 

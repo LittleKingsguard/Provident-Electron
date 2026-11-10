@@ -17,6 +17,17 @@
 // the Phase B `event.value` equivalent). Inline handler bodies default to
 // modern (translate.ts FORMAT MARKER) — no `format` field needed.
 //
+// THE LAYOUT SKELETON (`D-176`, `D-183`, `D-185`-`D-193`) stands INSIDE the authored app root: a DRAGGING
+// top-bar whose `content` is the app's name STRING (never a child node), the tabs row a placement mint
+// targets, the four zone nodes (`top`/`bottom`/`left`/`right`, authored where the record's declared ids
+// are), one arrangement container that nothing resolves by id, and the DERIVED stage holding the record's
+// two terminal pages — with the `h1` and the four content cards inside the landing page. **THIS FILE
+// AUTHORS NO GEOMETRY A RECORD OWNS**: a zone's fixed axis and the menus pane's width arrive as the
+// paint's `css.style` write, and no authored figure and no fallback stands in for one the record has not
+// stated (`D-129`, `D-174`, `D-185`). What a row may not read here is anything `overflow` or
+// `-webkit-app-region` claims: both are layout and compositor behaviour, invisible to a rendered read
+// (`D-178`, `D-183`, `D-187`).
+//
 // CATALOGUED FINDINGS (see docs/defects.md):
 //   - Inline `handlers` bodies DEFAULT to the modern (ctx, ...args)
 //     convention; the legacy `(event, context)` arg order requires an
@@ -107,19 +118,88 @@ const ECHO_BODY = `function (ctx, value) {
 // module carries no cursor literal, no axis literal and no unit string of its own.
 // ---------------------------------------------------------------------------
 
-/** The gutter handle's own axis mapping, keyed by the AUTHORED axis token the affordance's
- *  axis seam answers for the handle (`gutter-vertical`). */
-const GUTTER_CURSORS: Readonly<Record<string, string>> = { 'gutter-vertical': 'col-resize', 'gutter-horizontal': 'row-resize' }
+/** **THE CURSOR MAP, KEYED BY THE AUTHORED AXIS TOKEN** (`D-189`, `D-192`) — a cursor declaration is a
+ *  VALUE and the affordance module carries none of its own (`§2.2` P-4, `§8` item 8). Three keys, and
+ *  each one answers for the bar its token names:
+ *   · `gutter-horizontal` — `GUTTER_AFFORDANCE_ID`'s own axis; the gutter card's handle now spans the
+ *     HORIZONTAL (a `row-resize` grip at the pane's top-right, where it moves the pane's HEIGHT:
+ *     `D-189`'s top-right rule for a vertically-oriented pane);
+ *   · `menus-vertical` — `MENUS_AFFORDANCE_ID`'s own axis; a vertical bar at the menus pane's LEFT
+ *     EDGE, where it moves the pane's WIDTH, so the affordance's axis seam answers `col-resize`;
+ *   · `gutter-vertical` — the token the affordance's own contract still spells, and NO authored node
+ *     carries it since `D-189` moved that handle. The key is RETAINED rather than deleted because
+ *     `tests/gutter-ui.test.ts`'s `R-9` reads this file's TEXT for exactly that token and measures a
+ *     spelling's presence, never an axis (design §8, `interaction`'s row).
+ *  **THE MAP IS PRIVATE AND STAYS PRIVATE**: `cursorOf` is the only reader, so the nineteenth published
+ *  name is the menus pane's NODE ID and never a cursor entry (`D-192`, `D-193`). */
+const GUTTER_CURSORS: Readonly<Record<string, string>> = {
+  'gutter-vertical': 'col-resize',
+  'gutter-horizontal': 'row-resize',
+  'menus-vertical': 'col-resize',
+}
 /** The authored status node's engine id — the ONE node the DELIVERY's read-out turn patches
  *  (`renderPaneSize`, `D-164`: the sink's `commit`-route write this docblock once named is gone).
  *  It is deliberately OUTSIDE the affordance's own node, so the write patches a peer and never the
  *  handle the listeners are attached to (`§2.3` row 15, `§2.6` item 5). The node authors NO
  *  `content` of its own — the read-out is the delivery's (`F3`, `D-129`). */
 export const GUTTER_STATUS_ID = 'gutter-status'
-/** The authored affordance node's id — the handle the pointer is over. */
-export const GUTTER_AFFORDANCE_ID = 'gutter-vertical'
+/** **THE AUTHORED AFFORDANCE NODE'S ID — the handle the pointer is over.** **THE TOKEN NAMES THE BAR'S OWN
+ *  ORIENTATION, NOT THE PANE'S** (`D-193`, correcting a name whose subject had moved): `D-189` puts a
+ *  VERTICALLY-oriented pane's handle at its TOP-RIGHT, so the bar itself spans the horizontal and the
+ *  gesture adjusts the pane's HEIGHT — hence `gutter-horizontal`, and the cursor map above answers
+ *  `row-resize` for it. `pane-a` is such a pane: it carries no `zone` (`C-9`), so `D-187` makes it behave
+ *  as a sidebar pane, whose adjustable axis is the height. **THE VALUE IS THE ONLY THING THAT MOVES**: the
+ *  node, its `props.axis`, its handler and its reader (`AL-1` measures its presence under this id) stand
+ *  exactly as authored. */
+export const GUTTER_AFFORDANCE_ID = 'gutter-horizontal'
 /** The authored target node's id — the pane the affordance resizes. */
 export const GUTTER_TARGET_ID = 'gutter-target'
+/** **THE MENUS PANE'S OWN HANDLE — THE NINETEENTH PUBLISHED NAME** (`D-192` settled that the node needs an
+ *  id of its own and left the spelling to this design; `D-193` mints it). It is THE `GUTTER_AFFORDANCE_ID`
+ *  SHAPE EXACTLY, because that is the shape the mechanism already expects: `css.id` = `props.id` =
+ *  `props.axis` = this one string, `css.classes: ['gutter-handle']` as the SHARED styling hook (nothing
+ *  reads either class token), `cursor: 'col-resize'` plus the strip's `14px` thickness on the axis the
+ *  strip spans, `content: ''`, and the ONE authored `pointerdown` body the gutter handle carries, shared,
+ *  writing nothing.
+ *  **ITS READER, IN ONE LINE**: `AL-1` measures its PRESENCE under this id and `AL-10` measures the pane
+ *  width it drives — no row drives the gesture and no row reads the edge (L1 §6(vi): the tree's one drag
+ *  composition is bound to `DEFAULT_PANE_ID`, so this handle has no composition to carry it),
+ *  `renderer-wiring`'s residue.
+ *  **AND THE CURSOR KEY IS THE ONLY PLACE IT ENTERS A MAP** (`GUTTER_CURSORS` above): `cursorOf` answers
+ *  for it, and NO new export joins the module for that reason — the surface is `18 + 1 = 19`. */
+export const MENUS_AFFORDANCE_ID = 'menus-vertical'
+
+// ---------------------------------------------------------------------------
+// ⟶ ADDED (`D-176`-`D-183`, `docs/L3/app-envelope/design.md` rev 5 §2-§4): **THE THREE NAMES THE LAYOUT
+// SKELETON'S CONSUMERS RESOLVE** — the tabs row and its prototype (the mint's operands) and the ONE node
+// a menus answer is written into. Each is resolved BY ID OR BY NAME from outside this module, which is
+// the whole reason it is exported (`D-41`: an id a consumer resolves is derived or exported, never
+// re-spelled at the call site). The five REGION ids are the deliberate exception (§9 below): they are
+// authored as LITERALS at the site, because five more exports would move the published surface past the
+// `19` the map carries.
+// ---------------------------------------------------------------------------
+
+/** **THE TABS ROW'S AUTHORED ID — AND THE NAME ITS PLACEMENT HOOK IS DECLARED UNDER** (`D-179`, `D-182`;
+ *  ASM-AE-2). ONE string in two roles: the node's id, the mint op's `target`, its `hookName` and its
+ *  `placementName`, so no consumer spells any of them twice.
+ *  **ITS READER, IN ONE LINE**: the mint turn, whose `rows-mint` op names this node as its `target`
+ *  (resolved from a STRING by the runtime's own arm) and this string as its declared hook; and the row
+ *  paint, which writes each minted row's label and active marker (`AL-2`, `AL-4`). The rows themselves are
+ *  MINTED and never authored, which is why the node carries no `content`. */
+export const TABS_ROWS_ID = 'tab-rows'
+/** **THE ROW PROTOTYPE'S OWN NAME** — the def-root `component` node the mint resolves BY NAME, the last
+ *  child of `template.root`. Without it the mint answers `rows-prototype-unresolved` and a row has no shape
+ *  (`D-179`, `D-182` measurement 1).
+ *  **ITS READER, IN ONE LINE**: the engine's mint, by name and never by id — which is why the node carries
+ *  `component.reference` equal to this string and NO `css.id` (a node nothing addresses does not publish
+ *  an address). */
+export const TABS_ROW_PROTOTYPE_ID = 'tab-row'
+/** **THE RECEIPT CARRIER'S AUTHORED ID — THE ONE NODE A MENUS ANSWER IS WRITTEN INTO** (`D-129`): the
+ *  `GUTTER_STATUS_ID` form exactly, resolved BY ID by the menus turn, and it authors NO `content` — what
+ *  stands before the first answer is EMPTY, never a placeholder word (`D-127`, `D-174`).
+ *  **ITS READER, IN ONE LINE**: the menus turn writes the route's answer into it as a `state-slice`
+ *  `content` (`AL-7`). */
+export const MENUS_RECEIPT_ID = 'menus-receipt'
 
 // ---------------------------------------------------------------------------
 // ⟶ ADDED (`U-STORE-TABS-RECORD`, `T2`, `docs/specs/store-tabs-record.md` `§0A` item 5, `§6`
@@ -331,7 +411,11 @@ const OVERLAY_VERB_CLOSE = 'close'
 const OVERLAY_VERB_ESCAPE = 'escape'
 
 /** **THE AUTHORED STYLES — data, as every `css.style` object in this file is.** `appRootStyle` and `overlayPaneStyle` are
- *  flow declarations and claim nothing else. THE TWO OVERLAY-LAYER STYLES BELOW ARE THE GEOMETRY (`D-120`), and they
+ *  flow declarations and claim nothing else — **and `appRootStyle`'s `display` moved at `S-2`**: it stood at
+ *  `{display: 'block'}` and is now the ARRANGEMENT's own COLUMN, because the authored app root holds the
+ *  top-bar, the four zones' arrangement and the opener in that order (`D-176`, `D-185`, `C-5`). It states no
+ *  dimension of its own: the zones' fixed axes are the RECORD's and arrive through the paint (`D-129`).
+ *  THE TWO OVERLAY-LAYER STYLES BELOW ARE THE GEOMETRY (`D-120`), and they
  *  are the surface's HOME FOR POSITION because these are AUTHORED provident nodes: a scrim's backdrop and a dialog's
  *  centring are the node's own presentation, so they ride `css` as data rather than a hand-written rule in the shell's
  *  stylesheet (`AGENTS.md` § "UI authority"). What each one carries, and what it deliberately does NOT:
@@ -345,7 +429,7 @@ const OVERLAY_VERB_ESCAPE = 'escape'
  *  machine's decision, and the consumer's declared product of it is the `inert` attribute on the AUTHORED app root —
  *  the shell's page CSS keys the layer's `display` on exactly that attribute. An INLINE `display` here would outrank the
  *  keyed rule and pin a CLOSED overlay open, so the authored data carries geometry and the mechanism keeps visibility. */
-const appRootStyle: Record<string, string> = { display: 'block' }
+const appRootStyle: Record<string, string> = { display: 'flex', 'flex-direction': 'column' }
 const overlayScrimStyle: Record<string, string> = {
   position: 'fixed',
   top: '0',
@@ -404,6 +488,109 @@ function overlayVerbBody(verb: string): string {
 }`
 }
 
+// ---------------------------------------------------------------------------
+// ⟶ ADDED (`D-176`-`D-193`, `docs/L3/app-envelope/design.md` rev 5 §2-§5): **THE LAYOUT SKELETON'S OWN
+// DECLARATIONS** — the eleven admitted menu items' ONE shared body, the tabs row's declared hook KIND,
+// and the authored `css` blocks the skeleton's nodes carry.
+//
+// THREE THINGS THIS BLOCK DELIBERATELY DOES NOT CARRY, each a `D-129` second authority:
+//   · NO ZONE DIMENSION AND NO ZONE `display` — the fixed axis of `top`/`bottom` (a height) and of
+//     `left`/`right` (a width) is `['zones'].size`'s and reaches the node as the paint's `css.style` write
+//     (`D-185`). A zone stating no `size` is written NOTHING, and nothing authored stands in for it
+//     (`D-174`, `D-191`);
+//   · NO PANE `width` — the menus pane's width is `['panes', 'pane-menus', 'width']`'s, painted
+//     (`D-186`, `D-189`, `D-191`);
+//   · NO STAGE DIMENSION — the stage is DERIVED: the flex remainder, never stored, never painted
+//     (`D-185`).
+// AND TWO DECLARATIONS THE SUITE CANNOT SEE, stated as such rather than implied as tested (`D-178`):
+// `overflow` and `-webkit-app-region` are layout and compositor behaviour, invisible to a rendered read.
+// ---------------------------------------------------------------------------
+
+/** **THE ELEVEN ADMITTED MENU ITEMS' ONE SHARED BODY — authored once and REFERENCED ELEVEN TIMES**
+ *  (`D-126`'s discipline against a body repeated eleven times, `D-177`'s cut list). It writes NOTHING, and
+ *  that is the whole claim: the node it stands on is `list_targets`-visible and
+ *  `provident.dispatch`-reachable exactly as every other authored element is — **REACHABILITY AND NO
+ *  ROUTE**. An authored body can reach no record and no main-process command, so the role's journey to
+ *  `main` is `renderer-wiring`'s `startMenusItems` and `app-shell`'s ONE route, on the CLICK path
+ *  (design §8 (iv), `D-181`). A body that fabricated the route's answer here would be a writer of the
+ *  receipt the menus turn owns (`D-129`). */
+const MENUS_ITEM_BODY = `function (ctx) {
+  void ctx;
+}`
+
+/** **THE TABS ROW'S DECLARED HOOK KIND** (`D-179`, `D-182`; design §4): the closed kind union's
+ *  `'placement'`. An undeclared placement mint is REFUSED `hook-kind-mismatch`, so the declaration is what
+ *  makes the mint lawful at all; the record is typed against the union's closed set rather than left to
+ *  widen into `string`, because a widened member would not survive the round-trip. */
+const TABS_ROW_HOOKS_KIND: Record<string, 'value' | 'component' | 'placement'> = { [TABS_ROWS_ID]: 'placement' }
+
+/** **THE DRAG REGION'S TWO DECLARATIONS AND ONE ABSENCE** (`C-10`, `D-183`, `D-179`): the top-bar DRAGS,
+ *  the tabs row does not, and the strip the native controls occupy gets NO NODE and NOTHING — the platform
+ *  owns its own region, and an authored px inset there would be a figure of the WINDOW rather than of the
+ *  app. The bar's `36px` is `D-179`'s MEASURED title-bar area (`[0, 0, 607, 36]`); the row's width is the
+ *  overlay's own environment value — `env(titlebar-area-width, 100%)`, MEASURED at `D-193` as `607px` on
+ *  this desktop and equal to `getTitlebarAreaRect()`'s width — so the control strip needs NO paint turn and
+ *  adapts to another desktop's control width. This also completes the arrangement's own group: the bar is
+ *  a flex row of that fixed strip (`D-176`'s charter, `D-179`). */
+const topBarStyle: Record<string, string> = {
+  display: 'flex',
+  'align-items': 'center',
+  flex: '0 0 36px',
+  '-webkit-app-region': 'drag',
+}
+const tabsRowStyle: Record<string, string> = {
+  '-webkit-app-region': 'no-drag',
+  width: 'env(titlebar-area-width, 100%)',
+}
+
+/** **THE ARRANGEMENT** (`D-176`'s charter, `D-185`): the app root is a COLUMN — the top-bar, then the `top`
+ *  zone spanning the full width, then the row of `left` + stage + `right`, then the `bottom` zone spanning
+ *  the full width — and the container between the two full-width zones is a ROW whose middle child takes
+ *  the remainder. It is `css` on containers and NOTHING stores it; the record's `display` is the ZONE's
+ *  participation and is the paint's, which is why no zone authors one beside it (`D-129`). **The root's own
+ *  column is `appRootStyle` above**, whose `display` this unit re-authors from `block` to the layout
+ *  column: a `display` the RECORD owns is a zone's, and the root is no zone (`D-185`). */
+const arrangementStyle: Record<string, string> = { display: 'flex', 'flex-direction': 'row' }
+/** **THE STAGE — THE FLEX REMAINDER AND `overflow`, AND NO DIMENSION** (`D-185`): derived, so a figure here
+ *  would be the second authority the record does not have. `overflow: auto` is `D-187`'s one declaration
+ *  for the depth the stage adds to the two the zones and the panes carry. */
+const stageStyle: Record<string, string> = { flex: '1 1 0', overflow: 'auto' }
+
+/** **THE ZONES' OWN SCROLLING ON THEIR ARRANGEMENT AXIS** (`C-12`, `D-187`) — and NOTHING ELSE: a zone
+ *  authors no fixed dimension and no `display`, which the paint owns. **THE PROHIBITION IS THE POINT**: an
+ *  authored figure beside `['zones'].size` is `D-129`'s second authority, and where no `size` stands the
+ *  paint writes NO dimension and nothing authored stands in. **The `overflow` itself is unseeable** (the
+ *  third of the unverifiable pair's family, `D-178`); what `AL-10` can check is the painted figure that
+ *  replaces the absence. */
+const horizontalZoneStyle: Record<string, string> = { 'overflow-x': 'auto' }
+const verticalZoneStyle: Record<string, string> = { 'overflow-y': 'auto' }
+
+/** **THE MENUS PANE** (`D-187`'s invariant, `D-192`'s column, `D-191`'s wire): a COLUMN in the top zone at
+ *  its own stored width — it FILLS the zone's height as a RELATION (`height: '100%'`, never a figure), it
+ *  ADJUSTS its width, and it SCROLLS the axis it adjusts (`overflow-x`), so the eighteen items scroll
+ *  rather than clip when the pane is narrow. **ITS WIDTH IS NOT AUTHORED**: the paint writes it from
+ *  `['panes', 'pane-menus', 'width']`, the member its `zone` makes adjustable (`D-186`, `D-189`).
+ *  **AND ONE CONSEQUENCE THAT IS NOT A FIGURE**: the top zone authors no height either, so on a first
+ *  boot the strip's height is its CONTENT's until the paint's first `['zones', 'top', 'size']` write fixes
+ *  it. Nothing is authored to paper over it — a fallback would be right on one boot and false on the next
+ *  (`D-174`). */
+const menusPaneStyle: Record<string, string> = { height: '100%', 'overflow-x': 'auto' }
+/** **THE MENUS PANE'S HANDLE AT THE PANE'S LEFT EDGE** (`C-13`, `D-189`, `D-192`): the horizontal pane's
+ *  adjustable axis is its WIDTH, so its bar stands vertical at the left edge and its cursor is
+ *  `col-resize`. **THE THICKNESS IS THE STRIP'S, ON THE AXIS THE STRIP SPANS — `14px`**, the demo page's
+ *  one measured handle box (OWED-1's proposal, taken as the user's ruling; `D-194`). A strip of zero
+ *  thickness is an element that cannot be pressed at all, which is what makes the figure structural rather
+ *  than cosmetic. */
+const menusHandleStyle: Record<string, string> = { cursor: 'col-resize', width: '14px' }
+/** **THE FOUR MENUS AND THEIR ITEMS** (`D-180`, `D-181`, `D-177`'s static enumeration): the menu is a `div`
+ *  whose `content` is the MEASURED name, the item a `div` whose `content` is its label and whose
+ *  `props.role` is the role the menus turn reads OFF THE NODE. There are FOUR menus and EIGHTEEN items —
+ *  `1 + 7 + 7 + 3`, the enumeration `D-181` corrected the arithmetic of and `D-188` re-counted. **The three
+ *  separators in `D-180`'s table are NOT nodes.** **The SEVEN refused** (`quit`, `reload`, `forcereload`,
+ *  `toggledevtools`, `minimize`, `zoom`, `close`) additionally carry `props.disabled: 'true'` — the bare
+ *  attribute the runtime emits — and **NO handler**, so the refusal is DATA and the guard is `main`'s
+ *  admitted set (`D-196`). **NEITHER NODE AUTHORS A FIGURE**: a menu's and an item's shape is the class
+ *  hook's, and `D-187`'s fill/adjust/scroll rule is the PANE's and never theirs. */
 
 /** The demo legacy envelope. */
 export function demoEnvelope() {
@@ -411,7 +598,24 @@ export function demoEnvelope() {
    *  be pinned: `serializeStyle` (`translate.js`) turns an OBJECT of `k: v` pairs into the kebab
    *  `k: v;` CSS string at translate time, and its declared `Record<string, string>` would
    *  otherwise be inferred as a union of optional-`undefined` members across the two nodes. */
-  const handleStyle: Record<string, string> = { cursor: 'col-resize', width: '200px' }
+  /** **THE GUTTER CARD'S HANDLE — RE-AUTHORED IN PLACE, AND ITS POSITION IS THE POINT** (`C-13`, `D-189`):
+   *  `pane-a` carries no `zone`, so `D-187` makes it behave as a SIDEBAR pane, whose adjustable axis is its
+   *  HEIGHT — and a vertically-oriented pane's handle sits at the pane's **TOP-RIGHT**, inside the pane's
+   *  own flex row (`align-self: flex-start` takes the top, `margin-left: auto` takes the right). The bar
+   *  therefore spans the HORIZONTAL, its cursor is `row-resize`, and its thickness is the `14px` the demo
+   *  page measured as a pressable strip's box — **NOT the `200px` this once carried**, which was the OLD
+   *  left strip's landing WIDTH and never a thickness at all. A zero-thickness strip is one a press cannot
+   *  land on (the measured `w=0, h=44` of L-2), which is what makes the figure structural.
+   *  **NEITHER CROSSES THE AXIS ITS ZONE FIXES**: this bar slides on the vertical, the menus pane's on the
+   *  horizontal, and neither states a pane figure — `pane-a`'s height is `['panes']`'s (`D-191`). */
+  const handleStyle: Record<string, string> = {
+    cursor: 'row-resize',
+    height: '14px',
+    'align-self': 'flex-start',
+    'margin-left': 'auto',
+  }
+  /** The demo card's own pane and target styles; the drag's `pane-a` geometry is `['panes']`'s and neither
+   *  of these states one (`D-117`, `D-129`, `D-191`). */
   const paneStyle: Record<string, string> = { display: 'flex', 'align-items': 'stretch' }
   const targetStyle: Record<string, string> = { width: '100px', 'min-height': '28px' }
   return {
@@ -420,173 +624,424 @@ export function demoEnvelope() {
         type: 'div',
         css: { classes: ['demo-shell'] },
         children: [
-          // ---- THE AUTHORED APP ROOT (`D-113`) -------------------------------------------
-          // EVERY general-app card below stands INSIDE this node, and this node is what the overlay's inert
-          // declaration is written to. The opener is its LAST child on purpose: while the overlay is closed the
-          // root is not inert and the button is pressable; while it is open the root IS inert and the button is
-          // not — the modal's own controls live in the layer BELOW, outside this subtree.
+          // ---- THE AUTHORED APP ROOT (`D-113`, `S-2`) -------------------------------------
+          // EVERY node of the app's own surface stands INSIDE this node, and this node is what the overlay's
+          // inert declaration is written to — which is why `S-2`'s skeleton is authored HERE and never beside
+          // the root: the top-bar, the zones, the arrangement and the cards all go inert under the modal
+          // (`C-5`, `D-178` §3). The opener is its LAST child on purpose and the overlay LAYER its FOLLOWING
+          // SIBLING below: while the overlay is closed the root is not inert and the button is pressable;
+          // while it is open the root IS inert and the button is not — the modal's own controls live in that
+          // sibling, outside this subtree, where `inert` cannot reach them.
           {
             type: 'div',
             css: { id: APP_ROOT_ID, classes: ['app-surface'], style: appRootStyle },
             props: { id: APP_ROOT_ID },
             children: [
-              { type: 'h1', content: 'Provident-Electron — MCP endpoint demo' },
-              // ---- counter card ------------------------------------------------
+              // ---- THE TOP-BAR (`S-2`, `D-176`, `D-178` §3, `D-183`) ------------------------------
+              // `content` is the application-name PLACEHOLDER STRING and NEVER a child node (`D-177`'s cut
+              // list, `D-178` §3): the tree's own spelling of the name, read by the rendered markup (`AL-1`)
+              // and resolved by NO module by id — **no module reads this node's geometry** (`C-10`). Its
+              // `css` carries the window's DRAG REGION: with `titleBarStyle: 'hidden'` the OS bar is gone, so
+              // without `-webkit-app-region: drag` here the window cannot be moved at all (`D-183`). **The
+              // strip the native controls occupy gets NO NODE and NOTHING** — the platform owns its own
+              // region, and an authored inset there would be a figure of the WINDOW (`D-179`).
               {
-                type: 'section',
-                css: { id: 'counter-card', classes: ['card'] },
+                type: 'div',
+                css: { classes: ['top-bar'], style: topBarStyle },
+                content: 'Provident-Electron',
                 children: [
-                  { type: 'h2', content: 'Counter' },
+                  // ---- THE TABS ROW (`D-179`, `D-182`, `D-193`) ------------------------------------
+                  // **NO `content`**: its rows are MINTED and their labels PAINTED, so an authored string
+                  // here would be a label nothing computed (`D-177`). The `hooks` entry IS `TABS_ROWS_ID`,
+                  // because the node id, the mint op's `target` and its hook name are ONE string
+                  // (ASM-AE-2), and `hooksKind` declares it `'placement'` — without that declaration a
+                  // placement mint is REFUSED `hook-kind-mismatch`. It stands INSIDE the dragging bar
+                  // because that is the only place `no-drag` means anything (`D-183`), and its width is the
+                  // overlay's own environment value (`env(titlebar-area-width, 100%)`, measured `607px` at
+                  // `D-193`), so the platform's control strip is reserved by CSS and needs NO paint turn.
+                  // Readers: the mint turn (its `target`) and the row paint (`AL-2`, `AL-4`).
                   {
                     type: 'div',
-                    css: { id: 'counter', classes: ['counter-value'] },
-                    props: { id: 'counter' },
-                    content: '0',
-                  },
-                  {
-                    type: 'button',
-                    css: { id: 'inc', classes: ['btn'] },
-                    content: 'Increment (+1)',
-                    handlers: [{ name: 'inc', event: 'click', body: INC_BODY }],
-                  },
-                  {
-                    type: 'button',
-                    css: { id: 'dec', classes: ['btn'] },
-                    content: 'Decrement (-1)',
-                    handlers: [{ name: 'dec', event: 'click', body: DEC_BODY }],
-                  },
-                  {
-                    type: 'button',
-                    css: { id: 'reset', classes: ['btn'] },
-                    content: 'Reset',
-                    handlers: [{ name: 'reset', event: 'click', body: RESET_BODY }],
+                    css: { id: TABS_ROWS_ID, style: tabsRowStyle },
+                    props: { id: TABS_ROWS_ID },
+                    hooks: [TABS_ROWS_ID],
+                    hooksKind: TABS_ROW_HOOKS_KIND,
                   },
                 ],
               },
-              // ---- gutter card (U-GUTTER-UI) ----------------------------------
-              // The affordance / target / status triple, authored as DATA: the handle the pointer is
-              // over (its own `pointerdown` handler keeps it `list_targets`-visible), the pane it
-              // resizes, and the read-out the wiring's ONE `state-slice` write patches — the read-out
-              // authoring NO figure of its own, and standing EMPTY until its first delivery paints it
-              // (`F3`, `D-129`).
+              // ---- THE TOP ZONE (`D-185`, `D-187`) ------------------------------------------------
+              // The four zone nodes carry the record's DECLARED ids as LITERALS, on `css.id` AND `props.id`,
+              // because the paint addresses a zone BY ID and no op takes a walk — and because five more
+              // exports would move the published surface past the `19` the map carries (design §9). **The id
+              // must EQUAL `DECLARED_ZONE_IDS`' member of the same name**: the equality is a constraint
+              // `AL-10` measures, never a derivation (ASM-AE-1). `top`/`bottom` fix the HEIGHT and
+              // `left`/`right` the WIDTH, and **NEITHER FIGURE IS AUTHORED HERE**: `['zones', id, 'size']`
+              // owns it and the paint writes it, and where no `size` stands the paint writes NO dimension and
+              // nothing authored stands in (`D-174`, `D-185`, `D-129`). Each zone authors its own `overflow`
+              // on the ARRANGEMENT axis — the OUTER of `D-187`'s two depths. Reader: the paint's `css.style`
+              // write (`AL-10`).
               {
-                type: 'section',
-                css: { id: 'gutter-card', classes: ['card'] },
+                type: 'div',
+                css: { id: 'top', style: horizontalZoneStyle },
+                props: { id: 'top' },
                 children: [
-                  { type: 'h2', content: 'Gutter (drag to resize)' },
+                  // ---- THE MENUS PANE (`S-9`, `D-186`, `D-187`, `D-191`, `D-192`) -------------------
+                  // A **COLUMN in the top zone at its own stored width**: it fills the zone's HEIGHT
+                  // (a RELATION, `height: '100%'`), adjusts its WIDTH, and scrolls the axis it adjusts
+                  // (`overflow-x`), so twelve characters too many scroll rather than clip. **ITS WIDTH IS
+                  // NOT AUTHORED** — the paint writes it from `['panes', 'pane-menus', 'width']`, the member
+                  // its `zone` makes adjustable (`D-186`, `D-189`, `D-191`). Readers: that paint (`AL-10`) and
+                  // the menus turn, which attaches the items (`AL-6`, `AL-7`).
                   {
                     type: 'div',
-                    css: { id: 'gutter-pane', classes: ['gutter-pane'], style: paneStyle },
-                    props: { id: 'gutter-pane', resizable: 'true' },
+                    css: { id: 'pane-menus', style: menusPaneStyle },
+                    props: { id: 'pane-menus' },
                     children: [
+                      // (a) THE HANDLE (`MENUS_AFFORDANCE_ID`, §3 above) — THE GUTTER HANDLE'S OWN SHAPE: a
+                      // real, pressable `14px` strip at the pane's LEFT EDGE, the edge its ADJUSTABLE axis
+                      // (the width) can move, and it crosses no axis (`C-13`, `D-189`, `D-192`). Its shared
+                      // `pointerdown` body keeps the node `list_targets`-visible and
+                      // `provident.dispatch`-reachable and writes nothing; **no composition carries the
+                      // gesture** (the tree's one drag composition is bound to `DEFAULT_PANE_ID`), so no row
+                      // drives it and no row reads the edge — `AL-1` measures its PRESENCE under this id.
                       {
-                        // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
-                        // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`
-                        // DECLARATION **AND NO GEOMETRY CLAIM**, an authored `props.id`, and the
-                        // authored `pointerdown` handler. L-3's live finding was exactly this missing
-                        // declaration: the element rendered `<div … class="gutter-handle"
-                        // data-node-id="node-12">` with NO `cursor` and no `style` attribute at all,
-                        // so `U-2`(a) could not be satisfied by any shipped instrument. The declared
-                        // degradation the module carries (no pointer CAPTURE) means a drag that leaves
-                        // the handle's own box loses its reading (`§2.6` item 4) — which is why the
-                        // handle's box must be a real, pressable strip: it STRETCHES to the row's own
-                        // height through the pane's authored flex declarations, and its own base size
-                        // declaration gives the strip its WIDTH. Measured live (L-2): without a width
-                        // the handle's rendered box was `w=0, h=44` — an empty `div` whose width comes
-                        // from its (empty) content — so hit-testing could not land on it at all and a
-                        // real CDP press at its centre produced ZERO effect. The TARGET's own base size
-                        // (item 7(b) below) is the pane the drag resizes and the node the preview
-                        // writes; the handle's is the pointer's landing strip, and it has to be WIDE
-                        // enough to hold a drag: this composition installs NO pointer capture (`§2.6`
-                        // item 4 — the capture opt-in is an `E3`-SIDE owed item), so the session's
-                        // tracking listeners are LOCAL to the element and a drag that leaves the
-                        // handle's box loses its reading (the spec's own honest UX consequence).
                         type: 'div',
-                        css: { id: GUTTER_AFFORDANCE_ID, classes: ['gutter-handle'], style: handleStyle },
-                        props: { id: GUTTER_AFFORDANCE_ID, axis: GUTTER_AFFORDANCE_ID },
+                        css: { id: MENUS_AFFORDANCE_ID, classes: ['gutter-handle'], style: menusHandleStyle },
+                        props: { id: MENUS_AFFORDANCE_ID, axis: MENUS_AFFORDANCE_ID },
                         content: '',
-                        handlers: [{ name: 'gutter-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                        handlers: [{ name: 'menus-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                      },
+                      // (b) THE FOUR MENUS AND THEIR EIGHTEEN ITEMS (`D-180`, `D-181`, `D-188`) — a STATIC
+                      // enumeration, and a static node is exactly what makes an authored label lawful
+                      // (`D-177`). Each item carries its `props.role` so the menus turn reads the role OFF
+                      // THE NODE and never from a table of its own; **the SEVEN the ruling refused render
+                      // `disabled` with NO handler**, so the refusal is DATA and the unbypassable guard is
+                      // `main`'s admitted set (`D-181`, `D-196`). Readers: the menus turn, `AL-6`, `AL-7`.
+                      {
+                        type: 'div',
+                        css: { classes: ['menus-menu'] },
+                        content: 'File',
+                        children: [
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'quit', disabled: 'true' },
+                            content: 'Quit',
+                          },
+                        ],
                       },
                       {
-                        // (b) THE TARGET — `§2.1` item 7(b): an authored `css.id`, an authored
-                        // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id` —
-                        // and NOTHING ELSE. The pre-drag size and the bounds pair that once stood on
-                        // the PANE's `props` as `size`/`min`/`max` are `['panes']`'s since `D-117` and
-                        // left the node at `F11` (`D-129`), so no seam reads a geometry off an element
-                        // any more. An authored `props` entry still renders as a BARE ATTRIBUTE (the
-                        // pane's `resizable`, the handle's `axis`), which is what the surviving seams
-                        // read (L-6/ADV-GU-7: those reads used to go through `dataset[...]` and every
-                        // one missed).
                         type: 'div',
-                        css: { id: GUTTER_TARGET_ID, classes: ['gutter-target'], style: targetStyle },
-                        props: { id: GUTTER_TARGET_ID },
-                        content: 'resizable pane',
+                        css: { classes: ['menus-menu'] },
+                        content: 'Edit',
+                        children: [
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'undo' },
+                            content: 'Undo', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'redo' },
+                            content: 'Redo', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'cut' },
+                            content: 'Cut', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'copy' },
+                            content: 'Copy', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'paste' },
+                            content: 'Paste', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'delete' },
+                            content: 'Delete', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'selectall' },
+                            content: 'Select All', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                        ],
+                      },
+                      {
+                        type: 'div',
+                        css: { classes: ['menus-menu'] },
+                        content: 'View',
+                        children: [
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'reload', disabled: 'true' },
+                            content: 'Reload',
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'forcereload', disabled: 'true' },
+                            content: 'Force Reload',
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'toggledevtools', disabled: 'true' },
+                            content: 'Toggle Developer Tools',
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'resetzoom' },
+                            content: 'Actual Size', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoomin' },
+                            content: 'Zoom In', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoomout' },
+                            content: 'Zoom Out', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'togglefullscreen' },
+                            content: 'Toggle Full Screen', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                          },
+                        ],
+                      },
+                      {
+                        type: 'div',
+                        css: { classes: ['menus-menu'] },
+                        content: 'Window',
+                        children: [
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'minimize', disabled: 'true' },
+                            content: 'Minimize',
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoom', disabled: 'true' },
+                            content: 'Zoom',
+                          },
+                          {
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'close', disabled: 'true' },
+                            content: 'Close',
+                          },
+                        ],
+                      },
+                      // (c) THE RECEIPT CARRIER (`MENUS_RECEIPT_ID`) — **NO `content`**: what stands
+                      // between a boot and the first answer is EMPTY, never a figure and never a placeholder
+                      // word (`D-129`, `D-174`). Reader: the menus turn writes the route's answer into it
+                      // (`AL-7`). **The carrier is a NODE because the write is a `state-slice` content write
+                      // on an authored id** — an authored body can reach no route, so the click path is where
+                      // the answer comes from (design §8 (iv)).
+                      {
+                        type: 'div',
+                        css: { id: MENUS_RECEIPT_ID },
+                        props: { id: MENUS_RECEIPT_ID },
                       },
                     ],
                   },
-                  {
-                    // (c) THE READ-OUT — an authored `css.id`, an authored `css.classes` and an
-                    // authored `props.id`, and NO FIGURE OF ITS OWN. It carried `content: '100'`
-                    // until `F3`, and that figure was a SECOND AUTHORITY (`D-129`, case (b)): the
-                    // pane's size is a shape `['panes']` at `file` owns — `panesMustStand` repairs it
-                    // and `paneGeometryIn` answers the measured default for a pane the family does
-                    // not name — and the literal's only reader was the paint's own comparison, so it
-                    // bought a skipped write at the price of a figure the store can falsify. NOTHING
-                    // REPLACES IT — not `''`, not `'0'`, not a placeholder word, which would be a new
-                    // local default on the same shape: the read-out reads EMPTY until a `'record'`-arm
-                    // delivery paints it, which is never wrong, and that paint is `renderer.ts`'s
-                    // `renderPaneSize` (`S1`–`S4`) — the delivery is the read-out's only author.
-                    type: 'div',
-                    css: { id: GUTTER_STATUS_ID, classes: ['gutter-status'] },
-                    props: { id: GUTTER_STATUS_ID },
-                  },
                 ],
               },
-              // ---- echo card ---------------------------------------------------
+              // ---- THE ARRANGEMENT CONTAINER (`D-176`, `D-185`) ----------------------------------
+              // ONE `div` between the two full-width zones, holding `left` + the stage + `right` in a ROW so
+              // the sidebars stretch BETWEEN the top and bottom zones — the charter's own nesting, in `css`
+              // and nowhere else. **STRUCTURAL, AND RESOLVED BY NOTHING**: it authors no id because no reader
+              // can be written for one (`D-177`), and it states no dimension because the stage takes the
+              // remainder (`D-185`).
               {
-                type: 'section',
-                css: { id: 'echo-card', classes: ['card'] },
+                type: 'div',
+                css: { classes: ['arrangement'], style: arrangementStyle },
                 children: [
-                  { type: 'h2', content: 'Echo (input -> echo-out)' },
-                  {
-                    type: 'input',
-                    css: { id: 'echo-input' },
-                    props: { id: 'echo-input' },
-                    handlers: [{ name: 'echo', event: 'input', body: ECHO_BODY }],
-                  },
+                  // ---- THE LEFT SIDEBAR ZONE (`D-185`) --------------------------------------------
+                  // A sidebar fixes the WIDTH and leaves the height adjustable; its `overflow-y` scrolls the
+                  // axis it fixes at the zone depth, and no figure is authored for it (`D-174`, `AL-10`).
                   {
                     type: 'div',
-                    css: { id: 'echo-out', classes: ['echo-out'] },
-                    props: { id: 'echo-out' },
-                    content: '(nothing yet)',
+                    css: { id: 'left', style: verticalZoneStyle },
+                    props: { id: 'left' },
                   },
-                ],
-              },
-              // ---- theme card (U-THEME-CONTROL, docs/specs/theme-control.md §2.1) -------------------
-              // 'theme-card' — THE AUTHORED APPEARANCE CONTROL, and it is FIVE nodes: this section,
-              // its heading, the two setting-token buttons and the state node whose `content` carries
-              // the setting. THE TOKEN BLOCK IS CLOSED AT TWO and it is DEMO DATA: the repo asserts
-              // nothing about what either member MEANS, the authored handler CARRIES the caller's token
-              // and interprets nothing, the state node is the ONE graph-readable carrier, NO attribute
-              // is written, and no unit may generalise this card into a shipped appearance UI (§1
-              // item 7). Each button's handler carries its OWN authored block member; the value it
-              // WRITES is the CALLER's (`provident.dispatch theme-dark click` with the token as its
-              // argument), which is why the body declares its member and substitutes no default.
-              {
-                type: 'section',
-                css: { id: 'theme-card', classes: ['card'] },
-                children: [
-                  { type: 'h2', content: 'Appearance (demo)' },
+                  // ---- THE STAGE (`D-185`) ------------------------------------------------------
+                  // THE FLEX REMAINDER and `overflow`, and **NO dimension**: the stage is DERIVED, so a figure
+                  // here would be a second authority nothing stores and nothing repairs. **RESOLVED BY
+                  // NOTHING, NEVER PAINTED, NEVER STORED** (`D-185`) — no reader can be written for it by id,
+                  // which is why it authors none (`D-177`) — and the ONE body that decides its children's
+                  // `display` is the stage paint's (`C-4`, `D-129`). Its children are the record's TWO
+                  // TERMINAL PAGES, and the landing page holds the `h1` and the four content cards.
                   {
-                    type: 'button',
-                    css: { id: 'theme-dark', classes: ['btn'] },
-                    props: { value: THEME_DARK_TOKEN },
-                    content: 'Dark',
-                    handlers: [
+                    type: 'div',
+                    css: { classes: ['stage'], style: stageStyle },
+                    children: [
+                      // ---- the tab record's two authored terminal pages (U-STORE-TABS-RECORD) -------
+                      // THE LANDING PAGE and THE ERROR PAGE, `page`-roled TERMINALS rather than list rows
+                      // (`§0A` item 5). They are the record's own terminals and they are AUTHORED HERE, one
+                      // node each with its own authored structure, its own authored handler STRING and its
+                      // own `data-*`-free declarative styling — the same envelope-data form the gutter and
+                      // theme cards use. NEITHER page carries state: each renders from the record, and the
+                      // wiring's bounded role reads the record's witness and drives the node (`§3.5`
+                      // items 1/3). The two ids are the declared pairs `PAR-9` names and `T1` must read from
+                      // the contract rather than re-declare. **THE MOVE IS `A-5`'S**: they stand here instead
+                      // of inside the app root, and the landing page gains the `h1` and the four content cards
+                      // as children (`C-5`) — which keeps `inert` covering them, because the stage is inside
+                      // the root and so are they.
                       {
-                        name: 'theme-set',
-                        event: 'click',
-                        body: `function (ctx, value) {
+                        type: 'section',
+                        css: { id: TABS_LANDING_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
+                        props: { id: TABS_LANDING_PAGE_ID, role: 'page' },
+                        content: 'Landing',
+                        handlers: [{ name: 'tabs-landing-page-open', event: 'click', body: TABS_LANDING_PAGE_BODY }],
+                        children: [
+                          // ---- THE DEMO HEADING, RE-PARENTED FIRST (`A-5`) --------------------------
+                          // The app root's FIRST child until this pass, and it had no home in L2 §2's
+                          // root-child order; it stands FIRST here, inside the landing page, so the active
+                          // tab's stage content is one subtree and `inert` still covers it (`C-5`).
+                          { type: 'h1', content: 'Provident-Electron — MCP endpoint demo' },
+                          // ---- counter card ------------------------------------------------
+                          {
+                            type: 'section',
+                            css: { id: 'counter-card', classes: ['card'] },
+                            children: [
+                              { type: 'h2', content: 'Counter' },
+                              {
+                                type: 'div',
+                                css: { id: 'counter', classes: ['counter-value'] },
+                                props: { id: 'counter' },
+                                content: '0',
+                              },
+                              {
+                                type: 'button',
+                                css: { id: 'inc', classes: ['btn'] },
+                                content: 'Increment (+1)',
+                                handlers: [{ name: 'inc', event: 'click', body: INC_BODY }],
+                              },
+                              {
+                                type: 'button',
+                                css: { id: 'dec', classes: ['btn'] },
+                                content: 'Decrement (-1)',
+                                handlers: [{ name: 'dec', event: 'click', body: DEC_BODY }],
+                              },
+                              {
+                                type: 'button',
+                                css: { id: 'reset', classes: ['btn'] },
+                                content: 'Reset',
+                                handlers: [{ name: 'reset', event: 'click', body: RESET_BODY }],
+                              },
+                            ],
+                          },
+                          // ---- gutter card (U-GUTTER-UI) -----------------------------------
+                          // The affordance / target / status triple, authored as DATA: the handle the pointer
+                          // is over (its own `pointerdown` handler keeps it `list_targets`-visible), the pane
+                          // it resizes, and the read-out the wiring's ONE `state-slice` write patches — the
+                          // read-out authoring NO figure of its own, and standing EMPTY until its first
+                          // delivery paints it (`F3`, `D-129`). **NOTHING INSIDE THIS CARD MOVED WITH IT**:
+                          // its nodes, `props`, `css` and handler bodies are the bytes they were (`A-5`).
+                          {
+                            type: 'section',
+                            css: { id: 'gutter-card', classes: ['card'] },
+                            children: [
+                              { type: 'h2', content: 'Gutter (drag to resize)' },
+                              {
+                                type: 'div',
+                                css: { id: 'gutter-pane', classes: ['gutter-pane'], style: paneStyle },
+                                props: { id: 'gutter-pane', resizable: 'true' },
+                                children: [
+                                  {
+                                    // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
+                                    // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`
+                                    // DECLARATION **AND THE STRIP'S THICKNESS, AND NO GEOMETRY CLAIM**
+                                    // (`D-189`, `D-193`), an authored `props.id`, and the authored
+                                    // `pointerdown` handler. L-3's live finding was exactly this missing
+                                    // declaration: the element rendered `<div … class="gutter-handle"
+                                    // data-node-id="node-12">` with NO `cursor` and no `style` attribute at
+                                    // all, so `U-2`(a) could not be satisfied by any shipped instrument — and a
+                                    // measured `w=0, h=44` box is one no press can land on.
+                                    // **WHAT THE BOX SAYS NOW**: `handleStyle` carries the `14px` THICKNESS on
+                                    // the axis the strip spans, the `row-resize` cursor, and the TOP-RIGHT
+                                    // placement `D-189` gives a vertically-oriented pane's handle — the strip
+                                    // stands at the edge its ADJUSTABLE axis (the height) can move, and it
+                                    // crosses no axis. **THE `200px` THIS ONCE CARRIED IS GONE**: it was the old
+                                    // left strip's landing WIDTH, never a thickness, and `pane-a`'s height is
+                                    // `['panes']`'s since `D-117` (`D-129`). The declared degradation is
+                                    // unchanged (no pointer CAPTURE, `§2.6` item 4), so a drag that leaves the
+                                    // strip's box loses its reading — which is exactly why the strip has to be
+                                    // pressable at all: this composition installs NO pointer capture, so the
+                                    // session's tracking listeners are LOCAL to the element.
+                                    type: 'div',
+                                    css: { id: GUTTER_AFFORDANCE_ID, classes: ['gutter-handle'], style: handleStyle },
+                                    props: { id: GUTTER_AFFORDANCE_ID, axis: GUTTER_AFFORDANCE_ID },
+                                    content: '',
+                                    handlers: [{ name: 'gutter-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                                  },
+                                  {
+                                    // (b) THE TARGET — `§2.1` item 7(b): an authored `css.id`, an authored
+                                    // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id` —
+                                    // and NOTHING ELSE. The pre-drag size and the bounds pair that once stood
+                                    // on the PANE's `props` as `size`/`min`/`max` are `['panes']`'s since
+                                    // `D-117` and left the node at `F11` (`D-129`), so no seam reads a geometry
+                                    // off an element any more. An authored `props` entry still renders as a
+                                    // BARE ATTRIBUTE (the pane's `resizable`, the handle's `axis`), which is
+                                    // what the surviving seams read (L-6/ADV-GU-7: those reads used to go
+                                    // through `dataset[...]` and every one missed).
+                                    type: 'div',
+                                    css: { id: GUTTER_TARGET_ID, classes: ['gutter-target'], style: targetStyle },
+                                    props: { id: GUTTER_TARGET_ID },
+                                    content: 'resizable pane',
+                                  },
+                                ],
+                              },
+                              {
+                                // (c) THE READ-OUT — an authored `css.id`, an authored `css.classes` and an
+                                // authored `props.id`, and NO FIGURE OF ITS OWN. It carried `content: '100'`
+                                // until `F3`, and that figure was a SECOND AUTHORITY (`D-129`, case (b)): the
+                                // pane's geometry is a shape `['panes']` at `file` owns — `panesMustStand`
+                                // repairs it and `paneGeometryIn` answers the measured default for a pane the
+                                // family does not name — and the literal's only reader was the paint's own
+                                // comparison, so it bought a skipped write at the price of a figure the store
+                                // can falsify. NOTHING REPLACES IT — not `''`, not `'0'`, not a placeholder
+                                // word, which would be a new local default on the same shape: the read-out
+                                // reads EMPTY until a `'record'`-arm delivery paints it, which is never wrong,
+                                // and that paint is `renderer.ts`'s `renderPaneSize` (`S1`–`S4`) — the delivery
+                                // is the read-out's only author.
+                                type: 'div',
+                                css: { id: GUTTER_STATUS_ID, classes: ['gutter-status'] },
+                                props: { id: GUTTER_STATUS_ID },
+                              },
+                            ],
+                          },
+                          // ---- echo card ---------------------------------------------------
+                          {
+                            type: 'section',
+                            css: { id: 'echo-card', classes: ['card'] },
+                            children: [
+                              { type: 'h2', content: 'Echo (input -> echo-out)' },
+                              {
+                                type: 'input',
+                                css: { id: 'echo-input' },
+                                props: { id: 'echo-input' },
+                                handlers: [{ name: 'echo', event: 'input', body: ECHO_BODY }],
+                              },
+                              {
+                                type: 'div',
+                                css: { id: 'echo-out', classes: ['echo-out'] },
+                                props: { id: 'echo-out' },
+                                content: '(nothing yet)',
+                              },
+                            ],
+                          },
+                          // ---- theme card (U-THEME-CONTROL, docs/specs/theme-control.md §2.1) -----------
+                          // 'theme-card' — THE AUTHORED APPEARANCE CONTROL, and it is FIVE nodes: this section,
+                          // its heading, the two setting-token buttons and the state node whose `content` carries
+                          // the setting. THE TOKEN BLOCK IS CLOSED AT TWO and it is DEMO DATA: the repo asserts
+                          // nothing about what either member MEANS, the authored handler CARRIES the caller's token
+                          // and interprets nothing, the state node is the ONE graph-readable carrier, NO attribute
+                          // is written, and no unit may generalise this card into a shipped appearance UI (§1
+                          // item 7). Each button's handler carries its OWN authored block member; the value it
+                          // WRITES is the CALLER's (`provident.dispatch theme-dark click` with the token as its
+                          // argument), which is why the body declares its member and substitutes no default.
+                          {
+                            type: 'section',
+                            css: { id: 'theme-card', classes: ['card'] },
+                            children: [
+                              { type: 'h2', content: 'Appearance (demo)' },
+                              {
+                                type: 'button',
+                                css: { id: 'theme-dark', classes: ['btn'] },
+                                props: { value: THEME_DARK_TOKEN },
+                                content: 'Dark',
+                                handlers: [
+                                  {
+                                    name: 'theme-set',
+                                    event: 'click',
+                                    body: `function (ctx, value) {
       const authoredToken = 'dark';
       void authoredToken;
       const all = ctx.tree.allNodes();
@@ -596,19 +1051,19 @@ export function demoEnvelope() {
       try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
       try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
     }`,
-                      },
-                    ],
-                  },
-                  {
-                    type: 'button',
-                    css: { id: 'theme-light', classes: ['btn'] },
-                    props: { value: THEME_LIGHT_TOKEN },
-                    content: 'Light',
-                    handlers: [
-                      {
-                        name: 'theme-set',
-                        event: 'click',
-                        body: `function (ctx, value) {
+                                  },
+                                ],
+                              },
+                              {
+                                type: 'button',
+                                css: { id: 'theme-light', classes: ['btn'] },
+                                props: { value: THEME_LIGHT_TOKEN },
+                                content: 'Light',
+                                handlers: [
+                                  {
+                                    name: 'theme-set',
+                                    event: 'click',
+                                    body: `function (ctx, value) {
       const authoredToken = 'light';
       void authoredToken;
       const all = ctx.tree.allNodes();
@@ -618,43 +1073,51 @@ export function demoEnvelope() {
       try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
       try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
     }`,
+                                  },
+                                ],
+                              },
+                              {
+                                type: 'div',
+                                css: { id: 'theme-setting', classes: ['theme-setting'] },
+                                props: { id: 'theme-setting' },
+                                content: THEME_INITIAL_TOKEN,
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                      // ---- THE ERROR PAGE — the same moved shape, and it keeps its own children: none. ----
+                      {
+                        type: 'section',
+                        css: { id: TABS_ERROR_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
+                        props: { id: TABS_ERROR_PAGE_ID, role: 'page' },
+                        content: 'Tab error',
+                        handlers: [{ name: 'tabs-error-page-open', event: 'click', body: TABS_ERROR_PAGE_BODY }],
                       },
                     ],
                   },
+                  // ---- THE RIGHT SIDEBAR ZONE (`D-185`) -------------------------------------------
                   {
                     type: 'div',
-                    css: { id: 'theme-setting', classes: ['theme-setting'] },
-                    props: { id: 'theme-setting' },
-                    content: THEME_INITIAL_TOKEN,
+                    css: { id: 'right', style: verticalZoneStyle },
+                    props: { id: 'right' },
                   },
                 ],
               },
-              // ---- the tab record's two authored terminal pages (U-STORE-TABS-RECORD) ---------
-              // THE LANDING PAGE and THE ERROR PAGE, `page`-roled TERMINALS rather than list rows
-              // (`§0A` item 5). They are the record's own terminals and they are AUTHORED HERE, one
-              // node each with its own authored structure, its own authored handler STRING and its
-              // own `data-*`-free declarative styling — the same envelope-data form the gutter and
-              // theme cards above use. NEITHER page carries state: each renders from the record, and
-              // the wiring's bounded role reads the record's witness and drives the node (`§3.5`
-              // items 1/3). The two ids are the declared pairs `PAR-9` names and `T1` must read from
-              // the contract rather than re-declare.
+              // ---- THE BOTTOM ZONE (`D-185`) -----------------------------------------------------
+              // The second full-width zone: it fixes the HEIGHT and leaves each pane's width adjustable, and it
+              // authors no figure (`D-174`, `D-191`).
               {
-                type: 'section',
-                css: { id: TABS_LANDING_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
-                props: { id: TABS_LANDING_PAGE_ID, role: 'page' },
-                content: 'Landing',
-                handlers: [{ name: 'tabs-landing-page-open', event: 'click', body: TABS_LANDING_PAGE_BODY }],
-              },
-              {
-                type: 'section',
-                css: { id: TABS_ERROR_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
-                props: { id: TABS_ERROR_PAGE_ID, role: 'page' },
-                content: 'Tab error',
-                handlers: [{ name: 'tabs-error-page-open', event: 'click', body: TABS_ERROR_PAGE_BODY }],
+                type: 'div',
+                css: { id: 'bottom', style: horizontalZoneStyle },
+                props: { id: 'bottom' },
               },
 
               // THE OPENER — an authored `button` with an authored `click` body, so it is `list_targets`-visible and
-              // `provident.dispatch`-reachable exactly as every other control in this file is.
+              // `provident.dispatch`-reachable exactly as every other control in this file is. **IT STAYS THE APP
+              // ROOT'S LAST CHILD** across this pass's re-parent (`A-5`, `D-178` §3): the overlay LAYER below is its
+              // FOLLOWING SIBLING, and moving either would put the modal's own controls inside the subtree that
+              // `inert` is written to.
               {
                 type: 'button',
                 css: { id: OVERLAY_OPEN_ID, classes: ['btn', 'overlay-open'] },
@@ -735,6 +1198,19 @@ export function demoEnvelope() {
                 ],
               },
             ],
+          },
+          // ---- THE ROW PROTOTYPE (`D-179`, `D-182`; design §4) ----------------------------------
+          // **A DEF-ROOT `component` NODE, AND `template.root`'s LAST CHILD.** The engine's mint resolves it BY
+          // NAME — `component.reference` IS `TABS_ROW_PROTOTYPE_ID` — and without it the mint answers
+          // `rows-prototype-unresolved` and a row has no shape at all. It authors NO `css.id` (a node nothing
+          // addresses publishes no address), NO `content` (a row's label is PAINTED off the record), and it
+          // stands OUTSIDE the app root, in the region the modal's `inert` write cannot reach — the same choice
+          // the overlay layer makes below, for the same reason (`D-113`, `D-178` §3). **ITS READER, IN ONE LINE**:
+          // the engine's mint, by name (`AL-2`'s first measurement).
+          {
+            type: 'div',
+            component: { reference: TABS_ROW_PROTOTYPE_ID },
+            css: { classes: ['tab-row'] },
           },
         ],
       },

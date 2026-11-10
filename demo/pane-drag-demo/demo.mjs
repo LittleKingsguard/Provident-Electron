@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 88415d893f95ea33ca6efe67017d1b44da4adea861b63a024247ea06f9743952
+// @body-sha256 75f9ca838d1599edebe2dc55daa6e85161de3fc92a20f060a4da3d9d6402d548
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6f960a27fdf571a26992b061d9f3e2aa604847e5c668c52869bf40a84bda70c demo/pane-drag-demo/demo.ts
 // @source a3cdc0510a78080e253b5df3cef4e30c103296990063a644a29a80f7f58c2bc7 demo/pane-drag-demo/stub-view.ts
@@ -41,7 +41,7 @@
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source f83e54243983045a2eaee0c86d7c77d636b9976792d30d3d35f41f48f3194745 src/renderer/tabs-client.ts
 // @source 71b0efdf19c1c82177ed120b070afc29e94c2c72bc1003e7bddc41ba19e5459b src/renderer/view-client.ts
-// @source c975b742ef01b51d7d65aec354306cb2bc3f66c78807820de26d828a0330f649 src/shared/demo-envelope.ts
+// @source 5def8f32889984bcf55a55bb6caa8821c690a2415fe97cdd501846af408f6a66 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
@@ -1094,8 +1094,13 @@ function createGutterAffordance(options) {
 }
 
 // src/shared/demo-envelope.ts
-var GUTTER_CURSORS = { "gutter-vertical": "col-resize", "gutter-horizontal": "row-resize" };
-var GUTTER_AFFORDANCE_ID = "gutter-vertical";
+var GUTTER_CURSORS = {
+  "gutter-vertical": "col-resize",
+  "gutter-horizontal": "row-resize",
+  "menus-vertical": "col-resize"
+};
+var GUTTER_AFFORDANCE_ID = "gutter-horizontal";
+var TABS_ROWS_ID = "tab-rows";
 function gutterSeamExample() {
   const attributeOf = (element, key) => {
     if (element === null || element === void 0 || typeof element !== "object") return null;
@@ -1158,6 +1163,7 @@ function gutterSeamExample() {
     }
   };
 }
+var TABS_ROW_HOOKS_KIND = { [TABS_ROWS_ID]: "placement" };
 
 // src/renderer/secure-panels.ts
 var GROUP_LABELS = {
