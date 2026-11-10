@@ -4279,3 +4279,30 @@ stderr tail:
 **THE READINGS AT THIS HEAD ARE `D-179`'S** — `docs/` only; no `src/` byte moved, no leg was run by either seat, and the suite's figures are unchanged from `D-175`.
 
 **ITS REGISTER IS `D-71` TO `D-187`** as prose, unchanged and extended by this row only. **This row records a second miscount caught by a seat rather than by its author, five interface pages stating one unit's surface, four turns where an app had none, a keyboard surface that vanishes without being re-bound, and seven debts named with owners instead of carried silently.**
+
+## D-189 — `size` **SPLITS INTO `width` AND `height`** so a pane remembers both axes when it changes zones — and **a pane's drag handle moves to the LEFT EDGE when horizontal and the TOP-RIGHT when vertical**
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user, verbatim):**
+> *"Save pane width and height separately so that dragging a pane from a sidebar to a top/bottom zone doesn't reuse the same value for size. Also add drag handle to left side of horizontally-oriented (top/bottom zone) pane or top-right of vertically-oriented (sidebar) panes"*
+
+**THE FIRST CHANGE SUPERSEDES `D-186`'S CLEVEREST PART, WHICH IS WHY IT IS BETTER.** `D-186` made **`zone` disambiguate what `size` means** — a height in a sidebar, a width in a top/bottom zone. **The defect the user names is exactly that design's consequence**: one member, two axes, so **the number a sidebar pane carried as a height is then read as a width** when it moves to a top zone — *"doesn't reuse the same value for size"*. **So `size` becomes TWO MEMBERS, `width` and `height`, BOTH STORED**, and the member's own name says its axis. **`zone` keeps a job, but a better one: it selects WHICH member is adjustable — not what one member means.**
+
+**THE RULE, STATED EXACTLY, BECAUSE THE NON-PAINTED MEMBER IS THE WHOLE POINT.**
+
+| pane in | painted width | painted height | adjustable member painted |
+|---|---|---|---|
+| `top` / `bottom` zone | **the pane's `width`** | the **zone's** `size` | `width` |
+| `left` / `right` zone | the **zone's** `size` | **the pane's `height`** | `height` |
+| the stage (`zone` absent, `C-9`) | the pane's `width` | the pane's `height` | **both** (`D-187`: a stage pane behaves as a sidebar, but the stage has no fixed axis — `D-185` — so nothing overrides either) |
+
+**So while a pane sits in a top zone its stored `height` is RETAINED BUT UNPAINTED** — that is the memory the ruling asks for, and it is **not** a second authority (`D-129`): at any instant exactly **one** figure is painted per axis, and the unread one is read again the moment the pane's zone changes. **A pane dragged from a sidebar to a top zone therefore arrives with its own width and keeps its height for when it returns.** The drag writes the **adjustable** member — the axis its handle sits on — and never the fixed one.
+
+**`bounds` FOLLOWS THE SAME RULE AND STAYS OPTIONAL.** One pair, read against the **adjustable** axis, `pane-a`'s stored and a zone-resident pane's **absent and lawful** with the clamp the layout's (`D-186`, unchanged), and **no repair reads `['zones']`** (unchanged).
+
+**THE SECOND CHANGE IS A PLACEMENT RULE WITH A REAL MIGRATION COST, AND THE COST IS NAMED RATHER THAN DISCOVERED.** **A horizontally-oriented pane — one in a `top`/`bottom` zone, whose adjustable axis is the width — carries its handle on the LEFT SIDE.** **A vertically-oriented pane — one in a `left`/`right` zone, whose adjustable axis is the height — carries its handle at the TOP-RIGHT.** **The handle therefore always sits at an edge the adjustable axis can move**, which is the design's own justification for the asymmetry: a left-edge handle slides horizontally, a top-right handle slides vertically, and neither crosses the axis its zone has fixed.
+
+**AND `pane-a` MIGRATES TWICE, WHICH IS THE PART THAT TOUCHES WORK ALREADY MEASURED.** **Its `size: 100` becomes `height: 100`** — a **stored-member rename**, not a value change, so `DEFAULT_PANE_SIZE` keeps its figure and `paneSizeOf`'s readers move to `height`. **And its handle: `pane-a` carries no `zone` (`C-9`), so `D-187` makes it behave as a sidebar pane — which puts its handle at the TOP-RIGHT.** **The handle in the tree today is `GUTTER_AFFORDANCE_ID = 'gutter-vertical'` with `props: { axis: 'gutter-vertical' }`** — a left/vertical-styled handle authored in the gutter card — **so this ruling MOVES it**, and with it the three things that address it: **the demo page's `[data-gutter-handle]` selector, `panes-live.mjs`'s drive, and every battery row whose subject is that element's position or axis.** **That is a real cost, it is `pane-a`'s and the demo's, and it is stated here so `S-2`/`S-6` and the battery name it in the same edit** (`D-146`/`D-183`'s discipline). **If the user would rather the stage's pane keep a left handle — i.e. that the stage is NOT sidebar-equivalent for handles — that is the one sentence to contradict, and it would leave the demo untouched.**
+
+**WHAT IT ADDS TO THE WORK.** **`S-8`**: the pane member set becomes `width`/`height`/`bounds?` with **a stored-member migration for `pane-a`** and `pane-menus` defaulting **both** (`width` `100`; `height` — the zone's figure, stored so a sidebar move has one). **`S-2`**: two handle nodes, positioned by the orientation rule, with the existing `gutter-vertical` handle's position and axis re-authored. **`S-6`**: the paint selects the member by the zone rather than interpreting one, and **writes the zone's `size` into the fixed axis**. **The acceptance** gains a row that **is measurable**: a pane's painted width and height each come from a named source, so the "one figure per axis" claim is checkable in rendered markup.
+
+**ITS REGISTER IS `D-71` TO `D-188`** as prose, unchanged and extended by this row only. **This row records a ruling that superseded a cleverer design because that design had a cost, two members whose unused one is the feature, a placement rule with a migration bill attached, and the demo's own subject named as part of the price.**
