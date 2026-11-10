@@ -1263,11 +1263,18 @@ let tabsClientSubscription: TabsSubscription | null = null
  *  target's family path and never inside a container (ASM-RW-5) — so the value handed over is the row's own name and no line
  *  of this file ever reads a placement back.
  *
- *  **AND THE ACTIVE MARKER IS NOT PAINTED BY THIS TURN — SAID RATHER THAN GUESSED AT**: the datum's `props` carries
- *  `target` alone (`S-5`'s operand), so no row renders an `active` attribute from this turn, and what a `props.active`
- *  member WOULD render at each fresh mint is `D-201`'s measurement rather than this edit's subject. The datum still
- *  carries the record's own `active` as a PLAIN member because the datum IS that row WHOLE (`D-76`) — and a plain member
- *  reaches no prop. */
+ *  **AND THE ACTIVE MARKER IS THE SECOND `props` MEMBER, WHICH IS THE WHOLE OF ITS MECHANISM** (`D-201`'s marker half,
+ *  answered by `D-202`'s `keyField` removal rather than by a new operand): `props.active` carries **the record's own flag**
+ *  beside `target`, so the row the record marks active renders `active="true"` and every other row `active="false"` —
+ *  **measured on the rendered HTML across TWO deliveries with the flag moved**, both rows fresh each time
+ *  (`node-125/126 → node-143/144`), the marker on the other row and no stale value on either. **WHY IT NEEDS NO
+ *  `state-slice`, NO MAP AND NO SECOND MINT**: `D-201` measured a `props`-carried member FREEZING on a node that `keyField`
+ *  REUSED, and this turn declares no key, so every delivery mints every row fresh and a fresh mint composes every `props`
+ *  member the datum carries. **A READER WHO RESTORES `keyField` TURNS THIS MARKER BACK INTO A FROZEN ONE** — that sentence is
+ *  the reason the marker moved into the datum rather than into a mechanism. **AND THE VALUE IS A BOOLEAN, WHICH THE ENGINE
+ *  RENDERS AS TEXT**: measured, `false` renders `active="false"` (the attribute PRESENT and literal) and an OMITTED member
+ *  renders no attribute at all — so `active` is passed as a boolean and never as `'true'`/`'false'`, and the fallback where
+ *  the record names no row for a seat is `false`. */
 function driveTabsRows(reading: TabsClientReading, runtime: Runtime | null): void {
   if (reading.status !== 'committed' || runtime === null) return
   const recordById = new Map<string, TabsRecordRow>()
@@ -1276,10 +1283,17 @@ function driveTabsRows(reading: TabsClientReading, runtime: Runtime | null): voi
     const record = recordById.get(id)
     // `label` FIRST — see this turn's own note: it is the binding the engine renders the row's text from, and the tab id is
     // the fallback where the record carries no title (`D-194`). The record's row follows WHOLE, so `target`, `active` and
-    // every other member travel as the reading gave them (`D-76`); `props.target` LAST is the row's own value in the one
-    // slot the engine renders an attribute from — the slot the ATTACH turn's listener reads back off the node (`D-201`),
-    // with the tab's own id as the same fallback the label takes where the record names no row for that seat.
-    return { label: record?.label ?? id, ...(record ?? {}), props: { target: record?.target ?? id } }
+    // every other member travel as the reading gave them (`D-76`); `props` LAST is the row's own values in the one slot the
+    // engine renders attributes from — `target`, the slot the ATTACH turn's listener reads back off the node (`D-201`),
+    // with the tab's own id as the same fallback the label takes where the record names no row for that seat, and `active`,
+    // the record's own flag BESIDE it, which is the whole of the marker: every delivery mints FRESH (`keyField` is not
+    // declared — see this turn's own note), and a fresh mint composes every `props` member the datum carries, so the flag
+    // is painted at each mint instead of freezing on a reused node (`D-201`'s freeze measurement).
+    return {
+      label: record?.label ?? id,
+      ...(record ?? {}),
+      props: { target: record?.target ?? id, active: record?.active === true },
+    }
   })
   let minted: readonly string[] = []
   try {
