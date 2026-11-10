@@ -110,9 +110,11 @@ const ECHO_BODY = `function (ctx, value) {
 /** The gutter handle's own axis mapping, keyed by the AUTHORED axis token the affordance's
  *  axis seam answers for the handle (`gutter-vertical`). */
 const GUTTER_CURSORS: Readonly<Record<string, string>> = { 'gutter-vertical': 'col-resize', 'gutter-horizontal': 'row-resize' }
-/** The authored status node's engine id — the ONE node the wiring's `commit` route writes. It is
- *  deliberately OUTSIDE the affordance's own node, so the write patches a peer and never the
- *  handle the listeners are attached to (`§2.3` row 15, `§2.6` item 5). */
+/** The authored status node's engine id — the ONE node the DELIVERY's read-out turn patches
+ *  (`renderPaneSize`, `D-164`: the sink's `commit`-route write this docblock once named is gone).
+ *  It is deliberately OUTSIDE the affordance's own node, so the write patches a peer and never the
+ *  handle the listeners are attached to (`§2.3` row 15, `§2.6` item 5). The node authors NO
+ *  `content` of its own — the read-out is the delivery's (`F3`, `D-129`). */
 export const GUTTER_STATUS_ID = 'gutter-status'
 /** The authored affordance node's id — the handle the pointer is over. */
 export const GUTTER_AFFORDANCE_ID = 'gutter-vertical'
@@ -464,7 +466,9 @@ export function demoEnvelope() {
               // ---- gutter card (U-GUTTER-UI) ----------------------------------
               // The affordance / target / status triple, authored as DATA: the handle the pointer is
               // over (its own `pointerdown` handler keeps it `list_targets`-visible), the pane it
-              // resizes, and the read-out the wiring's ONE `state-slice` write patches.
+              // resizes, and the read-out the wiring's ONE `state-slice` write patches — the read-out
+              // authoring NO figure of its own, and standing EMPTY until its first delivery paints it
+              // (`F3`, `D-129`).
               {
                 type: 'section',
                 css: { id: 'gutter-card', classes: ['card'] },
@@ -521,10 +525,20 @@ export function demoEnvelope() {
                     ],
                   },
                   {
+                    // (c) THE READ-OUT — an authored `css.id`, an authored `css.classes` and an
+                    // authored `props.id`, and NO FIGURE OF ITS OWN. It carried `content: '100'`
+                    // until `F3`, and that figure was a SECOND AUTHORITY (`D-129`, case (b)): the
+                    // pane's size is a shape `['panes']` at `file` owns — `panesMustStand` repairs it
+                    // and `paneGeometryIn` answers the measured default for a pane the family does
+                    // not name — and the literal's only reader was the paint's own comparison, so it
+                    // bought a skipped write at the price of a figure the store can falsify. NOTHING
+                    // REPLACES IT — not `''`, not `'0'`, not a placeholder word, which would be a new
+                    // local default on the same shape: the read-out reads EMPTY until a `'record'`-arm
+                    // delivery paints it, which is never wrong, and that paint is `renderer.ts`'s
+                    // `renderPaneSize` (`S1`–`S4`) — the delivery is the read-out's only author.
                     type: 'div',
                     css: { id: GUTTER_STATUS_ID, classes: ['gutter-status'] },
                     props: { id: GUTTER_STATUS_ID },
-                    content: '100',
                   },
                 ],
               },

@@ -159,8 +159,10 @@ function seat(options: SeatOptions = {}): Seat {
   const routes: Routes = { commitDrag: [], clearDrag: 0, commitPane: [], dragReads: [] }
   /** **THE `view` MEMBER — seven routes, each counted.** The client reads the ambient member AT CALL TIME, so this object
    *  is the app's own bridge and not an injected one; the reads the drag needs (`paneSizeOf`/`paneBoundsOf`) are the
-   *  shape's and answer the MEASURED DEFAULT on a shape nothing has filled — which is why the arithmetic below is the
-   *  envelope's own `100` and not a number this file invented. */
+   *  shape's and answer the MEASURED DEFAULT on a shape nothing has filled — which is why the arithmetic below is
+   *  `view-shape.ts`'s measured `100` (`DEFAULT_PANE_SIZE`, the figure `D-87` measured off the authored pane) and not a
+   *  number this file invented. **IT IS NOT THE ENVELOPE'S**: no envelope node has authored that figure since `F11`
+   *  (`D-129`, `D-171`). */
   const view: Record<string, unknown> = {
     read: async (): Promise<unknown> => ({ status: 'committed' }),
     commitZones: async (): Promise<unknown> => ({ status: 'committed' }),

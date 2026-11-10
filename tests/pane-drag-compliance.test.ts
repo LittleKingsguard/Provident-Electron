@@ -2589,8 +2589,9 @@ describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'pa
     //     that id reaches the family — so the read is not keyed by an element lookup this wiring invented.
     expect(w.startSizeOf({ parentElement: authoredPane({ size: '140' }) }, 'gutter-pane'), 'the token names the pane the family records').toBe(320)
 
-    // (4) AND THE COMMIT IS THE CROSSING\'S ROUTE, with the authored status write as its SINK, in that order — and the
-    //     release then ends the drag\'s OWN reading of the address.
+    // (4) AND THE COMMIT IS THE CROSSING\'S ROUTE, with the CALLER\'S own recorder as its SINK, in that order — the sink is
+    //     NOT a write of the authored status node (`D-164` deleted that write, and the read-out is the DELIVERY\'s,
+    //     `renderPaneSize`) — and the release then ends the drag\'s OWN reading of the address.
     //     **SINK-1 IS RE-READ AND NEVER RETIRED**: the sink is the harness\'s own recorder, so the invocation is COUNTED
     //     rather than inferred from the route, and it is counted with TWO DRAG TURNS already run.
     //     **THE STRUCTURE THAT MAKES THAT A MEASUREMENT**: `move(gestureId, preview)`, `rightClick(gestureId)` and

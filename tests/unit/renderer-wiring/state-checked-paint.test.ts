@@ -345,7 +345,10 @@ async function flushAnswers(): Promise<void> {
 describe('D-163 · `docs/L3/renderer-wiring/design.md` §4/§6 — the state-checked paint, `RS-1`…`RS-6`', () => {
   it('RS-1 — **THE PAINT IS OWED IFF THE FAMILY ARM READS `\'record\'`**: a `[\'panes\']` delivery carrying `140` over a `\'record\'` family paints `content` `140` on `GUTTER_STATUS_ID`, a SECOND delivery of the same size writes NOTHING (the state check), and a `\'default\'` panes arm paints NOTHING even though its figure is the same `140` — the gate is the FAMILY and never `filled` (`D-127`)', () => {
     const stub = stubRuntime()
-    // THE ENVELOPE'S AUTHORED FIGURE — what the read-out carries before any delivery paints it.
+    // A STUB DOUBLE SEEDING THE RUNTIME, NOT A COPY OF THE ENVELOPE (`F3`, `D-129`): the envelope authors NO figure on this
+    // node any more — `#gutter-status` carries `css.id`, `css.classes` and `props.id` and no `content` — so what the read-out
+    // carries before its first delivery paints it is NOTHING. The `100` below is the STUB'S — a surface for the state check
+    // to compare against, which is why the seed's value may stay a figure the envelope does not author.
     stub.seed(GUTTER_STATUS_ID, { content: '100' })
     const started = startGutterAffordance(stub.runtime)
     expect(
