@@ -4601,3 +4601,30 @@ data.write { path: ['tabs', 'tab-1'], tier: 'file', value.target: 'page-one' }
 **THE READINGS AT THIS HEAD ARE `D-202`'S** — this row moves no byte; its product is the measurement, the two sites, and the gap.
 
 **ITS REGISTER IS `D-71` TO `D-202`** as prose, unchanged and extended by this row only. **This row records a write that reports success and does nothing, a shim that made it look like it worked, a leg that could not see the divergence, and every terminal the app has ever hidden on a screen where it was never hidden.**
+
+## D-204 — THE FIX IS ONE SPELLING PER SITE AND IT MAKES THE SURFACE WORK: the tabs terminals hide and show for the **first time in the running app**, the zones take their painted dimension, the pane its width — **verified by computed style, not by markup**
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `D-203`'s finding, fixed at its two sites and re-grained in three rows.
+
+**TWO SITES, ONE SPELLING EACH, NO OPERAND MOVED.** `drivePageDisplay` now writes `` `display: ${shown ? 'block' : 'none'}` `` — **the site that is the only thing showing or hiding the authored tabs terminals**; `paintStyle` keeps its `Record<string, string>` parameter and writes **`cssTextOf(style)`** — `property: value` joined by `'; '`, **with no key converter added**, because every property reaching it is already kebab-case (`D-194`'s callers compose them). **Every operand, guard, refusal and route is unchanged.**
+
+**AND IT IS VERIFIED THE ONE WAY THAT COULD HAVE CAUGHT IT — A COMPUTED STYLE IN A REAL DOM.**
+
+| site | object form (before) | CSS text (after) |
+|---|---|---|
+| terminal hidden | `style=""`, computed **`block`** | `style="display: none;"`, computed **`none`** |
+| terminal shown | — | `style="display: block;"`, computed **`block`** |
+| zone `top` height | `style=""`, computed **`484 px`** | `style="height: 40px; display: block;"`, computed **`40 px`** |
+| pane `menus` width | `style=""`, computed **`1248 px`** | `style="width: 200px;"`, computed **`200 px`** |
+
+**So the landing and error terminals now hide and show, and the four regions now take the figures the record holds — for the first time.** **The probe reproduces `D-203`'s finding exactly** (object ⇒ `applied`, empty attribute, unmoved computed style) **and adds one datum**: the no-op also left **a pane's width at its fill**, not only the zones' figures and the terminals' `display`.
+
+**THREE ROWS RE-GRAINED, NONE WEAKENED, AND TWO OF THE THREE CATCH MORE THAN THEY DID.** **`T-5`** goes `3 → 4` with **the fourth hand-out named**, and — the part that matters — **each of the four turns is now required to be CALLED in the body**, so **the arity edge and the call edge move together**: a fifth parameter reds, and **a hand-out named but never called reds too**. **`DC-2`** and **`DC-5`** now expect **CSS text**, and each carries `D-203`'s reason **in its own words** — *"the DOM shim serialised the object AS JSON TEXT into the attribute, so the old object spelling looked applied on every run of this file while the surface did nothing"*. **What they catch now is any reversion to the object spelling — the exact no-op every shim-reading row passed — plus a style text missing its property name and a per-terminal direction inversion.** **The old expectations could only fail against a shape the shim itself invented.**
+
+**THE ENGINE'S OBJECT HANDLING REMAINS UPSTREAM-OWNED AND UNPATCHED** (`D-5`): it accepts a record on `css.style`, and the real adapter bakes it to nothing — **symptom, reproduction, suspected root cause and proposed fix shape all recorded at `D-203`.**
+
+**AND THE ONE THING THIS ROW CANNOT CLAIM: NOTHING STILL GATES A COMPUTED STYLE.** The fix is verified **by a probe**, and **a probe is not a row**. **Every gating row in the tree reads markup**, so a style that is written-but-inert remains invisible to all of them — **this is the one class the corpus's instrument cannot see, and it has now produced a real defect that a full green suite passed for months.** **The row that would catch it belongs on a leg that gates** (`D-37` currently puts the real-DOM leg outside the four-leg floor), **and it is named here as the highest-value instrument the project is missing.**
+
+**THE READINGS.** `npm test` **`2,946 passed / 2 skipped` of `2,948`** over **`144`** files; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo bundle rebuilt and **current** at `39` inputs. **The counts are unchanged from `D-202`** — the fix changed spellings, not row counts.
+
+**ITS REGISTER IS `D-71` TO `D-203`** as prose, unchanged and extended by this row only. **This row records a one-word spelling that made a surface work for the first time, a verification taken in the only place that could have caught the defect, three rows that now catch what they never could, and the instrument the project still lacks.**
