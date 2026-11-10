@@ -4628,3 +4628,26 @@ data.write { path: ['tabs', 'tab-1'], tier: 'file', value.target: 'page-one' }
 **THE READINGS.** `npm test` **`2,946 passed / 2 skipped` of `2,948`** over **`144`** files; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo bundle rebuilt and **current** at `39` inputs. **The counts are unchanged from `D-202`** — the fix changed spellings, not row counts.
 
 **ITS REGISTER IS `D-71` TO `D-203`** as prose, unchanged and extended by this row only. **This row records a one-word spelling that made a surface work for the first time, a verification taken in the only place that could have caught the defect, three rows that now catch what they never could, and the instrument the project still lacks.**
+
+## D-205 — THE ACTIVE MARKER IS DISCHARGED WITH **NO MECHANISM AT ALL**: `props.active` rides the datum, and because `keyField` is gone every mint is fresh — measured moving across two deliveries, with the engine's `props` rendering settled on the way
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `D-201`'s open half and `D-202`'s limit (i), closed by the premise `D-202` itself changed.
+
+**THE GAP CLOSED ITSELF WHEN THE PREMISE MOVED.** `D-201` measured that **`props.active` reaches the attribute at mint and then freezes UNDER `keyField` REUSE** — so a marker that moves could not ride the datum, and the turn could not write it as a `state-slice` either (`minted: []`, and a key→id map is `D-129`'s copy). **`D-202` then removed `keyField`**, because the label could ride the datum anyway and the marker could not ride a *reused* node. **That made every delivery mint FRESH nodes — and a fresh mint re-applies everything the datum carries.** **So the marker became a datum entry rather than a mechanism, and `D-202`'s limit (i) — *"a marker that moves still needs a mechanism this turn does not have"* — is discharged by having no mechanism.**
+
+**MEASURED, FOUR READINGS, THE MARKER MOVING.**
+
+| delivery | `tab-1` "First" | `tab-2` "Second" |
+|---|---|---|
+| 1 | `target="counter-card" active="true"` (`node-125`) | `target="echo-card" active="false"` (`node-126`) |
+| 2 | `target="counter-card" active="false"` (`node-143`) | `target="echo-card" active="true"` (`node-144`) |
+
+**The marker moved, and no row carries a stale value** — with ids churning `125/126 → 143/144` under `keyField: undefined` and `minted: [both]`, which is `D-202`'s fresh-mint premise confirmed from the other side.
+
+**AND THE ENGINE'S `props` RENDERING IS SETTLED ON THE WAY, WHICH THE DESIGN PAGE HAD GUESSED.** Measured: **`false` ⇒ `active="false"`**; **`'true'`/`'false'` ⇒ the same text**; **omitted ⇒ NO attribute at all**. **The design page's idiom said `'true'` *or removed*, and the removal arm was not taken** — a boolean `false` renders a literal `false`, which is what the page's re-grain owes.
+
+**THE DATUM, WITH BOTH PROPERTIES THE ORDER CARES ABOUT.** `{ label: record?.label ?? id, ...(record ?? {}), props: { target, active } }` — **`label` is still the FIRST scalar member** (so the engine's first-scalar source anchor still composes the row's text, `D-201`) **and `props` is still LAST** (so the object displaces nothing). **No `state-slice`, no map, no second mint, no operand moved, and no `keyField` restored.**
+
+**THE READINGS.** `typecheck` **0**; `typecheck:tests` **0**; `npx vitest run` over the three mandated targets **`82/82`**; the full suite **`2,946 passed / 2 skipped` of `2,948`** over **`144`** files — **unchanged**, because no row asserts the marker yet; the demo bundle rebuilt and **current**. **The marker's own row is owed to the battery (`AL-4`), and so is the paint's (`AL-10`).**
+
+**ITS REGISTER IS `D-71` TO `D-204`** as prose, unchanged and extended by this row only. **This row records a gap that closed when the mechanism it needed was removed, a marker proved to move by four readings, a rendering rule settled by measurement instead of guessed, and a datum whose member ORDER carries two separate contracts.**
