@@ -423,7 +423,7 @@ export class Runtime {
 
   /** A3 — a single managed-channel op: resolve the string `node` to a Node,
    *  supervisor.apply → flush() → drain takePass2States once → render. */
-  applyCommand(cmd: { kind: string; node?: string; [k: string]: unknown } | null | undefined): { status: string; dirtied?: string[]; minted?: string[] } {
+  applyCommand(cmd: { kind: string; node?: string; target?: string; [k: string]: unknown } | null | undefined): { status: string; dirtied?: string[]; minted?: string[] } {
     // F1/F10 — a non-object command (null/undefined/primitive) is a hostile or
     // malformed op: reject cleanly, never throw.
     if (cmd === null || cmd === undefined || typeof cmd !== 'object') {
@@ -433,6 +433,14 @@ export class Runtime {
     // (never throw — a raw string must not reach `source.clone()` for the
     // node-less clone-instance op). Adversarial A3 fix.
     if (typeof cmd.node === 'string' && !this.resolveTarget(cmd.node)) {
+      return { status: 'rejected' }
+    }
+    // S-1 / D-179 — the SAME arm applied to a mint's `target`: a string `target`
+    // that does NOT resolve is rejected cleanly, at the `node`-string guard's own
+    // place and ahead of `supervisor.apply` (never throw — the engine requires a
+    // live Node object for a mint, so a raw string must reach it no more than a
+    // raw `node` may reach `source.clone()`).
+    if (typeof cmd.target === 'string' && !this.resolveTarget(cmd.target)) {
       return { status: 'rejected' }
     }
     // F1 — a NON-string, non-Node `node` value (number/object) would reach the
@@ -445,6 +453,13 @@ export class Runtime {
     // `.clone()`/`.source` in the engine. Resolve object node/source against the
     // registry; reject if not a live Node (never throw out of applyCommand).
     if (cmd.node !== undefined && typeof cmd.node === 'object' && !this.isRegisteredNode(cmd.node)) {
+      return { status: 'rejected' }
+    }
+    // S-1 / D-179 — the object arm of the same guard: a `target` that is an
+    // OBJECT but not a real registered Node (a plain object masquerading as one)
+    // is refused here rather than reaching the engine raw, by the SAME predicate
+    // the `node`/`source` F5 arm reads.
+    if (cmd.target !== undefined && typeof cmd.target === 'object' && !this.isRegisteredNode(cmd.target)) {
       return { status: 'rejected' }
     }
     if (cmd.source !== undefined && typeof cmd.source === 'object' && !this.isRegisteredNode(cmd.source)) {
@@ -476,6 +491,15 @@ export class Runtime {
       const id = this.resolveTarget(cmd.node)
       const n = id ? this.supervisor.getNode(id) : undefined
       if (n) payload.node = n
+    }
+    // S-1 / D-179 — the `node` substitution above, member for member, for a
+    // mint's `target`: a string resolves through the SAME resolver, and the live
+    // Node is what `supervisor.apply` receives, so a caller names the mint's
+    // target the way it already names a write's node.
+    if (typeof cmd.target === 'string') {
+      const id = this.resolveTarget(cmd.target)
+      const n = id ? this.supervisor.getNode(id) : undefined
+      if (n) payload.target = n
     }
     const result = this.supervisor.apply(payload)
     const dirty = (result.dirtied ?? []).filter((id) => this.supervisor.getNode(id)?.isInTree)
