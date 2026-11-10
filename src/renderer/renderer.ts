@@ -1213,22 +1213,31 @@ let tabsClientSubscription: TabsSubscription | null = null
  *  the gate `driveTabsLandingPage` already keeps for the same reason: `order` and `rows` exist on that arm only, so a mint
  *  driven from an `unread` or `absent` reading would REPLACE the row set with nothing (`D-127`).
  *
- *  **THE DATUM IS THE WHOLE PAINT, BECAUSE A KEYED RE-MINT MINTS NOTHING** (`D-182` m5, `D-194` owed (3)): a keyed re-mint
- *  answers `minted: []` — the engine REUSES each matched row's node — so this turn never learns an id it could write a
- *  `state-slice` to, and a key→id map would be the copy `D-129` forbids. What the keyed path DOES re-apply is each source
- *  anchor's value (`node_modules/provident-ssr/dist/core/ops.js`'s `reconcileRowFields`), so the datum is the paint. **AND
- *  THE DATUM'S KEY ORDER IS LOAD-BEARING, MEASURED**: the engine renders a minted row's text from its FIRST SCALAR
- *  source-anchor binding (`dist/core/render-helpers.js`'s `scalarBinding`, read at the plain-node emit), so `label` is
- *  composed BEFORE the record's own row — a datum whose `id` came first renders the TAB ID as the label, which is what
- *  `D-182`'s spike saw (`r1`, `r2`). `content` is not that slot: a datum's `content` is a SHAPE field the mint freezes on
- *  reuse and the scalar binding still wins, so this turn carries none.
+ *  **THE DATUM IS THE WHOLE PAINT, AND EVERY DELIVERY MINTS FRESH — `keyField` IS DELIBERATELY NOT DECLARED HERE** (`D-201`,
+ *  which supersedes `D-191`'s "`keyField` REQUIRED" and half of `D-182` m5's premise). **MEASURED, BOTH WAYS**: with
+ *  `keyField`, a re-mint answers `minted: []` because the engine REUSES each matched row's node — the label is re-applied
+ *  from the datum while a `props`-carried member FREEZES on the reused node (`rows-reuse-shape-ignored`), so a value that
+ *  MOVES is rendered once and never again; without it, every node is minted fresh, so the label AND everything the datum's
+ *  `props` carries are composed AT MINT and nothing has to address a row afterwards. **A READER TEMPTED TO RESTORE
+ *  `keyField: 'id'` MUST READ THAT SENTENCE FIRST**: it buys stable row ids, and a stable id is exactly what nothing here
+ *  needs, because the ATTACH turn below re-attaches to whatever the mint answers — the old nodes and their listeners are
+ *  gone. The price is DOM churn on each `['tabs']` delivery (N tabs' nodes replaced), which `D-201` records as the cheaper
+ *  of the two failures and the only one that leaves a `props`-carried value correct. **AND THE DATUM'S KEY ORDER IS
+ *  LOAD-BEARING, MEASURED**: the engine renders a minted row's text from its FIRST SCALAR source-anchor binding
+ *  (`dist/core/render-helpers.js`'s `scalarBinding`, read at the plain-node emit), so `label` is composed BEFORE the
+ *  record's own row — a datum whose `id` came first renders the TAB ID as the label, which is what `D-182`'s spike saw
+ *  (`r1`, `r2`). `content` is not that slot: a datum's `content` is a SHAPE field and the scalar binding still wins, so this
+ *  turn carries none.
  *
- *  **WHAT EACH DATUM IS, AND WHAT `keyField` NAMES** (`docs/L2/store-tabs-record/interface.md` §1): one datum per
- *  `['tabs'].order` entry, being the record's own row for that id (`reading.rows`) WHOLE, so no member of it is dropped
- *  (`D-76`), with `label` first and **the tab's own id as its fallback** — the one member every row has (`D-194`).
- *  `keyField: 'id'` is **`TabsRecordRow`'s identifying member** (`src/shared/types.ts`): the name the record's flat family is
- *  keyed by, and the member `seatOf` matches a row through. Unkeyed, a re-mint churns row ids; keyed, the nodes are reused and
- *  every surviving row keeps its id (`D-182` m4/m5, `D-179`).
+ *  **WHAT EACH DATUM IS, AND WHY IT CARRIES `props.target`** (`docs/L2/store-tabs-record/interface.md` §1, `D-201`): one
+ *  datum per `['tabs'].order` entry, being the record's own row for that id (`reading.rows`) WHOLE, so no member of it is
+ *  dropped (`D-76`), with `label` first and **the tab's own id as its fallback** — the one member every row has (`D-194`) —
+ *  and **the tab's `target` carried AGAIN under `props`**, which is the ONE slot a row's own value reaches the rendered
+ *  node in: **measured**, a plain datum member becomes a source anchor and reaches NO prop, while `props.<name>` reaches
+ *  the attribute AT MINT (`D-201`). That slot is what lets the ATTACH turn's listener ask the NODE what it stands for
+ *  instead of consulting a map, a closure over the previous mint or a captured id (`S-5`, `D-129`), and the plain `target`
+ *  the record's row already carries stays where it is because the row travels WHOLE — one value, in the record's own member
+ *  and in the engine's one readable slot, never a second authority over it.
  *
  *  **AND THE THREE OPERANDS THAT NAME THINGS THIS APP DOES NOT AUTHOR**: `target` and `hookName` are **`TABS_ROWS_ID`** — the
  *  row node's own id and the name the envelope DECLARES its hook under (`hooks: [TABS_ROWS_ID]`, `hooksKind` `'placement'`),
@@ -1240,22 +1249,25 @@ let tabsClientSubscription: TabsSubscription | null = null
  *  target's family path and never inside a container (ASM-RW-5) — so the value handed over is the row's own name and no line
  *  of this file ever reads a placement back.
  *
- *  **AND THE ACTIVE MARKER DOES NOT RIDE THE DATUM — MEASURED, AND SAID RATHER THAN GUESSED AT**: a datum's `active` becomes a
- *  source anchor and reaches NO rendered prop, and a `props.active` member in the datum reaches one on the FIRST mint only,
- *  because the mint freezes a row's `props` on reuse (`rows-reuse-shape-ignored`). A marker that MOVES is therefore the
- *  design's `state-slice` on the row node, which this turn cannot address without the key→id map `D-129` forbids — recorded
- *  here rather than smoothed, and the datum still carries the record's own `active` because the datum IS that row WHOLE. */
-function driveTabsRows(reading: TabsClientReading, runtime: TabsPageRuntime | null): void {
+ *  **AND THE ACTIVE MARKER IS NOT PAINTED BY THIS TURN — SAID RATHER THAN GUESSED AT**: the datum's `props` carries
+ *  `target` alone (`S-5`'s operand), so no row renders an `active` attribute from this turn, and what a `props.active`
+ *  member WOULD render at each fresh mint is `D-201`'s measurement rather than this edit's subject. The datum still
+ *  carries the record's own `active` as a PLAIN member because the datum IS that row WHOLE (`D-76`) — and a plain member
+ *  reaches no prop. */
+function driveTabsRows(reading: TabsClientReading, runtime: Runtime | null): void {
   if (reading.status !== 'committed' || runtime === null) return
   const recordById = new Map<string, TabsRecordRow>()
   for (const row of reading.rows) recordById.set(row.id, row)
   const rows = reading.order.map((id) => {
     const record = recordById.get(id)
     // `label` FIRST — see this turn's own note: it is the binding the engine renders the row's text from, and the tab id is
-    // the fallback where the record carries no title (`D-194`). The record's row follows WHOLE, so `id` (the `keyField`),
-    // `target`, `active` and every other member travel as the reading gave them (`D-76`).
-    return { label: record?.label ?? id, ...(record ?? {}) }
+    // the fallback where the record carries no title (`D-194`). The record's row follows WHOLE, so `target`, `active` and
+    // every other member travel as the reading gave them (`D-76`); `props.target` LAST is the row's own value in the one
+    // slot the engine renders an attribute from — the slot the ATTACH turn's listener reads back off the node (`D-201`),
+    // with the tab's own id as the same fallback the label takes where the record names no row for that seat.
+    return { label: record?.label ?? id, ...(record ?? {}), props: { target: record?.target ?? id } }
   })
+  let minted: readonly string[] = []
   try {
     const answer = runtime.applyCommand({
       kind: 'rows-mint',
@@ -1264,7 +1276,8 @@ function driveTabsRows(reading: TabsClientReading, runtime: TabsPageRuntime | nu
       mintKind: 'placement',
       prototypeName: TABS_ROW_PROTOTYPE_ID,
       placementName: TABS_ROWS_ID,
-      keyField: 'id',
+      // NO `keyField` — see this turn's own note: a keyed re-mint REUSES nodes and freezes what their `props` carry, so the
+      // attach below is re-made per mint instead, and the ids this answer names are the whole address book (`D-201`).
       rows,
     })
     // **A REFUSED MINT IS REPORTED, NEVER SILENT** (`D-179`: the four refusals are the ENGINE's — `hook-kind-mismatch`,
@@ -1273,11 +1286,64 @@ function driveTabsRows(reading: TabsClientReading, runtime: TabsPageRuntime | nu
     const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
     if (status !== 'applied') {
       console.error(`[provident-renderer] tabs rows: the mint answered ${status}; ${rows.length} row(s) stand unrendered`)
+    } else if (Array.isArray(answer.minted)) {
+      // THE MINT'S OWN ANSWER IS THE ADDRESS BOOK (`D-182` m1): the ids it minted, read and not remembered — a map from a
+      // row's key to the node it landed on would be the copy `D-129` forbids and the stale id `D-201` measured the cost of.
+      minted = answer.minted
     }
   } catch (error) {
     // A throw is a defect in the runtime's own totality, held here rather than left to surface as a page error.
     console.error(`[provident-renderer] tabs rows: the mint threw; ${rows.length} row(s) stand unrendered`, error)
   }
+  // **TURN 2 — THE ATTACH, ON THE SAME BODY AND ON THIS MINT'S OWN IDS** (`S-5`; `D-201`). One `click` listener per row the
+  // mint answered, installed on the node the id names. Nothing is attached where the mint answered nothing, which is the
+  // refused and the throwing arms alike, and no listener is ever installed twice on one node.
+  let attached = 0
+  for (const nodeId of minted) if (attachRowAct(runtime, nodeId)) attached += 1
+  if (attached < minted.length) {
+    console.error(`[provident-renderer] tabs rows: ${String(minted.length - attached)} of ${String(minted.length)} minted row(s) took no click listener`)
+  }
+}
+
+/** **TURN 2 — ONE `click` PER MINTED ROW, PER MINT** (`S-5`; `D-194`'s attach turn, re-attached per delivery at `D-201`). It
+ *  is handed the NODE ID the mint answered — never a tab id and never a target — and the turn reads **that row's own
+ *  `props.target`** at CLICK time through this file's `authoredPropOf`, the relation the paint already reads a node's
+ *  surface through (`Runtime.nodeState`'s `props`, `D-163`), and hands it to the realm's existing act as
+ *  `focusActRoute({ target })`.
+ *
+ *  **THE NODE KNOWS ITS OWN VALUE, WHICH IS THE WHOLE REASON THE DATUM CARRIES IT**: no map over minted nodes, no closure
+ *  over the previous mint and no captured target — a closure carrying the datum would be the copy `D-129` forbids, and it
+ *  would go stale the moment the record moved. **AND THE MEMBER IS `target`, NEVER `id`** (`:805`'s `seatOf`): the seat is
+ *  the FIRST row of `order` whose `target` matches the caller's string, so a row id handed here would answer
+ *  `target-absent` and write nothing (`D-194`, L2 §4).
+ *
+ *  **AND "PER MINT" IS NOT A LEAK, WHICH IS WHY THIS TURN MAY RE-ATTACH WHERE `D-194` SAID "ONE LISTENER PER ROW, EVER"**:
+ *  `keyField` is not declared (`D-201`), so every delivery mints every row FRESH — **the previous rows are DESTROYED and
+ *  their listeners die with them**, so this installs one listener on a node that carries none, and no listener outlives
+ *  its node. A per-delivery attach over REUSED nodes is what would accumulate, and that is exactly the shape the removed
+ *  key would have bought.
+ *
+ *  Two rows sharing one `target` both reach that seat, and `seatOf` seats the FIRST of `order` — so the later row is
+ *  unclickable and `AL-3` drives a unique target. **A ROW THAT WILL NOT RESOLVE OR WILL NOT TAKE A LISTENER ATTACHES
+ *  NOTHING AND THROWS NOTHING** (`D-127`); the answer says whether the listener landed so the delivery can report it. */
+function attachRowAct(runtime: Runtime, nodeId: string): boolean {
+  let element: unknown = null
+  try {
+    element = runtime.elementForNodeId(nodeId)
+  } catch {
+    element = null
+  }
+  const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+  if (typeof add !== 'function') return false
+  const turn = (): void => {
+    const held = authoredPropOf(runtime, nodeId, 'target')
+    if (!held.readable || typeof held.held !== 'string') return
+    // THE ACT IS THE REALM'S OWN AND IS CALLED, NEVER RE-SPELLED (`D-142`): `{ target }` is S1's argument space, and the
+    // seat, the row, the write and the re-read are all inside it.
+    void focusActRoute({ target: held.held })
+  }
+  ;(add as (type: string, handler: () => void) => void).call(element, 'click', turn)
+  return true
 }
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the
@@ -1285,7 +1351,7 @@ function driveTabsRows(reading: TabsClientReading, runtime: TabsPageRuntime | nu
  *  the answer and to let the record drive the two authored terminals. **THE HELD READING IS THE DRIVE'S INPUT**
  *  (`D-117`): the pages are driven FROM `tabsClientReading`, so the binding has a reader here rather than being a copy of
  *  the argument that shadowed it, and nothing else in this file writes either one. */
-function holdTabsReading(reading: TabsClientReading, runtime: TabsPageRuntime | null): void {
+function holdTabsReading(reading: TabsClientReading, runtime: Runtime | null): void {
   tabsClientReading = reading
   // **THE DRIVE IS MADE FROM THE HELD READING AND NOT FROM ITS ARGUMENT** (`D-117`). The two were the same
   // value, but only one of them had a reader: `tabsClientReading` was written here and at the defect arm
@@ -1293,9 +1359,12 @@ function holdTabsReading(reading: TabsClientReading, runtime: TabsPageRuntime | 
   // above the declaration already claimed — "`tabsPagesReading` is what the drive made of the LAST
   // READING" — and it makes the two statements about a read one pair rather than a pairing and a copy.
   tabsPagesReading = driveTabsLandingPage(tabsClientReading, runtime)
-  // **AND THE MINT IS MADE FROM THE SAME HELD READING** (`S-4`, `D-179`): one `rows-mint` per delivery, in the one body that
-  // already holds it, after the pages' drive and never before it. It writes no page, resolves nothing through a map and
-  // holds no record: a delivery that is not `'committed'` mints nothing at all (that gate is the turn's own).
+  // **AND THE MINT — WITH ITS ATTACH — IS MADE FROM THE SAME HELD READING** (`S-4`/`S-5`, `D-179`, `D-201`): one `rows-mint`
+  // per delivery, in the one body that already holds it, after the pages' drive and never before it, followed by one
+  // `click` listener per row that mint answered. It writes no page, resolves nothing through a map and holds no record: a
+  // delivery that is not `'committed'` mints nothing and attaches nothing (that gate is the turn's own). **THE RUNTIME IS
+  // THE WIDER `Runtime` HERE AND NOT `TabsPageRuntime`**: the attach reads each row's own `props.target` through
+  // `authoredPropOf`'s `nodeState`, which that narrowed surface does not carry (`docs/L3/renderer-wiring/design.md` §1).
   driveTabsRows(tabsClientReading, runtime)
 }
 
