@@ -4498,3 +4498,28 @@ stderr tail:
 **THE READINGS.** `npm test` **`2,946 passed / 2 skipped` of `2,948`** over **`144`** files — **the same figures as `S-1`**, because the terms moved and the counts did not; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo bundle rebuilt and **current** at `39` inputs.
 
 **ITS REGISTER IS `D-71` TO `D-198`** as prose, unchanged and extended by this row only. **This row records a tree counted twice by different means, a census that is a sum of named parts, three files carrying one path index, and a prototype that names a component nobody provides — found before it could cost a mint.**
+
+## D-200 — THE PROTOTYPE IS A REAL DEF AND THE NAME RESOLVES: `unresolved-reference` is **gone**, `S-4`'s op shape answers OK — and the fallout was **a row's arithmetic**, because the census has **FOUR categories** and the fourth was always zero until now
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `D-199`'s blocker, closed by restoring the shape `D-179`'s spike measured, and one row re-grained on a four-term sum.
+
+**THE NODE, AND WHY ITS TWO ADDED FIELDS ARE THE WHOLE FIX.** The prototype now carries **`props.id`** and an **inline `component.value`**:
+
+```
+{ type:'div', css:{classes:['tab-row']}, props:{id:'tab-row'},
+  component:{ reference:'tab-row', value:{ type:'div', css:{classes:['tab-row']} } } }
+```
+
+**The `value` is the def that makes the name resolvable** — exactly what `D-179`'s spike carried and the design page's shape lacked — and **`props.id` makes the provider addressable**. `div`/`tab-row` rather than the spike's `li`/`tab-row`: **`tab-row` is this app's own row class**, a `div` matches the tabs row (a `div` in the bar's flex row) and the app's other authored click targets, and **`li` needs a list this app never authors**. **No `props` in the def**, because the engine's `mintRowNode` copies only `type`/`css` off the shape — an authored `props` there would be **dead data**, which is the defect this corpus spends rows on.
+
+**AND IT WAS VERIFIED BY READING THE ENGINE'S OWN WARNINGS RATHER THAN BY HOPE.** A throwaway probe drove **`translateLegacy` + a whole-slice `compile` + the renderer's `Runtime.load`**: the as-filed shape reads **`[{code:'unresolved-reference', pathKey:'root/node-72'}]`**, the fixed tree reads **`[]`**, `defRootPrototypeFor('tab-row')` answers a **def-root**, and **`S-4`'s op shape returns OK instead of `rows-prototype-unresolved`**. **That last clause is the spike's own refusal, now not firing** — so the blocker is closed at the exact point it would have bitten.
+
+**THE FALLOUT WAS A ROW'S ARITHMETIC, NOT THE TEARDOWN — AND THE PROBE SAYS SO WITH NUMBERS.** After teardown the census reads **`registered: 72`** while **`destroyed + unplaced + inTree = 71`**. **The census has FOUR categories, not three**: **`prototypes`**, always present and always `0` until this row, now counts **the engine's out-of-tree def-root prototype** (state `'prototype'`, `isInTree` false, therefore neither destroyed nor unplaced). **`1 + 70 + 0 + 1 = 72` closes it, and nothing else does.** **So the row's sum gained its fourth term, and the row now SAYS why** — a reader who sees a four-term sum with no explanation will eventually delete the term.
+
+**AND THE ROW'S NEW CONTROL BITES WHERE THE OLD ARM COULD NOT.** The pass found that **`nodeState({kind:'cssId', cssId:'tab-row'})` cannot fail** — **the def-root authors no `css.id` at all**, so that arm throws structurally, whatever the teardown does. **So the bite was put in the arm the name actually occupies**: **`nodeState('tab-row')` — the props arm — RESOLVES before `teardown()` and throws after**, measured on the same graph. **The cssId arm was kept verbatim as the guard on that absence**, which is what it was always worth.
+
+**THE TREE IS UNCHANGED IN SIZE AND THE MINT IS ARMED.** Authored census **`72 → 72`**; **`registered` `72 → 73`** and **`prototypes` `0 → 1`** — the engine's own out-of-tree node, not the app's. **`S-4` can now pass a string `target` (`S-1`) at a hook whose prototype resolves (this row)**, which is every input the mint needs.
+
+**THE READINGS AT THIS STAGE.** `typecheck` **0**; `typecheck:tests` **0**; the demo bundle **current** at `39` inputs; the module rows **18/18** and the full suite green apart from `B-1`, which reds **by construction on the dirty tree** and clears on the commit taken with it.
+
+**ITS REGISTER IS `D-71` TO `D-199`** as prose, unchanged and extended by this row only. **This row records a def restored to the shape a spike measured, a resolution proved by reading the engine's own warnings, a census whose fourth category was invisible while it was zero, and a control moved to the arm that could actually fail.**
