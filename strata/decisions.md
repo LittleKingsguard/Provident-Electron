@@ -4230,3 +4230,30 @@ stderr tail:
 **THE SCOPE OWES A REV 3 CARRYING ALL THREE ROWS' OUTCOME**: `S-8` (two pane ids, `zone` as the axis field, `size` a width for `pane-menus`, `bounds` optional for a zone-resident pane and stored for `pane-a`), `S-6`'s paint (**the four zones from `['zones']`, the menus pane's width from its `size`**, the stage derived and unpainted), and `C-11` for the inheritance rule with `D-129`'s bite stated.
 
 **ITS REGISTER IS `D-71` TO `D-185`** as prose, unchanged and extended by this row only. **This row records an answer better than the four put to it, a member that needed an axis rather than a reader, a clamp that is the layout's because a stored one would cross families, and two panes whose geometry is read on different terms for a stated reason.**
+
+## D-187 — THE PANE'S BEHAVIOUR COMPLETES THE RULE: it fills the zone along the zone's **fixed** axis, adjusts its size along the **orthogonal** one, and **SCROLLS ALONG THE ONE IT CAN CONSTRAIN** — so the menus pane is a horizontally-scrollable strip and the invariant is one sentence
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user, verbatim):**
+> *"Behavior for panes: in top/bottom bar - occupies full height of the zone, width of pane can be adjusted. Internally scrolls horizontally if set too small to fully render; in sidebar - occupies full width of zone, height of pane can be adjusted. Internally scrolls vertically if set too small to fully render"*
+
+**THE INVARIANT, WHICH IS ONE SENTENCE AND EXPLAINS THE WHOLE SURFACE.** **A pane FILLS the axis its zone fixes, ADJUSTS the axis its zone leaves free, and SCROLLS along the axis it adjusts** — because that is the only axis whose own size can be smaller than its content. So:
+
+| pane in | fills | adjusts | overflows as |
+|---|---|---|---|
+| `top` / `bottom` | the zone's **height** (full) | **width** | **`overflow-x`** — scrolls horizontally when too narrow |
+| `left` / `right` | the zone's **width** (full) | **height** | **`overflow-y`** — scrolls vertically when too short |
+| *(no zone — the stage)* | — | — | today's behaviour, see below |
+
+**THE MENUS PANE IS THEREFORE A HORIZONTALLY-SCROLLABLE STRIP OF EIGHTEEN ITEMS, AND THAT IS THE RIGHT SHAPE FOR A MENUBAR.** `pane-menus` sits in `top`, so it is **full zone height and its width is its own** — and **when the width is set too small to render `File`…`Window`, it scrolls rather than clipping them.** That is exactly what a menubar must do at a narrow window, and it falls out of the rule rather than needing a special case.
+
+**AND IT ADDS TWO `css` DECLARATIONS PER PANE THAT NOTHING CAN MEASURE.** `overflow-x`/`overflow-y` are **layout behaviour**, invisible to rendered-HTML reads for the same reason `overflow` already was (`D-178`) — **so this is the third pane-side property the suite cannot see**, beside the drag region and the zones' own scrolling. **Stated as a deliberate unverified, not implied as a tested one.** **What IS measurable survives**: the pane's `size` is painted into its width (top/bottom) or height (sidebar), so **the adjustable dimension appears in rendered markup** even though the overflow does not.
+
+**THE STAGE'S CASE IS DERIVED, BECAUSE THE RULE NAMES ZONES AND `pane-a` HAS NONE.** `C-9` puts `pane-a` in the stage by `zone`'s absence, and the stage is derived (`D-185`) with no fixed axis to fill. **So `pane-a` keeps today's behaviour unchanged** — a stored `size` and `bounds`, adjusted on the axis its own affordance declares (a height, `DEFAULT_PANE_BOUNDS` `{0,200}`) — **which is indistinguishable from the sidebar rule**, and that is why the design is coherent without a fourth case: **a stage pane behaves as a sidebar pane behaves.** **If the user wants the stage's panes specified differently, this sentence is what must be contradicted.**
+
+**AND IT RECONCILES WITH *"THE ZONES ALL SCROLL INTERNALLY"* RATHER THAN REPEATING IT.** A zone with **several panes** exceeds its own extent along the arrangement axis — two `top` panes side by side overflow the top zone's width — **so the ZONE scrolls the arrangement axis while each PANE scrolls its content, two nested containers on the same axis.** **The design's sentence and this one are not in conflict; they are the same `overflow-x` at two depths**, and the distinction is worth stating because "scrolls internally" alone would have left a reader unable to say which one clipped.
+
+**WHAT IT ADDS TO THE WORK, NAMED.** **`S-2`** (the envelope's authored `css`) gains the pane's `overflow-*`, the zones' `overflow-*`, and the fill/adjust pairs; **`S-6`'s paint** gains the pane's adjustable dimension as its written dimension — **width for a top/bottom pane, height for a sidebar pane**, which is `D-186`'s axis rule applied at the paint; and **the acceptance** gains one measurable row (the painted dimension) and **one unmeasurable behaviour** (the scroll) recorded as such.
+
+**THE SCOPE OWES A REV 3 CARRYING FOUR ROWS' OUTCOME NOW** — `D-184` superseded, `D-185`'s zone authority, `D-186`'s axis rule, and this row's fill/adjust/scroll invariant — as `C-11` (the axis rule) and `C-12` (the invariant), with `S-2`, `S-6` and `S-8` re-grained and the unverified list named in full.
+
+**ITS REGISTER IS `D-71` TO `D-186`** as prose, unchanged and extended by this row only. **This row records an invariant that explains a whole surface in one sentence, a menubar that scrolls because the rule says so rather than because someone thought of it, a stage pane coherent by being indistinguishable from a sidebar pane, and two nested scroll containers distinguished at last.**
