@@ -37,9 +37,10 @@
         "src/main/main.ts",
         "src/main/preload.ts",
         "src/main/store-channels.ts",
-        "tests/ui-leg-seam.test.ts"
+        "tests/ui-leg-seam.test.ts",
+        "tests/e2e/app-layout/"
       ],
-      "endpoints": 7
+      "endpoints": 8
     },
     {
       "name": "bundle-boot-seam",
