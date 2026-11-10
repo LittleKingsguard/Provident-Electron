@@ -4547,3 +4547,32 @@ stderr tail:
 **THE READINGS.** `typecheck` **0**; `typecheck:tests` **0**; **`130/130` green** across `tests/unit/renderer-wiring/`, `tests/integration/store-tabs-record/` and `tests/theme-control.test.ts` — **identical to the pre-edit baseline**, because nothing yet addresses the minted rows; the demo bundle rebuilt. **The mint itself is measured working**, which is what `S-4` owed.
 
 **ITS REGISTER IS `D-71` TO `D-200`** as prose, unchanged and extended by this row only. **This row records a label that rides the data it describes, a marker that freezes under the mechanism chosen to keep ids stable, two rulings superseded by the measurement that tested them, and a trade stated as a trade rather than a defect.**
+
+## D-202 — **THE TABS ROW IS A CONTROL**: a synthesized click on a minted row reaches `focusActRoute` with the tab's own target and writes `['tabs', id]` — measured end to end, and the `keyField` removal is what makes the marker possible
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `S-5`'s landing (`src/renderer/renderer.ts`) and the rendered-HTML + click measurement it was required to take.
+
+**THE CHAIN, AND EVERY LINK OF IT MEASURED.** The minted row renders
+
+```
+<div data-wire="node-76" target="page-one" data-node-id="node-76"
+     id="preempt-node-node-76" class="tab-row">First</div>
+```
+
+— **the text is the record's `label`**, and **the tab's `target` IS on the node as the attribute `target`** (the datum's `props.target`, `page-one`/`page-two`), while **plain `id`/`active`/`lastActiveAt` reach no attribute** — which is `D-201`'s finding confirmed from the other side. **Then a synthesized `click` reached `focusActRoute`**, observed at the stub bridge as
+
+```
+data.write { path: ['tabs', 'tab-1'], tier: 'file', value.target: 'page-one' }
+```
+
+**So the row switches the tab, through the realm's existing act, using a string it read off its own node.** **`D-177`'s finding — *"a row that renders the order and cannot dispatch a switch is a picture of a store"* — is now discharged**: the row **is** a control, and it became one by three things landing in order (`S-1`'s string `target`, `D-200`'s resolvable prototype, and this turn's attach).
+
+**AND THE `keyField` REMOVAL IS NOT A RETREAT — IT IS WHAT MAKES THE MARKER POSSIBLE.** The comment left at the operand says so in the place a reader will look: *"NO `keyField` — a keyed re-mint REUSES nodes and freezes what their `props` carry, so the attach below is re-made per mint instead."* **The design's own docblock now tells a reader tempted to restore it to read why first** (`D-201` supersedes `D-191`), because a ruling reversed without a signpost is a ruling that gets reversed again.
+
+**PER-MINT ATTACH IS NOT a LEAK, AND THE MEASUREMENT SAYS SO WITH NUMBERS.** The second delivery **churned `node-76/77 → node-80/81`**, the old row **was no longer in the tree**, and **the two rows carried two `click` listeners, not four** — so "per mint" costs nothing because **the old nodes are destroyed and their listeners die with them**. That is stated in the code, because *"attach per delivery"* reads like a leak to anyone who does not already know the nodes are fresh.
+
+**THE HONEST LIMITS, STATED IN THE ROW THAT CLAIMS THE RESULT.** **(i) The active marker is still unpainted** — `props` carries `target` alone, and `D-201`'s marker half is untouched: a marker that MOVES still needs a mechanism this turn does not have. **(ii) The probe ran under the DOM shim**, so this is **rendered-surface-under-shim evidence** — the same standard the corpus holds its module rows to (`brief.md` §6: *a node-suite green is envelope-green, never app-green*) — **not a live-renderer reading.** Both limits are the pass's own words, not an auditor's.
+
+**THE READINGS.** `npm test` **`2,946 passed / 2 skipped` of `2,948`** over **`144`** files; `typecheck` **0**; `typecheck:tests` **0**; the demo bundle rebuilt and **current** at `39` inputs; the module rows **`130/130`** — **identical to the baseline**, because **nothing yet asserts the mint**; that row is owed to the battery (`AL-4`'s `row-is-N` and `AL-3`'s switch-act), not to this pass.
+
+**ITS REGISTER IS `D-71` TO `D-201`** as prose, unchanged and extended by this row only. **This row records a picture of a store becoming a control, a reversed ruling signposted where it was reversed, a per-delivery cost measured as nil, and a success stated with its own two limits.**
