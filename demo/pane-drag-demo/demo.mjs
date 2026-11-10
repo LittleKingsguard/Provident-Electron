@@ -7,10 +7,10 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 75f9ca838d1599edebe2dc55daa6e85161de3fc92a20f060a4da3d9d6402d548
+// @body-sha256 6e75abe3c6a6f6fa7b4b3d9332155fc302fdd920d6e569afe400997f56642041
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
-// @source b6f960a27fdf571a26992b061d9f3e2aa604847e5c668c52869bf40a84bda70c demo/pane-drag-demo/demo.ts
-// @source a3cdc0510a78080e253b5df3cef4e30c103296990063a644a29a80f7f58c2bc7 demo/pane-drag-demo/stub-view.ts
+// @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
+// @source e7f3564e5831beabef16930462d25d124e30ba710b9a34d1d81e4a8d5bdc5c9c demo/pane-drag-demo/stub-view.ts
 // @source 75b6817e000498d6d9b5eb36d74def28d20202c5ce1af4ee155e2b99bfbe87fe node_modules/provident-ssr/dist/core/adapters.js
 // @source 4bd7c4c2528b8422835abd1ee4e3e51bab329691aac63d25e78933240d594f04 node_modules/provident-ssr/dist/core/body-runs.js
 // @source d399540bae257c5a3775132148d06867e9169265bfbd2eec98aee6504c7fa1bb node_modules/provident-ssr/dist/core/client.js
@@ -35,18 +35,18 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source ea013cd2f8c7407bd05336f82240ecc42c1b4db9268ae5a63899c343c288d2dd src/renderer/renderer.ts
+// @source 3a7e31cc972028936aeadf26382fe0b582e36164400c0b8d46fb7886813762b7 src/renderer/renderer.ts
 // @source 3d3584923f66d936be72029ca46f9a838425aa5345e98026a4499f9252394a73 src/renderer/runtime.ts
 // @source 64c60c5c62a8e77c6515f0e323fd2e044ef02d77187f6e095f4a67a961c2dcb5 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source f83e54243983045a2eaee0c86d7c77d636b9976792d30d3d35f41f48f3194745 src/renderer/tabs-client.ts
-// @source 71b0efdf19c1c82177ed120b070afc29e94c2c72bc1003e7bddc41ba19e5459b src/renderer/view-client.ts
+// @source 27a8defa9386f70204b6be403d9db2302ccbf1799b6fc80556bf9b600ee1965c src/renderer/view-client.ts
 // @source a436c179192f263b93ad5a226afe5c4c59d8887edddfde5ad8ad5eb95c76e622 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source dc083cf11508f26c7fd2a8695eda8ca8f59800cf87c918e6e9f2eb194953653b src/shared/view-shape.ts
+// @source 68789596cf7cf044e7072e57659a55a05b6055d370e5638caee307083b30855f src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({
@@ -1182,16 +1182,19 @@ var DEFAULT_PANE_SIZE = 100;
 var DEFAULT_PANE_BOUNDS = { min: 0, max: 200 };
 var defaultPaneGeometry = (id) => ({
   id,
-  size: DEFAULT_PANE_SIZE,
+  width: DEFAULT_PANE_SIZE,
+  height: DEFAULT_PANE_SIZE,
   bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max }
 });
 var paneGeometryIn = (panes, id) => {
-  const held = panes.find((pane) => pane.id === id);
-  return held === void 0 ? { status: "committed", pane: defaultPaneGeometry(id), source: "default" } : {
-    status: "committed",
-    pane: { id: held.id, size: held.size, bounds: { min: held.bounds.min, max: held.bounds.max } },
-    source: "record"
-  };
+  const held = panes.find((pane2) => pane2.id === id);
+  if (held === void 0) {
+    return { status: "committed", pane: defaultPaneGeometry(id), source: "default" };
+  }
+  const pane = { id: held.id, width: held.width, height: held.height };
+  if (held.bounds !== void 0) pane.bounds = { min: held.bounds.min, max: held.bounds.max };
+  if (held.zone !== void 0) pane.zone = held.zone;
+  return { status: "committed", pane, source: "record" };
 };
 var zoneIn = (zones, id) => {
   const held = zones.find((zone2) => zone2.id === id);
@@ -1234,6 +1237,12 @@ if (false) {
     void main();
   }
 }
+function adjustableMemberNameOf(zone) {
+  return zone === "top" || zone === "bottom" ? "width" : "height";
+}
+function adjustableFigureOf(pane) {
+  return pane[adjustableMemberNameOf(pane.zone)];
+}
 function createPaneDrag(backing, source2) {
   const backingRecord = backing ?? null;
   const view = backingRecord?.view ?? null;
@@ -1243,6 +1252,16 @@ function createPaneDrag(backing, source2) {
     if (typeof viaElement === "string" && viaElement.length > 0) return viaElement;
     if (typeof token === "string" && token.length > 0) return token;
     return DEFAULT_PANE_ID;
+  };
+  const paneMemberOf = (id) => {
+    if (view !== null) {
+      try {
+        const held = view.shape().panes.find((pane) => pane.id === id);
+        if (held !== void 0) return adjustableMemberNameOf(held.zone);
+      } catch {
+      }
+    }
+    return adjustableMemberNameOf(defaultPaneGeometry(id).zone);
   };
   if (view === null) {
     console.warn("[provident-renderer] the pane drag has NO view client \u2014 this composition's writes reach no crossing (said ONCE here; the three per-turn statements stay silent while this stands)");
@@ -1285,13 +1304,13 @@ function createPaneDrag(backing, source2) {
       const size = preview?.value;
       if (typeof size !== "number" || !Number.isFinite(size) || size < 0) return;
       gestures.set(key, { erased: false });
-      if (view !== null) reportUnreached("the drag move", view.commitDrag(DEFAULT_PANE_ID, { size }));
+      if (view !== null) reportUnreached("the drag move", view.commitDrag(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: size }));
     } catch {
     }
   };
   const readPaneSize = (element, token) => {
     const id = paneIdOf(element, token);
-    const measured = defaultPaneGeometry(id).size;
+    const measured = adjustableFigureOf(defaultPaneGeometry(id));
     if (view === null) return measured;
     try {
       return view.paneSizeOf(id);
@@ -1301,7 +1320,7 @@ function createPaneDrag(backing, source2) {
   };
   const readPaneBounds = (element, token) => {
     const id = paneIdOf(element, token);
-    const measured = defaultPaneGeometry(id).bounds;
+    const measured = defaultPaneGeometry(id).bounds ?? DEFAULT_PANE_BOUNDS;
     const fallback = { min: measured.min, max: measured.max };
     if (view === null) return fallback;
     try {
@@ -1322,7 +1341,7 @@ function createPaneDrag(backing, source2) {
         ;
         sink.call(null, final);
       }
-      if (view !== null) reportUnreached("the pane commit", view.commitPane(DEFAULT_PANE_ID, { size: final }));
+      if (view !== null) reportUnreached("the pane commit", view.commitPane(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: final }));
       endReading(gestureId);
     } catch {
     }
@@ -1365,7 +1384,7 @@ function createPaneDrag(backing, source2) {
         clearGhost();
         return;
       }
-      const carried = member.size;
+      const carried = member[paneMemberOf(DEFAULT_PANE_ID)];
       const size = carried !== null && typeof carried === "object" && !Array.isArray(carried) ? carried.value : carried;
       if (typeof size !== "number" || !Number.isFinite(size) || size < 0) {
         clearGhost();
@@ -1410,11 +1429,12 @@ function createPaneDrag(backing, source2) {
 // demo/pane-drag-demo/stub-view.ts
 var ZONES = [];
 var DRAG_ADDRESS = ["drag"];
-var copyOf = (pane) => ({
-  id: pane.id,
-  size: pane.size,
-  bounds: { min: pane.bounds.min, max: pane.bounds.max }
-});
+var copyOf = (pane) => {
+  const copy = { id: pane.id, width: pane.width, height: pane.height };
+  if (pane.bounds !== void 0) copy.bounds = { min: pane.bounds.min, max: pane.bounds.max };
+  if (pane.zone !== void 0) copy.zone = pane.zone;
+  return copy;
+};
 function createStubView() {
   const family = /* @__PURE__ */ new Map();
   const logged = [];
@@ -1424,7 +1444,11 @@ function createStubView() {
     return {
       address: [...DRAG_ADDRESS],
       present: standing !== null,
-      members: standing === null ? [] : [...standing.entries()].map(([id, size]) => ({ id, size }))
+      members: standing === null ? [] : [...standing.entries()].map(([id, placement]) => ({
+        id,
+        member: placement.member,
+        value: placement.value
+      }))
     };
   };
   const panes = () => [...family.values()].map(copyOf);
@@ -1432,15 +1456,25 @@ function createStubView() {
     family.set(id, copyOf(paneGeometryIn([], id).pane));
   };
   seed(DEFAULT_PANE_ID);
-  const setSize = (id, size) => {
+  const writeMember = (id, member, value) => {
     const held = family.get(id);
-    const base = held === void 0 ? paneGeometryIn([], id).pane : copyOf(held);
-    family.set(id, { id: base.id, size, bounds: { min: base.bounds.min, max: base.bounds.max } });
+    const base = held === void 0 ? copyOf(paneGeometryIn([], id).pane) : copyOf(held);
+    const next = {
+      id: base.id,
+      width: base.width,
+      height: base.height
+    };
+    if (base.bounds !== void 0) next.bounds = { min: base.bounds.min, max: base.bounds.max };
+    if (base.zone !== void 0) next.zone = base.zone;
+    if (member === "bounds") next.bounds = { min: value.min, max: value.max };
+    else next[member] = value;
+    family.set(id, next);
+  };
+  const setWidth = (id, width) => {
+    writeMember(id, "width", width);
   };
   const setBounds = (id, bounds) => {
-    const held = family.get(id);
-    const base = held === void 0 ? paneGeometryIn([], id).pane : copyOf(held);
-    family.set(id, { id: base.id, size: base.size, bounds: { min: bounds.min, max: bounds.max } });
+    writeMember(id, "bounds", { min: bounds.min, max: bounds.max });
   };
   const reset = (id) => {
     if (id === void 0) {
@@ -1451,14 +1485,18 @@ function createStubView() {
     family.set(id, paneGeometryIn([], id).pane);
   };
   const members = {
-    /** **THE DRAG'S SIZE READ** — `paneGeometryIn`'s answer, exactly as `readPaneSize` reads it off the real client. */
+    /** **THE DEMO'S OPERATIVE MEMBER READ — ONE NUMBER, AND ITS AXIS NAMED**: this page's gesture is horizontal (pointer-x
+     *  onto `style.width`), so the member it reads is the pane's `width`, the same member the control writes and the release
+     *  commits. The app's `pane-a` is stage-resident and its client read answers `height`; the two are one client member with
+     *  two subjects, each stating its own axis, and the demo's figures are the ones its `size` used to carry (`D-189`). */
     paneSizeOf(id) {
-      return paneGeometryIn(panes(), id).pane.size;
+      return paneGeometryIn(panes(), id).pane.width;
     },
-    /** **THE DRAG'S BOUNDS READ** — the pair as stored; a pane the family does not name gets the measured default pair. */
+    /** **THE DRAG'S BOUNDS READ** — the pair as stored; a pane the family does not name gets the measured default pair, and
+     *  a pane storing none answers none rather than an invented one (`D-186`). */
     paneBoundsOf(id) {
       const pane = paneGeometryIn(panes(), id).pane;
-      return { min: pane.bounds.min, max: pane.bounds.max };
+      return pane.bounds === void 0 ? void 0 : { min: pane.bounds.min, max: pane.bounds.max };
     },
     /** **THE ZONE READ** — `zoneIn`'s measured missing arm: `null`, never an invented geometry (`D-91`). */
     zoneOf(id) {
@@ -1467,20 +1505,38 @@ function createStubView() {
     /** **THE ROUTE THE RELEASE WRITES THROUGH** — see this file's header: composed here, answered as the client answers. */
     commitPane(id, geometry) {
       const record = geometry ?? null;
-      const size = record !== null && record !== void 0 && typeof record.size === "number" ? record.size : void 0;
-      if (typeof size === "number" && Number.isFinite(size)) setSize(id, size);
+      if (record !== null && record !== void 0) {
+        for (const member of ["width", "height"]) {
+          const held = record[member];
+          if (typeof held === "number" && Number.isFinite(held) && held >= 0) writeMember(id, member, held);
+        }
+        const pair = record.bounds;
+        if (pair !== null && typeof pair === "object" && !Array.isArray(pair)) {
+          const min = pair.min;
+          const max = pair.max;
+          if (typeof min === "number" && typeof max === "number" && Number.isFinite(min) && Number.isFinite(max) && min <= max) {
+            writeMember(id, "bounds", { min, max });
+          }
+        }
+      }
       logged.push({ id, geometry });
       return { status: "sent" };
     },
     /** **THE DRAG'S MOVE ROUTE — ONE WHOLE VALUE THE CALLER FORMATTED** (`D-132`, `D-135`, `D-136`): the placement the
-     *  composition's `move` read, `{size}`, written as the family's single member because the composition drags one pane.
-     *  A pair its own shape arms cannot read (no id, a size that is not a finite non-negative number) writes NOTHING and
-     *  leaves what stands standing — the crossing's judgement, answered here from the same two facts and added to. */
+     *  composition's `move` read — **`{width}` or `{height}`, the pane's ADJUSTABLE member and no other** (`D-189`, `D-190`)
+     *  — written as the family's single member because the composition drags one pane. A value its own shape arms cannot read
+     *  (no id, no axis-named member, a figure that is not finite and non-negative) writes NOTHING and leaves what stands
+     *  standing — the crossing's judgement, answered here from the same facts and added to. */
     commitDrag(id, geometry) {
       const record = geometry ?? null;
-      const size = record === null || record === void 0 ? void 0 : record.size;
-      if (id.length > 0 && typeof size === "number" && Number.isFinite(size) && size >= 0) {
-        dragFamily = /* @__PURE__ */ new Map([[id, size]]);
+      if (id.length > 0 && record !== null && record !== void 0) {
+        for (const member of ["width", "height"]) {
+          const held = record[member];
+          if (typeof held === "number" && Number.isFinite(held) && held >= 0) {
+            dragFamily = /* @__PURE__ */ new Map([[id, { id, member, value: held }]]);
+            break;
+          }
+        }
       }
       return { status: "sent" };
     },
@@ -1496,7 +1552,7 @@ function createStubView() {
     panes,
     drag: drag2,
     geometryOf: (id) => paneGeometryIn(panes(), id),
-    setSize,
+    setWidth,
     setBounds,
     reset,
     writes: () => [...logged]
@@ -1606,11 +1662,13 @@ if (!affordance.attach()) {
   throw new Error("demo: the gutter affordance REFUSED to attach \u2014 the pane drag is inert");
 }
 var geometryOfPane = () => stub.geometryOf(DEFAULT_PANE_ID);
+var boundsText = (pane) => pane.bounds === void 0 ? "none (the clamp is the layout's)" : `{${String(pane.bounds.min)}, ${String(pane.bounds.max)}}`;
+var boundsOfPane = (pane) => pane.bounds === void 0 ? { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } : { min: pane.bounds.min, max: pane.bounds.max };
 function renderGeometry() {
   const geometry = geometryOfPane();
-  target.style.width = `${String(geometry.pane.size)}px`;
+  target.style.width = `${String(geometry.pane.width)}px`;
   if (paneWidthNode !== null) {
-    paneWidthNode.textContent = `${String(geometry.pane.size)}px \xB7 bounds {${String(geometry.pane.bounds.min)}, ${String(geometry.pane.bounds.max)}}`;
+    paneWidthNode.textContent = `${String(geometry.pane.width)}\xD7${String(geometry.pane.height)}px \xB7 bounds ${boundsText(geometry.pane)}`;
   }
 }
 function renderReadouts() {
@@ -1619,8 +1677,8 @@ function renderReadouts() {
   if (stubReadingNode !== null) {
     stubReadingNode.textContent = [
       `stub shape for ['panes'] \u2014 the demo's stand-in for the view record (no bridge on this page)`,
-      `  pane-a        size=${String(geometry.pane.size)}  bounds={min:${String(geometry.pane.bounds.min)}, max:${String(geometry.pane.bounds.max)}}  source='${geometry.source}'`,
-      `  pane-unknown  size=${String(unnamed.pane.size)}  bounds={min:${String(unnamed.pane.bounds.min)}, max:${String(unnamed.pane.bounds.max)}}  source='${unnamed.source}'  (the measured default, D-87)`,
+      `  pane-a        width=${String(geometry.pane.width)}  height=${String(geometry.pane.height)}  bounds=${boundsText(geometry.pane)}  source='${geometry.source}'`,
+      `  pane-unknown  width=${String(unnamed.pane.width)}  height=${String(unnamed.pane.height)}  bounds=${boundsText(unnamed.pane)}  source='${unnamed.source}'  (the measured default, D-87)`,
       `  route         commitPane calls=${String(stub.writes().length)}  ${JSON.stringify(stub.writes())}`
     ].join("\n");
   }
@@ -1657,7 +1715,7 @@ function render() {
 var control = (id) => document.getElementById(id);
 var sizeStep = (delta) => {
   const current = geometryOfPane();
-  stub.setSize(DEFAULT_PANE_ID, clampToBounds(current.pane.size + delta, current.pane.bounds));
+  stub.setWidth(DEFAULT_PANE_ID, clampToBounds(current.pane.width + delta, boundsOfPane(current.pane)));
   render();
 };
 control("ctl-size-inc")?.addEventListener("click", () => sizeStep(40));
@@ -1667,7 +1725,7 @@ control("ctl-bounds-tight")?.addEventListener("click", () => {
   render();
 });
 control("ctl-bounds-default")?.addEventListener("click", () => {
-  const measured = stub.geometryOf("pane-unknown").pane.bounds;
+  const measured = boundsOfPane(stub.geometryOf("pane-unknown").pane);
   stub.setBounds(DEFAULT_PANE_ID, { min: measured.min, max: measured.max });
   render();
 });

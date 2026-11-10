@@ -24,7 +24,8 @@
 // envelope-green — the seat's DECISIONS and its two routes, never a rendered surface. The live legs carry no pointer event
 // at all (`§7`), which is exactly why the seat needed a node instrument.
 //
-//   · `PS-1` — a VALID observed move sends ONE `commitDrag(DEFAULT_PANE_ID, {size})` and NO `clearDrag`.
+//   · `PS-1` — a VALID observed move sends ONE `commitDrag(DEFAULT_PANE_ID, {height})` and NO `clearDrag` — the pane's
+//     ADJUSTABLE member, whose NAME is its axis (`D-189`, `D-190`).
 //   · `PS-2` — a REVERT sends ONE `clearDrag` and NO `commitDrag`.
 //   · `PS-3` — a SECOND ending turn sends NOTHING — the ONE `clearDrag` the flag owns, and NO `applyCommand` at all: the app
 //     hands the release no sink (`D-129`), so this row's `commands` reading is `0` where the seat's one sink write used to be.
@@ -290,8 +291,8 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
 
     expect(
       live.routes.commitDrag,
-      'PS-1 — ONE write per placement change, at the composition\'s pane (the measured `DEFAULT_PANE_ID`, not the authored element\'s name) carrying the clamped size: this envelope answers the measured default 100 for a pane no family names and clamps into the measured {0, 200} pair, so the pointer\'s own 250 is the size 150',
-    ).toEqual([[DEFAULT_PANE_ID, { size: 150 }]])
+      'PS-1 — ONE write per placement change, at the composition\'s pane (the measured `DEFAULT_PANE_ID`, not the authored element\'s name) carrying the clamped figure AT THE PANE\'S ADJUSTABLE MEMBER — `{height}` for `pane-a`, which is stage-resident and therefore sidebar-equivalent (`C-9`, `C-12`, `D-189`), the same member the release commits: this envelope answers the measured default 100 for a pane no family names and clamps into the measured {0, 200} pair, so the pointer\'s own 250 is the figure 150',
+    ).toEqual([[DEFAULT_PANE_ID, { height: 150 }]])
     expect(
       live.routes.clearDrag,
       'PS-1 — a placement change is NOT an ending: `P4` goes to `move` and only `P5` (a revert) or the release reaches the erase, so a `clearDrag` in the move turn would end the `temp` family the same turn wrote',

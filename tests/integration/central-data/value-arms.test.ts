@@ -73,6 +73,19 @@ const RECORD: readonly string[] = ['operator-settings']
 const EXCLUSION: readonly string[] = ['operator-exclusion']
 const APP_STATE: readonly string[] = ['operator-app-state']
 
+/** **THE ZONE ID THIS FILE ADDRESSES — ONE OF THE FOUR THE RECORD DECLARES** (`D-181`, `D-151`): `zone-1` names nothing
+ *  since the set widened to `top`/`bottom`/`left`/`right` (`D-192` retired `DEFAULT_ZONE_ID`), and it appears below only as
+ *  an UNDECLARED id in the rows that measure the closure. */
+const ZONE = 'top'
+/** The four memberless zones the creation repair mints, in the order the store's own read answers them. */
+const FOUR_MEMBERLESS = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: 'top' }]
+/** **THE PANE FAMILY'S PLACEHOLDER — TWO PANES, EACH AT BOTH AXIS MEMBERS** (`D-192` correcting `D-191`): `pane-a` is the
+ *  stage pane carrying its own clamp, `pane-menus` the zone-resident one carrying its `zone` instead of a pair. */
+const PLACEHOLDER_PANES: Record<string, Record<string, unknown>> = {
+  'pane-a': { width: 100, height: 100, bounds: { min: 0, max: 200 } },
+  'pane-menus': { width: 100, height: 100, zone: 'top' },
+}
+
 const sourceOf = (path: string): string => readFileSync(join(REPO, path), 'utf8')
 
 /** A source read with comment lines and block comments ELIDED — the only form an absence may be asserted on, and the
@@ -206,11 +219,17 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const one = stand()
     const geometry = one.view.read().panes
     const stood = one.bytes()
-    expect(geometry, 'the family stands with the measured default before any attempt').toEqual([{ id: 'pane-a', size: 100, bounds: { min: 0, max: 200 } }])
-    // THE THREE ARMS THE AUDIT FOUND, AND ONE MORE: a plain record of junk (the read DROPS it and the geometry is gone
-    // while `source` still says `record`); a member whose record carries an unusable `size` (the fault lands ONE LEVEL
-    // IN); a member missing its `bounds`; and an empty member key, which the read skips without a word.
-    for (const value of [{ junk: true }, { 'pane-a': { size: 'big' } }, { 'pane-a': { size: 5 } }, { '': { size: 1, bounds: { min: 0, max: 1 } } }]) {
+    expect(geometry, 'the family stands with the measured default before any attempt — TWO panes, each at both axis members').toEqual([
+      { id: 'pane-a', width: 100, height: 100, bounds: { min: 0, max: 200 } },
+      { id: 'pane-menus', width: 100, height: 100, zone: 'top' },
+    ])
+    // THE ARMS THE AUDIT FOUND, RE-GRAINED TO THE RECORD'S MEMBER SET (`D-189`, `D-186`): a plain record of junk (the read
+    // DROPS it and the geometry is gone while `source` still says `record`); a member whose record carries an unusable
+    // `width` (the fault lands ONE LEVEL IN); **a member carrying ONE axis member and not the other** — which is what
+    // replaced this arm's *"a member missing its `bounds`"*, `bounds` having become LAWFUL WHERE ABSENT for a
+    // zone-resident pane (`D-186`, `D-129`), so a pane missing only its pair is a legal pane now and cannot serve as the
+    // fault; and an empty member key, which the read skips without a word.
+    for (const value of [{ junk: true }, { 'pane-a': { width: 'big', height: 100 } }, { 'pane-a': { width: 5 } }, { '': { width: 1, height: 1, bounds: { min: 0, max: 1 } } }]) {
       const refused = ledgerOf(one.surface.write({ path: ['panes'], tier: 'file', value }))
       expect(refused, `the corrupt value ${JSON.stringify(value)} is refused by the declaration, with the store's own status`).toEqual({
         reason: 'store-refused', storeStatus: 'ConstraintPassRefused', message: expect.stringContaining('the pane geometry carries a member that is no geometry'),
@@ -221,20 +240,21 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(one.bytes(), 'measured on the profile\'s own bytes: no refusal landed a byte').toBe(stood)
     // ONE LEVEL IN IS THE SAME FAULT ONE LEVEL DOWN, and it is judged at the node the pass is handed.
     expect(ledgerOf(one.surface.write({ path: ['panes', 'pane-a'], tier: 'file', value: {} })).storeStatus, 'a write AT the member is judged as that member').toBe('ConstraintPassRefused')
-    expect(ledgerOf(one.surface.write({ path: ['panes', 'pane-a', 'size'], tier: 'file', value: -1 })).reason, 'and a write at one of its fields').toBe('store-refused')
+    expect(ledgerOf(one.surface.write({ path: ['panes', 'pane-a', 'height'], tier: 'file', value: -1 })).reason, 'and a write at one of its fields').toBe('store-refused')
     expect(one.view.read().panes, 'with the family still exactly as it stood').toEqual(geometry)
     // THE LEGAL ARMS: the surface's, and the module's own route.
-    expect(one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { size: 60, bounds: { min: 0, max: 120 } } } }).status, 'a legal family lands through `data.*`').toBe('committed')
-    expect(one.view.read().panes).toEqual([{ id: 'pane-a', size: 60, bounds: { min: 0, max: 120 } }])
+    expect(one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { width: 60, height: 60, bounds: { min: 0, max: 120 } } } }).status, 'a legal family lands through `data.*`').toBe('committed')
+    expect(one.view.read().panes).toEqual([{ id: 'pane-a', width: 60, height: 60, bounds: { min: 0, max: 120 } }])
     // **AND THE ROUTE'S LABEL SAID A THING THE LANDING FALSIFIED, SO THE LABEL MOVES AND NOTHING ELSE DOES**: it read *"which
     // composes the family through the one composer"*, and `composePanes` is DELETED WHOLE — `D-138`'s leaf landing, `ASM-13`
     // — so no composer stands in the pane write path at all. What `commitPane` does now is write ONE LEAF PER SUPPLIED
-    // MEMBER, `['panes', id, 'size']` and then `['panes', id, 'bounds']`, each at `PANES_TIER` and each handing that member's
-    // own value, so the member the act does not name keeps what STANDS because no leaf write touches it — which is exactly
-    // why the arm below still measures what it measured, and its assertion is untouched: the same call, the same
-    // `committed`, and the same carried member read back on the arm after it.
-    expect(one.view.commitPane('pane-a', { size: 20 }), 'and the family\'s own route, which writes ONE LEAF PER SUPPLIED MEMBER — no composer stands in the pane write path, `composePanes` being DELETED at `D-138`\'s leaf landing').toEqual({ status: 'committed' })
-    expect(one.view.read().panes, 'with the member it did not supply kept from what stood').toEqual([{ id: 'pane-a', size: 20, bounds: { min: 0, max: 120 } }])
+    // MEMBER, `['panes', id, 'width']` or `['panes', id, 'height']` and then `['panes', id, 'bounds']`, each at `PANES_TIER`
+    // and each handing that member's own value, so the member the act does not name keeps what STANDS because no leaf write
+    // touches it — which is exactly why the arm below still measures what it measured. **AND THE ACT NOW HAS TO NAME WHICH
+    // AXIS IT MEANS** (`D-189`, `D-191`): `{ height: 20 }`, the ADJUSTABLE member of a stage-resident pane, so the `width`
+    // the family stood at is the member this act does not name and must therefore survive — the memory the split was for.
+    expect(one.view.commitPane('pane-a', { height: 20 }), 'and the family\'s own route, which writes ONE LEAF PER SUPPLIED MEMBER — no composer stands in the pane write path, `composePanes` being DELETED at `D-138`\'s leaf landing').toEqual({ status: 'committed' })
+    expect(one.view.read().panes, 'with the members it did not supply kept from what stood').toEqual([{ id: 'pane-a', width: 60, height: 20, bounds: { min: 0, max: 120 } }])
     // **AND THE CLOSURE'S SECOND SEAT, THE INVERT `VA-5` CARRIES ONE FAMILY OVER** (`D-138` H14, `ASM-14`; `VA-5`'s zone
     // arm is this row's own model): a `data.write` naming a pane id the record does NOT declare is refused BY THE
     // FAMILY'S OWN JUDGE — `paneNodeAdmits`'s declared-id check, at EVERY depth — because closing the route alone would
@@ -242,7 +262,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     // outside writer meets. **THIS IS THE ARM THE DESIGN NAMES AND NO ROW MEASURED UNTIL NOW**: the route's seat is driven
     // in the view record's own batteries, and this is the seat a `provident.data.write` caller meets.
     expect(
-      ledgerOf(one.surface.write({ path: ['panes', 'pane-z'], tier: 'file', value: { size: 90, bounds: { min: 0, max: 200 } } })),
+      ledgerOf(one.surface.write({ path: ['panes', 'pane-z'], tier: 'file', value: { width: 90, height: 90, bounds: { min: 0, max: 200 } } })),
       'an undeclared pane id is refused at the family\'s ADMISSION, with the pair\'s own sentence naming the fault',
     ).toEqual({
       reason: 'store-refused',
@@ -250,20 +270,27 @@ describe('the value arms — a declaration that cannot be subverted by any calle
       message: expect.stringContaining('a pane id this record does not declare'),
     })
     expect(one.view.read().panes, 'and no undeclared pane arrived: the declared one stands alone, exactly as it stood').toEqual([
-      { id: 'pane-a', size: 20, bounds: { min: 0, max: 120 } },
+      { id: 'pane-a', width: 60, height: 20, bounds: { min: 0, max: 120 } },
     ])
     // THE CONTROL THAT KEEPS THIS ARM FROM BEING A BLANKET (`VA-5`'s own shape): the SAME write at the id the record
     // declares lands, so the refusal above is about the ID'S DOMAIN and not about a write at a member node.
-    expect(one.surface.write({ path: ['panes', 'pane-a', 'size'], tier: 'file', value: 33 }).status, 'a declared pane\'s own leaf still lands through `data.*`').toBe('committed')
-    expect(one.view.read().panes).toEqual([{ id: 'pane-a', size: 33, bounds: { min: 0, max: 120 } }])
+    expect(one.surface.write({ path: ['panes', 'pane-a', 'height'], tier: 'file', value: 33 }).status, 'a declared pane\'s own leaf still lands through `data.*`').toBe('committed')
+    expect(one.view.read().panes).toEqual([{ id: 'pane-a', width: 60, height: 33, bounds: { min: 0, max: 120 } }])
   })
 
   it('VA-5 · THE ZONE FAMILY: a member that is no record, and a zone carrying a `size` the read cannot state, are refused — a zone that carries NOTHING stays legal at a DECLARED id, because that is a state the family holds (`D-91`, `D-105`) — and an id the record does not declare is refused at BOTH seats, which is the INVERT this row carries since `D-151` closed the id domain', () => {
     const one = stand()
-    expect(one.view.commitZones('zone-1', { slot: { a: 1 }, distance: 3, size: 10, display: 'left' }), 'a legal zone lands through the route').toEqual({ status: 'committed' })
+    expect(one.view.commitZones(ZONE, { slot: { a: 1 }, distance: 3, size: 10, display: 'left' }), 'a legal zone lands through the route').toEqual({ status: 'committed' })
     const zones = one.view.read().zones
-    expect(zones).toEqual([{ id: 'zone-1', slot: { a: 1 }, distance: 3, size: 10, display: 'left' }])
-    for (const value of [{ junk: true }, { 'zone-1': { size: 'big' } }, { 'zone-1': { size: -1 } }, { 'zone-1': { display: 7 } }]) {
+    // **THE FOUR DECLARED ZONES STAND AND THE ROUTE WROTE ONE OF THEM** (`D-181`, `D-151`): its leaves land under `top` and
+    // the three ids the act never named stand memberless beside it — a leaf write cannot reach a sibling.
+    expect(zones).toEqual([
+      { id: 'bottom' },
+      { id: 'left' },
+      { id: 'right' },
+      { id: ZONE, slot: { a: 1 }, distance: 3, size: 10, display: 'left' },
+    ])
+    for (const value of [{ junk: true }, { [ZONE]: { size: 'big' } }, { [ZONE]: { size: -1 } }, { [ZONE]: { display: 7 } }]) {
       const refused = ledgerOf(one.surface.write({ path: ['zones'], tier: 'mem', value }))
       expect(refused, `the corrupt family ${JSON.stringify(value)} is refused`).toEqual({
         reason: 'store-refused', storeStatus: 'ConstraintPassRefused', message: expect.stringContaining('the zone family holds a member that is no record'),
@@ -273,8 +300,8 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     // **THE LEGAL ARM A STRICT ARM COULD HAVE BROKEN**: a zone record carrying NO member is the state "the caller named a
     // zone and stored nothing about it yet", which `zoneOf` admits and `D-91` measured as the family's own shape — and it
     // is driven at the id the record DECLARES, because `D-151` closed the domain and the repair created that node.
-    expect(one.surface.write({ path: ['zones', 'zone-1'], tier: 'mem', value: {} }).status, 'a declared zone carrying nothing still lands').toBe('committed')
-    expect(one.view.read().zones, 'and it reads as the zone it names, with no member — no geometry invented for it').toEqual([{ id: 'zone-1' }])
+    expect(one.surface.write({ path: ['zones', ZONE], tier: 'mem', value: {} }).status, 'a declared zone carrying nothing still lands').toBe('committed')
+    expect(one.view.read().zones, 'and it reads as the zone it names, with no member — no geometry invented for it — while the three siblings stand').toEqual(FOUR_MEMBERLESS)
     // **AND THE INVERT (`ASM-9`, the design's §9)**: the same write at an id the record does NOT declare is refused BY THE
     // FAMILY'S OWN JUDGE, which is the closure's second seat — closing the route alone would leave `data.write` free to
     // mint the very zone the ruling refuses, and this is the seat an outside writer meets.
@@ -286,13 +313,13 @@ describe('the value arms — a declaration that cannot be subverted by any calle
       storeStatus: 'ConstraintPassRefused',
       message: expect.stringContaining('a zone id this record does not declare'),
     })
-    expect(one.view.read().zones, 'and no undeclared zone arrived: the declared one stands alone').toEqual([{ id: 'zone-1' }])
+    expect(one.view.read().zones, 'and no undeclared zone arrived: the four declared ids alone').toEqual(FOUR_MEMBERLESS)
     // THE ROUTE'S SEAT, THE OTHER HALF OF THE SAME CLOSURE (`ASM-9`): a well-formed id outside the set is refused before
     // any store verb under the closed vocabulary's own token — and the route still commits at the id it declares.
     expect(one.view.commitZones('zone-3', { size: 5 }), 'the route refuses an id this record does not declare').toMatchObject({
       status: 'refused', reason: UNDECLARED_ZONE_REASON,
     })
-    expect(one.view.commitZones('zone-1', { size: 5 }), 'and the family\'s own route still commits at its declared id').toEqual({ status: 'committed' })
+    expect(one.view.commitZones(ZONE, { size: 5 }), 'and the family\'s own route still commits at its declared id').toEqual({ status: 'committed' })
   })
 
   it('VA-6 · THE APPEARANCE FAMILY\'S SECOND ARM IS A DIFFERENT CLASS: it is a REPAIR, not a refusal — a corrupt appearance record is RE-DERIVED inside the caller\'s own commit and the answer says so, so `D-105` leaves its semantics alone', () => {
@@ -404,10 +431,10 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     // THE CENTRAL ROOTS, each at its creation-instant value: `['panes']`, `['tabs']` and `['theme']` are `file` and
     // carry the repair's write in the profile's own bytes; `['zones']` is `mem` and is re-minted at every boot, so its
     // placeholder is the register's and no byte of it is a file's (D-84; the other `mem` root left with `D-142`).
-    expect(one.store.read(['panes'], 'file'), 'panes-must-stand\'s placeholder').toEqual({ 'pane-a': { size: 100, bounds: { min: 0, max: 200 } } })
+    expect(one.store.read(['panes'], 'file'), 'panes-must-stand\'s placeholder: every DECLARED pane id with its default geometry, BOTH axis members of each (`D-192`)').toEqual(PLACEHOLDER_PANES)
     expect(one.tabs.read(), 'tabs-must-stand\'s landing row').toMatchObject({ order: ['landing'], landing: 'landing' })
     expect(one.store.read(['theme'], 'file'), 'theme-must-stand\'s placeholder declaration').toEqual({ declaration: { value: '', removal: true } })
-    expect(one.store.read(['zones'], 'mem'), 'zones-must-stand\'s placeholder: every DECLARED zone id with an EMPTY record (`D-151`)').toEqual({ 'zone-1': {} })
+    expect(one.store.read(['zones'], 'mem'), 'zones-must-stand\'s placeholder: every DECLARED zone id with an EMPTY record (`D-151`, `D-181`)').toEqual({ top: {}, bottom: {}, left: {}, right: {} })
     expect(one.view.read().source, 'and every family reads as a RECORD and never as a substituted default').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // THE SECURE CROSSING'S THREE: `['operator-exclusion']` is the `mem` pair its repair mints, and the two `file` records
     // are the repairs' own writes — which are what the file carries when the constructor returns (D-86).
@@ -424,19 +451,23 @@ describe('the value arms — a declaration that cannot be subverted by any calle
 
   it('VA-12 · THE PREVIOUS LEGAL VALUE SURVIVES A RESTART, family by family: the three `file` families are the file\'s and come back member for member, and the `mem` family is re-minted at its placeholder — which is what a `mem` address is for (D-84)', () => {
     const one = stand()
-    expect(one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { size: 61, bounds: { min: 1, max: 121 } } } }).status).toBe('committed')
+    expect(one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { width: 61, height: 61, bounds: { min: 1, max: 121 } } } }).status).toBe('committed')
     expect(one.surface.write({ path: ['theme'], tier: 'file', value: { token: 'dark', attribute: 'data-theme' } }).status).toBe('committed')
-    expect(one.surface.write({ path: ['zones'], tier: 'mem', value: { 'zone-1': { size: 7 } } }).status).toBe('committed')
+    expect(one.surface.write({ path: ['zones'], tier: 'mem', value: { [ZONE]: { size: 7 } } }).status).toBe('committed')
     const next = one.restart()
-    expect(next.view.read().panes, 'the pane geometry comes back off the bytes, exactly as it was written').toEqual([{ id: 'pane-a', size: 61, bounds: { min: 1, max: 121 } }])
+    expect(next.view.read().panes, 'the pane geometry comes back off the bytes, exactly as it was written — both axis members of it').toEqual([
+      { id: 'pane-a', width: 61, height: 61, bounds: { min: 1, max: 121 } },
+    ])
     expect(next.view.read().theme, 'and so does the appearance record').toEqual({ token: 'dark', attribute: 'data-theme', declaration: { name: 'data-theme', value: 'dark', removal: false } })
-    expect(next.view.read().zones, 'while a `mem` zone family is the instance\'s: the next process meets its placeholder — the declared zone, memberless (`D-151`)').toEqual([{ id: 'zone-1' }])
+    expect(next.view.read().zones, 'while a `mem` zone family is the instance\'s: the next process meets its placeholder — the FOUR declared zones, memberless (`D-151`, `D-181`)').toEqual(FOUR_MEMBERLESS)
     expect(next.view.read().source, 'and every one of them still reads as a record, because a repair is a lawful boot source').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // **AND THE PREVIOUS LEGAL VALUE SURVIVES A CORRUPT ATTEMPT AT THE NEW HEAD — THE SURVIVAL IS ASSERTED BEFORE THE
     // VERDICT**, so a body that answered this state with a REPAIR (instead of the refusal it owes) reds HERE: the
     // placeholder would have replaced the family the file carried, and this row is where that is measured.
     const attempt = next.surface.write({ path: ['panes'], tier: 'file', value: { junk: true } })
-    expect(next.view.read().panes, 'the geometry the file carried is still the geometry that stands — no repair replaced it').toEqual([{ id: 'pane-a', size: 61, bounds: { min: 1, max: 121 } }])
+    expect(next.view.read().panes, 'the geometry the file carried is still the geometry that stands — no repair replaced it').toEqual([
+      { id: 'pane-a', width: 61, height: 61, bounds: { min: 1, max: 121 } },
+    ])
     expect(ledgerOf(attempt).storeStatus, 'and the attempt itself was REFUSED at the new head: a restart is not a door').toBe('ConstraintPassRefused')
   })
 
@@ -455,9 +486,9 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     if (store === null) throw new Error('the store stands')
     expect(store.read(['panes'], 'file'), 'the family the file carries is the family the register carries').toEqual({ junk: true })
     const healed = stand(where)
-    const answer = healed.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { size: 12, bounds: { min: 0, max: 24 } } } })
+    const answer = healed.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { width: 12, height: 12, bounds: { min: 0, max: 24 } } } })
     expect(answer.status, 'and the FIRST legal write at the root replaces it — the arm refuses a corrupt write, never a legal one').toBe('committed')
-    expect(healed.view.read().panes, 'with the family legal from that instant on').toEqual([{ id: 'pane-a', size: 12, bounds: { min: 0, max: 24 } }])
+    expect(healed.view.read().panes, 'with the family legal from that instant on').toEqual([{ id: 'pane-a', width: 12, height: 12, bounds: { min: 0, max: 24 } }])
     expect(healed.bytes().includes('"junk":true'), 'and the corrupt member gone from the bytes').toBe(false)
   })
 

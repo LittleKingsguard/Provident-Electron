@@ -514,11 +514,11 @@ interface PaneCrossing {
   /** Every `commitPane` the composition sent, in order. */
   readonly calls: PaneRouteCall[]
   /** The family as the crossing's store holds it. */
-  readonly family: () => Readonly<Record<string, { readonly size: number; readonly bounds: { readonly min: number; readonly max: number } }>>
+  readonly family: () => Readonly<Record<string, HeldPane>>
   /** **THE CAUSE OF A DELIVERY WITH NO ROUTE CALL**: the family as a store that already holds it would answer — a boot, a
    *  second window's write, or the repair. It refills and delivers exactly as a route call does, and it records NO route
    *  call, because it is not this composition's write. */
-  readonly seed: (id: string, geometry: { readonly size?: number; readonly bounds?: { readonly min: number; readonly max: number } }) => void
+  readonly seed: (id: string, geometry: { readonly width?: number; readonly height?: number; readonly bounds?: { readonly min: number; readonly max: number } }) => void
   /** The live `onChanged` registrations — 0 for every row here, because this composition registers nothing on the push. */
   readonly registrations: () => number
   /** Read the shape's own `filled` statement. */
@@ -546,13 +546,31 @@ interface PaneCrossing {
    *  before the release grew its own ending. */
   readonly clears: unknown[]
   /** **THE DRAG FAMILY AS THE CROSSING'S STORE HOLDS IT — AND `null` IS "THE ADDRESS DOES NOT STAND"**, which is the state
-   *  before any drag, and the state an erase leaves. A whole-family write: `commitDrag(id, {size})` writes `{[id]: {size}}`
-   *  and nothing else, so the family holds one member per pane id and the last write wins. */
-  readonly dragFamily: () => Readonly<Record<string, { readonly size: number }>> | null
+   *  before any drag, and the state an erase leaves. A whole-family write: `commitDrag(id, { height })` — the pane's
+   *  ADJUSTABLE axis member and no other, its NAME the axis (`D-189`, `D-190`) — writes `{[id]: { height }}` and nothing
+   *  else, so the family holds one member per pane id and the last write wins. */
+  readonly dragFamily: () => Readonly<Record<string, HeldDragMember>> | null
   /** **ONE ORDERED LOG ACROSS ALL THREE ROUTE DOUBLES** — `'commitDrag'` / `'clearDrag'` / `'commitPane'`, in the order
    *  the composition sent them. The release's contract is an ORDER (the sink, then the file commit, then its own ending),
    *  and two separate logs cannot state an order between them. */
   readonly acts: string[]
+}
+
+/** **ONE PANE AS THIS HARNESS'S FAMILY HOLDS IT, WITH BOTH AXIS MEMBERS** (`D-189`, `D-192`): `size` has no home on the
+ *  record any more, so every row below names the member it means. The pair is required and stays so, because the shape
+ *  admits no unstated axis member. */
+interface HeldPane {
+  readonly width: number
+  readonly height: number
+  readonly bounds: { readonly min: number; readonly max: number }
+}
+
+/** **ONE PLACEMENT AT `['drag']`** — the ADJUSTABLE axis's own member and no other (`D-189`, `D-190`). The fixtures below
+ *  hold a stage-resident pane, so the member is `height`; the interface names it rather than typing a bare number, so a row
+ *  cannot read the wrong axis by accident. */
+interface HeldDragMember {
+  readonly width?: number
+  readonly height?: number
 }
 
 /** ONE ZONE AS THE RECORD HOLDS IT (D-91): all four members optional, `slot` opaque. */
@@ -578,9 +596,16 @@ function paneSourceOf(crossing: PaneCrossing, id: string): string {
   return paneGeometryIn(crossing.client.shape().panes, id).source
 }
 
-function defaultGeometryFor(id: string): { size: number; bounds: { min: number; max: number } } {
+function defaultGeometryFor(id: string): HeldPane {
   const seed = defaultPaneGeometry(id)
-  return { size: seed.size, bounds: { min: seed.bounds.min, max: seed.bounds.max } }
+  // THE MEASURED DEFAULT CARRIES BOTH AXIS MEMBERS (`D-189`, `D-192`) and, on this fixture, the pair a stage pane stores.
+  return {
+    width: seed.width,
+    height: seed.height,
+    bounds: seed.bounds === undefined
+      ? { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max }
+      : { min: seed.bounds.min, max: seed.bounds.max },
+  }
 }
 
 /** **THE CROSSING DOUBLE, KEYED BY WHATEVER OBJECT A ROW WANTS IT CACHED ON** (`D-93`: it used to be keyed by the frozen
@@ -592,7 +617,7 @@ function crossingOf(key?: object): PaneCrossing {
     if (cached !== undefined) return cached
   }
   // THE CREATION REPAIR'S PLACEHOLDER — `panes-must-stand`'s own seed, present before any caller writes.
-  let family: Record<string, { size: number; bounds: { min: number; max: number } }> = {
+  let family: Record<string, HeldPane> = {
     [DEFAULT_PANE_ID]: defaultGeometryFor(DEFAULT_PANE_ID),
   }
   // **THE ZONE FAMILY'S CREATION PLACEHOLDER NAMES EVERY DECLARED ID WITH AN EMPTY RECORD** (`D-151`, `D-152`; `D-91`'s
@@ -610,7 +635,7 @@ function crossingOf(key?: object): PaneCrossing {
   let zones: Record<string, HeldZone> = {}
   // **THE DRAG FAMILY'S ADDRESS** — `['drag']` at `temp`, ONE MEMBER PER PANE ID, each `{size}`. `null` is the family's
   // absence, which is the state before any gesture wrote and the state every erase turn leaves.
-  let dragFamily: Record<string, { size: number }> | null = null
+  let dragFamily: Record<string, HeldDragMember> | null = null
   const handlers: Array<() => void> = []
   const calls: PaneRouteCall[] = []
   const zoneCalls: ZoneRouteCall[] = []
@@ -621,7 +646,7 @@ function crossingOf(key?: object): PaneCrossing {
     status: 'committed',
     panes: Object.keys(family).map((id) => {
       const held = family[id]!
-      return { id, size: held.size, bounds: { min: held.bounds.min, max: held.bounds.max } }
+      return { id, width: held.width, height: held.height, bounds: { min: held.bounds.min, max: held.bounds.max } }
     }),
     // **THE MIRROR IS NO LONGER A FAMILY OF THIS READING** (`D-142`, `E-12`): `['focus']` is deleted whole and
     // `ViewCommittedReading` carries no `focus` member and no `source.focus`, so this reading carries the
@@ -648,12 +673,19 @@ function crossingOf(key?: object): PaneCrossing {
   const bridge = {
     read: async (): Promise<unknown> => reading(),
     commitPane: async (id: string, geometry: unknown): Promise<unknown> => {
-      const supplied = geometry as { readonly size?: unknown; readonly bounds?: { readonly min: number; readonly max: number } } | undefined
+      // **ONE LEAF PER SUPPLIED MEMBER AT THAT MEMBER'S OWN NAME** (`D-191`, `D-138`): `{ width }` or `{ height }`, then
+      // `{ bounds }` carrying its PAIR — so a member the act does not name keeps what stands and no copy of the family is
+      // taken. The two axis members are the record's (`D-189`); `size` has no home here any more.
+      const supplied = geometry as {
+        readonly width?: unknown
+        readonly height?: unknown
+        readonly bounds?: { readonly min: number; readonly max: number }
+      } | undefined
       const base = family[id] ?? defaultGeometryFor(id)
-      const size = typeof supplied?.size === 'number' ? supplied.size : base.size
+      const width = typeof supplied?.width === 'number' ? supplied.width : base.width
+      const height = typeof supplied?.height === 'number' ? supplied.height : base.height
       const bounds = supplied?.bounds ?? base.bounds
-      // THE WHOLE FAMILY, ONE ACT — the sibling panes are kept (`composePanes`).
-      family = { ...family, [id]: { size, bounds: { min: bounds.min, max: bounds.max } } }
+      family = { ...family, [id]: { width, height, bounds: { min: bounds.min, max: bounds.max } } }
       calls.push({ id, geometry })
       acts.push('commitPane')
       refill()
@@ -664,10 +696,12 @@ function crossingOf(key?: object): PaneCrossing {
     // `{[id]: {size}}` and the last write wins. A non-finite size is DROPPED rather than stored (the store's own admission,
     // and the reason a hostile preview can never reach it: the composition sends nothing at all for one).
     commitDrag: async (id: string, geometry: unknown): Promise<unknown> => {
-      const size = (geometry as { readonly size?: unknown } | null | undefined)?.size
+      const carried = (geometry ?? null) as { readonly width?: unknown; readonly height?: unknown } | null
       dragCalls.push({ id, geometry })
       acts.push('commitDrag')
-      dragFamily = typeof size === 'number' && Number.isFinite(size) ? { [id]: { size } } : {}
+      if (carried !== null && typeof carried.height === 'number' && Number.isFinite(carried.height)) dragFamily = { [id]: { height: carried.height } }
+      else if (carried !== null && typeof carried.width === 'number' && Number.isFinite(carried.width)) dragFamily = { [id]: { width: carried.width } }
+      else dragFamily = {}
       return { status: 'committed' }
     },
     // **THE ERASE — `clearDrag()` DELETEs THE FAMILY AND ANSWERS `committed` WHETHER OR NOT IT STOOD.** The store refuses a
@@ -724,13 +758,14 @@ function crossingOf(key?: object): PaneCrossing {
   const crossing: PaneCrossing = {
     client,
     calls,
-    family: (): Readonly<Record<string, { readonly size: number; readonly bounds: { readonly min: number; readonly max: number } }>> => family,
+    family: (): Readonly<Record<string, HeldPane>> => family,
     seed: (id, geometry): void => {
       const base = family[id] ?? defaultGeometryFor(id)
       family = {
         ...family,
         [id]: {
-          size: typeof geometry.size === 'number' ? geometry.size : base.size,
+          width: typeof geometry.width === 'number' ? geometry.width : base.width,
+          height: typeof geometry.height === 'number' ? geometry.height : base.height,
           bounds: geometry.bounds ?? base.bounds,
         },
       }
@@ -746,7 +781,7 @@ function crossingOf(key?: object): PaneCrossing {
     zoneCalls,
     dragCalls,
     clears,
-    dragFamily: (): Readonly<Record<string, { readonly size: number }>> | null => dragFamily,
+    dragFamily: (): Readonly<Record<string, HeldDragMember>> | null => dragFamily,
     acts,
   }
   if (key !== undefined && key !== null) crossingOfStore.set(key, crossing)
@@ -764,11 +799,11 @@ describe('§3.1 M-1 — the store-backed startSizeOf read answers the STORED siz
     const seeded = 240
     // THE RECORD ARM: the crossing\'s store holds the pane — a write this composition did not send (a boot, a second
     // window, the repair) — the delivery refills the shape, and the read answers it in the caller\'s own turn.
-    crossing.seed(PANE_ID, { size: seeded })
+    crossing.seed(PANE_ID, { height: seeded })
     expect(crossing.calls, 'the seed is not this composition\'s write, so it sends no route call').toEqual([])
     expect(w.startSizeOf(paneFixture, PANE_ID)).toBe(seeded)
     // AND IT TRACKS: a second delivery moves the answer, so a module-held size could not have produced it.
-    crossing.seed(PANE_ID, { size: 260 })
+    crossing.seed(PANE_ID, { height: 260 })
     expect(w.startSizeOf(paneFixture, PANE_ID)).toBe(260)
   })
 })
@@ -908,8 +943,8 @@ describe('§3.2 F-5 — a release with NO preview data commits NOTHING but a nor
     expect(sink.stats().sinkCalls).toBe(1)
     expect(sink.record).toEqual([final])
     // THE WRITE, AS THE ROUTE CARRIES IT: ONE call, one whole member, the pane NAMED and never a path or a tier.
-    expect(crossing.calls, 'one route call — the two-tier commit spelling is gone').toEqual([{ id: PANE_ID, geometry: { size: final } }])
-    expect(crossing.family()[PANE_ID]?.size, 'and what the crossing holds is the sink\'s own argument').toBe(final)
+    expect(crossing.calls, 'one route call — the two-tier commit spelling is gone').toEqual([{ id: PANE_ID, geometry: { height: final } }])
+    expect(crossing.family()[PANE_ID]?.height, 'and what the crossing holds is the sink\'s own argument').toBe(final)
     // **AND THE RELEASE ENDS THE TEMP READING ITSELF**: no move wrote the family, and the ending is still sent once — the
     // store\'s `delete` answers the same receipt whether or not the address stood, so the call is idempotent there.
     expect(crossing.dragCalls, 'no move ⇒ no drag write at all').toEqual([])
@@ -935,7 +970,7 @@ describe('§3.2 F-8 — a throwing seam implementation\'s throw is BOUND to its 
     const sink = makeSink()
     expect(() => w.release('g-h2', 42, sink)).not.toThrow()
     expect(sink.record).toEqual([42])
-    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 42 } }])
+    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { height: 42 } }])
   })
 
   it('F-8/absent-closure: the SIX SURVIVING TURNS driven with NO SHAPE AT ALL answer the declared degradation — never a throw out of the wiring turn (`D-93`: the "store absent from the closure" arm is the backing\'s own `view: null`, because there is no store in the closure to be absent; `D-168`: SIX is the surface, and the deleted four are not driven here or anywhere) — re-grain 2026-11-09', () => {
@@ -1109,7 +1144,7 @@ describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the shape-backed size/bounds REA
       if (state === 'unfilled') return createViewClient({ bridge: null })
       if (state === 'record') {
         return clientHolding(
-          [{ id: DEFAULT_PANE_ID, size: 240, bounds: { min: 40, max: 800 } }],
+          [{ id: DEFAULT_PANE_ID, width: 1_000, height: 240, bounds: { min: 40, max: 800 } }],
           [],
         )
       }
@@ -1153,12 +1188,12 @@ describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the shape-backed size/bounds REA
     // count above (the counting client would record it, and the count is exactly what this cell measures).
     const geometry = paneGeometryIn(client.shape().panes, DEFAULT_PANE_ID)
     if (state === 'record') {
-      expect(isBounds ? geometry.pane.bounds : geometry.pane.size, 'the family\'s own figure, read AT THE TERMINAL').toEqual(
+      expect(isBounds ? geometry.pane.bounds : geometry.pane.height, 'the family\'s own figure, read AT THE TERMINAL').toEqual(
         isBounds ? { min: 40, max: 800 } : 240,
       )
       expect(geometry.source, 'and the derivation names the record arm at the terminal too').toBe('record')
     } else {
-      expect(isBounds ? geometry.pane.bounds : geometry.pane.size, 'the MEASURED default at the terminal').toEqual(
+      expect(isBounds ? geometry.pane.bounds : geometry.pane.height, 'the MEASURED default at the terminal').toEqual(
         isBounds ? { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } : DEFAULT_PANE_SIZE,
       )
       expect(geometry.source, 'and the derivation names the default arm').toBe('default')
@@ -1171,7 +1206,7 @@ describe('REGISTER P-PD-IM-1 (S-PD-READS-1) — the shape-backed size/bounds REA
     // **THE CONTROL THAT MAKES THE BOUNDS TERMINAL CELL BITE** — the same turn over a shape whose pair CANNOT be clamped
     // sends NOTHING at all (`R2`'s refusing arm): a composition that never read the shape could not tell the two apart.
     if (isBounds && state === 'record') {
-      const hostile = clientHolding([{ id: DEFAULT_PANE_ID, size: 240, bounds: { min: 'x', max: 'y' } }], [])
+      const hostile = clientHolding([{ id: DEFAULT_PANE_ID, width: 1_000, height: 240, bounds: { min: 'x', max: 'y' } }], [])
       const refusing = wiring.createPaneDrag({ view: hostile }, makeSource()) as unknown as PaneDragSurface
       const refusingSink = makeSink()
       expect(() => refusing.release('g-refused', released, refusingSink), 'and it does not throw doing it').not.toThrow()
@@ -1296,7 +1331,7 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the SHAPE-BACKED seam implemen
       return wiring.createPaneDrag(
         {
           view: clientHolding(
-            [{ id: PANE_ID, size: 'not-a-size', bounds: { min: 800, max: 40 } }],
+            [{ id: PANE_ID, width: 1_000, height: 'not-a-size', bounds: { min: 800, max: 40 } }],
             [{ id: ZONE_ID, slot: 'slot-7', distance: 'not-a-distance' }],
           ),
         },
@@ -1415,16 +1450,16 @@ describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the t
     w.move('g1', { value: 120 }) // the preview — the drag's value, which IS the address's `size`
     // THE MOVE WROTE THE ADDRESS: `['drag']` at `temp`, one member for the composition's pane, `{size}` whole.
     expect(crossing.dragCalls, 'the move sends ONE `commitDrag` naming the pane, carrying the preview\'s value').toEqual([
-      { id: DEFAULT_PANE_ID, geometry: { size: 120 } },
+      { id: DEFAULT_PANE_ID, geometry: { height: 120 } },
     ])
-    expect(crossing.dragFamily(), 'and the family stands at what the move wrote').toEqual({ [PANE_ID]: { size: 120 } })
+    expect(crossing.dragFamily(), 'and the family stands at what the move wrote').toEqual({ [PANE_ID]: { height: 120 } })
     w.release('g1', clamped, sink)
 
     expect(sink.record).toEqual([clamped]) // the sink\'s own record
     expect(sink.stats().sinkCalls).toBe(1) // E3-side reading — they AGREE at 1
     // THE ONE WRITE: the route carries the sink\'s own argument to the ONE family at the ONE address.
-    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: clamped } }])
-    expect(crossing.family()[PANE_ID]?.size).toBe(clamped)
+    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { height: clamped } }])
+    expect(crossing.family()[PANE_ID]?.height).toBe(clamped)
     // **AND THE RELEASE'S OWN ENDING**: the temp reading the moves wrote is ended by the release itself, ONCE, AFTER its
     // file commit — the family does not stand afterwards.
     expect(crossing.clears.length, 'the release ends the temp reading it inherited').toBe(1)
@@ -1450,9 +1485,9 @@ describe('§3.1 M-10 — the temp preview is the ADDRESS `[\'drag\']` at `temp` 
     w.move('g1', { value: 120 })
     // THE MOVE WROTE THE ADDRESS — ONE call, the composition's pane, the preview's own `value` as the size.
     expect(crossing.dragCalls, 'ONE `commitDrag` naming DEFAULT_PANE_ID with the preview\'s value').toEqual([
-      { id: DEFAULT_PANE_ID, geometry: { size: 120 } },
+      { id: DEFAULT_PANE_ID, geometry: { height: 120 } },
     ])
-    expect(crossing.dragFamily(), 'and the family holds it').toEqual({ [PANE_ID]: { size: 120 } })
+    expect(crossing.dragFamily(), 'and the family holds it').toEqual({ [PANE_ID]: { height: 120 } })
     // **AND NO STORE ACT WAS MADE**: a store doubled beside the composition carries no node for the gesture at all, so the
     // name `temp.drag.<gestureId>.placement` does not exist anywhere but the crossing. That is the whole difference
     // between a value held as state and a value stored as data, and here it is MEASURED — the double would have recorded
@@ -1467,9 +1502,9 @@ describe('§3.1 M-10 — the temp preview is the ADDRESS `[\'drag\']` at `temp` 
     // write wins; a gesture id is not a member of the family and never becomes one.
     w.move('g2', { value: 140 })
     expect(crossing.dragCalls.length, 'one route call per move').toBe(2)
-    expect(crossing.dragCalls[1], 'and the second names the same pane').toEqual({ id: DEFAULT_PANE_ID, geometry: { size: 140 } })
+    expect(crossing.dragCalls[1], 'and the second names the same pane').toEqual({ id: DEFAULT_PANE_ID, geometry: { height: 140 } })
     expect(Object.keys(crossing.dragFamily() ?? {}), 'the family holds ONE member per pane').toEqual([PANE_ID])
-    expect(crossing.dragFamily(), 'and the last write wins').toEqual({ [PANE_ID]: { size: 140 } })
+    expect(crossing.dragFamily(), 'and the last write wins').toEqual({ [PANE_ID]: { height: 140 } })
     expect(register.census(), 'and the second gesture wrote no store either').toBe(1)
     // **A MOVE WHOSE `value` IS NOT A FINITE NON-NEGATIVE NUMBER SENDS NOTHING** — no route, and the family keeps what the
     // last usable move wrote rather than being erased by a hostile preview.
@@ -1479,7 +1514,7 @@ describe('§3.1 M-10 — the temp preview is the ADDRESS `[\'drag\']` at `temp` 
       w.move('g3', {})
       expect(crossing.dragCalls.length, `a ${String(hostile)} preview sends nothing to the drag address`).toBe(before)
     }
-    expect(crossing.dragFamily(), 'and the standing family is untouched by every one of them').toEqual({ [PANE_ID]: { size: 140 } })
+    expect(crossing.dragFamily(), 'and the standing family is untouched by every one of them').toEqual({ [PANE_ID]: { height: 140 } })
   })
 })
 
@@ -1499,7 +1534,7 @@ describe('§3.1 M-6 — the ONE abandon terminal (`cancel`) ENDS the drag family
     // ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
     expect(register.census(), 'nothing at construction').toBe(0)
     w.move('g1', { value: 120 })
-    expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { size: 120 } })
+    expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { height: 120 } })
     w.cancel('g1')
     // THE ERASE — exactly ONE call, and the family is ABSENT:
     expect(crossing.clears.length, 'the erase sends exactly ONE `clearDrag()`').toBe(1)
@@ -1514,7 +1549,7 @@ describe('§3.1 M-6 — the ONE abandon terminal (`cancel`) ENDS the drag family
     const before = crossing.clears.length
     w.cancel('g-never')
     expect(crossing.clears.length, 'a gesture that never moved then cancelled sends exactly ONE').toBe(before + 1)
-    expect(crossing.dragCalls, 'and no move means no drag write at all').toEqual([{ id: DEFAULT_PANE_ID, geometry: { size: 120 } }])
+    expect(crossing.dragCalls, 'and no move means no drag write at all').toEqual([{ id: DEFAULT_PANE_ID, geometry: { height: 120 } }])
     expect(register.census(), 'the whole row made not one store act').toBe(0)
   })
 })
@@ -1540,7 +1575,7 @@ describe('§3.2 F-4 — the abandon terminal during a NON-EXISTENT drag ends an 
     expect(register.census(), 'and never a store act').toBe(0)
     // THE CONTROL: the same turn on a gesture that DID move also sends exactly one, and ends the family it finds.
     w.move('g-present', { value: 140 })
-    expect(crossing.dragFamily(), 'the control gesture really wrote the address first').toEqual({ [PANE_ID]: { size: 140 } })
+    expect(crossing.dragFamily(), 'the control gesture really wrote the address first').toEqual({ [PANE_ID]: { height: 140 } })
     const before = crossing.clears.length
     w.cancel('g-present')
     expect(crossing.clears.length, 'and the same turn sends exactly one more').toBe(before + 1)
@@ -1565,14 +1600,14 @@ describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, 
     expect(register.census(), 'and the store was never written, so the subscriber could not have fired either').toBe(0)
     // THE TWO MOVES ARE TWO WHOLE-MEMBER WRITES TO THE ADDRESS, and the last one wins:
     expect(crossing.dragCalls, 'two moves, two `commitDrag`s, the last 140').toEqual([
-      { id: DEFAULT_PANE_ID, geometry: { size: 100 } },
-      { id: DEFAULT_PANE_ID, geometry: { size: 140 } },
+      { id: DEFAULT_PANE_ID, geometry: { height: 100 } },
+      { id: DEFAULT_PANE_ID, geometry: { height: 140 } },
     ])
     // **THE ORDER IS THE CONTRACT**: the sink is not on this log (it is the harness\'s), and the three ROUTE acts are the
     // release\'s file commit and then its OWN ending of the temp reading — never the ending before the commit.
     expect(crossing.acts, 'the release: its file commit, THEN its own `clearDrag`').toEqual(['commitDrag', 'commitDrag', 'commitPane', 'clearDrag'])
     expect(crossing.clears.length, 'the ending is sent ONCE, by the release').toBe(1)
-    expect(crossing.calls, 'and the file commit is the sink\'s own value').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    expect(crossing.calls, 'and the file commit is the sink\'s own value').toEqual([{ id: PANE_ID, geometry: { height: 240 } }])
     expect(crossing.dragFamily(), 'and no drag family stands once the release has ended it').toBeNull()
   })
 
@@ -1596,7 +1631,7 @@ describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, 
   it('F-6/§7a.1.2-cancel: the cancel/pointercancel terminal ends the family with AT MOST ONE `clearDrag` per gesture (reading (i)), ZERO sink writes (E10), and a fresh move after a cancel RE-MINTS the address', () => {
     const { w, crossing } = compose()
     w.move('g1', { value: 100 }) // the address stands
-    expect(crossing.dragFamily(), 'the control: the family really stands before the cancel').toEqual({ [PANE_ID]: { size: 100 } })
+    expect(crossing.dragFamily(), 'the control: the family really stands before the cancel').toEqual({ [PANE_ID]: { height: 100 } })
     w.cancel('g1')
     expect(crossing.clears.length, 'the cancel sends exactly one `clearDrag` — reading (i), not reading (ii)').toBe(1)
     expect(crossing.dragFamily(), 'and the family is gone').toBeNull()
@@ -1607,18 +1642,18 @@ describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, 
     // AND THE GESTURE MAY BEGIN AGAIN: a fresh move re-mints the address, so the erase gates the ERASE and never the gesture.
     w.move('g1', { value: 140 })
     expect(crossing.dragCalls.length, 'the fresh move is a fresh write').toBe(2)
-    expect(crossing.dragFamily(), 'and the address stands again at the new value').toEqual({ [PANE_ID]: { size: 140 } })
+    expect(crossing.dragFamily(), 'and the address stands again at the new value').toEqual({ [PANE_ID]: { height: 140 } })
   })
 
   it('F-6/invalid-release (reset): ONE route call holding the clamped PRE-DRAG size (the persistent original RESTORED BY THE CALL), AND the release\'s own `clearDrag`', () => {
     const { w, crossing } = compose()
     const sink = makeSink()
-    crossing.seed(PANE_ID, { size: 220 }) // the pre-drag size the reset restores
+    crossing.seed(PANE_ID, { height: 220 }) // the pre-drag size the reset restores
     w.move('g1', { value: 100 })
     w.release('g1', 220, sink) // 220 = the clamped pre-drag size
     expect(sink.stats().sinkCalls).toBe(1)
-    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: 220 } }])
-    expect(crossing.family()[PANE_ID]?.size).toBe(220)
+    expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { height: 220 } }])
+    expect(crossing.family()[PANE_ID]?.height).toBe(220)
     expect(crossing.clears.length, 'and the release ends the temp reading it inherited, once').toBe(1)
     expect(crossing.dragFamily(), 'so no family stands after the reset either').toBeNull()
   })
@@ -1659,13 +1694,13 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
         if (n % 2 === 1) {
           // RE-GRAINED (`D-89`): the write is the ROUTE CALL, not a store commit — ONE `commitPane` carrying the sink's own
           // value, which is what the two-tier commit spelling became.
-          expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { size: endPath === 1 ? 240 : 220 } }])
-          expect(crossing.family()[PANE_ID]?.size).toBe(endPath === 1 ? 240 : 220)
+          expect(crossing.calls).toEqual([{ id: PANE_ID, geometry: { height: endPath === 1 ? 240 : 220 } }])
+          expect(crossing.family()[PANE_ID]?.height).toBe(endPath === 1 ? 240 : 220)
         }
         // **AND THE DRAG/ENDING COUNTS, ON EVERY CELL OF THE PAIR** (`D-92` re-grained 2026-11-08): the move wrote the
         // address once, the release ended it once, and the family does not stand afterwards.
         expect(crossing.dragCalls, 'the move wrote the address once, with the preview\'s value').toEqual([
-          { id: DEFAULT_PANE_ID, geometry: { size: 100 } },
+          { id: DEFAULT_PANE_ID, geometry: { height: 100 } },
         ])
         expect(crossing.clears.length, 'the release ends the temp reading it inherited, exactly once').toBe(1)
         expect(crossing.dragFamily(), 'and the family is absent afterwards').toBeNull()
@@ -1693,9 +1728,9 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
       expect(crossing.dragFamily(), 'the address does not stand before the first write').toBeNull()
       w.move('g1', { value: 100 })
       expect(crossing.dragCalls, 'ONE `commitDrag` names DEFAULT_PANE_ID with the preview\'s value').toEqual([
-        { id: DEFAULT_PANE_ID, geometry: { size: 100 } },
+        { id: DEFAULT_PANE_ID, geometry: { height: 100 } },
       ])
-      expect(crossing.dragFamily(), 'and the family holds it').toEqual({ [PANE_ID]: { size: 100 } })
+      expect(crossing.dragFamily(), 'and the family holds it').toEqual({ [PANE_ID]: { height: 100 } })
       expect(stored(register, 'temp.drag.g1.placement').found, 'and the doubled store\'s temp tier is untouched').toBe(false)
       expect(register.census(), 'zero store writes — the address is the crossing\'s').toBe(0)
     } else if (n === 8) {
@@ -1705,9 +1740,9 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
       // ONE ROUTE CALL PER MOVE, AND THE FAMILY HOLDS THE LAST — a whole-family write replaces the member, it does not
       // accumulate a second one for a second gesture.
       expect(crossing.dragCalls.length, 'one route call per move').toBe(2)
-      expect(crossing.dragCalls[1], 'and the second carries the later value').toEqual({ id: DEFAULT_PANE_ID, geometry: { size: 140 } })
+      expect(crossing.dragCalls[1], 'and the second carries the later value').toEqual({ id: DEFAULT_PANE_ID, geometry: { height: 140 } })
       expect(Object.keys(crossing.dragFamily() ?? {}), 'one member per pane id').toEqual([PANE_ID])
-      expect(crossing.dragFamily(), 'and the family holds the LAST write').toEqual({ [PANE_ID]: { size: 140 } })
+      expect(crossing.dragFamily(), 'and the family holds the LAST write').toEqual({ [PANE_ID]: { height: 140 } })
     } else {
       const { w, register, crossing } = compose()
       w.release('g1', 240, makeSink()) // a whole gesture with NO move at all
@@ -1766,7 +1801,7 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the abandon terminal / reasse
     if (state === 'active-cancel') {
       // THE STATE THE ROW IS NAMED FOR: a gesture that wrote the address, ended by the abandon terminal (`cancel`, `D-168`).
       w.move('g1', { value: 120 })
-      expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { size: 120 } })
+      expect(crossing.dragFamily(), 'the control: the family really stands before the erase').toEqual({ [PANE_ID]: { height: 120 } })
       w.cancel('g1')
       if (reading === 'route-log') {
         // THE SEQUENCE, in the order the composition sent it: the move's write, then the erase's ending.
@@ -1795,7 +1830,7 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the abandon terminal / reasse
         expect(crossing.acts, 'the release: its file commit, THEN its own `clearDrag`').toEqual(['commitPane', 'clearDrag'])
         expect(crossing.dragCalls, 'and NO move ⇒ NO drag write').toEqual([])
       } else {
-        expect(crossing.family()[PANE_ID]?.size, 'the file commit landed').toBe(240)
+        expect(crossing.family()[PANE_ID]?.height, 'the file commit landed').toBe(240)
         expect(crossing.dragFamily(), 'while the drag family never stood and does not stand now').toBeNull()
       }
     } else {
@@ -2245,12 +2280,12 @@ describe('§3.1 M-12 — the composition holds end-to-end over the SHAPE, with a
     w.move('g1', { value: 140 }) // subsequent move — replaces it (a whole-family write)
     w.release('g1', 240, sink) // release: ONE route call inside the single sink invocation, then its own ending
     expect(sink.stats().sinkCalls, 'one sink invocation, no throw').toBe(1)
-    expect(crossing.calls, 'the release\'s write is the route call').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    expect(crossing.calls, 'the release\'s write is the route call').toEqual([{ id: PANE_ID, geometry: { height: 240 } }])
     // **THE DRAG ADDRESS ACROSS THE WHOLE GESTURE**: two whole-member writes, the last one winning, and the release's own
     // ending after its file commit — the family absent once the gesture is over.
     expect(crossing.dragCalls, 'two moves, two `commitDrag`s naming the composition\'s pane').toEqual([
-      { id: DEFAULT_PANE_ID, geometry: { size: 120 } },
-      { id: DEFAULT_PANE_ID, geometry: { size: 140 } },
+      { id: DEFAULT_PANE_ID, geometry: { height: 120 } },
+      { id: DEFAULT_PANE_ID, geometry: { height: 140 } },
     ])
     expect(crossing.acts, 'and the release: the file commit, THEN its own `clearDrag`').toEqual([
       'commitDrag',
@@ -2272,12 +2307,12 @@ describe('§3.1 M-12 — the composition holds end-to-end over the SHAPE, with a
     // no throw escapes ANY turn (the whole lifecycle above ran without one — asserted turn by turn; two more gestures
     // exercise the abandon terminal twice):
     w.move('g2', { value: 90 })
-    expect(crossing.dragFamily(), 'the second gesture wrote the address').toEqual({ [PANE_ID]: { size: 90 } })
+    expect(crossing.dragFamily(), 'the second gesture wrote the address').toEqual({ [PANE_ID]: { height: 90 } })
     // **THE ABANDON TERMINAL IS `cancel`** (`D-168`: `rightClick` was the same call and is DELETED).
     w.cancel('g2')
     expect(crossing.dragFamily(), 'the erase turn ended the family at its address, not a closure value').toBeNull()
     w.move('g3', { value: 80 })
-    expect(crossing.dragFamily(), 'and a third gesture writes it again').toEqual({ [PANE_ID]: { size: 80 } })
+    expect(crossing.dragFamily(), 'and a third gesture writes it again').toEqual({ [PANE_ID]: { height: 80 } })
     w.cancel('g3')
     expect(crossing.dragFamily(), 'and the cancel terminal ends it too').toBeNull()
     expect(crossing.clears.length, 'one ending per terminal: the release\'s own, then one per abandon turn — three').toBe(3)
@@ -2473,7 +2508,7 @@ describe('§3.4 R-2 — THE WIRING-ONLY / NO-WRITE-THROUGH ROW', () => {
     // The fork-boundary half (H-r6) is not drivable on the node host; the drivable half here is the fixture discipline: the
     // drive fixtures pass element/token and NO STORE is ever given one, because there is no store in the backing at all.
     const { w, register, crossing } = compose()
-    crossing.seed(PANE_ID, { size: 240 })
+    crossing.seed(PANE_ID, { height: 240 })
     expect(w.startSizeOf(paneFixture, PANE_ID), 'the element-derived id answers off the SHAPE').toBe(240)
     expect(() => w.startSizeOf(paneFixture, PANE_ID)).not.toThrow()
     // **NOT ONE ACT, NOT EVEN A READ** — an element that reached a store would have to arrive as a path, and the census
@@ -2508,10 +2543,10 @@ describe('§3.4 R-4 — THE ONE-SINK/ONE-CLAMP ROW', () => {
     w.move('g1', { value: 100 })
     w.release('g1', 240, sink)
     expect(sink.stats().sinkCalls).toBe(1) // one sink invocation
-    expect(crossing.calls, 'and ONE route call, made inside that invocation').toEqual([{ id: PANE_ID, geometry: { size: 240 } }])
+    expect(crossing.calls, 'and ONE route call, made inside that invocation').toEqual([{ id: PANE_ID, geometry: { height: 240 } }])
     // **THE ONE ORDERED TURN, READ ON THE ROUTE LOG**: the move's write to the ADDRESS, then the file commit, then the
     // release's own ending — and no second file commit anywhere.
-    expect(crossing.dragCalls, 'the move wrote the drag address once').toEqual([{ id: DEFAULT_PANE_ID, geometry: { size: 100 } }])
+    expect(crossing.dragCalls, 'the move wrote the drag address once').toEqual([{ id: DEFAULT_PANE_ID, geometry: { height: 100 } }])
     expect(crossing.acts, 'the release: commitPane, then its own `clearDrag` — never a second file write').toEqual([
       'commitDrag',
       'commitPane',
@@ -2553,7 +2588,7 @@ describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'pa
   it('D-117/LIVE-READ: for ONE element whose authored pane says `size 140`/`{20,260}` and whose `[\'panes\']` record says `320`/`{10,400}`, the COMPOSITION answers the record, a pane the family does not name answers the crossing\'s MEASURED DEFAULT rather than the attribute, and the EXAMPLE-SEAM read of those attributes is GONE — `startSizeOf`, `boundsOf` and their one private reader `numberFrom` occur nowhere in `demo-envelope.ts`\'s code (`F11`)', () => {
     const { w, crossing } = compose()
     // THE DELIVERY: a pane the family now names, at figures the authored attributes do not carry.
-    crossing.seed('gutter-pane', { size: 320, bounds: { min: 10, max: 400 } })
+    crossing.seed('gutter-pane', { height: 320, bounds: { min: 10, max: 400 } })
     const element = handleIn('gutter-pane', { size: '140', min: '20', max: '260', resizable: 'true' })
 
     // (1) THE COMPOSITION\'S TWO ANSWERS OVER THAT ELEMENT — the property `D-117` moved — AND THE RETIRED CONTROL
@@ -2604,9 +2639,9 @@ describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'pa
     expect(sink.record, 'the SINK was invoked exactly once, with the final value').toEqual([220])
     expect(sink.stats().sinkCalls, 'and it is NEVER RETIRED: ONE sink write per gesture end (E10/SINK-1)').toBe(1)
     expect(crossing.calls, 'and the file commit is the ONE `commitPane` carrying `{size: 220}`').toEqual([
-      { id: DEFAULT_PANE_ID, geometry: { size: 220 } },
+      { id: DEFAULT_PANE_ID, geometry: { height: 220 } },
     ])
-    expect(crossing.dragCalls, 'the move before it wrote the address').toEqual([{ id: DEFAULT_PANE_ID, geometry: { size: 180 } }])
+    expect(crossing.dragCalls, 'the move before it wrote the address').toEqual([{ id: DEFAULT_PANE_ID, geometry: { height: 180 } }])
     // **THE RELEASE\'S OWN ENDING LANDS AFTER THE FILE COMMIT** — the order the contract states, read on one log.
     expect(crossing.acts, 'the release: its file commit, THEN its own `clearDrag`').toEqual(['commitDrag', 'commitPane', 'clearDrag'])
     expect(crossing.clears.length, 'exactly one ending').toBe(1)

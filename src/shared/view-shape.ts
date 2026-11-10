@@ -8,11 +8,11 @@
 // (`D-73`) applied to a vocabulary rather than to a function. So the vocabulary is here, `main` re-exports every name from
 // its own module (no cite moves), and the renderer imports it instead of reaching into a main-process module.
 //
-// IT IS THE SHAPE AND NOT A STORE (D-78's ruling 3, D-88). Nothing here holds anything: these are type declarations, SIX
-// constants (the measured pane defaults, the zone the app has, and the declared pane and zone id sets derived from them) and
-// SIX PURE functions (the three placeholders and the three derivations). No address space, no persistence, no constraint, no
-// listener, no instance — a value of these types is thrown away and rebuilt on every delivery, which is exactly what makes
-// it a projection rather than a record.
+// IT IS THE SHAPE AND NOT A STORE (D-78's ruling 3, D-88). Nothing here holds anything: these are type declarations, SEVEN
+// constants (the two declared pane ids, the one zone the menus pane declares, the two measured pane defaults, and the two
+// declared id sets built from them) and SIX PURE functions (the three placeholders and the three derivations). No address
+// space, no persistence, no constraint, no listener, no instance — a value of these types is thrown away and rebuilt on
+// every delivery, which is exactly what makes it a projection rather than a record.
 //
 // **THE MEASURED DEFAULTS ARE THE TREE'S OWN AND NOT THIS FILE'S INVENTION** (D-87's ground, quoted rather than re-derived):
 // MEASURED 2026-11-03, the reading `D-87` took: the authored pane's `props` read `size '100'`, `min '0'`, `max '200'`, and
@@ -26,14 +26,31 @@
 // (D-91): its members are the frozen store's four, the read that MISSed them answered `undefined`, and so its derivation's
 // missing arm is `null` rather than a geometry. **AND ITS PLACEHOLDER IS NO LONGER *"THE FAMILY THAT NAMES NO ZONE"***:
 // that sentence is SUPERSEDED BY POINTER and not reworded (`D-46`) — the creation repair now writes EVERY DECLARED ZONE ID
-// WITH AN EMPTY RECORD (`{'zone-1': {}}`, `viewZonesPlaceholder` below), because a leaf write needs the zone's OWN NODE to
-// stand under it and an open id set could not guarantee one (`D-151`, `D-139`).
+// WITH AN EMPTY RECORD (`viewZonesPlaceholder` below, FOUR ids since `D-181`), because a leaf write needs the zone's OWN
+// NODE to stand under it and an open id set could not guarantee one (`D-151`, `D-139`).
 
-/** One pane's geometry, admitted field by field: an unknown member is dropped, never carried. */
+/** **ONE PANE'S GEOMETRY, ADMITTED FIELD BY FIELD: an unknown member is dropped, never carried.**
+ *
+ *  **THE MEMBER SET IS `width`/`height`/`bounds?`/`zone?`, AND BOTH AXIS MEMBERS ARE STORED AND BOTH REQUIRED** (`D-189`,
+ *  which SUPERSEDES `D-186`'s *"one `size`, two axes"* BY POINTER and not by rewording, `D-46`). Each member's own name
+ *  says its axis, so no reader needs the `zone` to know what a figure measures — and the axes are two members rather than
+ *  one precisely so that a pane dragged from a sidebar into a `top` zone does not arrive reusing a height as a width.
+ *  **THE MEMBER THE PANE'S `zone` DOES NOT MAKE ADJUSTABLE IS RETAINED AND UNPAINTED, AND IT IS THE FEATURE**: it is the
+ *  memory a zone change reads again, and it is not a second authority, because at any instant exactly one figure is
+ *  painted per axis (`C-11`).
+ *
+ *  **`bounds` IS OPTIONAL, AND ABSENT IS LAWFUL RATHER THAN REPAIRED** (`D-186`, `D-129`): one pair read against the
+ *  ADJUSTABLE axis — stored for `pane-a`, because the stage is derived and has no zone to inherit a clamp from, and absent
+ *  for a zone-resident pane, whose clamp is the LAYOUT's (the top zone's width is full width and stored nowhere), so a
+ *  required pair could only be invented. **`zone` IS OPTIONAL TOO** (`C-9`, `D-183`): present, it names one of
+ *  `DECLARED_ZONE_IDS` and SELECTS which axis member a gesture may move; absent, it says the pane lives in the STAGE, which
+ *  is not one of the four and therefore has no id to name. */
 export interface ViewPaneGeometry {
   readonly id: string
-  readonly size: number
-  readonly bounds: { readonly min: number; readonly max: number }
+  readonly width: number
+  readonly height: number
+  readonly bounds?: { readonly min: number; readonly max: number }
+  readonly zone?: string
 }
 
 /** **ONE ZONE, AS THE DRAG'S TWO ZONE TURNS READ IT (D-91) — AND ITS FOUR MEMBERS ARE THE FROZEN STORE'S, MEASURED, NOT
@@ -120,78 +137,116 @@ export type ViewGeometrySource = 'record' | 'default'
  *  its release turn hard-codes. The AUTHORED DOM PANE IS A DIFFERENT NAME (`demo-envelope.ts` authors `gutter-pane`): the
  *  store's family is keyed by the id the COMPOSITION addresses, and that is the rendering's business, not the address's. */
 export const DEFAULT_PANE_ID = 'pane-a'
+/** **THE SECOND DECLARED PANE — THE MENUS PANE, AND IT DISPLACES NOTHING** (`D-183`, on `D-180`'s eighteen items): `pane-a`
+ *  keeps its subject — the gutter card's resizable pane, whose only producer is the release turn's
+ *  `commitPane(DEFAULT_PANE_ID, { height })` — so the `['drag']` machinery, `panesMustStand`, the compliance battery and the
+ *  gating `renderer-wiring` rows keep theirs, and this id is DECLARED BESIDE it rather than in its place. **IT IS SPELLED
+ *  HERE ONCE** and the set below is built from it, so the declared domain and the placeholder cannot drift apart. */
+export const MENUS_PANE_ID = 'pane-menus'
 /** **THE MEASURED DEFAULT SIZE** — the figure `D-87` measured off the authored pane's `props.size` (MEASURED 2026-11-03),
- *  which the node NO LONGER CARRIES (`F11`: the prop and the two seam readers that read it went together), and the value
- *  `panes-must-stand` repairs to. */
+ *  which the node NO LONGER CARRIES (`F11`: the prop and the two seam readers that read it went together), and the figure
+ *  `panes-must-stand` repairs to. **AT `D-189` IT IS THE DEFAULT FOR BOTH AXIS MEMBERS**, and its VALUE does not move: the
+ *  split renamed `pane-a`'s member and kept the number (`D-192`). */
 export const DEFAULT_PANE_SIZE = 100
 /** **THE MEASURED DEFAULT BOUNDS PAIR** — the pair `D-87` measured off the authored pane's `props.min`/`props.max`
  *  (MEASURED 2026-11-03), which the node NO LONGER CARRIES (`F11`), and the pair `panes-must-stand` repairs to. A VALUE,
  *  copied into a fresh record by `defaultPaneGeometry` rather than handed out by reference, so no caller can move this
  *  file's own constant. */
 export const DEFAULT_PANE_BOUNDS: { readonly min: number; readonly max: number } = { min: 0, max: 200 }
-/** **THE PANE FAMILY'S ID DOMAIN, CLOSED — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-138; `DECLARED_ZONE_IDS`
- *  below is the same closure one family over, `D-151`). `['panes', id]` must be GUARANTEED to stand for every id the route
- *  is handed, and the store creates no parent (measured at this node), so an OPEN id set can guarantee nothing: the domain
- *  closes, and the creation repair writes exactly these ids, each with its measured default geometry. **IT IS DERIVED FROM
- *  `DEFAULT_PANE_ID` AND NOT SPELLED BESIDE IT**, for the reason `DECLARED_ZONE_IDS` is derived from `DEFAULT_ZONE_ID` —
- *  the fallback and the declared set cannot drift. **ONE ID IS A MEASUREMENT AND NOT A NARROWING CHOSEN HERE**: the only
- *  producer of a pane act under `src/` is the release turn's `view.commitPane(DEFAULT_PANE_ID, { size: final })` — ONE
- *  member, ONE id — while `paneIdOf`'s element and token ids reach READS alone, where `paneGeometryIn`'s default arm
- *  answers any id the family does not name, so declaring more would mint records nothing writes (`ASM-11`). */
-export const DECLARED_PANE_IDS: readonly string[] = [DEFAULT_PANE_ID]
+/** **THE PANE FAMILY'S ID DOMAIN, CLOSED AT TWO IDS — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-138, **widened
+ *  one → two at `D-183`**; `DECLARED_ZONE_IDS` below is the same closure one family over, `D-151`). `['panes', id]` must
+ *  be GUARANTEED to stand for every id the route is handed, and the store creates no parent (measured at this node), so an
+ *  OPEN id set can guarantee nothing: the domain closes, and the creation repair writes exactly these ids, each with its
+ *  declared default geometry (`viewPanesPlaceholder` below). **IT IS BUILT FROM THE TWO ID CONSTANTS AND NOT SPELLED
+ *  BESIDE THEM**, so the drag's own fallback (`DEFAULT_PANE_ID`) can never name a pane this record refuses and the
+ *  placeholder cannot drift from the set. **THE SECOND ID NAMES ITS OWN READER, WHICH IS WHY THE WIDENING IS LAWFUL**: the
+ *  menus pane renders eighteen authored items and its `width` is the member the paint writes, while `pane-a`'s subject —
+ *  the gutter card's resize, the drag's release its only producer — is UNCHANGED (`OWED-1`, settled at `D-183`). */
+export const DECLARED_PANE_IDS: readonly string[] = [DEFAULT_PANE_ID, MENUS_PANE_ID]
 
-/** **THE ZONE THE APP HAS, MEASURED AND NOT CHOSEN** — `DEFAULT_PANE_ID`'s pattern applied to the zone family (D-151): the
- *  id the drag composition's render turn hard-codes and the id `zoneIdOf` falls back to when a caller's element carries
- *  none. It is spelled ONCE, so the two zone turns' fallback and the declared set below cannot drift apart — and the
- *  renderer's two literals becoming this name is a finding routed to that module, not a byte of this one (D-3, D-87). */
-export const DEFAULT_ZONE_ID = 'zone-1'
-/** **THE ZONE FAMILY'S ID DOMAIN, CLOSED — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-151, D-139). `['zones', id]`
- *  must be GUARANTEED to stand for every id the route is handed, and the store creates no parent (measured at this node):
- *  an OPEN id set can guarantee nothing, so the domain closes and the creation repair writes exactly these ids, each with
- *  an EMPTY record. **IT IS DERIVED FROM `DEFAULT_ZONE_ID` AND NOT SPELLED BESIDE IT**, which is the same reason
- *  `defaultPaneGeometry` copies `DEFAULT_PANE_BOUNDS` rather than sharing it. **ONE ID IS A MEASUREMENT AND NOT A
- *  NARROWING CHOSEN HERE**: the render turn names `zone-1` literally, `zoneIdOf` falls back to it, no authored element
- *  under `src/` carries a `zoneId`, and no file of `src/` spells another id FOR THIS FAMILY — so declaring more would mint
- *  records nothing reads (`ASM-10`). */
-export const DECLARED_ZONE_IDS: readonly string[] = [DEFAULT_ZONE_ID]
+/** **THE ZONE FAMILY'S ID DOMAIN, CLOSED AT FOUR IDS — SPELLED, NOT DERIVED, AND THAT IS `D-192`'S SETTLEMENT** (D-151,
+ *  D-139, **widened one → four at `D-181`**). `['zones', id]` must be GUARANTEED to stand for every id the route is handed,
+ *  and the store creates no parent (measured at this node): an OPEN id set can guarantee nothing, so the domain closes and
+ *  the creation repair writes exactly these ids, each with an EMPTY record.
+ *
+ *  **AND `DEFAULT_ZONE_ID` IS RETIRED, NOT RE-SPELLED** (`D-192`, settling `OWED-L2-1`): that constant existed because the
+ *  declared set held ONE id and something had to be the default, and `zone-1` is not one of the four — so it named nothing
+ *  once the set widened, and **there is no default zone to name**, because a pane's `zone` is OPTIONAL and its absence
+ *  means the STAGE (`C-9`), the only default the design has. `D-169`'s dead-reader discipline, applied to a constant: it
+ *  went with its readers, and no placeholder below re-spells it. **THE FOUR IDS ARE A MEASUREMENT AND NOT A PREFERENCE**:
+ *  a pane naming `top` forces `top` to be a declared id, so the widening is the pane's default's price (`D-181`) — and the
+ *  two members that were dead surface since `D-169`, `size` and `display`, are the layout's own figures now (`D-185`,
+ *  `D-187`). */
+export const DECLARED_ZONE_IDS: readonly string[] = ['top', 'bottom', 'left', 'right']
+/** **THE ZONE THE MENUS PANE DECLARES — THE MEMBER THAT MAKES ITS `width` THE ADJUSTABLE ONE** (`D-183`, `D-186`, `D-189`,
+ *  `D-192`). **IT IS NOT A DEFAULT ZONE AND NOT A FALLBACK**: no route of this module writes a `zone` (`C-8`), so its only
+ *  two writers are the creation repair below and an outside `data.write`, and both are judged by the family's own parse —
+ *  which is why a spelling that drifted off `DECLARED_ZONE_IDS`' `top` would be REFUSED rather than stored (`paneOf`,
+ *  `paneNodeAdmits`, `D-105`). */
+export const MENUS_PANE_ZONE_ID = 'top'
 
-/** **THE ZONE FAMILY'S PLACEHOLDER: EVERY DECLARED ZONE ID WITH AN EMPTY RECORD** — `{'zone-1': {}}`, and **A FRESH RECORD
- *  ON EVERY CALL**, both for the family and for each zone in it, so no caller can move this file's constant or the set it
- *  is built from (`viewThemePlaceholder`'s rule). **IT REPLACES `D-91`'S *"THE FAMILY THAT NAMES NO ZONE"* BY POINTER AND
- *  NOT BY REWORDING** (`D-46`, `D-151`): that value cannot satisfy the leaf write's precondition, while `{}` IS a zone
- *  this file's vocabulary admits (`zoneIn` names a memberless zone and `main`'s `zoneOf` answers `{id}` for one), and the
- *  record it creates is the NODE a leaf write stands under. A route supplying no member therefore writes nothing and
- *  answers `committed`: the declared empty record IS the state that act names (`D-53`'s reading, at this family). */
+/** **THE ZONE FAMILY'S PLACEHOLDER: EVERY DECLARED ZONE ID WITH AN EMPTY RECORD** — `{'top': {}, 'bottom': {}, 'left': {},
+ *  'right': {}}`, and **A FRESH RECORD ON EVERY CALL**, both for the family and for each zone in it, so no caller can move
+ *  this file's constant or the set it is built from (`viewThemePlaceholder`'s rule). **IT REPLACES `D-91`'S *"THE FAMILY
+ *  THAT NAMES NO ZONE"* BY POINTER AND NOT BY REWORDING** (`D-46`, `D-151`): that value cannot satisfy the leaf write's
+ *  precondition, while `{}` IS a zone this file's vocabulary admits (`zoneIn` names a memberless zone and `main`'s
+ *  `zoneOf` answers `{id}` for one), and the record it creates is the NODE a leaf write stands under. **AND AT `D-181` IT
+ *  WRITES FOUR RECORDS WHERE IT WROTE ONE**, which is the whole of that widening's repair: each of the four ids the paint
+ *  addresses must stand for a leaf write at `['zones', id, 'size']` to land under it. **THAT THE FOUR ZONES RENDER NOTHING
+ *  UNTIL A WRITER STATES A `size` OR A `display` IS `OWED-4`'S ANSWER AND THE PAINT'S** — there is no repair default and no
+ *  authored fallback here, because no zone dimension has ever been measured and `DEFAULT_PANE_SIZE` is a PANE's figure
+ *  (`D-191`, `D-192`). A route supplying no member therefore writes nothing and answers `committed`: the declared empty
+ *  record IS the state that act names (`D-53`'s reading, at this family). */
 export const viewZonesPlaceholder = (): Record<string, unknown> => {
   const family: Record<string, unknown> = {}
   for (const id of DECLARED_ZONE_IDS) family[id] = {}
   return family
 }
 
-/** **THE PANE FAMILY'S PLACEHOLDER: EVERY DECLARED PANE ID WITH ITS MEASURED DEFAULT GEOMETRY** —
- *  `{'pane-a': { size: 100, bounds: { min: 0, max: 200 } }}` — and **A FRESH RECORD ON EVERY CALL**, both for the family
- *  and for each pane in it, so no caller can move this file's constants or the set it is built from
- *  (`viewThemePlaceholder`'s rule). **ITS VALUE DOES NOT MOVE** (`ASM-12`, D-138): the creation repair has written this
- *  very family since `D-87`, so what the closed domain adds is the GUARANTEE — a declared set plus an `undeclared-pane`
- *  refusal at the route — and never the node a leaf write stands under. **THAT IS WHERE THIS FAMILY DIVERGES FROM THE
- *  ZONE ONE RATHER THAN REPEATING IT**: `viewZonesPlaceholder` above had to change its value because the family it
- *  replaced created NO zone record at all, while this one has always created the pane's — so what the pane placeholder
- *  owes is a RE-SPELLING forced by the composer's deletion and by the set it must be built from, and not a new value. The
- *  shape it answers is `defaultPaneGeometry`'s `{size, bounds}`, with the derivation's `id` member left off because the
- *  key is the id here. */
+/** **THE PANE FAMILY'S PLACEHOLDER: EVERY DECLARED PANE ID WITH ITS DECLARED DEFAULT GEOMETRY** —
+ *  `{'pane-a': { width: 100, height: 100, bounds: { min: 0, max: 200 } }, 'pane-menus': { width: 100, height: 100,
+ *  zone: 'top' }}` — and **A FRESH RECORD ON EVERY CALL**, both for the family and for each pane in it, so no caller can
+ *  move this file's constants or the set it is built from (`viewThemePlaceholder`'s rule).
+ *
+ *  **BOTH MEMBERS OF BOTH PANES ARE WRITTEN AT `DEFAULT_PANE_SIZE`, AND THAT IS `D-192` CORRECTING `D-191`**: the shape
+ *  requires BOTH axis members, so a repair writing one per pane would leave the other UNSTATED and the shape unsatisfied —
+ *  and the OPERATIVE pair is `pane-menus`.`width` (the adjustable axis in a `top` zone) and `pane-a`.`height` (the figure
+ *  `D-189` renames from `size`). **THE FIGURE A ZONE-RESIDENT PANE STORES IS ITS MEMORY AND NOT THE ZONE'S**: a repair that
+ *  read `['zones']` for it would be this corpus's first family-crossing repair and would store a figure the layout already
+ *  computes (`D-186`), so the family's own measured default stands in and the divergence is STATED rather than inherited.
+ *
+ *  **THE TWO RECORDS DIFFER, AND THE DIFFERENCE IS THE WHOLE OF `C-9`/`D-186`**: `pane-a` carries its `bounds` — the stage is
+ *  derived and has no zone to inherit a clamp from — and NO `zone`, because absence IS the stage; `pane-menus` carries
+ *  `zone: 'top'` and NO `bounds`, whose absence is LAWFUL for a zone-resident pane and is not repaired into one. **THE SET
+ *  AND THE PLACEHOLDER CANNOT DRIFT** because the family is built from `DECLARED_PANE_IDS` and the `id` member is left off
+ *  each record: the key is the id here. */
 export const viewPanesPlaceholder = (): Record<string, unknown> => {
   const family: Record<string, unknown> = {}
   for (const id of DECLARED_PANE_IDS) {
     const geometry = defaultPaneGeometry(id)
-    family[id] = { size: geometry.size, bounds: { min: geometry.bounds.min, max: geometry.bounds.max } }
+    const record: Record<string, unknown> = { width: geometry.width, height: geometry.height }
+    if (id === MENUS_PANE_ID) {
+      // THE ZONE-RESIDENT PANE: its `width` is the adjustable member, its clamp is the LAYOUT's, and its `zone` is the
+      // member the design derives (`D-183`, `D-186`, `D-192`) — absence would place it in the stage instead.
+      record['zone'] = MENUS_PANE_ZONE_ID
+    } else {
+      // THE STAGE PANE: `zone` absent by `C-9`, and its OWN stored clamp because the stage has nothing to inherit from.
+      record['bounds'] = { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max }
+    }
+    family[id] = record
   }
   return family
 }
 
-/** The measured default geometry for one pane — a FRESH record every call, so no caller holds the constant above. */
+/** The measured default geometry for one pane — a FRESH record every call, so no caller holds the constant above.
+ *  **ITS TWO FIGURES ARE THE SAME NUMBER AND ITS TWO MEMBERS ARE NOT THE SAME AXIS** (`D-189`): `width` and `height` both
+ *  answer `DEFAULT_PANE_SIZE`, and neither can be left to a zone — a stage pane paints BOTH from its own record (`C-11`),
+ *  so an unstated axis would leave one axis with no source (`OWED-4`'s third instance). Its `bounds` is the measured clamp
+ *  the stage pane keeps; a zone-resident pane's ABSENCE of one is the placeholder's and the record's, never this default's. */
 export const defaultPaneGeometry = (id: string): ViewPaneGeometry => ({
   id,
-  size: DEFAULT_PANE_SIZE,
+  width: DEFAULT_PANE_SIZE,
+  height: DEFAULT_PANE_SIZE,
   bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max },
 })
 
@@ -207,13 +262,22 @@ export const paneGeometryIn = (
   id: string,
 ): { readonly status: 'committed'; readonly pane: ViewPaneGeometry; readonly source: ViewGeometrySource } => {
   const held = panes.find((pane) => pane.id === id)
-  return held === undefined
-    ? { status: 'committed', pane: defaultPaneGeometry(id), source: 'default' }
-    : {
-        status: 'committed',
-        pane: { id: held.id, size: held.size, bounds: { min: held.bounds.min, max: held.bounds.max } },
-        source: 'record',
-      }
+  if (held === undefined) {
+    return { status: 'committed', pane: defaultPaneGeometry(id), source: 'default' }
+  }
+  // **EVERY MEMBER THE FAMILY ADMITS IS CARRIED** (`docs/L2/view-record/interface.md` §3, `D-105`): the two axis members,
+  // and the optional `bounds` and `zone` WHERE THE RECORD NAMES ONE — because a member the family admits and this read
+  // drops is invisible to a consumer while `source.panes` still says `'record'`, which is `D-105`'s fault exactly.
+  const pane: {
+    id: string
+    width: number
+    height: number
+    bounds?: { readonly min: number; readonly max: number }
+    zone?: string
+  } = { id: held.id, width: held.width, height: held.height }
+  if (held.bounds !== undefined) pane.bounds = { min: held.bounds.min, max: held.bounds.max }
+  if (held.zone !== undefined) pane.zone = held.zone
+  return { status: 'committed', pane, source: 'record' }
 }
 
 /** **ONE ZONE OUT OF A READING — AND ITS MISSING ARM IS `null`, WHICH IS A MEASUREMENT AND NOT AN OVERSIGHT** (D-91).

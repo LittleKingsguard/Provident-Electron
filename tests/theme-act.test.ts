@@ -102,7 +102,7 @@ function crossing(): Crossing {
     // the whole-tree typecheck leg (`typecheck:tests`) for a route nothing reaches any more.
     commitZones: async (id: string, zone: unknown) => record.commitZones(id, zone),
     commitTheme: async (token: string, attributeName: string) => record.commitTheme(token, attributeName),
-    // **THE TWO ROUTES THE DRAG'S ADDRESS NEEDS**: `commitDrag(paneId, geometry)` writes `{[paneId]: {size}}` whole at
+    // **THE TWO ROUTES THE DRAG'S ADDRESS NEEDS**: `commitDrag(paneId, geometry)` writes `{[paneId]: {height}}` whole at
     // `['drag']`/`temp`, and `clearDrag()` ends the family. Each records the call before delegating, so a row can state
     // that the client SENT it and that the record then wrote the address.
     commitDrag: async (id: string, geometry: unknown) => {
@@ -417,7 +417,7 @@ interface DragRoutes {
 }
 
 describe('A-5 · the drag route pair: ONE member per pane at `[\'drag\']`/`temp`, and the erase that ends it', () => {
-  it('A-5 — **THE DRAG\'S VALUE IS AN ADDRESS**: the client\'s bridge carries `commitDrag`/`clearDrag` beside the five landed routes, `commitDrag(\'pane-a\', {size: 220})` reaches the literal and the record writes the family WHOLE at `[\'drag\']`/`temp` (`{\'pane-a\': {size: 220}}`), and `clearDrag()` leaves the address ABSENT while nothing was ever written at `file`', async () => {
+  it('A-5 — **THE DRAG\'S VALUE IS AN ADDRESS, AND ITS MEMBER NAMES THE AXIS THE GESTURE MOVES**: the client\'s bridge carries `commitDrag`/`clearDrag` beside the five landed routes, `commitDrag(\'pane-a\', {height: 220})` — the ADJUSTABLE member of a stage-resident pane (`D-189`, `D-190`) — reaches the literal and the record writes the family WHOLE at `[\'drag\']`/`temp` (`{\'pane-a\': {height: 220}}`), and `clearDrag()` leaves the address ABSENT while nothing was ever written at `file`', async () => {
     const live = crossing()
     try {
       // THE MEMBER CENSUS OF THE LITERAL THIS REALM HANDS THE CLIENT — the five landed routes and the drag pair, nothing
@@ -433,17 +433,18 @@ describe('A-5 · the drag route pair: ONE member per pane at `[\'drag\']`/`temp`
         typeof commitDrag,
         'A-5 — the view client carries `commitDrag(paneId, geometry)`: the drag family has no writer until the record routes one',
       ).toBe('function')
-      ;(commitDrag as (id: string, geometry: unknown) => unknown).call(client, 'pane-a', { size: 220 })
+      ;(commitDrag as (id: string, geometry: unknown) => unknown).call(client, 'pane-a', { height: 220 })
 
       // THE CALL REACHED THE LITERAL, and the literal delegated to the record.
       expect(live.dragCalls, 'A-5 — the client sent `commitDrag` with the pane id and the geometry it was handed').toEqual([
-        { id: 'pane-a', geometry: { size: 220 } },
+        { id: 'pane-a', geometry: { height: 220 } },
       ])
-      // **THE ADDRESS, READ AT ITS OWN PATH AND TIER**: one member per pane id, `{size}`, whole.
+      // **THE ADDRESS, READ AT ITS OWN PATH AND TIER**: one member per pane id, `{height}` — the axis-named member and no
+      // second, because at any instant exactly one axis is the pane's and the other is the zone's.
       expect(
         addressIn(live.store, ['drag'], 'temp'),
         'A-5 — the record wrote the family whole at `[\'drag\']` and `temp`',
-      ).toEqual({ 'pane-a': { size: 220 } })
+      ).toEqual({ 'pane-a': { height: 220 } })
 
       const clearDrag = client['clearDrag']
       expect(typeof clearDrag, 'A-5 — and the client carries `clearDrag()`: the family\'s end, whether or not it stood').toBe('function')
@@ -455,9 +456,9 @@ describe('A-5 · the drag route pair: ONE member per pane at `[\'drag\']`/`temp`
       // THE CONTROL: the store DOES answer a family that stands, so the two `null`s above are about the address and not
       // about a read that never works — the same read at the same path answers after the record writes it again.
       const again = client['commitDrag'] as (id: string, geometry: unknown) => unknown
-      again.call(client, 'pane-a', { size: 240 })
+      again.call(client, 'pane-a', { height: 240 })
       expect(addressIn(live.store, ['drag'], 'temp'), 'A-5 CONTROL — the read works; the family simply was not there').toEqual({
-        'pane-a': { size: 240 },
+        'pane-a': { height: 240 },
       })
     } finally {
       live.close()

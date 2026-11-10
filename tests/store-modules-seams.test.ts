@@ -411,10 +411,15 @@ interface StoreDouble {
  * **IT HOLDS NO ADDRESS AND OPENS NOTHING**: a pane is named by its id, never by a path or a tier — which is the whole
  * difference `D-78` ruling 3 draws between the shape and a store.
  */
+/** **ONE PANE'S GEOMETRY, AT THE RECORD'S TWO AXIS MEMBERS** (`D-189`, `D-190`): `size` has no home on the wire any more,
+ *  and a record carrying no `width` or no `height` is one the client drops — so a fixture that spelled `size` here would
+ *  measure a wire this record no longer declares. */
 interface WirePaneGeometry {
   readonly id: string
-  readonly size: number
-  readonly bounds: { readonly min: number; readonly max: number }
+  readonly width: number
+  readonly height: number
+  readonly bounds?: { readonly min: number; readonly max: number }
+  readonly zone?: string
 }
 
 /** ONE ZONE THE SHAPE MAY CARRY (`D-91`): every member optional, `slot` opaque. */
@@ -441,7 +446,16 @@ function paneShapeOf(panes: readonly WirePaneGeometry[] = [], zones: readonly Wi
   let readCount = 0
   const reading = (): unknown => ({
     status: 'committed',
-    panes: panes.map((pane) => ({ id: pane.id, size: pane.size, bounds: { min: pane.bounds.min, max: pane.bounds.max } })),
+    panes: panes.map((pane) => {
+      const carried: { id: string; width: number; height: number; bounds?: { min: number; max: number }; zone?: string } = {
+        id: pane.id,
+        width: pane.width,
+        height: pane.height,
+      }
+      if (pane.bounds !== undefined) carried.bounds = { min: pane.bounds.min, max: pane.bounds.max }
+      if (pane.zone !== undefined) carried.zone = pane.zone
+      return carried
+    }),
     focus: { entries: [], activeId: null },
     // THE THIRD FAMILY (`D-91`, WIRED `D-92`): the reading carries all three, and a row that wants a zone hands it here.
     zones: zones.map((zone) => ({ ...zone })),
@@ -1146,7 +1160,7 @@ describe('§3.1 M-rows — the menu-template recorded family (M-MT-*)', () => {
 describe('§3.1 M-rows — the VERIFICATION half on the LANDED composition (M-PDV-*)', () => {
   test('M-PDV-1 — the pane-size read REACHES THE SHAPE, and the store is NO LONGER the pane read\'s authority; the answer IS the delivered value (§2.5 items 1/2, pane-drag §2.1 A; D-88/D-89) — **RE-GRAINED 2026-11-09 (`D-168`): the size read has ONE NAME, `defaultSizeFor` is DELETED** and the reset arm\'s read is the AFFORDANCE\'s own `options.defaultSizeFor` seam (`src/shared/gutter.ts`), measured by `interaction`\'s `P-GU-IM-2`', () => {
     // THE DELIVERED FAMILY (what a boot read or a push refilled the shape with).
-    const shape = paneShapeOf([{ id: 'pane-a', size: 320, bounds: { min: 0, max: 200 } }])
+    const shape = paneShapeOf([{ id: 'pane-a', width: 1_000, height: 320, bounds: { min: 0, max: 200 } }])
     const double = createRecordingStoreDouble()
     // THE STORE STILL HOLDS THE OLD SPELLING, AND THE COMPOSITION MUST NOT READ IT: that is the claim this row makes now.
     double.commit('mem.layout.pane.pane-a.size', 999, { onRepeat: 'edit' })
@@ -1167,7 +1181,7 @@ describe('§3.1 M-rows — the VERIFICATION half on the LANDED composition (M-PD
   })
 
   test('M-PDV-2 — the bounds read answers AS DELIVERED, never a policy clamped here (§2.5 items 1/2, pane-drag §2.1 A)', () => {
-    const shape = paneShapeOf([{ id: 'pane-a', size: 100, bounds: { min: 100, max: 600 } }])
+    const shape = paneShapeOf([{ id: 'pane-a', width: 1_000, height: 100, bounds: { min: 100, max: 600 } }])
     const double = createRecordingStoreDouble()
     const { surface } = surfaceOver(double, shape)
     const answer = surface.boundsOf({ id: 'pane-a' }, 'pane-a')
@@ -1458,7 +1472,7 @@ describe('§3.2 F-rows — menu-template (F-MT-*)', () => {
 
 describe('§3.2 F-rows — the SECOND READ AUTHORITY (F-PDV-1, the falsifier) and the RE-LAND (F-PDV-2)', () => {
   test('F-PDV-1(a) — a MODULE-HELD authority answering a size from a module-held variable FAILS the shape-backed claim; the LANDED composition on the same drive answers from the SHAPE alone (§2.5 items 1/3; D-89)', () => {
-    const shape = paneShapeOf([{ id: 'pane-a', size: 320, bounds: { min: 0, max: 200 } }])
+    const shape = paneShapeOf([{ id: 'pane-a', width: 1_000, height: 320, bounds: { min: 0, max: 200 } }])
     const double = createRecordingStoreDouble()
     const moduleHeld = 999
     const moduleHeldSeam = (): unknown => moduleHeld
@@ -1484,12 +1498,12 @@ describe('§3.2 F-rows — the SECOND READ AUTHORITY (F-PDV-1, the falsifier) an
     expect(dualSeam({ id: 'pane-a' }, 'pane-a')).toBe(640)
     expect(double.readLog).toContain('mem.layout.pane.pane-a.size')
     expect(dualSeam({ id: 'pane-a' }, 'pane-a')).not.toBe(320) // the authority claim FAILS
-    const { surface } = surfaceOver(double, paneShapeOf([{ id: 'pane-a', size: 320, bounds: { min: 0, max: 200 } }]))
+    const { surface } = surfaceOver(double, paneShapeOf([{ id: 'pane-a', width: 1_000, height: 320, bounds: { min: 0, max: 200 } }]))
     expect(surface.startSizeOf({ id: 'pane-a' }, 'pane-a')).toBe(320)
   })
 
   test('F-PDV-2 — a RE-LANDED read (a second implementation for the same pane id) is a second authority and FAILS by construction; the LANDED composition remains the sole authority (§2.5 items 1/3, the H2b queue row)', () => {
-    const shape = paneShapeOf([{ id: 'pane-a', size: 320, bounds: { min: 0, max: 200 } }])
+    const shape = paneShapeOf([{ id: 'pane-a', width: 1_000, height: 320, bounds: { min: 0, max: 200 } }])
     const double = createRecordingStoreDouble()
     const { surface } = surfaceOver(double, shape)
     expect(surface.startSizeOf({ id: 'pane-a' }, 'pane-a')).toBe(320)
@@ -1502,7 +1516,7 @@ describe('§3.2 F-rows — the SECOND READ AUTHORITY (F-PDV-1, the falsifier) an
     const reLandedFigures = { 'pane-a': 320 }
     const reLandedClosure = (): unknown => reLandedFigures['pane-a']
     expect(reLandedClosure()).toBe(320)
-    expect(shape.client.shape().panes.find((pane) => pane.id === 'pane-a')?.size, 'and the landed authority still answers').toBe(320)
+    expect(shape.client.shape().panes.find((pane) => pane.id === 'pane-a')?.height, 'and the landed authority still answers').toBe(320)
     // F-PDV-2 asserts the LANDED composition stays the sole authority: the tree scan (S-PDV-1) proves no src/** file outside
     // the composition reads the reference — driven as part of §3.4's S-PDV-1 test.
   })
@@ -2070,7 +2084,7 @@ describe('§4.2 item 4 — the integration drives, post-purge', () => {
     store.commit('mem.layout.zone.zone-1.distance', 37, { onRepeat: 'edit' })
     store.commit('mem.layout.pane.pane-a.size', 320, { onRepeat: 'edit' })
     const shape = paneShapeOf(
-      [{ id: 'pane-a', size: 240, bounds: { min: 0, max: 400 } }],
+      [{ id: 'pane-a', width: 1_000, height: 240, bounds: { min: 0, max: 400 } }],
       [{ id: 'zone-1', slot: opaque, distance: 37 }],
     )
     const surface = createPaneDrag({ frozen: store as unknown as Record<string, unknown>, view: shape.client }, {}) as PaneDragSurface

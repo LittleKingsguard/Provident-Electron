@@ -11,8 +11,10 @@
  * data, it is closure state"*, read for a caller-supplied backing): the demo supplies a STUB SHAPE standing for the view
  * record, and says so here rather than simulating a crossing.
  *
- * **WHAT THE STUB STANDS FOR, EXACTLY.** `['panes']` — the record's first family — at the `file` tier, one whole value
- * `{id, size, bounds}`, holding `pane-a` at the tree's MEASURED defaults (`D-87`: `size 100`, `bounds {min: 0, max: 200}`,
+ * **WHAT THE STUB STANDS FOR, EXACTLY.** `['panes']` — the record's first family — at the `file` tier, one admitted value
+ * `{id, width, height, bounds?, zone?}` (`D-189`'s split, the shape `src/shared/view-shape.ts` declares), holding `pane-a`
+ * at the tree's MEASURED defaults (`D-87`'s `100`, `bounds {min: 0, max: 200}`, now read at TWO members — `width` and
+ * `height` — because `paneOf` admits no unstated axis member),
  * re-derived here from `src/shared/view-shape.ts`'s constants rather than re-spelled). Every read is the app's own
  * PURE derivation `paneGeometryIn`, so the answer a pane the family does not name receives is the app's measured default
  * and not the stub's invention, and the `source` word (`'record'` / `'default'`) is the derivation's, not this file's.
@@ -43,6 +45,7 @@
  */
 import type { ViewClient } from '../../src/renderer/view-client.js'
 import {
+  DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   paneGeometryIn,
   zoneIn,
@@ -70,8 +73,18 @@ export interface StubDragReading {
   /** THE ONE SPELLING of the address this page reads — `['drag']`, the root `D-132` gave the in-process placement. */
   readonly address: readonly string[]
   readonly present: boolean
-  /** One member per pane id carrying the placement ALONE — `{size}`, never a geometry (`docs/L2/view-record/interface.md` §1). */
-  readonly members: readonly { readonly id: string; readonly size: number }[]
+  /** One member per pane id carrying the placement ALONE — **the ADJUSTABLE axis's own member and no other**, `{width}` or
+   *  `{height}`, never a geometry and never a `size` (`docs/L2/view-record/interface.md` §1, `D-189`): `member` names the
+   *  axis and `value` is its figure. */
+  readonly members: readonly StubDragMember[]
+}
+
+/** **ONE PLACEMENT AT THE ADDRESS** — the member's NAME is its axis (`D-189`, `D-190`), so this page never has to interpret a
+ *  standing number: `member` is `'width'` for a horizontally-oriented pane and `'height'` for a vertical one. */
+export interface StubDragMember {
+  readonly id: string
+  readonly member: 'width' | 'height'
+  readonly value: number
 }
 
 /** The stub, and the controls the demo's panel drives it with. `members` is what `createPaneDrag` is handed. */
@@ -84,8 +97,11 @@ export interface StubView {
   drag(): StubDragReading
   /** ONE PANE THROUGH THE APP'S OWN DERIVATION — `source` says whether the family named it. */
   geometryOf(id: string): ReturnType<typeof paneGeometryIn>
-  /** THE CONTROL'S WRITE: a new size for one pane, CLAMPED by the caller (`clampToBounds`, `gutter.ts`) into its own pair. */
-  setSize(id: string, size: number): void
+  /** THE CONTROL'S WRITE: a new **`width`** for one pane, CLAMPED by the caller (`clampToBounds`, `gutter.ts`) into its own
+   *  pair. **IT NAMES ITS AXIS** (`D-189`): the demo's gesture is the HORIZONTAL one — its `sizeFromPointer` reads the
+   *  pointer's x and its preview writes `style.width` — so the member this page moves is the width, and the figure the
+   *  control carried as a `size` before the split is that same figure. */
+  setWidth(id: string, width: number): void
   /** THE CONTROL'S WRITE: a new bounds pair for one pane. */
   setBounds(id: string, bounds: { readonly min: number; readonly max: number }): void
   /** BACK TO THE MEASURED DEFAULTS — `defaultPaneGeometry`'s own answer, for the one pane (or a fresh family). */
@@ -102,12 +118,26 @@ const ZONES: readonly ViewZone[] = []
  *  so the one spelling stands here and the readout shows THIS value rather than a second string written beside it. */
 const DRAG_ADDRESS: readonly string[] = ['drag']
 
-/** A fresh copy of one geometry, so no caller of `panes()` can move the stub's record. */
-const copyOf = (pane: ViewPaneGeometry): ViewPaneGeometry => ({
-  id: pane.id,
-  size: pane.size,
-  bounds: { min: pane.bounds.min, max: pane.bounds.max },
-})
+/** A fresh copy of one geometry, so no caller of `panes()` can move the stub's record. **BOTH AXIS MEMBERS ARE CARRIED AND
+ *  THE TWO OPTIONAL ONES ONLY WHERE THE RECORD NAMES ONE** (`D-189`, `D-186`, `D-129`): a zone-resident pane's absent
+ *  `bounds` is lawful — its clamp is the layout's — and copying a pair into it would be a member the record never had. */
+const copyOf = (pane: ViewPaneGeometry): ViewPaneGeometry => {
+  const copy: {
+    id: string
+    width: number
+    height: number
+    bounds?: { readonly min: number; readonly max: number }
+    zone?: string
+  } = { id: pane.id, width: pane.width, height: pane.height }
+  if (pane.bounds !== undefined) copy.bounds = { min: pane.bounds.min, max: pane.bounds.max }
+  if (pane.zone !== undefined) copy.zone = pane.zone
+  return copy
+}
+
+/** THE PAIR THE CONTROL CLAMPS INTO, or the measured one where the pane stores none — the demo's own pane always stores
+ *  one, so this is the stated arm and never a second authority (`D-186`). */
+const boundsOfPane = (pane: ViewPaneGeometry): { readonly min: number; readonly max: number } =>
+  pane.bounds === undefined ? { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } : { min: pane.bounds.min, max: pane.bounds.max }
 
 /**
  * THE STUB'S FACTORY. Seeded with the app's measured defaults for `DEFAULT_PANE_ID` (`pane-a`, `100`, `{0, 200}`) — not a
@@ -120,7 +150,7 @@ export function createStubView(): StubView {
   /** **THE DRAG FAMILY, AND `null` IS THE ABSENT READING** (`D-132`): one member per pane id while a gesture is in process,
    *  and NO family at all once its ending deleted it — the store's own distinction, kept here so the demo reads a truth and
    *  not an empty placeholder. `move` writes it through `commitDrag`, the ending turns delete it through `clearDrag`. */
-  let dragFamily: Map<string, number> | null = null
+  let dragFamily: Map<string, StubDragMember> | null = null
 
   /** THE READ OF THAT ADDRESS — a fresh copy on every call, so no holder can alias the standing family. */
   const drag = (): StubDragReading => {
@@ -128,7 +158,11 @@ export function createStubView(): StubView {
     return {
       address: [...DRAG_ADDRESS],
       present: standing !== null,
-      members: standing === null ? [] : [...standing.entries()].map(([id, size]) => ({ id, size })),
+      members: standing === null ? [] : [...standing.entries()].map(([id, placement]) => ({
+        id,
+        member: placement.member,
+        value: placement.value,
+      })),
     }
   }
 
@@ -143,16 +177,30 @@ export function createStubView(): StubView {
 
   seed(DEFAULT_PANE_ID)
 
-  const setSize = (id: string, size: number): void => {
+  /** **A WRITE AT ONE MEMBER'S OWN NAME** — the crossing's leaf rule (`D-138`, `D-151`, `D-191`): the member supplied is the
+   *  member written, and every other member of the standing record survives untouched. It is the rule this page's stub would
+   *  otherwise quietly break by re-composing the geometry whole. */
+  const writeMember = (id: string, member: 'width' | 'height' | 'bounds', value: number | { readonly min: number; readonly max: number }): void => {
     const held = family.get(id)
-    const base = held === undefined ? paneGeometryIn([], id).pane : copyOf(held)
-    family.set(id, { id: base.id, size, bounds: { min: base.bounds.min, max: base.bounds.max } })
+    const base = held === undefined ? copyOf(paneGeometryIn([], id).pane) : copyOf(held)
+    const next: { id: string; width: number; height: number; bounds?: { readonly min: number; readonly max: number }; zone?: string } = {
+      id: base.id,
+      width: base.width,
+      height: base.height,
+    }
+    if (base.bounds !== undefined) next.bounds = { min: base.bounds.min, max: base.bounds.max }
+    if (base.zone !== undefined) next.zone = base.zone
+    if (member === 'bounds') next.bounds = { min: (value as { readonly min: number }).min, max: (value as { readonly max: number }).max }
+    else next[member] = value as number
+    family.set(id, next)
+  }
+
+  const setWidth = (id: string, width: number): void => {
+    writeMember(id, 'width', width)
   }
 
   const setBounds = (id: string, bounds: { readonly min: number; readonly max: number }): void => {
-    const held = family.get(id)
-    const base = held === undefined ? paneGeometryIn([], id).pane : copyOf(held)
-    family.set(id, { id: base.id, size: base.size, bounds: { min: bounds.min, max: bounds.max } })
+    writeMember(id, 'bounds', { min: bounds.min, max: bounds.max })
   }
 
   const reset = (id?: string): void => {
@@ -165,14 +213,18 @@ export function createStubView(): StubView {
   }
 
   const members: StubViewMembers = {
-    /** **THE DRAG'S SIZE READ** — `paneGeometryIn`'s answer, exactly as `readPaneSize` reads it off the real client. */
+    /** **THE DEMO'S OPERATIVE MEMBER READ — ONE NUMBER, AND ITS AXIS NAMED**: this page's gesture is horizontal (pointer-x
+     *  onto `style.width`), so the member it reads is the pane's `width`, the same member the control writes and the release
+     *  commits. The app's `pane-a` is stage-resident and its client read answers `height`; the two are one client member with
+     *  two subjects, each stating its own axis, and the demo's figures are the ones its `size` used to carry (`D-189`). */
     paneSizeOf(id: string): unknown {
-      return paneGeometryIn(panes(), id).pane.size
+      return paneGeometryIn(panes(), id).pane.width
     },
-    /** **THE DRAG'S BOUNDS READ** — the pair as stored; a pane the family does not name gets the measured default pair. */
+    /** **THE DRAG'S BOUNDS READ** — the pair as stored; a pane the family does not name gets the measured default pair, and
+     *  a pane storing none answers none rather than an invented one (`D-186`). */
     paneBoundsOf(id: string): unknown {
       const pane = paneGeometryIn(panes(), id).pane
-      return { min: pane.bounds.min, max: pane.bounds.max }
+      return pane.bounds === undefined ? undefined : { min: pane.bounds.min, max: pane.bounds.max }
     },
     /** **THE ZONE READ** — `zoneIn`'s measured missing arm: `null`, never an invented geometry (`D-91`). */
     zoneOf(id: string): ViewZone | null {
@@ -180,21 +232,42 @@ export function createStubView(): StubView {
     },
     /** **THE ROUTE THE RELEASE WRITES THROUGH** — see this file's header: composed here, answered as the client answers. */
     commitPane(id: string, geometry: unknown): { readonly status: 'sent' } {
-      const record = (geometry ?? null) as { readonly size?: unknown } | null
-      const size = record !== null && record !== undefined && typeof record.size === 'number' ? record.size : undefined
-      if (typeof size === 'number' && Number.isFinite(size)) setSize(id, size)
+      // **THE ACT'S ARGUMENT IS THE RECORD'S OWN MEMBER SET** (`D-191`): `{ width?, height?, bounds? }`, each supplied member
+      // landing at ITS OWN NAME and a member the act does not name keeping what stands — the crossing's leaf rule, stood in
+      // for here because this page has no store. A member this stub cannot state writes nothing, as the route's own arms do.
+      const record = (geometry ?? null) as { readonly width?: unknown; readonly height?: unknown; readonly bounds?: unknown } | null
+      if (record !== null && record !== undefined) {
+        for (const member of ['width', 'height'] as const) {
+          const held = record[member]
+          if (typeof held === 'number' && Number.isFinite(held) && held >= 0) writeMember(id, member, held)
+        }
+        const pair = record.bounds
+        if (pair !== null && typeof pair === 'object' && !Array.isArray(pair)) {
+          const min = (pair as { readonly min?: unknown }).min
+          const max = (pair as { readonly max?: unknown }).max
+          if (typeof min === 'number' && typeof max === 'number' && Number.isFinite(min) && Number.isFinite(max) && min <= max) {
+            writeMember(id, 'bounds', { min, max })
+          }
+        }
+      }
       logged.push({ id, geometry })
       return { status: 'sent' }
     },
     /** **THE DRAG'S MOVE ROUTE — ONE WHOLE VALUE THE CALLER FORMATTED** (`D-132`, `D-135`, `D-136`): the placement the
-     *  composition's `move` read, `{size}`, written as the family's single member because the composition drags one pane.
-     *  A pair its own shape arms cannot read (no id, a size that is not a finite non-negative number) writes NOTHING and
-     *  leaves what stands standing — the crossing's judgement, answered here from the same two facts and added to. */
+     *  composition's `move` read — **`{width}` or `{height}`, the pane's ADJUSTABLE member and no other** (`D-189`, `D-190`)
+     *  — written as the family's single member because the composition drags one pane. A value its own shape arms cannot read
+     *  (no id, no axis-named member, a figure that is not finite and non-negative) writes NOTHING and leaves what stands
+     *  standing — the crossing's judgement, answered here from the same facts and added to. */
     commitDrag(id: string, geometry: unknown): { readonly status: 'sent' } {
-      const record = (geometry ?? null) as { readonly size?: unknown } | null
-      const size = record === null || record === undefined ? undefined : record.size
-      if (id.length > 0 && typeof size === 'number' && Number.isFinite(size) && size >= 0) {
-        dragFamily = new Map([[id, size]])
+      const record = (geometry ?? null) as { readonly width?: unknown; readonly height?: unknown } | null
+      if (id.length > 0 && record !== null && record !== undefined) {
+        for (const member of ['width', 'height'] as const) {
+          const held = record[member]
+          if (typeof held === 'number' && Number.isFinite(held) && held >= 0) {
+            dragFamily = new Map([[id, { id, member, value: held }]])
+            break
+          }
+        }
       }
       return { status: 'sent' }
     },
@@ -211,7 +284,7 @@ export function createStubView(): StubView {
     panes,
     drag,
     geometryOf: (id: string) => paneGeometryIn(panes(), id),
-    setSize,
+    setWidth,
     setBounds,
     reset,
     writes: () => [...logged],

@@ -36,7 +36,8 @@
  * write). The SINK is the demo's status node; the ROUTE is `createPaneDrag`'s `release`, writing into `stub-view.ts`.
  *
  * **AND THE IN-PROCESS VALUE IS READ AT ITS ADDRESS, WHICH IS WHY NO MEMBER READS IT** (`D-132`; L2 §1): the preview while
- * the pointer moves is `['drag']` at `temp` — one member per pane id, `{size}` — written by the composition's `move` and
+ * the pointer moves is `['drag']` at `temp` — one member per pane id, `{width}` or `{height}`, the ADJUSTABLE axis's own
+ * member and no other (`D-189`, `D-190`) — written by the composition's `move` and
  * deleted whole by the gesture's ending. This file therefore reads it through the demo's own seam (`stub.drag()`, the
  * page's stand-in for that family) and NOT through the surface: the `previewOf` member that read a closure copy is
  * deleted with the copy it read, and a member re-added here would be a second value that could disagree with the address.
@@ -60,7 +61,7 @@ import { createGutterAffordance, domEventSource } from '../../src/shared/gutter-
 import { gutterSeamExample } from '../../src/shared/demo-envelope.js'
 import { clampToBounds } from '../../src/shared/gutter.js'
 import { createPaneDrag, type PaneDragSurface } from '../../src/renderer/renderer.js'
-import { DEFAULT_PANE_ID, paneGeometryIn } from '../../src/shared/view-shape.js'
+import { DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, paneGeometryIn, type ViewPaneGeometry } from '../../src/shared/view-shape.js'
 import { createStubView } from './stub-view.js'
 
 /** THE PAGE'S ROOT, and a throw rather than a silent no-op if the page and this bundle disagree (`main()`'s own rule). */
@@ -211,12 +212,25 @@ if (!affordance.attach()) {
 /** THE MEASURED PANE (the family's own id) and A PANE THE FAMILY DOES NOT NAME — both through the app's derivation. */
 const geometryOfPane = (): ReturnType<typeof paneGeometryIn> => stub.geometryOf(DEFAULT_PANE_ID)
 
-/** THE GEOMETRY THE PAGE PAINTS — the record's size and pair, and nothing else (the preview writes over it in between). */
+/** **THE PAIR AS STORED, OR THE MEASURED ONE WHERE THE PANE STORES NONE** (`D-186`, `D-129`): a zone-resident pane's clamp is
+ *  the LAYOUT's and its absent `bounds` is lawful, so this page renders that absence as a word rather than inventing a pair.
+ *  The demo's own pane is stage-resident and always stores one. */
+const boundsText = (pane: ViewPaneGeometry): string =>
+  pane.bounds === undefined ? 'none (the clamp is the layout\'s)' : `{${String(pane.bounds.min)}, ${String(pane.bounds.max)}}`
+
+/** THE PAIR THIS PAGE'S CONTROL CLAMPS INTO — the stored one, or the measured one where the pane stores none. */
+const boundsOfPane = (pane: ViewPaneGeometry): { readonly min: number; readonly max: number } =>
+  pane.bounds === undefined ? { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } : { min: pane.bounds.min, max: pane.bounds.max }
+
+/** **THE GEOMETRY THE PAGE PAINTS — the record's own figures, each at the member that names it** (`D-189`): the target's width
+ *  is the pane's `width` (the member this page's horizontal gesture moves) and the read-out states BOTH members, because the
+ *  record stores both and the unpainted one is the memory a zone change reads again. The height is stated and never painted
+ *  here: this page's subject is the one axis it has always painted, and widening the write would be a change of subject. */
 function renderGeometry(): void {
   const geometry = geometryOfPane()
-  target.style.width = `${String(geometry.pane.size)}px`
+  target.style.width = `${String(geometry.pane.width)}px`
   if (paneWidthNode !== null) {
-    paneWidthNode.textContent = `${String(geometry.pane.size)}px · bounds {${String(geometry.pane.bounds.min)}, ${String(geometry.pane.bounds.max)}}`
+    paneWidthNode.textContent = `${String(geometry.pane.width)}×${String(geometry.pane.height)}px · bounds ${boundsText(geometry.pane)}`
   }
 }
 
@@ -227,8 +241,8 @@ function renderReadouts(): void {
   if (stubReadingNode !== null) {
     stubReadingNode.textContent = [
       `stub shape for ['panes'] — the demo's stand-in for the view record (no bridge on this page)`,
-      `  pane-a        size=${String(geometry.pane.size)}  bounds={min:${String(geometry.pane.bounds.min)}, max:${String(geometry.pane.bounds.max)}}  source='${geometry.source}'`,
-      `  pane-unknown  size=${String(unnamed.pane.size)}  bounds={min:${String(unnamed.pane.bounds.min)}, max:${String(unnamed.pane.bounds.max)}}  source='${unnamed.source}'  (the measured default, D-87)`,
+      `  pane-a        width=${String(geometry.pane.width)}  height=${String(geometry.pane.height)}  bounds=${boundsText(geometry.pane)}  source='${geometry.source}'`,
+      `  pane-unknown  width=${String(unnamed.pane.width)}  height=${String(unnamed.pane.height)}  bounds=${boundsText(unnamed.pane)}  source='${unnamed.source}'  (the measured default, D-87)`,
       `  route         commitPane calls=${String(stub.writes().length)}  ${JSON.stringify(stub.writes())}`,
     ].join('\n')
   }
@@ -270,7 +284,8 @@ function render(): void {
 const control = (id: string): HTMLButtonElement | null => document.getElementById(id) as HTMLButtonElement | null
 const sizeStep = (delta: number): void => {
   const current = geometryOfPane()
-  stub.setSize(DEFAULT_PANE_ID, clampToBounds(current.pane.size + delta, current.pane.bounds))
+  // THE CONTROL MOVES THE MEMBER ITS OWN GESTURE MOVES — the pane's `width` (`setWidth`), clamped into its stored pair.
+  stub.setWidth(DEFAULT_PANE_ID, clampToBounds(current.pane.width + delta, boundsOfPane(current.pane)))
   render()
 }
 control('ctl-size-inc')?.addEventListener('click', () => sizeStep(40))
@@ -280,7 +295,7 @@ control('ctl-bounds-tight')?.addEventListener('click', () => {
   render()
 })
 control('ctl-bounds-default')?.addEventListener('click', () => {
-  const measured = stub.geometryOf('pane-unknown').pane.bounds
+  const measured = boundsOfPane(stub.geometryOf('pane-unknown').pane)
   stub.setBounds(DEFAULT_PANE_ID, { min: measured.min, max: measured.max })
   render()
 })

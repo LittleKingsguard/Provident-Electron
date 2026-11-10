@@ -667,7 +667,8 @@ describe('D-142/D-160 — the act, its leaf row write and round trip, and the su
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
  * `DC-8` — THE GHOST'S DELIVERY TURN. The drag's in-process value became an ADDRESS (`['drag']` at `temp`, one member
- * per pane id, each `{size}`), so the transient a human sees while dragging is no longer a closure value: it is a READ
+ * per pane id, each carrying the ADJUSTABLE axis's own member — `{height}` for `pane-a`, whose NAME is its axis,
+ * `D-189`/`D-190`), so the transient a human sees while dragging is no longer a closure value: it is a READ
  * of that address, painted as the declared `data-ghost` attribute on the pane ELEMENT. Both halves are measured here —
  * THE TURN (`renderGhost()` over every arm of the read) and THE DELIVERY (the wiring that calls it), because a turn
  * nothing calls is a turn that paints nothing.
@@ -718,12 +719,14 @@ function ghostRealm(answer: () => Promise<unknown>): { reads: () => number } {
 }
 
 /** **THE ONE READING THE GHOST PAINTS FOR** — L2's committed branch at the drag's own address, the family standing at
- *  `temp` for the composition's pane with a usable `size`. */
+ *  `temp` for the composition's pane with a usable member at the pane's ADJUSTABLE axis name — `height` for `pane-a`, which
+ *  is stage-resident and therefore sidebar-equivalent (`C-9`, `C-12`), so a `size` member names no axis at all and a
+ *  `width` one names an axis this pane does not adjust. */
 const GHOST_STANDS = (): unknown => ({
   status: 'read',
   kind: 'branch',
   path: ['drag'],
-  value: { _tier: 'temp', 'pane-a': { _tier: 'temp', size: 220 } },
+  value: { _tier: 'temp', 'pane-a': { _tier: 'temp', height: 220 } },
 })
 
 /** The microtask settle the turn's `void read(...).then(...)` continuation needs — a handful of turns, no timer. */
@@ -782,7 +785,7 @@ function functionRegion(source: string, header: string): string {
 }
 
 describe('DC-8 — the ghost\'s delivery: `[\'drag\']` at `temp`, read once and painted as a declared transient', () => {
-  it('DC-8(a) — **THE TURN**: `renderGhost()` asks the realm\'s `data.read` ONCE for `{path: [\'drag\']}` and declares `data-ghost="temp"` on the backing\'s target IFF the answer is a committed reading whose node stands at `temp` for the composition\'s pane with a usable `size` — and, throwing nothing, behaves closed on every other arm, in TWO CLASSES: the arms that REMOVE a standing declaration (no `data` member at all, a route that throws, the `absent` arm, the ledger arm, a node at `file`, a node naming another pane, a non-finite size) and the attribute-less target, which RETURNS AHEAD OF THE PAINT and REMOVES NOTHING — it never carried the declaration, so there is none to remove — painting nothing either', async () => {
+  it('DC-8(a) — **THE TURN**: `renderGhost()` asks the realm\'s `data.read` ONCE for `{path: [\'drag\']}` and declares `data-ghost="temp"` on the backing\'s target IFF the answer is a committed reading whose node stands at `temp` for the composition\'s pane with a usable member at that pane\'s ADJUSTABLE axis name (`height` for `pane-a`) — and, throwing nothing, behaves closed on every other arm, in TWO CLASSES: the arms that REMOVE a standing declaration (no `data` member at all, a route that throws, the `absent` arm, the ledger arm, a node at `file`, a node naming another pane, a non-finite member, and a member naming an axis this pane does not adjust) and the attribute-less target, which RETURNS AHEAD OF THE PAINT and REMOVES NOTHING — it never carried the declaration, so there is none to remove — painting nothing either', async () => {
     const target = ghostElement()
     const surface = createPaneDrag({ view: null, ghostTarget: target }, null) as unknown as Record<string, unknown>
     expect(
@@ -821,17 +824,25 @@ describe('DC-8 — the ghost\'s delivery: `[\'drag\']` at `temp`, read once and 
       {
         label: 'a node standing at `file`',
         install: (): (() => number) =>
-          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'file', 'pane-a': { _tier: 'file', size: 220 } } })).reads,
+          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'file', 'pane-a': { _tier: 'file', height: 220 } } })).reads,
       },
       {
         label: 'a node naming only another pane',
         install: (): (() => number) =>
-          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'temp', 'pane-b': { _tier: 'temp', size: 220 } } })).reads,
+          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'temp', 'pane-b': { _tier: 'temp', height: 220 } } })).reads,
       },
       {
-        label: 'a non-finite size',
+        label: 'a non-finite axis member',
         install: (): (() => number) =>
-          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'temp', 'pane-a': { _tier: 'temp', size: Number.NaN } } })).reads,
+          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'temp', 'pane-a': { _tier: 'temp', height: Number.NaN } } })).reads,
+      },
+      {
+        // **AND THE MEMBER THAT NAMES NO AXIS THIS PANE ADJUSTS** (`D-189`, `D-190`; design §4): `pane-a` is
+        // stage-resident, so its gesture moves its `height` — a `width` at the address is a placement on the OTHER axis,
+        // and it is a closed arm like the rest, the declaration removed rather than painted from it.
+        label: 'a member naming an axis this pane does not adjust',
+        install: (): (() => number) =>
+          ghostRealm(async () => ({ status: 'read', kind: 'branch', path: ['drag'], value: { _tier: 'temp', 'pane-a': { _tier: 'temp', width: 220 } } })).reads,
       },
       { label: 'a ledger arm', install: (): (() => number) => ghostRealm(async () => ({ status: 'refused', reason: 'parent-absent', message: 'no family stands' })).reads },
     ]

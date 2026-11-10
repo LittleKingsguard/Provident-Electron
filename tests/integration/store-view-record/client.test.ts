@@ -80,11 +80,15 @@ interface WireZone {
 }
 
 /** ONE PANE'S GEOMETRY as the wire carries it — the crossing's own admission is the store's
- *  business; this file only states values a boundary could legally hand over. */
+ *  business; this file only states values a boundary could legally hand over. **BOTH AXIS MEMBERS ARE REQUIRED AND THE TWO
+ *  OPTIONAL ONES ARE OPTIONAL HERE TOO** (`D-189`, `D-186`): `size` has no home on the wire any more, and a zone-resident
+ *  pane's absent `bounds` is lawful rather than a malformed record. */
 interface WirePane {
   readonly id: string
-  readonly size: number
-  readonly bounds: { readonly min: number; readonly max: number }
+  readonly width: number
+  readonly height: number
+  readonly bounds?: { readonly min: number; readonly max: number }
+  readonly zone?: string
 }
 
 /** **THE BOUNDARY DOUBLE** — the member's surviving routes, each recording what it was handed,
@@ -120,7 +124,12 @@ function doubleOf(options: { readonly withChanged?: boolean; readonly withRead?:
   const handlers: Array<() => void> = []
   let answer: unknown = {
     status: 'committed',
-    panes: [{ id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } }],
+    panes: [{
+      id: DEFAULT_PANE_ID,
+      width: DEFAULT_PANE_SIZE,
+      height: DEFAULT_PANE_SIZE,
+      bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max },
+    }],
     zones: [],
     // **THE APPEARANCE FAMILY, AT THE PLACEHOLDER THE CREATION REPAIR MINTS** (D-97): a declaration whose `name` is absent,
     // which is the one record that can be applied nowhere — so a row that drives the appearance family supplies its own.
@@ -209,14 +218,26 @@ const settle = async (): Promise<void> => {
   await Promise.resolve()
 }
 
-const pane = (id: string, size: number, min = 0, max = 200): WirePane => ({ id, size, bounds: { min, max } })
+/** **ONE PANE ON THE WIRE, AND ITS TWO AXIS MEMBERS CARRY DIFFERENT FIGURES ON PURPOSE** (`D-189`): every row below reads
+ *  the pane's ADJUSTABLE member, which is its `height` for a pane carrying no `zone` — these fixtures are stage-resident,
+ *  and `C-9`/`C-12` make a stage pane sidebar-equivalent. `width` is held at the measured default, so a read that answered
+ *  the WRONG member could not pass by coincidence: the figure under test is `height`, and `width` is the control's. */
+const pane = (id: string, height: number, min = 0, max = 200): WirePane => ({
+  id,
+  width: DEFAULT_PANE_SIZE,
+  height,
+  bounds: { min, max },
+})
 
 describe('view client · the shape is filled FROM A READ, never invented', () => {
   it('C-1 · BEFORE ANYTHING ANSWERS the shape is UNFILLED and answers the MEASURED DEFAULT — `filled: false` is the statement that nothing has been read, and it is never a claim about a store', () => {
     const client: ViewClient = createViewClient({ bridge: asBridge(doubleOf().member) })
     expect(client.shape().filled, 'nothing has answered yet').toBe(false)
     expect(client.reading(), 'and no reading stands').toBeNull()
-    expect(client.paneSizeOf(DEFAULT_PANE_ID), 'the measured default — the figure `D-87` measured off the authored pane\'s `props.size`, which the node NO LONGER CARRIES (`F11`, `D-129`)').toBe(DEFAULT_PANE_SIZE)
+    // **THE READ ANSWERS THE PANE'S ADJUSTABLE MEMBER** (`D-189`, `D-191`): the cold shape names no pane, so the measured
+    // default's own selection answers — `height` for a pane carrying no `zone`, the figure `D-87` measured off the authored
+    // pane's `props.size`, which the node NO LONGER CARRIES (`F11`, `D-129`).
+    expect(client.paneSizeOf(DEFAULT_PANE_ID), 'the measured default, read at the member the pane adjusts').toBe(DEFAULT_PANE_SIZE)
     expect(client.paneBoundsOf('any-pane'), 'and the measured bounds pair, measured the same way and carried by nothing in the envelope since `F11`').toEqual({
       min: DEFAULT_PANE_BOUNDS.min,
       max: DEFAULT_PANE_BOUNDS.max,
@@ -235,7 +256,7 @@ describe('view client · the shape is filled FROM A READ, never invented', () =>
     expect(reading.status, 'the committed arm is the answer').toBe('committed')
     expect(client.shape().filled).toBe(true)
     expect(client.shape().panes.map((held) => held.id).sort(), 'the family is the panes it can state').toEqual(['pane-a', 'pane-b'])
-    expect(client.paneSizeOf('pane-a'), 'and the read is the record\'s value').toBe(240)
+    expect(client.paneSizeOf('pane-a'), 'and the read is the record\'s value, at the ADJUSTABLE member its zone selects').toBe(240)
     expect(client.paneBoundsOf('pane-b'), 'the pair AS STORED, never a clamped policy').toEqual({ min: 10, max: 400 })
     expect(client.paneSizeOf('pane-never-written'), 'a pane the family does not name answers the measured default').toBe(DEFAULT_PANE_SIZE)
     expect(client.zoneOf('zone-1'), 'the zone the wire carried, member for member').toEqual({ id: 'zone-1', size: 160, display: 'normal' })
@@ -287,13 +308,15 @@ describe('view client · the write is SENT, and its receipt is not the answer', 
   it('C-5 · `commitPane` ANSWERS `{status:\'sent\'}` IN THE CALLER\'S TURN and the crossing\'s answer lands in `writeOutcome()` later — no caller composes anything from a receipt', async () => {
     const double = doubleOf()
     const client = createViewClient({ bridge: asBridge(double.member) })
-    const statement = client.commitPane('pane-a', { size: 260 })
+    // **THE ACT SPEAKS THE RECORD'S OWN MEMBER NAME, AND IT IS THE PANE'S ADJUSTABLE ONE** (`D-191`): `pane-a` is
+    // stage-resident, so `{ height }` — `{ size }` would be a shape the record no longer has.
+    const statement = client.commitPane('pane-a', { height: 260 })
     expect(statement, 'the same turn: the route was handed the write').toEqual({ status: 'sent' })
     expect(client.writeOutcome(), 'and nothing has landed yet').toBeNull()
     await settle()
     expect(client.writeOutcome()?.status, 'the receipt, a tick later').toBe('committed')
     expect(double.writes(), 'ONE route call, one whole member, and the id names the pane — never a path, never a tier').toEqual([
-      { route: 'pane', args: ['pane-a', { size: 260 }] },
+      { route: 'pane', args: ['pane-a', { height: 260 }] },
     ])
   })
 
@@ -301,7 +324,7 @@ describe('view client · the write is SENT, and its receipt is not the answer', 
     const double = doubleOf()
     const client = createViewClient({ bridge: asBridge(double.member) })
     double.nextRouteAnswer(Promise.resolve({ status: 'refused', reason: 'malformed-geometry', message: 'the supplied size is not a finite non-negative number' }))
-    client.commitPane('pane-a', { size: -1 })
+    client.commitPane('pane-a', { height: -1 })
     await settle()
     const outcome = client.writeOutcome()
     expect(outcome?.status, 'refused, and stated as such').toBe('refused')
@@ -324,11 +347,11 @@ describe('view client · the write is SENT, and its receipt is not the answer', 
     expect(typeof drag.clearDrag, 'and its clear route').toBe('function')
     const sent = drag.commitDrag as (id: string, geometry: unknown) => ViewWriteStatement
     const clear = drag.clearDrag as () => ViewWriteStatement
-    expect(sent('pane-a', { size: 180 }), 'the same turn: the placement was handed to the route').toEqual({ status: 'sent' })
+    expect(sent('pane-a', { height: 180 }), 'the same turn: the placement was handed to the route, at the axis-named member').toEqual({ status: 'sent' })
     expect(clear(), 'and the clear is sent with NO argument at all').toEqual({ status: 'sent' })
     await settle()
     expect(double.writes(), 'TWO calls at the member\'s drag routes, the second carrying no argument — the `null` arm stays unspent').toEqual([
-      { route: 'drag', args: ['pane-a', { size: 180 }] },
+      { route: 'drag', args: ['pane-a', { height: 180 }] },
       { route: 'drag', args: [] },
     ])
     expect(client.writeOutcome()?.route as string, 'and the receipt names the drag family, as the three commits name theirs').toBe('drag')
@@ -365,7 +388,7 @@ describe('view client · the release, and the arms that are VALUES', () => {
     const absent = createViewClient({ bridge: null })
     expect(await absent.fill(), 'the absence is the declared arm').toMatchObject({ status: 'absent', reason: 'no-view-member' })
     expect(absent.paneSizeOf(DEFAULT_PANE_ID), 'and the measured default still answers').toBe(DEFAULT_PANE_SIZE)
-    expect(absent.commitPane('pane-a', { size: 1 })).toEqual({ status: 'absent', reason: 'no-view-member' })
+    expect(absent.commitPane('pane-a', { height: 1 })).toEqual({ status: 'absent', reason: 'no-view-member' })
     expect(absent.subscribe(() => undefined)).toMatchObject({ subscribed: false, reason: 'no-view-member' })
     // (b) A MEMBER WITH NO `read` ROUTE — an older preload.
     const noRead = createViewClient({ bridge: asBridge(doubleOf({ withRead: false }).member) })
@@ -400,7 +423,7 @@ describe('view client · the release, and the arms that are VALUES', () => {
     const client = createViewClient({ bridge: asBridge(double.member) })
     double.answerWith({
       status: 'committed',
-      panes: [pane('pane-a', 240), { id: 'pane-broken', size: 'x', bounds: { min: 0, max: 1 } }],
+      panes: [pane('pane-a', 240), { id: 'pane-broken', width: 'x', height: 200, bounds: { min: 0, max: 1 } }],
       zones: [
         { id: 'zone-1', size: 160, display: 'normal', slot: 'doc-nav' },
         { id: 'zone-broken', size: 'x' },
@@ -467,7 +490,7 @@ describe('view client · the receipt is a STATE and an EVENT — `writeOutcome()
     expect(client.writeOutcome(), 'C-12 — before any write the STATE is `null`, and the event has nothing to carry').toBeNull()
     expect(pushed, 'C-12 — and nothing is pushed at registration: the member subscribes and holds nothing').toEqual([])
 
-    expect(client.commitPane('pane-a', { size: 260 }), 'C-12 — the caller\'s turn still answers the STATEMENT, not the receipt').toEqual({
+    expect(client.commitPane('pane-a', { height: 260 }), 'C-12 — the caller\'s turn still answers the STATEMENT, not the receipt').toEqual({
       status: 'sent',
     })
     expect(pushed, 'C-12 — the push is not the caller\'s turn either: the answer has not arrived').toEqual([])
@@ -483,7 +506,7 @@ describe('view client · the receipt is a STATE and an EVENT — `writeOutcome()
     double.nextRouteAnswer(
       Promise.resolve({ status: 'refused', reason: 'malformed-geometry', message: 'the supplied size is not a finite non-negative number' }),
     )
-    client.commitPane('pane-a', { size: -1 })
+    client.commitPane('pane-a', { height: -1 })
     await settle()
     expect(pushed.length, 'C-12 — the second write is the second push, and never a re-push of the first').toBe(2)
     const refused = pushed[1]
@@ -502,7 +525,7 @@ describe('view client · the receipt is a STATE and an EVENT — `writeOutcome()
       throw new Error('the caller\'s handler, the caller\'s error')
     })
     const withdrawNeighbour = containedClient.onWriteOutcome((outcome) => neighbours.push(outcome))
-    expect(containedClient.commitPane('pane-a', { size: 10 }), 'C-12 — the write path is unmoved by the handler ahead of the answer').toEqual({
+    expect(containedClient.commitPane('pane-a', { height: 10 }), 'C-12 — the write path is unmoved by the handler ahead of the answer').toEqual({
       status: 'sent',
     })
     await settle()
@@ -520,7 +543,7 @@ describe('view client · the receipt is a STATE and an EVENT — `writeOutcome()
       withdrawNeighbour()
       withdrawNeighbour()
     }, 'C-12 — **a SECOND withdrawal is not an error**: this realm\'s registration has no bridge half to refuse, so the withdrawal is `() => void` and total').not.toThrow()
-    containedClient.commitPane('pane-a', { size: 12 })
+    containedClient.commitPane('pane-a', { height: 12 })
     await settle()
     expect(neighbours.length, 'C-12 — and after the withdrawal the handler receives NOTHING, though the write was sent and answered').toBe(1)
     expect(
@@ -534,11 +557,11 @@ describe('view client · the receipt is a STATE and an EVENT — `writeOutcome()
     const absent = createViewClient({ bridge: null })
     const absentPushes: ViewWriteOutcome[] = []
     absent.onWriteOutcome((outcome) => absentPushes.push(outcome))
-    expect(absent.commitPane('pane-a', { size: 1 }), 'C-12 — `no-view-member`: the realm states for itself that it has no crossing').toEqual({
+    expect(absent.commitPane('pane-a', { height: 1 }), 'C-12 — `no-view-member`: the realm states for itself that it has no crossing').toEqual({
       status: 'absent',
       reason: 'no-view-member',
     })
-    expect(absent.commitDrag('pane-a', { size: 1 }), 'C-12 — and the drag route answers the same arm').toEqual({
+    expect(absent.commitDrag('pane-a', { height: 1 }), 'C-12 — and the drag route answers the same arm').toEqual({
       status: 'absent',
       reason: 'no-view-member',
     })
@@ -554,13 +577,13 @@ describe('view client · the receipt is a STATE and an EVENT — `writeOutcome()
     const olderClient = createViewClient({ bridge: asBridge(older.member) })
     const olderPushes: ViewWriteOutcome[] = []
     olderClient.onWriteOutcome((outcome) => olderPushes.push(outcome))
-    olderClient.commitPane('pane-a', { size: 20 })
+    olderClient.commitPane('pane-a', { height: 20 })
     await settle()
     expect(olderPushes.length, 'C-12 — the control: one sent write, one push').toBe(1)
     const standing = olderClient.writeOutcome()
     expect(standing?.status, 'C-12 — and the hold the next clause is read against').toBe('committed')
     delete member['commitDrag']
-    expect(olderClient.commitDrag('pane-a', { size: 21 }), 'C-12 — `no-route`: the member answered and the route is not there').toEqual({
+    expect(olderClient.commitDrag('pane-a', { height: 21 }), 'C-12 — `no-route`: the member answered and the route is not there').toEqual({
       status: 'absent',
       reason: 'no-route',
     })

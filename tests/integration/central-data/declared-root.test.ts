@@ -114,6 +114,15 @@ const sourceOf = (path: string): string => readFileSync(new URL(path, REPO), 'ut
 
 const rootOf = (address: readonly string[]): string => String(address[0])
 
+
+/** **THE ZONE ID THIS FILE ADDRESSES — ONE OF THE FOUR THE RECORD DECLARES** (`D-181`, `D-151`; `D-192` retired
+ *  `DEFAULT_ZONE_ID`, whose `zone-1` names nothing once the set widened). */
+const ZONE = 'top'
+/** The placeholder the creation repair mints: EVERY DECLARED ZONE ID WITH AN EMPTY RECORD (`D-151`, `D-181`). */
+const ZONE_PLACEHOLDER = { top: {}, bottom: {}, left: {}, right: {} }
+/** The same placeholder as a READING, in the order the store's own read answers the ids. */
+const ZONE_MEMBERLESS = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: 'top' }]
+
 describe('the tier is the caller’s, and a declared root’s tier is not (D-101)', () => {
   it('D-1 · the guarded set IS the two crossings’ own publications — the declaration batches PLUS the one root declared with no pair — and src/main/data/surface.ts spells neither a root nor a tier', () => {
     // THE SET, BOTH DIRECTIONS. The surface imports its roots from the modules that own them (`D-53`'s rule: a
@@ -181,10 +190,10 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     const one = stand()
     const stood = readFileSync(at(one.dir))
     const before = one.store.read(['zones'], 'mem')
-    expect(before, 'the family stands at `mem` before the attempt, so the reading after it is not a reading of nothing — every DECLARED zone id with an empty record (`D-151`)').toEqual({ 'zone-1': {} })
+    expect(before, 'the family stands at `mem` before the attempt, so the reading after it is not a reading of nothing — every DECLARED zone id with an empty record (`D-151`)').toEqual(ZONE_PLACEHOLDER)
     expect(one.view.read().source.zones, 'and the record reads its family as a RECORD — the state the defect destroyed').toBe('record')
 
-    const refused = one.surface.write({ path: ['zones'], tier: 'file', value: { 'zone-1': { size: 10 } } })
+    const refused = one.surface.write({ path: ['zones'], tier: 'file', value: { [ZONE]: { size: 10 } } })
     expect(refused.status, 'A CROSSING\'S ROOT IS WRITTEN ONLY AT ITS FAMILY\'S TIER').toBe('refused')
     expect(refused.status === 'refused' ? refused.reason : '', 'and the reason word is the twelfth, minted by this pass').toBe('declared-tier')
     const message = refused.status === 'refused' ? refused.message : ''
@@ -192,16 +201,16 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     expect(message.includes("this write asks for 'file'"), 'and the tier this call asked for, so a caller corrects it without reading a document').toBe(true)
 
     // NOTHING MOVED, ON ALL FOUR READINGS THE DEFECT MOVED:
-    expect(one.store.read(['zones'], 'mem'), 'the store still answers at the family\'s own tier — no `TierNotFound`, which was the defect\'s first symptom').toEqual({ 'zone-1': {} })
+    expect(one.store.read(['zones'], 'mem'), 'the store still answers at the family\'s own tier — no `TierNotFound`, which was the defect\'s first symptom').toEqual(ZONE_PLACEHOLDER)
     expect(one.view.read().source.zones, 'the record still reads a RECORD and never the default the defect left behind').toBe('record')
-    expect(one.view.read().zones, 'and its value is the declared zone, memberless, not the caller\'s zones').toEqual([{ id: 'zone-1' }])
+    expect(one.view.read().zones, 'and its value is the declared zone, memberless, not the caller\'s zones').toEqual(ZONE_MEMBERLESS)
     expect(readFileSync(at(one.dir)).equals(stood), 'the profile is byte-identical: a refusal lands no byte').toBe(true)
     expect(one.surface.journal({}), 'and mints no cursor and adds no journal entry (D-12)').toEqual({ status: 'read', from: 0, through: 0, floor: 0, entries: [], count: 0 })
 
     // THE RESTART HEALS NOTHING BECAUSE NOTHING WAS BROKEN — the arm the defect made permanent.
     const next = one.restart()
     expect(next.view.read().source.zones, 'and a restart has nothing to heal, because no `file` version was ever created').toBe('record')
-    expect(next.store.read(['zones'], 'mem'), 'the family is re-minted at its placeholder, as it is at every boot — the declared zone with an empty record').toEqual({ 'zone-1': {} })
+    expect(next.store.read(['zones'], 'mem'), 'the family is re-minted at its placeholder, as it is at every boot — the declared zone with an empty record').toEqual(ZONE_PLACEHOLDER)
   })
 
   it('D-3 · defect A’s silent default: the two calls the defect was MADE of — a `write` and a `delete` that name no tier — are refused the same way', () => {
@@ -239,10 +248,10 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // THE OTHER ARM AT THE UNPAIRED ROOT: the tier the entry declares is ADMITTED, so the two refusals above are the
     // declared tier's boundary and no blanket over `['drag']` — and nothing judges the value, because no pair stands
     // at this root (`D-105`, `D-132`).
-    expect(one.surface.write({ path: ['drag'], tier: 'temp', value: { 'pane-a': { size: 120 } } }).status, 'the unpaired root\'s OWN tier is admitted, so the guard refuses a crossing and never the family').toBe('committed')
+    expect(one.surface.write({ path: ['drag'], tier: 'temp', value: { 'pane-a': { height: 120 } } }).status, 'the unpaired root\'s OWN tier is admitted, so the guard refuses a crossing and never the family').toBe('committed')
     // AND THE GUARD IS BELOW THE ROOT TOO: a family is ONE value at its root, so every address under it is that
     // root's tier — a descendant write at another tier is the same lie one segment down.
-    expect(one.surface.write({ path: ['panes', 'pane-a', 'size'], value: 1, tier: 'mem' }).status, 'a descendant of a declared root is guarded by its ROOT').toBe('refused')
+    expect(one.surface.write({ path: ['panes', 'pane-a', 'height'], value: 1, tier: 'mem' }).status, 'a descendant of a declared root is guarded by its ROOT').toBe('refused')
     // THE POSITIVE CONTROL: an address that no crossing declares is untouched by the guard at all three tiers.
     for (const tier of ['file', 'mem', 'temp'] as const) {
       expect(one.surface.write({ path: ['alpha'], value: tier, tier }).status, `an undeclared root still writes at '${tier}', so the refusals above are not a blanket`).toBe('committed')
@@ -252,7 +261,7 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
   it('D-4 · defect A, second arm: the SAME write at `mem` commits, the family’s own read() sees it, and a restart takes it away — a `mem` write is this process’s and persists nowhere', () => {
     const one = stand()
     const stood = readFileSync(at(one.dir))
-    const family = { 'zone-1': { size: 10 } }
+    const family = { [ZONE]: { size: 10 } }
 
     const landed = one.surface.write({ path: ['zones'], tier: 'mem', value: family })
     // **AND THE ANSWER NAMES THE PASS THAT JUDGED IT** (`D-103`): one pair was asked at `['zones']` and it PASSED, so the
@@ -266,7 +275,7 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     })
     // THE FAMILY'S OWN READ IS THE OBSERVABLE, and it is the one the defect broke: `viewRecord.read()` serves what
     // the surface wrote because the two now address the same tier.
-    expect(one.view.read().zones, 'the record reads the caller\'s family, member for member').toEqual([{ id: 'zone-1', size: 10 }])
+    expect(one.view.read().zones, 'the record reads the caller\'s family, member for member').toEqual([{ id: ZONE, size: 10 }])
     expect(one.view.read().source.zones, 'and still reports the family as a RECORD').toBe('record')
     // **THE ARM IS `branch` AND NOT `row`, WHICH IS A MEASUREMENT AND NOT A PREFERENCE** (D-11's `ASM-L2-2`): a `row`
     // is a LITERAL at an exact address and the family is a container, so `readLiteral` answers `ReadTargetIsBranch`
@@ -274,7 +283,7 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // **AND THE ANSWER'S `value` IS §2a'S NODE** (`D-134`): the family is an OBJECT node with its members INLINE, each
     // member a node of its own and the leaf's `size` carrying its literal under `value` — so the container's shape and the
     // readout are ONE claim here, and neither can be asserted apart from the other.
-    const familyNode = { _tier: 'mem', 'zone-1': { _tier: 'mem', size: { _tier: 'mem', value: 10 } } }
+    const familyNode = { _tier: 'mem', [ZONE]: { _tier: 'mem', size: { _tier: 'mem', value: 10 } } }
     expect(one.surface.read({ path: ['zones'], tier: 'mem' }), 'the surface reads it back at its own tier, as the container the family is').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: familyNode })
     expect(one.surface.read({ path: ['zones'] }), 'and an unqualified read serves it too — the store\'s own lowest-persistence-present, which is `mem` where only `mem` stands').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: familyNode })
     // **AND NO BYTE OF IT IS IN THE PROFILE**: a `mem` write is the instance's register, which `D-84` measured and
@@ -286,17 +295,20 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     // family is GONE and the family's pair re-mints the placeholder at the registration instant (`D-84`, `D-91`) — the
     // placeholder being every DECLARED zone id with an EMPTY record (`D-151`).
     const next = one.restart()
-    expect(next.store.read(['zones'], 'mem'), 'the next process\'s family register is the placeholder again, not the caller\'s family').toEqual({ 'zone-1': {} })
-    expect(next.view.read().zones, 'so the record answers the declared zone, memberless').toEqual([{ id: 'zone-1' }])
+    expect(next.store.read(['zones'], 'mem'), 'the next process\'s family register is the placeholder again, not the caller\'s family').toEqual(ZONE_PLACEHOLDER)
+    expect(next.view.read().zones, 'so the record answers the declared zone, memberless').toEqual(ZONE_MEMBERLESS)
     expect(next.view.read().source.zones, 'and reads its family as a RECORD, because a repair is its lawful source').toBe('record')
-    expect(next.surface.read({ path: ['zones'] }), 'and the surface answers the placeholder, never the value it committed before the restart — the node is `{_tier}` and the zone\'s own record is `{_tier}` with no member').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: { _tier: 'mem', 'zone-1': { _tier: 'mem' } } })
+    expect(next.surface.read({ path: ['zones'] }), 'and the surface answers the placeholder, never the value it committed before the restart — the node is `{_tier}` and the zone\'s own record is `{_tier}` with no member').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: { _tier: 'mem', bottom: { _tier: 'mem' }, left: { _tier: 'mem' }, right: { _tier: 'mem' }, top: { _tier: 'mem' } } })
     expect(readFileSync(at(one.dir)).equals(stood), 'with the profile byte-identical across BOTH constructions').toBe(true)
   })
 
   it('D-5 · defect B, both arms: [\'panes\'] at a mismatched tier is refused BY THE ROOT GUARD, and the plain junk at its OWN tier is refused BY THE PAIR — the residual half this row was written to measure DIES at `D-105`, and its own text said its death would be this refusal', () => {
     const one = stand()
     const geometry = one.view.read().panes
-    expect(geometry, 'the pane family stands with the measured default before any attempt').toEqual([{ id: 'pane-a', size: 100, bounds: { min: 0, max: 200 } }])
+    expect(geometry, 'the pane family stands with the measured default before any attempt').toEqual([
+      { id: 'pane-a', width: 100, height: 100, bounds: { min: 0, max: 200 } },
+      { id: 'pane-menus', width: 100, height: 100, zone: 'top' },
+    ])
 
     for (const tier of ['mem', 'temp'] as const) {
       const refused = one.surface.write({ path: ['panes'], tier, value: { junk: true } })
@@ -320,9 +332,9 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     expect(readFileSync(at(one.dir)).equals(stood), 'and the junk is NOT durable: the profile is byte-identical across the refusal').toBe(true)
     // THE CONTROL THAT KEEPS THIS ROW FROM BEING A SURRENDER: a LEGAL write at the same tier still lands, so the refusal
     // above is the VALUE's and not a blanket on the address.
-    const legal = one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { size: 60, bounds: { min: 0, max: 120 } } } })
+    const legal = one.surface.write({ path: ['panes'], tier: 'file', value: { 'pane-a': { width: 60, height: 60, bounds: { min: 0, max: 120 } } } })
     expect(legal.status, 'a legal family at the family\'s own tier still commits').toBe('committed')
-    expect(one.view.read().panes, 'and it is what the family reads').toEqual([{ id: 'pane-a', size: 60, bounds: { min: 0, max: 120 } }])
+    expect(one.view.read().panes, 'and it is what the family reads').toEqual([{ id: 'pane-a', width: 60, height: 60, bounds: { min: 0, max: 120 } }])
     const other = stand()
     expect(other.surface.write({ path: ['panes'], tier: 'mem', value: { junk: true } }).status, 'a second profile: `mem` is still refused by the guard').toBe('refused')
     expect(other.view.read().panes, 'and that profile keeps its geometry').toEqual(geometry)
@@ -422,14 +434,14 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
         { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
       ],
     })
-    expect(one.store.read(['zones'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER — the declared zone with an empty record (`D-151`) — and the caller’s value is nowhere').toEqual({ 'zone-1': {} })
-    expect(one.view.read().zones, 'the record answers the declared zone, memberless, never the value that was written').toEqual([{ id: 'zone-1' }])
+    expect(one.store.read(['zones'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER — the declared zone with an empty record (`D-151`) — and the caller’s value is nowhere').toEqual(ZONE_PLACEHOLDER)
+    expect(one.view.read().zones, 'the record answers the declared zone, memberless, never the value that was written').toEqual(ZONE_MEMBERLESS)
     expect(JSON.stringify(landed).includes('"repaired":true'), 'and the verdict SURVIVES JSON, which the store\'s own member does not — so the member a tool answer carries is the one that says it').toBe(true)
     // THE CONTROL: the same write with a value the family ADMITS leaves the caller's own value standing, so the reading above
     // is the repair and not the tier.
-    const admitted = one.surface.write({ path: ['zones'], tier: 'mem', value: { 'zone-1': { size: 4 } } })
+    const admitted = one.surface.write({ path: ['zones'], tier: 'mem', value: { [ZONE]: { size: 4 } } })
     expect(admitted.status, 'a value the family admits commits too').toBe('committed')
-    expect(one.view.read().zones, 'and THAT one the record serves member for member').toEqual([{ id: 'zone-1', size: 4 }])
+    expect(one.view.read().zones, 'and THAT one the record serves member for member').toEqual([{ id: ZONE, size: 4 }])
   })
 
   it('D-8 · a `mem` write is visible to THIS instance and to no other: a second store over the same bytes never serves it', () => {

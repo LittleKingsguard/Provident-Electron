@@ -84,6 +84,7 @@ import type {
   ViewRecordStore,
   ViewRepairAnswer,
 } from '../../../src/main/view-record'
+import { MENUS_PANE_ID, MENUS_PANE_ZONE_ID } from '../../../src/shared/view-shape'
 import { createViewSurface } from '../../../src/main/view-surface'
 import {
   IPC_VIEW_CHANGED,
@@ -95,6 +96,20 @@ import {
 
 const PROFILE_FILE = 'provident-profile.json'
 const REPO = new URL('../../../', import.meta.url)
+
+/** **THE ZONE THIS BATTERY ADDRESSES — ONE OF THE FOUR DECLARED IDS** (`D-181`, `D-151`): the fixture asked `'zone-1'`
+ *  while the domain held one id, and `zone-1` names nothing now that the set is `top`/`bottom`/`left`/`right` (`D-192`
+ *  retired `DEFAULT_ZONE_ID` with its premise). The subject is unchanged — a declared id, its leaves, its deliveries. */
+const ZONE = 'top'
+/** The four memberless zones a fresh repair leaves, in the order the store's own read answers them. */
+const FOUR_MEMBERLESS = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: 'top' }]
+/** **THE PANES FAMILY AS THE REPAIR MINTS IT — TWO PANES, EACH AT BOTH AXIS MEMBERS** (`D-192` correcting `D-191`):
+ *  `pane-a` is the stage pane and carries its own clamp, `pane-menus` is the zone-resident one and carries its `zone`
+ *  instead. The measured figures are the module's own constants, so a changed default reds these rows. */
+const PLACEHOLDER_PANES = [
+  { id: DEFAULT_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
+  { id: MENUS_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
+]
 
 /** **A SOURCE READ WITH THE COMMENT LINES AND BLOCK COMMENTS ELIDED — THE ONLY FORM AN ABSENCE MAY BE ASSERTED ON**
  *  (`D-81`'s hollow-green class: a naive byte read passes on a comment, and this tree has already paid for that once).
@@ -143,7 +158,7 @@ const voidConstraintBody: ViewConstraintDeclaration = { address: ['zones'], id: 
 
 declare const aStore: ViewRecordStore
 const aCarrier = { pending: [] }
-const anIntendedFamily: unknown = { [DEFAULT_PANE_ID]: { size: 100, bounds: { min: 0, max: 200 } } }
+const anIntendedFamily: unknown = { [DEFAULT_PANE_ID]: { width: 100, height: 100, bounds: { min: 0, max: 200 } } }
 
 // The positive control: a carrier IS accepted here, so the directives below are about the position and not the call.
 const joinedRepairWrite = (): unknown => writeJoinedAt(aStore, aCarrier, VIEW_PANES_ADDRESS, 'file', anIntendedFamily)
@@ -210,8 +225,13 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
       bound.current = store as unknown as ViewRecordStore
       // THE FAMILY STANDS AT THE STORE'S OWN ADDRESS BEFORE ANY COMMIT — read through the STORE, not through the module,
       // so the reading is the instance's and not a route's composition.
-      expect(store.read(VIEW_PANES_ADDRESS, 'file'), 'the existence pair minted the pane family at construction').toEqual({
-        [DEFAULT_PANE_ID]: { size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
+      expect(store.read(VIEW_PANES_ADDRESS, 'file'), 'the existence pair minted the pane family at construction — BOTH declared panes, BOTH axis members of each (`D-192`)').toEqual({
+        [DEFAULT_PANE_ID]: {
+          width: DEFAULT_PANE_SIZE,
+          height: DEFAULT_PANE_SIZE,
+          bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max },
+        },
+        [MENUS_PANE_ID]: { width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
       })
       // **AND THE DEFAULT IS THE MEASURED ONE, NOT AN INVENTED ONE**: the pane the app's store-backed drag composition
       // addresses, at the size and bounds pair `D-87` MEASURED off `src/shared/demo-envelope.ts`'s authored pane — a
@@ -219,7 +239,13 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
       // gone), so what stands here is the record's figure and never a figure copied off an element. A repair writing any
       // other number would pass a `toBeDefined`-shaped row and lose the whole point.
       expect(DEFAULT_PANE_ID, 'the one pane id the app addresses').toBe('pane-a')
-      expect({ size: DEFAULT_PANE_SIZE, ...DEFAULT_PANE_BOUNDS }, 'the geometry the tree states, and no other').toEqual({ size: 100, min: 0, max: 200 })
+      // **BOTH AXIS MEMBERS CARRY THE ONE MEASURED FIGURE AND ITS NAME DID NOT MOVE** (`D-189`, `D-192`): the split
+      // renamed `pane-a`'s `size` to `height` and minted its `width` from the same measured number, so this control reads
+      // the figure twice and the pair once.
+      expect(
+        { width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, ...DEFAULT_PANE_BOUNDS },
+        'the geometry the tree states, and no other',
+      ).toEqual({ width: 100, height: 100, min: 0, max: 200 })
 
       const fresh = createViewRecord({ store: bound.current })
       const read = fresh.read()
@@ -228,9 +254,7 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
         zones: 'record',
         theme: 'record',
       })
-      expect(read.panes, 'and the record reads the family the repair wrote').toEqual([
-        { id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
-      ])
+      expect(read.panes, 'and the record reads the family the repair wrote — TWO panes, each stating both axes').toEqual(PLACEHOLDER_PANES)
       // **AND THE ANSWER CARRIES NO `focus` MEMBER AT ALL** (D-142): the mirror's root, pair and read are deleted with the
       // family, so an answer that still named one would be a shape this module's document does not declare.
       expect(Object.hasOwn(read, 'focus'), 'the read carries no mirror: the family is gone, not defaulted').toBe(false)
@@ -260,14 +284,20 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
     const instant = mkdtempSync(join(tmpdir(), 'view-seeded-'))
     const path = join(instant, PROFILE_FILE)
     try {
-      createProfileStore({ filePath: path }).write(VIEW_PANES_ADDRESS, 'file', { [DEFAULT_PANE_ID]: { size: 240, bounds: { min: 10, max: 400 } } })
+      // **BOTH AXIS MEMBERS ARE SEEDED AND THEY DIFFER** (`D-189`): the shape admits no unstated axis member, and two
+      // distinct figures make a read that answered the wrong one visible rather than coincidentally right.
+      createProfileStore({ filePath: path }).write(VIEW_PANES_ADDRESS, 'file', {
+        [DEFAULT_PANE_ID]: { width: 240, height: 180, bounds: { min: 10, max: 400 } },
+      })
       const booted = boot(path)
       try {
         expect(booted.store.read(VIEW_PANES_ADDRESS as never, 'file'), 'the file\'s own family, byte for byte').toEqual({
-          [DEFAULT_PANE_ID]: { size: 240, bounds: { min: 10, max: 400 } },
+          [DEFAULT_PANE_ID]: { width: 240, height: 180, bounds: { min: 10, max: 400 } },
         })
         const read = booted.read()
-        expect(read.panes, 'and the record reads what the file brought').toEqual([{ id: DEFAULT_PANE_ID, size: 240, bounds: { min: 10, max: 400 } }])
+        expect(read.panes, 'and the record reads what the file brought — both members, each at its own name').toEqual([
+          { id: DEFAULT_PANE_ID, width: 240, height: 180, bounds: { min: 10, max: 400 } },
+        ])
         expect(read.source.panes, 'from the RECORD: the pair passed it and wrote nothing').toBe('record')
       } finally {
         booted.close()
@@ -281,7 +311,7 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
     const instant = mkdtempSync(join(tmpdir(), 'view-legal-'))
     const path = join(instant, PROFILE_FILE)
     try {
-      const seed = { [DEFAULT_PANE_ID]: { size: 133, bounds: { min: 5, max: 300 } } }
+      const seed = { [DEFAULT_PANE_ID]: { width: 133, height: 121, bounds: { min: 5, max: 300 } } }
       createProfileStore({ filePath: path }).write(VIEW_PANES_ADDRESS as never, 'file', seed)
       const stood = readFileSync(path, 'utf8')
       const booted = boot(path)
@@ -304,7 +334,9 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
         expect(after['theme'], 'which names no attribute, so nothing can be applied from it').toEqual({
           declaration: { value: '', removal: true },
         })
-        expect(booted.read().panes, 'and the reading is the seed\'s, not a re-mint of it').toEqual([{ id: DEFAULT_PANE_ID, size: 133, bounds: { min: 5, max: 300 } }])
+        expect(booted.read().panes, 'and the reading is the seed\'s, not a re-mint of it').toEqual([
+          { id: DEFAULT_PANE_ID, width: 133, height: 121, bounds: { min: 5, max: 300 } },
+        ])
       } finally {
         booted.close()
       }
@@ -341,17 +373,19 @@ describe('view-record · clause 2 — the push, measured per family and against 
     const off = record.subscribe(() => {
       delivered += 1
     })
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 120 }).status, 'the pane commit commits').toBe('committed')
+    // **EACH ACT NAMES THE ONE MEMBER ITS PANE ADJUSTS** (`D-189`, `D-191`): `pane-a` is stage-resident, so its ADJUSTABLE
+    // member is its `height` — `{size}` would be a shape the record no longer has.
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 120 }).status, 'the pane commit commits').toBe('committed')
     expect(delivered, 'a committed change of the PANES family delivers exactly one notification').toBe(1)
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 140 }).status).toBe('committed')
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 140 }).status).toBe('committed')
     expect(delivered, 'a second committed change delivers exactly one more — never one per family standing at a root').toBe(2)
-    expect(record.commitZones('zone-1', { size: 160, display: 'normal' }).status, 'the zone commit commits').toBe('committed')
+    expect(record.commitZones(ZONE, { size: 160, display: 'normal' }).status, 'the zone commit commits').toBe('committed')
     expect(
       delivered,
       'a committed ZONE act delivers ONE PER SUPPLIED MEMBER — `size` and `display` are two leaf writes, so two more: one route call is no longer one delivery (`D-151`)',
     ).toBe(4)
     off()
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 160 }).status, 'a commit after the withdrawal still commits').toBe('committed')
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 160 }).status, 'a commit after the withdrawal still commits').toBe('committed')
     expect(delivered, 'the withdrawal is the answer: no delivery follows it').toBe(4)
   })
 
@@ -365,7 +399,7 @@ describe('view-record · clause 2 — the push, measured per family and against 
     store.write(['elsewhere'], 'mem', { note: 'not the view' })
     expect(delivered, 'a write outside both roots notifies nothing: the listener is bound to the families, not to the store').toBe(0)
     // AND THE POSITIVE HALF ON THE SAME SUBSCRIPTION.
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 101 }).status).toBe('committed')
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 101 }).status).toBe('committed')
     expect(delivered, 'and the very same subscription delivers when a family moves').toBe(1)
   })
 
@@ -375,15 +409,15 @@ describe('view-record · clause 2 — the push, measured per family and against 
     let bridged = 0
     const surface = createViewSurface({ store, onChanged: () => { bridged += 1 } })
     surface.attach()
-    expect(surface.commitPane(DEFAULT_PANE_ID, { size: 111 }).status).toBe('committed')
+    expect(surface.commitPane(DEFAULT_PANE_ID, { height: 111 }).status).toBe('committed')
     expect(bridged, 'the main-side half: one committed pane change reaches the broadcast').toBe(1)
-    expect(surface.commitZones('zone-1', { size: 140, display: 'normal' }).status, 'a committed change of a second family').toBe('committed')
+    expect(surface.commitZones(ZONE, { size: 140, display: 'normal' }).status, 'a committed change of a second family').toBe('committed')
     expect(
       bridged,
       'and this zone act reaches it too, over the one subscription — twice, because its two supplied members are two leaf writes (D-151)',
     ).toBe(3)
     surface.detach()
-    expect(surface.commitPane(DEFAULT_PANE_ID, { size: 112 }).status).toBe('committed')
+    expect(surface.commitPane(DEFAULT_PANE_ID, { height: 112 }).status).toBe('committed')
     expect(bridged, '`detach` withdraws exactly what `attach` took').toBe(3)
 
     // THE RENDERER-SIDE HALF, READ AS CODE WITH ITS COMMENTS ELIDED (so a comment naming the channel cannot pass):
@@ -406,13 +440,13 @@ describe('view-record · clause 2 — the push, measured per family and against 
     // **THE WRITE THE DRAG DID NOT MAKE** — an outside `temp` write at the family's own address, which is the only form this precondition can be
     // measured in (`D-137`): a temp root the array omits is a write the renderer never hears, and a listener bound per address is TIER-BLIND, so the
     // delivery is the root's and not the writer's. `['drag']` is a root, so the write lands without a repair (L2 §1).
-    store.write(['drag'] as never, 'temp', { [DEFAULT_PANE_ID]: { size: 180 } })
+    store.write(['drag'] as never, 'temp', { [DEFAULT_PANE_ID]: { height: 180 } })
     expect(
       delivered,
       'the delivery fired: an array without the temp root answers ZERO here while every temp write reaches the store unspoken',
     ).toBeGreaterThan(0)
     // AND THE POSITIVE HALF ON THE SAME SUBSCRIPTION, so a zero above could never be read as a dead registration.
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 122 }).status).toBe('committed')
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 122 }).status).toBe('committed')
     expect(delivered, 'and the same subscription still delivers for the file family').toBeGreaterThan(1)
     off()
   })
@@ -445,7 +479,7 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
       try {
         expect(two.read().panes, 'boot two answers boot one\'s family').toEqual(first.panes)
         expect(two.read().theme, 'and the same appearance record, which is the second `file` family').toEqual(first.theme)
-        expect(two.read().zones, 'while the `mem` family is re-minted rather than carried — the declared zone, memberless (`D-151`)').toEqual([{ id: 'zone-1' }])
+        expect(two.read().zones, 'while the `mem` family is re-minted rather than carried — the FOUR declared zones, memberless (`D-151`, `D-181`)').toEqual(FOUR_MEMBERLESS)
         expect(two.bytes(), 'the file is byte-identical across the two boots (nothing re-wrote it)').toBe(oneBytes)
       } finally {
         two.close()
@@ -480,16 +514,19 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
     expect(record.read().panes, 'and the family stands again, at the measured placeholder').toEqual(before)
     // THE OTHER SURVIVING ROOT, THE SAME WAY: the `mem` family's landing arm, which the retired focus row used to carry.
     delivered = 0
-    expect(store.write(VIEW_ZONES_ADDRESS as never, 'mem', { 'zone-1': { size: 160, display: 'normal' } }).op).toBeDefined()
+    expect(store.write(VIEW_ZONES_ADDRESS as never, 'mem', { [ZONE]: { size: 160, display: 'normal' } }).op).toBeDefined()
     expect(delivered, 'a zone write delivers once').toBe(1)
-    expect(record.read().zones).toEqual([{ id: 'zone-1', size: 160, display: 'normal' }])
+    // **THIS IS THE STORE'S OWN ROOT WRITE AND NOT A ROUTE'S LEAF**, so the value REPLACES the family whole: the one zone
+    // this write names stands and the three the placeholder minted do not survive it — the contrast the row exists for,
+    // since `commitZones` writes leaves and could not do this (`D-151`).
+    expect(record.read().zones).toEqual([{ id: ZONE, size: 160, display: 'normal' }])
     delivered = 0
     const zonesReceipt = store.delete(VIEW_ZONES_ADDRESS as never) as { triggered?: readonly { handle: string }[] }
     expect(delivered, 'and its delete is ONE committed change, its repair re-minting the family inside that commit').toBe(1)
     expect((zonesReceipt.triggered ?? []).map((entry) => entry.handle), 'the pair that answered is the zone family\'s').toContain(
       VIEW_ZONES_MUST_STAND_ID,
     )
-    expect(record.read().zones, 'leaving the placeholder that names every DECLARED zone with an empty record').toEqual([{ id: 'zone-1' }])
+    expect(record.read().zones, 'leaving the placeholder that names every DECLARED zone with an empty record').toEqual(FOUR_MEMBERLESS)
     off()
   })
 })
@@ -541,7 +578,7 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
   it('NO WRITE ON READ, MEASURED BOTH WAYS: a read lands no byte over a standing family, and a read over a store whose batch NEVER RAN answers the declared defaults WITHOUT minting either family', () => {
     // HALF ONE — THE `file` FAMILY, WHERE THE BYTES CAN SHOW IT.
     const path = join(dir, PROFILE_FILE)
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 175 }).status).toBe('committed')
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 175 }).status).toBe('committed')
     const stood = readFileSync(path)
     for (let n = 0; n < 3; n += 1) expect(record.read().status).toBe('committed')
     expect(readFileSync(path).equals(stood), 'a read lands no byte: the whole-value write is the only writer').toBe(true)
@@ -582,22 +619,35 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
 // ═══════════════ THE ROUTES' SHAPE ARMS, THE SEAT RULE AND THE PURE DEFAULT ═══════════════
 
 describe('view-record · the routes', () => {
-  it('THE SHAPE ARMS ANSWER BEFORE ANY STORE VERB: a pane with no id, a non-plain geometry, an unusable size and an unusable bounds pair are each refused under this module\'s own reason, and neither family moved', () => {
+  it('THE SHAPE ARMS ANSWER BEFORE ANY STORE VERB: a pane with no id, a non-plain geometry, an unusable axis member, a member the pane\'s own zone does not make adjustable, both axis members in one act and an unusable bounds pair are each refused under this module\'s own reason, and neither family moved', () => {
     const before = record.read()
-    expect(record.commitPane('', { size: 1 }), 'no pane id').toMatchObject({ status: 'refused', reason: PANE_SHAPE_REASON })
+    expect(record.commitPane('', { height: 1 }), 'no pane id').toMatchObject({ status: 'refused', reason: PANE_SHAPE_REASON })
     expect(record.commitPane(DEFAULT_PANE_ID, null), 'no plain geometry record').toMatchObject({ status: 'refused', reason: PANE_SHAPE_REASON })
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: Number.NaN }), 'a size that is not a finite number').toMatchObject({ status: 'refused', reason: PANE_GEOMETRY_REASON })
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: -1 }), 'a negative size').toMatchObject({ status: 'refused', reason: PANE_GEOMETRY_REASON })
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: Number.NaN }), 'an axis member that is not a finite number').toMatchObject({ status: 'refused', reason: PANE_GEOMETRY_REASON })
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: -1 }), 'a negative axis member').toMatchObject({ status: 'refused', reason: PANE_GEOMETRY_REASON })
+    // **THE REV-16 CLAUSES, AND THEY ARE TWO FACTS THIS TOKEN ALREADY NAMED** (`D-191`; L2 §5): a `width` handed to a
+    // stage-resident pane — `pane-a` carries no memberless `zone`, so `C-9` puts it in the stage and `C-12` makes it
+    // sidebar-equivalent — is a FAULT and not an update, and both axis members in one act is the same refusal, because at
+    // any instant exactly one axis is the pane's and the other is memory (`D-189`). No ninth token arrives for either.
+    expect(record.commitPane(DEFAULT_PANE_ID, { width: 120 }), 'a NON-ADJUSTABLE axis member: a width handed to a stage pane').toMatchObject({
+      status: 'refused',
+      reason: PANE_GEOMETRY_REASON,
+    })
+    expect(record.commitPane(DEFAULT_PANE_ID, { width: 120, height: 120 }), 'BOTH axis members in one act').toMatchObject({
+      status: 'refused',
+      reason: PANE_GEOMETRY_REASON,
+    })
     expect(record.commitPane(DEFAULT_PANE_ID, { bounds: { min: 0 } }), 'a bounds pair with one member').toMatchObject({ status: 'refused', reason: PANE_GEOMETRY_REASON })
     expect(record.commitPane(DEFAULT_PANE_ID, { bounds: { min: 300, max: 100 } }), 'and a pair whose min exceeds its max').toMatchObject({ status: 'refused', reason: PANE_GEOMETRY_REASON })
     expect(record.read(), 'no refused act moved either family').toEqual(before)
   })
 
   it('ONE MEMBER IS FILLED, NOT ERASED: a commit naming a size alone keeps the pane\'s standing bounds — now the LEAF WRITE\'s own guarantee and no longer a composer\'s — and an id this record does not declare is REFUSED, which is the arm that replaced this row\'s sibling-pane half', () => {
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 250, bounds: { min: 5, max: 500 } }).status).toBe('committed')
-    expect(record.commitPane(DEFAULT_PANE_ID, { size: 260 }).status, 'the size alone').toBe('committed')
-    expect(record.read().panes, 'the bounds the family stood at survive the narrower act').toEqual([
-      { id: DEFAULT_PANE_ID, size: 260, bounds: { min: 5, max: 500 } },
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 250, bounds: { min: 5, max: 500 } }).status).toBe('committed')
+    expect(record.commitPane(DEFAULT_PANE_ID, { height: 260 }).status, 'the adjustable member alone').toBe('committed')
+    expect(record.read().panes, 'the bounds the family stood at survive the narrower act — as does the OTHER axis member the act never named, which is the memory `D-189` asked the split for').toEqual([
+      { id: DEFAULT_PANE_ID, width: DEFAULT_PANE_SIZE, height: 260, bounds: { min: 5, max: 500 } },
+      { id: MENUS_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
     ])
     // **WHY THIS HALF SURVIVES THE COMPOSER'S DELETION, SAID HERE BECAUSE A READER WILL ASK IT OF THE ROW'S TITLE**: the
     // claim is the same one the row always measured — a one-member act does not erase the member it did not name — and
@@ -618,11 +668,12 @@ describe('view-record · the routes', () => {
     // was enforced). **So the arm below asserts the REFUSAL — the new contract — and the sibling half retires here with its
     // reason rather than being re-pointed at a state that cannot be represented** (`Z-9`'s rule, `D-152`).
     expect(
-      record.commitPane('pane-z', { size: 90, bounds: { min: 0, max: 200 } }),
+      record.commitPane('pane-z', { height: 90, bounds: { min: 0, max: 200 } }),
       'a well-formed id this record does not declare is REFUSED before any store verb: the closure at the route\'s seat',
     ).toMatchObject({ status: 'refused', reason: UNDECLARED_PANE_REASON, address: ['panes', 'pane-z'] })
-    expect(record.read().panes, 'and nothing the refused act named reached the family: its one declared pane stands exactly as it stood').toEqual([
-      { id: DEFAULT_PANE_ID, size: 260, bounds: { min: 5, max: 500 } },
+    expect(record.read().panes, 'and nothing the refused act named reached the family: both declared panes stand exactly as they stood').toEqual([
+      { id: DEFAULT_PANE_ID, width: DEFAULT_PANE_SIZE, height: 260, bounds: { min: 5, max: 500 } },
+      { id: MENUS_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
     ])
   })
 
@@ -635,14 +686,27 @@ describe('view-record · the routes', () => {
 
   it('THE PURE DEFAULT, OUT OF A READING AND WITH NO STORE VERB: `paneGeometryIn` answers the measured geometry for a pane the family does not name, says so, and answers the record\'s own when it does', () => {
     const panes = record.read().panes
+    // **THE DERIVATION ANSWERS BOTH AXIS MEMBERS, AND THE DEFAULT'S TWO FIGURES ARE ONE NUMBER AT TWO NAMES** (`D-189`,
+    // `D-192`): the missing arm is `defaultPaneGeometry`'s pair, which is why a consumer that reads `height` (the stage
+    // pane's adjustable member) and one that reads `width` both have a source.
     expect(paneGeometryIn(panes, DEFAULT_PANE_ID), 'the family names it').toEqual({
       status: 'committed',
-      pane: { id: DEFAULT_PANE_ID, size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
+      pane: {
+        id: DEFAULT_PANE_ID,
+        width: DEFAULT_PANE_SIZE,
+        height: DEFAULT_PANE_SIZE,
+        bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max },
+      },
       source: 'record',
     })
     expect(paneGeometryIn(panes, 'pane-never-written'), 'and one it does not').toEqual({
       status: 'committed',
-      pane: { id: 'pane-never-written', size: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
+      pane: {
+        id: 'pane-never-written',
+        width: DEFAULT_PANE_SIZE,
+        height: DEFAULT_PANE_SIZE,
+        bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max },
+      },
       source: 'default',
     })
   })

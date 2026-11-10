@@ -57,6 +57,7 @@ import type { Runtime } from '../../../src/renderer/runtime.js'
 import type { ViewCommittedReading } from '../../../src/renderer/view-client.js'
 import {
   DEFAULT_PANE_ID,
+  DEFAULT_PANE_SIZE,
   viewThemePlaceholder,
   type ViewGeometrySource,
   type ViewPaneGeometry,
@@ -244,9 +245,11 @@ function adopt(options: AdoptOptions = {}): ViewCommittedReading {
 }
 
 /** The panes family's ONE entry for the app's measured pane — the figure `paneSizeOf(DEFAULT_PANE_ID)` answers, whichever arm
- *  the `source` word names. */
-const panesAt = (size: number): readonly ViewPaneGeometry[] => [
-  { id: DEFAULT_PANE_ID, size, bounds: { min: 0, max: 200 } },
+ *  the `source` word names. **THE FIGURE SITS AT THE PANE'S ADJUSTABLE MEMBER AND THE OTHER MEMBER IS THE CONTROL** (`D-189`,
+ *  `D-191`): `pane-a` carries no `zone`, so `C-9`/`C-12` make its ADJUSTABLE axis the `height` — the `width` is held at the
+ *  measured default, so a read-out that painted the wrong member could not answer the record's figure by coincidence. */
+const panesAt = (figure: number): readonly ViewPaneGeometry[] => [
+  { id: DEFAULT_PANE_ID, width: DEFAULT_PANE_SIZE, height: figure, bounds: { min: 0, max: 200 } },
 ]
 
 /** A crossing that answers the store's own word and records the acts — the overlay's two members, no third. */

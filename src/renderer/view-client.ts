@@ -158,12 +158,18 @@ export interface ViewClientOptions {
 export interface ViewClient {
   /** THE SHAPE AS IT STANDS — `filled: false` before anything has answered. */
   shape(): ViewShape
-  /** **THE DRAG'S SIZE READ — SYNCHRONOUS, over the shape.** The named pane's stored size, and the MEASURED DEFAULT for a
-   *  pane the standing family does not name (`paneGeometryIn`, the crossing's own derivation, called here and not
-   *  re-spelled). */
+  /** **THE DRAG'S SIZE READ — SYNCHRONOUS, over the shape, AND IT ANSWERS THE PANE'S ADJUSTABLE MEMBER NAMED BY THE PANE'S
+   *  OWN `zone`** (`D-189`, `D-191`; `docs/L2/renderer-wiring/interface.md` §3). The pane's `zone` selects which of its two
+   *  STORED axis members a gesture may move — `width` under `top`/`bottom`, `height` under `left`/`right` or where the
+   *  member is absent (the stage, `C-9`/`C-12`) — so this answer is the figure the move writes and the release commits, and
+   *  it is ONE number because a gesture moves ONE axis. **THE PAIR IS NOT HIDDEN BY THAT**: both members cross the wire and
+   *  stand on `shape().panes`, admitted member for member by `paneOf`; this read names its axis (`adjustableMemberOf`) so a
+   *  single figure can never be mistaken for the other axis's. A pane the standing family does not name answers the MEASURED
+   *  DEFAULT (`paneGeometryIn`, the crossing's own derivation, called here and not re-spelled). */
   paneSizeOf(id: string): unknown
-  /** **THE DRAG'S BOUNDS READ — SYNCHRONOUS.** The pair AS STORED, never a clamped policy; a fresh copy on the default arm
-   *  so no caller can move the measured constant. */
+  /** **THE DRAG'S BOUNDS READ — SYNCHRONOUS, AND `undefined` IS A LAWFUL ANSWER** (`D-186`, `D-129`): the pair AS STORED,
+   *  never a clamped policy, and a zone-resident pane stores none because its clamp is the LAYOUT's. A fresh copy on the
+   *  default arm so no caller can move the measured constant; the pane's pair when the family names one. */
   paneBoundsOf(id: string): unknown
   /** **THE APPEARANCE READ — SYNCHRONOUS, AND IT ANSWERS THE CROSSING'S OWN RECORD** (D-97): the setting it carries, the
    *  attribute name the last act supplied, and **THE DECLARATION THE MECHANISM COMPUTED FOR THE PAIR**. This module never
@@ -257,19 +263,53 @@ const finiteNumber = (value: unknown): value is number => typeof value === 'numb
 /** **ONE PANE, ADMITTED FIELD BY FIELD, FROM THE WIRE** — the same admission the crossing performs on its own store, applied
  *  on this side of the boundary because the answer crossed a trust boundary to get here. A member this module cannot admit
  *  is DROPPED, which is the crossing's own disposition: a family is the panes it can state, and the missing one answers the
- *  measured default rather than a guess. */
+ *  measured default rather than a guess.
+ *
+ *  **BOTH AXIS MEMBERS ARE REQUIRED AND EACH IS READ AT ITS OWN NAME** (`D-189`, `D-190`; L2 §1, §3): `width` and `height`
+ *  replace the one `size` this function used to parse, because a record carrying no `width` or no `height` is one the
+ *  family cannot state at all — the crossing's `paneOf` drops it, so a pane arriving here without one is a divergence and
+ *  not a pane with a member this realm leaves off. **`bounds` AND `zone` ARE OPTIONAL AND BOTH ARE CARRIED WHERE STATED**
+ *  (`D-186`, `D-129`; L2 §3's *"every member it admits"*): a zone-resident pane's absent `bounds` is LAWFUL — its clamp is
+ *  the layout's — and dropping a member the family admits while `source.panes` still says `'record'` is `D-105`'s fault
+ *  exactly. An `id` is the family's key rather than a member of the value. */
 function paneOf(held: unknown): ViewPaneGeometry | null {
   if (!isObject(held) || Array.isArray(held)) return null
   const id = held['id']
   if (typeof id !== 'string' || id.length === 0) return null
-  const size = held['size']
-  if (!finiteNumber(size) || size < 0) return null
-  const bounds = held['bounds']
-  if (!isObject(bounds) || Array.isArray(bounds)) return null
-  const min = bounds['min']
-  const max = bounds['max']
-  if (!finiteNumber(min) || !finiteNumber(max) || min > max) return null
-  return { id, size, bounds: { min, max } }
+  const width = held['width']
+  const height = held['height']
+  if (!finiteNumber(width) || width < 0) return null
+  if (!finiteNumber(height) || height < 0) return null
+  const pane: {
+    id: string
+    width: number
+    height: number
+    bounds?: { readonly min: number; readonly max: number }
+    zone?: string
+  } = { id, width, height }
+  if (Object.hasOwn(held, 'bounds')) {
+    const bounds = held['bounds']
+    if (!isObject(bounds) || Array.isArray(bounds)) return null
+    const min = bounds['min']
+    const max = bounds['max']
+    if (!finiteNumber(min) || !finiteNumber(max) || min > max) return null
+    pane.bounds = { min, max }
+  }
+  if (Object.hasOwn(held, 'zone')) {
+    const zone = held['zone']
+    if (typeof zone !== 'string' || zone.length === 0) return null
+    pane.zone = zone
+  }
+  return pane
+}
+
+/** **THE MEMBER ONE PANE'S `zone` MAKES ADJUSTABLE, NAMED BY THE SELECTION AND NEVER BY A RE-INTERPRETATION** (`D-189`,
+ *  `D-191`; `docs/L2/view-record/interface.md` §1): `width` in a `top`/`bottom` zone, `height` in a `left`/`right` one, and
+ *  **`height` where the `zone` member is ABSENT** — the STAGE, which `C-9` derives and `C-12` makes sidebar-equivalent, so
+ *  `pane-a` adjusts its height as it always has. It selects WHICH of the two stored members a gesture may move; it never
+ *  says what a figure measures, because each member's own name already does (`D-189`). */
+function adjustableMemberOf(pane: ViewPaneGeometry): 'width' | 'height' {
+  return pane.zone === 'top' || pane.zone === 'bottom' ? 'width' : 'height'
 }
 
 /** **ONE ZONE, ADMITTED FROM THE WIRE** — the crossing's own admission, member for member, applied on this side of the
@@ -492,11 +532,16 @@ export function createViewClient(options: ViewClientOptions = {}): ViewClient {
     },
 
     paneSizeOf(id: string): unknown {
-      return paneGeometryIn(shape.panes, id).pane.size
+      // THE ADJUSTABLE MEMBER, SELECTED BY THE PANE'S OWN `zone` — never a re-interpretation of one standing number (`D-189`).
+      const pane = paneGeometryIn(shape.panes, id).pane
+      return pane[adjustableMemberOf(pane)]
     },
 
     paneBoundsOf(id: string): unknown {
+      // THE PAIR AS STORED, OR `undefined` WHERE THE PANE STORES NONE: a zone-resident pane's clamp is the layout's
+      // (`D-186`), so an invented pair here would be `D-91`'s second authority. The default arm's pair is COPIED.
       const pane = paneGeometryIn(shape.panes, id).pane
+      if (pane.bounds === undefined) return undefined
       return { min: pane.bounds.min, max: pane.bounds.max }
     },
 

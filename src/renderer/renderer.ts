@@ -13,7 +13,7 @@ import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCom
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DEFAULT_PANE_ID, defaultPaneGeometry, zoneIn, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -1759,7 +1759,12 @@ function describeModuleReading(shape: { filled: boolean; corrupt: boolean; modul
 /** THE ONE LINE'S TEXT — the arm, the per-family `source` words, and the two families' sizes. */
 function describeViewReading(reading: ViewClientReading): string {
   if (reading.status === 'committed') {
-    const panes = reading.panes.map((pane) => `${pane.id}=${String(pane.size)}[${String(pane.bounds.min)}…${String(pane.bounds.max)}]`)
+    const panes = reading.panes.map((pane) => {
+      // BOTH AXIS MEMBERS, EACH AT ITS OWN NAME, AND THE TWO OPTIONAL ONES SAID AS ABSENCES WHERE THEY ARE ABSENT
+      // (`D-189`, `D-186`, `D-129`): a zone-resident pane stores no `bounds`, and a pane with no `zone` is in the STAGE.
+      const bounds = pane.bounds === undefined ? 'no bounds' : `${String(pane.bounds.min)}…${String(pane.bounds.max)}`
+      return `${pane.id}=${String(pane.width)}×${String(pane.height)}[${bounds}] (${pane.zone === undefined ? 'stage' : pane.zone})`
+    })
     return `read; panes=[${panes.join(', ')}] (source ${reading.source.panes}), `
       + `zones=${String(reading.zones.length)} (source ${reading.source.zones}), `
       + `theme=${JSON.stringify(reading.theme.declaration)} (source ${reading.source.theme})`
@@ -2917,6 +2922,23 @@ export interface PaneDragBacking {
   readonly ghostTarget?: unknown
 }
 
+/** **THE MEMBER ONE PANE'S `zone` MAKES ADJUSTABLE — NAMED ONCE, AND READ BY EVERY TURN THAT ANSWERS OR WRITES A FIGURE**
+ *  (`D-189`, `D-191`; `docs/L2/renderer-wiring/interface.md` §3/§4). `width` in a `top`/`bottom` zone, `height` in a
+ *  `left`/`right` one, and **`height` where the `zone` member is ABSENT** — the STAGE, which `C-9` derives and `C-12` makes
+ *  sidebar-equivalent, so `pane-a`'s adjustable member is its `height` as its `size` always was (`D-189`'s rename is a
+ *  stored-member rename and not a value change). **THE OTHER MEMBER IS MEMORY, NEVER AN AUTHORITY**: a `top` pane's stored
+ *  `height` is retained and unpainted and a gesture must not move it (`D-129`, `D-186`). One selection, no
+ *  re-interpretation of a figure: each member's own name already says its axis. */
+function adjustableMemberNameOf(zone: string | undefined): 'width' | 'height' {
+  return zone === 'top' || zone === 'bottom' ? 'width' : 'height'
+}
+
+/** THE FIGURE THAT SELECTION NAMES, off one admitted geometry — so the drag's read, the read-out's figure and the ghost's
+ *  declared transient cannot disagree about WHICH member they are reading (`D-117`). */
+function adjustableFigureOf(pane: ViewPaneGeometry): number {
+  return pane[adjustableMemberNameOf(pane.zone)]
+}
+
 /** THE WIRED COMPOSITION (§2.1 A/B/C + the shape's delivery turn + §7a.1 item 1's reconcile turns), bound to the
  *  caller-supplied BACKINGS above and the RECORDING SOURCE DOUBLE. Every read is the shape's; the temp preview is this
  *  closure's; the ghost turn is a member the shape's one delivery calls. **NO TURN READS `source` ANY MORE** (`D-168`):
@@ -2946,6 +2968,23 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
     if (typeof token === 'string' && token.length > 0) return token
     return DEFAULT_PANE_ID
+  }
+
+  /** **WHICH MEMBER A GESTURE ON THIS PANE MAY MOVE — THE PANE'S OWN `zone`, READ FOR JUDGEMENT AND NEVER MERGED INTO A
+   *  WRITE** (`D-189`, `D-191`; `docs/L2/view-record/interface.md` §2). `width` under `top`/`bottom`, `height` under
+   *  `left`/`right`, and `height` where the `zone` member itself is absent — the stage, `C-9`/`C-12`. **THE READ IS THE
+   *  SHAPE'S AND IS TOTAL** (`D-95`): a null `view`, a hostile shape and a pane the family does not name all answer the
+   *  measured default's own selection, because `defaultPaneGeometry` carries no `zone` and therefore selects `height`. */
+  const paneMemberOf = (id: string): 'width' | 'height' => {
+    if (view !== null) {
+      try {
+        const held = view.shape().panes.find((pane) => pane.id === id)
+        if (held !== undefined) return adjustableMemberNameOf(held.zone)
+      } catch {
+        // A HOSTILE SHAPE ANSWERS THE MEASURED DEFAULT'S MEMBER — the absent shape's own arm, and no write.
+      }
+    }
+    return adjustableMemberNameOf(defaultPaneGeometry(id).zone)
   }
 
   /** **A `null` `view` REPORTS ONCE, AT CONSTRUCTION, AND THE THREE PER-TURN GUARDS STAY SILENT BY DESIGN** (design §2
@@ -3058,7 +3097,9 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
       if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) return
       gestures.set(key, { erased: false })
       // THE STATEMENT IS READ (`N1`), and the per-turn silence on a null `view` is the construction's one word above.
-      if (view !== null) reportUnreached('the drag move', view.commitDrag(DEFAULT_PANE_ID, { size }))
+      // **THE MEMBER IS THE PANE'S ADJUSTABLE ONE AND ITS NAME IS ITS AXIS** (`D-189`, `D-190`): `{height}` for `pane-a`,
+      // the stage-resident pane, so the `['drag']` reading and the release's `file` commit name ONE member.
+      if (view !== null) reportUnreached('the drag move', view.commitDrag(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: size }))
     } catch {
       // a hostile key, preview or view must never throw out of the move turn
     }
@@ -3080,8 +3121,9 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  ending and release turns' silence), so this one answers the default IT declares. */
   const readPaneSize = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
-    // A REALM WITH NO CROSSING: the measured default stands, stated from the ONE shared declaration rather than invented.
-    const measured = defaultPaneGeometry(id).size
+    // A REALM WITH NO CROSSING: the measured default stands, stated from the ONE shared declaration rather than invented —
+    // and read at the member that default's own selection names (`adjustableFigureOf`, i.e. its `height`, the stage's).
+    const measured = adjustableFigureOf(defaultPaneGeometry(id))
     if (view === null) return measured
     try {
       return view.paneSizeOf(id)
@@ -3099,7 +3141,9 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  what an absent shape answers — the pair is COPIED, so no caller holds `DEFAULT_PANE_BOUNDS`. */
   const readPaneBounds = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
-    const measured = defaultPaneGeometry(id).bounds
+    // `bounds` IS OPTIONAL ON THE ADMITTED RECORD (`D-186`, `D-129`); the measured pair is this read's declared degradation,
+    // so it is taken from the ONE shared declaration and COPIED, and the caller's pair is never a constant of that module.
+    const measured = defaultPaneGeometry(id).bounds ?? DEFAULT_PANE_BOUNDS
     const fallback = { min: measured.min, max: measured.max }
     if (view === null) return fallback
     try {
@@ -3134,10 +3178,12 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
       if (typeof sink === 'function') {
         ;(sink as (value: unknown) => unknown).call(null, final)
       }
-      // ONE ROUTE, ONE WHOLE MEMBER: the id names the pane and the crossing composes the family (D-87's `commitPane`).
+      // ONE ROUTE, ONE AXIS MEMBER: the id names the pane and the figure lands at the member the pane's own `zone` makes
+      // ADJUSTABLE (`{ height }` for `pane-a`, the stage-resident pane — `D-189`, `D-191`), which is the member the move
+      // wrote at `temp`, so the gesture and the record name one member and nothing translates between them.
       // THE STATEMENT IS READ (`N1`) — a write that went nowhere is the only reading this turn will ever have of it. The
       // per-turn silence on a null `view` is the construction's one word above, pointed at rather than repeated.
-      if (view !== null) reportUnreached('the pane commit', view.commitPane(DEFAULT_PANE_ID, { size: final }))
+      if (view !== null) reportUnreached('the pane commit', view.commitPane(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: final }))
       endReading(gestureId)
     } catch {
       // a hostile view or sink must never throw out of the release turn
@@ -3239,12 +3285,13 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
         clearGhost()
         return
       }
-      // **THE MEMBER'S `size` IS A LEAF NODE ON THE LIVE ROUTE** (`D-134`'s node contract): `data.read` answers every node
-      // as the store's own `{_tier, …}` — an object node with its members INLINE, a LEAF as `{_tier, value:<literal>}` — so
-      // the placement's size arrives as `{_tier, value: 200}` and a bare number is the same fact stated without a node (which
-      // is the shape a double may answer). BOTH ARE READ; anything else is the closed arm. Nothing is judged here: the leaf
-      // is unwrapped to the value it carries and no tier is re-derived (the branch's own `_tier` above is the one fact).
-      const carried = (member as { readonly size?: unknown }).size
+      // **THE MEMBER'S NAME IS THE AXIS THE GESTURE MOVES** (`D-189`, `D-190`; design §4): the `['drag']` reading carries
+      // the ADJUSTABLE member — `{height}` for `pane-a` — and it is a LEAF NODE on the live route (`D-134`'s node contract):
+      // `data.read` answers every node as the store's own `{_tier, …}`, so the placement's figure arrives as
+      // `{_tier, value: 200}` while a bare number is the same fact stated without a node (the shape a double may answer).
+      // BOTH ARE READ; **a `size` member, or any member whose name is not this pane's adjustable axis, is a CLOSED ARM** —
+      // it names no axis at all, so the declaration is removed rather than painted from a figure of unknown meaning.
+      const carried = (member as unknown as Record<string, unknown>)[paneMemberOf(DEFAULT_PANE_ID)]
       const size = carried !== null && typeof carried === 'object' && !Array.isArray(carried)
         ? (carried as { readonly value?: unknown }).value
         : carried

@@ -9,14 +9,20 @@
  * WHAT IT PROVES, ROW BY ROW:
  *   · the page boots the demo and NOTHING ELSE — the app's boot guard is neutralised by the bundle, so `#app` still holds
  *     the demo's own heading and the window raised no page exception;
- *   · the SHAPE is what the drag reads: the stub answers `pane-a` at `100 / {0,200}` (`source: 'record'`) and a pane it does
- *     not name at the same figures (`source: 'default'`, the measured default `D-87`), while the handle's parent carries
- *     the DECOY attributes `size="999" min="0" max="999"` the pre-`D-117` wiring read and the composition does not;
+ *   · the SHAPE is what the drag reads: the stub answers `pane-a` at `100 × 100 / {0,200}` (`source: 'record'`) — **BOTH
+ *     AXIS MEMBERS, BOTH REQUIRED** (`D-189` split `size` into `width`/`height`; the demo's horizontal gesture reads the
+ *     `width`) — and a pane it does not name at the same figures (`source: 'default'`, the measured default `D-87`), while
+ *     the handle's parent carries the DECOY attributes `size="999" min="0" max="999"` the pre-`D-117` wiring read and the
+ *     composition does not — **those three attribute NAMES are the authored element's and do not move with the split**;
  *   · a real hover writes the cursor declaration and a real exit clears it (`gutter-affordance`'s hover counters);
  *   · a real drag PREVIEWS from the shape's start, and its release COMMITS through `createPaneDrag`'s `release` — the
- *     demo's status node is the sink, and the route's call is recorded by the stub;
- *   · **THE STUB'S CONTROL IS THE AUTHORITY**: after the panel changes `pane-a`, the NEXT drag's start read is the new
- *     value, and after the bounds are tightened the next preview and commit are CLAMPED into the new pair.
+ *     demo's status node is the sink, and the route's call is recorded by the stub — **ONE AXIS MEMBER PER ACT, NAMED**
+ *     (`D-189`, `D-191`): the start read is the pane's `width` (the member this page's pointer-x gesture moves and
+ *     `style.width` paints) while the release writes the member `pane-a`'s ABSENT `zone` makes adjustable — its `height`,
+ *     `C-12` — so the payload this page asserts is `commitPane('pane-a', { height })` and the record's `height` is what
+ *     moves. The two members are two records' facts, never one figure under two names;
+ *   · **THE STUB'S CONTROL IS THE AUTHORITY**: after the panel changes `pane-a`'s `width`, the NEXT drag's start read is
+ *     the new value, and after the bounds are tightened the next preview and commit are CLAMPED into the new pair.
  *
  * USAGE — `node demo/pane-drag-demo/run-live.mjs [--cdp-port=9223]`. It needs a display (`DISPLAY=:0`) because an Electron
  * window is a real window; the profile directory is a FRESH one in the OS temp area (`mkdtemp`) and is removed at the end,
@@ -221,17 +227,19 @@ async function main() {
     const before = await read()
     check('boot: no page exception was raised', cdp.pageExceptions.length === 0, `exceptions=${String(cdp.pageExceptions.length)}`)
     check(
-      "boot: the stub answers pane-a from its RECORD at the measured defaults",
+      "boot: the stub answers pane-a from its RECORD at the measured defaults (BOTH axis members at 100, `D-189`)",
       before.geometry['pane-a'].source === 'record' &&
-        before.geometry['pane-a'].pane.size === 100 &&
+        before.geometry['pane-a'].pane.width === 100 &&
+        before.geometry['pane-a'].pane.height === 100 &&
         before.geometry['pane-a'].pane.bounds.min === 0 &&
         before.geometry['pane-a'].pane.bounds.max === 200,
       JSON.stringify(before.geometry['pane-a']),
     )
     check(
-      "boot: a pane the family does NOT name answers the measured default (the derivation's own arm)",
+      "boot: a pane the family does NOT name answers the measured default (the derivation's own arm, both members)",
       before.geometry['pane-unknown'].source === 'default' &&
-        before.geometry['pane-unknown'].pane.size === 100 &&
+        before.geometry['pane-unknown'].pane.width === 100 &&
+        before.geometry['pane-unknown'].pane.height === 100 &&
         before.geometry['pane-unknown'].pane.bounds.max === 200,
       JSON.stringify(before.geometry['pane-unknown']),
     )
@@ -276,7 +284,7 @@ async function main() {
     await moveBy(first, 40)
     const mid = await read()
     check(
-      'drag 1: the pre-drag size read at establishment is the SHAPE’s 100, not the element’s decoy 999',
+      'drag 1: the pre-drag WIDTH read at establishment is the SHAPE’s 100, not the element’s decoy 999',
       lastOf(mid.probe.starts) === 100,
       `start=${JSON.stringify(lastOf(mid.probe.starts))} decoy=${JSON.stringify(mid.decoy.size)}`,
     )
@@ -303,15 +311,15 @@ async function main() {
       `sinkWrites=${JSON.stringify(afterOne.drag.sinkWrites)} sinkCalls=${String(afterOne.controller.sinkCalls)}`,
     )
     check(
-      "drag 1: the release sent ONE commitPane('pane-a', {size}) through the composition's route",
+      "drag 1: the release sent ONE commitPane('pane-a', {height}) through the composition's route (the AXIS-NAMED member)",
       afterOne.stub.writes.length === 1 &&
         afterOne.stub.writes[0].id === 'pane-a' &&
-        JSON.stringify(afterOne.stub.writes[0].geometry) === JSON.stringify({ size: 140 }),
+        JSON.stringify(afterOne.stub.writes[0].geometry) === JSON.stringify({ height: 140 }),
       JSON.stringify(afterOne.stub.writes),
     )
     check(
-      'drag 1: the shape now holds the committed size (the next read answers it)',
-      afterOne.geometry['pane-a'].pane.size === 140 && afterOne.geometry['pane-a'].source === 'record',
+      'drag 1: the shape now holds the committed 140 at its OWN axis member (the record answers it)',
+      afterOne.geometry['pane-a'].pane.height === 140 && afterOne.geometry['pane-a'].source === 'record',
       JSON.stringify(afterOne.geometry['pane-a']),
     )
     check(
@@ -324,32 +332,32 @@ async function main() {
     await clickSelector('#ctl-size-inc')
     const afterControl = await read()
     check(
-      'control: the panel changed the stub to 180 and the page repainted from the record',
-      afterControl.geometry['pane-a'].pane.size === 180 && afterControl.target.width === '180px',
-      `stub=${String(afterControl.geometry['pane-a'].pane.size)} target.width=${JSON.stringify(afterControl.target.width)}`,
+      'control: the panel advanced the stub’s WIDTH to 140 and the page repainted from the record',
+      afterControl.geometry['pane-a'].pane.width === 140 && afterControl.target.width === '140px',
+      `width=${String(afterControl.geometry['pane-a'].pane.width)} height=${String(afterControl.geometry['pane-a'].pane.height)} target.width=${JSON.stringify(afterControl.target.width)}`,
     )
     const secondBox = await handleBoxNow()
     await press(secondBox)
     await moveBy(secondBox, 15)
     const second = await read()
     check(
-      'control: THE NEXT DRAG READ ITS START FROM THE NEW VALUE — 180, not the old 140 and not the decoy',
-      lastOf(second.probe.starts) === 180,
+      'control: THE NEXT DRAG READ ITS START FROM THE NEW VALUE — 140, not the old 100 and not the decoy',
+      lastOf(second.probe.starts) === 140,
       `start=${JSON.stringify(lastOf(second.probe.starts))} previous start was 100`,
     )
     check(
-      'control: its preview is start + 15 (195), so the whole arithmetic follows the shape',
-      second.drag.preview !== null && second.drag.preview.value === 195,
+      'control: its preview is start + 15 (155), so the whole arithmetic follows the shape',
+      second.drag.preview !== null && second.drag.preview.value === 155,
       `preview=${JSON.stringify(second.drag.preview)}`,
     )
     await release(secondBox, 15)
     const afterTwo = await read()
     check(
-      'control: the second release committed 195 (one more sink write, one more route call)',
+      'control: the second release committed 155 at the pane’s axis member (one more sink write, one more route call)',
       afterTwo.drag.sinkWrites.length === 2 &&
-        afterTwo.drag.sinkWrites[1] === 195 &&
+        afterTwo.drag.sinkWrites[1] === 155 &&
         afterTwo.stub.writes.length === 2 &&
-        afterTwo.geometry['pane-a'].pane.size === 195,
+        afterTwo.geometry['pane-a'].pane.height === 155,
       `sinkWrites=${JSON.stringify(afterTwo.drag.sinkWrites)} writes=${afterTwo.stub.writes.length}`,
     )
 
@@ -366,24 +374,25 @@ async function main() {
     await moveBy(thirdBox, 40)
     const clamped = await read()
     check(
-      'bounds: the start read IS the record’s 195 and the preview is CLAMPED to the pair’s max (180)',
-      lastOf(clamped.probe.starts) === 195 && clamped.drag.preview !== null && clamped.drag.preview.value === 180,
+      'bounds: the start read IS the record’s WIDTH (140) and the preview is CLAMPED to the pair’s max (180)',
+      lastOf(clamped.probe.starts) === 140 && clamped.drag.preview !== null && clamped.drag.preview.value === 180,
       `start=${JSON.stringify(lastOf(clamped.probe.starts))} preview=${JSON.stringify(clamped.drag.preview)}`,
     )
     await release(thirdBox, 40)
     const afterThree = await read()
     check(
-      'bounds: the release committed the CLAMPED value, not the pointer’s 235',
-      afterThree.drag.sinkWrites[2] === 180 && afterThree.geometry['pane-a'].pane.size === 180,
-      `sink=${JSON.stringify(afterThree.drag.sinkWrites[2])} stub=${String(afterThree.geometry['pane-a'].pane.size)}`,
+      'bounds: the release committed the CLAMPED 180 at the pane’s axis member, not the pointer’s 235',
+      afterThree.drag.sinkWrites[2] === 180 && afterThree.geometry['pane-a'].pane.height === 180,
+      `sink=${JSON.stringify(afterThree.drag.sinkWrites[2])} height=${String(afterThree.geometry['pane-a'].pane.height)}`,
     )
 
     // ── 5. THE RESET — back to the measured defaults, and a fourth drag reads THEM ──────────────────────────────────
     await clickSelector('#ctl-reset')
     const reset = await read()
     check(
-      'reset: the panel restored the measured defaults 100 / {0,200}',
-      reset.geometry['pane-a'].pane.size === 100 &&
+      'reset: the panel restored the measured defaults — both axis members at 100, bounds {0,200}',
+      reset.geometry['pane-a'].pane.width === 100 &&
+        reset.geometry['pane-a'].pane.height === 100 &&
         reset.geometry['pane-a'].pane.bounds.min === 0 &&
         reset.geometry['pane-a'].pane.bounds.max === 200,
       JSON.stringify(reset.geometry['pane-a'].pane),
@@ -417,7 +426,7 @@ async function main() {
 
     console.log('')
     console.log(
-      `[live] THE DRAG'S START SIZE: before the stub's control ${String(afterOne.probe.starts[0])} → after it ${String(lastOf(second.probe.starts))}; ` +
+      `[live] THE DRAG'S START WIDTH (the member this page's gesture reads): before the stub's control ${String(afterOne.probe.starts[0])} → after it ${String(lastOf(second.probe.starts))}; ` +
         `clamped commit ${String(afterThree.drag.sinkWrites[2])}; back to ${String(lastOf(fourth.probe.starts))} after the reset.`,
     )
   } finally {

@@ -119,7 +119,13 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     })
     const tabs = image['tabs'] as { landing?: { id?: unknown; active?: unknown }; order?: unknown }
     expect({ landing: tabs.landing?.id, active: tabs.landing?.active, order: tabs.order }, 'the landing entry seated and active, and the order naming exactly it — the repair’s own value, whole').toEqual({ landing: 'landing', active: true, order: ['landing'] })
-    expect(image['panes'], 'and the measured default family, whole: the one pane id the app addresses at the size and bounds the tree states (D-87)').toEqual({ 'pane-a': { size: 100, bounds: { min: 0, max: 200 } } })
+    // **AND THE MEASURED DEFAULT FAMILY, WHOLE, AT BOTH AXIS MEMBERS OF BOTH DECLARED PANES** (`D-189`, `D-192`): the
+    // split renamed `pane-a`'s `size` to `height` and minted its `width` from the same measured figure, and the family
+    // widened to the menus pane, whose record carries its `zone` instead of a stored clamp (`D-183`, `D-186`).
+    expect(image['panes'], 'and the measured default family, whole: two panes, each at the figure and the pair the tree states (D-87)').toEqual({
+      'pane-a': { width: 100, height: 100, bounds: { min: 0, max: 200 } },
+      'pane-menus': { width: 100, height: 100, zone: 'top' },
+    })
     expect(statSync(profilePath).size, 'and the file stands at the byte length that value serialises to, before any caller act (the length is derived, not pinned: the stamp is a clock reading)').toBe(readFileSync(profilePath, 'utf8').length)
     expect(statSync(profilePath).size, 'which is not zero: the boot’s own save is the difference this row exists to state').toBeGreaterThan(0)
     // A READ ONLY SESSION MOVES NOTHING AFTER IT: the surface over the same instance answers and lands no byte.
