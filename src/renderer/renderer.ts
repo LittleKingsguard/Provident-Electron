@@ -246,14 +246,20 @@ export interface TabsPageRuntime {
 }
 
 /** THE ONE WRITE — `css.style` on the authored page node, the member the envelope's own style record already carries.
- *  It answers the runtime's status word, or this file's own `'threw'`/`'no-answer'` statement. */
+ *  It answers the runtime's status word, or this file's own `'threw'`/`'no-answer'` statement.
+ *
+ *  **THE VALUE IS CSS TEXT, NOT AN OBJECT, AND `D-203` IS WHY**: measured in a real Electron DOM against this module's
+ *  own `Runtime`, an OBJECT on `css.style` answers `applied` and writes **NOTHING** — the `style` attribute ends up
+ *  EMPTY and the computed style does not move — while CSS text in the same slot lands. So the object spelling made this
+ *  drive a write that reported success and showed nothing, in every terminal this app has ever hidden. **THE ENGINE'S
+ *  OBJECT HANDLING STAYS UPSTREAM-OWNED** (`D-5`): the spelling changes here, the mechanism does not. */
 function drivePageDisplay(runtime: TabsPageRuntime | null, nodeId: string, shown: boolean): string | null {
   if (runtime === null) return null
   try {
     const answer = runtime.applyCommand({
       kind: 'state-slice',
       node: nodeId,
-      mutation: [{ targetProp: 'css.style', mode: 'replace', value: { display: shown ? 'block' : 'none' } }],
+      mutation: [{ targetProp: 'css.style', mode: 'replace', value: `display: ${shown ? 'block' : 'none'}` }],
     })
     return typeof answer?.status === 'string' ? answer.status : 'no-answer'
   } catch {
@@ -1511,19 +1517,32 @@ function paneAxisMembers(zone: unknown): readonly ('width' | 'height')[] {
 
 /** **ONE `css.style` WRITE ON ONE AUTHORED NODE — THE FORM `drivePageDisplay` ALREADY USES** (`:250`): one `state-slice`
  *  whose single mutation replaces that key. **THE ENGINE COMPOSES `css` PER KEY, SO ONE `css.style` LAYER REPLACES THE
- *  STANDING STYLE OBJECT WHOLE** — which is why a zone's dimension and its `display` are composed into ONE object here and
+ *  STANDING STYLE OBJECT WHOLE** — which is why a zone's dimension and its `display` are composed into ONE record here and
  *  written once, never as two members (`D-194`: one style value, not two writes), and why the value handed over is the whole
  *  style this paint wants on that node. **THE COLLISION THAT LEAVES IS `app-envelope`'s AND IS ROUTED, NOT TAKEN** (design §6):
  *  a region's authored `overflow`/fill cannot stand BESIDE a painted dimension, so a region's static layout must move to a
  *  class or to a child this paint never writes.
+ *
+ *  **THE RECORD STAYS THE PARAMETER AND THE VALUE SLOT CARRIES CSS TEXT** (`D-203`): the callers compose the members, and
+ *  what the engine is handed is `${property}: ${value}` joined by `'; '` — the spelling a real renderer APPLIES, where the
+ *  object spelling answered `applied` and wrote an EMPTY attribute. **NOT ONE OPERAND MOVES**: the members composed above are
+ *  still the zone's fixed axis, its `display` and the pane's adjustable axis. **NO KEY CONVERTER IS ADDED, because none is
+ *  needed**: every property reaching here is `width`/`height`/`display` — single lowercase words, kebab-case already
+ *  (`D-194`'s callers compose the keys; nothing camel-cases one on the way).
  *  It answers `true` only where the runtime said `applied`; every other arm — a refusal, a `'threw'`, a hostile runtime — is
  *  `false`, and the CALLER reports it in `D-117`'s register rather than letting a refusal read as a paint. */
+function cssTextOf(style: Record<string, string>): string {
+  return Object.entries(style)
+    .map(([property, value]) => `${property}: ${value}`)
+    .join('; ')
+}
+
 function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<string, string>): boolean {
   try {
     const answer = runtime.applyCommand({
       kind: 'state-slice',
       node: nodeId,
-      mutation: [{ targetProp: 'css.style', mode: 'replace', value: style }],
+      mutation: [{ targetProp: 'css.style', mode: 'replace', value: cssTextOf(style) }],
     })
     return (typeof answer?.status === 'string' ? answer.status : 'no-answer') === 'applied'
   } catch {

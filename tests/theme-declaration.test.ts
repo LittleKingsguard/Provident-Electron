@@ -27,8 +27,10 @@
 //          the renderer, no hand-written DOM is written, and no timer or poll stands in the wiring. **AND THE DELIVERY'S
 //          HAND-OFF IS READ STRUCTURALLY** — `main()`'s ONE call to `startViewShape` hands it the appearance application as
 //          its FIRST argument (whatever a second, drag-owned turn is handed beside it), and the shape's ONE subscription body
-//          calls both turns it was handed. The row re-grains from the literal to the hand-off, so the next turn given a seat
-//          in that call reds this file no more (`docs/L3/renderer-wiring/design.md` §4/§6; `signatures.md` §6's same edit).
+//          **calls EVERY turn it was handed — FOUR of them, each NAMED off the declaration's head and each measured in that
+//          body**: the appearance application, the ghost's transient, the read-out, and the LAYOUT PAINT (`S-6`/`D-194`). The row
+//          re-grains from the literal to the hand-off, so the next turn given a seat in that call reds this file no more
+//          (`docs/L3/renderer-wiring/design.md` §4/§6; `signatures.md` §6's same edit).
 //   · T-6  TOTALITY: an unreadable carrier, a realm with no crossing, a record with no applicable declaration and a runtime
 //          whose write throws all answer a READING — never an exception.
 //
@@ -594,14 +596,32 @@ describe('D-97 · the appearance act, from the authored control to the crossing 
     expect(shapeRegion.length, 'and the slice is the WHOLE body, not the head\'s two lines').toBeGreaterThan(200)
     expect(shapeRegion.includes('theme?.apply()'), 'whose body applies the record\'s declaration').toBe(true)
     const shapeTurns = parameterNamesOf(code, 'function startViewShape(')
+    // **THE COUNT IS A SUM OF NAMED PARTS, NEVER A BARE NUMBER** (`D-194`, `S-6`): the FOURTH hand-out is the LAYOUT PAINT,
+    // `startViewShape(theme, ghost, readout, paint)`, whose turn reads the shape the client has just adopted and writes the
+    // four zones' dimension and the panes' adjustable member. Each position is named off the declaration's own head and then
+    // MEASURED in the body it was handed to, so a hand-out can only arrive here by being CALLED — the arity edge and the
+    // call edge move together, which is what keeps a dropped fourth turn from passing as a count.
+    const [themeTurn = '', ghostTurn = '', readoutTurn = '', paintTurn = ''] = shapeTurns
     expect(
       shapeTurns.length,
-      'the shape is handed THREE turns, since ONE delivery body drives all three paints: the appearance application, the ghost\'s declared transient, and the read-out the deleted sink used to author (`D-129`; design §1, §4 `S1`–`S4`) — the third was added under `F3` and this arity assertion is the edge that names it',
-    ).toBe(3)
-    const ghostTurn = shapeTurns[1] ?? ''
+      'the shape is handed FOUR turns, since ONE delivery body drives all four paints: the appearance application (`theme`), the ghost\'s declared transient (`ghost`), the read-out the deleted sink used to author (`readout`, `D-129`) and the LAYOUT PAINT (`paint`, `S-6`/`D-194`; design §1, §4 `S1`–`S4`) — the third was added under `F3`, the fourth by the drag unit\'s paint, and this arity assertion is the edge that names each part',
+    ).toBe(4)
+    expect(
+      [themeTurn, ghostTurn, readoutTurn, paintTurn].every((turn) => turn.length > 0),
+      'and all FOUR are NAMED off the head, so the four is a sum of named parts rather than a figure the head happens to spell',
+    ).toBe(true)
+    expect(new Set(shapeTurns).size, 'and they are four DISTINCT turns, not one turn handed twice under two names').toBe(4)
     expect(
       new RegExp(`${ghostTurn}\\s*(?:\\?\\.)?\\(`).test(shapeRegion),
       'and the turn handed beside the application is CALLED in that same body, so one delivery drives both',
+    ).toBe(true)
+    expect(
+      new RegExp(`${readoutTurn}\\s*(?:\\?\\.)?\\(`).test(shapeRegion),
+      'and the read-out beside it is CALLED too, so the deleted sink\'s successor runs on every delivery rather than standing as a parameter',
+    ).toBe(true)
+    expect(
+      new RegExp(`${paintTurn}\\s*(?:\\?\\.)?\\(`).test(shapeRegion),
+      'and the FOURTH turn — the layout paint `S-6`/`D-194` added — is CALLED in the same body, so the arity above names a hand-out the delivery actually drives and not a parameter nobody reaches',
     ).toBe(true)
     // (d) THE RENDERER NO LONGER HOLDS A DECLARATION RECORD AT ALL — the deleted `changed` seed is gone by name.
     expect(code.includes('startThemeDeclaration'), 'the deleted role is spelled nowhere in code').toBe(false)

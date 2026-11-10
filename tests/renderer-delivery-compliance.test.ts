@@ -120,7 +120,7 @@ describe('D-127 · F7 — the tab terminals are driven by a RECORD and by nothin
     expect(pages.landing.driven, 'DC-1 CONTROL — and reports it').toBe(true)
   })
 
-  it('DC-2 — **THE RECORD STILL DRIVES, PER TERMINAL AND IN BOTH DIRECTIONS**: a committed reading drives each authored page from ITS OWN witness — `display: "block"` where the witness stands and `display: "none"` where it does not — so closing the no-record arm did not make the drive inert. The two terminals are read independently, which is what a single flag would have hidden', () => {
+  it('DC-2 — **THE RECORD STILL DRIVES, PER TERMINAL AND IN BOTH DIRECTIONS**: a committed reading drives each authored page from ITS OWN witness — the CSS text `display: block` where the witness stands and `display: none` where it does not — so closing the no-record arm did not make the drive inert. The two terminals are read independently, which is what a single flag would have hidden. **THE VALUE PINNED HERE IS CSS TEXT AND NOT AN OBJECT, AND `D-203` IS WHY**: an OBJECT written to `css.style` answers `applied` and writes NOTHING in the real renderer — the `style` attribute ends up EMPTY and no computed style moves — while CSS text in the same slot lands; the DOM shim serialised the object AS JSON TEXT into the attribute, so the old object spelling looked applied on every run of this file while the surface did nothing. The spelling is the difference between a paint and a no-op, so this row pins it', () => {
     const cases = [
       { landing: true, error: false, expected: { landing: 'block', error: 'none' } },
       { landing: false, error: true, expected: { landing: 'none', error: 'block' } },
@@ -132,10 +132,14 @@ describe('D-127 · F7 — the tab terminals are driven by a RECORD and by nothin
       driveTabsLandingPage(committed({ landing: one.landing, error: one.error }), runtime)
       expect(writes.length, `DC-2 — two terminals, two writes (landing=${one.landing} error=${one.error})`).toBe(2)
       const byNode = new Map(writes.map((w) => [w.node, w.value]))
+      // **CSS TEXT, NOT AN OBJECT** (`D-203`): the shim serialised an object value as JSON text into the `style` attribute,
+      // so `{ display: 'block' }` here read as a written style; the real renderer leaves that attribute EMPTY and applies
+      // nothing, while `display: block` in the same slot lands. The expectation is the text the drive now writes, so a
+      // reversion to the object spelling is a RED here rather than a green row over an inert surface.
       expect(
         [byNode.get(TABS_LANDING_PAGE_ID), byNode.get(TABS_ERROR_PAGE_ID)],
-        `DC-2 — each page is driven by its OWN witness, never by the other's`,
-      ).toEqual([{ display: one.expected.landing }, { display: one.expected.error }])
+        `DC-2 — each page is driven by its OWN witness, never by the other's, and the value is CSS TEXT (\`D-203\`: an object on \`css.style\` answers \`applied\` and paints nothing in the real renderer; the shim serialised it as JSON text, which is why the old object spelling passed)`,
+      ).toEqual([`display: ${one.expected.landing}`, `display: ${one.expected.error}`])
       for (const write of writes) {
         expect(write.targetProp, 'DC-2 — the ONE write surface is the envelope\'s own style member').toBe('css.style')
       }
@@ -336,12 +340,15 @@ describe('D-142/D-160 — the act, its leaf row write and round trip, and the su
     // BOTH TERMINALS, FROM THE POST-ACT RECORD, EACH BY ITS OWN WITNESS.
     expect(after.writes.length, 'DC-5 — the post-act delivery drives BOTH authored terminals, so neither page keeps a prior turn\'s word').toBe(2)
     expect([post.landing.driven, post.error.driven], 'DC-5 — and each drive is the runtime\'s own `applied`').toEqual([true, true])
+    // **THE WRITTEN VALUE IS CSS TEXT, NOT AN OBJECT** (`D-203`): `css.style` answers `applied` to a record and then writes
+    // NOTHING in the real renderer — the attribute stays empty — while CSS text in the same slot lands. The shim's JSON
+    // serialisation of the record is what made the object spelling look written. So this row pins the drive's own text.
     expect(
       after.writes.map((w) => [w.node, w.targetProp, w.value]),
-      'DC-5 — the post-act drive writes the ENVELOPE\'s own style member on the envelope\'s own authored nodes',
+      'DC-5 — the post-act drive writes the ENVELOPE\'s own style member on the envelope\'s own authored nodes, as CSS TEXT: `D-203` measured that an object value on `css.style` reports `applied` and paints nothing in the real renderer, the shim serialised it as JSON text into the attribute, and that is why the spelling changed',
     ).toEqual([
-      [TABS_LANDING_PAGE_ID, 'css.style', { display: 'block' }],
-      [TABS_ERROR_PAGE_ID, 'css.style', { display: 'block' }],
+      [TABS_LANDING_PAGE_ID, 'css.style', 'display: block'],
+      [TABS_ERROR_PAGE_ID, 'css.style', 'display: block'],
     ])
 
     // THE INVARIANCE THAT BLINDS `F-3` — MEASURED, NOT ASSERTED IN PROSE.
@@ -376,8 +383,8 @@ describe('D-142/D-160 — the act, its leaf row write and round trip, and the su
     expect(twoPages.landing.witness, 'DC-5 CONTROL — two actives derive no landing witness').toBe(false)
     expect(
       twoPages.landing.driven && two.writes[0]?.value,
-      'DC-5 CONTROL — and the terminal is DRIVEN to `none`: the drive is a function of the record, so it moves when the record does',
-    ).toEqual({ display: 'none' })
+      'DC-5 CONTROL — and the terminal is DRIVEN to `none`: the drive is a function of the record, so it moves when the record does. The control reads CSS TEXT for the same reason the row above does (`D-203`: an object on `css.style` is inert in the real renderer and only the shim\'s JSON serialisation made it look written), so the arm cannot pass on a spelling that paints nothing',
+    ).toEqual('display: none')
   })
 
   it('DC-6 — **THE ACT\'S ROUND TRIP, RE-GRAINED TO THE LEAF ROW WRITE**: ONE `data.write` at `[\'tabs\', <id>]` at `file` carries the target\'s ONE ROW — the value\'s keys are that ROW\'s own, with no `order`, no `landing` and no member invented — the row that STOOD active is ABSENT from the write and reads `active: false` in the ANSWER, `order` is read off the ANSWER with an opened id appended LAST, and exactly TWO `tabs.read()` calls stand. `composeRecord` is DELETED from this realm (`D-160`), so the round trip spans the SENT ROW and the RE-READ RECORD, and both halves are measured here (ASM-1, `D-158`, `D-159`)', async () => {
