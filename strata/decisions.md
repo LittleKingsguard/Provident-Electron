@@ -4850,3 +4850,19 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **AND ONE THING IS TRUE WHICHEVER WAY IT GOES.** The **instrument** (`D-214`) works: it reports the computed figure after a delivery and reports the **fill** when the write is inert. **So `AL-12` is worth its boot either way**, and the fork changes **when** the carrier has something to say, not whether it can say it.
 
 **ITS REGISTER IS `D-71` TO `D-214`** as prose, unchanged and extended by this row only. **This row records a defect that is not one, an invariant that explains it, two options with their costs named, and a seat that refused to re-grain a row in the direction it wanted.**
+
+## D-216 — THE PARADIGM IS THE RULING: **"the render is driven by listeners on the store"** — so the boot is silent **by design**, a render not driven by a listener is off-paradigm, and `T-4`'s invariant is not narrowed but **confirmed**
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user, verbatim, on `D-215`'s fork):** *"The design paradigm has always been that the render is driven by listeners on the store"*.
+
+**THE FORK CLOSES ON A PRINCIPLE RATHER THAN ON A COST.** `D-215` put two options and named what each would cost. **The answer is neither of its two as stated — it is that the first option was never a cost at all.** **A cold boot showing the authored CSS until a listener speaks is not an unpainted layout; it is a surface waiting for the store, which is what this app is.** **The render's trigger is the listener; a boot paint would be a render with no event behind it**, and that is the thing the paradigm forbids.
+
+**SO `T-4` IS CONFIRMED AND NOT NARROWED.** *"Nothing is applied at a boot — `fill()` adopts and never applies"* **is not an instrument limitation that a later unit may relax**: it is **the paradigm observed at the boot path**. **The record is read and not applied because a read is not a listener.** **`D-215`'s option (B) is refused by the ruling, not by its cost.**
+
+**WHAT THIS RULES OUT, STATED SO IT IS NOT RE-ARGUED.** **Any render without a listener behind it**: a **boot paint** (this fork); **a timer, an interval, or a poll** — which the corpus already refused by habit and now can cite; **a retry that repaints after a failure**; and **a render scheduled by a write's own continuation** where the write's *delivery* is the lawful trigger. **The four delivery turns, the mint, the attach and the receipt write all hang off a listener or an authored click — none of them schedules itself.**
+
+**AND IT FIXES WHAT THE INSTRUMENT'S ROW MUST LOOK LIKE.** `AL-12` — *the figure the browser APPLIED equals the figure the record holds* — **must induce a delivery** (a `['zones']` or `['panes']` write) and then read the **carrier's text**, because **before that write the carrier is empty and that is correct**. **A row that read the carrier at boot would be asserting the absence of a paint the paradigm requires to be absent.** **So the row's own first clause is its setup: change the record, wait for the listener's render, then read.**
+
+**WHAT IS CONFIRMED TRUE WHICHEVER WAY THE CARRIER IS READ.** The instrument works (`D-214`): after a delivery it reports the **computed** figure (`top.height=140px`, `pane-menus.width=100px`), and with the object spelling it reports the **fill** (`396px`) — **so it catches `D-203` exactly, and it catches it only after a listener has spoken.** **The measured carrier is empty at boot as a CONSEQUENCE of the paradigm, and its emptiness is therefore evidence the paradigm holds rather than evidence anything is missing.**
+
+**ITS REGISTER IS `D-71` TO `D-215`** as prose, unchanged and extended by this row only. **This row records a fork closed by a principle instead of a price, an invariant confirmed rather than narrowed, four kinds of self-scheduled render named as off-paradigm, and the setup a battery row needs in order to test a render that only exists after a listener speaks.**
