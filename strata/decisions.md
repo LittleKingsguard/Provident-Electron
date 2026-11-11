@@ -4828,3 +4828,25 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,957 passed / 2 skipped` of `2,959`** over **`145`** files; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt to **`40`** inputs; the census rows (`M-2`, `X-1`, `I-10`, `P-TC-IM-2`) re-grained to **`73 = 18 + 5 + 2 + 13 + 35`**, **the fourth term named** as the interface inventory's 34 **plus the measured-figures carrier**, with **an independent walk of `demoEnvelope()` agreeing**.
 
 **ITS REGISTER IS `D-71` TO `D-213`** as prose, unchanged and extended by this row only. **This row records the instrument the project was missing, proof that it bites both ways, a boot-paint gap it found on its first measurement, and a docblock that describes the function it sits in wrongly.**
+
+## D-215 — THE BOOT-PAINT FORK IS REAL AND `T-4` IS THE SENTENCE THAT DECIDES IT: **"nothing is applied at a boot — `fill()` adopts and never applies"** — so a cold boot shows the authored CSS while the record already holds the figures
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `D-214`'s first measurement, read against `T-4`'s own claim.
+
+**WHAT WAS MEASURED.** On a cold boot the measured-figures carrier is **empty across fifteen polls** and `pane-menus` keeps only its authored `height: 100%; overflow-x: auto`; after **one induced delivery** it reads `pane-menus.width=100px`. **The cause is not a defect in the paint**: `startViewShape` registers the subscription and then calls **`fill()`**, whose continuation **logs only**. **So the record IS read at boot and its figures are NOT applied.**
+
+**AND THAT IS A STATED INVARIANT, NOT AN OVERSIGHT.** `tests/theme-declaration.test.ts`'s **`T-4`** reads: *"**NOTHING IS APPLIED AT A BOOT** — measured three times: on a FRESH profile the record a boot carries is the [default] … the boot read STILL writes nothing … **what keeps a boot silent is that `fill()` adopts and never applies.**"* **So the app deliberately declines to apply a record it has just read**, and **a layout boot paint would red that row.**
+
+**THE FORK, STATED AS THE TWO REAL OPTIONS AND NOTHING IN BETWEEN.**
+
+**(A) STAY SILENT AT BOOT.** `T-4` stands unchanged. **A cold boot shows the authored CSS** — the zones' authored `overflow`, `pane-menus`'s authored `100%` width — **until any record changes**, after which the record's figures appear and never leave. **The measured carrier is empty at boot by design**, so `AL-12` must be taken **after a delivery**, and **the app's first frame is not the record's**.
+
+**(B) APPLY THE LAYOUT'S FIGURES AT BOOT.** The `fill()` continuation calls the paint once, beside its log. **`T-4` must be re-grained and its invariant narrowed** from *"nothing is applied at a boot"* to *"nothing is applied at a boot **except figures whose subject is a rendering the record already states**"* — **and the theme's silence, which is what `T-4` was written for, must stay silent**, so the row would need to say which family it excuses and why. **The app's first frame becomes the record's.**
+
+**WHAT EACH COSTS, NAMED.** **(A)** costs a **visible first frame that is not the state**: a zone with a stated size renders at its authored CSS until something changes, and **a second boot that never receives a delivery shows an unpainted layout for its life** — which is **`F3`'s class**, the one `D-174` closed for the read-out by *deleting* the authored figure. **(B)** costs **an invariant, narrowed**: `T-4`'s three measurements stay true of the theme and stop being true of the layout, and **the SSR fragment moves at boot for the first time**, which is the thing the row exists to prevent.
+
+**WHY THIS SEAT WILL NOT CHOOSE IT.** `T-4` is a **gating row asserting an invariant measured three times**, and this unit's own record shows what happens when a row is re-grained in the direction an author wants (`D-212`: two rows were moved only after the defect they defended was **proved by measurement**). **Here the measurement exists and the ruling does not** — so the fork is put to the user.
+
+**AND ONE THING IS TRUE WHICHEVER WAY IT GOES.** The **instrument** (`D-214`) works: it reports the computed figure after a delivery and reports the **fill** when the write is inert. **So `AL-12` is worth its boot either way**, and the fork changes **when** the carrier has something to say, not whether it can say it.
+
+**ITS REGISTER IS `D-71` TO `D-214`** as prose, unchanged and extended by this row only. **This row records a defect that is not one, an invariant that explains it, two options with their costs named, and a seat that refused to re-grain a row in the direction it wanted.**
