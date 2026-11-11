@@ -2,7 +2,7 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
-import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_RECEIPT_ID } from '../shared/demo-envelope.js'
+import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
 import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
@@ -1670,7 +1670,14 @@ function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<stri
  *
  *  **IT IS PRIVATE AND ANSWERS NOTHING**, the form `driveTabsRows` landed in (`D-201`): `signatures.md` §3 declares
  *  `{written: number}` and no caller reads such a count, so the count would be a name with no reader (`D-70`) — the refusals
- *  are REPORTED here instead, and the answer `AL-10` reads is the markup. */
+ *  are REPORTED here instead, and the answer `AL-10` reads is the markup.
+ *
+ *  **AND ITS LAST ACT IS THE SELF-REPORT** (`D-203`'s missing instrument, `D-204`, `D-208`; design §4's `W1`–`W5`, `AL-12`):
+ *  `reportMeasuredFigures(runtime)` below reads the COMPUTED figure of each node these three loops just wrote and lands them
+ *  in the authored carrier's `content` as `id.property=value` text. **THE CARRIER IS AN INSTRUMENT AND NEVER A REGION**: it
+ *  is a fourth WRITE and not a fourth subject, and a realm that answers no `getComputedStyle` writes nothing to it at all.
+ *  **NOT A FIFTH HAND-OUT AND NOT A FIFTH PARAMETER** (`D-45`): it stands inside this turn, on the deliveries this turn's
+ *  own gate admits. */
 function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPageRuntime | null): void {
   if (runtime === null) return
   if (reading === null || reading.status !== 'committed') return
@@ -1708,23 +1715,141 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
   // (c) THE STAGE'S CONTENT — THE ACTIVE TAB'S `target` THROUGH `drivePageDisplay`'s FORM, so a page's `display` keeps its ONE
   // author (`D-129`, `C-4`). The rows are the realm's HELD statement about the tab record: `holdTabsReading` writes that
   // binding and this turn reads it, so no second subscription, no second read route and no poll is added (`D-82` clause 4).
+  // **AND THE GUARD IS A GUARD AND NOT AN EARLY RETURN** (`D-208`'s self-report, design §4 `W5`): the report below must be
+  // this turn's LAST ACT on EVERY delivery the paint's own gate admits, so a delivery with no committed tab record skips
+  // (c)'s writes and still measures. WHAT (c) WRITES, IN WHAT ORDER, ON WHICH DELIVERIES IS BYTE-UNCHANGED.
   const tabs = tabsClientReading
-  if (tabs === null || tabs.status !== 'committed') return
-  for (const row of tabs.rows) {
-    if (row.target === '') continue
-    // RESOLVED FIRST: an authored node is what a page's `display` can be written to at all, and a target naming none is
-    // written NOTHING rather than refused — `driveTabsLandingPage`'s own resolution arm, one level down (`D-127`).
-    let resolved: unknown = null
+  if (tabs !== null && tabs.status === 'committed') {
+    for (const row of tabs.rows) {
+      if (row.target === '') continue
+      // RESOLVED FIRST: an authored node is what a page's `display` can be written to at all, and a target naming none is
+      // written NOTHING rather than refused — `driveTabsLandingPage`'s own resolution arm, one level down (`D-127`).
+      let resolved: unknown = null
+      try {
+        resolved = runtime.elementForNodeId(row.target)
+      } catch {
+        resolved = null
+      }
+      if (resolved === null || resolved === undefined) continue
+      const status = drivePageDisplay(runtime, row.target, row.active === true)
+      if (status !== 'applied') {
+        console.error(`[provident-renderer] layout paint: the page ${row.target} answered ${String(status)}`)
+      }
+    }
+  }
+  // THE SELF-REPORT IS THE LAST ACT, INSIDE THIS TURN AND ON THE SAME DELIVERIES (`W5`): no second subscription, no timer,
+  // no poll, no retry (`D-82` clause 4).
+  reportMeasuredFigures(runtime)
+}
+
+/** **TURN 3'S LAST ACT — THE SELF-REPORT: WHAT THE PAINT JUST APPLIED, MEASURED AND WRITTEN DOWN** (`D-203`'s missing
+ *  instrument, `D-204`, `D-208`; design §4's `W1`–`W5`, §1 turn 3; `AL-12`). **IT IS NOT A FIFTH HAND-OUT**: it stands
+ *  INSIDE `driveLayoutRegions`, so `startViewShape` keeps FOUR parameters and `T-5`'s edge is untouched (`D-45`).
+ *
+ *  **WHY IT EXISTS AT ALL**: `AL-10` reads the MARKUP — a `css.style` write carrying CSS TEXT is in the rendered HTML — and
+ *  **no markup read can say whether the browser APPLIED it**. This relation reads the CASCADE instead and puts the answer
+ *  where a battery can read it as markup: the carrier's `content` (`LAYOUT_MEASURED_ID`). **THE WRITE AND THE READ ARE
+ *  DIFFERENT MECHANISMS, WHICH IS WHY MEASURING ONE'S OWN OUTPUT IS NOT CIRCULAR**: the write is a graph `state-slice` the
+ *  engine bakes into a declaration, the read is the browser resolving that declaration — and the cascade answers the FILL
+ *  when the declaration never landed, which is `D-203`'s own measurement (`484px` over a record's `40`).
+ *
+ *  **`W1` — THE REALM'S `getComputedStyle` IS CENSUSED FIRST, AND A REALM THAT DOES NOT ANSWER A FUNCTION RETURNS, HAVING
+ *  WRITTEN NOTHING AND THROWN NOTHING.** That realm is the DOM SHIM'S, which is the whole unit suite's: the carrier then
+ *  stays EMPTY, which is `D-174`'s one state that is never wrong — a placeholder, a default or "the figure it meant to
+ *  write" would be right once and false after. **ABSENCE IS THE READABLE STATE**: a realm that HAS the function and an
+ *  EMPTY carrier is a RED row's job (`AL-12`), so this arm is a STATED degradation and no fallback stands in it.
+ *
+ *  **`W2`–`W3` — THE SUBJECTS ARE THE PAINT'S OWN THREE LOOPS AND NOTHING ELSE**, so the report cannot measure a node the
+ *  paint did not write: the four zones `LAYOUT_ZONE_AXES` names (each only where the record states the `size` the paint
+ *  required), every pane `reading.panes` declares (only the members its `zone` makes adjustable AND the record states) and
+ *  every `row.target` `(c)` resolved — the landing terminal among them. Each one resolves through
+ *  `runtime.elementForNodeId`, and a throw or an absent node is the figure `absent`, STATED and never silently skipped
+ *  (`D-127`'s arm one level down); the figure itself is `styleOf(element).getPropertyValue(property)` — **THE CASCADE'S
+ *  ANSWER, NEVER THE ATTRIBUTE'S TEXT**, because the `style` attribute is the layer's own serialisation and the very text
+ *  `D-203` measured EMPTY under an `applied` answer.
+ *
+ *  **`W4`–`W5` — ONE `state-slice` `content` REPLACE, AS `id.property=value` TEXT**, a member a real renderer applies as
+ *  written (`D-207`'s receipt is the same shape already measured); a status that is not `applied` is `console.error` and
+ *  nothing throws. **THE REPORT RUNS AFTER EVERY REGION WRITE, INSIDE THE SAME TURN** — no second subscription, no timer, no
+ *  poll, no retry (`D-82` clause 4) — and the reading it re-walks is the client's HELD one, the same adopted reading this
+ *  turn was handed, so no route is asked a second time. **ITS OUTPUT IS BOUNDED-STALE BY ONE DELIVERY** (`D-117`): a figure
+ *  is only true of ITS turn, so a row spends one more record write to force the turn it reads.
+ *
+ *  **AND THE ONE THING IT MUST NOT DO IS THE ONE THING THAT WOULD MAKE IT CHEAP**: it reads no `nodeState` copy of what the
+ *  paint set, no `css.style` member and no `style` attribute — that is the same layer that wrote the figure, and reading it
+ *  back would measure the write instead of the render (design §4, the named circular case). */
+function reportMeasuredFigures(runtime: TabsPageRuntime): void {
+  // W1 — THE REALM'S ONE MEMBER, CENSUSED FIRST AND READ STRUCTURALLY (the module's own idiom: a shim, an older realm and
+  // a hostile global are one arm).
+  const realm = typeof window === 'undefined' ? null : (window as unknown as { readonly getComputedStyle?: unknown })
+  const styleOf = realm === null ? undefined : realm.getComputedStyle
+  if (typeof styleOf !== 'function') return
+  // THE PAINT'S OWN SUBJECTS, IN THE PAINT'S OWN ORDER: (a) the zones, (b) the panes, (c) the rows' targets.
+  const subjects: { readonly nodeId: string; readonly property: string }[] = []
+  const reading = getViewClient().reading()
+  if (reading !== null && reading.status === 'committed') {
+    for (const zone of LAYOUT_ZONE_AXES) {
+      // THE PAINT'S OWN GATE, RESTATED BESIDE ITS LOOP: a zone stating no `size` was written nothing, so it measured nothing.
+      const held = zoneIn(reading.zones, zone.id)
+      if (held === null || held.size === undefined) continue
+      if (!Number.isFinite(held.size) || held.size < 0) continue
+      subjects.push({ nodeId: zone.id, property: zone.member })
+    }
+    for (const pane of reading.panes) {
+      const record = pane as unknown as Record<string, unknown>
+      for (const member of paneAxisMembers(record['zone'])) {
+        // THE MEMBER IS A SUBJECT ONLY WHERE THE RECORD STATES THE FIGURE THE PAINT WROTE (the same three tests).
+        const figure = record[member]
+        if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
+        subjects.push({ nodeId: pane.id, property: member })
+      }
+    }
+  }
+  // (c) EVERY `row.target` THE PAINT RESOLVED — the landing terminal among them, and each tab's own page.
+  const tabs = tabsClientReading
+  if (tabs !== null && tabs.status === 'committed') {
+    for (const row of tabs.rows) {
+      if (row.target === '') continue
+      subjects.push({ nodeId: row.target, property: 'display' })
+    }
+  }
+  const figures: string[] = []
+  for (const subject of subjects) {
+    // W2 — RESOLVED THROUGH THE RUNTIME, AND AN ABSENT OR THROWING SUBJECT IS THE FIGURE `absent`.
+    let figure = 'absent'
     try {
-      resolved = runtime.elementForNodeId(row.target)
+      const element = runtime.elementForNodeId(subject.nodeId)
+      if (element !== null && element !== undefined) {
+        const style = (styleOf as (element: unknown) => unknown).call(realm, element)
+        const read = (style as { readonly getPropertyValue?: unknown } | null | undefined)
+        if (read !== null && read !== undefined && typeof read.getPropertyValue === 'function') {
+          // W3 — THE CASCADE'S ANSWER. A NON-STRING IS `absent`; an EMPTY string is WRITTEN AS THE CASCADE GAVE IT, because
+          // inventing a word for it would be the placeholder `D-174` deletes.
+          const value = (read.getPropertyValue as (property: string) => unknown).call(style, subject.property)
+          figure = typeof value === 'string' ? value : 'absent'
+        }
+      }
     } catch {
-      resolved = null
+      figure = 'absent'
     }
-    if (resolved === null || resolved === undefined) continue
-    const status = drivePageDisplay(runtime, row.target, row.active === true)
+    figures.push(`${subject.nodeId}.${subject.property}=${figure}`)
+  }
+  // NOTHING MEASURED, NOTHING WRITTEN — the same rule as every other arm of this file.
+  if (figures.length === 0) return
+  // W4/W5 — ONE WRITE, AS TEXT, AND EVERY NON-`applied` ANSWER REPORTED RATHER THAN SWALLOWED (`D-117`'s register).
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: LAYOUT_MEASURED_ID,
+      mutation: [{ targetProp: 'content', mode: 'replace', value: figures.map((figure) => `${figure};`).join('') }],
+    })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
     if (status !== 'applied') {
-      console.error(`[provident-renderer] layout paint: the page ${row.target} answered ${String(status)}`)
+      console.error(`[provident-renderer] layout report: the measured carrier answered ${String(status)}`)
     }
+  } catch (error) {
+    // NOTHING ESCAPES THE DELIVERY: a hostile runtime is a reading this turn leaves standing.
+    console.error(`[provident-renderer] layout report: the carrier write threw — ${String(error)}`)
   }
 }
 
@@ -2069,7 +2194,9 @@ function startMenusItems(runtime: Runtime): { readonly attached: number } {
  *
  *  **AND THE FOURTH ARGUMENT IS THE LAYOUT PAINT, CALLED FOURTH IN THAT SAME BODY** (`S-6`; `D-185`, `D-194`): the four
  *  authored zones' fixed dimension from `['zones']`, the panes' adjustable member from `['panes']`, and the stage's content
- *  through `drivePageDisplay`'s form — ONE subscription writing four rendered values and no fifth. It is the turn
+ *  through `drivePageDisplay`'s form — ONE subscription writing four rendered values **and, inside the fourth, the
+ *  self-report's fifth: the carrier's measured text** (`reportMeasuredFigures`, `D-203`/`D-208`; design §4's `W1`–`W5`), so
+ *  the fifth write rides a turn that already ran and no parameter is added here. It is the turn
  *  `driveLayoutRegions` above declares, and it is **NOT `renderZone` returning** (`D-168`, `D-185`): no layout projection, no
  *  `source.layout` member, no zone turn on any surface.
  *

@@ -205,6 +205,20 @@ export const TABS_ROW_PROTOTYPE_ID = 'tab-row'
  *  **ITS READER, IN ONE LINE**: the menus turn writes the route's answer into it as a `state-slice`
  *  `content` (`AL-7`). */
 export const MENUS_RECEIPT_ID = 'menus-receipt'
+/** **THE MEASURED-FIGURES CARRIER'S AUTHORED ID — THE ONE NODE A COMPUTED STYLE IS WRITTEN INTO** (`D-203`,
+ *  `D-204`, `D-207`, `D-208`; `docs/L3/app-envelope/design.md` rev 6 §2's `A-8`, the TWENTIETH published
+ *  name): a `span` inside the stage and its **LAST** child, carrying `css.id` + `props.id` and an authored
+ *  `display: 'none'`, so a node that exists to be READ takes no ground from the region it reports.
+ *  **IT AUTHORS NO `content`**, exactly as `MENUS_RECEIPT_ID` and `GUTTER_STATUS_ID` author none: what stands
+ *  before a real realm measures is EMPTY, never a placeholder figure — an authored figure standing in for a
+ *  measurement is right once and false after (`D-174`, `D-129`).
+ *  **ITS READER, IN ONE LINE**: `renderer-wiring`'s `reportMeasuredFigures` writes the paint's own subjects'
+ *  COMPUTED figures into its `content` as `id.property=value` text, and `AL-12` reads that TEXT — the ONE
+ *  place a computed style can reach a row (`D-208`). **AND THE FORM IS `content` AND NEVER `css.style`**
+ *  (`D-203`): a text member is applied as written in both realms, where a `css.style` OBJECT answers
+ *  `applied` and writes nothing — and `css.style`'s serialisation is the one property on which the shim and
+ *  the browser disagree, so a reading written there would be an instrument nobody could trust. */
+export const LAYOUT_MEASURED_ID = 'layout-measured'
 
 // ---------------------------------------------------------------------------
 // ⟶ ADDED (`U-STORE-TABS-RECORD`, `T2`, `docs/specs/store-tabs-record.md` `§0A` item 5, `§6`
@@ -560,6 +574,13 @@ const arrangementStyle: Record<string, string> = { display: 'flex', 'flex-direct
  *  would be the second authority the record does not have. `overflow: auto` is `D-187`'s one declaration
  *  for the depth the stage adds to the two the zones and the panes carry. */
 const stageStyle: Record<string, string> = { flex: '1 1 0', overflow: 'auto' }
+/** **THE MEASURED-FIGURES CARRIER'S AUTHORED STYLE — ONE DECLARATION, AND IT IS `display: 'none'`**
+ *  (`docs/L3/app-envelope/design.md` rev 6 §2, `A-8`): the node exists to be READ, so it takes no ground from
+ *  the region it reports. **AUTHORED `css` IS NOT A WRITE**, so `D-203` (a `css.style` *write* must carry CSS
+ *  TEXT) does not reach it: this object is the engine's authored layer, serialised at translate time like every
+ *  other `css.style` in this file, while the carrier's measured figures land in its `content` — a different
+ *  mechanism, one `state-slice` away. */
+const measuredCarrierStyle: Record<string, string> = { display: 'none' }
 
 /** **THE ZONES' OWN SCROLLING ON THEIR ARRANGEMENT AXIS** (`C-12`, `D-187`) — and NOTHING ELSE: a zone
  *  authors no fixed dimension and no `display`, which the paint owns. **THE PROHIBITION IS THE POINT**: an
@@ -1098,6 +1119,22 @@ export function demoEnvelope() {
                         props: { id: TABS_ERROR_PAGE_ID, role: 'page' },
                         content: 'Tab error',
                         handlers: [{ name: 'tabs-error-page-open', event: 'click', body: TABS_ERROR_PAGE_BODY }],
+                      },
+                      // ---- THE MEASURED-FIGURES CARRIER (`D-203`, `D-204`, `D-207`, `D-208`; `A-8`) ----
+                      // **THE STAGE'S LAST CHILD, AND IT IS AN INSTRUMENT AND NOT A REGION**: a `span` carrying
+                      // its two ids and an authored `display: 'none'`, so it takes no ground from the stage it
+                      // stands in (`docs/L3/app-envelope/design.md` rev 6 §2). **NO `content` IS AUTHORED** —
+                      // what stands before a real realm measures is EMPTY (`D-174`, `D-129`) — and **NO
+                      // `handlers` BODY**: a figure here is MEASURED and never computed, and `D-208` measured
+                      // twice why a driven body cannot take the reading at all (the app boots through
+                      // `bootstrap()`, and every driver envelope replaces the graph the app renders). **ITS
+                      // WRITER IS `renderer-wiring`'s `reportMeasuredFigures`**, the paint turn's last act; its
+                      // ONE reader is `AL-12`, which reads this node's TEXT out of
+                      // `provident.get_rendered_html` — the ONE way a COMPUTED style reaches a battery row.
+                      {
+                        type: 'span',
+                        css: { id: LAYOUT_MEASURED_ID, style: measuredCarrierStyle },
+                        props: { id: LAYOUT_MEASURED_ID },
                       },
                     ],
                   },

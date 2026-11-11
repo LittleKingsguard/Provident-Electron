@@ -4806,3 +4806,25 @@ const landingWitness = activeIds.length === 1 && activeIds[0] === answer.landing
 **THE READINGS AT CLOSE.** `npm test` **`2,957 passed / 2 skipped` of `2,959`** over **`145`** files; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; `strata-marks check` **0** (`363` gating sites in `48` files); `strata-walkthrough refs` **0** (212 rows); `strata-walkthrough check` **exit `1` on the three recorded forward cites and nothing else**; the demo bundle **current** at **40** inputs.
 
 **ITS REGISTER IS `D-71` TO `D-212`** as prose, unchanged and extended by this row only. **This row records a unit closed on its own instrument, a record that caught its own citation defect, two caveats routed to their owners, and a state file that finally says what happened instead of what it said at the start.**
+
+## D-214 — `D-204`'S INSTRUMENT EXISTS: an authored carrier the app writes its **COMPUTED** figures into, so a gating row can finally see the layout — and the moment it was measured it reported **why the app never painted at boot**
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `D-204`'s missing instrument, built as a self-report turn (design at `docs/L3/renderer-wiring/design.md` rev 20, `W1`–`W5`) plus `app-envelope`'s `A-8` carrier (rev 6).
+
+**THE SHAPE, AND IT IS THE ONE THIS UNIT ALREADY PROVED.** `AL-9` established that **a body can read a browser API and write the answer into an authored carrier, which a gating row then reads as MARKUP.** The app's own regions cannot be read that way — **every driver envelope replaces the graph** (`D-208`) — **so the read happens in the app's own realm**: `reportMeasuredFigures(runtime)` is **`driveLayoutRegions`' last act**, and it censuses `getComputedStyle` **first**, writing **nothing and throwing nothing** where the realm has no such function (the DOM shim, the whole unit suite). **The report lands in the carrier's `content` as `id.property=value;` text — never `css.style`**, because `D-203` proved that member's *object* form is the one place shim and browser disagree.
+
+**AND THE INSTRUMENT WORKS, PROVED IN A REAL DOM BOTH WAYS.** Before any paint the carrier reads **`top.height=396px`** — the **fill**. A CSS-text write then reads
+
+```
+top.height=140px; bottom.height=60px; left.width=120px; right.width=90px; tabs-landing-page.display=block;
+```
+
+and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` and an empty `style` attribute. **So the instrument catches `D-203` exactly: the inert write reports the fill rather than the record's figure.** **The row reads the CARRIER'S TEXT; the TURN reads the computed style** — and the design says it in those words so nobody later mistakes a markup read for a layout read.
+
+**AND THE FIRST THING IT MEASURED WAS A DEFECT NOBODY HAD LOOKED FOR.** On a **cold boot the carrier is EMPTY across fifteen polls**, and `pane-menus` keeps only its authored `height: 100%; overflow-x: auto` — **because `startViewShape` calls `driveLayoutRegions` (and therefore the report) only from the DELIVERY subscription**, while its one boot read (`fill()`) adopts and logs. **So nothing is painted until something changes a record.** After **one induced delivery** the carrier reads `top.height=40px; pane-a.width=absent; pane-a.height=absent; pane-menus.width=100px; tabs-landing-page.display=block;` — **so a stated pane width is applied on a delivery and NOT at boot**, which is `F3`'s class (`D-164`) in the layout: **a delivery is the only trigger, so a second boot that receives none shows the authored CSS.** **Routed, not fixed: a boot paint is refused by `D-96`/`T-4`, so the fix is a decision, not an edit.**
+
+**TWO SMALLER FINDINGS TRAVEL WITH IT.** **`pane-a`'s figures read `absent`** — **no authored element carries id `pane-a`** (the stage pane's box is `gutter-card`, which `D-194` already flagged as a record-id-versus-node-id mapping), so its report is honest and meaningless. **And `driveLayoutRegions`' own docblock still says the pane arm *"is INERT until `S-8` lands"*** — **false at this head**, since `view-shape.ts`, `paneOf` and the paint all carry the pair (`D-206`). **A stale paragraph inside the function it describes.**
+
+**THE READINGS.** `npm test` **`2,957 passed / 2 skipped` of `2,959`** over **`145`** files; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt to **`40`** inputs; the census rows (`M-2`, `X-1`, `I-10`, `P-TC-IM-2`) re-grained to **`73 = 18 + 5 + 2 + 13 + 35`**, **the fourth term named** as the interface inventory's 34 **plus the measured-figures carrier**, with **an independent walk of `demoEnvelope()` agreeing**.
+
+**ITS REGISTER IS `D-71` TO `D-213`** as prose, unchanged and extended by this row only. **This row records the instrument the project was missing, proof that it bites both ways, a boot-paint gap it found on its first measurement, and a docblock that describes the function it sits in wrongly.**
