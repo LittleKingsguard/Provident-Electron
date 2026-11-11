@@ -5068,3 +5068,28 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** Three runs at the capped pool on a clean tree: **`2,962 passed / 2 skipped` of `2,964`** twice and **`2,961`/`2,964`** once; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the four uncapped baseline runs at the same head were **three red**.
 
 **ITS REGISTER IS `D-71` TO `D-226`** as prose, unchanged and extended by this row only. **This row records a fix that would have deadlocked the suite, a cause refuted on a tree where nothing was rebuilt, a cap that more than doubles the green rate for nothing, and two residuals whose shapes are a hang and an under-sampled read.**
+
+## D-228 — THE DEADLOCK IS GONE BY CONSTRUCTION: **the booter builds under the lock it already holds**, so a build is never a second claimant — cold runs build **exactly once**, warm runs build **never**, and the wall clock matches baseline
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `D-227`'s cure shape **(2)**, landed across seven files.
+
+**THE SHAPE, AND WHY IT CANNOT DEADLOCK.** Every boot hook now takes **`acquireLiveBoot` FIRST**, then calls **`ensureArtifacts()`**: **all artifacts present and non-empty ⇒ return with NO build**; **otherwise `npm run build` runs ONCE, in this process, under the lock it already holds**, then the set is **re-measured**. **A build that throws, or that exits zero without the set, raises an `Error` naming the command, the bound and the child's own stderr — never swallowed.** **`artifactsWithin` is gone.** **And the three in-suite builders take the same path** (`boot-contract`, `arrangement`, `emission` — their `beforeAll` is lock → ensure → release), **with the lock helper duplicated verbatim into them**, because the corpus's own rule is that the same `tmpdir()` derivation is what makes one contended path.
+
+**SO THE CYCLE HAS NO SECOND EDGE TO FORM.** `D-227` measured the old shape as **hold-and-wait**: a booter holding the lock and waiting for `dist/`, against a builder waiting for the lock to make it — **10 holds × 60 s, zero builds in 600 s**. **There is now no party that wants the lock for a build's sake without already holding it**, **so no ordering rule, no release-and-retry and no second lock is needed**: the cure removed the claimant instead of sequencing it.
+
+**MEASURED IN BOTH DIRECTIONS, WHICH WAS THE POINT.**
+
+| tree | builds | wall | deadlock |
+|---|---|---|---|
+| **COLD** (`rm -rf dist`), three runs | **exactly one per run** | 26 s / 70 s / 85 s | **none — no 60 s hold** |
+| **WARM**, two runs | **zero** | **27 s** | — |
+
+**The build count is evidenced, not asserted**: a **PATH `npm` shim logged every npm child** — **one `run build` and its one `run clean` per cold run, never two** — and **all four artifacts' mtimes landed inside the run's first second**, with builds starting **0.4–0.6 s after launch**. **The warm wall (27 s) matches a `HEAD` baseline measured by restoring the seven files (25.5 s / 26 s).** **And the 70/85 s cold runs are `B-6`'s own hang, not a lock wait** — the distinction `D-227` made, still holding.
+
+**NO SECOND CLAIMANT REMAINS INSIDE `npm test`, AND THAT IS CHECKED RATHER THAN ARGUED.** All **seven** `npm run build` sites in `tests/` are **inside `ensureArtifacts`**, each reached only after `acquireLiveBoot`. **An injected-failure check** (a failing `npm` shim, cold tree, one booter file) **reds every row with the build's own stderr, leaves NO lock directory behind, and shows five boots taking the lock in turn rather than queueing.**
+
+**AND THE RESIDUAL IS NAMED, NOT ABSORBED.** **`B-6`'s bind-and-answer hang — `D-227`'s residual (i) — reds in most runs at this head**, including two consecutive runs during this pass's own floor. **It is not the lock's subject and it is not fixed by this row.** **The lock work is measured complete**: cold builds once, warm builds never, no hold, no cycle. **What remains is a different defect with a different shape**, and the suite's green rate will not reach parity until it is taken.
+
+**THE READINGS.** The last full run carried **`B-6` only**: **`2,961 passed / 2 skipped` of `2,964`** over **`146`** files; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; `strata-marks check` **0**; `refs` **0**; **`B-1` green with an empty offender list** after the two builder paths were declared **by their real locations** — **the pass corrected the brief's own quoted path** (`tests/integration/` where the file is `tests/unit/`), **and declared the real one because declaring the quoted one would have left `B-1` red**.
+
+**ITS REGISTER IS `D-71` TO `D-227`** as prose, unchanged and extended by this row only. **This row records a deadlock removed by deleting its second claimant, both directions measured with the build count evidenced by a shim, a wall clock matched to a restored baseline, and the one residual it does not touch named as a different defect.**
