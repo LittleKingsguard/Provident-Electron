@@ -159,6 +159,25 @@ const PANE_MENUS = 'pane-menus'
  *  this battery reads it). */
 const GUTTER_HANDLE_ID = 'gutter-horizontal'
 const MENUS_HANDLE_ID = 'menus-vertical'
+/** **THE AUTHORED NODE THE STAGE PANE'S RECORD IS PAINTED ONTO, AND IT IS *NOT* THE RECORD'S KEY** (`D-194`'s mapping gap,
+ *  `D-214`'s measured `absent`, `D-224`'s limit `(i)`; `docs/L3/renderer-wiring/design-pane-node-map.md` §1–§3): `pane-a` is
+ *  the id the COMPOSITION addresses and `gutter-pane` the id the ENVELOPE authors, and `src/shared/view-shape.ts:136-139`
+ *  refuses BOTH re-namings — so the correspondence is a third thing, declared in the rendering (`PANE_NODE_IDS`). **THIS
+ *  ROW IS ITS ONLY INSTRUMENT AND IT MEASURES IT IN MARKUP**: the measured-figures carrier cannot catch a map entry naming
+ *  another EXISTING node, because the write and the report consult the SAME map (`D-224` limit `(ii)`) — a wrong-but-
+ *  existing node is invisible to the carrier and reds here. */
+const GUTTER_PANE_ID = 'gutter-pane'
+/** **THE FIGURE `AL-10` WRITES AT `['panes','pane-a','height']` AND `AL-12` READS BACK OUT OF THE CARRIER** — one constant
+ *  because the two rows are one exchange: `AL-10` proves the figure reaches the MARKUP (on the node the map declares),
+ *  `AL-12` that the browser APPLIED it. It stands inside `DEFAULT_PANE_BOUNDS` `{0, 200}` (`view-shape.ts:155`, the row's
+ *  preference and never a clamp the store enforces) and far from the fill this window gives the pane, so the carrier's
+ *  reading is the RECORD's figure rather than a coincidence of the cascade (`D-214`: `140` over a fill of `396`; `D-224`
+ *  limit `(ii)`). */
+const PANE_A_HEIGHT = 140
+/** The stage pane's OTHER painted member, which no row writes: `DEFAULT_PANE_SIZE` (`view-shape.ts:150`) as the creation
+ *  repair stores it. `pane-a` carries NO `zone`, so absence IS the stage (`C-9`) and BOTH its members are its own
+ *  (`D-189`, `D-191`) — which is why the carrier below names a `width` this battery never writes. */
+const PANE_A_WIDTH = 100
 /** The authored app root, the overlay layer's first node (the root's FOLLOWING sibling, `C-5`), the root's LAST
  *  authored control, and the two authored terminal pages the stage holds. */
 const APP_ROOT_ID = 'app-surface'
@@ -2080,7 +2099,8 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     expect(
       declaredPanes.includes(PANE_MENUS) && tagById(html, PANE_MENUS) !== null,
       `AL-10 — and \`${PANE_MENUS}\` must be BOTH a declared pane and a rendered node: the pane paint addresses it by the ` +
-        `same id the record declares. Record: [${declaredPanes.join(', ')}]; markup: ` +
+        `id the record declares **BECAUSE THE RENDERING'S MAP SAYS SO**, and not because the two names happen to coincide ` +
+        `(\`D-194\`; a coincidence nothing derives is what the map replaced). Record: [${declaredPanes.join(', ')}]; markup: ` +
         `${tagById(html, PANE_MENUS) === null ? '(absent)' : 'present'}.`,
     ).toBe(true)
     // ── the baseline: a zone the record states no `size` for paints NO dimension ──
@@ -2137,6 +2157,29 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       styleDeclares(paneStyle, 'width', '140px'),
       `AL-10 — the \`${PANE_MENUS}\` pane's rendered width must FOLLOW \`['${PANES}','${PANE_MENUS}','width']\`: the record ` +
         `stated 140 and its style read ${textOf(paneStyle)} over ${String(paneWidth.polls)} bounded re-read(s).`,
+    ).toBe(true)
+    // ── (c) THE STAGE PANE'S FIGURE LANDS ON THE NODE THE MAP DECLARES — THE CORRESPONDENCE ITSELF, IN MARKUP ──
+    // **THIS IS THE ARM `D-194` FLAGGED AND `D-224`'s LIMIT `(i)` MEASURED**: `pane-a` names NO authored element, so before
+    // the map the paint wrote its figure into nothing and the carrier reported `absent` — honestly and uselessly. The
+    // record's key and the node's id differ BY DESIGN (`view-shape.ts:136-139`), the correspondence is the rendering's
+    // (`PANE_NODE_IDS`), and **THE CARRIER CANNOT SEE WHICH NODE IT WAS**: the write and the report consult the SAME map
+    // (`D-224` limit `(ii)`), so a map entry naming another EXISTING node would put the figure on the wrong element and
+    // measure it back as applied. This read stands on the other side of that correspondence and reds on exactly that.
+    const stageWrite = await writeAt(booted.client, [PANES, PANE_SIDEBARLESS, 'height'], 'file', PANE_A_HEIGHT)
+    expect(
+      str(asObject(stageWrite.value)?.['status']),
+      `AL-10 PREREQUISITE — the stage pane's adjustable member must be writable at its own leaf: ` +
+        `\`data.write(['${PANES}','${PANE_SIDEBARLESS}','height'], tier:'file')\` answered ${trunc(stageWrite.text, 320)}.`,
+    ).toBe('committed')
+    const stagePainted = await surfaceWithin(booted.client, (text) => styleDeclares(styleOf(text, GUTTER_PANE_ID), 'height', `${String(PANE_A_HEIGHT)}px`))
+    const gutterPaneStyle = styleOf(stagePainted.html, GUTTER_PANE_ID)
+    expect(
+      styleDeclares(gutterPaneStyle, 'height', `${String(PANE_A_HEIGHT)}px`),
+      `AL-10 — the record's \`${PANE_SIDEBARLESS}.height\` (${String(PANE_A_HEIGHT)}) must be rendered ON \`${GUTTER_PANE_ID}\`: ` +
+        `that node's style read ${tagById(stagePainted.html, GUTTER_PANE_ID) === null ? '(the node is ABSENT from the markup)' : textOf(gutterPaneStyle)} ` +
+        `over ${String(stagePainted.polls)} bounded re-read(s). **THE TWO NAMES ARE NOT THE SAME NAME BY DESIGN** ` +
+        `(\`view-shape.ts:136-139\` refuses both re-namings), so the rendering declares the correspondence and this row ` +
+        `measures it; a map that named another EXISTING node would pass the carrier and red HERE (\`D-224\` limit \`(ii)\`).`,
     ).toBe(true)
     // ── and the pane's UNPAINTED member must not appear: exactly one figure per axis ──
     expect(

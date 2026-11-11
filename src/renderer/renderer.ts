@@ -13,7 +13,7 @@ import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCom
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -1591,6 +1591,42 @@ const LAYOUT_ZONE_AXES: readonly { readonly id: string; readonly member: 'height
   { id: 'right', member: 'width' },
 ]
 
+/** **THE PANE ↔ NODE MAP: WHICH AUTHORED NODE A RECORD'S PANE ID IS PAINTED ONTO** (`D-194`'s gap, `D-214`'s
+ *  measurement, `D-224`'s limits; `docs/L3/renderer-wiring/design-pane-node-map.md` §2–§3). **IT EXISTS BECAUSE BOTH
+ *  RE-NAMINGS ARE REFUSED, AND THAT IS THE WHOLE OF ITS REASON**: `src/shared/view-shape.ts:136-139` states the position
+ *  verbatim — *"the store's family is keyed by the id the COMPOSITION addresses, and that is the rendering's business,
+ *  not the address's"* — so `gutter-pane` stays the authored node's name (the envelope's own spelling, `D-41`) and `pane-a`
+ *  stays the record's key (`['panes']` is addressed by `commitPane`/`commitDrag` and repaired by `panesMustStand`, `D-138`,
+ *  `D-191`). **THE TWO NAMES DIFFER BY DESIGN, SO THE CORRESPONDENCE IS A THIRD THING AND IT STANDS HERE**, in the one
+ *  layer that holds both vocabularies.
+ *
+ *  **THE NODE SIDE IS A LITERAL AND THE RECORD SIDE IS IMPORTED**, which is `LAYOUT_ZONE_AXES`' own precedent one
+ *  declaration above: `src/shared/demo-envelope.ts` authors `#gutter-pane` (`:960-961`) and `#pane-menus` (`:723-724`) as
+ *  raw literals and publishes no constant for either (§2 (c)), so the literal is the one spelling both sides carry, while
+ *  the record's ids come from `view-shape.ts` where they are declared.
+ *
+ *  **TWO ENTRIES, AND BOTH ARE EXPLICIT EVEN WHERE THE IDS ALREADY MATCH**: `pane-menus`' node id happens to equal its
+ *  record key `today`, and that is a MEASUREMENT and never a law — two literals in two modules, each with its own reason
+ *  (`D-41`) — so the equality is DECLARED here and measured by `AL-10` rather than derived by anything (`D-188` debt 2).
+ *  A map carrying only `pane-a` would leave the menus pane's paint standing on a silent identity rule, which is the state
+ *  this declaration exists to delete. **THE LIST MUST BE TOTAL OVER `DECLARED_PANE_IDS`** (`view-shape.ts:165`); a third
+ *  declared pane would write nothing and be reported `absent`. */
+const PANE_NODE_IDS: readonly { readonly paneId: string; readonly nodeId: string }[] = [
+  { paneId: DEFAULT_PANE_ID, nodeId: 'gutter-pane' }, // the STAGE pane: the record's id is the COMPOSITION's, the node's the ENVELOPE's (`D-138`)
+  { paneId: MENUS_PANE_ID, nodeId: 'pane-menus' }, // measured EQUAL today and DECLARED regardless — an equality nothing derives
+]
+
+/** **THE MAP CONSULTED, AND ITS MISSING ARM IS `null` AND NEVER THE PANE ID** (§3; `D-174`'s standard applied to a lookup).
+ *  **A DECLARED ABSENCE CANNOT BE WRONG, WHERE AN IDENTITY FALLBACK IS RIGHT ONCE AND WRONG AFTER**: `?? paneId` would
+ *  make `pane-menus` work by coincidence and would hand every undeclared pane id a live route to any element that merely
+ *  shares its name — the confusion `view-shape.ts:137-138` refuses. **A `find` OVER A DECLARED LIST AND NOT AN INDEX
+ *  SIGNATURE**: `tsconfig.json` carries `strict` but not `noUncheckedIndexedAccess`, so a `Record<string, string>` would
+ *  type the lookup `string` and lie at runtime about a missing key (`paneGeometryIn`'s own `find`, `view-shape.ts:264`). */
+function nodeIdForPane(paneId: string): string | null {
+  const held = PANE_NODE_IDS.find((entry) => entry.paneId === paneId)
+  return held === undefined ? null : held.nodeId
+}
+
 /** **THE PANE'S TWO AXIS MEMBERS, AND THE PANE'S `zone` IS WHAT SELECTS WHICH ONE IT PAINTS** (`D-186`'s axis rule as
  *  `D-189`/`D-191` settled it; `D-194`); in `top`/`bottom` the zone fixes the height, so the pane's own member is its
  *  **`width`**; in `left`/`right` the zone fixes the width, so the pane's own member is its **`height`**; and **with no
@@ -1652,7 +1688,10 @@ function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<stri
  *   (b) **THE PANE'S ADJUSTABLE MEMBER — AND ONLY THAT ONE.** The member the pane's `zone` makes adjustable is written, and
  *       only where the record STATES it; its other stored member is retained-but-unpainted and is never written, because at
  *       any instant exactly one figure is painted per axis and a leaf cannot reach a sibling (`D-189`/`D-191`). **A STAGE PANE
- *       HAS NO ZONE, SO BOTH ITS MEMBERS ARE ITS OWN** — and still only the ones the record states.
+ *       HAS NO ZONE, SO BOTH ITS MEMBERS ARE ITS OWN** — and still only the ones the record states. **AND A PANE'S RECORD
+ *       ID IS NOT ITS NODE ID**: the figure is written to `nodeIdForPane(pane.id)`'s answer and never to the record's key,
+ *       and a pane the map declares no entry for is written NOTHING — no resolution, no invented id — while the report
+ *       states its absence at the record's key (§4, `D-194`).
  *   (c) **THE STAGE'S CONTENT**: the active tab's `target`, resolved to an authored node and driven through
  *       `drivePageDisplay`'s existing form (one `state-slice` per authored page, the member the landing/error witnesses
  *       already write). **THE STAGE'S OWN DIMENSIONS ARE DERIVED FROM THE REMAINDER AND ARE NEVER WRITTEN** (`D-185`): it
@@ -1661,12 +1700,6 @@ function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<stri
  *  **NOTHING IS WRITTEN FROM A READING THAT IS NOT `committed`** — the gate `driveTabsLandingPage` keeps, for its own
  *  reason: `absent` and `unread` are not a record saying the regions carry no figure, and a fault delivers no correction
  *  (`D-127`).
- *
- *  **AND THE RECORD IT READS IS NOT IN THE TREE AT THIS HEAD, SAID RATHER THAN PAPERED OVER**: `src/shared/view-shape.ts`
- *  still carries `ViewPaneGeometry`'s `size`/`bounds` with no `width`, no `height` and no `zone`, and one declared pane id,
- *  so (b) is INERT until `store-view-record`'s `S-8` lands in the same pass — and its rule is exactly that inertness: **a
- *  member the record does not state writes NOTHING**. (a) is live the moment a writer states a zone's `size`, and (c) the
- *  moment a tab's `target` names an authored node.
  *
  *  **IT IS PRIVATE AND ANSWERS NOTHING**, the form `driveTabsRows` landed in (`D-201`): `signatures.md` §3 declares
  *  `{written: number}` and no caller reads such a count, so the count would be a name with no reader (`D-70`) — the refusals
@@ -1699,6 +1732,11 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
   // (b) EVERY DECLARED PANE, THE MEMBER ITS `zone` MAKES ADJUSTABLE — read STRUCTURALLY, because the record's pane shape is
   // `store-view-record`'s and this turn may not invent a member the record does not carry.
   for (const pane of reading.panes) {
+    // THE MAP IS CONSULTED BEFORE ANY RESOLUTION (`M2`, §4 `B1`): the record's id is not the node's id, and a pane the map
+    // does not declare is written NOTHING — no lookup, no invented id — and the report states it (`W2`). **NOT A SILENT
+    // SKIP**: this `continue` writes no DOM and the carrier prints `pane-x.<member>=absent` at the RECORD's own key.
+    const nodeId = nodeIdForPane(pane.id)
+    if (nodeId === null) continue
     const record = pane as unknown as Record<string, unknown>
     const style: Record<string, string> = {}
     for (const member of paneAxisMembers(record['zone'])) {
@@ -1708,8 +1746,8 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     }
     // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted.
     if (Object.keys(style).length === 0) continue
-    if (!paintStyle(runtime, pane.id, style)) {
-      console.error(`[provident-renderer] layout paint: the pane ${pane.id} refused its ${Object.keys(style).join('/')}`)
+    if (!paintStyle(runtime, nodeId, style)) {
+      console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(style).join('/')}`)
     }
   }
   // (c) THE STAGE'S CONTENT — THE ACTIVE TAB'S `target` THROUGH `drivePageDisplay`'s FORM, so a page's `display` keeps its ONE
@@ -1766,7 +1804,14 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
  *  `runtime.elementForNodeId`, and a throw or an absent node is the figure `absent`, STATED and never silently skipped
  *  (`D-127`'s arm one level down); the figure itself is `styleOf(element).getPropertyValue(property)` — **THE CASCADE'S
  *  ANSWER, NEVER THE ATTRIBUTE'S TEXT**, because the `style` attribute is the layer's own serialisation and the very text
- *  `D-203` measured EMPTY under an `applied` answer.
+ *  `D-203` measured EMPTY under an `applied` answer. **A PANE RESOLVES THROUGH `nodeIdForPane`, THE SAME MAP THE PAINT
+ *  USED**, so a pane the map declares no entry for is a subject whose node id is `null`: it prints at its RECORD's key as
+ *  `absent` with `elementForNodeId` NEVER CALLED, so the absence is a DECLARED READING and not a lookup that missed.
+ *  **THE CARRIER'S PRINTED KEY IS THE PAINT'S SUBJECT KEY** — the record's pane id for the pane family, and the node's own
+ *  id for the zones and the rows, where the two coincide, so their output does not move. **AND THE ONE LIMIT THAT SURVIVES
+ *  IS THE MAP'S AND NOT THE INSTRUMENT'S** (`D-224`'s limit `(ii)`): the write and the report consult the SAME map, so a map
+ *  entry naming another EXISTING node would put a figure on the wrong element and read it back — *which node* is the
+ *  MARKUP's to measure (`AL-10`), and this report proves APPLICATION only.
  *
  *  **`W4`–`W5` — ONE `state-slice` `content` REPLACE, AS `id.property=value` TEXT**, a member a real renderer applies as
  *  written (`D-207`'s receipt is the same shape already measured); a status that is not `applied` is `console.error` and
@@ -1784,8 +1829,12 @@ function reportMeasuredFigures(runtime: TabsPageRuntime): void {
   const realm = typeof window === 'undefined' ? null : (window as unknown as { readonly getComputedStyle?: unknown })
   const styleOf = realm === null ? undefined : realm.getComputedStyle
   if (typeof styleOf !== 'function') return
-  // THE PAINT'S OWN SUBJECTS, IN THE PAINT'S OWN ORDER: (a) the zones, (b) the panes, (c) the rows' targets.
-  const subjects: { readonly nodeId: string; readonly property: string }[] = []
+  // THE PAINT'S OWN SUBJECTS, IN THE PAINT'S OWN ORDER: (a) the zones, (b) the panes, (c) the rows' targets. **EACH SUBJECT
+  // CARRIES ITS PAINT'S KEY BESIDE THE NODE IT RESOLVES** (`M3`, `W2`): the key is what the carrier PRINTS — the RECORD's
+  // id for a pane and the node's own id for a zone or a row, where the two coincide — and the node id is what the paint
+  // wrote, `null` where the map declares no entry. A node-keyed carrier could not express a pane the rendering does not
+  // display at all, which is why the record's key is the printed one (`D-204`, `D-127`).
+  const subjects: { readonly key: string; readonly nodeId: string | null; readonly property: string }[] = []
   const reading = getViewClient().reading()
   if (reading !== null && reading.status === 'committed') {
     for (const zone of LAYOUT_ZONE_AXES) {
@@ -1793,7 +1842,7 @@ function reportMeasuredFigures(runtime: TabsPageRuntime): void {
       const held = zoneIn(reading.zones, zone.id)
       if (held === null || held.size === undefined) continue
       if (!Number.isFinite(held.size) || held.size < 0) continue
-      subjects.push({ nodeId: zone.id, property: zone.member })
+      subjects.push({ key: zone.id, nodeId: zone.id, property: zone.member })
     }
     for (const pane of reading.panes) {
       const record = pane as unknown as Record<string, unknown>
@@ -1801,7 +1850,9 @@ function reportMeasuredFigures(runtime: TabsPageRuntime): void {
         // THE MEMBER IS A SUBJECT ONLY WHERE THE RECORD STATES THE FIGURE THE PAINT WROTE (the same three tests).
         const figure = record[member]
         if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
-        subjects.push({ nodeId: pane.id, property: member })
+        // THE PANE ARM RESOLVES THROUGH THE MAP THE PAINT USED — and a pane the map declares no entry for is a subject whose
+        // node id is `null`, so the figure loop answers `absent` WITHOUT resolving anything (`W2`, §4).
+        subjects.push({ key: pane.id, nodeId: nodeIdForPane(pane.id), property: member })
       }
     }
   }
@@ -1810,29 +1861,33 @@ function reportMeasuredFigures(runtime: TabsPageRuntime): void {
   if (tabs !== null && tabs.status === 'committed') {
     for (const row of tabs.rows) {
       if (row.target === '') continue
-      subjects.push({ nodeId: row.target, property: 'display' })
+      subjects.push({ key: row.target, nodeId: row.target, property: 'display' })
     }
   }
   const figures: string[] = []
   for (const subject of subjects) {
-    // W2 — RESOLVED THROUGH THE RUNTIME, AND AN ABSENT OR THROWING SUBJECT IS THE FIGURE `absent`.
+    // W2 — RESOLVED THROUGH THE RUNTIME, AND AN ABSENT OR THROWING SUBJECT IS THE FIGURE `absent`. **A SUBJECT THE MAP
+    // GIVES NO NODE ID IS `absent` BEFORE ANY RESOLUTION**: `elementForNodeId` is never called for it, so the absence is the
+    // declared reading and never a lookup that happened to miss (`D-129`, `D-174`).
     let figure = 'absent'
-    try {
-      const element = runtime.elementForNodeId(subject.nodeId)
-      if (element !== null && element !== undefined) {
-        const style = (styleOf as (element: unknown) => unknown).call(realm, element)
-        const read = (style as { readonly getPropertyValue?: unknown } | null | undefined)
-        if (read !== null && read !== undefined && typeof read.getPropertyValue === 'function') {
-          // W3 — THE CASCADE'S ANSWER. A NON-STRING IS `absent`; an EMPTY string is WRITTEN AS THE CASCADE GAVE IT, because
-          // inventing a word for it would be the placeholder `D-174` deletes.
-          const value = (read.getPropertyValue as (property: string) => unknown).call(style, subject.property)
-          figure = typeof value === 'string' ? value : 'absent'
+    if (subject.nodeId !== null) {
+      try {
+        const element = runtime.elementForNodeId(subject.nodeId)
+        if (element !== null && element !== undefined) {
+          const style = (styleOf as (element: unknown) => unknown).call(realm, element)
+          const read = (style as { readonly getPropertyValue?: unknown } | null | undefined)
+          if (read !== null && read !== undefined && typeof read.getPropertyValue === 'function') {
+            // W3 — THE CASCADE'S ANSWER. A NON-STRING IS `absent`; an EMPTY string is WRITTEN AS THE CASCADE GAVE IT, because
+            // inventing a word for it would be the placeholder `D-174` deletes.
+            const value = (read.getPropertyValue as (property: string) => unknown).call(style, subject.property)
+            figure = typeof value === 'string' ? value : 'absent'
+          }
         }
+      } catch {
+        figure = 'absent'
       }
-    } catch {
-      figure = 'absent'
     }
-    figures.push(`${subject.nodeId}.${subject.property}=${figure}`)
+    figures.push(`${subject.key}.${subject.property}=${figure}`)
   }
   // NOTHING MEASURED, NOTHING WRITTEN — the same rule as every other arm of this file.
   if (figures.length === 0) return

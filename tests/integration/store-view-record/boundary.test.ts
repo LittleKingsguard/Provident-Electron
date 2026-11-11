@@ -1235,18 +1235,25 @@ const DECLARED_SCOPE: readonly string[] = [
   //    re-grained the sentence to what the tree measures and cited `D-171` at the site — so the obligation the row carried was met by
   //    the page that owned it, and the row states the discharge instead of an instruction (`D-171`, `D-174`'s residue (iii), `D-46`).
   //    The page's own rev moved to `4` for that one row; no export, id, count, hunk or guardrail of the module moves with it, and no
-  //    `strata/` byte does either — which is why this is a DOCUMENT's entry and not a module's. **IT IS THE LAST ENTRY THIS UNION IS
-  //    OWED**: `B-1` reported this path as its ONE offender on this tree, so the row is green on the dirty tree only because the path
-  //    stands here, and a prefix declared in its place would admit a page nobody named.
+  //    `strata/` byte does either — which is why this is a DOCUMENT's entry and not a module's. **IT WAS THE ONLY ENTRY THE UNION WAS
+  //    OWED AT ITS OWN HEAD, AND THAT IS A READING AT A DATE AND NEVER THE LIST'S END**: `B-1` reported this path as its ONE offender
+  //    on that tree, so the row was green on the dirty tree only because the path stood here, and a prefix declared in its place
+  //    would admit a page nobody named. **THE LIST HAS GROWN SINCE AND GROWS AGAIN BELOW** — `app-shell`'s transcription page,
+  //    `app-layout`'s battery, `operator-settings`' delivery page and, in the pass that adds this prose, the pane↔node map's page
+  //    each carry their own entry — because every pass that writes a path RE-OPENS the union (`D-146`). A list that read as finished
+  //    and then grew would teach the next reader that its own claims are decoration, so nothing here now claims to be its last entry.
   'docs/L3/app-envelope/design.md',
   // ── `app-shell`'S TRANSCRIPTION PAGE — `docs/L3/app-shell/signatures.md`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH ITS
   //    OWN REASON, NEVER AS A PREFIX OF THE NEIGHBOUR ABOVE (`docs/L3/app-shell/` would admit every page a later pass drops
   //    beside it, and a directory measures nothing — `B-2`'s undeclared-sibling arm is what bites when one is dropped without a
   //    name). **THE FILE IS `app-shell`'s AND IS DECLARED HERE FOR THE REASON THE FIVE ENTRIES ABOVE ARE**: this row asserts
   //    the worktree's edit set against a scope, so EVERY path a pass writes is a path this union must carry whatever module
-  //    authored it — and the entry is added WITH the edit that dirtied the path, never after it (`D-146`'s precedent; the
-  //    sentence above that called `app-envelope`'s page *"the last entry this union is owed"* is that page's own reading at
-  //    its date and is read THROUGH this entry rather than reworded, `D-46`).
+  //    authored it — and the entry is added WITH the edit that dirtied the path, never after it (`D-146`'s precedent).
+  //    **AND THE SENTENCE ABOVE THAT CALLED `app-envelope`'S PAGE *"the last entry this union is owed"* IS RE-GRAINED IN THE PASS
+  //    THAT ADDS THE LAST ENTRY BELOW**: it now reads as that page's own reading at `D-174`'s head and not as the list's end,
+  //    because entries have been added after it — this one and every block below it — and a union that says it is finished and then
+  //    grows teaches the next reader that its own claims are decoration (`D-146`; the re-grain `D-46` reads a superseded
+  //    sentence through, taken here rather than deferred to the next reader who notices).
   //    **ITS SUBJECT IS THE MODULE'S FIRST TRANSCRIPTION PAGE**: `app-shell`'s design went to rev 5 for the window and the
   //    menus route's main half and this page was CREATED (`D-45`'s declared-names form) because the pass mints a signature of
   //    its own — the bridge's tenth member `menu`, the one channel constant `IPC_MENU_ROLE` in `src/main/store-channels.ts`
@@ -1288,6 +1295,27 @@ const DECLARED_SCOPE: readonly string[] = [
   'tests/integration/security-store-storeroom/instance.test.ts',
   'tests/unit/security-store-storeroom/operator-settings.test.ts',
   'tests/unit/security-store-storeroom/recovered-scenarios.test.ts',
+  // ── THE PANE↔NODE MAP'S OWN PAGE — `docs/L3/renderer-wiring/design-pane-node-map.md`, AND IT JOINS THIS UNION AS ITS OWN ENTRY
+  //    WITH ITS OWN REASON, NEVER AS THE PREFIX `docs/L3/renderer-wiring/` (`design.md` and `signatures.md` stand declared above at
+  //    their own entries, and a prefix would admit every page a later pass drops beside them — a directory measures nothing, and
+  //    `B-2`'s undeclared-sibling arm is what bites on a page nobody named). **THE PAGE IS NEW AND IS DECLARED IN THE SAME EDIT THAT
+  //    CREATED IT, NEVER AFTER IT** (`D-146`'s precedent, and `D-195`'s for a newly created page): `B-1` reported this path as its ONE
+  //    offender on this tree, and the page's own §9 carries the obligation as OWED *"in the same edit that created this page"* — so
+  //    the row is green on a dirty tree only because the path stands here, which is the instrument working and not a defect.
+  //    **ITS SUBJECT IS THE DESIGN OF THE `pane id → authored node id` MAP IN THE WIRING**: the private `PANE_NODE_IDS` declared beside
+  //    `LAYOUT_ZONE_AXES`, holding **TWO EXPLICIT ENTRIES** — `pane-a → 'gutter-pane'` and `pane-menus → 'pane-menus'`, the second
+  //    measured EQUAL today and declared regardless, since an equality nothing derives is a measurement and not a law — and the
+  //    private `nodeIdForPane`, which answers **`null` ON A MISS AND NEVER THE PANE ID**, an identity fallback being right once and
+  //    wrong after (`D-174`). **AND THE MAP EXISTS BECAUSE `src/shared/view-shape.ts:135-139` MAKES THE TWO NAMES DIFFERENT BY
+  //    DESIGN**: the store's family is keyed by the id the COMPOSITION addresses while the authored node carries the ENVELOPE's
+  //    spelling — *"that is the rendering's business, not the address's"* — so BOTH re-namings are refused and the correspondence is a
+  //    third thing, held by the one layer that carries both vocabularies (§2's four grounds, §3's stub, §4's two new turn-3(b) arms
+  //    and the report's `key`, §8's seven guardrails). The page is `D-194`'s demanded SPLIT of `renderer-wiring`'s `150/150` pair and
+  //    moves no byte of `design.md`, `signatures.md`, `demo-envelope.ts` or `view-shape.ts`; **ITS `src/` HALF AND ITS TWO RE-GRAINED
+  //    ROWS ARE ALREADY DECLARED ABOVE** — `src/renderer/renderer.ts` (`PANE_NODE_IDS`, `nodeIdForPane`, the two arms and the deleted
+  //    false docblock) and `tests/e2e/app-layout/app-layout.test.ts` (`AL-10`'s markup arm, `AL-12`'s pane clause) — so this block
+  //    adds ONE path and no second spelling of one already in the union, which is the difference between a write and a claim.
+  'docs/L3/renderer-wiring/design-pane-node-map.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
