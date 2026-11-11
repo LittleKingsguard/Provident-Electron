@@ -5014,3 +5014,23 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,959 passed / 2 skipped` of `2,961`** over **`145`** files (`+1` row for `AL-12`); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; `strata-marks` regenerated to **`365` gating sites in `48` files**; **the `app-layout` battery is `12` of `12`** and its five-boot teardown assertion held.
 
 **ITS REGISTER IS `D-71` TO `D-223`** as prose, unchanged and extended by this row only. **This row records the instrument the project was missing, a row that reds on the defect it was built for, and a ruling superseded by the fix that followed it — with the narrower claim that was true all along named beside it.**
+
+## D-225 — THE PANE-NODE MAP LANDS AND **NEITHER NAME MOVES**: `pane-a`'s figures are measured for the first time, `AL-10` gains the arm that can catch a wrong-but-existing node, and the tree is green
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `D-224`'s last open item, designed at `docs/L3/renderer-wiring/design-pane-node-map.md` and landed as `M1`…`M4`.
+
+**THE OBVIOUS FIX WAS REFUSED, AND THE REFUSAL IS THE DESIGN.** Renaming `gutter-pane` to `pane-a` — or re-keying the record — **would contradict a stated position** (`src/shared/view-shape.ts:135-139`, verbatim): *"**THE AUTHORED DOM PANE IS A DIFFERENT NAME** … **the store's family is keyed by the id the COMPOSITION addresses, and that is the rendering's business, not the address's.**"* **So the two names differ BY DESIGN, and the paint — which is the rendering — declares the correspondence**: `PANE_NODE_IDS`, **two explicit entries** (`pane-a → 'gutter-pane'`, `pane-menus → 'pane-menus'`), **both spelled even where the ids already match, because that equality is a MEASUREMENT and not a law.**
+
+**AND THE LOOKUP'S MISSING ARM IS `null`, NEVER THE PANE ID.** **An identity fallback would be right once and would hand every undeclared id a route to a same-named element**; **a missing entry writes nothing to the DOM, resolves nothing, and states `pane-x.<member>=absent` at the RECORD's own key** — **a declared reading, never a silent skip**, and **no fifth word** (`D-174`).
+
+**THE INSTRUMENT GAINED THE ARM THAT CAN CATCH A MAP THAT IS CONFIDENTLY WRONG.** **`AL-10` now spells `gutter-pane` in markup** — **its real instrument**, because **the write and the report share the map**, so **a wrong-but-existing node is invisible to the carrier**: the carrier would report a figure from the wrong element and call it right. **`AL-12` gained the `pane-a` carrier clause** and re-grained its quoted `absent` text; **its negative arm survives unmoved** — a computed figure still cannot separate the record's value from a fill.
+
+**AND A SENTENCE TWO BLOCKS ABOVE THE NEW ENTRY HAD TO GO WITH IT.** `DECLARED_SCOPE`'s **`docs/L3/app-envelope/design.md` entry still called itself *"the last entry this union is owed"*** — **already two blocks stale**, and **`D-195`'s neighbour had read it through rather than reword it**. **It is now a dated reading of that page's one-offender moment at `D-174`'s head, naming the entries that followed, and stating that every pass writing a path RE-OPENS the union.** **A list that says it is finished and then grows teaches the next reader that its own claims are decorative.**
+
+**A FALSE PARAGRAPH INSIDE THE CHANGED FUNCTION WAS DELETED WITH IT**: the one calling its pane arm *"INERT until `S-8` lands"* — **measured false since `D-206`**, and **it described the very function the pass was editing.**
+
+**AND ONE OBLIGATION THE PAGE LEAVES OWED RATHER THAN MET**: **`PM-1`** — **a `tests/unit/renderer-wiring/` source probe of the map's totality** — **is named and not yet a path**, and **it will need its own `DECLARED_SCOPE` entry when it is written.** **The map's own completeness is therefore the one thing about it no row measures**: a third declared pane added without an entry would render nothing and report `absent` — **honest, and silent**.
+
+**THE READINGS.** `npm test` **`2,959 passed / 2 skipped` of `2,961`** over **`145`** files; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; `strata-marks check` **0**; the `app-layout` battery **`12`/`12`**; the demo rebuilt to **`40`** inputs; `DECLARED_SCOPE` **`231` entries, `231` unique**.
+
+**ITS REGISTER IS `D-71` TO `D-224`** as prose, unchanged and extended by this row only. **This row records a rename refused by a stated position, a map whose miss is a declared absence, an instrument given the one arm that can catch a confident error, a finished-looking list corrected above its own new entry, and an obligation its page names rather than hides.**
