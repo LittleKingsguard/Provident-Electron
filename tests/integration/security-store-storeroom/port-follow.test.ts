@@ -114,11 +114,17 @@ describe('the port follows the record (D-123)', () => {
     try {
       const surface = createSettingsSurface({ userDataDir: dir, onExclusionChanged: (state) => { seen.push(state) } })
       surface.attach(sink)
-      expect(seen, 'the attach lands the boot terminal and delivers nothing: a boot is not a change').toEqual([])
+      // **A BOOT IS NOT A CHANGE, AND SINCE `D-221` THE BOOT'S OWN FIRING IS THE DRAIN** (`docs/L3/operator-settings/
+      // delivery.md` §4, §8): `attach` subscribes FIRST — its own sentence is *"no change can fall between the acts"* — so
+      // the creation's four held addresses are handed over INSIDE that `subscribe`, one per record/pair/pane address through
+      // `onDelivery`; the pair's own delivery is the one that reaches this callback, and it carries the state the boot
+      // repaired the ports to. **The change this row measures is the one BEHIND that firing**, so the boot's reading is
+      // taken as the row's PREFIX and every index below counts from it.
+      expect(seen, 'the attach lands the boot terminal, and its delivery is the CREATION’s: the drain’s pair address, carrying the state the boot’s repair minted — not a change, and not silence').toEqual(['mcp-enabled'])
       // (i) AN ORDINARY TRANSITION — the operator's own act, the path `D-122` used as a TRIGGER and which is now only one
       //     of the two routes that reach the same delivery.
       expect(surface.transition('mcp-disabled').applied, 'the transition applies').toBe(true)
-      expect(seen, 'and the delivery carried the state it landed as, exactly once').toEqual(['mcp-disabled'])
+      expect(seen.slice(1), 'and the delivery carried the state it landed as, exactly once').toEqual(['mcp-disabled'])
       // (ii) THE INVARIANT'S REPAIR — a route that never passes through `transition` at all, which is why the port's edge
       //      cannot be a hook at the transition site (`D-123`).
       expect(surface.transition('mcp-enabled').applied, 'the pair is re-enabled').toBe(true)
@@ -129,7 +135,7 @@ describe('the port follows the record (D-123)', () => {
       // pass's set carry the repair's op address — so the callback is called twice for one act, handing the SAME state both
       // times. A consumer that reconciles a socket is idempotent by construction (`followExclusion` compares against the
       // listener's own record), and a row counting one delivery per act would be pinning the wrong fact.
-      expect(seen, 'SO THE CROSSING`S REPAIR REACHED THE SAME CALLBACK, with the state it landed as — the port is driven by the DELIVERY and not by the verb').toEqual(['mcp-disabled', 'mcp-enabled', 'mcp-disabled', 'mcp-disabled'])
+      expect(seen.slice(1), 'SO THE CROSSING`S REPAIR REACHED THE SAME CALLBACK, with the state it landed as — the port is driven by the DELIVERY and not by the verb').toEqual(['mcp-disabled', 'mcp-enabled', 'mcp-disabled', 'mcp-disabled'])
       // (iii) **THE CLOSING EDGE — RE-DERIVED AT `D-125`, AND IT IS THE FIGURE `D-123` GOT THE OTHER WAY ROUND.** That row
       //       recorded *"CLOSING A PANE DOES NOT RE-OPEN THE PORTS: that is `D-122`’s auto-re-enable, which the invariant
       //       does not state"*, and it was right about the invariant it had: its repair had OVERWRITTEN the operator's
@@ -138,7 +144,7 @@ describe('the port follows the record (D-123)', () => {
       //       address. The port's consumer hears it exactly as it hears every other change, which is what makes the socket a
       //       LISTENER'S consequence and never a toggle's (`D-82` clause 2).
       expect(surface.pane(false), 'the pane closes, and the close edge settles the ports to the intent the open edge preserved').toEqual({ status: 'committed' })
-      expect(seen.slice(4), 'so the port`s consumer IS called on the closing act — twice, on the same per-handle rule as above, with the state the record now holds').toEqual(['mcp-enabled', 'mcp-enabled'])
+      expect(seen.slice(5), 'so the port`s consumer IS called on the closing act — twice, on the same per-handle rule as above, with the state the record now holds: the index counts from the boot’s own draining delivery').toEqual(['mcp-enabled', 'mcp-enabled'])
       expect(surface.read().exclusion, 'and the record holds the intent: `D-122`’s auto re-enable arrives through the CONSTRAINT now, and not through a toggle beside it').toBe('mcp-enabled')
       // AND THE OTHER ARM, WHICH IS THE DISCRIMINATOR: with the intent DISABLED the same closing act settles nothing, so the
       // consumer is not called and the ports stay shut. Both arms are driven because the intent is the only thing that
@@ -149,7 +155,7 @@ describe('the port follows the record (D-123)', () => {
       expect(shut.transition('mcp-disabled').applied, 'the operator disables the ports, with no pane open').toBe(true)
       expect(shut.pane(true).status, 'the pane opens').toBe('committed')
       expect(shut.pane(false).status, 'and closes').toBe('committed')
-      expect(quiet, 'and the consumer heard the ONE ordinary transition alone: neither pane act moved the pair, because the intent it settles to is the state the pair already stands in — the two arms of this edge, side by side').toEqual(['mcp-disabled'])
+      expect(quiet, 'and the consumer heard the boot’s own draining delivery and then the ONE ordinary transition alone: neither pane act moved the pair, because the intent it settles to is the state the pair already stands in — the two arms of this edge, side by side').toEqual(['mcp-enabled', 'mcp-disabled'])
       expect(shut.read().exclusion, 'with the ports still shut, which is the arm the intent decided').toBe('mcp-disabled')
     } finally {
       rmSync(dir, { recursive: true, force: true })

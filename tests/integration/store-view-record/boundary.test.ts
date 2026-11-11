@@ -1265,6 +1265,29 @@ const DECLARED_SCOPE: readonly string[] = [
   //    as the RECORD's own membership (`D-181`, `D-183`, `D-189`), so a re-widened domain reds this file by name rather
   //    than sliding past it — which is why the entry is added WITH the edit that dirtied the path (`D-146`'s precedent).
   'tests/e2e/app-layout/app-layout.test.ts',
+  // ── `operator-settings`'S DELIVERY — `docs/L3/operator-settings/delivery.md` AND THE FOUR BATTERY PATHS IT RE-GRAINS, EACH
+  //    ITS OWN ENTRY AND NEVER THE DIRECTORY (`tests/e2e/security-store-storeroom/` would admit every file a later pass drops
+  //    beside them, and a directory measures nothing — `B-2`'s undeclared-sibling arm). **THE PAGE IS THE ONE MODULE-NAMED
+  //    SCOPE THIS UNION HAS NEVER CARRIED**, and it is the split `D-221` filed rather than an append to
+  //    `docs/L3/security-store-storeroom/design.md`: that page stands at `150` of `150` and this one names the delivery, its
+  //    queue and the six hunks `OD-1`…`OD-6` — so `B-1` red the path BY NAME on this page's existence until this entry did,
+  //    which is the precondition and not a defect (`D-195`'s OWED-8 reads the same way).
+  'docs/L3/operator-settings/delivery.md',
+  //    **THE FOUR ROWS RE-GRAINED IN PLACE, EACH KEEPING ITS CLAIM AND EACH ABLE TO FAIL.** `instance.test.ts`'s
+  //    *"a listener is the change path"* gains the drain's prefix in creation order and *"a listener's throw cannot take the
+  //    write's answer away"* becomes the interrupted drain's witness — the throw lands on the first HELD address, that
+  //    subscriber is dropped locally and the remainder stays held; `operator-settings.test.ts`'s *"each subscription owns its
+  //    own handle"* is FALSIFIED by the delivery (the handles are the construction's and a subscription is a fan-out entry)
+  //    and is re-grained, not appended, while its throw row keeps its `calls === 1` for a new cause; and
+  //    `recovered-scenarios.test.ts`'s `SC-E5-18` reads its delivery beyond the drain's prefix instead of inside it, its
+  //    claim unmoved; `scenarios.test.ts`'s `S-5` moves on its delivered count and `S-6` stands. `creation-declarations.test.ts`,
+  //    `port-follow.test.ts`, `tests/unit/settings-surface/surface.test.ts`,
+  //    `tests/integration/secure-panels/roster.test.ts` and the two `settings-carrier-retirement` delivery batteries are
+  //    ALREADY DECLARED ABOVE and are not re-listed — the difference between a write and a claim.
+  'tests/e2e/security-store-storeroom/scenarios.test.ts',
+  'tests/integration/security-store-storeroom/instance.test.ts',
+  'tests/unit/security-store-storeroom/operator-settings.test.ts',
+  'tests/unit/security-store-storeroom/recovered-scenarios.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

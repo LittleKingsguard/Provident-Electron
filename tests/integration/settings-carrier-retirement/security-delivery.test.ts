@@ -155,11 +155,17 @@ describe('settings-carrier-retirement · THE SECURITY RECORD’S DELIVERY (D-106
     const composed = compose(dir)
     await composed.client.fill()
     expect(composed.handlerCalls(), 'the boot fill is a READ and never a delivery: the subscription’s handler has not run').toBe(0)
-    expect(composed.broadcasts.count, 'and the composition has broadcast nothing yet: no security act has been committed').toBe(0)
+    // **THE THREE BROADCASTS THAT STAND HERE ARE THE BOOT'S OWN, AND THEY ARE THE DRAIN** (`D-221`; `docs/L3/operator-settings/
+    // delivery.md` §4): `attach` subscribes FIRST, so the creation's four held addresses are handed over inside it — the
+    // record, the pair and the pane through `onDelivery`, the app-state rows through the OTHER body, which this composition
+    // does not supply. **NO SECURITY ACT HAS BEEN COMMITTED**, which is what this figure has to keep saying; what moved is
+    // that the boot's own firing is one delivery per held address instead of silence — and the realm's handler, registered
+    // after `attach`, still has not run.
+    expect(composed.broadcasts.count, 'three broadcasts, and they are the CREATION’s: one per held record/pair/pane address, and no security act has been committed').toBe(3)
 
     // ONE record write, the way the operator's pane commits it — `security.set` → the surface's `set` → ONE store commit.
     composed.set({ token: 'tok-1', groups: ['graph'] })
-    expect(composed.broadcasts.count, 'the surface handed the change to the composition’s broadcast INSIDE the write — before the commit’s own answer').toBe(1)
+    expect(composed.broadcasts.count, 'the surface handed the change to the composition’s broadcast INSIDE the write — before the commit’s own answer, and one behind the boot’s three draining deliveries').toBe(4)
     await composed.settle()
     expect(composed.handlerCalls(), 'and it crossed the channel to the realm’s registered handler with NOTHING asked for by the realm').toBe(1)
 
@@ -167,7 +173,7 @@ describe('settings-carrier-retirement · THE SECURITY RECORD’S DELIVERY (D-106
     composed.transition('mcp-disabled')
     await composed.settle()
     expect(composed.handlerCalls(), 'an exclusion transition is a second delivery of the SAME record — one read answers both, so one channel carries both').toBe(2)
-    expect(composed.broadcasts.count, 'and a second broadcast').toBe(2)
+    expect(composed.broadcasts.count, 'and a second broadcast').toBe(5)
     expect(composed.client.shape().exclusion, 'and the realm’s shape carries the state it was TOLD about').toBe('mcp-disabled')
 
     // A THIRD act delivers again — the addresses are bound to the one subscription, not to one lucky instant.
@@ -279,7 +285,7 @@ describe('settings-carrier-retirement · THE SECURITY RECORD’S DELIVERY (D-106
     composed.commitRows([moduleRow('alpha', '1.0.0')])
     await composed.settle()
 
-    expect(composed.broadcasts.count, 'the composition broadcast NOTHING for the app-state family: the record’s push is the other body’s alone').toBe(1)
+    expect(composed.broadcasts.count, 'the composition broadcast NOTHING for the app-state family: the record’s push is the other body’s alone, so the figure is the boot’s own three plus the record’s delivery and no fourth').toBe(4)
     expect(composed.handlerCalls(), 'the security realm’s handler did not run').toBe(callsAfterRecord)
     expect(composed.client.shape(), 'and the shape is the shape the record’s delivery left, member for member').toEqual(afterRecord)
   })

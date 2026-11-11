@@ -37,6 +37,9 @@ import { createSettingsSurface } from '../../../src/main/settings-surface'
 const OPERATOR_FILE = 'provident-operator-settings.json' // persistence.md §1: the instance's one name
 const RETIRED_FILE = 'provident-security.json' // persistence.md §1: read once, never written again
 const RECORD_ADDRESS = ['operator-settings'] // interface.md §1: the durable address
+const PAIR_ADDRESS = ['operator-exclusion'] // interface.md §1 / ASM-L2-1: the `mem` address
+const APP_STATE_ADDRESS = ['operator-app-state'] // interface.md §1: the retired carrier's rows
+const PANE_ADDRESS = ['operator-pane'] // interface.md §1: the pane's open state
 
 let userDataDir: string
 
@@ -152,8 +155,12 @@ describe('security-store-storeroom · the twelve L1 scenarios through their decl
       const settings = createOperatorSettings({ userDataDir: instanceDir })
       const delivered: unknown[] = []
       const off = settings.subscribe((address) => { delivered.push(address) })
+      // **`S-5` MOVES ON ITS DELIVERED COUNT AND ON NOTHING ELSE** (`D-221`; `docs/L3/operator-settings/delivery.md` §8):
+      // the subscription is the consumer's ARRIVAL, so the creation's four held addresses are handed over inside this
+      // call, in creation order, before the write below — the drain's prefix, and then the write's own address.
+      expect(delivered, 'the creation’s delivery, in creation order, and no write stands behind it').toEqual([RECORD_ADDRESS, PAIR_ADDRESS, APP_STATE_ADDRESS, PANE_ADDRESS])
       committed(settings.write({ token: 'x' }))
-      expect(delivered, 'a committed write delivers the subscription with the record’s own address').toEqual([RECORD_ADDRESS])
+      expect(delivered.slice(4), 'a committed write delivers the subscription with the record’s own address').toEqual([RECORD_ADDRESS])
       off()
     } finally {
       rmSync(instanceDir, { recursive: true, force: true })

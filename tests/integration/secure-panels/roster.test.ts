@@ -337,7 +337,13 @@ describe('secure-panels · the arrangement and the route a click reaches', () =>
       gate: { exclusionState: () => 'mcp-enabled' },
     }
     surface.attach(sink)
-    expect(sequence, 'attach is the boot terminal: one patch and one exclusion, and no third call (the surface’s own `ASM-3`)').toEqual(['patch', 'exclusion:mcp-enabled'])
+    // **THE PREFIX IS THE CREATION'S, AND THE BOOT TERMINAL IS THE SAME TWO CALLS BEHIND IT** (`D-221`; `docs/L3/operator-
+    // settings/delivery.md` §4): `attach` subscribes first, so the creation's four HELD addresses are delivered inside that
+    // `subscribe` — the record and the pane through the patch arm, the pair through the exclusion arm, and the app-state rows
+    // through the surface's OTHER body, which this sink never sees. **So the boot terminal is still one patch and one
+    // exclusion and there is still no third ACT**; what stands in front of it is the creation's own event, one `deliver` per
+    // address, which is the row's new grain and not a second boot.
+    expect(sequence, 'attach is the boot terminal behind the creation’s three draining deliveries: the drain’s patch, exclusion and patch, then attach’s own patch and exclusion, and no fourth call').toEqual(['patch', 'exclusion:mcp-enabled', 'patch', 'patch', 'exclusion:mcp-enabled'])
 
     sequence.length = 0
     patches.length = 0

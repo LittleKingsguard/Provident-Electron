@@ -34,6 +34,8 @@ const OPERATOR_FILE = 'provident-operator-settings.json'
 const LEGACY_FILE = 'provident-security.json'
 const RECORD_ADDRESS = ['operator-settings']
 const VOLATILE_ADDRESS = ['operator-exclusion']
+const APP_STATE_ADDRESS = ['operator-app-state']
+const PANE_ADDRESS = ['operator-pane']
 
 let userDataDir: string
 
@@ -186,30 +188,41 @@ describe('security-store-storeroom · the instance through its declared surface'
     expect(readFileSync(filePath(OPERATOR_FILE)).equals(before), 'and the bytes are byte-identical').toBe(true)
   })
 
-  it('a listener is the change path: a committed write delivers the triggering address, and the withdrawal stops it (D-17)', () => {
+  it('a listener is the change path: the creation’s own delivery is the drain’s four addresses, a committed write delivers the triggering address, and the withdrawal stops it (D-17, D-221)', () => {
     const settings = createOperatorSettings({ userDataDir })
     const seen: OperatorSettingsAddress[] = []
     const off = settings.subscribe((address: OperatorSettingsAddress) => { seen.push(address) })
+    // **THE DRAIN'S PREFIX** (`D-221`; `docs/L3/operator-settings/delivery.md` §3): the creation instant's addresses are
+    // HELD in the delivery's own closure and handed over INSIDE this `subscribe`, in the creation order the four
+    // `cfg.listeners` entries were adopted in — one `deliver` per address, and no write is made by this row to cause it.
+    // So this row's grain moves from the write's one address to THE DRAIN'S, THEN THE WRITE'S, and the figure is FOUR.
+    expect(seen, 'the creation’s delivery reaches the first subscriber: four addresses, in creation order, and the held set is empty afterwards').toEqual([RECORD_ADDRESS, VOLATILE_ADDRESS, APP_STATE_ADDRESS, PANE_ADDRESS])
     committed(settings.write({ token: 'x' }))
-    expect(seen, 'the record’s own address, delivered inside the write’s call').toEqual([RECORD_ADDRESS])
+    expect(seen.slice(4), 'the record’s own address, delivered inside the write’s call').toEqual([RECORD_ADDRESS])
     committed(settings.write({ exclusion: 'mcp-disabled' }))
-    expect(seen, 'and the volatile pair’s address, because that is the address the act touched').toEqual([RECORD_ADDRESS, VOLATILE_ADDRESS])
+    expect(seen.slice(4), 'and the volatile pair’s address, because that is the address the act touched').toEqual([RECORD_ADDRESS, VOLATILE_ADDRESS])
     off()
     committed(settings.write({ token: 'y' }))
-    expect(seen.length, 'a withdrawn handle fires nothing, silently (guide §6.2-§6.3)').toBe(2)
+    expect(seen.length, 'a withdrawn handle fires nothing, silently (guide §6.2-§6.3) — the four held addresses and the two writes are all this subscriber ever heard').toBe(6)
   })
 
-  it('a listener’s throw cannot take the write’s answer away, and the throwing subscriber is withdrawn (ASM-L2-6, guide §6.5a)', () => {
+  it('a listener’s throw cannot take the write’s answer away, and the throwing subscriber is dropped locally while the drain’s remainder stays held (ASM-L2-6, guide §6.5a, D-221)', () => {
     const settings = createOperatorSettings({ userDataDir })
     let calls = 0
     settings.subscribe(() => { calls += 1; throw new Error('boom-in-subscriber') })
+    // **THE THROW NOW LANDS ON THE DRAIN, AND ITS REMAINDER IS RE-HELD** (`D-221`; `OG-5`): the throwing subscriber's first
+    // and only delivery is the creation's FIRST held address, the throw is contained and that subscriber is dropped
+    // LOCALLY, and the three addresses it never received stay held — an address of the creation's event is never dropped
+    // with the subscriber that failed to hear it.
+    expect(calls, 'the throw was the creation’s first held address, and the body was invoked exactly once').toBe(1)
     const seen: OperatorSettingsAddress[] = []
     settings.subscribe((address: OperatorSettingsAddress) => { seen.push(address) })
+    expect(seen, 'so the subscriber beside it drains the REMAINDER, in creation order, and no address of the event was lost').toEqual([VOLATILE_ADDRESS, APP_STATE_ADDRESS, PANE_ADDRESS])
 
     const first = committed(settings.write({ token: 'boom-1' }))
     expect(Number.isInteger(first.cursor), 'the write answers its own receipt though a subscriber threw').toBe(true)
     expect(settings.read().token, 'and the data had already landed, so the read serves it').toBe('boom-1')
-    expect(seen.length, 'the subscriber beside it was delivered: one withdrawal is not the window’s failure').toBe(1)
+    expect(seen.slice(3), 'the subscriber beside it was delivered the write’s own address: one withdrawal is not the window’s failure').toEqual([RECORD_ADDRESS])
 
     const second = committed(settings.write({ token: 'boom-2' }))
     expect(second.cursor - first.cursor, 'the second write is the next op, so the failed subscriber cost it no commit').toBe(1)

@@ -158,11 +158,15 @@ describe('settings-carrier-retirement · THE APP-STATE ROWS’ DELIVERY (D-104; 
     const composed = compose(dir)
     await composed.client.fill()
     expect(composed.handlerCalls(), 'the boot fill is a READ and never a delivery: the subscription’s handler has not run').toBe(0)
-    expect(composed.broadcasts.count, 'and the composition has broadcast nothing yet: no app-state act has been committed').toBe(0)
+    // **THE ONE BROADCAST THAT STANDS HERE IS THE BOOT'S OWN, AND IT IS THE DRAIN** (`D-221`; `docs/L3/operator-settings/
+    // delivery.md` §4): `attach` subscribes FIRST, so the creation's four held addresses are handed over inside it — and the
+    // app-state one is routed to this composition's `onAppStateChanged`. **NO APP-STATE ACT HAS BEEN COMMITTED**, which is
+    // what this figure has to keep saying; what moved is that the boot's own firing is a delivery rather than silence.
+    expect(composed.broadcasts.count, 'one broadcast, and it is the CREATION’s: no app-state act has been committed, and the realm’s handler still has not run').toBe(1)
 
     // ONE module row, committed the way every writer class commits it — ONE whole rows list through the surface.
     composed.commitRows([moduleRow('alpha', '1.0.0')])
-    expect(composed.broadcasts.count, 'the surface handed the change to the composition’s broadcast INSIDE the write — before the commit’s own answer').toBe(1)
+    expect(composed.broadcasts.count, 'the surface handed the change to the composition’s broadcast INSIDE the write — before the commit’s own answer, and one behind the boot’s own draining delivery').toBe(2)
     await composed.settle()
     expect(composed.handlerCalls(), 'and it crossed the channel to the realm’s registered handler with NOTHING asked for by the realm').toBe(1)
 
@@ -170,7 +174,7 @@ describe('settings-carrier-retirement · THE APP-STATE ROWS’ DELIVERY (D-104; 
     composed.commitRows([moduleRow('alpha', '1.0.0'), moduleRow('beta', '0.2.0')])
     await composed.settle()
     expect(composed.handlerCalls(), 'a second module-row change is a second delivery').toBe(2)
-    expect(composed.broadcasts.count, 'and a second broadcast').toBe(2)
+    expect(composed.broadcasts.count, 'and a second broadcast').toBe(3)
     expect(composed.client.shape().modules.map((m) => m.name), 'and the realm’s shape carries both rows it was TOLD about').toEqual(['alpha', 'beta'])
   })
 
@@ -261,7 +265,7 @@ describe('settings-carrier-retirement · THE APP-STATE ROWS’ DELIVERY (D-104; 
     expect(composed.surface.transition('mcp-disabled').applied, 'and a committed exclusion transition').toBe(true)
     await composed.settle()
 
-    expect(composed.broadcasts.count, 'the composition broadcast NOTHING for either family: the push is the third address’s alone').toBe(1)
+    expect(composed.broadcasts.count, 'the composition broadcast NOTHING for either family: the push is the third address’s alone, so the figure is the boot’s own one plus the module-row delivery and no third').toBe(2)
     expect(composed.handlerCalls(), 'the realm’s handler did not run').toBe(callsAfterModule)
     expect(composed.client.shape(), 'and the shape is the shape the module-row delivery left, member for member').toEqual(afterModule)
   })
@@ -275,6 +279,13 @@ describe('settings-carrier-retirement · THE APP-STATE ROWS’ DELIVERY (D-104; 
     // routed by the same body — a family's change reaches its consumers as a delivery, which is this row's own claim.
     expect((list as RegExpExecArray)[1].split(',').map((name) => name.trim()).filter((name) => name.length > 0), 'and it names the record, the pair, the app-state rows and `D-123`’s pane record').toEqual(['RECORD_ADDRESS', 'EXCLUSION_ADDRESS', 'APP_STATE_ADDRESS', 'PANE_ADDRESS'])
     expect(/address\[0\] === APP_STATE_ADDRESS\[0\]/.test(instance), 'the app-state delivery is ROUTED by the module’s own constant, so no other file spells the address (`D-53`)').toBe(true)
+    // **AND SINCE `D-221` THE REGISTRATION IS THE CONSTRUCTION'S AND THERE IS NO OTHER** (`docs/L3/operator-settings/
+    // delivery.md` §6 `OD-2`/`OD-3`/`OD-4`; `OG-1`): the delivery's four entries are adopted by `storeCreate`, so the
+    // subscription is a FAN-OUT entry — `subscribe` spells no `listen`/`register`, and the withdrawal the subscriber is
+    // handed spells no `unlisten`. This is the census that makes `D-129`'s one-registration rule structural rather than a
+    // claim: two registrations for one address cannot be written here, because the verbs that would spell one are gone.
+    expect(/\bstanding\.listen\(|\bstanding\.register\(|\.unlisten\(|\.removeListener\(/.test(instance), 'no `listen`, `register`, `unlisten` or `removeListener` remains in the module: the crossing takes ONE registration and the construction is where it is taken').toBe(false)
+    expect(/listeners: \[\.\.\.delivery\.entries\]/.test(instance), 'and the construction hands the package the delivery’s four entries where `listeners: []` stood').toBe(true)
 
     // THE SURFACE: the one subscription carries the second body.
     const surface = elided(sourceOf('src/main/settings-surface/index.ts'))

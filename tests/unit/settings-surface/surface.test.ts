@@ -133,18 +133,24 @@ describe('security-store-storeroom · the settings surface at unit grain', () =>
     const sink = recordingSink(server)
     const surface = createSettingsSurface({ userDataDir })
     surface.attach(sink)
-    expect(sink.calls.length, 'attach patches the record and lands the boot terminal, and nothing else').toBe(2)
-    expect(sink.calls.map((call) => call.kind).sort(), 'one patch and one exclusion, in either order: the delivery\'s order is not declared (guide §6.4)').toEqual(['exclusion', 'patch'])
+    // **THE FIGURES MOVE AND THE CLAIM DOES NOT, AND THE CAUSE IS `D-221`** (`docs/L3/operator-settings/delivery.md` §8):
+    // `attach` subscribes FIRST, so the creation's four held addresses are delivered INSIDE that call — the record, the pair
+    // and the pane through `onDelivery` (two patch arms and one exclusion arm; the app-state address goes to the surface's
+    // OTHER body and never to this sink) — and only then does `attach` perform its own two, `applyGatePatch` and
+    // `applyExclusion`. **So `attach` is still ONE boot terminal with nothing else behind it**: what stands behind it is the
+    // creation's own event, which is a delivery and not a second boot.
+    expect(sink.calls.length, 'attach lands the boot terminal AND the creation’s three draining deliveries: two patches and one exclusion from the drain, then attach’s own patch and exclusion').toBe(5)
+    expect(sink.calls.map((call) => call.kind).sort(), 'three patches and two exclusions, in either order: the delivery\'s order is not declared (guide §6.4)').toEqual(['exclusion', 'exclusion', 'patch', 'patch', 'patch'])
 
     const answer = surface.set({ token: 'q', groups: ['graph'] })
-    expect(sink.calls.length, 'the receipt answers with the delivery already made: the re-patch is the listener\'s, inside the write').toBe(3)
+    expect(sink.calls.length, 'the receipt answers with the delivery already made: the re-patch is the listener\'s, inside the write — one call behind the boot’s five').toBe(6)
     const patches = sink.calls.filter((call) => call.kind === 'patch')
     expect((patches[patches.length - 1].value as { groups?: string[] }).groups, 'the patch carries the post-state grant set, so the answer and the gate cannot carry two states').toEqual(answer.enabled)
     expect([...server.getGateConfig().enabled].sort()).toEqual(['dispatch', 'graph', 'read'])
 
     const refused = surface.set({ maxJournalLength: Number.POSITIVE_INFINITY })
     expect(refused.write.status, 'a non-finite cap refuses the patch in the instance\'s own member domain (design §6)').toBe('refused')
-    expect(sink.calls.length, 'no commit, no delivery: the sink is not consulted at all').toBe(3)
+    expect(sink.calls.length, 'no commit, no delivery: the sink is not consulted at all').toBe(6)
     expect([...server.getGateConfig().enabled].sort(), 'and the live gate keeps the state it had').toEqual(['dispatch', 'graph', 'read'])
   })
 

@@ -342,6 +342,40 @@ describe('the instance’s declarations · measured at the store’s creation (D
     expect({ cursor: receipt.cursor, opId: typeof receipt.opId === 'string' && receipt.opId.length > 0 }, 'exactly four ops stand behind the first caller write, and they are the four existence repairs’ — the invariant’s repair ran zero times').toEqual({ cursor: 5, opId: true })
   })
 
+  // ⟶ **THE COMPANION `D-221` OWES THIS ROW** (`docs/L3/operator-settings/delivery.md` §8): `CD-5` counts the four ops the
+  // creation LANDS and says nothing about the four FIRES that follow them. `D-220` gap (ii)'s analogue at this crossing is
+  // exactly that silence, so the row below is DRIVEN — a real construction, a real subscription, a real drain — and never
+  // a string assertion over the configuration.
+  it('CD-24 · THE STANDING CONSTRUCTION ALSO FIRES FOUR: the creation’s delivery reaches the first subscriber as one address per entry, in creation order, on a COLD profile and on a WARM one, and the second subscriber is handed no replay (D-221; `D-220` gap (ii) at this crossing)', () => {
+    const cold: string[] = []
+    const settings = createOperatorSettings({ userDataDir })
+    // **NO WRITE STANDS BEHIND THIS READING**: the four fires are the construction's own, delivered at the instant the
+    // batch's repairs landed (`1.11.0`'s ASK → REPAIRS LAND → RE-RUN → SAVE → DELIVER → THE ANSWER), held in the delivery's
+    // closure, and handed over INSIDE this call — which is this crossing's arming, because its consumers are IN-PROCESS
+    // and there is nothing to shake hands with (`D-221`; delivery.md §3).
+    const offFirst = settings.subscribe((address) => { cold.push(address.join('/')) })
+    expect(cold, 'COLD: four addresses, one `deliver` per entry, in the order the entries were adopted').toEqual([
+      RECORD.join('/'), EXCLUSION.join('/'), APP_STATE.join('/'), PANE.join('/'),
+    ])
+    const replay: string[] = []
+    const offSecond = settings.subscribe((address) => { replay.push(address.join('/')) })
+    expect(replay, 'and the SECOND subscriber is handed NOTHING: the held set drained once and is gone, so what stands is the total read and not a re-painted event (`D-216`, `D-90`; delivery.md §3)').toEqual([])
+    offFirst()
+    offSecond()
+
+    // **AND THE COUNT IS FOUR ON A WARM PROFILE TOO, WHICH IS THE RULE AND NOT A COINCIDENCE**: the two `file` addresses
+    // resolve from the file the first boot wrote and the two `mem` ones are re-minted by that boot's own repairs, so the
+    // adopted set ∩ the resolving addresses is four again — the same rule seen from the other side at the profile store,
+    // where `drag` fires at no creation instant because its address does not resolve (`D-220`, `D-145`).
+    const warm: string[] = []
+    const rebooted = createOperatorSettings({ userDataDir })
+    const offWarm = rebooted.subscribe((address) => { warm.push(address.join('/')) })
+    expect(warm, 'WARM: the same four, in the same creation order, with no write from this row').toEqual([
+      RECORD.join('/'), EXCLUSION.join('/'), APP_STATE.join('/'), PANE.join('/'),
+    ])
+    offWarm()
+  })
+
   it('CD-6 · the batch’s membership is a census: all FOUR addresses carry an existence declaration, the invariant stands at EACH half it judges and at no other address, and each `file` declaration performs the import its address’s absence used to key — which is the half `D-84` stopped and `D-85` builds (D-84, D-85, D-124; D-82’s V1)', () => {
     createOperatorSettings({ userDataDir })
     const batch = lastBatch()

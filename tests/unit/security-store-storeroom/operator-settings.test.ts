@@ -28,6 +28,8 @@ const FILE = 'provident-operator-settings.json' // persistence.md §1: the insta
 const RETIRED = 'provident-security.json' // persistence.md §1: read once, never written again (D-19)
 const RECORD = ['operator-settings'] // interface.md §1: the `file` tier's one address
 const PAIR = ['operator-exclusion'] // interface.md §1 / ASM-L2-1: the `mem` address
+const APP_STATE = ['operator-app-state'] // interface.md §1: the retired carrier's rows, `D-104`'s address
+const PANE = ['operator-pane'] // interface.md §1: the pane's open state, `D-123`'s address
 
 let userDataDir: string
 
@@ -69,6 +71,9 @@ describe('security-store-storeroom · the operator-settings instance at unit gra
     settings.read()
     const off = settings.subscribe(() => {})
     off()
+    // **THIS ROW STANDS AND GAINS FORCE AT `D-221`, AND ITS GREEN IS NOT A GAP**: the subscription above DRAINS the
+    // creation`s four held addresses through its body inside that call (`docs/L3/operator-settings/delivery.md` §3;
+    // `OG-3`), and `deliver` writes nothing — so the figure below is the same figure for a wider act.
     expect(bytesOf(FILE).equals(bootImage), 'a read, a subscribe and its withdrawal write no byte: the boot is the only writer here').toBe(true)
 
     committed(settings.write({ token: 'kept' }))
@@ -207,38 +212,51 @@ describe('security-store-storeroom · the operator-settings instance at unit gra
     expect(readdirSync(userDataDir), 'and nothing else was created beside the occupied name').toEqual([FILE])
   })
 
-  it('each subscription owns its own handle: two deliveries, one withdrawal withdraws one, and the delivery is the address and nothing else (interface.md §2; design.md §8)', () => {
+  it('a subscription is a FAN-OUT ENTRY AND NOT A HANDLE: two deliveries, one withdrawal withdraws one, the second subscriber gets no replay of the creation’s event, and the delivery is the address and nothing else (interface.md §2; design.md §8; D-221)', () => {
     const settings = createOperatorSettings({ userDataDir })
     const seen: unknown[][] = []
     const record = (...args: unknown[]): void => { seen.push(args) }
     const offA = settings.subscribe(record)
     const offB = settings.subscribe(record)
+    // **THE HANDLES ARE THE CONSTRUCTION'S AND THE SUBSCRIPTIONS ARE ENTRIES IN ITS FAN-OUT** (`D-221`), which is what
+    // FALSIFIED this row's old subject: there is no per-subscription handle to own. What it measures now is the same two
+    // claims at the fan-out — and the new fact the drain creates: FOUR held addresses reach the FIRST subscriber, and the
+    // SECOND is handed NOTHING, because a replay would paint a stale event as if it were a change (`D-216`, `D-90`).
+    expect(seen, 'the creation’s four held addresses reach the first subscriber alone, in creation order').toEqual([[RECORD], [PAIR], [APP_STATE], [PANE]])
 
     committed(settings.write({ token: 'one' }))
-    expect(seen, 'one commit, one delivery per subscription: a shared handle would collapse the two (guide §6.2)').toEqual([[RECORD], [RECORD]])
+    expect(seen.slice(4), 'one commit, one delivery per subscription: one body per standing entry, so neither is collapsed').toEqual([[RECORD], [RECORD]])
 
     offA()
     committed(settings.write({ token: 'two' }))
-    expect(seen.length, 'the second subscription still stands, so one withdrawal did not withdraw the other').toBe(3)
-    expect(seen[2], 'the one argument is the address the act touched, never the value and never which member moved (guide §6.4)').toEqual([RECORD])
+    expect(seen.length, 'the second subscription still stands, so one withdrawal did not withdraw the other').toBe(7)
+    expect(seen[6], 'the one argument is the address the act touched, never the value and never which member moved (guide §6.4)').toEqual([RECORD])
 
     offB()
     committed(settings.write({ token: 'three' }))
-    expect(seen.length, 'and after both withdrawals nothing is delivered, silently (guide §6.3)').toBe(3)
+    expect(seen.length, 'and after both withdrawals nothing is delivered, silently (guide §6.3)').toBe(7)
 
     const offC = settings.subscribe(record)
+    // A LATER SUBSCRIBER IS HANDED NO REPLAY EITHER: the held set drained once and is gone (`OG-4`). So the pair's own
+    // address below is the FIRST thing this subscriber hears, and it rides the same one-argument form.
     committed(settings.write({ exclusion: 'mcp-disabled' }))
-    expect(seen[3], 'the pair\'s own address rides the same one-argument form').toEqual([PAIR])
+    expect(seen[7], 'the pair\'s own address rides the same one-argument form').toEqual([PAIR])
     offC()
   })
 
   it('a subscriber\'s throw is contained inside the module\'s own listener body at the pair\'s address too, and withdraws only that subscriber (ASM-L2-6; design.md §8)', () => {
     const settings = createOperatorSettings({ userDataDir })
+    // **THE DRAIN IS NOT THIS ROW'S SUBJECT, SO IT IS TAKEN FIRST AND BY A SUBSCRIBER THAT DOES NOT THROW** (`D-221`): a
+    // throwing subscriber that stands FIRST now meets the creation's first held address instead of a write's delivery, so
+    // the claim below would be re-counted rather than re-gained. Standing a quiet subscriber first hands the drain over
+    // and leaves this row measuring exactly what it did — a WRITE's delivery, at the PAIR's address, contained.
+    settings.subscribe(() => {})
     let calls = 0
     settings.subscribe(() => { calls += 1; throw new Error('boom-in-subscriber') })
 
     const receipt = committed(settings.write({ exclusion: 'mcp-disabled' }))
     expect(Number.isInteger(receipt.cursor), 'the mem write answers its receipt though a subscriber threw (guide §6.5a)').toBe(true)
+    expect(calls, 'and the throw WAS the write’s own delivery at the pair’s address: one invocation, no second').toBe(1)
     expect(settings.read().exclusion, 'and the pair had landed before the delivery ran').toBe('mcp-disabled')
 
     committed(settings.write({ exclusion: 'mcp-enabled' }))
@@ -247,7 +265,7 @@ describe('security-store-storeroom · the operator-settings instance at unit gra
     const seen: unknown[][] = []
     settings.subscribe((...args: unknown[]) => { seen.push(args) })
     committed(settings.write({ token: 'after' }))
-    expect(seen, 'and the registry is not wedged: a later subscription is delivered').toEqual([[RECORD]])
+    expect(seen, 'and the registry is not wedged: a later subscription is delivered, and the drain being spent it is handed no replay').toEqual([[RECORD]])
   })
 
   it('the volatile pair is never persisted: a mem write lands no byte, and the file carries no exclusion, tier4 or second address (persistence.md §6; ASM-L2-2)', () => {

@@ -222,9 +222,22 @@ describe('security-store-storeroom · the required scenarios authored against th
       const record = settings.read()
       seen.push({ token: record.token, maxJournalLength: record.maxJournalLength })
     })
+    // **THE DRAIN'S PREFIX** (`D-221`; `docs/L3/operator-settings/delivery.md` §3): this `subscribe` IS the consumer's
+    // arrival, so the creation's four held addresses are handed to this body INSIDE the call — and each of them reads the
+    // record that STANDS (`'before'`), which is this row's claim at an earlier instant: no read meets a half-applied
+    // record there either. The row's own subject is the WRITE's delivery, so the prefix is MEASURED once and stepped over;
+    // nothing is dropped from the reading.
+    // **THE HELD SET HERE IS FIVE, AND ITS ARITHMETIC IS THE PAGE'S** (`docs/L3/operator-settings/delivery.md` §3): the
+    // creation's FOUR addresses — one `deliver` per entry, in creation order — plus the ONE address the `write` above fired
+    // while NO consumer stood, which is `D-218`'s cause (i) held rather than dropped. Each is handed over inside this call,
+    // in the order it fired, and each body reads the record that stands: the pre-write record, whole.
+    const drained = seen.length
+    expect(drained, 'the creation’s four addresses and the one the unattended write fired: five deliveries, and the held set is empty afterwards').toBe(5)
+    const theRecordThatStood = { token: 'before' as string | null, maxJournalLength: undefined as number | undefined }
+    expect(seen.slice(0, drained), 'each of the drain’s five deliveries reads the record that stood when the subscriber arrived — never a half-applied one').toEqual([theRecordThatStood, theRecordThatStood, theRecordThatStood, theRecordThatStood, theRecordThatStood])
     committed(settings.write({ token: 'after', maxJournalLength: 7 }))
     expect(
-      seen,
+      seen.slice(drained),
       'the delivery serves the COMMITTED post-state — never the pre-write record, never a candidate value, and never a half-applied pair',
     ).toEqual([{ token: 'after', maxJournalLength: 7 }])
 

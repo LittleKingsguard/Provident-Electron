@@ -4,7 +4,9 @@
 // signatures.md` §2 and nothing else; the design is `design.md` §2-§8, whose §3/§8 name every private
 // helper below so this file mints none of its own but the declaration machinery `D-84` adds — `repairAnswer`,
 // `mintExclusion`, `exclusionMustStand` and the batch itself, all named in that table (the one L4 exception:
-// `plain`, reported at L4).
+// `plain`, reported at L4) — **and, since `D-221`, the DELIVERY, whose two private interfaces and one
+// factory are named by `docs/L3/operator-settings/delivery.md` §2 (`OD-1`): the four `cfg.listeners` entries,
+// the held set they fill at the creation instant, and the `stand` the consumer's arrival drains.**
 //
 // FOUR ADDRESSES (three at `D-84`–`D-85`, the fourth at `D-123`), and the measurement is why: a `file`-tier write purges the versions it outranks
 // AT ITS OWN KEY, so one address would let a settings commit reset the operator's exclusion pair
@@ -71,8 +73,10 @@ import { join } from 'node:path'
 import { storeCreate } from 'provident-storeroom'
 
 /** The instance's own type, named here so the package import stays ONE name (`storeCreate`) —
- *  the six members called are `read`, `write`, `listen`, `register`, `unlisten` and the factory
- *  itself; `readLiteral`, `delete`, `rollback` and the four constraint members are never called. */
+ *  **and since `D-221` the members called are `read`, `write` and the factory itself, and no fourth**:
+ *  the registration is the CONSTRUCTION's (§ the delivery below), so no `listen`/`register`/`unlisten`
+ *  stands in this module at all; `readLiteral`, `delete`, `rollback` and the four constraint members
+ *  were never called. */
 type Store = ReturnType<typeof storeCreate>
 
 /** The durable row: the record minus the pair and the members it derives (interface §1). */
@@ -244,7 +248,9 @@ function settledPorts(wanted: PortsWord, paneOpen: boolean): PortsWord {
   return wanted === 'mcp-enabled' && !paneOpen ? 'mcp-enabled' : PORTS_CLOSED
 }
 
-/** The one monotonic source of handle names, so no two subscriptions share an identity (design §8). */
+/** The one monotonic source of handle names, so no two subscriptions share an identity (design §8) —
+ *  **and since `D-221` the four handles this instance carries are minted ONCE, by the construction's
+ *  delivery, and never withdrawn** (`D-70`, `D-71`). */
 let issuance = 0
 
 /** An object whose prototype is `Object.prototype` or `null`, and not an array: the plainness test
@@ -535,9 +541,11 @@ function cap(journalLength: number | undefined): number {
   return supplied > 0 ? supplied : 256
 }
 
-/** The handle identity, minted here and held by the caller — one per subscription PER ADDRESS, so
- *  the withdrawal is `unlisten` over a ONE-address handle, the arm the package silences (design §8
- *  `ASM-7`; behaviour §5). */
+/** The handle identity, minted here and held by the construction — **one per `cfg.listeners` ENTRY, not
+ *  one per subscription PER ADDRESS**: since `D-221` the four handles are minted when the delivery is
+ *  built, before the store that adopts them exists, and they are the instance's for its life, so a
+ *  subscription is a FAN-OUT entry and never a handle (`D-70`, `D-71`; `D-219` clause (ii);
+ *  `docs/L3/operator-settings/delivery.md` §2). */
 function seq(): number {
   issuance += 1
   return issuance
@@ -547,11 +555,113 @@ function handleFor(address: OperatorSettingsAddress): string {
   return 'operator-settings:' + seq() + '@' + address.map(String).join('/')
 }
 
-/** The withdrawal: one `unlisten` per handle, a no-op success over a handle already withdrawn, and
- *  never a throw — so calling an answered withdrawal twice is harmless (design §8; guide §6.2). */
-function withdraw(store: Store, handles: readonly string[]): void {
-  for (const handle of handles) {
-    try { store.unlisten(handle) } catch { /* a withdrawal answers nothing, not even a failure */ }
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE DELIVERY — MINTED BEFORE THE STORE, ADOPTED BY IT, AND DRAINED BY THE FIRST SUBSCRIBER (`D-221`)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **ONE `cfg.listeners[]` ELEMENT — THREE OWN MEMBERS WITH THE THIRD REQUIRED** (`guide §6`; `D-219`; `PIN-9`): `address`
+ *  is ONE address (an element carries exactly one), `handle` the string `handleFor` minted, and `listener` the function
+ *  the adopted handle fires **with the address it watches as its one argument** (`index.d.ts`'s `Listener`; §7 `OG-8`).
+ *  **A TWO-MEMBER ELEMENT IS REFUSED `AddressMalformed`** before any filesystem act, and **`listener: () => {}` — the
+ *  package's own migration route — is REFUSED HERE**: it satisfies the refusal and changes nothing, which is the shape
+ *  this corpus calls a row that cannot fail (`D-219`, `D-220`; `OG-2`). Every entry carries a real `deliver`. */
+interface OperatorDeliveryEntry {
+  readonly address: OperatorSettingsAddress
+  readonly handle: string
+  readonly listener: (address: OperatorSettingsAddress) => void
+}
+
+/** **THE DELIVERY — TWO HALVES OF ONE THING, BUILT BEFORE THE STORE EXISTS** (`D-221`; `docs/L3/operator-settings/
+ *  delivery.md` §2–§3). `entries` is what `createOperatorSettings`'s `listeners` adopts — **FOUR elements, one per
+ *  ADDRESS** (`RECORD`, `EXCLUSION`, `APP_STATE`, `PANE`) and never one per root, because an entry carries exactly one
+ *  address and no act of this instance writes `[]`; `stand` is the consumer's arrival — it appends the body to the local
+ *  fan-out and **drains the held set INSIDE the call**, which is this crossing's arming because its consumers are
+ *  IN-PROCESS and have no readiness handshake (`D-218`, `D-221`). **NEITHER HALF RUNS A STORE VERB**: the construction
+ *  takes the one registration this crossing is allowed (`D-93`, `D-129`). */
+interface OperatorDelivery {
+  readonly entries: readonly OperatorDeliveryEntry[]
+  stand(body: (address: OperatorSettingsAddress) => void): () => void
+}
+
+/** **THE DELIVERY, MINTED BEFORE `storeCreate` AND HELD BY THAT CONSTRUCTION FOR THE INSTANCE'S LIFE** (`D-221`;
+ *  design §3). It holds **ADDRESSES, NEVER VALUES** (a delivery is a signal and every consumer answers it with a re-read:
+ *  `D-92`, `D-106`), and the held set is the creation's own event — the addresses the adopted entries are fired with after
+ *  the batch's repairs land (`1.11.0`'s ASK → REPAIRS LAND → RE-RUN → SAVE → DELIVER → THE ANSWER), **four on a cold
+ *  profile and four on a warm one**, one `deliver` per address in CREATION ORDER.
+ *
+ *  **WHAT ARMS IT IS THE CONSUMER'S OWN ARRIVAL**: the first `subscribe` drains, in order, each address removed as it is
+ *  handed over — so a withdrawal after the drain does nothing, before it cannot arise, and an **interrupted** drain (whose
+ *  only producer is a subscriber's own throw) re-holds its remainder rather than dropping it (§3 arm (iii); `OG-5`). **A
+ *  second subscriber gets no replay**: what stands is the total `read()`/`readAppState()`, and a replay would paint a stale
+ *  event as if it were a change (`D-216`, `D-90`). */
+function createOperatorDelivery(): OperatorDelivery {
+  // THE FOUR ADDRESSES, SPELLED ONCE — the list `subscribe` used to spell, moved up so the four entries and the routing
+  // below read the SAME four names (design §2; `D-104`'s one-file spelling, `ISO-7`'s census).
+  const addresses: readonly OperatorSettingsAddress[] = [RECORD_ADDRESS, EXCLUSION_ADDRESS, APP_STATE_ADDRESS, PANE_ADDRESS]
+  // THE DRAIN'S SET — ORDERED, ADDRESS-ONLY, and no count, no value, no timer and no re-arm (`OG-4`).
+  const held: OperatorSettingsAddress[] = []
+  // **WHETHER A CONSUMER HAS ARRIVED, WHICH IS WHAT MAKES THE QUEUE DRAIN ONCE AND NEVER RE-ARM** (`OG-4`): the held set is
+  // the window between the construction and the FIRST `subscribe` — `D-218`'s cause (i), *"a write made before a standing
+  // handle is DROPPED"*, narrowed to the one window this crossing can close. A delivery that finds nobody standing AFTER
+  // that arrival reaches no consumer and is not re-held, because re-holding it would paint an event the standing consumer
+  // already outlived as a change to the next one (`D-216`, `D-90`).
+  let arrived = false
+  // THE FAN-OUT: one entry per standing subscriber, appended and dropped LOCALLY, and never a store act (`D-71`).
+  const standing: Array<{ body: (address: OperatorSettingsAddress) => void }> = []
+  const drop = (entry: { body: (address: OperatorSettingsAddress) => void }): void => {
+    const at = standing.indexOf(entry)
+    if (at >= 0) standing.splice(at, 1)
+  }
+  // **`deliver` IS TOTAL, WRITES NOTHING, AND CONTAINS ITS OWN THROW AND EVERY SUBSCRIBER'S** (`OG-3`): a listener's write
+  // would open a commit of its own inside the one that fired it (`guide §6.5` item 1), and an uncontained throw at a
+  // registration instant refuses the act at rank `21` — which at the creation means `storeCreate` answers and this module
+  // takes its SILENT `refusal` arm, so the containment is load-bearing rather than tidy (design §3). **A DELIVERY WITH NO
+  // CONSUMER STANDING IS HELD UNTIL THE FIRST ARRIVAL**; with one standing it is fanned out to each, and a throwing
+  // subscriber is dropped alone.
+  const deliver = (address: OperatorSettingsAddress): void => {
+    if (standing.length === 0) {
+      if (!arrived) held.push(address)
+      return
+    }
+    for (const entry of [...standing]) {
+      try { entry.body(address) } catch { drop(entry) }
+    }
+  }
+  const stand = (body: (address: OperatorSettingsAddress) => void): (() => void) => {
+    const entry = { body }
+    standing.push(entry)
+    arrived = true
+    let live = true
+    // THE WITHDRAWAL IS LOCAL, IDEMPOTENT AND OWES NO `unlisten`: the entries are the instance's for its life (`D-70`).
+    const withdrawn = (): void => {
+      if (!live) return
+      live = false
+      drop(entry)
+    }
+    // **THE DRAIN: ONCE, IN CREATION ORDER, INSIDE THIS CALL** (§3). Each held address leaves the set as it is HANDED OVER,
+    // so a throw from the body stops the drain with exactly the undelivered remainder still held — never dropped — and the
+    // next subscriber to stand drains the rest.
+    for (let address = held.shift(); address !== undefined; address = held.shift()) {
+      try {
+        body(address)
+      } catch {
+        withdrawn()
+        break
+      }
+    }
+    return withdrawn
+  }
+  return {
+    entries: addresses.map((address) => ({
+      address,
+      handle: handleFor(address),
+      listener: (delivered: OperatorSettingsAddress): void => {
+        try { deliver(delivered) } catch {
+          // THE ENTRY CONTAINS ITS OWN THROW (`OG-3`): an uncontained one refuses the act that fired it at rank 21.
+        }
+      },
+    })),
+    stand,
   }
 }
 
@@ -1165,6 +1275,10 @@ function declarationsFor(userDataDir: string, standing: () => Store | null): rea
 export function createOperatorSettings(options: OperatorSettingsOptions): OperatorSettings {
   let store: Store | null = null
   let refusal: OperatorSettingsReceipt | null = null
+  // **THE DELIVERY IS MINTED BEFORE THE CONSTRUCTION, AND THAT ORDER IS THE WHOLE OF IT** (`D-221`): `cfg.listeners` is
+  // read INSIDE the call that creates the store, so the four entries and the handles they carry must exist before it, and
+  // the addresses it fires at the creation instant are held in THIS object's closure until a consumer stands (design §3).
+  const delivery = createOperatorDelivery()
   try {
     // **THE BATCH IS THE CONSTRUCTION'S, AND IT IS WHAT MAKES ALL THREE ADDRESSES INVARIANTS RATHER THAN READ-SIDE
     // DEFAULTS** (D-84, D-85): `constraints` is `StoreConfig`'s fourth declared key and its absence is in domain, so
@@ -1172,7 +1286,11 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
     // `mem` pair's repair mints the value a `mem` address can never get from a file, and the two `file` repairs perform
     // the imports their addresses' absence used to key. The list is minted PER CONSTRUCTION because a repair must know
     // where the retired carriers stand and no handle exists at that instant (`guide §7.2` (1); `declarationsFor`).
-    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [], filePath: join(options.userDataDir, FILE_NAME), constraints: declarationsFor(options.userDataDir, () => store) })
+    //
+    // **AND `listeners` ADOPTS THE DELIVERY'S FOUR ENTRIES** (`D-221`; this replaces `listeners: []`): the adopted handles
+    // hold a body from the instant the instance exists, so the creation's own repairs DELIVER instead of writing to
+    // nobody — the defect `D-220` named as gap (i) and this pass closes.
+    store = storeCreate({ journalLength: cap(options.journalLength), listeners: [...delivery.entries], filePath: join(options.userDataDir, FILE_NAME), constraints: declarationsFor(options.userDataDir, () => store) })
   } catch (caught) {
     // A refused construction throws nothing across this boundary: no instance stands and every
     // later write answers this value (design §4 `ASM-4`; interface §2.1; guide §8.2).
@@ -1312,42 +1430,28 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
   }
 
   const subscribe = (listener: OperatorSettingsListener, appStateListener?: OperatorAppStateListener): (() => void) => {
-    const standing = store
     // No instance stands, or the subscriber is no callable at all: a withdrawal that withdraws
     // nothing, and never a throw (design §4, §8; behaviour §5).
-    if (standing === null || typeof listener !== 'function') return () => {}
-    const handles: string[] = []
-    // **THREE ADDRESSES, ONE SUBSCRIPTION** (`D-104`): the two the record and the pair occupy, and the app-state rows'
-    // own — which `D-82` clause 2 measured as delivering ZERO, so a module row's change reached its consumers only by
-    // their own request. The third handle is registered exactly as the other two are; what differs is the ROUTING below.
-    const addresses: readonly OperatorSettingsAddress[] = [RECORD_ADDRESS, EXCLUSION_ADDRESS, APP_STATE_ADDRESS, PANE_ADDRESS]
+    if (store === null || typeof listener !== 'function') return () => {}
+    // **A SUBSCRIPTION IS A FAN-OUT ENTRY AND NO LONGER A REGISTRATION** (`D-221`; design §2–§3): the four handles were
+    // minted once, by the construction, so nothing here calls `listen`/`register` — two registrations for one address is
+    // the copy `D-129` forbids, and the ONE registration this crossing is allowed was taken before this call could
+    // return. **THE BODY'S ROUTING IS TRANSCRIBED UNCHANGED** (`OG-6`), and the containment that used to withdraw both
+    // handles is the delivery's own local drop, so the body is the routing and nothing else.
     const body = (address: OperatorSettingsAddress): void => {
-      // The delivery carries the address and nothing else, so the subscriber reads the record for
-      // what moved; a THROW IS CONTAINED HERE and withdraws that subscriber WHOLE — both handles —
-      // so the write that triggered it still answers its receipt (design §8; `ASM-L2-6`).
-      try {
-        // **THE APP-STATE ROWS GO TO THEIR OWN BODY AND NOWHERE ELSE** (`D-104`): this address carries a whole value the
-        // record's read does not project, so handing it to the record's listener would ask that listener to re-read a
-        // record that did not move. A subscriber that supplied no second body hears it through the first — the one-argument
-        // subscription's total reading, unchanged.
-        if (typeof appStateListener === 'function' && address[0] === APP_STATE_ADDRESS[0]) {
-          appStateListener()
-          return
-        }
-        listener(detach(address) as OperatorSettingsAddress)
-      } catch { withdraw(standing, handles) }
-    }
-    try {
-      for (const address of addresses) {
-        const handle = handleFor(address)
-        standing.listen(handle, [address])
-        handles.push(handle)
-        standing.register(handle, body)
+      // **THE APP-STATE ROWS GO TO THEIR OWN BODY AND NOWHERE ELSE** (`D-104`): this address carries a whole value the
+      // record's read does not project, so handing it to the record's listener would ask that listener to re-read a
+      // record that did not move. A subscriber that supplied no second body hears it through the first — the one-argument
+      // subscription's total reading, unchanged, and the creation's drain goes through this same routing.
+      if (typeof appStateListener === 'function' && address[0] === APP_STATE_ADDRESS[0]) {
+        appStateListener()
+        return
       }
-    } catch {
-      withdraw(standing, handles)
+      listener(detach(address) as OperatorSettingsAddress)
     }
-    return () => withdraw(standing, handles)
+    // THE ARRIVAL, THE DRAIN AND THE LOCAL WITHDRAWAL ARE THE DELIVERY'S (`D-221`): the held addresses are handed over INSIDE
+    // this call, in creation order, before it returns.
+    return delivery.stand(body)
   }
 
   // **THE THIRD ADDRESS'S READ READS THE RECORD, WHICH NOW ALWAYS STANDS** (D-85): each answer re-projects the store, and
