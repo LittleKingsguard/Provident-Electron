@@ -8,7 +8,7 @@
     },
     "e2e": {
       "files": 9,
-      "sites": 75
+      "sites": 76
     },
     "integration": {
       "files": 31,
@@ -701,7 +701,7 @@
   "readings": {
     "gating": {
       "files": 48,
-      "sites": 364
+      "sites": 365
     },
     "onNotice": {
       "files": 105,
@@ -709,7 +709,7 @@
     },
     "retained": {
       "files": 9,
-      "sites": 75
+      "sites": 76
     },
     "carveOut": 9
   }

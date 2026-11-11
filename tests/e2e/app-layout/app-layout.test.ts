@@ -1,6 +1,8 @@
 // tests/e2e/app-layout/app-layout.test.ts — THE L1 BATTERY for `app-layout`: the ELEVEN e2e rows of
-// `docs/L1/app-layout.md` rev 5 §5 (`AL-1`..`AL-11`), one row each, UNMARKED AND GATING (`tests/e2e/**` is never
-// marked, `D-30`; authored after the rework sweep, `D-40`).
+// `docs/L1/app-layout.md` rev 5 §5 (`AL-1`..`AL-11`), one row each, plus **`AL-12`** — the row `D-203`/`D-204` named as
+// the instrument the corpus did not have and `D-216` fixed the shape of, which reads the layout's **COMPUTED** figures
+// out of an authored carrier (`docs/L3/renderer-wiring/design.md` rev 20 §4 `W1`–`W5`, `docs/L3/app-envelope/design.md`
+// rev 6 §2's `A-8`) — UNMARKED AND GATING (`tests/e2e/**` is never marked, `D-30`; authored after the rework sweep, `D-40`).
 //
 // WHAT THIS BATTERY EXISTS FOR. The unit's subject is the application's interface — a top-bar with the name at its
 // left and the tabs row in the strip, four fixed zones, a stage derived from the remainder, a tabs row that RENDERS
@@ -24,7 +26,7 @@
 // SOFTENED and this file carries no marker of any kind.
 //
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// **FIVE BOOTS FOR ELEVEN ROWS, AND THE GROUPING IS THE WHOLE ECONOMY OF THIS FILE** (`D-165`, `D-173`: at this file
+// **FIVE BOOTS FOR TWELVE ROWS, AND THE GROUPING IS THE WHOLE ECONOMY OF THIS FILE** (`D-165`, `D-173`: at this file
 // count roughly one run in two carries a spawn casualty, so a boot is the scarcest thing a battery spends). The L1
 // table's own instrument column is what decides the grouping — the rows that need a driver envelope are `AL-9` and
 // `AL-11`, and every other row is a plain `provident.get_rendered_html` (plus, where it names one, a `data` call):
@@ -39,12 +41,15 @@
 //   · group `menus`   — `AL-7` alone: eighteen dispatches plus a rendered read and a transport ask between each, and
 //     its DECLARED failure mode is that the app DIES (`quit`/`close`/`reload` reaching the window). A row that reds by
 //     killing its boot must not take four sibling rows with it.
-//   · group `view`    — `AL-8`, `AL-10`: both write `['zones']` and neither needs the driver channel; `AL-8`'s profile
-//     read and `AL-10`'s two markup reads are independent, and `AL-8` stands first because its file reading is a
-//     question about the SAME bytes `AL-10`'s pane write would move.
+//   · group `view`    — `AL-8`, `AL-10`, `AL-12`: all three write `['zones']` and none needs the driver channel; `AL-8`'s
+//     profile read and `AL-10`'s two markup reads are independent, and `AL-8` stands first because its file reading is a
+//     question about the SAME bytes `AL-10`'s pane write would move. **`AL-12` STANDS LAST BECAUSE IT MOVES THE ONE THING
+//     `AL-10`'s BASELINE READS** (`AL-10` measures that a zone stating NO `size` is painted no dimension — so the top
+//     zone must acquire a `size` only after that reading is taken), and because its own subject is the LAST delivery this
+//     boot's record states, never a figure a sibling left behind.
 //   · group `driver`  — `AL-9`, `AL-11`: the two rows that need a body INSIDE the realm. ONE envelope, two acts.
 //
-// Five distinct boots, then (`skeleton`, `tabs`, `menus`, `view`, `driver`) — `5 < 11`, and the count is asserted at
+// Five distinct boots, then (`skeleton`, `tabs`, `menus`, `view`, `driver`) — `5 < 12`, and the count is asserted at
 // teardown. A group's boot is created by the first row of that group that needs it, kept alive only for its own group,
 // and withdrawn before the next group asks; the groups are therefore strictly SEQUENTIAL, which is also what the
 // host-wide live-boot lock requires (`D-94`: one live boot at a time, host-wide, so no two spawning batteries' Electron
@@ -67,15 +72,21 @@
 // readable at once — so `AL-7` issues a DUMP ACT at the carrier (a node with no handler, performing nothing) and spends
 // its bound on the carrier's own text, and `AL-3` reads the RECORD, which is the store's answer and knows no render turn.
 //
-// **AND THE COMPUTED-STYLE INSTRUMENT `D-204` NAMES AS THE PROJECT'S MISSING ONE IS STILL MISSING FROM THIS BATTERY**,
-// measured rather than assumed: `AL-10` stands on RENDERED MARKUP, because neither route to a computed style exists
-// on a gating leg at this head — (i) the app boots through `Runtime.bootstrap()`, so `provident.code.get({path:''})`
-// answers `{path:'', value:null}` and `code.set` refuses with "no envelope loaded": there is no envelope a probe body
+// **`AL-10` STANDS ON RENDERED MARKUP, AND `AL-12` IS THE ROW THAT DOES NOT** — the two are the two halves of `D-203`
+// and the difference between them is the whole reason `AL-12` exists. **NO DRIVEN BODY CAN READ THE APP'S OWN COMPUTED
+// STYLE, MEASURED TWICE** (`D-208`): (i) the app boots through `Runtime.bootstrap()`, so `provident.code.get({path:''})`
+// answers `{path:'', value:null}` and `code.set` refuses with "no envelope loaded" — there is no envelope a probe body
 // could be injected into; (ii) every driver envelope replaces the graph (the paragraph above), so a body reading
-// `getComputedStyle` would compute the styles of the DRIVER's nodes and not the app's. What `AL-10` can honestly do is
-// what `D-203` left measurable: after the CSS-text fix, the paint's figure is IN the `style` attribute, while the
-// broken object spelling left it EMPTY — so the markup read now catches that whole class of silent no-op, and the row
-// says in its own words that it reads markup and never computed style.
+// `getComputedStyle` would compute the styles of the DRIVER's nodes and not the app's. **SO THE READING HAPPENS IN THE
+// APP'S OWN REALM AND ARRIVES AS MARKUP**: `renderer-wiring`'s private `reportMeasuredFigures` is `driveLayoutRegions`'
+// LAST ACT, it reads `getComputedStyle` on each authored region the paint just wrote, and it writes the measured figures
+// into the authored carrier `LAYOUT_MEASURED_ID` (`layout-measured`) as `id.property=value;` TEXT — never `css.style`,
+// the one member whose object form answers `applied` and writes nothing (`D-203`, `D-214`). **THE ROW READS THE CARRIER;
+// THE TURN READS THE COMPUTED STYLE** — said in those words at `AL-12`'s own site and in `docs/L3/renderer-wiring/design.md`
+// §4, so nobody later mistakes this battery's markup read (`AL-10`) for the layout read (`AL-12`). What `AL-10` can
+// honestly do is what `D-203` left measurable in the markup: after the CSS-text fix the paint's figure is IN the `style`
+// attribute, where the broken object spelling left it EMPTY — so the markup row still catches that class, while the
+// computed row catches the one class no markup row ever could: a write that reports `applied` and never lands.
 //
 // EVERY WAIT IS BOUNDED AND EVERY FAILURE NAMES ITS REASON, in `tests/e2e/pane-drag-temp/`'s grain: a boot that
 // publishes a load error is reported AT ONCE with that error and never as a timeout; a delivery is not the caller's
@@ -566,6 +577,21 @@ async function surfaceWithin(client: Client, until: (html: string) => boolean): 
   }
   return { ...read, polls: POLL_MAX }
 }
+/** **POLL THE MEASURED CARRIER'S OWN TEXT**, on `surfaceWithin`'s bound and for its reason: the report rides a DELIVERY,
+ *  and a delivery is not the caller's turn — so a row that wants a figure spends its bound waiting for the listener's
+ *  render instead of assuming it (`D-216`: the render is the listener's, and a row may not schedule one). **WHAT THIS
+ *  FUNCTION CANNOT SEE IS SAID HERE RATHER THAN DISCOVERED LATER**: an inert `css.style` write leaves the figure the
+ *  CASCADE would give with no declaration at all — the region's FILL — so the poll below has no way to read "nothing was
+ *  written"; it reads the figure the browser answered, which is exactly the reading `D-203` needs a row to take. */
+async function carrierWithin(client: Client, until: (carrier: string) => boolean): Promise<{ carrier: string; polls: number }> {
+  let carrier = carrierText((await renderedHtml(client)).html)
+  for (let polls = 1; polls <= POLL_MAX; polls += 1) {
+    if (until(carrier)) return { carrier, polls }
+    await sleep(POLL_MS)
+    carrier = carrierText((await renderedHtml(client)).html)
+  }
+  return { carrier, polls: POLL_MAX }
+}
 
 // ---- reading the rendered markup (the subject of nine of these rows) ------
 /** ONE TAG, BY ITS `id` ATTRIBUTE — the engine emits `id="<the authored css/props id>"` on every node that carries one,
@@ -602,6 +628,31 @@ function styleDeclares(style: string | null, property: string, value: string): b
 /** Whether a style text names the property at all — what `AL-10` asks of the pane's UNPAINTED member. */
 function styleNames(style: string | null, property: string): boolean {
   return style !== null && new RegExp(`(?:^|;)\\s*${property}\\s*:`).test(style)
+}
+/** **THE MEASURED-FIGURES CARRIER — `D-214`'S INSTRUMENT, AND THE ONE PLACE A COMPUTED STYLE REACHES A ROW** (`D-203`,
+ *  `D-204`, `D-208`; `docs/L3/app-envelope/design.md` rev 6 §2's `A-8`, `docs/L3/renderer-wiring/design.md` rev 20 §4
+ *  `W1`–`W5`): an authored `span` in the stage whose `content` the paint's LAST act replaces with the figures the
+ *  BROWSER computed — `id.property=value` pairs joined by `;`. **ITS ID IS SPELLED HERE AS A LITERAL**: no row of this
+ *  battery imports `src/**`, and the authored name is part of the published surface a row may name (`D-27`). */
+const LAYOUT_MEASURED_ID = 'layout-measured'
+const NO_CARRIER = '(no measured carrier)'
+function carrierText(html: string): string {
+  const tag = tagById(html, LAYOUT_MEASURED_ID)
+  if (tag === null) return NO_CARRIER
+  const after = html.slice(html.indexOf(tag) + tag.length)
+  const close = after.indexOf('<')
+  return (close < 0 ? after : after.slice(0, close)).trim()
+}
+/** **ONE FIGURE THE CARRIER CARRIES**, by the `id.property` subject the report spells: `null` where the carrier names
+ *  no such subject at all — which is the report's own silence and not an empty string, because the report measures ONLY
+ *  what the paint wrote (`W5`) and writes `absent` rather than skipping a subject it could not resolve (`W2`). */
+function measuredFigure(carrier: string, subject: string): string | null {
+  for (const part of carrier.split(';')) {
+    const at = part.indexOf('=')
+    if (at < 0) continue
+    if (part.slice(0, at).trim() === subject) return part.slice(at + 1).trim()
+  }
+  return null
 }
 /** **THE MINTED TAB ROWS, AND NOT THE PROTOTYPE**: a minted row carries the record's `target` as a bare attribute and its
  *  label as its text, while the def-root prototype carries neither (`D-199`). This is also how the row's own
@@ -979,7 +1030,7 @@ async function loadDriver(booted: Boot, acts: Act[]): Promise<void> {
   throw new Error(`the driver's envelope did not settle: \`${OUT_ID}\` is not addressable within ${SETTLE_READS_MAX} reads`)
 }
 
-// ---- the groups: five boots, eleven rows ------------------------------------
+// ---- the groups: five boots, twelve rows ------------------------------------
 /** **THE GROUPS, AND WHY THE BOOT IS SHARED** (the file header's table): a boot is the scarcest thing a battery spends
  *  (`D-165`, `D-173`), so the rows that can read one process's own page share it. The groups are STRICTLY SEQUENTIAL —
  *  a new group's boot is only taken after the previous group's is PROVEN gone — because the live-boot lock is
@@ -1045,8 +1096,8 @@ afterAll(async () => {
         report.survivors.map((row) => `  pid ${row.pid} (ppid ${row.ppid}) ${row.args}`).join('\n'),
     )
   }
-  // The count is a READING of this file's own economy, reported once: five boots for eleven rows.
-  expect(bootCount, 'this battery makes FIVE boots for its eleven rows (the header’s grouping); a sixth boot is a row that did not share').toBeLessThanOrEqual(5)
+  // The count is a READING of this file's own economy, reported once: five boots for twelve rows.
+  expect(bootCount, 'this battery makes FIVE boots for its twelve rows (the header’s grouping); a sixth boot is a row that did not share').toBeLessThanOrEqual(5)
 })
 
 /** **THE RECORD'S OWN SHAPE, AS A WRITE THE `tabs` CROSSING ADMITS** (`D-63`, `D-181`): the two rows and the `order`
@@ -2096,6 +2147,148 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `is the declared failure mode. AND the fixed axis's absence is read BESIDE the zone's own painted figure — ` +
         `\`${ZONE_IDS[0]}\` reads ${textOf(topAfter)} — so the axis is not simply unpainted everywhere.`,
     ).toBe(false)
+  }, ROW_MS)
+
+  it('AL-12 — the figure the browser APPLIED equals the figure the record holds, read out of the measured carrier', async () => {
+    const { booted } = await shared('view')
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    // **THE ROW READS THE CARRIER; THE TURN READS THE COMPUTED STYLE** (`D-203`'s missing instrument, `D-204`, `D-214`,
+    // `D-216`; `docs/L3/renderer-wiring/design.md` rev 20 §4's `W1`–`W5`, `docs/L3/app-envelope/design.md` rev 6 §2 `A-8`).
+    // `provident.get_rendered_html` never shows a computed style — it shows the graph's markup — and no gating row may
+    // compute one itself (`D-208` measures both reasons twice, and the file's header carries them). What a gating row CAN
+    // read is the authored carrier `layout-measured`, whose `content` the paint's LAST act replaces with the figures
+    // `getComputedStyle` answered for the nodes the paint just wrote. **SO THE CARRIER'S TEXT IS A COMPUTED READING BY
+    // PROXY, AND THIS ROW IS ITS ONLY READER**: the WRITE the row reads is `id.property=value;` TEXT and never a
+    // `css.style` object, because `D-203` measured the object form answering `applied` while the browser wrote an EMPTY
+    // attribute — a defect a fully green suite carried for months BECAUSE every row in the tree read markup.
+    //
+    // **AND `D-216` FIXES THIS ROW'S SHAPE: ITS FIRST CLAUSE IS ITS SETUP.** The render is driven by LISTENERS ON THE
+    // STORE, so a figure exists in the carrier only inside a delivery's turn: **induce a delivery — a `['zones']` write
+    // with a figure — wait for the listener's render, and only then read.** A row that read the carrier at a cold boot
+    // would be asserting the absence of a paint the paradigm requires to be absent (`D-216`'s own sentence). **AND THE
+    // BOOT IS NOT SILENT AT THIS HEAD, WHICH IS WHY THE CLAUSE IS SPELLED AS THIS ROW'S FIGURE AND NOT AS AN EMPTY
+    // STRING**: `provident-storeroom@1.11.0` delivers at the store's OWN CREATION, the app arms the delivery's entries at
+    // the construction and flushes at readiness, so the panes and the landing page are measured BEFORE any agent speaks
+    // (`D-219`, `D-220`) — **measured here**: the carrier reads
+    // `top.height=64px;bottom.height=33px;pane-a.width=absent;pane-a.height=absent;pane-menus.width=140px;tabs-landing-page.display=block;`
+    // by the time this row starts in its group's own order, i.e. a previous delivery's RECORD figures and no `140px`. The
+    // silence the paradigm requires is therefore the absence of the figure the not-yet-written delivery would carry, and
+    // the row asserts exactly that — over the carrier's own text, which is also its proof that the instrument is ALIVE.
+    // (Standalone — `vitest -t 'AL-12'` — the same reading is the boot's own, and `top.height` is then `null` because no
+    // writer has stated a zone `size`: the same lawful silence, read a different way.)
+    //
+    // **WHAT REDS IT, IN THIS ROW'S OWN WORDS.** **(i) An inert write — the OBJECT spelling of `css.style`**: the answer
+    // is still `applied`, nothing lands, and the cascade reports the region's FILL — measured at `396px` over a record's
+    // `140` (`D-214`) — so clause 2 reds on a figure the record never held, while clause 1's silence had been true.
+    // **(ii) A paint that never runs** — no delivery, no report, or `reportMeasuredFigures` dropped from the turn: the
+    // carrier keeps the last delivery's text (bounded-stale by one turn, `D-117`) or stays empty, so clause 2 reds by
+    // STALENESS or by ABSENCE and the message says which. **(iii) A terminal whose `display` stops following the record**:
+    // clause 4 reds, because the two authored pages declare `display: block` and nothing but the record can make one of
+    // them `none`. **THE ONE THING IT CANNOT SEE IS SAID HERE TOO**: a figure the browser answered is a figure, so the
+    // carrier cannot distinguish "the record's figure landed" from "the fill happens to equal the record's figure" — the
+    // figures below are chosen far from this window's fills (`D-214` measured `396px` where the record said `140`) and the
+    // clause reads EQUALITY WITH THE RECORD, never a difference from the fill.
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    /** The figure this row's zone write states — `D-214`'s own measured pair (`top.height=140px` over a fill of `396px`). */
+    const FIGURE = 140
+    const TOP = `${ZONE_IDS[0]}.height`
+    const LANDING_DISPLAY = `${LANDING_PAGE_ID}.display`
+    const ERROR_DISPLAY = `${ERROR_PAGE_ID}.display`
+
+    // ── CLAUSE 1 — THE SETUP: no figure of this row's is in the carrier yet, and the carrier itself IS here ───────────
+    const beforePage = await renderedHtml(booted.client)
+    const before = carrierText(beforePage.html)
+    expect(
+      before,
+      `AL-12 PREREQUISITE — the authored carrier \`${LAYOUT_MEASURED_ID}\` must RENDER, or this row's whole subject is a ` +
+        `node that does not exist (\`A-8\`, \`D-214\`): the page read ${String(beforePage.html.length)} ` +
+        `bytes and carried no such tag. The report writes its figures into this node's \`content\`, so an absent node is a ` +
+        `red here and never a reading about the layout.`,
+    ).not.toBe(NO_CARRIER)
+    const beforeTop = measuredFigure(before, TOP)
+    expect(
+      beforeTop,
+      `AL-12 — NOTHING THIS ROW WRITES IS IN THE CARRIER BEFORE THE LISTENER SPEAKS (\`D-216\`): the render is driven by ` +
+        `listeners on the store, so a figure stands only inside a delivery's own turn. The carrier already read ` +
+        `\`${TOP}=${String(beforeTop)}\`, and a \`${String(FIGURE)}px\` standing there BEFORE this row's write is a render ` +
+        `with no event behind it — the one thing the paradigm forbids — while its ABSENCE is the state the row needs and ` +
+        `must therefore assert rather than assume. Carrier as read: ${trunc(before, 400)}`,
+    ).not.toBe(`${String(FIGURE)}px`)
+
+    // ── CLAUSE 2 + ITS PREREQUISITE — the terminals' arm: the record moves, so the stage's two pages must move ─────────
+    // **THE LANDING PAGE IS HIDDEN BY THE RECORD AND SHOWN BY THE AUTHORED CSS**, so this arm is also the negative's
+    // premise: both authored pages carry `display: block` (`tabsPageStyle`), and only the record's active member can make
+    // one of them `none` — which is `D-203`'s own subject, the figure that never reached the screen.
+    const movedRecord = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: true, error: 'al-12-terminal' }))
+    expect(
+      str(asObject(movedRecord.value)?.['status']),
+      `AL-12 PREREQUISITE — the tab record must take a SECOND, ACTIVE row that names the error page WITH its witness ` +
+        `(the witness is derived from the row's own \`error\` member, \`C-4\`/\`D-212\`): ` +
+        `\`data.write(['${TABS}'], tier:'file')\` answered ${trunc(movedRecord.text, 320)}.`,
+    ).toBe('committed')
+    // THE PREMISE IS READ IN MARKUP AND NOT IN THE CARRIER ON PURPOSE: the terminals' `display` is driven by the TABS
+    // crossing's own turn (`driveTabsLandingPage`), and the carrier is written by the VIEW crossing's paint — so a
+    // markup read is the only way to know that the record's delivery LANDED before the delivery this row reads is
+    // asked for. `AL-10`'s and `AL-5`'s instrument, spent here as a premise rather than as a claim.
+    const hid = await surfaceWithin(booted.client, (text) => styleDeclares(styleOf(text, LANDING_PAGE_ID), 'display', 'none'))
+    expect(
+      styleDeclares(styleOf(hid.html, LANDING_PAGE_ID), 'display', 'none'),
+      `AL-12 PREREQUISITE — the record's own delivery must LAND before the carrier can report it: the landing page's ` +
+        `\`style\` read ${textOf(styleOf(hid.html, LANDING_PAGE_ID))} over ${String(hid.polls)} bounded re-read(s) after the ` +
+        `record was written. A premise that reds here is a terminal that does not follow its record at all, and it is ` +
+        `reported as the PREMISE it is so that clause 4's red stays the carrier's own finding.`,
+    ).toBe(true)
+
+    // ── THE DELIVERY `D-216` REQUIRES — a `['zones']` write at a declared leaf, and the listener's render is awaited ────
+    const zoneWrite = await writeAt(booted.client, [ZONES, ZONE_IDS[0], 'size'], 'mem', FIGURE)
+    expect(
+      str(asObject(zoneWrite.value)?.['status']),
+      `AL-12 PREREQUISITE — the delivery this row reads must be INDUCED through the record (\`D-216\`: the row's first ` +
+        `clause is its setup): \`data.write(['${ZONES}','${ZONE_IDS[0]}','size'], tier:'mem')\` answered ` +
+        `${trunc(zoneWrite.text, 320)}.`,
+    ).toBe('committed')
+    const settled = await carrierWithin(booted.client, (carrier) => measuredFigure(carrier, TOP) === `${String(FIGURE)}px`)
+
+    // ── CLAUSE 2 — THE BROWSER-APPLIED FIGURE EQUALS THE RECORD'S (`D-203` would have failed HERE) ───────────────────
+    // **MEASURED AT THIS HEAD, ONE POLL AFTER THE WRITE** — the carrier's own text, quoted so a later reader can see what
+    // the row was reading:
+    //   `top.height=140px;bottom.height=33px;pane-a.width=absent;pane-a.height=absent;pane-menus.width=140px;`
+    //   `tabs-landing-page.display=none;tabs-error-page.display=block;`
+    // i.e. the record's `140` where the record stated `140`, the panes' `absent` for the one declared pane id no authored
+    // element carries (`D-214`'s honest-but-meaningless arm, kept rather than invented), and the two terminals SPLIT by
+    // the record. The same delivery with the object spelling reported the zone's FILL in that first pair's place.
+    const measuredTop = measuredFigure(settled.carrier, TOP)
+    expect(
+      measuredTop,
+      `AL-12 — THE FIGURE THE BROWSER APPLIED MUST EQUAL THE FIGURE THE RECORD HOLDS: the record states ` +
+        `\`['${ZONES}','${ZONE_IDS[0]}','size']\` = ${String(FIGURE)} and the carrier measured \`${TOP}=` +
+        `${String(measuredTop)}\` over ${String(settled.polls)} bounded re-read(s). **THIS IS THE ASSERTION \`D-203\` WOULD ` +
+        `HAVE FAILED**: an inert \`css.style\` write — the OBJECT spelling — answers \`applied\`, writes nothing, and leaves ` +
+        `the cascade reporting the region's FILL (measured: \`396px\` over a record's \`140\`, \`D-214\`), so a reversion to ` +
+        `that spelling reds here with a figure the record never held. A \`null\` or a stale value is the other red: a paint ` +
+        `that never ran, or a report dropped from the turn, leaves the carrier saying what the previous delivery said. ` +
+        `Carrier as read: ${trunc(settled.carrier, 480)}`,
+    ).toBe(`${String(FIGURE)}px`)
+
+    // ── CLAUSE 3 — THE LANDING TERMINAL'S `display` IS IN THE CARRIER, AND CLAUSE 4 IS ITS NEGATIVE ───────────────────
+    const landingDisplay = measuredFigure(settled.carrier, LANDING_DISPLAY)
+    expect(
+      landingDisplay,
+      `AL-12 — the landing terminal's \`display\` must be a SUBJECT the carrier names: it is the paint's own third loop ` +
+        `(\`C-4\`, \`D-203\`'s subject — the two authored pages are the only thing the app has ever shown and hidden) and ` +
+        `the report measures exactly the nodes that loop wrote. The carrier read: ${trunc(settled.carrier, 480)}. A \`null\` ` +
+        `here means the report measured no terminal at all, so the figure below would have nothing to be about.`,
+    ).not.toBe(null)
+    expect(
+      { landing: landingDisplay, error: measuredFigure(settled.carrier, ERROR_DISPLAY) },
+      `AL-12 — AND NO AUTHORED \`css\` FIGURE MAY STAND IN PLACE OF THE RECORD'S: both authored pages declare ` +
+        `\`display: block\` (\`tabsPageStyle\`), the record this row wrote names the SECOND row active and the landing ` +
+        `entry NOT active, so the painted pair must be landing=\`none\` / error=\`block\` — the RECORD's two answers and ` +
+        `not the authored one. A \`block\` on the landing page here is the markup's authored declaration surviving where ` +
+        `the record said otherwise, which is the class \`D-203\` found on the screen and no row could see ` +
+        `(\`D-214\`/\`D-216\`: this figure is true only of the delivery that carried it). The carrier read: ` +
+        `${trunc(settled.carrier, 480)}`,
+    ).toEqual({ landing: 'none', error: 'block' })
   }, ROW_MS)
 
   // ── group `driver`: AL-9, AL-11 — the two rows that need a body inside the realm ──
