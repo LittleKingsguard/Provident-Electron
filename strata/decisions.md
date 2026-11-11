@@ -4711,3 +4711,28 @@ data.write { path: ['tabs', 'tab-1'], tier: 'file', value.target: 'page-one' }
 **THE READINGS.** `npx vitest run tests/e2e/app-layout/` → **`7 passed / 4 failed` of `11`** over one file, `70.9 s`; `typecheck:tests` **exit `0`**; the marks census **`145` files, `363` gating sites in `48` files** (`352`/`47` before), `2,382` on notice, `9` carve-outs; the module map **already carried** the path (`app-shell`, rev 2) and the boundary gained **one entry with its reason** (`B-1` green, 3/3).
 
 **ITS REGISTER IS `D-71` TO `D-207`** as prose, unchanged and extended by this row only. **This row records a battery that found four things on its first run, the same gap twice — the agent can look but not touch — a trade made visible as a red row, and a terminal that cannot be hidden because a mint discards the write that would hide it.**
+
+## D-209 — A MINTED ROW **CAN** CARRY A LIVE-FUNCTION HANDLER THAT `provident.dispatch` RUNS — measured, not traced — so the controls become agent-drivable with **no new preload surface at all**
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user, on `D-208`'s `AL-3`/`AL-7`):** *"Make the controls agent-drivable via authored handler bodies"*, established by a probe after a source trace.
+
+**THE MEASUREMENT, WHICH WAS THE ONE THING THE TRACE COULD NOT SETTLE.** A probe mints two rows on the app's own `Runtime` (the real envelope, the DOM shim), **the first carrying a live-function handler**, then dispatches `click` at it:
+
+```json
+{ "mint": "applied", "mintedCount": 2, "first": "node-74",
+  "ran": ["row-one"], "dispatchAnswer": ["ran-one"], "rowsInHtml": 3 }
+```
+
+**`ran` carries the closure's own side effect and `dispatchAnswer` carries its return** — so **a `rows-mint` datum may carry `handlers: [{ name, event: 'click', body: <function> }]`, the minted node renders with it, and `dispatchEvent` runs it with `ctx`.** **The datum shape is the record row plus `label`, `props`, and `handlers` as a top-level member beside them**; a **string** body would be adopted and **never run** (`rows-mint` does not compile bodies), so **the datum must carry a FUNCTION**.
+
+**AND THAT MEANS THE CHEAPEST PATH IS ALSO THE SAFEST ONE.** The reach research found that a body is `new Function`-compiled in the renderer's global scope and **can name `window.provident`** — which would let an agent's `provident.dispatch` reach **every preload member**, since `dispatch` sits in the default grant outside MCP's `guarded` wrapper. **But a live-function body minted from `driveTabsRows` is a CLOSURE**: it can call the realm's own turn — **`focusActRoute` for a row** — **without naming the bridge at all.** **So the ruling is met by a closure rather than by a surface**, and **the security widening the reach research named is not taken.**
+
+**AND THE MENUS PANE TAKES THE SAME SHAPE RATHER THAN AN AUTHORED BODY.** Its items are **authored**, so their bodies would be **strings** — which means `window.provident` in the envelope, which is the surface above. **The alternative is a wiring-installed `handlers` state-slice** (`node.js` adopts `handlers` from the data layer), **installing a closure that calls the same route the DOM listener does** — **so the pane's dispatch becomes agent-reachable without an authored bridge reference either.** **Both controls, one mechanism, no new surface.**
+
+**WHAT IT COSTS, NAMED.** **(i)** The op is **journaled shallowly** (`{kind, …rest}`), so **a function sits in the journal** and a condense's byte estimate aborts contained (`condense-aborted`) — a fact the mint's own path now carries for every row. **(ii)** A body's return crosses `JSON.stringify`, so it must be **JSON-safe**. **(iii)** `keyField` cannot come back: a restored key would answer `rows-reuse-shape-ignored` on a differing datum (`D-201`'s trade, unchanged).
+
+**WHAT IT CHANGES FOR `AL-3`/`AL-7`.** **`AL-3` stops being a row that cannot pass**: the minted row now carries a body, so an agent's `provident.dispatch` at its `nodeId` **switches the tab through the same act the human's click uses**. **`AL-7` likewise**: the menus items gain a wiring-installed handler, so eighteen dispatches produce eleven receipts and seven refusals **through the route `main` already guards**. **Both rows keep their subjects and lose only the reason they were red.**
+
+**THE READINGS AT THIS HEAD ARE `D-208`'S** — this row moves no repo byte; its product is a measurement, a datum shape, and the reason the safe path is also the cheap one.
+
+**ITS REGISTER IS `D-71` TO `D-208`** as prose, unchanged and extended by this row only. **This row records a trace confirmed by a probe, a closure preferred to a surface on security grounds rather than convenience, a journal cost accepted with its name, and two battery rows that can now pass without their subjects moving.**
