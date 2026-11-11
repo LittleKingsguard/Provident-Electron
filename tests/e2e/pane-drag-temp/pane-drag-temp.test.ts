@@ -55,8 +55,10 @@
 //
 // **THE LIVE BOOTS ARE SERIALISED HOST-WIDE**: two spawning batteries already stand (`tests/e2e/tier-readout/` and
 // `tests/e2e/focus-retirement/`), and this is the third, so every boot here holds the SAME lock from spawn to
-// proved-zero teardown and waits for the WHOLE artifact set `npm run build` produces — a third must not contend with
-// them, and a sibling worker's `npm run clean` deletes `dist/` while it runs (D-94, D-74, D-43).
+// proved-zero teardown — a third must not contend with them (`D-94`, `D-74`, `D-43`). **AND THE TREE IS PREPARED UNDER
+// THAT SAME LOCK**: the whole artifact set `npm run build` produces is ENSURED, not waited for — absent, this process
+// builds it once, itself, as the one claimant, because a booter that waited for a builder queued behind its own lock
+// livelocks (`D-227`).
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -472,47 +474,72 @@ async function withBound<T>(work: Promise<T>, label: string, trace: () => string
   }
 }
 /** **THE WHOLE ARTIFACT SET A BOOT LOADS, AND NOT ONLY ITS ENTRY POINT** — because a boot is not a reading of one file and
- *  a snapshot of one file is not a snapshot of the build. `npm run build`'s FIRST arm is `npm run clean`, which deletes
- *  `dist/`, and three files of this suite run that build from other workers (`tests/e2e/bundle-boot-seam/`,
- *  `tests/integration/bundle-boot-seam/`, `tests/unit/bundle-boot-seam/`), so waiting on `main.mjs` alone let a boot start
- *  in the window where the main bundle was back and the renderer was not — MEASURED on a sibling spawning battery: a boot
- *  answered `ERR_FILE_NOT_FOUND` on `dist/renderer/index.html` instead of measuring its row. Every member below is a file
- *  this boot's ELECTRON LOAD reads (`npm run build`'s `outfile`/`outdir`/`cp` arms), and the wait is inside `BOUND_MS`, so
- *  an absent member is a named prerequisite failure and never a silent one (D-27, `strata/brief.md` §6). */
+ *  a snapshot of one file is not a snapshot of the build: waiting on `main.mjs` alone let a boot start in the window where
+ *  the main bundle was back and the renderer was not — MEASURED on a sibling spawning battery: a boot answered
+ *  `ERR_FILE_NOT_FOUND` on `dist/renderer/index.html` instead of measuring its row. Every member below is a file this
+ *  boot's ELECTRON LOAD reads (`npm run build`'s `outfile`/`outdir`/`cp` arms) — the main bundle, its preload, and the
+ *  renderer's bundle and page — and an absent member is a named prerequisite failure and never a silent one
+ *  (D-27, `strata/brief.md` §6). */
 const BOOT_ARTIFACTS = [
   join(repoRoot, 'dist', 'main', 'main.mjs'),
   join(repoRoot, 'dist', 'main', 'preload.cjs'),
   join(repoRoot, 'dist', 'renderer', 'index.html'),
   join(repoRoot, 'dist', 'renderer', 'renderer.js'),
 ]
-/** Wait for the whole set above, inside the bound: a `statSync` that threw is not a reading, it is a file still being
- *  written, so every member is polled again on the same tick. */
-async function artifactsWithin(): Promise<void> {
-  const started = Date.now()
-  while (Date.now() - started < BOUND_MS) {
-    const seen = BOOT_ARTIFACTS.map((file) => {
-      try {
-        return existsSync(file) && statSync(file).size > 0
-      } catch {
-        return false
-      }
-    })
-    if (seen.every(Boolean)) return
-    await sleep(20)
+/** A `statSync` that threw is not a reading — it is a file still being written — so it is `false` here, never an exception. */
+function artifactReady(file: string): boolean {
+  try {
+    return existsSync(file) && statSync(file).size > 0
+  } catch {
+    return false
   }
-  const absent = BOOT_ARTIFACTS.filter((file) => {
-    try {
-      return !(existsSync(file) && statSync(file).size > 0)
-    } catch {
-      return true
-    }
-  })
-  throw new Error(
-    `the built artifacts are absent at [${absent.join(', ')}] within the ${BOUND_MS} ms bound. This battery boots the ` +
-      `ARTIFACT \`npm run build\` produces — the main bundle, its preload, and the renderer's bundle and page — and never ` +
-      `builds one (D-27, strata/brief.md §6): run \`npm run build\` first, and note that a sibling worker's ` +
-      `\`npm run clean\` deletes \`dist/\` while it runs.`,
-  )
+}
+/** **THE BUILD'S OWN BOUND, AND IT IS DELIBERATELY SMALLER THAN `ROW_MS`**: a build that spends past it reds as a NAMED
+ *  build failure inside the row that asked for it, never as a row timeout that leaves the live-boot lock held with no
+ *  verdict (`F-2`'s lesson). Measured: `npm run build` takes `240-500 ms`; this is ~240× that. */
+const BUILD_MS = 120_000
+
+/** **THE ARTIFACT SET IS ENSURED, NOT WAITED FOR, BY THE ONE CLAIMANT THAT HOLDS THE LOCK** — `D-227`'s cure shape (2).
+ *
+ *  THE LIVELOCK THIS REPLACES, MEASURED. `D-173` asked for two halves: this check moved INSIDE the live-boot lock (landed,
+ *  `D-175`) and the three in-suite builders given the SAME lock (`boot-contract.test.ts`, `arrangement.test.ts`,
+ *  `emission.test.ts`). Together they deadlock: this battery held the lock and waited (`BOUND_MS`, `60 000 ms`) for a
+ *  `dist/` that only `npm run build` produces, while the builders waited for that same lock to run it — and `npm run build`'s
+ *  FIRST arm is `npm run clean`, the only thing that ever removes `dist/`. Neither side can yield to the other:
+ *  **ten holds × `60 000 ms`, ZERO builds in `600 s`, the run killed.** So the wait is gone. The booter BUILDS THE TREE
+ *  ITSELF, in this process, under the lock it already holds — **one claimant, no cycle**.
+ *
+ *  THE THREE STATES, EACH STATED RATHER THAN IMPLIED. (i) Every member present and non-empty ⇒ return; no build, which is
+ *  the whole of a warm run. (ii) A member absent or empty ⇒ `npm run build` runs ONCE, here, and the set is RE-MEASURED: a
+ *  build that exits zero and leaves a member absent is a named red, never a spawn into a half-written `dist/`. (iii) The
+ *  build THREW ⇒ the reason is re-thrown naming the command, the bound and the child's own error: this battery spawns
+ *  nothing, the lock is released on the way out, and the failure is never swallowed.
+ *
+ *  **ABSENCE UNDER THE LOCK IS ABSENCE, WHICH IS WHY THIS IS ONE SNAPSHOT AND NOT A POLL**: after this change no file in the
+ *  suite runs `npm run build` outside this lock, so the `~54 ms` `dist/` hole that made a booter's artifact check stale
+ *  cannot be opened under a boot at all (`D-173`, `D-175`, `D-227`). */
+async function ensureArtifacts(): Promise<void> {
+  if (BOOT_ARTIFACTS.every(artifactReady)) return
+  const before = BOOT_ARTIFACTS.filter((file) => !artifactReady(file))
+  try {
+    execFileSync('npm', ['run', 'build'], { cwd: repoRoot, stdio: 'pipe', timeout: BUILD_MS })
+  } catch (error) {
+    throw new Error(
+      `the built artifact set is absent at [${before.join(', ')}] and \`npm run build\` — run by this battery ITSELF, under ` +
+        `the host-wide live-boot lock it already holds (\`D-227\`) — failed inside its ${BUILD_MS} ms bound: ` +
+        `${error instanceof Error ? error.message : String(error)}. This battery boots the ARTIFACT \`npm run build\` ` +
+        `produces and builds one only when the tree does not already carry it, so a build that cannot produce it is a ` +
+        `harness prerequisite failure and never a row's reading (D-27, strata/brief.md §6).`,
+    )
+  }
+  const after = BOOT_ARTIFACTS.filter((file) => !artifactReady(file))
+  if (after.length > 0) {
+    throw new Error(
+      `\`npm run build\` exited without an error and the artifact set is STILL absent at [${after.join(', ')}] (absent ` +
+        `before it ran: [${before.join(', ')}]). This battery spawns into a COMPLETE artifact set or not at all ` +
+        `(D-27, strata/brief.md §6).`,
+    )
+  }
 }
 
 // ---- the MCP plumbing -------------------------------------------------------
@@ -743,8 +770,10 @@ interface Boot {
  *  measures the store and the profile's bytes over stdio, and `P-6`'s SECOND boot does the same on the same profile: those
  *  stand before the window does and ask for no renderer.
  *
- *  **THE BOOT WINDOW IS HELD UNDER THE HOST-WIDE LIVE-BOOT LOCK**: taken after the artifact set is seen and released only
- *  once this boot's tree is proven gone, so no two spawning batteries' Electron trees contend (`D-94`, `D-74`). */
+ *  **THE BOOT WINDOW IS HELD UNDER THE HOST-WIDE LIVE-BOOT LOCK**: taken BEFORE the artifact set is ensured, and the build
+ *  that ensures it runs in THIS process under that same lock — one claimant, so no builder can hold this boot behind a
+ *  lock that same builder is queued for (`D-227`) — and released only once this boot's tree is proven gone, so no two
+ *  spawning batteries' Electron trees contend (`D-94`, `D-74`). */
 async function boot(profile: string, options: { renderer?: boolean } = {}): Promise<Boot> {
   const display = process.env['DISPLAY']
   if (typeof display !== 'string' || display === '') {
@@ -756,13 +785,14 @@ async function boot(profile: string, options: { renderer?: boolean } = {}): Prom
     )
   }
   const releaseBootLock = await acquireLiveBoot(`pane-drag-temp boot on ${profile}`)
-  /** **THE ARTIFACT CHECK IS INSIDE THE LOCK, WHICH IS THE ONLY PLACE IT MEASURES ANYTHING** (`D-173`): taken BEFORE the
-   *  lock, the "artifacts are here" reading is stale by the whole lock-queue wait (bounded `120 s`), and `npm run build`'s
-   *  first arm is `npm run clean` — so a boot could spawn into the ~`54 ms` window in which `dist/` is absent. */
+  /** **THE ARTIFACT SET IS ENSURED UNDER THE LOCK THIS BOOT ALREADY HOLDS** (`D-227`'s cure shape (2), with the measured
+   *  livelock it removes stated in `ensureArtifacts`'s own note): present ⇒ a `stat` and no build at all; absent ⇒ THIS
+   *  process builds it once, here — so no builder can be queued for this lock while this boot waits for that builder's
+   *  output, because there is no second claimant. A build that fails throws with its reason and spawns nothing. */
   try {
-    await artifactsWithin()
+    await ensureArtifacts()
   } catch (error) {
-    // An artifact set that never arrived spawns nothing: the lock is released here, never left for the bound.
+    // A tree that could not be prepared spawns nothing: the lock is released here, never left for the bound.
     releaseBootLock()
     throw error
   }

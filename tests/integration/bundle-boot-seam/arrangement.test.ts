@@ -20,12 +20,15 @@
 // (`dist/main/main.cjs:38479` is `var import_meta = {}`, `:40392` is `var here = __dirname`). No row
 // is skipped, conditionally disabled or softened to reach a colour.
 //
-// THE BUILD IS CO-OWNED WITH L1's B-1, which runs `npm run build` in its own `beforeAll`: this file
-// therefore builds ONLY when the artifact is absent, and every read of a built artifact is retried
-// inside a bound, so a concurrent `npm run clean` cannot turn a row red for a moment's absence.
+// THE BUILD HAS ONE CLAIMANT: this file runs `npm run build` only when the artifact set is absent, and it runs it UNDER
+// THE HOST-WIDE LIVE-BOOT LOCK the booting batteries hold (`D-227`, cure shape (2)) — so no boot can meet a `dist/`
+// rebuild, and this file can no longer wait for a lock a waiting booter holds. Every read of a built artifact is still
+// retried inside a bound: the lock closes the race at its source, and the retry is what keeps a row honest about a tree
+// that is being read at all.
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { dirname, extname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -48,7 +51,7 @@ const preloadEntry = join(repoRoot, 'dist', 'main', 'preload.cjs')
  *  as ESM and named by the `main` field (`interface.md` §1, `docs/L1/bundle-boot-seam.md` §3). */
 const DECLARED_MODULE_SYSTEM = 'esm'
 
-/** The bound every wait and every build is held to — the harness's, never a loader's. */
+/** **THE BUILD'S OWN BOUND, and the bound every read of its output is held to — the harness's, never a loader's.** */
 const BUILD_MS = 600_000
 const READ_MS = 120_000
 
@@ -158,27 +161,180 @@ async function withArtifact<T>(file: string, label: string, use: (path: string) 
 
 
 
-/** **HOW LONG AN ABSENT ARTIFACT IS GIVEN TO APPEAR BEFORE THIS FILE BUILDS IT ITSELF.** Measured: a build here
- *  takes 240-500 ms, and a sibling worker's build is IN FLIGHT when the artifact is at its most absent — which is
- *  exactly when this file used to decide to build too, adding a second `npm run clean` on top of the first. The
- *  grace is ~4x the measured worst build: enough for a build already running, short enough that a genuinely cold
- *  checkout is not made to wait. */
-const BUILD_GRACE_MS = 2_000
+// ---- ONE CLAIMANT FOR THE TREE: THE BUILD RUNS UNDER THE LIVE-BOOT LOCK -------------
+/** **THE BUILD IS THE SUITE'S ONLY WRITER OF `dist/`, SO IT TAKES THE SAME HOST-WIDE LOCK THE BOOTING BATTERIES HOLD**
+ *  (`D-227`'s cure shape (2)). `npm run build`'s FIRST arm is `npm run clean` (`rmSync('dist')`), which is the `~54 ms`
+ *  window measured immediately below; `D-173` asked for *"one shared build lock for the three builders"* and it could not
+ *  be landed while the booters only WAITED for artifacts — **the booter held the lock and waited for `dist/`, the builder
+ *  waited for the lock to make `dist/`: ten holds × `60 000 ms`, ZERO builds in `600 s`** (`D-227`, measured, and reverted
+ *  clean rather than kept). It lands now because the booters build their own tree under this lock too: **one claimant, so
+ *  there is no cycle to deadlock on.**
+ *
+ *  **THE DERIVATION IS THE SIBLING SPAWNING BATTERIES', CHARACTER FOR CHARACTER** — the same `tmpdir()` name, owner file,
+ *  120 s bound and dead-holder sweep — because they must contend on ONE path. It is DUPLICATED, never shared: the corpus's
+ *  booting files each carry their own copy of exactly this helper, and a shared module authored by a harness pass would be
+ *  a second place for the lock path to drift. */
+const BOOT_LOCK = join(tmpdir(), `provident-electron-live-boot-${repoRoot.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(-60)}.lock`)
+const BOOT_LOCK_OWNER = join(BOOT_LOCK, 'owner')
+const BOOT_LOCK_POLL_MS = 100
+/** How long an UNOWNED lock directory is left alone before it is read as a holder that died between its `mkdir` and its own
+ *  owner write: that window is microseconds wide, and sweeping it early would seat two claimants at once. */
+const BOOT_LOCK_SETTLE_MS = 2_000
+/** **The wait is BOUNDED, because a harness that waits forever measures nothing.** One peer's boot is the whole of a wait,
+ *  and a boot's own worst case is its row's bound plus its teardown. */
+const BOOT_LOCK_BOUND_MS = 120_000
+/** A pid that answers signal `0` is alive; `EPERM` is a live process this seat may not signal, which is still alive. */
+function pidAlive(pid: number): boolean {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'EPERM'
+  }
+}
+interface LockHolder { pid: number; since: number; why: string }
+/** Who is holding the lock, read off the owner file — `null` where the directory carries no readable owner. */
+function lockHolder(): LockHolder | null {
+  try {
+    const [pid, since, ...why] = readFileSync(BOOT_LOCK_OWNER, 'utf8').trim().split(' ')
+    const held = Number(pid)
+    return Number.isSafeInteger(held) && held > 0 ? { pid: held, since: Number(since), why: why.join(' ') } : null
+  } catch {
+    return null
+  }
+}
+/** The lock directory's own age, and `Infinity` where it is gone: a stat that threw is not an age of zero. */
+function lockAgeMs(): number {
+  try {
+    return Date.now() - statSync(BOOT_LOCK).mtimeMs
+  } catch {
+    return Number.POSITIVE_INFINITY
+  }
+}
+const liveBootReleases: Array<() => void> = []
+/** **TAKE THE HOST-WIDE LIVE-BOOT LOCK, OR RED WITH THE HOLDER NAMED.** A holder that was SIGKILLed ran no release, so it is
+ *  read off its own pid (and off the lock's age, because a pid is reused) rather than waited out to the bound. */
+async function acquireLiveBoot(why: string): Promise<() => void> {
+  const started = Date.now()
+  for (;;) {
+    try {
+      mkdirSync(BOOT_LOCK)
+      writeFileSync(BOOT_LOCK_OWNER, `${process.pid} ${started} ${why}`)
+      let released = false
+      const release = (): void => {
+        if (released) return
+        released = true
+        // A lock naming ANOTHER pid is that holder's: this release has been overtaken and must not remove it.
+        const holder = lockHolder()
+        if (holder !== null && holder.pid !== process.pid) return
+        try {
+          rmSync(BOOT_LOCK, { recursive: true, force: true })
+        } catch {
+          /* the exit net sweeps again */
+        }
+      }
+      liveBootReleases.push(release)
+      return release
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
+        throw new Error(
+          `the live-boot lock could not be taken at \`${BOOT_LOCK}\`: ${error instanceof Error ? error.message : String(error)}. ` +
+            `The spawning batteries and the three builders are serialised so their writes to \`dist/\` cannot overlap, so a ` +
+            `lock path that cannot be created is a harness fault and never a row's reading.`,
+        )
+      }
+    }
+    const holder = lockHolder()
+    if (holder === null) {
+      if (lockAgeMs() < BOOT_LOCK_SETTLE_MS) {
+        await sleep(BOOT_LOCK_POLL_MS)
+        continue
+      }
+      try {
+        rmSync(BOOT_LOCK, { recursive: true, force: true })
+      } catch {
+        /* somebody else swept it first */
+      }
+      continue
+    }
+    if (!pidAlive(holder.pid) || Date.now() - holder.since > BOOT_LOCK_BOUND_MS * 2) {
+      try {
+        rmSync(BOOT_LOCK, { recursive: true, force: true })
+      } catch {
+        /* somebody else swept it first */
+      }
+      continue
+    }
+    if (Date.now() - started > BOOT_LOCK_BOUND_MS) {
+      throw new Error(
+        `the live-boot lock at \`${BOOT_LOCK}\` is still held by pid ${holder.pid} after ${BOOT_LOCK_BOUND_MS} ms — holder ` +
+          `"${holder.why}", since ${new Date(holder.since).toISOString()}. The spawning batteries and the builders are ` +
+          `SERIALISED (one claimant at a time, host-wide) so no boot can meet a \`dist/\` rebuild, and this wait is bounded ` +
+          `and stated, never silent. Fix: a holder that outlives the bound is a boot or a build that wedged — ` +
+          `\`${BOOT_LOCK}\` names it, and SIGKILLing it releases the lock at once.`,
+      )
+    }
+    await sleep(BOOT_LOCK_POLL_MS)
+  }
+}
 
-beforeAll(async () => {
-  // Read-only when the tree already carries the artifacts; a clean checkout builds them exactly the
-  // way L1's B-1 does (same command, same bound), so no second build races the first unnecessarily.
-  // **THE DECISION IS NOT A SNAPSHOT**: "absent" is a reason to build only if it STAYS absent, because the
-  // absence this file is most likely to see is another worker's clean in the middle of a build it is running.
-  const deadline = Date.now() + BUILD_GRACE_MS
-  while (!(existsSync(mainEntry) && statSync(mainEntry).size > 0) && Date.now() < deadline) await sleep(20)
-  if (existsSync(mainEntry) && statSync(mainEntry).size > 0) return
+/** **THE ARTIFACT SET THIS BATTERY READS, AND `npm run build` IS THE ONLY THING THAT PRODUCES IT**: the entry the `main`
+ *  field names and the preload the arrangement keeps beside it (`interface.md` §1, §4). */
+const BUILT_ARTIFACTS = [mainEntry, preloadEntry]
+/** A `stat` that threw is not a reading — it is a file still being written — so it is `false` here, never an exception. */
+function artifactReady(file: string): boolean {
+  try {
+    return existsSync(file) && statSync(file).size > 0
+  } catch {
+    return false
+  }
+}
+
+/** **THE ARTIFACT SET IS ENSURED, NOT WAITED FOR, UNDER THE LOCK THE BUILDER HOLDS — ONE CLAIMANT** (`D-227`'s cure shape
+ *  (2), with the measured livelock stated in the lock note above). (i) Every member present and non-empty ⇒ return; no
+ *  build, which is the whole of a warm run. (ii) A member absent or empty ⇒ `npm run build` runs ONCE, in this process,
+ *  and the set is RE-MEASURED. (iii) The build THREW, or exited zero without producing the set ⇒ a `new Error` naming the
+ *  command, the bound and the child's own reason: `beforeAll` records it in `buildFailure`, which `A-1` asserts is null,
+ *  and the row that would read the artifact reports its own named absence. Nothing is swallowed. */
+async function ensureArtifacts(): Promise<void> {
+  if (BUILT_ARTIFACTS.every(artifactReady)) return
+  const before = BUILT_ARTIFACTS.filter((file) => !artifactReady(file))
   try {
     execFileSync('npm', ['run', 'build'], { cwd: repoRoot, stdio: 'pipe', timeout: BUILD_MS })
   } catch (error) {
-    buildFailure = error instanceof Error ? error.message : String(error)
+    throw new Error(
+      `the built artifact set is absent at [${before.join(', ')}] and \`npm run build\` — run by this battery ITSELF, under ` +
+        `the host-wide live-boot lock it already holds (\`D-227\`) — failed inside its ${BUILD_MS} ms bound: ` +
+        `${error instanceof Error ? error.message : String(error)}. These rows read the ARTIFACT \`npm run build\` ` +
+        `produces, so a build that cannot produce it is a harness prerequisite failure and never a row's reading.`,
+    )
   }
-}, BUILD_MS)
+  const after = BUILT_ARTIFACTS.filter((file) => !artifactReady(file))
+  if (after.length > 0) {
+    throw new Error(
+      `\`npm run build\` exited without an error and the artifact set is STILL absent at [${after.join(', ')}] (absent ` +
+        `before it ran: [${before.join(', ')}]). These rows read a COMPLETE artifact set or not at all.`,
+    )
+  }
+}
+
+beforeAll(async () => {
+  /** **A CLEAN CHECKOUT IS BUILT HERE, UNDER THE LOCK, AND AN ALREADY-BUILT ONE IS NOT BUILT AT ALL** — the two siblings'
+   *  rule (`boot-contract.test.ts`, `emission.test.ts`), now with the shared lock `D-173` asked for and `D-227` measured
+   *  as impossible without a booter-side redesign. **THE 2 s GRACE IS GONE WITH THE RACE IT PAPERED OVER**: it existed
+   *  because an absence here was most likely a sibling worker's in-flight `npm run clean`, and no file in the suite can
+   *  run that build outside this lock any more, so an absence under the lock is an absence. The lock is released in a
+   *  `finally`: a build that throws must never queue the booting batteries behind a dead claimant. */
+  const releaseBootLock = await acquireLiveBoot('bundle-boot-seam arrangement build (L2)')
+  try {
+    await ensureArtifacts()
+  } catch (error) {
+    buildFailure = error instanceof Error ? error.message : String(error)
+  } finally {
+    releaseBootLock()
+  }
+}, BUILD_MS + BOOT_LOCK_BOUND_MS)
 
 describe('bundle-boot-seam — the arrangement `npm run build` emits', () => {
   it('A-1 the build emits the artifact the `main` field names, in the declared format', async () => {

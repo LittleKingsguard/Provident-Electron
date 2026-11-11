@@ -1338,6 +1338,36 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `strata/marks.json` (REGENERATED: one unmarked gating file is added), so this block appends ONE path and no second spelling
   //    of one already in the union, which is the difference between a write and a claim.
   'tests/unit/renderer-wiring/pane-node-map.test.ts',
+  // ── `bundle-boot-seam`'S L2 BATTERY — `tests/integration/bundle-boot-seam/arrangement.test.ts`, AND IT JOINS THIS UNION AS ITS
+  //    OWN ENTRY WITH ITS OWN REASON, NEVER AS THE PREFIX `tests/integration/bundle-boot-seam/` (`strata/modules.json` claims that
+  //    DIRECTORY for the module, because a map row claims a TREE; a boundary row may not, because a directory declaration would
+  //    admit every battery a later pass drops beside this one without naming it — `B-2`'s undeclared-sibling arm).
+  //    **ITS SUBJECT IS `D-227`'S CURE SHAPE (2): AN IN-SUITE BUILDER THAT IS NO LONGER A SECOND CLAIMANT.** This battery reads
+  //    only what `npm run build` emits, so it has to be able to build — and its `beforeAll` now takes the HOST-WIDE LIVE-BOOT LOCK
+  //    (`acquireLiveBoot()`, the same lock every booting battery holds) and then calls `ensureArtifacts()`, which runs
+  //    `npm run build` ONLY when a member of its artifact set is absent or empty, ONCE, in this process, and RE-MEASURES the set
+  //    after it: so the build this file runs stands INSIDE the host-wide live-boot lock, and no build it starts can be a SECOND
+  //    CLAIMANT against a boot. A warm tree builds nothing at all — a `stat` and no build is the whole of that arm — and the 2 s
+  //    grace the race needed is GONE with the race, an absence under the lock being an absence. The lock is released in a
+  //    `finally`, so a build that throws cannot queue the booters behind a dead claimant; and a build that throws, or that exits
+  //    zero without producing the set, is named into `buildFailure` and asserted null by `A-1`, never swallowed.
+  //    **NO PRODUCT BYTE AND NO ASSERTION MOVES** — this is the instrument's own serialisation, not the app's — and the entry is
+  //    added WITH the edit that dirtied the path, never after it (`D-146`'s precedent).
+  'tests/integration/bundle-boot-seam/arrangement.test.ts',
+  // ── `bundle-boot-seam`'S L3 BATTERY — `tests/unit/bundle-boot-seam/emission.test.ts`, AND IT JOINS THIS UNION AS ITS OWN ENTRY
+  //    WITH ITS OWN REASON, NEVER AS THE PREFIX `tests/unit/bundle-boot-seam/` (`derivation.test.ts` and this file are the two
+  //    paths the map's directory claim covers, and a directory would admit a third battery a later pass drops beside them without
+  //    naming it — `B-2`'s undeclared-sibling arm; the two are declared as the SEPARATE entries they are).
+  //    **ITS SUBJECT IS THE SAME CURE SHAPE AT THE OTHER GRAIN**: `U-1`…`U-6` read the emission set's names and the arms that
+  //    produce them, so this file too must build when the set is absent — and it does it through its own `ensureArtifacts()`
+  //    inside the SAME host-wide live-boot lock, taken at its `beforeAll` and released in a `finally`. Its set is the wider one its
+  //    rows read — the `main` field's entry, the preload, the two sibling bundles, and the renderer's bundle and page — and the
+  //    reading is identical in shape to `arrangement.test.ts`'s: present ⇒ a `stat` and no build; absent ⇒ `npm run build` ONCE by
+  //    this process under the lock, then the set RE-MEASURED, with a throw or a set still incomplete named into `buildFailure`
+  //    (`U-2` asserts it null) and never a red attributed to a row's own claim. **SO NEITHER BUILDER IS A SECOND CLAIMANT AGAINST
+  //    A BOOT**, which is the whole of what these two entries declare: they are the pass's edit and they are in-suite BUILDERS, not
+  //    merely assertions over a tree someone else built. Added WITH the edit that dirtied the path (`D-146`).
+  'tests/unit/bundle-boot-seam/emission.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
