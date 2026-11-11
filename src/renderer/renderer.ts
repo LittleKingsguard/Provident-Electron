@@ -1018,16 +1018,19 @@ async function main(): Promise<void> {
   if (!gutter.attached) {
     console.error(`[provident-renderer] the gutter affordance did NOT attach — the pane drag is inert (handle ${GUTTER_AFFORDANCE_ID})`)
   }
-  // ⟶ **TURN 4 — THE MENUS' ONE BOOT REGISTRATION (`S-11`; `D-181`, `D-196`)** — taken HERE, beside the affordance's
-  //    attach, because the menus pane is AUTHORED and nothing mints it: the eighteen static items exist as soon as the
-  //    first envelope loaded, so their listeners are attached once and no delivery, mint, subscription or timer is added
-  //    (`D-82` clause 4). **IT SENDS NO ROUTE AT BOOT**: the eleven admitted roles are called by a CLICK, so this site
-  //    writes no byte, awaits nothing and cannot move a step `tests/e2e/bundle-boot-seam`'s `B-5` orders. **AND ITS ONE
-  //    RETURNED READING IS READ**, the gutter's own rule above (`D-117`): zero attached items is a pane that renders as
-  //    the menu it claims and can perform nothing, and that is said out loud at the one site that can say it. **THE
-  //    SEVEN REFUSED ITEMS TAKE NO LISTENER AND THAT IS THE ENVELOPE'S DATA** (`D-181`): they carry no handler and render
-  //    `disabled`, while the enforcement is `main`'s admitted set — this realm adds no guard, because a render-side one is
-  //    the guard an agent's `provident.dispatch` bypasses (`D-196`).
+  // ⟶ **TURN 4 — THE MENUS' ONE BOOT REGISTRATION (`S-11`; `D-181`, `D-196`, `D-209`)** — taken HERE, beside the
+  //    affordance's attach, because the menus pane is AUTHORED and nothing mints it: the eighteen static items exist as
+  //    soon as the first envelope loaded, so their listeners AND their wiring-installed handler bodies are installed once
+  //    and no delivery, mint, subscription or timer is added (`D-82` clause 4). **IT SENDS NO ROUTE AT BOOT**: the eleven
+  //    admitted roles are called by a CLICK or by an agent's DISPATCH, never here, so this site sends nothing over the
+  //    bridge, awaits nothing and cannot move a step `tests/e2e/bundle-boot-seam`'s `B-5` orders — what it DOES write is
+  //    ONE `handlers` state-slice per item, graph bytes in this realm with no crossing behind them (`D-209`). **AND ITS
+  //    ONE RETURNED READING IS READ**, the gutter's own rule above (`D-117`): zero attached items is a pane that renders
+  //    as the menu it claims and can perform nothing, and that is said out loud at the one site that can say it. **THE
+  //    SEVEN REFUSED ITEMS TAKE NO CLICK LISTENER BUT THEY DO TAKE THE INSTALLED BODY** (`D-181`, `D-209`): they render
+  //    `disabled` and their refusal is `main`'s admitted set, and this realm installs the SAME handler on all eighteen
+  //    because a render-side guard is the one an agent's `provident.dispatch` runs around (`D-196`) — the body vets no role
+  //    and the route's refusal is written to the carrier like any other answer.
   const menus = startMenusItems(runtime)
   if (menus.attached === 0) {
     console.error('[provident-renderer] the menus items took NO click listener — the pane renders the menu it claims and no role can reach the route')
@@ -1235,6 +1238,12 @@ let tabsPagesReading: TabsPagesReading | null = null
  *  registration that stood beside it in `main()` is deleted with the store it fed). */
 let tabsClientSubscription: TabsSubscription | null = null
 
+/** **THE ROW'S ONE HANDLER NAME, AND NOTHING DISCOVERS A ROW BY IT** (`D-209`): a minted row carries its act as a
+ *  `handlers` entry on the DATUM, and the address book of rows is the mint's own `minted` answer (`D-182` m1) — so this
+ *  name is stated once, here, and never read back off a node. It is also **not** the menus' `MENUS_ITEM_HANDLER`: that one
+ *  is a CENSUS KEY the authored items are found by, while nothing in this file enumerates rows. */
+const TABS_ROW_HANDLER = 'tab-row-act'
+
 /** **THE DELIVERY'S OTHER TURN — THE MINT, BESIDE THE PAGES' DRIVE** (`S-4`; `D-179`'s spike, `D-182`'s five measurements,
  *  `D-198`'s string `target`, `D-200`'s resolvable prototype; `docs/L2/renderer-wiring/interface.md` §2 turn 1). ONE
  *  in-process `runtime.applyCommand({kind:'rows-mint', …})` per `['tabs']` DELIVERY — and **ON A `'committed'` READING ALONE**,
@@ -1288,25 +1297,63 @@ let tabsClientSubscription: TabsSubscription | null = null
  *  the reason the marker moved into the datum rather than into a mechanism. **AND THE VALUE IS A BOOLEAN, WHICH THE ENGINE
  *  RENDERS AS TEXT**: measured, `false` renders `active="false"` (the attribute PRESENT and literal) and an OMITTED member
  *  renders no attribute at all — so `active` is passed as a boolean and never as `'true'`/`'false'`, and the fallback where
- *  the record names no row for a seat is `false`. */
+ *  the record names no row for a seat is `false`.
+ *
+ *  **AND THE DATUM CARRIES A HANDLER BODY AS A LIVE FUNCTION, WHICH IS WHAT MAKES THE ROW A CONTROL FOR AN AGENT AND NOT
+ *  ONLY FOR A POINTER** (`D-209`, discharging `D-208`'s `AL-3` red without touching the surface or the preload). **MEASURED,
+ *  NOT TRACED**: a `rows-mint` datum may carry `handlers: [{ name, event: 'click', body: <function> }]`, the minted node
+ *  renders with it, and `provident.dispatch` runs it with `ctx` — while a **STRING** body would be adopted and **never run**
+ *  (`rows-mint` does not compile bodies; `dispatchEvent` skips a non-function `body` outright). **So the body here is a
+ *  CLOSURE over this turn's own `focusActRoute` and the seat's own `target` — NOT a body that names `window.provident`**,
+ *  which is the whole ruling: an authored/compiled body is `new Function`-compiled in the renderer's global scope and could
+ *  name every preload member, whereas a minted closure calls the realm's OWN act and opens no surface to an agent's
+ *  dispatch. **THE TWO PATHS CALL THE SAME ACT AND NEITHER REPLACES THE OTHER** — `attachRowAct` below stays exactly as it
+ *  was for a human's click, and this body is the agent's arm of the same act.
+ *
+ *  **AND ITS RETURN CROSSES `JSON.stringify`** (`D-209`'s cost (ii)): `focusActRoute` is ASYNC, so the body must **not**
+ *  return its promise — it starts the act and answers **its own short string**, which is what `dispatch`'s `results`
+ *  carries. **A DATUM'S `target` IS THE VALUE THE BODY CLOSES OVER AND THE VALUE `props.target` PUBLISHES**: one seat, one
+ *  delivery, one closure — and because `keyField` is not declared every delivery mints fresh nodes, so the closure cannot
+ *  outlive the value it carries (the same freshness argument this turn makes for re-attaching listeners, `D-201`).
+ *  **`handlers` SITS BEFORE `props` SO THAT `props` STAYS LAST**, which is the member order the two paragraphs above hold
+ *  (the first scalar composes the row's text, and `props` reaches the attributes). */
 function driveTabsRows(reading: TabsClientReading, runtime: Runtime | null): void {
   if (reading.status !== 'committed' || runtime === null) return
   const recordById = new Map<string, TabsRecordRow>()
   for (const row of reading.rows) recordById.set(row.id, row)
   const rows = reading.order.map((id) => {
     const record = recordById.get(id)
+    // THE SEAT'S OWN TARGET, DERIVED ONCE AND CARRIED BY BOTH HALVES OF THE DATUM — `props.target`, which the listener reads
+    // back off the node, and the handler body's closure, which is the agent's arm of the same act. One value, two members,
+    // and no third spelling of it (`D-129`).
+    const seatTarget = record?.target ?? id
     // `label` FIRST — see this turn's own note: it is the binding the engine renders the row's text from, and the tab id is
     // the fallback where the record carries no title (`D-194`). The record's row follows WHOLE, so `target`, `active` and
-    // every other member travel as the reading gave them (`D-76`); `props` LAST is the row's own values in the one slot the
-    // engine renders attributes from — `target`, the slot the ATTACH turn's listener reads back off the node (`D-201`),
-    // with the tab's own id as the same fallback the label takes where the record names no row for that seat, and `active`,
-    // the record's own flag BESIDE it, which is the whole of the marker: every delivery mints FRESH (`keyField` is not
-    // declared — see this turn's own note), and a fresh mint composes every `props` member the datum carries, so the flag
-    // is painted at each mint instead of freezing on a reused node (`D-201`'s freeze measurement).
+    // every other member travel as the reading gave them (`D-76`); `handlers` sits BESIDE them as a live-function body, the
+    // agent's reachable half (`D-209`); `props` LAST is the row's own values in the one slot the engine renders attributes
+    // from — `target`, the slot the ATTACH turn's listener reads back off the node (`D-201`), with the tab's own id as the
+    // same fallback the label takes where the record names no row for that seat, and `active`, the record's own flag
+    // BESIDE it, which is the whole of the marker: every delivery mints FRESH (`keyField` is not declared — see this turn's
+    // own note), and a fresh mint composes every `props` member the datum carries, so the flag is painted at each mint
+    // instead of freezing on a reused node (`D-201`'s freeze measurement).
     return {
       label: record?.label ?? id,
       ...(record ?? {}),
-      props: { target: record?.target ?? id, active: record?.active === true },
+      // THE AGENT-REACHABLE HALF (`D-209`): a CLOSURE calling this realm's own `focusActRoute`, which is the SAME act
+      // `attachRowAct`'s DOM listener calls below — neither replaces the other, a human clicks and an agent dispatches. The
+      // body does NOT name `window.provident` (no surface is opened to an agent's dispatch) and does NOT return the act's
+      // promise: it starts the act and answers its own JSON-safe word for `dispatch`'s `results`.
+      handlers: [
+        {
+          name: TABS_ROW_HANDLER,
+          event: 'click',
+          body: (): string => {
+            void focusActRoute({ target: seatTarget })
+            return `focus ${seatTarget}`
+          },
+        },
+      ],
+      props: { target: seatTarget, active: record?.active === true },
     }
   })
   let minted: readonly string[] = []
@@ -1367,7 +1414,12 @@ function driveTabsRows(reading: TabsClientReading, runtime: Runtime | null): voi
  *
  *  Two rows sharing one `target` both reach that seat, and `seatOf` seats the FIRST of `order` — so the later row is
  *  unclickable and `AL-3` drives a unique target. **A ROW THAT WILL NOT RESOLVE OR WILL NOT TAKE A LISTENER ATTACHES
- *  NOTHING AND THROWS NOTHING** (`D-127`); the answer says whether the listener landed so the delivery can report it. */
+ *  NOTHING AND THROWS NOTHING** (`D-127`); the answer says whether the listener landed so the delivery can report it.
+ *
+ *  **AND THIS LISTENER IS NOT REPLACED BY THE ROW'S HANDLER BODY, NOR IS IT A SECOND ACT BESIDE IT** (`D-209`): the datum's
+ *  `handlers` entry is the AGENT's arm — `provident.dispatch` at the row's node id — and this is the HUMAN's; both call
+ *  `focusActRoute({ target })` with the seat's own target, so there is ONE implementation of the switch and two causes that
+ *  reach it. A reader who finds two paths must not read the newer one as having retired this one. */
 function attachRowAct(runtime: Runtime, nodeId: string): boolean {
   let element: unknown = null
   try {
@@ -1395,19 +1447,31 @@ function attachRowAct(runtime: Runtime, nodeId: string): boolean {
  *  the argument that shadowed it, and nothing else in this file writes either one. */
 function holdTabsReading(reading: TabsClientReading, runtime: Runtime | null): void {
   tabsClientReading = reading
+  // **AND THE MINT — WITH ITS ATTACH — IS MADE FROM THE SAME HELD READING** (`S-4`/`S-5`, `D-179`, `D-201`): one `rows-mint`
+  // per delivery, in the one body that already holds it, followed by one `click` listener per row that mint answered. It
+  // writes no page, resolves nothing through a map and holds no record: a delivery that is not `'committed'` mints nothing
+  // and attaches nothing (that gate is the turn's own). **THE RUNTIME IS THE WIDER `Runtime` HERE AND NOT `TabsPageRuntime`**:
+  // the attach reads each row's own `props.target` through `authoredPropOf`'s `nodeState`, which that narrowed surface does
+  // not carry (`docs/L3/renderer-wiring/design.md` §1).
+  // **AND THE MINT NOW RUNS FIRST — BEFORE THE PAGES' DRIVE, WHERE IT USED TO RUN AFTER IT** (`D-208`'s `AL-5` red, whose
+  // stated cause the measurement below does not confirm). **WHAT MOVED IS THE ORDER AND NOTHING ELSE**: the same two calls,
+  // on the same held reading, from the same body — the datum, the attach, the `'committed'` gate and the terminals' two
+  // writes are what they were.
+  // **AND THE ORDER WAS MEASURED BOTH WAYS IN A REAL RENDERER, WHICH IS WHY IT IS RECORDED RATHER THAN CREDITED**: a
+  // `css.style` write on either authored terminal, then a `rows-mint` — and the same mint, then the same write — leaves the
+  // write standing at its value across every render that follows (a `state-slice` on `tabs-landing-page` read back
+  // `display: none;` after two mints, and after a delivery's whole dirtied set). **SO THE MINT'S RENDER DISCARDS NOTHING**,
+  // and this ordering changes no reading: the terminals' red is the WITNESS's, not this turn's — `deriveTabsWitness`'s
+  // landing arm compares the active row's id against the reading's own `landing` member, which IS that id
+  // (`src/main/tabs-record/index.ts`'s `TabsRecordReading.landing`), so a record showing the ERROR tab still asks the
+  // landing page to show. That arm is `tabs-client.ts`'s subject and not this file's, and it is `AL-5` and `AL-3`'s red.
+  driveTabsRows(tabsClientReading, runtime)
   // **THE DRIVE IS MADE FROM THE HELD READING AND NOT FROM ITS ARGUMENT** (`D-117`). The two were the same
   // value, but only one of them had a reader: `tabsClientReading` was written here and at the defect arm
   // below and READ NOWHERE, so it named nothing (`D-70`). Reading the binding here is what the comment
   // above the declaration already claimed — "`tabsPagesReading` is what the drive made of the LAST
   // READING" — and it makes the two statements about a read one pair rather than a pairing and a copy.
   tabsPagesReading = driveTabsLandingPage(tabsClientReading, runtime)
-  // **AND THE MINT — WITH ITS ATTACH — IS MADE FROM THE SAME HELD READING** (`S-4`/`S-5`, `D-179`, `D-201`): one `rows-mint`
-  // per delivery, in the one body that already holds it, after the pages' drive and never before it, followed by one
-  // `click` listener per row that mint answered. It writes no page, resolves nothing through a map and holds no record: a
-  // delivery that is not `'committed'` mints nothing and attaches nothing (that gate is the turn's own). **THE RUNTIME IS
-  // THE WIDER `Runtime` HERE AND NOT `TabsPageRuntime`**: the attach reads each row's own `props.target` through
-  // `authoredPropOf`'s `nodeState`, which that narrowed surface does not carry (`docs/L3/renderer-wiring/design.md` §1).
-  driveTabsRows(tabsClientReading, runtime)
 }
 
 /** THE ONE SITE — called from `main()` as its last statement, never awaited (see above). ONE read and ONE registration,
@@ -1680,22 +1744,39 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
  * spelled here, and no closure map from a node to a role stands in for the node's own prop — a captured role would
  * be the copy `D-129` forbids and would go stale the moment the envelope's authored text moved.
  *
+ * **AND EVERY ITEM ALSO GAINS A WIRING-INSTALLED HANDLER BODY, WHICH IS THE AGENT'S ARM OF THE SAME ACT** (`D-209`,
+ * discharging `D-208`'s `AL-7` red). The items are AUTHORED, so a body authored beside them would be a **STRING** —
+ * adopted by `rows-mint`'s datum path and **never run** by `dispatchEvent` (which skips a non-function `body`) — and the
+ * only way such a body could reach the route would be to name `window.provident` **inside the envelope**, which is exactly
+ * the surface `D-209` refuses. **So the body is a CLOSURE this file installs as a `handlers` `state-slice`, per item**, and
+ * the naming of `window.provident.menu` lives in this file's own `menuRoleRoute` — in the app's code, never in a body. The
+ * engine merges a slice layer's handlers **append-with-override per `(name, event)`**, so on the eleven the installed
+ * function **OVERRIDES** the authored no-op under the same key rather than standing beside a second `click` path, and on
+ * the seven it is the item's **only** dispatch body. **A HUMAN CLICKS AND AN AGENT DISPATCHES, AND BOTH CALL ONE ACT**
+ * (`menuRoleAct`): the DOM listener below is NOT replaced by the installed body, and a reader who finds two paths must not
+ * read the newer one as having retired the older.
+ *
  * **AND THE FOCUS RULE, WHICH IS A RULE AND NOT A NICETY** (`D-196`, and the reason it is written down): the edit
  * roles — `undo`, `redo`, `cut`, `copy`, `paste`, `delete`, `selectall` — are `webContents` operations that act on
  * the **FOCUSED ELEMENT**, and clicking an authored `<div>` moves focus ONTO that div first. A native menu never has
  * this problem because it lives OUTSIDE the document. **So a `mousedown` listener calls `preventDefault()`**, which
  * stops focus from moving while leaving the `click` to fire on mouseup — and only then does the role execute, against
  * the element the user was actually in. **WITHOUT THIS LISTENER SIX OF THE ELEVEN EXECUTE AGAINST A COPY OF NOTHING**:
- * the receipt would read `admitted` over an edit that reached no text.
+ * the receipt would read `admitted` over an edit that reached no text. **IT IS A DOM LISTENER AND A DISPATCHED CLICK HAS
+ * NO MOUSEDOWN**: an agent's `provident.dispatch` never moves the document's focus, so the focus rule is the HUMAN's half
+ * of the arrangement and the dispatch arm needs no equivalent of it.
  *
- * **THE SEVEN ARE DATA AND THE GUARD IS `main`'s** (`D-181`, whose split is FIXED and is not adjusted here): the
- * envelope renders them `disabled` and authors NO handler on them, so they take no listener and carry no click path
- * at all — **the refusal is the RENDERING, and it is a COURTESY**. The **ENFORCEMENT** is `src/main/main.ts`'s
- * admitted set, tested before any other arm of `menuRoleAnswer`: `provident.dispatch` synthesises a click on an
- * authored id, so an agent reaches every listener this file installs, and only the main-process bound stops `quit`,
- * `close`, `reload`, `forcereload`, `toggledevtools`, `minimize` and `zoom` however the click arrived (`D-196`).
- * **SO THIS TURN REFUSES NOTHING**: it adds no roster, no veto and no prefix test — a render-side guard would be the
- * one an agent's own `dispatch` bypasses, and it would be a second authority over a decision the corpus gave `main`.
+ * **THE SEVEN ARE DATA AND THE GUARD IS `main`'s** (`D-181`, whose split is FIXED and is not adjusted here): the envelope
+ * renders them `disabled`, and **they take no DOM listener** — the refusal is the RENDERING, and it is a COURTESY. The
+ * **ENFORCEMENT** is `src/main/main.ts`'s admitted set, tested before any other arm of `menuRoleAnswer`: `provident.dispatch`
+ * synthesises a click on an authored id, so an agent reaches every installed body this file writes, and only the
+ * main-process bound stops `quit`, `close`, `reload`, `forcereload`, `toggledevtools`, `minimize` and `zoom` however the
+ * click arrived (`D-196`). **SO THE SEVEN GET THE INSTALLED BODY TOO, AND THIS TURN STILL REFUSES NOTHING**: every item the
+ * census answers — **all eighteen**, not the eleven — is given the same body, and that body **does not vet a role, read a
+ * role list or refuse anything**; a refusal it receives is the route's answer, written to the carrier like any other. To
+ * have installed on the eleven and SKIPPED the seven would be this file making the refusal decision a second time, in the
+ * realm an agent's own `dispatch` runs in — the second authority `D-181` puts on `main` and the one `D-196` measured a
+ * render-side guard cannot hold.
  *
  * **AND THE ANSWER LANDS IN THE ENVELOPE'S ONE RECEIPT CARRIER** (`MENUS_RECEIPT_ID`): the route's answer is written
  * as ONE `state-slice` `content` on that authored node — the write kind the corpus already uses for a STATUS node
@@ -1707,17 +1788,49 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
  * silence, because a click that reached nothing is a reading and not an exception.
  * ══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/** **THE ENVELOPE'S ONE HANDLER NAME, AND THE ONLY DISCOVERY CRITERION THIS TURN ADDS** (`D-181`, `D-126`'s
- *  discipline): the eleven admitted items share ONE authored body (`MENUS_ITEM_BODY`) under ONE handler name, and
- *  nothing else in the tree authors it — so the graph's own census answers "which nodes are menu items", and the
- *  seven, which the envelope authors with `disabled` and NO handler, are absent from that answer rather than vetoed
- *  here. **IT IS A NAME AND NOT A ROSTER**: no role is listed, no count is asserted, and a node this criterion
- *  misses is a node nobody can click (`provident.list_targets` shows the same handler list to an agent). */
+/** **THE ENVELOPE'S ITEM TOKEN — ONE SPELLING, TWO AUTHORED USES, AND THE CENSUS CRITERION THIS TURN ADDS**
+ *  (`D-181`, `D-126`'s discipline; `D-209`). The envelope authors `css: { classes: ['menu-item'] }` on **ALL EIGHTEEN**
+ *  items and `handlers: [{ name: 'menu-item', event: 'click' }]` on the **ELEVEN** admitted ones — the same token in both
+ *  places. **THIS FILE READS THE CLASS** as "which nodes are menu items", because that is the criterion the seven are
+ *  absent from and must not be (the agent's arm belongs on all eighteen, `D-181`'s refusal being `main`'s), and **INSTALLS
+ *  UNDER THE SAME NAME**, which is the `(name, event)` key the eleven's authored body already occupies — so the engine's
+ *  append-with-override REPLACES that no-op with the function instead of leaving two `click` handlers on one item.
+ *  **IT IS A TOKEN AND NOT A ROSTER**: no role is listed and no count is asserted; a node this criterion misses is a node
+ *  no agent can dispatch at (`provident.list_targets` shows the same handler list to an agent, which is why the install is
+ *  also visible there). */
 const MENUS_ITEM_HANDLER = 'menu-item'
 
-/** **THE AUTHORED ITEMS' NODE IDS, ASKED OF THE GRAPH** (`runtime.listTargets`, the one census this file reads):
- *  in-tree nodes carrying the envelope's own `click` handler. TOTAL — a runtime whose census throws, answers no
- *  `nodes` or answers a shape that is not a list states NO item, so the turn degrades to no listener and no throw. */
+/** **THE AUTHORED CLASS TOKEN OF ONE NODE, AS THE GRAPH HOLDS IT** (`runtime.nodeState`'s `states[0].css`) — the read
+ *  `authoredPropOf` makes for `props`, made for `css`. **BOTH SPELLINGS THE TREE CAN CARRY ARE ANSWERED**: the authored
+ *  `classes` may reach the compiled state as the ARRAY the envelope writes or as the SPACE-JOINED string the adapters
+ *  compose before emitting the attribute, and this relation accepts either rather than assuming one. TOTAL — a `''` id,
+ *  an absent node, an answer with no `states`, a `css` that is not an object and a read that THROWS all answer NO CLASS. */
+function authoredClassesOf(runtime: Runtime, nodeId: string): readonly string[] {
+  if (nodeId === '') return []
+  try {
+    const answer = runtime.nodeState(nodeId) as { readonly states?: readonly unknown[] } | null | undefined
+    const states = answer?.states
+    if (!Array.isArray(states) || states.length === 0) return []
+    const css = (states[0] as { readonly css?: unknown } | null | undefined)?.css
+    if (css === null || typeof css !== 'object' || Array.isArray(css)) return []
+    const classes = (css as Record<string, unknown>)['classes']
+    if (Array.isArray(classes)) return classes.filter((token): token is string => typeof token === 'string' && token !== '')
+    if (typeof classes === 'string') return classes.split(/\s+/).filter((token) => token !== '')
+    return []
+  } catch {
+    return []
+  }
+}
+
+/** **THE AUTHORED ITEMS' NODE IDS, ASKED OF THE GRAPH** (`runtime.listTargets` for the population, `runtime.nodeState`
+ *  for the one token — the two relations this file already reads): every in-tree node carrying the envelope's own item
+ *  class. **ALL EIGHTEEN, AND THAT IS DELIBERATE** (`D-181`, `D-209`): the seven refused items are items, they render, and
+ *  a dispatch at one must reach the route and be refused BY `main` — so the wiring installs their body and this function
+ *  refuses nothing. **THE COST IS NAMED, NOT HIDDEN**: one `nodeState` read per in-tree node, ONCE at boot, because the
+ *  class is a `css` member and the census `listTargets` answers carries no `css` — the tree is a few dozen nodes
+ *  (`theme-control.test.ts` counts `72`), so this is a boot registration's price and not a per-delivery one (`D-82` clause
+ *  4). TOTAL — a runtime whose census throws, answers no `nodes` or answers a shape that is not a list states NO item, so
+ *  the turn degrades to no listener and no throw. */
 function menuItemNodeIds(runtime: Runtime): readonly string[] {
   let listed: unknown = null
   try {
@@ -1730,19 +1843,95 @@ function menuItemNodeIds(runtime: Runtime): readonly string[] {
   const ids: string[] = []
   for (const entry of nodes as readonly unknown[]) {
     if (entry === null || typeof entry !== 'object') continue
-    const node = entry as { readonly nodeId?: unknown; readonly handlers?: unknown }
+    const node = entry as { readonly nodeId?: unknown }
     if (typeof node.nodeId !== 'string' || node.nodeId === '') continue
-    if (!Array.isArray(node.handlers)) continue
-    const carries = (node.handlers as readonly unknown[]).some(
-      (handler) =>
-        handler !== null &&
-        typeof handler === 'object' &&
-        (handler as { readonly name?: unknown }).name === MENUS_ITEM_HANDLER &&
-        (handler as { readonly event?: unknown }).event === 'click',
-    )
-    if (carries) ids.push(node.nodeId)
+    if (!authoredClassesOf(runtime, node.nodeId).includes(MENUS_ITEM_HANDLER)) continue
+    ids.push(node.nodeId)
   }
   return ids
+}
+
+/** **THE APP'S ONE CALL INTO THE MENUS ROUTE** (`D-181`, `D-196`; `D-209`'s reason written where the naming happens): the
+ *  route is `window.provident.menu`, reached through the app's EXISTING bridge handle — **and THIS is the only site that
+ *  spells it for a role's journey**, so the wiring-installed handler body below can be a closure that names nothing an
+ *  agent's `dispatch` could widen into a surface. `menu` is declared `menu?` on the ambient bridge, so a realm with an
+ *  older preload has no member at all: that arm is `no-route` and NOT a throw. **A SYNCHRONOUS THROW IS AN ARM TOO** — the
+ *  route is asked through `Promise.resolve` so a member that throws before answering and one that rejects answer the same
+ *  way, and neither escapes a click. */
+type MenuRouteAttempt =
+  | { readonly kind: 'sent'; readonly answer: Promise<unknown> }
+  | { readonly kind: 'no-route' }
+  | { readonly kind: 'threw'; readonly detail: string }
+
+function menuRoleRoute(role: string): MenuRouteAttempt {
+  const bridge = typeof window === 'undefined' ? undefined : window.provident
+  const route = bridge?.menu
+  if (bridge === undefined || typeof route !== 'function') return { kind: 'no-route' }
+  try {
+    return { kind: 'sent', answer: Promise.resolve(route.call(bridge, role)) }
+  } catch (error) {
+    return { kind: 'threw', detail: String(error) }
+  }
+}
+
+/** **ONE ITEM'S ACT — READ THE NODE'S OWN ROLE, ASK THE ONE ROUTE, WRITE THE ONE RECEIPT** (L2 §2 turn 4; `D-129`,
+ *  `D-194`): the SINGLE implementation the two causes share — the DOM `click` listener and the wiring-installed handler
+ *  body both call it, so a human's click and an agent's `provident.dispatch` take the same path (neither replaces the
+ *  other, `D-209`). The role is read **at the moment of the act** and never captured, the answer is written verbatim, and
+ *  every arm — no route, a rejection, a synchronous throw — lands a STATED receipt (`D-117`'s register). It **refuses
+ *  nothing and vets no role**: the refusal is `main`'s (`D-181`, `D-196`) and this turn writes whatever came back. */
+function menuRoleAct(runtime: Runtime, nodeId: string): { readonly role: string | null } {
+  const held = authoredPropOf(runtime, nodeId, 'role')
+  if (!held.readable || typeof held.held !== 'string' || held.held === '') return { role: null }
+  const role = held.held
+  const attempt = menuRoleRoute(role)
+  if (attempt.kind === 'no-route') {
+    writeMenuReceipt(runtime, `no route: this realm's preload carries no \`menu\` member, so '${role}' reached nothing`)
+    return { role }
+  }
+  if (attempt.kind === 'threw') {
+    writeMenuReceipt(runtime, `no answer: the menus route threw for '${role}' (${attempt.detail})`)
+    return { role }
+  }
+  void attempt.answer.then(
+    (answer: unknown) => { writeMenuReceipt(runtime, menuReceiptText(role, answer)) },
+    (error: unknown) => { writeMenuReceipt(runtime, `no answer: the menus route rejected for '${role}' (${String(error)})`) },
+  )
+  return { role }
+}
+
+/** **THE ITEM'S ONE INSTALLED HANDLER BODY — THE AGENT'S ARM, INSTALLED BY THE WIRING** (`D-209`; L1 `AL-7`'s reason for
+ *  being red, discharged here). ONE `state-slice` per item, at boot, writing a `handlers` list whose single entry is a
+ *  **live FUNCTION** — and the function is a CLOSURE over this file's `menuRoleAct`, so the route's naming stays in the
+ *  app's code and the envelope stays data (`D-129`). **THE NAME IS THE AUTHORED ONE**, so on the eleven the engine's
+ *  append-with-override `(name, event)` rule REPLACES the authored no-op body instead of adding a second `click` handler,
+ *  and on the seven — which author none — it is the whole of their dispatch path. **THE BODY VETS NOTHING**: it does not
+ *  know the admitted set, does not hold a roster and refuses no role; the refusal is `main`'s answer, and this body writes
+ *  it to the carrier through the same act a click uses. **AND ITS RETURN IS ITS OWN WORD AND NEVER THE ACT'S PROMISE**:
+ *  a body's return crosses `JSON.stringify` into `dispatch`'s `results`, so `menuRoleAct` is STARTED and the body answers a
+ *  short string (`D-209`'s cost (ii)). A refused write is REPORTED, never silent (`D-117`). */
+function installMenuItemHandler(runtime: Runtime, nodeId: string): boolean {
+  // THE CLOSURE CLOSES OVER THE NODE ID, NOT THE ROLE: the authored node does not churn, and the role is read off the node
+  // by `menuRoleAct` at dispatch time — the same relation the DOM listener has (`D-129`'s no-captured-role rule).
+  const body = (): string => {
+    const act = menuRoleAct(runtime, nodeId)
+    return act.role === null ? 'menu-item: no role' : `menu-item ${act.role}`
+  }
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: nodeId,
+      mutation: [{ targetProp: 'handlers', mode: 'replace', value: [{ name: MENUS_ITEM_HANDLER, event: 'click', body }] }],
+    })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    if (status === 'applied') return true
+    console.error(`[provident-renderer] menus: the item on ${nodeId} refused its installed handler (status=${status})`)
+    return false
+  } catch (error) {
+    // NOTHING ESCAPES THE INSTALL: a hostile runtime is a reading this turn leaves standing, said out loud.
+    console.error(`[provident-renderer] menus: the install on ${nodeId} threw; an agent's dispatch reaches no act there`, error)
+    return false
+  }
 }
 
 /** **THE RECEIPT'S TEXT — WHAT THE ROUTE ANSWERED, IN THE ROUTE'S OWN WORDS** (`D-181`, `D-196`; L2 §2 turn 4): an
@@ -1801,6 +1990,10 @@ function writeMenuReceipt(runtime: Runtime, text: string): void {
  *  synchronous throw from the channel writes the same way. **A CLICK THAT REACHED NOTHING IS A READING**: it is never
  *  an exception out of a handler and never silence.
  *
+ *  **AND THE CALL IS `menuRoleAct`, WHICH IS THE SAME ACT THE INSTALLED HANDLER BODY RUNS** (`D-209`): the body does not
+ *  replace this listener and this listener does not second-guess the body — one act, two causes (a human's click and an
+ *  agent's `provident.dispatch`), one receipt. The role read, the route call and the carrier write all live there.
+ *
  *  Two items sharing one role are two callers of one route and the route answers each of them; this turn keys nothing
  *  by role. **A NODE THAT WILL NOT RESOLVE OR WILL NOT TAKE A LISTENER ATTACHES NOTHING AND THROWS NOTHING**
  *  (`D-127`), and the answer says so, so the boot can report it. */
@@ -1820,39 +2013,28 @@ function attachMenuItem(runtime: Runtime, nodeId: string): boolean {
     const prevent = (event as { readonly preventDefault?: unknown } | null | undefined)?.preventDefault
     if (typeof prevent === 'function') (prevent as () => void).call(event)
   })
-  listen.call(element, 'click', (): void => {
-    const held = authoredPropOf(runtime, nodeId, 'role')
-    if (!held.readable || typeof held.held !== 'string' || held.held === '') return
-    const role = held.held
-    const bridge = typeof window === 'undefined' ? undefined : window.provident
-    const route = bridge?.menu
-    if (bridge === undefined || typeof route !== 'function') {
-      writeMenuReceipt(runtime, `no route: this realm's preload carries no \`menu\` member, so '${role}' reached nothing`)
-      return
-    }
-    try {
-      void route.call(bridge, role).then(
-        (answer: unknown) => { writeMenuReceipt(runtime, menuReceiptText(role, answer)) },
-        (error: unknown) => { writeMenuReceipt(runtime, `no answer: the menus route rejected for '${role}' (${String(error)})`) },
-      )
-    } catch (error) {
-      writeMenuReceipt(runtime, `no answer: the menus route threw for '${role}' (${String(error)})`)
-    }
-  })
+  // THE HUMAN'S ARM — the same act the installed handler body is the agent's arm of (`D-209`): read the node's own role,
+  // ask the one route, write the one receipt. Neither path is the other's implementation.
+  listen.call(element, 'click', (): void => { menuRoleAct(runtime, nodeId) })
   return true
 }
 
-/** **TURN 4 — `main()`'S ONE BOOT REGISTRATION, ONCE, BESIDE THE AFFORDANCE'S ATTACH** (`S-11`; `D-181`, `D-196`;
- *  design §1 turn 4). It discovers the authored items from the graph's own census, gives each ONE `mousedown` and ONE
- *  `click` (`attachMenuItem`), and answers how many took their listener. **IT CREATES NOTHING, MINTS NOTHING,
- *  REGISTERS NO SUBSCRIPTION, AWAITS NOTHING AND SENDS NO ROUTE ITSELF**: every route call is a click's, so a boot that
- *  never clicks writes no byte and cannot delay or fail `tests/e2e/bundle-boot-seam`'s `B-5` order. **AND A FAILED
- *  ATTACH IS REPORTED PER ITEM** in `D-117`'s register — the boot's reading of this turn is the count it answers,
- *  which `main()` reads. */
+/** **TURN 4 — `main()`'S ONE BOOT REGISTRATION, ONCE, BESIDE THE AFFORDANCE'S ATTACH** (`S-11`; `D-181`, `D-196`,
+ *  `D-209`; design §1 turn 4). It discovers the authored items from the graph's own census, gives each ONE
+ *  `mousedown` and ONE `click` (`attachMenuItem`) AND ONE wiring-installed handler body
+ *  (`installMenuItemHandler`) — the two arms of one act, a human's and an agent's — and answers how many took their
+ *  listener. **IT CREATES NOTHING, MINTS NOTHING, REGISTERS NO SUBSCRIPTION, AWAITS NOTHING AND SENDS NO ROUTE ITSELF**:
+ *  every route call is a click's or a dispatch's, so a boot that never clicks writes no byte and cannot delay or fail
+ *  `tests/e2e/bundle-boot-seam`'s `B-5` order (the install writes one `handlers` layer per item — graph bytes, no
+ *  surface, no route and no await). **AND A FAILED ATTACH OR A REFUSED INSTALL IS REPORTED PER ITEM** in `D-117`'s
+ *  register — the boot's reading of this turn is the count it answers, which `main()` reads. */
 function startMenusItems(runtime: Runtime): { readonly attached: number } {
   const items = menuItemNodeIds(runtime)
   let attached = 0
   for (const nodeId of items) {
+    // THE AGENT'S ARM FIRST, THE HUMAN'S BESIDE IT (`D-209`): both are installed on every item the census answered, and
+    // neither depends on the other succeeding.
+    installMenuItemHandler(runtime, nodeId)
     if (attachMenuItem(runtime, nodeId)) {
       attached += 1
     } else {

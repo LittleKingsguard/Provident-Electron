@@ -32,8 +32,10 @@
 //   · group `skeleton` — `AL-1`, `AL-2`, `AL-6`: three READ-ONLY rows over one boot's own page. They cannot disturb
 //     each other (no write between them), and `AL-2` must read the record BEFORE the `tabs` group writes it.
 //   · group `tabs`    — `AL-3`, `AL-4`, `AL-5`: one boot, three acts on ONE record, in the order the rows stand
-//     (`AL-3` establishes the second tab the switch needs, `AL-4` re-mints over that state, `AL-5` drives the stage
-//     from it). Each row re-asserts its own premise, so a red row leaves a state the next row still states.
+//     (`AL-3` establishes the second tab the switch needs, `AL-4` moves the record's MARKER across a re-mint and reads
+//     two deliveries' fresh rows for it — `D-205`'s measurement as a gating row, with the id churn asserted as the price
+//     the app paid — and `AL-5` drives the stage from that record). Each row re-asserts its own premise, so a red row
+//     leaves a state the next row still states.
 //   · group `menus`   — `AL-7` alone: eighteen dispatches plus a rendered read and a transport ask between each, and
 //     its DECLARED failure mode is that the app DIES (`quit`/`close`/`reload` reaching the window). A row that reds by
 //     killing its boot must not take four sibling rows with it.
@@ -49,17 +51,21 @@
 // trees contend).
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 //
-// **THE ONE THING A DRIVER ENVELOPE CANNOT DO, AND IT DECIDES TWO OF THESE ROWS** (`D-201`, measured here):
-// `provident.load({kind:'envelope'})` reaches `Runtime.loadEnvelope`, whose FIRST statement is `tearDownGraph()` — the
-// app's own graph, its minted tab rows and their DOM listeners are DISCARDED before any body of the loaded envelope
-// can run. So the L1 table's `AL-3` instrument ("a driver-envelope body issues a `.click()` at a minted row's
-// element") has no expressible form at this head: the row the body would click no longer exists by the time the body
-// exists. `AL-3` is therefore driven at the boundary that DOES exist and is closest to its subject — an agent's
-// `provident.dispatch` at the minted row's own node id — and the red it takes is the finding: the switch turn is a
-// DOM `click` listener installed by the app's attach turn (`startTabsRowAttach`/`attachRowAct`), and the engine's
-// `dispatchEvent` runs declared handler bodies only, so nothing an agent can send reaches it. `AL-7` is the same
-// instrument gap one pane over (its items carry DOM listeners, and their authored engine body writes nothing), and
-// both rows are written as the L1 table states them so that the gap is MEASURED rather than papered over.
+// **THE ONE THING A DRIVER ENVELOPE CANNOT DO, AND WHY BOTH CONTROL ROWS ARE DRIVEN AT THE AGENT'S OWN DISPATCH**
+// (`D-201`, `D-209`; measured here): `provident.load({kind:'envelope'})` reaches `Runtime.loadEnvelope`, whose FIRST
+// statement is `tearDownGraph()` — the app's own graph, its minted tab rows and their DOM listeners are DISCARDED before
+// any body of the loaded envelope can run. So the L1 table's `AL-3` instrument ("a driver-envelope body issues a
+// `.click()` at a minted row's element") has no expressible form at this head: the row the body would click no longer
+// exists by the time the body exists. **BOTH ROWS ARE THEREFORE DRIVEN AT THE BOUNDARY THAT DOES EXIST** — an agent's
+// `provident.dispatch` at the control's own node id — **and since `D-209` THAT BOUNDARY REACHES THE ACT**: the minted tab
+// row carries a live-function `handlers: [{name:'tab-row-act', event:'click', body}]` closure over this realm's own
+// `focusActRoute`, and every menus item carries a wiring-installed `menu-item`/`click` body calling the same `menuRoleAct`
+// the item's DOM listener calls — so a human clicks and an agent dispatches, one act with two causes and no new preload
+// surface. **THE ANSWER ARRIVES ONE TURN LATE AND EACH ROW STATES HOW IT FORCES THAT TURN**: a menu body's route answer is
+// written into the receipt carrier in the ROUTE PROMISE's continuation, and a re-read of the rendered page 0…2 000 ms
+// after the act (measured: eight stamps) still read the previous answer, while the next dispatch's render turn made it
+// readable at once — so `AL-7` issues a DUMP ACT at the carrier (a node with no handler, performing nothing) and spends
+// its bound on the carrier's own text, and `AL-3` reads the RECORD, which is the store's answer and knows no render turn.
 //
 // **AND THE COMPUTED-STYLE INSTRUMENT `D-204` NAMES AS THE PROJECT'S MISSING ONE IS STILL MISSING FROM THIS BATTERY**,
 // measured rather than assumed: `AL-10` stands on RENDERED MARKUP, because neither route to a computed style exists
@@ -613,16 +619,23 @@ function renderedRows(html: string): RenderedRow[] {
     return [{ nodeId, target, label, active: attrOf(tag, 'active') === 'true' }]
   })
 }
-/** THE MENUS' EIGHTEEN ITEMS, in DOM order, with the role each node carries and whether it renders disabled. */
-interface RenderedItem { role: string; label: string; disabled: boolean }
+/** THE MENUS' EIGHTEEN ITEMS, in DOM order, with the ROLE each node carries, its rendered label, whether it renders
+ *  disabled, and — **THE ADDRESS AN AGENT'S DISPATCH NEEDS AND THE ONLY UNAMBIGUOUS ONE** (`D-209`) — the node's own
+ *  `data-node-id`. **THE LABEL IS NOT AN ADDRESS**: `D-180`'s enumeration labels one item `Close` and the app authors a
+ *  SECOND node with that very text (the overlay's own close control, `overlay-close`), so a label→node map built from
+ *  `provident.list_targets` addresses the wrong node for `close` — measured: that dispatch ran the OVERLAY's body
+ *  (`results:[null]`) and left the menus carrier untouched. The item's `menu-item` class is the criterion, and its own
+ *  `data-node-id` is the address. */
+interface RenderedItem { nodeId: string; role: string; label: string; disabled: boolean }
 function renderedItems(html: string): RenderedItem[] {
   return tagsOf(html).flatMap((tag): RenderedItem[] => {
     if (!tagHasClass(tag, 'menu-item')) return []
     const role = attrOf(tag, 'role')
-    if (role === null) return []
+    const nodeId = attrOf(tag, 'data-node-id')
+    if (role === null || nodeId === null) return []
     const after = html.slice(html.indexOf(tag) + tag.length)
     const close = after.indexOf('<')
-    return [{ role, label: (close < 0 ? after : after.slice(0, close)).trim(), disabled: attrOf(tag, 'disabled') === 'true' }]
+    return [{ nodeId, role, label: (close < 0 ? after : after.slice(0, close)).trim(), disabled: attrOf(tag, 'disabled') === 'true' }]
   })
 }
 const menuCount = (html: string): number => tagsOf(html).filter((tag) => tagHasClass(tag, 'menus-menu')).length
@@ -1276,7 +1289,13 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
   it('AL-3 — the row is a CONTROL: a click at a minted row moves the record\'s active member', async () => {
     const { booted } = await shared('tabs')
     // ── the premise: a SECOND tab, because a switch to the only tab is no switch ──
-    const seeded = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: false }))
+    // **AND ITS TARGET IS THE ERROR TERMINAL CARRYING ITS WITNESS**: the error page's witness is DERIVED FROM THE ROW's
+    // own `error` member (`tabs-client.ts`'s `deriveTabsWitness`; the rule `AL-5` states and uses), so a record whose
+    // second row names the error page WITHOUT an `error` member asks the stage to show a page the record holds no
+    // witness for — measured: that delivery leaves the landing page standing and the error page hidden, which is the
+    // witness answered correctly rather than a repaint missing. The witness is this row's PREREQUISITE and not its
+    // subject, exactly as the record itself is.
+    const seeded = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: false, error: 'al-3-switch' }))
     expect(
       str(asObject(seeded.value)?.['status']),
       `AL-3 PREREQUISITE — the record must name two tabs before a switch can move anything: the agent's ` +
@@ -1303,41 +1322,71 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     ).toHaveLength(1)
 
     // ── the act: an agent's dispatch AT THE MINTED ROW'S OWN NODE ID ─────────
-    // **AND THE INSTRUMENT IS NAMED WHERE IT IS WEAKER THAN THE L1 TABLE** (this file's header): `.click()` inside a
-    // driver-envelope body cannot reach this row, because loading an envelope TEARS THE APP'S GRAPH DOWN
-    // (`Runtime.loadEnvelope`'s first statement) and the row with it. So the closest boundary that exists is the agent's
-    // `provident.dispatch` at the row's own address — which is exactly the boundary the attach turn is supposed to make
-    // reachable.
+    // **THE ROW'S BODY IS THE AGENT-REACHABLE HALF, AND IT IS MEASURED HERE** (`D-209`): the mint's datum carries
+    // `handlers: [{ name: 'tab-row-act', event: 'click', body }]` — a CLOSURE over the realm's own `focusActRoute` and
+    // the seat's own `target` — so this dispatch RUNS the SAME act `attachRowAct`'s DOM listener calls, and neither path
+    // retires the other. **THE L1 TABLE'S INSTRUMENT IS STILL INEXPRESSIBLE AND THAT IS WHY THE BOUNDARY IS THIS ONE**:
+    // a driver-envelope body cannot `.click()` a minted row, because an envelope's load TEARS THE APP'S GRAPH DOWN
+    // (`Runtime.loadEnvelope`'s first statement) and the row with it (`D-201`).
     const clicked = await call(booted.client, 'provident.dispatch', { target: { kind: 'nodeId', nodeId: other?.nodeId ?? '' }, event: 'click' })
     expect(
       clicked.ok,
       `AL-3 — the agent's own \`provident.dispatch\` at the minted row \`${String(other?.nodeId)}\` must be answered: ` +
         `\`${trunc(clicked.text, 320)}\``,
     ).toBe(true)
+    // ── AND THE BODY'S OWN WORD, BEFORE THE RECORD IS READ: a body that ran with ANOTHER seat's value is caught here ──
+    // `dispatch`'s `results` is where a handler body's return arrives (`D-209`'s measurement, re-measured here), so this
+    // is the ONE place the row can read WHAT the click ran and WHICH target it closed over — the record below can only
+    // say that something moved.
+    expect(
+      arr(memberOf(clicked.value, 'results')),
+      `AL-3 — the minted row's DISPATCH BODY must RUN and answer the seat it closed over: \`provident.dispatch\` at ` +
+        `\`${String(other?.nodeId)}\` answered results=${textOf(memberOf(clicked.value, 'results'))} where the row's own ` +
+        `\`handlers\` body answers \`focus ${String(other?.target)}\` (the target its datum carries, \`D-209\`). An empty ` +
+        `\`results\` is a node whose declared bodies did not run; a word naming another target is a body bound to the ` +
+        `wrong seat.`,
+    ).toEqual([`focus ${String(other?.target)}`])
     // ── the record's active member MOVES ────────────────────────────────────
     let after = before
     let polls = 0
     let afterActive: unknown[] = beforeActive
+    let moved = false
     for (let attempt = 1; attempt <= POLL_MAX; attempt += 1) {
       polls = attempt
       after = recordOf((await readAt(booted.client, [TABS])).value) ?? before
       afterActive = arr(memberOf(after, 'order')).filter(
         (tabId) => typeof tabId === 'string' && memberOf(memberOf(after, tabId as string), 'active') === true,
       )
-      if (afterActive.length === 1 && afterActive[0] !== beforeActive[0]) break
+      if (afterActive.length === 1 && afterActive[0] !== beforeActive[0]) {
+        moved = true
+        break
+      }
       await sleep(POLL_MS)
+    }
+    // **THE DIAGNOSIS, TAKEN ONLY WHERE THE READING FAILED AND NEVER AS ITS SUBSTITUTE** (`D-208`'s discipline: the row
+    // is the instrument, the act is the subject). If the record did not move, the act is asked the SAME question the
+    // body asked it — `provident.focus` routes to the very `focusActRoute` the closure calls (`backend.invoke('focus')`)
+    // — so a red names whether the act REFUSED and with which word, instead of guessing at a lag.
+    let actAnswer = '(not asked: the record moved, so the act performed)'
+    if (!moved) {
+      const asked = await call(booted.client, 'provident.focus', { target: other?.target ?? '' })
+      actAnswer = trunc(asked.text, 700)
     }
     expect(
       { before: beforeActive, after: afterActive },
       `AL-3 — the record's active member must MOVE when the minted row is clicked: it read ${textOf(beforeActive)} before ` +
-        `the act and ${textOf(afterActive)} after ${String(polls)} re-read(s). **THE MEASURED CAUSE, AND IT IS THE ROW'S ` +
-        `FINDING**: the switch turn is a DOM \`click\` listener the app's own attach turn installs on the row's element ` +
-        `(\`attachRowAct\`), while \`provident.dispatch\` runs the node's DECLARED handler bodies and the minted row ` +
-        `declares none — so no agent-reachable act reaches the listener, and the driver-envelope body the L1 table names ` +
-        `cannot either, its load having discarded the very row it would click (\`D-201\`, \`D-202\`'s shim-only probe). The ` +
-        `row is a control for a pointer and not yet for an agent (\`D-177\`).`,
+        `the act and ${textOf(afterActive)} after ${String(polls)} re-read(s). **THE MECHANISM THE ROW NOW READS**: the ` +
+        `minted row carries a live-function \`handlers\` body (\`D-209\`), \`provident.dispatch\` runs it, and that body ` +
+        `calls this realm's own \`focusActRoute({ target })\` — the SAME act the DOM \`click\` listener calls — which seats ` +
+        `the row in the record's terms and writes \`['${TABS}', <row id>]\` at \`file\` through the \`data.write\` ` +
+        `passthrough, so the record this row reads is the act's own product. The body's word arrived as ` +
+        `\`${textOf(arr(memberOf(clicked.value, 'results')))}\`; the act, asked directly with the same target ` +
+        `(\`provident.focus\`), answers ${actAnswer}.`,
     ).toEqual({ before: ['landing'], after: ['second'] })
     // ── and the stage repaints, one body deciding both pages (`C-4`) ─────────
+    // **THE SUBJECT ABOVE PASSED; THIS ARM IS A SECOND CLAIM THE SAME CLICK OWES** (`C-4`, `D-129`): the row's switch is
+    // the record's, and the stage is driven from the record by ONE body, so a switch must move both pages. The record
+    // this row seeds gives the error terminal its witness (see the premise), so both writes are owed and both are read.
     const repaint = await surfaceWithin(booted.client, (text) => {
       const landing = styleOf(text, LANDING_PAGE_ID)
       const error = styleOf(text, ERROR_PAGE_ID)
@@ -1347,53 +1396,307 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       repaint.polls < POLL_MAX || (styleDeclares(styleOf(repaint.html, LANDING_PAGE_ID), 'display', 'none') && styleDeclares(styleOf(repaint.html, ERROR_PAGE_ID), 'display', 'block')),
       `AL-3 — and the stage must REPAINT onto the newly active tab's target: after the act the surface read ` +
         `landing=${textOf(styleOf(repaint.html, LANDING_PAGE_ID))} error=${textOf(styleOf(repaint.html, ERROR_PAGE_ID))} over ` +
-        `${String(repaint.polls)} bounded re-read(s). The declared failure mode "the stage not repainted" (\`C-4\`, ` +
-        `\`D-129\`: one body decides both pages).`,
+        `${String(repaint.polls)} bounded re-read(s), where the record's active member had moved to ` +
+        `${textOf(afterActive)} — so the ERROR page follows the record and the LANDING page does NOT hide. **THE MEASURED ` +
+        `CAUSE, AND IT IS \`AL-5\`'S OWN SUBJECT REACHED THROUGH THIS ROW'S CLICK**: the landing page's \`display\` write ` +
+        `is issued by the SAME delivery that then mints the tab rows (\`driveLayoutRegions\` (c) then \`driveTabsRows\`), ` +
+        `and the mint's render is what leaves the landing page's figure standing at the authored value — the upstream ` +
+        `placement-routing defect this unit lives with (\`D-182\`, upstream-owned, \`D-5\`/\`D-52\`, recorded at \`AL-5\`). ` +
+        `The declared failure mode "the stage not repainted" (\`C-4\`, \`D-129\`: one body decides both pages) is ` +
+        `therefore read on ONE page and not on the other: this arm is red on the landing half ALONE, and no part of it ` +
+        `says an agent's dispatch failed to reach the act — that is the arm above, and it passed.`,
     ).toBe(true)
   }, ROW_MS)
 
-  it('AL-4 — `keyField` holds ids stable: the surviving rows keep their `data-node-id`s across a re-mint', async () => {
+  it('AL-4 — the marker MOVES across a re-mint and the fresh rows are still CONTROLS: every id churns, and that churn is the price', async () => {
     const { booted } = await shared('tabs')
-    const before = renderedRows((await renderedHtml(booted.client)).html)
-    const beforeById = new Map(before.map((row) => [row.target, row.nodeId]))
+    // **THIS ROW'S SUBJECT IS WHAT THE APP CHOSE, AND IT IS THE OPPOSITE HALF OF WHAT `keyField` WOULD HAVE BOUGHT**
+    // (`D-208`'s reading of this row, `D-201`, `D-202`, `D-205`). `keyField` was REMOVED, not lost: with it a re-mint answers
+    // `minted: []` and REUSES each matched node, re-applying only the datum's source anchors, so a `props`-carried marker
+    // FROZE at the value it was first composed with. Without it every delivery mints every row FRESH, `props.active` is
+    // composed at each mint, and the attach turn re-attaches beside it. So this row asserts TWO properties where the old
+    // one asserted one — **the marker MOVES**, and **every row is a NEW node that is STILL A CONTROL** — and it names the
+    // PRICE of both rather than hiding it: DOM churn on every `['tabs']` delivery. **THE CONTROL IS CLAUSE 1**: restore
+    // `keyField: 'id'` and the marker stops moving, which is the red this row was re-grained to be able to produce.
+    const rowFor = (rows: RenderedRow[], target: string): RenderedRow | undefined => rows.find((row) => row.target === target)
+    /** THE MARKER AS THE PAGE SPELLS IT, one entry per authored tab target (`D-205`: `props.active` reaches the attribute
+     *  AT MINT, and a fresh mint is the whole of its mechanism). A target the page does not carry answers a SENTINEL, so
+     *  an absent row is a reading of the comparison and never a silent absence from it. */
+    const markerOf = (rows: RenderedRow[]): Json => {
+      const held: Json = {}
+      for (const target of [LANDING_PAGE_ID, ERROR_PAGE_ID]) held[target] = rowFor(rows, target)?.active ?? '(no row)'
+      return held
+    }
+    /** EVERY RENDERED ROW'S OWN ADDRESS, by the target its datum carries — read OFF THE PAGE and never remembered from a
+     *  mint's answer (`D-182` m1). */
+    const idsOf = (rows: RenderedRow[]): Json => {
+      const held: Json = {}
+      for (const row of rows) held[row.target] = row.nodeId
+      return held
+    }
+    /** THE RECORD'S OWN MARKER in the same per-target terms: the AUTHORITY the rendering is compared against, because a
+     *  rendered value that disagrees with the record IS a stale one — the exact product of the removed key (`D-201`). */
+    const recordMarkerOf = (record: Json | null): Json => {
+      const held: Json = {}
+      for (const tabId of arr(memberOf(record, 'order'))) {
+        if (typeof tabId !== 'string') continue
+        const row = memberOf(record, tabId)
+        const target = str(memberOf(row, 'target'))
+        if (target !== null) held[target] = memberOf(row, 'active') === true
+      }
+      return held
+    }
+    /** THE RECORD'S ACTIVE TARGETS — the ACT's own effect, read at the store (`focusActRoute` S8/S9): the marker as the
+     *  repair left it, in `order`'s terms, so no tab id has to be spelled here. */
+    const activeTargets = (record: Json | null): string[] =>
+      arr(memberOf(record, 'order')).flatMap((tabId): string[] => {
+        if (typeof tabId !== 'string') return []
+        if (memberOf(memberOf(record, tabId), 'active') !== true) return []
+        return [str(memberOf(memberOf(record, tabId), 'target')) ?? `(row ${tabId} carries no target)`]
+      })
+    /** THE RECORD'S STAMP FOR ONE ROW, by the target that row carries: the act's S8 product is ONE write of that row with
+     *  a FRESH `lastActiveAt` (`rowForSeat`'s clock), so the stamp is where a body that reached no act can be told from one
+     *  that performed — `dispatch`'s `results` cannot tell them apart (`D-209`'s cost (ii): the body answers its own word
+     *  whether or not the act lands). */
+    const stampOf = (record: Json | null, target: string): string | null => {
+      for (const tabId of arr(memberOf(record, 'order'))) {
+        if (typeof tabId !== 'string') continue
+        const row = memberOf(record, tabId)
+        if (str(memberOf(row, 'target')) === target) return str(memberOf(row, 'lastActiveAt'))
+      }
+      return null
+    }
+    // ── delivery 1: the marker stands on the LANDING row, and every row's address is read off it ──
+    // **THE PREMISE IS THIS ROW'S OWN** (`tabsRecord`), because `AL-3` leaves the record with its SECOND tab active: this
+    // row writes the record it must start from, and a red row still leaves that state standing for `AL-5`. **THE `error`
+    // MEMBER IS NOT THIS ROW'S SUBJECT** (`AL-5`'s witness rule): it is carried so the record has the shape the battery's
+    // other two rows write, and nothing below is a reading about the stage.
+    const seeded = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: false, error: 'al-4-marker' }))
     expect(
-      before.length,
-      `AL-4 PREREQUISITE — two rows must stand before a re-mint can be compared: ${textOf(before)}`,
-    ).toBe(2)
-    // ── the act: an agent's write that MOVES the record, so a delivery re-mints ──
-    const wrote = await writeAt(booted.client, [TABS, 'landing', 'label'], 'file', 'landing (renamed)')
-    expect(
-      str(asObject(wrote.value)?.['status']),
-      `AL-4 PREREQUISITE — the write that provokes the re-mint must commit: ` +
-        `\`data.write(['${TABS}','landing','label'])\` answered ${trunc(wrote.text, 320)}.`,
+      str(asObject(seeded.value)?.['status']),
+      `AL-4 PREREQUISITE — the delivery the FIRST reading is taken from must commit: ` +
+        `\`data.write(['${TABS}'], tier:'file')\` answered ${trunc(seeded.text, 320)}.`,
     ).toBe('committed')
-    const surface = await surfaceWithin(booted.client, (text) => renderedRows(text).some((row) => row.label === 'landing (renamed)'))
-    const after = renderedRows(surface.html)
+    const first = await surfaceWithin(booted.client, (text) => {
+      const rows = renderedRows(text)
+      return rows.length === 2 && rowFor(rows, LANDING_PAGE_ID)?.active === true && rowFor(rows, ERROR_PAGE_ID)?.active === false
+    })
+    const before = renderedRows(first.html)
+    const beforeIds = idsOf(before)
+    const beforeMarker = markerOf(before)
     expect(
-      after.some((row) => row.label === 'landing (renamed)'),
-      `AL-4 PREREQUISITE — the re-mint must have happened (the new label must render) before id stability can be read: ` +
-        `the surface answered ${textOf(after)} over ${String(surface.polls)} bounded re-read(s).`,
+      beforeMarker,
+      `AL-4 PREREQUISITE — two rows must stand, the LANDING one marked and the other NOT, before a MOVE has anything to ` +
+        `move: ${textOf(beforeMarker)} over ${String(first.polls)} bounded re-read(s).`,
+    ).toEqual({ [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false })
+    // ── CLAUSE 2 (b) (i) — THE FRESH ROW FOR THE TAB ALREADY SHOWN: dispatched, and the ACT'S OWN WRITE is the reading ──
+    // **EACH FRESH ROW MUST STILL BE A CONTROL, AND THAT IS ONE CLAIM PER ROW**: this is the row for the tab the record
+    // already shows, so the act's product is the row's fresh stamp and the marker must NOT move — the two halves of one
+    // `focusActRoute` call, read in the state where its own write is the whole change. The other row's arm follows, at the
+    // address the shift write's delivery mints.
+    const landingFresh = str(beforeIds[LANDING_PAGE_ID]) ?? ''
+    const stampBefore = stampOf(recordOf((await readAt(booted.client, [TABS])).value), LANDING_PAGE_ID)
+    const clicked = await call(booted.client, 'provident.dispatch', {
+      target: { kind: 'nodeId', nodeId: landingFresh },
+      event: 'click',
+    })
+    expect(
+      clicked.ok,
+      `AL-4 — the agent's own \`provident.dispatch\` at the FRESH row \`${landingFresh}\` must be answered: ` +
+        `\`${trunc(clicked.text, 320)}\`. That id was minted by the delivery this row has just read, so an unanswered ` +
+        `dispatch at it is a row that did not survive its own delivery.`,
     ).toBe(true)
-    // ── the MEASURE: a surviving row keeps the id it had ────────────────────
-    const churned: string[] = []
+    expect(
+      arr(memberOf(clicked.value, 'results')),
+      `AL-4 — the fresh row must RUN ITS OWN SEAT'S BODY and answer it: dispatch at \`${landingFresh}\` answered ` +
+        `results=${textOf(memberOf(clicked.value, 'results'))} where that row's datum answers \`focus ${LANDING_PAGE_ID}\` ` +
+        `(\`D-209\`). **WHAT THIS PROVES, AND WHAT IT DOES NOT**: the node is a NEW one — its id was not the previous ` +
+        `delivery's — and it carries a live body closed over ITS OWN seat, so the re-mint re-made the row as a CONTROL and ` +
+        `not as a picture of one. The \`click\` listener \`attachRowAct\` installs BESIDE that body is the HUMAN's arm of ` +
+        `the SAME act and is not addressable from this boundary (\`D-209\`), so what gates here is the datum-side reach on ` +
+        `a fresh address; the listener's per-mint re-attachment rests on the same premise (\`D-202\`) and is stated, not ` +
+        `measured.`,
+    ).toEqual([`focus ${LANDING_PAGE_ID}`])
+    let stampAfter = stampBefore
+    for (let attempt = 1; attempt <= POLL_MAX; attempt += 1) {
+      stampAfter = stampOf(recordOf((await readAt(booted.client, [TABS])).value), LANDING_PAGE_ID)
+      if (stampAfter !== stampBefore) break
+      await sleep(POLL_MS)
+    }
+    expect(
+      stampAfter,
+      `AL-4 — and the fresh row must ACT, and not merely answer: its body calls this realm's own \`focusActRoute\`, whose ` +
+        `S8 product is ONE write of the \`${LANDING_PAGE_ID}\` row with a fresh \`lastActiveAt\`, so the record's stamp for ` +
+        `that row must advance — it read ${textOf(stampBefore)} and then ${textOf(stampAfter)}. **THIS IS THE ARM THAT ` +
+        `SEPARATES THE CLOSURE FROM THE ACT**: \`D-209\`'s cost (ii) is that the body answers its own word whether or not ` +
+        `the act lands, so \`results\` above proves the body RAN and this proves the act PERFORMED.`,
+    ).not.toBe(stampBefore)
+    // ── and the delivery THAT ACT caused: the ids churn once more, and the marker stays where the act left it ──
+    const second = await surfaceWithin(booted.client, (text) => {
+      const rows = renderedRows(text)
+      return rows.length === 2 && rows.every((row) => {
+        const was = str(beforeIds[row.target])
+        return was !== null && was !== row.nodeId
+      })
+    })
+    const secondRows = renderedRows(second.html)
+    const secondIds = idsOf(secondRows)
+    const secondMarker = markerOf(secondRows)
+    expect(
+      { before: beforeMarker, afterAct: secondMarker },
+      `AL-4 — the act on the tab ALREADY SHOWN must leave the marker WHERE IT STANDS: the two deliveries read ` +
+        `${textOf(beforeMarker)} and then ${textOf(secondMarker)} over ${String(second.polls)} bounded re-read(s), and the ` +
+        `second is the delivery the act's own write caused (\`S8\` writes that one row and no other, \`D-136\`). A marker ` +
+        `that MOVED here would be an act seating a row the caller did not name.`,
+    ).toEqual({ before: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false }, afterAct: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false } })
+    // ── CLAUSE 2 (a) — THE ROWS ARE FRESH: THE CHURN IS ASSERTED AS THE COST, NEVER LAMENTED AS A FAILURE ────
     const kept: string[] = []
-    for (const row of after) {
-      const was = beforeById.get(row.target)
-      if (was === undefined) continue
-      if (was === row.nodeId) kept.push(`${row.target}=${row.nodeId}`)
+    const churned: string[] = []
+    for (const row of secondRows) {
+      const was = str(beforeIds[row.target])
+      if (was === null) continue
+      if (was === row.nodeId) kept.push(`${row.target} = ${row.nodeId}`)
       else churned.push(`${row.target}: ${was} → ${row.nodeId}`)
     }
     expect(
-      churned,
-      `AL-4 — \`keyField\` must hold a surviving row's identity across a re-mint: the rows that stood before the delivery ` +
-        `must keep their \`data-node-id\`s instead of churning (\`D-182\` measurement 5 — "the ids churn (no \`keyField\`)" ` +
-        `is the declared failure mode). Measured: kept [${kept.join(', ')}], churned [${churned.join('; ')}] over ` +
-        `${String(surface.polls)} bounded re-read(s). **AND THE TREE SAYS THIS IS NOT AN ACCIDENT**: \`D-201\` removed the ` +
-        `\`keyField\` operand BY MEASUREMENT — a keyed re-mint REUSES nodes and FREEZES the \`props\` they carry, so the ` +
-        `active marker could not move, and this row's subject (stable ids) and \`AL-2\`'s marker were measured to be the ` +
-        `two ends of one trade. The L1 table still asks for the stable half; the tree chose the other, and this row is ` +
-        `where that choice has to be faced rather than absorbed.`,
+      kept,
+      `AL-4 — NOT ONE row may keep its previous \`data-node-id\`: ${textOf(kept)} stood across the delivery, where every ` +
+        `\`['${TABS}']\` delivery mints every row FRESH because the mint declares NO \`keyField\` (\`D-202\`). **THIS IS THE ` +
+        `PRICE THE APP ACCEPTED, AND THIS ROW ASSERTS IT RATHER THAN APOLOGISING FOR IT**: N tabs' DOM nodes are replaced ` +
+        `on every delivery, which \`D-201\` records as "the cheaper of the two failures" and the only one that leaves a ` +
+        `\`props\`-carried value correct. A GREEN here — an id that SURVIVED — would mean the price had gone un-paid, i.e. ` +
+        `that \`keyField\` had come back; that is what reds the marker clauses above, and this clause is where the trade is ` +
+        `stated. **So an id in this battery is never an address across a delivery**, which is why each dispatch re-reads ` +
+        `its own node first.`,
     ).toEqual([])
+    expect(
+      churned.length,
+      `AL-4 — and both surviving rows must have been RE-MINTED, so both ids must differ from the previous delivery's: ` +
+        `${textOf({ before: beforeIds, after: secondIds })} over ${String(second.polls)} bounded re-read(s), where ` +
+        `\`D-202\` measured \`node-76/77 → node-80/81\` and \`D-205\` \`node-125/126 → node-143/144\`.`,
+    ).toBe(2)
+    // ── the act's other direction: ONE write moving the record's own flag, so the next delivery re-mints on it ──
+    const shifted = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: true, error: 'al-4-marker' }))
+    expect(
+      str(asObject(shifted.value)?.['status']),
+      `AL-4 PREREQUISITE — the write that MOVES the marker must commit, or no delivery is owed for it: ` +
+        `\`${trunc(shifted.text, 320)}\`.`,
+    ).toBe('committed')
+    const third = await surfaceWithin(booted.client, (text) => {
+      const rows = renderedRows(text)
+      return rows.length === 2 && rowFor(rows, ERROR_PAGE_ID)?.active === true && rowFor(rows, LANDING_PAGE_ID)?.active === false
+    })
+    const thirdRows = renderedRows(third.html)
+    const thirdIds = idsOf(thirdRows)
+    const afterMarker = markerOf(thirdRows)
+    // ── CLAUSE 1 — THE MARKER MOVES, AND NO ROW KEEPS A STALE VALUE (`D-205`, four readings, now gating) ─────
+    expect(
+      { before: secondMarker, after: afterMarker },
+      `AL-4 — the record's active marker must MOVE across a re-mint, and NO row may keep a stale value: the two deliveries ` +
+        `read ${textOf(secondMarker)} and then ${textOf(afterMarker)} over ${String(third.polls)} bounded re-read(s), ` +
+        `where \`D-205\`'s four-reading measurement requires the flag on the OTHER row. **AND THIS CLAUSE IS THE ROW'S ` +
+        `CONTROL**: RESTORE \`keyField: 'id'\` AND IT IS WHAT REDS. \`D-201\` measured a keyed re-mint answering ` +
+        `\`minted: []\`, REUSING each matched node and re-applying only the datum's source anchors, so a reused node keeps ` +
+        `the \`props\` it was first composed with — \`${LANDING_PAGE_ID}\` would still read \`active="true"\` and ` +
+        `\`${ERROR_PAGE_ID}\` \`active="false"\` while the record says the reverse. **A STABLE ID IS EXACTLY WHAT MAKES THIS ` +
+        `CLAUSE RED**, which is the trade \`D-208\` recorded: the old subject (ids held stable) is REPLACED rather than ` +
+        `restored, and the property it asked for is now the failure this row is built to report.`,
+    ).toEqual({
+      before: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false },
+      after: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
+    })
+    // ── and the rendering must agree with the RECORD, row by row: the same control, read from the other side ──
+    const standing = recordOf((await readAt(booted.client, [TABS])).value)
+    const recordMarker = recordMarkerOf(standing)
+    expect(
+      { rendered: afterMarker, record: recordMarker },
+      `AL-4 — every rendered marker must AGREE with the record's own flag for that row: the page read ` +
+        `${textOf(afterMarker)} where \`data.read(['${TABS}'])\` holds ${textOf(recordMarker)}. **A ROW CARRYING THE VALUE ` +
+        `IT WAS FIRST MINTED WITH IS THE \`keyField\` FREEZE ITSELF** (\`D-201\`: a reused node ignores the changed ` +
+        `\`props\` under \`rows-reuse-shape-ignored\`), so this arm reds for the same restored key the clause above reds ` +
+        `for — and it reds even for a reader willing to call one comparison a coincidence.`,
+    ).toEqual({
+      rendered: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
+      record: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
+    })
+    // ── and the churn is PER DELIVERY, not once ever: the shift write owed a delivery of its own ──
+    const keptAgain: string[] = []
+    for (const target of [LANDING_PAGE_ID, ERROR_PAGE_ID]) {
+      const was = str(secondIds[target])
+      const now = str(thirdIds[target])
+      if (was !== null && was === now) keptAgain.push(`${target} = ${String(now)}`)
+    }
+    expect(
+      keptAgain,
+      `AL-4 — and the delivery the shift write owed must have churned the ids AGAIN: ${textOf(keptAgain)} stood across it, ` +
+        `where ${textOf({ before: secondIds, after: thirdIds })} is what the two deliveries read. **THE COST IS PER ` +
+        `DELIVERY AND NOT "ONCE EVER"**, which is why \`D-194\`'s "one listener per row, ever" could not survive the ` +
+        `per-mint attach \`D-201\` chose, and why nothing here remembers an id between two acts.`,
+    ).toEqual([])
+    // ── CLAUSE 2 (b) (ii) — THE OTHER FRESH ROW, dispatched at the address THIS delivery minted ──
+    const errorFresh = str(thirdIds[ERROR_PAGE_ID]) ?? ''
+    const clickedOther = await call(booted.client, 'provident.dispatch', {
+      target: { kind: 'nodeId', nodeId: errorFresh },
+      event: 'click',
+    })
+    expect(
+      clickedOther.ok,
+      `AL-4 — the SECOND fresh row must be dispatchable too: \`provident.dispatch\` at \`${errorFresh}\` answered ` +
+        `\`${trunc(clickedOther.text, 320)}\`. "Each new row is still a control" is not a claim about one of the two.`,
+    ).toBe(true)
+    expect(
+      arr(memberOf(clickedOther.value, 'results')),
+      `AL-4 — and it must answer ITS OWN seat and not its sibling's: results=` +
+        `${textOf(memberOf(clickedOther.value, 'results'))} where that row's datum answers \`focus ${ERROR_PAGE_ID}\`. A ` +
+        `word naming \`${LANDING_PAGE_ID}\` here would be a body bound to the wrong row's seat, which is the one thing the ` +
+        `per-mint datum exists to make impossible.`,
+    ).toEqual([`focus ${ERROR_PAGE_ID}`])
+    let movedTo: string[] = []
+    for (let attempt = 1; attempt <= POLL_MAX; attempt += 1) {
+      movedTo = activeTargets(recordOf((await readAt(booted.client, [TABS])).value))
+      if (movedTo.length === 1 && movedTo[0] === ERROR_PAGE_ID) break
+      await sleep(POLL_MS)
+    }
+    // **THE DIAGNOSIS, TAKEN ONLY WHERE THE READING FAILED AND NEVER AS ITS SUBSTITUTE** (`D-208`'s discipline, `AL-3`'s
+    // own form): if the marker did not come to rest on the row just clicked, the act is asked the SAME question the body
+    // asked it — `provident.focus` routes to the very `focusActRoute` the row's body calls (`backend.invoke('focus')`) — so
+    // a red names whether the act REFUSED, and with which word, instead of guessing at a lag.
+    let actAnswer = '(not asked: the marker moved onto the clicked row, so the act performed)'
+    if (!(movedTo.length === 1 && movedTo[0] === ERROR_PAGE_ID)) {
+      actAnswer = trunc((await call(booted.client, 'provident.focus', { target: ERROR_PAGE_ID })).text, 900)
+    }
+    expect(
+      movedTo,
+      `AL-4 — and the second fresh row must ACT as well, moving the record's marker ONTO ITS OWN target: the record reads ` +
+        `${textOf(movedTo)} after that dispatch, where \`focusActRoute\` seats the row carrying \`${ERROR_PAGE_ID}\`. Both ` +
+        `halves are therefore measured on FRESH nodes — one act whose product is its row's stamp, one whose product is the ` +
+        `marker itself — so the marker is a live value and not a value painted once at a boot. The act, asked directly ` +
+        `with the same target (\`provident.focus\`), answers ${actAnswer}.`,
+    ).toEqual([ERROR_PAGE_ID])
+    // ── and the marker moves BACK, so this row leaves the record where its own premise found it ──
+    // **THE THIRD MOVE, AND ITS POINT IS TWO-FOLD** (`D-205`: the marker is a DATUM VALUE and not a mechanism): it is read
+    // in the direction a record write carries it a SECOND time — the first was this row's own seed — and it leaves
+    // `['tabs']` with the LANDING tab active, which is the state the app boots on and the one `AL-5`'s own premise expects.
+    // **A MARKER THAT CAN MOVE ONE WAY AND NOT THE OTHER WOULD NOT BE A VALUE**: it would be a value painted once, which is
+    // `D-201`'s freeze arriving by another road, so both directions are read on purpose.
+    const restored = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: false, error: 'al-4-marker' }))
+    expect(
+      str(asObject(restored.value)?.['status']),
+      `AL-4 PREREQUISITE — the write that returns the marker to the landing tab must commit: ` +
+        `\`${trunc(restored.text, 320)}\`.`,
+    ).toBe('committed')
+    const back = await surfaceWithin(booted.client, (text) => {
+      const rows = renderedRows(text)
+      return rows.length === 2 && rowFor(rows, LANDING_PAGE_ID)?.active === true && rowFor(rows, ERROR_PAGE_ID)?.active === false
+    })
+    const backMarker = markerOf(renderedRows(back.html))
+    expect(
+      backMarker,
+      `AL-4 — and the marker must move BACK where the record says so: the surface read ${textOf(backMarker)} over ` +
+        `${String(back.polls)} bounded re-read(s) after the record named the landing tab again, where the two deliveries ` +
+        `above had read ${textOf(afterMarker)}. Three deliveries, six readings of two rows, and the flag followed the ` +
+        `RECORD every time — which is the whole of \`D-205\`'s finding and of this row's subject.`,
+    ).toEqual({ [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false })
   }, ROW_MS)
 
   it('AL-5 — the stage obeys the ACTIVE tab: one page shown, the other hidden, one body deciding both', async () => {
@@ -1447,21 +1750,37 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       items.length,
       `AL-7 PREREQUISITE — the eighteen items must render before they can be dispatched: ${String(items.length)} did.`,
     ).toBe(18)
-    // ── the address book: the item's LABEL is unique in `D-180`'s enumeration, and `list_targets` names the node ──
+    // ── the address book: each RENDERED item's own `data-node-id`, and the graph must confirm it ──────────
+    // **AND THE ITEM'S OWN `menu-item`/`click` HANDLER MUST BE VISIBLE ON THE AGENT'S OWN SURFACE** (`D-209`): the wiring
+    // installs a live-function body per item as a `handlers` state-slice at boot, which is why `provident.list_targets`
+    // shows one `click` handler named after the envelope's own item token on every one of the eighteen — INCLUDING the
+    // seven, which author none (their refusal is `main`'s, never the rendering's).
     const targets = await call(booted.client, 'provident.list_targets', {})
     const nodes = objectList(asObject(targets.value)?.['nodes'])
-    const nodeForLabel = new Map<string, string>()
+    const byNodeId = new Map<string, Json>()
     for (const node of nodes) {
       const nodeId = str(node['nodeId'])
-      const content = str(node['content'])
-      if (nodeId !== null && content !== null && content !== '') nodeForLabel.set(content, nodeId)
+      if (nodeId !== null && nodeId !== '') byNodeId.set(nodeId, node)
     }
-    const missing = items.filter((item) => !nodeForLabel.has(item.label)).map((item) => item.role)
+    const missing = items.filter((item) => !byNodeId.has(item.nodeId)).map((item) => item.role)
     expect(
       missing,
       `AL-7 PREREQUISITE — every rendered item must be an ADDRESSABLE node of the app's own graph (` +
         `\`provident.list_targets\`), or "dispatch at each of the eighteen" has no instrument: unaddressable ` +
-        `[${missing.join(', ')}].`,
+        `[${missing.join(', ')}]. Addresses: ${textOf(items.map((item) => [item.role, item.nodeId]))}`,
+    ).toEqual([])
+    const unwired = items
+      .filter((item) => {
+        const handlers = objectList(memberOf(byNodeId.get(item.nodeId), 'handlers'))
+        return !handlers.some((held) => str(held['name']) === 'menu-item' && str(held['event']) === 'click')
+      })
+      .map((item) => item.role)
+    expect(
+      unwired,
+      `AL-7 — every one of the EIGHTEEN items must carry the wiring-installed \`menu-item\`/\`click\` body, the seven ` +
+        `included: the agent's arm of the act is that body, and \`provident.list_targets\` is where an agent reads it ` +
+        `(\`D-209\`). Items with no such handler: [${unwired.join(', ')}]. A node missing here is a node an agent's ` +
+        `\`provident.dispatch\` can reach only as a node with nothing declared to run.`,
     ).toEqual([])
     const receiptAt = (text: string): string => {
       const tag = tagById(text, MENUS_RECEIPT_ID)
@@ -1470,16 +1789,43 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       const close = after.indexOf('<')
       return (close < 0 ? after : after.slice(0, close)).trim()
     }
-    // ── the eighteen acts, one at a time, with the transport asked after each ──
+    // ── the eighteen acts, one at a time: STASH the act, then FORCE THE TURN, then DUMP the carrier ─────────
+    // **THE READ IS TWO ACTS BECAUSE THE WRITE AND THE PAINT ARE TWO TURNS, AND THAT IS MEASURED, NOT ASSUMED**
+    // (`D-209`'s battery finding). A dispatch runs the item's body, the body asks the menus route, and the answer is
+    // written into `MENUS_RECEIPT_ID` as a `content` state-slice in the ROUTE PROMISE's continuation — one turn AFTER the
+    // click turn. **MEASURED in a real boot**: re-reading the rendered surface 0, 5, 20, 100, 250, 500, 1 000 and 2 000 ms
+    // after the act still read the PREVIOUS item's text at every one of those eight stamps, while the very next dispatch
+    // — at the carrier itself, which declares no handler and therefore performs nothing — made the answer readable at
+    // once. **SO THE SETTLE IS FORCED AND NOT SLEPT ON**: the dump act is issued for every attempt and the bound is spent
+    // on the CARRIER'S OWN TEXT naming THIS item's role. A sleep alone could not do this (two seconds of it sufficed for
+    // nothing), and a poll alone could not either (no re-read of a page paints a write the graph has not been asked to
+    // render). What the pacing below buys is only the turn the route's answer needs to cross the IPC seam; the reading
+    // is the carrier's text, and it is re-asked after EVERY dump act.
+    const SETTLE_TURNS_MAX = 14
+    const SETTLE_TURN_MS = 60
     const receipts = new Map<string, string>()
+    const bodyWords = new Map<string, unknown[]>()
+    const turnsUsed = new Map<string, number>()
     const transportStopped: string[] = []
     for (const item of items) {
-      const nodeId = nodeForLabel.get(item.label) ?? ''
       const previous = receiptAt((await renderedHtml(booted.client)).html)
-      await call(booted.client, 'provident.dispatch', { target: { kind: 'nodeId', nodeId }, event: 'click' })
-      // A RECEIPT IS WRITTEN BY THE CLICK TURN, so the poll waits for the carrier to MOVE and never assumes it did.
-      const surface = await surfaceWithin(booted.client, (text) => receiptAt(text) !== previous)
-      receipts.set(item.role, receiptAt(surface.html))
+      const answered = await call(booted.client, 'provident.dispatch', { target: { kind: 'nodeId', nodeId: item.nodeId }, event: 'click' })
+      // THE BODY'S OWN WORD — the item the dispatch reached, named by the body that ran (`D-209`), independent of the
+      // carrier and therefore of the settle: a dispatch that reached the WRONG node is caught even if the receipt lagged.
+      bodyWords.set(item.role, arr(memberOf(answered.value, 'results')))
+      let settled = previous
+      let turns = 0
+      for (let attempt = 1; attempt <= SETTLE_TURNS_MAX; attempt += 1) {
+        turns = attempt
+        await sleep(SETTLE_TURN_MS)
+        // THE DUMP ACT: a dispatch at the authored carrier, whose body list is empty — it performs nothing and exists
+        // only to take a render turn, which is the turn that paints the answer already standing in the graph.
+        await call(booted.client, 'provident.dispatch', { target: { kind: 'cssId', cssId: MENUS_RECEIPT_ID }, event: 'click' })
+        settled = receiptAt((await renderedHtml(booted.client)).html)
+        if (settled !== previous && settled.includes(item.role)) break
+      }
+      receipts.set(item.role, settled)
+      turnsUsed.set(item.role, turns)
       const alive = await call(booted.client, 'provident.list_targets', {})
       if (!alive.ok || asObject(alive.value) === null) transportStopped.push(`${item.role} (${trunc(alive.text, 120)})`)
     }
@@ -1489,26 +1835,35 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `the window (the declared failure mode "quit/close/reload reaching the window — the row reds by dying") leaves ` +
         `its name here. Silent roles: [${transportStopped.join('; ')}]; trace:\n${tail(booted.trace())}`,
     ).toEqual([])
-    // ── the eleven admitted: each answers a receipt reflected in the carrier ──
+    // ── THE PAIRING, ITEM → ITS OWN ANSWER: the body's word AND the carrier's answer, both per role ──────────
+    // **THE SEVEN REFUSALS ARE `main`'s ANSWER AND NOT THE RENDERING's COURTESY** (`D-181`, `D-196`): each refused item's
+    // body runs exactly as an admitted one's does, the route tests the seven BEFORE any other arm, and the refusal names
+    // its own role — so the two lists below are read per item and never as a tally.
     const admitted = items.filter((item) => !item.disabled).map((item) => item.role)
-    const badAdmitted = admitted.filter((role) => receipts.get(role) !== `admitted ${role}`)
-    // ── the seven refused: each is REFUSED BY NAME ──────────────────────────
     const refused = items.filter((item) => item.disabled).map((item) => item.role)
+    const badBody = items.filter((item) => textOf(bodyWords.get(item.role)) !== textOf([`menu-item ${item.role}`])).map((item) => [item.role, bodyWords.get(item.role)])
+    const badAdmitted = admitted.filter((role) => receipts.get(role) !== `admitted ${role}`)
     const badRefused = refused.filter((role) => {
       const receipt = receipts.get(role) ?? ''
       return !(receipt.startsWith('refused ') && receipt.includes(role))
     })
     expect(
+      badBody,
+      `AL-7 — every dispatch must RUN ITS OWN ITEM'S BODY and the body must answer with that item's own role ` +
+        `(\`D-209\`): the wiring installs one \`menu-item\`/\`click\` body per item and the body answers ` +
+        `\`menu-item <role>\` for the node it stands on. These answered something else: ${textOf(badBody)}.`,
+    ).toEqual([])
+    expect(
       { admitted: badAdmitted.map((role) => [role, receipts.get(role)]), refused: badRefused.map((role) => [role, receipts.get(role)]) },
       `AL-7 — EIGHTEEN RENDER, ELEVEN DISPATCH, SEVEN REFUSE BY NAME, and the carrier is where the answer is reflected ` +
-        `(\`D-181\`, \`D-196\`). The eleven admitted roles must each read \`admitted <role>\` in \`${MENUS_RECEIPT_ID}\` and ` +
-        `the seven refused must each read a refusal naming their role; the receipts read ` +
-        `${textOf([...receipts.entries()])}. **THE MEASURED CAUSE, AND IT IS THE SAME INSTRUMENT GAP AS \`AL-3\`**: each ` +
-        `item's route call is a DOM \`click\` listener the app's own menus turn installs on the item's ELEMENT ` +
-        `(\`attachMenuItem\`), while \`provident.dispatch\` runs the node's DECLARED handler bodies — and the eleven's ` +
-        `shared authored body writes nothing by design (\`MENUS_ITEM_BODY\`: reachability and no route). So the pane is a ` +
-        `menubar for a pointer and its receipt is unwritten for an agent, exactly as \`D-207\` left it: the route itself ` +
-        `is total (that is \`AL-11\`'s and the transport arms above), but nothing an agent can send reaches it.`,
+        `(\`D-181\`, \`D-196\`, \`D-209\`). The eleven admitted roles must each read \`admitted <role>\` in ` +
+        `\`${MENUS_RECEIPT_ID}\` and the seven refused must each read a refusal NAMING their role; the carrier read ` +
+        `${textOf([...receipts.entries()])} and the bodies answered ${textOf([...bodyWords.entries()])}. **THE PATH, IN ` +
+        `THE ROW'S OWN WORDS**: \`provident.dispatch\` at an item's own \`data-node-id\` runs the wiring-installed ` +
+        `\`handlers\` body, that body calls \`menuRoleAct\` — the SAME act the item's DOM \`click\` listens for, so a ` +
+        `human's click and an agent's dispatch are two causes of one act — and the answer comes back over ` +
+        `\`window.provident.menu\`, is written into this carrier as a \`content\` state-slice, and is READ here on the ` +
+        `turn a dump act forces (settle turns used: ${textOf([...turnsUsed.entries()])}).`,
     ).toEqual({ admitted: [], refused: [] })
   }, ROW_MS)
 

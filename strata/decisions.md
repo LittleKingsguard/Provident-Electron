@@ -4736,3 +4736,29 @@ data.write { path: ['tabs', 'tab-1'], tier: 'file', value.target: 'page-one' }
 **THE READINGS AT THIS HEAD ARE `D-208`'S** — this row moves no repo byte; its product is a measurement, a datum shape, and the reason the safe path is also the cheap one.
 
 **ITS REGISTER IS `D-71` TO `D-208`** as prose, unchanged and extended by this row only. **This row records a trace confirmed by a probe, a closure preferred to a surface on security grounds rather than convenience, a journal cost accepted with its name, and two battery rows that can now pass without their subjects moving.**
+
+## D-210 — THE LANDING TERMINAL NEVER HIDES BECAUSE ITS WITNESS IS **TAUTOLOGICAL**: `answer.landing` *is* the active row's id, so `activeIds[0] === answer.landing` can never be false — `D-208`'s stated cause is **refuted by measurement**, and **a test row pins the vacuous answer**
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `AL-5`'s and `AL-3`'s reds, pursued through a reorder measurement to the predicate itself.
+
+**`D-208`'S CAUSE WAS WRONG AND IS CORRECTED HERE.** That row said the landing page's `display` write *"is discarded by the mint"* (`D-182`'s upstream routing defect). **Measured in a real Electron renderer: the write is NOT discarded** — a `state-slice` `css.style` on `tabs-landing-page` read back `display: none;` **after two `rows-mint`s and after a whole delivery's dirtied set, in both orders.** **So the delivery order is neutral and the reorder that was tried changes no reading.** **The write is issued with the WRONG VALUE.**
+
+**THE PREDICATE, AND WHY IT CANNOT FAIL.** `deriveTabsWitness` (`src/renderer/tabs-client.ts`) computes
+
+```ts
+const landingWitness = activeIds.length === 1 && activeIds[0] === answer.landing
+```
+
+**and `answer.landing` is defined as *"the id of the row reading active"*** (`src/main/tabs-record/index.ts:56-59`, **derived, never stored**). **So the second comparison compares the active row's id to itself**: `landingWitness` is **true whenever exactly one row is active, and can never be false for a legal record.** Probed on the app's own record shape (`landing` inactive, `second` active, `landing:'second'`): **`{"landing":{"witness":true,"activeIds":["second"]}}`** — **the wrong value, from a predicate that has no false arm.**
+
+**AND NOTHING CAUGHT IT BECAUSE A ROW PINS IT.** `tests/integration/store-tabs-record/tabs-client.test.ts`'s **`TC-10`** asserts **`witness: true`** on `[{landing,false},{t4,true}]` with `landing:'t4'` — **the vacuous answer, asserted.** **So the defect has a green row defending it**, which is the `D-30`/`D-139` class at its sharpest: **a row that cannot fail and a row that pins the failure are the same row seen from two sides.**
+
+**THE FIX IS ONE COMPARISON AND IT IS BLOCKED AT A BOUNDARY.** The landing page must be shown only when **the landing entry** is the active row — so the comparison must be against **the landing entry's own id**, which `src/main/tabs-record/index.ts:582` exports as **`TABS_LANDING_ID`** with a docblock saying *"its own `TABS_LANDING_ID` is this value, and a second literal in a client is the rename that half-lands"*. **But that docblock is not true of this client at this head**: **a VALUE import of that module pulls it into the renderer bundle and `npm run build` dies** (`Could not resolve "node:util"`), measured twice; every existing renderer→main import is `import type` and erases; and **`src/shared/` carries no browser-safe spelling of it** (`TABS_LANDING_PAGE_ID` is a different value). **So the single spelling the docblock promises does not exist on the renderer's side of the boundary** — and **adding a second literal in the client is exactly what the docblock forbids.**
+
+**SO THE FIX NEEDS ONE SPELLING IN `src/shared/` FIRST** — the constant moves to where both sides can import it, `tabs-record` re-exports it rather than re-spelling it, the client imports it, **and `TC-10` is re-grained to the correct answer** (it is a battery row defending the defect, and its owner must move it in the same edit).
+
+**THE READINGS.** `typecheck` **0**; `typecheck:tests` **0**; the tabs and wiring batteries **`69/69` green — *because* `TC-10` pins the vacuous answer**; `AL-5` and `AL-3` **red** with `landing="display: block;" error="display: block;"`.
+
+**AND TWO PROSE DEFECTS ARE NAMED WITH IT**: both e2e rows' own messages still blame the upstream mint-render placement (`D-182`) rather than the witness's value, **so they will keep naming the wrong cause while red** — and those messages are owed a re-grain by the same edit that fixes the predicate.
+
+**ITS REGISTER IS `D-71` TO `D-209`** as prose, unchanged and extended by this row only. **This row records a cause refuted by measurement, a predicate with no false arm, a row defending it, and a fix blocked by a spelling that lives on the wrong side of a build boundary.**
