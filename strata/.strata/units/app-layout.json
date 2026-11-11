@@ -1,10 +1,19 @@
 {
   "unit": "app-layout",
-  "layer": "L0",
-  "stage": "design",
-  "artifacts": [],
+  "layer": "L4",
+  "stage": "done",
+  "artifacts": [
+    "l1-design",
+    "l2-data",
+    "l2-ui",
+    "l3-envelope",
+    "l3-renderer",
+    "l3-shell",
+    "l4-source",
+    "al-battery"
+  ],
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-11-10T05:14:23.769Z"
+  "updated": "2026-11-11T05:25:27.981Z"
 }
