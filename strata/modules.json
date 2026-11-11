@@ -280,6 +280,7 @@
         "src/main/tabs-record/index.ts",
         "src/main/tabs-surface/index.ts",
         "src/shared/tabs-channels.ts",
+        "src/shared/tabs-landing.ts",
         "src/renderer/tabs-client.ts",
         "tests/integration/store-tabs-record/crossing.test.ts",
         "tests/integration/store-tabs-record/tabs-client.test.ts",

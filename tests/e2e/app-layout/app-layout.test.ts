@@ -1398,10 +1398,12 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `landing=${textOf(styleOf(repaint.html, LANDING_PAGE_ID))} error=${textOf(styleOf(repaint.html, ERROR_PAGE_ID))} over ` +
         `${String(repaint.polls)} bounded re-read(s), where the record's active member had moved to ` +
         `${textOf(afterActive)} — so the ERROR page follows the record and the LANDING page does NOT hide. **THE MEASURED ` +
-        `CAUSE, AND IT IS \`AL-5\`'S OWN SUBJECT REACHED THROUGH THIS ROW'S CLICK**: the landing page's \`display\` write ` +
-        `is issued by the SAME delivery that then mints the tab rows (\`driveLayoutRegions\` (c) then \`driveTabsRows\`), ` +
-        `and the mint's render is what leaves the landing page's figure standing at the authored value — the upstream ` +
-        `placement-routing defect this unit lives with (\`D-182\`, upstream-owned, \`D-5\`/\`D-52\`, recorded at \`AL-5\`). ` +
+        `CAUSE, AND IT IS \`AL-5\`'S OWN SUBJECT REACHED THROUGH THIS ROW'S CLICK** (\`D-210\`, which REFUTED the cause this ` +
+        `message used to name): the landing page's \`display\` write IS issued — measured in a real renderer, a \`state-slice\` ` +
+        `\`css.style\` on the landing page node lands after two rows-mints and after a whole delivery's dirtied set, in both ` +
+        `orders, so the delivery order and any mint-render placement (\`D-182\`) are NEUTRAL — and it is issued with the ` +
+        `WRONG VALUE: \`deriveTabsWitness\` compared the active row's id with \`answer.landing\`, which IS the active row's ` +
+        `id, so exactly one active row ALWAYS read as a landing witness and the landing page was driven \`display: block\`. ` +
         `The declared failure mode "the stage not repainted" (\`C-4\`, \`D-129\`: one body decides both pages) is ` +
         `therefore read on ONE page and not on the other: this arm is red on the landing half ALONE, and no part of it ` +
         `says an agent's dispatch failed to reach the act — that is the arm above, and it passed.`,
@@ -1734,10 +1736,14 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       `AL-5 — with the error tab active the ERROR page must be shown and the LANDING page hidden — one body deciding ` +
         `both (\`C-4\`, \`D-129\`). The surface read landing=${textOf(landingAfter)} error=${textOf(errorAfter)} over ` +
         `${String(withError.polls)} bounded re-read(s): the error page follows the record and the landing page does NOT ` +
-        `hide, so BOTH pages render — the declared failure mode, measured. The landing page's \`display\` write is issued ` +
-        `by the same delivery that then mints the rows (\`driveLayoutRegions\` (c) then \`driveTabsRows\`), and the mint's ` +
-        `render is what leaves the landing page's figure standing at the authored value: the upstream placement-routing ` +
-        `defect this unit lives with (\`D-182\`, upstream-owned, \`D-5\`/\`D-52\`).`,
+        `hide, so BOTH pages render — the declared failure mode, measured. **THE MEASURED CAUSE** (\`D-210\`, which REFUTED ` +
+        `the cause this message used to name): the landing page's \`display\` write IS issued — measured in a real renderer, ` +
+        `a \`state-slice\` \`css.style\` on the landing page node lands after two rows-mints and after a whole delivery's ` +
+        `dirtied set, in both orders, so the delivery order and any mint-render placement (\`D-182\`, upstream-owned, ` +
+        `\`D-5\`/\`D-52\`) are NEUTRAL — and it is issued with the WRONG VALUE: \`deriveTabsWitness\` compared the active ` +
+        `row's id with \`answer.landing\`, which IS the active row's id, so exactly one active row ALWAYS read as a landing ` +
+        `witness and the landing page was driven \`display: block\` over the error tab's page. The defect is this tree's ` +
+        `predicate and not an upstream one.`,
     ).toEqual({ landing: expect.stringContaining('display: none'), error: expect.stringContaining('display: block') })
   }, ROW_MS)
 

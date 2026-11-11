@@ -15,11 +15,13 @@
 //     after a record changing nothing.
 //
 //   · `DC-5`…`DC-7` — THE `focus` ACT'S NEW BODY (`D-141`, `D-142`), and the TWO ROWS the L1 document's §4 books as this
-//     module's: `DC-5` is the app's OWN SUBSCRIBER after the act — the arm `F-3` cannot carry, because a pure active-tab
-//     change leaves both authored witnesses invariant, `landing` being DERIVED from the active row and the error witness
-//     reading rows' error tokens (`D-76`, `D-127`); `DC-7` is the passthrough's refusals — the store's judgement passing
-//     THROUGH and the tool's own refusal confined to its arguments (`D-142`, `D-136`, `D-127`). **THE RETARGET LANDED**
-//     (`E-1`): the arms these rows drive exist at this head, and each row says which one it is.
+//     module's: `DC-5` is the app's OWN subscriber after the act — RE-GRAINED at `D-210`, which refuted the reason this
+//     bullet used to give. The landing ENTRY is the active row before the act and `alpha` is after it, so the landing
+//     terminal moves `block` → `none`: the row now pins that MOVE, and the error terminal's invariance beside it (no row's
+//     error token moved), where it used to assert BOTH values invariant across the act — the tautology's consequence
+//     (`landing` being compared against a derivation of itself, `D-76`, `D-127`); `DC-7` is the passthrough's refusals —
+//     the store's judgement passing THROUGH and the tool's own refusal confined to its arguments (`D-142`, `D-136`, `D-127`).
+//     **THE RETARGET LANDED** (`E-1`): the arms these rows drive exist at this head, and each row says which one it is.
 //
 //   · `DC-6`, RE-GRAINED AND NOT RETIRED (`D-158`, `D-159`, `D-160`): its subject is still the act's ROUND TRIP, and the round
 //     trip now spans TWO objects instead of one — the SENT VALUE proves *one row, no member invented, no whole record*, and
@@ -331,7 +333,7 @@ afterEach(() => {
 })
 
 describe('D-142/D-160 — the act, its leaf row write and round trip, and the subscriber that follows it', () => {
-  it('DC-5 — **THE APP\'S OWN SUBSCRIBER AFTER THE ACT**: `driveTabsLandingPage` drives BOTH authored terminals from the post-act record — the arm `F-3` cannot carry, because a pure active-tab change leaves both written values IDENTICAL (`landing` is DERIVED from the active row and the error witness reads rows\' error tokens), so the terminals are invariant while the record moved. The control beside it proves the drive is not inert: a record seating TWO actives — the state the act\'s ONE row write leaves if no repair settled it, which is why `exactly-one-active` does so inside the caller\'s own commit (`D-129`) — drives the landing terminal `none` naming both ids', () => {
+  it('DC-5 — **THE APP\'S OWN SUBSCRIBER AFTER THE ACT**: `driveTabsLandingPage` drives BOTH authored terminals from the post-act record — the landing page to `display: none`, because the act moved the one active row onto `alpha` and thus OFF the landing ENTRY, and the error page to `display: block`, because no row\'s error token moved. **THIS ROW PREVIOUSLY ASSERTED THE TAUTOLOGY** (`D-210`): it expected the landing page `display: block` on a record whose active row is `alpha`, NOT the landing entry, because `deriveTabsWitness` compared the active row\'s id with `answer.landing` — which IS the active row\'s id — so EXACTLY ONE ACTIVE ROW always derived a landing witness and the assertion could not fail; the correct answer is `none`. **BOTH CLAUSES IT CARRIED FROM THAT PREDICATE ARE RE-GRAINED, NONE DROPPED**: the equality across the act ("a pure active-tab change leaves both written values IDENTICAL") was the tautology\'s consequence and is now a per-terminal MOVE — the landing page goes `block` → `none`, the error page keeps its word — and the witnesses are pinned as the PAIR `[true, true, false, true]` rather than as "identical". The control beside it proves the drive is not inert: a record seating TWO actives — the state the act\'s ONE row write leaves if no repair settled it, which is why `exactly-one-active` does so inside the caller\'s own commit (`D-129`) — drives the landing terminal `none` naming both ids', () => {
     const before = runtimeRecorder()
     const after = runtimeRecorder()
     const pre = driveTabsLandingPage(readingOf(BEFORE_ACT, before.runtime), before.runtime)
@@ -345,21 +347,25 @@ describe('D-142/D-160 — the act, its leaf row write and round trip, and the su
     // serialisation of the record is what made the object spelling look written. So this row pins the drive's own text.
     expect(
       after.writes.map((w) => [w.node, w.targetProp, w.value]),
-      'DC-5 — the post-act drive writes the ENVELOPE\'s own style member on the envelope\'s own authored nodes, as CSS TEXT: `D-203` measured that an object value on `css.style` reports `applied` and paints nothing in the real renderer, the shim serialised it as JSON text into the attribute, and that is why the spelling changed',
+      'DC-5 — the post-act drive writes the ENVELOPE\'s own style member on the envelope\'s own authored nodes, as CSS TEXT: `D-203` measured that an object value on `css.style` reports `applied` and paints nothing in the real renderer, the shim serialised it as JSON text into the attribute, and that is why the spelling changed. **AND THE LANDING PAGE READS `none`, NOT `block`** (`D-210`): the post-act record\'s one active row is `alpha` and the landing ENTRY is not it, so no landing witness is derived — the `display: block` this row used to expect here was the tautology asserted, and any return of the compare-against-`answer.landing` predicate reds on this line',
     ).toEqual([
-      [TABS_LANDING_PAGE_ID, 'css.style', 'display: block'],
+      [TABS_LANDING_PAGE_ID, 'css.style', 'display: none'],
       [TABS_ERROR_PAGE_ID, 'css.style', 'display: block'],
     ])
 
-    // THE INVARIANCE THAT BLINDS `F-3` — MEASURED, NOT ASSERTED IN PROSE.
+    // **THE MOVE, PER TERMINAL, WITH BOTH SIDES READ ON THE SAME INSTRUMENT** — the clause this row used to state as an
+    // INVARIANCE, and that invariance was the tautology's own consequence (`D-210`): with the predicate fixed, the act's
+    // change of the active row is exactly what moves the landing terminal, while the error token the act never touches
+    // leaves the other terminal standing. The BEFORE side is what makes the AFTER side a comparison and not a constant:
+    // a witness that answered `false` unconditionally passes `none` above and reds here.
     expect(
-      after.writes.map((w) => w.value),
-      'DC-5 — **the arm `F-3` cannot carry**: the two written values are IDENTICAL across the act, so no authored witness moves and only the RECORD did (`D-76`, `D-127`)',
-    ).toEqual(before.writes.map((w) => w.value))
+      { before: before.writes.map((w) => w.value), after: after.writes.map((w) => w.value) },
+      'DC-5 — the act MOVES the record and each terminal follows it BY ITS OWN WITNESS: the landing page goes `display: block` → `display: none` because the landing entry stopped being the active row, and the error page keeps `display: block` because `broken` still carries its token — **the two written values are NOT identical across the act**, which is what this row asserted while it was pinned to the tautology',
+    ).toEqual({ before: ['display: block', 'display: block'], after: ['display: none', 'display: block'] })
     expect(
-      [pre.landing.witness, pre.error.witness],
-      'DC-5 — both witnesses stand before the act and after it, which is exactly why a witness row cannot see this act',
-    ).toEqual([post.landing.witness, post.error.witness])
+      [pre.landing.witness, pre.error.witness, post.landing.witness, post.error.witness],
+      'DC-5 — the four witnesses as a PAIR rather than the equality this row used to assert: the landing entry IS the active row before the act and is NOT after it, while the error witness stands on both sides because the act touches no row\'s token (`D-76`, `D-210`)',
+    ).toEqual([true, true, false, true])
     const afterReading = readingOf(AFTER_ACT, null)
     expect(
       afterReading.status === 'committed' ? afterReading.landing : null,

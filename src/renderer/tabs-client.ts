@@ -20,8 +20,10 @@
 // client answers is ALWAYS one it re-read, never one it remembered and never one it composed.
 //
 // WHY IT EXISTS AT ALL — THE WITNESS, which is the whole value of Stage A. L2 §6 fixes the derivation from `read()`'s
-// answer ALONE: the **landing** terminal stands where `landing` names a row reading `active: true` **and no other row
-// does**, and the **error** terminal where a row carries an `error`. Both page nodes are the ENVELOPE's
+// answer ALONE: the **landing** terminal stands where the landing ENTRY is the one row reading `active: true` — L2 §6's own
+// words are "`landing` names a row reading `active: true`, and no other row does", and because `landing` is DERIVED as the
+// active row's id (`D-76`) the only comparison that can decide it is the active row against the entry's own id (`D-210`) —
+// and the **error** terminal where a row carries an `error`. Both page nodes are the ENVELOPE's
 // (`TABS_LANDING_PAGE_ID` / `TABS_ERROR_PAGE_ID`, `src/shared/demo-envelope.ts`) and are resolved through
 // `Runtime.elementForNodeId`; this module authors no element, no class and no text — it resolves the nodes the envelope
 // already carries, exactly as the wiring's landed driver does (`src/renderer/renderer.ts`'s `driveTabsLandingPage`).
@@ -48,6 +50,7 @@
 // instrument has nothing to read.
 
 import { TABS_ERROR_PAGE_ID, TABS_LANDING_PAGE_ID } from '../shared/demo-envelope.js'
+import { TABS_LANDING_ENTRY_ID } from '../shared/tabs-landing.js'
 import type { TabsRecordRow } from '../shared/types.js'
 
 /** THE READ ANSWER'S COMMITTED ARM — L2 §2's three members, verbatim: `order` (the record's one stored seat),
@@ -206,18 +209,21 @@ function answerOrDivergence(raw: unknown): { readonly answer: TabsReadAnswer } |
  *  answers `witness: false` with `activeIds` naming both.
  *
  *  **"Exactly one active" is ONE comparison and not two**: exactly one row reads active (`activeIds.length === 1`) AND that
- *  row is the one `landing` names (`activeIds[0] === landing`). A record whose `landing` is `''` — the value L2 §2 declares
- *  on a record no legal act has left — therefore matches no row and derives no terminal, which is the intended answer and
- *  not a special case. An `error` token is CARRIED where the member is present and neither `null` nor `undefined` (an empty
- *  string is a token the record carries; the wiring's landed driver reads the same three lines), and the FIRST such row in
- *  `rows` order names `error.tabId`.
+ *  row IS the landing entry (`activeIds[0] === TABS_LANDING_ENTRY_ID`, the one spelling both realms import from
+ *  `src/shared/tabs-landing.ts`). **`answer.landing` IS NOT CONSULTED, AND THAT IS THE WHOLE CORRECTION** (`D-210`): it is
+ *  DERIVED as *the id of the row reading active*, so a comparison against it compares the active row's id with itself — a
+ *  predicate with no false arm, which answered `witness: true` on a record whose shown tab was any tab at all. A record no
+ *  legal act has left has no active row, so the count arm alone denies it and no terminal is derived, which is the intended
+ *  answer and not a special case. An `error` token is CARRIED where the member is present and neither `null` nor
+ *  `undefined` (an empty string is a token the record carries; the wiring's landed driver reads the same three lines), and
+ *  the FIRST such row in `rows` order names `error.tabId`.
  *
  *  **THE NODES ARE THE ENVELOPE'S AND ARE RESOLVED, NEVER AUTHORED.** A false witness resolves nothing (`resolved: null` —
  *  the terminal is not driven), and a resolver that throws answers `null` for that node rather than throwing out of a read:
  *  this function is pinned TOTAL because a client's read is. */
 export function deriveTabsWitness(answer: TabsCommittedAnswer, runtime?: TabsNodeResolver | null): TabsWitness {
   const activeIds = answer.rows.filter((row) => row.active === true).map((row) => row.id)
-  const landingWitness = activeIds.length === 1 && activeIds[0] === answer.landing
+  const landingWitness = activeIds.length === 1 && activeIds[0] === TABS_LANDING_ENTRY_ID
   let errorTabId: string | null = null
   for (const row of answer.rows) {
     const carried: unknown = row.error

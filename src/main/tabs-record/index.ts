@@ -26,6 +26,7 @@ import { types } from 'node:util'
 
 import { storeCreate } from 'provident-storeroom'
 import type { TriggerPair } from 'provident-storeroom'
+import { TABS_LANDING_ENTRY_ID } from '../../shared/tabs-landing.js'
 import type { TabsRecordRow } from '../../shared/types.js'
 
 type Store = ReturnType<typeof storeCreate>
@@ -200,11 +201,15 @@ export const TABS_RECORD_ADDRESS: readonly string[] = ['tabs']
 const TABS_RECORD_TIER = 'file' as const
 /** **THE ONE SINGLETON SEAT**, named so no caller composes it: the ordered place of every tab id. */
 export const TABS_ORDER_ADDRESS: readonly string[] = ['tabs', 'order']
-/** **THE LANDING ENTRY'S KEY, SPELLED ONCE.** It is the second element of `TABS_LANDING_ADDRESS` below, and it is the id
- *  the landing entry DOES carry (`TABS_LANDING_ID`, below) — one spelling rather than two that must be kept equal by hand.
+/** **THE LANDING ENTRY'S KEY, AND IT IS NO LONGER SPELLED HERE** (`D-210`). It is the second element of
+ *  `TABS_LANDING_ADDRESS` below, and it is the id the landing entry DOES carry (`TABS_LANDING_ID`, below) — one spelling
+ *  rather than two that must be kept equal by hand. **THE LITERAL NOW LIVES IN `src/shared/tabs-landing.ts`**, because the
+ *  renderer must compare the active row's id against it and a VALUE import of THIS module from the renderer pulls
+ *  `node:util` into the browser bundle and kills `npm run build` (measured twice, `D-210`). So this local name is the
+ *  shared constant read back, never a second literal.
  *  A legacy install's retired STRING seat may still sit at this address in an old file: `landingOf` reads only a ROW there, so
  *  a stale string answers nothing rather than naming a tab, and the first whole-record write replaces it whole. */
-const LANDING_ENTRY_KEY = 'landing'
+const LANDING_ENTRY_KEY: string = TABS_LANDING_ENTRY_ID
 /** **THE LANDING ENTRY'S OWN LEAF — `file.tabs.landing` — AND NO LONGER A SEAT OF ITS OWN** (D-76). This address used to
  *  hold a STRING: the witness naming which tab is active, written beside `order` in the same flat object. **That string is
  *  the collision `D-75` measured**: a member's key and a seat's name are one namespace, so an entry whose id spelled the
@@ -564,8 +569,9 @@ const seatViewFrom = (whole: unknown): RecordView => {
 }
 
 /** **THE LANDING ENTRY'S ID IS `'landing'`, SPELLED ONCE AND EXPORTED** — the user's decision (D-75) as it now stands in the
- *  record (D-76). It is `LANDING_ENTRY_KEY`, the same literal `TABS_LANDING_ADDRESS` is spelled from, so the entry's id, the
- *  address it is seated at and the `order` member that names it are ONE spelling rather than three that must agree. **The
+ *  record (D-76). It is `LANDING_ENTRY_KEY`, which is `src/shared/tabs-landing.ts`'s `TABS_LANDING_ENTRY_ID` read back and
+ *  the same value `TABS_LANDING_ADDRESS` is spelled from, so the entry's id, the address it is seated at and the `order`
+ *  member that names it are ONE spelling rather than three that must agree. **The
  *  move was not a rename, and the measurement is why it needed a derivation first**: the family keyed one member per tab in
  *  the SAME flat object as its two SEATS, so with this id the composer wrote the row at that key and then the `landing` seat
  *  over it — the construction instant's own bytes answered `{"landing":"landing","order":["landing"]}` at `['tabs']` with
@@ -574,7 +580,12 @@ const seatViewFrom = (whole: unknown): RecordView => {
  *  DERIVED AND NO LONGER STORED (`landingOf`; the composer writes no witness at all), and that is what freed the spelling.
  *
  *  **Exported because the renderer pass reads ONE spelling** (D-76): its own `TABS_LANDING_ID` is this value, and a second
- *  literal in a client is the rename that half-lands. **IT IS NOT THE PAGE NODE'S ID** (`src/shared/demo-envelope.ts`'s
+ *  literal in a client is the rename that half-lands. **THAT PROMISE IS NOW KEPT BY THE TREE RATHER THAN ONLY STATED HERE**
+ *  (`D-210`): the literal lives in `src/shared/tabs-landing.ts`, this module derives from it (address and id both, above and
+ *  here) and `src/renderer/tabs-client.ts` imports it for the one comparison it decides — so both sides read ONE constant and
+ *  no code site in either file spells `'landing'`. It was NOT true of the head `D-210` measured: there, the only spelling was this line's,
+ *  a VALUE import of this module pulled `node:util` into the browser bundle and killed `npm run build`, and the client had no
+ *  lawful second spelling to reach for. **IT IS NOT THE PAGE NODE'S ID** (`src/shared/demo-envelope.ts`'s
  *  `TABS_LANDING_PAGE_ID`, which AUTHORS the node and stays `'tabs-landing-page'`) **AND NOT A CONTENT TARGET**
  *  (`TAB_CONTENT_FALLBACK` below, which stays the authored page because a row's `target` is the content it contains while its
  *  `id` is its identity — and `'landing'` names no authored node at all): four spellings shared these letters before this
