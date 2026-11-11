@@ -149,7 +149,13 @@ declare global {
         delete(args: unknown): Promise<DataDeleteAnswer>
         list(args: unknown): Promise<DataListAnswer>
         journal(args: unknown): Promise<DataJournalAnswer>
-      }
+      },
+      // **THE MENUS ROUTE'S ONE MEMBER — THE TENTH — AND ITS LOCKSTEP HALF HERE** (`D-181`, `D-196`; the
+      // `docs/L3/app-shell/signatures.md` §2(a) text verbatim): `main`'s ONE handler answers `{status:'admitted', role}` only
+      // once the role's operation ran, or a refusal naming the role. It is the seat where the grant stops — the admitted set
+      // lives in `main`, so a `disabled` mark on a pane item is a courtesy and this declaration carries no guard of its own.
+      // The member is OPTIONAL here and required in `src/main/preload.ts`, which is the same asymmetry `data` carries.
+      menu?(role: string): Promise<{ status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string }>
     }
   }
 }

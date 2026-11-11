@@ -6,8 +6,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_SECURITY_CHANGED, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, IPC_MODULE_CHANGED, IPC_DATA_READ, IPC_DATA_WRITE, IPC_DATA_DELETE, IPC_DATA_LIST, IPC_DATA_JOURNAL, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 // ⟶ **`STORE_FILE_GET` AND `STORE_FILE_PUT` LEAVE THIS IMPORT** (`D-93`): the `store` member they served is deleted with
-// the renderer's frozen graph store, so the preload reaches the channel file for the secure crossing's two channels alone.
-import { IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE } from '../main/store-channels.js'
+// the renderer's frozen graph store, so the preload reaches the channel file for the secure crossing's two channels and,
+// from `D-181`'s menus route, the role route's one beside them — THREE specifiers off a file that carries three
+// constants, and this file carries exactly those three.
+import { IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE, IPC_MENU_ROLE } from '../main/store-channels.js'
 import type { TabsRecordRow } from '../shared/types.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_DRAG_COMMIT, IPC_VIEW_DRAG_CLEAR, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
@@ -135,16 +137,24 @@ export interface ProvidentBridge {
     list(args: unknown): Promise<DataListAnswer>
     journal(args: unknown): Promise<DataJournalAnswer>
   },
+  /** **THE MENUS ROUTE'S ONE MEMBER — THE TENTH** (`D-181`, `D-196`; `docs/L2/app-shell/interface.md` §5): the realm hands a
+   *  role name, and `main`'s ONE handler answers `{status:'admitted', role}` ONLY after that role's operation ran, or a
+   *  refusal naming the role — `role-not-admitted` for the seven, `role-unknown` for a role in neither set, `role-malformed`
+   *  for a non-string. It carries NO delivery and spells NO address: the channel is `IPC_MENU_ROLE`, imported above.
+   *  `src/renderer/secure-panels.ts`'s `declare global` half declares the same member in lockstep (the rule the `security`,
+   *  `tabs`, `view` and `module` members already follow: a half-declaration FAILS). */
+  menu(role: string): Promise<{ status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string }>
   // ⟶ **THE `store` MEMBER IS DELETED** (`D-93`; `D-90`'s clause (3): "the two preload members"). It carried Y-1 the boot
   // hand-off, Y-2 the commit crossing and Y-3 the change-push registration, all three exclusively for the renderer's frozen
   // graph store — the file's own note above still describes that trio as it was filed, and this line is where it stopped
   // being true. **WHAT THE BRIDGE NOW CARRIES, AND NOTHING ELSE**: `ready` · `onRequest` · `sendReply` · `notify` ·
-  // `security` · `module` · `tabs` · `view` · `data` — NINE top-level members, one per crossing surface the app actually
-  // reads or writes, the ninth being `D-112`'s five `data.*` routes. The lockstep pair `store`/`security` is no longer a
-  // pair: `security` stands (the secure crossing's manual-UI surface) and `store` has no successor, because the thing it
-  // existed for has none. **AND THIS COUNT IS NOT RESTATED FROM MEMORY**: two sibling rows (`ISO-4` in both `isolation`
-  // files) and `S-11` in `settings-carrier-retirement`'s e2e scenarios set-equality it against their own `BRIDGE_MEMBERS`,
-  // and each was moved with a dated note on this pass rather than left to disagree.
+  // `security` · `module` · `tabs` · `view` · `data` · `menu` — TEN top-level members, one per crossing surface the app
+  // actually reads or writes, the ninth being `D-112`'s five `data.*` routes and the tenth `D-181`'s ONE menus route (the
+  // role route: one request, no delivery, no address, admitting eleven and refusing seven). The lockstep pair
+  // `store`/`security` is no longer a pair: `security` stands (the secure crossing's manual-UI surface) and `store` has no
+  // successor, because the thing it existed for has none. **AND THIS COUNT IS NOT RESTATED FROM MEMORY**: two sibling rows
+  // (`ISO-4` in both `isolation` files) and `S-11` in `settings-carrier-retirement`'s e2e scenarios set-equality it against
+  // their own `BRIDGE_MEMBERS`, and each was moved with a dated note on this pass rather than left to disagree.
 }
 
 const bridge: ProvidentBridge = {
@@ -300,10 +310,17 @@ const bridge: ProvidentBridge = {
       return ipcRenderer.invoke(IPC_DATA_JOURNAL, args)
     },
   },
+  // THE MENUS ROUTE'S ONE ARM (`D-181`, `D-196`): the role name crosses the ONE channel and the answer is `main`'s total
+  // answer — `admitted` only once the role's operation ran, or a refusal naming the role. Nothing is decided, widened,
+  // defaulted or re-spelled on this side, exactly as the five `data` arms decide nothing.
+  menu(role: string): Promise<{ status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string }> {
+    return ipcRenderer.invoke(IPC_MENU_ROLE, role)
+  },
   // ⟶ **THE `store` MEMBER'S IMPLEMENTATION IS DELETED** (`D-93`): the three members above are gone with the frozen graph
   // store, and with them the `STORE_FILE_CHANGED` preload LOCAL that carried the Y-3 push. **NO CHANNEL SPELLING SURVIVES
   // HERE**: `provident:store:file:get`, `provident:store:file:put` and `provident:store:file:changed` appear in no file of
-  // this tree any more, and `store-channels.ts` carries the ONE constant its own secure surface needs.
+  // this tree any more, and `store-channels.ts` carries the THREE constants its own secure surface and the menus route
+  // need (`IPC_SECURITY_EXCLUSION`, `IPC_SECURITY_PANE`, `IPC_MENU_ROLE`).
 }
 
 contextBridge.exposeInMainWorld('provident', bridge)

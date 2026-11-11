@@ -16,8 +16,10 @@
 // preload's own `provident:store:file:changed` LOCAL are all deleted with that projection, so neither name has
 // a caller left to reach. **`IPC_SECURITY_EXCLUSION` IS NOT THE PURGE'S**: it belongs to the SECURE CROSSING's
 // manual-UI surface — one member of the operator's `security` namespace, delivered to `main.ts`'s handler and
-// `preload.ts`'s `setExclusion` — and it has nothing to do with the frozen store. It stands, and it is now the
-// whole file, and `D-123` makes it two.
+// `preload.ts`'s `setExclusion` — and it has nothing to do with the frozen store. It stands, and `D-123` makes it
+// two. **AND THE MENUS ROUTE MAKES IT THREE** (`D-181`): `IPC_MENU_ROLE` is the third, appended below its two
+// siblings with their reason and theirs alone — a channel name this file owns, imported by both ends and never
+// re-spelled. The census above reads `2 → 3` at that addition and no other figure moves with it.
 
 /** `docs/specs/secure-exclusion.md` §1.5 item 4 / §2.4 item 4 — the exclusion transition's OWN
  *  channel. It reaches `main.ts` (the handler) and `preload.ts` (the `setExclusion` member) by
@@ -32,3 +34,9 @@ export const IPC_SECURITY_EXCLUSION = 'provident:security:exclusion'
  *  constant wide, and `D-123` adds the second because a crossing's verb that no realm could reach is a verb no realm
  *  can drive. */
 export const IPC_SECURITY_PANE = 'provident:security:pane'
+
+/** **THE MENU'S ROLE ROUTE** (`D-181`; `docs/L2/app-shell/interface.md` §5). The third constant in a file that holds channel
+ *  names and nothing else, for its two siblings' reason: an ADDRESS that must not be spelled in `src/shared/types.ts`, the
+ *  file the MCP-reachable stack imports (`D-123`, `ISO-5`/`ISO-6`). It reaches `main.ts`'s handler and `preload.ts`'s `menu`
+ *  member by IMPORT from this file and is never re-spelled. **THE FILE'S CENSUS MOVES `2 → 3`** and no other member joins. */
+export const IPC_MENU_ROLE = 'provident:menu:role'

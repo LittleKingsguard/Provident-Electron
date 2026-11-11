@@ -2,7 +2,7 @@
 // (the renderer owns the provident-ssr graph + DOM), starts the MCP server
 // (stdio or Streamable HTTP), and bridges MCP tool calls to the renderer via
 // IPC.
-import {app, BrowserWindow, ipcMain} from 'electron'
+import {app, BrowserWindow, ipcMain, Menu} from 'electron'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {createHash} from 'node:crypto'
@@ -17,8 +17,10 @@ import {createSettingsSurface} from './settings-surface/index.js'
 import type {ModuleStore, ModuleRecord, ModuleStoreStatus} from './mcp-server.js'
 // ⟶ **TWO CONSTANTS LEAVE THIS IMPORT AND THE FILE KEEPS ONE** (`D-93`): `STORE_FILE_GET` and `STORE_FILE_PUT` are
 // deleted with the projection they carried, and `IPC_SECURITY_EXCLUSION` — the exclusion transition's own channel — stands
-// because its surface is the SECURE CROSSING's and has nothing to do with the renderer's frozen store.
-import {IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE} from './store-channels.js'
+// because its surface is the SECURE CROSSING's and has nothing to do with the renderer's frozen store. **AND `D-181`'S
+// ROLE ROUTE ADDS THE THIRD SPECIFIER** (`IPC_MENU_ROLE`, this file's own spelling beside `preload.ts`'s): the channel the
+// one handler below is registered on, taken from the one file that spells it.
+import {IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE, IPC_MENU_ROLE} from './store-channels.js'
 import {CapabilityRouter} from '../renderer/extensions.js'
 import {syncModuleRouter} from './mcp-server.js'
 import {SecurityGate, type ToolGroup} from './security.js'
@@ -565,6 +567,76 @@ async function main(): Promise<void> {
     return moduleBridgeResult()
   })
 
+  // ═══ THE MENUS ROUTE — ONE CHANNEL, ONE HANDLER, ELEVEN ADMITTED, SEVEN REFUSED, AND THE ADMITTED ONES EXECUTE ═══
+  // (`S-10`, `D-181`, `D-196`; `docs/L2/app-shell/interface.md` §5, `docs/L3/app-shell/signatures.md` §2–§3.) The pane
+  // renders EIGHTEEN items and THIS route admits ELEVEN. **THE REFUSAL IS ENFORCED HERE AND NOWHERE ELSE**: the pane's
+  // `disabled` marks are a courtesy, and a renderer-side veto would be a guard an agent's `provident.dispatch` could
+  // bypass, while an admitted set in `main` cannot be — so this site is where the grant stops. **THE ROUTE SITS UNDER NO
+  // GATE GROUP AND NO STORE**: it is a preload member the realm calls over its own bridge channel, it is NOT added to
+  // `security.ts`'s `TOOL_GROUPS` and NOT to the default grant's `dispatch` surface, and it reads no record, no tier and
+  // no address. Its reachability is the bridge's, exactly as every sibling member's is (`D-181`, `D-123`).
+  //
+  // **THE SETS ARE LITERAL, DISJOINT AND TOTAL OVER `D-181`'S EIGHTEEN, AND THERE IS NO PREFIX TEST**: `zoom` is refused
+  // while `zoomin`/`zoomout` are admitted, and `selectall` is one word. The refused set is tested BEFORE any other arm.
+  const MENU_ADMITTED_ROLES = ['undo', 'redo', 'cut', 'copy', 'paste', 'delete', 'selectall', 'resetzoom', 'zoomin', 'zoomout', 'togglefullscreen'] as const   // ELEVEN
+  const MENU_REFUSED_ROLES = ['quit', 'close', 'reload', 'forcereload', 'toggledevtools', 'minimize', 'zoom'] as const                                          // SEVEN
+
+  /** **THE TOTAL ANSWER — R1 TYPE → R2 REFUSED → R3 ADMITTED → R4 UNKNOWN — AND THE ADMITTED ROLE EXECUTES** (`D-196`
+   *  supersedes the design's `G-5`): an admitted role is PERFORMED on the live window's `webContents` — the same-named
+   *  method for `undo`/`redo`/`cut`/`copy`/`paste`/`delete`/`selectall`, `setZoomLevel(0)` for `resetzoom`, the platform's
+   *  own half-step for `zoomin`/`zoomout`, and `setFullScreen(!isFullScreen())` for `togglefullscreen` — and `admitted` is
+   *  answered ONLY once that operation returned. **A THROWING OPERATION IS A FAILURE ANSWER, NEVER AN ADMISSION**: the
+   *  declared vocabulary carries three words and no fourth, so a failed operation answers `role-not-admitted` with the
+   *  operation's own words in `message`, and `admitted` stays reserved for the case where the act happened. Nothing here
+   *  reads the call's first parameter, checks a sender or inspects its frame: the admitted set is the bound (`D-121`). */
+  function menuRoleAnswer(role: unknown): { status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string } {
+    // R1 — THE TYPE TEST. A non-string is refused AS A VALUE naming what arrived, never thrown.
+    if (typeof role !== 'string') {
+      return { status: 'refused', role: '', reason: 'role-malformed', message: `a menus role must be a string; this call carried ${role === null ? 'null' : typeof role}` }
+    }
+    // R2 — THE SEVEN, TESTED BEFORE ANY OTHER ARM: `quit`/`close` kill the app and the MCP port the agent is speaking on;
+    // `reload`/`forcereload` wipe every renderer transient; `toggledevtools` is an agent-visible devtools toggle; and
+    // `minimize`/`zoom` are window state the corpus already refused for authored controls. Refused BY NAME, so a refusal
+    // can be read back role by role while the app still answers on its transport.
+    if ((MENU_REFUSED_ROLES as readonly string[]).includes(role)) {
+      return { status: 'refused', role, reason: 'role-not-admitted', message: `the role '${role}' is not admitted: it would end the app, the MCP port or this realm's transients, or move window state the app keeps out of reach` }
+    }
+    // R3 — THE ELEVEN. What is not one of them falls through to R4 rather than being guessed at.
+    if (!(MENU_ADMITTED_ROLES as readonly string[]).includes(role)) {
+      // R4 — NEITHER SET: named, never silent and never a throw.
+      return { status: 'refused', role, reason: 'role-unknown', message: `the role '${role}' is neither one of the eleven admitted roles nor one of the seven refused ones` }
+    }
+    // R3'S ACT — the app's one window, resolved at CALL time because this handler is registered before that window exists.
+    const target = BrowserWindow.getAllWindows().find((candidate) => !candidate.isDestroyed())
+    if (target === undefined) {
+      return { status: 'refused', role, reason: 'role-not-admitted', message: `the role '${role}' is admitted, but no live window was there to perform it on` }
+    }
+    const contents = target.webContents
+    try {
+      switch (role) {
+        case 'undo': contents.undo(); break
+        case 'redo': contents.redo(); break
+        case 'cut': contents.cut(); break
+        case 'copy': contents.copy(); break
+        case 'paste': contents.paste(); break
+        case 'delete': contents.delete(); break
+        case 'selectall': contents.selectAll(); break
+        case 'resetzoom': contents.setZoomLevel(0); break
+        // THE HALF-STEP IS THE PLATFORM'S OWN DEFAULT for these roles, not a figure chosen here (`D-196`).
+        case 'zoomin': contents.setZoomLevel(contents.getZoomLevel() + 0.5); break
+        case 'zoomout': contents.setZoomLevel(contents.getZoomLevel() - 0.5); break
+        // A TOGGLE DESPITE THE NAME: fullscreen is a presentation of the window and ends nothing.
+        case 'togglefullscreen': target.setFullScreen(!target.isFullScreen()); break
+      }
+    } catch (failure) {
+      const why = failure instanceof Error ? failure.message : String(failure)
+      return { status: 'refused', role, reason: 'role-not-admitted', message: `the role '${role}' was admitted for execution and its operation FAILED: ${why}` }
+    }
+    return { status: 'admitted', role }
+  }
+
+  ipcMain.handle(IPC_MENU_ROLE, (_event, role: unknown) => menuRoleAnswer(role))
+
   // The MCP stdio transport is spawned by a client (the battery, a test, or an
   // agent). When that client disconnects, stdin closes. Exit so a test run does
   // NOT leave an orphaned Electron app instance open on the machine — otherwise
@@ -621,9 +693,34 @@ async function main(): Promise<void> {
   // axes move together, and NOTHING ELSE IN THIS FILE RE-PATCHES OR RE-TRANSITIONS THE GATE.
   settingsSurface.attach(mcp)
 
+  // ═══ THE NATIVE MENU LEAVES, AND THIS IS EXACTLY WHAT A USER LOSES (`S-10`, `D-181`, `D-188`, `D-195`) ═══
+  // The menubar is removed HERE, ONCE, immediately BEFORE the window that would draw it exists, because the menus pane
+  // CONTAINS the menus now and a pane beside a live native bar would draw them twice (`D-180` §iii). The call authors
+  // nothing — it REMOVES — which is what `D-195` ruled and `tests/menu-template.test.ts`'s `X-5` was re-grained to admit,
+  // on this ONE path and in this ONE form.
+  //
+  // **WHAT THE REMOVAL COSTS, SAID PLAINLY BECAUSE A READER SHOULD NOT HAVE TO REDISCOVER IT**: TEN accelerators leave
+  // with the template and NOT ONE is re-bound (`C-6`; no accelerator, no global shortcut and no key listener is added
+  // here): Ctrl+Q (quit) · Ctrl+W (close) · Ctrl+R (reload) · Shift+Ctrl+R (force reload) · Ctrl+Shift+I (devtools) ·
+  // Ctrl+M (minimize) · Ctrl+0 · Ctrl+= · Ctrl+- · F11. So after this act **Ctrl+Q DOES NOTHING**, Ctrl+W does not
+  // close the window, Ctrl+R cannot rescue a stuck renderer, Ctrl+Shift+I cannot open devtools and F11 cannot fullscreen;
+  // a pane item needs a CLICK and restores none of them. What survives is the EDIT keys (undo/redo, cut, copy, paste,
+  // select-all), which were never the template's: the renderer handles them over a focused element, menu or no menu.
+  // The app's own quit paths from here are the platform's overlay close button (the WINDOW's, not authored), this file's
+  // `closed` handler and `window-all-closed` — and the silence is UNMEASURED by the four legs (no row reads the
+  // application menu and no leg sends a keystroke), so it is a recorded gap and never an implied guarantee.
+  Menu.setApplicationMenu(null)
+
   const win = new BrowserWindow({
     width: 980,
     height: 720,
+    // ═══ ONE OPTION PAIR, ON THE ONE WINDOW, AND NOTHING ELSE IN THIS LITERAL MOVES (`S-3`, `C-1`, `D-179`) ═══
+    // The platform draws its own window controls OVER the page and the page owns the whole window; the bare `true`
+    // leaves colour, symbol colour and height to the platform, because no authored figure stands beside its chrome
+    // (`ASM-L3-3`, `OWED-5`). Measured working on this host's own binary (`D-179`): overlay `visible`, a `607x36` free
+    // strip and the page owning the window. No authored control, no `frame`, no window IPC: those are `D-178` §2's.
+    titleBarStyle: 'hidden',
+    titleBarOverlay: true,
     webPreferences: {
       preload: join(here, 'preload.cjs'),
       contextIsolation: true,

@@ -4885,13 +4885,15 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
      * (`D-90`'s clause (3), `D-93`), so the file now carries the ONE constant this unit added and nothing else. **THE
      * ADDITION IS STILL EXACTLY ONE TERM OF THE `8` AND IS STILL COUNTED ONCE**, as the membership witness below; what
      * moved is the BEFORE-VALUE, `2 -> 0`, and with it the post-landing census. `RCA-8(d)`: the `3` is recorded beside it. */
-    /* ⟶ **THE CONSTANT CENSUS MOVES `1 -> 2` (2026-11-05, `D-123`).** `D-93` left the file one constant wide — this
-     * unit's own addition — and `D-123` adds the pane's channel because a crossing verb no realm can reach is a verb no
-     * realm can drive. **THIS ROW'S ADDITION IS STILL EXACTLY ONE TERM OF THE `8` AND IS STILL COUNTED ONCE**, as the
-     * membership witness below; `IPC_SECURITY_PANE` is EXCLUDED BY NAME from the before-value arithmetic for `onChanged`'s
-     * reason, and the control beneath is re-aimed at the THIRD constant. */
+    /* ⟶ **THE CONSTANT CENSUS MOVES `2 -> 3` (2026-11-09, `D-181`/`D-196`).** `D-123` left the file two constants wide, and the
+     * menus role route adds the third — `IPC_MENU_ROLE` (`provident:menu:role`), `app-shell`'s, one member of the bridge's `menu`
+     * behind one `ipcMain.handle`. **THIS ROW'S ADDITION IS STILL EXACTLY ONE TERM OF THE `8` AND IS STILL COUNTED ONCE**, as the
+     * membership witness below; the TWO constants later passes added are EXCLUDED BY NAME from the before-value arithmetic for
+     * `onChanged`'s reason, and the control beneath plants a FOURTH and still catches it. */
     expect(landedConstants.length,
-      '§2.6 item 3 / §1.3 item 9 — the `store-channels.ts` constant census reads `2` (`D-93` left this unit\'s addition alone in the file; `D-123`\'s pane channel is the second and is excluded by name below). NOT the addition counted again').toBe(2)
+      '§2.6 item 3 / §1.3 item 9 — the `store-channels.ts` constant census reads `3`, and the figure is a SUM OF NAMED PARTS (`D-26`/`D-43`): this unit\'s `IPC_SECURITY_EXCLUSION` (`D-93` left it alone in the file), `D-123`\'s `IPC_SECURITY_PANE`, and `D-181`/`D-196`\'s `IPC_MENU_ROLE`. NOT the addition counted again').toBe(3)
+    expect([...landedConstants].sort(),
+      '§2.6 item 3 / §1.3 item 9 — and the census is ENUMERATED, never a bare figure: the three names are the ONE constant this unit declares plus the two constants the later passes added, `IPC_SECURITY_PANE` (`D-123`) and `IPC_MENU_ROLE` — the menus role route\'s channel, `provident:menu:role`, added at `D-181`/`D-196`. A FOURTH constant is the finding').toEqual(['IPC_MENU_ROLE', 'IPC_SECURITY_EXCLUSION', 'IPC_SECURITY_PANE'])
     expect(landedConstants.includes('IPC_SECURITY_EXCLUSION'),
       '§2.6 item 3 / §1.3 item 9 — the ONE surviving constant IS this unit\'s declared addition: `IPC_SECURITY_EXCLUSION` (the addition is PRESENT, and it is counted ONCE, as this membership witness)').toBe(true)
     // the ADDITION itself is still one term of the 8, and it is still exactly 1:
@@ -4929,33 +4931,39 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
    *  Both are asserted through the SAME predicates the row above uses (count and
    *  deep equality), and both are driven on the REAL landed sources with one
    *  synthetic extra entry, so the control cannot drift from the row it guards. */
-  it('(CONTROL) the ADDITIVE-SURFACE census is a REAL BOUND: a FOURTH constant or a FOURTH `security` member FAILS it', () => {
+  it('(CONTROL) the ADDITIVE-SURFACE census is a REAL BOUND: a FOURTH constant or a SIXTH `security` member FAILS it', () => {
     const channels = sourceOrEmpty(STORE_CHANNELS_SRC)
     const landedConstants = [...channels.matchAll(/^export const ([A-Z_]+)\s*=/gm)].map((m) => m[1])
     const preload = sourceOrEmpty(PRELOAD_SRC)
     const securityBlock = /security:\s*\{[\s\S]*?\n  \}/.exec(preload)?.[0] ?? ''
     const members = [...securityBlock.matchAll(/^\s{4}([a-zA-Z]+)\(/gm)].map((m) => m[1])
 
-    // (i) an UNDECLARED THIRD constant. The addition is NOT re-counted: the census is the landed count, and a constant
-    // the spec does not declare makes it `3 != 2`. **⟶ `D-123`: the control's arithmetic follows the row's, and the surplus
-    // the row must refuse is the THIRD, not the second.**
+    // (i) an UNDECLARED FOURTH constant. The addition is NOT re-counted: the census is the landed count, and a constant
+    // the spec does not declare makes it `4 != 3`. **⟶ `D-181`/`D-196`: the control's arithmetic follows the row's, and the
+    // surplus the row must refuse is the FOURTH of three declared, exactly as it was the third of two at `D-123`.**
     const fourthConstant = [...landedConstants, 'IPC_SECURITY_UNSPECIFIED']
     expect(fourthConstant.length,
-      'CONTROL (i) — an UNDECLARED extra `store-channels.ts` constant makes the census `3`, and the row\'s `toBe(2)` then FAILS (the pre-landing instrument, by contrast, would have read `2 + 1 = 3` and failed for the WRONG reason — the census was unreachable in BOTH directions)').toBe(3)
-    expect(fourthConstant.length === 2,
-      'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 2`) is FALSIFIED by the undeclared constant: the bound bites').toBe(false)
+      'CONTROL (i) — an UNDECLARED extra `store-channels.ts` constant makes the census `4`: the three declared (`IPC_SECURITY_EXCLUSION`, `IPC_SECURITY_PANE`, `IPC_MENU_ROLE`) plus the planted one, and the row\'s `toBe(3)` then FAILS (the pre-landing instrument, by contrast, would have read a count that matched for the WRONG reason — the census was unreachable in BOTH directions)').toBe(4)
+    expect(fourthConstant.length === 3,
+      'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 3`) is FALSIFIED by the undeclared constant: the bound bites').toBe(false)
 
-    /* (ii) a FIFTH `security` member that no pass declares. **⟶ `D-106`: the surplus the row must refuse is the FIFTH, not
-     * the fourth — the fourth is the record's delivery and it is declared.** */
+    /* (ii) a SIXTH `security` member that no pass declares. **⟶ `D-106`: the surplus the row must refuse is the FIFTH, not
+     * the fourth — the fourth is the record's delivery and it is declared.** **⟶ AND AT `D-123` IT MOVED ONE ALONG: the fifth
+     * is `setPane`, the pane's request, also declared, so the surplus this control plants is the SIXTH and the title above
+     * reads with the planted set rather than two passes behind it.** */
     const fourthMember = [...members, 'resetExclusion']
     expect(fourthMember,
       'CONTROL (ii) — the row\'s member equality is FALSIFIED by an undeclared extra member: the five declared plus `resetExclusion` are NOT the declared post-landing member set').not.toEqual(['get', 'set', 'setExclusion', 'onChanged', 'setPane'])
     expect(members,
       'CONTROL (ii) POSITIVE HALF — the UNPERTURBED landed member set DOES equal the declared post-landing set (`D-106`’s delivery and `D-123`’s `setPane` included), so control (ii) is not vacuous').toEqual(['get', 'set', 'setExclusion', 'onChanged', 'setPane'])
 
-    // and the addition is still exactly ONE term of the 8 (never re-counted):
-    expect(fourthConstant.length - 2,
-      'CONTROL — the declared addition is subtracted ONCE from the post-landing census to recover the before-value, the later pass\'s constant being excluded by name; counting it twice (the as-filed defect) would read `3 - 2 = 1` where the before-value is `0` (`D-93`: the file\'s two starting constants were deleted with the frozen store projection)').toBe(1)
+    // and the addition is still exactly ONE term of the 8 (never re-counted) — written as NAMED PARTS, because a count
+    // that is not a sum of named parts is a count nobody can check (`D-26`/`D-43`): the constant this control planted and the
+    // TWO constants the later passes added are each subtracted BY NAME, and what stands is the `D-93` census.
+    const plantedUndeclared = 1
+    const laterAdditions = ['IPC_SECURITY_PANE', 'IPC_MENU_ROLE']
+    expect(fourthConstant.length - plantedUndeclared - laterAdditions.length,
+      'CONTROL — the declared addition is subtracted ONCE from the post-landing census: `4` planted-and-declared, less the `1` UNDECLARED constant this control planted, less the `2` constants the later passes added BY NAME (`IPC_SECURITY_PANE` at `D-123`, `IPC_MENU_ROLE` at `D-181`/`D-196`) = `1`, which is this unit\'s ONE addition and nothing else; counting that addition twice (the as-filed defect) would read `0` where the `D-93` census is `1` (the file\'s two starting constants were deleted with the frozen store projection)').toBe(1)
   })
 
   it('the PAR-13 declaration-site widening: `1` declared-return widening at `2` declaration sites — the two MUST move together (§1.5 item 5)', () => {

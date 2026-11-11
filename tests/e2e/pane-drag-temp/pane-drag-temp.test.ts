@@ -3,8 +3,9 @@
 //
 // WHAT THIS BATTERY EXISTS FOR (`strata/next-steps.md` row `5`, the last actionable row in the queue, D-144). The pane
 // drag's in-process reading becomes an ADDRESSABLE FACT AT A TIER THAT PERSISTS NOWHERE: one family at `['drag']` at
-// `temp`, keyed by pane id, `{ [paneId]: { size } }` (ASM-1); two new routes on the app's `view` bridge member —
-// `commitDrag(paneId, {size})` and `clearDrag()` (ASM-4); `clearDrag()` ENDS the reading with a tier-scoped delete, so a
+// `temp`, keyed by pane id, `{ [paneId]: { height } }` — the ADJUSTABLE axis's own member, `height` for the stage-resident
+// `pane-a`, which carries no `zone` (D-186, D-189) (ASM-1); two new routes on the app's `view` bridge member —
+// `commitDrag(paneId, { height })` and `clearDrag()` (ASM-4); `clearDrag()` ENDS the reading with a tier-scoped delete, so a
 // later read at the address is `absent` (ASM-2); the declared-root guard refuses a `file` or `mem` shadow of the family
 // with reason `declared-tier` (D-101, D-132); `createViewRecord.subscribe`'s address array gains `['drag']`, so a `temp`
 // write ANYONE makes fires `window.provident.view.onChanged` (R-2, D-137); and the renderer paints a declared transient
@@ -209,10 +210,14 @@ function plainOf(node: unknown): unknown {
   for (const [key, member] of Object.entries(object)) if (key !== '_tier') plain[key] = plainOf(member)
   return plain
 }
-/** The size one pane carries in a `['panes']` node (or in a `['drag']` node), read off the plain projection: the family
- *  is keyed by pane id and each member carries `{size, …}`, so this is the one field the two tiers are compared on. */
-const paneSize = (node: unknown, id: string): number | null =>
-  num(memberOf(asObject(memberOf(plainOf(node), id)), 'size'))
+/** **THE ADJUSTABLE MEMBER ONE PANE CARRIES — THE MEMBER'S OWN NAME IS THE AXIS** (`D-189`, `D-191`): the record is
+ *  `{ id, width, height, bounds?, zone? }` with **BOTH figures required**, and `zone` — which `pane-a` does NOT carry, the
+ *  absence `D-186` reads as the STAGE — selects WHICH of the two a gesture may move. A stage pane is sidebar-equivalent
+ *  (`C-12`), so **the adjustable member is `height`**, and **on BOTH tiers** — `['panes']` at `file` and `['drag']` at
+ *  `temp` — each family's member now carries the axis-named member, so this is the one figure the two tiers are compared
+ *  on. It is NEVER the `size` the split retired, and no reader here re-interprets one standing number. */
+const paneHeight = (node: unknown, id: string): number | null =>
+  num(memberOf(asObject(memberOf(plainOf(node), id)), 'height'))
 
 // ---- the process table and the teardown (D-74) ------------------------------
 interface Proc { pid: number; ppid: number; args: string }
@@ -547,7 +552,7 @@ async function writeAt(client: Client, path: string[], tier: Tier, value: unknow
  *  `['drag']` and equally the member record `['drag', <pane>]` — is answered by the EMPTY RECEIPT
  *  `{status:'committed', removed:false, tiers:[]}`, which removes NOTHING and mints no cursor (`docs/L3/central-data/design.md`
  *  §3; `ASM-L2-6`). A caller that means to END a family's reading must therefore name the LEAF that stands — which is why
- *  `P-4` deletes `['drag', <pane>, 'size']` and never the root it was painted from. */
+ *  `P-4` deletes `['drag', <pane>, 'height']` and never the root it was painted from. */
 async function deleteAt(client: Client, path: string[], tier: Tier): Promise<CallAnswer> {
   return call(client, 'provident.data.delete', { path: [...path], tier })
 }
@@ -899,7 +904,7 @@ function commitDragAct(paneId: string): Act {
     act: `var view = need('view')
     var census = { members: Object.keys(view), commitDrag: typeof view.commitDrag, clearDrag: typeof view.clearDrag }
     if (typeof view.commitDrag !== 'function') { ok({ route: 'absent', census: census }); return }
-    view.commitDrag('${paneId}', { size: 220 }).then(function (answer) { ok({ route: 'present', answer: answer, census: census }) }, no)`,
+    view.commitDrag('${paneId}', { height: 220 }).then(function (answer) { ok({ route: 'present', answer: answer, census: census }) }, no)`,
   }
 }
 /** `P-2`'s ONE act: the gesture's three turns IN ORDER — the mid-gesture `temp` write, the release's `file` commit, the
@@ -911,8 +916,8 @@ function dragTurnsAct(paneId: string): Act {
     act: `var view = need('view')
     var census = { members: Object.keys(view), commitDrag: typeof view.commitDrag, commitPane: typeof view.commitPane, clearDrag: typeof view.clearDrag }
     if (typeof view.commitDrag !== 'function' || typeof view.clearDrag !== 'function') { ok({ turn: 'absent', census: census }); return }
-    view.commitDrag('${paneId}', { size: 180 }).then(function (mid) {
-      view.commitPane('${paneId}', { size: 180 }).then(function (release) {
+    view.commitDrag('${paneId}', { height: 180 }).then(function (mid) {
+      view.commitPane('${paneId}', { height: 180 }).then(function (release) {
         view.clearDrag().then(function (cleared) { ok({ turn: 'present', turns: [mid, release, cleared], census: census }) }, no)
       }, no)
     }, no)`,
@@ -1096,7 +1101,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       const commit = asObject(memberOf(framed, 'answer'))
       expect(
         str(memberOf(commit, 'status')),
-        `P-1 — \`commitDrag('${paneId}', {size: 220})\` must answer status 'committed': the drag's mid-gesture turn is a WRITE at ` +
+        `P-1 — \`commitDrag('${paneId}', { height: 220 })\` must answer status 'committed': the drag's mid-gesture turn is a WRITE at ` +
           `\`['${DRAG}']\` at tier '${GHOST_TOKEN}', and a refusal here says the route reached no store. Commit answer: ${textOf(commit)}`,
       ).toBe('committed')
 
@@ -1120,7 +1125,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       const node = answer?.['value']
       expect(
         owns(node, paneId),
-        `P-1 — the branch's node must NAME the pane the drag committed (\`${paneId}\`): the family is \`{ [paneId]: { size } }\` ` +
+        `P-1 — the branch's node must NAME the pane the drag committed (\`${paneId}\`): the family is \`{ [paneId]: { height } }\` ` +
           `(ASM-1), so the ghost's question is asked at the node that names the pane. Observed answer: ${trunc(read.text)}`,
       ).toBe(true)
       expect(
@@ -1135,8 +1140,8 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
           `and a member naming another tier (or none) is the tier that would persist. Observed answer: ${trunc(read.text)}`,
       ).toBe(GHOST_TOKEN)
       expect(
-        num(memberOf(plainOf(member), 'size')),
-        `P-1 — the member must carry the size the commit wrote: \`commitDrag('${paneId}', {size: 220})\` writes a placement at ` +
+        num(memberOf(plainOf(member), 'height')),
+        `P-1 — the member must carry the \`height\` the commit wrote: \`commitDrag('${paneId}', { height: 220 })\` writes a placement at ` +
           `\`['${DRAG}']\`, so the reading's own member carries 220. Observed answer: ${trunc(read.text)}`,
       ).toBe(220)
 
@@ -1187,8 +1192,8 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       const turns = objectList(memberOf(framed, 'turns'))
       expect(
         turns.map((turn) => str(turn['status'])),
-        `P-2 — the three turns must each answer 'committed', IN ORDER: the mid-gesture \`commitDrag('${paneId}', {size: 180})\` ` +
-          `writes \`['${DRAG}']\` at '${GHOST_TOKEN}', the release's \`commitPane('${paneId}', {size: 180})\` writes \`['${PANES}']\` ` +
+        `P-2 — the three turns must each answer 'committed', IN ORDER: the mid-gesture \`commitDrag('${paneId}', { height: 180 })\` ` +
+          `writes \`['${DRAG}']\` at '${GHOST_TOKEN}', the release's \`commitPane('${paneId}', { height: 180 })\` writes \`['${PANES}']\` ` +
           `at 'file', and \`clearDrag()\` ends the reading. Framed answer: ${textOf(driven.answer)}`,
       ).toEqual(['committed', 'committed', 'committed'])
 
@@ -1209,9 +1214,9 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
           `commit is the durable half of the gesture (D-132, D-138). Observed answer: ${trunc(panes.text)}`,
       ).toBe('file')
       expect(
-        paneSize(panesNode, paneId),
-        `P-2 — and it must carry the size the release committed (180) for the pane the drag named (\`${paneId}\`): the two tiers ` +
-          `hold ONE datum at one time, so the address that survives the gesture carries the size the drag was at. ` +
+        paneHeight(panesNode, paneId),
+        `P-2 — and it must carry the \`height\` the release committed (180) for the pane the drag named (\`${paneId}\`): the two tiers ` +
+          `hold ONE datum at one time, so the address that survives the gesture carries the \`height\` the drag was at. ` +
           `Observed answer: ${trunc(panes.text)}`,
       ).toBe(180)
 
@@ -1263,7 +1268,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       ).toBe(0)
 
       // ── the write is an AGENT's: outside the drag, outside the composition ───
-      const wrote = await writeAt(booted.client, [DRAG], 'temp', { [paneId]: { size: 210 } })
+      const wrote = await writeAt(booted.client, [DRAG], 'temp', { [paneId]: { height: 210 } })
       expect(
         str(asObject(wrote.value)?.['status']),
         `P-3 PREREQUISITE — the agent's \`data.write(['${DRAG}'], tier:'${GHOST_TOKEN}')\` must answer committed: this row is ` +
@@ -1302,10 +1307,10 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
           `${trunc(panesAnswer.text)}`,
       ).toBe('file')
 
-      const wrote = await writeAt(booted.client, [DRAG], 'temp', { [paneId]: { size: 200 } })
+      const wrote = await writeAt(booted.client, [DRAG], 'temp', { [paneId]: { height: 200 } })
       expect(
         str(asObject(wrote.value)?.['status']),
-        `P-4 PREREQUISITE — the agent's \`data.write(['${DRAG}'], tier:'${GHOST_TOKEN}', {${paneId}: {size: 200}})\` must answer ` +
+        `P-4 PREREQUISITE — the agent's \`data.write(['${DRAG}'], tier:'${GHOST_TOKEN}', {${paneId}: {height: 200}})\` must answer ` +
           `committed: the write is the row's own act and the ghost is its product, so a refusal here would measure the guard and ` +
           `not the rendering. Observed: ${trunc(wrote.text, 320)}`,
       ).toBe('committed')
@@ -1345,28 +1350,29 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       // `{status:'committed', removed:false, tiers:[]}`, which removes nothing and mints no cursor. A delete of the root
       // would leave the reading standing and make the absence measured below the HARNESS's rather than the act's
       // (`docs/L3/central-data/design.md` §3; `ASM-L2-6`) — which is why the prerequisite below asserts BOTH members.
-      // The address deleted is `['drag', <pane>, 'size']`: the LEAF the ghost's own condition reads (the member's finite
-      // `size` at `temp`), so the declaration goes with the exact reading it was painted from and no tier of the family is
-      // merely overwritten (ASM-2, ASM-3).
+      // The address deleted is `['drag', <pane>, 'height']`: the LEAF the ghost's own condition reads (the pane's ADJUSTABLE
+      // member at `temp`, which for the stage-resident `pane-a` is `height`, D-186/D-189), so the declaration goes with the
+      // exact reading it was painted from and no tier of the family is merely overwritten (ASM-2, ASM-3).
       //
       // **AND SO IT ENDS THE ROW'S READING AND NOT THE FAMILY'S — MEASURED ON A LIVE BOOT OF THIS HEAD, NEVER INFERRED**:
       // `data.delete` names ONE ROW, so after this leaf delete `['drag']` still answers
       // `{status:'read', kind:'branch', value:{_tier:'temp', <pane>:{_tier:'temp'}}}` — the pane member STANDS at `temp` and
-      // only its `size` is gone. The family's own end is the ROUTE's (`clearDrag()`'s store root delete at `['drag']`,
+      // only its `height` is gone. The family's own end is the ROUTE's (`clearDrag()`'s store root delete at `['drag']`,
       // driven by `P-2`'s third turn; `src/main/view-record/index.ts`'s `clearDrag`) and the gesture's own turns are
       // `pane-drag-compliance`'s, so this battery pins the GHOST's product and says plainly that it does not measure the
       // family's absence.
       //
       // **THE PREDICATE THIS ARM THEREFORE RELIES ON IS THE RENDERER'S OWN, AND IT IS NARROWER THAN ASM-3's SENTENCE**: the
-      // declaration is painted iff the branch stands at `temp` naming the pane WITH A FINITE NON-NEGATIVE `size`
-      // (`docs/L2/renderer-wiring/interface.md` §3's "What it reads"), so what this row removes is exactly that datum and
-      // not the reading's existence — arm (b)'s zero is caused by that predicate LOSING ITS DATUM. A predicate reading
+      // declaration is painted iff the branch stands at `temp` naming the pane WITH A FINITE NON-NEGATIVE FIGURE AT THAT
+      // PANE'S ADJUSTABLE MEMBER — `height`, its own name stating its axis (`docs/L2/renderer-wiring/interface.md` §3's
+      // "What it reads") — so what this row removes is exactly that datum and not the reading's existence — arm (b)'s zero
+      // is caused by that predicate LOSING ITS DATUM. A predicate reading
       // ASM-3's sentence alone — present while the reading names the pane — would keep the declaration painted after this
       // delete, which is why the row pins the L2 predicate it cites rather than the one sentence it quotes.
-      const ended = await deleteAt(booted.client, [DRAG, paneId, 'size'], 'temp')
+      const ended = await deleteAt(booted.client, [DRAG, paneId, 'height'], 'temp')
       expect(
         str(asObject(ended.value)?.['status']),
-        `P-4 PREREQUISITE — \`data.delete(['${DRAG}', '${paneId}', 'size'], tier:'${GHOST_TOKEN}')\` must answer committed: the ` +
+        `P-4 PREREQUISITE — \`data.delete(['${DRAG}', '${paneId}', 'height'], tier:'${GHOST_TOKEN}')\` must answer committed: the ` +
           `end of the reading is the arm the ghost's disappearance is measured against, and a refusal here ends nothing. ` +
           `Observed: ${trunc(ended.text, 320)}`,
       ).toBe('committed')
@@ -1383,7 +1389,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       expect(
         vanished.count,
         `P-4 — the declaration must be GONE once the row that names the pane is removed: a \`data-ghost="${GHOST_TOKEN}"\` that ` +
-          `survives \`data.delete(['${DRAG}', '${paneId}', 'size'], tier:'${GHOST_TOKEN}')\` is the ghost of a gesture that is ` +
+          `survives \`data.delete(['${DRAG}', '${paneId}', 'height'], tier:'${GHOST_TOKEN}')\` is the ghost of a gesture that is ` +
           `over, and the design's own failure-mode column names it (${String(vanished.polls)} bounded re-read(s); html length ` +
           `${String(vanished.length)}${vanished.truncated ? ', answer TRUNCATED' : ''}). It is the ROW's reading that is removed ` +
           `and never the family's: the family's own end is the route's \`clearDrag()\` at \`['${DRAG}']\`, which \`P-2\` measures.`,
@@ -1398,7 +1404,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       ).toBeGreaterThan(0)
 
       // ── arm (c): a reading naming ANOTHER pane must not move this pane ──────
-      const foreign = await writeAt(booted.client, [DRAG], 'temp', { [OTHER_PANE]: { size: 200 } })
+      const foreign = await writeAt(booted.client, [DRAG], 'temp', { [OTHER_PANE]: { height: 200 } })
       expect(
         str(asObject(foreign.value)?.['status']),
         `P-4 PREREQUISITE — the agent's write naming \`${OTHER_PANE}\` (an id the \`['${PANES}']\` family does not name) must answer ` +
@@ -1420,7 +1426,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       const { id: paneId } = await paneFamily(booted.client)
 
       // ── a standing temp reading, and the bytes at rest beside it ────────────
-      const seeded = await writeAt(booted.client, [DRAG], 'temp', { [paneId]: { size: 160 } })
+      const seeded = await writeAt(booted.client, [DRAG], 'temp', { [paneId]: { height: 160 } })
       expect(
         str(asObject(seeded.value)?.['status']),
         `P-5 PREREQUISITE — the standing \`temp\` reading must be written first: \`data.write(['${DRAG}'], tier:'${GHOST_TOKEN}')\` ` +
@@ -1435,7 +1441,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
       const atRest = await stableProfile(profile)
 
       // ── the shadow: `file` first, then `mem` ───────────────────────────────
-      const fileShadow = await writeAt(booted.client, [DRAG], 'file', { [paneId]: { size: 240 } })
+      const fileShadow = await writeAt(booted.client, [DRAG], 'file', { [paneId]: { height: 240 } })
       const fileAnswer = asObject(fileShadow.value)
       expect(
         str(fileAnswer?.['status']),
@@ -1451,7 +1457,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
           `at (D-101). Observed: ${trunc(fileShadow.text, 320)}`,
       ).toBe('declared-tier')
 
-      const memShadow = await writeAt(booted.client, [DRAG], 'mem', { [paneId]: { size: 240 } })
+      const memShadow = await writeAt(booted.client, [DRAG], 'mem', { [paneId]: { height: 240 } })
       const memAnswer = asObject(memShadow.value)
       expect(
         str(memAnswer?.['status']),
@@ -1491,7 +1497,7 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
 
   it('P-6 — `temp` is the tier that persists nothing, and the sink\'s half survives the restart', async () => {
     // **THE READING IS SEEDED THROUGH THE APP'S OWN ROUTE, AND NEVER BY AN AGENT** (§4 P-6; `D-132`, `D-101`): boot one drives
-    // `window.provident.view.commitDrag(<pane>, {size})` INSIDE its renderer realm — the same driver envelope `P-1` uses —
+    // `window.provident.view.commitDrag(<pane>, { height })` INSIDE its renderer realm — the same driver envelope `P-1` uses —
     // because an agent's `provident.data.write({path:['drag'], tier:'temp', …})` succeeds at ANY undeclared address at this
     // head. A reading seeded that way would make this row measure the durability of a write nothing owns: it would pass on a
     // tree that carries no `['drag']` family at all. Seeded through the route, the row's subject is the family's own tier —
@@ -1519,24 +1525,24 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
         `${textOf(memberOf(asObject(memberOf(framed, 'census')), 'commitDrag'))} (members: ` +
         `${textOf(memberOf(asObject(memberOf(framed, 'census')), 'members'))}), so the \`['${DRAG}']\` reading at ` +
         `'${GHOST_TOKEN}' whose durability this row measures was never written, and boot two's \`absent\` would be an absence ` +
-        `no gesture made. §4 P-6 seeds that reading through the app's OWN route \`commitDrag(paneId, {size})\` — the \`view\` ` +
+        `no gesture made. §4 P-6 seeds that reading through the app's OWN route \`commitDrag(paneId, { height })\` — the \`view\` ` +
         `member's lockstep surface (\`R-4\`, \`D-132\`) — and not through an agent's \`data.write\`.`,
     ).toBe('present')
     const commit = asObject(memberOf(framed, 'answer'))
     expect(
       str(memberOf(commit, 'status')),
-      `P-6 — \`commitDrag('${paneId}', {size: 220})\` must answer status 'committed': the drag's mid-gesture turn is a WRITE at ` +
+      `P-6 — \`commitDrag('${paneId}', { height: 220 })\` must answer status 'committed': the drag's mid-gesture turn is a WRITE at ` +
         `\`['${DRAG}']\` at tier '${GHOST_TOKEN}', and a refusal here says the route reached no store. Commit answer: ${textOf(commit)}`,
     ).toBe('committed')
 
     // ── boot one: the geometry at `file` ─────────────────────────────────────
     const heldPane = asObject(memberOf(family, paneId)) ?? {}
-    const committed = { ...family, [paneId]: { ...heldPane, size: 150 } }
+    const committed = { ...family, [paneId]: { ...heldPane, height: 150 } }
     const paneWrite = await writeAt(first.client, [PANES], 'file', committed)
     expect(
       str(asObject(paneWrite.value)?.['status']),
       `P-6 PREREQUISITE — boot one must commit the pane at \`['${PANES}']\` at 'file': the value is the family the boot's own read ` +
-        `stands with ONE size moved (\`${paneId}\` at 150, which is what tells the durable half from the '${GHOST_TOKEN}' ` +
+        `stands with ONE figure moved — its \`height\` (\`${paneId}\` at 150, which is what tells the durable half from the '${GHOST_TOKEN}' ` +
         `reading's own 220 after the restart), so a refusal here is a harness fault and not this row's reading. ` +
         `Observed: ${trunc(paneWrite.text, 320)}`,
     ).toBe('committed')
@@ -1581,8 +1587,8 @@ describe('pane-drag-temp — the drag\'s in-process value at `temp`, its release
         `${trunc(survived.text)}`,
     ).toBe('file')
     expect(
-      paneSize(survivedNode, paneId),
-      `P-6 — with the size boot one committed at \`file\` (150) intact for the pane it named (\`${paneId}\`), and not the ` +
+      paneHeight(survivedNode, paneId),
+      `P-6 — with the \`height\` boot one committed at \`file\` (150) intact for the pane it named (\`${paneId}\`), and not the ` +
         `'${GHOST_TOKEN}' reading's own 220: the durable half is exactly the sink's, so a missing pane — or a pane carrying the ` +
         `in-process reading — after the restart is the design's own declared failure mode. Observed answer: ${trunc(survived.text)}`,
     ).toBe(150)

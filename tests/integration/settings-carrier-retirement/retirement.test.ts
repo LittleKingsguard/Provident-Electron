@@ -243,7 +243,7 @@ describe('settings-carrier-retirement · the retirement’s absences, the census
     }
   })
 
-  it('RET-4 · the two channel names keep their spellings BY CONSTANT VALUE and nothing re-spells them: both handlers are registered where they were and both `invoke` sites stand where they stood (L1 §2; D-18; interface.md §0)', () => {
+  it('RET-4 · the channel names keep their spellings BY CONSTANT VALUE and nothing re-spells them: both handlers are registered where they were and both `invoke` sites stand where they stood (L1 §2; D-18; interface.md §0)', () => {
     // BY VALUE, off the module that owns the names — never by a local literal, which could drift in
     // lockstep with a rename and still pass.
     /* ⟶ **RET-4 IS RE-GRAINED `3 -> 1` AND ITS SUBJECT IS WHAT STANDS (2026-11-03, `D-93`).** The row asserted the
@@ -258,7 +258,12 @@ describe('settings-carrier-retirement · the retirement’s absences, the census
      * still bites. */
     // ⟶ **THE FILE'S CENSUS MOVES `1 → 2` AT `D-123`, AND THE CLAIM IS UNMOVED IN KIND**: a second crossing verb — the pane's
     // open state — reaches its two ends by IMPORT from this file, and the F-8 single-source rule still bites on both names.
-    expect(Object.keys(storeChannels).sort(), 'the channel-name file carries the two constants the secure crossing’s surface needs and mints no third (store-channels.ts\'s own census: `D-93` left it one wide, `D-123` adds the pane’s)').toEqual(['IPC_SECURITY_EXCLUSION', 'IPC_SECURITY_PANE'])
+    // ⟶ **AND `2 → 3` ON 2026-11-09 (`D-181`, `D-196`): THE THIRD IS THE MENUS ROLE ROUTE'S CHANNEL.** `IPC_MENU_ROLE`
+    // (`provident:menu:role`) is `app-shell`'s — one member of the bridge's `menu` behind one `ipcMain.handle` — imported by
+    // `main.ts` and `preload.ts` from this file exactly as its two siblings are. **IT IS NOT THE RETIREMENT'S AND IT MOVES
+    // NOTHING THE PURGE LEFT**; the equality names all three so the reading is a SUM OF NAMED PARTS and not a bare figure a
+    // reader cannot check (`D-26`/`D-43`), and the two by-value spellings the crossings need below are unmoved, name for name.
+    expect(Object.keys(storeChannels).sort(), 'the channel-name file carries EXACTLY three constants and mints no fourth: this retirement\'s one survivor `IPC_SECURITY_EXCLUSION` (`D-93`, the `STORE_FILE_GET`/`STORE_FILE_PUT` pair having gone with the frozen store), `D-123`\'s pane channel `IPC_SECURITY_PANE`, and `D-181`/`D-196`\'s menus role route `IPC_MENU_ROLE` (`provident:menu:role`) — the menus member\'s one channel, and the only one of the three that is not a security channel').toEqual(['IPC_MENU_ROLE', 'IPC_SECURITY_EXCLUSION', 'IPC_SECURITY_PANE'])
     expect(storeChannels.IPC_SECURITY_EXCLUSION, 'the exclusion channel keeps its spelling BY VALUE').toBe('provident:security:exclusion')
     expect(storeChannels.IPC_SECURITY_PANE, 'and the pane channel’s spelling, BY VALUE, is the one its two ends import').toBe('provident:security:pane')
     expect(Object.values(storeChannels), 'and the two purged names are GONE from the module, not merely unreferenced').not.toContain('provident:store:file:get')

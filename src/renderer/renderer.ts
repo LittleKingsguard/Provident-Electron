@@ -2,7 +2,7 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
-import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID } from '../shared/demo-envelope.js'
+import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_RECEIPT_ID } from '../shared/demo-envelope.js'
 import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
@@ -1018,6 +1018,20 @@ async function main(): Promise<void> {
   if (!gutter.attached) {
     console.error(`[provident-renderer] the gutter affordance did NOT attach — the pane drag is inert (handle ${GUTTER_AFFORDANCE_ID})`)
   }
+  // ⟶ **TURN 4 — THE MENUS' ONE BOOT REGISTRATION (`S-11`; `D-181`, `D-196`)** — taken HERE, beside the affordance's
+  //    attach, because the menus pane is AUTHORED and nothing mints it: the eighteen static items exist as soon as the
+  //    first envelope loaded, so their listeners are attached once and no delivery, mint, subscription or timer is added
+  //    (`D-82` clause 4). **IT SENDS NO ROUTE AT BOOT**: the eleven admitted roles are called by a CLICK, so this site
+  //    writes no byte, awaits nothing and cannot move a step `tests/e2e/bundle-boot-seam`'s `B-5` orders. **AND ITS ONE
+  //    RETURNED READING IS READ**, the gutter's own rule above (`D-117`): zero attached items is a pane that renders as
+  //    the menu it claims and can perform nothing, and that is said out loud at the one site that can say it. **THE
+  //    SEVEN REFUSED ITEMS TAKE NO LISTENER AND THAT IS THE ENVELOPE'S DATA** (`D-181`): they carry no handler and render
+  //    `disabled`, while the enforcement is `main`'s admitted set — this realm adds no guard, because a render-side one is
+  //    the guard an agent's `provident.dispatch` bypasses (`D-196`).
+  const menus = startMenusItems(runtime)
+  if (menus.attached === 0) {
+    console.error('[provident-renderer] the menus items took NO click listener — the pane renders the menu it claims and no role can reach the route')
+  }
   // ⟶ **THE APPEARANCE APPLICATION (`D-97`)** — constructed here, ONCE, after the first envelope load so the authored state
   //    node exists: `themeWiringRole` derives the caller-held attribute name and the authored carrier's id, and the returned
   //    pair of turns is the app's ONE application site. **IT READS NOTHING AND WRITES NOTHING AT THIS SITE** — `D-96`'s boot
@@ -1648,6 +1662,204 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
       console.error(`[provident-renderer] layout paint: the page ${row.target} answered ${String(status)}`)
     }
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * TURN 4 — THE MENUS: A BOOT REGISTRATION AND NOT A DELIVERY (`S-11`; `D-181`, `D-196`; L1 `AL-6`/`AL-7`,
+ * `docs/L2/renderer-wiring/interface.md` §2 turn 4, `docs/L3/renderer-wiring/design.md` §1 turn 4).
+ *
+ * **THE PANE IS AUTHORED, SO NOTHING MINTS IT.** The four menus and their eighteen items are STATIC nodes of the
+ * envelope (`src/shared/demo-envelope.ts`), not rows a mint produces — so this turn is ONE registration at boot,
+ * beside the affordance's attach, and never a per-delivery turn: there is no delivery to ride and no mint answer
+ * that could name an item's node. That is the whole difference between this turn and turns 1–2.
+ *
+ * **ONE LISTENER PER AUTHORED ITEM, AND THE ROLE IS READ OFF THE NODE** (`D-129`, `D-194`'s form): the click turn
+ * asks THAT node for its own `props.role` through `authoredPropOf` at CLICK time and hands it, unchanged, to
+ * `window.provident.menu` — the ONE route `app-shell` landed (`D-181`, `D-196`: one channel, one preload member, one
+ * `ipcMain.handle`). **NO ROLE NAME APPEARS IN THIS FILE**: not one of the eleven and not one of the seven is
+ * spelled here, and no closure map from a node to a role stands in for the node's own prop — a captured role would
+ * be the copy `D-129` forbids and would go stale the moment the envelope's authored text moved.
+ *
+ * **AND THE FOCUS RULE, WHICH IS A RULE AND NOT A NICETY** (`D-196`, and the reason it is written down): the edit
+ * roles — `undo`, `redo`, `cut`, `copy`, `paste`, `delete`, `selectall` — are `webContents` operations that act on
+ * the **FOCUSED ELEMENT**, and clicking an authored `<div>` moves focus ONTO that div first. A native menu never has
+ * this problem because it lives OUTSIDE the document. **So a `mousedown` listener calls `preventDefault()`**, which
+ * stops focus from moving while leaving the `click` to fire on mouseup — and only then does the role execute, against
+ * the element the user was actually in. **WITHOUT THIS LISTENER SIX OF THE ELEVEN EXECUTE AGAINST A COPY OF NOTHING**:
+ * the receipt would read `admitted` over an edit that reached no text.
+ *
+ * **THE SEVEN ARE DATA AND THE GUARD IS `main`'s** (`D-181`, whose split is FIXED and is not adjusted here): the
+ * envelope renders them `disabled` and authors NO handler on them, so they take no listener and carry no click path
+ * at all — **the refusal is the RENDERING, and it is a COURTESY**. The **ENFORCEMENT** is `src/main/main.ts`'s
+ * admitted set, tested before any other arm of `menuRoleAnswer`: `provident.dispatch` synthesises a click on an
+ * authored id, so an agent reaches every listener this file installs, and only the main-process bound stops `quit`,
+ * `close`, `reload`, `forcereload`, `toggledevtools`, `minimize` and `zoom` however the click arrived (`D-196`).
+ * **SO THIS TURN REFUSES NOTHING**: it adds no roster, no veto and no prefix test — a render-side guard would be the
+ * one an agent's own `dispatch` bypasses, and it would be a second authority over a decision the corpus gave `main`.
+ *
+ * **AND THE ANSWER LANDS IN THE ENVELOPE'S ONE RECEIPT CARRIER** (`MENUS_RECEIPT_ID`): the route's answer is written
+ * as ONE `state-slice` `content` on that authored node — the write kind the corpus already uses for a STATUS node
+ * (`renderPaneSize`'s on `#gutter-status`) and the kind the envelope's own note names for this carrier. **THE VALUE
+ * IS TEXT AND NOT A `css.style`, SO `D-203` DOES NOT BITE HERE**: that row's rule is that a `css.style` write must
+ * carry CSS TEXT rather than an object (the object spelling is a silent no-op in a real renderer), and this turn
+ * writes `content` — a text member — which is applied as written on both realms. A realm that carries no `menu`
+ * member, a route that rejects and a route that throws each answer a STATED receipt rather than a throw or a
+ * silence, because a click that reached nothing is a reading and not an exception.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** **THE ENVELOPE'S ONE HANDLER NAME, AND THE ONLY DISCOVERY CRITERION THIS TURN ADDS** (`D-181`, `D-126`'s
+ *  discipline): the eleven admitted items share ONE authored body (`MENUS_ITEM_BODY`) under ONE handler name, and
+ *  nothing else in the tree authors it — so the graph's own census answers "which nodes are menu items", and the
+ *  seven, which the envelope authors with `disabled` and NO handler, are absent from that answer rather than vetoed
+ *  here. **IT IS A NAME AND NOT A ROSTER**: no role is listed, no count is asserted, and a node this criterion
+ *  misses is a node nobody can click (`provident.list_targets` shows the same handler list to an agent). */
+const MENUS_ITEM_HANDLER = 'menu-item'
+
+/** **THE AUTHORED ITEMS' NODE IDS, ASKED OF THE GRAPH** (`runtime.listTargets`, the one census this file reads):
+ *  in-tree nodes carrying the envelope's own `click` handler. TOTAL — a runtime whose census throws, answers no
+ *  `nodes` or answers a shape that is not a list states NO item, so the turn degrades to no listener and no throw. */
+function menuItemNodeIds(runtime: Runtime): readonly string[] {
+  let listed: unknown = null
+  try {
+    listed = runtime.listTargets()
+  } catch {
+    return []
+  }
+  const nodes = (listed as { readonly nodes?: unknown } | null | undefined)?.nodes
+  if (!Array.isArray(nodes)) return []
+  const ids: string[] = []
+  for (const entry of nodes as readonly unknown[]) {
+    if (entry === null || typeof entry !== 'object') continue
+    const node = entry as { readonly nodeId?: unknown; readonly handlers?: unknown }
+    if (typeof node.nodeId !== 'string' || node.nodeId === '') continue
+    if (!Array.isArray(node.handlers)) continue
+    const carries = (node.handlers as readonly unknown[]).some(
+      (handler) =>
+        handler !== null &&
+        typeof handler === 'object' &&
+        (handler as { readonly name?: unknown }).name === MENUS_ITEM_HANDLER &&
+        (handler as { readonly event?: unknown }).event === 'click',
+    )
+    if (carries) ids.push(node.nodeId)
+  }
+  return ids
+}
+
+/** **THE RECEIPT'S TEXT — WHAT THE ROUTE ANSWERED, IN THE ROUTE'S OWN WORDS** (`D-181`, `D-196`; L2 §2 turn 4): an
+ *  admitted role reads `admitted <role>`, and a refusal reads `refused <role>: <reason> — <message>`, with the
+ *  role the ANSWER names where it names one (a malformed call carries `''` there, so the node's own role stands in)
+ *  and the route's `message` verbatim — nothing is re-worded, softened or summarised. TOTAL: an answer that is not
+ *  an object, a status that is not a string and a refusal with no reason each answer a sentence rather than a throw. */
+function menuReceiptText(role: string, answer: unknown): string {
+  const record = answer !== null && typeof answer === 'object' ? (answer as Record<string, unknown>) : {}
+  const status = typeof record['status'] === 'string' ? record['status'] : ''
+  if (status === 'admitted') return `admitted ${role}`
+  const named = typeof record['role'] === 'string' && record['role'] !== '' ? record['role'] : role
+  const reason = typeof record['reason'] === 'string' ? record['reason'] : status === '' ? 'no-answer' : status
+  const message = typeof record['message'] === 'string' ? record['message'] : ''
+  return message === '' ? `refused ${named}: ${reason}` : `refused ${named}: ${reason} — ${message}`
+}
+
+/** **THE RECEIPT'S ONE WRITE — ONE `state-slice` `content` ON THE AUTHORED CARRIER** (`MENUS_RECEIPT_ID`; the form
+ *  `renderPaneSize`'s `S3`/`S4` writes on `#gutter-status`, and that is why this turn borrows it: a status node in
+ *  this realm has ONE landed write kind and a second spelling of it would be a second authority). The surface is
+ *  ASKED and nothing is remembered — `authoredSettingOf` answers whether the node already carries this text, and
+ *  the write is skipped where it does, so "not owed" means "the write would be a no-op" by construction (`D-129`).
+ *  **`text` is never `undefined`, so this turn has NO removal arm** — the absence-keyed skip `D-163` convicted is
+ *  unrepresentable here — and a status but `'applied'` is REPORTED rather than swallowed (`D-117`'s register). */
+function writeMenuReceipt(runtime: Runtime, text: string): void {
+  try {
+    const authored = authoredSettingOf(runtime, MENUS_RECEIPT_ID)
+    if (authored.readable && authored.setting === text) return
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: MENUS_RECEIPT_ID,
+      mutation: [{ targetProp: 'content', mode: 'replace', value: text }],
+    })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    if (status !== 'applied') {
+      console.error(`[provident-renderer] menus receipt REFUSED (status=${status}) for node ${MENUS_RECEIPT_ID}`)
+    }
+  } catch (error) {
+    // NOTHING ESCAPES A CLICK: a hostile answer or runtime is the reading this turn leaves standing.
+    console.error(`[provident-renderer] menus receipt: the write threw; the answer to "${text}" stands nowhere`, error)
+  }
+}
+
+/** **ONE ITEM'S TWO LISTENERS — THE FOCUS RULE AND THE CLICK** (`D-196`; L2 §2 turn 4). The turn is handed the NODE
+ *  ID the census answered — never a role, never an element — so both listeners ask the NODE for its own
+ *  `props.role` at click time and nothing is captured (`D-129`).
+ *
+ *  `mousedown` → `preventDefault()`: THE FOCUS RULE, and the mechanism is exactly that one call (see this region's
+ *  headstone: without it the seven edit roles execute against the item div rather than the element the user was in).
+ *  It cannot cancel the click — `preventDefault` on `mousedown` stops focus and the text selection a press would
+ *  start, and the `click` still fires on mouseup.
+ *
+ *  `click` → the route, called with the role the node carries, its answer written into the carrier. **THE ROUTE IS
+ *  READ STRUCTURALLY AND OFF THE BRIDGE'S OWN OBJECT**: `menu` is declared `menu?` on the ambient bridge, so a realm
+ *  with an older preload has no member at all — that arm writes a stated `no route` receipt, and a rejection or a
+ *  synchronous throw from the channel writes the same way. **A CLICK THAT REACHED NOTHING IS A READING**: it is never
+ *  an exception out of a handler and never silence.
+ *
+ *  Two items sharing one role are two callers of one route and the route answers each of them; this turn keys nothing
+ *  by role. **A NODE THAT WILL NOT RESOLVE OR WILL NOT TAKE A LISTENER ATTACHES NOTHING AND THROWS NOTHING**
+ *  (`D-127`), and the answer says so, so the boot can report it. */
+function attachMenuItem(runtime: Runtime, nodeId: string): boolean {
+  let element: unknown = null
+  try {
+    element = runtime.elementForNodeId(nodeId)
+  } catch {
+    element = null
+  }
+  const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+  if (typeof add !== 'function') return false
+  const listen = add as (type: string, handler: (event: unknown) => void) => void
+  // THE FOCUS RULE (`D-196`) — a menu item is a control that must not take focus, and `preventDefault` on `mousedown`
+  // is the whole mechanism: focus stays on the element the user was in while the `click` still fires on mouseup.
+  listen.call(element, 'mousedown', (event: unknown): void => {
+    const prevent = (event as { readonly preventDefault?: unknown } | null | undefined)?.preventDefault
+    if (typeof prevent === 'function') (prevent as () => void).call(event)
+  })
+  listen.call(element, 'click', (): void => {
+    const held = authoredPropOf(runtime, nodeId, 'role')
+    if (!held.readable || typeof held.held !== 'string' || held.held === '') return
+    const role = held.held
+    const bridge = typeof window === 'undefined' ? undefined : window.provident
+    const route = bridge?.menu
+    if (bridge === undefined || typeof route !== 'function') {
+      writeMenuReceipt(runtime, `no route: this realm's preload carries no \`menu\` member, so '${role}' reached nothing`)
+      return
+    }
+    try {
+      void route.call(bridge, role).then(
+        (answer: unknown) => { writeMenuReceipt(runtime, menuReceiptText(role, answer)) },
+        (error: unknown) => { writeMenuReceipt(runtime, `no answer: the menus route rejected for '${role}' (${String(error)})`) },
+      )
+    } catch (error) {
+      writeMenuReceipt(runtime, `no answer: the menus route threw for '${role}' (${String(error)})`)
+    }
+  })
+  return true
+}
+
+/** **TURN 4 — `main()`'S ONE BOOT REGISTRATION, ONCE, BESIDE THE AFFORDANCE'S ATTACH** (`S-11`; `D-181`, `D-196`;
+ *  design §1 turn 4). It discovers the authored items from the graph's own census, gives each ONE `mousedown` and ONE
+ *  `click` (`attachMenuItem`), and answers how many took their listener. **IT CREATES NOTHING, MINTS NOTHING,
+ *  REGISTERS NO SUBSCRIPTION, AWAITS NOTHING AND SENDS NO ROUTE ITSELF**: every route call is a click's, so a boot that
+ *  never clicks writes no byte and cannot delay or fail `tests/e2e/bundle-boot-seam`'s `B-5` order. **AND A FAILED
+ *  ATTACH IS REPORTED PER ITEM** in `D-117`'s register — the boot's reading of this turn is the count it answers,
+ *  which `main()` reads. */
+function startMenusItems(runtime: Runtime): { readonly attached: number } {
+  const items = menuItemNodeIds(runtime)
+  let attached = 0
+  for (const nodeId of items) {
+    if (attachMenuItem(runtime, nodeId)) {
+      attached += 1
+    } else {
+      console.error(`[provident-renderer] menus: the item on ${nodeId} took no click listener — its role cannot be reached from a click`)
+    }
+  }
+  return { attached }
 }
 
 /** **THE SHAPE'S ONE BOOT SITE (`D-88`)** — ONE registration and ONE stated read, started from `main()` as its last
