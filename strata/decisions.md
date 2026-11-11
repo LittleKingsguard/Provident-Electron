@@ -4687,3 +4687,27 @@ data.write { path: ['tabs', 'tab-1'], tier: 'file', value.target: 'page-one' }
 **THE READINGS.** `npm test` **`2,946 passed / 2 skipped` of `2,948`** over **`144`** files; `typecheck` **0**; `typecheck:tests` **0**; the demo bundle rebuilt and **current**; the six named battery paths **`63/63`** and **`90/90`** at their landings, and the e2e pane-drag set **`6/6`**.
 
 **ITS REGISTER IS `D-71` TO `D-206`** as prose, unchanged and extended by this row only. **This row records a title bar and a menu removed together, a route whose refusal precedes every other arm and whose admission performs, a menubar that dispatches by clicking, a focus rule that six — no, seven — roles depend on, and a third count re-taken.**
+
+## D-208 — THE UNIT'S OWN BATTERY EXISTS AND **FOUR OF ELEVEN ROWS RED, EACH NAMING A MEASURED CAUSE**: the agent cannot click, `keyField`'s trade is now a red row, the landing terminal never hides, and the eleven's shared body writes nothing
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source:** `tests/e2e/app-layout/app-layout.test.ts` (new, unmarked, gating) — `AL-1`…`AL-11` from `docs/L1/app-layout.md` §5.
+
+**THE BATTERY IS FIVE BOOTS FOR ELEVEN ROWS, AND THAT IS A MEASURED CHOICE.** The groups are **skeleton** (`AL-1`/`AL-2`/`AL-6`, read-only), **tabs** (`AL-3`/`AL-4`/`AL-5`, one record and three acts), **menus** (`AL-7` alone, because its declared failure mode is killing its own boot), **view** (`AL-8`/`AL-10`, both writing `['zones']`) and **driver** (`AL-9`/`AL-11`, one envelope and two acts); **strictly sequential**, because the live-boot lock is host-wide. **Every electron boot is a casualty risk** (`D-165`/`D-173`), so eleven boots would have been eleven chances to lose the battery to a flake.
+
+**SEVEN PASS, AND THE FOUR REDS ARE THE ROWS DOING THEIR JOB.**
+
+**`AL-3` — THE AGENT CANNOT CLICK A ROW.** The switch turn is a **DOM `click` listener**; **`provident.dispatch` runs declared handler bodies**, and the minted row **declares none**; and **a driver envelope's load tears the graph down**, so a body cannot reach a minted row either. **So the tab switch is reachable by a HUMAN and not by an agent** — which is `D-177`'s finding returning through a different door: the row stopped being a depiction **for a person**, and stayed one **for the agent**.
+
+**`AL-7` — THE SAME GAP, AT THE MENUS.** Eighteen dispatches, and the receipts do not arrive — **the items are DOM listeners too**, and **the eleven's shared authored body writes nothing** (`MENUS_ITEM_BODY` is a no-op by design, `D-207`). **The transport arms are green**: nothing throws, nothing dies. **But the pane's dispatch is human-only as well.**
+
+**`AL-4` — THE ROW AND THE TREE CHOSE OPPOSITE HALVES OF ONE TRADE.** `AL-4` asserts **stable ids across a re-mint**; `D-201` **removed `keyField`** precisely because stable ids froze the active marker. **Measured**: `node-155/156 → node-168/169`. **The row is right about what `keyField` would buy and wrong about what this app wants** — and the honest resolution is to re-grain it at the *marker*, which is what the app chose, not to restore `keyField`.
+
+**`AL-5` — AND THIS ONE IS A DEFECT RATHER THAN A TRADE: THE LANDING TERMINAL NEVER HIDES.** The error page follows the record; **the landing page's `display` write is issued by the SAME delivery that then mints**, and **the mint's upstream placement behaviour (`D-182`) discards it**. **So one of the two authored terminals cannot be hidden** — the first live-ish evidence that `D-182`'s routing defect has a user-visible consequence beyond the zone layout.
+
+**FOUR ROWS WERE PROVED ABLE TO RED, ALONE.** One-line assertion flips against a byte-saved baseline redded **`AL-1`** (top-bar expected absent), **`AL-6`** (menus `4 → 5`), **`AL-9`** (`visible` inverted) and **`AL-10`** (pane width `140 → 141`) — **each alone**, while `AL-2`/`AL-8`/`AL-11` stayed green; restored byte-identically (`md5` identical before and after). **The battery is not decoration.**
+
+**AND `AL-10` READS MARKUP AND SAYS SO, BECAUSE COMPUTED STYLE IS UNREACHABLE ON A GATING LEG — MEASURED TWICE.** The app boots through `bootstrap()`, so `code.get('')` answers `value: null` and `code.set` refuses *"no envelope loaded"*; and **every driver envelope REPLACES the graph**, so a `getComputedStyle` body would compute the driver's nodes, not the app's. **So `D-204`'s missing instrument is still missing, and the row states both reasons rather than faking it.**
+
+**THE READINGS.** `npx vitest run tests/e2e/app-layout/` → **`7 passed / 4 failed` of `11`** over one file, `70.9 s`; `typecheck:tests` **exit `0`**; the marks census **`145` files, `363` gating sites in `48` files** (`352`/`47` before), `2,382` on notice, `9` carve-outs; the module map **already carried** the path (`app-shell`, rev 2) and the boundary gained **one entry with its reason** (`B-1` green, 3/3).
+
+**ITS REGISTER IS `D-71` TO `D-207`** as prose, unchanged and extended by this row only. **This row records a battery that found four things on its first run, the same gap twice — the agent can look but not touch — a trade made visible as a red row, and a terminal that cannot be hidden because a mint discards the write that would hide it.**

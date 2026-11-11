@@ -1254,6 +1254,17 @@ const DECLARED_SCOPE: readonly string[] = [
   //    (`D-195`, `D-196`). `docs/L3/app-shell/design.md` stands declared above; this page did not, so `B-1` red the path BY
   //    NAME until this entry did (`D-195`'s OWED-8) — which is the precondition, not a defect.
   'docs/L3/app-shell/signatures.md',
+  // ── `app-layout`'S E2E BATTERY — `tests/e2e/app-layout/app-layout.test.ts`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH
+  //    ITS OWN REASON, NEVER AS THE DIRECTORY `tests/e2e/app-layout/` (`strata/modules.json` claims the DIRECTORY because a
+  //    map row claims a tree; a boundary row may not, because a directory declaration would admit every file a later pass
+  //    drops beside this one without naming it — `B-2`'s undeclared-sibling arm). **ITS SUBJECT IS `AL-1`…`AL-11` OF
+  //    `docs/L1/app-layout.md` rev 5 §5**: eleven exchanges at a process boundary — an agent's reads and writes over the
+  //    built bundle's stdio, a drive of the realm's own platform API and of the `menu` bridge member, and this process's
+  //    read of the profile file — which is the battery §2 files on `app-shell` and §6 gates. **AND IT IS THE PATH THAT MADE
+  //    THE FIVE ROWS OF THE UNIT'S OWN RE-GRAIN NECESSARY TO STATE**: the four zone ids and the two pane ids are read here
+  //    as the RECORD's own membership (`D-181`, `D-183`, `D-189`), so a re-widened domain reds this file by name rather
+  //    than sliding past it — which is why the entry is added WITH the edit that dirtied the path (`D-146`'s precedent).
+  'tests/e2e/app-layout/app-layout.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
