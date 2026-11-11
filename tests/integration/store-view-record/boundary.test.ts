@@ -1316,6 +1316,28 @@ const DECLARED_SCOPE: readonly string[] = [
   //    false docblock) and `tests/e2e/app-layout/app-layout.test.ts` (`AL-10`'s markup arm, `AL-12`'s pane clause) — so this block
   //    adds ONE path and no second spelling of one already in the union, which is the difference between a write and a claim.
   'docs/L3/renderer-wiring/design-pane-node-map.md',
+  // ── `PM-1`'S OWN FILE — `tests/unit/renderer-wiring/pane-node-map.test.ts`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH ITS OWN
+  //    REASON (`D-225`'s one OWED obligation, discharged by the pass that adds this block). **THE FILE IS L3'S AND IS DECLARED HERE
+  //    FOR THE REASON EVERY ENTRY ABOVE IS**: this row asserts the worktree's edit set against a scope, so EVERY path a pass writes
+  //    is a path this union must carry whatever module authored it — and the entry is added WITH the edit that dirtied the path,
+  //    never after it (`D-146`'s precedent). **AND IT IS NOT ADMITTED BY A PREFIX**: `tests/unit/renderer-wiring/` claims three files
+  //    on `renderer-wiring`'s map row and is NOT a directory claim there either, so a fourth file dropped beside them without a
+  //    name would slide past — a directory would admit it, and a directory measures nothing (`B-2`'s undeclared-sibling arm).
+  //    **ITS SUBJECT IS THE MAP'S TOTALITY, MEASURED IN THE SOURCE TEXT** (`docs/L3/renderer-wiring/design-pane-node-map.md` §5, §7;
+  //    `D-225`): `PANE_NODE_IDS` is PRIVATE and `renderer.ts` exports nothing, so `PM-1` reads `renderer.ts`'s BYTES — the tree's
+  //    idiom for a private relation (`AE-1`…`AE-3`, `TR-1`…`TR-4`) — derives the map's `paneId`s through `view-shape.ts`'s own
+  //    exported id constants, and holds them against the REAL IMPORT of `DECLARED_PANE_IDS`, as a sum of named parts and never as a
+  //    bare count: a third declared pane added without an entry reds this row, which is exactly the reading `D-225` records as
+  //    missing — *"a third declared pane added without an entry would render nothing and report `absent` — honest, and silent"*.
+  //    `PM-2` then holds each entry's node id to a SPELLED LITERAL, and `PM-3` is its control: the same comparator reds on a fourth
+  //    declared pane, an undeclared entry, a duplicated `paneId` and a derived node id, and cannot pass on two empty sides.
+  //    **AND THE ROW CLAIMS NOTHING ABOUT WHETHER THE MAP IS RIGHT**: a wrong-but-existing node id is invisible to it by design
+  //    (`D-225`'s limit `(ii)` — the write and the report share the map), which is `AL-10`'s arm in `tests/e2e/app-layout/`.
+  //    **ITS `src/` HALF IS ALREADY DECLARED ABOVE** — `src/renderer/renderer.ts` (`PANE_NODE_IDS`, `nodeIdForPane`) and
+  //    `src/shared/view-shape.ts` (`DECLARED_PANE_IDS`) — as are `strata/modules.json` (the map row gains this one path) and
+  //    `strata/marks.json` (REGENERATED: one unmarked gating file is added), so this block appends ONE path and no second spelling
+  //    of one already in the union, which is the difference between a write and a claim.
+  'tests/unit/renderer-wiring/pane-node-map.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

@@ -132,6 +132,7 @@
         "tests/unit/renderer-wiring/preview-seat.test.ts",
         "tests/unit/renderer-wiring/state-checked-paint.test.ts",
         "tests/unit/renderer-wiring/signatures.test.ts",
+        "tests/unit/renderer-wiring/pane-node-map.test.ts",
         "tests/e2e/focus-retirement/",
         "tests/e2e/pane-drag-temp/"
       ],
