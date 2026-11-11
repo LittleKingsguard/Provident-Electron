@@ -32,7 +32,7 @@ import {createDataSurface} from './data/index.js'
 // of this file moves: it constructs no store, spells no `provident-*.json` literal for one, and reaches the
 // record only through the surface's own read/commit (the arrangement the operator's store already uses).
 import {createTabsSurface} from './tabs-surface/index.js'
-import {tabsConstraintDeclarations, tabsDeclaredRoots} from './tabs-record/index.js'
+import {createTabsDelivery, tabsConstraintDeclarations, tabsDeclaredRoots} from './tabs-record/index.js'
 import {createProfileStore} from './storeroom.js'
 import {PROFILE_FILE_NAME} from './data/store.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
@@ -42,7 +42,7 @@ import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from 
 // is constructed beside the tab record's, and its six handlers stand beside the tab record's three. It constructs no
 // store and spells no `provident-*.json` literal for one.
 import {createViewSurface} from './view-surface/index.js'
-import {viewConstraintDeclarations, viewDeclaredRoots} from './view-record/index.js'
+import {createViewDelivery, viewConstraintDeclarations, viewDeclaredRoots} from './view-record/index.js'
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_DRAG_COMMIT, IPC_VIEW_DRAG_CLEAR, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
@@ -101,6 +101,66 @@ function userDataFromArgs(argv: string[], flagName: string): string | undefined 
   return v !== '' ? v : undefined
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE DELIVERY QUEUE — ONE PER CROSSING, `main()`'s OWN, AND IT HOLDS ADDRESSES (`D-219`, `D-216`, `D-217`)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **WHAT A CREATION DELIVERS BEFORE ANY WINDOW EXISTS, HELD UNTIL A REALM CAN HEAR IT** (`D-219` (i), `D-218`;
+ *  `docs/L3/app-shell/delivery.md` §3, `docs/L3/app-shell/signatures.md` §5).
+ *
+ *  **IT IS A QUEUE OF ADDRESSES AND NEVER OF READINGS.** A queue of values would be a SECOND AUTHORITY beside the record —
+ *  `D-129`'s own class — while what is held here is the delivery's own argument: an address, which is all a push may ever
+ *  carry (`D-92`, `guide §6.4`). **So the flush translates nothing**: it re-emits the crossing's one signal, exactly as a
+ *  write's delivery does, and the renderer re-reads.
+ *
+ *  **`deliver` IS TOTAL AND IT IS THE LISTENER'S WHOLE ACT.** It runs no store verb, reads no family and formats nothing — a
+ *  listener body's write would open a commit of its own inside the one that fired it (`guide §6.5` item 1) — and it never
+ *  throws, because an uncontained throw at a registration instant refuses the construction at rank `21` `ListenerBodyThrew`
+ *  (`D-124`). With no realm standing it HOLDS the address verbatim; once armed it pushes.
+ *
+ *  **`arm` IS THE FLUSH, IT IS UNCONDITIONAL, AND IT EMITS ONE PUSH PER CROSSING PER ARRIVAL.** A queue that flushed only
+ *  when it had something held would leave a RELOADED realm unpainted until the next record change — a new silence of
+ *  exactly the class this pass exists to remove — so every arrival owes that realm one delivery, and `held`'s content is
+ *  the creation's EVIDENCE rather than the trigger. Clearing the list unconditionally is what keeps the arm from growing
+ *  with the app's age, and the flag is idempotent within a realm and re-set by the next arrival (`D-216`, `D-217`).
+ *
+ *  **`held` IS A READING AND NEVER A DESTINATION**: an insertion-ordered list of the addresses the construction delivered
+ *  while nothing could hear them. Nothing under `src/` reads it — it is the reading a battery takes. */
+interface DeliveryQueue {
+  /** THE LISTENER'S WHOLE ACT: the delivered ADDRESS — never a value, never a read (`D-92`). Total. */
+  deliver(address: readonly string[]): void
+  /** THE REALM HAS ARRIVED: one push for this crossing, then the held addresses are dropped. Idempotent, re-armed by the next arrival. */
+  arm(): void
+  /** WHAT WAS DELIVERED WITH NO DESTINATION — the creation's evidence, a reading for a battery and never a destination. */
+  readonly held: readonly (readonly string[])[]
+}
+
+function createDeliveryQueue(push: () => void): DeliveryQueue {
+  const held: (readonly string[])[] = []
+  let armed = false
+  return {
+    deliver(address: readonly string[]): void {
+      if (armed) {
+        push()
+        return
+      }
+      // HELD VERBATIM: the address is the delivery's own argument and a copy of it is the whole of what this queue keeps.
+      held.push([...address])
+    },
+    arm(): void {
+      // THE FLAG FIRST, SO NOTHING DELIVERED DURING THE PUSH IS HELD BEHIND IT; then ONE push for this crossing; then the
+      // held set is dropped whether or not it held anything (the clear is unconditional, the push is unconditional).
+      armed = true
+      push()
+      held.length = 0
+    },
+    get held(): readonly (readonly string[])[] {
+      // A READING: a copy, so a reader cannot reach the queue's own list.
+      return held.map((address) => [...address])
+    },
+  }
+}
+
 async function main(): Promise<void> {
   console.error(`[provident-main] node ${process.versions.node} electron ${process.versions.electron} crypto=${typeof globalThis.crypto}`)
   // ADDITIVE SEAM (docs/specs/ci-ui-leg.md §4): honour a user-data override
@@ -113,6 +173,32 @@ async function main(): Promise<void> {
   if (userDataOverride !== undefined) app.setPath('userData', userDataOverride)
   const transport = transportFromArgs(process.argv.slice(1))
   const port = portFromArgs(process.argv.slice(1))
+
+  // ═══ `A-1` — THE TWO CROSSINGS' PUSH LOOPS, MOVED VERBATIM OUT OF THE SURFACES' `onChanged` OPTIONS (`D-92`, `D-104`) ═══
+  // Each body is unchanged: every window is told, the destroyed guard stands, and the push carries NO VALUE AND NO ADDRESS —
+  // it is the crossing's one signal and the renderer re-reads. **THEY LIVE HERE BECAUSE THE DELIVERY'S DESTINATION EXISTS
+  // BEFORE ANY SURFACE DOES**: a creation's delivery fires before the window is created, so the push it eventually causes is
+  // the QUEUE's and not an option's (`D-219`, `D-218`).
+  const pushTabsChanged = (): void => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send(IPC_TABS_CHANGED)
+    }
+  }
+  const pushViewChanged = (): void => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send(IPC_VIEW_CHANGED)
+    }
+  }
+  // ═══ `A-2` — ONE QUEUE PER CROSSING, BUILT BEFORE THE STORE, AND TWO CREATIONS MEAN TWO QUEUES (§3) ═══
+  // Each crossing delivers into its own queue and cannot collide with the other's; where one crossing ever did deliver twice
+  // into one queue the arm still emits ONE push, so the dedup is structural rather than counted.
+  const tabsDeliveries = createDeliveryQueue(pushTabsChanged)
+  const viewDeliveries = createDeliveryQueue(pushViewChanged)
+  // ═══ THE TWO ENTRY BUILDERS, CALLED BEFORE `createProfileStore` BECAUSE ITS `listeners` ARRAY IS READ INSIDE IT (§2) ═══
+  // The crossings own their addresses and their handles; this file names none of them and builds no entry (`G-5`, `D-53`).
+  // **THE SINK IS THE QUEUE'S `deliver`, TOTAL AND UNINTERPRETED**: an address in, and nothing else.
+  const tabsDelivery = createTabsDelivery((address) => tabsDeliveries.deliver(address))
+  const viewDelivery = createViewDelivery((address) => viewDeliveries.deliver(address))
 
   // The manual-UI security settings (mcp-endpoint.md §6.4): persisted to userData so a restart
   // restores them. The MCP server gate is built from the persisted config (read+dispatch ON by
@@ -176,7 +262,10 @@ async function main(): Promise<void> {
   // ones are the two that can repair a seat the profile FILE brought broken — the clause-3 repair the renderer's deleted
   // boot step could not be. (2) CONSTRUCT: the app's ONE store, built here with the BATCHED constraints, so the pass is armed before
   // anything can write. (3) LISTENERS DRIVE: the surfaces read and write that store, and a commit's listeners carry the flow
-  // from there.
+  // from there. **AND THE LISTENERS COME FROM THE CONSTRUCTION ITSELF**: the two crossings build their `entries` before this
+  // call and its `listeners:` array adopts them, so the CREATION's own repairs deliver to them — the initial render's event
+  // (`D-219`, `D-216`, `D-217`). Before this pass that array was empty and every registration was taken after the instance
+  // existed, which is why the creation's writes reached nobody (`D-218`).
   const storeHolder: { current: ReturnType<typeof createProfileStore> | null } = { current: null }
   // ═══ THE BOOT'S ONE STORE CONSTRUCTION, AND THE ONE REFUSAL THAT MUST BE LEGIBLE (D-80) ═══
   // `createProfileStore` REFUSES rather than degrades: a `filePath` that can never be OCCUPIED — a directory
@@ -211,6 +300,21 @@ async function main(): Promise<void> {
       // each module's own and the two sets do not interleave: the ids are one namespace, and `viewConstraintDeclarations`'
       // three carry a `-must-stand` suffix no tab-record id repeats.
       constraints: [...tabsConstraintDeclarations(() => storeHolder.current), ...viewConstraintDeclarations(() => storeHolder.current)] as never,
+      // ═══ `A-3` — AND THE SAME CONSTRUCTION ADOPTS THE TWO CROSSINGS' LISTENERS, WHICH IS WHAT MAKES THE INITIAL RENDER A
+      // DELIVERY'S (`D-219`, `D-216`, `D-217`) ═══
+      // `1.11.0` delivers at FOUR registration instants — the creation, the boot, `addConstraint` and a re-arm — in `D-117`'s
+      // order `ASK → REPAIRS LAND → RE-RUN → SAVE → DELIVER → THE ANSWER`, so a listener supplied HERE is invoked after the
+      // creation's repairs have written. That is the event the app never had: the empty array this line replaces was the
+      // whole defect (`D-218`, `D-219`).
+      //
+      // **EACH ELEMENT IS `{ address, handle, listener }` WITH THE THIRD REQUIRED**, and a two-member element is refused
+      // `AddressMalformed` (subject `listeners`) before any filesystem act — so no entry here is a shape this file may thin,
+      // and none of them is a no-op: the package's own migration route (`listener: () => {}`) satisfies its refusal and
+      // changes nothing, which is a row that cannot fail (`D-219`, `G-1`). **THE ORDER IS TABS-THEN-VIEW AND IT MATCHES THE
+      // BATCH'S**: the tab record's delivery lands first, so the layout paint's own turn finds a held tabs reading rather than
+      // `null`. **`constraints:` MAKES NO BYTE OF THIS CALL A SECOND REGISTRATION** — it is a different list at the same
+      // store, and the crossings' entries are the only listener each address has (`D-129`, `D-93`).
+      listeners: [...tabsDelivery.entries, ...viewDelivery.entries],
     })
   } catch (refusal) {
     const shape = refusal as { status?: unknown; message?: unknown } | null
@@ -228,23 +332,18 @@ async function main(): Promise<void> {
   // is the bridge's and only the bridge's (L2 §2, L3 §6). It constructs nothing: the store above is its store.
   const tabsSurface = createTabsSurface({
     store: centralStore,
-    // THE CHANGE PUSH (L2 §2): the record moved, and every window is told so it can re-read. The delivery
-    // carries no value — the address is the L2's contract, and a payload here would be a second copy.
-    onChanged: () => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send(IPC_TABS_CHANGED)
-      }
-    },
+    // THE CROSSING'S DELIVERY, BUILT ABOVE AND ADOPTED BY THE CONSTRUCTION (A-2, A-3; `D-219`). The change push is the
+    // QUEUE's now, so no `onChanged` option and no `attach()` stand here: two registrations for one address is the copy
+    // `D-129` forbids (`D-93`).
+    delivery: tabsDelivery,
   })
   // **THE VIEW RECORD'S SURFACE (D-87)** — the same shape at the other family: one reference, over the ONE store this
   // boot constructed, and one subscription that fires for any of its four roots. It constructs nothing.
   const viewSurface = createViewSurface({
     store: centralStore,
-    onChanged: () => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send(IPC_VIEW_CHANGED)
-      }
-    },
+    // THE VIEW RECORD'S DELIVERY, on the tab record's own terms (A-2, A-3; `D-219`): the four entries are the construction's
+    // and the push is the queue's — `attach()` is gone with its subject.
+    delivery: viewDelivery,
   })
   const persisted = settingsSurface.read()
   // `docs/specs/secure-exclusion.md` `§2.1` item 4 — THE ORDERING ENVELOPE, STEP 2: the gate is
@@ -463,8 +562,6 @@ async function main(): Promise<void> {
   ipcMain.handle(IPC_TABS_READ, () => tabsSurface.read())
   ipcMain.handle(IPC_TABS_COMMIT, (_event, row: unknown) => tabsSurface.commit(row))
   ipcMain.handle(IPC_TABS_REMOVE, (_event, id: unknown) => tabsSurface.remove(id))
-  // the change push: one subscription, taken here so the window's teardown can withdraw exactly what it took
-  tabsSurface.attach()
   // **THE VIEW RECORD'S SIX CHANNELS (D-87, D-91, D-97, D-132, L2 §2)**: a whole-view read takes no argument; a pane commit names
   // a pane id and a geometry and never a path; a zone commit names
   // a zone id and the members it carries, and the crossing composes the family; **the appearance commit hands the ACT —
@@ -479,8 +576,6 @@ async function main(): Promise<void> {
   ipcMain.handle(IPC_VIEW_THEME_COMMIT, (_event, token: unknown, attributeName: unknown) => viewSurface.commitTheme(token, attributeName))
   ipcMain.handle(IPC_VIEW_DRAG_COMMIT, (_event, id: unknown, geometry: unknown) => viewSurface.commitDrag(id, geometry))
   ipcMain.handle(IPC_VIEW_DRAG_CLEAR, () => viewSurface.clearDrag())
-  // and its change push, taken at the same point and for the same reason as the tab record's
-  viewSurface.attach()
   // ═══ THE FIVE `data.*` ROUTES' ANSWER SITES (`D-112`; `docs/L2/central-data/interface.md` §5) ═══
   // Each hands the caller's argument object to the module's adapter UNTOUCHED and answers §2's shape verbatim, so the
   // bridge route and the `provident.data.*` tool of the same name are ONE answer site — the property the MCP
@@ -660,6 +755,16 @@ async function main(): Promise<void> {
   // or clears the operator's disabled state.
   ipcMain.on(IPC_READY, () => {
     backend.markReady()
+    // ═══ `A-5` — THE FLUSH RIDES THE REALM'S ARRIVAL, NOT `attachWindow` (`D-219` (i), `D-218`; §4) ═══
+    // `attachWindow` runs immediately after `new BrowserWindow` and BEFORE `win.loadFile(...)`, so at that instant the renderer
+    // process does not exist, `webContents.send` is discarded, and a flush there would empty the queue into nothing —
+    // the defect this pass removes, re-created by hand. **THE INSTANT TAKEN IS `IPC_READY`**, the app's own arrival signal:
+    // the renderer sends it and registers every delivery handler SYNCHRONOUSLY IN THE SAME TURN, and main's push is a LATER
+    // MACROTASK on that loop, so the delivery cannot be dispatched before that turn finishes and it finds every
+    // `ipcRenderer.on` standing. **ONE ARM PER CROSSING, TABS FIRST**: the tab record's delivery lands first so the layout
+    // paint's turn finds a held tabs reading rather than `null`.
+    tabsDeliveries.arm()
+    viewDeliveries.arm()
     console.error('[provident-main] renderer ready — MCP backend armed')
   })
   ipcMain.on(IPC_REPLY, (_event, reply: RpcReply) => {

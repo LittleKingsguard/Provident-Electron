@@ -17,14 +17,17 @@
 // measures the reading on a name that cannot be occupied, with the store supplied from the boot so that
 // the refusal is provably the READING's and not a store's.
 //
-// DISPOSITION UNDER THE READOUT (`D-134`, `D-30`, `D-143`) — THREE SITES, ALL THREE RE-GRAINED IN PLACE AND NONE
-// RETIRED. `PF-1` and `PF-2` move to the LEAF node `{_tier:'file', value:'x'}` that a passing read now answers — `PF-1`
-// after a seeded `{}` image, `PF-2` after a foreign image the boot replaced by declaration. `PF-3` is the one site here
-// whose CLAIM moves and not only its grain: the profile's name is REMOVED under the live store, so the empty address
-// answers `absent` at `[]` — the arm §2a declares, no store having answered and this module spelling no tier of its own
-// to mint a node with. Every other row of this file — the one written name, the app's own boot image, the two
-// unreachability arms, and the delete across a fresh surface — is UNTOUCHED: their subject is the profile's BYTES or
-// an absence, and neither carries a node.
+// DISPOSITION UNDER THE READOUT (`D-134`, `D-30`, `D-143`) — TWO SITES RE-GRAINED IN PLACE, NEITHER RETIRED, AND A THIRD
+// THAT WENT WITH ITS SITE. `PF-1` moves to the LEAF node `{_tier:'file', value:'x'}` that a passing read now answers,
+// after a seeded `{}` image. **`PF-2` RETIRES WITH ITS SITE AND NOT WITH ITS CLAIM**: it was that same leaf after a
+// foreign image the boot replaced by declaration, and `provident-storeroom` `1.11.0` made the arm unreachable — over a
+// present, non-empty, unreadable image the CONSTRUCTION now refuses at rank `22` `FileImageRefused`, so no recovering
+// write runs and no read follows one (the foreign-image row states the package change in its own words). `PF-3` is the
+// one site here whose CLAIM moves and not only its grain: the profile's name is REMOVED under the live store, so the
+// empty address answers `absent` at `[]` — the arm §2a declares, no store having answered and this module spelling no
+// tier of its own to mint a node with. Every other row of this file — the one written name, the app's own boot image,
+// the two unreachability arms, and the delete across a fresh surface — is UNTOUCHED: their subject is the profile's
+// BYTES or an absence, and neither carries a node.
 // **EACH RE-GRAINED SITE IS RED AT THIS HEAD FOR THE ABSENCE IT NAMES** until L4 lands `interface.md` §9's H-2, and the
 // marker above stays, for the reason `surface.test.ts`'s header block states (D-30, D-31, D-134, `D-143`).
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
@@ -149,22 +152,45 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     expect(readFileSync(profilePath, 'utf8').includes('alpha'), 'the bytes now describe the state the act left').toBe(true)
   })
 
-  it('a foreign, unparsable profile image is seeded → the boot answers an empty register and the next write replaces the bytes', () => {
+  it('a foreign, unparsable profile image is seeded → the boot REFUSES it at rank `22` `FileImageRefused`, diagnosed by name, and the corrupt bytes stand', () => {
     const foreign = 'this is not the store\'s image\n'
     writeFileSync(profilePath, foreign)
-    // THE BOOT MEETS THE FOREIGN IMAGE and answers an empty register rather than throwing: this is `persistence.md`
-    // §9 P-1's measured arm, and the boot is the row's act now that the surface constructs nothing (D-80).
-    const s = surfaceAt()
-    const listed = widened(s.list({}))
-    expect({ status: listed.status, paths: listed.paths, count: listed.count }, 'the cold tier answers, and the answer is a value rather than a throw').toEqual({ status: 'read', paths: [], count: 0 })
-    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'absent', path: ['alpha'] })
-    const committed = widened(s.write({ path: ['alpha'], value: 'x' }))
-    expect({ status: committed.status, path: committed.path }, 'the next committed write recovers by declaration, never by a repair of the bytes').toEqual({ status: 'committed', path: ['alpha'] })
-    const text = readFileSync(profilePath, 'utf8')
-    expect(text === foreign, 'the foreign image is replaced, not preserved').toBe(false)
-    expect(text.includes('alpha')).toBe(true)
-    // PF-2 — RE-GRAINED IN PLACE (§2a): the row the recovering write landed is served as its LEAF node.
-    expect(s.read({ path: ['alpha'] })).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'x' } })
+    // **THE GRAIN MOVED WITH THE PACKAGE, AND THE ROW SAYS SO IN ITS OWN WORDS SO THE NEXT READER DOES NOT READ A VERSION
+    // CHANGE AS A REGRESSION.** `provident-storeroom` went `1.10.0` → `1.11.0`, a MINOR, and its `RELEASE-NOTES.md`
+    // §1.11.0 item 2 carries it verbatim: *"A BOOT REFUSES IT TOO — AND A BOOT OVER A CORRUPT IMAGE NOW REFUSES RATHER
+    // THAN OPENING A STORE OVER IT"* — **the rank that carries it is `22` `FileImageRefused`** (§1.11.0 item 5: *"The
+    // STORE mints this one at the construction's step `7` … and the corrupt bytes stand"*; `D-126` item 2, `PIN-11`).
+    // **THIS ROW ASSERTED `1.10.0`'S ARM** — a store answering an instance indistinguishable from an empty path, which
+    // the next write then replaced — and `1.10.0`'s arm is superseded, not broken: over the same bytes `1.10.0`'s boot
+    // opened and `1.11.0`'s refuses. **THE ROW'S SUBJECT IS UNMOVED AND IT IS THE WHOLE POINT OF THE RE-GRAIN**: an
+    // unparsable image is DIAGNOSED, never silently tolerated — so this row reds if the construction answers a store
+    // again, and it reds on the refusal's own members below if the diagnosis stops naming WHICH file and WHAT it wanted.
+    const caught = ((): { readonly refused: boolean; readonly refusal: Record<string, unknown> } => {
+      try {
+        createProfileStore({ filePath: profilePath })
+      } catch (refusal) {
+        return { refused: true, refusal: refusal as Record<string, unknown> }
+      }
+      return { refused: false, refusal: {} }
+    })()
+    expect(caught.refused, 'the construction REFUSES the image; a store answering over it is `1.10.0`\'s arm and not this one').toBe(true)
+    if (!caught.refused) return
+    const refusal = caught.refusal
+    expect(refusal.status, 'rank `22` `FileImageRefused` — whose SUBJECT is the store\'s own image, not the constraint list (19/20)').toBe('FileImageRefused')
+    expect(refusal.address, '§1.11.0 item 5 — `address: null` as its truth: no address is the subject of this one').toBeNull()
+    expect(refusal.log, 'and no pass ran: the refusal composes before the package\'s first ask, so its log is empty and not absent').toEqual([])
+    expect(String(refusal.message), 'the sentence names the shape it wanted, so the diagnosis is a sentence and not a status alone').toContain('is not an image this store reads')
+    expect(String(refusal.message), 'and its subject is the `filePath`\'s own spelling — a caller reads WHICH file it refused').toContain(profilePath)
+    // **AND THE CORRUPT BYTES STAND** — the notes' own clause, and the reason there is no rollback to compose: nothing
+    // was written to the file, so nothing is withdrawn from it either.
+    expect(readFileSync(profilePath, 'utf8'), 'the image the loader could not read is still the image on the disk').toBe(foreign)
+    expect(statSync(profilePath).size, 'byte for byte: the refusing read truncated nothing').toBe(Buffer.byteLength(foreign))
+    expect(readdirSync(profileDir), 'and no second name stands beside it — no .tmp, no lock, no sidecar (persistence §1, §5)').toEqual([PROFILE_FILE])
+    // THE CONTROL THE NOTES STATE IN THEIR OWN SENTENCE: *"A ZERO-LENGTH FILE AND AN ABSENT FILE ARE STILL NO IMAGE AND
+    // CROSS NO CODE"*. So the refusal is keyed on a PRESENT, NON-EMPTY, UNREADABLE image — not on the path existing — and
+    // a row that reds here is red for the wrong reason.
+    writeFileSync(profilePath, '')
+    expect(() => createProfileStore({ filePath: profilePath }), 'a zero-length file is no image: the store opens over it').not.toThrow()
   })
 
   it('a profileDir whose name cannot be occupied → store-unreachable on every tool, the store never consulted, and nothing created', () => {

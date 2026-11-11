@@ -1,6 +1,6 @@
-# L3 — `app-shell`: the declared signatures — the tenth member, its channel, and the role vocabulary
+# L3 — `app-shell`: the declared signatures — the tenth member, its channel, the role vocabulary, and the delivery queue
 
-- **Layer:** L3 · **Unit:** `app-layout` · **Artifact:** `l3-app-shell-signatures` · **Branch:** `strata` (D-6) · **Rev:** 1 — **THIS PAGE IS NEW**: `docs/L3/app-shell/signatures.md` did not exist, and rev 4's `G-7` declined one because the drag pair minted no signature of its own (the two members were the five commits' text verbatim). **This pass mints one member, one channel constant and one role vocabulary — and `docs/L2/app-shell/interface.md` rev 5 §2's `OWED-1` separately hands the unmoved `view` block's exact text DOWN to `docs/L3/`**, so both have a carrier here (`design.md` §4, D-45).
+- **Layer:** L3 · **Unit:** `app-layout` · **Artifact:** `l3-app-shell-signatures` · **Branch:** `strata` (D-6) · **Rev:** 2 — **THE DELIVERY QUEUE, ITS THREE MEMBERS, AND THE LISTENER ENTRY THIS FILE CONSUMES AND NEVER DECLARES** (`docs/L3/app-shell/delivery.md` §3, §6): §5 is new, §1's census is **unmoved** (the queue is `main()`'s private and crosses no bridge), and **no member, route, channel or type above §5 moves a byte** — the delta is one interface, one factory and one consumed element shape, all of them `main()`'s own (`D-219`, `D-218`). Rev 1 — **THIS PAGE WAS NEW**: `docs/L3/app-shell/signatures.md` did not exist, and rev 4's `G-7` declined one because the drag pair minted no signature of its own (the two members were the five commits' text verbatim). **This pass mints one member, one channel constant and one role vocabulary — and `docs/L2/app-shell/interface.md` rev 5 §2's `OWED-1` separately hands the unmoved `view` block's exact text DOWN to `docs/L3/`**, so both have a carrier here (`design.md` §4, D-45).
 - **Status:** DECLARED NAMES AND EXACT TEXT ONLY — every name this landing exposes or consumes is here; the structure, the hunks and the guardrails are `design.md`'s (D-3, D-45). **No type, no export and no new file is minted**: the answer is spelled inline at both preload sites and the two role sets are private to `main()` (`design.md` §4's `ASM-L3-1`/`ASM-L3-2`).
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `L2 §n` is `docs/L2/app-shell/interface.md`'s, `G-n` is `design.md` §8's, `ASM-n` is `design.md` §10's, `OWED-n` is `design.md` §9's; a cite into `src/**` names the **site** and never an offset (D-41).
 
@@ -91,3 +91,44 @@ Landed in `main()` beside the total function, in this order, **`as const` and no
 | a sender guard (`permitted(`, `senderFrame`, a read `_event`) | `G-3`, `D-121`: the admitted set is the bound, and a guard here would make this crossing stricter than every sibling handler |
 | any accelerator, `globalShortcut` or key listener | `C-6`: the lost ten are a stated cost and a later unit's surface (`design.md` §2) |
 | a window IPC channel or an authored control | `D-178` §2, `C-1`: the three buttons are the platform's, and `D-121`'s authored arm was never landed |
+
+## 5. The delivery queue — one interface, one factory, and the element this file consumes (rev 2, `delivery.md` §3–§6)
+
+**PRIVATE TO `main()`'s MODULE AND EXPORTED NOWHERE** (`delivery.md` `G-7`, `ASM-L3-6`): no bridge member, no channel, no `src/` file, no map row, no `endpoints` move. **It is a queue of ADDRESSES and never of readings** (`D-92`).
+
+```ts
+interface DeliveryQueue {
+  /** THE LISTENER'S WHOLE ACT: the delivered ADDRESS — never a value, never a read (D-92). Total: it throws at no argument. */
+  deliver(address: readonly string[]): void
+  /** THE REALM HAS ARRIVED: one push for this crossing, then `held` is dropped. Idempotent within a realm, re-armed by the next arrival. */
+  arm(): void
+  /** WHAT WAS DELIVERED WITH NO DESTINATION — the creation's evidence, a reading for a battery and never a destination. */
+  readonly held: readonly (readonly string[])[]
+}
+function createDeliveryQueue(push: () => void): DeliveryQueue
+```
+
+- **`push` IS THE CROSSING'S EXISTING FAN-OUT LOOP, HOISTED AND UNCHANGED IN BODY** — `for (const win of BrowserWindow.getAllWindows()) if (!win.isDestroyed()) win.webContents.send(IPC_*_CHANGED)` — so `deliver` and the runtime path send the same signal and a consumer cannot tell a creation's delivery from a write's (`delivery.md` §3, `D-92`).
+- **THE ELEMENT THIS FILE CONSUMES AND NEVER DECLARES** (each crossing's own page owns its text — `docs/L3/view-record/delivery.md` §2, `docs/L3/store-tabs-record/delivery.md` §2; `D-3`):
+
+```ts
+  { readonly address: readonly string[]; readonly handle: string; readonly listener: (address: readonly string[]) => void }
+```
+
+  **`LISTENER` IS REQUIRED AND IS NEVER A NO-OP**: a two-member element is refused `AddressMalformed` (subject `listeners`) **before any filesystem act**, and `listener: () => {}` — the package's own migration route — is **refused by this design** as a row that cannot fail (`guide §6`, `:553`–`:563`; `delivery.md` `G-1`).
+- **THE TWO BUILDERS, AS THIS FILE CALLS THEM** — the crossings declare them beside their constraint and root declarations (`delivery.md` `ASM-L3-9`):
+
+```ts
+  createTabsDelivery(sink: (address: readonly string[]) => void): { readonly entries: readonly { readonly address: readonly string[]; readonly handle: string; readonly listener: (address: readonly string[]) => void }[]; subscribe(handler: () => void): () => void }
+  createViewDelivery(sink: (address: readonly string[]) => void): { readonly entries: readonly { readonly address: readonly string[]; readonly handle: string; readonly listener: (address: readonly string[]) => void }[]; subscribe(handler: () => void): () => void }
+```
+
+- **THE ELEMENT SHAPE IS SPELLED INLINE AT THESE TWO LINES AND NO NAMED TYPE IS MINTED HERE** (`ASM-L3-2`'s rule read one subject over): a type declared in this file would be a THIRD spelling beside each crossing's own entry builder and the package's `StoreConfig`, and no row reads it. **This file consumes the shape; it does not own it** (`D-45`, `D-3`).
+
+- **THE ONE SITE THAT CONSUMES THEM** — `src/main/main.ts`, `createProfileStore({`, where `constraints:` already spreads (`delivery.md` §5 `A-3`); the order is tabs-then-view and `constraints:` does not move:
+
+```ts
+      listeners: [...tabsDelivery.entries, ...viewDelivery.entries],
+```
+
+- **AND NOTHING ELSE IS DECLARED HERE**: no answer type, no exported symbol, no second spelling of an address — **the four view roots and the one tabs root are the crossings' and `main.ts` names none of them** (`delivery.md` `G-5`, `D-53`, `D-101`).

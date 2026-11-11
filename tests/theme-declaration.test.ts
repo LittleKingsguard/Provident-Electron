@@ -56,7 +56,7 @@ import { getViewClient, startThemeApplication, themeWiringRole, type ThemeApplic
 import { applyThemeDeclaration, resolveTheme } from '../src/shared/theme.js'
 import { createViewClient, type ViewClient, type ViewClientBridge } from '../src/renderer/view-client.js'
 import { createProfileStore } from '../src/main/storeroom.js'
-import { createViewRecord, viewConstraintDeclarations, type ViewRecordStore } from '../src/main/view-record/index.js'
+import { createViewDelivery, createViewRecord, viewConstraintDeclarations, type ViewDelivery, type ViewRecordStore } from '../src/main/view-record/index.js'
 
 beforeAll(() => {
   installShim()
@@ -85,6 +85,11 @@ function crossing(seed?: (profilePath: string) => void): Crossing {
   // **THE SEED IS WRITTEN BEFORE THE CONSTRUCTION** (`D-98`): a `file` family's boot datum is the FILE, so a row that needs a
   // profile a PREVIOUS boot wrote has to hand the store its bytes, and a fresh profile is the seed's own absence.
   if (seed !== undefined) seed(profilePath)
+  // **THE DELIVERY IS BUILT BEFORE THE STORE, BECAUSE ITS `listeners` ARRAY IS READ INSIDE THE CALL THAT CREATES IT**
+  // (`D-219`; `docs/L3/view-record/delivery.md` §1). The appearance root's entry is among the four, so this crossing is the
+  // app's shape and the creation repair's write delivers here — the event every row below reads as a PUSH.
+  const sunk: (readonly string[])[] = []
+  const delivery = createViewDelivery((address) => sunk.push([...address]))
   const store = createProfileStore({
     filePath: profilePath,
     constraints: viewConstraintDeclarations(() => bound.current).map((declaration) => ({
@@ -92,9 +97,10 @@ function crossing(seed?: (profilePath: string) => void): Crossing {
       id: declaration.id,
       constraint: declaration.constraint,
     })) as never,
+    listeners: [...delivery.entries],
   })
   bound.current = store as unknown as ViewRecordStore
-  const record = createViewRecord({ store: bound.current })
+  const record = createViewRecord({ store: bound.current, delivery })
   // **THE SEVEN MEMBERS THE BRIDGE NOW DECLARES, AND `commitFocus` IS NOT ONE OF THEM** (`D-142`; L1 §2's `chrome` row, §6
   // `E-12`; the count moved five → seven with the drag pair, L2 app-shell §3's block, D-132): the
   // `['focus']` family goes whole — address, tier, declaration, declared-root entry, route and mirror — so this literal

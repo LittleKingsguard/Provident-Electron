@@ -50,6 +50,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createProfileStore } from '../../../src/main/storeroom'
 import {
+  createTabsDelivery,
   createTabsRecord,
   isCommitCarrier,
   SEAT_NAME_MESSAGE,
@@ -61,6 +62,7 @@ import type {
   TabsCommitCarrier,
   TabsConstraintAnswer,
   TabsConstraintDeclaration,
+  TabsDelivery,
   TabsRecord,
   TabsRecordStore,
   TabsRepair,
@@ -73,11 +75,27 @@ const PROFILE_FILE = 'provident-profile.json'
 let dir: string
 let holder: TabsRecordStore | null = null
 let record: TabsRecord
+/** **THE CROSSING'S DELIVERY, BUILT BEFORE THE STORE AND ADOPTED BY ITS CONSTRUCTION** (`D-219`;
+ *  `docs/L3/store-tabs-record/delivery.md` §1–§2): its ONE entry at `['tabs']` is the one registration the crossing is
+ *  allowed and the construction takes it, so the six declarations' creation repairs deliver from the instant they write. */
+let delivery: TabsDelivery
+/** **WHAT THE SINK WAS HANDED** — the delivered ADDRESSES, in order. A creation's deliveries are EVIDENCE (`D-219`), and a
+ *  row that counts what an act caused reads a DELTA of this list rather than its total. */
+let sunk: (readonly string[])[] = []
 
-/** A record over a real store built the way the app builds it: the six declarations batched at construction (D-65, D-83). */
+/** A row's own crossing: one delivery, built before the store that adopts it. */
+const deliveries = (): { delivery: TabsDelivery; sunk: (readonly string[])[] } => {
+  const recorded: (readonly string[])[] = []
+  return { delivery: createTabsDelivery((address) => recorded.push([...address])), sunk: recorded }
+}
+
+/** A record over a real store built the way the app builds it: the six declarations batched at construction (D-65, D-83)
+ *  **AND THE CROSSING'S ONE LISTENER ENTRY ADOPTED BY THAT SAME CALL** (`D-219`, `docs/L3/app-shell/delivery.md` §5 `A-3`). */
 const open = (): void => {
   dir = mkdtempSync(join(tmpdir(), 'tabs-crossing-'))
   holder = null
+  sunk = []
+  delivery = createTabsDelivery((address) => sunk.push([...address]))
   const store = createProfileStore({
     filePath: join(dir, PROFILE_FILE),
     constraints: tabsConstraintDeclarations(() => holder).map((declaration) => ({
@@ -85,9 +103,10 @@ const open = (): void => {
       id: declaration.id,
       constraint: declaration.constraint,
     })) as never,
+    listeners: [...delivery.entries],
   })
   holder = store as unknown as TabsRecordStore
-  record = createTabsRecord({ store: holder })
+  record = createTabsRecord({ store: holder, delivery })
 }
 
 beforeEach(open)
@@ -182,6 +201,9 @@ describe('store-tabs-record · the crossing', () => {
     const instant = mkdtempSync(join(tmpdir(), 'tabs-construction-'))
     const path = join(instant, PROFILE_FILE)
     let bound: TabsRecordStore | null = null
+    // **THE DELIVERY IS BUILT BEFORE THE STORE BECAUSE THE CONSTRUCTION'S `listeners` ARRAY IS READ INSIDE THE CALL THAT
+    // CREATES IT** (`D-219`; `docs/L3/store-tabs-record/delivery.md` §2).
+    const { delivery: instantDelivery, sunk: instantSunk } = deliveries()
     const store = createProfileStore({
       filePath: path,
       constraints: tabsConstraintDeclarations(() => bound).map((declaration) => ({
@@ -189,6 +211,7 @@ describe('store-tabs-record · the crossing', () => {
         id: declaration.id,
         constraint: declaration.constraint,
       })) as never,
+      listeners: [...instantDelivery.entries],
     })
     // THE HANDLE IS BOUND AFTER THE CONSTRUCTION, exactly as the boot binds it (`src/main/main.ts`), so the pair that runs
     // DURING the construction reaches no store at all — and creates the root anyway, through its repair's own route.
@@ -198,7 +221,10 @@ describe('store-tabs-record · the crossing', () => {
       // and not "does not exist", which is the whole difference this pair makes.
       const answer = store.read(['tabs'] as never) as unknown
       expect(answer, 'the existence pair minted the root at construction').toMatchObject({ order: ['landing'] })
-      const fresh = createTabsRecord({ store: bound })
+      // **AND THE CREATION'S OWN REPAIR ALREADY DELIVERED, BEFORE THIS RECORD EXISTED**: the sink carries `['tabs']`,
+      // which is the event `D-218` measured as absent and `D-219` closed upstream (`docs/L3/app-shell/delivery.md` §1).
+      expect(instantSunk.map((address) => address.join('/')), 'the construction delivered at `[\'tabs\']` to its adopted entry').toContain('tabs')
+      const fresh = createTabsRecord({ store: bound, delivery: instantDelivery })
       const read = fresh.read()
       if (!('rows' in read)) throw new Error('a record created at construction must answer a reading')
       expect([...read.order], 'the fresh record seats the landing ENTRY — id `landing` — and nothing else').toEqual(['landing'])
@@ -385,6 +411,7 @@ describe('store-tabs-record · the crossing', () => {
     holder = null
     // A SECOND instance over the same file: the same boot route, the same declarations (D-65).
     let second: TabsRecordStore | null = null
+    const { delivery: secondDelivery } = deliveries()
     const store = createProfileStore({
       filePath: path,
       constraints: tabsConstraintDeclarations(() => second).map((declaration) => ({
@@ -392,9 +419,10 @@ describe('store-tabs-record · the crossing', () => {
         id: declaration.id,
         constraint: declaration.constraint,
       })) as never,
+      listeners: [...secondDelivery.entries],
     })
     second = store as unknown as TabsRecordStore
-    const reopened = createTabsRecord({ store: second })
+    const reopened = createTabsRecord({ store: second, delivery: secondDelivery })
     const answer = reopened.read()
     expect(answer.status).toBe('committed')
     if (!('rows' in answer)) throw new Error('a reopened record must answer a reading')
@@ -404,11 +432,14 @@ describe('store-tabs-record · the crossing', () => {
 
   // ═══════════════ THE CHANGE DELIVERY (L2 §2's fourth route, design §5; D-70) — the push that shipped as a name ═══════════════
 
-  it('THE DELIVERY HAPPENS AND THE WITHDRAWAL IS ITS ANSWER: `subscribe` — a live listener at the record\'s OWN address, `[\'tabs\']`, beside all six pairs (D-71, D-83) — then a `commit` fires the handler ONCE, a `remove` fires it AGAIN, and the unsubscribe STOPS it — a counter, because a listener the store never registered fires nothing, silently', () => {
+  it('THE DELIVERY HAPPENS AND THE WITHDRAWAL IS LOCAL — **RE-GRAINED FOR `D-219`: THE LIVE LISTENER AT `[\'tabs\']` IS THE CONSTRUCTION\'S `cfg.listeners` ENTRY, AND `subscribe` IS THE FAN-OUT THAT NO LONGER RUNS A STORE VERB** (`D-71`, `D-83`, `docs/L3/store-tabs-record/delivery.md` §2–§3). A `commit` fires the handler ONCE, a `remove` fires it AGAIN, and the release STOPPES that handler — a counter, because a fan-out nobody reaches fires nothing, silently', () => {
     // THE COUNT IS THE WHOLE MEASUREMENT: the module's `subscribe` once installed nothing at all — it asked for `['tabs']`
     // while a pre-`1.7.0` package refused a listener beside a constraint there, and swallowed the refusal — so the counter
     // read `0` while every one of these acts answered `committed` (D-70). The first `commit` below is also the one that runs
     // `exactly-one-active`'s repair, whose write joins the same commit and is therefore ONE delivery and not two.
+    // **THE BASELINE IS THE CREATION'S OWN DELIVERY**: the construction's repairs already fired the adopted entry before
+    // `open()` answered (`D-219`), so a row reading the sink's TOTAL would be counting the boot's act as this row's.
+    const queued = sunk.length
     let delivered = 0
     const off = record.subscribe(() => {
       delivered += 1
@@ -417,6 +448,11 @@ describe('store-tabs-record · the crossing', () => {
     expect(delivered, 'a commit of a NEW tab delivers exactly one notification').toBe(1)
     expect(record.remove('tab-1').status, 'the removal that fires it again commits').toBe('committed')
     expect(delivered, 'a `remove` delivers exactly one more — the removal is a committed change of the record like any other').toBe(2)
+    // **AND THE SINK AGREES WITH THE COUNTER, WHICH IS THE CLAIM `docs/L3/store-tabs-record/delivery.md` §2 MAKES FOR THE TWO
+    // HALVES OF ONE THING**: the fan-out runs before the sink on every delivery, so a construction that fired its entry
+    // without fanning out — or fanned out without reaching the app's queue — would red one of the two readings here.
+    expect(sunk.length - queued, 'the sink was handed exactly the two deliveries the fan-out counted: two readings of one event').toBe(2)
+    expect(sunk.slice(queued).every((address) => address[0] === 'tabs'), 'and each of them carries an ADDRESS rooted at `[\'tabs\']` — the leaf the removal targeted, never the record').toBe(true)
     off()
     expect(record.commit(row('tab-2')).status, 'a commit after the withdrawal still commits').toBe('committed')
     expect(delivered, 'the withdrawal is the answer: no delivery follows it').toBe(2)
@@ -449,6 +485,10 @@ describe('store-tabs-record · the crossing', () => {
     const instant = mkdtempSync(join(tmpdir(), 'tabs-one-address-'))
     let bound: TabsRecordStore | null = null
     const asked: string[] = []
+    // **AND ITS LISTENER IS THE CONSTRUCTION'S ENTRY, WHICH IS THE ROW'S WHOLE SUBJECT SINCE `D-219`**: the live listener this
+    // row measures standing beside the six pairs is adopted by `cfg.listeners` rather than taken by `subscribe`, and the
+    // write's own record names it at the SAME address for the same reason (`guide §6.4`).
+    const { delivery: hereDelivery, sunk: hereSunk } = deliveries()
     const store = createProfileStore({
       filePath: join(instant, PROFILE_FILE),
       constraints: tabsConstraintDeclarations(() => bound).map((declaration) => ({
@@ -459,10 +499,11 @@ describe('store-tabs-record · the crossing', () => {
           return declaration.constraint(context)
         },
       })) as never,
+      listeners: [...hereDelivery.entries],
     })
     bound = store as unknown as TabsRecordStore
     try {
-      const recordHere = createTabsRecord({ store: bound })
+      const recordHere = createTabsRecord({ store: bound, delivery: hereDelivery })
       // ALL SIX PAIRS ARE AT THE ONE ADDRESS, read off the store's own registered-pair read — where `address` is the
       // pair's own SET, so one address reads `[['tabs']]` (`guide §7.4`). **THE SIXTH IS `order-names-its-tabs`** (`D-83`):
       // the seat pair, listed second because it is the precondition of the four field pairs' SUBJECT, as `tabs-must-stand`
@@ -647,6 +688,7 @@ describe('store-tabs-record · the crossing', () => {
     const instant = mkdtempSync(join(tmpdir(), 'tabs-repair-answer-'))
     let bound: TabsRecordStore | null = null
     const answers: TabsRepairAnswer[] = []
+    const { delivery: repairDelivery } = deliveries()
     const store = createProfileStore({
       filePath: join(instant, PROFILE_FILE),
       constraints: tabsConstraintDeclarations(() => bound).map((declaration) => ({
@@ -669,10 +711,11 @@ describe('store-tabs-record · the crossing', () => {
           }
         },
       })) as never,
+      listeners: [...repairDelivery.entries],
     })
     bound = store as unknown as TabsRecordStore
     try {
-      const here = createTabsRecord({ store: bound })
+      const here = createTabsRecord({ store: bound, delivery: repairDelivery })
       // THE COMMIT THAT TRIGGERS A REPAIR: the existence pair minted the record with the landing ENTRY SEATED AND ACTIVE, so
       // this row's tab makes two actives — `exactly-one-active` answers `{message, repair}` and the engine invokes it.
       expect(here.commit(row('tab-1')).status, 'the commit carrying the repair still commits').toBe('committed')
@@ -757,6 +800,9 @@ const fileTabRow = { id: 'tab-1', target: 'page://tab-1', active: false, label: 
 
 interface SeatedOn {
   readonly store: TabsRecordStore
+  /** **THE BOOT'S DELIVERY**, built before its store and adopted by it (`D-219`): a row that builds a SECOND record over this
+   *  instance hands it this, because the registration is the construction's and the fan-out is the record's. */
+  readonly delivery: TabsDelivery
   readonly read: () => { order: string[]; landing: string; rows: TabsRecordRow[] }
   readonly standing: () => unknown
   readonly close: () => void
@@ -771,14 +817,19 @@ const seatedOn = (record: unknown, declared?: readonly TabsConstraintDeclaration
   createProfileStore({ filePath: path }).write(['tabs'] as never, 'file', record as never)
   let bound: TabsRecordStore | null = null
   const batch = declared ?? tabsConstraintDeclarations(() => bound)
+  // **AND THE SECOND BOOT ADOPTS ITS OWN DELIVERY'S ENTRY** (`D-219`): a boot has one whether or not a row reads it, and a
+  // fixture that left it out would model a construction the app does not have.
+  const { delivery: seatDelivery } = deliveries()
   const store = createProfileStore({
     filePath: path,
     constraints: batch.map((declaration) => ({ address: declaration.address, id: declaration.id, constraint: declaration.constraint })) as never,
+    listeners: [...seatDelivery.entries],
   })
   bound = store as unknown as TabsRecordStore
-  const seated = createTabsRecord({ store: bound })
+  const seated = createTabsRecord({ store: bound, delivery: seatDelivery })
   return {
     store: bound,
+    delivery: seatDelivery,
     read: () => {
       const answer = seated.read()
       if (!('rows' in answer)) throw new Error('a record repaired at construction must answer a reading')
@@ -803,6 +854,7 @@ describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)',
     createProfileStore({ filePath: path }).write(['tabs'] as never, 'file', { order: ['landing', 'ghost'], landing: fileLandingRow } as never)
     let bound: TabsRecordStore | null = null
     const seen: { tier: unknown; holds: unknown; order: unknown }[] = []
+    const { delivery: askDelivery } = deliveries()
     const store = createProfileStore({
       filePath: path,
       constraints: tabsConstraintDeclarations(() => bound).map((declaration) => ({
@@ -816,6 +868,7 @@ describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)',
           return declaration.constraint(context)
         },
       })) as never,
+      listeners: [...askDelivery.entries],
     })
     bound = store as unknown as TabsRecordStore
     try {
@@ -827,7 +880,7 @@ describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)',
       // gives over its own repair is `true`, which is what makes the registration stand.
       const last = seen[seen.length - 1]
       expect(last?.order, 'the registration’s own RE-RUN reads the corrected seat the repair wrote, in the same instant').toEqual(['landing'])
-      const seated = createTabsRecord({ store: bound })
+      const seated = createTabsRecord({ store: bound, delivery: askDelivery })
       const read = seated.read()
       if (!('rows' in read)) throw new Error('the repaired record must answer a reading')
       expect([...read.order], 'THE CORRECTED ORDER: the dangling id is GONE and the record is read, not merely stored').toEqual(['landing'])
@@ -980,7 +1033,7 @@ describe('store-tabs-record · the `order` SEAT at the creation instant (D-83)',
       // THE ROW IS INACTIVE ON PURPOSE: a SECOND ACTIVE tab is `exactly-one-active`'s arm and would repair on any batch,
       // which is why it cannot be the reading here — this half asks only what THIS pair left behind.
       const answer = (() => {
-        const seated = createTabsRecord({ store: fresh.store })
+        const seated = createTabsRecord({ store: fresh.store, delivery: fresh.delivery })
         // EVERY FIELD IS SUPPLIED, so the only repair that COULD fire is this module's own seat pair: a blank `label` or a
         // missing stamp would hand `tab-has-title`/`tab-has-lastActiveAt` a violation and `repaired` would say nothing about
         // the pair this row is asking about.

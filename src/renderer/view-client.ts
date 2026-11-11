@@ -32,8 +32,12 @@
 //     composed from a receipt: the pane drag's `release` returns `void` (it already did — the old receipts were
 //     discarded), so the drag's next read is the shape a delivery refilled.
 //   · NOTHING HERE POLLS, TIMES, RETRIES OR WRITES ON A READ (`D-82` clause 4). There is exactly ONE stated boot read
-//     (`fill()`), because a boot's own store acts happened before this realm subscribed and a cold profile changes nothing
-//     afterwards — so no delivery exists to carry the first fill — and every later fill is a delivery's.
+//     (`fill()`), and **IT IS NO LONGER THE FIRST FILL: THE DELIVERY IS** (`D-219`, `D-217`). The crossing's construction
+//     adopted its listener in `cfg.listeners`, so the creation's own repairs deliver, the queue holds that address until
+//     this realm arrives, and the flushed push reaches the subscription registered above — so the first fill is a
+//     DELIVERY's turn and not a read's. **THE READ IS STILL OWED ITS SITE**: it is the one channel for a realm whose bridge
+//     carries no `view` member, for a registration that threw, and for the RELOAD — an arrival whose arm is already spent,
+//     which no creation can deliver to and which therefore runs its own read (`D-98`).
 //
 // **NO `provident-storeroom` IMPORT, AND NO MAIN-PROCESS IMPORT EITHER.** The renderer bundle is a browser bundle: the
 // shape's vocabulary comes from `src/shared/view-shape.ts`, the bridge is narrowed structurally by LOCAL types (the

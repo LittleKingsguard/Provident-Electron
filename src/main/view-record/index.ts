@@ -335,12 +335,17 @@ export interface ViewRecordAnswer {
 export interface ViewRecordOptions {
   /** THE APP'S ONE STORE (D-64, D-65): the view record lives at this instance's three roots and owns no instance. */
   readonly store: Store
+  /** **THE CROSSING'S DELIVERY, BUILT BEFORE THIS STORE EXISTED** (`D-219`; `docs/L3/view-record/delivery.md` §1). The
+   *  registration is the CONSTRUCTION's: this object's `entries` were adopted by `cfg.listeners` when the instance was
+   *  created, so the creation's repairs already delivered to it. What this record takes is the other half — the fan-out a
+   *  later consumer subscribes to — and it runs no store verb to have it (`D-129`: one registration per address). */
+  readonly delivery: ViewDelivery
 }
 
 /** **THE ROUTES A CLIENT NEEDS, AND FIVE OF THEM — one per act, and no act without one** (the appearance route is D-97's).
  *  The renderer reads a pane's geometry (`:1700-1722`), writes one (`:1823-1825`), reads a zone's four members twice
  *  (`:1799-1805`, `:1935-1941`) and commits the appearance act its authored control produced. `read` is ONE route
- *  because all three families are read at once by the one consumer, and `subscribe` is the push's own — so no route of
+ *  because all three families are read at once by the one consumer, and `subscribe` is the push's fan-out — so no route of
  *  this module stands without an answer site, which is the defect `docs/L2/central-data/interface.md` §2 records against a
  *  bridge member nothing calls. **THE FOURTH ROUTE THAT STOOD HERE LEFT WITH ITS FAMILY AND NOTHING REPLACES IT** (`D-142`):
  *  a route that left one side alone would be a channel with a handler and no caller. */
@@ -1197,11 +1202,108 @@ const handleFor = (address: readonly string[]): string => {
   return 'view-record:' + String(issuance) + '@' + address.join('/')
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE DELIVERY — BUILT BEFORE THE STORE, ADOPTED BY IT (`D-219`; `docs/L3/view-record/delivery.md` §1–§3)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE FOUR ROOTS THIS MODULE DECLARES, IN ONE ARRAY, AND THAT IS `D-137`'s RULE KEPT RATHER THAN REPEALED**: *"a root the
+ *  array omits is a write the renderer NEVER HEARS"*. What moved is WHERE the list is consumed — `cfg.listeners` at the
+ *  construction instead of a `subscribe` loop after it — so a fifth root added later is still ONE edit (`D-137`, `D-219`).
+ *  **IT IS NOT A SECOND SPELLING OF THE ADDRESSES**: every element is one of the four exported constants above, and
+ *  `viewDeclaredRoots()` carries the same four with their tiers. */
+const VIEW_DECLARED_ADDRESSES: readonly (readonly string[])[] = [
+  VIEW_PANES_ADDRESS,
+  VIEW_ZONES_ADDRESS,
+  VIEW_THEME_ADDRESS,
+  VIEW_DRAG_ADDRESS,
+]
+
+/** **ONE `cfg.listeners[]` ELEMENT — THREE OWN MEMBERS WITH THE THIRD REQUIRED** (`guide §6`, `:533`–`:560`; `D-219`). A
+ *  two-member element is refused `AddressMalformed` (subject `listeners`) before any filesystem act, so this is not a shape
+ *  a caller may narrow: `address` is ONE address, `handle` the string `handleFor` minted for it, and `listener` the function
+ *  the adopted handle fires with that address as its one argument. **IT CARRIES NO VALUE AND NEVER A READING** (`D-92`). */
+export interface ViewDeliveryEntry {
+  readonly address: readonly string[]
+  readonly handle: string
+  readonly listener: (address: readonly string[]) => void
+}
+
+/** **THE CROSSING'S DELIVERY — TWO HALVES OF ONE THING, BUILT BEFORE THE STORE EXISTS** (`D-219`; §1). `entries` is what
+ *  `createProfileStore`'s `listeners` adopts, so a creation delivery has a destination from the instant a repair writes;
+ *  `subscribe` is the fan-out a later consumer takes, and it runs no store verb — the construction already took the one
+ *  registration this crossing is allowed (`D-129`, `D-71`). */
+export interface ViewDelivery {
+  readonly entries: readonly ViewDeliveryEntry[]
+  subscribe(handler: () => void): () => void
+}
+
+/** **THE DELIVERY THE BOOT BUILDS BEFORE `createProfileStore` AND HANDS TO IT** (`D-219`; `docs/L3/app-shell/delivery.md`
+ *  §3). `sink` is the app's TOTAL, UNINTERPRETED destination: it is handed the ADDRESS the delivery carried — no reading,
+ *  no family, no formatted value — and the consumer's only correct answer to it is its own re-read (`D-92`, `D-137`).
+ *
+ *  **THE ENTRY'S BODY IS ONE ACT AND TWO GUARANTEES.** It **writes nothing** — a listener body's write opens a commit of
+ *  its own inside the one that fired it (`guide §6.5` item 1) — and **it contains its own throw**, because at a
+ *  registration instant an uncontained throw refuses the act at rank `21` `ListenerBodyThrew`, which at the creation means
+ *  `storeCreate` refuses and the app takes `D-80`'s fatal arm (`guide §6`, `:513`–`:516`, `D-124` item 2).
+ *
+ *  **THE ORDER INSIDE THE BODY IS THE FAN-OUT, THEN THE SINK, AND THE TWO CANNOT DISAGREE**: a subscriber standing hears
+ *  the delivery first and the app's sink is called after it, on every delivery, armed or not — so a queue's `held` list and
+ *  a subscriber's calls are two readings of ONE event and never two paths through different code. In the app exactly one
+ *  destination stands (the sink: `main()` registers no subscriber), so no delivery is duplicated (`D-92`).
+ *
+ *  **AND THE FOUR HANDLES ARE MINTED HERE AND NEVER WITHDRAWN**: the entry the construction adopts is the instance's for
+ *  the instance's life, which is the app's, so no second subscriber is possible and the starvation `D-71` measured has
+ *  nothing to guard — while the SPELLING is unmoved, because the reason for a minted ordinal is `register`'s replacement
+ *  and `unlisten`'s whole-withdrawal and neither stopped being true of the package (`D-71`). */
+export function createViewDelivery(sink: (address: readonly string[]) => void): ViewDelivery {
+  // THE FAN-OUT'S OWN LIST: one entry per subscriber, appended and dropped locally, and never a store act (`D-71`).
+  const handlers: (() => void)[] = []
+  const notify = (address: readonly string[]): void => {
+    for (const handler of [...handlers]) {
+      try {
+        handler()
+      } catch {
+        // THE CALLER'S THROW STOPS AT THE FAN-OUT: the family moved and the delivery happened, and the subscriber's own
+        // failure is the subscriber's (`guide §6.5a`, `D-105`).
+      }
+    }
+    sink(address)
+  }
+  const entries: ViewDeliveryEntry[] = VIEW_DECLARED_ADDRESSES.map((address) => ({
+    address,
+    handle: handleFor(address),
+    listener: (delivered: readonly string[]): void => {
+      try {
+        notify(delivered)
+      } catch {
+        // THE ENTRY CONTAINS ITS OWN THROW (`D-124`, `G-2`): an uncontained one refuses the act that fired it at rank `21`.
+      }
+    },
+  }))
+  return {
+    entries,
+    subscribe(handler: () => void): () => void {
+      // ONE ENTRY APPENDED TO ONE LIST AND ONE REMOVAL RETURNED (`D-71`, §3): the withdrawal is LOCAL, idempotent, and runs
+      // no store verb — the registration the construction adopted is not this subscription's to withdraw.
+      handlers.push(handler)
+      let live = true
+      return () => {
+        if (!live) return
+        live = false
+        const at = handlers.indexOf(handler)
+        if (at >= 0) handlers.splice(at, 1)
+      }
+    },
+  }
+}
+
 /** **THE VIEW RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65, D-87; the appearance family is D-97's): this
  *  module constructs nothing and owns no file — it is handed the app's one store and reads and writes its FOUR roots
  *  through it, the drag's `temp` root among them (D-132). */
 export function createViewRecord(options: ViewRecordOptions): ViewRecord {
   const standing: Store = options.store
+  // THE DELIVERY THE CONSTRUCTION ADOPTED (`D-219`): this record reads the other half of it and takes no registration.
+  const delivery: ViewDelivery = options.delivery
 
   const reading = (): ViewRecordReading => {
     const panes = panesOf(standing)
@@ -1509,59 +1611,24 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
     },
 
     subscribe(handler: () => void): () => void {
-      // **THE REGISTRATION IS TWO ACTS PER ADDRESS, NOT ONE** (`guide §6.2`, `§6.3`): `listen` installs the ENTRY and
-      // `register` installs the FUNCTION under it; an entry `listen` wrote and `register` never filled is a lawful, silent
-      // reservation. **A LISTENER AND A CONSTRAINT PAIR MAY STAND AT ONE ADDRESS** (`1.7.0`'s clause, `D-71`) — the only
-      // cross-kind restriction is the HANDLE — so each pair of this module and its family's listener share a root.
+      // **THE SIGNATURE STANDS VERBATIM, ITS MEANING STANDS, AND THE STORE ACT IS GONE** (`docs/L3/view-record/delivery.md`
+      // §3): a committed change of any of the four roots calls `handler` once and the answer withdraws that handler — what
+      // left is the `listen`/`register`/`unlisten` third of the body, because the CONSTRUCTION adopted those four entries
+      // and the package armed their bodies (`D-219`, `guide §6`, `:557`).
       //
-      // **THE BODY IS A NOTIFICATION AND NOTHING ELSE** (`guide §6.5` item 1): a listener's write opens its own commit, so
-      // a delivery path that wrote would be a second writer inside the one that fired it. The renderer RE-READS. **AND
-      // THE CALLER'S THROW IS CONTAINED HERE** — a listener body's throw is neither caught nor reported by the store and
-      // crosses every hop back into the write that fired it (`guide §6.5a`), which the tab record measured as a LANDED
-      // commit answering `refused`.
-      const body = (): void => {
-        try {
-          handler()
-        } catch {
-          // the family moved and the delivery happened; the subscriber's own failure stops at the subscriber
-        }
-      }
-      const handles: string[] = []
-      // **EVERY ROOT THIS MODULE DECLARES, IN ONE ARRAY** (`D-137`, `R-2`): the fourth entry is the `temp` root, and a root
-      // the array omits is a write the renderer NEVER HEARS — the one place this can fail silently. **AND THE LISTENER IS
-      // TIER-BLIND**: `listen(handle, [address])` binds an ADDRESS and no tier (the store's own `listen` takes addresses and
-      // never a tier), so an outside `provident.data.write({path: ['drag'], tier: 'temp'})` fires the same delivery the
-      // drag's own commit does — and the consumer's only correct answer is a re-read (`P-3`).
-      for (const address of [VIEW_PANES_ADDRESS, VIEW_ZONES_ADDRESS, VIEW_THEME_ADDRESS, VIEW_DRAG_ADDRESS]) {
-        const handle = handleFor(address)
-        try {
-          standing.listen(handle, [address])
-          standing.register(handle, body)
-          handles.push(handle)
-        } catch {
-          // A REGISTRATION THAT COULD NOT STAND LEAVES NOTHING BEHIND: an entry `listen` wrote that `register` could not
-          // fill would fire nothing and would hold this subscription's name against a later one.
-          try {
-            standing.unlisten(handle)
-          } catch {
-            // a withdrawal answers nothing, not even a failure
-          }
-        }
-      }
-      let live = true
-      return () => {
-        // **THE WITHDRAWAL IS THIS SUBSCRIPTION'S OWN ANSWER** and it is idempotent: one `unlisten` per handle, a plain
-        // no-op success over a handle already withdrawn, and never a throw to the caller (`guide §6.2`).
-        if (!live) return
-        live = false
-        for (const handle of handles) {
-          try {
-            standing.unlisten(handle)
-          } catch {
-            // a withdrawal the store refuses leaves the listener to the instance's lifetime, not a throw
-          }
-        }
-      }
+      // **WHAT REMAINS IS ONE ENTRY APPENDED TO ONE LIST AND ONE REMOVAL RETURNED** (`D-71`, `D-137`), and the removal is
+      // LOCAL: it drops this one handler, is idempotent, and runs no store verb — the entry the construction adopted is
+      // the instance's for the instance's life, which is the app's (`D-70`: a member whose only act would be a no-op
+      // `unlisten` is a name without a reader). **AND `D-71`'s *"a registration that could not stand leaves nothing behind"*
+      // LOSES ITS SITE WITHOUT LOSING ITS FORCE**: `storeCreate` either adopts every entry or refuses the construction, and
+      // a refused construction is `D-80`'s fatal arm — there is no half-registration left to withdraw.
+      //
+      // **THE CONTAINMENT MOVED FROM THIS BODY TO THE ENTRY'S** (§2, §3): a handler's throw is still contained where it
+      // always was, at the fan-out, and the entry's own containment is the registration instant's guard. **THE LISTENER IS
+      // TIER-BLIND** — `cfg.listeners` binds an ADDRESS and no tier, so an outside `provident.data.write({path: ['drag'],
+      // tier: 'temp'})` fires the same delivery the drag's own commit does, and the consumer's only answer is a re-read
+      // (`P-3`, `D-92`).
+      return delivery.subscribe(handler)
     },
   }
 }

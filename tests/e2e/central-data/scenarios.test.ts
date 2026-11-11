@@ -474,7 +474,7 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     } finally { await close() }
   })
 
-  it('S-12 · two profiles are disjoint and a corrupt image recovers by declaration: an empty register answers, the process boots, and the next commit replaces the bytes', () => {
+  it('S-12 · two profiles are disjoint and a corrupt image is DIAGNOSED by the boot, never tolerated: the construction REFUSES at rank `22` `FileImageRefused`, the corrupt bytes stand, and the recovery is the operator\'s declaration', () => {
     const other = mkdtempSync(join(tmpdir(), 'central-data-e2e-other-'))
     try {
       const a = surfaceAt()
@@ -491,11 +491,23 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       expect(readFileSync(join(other, PROFILE_FILE), 'utf8'), 'two profiles, two files — and the second carries none of the first\'s row').toBe('')
     } finally { rmSync(other, { recursive: true, force: true }) }
 
-    // A FOREIGN image each answers the cold tier, boots, and is replaced by the next commit — the
-    // recovery arm `persistence.md` §9 P-1 measures (D-13, D-5). THE ARM'S OWN BOUND, STATED: the
-    // store's image IS a register (a flat JSON object of address → value), so no object-shaped image
-    // is foreign to it — the seeds below are the images that are not one, which is the only reading
-    // of "foreign-keyed" this head can carry (`docs/L2/central-data/behaviour.md` §9).
+    // A FOREIGN image each REFUSES the boot and is left standing — the arm `persistence.md` §9 P-1 measures, RE-GRAINED
+    // WITH THE PACKAGE (D-13, D-5). THE ARM'S OWN BOUND, STATED: the store's image IS a register (a flat JSON object of
+    // address → value), so no object-shaped image is foreign to it — the seeds below are the images that are not the
+    // store's image at all, which is the only reading of "foreign-keyed" this head can carry
+    // (`docs/L2/central-data/behaviour.md` §9).
+    //
+    // **THE PACKAGE CHANGED UNDER THIS HALF AND THE ROW SAYS SO IN ITS OWN WORDS** (`D-219`): `provident-storeroom` went
+    // `1.10.0` → `1.11.0` — a MINOR, admitted by `package.json`'s caret — and `RELEASE-NOTES.md` §1.11.0 item 2 carries the
+    // arm verbatim: *"A BOOT REFUSES IT TOO — AND A BOOT OVER A CORRUPT IMAGE NOW REFUSES RATHER THAN OPENING A STORE OVER
+    // IT"*, crossing the minted **rank `22` `FileImageRefused`** (§1.11.0 item 5: *"the corrupt bytes stand"*; `D-126`
+    // item 2, `PIN-11`). **THIS HALF ASSERTED `1.10.0`'s ARM** — a boot answering an instance indistinguishable from an
+    // empty path, whose register answered cold, whose bytes survived until a commit and whose next commit replaced them —
+    // and that arm is SUPERSEDED, not broken: over the same bytes `1.10.0`'s construction opened and `1.11.0`'s refuses.
+    // **THE ROW'S SUBJECT IS UNMOVED AND IT IS THE WHOLE POINT OF THE RE-GRAIN**: a corrupt image is DIAGNOSED — coded,
+    // named and never silently tolerated — and the bytes are NEVER DESTROYED. So this half reds if the construction
+    // answers a store again (that is `1.10.0`'s arm), and it reds on the refusal's own members below if the diagnosis
+    // stops naming WHICH file was refused and WHAT the store wanted instead.
     const seeds = [
       { label: 'unparsable', bytes: '{"alpha":' }, { label: 'not-json', bytes: "this is not the store's image\n" },
       { label: 'foreign-array', bytes: '[1,2]' },
@@ -504,17 +516,40 @@ describe('central-data-management · the twelve L1 scenarios through their decla
       const dir = mkdtempSync(join(tmpdir(), 'central-data-e2e-corrupt-'))
       try {
         writeFileSync(join(dir, PROFILE_FILE), seed.bytes)
-        // RE-DERIVED, D-80. The row's subject is P-1's measured arm — a boot over bytes that are not the store's
-        // image answers cold and leaves them untouched — and the boot is now the ROW's act rather than the surface's
-        // lazy one, which puts the finding exactly where `persistence.md` §9 P-1 states it: `createProfileStore` is
-        // what meets the foreign image, and a boot that threw here would redden this line by throwing out of the row.
-        const surface = surfaceAt(dir)
-        expect(surface.list({}), `S-12/${seed.label}: the register is empty — not a refusal and not a throw`).toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
-        expect(surface.read({ path: ['alpha'] }), `S-12/${seed.label}: absence is the answer`).toEqual({ status: 'absent', path: ['alpha'] })
-        expect(readFileSync(join(dir, PROFILE_FILE), 'utf8'), `S-12/${seed.label}: the foreign bytes stand untouched until a commit`).toBe(seed.bytes)
-        expect(surface.write({ path: ['alpha'], value: 'recovered' }).status, `S-12/${seed.label}: the next commit commits`).toBe('committed')
-        expect(surface.read({ path: ['alpha'] }), `S-12/${seed.label}: and serves the row it landed, as the leaf node over the bytes it replaced`).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'recovered' } })
-        expect(readFileSync(join(dir, PROFILE_FILE), 'utf8'), `S-12/${seed.label}: the commit replaced the bytes`).not.toBe(seed.bytes)
+        // THE BOOT MEETS THE IMAGE AND NOT THE SURFACE: `surfaceAt` constructs the store first (at `main.ts`'s own
+        // `createProfileStore` site), so the refusal stands exactly where `persistence.md` §9 P-1 states it. It is caught
+        // here as the store's own four-member refusal VALUE, so the row reads it rather than throwing out of itself.
+        const boot = ((): { readonly refused: boolean; readonly refusal: Record<string, unknown> } => {
+          try {
+            surfaceAt(dir)
+            return { refused: false, refusal: {} }
+          } catch (refusal) {
+            return { refused: true, refusal: refusal as Record<string, unknown> }
+          }
+        })()
+        expect(boot.refused, `S-12/${seed.label}: the boot REFUSES a corrupt image rather than opening a store over it — a store answering here is 1.10.0's arm and not this one`).toBe(true)
+        if (!boot.refused) continue
+        expect(boot.refusal.status, `S-12/${seed.label}: rank \`22\` \`FileImageRefused\` — the code whose SUBJECT is the store's own image, never the constraint list (19/20)`).toBe('FileImageRefused')
+        expect(boot.refusal.address, `S-12/${seed.label}: \`address: null\` is this refusal's truth — no address is its subject (§1.11.0 item 5)`).toBeNull()
+        expect(boot.refusal.log, `S-12/${seed.label}: no pass ran — the refusal composes before the package's first ask, so its log is empty and not absent`).toEqual([])
+        expect(String(boot.refusal.message), `S-12/${seed.label}: the sentence says WHAT the store wanted, so the diagnosis is a sentence and not a status alone`).toContain('is not an image this store reads')
+        expect(String(boot.refusal.message), `S-12/${seed.label}: and its subject is the \`filePath\`'s own spelling — a caller reads WHICH file was refused`).toContain(join(dir, PROFILE_FILE))
+        expect(readFileSync(join(dir, PROFILE_FILE), 'utf8'), `S-12/${seed.label}: THE CORRUPT BYTES STAND — the refusing read truncated nothing and nothing was written, so nothing is withdrawn`).toBe(seed.bytes)
+        expect(readdirSync(dir), `S-12/${seed.label}: and no second name stands beside it — no .tmp, no lock, no sidecar`).toEqual([PROFILE_FILE])
+        // **RECOVERY IS BY DECLARATION, WHICH IS WHAT THE ROW'S NAME HAS ALWAYS SAID.** The app's own arm at this refusal
+        // is `main.ts`'s `D-80` fatal catch — a boot over a corrupt image is OVER, nothing degraded, nothing defaulted and
+        // nothing retried — so the recovery is no longer a commit over the foreign bytes (that was `1.10.0`'s arm). The
+        // operator DECLARES the profile's image empty, and the next boot's own repair re-mints the families from nothing.
+        writeFileSync(join(dir, PROFILE_FILE), '')
+        const recovered = surfaceAt(dir)
+        // **THE CONTROL THE NOTES STATE IN THEIR OWN SENTENCE** (§1.11.0 item 2: *"A ZERO-LENGTH FILE AND AN ABSENT FILE ARE
+        // STILL NO IMAGE AND CROSS NO CODE"*): the refusal is keyed on a PRESENT, NON-EMPTY, UNREADABLE image and never on
+        // the path existing, so a store that refused this boot would red the row for the wrong reason.
+        expect(recovered.list({}), `S-12/${seed.label}: over the declared-empty image the register answers empty — not a refusal and not a throw`).toEqual({ status: 'read', prefix: null, paths: [], count: 0 })
+        expect(recovered.read({ path: ['alpha'] }), `S-12/${seed.label}: absence is the answer`).toEqual({ status: 'absent', path: ['alpha'] })
+        expect(recovered.write({ path: ['alpha'], value: 'recovered' }).status, `S-12/${seed.label}: the next commit commits`).toBe('committed')
+        expect(recovered.read({ path: ['alpha'] }), `S-12/${seed.label}: and serves the row it landed, as the leaf node over the bytes it replaced`).toEqual({ status: 'read', kind: 'row', path: ['alpha'], value: { _tier: 'file', value: 'recovered' } })
+        expect(readFileSync(join(dir, PROFILE_FILE), 'utf8'), `S-12/${seed.label}: THE COMMIT REPLACED THE BYTES — the declaration is what let them be replaced, and the corrupt image is never rewritten in place`).toContain('recovered')
       } finally { rmSync(dir, { recursive: true, force: true }) }
     }
   })

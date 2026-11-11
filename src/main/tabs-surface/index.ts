@@ -5,7 +5,7 @@
 // THE SHAPE ARM IS THIS FILE'S, and it is the surface's FIRST act: `commit` takes `unknown` on purpose, because
 // a typed parameter would move the check into the type system where the renderer's boundary cannot reach it
 // (`docs/L3/store-tabs-record/signatures.md` §3). A malformed row never reaches a store verb.
-import { createTabsRecord, type TabsRecord, type TabsRecordAnswer, type TabsRecordRow } from '../tabs-record/index.js'
+import { createTabsRecord, type TabsDelivery, type TabsRecord, type TabsRecordAnswer, type TabsRecordRow } from '../tabs-record/index.js'
 
 export type TabsReadAnswer =
   | { readonly status: 'committed'; readonly order: readonly string[]; readonly landing: string; readonly rows: readonly TabsRecordRow[] }
@@ -16,25 +16,25 @@ export interface TabsSurface {
   commit(row: unknown): TabsRecordAnswer
   /** L2 §2's fourth route: a tab leaves by name, and the order seat is rewritten without it. */
   remove(id: unknown): TabsRecordAnswer
-  attach(): void
-  detach(): void
 }
 
 export interface TabsSurfaceOptions {
   /** THE APP'S ONE STORE (D-64, D-65): this surface neither constructs nor owns one. */
   readonly store: import('../tabs-record/index.js').TabsRecordStore
-  /** The change push: called once per committed change of the record's root, and never handed the value —
-   *  the delivery names that the record moved, and a renderer that needs the value re-reads (L2 §2). */
-  readonly onChanged?: () => void
+  /** **THE CROSSING'S DELIVERY, BUILT BEFORE THE STORE AND ADOPTED BY IT** (`D-219`; `docs/L3/store-tabs-record/delivery.md`
+   *  §4). Its one entry at `['tabs']` is the ONE registration this crossing is allowed and the construction took it, so this
+   *  surface takes no subscription: it hands the delivery to the record, whose `subscribe` is the fan-out and nothing else.
+   *  **The push carries an ADDRESS and never the record** — the renderer re-reads (L2 §2, `D-92`). */
+  readonly delivery: TabsDelivery
 }
 
 const plain = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
 export function createTabsSurface(options: TabsSurfaceOptions): TabsSurface {
-  // THE INSTANCE IS CONSTRUCTED HERE, ONCE, AND HELD HERE: one reference, one file, one constraint (design §6).
-  const record: TabsRecord = createTabsRecord({ store: options.store })
-  let off: (() => void) | null = null
+  // THE INSTANCE IS CONSTRUCTED HERE, ONCE, AND HELD HERE: one reference, one file, one constraint (design §6) — and over
+  // the delivery the store's construction already adopted, so this surface takes no registration of its own (`D-219`).
+  const record: TabsRecord = createTabsRecord({ store: options.store, delivery: options.delivery })
 
   return {
     read(): TabsReadAnswer {
@@ -67,18 +67,6 @@ export function createTabsSurface(options: TabsSurfaceOptions): TabsSurface {
         return { status: 'refused', reason: 'malformed-row', message: 'the removal names no tab id', address: null }
       }
       return record.remove(id)
-    },
-
-    /** The change push: one subscription, held here so `detach` can withdraw exactly what `attach` took. */
-    attach(): void {
-      if (off !== null) return
-      off = record.subscribe(() => options.onChanged?.())
-    },
-
-    detach(): void {
-      if (off === null) return
-      off()
-      off = null
     },
   }
 }

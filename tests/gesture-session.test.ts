@@ -1583,6 +1583,17 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   //    read answer and route carry the fourth family — beside the four sibling paths already named above. It is excluded BY
   //    NAME like every other entry here; the DENIED predicate and the positive control below are untouched.
   'src/main/view-surface/index.ts', // `D-97` — the surface's read answer and its appearance route
+  // **⟶ ADDED 2026-11-09 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-219`): THE PASS THAT MOVES THE REGISTRATIONS INTO
+  //    `cfg.listeners` WRITES THE TABS CROSSING'S OWN SURFACE MODULE — `src/main/tabs-surface/index.ts`.** The delivery
+  //    pass (`strata/decisions.md` `D-219`) deletes `attach()`/`detach()` from that surface and takes the `onChanged`
+  //    option away with them, because `1.11.0` delivers at the CREATION and the construction adopts the crossing's one
+  //    `listeners` entry (`docs/L3/store-tabs-record/delivery.md` §4). Its twin `src/main/view-surface/index.ts` is
+  //    already named above for `D-97` and `src/main/tabs-record/index.ts` for `D-101`, so this is the SECOND surface of a
+  //    crossing whose record is already declared — a path the row charged to THIS unit only because the list had no entry
+  //    for it. It is a SIBLING's declared artifact and is excluded BY NAME like every other entry here. **THE DENIED
+  //    PREDICATE IS UNTOUCHED**: a `src/renderer/**` or `src/main/**` path this list does not name STILL fails the row
+  //    (`src/main/security.ts` is still charged below), and both controls still drive the instrument in both directions.**
+  'src/main/tabs-surface/index.ts', // `D-219` — `attach`/`detach`/`onChanged` leave; the surface takes the crossing's delivery
   // **⟶ ADDED 2026-11-03 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-101`): THE `central-data` UNIT'S OWN PATHS.** The pass
   //    that makes the `data.*` tier the caller's and guards the crossings' declared roots writes seven files under
   //    `src/main/`: the module's four (`data/types.ts`, `data/args.ts`, `data/mapper.ts`, `data/surface.ts`), the two
@@ -5179,6 +5190,32 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
 
   it('F-9(b) §3.2 — THE SIX REGISTRATION SITES ARE UNTOUCHED: asserted BY SET EQUALITY AGAINST THE NAMES, never by a bare count', async () => {
     await requireModule('F-9(b) §0 ruling 9')
+    // **⟶ RE-GRAINED 2026-11-09 (`D-219`): THE SIX SITES ARE THE MCP SURFACE'S SIX, AND NOTHING THEY NAME MOVED — SAID
+    // OUT LOUD, BECAUSE A REGISTRATION THAT MOVED ELSEWHERE IN THE TREE IS NOW EASY TO MISTAKE FOR ONE OF THEM.** The six
+    // are the gate record's own, named at `archive/gate-corpus-2026-10-29/specs/gsession.md` §3.2 `F-9(b)` in its own
+    // words: *"`ALL_TOOLS` (`21` names) · `RpcMethod` (`21`) · `MUTATING_METHODS` (`7`) · `VALID_GROUPS` (`5`) · **the
+    // renderer RPC switch** · **the preload bridge** are unchanged"* — four of them read below from their own live
+    // declaration, and the last two are the change-set half below (`src/renderer/renderer.ts`'s switch and
+    // `src/main/preload.ts`'s bridge, denied to this unit by path). **THE TWO CHANGES THAT LANDED TOGETHER AT THIS HEAD MOVE
+    // NONE OF THE SIX**: the crossings' registrations into `cfg.listeners` (`D-219`, `D-218`) and
+    // `provident-storeroom` `1.10.0` → `1.11.0` add no tool, no resource, no group, no `RpcMethod` member and no
+    // `MUTATING_METHODS` entry, and they leave the renderer's RPC switch and the preload bridge byte-identical.
+    //
+    // **AND THE REGISTRATIONS THE PASS DID MOVE ARE NOT ONE OF THESE SIX, NAMED SO THE NEXT READER DOES NOT COUNT THEM AS
+    // ONE — AND MEASURED BY NO ROW OF THIS FILE, WHICH IS SAID RATHER THAN LEFT IMPLIED.** What `D-219` moved is the
+    // STORE's registration surface, and it is named by kind because only two of its names are in this repo's reach at
+    // all: **five `cfg.listeners` entries** adopted by the ONE construction (`main.ts`'s `listeners:` array — the tab
+    // record's one at `['tabs']` and the view record's four at its panes/zones/theme/drag roots), **two `arm()`s** at the
+    // renderer's `IPC_READY` (the flush that replaces the deleted `attachWindow` re-delivery — one per crossing), and
+    // **two `subscribe` fan-outs** (`createTabsDelivery`'s and `createViewDelivery`'s; `main()` registers no subscriber,
+    // so the app has exactly one destination per crossing). **They are `src/main/**`'s and belong to the crossings' own
+    // rows** (`tests/integration/store-tabs-record/**`, `tests/integration/store-view-record/**`,
+    // `tests/unit/store-tabs-record/signatures.test.ts`), never to `U-GSESSION`: a scan of them for this module's name
+    // would be a row that cannot fail, which is the shape `D-219` itself refuses in the package's no-op migration route.
+    // **WHAT REDS THIS ROW'S SIX-SITE HALF**: a 28th tool name, a seventh group, an eighth `MUTATING_METHODS` entry, a
+    // duplicated (non-distinct) name in either 27-name set, a 28th `RpcMethod` member — and, on the change-set half, any
+    // attributable path under `src/renderer/` or `src/main/` that no declaration names.
+    //
     // The four named seams of the gate record, each read from its OWN live declaration
     // (`src/shared/gesture-session.test.ts` would be a fabricated seam: the six sites are
     // this repo's own, and the five NAME-COMPLETE sets below are theirs).

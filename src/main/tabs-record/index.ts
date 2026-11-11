@@ -64,6 +64,11 @@ export interface TabsRecordReading {
 export interface TabsRecordOptions {
   /** THE APP'S ONE STORE (D-64, D-65): the tab record lives at its `['tabs']` addresses and owns no instance. */
   readonly store: Store
+  /** **THE CROSSING'S DELIVERY, BUILT BEFORE THIS STORE EXISTED** (`D-219`; `docs/L3/store-tabs-record/delivery.md` §2).
+   *  Its ONE entry was adopted by `cfg.listeners` when the instance was created, so the six declarations' creation repairs
+   *  already delivered to it. What this record takes is the other half — the fan-out a later consumer subscribes to — and
+   *  it runs no store verb to have it (`D-129`: one registration per address). */
+  readonly delivery: TabsDelivery
 }
 
 export interface TabsRecord {
@@ -286,10 +291,11 @@ const namesASeat = (id: string): boolean => SEAT_NAMES.includes(id)
  *  for a commit, and `{first: 0, second: 1}` again after the FIRST withdrawal — the second subscriber silently starved
  *  the first, and the first's teardown silenced the second. **With a name per subscription the same drive answers
  *  `{h1: 1, h2: 1}` and then `{h1: 1, h2: 2}`.** A fixed `'tabs-record'` name therefore encoded "one subscriber" as a
- *  fact about the SPELLING, and a second `subscribe` is not impossible in this app: the surface holds exactly one
- *  subscription (`attach`/`detach` guard their own), while `subscribe` is a route of this module's own interface that
- *  nothing refuses a second caller — the crossing battery itself builds a second record over one store. So the name is
- *  minted, and the one-subscriber arrangement stays where it belongs, in the surface. */
+ *  fact about the SPELLING, and a second `subscribe` is not impossible in this app: `subscribe` is a route of this
+ *  module's own interface that nothing refuses a second caller — the crossing battery itself builds a second record over
+ *  one store. So the name is minted. **AND THE ORDINAL IS NOW MINTED AT THE DELIVERY'S CONSTRUCTION AND NEVER WITHDRAWN**
+ *  (`D-219`): the surface takes no subscription at all any more (`attach`/`detach` are gone with it), so the app's one
+ *  registration is the store's own `cfg.listeners` element and no second one can starve it. */
 let issuance = 0
 /** **AND THE MINTED SPELLING CAN NEVER EQUAL A CONSTRAINT `id`, WHICH IS THE WHOLE OF THE ONE RULE THAT SURVIVES** (D-71):
  *  the six ids this module declares are `tabs-must-stand`, `order-names-its-tabs`, `exactly-one-active`, `tab-has-title`,
@@ -1352,11 +1358,93 @@ export function tabsDeclaredRoots(): readonly { readonly address: readonly strin
   return [{ address: TABS_RECORD_ADDRESS, tier: TABS_RECORD_TIER }]
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE DELIVERY — BUILT BEFORE THE STORE, ADOPTED BY IT (`D-219`; `docs/L3/store-tabs-record/delivery.md` §1–§3)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **ONE `cfg.listeners[]` ELEMENT — THREE OWN MEMBERS WITH THE THIRD REQUIRED** (`guide §6`, `:533`–`:560`; `D-219`). A
+ *  two-member element is refused `AddressMalformed` (subject `listeners`) before any filesystem act, so `listener` is not a
+ *  member a caller may drop: `address` is `TABS_RECORD_ADDRESS` itself — ONE element carries exactly one address — `handle`
+ *  the string `handleFor` minted, and `listener` the function the adopted handle fires with that address as its one
+ *  argument. **IT CARRIES NO VALUE AND NEVER THE RECORD** (`D-92`; `design.md` §6 forbids the renderer-side copy by name). */
+export interface TabsDeliveryEntry {
+  readonly address: readonly string[]
+  readonly handle: string
+  readonly listener: (address: readonly string[]) => void
+}
+
+/** **THE CROSSING'S DELIVERY — TWO HALVES OF ONE THING, BUILT BEFORE THE STORE EXISTS** (`D-219`; §1–§2). `entries` is what
+ *  `createProfileStore`'s `listeners` adopts — ONE element at `['tabs']` — so the six declarations' creation repairs deliver
+ *  from the instant they write; `subscribe` is the fan-out a later consumer takes, and it runs no store verb, because the
+ *  construction took the one registration this crossing is allowed (`D-129`, `D-93`). */
+export interface TabsDelivery {
+  readonly entries: readonly TabsDeliveryEntry[]
+  subscribe(handler: () => void): () => void
+}
+
+/** **THE DELIVERY THE BOOT BUILDS BEFORE `createProfileStore` AND HANDS TO IT** (`D-219`; `docs/L3/app-shell/delivery.md`
+ *  §3). `sink` is the app's TOTAL, UNINTERPRETED destination: the ADDRESS the delivery carried and nothing else — no
+ *  reading, no record, no formatted value — and the consumer's only correct answer to it is its own re-read (`D-92`).
+ *
+ *  **THE ENTRY'S BODY IS ONE ACT AND TWO GUARANTEES.** It **writes nothing** — a listener body's write opens a commit of
+ *  its own inside the one that fired it (`guide §6.5` item 1) — and **it contains its own throw**, because at a
+ *  registration instant an uncontained throw refuses the act at rank `21` `ListenerBodyThrew`, which at the creation means
+ *  `storeCreate` refuses and the app takes `D-80`'s fatal arm (`guide §6`, `:513`–`:516`).
+ *
+ *  **THE PREFIX CLAUSE STILL CARRIES THE ACTS AND NONE OF THEM MOVES** (`design.md` §5, `D-67`, `D-142`): `commit`'s leaf
+ *  write at `['tabs', row.id]` and the seat repair's whole-record write inside that commit are ONE commit and therefore
+ *  ONE delivery, and an outside whole-record `data.write` delivers through the same entry — the ADDRESS was always the
+ *  authority and it still is. **AND THE FAN-OUT RUNS BEFORE THE SINK**, so a subscriber standing and the app's queue are
+ *  two readings of one event and never two paths through different code (`D-92`). */
+export function createTabsDelivery(sink: (address: readonly string[]) => void): TabsDelivery {
+  // THE FAN-OUT'S OWN LIST: one entry per subscriber, appended and dropped locally, and never a store act (`D-71`).
+  const handlers: (() => void)[] = []
+  const notify = (address: readonly string[]): void => {
+    for (const handler of [...handlers]) {
+      try {
+        handler()
+      } catch {
+        // THE CALLER'S THROW STOPS AT THE FAN-OUT: the record moved and the delivery happened (`guide §6.5a`).
+      }
+    }
+    sink(address)
+  }
+  return {
+    entries: [
+      {
+        address: TABS_RECORD_ADDRESS,
+        handle: handleFor(),
+        listener: (delivered: readonly string[]): void => {
+          try {
+            notify(delivered)
+          } catch {
+            // THE ENTRY CONTAINS ITS OWN THROW (`D-124`, `TG-3`): an uncontained one refuses the act that fired it at rank 21.
+          }
+        },
+      },
+    ],
+    subscribe(handler: () => void): () => void {
+      // ONE ENTRY APPENDED TO ONE LIST AND ONE REMOVAL RETURNED (`D-71`, §3): the withdrawal is LOCAL, idempotent, and runs
+      // no store verb — the registration the construction adopted is the instance's for its life.
+      handlers.push(handler)
+      let live = true
+      return () => {
+        if (!live) return
+        live = false
+        const at = handlers.indexOf(handler)
+        if (at >= 0) handlers.splice(at, 1)
+      }
+    },
+  }
+}
+
 /** **THE RECORD OVER THE CENTRAL INSTANCE** (D-64, D-65): this module constructs nothing and owns no file — it is handed
  *  the app's one store and reads and writes its `['tabs']` addresses through it. The instance's lifetime, its file and
  *  its constraint pass are the boot's. */
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
   const standing: Store = options.store
+  // THE DELIVERY THE CONSTRUCTION ADOPTED (`D-219`): this record reads the other half of it and takes no registration.
+  const delivery: TabsDelivery = options.delivery
   // **NOTHING IS WRITTEN HERE, AND THE ROOT IS NO LONGER THE FIRST COMMIT'S TO MINT** (D-69). This module still writes
   // nothing at construction — but the address is no longer absent when it is handed over: `tabs-must-stand` was asked at
   // the INSTANCE's construction, before this function existed, and its repair created the record with the landing page
@@ -1508,61 +1596,25 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       }
     },
     subscribe(handler: () => void): () => void {
-      // **THE REGISTRATION IS TWO ACTS, NOT ONE** (`guide §6.2`, `§6.3`): `listen(handle, addresses)` installs the ENTRY
-      // and `register(handle, listener)` installs the FUNCTION under it — the store answers the triggered set and invokes
-      // nothing it was not registered with. **An entry `listen` wrote and `register` never filled is a LAWFUL, SILENT
-      // RESERVATION** (`§6.3` rule 1: *"an unregistered handle fires nothing, silently"*) — the package's own record calls
-      // it "a reservation, `off: true`, no function" — and it holds nothing against anything, which is why the push is
-      // built on it: `register` runs at once, and the entry is withdrawn where `register` fails (D-71). **The body this
-      // replaces called `listen` alone and dropped `handler` on the floor: the push existed in name only** (D-70).
+      // **THE SIGNATURE STANDS VERBATIM, ITS MEANING STANDS, AND THE STORE'S THIRD OF IT IS GONE**
+      // (`docs/L3/store-tabs-record/delivery.md` §3): one notification per committed change of the record, a body that
+      // writes nothing, the caller's throw contained, and an idempotent withdrawal. **WHAT LEFT IS THE REGISTRATION** —
+      // `handleFor()`, `listen`, `register` and the `unlisten` on the failure path — because the CONSTRUCTION adopted the
+      // one entry and the package armed its body from the instant the instance existed (`D-219`, `guide §6`, `:557`).
+      // Keeping this body's own pair beside that entry would be a SECOND registration for one address, which is the copy
+      // `D-129` forbids and a doubled delivery on every write (`D-93`).
       //
-      // **THE LISTENER STANDS AT `['tabs']` ITSELF, beside all six of this module's pairs** — lawful from `1.7.0`, whose
-      // one cross-kind rule reads the HANDLE and never the address (`guide §7.3`'s clause of 2026-11-01; the listener's own
-      // docblock above, and `D-71`).
+      // **THE BODY IS ONE HANDLER APPENDED TO ONE LIST AND ONE REMOVAL RETURNED** (`D-71`, §3), and the removal is LOCAL:
+      // it drops that one handler, is idempotent and runs no store verb — the entry the construction adopted is the
+      // instance's for its life (`D-70`: a `unlisten` whose only possible act is to remove the app's own listener is a name
+      // without a reader). **AND `D-71`'s *"a registration that could not stand leaves nothing behind"* LOSES ITS SITE AND
+      // NOT ITS FORCE**: `storeCreate` adopts the entry or refuses the construction, and a refused construction is `D-80`'s
+      // fatal arm — there is no half-registration left to withdraw.
       //
-      // **THE BODY IS A NOTIFICATION AND NOTHING ELSE.** It calls the caller's `handler` and writes nothing at all: a
-      // listener's write opens its own commit (`guide §6.5` item 1), so a delivery path that wrote would be a second
-      // writer inside the one that fired it, with no loop guard to bound it (`§7.9` item 2). The renderer RE-READS.
-      //
-      // **THE CALLER'S THROW IS CONTAINED HERE, AND THAT IS MEASURED RATHER THAN DEFENSIVE** (2026-11-01, the installed
-      // `1.6.2`): a listener body's throw is neither caught nor reported by the store and crosses every hop back into the
-      // write that fired it (`guide §6.5a`), so an uncontained subscriber made a LANDED commit — the tab seated, the
-      // repair filed — answer `{status: 'refused', reason: 'refused', message: 'boom-in-subscriber'}`. The act's answer is
-      // the act's; the subscriber's failure is the subscriber's.
-      const body = (): void => {
-        try {
-          handler()
-        } catch {
-          // the record moved and the delivery happened; the subscriber's own failure stops at the subscriber
-        }
-      }
-      const handle = handleFor()
-      try {
-        standing.listen(handle, [TABS_RECORD_ADDRESS])
-        standing.register(handle, body)
-      } catch {
-        // **A REGISTRATION THAT COULD NOT STAND LEAVES NOTHING BEHIND**: an entry `listen` wrote that `register` could not
-        // fill would fire nothing and would hold this subscription's name against a later one, so it is withdrawn here.
-        try {
-          standing.unlisten(handle)
-        } catch {
-          // a withdrawal answers nothing, not even a failure
-        }
-        return () => undefined
-      }
-      let live = true
-      return () => {
-        // **THE WITHDRAWAL IS THIS SUBSCRIPTION'S OWN ANSWER** and it is idempotent: one `unlisten` per handle, a plain
-        // no-op success over a handle already withdrawn, and never a throw to the caller (`guide §6.2`). The flag keeps
-        // the second call from withdrawing whatever a later minted name might own.
-        if (!live) return
-        live = false
-        try {
-          standing.unlisten(handle)
-        } catch {
-          // a withdrawal the store refuses leaves the listener to the instance's lifetime, not a throw to the caller
-        }
-      }
+      // **NOTHING IS WRITTEN HERE AND NOTHING IS READ** (`guide §6.5` item 1): a listener's write opens its own commit, so a
+      // delivery path that wrote would be a second writer inside the one that fired it. The renderer RE-READS, and the
+      // delivery carries the ADDRESS and never the record (`design.md` §5, §6; `D-92`).
+      return delivery.subscribe(handler)
     },
   }
 }

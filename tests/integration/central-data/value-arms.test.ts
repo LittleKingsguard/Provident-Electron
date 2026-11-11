@@ -56,8 +56,9 @@ import { storeCreate } from 'provident-storeroom'
 import { createDataSurface, type DataDeleteAnswer, type DataSurface, type DataWriteAnswer } from '../../../src/main/data'
 import { createOperatorSettings } from '../../../src/main/operator-settings'
 import { createProfileStore } from '../../../src/main/storeroom.js'
-import { createTabsRecord, tabsConstraintDeclarations, tabsDeclaredRoots, type TabsRecord } from '../../../src/main/tabs-record'
+import { createTabsDelivery, createTabsRecord, tabsConstraintDeclarations, tabsDeclaredRoots, type TabsRecord } from '../../../src/main/tabs-record'
 import {
+  createViewDelivery,
   createViewRecord,
   UNDECLARED_ZONE_REASON,
   viewConstraintDeclarations,
@@ -113,7 +114,7 @@ const at = (where: string, name = PROFILE): string => join(where, name)
 /** **THE CENTRAL CROSSING'S BATCH, MAPPED THE WAY `src/main/main.ts` MAPS IT** — both modules' declarations in ONE
  *  construction, because a surface stood over a store carrying half the batch would be measuring a store the app does not
  *  have (`D-65`, `D-87`, `D-91`, `D-97`). The holder is bound after the call answers, exactly as the boot binds it. */
-function boot(where: string): ViewRecordStore {
+function boot(where: string, listeners: readonly unknown[] = []): ViewRecordStore {
   const holder: { current: ViewRecordStore | null } = { current: null }
   const store = createProfileStore({
     filePath: at(where),
@@ -121,6 +122,10 @@ function boot(where: string): ViewRecordStore {
       ...tabsConstraintDeclarations(() => holder.current),
       ...viewConstraintDeclarations(() => holder.current),
     ].map((declaration) => ({ address: declaration.address, id: declaration.id, constraint: declaration.constraint })) as never,
+    // **AND THE SAME CONSTRUCTION ADOPTS THE CROSSINGS' `cfg.listeners` ENTRIES** (`D-219`, `docs/L3/app-shell/delivery.md`
+    // §5 `A-3`): the app's one call carries five of them, so this fixture models it — the argument its docblock already
+    // makes for the batch, one list over. A caller asking for the ordinary no-listener store passes nothing (`guide §6`).
+    listeners: listeners as never,
   }) as unknown as ViewRecordStore
   holder.current = store
   return store
@@ -137,13 +142,20 @@ interface Standing {
 }
 
 function stand(where = dir()): Standing {
-  const store = boot(where)
+  // **THE TWO DELIVERIES ARE BUILT BEFORE THE STORE, BECAUSE ITS `listeners` ARRAY IS READ INSIDE THE CALL THAT CREATES
+  // IT** (`D-219`; `docs/L3/view-record/delivery.md` §1, `docs/L3/store-tabs-record/delivery.md` §2). This battery
+  // subscribes to nothing, so its sink is the recorder the design names for a battery — and what the entries buy is a store
+  // carrying every list the app's construction carries, never a push a row here reads.
+  const sink: (readonly string[])[] = []
+  const tabsDelivery = createTabsDelivery((address) => sink.push([...address]))
+  const viewDelivery = createViewDelivery((address) => sink.push([...address]))
+  const store = boot(where, [...tabsDelivery.entries, ...viewDelivery.entries])
   return {
     dir: where,
     store,
     surface: createDataSurface({ profileDir: where, store: store as never, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] }),
-    view: createViewRecord({ store }),
-    tabs: createTabsRecord({ store }),
+    view: createViewRecord({ store, delivery: viewDelivery }),
+    tabs: createTabsRecord({ store, delivery: tabsDelivery }),
     bytes: () => readFileSync(at(where), 'utf8'),
     restart: () => stand(where),
   }

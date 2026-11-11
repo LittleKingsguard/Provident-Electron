@@ -59,6 +59,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createProfileStore } from '../../../src/main/storeroom'
 import {
+  createViewDelivery,
   createViewRecord,
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
@@ -80,6 +81,7 @@ import {
 import type {
   ViewConstraintAnswer,
   ViewConstraintDeclaration,
+  ViewDelivery,
   ViewRecord,
   ViewRecordStore,
   ViewRepairAnswer,
@@ -172,14 +174,31 @@ const nullCarrierRepairWrite = (): unknown => writeJoinedAt(aStore, null, VIEW_Z
 let dir: string
 let holder: ViewRecordStore | null = null
 let record: ViewRecord
+/** **THE CROSSING'S DELIVERY, BUILT BEFORE THE STORE AND ADOPTED BY ITS CONSTRUCTION** (`D-219`;
+ *  `docs/L3/view-record/delivery.md` §1–§3): the four entries are what `createProfileStore`'s `listeners` takes, and
+ *  `subscribe` is the fan-out every row below drives. **IT IS THE FILE'S, NOT A ROW'S**, because `open()` is the one
+ *  fixture nine rows read and a second delivery per row would measure a second crossing. */
+let delivery: ViewDelivery
+/** **WHAT THE SINK WAS HANDED, WHICH IS THE CREATION'S EVIDENCE AND NOT A DESTINATION** (`docs/L3/app-shell/delivery.md`
+ *  §3's `held`): an insertion-ordered list of the delivered ADDRESSES. Reset by `open()`, because a fresh construction is a
+ *  fresh queue. */
+let sunk: (readonly string[])[] = []
 
-/** A record over a real store built the way the boot builds it: the surviving declarations batched at construction (D-65). */
+/** A record over a real store built the way the boot builds it: the surviving declarations batched at construction (D-65)
+ *  **AND THE CROSSING'S FOUR LISTENER ENTRIES ADOPTED BY THAT SAME CALL** (`D-219`), so the creation's own repairs deliver
+ *  from the instant they write — the shape `src/main/main.ts` now supplies, and the one this battery measures. */
 const open = (): void => {
   dir = mkdtempSync(join(tmpdir(), 'view-crossing-'))
   holder = null
-  const store = createProfileStore({ filePath: join(dir, PROFILE_FILE), constraints: batchOf(() => holder) as never })
+  sunk = []
+  delivery = createViewDelivery((address) => sunk.push([...address]))
+  const store = createProfileStore({
+    filePath: join(dir, PROFILE_FILE),
+    constraints: batchOf(() => holder) as never,
+    listeners: [...delivery.entries],
+  })
   holder = store as unknown as ViewRecordStore
-  record = createViewRecord({ store: holder })
+  record = createViewRecord({ store: holder, delivery })
 }
 
 beforeEach(open)
@@ -191,13 +210,28 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
 })
 
-/** A second store over a given path, with the batch, exactly as a second boot constructs it. */
-const boot = (path: string): { store: ViewRecordStore; read: () => ReturnType<ViewRecord['read']>; bytes: () => string; close: () => void } => {
+/** A second store over a given path, with the batch and its own delivery, exactly as a second boot constructs it. */
+const boot = (path: string): { store: ViewRecordStore; delivery: ViewDelivery; sunk: (readonly string[])[]; read: () => ReturnType<ViewRecord['read']>; bytes: () => string; close: () => void } => {
   const bound: { current: ViewRecordStore | null } = { current: null }
-  const store = createProfileStore({ filePath: path, constraints: batchOf(() => bound.current) as never })
+  const secondSunk: (readonly string[])[] = []
+  const second = createViewDelivery((address) => secondSunk.push([...address]))
+  const store = createProfileStore({
+    filePath: path,
+    constraints: batchOf(() => bound.current) as never,
+    listeners: [...second.entries],
+  })
   bound.current = store as unknown as ViewRecordStore
-  const here = createViewRecord({ store: bound.current })
-  return { store: bound.current, read: () => here.read(), bytes: () => readFileSync(path, 'utf8'), close: () => { bound.current = null } }
+  const here = createViewRecord({ store: bound.current, delivery: second })
+  return {
+    store: bound.current,
+    delivery: second,
+    sunk: secondSunk,
+    read: () => here.read(),
+    bytes: () => readFileSync(path, 'utf8'),
+    close: () => {
+      bound.current = null
+    },
+  }
 }
 
 // ═══════════════ CLAUSE 1 — EXISTENCE + PLACEHOLDER REPAIR AT THE CREATION INSTANT, PER ADDRESS ═══════════════
@@ -219,9 +253,16 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
       }
       expect(absent, 'a store with no declaration holds NOTHING at `[\'panes\']` — the absent arm, measured').toBe('AddressNotFound')
 
-      // AND THE BATCHED BOOT OVER A FRESH PROFILE.
+      // AND THE BATCHED BOOT OVER A FRESH PROFILE — **WITH THE CROSSING'S DELIVERY BUILT BEFORE IT AND ADOPTED BY IT**
+      // (`D-219`): the four entries are the construction's, and the fresh record is handed the delivery's other half.
       const bound: { current: ViewRecordStore | null } = { current: null }
-      const store = createProfileStore({ filePath: path, constraints: batchOf(() => bound.current) as never })
+      const instantSunk: (readonly string[])[] = []
+      const instantDelivery = createViewDelivery((address) => instantSunk.push([...address]))
+      const store = createProfileStore({
+        filePath: path,
+        constraints: batchOf(() => bound.current) as never,
+        listeners: [...instantDelivery.entries],
+      })
       bound.current = store as unknown as ViewRecordStore
       // THE FAMILY STANDS AT THE STORE'S OWN ADDRESS BEFORE ANY COMMIT — read through the STORE, not through the module,
       // so the reading is the instance's and not a route's composition.
@@ -247,7 +288,7 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
         'the geometry the tree states, and no other',
       ).toEqual({ width: 100, height: 100, min: 0, max: 200 })
 
-      const fresh = createViewRecord({ store: bound.current })
+      const fresh = createViewRecord({ store: bound.current, delivery: instantDelivery })
       const read = fresh.read()
       expect(read.source, 'all three surviving families stand because a repair put them there, and the read says which').toEqual({
         panes: 'record',
@@ -403,22 +444,53 @@ describe('view-record · clause 2 — the push, measured per family and against 
     expect(delivered, 'and the very same subscription delivers when a family moves').toBe(1)
   })
 
-  it('AND THE DELIVERY REACHES THE BRIDGE: the surface\'s `attach` turns ONE subscription into the `onChanged` the main process broadcasts, and the renderer half registers the SAME channel constant — measured end to end rather than asserted from a name', () => {
+  it('AND THE DELIVERY REACHES THE BRIDGE — **RE-GRAINED: THE SURFACE TAKES NO SUBSCRIPTION ANY MORE** (`D-219`). The crossing\'s construction-adopted entry is the ONE registration, the surface is handed that delivery, and every committed change of either paired family is handed to the sink `src/main/main.ts` turns into the `IPC_VIEW_CHANGED` push — with the renderer half registering the SAME channel constant, measured end to end rather than asserted from a name. **AND THE WITHDRAWAL IS LOCAL AND ONLY LOCAL**: a `subscribe` that has been released silences THAT handler and not the construction\'s registration, so the sink still counts the change', () => {
     const store = holder
     if (store === null) throw new Error('the battery needs the instance it opened')
-    let bridged = 0
-    const surface = createViewSurface({ store, onChanged: () => { bridged += 1 } })
-    surface.attach()
+    // **THE ROW'S DELETED SUBJECT IS NAMED SO IT IS NOT RE-DISCOVERED** (`D-152`'s shape): `ViewSurface.attach()`,
+    // `ViewSurface.detach()` and the `onChanged` option are gone whole (`docs/L3/view-record/delivery.md` §4), because their
+    // subject — *"take the one subscription so the window's teardown can withdraw exactly what it took"* — is the
+    // CONSTRUCTION's now. **What they measured is measured here**: one committed change, one push, and no per-family
+    // mapping in between. What they measured that no longer exists — *"a boot that never called `attach()` hears nothing"* —
+    // is a state the tree can no longer be in, and the row does not pretend otherwise.
+    const surface = createViewSurface({ store, delivery })
+    expect(Object.keys(surface).sort(), 'the surface exposes its SIX routes and no subscription member').toEqual([
+      'clearDrag',
+      'commitDrag',
+      'commitPane',
+      'commitTheme',
+      'commitZones',
+      'read',
+    ])
+    let bridged = sunk.length
     expect(surface.commitPane(DEFAULT_PANE_ID, { height: 111 }).status).toBe('committed')
-    expect(bridged, 'the main-side half: one committed pane change reaches the broadcast').toBe(1)
+    expect(sunk.length - bridged, 'the main-side half: one committed pane change reaches the sink exactly once').toBe(1)
+    bridged = sunk.length
     expect(surface.commitZones(ZONE, { size: 140, display: 'normal' }).status, 'a committed change of a second family').toBe('committed')
     expect(
-      bridged,
-      'and this zone act reaches it too, over the one subscription — twice, because its two supplied members are two leaf writes (D-151)',
-    ).toBe(3)
-    surface.detach()
+      sunk.length - bridged,
+      'and this zone act reaches it too, over the one registration — twice, because its two supplied members are two leaf writes (D-151)',
+    ).toBe(2)
+    // **THE WITHDRAWAL, MEASURED WHERE IT NOW STANDS** (`docs/L3/view-record/delivery.md` §3): a subscriber released runs no
+    // store verb and withdraws nothing but its own entry, so the construction's registration still delivers to the sink —
+    // the arm that would red if the local removal were ever rewired onto `unlisten`.
+    const released = delivery.subscribe(() => undefined)
+    released()
+    bridged = sunk.length
     expect(surface.commitPane(DEFAULT_PANE_ID, { height: 112 }).status).toBe('committed')
-    expect(bridged, '`detach` withdraws exactly what `attach` took').toBe(3)
+    expect(sunk.length - bridged, 'the construction\'s registration stands after a local release: the sink is still told').toBe(1)
+
+    // THE DELIVERED ARGUMENT IS THE ADDRESS THE DELIVERY CARRIED AND NEVER THE FAMILY (`D-92`, `D-137`): what the sink is
+    // handed is the TRIGGERING address — the path the write landed at, which for a leaf act is the leaf and not the root —
+    // and the queue `src/main/main.ts` holds it VERBATIM and translates nothing, which is why no formatting stands here.
+    const roots = ['panes', 'zones', 'theme', 'drag']
+    for (const address of sunk) {
+      expect(roots, 'every delivered address is rooted at one of the four roots this module declares — never a value').toContain(address[0])
+      expect(address.length, 'and it is a PATH: an address, which is all a push may ever carry').toBeGreaterThan(0)
+    }
+    expect(sunk.map((address) => address[0]), 'the pane acts delivered under the pane root and the zone act under the zone root').toEqual(
+      expect.arrayContaining(['panes', 'zones']),
+    )
 
     // THE RENDERER-SIDE HALF, READ AS CODE WITH ITS COMMENTS ELIDED (so a comment naming the channel cannot pass):
     expect(IPC_VIEW_CHANGED, 'the channel constant both halves register').toBe('provident:view:changed')
@@ -589,7 +661,12 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     // write here, and the absence below is what catches it.
     const barePath = join(dir, 'bare.json')
     const bare = createProfileStore({ filePath: barePath })
-    const overBare = createViewRecord({ store: bare as unknown as ViewRecordStore }).read()
+    // **A STORE WHOSE BATCH NEVER RAN HAS NO `cfg.listeners` ENTRY EITHER**: the delivery is built and handed to the record
+    // all the same, because the record's shape takes one — and the entries here were adopted by nobody, which is exactly
+    // what this row's half is about: a read writes nothing whether or not a listener stands (`D-219`, `guide §6`, `:561`).
+    const bareSunk: (readonly string[])[] = []
+    const bareDelivery = createViewDelivery((address) => bareSunk.push([...address]))
+    const overBare = createViewRecord({ store: bare as unknown as ViewRecordStore, delivery: bareDelivery }).read()
     expect(overBare.source, 'no declaration ran, so no family of the THREE stands').toEqual({
       panes: 'default',
       zones: 'default',
@@ -736,7 +813,17 @@ describe('view-record · the boot\'s wiring, read as code and never as prose', (
     // ONE CONSTRUCTION SITE, AND IT IS THE BOOT'S: a second `createProfileStore(` in the entry would be the third instance
     // the purge refuses (D-78, D-79). The count is stated as a figure a new site would break.
     expect((main.match(/createProfileStore\s*\(/g) ?? []).length, 'the entry constructs the profile store exactly once').toBe(1)
-    expect(main.includes('viewSurface.attach()'), 'and the push is attached where the tab record\'s is').toBe(true)
+    // **RE-GRAINED FROM `main.includes('viewSurface.attach()')`** (`D-219`; `docs/L3/app-shell/delivery.md` §5 `A-4`): the
+    // assertion's subject — *"and the push is attached where the tab record's is"* — MOVES rather than vanishing. The push
+    // is not taken after the construction any more, so the two facts that replace it are asserted here and each can fail on
+    // its own: **the construction ADOPTS the crossing's entries** in its one `listeners:` array, and **the two `attach()`
+    // calls are gone** — leaving one beside the new entry would be the second registration `D-129` forbids.
+    expect(main.includes('listeners: [...tabsDelivery.entries, ...viewDelivery.entries]'), 'the construction adopts BOTH crossings\' listener entries, tabs first').toBe(true)
+    expect(main.includes('...viewConstraintDeclarations('), 'and the batch is the same call\'s other list, unmoved').toBe(true)
+    expect(main.includes('viewSurface.attach()'), 'no `attach()` stands after the construction: the registration is the construction\'s').toBe(false)
+    expect(main.includes('tabsSurface.attach()'), 'and neither does the tab record\'s, whose entry is in the same array').toBe(false)
+    expect(main.includes('viewDeliveries.arm()'), 'the flush rides the realm\'s arrival, one arm per crossing').toBe(true)
+    expect(main.includes('tabsDeliveries.arm()'), 'and the two arms stand in the queue\'s own order, tabs first').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_READ'), 'the read handler is registered').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_PANE_COMMIT'), 'the pane route\'s handler is registered').toBe(true)
     expect(main.includes('ipcMain.handle(IPC_VIEW_ZONES_COMMIT'), 'and the zone route\'s (D-91)').toBe(true)

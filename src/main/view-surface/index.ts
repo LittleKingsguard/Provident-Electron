@@ -4,7 +4,9 @@
 //
 // **IT CONSTRUCTS NOTHING** — not the record's store, and (unlike `tabs-surface`, whose `createTabsRecord` call is its own
 // construction) not even an instance-owning object: `createViewRecord` is handed the boot's store and owns no file, so
-// this surface is a reference to the boot's store plus the one subscription the push needs. **THE SHAPE ARMS ARE THIS
+// this surface is a reference to the boot's store plus the crossing's DELIVERY, which the boot built and the store's
+// construction already adopted — **NO `attach` AND NO `detach`, because the one registration is the construction's**
+// (`D-219`, `D-70`). **THE SHAPE ARMS ARE THIS
 // FILE'S AND THEY ARE ITS FIRST ACT**: `commitPane`, `commitZones`, `commitTheme` and `commitDrag` take `unknown` on
 // purpose, because a typed parameter would move the check into the type system where the renderer's boundary cannot reach
 // it (`docs/L3/store-tabs-record/signatures.md` §3). A malformed id or value never reaches a store verb, and each arm
@@ -18,6 +20,7 @@ import {
   THEME_SHAPE_REASON,
   ZONE_SHAPE_MESSAGE,
   ZONE_SHAPE_REASON,
+  type ViewDelivery,
   type ViewRecord,
   type ViewRecordAnswer,
   type ViewRecordStore,
@@ -53,22 +56,22 @@ export interface ViewSurface {
   /** **THE DRAG'S END — the act that ENDS the family** (D-132): it takes nothing, and the record's `clearDrag` is a DELETE
    *  rather than a placeholder, so the address answers `absent` once the gesture is over. */
   clearDrag(): ViewRecordAnswer
-  attach(): void
-  detach(): void
 }
 
 export interface ViewSurfaceOptions {
   /** THE APP'S ONE STORE (D-64, D-65, D-87): the surface neither constructs nor owns one. */
   readonly store: ViewRecordStore
-  /** The change push: called once per committed change of EITHER family's root, and never handed the value — the
-   *  delivery names that the view moved, and a renderer that needs the value re-reads (L2 §2). */
-  readonly onChanged?: () => void
+  /** **THE CROSSING'S DELIVERY, BUILT BEFORE THE STORE AND ADOPTED BY IT** (`D-219`; `docs/L3/view-record/delivery.md` §4).
+   *  Its four entries are the ONE registration this crossing is allowed and the construction took it, so this surface
+   *  takes no subscription: it hands the delivery to the record, whose `subscribe` is the fan-out and nothing else. **The
+   *  push carries an ADDRESS and never a value** — the renderer re-reads (`D-92`, L2 §2). */
+  readonly delivery: ViewDelivery
 }
 
 export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
-  // THE RECORD IS HELD HERE, ONCE: one reference over the boot's one instance (design §1).
-  const record: ViewRecord = createViewRecord({ store: options.store })
-  let off: (() => void) | null = null
+  // THE RECORD IS HELD HERE, ONCE: one reference over the boot's one instance (design §1), and over the delivery the
+  // construction adopted — the surface takes no registration of its own (`D-219`, `D-129`).
+  const record: ViewRecord = createViewRecord({ store: options.store, delivery: options.delivery })
 
   return {
     read(): ViewReadAnswer {
@@ -132,21 +135,6 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
       // NOTHING IS CHECKED HERE BECAUSE THE ACT CARRIES NOTHING (`D-132`, D-140): the record's clear is a DELETE at the
       // family's own tier, so this arm is the delegation and no second vocabulary.
       return record.clearDrag()
-    },
-
-    /** The change push: ONE subscription over EVERY root the record declares, held here so `detach` can withdraw exactly
-     *  what `attach` took. **THE FOURTH ROOT IS COVERED BY CONSTRUCTION** (`D-137`): `record.subscribe` ranges over the
-     *  record's own four addresses, so the drag's `temp` family needs no arm here — and the listener is TIER-BLIND, so an
-     *  outside `temp` write delivers the same signal the drag's own commit does. */
-    attach(): void {
-      if (off !== null) return
-      off = record.subscribe(() => options.onChanged?.())
-    },
-
-    detach(): void {
-      if (off === null) return
-      off()
-      off = null
     },
   }
 }

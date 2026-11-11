@@ -54,19 +54,38 @@ describe('S-1 — the seam module is what the app imports', () => {
     + ' without a repo change', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as
       { dependencies: Record<string, string> }
-    // **`1.10.0` IS THE PIN, AND THE PIN IS A CARET RANGE** (`D-134`) — the release whose ONE addition is the third read
-    // verb `readTiered`, which answers the durability tier at every node it returns. **THE MEMBER COUNTS ABOVE DID MOVE
-    // WITH IT, WHICH `1.9.3`'s DID NOT**: the fourteen became fifteen and `readTiered` sits THIRD in the instance's own
-    // order (measured: `read`, `readLiteral`, `readTiered`, `write`, …), so `S-1.1` and `S-1.2` read fifteen now. The
-    // figure moves here for the reason the row states: the pin follows the reviewed install, never the other way.
-    // *What stood before, kept as the reading it was*: **`1.9.3` IS THE PIN** — the release that makes the kernel's TWO instants
+    // **`1.11.0` IS THE PIN, AND THE PIN IS STILL A CARET RANGE** (`D-219`) — **THE REVIEWED PACKAGE MOVED `1.10.0` →
+    // `1.11.0` AND THE CARET IS WHAT LET IT LAND**: `1.11.0` is a MINOR, the caret admitted it, `package-lock.json` moved
+    // with it, and **no byte of this row had to be re-decided to let the install in** — which is exactly the property the
+    // row exists to assert, and the reason the claim below is written on the RANGE and never on a version number.
+    // **THE MINOR IS NOT A PATCH AND IT DID CARRY BEHAVIOUR CHANGES, SO THREE ROWS RE-GRAINED WITH IT AND THIS ONE DID NOT
+    // HAVE TO** (`node_modules/provident-storeroom/RELEASE-NOTES.md` §1.11.0: a `cfg.listeners[]` element now REQUIRES its
+    // `listener` — a two-member element is refused `AddressMalformed`, subject `listeners`, before any filesystem act — and
+    // a boot over a corrupt image now REFUSES at rank `22` `FileImageRefused` rather than opening a store over it). **THE
+    // MEMBER COUNTS ABOVE DID NOT MOVE WITH IT**: §1.11.0's own "what does not move" list keeps *"the instance's own
+    // member set stays fifteen"*, so `S-1.1` and `S-1.2` still read fifteen and `readTiered` sits THIRD in the instance's
+    // own order (measured on the installed `1.11.0`: `read`, `readLiteral`, `readTiered`, `write`, …).
+    // **AND THIS ROW CARRIES A RANGE ASSERTION AND NO LOCKED-VERSION ASSERTION, DELIBERATELY — THEY ARE TWO DIFFERENT
+    // CLAIMS AND ONLY ONE OF THEM IS A PIN.** `package.json`'s `^1.11.0` is the REPO'S DECISION; the locked `1.11.0` in
+    // `package-lock.json` (and in `node_modules/provident-storeroom/package.json`) is WHAT IS ON THIS DISK. A row that
+    // pinned the latter would red on precisely the event this row exists to bless — a caret landing a later release
+    // without a repo change — so the installed version is measured where it is the subject and where it can be measured
+    // live: `S-1.1` and `S-1.2` above (the instance's own member census, from the constructed store) and the e2e `S-9`
+    // (`15` members over `13` symbols). **A future pass that WANTS the locked version pinned must add a SECOND row and
+    // say so; it must not narrow this one.**
+    // *What stood before, kept as the readings they were*: **`1.10.0` WAS THE PIN** (`D-134`) — the release whose ONE
+    // addition is the third read verb `readTiered`, which answers the durability tier at every node it returns, and
+    // **THE MEMBER COUNTS ABOVE DID MOVE WITH IT, WHICH `1.9.3`'s DID NOT**: the fourteen became fifteen and `readTiered`
+    // sits THIRD in the instance's own order (measured: `read`, `readLiteral`, `readTiered`, `write`, …), so `S-1.1` and
+    // `S-1.2` read fifteen. The figure moves here for the reason the row states: the pin follows the reviewed install,
+    // never the other way. **Before it, `1.9.3` WAS THE PIN** — the release that makes the kernel's TWO instants
     // agree: the registration instant reads a returned outcome's `message` and `repair`, and a repair's return's
     // `ok`, as OWN members, exactly as the write's own evaluation reads them, so a member carried on a prototype
     // is a member neither instant reads — the divergence this repo filed as `ST-F1`, never patched here (`D-5`)
     // and discharged upstream at that release (`D-109`). The figure moves here for the reason the row states: the
     // pin follows the reviewed install, never the other way. **AND THE TWO MEMBER COUNTS ABOVE DID NOT MOVE WITH
     // IT** — `1.9.3` adds no name and no symbol, which is why `S-1.1` and `S-1.2` read the same fourteen (`D-109`).
-    expect(pkg.dependencies['provident-storeroom']).toBe('^1.10.0')
+    expect(pkg.dependencies['provident-storeroom']).toBe('^1.11.0')
   })
 
   it('S-1.2 — the store `createProfileStore` returns IS a storeroom store, member for member', () => {

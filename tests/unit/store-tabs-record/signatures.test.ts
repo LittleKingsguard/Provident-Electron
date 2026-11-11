@@ -89,11 +89,25 @@ describe('D-45 — the declaration blocks, checked against the modules they tran
     expect(tabsChannels.IPC_TABS_CHANGED).toBe('provident:tabs:changed')
   })
 
-  it("C-2 — `src/main/tabs-record/index.ts`: the block's names equal the module's, on both sides of the type/value line", () => {
+  it("C-2 — `src/main/tabs-record/index.ts`: the block's names equal the module's, on both sides of the type/value line — **RE-GRAINED FOR `D-219`: THE DRIFT IS NOW EMPTY BECAUSE THE PAGE TRANSCRIBES THE THREE NAMES**", () => {
     const block = blockOf(DOC, '## 2. `src/main/tabs-record/index.ts`')
     expect(block.length, '§2 — the block must exist').toBeGreaterThan(0)
-    expect(divergence(declaredValues(block), Object.keys(tabsRecord).sort())).toEqual([])
-    expect(divergence(declaredTypes(block), sourceTypes('../../../src/main/tabs-record/index.ts'))).toEqual([])
+    // **THE DRIFT IS EMPTY, AND IT IS EMPTY FOR ONE REASON THIS ROW NAMES**: the propagation moved the module's declared
+    // surface by three names — `createTabsDelivery` as a value and `TabsDelivery`/`TabsDeliveryEntry` as types — and
+    // `signatures.md` rev 9 §2 TRANSCRIBES ALL THREE, so both comparators below now answer `[]` where the earlier grain of
+    // this very row pinned the three as `(exported, not declared)` (`D-219`, `TD-5`). **THE LISTS ARE STILL PINNED, AS EXACT
+    // `[]`, RATHER THAN DELETED**, because the row keeps measuring the direction it was built for: **A FOURTH EXPORT THE
+    // PAGE DOES NOT DECLARE reds the value or the type list; A PAGE THAT DROPS ANY OF THE THREE reds the list from the other
+    // side; and A DECLARED NAME THE MODULE NO LONGER EXPORTS reds the reverse checks below** — an empty list that nothing
+    // can move is a row that cannot fail, and this one can fail in all three of those ways (`D-45`).
+    expect(divergence(declaredValues(block), Object.keys(tabsRecord).sort()), '§2 — no value is exported and undeclared: `createTabsDelivery` is transcribed').toEqual([])
+    expect(divergence(declaredTypes(block), sourceTypes('../../../src/main/tabs-record/index.ts')), '§2 — and no type: `TabsDelivery` and `TabsDeliveryEntry` are transcribed').toEqual([])
+    // **THE OTHER DIRECTION IS ALSO EMPTY, AND IT IS KEPT BECAUSE IT IS THE HALF THAT KEEPS THE PAIR FROM BEING A RENAME**:
+    // nothing the block declares has stopped being exported, so a page that fell behind its module reds the two `[]`s above
+    // while a page describing a module that moved away reds here — the two directions are read on every run, so neither
+    // `[]` is an absence.
+    expect(declaredValues(block).filter((name) => !Object.keys(tabsRecord).includes(name)), '§2 — every declared value still stands in the module').toEqual([])
+    expect(declaredTypes(block).filter((name) => !sourceTypes('../../../src/main/tabs-record/index.ts').includes(name)), '§2 — and every declared type').toEqual([])
     // THE RE-EXPORT IS DECLARED, and it is `TabsRecordRow` — a name whose body lives in `src/shared/types.ts` and which
     // the module exports under `export type { … } from`. A name-set check that read only `export interface`/`export type`
     // would miss it and would silently accept a block that dropped it.
@@ -147,17 +161,37 @@ describe('D-45 — the declaration blocks, checked against the modules they tran
     expect(DOC, '§2\'s gloss states the count, so the sentence and this row measure the same six').toContain('**six**')
   })
 
-  it("C-5 — `src/main/tabs-surface/index.ts`: the block's names equal the module's, and its four routes plus attach/detach", () => {
+  it("C-5 — `src/main/tabs-surface/index.ts`: the block's names equal the module's, and its three surviving routes — **THE `attach`/`detach` HALF RETIRES BY NAME WITH ITS MEMBERS** (`D-219`, `TD-5`)", () => {
     const block = blockOf(DOC, '## 3. `src/main/tabs-surface/index.ts`')
     expect(block.length, '§3 — the block must exist').toBeGreaterThan(0)
     expect(divergence(declaredValues(block), Object.keys(tabsSurface).sort())).toEqual([])
     expect(divergence(declaredTypes(block), sourceTypes('../../../src/main/tabs-surface/index.ts'))).toEqual([])
-    // THE ROUTE NAMES, read off the module's own declaration: `read`, `commit`, `remove`, `attach`, `detach`. §3's block
-    // is the only home of them, so a route added to `TabsSurface` and not to the block reds HERE and not in C-5's set row.
+    // THE ROUTE NAMES, read off the module's own declaration: `read`, `commit` and `remove`. §3's block is the only home of
+    // them, so a route added to `TabsSurface` and not to the block reds HERE and not in C-5's set row.
     const declared = block.slice(block.indexOf('export interface TabsSurface'), block.indexOf('export interface TabsSurfaceOptions'))
-    for (const route of ['read(', 'commit(', 'remove(', 'attach(', 'detach(']) {
+    for (const route of ['read(', 'commit(', 'remove(']) {
       expect(declared, `§3 — \`TabsSurface\` must declare \`${route}\``).toContain(route)
     }
+    // ── THE RETIRED HALF, RECORDED WITH ITS REASON (`D-152`'s shape, `D-9`) ──
+    // 'AND `attach()`, `detach()` ARE THE FOURTH AND FIFTH ROUTE' asserted both members PRESENT in §3's block and in the
+    // module. **THE TWO MEMBERS ARE DELETED WHOLE** (`docs/L3/store-tabs-record/delivery.md` §4, `D-219`): the surface takes
+    // no subscription, so a row asserting the block still carries them would be asserting a module the tree no longer has —
+    // and one asserting the MODULE no longer has them would be a row about an absence rather than about the block this file
+    // exists to pin. **So the claim moves to the module, where it can fail**: the surface's own bytes declare neither member,
+    // read over COMMENT-ELIDED code with the routes that DO stand as the positive control. **The page has CAUGHT UP, and the
+    // two `[]`s above are the witness**: `signatures.md` rev 9 dropped both lines and the `onChanged` option, the edit
+    // `docs/L3/store-tabs-record/delivery.md` §7 (`TD-5`) owed this page — so the module half is the only half left to pin,
+    // because a name-set row over a page that no longer spells a member would be a row about an absence (`D-3`: this file may
+    // not edit that page).
+    const surfaceSource = readFileSync(at('../../../src/main/tabs-surface/index.ts'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split('\n')
+      .filter((line) => !/^\s*\/\//.test(line))
+      .join('\n')
+    expect(surfaceSource.includes('attach('), 'the module declares no `attach`: the construction took the one registration').toBe(false)
+    expect(surfaceSource.includes('detach('), 'and no `detach`: there is nothing this surface could withdraw').toBe(false)
+    expect(surfaceSource.includes('onChanged'), 'and no `onChanged` option: the push is the delivery\'s, not an option\'s').toBe(false)
+    expect(surfaceSource.includes('delivery'), 'the positive control: the option it DOES carry is the crossing\'s delivery, and the scan finds a name that stands').toBe(true)
     expect(tabsSurface.createTabsSurface, '§3 — the one construction of the record').toBeTypeOf('function')
   })
 

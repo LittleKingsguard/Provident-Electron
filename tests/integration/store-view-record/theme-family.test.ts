@@ -36,6 +36,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createProfileStore } from '../../../src/main/storeroom'
 import {
+  createViewDelivery,
   createViewRecord,
   THEME_SHAPE_MESSAGE,
   THEME_SHAPE_REASON,
@@ -49,6 +50,7 @@ import {
 import type {
   ViewConstraintAnswer,
   ViewConstraintDeclaration,
+  ViewDelivery,
   ViewRecord,
   ViewRecordStore,
   ViewRepairAnswer,
@@ -92,9 +94,15 @@ const pairOf = (batch: readonly ViewConstraintDeclaration[]) => {
   return declaration.constraint
 }
 
-/** ONE BOOT: a fresh instance over `path`, carrying the whole batch, with its holder bound the way the boot binds it. */
+/** ONE BOOT: a fresh instance over `path`, carrying the whole batch, with its holder bound the way the boot binds it.
+ *  **AND THE CROSSING'S DELIVERY, BUILT BEFORE THE STORE AND ADOPTED BY ITS `listeners`** (`D-219`;
+ *  `docs/L3/view-record/delivery.md` §1–§3): the appearance root's entry is among the four, so the creation repair's write
+ *  delivers to it — the event `D-218` measured as absent. The sink records the delivered addresses, which is the reading
+ *  the design names for a battery (`docs/L3/app-shell/delivery.md` §3). */
 interface Boot {
   readonly store: ViewRecordStore
+  readonly delivery: ViewDelivery
+  readonly sunk: (readonly string[])[]
   readonly record: ViewRecord
   readonly batch: readonly ViewConstraintDeclaration[]
   readonly read: () => ReturnType<ViewRecord['read']>
@@ -104,6 +112,8 @@ interface Boot {
 function boot(path: string, withBatch = true): Boot {
   const bound: { current: ViewRecordStore | null } = { current: null }
   const batch = batchOf(() => bound.current)
+  const sunk: (readonly string[])[] = []
+  const delivery = createViewDelivery((address) => sunk.push([...address]))
   const store = createProfileStore({
     filePath: path,
     constraints: (withBatch ? batch : []).map((declaration) => ({
@@ -111,10 +121,13 @@ function boot(path: string, withBatch = true): Boot {
       id: declaration.id,
       constraint: declaration.constraint,
     })) as never,
+    // **THE APP'S CONSTRUCTION CARRIES THE ENTRIES WHETHER OR NOT ITS BATCH DOES**, so a `withBatch = false` boot still
+    // hands the adoption the four entries and the store simply has no repair to fire them (`guide §6`, `:561`).
+    listeners: [...delivery.entries],
   })
   bound.current = store as unknown as ViewRecordStore
-  const record = createViewRecord({ store: bound.current })
-  return { store: bound.current, record, batch, read: () => record.read(), bytes: () => readFileSync(path, 'utf8') }
+  const record = createViewRecord({ store: bound.current, delivery })
+  return { store: bound.current, delivery, sunk, record, batch, read: () => record.read(), bytes: () => readFileSync(path, 'utf8') }
 }
 
 let dir = ''
@@ -419,7 +432,9 @@ describe('view-record · the appearance family, clause 4 — the write census, a
     })
     expect(here.store.read(VIEW_THEME_ADDRESS, 'file'), 'and neither refusal touched the store').toEqual(before)
     // A READ WRITES NOTHING: no byte on the file, no delivery, over three readings.
-    const surface = createViewSurface({ store: here.store })
+    // **THE SURFACE IS HANDED THE DELIVERY THE CONSTRUCTION ADOPTED AND TAKES NO SUBSCRIPTION OF ITS OWN** (`D-219`;
+    // `docs/L3/view-record/delivery.md` §4): `attach`/`detach` and the `onChanged` option are gone with their subject.
+    const surface = createViewSurface({ store: here.store, delivery: here.delivery })
     let deliveries = 0
     const off = here.record.subscribe(() => {
       deliveries += 1

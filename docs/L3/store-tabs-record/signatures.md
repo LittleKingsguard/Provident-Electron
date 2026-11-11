@@ -1,6 +1,7 @@
 # L3 — `store-tabs-record`: signatures
 
-- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 8 — every declared name and its exact text, transcribing `design.md` rev 16 — **AND NO NAME MOVES, TWICE OVER: the creation's ONE leaf row write (rev 7) and the record's PRIVATE composer cut at `H12`–`H14` into a named drop beside the assembly that keeps the name (rev 8's judgement, not yet landed) are neither a declared name, an exported member nor a route — `composeRecord` and `rowsSeatedUnder` are both `const`s this surface never declares, so §2's and §3's blocks are BYTE-UNMOVED and the rev tokens are the only bytes these two revs move** — regenerated from the landed modules on 2026-11-02 and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
+- **Layer:** L3 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 9 — every declared name and its exact text, **transcribing `design.md` rev 16** — regenerated from the landed modules and **checked** against them by `tests/unit/store-tabs-record/signatures.test.ts` (D-45), which pins that rev.
+- **WHAT MOVED IN REV 9, AND IT IS `D-219`'S PROPAGATION AND NOT A REFRESH**: §2 gains the crossing's DELIVERY — `createTabsDelivery`, and the two types it answers and takes, `TabsDelivery` and `TabsDeliveryEntry` — and `TabsRecordOptions` gains the `delivery` it is handed; §3 loses `TabsSurface`'s `attach(): void` and `detach(): void`, and its options lose `onChanged` for `delivery`, because the ONE registration at `['tabs']` is taken by `createProfileStore`'s `cfg.listeners` **at the construction** and a surface that attached afterwards would be the second registration `D-129` forbids (`docs/L3/store-tabs-record/delivery.md` §2–§5, `TD-1`–`TD-3`; `D-219`). **The three names are ADDITIONS to the export set; `subscribe`'s declared line, the three routes, the six declarations and every address constant are BYTE-UNMOVED**, and rev 8's judgement stands: the creation's one leaf row write and the record's private composer mint no declared name — `composeRecord` and `rowsSeatedUnder` are `const`s this block never declares.
 - **Ceiling:** 150 lines, class max (D-1). `guide §n` is `node_modules/provident-storeroom/README.guide.md`.
 
 ## 1. `src/shared/tabs-channels.ts` — the four channel names
@@ -44,6 +45,7 @@ export interface TabsRecordReading {
 
 export interface TabsRecordOptions {
   readonly store: ReturnType<typeof storeCreate>
+  readonly delivery: TabsDelivery
 }
 
 export interface TabsRecord {
@@ -53,28 +55,32 @@ export interface TabsRecord {
   subscribe(handler: () => void): () => void
 }
 
+export interface TabsDeliveryEntry {
+  readonly address: readonly string[]
+  readonly handle: string
+  readonly listener: (address: readonly string[]) => void
+}
+export interface TabsDelivery {
+  readonly entries: readonly TabsDeliveryEntry[]
+  subscribe(handler: () => void): () => void
+}
 export interface TabsRepairCredited {
   readonly ok: true
   readonly op: unknown
 }
-
 export interface TabsRepairFailed {
   readonly ok: false
   readonly message: string
 }
-
 export type TabsRepairAnswer = TabsRepairCredited | TabsRepairFailed
-
 export type TabsRepair = (context: unknown) => TabsRepairAnswer
 export interface TabsCommitCarrier {
   readonly pending: readonly TriggerPair[]
 }
-
 export type TabsConstraintAnswer =
   | true
   | { readonly message: string; readonly repair: TabsRepair }
   | { readonly message: string; readonly repair?: never }
-
 export interface TabsConstraintDeclaration {
   readonly address: readonly string[]
   readonly id: string
@@ -95,11 +101,11 @@ export const isCommitCarrier: (value: unknown) => value is TabsCommitCarrier
 export const writeJoined: (store: TabsRecordStore, commit: TabsCommitCarrier, value: unknown) => unknown
 export function tabsConstraintDeclarations(getStore: () => TabsRecordStore | null): readonly TabsConstraintDeclaration[]
 export function tabsDeclaredRoots(): readonly { readonly address: readonly string[]; readonly tier: 'file' }[]
+export function createTabsDelivery(sink: (address: readonly string[]) => void): TabsDelivery
 export function createTabsRecord(options: TabsRecordOptions): TabsRecord
 ```
 
-The three address constants are `['tabs']`, `['tabs', 'order']` and `['tabs', 'landing']` — **the last the landing ENTRY's own leaf (`['tabs', TABS_LANDING_ID]`, whose id is `'landing'`), not a seat** (design §2, D-76); the exported ids are `'exactly-one-active'` and `'tabs-must-stand'`, and the batch adds
-`'order-names-its-tabs'`, `'tab-has-title'`, `'tab-has-content'` and `'tab-has-lastActiveAt'` as literals — **six** declarations in all (design §4, D-83), of which this block declares the two exported ids. **The batch's ORDER is part of the contract**: `tabs-must-stand` and then `order-names-its-tabs` are the two bodies the boot's unbound holder cannot silence, so they are the two that act at the store's creation.
+The three address constants are `['tabs']`, `['tabs', 'order']` and `['tabs', 'landing']` — **the last the landing ENTRY's own leaf (`['tabs', TABS_LANDING_ID]`, whose id is `'landing'`), not a seat** (design §2, D-76); the exported ids are `'exactly-one-active'` and `'tabs-must-stand'`, and the batch adds `'order-names-its-tabs'`, `'tab-has-title'`, `'tab-has-content'` and `'tab-has-lastActiveAt'` as literals — **six** declarations in all (design §4, D-83), of which this block declares the two exported ids. **The batch's ORDER is part of the contract**: `tabs-must-stand` and then `order-names-its-tabs` are the two bodies the boot's unbound holder cannot silence, so they are the two that act at the store's creation. **`TabsDelivery` IS TWO HALVES OF ONE ACT** (`D-219`): `entries` is the ONE `{address, handle, listener}` element `createProfileStore`'s `cfg.listeners` adopts — `listener` is REQUIRED and is never a no-op — and `subscribe` is the fan-out a later consumer takes, running no store verb, because the construction took the one registration this crossing is allowed (`D-129`, `D-93`).
 
 ## 3. `src/main/tabs-surface/index.ts` — the one reference
 
@@ -112,25 +118,21 @@ export interface TabsSurface {
   read(): TabsReadAnswer
   commit(row: unknown): TabsRecordAnswer
   remove(id: unknown): TabsRecordAnswer
-  attach(): void
-  detach(): void
 }
 
 export interface TabsSurfaceOptions {
   readonly store: TabsRecordStore
-  readonly onChanged?: () => void
+  readonly delivery: TabsDelivery
 }
 
 export function createTabsSurface(options: TabsSurfaceOptions): TabsSurface
 ```
 
-**`commit(row: unknown)` and `remove(id: unknown)` take `unknown` on purpose**: the shape arm is the surface's first act, and a typed parameter would move that check into the type system where the renderer's boundary cannot reach it (L2 §3).
+**`commit(row: unknown)` and `remove(id: unknown)` take `unknown` on purpose**: the shape arm is the surface's first act, and a typed parameter would move that check into the type system where the renderer's boundary cannot reach it (L2 §3). **The two departed members are recorded where they lived**: `attach()` and `detach()` had no subject once the construction held the registration, so the surface subscribes to nothing and this block declares the three routes that remain (`delivery.md` §4, `TD-3`).
 
 ## 4. The bridge member — cited, never copied (D-45 arm (i))
 
-The `tabs` member of `window.provident` is declared in `src/main/preload.ts`'s `ProvidentBridge` and copied verbatim in
-`src/renderer/secure-panels.ts`'s `declare global` widening; it carries **four** routes — `read()`, `commit(row)`, `remove(id)`
-and `onChanged(handler)`. This document names the sites instead of copying the block: each answer is a five-line inline generic type, and a third spelling here would be one more surface to drift (D-45, D-63).
+The `tabs` member of `window.provident` is declared in `src/main/preload.ts`'s `ProvidentBridge` and copied verbatim in `src/renderer/secure-panels.ts`'s `declare global` widening; it carries **four** routes — `read()`, `commit(row)`, `remove(id)` and `onChanged(handler)` — and **this route is `main`'s fan-out and not the surface's registration** (`delivery.md` §4, D-112). This document names the sites instead of copying the block: each answer is a five-line inline generic type, and a third spelling here would be one more surface to drift (D-45, D-63).
 
 ## 5. The refusal vocabulary, as text
 
@@ -141,9 +143,7 @@ and `onChanged(handler)`. This document names the sites instead of copying the b
 | seat arm, `commit` and `remove` | `SEAT_NAME_REASON` — `'seat-name'` | `SEAT_NAME_MESSAGE` — `"the tab id spells the record's own 'order' seat, and a member and a seat are one name in this family"` |
 | store arm | the instance's status verbatim | the instance's own sentence |
 
-**There is no construction arm.** Measured 2026-11-02, `grep -rn 'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/`
-is empty: D-64/D-65 hand this module a store the boot already constructed, and a root the existence pair has created (design §2). **The sixth constraint's sentence —
-`"the tab record's 'order' seat carries no sequence of exactly its own tabs, once each"` (rev 14's re-grain: ONE sentence for BOTH directions, because one repair answers both, design §4) — is a REFUSAL a caller reads at the store's creation and never at a route**, so it is not in the table above and it mints no `reason` (L2 §3, D-83).
+**There is no construction arm.** Measured 2026-11-02, `grep -rn 'FilePathUnreachable' src/main/tabs-record/ src/main/tabs-surface/` is empty: D-64/D-65 hand this module a store the boot already constructed, and a root the existence pair has created (design §2). **The sixth constraint's sentence — `"the tab record's 'order' seat carries no sequence of exactly its own tabs, once each"` (rev 14's re-grain: ONE sentence for BOTH directions, because one repair answers both, design §4) — is a REFUSAL a caller reads at the store's creation and never at a route**, so it is not in the table above and it mints no `reason` (L2 §3, D-83).
 
 ## 6. What L4 must not transcribe
 

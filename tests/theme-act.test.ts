@@ -39,7 +39,7 @@ import { installShim, mountEl, ShimElement } from '../src/shared/dom-shim.js'
 import { getViewClient, startThemeApplication, themeWiringRole } from '../src/renderer/renderer.js'
 import { createViewClient, type ViewClient, type ViewClientBridge } from '../src/renderer/view-client.js'
 import { createProfileStore } from '../src/main/storeroom.js'
-import { createViewRecord, viewConstraintDeclarations, type ViewRecordStore } from '../src/main/view-record/index.js'
+import { createViewDelivery, createViewRecord, viewConstraintDeclarations, type ViewDelivery, type ViewRecordStore } from '../src/main/view-record/index.js'
 
 beforeAll(() => {
   installShim()
@@ -74,6 +74,12 @@ function crossing(): Crossing {
   const dir = mkdtempSync(join(tmpdir(), 'theme-act-'))
   const bound: { current: ViewRecordStore | null } = { current: null }
   const profilePath = join(dir, 'provident-profile.json')
+  // **THE DELIVERY IS BUILT BEFORE THE STORE, BECAUSE ITS `listeners` ARRAY IS READ INSIDE THE CALL THAT CREATES IT**
+  // (`D-219`; `docs/L3/view-record/delivery.md` §1). The four entries are what the construction adopts, so this crossing is
+  // the app's shape and the creation's repairs deliver here — and `record.subscribe` below is the fan-out the bridge's
+  // `onChanged` route stands on, with no store verb behind it (`D-129`: one registration per address).
+  const sunk: (readonly string[])[] = []
+  const delivery = createViewDelivery((address) => sunk.push([...address]))
   const store = createProfileStore({
     filePath: profilePath,
     constraints: viewConstraintDeclarations(() => bound.current).map((declaration) => ({
@@ -81,9 +87,10 @@ function crossing(): Crossing {
       id: declaration.id,
       constraint: declaration.constraint,
     })) as never,
+    listeners: [...delivery.entries],
   })
   bound.current = store as unknown as ViewRecordStore
-  const record = createViewRecord({ store: bound.current })
+  const record = createViewRecord({ store: bound.current, delivery })
   const dragCalls: { id: string; geometry: unknown }[] = []
   // **THE DRAG PAIR ARRIVES WITH THE RECORD'S OWN IMPLEMENTATION, AND THE CAST KEEPS THIS FILE COMPILING ON BOTH SIDES OF
   // THAT LANDING** (`ViewClientBridge` declares FIVE members today: `read`, `commitPane`, `commitZones`, `commitTheme`,

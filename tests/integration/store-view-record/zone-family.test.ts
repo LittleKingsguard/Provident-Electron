@@ -37,6 +37,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createProfileStore } from '../../../src/main/storeroom'
 import {
+  createViewDelivery,
   createViewRecord,
   UNDECLARED_ZONE_REASON,
   VIEW_ZONES_ADDRESS,
@@ -46,7 +47,7 @@ import {
   ZONE_SHAPE_REASON,
   zoneIn,
 } from '../../../src/main/view-record'
-import type { ViewConstraintDeclaration, ViewRecordStore, ViewZone } from '../../../src/main/view-record'
+import type { ViewConstraintDeclaration, ViewDelivery, ViewRecordStore, ViewZone } from '../../../src/main/view-record'
 import { createViewSurface } from '../../../src/main/view-surface'
 import { IPC_VIEW_CHANGED, IPC_VIEW_ZONES_COMMIT } from '../../../src/shared/view-channels'
 
@@ -88,10 +89,28 @@ const batchOf = (getStore: () => ViewRecordStore | null) =>
     constraint: declaration.constraint,
   }))
 
-/** **ONE BOOT**: a fresh instance over `path`, carrying the whole batch, with its holder bound the way the boot binds it
- *  — bound only after the construction answers, which is why the pairs judge `context.value`. */
+/** **THE CROSSING'S DELIVERY, BUILT BEFORE THE STORE BECAUSE ITS `listeners` ARRAY IS READ INSIDE THE CALL THAT CREATES
+ *  IT** (`D-219`; `docs/L3/view-record/delivery.md` §1–§3). `entries` is what the construction adopts — one per declared
+ *  root, this row's subject among them — and `subscribe` is the fan-out. The SINK records the delivered addresses, which is
+ *  the reading the design names for a battery and the only destination a node fixture has (`docs/L3/app-shell/delivery.md`
+ *  §3). */
+interface Deliveries {
+  readonly delivery: ViewDelivery
+  readonly sunk: (readonly string[])[]
+}
+
+const deliveryFor = (): Deliveries => {
+  const sunk: (readonly string[])[] = []
+  return { delivery: createViewDelivery((address) => sunk.push([...address])), sunk }
+}
+
+/** **ONE BOOT**: a fresh instance over `path`, carrying the whole batch AND the crossing's adopted entries, with its holder
+ *  bound the way the boot binds it — bound only after the construction answers, which is why the pairs judge
+ *  `context.value`. */
 interface Boot {
   readonly store: ViewRecordStore
+  readonly delivery: ViewDelivery
+  readonly sunk: (readonly string[])[]
   readonly read: () => ReturnType<ReturnType<typeof createViewRecord>['read']>
   readonly bytes: () => string
   readonly close: () => void
@@ -99,6 +118,7 @@ interface Boot {
 
 function boot(path: string, declarations?: readonly ViewConstraintDeclaration[]): Boot {
   const bound: { current: ViewRecordStore | null } = { current: null }
+  const { delivery, sunk } = deliveryFor()
   const store = createProfileStore({
     filePath: path,
     constraints: (declarations === undefined ? batchOf(() => bound.current) : declarations.map((declaration) => ({
@@ -106,10 +126,11 @@ function boot(path: string, declarations?: readonly ViewConstraintDeclaration[])
       id: declaration.id,
       constraint: declaration.constraint,
     }))) as never,
+    listeners: [...delivery.entries],
   })
   bound.current = store as unknown as ViewRecordStore
-  const here = createViewRecord({ store: bound.current })
-  return { store: bound.current, read: () => here.read(), bytes: () => readFileSync(path, 'utf8'), close: () => { bound.current = null } }
+  const here = createViewRecord({ store: bound.current, delivery })
+  return { store: bound.current, delivery, sunk, read: () => here.read(), bytes: () => readFileSync(path, 'utf8'), close: () => { bound.current = null } }
 }
 
 let dir = ''
@@ -142,15 +163,25 @@ describe('view-record · the zone family, clause 1 — the address stands before
     // node), so the repair CREATES each declared id's record and `{}` IS a zone this module admits.
     const path = join(dir, PROFILE_FILE)
     const bound: { current: ViewRecordStore | null } = { current: null }
-    const store = createProfileStore({ filePath: path, constraints: batchOf(() => bound.current) as never })
+    // **AND THE SAME CONSTRUCTION ADOPTS THE CROSSING'S FOUR ENTRIES** (`D-219`, §1–§2): the zone root's among them, which
+    // is what makes this row's family a REPAIR's and the creation's own delivery its first reader.
+    const { delivery, sunk } = deliveryFor()
+    const store = createProfileStore({
+      filePath: path,
+      constraints: batchOf(() => bound.current) as never,
+      listeners: [...delivery.entries],
+    })
     bound.current = store as unknown as ViewRecordStore
     const standing = store.read(VIEW_ZONES_ADDRESS as never, 'mem') as unknown
     expect(standing, 'the family STANDS when the constructor returns, and it names every DECLARED zone id with an EMPTY record').toEqual(FOUR_EMPTY)
+    // **AND THE CREATION DELIVERED AT THIS VERY INSTANT, WHICH IS THE EVENT `D-218` MEASURED AS ABSENT**: the repair's write
+    // fired the adopted entry after it landed, so the sink already carries the zone root before any route exists.
+    expect(sunk.map((address) => address[0]), 'the construction delivered to the adopted listener before `createViewRecord` ran').toContain('zones')
     // **AND THE PLACEHOLDER IS THE READ'S OWN ANSWER, NOT A SECOND AUTHORITY**: the declared zone is a ZONE WITH NO MEMBER
     // and no geometry is minted for it, which is what the frozen store answered for a MISS too — so the read names ONE
     // zone where it answered NONE, and `zoneIn`'s `null` is left meaning *"an id this record does not declare"*
     // (`D-151` (b), H9).
-    const record = createViewRecord({ store: bound.current })
+    const record = createViewRecord({ store: bound.current, delivery })
     const read = record.read()
     expect(read.zones, 'so the record reads the FOUR declared zones, each memberless').toEqual(FOUR_MEMBERLESS)
     expect(read.source.zones, 'because a REPAIR put it there, and the read says which').toBe('record')
@@ -175,42 +206,80 @@ describe('view-record · the zone family, clause 1 — the address stands before
 // ═══════════════ CLAUSE 2 — THE LISTENER CARRIES THE CHANGE ═══════════════
 
 describe('view-record · the zone family, clause 2 — one delivery per committed change, and zero for a write that touches nothing', () => {
-  it('Z-3 · ONE DELIVERY PER COMMITTED CHANGE OF THE FAMILY — AND ONE ROUTE CALL IS ONE CHANGE PER SUPPLIED MEMBER, because each member is ONE LEAF WRITE (`D-151`): `{size, display}` delivers twice — and ZERO for a write at another address — with the SAME subscription then delivering, so the zero is not a dead registration', () => {
+  it('Z-3 · ONE DELIVERY PER COMMITTED CHANGE OF THE FAMILY — AND ONE ROUTE CALL IS ONE CHANGE PER SUPPLIED MEMBER, because each member is ONE LEAF WRITE (`D-151`): `{size, display}` delivers twice — and ZERO for a write at another address — with the SAME subscription then delivering, so the zero is not a dead registration. **RE-GRAINED FOR `D-219`: THE LISTENER IS THE CONSTRUCTION\'S `cfg.listeners` ENTRY AND THE WITHDRAWAL IS LOCAL**', () => {
     const path = join(dir, PROFILE_FILE)
     const bound: { current: ViewRecordStore | null } = { current: null }
-    const store = createProfileStore({ filePath: path, constraints: batchOf(() => bound.current) as never })
+    // **THE SETUP GAINS THE DELIVERY AND ITS `entries`** (`docs/L3/view-record/delivery.md` §7): the one registration this
+    // crossing is allowed is taken by the construction, so a fixture that kept registering by hand would be measuring the
+    // copy `D-129` forbids — and would also fire twice on every write.
+    const { delivery, sunk } = deliveryFor()
+    const store = createProfileStore({
+      filePath: path,
+      constraints: batchOf(() => bound.current) as never,
+      listeners: [...delivery.entries],
+    })
     bound.current = store as unknown as ViewRecordStore
-    const record = createViewRecord({ store: bound.current })
+    const record = createViewRecord({ store: bound.current, delivery })
     let delivered = 0
     const off = record.subscribe(() => {
       delivered += 1
     })
+    // **THE SINK AND THE SUBSCRIBER ARE TWO READINGS OF ONE EVENT** (§3): the queue `src/main/main.ts` keeps is the sink's,
+    // so a store that fired the entry without fanning out — or fanned out without the sink — would red one of the two
+    // figures below rather than passing both.
+    let queued = sunk.length
     expect(record.commitZones(ZONE, { size: 160, display: 'normal' }).status).toBe('committed')
     expect(
       delivered,
       'ONE ROUTE CALL, TWO SUPPLIED MEMBERS, TWO DELIVERIES: `commitZones` writes one leaf per member — `size`, then `display` — so the act lands as two states and each is a change the pair admits (D-151)',
     ).toBe(2)
+    expect(sunk.length - queued, 'and the sink was handed exactly the same two addresses, never one per family').toBe(2)
     expect(record.commitZones(ZONE, { slot: 'doc-nav' }).status).toBe('committed')
     expect(delivered, 'a second act, supplying one member and so writing one leaf, and the count is a count rather than a flag').toBe(3)
     // THE CONTROL: a write that touches NOTHING this module binds. A listener the store never wired would also answer 0
     // here, which is why the row does not end on the zero.
     ;(store as unknown as { write: (a: unknown, t: string, v: unknown) => unknown }).write(['elsewhere'], 'mem', { x: 1 })
     expect(delivered, 'a write at another address delivers nothing').toBe(3)
+    queued = sunk.length
     expect(record.commitZones(ZONE, { size: 200 }).status).toBe('committed')
     expect(delivered, 'and the same subscription still delivers — the zero above was about the address').toBe(4)
+    expect(sunk.length - queued, 'the sink agrees, so neither reading can be the only one alive').toBe(1)
     off()
+    queued = sunk.length
     expect(record.commitZones(ZONE, { size: 210 }).status, 'the withdrawal leaves the route working').toBe('committed')
     expect(delivered, 'and nothing more is delivered to a withdrawn subscription').toBe(4)
+    // **AND THE WITHDRAWAL IS LOCAL, WHICH IS THE HALF `D-219` MOVED** (§3): it drops that one handler and runs no store verb,
+    // so the construction's adopted entry still delivers to the sink — the arm that reds if the local removal were rewired
+    // onto `unlisten`.
+    expect(sunk.length - queued, 'the construction\'s registration stands after a local release: the sink is still told').toBe(1)
   })
 
-  it('Z-4 · AND THE SHAPE REFILLS ON THE DELIVERY: the surface\'s ONE subscription becomes the push the main process broadcasts, and the client\'s re-read REPLACES the family whole — so the renderer reads a zone it never asked the store for', async () => {
+  it('Z-4 · AND THE SHAPE REFILLS ON THE DELIVERY: **the construction-adopted entry is the ONE registration and the surface takes none** (`D-219`), so the crossing\'s sink is what the main process broadcasts, and the client\'s re-read REPLACES the family whole — the renderer reads a zone it never asked the store for', async () => {
     const path = join(dir, PROFILE_FILE)
     const bound: { current: ViewRecordStore | null } = { current: null }
-    const store = createProfileStore({ filePath: path, constraints: batchOf(() => bound.current) as never })
-    bound.current = store as unknown as ViewRecordStore
+    // **THE SETUP GAINS THE DELIVERY AND ITS `entries`, AND LOSES `surface.attach()`** (`docs/L3/view-record/delivery.md`
+    // §4, §7): the two surface members are gone with their subject — *"take the one subscription so the window's teardown
+    // can withdraw exactly what it took"* — and what they measured (one committed change, one push) is the SINK's reading
+    // now, because that is where `src/main/main.ts`'s fan-out loop stands.
     let pushes = 0
-    const surface = createViewSurface({ store: bound.current, onChanged: () => { pushes += 1 } })
-    surface.attach()
+    const viewDelivery = createViewDelivery(() => {
+      pushes += 1
+    })
+    const store = createProfileStore({
+      filePath: path,
+      constraints: batchOf(() => bound.current) as never,
+      listeners: [...viewDelivery.entries],
+    })
+    bound.current = store as unknown as ViewRecordStore
+    const surface = createViewSurface({ store: bound.current, delivery: viewDelivery })
+    expect(Object.keys(surface).sort(), 'the surface exposes its SIX routes and no subscription member').toEqual([
+      'clearDrag',
+      'commitDrag',
+      'commitPane',
+      'commitTheme',
+      'commitZones',
+      'read',
+    ])
     // THE BRIDGE, AS THE PRELOAD DECLARES IT: the member's surviving routes, each answering what the surface answers.
     // **`commitFocus` IS NOT HERE AND THAT IS THE RE-GRAIN** (`D-142`): the route leaves both sides in the same edit, so a
     // literal still carrying it would model a wire this module no longer declares.
@@ -242,11 +311,14 @@ describe('view-record · the zone family, clause 2 — one delivery per committe
     })
     expect(subscription.subscribed, 'one registration over the member\'s one push').toBe(true)
     expect(handlers.length, 'and exactly one').toBe(1)
-    // THE WRITE LANDS AT THE ROUTE, the surface broadcasts, and the delivery re-reads.
+    // THE WRITE LANDS AT THE ROUTE, the construction's delivery reaches the sink, and the delivery re-reads.
+    // **THE FIGURE IS A DELTA AND NOT AN ABSOLUTE**: the construction has already delivered once per family its repairs
+    // wrote (`D-219`), so a row reading the sink's total would be counting the BOOT's deliveries as this act's.
+    const queued = pushes
     expect(surface.commitZones(ZONE, { size: 240, display: 'normal', slot: 'doc-nav' }).status).toBe('committed')
     expect(
-      pushes,
-      'the surface turns ONE subscription into ONE push per landed change — and this act supplies THREE members, so three leaf writes and three pushes (`D-151`)',
+      pushes - queued,
+      'the crossing\'s one registration becomes ONE push per landed change — and this act supplies THREE members, so three leaf writes and three pushes (`D-151`)',
     ).toBe(3)
     delivery()
     await new Promise((resolve) => setTimeout(resolve, 0))
@@ -257,7 +329,13 @@ describe('view-record · the zone family, clause 2 — one delivery per committe
       size: 240,
       display: 'normal',
     })
-    surface.detach()
+    // ── THE WITHDRAWAL HALF RETIRES BY NAME (`D-152`'s shape, `D-9`) ──
+    // 'AND `detach()` WITHDRAWS EXACTLY WHAT `attach()` TOOK' drove `surface.detach()` and then a commit that pushed
+    // nothing. **BOTH MEMBERS ARE DELETED WITH THEIR SUBJECT** (`docs/L3/view-record/delivery.md` §4, `D-219`): nothing
+    // under `src/` calls `detach`, the construction's entry is the instance's for its life, and a `detach` that remained
+    // would be a name whose only act is the no-op `D-70` refuses. **What the half measured that STILL EXISTS — a
+    // subscriber's own removal silences that subscriber and nothing else — is `Z-3`'s last arm**, which asserts it against
+    // the sink, so the claim keeps an owner and this row does not end on a member the tree no longer has.
   })
 })
 
@@ -269,7 +347,7 @@ describe('view-record · the zone family, clause 3 — a `mem` family is re-mint
     const one = boot(path)
     expect(one.read().source.zones).toBe('record')
     // A CALLER'S FACT, WRITTEN IN BOOT ONE — the thing a `file` family would carry forward and this one provably cannot.
-    const recordOne = createViewRecord({ store: one.store })
+    const recordOne = createViewRecord({ store: one.store, delivery: one.delivery })
     expect(recordOne.commitZones(ZONE, { size: 160, display: 'normal' }).status).toBe('committed')
     const bytesAfterOne = one.bytes()
     one.close()
@@ -287,12 +365,19 @@ describe('view-record · the zone family, clause 3 — a `mem` family is re-mint
         return declaration.constraint(context)
       },
     }))
-    const two = createProfileStore({ filePath: path, constraints: wrapped as never })
+    // **BOOT TWO ADOPTS ITS OWN DELIVERY'S ENTRIES BECAUSE THE BOOT HAS ONE** (`D-219`): the row's subject is the pair, and
+    // the listener is the shape the construction carries rather than a destination this row reads.
+    const bootTwoDelivery = deliveryFor().delivery
+    const two = createProfileStore({
+      filePath: path,
+      constraints: wrapped as never,
+      listeners: [...bootTwoDelivery.entries],
+    })
     bound.current = two as unknown as ViewRecordStore
     expect(seen.length, 'the engine ASKS the zone pair at the creation instant — a pair the batch does not carry is asked nowhere, and this row reds on that revert').toBeGreaterThan(0)
     expect(seen[0], 'boot two is handed NOTHING at the zone root: a `mem` value never came from a file').toBeUndefined()
     expect(seen[seen.length - 1], 'and the registration\'s own RE-RUN reads the family the repair landed — every DECLARED id with an empty record (`D-151`)').toEqual(FOUR_EMPTY)
-    const readTwo = createViewRecord({ store: bound.current }).read()
+    const readTwo = createViewRecord({ store: bound.current, delivery: bootTwoDelivery }).read()
     expect(readTwo.zones, 'so boot two answers the FOUR declared zones, memberless — boot one\'s `top` members did not survive, and cannot').toEqual(FOUR_MEMBERLESS)
     expect(readTwo.source.zones, 'because a repair put it there, at this boot as at the last').toBe('record')
     const bytesAfterTwo = readFileSync(path, 'utf8')
@@ -378,7 +463,7 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
   it('Z-7 · NO WRITE ON READ, MEASURED BOTH WAYS: three reads land no byte over a standing family, and a read over a store whose batch NEVER RAN answers the empty family WITHOUT minting it', () => {
     const path = join(dir, PROFILE_FILE)
     const one = boot(path)
-    const record = createViewRecord({ store: one.store })
+    const record = createViewRecord({ store: one.store, delivery: one.delivery })
     expect(record.commitZones(ZONE, { size: 175 }).status).toBe('committed')
     // A `mem` family cannot show bytes, so the instrument is the JOURNAL's own ordinal: a read that wrote would move it.
     const before = (one.store as unknown as { write: (a: unknown, t: string, v: unknown) => { op?: { seq?: number } } }).write(['elsewhere'], 'mem', { x: 1 }).op?.seq
@@ -391,7 +476,7 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     // HALF TWO — A STORE WHOSE BATCH NEVER RAN: the only place the family can be absent while a record reads it.
     const barePath = join(dir, 'bare.json')
     const bare = createProfileStore({ filePath: barePath })
-    const overBare = createViewRecord({ store: bare as unknown as ViewRecordStore }).read()
+    const overBare = createViewRecord({ store: bare as unknown as ViewRecordStore, delivery: deliveryFor().delivery }).read()
     expect(overBare.zones, 'no declaration ran, so the family answers the empty arm, never a minted record').toEqual([])
     expect(overBare.source.zones).toBe('default')
     let absent = ''
@@ -411,7 +496,7 @@ describe('view-record · the zone route', () => {
   it('Z-8 · THE SHAPE ARMS ANSWER BEFORE ANY STORE VERB: no id, a non-record, and each of the four members supplied unusably are refused under this module\'s own tokens — and the family did not move', () => {
     const path = join(dir, PROFILE_FILE)
     const one = boot(path)
-    const record = createViewRecord({ store: one.store })
+    const record = createViewRecord({ store: one.store, delivery: one.delivery })
     const before = record.read()
     // THE PROFILE'S OWN IMAGE IS NOT EMPTY AND MUST NOT BE: the `panes` pair is a `file` value whose creation repair the
     // landing arm saves (D-86), so the instrument is that the bytes DO NOT MOVE and that they carry no zone.
@@ -433,7 +518,7 @@ describe('view-record · the zone route', () => {
   it('Z-9 · ONE MEMBER IS FILLED, NOT ERASED: a commit naming a size alone keeps the zone\'s standing slot and display, because each supplied member is its OWN LEAF WRITE (D-151) — and an id this record does not declare is REFUSED, which is the arm that replaced this row\'s sibling-zone half', () => {
     const path = join(dir, PROFILE_FILE)
     const one = boot(path)
-    const record = createViewRecord({ store: one.store })
+    const record = createViewRecord({ store: one.store, delivery: one.delivery })
     expect(record.commitZones(ZONE, { size: 160, display: 'normal', slot: 'doc-nav' }).status).toBe('committed')
     expect(record.commitZones(ZONE, { size: 240 }).status, 'the size alone').toBe('committed')
     expect(record.read().zones, 'the members the family stood at survive the narrower act — and with FOUR declared ids the sibling half has a subject again: the three zones this act did not name stand untouched beside it').toEqual([
@@ -472,16 +557,27 @@ describe('view-record · the zone route', () => {
   it('Z-10 · THE LANDING INSTANT IS REACHABLE AND ITS REPAIR NAMES THE COMMIT AT `write`\'s FOURTH POSITION: a `delete` of the zone root is re-minted inside the SAME commit, answering one credited arm and delivering ONE notification — not two', () => {
     const path = join(dir, PROFILE_FILE)
     const bound: { current: ViewRecordStore | null } = { current: null }
-    const store = createProfileStore({ filePath: path, constraints: batchOf(() => bound.current) as never })
+    const { delivery, sunk } = deliveryFor()
+    const store = createProfileStore({
+      filePath: path,
+      constraints: batchOf(() => bound.current) as never,
+      listeners: [...delivery.entries],
+    })
     bound.current = store as unknown as ViewRecordStore
-    const record = createViewRecord({ store: bound.current })
+    const record = createViewRecord({ store: bound.current, delivery })
     expect(record.commitZones(ZONE, { size: 160 }).status).toBe('committed')
     let delivered = 0
     const off = record.subscribe(() => {
       delivered += 1
     })
+    const queued = sunk.length
     const receipt = (bound.current as unknown as { delete: (a: unknown) => { triggered?: readonly { handle: string }[] } }).delete(VIEW_ZONES_ADDRESS as never)
     expect(delivered, 'the delete is ONE committed change, its repair\'s joined write being no second delivery').toBe(1)
+    // **AND THE SINK WAS TOLD EXACTLY ONCE, WHICH IS THE SAME EVENT READ AT THE CROSSING'S DELIVERY** (`D-219`): the pair is
+    // asked and the adopted listener delivered INSIDE ONE commit, so `main()`'s queue holds ONE address and the arm emits
+    // ONE push. A repair that opened a second commit — or a fixture that took a second registration — would red this figure
+    // while the subscriber's counter stayed at 1.
+    expect(sunk.length - queued, 'the delete delivered ONE address to the sink: its repair\'s joined write is no second delivery').toBe(1)
     expect((receipt.triggered ?? []).map((entry) => entry.handle)).toContain(VIEW_ZONES_MUST_STAND_ID)
     expect(record.read().zones, 'and the family stands again, at the placeholder that names every DECLARED zone with an empty record').toEqual(FOUR_MEMBERLESS)
     expect(record.read().source.zones).toBe('record')

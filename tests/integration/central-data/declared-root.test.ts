@@ -41,8 +41,9 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { createDataSurface, type DataSurface } from '../../../src/main/data'
 import { createProfileStore } from '../../../src/main/storeroom.js'
-import { tabsConstraintDeclarations, tabsDeclaredRoots } from '../../../src/main/tabs-record'
+import { createTabsDelivery, tabsConstraintDeclarations, tabsDeclaredRoots } from '../../../src/main/tabs-record'
 import {
+  createViewDelivery,
   createViewRecord,
   viewConstraintDeclarations,
   viewDeclaredRoots,
@@ -60,7 +61,7 @@ const at = (dir: string, name: string = PROFILE_FILE): string => join(dir, name)
  *  construction, because a surface stood over a store carrying only half the batch would be measuring a store the
  *  app does not have (`D-65`, `D-87`, `D-91`, `D-97`). The holder is bound after the call answers, exactly as the
  *  boot binds it, which is why the two unwrapped pairs act at the registration instant and the rest abstain. */
-function boot(dir: string): ViewRecordStore {
+function boot(dir: string, listeners: readonly unknown[] = []): ViewRecordStore {
   const holder: { current: ViewRecordStore | null } = { current: null }
   const store = createProfileStore({
     filePath: at(dir),
@@ -68,6 +69,11 @@ function boot(dir: string): ViewRecordStore {
       ...tabsConstraintDeclarations(() => holder.current),
       ...viewConstraintDeclarations(() => holder.current),
     ].map((declaration) => ({ address: declaration.address, id: declaration.id, constraint: declaration.constraint })) as never,
+    // **AND THE SAME CONSTRUCTION ADOPTS THE CROSSINGS' `cfg.listeners` ENTRIES** (`D-219`, `docs/L3/app-shell/delivery.md`
+    // §5 `A-3`): the app's one call carries five of them, so a fixture that modelled the batch alone would measure a store
+    // the app does not have — the argument this docblock already makes for the batch, one list over. A caller asking for
+    // the ordinary no-listener store passes nothing and gets the empty array the package documents (`guide §6`, `:561`).
+    listeners: listeners as never,
   }) as unknown as ViewRecordStore
   holder.current = store
   return store
@@ -86,12 +92,19 @@ const standing: string[] = []
 
 function stand(dir = mkdtempSync(join(tmpdir(), 'declared-root-'))): Standing {
   if (!standing.includes(dir)) standing.push(dir)
-  const store = boot(dir)
+  // **THE DELIVERIES ARE BUILT BEFORE THE STORE, BECAUSE ITS `listeners` ARRAY IS READ INSIDE THE CALL THAT CREATES IT**
+  // (`D-219`, `docs/L3/view-record/delivery.md` §1, `docs/L3/store-tabs-record/delivery.md` §2). This fixture delivers
+  // NOWHERE — it subscribes to nothing — so its sink is the recorder the design names for a battery, and what the two
+  // entries buy here is a store carrying every list the app's construction carries, not a push this file reads.
+  const sink: (readonly string[])[] = []
+  const tabsDelivery = createTabsDelivery((address) => sink.push([...address]))
+  const viewDelivery = createViewDelivery((address) => sink.push([...address]))
+  const store = boot(dir, [...tabsDelivery.entries, ...viewDelivery.entries])
   return {
     dir,
     store,
     surface: createDataSurface({ profileDir: dir, store: store as never, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] }),
-    view: createViewRecord({ store }),
+    view: createViewRecord({ store, delivery: viewDelivery }),
     restart: () => stand(dir),
   }
 }
