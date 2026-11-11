@@ -161,6 +161,60 @@ function createDeliveryQueue(push: () => void): DeliveryQueue {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE SECURE CROSSING'S PENDING SET — ONE PER CHANNEL, ON `main()`'s OWN, FLUSHED AT THE REALM'S ARRIVAL
+// (`D-222` closes the half `D-221` named: *"bare broadcasts with no queue covering them"*)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **A CREATION'S PUSH, RECORDED WHILE NO WINDOW EXISTS AND SENT ONCE A REALM CAN HEAR IT** (`D-222`) — **THE GAP WAS NAMED
+ *  BY ANOTHER MODULE AND THE SHAPE IS THIS ONE'S**: `docs/L3/operator-settings/delivery.md` §5 measured that this crossing's
+ *  two pushes are *"bare broadcasts"* with no queue and routed the cross-process half here, and the shape is
+ *  `docs/L3/app-shell/delivery.md` §3–§4's (`D-220`: a hold, an unconditional flush at the realm's arrival, one push per
+ *  channel per arrival).
+ *
+ *  **WHAT IS HELD IS THE CHANNEL, AND IT IS A SET OF ONE — ONE INSTANCE PER CHANNEL AND NEVER ONE INSTANCE FOR BOTH.**
+ *  `IPC_MODULE_CHANGED` and `IPC_SECURITY_CHANGED` are separate pending entries, because a window that missed one may
+ *  not have missed the other. **AND A SECOND FIRING OF THE SAME CHANNEL BEFORE THE FLUSH IS ONE ENTRY**, because the push
+ *  is a SIGNAL and the read is the consumer's (`A-1`'s own sentence, below): two held pushes would tell a realm nothing
+ *  the first did not, and the set is what keeps the hold from growing with the app's age.
+ *
+ *  **`push` IS THE CALLBACK'S WHOLE ACT AND IT IS TOTAL.** Before the flush it records its channel and returns; once armed
+ *  it sends immediately — no queue, no growth, no re-arming. It runs no store verb and never throws, so a delivery that
+ *  fires INSIDE a write's own commit can open no act of its own (`guide §6.5` item 1).
+ *
+ *  **`flush` SENDS THE PENDING ENTRY ONCE AND CLEARS THE SET, AND THE CLEAR IS UNCONDITIONAL** — it is the whole of what
+ *  this hold keeps, so an arrival that finds nothing pending sends nothing and leaves nothing behind: the next change's
+ *  push reaches that realm immediately, and no second creation delivery is owed it (`D-222`, `D-220`). */
+interface PendingChange {
+  /** THE CALLBACK'S WHOLE ACT: records the channel before the realm stands; sends immediately after (`D-222`). */
+  push(): void
+  /** THE REALM HAS ARRIVED: the pending entry, if any, is sent ONCE, and the set is cleared. */
+  flush(): void
+}
+
+function createPendingChange(send: () => void): PendingChange {
+  /** THE SET. It is spelled as one flag because a set of ONE member is its own membership: this channel either owes a
+   *  realm one push or owes it none, and a second firing before the flush cannot make it owe two. */
+  let pending = false
+  let armed = false
+  return {
+    push(): void {
+      if (armed) {
+        send()
+        return
+      }
+      pending = true
+    },
+    flush(): void {
+      // THE FLAG FIRST, ON `arm()`'s OWN TERMS ABOVE: a change delivered DURING this flush is SENT rather than re-held;
+      // then the one pending entry; then the clear, which stands whether or not there was anything to send.
+      armed = true
+      if (pending) send()
+      pending = false
+    },
+  }
+}
+
 async function main(): Promise<void> {
   console.error(`[provident-main] node ${process.versions.node} electron ${process.versions.electron} crypto=${typeof globalThis.crypto}`)
   // ADDITIVE SEAM (docs/specs/ci-ui-leg.md §4): honour a user-data override
@@ -200,6 +254,31 @@ async function main(): Promise<void> {
   const tabsDelivery = createTabsDelivery((address) => tabsDeliveries.deliver(address))
   const viewDelivery = createViewDelivery((address) => viewDeliveries.deliver(address))
 
+  // ═══ `A-4` — THE SECURE CROSSING'S TWO PUSH LOOPS, HOISTED FOR THE SAME REASON THE TWO CROSSINGS' ARE (`A-1`), AND THEIR
+  // PENDING SETS BUILT BEFORE THE SURFACE (`D-222`) ═══
+  // Each body is the one the two `onAppStateChanged`/`onSecurityChanged` options carried: every window is told, the
+  // destroyed guard stands, and the push carries NO value and NO address. **THEY LIVE HERE BECAUSE THE INSTANT THE SURFACE'S
+  // DELIVERY FIRES IS NOW THE CONSTRUCTION'S**: `D-221`'s `OD-2`, landed and measured at `D-222`, adopts the crossing's four
+  // listeners at `storeCreate`, so the creation's delivery reaches these two callbacks BEFORE `new BrowserWindow` — when
+  // `BrowserWindow.getAllWindows()` is
+  // EMPTY and a bare broadcast goes nowhere. **That is `D-221`'s *"bare broadcasts with no queue covering them"*, and the
+  // pending set is the queue it named** (`D-220`'s shape, one set per channel).
+  const broadcastModuleChanged = (): void => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send(IPC_MODULE_CHANGED)
+    }
+  }
+  const broadcastSecurityChanged = (): void => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send(IPC_SECURITY_CHANGED)
+    }
+  }
+  // **TWO SETS AND NEVER ONE**, one per channel: `IPC_MODULE_CHANGED` is the app-state rows' and `IPC_SECURITY_CHANGED` is
+  // the record's and the exclusion pair's, and the flush sends each on its own entry because a window that missed one may
+  // not have missed the other (`D-222`, `D-104`, `D-106`).
+  const moduleChanged = createPendingChange(broadcastModuleChanged)
+  const securityChanged = createPendingChange(broadcastSecurityChanged)
+
   // The manual-UI security settings (mcp-endpoint.md §6.4): persisted to userData so a restart
   // restores them. The MCP server gate is built from the persisted config (read+dispatch ON by
   // default on first run).
@@ -231,20 +310,22 @@ async function main(): Promise<void> {
     // NO address, exactly as the two crossing pushes beside it carry none: the push is a SIGNAL and the read is the
     // consumer's. Every window is told, because every window is a realm that renders the registry (`IPC_MODULE_GET`'s own
     // answer is per-window and this is what tells a window it is stale).
+    // **AND SINCE `D-222` THIS CALL IS THE PENDING SET'S, NOT A BARE BROADCAST**: the fan-out is `broadcastModuleChanged`
+    // (`A-4`), and before `IPC_READY` the same call RECORDS `IPC_MODULE_CHANGED` instead of sending it — because the
+    // creation's delivery now fires at the construction, when no window exists and a broadcast would be dropped.
     onAppStateChanged: () => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send(IPC_MODULE_CHANGED)
-      }
+      moduleChanged.push()
     },
     // **THE SECURITY RECORD'S CHANGE PUSH** (`D-106`; the rule `D-104` read as the architecture): the surface's delivery body
     // fires for `['operator-settings']` and for the `mem` `['operator-exclusion']` pair — the two addresses the instance's one
     // subscription has always bound and whose deliveries never crossed to the renderer — and every window is told, so the
     // operator's pane re-reads instead of being re-asked after every click. It carries NO value and NO address, exactly as the
     // three pushes beside it carry none: the push is a SIGNAL and the read is the consumer's.
+    // **AND THIS ONE IS THE PENDING SET'S ON ITS OWN TERMS** (`D-222`): `IPC_SECURITY_CHANGED` is a SEPARATE entry from the
+    // app-state channel, so a window that missed one is not credited with the other; the fan-out is
+    // `broadcastSecurityChanged` (`A-4`) and before `IPC_READY` the call records rather than sends.
     onSecurityChanged: () => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send(IPC_SECURITY_CHANGED)
-      }
+      securityChanged.push()
     },
     // **THE PORT IS THE EXCLUSION'S DELIVERY'S CONSEQUENCE** (`D-123`; `D-82` clause 2). This callback is called INSIDE the
     // instance's delivery body, after the gate has been re-patched from the same reading, and it hands the state it landed
@@ -753,6 +834,19 @@ async function main(): Promise<void> {
   // not the operator's CONSENT signal; a gate re-armed on readiness would be re-armed by the very
   // party the gate exists to constrain (the `G-7` hazard), so no readiness path ever derives from
   // or clears the operator's disabled state.
+  //
+  // ═══ `A-6` — THE SECURE CROSSING'S TWO PENDING SETS ARE FLUSHED HERE, AND THE ORDER IS THE WHOLE OF THIS PASS'S CLAIM
+  // (`D-222`, on `D-220`'s terms; `A-4`, above, is where the sets are built) ═══
+  // **`markReady()` → TABS → VIEW → `IPC_MODULE_CHANGED` → `IPC_SECURITY_CHANGED`, AND BOTH HALVES OF THE ORDER MATTER.**
+  // (1) **AFTER `markReady()`**: the two pushes' consumers are the realm's own listeners, and each answers with a RE-READ over
+  // its own bridge route (`IPC_MODULE_GET`, `IPC_SECURITY_GET`) — an invoke the backend dispatches only once it is ready
+  // (`RendererBackend`'s readiness gate) — so a flush issued BEFORE `markReady()` would hand the realm a signal whose read the
+  // backend has not armed: the same drop `A-5` removes, one step later. (2) **AFTER THE TWO ARMS**: `D-220`'s order (tabs, then
+  // view) is left byte-unmoved and the two change pushes are APPENDED rather than inserted, so no existing arrival's order
+  // moves. (3) **IN THE CHANNELS' OWN ORDER OF FIRE** — the app-state rows' first, the security record's second — which is the
+  // order the creation delivered them (`D-104`, `D-106`). Each set clears whether or not it held anything, so a realm that
+  // reloads is owed no second creation delivery and the next change reaches it immediately. **THIS RATIONALE STANDS OUTSIDE
+  // THE BODY FOR THE SAME REASON THE ONE ABOVE DOES**: the row reads the body, and the body carries no exclusion token.
   ipcMain.on(IPC_READY, () => {
     backend.markReady()
     // ═══ `A-5` — THE FLUSH RIDES THE REALM'S ARRIVAL, NOT `attachWindow` (`D-219` (i), `D-218`; §4) ═══
@@ -765,6 +859,9 @@ async function main(): Promise<void> {
     // paint's turn finds a held tabs reading rather than `null`.
     tabsDeliveries.arm()
     viewDeliveries.arm()
+    // `A-6` — the secure crossing's two pending sets, beside the two arms and after `markReady()` (rationale outside the body).
+    moduleChanged.flush()
+    securityChanged.flush()
     console.error('[provident-main] renderer ready — MCP backend armed')
   })
   ipcMain.on(IPC_REPLY, (_event, reply: RpcReply) => {
