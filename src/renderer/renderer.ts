@@ -2019,6 +2019,43 @@ const LAYOUT_ZONE_AXES: readonly {
   { id: 'right', member: 'width', scroll: 'overflow-y' },
 ]
 
+/** **THE PANE'S FILL IS A RELATION AND NEVER A FIGURE — `100%` ON THE AXIS THE PANE'S ZONE FIXES** (`D-187`'s invariant,
+ *  which `demo-envelope.ts`'s `menusPaneStyle` states in the authored half: *"it FILLS the zone's height as a RELATION
+ *  (`height: '100%'`, never a figure), it ADJUSTS its width, and it SCROLLS the axis it adjusts (`overflow-x`)"*).
+ *  **IT IS THE SAME CLASS OF DECLARATION AS `LAYOUT_ZONE_AXES`' `scroll` COLUMN AND AS `PANE_NODE_IDS`** (`D-240`,
+ *  `D-225`): a LAYOUT CONSTANT of the design, stated by NO record member, and it must stand wherever the whole style
+ *  string is composed — because `paintStyle` hands the engine ONE `css.style` value in `replace` mode (`D-225`'s routed
+ *  finding), so the authored fill dies at the same instant as the authored scroll. **THAT IS MEASURED, NOT SUPPOSED**:
+ *  `#pane-menus` served `style="width: 100px;"` with its authored `height: 100%` and `overflow-x: auto` GONE, which is
+ *  `D-234`'s zone collision one family over and the defect this declaration exists to end.
+ *  **IT CARRIES NO NUMBER, AND THAT IS THE WHOLE OF IT**: a percentage is the cascade's own resolution of "the extent of
+ *  the zone this pane stands in", so any px here would be a SECOND AUTHORITY beside `['zones', <zone>, 'size']` —
+ *  `D-129`'s fault, and the one thing `DEFAULT_ZONE_SIZES` may be for a ZONE (its own figure, at its own address) and may
+ *  never be for a PANE (a sibling family's figure). **`100%` IS ALSO WHY THE FILL CANNOT BE STALE**: the zone's figure
+ *  changes, the pane's relation does not. */
+const PANE_FILL = '100%'
+
+/** **THE PANE'S FILL AXIS AND ITS SCROLL AXIS, READ OFF `LAYOUT_ZONE_AXES` RATHER THAN SPELLED A SECOND TIME** — the
+ *  table one declaration above, whose four rows already answer exactly these two questions for the zone node (`D-240`,
+ *  `D-234`). **A PANE FILLS THE AXIS ITS ZONE FIXES AND SCROLLS THE AXIS IT ADJUSTS**, so its fill axis IS that row's
+ *  `member` and its scroll IS that row's `scroll` column: one table answers both nodes, and **A SECOND TABLE WOULD SPELL
+ *  THE SAME FOUR FACTS TWICE WITH NO INSTRUMENT TO CATCH THEM DRIFTING** (`D-188` debt 2's rule, applied where it does
+ *  not bite: `PANE_NODE_IDS`' equalities are two literals in two MODULES and cannot be derived, while these are one row of
+ *  one table and can be). **THE MEMBER THE RECORD'S FIGURE GOES ON IS NOT ANSWERED HERE** — that is `paneAxisMembers`
+ *  below, the complement of this fill, declared once at its own site and read by the same arm; two derivations of one axis
+ *  pair would be the second authority this file refuses.
+ *
+ *  **WHAT THIS CANNOT ANSWER IS THE STAGE AND AN UNDECLARED ZONE, AND `null` IS THE STATED ABSENCE FOR BOTH** (`D-174`):
+ *  a pane stating no `zone` stands in the STAGE, which the arrangement derives and which fixes no axis at all (`C-9`,
+ *  `D-185`) — so there is no zone extent to fill and no zone axis to scroll on, and a fill would have to name an axis the
+ *  design has not chosen — while an id the closed four do not name names no axis either (`D-129`), which is the same
+ *  answer `paneAxisMembers` gives it. **AND A HOSTILE OR NON-STRING `zone` IS THE SAME ARM**: `find` over a DECLARED list
+ *  compares, and a comparison against a non-string is a miss and never a coercion (`paneGeometryIn`'s `find`). */
+function paneFillAxisOf(zone: unknown): { readonly fill: 'width' | 'height'; readonly scroll: 'overflow-x' | 'overflow-y' } | null {
+  const held = LAYOUT_ZONE_AXES.find((entry) => entry.id === zone)
+  return held === undefined ? null : { fill: held.member, scroll: held.scroll }
+}
+
 /** **THE PANE ↔ NODE MAP: WHICH AUTHORED NODE A RECORD'S PANE ID IS PAINTED ONTO** (`D-194`'s gap, `D-214`'s
  *  measurement, `D-224`'s limits; `docs/L3/renderer-wiring/design-pane-node-map.md` §2–§3). **IT EXISTS BECAUSE BOTH
  *  RE-NAMINGS ARE REFUSED, AND THAT IS THE WHOLE OF ITS REASON**: `src/shared/view-shape.ts:136-139` states the position
@@ -2117,13 +2154,24 @@ function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<stri
  *       **A ZONE STATING NO `size` IS WRITTEN NOTHING**: no fallback, no default, no authored height, so such a zone renders
  *       on its authored `css` alone — its `overflow` INCLUDED, which is the one window in which that half still applies —
  *       until a writer speaks (`D-191`'s `OWED-4` answer, `D-174`).
- *   (b) **THE PANE'S ADJUSTABLE MEMBER — AND ONLY THAT ONE.** The member the pane's `zone` makes adjustable is written, and
- *       only where the record STATES it; its other stored member is retained-but-unpainted and is never written, because at
- *       any instant exactly one figure is painted per axis and a leaf cannot reach a sibling (`D-189`/`D-191`). **A STAGE PANE
- *       HAS NO ZONE, SO BOTH ITS MEMBERS ARE ITS OWN** — and still only the ones the record states. **AND A PANE'S RECORD
- *       ID IS NOT ITS NODE ID**: the figure is written to `nodeIdForPane(pane.id)`'s answer and never to the record's key,
- *       and a pane the map declares no entry for is written NOTHING — no resolution, no invented id — while the report
- *       states its absence at the record's key (§4, `D-194`).
+ *   (b) **THE PANE'S THREE PARTS: THE FILL, THE RECORD'S FIGURE, AND THE SCROLL** — **the same shape the zone arm above
+ *       composes**, for the same reason and in the same order (`D-187`'s invariant, `D-240`'s routed finding). **THE FILL
+ *       IS THE LAYOUT CONSTANT `PANE_FILL`**, written on the axis the pane's `zone` FIXES — a `height` in `top`/`bottom`,
+ *       a `width` in `left`/`right` — so a pane "fills its zone" as a RELATION and never as a figure. **THE FIGURE IS THE
+ *       RECORD'S OWN**, written on the axis that zone makes ADJUSTABLE and only where the record STATES it; its other
+ *       stored member is retained-but-unpainted and is never written, because at any instant exactly one figure is painted
+ *       per axis and a leaf cannot reach a sibling (`D-189`/`D-191`). **THE SCROLL IS THE LAYOUT CONSTANT
+ *       `LAYOUT_ZONE_AXES`' `scroll` COLUMN**, on the axis the pane adjusts (`top`/`bottom` `overflow-x`, `left`/`right`
+ *       `overflow-y`) — because this write REPLACES `css.style` whole and the node's authored `overflow-x` dies with it.
+ *       **A ZONE-RESIDENT PANE IS STILL A PANE WHERE ITS RECORD STATES NO FIGURE**: the fill and the scroll are written
+ *       regardless, so such a pane reads `height: 100%; overflow-x: auto` and its ADJUSTABLE AXIS IS LEFT UNSET — no
+ *       default is invented there, because the record is that axis's only authority (`D-129`, `D-233`'s own no-default
+ *       rule one family over) and a declared figure would be right on one boot and false after the first gesture.
+ *       **A STAGE PANE HAS NO ZONE, SO BOTH ITS MEMBERS ARE ITS OWN AND IT FILLS NOTHING** — `paneFillAxisOf` answers
+ *       `null` for it, no fill and no scroll are written, and only the members the record states are (`C-9`, `D-185`).
+ *       **AND A PANE'S RECORD ID IS NOT ITS NODE ID**: what is written goes to `nodeIdForPane(pane.id)`'s answer and never
+ *       to the record's key, and a pane the map declares no entry for is written NOTHING — no resolution, no invented id —
+ *       while the report states its absence at the record's key (§4, `D-194`).
  *   (c) **THE STAGE'S CONTENT**: the active tab's `target`, resolved to an authored node and driven through
  *       `drivePageDisplay`'s existing form (one `state-slice` per authored page, the member the landing/error witnesses
  *       already write). **THE STAGE'S OWN DIMENSIONS ARE DERIVED FROM THE REMAINDER AND ARE NEVER WRITTEN** (`D-185`): it
@@ -2172,8 +2220,11 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
       console.error(`[provident-renderer] layout paint: the ${zone.id} zone refused its ${zone.member}/${zone.scroll} (${String(held.size)})`)
     }
   }
-  // (b) EVERY DECLARED PANE, THE MEMBER ITS `zone` MAKES ADJUSTABLE — read STRUCTURALLY, because the record's pane shape is
-  // `store-view-record`'s and this turn may not invent a member the record does not carry.
+  // (b) EVERY DECLARED PANE IN THREE PARTS — THE FILL, THE MEMBER ITS `zone` MAKES ADJUSTABLE, AND THE SCROLL — read
+  // STRUCTURALLY, because the record's pane shape is `store-view-record`'s and this turn may not invent a member the
+  // record does not carry. **THE TWO PARTS THAT ARE NOT THE RECORD'S ARE THE LAYOUT'S** (`PANE_FILL`, `paneFillAxisOf`),
+  // and they are composed into the SAME value as the zone arm's above, because one `css.style` write replaces the
+  // authored style whole (`D-240`).
   for (const pane of reading.panes) {
     // THE MAP IS CONSULTED BEFORE ANY RESOLUTION (`M2`, §4 `B1`): the record's id is not the node's id, and a pane the map
     // does not declare is written NOTHING — no lookup, no invented id — and the report states it (`W2`). **NOT A SILENT
@@ -2181,13 +2232,27 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     const nodeId = nodeIdForPane(pane.id)
     if (nodeId === null) continue
     const record = pane as unknown as Record<string, unknown>
+    // THE PANE'S ZONE, ASKED ONCE: its fill axis and its scroll axis are the LAYOUT's (`PANE_FILL`, `paneFillAxisOf`),
+    // and `null` is a stage-resident pane or an id the closed four do not name — the two arms that fill nothing.
+    const placement = paneFillAxisOf(record['zone'])
     const style: Record<string, string> = {}
+    // THE FILL FIRST — the zone's fixed axis, as a RELATION (`100%`) and never as a figure: the whole-key replace below
+    // is why the authored `height: 100%` on `#pane-menus` cannot be relied on (`D-240`'s collision, `D-225`'s finding).
+    if (placement !== null) style[placement.fill] = PANE_FILL
+    // THEN THE RECORD'S FIGURE, on the one axis this pane's `zone` makes adjustable — and only where the record STATES it,
+    // so an unstated adjustable axis stays UNSET rather than taking a default this turn would have to invent.
     for (const member of paneAxisMembers(record['zone'])) {
       const figure = record[member]
       if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
       style[member] = `${String(figure)}px`
     }
-    // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted.
+    // AND THE SCROLL LAST, on the axis the pane adjusts (`D-234`'s column, the zone arm's own rule): the write replaces
+    // `css.style` whole, so a pane's authored `overflow-x` does not survive it and the pane must restate it here — which is
+    // what makes the eighteen items scroll rather than clip when the menus pane is dragged narrow.
+    if (placement !== null) style[placement.scroll] = 'auto'
+    // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted. **IT IS
+    // REACHED ONLY BY A PANE THAT FILLS NOTHING** (the stage pane with no stated member): a zone-resident pane is still a
+    // pane and always carries its fill and its scroll, so this `continue` never withholds them (`D-187`, `D-189`).
     if (Object.keys(style).length === 0) continue
     if (!paintStyle(runtime, nodeId, style)) {
       console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(style).join('/')}`)

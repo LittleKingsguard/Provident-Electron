@@ -747,7 +747,9 @@ function styleDeclares(style: string | null, property: string, value: string): b
   if (style === null) return false
   return new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*${value}\\s*(?:;|$)`).test(style)
 }
-/** Whether a style text names the property at all — what `AL-10` asks of the pane's UNPAINTED member. */
+/** Whether a style text names the property at all — what `AL-10` asks of a member that must NOT be declared: the pane's
+ *  stored figure on the axis its zone gives to the FILL (now a `100%` relation, `D-187`), the pane's scroll on the axis it
+ *  fills, and both of a stage pane's layout parts, which it does not have (`D-129`, `D-185`). */
 function styleNames(style: string | null, property: string): boolean {
   return style !== null && new RegExp(`(?:^|;)\\s*${property}\\s*:`).test(style)
 }
@@ -2636,27 +2638,140 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       `AL-10 — and it must FOLLOW the record's SECOND figure too (64), so the reading is a paint and not a coincidence of ` +
         `one value: the style read ${textOf(topAfter)} over ${String(painted64.polls)} bounded re-read(s).`,
     ).toBe(true)
-    // ── (b) the menus pane's rendered width FOLLOWS `['panes','pane-menus','width']` ──
+    // ── (b) THE MENUS PANE'S THREE PARTS — THE FILL, THE RECORD'S OWN FIGURE, AND THE SCROLL ─────────────────────────
+    // **THE CONTROL'S SUBJECT MOVED ONE CLAUSE IN, AND IT IS NOT A FLIP** (`D-187`'s one-sentence invariant: a pane FILLS
+    // the axis its zone fixes, ADJUSTS the axis the zone leaves free, and SCROLLS along the axis it adjusts — the charter's
+    // own words, `D-187`'s source quotation). The arm that stood HERE asserted the pane's OTHER stored member was painted
+    // NOWHERE (`styleNames(style, 'height')` false), and that was TRUE while the paint wrote ONE part: the adjustable
+    // figure. **THE PAINT NOW WRITES THREE, COMPOSED INTO ONE `css.style` VALUE** — the fill is the LAYOUT's relation
+    // (`100%`, never a figure: a px there would be a SECOND AUTHORITY beside `['zones', <zone>, 'size']`, `D-129`), the
+    // figure is the RECORD's, and the scroll is the LAYOUT's (the node's authored `overflow-x` cannot survive the replace
+    // — `D-225`'s routed finding, `D-240`'s collision one family over). **SO WHAT THIS ROW PINS IS THE THREE PARTS AND
+    // THEIR RELATIONS, AND THE OLD ABSENCE SURVIVES ONE CLAUSE IN**: the pane's other stored member is still painted NO
+    // FIGURE — the axis it would stand on carries the fill RELATION instead, which is the whole difference `D-129` draws.
+    //
+    // **NO PART IS SPELLED FROM `src/**`** (`D-27`, and this battery imports nothing of the tree it measures): the AXES are
+    // read off the RECORD's own `zone` member through the ONE `AXIS_OF` table the control above has just measured in all
+    // four zone nodes' markup — so the axis is the ZONE's answer and never this row's guess about THIS node, and a paint
+    // that hard-coded an axis for this node reds the second arm at (d.2); the FIGURE is read back out of the record over
+    // the wire; and the FILL's `100%` and the scroll's `auto` are the two literals the DESIGN states and no record member
+    // does, so they are SPELLED — and they cannot drift into an opinion of the row's, because the ENVELOPE authors the
+    // same two on `#pane-menus` (`menusPaneStyle`: `height: 100%`, `overflow-x: auto`) and because each is asserted beside
+    // the derivation, not alone.
+    /** **THE TWO LITERALS THE DESIGN STATES AND NO RECORD MEMBER DOES** (`D-187`): the fill is a RELATION and the scroll is
+     *  the axis's own word. */
+    const PANE_FILL = '100%'
+    const PANE_SCROLL = 'auto'
+    /** **THE PANE'S THREE AXES, DERIVED FROM ITS OWN `zone` MEMBER AND THE ONE `AXIS_OF` TABLE** (`D-187`): the fill is
+     *  the axis that zone FIXES, the figure is its COMPLEMENT (the axis the zone leaves free) and the scroll is the axis
+     *  the pane ADJUSTS — `height`/`overflow-x` for a `top`/`bottom` pane, `width`/`overflow-y` for a `left`/`right` one.
+     *  **`null` IS THE STAGE AND AN UNDECLARED ZONE** — no zone extent to fill and no zone axis to scroll (`C-9`,
+     *  `D-185`), the THIRD row of `D-187`'s table, which the arm at (c) asserts as an ABSENCE. It is a function of the
+     *  RECORD and not of the node, which is what makes the two arms at (b) and (d.2) one claim about one relation. */
+    const paneAxesOf = (zone: string): { fill: string; figure: string; scroll: string } | null => {
+      const fixed = AXIS_OF[zone as (typeof ZONE_IDS)[number]]
+      if (fixed === 'height') return { fill: 'height', figure: 'width', scroll: 'overflow-x' }
+      if (fixed === 'width') return { fill: 'width', figure: 'height', scroll: 'overflow-y' }
+      return null
+    }
     const paneReadBefore = await readAt(booted.client, [PANES])
     const paneRecord = asObject(memberOf(recordOf(paneReadBefore.value), PANE_MENUS))
+    const paneZone = str(memberOf(paneRecord, 'zone')) ?? ''
+    const paneAxes = paneAxesOf(paneZone)
     expect(
-      num(memberOf(paneRecord, 'height')),
-      `AL-10 PREREQUISITE — \`${PANE_MENUS}\`'s STORED \`height\` must be read so that the absence below is a reading about ` +
-        `a figure that stands: ${trunc(paneReadBefore.text)}`,
+      paneAxes,
+      `AL-10 PREREQUISITE — \`${PANE_MENUS}\` must state a \`zone\` of the closed four, because its FILL axis and its ` +
+        `SCROLL axis are that member's answer and nothing else's (\`D-187\`): the family read ` +
+        `${trunc(paneReadBefore.text)}. A pane stating NO zone stands in the STAGE and fills nothing (\`C-9\`), so it is a ` +
+        `different arm — the one at (c) — and not a reading about this one.`,
     ).not.toBe(null)
-    const paneWrite = await writeAt(booted.client, [PANES, PANE_MENUS, 'width'], 'file', 140)
+    const paneFillAxis = paneAxes?.fill ?? 'height'
+    const paneFigureAxis = paneAxes?.figure ?? 'width'
+    const paneScrollAxis = paneAxes?.scroll ?? 'overflow-x'
+    // **THE PANE'S OTHER STORED MEMBER — THE MEMORY `D-189`/`D-191` KEEP AND THE PAINT NEVER WRITES AS A FIGURE** — read so
+    // that the absence clause below is a reading about a figure that STANDS rather than about a member nobody stores.
+    const paneMemory = num(memberOf(paneRecord, paneFigureAxis === 'width' ? 'height' : 'width'))
+    expect(
+      paneMemory,
+      `AL-10 PREREQUISITE — \`${PANE_MENUS}\`'s stored \`${paneFigureAxis === 'width' ? 'height' : 'width'}\` must be read, ` +
+        `so that "painted no figure" below is a reading about a figure that stands: ${trunc(paneReadBefore.text)}`,
+    ).not.toBe(null)
+    const paneWrite = await writeAt(booted.client, [PANES, PANE_MENUS, paneFigureAxis], 'file', 140)
     expect(
       str(asObject(paneWrite.value)?.['status']),
-      `AL-10 PREREQUISITE — the pane's adjustable member must be writable at its own leaf: ` +
-        `\`data.write(['${PANES}','${PANE_MENUS}','width'], tier:'file')\` answered ${trunc(paneWrite.text, 320)}.`,
+      `AL-10 PREREQUISITE — the pane's ADJUSTABLE member (the axis its \`zone\` leaves free) must be writable at its own ` +
+        `leaf: \`data.write(['${PANES}','${PANE_MENUS}','${paneFigureAxis}'], tier:'file')\` answered ` +
+        `${trunc(paneWrite.text, 320)}.`,
     ).toBe('committed')
-    const paneWidth = await surfaceWithin(booted.client, (text) => styleDeclares(styleOf(text, PANE_MENUS), 'width', '140px'))
-    const paneStyle = styleOf(paneWidth.html, PANE_MENUS)
+    // **THE EXPECTATION IS THE RECORD'S, READ BACK OVER THE WIRE — NEVER THE LITERAL THIS ROW WROTE** (the requirement is
+    // "read the record, do not hard-code"): `140` is the row's own STIMULUS and it is a figure the creation repair cannot
+    // state (`DEFAULT_PANE_SIZE` is `100`), so a paint carrying `140` cannot be the boot's; but what the clause COMPARES
+    // is the markup against the record, so a stored figure the write did not spell reds here too.
+    const paneReadBack = await readAt(booted.client, [PANES])
+    const paneFigure = num(memberOf(asObject(memberOf(recordOf(paneReadBack.value), PANE_MENUS)), paneFigureAxis))
     expect(
-      styleDeclares(paneStyle, 'width', '140px'),
-      `AL-10 — the \`${PANE_MENUS}\` pane's rendered width must FOLLOW \`['${PANES}','${PANE_MENUS}','width']\`: the record ` +
-        `stated 140 and its style read ${textOf(paneStyle)} over ${String(paneWidth.polls)} bounded re-read(s).`,
+      paneFigure,
+      `AL-10 PREREQUISITE — the pane's \`${paneFigureAxis}\` figure must be READ BACK OUT OF THE RECORD after the write, ` +
+        `so the clause below compares markup against the record and not against this row's own literal: ` +
+        `${trunc(paneReadBack.text)}`,
+    ).not.toBe(null)
+    const panePainted = await surfaceWithin(booted.client, (text) => {
+      const style = styleOf(text, PANE_MENUS)
+      return (
+        styleDeclares(style, paneFillAxis, PANE_FILL) &&
+        styleDeclares(style, paneFigureAxis, `${String(paneFigure)}px`) &&
+        styleDeclares(style, paneScrollAxis, PANE_SCROLL)
+      )
+    })
+    const paneStyle = styleOf(panePainted.html, PANE_MENUS)
+    // ── CLAUSE 1 — THE FIXED AXIS CARRIES THE FILL, ON THE AXIS THE RECORD'S ZONE FIXES ─────────────────────────────
+    expect(
+      styleDeclares(paneStyle, paneFillAxis, PANE_FILL),
+      `AL-10 CLAUSE 1 — THE PANE'S FIXED AXIS MUST CARRY THE FILL AS A RELATION: \`${PANE_MENUS}\`'s record states ` +
+        `\`zone: '${paneZone}'\`, so the axis that zone fixes is its \`${paneFillAxis}\` and the paint must write ` +
+        `\`${paneFillAxis}: ${PANE_FILL}\` there — never a px, because a px would be a SECOND AUTHORITY beside ` +
+        `\`['${ZONES}','${paneZone}','size']\` (\`D-129\`, \`D-187\`). The node's style read ${textOf(paneStyle)} over ` +
+        `${String(panePainted.polls)} bounded re-read(s). **THE AXIS IS THE RECORD'S ZONE'S AND NOT A GUESS**: (d.2) reads ` +
+        `this same node again with the record's \`zone\` moved to another declared id, so a paint that wrote this pane's ` +
+        `fill on an axis of its own reds one arm or the other.`,
     ).toBe(true)
+    // ── CLAUSE 2 — THE ADJUSTABLE AXIS CARRIES THE RECORD'S OWN FIGURE ───────────────────────────────────────────────
+    expect(
+      styleDeclares(paneStyle, paneFigureAxis, `${String(paneFigure)}px`),
+      `AL-10 CLAUSE 2 — AND THE AXIS THE ZONE LEAVES FREE MUST CARRY THE RECORD'S OWN FIGURE: the record states ` +
+        `\`['${PANES}','${PANE_MENUS}','${paneFigureAxis}']\` = ${String(paneFigure)} and the node's style read ` +
+        `${textOf(paneStyle)} over ${String(panePainted.polls)} bounded re-read(s). This is the clause this arm has always ` +
+        `carried, moved onto the axis the RECORD selects — a figure of the paint's own, or one the record does not state, ` +
+        `reds here (\`D-189\`/\`D-191\` keep the other member stored and unpainted).`,
+    ).toBe(true)
+    // ── CLAUSE 3 — THE SCROLL STANDS ON THE AXIS THE PANE ADJUSTS ────────────────────────────────────────────────────
+    expect(
+      styleDeclares(paneStyle, paneScrollAxis, PANE_SCROLL),
+      `AL-10 CLAUSE 3 — THE SCROLL MUST BE ON THE AXIS THE PANE ADJUSTS: \`${PANE_MENUS}\` adjusts its ` +
+        `\`${paneFigureAxis}\`, so its content overflows along \`${paneScrollAxis}\` and the paint must state it — because ` +
+        `the write REPLACES the node's authored \`css.style\` WHOLE (\`D-225\`, \`D-240\`), so the envelope's own ` +
+        `\`overflow-x: auto\` (\`menusPaneStyle\`) does NOT survive without this part. The node's style read ` +
+        `${textOf(paneStyle)}. **WHAT THIS READS IS THE DECLARATION AND NOT THE BEHAVIOUR**: rendered HTML can say the ` +
+        `property is STATED and cannot say the browser scrolls (\`D-187\` measured the scrolling as the one thing no markup ` +
+        `read sees and stated it as a DELIBERATE UNVERIFIED), so the row claims the DECLARATION and never the scroll — the ` +
+        `behaviour is measured on no leg of this battery and this row does not imply one.`,
+    ).toBe(true)
+    // ── AND THE OLD ARM'S SUBJECT SURVIVES AS A RELATION: THE OTHER STORED MEMBER IS PAINTED NO FIGURE ────────────────
+    const otherScrollAxis = paneScrollAxis === 'overflow-x' ? 'overflow-y' : 'overflow-x'
+    expect(
+      {
+        memoryAsFigure: styleDeclares(paneStyle, paneFillAxis, `${String(paneMemory)}px`),
+        scrollOnTheFixedAxis: styleNames(paneStyle, otherScrollAxis),
+      },
+      `AL-10 — THE PANE'S OTHER STORED MEMBER MUST STILL BE PAINTED NO FIGURE, AND ITS SCROLL MUST NOT STAND ON THE AXIS ` +
+        `IT FILLS: \`${PANE_MENUS}\` stores \`${paneFigureAxis === 'width' ? 'height' : 'width'}\` = ${String(paneMemory)} ` +
+        `as MEMORY (\`C-11\`, \`D-189\`, \`D-191\`), and the one axis that figure could stand on is the axis its zone FIXES — ` +
+        `which carries the fill RELATION \`${PANE_FILL}\`, measured TRUE in clause 1 above. A \`${paneFillAxis}: ` +
+        `${String(paneMemory)}px\` there would be the second authority \`D-129\` forbids (that axis's authority is ` +
+        `\`['${ZONES}','${paneZone}','size']\` and not a pane's own stored figure), and \`${otherScrollAxis}\` is the ZONE's ` +
+        `column and not this pane's: the pane scrolls the axis it ADJUSTS (\`D-187\`), so its scroll cannot stand on the ` +
+        `axis it fills. The node's style read ${textOf(paneStyle)}.`,
+    ).toEqual({ memoryAsFigure: false, scrollOnTheFixedAxis: false })
     // ── (c) THE STAGE PANE'S FIGURE LANDS ON THE NODE THE MAP DECLARES — THE CORRESPONDENCE ITSELF, IN MARKUP ──
     // **THIS IS THE ARM `D-194` FLAGGED AND `D-224`'s LIMIT `(i)` MEASURED**: `pane-a` names NO authored element, so before
     // the map the paint wrote its figure into nothing and the carrier reported `absent` — honestly and uselessly. The
@@ -2680,17 +2795,118 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `(\`view-shape.ts:136-139\` refuses both re-namings), so the rendering declares the correspondence and this row ` +
         `measures it; a map that named another EXISTING node would pass the carrier and red HERE (\`D-224\` limit \`(ii)\`).`,
     ).toBe(true)
-    // ── and the pane's UNPAINTED member must not appear: exactly one figure per axis ──
+    // ── AND THE STAGE PANE FILLS NOTHING AND SCROLLS NOTHING — THE `null` ARM OF THE SAME RELATION (`D-187`'s row 3) ──
+    // `pane-a` states NO `zone`, so the stage it stands in is DERIVED and fixes no axis to fill and no zone axis to scroll
+    // on (`C-9`, `D-185`) — so the TWO parts that are the LAYOUT's must be ABSENT from that node while the parts that are
+    // the RECORD's are present, read on the very style the clause above just measured. **A `100%` OR AN `overflow-*` HERE
+    // WOULD BE THE PAINT NAMING AN AXIS THE DESIGN HAS NOT CHOSEN FOR THIS PANE** (`D-129`), which is exactly why
+    // `paneFillAxisOf` answers `null` for it and why the fill is written only where the record's `zone` names one.
     expect(
-      styleNames(paneStyle, 'height'),
-      `AL-10 — the pane's OTHER stored member must NOT be painted: \`${PANE_MENUS}\` sits in the \`top\` zone, so its HEIGHT ` +
-        `is the ZONE's figure and its own \`height\` is retained MEMORY (\`C-11\`, \`D-189\`, \`D-191\`). Its style read ` +
-        `${textOf(paneStyle)} where its record stores height=100: "the pane's unpainted member appearing in the markup" ` +
-        `is the declared failure mode. AND the fixed axis's absence is read BESIDE the zone's own painted figure — ` +
-        `\`${ZONE_IDS[0]}\` reads ${textOf(topAfter)} — so the axis is not simply unpainted everywhere.`,
-    ).toBe(false)
+      {
+        widthFill: styleDeclares(gutterPaneStyle, 'width', PANE_FILL),
+        heightFill: styleDeclares(gutterPaneStyle, 'height', PANE_FILL),
+        overflowX: styleNames(gutterPaneStyle, 'overflow-x'),
+        overflowY: styleNames(gutterPaneStyle, 'overflow-y'),
+      },
+      `AL-10 — A STAGE PANE FILLS NOTHING AND SCROLLS NOTHING: \`${PANE_SIDEBARLESS}\`'s record states NO \`zone\`, so it ` +
+        `stands in the stage, which is derived and has no fixed axis to fill (\`C-9\`, \`D-185\`, \`D-187\`'s third row) — the ` +
+        `paint may write only the members its RECORD states. \`${GUTTER_PANE_ID}\`'s style read ` +
+        `${textOf(gutterPaneStyle)}; a \`${PANE_FILL}\` or an \`overflow-*\` on it is the SECOND AUTHORITY \`D-129\` ` +
+        `forbids, and it would also red this arm's own clause above (the fill would take the figure's place).`,
+    ).toEqual({ widthFill: false, heightFill: false, overflowX: false, overflowY: false })
     // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-    // ── (d) THE PAINT'S NO-DEFAULT ARM, REACHED BY THE ONE WRITE THAT CAN STILL REACH IT (`D-233`) ───────────────────
+    // ── (d) THE FALSE ARM — THE ONE STATE THE PAINT CANNOT BE *MADE* TO WRITE, REACHED THE ONE WAY IT IS REACHABLE ───
+    // **THIS IS THE ARM THAT USED TO BE THE ROW'S WHOLE POINT AND IT STILL HAS TO RED**: a pane whose style carried the
+    // OTHER stored member's FIGURE — a `top`-zone pane painted `height: 100px` where the fill belongs — was the state the
+    // old absence clause forbade, and the paint as it now stands CANNOT BE DRIVEN INTO IT by any write: the pane arm
+    // composes the fill from a LAYOUT constant (`PANE_FILL`) on the axis the record's `zone` fixes, and no record member
+    // names that constant. **SO IT IS EXPRESSED AGAINST THE MARKUP THE PAINT PRODUCES FOR THE WRONG ZONE, AND THAT IS NOT A
+    // SYNTHETIC STAND-IN**: the record's `zone` is a member an outside writer may move to any DECLARED id (`paneNodeAdmits`
+    // admits exactly the four, `D-105`), the paint then answers THAT zone's axes, and since the other zone's fill axis is
+    // this pane's ADJUSTABLE axis, the markup it produces for real is `width: 100%; height: <the record's height>px;
+    // overflow-y: auto` — i.e. **THE PANE'S OWN STORED `height` PAINTED AS A FIGURE ON THE VERY AXIS THE `top` PLACEMENT
+    // GIVES TO THE FILL**. That markup is the false arm, and (d.1) asserts that clauses 1 and the absence clause above
+    // REJECT it while (d.2) asserts the same node answers the OTHER placement's axes — so a paint that hard-coded this
+    // node's axis pair, or that read the record's stored `height` as the fill's figure, reds here.
+    //
+    // **AND IT IS NOT REACHED BY A `data.write` THAT MINTS A ZONE**: `al-not-a-zone` is refused (`AL-8` measured it), so
+    // this arm can only move the pane between the design's OWN four — the axes it reads are the design's, one arm from the
+    // one (b) just measured, and the row puts the record back where it met it at (d.3).
+    const otherZone = paneFillAxis === 'height' ? 'left' : 'top'
+    const otherAxes = paneAxesOf(otherZone)
+    const movedZone = await writeAt(booted.client, [PANES, PANE_MENUS, 'zone'], 'file', otherZone)
+    expect(
+      str(asObject(movedZone.value)?.['status']),
+      `AL-10 PREREQUISITE — the pane's \`zone\` member must be writable at its own leaf, or the axis this row reads is ` +
+        `measured in ONE placement and a paint could still hard-code it: ` +
+        `\`data.write(['${PANES}','${PANE_MENUS}','zone'], tier:'file', '${otherZone}')\` answered ` +
+        `${trunc(movedZone.text, 320)}. (The four DECLARED ids are admitted; \`al-not-a-zone\` is refused — \`AL-8\`.)`,
+    ).toBe('committed')
+    const movedAxes = otherAxes ?? { fill: paneFigureAxis, figure: paneFillAxis, scroll: otherScrollAxis }
+    const movedPainted = await surfaceWithin(booted.client, (text) => {
+      const style = styleOf(text, PANE_MENUS)
+      return (
+        styleDeclares(style, movedAxes.fill, PANE_FILL) && styleDeclares(style, movedAxes.figure, `${String(paneMemory)}px`)
+      )
+    })
+    const movedStyle = styleOf(movedPainted.html, PANE_MENUS)
+    // ── (d.1) THE FALSE ARM ITSELF — the old state, produced by the paint, and REJECTED by the clauses ────────────────
+    expect(
+      {
+        otherMemberAsFigure: styleDeclares(movedStyle, paneFillAxis, `${String(paneMemory)}px`),
+        fillOnTheFixedAxis: styleDeclares(movedStyle, paneFillAxis, PANE_FILL),
+      },
+      `AL-10 FALSE ARM — THE PANE'S OTHER STORED MEMBER PAINTED AS A FIGURE MUST STILL RED, AND THIS IS THE MARKUP WHERE ` +
+        `IT DOES: with the record's \`zone\` at \`'${otherZone}'\` the paint wrote \`${movedAxes.fill}: ${PANE_FILL}\`, ` +
+        `\`${movedAxes.figure}: ${String(paneMemory)}px\` and \`${movedAxes.scroll}: ${PANE_SCROLL}\` — so on THIS node's ` +
+        `style the axis the \`${paneZone}\` placement gives the FILL (\`${paneFillAxis}\`) carries the pane's stored ` +
+        `\`${paneMemory}\` AS A FIGURE and carries NO fill at all. Clause 1 above answers FALSE on that text and the ` +
+        `absence clause answers \`memoryAsFigure: true\`, which is exactly the state the arm this row grew out of forbade ` +
+        `(\`C-11\`, \`D-189\`, \`D-191\`: that member is MEMORY, and a figure of it on the fill's axis is \`D-129\`'s second ` +
+        `authority). The node's style read ${textOf(movedStyle)} over ${String(movedPainted.polls)} bounded re-read(s). ` +
+        `**AND THE STATE IS NOT SYNTHETIC**: it is the markup the paint produces for a real record, and the only reason it ` +
+        `is not the \`${paneZone}\` placement's own text is that the RECORD says which zone the pane stands in.`,
+    ).toEqual({ otherMemberAsFigure: true, fillOnTheFixedAxis: false })
+    // ── (d.2) CLAUSE 1's SECOND ARM — THE AXES FOLLOW THE RECORD'S ZONE ON THE SAME NODE ─────────────────────────────
+    expect(
+      {
+        fill: styleDeclares(movedStyle, movedAxes.fill, PANE_FILL),
+        figure: styleDeclares(movedStyle, movedAxes.figure, `${String(paneMemory)}px`),
+        scroll: styleDeclares(movedStyle, movedAxes.scroll, PANE_SCROLL),
+        scrollOnTheFixedAxis: styleNames(movedStyle, movedAxes.scroll === 'overflow-x' ? 'overflow-y' : 'overflow-x'),
+      },
+      `AL-10 CLAUSE 1, SECOND ARM — A PANE'S AXES ARE ITS ZONE'S ANSWER AND NOT THIS NODE'S: the SAME rendered node, the ` +
+        `record now stating \`zone: '${otherZone}'\` instead of \`'${paneZone}'\`, must carry the fill on ` +
+        `\`${movedAxes.fill}\`, the record's figure on \`${movedAxes.figure}\` and the scroll on \`${movedAxes.scroll}\` — ` +
+        `the orthogonal pair to the one (b) measured, with the same two literals. \`${PANE_MENUS}\`'s style read ` +
+        `${textOf(movedStyle)} over ${String(movedPainted.polls)} bounded re-read(s). **A PAINT THAT SPELLED \`top\`'s PAIR ` +
+        `FOR THIS NODE WOULD PASS EVERY CLAUSE ABOVE AND RED HERE**, which is what makes clause 1's "the axis its ZONE ` +
+        `fixes, not a guess" a reading rather than a sentence.`,
+    ).toEqual({ fill: true, figure: true, scroll: true, scrollOnTheFixedAxis: false })
+    // ── (d.3) AND THE RECORD GOES BACK WHERE THIS ROW MET IT ─────────────────────────────────────────────────────────
+    const restoredZone = await writeAt(booted.client, [PANES, PANE_MENUS, 'zone'], 'file', paneZone)
+    expect(
+      str(asObject(restoredZone.value)?.['status']),
+      `AL-10 PREREQUISITE — the restore must commit, so the state this row leaves behind is the state it met: ` +
+        `${trunc(restoredZone.text, 320)}`,
+    ).toBe('committed')
+    const backToTop = await surfaceWithin(booted.client, (text) => {
+      const style = styleOf(text, PANE_MENUS)
+      return (
+        styleDeclares(style, paneFillAxis, PANE_FILL) &&
+        styleDeclares(style, paneFigureAxis, `${String(paneFigure)}px`) &&
+        styleDeclares(style, paneScrollAxis, PANE_SCROLL)
+      )
+    })
+    expect(
+      styleDeclares(styleOf(backToTop.html, PANE_MENUS), paneFillAxis, PANE_FILL),
+      `AL-10 — AND THE \`${paneZone}\` PLACEMENT'S THREE PARTS MUST RETURN with the record, which is the same property ` +
+        `read from the other side: a paint that answered an axis pair once and never again — or that kept the moved ` +
+        `zone's — would leave (d.2) true and this red. The node's style read ` +
+        `${textOf(styleOf(backToTop.html, PANE_MENUS))} over ${String(backToTop.polls)} bounded re-read(s).`,
+    ).toBe(true)
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    // ── (e) THE PAINT'S NO-DEFAULT ARM, REACHED BY THE ONE WRITE THAT CAN STILL REACH IT (`D-233`) ───────────────────
     // **THIS IS THE HALF OF THE OLD CONTROL THAT STILL EXISTS, AND IT IS DRIVEN WHERE THE STATE IS STILL CONSTRUCTIBLE.**
     // The removed premise was *"a zone whose record states NO `size` is painted NO dimension"* read off a COLD profile; the
     // creation repair now states a declared default figure for every declared id, so that boot no longer exists. **THE
