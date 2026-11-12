@@ -1762,7 +1762,10 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
   // (a) THE FOUR ZONES' FIXED DIMENSION — ONE `css.style` VALUE PER NODE, ONE WRITE (`D-185`, `D-194`).
   for (const zone of LAYOUT_ZONE_AXES) {
     // THE CLIENT'S OWN DERIVATION, NOT A SECOND ONE: `zoneIn` answers `null` for an id the family does not declare and the
-    // members it carries for one the record wrote — so a memberless zone (the creation repair's `{}`) states no `size`.
+    // members it carries for one the record wrote — so a memberless zone states no `size`. **AND THE CREATION REPAIR NO
+    // LONGER WRITES ONE** (`D-233`'s item (4)): `zones-must-stand` repairs every declared zone to its declared default
+    // `size` (`shared/view-shape.ts`'s `DEFAULT_ZONE_SIZES`), so this `continue` is the arm an OUTSIDE writer's memberless
+    // record meets and no longer the cold profile's.
     const held = zoneIn(reading.zones, zone.id)
     if (held === null || held.size === undefined) continue
     if (!Number.isFinite(held.size) || held.size < 0) continue

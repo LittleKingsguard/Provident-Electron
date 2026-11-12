@@ -50,6 +50,7 @@ import {
   type ViewRecord,
   type ViewRecordStore,
 } from '../../../src/main/view-record'
+import { DEFAULT_ZONE_SIZES } from '../../../src/shared/view-shape'
 
 const PROFILE_FILE = 'provident-profile.json'
 const REPO = new URL('../../../', import.meta.url)
@@ -131,10 +132,17 @@ const rootOf = (address: readonly string[]): string => String(address[0])
 /** **THE ZONE ID THIS FILE ADDRESSES — ONE OF THE FOUR THE RECORD DECLARES** (`D-181`, `D-151`; `D-192` retired
  *  `DEFAULT_ZONE_ID`, whose `zone-1` names nothing once the set widened). */
 const ZONE = 'top'
-/** The placeholder the creation repair mints: EVERY DECLARED ZONE ID WITH AN EMPTY RECORD (`D-151`, `D-181`). */
-const ZONE_PLACEHOLDER = { top: {}, bottom: {}, left: {}, right: {} }
-/** The same placeholder as a READING, in the order the store's own read answers the ids. */
-const ZONE_MEMBERLESS = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: 'top' }]
+/** **THE PLACEHOLDER THE CREATION REPAIR MINTS, READ FROM `DEFAULT_ZONE_SIZES` AND NEVER SPELLED HERE** (`D-233`): since
+ *  `D-233` each declared zone's record STATES its declared default `size` — a memberless record was the node a leaf write
+ *  could land under and not a zone the paint could present — so this fixture reads the table the repair itself reads. A
+ *  figure hard-coded beside it would be the count-slip class this corpus keeps re-taking. */
+const ZONE_DEFAULTS = [...DEFAULT_ZONE_SIZES].slice().sort((left, right) => left.id.localeCompare(right.id))
+/** The same placeholder as a VALUE — the family the repair lands, member for member. */
+const ZONE_PLACEHOLDER: Record<string, { size: number }> = Object.fromEntries(
+  ZONE_DEFAULTS.map((entry) => [entry.id, { size: entry.size }]),
+)
+/** The same placeholder as a READING, in sorted-id order — the store answers its own key order, which no row here claims. */
+const ZONE_MEMBERLESS = ZONE_DEFAULTS.map((entry) => ({ id: entry.id, size: entry.size }))
 
 describe('the tier is the caller’s, and a declared root’s tier is not (D-101)', () => {
   it('D-1 · the guarded set IS the two crossings’ own publications — the declaration batches PLUS the one root declared with no pair — and src/main/data/surface.ts spells neither a root nor a tier', () => {
@@ -277,26 +285,48 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
     const family = { [ZONE]: { size: 10 } }
 
     const landed = one.surface.write({ path: ['zones'], tier: 'mem', value: family })
-    // **AND THE ANSWER NAMES THE PASS THAT JUDGED IT** (`D-103`): one pair was asked at `['zones']` and it PASSED, so the
-    // log is two entries with no `repair-run` among them and `repaired:false` — which is the arm `D-9` does not reach.
-    expect(landed, 'a write at the family\'s own tier is admitted, and the answer names the pass that admitted it').toEqual({
-      status: 'committed', path: ['zones'], cursor: 1, repaired: false,
+    // **AND THE ANSWER NAMES THE PASS THAT JUDGED IT** (`D-103`) — WHICH IS NOW THE REPAIR'S, NOT THE CLEAN ARM'S
+    // (`D-233`'s item (4), `D-9` one row down): a root write naming ONE zone is a family whose other three DECLARED ids
+    // state no `size`, so the pair's `size` arm repairs it INSIDE THE CALLER'S OWN COMMIT and the receipt says
+    // `repaired:true` with the `repair-run` in its log. **THE ROW'S SUBJECT IS UNMOVED AND ITS ARM IS THE OPPOSITE ONE**:
+    // what it must still prove is that a lawful write at the family's own tier COMMITS AND IS SERVED BY THE FAMILY'S OWN
+    // READ, and that a restart takes it away — so the receipt is re-grained to the receipt this head answers rather than
+    // the assertion being dropped. **WHAT IT NOW CATCHES**: a `mem` write that stopped being admitted at its own tier, a
+    // receipt that stopped naming the pass that judged it, and — one line down — a completion that dropped the caller's own
+    // figure or invented figures for a zone the caller named.
+    expect(landed, 'a write at the family\'s own tier is admitted, completed by the pair, and the answer names both').toEqual({
+      status: 'committed', path: ['zones'], cursor: 1, repaired: true,
       log: [
+        { kind: 'constraint-check', id: 'zones-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
+        { kind: 'repair-run', id: 'zones-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
         { kind: 'constraint-check', id: 'zones-must-stand', opId: expect.any(String), message: expect.any(String), state: null },
         { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
       ],
     })
     // THE FAMILY'S OWN READ IS THE OBSERVABLE, and it is the one the defect broke: `viewRecord.read()` serves what
-    // the surface wrote because the two now address the same tier.
-    expect(one.view.read().zones, 'the record reads the caller\'s family, member for member').toEqual([{ id: ZONE, size: 10 }])
+    // the surface wrote because the two now address the same tier — **THE CALLER'S `10` CARRIED AND THE OTHER THREE DECLARED
+    // IDS STATED AT THEIR DECLARED DEFAULTS**, which is the completion `D-233` added: the write is no longer replaced whole
+    // by a placeholder, and it is no longer left three-zones-short either.
+    expect(one.view.read().zones, 'the record reads the caller\'s figure, carried, beside the three declared defaults the repair supplied').toEqual([
+      ...ZONE_MEMBERLESS.filter((zone) => zone.id !== ZONE),
+      { id: ZONE, size: 10 },
+    ])
     expect(one.view.read().source.zones, 'and still reports the family as a RECORD').toBe('record')
     // **THE ARM IS `branch` AND NOT `row`, WHICH IS A MEASUREMENT AND NOT A PREFERENCE** (D-11's `ASM-L2-2`): a `row`
     // is a LITERAL at an exact address and the family is a container, so `readLiteral` answers `ReadTargetIsBranch`
     // and the surface serves the assembled branch — exactly what `['tabs']` answers for the same reason.
     // **AND THE ANSWER'S `value` IS §2a'S NODE** (`D-134`): the family is an OBJECT node with its members INLINE, each
     // member a node of its own and the leaf's `size` carrying its literal under `value` — so the container's shape and the
-    // readout are ONE claim here, and neither can be asserted apart from the other.
-    const familyNode = { _tier: 'mem', [ZONE]: { _tier: 'mem', size: { _tier: 'mem', value: 10 } } }
+    // readout are ONE claim here, and neither can be asserted apart from the other. **THE NODE IS THE COMPLETED FAMILY**
+    // (`D-233`): four declared ids, the caller's `10` on `top` and each sibling at its declared default, every `size` a
+    // node of its own — the shape a read that dropped a member, or that handed back the caller's value alone, would red.
+    const familyNode = {
+      _tier: 'mem',
+      ...Object.fromEntries(ZONE_MEMBERLESS.map((zone) => [
+        zone.id,
+        { _tier: 'mem', size: { _tier: 'mem', value: zone.id === ZONE ? 10 : zone.size } },
+      ])),
+    }
     expect(one.surface.read({ path: ['zones'], tier: 'mem' }), 'the surface reads it back at its own tier, as the container the family is').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: familyNode })
     expect(one.surface.read({ path: ['zones'] }), 'and an unqualified read serves it too — the store\'s own lowest-persistence-present, which is `mem` where only `mem` stands').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: familyNode })
     // **AND NO BYTE OF IT IS IN THE PROFILE**: a `mem` write is the instance's register, which `D-84` measured and
@@ -306,12 +336,20 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
 
     // THE RESTART: a second construction over the same bytes. The `mem` register is the INSTANCE's, so the caller's
     // family is GONE and the family's pair re-mints the placeholder at the registration instant (`D-84`, `D-91`) — the
-    // placeholder being every DECLARED zone id with an EMPTY record (`D-151`).
+    // placeholder being every DECLARED zone id at its declared default `size` (`D-151`, `D-233`).
     const next = one.restart()
     expect(next.store.read(['zones'], 'mem'), 'the next process\'s family register is the placeholder again, not the caller\'s family').toEqual(ZONE_PLACEHOLDER)
-    expect(next.view.read().zones, 'so the record answers the declared zone, memberless').toEqual(ZONE_MEMBERLESS)
+    expect(next.view.read().zones, 'so the record answers every declared zone at its declared default figure — the caller\'s 10 is gone, and so is every trace of the completion that carried it').toEqual(ZONE_MEMBERLESS)
     expect(next.view.read().source.zones, 'and reads its family as a RECORD, because a repair is its lawful source').toBe('record')
-    expect(next.surface.read({ path: ['zones'] }), 'and the surface answers the placeholder, never the value it committed before the restart — the node is `{_tier}` and the zone\'s own record is `{_tier}` with no member').toEqual({ status: 'read', kind: 'branch', path: ['zones'], value: { _tier: 'mem', bottom: { _tier: 'mem' }, left: { _tier: 'mem' }, right: { _tier: 'mem' }, top: { _tier: 'mem' } } })
+    expect(next.surface.read({ path: ['zones'] }), 'and the surface answers the placeholder, never the value it committed before the restart — each zone a `{_tier}` node with its `size` under `value`').toEqual({
+      status: 'read',
+      kind: 'branch',
+      path: ['zones'],
+      value: {
+        _tier: 'mem',
+        ...Object.fromEntries(ZONE_MEMBERLESS.map((zone) => [zone.id, { _tier: 'mem', size: { _tier: 'mem', value: zone.size } }])),
+      },
+    })
     expect(readFileSync(at(one.dir)).equals(stood), 'with the profile byte-identical across BOTH constructions').toBe(true)
   })
 
@@ -447,14 +485,22 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
         { kind: 'commit', id: null, opId: expect.any(String), message: expect.any(String), state: null },
       ],
     })
-    expect(one.store.read(['zones'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER — the declared zone with an empty record (`D-151`) — and the caller’s value is nowhere').toEqual(ZONE_PLACEHOLDER)
-    expect(one.view.read().zones, 'the record answers the declared zone, memberless, never the value that was written').toEqual(ZONE_MEMBERLESS)
+    expect(one.store.read(['zones'], 'mem'), 'what actually stands is the pair’s PLACEHOLDER — every declared zone at its declared default size (`D-151`, `D-233`) — and the caller’s value is nowhere').toEqual(ZONE_PLACEHOLDER)
+    expect(one.view.read().zones, 'the record answers the four declared zones at their declared defaults, never the value that was written').toEqual(ZONE_MEMBERLESS)
     expect(JSON.stringify(landed).includes('"repaired":true'), 'and the verdict SURVIVES JSON, which the store\'s own member does not — so the member a tool answer carries is the one that says it').toBe(true)
-    // THE CONTROL: the same write with a value the family ADMITS leaves the caller's own value standing, so the reading above
-    // is the repair and not the tier.
+    // THE CONTROL: the same write with a value the family ADMITS leaves the caller's own figure standing, so the reading above
+    // is the repair and not the tier. **AND THE ADMISSION IS NOW THE `size` ARM'S TOO** (`D-233`): the value names ONE zone,
+    // so the other three are completed at their declared defaults — which is why the control's expectation names the
+    // caller's `4` BESIDE them rather than alone. **THE TWO ARMS ARE STILL TOLD APART, WHICH IS THIS ROW'S WHOLE CLAIM**: the
+    // corrupt value's `repaired:true` replaced it with the placeholder, while this one's `4` SURVIVES the completion. A
+    // repair that replaced a lawful value whole would red on the `4`; a completion that dropped the caller's member would
+    // red on its absence.
     const admitted = one.surface.write({ path: ['zones'], tier: 'mem', value: { [ZONE]: { size: 4 } } })
     expect(admitted.status, 'a value the family admits commits too').toBe('committed')
-    expect(one.view.read().zones, 'and THAT one the record serves member for member').toEqual([{ id: ZONE, size: 4 }])
+    expect(one.view.read().zones, 'and THAT one the record serves the caller\'s figure for, beside the three declared defaults the completion supplied').toEqual([
+      ...ZONE_MEMBERLESS.filter((zone) => zone.id !== ZONE),
+      { id: ZONE, size: 4 },
+    ])
   })
 
   it('D-8 · a `mem` write is visible to THIS instance and to no other: a second store over the same bytes never serves it', () => {

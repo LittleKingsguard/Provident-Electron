@@ -66,6 +66,7 @@ import {
   type ViewRecord,
   type ViewRecordStore,
 } from '../../../src/main/view-record'
+import { DEFAULT_ZONE_SIZES } from '../../../src/shared/view-shape'
 
 const REPO = fileURLToPath(new URL('../../../', import.meta.url))
 const PROFILE = 'provident-profile.json'
@@ -78,8 +79,18 @@ const APP_STATE: readonly string[] = ['operator-app-state']
  *  since the set widened to `top`/`bottom`/`left`/`right` (`D-192` retired `DEFAULT_ZONE_ID`), and it appears below only as
  *  an UNDECLARED id in the rows that measure the closure. */
 const ZONE = 'top'
-/** The four memberless zones the creation repair mints, in the order the store's own read answers them. */
-const FOUR_MEMBERLESS = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: 'top' }]
+/** **THE FOUR ZONES THE CREATION REPAIR MINTS, EACH AT ITS DECLARED DEFAULT `size` — READ FROM `DEFAULT_ZONE_SIZES` AND
+ *  NEVER SPELLED HERE** (`D-233`'s item (4)): since `D-233` a repaired zone STATES the figure the paint reads, so this
+ *  fixture reads the table the repair itself reads and a hard-coded figure here would be the count-slip class this corpus
+ *  keeps re-taking. **THE ORDER IS THE SORT'S AND NOT THE STORE'S** (it answers `bottom`, `left`, `right`, `top`), which is
+ *  no claim of any row here. */
+const ZONE_DEFAULTS = [...DEFAULT_ZONE_SIZES].slice().sort((left, right) => left.id.localeCompare(right.id))
+/** The four standing zones as a READ answers them — `{id, size}` per declared id. */
+const FOUR_STANDING = ZONE_DEFAULTS.map((entry) => ({ id: entry.id, size: entry.size }))
+/** The same table as a VALUE, which is what a repair writes at the family's root. */
+const ZONE_PLACEHOLDER: Record<string, { size: number }> = Object.fromEntries(
+  ZONE_DEFAULTS.map((entry) => [entry.id, { size: entry.size }]),
+)
 /** **THE PANE FAMILY'S PLACEHOLDER — TWO PANES, EACH AT BOTH AXIS MEMBERS** (`D-192` correcting `D-191`): `pane-a` is the
  *  stage pane carrying its own clamp, `pane-menus` the zone-resident one carrying its `zone` instead of a pair. */
 const PLACEHOLDER_PANES: Record<string, Record<string, unknown>> = {
@@ -295,11 +306,10 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(one.view.commitZones(ZONE, { slot: { a: 1 }, distance: 3, size: 10, display: 'left' }), 'a legal zone lands through the route').toEqual({ status: 'committed' })
     const zones = one.view.read().zones
     // **THE FOUR DECLARED ZONES STAND AND THE ROUTE WROTE ONE OF THEM** (`D-181`, `D-151`): its leaves land under `top` and
-    // the three ids the act never named stand memberless beside it — a leaf write cannot reach a sibling.
+    // the three ids the act never named stand at their declared default sizes beside it — a leaf write cannot reach a
+    // sibling, and since `D-233` a sibling's default is a FIGURE rather than no member at all.
     expect(zones).toEqual([
-      { id: 'bottom' },
-      { id: 'left' },
-      { id: 'right' },
+      ...FOUR_STANDING.filter((zone) => zone.id !== ZONE),
       { id: ZONE, slot: { a: 1 }, distance: 3, size: 10, display: 'left' },
     ])
     for (const value of [{ junk: true }, { [ZONE]: { size: 'big' } }, { [ZONE]: { size: -1 } }, { [ZONE]: { display: 7 } }]) {
@@ -312,8 +322,16 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     // **THE LEGAL ARM A STRICT ARM COULD HAVE BROKEN**: a zone record carrying NO member is the state "the caller named a
     // zone and stored nothing about it yet", which `zoneOf` admits and `D-91` measured as the family's own shape — and it
     // is driven at the id the record DECLARES, because `D-151` closed the domain and the repair created that node.
+    // **AND IT IS ALSO THE ONLY REACHABLE WAY TO LEAVE A DECLARED ZONE STATING NO `size` AT THIS HEAD** (`D-233`): the
+    // family's `size` arm judges the ROOT, and a write AT or BELOW a zone id is never repaired, so this one write takes
+    // `top` from its declared default to no figure at all while the three siblings keep theirs — the state the PAINT's own
+    // no-default arm answers (`renderer.ts`'s `driveLayoutRegions` skips a zone with no `size`) and the only instrument a
+    // row has for it, `tests/e2e/app-layout/app-layout.test.ts`'s `AL-10` being the reader.
     expect(one.surface.write({ path: ['zones', ZONE], tier: 'mem', value: {} }).status, 'a declared zone carrying nothing still lands').toBe('committed')
-    expect(one.view.read().zones, 'and it reads as the zone it names, with no member — no geometry invented for it — while the three siblings stand').toEqual(FOUR_MEMBERLESS)
+    expect(one.view.read().zones, 'and it reads as the zone it names, with NO member at all — the repair did not reach below the root — while the three siblings stand at their declared defaults').toEqual([
+      ...FOUR_STANDING.filter((zone) => zone.id !== ZONE),
+      { id: ZONE },
+    ])
     // **AND THE INVERT (`ASM-9`, the design's §9)**: the same write at an id the record does NOT declare is refused BY THE
     // FAMILY'S OWN JUDGE, which is the closure's second seat — closing the route alone would leave `data.write` free to
     // mint the very zone the ruling refuses, and this is the seat an outside writer meets.
@@ -325,7 +343,10 @@ describe('the value arms — a declaration that cannot be subverted by any calle
       storeStatus: 'ConstraintPassRefused',
       message: expect.stringContaining('a zone id this record does not declare'),
     })
-    expect(one.view.read().zones, 'and no undeclared zone arrived: the four declared ids alone').toEqual(FOUR_MEMBERLESS)
+    expect(one.view.read().zones, 'and no undeclared zone arrived: the four declared ids alone — `top` still at NO member, because a refused act reaches no repair either').toEqual([
+      ...FOUR_STANDING.filter((zone) => zone.id !== ZONE),
+      { id: ZONE },
+    ])
     // THE ROUTE'S SEAT, THE OTHER HALF OF THE SAME CLOSURE (`ASM-9`): a well-formed id outside the set is refused before
     // any store verb under the closed vocabulary's own token — and the route still commits at the id it declares.
     expect(one.view.commitZones('zone-3', { size: 5 }), 'the route refuses an id this record does not declare').toMatchObject({
@@ -446,7 +467,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(one.store.read(['panes'], 'file'), 'panes-must-stand\'s placeholder: every DECLARED pane id with its default geometry, BOTH axis members of each (`D-192`)').toEqual(PLACEHOLDER_PANES)
     expect(one.tabs.read(), 'tabs-must-stand\'s landing row').toMatchObject({ order: ['landing'], landing: 'landing' })
     expect(one.store.read(['theme'], 'file'), 'theme-must-stand\'s placeholder declaration').toEqual({ declaration: { value: '', removal: true } })
-    expect(one.store.read(['zones'], 'mem'), 'zones-must-stand\'s placeholder: every DECLARED zone id with an EMPTY record (`D-151`, `D-181`)').toEqual({ top: {}, bottom: {}, left: {}, right: {} })
+    expect(one.store.read(['zones'], 'mem'), 'zones-must-stand\'s placeholder: every DECLARED zone id at its declared default `size` (`D-151`, `D-181`, `D-233`) — the memberless record was the node a leaf could land under and not a zone the paint could present').toEqual(ZONE_PLACEHOLDER)
     expect(one.view.read().source, 'and every family reads as a RECORD and never as a substituted default').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // THE SECURE CROSSING'S THREE: `['operator-exclusion']` is the `mem` pair its repair mints, and the two `file` records
     // are the repairs' own writes — which are what the file carries when the constructor returns (D-86).
@@ -471,7 +492,7 @@ describe('the value arms — a declaration that cannot be subverted by any calle
       { id: 'pane-a', width: 61, height: 61, bounds: { min: 1, max: 121 } },
     ])
     expect(next.view.read().theme, 'and so does the appearance record').toEqual({ token: 'dark', attribute: 'data-theme', declaration: { name: 'data-theme', value: 'dark', removal: false } })
-    expect(next.view.read().zones, 'while a `mem` zone family is the instance\'s: the next process meets its placeholder — the FOUR declared zones, memberless (`D-151`, `D-181`)').toEqual(FOUR_MEMBERLESS)
+    expect(next.view.read().zones, 'while a `mem` zone family is the instance\'s: the next process meets its placeholder — the FOUR declared zones at their declared default sizes, and the caller\'s 7 gone with the register (`D-151`, `D-181`, `D-233`)').toEqual(FOUR_STANDING)
     expect(next.view.read().source, 'and every one of them still reads as a record, because a repair is a lawful boot source').toEqual({ panes: 'record', zones: 'record', theme: 'record' })
     // **AND THE PREVIOUS LEGAL VALUE SURVIVES A CORRUPT ATTEMPT AT THE NEW HEAD — THE SURVIVAL IS ASSERTED BEFORE THE
     // VERDICT**, so a body that answered this state with a REPAIR (instead of the refusal it owes) reds HERE: the

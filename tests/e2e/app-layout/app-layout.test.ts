@@ -44,9 +44,12 @@
 //   · group `view`    — `AL-8`, `AL-10`, `AL-12`: all three write `['zones']` and none needs the driver channel; `AL-8`'s
 //     profile read and `AL-10`'s two markup reads are independent, and `AL-8` stands first because its file reading is a
 //     question about the SAME bytes `AL-10`'s pane write would move. **`AL-12` STANDS LAST BECAUSE IT MOVES THE ONE THING
-//     `AL-10`'s BASELINE READS** (`AL-10` measures that a zone stating NO `size` is painted no dimension — so the top
-//     zone must acquire a `size` only after that reading is taken), and because its own subject is the LAST delivery this
-//     boot's record states, never a figure a sibling left behind.
+//     `AL-10`'s BASELINE READS**: `AL-10` reads the four zones' RECORDED figures and requires each of them in the markup,
+//     then takes one zone to NO figure and back — so the top zone's figure must be settled only after that reading is
+//     taken, and `AL-12`'s own subject is the LAST delivery this boot's record states, never a figure a sibling left
+//     behind. (Before `D-233` the parenthetical here said *"`AL-10` measures that a zone stating NO `size` is painted no
+//     dimension — so the top zone must acquire a `size` only after that reading is taken"*; the reading still exists and
+//     still stands first, one zone further in.)
 //   · group `driver`  — `AL-9`, `AL-11`: the two rows that need a body INSIDE the realm. ONE envelope, two acts.
 //
 // Five distinct boots, then (`skeleton`, `tabs`, `menus`, `view`, `driver`) — `5 < 12`, and the count is asserted at
@@ -2304,14 +2307,43 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `(\`D-194\`; a coincidence nothing derives is what the map replaced). Record: [${declaredPanes.join(', ')}]; markup: ` +
         `${tagById(html, PANE_MENUS) === null ? '(absent)' : 'present'}.`,
     ).toBe(true)
-    // ── the baseline: a zone the record states no `size` for paints NO dimension ──
-    const topStyle = styleOf(html, ZONE_IDS[0])
+    // ── THE BASELINE — THE FIGURE THE MARKUP CARRIES IS THE RECORD'S OWN, AND THE PAINT INVENTS NONE ──
+    // **THE CONTROL'S SUBJECT MOVED, AND IT IS NOT A FLIP** (`D-233`'s item (4)). It asserted *"a zone whose record states
+    // NO `size` is painted NO dimension: no fallback, no default, no authored height"* — a claim about the PAINT, read off a
+    // cold profile whose four zone records carried no `size` at all. **`D-233` CHANGED THE RECORD AND NOT THE PAINT**:
+    // `zones-must-stand` now states a declared default `size` per declared id (`DEFAULT_ZONE_SIZES`), so a cold profile's
+    // four zones are PRESENT on the first frame and the OLD premise — a boot whose zones state nothing — can no longer be
+    // constructed by anyone. **THE PROPERTY THAT STILL EXISTS, AND IS WHAT THIS ROW IS REALLY ABOUT, IS THAT THE PAINT
+    // WRITES THE RECORD'S FIGURE AND NO FIGURE OF ITS OWN**: for each of the four declared ids the record's `size` is read
+    // OVER THE WIRE and the markup must carry exactly that number on the axis that zone fixes. **NO FIGURE IS SPELLED
+    // HERE** (no row of this battery imports `src/**`, `D-27`), so the expectation is the live record's. **WHAT REDS IT**: a
+    // paint that writes no dimension at all (the class this control was written to catch); a paint whose figure the record
+    // does not state (a fallback, or a figure of the paint's own); an axis swapped — a `height` where the zone fixes a
+    // `width`; and a record that drifted off the table its own repair reads, because the two would disagree here.
+    const AXIS_OF: Record<(typeof ZONE_IDS)[number], string> = { top: 'height', bottom: 'height', left: 'width', right: 'width' }
+    const zonesRecord = recordOf(zonesRead.value)
+    const statedZones = ZONE_IDS.map((id) => ({ id, size: num(memberOf(memberOf(zonesRecord, id), 'size')) }))
     expect(
-      styleNames(topStyle, 'height'),
-      `AL-10 — a zone whose record states NO \`size\` must be painted NO dimension: no fallback, no default, no authored ` +
-        `height (\`D-191\`'s \`OWED-4\` answer, \`D-174\`). The \`${ZONE_IDS[0]}\` zone's style read ${textOf(topStyle)} ` +
-        `before any writer spoke.`,
-    ).toBe(false)
+      statedZones.every((zone) => zone.size !== null),
+      `AL-10 PREREQUISITE — every declared zone's record must STATE a \`size\`: this control is about the FIGURE the paint ` +
+        `writes, and a zone stating none is a different arm (the one below, driven where it is still reachable). Records ` +
+        `read: ${trunc(zonesRead.text)}`,
+    ).toBe(true)
+    /** Whether the markup carries each of those figures on its own axis — the predicate the bounded re-read below spends. */
+    const carriesRecordsFigures = (text: string): boolean =>
+      statedZones.every((zone) => styleDeclares(styleOf(text, zone.id), AXIS_OF[zone.id], `${String(zone.size)}px`))
+    // **A DELIVERY IS NOT THIS ROW'S TURN, SO THE READING IS BOUNDED AND REPEATED** — the file's own rule (`D-165`,
+    // `carrierWithin`'s reason). A sibling row of this group has already written one zone (`AL-8` states `bottom`), so the
+    // record read above and the last paint are two instants, and the row waits for the paint rather than assuming it.
+    const painted = await surfaceWithin(booted.client, carriesRecordsFigures)
+    expect(
+      carriesRecordsFigures(painted.html),
+      `AL-10 — the four zones' markup must carry the RECORD's own \`size\` for each, on the axis that zone fixes: read ` +
+        `over ${String(painted.polls)} bounded re-read(s), the record stated ${textOf(statedZones)} and the nodes read ` +
+        `${textOf(ZONE_IDS.map((id) => [id, styleOf(painted.html, id)]))}. \`D-233\` makes the figure the declared ` +
+        `default the creation repair states rather than a paint of its own, so a paint that invents a fallback, drops the ` +
+        `dimension, or writes the other axis reds HERE.`,
+    ).toBe(true)
     // ── (a) the top zone's rendered height FOLLOWS `['zones','top','size']` ──
     const firstZoneWrite = await writeAt(booted.client, [ZONES, ZONE_IDS[0], 'size'], 'mem', 40)
     expect(
@@ -2391,6 +2423,72 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `is the declared failure mode. AND the fixed axis's absence is read BESIDE the zone's own painted figure — ` +
         `\`${ZONE_IDS[0]}\` reads ${textOf(topAfter)} — so the axis is not simply unpainted everywhere.`,
     ).toBe(false)
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    // ── (d) THE PAINT'S NO-DEFAULT ARM, REACHED BY THE ONE WRITE THAT CAN STILL REACH IT (`D-233`) ───────────────────
+    // **THIS IS THE HALF OF THE OLD CONTROL THAT STILL EXISTS, AND IT IS DRIVEN WHERE THE STATE IS STILL CONSTRUCTIBLE.**
+    // The removed premise was *"a zone whose record states NO `size` is painted NO dimension"* read off a COLD profile; the
+    // creation repair now states a declared default figure for every declared id, so that boot no longer exists. **THE
+    // PAINT'S ARM DID NOT MOVE**: `driveLayoutRegions` writes a zone's fixed axis only from a `size` the record states and
+    // writes NOTHING for a zone stating none — and the repair judges the family's ROOT only, so a write AT a zone id (never
+    // repaired, `D-151` H4) can still take one declared zone from its figure to NO figure while its siblings keep theirs.
+    //
+    // **THE INSTRUMENT HERE IS THE CARRIER AND NOT THE MARKUP, AND THE REASON IS MEASURED**: the paint skips the zone and
+    // writes nothing, so the LAST figure it wrote still stands in that node's `style` attribute — measured on this very
+    // clear, the markup still read `height: 33px` while the carrier named no `bottom.height` subject at all. Markup cannot
+    // say "no dimension was written this turn"; it can only show the previous turn's figure. The paint's LAST act replaces
+    // the carrier's `content` WHOLE and names ONLY the zones it wrote, so an ABSENT `bottom.height` subject is exactly "the
+    // paint dimensioned nothing for it on the delivery that produced this text" — the property, read where it is readable.
+    // **AND THAT STALE ATTRIBUTE IS NAMED AS A FINDING RATHER THAN PINNED AS A CLAIM**: no row asserts a figure the paint
+    // no longer stands behind, because a row that did would be defending the defect the corpus would owe a clearing arm for.
+    // **AND THE DEBT IS NAMED RATHER THAN LEFT STANDING**: the MARKUP half of the old control — the assertion that the
+    // attribute itself carries no dimension — is UNPROVEN at this head, because the paint has no clearing arm and a stale
+    // attribute is indistinguishable from a painted one in rendered HTML. Only a paint that cleared the property would make
+    // it readable again, and that is a renderer-wiring change, not a row's.
+    const beforeClear = carrierText((await renderedHtml(booted.client)).html)
+    expect(
+      beforeClear === NO_CARRIER ? null : measuredFigure(beforeClear, 'bottom.height'),
+      `AL-10 PREREQUISITE — the carrier must NAME the \`bottom\` zone's figure BEFORE the clear, or the absence below is a ` +
+        `reading about a dead instrument (\`D-216\`). Carrier as read: ${trunc(beforeClear, 400)}`,
+    ).not.toBe(null)
+    const cleared = await writeAt(booted.client, [ZONES, 'bottom'], 'mem', {})
+    expect(
+      str(asObject(cleared.value)?.['status']),
+      `AL-10 PREREQUISITE — the write at a zone's OWN id must commit, because that is the only reachable way to take one ` +
+        `declared zone to NO \`size\` (\`D-151\` H4: a write at or below a zone id is never repaired): ` +
+        `\`data.write(['${ZONES}','bottom'], tier:'mem')\` answered ${trunc(cleared.text, 320)}.`,
+    ).toBe('committed')
+    const afterClear = await carrierWithin(booted.client, (carrier) => measuredFigure(carrier, 'bottom.height') === null)
+    expect(
+      measuredFigure(afterClear.carrier, 'bottom.height'),
+      `AL-10 — A ZONE WHOSE RECORD STATES NO \`size\` MUST BE PAINTED NO DIMENSION: no fallback, no default, no paint of the ` +
+        `paint's own. The record's \`bottom\` now carries an empty record, and the carrier still measured ` +
+        `\`bottom.height=${String(measuredFigure(afterClear.carrier, 'bottom.height'))}\` over ` +
+        `${String(afterClear.polls)} bounded re-read(s) — which is the paint having DIMENSIONED a zone its record states no ` +
+        `figure for (\`D-191\`'s \`OWED-4\` answer, \`D-174\`, \`D-233\`). Carrier as read: ${trunc(afterClear.carrier, 480)}`,
+    ).toBe(null)
+    expect(
+      measuredFigure(afterClear.carrier, 'top.height'),
+      `AL-10 — and the turn is ALIVE beside that absence: the sibling the write never named is still measured, so ` +
+        `\`bottom\`'s missing subject is one zone's and not a report that stopped. Carrier as read: ` +
+        `${trunc(afterClear.carrier, 480)}`,
+    ).not.toBe(null)
+    // AND THE FIGURE RETURNS WHEN THE RECORD STATES ONE AGAIN — the positive half of the same property, so the absent
+    // subject above cannot be a report that simply dropped the zone for good.
+    const restoreSize = statedZones.find((zone) => zone.id === 'bottom')?.size ?? null
+    expect(restoreSize, 'AL-10 PREREQUISITE — the figure to restore is the one the record stated before the clear').not.toBe(null)
+    const restored = await writeAt(booted.client, [ZONES, 'bottom', 'size'], 'mem', restoreSize)
+    expect(
+      str(asObject(restored.value)?.['status']),
+      `AL-10 — the restore must commit, so the state this row leaves behind is the state it met: ` +
+        `${trunc(restored.text, 320)}`,
+    ).toBe('committed')
+    const back = await carrierWithin(booted.client, (carrier) => measuredFigure(carrier, 'bottom.height') === `${String(restoreSize)}px`)
+    expect(
+      measuredFigure(back.carrier, 'bottom.height'),
+      `AL-10 — and the zone's figure must be measured again once the record states it (${String(restoreSize)}), which is the ` +
+        `same property read from the other side: a paint that stopped dimensioning \`bottom\` at all would leave the absence ` +
+        `above true and this red. Carrier as read: ${trunc(back.carrier, 480)}`,
+    ).toBe(`${String(restoreSize)}px`)
   }, ROW_MS)
 
   it('AL-12 — the figure the browser APPLIED equals the figure the record holds, read out of the measured carrier', async () => {
@@ -2410,16 +2508,17 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     // STORE, so a figure exists in the carrier only inside a delivery's turn: **induce a delivery — a `['zones']` write
     // with a figure — wait for the listener's render, and only then read.** A row that read the carrier at a cold boot
     // would be asserting the absence of a paint the paradigm requires to be absent (`D-216`'s own sentence). **AND THE
-    // BOOT IS NOT SILENT AT THIS HEAD, WHICH IS WHY THE CLAUSE IS SPELLED AS THIS ROW'S FIGURE AND NOT AS AN EMPTY
+    // **AND THE BOOT IS NOT SILENT AT THIS HEAD, WHICH IS WHY THE CLAUSE IS SPELLED AS THIS ROW'S FIGURE AND NOT AS AN EMPTY
     // STRING**: `provident-storeroom@1.11.0` delivers at the store's OWN CREATION, the app arms the delivery's entries at
     // the construction and flushes at readiness, so the panes and the landing page are measured BEFORE any agent speaks
-    // (`D-219`, `D-220`) — **measured here**: the carrier reads
-    // `top.height=64px;bottom.height=33px;pane-a.width=absent;pane-a.height=absent;pane-menus.width=140px;tabs-landing-page.display=block;`
-    // by the time this row starts in its group's own order, i.e. a previous delivery's RECORD figures and no `140px`. The
-    // silence the paradigm requires is therefore the absence of the figure the not-yet-written delivery would carry, and
-    // the row asserts exactly that — over the carrier's own text, which is also its proof that the instrument is ALIVE.
-    // (Standalone — `vitest -t 'AL-12'` — the same reading is the boot's own, and `top.height` is then `null` because no
-    // writer has stated a zone `size`: the same lawful silence, read a different way.)
+    // (`D-219`, `D-220`) — **and since `D-233` the FOUR ZONES are among them**, because the creation repair states a
+    // declared default `size` per declared id and the boot's own first turn therefore dimensions all four. **MEASURED AT THIS
+    // HEAD**: by the time this row starts, the carrier already names a PREVIOUS delivery's figures (`AL-10`'s own
+    // `top.height=64px` among them, its siblings at their declared defaults). **SO THE CLAUSE MOVED AND ITS SUBJECT DID
+    // NOT**: the silence the paradigm requires is the absence of the figure the NOT-YET-WRITTEN delivery would carry, and
+    // that absence is only readable while this row's figure is one the record cannot state without this row's write — which
+    // is why `FIGURE` below is `143` and not `140`, `140` being `top`'s DECLARED DEFAULT (`DEFAULT_ZONE_SIZES`) and so a
+    // figure the boot's own repair puts in the carrier with no event of this row's behind it.
     //
     // **WHAT REDS IT, IN THIS ROW'S OWN WORDS.** **(i) An inert write — the OBJECT spelling of `css.style`**: the answer
     // is still `applied`, nothing lands, and the cascade reports the region's FILL — measured at `396px` over a record's
@@ -2430,11 +2529,16 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     // clause 4 reds, because the two authored pages declare `display: block` and nothing but the record can make one of
     // them `none`. **THE ONE THING IT CANNOT SEE IS SAID HERE TOO**: a figure the browser answered is a figure, so the
     // carrier cannot distinguish "the record's figure landed" from "the fill happens to equal the record's figure" — the
-    // figures below are chosen far from this window's fills (`D-214` measured `396px` where the record said `140`) and the
+    // figure below is chosen far from this window's fills (`D-214` measured `396px` where the record then said `140`) and
     // clause reads EQUALITY WITH THE RECORD, never a difference from the fill.
     // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-    /** The figure this row's zone write states — `D-214`'s own measured pair (`top.height=140px` over a fill of `396px`). */
-    const FIGURE = 140
+    /** **THE FIGURE THIS ROW'S ZONE WRITE STATES, AND IT MUST BE ONE THE RECORD CANNOT STATE WITHOUT THIS ROW** (`D-233`):
+     *  `top`'s DECLARED DEFAULT is `140` (`DEFAULT_ZONE_SIZES`), so a row writing `140` could no longer tell "my write
+     *  landed" from "the boot's own repair put it there" — which is clause 1's whole premise — and `D-214`'s measured pair
+     *  (`140px` over a fill of `396px`) is therefore no longer available to it. `143` stands outside every declared default
+     *  and far from that fill. **NO ROW OF THIS BATTERY IMPORTS `src/**`** (`D-27`), so the number is a literal and the
+     *  RECORD is what the clause below compares it against. */
+    const FIGURE = 143
     const TOP = `${ZONE_IDS[0]}.height`
     const LANDING_DISPLAY = `${LANDING_PAGE_ID}.display`
     const ERROR_DISPLAY = `${ERROR_PAGE_ID}.display`
@@ -2452,11 +2556,13 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     const beforeTop = measuredFigure(before, TOP)
     expect(
       beforeTop,
-      `AL-12 — NOTHING THIS ROW WRITES IS IN THE CARRIER BEFORE THE LISTENER SPEAKS (\`D-216\`): the render is driven by ` +
-        `listeners on the store, so a figure stands only inside a delivery's own turn. The carrier already read ` +
-        `\`${TOP}=${String(beforeTop)}\`, and a \`${String(FIGURE)}px\` standing there BEFORE this row's write is a render ` +
-        `with no event behind it — the one thing the paradigm forbids — while its ABSENCE is the state the row needs and ` +
-        `must therefore assert rather than assume. Carrier as read: ${trunc(before, 400)}`,
+      `AL-12 — THE FIGURE THIS ROW WRITES IS NOT IN THE CARRIER BEFORE ITS OWN WRITE (\`D-216\`, \`D-233\`): the render is ` +
+        `driven by listeners on the store, so a figure stands only inside a delivery's turn, and \`${String(FIGURE)}\` is a ` +
+        `number no declared zone default names — so one standing there BEFORE this row's write would be a render with no ` +
+        `event behind it, which is the one thing the paradigm forbids. The carrier already read ` +
+        `\`${TOP}=${String(beforeTop)}\`, and that is a PREVIOUS delivery's figure and lawful (\`AL-10\` moved this node ` +
+        `before this row ran); the absence this clause needs is the absence of ITS OWN figure, and it is asserted here rather ` +
+        `than assumed. Carrier as read: ${trunc(before, 400)}`,
     ).not.toBe(`${String(FIGURE)}px`)
 
     // ── CLAUSE 2 + ITS PREREQUISITE — the terminals' arm: the record moves, so the stage's two pages must move ─────────
@@ -2494,13 +2600,16 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     const settled = await carrierWithin(booted.client, (carrier) => measuredFigure(carrier, TOP) === `${String(FIGURE)}px`)
 
     // ── CLAUSE 2 — THE BROWSER-APPLIED FIGURE EQUALS THE RECORD'S (`D-203` would have failed HERE) ───────────────────
-    // **MEASURED AT THIS HEAD, ONE POLL AFTER THE WRITE** — the carrier's own text, quoted so a later reader can see what
-    // the row was reading:
-    //   `top.height=140px;bottom.height=33px;pane-a.width=absent;pane-a.height=absent;pane-menus.width=140px;`
-    //   `tabs-landing-page.display=none;tabs-error-page.display=block;`
-    // i.e. the record's `140` where the record stated `140`, the panes' `absent` for the one declared pane id no authored
-    // element carries (`D-214`'s honest-but-meaningless arm, kept rather than invented), and the two terminals SPLIT by
-    // the record. The same delivery with the object spelling reported the zone's FILL in that first pair's place.
+    // **MEASURED AT THIS HEAD, ONE POLL AFTER THE WRITE — QUOTED FROM A STANDALONE RUN (`vitest -t 'AL-12'`), so a reader
+    // knows which figures a group run's own predecessor may have moved** — the carrier's own text, quoted so a later
+    // reader can see what the row was reading:
+    //   `top.height=143px;bottom.height=60px;left.width=120px;right.width=90px;pane-a.width=100px;pane-a.height=100px;`
+    //   `pane-menus.width=100px;tabs-landing-page.display=none;tabs-error-page.display=block;`
+    // i.e. the record's `143` where the record states `143`, the tree's other three zones at their RECORDED figures (the
+    // declared defaults the creation repair states, `D-233`), the two panes at their repaired geometry — **not `absent`,
+    // which `D-214` measured for `pane-a` before `D-224`'s node map landed and which this reading re-measures** — and the
+    // two terminals SPLIT by the record. The same delivery with the object spelling reported the zone's FILL in that first
+    // pair's place.
     const measuredTop = measuredFigure(settled.carrier, TOP)
     expect(
       measuredTop,

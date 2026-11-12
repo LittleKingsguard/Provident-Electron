@@ -86,7 +86,7 @@ import type {
   ViewRecordStore,
   ViewRepairAnswer,
 } from '../../../src/main/view-record'
-import { MENUS_PANE_ID, MENUS_PANE_ZONE_ID } from '../../../src/shared/view-shape'
+import { DEFAULT_ZONE_SIZES, MENUS_PANE_ID, MENUS_PANE_ZONE_ID } from '../../../src/shared/view-shape'
 import { createViewSurface } from '../../../src/main/view-surface'
 import {
   IPC_VIEW_CHANGED,
@@ -103,8 +103,16 @@ const REPO = new URL('../../../', import.meta.url)
  *  while the domain held one id, and `zone-1` names nothing now that the set is `top`/`bottom`/`left`/`right` (`D-192`
  *  retired `DEFAULT_ZONE_ID` with its premise). The subject is unchanged — a declared id, its leaves, its deliveries. */
 const ZONE = 'top'
-/** The four memberless zones a fresh repair leaves, in the order the store's own read answers them. */
-const FOUR_MEMBERLESS = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: 'top' }]
+/** **THE FOUR ZONES A FRESH REPAIR LEAVES, EACH AT ITS DECLARED DEFAULT `size` — READ FROM `DEFAULT_ZONE_SIZES` AND
+ *  NEVER SPELLED HERE** (`D-233`'s item (4)): the creation repair no longer mints a memberless record, it writes each
+ *  declared id with the figure the table declares, so the state this file's clause-3 rows assert is the table's own. A
+ *  figure hard-coded beside it would be the count-slip class this corpus keeps re-taking. **THE ORDER IS THE SORT'S AND
+ *  NOT THE STORE'S**: the store answers the family in its own key order (measured: `bottom`, `left`, `right`, `top`),
+ *  which no row here claims. */
+const FOUR_STANDING = [...DEFAULT_ZONE_SIZES]
+  .slice()
+  .sort((left, right) => left.id.localeCompare(right.id))
+  .map((entry) => ({ id: entry.id, size: entry.size }))
 /** **THE PANES FAMILY AS THE REPAIR MINTS IT — TWO PANES, EACH AT BOTH AXIS MEMBERS** (`D-192` correcting `D-191`):
  *  `pane-a` is the stage pane and carries its own clamp, `pane-menus` is the zone-resident one and carries its `zone`
  *  instead. The measured figures are the module's own constants, so a changed default reds these rows. */
@@ -551,7 +559,7 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
       try {
         expect(two.read().panes, 'boot two answers boot one\'s family').toEqual(first.panes)
         expect(two.read().theme, 'and the same appearance record, which is the second `file` family').toEqual(first.theme)
-        expect(two.read().zones, 'while the `mem` family is re-minted rather than carried — the FOUR declared zones, memberless (`D-151`, `D-181`)').toEqual(FOUR_MEMBERLESS)
+        expect(two.read().zones, 'while the `mem` family is re-minted rather than carried — the FOUR declared zones at their declared default sizes (`D-151`, `D-181`, `D-233`)').toEqual(FOUR_STANDING)
         expect(two.bytes(), 'the file is byte-identical across the two boots (nothing re-wrote it)').toBe(oneBytes)
       } finally {
         two.close()
@@ -585,20 +593,30 @@ describe('view-record · clause 3 — the `file` family from the file, the `mem`
     expect((receipt.triggered ?? []).map((entry) => entry.handle)).toContain(VIEW_PANES_MUST_STAND_ID)
     expect(record.read().panes, 'and the family stands again, at the measured placeholder').toEqual(before)
     // THE OTHER SURVIVING ROOT, THE SAME WAY: the `mem` family's landing arm, which the retired focus row used to carry.
+    // **AND THE SETUP MOVES A SIBLING OFF ITS DECLARED DEFAULT FIRST, WHICH IS WHAT MAKES THE CLAIM BELOW FALSIFIABLE**
+    // (`D-233`): the boot's own `bottom` already stands at its declared default, so a root write that never touched it
+    // would read identically to one that replaced it. A route leaf at `bottom` states 33, so the two arms are told apart.
+    expect(record.commitZones('bottom', { size: 33 }).status).toBe('committed')
     delivered = 0
     expect(store.write(VIEW_ZONES_ADDRESS as never, 'mem', { [ZONE]: { size: 160, display: 'normal' } }).op).toBeDefined()
     expect(delivered, 'a zone write delivers once').toBe(1)
     // **THIS IS THE STORE'S OWN ROOT WRITE AND NOT A ROUTE'S LEAF**, so the value REPLACES the family whole: the one zone
-    // this write names stands and the three the placeholder minted do not survive it — the contrast the row exists for,
-    // since `commitZones` writes leaves and could not do this (`D-151`).
-    expect(record.read().zones).toEqual([{ id: ZONE, size: 160, display: 'normal' }])
+    // this write names stands member for member, and the three the value does NOT name are `D-233`'s `size` arm's subjects —
+    // the repair states each of them its DECLARED DEFAULT, so the `33` the setup wrote at `bottom` is GONE. **THE ROW IS TWO
+    // REDS APART FROM A LIE**: a MERGE (the composition `D-151` deleted) would leave `bottom` at 33, and a repair that
+    // stopped stating a figure would leave it absent — where `commitZones` writes leaves and could neither drop nor
+    // re-figure a sibling at all (`D-151`, `Z-9` one file over).
+    expect(record.read().zones).toEqual([
+      ...FOUR_STANDING.filter((zone) => zone.id !== ZONE),
+      { id: ZONE, size: 160, display: 'normal' },
+    ])
     delivered = 0
     const zonesReceipt = store.delete(VIEW_ZONES_ADDRESS as never) as { triggered?: readonly { handle: string }[] }
     expect(delivered, 'and its delete is ONE committed change, its repair re-minting the family inside that commit').toBe(1)
     expect((zonesReceipt.triggered ?? []).map((entry) => entry.handle), 'the pair that answered is the zone family\'s').toContain(
       VIEW_ZONES_MUST_STAND_ID,
     )
-    expect(record.read().zones, 'leaving the placeholder that names every DECLARED zone with an empty record').toEqual(FOUR_MEMBERLESS)
+    expect(record.read().zones, 'leaving the placeholder that names every DECLARED zone at its declared default size').toEqual(FOUR_STANDING)
     off()
   })
 })

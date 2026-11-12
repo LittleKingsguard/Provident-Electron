@@ -128,7 +128,8 @@ export const VIEW_PANES_MUST_STAND_ID = 'panes-must-stand'
  *  premise is exactly what `D-139` assumed and `D-151` measured this module forbidding. The set is
  *  `src/shared/view-shape.ts`'s `DECLARED_ZONE_IDS` — the FOUR ids `top`/`bottom`/`left`/`right` since `D-181`, and
  *  `DEFAULT_ZONE_ID` went with its readers at `D-192` — the creation repair writes each declared id
- *  with an EMPTY record (`viewZonesPlaceholder`), and a caller naming any other id is REFUSED (`UNDECLARED_ZONE_REASON`)
+ *  with its declared default `size` (`viewZonesPlaceholder`, `D-233`; an EMPTY record before it), and a caller naming any
+ *  other id is REFUSED (`UNDECLARED_ZONE_REASON`)
  *  rather than silently creating a zone. **WHY IT HAD TO CLOSE**: the store creates no parent (measured at this node, and
  *  even an EMPTY family is not enough — the ZONE'S OWN NODE must stand), so `['zones', id]` must be GUARANTEED to stand
  *  for every id the route is handed, and only a closed set can guarantee one. **AND A WRITE MAY LAND AT A LEAF INSIDE THE
@@ -892,12 +893,15 @@ const zoneMemberAdmits = (member: string | undefined, value: unknown): boolean =
 }
 
 /** **THE ZONE FAMILY AT ONE NODE — the root's is the family WHOLE**, one member per zone id, each a record `zoneOf`
- *  admits. The declared ids each stand as an EMPTY record after the repair (`viewZonesPlaceholder`), so a family the
+ *  admits. The declared ids each stand after the repair (`viewZonesPlaceholder`: an EMPTY record at `D-181`, its declared
+ *  default `size` since `D-233`), so a family the
  *  repair wrote is admitted member by member; the root's own test is TOTAL over an empty family, which is the arm `ASM-9`
  *  keeps: **a `data.write` that replaces the family with a record naming NONE of the declared ids is ADMITTED**, because
  *  the family is judged by the ids it NAMES and the record's existence is the REPAIR's subject and not the value's — so
  *  what the closure buys is the creation plus an honest `AddressNotFound` at the next leaf write (`D-135`), never a
- *  silently wrong value. */
+ *  silently wrong value. **AND THAT ADMISSION IS THE SHAPE'S AND NOT THE PAINT'S** (`D-233`): a root value naming none of
+ *  the four passes here and is then handed to the `size` arm, which repairs it — so `ASM-9`'s arm still admits and no
+ *  longer leaves the zones unpresentable. */
 const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
   if (node.length > 0) return zoneNodeAdmits(node, value)
   if (!plain(value)) return false
@@ -922,6 +926,16 @@ export const PANE_UNUSABLE_MESSAGE =
   'the pane geometry carries a member that is no geometry — no finite non-negative width or height, or a bounds pair of two finite numbers whose min does not exceed its max, or a zone the pane names that this record does not declare, or a pane id this record does not declare'
 export const ZONE_UNUSABLE_MESSAGE =
   'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses, or a zone id this record does not declare'
+/** **THE THIRD SENTENCE — THE ONE `D-233`'S ITEM (4) OWED, AND IT NAMES THE FAMILY'S FAULT RATHER THAN THE ACT'S.** A family
+ *  that ADMITS member by member and still leaves a DECLARED zone without a `size` is the state in which
+ *  `driveLayoutRegions` writes no fixed dimension at all for that zone — *"a ZONE STATING NO size IS WRITTEN NOTHING: no
+ *  fallback, no default"* (`D-233`) — so the zone is a node with no extent and nothing on the surface can present or press
+ *  it. **IT IS ANSWERED WITH A REPAIR AND NOT A REFUSAL** (`ZONE_UNUSABLE_MESSAGE`'s opposite arm, and the opposite for a
+ *  stated reason): a family that is unusable is a value the read cannot state, while a family that simply STATES NO FIGURE
+ *  is a value the read states perfectly and the PAINT cannot use — so the fault is repaired with the declared default
+ *  (`DEFAULT_ZONE_SIZES`, `shared/view-shape.ts`) exactly as `panes-must-stand` repairs an absent pane's geometry. */
+export const ZONE_UNSTATED_SIZE_MESSAGE =
+  'the zone family leaves a declared zone stating no finite non-negative size, so the zones are written their declared default fixed dimension'
 
 /** **`panes-must-stand` — THE PANE GEOMETRY IS AN ENFORCED INVARIANT, NOT A SIDE EFFECT OF THE FIRST DRAG.**
  *
@@ -996,33 +1010,51 @@ const panesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
 const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer =>
   writeWholeValue(getStore)(context, VIEW_PANES_ADDRESS, PANES_TIER, viewPanesPlaceholder())
 
-/** **`zones-must-stand` — THE ZONE FAMILY'S EXISTENCE, AND ITS PLACEHOLDER IS EVERY DECLARED ZONE ID WITH AN EMPTY
- *  RECORD** (D-151; `D-91`'s *"the family that names no zone"* is SUPERSEDED BY POINTER and not reworded, `D-46`).
+/** **`zones-must-stand` — THE ZONE FAMILY'S EXISTENCE *AND ITS FIXED DIMENSION*, AND ITS PLACEHOLDER IS EVERY DECLARED ZONE
+ *  ID WITH ITS DECLARED DEFAULT `size`** (D-151; **`D-233`'s item (4)**; `D-91`'s *"the family that names no zone"* is
+ *  SUPERSEDED BY POINTER and not reworded, `D-46`).
  *
- *  **THE PLACEHOLDER MINTS NO MEMBER, WHICH IS THE HALF OF `D-91` THAT STANDS.** The zone family has NO default value
- *  anywhere in the tree: the frozen store held none, a read that MISSed its tier answered `undefined`, the render turn
- *  handed that `undefined` straight to its layout call, and `candidatesFor` answered `[]` — so a repair minting a geometry
- *  (`{width: 100}` or the demo's `160`) would make the repair and the read two authorities over one question. What it
- *  writes is therefore EVERY DECLARED ZONE ID WITH AN EMPTY RECORD — four ids since `D-181`, `{'top': {}, 'bottom': {},
- *  'left': {}, 'right': {}}` — and not `{}`: each DECLARED id with an EMPTY record, because `{}` IS a zone this
- *  module admits (`zoneOf(id, {})` answers `{id}`) and the record it creates is the node a LEAF write needs standing under
- *  it. `panes-must-stand`'s shape, with a declared-empty family where that family's placeholder is the measured default.
+ *  **THE SECOND SUBJECT — THE `size` — IS WHAT `D-233` MEASURED AND THIS ARM OWES.** `panes-must-stand` repairs a pane's
+ *  geometry with `defaultPaneGeometry()`; the zones never got the same treatment. `driveLayoutRegions` writes a zone's fixed
+ *  axis ONLY from `['zones', <id>, 'size']` and writes NOTHING for a zone stating none (*"no fallback, no default"*), while
+ *  the repair and the placeholder both wrote a MEMBERLESS record — so a cold profile had four zones with no fixed dimension
+ *  and four empty strips, and `D-220` named the cause in one clause: *"no writer under `src/` states a `size`"*. **THE
+ *  FIGURE IS NOT INVENTED HERE**: it is `DEFAULT_ZONE_SIZES` in `shared/view-shape.ts`, the module that owns the
+ *  placeholder, so the repair and the placeholder read ONE spelling and cannot drift — the reason `DEFAULT_PANE_SIZE` lives
+ *  beside `viewPanesPlaceholder` one family over. `D-191`/`D-192`'s refusal still stands where it bound: the zones are NOT
+ *  given `DEFAULT_PANE_SIZE`, because a pane's figure is not a zone's; they are given figures of their own.
  *
- *  **THE EXISTENCE ARM IS THE FAMILY ROOT'S, AND `nodeOf` IS TAKEN FIRST** (D-151 H4) — this is the hunk without which the
- *  per-member write cannot land at all. `context.value` is the value the act LANDED (`guide §7.6`) and the pair asked
- *  here sits at an ANCESTOR of the act's address (`D-56`), so a LEAF write hands this body a SCALAR: answering that as
- *  absence would write the placeholder AT THE ROOT and REPLACE the whole family — the caller's own value included —
- *  inside a commit that still answers `committed`. So absence is answered only at `node === null || node.length === 0`,
- *  and a write AT or BELOW a zone id is judged at its own node and NEVER REPAIRED.
+ *  **THE TRIGGER, EXACTLY.** The pair is consulted at the address a write happened at, and `nodeOf` says how far below this
+ *  family's root that is. At the ROOT (`node === null || node.length === 0`) — the registration instant, a write AT
+ *  `['zones']`, or a write beneath it that lands on the family whole — the family must (a) STAND as a plain record, (b) ADMIT
+ *  member by member, and (c) STATE a finite non-negative `size` for EVERY DECLARED zone id. (a) fails → the placeholder,
+ *  `panesMustStand`'s own absence arm. (b) fails → REFUSED, no repair, at a write instant (`D-105`'s value arm, unchanged).
+ *  (c) fails → the repair writes the corrected family, because a family that states no figure is one the paint cannot use.
+ *  **A WRITE AT OR BELOW A ZONE ID IS NEVER REPAIRED** (`D-151` H4, unchanged): `context.value` is the value the act LANDED
+ *  (`guide §7.6`) and the pair sits at an ANCESTOR of the act's address (`D-56`), so a leaf write hands this body a SCALAR —
+ *  and answering that as a family fault would write the placeholder AT THE ROOT and REPLACE the whole family, the caller's
+ *  own value included, inside a commit that still answers `committed`. So a leaf write at `['zones', id, 'size']` is judged
+ *  at its own node and the repair is never reached from there.
+ *
+ *  **A ZONE STATING A `size` OF ITS OWN IS LEFT ALONE, AND THAT IS THE REPLACE-NEVER-MERGE DISCIPLINE READ PRECISELY**:
+ *  the repair writes ONE WHOLE VALUE at the family's root (a second write at a leaf, or a merge into a standing record,
+ *  would be the composition `D-151` deleted), and INSIDE that value each declared zone keeps the record it already states
+ *  when that record carries a valid `size` — only the ids that state none are written the declared default. So a custom
+ *  figure survives a repair triggered by a sibling, and a figure this repair did not mint is never overwritten
+ *  (`D-192`'s panes rule — *"rewriting a state a writer stated is the second-authority class `C-9` refuses"* — applied to a
+ *  family whose records are individually optional). A zone needing the repair has its record REPLACED by the declared
+ *  default, not merged into: `size` is the only member any writer under `src/` states at this family today, and a merge over
+ *  what stands is exactly the composition this family deleted.
  *
  *  **IT JUDGES `context.value` AND NEVER REACHES FOR THE INSTANCE**, `panesMustStand`'s shape and its measured reason: at
  *  the construction instant the boot's holder is unassigned, so a handle-reading body would abstain at the one instant it
- *  is the only one that can act. **THE SECOND ARM IS THE VALUE'S (`D-105`, and now the DOMAIN'S too)**: a family that
+ *  is the only one that can act. **THE VALUE ARM IS THE `D-105` ONE (`D-105`, and now the DOMAIN'S too)**: a family that
  *  STANDS and carries a member `zoneOf` cannot admit — or names an undeclared zone id — is REFUSED with no repair, where
  *  before it was the read's dropped-member disposition, and the disposition is exactly why the arm is owed rather than
  *  cheap: the dropped member answers its absence, so the app lost a zone it had while `source.zones` still said
- *  `'record'`. **A ZONE THAT CARRIES NOTHING IS STILL LEGAL** (`{}` at a declared zone id), because that state is the
- *  family's own shape and not a fault. */
+ *  `'record'`. **A ZONE THAT CARRIES NOTHING IS STILL LEGAL TO THE SHAPE** (`{}` at a declared zone id, admitted by
+ *  `zonesAdmitAt`), because that state is the family's own shape and not a value fault — and it is now REPAIRED at the root
+ *  rather than left standing, which is the difference between `D-151`'s answer and `D-233`'s. */
 const zonesMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
   const node = nodeOf(context, VIEW_ZONES_ADDRESS)
@@ -1035,27 +1067,98 @@ const zonesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
       repair: repairZones(getStore),
     }
   }
+  // **A NODE THIS BODY CANNOT PLACE IS NEVER A FAULT** (measured: no act reaches this arm, and the arm that cannot be
+  // measured must not refuse — `nodeOf`'s own note).
+  if (node === null) return true
   // **THE VALUE ARM (`D-105`), AT THE NODE THE WRITE IS AT.** A zone whose `size` is a string, a member that is no
   // record at all, a `slot` the crossing refuses, or an id this record does not declare is a family the read can only
   // answer by DROPPING the member — and a dropped member answers its absence, so the app loses a zone it had while
   // `source` still says `'record'`. Refused with no repair, so the store's rollback leaves the standing family and the
-  // profile's bytes exactly as they were.
-  if (node === null || zonesAdmitAt(node, held)) return true
-  if (!writeInstant(context)) return true
-  return { message: ZONE_UNUSABLE_MESSAGE }
+  // profile's bytes exactly as they were. **AND AT OR BELOW A ZONE ID THIS IS THE WHOLE ARM** (`D-151` H4): no repair is
+  // reached from a leaf write, whatever the leaf carried.
+  if (node.length > 0) {
+    if (zonesAdmitAt(node, held)) return true
+    if (!writeInstant(context)) return true
+    return { message: ZONE_UNUSABLE_MESSAGE }
+  }
+  // THE ROOT'S SECOND ARM, IN ITS OWN ORDER: ADMISSION FIRST, so a fault the shape names is refused as that fault rather
+  // than repaired into a legal value the caller never wrote.
+  if (!zonesAdmitAt(node, held)) {
+    if (!writeInstant(context)) return true
+    return { message: ZONE_UNUSABLE_MESSAGE }
+  }
+  // **AND THE `size` ARM (`D-233`'s item (4)), WITH NO `writeInstant` GUARD BY DESIGN**: it answers a REPAIR, and a repair
+  // is lawful at BOTH measured instants — at a write's landing instant through the record's own `write` function, and at
+  // the REGISTRATION instant through the three positions the record carries there (`writeWholeValue`). A guard here would
+  // abstain at the one instant the cold profile's repair is the only thing that can make the zones present.
+  if (zoneFamilyStatesSizes(held)) return true
+  return { message: ZONE_UNSTATED_SIZE_MESSAGE, repair: repairZones(getStore) }
 }
 
-/** **THE ZONES' REPAIR: EVERY DECLARED ZONE ID WITH AN EMPTY RECORD, AS ONE WHOLE LEGAL VALUE** — the FOUR
- *  `{'top': {}, 'bottom': {}, 'left': {}, 'right': {}}` at the family's own root and its own tier, through the module's
- *  one repair-write path. **IT PERFORMS THE THING IT KEYS** (the `D-85` pattern): the repair does not assert that a zone
- *  record stands, it CREATES each declared one, which is what makes `['zones', id]` a node the route's leaf writes can land
- *  under (D-151). It mints no MEMBER, so it is not a second authority beside the read; and because the tier is `mem`,
- *  nothing of it reaches the profile (D-84, measured at this address). **AND THE READ VOCABULARY MOVED WITH IT** (D-151
- *  (b)): `read().zones` names each declared zone where the family answered none, while `zoneIn`'s `null` starts meaning
- *  *"an id this record does not declare"* — the two states told apart with NO new member on the reading, and no reader's
- *  output moved (both zone readers answer `undefined`/`[]` on a memberless zone exactly as they did on an absent one). */
-const repairZones = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer =>
-  writeWholeValue(getStore)(context, VIEW_ZONES_ADDRESS, ZONES_TIER, viewZonesPlaceholder())
+/** **THE ZONES' REPAIR: EVERY DECLARED ZONE ID, EACH STATING A `size`, AS ONE WHOLE LEGAL VALUE** — the FOUR
+ *  `{'top': {size: 140}, 'bottom': {size: 60}, 'left': {size: 120}, 'right': {size: 90}}` on a cold profile, at the
+ *  family's own root and its own tier, through the module's one repair-write path. **IT PERFORMS THE THING IT KEYS** (the
+ *  `D-85` pattern): the repair does not assert that a zone record stands, it CREATES each declared one, which is what makes
+ *  `['zones', id]` a node the route's leaf writes can land under (D-151) — and, since `D-233`'s item (4), the record it
+ *  creates STATES the one member the paint needs, so the zone is present on the first frame rather than a strip with no
+ *  extent. **THE FIGURE IS `DEFAULT_ZONE_SIZES`' AND NOT THIS FILE'S**: the value is `viewZonesPlaceholder()`'s, read from
+ *  the module that owns the placeholder, so the repair cannot drift from it.
+ *
+ *  **A ZONE THAT ALREADY STATES A VALID `size` IS CARRIED AND NOT REWRITTEN** (`repairedZones` below): the repair judges
+ *  the four ids ONE BY ONE and writes the declared default only where the standing record states none, so a custom figure
+ *  survives a repair its SIBLING triggered — rewriting a state a writer stated is the second-authority class `C-9` refuses,
+ *  the rule `repairPanes`' own comment states for the pane family. **AND IT IS ONE WRITE AT THE ROOT AND NEVER A MERGE**: the
+ *  alternative — a leaf write per repaired id, or a merge into a standing record — is the composition this family deleted
+ *  (`D-151`), and a repair that wrote two values would split one commit. Because the tier is `mem`, nothing of it reaches
+ *  the profile (D-84, measured at this address). **AND THE READ VOCABULARY MOVED WITH IT** (D-151 (b)): `read().zones` names
+ *  each declared zone where the family answered none, while `zoneIn`'s `null` starts meaning *"an id this record does not
+ *  declare"* — the two states told apart with NO new member on the reading, and no reader's own answer moves with the
+ *  figure (`zoneIn` still hands back the record the family carries). */
+const repairZones = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer => {
+  const held = plain(context) ? context['value'] : undefined
+  return writeWholeValue(getStore)(context, VIEW_ZONES_ADDRESS, ZONES_TIER, repairedZones(held))
+}
+
+/** **THE FAMILY THE ZONES' REPAIR WRITES — THE STANDING RECORD WHERE IT STATES A `size`, THE DECLARED DEFAULT WHERE IT DOES
+ *  NOT**, over `DECLARED_ZONE_IDS` and never over the keys the value happens to carry, so every declared id stands after the
+ *  write (`D-151`'s leaf-write precondition) and no id the value names alone is invented into the family. **TWO SOURCES AND
+ *  BOTH ARE THE FAMILY'S OWN**: the record the value states, and `viewZonesPlaceholder()`'s record for the same id — no
+ *  figure is computed here, and nothing is read from another family (the crossing `repairPanes`' comment refuses).
+ *  **A RECORD NEEDING THE REPAIR IS REPLACED, NEVER MERGED INTO**: `size` is the only member any writer under `src/` states
+ *  at this family, and a merge over what stands would be the composition `D-151` deleted — while a record whose `size` is
+ *  already valid is carried WHOLE, its own other members included, so the repair never drops a member a writer stated. */
+const repairedZones = (held: unknown): Record<string, unknown> => {
+  const placeholder = viewZonesPlaceholder()
+  const family: Record<string, unknown> = {}
+  for (const id of DECLARED_ZONE_IDS) {
+    const standing = plain(held) ? held[id] : undefined
+    if (plain(standing) && zoneStatesSize(standing)) family[id] = { ...standing }
+    else family[id] = placeholder[id]
+  }
+  return family
+}
+
+/** **DOES THIS FAMILY STATE A FIXED DIMENSION FOR EVERY ZONE IT DECLARES?** — the `size` arm's whole test, over
+ *  `DECLARED_ZONE_IDS` and never over the family's keys, because it is the four DECLARED ids the paint addresses
+ *  (`LAYOUT_ZONE_AXES`) and a family naming three of them leaves the fourth a strip of no extent. **THE MEMBER'S TEST IS
+ *  `zoneMemberAdmits`'S, NOT A SECOND ONE**: finite and non-negative, read off the record rather than off a handle. A zone
+ *  record that is no record at all answers `false` here too, so an id the family names as a scalar is repaired rather than
+ *  left (that state is separately REFUSED by `zonesAdmitAt` at the root, which is why the refusal is the answer a caller
+ *  meets and this test is what a REPAIR meets). */
+const zoneFamilyStatesSizes = (family: unknown): boolean => {
+  if (!plain(family)) return false
+  for (const id of DECLARED_ZONE_IDS) if (!zoneStatesSize(family[id])) return false
+  return true
+}
+
+/** One zone record's own `size`, where it states one the shape admits — `zoneMemberAdmits('size', …)`'s test lifted onto a
+ *  record, so the repair and the pair cannot disagree about what a stated figure is. */
+const zoneStatesSize = (record: unknown): boolean => {
+  if (!plain(record)) return false
+  if (!Object.hasOwn(record, 'size')) return false
+  const size = record['size']
+  return finiteNumber(size) && size >= 0
+}
 
 /** **`theme-must-stand` — THE APPEARANCE RECORD HAS TWO ARMS, AND THE SECOND IS THE WHOLE OF THE INSTRUCTION (D-97).**
  *

@@ -49,6 +49,7 @@ import {
 } from '../../../src/main/view-record'
 import type { ViewConstraintDeclaration, ViewDelivery, ViewRecordStore, ViewZone } from '../../../src/main/view-record'
 import { createViewSurface } from '../../../src/main/view-surface'
+import { DEFAULT_ZONE_SIZES } from '../../../src/shared/view-shape'
 import { IPC_VIEW_CHANGED, IPC_VIEW_ZONES_COMMIT } from '../../../src/shared/view-channels'
 
 const PROFILE_FILE = 'provident-profile.json'
@@ -62,11 +63,24 @@ const ZONE = 'top'
  *  constant and this list is the battery's own statement of it — the same relationship `ZONE` has with the domain, one
  *  level up, so the fixture cannot fall silently behind the set it measures. */
 const DECLARED = ['top', 'bottom', 'left', 'right'] as const
-/** The four memberless zones a fresh repair leaves, in the order the store's own read answers them (its key order, not
- *  `DECLARED_ZONE_IDS`'s): the family's measured state, written out rather than derived, so the placeholder is asserted. */
-const FOUR_MEMBERLESS = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: 'top' }]
-/** The whole placeholder value the repair lands, member for member. */
-const FOUR_EMPTY: Record<string, Record<string, never>> = { top: {}, bottom: {}, left: {}, right: {} }
+/** **THE FOUR FIGURES A FRESH REPAIR LEAVES, READ FROM `DEFAULT_ZONE_SIZES` AND NEVER SPELLED HERE** (`D-233`'s item
+ *  (4)). Since `D-233` the creation repair no longer mints a MEMBERLESS record: it writes each declared id WITH its
+ *  declared default `size`, so the state this file's clause-1 and clause-3 rows assert is the table's own — and a figure
+ *  hard-coded beside it would be the count-slip class this corpus keeps re-taking (a table whose numbers move would leave
+ *  these rows green against a stale number). **THE ORDER IS THE SORT'S AND NOT THE STORE'S**: the store answers the family
+ *  in its own key order (measured: `bottom`, `left`, `right`, `top`), which is no claim of any row's, so the comparison is
+ *  over MEMBERSHIP AND FIGURE; `toEqual` on an array still refuses a missing or an extra zone, which is what the rows are
+ *  about. */
+const DECLARED_DEFAULTS = [...DEFAULT_ZONE_SIZES].slice().sort((left, right) => left.id.localeCompare(right.id))
+/** The four standing zones as the RECORD's read answers them — `{id, size}` per declared id. */
+const FOUR_STANDING: readonly { readonly id: string; readonly size: number }[] = DECLARED_DEFAULTS.map((entry) => ({
+  id: entry.id,
+  size: entry.size,
+}))
+/** The whole placeholder VALUE the repair lands, member for member — the same table one level down. */
+const FOUR_EMPTY: Record<string, { size: number }> = Object.fromEntries(
+  DECLARED_DEFAULTS.map((entry) => [entry.id, { size: entry.size }]),
+)
 
 /** **A SOURCE READ WITH THE COMMENT LINES AND BLOCK COMMENTS ELIDED — THE ONLY FORM AN ABSENCE MAY BE ASSERTED ON**
  *  (`D-81`): a naive byte read passes on a comment, and the positive control each absence row carries is that the RAW
@@ -156,11 +170,13 @@ describe('view-record · the zone family, clause 1 — the address stands before
     expect(absent, 'a store with no declaration holds NOTHING at the zone root').toBe('AddressNotFound')
 
     // AND THE BATCHED BOOT: the address stands, at the ONE whole legal value `D-151`'s repair writes — EVERY DECLARED ZONE
-    // ID WITH AN EMPTY RECORD (`viewZonesPlaceholder`, `{'zone-1': {}}`) — read off the store's own verb, before
-    // `createViewRecord` exists and before any route of this module has been called. **AND IT NAMES A ZONE NOW, WHICH IS
-    // THE RE-GRAIN** (`D-151`): `D-91`'s placeholder was *"the family that names no zone"*, and an EMPTY family cannot
+    // ID WITH ITS DECLARED DEFAULT `size` (`viewZonesPlaceholder` reading `DEFAULT_ZONE_SIZES`) — read off the store's own
+    // verb, before `createViewRecord` exists and before any route of this module has been called. **AND IT NAMES A ZONE,
+    // WHICH IS `D-151`'s RE-GRAIN**: `D-91`'s placeholder was *"the family that names no zone"*, and an EMPTY family cannot
     // satisfy the leaf write's precondition — `['zones', id]` must STAND and the store creates no parent (measured at this
-    // node), so the repair CREATES each declared id's record and `{}` IS a zone this module admits.
+    // node), so the repair CREATES each declared id's record. **AND SINCE `D-233` EACH OF THOSE RECORDS STATES A `size`**:
+    // naming an id is not the same thing as the zone presenting on the surface, and the figure comes from the table this
+    // row imports, so a repair that dropped it — or wrote one figure for four ids — reds here.
     const path = join(dir, PROFILE_FILE)
     const bound: { current: ViewRecordStore | null } = { current: null }
     // **AND THE SAME CONSTRUCTION ADOPTS THE CROSSING'S FOUR ENTRIES** (`D-219`, §1–§2): the zone root's among them, which
@@ -173,19 +189,24 @@ describe('view-record · the zone family, clause 1 — the address stands before
     })
     bound.current = store as unknown as ViewRecordStore
     const standing = store.read(VIEW_ZONES_ADDRESS as never, 'mem') as unknown
-    expect(standing, 'the family STANDS when the constructor returns, and it names every DECLARED zone id with an EMPTY record').toEqual(FOUR_EMPTY)
+    expect(standing, 'the family STANDS when the constructor returns, and it names every DECLARED zone id at its declared default size').toEqual(FOUR_EMPTY)
     // **AND THE CREATION DELIVERED AT THIS VERY INSTANT, WHICH IS THE EVENT `D-218` MEASURED AS ABSENT**: the repair's write
     // fired the adopted entry after it landed, so the sink already carries the zone root before any route exists.
     expect(sunk.map((address) => address[0]), 'the construction delivered to the adopted listener before `createViewRecord` ran').toContain('zones')
-    // **AND THE PLACEHOLDER IS THE READ'S OWN ANSWER, NOT A SECOND AUTHORITY**: the declared zone is a ZONE WITH NO MEMBER
-    // and no geometry is minted for it, which is what the frozen store answered for a MISS too — so the read names ONE
-    // zone where it answered NONE, and `zoneIn`'s `null` is left meaning *"an id this record does not declare"*
-    // (`D-151` (b), H9).
+    // **AND THE PLACEHOLDER IS THE READ'S OWN ANSWER, NOT A SECOND AUTHORITY**: `zoneIn` hands back exactly the members the
+    // family carries, and after the repair that is the ONE member the paint reads — no `display`, no `slot`, no `distance` —
+    // so the read names each declared zone where it once answered none, and `zoneIn`'s `null` is left meaning *"an id this
+    // record does not declare"* (`D-151` (b), H9). **THE `size` IS A MEMBER THE REPAIR'S OWN TABLE DECLARES AND THE OTHER
+    // THREE ARE NOTHING'S** (`D-233`): a vocabulary that grew a member here, or a placeholder that stopped stating the
+    // figure, reds on the very next line.
     const record = createViewRecord({ store: bound.current, delivery })
     const read = record.read()
-    expect(read.zones, 'so the record reads the FOUR declared zones, each memberless').toEqual(FOUR_MEMBERLESS)
+    expect(read.zones, 'so the record reads the FOUR declared zones, each stating its declared default size and nothing else').toEqual(FOUR_STANDING)
     expect(read.source.zones, 'because a REPAIR put it there, and the read says which').toBe('record')
-    expect(zoneIn(read.zones, ZONE), 'and that zone carries no member at all — no geometry is invented for it').toEqual({ id: ZONE })
+    expect(zoneIn(read.zones, ZONE), 'and that zone carries exactly ONE member — the figure the paint needs — and no geometry is invented beyond it').toEqual({
+      id: ZONE,
+      size: DECLARED_DEFAULTS.find((entry) => entry.id === ZONE)?.size,
+    })
     expect(zoneIn(read.zones, 'zone-undeclared'), 'while an id the family does not name still answers null — which is now the DOMAIN\'s word and not absence\'s').toBeNull()
   })
 
@@ -197,7 +218,7 @@ describe('view-record · the zone family, clause 1 — the address stands before
     // A family the FIRST boot's instance never had (mem is re-minted, so the seed is the caller's act in the same boot).
     const seeded = readFileSync(path, 'utf8')
     const two = boot(path)
-    expect(two.read().zones, 'boot two is handed ABSENT and its repair mints the declared records again — FOUR memberless zones').toEqual(FOUR_MEMBERLESS)
+    expect(two.read().zones, 'boot two is handed ABSENT and its repair mints the declared records again — FOUR zones, each at its declared default size').toEqual(FOUR_STANDING)
     expect(readFileSync(path, 'utf8'), 'and the profile is byte-identical: a `mem` family never reaches it').toBe(seeded)
     two.close()
   })
@@ -304,7 +325,10 @@ describe('view-record · the zone family, clause 2 — one delivery per committe
     // THE ONE STATED BOOT READ, then every later fill is a delivery's.
     const first = await client.fill()
     expect(first.status).toBe('committed')
-    expect(client.zoneOf(ZONE), 'the boot read answers the declared zone, carrying no member').toEqual({ id: ZONE })
+    expect(client.zoneOf(ZONE), 'the boot read answers the declared zone at its ONE declared default figure (`D-233`) — a client that read a memberless zone here would paint a strip of no extent').toEqual({
+      id: ZONE,
+      size: DECLARED_DEFAULTS.find((entry) => entry.id === ZONE)?.size,
+    })
     let refills = 0
     const subscription = client.subscribe(() => {
       refills += 1
@@ -342,7 +366,7 @@ describe('view-record · the zone family, clause 2 — one delivery per committe
 // ═══════════════ CLAUSE 3 — BOOT DATA ═══════════════
 
 describe('view-record · the zone family, clause 3 — a `mem` family is re-minted at every boot and the profile carries no byte of it', () => {
-  it('Z-5 · TWO SUCCESSIVE BOOTS: boot two is handed the address ABSENT, its repair mints the declared zone with an empty record again, and NOT ONE BYTE of the family reaches the profile — measured at the pair\'s own context and in the file\'s own text', () => {
+  it('Z-5 · TWO SUCCESSIVE BOOTS: boot two is handed the address ABSENT, its repair mints every declared zone at its declared default size again, and NOT ONE BYTE of the family reaches the profile — measured at the pair\'s own context and in the file\'s own text', () => {
     const path = join(dir, PROFILE_FILE)
     const one = boot(path)
     expect(one.read().source.zones).toBe('record')
@@ -376,9 +400,9 @@ describe('view-record · the zone family, clause 3 — a `mem` family is re-mint
     bound.current = two as unknown as ViewRecordStore
     expect(seen.length, 'the engine ASKS the zone pair at the creation instant — a pair the batch does not carry is asked nowhere, and this row reds on that revert').toBeGreaterThan(0)
     expect(seen[0], 'boot two is handed NOTHING at the zone root: a `mem` value never came from a file').toBeUndefined()
-    expect(seen[seen.length - 1], 'and the registration\'s own RE-RUN reads the family the repair landed — every DECLARED id with an empty record (`D-151`)').toEqual(FOUR_EMPTY)
+    expect(seen[seen.length - 1], 'and the registration\'s own RE-RUN reads the family the repair landed — every DECLARED id at its declared default size (`D-151`, `D-233`)').toEqual(FOUR_EMPTY)
     const readTwo = createViewRecord({ store: bound.current, delivery: bootTwoDelivery }).read()
-    expect(readTwo.zones, 'so boot two answers the FOUR declared zones, memberless — boot one\'s `top` members did not survive, and cannot').toEqual(FOUR_MEMBERLESS)
+    expect(readTwo.zones, 'so boot two answers the FOUR declared zones at their declared default sizes — boot one\'s `top` 160 did not survive, and cannot').toEqual(FOUR_STANDING)
     expect(readTwo.source.zones, 'because a repair put it there, at this boot as at the last').toBe('record')
     const bytesAfterTwo = readFileSync(path, 'utf8')
     expect(bytesAfterTwo.includes('zones'), 'not one byte of the family reached the profile: not the root\'s name').toBe(false)
@@ -467,8 +491,14 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     expect(record.commitZones(ZONE, { size: 175 }).status).toBe('committed')
     // A `mem` family cannot show bytes, so the instrument is the JOURNAL's own ordinal: a read that wrote would move it.
     const before = (one.store as unknown as { write: (a: unknown, t: string, v: unknown) => { op?: { seq?: number } } }).write(['elsewhere'], 'mem', { x: 1 }).op?.seq
-    const written = [{ id: 'bottom' }, { id: 'left' }, { id: 'right' }, { id: ZONE, size: 175 }]
-    for (let n = 0; n < 3; n += 1) expect(record.read().zones, 'the family the caller wrote is what a read answers, and its three siblings stand untouched beside it').toEqual(written)
+    // **THE SIBLINGS ARE AT THEIR DECLARED DEFAULTS AND THE CALLER'S ZONE IS AT THE CALLER'S FIGURE** (`D-233`): the route
+    // writes ONE LEAF at `['zones', top, 'size']`, so the three ids it never named keep the record the creation repair
+    // wrote — the declared default each — and none of them is dropped, re-minted or re-figured by the act or by the reads.
+    const written = [
+      ...DECLARED_DEFAULTS.filter((entry) => entry.id !== ZONE).map((entry) => ({ id: entry.id, size: entry.size })),
+      { id: ZONE, size: 175 },
+    ]
+    for (let n = 0; n < 3; n += 1) expect(record.read().zones, 'the family the caller wrote is what a read answers, and its three siblings stand at their declared default sizes beside it').toEqual(written)
     const after = (one.store as unknown as { write: (a: unknown, t: string, v: unknown) => { op?: { seq?: number } } }).write(['elsewhere'], 'mem', { x: 2 }).op?.seq
     expect(typeof before === 'number' && typeof after === 'number' ? after - before : null, 'three reads landed NO op: the journal moved by exactly the one write between the two probes').toBe(1)
     one.close()
@@ -521,10 +551,8 @@ describe('view-record · the zone route', () => {
     const record = createViewRecord({ store: one.store, delivery: one.delivery })
     expect(record.commitZones(ZONE, { size: 160, display: 'normal', slot: 'doc-nav' }).status).toBe('committed')
     expect(record.commitZones(ZONE, { size: 240 }).status, 'the size alone').toBe('committed')
-    expect(record.read().zones, 'the members the family stood at survive the narrower act — and with FOUR declared ids the sibling half has a subject again: the three zones this act did not name stand untouched beside it').toEqual([
-      { id: 'bottom' },
-      { id: 'left' },
-      { id: 'right' },
+    expect(record.read().zones, 'the members the family stood at survive the narrower act — and with FOUR declared ids the sibling half has a subject again: the three zones this act did not name stand at their declared default sizes beside it').toEqual([
+      ...DECLARED_DEFAULTS.filter((entry) => entry.id !== ZONE).map((entry) => ({ id: entry.id, size: entry.size })),
       { id: ZONE, slot: 'doc-nav', size: 240, display: 'normal' },
     ])
     // ── THE RETIRED HALF, RECORDED WITH ITS REASON (this corpus's habit, `D-142`'s style, `D-9`) ──
@@ -542,10 +570,8 @@ describe('view-record · the zone route', () => {
       record.commitZones('zone-2', { slot: 'main', distance: 40 }),
       'a well-formed id this record does not declare is REFUSED before any store verb: the closure at the route\'s seat',
     ).toMatchObject({ status: 'refused', reason: UNDECLARED_ZONE_REASON, address: ['zones', 'zone-2'] })
-    expect(record.read().zones, 'and nothing the refused act named reached the family: the declared zone stands exactly as it stood, and its three siblings stand beside it').toEqual([
-      { id: 'bottom' },
-      { id: 'left' },
-      { id: 'right' },
+    expect(record.read().zones, 'and nothing the refused act named reached the family: the declared zone stands exactly as it stood, and its three siblings stand at their declared defaults beside it').toEqual([
+      ...DECLARED_DEFAULTS.filter((entry) => entry.id !== ZONE).map((entry) => ({ id: entry.id, size: entry.size })),
       { id: ZONE, slot: 'doc-nav', size: 240, display: 'normal' },
     ])
     // THE MINIMISE MARKER IS A LEGAL SIZE, because it is the composition's own word for a minimized zone.
@@ -579,7 +605,7 @@ describe('view-record · the zone route', () => {
     // while the subscriber's counter stayed at 1.
     expect(sunk.length - queued, 'the delete delivered ONE address to the sink: its repair\'s joined write is no second delivery').toBe(1)
     expect((receipt.triggered ?? []).map((entry) => entry.handle)).toContain(VIEW_ZONES_MUST_STAND_ID)
-    expect(record.read().zones, 'and the family stands again, at the placeholder that names every DECLARED zone with an empty record').toEqual(FOUR_MEMBERLESS)
+    expect(record.read().zones, 'and the family stands again, at the placeholder that names every DECLARED zone at its declared default size — the caller\'s 160 does not survive a DELETE of the root, which is what makes this the LANDING arm and not a merge').toEqual(FOUR_STANDING)
     expect(record.read().source.zones).toBe('record')
     off()
   })
