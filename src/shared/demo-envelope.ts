@@ -614,11 +614,16 @@ const menusHandleStyle: Record<string, string> = { cursor: 'col-resize', width: 
  *  whose `content` is the MEASURED name, the item a `div` whose `content` is its label and whose
  *  `props.role` is the role the menus turn reads OFF THE NODE. There are FOUR menus and EIGHTEEN items —
  *  `1 + 7 + 7 + 3`, the enumeration `D-181` corrected the arithmetic of and `D-188` re-counted. **The three
- *  separators in `D-180`'s table are NOT nodes.** **The SEVEN refused** (`quit`, `reload`, `forcereload`,
- *  `toggledevtools`, `minimize`, `zoom`, `close`) additionally carry `props.disabled: 'true'` — the bare
- *  attribute the runtime emits — and **NO handler**, so the refusal is DATA and the guard is `main`'s
- *  admitted set (`D-196`). **NEITHER NODE AUTHORS A FIGURE**: a menu's and an item's shape is the class
- *  hook's, and `D-187`'s fill/adjust/scroll rule is the PANE's and never theirs. */
+ *  separators in `D-180`'s table are NOT nodes.** **THE SEVEN THE ROUTE REFUSES AN AGENT** (`quit`, `reload`,
+ *  `forcereload`, `toggledevtools`, `minimize`, `zoom`, `close`) **CARRY NO `props.disabled` MARK**. They used to,
+ *  and the mark was a lie: `disabled` is a FORM-CONTROL attribute and does nothing on a `div`, so the seven were
+ *  only STYLED inert while `D-232`'s trusted path EXECUTED them for a person (a real click is `isTrusted === true`) —
+ *  the contradiction the user's ruling ended: *"un-grey them — they work for a person, so show them enabled"*. **THE
+ *  MARK WAS AUTHORED PER NODE AND IS REMOVED PER NODE**: no role set stands behind it here, so there is no set to
+ *  change. The agent's refusal is UNMOVED and stays `main`'s admitted set (`D-196`); a `disabled` mark that ever
+ *  returns is INERT at BOTH guard layers (`src/renderer/renderer.ts`'s `attachMenuItem` and `src/main/preload.ts`'s
+ *  gesture witness), so it cannot half-work again. **NEITHER NODE AUTHORS A FIGURE**: a menu's and an item's shape
+ *  is the class hook's, and `D-187`'s fill/adjust/scroll rule is the PANE's and never theirs. */
 
 /** The demo legacy envelope. */
 export function demoEnvelope() {
@@ -742,9 +747,10 @@ export function demoEnvelope() {
                       // (b) THE FOUR MENUS AND THEIR EIGHTEEN ITEMS (`D-180`, `D-181`, `D-188`) — a STATIC
                       // enumeration, and a static node is exactly what makes an authored label lawful
                       // (`D-177`). Each item carries its `props.role` so the menus turn reads the role OFF
-                      // THE NODE and never from a table of its own; **the SEVEN the ruling refused render
-                      // `disabled` with NO handler**, so the refusal is DATA and the unbypassable guard is
-                      // `main`'s admitted set (`D-181`, `D-196`). Readers: the menus turn, `AL-6`, `AL-7`.
+                      // THE NODE and never from a table of its own; **NO ITEM CARRIES `props.disabled`**: the seven
+                      // the route refuses an agent are STYLED ENABLED because they WORK for a person (`D-232`'s
+                      // trusted path), and the unbypassable guard is `main`'s admitted set (`D-181`, `D-196`).
+                      // Readers: the menus turn, `AL-6`, `AL-7`.
                       //
                       // **AND EACH MENU CARRIES `props.tabindex: '0'`, WHICH IS THE DROP-DOWN'S WHOLE MECHANISM.** The paint
                       // writes `props.*` as attributes, so this is the bare `tabindex="0"` the page sheet keys on: a menu NAME
@@ -755,7 +761,7 @@ export function demoEnvelope() {
                       // `list_targets`, `get_rendered_html` and `get_markdown` all still see all eighteen, and `AL-6`'s count
                       // is unmoved. It is also the honest control for a keyboard user: `Tab` reaches each name and the items
                       // open on focus. **NOTHING HERE IS A FIGURE OR A LABEL**: the prop adds no node, no class, no content and
-                      // no handler, and every role, label and `disabled` mark below is the landed text, unchanged.
+                      // no handler, and every role, label and mark below is the landed text, unchanged.
                       {
                         type: 'div',
                         css: { classes: ['menus-menu'] },
@@ -763,7 +769,7 @@ export function demoEnvelope() {
                         content: 'File',
                         children: [
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'quit', disabled: 'true' },
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'quit' },
                             content: 'Quit',
                           },
                         ],
@@ -811,15 +817,15 @@ export function demoEnvelope() {
                         content: 'View',
                         children: [
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'reload', disabled: 'true' },
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'reload' },
                             content: 'Reload',
                           },
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'forcereload', disabled: 'true' },
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'forcereload' },
                             content: 'Force Reload',
                           },
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'toggledevtools', disabled: 'true' },
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'toggledevtools' },
                             content: 'Toggle Developer Tools',
                           },
                           {
@@ -847,15 +853,15 @@ export function demoEnvelope() {
                         content: 'Window',
                         children: [
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'minimize', disabled: 'true' },
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'minimize' },
                             content: 'Minimize',
                           },
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoom', disabled: 'true' },
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoom' },
                             content: 'Zoom',
                           },
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'close', disabled: 'true' },
+                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'close' },
                             content: 'Close',
                           },
                         ],

@@ -31,8 +31,13 @@
 // table's own instrument column is what decides the grouping — the rows that need a driver envelope are `AL-9` and
 // `AL-11`, and every other row is a plain `provident.get_rendered_html` (plus, where it names one, a `data` call):
 //
-//   · group `skeleton` — `AL-1`, `AL-2`, `AL-6`: three READ-ONLY rows over one boot's own page. They cannot disturb
-//     each other (no write between them), and `AL-2` must read the record BEFORE the `tabs` group writes it.
+//   · group `skeleton` — `AL-1`, `AL-2`, `AL-6`: `AL-1` and `AL-2` are READ-ONLY rows over one boot's own page, and
+//     `AL-6` stands LAST because since `D-232`'s un-greying it SPENDS that boot on the route's own answers (eighteen
+//     dispatches, `actAtItem`'s paragraph carries the measured cost). The two reads are therefore taken on a page no
+//     dispatch has touched, and nothing after `AL-6` reads this boot — the eleven admitted roles EXECUTE when they are
+//     dispatched (`togglefullscreen` flips the window, the zoom trio round-trips), so a row that reads this page
+//     afterwards would be reading a page a gesture moved. `AL-2` must also read the record BEFORE the `tabs` group
+//     writes it.
 //   · group `tabs`    — `AL-3`, `AL-4`, `AL-5`: one boot, three acts on ONE record, in the order the rows stand
 //     (`AL-3` establishes the second tab the switch needs, `AL-4` moves the record's MARKER across a re-mint and reads
 //     two deliveries' fresh rows for it — `D-205`'s measurement as a gating row, with the id churn asserted as the price
@@ -40,7 +45,8 @@
 //     leaves a state the next row still states.
 //   · group `menus`   — `AL-7` alone: eighteen dispatches plus a rendered read and a transport ask between each, and
 //     its DECLARED failure mode is that the app DIES (`quit`/`close`/`reload` reaching the window). A row that reds by
-//     killing its boot must not take four sibling rows with it.
+//     killing its boot must not take four sibling rows with it — and the row that now shares its INSTRUMENT (`AL-6`,
+//     eighteen dispatches of its own on the `skeleton` boot) stands last in ITS group for the same reason.
 //   · group `view`    — `AL-8`, `AL-10`, `AL-12`: all three write `['zones']` and none needs the driver channel; `AL-8`'s
 //     profile read and `AL-10`'s two markup reads are independent, and `AL-8` stands first because its file reading is a
 //     question about the SAME bytes `AL-10`'s pane write would move. **`AL-12` STANDS LAST BECAUSE IT MOVES THE ONE THING
@@ -72,8 +78,9 @@
 // surface. **THE ANSWER ARRIVES ONE TURN LATE AND EACH ROW STATES HOW IT FORCES THAT TURN**: a menu body's route answer is
 // written into the receipt carrier in the ROUTE PROMISE's continuation, and a re-read of the rendered page 0…2 000 ms
 // after the act (measured: eight stamps) still read the previous answer, while the next dispatch's render turn made it
-// readable at once — so `AL-7` issues a DUMP ACT at the carrier (a node with no handler, performing nothing) and spends
-// its bound on the carrier's own text, and `AL-3` reads the RECORD, which is the store's answer and knows no render turn.
+// readable at once — so `AL-6` and `AL-7` issue a DUMP ACT at the carrier (a node with no handler, performing nothing) and
+// spend their bound on the carrier's own text, and `AL-3` reads the RECORD, which is the store's answer and knows no render
+// turn. Both rows share `actAtItem`, so the act, the dump and the settle cannot drift apart between them.
 //
 // **`AL-10` STANDS ON RENDERED MARKUP, AND `AL-12` IS THE ROW THAT DOES NOT** — the two are the two halves of `D-203`
 // and the difference between them is the whole reason `AL-12` exists. **NO DRIVEN BODY CAN READ THE APP'S OWN COMPUTED
@@ -189,7 +196,7 @@ const OVERLAY_OPEN_ID = 'overlay-open'
 const TABS_ROWS_ID = 'tab-rows'
 const LANDING_PAGE_ID = 'tabs-landing-page'
 const ERROR_PAGE_ID = 'tabs-error-page'
-/** The ONE carrier a menus answer is written into — `AL-7`'s rendered read. */
+/** The ONE carrier a menus answer is written into — `AL-6`'s and `AL-7`'s rendered read. */
 const MENUS_RECEIPT_ID = 'menus-receipt'
 /** The two record families' roots this battery writes at, and the tiers each is DECLARED at (`D-101`, `D-145`): a write
  *  at another tier is refused `declared-tier` before any store verb, which is `AL-8`'s own contrast. */
@@ -197,10 +204,28 @@ const PANES = 'panes'
 const ZONES = 'zones'
 const TABS = 'tabs'
 const TIERS = { [ZONES]: 'mem', [PANES]: 'file', [TABS]: 'file' } as const
-/** **THE SEVEN REFUSED ROLES, AS THE ROUTE REFUSES THEM** (`D-181`, `D-196`): the ruling's own list, and the list the
- *  envelope marks `disabled` with no handler. `AL-6` reads their rendering and `AL-7` the route's answer — the two
- *  halves of one decision, one row each. */
+/** **THE TWO SETS THE ROUTE HOLDS, SPELLED AS LITERALS BECAUSE NO ROW MAY IMPORT THEM** (`D-27`):
+ *  `src/main/main.ts`'s `MENU_ADMITTED_ROLES` (`11`) and `MENU_REFUSED_ROLES` (`7`), literal, disjoint and total over
+ *  `D-181`'s eighteen — the site where the grant stops (`D-196`), and the list `D-232`'s trusted-click path executes the
+ *  seven FROM for a person.
+ *
+ *  **AND THE SPLIT IS THE ACT'S FROM NOW ON, NEVER THE PAINTING'S** — the user's ruling, made envelope-wide: *"un-grey
+ *  them — they work for a person, so show them enabled"*. The seven per-node `disabled: 'true'` marks are GONE, so no
+ *  reading of the served markup separates the eleven from the seven any more; a row that derived the refused set from a
+ *  mark measured the PAINT and agreed with it whatever it said (`D-232`'s correction: the marks were the lie, the route
+ *  was the truth). **SO BOTH ROWS DISPATCH ALL EIGHTEEN AND READ THE ROUTE'S OWN WORDS**: `AL-6` for the split itself,
+ *  `AL-7` for the split plus every act's own identity and the session surviving each one. Neither derives anything from
+ *  a mark, and a mark that ever RETURNS is asserted ABSENT rather than believed (`AL-6`). */
+const ADMITTED_ROLES = ['undo', 'redo', 'cut', 'copy', 'paste', 'delete', 'selectall', 'resetzoom', 'zoomin', 'zoomout', 'togglefullscreen'] as const
 const REFUSED_ROLES = ['quit', 'reload', 'forcereload', 'toggledevtools', 'minimize', 'zoom', 'close'] as const
+/** **THE SEVEN'S ANSWER, BYTE FOR BYTE, AND IT IS COMPARED IN FULL** (`D-196`, `D-232`): the realm writes a refusal as
+ *  `refused <role>: <reason> — <message>` with the route's `message` VERBATIM (`menuReceiptText`), and `main`'s sentence
+ *  for the seven is the one the ruling left UNCHANGED — an agent's `provident.dispatch` synthesises a click, so
+ *  `event.isTrusted` is false for every act either row takes and the refusal these rows read is the UNTRUSTED arm,
+ *  character for character. **A PREFIX OR A `includes` WOULD PASS OVER A SOFTENED REFUSAL** (a message that lost its
+ *  "would end the app, the MCP port …" clause still names the role and the reason); equality cannot. */
+const refusalText = (role: string): string =>
+  `refused ${role}: role-not-admitted — the role '${role}' is not admitted: it would end the app, the MCP port or this realm's transients, or move window state the app keeps out of reach`
 /** How many boundedly-re-read polls a render gets before its absence is a reading: a DELIVERY is not the caller's
  *  turn, so a write that returned has not necessarily repainted yet (`npm run crossings` polls for exactly this). */
 const POLL_MAX = 14
@@ -728,7 +753,11 @@ function renderedRows(html: string): RenderedRow[] {
  *  SECOND node with that very text (the overlay's own close control, `overlay-close`), so a label→node map built from
  *  `provident.list_targets` addresses the wrong node for `close` — measured: that dispatch ran the OVERLAY's body
  *  (`results:[null]`) and left the menus carrier untouched. The item's `menu-item` class is the criterion, and its own
- *  `data-node-id` is the address. */
+ *  `data-node-id` is the address.
+ *  **`disabled` IS READ FOR ONE REASON AND IT IS THE OPPOSITE OF THE ONE IT WAS ADDED FOR**: the field used to name the
+ *  refused half of the pane and no row reads it as a verdict any more (`D-232`'s un-greying — the marks are gone).
+ *  `AL-6` asserts the served markup carries NONE, so a mark that comes back is a named red at the place it returns,
+ *  and what the route ANSWERS stays the only evidence of the split. */
 interface RenderedItem { nodeId: string; role: string; label: string; disabled: boolean }
 function renderedItems(html: string): RenderedItem[] {
   return tagsOf(html).flatMap((tag): RenderedItem[] => {
@@ -742,6 +771,78 @@ function renderedItems(html: string): RenderedItem[] {
   })
 }
 const menuCount = (html: string): number => tagsOf(html).filter((tag) => tagHasClass(tag, 'menus-menu')).length
+
+// ---- driving the route: the eighteen acts, and the answer read off the carrier -----
+/** **THE ANSWER ARRIVES ONE TURN LATE AND THE TURN IS FORCED** (`D-209`'s battery finding; `AL-6` and `AL-7` share this
+ *  one implementation so the two rows cannot drift apart in HOW they read the route). A dispatch runs the item's
+ *  wiring-installed body, the body asks `window.provident.menu`, and the answer is written into `MENUS_RECEIPT_ID` in
+ *  the ROUTE PROMISE's continuation — one render turn AFTER the click turn. **MEASURED in a real boot**: re-reading the
+ *  rendered surface 0, 5, 20, 100, 250, 500, 1 000 and 2 000 ms after the act still read the PREVIOUS answer at every
+ *  one of those eight stamps, while the very next dispatch — at the carrier itself, which declares no handler and
+ *  therefore performs nothing — made the answer readable at once. **SO THE SETTLE IS A DUMP ACT PER ATTEMPT** and the
+ *  bound is spent on the CARRIER'S OWN TEXT naming this item's role: a sleep alone could not do it (two seconds of one
+ *  sufficed for nothing) and a poll alone could not either (no re-read of a page paints a write the graph has not been
+ *  asked to render). What the pacing buys is only the turn the answer needs to cross the IPC seam.
+ *  **MEASURED COST, THIS HEAD**: one dump act settles every one of the eighteen (turns used `1` for all eighteen on
+ *  `AL-7`'s sweep), so a full sweep of the pane is eighteen dispatches + eighteen dump acts + eighteen rendered reads +
+ *  eighteen transport asks. **OBSERVED ON EVERY RUN AT THIS HEAD**: `AL-6`'s row — one rendered read, the shape
+ *  assertions and the whole eighteen-item sweep — `~1.25 s`; `AL-7`'s (the same sweep plus its `list_targets`
+ *  census) `~1.9 s`; the battery's twelve rows `~8.5–8.9 s` over five boots. That is the price this file pays for a
+ *  split between the eleven and the seven that is MEASURED at the route instead of painted in the markup. */
+interface ItemAct { receipt: string; words: unknown[]; turns: number }
+const ITEM_SETTLE_TURNS_MAX = 14
+const ITEM_SETTLE_TURN_MS = 60
+/** The carrier's own text, read out of the rendered markup — `(no carrier)` where the authored node did not render,
+ *  which is a READING and never an empty answer. */
+function receiptAt(text: string): string {
+  const tag = tagById(text, MENUS_RECEIPT_ID)
+  if (tag === null) return '(no carrier)'
+  const after = text.slice(text.indexOf(tag) + tag.length)
+  const close = after.indexOf('<')
+  return (close < 0 ? after : after.slice(0, close)).trim()
+}
+/** **WHETHER A CARRIER TEXT IS THIS ROLE'S ANSWER AT ALL** — asked of the WHOLE word, because `zoom` is a prefix of
+ *  `zoomin`, `zoomout` and `resetzoom`: a `startsWith` on the role alone would accept `admitted zoomin` as `zoom`'s
+ *  answer and, on a slow turn, hand this row its NEIGHBOUR's verdict. */
+function receiptNamesRole(receipt: string, role: string): boolean {
+  return receipt === `admitted ${role}` || receipt.startsWith(`refused ${role}:`)
+}
+/** ONE ITEM'S ACT: a dispatch at the item's OWN `data-node-id`, the dump acts that force its answer's turn, and the
+ *  answer as the carrier spells it. `dispatch` answers `results` in the same call — the body's own word — which is the
+ *  identity instrument `AL-7` reads and the reason a dispatch that reached the carrier is known to be THIS item's. */
+async function actAtItem(booted: Boot, item: RenderedItem): Promise<ItemAct> {
+  const previous = receiptAt((await renderedHtml(booted.client)).html)
+  const answered = await call(booted.client, 'provident.dispatch', { target: { kind: 'nodeId', nodeId: item.nodeId }, event: 'click' })
+  let settled = previous
+  let turns = 0
+  for (let attempt = 1; attempt <= ITEM_SETTLE_TURNS_MAX; attempt += 1) {
+    turns = attempt
+    await sleep(ITEM_SETTLE_TURN_MS)
+    // THE DUMP ACT: a dispatch at the authored carrier, whose body list is empty — it performs nothing and exists only
+    // to take a render turn, which is the turn that paints the answer already standing in the graph.
+    await call(booted.client, 'provident.dispatch', { target: { kind: 'cssId', cssId: MENUS_RECEIPT_ID }, event: 'click' })
+    settled = receiptAt((await renderedHtml(booted.client)).html)
+    if (settled !== previous && receiptNamesRole(settled, item.role)) break
+  }
+  return { receipt: settled, words: arr(memberOf(answered.value, 'results')), turns }
+}
+/** **THE EIGHTEEN SPLIT BY THE ROUTE'S OWN WORDS AND BY NOTHING ELSE**: a receipt that IS `admitted <role>` is an
+ *  admission, one that IS the seven's sentence (`refusalText`) is a refusal, and anything else — no answer, a re-worded
+ *  refusal, a different role's text — is SILENT, a third answer a row REPORTS rather than folds into either list. The
+ *  partition is total over the eighteen, so the three lists always account for every item and a role that answered
+ *  neither way can never be read as either. */
+function splitByAnswer(items: RenderedItem[], receipts: Map<string, string>): { admitted: string[]; refused: string[]; silent: string[] } {
+  const admitted: string[] = []
+  const refused: string[] = []
+  const silent: string[] = []
+  for (const item of items) {
+    const receipt = receipts.get(item.role) ?? ''
+    if (receipt === `admitted ${item.role}`) admitted.push(item.role)
+    else if (receipt === refusalText(item.role)) refused.push(item.role)
+    else silent.push(item.role)
+  }
+  return { admitted: admitted.sort(), refused: refused.sort(), silent: silent.sort() }
+}
 /** **THE APP ROOT'S OWN SUBTREE AS THE MARKUP SPELLS IT**: from the authored root's tag to the overlay layer's FIRST
  *  node, which is its FOLLOWING SIBLING (`C-5`, `D-178` §3). What lies between them is the app's general surface, and
  *  its last `data-node-id` is what `AL-1` measures the opener against. */
@@ -1353,9 +1454,16 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     ).toEqual(activeIds.map((tabId) => str(memberOf(memberOf(record, tabId), 'target')) ?? ''))
   }, ROW_MS)
 
-  it('AL-6 — the pane is the menu it claims: four menus, eighteen labelled items, the seven refused rendered disabled', async () => {
+  it('AL-6 — the pane is the menu it claims: four menus, eighteen labelled items, and the route\'s own answer to each', async () => {
     const { booted } = await shared('skeleton')
-    const html = (await renderedHtml(booted.client)).html
+    const surface = await renderedHtml(booted.client)
+    expect(
+      surface.truncated,
+      `AL-6 PREREQUISITE — the rendered answer must carry the PAGE: a truncated answer (html length ` +
+        `${String(surface.html.length)}) would let the "no \`disabled\` mark" reading below be the server's guard ` +
+        `rather than the app's.`,
+    ).toBe(false)
+    const html = surface.html
     const menus = tagsOf(html).filter((tag) => tagHasClass(tag, 'menus-menu'))
     expect(
       menus.length,
@@ -1383,14 +1491,91 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       items.filter((item) => item.label.length === 0).map((item) => item.role),
       `AL-6 — every item must be LABELLED (the label is the authored content string, \`D-177\`); these carried none.`,
     ).toEqual([])
-    // ── the seven refusals are DATA in the rendering, and the guard is `main`'s ──
-    const disabled = items.filter((item) => item.disabled).map((item) => item.role).sort()
+    // ══ THE SHAPE HALF ABOVE IS UNMOVED. THE REFUSAL HALF BELOW IS NO LONGER THE PAINTING'S. ════════════════════
+    // **WHAT THIS ROW USED TO ASSERT, AND WHY THAT WAS WEAKER THAN IT LOOKED**: `items.filter(item => item.disabled)`
+    // read the seven off the served markup — so the row measured the PAINT and AGREED WITH IT whatever it said, and a
+    // mark on the wrong item was a green. `D-232`'s un-greying removed the marks on the user's ruling (*"un-grey them —
+    // they work for a person, so show them enabled"*), which left the split with NO structural reading at all: the
+    // eleven and the seven are identical in the markup. **SO THE VERDICT IS TAKEN FROM THE ACT** — the same channel an
+    // agent uses — and the mark's ABSENCE is pinned rather than believed.
+    //
+    // ── (1) NOTHING IS PAINTED GREY: the ruling, asserted at the place a mark would return ──────────────────────
+    const marks = tagsOf(html).filter((tag) => /\bdisabled\b/.test(tag)).map((tag) => `${attrOf(tag, 'id') ?? attrOf(tag, 'data-node-id') ?? '(unnamed)'}→${attrOf(tag, 'disabled') ?? '(bare)'}`)
     expect(
-      disabled,
-      `AL-6 — the SEVEN the ruling refused must render \`disabled\` and the eleven admitted must not: \`D-181\`'s list is ` +
-        `[${[...REFUSED_ROLES].sort().join(', ')}] and the surface marked [${disabled.join(', ')}]. A refused item that ` +
-        `renders enabled is the declared failure mode "a refused item dispatchable" — and the refusal would then be ` +
-        `\`main\`'s alone, which \`D-196\` measured as the guard that matters.`,
+      marks,
+      `AL-6 — the served markup must carry NO \`disabled\` attribute anywhere, because the seven WORK FOR A PERSON and ` +
+        `the user's ruling is *"un-grey them — they work for a person, so show them enabled"* (\`D-232\`'s trusted-click ` +
+        `path executes exactly these roles on a real gesture). The markup carried [${marks.join(', ')}]. **A MARK THAT ` +
+        `RETURNS IS NOT COSMETIC AND THIS ROW REFUSES IT FOR THAT REASON**: the paint writes an authored ` +
+        `\`props.disabled\` as the bare attribute, and BOTH guard layers now VETO a marked item (\`disabledMarkOn\` in ` +
+        `the renderer's listener, \`disabledMarkOf\` in preload's gesture witness) — so a mark takes the seven away from ` +
+        `a PERSON while changing nothing for an agent, which is the ruling inverted. It is a second authority over a ` +
+        `split the route alone owns.`,
+    ).toEqual([])
+    // ── (2) the eighteen roles are the route's own two sets, and the ADDRESSES come from the markup ─────────────
+    // The census is STRUCTURAL on purpose and it says so: a role dropped, renamed or duplicated is caught HERE, before
+    // any act, because an item whose role the route never saw would be an item this row could not dispatch at all.
+    const roles = [...new Set(items.map((item) => item.role))].sort()
+    expect(
+      roles,
+      `AL-6 — the eighteen items must carry EIGHTEEN DISTINCT roles and those roles must BE the route's two sets ` +
+        `(\`D-181\`'s enumeration, \`D-196\`'s admitted/refused split): the markup carried [${roles.join(', ')}] over ` +
+        `${String(items.length)} item(s). An item with no role, a DUPLICATED role or a role in NEITHER set is a finding ` +
+        `against the ENVELOPE and not against the route — and it would leave one of the two lists below short.`,
+    ).toEqual([...ADMITTED_ROLES, ...REFUSED_ROLES].sort())
+    // ── (3) THE ACT'S OWN ANSWER, ONE ITEM AT A TIME: eighteen dispatches on this boot ──────────────────────────
+    // **HOW IT IS DRIVEN, AND WHAT IT COSTS** (`AL-7`'s instrument, shared through `actAtItem`): a
+    // `provident.dispatch` at each item's own `data-node-id`, then the dump act that forces the route answer's turn,
+    // then the carrier's text — 18 dispatches + 18 dump acts + 18 rendered reads + 18 transport asks on ONE boot,
+    // measured at `~1.25 s` for this whole row (the carrier settled on the first dump act for all eighteen, so the
+    // bound is never approached; `AL-7`'s identical sweep plus its `list_targets` census reads `~1.9 s`). **THE
+    // ELEVEN'S ADMISSION IS NOT OBSERVABLE WITHOUT EXECUTING IT** — there is no structural reading of it and none is
+    // invented here: the route performs the act and answers `admitted` only once it returned. That is SAFE ON THIS BOOT
+    // AND THE REASON IS THE SEVEN'S OWN DEFINITION: none of the eleven ends the app, the MCP port or this realm's
+    // transients, and the three edit roles act on a document whose focus a dispatch never moves. The acts DO have
+    // effects and they are named, not hidden: `resetzoom` → `zoomin` → `zoomout` round-trips the zoom level to `0`,
+    // `togglefullscreen` flips the window ONE time, and the sweep leaves this boot's page with the last item's receipt —
+    // which is why this row stands LAST in its group and why no sibling reads this boot afterwards.
+    const started = Date.now()
+    const receipts = new Map<string, string>()
+    const transportStopped: string[] = []
+    for (const item of items) {
+      const act = await actAtItem(booted, item)
+      receipts.set(item.role, act.receipt)
+      const alive = await call(booted.client, 'provident.list_targets', {})
+      if (!alive.ok || asObject(alive.value) === null) transportStopped.push(`${item.role} (${trunc(alive.text, 120)})`)
+    }
+    const elapsedMs = Date.now() - started
+    expect(
+      transportStopped,
+      `AL-6 — the app must still answer on its transport after EVERY one of the eighteen dispatches, or a "refused" ` +
+        `role EXECUTED: \`quit\`/\`close\` kill the app and the MCP port this row is speaking on, \`reload\`/\`forcereload\` ` +
+        `wipe every renderer transient. Roles that left the transport silent (over ${String(elapsedMs)} ms): ` +
+        `[${transportStopped.join('; ')}]; trace:\n${tail(booted.trace())}`,
+    ).toEqual([])
+    const split = splitByAnswer(items, receipts)
+    expect(
+      split.silent,
+      `AL-6 — EVERY one of the eighteen dispatches must answer in the route's OWN words: \`admitted <role>\` for the ` +
+        `eleven, the seven's sentence for the seven (\`D-196\`), and NOTHING ELSE — a re-worded refusal, a different ` +
+        `role's text or a carrier that never moved is SILENT and is reported here rather than read as either half. ` +
+        `What the carrier read per item after ${String(elapsedMs)} ms over eighteen dispatches: ` +
+        `${textOf([...receipts.entries()])}.`,
+    ).toEqual([])
+    expect(
+      split.admitted,
+      `AL-6 — the ELEVEN the route admits must each answer \`admitted <role>\`: \`D-196\`'s admitted set is ` +
+        `[${[...ADMITTED_ROLES].sort().join(', ')}] and the route admitted [${split.admitted.join(', ')}]. This half is ` +
+        `the one \`D-232\`'s ruling left UNCHANGED for an agent — *"a person's click works; an agent's dispatch stays ` +
+        `refused"* is the SEVEN's sentence, and the eleven are admitted to both causes.`,
+    ).toEqual([...ADMITTED_ROLES].sort())
+    expect(
+      split.refused,
+      `AL-6 — the SEVEN the ruling refused must each be REFUSED BY NAME with the route's sentence BYTE FOR BYTE ` +
+        `(\`${refusalText('<role>')}\`). \`D-181\`'s list is [${[...REFUSED_ROLES].sort().join(', ')}] and the route ` +
+        `refused [${split.refused.join(', ')}]. **THIS IS THE ARM THAT REPLACED THE MARK**: a refused role that answers ` +
+        `\`admitted\` is the declared failure mode "a refused item dispatchable" — the grant moved out of \`main\`, which ` +
+        `\`D-196\` measured as the guard that matters — and it reds here rather than being excused by a paint.`,
     ).toEqual([...REFUSED_ROLES].sort())
   }, ROW_MS)
 
@@ -2022,7 +2207,7 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
   }, ROW_MS)
 
   // ── group `menus`: AL-7 — eighteen dispatches, one boot that may die ────────
-  it('AL-7 — eighteen render, eleven dispatch, seven refuse by name, and the agent\'s session survives', async () => {
+  it('AL-7 — eighteen render, eleven dispatch, seven refuse by name in the route\'s own words, and the agent\'s session survives', async () => {
     const { booted } = await shared('menus')
     const html = (await renderedHtml(booted.client)).html
     const items = renderedItems(html)
@@ -2062,50 +2247,24 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `(\`D-209\`). Items with no such handler: [${unwired.join(', ')}]. A node missing here is a node an agent's ` +
         `\`provident.dispatch\` can reach only as a node with nothing declared to run.`,
     ).toEqual([])
-    const receiptAt = (text: string): string => {
-      const tag = tagById(text, MENUS_RECEIPT_ID)
-      if (tag === null) return '(no carrier)'
-      const after = text.slice(text.indexOf(tag) + tag.length)
-      const close = after.indexOf('<')
-      return (close < 0 ? after : after.slice(0, close)).trim()
-    }
-    // ── the eighteen acts, one at a time: STASH the act, then FORCE THE TURN, then DUMP the carrier ─────────
+    // ── the eighteen acts, one at a time: the item's own body, then the FORCED turn, then the carrier ───────
     // **THE READ IS TWO ACTS BECAUSE THE WRITE AND THE PAINT ARE TWO TURNS, AND THAT IS MEASURED, NOT ASSUMED**
-    // (`D-209`'s battery finding). A dispatch runs the item's body, the body asks the menus route, and the answer is
-    // written into `MENUS_RECEIPT_ID` as a `content` state-slice in the ROUTE PROMISE's continuation — one turn AFTER the
-    // click turn. **MEASURED in a real boot**: re-reading the rendered surface 0, 5, 20, 100, 250, 500, 1 000 and 2 000 ms
-    // after the act still read the PREVIOUS item's text at every one of those eight stamps, while the very next dispatch
-    // — at the carrier itself, which declares no handler and therefore performs nothing — made the answer readable at
-    // once. **SO THE SETTLE IS FORCED AND NOT SLEPT ON**: the dump act is issued for every attempt and the bound is spent
-    // on the CARRIER'S OWN TEXT naming THIS item's role. A sleep alone could not do this (two seconds of it sufficed for
-    // nothing), and a poll alone could not either (no re-read of a page paints a write the graph has not been asked to
-    // render). What the pacing below buys is only the turn the route's answer needs to cross the IPC seam; the reading
-    // is the carrier's text, and it is re-asked after EVERY dump act.
-    const SETTLE_TURNS_MAX = 14
-    const SETTLE_TURN_MS = 60
+    // (`D-209`'s battery finding, and it is `actAtItem`'s own paragraph in this file: one dump act at the carrier — a
+    // node with no handler, performing nothing — is what makes the route's answer readable; a sleep of two seconds was
+    // measured to do nothing, and no re-read paints a write the graph was not asked to render). **THE COST, HERE**: one
+    // dump act settled every one of the eighteen on this boot (turns used below), so the sweep is 18 dispatches + 18
+    // dump acts + 18 rendered reads + 18 transport asks, and AL-7's whole row runs inside a few seconds of `ROW_MS`.
     const receipts = new Map<string, string>()
     const bodyWords = new Map<string, unknown[]>()
     const turnsUsed = new Map<string, number>()
     const transportStopped: string[] = []
     for (const item of items) {
-      const previous = receiptAt((await renderedHtml(booted.client)).html)
-      const answered = await call(booted.client, 'provident.dispatch', { target: { kind: 'nodeId', nodeId: item.nodeId }, event: 'click' })
+      const act = await actAtItem(booted, item)
       // THE BODY'S OWN WORD — the item the dispatch reached, named by the body that ran (`D-209`), independent of the
       // carrier and therefore of the settle: a dispatch that reached the WRONG node is caught even if the receipt lagged.
-      bodyWords.set(item.role, arr(memberOf(answered.value, 'results')))
-      let settled = previous
-      let turns = 0
-      for (let attempt = 1; attempt <= SETTLE_TURNS_MAX; attempt += 1) {
-        turns = attempt
-        await sleep(SETTLE_TURN_MS)
-        // THE DUMP ACT: a dispatch at the authored carrier, whose body list is empty — it performs nothing and exists
-        // only to take a render turn, which is the turn that paints the answer already standing in the graph.
-        await call(booted.client, 'provident.dispatch', { target: { kind: 'cssId', cssId: MENUS_RECEIPT_ID }, event: 'click' })
-        settled = receiptAt((await renderedHtml(booted.client)).html)
-        if (settled !== previous && settled.includes(item.role)) break
-      }
-      receipts.set(item.role, settled)
-      turnsUsed.set(item.role, turns)
+      receipts.set(item.role, act.receipt)
+      bodyWords.set(item.role, act.words)
+      turnsUsed.set(item.role, act.turns)
       const alive = await call(booted.client, 'provident.list_targets', {})
       if (!alive.ok || asObject(alive.value) === null) transportStopped.push(`${item.role} (${trunc(alive.text, 120)})`)
     }
@@ -2116,17 +2275,18 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `its name here. Silent roles: [${transportStopped.join('; ')}]; trace:\n${tail(booted.trace())}`,
     ).toEqual([])
     // ── THE PAIRING, ITEM → ITS OWN ANSWER: the body's word AND the carrier's answer, both per role ──────────
-    // **THE SEVEN REFUSALS ARE `main`'s ANSWER AND NOT THE RENDERING's COURTESY** (`D-181`, `D-196`): each refused item's
+    // **THE SEVEN REFUSALS ARE `main`'s ANSWER AND NOT THE RENDERING'S COURTESY** (`D-181`, `D-196`): each refused item's
     // body runs exactly as an admitted one's does, the route tests the seven BEFORE any other arm, and the refusal names
     // its own role — so the two lists below are read per item and never as a tally.
-    const admitted = items.filter((item) => !item.disabled).map((item) => item.role)
-    const refused = items.filter((item) => item.disabled).map((item) => item.role)
+    //
+    // **AND THE TWO LISTS ARE THE ACT'S, WHICH IS WHAT `D-232`'S UN-GREYING MADE NECESSARY AND STRONGER**: this row used
+    // to split the eighteen on `item.disabled`, i.e. on the PAINT — so it agreed with whatever the envelope marked and a
+    // mark on the wrong item was a green. The marks are gone (*"un-grey them — they work for a person, so show them
+    // enabled"*), so the split is `splitByAnswer`'s: `admitted <role>` or the seven's sentence, and any third answer is
+    // SILENT and reported. **THE SENTENCE THIS ROW'S TITLE STATES IS NOW MORE TRUE THAN WHEN IT WAS WRITTEN**: eighteen
+    // render, eleven dispatch, seven refuse by name, and NOTHING in the markup says which is which.
+    const split = splitByAnswer(items, receipts)
     const badBody = items.filter((item) => textOf(bodyWords.get(item.role)) !== textOf([`menu-item ${item.role}`])).map((item) => [item.role, bodyWords.get(item.role)])
-    const badAdmitted = admitted.filter((role) => receipts.get(role) !== `admitted ${role}`)
-    const badRefused = refused.filter((role) => {
-      const receipt = receipts.get(role) ?? ''
-      return !(receipt.startsWith('refused ') && receipt.includes(role))
-    })
     expect(
       badBody,
       `AL-7 — every dispatch must RUN ITS OWN ITEM'S BODY and the body must answer with that item's own role ` +
@@ -2134,17 +2294,36 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `\`menu-item <role>\` for the node it stands on. These answered something else: ${textOf(badBody)}.`,
     ).toEqual([])
     expect(
-      { admitted: badAdmitted.map((role) => [role, receipts.get(role)]), refused: badRefused.map((role) => [role, receipts.get(role)]) },
-      `AL-7 — EIGHTEEN RENDER, ELEVEN DISPATCH, SEVEN REFUSE BY NAME, and the carrier is where the answer is reflected ` +
-        `(\`D-181\`, \`D-196\`, \`D-209\`). The eleven admitted roles must each read \`admitted <role>\` in ` +
-        `\`${MENUS_RECEIPT_ID}\` and the seven refused must each read a refusal NAMING their role; the carrier read ` +
-        `${textOf([...receipts.entries()])} and the bodies answered ${textOf([...bodyWords.entries()])}. **THE PATH, IN ` +
-        `THE ROW'S OWN WORDS**: \`provident.dispatch\` at an item's own \`data-node-id\` runs the wiring-installed ` +
-        `\`handlers\` body, that body calls \`menuRoleAct\` — the SAME act the item's DOM \`click\` listens for, so a ` +
-        `human's click and an agent's dispatch are two causes of one act — and the answer comes back over ` +
-        `\`window.provident.menu\`, is written into this carrier as a \`content\` state-slice, and is READ here on the ` +
-        `turn a dump act forces (settle turns used: ${textOf([...turnsUsed.entries()])}).`,
-    ).toEqual({ admitted: [], refused: [] })
+      split.silent,
+      `AL-7 — EIGHTEEN DISPATCH AND EVERY ONE MUST ANSWER IN THE ROUTE'S OWN WORDS: \`admitted <role>\` or the seven's ` +
+        `sentence (\`${refusalText('<role>')}\`), and anything else is SILENT — a body that reached no route, a carrier ` +
+        `that never moved, a refusal re-worded, or one item's answer read at its neighbour's turn (\`actAtItem\` asks the ` +
+        `WHOLE word for exactly that reason: \`zoom\` is a prefix of \`zoomin\`). Silent here: ` +
+        `${textOf(split.silent.map((role) => [role, receipts.get(role)]))}. **THE PATH, IN THE ROW'S OWN WORDS**: ` +
+        `\`provident.dispatch\` at an item's own \`data-node-id\` runs the wiring-installed \`handlers\` body, that body ` +
+        `calls \`menuRoleAct\` — the SAME act the item's DOM \`click\` listens for, so a human's click and an agent's ` +
+        `dispatch are two causes of one act — and the answer comes back over \`window.provident.menu\`, is written into ` +
+        `this carrier as a \`content\` state-slice, and is READ here on the turn a dump act forces (settle turns used: ` +
+        `${textOf([...turnsUsed.entries()])}).`,
+    ).toEqual([])
+    expect(
+      split.admitted,
+      `AL-7 — the ELEVEN the route admits must each answer \`admitted <role>\` in \`${MENUS_RECEIPT_ID}\`: \`D-196\`'s ` +
+        `admitted set is [${[...ADMITTED_ROLES].sort().join(', ')}] and the route admitted [${split.admitted.join(', ')}]. ` +
+        `The carrier read ${textOf([...receipts.entries()])} and the bodies answered ` +
+        `${textOf([...bodyWords.entries()])}. An admitted role that answers otherwise is a grant that has NARROWED ` +
+        `without a ruling.`,
+    ).toEqual([...ADMITTED_ROLES].sort())
+    expect(
+      split.refused,
+      `AL-7 — the SEVEN the ruling refused must each be REFUSED BY NAME with the route's sentence BYTE FOR BYTE ` +
+        `(\`${refusalText('<role>')}\`), and this row reads that answer AFTER the transport has answered once more per ` +
+        `act — which is what proves a refused dispatch did not kill the app it was measuring. \`D-181\`'s list is ` +
+        `[${[...REFUSED_ROLES].sort().join(', ')}] and the route refused [${split.refused.join(', ')}]. The carrier read ` +
+        `${textOf([...receipts.entries()])}. **A REFUSED ROLE THAT EXECUTES IS THE DECLARED FAILURE MODE** — ` +
+        `\`quit\`/\`close\` would take the boot and the MCP port with them, and the transport arm above reds with the ` +
+        `role named.`,
+    ).toEqual([...REFUSED_ROLES].sort())
   }, ROW_MS)
 
   // ── group `view`: AL-8, AL-10 — both write `['zones']`, neither needs the realm ──

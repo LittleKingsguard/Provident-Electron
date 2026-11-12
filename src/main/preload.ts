@@ -180,6 +180,11 @@ export interface ProvidentBridge {
  * page or from this realm's other process. **SO THE TRUSTED ARM IS UNREACHABLE FROM THE MCP SURFACE**, and the refusal an
  * agent reads for the seven is byte-for-byte the one it read before this witness existed.
  *
+ * **AND A `disabled` ITEM EARNS NO GESTURE AT ALL** (`disabledMarkOf`, `D-232`'s correction): a mark the surface shows as
+ * inert must never be able to become a trusted call, because the witness is what hands `main` the `trusted` flag. The
+ * check reads the SAME element the role was read from, so a marked item is witnessed as NO gesture and every later arm
+ * reads it as a machine's — the one arrangement in which a future marking cannot half-work again.
+ *
  * **AND THE BRIDGE'S DECLARED SURFACE DOES NOT MOVE**: `menu(role)` keeps its one argument, its one answer and its one
  * channel. The second `invoke` argument is a fact of THIS channel, spelled by the two files that own it, and
  * `src/renderer/secure-panels.ts`'s `declare global` half stays in lockstep because nothing it declares changed.
@@ -187,8 +192,40 @@ export interface ProvidentBridge {
 /** The role the LAST trusted gesture landed on, or `null`. Consumed by the call that reads it (`witnessedGestureFor`). */
 let trustedMenuGesture: string | null = null
 
+/** **WHETHER THE ELEMENT CARRYING THE ROLE ALSO CARRIES A `disabled` MARK** — the WITNESS LAYER of the guard that makes
+ *  a half-working mark impossible. `disabled` is a form-control attribute and does nothing on a `div`, so a marked item
+ *  stays pressable; and because a real click is `isTrusted === true`, a mark that only painted would be a control the
+ *  surface calls inert and this witness reports as live. **SO A MARKED ELEMENT EARNS NO GESTURE**: the role is not
+ *  recorded, `witnessedGestureFor` answers `false`, and `main` weighs the call as a machine's — the untrusted arm, which
+ *  is the refusal. **PRESENCE IS THE MARK AND THE VALUE IS NOT INTERPRETED** (a DOM boolean attribute is present-or-absent;
+ *  `[disabled="true"]` is the page's paint key and not this rule's subject). TOTAL: no `getAttribute`, a read that throws
+ *  and an absent attribute all answer NOT MARKED, so an ordinary item is witnessed exactly as it was. */
+function disabledMarkOf(element: unknown): boolean {
+  if (element === null || typeof element !== 'object') return false
+  const read = (element as { readonly getAttribute?: unknown }).getAttribute
+  if (typeof read === 'function') {
+    try {
+      const held = (read as (name: string) => unknown).call(element, 'disabled')
+      return held !== null && held !== undefined
+    } catch {
+      return false
+    }
+  }
+  const listed = (element as { readonly hasAttribute?: unknown }).hasAttribute
+  if (typeof listed === 'function') {
+    try {
+      return (listed as (name: string) => unknown).call(element, 'disabled') === true
+    } catch {
+      return false
+    }
+  }
+  return (element as { readonly disabled?: unknown }).disabled === true
+}
+
 /** The authored `role` attribute of the element an event landed on, or of its nearest ancestor that carries one — the menu
- *  item itself when the press lands on its label, since the label is that element's own text. TOTAL: a target that is not
+ *  item itself when the press lands on its label, since the label is that element's own text. **THE ELEMENT THAT CARRIES
+ *  THE ROLE IS THE ONE MARKED `disabled`** (the paint writes both attributes on the item), so a mark there answers `null`
+ *  and NO ROLE IS RECORDED. TOTAL: a target that is not
  *  an element, an absent attribute and a walk that spends its depth all answer `null`, which reads as NO GESTURE. */
 function roleOfGesture(event: Event): string | null {
   let node: unknown = event.target
@@ -198,7 +235,11 @@ function roleOfGesture(event: Event): string | null {
     const read = element.getAttribute
     if (typeof read === 'function') {
       const held = (read as (name: string) => string | null).call(element, 'role')
-      if (typeof held === 'string' && held !== '') return held
+      if (typeof held === 'string' && held !== '') {
+        // THE DISABLED ARM, AND IT IS WHY A MARK CAN NEVER EARN A TRUSTED GESTURE: read at the SAME element the role came
+        // from, so a walk that finds the role on an ancestor still weighs that ancestor's own mark.
+        return disabledMarkOf(element) ? null : held
+      }
     }
     node = element.parentElement ?? null
   }

@@ -1072,10 +1072,12 @@ async function main(): Promise<void> {
   //    ONE `handlers` state-slice per item, graph bytes in this realm with no crossing behind them (`D-209`). **AND ITS
   //    ONE RETURNED READING IS READ**, the gutter's own rule above (`D-117`): zero attached items is a pane that renders
   //    as the menu it claims and can perform nothing, and that is said out loud at the one site that can say it. **THE
-  //    SEVEN REFUSED ITEMS TAKE NO CLICK LISTENER BUT THEY DO TAKE THE INSTALLED BODY** (`D-181`, `D-209`): they render
-  //    `disabled` and their refusal is `main`'s admitted set, and this realm installs the SAME handler on all eighteen
-  //    because a render-side guard is the one an agent's `provident.dispatch` runs around (`D-196`) — the body vets no role
-  //    and the route's refusal is written to the carrier like any other answer.
+  //    SEVEN A MACHINE MAY NOT DISPATCH TAKE THE SAME CLICK LISTENER AND THE SAME INSTALLED BODY** (`D-181`, `D-209`,
+  //    `D-232`): they are STYLED ENABLED because a person's trusted click EXECUTES them, they refuse a machine at `main`'s
+  //    admitted set, and this realm installs the SAME handler on all eighteen because a render-side guard is the one an
+  //    agent's `provident.dispatch` runs around (`D-196`) — the body vets no role and the route's refusal is written to the
+  //    carrier like any other answer. **AND A `disabled` MARK VETOES A CLICK AT THE LISTENER**, so the mark is never paint
+  //    with a live act behind it.
   const menus = startMenusItems(runtime)
   if (menus.attached === 0) {
     console.error('[provident-renderer] the menus items took NO click listener — the pane renders the menu it claims and no role can reach the route')
@@ -1994,13 +1996,18 @@ function reportMeasuredFigures(runtime: TabsPageRuntime): void {
  * NO MOUSEDOWN**: an agent's `provident.dispatch` never moves the document's focus, so the focus rule is the HUMAN's half
  * of the arrangement and the dispatch arm needs no equivalent of it.
  *
- * **THE SEVEN ARE DATA AND THE GUARD IS `main`'s** (`D-181`, whose split is FIXED and is not adjusted here): the envelope
- * renders them `disabled`, and **they take no DOM listener** — the refusal is the RENDERING, and it is a COURTESY. The
- * **ENFORCEMENT** is `src/main/main.ts`'s admitted set, tested before any other arm of `menuRoleAnswer`: `provident.dispatch`
- * synthesises a click on an authored id, so an agent reaches every installed body this file writes, and only the
- * main-process bound stops `quit`, `close`, `reload`, `forcereload`, `toggledevtools`, `minimize` and `zoom` however the
- * click arrived (`D-196`). **SO THE SEVEN GET THE INSTALLED BODY TOO, AND THIS TURN STILL REFUSES NOTHING**: every item the
- * census answers — **all eighteen**, not the eleven — is given the same body, and that body **does not vet a role, read a
+ * **THE SEVEN ARE DATA AND THE GUARD IS `main`'s** (`D-181`, whose split is FIXED and is not adjusted here): the seven
+ * items the ruling refuses AN AGENT are the seven the trusted-click path EXECUTES FOR A PERSON, so **they are STYLED
+ * ENABLED** — the record marks none of them (`D-232`'s correction, the user's ruling *"un-grey them — they work for a
+ * person, so show them enabled"*). **THE ELEVEN AND THE SEVEN TAKE THE SAME TWO `click` PATHS**: a DOM listener and the
+ * wiring-installed body, and the refusal a machine reads is `src/main/main.ts`'s admitted set, tested there before any
+ * other arm of `menuRoleAnswer` (an agent's `provident.dispatch` synthesises a click, so it reaches every installed body
+ * this file writes, and only the main-process bound stops the seven however the click arrived — `D-196`). **AND A
+ * `disabled` MARK IS NOW A VETO AT BOTH LAYERS**: this file's DOM listener refuses to call `menuRoleAct` for a marked
+ * element (`disabledMarkOn`) and `src/main/preload.ts`'s witness refuses to record a gesture on one — so a mark is
+ * either a real enforcement or nothing at all, never a grey that a person's click walks straight through.
+ * **SO EVERY ITEM THE CENSUS ANSWERS** — **all eighteen**, not the eleven — is given the same body, and that body
+ * **does not vet a role, read a
  * role list or refuse anything**; a refusal it receives is the route's answer, written to the carrier like any other. To
  * have installed on the eleven and SKIPPED the seven would be this file making the refusal decision a second time, in the
  * realm an agent's own `dispatch` runs in — the second authority `D-181` puts on `main` and the one `D-196` measured a
@@ -2203,6 +2210,42 @@ function writeMenuReceipt(runtime: Runtime, text: string): void {
   }
 }
 
+/** **THE `disabled` MARK ON A RESOLVED ELEMENT — THE DOM LAYER OF THE GUARD THAT MAKES A HALF-WORKING MARK
+ *  IMPOSSIBLE** (the user's ruling, `D-232`'s correction): the paint writes an authored `props.disabled` as the BARE
+ *  ATTRIBUTE, and on a `div` that attribute does NOTHING — `disabled` is a form-control attribute, so a marked item
+ *  stays pressable and `D-232`'s trusted path used to execute it for a person (a real click is `isTrusted === true`).
+ *  **SO PRESENCE IS THE MARK AND PRESENCE IS THE VETO**: the element's own `disabled` attribute, read HERE at click
+ *  time (never captured), stops the click before `menuRoleAct` — which means a future marking cannot be a paint
+ *  instruction that leaves the act live, and it cannot be half-honoured either. **THE VALUE IS NOT INTERPRETED**: a
+ *  DOM boolean attribute is present-or-absent, and the CSS the page keys on (`[disabled="true"]`) is a PAINT detail,
+ *  not this rule's subject. The property arm exists for a node whose authored prop reached a real form control, which
+ *  is the one shape in which the platform would have enforced this itself. TOTAL: no `getAttribute`, a read that
+ *  throws, an absent attribute and a non-`true` property all answer NOT MARKED, so an ordinary item behaves exactly as
+ *  it did and no click is lost to a hostile element. */
+function disabledMarkOn(element: unknown): boolean {
+  if (element === null || typeof element !== 'object') return false
+  const read = (element as { readonly getAttribute?: unknown }).getAttribute
+  if (typeof read === 'function') {
+    try {
+      const held = (read as (name: string) => unknown).call(element, 'disabled')
+      // AN ABSENT ATTRIBUTE ANSWERS `null` IN THIS PLATFORM'S DOM AND `undefined` IN A SHIM THAT SPELLS IT THAT WAY:
+      // both read as NOT MARKED, so the guard never invents a mark out of a missing attribute.
+      return held !== null && held !== undefined
+    } catch {
+      return false
+    }
+  }
+  const listed = (element as { readonly hasAttribute?: unknown }).hasAttribute
+  if (typeof listed === 'function') {
+    try {
+      return (listed as (name: string) => unknown).call(element, 'disabled') === true
+    } catch {
+      return false
+    }
+  }
+  return (element as { readonly disabled?: unknown }).disabled === true
+}
+
 /** **ONE ITEM'S TWO LISTENERS — THE FOCUS RULE AND THE CLICK** (`D-196`; L2 §2 turn 4). The turn is handed the NODE
  *  ID the census answered — never a role, never an element — so both listeners ask the NODE for its own
  *  `props.role` at click time and nothing is captured (`D-129`).
@@ -2243,7 +2286,15 @@ function attachMenuItem(runtime: Runtime, nodeId: string): boolean {
   })
   // THE HUMAN'S ARM — the same act the installed handler body is the agent's arm of (`D-209`): read the node's own role,
   // ask the one route, write the one receipt. Neither path is the other's implementation.
-  listen.call(element, 'click', (): void => { menuRoleAct(runtime, nodeId) })
+  // **AND A MARKED ITEM RUNS NOTHING** (`disabledMarkOn`, the DOM layer of the guard): the mark is read off the
+  // element at CLICK time — never captured at attach time — because the paint may write or clear it after this
+  // listener exists, and a captured reading would be the stale copy `D-129` forbids. This is the layer that makes the
+  // contradiction impossible from the human's side; `src/main/preload.ts`'s witness is the one that keeps a trusted
+  // gesture from ever being earned on such an element.
+  listen.call(element, 'click', (): void => {
+    if (disabledMarkOn(element)) return
+    menuRoleAct(runtime, nodeId)
+  })
   return true
 }
 
