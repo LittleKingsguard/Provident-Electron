@@ -9,7 +9,7 @@ import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.j
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply, TabsRecordRow } from '../shared/types.js'
 import { clampToBounds } from '../shared/gutter.js'
-import { createTabsClient, type TabsClient, type TabsClientReading, type TabsCommittedAnswer, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
+import { createTabsClient, NEW_TAB_TARGET_PREFIX, type TabsClient, type TabsClientReading, type TabsCommittedAnswer, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
@@ -1649,92 +1649,34 @@ function attachRowAct(runtime: Runtime, nodeId: string): boolean {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
- * THE LANDING-PAGE REPAIR — A NEW TAB WITH NO CONTENT OF ITS OWN IS COERCED TO THE LANDING PAGE'S
+ * THE LANDING-PAGE REPAIR IS UNDONE — THIS IS ITS HEADSTONE, NOT ITS HOME (`D-241`'s repair, undone on measurement)
  *
- * **THE USER'S RULING, VERBATIM**: *"The new tab should be coerced to the landing-page content by repair if it isn't
- * seeded with any."* What that fixes is measured: a `+` press activates a row whose `target` is `D-239`'s placeholder
- * `untitled-<n>` — a string THIS REALM invented because it authors no node for a new tab's content — so the stage has
- * nothing to paint and BOTH authored terminals are driven `display: none`: the row the user is looking at contains nothing
- * at all.
+ * **WHAT STOOD HERE, AND WHAT IT GOT WRONG.** `repairUnpagedTarget(reading)` read a `['tabs']` delivery and, where the
+ * ACTIVE row's `target` was this realm's own `untitled-<n>` placeholder, wrote that row WHOLE with
+ * `target: TABS_LANDING_PAGE_ID` through the `dataRoute('write', …)` passthrough — the user's ruling, *"The new tab should
+ * be coerced to the landing-page content by repair if it isn't seeded with any"*, discharged by changing the RECORD. **IT
+ * BOUGHT THE VIEW ITS RULING ASKED FOR AND SOLD THE ROW'S IDENTITY**, which is the one thing that makes a chip
+ * addressable: `seatOf` above (S6) seats the FIRST row of `reading.order` whose `target` matches the string a chip hands
+ * the act, so once the new row and the `landing` row carried ONE target, **every click in the bar resolved to the
+ * `landing` row** — earlier in `order` — and the user saw exactly that: *"clicking on any tab (including the currently
+ * active one) switches the active tab to the landing."* The already-active `landing` chip looked fine only because it
+ * landed on itself.
  *
- * **WHERE THE REPAIR CAN LAWFULLY LIVE, AND WHY IT IS HERE AND NOT IN THE RECORD.** A repair is a CONSTRAINT's product,
- * and the constraint this one needs is *"a tab's content is a node this app authors"* — which **the record cannot state**:
- * `src/main/tabs-record/index.ts` composes the family, its seats and its eight creation-time declarations, and **which
- * nodes are authored pages is the ENVELOPE's fact, held in this realm**. So the trigger is the point at which both halves
- * are in one hand: **a `['tabs']` DELIVERY, read in this realm** — the one moment the record's own text and the authored
- * tree are both here — and the repair is a CONVERGING WRITE through the EXISTING `dataRoute` passthrough, the same route
- * and the same one-row-whole shape `focusActRoute`'s S8 already uses. **No channel, no bridge member, no new tool**
- * (`D-18`), and the record's own listener delivers the change, so this writes no view: what moves is the RECORD, which is
- * the only thing a next delivery could not undo.
+ * **SO THE FIX IS THE CONTENT AND NEVER THE IDENTITY, AND IT LIVES ONE MODULE OVER.** A row's `target` stays what the `+`
+ * gave it (`NEW_TAB_TARGET_PREFIX` + n, this realm's own marker, imported at this file's head), so every tab keeps a
+ * distinct identity and each chip's click addresses its OWN row. **What the stage shows is decided where it has always been
+ * decided — the LANDING TERMINAL'S WITNESS** (`src/renderer/tabs-client.ts`'s `deriveTabsWitness`), whose one comparison now
+ * answers `true` for the landing page OR for this realm's own no-content marker: **a new tab LOOKS like the landing content
+ * without BECOMING the landing tab.** This file therefore writes no row, holds no closure guard and takes no route for the
+ * ruling at all — no write, no `coercedUnpaged`, no second reader of the record — and the marker's ONE spelling is
+ * `tabs-client.ts`'s, read by the `+`'s derivation below and by the witness that decides the paint.
  *
- * **THE TRIGGER IS THE ACTIVE ROW WHOSE TARGET IS THIS REALM'S OWN PLACEHOLDER — "isn't seeded with any", read as the
- * corpus already spells it.** `NEW_TAB_TARGET_PREFIX` above is the ONE string this realm uses for a tab it opened without
- * content (`D-239`: *"this app authors no node for a new tab's content"*), so a row carrying `untitled-<n>` is a row
- * NOBODY SEEDED — and that is the condition the ruling names. **THE ACTIVE ROW ALONE**, because it is the one the stage
- * follows: an inactive row keeps its own `target` until it is activated, which matters because `seatOf` seats the FIRST
- * row of `order` carrying a target (`:805`), so coercing every row at once would turn every fresh tab into a second
- * spelling of one seat in a single delivery.
- * **AND THE WIDER KEY WAS MEASURED AND IS REFUSED, WHICH IS THE REASON THIS ONE IS SO NARROW**: *"the target resolves no
- * authored page"* — the shape this repair could have taken, whether nominal (`TABS_LANDING_PAGE_ID` /
- * `TABS_ERROR_PAGE_ID`) or by `elementForNodeId` — coerces a target a CALLER chose. `tests/e2e/focus-retirement/`'s `F-1`
- * opens a row with `/delta` and asserts the opened row CARRIES it, and that is a gating `tests/e2e/` row measuring the
- * act's own contract: a caller's string is a SEED by definition, and the ruling's condition is the ABSENCE of one. So the
- * placeholder — and only the placeholder — is repaired.
- *
- * **`provident.focus` IS WHY IT IS NOT IN THE `+`'S ACT**: the act sees only the target it was handed, so a repair placed
- * there could never reach a row opened by `provident.focus` — the `+` is one of two callers, not the cause. **WHAT A TAB
- * CREATED BY `provident.focus` WITH AN UNKNOWN TARGET GETS, STATED EXACTLY**: its caller's target, unrepaired, and
- * therefore a stage that paints nothing until it is retargeted — because that caller SEEDED a target, and the ruling's
- * condition does not hold for it. What it does NOT get is the placeholder's coercion, and that is a deliberate difference
- * of class: `untitled-<n>` is this realm's own declaration that it has nothing to put there, while `/delta` is somebody's
- * answer.
- *
- * **IT CONVERGES, AND THE CLOSURE MEMBER IS WHAT KEEPS IT FROM REPEATING.** The write fires a delivery, that delivery
- * reads the coerced row, and the coerced target is no longer a placeholder — so the repair writes nothing. The only window
- * in which it could write twice is between a write and the record catching up (the same window `startThemeApplication`'s
- * `lastSetting` covers): `coercedUnpaged` holds the `row id|target` pair this turn just handed, is read as nothing but a
- * guard, and a stale value only ever costs one skipped repeat.
- *
- * **THE RESIDUE THIS REPAIR ONCE CARRIED IS DISCHARGED AT THE TERMINAL'S OWN KEY, AND THE TWO HALVES MOVED APART ON
- * PURPOSE.** The landing TERMINAL is driven by `deriveTabsWitness` (`src/renderer/tabs-client.ts`), and **its witness now
- * compares the ACTIVE ROW'S `target` with `TABS_LANDING_PAGE_ID`** — the fact this repair makes true — where it used to
- * compare the active row's ID with the landing ENTRY's, which a coerced row can never satisfy (`tab-2` is not `landing`).
- * So the record's write and the terminal's key agree, and a coerced tab shows the landing page: **measured on a live boot,
- * `display: block` on `#tabs-landing-page` with the coerced row active.** What this repair owes — the RECORD naming a page
- * this app authors — is what it delivers; what the WITNESS owes — reading that name off the record's own member rather than
- * off a derived answer — is that module's, and it no longer reads an id at all.
+ * **WHAT A TAB CREATED BY `provident.focus` WITH A CALLER'S OWN UNKNOWN TARGET GETS, STATED EXACTLY**: its caller's target,
+ * carried untouched and never rewritten, and **the landing terminal does NOT stand for it** — the fallback keys on this
+ * realm's own marker and NEVER on "the target resolves no authored page". That wider key was measured RED on gating
+ * `tests/e2e/focus-retirement/`'s `F-1`, which opens a row with `/delta` and asserts the opened row CARRIES it: a caller's
+ * string is a SEED by definition, while `untitled-<n>` is this realm's own declaration that it has nothing to put there.
  * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
-
-/** **THE `row id|target` PAIR THIS TURN LAST HANDED THE STORE — CLOSURE STATE AND NEVER DATA**, exactly as
- *  `handedNewTabTarget` is: it is read as a guard against re-writing during the window before the record catches up, and
- *  it is never read as a record. */
-let coercedUnpaged: string | null = null
-
-/** **THE REPAIR ITSELF — TOTAL, ONE WRITE, AND REPORTED WHERE IT REFUSES** (`D-117`). It reads the row it was handed and
- *  writes it WHOLE with its `target` replaced (`D-76`), at the row's own address and the record's own `file` tier
- *  (`D-101`, `D-136`), through the SAME `dataRoute` passthrough the act uses. A reading that is not `committed` carries
- *  no rows and is not a record (`D-127`), so it refuses nothing and writes nothing. */
-async function repairUnpagedTarget(reading: TabsClientReading): Promise<void> {
-  if (reading.status !== 'committed') return
-  const active = reading.rows.find((row) => row.active === true)
-  if (active === undefined) return
-  if (!active.target.startsWith(NEW_TAB_TARGET_PREFIX)) return
-  const pair = `${active.id}|${active.target}`
-  if (pair === coercedUnpaged) return
-  coercedUnpaged = pair
-  const row: TabsRecordRow = { ...active, target: TABS_LANDING_PAGE_ID }
-  let written: unknown
-  try {
-    written = await dataRoute('write', { path: ['tabs', active.id], tier: 'file', value: row })
-  } catch (error) {
-    console.error(`[provident-renderer] the landing repair on ${active.id} threw; the tab's target stays '${active.target}'`, error)
-    return
-  }
-  const refusal = refusalOf(written)
-  if (refusal !== null) {
-    console.error(`[provident-renderer] the landing repair on ${active.id} was refused (${refusal.reason}: ${refusal.message}); the tab's target stays '${active.target}'`)
-  }
-}
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
  * THE ADD-A-TAB CONTROL — THE ONE AFFORDANCE THE ACT HAD AND THE INTERFACE DID NOT
@@ -1771,13 +1713,14 @@ async function repairUnpagedTarget(reading: TabsClientReading): Promise<void> {
  *  front of this body — an agent's `dispatch` would run the placeholder and the act would silently not happen. */
 const TABS_ADD_HANDLER = 'tab-add-act'
 
-/** **THE NEW TAB'S TARGET PREFIX, AND NOTHING DEPENDS ON ITS SPELLING**: a `target` is the CONTENT a tab holds
- *  (`src/shared/types.ts`'s row docblock), this app authors no node for a new tab's content, and the record's own title
- *  repair (`tab-has-title`, `'untitled'`) is what the chip will read — so the string is this turn's, chosen once here.
- *  **⟶ AND IT IS NOW A SECOND READER'S TOO, WHICH IS WHY IT IS NOT A PRIVATE DETAIL**: `repairUnpagedTarget` below treats a
- *  `target` carrying this prefix as THE declaration that the tab was opened with no content, and coerces it to the landing
- *  page — so this one spelling is both what the `+` hands the act and what the repair recognises as "nobody seeded this". */
-const NEW_TAB_TARGET_PREFIX = 'untitled-'
+/** **THE `+`'S TARGET PREFIX IS NOT SPELLED HERE — IT IS `tabs-client.ts`'S ONE `NEW_TAB_TARGET_PREFIX`, IMPORTED AT THIS
+ *  FILE'S HEAD, AND BOTH READERS READ THE SAME BYTES**: this turn hands the act `untitled-<n>` for a tab it opened with no
+ *  content (`src/shared/types.ts`'s row docblock: a `target` is the CONTENT a tab holds, and this app authors no node for a
+ *  new tab's content; the record's own title repair, `tab-has-title`/`'untitled'`, is what the chip reads), and the landing
+ *  terminal's witness (`src/renderer/tabs-client.ts`'s `deriveTabsWitness`) reads that same prefix as "this tab is looking
+ *  at the landing content" — **so a fresh tab shows the landing page while its own `target`, and therefore its own seat,
+ *  stays its own.** The constant lives at the witness because that module is the reader this file cannot hand a value to
+ *  (this file imports it, never the reverse); a second copy on either side is the collision `D-241` recorded, back. */
 
 /** **THE LAST TARGET THIS TURN HANDED THE ACT, AND IT IS CLOSURE STATE AND NEVER DATA** (the form
  *  `startThemeApplication`'s `lastSetting` already has): the derivation below reads the RECORD for every string a row
@@ -1911,14 +1854,10 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
  *  the argument that shadowed it, and nothing else in this file writes either one. */
 function holdTabsReading(reading: TabsClientReading, runtime: Runtime | null): void {
   tabsClientReading = reading
-  // **THE REPAIR, AND IT IS TAKEN FROM THE SAME HELD READING BESIDE THE MINT AND THE DRIVE** (`repairUnpagedTarget`'s own
-  // block carries the ruling, the trigger and the convergence argument). **IT IS NOT A FOURTH TURN AND NOT A THROW INTO
-  // THE OTHER TWO**: it is `void`-ed, so a repair that throws or is refused is REPORTED inside itself and neither the row
-  // mint below nor the terminals' drive can be aborted by it — the same rule `driveTabsRows`' own `try` keeps, one
-  // function out. **AND IT RUNS BEFORE THE MINT**, so the delivery that shows the empty tab is the one that also writes the
-  // coercion: the record's answer arrives as the next delivery, and the chip the operator is looking at carries the
-  // landing page from then on.
-  void repairUnpagedTarget(reading)
+  // **NO REPAIR RUNS HERE ANY MORE, AND THAT IS THE `D-241` HEADSTONE ABOVE** (`repairUnpagedTarget` wrote a row's `target`
+  // and made two rows one seat). A delivery is a RE-READ and this body makes of it two things only: the rows' mint, and the
+  // two authored terminals' drive — **and the fresh tab's landing content is the WITNESS's answer, not a record write**
+  // (`deriveTabsWitness`'s marker arm), so nothing here writes a byte of the record on a delivery at all.
   // **AND THE MINT — WITH ITS ATTACH — IS MADE FROM THE SAME HELD READING** (`S-4`/`S-5`, `D-179`, `D-201`): one `rows-mint`
   // per delivery, in the one body that already holds it, followed by one `click` listener per row that mint answered. It
   // writes no page, resolves nothing through a map and holds no record: a delivery that is not `'committed'` mints nothing
