@@ -5127,3 +5127,33 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,962 passed / 2 skipped` of `2,964`** over **`146`** files; the app **live on `http://127.0.0.1:3787/mcp`** with the styled bundle, its window armed, and **one `http transport ready` line** — the duplicate claim `D-229` left named is **gone at this head**.
 
 **ITS REGISTER IS `D-71` TO `D-229`** as prose, unchanged and extended by this row only. **This row records a user seeing what an instrument could not, an element that was present and unpresented, a rule keyed off the one signal the paint can write, and a visual judgement left where it belongs.**
+
+## D-231 — THE APP WAS MOUNTED INSIDE HAND-WRITTEN DEMO SCAFFOLDING, AND **A SCREENSHOT IS WHAT FOUND IT**: a UI-authority violation had shipped, been styled around, and passed every row
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** a screenshot of the running app, after which *"there's no tab row in the top-bar"* became a different and larger finding than the one `D-230` fixed.
+
+**THE DEFECT, AND IT WAS IN THE SHELL'S OWN PAGE.** `src/renderer/index.html`'s `<body>` carried:
+
+```html
+<header><h1>Provident-Electron — MCP endpoint demo</h1><p>…</p></header>
+<main class="layout">
+  <div id="app" class="card"></div>
+  <div id="panes"></div>
+</main>
+```
+
+**So the app root rendered HALF the window width** (`grid-template-columns: 1fr 1fr`), **inset by `.card`'s border, radius and padding and by `body`'s `1rem`**, **under a hand-written title and subtitle** — **and the top-bar's name wrapped onto two lines for want of room**, with the menus rendering as a vertical string of bare words. **Every one of those observations came from a screenshot; none of the suite's `364` gating sites could see any of it.**
+
+**AND IT WAS A UI-AUTHORITY VIOLATION, WHICH `AGENTS.md` STATES AS A NON-NEGOTIABLE**: *"every element outside the Electron shell's own chrome is provident data … never hand-written DOM; an element rendered outside it is invisible to `provident.dispatch`, `get_rendered_html` and `get_markdown`."* **The `<header>` was exactly that** — two elements on screen that no agent could dispatch to, read, or markdown. **It had been there since the demo page and survived every pass**, because **the app never *looked* at itself**: the rows read the graph, and the graph was correct.
+
+**WHAT WAS REMOVED, KEPT AND ADDED.** **Removed**: the header and its paragraph, `header h1`/`header p`/`.layout`, and the dark-pair line that existed only for the header. **Kept**: the `color-scheme: light` pin, `body`'s explicit `color` (its `padding` → `0`), `.card` (authored cards use it), and `D-230`'s `#tab-row` rule with its comment. **Added**: `#app { position: fixed; inset: 0 }` — **chosen over `width`/`height` because a fixed box leaves the document flow entirely, so no future page content can open a scroll range under the app** — plus **`.app-surface { height: 100% }`, the single declaration that makes the root's inline `display: flex; flex-direction: column` viewport-tall** and lets the stage's authored `flex: 1 1 0` be the remainder.
+
+**`#panes` WAS KEPT WITH EVIDENCE AND NOT DELETED, WHICH IS THE PART THAT MATTERED.** It **is a real realm host**: `renderer.ts:1090` mounts `SecurePanels` on it and **both live legs read boxes inside it** (`panes-live`'s `P-3` requires a **non-zero** `[data-group]` box). **So it was taken out of the visual flow by `position: fixed; left: -10000px`** — **deliberately NOT `display: none` and NOT zero-size**, because either would have reddened the legs that need its box to be real. **A deletion would have looked right and broken a realm.**
+
+**AND THE TWO PROPORTION DEFECTS THE SCREENSHOT SHOWED.** **`.top-bar` gained `white-space: nowrap` and the tabs box `flex: 1 1 auto; min-width: 0`**, so **the row yields room instead of squeezing the name onto two lines** — the name is the node's `content` and cannot shrink gracefully. **`.menus-menu` became a compact bordered box whose name leads its items, and `.menu-item` an inline chip**, with **`.menu-item[disabled="true"]` greyed and struck through** — **keyed off the record's painted attribute for `D-230`'s reason: the paint cannot set a class.**
+
+**THE LESSON THIS ROW EXISTS TO CARRY.** **Three rows in a row this seat reasoned about appearance from markup and got it wrong** — `D-230` found an unstyled row by *grepping a stylesheet*, and **this row found a UI-authority violation only because the user sent a picture**. **The suite cannot see the page's own scaffolding, because the page is not provident data** — **so the one class of defect the corpus's authority rule exists to forbid is also the one class no row can catch.** **A screenshot is the instrument for it, and this project had never taken one.**
+
+**THE READINGS.** `npm test` **`2,960 passed / 2 skipped` of `2,964`** with **two edit-set rows** (`F-9(b)` owner `gesture-session`, `I-12` owner `gutter-ui`) that clear on commit; `typecheck`/`typecheck:tests` **0**; `build` **0**; **every markup and CSS row green, the theme rows included** (`T-8`, `T-9`, `PRE-3`/`X-3`, and `X-5`'s one-match reading still **`1`**). **The app is live on `http://127.0.0.1:3787/mcp`**, its `get_rendered_html` **now starts at the graph's root** with **zero `<header>`** and the only `<h1>` the authored landing page's own.
+
+**ITS REGISTER IS `D-71` TO `D-230`** as prose, unchanged and extended by this row only. **This row records a non-negotiable violated in the shell's own page, a realm host spared by requiring evidence before deletion, and the admission that the instrument which found it was a person looking.**
