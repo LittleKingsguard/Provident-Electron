@@ -180,8 +180,25 @@
        sheet cannot read (the unseeable family, `D-178`); the wheel scrolls the row either way, and the cure for it must
        never be a `no-drag` on the container. */
 
+    /* **THE FREE AREA IS THE BAR'S WIDTH, AND THAT IS THE CLAIM `D-239` DELETED FROM THE ROW AND NEVER RE-HOMED.**
+       `D-193` measured `env(titlebar-area-width)` resolving to `607px` on a `720`-wide window (`607 = 720 − 113`,
+       the platform's three controls owning the rest), so the variable IS the free area WITH THE CONTROLS EXCLUDED —
+       and it was the ROW that carried it. Deleting it there was right (an explicit `width` is a flex BASE SIZE, so it
+       stole the name's ground) but it left NOTHING bounding the bar: the root's column stretches the bar to the
+       WINDOW's width, so the bar's content — name, row, `+` — ran to the window's edge and under the platform's
+       buttons, which is exactly the reported screenshot at `249px` wide ("scroll happens only after the tab row is
+       covered by the buttons"). Declared HERE, the bar IS the free area, and the row's `flex: 1 1 auto; min-width: 0`
+       then computes a remainder that ENDS BEFORE THE CONTROLS — the space in between, which is the charter's own
+       allocation (`D-176`).
+       `box-sizing: border-box` IS LOAD-BEARING AND NOT DECORATION: the inline padding below is `0 0.75rem`, and
+       without the border-box arm `env(...)` would be the CONTENT box, so the bar would measure `env()` PLUS its
+       padding and overrun the free area by `1.5rem` — the same crowding by a slimmer margin.
+       THE FALLBACK IS WHY THE DECLARATION CARRIES ONE: where `env(titlebar-area-width)` does not resolve (no window
+       controls overlay, another platform, an older Chromium) it computes the `100%` arm, which is the pre-change
+       full-window bar — sane, and never a zero-width strip. */
     .top-bar {
       box-sizing: border-box;
+      width: env(titlebar-area-width, 100%);
       padding: 0 0.75rem;
       background: #fff;
       border-bottom: 1px solid #d8dde3;
