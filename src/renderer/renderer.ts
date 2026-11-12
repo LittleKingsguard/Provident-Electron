@@ -1721,6 +1721,22 @@ async function main(): Promise<void> {
         `installed=${String(addTab.installed)} attached=${String(addTab.attached)}, so a press reaches no act`,
     )
   }
+  // ⟶ **AND THE PANE'S RELOCATION TAKES THE SAME ONE REGISTRATION, ONE AFFORDANCE OVER** (`docs/L3/renderer-wiring/
+  //    design-pane-relocation.md` rev 1 §3): the second gesture `D-244` designed and never built — a `grab` grip per
+  //    pane and four authored zone drops, revealed by `props.tabindex` + `:focus-within` and NEVER by a state. The
+  //    nodes are AUTHORED, so they exist as soon as the first envelope loaded: this site installs ONE live body and
+  //    ONE `click` per drop and nothing else, so it awaits nothing, sends no route and writes no byte of the pane
+  //    record — a boot that is never pressed cannot move `B-5`'s order. **ITS THREE READINGS ARE READ**, the gutter's
+  //    and the `+`'s own rule (`D-117`): a drop that never resolved, never took a body or never took a listener is a
+  //    relocation a person cannot perform and an agent cannot dispatch, and it is said out loud where it happens.
+  const paneMove = startPaneMove(runtime)
+  if (paneMove.drops !== PANE_MOVE_DROP_IDS.length || paneMove.installed !== paneMove.drops || paneMove.attached !== paneMove.drops) {
+    console.error(
+      `[provident-renderer] the pane-move drops are NOT fully wired — resolved ${String(paneMove.drops)}/${String(PANE_MOVE_DROP_IDS.length)} ` +
+        `of \`${PANE_MOVE_DROP_IDS.join('`, `')}\`, installed ${String(paneMove.installed)}, attached ${String(paneMove.attached)}, ` +
+        `so a press or a dispatch may reach no act`,
+    )
+  }
   // ⟶ **THE APPEARANCE APPLICATION (`D-97`)** — constructed here, ONCE, after the first envelope load so the authored state
   //    node exists: `themeWiringRole` derives the caller-held attribute name and the authored carrier's id, and the returned
   //    pair of turns is the app's ONE application site. **IT READS NOTHING AND WRITES NOTHING AT THIS SITE** — `D-96`'s boot
@@ -2367,6 +2383,202 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
   const installed = installAddTabHandler(runtime, nodeId)
   const attached = attachAddTab(runtime, nodeId)
   return { nodeId, installed, attached }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// **TURN 6 — THE PANE'S RELOCATION: ONE GRIP PER PANE, FOUR AUTHORED ZONES, ONE WHOLE-PANE WRITE**
+// (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1; the second affordance `D-244` designed and never built.)
+//
+// **THE GESTURE IS A PICK AND NOT A DRAG, AND THE MACHINERY IS WHY** (§1): the landed affordance installs no pointer
+// capture local to another region, so a drag that leaves the strip's box loses its reading and a pointer over another
+// zone is a pointer the gesture cannot see. So the grip is pressed, its four drops are REVEALED BY FOCUS
+// (`props.tabindex` + one `:focus-within` rule — the menus' mechanism, no state and no record), and the SECOND click is
+// the act. **AND THE DROP NAMES BOTH OPERANDS IN ITS OWN `props`** (§2): `props.pane` and `props.zone` are read OFF THE
+// NODE through `authoredPropOf`, so no hit-test is taken and no `getBoundingClientRect` is called — that call THROWS in
+// the layout-less DOM shim, so a box-resolved drop could be measured in no module row of this unit at all.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE EIGHT DECLARED DROPS, BY THEIR AUTHORED IDS — THE ADDRESS BOOK AND NOT A WALK** (§3 `M1`; `D-235`). The
+ *  envelope derives each id from its grip's one spelling (`'menus-grab'`/`'gutter-grab'` + `-<zone>`), so these eight
+ *  literals are the SECOND spelling and the equality is a ROW's business, never a derivation — the ids cannot cross the
+ *  module boundary without becoming published names, which the design refuses (`D-41`, `D-188` debt 2, §7). The census
+ *  resolves each of them to the NODE id the graph minted (a node id is not a `props.id`: `addTabNodeId`'s lesson), and
+ *  a drop naming a pane or a zone the record does not declare is REFUSED BY THE STORE rather than dropped here (§3). */
+const PANE_MOVE_DROP_IDS: readonly string[] = [
+  'menus-grab-top', 'menus-grab-bottom', 'menus-grab-left', 'menus-grab-right',
+  'gutter-grab-top', 'gutter-grab-bottom', 'gutter-grab-left', 'gutter-grab-right',
+]
+
+/** **THE ONE `(name, event)` PAIR EVERY DROP AUTHORS AND THIS FILE INSTALLS OVER** (`TABS_ADD_HANDLER`'s two-spelling
+ *  rule, exactly): the envelope states it (`demo-envelope.ts`'s `PANE_MOVE_HANDLER_NAME`) and this copy names the body
+ *  it installs. A rename on either side would silently turn the install into a SECOND handler rather than a
+ *  replacement, which is why both sites say so. */
+const PANE_MOVE_HANDLER = 'pane-move'
+
+/** **THE CENSUS — EACH DECLARED DROP ID RESOLVED TO THE NODE THE GRAPH MINTED, IN ONE WALK** (`D-235`; the
+ *  `addTabNodeId`/`menuItemNodeIds` form): `props.id` is read off every in-tree node ONCE at boot and compared against
+ *  the eight literals above, so no node id is spelled and no selector is used. **TOTAL**: a census that throws, answers
+ *  no `nodes` or answers a shape that is not a list states an EMPTY answer, so a realm with no such node degrades to no
+ *  listener and no throw (`D-127`). **THE COST IS NAMED**: one `nodeState` read per in-tree node, once — the price
+ *  `addTabNodeId` already pays, and no per-delivery read. **A MISSING DROP IS NOT INVENTED**: the list carries what the
+ *  tree answered, and the boot's one site compares its length against the eight. */
+function paneMoveDropNodeIds(runtime: Runtime): readonly { readonly id: string; readonly nodeId: string }[] {
+  let listed: unknown = null
+  try {
+    listed = runtime.listTargets()
+  } catch {
+    return []
+  }
+  const nodes = (listed as { readonly nodes?: unknown } | null | undefined)?.nodes
+  if (!Array.isArray(nodes)) return []
+  const found: { readonly id: string; readonly nodeId: string }[] = []
+  for (const entry of nodes as readonly unknown[]) {
+    if (entry === null || typeof entry !== 'object') continue
+    const nodeId = (entry as { readonly nodeId?: unknown }).nodeId
+    if (typeof nodeId !== 'string' || nodeId === '') continue
+    const held = authoredPropOf(runtime, nodeId, 'id')
+    if (!held.readable || typeof held.held !== 'string') continue
+    if (!PANE_MOVE_DROP_IDS.includes(held.held)) continue
+    found.push({ id: held.held, nodeId })
+  }
+  return found
+}
+
+/** **THE ACT — ONE DROP'S PRESS, AND THE WHOLE PANE RECORD WRITTEN ONCE** (§3 `X1`–`X4`). It is TOTAL: every arm
+ *  answers and nothing throws (`D-127`), so no caller wraps an IPC turn in a `try`.
+ *
+ *  **`X0` — THE TWO OPERANDS ARE READ OFF THE NODE AT PRESS TIME** (`D-129`'s ask-don't-remember rule, the form
+ *  `attachMenuItem` uses for `props.role`): the drop's `props.pane` is the RECORD id its act addresses and `props.zone`
+ *  the DECLARED zone id it relocates to. A node whose `props` cannot be read is REPORTED and no act is attempted.
+ *  **`X1` — THE STANDING RECORD COMES FROM THE SHAPE, AND A PANE THE FAMILY DOES NOT NAME HAS NO ACT**: the client's
+ *  held reading is the realm's one copy of the family (`D-117`), and a miss is reported rather than filled with
+ *  `paneGeometryIn`'s measured DEFAULT — a default written back would INVENT a figure the record never stored, which is
+ *  `D-174`'s class exactly.
+ *  **`X2` — THE VALUE IS THE WHOLE RECORD: BOTH FIGURES VERBATIM, THE ZONE THE DROP NAMES, AND NO `BOUNDS`** (§4).
+ *  Both axis members are stored for every pane and `paneOf` admits no half geometry, so **NO FIGURE IS INVENTED ON
+ *  ARRIVAL**: the pane arrives in its new zone already carrying the figure that zone makes adjustable, and the member
+ *  it no longer adjusts stays as the MEMORY `D-189` keeps. **`bounds` is the DRAG's pixel clamp and belongs to the axis
+ *  it was measured on** (`D-243`), so carrying a stage pane's `{0,200}` into a `top` zone would clamp an axis never
+ *  measured for it — `D-129`'s second authority in its quietest form. **IT IS DROPPED BY NOT BEING COPIED**, and a pane
+ *  that returns to the stage answers the measured pair through the read's own absent arm (`D-186`).
+ *  **`X3` — ONE WRITE, AT THE FAMILY'S OWN ADDRESS, THROUGH THE REALM'S EXISTING `dataRoute('write')`** (`D-191`,
+ *  `D-112`): `['panes', <pane>]` at `file`, WHICH IS THE RECORD AND NOT A LEAF — **and it is NOT `commitPane`**: that
+ *  route carries `{width?, height?, bounds?}`, names no placement, and REFUSES a member the pane's `zone` does not make
+ *  adjustable (*"a `width` handed to a sidebar pane is a fault, not an update"*), so a relocation cannot be expressed
+ *  through it at all. No route, no channel, no bridge member and no new MCP tool is added (`D-18`, `D-123`). **THE
+ *  ANSWER IS REPORTED IN `D-117`'S REGISTER**: a refusal is `console.error` with its `reason` and `message` verbatim, an
+ *  answer that is not `committed` is `console.warn`, and a COMMIT IS SILENT.
+ *  **`X4` — NOTHING ELSE**: no paint, no re-read and no poll stands here. The record's own push repaints (`D-82`
+ *  clause 4): `paneFillAxisOf`/`paneAxisMembers` read the record's `zone` on EVERY delivery, so the next one paints the
+ *  NEW zone's fill, figure and scroll with no byte of this file's paint moving (`D-243`). **AND NOTHING IS RE-PARENTED**:
+ *  the region a pane renders inside stays the authored tree's, which is `D-182`'s upstream routing defect and the limit
+ *  the design declares rather than papers over (§6). */
+async function paneMoveAct(runtime: Runtime, dropNodeId: string): Promise<void> {
+  // X0 — THE TWO OPERANDS, READ OFF THE NODE.
+  const pane = authoredPropOf(runtime, dropNodeId, 'pane')
+  const zone = authoredPropOf(runtime, dropNodeId, 'zone')
+  if (!pane.readable || typeof pane.held !== 'string' || pane.held === '') {
+    console.error(`[provident-renderer] pane move: the drop on ${dropNodeId} states no readable \`pane\`, so no act was attempted`)
+    return
+  }
+  if (!zone.readable || typeof zone.held !== 'string' || zone.held === '') {
+    console.error(`[provident-renderer] pane move: the drop on ${dropNodeId} states no readable \`zone\`, so no act was attempted`)
+    return
+  }
+  const paneId = pane.held
+  const zoneId = zone.held
+  // X1 — THE STANDING RECORD, OUT OF THE SHAPE THIS REALM ALREADY HOLDS. No route is asked and no default stands in.
+  const standing = getViewClient().shape().panes.find((entry) => entry.id === paneId)
+  if (standing === undefined) {
+    console.error(`[provident-renderer] pane move: the record names no pane \`${paneId}\`, so nothing was written and nothing was invented`)
+    return
+  }
+  // X2 — THE WHOLE RECORD: both figures VERBATIM, the zone the drop names, and NO `bounds`.
+  const value = { id: standing.id, width: standing.width, height: standing.height, zone: zoneId }
+  // X3 — ONE WRITE AT THE FAMILY'S OWN ADDRESS, THROUGH THE REALM'S OWN PASSTHROUGH.
+  let written: unknown = null
+  try {
+    written = await dataRoute('write', { path: ['panes', paneId], tier: 'file', value })
+  } catch (error) {
+    // THE ROUTE THAT THREW IS AN ARM AND NOT AN ESCAPE: a rejected `data.write` is reported here and no caller sees it.
+    console.error(`[provident-renderer] pane move: the write at ['panes','${paneId}'] threw — ${String(error)}`)
+    return
+  }
+  const answer = written !== null && typeof written === 'object' ? (written as Record<string, unknown>) : {}
+  const status = typeof answer['status'] === 'string' ? answer['status'] : 'no-answer'
+  if (status === 'committed') return
+  if (status === 'refused') {
+    console.error(
+      `[provident-renderer] pane move: the write at ['panes','${paneId}'] was REFUSED (${String(answer['reason'])}): ${String(answer['message'])}`,
+    )
+    return
+  }
+  console.warn(`[provident-renderer] pane move: the write at ['panes','${paneId}'] answered \`${status}\`, so the store's answer is unread`)
+}
+
+/** **THE DROP'S ONE INSTALLED HANDLER BODY — THE AGENT'S ARM** (`D-239`'s path, one control class over): ONE
+ *  `state-slice` at boot whose `handlers` list holds a LIVE FUNCTION under the name the envelope authored, so the
+ *  engine's append-with-override REPLACES the authored no-op instead of adding a second `click`. **THE BODY IS A
+ *  CLOSURE OVER THIS FILE'S OWN ACT**, so no surface is opened to an agent's `dispatch`, and **ITS RETURN IS ITS OWN
+ *  WORD AND NEVER THE ACT'S PROMISE**: a body's return crosses `JSON.stringify` into `dispatch`'s `results`, so the act
+ *  is STARTED and the body answers a short string (`D-209`'s cost (ii)). */
+function installPaneMoveHandler(runtime: Runtime, dropNodeId: string): boolean {
+  const body = (): string => {
+    void paneMoveAct(runtime, dropNodeId)
+    return 'pane move'
+  }
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: dropNodeId,
+      mutation: [{ targetProp: 'handlers', mode: 'replace', value: [{ name: PANE_MOVE_HANDLER, event: 'click', body }] }],
+    })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    if (status === 'applied') return true
+    console.error(`[provident-renderer] pane move: the drop on ${dropNodeId} refused its installed handler (status=${status})`)
+    return false
+  } catch (error) {
+    console.error(`[provident-renderer] pane move: the install on ${dropNodeId} threw; an agent's dispatch reaches no act there`, error)
+    return false
+  }
+}
+
+/** **THE DROP'S ONE DOM `click` — THE HUMAN'S ARM** (`attachAddTab`'s form, and ONE listener, not two): the drop is
+ *  AUTHORED and never re-minted, so this listener is installed once at boot and no churn can leave a second one behind.
+ *  It calls the SAME act the installed body starts (`paneMoveAct`), so a person's press and an agent's dispatch cannot
+ *  diverge — one act, two causes (`AL-3`'s instrument, `D-239`). **A NODE THAT WILL NOT RESOLVE OR WILL NOT TAKE A
+ *  LISTENER ATTACHES NOTHING AND THROWS NOTHING** (`D-127`). */
+function attachPaneMove(runtime: Runtime, dropNodeId: string): boolean {
+  let element: unknown = null
+  try {
+    element = runtime.elementForNodeId(dropNodeId)
+  } catch {
+    element = null
+  }
+  const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+  if (typeof add !== 'function') return false
+  ;(add as (type: string, handler: () => void) => void).call(element, 'click', (): void => {
+    void paneMoveAct(runtime, dropNodeId)
+  })
+  return true
+}
+
+/** **TURN 6 — `main()`'S ONE BOOT REGISTRATION FOR THE RELOCATION**, taken beside `startAddTab`'s and for its reason: the
+ *  grips and their drops are AUTHORED, so they exist as soon as the first envelope loaded and nothing mints,
+ *  subscribes or re-attaches. **IT SENDS NO ROUTE AND WRITES NO RECORD**: the act is a press's, so a boot that is never
+ *  pressed writes no byte of the pane record and cannot delay or fail `tests/e2e/bundle-boot-seam`'s `B-5` (the
+ *  install writes one `handlers` layer per drop — graph bytes with no crossing behind them). **ALL THREE READINGS ARE
+ *  RETURNED**, so the boot's one site can say out loud that a drop is missing, took no body or took no listener
+ *  (`D-117`). */
+function startPaneMove(runtime: Runtime): { readonly drops: number; readonly installed: number; readonly attached: number } {
+  const drops = paneMoveDropNodeIds(runtime)
+  let installed = 0
+  let attached = 0
+  for (const drop of drops) {
+    if (installPaneMoveHandler(runtime, drop.nodeId)) installed += 1
+    if (attachPaneMove(runtime, drop.nodeId)) attached += 1
+  }
+  return { drops: drops.length, installed, attached }
 }
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the

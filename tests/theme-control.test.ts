@@ -141,12 +141,13 @@ const PRE_CENSUS = 18 // §3.5 X-1 — the filing-time authored census
  *  the dialog's heading, its TWO authored panes with one hint and one status node each, the state carrier and the
  *  close control — **THIRTEEN objects, and the census moved by EXACTLY that number: `25 + 13 = 38`.**
  *  **THE BITE IS KEPT AS IT WAS MADE:** the delta was asserted as the SUM OF ITS THREE DECLARED TERMS at `D-113`'s
- *  landing (it is SIX at this head — the block below adds the fourth term `35`: the interface inventory's `34` plus the
- *  layout's measured-figures carrier, then the fifth term `1`: the add-tab control, and then the sixth term `1`: the
- *  application's NAME NODE), so a count that moves for an
+ *  landing (it is **EIGHT** at this head — the block below adds the fourth term `35`: the interface inventory's `34` plus the
+ *  layout's measured-figures carrier, then the fifth term `1`: the add-tab control, then the sixth term `1`: the
+ *  application's NAME NODE, then the seventh term `4`: the four zone strips, and then the eighth term `10`: the two
+ *  pane-move grips with their eight drops), so a count that moves for an
  *  UNDECLARED reason — an element authored into the envelope by nothing at all — reddens here as well as at the figure.
  *  THE AS-FILED FORM (`18 -> 23`, then `-> 25`) stays visible above and beside. */
-const POST_CENSUS = 79 // as filed `23`; `25` at T2; `38` at D-113; `73` at the carrier's landing; `75` at the name node's; measured `79` = 18 + 5 + 2 + 13 + 35 + 1 + 1 + 4 (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1)
+const POST_CENSUS = 89 // as filed `23`; `25` at T2; `38` at D-113; `73` at the carrier's landing; `75` at the name node's; `79` once the four zone strips landed; measured `89` = 18 + 5 + 2 + 13 + 35 + 1 + 1 + 4 + 10 (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1's four strips AND `design-pane-relocation.md` rev 1 §7's two grips with their eight drops)
 const CENSUS_DELTA = 5 // the theme card's own FIVE authored nodes (UNMOVED by this re-grain)
 /** **THE OVERLAY'S DECLARED AUTHORED-OBJECT DELTA** (`D-113`) — the thirteen nodes named in the block above. */
 const OVERLAY_AUTHORED_DELTA = 13
@@ -169,18 +170,20 @@ const OVERLAY_AUTHORED_DELTA = 13
  *  `left` `1` + **`#zone-left-vertical` `1`** + the stage `26` = the landing page `23` (page `1` + the `h1` `1` + counter `6` + gutter `6` + echo `4`
  *  + theme `5`) + the error page `1` + **the measured-figures carrier `1`** + **`#zone-right-vertical` `1`** + `right` `1`) + **`#zone-bottom-horizontal` `1`** + `bottom` `1` + the
  *  opener `1`. `79 - 44 = 35` — the filing figure and the SIX terms other than the fourth stand for `44`
- *  (`18 + 5 + 2 + 13 + 1 + 1 + 4`), and what they leave is the fourth term's `35` — and the SEVEN terms sum to the figure:
- *  `18 + 5 + 2 + 13 + 35 + 1 + 1 + 4 = 79`. THE WALK MOVED BY EXACTLY FOUR NODES AND SAID WHERE, AS IT DID FOR THE `+` AND THE
+ *  (`18 + 5 + 2 + 13 + 1 + 1 + 4`), and what they leave is the fourth term's `35` — and the SEVEN terms summed to the figure
+ *  at that head: `18 + 5 + 2 + 13 + 35 + 1 + 1 + 4 = 79`. THE WALK MOVED BY EXACTLY FOUR NODES AND SAID WHERE, AS IT DID FOR THE `+` AND THE
  *  NAME: the top-bar read `4` and `app-surface` read `62` before the four strips landed (`3`/`61` before the name node,
  *  `2`/`60` before the `+`), the arrangement read `29` before the two strips in its row landed, and no other subtree's
- *  figure moves.
- *  **THE BITE IS KEPT AS IT WAS MADE:** the drift is still asserted as the SUM OF ITS DECLARED TERMS — SEVEN at this
- *  head — so a node authored into the envelope by NOTHING reddens at the figure AND at the sum, and `M-2`'s / `X-1`'s
+ *  figure moves. **THAT WALK IS THE `79` HEAD'S AND IS KEPT AS TAKEN; THE WALK OF RECORD IS THE EIGHTH TERM'S BLOCK
+ *  BELOW**, which re-takes it off the tree at `89` and says where each of the last ten nodes stands.
+ *  **THE BITE IS KEPT AS IT WAS MADE:** the drift is still asserted as the SUM OF ITS DECLARED TERMS — **EIGHT at this
+ *  head** — so a node authored into the envelope by NOTHING reddens at the figure AND at the sum, and `M-2`'s / `X-1`'s
  *  residue rows still name the one term each of them leaves standing. **AND THE COUNT OF TERMS IS NOT ITSELF A CLAIM**
  *  (`D-26`, `D-43`): the census's shape is ONE TERM PER LANDING THAT AUTHORED NODES, so a further authoring landing adds
  *  a further term in the pass that authors it, and a node arriving with NO term of its own is exactly what the figure, the
  *  sum and the residue catch together. THE EARLIER FORMS (`18 -> 23`, `-> 25`, `-> 38`, `-> 72` at the term's `34`,
- *  `-> 73` once the carrier landed, `-> 74` once the add-tab control landed, `-> 75` once the name node landed) stay
+ *  `-> 73` once the carrier landed, `-> 74` once the add-tab control landed, `-> 75` once the name node landed,
+ *  `-> 79` once the four zone strips landed) stay
  *  visible above and beside. */
 /** **THE FOURTH TERM'S SECOND COMPONENT, NAMED** (`docs/L3/app-envelope/design.md` rev 6 §2, hunk `A-8`; `D-203`,
  *  `D-204`): **THE LAYOUT'S MEASURED-FIGURES CARRIER — ONE authored node.** `LAYOUT_MEASURED_ID = 'layout-measured'`, a
@@ -249,7 +252,7 @@ const TABS_ADD_NODE_ID = 'tab-add'
  *  line, so the figure, the sum and the residue move together, and the rows below ALSO assert that the tree holds EXACTLY
  *  ONE authored node at this id — so the `1` cannot become a slack figure and a second node at the same address cannot hide
  *  inside it. **AND THE ONE-NODE TERMS ARE WHAT CATCH A NODE ARRIVING UNNOTICED**: a node authored by
- *  nothing moves the measured census, the seven-term sum and the residue rows TOGETHER, and no one-node identity row
+ *  nothing moves the measured census, the EIGHT-term sum and the residue rows TOGETHER, and no one-node identity row
  *  can absorb it, because each is pinned to its own address and its own figure of one. */
 const APP_NAME_AUTHORED_DELTA = 1 // the application's name `app-name` — ONE authored node, the top bar's FIRST child
 /** **THE SIXTH TERM'S NODE, AS THE TREE SPELLS IT** — `'app-name'`, the id the `1` above is attributable to, so a census
@@ -267,7 +270,8 @@ const APP_NAME_NODE_ID = 'app-name'
  *  zones' SIBLINGS (never their children, `paintStyle` replacing a zone's `css.style` whole), placed two in the root
  *  column and two in the arrangement row.
  *  **WHY IT IS A TERM OF ITS OWN RATHER THAN A RE-SPELLING OF THE FOURTH** (the question this block answers rather than
- *  assumes, and the reason `79` is `… + 35 + 1 + 1 + 4` and not `… + 39 + 1`): that `34` is
+ *  assumes, and the reason the figure was `79` at this term's landing — `… + 35 + 1 + 1 + 4`, and `89` now that the
+ *  EIGHTH term's `10` stands beside it — and not `… + 39 + 1`): that `34` is
  *  `docs/L3/app-envelope/design.md` rev 5 §2's node-for-node inventory and rev 6's `A-8` says *"NOTHING ELSE MOVES"*, so
  *  folding four nodes into it would RESTATE another layer's count to absorb a mover this landing authored — the exact
  *  shape `D-26`/`D-43` forbid and `C-6` was written to redden. **THE DESIGN'S BILL IS REPORTED, NOT PATCHED** (`D-3`,
@@ -289,6 +293,78 @@ const ZONE_STRIPS_AUTHORED_DELTA = 4 // the four zone strips — ONE authored no
  *  (`PS-1`'s census), never a derivation, which is why these four strings standing here a third time is the census
  *  measuring a spelling rather than a drift. */
 const ZONE_STRIP_NODE_IDS = ['zone-top-horizontal', 'zone-bottom-horizontal', 'zone-left-vertical', 'zone-right-vertical'] as const
+/* ── ⟶ THE EIGHTH DECLARED TERM — THE TENTH NAMED PART OF THE FIGURE — LANDED WITH PANE RELOCATION: ──────
+ *  **TEN AUTHORED NODES — THE TWO PANE-MOVE GRIPS AND THEIR EIGHT ZONE DROPS — AND ONE TERM.** **WHAT THE `10` IS, IN
+ *  THIS CENSUS'S OWN VOCABULARY** (`D-26`: a figure never stands bare — a reader must be able to say which nodes the `10`
+ *  are): `docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §7 authors, inside each of the two panes, ONE grip node
+ *  — `css.id` = `props.id` = its own name, `props.tabindex: '0'` (the page sheet's `:focus-within` reveal is what arms the
+ *  gesture, *"NO STATE, NO TOGGLE AND NO NEW RECORD"*), the `pane-grab` class and the authored glyph — and FOUR drop
+ *  children under it, one per declared zone, each carrying `props.pane` (the RECORD id its act addresses, `pane-menus` /
+ *  `pane-a`, never the node id) and `props.zone` (the DECLARED zone id it relocates to), the `pane-drop` class and ONE
+ *  `pane-move`/`click` handler whose body is a declared no-op the wiring replaces. `2 + 8 = 10`: EACH PANE'S SUBTREE
+ *  GAINS FIVE (grip `1` + its four drops `4`), which is the whole of where the figure moved.
+ *  **THE WALK, RE-TAKEN OFF THE TREE AT THIS HEAD AND NOT GUESSED** (`D-26`): `89` = the root `1` + `app-surface` `76` +
+ *  the overlay layer `11` (scrim `1` + dialog `10`) + the row prototype `1`; `app-surface`'s `76` = itself `1` + the
+ *  top-bar `4` + the `top` zone `31` + `#zone-top-horizontal` `1` + the arrangement `36` + `#zone-bottom-horizontal` `1` +
+ *  `bottom` `1` + the opener `1`; the `top` zone read `26` before this landing and reads `31` because its menus pane read
+ *  `25` and reads `30` (the pane `1` + **the grip `menus-grab` `5`** — grip `1` + its four drops `4` + the handle `1` +
+ *  the four menus `22` + the receipt carrier `1`); the arrangement read `31` and reads `36` because the stage read `26`
+ *  and reads `31` — the landing page read `23` and reads `28`, and the gutter card read `6` and reads `11` (the card `1`
+ *  + its `h2` `1` + **the grip `gutter-grab` `5`** — grip `1` + its four drops `4` — + the pane `1` + the handle `1` +
+ *  the target `1` + the status carrier `1`). NO OTHER SUBTREE'S FIGURE MOVES, and the filing figure with its EIGHT declared terms IS the figure:
+ *  `18 + 5 + 2 + 13 + 35 + 1 + 1 + 4 + 10 = 89`.
+ *  **WHY IT IS A TERM OF ITS OWN AND NOT A RE-SPELLING OF THE SEVENTH OR THE FOURTH** (the question this block answers
+ *  rather than assumes, and the reason `89` is `… + 4 + 10` and not `… + 14` or `… + 45`): `app-envelope`'s rev 7 §10
+ *  declares the whole gesture's bill as ONE term of `14` — *"the four zone strips, the two move grips and their eight
+ *  drops"* — and **the four strips LANDED FIRST AND ARE ALREADY THE SEVENTH TERM**, so folding these ten into it would
+ *  RESTATE a landed term's figure (`4` → `14`) to absorb a mover a LATER landing authored, while folding them into the
+ *  fourth's `34` would restate another layer's count: the exact shape `D-26`/`D-43` forbid and `C-6` was written to
+ *  redden. **SO THE DESIGN'S BILL IS REPORTED, NOT PATCHED** (`D-3`, `D-5`): its `14` is the SEPARATE SUM OF TWO
+ *  LANDINGS' TERMS — `4` (seventh) `+ 10` (eighth) — and the two spellings agree on the total; the page's own arithmetic
+ *  is `89 = 18 + 5 + 2 + 13 + 35 + 1 + 1 + 14`, which this census does NOT re-spell as one term.
+ *  **AND ITS NODE SPELLINGS ARE STALE, WHICH IS ALSO REPORTED AND NOT PATCHED**: rev 7 §2 names the grips
+ *  `pane-a-move` / `pane-menus-move` and the drops `<pane>-move-<zone>`, while the tree spells
+ *  `<affordance-region>-<verb>` and `<grip>-<zone>` — `menus-grab` / `gutter-grab` and `menus-grab-top` … — the file's
+ *  own docblock's convention (`src/shared/demo-envelope.ts`'s `MENUS_GRAB_ID` and its comment). **THE CENSUS MEASURES THE
+ *  TREE** (`D-26`: every figure its owner's), and the re-take of that table is the design page's (its `D-188` debt).
+ *  **THE BITE IS KEPT, AND IT IS STRONGER THAN THE ONE-NODE AND FOUR-NODE TERMS' BITE — TEN IDS GET TEN PER-ID ROWS.**
+ *  The precedent is the seventh term's (one row per declared address) applied at ten, because here a TERM-LEVEL IDENTITY
+ *  ROW WOULD NOT BE ENOUGH: `measured === POST_CENSUS` plus `measured - PRE_CENSUS === Σ terms` are BOTH INVARIANT UNDER
+ *  A SWAP — delete one drop (`−1`) and author one node at an address no term names (`+1`) and the figure, the sum and
+ *  the residue all stand, so the term-level identity alone would hide exactly the mover this term exists to catch. The
+ *  ten per-id rows are what make a **renamed or deleted drop red BY NAME** and a **duplicated id red at its own address**,
+ *  and the two group sums (`2` grips, `8` drops) plus the drops' `props.pane`/`props.zone` and the grips'
+ *  `props.tabindex` rows are what stop the `10` from becoming a slack figure or a re-parented node from passing as a
+ *  drop. */
+const PANE_GRAB_AUTHORED_DELTA = 2 // the two pane-move grips — one authored node per pane, `props.tabindex: '0'`
+const PANE_MOVE_DROP_AUTHORED_DELTA = 8 // the eight zone drops — four per grip, one per declared zone
+/** **THE EIGHTH DECLARED TERM ITSELF — THE SUM OF ITS TWO NAMED GROUPS**, never a bare figure (`D-26`, `D-43`):
+ *  the two grips' `2` PLUS the eight drops' `8` = **`10`**, which is what every census row adds beside the first seven
+ *  terms. The two groups stay separately visible so a moved part reddens the figure AND the sum, and `2 + 8 = 10` is
+ *  asserted as arithmetic at `M-2` — a term that no longer sums reds there rather than being re-spelled. */
+const PANE_MOVE_AUTHORED_DELTA = PANE_GRAB_AUTHORED_DELTA + PANE_MOVE_DROP_AUTHORED_DELTA
+/** **THE EIGHTH TERM'S GRIP NODES, AS THE TREE SPELLS THEM** — the two ids the `2` above is attributable to (`D-26`).
+ *  **LITERALS AND NOT IMPORTS**: `src/shared/demo-envelope.ts`'s `MENUS_GRAB_ID`/`GUTTER_GRAB_ID` are private by design
+ *  (rev 7 §7: *"no export joins the published surface"*), so an import here would measure the import; this file reads the
+ *  AUTHORED TREE. The wiring spells the drops again in its own census (`renderer.ts`'s `PANE_MOVE_DROP_IDS`), and that
+ *  equality is a ROW of `renderer-wiring`'s, never a derivation. **AND A GRIP'S ONE PROP IS `props.tabindex: '0'`** — the
+ *  whole arming mechanism, which a grip that lost it would keep in the census while ceasing to work. */
+const PANE_GRAB_NODE_IDS = ['menus-grab', 'gutter-grab'] as const
+/** **THE EIGHTH TERM'S EIGHT DROP NODES, EACH WITH ITS GRIP, ITS RECORD PANE AND ITS DECLARED ZONE — ALL LITERALS.**
+ *  The zone is carried per row rather than derived from the id's suffix: a drop whose id and whose `props.zone` were
+ *  renamed TOGETHER would keep a derived expectation standing while moving a destination, and a destination is the whole
+ *  meaning of a drop (`design-pane-relocation.md` §2). `props.pane` is the RECORD id and never the node id (`pane-a` is
+ *  the record key whose node is `#gutter-pane`, `D-194`), which is why it is spelled here beside the node ids. */
+const PANE_MOVE_DROPS: ReadonlyArray<{ id: string; grip: string; pane: string; zone: string }> = [
+  { id: 'menus-grab-top', grip: 'menus-grab', pane: 'pane-menus', zone: 'top' },
+  { id: 'menus-grab-bottom', grip: 'menus-grab', pane: 'pane-menus', zone: 'bottom' },
+  { id: 'menus-grab-left', grip: 'menus-grab', pane: 'pane-menus', zone: 'left' },
+  { id: 'menus-grab-right', grip: 'menus-grab', pane: 'pane-menus', zone: 'right' },
+  { id: 'gutter-grab-top', grip: 'gutter-grab', pane: 'pane-a', zone: 'top' },
+  { id: 'gutter-grab-bottom', grip: 'gutter-grab', pane: 'pane-a', zone: 'bottom' },
+  { id: 'gutter-grab-left', grip: 'gutter-grab', pane: 'pane-a', zone: 'left' },
+  { id: 'gutter-grab-right', grip: 'gutter-grab', pane: 'pane-a', zone: 'right' },
+]
 /** THE `T2` PAGE-NODE DELTA (`docs/specs/store-tabs-record.md` `§5.1` item 2 / `§0A` item 5):
  *  the TWO authored page nodes `tabs-landing-page` and `tabs-error-page`.
  *
@@ -360,6 +436,15 @@ function propsIdOf(n: J | null): string | null {
   const props = asObj(n['props'])
   const id = props === null ? null : props['id']
   return typeof id === 'string' ? id : null
+}
+/** The authored `props` VALUE at `key`, or `null` — the reading the EIGHTH term's identity rows use to pin a
+ *  drop's two operands (`props.pane`, `props.zone`) and a grip's `props.tabindex: '0'` OFF THE NODE rather
+ *  than off this file's own literals (`D-177`: the operands are DATA carried on the node). */
+function propsValueOf(n: J | null, key: string): string | null {
+  if (n === null) return null
+  const props = asObj(n['props'])
+  const v = props === null ? null : props[key]
+  return typeof v === 'string' ? v : null
 }
 function classMembersOf(n: J | null): string[] {
   if (n === null) return []
@@ -1020,11 +1105,11 @@ describe('§3.1 M-* — valid / happy states', () => {
     ).toBe(STATE_ID)
   })
 
-  it('M-2 (§2.1 item 1, §3.5 X-1/X-2) — the AUTHORED object census moves 18 -> 79 (AS FILED 18 -> 23; 25 at T2; 38 at D-113; 72 once the interface inventory landed; 73 once the layout\'s measured-figures carrier landed; 74 once the add-tab control landed; 75 once the application\'s name node landed; 79 once the four zone strips landed), and it is the authored noun', () => {
+  it('M-2 (§2.1 item 1, §3.5 X-1/X-2) — the AUTHORED object census moves 18 -> 89 (AS FILED 18 -> 23; 25 at T2; 38 at D-113; 72 once the interface inventory landed; 73 once the layout\'s measured-figures carrier landed; 74 once the add-tab control landed; 75 once the application\'s name node landed; 79 once the four zone strips landed; 89 once the two pane-move grips and their eight zone drops landed), and it is the authored noun', () => {
     const measured = authoredCensus()
     expect(
       measured,
-      `§3.1 M-2 — the AUTHORED OBJECT census of \`demoEnvelope()\` must read ${POST_CENSUS}; measured ${measured} (${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} + ${OVERLAY_AUTHORED_DELTA} + ${LAYOUT_AUTHORED_NODE_DELTA} + ${TABS_ADD_AUTHORED_DELTA} + ${APP_NAME_AUTHORED_DELTA} + ${ZONE_STRIPS_AUTHORED_DELTA} = ${POST_CENSUS}). AS FILED the post figure was 23 (18 + 5): \`T2\`'s two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), \`D-113\`'s overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}, the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} is the interface inventory's THIRTY-FOUR authored nodes (docs/L3/app-envelope/design.md rev 5 §2) PLUS the layout's measured-figures carrier \`layout-measured\` (rev 6 §2, \`A-8\`, D-203/D-204) — the figure \`D-193\` predicted and \`D-204\` re-grained — the FIFTH term's ${TABS_ADD_AUTHORED_DELTA} is the add-tab control \`${TABS_ADD_NODE_ID}\`, the top bar's \`+\`, authored BESIDE \`#tab-rows\` because a mint REPLACES that row set (D-201), the SIXTH term's ${APP_NAME_AUTHORED_DELTA} is the application's NAME NODE \`${APP_NAME_NODE_ID}\`, the top bar's FIRST child, authored when the user ruled *"make the name an element so it can truncate"* over \`D-177\`'s content-string cut, and the SEVENTH term's ${ZONE_STRIPS_AUTHORED_DELTA} is the FOUR ZONE STRIPS \`${ZONE_STRIP_NODE_IDS.join('`/`')}\` (docs/L3/renderer-wiring/design-zone-handles.md rev 1 §2) — one authored sibling per declared zone, on the edge that faces the stage.`,
+      `§3.1 M-2 — the AUTHORED OBJECT census of \`demoEnvelope()\` must read ${POST_CENSUS}; measured ${measured} (${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} + ${OVERLAY_AUTHORED_DELTA} + ${LAYOUT_AUTHORED_NODE_DELTA} + ${TABS_ADD_AUTHORED_DELTA} + ${APP_NAME_AUTHORED_DELTA} + ${ZONE_STRIPS_AUTHORED_DELTA} + ${PANE_MOVE_AUTHORED_DELTA} = ${POST_CENSUS}). AS FILED the post figure was 23 (18 + 5): \`T2\`'s two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), \`D-113\`'s overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}, the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} is the interface inventory's THIRTY-FOUR authored nodes (docs/L3/app-envelope/design.md rev 5 §2) PLUS the layout's measured-figures carrier \`layout-measured\` (rev 6 §2, \`A-8\`, D-203/D-204) — the figure \`D-193\` predicted and \`D-204\` re-grained — the FIFTH term's ${TABS_ADD_AUTHORED_DELTA} is the add-tab control \`${TABS_ADD_NODE_ID}\`, the top bar's \`+\`, authored BESIDE \`#tab-rows\` because a mint REPLACES that row set (D-201), the SIXTH term's ${APP_NAME_AUTHORED_DELTA} is the application's NAME NODE \`${APP_NAME_NODE_ID}\`, the top bar's FIRST child, authored when the user ruled *"make the name an element so it can truncate"* over \`D-177\`'s content-string cut, the SEVENTH term's ${ZONE_STRIPS_AUTHORED_DELTA} is the FOUR ZONE STRIPS \`${ZONE_STRIP_NODE_IDS.join('`/`')}\` (docs/L3/renderer-wiring/design-zone-handles.md rev 1 §2) — one authored sibling per declared zone, on the edge that faces the stage — and the EIGHTH term's ${PANE_MOVE_AUTHORED_DELTA} is the TWO PANE-MOVE GRIPS \`${PANE_GRAB_NODE_IDS.join('`/`')}\` PLUS their EIGHT ZONE DROPS \`${PANE_MOVE_DROPS.map((d) => d.id).join('`/`')}\` (docs/L3/renderer-wiring/design-pane-relocation.md rev 1 §7), each drop carrying \`props.pane\` and \`props.zone\` and each grip \`props.tabindex: '0'\`.`,
     ).toBe(POST_CENSUS)
     // ── THE FIFTH TERM IS ONE NODE A READER CAN POINT AT (`D-26`): the `1` above is not a slack
     //    figure — it is `#tab-add`. A SECOND node authored at that same id would move the census by
@@ -1057,6 +1142,68 @@ describe('§3.1 M-* — valid / happy states', () => {
       ZONE_STRIP_NODE_IDS.reduce((sum, stripId) => sum + authoredNodesAtId(stripId).length, 0),
       `§2.1 item 1 / §3.1 M-2 — the four strip addresses hold EXACTLY the declared ${ZONE_STRIPS_AUTHORED_DELTA} nodes between them, so the term is the SUM of its addresses and no fifth node can hide inside it`,
     ).toBe(ZONE_STRIPS_AUTHORED_DELTA)
+    // ── AND THE EIGHTH TERM IS TEN NODES AT TEN ADDRESSES — **TEN IDS GET TEN PER-ID ROWS**, the seventh
+    //    term's precedent applied at ten, and NOT one term-level identity row. THE REASON, WHERE IT BITES:
+    //    `measured === POST_CENSUS` AND `measured - PRE_CENSUS === Σ terms` are BOTH INVARIANT UNDER A SWAP —
+    //    delete one drop (`−1`) and author one node at an address no term names (`+1`) and the figure, the sum
+    //    and the residue all stand — so a term-level identity alone would hide exactly the mover this term
+    //    exists to catch. Each id is pinned to its own address, so a RENAMED or DELETED drop reds BY NAME and
+    //    a DUPLICATED id reds at the address that carries it twice; the group sums (`2 + 8 = 10`) and the
+    //    props rows below stop the `10` from becoming a slack figure or a re-parented node from passing as one.
+    for (const grabId of PANE_GRAB_NODE_IDS) {
+      const grabs = authoredNodesAtId(grabId)
+      expect(
+        grabs.length,
+        `§2.1 item 1 / §3.1 M-2 — the EIGHTH declared term's ${PANE_GRAB_AUTHORED_DELTA} grips are NOT a slack figure: \`${grabId}\` must be authored EXACTLY ONCE (a renamed, deleted or twice-authored grip reddens here, by name)`,
+      ).toBe(1)
+      expect(
+        propsIdOf(grabs[0] ?? null),
+        `§2.1 item 1 / §3.1 M-2 — \`${grabId}\` must carry \`props.id\` equal to its \`css.id\`, the addressability the drops' parents are read through (a grip whose \`css.id\` and \`props.id\` disagree reddens here)`,
+      ).toBe(grabId)
+      expect(
+        propsValueOf(grabs[0] ?? null, 'tabindex'),
+        `§2.1 item 1 / §3.1 M-2 — the grip \`${grabId}\` must carry \`props.tabindex: '0'\`: that bare attribute IS the page sheet's \`:focus-within\` arming, so a grip that lost it would stay in the census while ceasing to open its drops (design-pane-relocation.md §1)`,
+      ).toBe('0')
+    }
+    for (const drop of PANE_MOVE_DROPS) {
+      const drops = authoredNodesAtId(drop.id)
+      expect(
+        drops.length,
+        `§2.1 item 1 / §3.1 M-2 — the EIGHTH declared term's ${PANE_MOVE_DROP_AUTHORED_DELTA} drops are NOT a slack figure: \`${drop.id}\` must be authored EXACTLY ONCE (a renamed, deleted or twice-authored drop reddens here, by name)`,
+      ).toBe(1)
+      expect(
+        propsIdOf(drops[0] ?? null),
+        `§2.1 item 1 / §3.1 M-2 — the drop \`${drop.id}\` must carry \`props.id\` equal to its \`css.id\` (the wiring's census reads the drops off the tree by address, design-pane-relocation.md §2)`,
+      ).toBe(drop.id)
+      expect(
+        propsValueOf(drops[0] ?? null, 'pane'),
+        `§2.1 item 1 / §3.1 M-2 — the drop \`${drop.id}\` must carry \`props.pane\` = \`${drop.pane}\`, the RECORD id its act addresses and NOT its node's id (a drop whose pane moved reddens here even though the census' figure would not move)`,
+      ).toBe(drop.pane)
+      expect(
+        propsValueOf(drops[0] ?? null, 'zone'),
+        `§2.1 item 1 / §3.1 M-2 — the drop \`${drop.id}\` must carry \`props.zone\` = \`${drop.zone}\`, the DECLARED zone id it relocates its pane to — read per row and never derived from the id's suffix, because a destination renamed on both sides together would keep a derived expectation standing while moving a pane`,
+      ).toBe(drop.zone)
+    }
+    expect(
+      PANE_GRAB_NODE_IDS.reduce((sum, grabId) => sum + authoredNodesAtId(grabId).length, 0),
+      `§2.1 item 1 / §3.1 M-2 — the two grip addresses hold EXACTLY the declared ${PANE_GRAB_AUTHORED_DELTA} nodes between them, so the grips' group is the SUM of its addresses and no third grip can hide inside it`,
+    ).toBe(PANE_GRAB_AUTHORED_DELTA)
+    expect(
+      PANE_MOVE_DROPS.reduce((sum, drop) => sum + authoredNodesAtId(drop.id).length, 0),
+      `§2.1 item 1 / §3.1 M-2 — the eight drop addresses hold EXACTLY the declared ${PANE_MOVE_DROP_AUTHORED_DELTA} nodes between them, so the drops' group is the SUM of its addresses and a NINTH drop cannot hide inside the term`,
+    ).toBe(PANE_MOVE_DROP_AUTHORED_DELTA)
+    // ── A TERM THAT NO LONGER SUMS REDS HERE, BEFORE ANY TREE IS READ: the figure is its terms, and the
+    //    eighth is its two groups. Edit a constant — or move the figure — without its counterpart and this
+    //    reds even on a tree that happens to match, which is the arithmetic half `C-6` owns independently of
+    //    the walk (`D-26`: a figure is never re-spelled to absorb a mover).
+    expect(
+      PANE_MOVE_AUTHORED_DELTA,
+      `§2.1 item 1 / §3.1 M-2 — the EIGHTH term IS \`${PANE_GRAB_AUTHORED_DELTA} + ${PANE_MOVE_DROP_AUTHORED_DELTA} = ${PANE_MOVE_AUTHORED_DELTA}\`; a term that no longer sums reddens here`,
+    ).toBe(PANE_GRAB_AUTHORED_DELTA + PANE_MOVE_DROP_AUTHORED_DELTA)
+    expect(
+      PRE_CENSUS + CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA + PANE_MOVE_AUTHORED_DELTA,
+      `§2.1 item 1 / §3.1 M-2 — THE FIGURE IS ITS TERMS: \`${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} + ${OVERLAY_AUTHORED_DELTA} + ${LAYOUT_AUTHORED_NODE_DELTA} + ${TABS_ADD_AUTHORED_DELTA} + ${APP_NAME_AUTHORED_DELTA} + ${ZONE_STRIPS_AUTHORED_DELTA} + ${PANE_MOVE_AUTHORED_DELTA}\` must equal \`POST_CENSUS\` (${POST_CENSUS}); a term that no longer sums reddens here`,
+    ).toBe(POST_CENSUS)
     // ── THE ATTRIBUTED DRIFT (`RCA-8(d)`; `C-6`): the delta is asserted as the SUM OF ITS
     //    DECLARED TERMS, not as one bare figure — a count that moves for an UNDECLARED reason
     //    reddens HERE as well as at the figure above. THE AS-FILED FORM (`expect(measured -
@@ -1064,9 +1211,9 @@ describe('§3.1 M-* — valid / happy states', () => {
     //    visible in the constants block above and is re-grained, not deleted.
     expect(
       measured - PRE_CENSUS,
-      '§2.1 item 1 / §3.1 M-2 — the drift is EXACTLY the declared terms WITH their terms: the five authored card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes PLUS the fourth term\'s thirty-five (the interface inventory\'s thirty-four authored nodes AND the layout\'s measured-figures carrier, A-8) PLUS the fifth term\'s one (the add-tab control `tab-add`, the top bar\'s `+`) PLUS the sixth term\'s one (the application\'s name node `app-name`, the top bar\'s FIRST child) PLUS the seventh term\'s four (the four zone strips, one per declared zone)',
-    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA)
-    expect(measured - PRE_CENSUS - CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - LAYOUT_AUTHORED_NODE_DELTA - TABS_ADD_AUTHORED_DELTA - APP_NAME_AUTHORED_DELTA - ZONE_STRIPS_AUTHORED_DELTA, 'T2 §5.1 item 2 — with the overlay\'s thirteen AND the fourth term\'s thirty-five (the interface inventory\'s thirty-four plus the measured-figures carrier) AND the fifth term\'s one (the add-tab control) AND the sixth term\'s one (the name node) AND the seventh term\'s four (the four zone strips) taken out, the residue is EXACTLY this unit\'s two declared page nodes').toBe(T2_PAGE_NODE_CENSUS_DELTA)
+      '§2.1 item 1 / §3.1 M-2 — the drift is EXACTLY the declared terms WITH their terms: the five authored card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes PLUS the fourth term\'s thirty-five (the interface inventory\'s thirty-four authored nodes AND the layout\'s measured-figures carrier, A-8) PLUS the fifth term\'s one (the add-tab control `tab-add`, the top bar\'s `+`) PLUS the sixth term\'s one (the application\'s name node `app-name`, the top bar\'s FIRST child) PLUS the seventh term\'s four (the four zone strips, one per declared zone) PLUS the EIGHTH term\'s ten (the two pane-move grips AND their eight zone drops, `menus-grab`/`gutter-grab` with four drops under each)',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA + PANE_MOVE_AUTHORED_DELTA)
+    expect(measured - PRE_CENSUS - CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - LAYOUT_AUTHORED_NODE_DELTA - TABS_ADD_AUTHORED_DELTA - APP_NAME_AUTHORED_DELTA - ZONE_STRIPS_AUTHORED_DELTA - PANE_MOVE_AUTHORED_DELTA, 'T2 §5.1 item 2 — with the overlay\'s thirteen AND the fourth term\'s thirty-five (the interface inventory\'s thirty-four plus the measured-figures carrier) AND the fifth term\'s one (the add-tab control) AND the sixth term\'s one (the name node) AND the seventh term\'s four (the four zone strips) AND the eighth term\'s ten (the two pane-move grips and their eight zone drops) taken out, the residue is EXACTLY this unit\'s two declared page nodes').toBe(T2_PAGE_NODE_CENSUS_DELTA)
   })
 
   it('M-3 (§2.1 item 2) — both buttons carry `theme-set`/`click`, as a function STRING, with one token each', () => {
@@ -1451,16 +1598,16 @@ describe('§3.3 I-* — invariants that hold in every state', () => {
     }
   })
 
-  it('I-10 (§3.5 X-1/X-2, §5.U U-7) — the AUTHORED census is reconciled as 79 (AS FILED 23; 25 at T2; 38 at D-113; 72 once the interface inventory landed; 73 once the layout\'s measured-figures carrier landed; 74 once the add-tab control landed; 75 once the application\'s name node landed; 79 once the four zone strips landed), and no live reading is claimed here', () => {
+  it('I-10 (§3.5 X-1/X-2, §5.U U-7) — the AUTHORED census is reconciled as 89 (AS FILED 23; 25 at T2; 38 at D-113; 72 once the interface inventory landed; 73 once the layout\'s measured-figures carrier landed; 74 once the add-tab control landed; 75 once the application\'s name node landed; 79 once the four zone strips landed; 89 once the two pane-move grips and their eight zone drops landed), and no live reading is claimed here', () => {
     const authored = authoredCensus()
     expect(
       authored,
-      `§3.3 I-10 — the AUTHORED OBJECT census is the only census this [T] half measures; it must read ${POST_CENSUS} (measured ${authored}; the SUM OF ITS NAMED PARTS is ${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} + ${OVERLAY_AUTHORED_DELTA} + ${LAYOUT_AUTHORED_NODE_DELTA} + ${TABS_ADD_AUTHORED_DELTA} + ${APP_NAME_AUTHORED_DELTA} + ${ZONE_STRIPS_AUTHORED_DELTA}). AS FILED it read 23 (18 + 5): T2's two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), D-113's overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}, the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} is the interface inventory's THIRTY-FOUR authored nodes (docs/L3/app-envelope/design.md rev 5 §2) PLUS the layout's measured-figures carrier \`layout-measured\` (rev 6 §2, \`A-8\`, D-203/D-204), the fifth term's ${TABS_ADD_AUTHORED_DELTA} is the add-tab control \`${TABS_ADD_NODE_ID}\`, the sixth term's ${APP_NAME_AUTHORED_DELTA} is the application's name node \`${APP_NAME_NODE_ID}\` (the top bar's FIRST child, the user's ruling over \`D-177\`'s content-string cut), and the seventh term's ${ZONE_STRIPS_AUTHORED_DELTA} is the FOUR ZONE STRIPS \`${ZONE_STRIP_NODE_IDS.join('`/`')}\` (docs/L3/renderer-wiring/design-zone-handles.md rev 1 §2). The LOADED census belongs to the live app and its own command (§5.U U-7) and is NEVER re-quoted for this figure.`,
+      `§3.3 I-10 — the AUTHORED OBJECT census is the only census this [T] half measures; it must read ${POST_CENSUS} (measured ${authored}; the SUM OF ITS NAMED PARTS is ${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} + ${OVERLAY_AUTHORED_DELTA} + ${LAYOUT_AUTHORED_NODE_DELTA} + ${TABS_ADD_AUTHORED_DELTA} + ${APP_NAME_AUTHORED_DELTA} + ${ZONE_STRIPS_AUTHORED_DELTA} + ${PANE_MOVE_AUTHORED_DELTA}). AS FILED it read 23 (18 + 5): T2's two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5), D-113's overlay nodes move it by ${OVERLAY_AUTHORED_DELTA}, the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} is the interface inventory's THIRTY-FOUR authored nodes (docs/L3/app-envelope/design.md rev 5 §2) PLUS the layout's measured-figures carrier \`layout-measured\` (rev 6 §2, \`A-8\`, D-203/D-204), the fifth term's ${TABS_ADD_AUTHORED_DELTA} is the add-tab control \`${TABS_ADD_NODE_ID}\`, the sixth term's ${APP_NAME_AUTHORED_DELTA} is the application's name node \`${APP_NAME_NODE_ID}\` (the top bar's FIRST child, the user's ruling over \`D-177\`'s content-string cut), the seventh term's ${ZONE_STRIPS_AUTHORED_DELTA} is the FOUR ZONE STRIPS \`${ZONE_STRIP_NODE_IDS.join('`/`')}\` (docs/L3/renderer-wiring/design-zone-handles.md rev 1 §2), and the EIGHTH term's ${PANE_MOVE_AUTHORED_DELTA} is the TWO PANE-MOVE GRIPS \`${PANE_GRAB_NODE_IDS.join('`/`')}\` PLUS their EIGHT ZONE DROPS \`${PANE_MOVE_DROPS.map((d) => d.id).join('`/`')}\` (docs/L3/renderer-wiring/design-pane-relocation.md rev 1 §7) — each drop carrying \`props.pane\` and \`props.zone\`, each grip \`props.tabindex: '0'\`. The LOADED census belongs to the live app and its own command (§5.U U-7) and is NEVER re-quoted for this figure.`,
     ).toBe(POST_CENSUS)
     expect(
       authored - PRE_CENSUS,
-      '§3.3 I-10 / C-6 — the drift is ATTRIBUTED, never re-spelled: the five card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes PLUS the fourth term\'s thirty-five (the interface inventory\'s thirty-four authored nodes AND the layout\'s measured-figures carrier, A-8) PLUS the fifth term\'s one (the add-tab control `tab-add`, the top bar\'s `+`) PLUS the sixth term\'s one (the application\'s name node `app-name`, the top bar\'s FIRST child) PLUS the seventh term\'s four (the four zone strips, one per declared zone)',
-    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA)
+      '§3.3 I-10 / C-6 — the drift is ATTRIBUTED, never re-spelled: the five card nodes PLUS T2\'s two page nodes PLUS D-113\'s thirteen overlay nodes PLUS the fourth term\'s thirty-five (the interface inventory\'s thirty-four authored nodes AND the layout\'s measured-figures carrier, A-8) PLUS the fifth term\'s one (the add-tab control `tab-add`, the top bar\'s `+`) PLUS the sixth term\'s one (the application\'s name node `app-name`, the top bar\'s FIRST child) PLUS the seventh term\'s four (the four zone strips, one per declared zone) PLUS the eighth term\'s ten (the two pane-move grips and their eight zone drops)',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA + PANE_MOVE_AUTHORED_DELTA)
     const titles = thisFileTitles()
     expect(
       titles.filter((t) => /loaded census|targets reading|rendered html reading/i.test(t)),
@@ -1659,7 +1806,7 @@ describe('§3.4 R-* — the static rows', () => {
 // §3.5 — the EXISTENCE rows, each with its probe
 // ===========================================================================
 describe('§3.5 X-* — the existence rows', () => {
-  it('X-1 (§2.1 item 1) — the authored census: 18 at filing time, 79 at this head (AS FILED 23 once the card landed; 25 at T2; 38 at D-113; 72 once the interface inventory landed; 73 once the layout\'s measured-figures carrier landed; 74 once the add-tab control landed; 75 once the application\'s name node landed; 79 once the four zone strips landed)', () => {
+  it('X-1 (§2.1 item 1) — the authored census: 18 at filing time, 89 at this head (AS FILED 23 once the card landed; 25 at T2; 38 at D-113; 72 once the interface inventory landed; 73 once the layout\'s measured-figures carrier landed; 74 once the add-tab control landed; 75 once the application\'s name node landed; 79 once the four zone strips landed; 89 once the two pane-move grips and their eight zone drops landed)', () => {
     const spec = sourceOrEmpty(SPEC_PATH)
     expect(
       spec.includes('`18`') && spec.includes('`23`'),
@@ -1678,11 +1825,11 @@ describe('§3.5 X-* — the existence rows', () => {
     ).toBe(POST_CENSUS)
     expect(
       measured - PRE_CENSUS,
-      'C-6 / §3.5 X-1 — the drift is ATTRIBUTED: the five card nodes PLUS T2\'s two declared page nodes PLUS D-113\'s thirteen overlay nodes PLUS the fourth term\'s thirty-five (the interface inventory\'s thirty-four authored nodes AND the layout\'s measured-figures carrier, A-8) PLUS the fifth term\'s one (the add-tab control `tab-add`, the top bar\'s `+`) PLUS the sixth term\'s one (the application\'s name node `app-name`, the top bar\'s FIRST child) PLUS the seventh term\'s four (the four zone strips, one per declared zone), with the undeclared residue asserted at ZERO',
-    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA)
+      'C-6 / §3.5 X-1 — the drift is ATTRIBUTED: the five card nodes PLUS T2\'s two declared page nodes PLUS D-113\'s thirteen overlay nodes PLUS the fourth term\'s thirty-five (the interface inventory\'s thirty-four authored nodes AND the layout\'s measured-figures carrier, A-8) PLUS the fifth term\'s one (the add-tab control `tab-add`, the top bar\'s `+`) PLUS the sixth term\'s one (the application\'s name node `app-name`, the top bar\'s FIRST child) PLUS the seventh term\'s four (the four zone strips, one per declared zone) PLUS the eighth term\'s ten (the two pane-move grips and their eight zone drops), with the undeclared residue asserted at ZERO',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA + PANE_MOVE_AUTHORED_DELTA)
     expect(
-      measured - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - LAYOUT_AUTHORED_NODE_DELTA - TABS_ADD_AUTHORED_DELTA - APP_NAME_AUTHORED_DELTA - ZONE_STRIPS_AUTHORED_DELTA,
-      'C-6 — an UNDECLARED mover of the authored census: the delta is not the sum of its seven declared terms (an EIGHTH authored node — a FIFTH zone strip, say — arriving with no term of its own lands here, at the figure, and at M-2\'s identity rows, which are pinned to their own addresses and cannot absorb it)',
+      measured - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - LAYOUT_AUTHORED_NODE_DELTA - TABS_ADD_AUTHORED_DELTA - APP_NAME_AUTHORED_DELTA - ZONE_STRIPS_AUTHORED_DELTA - PANE_MOVE_AUTHORED_DELTA,
+      'C-6 — an UNDECLARED mover of the authored census: the delta is not the sum of its EIGHT declared terms (a NINTH authored node — a FIFTH zone strip, a THIRD grip, or a spare drop at an address no term names — arriving with no term of its own lands here, at the figure, and at M-2\'s identity rows, which are pinned to their own addresses and cannot absorb it)',
     ).toBe(0)
   })
 
@@ -2081,12 +2228,15 @@ function im2Attempt(shape: 1 | 2 | 3 | 4, config: 'object' | 'scan'): AttemptRes
         [
           { label: '§5.5.1 P-TC-IM-2 shape (1) — the authored id set is CLOSED at the four declared ids', ok: idSetClauseHolds(card.section) },
           { label: '§5.5.1 P-TC-IM-2 shape (1) — the state node carries BOTH `css.id` and `props.id`', ok: propsClauseHolds(card.section) },
-          { label: `§5.5.1 P-TC-IM-2 shape (1) — the authored census moves ${PRE_CENSUS} -> ${POST_CENSUS} (AS FILED 18 -> 23; T2's two page nodes, docs/specs/store-tabs-record.md §5.1 item 2; D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes; the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} = the interface inventory's ${INTERFACE_INVENTORY_NODE_DELTA} authored nodes, docs/L3/app-envelope/design.md rev 5 §2, PLUS the layout's measured-figures carrier \`layout-measured\`, rev 6 §2 \`A-8\`; the fifth term's ${TABS_ADD_AUTHORED_DELTA} = the add-tab control \`${TABS_ADD_NODE_ID}\`, the top bar's \`+\`; the sixth term's ${APP_NAME_AUTHORED_DELTA} = the application's name node \`${APP_NAME_NODE_ID}\`, the top bar's FIRST child; the seventh term's ${ZONE_STRIPS_AUTHORED_DELTA} = the four zone strips \`${ZONE_STRIP_NODE_IDS.join('`/`')}\`, docs/L3/renderer-wiring/design-zone-handles.md rev 1 §2)`, ok: authoredCensus() === POST_CENSUS },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) — the authored census moves ${PRE_CENSUS} -> ${POST_CENSUS} (AS FILED 18 -> 23; T2's two page nodes, docs/specs/store-tabs-record.md §5.1 item 2; D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes; the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} = the interface inventory's ${INTERFACE_INVENTORY_NODE_DELTA} authored nodes, docs/L3/app-envelope/design.md rev 5 §2, PLUS the layout's measured-figures carrier \`layout-measured\`, rev 6 §2 \`A-8\`; the fifth term's ${TABS_ADD_AUTHORED_DELTA} = the add-tab control \`${TABS_ADD_NODE_ID}\`, the top bar's \`+\`; the sixth term's ${APP_NAME_AUTHORED_DELTA} = the application's name node \`${APP_NAME_NODE_ID}\`, the top bar's FIRST child; the seventh term's ${ZONE_STRIPS_AUTHORED_DELTA} = the four zone strips \`${ZONE_STRIP_NODE_IDS.join('`/`')}\`, docs/L3/renderer-wiring/design-zone-handles.md rev 1 §2; the EIGHTH term's ${PANE_MOVE_AUTHORED_DELTA} = the TWO PANE-MOVE GRIPS \`${PANE_GRAB_NODE_IDS.join('`/`')}\` PLUS their EIGHT ZONE DROPS \`${PANE_MOVE_DROPS.map((d) => d.id).join('`/`')}\`, docs/L3/renderer-wiring/design-pane-relocation.md rev 1 §7)`, ok: authoredCensus() === POST_CENSUS },
           { label: `§5.5.1 P-TC-IM-2 shape (1) — the FIFTH declared term's ${TABS_ADD_AUTHORED_DELTA} is ONE node a reader can point at: \`${TABS_ADD_NODE_ID}\` is authored EXACTLY ONCE (a renamed, deleted or twice-authored control reddens here)`, ok: authoredNodesAtId(TABS_ADD_NODE_ID).length === TABS_ADD_AUTHORED_DELTA },
           { label: `§5.5.1 P-TC-IM-2 shape (1) — the SIXTH declared term's ${APP_NAME_AUTHORED_DELTA} is ONE node a reader can point at: \`${APP_NAME_NODE_ID}\` is authored EXACTLY ONCE (a renamed, deleted or twice-authored name node reddens here, and a node authored at another address cannot hide inside either one-node term)`, ok: authoredNodesAtId(APP_NAME_NODE_ID).length === APP_NAME_AUTHORED_DELTA },
           { label: `§5.5.1 P-TC-IM-2 shape (1) — the SEVENTH declared term's ${ZONE_STRIPS_AUTHORED_DELTA} is FOUR nodes a reader can point at: each of \`${ZONE_STRIP_NODE_IDS.join('`/`')}\` is authored EXACTLY ONCE, and the four addresses hold EXACTLY ${ZONE_STRIPS_AUTHORED_DELTA} nodes between them (a renamed, deleted or twice-authored strip reddens here, by name, and a FIFTH node cannot hide inside the term)`, ok: ZONE_STRIP_NODE_IDS.every((stripId) => authoredNodesAtId(stripId).length === 1) && ZONE_STRIP_NODE_IDS.reduce((sum, stripId) => sum + authoredNodesAtId(stripId).length, 0) === ZONE_STRIPS_AUTHORED_DELTA },
-          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the drift is ATTRIBUTED: measured - pre === the five card nodes + T2's ${T2_PAGE_NODE_CENSUS_DELTA} page nodes + D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes + the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} (the interface inventory's thirty-four AND the measured-figures carrier) + the fifth term's ${TABS_ADD_AUTHORED_DELTA} (the add-tab control) + the sixth term's ${APP_NAME_AUTHORED_DELTA} (the application's name node) + the seventh term's ${ZONE_STRIPS_AUTHORED_DELTA} (the four zone strips) (an UNDECLARED mover reddens here)`, ok: authoredCensus() - PRE_CENSUS === CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA },
-          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the UNDECLARED residue is ZERO: neither the figure nor the sum is re-spelled to absorb a mover`, ok: authoredCensus() - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - LAYOUT_AUTHORED_NODE_DELTA - TABS_ADD_AUTHORED_DELTA - APP_NAME_AUTHORED_DELTA - ZONE_STRIPS_AUTHORED_DELTA === 0 },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) — the EIGHTH declared term's ${PANE_GRAB_AUTHORED_DELTA} grips are TWO nodes a reader can point at: each of \`${PANE_GRAB_NODE_IDS.join('`/`')}\` is authored EXACTLY ONCE, carries \`props.id\` equal to its \`css.id\`, and carries \`props.tabindex: '0'\` — the bare attribute the page sheet's \`:focus-within\` reveal is armed by (a renamed, deleted or twice-authored grip, or one that lost its tabindex, reddens here, by name)`, ok: PANE_GRAB_NODE_IDS.every((grabId) => { const g = authoredNodesAtId(grabId); return g.length === 1 && propsIdOf(g[0] ?? null) === grabId && propsValueOf(g[0] ?? null, 'tabindex') === '0' }) && PANE_GRAB_NODE_IDS.reduce((sum, grabId) => sum + authoredNodesAtId(grabId).length, 0) === PANE_GRAB_AUTHORED_DELTA },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) — the EIGHTH declared term's ${PANE_MOVE_DROP_AUTHORED_DELTA} drops are EIGHT nodes a reader can point at: each of \`${PANE_MOVE_DROPS.map((d) => d.id).join('`/`')}\` is authored EXACTLY ONCE and carries BOTH \`props.pane\` (the RECORD id) and \`props.zone\` (the DECLARED destination) as this census spells them (a renamed, deleted or twice-authored drop reddens here by name, and a drop whose operands moved reddens here even though the figure would not)`, ok: PANE_MOVE_DROPS.every((drop) => { const d = authoredNodesAtId(drop.id); return d.length === 1 && propsIdOf(d[0] ?? null) === drop.id && propsValueOf(d[0] ?? null, 'pane') === drop.pane && propsValueOf(d[0] ?? null, 'zone') === drop.zone }) && PANE_MOVE_DROPS.reduce((sum, drop) => sum + authoredNodesAtId(drop.id).length, 0) === PANE_MOVE_DROP_AUTHORED_DELTA },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the EIGHTH term is ${PANE_GRAB_AUTHORED_DELTA} + ${PANE_MOVE_DROP_AUTHORED_DELTA} = ${PANE_MOVE_AUTHORED_DELTA} and TEN IDS GET TEN PER-ID ROWS: a term-level identity alone is INVARIANT UNDER A SWAP (a deleted drop and an eleventh node elsewhere leave the figure and the sum standing), so the tenth row is the one that carries the mover`, ok: PANE_MOVE_AUTHORED_DELTA === PANE_GRAB_AUTHORED_DELTA + PANE_MOVE_DROP_AUTHORED_DELTA && PANE_GRAB_NODE_IDS.length + PANE_MOVE_DROPS.length === PANE_MOVE_AUTHORED_DELTA },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the drift is ATTRIBUTED: measured - pre === the five card nodes + T2's ${T2_PAGE_NODE_CENSUS_DELTA} page nodes + D-113's ${OVERLAY_AUTHORED_DELTA} overlay nodes + the fourth term's ${LAYOUT_AUTHORED_NODE_DELTA} (the interface inventory's thirty-four AND the measured-figures carrier) + the fifth term's ${TABS_ADD_AUTHORED_DELTA} (the add-tab control) + the sixth term's ${APP_NAME_AUTHORED_DELTA} (the application's name node) + the seventh term's ${ZONE_STRIPS_AUTHORED_DELTA} (the four zone strips) + the eighth term's ${PANE_MOVE_AUTHORED_DELTA} (the two pane-move grips and their eight zone drops) (an UNDECLARED mover reddens here)`, ok: authoredCensus() - PRE_CENSUS === CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA + OVERLAY_AUTHORED_DELTA + LAYOUT_AUTHORED_NODE_DELTA + TABS_ADD_AUTHORED_DELTA + APP_NAME_AUTHORED_DELTA + ZONE_STRIPS_AUTHORED_DELTA + PANE_MOVE_AUTHORED_DELTA },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the UNDECLARED residue is ZERO: neither the figure nor the sum is re-spelled to absorb a mover`, ok: authoredCensus() - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA - OVERLAY_AUTHORED_DELTA - LAYOUT_AUTHORED_NODE_DELTA - TABS_ADD_AUTHORED_DELTA - APP_NAME_AUTHORED_DELTA - ZONE_STRIPS_AUTHORED_DELTA - PANE_MOVE_AUTHORED_DELTA === 0 },
         ],
         4,
       )
