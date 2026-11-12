@@ -757,13 +757,47 @@ async function main(): Promise<void> {
   const MENU_ADMITTED_ROLES = ['undo', 'redo', 'cut', 'copy', 'paste', 'delete', 'selectall', 'resetzoom', 'zoomin', 'zoomout', 'togglefullscreen'] as const   // ELEVEN
   const MENU_REFUSED_ROLES = ['quit', 'close', 'reload', 'forcereload', 'toggledevtools', 'minimize', 'zoom'] as const                                          // SEVEN
 
+  /** **THE TWO ARMS THAT END THE CALLER'S OWN WINDOW RUN ONE TURN PAST THE ANSWER, AND THE PROBE IS WHY** (`D-237`).
+   *  `ipcMain.handle(IPC_MENU_ROLE, …)` is reached by `ipcRenderer.invoke` from the frame that owns the window being
+   *  destroyed, so an act that tears that window down SYNCHRONOUSLY INSIDE THE HANDLER destroys the frame before the
+   *  reply can be delivered: the caller's `menu(role)` promise then never settles — no `admitted`, no refusal, nothing to
+   *  write into the receipt — and the click is answered by `undefined`. **MEASURED, NOT ASSUMED**, on the smallest honest
+   *  probe (`/tmp/menu-close-probe`, Electron 44.4.5, `close` on the caller's own window): the reply settled in **0 of 3**
+   *  runs for the synchronous form, **1 of 3** deferred by `setImmediate` and **0 of 3** by `queueMicrotask`, and **3 of 3**
+   *  for a plain `setTimeout(…, 0)` — the same figures for `quit` (0/3 synchronous, 3/3 deferred). **SO THE PRIMITIVE IS A
+   *  TIMER AND NOT A MICROTASK OR AN IMMEDIATE**: the answer crosses a PROCESS BOUNDARY, so it is not a microtask — a
+   *  microtask drains before the reply has left this process at all; and `setImmediate` runs in the same loop iteration,
+   *  inside the check phase, which measured as a race the renderer usually LOST. One timer turn is the smallest thing the
+   *  probe found that was reliably long enough, and the timer is never what makes the act happen — a lost race costs the
+   *  RECEIPT and never the act, because the act is scheduled unconditionally.
+   *
+   *  **THE COST IS STATED, NOT HIDDEN**: the handler answers `admitted` BEFORE these two acts run, so a failure in a
+   *  deferred act can no longer come back as a refusal — the declared vocabulary carries three words and no fourth
+   *  (`D-196`) — and it is said on the main-process console instead. `reload`/`forcereload` are NOT deferred: the probe
+   *  measured their replies settling even in the synchronous form (3/3, `dt≈2ms`), because a reload replaces the document
+   *  asynchronously rather than destroying the frame, so they keep today's shape. */
+  function deferPastReply(act: () => void): void {
+    setTimeout((): void => {
+      try {
+        act()
+      } catch (failure) {
+        console.error(`[provident-main] menus: a deferred act failed AFTER its answer was sent: ${failure instanceof Error ? failure.message : String(failure)}`)
+      }
+    }, 0)
+  }
+
   /** **THE TOTAL ANSWER — R1 TYPE → R2 REFUSED → R3 ADMITTED → R4 UNKNOWN — AND THE ADMITTED ROLE EXECUTES** (`D-196`
    *  supersedes the design's `G-5`): an admitted role is PERFORMED on the live window's `webContents` — the same-named
    *  method for `undo`/`redo`/`cut`/`copy`/`paste`/`delete`/`selectall`, `setZoomLevel(0)` for `resetzoom`, the platform's
    *  own half-step for `zoomin`/`zoomout`, and `setFullScreen(!isFullScreen())` for `togglefullscreen` — and `admitted` is
-   *  answered ONLY once that operation returned. **A THROWING OPERATION IS A FAILURE ANSWER, NEVER AN ADMISSION**: the
+   *  answered ONLY once that operation returned — **EXCEPT FOR THE TWO THAT END THE CALLER** (`quit`, `close`; `D-237`,
+   *  `deferPastReply` below), which answer `admitted` one turn BEFORE they act, because acting synchronously inside this
+   *  handler destroyed the frame that was waiting on the answer and the probe measured that answer never landing at all.
+   *  **A THROWING OPERATION IS A FAILURE ANSWER, NEVER AN ADMISSION**: the
    *  declared vocabulary carries three words and no fourth, so a failed operation answers `role-not-admitted` with the
-   *  operation's own words in `message`, and `admitted` stays reserved for the case where the act happened. Nothing here
+   *  operation's own words in `message`, and `admitted` stays reserved for the case where the act happened — the two
+   *  deferred acts excepted, whose failure can only be said on the main-process console because their answer has already
+   *  crossed. Nothing here
    *  checks a sender or inspects a frame: the admitted set is the bound (`D-121`).
    *
    *  **AND THE SEVEN'S ANSWER NOW HAS TWO ARMS, WHICH IS THE USER'S RULING AND NOT A WIDENING OF THE SET** (`D-196`,
@@ -824,9 +858,13 @@ async function main(): Promise<void> {
         // ── THE SEVEN, AND THIS ARM IS REACHED ONLY BY A REAL GESTURE ─────────────────────────────────────────────
         // Each is the operation the role NAMES, and nothing here re-tests the caller: the gate is the `trusted` argument
         // above, which only `src/main/preload.ts` can set and only from an `isTrusted` event on the item carrying the role.
-        // **`quit` AND `close` END WHAT THEY END BEFORE THIS CALL RETURNS** — the invoke's promise is torn down with the
-        // window or the process, so a person's click on those two is answered by the app leaving, not by `admitted`.
-        case 'quit': app.quit(); break
+        // **`quit` AND `close` END WHAT THEY END ONE TURN AFTER THE ANSWER, AND NOT SYNCHRONOUSLY WITHIN THIS HANDLER**
+        // (`D-237`): both destroy the frame that is WAITING on this very invoke's reply, and measured synchronously the
+        // reply never landed (0 of 3 runs), so the click was answered by nothing at all. `deferPastReply`, above, states
+        // the probe's figures, the primitive and the cost. The other five of the seven are NOT deferred: none of them
+        // destroys the caller — a reload replaces the document asynchronously and its reply settled even synchronously —
+        // and deferring them would move no deadline while costing the failure answer their arms still owe.
+        case 'quit': deferPastReply(() => { app.quit() }); break
         // ═══ A FORK DECISION NOTE AT THE `close` ROLE — THE ROLE CLOSES **THE WINDOW**, AND WHAT FOLLOWS IS NOT ITS DECISION ═══
         // **`close` CLOSES THE WINDOW AND NOTHING ELSE.** This arm asks the one window to close: it does not quit, does not end
         // the MCP endpoint, and does not write, clear or re-read a record. **WHAT HAPPENS NEXT IS THE COMPOSITION'S DECISION AND
@@ -842,7 +880,11 @@ async function main(): Promise<void> {
         // `Close` that no longer ends anything still belongs beside it. Both are its decisions, taken in its own composition;
         // neither is a flag this role carries. **THE MIRROR OF THIS NOTE STANDS AT `window-all-closed`, below, with what a fork
         // must verify before it can take that shape** — the two are ONE decision and nobody should have to find one from the other.
-        case 'close': target.close(); break
+        // **AND THIS ARM IS SCHEDULED, NOT SYNCONOUS** (`D-237`): the `close()` it asks for runs one timer turn after this
+        // handler's answer, because the window it closes is the caller's and the caller is waiting for that answer. The ROLE
+        // still answers one question — it closes the window and nothing else — and a fork's decision above is unmoved by WHEN
+        // the call happens; what moves is that a person's click now also lands its `admitted` receipt before the window goes.
+        case 'close': deferPastReply(() => { target.close() }); break
         case 'reload': contents.reload(); break
         case 'forcereload': contents.reloadIgnoringCache(); break
         case 'toggledevtools': contents.toggleDevTools(); break
