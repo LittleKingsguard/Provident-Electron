@@ -5528,3 +5528,22 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two worktree-boundary rows** red before the commit; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt. **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-249`** as prose, unchanged and extended by this row only. **This row records a gesture resolved against an invented grid, a drop mistaken for debris, a seam that was two defects, and a rule kept while its paint was extended — because the layout and the paint had been one thought.**
+## D-251 — ONE HANDLE WAS WRITING **TWO SUBJECTS**: the preview wrote the composition's declared target **for every pane handle**, so dragging the menus grip reflowed the **stage's** pane — and the obvious guess was wrong
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"Still not moving. The drag handle appearing on the far side appears to be controlling the height of the menu pane, without the pane relocating."* · *"the demo pane inside the stage **also** changes from 1 to 2 lines, indicating that the handle is changing more than just its own pane."*
+
+**THE SECOND SENTENCE WAS THE PROOF, AND IT WAS RIGHT.** **The stage's own `<section>` reflowing while the user dragged the MENUS grip could only mean one stroke was reaching two subjects.**
+
+**THE INSTRUMENTED LOG SETTLED IT, AND IT REFUTED THE OBVIOUS GUESS.** **It was NOT one press starting two gestures.** **The grip carries exactly ONE `pointerdown`**, **`elementFromPoint` at its centre answers the grip**, **and the strips' five listeners each sit on their own boxes.** **And the grip drag was ALREADY ONE ACT**: **press → five moves naming the `top` drop → seven naming the `left` → end armed → one `paneMoveAct` → one relocation write** — **no `commitDrag`, no second gesture.**
+
+**WHAT WAS WRONG WAS INSIDE THE RESIZE PREVIEW.** **`previewFor` wrote `GUTTER_TARGET_ID` — `D-144`'s ghost target, which is the STAGE pane's — FOR EVERY PANE HANDLE**, **beside the handle's own pane node.** **So the menus handle wrote the menus pane AND the stage's target.** **And because `panePreviewOf`'s member follows the record's `zone`, AFTER A RELOCATION the same drag wrote `member: height`** (`100 → 137`) — **the only writer of height anywhere in the system** — **so the menus pane's height moved exactly as the user described, and ONLY because the zone had already flipped.** **Two reports, one defect, and the second was a consequence of the first.**
+
+**THE FIX MAKES THE TWO EXCLUSIVE BY ADDRESS**: **the composition's target is written only when the handle's subject IS the default pane**, **while every pane handle always writes its own subject's node and member**, **byte-unchanged for the stage arm** (`PS-1`…`PS-4`). **It cannot regress because the test is the handle's ADDRESS — its record key — not an id string, a flag or a boot reading**: **a third pane handle writes its own node BY CONSTRUCTION.**
+
+**MEASURED AFTER.** **The relocation drag logs ONE relocation and nothing else**, **with the stage pane unchanged**; **the resize drag logs only `pane-menus`'s width**, **with no `#gutter-target` write and `pane-a` untouched** — **the stage's demo pane no longer reflows on either gesture**, **where before it went `100×44` across three lines to `137×28` across two.**
+
+**AND THE HEIGHT THAT REMAINS IS THE DECLARED LIMIT, NOT THIS HANDLE.** **After a relocation the menus pane paints `137` tall** — **because the whole-pane write set `zone: left` and the paint reads `zone` per delivery (`D-243`)** — **which is `D-248`'s *"the record relocates, the region does not"* (`D-182`), L3's to lift.** **This row says so rather than letting a user discover it and report it a third time.**
+
+**THE READINGS.** `npm test` **`2,963 passed / 2 skipped` of `2,965`** over **`146`** files, **zero red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; `npm run panes` **`7`/`7`**; the demo rebuilt. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-250`** as prose, unchanged and extended by this row only. **This row records a handle that wrote its neighbour's target, a guess refuted by the log, two reports that were one defect, and a remaining height change traced to a limit rather than to the stroke.**
