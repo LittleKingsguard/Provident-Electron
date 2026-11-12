@@ -8,11 +8,17 @@
 // dragged the package into the renderer would red a gating e2e row).
 //
 // WHAT THESE ROWS ARE ABOUT — the derivation, and it is the whole of Stage A's value: from `read()`'s answer ALONE the
-// client decides whether the LANDING terminal stands (the landing ENTRY is the one row reading `active: true` and NO OTHER
-// ROW does — L2 §6's *"`landing` names a row reading `active: true`"* read as what it is, because `landing` IS the active
-// row's id and so a comparison with it was a comparison with itself, `D-210`) and whether the ERROR terminal stands (a row
-// carries an `error`), and resolves each page node through the runtime's `elementForNodeId` — the ENVELOPE's ids, never a
-// spelling of the client's. The rows below are the four record states that predicate has (a landing witness, an error
+// client decides whether the LANDING terminal stands (EXACTLY ONE row reads `active: true` **AND THAT ROW'S `target` IS THE
+// LANDING PAGE** — `TABS_LANDING_PAGE_ID` — L2 §6's *"`landing` names a row reading `active: true`"* read as what it is,
+// because `landing` IS the active row's id and so a comparison with it was a comparison with itself, `D-210`) and whether
+// the ERROR terminal stands (a row carries an `error`), and resolves each page node through the runtime's
+// `elementForNodeId` — the ENVELOPE's ids, never a spelling of the client's. **THE KEY IS THE TARGET AND NOT THE ENTRY'S
+// ID**: a row's `target` is the CONTENT it contains and its `id` is its identity (`src/main/tabs-record/index.ts`, `D-75`,
+// `D-76`), and the `+` mints an id whose target the landing repair coerces to the landing page, so an id-keyed predicate
+// answered `false` over a record whose shown tab WAS the landing page. **EVERY ROW MEANT TO BE THE LANDING ENTRY THEREFORE
+// CARRIES THAT TARGET** (the `landingRow` helper below), which is what lets `TC-1`/`TC-2`/`TC-11`/`TC-12` assert a standing
+// landing terminal at all, and a row meant to be a NON-landing tab keeps a made-up target so the same predicate still has
+// its false arm. The rows below are the four record states that predicate has (a landing witness, an error
 // witness, neither, and TWO actives) plus the three answers that are not a record at all (a refusal, an absent member, a
 // route that did not answer) and the change push's own duty.
 //
@@ -31,10 +37,18 @@ import {
   type TabsCommittedAnswer,
 } from '../../../src/renderer/tabs-client.js'
 
-/** One tab row in the record's own fields (`TabsRecordRow`): `active` decides the landing witness, a carried `error`
- *  token decides the error witness. */
+/** One tab row in the record's own fields (`TabsRecordRow`): `active` decides "exactly one", a carried `error` token
+ *  decides the error witness, and `target` is the CONTENT the row holds — a made-up `node-<id>` here is precisely what
+ *  makes the row a NON-landing tab. */
 const row = (id: string, active: boolean, error?: string): TabsRecordRow =>
   error === undefined ? { id, target: `node-${id}`, active } : { id, target: `node-${id}`, active, error }
+
+/** **THE LANDING ENTRY, AS THE RECORD SEATS IT** — and the landing terminal stands on its `target`, never on its `id`: a
+ *  row's `target` is the content it contains and its `id` is its identity (`src/main/tabs-record/index.ts`, `D-75`,
+ *  `D-76`). So this row carries **`target: TABS_LANDING_PAGE_ID`** (the constant IMPORTED above, `'tabs-landing-page'`,
+ *  `src/shared/demo-envelope.ts`), which is the one value `deriveTabsWitness` compares the active row's target against.
+ *  A row of `row(...)` beside it is then a tab whose content is somewhere else, which is the predicate's false arm. */
+const landingRow = (active: boolean): TabsRecordRow => ({ id: 'landing', target: TABS_LANDING_PAGE_ID, active })
 
 /** A committed read answer — L2 §2's three members, with `order` spelled from the rows so the two cannot disagree by
  *  accident. */
@@ -111,8 +125,8 @@ afterEach(() => {
 })
 
 describe('the client derives the two terminals from `read()`\'s answer alone (L2 §6)', () => {
-  it('TC-1 — THE LANDING WITNESS STANDS: `landing` names a row reading `active: true` and no other row does, so the terminal is driven and the node it drives is the ENVELOPE\'s, resolved through the runtime', async () => {
-    const member = stubMember(() => recordOf([row('landing', true), row('t1', false)], 'landing'))
+  it('TC-1 — THE LANDING WITNESS STANDS: `landing` names a row reading `active: true` and no other row does **whose `target` IS the landing page**, so the terminal is driven and the node it drives is the ENVELOPE\'s, resolved through the runtime', async () => {
+    const member = stubMember(() => recordOf([landingRow(true), row('t1', false)], 'landing'))
     const resolver = recordingResolver()
     const reading = await createTabsClient({ bridge: member.bridge, runtime: resolver }).read()
     expect(reading.status).toBe('committed')
@@ -130,7 +144,7 @@ describe('the client derives the two terminals from `read()`\'s answer alone (L2
   })
 
   it('TC-2 — THE ERROR WITNESS STANDS: a row carries an `error` token, so the error terminal is driven and NAMES that tab, while the landing terminal stands on the active row it does not disturb', async () => {
-    const rows = [row('landing', true), row('t9', false, 'unresolvable-target')]
+    const rows = [landingRow(true), row('t9', false, 'unresolvable-target')]
     const resolver = recordingResolver()
     const reading = await createTabsClient({ bridge: stubMember(() => recordOf(rows, 'landing')).bridge, runtime: resolver }).read()
     if (reading.status !== 'committed') throw new Error(`expected a read, got ${reading.status}`)
@@ -168,11 +182,12 @@ describe('the client derives the two terminals from `read()`\'s answer alone (L2
     expect(reading.witness.landing.resolved).toBeNull()
     expect(resolver.asked).toEqual([])
     // AND ITS SIBLING STATE, decided by the same comparison rather than by a second rule: ONE active row that is NOT the
-    // landing entry is no witness either — the terminal stands on the LANDING ENTRY being the shown tab, and not on there
-    // being a shown tab at all (`D-210`). **THE OLD PREDICATE REACHED THIS `false` BY THE OTHER ROAD**: it compared the
-    // active row against `answer.landing`, so this answer — where `landing` names an INACTIVE row, a state no legal act
-    // leaves — was the only shape that could turn it off. The comparison is now the entry's own id, so the row is answered
-    // `false` for the reason the derivation gives rather than by an answer the record cannot produce.
+    // landing entry is no witness either — the terminal stands on the LANDING PAGE being the shown tab's content, and not
+    // on there being a shown tab at all (`D-210`). **THE OLD PREDICATE REACHED THIS `false` BY THE OTHER ROAD**: it compared
+    // the active row against `answer.landing`, so this answer — where `landing` names an INACTIVE row, a state no legal act
+    // leaves — was the only shape that could turn it off. The comparison is now the active row's `target` against
+    // `TABS_LANDING_PAGE_ID` (a made-up `node-t1` here), so the row is answered `false` for the reason the derivation gives
+    // rather than by an answer the record cannot produce.
     const moved = await createTabsClient({
       bridge: stubMember(() => recordOf([row('landing', false), row('t1', true)], 'landing')).bridge,
       runtime: recordingResolver(),
@@ -315,13 +330,14 @@ describe('the client re-reads after every change and holds no record of its own 
     // (`D-210`): the predicate compared the active row's id with `answer.landing`, which IS the active row's id, so any
     // record with exactly one active row answered `true` and this assertion could not fail. The witness re-grained in the
     // same edit is what makes the reading above and this one the app's real answer rather than a second spelling of the
-    // same row compared with itself.
-    expect(second.witness.landing.witness, 'the landing entry is NOT the active row, so the terminal does not stand (D-210)').toBe(false)
+    // same row compared with itself. **AND THE KEY IS THE TARGET**: `t4`'s target is a made-up `node-t4`, so the one active
+    // row's content is NOT the landing page — the same `false`, now derived from the member the stage actually shows.
+    expect(second.witness.landing.witness, 'the one active row is `t4` and its target is not the landing page, so the terminal does not stand (D-210)').toBe(false)
     expect(member.reads()).toBe(2)
   })
 
   it('TC-11 — THE AMBIENT PATH IS THE APP\'S: with `window.provident.tabs` installed and NO injected member, the client finds it and reads through it — the same member the preload exposes and the same one the node shim\'s absence is measured against in TC-6', async () => {
-    const member = stubMember(() => recordOf([row('landing', true), row('t1', false)], 'landing'))
+    const member = stubMember(() => recordOf([landingRow(true), row('t1', false)], 'landing'))
     installAmbient(member.bridge)
     const reading = await createTabsClient().read()
     if (reading.status !== 'committed') throw new Error(`expected a read, got ${reading.status}`)
@@ -333,7 +349,7 @@ describe('the client re-reads after every change and holds no record of its own 
 
 describe('D-76\'s derivation, read from the client\'s side', () => {
   it('TC-12 — THE WITNESS IS A FUNCTION OF THE ANSWER ALONE: the same call over two records that differ only in `landing` answers two witnesses, and the resolver\'s absence changes NEITHER (a node-less drive derives the terminal and resolves no node)', () => {
-    const rows = [row('landing', true), row('t1', false)]
+    const rows = [landingRow(true), row('t1', false)]
     const withNode = deriveTabsWitness(recordOf(rows, 'landing'), recordingResolver())
     const withoutNode = deriveTabsWitness(recordOf(rows, 'landing'))
     expect(withNode.landing.witness).toBe(true)

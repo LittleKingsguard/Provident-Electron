@@ -20,10 +20,11 @@
 // client answers is ALWAYS one it re-read, never one it remembered and never one it composed.
 //
 // WHY IT EXISTS AT ALL — THE WITNESS, which is the whole value of Stage A. L2 §6 fixes the derivation from `read()`'s
-// answer ALONE: the **landing** terminal stands where the landing ENTRY is the one row reading `active: true` — L2 §6's own
-// words are "`landing` names a row reading `active: true`, and no other row does", and because `landing` is DERIVED as the
-// active row's id (`D-76`) the only comparison that can decide it is the active row against the entry's own id (`D-210`) —
-// and the **error** terminal where a row carries an `error`. Both page nodes are the ENVELOPE's
+// answer ALONE: the **landing** terminal stands where exactly one row reads `active: true` AND THAT ROW'S `target` IS THE
+// LANDING PAGE — L2 §6's own words are "`landing` names a row reading `active: true`, and no other row does", and the fact
+// that decides *the stage shows the landing content* is the active row's `target` (`TABS_LANDING_PAGE_ID`), not its ID —
+// see the predicate's own block below for the measured defect that moved the key off the entry's id (`D-210` still owns the
+// anti-tautology half: `answer.landing` is NOT consulted) — and the **error** terminal where a row carries an `error`. Both page nodes are the ENVELOPE's
 // (`TABS_LANDING_PAGE_ID` / `TABS_ERROR_PAGE_ID`, `src/shared/demo-envelope.ts`) and are resolved through
 // `Runtime.elementForNodeId`; this module authors no element, no class and no text — it resolves the nodes the envelope
 // already carries, exactly as the wiring's landed driver does (`src/renderer/renderer.ts`'s `driveTabsLandingPage`).
@@ -50,7 +51,6 @@
 // instrument has nothing to read.
 
 import { TABS_ERROR_PAGE_ID, TABS_LANDING_PAGE_ID } from '../shared/demo-envelope.js'
-import { TABS_LANDING_ENTRY_ID } from '../shared/tabs-landing.js'
 import type { TabsRecordRow } from '../shared/types.js'
 
 /** THE READ ANSWER'S COMMITTED ARM — L2 §2's three members, verbatim: `order` (the record's one stored seat),
@@ -209,21 +209,48 @@ function answerOrDivergence(raw: unknown): { readonly answer: TabsReadAnswer } |
  *  answers `witness: false` with `activeIds` naming both.
  *
  *  **"Exactly one active" is ONE comparison and not two**: exactly one row reads active (`activeIds.length === 1`) AND that
- *  row IS the landing entry (`activeIds[0] === TABS_LANDING_ENTRY_ID`, the one spelling both realms import from
- *  `src/shared/tabs-landing.ts`). **`answer.landing` IS NOT CONSULTED, AND THAT IS THE WHOLE CORRECTION** (`D-210`): it is
- *  DERIVED as *the id of the row reading active*, so a comparison against it compares the active row's id with itself — a
- *  predicate with no false arm, which answered `witness: true` on a record whose shown tab was any tab at all. A record no
- *  legal act has left has no active row, so the count arm alone denies it and no terminal is derived, which is the intended
- *  answer and not a special case. An `error` token is CARRIED where the member is present and neither `null` nor
- *  `undefined` (an empty string is a token the record carries; the wiring's landed driver reads the same three lines), and
- *  the FIRST such row in `rows` order names `error.tabId`.
+ *  row's `target` IS the landing PAGE (`activeRows[0].target === TABS_LANDING_PAGE_ID`). **THE KEY IS THE TARGET AND NO
+ *  LONGER THE ENTRY'S ID, AND THAT IS A MEASURED DEFECT RATHER THAN A CHANGE OF TASTE.** The comparison this block used to
+ *  carry was `activeIds[0] === TABS_LANDING_ENTRY_ID` — the active row's *identity* against the landing ENTRY's id, the
+ *  spelling `src/shared/tabs-landing.ts` held for both realms. **A `+` press activates a row whose id is MINTED
+ *  (`tab-2`) and whose `target` the landing repair then coerces to the landing page** (the user's ruling: *"The new tab
+ *  should be coerced to the landing-page content by repair if it isn't seeded with any"*, `src/renderer/renderer.ts`'s
+ *  `repairUnpagedTarget`), **so the record is right — the tab's content IS the landing page — and the id is not the landing
+ *  entry, which made this predicate answer `false` over a record the stage had every reason to show.** MEASURED on a live
+ *  boot: one row before the press (`landing` active, landing page `display: block`), a press reaching two rows with the new
+ *  row `active: true` and `target: tabs-landing-page`, and **BOTH authored terminals reading `display: none`** — the tab
+ *  the user is looking at contained nothing visible at all. **What "the landing terminal stands" MEANS is "the stage shows
+ *  the landing content",** so the fact that decides it is the content the active row names, and `target` is that member
+ *  (a row's `target` is the content it contains; its `id` is its identity — `src/main/tabs-record/index.ts`'s spelling of
+ *  the two, `D-75`, `D-76`).
+ *
+ *  **`answer.landing` IS STILL NOT CONSULTED, AND THE ANTI-TAUTOLOGY PROPERTY SURVIVES THE MOVE** (`D-210`): it is DERIVED
+ *  as *the id of the row reading active*, so a comparison against it compares the active row's id with itself — a predicate
+ *  with no false arm, which answered `witness: true` on a record whose shown tab was any tab at all. **THE NEW KEY IS STILL
+ *  INDEPENDENT OF THE THING IT GUARDS**, and in one respect more plainly so: it reads a DIFFERENT ROW MEMBER (`target`, the
+ *  content pointer) and compares it against a constant the ENVELOPE authors (`TABS_LANDING_PAGE_ID`, `'tabs-landing-page'`,
+ *  `src/shared/demo-envelope.ts`) that no derivation in this realm produces. `landing` remains unread, and this predicate
+ *  still has false arms a legal act reaches: an active row whose target is `tabs-error-page`, a caller's `/delta`, or the
+ *  `+`'s own `untitled-<n>` placeholder BEFORE the coercion lands all answer `false`. A record no legal act has left has no
+ *  active row, so the count arm alone denies it and no terminal is derived, which is the intended answer and not a special
+ *  case. **A RECORD SEATING TWO ACTIVES STILL ANSWERS `false` with `activeIds` naming both**, because a record with no ONE
+ *  active row has no one content the stage can be said to show. An `error` token is CARRIED where the member is present and
+ *  neither `null` nor `undefined` (an empty string is a token the record carries; the wiring's landed driver reads the same
+ *  three lines), and the FIRST such row in `rows` order names `error.tabId`.
+ *
+ *  **AND `TABS_LANDING_ENTRY_ID` IS NO LONGER READ HERE** — this module's import of it is gone with the comparison, so the
+ *  shared constant's remaining reader is the main-side record that seats the row (`src/main/tabs-record/index.ts`). That is
+ *  not a lost spelling: one realm still derives the id from one place, and this realm no longer needs it, because whether a
+ *  row is the landing ENTRY is not what decides whether the stage shows the landing page.
  *
  *  **THE NODES ARE THE ENVELOPE'S AND ARE RESOLVED, NEVER AUTHORED.** A false witness resolves nothing (`resolved: null` —
  *  the terminal is not driven), and a resolver that throws answers `null` for that node rather than throwing out of a read:
  *  this function is pinned TOTAL because a client's read is. */
 export function deriveTabsWitness(answer: TabsCommittedAnswer, runtime?: TabsNodeResolver | null): TabsWitness {
-  const activeIds = answer.rows.filter((row) => row.active === true).map((row) => row.id)
-  const landingWitness = activeIds.length === 1 && activeIds[0] === TABS_LANDING_ENTRY_ID
+  const activeRows = answer.rows.filter((row) => row.active === true)
+  const activeIds = activeRows.map((row) => row.id)
+  // THE ONE COMPARISON: the single active row's CONTENT against the envelope's landing page. `answer.landing` is never read.
+  const landingWitness = activeRows.length === 1 && activeRows[0]?.target === TABS_LANDING_PAGE_ID
   let errorTabId: string | null = null
   for (const row of answer.rows) {
     const carried: unknown = row.error

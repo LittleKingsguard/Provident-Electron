@@ -6,7 +6,7 @@
 // generated body itself. A source that moved, an import that appeared, or a hand-edited body makes --check exit 1
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
-// @source-count 40
+// @source-count 39
 // @body-sha256 095bfa5dae041e35b3f604cbe9725fdf9b94d775ccc2f748d7a36cdb77bc3781
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
@@ -35,18 +35,17 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 5a94486cd32f74d26142286291f32682d2612bd1cb4119ae45dfcb375947132d src/renderer/renderer.ts
+// @source 2a8155136c429fa1d5f40929ce694a01f1017eb70428facc43010ec20055b9e1 src/renderer/renderer.ts
 // @source 3d3584923f66d936be72029ca46f9a838425aa5345e98026a4499f9252394a73 src/renderer/runtime.ts
 // @source 917e7ac67ad1e3d63f9d9e833cab57febf79bdec751a2bd0b6680de26dc62198 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
-// @source c533fcf9b4da2bae5e197178603cc2b8f2f466b0ec327307a20e19bc2db17a7e src/renderer/tabs-client.ts
+// @source a70e7c06399b490e5ebbb1e9afda8c9b76b5595a26cfa18374c4883951378308 src/renderer/tabs-client.ts
 // @source 9f0ed60a439da36392a1cddc2fe64acbfce54a7fae41c98e35fbe6dcc637b9f7 src/renderer/view-client.ts
-// @source 77ba9f938b16748d12b66351b49d9a39817748d2b52d6a22db9ea62fac676824 src/shared/demo-envelope.ts
+// @source 6681c4227f3fbee9651d9e9711f39ad352697f472b34dd80a725e63fc76ed225 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source 14d8f138229afda6f8acd22d83f8d0d7befca7d364d7bf456ee07034e11305b0 src/shared/tabs-landing.ts
 // @source f3a50cfe3871e03082a336c2a43eaf9daee47cff9fa6998b42f5a3e7adf6e221 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts

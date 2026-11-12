@@ -194,6 +194,13 @@ const APP_ROOT_ID = 'app-surface'
 const OVERLAY_SCRIM_ID = 'overlay-scrim'
 const OVERLAY_OPEN_ID = 'overlay-open'
 const TABS_ROWS_ID = 'tab-rows'
+/** **THE BAR'S NAME IS A NODE NOW, AND ITS ID IS THE ENVELOPE'S LITERAL** (`src/shared/demo-envelope.ts`'s `APP_NAME_ID`,
+ *  `'app-name'`; the user's ruling, which supersedes `D-177`'s content-string cut for this one node), and the `+`'s is the
+ *  twenty-first published name (`TABS_ADD_ID`, `'tab-add'`). **BOTH ARE SPELLED HERE AS LITERALS**: no row of this battery
+ *  imports `src/**` (`D-27`), and a published node id is part of the surface a row may name. **`AL-1` READS THE BAR BY
+ *  THESE THREE IDS, IN ORDER** — name, row set, `+` — which is the order it had when the name was the bar's own text run. */
+const APP_NAME_ID = 'app-name'
+const TABS_ADD_ID = 'tab-add'
 const LANDING_PAGE_ID = 'tabs-landing-page'
 const ERROR_PAGE_ID = 'tabs-error-page'
 /** The ONE carrier a menus answer is written into — `AL-6`'s and `AL-7`'s rendered read. */
@@ -689,6 +696,44 @@ function tagById(html: string, id: string): string | null {
 function tagHasClass(tag: string, token: string): boolean {
   const classes = attrOf(tag, 'class')
   return classes !== null && classes.split(/\s+/).includes(token)
+}
+/** **THE TEXT A NODE CARRIES DIRECTLY — between its own opening tag and its FIRST child tag**, trimmed. `''` is the
+ *  reading that matters at `AL-1`: a bar carrying no text of its own, because its name is a NODE. `null` where the node
+ *  does not render at all, so an absence is never confused with an empty run. */
+function ownTextOf(html: string, tag: string): string | null {
+  const at = html.indexOf(tag)
+  if (at < 0) return null
+  const after = html.slice(at + tag.length)
+  const close = after.indexOf('<')
+  return (close < 0 ? after : after.slice(0, close)).trim()
+}
+/** **ONE NODE'S DIRECT ELEMENT CHILDREN, IN MARKUP ORDER, READ AS THEIR `id` ATTRIBUTES** — the reading `AL-1` needs to
+ *  say the bar's children are the name, the row set and the `+`, IN THAT ORDER, and to red on a name node that is not
+ *  first. **IT COUNTS DEPTH AND NOT OCCURRENCE**: `TAG` matches opening tags only (a closing tag begins `</`, which its
+ *  `[a-z]` refuses), so the walk pairs each opener with a `+1` and each closer with a `-1`, and only a `depth === 0`
+ *  opener is a CHILD. A descendant — a minted chip inside `#tab-rows`, which is exactly what this battery must not read as
+ *  a sibling — stands at `depth ≥ 1` and is skipped. The walk stops at the node's OWN closing tag, so a node with no
+ *  closing tag reports the children it did find rather than swallowing the rest of the page. A child carrying no `id` is
+ *  spelled `(no id: …)` rather than dropped: an unaddressable child is a READING here, not an absence. */
+function childIdsOf(html: string, tag: string): string[] {
+  const at = html.indexOf(tag)
+  if (at < 0) return []
+  const children: string[] = []
+  const WALK = /<(\/?)([a-z][a-z0-9]*)\b[^>]*>/g
+  WALK.lastIndex = at + tag.length
+  let depth = 0
+  let match: RegExpExecArray | null
+  while ((match = WALK.exec(html)) !== null) {
+    if (match[1] === '/') {
+      if (depth === 0) break // the node's own closing tag: its children are done
+      depth -= 1
+      continue
+    }
+    if (depth === 0) children.push(attrOf(match[0], 'id') ?? `(no id: ${match[0].slice(0, 48)})`)
+    const voidTag = /\/>$/.test(match[0]) || /^<(?:br|hr|img|input|meta|link)\b/i.test(match[0])
+    if (!voidTag) depth += 1
+  }
+  return children
 }
 /** **ONE NODE'S RENDERED `style` ATTRIBUTE**, as the paint's `css.style` write lands it: CSS TEXT, so the figure is IN
  *  the markup (`D-203`/`D-204` — the object spelling this row was written for left the attribute EMPTY, which is why a
@@ -1276,7 +1321,7 @@ function tabsRecord(second: { active: boolean; label?: string; error?: string })
 // ══════════════════════════════════════════════════════════════════════════════
 describe('app-layout — the skeleton, the tabs row, the zones, the stage and the menus pane (D-176…D-192)', () => {
   // ── group `skeleton`: AL-1, AL-2, AL-6 — three read-only rows, one boot ──────
-  it('AL-1 — the skeleton is the design\'s: top-bar, tabs row, four zones and a stage, two handles, and the opener last', async () => {
+  it('AL-1 — the skeleton is the design\'s: the bar\'s NAME is a NODE and its first child, then the tabs row and the `+`, four zones and a stage, two handles, and the opener last', async () => {
     const { booted } = await shared('skeleton')
     const surface = await renderedHtml(booted.client)
     expect(
@@ -1286,7 +1331,22 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     ).toBe(false)
     const html = surface.html
 
-    // ── the top-bar, its logo text, and the tabs-row node inside it ──────────
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    // ── the top-bar, ITS NAME AS A NODE, and the bar's children IN ORDER ─────────
+    // **THIS ARM WAS RE-GRAINED, AND IT IS THE OPPOSITE CLAIM IT CARRIED — WHICH IS A RULING'S, NOT THIS ROW'S.**
+    // `D-177`'s cut said the name was the bar's `content` STRING and NEVER a child node, and this row asserted exactly that
+    // (`ownTextOf(topBar).length > 0`). **THE USER HAS SINCE RULED THE OPPOSITE** — *"make the name an element so it can
+    // truncate"* — and **the envelope now carries `#app-name` as the bar's FIRST child** with no `content` on the bar
+    // (`src/shared/demo-envelope.ts`'s `APP_NAME_ID`; `D-239`/`D-240` are the two measurements that led there: an anonymous
+    // text run cannot be reached by any selector, so neither `min-width: 0` nor an `overflow` — and thus the ellipsis — was
+    // ever available on it). **THE SUBJECT IS UNCHANGED — "the skeleton is the design's" — so the row now asserts the
+    // skeleton as it IS authored**, and it is STRONGER where it matters: three readings that used to be one `includes`-shaped
+    // presence check are now a node with its id, a node that carries the name, and an ORDERED child list.
+    // **WHAT REDS IT NOW, EACH BY NAME**: (i) **a missing name node** — the `#app-name` probe below; (ii) **a name node that
+    // is NOT first** — the ordered child list, whose expected first entry is `app-name`; (iii) **a bar that still carries
+    // `content`** — the bar's own text run asserted EMPTY, which is the `D-177` form the ruling retired. A FOURTH, cheaper
+    // red comes free: a name node that carries no text of its own (an element with an empty run is a name nobody can read).
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
     const topBar = tagsOf(html).find((tag) => tagHasClass(tag, 'top-bar'))
     expect(
       topBar === undefined ? '(absent)' : 'present',
@@ -1294,18 +1354,45 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `left and the tabs row in the strip the platform's controls leave (\`D-176\`, \`C-1\`). An absent node here is the ` +
         `declared failure mode "a node absent".`,
     ).toBe('present')
-    const topBarText = ((): string => {
-      const at = html.indexOf(topBar ?? '')
-      if (at < 0) return ''
-      const after = html.slice(at + (topBar ?? '').length)
-      const close = after.indexOf('<')
-      return (close < 0 ? after : after.slice(0, close)).trim()
-    })()
+    // ── (i) THE NAME IS A NODE, UNDER THE ENVELOPE'S OWN ID ──────────────────
+    const nameNode = tagById(html, APP_NAME_ID)
     expect(
-      topBarText.length > 0,
-      `AL-1 — the top-bar must carry the logo/name as a CONTENT STRING and never a child node (\`D-177\`'s cut list): ` +
-        `the text between its tag and its first child was ${JSON.stringify(trunc(topBarText, 80))}.`,
-    ).toBe(true)
+      nameNode === null ? '(absent)' : 'present',
+      `AL-1 — the application's name must render as ITS OWN NODE under the id \`${APP_NAME_ID}\`, and never as the bar's ` +
+        `\`content\` string: the user's ruling — *"make the name an element so it can truncate"* — is what makes an ellipsis ` +
+        `reachable at all, because a text run is an anonymous flex item no selector can reach (\`D-239\`, \`D-240\`; it ` +
+        `supersedes \`D-177\`'s cut FOR THIS ONE NODE). A bar whose name is still a childless text run reds HERE first.`,
+    ).toBe('present')
+    expect(
+      nameNode === null ? null : attrOf(nameNode, 'data-node-id'),
+      `AL-1 — and the name node must carry a \`data-node-id\`: every emitted element does, and a node with no address is a ` +
+        `node no rendered reading can name (\`D-194\`).`,
+    ).not.toBe(null)
+    const nameText = nameNode === null ? null : ownTextOf(html, nameNode)
+    expect(
+      nameText === null ? '(no name node)' : nameText.length > 0 ? 'carries the name' : 'empty',
+      `AL-1 — and the name node must CARRY the name as its own text, because a ` +
+        `\`content\` on a node is what the engine emits as its text run: it rendered ${JSON.stringify(trunc(nameText ?? '', 80))}.`,
+    ).toBe('carries the name')
+    // ── (iii) AND THE BAR CARRIES NO TEXT OF ITS OWN — THE `D-177` FORM, REFUSED ──
+    const barText = topBar === undefined ? '(no bar)' : ownTextOf(html, topBar)
+    expect(
+      barText,
+      `AL-1 — the top-bar must carry NO text run of its own: its name is the FIRST CHILD NODE (\`${APP_NAME_ID}\`), which ` +
+        `is the user's ruling over \`D-177\`'s content-string cut. The text between the bar's tag and its first child was ` +
+        `${JSON.stringify(trunc(barText ?? '', 80))}, where a bar still carrying its name as \`content\` renders that name ` +
+        `here and reds this row.`,
+    ).toBe('')
+    // ── (ii) THE BAR'S CHILDREN, IN ORDER: name, row set, `+` ────────────────
+    const barChildren = topBar === undefined ? ['(no bar)'] : childIdsOf(html, topBar)
+    expect(
+      barChildren,
+      `AL-1 — the top-bar's DIRECT children, in markup order, must be [\`${APP_NAME_ID}\`, \`${TABS_ROWS_ID}\`, ` +
+        `\`${TABS_ADD_ID}\`] — the name, then the row set the mint fills, then the \`+\` — and the markup read ` +
+        `[${barChildren.join(', ')}]. **A NAME NODE THAT IS NOT FIRST REDS HERE**, and so does a control minted INTO the row ` +
+        `set instead of standing beside it (a mint REPLACES that set, \`D-201\`); the row set is what occupies the strip the ` +
+        `platform's controls leave, between the name and the \`+\` (\`D-176\`, \`D-179\`, \`D-183\`, \`C-10\`).`,
+    ).toEqual([APP_NAME_ID, TABS_ROWS_ID, TABS_ADD_ID])
     expect(
       tagById(html, TABS_ROWS_ID),
       `AL-1 — the tabs-row node (\`${TABS_ROWS_ID}\`) must render INSIDE the top-bar strip: it is the mint's \`target\` and ` +

@@ -18,7 +18,8 @@
 // modern (translate.ts FORMAT MARKER) — no `format` field needed.
 //
 // THE LAYOUT SKELETON (`D-176`, `D-183`, `D-185`-`D-193`) stands INSIDE the authored app root: a DRAGGING
-// top-bar whose `content` is the app's name STRING (never a child node), the tabs row a placement mint
+// top-bar whose NAME IS ITS OWN CHILD NODE (`APP_NAME_ID`; the user's ruling, which supersedes `D-177`'s
+// content-string cut for that one node so the sheet can truncate it), the tabs row a placement mint
 // targets, the four zone nodes (`top`/`bottom`/`left`/`right`, authored where the record's declared ids
 // are), one arrangement container that nothing resolves by id, and the DERIVED stage holding the record's
 // two terminal pages — with the `h1` and the four content cards inside the landing page. **THIS FILE
@@ -590,9 +591,10 @@ const TABS_ROW_HOOKS_KIND: Record<string, 'value' | 'component' | 'placement'> =
  *  rather than yielded, and the row never needed to scroll because it was never the constrained box. The
  *  charter's own allocation is that **"the space in between is occupied by the tabs row"** (`D-176`), and only
  *  FLEX can compute a remainder: the row's `flex: 1 1 auto; min-width: 0` with `overflow-x: auto`, and the
- *  `+`-control's `flex: 0 0 auto`, are the page sheet's (`src/renderer/index.html`), and the name holds its
- *  line by the bar's `white-space: nowrap` — a text run cannot be selected, so the anonymous flex item's
- *  floor is where that declaration is made. **NOTHING ELSE IN THE TREE READ THE WIDTH**: no module resolved
+ *  `+`-control's `flex: 0 0 auto`, are the page sheet's (`src/renderer/index.html`), and **the name holds its
+ *  line by the sheet's `#app-name` `white-space: nowrap` — and NOT by the bar's, which stood here until the name
+ *  became a node** (`APP_NAME_ID` below: the user's ruling, which supersedes `D-177`'s content-string cut for this
+ *  one node). **NOTHING ELSE IN THE TREE READ THE WIDTH**: no module resolved
  *  it, no row measured it, and the one place it appears in prose is the sheet's own note.
  *  **WHAT REMOVING IT COSTS, STATED**: the WCO free area is where the bar already sits — `titleBarOverlay:
  *  true` with `titleBarStyle: 'hidden'` (`src/main/main.ts`) draws the platform's controls over the strip's
@@ -607,6 +609,25 @@ const topBarStyle: Record<string, string> = {
   flex: '0 0 36px',
   '-webkit-app-region': 'drag',
 }
+
+/** **THE APPLICATION'S NAME, AS A NODE AND NEVER AS THE BAR'S `content` — AND THAT IS THE USER'S RULING OVER
+ *  `D-177`'s CUT FOR THIS ONE NODE.** The report was *"the overflow also causes the title to switch to two lines"* and
+ *  the ruling was *"make the name an element so it can truncate"*. **WHAT `D-177` HAD RIGHT AND WHY THE RULING IS STILL
+ *  THE CURE**: a text run is an ANONYMOUS flex item, so no selector reaches it — it can neither be given `min-width: 0`
+ *  nor an `overflow` of its own, so the ellipsis `D-240` measured as UNAVAILABLE on the bar is unavailable for exactly
+ *  one reason, the missing element. As a child node the name keeps `css.id` + `props.id` and the string as its
+ *  `content`, and `src/renderer/index.html`'s `#app-name` rule gives it the four declarations an anonymous run can never
+ *  hold (`overflow: hidden`, `text-overflow: ellipsis`, `white-space: nowrap`, `min-width: 0`) plus `flex: 0 1 auto`, so
+ *  a narrow window truncates the name to `Providen…` instead of wrapping it or pushing the row out from under the
+ *  platform's controls.
+ *  **IT STANDS FIRST IN THE BAR SO THE BAR'S ORDER IS UNCHANGED** — name, then the tabs row, then the `+` — and it
+ *  carries NOTHING ELSE: no authoring of a look, no `handlers`, no `-webkit-app-region` (the bar's `drag` owns every
+ *  pixel its children do not claim, and a name that could not drag would be a hole in the window's own handle).
+ *  **ITS ID IS A LITERAL AND NOT AN EXPORT, for the reason the four zone nodes' ids are literals** (`docs/L3/app-envelope/
+ *  design.md` §9): a further export moves the module's published-name surface, and no module resolves this node by id —
+ *  its reader is the page sheet's `#app-name` rule (`D-240`'s lever, now writable) and the rendered markup `AL-1` reads.
+ *  **ITS READER, IN ONE LINE**: the sheet's truncation rule and the rendered read — and, unlike the zones, nothing else. */
+const APP_NAME_ID = 'app-name'
 
 /** **THE ADD-A-TAB CONTROL'S TWO DECLARATIONS, AND ONE OF THEM IS THE DRAG REGION'S** (`C-10`'s rule applied
  *  to a node the chips do not own): `no-drag`, exactly as the row PROTOTYPE's `css` carries it for every minted
@@ -728,9 +749,11 @@ export function demoEnvelope() {
             props: { id: APP_ROOT_ID },
             children: [
               // ---- THE TOP-BAR (`S-2`, `D-176`, `D-178` §3, `D-183`) ------------------------------
-              // `content` is the application-name PLACEHOLDER STRING and NEVER a child node (`D-177`'s cut
-              // list, `D-178` §3): the tree's own spelling of the name, read by the rendered markup (`AL-1`)
-              // and resolved by NO module by id — **no module reads this node's geometry** (`C-10`). Its
+              // **THE BAR AUTHORS NO `content` AND ITS NAME IS A CHILD NODE (`APP_NAME_ID` above), WHICH IS THE
+              // USER'S RULING AND SUPERSEDES `D-177`'s content-string cut FOR THIS NODE ALONE.** The name stands FIRST
+              // in `children`, so the bar's order — name, tabs row, `+` — is exactly what it was when the name was the
+              // bar's own text run; what changed is that the run has an element of its own to truncate in.
+              // It is resolved by NO module by id — **no module reads this node's geometry** (`C-10`). Its
               // `css` carries the window's DRAG REGION: with `titleBarStyle: 'hidden'` the OS bar is gone, so
               // without `-webkit-app-region: drag` here the window cannot be moved at all (`D-183`). **The
               // strip the native controls occupy gets NO NODE and NOTHING** — the platform owns its own
@@ -738,8 +761,20 @@ export function demoEnvelope() {
               {
                 type: 'div',
                 css: { classes: ['top-bar'], style: topBarStyle },
-                content: 'Provident-Electron',
                 children: [
+                  // ---- THE APPLICATION'S NAME (`APP_NAME_ID`, the user's ruling over `D-177`'s cut) ------
+                  // An element and not a text run, so the sheet can give it `min-width: 0` and an `overflow` of its
+                  // own and the ellipsis becomes available (`D-240` measured it UNAVAILABLE on the bar for the one
+                  // reason this node removes). **IT CARRIES THE STRING AND NOTHING ELSE**: its id on `css.id` and on
+                  // `props.id`, and the name as `content` — no `css.style` (the whole truncation is the sheet's
+                  // `#app-name` rule), no `handlers`, no `-webkit-app-region`. Reader: that rule, and the rendered
+                  // markup (`AL-1`).
+                  {
+                    type: 'span',
+                    css: { id: APP_NAME_ID },
+                    props: { id: APP_NAME_ID },
+                    content: 'Provident-Electron',
+                  },
                   // ---- THE TABS ROW (`D-179`, `D-182`) --------------------------------------------
                   // **NO `content`**: its rows are MINTED and their labels PAINTED, so an authored string
                   // here would be a label nothing computed (`D-177`). The `hooks` entry IS `TABS_ROWS_ID`,

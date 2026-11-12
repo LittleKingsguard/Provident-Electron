@@ -1031,8 +1031,8 @@ async function focusActRoute(payload: unknown): Promise<FocusActAnswer> {
   //
   // **IT CANNOT SKIP A NEEDED STAGE REPAINT, AND THE REASON IS THAT ONE MEMBER DECIDES BOTH**: `rowForSeat`'s seat arm is
   // `{...seat.row, active: true, lastActiveAt}`, so on a row that already reads active the ONE member the write would
-  // change is the CLOCK, `lastActiveAt` — and no part of the stage reads it: `deriveTabsWitness` reads `active` and
-  // `error` off the rows, and `driveTabsLandingPage` writes the two pages' `display` from that witness alone. So an
+  // change is the CLOCK, `lastActiveAt` — and no part of the stage reads it: `deriveTabsWitness` reads `active`, `target`
+  // and `error` off the rows, and `driveTabsLandingPage` writes the two pages' `display` from that witness alone. So an
   // already-active click could never move the stage's own inputs, and the two cannot disagree about which tab is shown.
   // **A stage that DID disagree would be a paint that never landed**, and re-writing the row would re-force it only as a
   // side effect of a delivery — that is the repair the surface's own delivery path owes on every `['tabs']` read, not a
@@ -1556,6 +1556,50 @@ function driveTabsRows(reading: TabsClientReading, runtime: Runtime | null): voi
   if (attached < minted.length) {
     console.error(`[provident-renderer] tabs rows: ${String(minted.length - attached)} of ${String(minted.length)} minted row(s) took no click listener`)
   }
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // **THE SETTLE WRITE — AND IT IS THE `+` BUG'S WHOLE CURE, MEASURED RATHER THAN GUESSED** (the head after `D-240`; the
+  // report: *"'+' button causes the tabs row and stage to stop rendering until it is reloaded"*).
+  //
+  // **WHAT THE MEASUREMENT FOUND, WHICH IS NONE OF THE THREE THINGS THE BUG WAS BLAMED ON.** In a real renderer, one press
+  // takes the record from one row to two (`order: ['landing','tab-2']`, read back `committed`, both rows standing) and
+  // **`#tab-rows` is left EMPTY**, with every fresh row rendered as a child of the MOUNT ROOT — `document.querySelectorAll(
+  // '#tab-rows .tab-row')` read `0` while the same rows sat under `#app`. So the mint did not refuse, did not throw and was
+  // not swallowed: `MutationObserver` transcript of one press is `ADD <row> -> tab-rows`, `REM <row> <- tab-rows`,
+  // `ADD <row> -> app`, and the old batch re-parented home in the SAME pass — the rows are minted into the row set and
+  // then re-emitted at the root. **`Runtime.applyCommand` is why, and the reason is a member order rather than a bug in the
+  // mint**: it re-compiles each node of the mint's `dirtied` set FOCUSED ON ITSELF (`focusNodeId: node.id`), that set is
+  // `[target, ...minted]`, and the minted rows' own focused states are therefore written into `prevStates` LAST — so the
+  // render emits each fresh row as a root-level element and its anchored parent's emission is overwritten. The boot row is
+  // placed correctly because the FIRST render is the bootstrap's full compile, which is why the app looks right until
+  // something mints — and RELOADING restores it, which is exactly the user's own report.
+  //
+  // **WHY THIS ONE WRITE IS THE CURE, AND WHY THE OBVIOUS TWO WERE MEASURED AND REJECTED.** A re-EMIT alone does not fix
+  // it (`runtime.bootstrap()` after the mint was tried first and measured: the rows stayed under `#app`, because the
+  // focused states are still what is re-emitted) — what settles the placement is a pass in which the ROW NODE is the
+  // focused subject, since its own compile carries the family children it anchors and its grouped states are written after
+  // everything the mint wrote. So this turn makes ONE more `state-slice` on `TABS_ROWS_ID`, re-asserting the `props.id` it
+  // was AUTHORED with (`css.id === props.id === TABS_ROWS_ID`, `ASM-AE-2`) — **no new value, no new member and no second
+  // authority**: the byte written is the byte the envelope already carries, and what it buys is the re-compile.
+  // **AND IT IS A WRITE THE APP CANNOT OTHERWISE MAKE**: a mint op re-mints (and would land its own fresh rows at the root
+  // again), a plain render is private to the runtime, and `dispatch` needs an event and runs a body. This is the one public
+  // op whose subject is a node the app authors and whose product is a state re-emit.
+  // **THE COST IS NAMED**: one `slice-*` layer on the row node per `['tabs']` delivery, the engine's own write record for a
+  // `state-slice` (the form `installAddTabHandler` already takes once at boot). It carries the value the node already has,
+  // so the rendered attribute is unmoved. **THE ENGINE'S HALF IS RECORDED AS UPSTREAM-OWNED** (`D-5`): a minted node's
+  // focused state rendering it at the mount root is the engine's placement behaviour, so this is the app's compensation at
+  // the same boundary `D-203`'s CSS-text spelling takes.
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  try {
+    runtime.applyCommand({
+      kind: 'state-slice',
+      node: TABS_ROWS_ID,
+      mutation: [{ targetProp: 'props.id', mode: 'replace', value: TABS_ROWS_ID }],
+    })
+  } catch (error) {
+    // A hostile runtime is a reading this turn leaves standing, said out loud: the rows stay where the mint's own render put
+    // them, which is the defect this write exists for and never a throw out of the delivery turn (`D-127`).
+    console.error(`[provident-renderer] tabs rows: the settle write threw; the fresh rows may stand outside #${TABS_ROWS_ID}`, error)
+  }
 }
 
 /** **TURN 2 — ONE `click` PER MINTED ROW, PER MINT** (`S-5`; `D-194`'s attach turn, re-attached per delivery at `D-201`). It
@@ -1605,6 +1649,94 @@ function attachRowAct(runtime: Runtime, nodeId: string): boolean {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
+ * THE LANDING-PAGE REPAIR — A NEW TAB WITH NO CONTENT OF ITS OWN IS COERCED TO THE LANDING PAGE'S
+ *
+ * **THE USER'S RULING, VERBATIM**: *"The new tab should be coerced to the landing-page content by repair if it isn't
+ * seeded with any."* What that fixes is measured: a `+` press activates a row whose `target` is `D-239`'s placeholder
+ * `untitled-<n>` — a string THIS REALM invented because it authors no node for a new tab's content — so the stage has
+ * nothing to paint and BOTH authored terminals are driven `display: none`: the row the user is looking at contains nothing
+ * at all.
+ *
+ * **WHERE THE REPAIR CAN LAWFULLY LIVE, AND WHY IT IS HERE AND NOT IN THE RECORD.** A repair is a CONSTRAINT's product,
+ * and the constraint this one needs is *"a tab's content is a node this app authors"* — which **the record cannot state**:
+ * `src/main/tabs-record/index.ts` composes the family, its seats and its eight creation-time declarations, and **which
+ * nodes are authored pages is the ENVELOPE's fact, held in this realm**. So the trigger is the point at which both halves
+ * are in one hand: **a `['tabs']` DELIVERY, read in this realm** — the one moment the record's own text and the authored
+ * tree are both here — and the repair is a CONVERGING WRITE through the EXISTING `dataRoute` passthrough, the same route
+ * and the same one-row-whole shape `focusActRoute`'s S8 already uses. **No channel, no bridge member, no new tool**
+ * (`D-18`), and the record's own listener delivers the change, so this writes no view: what moves is the RECORD, which is
+ * the only thing a next delivery could not undo.
+ *
+ * **THE TRIGGER IS THE ACTIVE ROW WHOSE TARGET IS THIS REALM'S OWN PLACEHOLDER — "isn't seeded with any", read as the
+ * corpus already spells it.** `NEW_TAB_TARGET_PREFIX` above is the ONE string this realm uses for a tab it opened without
+ * content (`D-239`: *"this app authors no node for a new tab's content"*), so a row carrying `untitled-<n>` is a row
+ * NOBODY SEEDED — and that is the condition the ruling names. **THE ACTIVE ROW ALONE**, because it is the one the stage
+ * follows: an inactive row keeps its own `target` until it is activated, which matters because `seatOf` seats the FIRST
+ * row of `order` carrying a target (`:805`), so coercing every row at once would turn every fresh tab into a second
+ * spelling of one seat in a single delivery.
+ * **AND THE WIDER KEY WAS MEASURED AND IS REFUSED, WHICH IS THE REASON THIS ONE IS SO NARROW**: *"the target resolves no
+ * authored page"* — the shape this repair could have taken, whether nominal (`TABS_LANDING_PAGE_ID` /
+ * `TABS_ERROR_PAGE_ID`) or by `elementForNodeId` — coerces a target a CALLER chose. `tests/e2e/focus-retirement/`'s `F-1`
+ * opens a row with `/delta` and asserts the opened row CARRIES it, and that is a gating `tests/e2e/` row measuring the
+ * act's own contract: a caller's string is a SEED by definition, and the ruling's condition is the ABSENCE of one. So the
+ * placeholder — and only the placeholder — is repaired.
+ *
+ * **`provident.focus` IS WHY IT IS NOT IN THE `+`'S ACT**: the act sees only the target it was handed, so a repair placed
+ * there could never reach a row opened by `provident.focus` — the `+` is one of two callers, not the cause. **WHAT A TAB
+ * CREATED BY `provident.focus` WITH AN UNKNOWN TARGET GETS, STATED EXACTLY**: its caller's target, unrepaired, and
+ * therefore a stage that paints nothing until it is retargeted — because that caller SEEDED a target, and the ruling's
+ * condition does not hold for it. What it does NOT get is the placeholder's coercion, and that is a deliberate difference
+ * of class: `untitled-<n>` is this realm's own declaration that it has nothing to put there, while `/delta` is somebody's
+ * answer.
+ *
+ * **IT CONVERGES, AND THE CLOSURE MEMBER IS WHAT KEEPS IT FROM REPEATING.** The write fires a delivery, that delivery
+ * reads the coerced row, and the coerced target is no longer a placeholder — so the repair writes nothing. The only window
+ * in which it could write twice is between a write and the record catching up (the same window `startThemeApplication`'s
+ * `lastSetting` covers): `coercedUnpaged` holds the `row id|target` pair this turn just handed, is read as nothing but a
+ * guard, and a stale value only ever costs one skipped repeat.
+ *
+ * **THE RESIDUE THIS REPAIR ONCE CARRIED IS DISCHARGED AT THE TERMINAL'S OWN KEY, AND THE TWO HALVES MOVED APART ON
+ * PURPOSE.** The landing TERMINAL is driven by `deriveTabsWitness` (`src/renderer/tabs-client.ts`), and **its witness now
+ * compares the ACTIVE ROW'S `target` with `TABS_LANDING_PAGE_ID`** — the fact this repair makes true — where it used to
+ * compare the active row's ID with the landing ENTRY's, which a coerced row can never satisfy (`tab-2` is not `landing`).
+ * So the record's write and the terminal's key agree, and a coerced tab shows the landing page: **measured on a live boot,
+ * `display: block` on `#tabs-landing-page` with the coerced row active.** What this repair owes — the RECORD naming a page
+ * this app authors — is what it delivers; what the WITNESS owes — reading that name off the record's own member rather than
+ * off a derived answer — is that module's, and it no longer reads an id at all.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** **THE `row id|target` PAIR THIS TURN LAST HANDED THE STORE — CLOSURE STATE AND NEVER DATA**, exactly as
+ *  `handedNewTabTarget` is: it is read as a guard against re-writing during the window before the record catches up, and
+ *  it is never read as a record. */
+let coercedUnpaged: string | null = null
+
+/** **THE REPAIR ITSELF — TOTAL, ONE WRITE, AND REPORTED WHERE IT REFUSES** (`D-117`). It reads the row it was handed and
+ *  writes it WHOLE with its `target` replaced (`D-76`), at the row's own address and the record's own `file` tier
+ *  (`D-101`, `D-136`), through the SAME `dataRoute` passthrough the act uses. A reading that is not `committed` carries
+ *  no rows and is not a record (`D-127`), so it refuses nothing and writes nothing. */
+async function repairUnpagedTarget(reading: TabsClientReading): Promise<void> {
+  if (reading.status !== 'committed') return
+  const active = reading.rows.find((row) => row.active === true)
+  if (active === undefined) return
+  if (!active.target.startsWith(NEW_TAB_TARGET_PREFIX)) return
+  const pair = `${active.id}|${active.target}`
+  if (pair === coercedUnpaged) return
+  coercedUnpaged = pair
+  const row: TabsRecordRow = { ...active, target: TABS_LANDING_PAGE_ID }
+  let written: unknown
+  try {
+    written = await dataRoute('write', { path: ['tabs', active.id], tier: 'file', value: row })
+  } catch (error) {
+    console.error(`[provident-renderer] the landing repair on ${active.id} threw; the tab's target stays '${active.target}'`, error)
+    return
+  }
+  const refusal = refusalOf(written)
+  if (refusal !== null) {
+    console.error(`[provident-renderer] the landing repair on ${active.id} was refused (${refusal.reason}: ${refusal.message}); the tab's target stays '${active.target}'`)
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
  * THE ADD-A-TAB CONTROL — THE ONE AFFORDANCE THE ACT HAD AND THE INTERFACE DID NOT
  *
  * **WHAT WAS MISSING, IN THE USER'S OWN WORDS**: *"I don't see a way to add new tabs in the ui"*. The act existed —
@@ -1641,7 +1773,10 @@ const TABS_ADD_HANDLER = 'tab-add-act'
 
 /** **THE NEW TAB'S TARGET PREFIX, AND NOTHING DEPENDS ON ITS SPELLING**: a `target` is the CONTENT a tab holds
  *  (`src/shared/types.ts`'s row docblock), this app authors no node for a new tab's content, and the record's own title
- *  repair (`tab-has-title`, `'untitled'`) is what the chip will read — so the string is this turn's, chosen once here. */
+ *  repair (`tab-has-title`, `'untitled'`) is what the chip will read — so the string is this turn's, chosen once here.
+ *  **⟶ AND IT IS NOW A SECOND READER'S TOO, WHICH IS WHY IT IS NOT A PRIVATE DETAIL**: `repairUnpagedTarget` below treats a
+ *  `target` carrying this prefix as THE declaration that the tab was opened with no content, and coerces it to the landing
+ *  page — so this one spelling is both what the `+` hands the act and what the repair recognises as "nobody seeded this". */
 const NEW_TAB_TARGET_PREFIX = 'untitled-'
 
 /** **THE LAST TARGET THIS TURN HANDED THE ACT, AND IT IS CLOSURE STATE AND NEVER DATA** (the form
@@ -1776,6 +1911,14 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
  *  the argument that shadowed it, and nothing else in this file writes either one. */
 function holdTabsReading(reading: TabsClientReading, runtime: Runtime | null): void {
   tabsClientReading = reading
+  // **THE REPAIR, AND IT IS TAKEN FROM THE SAME HELD READING BESIDE THE MINT AND THE DRIVE** (`repairUnpagedTarget`'s own
+  // block carries the ruling, the trigger and the convergence argument). **IT IS NOT A FOURTH TURN AND NOT A THROW INTO
+  // THE OTHER TWO**: it is `void`-ed, so a repair that throws or is refused is REPORTED inside itself and neither the row
+  // mint below nor the terminals' drive can be aborted by it — the same rule `driveTabsRows`' own `try` keeps, one
+  // function out. **AND IT RUNS BEFORE THE MINT**, so the delivery that shows the empty tab is the one that also writes the
+  // coercion: the record's answer arrives as the next delivery, and the chip the operator is looking at carries the
+  // landing page from then on.
+  void repairUnpagedTarget(reading)
   // **AND THE MINT — WITH ITS ATTACH — IS MADE FROM THE SAME HELD READING** (`S-4`/`S-5`, `D-179`, `D-201`): one `rows-mint`
   // per delivery, in the one body that already holds it, followed by one `click` listener per row that mint answered. It
   // writes no page, resolves nothing through a map and holds no record: a delivery that is not `'committed'` mints nothing
@@ -1790,10 +1933,11 @@ function holdTabsReading(reading: TabsClientReading, runtime: Runtime | null): v
   // `css.style` write on either authored terminal, then a `rows-mint` — and the same mint, then the same write — leaves the
   // write standing at its value across every render that follows (a `state-slice` on `tabs-landing-page` read back
   // `display: none;` after two mints, and after a delivery's whole dirtied set). **SO THE MINT'S RENDER DISCARDS NOTHING**,
-  // and this ordering changes no reading: the terminals' red is the WITNESS's, not this turn's — `deriveTabsWitness`'s
-  // landing arm compares the active row's id against the reading's own `landing` member, which IS that id
-  // (`src/main/tabs-record/index.ts`'s `TabsRecordReading.landing`), so a record showing the ERROR tab still asks the
-  // landing page to show. That arm is `tabs-client.ts`'s subject and not this file's, and it is `AL-5` and `AL-3`'s red.
+  // and this ordering changes no reading: the terminals' red was the WITNESS's, not this turn's — that seat's
+  // `deriveTabsWitness` landing arm compared the active row's id against the reading's own `landing` member, which IS that
+  // id (`src/main/tabs-record/index.ts`'s `TabsRecordReading.landing`), so a record showing the ERROR tab asked the landing
+  // page to show; **THAT PREDICATE HAS SINCE MOVED TO THE ACTIVE ROW'S `target`** (`src/renderer/tabs-client.ts`), so the
+  // record showing the ERROR tab now asks the landing page to HIDE. That arm is `tabs-client.ts`'s subject and not this file's.
   driveTabsRows(tabsClientReading, runtime)
   // **THE DRIVE IS MADE FROM THE HELD READING AND NOT FROM ITS ARGUMENT** (`D-117`). The two were the same
   // value, but only one of them had a reader: `tabsClientReading` was written here and at the defect arm
