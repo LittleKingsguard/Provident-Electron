@@ -3598,7 +3598,9 @@ export interface ThemeApplicationReading {
   readonly attributeName: string
   /** The setting this turn READ off the authored node, normalised the way the mechanism does (`null` for the empty setting). */
   readonly setting: string | null
-  /** Whether that setting MOVED since the last act this realm carried to the crossing. */
+  /** **Whether the act was OWED**, and the reference it is measured against is the CAUSE's (see `commitSetting`): the
+   *  setting MOVED since the last act this realm carried, on the reply path — or, on a CLICK, the painted surface does not
+   *  already carry the token the control carries. `false` is an act that asked the crossing nothing. */
   readonly changed: boolean
   /** Whether the act was SENT (`sent`), or the realm has no crossing to send it to. */
   readonly sent: boolean
@@ -3736,12 +3738,39 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
   // THE TWO TURNS ARE `const`s RATHER THAN OBJECT-LITERAL METHODS, because `attach()` below installs a listener
   // whose whole job is the FIRST of them: a DOM listener has to reach the same turn the reply path calls, and
   // capturing it is what keeps ONE implementation of the act instead of two that can drift.
+  /** **THE SURFACE'S OWN ANSWER TO "IS THIS TOKEN ALREADY PAINTED", ASKED AND NEVER REMEMBERED** (`D-129`; design §4) —
+   *  `authoredPropOf` is the relation `applyTurn` below reads, and this is the same question from the ACT's side: the
+   *  painted node's `props.<attributeName>` against the token a control carries. **ONLY A POSITIVE SETTLED MATCH SKIPS A
+   *  CLICK'S ACT** (`D-163`'s rule at this arm): an unreadable surface, an absent member and a node that did not resolve all
+   *  answer `false`, so the act is CARRIED rather than silently dropped — fail open, because the store is the authority and
+   *  a click is its external cause (`D-82` clause 4). It stores nothing: an absence in `props` is what a REBUILT node, a
+   *  not-yet-applied removal and a never-written surface all look like. */
+  const surfaceCarries = (setting: string): boolean => {
+    const held = authoredPropOf(runtime, nodeId, attributeName)
+    return held.readable && held.held === setting
+  }
+
   /** **THE ACT ITSELF, keyed on the SETTING it carries** — the one body both causes reach: the reply path's turn reads
    *  the setting off the AUTHORED CARRIER, and the DOM-originated turn is handed the setting the CLICK carried. Neither
-   *  composes a declaration and neither awaits a receipt; the `changed` guard is what keeps a second cause from asking
-   *  the crossing a question the first already answered. */
-  const commitSetting = (setting: string): ThemeApplicationReading => {
-    const changed = lastCarried === null || lastCarried.setting !== setting
+   *  composes a declaration and neither awaits a receipt.
+   *
+   *  **AND THE TWO CAUSES ARE MEASURED AGAINST DIFFERENT REFERENCES — THE DEFECT THIS PASS FIXES, MEASURED ON THE REAL
+   *  WINDOW (2026-11-12, a FRESH profile through CDP).** A **CLICK** is measured against the SURFACE (`surfaceCarries`,
+   *  `D-129`'s relation), and the **REPLY path** against `lastCarried`, the boot BASELINE. They cannot share one reference:
+   *  the baseline is seeded at a boot from the AUTHORED CARRIER — `THEME_INITIAL_TOKEN`, `'dark'` — and its whole purpose is
+   *  to stop the FIRST reply of a boot from carrying the token the ENVELOPE authored as though a person had chosen it
+   *  (`T-7`; without the seed `npm run divergence` redded). **What that seed then did to a person is the report**: on a
+   *  fresh profile the record stands at the placeholder, the authored node carries NO `theme` attribute, and the carrier
+   *  reads `dark` — so a click on `Dark` "moved nothing" against the baseline and reached the crossing NEVER (measured: the
+   *  record byte-identical before and after, no attribute, no delivery, no paint), while `Light` — a DIFFERENT token —
+   *  delivered and painted, after which `Dark` could too. That is the reported *"dark doesn't work, unless it was
+   *  previously set to light mode"* exactly. **A person pressing a control labelled `Dark` asks the store for dark; whether
+   *  the demo card's own carrier already says `dark` is not a question the store has ever been asked.** So the click asks
+   *  the SURFACE instead, and a click on a token the paint already carries sends nothing — the "once per real change" the
+   *  baseline bought, kept without a copy of what was written. **THE BASELINE IS NOT WEAKENED**: no reply path's turn is
+   *  touched, no boot step moves, and nothing is scheduled — the click is still the only thing that makes this write. */
+  const commitSetting = (setting: string, cause: 'reply' | 'click'): ThemeApplicationReading => {
+    const changed = cause === 'click' ? !surfaceCarries(setting) : lastCarried === null || lastCarried.setting !== setting
     if (!changed) {
       return reading({ setting, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
     }
@@ -3759,7 +3788,7 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
     if (!read.readable) {
       return reading({ setting: null, changed: false, sent: false, declaration: null, declared: false, status: null, written: false })
     }
-    return commitSetting(read.setting)
+    return commitSetting(read.setting, 'reply')
   }
 
   /** **THE DELIVERY'S TURN** — read the record the crossing's answer now carries and write `props.<declaration.name>`
@@ -3837,10 +3866,13 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
      *
      *  **THE LISTENER SPELLS NO TOKEN.** A real click runs the AUTHORED handler first (provident registered its own
      *  listener at render, before this one), and that handler writes the caller's token into the AUTHORED carrier. So
-     *  the turn reads the token the EVENT carries and hands it to `commitSetting`, which is the same act the reply
-     *  path performs, with the same `changed` guard: a click that moved nothing sends nothing, and the crossing is asked
-     *  once per real change rather than once per click. The ids are the ROLE's — derived from the envelope by
-     *  `themeControlIds`, never re-spelled here. */
+     *  the turn reads the token the EVENT carries and hands it to `commitSetting` with its CAUSE named, which is the same
+     *  act the reply path performs against a DIFFERENT reference (`D-129`): a click is owed exactly when the painted
+     *  surface does not already carry the token, so a click on the theme already on screen sends nothing and the crossing
+     *  is still asked once per real change rather than once per click. **The arm that matters is the one the baseline used
+     *  to swallow: a click on the token the ENVELOPE itself authored is now ASKED**, which is the reported
+     *  *"dark doesn't work"* measured and fixed. The ids are the ROLE's — derived from the envelope by `themeControlIds`,
+     *  never re-spelled here. */
     attach(): { readonly attached: number } {
       /** **THE CLICK'S TOKEN IS READ FROM THE EVENT, AND THAT IS MEASURED RATHER THAN PREFERRED.** The authored handler
        *  runs first and writes the carrier, but ITS WRITE LANDS ON A LATER TURN — measured on this tree: synchronously
@@ -3855,7 +3887,11 @@ export function startThemeApplication(runtime: Runtime): ThemeApplication {
         const target = (event as { readonly target?: unknown } | null | undefined)?.target
         const carried = (target as { readonly value?: unknown } | null | undefined)?.value
         if (typeof carried !== 'string' || carried === '') return
-        commitSetting(carried)
+        // **THE CLICK'S CAUSE IS NAMED, AND IT IS WHAT MAKES THE ACT POSSIBLE AT ALL** (`commitSetting` above): the surface
+        // is this turn's reference, so a person pressing `Dark` on a fresh profile reaches the crossing even though the
+        // card's own carrier already reads `dark`. The baseline's seed answered `no` to a question the store was never asked
+        // (`commitSetting`'s docblock), and that is the defect this cause-argument names.
+        commitSetting(carried, 'click')
       }
       let attached = 0
       for (const id of themeControlIds()) {

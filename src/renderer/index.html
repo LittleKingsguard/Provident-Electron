@@ -280,8 +280,11 @@
        here, the same division `.tab-row` already has. **IT IS SIZED TO THE BAR AND NOT BY ITS GLYPH** — a one-character
        label with no padding is a 6px press target, which is not a control a person can find, let alone hit.
        **AND IT IS A CHIP'S PEER AND NOT A CHIP**: the same border, radius, background and type as `.tab-row`, so it reads
-       as part of the row set — and, like `.tab-row`, it takes NO line in the dark pair below, because the bar keeps its own
-       light background in both arms and a chip repainted dark on it would be the only dark box in a light strip.
+       as part of the row set — and it takes its dark line in the SAME pair `.tab-row` does, which is the correction the
+       reported defect forced: this rule used to say the `+` and the chip took NO line because *"the bar keeps its own light
+       background in both arms"*, and that was the bug stated as a reason — a white bar under a `#12161c` page with the
+       name and the chips in dark text is the illegible strip the screenshot showed. The bar, the name, the chips and the
+       `+` are ONE surface and now carry ONE pair (`body:has([theme="dark"])` below).
        `flex: 0 0 auto` is NOT restated here — the envelope's `tabAddStyle` carries it, and the inline declaration wins. */
     #tab-add {
       box-sizing: border-box;
@@ -586,7 +589,15 @@
     /* THE PANEL HAS ITS OWN DARK LINE, and the rows keep none: their background is the panel's (see the OPEN rule
        above), so the pair moves the PANEL's fill and border and paints a row only where a row has a colour of its own —
        the hover. A row rule here would repaint all eighteen rows over the panel and leave the panel's edge light. */
-    body:has([theme="dark"]) .menus-menu:focus-within::before { background: #1b222b; border-color: #2c3642; }
+    body:has([theme="dark"]) .menus-menu:focus-within::before {
+      background: #1b222b;
+      border-color: #2c3642;
+      /* AND ITS SHADOW, WHICH IS THE ONE MEMBER OF THE LIGHT RULE THE PAIR LEFT BEHIND: `rgba(27, 36, 48, 0.22)` is a
+         shadow cast ON a light page and reads as a light haze under a dark one, so it deepens to the page's own near-black
+         (`#12161c`, at the light arm's own alpha-plus). Nothing else in the rule moves and no second rule for the selector
+         stands — one selector, one box. */
+      box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.55);
+    }
     body:has([theme="dark"]) .menu-item:hover:not([disabled="true"]) { background: #2b3542; border-color: #3a4654; }
     body:has([theme="dark"]) .menu-item[disabled="true"] { color: #5d6b7d; border-color: #2c3642; }
     body:has([theme="dark"]) .gutter-handle { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
@@ -595,6 +606,49 @@
     body:has([theme="dark"]) #panes .hint,
     body:has([theme="dark"]) #panes #security-status,
     body:has([theme="dark"]) #panes #security-token label { color: #9aa7b8; }
+
+    /* ═══ **THE TOP BAR'S OWN PAIR — THE ONE SURFACE THE DARK ARM HAD MISSED, AND THE REPORTED DEFECT WAS EXACTLY IT.** ═══
+       THE REPORT, VERBATIM: *"Dark mode doesn't change the top-bar"* — and the screenshot showed the app `#12161c`
+       everywhere with a WHITE strip across the top carrying the name and the chips in dark text. **THAT IS A LEGIBILITY
+       BUG AND NOT A TASTE ONE**: the bar is the app's own surface, not the Electron shell's chrome (its three window
+       buttons are the platform's and are not in this sheet's reach), and the name, the tab chips, the `+` and the dropdown
+       panels that hang off it are all authored provident nodes painted ON it.
+       **WHAT WAS PAIRED AND WHAT WAS NOT, READ OFF THIS SHEET RATHER THAN GUESSED.** The pair above covered `body`, the
+       `.card`, `.btn`, `.counter-value`, `input`, `.echo-out`, the `.menus-menu` names, the drop-down PANEL
+       (`.menus-menu:focus-within::before`, fill AND border), the menu items' hover and refusal arms, the two grips and the
+       operator panes' four muted lines — and it did NOT cover one pixel of the bar: `.top-bar`'s `background: #fff`,
+       `border-bottom: 1px solid #d8dde3` and `color: #1b2430`, `.tab-row`'s `#f4f6f8`/`#d8dde3`/`#1b2430` with its
+       `#e8edf4`/`#b9c2cc` hover and its `#1b2430`+`#ffffff` ACTIVE inversion, `#tab-add`'s identical four, and the panel's
+       `box-shadow: … rgba(27, 36, 48, 0.22)`. Each takes its line below.
+       **THE CONVENTION IS THE EXISTING ONE, COPIED AND NOT INVENTED**: the light design is the BASE rule and stays exactly
+       as it is; the dark arm is `body:has([theme="dark"]) <the light selector verbatim> { … }`, keyed on the ATTRIBUTE the
+       paint writes (never the envelope's node id — `[theme="dark"]` is the graph's published interface); ONLY COLOURS move,
+       in the proportions the light design already states; and the values are the SAME PALETTE the pair above uses —
+       `#1b222b` the raised surface (`.card`, `.menus-menu`), `#2c3642` its border, `#2b3542` the raised-and-inset fill
+       (`.btn`, a menu item's hover), `#3a4654` its stronger border, `#e8edf4` the page's own foreground on dark, `#1b222b`
+       the ink ON that foreground when the emphasis inverts. No new colour is spent: an arm that needed one would be a
+       figure this sheet's design does not have.
+       **AND WHAT A DARK BAR SHOULD LOOK LIKE, STATED SO THE PAIR CAN BE READ AS A PICTURE**: the strip is the same panel
+       surface the cards and the menu names are (`#1b222b`), its bottom edge is that surface's border (`#2c3642`), and the
+       name is the page's own light ink (`#e8edf4`). A chip is one step ABOVE the bar (`#2b3542` fill, `#3a4654` border) so
+       the row set reads as controls lying on a strip rather than as holes cut in it, its hover is one step above the chip
+       (`#3a4654`), and the ACTIVE chip keeps the light arm's proportion — emphasis by INVERSION — so it is the one light box
+       with dark ink (`#e8edf4` on `#1b222b`), exactly as it is the one dark box with light ink on the light bar. The `+`
+       is a chip's peer by the rule above, so it moves with the chips and not separately.
+       **IT IS THE SHEET'S ONE COLOUR PAIR FOR THIS STRIP AND NOT A SECOND APPEARANCE AUTHORITY**: no element, class,
+       attribute or style is created here, the key is the declaration's own attribute, and the light arm is still the base —
+       so a realm that renders no `theme` attribute (a boot with no delivery) paints exactly what it painted before. */
+    body:has([theme="dark"]) .top-bar { background: #1b222b; border-bottom-color: #2c3642; color: #e8edf4; }
+    /* THE NAME TAKES NO LINE OF ITS OWN: it authors no colour (the `#app-name` rule above carries the four truncation
+       declarations and nothing else), so it INHERITS this one from the bar it stands in. A rule here would be a second
+       spelling of the bar's ink. */
+    body:has([theme="dark"]) .tab-row { background: #2b3542; border-color: #3a4654; color: #e8edf4; }
+    body:has([theme="dark"]) .tab-row:hover { background: #3a4654; border-color: #3a4654; }
+    /* THE ACTIVE CHIP INVERTS, WHICH IS THE LIGHT ARM'S OWN PROPORTION KEPT: `#1b2430` on `#ffffff` there, `#e8edf4` on
+       `#1b222b` here — the emphasised row is the one that turns the page's foreground into its ground. */
+    body:has([theme="dark"]) .tab-row[active="true"] { background: #e8edf4; border-color: #e8edf4; color: #1b222b; }
+    body:has([theme="dark"]) #tab-add { background: #2b3542; border-color: #3a4654; color: #e8edf4; }
+    body:has([theme="dark"]) #tab-add:hover { background: #3a4654; border-color: #3a4654; }
 
     /* THE OVERLAY LAYER'S VISIBILITY — PRESENTATION KEYED ON THE MECHANISM'S OWN PRODUCT, NEVER A SECOND STATE. The
        four-state machine (`src/shared/overlay.ts`) decides when the surface is up, and its DECLARED product on this

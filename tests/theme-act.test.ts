@@ -17,8 +17,15 @@
 //   · A-2  A REAL CLICK REACHES THE CROSSING AND COMES BACK: the authored handler runs, the carrier moves, the attached
 //          listener hands the setting to the SAME turn the reply path calls, the crossing's repair resolves it, the delivery
 //          applies `props.<name>`, and `renderedHtml` carries the attribute — end to end, from a dispatched event.
-//   · A-3  THE `changed` GUARD SURVIVES THE CLICK: a control clicked when the carrier already holds its token sends nothing,
-//          so the crossing is asked once per real change and not once per click.
+//   · A-3  **THE ACT IS OWED AGAINST THE PAINTED SURFACE, AND EACH CAUSE KEEPS ITS OWN REFERENCE** — the arm this row was
+//          MISSING, and the defect it used to assert as correct. A CLICK sends exactly when the painted node does not already
+//          carry the token the control carries (`authoredPropOf`, `D-129`'s ask-don't-remember relation), so a click on a
+//          token the surface ALREADY SHOWS sends nothing, while a click from a FRESH boot — whose RECORD is the placeholder
+//          and whose surface carries no attribute, though the authored card's own `content` reads `dark` — SENDS. Measured
+//          against the boot baseline the click answered `changed: false` instead: the baseline is seeded from the AUTHORED
+//          CARRIER, and only a DIFFERENT token could pass it, which is the user's *"dark doesn't work, unless it was
+//          previously set to light mode"*. The REPLY path keeps that baseline (`T-7`, untouched), and the boot stays
+//          event-free (`D-216`).
 //   · A-4  TOTALITY: an envelope with no derivable controls answers `{attached: 0}` and throws nothing, and the ids are
 //          DERIVED from the envelope rather than spelled at the wiring.
 //
@@ -306,44 +313,146 @@ describe('D-126 · the appearance act, from a REAL CLICK to the store and back',
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // A-3 — THE `changed` GUARD SURVIVES THE CLICK
+  // A-3 — THE ACT IS OWED AGAINST THE PAINTED SURFACE, AND EACH CAUSE KEEPS ITS REFERENCE
   // ─────────────────────────────────────────────────────────────────────────
-  it('A-3 — **A CLICK THAT MOVES NOTHING SENDS NOTHING**: the attached listener hands the carrier to the same `changed`-guarded turn, so clicking a control whose token the carrier already holds asks the crossing no question — the act is sent ONCE per real change and not once per click, which is what keeps `D-82` clause 4 (a write has an external cause) true of the click path too', async () => {
+  it('A-3 — **A CLICK IS OWED AGAINST THE PAINTED SURFACE, NOT AGAINST THE BOOT BASELINE**: the attached listener hands the control\'s token to `commitSetting` with its CAUSE named, so a click SENDS exactly when the painted node does not already carry that token (`authoredPropOf`, the same relation `apply` reads) — which means a click from a FRESH boot whose RECORD is the PLACEHOLDER and whose surface carries no attribute SENDS, and `Dark` on such a boot is now asked rather than swallowed; a click on a token the SURFACE already shows sends nothing; and the REPLY path\'s `T-7` baseline is untouched (a `commit()` in the same realm, on the same carrier token, still answers `changed: false, sent: false`), with the boot itself event-free (`D-216`)', async () => {
     const runtime = boot()
     const bridge = crossing()
     try {
       const application = startThemeApplication(runtime)
       application.attach()
+      /** **EVERY DELIVERY THE REALM'S OWN SUBSCRIPTION SAW** — `startViewShape`'s body, taken here, so "sends nothing" is
+       *  measured at the CROSSING's fan-out and not only at the record's bytes: an act that was sent writes, and a write
+       *  causes a delivery; an act that was not sent causes none. */
+      const deliveries: number[] = []
       const subscription = realm().subscribe(() => {
+        deliveries.push(deliveries.length)
         application.apply()
       })
       try {
-        // The envelope authors `dark`, so THIS click moves nothing.
+        await settle()
+        /** THE RECORD A FRESH PROFILE'S FAMILY STANDS AT: no token, no attribute name, and a removal declaration naming
+         *  nothing. A placeholder is NOT a resolution — it is the absence of one. */
+        const PLACEHOLDER = { token: null, attribute: null, declaration: { name: null, value: '', removal: true } }
+
+        // ── (0) THE BOOT IS EVENT-FREE (`D-216`'s paradigm is not touched by this fix) ─────────────────────────────────
+        expect(
+          authored(runtime).content,
+          'A-3 — the AUTHORED CARRIER reads `dark` at boot: that is the LABEL, and it is what the record below DISAGREES with — the disagreement is the hazard this row is about',
+        ).toBe('dark')
+        expect(
+          authored(runtime).props.theme,
+          'A-3 — NOTHING IS APPLIED AT A BOOT: the record stands at the placeholder, so no `props.theme` exists yet',
+        ).toBeUndefined()
+        expect(
+          renderedAttribute(runtime, 'theme'),
+          'A-3 — and the PAINTED surface carries no `theme` attribute at all: THAT absence is the reference a CLICK is measured against',
+        ).toBeNull()
+        expect(
+          bridge.record.read().theme,
+          'A-3 — a fresh profile\'s record, byte for byte: no token, no attribute, a removal declaration naming nothing',
+        ).toEqual(PLACEHOLDER)
+        const bootDeliveries = deliveries.length
+
+        // ── (0b) THE REPLY PATH'S BASELINE IS UNTOUCHED (`T-7`) — the same carrier token, the same realm, the same
+        //        instant, and the reply path asks the crossing NOTHING: its reference is `lastCarried`, seeded at the boot
+        //        from the AUTHORED CARRIER, which is what keeps the first reply of a boot from carrying the envelope's own
+        //        token as though a person had chosen it (without that seed `npm run divergence` reds). **A fix that
+        //        re-pointed THIS arm at the surface would license the boot-time declaration the seed exists to prevent.**
+        const reply = application.commit()
+        expect(
+          { changed: reply.changed, sent: reply.sent },
+          'A-3 (reply path) — `commit()` on a FRESH boot answers `changed: false, sent: false`: the baseline is the CARRIER\'s and it stays so',
+        ).toEqual({ changed: false, sent: false })
+        expect(
+          bridge.record.read().theme,
+          'A-3 (reply path) — and it wrote nothing: the record is still the placeholder',
+        ).toEqual(PLACEHOLDER)
+        expect(deliveries.length, 'A-3 (reply path) — so no delivery was caused by the reply path either').toBe(bootDeliveries)
+
+        // ── (1) **THE USER'S DEFECT, AND THE ARM THIS ROW WAS MISSING — A CLICK WHOSE RECORD IS A PLACEHOLDER BUT WHOSE
+        //        AUTHORED CARD SHOWS A TOKEN SENDS.** The card's own carrier reads `dark` (arm (0)) while the record stands
+        //        at the placeholder, and a person pressing the control labelled `Dark` is asking the STORE for dark: whether
+        //        the demo card already says `dark` is a question the store has never been asked. Measured against the boot
+        //        baseline the click answered `changed: false` and the record stayed byte-identical — *"dark doesn't work,
+        //        unless it was previously set to light mode"* — which is what the guard was doing while it trusted the LABEL
+        //        over the record.
         click(runtime, DARK_ID)
         await settle()
         expect(
           authored(runtime).content,
-          'A-3 — the control\'s token is the one the carrier already held, character for character',
+          'A-3 — the AUTHORED HANDLER ran first and wrote the control\'s token into the carrier — the same `dark` the baseline was reading',
         ).toBe('dark')
         expect(
           bridge.record.read().theme,
-          'A-3 — so the crossing still stands at the PLACEHOLDER: no act was sent, and no declaration exists',
-        ).toEqual({ token: null, attribute: null, declaration: { name: null, value: '', removal: true } })
+          'A-3 — AND THE ACT IS SENT: the RECORD was a PLACEHOLDER (the surface carried no `theme` DECLARATION, whatever its label said), so a click on `Dark` is OWED — measured as the record MOVING off the placeholder onto the clicked token, with the caller-held attribute name',
+        ).toEqual({ token: 'dark', attribute: 'theme', declaration: { name: 'theme', value: 'dark', removal: false } })
+        expect(
+          bridge.record.read().source.theme,
+          'A-3 — and a repair produced it; this realm composed no declaration',
+        ).toBe('record')
+        expect(authored(runtime).props.theme, 'A-3 — the delivery applied the record\'s declaration to the producing graph').toBe('dark')
+        expect(
+          renderedAttribute(runtime, 'theme'),
+          'A-3 — AND THE SURFACE NOW SHOWS IT, which is the reference every later click is measured against',
+        ).toBe('dark')
+        expect(deliveries.length, 'A-3 — exactly one delivery was caused by that one act').toBe(bootDeliveries + 1)
 
-        // THE CONTROL THAT MAKES THAT A MEASUREMENT: the OTHER control, and the same wiring DOES send.
+        // ── (2) **A CLICK ON A TOKEN THE SURFACE ALREADY SHOWS SENDS NOTHING** — the arm that was right, re-measured
+        //        against the SURFACE instead of the carrier. The skip is a POSITIVE SETTLED MATCH on `props.theme` and
+        //        never a memory of what was written (`D-129`, `D-163`): the same control, pressed again, asks no second
+        //        question.
+        const standingAfterDark = JSON.stringify(bridge.record.read())
+        const deliveriesAfterDark = deliveries.length
+        click(runtime, DARK_ID)
+        await settle()
+        expect(
+          JSON.stringify(bridge.record.read()),
+          'A-3 — `Dark` pressed again with the PAINT already `dark` asks the crossing nothing: the act is sent ONCE per real change and not once per click, and the reference that says "already there" is the surface',
+        ).toBe(standingAfterDark)
+        expect(deliveries.length, 'A-3 — and nothing was written, so no delivery was owed a repaint').toBe(deliveriesAfterDark)
+        expect(authored(runtime).content, 'A-3 — the carrier still holds the token the control carries').toBe('dark')
+
+        // ── (3) THE CONTROL THAT MAKES THAT SKIP A MEASUREMENT: the OTHER token is never on the surface it compares with,
+        //        so the same wiring DOES send.
         click(runtime, LIGHT_ID)
         await settle()
-        expect(bridge.record.read().theme.token, 'A-3 — the other control moves the carrier, so the act is sent').toBe('light')
+        expect(bridge.record.read().theme.token, 'A-3 — the other control carries a token the paint does not, so the act goes out').toBe('light')
         expect(authored(runtime).props.theme, 'A-3 — and the delivery applies it to the producing graph').toBe('light')
+        expect(renderedAttribute(runtime, 'theme'), 'A-3 — and the paint follows it').toBe('light')
+        expect(deliveries.length, 'A-3 — one more delivery, for one more real change').toBe(deliveriesAfterDark + 1)
 
-        // AND RE-CLICKING THE SAME CONTROL SENDS NOTHING A SECOND TIME.
-        const standingBefore = JSON.stringify(bridge.record.read())
+        // ── (4) AND THE SAME CONTROL PRESSED AGAIN SENDS NOTHING A SECOND TIME.
+        const standingAfterLight = JSON.stringify(bridge.record.read())
+        const deliveriesAfterLight = deliveries.length
         click(runtime, LIGHT_ID)
         await settle()
         expect(
           JSON.stringify(bridge.record.read()),
-          'A-3 — a repeated click on the control the carrier already agrees with asks no second question',
-        ).toBe(standingBefore)
+          'A-3 — a repeated click on the token the surface already shows asks no second question',
+        ).toBe(standingAfterLight)
+        expect(deliveries.length, 'A-3 — and causes no delivery').toBe(deliveriesAfterLight)
+
+        // ── (4b) **AND THE CLICK'S SEND MOVES THE REPLY PATH'S BASELINE WITH IT** — one act, two causes, one setting.
+        //        THIS ARM IS TAKEN HERE AND NOT AT THE BOOT TOKEN, `dark`: the carrier now reads `light`, a token the boot
+        //        never carried, so a realm whose click-send failed to move `lastCarried` would answer `changed: true` and
+        //        send the same setting a SECOND time — the duplicate act the shared `changed` guard exists to prevent.
+        const beforeReply = JSON.stringify(bridge.record.read())
+        const afterClick = application.commit()
+        expect(
+          { changed: afterClick.changed, sent: afterClick.sent },
+          "A-3 — the reply path does not repeat the click's act: the setting it reads off the carrier is the one this realm has already carried",
+        ).toEqual({ changed: false, sent: false })
+        expect(JSON.stringify(bridge.record.read()), 'A-3 — and it wrote nothing a second time').toBe(beforeReply)
+        expect(deliveries.length, 'A-3 — and caused no extra delivery').toBe(deliveriesAfterLight)
+
+        // ── (5) THE SURFACE IS A LIVE REFERENCE AND NOT A LATCH: the moment the PAINT changes, the other token is owed
+        //        again — read off the surface at CLICK time rather than remembered.
+        click(runtime, DARK_ID)
+        await settle()
+        expect(bridge.record.read().theme.token, 'A-3 — going back to the token the paint no longer shows is a real change').toBe('dark')
+        expect(renderedAttribute(runtime, 'theme'), 'A-3 — and the surface follows it back').toBe('dark')
+        expect(deliveries.length, 'A-3 — one delivery, for one more real change').toBe(deliveriesAfterLight + 1)
       } finally {
         subscription.release()
       }
