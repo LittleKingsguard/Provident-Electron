@@ -892,6 +892,8 @@ function refusalOf(written: unknown): FocusRefusal | null {
  *  S5  a `target` that can be no row is THIS ROUTE's own refusal, and no store is asked — the tool's own class is its
  *      argument holder's (`focusHandler`), which judges the holder and never a member's value;
  *  S6  the seat in the RECORD's own terms — `seatOf` answers the row it resolved, never a second lookup (`D-158`);
+ *  S6b THE SEAT *IS* THE RECORD'S ACTIVE ROW, SO THE ACT IS A NO-OP: the record as it stands answers, no write is
+ *      attempted and no delivery follows — the ONE member consulted is the resolved row's own `active` (see below);
  *  S7  no standing row carries it and no open was asked for: refusal of the route's own, and no write (`D-18`, L2 §4);
  *  S8  ONE ROW, ONE passthrough, NO RETRY: `rowForSeat(seat)` is the act's WHOLE product and it is handed on VERBATIM —
  *      `['tabs', row.id]` is the row's own address, `file` the record's own tier, the one the declared-root guard admits
@@ -912,6 +914,49 @@ async function focusActRoute(payload: unknown): Promise<FocusActAnswer> {
   if (typeof target !== 'string') return withRefusal(reading, malformed(target))
   const seat = seatOf(reading, target, opens)
   if (seat.kind === 'unresolved') return withRefusal(reading, absentTarget(target))
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // **S6b — THE SEAT THAT IS ALREADY THE RECORD'S ACTIVE ROW IS A NO-OP, AND THAT IS THE WHOLE OF THE CURE.**
+  //
+  // **WHAT WAS MEASURED, WHICH IS WHY THIS ARM EXISTS**: dispatching a `click` at the minted row of the tab the record
+  // ALREADY showed answered `results: ["focus tabs-landing-page"]`, the row was RE-MINTED (`node-225` → `node-249`) and
+  // the fresh row carried `active="true"` — so the RECORD was right the whole time and the only thing a person could
+  // perceive was the CHURN: the chip under the pointer was destroyed and rebuilt, which reads as the tab "disappearing"
+  // until the next delivery brings it back. The user's own sentence names the cure — "clicking the tab that is already
+  // active should be a no-op" — so the act stops acting when there is nothing to move.
+  //
+  // **THE MEMBER THIS KEYS ON IS THE ROW'S OWN `active`, AND IT IS THE RECORD'S ANSWER RATHER THAN A GUESS**: `seatOf`
+  // resolves the row OFF `reading.rows` (`seatOf` above), so `seat.row.active === true` is the record's own flag for the
+  // very row the caller named — the SAME member `tabs-client.ts`'s `deriveTabsWitness` counts
+  // (`rows.filter((row) => row.active === true)`) and the SAME one `driveTabsRows` publishes as `props.active`, which the
+  // paint emits as the bare `active="true"` attribute the page sheet keys `.tab-row[active="true"]` on. **THE TWO DERIVED
+  // SPELLINGS ARE NOT USED AND NEITHER IS WRONG**: `reading.landing` is BY DEFINITION the id of the row reading active
+  // (`D-76`), and `reading.witness.landing.activeIds` is that same count — so either would answer the identical question
+  // from the derived side, one comparison removed from the state itself. The primitive is used because a derived member
+  // that disagrees with its own source is a defect this arm must not inherit, and because `seat.row` is already in hand.
+  //
+  // **IT CANNOT SKIP A NEEDED STAGE REPAINT, AND THE REASON IS THAT ONE MEMBER DECIDES BOTH**: `rowForSeat`'s seat arm is
+  // `{...seat.row, active: true, lastActiveAt}`, so on a row that already reads active the ONE member the write would
+  // change is the CLOCK, `lastActiveAt` — and no part of the stage reads it: `deriveTabsWitness` reads `active` and
+  // `error` off the rows, and `driveTabsLandingPage` writes the two pages' `display` from that witness alone. So an
+  // already-active click could never move the stage's own inputs, and the two cannot disagree about which tab is shown.
+  // **A stage that DID disagree would be a paint that never landed**, and re-writing the row would re-force it only as a
+  // side effect of a delivery — that is the repair the surface's own delivery path owes on every `['tabs']` read, not a
+  // duty of this act, which would be paying a whole mint to repeat a claim it did not change.
+  //
+  // **AND THE ANSWER IS THE SAME SHAPE, WHICH IS WHY NO DISPATCHER SEES A DIFFERENCE** (`D-209`'s cost (ii) read the other
+  // way): the committed reading is answered exactly as S4 answers one — no `refused` member is invented, so `provident.focus`
+  // answers a record and not a refusal — and `dispatch`'s `results` is the ROW BODY's own word (`focus <target>`), which
+  // this route never mints and therefore cannot change. **AND `dirtied` IS NOT THE DISCRIMINATOR, WHICH WAS MEASURED RATHER
+  // THAN ASSUMED**: it is the dispatched EVENT's own apply cascade (`apply().dirtied ∪ keys(takePass2States())`,
+  // `src/shared/types.ts`), so a click at an already-active row answers a full set of node ids either way — measured live
+  // at `:3801`, 63 ids for the no-op and the same shape of set for a click that DID write — and the two facts that separate
+  // the arms are read elsewhere: the store's `lastActiveAt` for that row, which does not advance, and that row's node id,
+  // which is not re-minted. What this arm gives up is the WRITE and the delivery it owed; what it keeps is the reading,
+  // the word and the terminal state of every member.
+  //
+  // **THE `open` ARM CANNOT REACH IT**: a minted row is not in `reading.rows` yet, so a newly opened tab's row is never the
+  // record's active one and `newTab: true` always writes. ══════════════════════════════════════════════════════════════
+  if (seat.kind === 'seat' && seat.row.active === true) return reading
   const row = rowForSeat(seat)
   const written = await dataRoute('write', { path: ['tabs', row.id], tier: 'file', value: row })
   const after = await getTabsClient().read()

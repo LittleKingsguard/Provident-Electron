@@ -1609,13 +1609,22 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       `AL-4 PREREQUISITE — two rows must stand, the LANDING one marked and the other NOT, before a MOVE has anything to ` +
         `move: ${textOf(beforeMarker)} over ${String(first.polls)} bounded re-read(s).`,
     ).toEqual({ [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false })
-    // ── CLAUSE 2 (b) (i) — THE FRESH ROW FOR THE TAB ALREADY SHOWN: dispatched, and the ACT'S OWN WRITE is the reading ──
-    // **EACH FRESH ROW MUST STILL BE A CONTROL, AND THAT IS ONE CLAIM PER ROW**: this is the row for the tab the record
-    // already shows, so the act's product is the row's fresh stamp and the marker must NOT move — the two halves of one
-    // `focusActRoute` call, read in the state where its own write is the whole change. The other row's arm follows, at the
-    // address the shift write's delivery mints.
+    // ── CLAUSE 2 (b) (i), FIRST HALF — A CLICK AT THE ROW THE RECORD ALREADY SHOWS ACTIVE IS A NO-OP ──────────────
+    // **THIS HALF WAS RE-GRAINED FROM A WRITE INTO A NO-OP, AND THE USER'S OWN SENTENCE IS WHY** (`D-233`): *"clicking on
+    // the 'landing' button makes it disappear … expected behavior: clicking on landing makes it the focused tab if not
+    // already (it should be)"*. `focusActRoute`'s S6b answers the committed reading and writes NOTHING when the resolved
+    // seat IS the record's active row — so what a DISPATCHER sees is unchanged (`dispatch`'s `results` is the row body's
+    // own word, which the route never mints; `D-209`), and what the STORE sees is the whole difference: no `lastActiveAt`,
+    // and — the half a person could actually see — no re-mint of the chip under the pointer. **THE OLD ARM ASSERTED THE
+    // WRITE HERE AND WAS THEREFORE ASSERTING THE DEFECT**; it is not weakened but INVERTED, and the write it used to read
+    // is proven in the half below, from a seat that is not the record's active one.
     const landingFresh = str(beforeIds[LANDING_PAGE_ID]) ?? ''
     const stampBefore = stampOf(recordOf((await readAt(booted.client, [TABS])).value), LANDING_PAGE_ID)
+    expect(
+      stampBefore,
+      `AL-4 PREREQUISITE — the record must carry a \`lastActiveAt\` for the \`${LANDING_PAGE_ID}\` row before a freeze has ` +
+        `anything to hold still: \`data.read(['${TABS}'])\` answered no stamp for that row.`,
+    ).not.toBe(null)
     const clicked = await call(booted.client, 'provident.dispatch', {
       target: { kind: 'nodeId', nodeId: landingFresh },
       event: 'click',
@@ -1637,33 +1646,102 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `a fresh address; the listener's per-mint re-attachment rests on the same premise (\`D-202\`) and is stated, not ` +
         `measured.`,
     ).toEqual([`focus ${LANDING_PAGE_ID}`])
-    let stampAfter = stampBefore
+    // ── THE NO-OP, ASSERTED POSITIVELY AND BY SAMPLING RATHER THAN BY SILENCE ────────────────────────────────────
+    // **WHY A WINDOW AND NOT A SINGLE RE-READ**: "nothing was written" is a claim about every instant after the act, and
+    // one read can only report the instant it took. Each sample below reads BOTH faces of the claim at one instant — the
+    // STORE's `lastActiveAt` for the row (the write `S8` would have made) and the PAGE's own address book plus marker pair
+    // (the re-mint that write would have forced) — and every one of the samples must read exactly what the seed's delivery
+    // did. `NOOP_SETTLE_POLLS` × `POLL_MS` is the window: `1 250 ms` of wall clock, inside `ROW_MS` (240 000 ms), and it
+    // names its own cost rather than pretending to be free. **WHAT IT CANNOT DO IS PROVE "NEVER"**: a write issued after
+    // the last sample is not caught by this row, and no bounded read in this battery could catch it.
+    const NOOP_SETTLE_POLLS = 6
+    const noopSamples: Json[] = []
+    for (let poll = 1; poll <= NOOP_SETTLE_POLLS; poll += 1) {
+      const rows = renderedRows((await renderedHtml(booted.client)).html)
+      noopSamples.push({
+        stamp: stampOf(recordOf((await readAt(booted.client, [TABS])).value), LANDING_PAGE_ID),
+        ids: idsOf(rows),
+        marker: markerOf(rows),
+      })
+      if (poll < NOOP_SETTLE_POLLS) await sleep(POLL_MS)
+    }
+    expect(
+      noopSamples,
+      `AL-4 — the act on the tab ALREADY SHOWN must change NOTHING, in the store AND on the page: the record's ` +
+        `\`lastActiveAt\` for \`${LANDING_PAGE_ID}\` read ${textOf(stampBefore)} before the click and the samples read ` +
+        `${textOf(noopSamples.map((sample) => sample['stamp']))}, and the ids/markers read ` +
+        `${textOf(noopSamples.map((sample) => ({ ids: sample['ids'], marker: sample['marker'] })))} where the delivery ` +
+        `before the click read ids=${textOf(beforeIds)} marker=${textOf(beforeMarker)}. **A FRESH STAMP OR A CHURNED ID ` +
+        `HERE IS THE WRITE \`D-233\` FORBIDS**: the user reported exactly that behaviour as the defect ("clicking on the ` +
+        `'landing' button makes it disappear"), and the disappearance IS the re-mint — \`focusActRoute\`'s S6b \`return\`s the ` +
+        `committed reading on an already-active seat, so no \`S8\` write and no delivery follow, while the row body still ` +
+        `answers its own word above so a dispatcher sees no change (\`D-209\`'s cost (ii) read the other way). **THIS IS ` +
+        `THE HALF THAT CATCHES A REGRESSION WHICH RE-INTRODUCES THE WRITE-ON-ACTIVE**: drop S6b, or narrow it to a ` +
+        `\`target\`-vs-\`landing\` comparison that a rename breaks, and the first sample's stamp or id reds here.`,
+    ).toEqual(Array.from({ length: NOOP_SETTLE_POLLS }, () => ({ stamp: stampBefore, ids: beforeIds, marker: beforeMarker })))
+    // ── CLAUSE 2 (b) (i), SECOND HALF — THE WRITE IS PROVEN FROM A SEAT THAT IS NOT ACTIVE ────────────────────────
+    // **THE ROW'S SUBJECT STILL NEEDS A MOVE, AND A NO-OP CANNOT SUPPLY ONE**: S6b writes nothing on an active seat, so the
+    // write this row used to read at the landing row is read HERE — at the OTHER fresh row, the one the record shows NOT
+    // active, which is the one seat S6b cannot reach (`AL-3` drives this same shape and is the row's own control). **THE
+    // ADDRESS IS STILL THE SEED DELIVERY'S OWN** (`beforeIds`), and that is the no-op half's receipt: nothing churned, so
+    // the address book still names standing nodes.
+    const inactiveFresh = str(beforeIds[ERROR_PAGE_ID]) ?? ''
+    const stampErrorBefore = stampOf(recordOf((await readAt(booted.client, [TABS])).value), ERROR_PAGE_ID)
+    expect(
+      beforeMarker[ERROR_PAGE_ID],
+      `AL-4 PREREQUISITE — the seat this half clicks must NOT be the record's active one, or S6b would answer the ` +
+        `reading and the write this half exists to read would never be owed: the delivery before the click read ` +
+        `${textOf(beforeMarker)}.`,
+    ).toBe(false)
+    const wrote = await call(booted.client, 'provident.dispatch', {
+      target: { kind: 'nodeId', nodeId: inactiveFresh },
+      event: 'click',
+    })
+    expect(
+      wrote.ok,
+      `AL-4 — the agent's own \`provident.dispatch\` at the FRESH, INACTIVE row \`${inactiveFresh}\` must be answered: ` +
+        `\`${trunc(wrote.text, 320)}\`. "Each new row is still a control" is a claim about BOTH rows, and this is the ` +
+        `second of them reaching its own seat.`,
+    ).toBe(true)
+    expect(
+      arr(memberOf(wrote.value, 'results')),
+      `AL-4 — and that row must RUN ITS OWN SEAT'S BODY and answer it: dispatch at \`${inactiveFresh}\` answered ` +
+        `results=${textOf(memberOf(wrote.value, 'results'))} where its datum answers \`focus ${ERROR_PAGE_ID}\`. A word ` +
+        `naming \`${LANDING_PAGE_ID}\` here would be a body bound to the wrong row's seat.`,
+    ).toEqual([`focus ${ERROR_PAGE_ID}`])
+    let stampWriteAfter = stampErrorBefore
     for (let attempt = 1; attempt <= POLL_MAX; attempt += 1) {
-      stampAfter = stampOf(recordOf((await readAt(booted.client, [TABS])).value), LANDING_PAGE_ID)
-      if (stampAfter !== stampBefore) break
+      stampWriteAfter = stampOf(recordOf((await readAt(booted.client, [TABS])).value), ERROR_PAGE_ID)
+      if (stampWriteAfter !== stampErrorBefore) break
       await sleep(POLL_MS)
     }
     expect(
-      stampAfter,
-      `AL-4 — and the fresh row must ACT, and not merely answer: its body calls this realm's own \`focusActRoute\`, whose ` +
-        `S8 product is ONE write of the \`${LANDING_PAGE_ID}\` row with a fresh \`lastActiveAt\`, so the record's stamp for ` +
-        `that row must advance — it read ${textOf(stampBefore)} and then ${textOf(stampAfter)}. **THIS IS THE ARM THAT ` +
-        `SEPARATES THE CLOSURE FROM THE ACT**: \`D-209\`'s cost (ii) is that the body answers its own word whether or not ` +
-        `the act lands, so \`results\` above proves the body RAN and this proves the act PERFORMED.`,
-    ).not.toBe(stampBefore)
-    // ── and the delivery THAT ACT caused: the ids churn once more, and the marker stays where the act left it ──
+      stampWriteAfter,
+      `AL-4 — and a click at a seat the record does NOT show active must ACT, and not merely answer: its body calls this ` +
+        `realm's own \`focusActRoute\`, whose S8 product is ONE write of the \`${ERROR_PAGE_ID}\` row with a fresh ` +
+        `\`lastActiveAt\`, so that row's stamp must advance — it read ${textOf(stampErrorBefore)} and then ` +
+        `${textOf(stampWriteAfter)}. **THIS IS THE ARM THAT SEPARATES THE CLOSURE FROM THE ACT**: \`D-209\`'s cost (ii) ` +
+        `is that the body answers its own word whether or not the act lands, so \`results\` above proves the body RAN ` +
+        `and this proves the act PERFORMED. **AND THE TWO HALVES ARE ONE COMPARATOR READ IN BOTH DIRECTIONS**: the no-op ` +
+        `half asserts the \`${LANDING_PAGE_ID}\` row's stamp did NOT move and its id did NOT churn, so an act that writes ` +
+        `on an already-active seat reds THERE while an act that stops writing altogether reds HERE — and the stamp is the ` +
+        `discriminator because \`dispatch\`'s \`results\` and its \`dirtied\` set are the same in both arms (\`D-233\`: 64 ` +
+        `dirtied ids for the no-op too).`,
+    ).not.toBe(stampErrorBefore)
+    // ── and the delivery THAT ACT caused: the ids churn once more, and the marker MOVES onto the seat that was clicked ──
     // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
     // **THE `until` BELOW SAMPLES THE PAIR THE ASSERTION BELOW IT READS, AND THAT IS THE ONLY THING THIS READ CHANGED**
     // (`D-227` residual (ii)'s class, whose `AL-5` half landed in the row above: a poll must return only on a sample the
     // unchanged assertion below it would pass). The predicate of a bounded poll IS its sampling, and this read's sampled
-    // ONE half — the id churn — while the assertion it guards reads THE MARKER PAIR `{${LANDING_PAGE_ID}: true,
-    // ${ERROR_PAGE_ID}: false}`, the state the first read recorded. So the poll could return on the first sample where
-    // both ids were new and the marker half was still whatever the page held at that instant: a delivery whose reading
-    // was taken before the act's own write landed can re-mint with the ids churned and the pair one delivery behind, and
-    // the assertion then read that stale pair — reported as this row's own casualty, the stale paint pair answered at
-    // the poll's bound. **THE ASSERTION IS BYTE-IDENTICAL**: same object, same order, same expected values (`beforeMarker`
-    // is not re-spelled here, it is the state read 1 established), same message. Only the `until` gained the marker half,
-    // in `AL-5`'s own shape — `surfaceWithin` with a predicate over the whole claim, not over one of its halves.
+    // ONE half — the id churn — while the assertion it guards reads THE MARKER PAIR `{${LANDING_PAGE_ID}: false,
+    // ${ERROR_PAGE_ID}: true}`. So the poll could return on the first sample where both ids were new and the marker half
+    // was still whatever the page held at that instant: a delivery whose reading was taken before the act's own write
+    // landed can re-mint with the ids churned and the pair one delivery behind, and the assertion then read that stale
+    // pair — reported as this row's own casualty, the stale paint pair answered at the poll's bound. **THE ASSERTION IS
+    // BYTE-IDENTICAL TO ITS PREVIOUS FORM** in shape: same object, same order, same message; only the expected pair moved,
+    // because the click that owes this delivery is now the INACTIVE seat's (`D-233`) and the marker moving onto it is the
+    // act's product. **AND THE `until` NAMES THE SAME PAIR** — `surfaceWithin` with a predicate over the whole claim, not
+    // over one of its halves.
     //
     // **WHAT IT COSTS IN WALL CLOCK**: nothing on a healthy run. `surfaceWithin` samples once and sleeps only when the
     // sample fails the predicate, and a delivery's rows are minted in one turn, so a pair that is already consistent
@@ -1673,9 +1751,10 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     // the assertion itself, which names the pair it read and the poll count it spent. **THE BOUND IS NOT RAISED, AND
     // THAT IS DELIBERATE** (`D-227` residual (i): a raised bound hides a defect instead of reading it).
     // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    const afterWriteMarker: Json = { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true }
     const second = await surfaceWithin(booted.client, (text) => {
       const rows = renderedRows(text)
-      return rows.length === 2 && markerIs(rows, beforeMarker) && rows.every((row) => {
+      return rows.length === 2 && markerIs(rows, afterWriteMarker) && rows.every((row) => {
         const was = str(beforeIds[row.target])
         return was !== null && was !== row.nodeId
       })
@@ -1685,11 +1764,31 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     const secondMarker = markerOf(secondRows)
     expect(
       { before: beforeMarker, afterAct: secondMarker },
-      `AL-4 — the act on the tab ALREADY SHOWN must leave the marker WHERE IT STANDS: the two deliveries read ` +
-        `${textOf(beforeMarker)} and then ${textOf(secondMarker)} over ${String(second.polls)} bounded re-read(s), and the ` +
-        `second is the delivery the act's own write caused (\`S8\` writes that one row and no other, \`D-136\`). A marker ` +
-        `that MOVED here would be an act seating a row the caller did not name.`,
-    ).toEqual({ before: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false }, afterAct: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false } })
+      `AL-4 — the act on a seat the record does NOT show must MOVE the marker ONTO IT, and the delivery that write owed ` +
+        `must be the delivery that carries it: the two deliveries read ${textOf(beforeMarker)} and then ` +
+        `${textOf(secondMarker)} over ${String(second.polls)} bounded re-read(s), where \`S8\` writes that one row and no ` +
+        `other (\`D-136\`). **A MARKER THAT DID NOT MOVE HERE WOULD BE THE OPPOSITE DEFECT FROM THE NO-OP ABOVE**: an act ` +
+        `that answers the reading without seating the row the caller named, which would leave the click on an inactive ` +
+        `chip doing nothing at all.`,
+    ).toEqual({ before: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false }, afterAct: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true } })
+    // ── and the rendering must agree with the RECORD, row by row: the same control, read from the other side ──
+    // **IT IS READ HERE, ON THE DELIVERY THE ACT'S WRITE CAUSED, AND THAT IS THE ONE PLACE ITS TWO SIDES CAN DIFFER**: the
+    // pair under test is the one `S8` just moved (`{${LANDING_PAGE_ID}: false, ${ERROR_PAGE_ID}: true}`), so a paint that
+    // kept the values its nodes were FIRST minted with — `D-201`'s freeze, the shape `keyField` would restore — disagrees
+    // with the record HERE and nowhere later, because the later deliveries of this row carry the pair the seed minted.
+    const standing = recordOf((await readAt(booted.client, [TABS])).value)
+    const recordMarker = recordMarkerOf(standing)
+    expect(
+      { rendered: secondMarker, record: recordMarker },
+      `AL-4 — every rendered marker must AGREE with the record's own flag for that row: the page read ` +
+        `${textOf(secondMarker)} where \`data.read(['${TABS}'])\` holds ${textOf(recordMarker)}, on the delivery the act's ` +
+        `own write caused. **A ROW CARRYING THE VALUE IT WAS FIRST MINTED WITH IS THE \`keyField\` FREEZE ITSELF** ` +
+        `(\`D-201\`: a reused node ignores the changed \`props\` under \`rows-reuse-shape-ignored\`), so this arm reds for a ` +
+        `restored key — and it reds even for a reader willing to call one comparison a coincidence.`,
+    ).toEqual({
+      rendered: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
+      record: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
+    })
     // ── CLAUSE 2 (a) — THE ROWS ARE FRESH: THE CHURN IS ASSERTED AS THE COST, NEVER LAMENTED AS A FAILURE ────
     const kept: string[] = []
     const churned: string[] = []
@@ -1716,51 +1815,42 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `${textOf({ before: beforeIds, after: secondIds })} over ${String(second.polls)} bounded re-read(s), where ` +
         `\`D-202\` measured \`node-76/77 → node-80/81\` and \`D-205\` \`node-125/126 → node-143/144\`.`,
     ).toBe(2)
-    // ── the act's other direction: ONE write moving the record's own flag, so the next delivery re-mints on it ──
-    const shifted = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: true, error: 'al-4-marker' }))
+    // ── the act's other direction: ONE record write moving the marker BACK, so the next delivery re-mints on it ──
+    // **THE MARKER STANDS WHERE THE CLICK PUT IT** (the `ERROR` row, by the half above), so the write that can still MOVE
+    // it is the one naming the LANDING tab. **WHAT THIS ARM PROVES IS THE OTHER DIRECTION AND NOT A REPEAT**: a marker that
+    // can move one way and not the other would be a value painted once rather than a value (`D-205`), so the flag is read
+    // following the RECORD both ways — and the `keyField` control does not live here (the pair this delivery carries is the
+    // one the seed minted, so a frozen paint would read it too): it lives in the delivery above, in its ids and in its
+    // rendering-versus-record comparison, which are read against the pair that only a live mint can paint.
+    const returned = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: false, error: 'al-4-marker' }))
     expect(
-      str(asObject(shifted.value)?.['status']),
-      `AL-4 PREREQUISITE — the write that MOVES the marker must commit, or no delivery is owed for it: ` +
-        `\`${trunc(shifted.text, 320)}\`.`,
+      str(asObject(returned.value)?.['status']),
+      `AL-4 PREREQUISITE — the write that MOVES the marker back to the landing tab must commit, or no delivery is owed ` +
+        `for it: \`${trunc(returned.text, 320)}\`.`,
     ).toBe('committed')
     const third = await surfaceWithin(booted.client, (text) => {
       const rows = renderedRows(text)
-      return rows.length === 2 && rowFor(rows, ERROR_PAGE_ID)?.active === true && rowFor(rows, LANDING_PAGE_ID)?.active === false
+      return rows.length === 2 && rowFor(rows, LANDING_PAGE_ID)?.active === true && rowFor(rows, ERROR_PAGE_ID)?.active === false
     })
     const thirdRows = renderedRows(third.html)
     const thirdIds = idsOf(thirdRows)
     const afterMarker = markerOf(thirdRows)
-    // ── CLAUSE 1 — THE MARKER MOVES, AND NO ROW KEEPS A STALE VALUE (`D-205`, four readings, now gating) ─────
+    // ── CLAUSE 1 — THE MARKER MOVES BOTH WAYS, AND NO ROW KEEPS A STALE VALUE (`D-205`, four readings, now gating) ──
     expect(
       { before: secondMarker, after: afterMarker },
       `AL-4 — the record's active marker must MOVE across a re-mint, and NO row may keep a stale value: the two deliveries ` +
         `read ${textOf(secondMarker)} and then ${textOf(afterMarker)} over ${String(third.polls)} bounded re-read(s), ` +
-        `where \`D-205\`'s four-reading measurement requires the flag on the OTHER row. **AND THIS CLAUSE IS THE ROW'S ` +
-        `CONTROL**: RESTORE \`keyField: 'id'\` AND IT IS WHAT REDS. \`D-201\` measured a keyed re-mint answering ` +
-        `\`minted: []\`, REUSING each matched node and re-applying only the datum's source anchors, so a reused node keeps ` +
-        `the \`props\` it was first composed with — \`${LANDING_PAGE_ID}\` would still read \`active="true"\` and ` +
-        `\`${ERROR_PAGE_ID}\` \`active="false"\` while the record says the reverse. **A STABLE ID IS EXACTLY WHAT MAKES THIS ` +
-        `CLAUSE RED**, which is the trade \`D-208\` recorded: the old subject (ids held stable) is REPLACED rather than ` +
-        `restored, and the property it asked for is now the failure this row is built to report.`,
+        `where \`D-205\`'s four-reading measurement requires the flag on the OTHER row each time. **AND THE MOVE IS IN BOTH ` +
+        `DIRECTIONS ON PURPOSE**: this one carries the flag back to the tab the app boots on, which is the state \`AL-5\`'s ` +
+        `own premise expects, while the delivery above carries it away from it — one value, read moving each way, so it is ` +
+        `a value and not a value painted once (\`D-201\`'s freeze arriving by another road). **THE \`keyField\` CONTROL IS ` +
+        `THE DELIVERY ABOVE AND NOT THIS ONE**, for the reason that arm states: these rows were first minted carrying this ` +
+        `very pair.`,
     ).toEqual({
-      before: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false },
-      after: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
+      before: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
+      after: { [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false },
     })
-    // ── and the rendering must agree with the RECORD, row by row: the same control, read from the other side ──
-    const standing = recordOf((await readAt(booted.client, [TABS])).value)
-    const recordMarker = recordMarkerOf(standing)
-    expect(
-      { rendered: afterMarker, record: recordMarker },
-      `AL-4 — every rendered marker must AGREE with the record's own flag for that row: the page read ` +
-        `${textOf(afterMarker)} where \`data.read(['${TABS}'])\` holds ${textOf(recordMarker)}. **A ROW CARRYING THE VALUE ` +
-        `IT WAS FIRST MINTED WITH IS THE \`keyField\` FREEZE ITSELF** (\`D-201\`: a reused node ignores the changed ` +
-        `\`props\` under \`rows-reuse-shape-ignored\`), so this arm reds for the same restored key the clause above reds ` +
-        `for — and it reds even for a reader willing to call one comparison a coincidence.`,
-    ).toEqual({
-      rendered: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
-      record: { [LANDING_PAGE_ID]: false, [ERROR_PAGE_ID]: true },
-    })
-    // ── and the churn is PER DELIVERY, not once ever: the shift write owed a delivery of its own ──
+    // ── and the churn is PER DELIVERY, not once ever: the return write owed a delivery of its own ──
     const keptAgain: string[] = []
     for (const target of [LANDING_PAGE_ID, ERROR_PAGE_ID]) {
       const was = str(secondIds[target])
@@ -1769,13 +1859,21 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     }
     expect(
       keptAgain,
-      `AL-4 — and the delivery the shift write owed must have churned the ids AGAIN: ${textOf(keptAgain)} stood across it, ` +
+      `AL-4 — and the delivery the return write owed must have churned the ids AGAIN: ${textOf(keptAgain)} stood across it, ` +
         `where ${textOf({ before: secondIds, after: thirdIds })} is what the two deliveries read. **THE COST IS PER ` +
         `DELIVERY AND NOT "ONCE EVER"**, which is why \`D-194\`'s "one listener per row, ever" could not survive the ` +
         `per-mint attach \`D-201\` chose, and why nothing here remembers an id between two acts.`,
     ).toEqual([])
     // ── CLAUSE 2 (b) (ii) — THE OTHER FRESH ROW, dispatched at the address THIS delivery minted ──
+    // **THIS CLICK IS AT A SEAT THE RECORD SHOWS NOT ACTIVE** (`afterMarker` above: the return write left the LANDING row
+    // active and this one not), which is what makes it a WRITE and not a second no-op — the seat S6b cannot reach. Both
+    // fresh rows are therefore controls whose act performs, one in each half of this row.
     const errorFresh = str(thirdIds[ERROR_PAGE_ID]) ?? ''
+    expect(
+      afterMarker[ERROR_PAGE_ID],
+      `AL-4 PREREQUISITE — the row this half clicks must NOT be the record's active one, or S6b would answer the reading ` +
+        `and no write would be owed: the delivery this address was minted by read ${textOf(afterMarker)}.`,
+    ).toBe(false)
     const clickedOther = await call(booted.client, 'provident.dispatch', {
       target: { kind: 'nodeId', nodeId: errorFresh },
       event: 'click',
@@ -1815,8 +1913,8 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `with the same target (\`provident.focus\`), answers ${actAnswer}.`,
     ).toEqual([ERROR_PAGE_ID])
     // ── and the marker moves BACK, so this row leaves the record where its own premise found it ──
-    // **THE THIRD MOVE, AND ITS POINT IS TWO-FOLD** (`D-205`: the marker is a DATUM VALUE and not a mechanism): it is read
-    // in the direction a record write carries it a SECOND time — the first was this row's own seed — and it leaves
+    // **THE LAST MOVE, AND ITS POINT IS TWO-FOLD** (`D-205`: the marker is a DATUM VALUE and not a mechanism): it is owed by
+    // a RECORD WRITE the act did not cause — so the flag is read following the record and not only the act — and it leaves
     // `['tabs']` with the LANDING tab active, which is the state the app boots on and the one `AL-5`'s own premise expects.
     // **A MARKER THAT CAN MOVE ONE WAY AND NOT THE OTHER WOULD NOT BE A VALUE**: it would be a value painted once, which is
     // `D-201`'s freeze arriving by another road, so both directions are read on purpose.
@@ -1834,9 +1932,11 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     expect(
       backMarker,
       `AL-4 — and the marker must move BACK where the record says so: the surface read ${textOf(backMarker)} over ` +
-        `${String(back.polls)} bounded re-read(s) after the record named the landing tab again, where the two deliveries ` +
-        `above had read ${textOf(afterMarker)}. Three deliveries, six readings of two rows, and the flag followed the ` +
-        `RECORD every time — which is the whole of \`D-205\`'s finding and of this row's subject.`,
+        `${String(back.polls)} bounded re-read(s) after the record named the landing tab again, where the delivery ` +
+        `before it had read ${textOf(afterMarker)} after the SECOND row's click put the marker on \`${ERROR_PAGE_ID}\`. ` +
+        `Five deliveries of two rows — the seed's, the inactive-seat click's, the return write's, the second row's ` +
+        `click's and this one's — and the flag followed the RECORD every time, which is the whole of \`D-205\`'s finding ` +
+        `and of this row's subject.`,
     ).toEqual({ [LANDING_PAGE_ID]: true, [ERROR_PAGE_ID]: false })
   }, ROW_MS)
 

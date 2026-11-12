@@ -168,8 +168,14 @@
        **THE ITEMS DROP VERTICALLY AND OUT OF THE FLOW**: an open menu's items are `position: absolute` below their own
        name, so they OVERLAY the content beneath instead of pushing the layout — the pane stands in the `top` zone, and a
        strip that grew by seven rows would move the stage. The stack is placed with NO measurement: each row owns one fixed
-       `1.4rem` height and the n-th row is offset by `(n - 1) * 1.4rem`, so `nth-of-type` is the only index needed and no
-       figure of a label's width is authored anywhere.
+       `1.4rem` height and the n-th row is offset by `(n - 1) * 1.4rem`, so `nth-of-type` is the only index needed.
+       **AND OUT-OF-FLOW MEANS NOTHING CONTAINS THEM, WHICH IS WHY THE PANEL IS A PSEUDO-ELEMENT** (the measured defect:
+       the open `View` menu's seven labels were read off a screenshot rendering straight OVER the landing page's heading
+       and cards, because an item carried a white background only as wide as the NAME and no edge, radius, shadow or lane
+       of its own — over white cards that is no panel at all). The focused menu's `::before` is the ONE box the stack is
+       painted behind; its height is the stack's, authored from the item count, and so is the LABEL LANE (`12rem`), wide
+       enough that no label spills past the panel. A `min-width` on the items could not do that job: their containing block
+       is the name's 40-odd pixels.
        **AND THE TWO ANCESTORS THAT CLIP ARE RELEASED ONLY WHILE A MENU IS OPEN**: an `overflow-x: auto` box computes its
        OTHER axis to `auto` too, so `#pane-menus`'s and the `top` zone's authored `overflow-x: auto` would clip the
        drop-down to the height of the NAME STRIP. The `:has()` rule below outranks those authored inline declarations
@@ -217,25 +223,82 @@
     }
     /* CLOSED BY DEFAULT: the NAME is all a menu shows until it is focused. */
     .menus-menu > .menu-item { display: none; }
-    /* OPEN: the focused menu's items, one fixed row each, dropped straight below the name and taken OUT of the flow. */
-    .menus-menu:focus-within > .menu-item {
-      display: block;
+    /* THE PANEL — ONE BOX FOR THE WHOLE DROPPED STACK, AND IT IS THE FOCUSED MENU'S OWN PSEUDO-ELEMENT.
+       **WHY A PSEUDO AND NOT THE CONTAINER'S OWN BACKGROUND**: the open items are individually `position: absolute`
+       (the rule below), so NO box contains them — the menu's own padding box is the NAME's, and a background declared on
+       it would paint the chip and nothing else. `::before` is a box this sheet may author without touching the graph
+       (`AGENTS.md` § "UI authority": a pseudo-element renders no node and no DOM), and it is the ONE box the stack is
+       painted behind — background, border, radius, shadow, padding and stacking are declared ONCE here and never
+       per item. **A SINGLE PANEL WRAPPER IS NOT EXPRESSIBLE WITH THE NODES THAT EXIST**: the four menus and their
+       eighteen items are authored provident data (`src/shared/demo-envelope.ts`) and this sheet adds no markup, so the
+       only enclosing node is the menu itself, whose box is the name.
+       **SO THE PANEL'S HEIGHT IS THE STACK'S, AUTHORED FROM THE ITEM COUNT** — `n * --menu-row` plus the panel's two
+       paddings — which is the same trade the six offset rules below already make for each ROW: the count is a figure
+       this sheet states, and a menu that gains or loses an item must move both. The `:has()` ladder beneath the panel
+       names every count from `2` to `7` in ascending order (the LAST matching rule wins), so every count the offset
+       ladder can stack is also sized exactly; a menu of one item falls through to the base value.
+       **AND ITS `z-index` IS WHAT PUTS IT OVER THE STAGE, WHICH IS THE SECOND HALF OF THE DEFECT**: the stage is a LATER
+       sibling with no stacking of its own, so an in-flow or z-index-less box would be painted UNDER it. The focused
+       menu is `position: relative` (the base rule) and takes `z-index: 30`, which makes it a stacking context — panel
+       and items together are lifted above every sibling, the stage included, while a menu is open and never otherwise.
+       **THE CLIP RELEASES BELOW ARE STILL NEEDED, AND THEY ARE NOT DUPLICATED HERE**: the panel begins at `top: 100%`
+       of the name — below the name strip — and `#pane-menus` (`height: 100%`, `overflow-x: auto`) and the `top` zone
+       (`overflow-x: auto`) both clip on the axis their own declaration computes, so the panel and its items would show
+       their TOP EDGE ONLY. The existing `:has(.menus-menu:focus-within)` pair on those two boxes is what makes the panel
+       visible at all, and it does not care what the opened box paints. */
+    .menus-menu:focus-within {
+      --menu-row: 1.4rem;         /* ONE ITEM'S ROW HEIGHT — the figure every offset and the panel's height are made of */
+      --menu-lane: 12rem;         /* THE LABEL LANE — wider than the longest label, so no label wraps or spills */
+      --menu-pad: 0.25rem;        /* the panel's own padding above the first row and below the last */
+      --menu-rows: 1;             /* the File menu's ONE row; the ladder below names 2 … 7 */
+      z-index: 30;
+    }
+    .menus-menu:focus-within::before {
+      content: '';
       position: absolute;
       left: 0;
       top: 100%;
-      min-width: 100%;
-      height: 1.4rem;
+      width: var(--menu-lane);
+      height: calc(var(--menu-rows) * var(--menu-row) + 2 * var(--menu-pad));
       box-sizing: border-box;
       background: #fff;
+      border: 1px solid #d8dde3;
+      border-radius: 6px;
+      box-shadow: 0 0.5rem 1.25rem rgba(27, 36, 48, 0.22);
+      z-index: 1;
+    }
+    /* THE COUNT LADDER — ASCENDING ON PURPOSE, because these selectors are equally specific and the LAST match is the
+       one that stands: the tallest count a menu carries is the height the panel gets. */
+    .menus-menu:focus-within:has(> .menu-item:nth-child(2)) { --menu-rows: 2; }
+    .menus-menu:focus-within:has(> .menu-item:nth-child(3)) { --menu-rows: 3; }
+    .menus-menu:focus-within:has(> .menu-item:nth-child(4)) { --menu-rows: 4; }
+    .menus-menu:focus-within:has(> .menu-item:nth-child(5)) { --menu-rows: 5; }
+    .menus-menu:focus-within:has(> .menu-item:nth-child(6)) { --menu-rows: 6; }
+    .menus-menu:focus-within:has(> .menu-item:nth-child(7)) { --menu-rows: 7; }
+    /* OPEN: the focused menu's items, one fixed row each, dropped straight below the name and taken OUT of the flow.
+       **THE ROW IS A LANE INSIDE THE PANEL AND NOT A BOX OF ITS OWN**: `background` is left undeclared here, so the
+       panel's box shows through every row and only a hover or a refusal paints a row's own colour — the look a person
+       reads as ONE floating panel rather than seven strips. `left: 1px` and `width: … - 2px` keep the rows inside the
+       panel's border, and `line-height` centres each label in its `--menu-row`. */
+    .menus-menu:focus-within > .menu-item {
+      display: block;
+      position: absolute;
+      left: 1px;
+      top: calc(100% + var(--menu-pad));
+      width: calc(var(--menu-lane) - 2px);
+      height: var(--menu-row);
+      box-sizing: border-box;
+      padding: 0 0.5rem;
+      line-height: calc(var(--menu-row) - 2px);
       border-radius: 4px;
       z-index: 20;
     }
-    .menus-menu:focus-within > .menu-item:nth-of-type(2) { margin-top: 1.4rem; }
-    .menus-menu:focus-within > .menu-item:nth-of-type(3) { margin-top: 2.8rem; }
-    .menus-menu:focus-within > .menu-item:nth-of-type(4) { margin-top: 4.2rem; }
-    .menus-menu:focus-within > .menu-item:nth-of-type(5) { margin-top: 5.6rem; }
-    .menus-menu:focus-within > .menu-item:nth-of-type(6) { margin-top: 7rem; }
-    .menus-menu:focus-within > .menu-item:nth-of-type(7) { margin-top: 8.4rem; }
+    .menus-menu:focus-within > .menu-item:nth-of-type(2) { margin-top: var(--menu-row); }
+    .menus-menu:focus-within > .menu-item:nth-of-type(3) { margin-top: calc(2 * var(--menu-row)); }
+    .menus-menu:focus-within > .menu-item:nth-of-type(4) { margin-top: calc(3 * var(--menu-row)); }
+    .menus-menu:focus-within > .menu-item:nth-of-type(5) { margin-top: calc(4 * var(--menu-row)); }
+    .menus-menu:focus-within > .menu-item:nth-of-type(6) { margin-top: calc(5 * var(--menu-row)); }
+    .menus-menu:focus-within > .menu-item:nth-of-type(7) { margin-top: calc(6 * var(--menu-row)); }
     /* THE CLIP IS RELEASED ONLY WHILE A MENU IS OPEN — the pane and the zone it stands in both scroll their own axis
        (`D-187`) and both would otherwise cut the drop-down off at the name strip's own height. */
     #pane-menus:has(.menus-menu:focus-within),
@@ -309,7 +372,11 @@
     body:has([theme="dark"]) input { background: #10151b; color: #e8edf4; border: 1px solid #2c3642; }
     body:has([theme="dark"]) .echo-out { border-color: #3a4654; }
     body:has([theme="dark"]) .menus-menu { background: #1b222b; border-color: #2c3642; }
-    body:has([theme="dark"]) .menus-menu:focus-within > .menu-item { background: #1b222b; border-color: #2c3642; }
+    /* THE PANEL HAS ITS OWN DARK LINE, and the rows keep none: their background is the panel's (see the OPEN rule
+       above), so the pair moves the PANEL's fill and border and paints a row only where a row has a colour of its own —
+       the hover. A row rule here would repaint all eighteen rows over the panel and leave the panel's edge light. */
+    body:has([theme="dark"]) .menus-menu:focus-within::before { background: #1b222b; border-color: #2c3642; }
+    body:has([theme="dark"]) .menu-item:hover:not([disabled="true"]) { background: #2b3542; border-color: #3a4654; }
     body:has([theme="dark"]) .menu-item[disabled="true"] { color: #5d6b7d; border-color: #2c3642; }
     body:has([theme="dark"]) .gutter-handle { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
     body:has([theme="dark"]) .gutter-handle:hover { background-color: #3a4654; }
