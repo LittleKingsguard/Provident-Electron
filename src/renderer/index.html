@@ -234,6 +234,39 @@
       font-size: 0.85rem;
       gap: 0.75rem;
     }
+    /* ═══ **THE BAR'S PAINT IS CARRIED ACROSS THE PLATFORM'S CONTROL STRIP — AND `D-240`'s WIDTH IS UNMOVED.** ═══
+       THE REPORT, VERBATIM: *"there is a break where the window control buttons have a different box than the rest of the
+       top-bar, and break some of the lines"*. **THE CAUSE IS `D-240`'s OWN FIX**: `.top-bar` is `width:
+       env(titlebar-area-width, 100%)`, which ENDS where the free area ends — so the bar's fill and its `border-bottom` stop
+       at that edge while the platform draws its three buttons in a native strip of its own to the right of it.
+       **THE DIFFERENCE WAS MEASURED OFF THE SCREEN (`import -window`, both themes) AND IT IS BOTH THE FILL AND THE BORDER**:
+       the strip is the overlay's own `color` for `32px` and then the PAGE's ground — `#f4f6f8` light, `#12161c` dark — for
+       the last `4px`, because `getTitlebarAreaRect()` answers `[0, 0, 908, 32]` while the bar is `36px` tall; and not one
+       pixel of the bar's `#d8dde3` / `#2c3642` edge crosses it. So the buttons read as a box of their own with a broken line
+       under it.
+       **WHAT THIS RULE DOES, AND WHAT IT DELIBERATELY DOES NOT DO**: the box it paints is the HOST's (`#app`,
+       `position: fixed; inset: 0`), placed to the RIGHT of the very figure the bar's own width is — so it covers exactly
+       the strip and no pixel of the bar — and `.top-bar` keeps `width: env(...)` and its `box-sizing` untouched. The bar
+       does NOT reclaim the strip: `D-240` measured the chips running under the buttons when it did. Its `background` is the
+       bar's fill and its `border-bottom` is the bar's edge, so the `4px` the platform leaves short are filled and the line
+       runs the window's whole width. `box-sizing: border-box` puts that border on the same pixel row the bar's own edge
+       occupies (`35…36` — measured), and `height` is the bar's authored `flex: 0 0 36px` (`demo-envelope.ts`'s
+       `topBarStyle`) TRANSCRIBED WITH ITS REASON — the same debt `D-247` named for the overlay's colour pair: the platform's
+       strip is `32px`, the bar is `36px`, and only the page can paint the difference where the platform does not.
+       `pointer-events: none` keeps a 1px line from eating a press, and where `env()` does not resolve the `100%` fallback
+       collapses this box to nothing — the bar's own edge is then the whole line, exactly as before. */
+    #app::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: env(titlebar-area-width, 100%);
+      right: 0;
+      height: 36px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #d8dde3;
+      pointer-events: none;
+    }
     /* **THE NAME — `#app-name`, THE AUTHORED NODE THE BAR'S TEXT RUN BECAME — AND THE FOUR DECLARATIONS ARE THE WHOLE
        POINT OF THE RULING.** *"Make the name an element so it can truncate"*: a text run is an anonymous flex item, so no
        selector reaches it and neither its `overflow` nor its `min-width` is writable — `D-240` measured the bar-level
@@ -578,13 +611,22 @@
        and close when it is let go — *"NO STATE, NO TOGGLE AND NO NEW RECORD"*, exactly the four menus' rule above — and
        THE HIDING IS CSS AND NEVER DELETION, so all eight drops stay in the markup for `provident.dispatch`,
        `list_targets`, `get_rendered_html` and `get_markdown` while nothing renders them until a grip holds focus.
-       **THE OVERLAYS' BOX IS THE ENVELOPE'S AND THIS SHEET PAINTS THEM, NEVER PLACES THEM** (the `14px` grip thickness,
-       `cursor: grab` and — for the menus pane only — `D-246`'s `float`/`position: sticky` pin are authored there, and so
-       are the four drops' viewport windows): a `position`, an `inset` or a dimension here would be a second spelling of a
-       node's own `css`, the drift `D-188` debt 2 names. What stands here is the FILL, the border, the centred one-word
-       label and the `z-index` that keeps an overlay above the pane it was opened from — and, on the overlay the pointer is
-       standing in during a drag, one TRANSIENT inline `background-color` written and cleared by `renderer.ts`'s
-       `paneMovePreviewWrite`/`paneMovePreviewClear`, which is the preview's own state and no record's.
+       **THE OVERLAYS' BOX IS NOT THIS SHEET'S AND IS NO LONGER THE ENVELOPE'S EITHER — IT IS THE DRAG'S** (the `14px` grip
+       thickness, `cursor: grab` and — for the menus pane only — `D-246`'s `float`/`position: sticky` pin are authored there;
+       the drops themselves author `position: fixed`, a pointer cursor and `opacity: 0`, and NO extent at all): a zone's
+       extent is `['zones', <id>, 'size']`, so `renderer.ts` composes each drop's box from those four figures and the zones'
+       order while the grip is pressed (`paneMoveDropBoxOf`) and writes it as the gesture's own inline style. A `position`,
+       an `inset` or a dimension here would be a second spelling of a figure the record owns — the drift `D-188` debt 2
+       names — and the `25vh`/`20vw` bands the envelope used to carry were that same second authority in viewport units:
+       measured on a `230`-wide window, a `20vw` left lane was `50px` against a `115px` left rail, so a drag into the rail
+       resolved nothing, while the right lane hung over the `top` zone's own right end. What stands here is the FILL, the
+       border, the centred one-word label and the `z-index` that keeps an overlay above the pane it was opened from — and,
+       on the overlay the pointer is standing in during a drag, one TRANSIENT inline `background-color` written and cleared
+       by `renderer.ts`'s `paneMovePreviewWrite`/`paneMovePreviewClear`, which is the preview's own state and no record's.
+       **AND `opacity` IS THE VISIBILITY OF THE WHOLE AFFORDANCE**: the authored `0` above is every drop's closed state, and
+       the drag raises the ONE under the pointer to `1` and drops its three siblings back to `0` — so the four windows are
+       never all painted at once (they used to be, and a drag released over no zone left them standing over the app, which
+       is exactly the debris the user reported as *"something appears in the right side of the top zone"*).
        **AND `-webkit-app-region` IS DELIBERATELY NOT DECLARED HERE**: the drag region is the top-bar's alone and both
        grips stand OUTSIDE it — the menus pane in the `top` ZONE below the bar, the gutter pane in the stage's own card
        — so a `no-drag` here would guard against a region the compositor never had, which is the reading
@@ -700,6 +742,10 @@
        attribute or style is created here, the key is the declaration's own attribute, and the light arm is still the base —
        so a realm that renders no `theme` attribute (a boot with no delivery) paints exactly what it painted before. */
     body:has([theme="dark"]) .top-bar { background: #1b222b; border-bottom-color: #2c3642; color: #e8edf4; }
+    /* AND THE STRIP'S PAINT TAKES THE SAME PAIR, because it is the bar's continuation and not a second surface: the
+       measured dark reading off the screen was the overlay's `#1b222b` for `32px`, the page's `#12161c` for the last
+       `4px` and NO edge at all under the buttons. One selector, two colours, and the light arm stays the base. */
+    body:has([theme="dark"]) #app::before { background: #1b222b; border-bottom-color: #2c3642; }
     /* THE NAME TAKES NO LINE OF ITS OWN: it authors no colour (the `#app-name` rule above carries the four truncation
        declarations and nothing else), so it INHERITS this one from the bar it stands in. A rule here would be a second
        spelling of the bar's ink. */

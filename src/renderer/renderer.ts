@@ -2403,8 +2403,8 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
 // `setPointerCapture`, and `captureOnGripPress` below is that row's fix applied to the two grips, on the same
 // `pointerdown`, with the same total degradations (`D-245`). **(ii)** §2's reason no hit-test is taken —
 // `getBoundingClientRect` THROWS in the layout-less DOM shim — **IS ABOUT MEASURABILITY AND NOT ABOUT THE HAND,
-// so nothing here measures a box either**: the four drops are AUTHORED ZONE-SIZED OVERLAYS while a drag is in flight
-// (the geometry is `demo-envelope.ts`'s, one `css.style` per drop, no arithmetic and no node added), and the drag asks
+// so nothing here measures a box either**: the four drops are AUTHORED OVERLAYS given their ZONE'S OWN EXTENT while a drag
+// is in flight (`paneMoveDropBoxOf` below: the four stored figures and their order, no node added), and the drag asks
 // **the DOM** which of them the pointer is standing on — `document.elementFromPoint` in a realm that has layout, and the
 // event's own `target` in a realm that does not (the whole node suite, `D-27`). So a row can drive the gesture by
 // dispatching at a drop, while the real window resolves the drop under a real pointer.
@@ -2707,6 +2707,103 @@ function paneMovePreviewClear(element: unknown, kind: 'zone' | 'drop'): void {
   for (const declaration of PANE_MOVE_PREVIEW[kind]) style.remove(declaration.property)
 }
 
+/** **THE SIX BOX PROPERTIES THE DRAG OWNS ON A DROP, AND THE ONE THAT MAKES IT VISIBLE** (`D-249` defect: the drops' boxes
+ *  were `25vh`/`20vw` OF THE VIEWPORT, which is not a zone). **THE BOX IS COMPUTED FROM THE RECORD AND NEVER AUTHORED**:
+ *  a zone's extent is `['zones', <id>, 'size']` — the envelope states it in words for the one reason it states no figure
+ *  (`demo-envelope.ts`'s `paneMoveDropStyleOf`, `D-129`, `D-174`) — so the four drops are placed here, at the press, from
+ *  the same family `driveLayoutRegions` paints the zones from, and are **`position: fixed`, so they are placed against the
+ *  VIEWPORT while their figures are the ZONES'**: `top` owns the band `0 … top.size`, `bottom` the band
+ *  `window − bottom.size … window` and `left`/`right` own the lanes BETWEEN those two bands, at their own width. **THE
+ *  FOUR WINDOWS ARE DISJOINT BY CONSTRUCTION** and the stage — the middle, below the top band and beside the lanes — belongs
+ *  to none of them, which is what keeps a release elsewhere from being read as a destination.
+ *  **`opacity` IS PART OF THIS LIST AND NOT DECORATION**: the sheet reveals all four drops on `.pane-grab:focus-within`, and
+ *  an overlay that is not the one under the pointer is debris over the whole app (measured: a drag released over no zone
+ *  leaves the grip focused and four translucent windows standing). The authored state is `opacity: 0`; the drag shows the
+ *  hovered one and hides the rest. **OPACITY AND NOT `display`**: a `display: none` element is not hit-testable, and these
+ *  four boxes are exactly what `document.elementFromPoint` has to answer. */
+const PANE_MOVE_DROP_BOX: readonly string[] = ['top', 'right', 'bottom', 'left', 'width', 'height']
+const PANE_MOVE_DROP_OPACITY: Readonly<Record<'shown' | 'hidden', string>> = { shown: '1', hidden: '0' }
+
+/** **THE FOUR ZONES' PAINTED FIGURES, READ OFF THE RECORD'S OWN FAMILY ONCE PER PRESS** (`D-129`'s ask-don't-remember:
+ *  the drag asks the standing record at the gesture's first instant rather than remembering a shape a delivery may have
+ *  replaced). Total over every arm (`D-127`): a throwing client, a shape with no `zones` list, a non-object row, a
+ *  non-string id and a figure that is not a finite non-negative number each contribute NOTHING, so a zone the record does
+ *  not state simply has no window and no drop of its own can be reached. **NO DEFAULT IS INVENTED** (`D-174`, `D-233`): a
+ *  missing figure leaves the drop at its authored box, which is no box at all. */
+function paneMoveZoneFigures (): ReadonlyMap<string, number> {
+  const figures = new Map<string, number>()
+  let shape: unknown = null
+  try {
+    shape = getViewClient().shape()
+  } catch {
+    return figures
+  }
+  const zones = (shape as { readonly zones?: unknown } | null | undefined)?.zones
+  if (!Array.isArray(zones)) return figures
+  for (const entry of zones as readonly unknown[]) {
+    if (entry === null || typeof entry !== 'object') continue
+    const id = (entry as { readonly id?: unknown }).id
+    const size = (entry as { readonly size?: unknown }).size
+    if (typeof id !== 'string' || id === '') continue
+    if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) continue
+    figures.set(id, size)
+  }
+  return figures
+}
+
+/** **ONE DROP'S BOX, COMPOSED FROM THE ZONE'S FIGURE AND THE FOUR ZONES' ORDER — OR `null` WHERE THE RECORD STATES NO
+ *  FIGURE.** The bands are the zones' own extents against the window's two edges, and the lanes run between them, so
+ *  *"the vicinity of a zone"* is resolved against THE ZONES and never against a grid of viewport percentages (the defect
+ *  measured at a `230`-wide window: a `50px` lane against a `115px` rail). Every side is stated on every arm — the unused
+ *  ones as `auto` — because these are inline declarations on ONE element and a leftover side from the previous target would
+ *  be a box nobody composed. **`null` IS THE STATED ABSENCE AND NEVER A FALLBACK** (`D-174`). */
+function paneMoveDropBoxOf (zone: string, figures: ReadonlyMap<string, number>): Record<string, string> | null {
+  const top = figures.get('top')
+  const bottom = figures.get('bottom')
+  const own = figures.get(zone)
+  if (top === undefined || bottom === undefined || own === undefined) return null
+  const px = (figure: number): string => `${String(figure)}px`
+  if (zone === 'top') return { top: '0', bottom: 'auto', left: '0', right: '0', height: px(own), width: 'auto' }
+  if (zone === 'bottom') return { top: 'auto', bottom: '0', left: '0', right: '0', height: px(own), width: 'auto' }
+  if (zone === 'left') return { top: px(top), bottom: px(bottom), left: '0', right: 'auto', width: px(own), height: 'auto' }
+  if (zone === 'right') return { top: px(top), bottom: px(bottom), right: '0', left: 'auto', width: px(own), height: 'auto' }
+  return null
+}
+
+/** **ONE DROP'S BOX, WRITTEN ON THE PRESS** — the six properties of the composed box, and the hidden state, on the element
+ *  the census resolved. A realm whose `style` refuses is the declared no-write arm (`paneMoveStyleOf`'s own, `D-127`), and
+ *  the gesture still commits: what is lost is the picture, never the act. */
+function paneMoveDropBoxWrite (element: unknown, zone: string, figures: ReadonlyMap<string, number>): void {
+  const style = paneMoveStyleOf(element)
+  if (style === null) return
+  style.set('opacity', PANE_MOVE_DROP_OPACITY.hidden)
+  const box = paneMoveDropBoxOf(zone, figures)
+  if (box === null) return
+  for (const property of PANE_MOVE_DROP_BOX) {
+    const text = box[property]
+    if (text === undefined) continue
+    style.set(property, text)
+  }
+}
+
+/** **AND CLEARED ON THE RELEASE, THE CANCEL AND A NEW PRESS** — the same six properties and the opacity, by NAME, so the
+ *  authored style (fixed, a pointer cursor, `opacity: 0`) is what stands afterwards and nothing is remembered. */
+function paneMoveDropBoxClear (element: unknown): void {
+  const style = paneMoveStyleOf(element)
+  if (style === null) return
+  for (const property of PANE_MOVE_DROP_BOX) style.remove(property)
+  style.remove('opacity')
+}
+
+/** **THE ONE DROP THE DRAG IS OFFERING, AND ITS THREE SIBLINGS MADE INVISIBLE** — the emphasis transition, written and
+ *  cleared by the same `highlight` turn that writes and clears the fill, so the picture a person sees is always exactly the
+ *  placement the release would commit. */
+function paneMoveDropEmphasis (element: unknown, shown: boolean): void {
+  const style = paneMoveStyleOf(element)
+  if (style === null) return
+  style.set('opacity', shown ? PANE_MOVE_DROP_OPACITY.shown : PANE_MOVE_DROP_OPACITY.hidden)
+}
+
 /** **THE POINTER'S TWO COORDINATES, OR `null`** — the ONE coordinate read this file takes, total over a primitive event, a
  *  throwing accessor and a realm that carries no `clientX`/`clientY` (the layout-less shim: `pointerOf`'s own null arm,
  *  which the drag treats as "a move I cannot measure, which is still a move"). */
@@ -2749,8 +2846,9 @@ function paneMoveTargetOfHit (hit: unknown, targets: ReadonlyMap<unknown, PaneMo
  *  (`design-pane-relocation.md` §2 rejected box hit-testing because `getBoundingClientRect` THROWS in the layout-less shim
  *  — a rejection about MEASURABILITY, not about a hand, so the gesture takes the two arms below and measures nothing).
  *  **(1) A REALM WITH LAYOUT — THE WINDOW — ASKS THE DOM**: the four authored drops are ZONE-SIZED OVERLAYS while a drag
- *  is in flight (`demo-envelope.ts`'s `paneMoveDropStyleOf`), so `document.elementFromPoint(x, y)` lands on one of them,
- *  and the drop is the element it answered. **This is the arm a real pointer needs and no node row can reach** (`D-27`).
+ *  is in flight (`paneMoveDropBoxOf` below, from the record's own zone figures), so `document.elementFromPoint(x, y)` lands
+ *  on one of them, and the drop is the element it answered. **This is the arm a real pointer needs and no node row can
+ *  reach** (`D-27`).
  *  **(2) A REALM WITH NO LAYOUT — THE WHOLE NODE SUITE — TAKES THE EVENT'S OWN `target`**: `elementFromPoint` is a member
  *  of the DOCUMENT and not of an element, so a shim that carries `document` at all need not carry it, and a row that
  *  dispatches `pointerdown` at the grip and `pointerup` at a drop hands the drop over as the event's target. **So the
@@ -2850,15 +2948,20 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
   const highlight = (target: PaneMoveDropTarget | null): void => {
     if (state.drop === target) {
       if (target === null) return
+      paneMoveDropEmphasis(target.element, true)
       paneMovePreviewWrite(target.element, 'drop')
       if (state.zone !== null) paneMovePreviewWrite(state.zone, 'zone')
       return
     }
-    if (state.drop !== null) paneMovePreviewClear(state.drop.element, 'drop')
+    if (state.drop !== null) {
+      paneMovePreviewClear(state.drop.element, 'drop')
+      paneMoveDropEmphasis(state.drop.element, false)
+    }
     if (state.zone !== null) paneMovePreviewClear(state.zone, 'zone')
     state.drop = target
     state.zone = null
     if (target === null) return
+    paneMoveDropEmphasis(target.element, true)
     paneMovePreviewWrite(target.element, 'drop')
     const authored = authoredPropOf(runtime, target.nodeId, 'zone')
     if (!authored.readable || typeof authored.held !== 'string' || authored.held === '') return
@@ -2911,6 +3014,25 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       // a grip this realm will not blur keeps its reveal; the preview and the record are already settled
     }
   }
+  /** **THE FOUR BOXES, WRITTEN AT THE PRESS FROM THE RECORD'S OWN ZONE FIGURES** — this grip's four drops and no other
+   *  grip's, each composed by `paneMoveDropBoxOf` against the figures asked ONCE (`paneMoveZoneFigures`). **IT IS THE
+   *  PRESS'S AND NOT THE BOOT'S**: the boxes tile the window's edges and lanes, so a drop given a box outside a gesture
+   *  would be an invisible full-window hit-catcher over the app; written here and cleared on the end, the four exist while
+   *  the pointer does and no longer. A drop whose zone states no figure takes no box (`paneMoveDropBoxOf`'s `null`) and is
+   *  therefore unreachable — the honest arm, and never an invented window (`D-174`). */
+  const boxDrops = (): void => {
+    const figures = paneMoveZoneFigures()
+    for (const target of targets) {
+      const authored = authoredPropOf(runtime, target.nodeId, 'zone')
+      const zone = authored.readable && typeof authored.held === 'string' ? authored.held : ''
+      paneMoveDropBoxWrite(target.element, zone, figures)
+    }
+  }
+  /** **AND THE SAME FOUR CLEARED ON EVERY END** — by property NAME, so the authored style (fixed, a pointer cursor and
+   *  `opacity: 0`) is what stands again and nothing of the gesture is remembered. */
+  const unboxDrops = (): void => {
+    for (const target of targets) paneMoveDropBoxClear(target.element)
+  }
   const onPress = (event: unknown): void => {
     captureOnGripPress(event)
     state.pressed = true
@@ -2918,6 +3040,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     state.press = paneMovePointOf(event)
     // A NEW GESTURE CLAIMS NO PLACEMENT: whatever the last one left is cleared before this one draws its own.
     highlight(null)
+    boxDrops()
   }
   /** **THE ARMING GATE** — a measurable pointer arms past `PANE_MOVE_ARM_DISTANCE`; a pointer this realm cannot measure
    *  arms on the first move it hears, because a move is still a move. */
@@ -2947,6 +3070,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     state.armed = false
     state.press = null
     highlight(null)
+    unboxDrops()
     if (target === null) return
     void paneMoveAct(runtime, target.nodeId)
     blurGrip()
@@ -2956,6 +3080,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     state.armed = false
     state.press = null
     highlight(null)
+    unboxDrops()
   }
   // THE PRESS IS THE GRIP'S ALONE: only a gesture that started on the grip can end in a commit, which is what keeps a
   // press on a revealed overlay the CLICK arm's (`attachPaneMove`) and never this one's.
