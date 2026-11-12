@@ -157,6 +157,81 @@ export interface ProvidentBridge {
   // their own `BRIDGE_MEMBERS`, and each was moved with a dated note on this pass rather than left to disagree.
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * **THE GESTURE WITNESS — THE ONE PLACE `isTrusted` EXISTS, AND THE ONLY THING THIS FILE ADDS TO THE MENUS ROUTE**
+ * (`D-196`'s ruling, verbatim: *"A person's click works; an agent's dispatch stays refused"*).
+ *
+ * `event.isTrusted` is a DOM property of an `Event`: Chromium sets it TRUE only for real user input, and a SYNTHETIC event
+ * — `dispatchEvent`, which is how `provident.dispatch` runs an authored handler body — can NEVER set it true. It cannot
+ * cross an IPC channel by itself and `src/main/main.ts`'s handler never sees an `Event`, so the signal has to be read HERE,
+ * by the only file on the route that holds the DOM (`contextIsolation: true`, so this listener stands in the ISOLATED
+ * WORLD: page script can neither see it nor set its value) and before the role leaves the realm.
+ *
+ * **HOW IT REACHES THE ROUTE, IN ONE SENTENCE**: a real click on a menu item fires this CAPTURING listener on `window`
+ * before the item's own `click` listener runs, the item's listener synchronously calls `window.provident.menu(role)`
+ * (`src/renderer/renderer.ts`'s `attachMenuItem` → `menuRoleAct` → `menuRoleRoute`), and `menu` below hands `main` the
+ * answer as a plain second argument. **A ROLE IS ONE-SHOT AND IT MUST MATCH**: the witness records the role the gesture
+ * actually landed on (read off the clicked element's own `role` attribute, the same attribute the paint writes), the call
+ * consumes it, and a call naming any other role reads `false`. The `setTimeout(0)` clear is what bounds it to that one
+ * gesture's own task — a microtask would be too early (microtasks drain between listeners of one dispatch).
+ *
+ * **WHAT AN AGENT CANNOT DO, SAID PLAINLY**: it cannot make a trusted event. Its `provident.dispatch` never touches the DOM
+ * at all, a `.click()` it authors in a loaded envelope answers `isTrusted === false`, and the value is not settable from the
+ * page or from this realm's other process. **SO THE TRUSTED ARM IS UNREACHABLE FROM THE MCP SURFACE**, and the refusal an
+ * agent reads for the seven is byte-for-byte the one it read before this witness existed.
+ *
+ * **AND THE BRIDGE'S DECLARED SURFACE DOES NOT MOVE**: `menu(role)` keeps its one argument, its one answer and its one
+ * channel. The second `invoke` argument is a fact of THIS channel, spelled by the two files that own it, and
+ * `src/renderer/secure-panels.ts`'s `declare global` half stays in lockstep because nothing it declares changed.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/** The role the LAST trusted gesture landed on, or `null`. Consumed by the call that reads it (`witnessedGestureFor`). */
+let trustedMenuGesture: string | null = null
+
+/** The authored `role` attribute of the element an event landed on, or of its nearest ancestor that carries one — the menu
+ *  item itself when the press lands on its label, since the label is that element's own text. TOTAL: a target that is not
+ *  an element, an absent attribute and a walk that spends its depth all answer `null`, which reads as NO GESTURE. */
+function roleOfGesture(event: Event): string | null {
+  let node: unknown = event.target
+  for (let depth = 0; depth < 8; depth += 1) {
+    const element = node as { getAttribute?: unknown; parentElement?: unknown } | null
+    if (element === null || typeof element !== 'object') return null
+    const read = element.getAttribute
+    if (typeof read === 'function') {
+      const held = (read as (name: string) => string | null).call(element, 'role')
+      if (typeof held === 'string' && held !== '') return held
+    }
+    node = element.parentElement ?? null
+  }
+  return null
+}
+
+/** Register the witness ONCE, at preload evaluation, before any page script exists. A realm with no DOM (a harness that
+ *  imports this module without one) registers nothing and every call reads `false` — the untrusted arm, never a throw. */
+function witnessTrustedGestures(): void {
+  if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
+  window.addEventListener(
+    'click',
+    (event: Event): void => {
+      if (event.isTrusted !== true) return
+      const role = roleOfGesture(event)
+      if (role === null) return
+      trustedMenuGesture = role
+      setTimeout((): void => {
+        trustedMenuGesture = null
+      }, 0)
+    },
+    true,
+  )
+}
+witnessTrustedGestures()
+
+/** Whether THIS call is the trusted gesture for THIS role — read once, and consumed so one click can never answer twice. */
+function witnessedGestureFor(role: string): boolean {
+  if (trustedMenuGesture === null || trustedMenuGesture !== role) return false
+  trustedMenuGesture = null
+  return true
+}
+
 const bridge: ProvidentBridge = {
   ready(): void {
     ipcRenderer.send(IPC_READY)
@@ -312,9 +387,12 @@ const bridge: ProvidentBridge = {
   },
   // THE MENUS ROUTE'S ONE ARM (`D-181`, `D-196`): the role name crosses the ONE channel and the answer is `main`'s total
   // answer — `admitted` only once the role's operation ran, or a refusal naming the role. Nothing is decided, widened,
-  // defaulted or re-spelled on this side, exactly as the five `data` arms decide nothing.
+  // defaulted or re-spelled on this side, exactly as the five `data` arms decide nothing. **AND THE SECOND ARGUMENT IS THE
+  // GESTURE WITNESS ABOVE, NOT A DECISION**: it says only whether a REAL click on THIS role is what asked (`D-196`'s
+  // ruling), `main` is where that is weighed, and the declared member stays `menu(role)` so no caller and no sibling
+  // declaration moves with it.
   menu(role: string): Promise<{ status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string }> {
-    return ipcRenderer.invoke(IPC_MENU_ROLE, role)
+    return ipcRenderer.invoke(IPC_MENU_ROLE, role, witnessedGestureFor(role))
   },
   // ⟶ **THE `store` MEMBER'S IMPLEMENTATION IS DELETED** (`D-93`): the three members above are gone with the frozen graph
   // store, and with them the `STORE_FILE_CHANGED` preload LOCAL that carried the Y-3 push. **NO CHANNEL SPELLING SURVIVES

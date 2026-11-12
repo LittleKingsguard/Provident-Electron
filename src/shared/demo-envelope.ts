@@ -745,9 +745,21 @@ export function demoEnvelope() {
                       // THE NODE and never from a table of its own; **the SEVEN the ruling refused render
                       // `disabled` with NO handler**, so the refusal is DATA and the unbypassable guard is
                       // `main`'s admitted set (`D-181`, `D-196`). Readers: the menus turn, `AL-6`, `AL-7`.
+                      //
+                      // **AND EACH MENU CARRIES `props.tabindex: '0'`, WHICH IS THE DROP-DOWN'S WHOLE MECHANISM.** The paint
+                      // writes `props.*` as attributes, so this is the bare `tabindex="0"` the page sheet keys on: a menu NAME
+                      // becomes focusable, `:focus-within` IS THE CLICK (a click focuses, a click elsewhere blurs), and
+                      // `src/renderer/index.html` hides `.menus-menu > .menu-item` until then. **NO STATE, NO TOGGLE AND NO NEW
+                      // RECORD** — the four names stand in a horizontal strip, a name's items drop VERTICALLY below it on a
+                      // click, and the items remain in the markup (hidden by CSS, never deleted): `provident.dispatch`,
+                      // `list_targets`, `get_rendered_html` and `get_markdown` all still see all eighteen, and `AL-6`'s count
+                      // is unmoved. It is also the honest control for a keyboard user: `Tab` reaches each name and the items
+                      // open on focus. **NOTHING HERE IS A FIGURE OR A LABEL**: the prop adds no node, no class, no content and
+                      // no handler, and every role, label and `disabled` mark below is the landed text, unchanged.
                       {
                         type: 'div',
                         css: { classes: ['menus-menu'] },
+                        props: { tabindex: '0' },
                         content: 'File',
                         children: [
                           {
@@ -759,6 +771,7 @@ export function demoEnvelope() {
                       {
                         type: 'div',
                         css: { classes: ['menus-menu'] },
+                        props: { tabindex: '0' },
                         content: 'Edit',
                         children: [
                           {
@@ -794,6 +807,7 @@ export function demoEnvelope() {
                       {
                         type: 'div',
                         css: { classes: ['menus-menu'] },
+                        props: { tabindex: '0' },
                         content: 'View',
                         children: [
                           {
@@ -829,6 +843,7 @@ export function demoEnvelope() {
                       {
                         type: 'div',
                         css: { classes: ['menus-menu'] },
+                        props: { tabindex: '0' },
                         content: 'Window',
                         children: [
                           {

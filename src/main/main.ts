@@ -764,8 +764,22 @@ async function main(): Promise<void> {
    *  answered ONLY once that operation returned. **A THROWING OPERATION IS A FAILURE ANSWER, NEVER AN ADMISSION**: the
    *  declared vocabulary carries three words and no fourth, so a failed operation answers `role-not-admitted` with the
    *  operation's own words in `message`, and `admitted` stays reserved for the case where the act happened. Nothing here
-   *  reads the call's first parameter, checks a sender or inspects its frame: the admitted set is the bound (`D-121`). */
-  function menuRoleAnswer(role: unknown): { status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string } {
+   *  checks a sender or inspects a frame: the admitted set is the bound (`D-121`).
+   *
+   *  **AND THE SEVEN'S ANSWER NOW HAS TWO ARMS, WHICH IS THE USER'S RULING AND NOT A WIDENING OF THE SET** (`D-196`,
+   *  restated verbatim: *"A person's click works; an agent's dispatch stays refused"*). The distinguishing signal is
+   *  `event.isTrusted`, which Chromium sets TRUE only for real user input: a SYNTHETIC event — `dispatchEvent`, which is how
+   *  `provident.dispatch` runs an authored handler body — can NEVER set it true. **So a trusted gesture is a person and an
+   *  untrusted one is a machine, and that is a real boundary and not a convention.** The signal cannot cross IPC by itself
+   *  (it is a DOM property of an Event and this handler never sees one), so `src/main/preload.ts` witnesses it at the only
+   *  place it exists and hands this function a plain second argument: `trusted`. **AN ABSENT, MALFORMED OR FALSY SECOND
+   *  ARGUMENT IS UNTRUSTED**, so a realm with an older preload, a hand-rolled `ipcRenderer.invoke` and every agent path keep
+   *  today's answer byte for byte — the refusal message below is UNCHANGED, and an agent dispatching `close` still reads
+   *  `refused close` by name. Only a real gesture on the item carrying that role reaches the seven's acts. */
+  function menuRoleAnswer(
+    role: unknown,
+    trusted: boolean,
+  ): { status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string } {
     // R1 — THE TYPE TEST. A non-string is refused AS A VALUE naming what arrived, never thrown.
     if (typeof role !== 'string') {
       return { status: 'refused', role: '', reason: 'role-malformed', message: `a menus role must be a string; this call carried ${role === null ? 'null' : typeof role}` }
@@ -773,12 +787,16 @@ async function main(): Promise<void> {
     // R2 — THE SEVEN, TESTED BEFORE ANY OTHER ARM: `quit`/`close` kill the app and the MCP port the agent is speaking on;
     // `reload`/`forcereload` wipe every renderer transient; `toggledevtools` is an agent-visible devtools toggle; and
     // `minimize`/`zoom` are window state the corpus already refused for authored controls. Refused BY NAME, so a refusal
-    // can be read back role by role while the app still answers on its transport.
-    if ((MENU_REFUSED_ROLES as readonly string[]).includes(role)) {
+    // can be read back role by role while the app still answers on its transport. **AN UNTRUSTED CALLER STOPS HERE**,
+    // which is every agent and every synthetic event; a TRUSTED one falls through to the act below with its role admitted
+    // by the gesture rather than by the set.
+    const refusedRole = (MENU_REFUSED_ROLES as readonly string[]).includes(role)
+    if (refusedRole && !trusted) {
       return { status: 'refused', role, reason: 'role-not-admitted', message: `the role '${role}' is not admitted: it would end the app, the MCP port or this realm's transients, or move window state the app keeps out of reach` }
     }
-    // R3 — THE ELEVEN. What is not one of them falls through to R4 rather than being guessed at.
-    if (!(MENU_ADMITTED_ROLES as readonly string[]).includes(role)) {
+    // R3 — THE ELEVEN. What is not one of them falls through to R4 rather than being guessed at. On the trusted arm the
+    // seven are already past R2 and are admitted by the gesture, so this test is asked of every OTHER role.
+    if (!refusedRole && !(MENU_ADMITTED_ROLES as readonly string[]).includes(role)) {
       // R4 — NEITHER SET: named, never silent and never a throw.
       return { status: 'refused', role, reason: 'role-unknown', message: `the role '${role}' is neither one of the eleven admitted roles nor one of the seven refused ones` }
     }
@@ -803,6 +821,19 @@ async function main(): Promise<void> {
         case 'zoomout': contents.setZoomLevel(contents.getZoomLevel() - 0.5); break
         // A TOGGLE DESPITE THE NAME: fullscreen is a presentation of the window and ends nothing.
         case 'togglefullscreen': target.setFullScreen(!target.isFullScreen()); break
+        // ── THE SEVEN, AND THIS ARM IS REACHED ONLY BY A REAL GESTURE ─────────────────────────────────────────────
+        // Each is the operation the role NAMES, and nothing here re-tests the caller: the gate is the `trusted` argument
+        // above, which only `src/main/preload.ts` can set and only from an `isTrusted` event on the item carrying the role.
+        // **`quit` AND `close` END WHAT THEY END BEFORE THIS CALL RETURNS** — the invoke's promise is torn down with the
+        // window or the process, so a person's click on those two is answered by the app leaving, not by `admitted`.
+        case 'quit': app.quit(); break
+        case 'close': target.close(); break
+        case 'reload': contents.reload(); break
+        case 'forcereload': contents.reloadIgnoringCache(); break
+        case 'toggledevtools': contents.toggleDevTools(); break
+        case 'minimize': target.minimize(); break
+        // `zoom` toggles the window's maximized state, which is what the platform's own role does.
+        case 'zoom': if (target.isMaximized()) target.unmaximize(); else target.maximize(); break
       }
     } catch (failure) {
       const why = failure instanceof Error ? failure.message : String(failure)
@@ -811,7 +842,7 @@ async function main(): Promise<void> {
     return { status: 'admitted', role }
   }
 
-  ipcMain.handle(IPC_MENU_ROLE, (_event, role: unknown) => menuRoleAnswer(role))
+  ipcMain.handle(IPC_MENU_ROLE, (_event, role: unknown, trusted: unknown) => menuRoleAnswer(role, trusted === true))
 
   // The MCP stdio transport is spawned by a client (the battery, a test, or an
   // agent). When that client disconnects, stdin closes. Exit so a test run does
