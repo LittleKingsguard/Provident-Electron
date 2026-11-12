@@ -38,6 +38,15 @@
 //     (`handles`), asserts each entry resolved to an ELEMENT and attached, and censuses the declaration against the handles
 //     `demoEnvelope()` AUTHORS — in both directions, with a control proving the census bites. It reds on a declared handle
 //     that fails to resolve, on one that resolves to nothing, and on a declaration and an envelope that disagree.
+//     **⟶ RE-GRAINED FOR THE DECLARATION'S SECOND SUBJECT KIND** (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1
+//     §3; the four authored strips): the list now carries PANE handles and ZONE strips, and **the KIND is expressed by the
+//     wiring's own `subject` member on each per-entry reading** (`'pane' | 'zone'`, `PaneGestureReading`'s declaration) —
+//     never inferred from a key's spelling, which is why the census's fourth arm below can name the vocabulary an entry's
+//     key belongs to. So the row's subject is UNMOVED (*every declared handle is resolvable and the declaration is the
+//     envelope's*) while both kinds are admitted: the entry's key is checked against the ID DOMAIN ITS KIND NAMES —
+//     `DECLARED_PANE_IDS` for a `pane` entry, `DECLARED_ZONE_IDS` for a `zone` one — and the census reds, by NAME, on an
+//     authored handle with no entry, an entry the envelope does not author, a duplicate entry, and (the fourth arm) a
+//     `pane` entry whose `paneId` is outside `DECLARED_PANE_IDS`.
 //   · `PS-2` — a REVERT sends ONE `clearDrag` and NO `commitDrag`.
 //   · `PS-3` — a SECOND ending turn sends NOTHING — the ONE `clearDrag` the flag owns, and NO `applyCommand` at all: the app
 //     hands the release no sink (`D-129`), so this row's `commands` reading is `0` where the seat's one sink write used to be.
@@ -49,8 +58,15 @@
 //     statements staying silent by design.
 //   · `PS-6` — **THE RECEIPT'S PUSH, ASYNCHRONOUS** (§2 `N2`; L2 §9): the one register a construction takes reports
 //     `refused` as an error carrying `reason`/`message`, `unread` as a warning, and stays silent on `committed` — and it
-//     is SCOPED to the `pane` and `drag` route words, so a `zone` and a `theme` refusal of the same shape is not this
-//     realm's news.
+//     is SCOPED to the `pane`, `drag` and `zone` route words, so a `theme` refusal of the same shape is not this realm's
+//     news. **⟶ RE-GRAINED FROM THE RECEIPT'S ABSENCE TO ITS PRESENCE** (`docs/L3/renderer-wiring/design-zone-handles.md`
+//     rev 1 §4; the four strips send `commitZones`): the `zone` word JOINS the filter at this rev, because the sentence
+//     that excluded it — *"the zone family has no UI caller at all"* (`D-151`) — is false from the moment a strip release
+//     sends that route. So the row now drives a `zone` refusal through the client's own member and asserts the line it
+//     produces, and **what reds it is the line's own spelling of its zone**: a receipt that STOPS NAMING its route
+//     (`[provident-renderer] zone write REFUSED …` losing the word `zone`) and one that NAMES THE WRONG ONE (a `zone`
+//     write reported as `theme`'s or `pane`'s) each fail here, because the assertion is the rendered sentence and not a
+//     count. The `theme` silence is kept as the control that makes the scope a reading rather than an absent filter.
 //
 // **THE CONSOLE IS READ THROUGH A SPY AND NOT THROUGH A REDIRECT** (`RS-6`'s idiom, followed rather than re-invented): both
 // members are spied and MUTED, the messages collected, and the spies restored in a `finally` — each row then reads
@@ -63,7 +79,7 @@ import { createPaneDrag, startGutterAffordance } from '../../../src/renderer/ren
 import type { PaneGestureReading } from '../../../src/renderer/renderer.js'
 import { createViewClient } from '../../../src/renderer/view-client.js'
 import type { Runtime } from '../../../src/renderer/runtime.js'
-import { DECLARED_PANE_IDS, DEFAULT_PANE_ID } from '../../../src/shared/view-shape.js'
+import { DECLARED_PANE_IDS, DECLARED_ZONE_IDS, DEFAULT_PANE_ID } from '../../../src/shared/view-shape.js'
 import { demoEnvelope, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID } from '../../../src/shared/demo-envelope.js'
 
 /** **THE CENSUS'S TWO SIDES, BOTH DERIVED AND NEITHER A LITERAL.** The envelope's authored handle nodes are read off
@@ -139,11 +155,16 @@ function authoredHandlesOf(nodes: readonly unknown[]): { readonly handles: strin
 }
 
 /** **`PS-1`'S CENSUS COMPARATOR — THE DECLARED LIST AGAINST THE ENVELOPE'S AUTHORED HANDLES, AS A SUM OF NAMED PARTS**, in
- *  both directions and with the duplicate and empty arms that a set comparison cannot see (`pane-node-map.test.ts`'s `PM-1`
- *  comparator, for the same vacuity reasons). Every line NAMES the handle it is about, so a red is a sentence and not a moved
- *  count (`D-168`). */
+ *  both directions and with the duplicate, empty and WRONG-DOMAIN arms that a set comparison cannot see
+ *  (`pane-node-map.test.ts`'s `PM-1` comparator, for the same vacuity reasons). Every line NAMES the handle it is about, so
+ *  a red is a sentence and not a moved count (`D-168`).
+ *  **THE FOURTH ARM IS THE KIND'S** (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §3, this row's re-grain): an
+ *  entry's key must lie in the ID DOMAIN ITS OWN `subject` NAMES — a `pane` entry in `DECLARED_PANE_IDS`, a `zone` entry
+ *  in `DECLARED_ZONE_IDS` — because the two vocabularies are different records and a `pane` entry addressing `'top'`
+ *  would ask the panes family for a zone. The kind is read off the WIRING's reading and never off the string's spelling,
+ *  so this arm cannot be satisfied by a key that merely happens to look like a zone. */
 function handleCensusDivergences(
-  declared: readonly Pick<PaneGestureReading, 'handleId'>[],
+  declared: readonly Pick<PaneGestureReading, 'handleId' | 'paneId' | 'subject'>[],
   authored: readonly string[],
 ): string[] {
   const out: string[] = []
@@ -159,6 +180,11 @@ function handleCensusDivergences(
   for (const id of [...new Set(declaredIds)]) {
     const times = declaredIds.filter((carried) => carried === id).length
     if (times > 1) out.push(`${id} — declared by ${String(times)} entries: one authored handle with two entries is two affordances on ONE element, and a SET comparison cannot see it`)
+  }
+  for (const handle of declared) {
+    const domain = handle.subject === 'zone' ? DECLARED_ZONE_IDS : DECLARED_PANE_IDS
+    if (domain.includes(handle.paneId)) continue
+    out.push(`${handle.handleId} — declared as a ${handle.subject} handle addressing \`${handle.paneId}\`, which its kind's declared id domain (${JSON.stringify([...domain])}) does not carry: a ${handle.subject} entry outside that domain addresses a record the family does not declare`)
   }
   if (authored.length === 0) out.push('the envelope authors NO handle — two empty sides compare equal and prove nothing')
   if (declaredIds.length === 0) out.push('`PANE_DRAG_HANDLES` declares NO handle — the comparison would pass on nothing at all')
@@ -418,7 +444,7 @@ afterEach(() => {
 const flushed = (): Promise<void> => new Promise<void>((resolve) => { setTimeout(resolve, 0) })
 
 describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven through `startGutterAffordance`', () => {
-  it('PS-1 — **EVERY DECLARED HANDLE IS RESOLVABLE, AND THE DECLARATION IS THE ENVELOPE\'S — and a VALID OBSERVED MOVE then sends ONE `commitDrag(DEFAULT_PANE_ID, {size})` and NO `clearDrag`**: the declaration is read through the wiring\'s OWN per-entry reading (`handles`) and censused against the handles `demoEnvelope()` AUTHORS, so a third handle costs a line in the list and no edit in this row — while a declared handle that fails to resolve, one that resolves to NOTHING, and a list that disagrees with the envelope each red here by NAME. The gesture clause is unchanged: the preview seam\'s `P4` arm is the WHOLE placement change, so the family is written once per observed move, naming the COMPOSITION\'s pane and the CLAMPED value the affordance computed — and an ending there would end the reading the move had just written', () => {
+  it('PS-1 — **EVERY DECLARED HANDLE IS RESOLVABLE, AND THE DECLARATION IS THE ENVELOPE\'S — and a VALID OBSERVED MOVE then sends ONE `commitDrag(DEFAULT_PANE_ID, {size})` and NO `clearDrag`**: the declaration is read through the wiring\'s OWN per-entry reading (`handles`) and censused against the handles `demoEnvelope()` AUTHORS, so a third handle costs a line in the list and no edit in this row — while a declared handle that fails to resolve, one that resolves to NOTHING, and a list that disagrees with the envelope each red here by NAME. **BOTH SUBJECT KINDS ARE ADMITTED, AND THE KIND IS THE WIRING\'S OWN `subject` MEMBER** (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §3): a `pane` entry\'s key is checked against `DECLARED_PANE_IDS` and a `zone` entry\'s against `DECLARED_ZONE_IDS`, so a pane entry naming a zone id — and a zone strip naming a pane — each red by name rather than passing on a key that merely looks like an address. The gesture clause is unchanged: the preview seam\'s `P4` arm is the WHOLE placement change, so the family is written once per observed move, naming the COMPOSITION\'s pane and the CLAMPED value the affordance computed — and an ending there would end the reading the move had just written', () => {
     const live = seat()
     const declared = live.started.handles
 
@@ -476,19 +502,33 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
       handleCensusDivergences(declared, authored.handles),
       `PS-1 — **the declared list IS the envelope's authored handles**: each authored handle carries an entry (no authored strip is left without a gesture) and each entry names an authored handle (no declared handle's element is missing), compared as a sum of NAMED parts — ${JSON.stringify(declared.map((handle) => handle.handleId))} against ${JSON.stringify(authored.handles)}`,
     ).toEqual([])
-    // AND THE PANE SIDE IS THE RECORD'S, NOT THIS FILE'S: an entry naming a pane `view-shape.ts` does not declare would
-    // address a pane no family answers, which the composition would then have to invent a default for.
+    // AND THE KEY'S DOMAIN IS THE RECORD'S, NOT THIS FILE'S, AND IT IS THE KIND THAT SAYS WHICH RECORD: a `pane` entry
+    // naming a pane `view-shape.ts` does not declare would address a pane no family answers (which the composition would
+    // then have to invent a default for), and a `zone` strip naming anything outside the zone family's closed four would
+    // address a zone `commitZones` refuses. BOTH KINDS ARE ASSERTED PRESENT, because a declaration that lost a kind would
+    // otherwise pass every clause above on the other one's entries alone.
+    const kinds = [...new Set(declared.map((handle) => handle.subject))]
+    expect(
+      [...kinds].sort(),
+      'PS-1 — **the declaration reports BOTH subject kinds, and each entry says which one it is** (`PaneGestureReading`\'s `subject`): the census below measures the envelope\'s two kinds of handle, so a list that declared only one of them would agree with half its own tree',
+    ).toEqual(['pane', 'zone'])
     for (const handle of declared) {
+      const domain = handle.subject === 'zone' ? DECLARED_ZONE_IDS : DECLARED_PANE_IDS
       expect(
-        [...DECLARED_PANE_IDS],
-        `PS-1 — the handle ${handle.handleId} addresses the pane ${handle.paneId}, which \`DECLARED_PANE_IDS\` declares`,
+        [...domain],
+        `PS-1 — the ${handle.subject} handle ${handle.handleId} addresses \`${handle.paneId}\`, which its kind's declared id domain (${JSON.stringify([...domain])}) carries: a ${handle.subject} entry outside it addresses a record that family does not declare`,
       ).toContain(handle.paneId)
     }
 
     // ─── (e) THE CENSUS CAN BITE — the control, over fixtures in the declaration's own shape ─────────────────────────────
     // A control reading the tree's own declaration would red beside (d) and hide which arm bit (`PM-3`'s reason for its
-    // fixture domain), so the ids below are NEUTRAL: this arm measures the comparator, never the list.
-    const fixtureDeclaration = [{ handleId: 'handle-a' }, { handleId: 'handle-b' }]
+    // fixture domain), so the ids below are NEUTRAL: this arm measures the comparator, never the list. The fixtures carry
+    // a KIND and a key in their kind's domain, so each red below is the ONE arm under test and not a domain divergence
+    // riding beside it — and the fourth arm's red is the domain's, driven on purpose.
+    const fixtureDeclaration = [
+      { handleId: 'handle-a', paneId: 'pane-a', subject: 'pane' as const },
+      { handleId: 'handle-b', paneId: 'pane-a', subject: 'pane' as const },
+    ]
     const fixtureAuthored = ['handle-a', 'handle-b']
     expect(
       handleCensusDivergences(fixtureDeclaration, fixtureAuthored),
@@ -505,10 +545,41 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
       namedIn(vanished, 'handle-b'),
       'PS-1(e) — and a DECLARED handle the envelope authors nowhere reds, NAMED: its element cannot resolve, which is the `null` arm of (c)',
     ).toHaveLength(1)
-    const duplicated = handleCensusDivergences([{ handleId: 'handle-a' }, { handleId: 'handle-a' }], ['handle-a', 'handle-b'])
+    const duplicated = handleCensusDivergences(
+      [
+        { handleId: 'handle-a', paneId: 'pane-a', subject: 'pane' as const },
+        { handleId: 'handle-a', paneId: 'pane-a', subject: 'pane' as const },
+      ],
+      ['handle-a', 'handle-b'],
+    )
     expect(
       namedIn(duplicated, 'handle-a'),
       'PS-1(e) — a DUPLICATED entry reds even where both SETS agree: two entries on one authored handle are two affordances on one element',
+    ).toHaveLength(1)
+    // ─── THE FOURTH ARM, AND IT IS THE KIND'S: a `pane` ENTRY WHOSE `paneId` IS OUTSIDE `DECLARED_PANE_IDS` ─────────────
+    // **THIS IS THE ARM THE OLD ROW CARRIED AS A BARE LOOP AND THE RE-GRAIN MOVES INTO THE COMPARATOR**: the two kinds
+    // have DIFFERENT id domains, so a comparator that only compared handle ids would pass a pane entry addressing `'top'`
+    // — a key that looks exactly like an address and belongs to the other family. THE CONTROL PROVES IT BITES, and the
+    // zone-side twin below proves the domain is read per kind rather than being one list with two names.
+    const wrongPane = handleCensusDivergences(
+      [
+        { handleId: 'handle-a', paneId: 'top', subject: 'pane' as const },
+        { handleId: 'handle-b', paneId: 'pane-a', subject: 'pane' as const },
+      ],
+      fixtureAuthored,
+    )
+    expect(
+      namedIn(wrongPane, 'handle-a'),
+      'PS-1(e) — **a `pane` entry whose `paneId` is outside `DECLARED_PANE_IDS` reds, and is NAMED**: a pane handle addressing a zone id asks the panes family for a record it does not declare, and the old bare loop is where that red used to stand',
+    ).toHaveLength(1)
+    expect(wrongPane, 'PS-1(e) — and it is the ONLY divergence: the domain arm does not also report the agreeing entry').toHaveLength(1)
+    const wrongZone = handleCensusDivergences(
+      [{ handleId: 'handle-a', paneId: 'pane-a', subject: 'zone' as const }],
+      ['handle-a'],
+    )
+    expect(
+      namedIn(wrongZone, 'handle-a'),
+      'PS-1(e) — and its ZONE twin reds the same way: a `zone` entry keyed on a pane id is the same mistake with the vocabularies swapped, which is what makes the domain a function of the KIND and not a widened list',
     ).toHaveLength(1)
     // THE VACUITY ARMS — one per side, without which a deleted list and an emptied envelope would compare equal.
     for (const arm of [handleCensusDivergences([], []), handleCensusDivergences([], fixtureAuthored), handleCensusDivergences(fixtureDeclaration, [])]) {
@@ -741,7 +812,7 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
     ).toEqual([false, false])
   })
 
-  it('PS-6 — **THE RECEIPT IS PUSHED, AND THE REPORT IS SCOPED TO THE TWO ROUTE WORDS THIS REALM SENDS**: the ONE register a construction takes reports `refused` as an ERROR carrying `reason`/`message` and `unread` as a WARNING, stays SILENT on `committed`, and ignores a `zone` and a `theme` receipt of the very same shape (design §2 `N2`, L2 §9)', async () => {
+  it('PS-6 — **THE RECEIPT IS PUSHED, AND THE REPORT IS SCOPED TO THE THREE ROUTE WORDS THIS REALM SENDS**: the ONE register a construction takes reports `refused` as an ERROR carrying `reason`/`message` and `unread` as a WARNING, stays SILENT on `committed`, **REPORTS the `zone` receipt a strip\'s release earns — naming its own zone — and still ignores a `theme` receipt of the very same shape** (design §2 `N2`, L2 §9; `docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §4)', async () => {
     const reports = captureConsole()
     try {
       // **WHY THIS ROW BUILDS ITS OWN CLIENT AND DRIVES `createPaneDrag` DIRECTLY, STATED RATHER THAN LEFT TO LOOK LIKE A
@@ -845,43 +916,73 @@ describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven 
       expect(reports.warns[1]).toContain('route-threw')
       expect(reports.errors.length, 'PS-6 — neither `unread` arm is an error: a boundary that did not speak is no state of the record').toBe(1)
 
-      // ══ (d) THE SCOPE, DRIVEN ONE ROUTE WORD AT A TIME. `zone` and `theme` belong to the senders that sent them — the
-      //    zone family has no UI caller at all (`D-151`) — so this realm may not report another act\'s answer. The control
-      //    is the SAME refusal shape on a route word this realm DOES send: a report that did not read the route word would
-      //    find the two pairs indistinguishable.
+      // ══ (d) THE SCOPE, DRIVEN ONE ROUTE WORD AT A TIME — AND THE `zone` WORD IS THIS REALM'S NOW.
+      //    **⟶ THE RE-GRAIN IS FROM THE RECEIPT'S ABSENCE TO ITS PRESENCE** (`docs/L3/renderer-wiring/design-zone-handles.md`
+      //    rev 1 §4): this file sends `commitZones` from every strip's release, so the sentence that excluded the `zone`
+      //    route — *"the zone family has no UI caller at all"* (`D-151`) — is false, and a zone write's refusal is now
+      //    this realm's fault to report. `theme` stays another sender's and is the control that proves the filter still
+      //    reads the route word instead of reporting everything it is handed.
       answers.commitZones = { status: 'refused', reason: 'malformed-zone', message: 'the commit carries no zone id' }
       answers.commitTheme = { status: 'refused', reason: 'malformed-theme', message: 'the commit carries no setting token' }
-      const beforeForeign = [reports.errors.length, reports.warns.length]
+      const beforeZone = [reports.errors.length, reports.warns.length]
       client.commitZones('zone-1', { size: 10 })
+      await flushed()
+      expect(
+        routes.commitZones.length,
+        'PS-6 — the control that makes the report mean something: the `zone` route was handed its write through the client\'s OWN member — the client this register stands on — and it ANSWERED a refusal',
+      ).toBe(1)
+      expect(
+        [reports.errors.length - beforeZone[0], reports.warns.length - beforeZone[1]],
+        'PS-6 — **a `zone` refusal IS reported, on the error channel, ONE line for ONE write**: the `zone` word joins `pane` and `drag` in the filter at this rev, so the absence this row used to pin is the presence it pins now',
+      ).toEqual([1, 0])
+      const zoneLine = reports.errors[reports.errors.length - 1]
+      expect(
+        zoneLine,
+        'PS-6 — **AND THE LINE NAMES ITS ZONE**: a receipt that STOPPED naming its route word (a sentence reading `write REFUSED` with no family in front of it, or one naming `pane`/`theme` instead) fails here — the assertion is the rendered sentence, not a count, because a count cannot tell one family\'s refusal from another\'s',
+      ).toContain('zone write REFUSED')
+      expect(zoneLine, 'PS-6 — carrying the crossing\'s own `reason` verbatim, spelled as the crossing spelled it').toContain('malformed-zone')
+      expect(zoneLine, 'PS-6 — and its `message` beside it: a zone refusal reported without its sentence is a word a reader cannot act on').toContain(
+        'the commit carries no zone id',
+      )
+      expect(
+        [zoneLine.includes('theme'), zoneLine.includes('pane')],
+        'PS-6 — **and it names the RIGHT one**: a report that reported a zone write under `theme`\'s or `pane`\'s word would still pass a bare `toContain(\'zone\')` (the reason string carries it), so the rendered route word is read where the renderer writes it',
+      ).toEqual([false, false])
+
+      // AND THE SCOPE'S OTHER SIDE, so the presence above is a FILTER and not a register that reports everything.
+      const beforeTheme = [reports.errors.length, reports.warns.length]
       client.commitTheme('dark', 'data-theme')
       await flushed()
       expect(
-        [routes.commitZones.length, routes.commitTheme.length],
-        'PS-6 — the control that makes the silence mean something: BOTH foreign routes were handed their write, through the client\'s own members — the SAME client this register stands on — and both ANSWERED a refusal',
-      ).toEqual([1, 1])
+        routes.commitTheme.length,
+        'PS-6 — the control for the silence: the `theme` route was handed its write and ANSWERED the same refusal shape',
+      ).toBe(1)
       expect(
-        [reports.errors.length, reports.warns.length],
-        'PS-6 — **a `zone` and a `theme` refusal are NOT this realm\'s news**: the register is scoped to `pane` and `drag`, and a report that ignored the route word would read `3` and `0` here',
-      ).toEqual(beforeForeign)
+        [reports.errors.length - beforeTheme[0], reports.warns.length - beforeTheme[1]],
+        'PS-6 — **a `theme` refusal is NOT this realm\'s news**: the appearance control sends that route, so reporting it here would be a second realm claiming another act\'s answer — a register that had dropped the route word entirely would read `[1, 0]` here',
+      ).toEqual([0, 0])
 
-      // THE SAME REGISTER, THE SAME SHAPE, A ROUTE WORD THIS REALM SENDS (`pane`, the release\'s one `file` commit).
+      // THE SAME REGISTER, THE SAME SHAPE, THE THIRD ROUTE WORD THIS REALM SENDS (`pane`, the release\'s one `file` commit).
       answers.commitPane = { status: 'refused', reason: 'undeclared-pane', message: 'the pane id names no pane this record declares' }
+      const beforePane = [reports.errors.length, reports.warns.length]
       drag.release('gutter', 150, undefined)
       await flushed()
       expect(routes.commitPane.length, 'PS-6 — the release seat sent the `file` commit, so the route word below is `pane` and not an inferred one').toBe(1)
       expect(
-        [reports.errors.length - beforeForeign[0], reports.warns.length - beforeForeign[1]],
+        [reports.errors.length - beforePane[0], reports.warns.length - beforePane[1]],
         'PS-6 — **and THAT refusal IS reported, on the error channel**: the scope is the route word, and not the silence of a register that never fired',
       ).toEqual([1, 0])
       expect(reports.errors[reports.errors.length - 1]).toContain('undeclared-pane')
 
-      // ══ AND THE CENSUS THAT KEEPS CLAUSE (a) FROM BEING AN ACCIDENT: FIVE writes travelled through this ONE register
-      //    above — one refusal, one commit, two losses and this one — and they produced FIVE lines, one each. A register
-      //    taken per turn would read 15; a register taken twice, 10.
+      // ══ AND THE CENSUS THAT KEEPS CLAUSE (a) FROM BEING AN ACCIDENT: SEVEN writes travelled through this ONE register
+      //    above — two refusals on this realm's routes, one commit, two losses, the `zone` refusal and the `theme` one —
+      //    and they produced FIVE lines: one per write that was ANSWERED and IN SCOPE, the `committed` answer and the
+      //    out-of-scope `theme` refusal being silent by design. A register taken per turn would read a line per turn; a
+      //    register taken twice, every line twice.
       expect(
         [reports.errors.length, reports.warns.length],
-        'PS-6 — **the register is ONE, and its lines are one per write**: the whole row\'s two channels, counted once',
-      ).toEqual([2, 2])
+        'PS-6 — **the register is ONE, and its lines are one per write that is its news**: the whole row\'s two channels, counted once — three errors (the drag refusal, the zone refusal, the pane refusal) and two warnings (the two `unread` arms)',
+      ).toEqual([3, 2])
     } finally {
       reports.restore()
     }

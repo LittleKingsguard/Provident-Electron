@@ -119,8 +119,30 @@ const ECHO_BODY = `function (ctx, value) {
 // module carries no cursor literal, no axis literal and no unit string of its own.
 // ---------------------------------------------------------------------------
 
-/** **THE CURSOR MAP, KEYED BY THE AUTHORED AXIS TOKEN** (`D-189`, `D-192`) — a cursor declaration is a
- *  VALUE and the affordance module carries none of its own (`§2.2` P-4, `§8` item 8). Three keys, and
+/** **THE FOUR ZONE STRIPS' IDS — PRIVATE, AND THE ONE SPELLING THIS FILE NEEDS OF EACH**
+ *  (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §2–§3; `D-234`, `D-238`, `D-243`). Each string is
+ *  the strip's `css.id`, its `props.id` AND its `props.axis` — ONE token, three slots, exactly as
+ *  `MENUS_AFFORDANCE_ID`'s node does, because the affordance's own `axisOf` seam reads `props.axis` as the bare
+ *  `axis` attribute and that token is the cursor map's key.
+ *  **THEY ARE PRIVATE CONSTANTS AND NOT EXPORTS**: a published name here would move this module's surface, which
+ *  the design refuses (§1: *no export … and no published name is added*), while a triple-spelled literal would be
+ *  the drift `D-188` debt 2 names. A private constant is neither: it is one spelling inside the one file that
+ *  authors the node. **THE WIRING SPELLS THE SAME FOUR IDS IN ITS OWN TABLE** (`renderer.ts`'s
+ *  `ZONE_DRAG_HANDLES`), and that equality is a ROW's business (`PS-1`'s census, `AL-10`'s form) and never a
+ *  derivation — the ids cannot cross the module boundary without becoming published names.
+ *  **WHICH SIDE EACH ONE STANDS ON IS THE STAGE'S RULE AND NOT A TASTE**: every strip stands on its zone's
+ *  **bounding edge facing the stage**, because that is the edge whose POSITION is the zone's `size` (`D-185`) —
+ *  `top`'s BOTTOM edge, `bottom`'s TOP edge, `left`'s RIGHT edge, `right`'s LEFT edge.
+ *  **AND THE TWO HORIZONTAL ONES SPAN THE VERTICAL AXIS**: the token names the GUTTER's own orientation, exactly
+ *  as `GUTTER_AFFORDANCE_ID`'s does (`D-193`), so a strip that resizes a HEIGHT carries a `row-resize` cursor and
+ *  a strip that resizes a WIDTH a `col-resize` one. */
+const ZONE_TOP_STRIP_ID = 'zone-top-horizontal'
+const ZONE_BOTTOM_STRIP_ID = 'zone-bottom-horizontal'
+const ZONE_LEFT_STRIP_ID = 'zone-left-vertical'
+const ZONE_RIGHT_STRIP_ID = 'zone-right-vertical'
+
+/** **THE CURSOR MAP, KEYED BY THE AUTHORED AXIS TOKEN** (`D-189`, `D-192`, `D-243`) — a cursor declaration is a
+ *  VALUE and the affordance module carries none of its own (`§2.2` P-4, `§8` item 8). Seven keys, and
  *  each one answers for the bar its token names:
  *   · `gutter-horizontal` — `GUTTER_AFFORDANCE_ID`'s own axis; the gutter card's handle now spans the
  *     HORIZONTAL (a `row-resize` grip at the pane's top-right, where it moves the pane's HEIGHT:
@@ -130,13 +152,22 @@ const ECHO_BODY = `function (ctx, value) {
  *   · `gutter-vertical` — the token the affordance's own contract still spells, and NO authored node
  *     carries it since `D-189` moved that handle. The key is RETAINED rather than deleted because
  *     `tests/gutter-ui.test.ts`'s `R-9` reads this file's TEXT for exactly that token and measures a
- *     spelling's presence, never an axis (design §8, `interaction`'s row).
+ *     spelling's presence, never an axis (design §8, `interaction`'s row);
+ *   · the FOUR STRIP IDS above — `row-resize` for the two that stand on a zone's horizontal bound
+ *     (`top`/`bottom`, whose fixed axis is the HEIGHT) and `col-resize` for the two that stand on a
+ *     vertical one (`left`/`right`, whose fixed axis is the WIDTH). The cursor is a DECLARATION and not a
+ *     mechanism: the wiring's `cursorOf` reads this map through the same `axisOf` seam every handle uses.
  *  **THE MAP IS PRIVATE AND STAYS PRIVATE**: `cursorOf` is the only reader, so the nineteenth published
- *  name is the menus pane's NODE ID and never a cursor entry (`D-192`, `D-193`). */
+ *  name is the menus pane's NODE ID and never a cursor entry (`D-192`, `D-193`) — and the four keys below add
+ *  no name to the surface for the same reason. */
 const GUTTER_CURSORS: Readonly<Record<string, string>> = {
   'gutter-vertical': 'col-resize',
   'gutter-horizontal': 'row-resize',
   'menus-vertical': 'col-resize',
+  [ZONE_TOP_STRIP_ID]: 'row-resize',
+  [ZONE_BOTTOM_STRIP_ID]: 'row-resize',
+  [ZONE_LEFT_STRIP_ID]: 'col-resize',
+  [ZONE_RIGHT_STRIP_ID]: 'col-resize',
 }
 /** The authored status node's engine id — the ONE node the DELIVERY's read-out turn patches
  *  (`renderPaneSize`, `D-164`: the sink's `commit`-route write this docblock once named is gone).
@@ -671,6 +702,50 @@ const measuredCarrierStyle: Record<string, string> = { display: 'none' }
 const horizontalZoneStyle: Record<string, string> = { 'overflow-x': 'auto' }
 const verticalZoneStyle: Record<string, string> = { 'overflow-y': 'auto' }
 
+/** **THE FOUR ZONE STRIPS' OWN DECLARATIONS — A THICKNESS AND A CURSOR, AND NOTHING ELSE**
+ *  (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §2; `D-194`'s `14px`, `D-234`, `D-238`).
+ *  **`flex: 0 0 14px` IS THE WHOLE OF THE BOX, ON THE AXIS THE STRIP'S CONTAINER RUNS**: each strip is a FLEX ITEM
+ *  of the container that holds its zone — the app root's COLUMN for `top`/`bottom`, the arrangement's ROW for
+ *  `left`/`right` — so one `flex-basis` gives each one its `14px` thickness (a `height` on the column's axis, a
+ *  `width` on the row's) and `flex: 0 0 …` is the belt against a crowded container squeezing it away. **AND ITS
+ *  OTHER AXIS IS NO FIGURE AT ALL**: `align-self`'s default `stretch` makes every strip span its zone's edge, and
+ *  an authored figure there would be a second authority beside `['zones', <id>, 'size']` (`D-129`, `D-174`).
+ *  **THE THICKNESS IS STRUCTURAL AND NOT COSMETIC** (`D-194`, `OWED-1`'s taken figure): a strip of zero thickness
+ *  is an element no press can land on, which is why the same `14px` is the pane handles' and why the strip is the
+ *  zone's SIBLING — a strip inside a zone the record dragged to `0` would be a strip the tree had deleted.
+ *  **THE CURSOR IS THE STRIP'S OWN AND IT COMES FROM THE PRIVATE MAP ABOVE**: the affordance's `cursorOf` reads
+ *  `props.axis` off THIS node and paints the declaration, so the map's key is these ids and this `css.style` states
+ *  the same token a second time only so the strip reads as a grip before any gesture installs (`GUTTER_CURSORS`'
+ *  own two-line reason, `D-192`). **NOTHING HERE IS EVER PAINTED**: `paintStyle`'s subjects are the four zones, the
+ *  panes and the rows' targets, so a strip's authored placement is stable by construction — which is exactly what
+ *  a zone's authored style is NOT (`D-234` measured a zone reading `height: 140px` and nothing else). */
+const horizontalZoneStripStyle: Record<string, string> = { flex: '0 0 14px', cursor: 'row-resize' }
+const verticalZoneStripStyle: Record<string, string> = { flex: '0 0 14px', cursor: 'col-resize' }
+
+/** **ONE ZONE STRIP, AUTHORED ONCE AND PLACED FOUR TIMES** — the `gutter-handle` SHAPE `MENUS_AFFORDANCE_ID` already
+ *  carries (`css.id` = `props.id` = `props.axis` = the one string, `css.classes: ['gutter-handle']` as the shared
+ *  styling hook, `content: ''`, and the ONE authored `pointerdown` body the gutter handle carries, shared, writing
+ *  nothing), so the node is `list_targets`-visible and `provident.dispatch`-reachable exactly as every authored
+ *  control is (`D-177`, `D-192`).
+ *  **WHAT IT DELIBERATELY DOES NOT CARRY**: no zone id (the strip is the ZONE's sibling, never its child, so it names
+ *  nothing about the box it stands beside — `renderer.ts`'s `ZONE_DRAG_HANDLES` is where node id and zone id are
+ *  compared, one row per strip), no dimension of the zone (`['zones', id, 'size']` is that figure's ONE source), no
+ *  `resizable` (`gutterSeamExample().resizableOf` reads the PARENT element and an absent attribute is the example's
+ *  own "no veto" reading, so a strip whose parent is `app-surface` or the arrangement is resizable by declaration
+ *  and nothing is authored for it), and no authored style beyond the two lines above.
+ *  **THE HANDLER NAME IS THE STRIP'S OWN** rather than one shared token, because a `name` is what `list_targets`
+ *  reports; the BODY is the gutter handle's shared no-op, since the drag itself is the composed gesture session's
+ *  and this node authors no mechanism. */
+function zoneStripNodeOf (id: string, style: Record<string, string>): Record<string, unknown> {
+  return {
+    type: 'div',
+    css: { id, classes: ['gutter-handle'], style },
+    props: { id, axis: id },
+    content: '',
+    handlers: [{ name: `${id}-drag`, event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+  }
+}
+
 /** **THE MENUS PANE** (`D-187`'s invariant, `D-192`'s column, `D-191`'s wire): a COLUMN in the top zone at
  *  its own stored width — it FILLS the zone's height as a RELATION (`height: '100%'`, never a figure), it
  *  ADJUSTS its width, and it SCROLLS the axis it adjusts (`overflow-x`), so the eighteen items scroll
@@ -992,6 +1067,21 @@ export function demoEnvelope() {
                   },
                 ],
               },
+              // ---- THE `top` ZONE'S STRIP — ITS **FOLLOWING SIBLING** IN THE ROOT COLUMN ---------------------
+              // **THE ZONE'S SIBLING AND NEVER ITS CHILD, AND THAT IS MEASURED RATHER THAN PREFERRED**
+              // (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §2; `D-234`): `paintStyle` hands the engine
+              // ONE `css.style` value in `replace` mode, so a ZONE's authored style does not survive its first paint
+              // (`#top` reads `height: 140px` and nothing else) — which means a zone can carry no `position:
+              // relative` for an absolutely placed child and no authored layout at all for a flowed one, and the tree
+              // could state no placement for a strip inside it. **AND THE SECOND REASON IS STRUCTURAL**: the record
+              // admits a zone of `size: 0` (`D-234`'s minimize marker), and a handle inside a zero-sized zone is a
+              // handle no press can land on — where a SIBLING keeps its own `14px` and a zone dragged to nothing is a
+              // zone dragged back.
+              // **IT STANDS ON THE ZONE'S BOTTOM EDGE**, the one facing the stage: that edge's position IS the zone's
+              // `size` (`D-185`), so it is the edge a person pushes. Its pointer axis is `y` and its sign is `+1`
+              // (the figure grows as the edge moves DOWN) — all three in `renderer.ts`'s `ZONE_DRAG_HANDLES`, which
+              // is the wiring's half of this node.
+              zoneStripNodeOf(ZONE_TOP_STRIP_ID, horizontalZoneStripStyle),
               // ---- THE ARRANGEMENT CONTAINER (`D-176`, `D-185`) ----------------------------------
               // ONE `div` between the two full-width zones, holding `left` + the stage + `right` in a ROW so
               // the sidebars stretch BETWEEN the top and bottom zones — the charter's own nesting, in `css`
@@ -1010,6 +1100,13 @@ export function demoEnvelope() {
                     css: { id: 'left', style: verticalZoneStyle },
                     props: { id: 'left' },
                   },
+                  // ---- THE `left` ZONE'S STRIP — ITS **FOLLOWING SIBLING** IN THE ARRANGEMENT ROW ------------
+                  // **ON THE ZONE'S RIGHT EDGE**, the one facing the stage, because that edge's position is the
+                  // width `['zones','left','size']` carries; pointer axis `x`, sign `+1` (the figure grows as the
+                  // edge moves RIGHT) — `renderer.ts`'s `ZONE_DRAG_HANDLES`. It is the zone's SIBLING for the two
+                  // reasons the `top` strip's comment states (a replaced `css.style` and a lawful `size: 0`), and
+                  // this row is the ROW container, so its `flex: 0 0 14px` is a WIDTH here.
+                  zoneStripNodeOf(ZONE_LEFT_STRIP_ID, verticalZoneStripStyle),
                   // ---- THE STAGE (`D-185`) ------------------------------------------------------
                   // THE FLEX REMAINDER and `overflow`, and **NO dimension**: the stage is DERIVED, so a figure
                   // here would be a second authority nothing stores and nothing repairs. **RESOLVED BY
@@ -1272,6 +1369,13 @@ export function demoEnvelope() {
                       },
                     ],
                   },
+                  // ---- THE `right` ZONE'S STRIP — ITS **PRECEDING SIBLING** IN THE ARRANGEMENT ROW ------------
+                  // **ON THE ZONE'S LEFT EDGE**, the edge facing the stage, so the same leftward pointer GROWS this
+                  // zone's width where it SHRANK `left`'s — the sign is one coefficient negated (`-1`), `D-238`'s own
+                  // form. It is the `right` zone's PRECEDING sibling and the stage's FOLLOWING one, which is the one
+                  // place the two affordances' boxes could meet; the strip wins there because it is the later sibling
+                  // in markup order (the design's §6 corner, stated rather than measured).
+                  zoneStripNodeOf(ZONE_RIGHT_STRIP_ID, verticalZoneStripStyle),
                   // ---- THE RIGHT SIDEBAR ZONE (`D-185`) -------------------------------------------
                   {
                     type: 'div',
@@ -1280,6 +1384,12 @@ export function demoEnvelope() {
                   },
                 ],
               },
+              // ---- THE `bottom` ZONE'S STRIP — ITS **PRECEDING SIBLING** IN THE ROOT COLUMN ------------
+              // **ON THE ZONE'S TOP EDGE**: the figure is the distance from the window's FOOT up to that edge
+              // (`D-185`), so the same downward pointer SHRINKS this zone's height where it grew `top`'s — sign
+              // `-1`, axis `y`. It stands BEFORE the zone it moves and it is not inside it, so a `bottom` zone the
+              // record drags to `0` is still a zone a person can pull back out.
+              zoneStripNodeOf(ZONE_BOTTOM_STRIP_ID, horizontalZoneStripStyle),
               // ---- THE BOTTOM ZONE (`D-185`) -----------------------------------------------------
               // The second full-width zone: it fixes the HEIGHT and leaves each pane's width adjustable, and it
               // authors no figure (`D-174`, `D-191`).

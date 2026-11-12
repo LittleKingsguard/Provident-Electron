@@ -415,14 +415,20 @@ describe('R6 — placement-routed loads path-enumerate (H1)', () => {
 })
 
 describe('R7 — code-CRUD (mcp-endpoint.md §4)', () => {
-  // ⟶ RE-POINTED 2026-11-05 (`D-113`), then AGAIN for the authored skeleton (`D-176`–`D-193`). The row's subject — a
-  //    defined value at a DEEP envelope path — is unmoved; only the route moved, and it is re-derived to the SAME NODE
-  //    the earlier routes reached: the counter card's THIRD child, the `inc` button. The skeleton (top-bar, top zone,
-  //    arrangement container) and `A-5`'s re-parent put that card inside the landing page inside the stage.
-  it('29. codeGet("template.root.children[0].children[2].children[1].children[0].children[1].children[2]") → a defined value', () => {
+  // ⟶ RE-POINTED 2026-11-05 (`D-113`), then AGAIN for the authored skeleton (`D-176`–`D-193`), and AGAIN at this rev for
+  //    the FOUR AUTHORED ZONE STRIPS (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §2). The row's subject — a
+  //    defined value at a DEEP envelope path — is unmoved; only the route moved, and it is re-derived to the SAME NODE the
+  //    earlier routes reached: the counter card's THIRD child, the `inc` button. `A-5`'s re-parent put that card inside the
+  //    landing page inside the stage, and the strips moved two indices inside that same route: the arrangement container
+  //    `[2] → [3]` (`#zone-top-horizontal` is `#top`'s FOLLOWING sibling in the root column) and the stage `[1] → [2]`
+  //    (`#zone-left-vertical` is `#left`'s FOLLOWING sibling in the arrangement row). **THE PATH IS POSITIONAL AND ONLY
+  //    POSITIONAL**: `codeGet`'s grammar is dotted keys and `[n]` indices, so a node inside a `children` array cannot be
+  //    addressed by its `css.id`; the next sibling moves it again, and deriving the path from `demoEnvelope()` by id is
+  //    named as debt rather than taken here (this re-grain moves the indices and nothing else).
+  it('29. codeGet("template.root.children[0].children[3].children[2].children[0].children[1].children[2]") → a defined value', () => {
     const runtime = freshRuntime()
     ;(runtime as any).loadEnvelope(demoEnvelope())
-    const res = (runtime as any).codeGet('template.root.children[0].children[2].children[1].children[0].children[1].children[2]')
+    const res = (runtime as any).codeGet('template.root.children[0].children[3].children[2].children[0].children[1].children[2]')
     expect(res.value).toBeDefined()
   })
 

@@ -393,13 +393,140 @@ const PANE_DRAG_HANDLES: readonly PaneGestureAddress[] = [
   { handleId: MENUS_AFFORDANCE_ID, paneId: MENUS_PANE_ID, sign: -1 },
 ]
 
-/** **WHAT THE WIRING READ FOR ONE HANDLE** — its authored id, the pane it addresses and whether the affordance ATTACHED. A
+/** **THE ZONE'S COUNTERPART OF `PaneGestureAddress` — THE SAME THREE IDEAS AND ONE MEMBER MORE**
+ *  (`docs/L3/renderer-wiring/design-zone-handles.md` rev 1 §3; `D-234`, `D-238`, `D-243`).
+ *  `handleId` is the authored strip's own node id — also the gesture key every seat of that strip is handed — and
+ *  `zoneId` is the RECORD's declared id (`DECLARED_ZONE_IDS`' member), never the node's id spelling: the two are one
+ *  string on this app's tree, and that equality is a ROW's (`AL-10`'s form) and never a derivation (`D-188` debt 2).
+ *  **THE TWO MEMBERS A PANE'S ENTRY DOES NOT HAVE ARE THE ONES A ZONE NEEDS**: `axis` is the POINTER coordinate the
+ *  strip reads — `y` for `top`/`bottom`, `x` for `left`/`right` — and it is declared HERE because, unlike a pane's, it
+ *  is not the record's to answer: a pane's adjustable axis is selected by its `zone` (`adjustableMemberNameOf`), while
+ *  a zone's fixed axis is the layout constant `LAYOUT_ZONE_AXES` states. `targetId` is the ZONE node the inline
+ *  transient is written on — the strip's SUBJECT, where the pane composition has one fixed `GUTTER_TARGET_ID`. */
+interface ZoneGestureAddress {
+  /** The authored strip's own node id — and the gesture key every seat of THIS strip is handed. */
+  readonly handleId: string
+  /** The zone this strip resizes — the record's own key (`DECLARED_ZONE_IDS`). */
+  readonly zoneId: string
+  /** The POINTER coordinate this strip reads: `y` for `top`/`bottom`, `x` for `left`/`right`. */
+  readonly axis: 'x' | 'y'
+  /** `+1` where the bounding edge moves toward increasing coordinate, `-1` where it moves back. */
+  readonly sign: 1 | -1
+  /** The ZONE node the inline preview is written on — this strip's subject, never the composition's one target. */
+  readonly targetId: string
+}
+
+/** **THE FOUR ZONE STRIPS, ON THE EDGE THE STAGE NAMES** — `top` on its BOTTOM edge, `bottom` on its TOP, `left` on its
+ *  RIGHT and `right` on its LEFT, because that bound's POSITION is the zone's `size` (`D-185`): the edge facing the stage
+ *  is the one a person pushes, and `top`/`left` grow as that edge moves toward the increasing coordinate (`+1`) while
+ *  `bottom`/`right` grow as it moves back (`-1`).
+ *  **THE SIGN IS ONE COEFFICIENT AND NOT A TASTE** (`D-238`'s own form, `D-192`): one mapping — `pointer[axis] - start` —
+ *  negated where the edge's sense inverts, so four rows carry four facts and no second arithmetic exists.
+ *  **`PANE_DRAG_HANDLES` IS NOT RE-GRAINED AND THAT IS DELIBERATE** (`D-238`, `PS-1`…`PS-4`): its entries, its `sign` and
+ *  its absent axis member are a landed MEASUREMENT, and `gestureAddressesOf()` below maps it verbatim into the one list
+ *  the affordance loop walks. The second subject KIND is therefore an adapter at the loop's head and never a second
+ *  gesture (`D-238`'s own reason, one subject over).
+ *  **NOTHING HERE IS EXPORTED**: a published name would move this module's surface and the design refuses one, while the
+ *  four ids are LITERALS on both sides — the envelope's (`zoneStripNodeOf`'s call sites) and this table's — with the
+ *  equality measured by `PS-1`'s census rather than derived (the zone ids' own precedent, `LAYOUT_ZONE_AXES`'). */
+const ZONE_DRAG_HANDLES: readonly ZoneGestureAddress[] = [
+  { handleId: 'zone-top-horizontal', zoneId: 'top', axis: 'y', sign: 1, targetId: 'top' },
+  { handleId: 'zone-bottom-horizontal', zoneId: 'bottom', axis: 'y', sign: -1, targetId: 'bottom' },
+  { handleId: 'zone-left-vertical', zoneId: 'left', axis: 'x', sign: 1, targetId: 'left' },
+  { handleId: 'zone-right-vertical', zoneId: 'right', axis: 'x', sign: -1, targetId: 'right' },
+]
+
+/** **WHAT A HANDLE'S FIGURE LANDS IN** — the one thing that differs between the two subject kinds, and the ONLY member
+ *  of this adapter that is not already declared: a pane's entry is `{kind: 'pane', id: paneId}` (mapped verbatim from
+ *  `PANE_DRAG_HANDLES`) and a strip's is `{kind: 'zone', id: zoneId}`. `id` is a pane's record key or a zone's declared
+ *  id, and the `kind` is what tells the two vocabularies apart — never the string's spelling. */
+interface GestureSubject {
+  readonly kind: 'pane' | 'zone'
+  readonly id: string
+}
+
+/** **ONE ROW OF THE LIST THE LOOP WALKS** — the two declarations' common shape: the authored handle, the subject its
+ *  figure lands in, the pointer axis and sign its mapping reads, and the element an inline preview is written on. */
+interface GestureAddress {
+  readonly handleId: string
+  readonly subject: GestureSubject
+  readonly axis: 'x' | 'y'
+  readonly sign: 1 | -1
+  readonly targetId: string
+}
+
+/** **THE ADAPTER AT THE LOOP'S HEAD — THE SECOND SUBJECT KIND COSTING NO SECOND GESTURE** (design §3).
+ *  `PANE_DRAG_HANDLES` is mapped VERBATIM and gains nothing: its `axis` is `'x'` — the example's own `pointer.x - start`
+ *  mapping (`gutterSeamExample().sizeFromPointer`), byte-identical in effect to the `sign === 1 ? example : -example`
+ *  form the loop has always read — and its `targetId` is the composition's ONE target (`D-144`). The four strips follow
+ *  it in declaration order, so the loop's resolution order is the pane handles' first and the strips' after, which is
+ *  what `PS-1`'s order reading states. **THE PANE ARM'S READING THEREFORE DOES NOT MOVE AND THE ZONE ARM IS THE ONLY NEW
+ *  BEHAVIOUR** — and a hostile or frozen `PANE_DRAG_HANDLES` cannot reach it: both sides are module constants. */
+function gestureAddressesOf (): readonly GestureAddress[] {
+  const panes: GestureAddress[] = PANE_DRAG_HANDLES.map((handle) => ({
+    handleId: handle.handleId,
+    subject: { kind: 'pane', id: handle.paneId },
+    axis: 'x',
+    sign: handle.sign,
+    targetId: GUTTER_TARGET_ID,
+  }))
+  const zones: GestureAddress[] = ZONE_DRAG_HANDLES.map((handle) => ({
+    handleId: handle.handleId,
+    subject: { kind: 'zone', id: handle.zoneId },
+    axis: handle.axis,
+    sign: handle.sign,
+    targetId: handle.targetId,
+  }))
+  return [...panes, ...zones]
+}
+
+/** **THE CLAMP'S CEILING — THE WINDOW'S OWN EXTENT ON THE AXIS A ZONE FIXES** (`docs/L3/renderer-wiring/
+ *  design-zone-handles.md` rev 1 §5); `null` is this read's STATED ABSENCE and never a figure: a zone can never exceed
+ *  the window it stands in, which is the *"bounded by the window"* half in its only measurable form.
+ *  **THE READ IS STRUCTURAL AND ANSWERS `null`, NEVER A THROW AND NEVER `undefined`-INTO-`NaN`**: the W1 idiom — a realm
+ *  that does not answer a finite POSITIVE number gets the degradation, and the degradation is the CALLER's (the record's
+ *  own figure, `zoneBoundsOf` below). **THAT IS `D-238`'S LESSON TAKEN AT ITS OWN SITE**: the menus pane's handle was
+ *  wired and inert because `paneBoundsOf` answered `undefined`, `clampToBounds` turned it into `NaN` and every move was
+ *  invalid — the failure mode that looks wired. So this function's two arms are a number and an explicit absence, and the
+ *  arm it does not have is the one that answers `undefined`.
+ *  **AND IT IS READ PER MOVE RATHER THAN CACHED**: the extent is `window.innerWidth`/`innerHeight`, which moves with the
+ *  window, so a figure captured at construction would be stale at the first resize — a read has no such lifetime. */
+function zoneExtentOf (axis: 'x' | 'y'): number | null {
+  try {
+    if (typeof window === 'undefined') return null
+    const raw = axis === 'x' ? window.innerWidth : window.innerHeight
+    return typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? raw : null
+  } catch {
+    // a hostile realm is the same arm as one that measures nothing: the caller degrades to the record's own figure
+    return null
+  }
+}
+
+/** **THE MEMBER A ZONE'S FIGURE LANDS ON, READ OFF `LAYOUT_ZONE_AXES` RATHER THAN SPELLED A SECOND TIME** (`D-243`,
+ *  `D-240`): the paint's own table already answers which of `height`/`width` each declared zone fixes, and the inline
+ *  preview writes the SAME member the delivery will paint (`Z5`). **A SECOND TABLE WOULD SPELL FOUR FACTS TWICE WITH NO
+ *  INSTRUMENT TO CATCH THEM DRIFTING** (`D-188` debt 2) — and a strip previewing a member the paint never writes would
+ *  move a box that snaps back on the next delivery, which is `D-238`'s class of defect one layer down. `null` is the
+ *  declared absence for an id the closed four do not name: no member, no preview, and the commit is still the record's. */
+function zoneMemberOf (zoneId: string): 'height' | 'width' | null {
+  const held = LAYOUT_ZONE_AXES.find((entry) => entry.id === zoneId)
+  return held === undefined ? null : held.member
+}
+
+/** **WHAT THE WIRING READ FOR ONE HANDLE** — its authored id, the SUBJECT it addresses (`paneId`, carrying the record's
+ *  pane key or the record's zone id according to `subject`) and whether the affordance ATTACHED. A
  *  REFUSED `attach()` is the DECLARED silent failure the affordance cannot report itself (`D-117`): the handle is then
  *  INERT and every later gesture on it is a no-op nobody hears, so the reading is returned for `main()` to say out loud —
- *  the rule that was applied to the one handle and is now owed to every entry of the list. */
+ *  the rule that was applied to the one handle and is now owed to every entry of the list.
+ *  **`paneId` IS THE SUBJECT'S KEY AND `subject` SAYS WHICH VOCABULARY THAT KEY IS IN**: for a pane handle the two are the
+ *  same thing (`PS-1`'s pane clause, `main()`'s refusal line), and the four strips report their ZONE's declared id in the
+ *  same member — one member for one idea, with the KIND beside it so no reader has to infer a vocabulary from a string's
+ *  spelling. **THE MEMBER KEEPS ITS NAME** because every existing reader reads a page of pane entries, and renaming it
+ *  would move those readers for the sake of the four entries that widened the list. */
 export interface PaneGestureReading {
   readonly handleId: string
   readonly paneId: string
+  readonly subject: 'pane' | 'zone'
   readonly attached: boolean
 }
 
@@ -566,9 +693,122 @@ export function startGutterAffordance (runtime: Runtime): {
    *  edge, where the same rightward pointer must shrink it. Negating the example's expression is exactly that inversion:
    *  `-(pointer.x - start) = start - pointer.x`, so `d(size)/d(pointer.x)` is `-1` at the left handle and `+1` at the
    *  right one, with ONE arithmetic and no second mapping. The clamp that follows is the composition's, unchanged. */
-  const sizeFromPointerFor = (handle: PaneGestureAddress) => (pointer: { readonly x: number }, start: number): number => {
-    const example = seams.sizeFromPointer(pointer, start)
-    return handle.sign === 1 ? example : -example
+  const sizeFromPointerFor = (address: GestureAddress) => (pointer: { readonly x: number }, start: number): number => {
+    const mapped = address.axis === 'x' ? seams.sizeFromPointer(pointer, start) : verticalFromPointer(pointer, start)
+    return address.sign === 1 ? mapped : -mapped
+  }
+  /** **THE VERTICAL ARM OF THE ONE MAPPING — `pointer.y - start`, AND THE SEAM'S TYPE DOES NOT DECLARE `y`**
+   *  (design §3; `gutterSeamExample().sizeFromPointer` types the pointer `{ readonly x: number }`, `:345`). So the
+   *  `y` member is read STRUCTURALLY through the example's own `typeof` gate and the answer for anything that is not a
+   *  number is `Number.NaN` — **the example's own degradation, carried over rather than invented**: a `NaN` makes the
+   *  affordance's `M1`-shaped gate call the move INVALID rather than write a figure, which is exactly what a pointer
+   *  this realm cannot read must do. **NO OTHER MODULE'S FILE MOVES**: widening the seam's type would be a second
+   *  owner's hunk for a member the runtime already carries (`pointerOf` answers `{x, y}`, frozen, at
+   *  `demo-envelope.ts`). */
+  const verticalFromPointer = (pointer: { readonly x: number }, start: number): number => {
+    let coordinate: unknown
+    try {
+      const held = pointer as unknown as { readonly y?: unknown } | null | undefined
+      coordinate = held === null || held === undefined ? undefined : held.y
+    } catch {
+      // a hostile pointer is the non-number arm below: an INVALID move and no write
+      return Number.NaN
+    }
+    return typeof coordinate === 'number' ? coordinate - start : Number.NaN
+  }
+  /** **Z1 — THE RECORD'S OWN FIGURE, AND NOTHING ELSE** (design §4; `view-client.ts`'s `zoneOf`, `D-152`, `D-174`).
+   *  `['zones', <zone>, 'size']` is the ONE source of a zone's dimension, and this read answers it off the shape the
+   *  client holds — the same synchronous read `drag.startSizeOf` is for a pane. **THE ABSENCE ARM IS THE WHOLE OF IT**:
+   *  a zone the family does not name, or one it names with NO `size`, answers `undefined` and the gesture then writes
+   *  NOTHING (a `NaN` start makes every move invalid and the release's own gate refuses a non-finite figure) — no
+   *  default, no fallback and no remembered figure, because a `size` the record does not state is a figure this realm
+   *  must not invent (`D-174`, `D-191`'s `OWED-4`, `D-233`'s no-default rule one family over).
+   *  **AND IT IS TOTAL OVER A SHAPE WHOSE READ THROWS** (`D-95`): a throwing `zoneOf` answers the same absence an
+   *  absent family does, so no exception escapes a listener turn. */
+  const zoneSizeOf = (zoneId: string): number | undefined => {
+    try {
+      const zone = getViewClient().zoneOf(zoneId)
+      const figure = zone === null ? undefined : zone.size
+      return typeof figure === 'number' ? figure : undefined
+    } catch {
+      // a hostile shape must never throw out of the size read — the absent member's own answer, and no write
+      return undefined
+    }
+  }
+  /** **Z3 — THE CLAMP, AND IT IS FINITE IN EVERY REALM** (design §5; `D-238`, `D-240`, `D-26`).
+   *  `{min: 0, max: the WINDOW's extent on the axis this zone fixes}` — a zone can never exceed the window it stands in,
+   *  which is the charter's *"bounded by the window"* in its only measurable form. **THE FLOOR IS `0` AND IT IS LAWFUL**:
+   *  the record already carries a `0` minimize marker (`D-234`'s repair keeps it, the paint's own gate admits
+   *  `size >= 0`), so a drag CAN produce `0` and a `0`-sized zone is a record the design admits rather than a state the
+   *  gesture must forbid — recoverable, because the strip is the zone's SIBLING and keeps its own `14px`.
+   *  **THE DEGRADATION IS THE RECORD'S OWN FIGURE AND THE HONEST DIRECTION**: where the realm answers no finite positive
+   *  extent — the layout-less shim, which is the whole node suite's realm (`D-27`) — the ceiling is the zone's current
+   *  `size`, so the gesture can only SHRINK what it cannot measure. **A `NaN` HERE IS WHAT MADE THE MENUS HANDLE INERT
+   *  WITH THE WIRING LOOKING CORRECT** (`D-238`: `paneBoundsOf` answered `undefined`, `clampToBounds` turned it into
+   *  `NaN`, every move was invalid) — so every arm of this closure answers a FINITE pair, and the arm it does not have
+   *  is the one that answers `undefined`. A zone stating no figure at all answers `{0, 0}`, which the `NaN` start
+   *  beside it has already made unreachable as a write. */
+  const zoneBoundsOf = (address: GestureAddress): { readonly min: number; readonly max: number } => {
+    const extent = zoneExtentOf(address.axis)
+    if (extent !== null) return { min: 0, max: extent }
+    const own = zoneSizeOf(address.subject.id)
+    return { min: 0, max: own === undefined ? 0 : own }
+  }
+  /** **Z5 — THE TRANSIENT IS AN INLINE STYLE WRITE ON THE ZONE ELEMENT** (design §4; `D-138`'s `P1`–`P5` shape,
+   *  `D-234`, `D-243`). It is `applyPreview`'s own class: a RENDERED element write and NEVER a graph write, so no
+   *  second author touches the `css.style` the painter replaces whole (`D-129`) — **and the next delivery replacing it
+   *  is the declared transient's own contract, not a bug**: a preview that outlives its gesture is replaced by the
+   *  record's figure, so a stale figure is never fabricated and never persisted.
+   *  **THE MEMBER IS THE ONE THE PAINT WRITES** (`zoneMemberOf` over `LAYOUT_ZONE_AXES`) — a preview on any other
+   *  member would move a box the delivery never restores, and reading the table rather than spelling `height`/`width`
+   *  here is `D-243`'s own rule.
+   *  **IT RESOLVES THE ZONE LAZILY AND NEVER AT CONSTRUCTION**: `elementForNodeId(address.targetId)` is called here, on
+   *  the arm that actually writes, so the wiring's construction resolves the composition's ONE target and one element
+   *  per declared HANDLE and nothing else — the order and the count `PS-1` reads. A zone element the graph does not
+   *  resolve is the declared no-write arm (`P1`/`P2`): the pointer moves, the transient is skipped, and the RELEASE's
+   *  commit still lands the figure in the record, which is where a zone's size actually lives. */
+  const zonePreviewOf = (address: GestureAddress, state: unknown): void => {
+    const value = (state as { readonly value?: unknown } | null | undefined)?.value
+    if (typeof value !== 'number' || !Number.isFinite(value)) return
+    const member = zoneMemberOf(address.subject.id)
+    if (member === null) return
+    let element: unknown = null
+    try {
+      element = runtime.elementForNodeId(address.targetId)
+    } catch {
+      element = null
+    }
+    const holder = element as { readonly style?: { setProperty?: unknown } } | null | undefined
+    if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
+    const set = holder.style.setProperty
+    if (typeof set !== 'function') return
+    ;(set as (property: string, text: string) => void).call(holder.style, member, `${String(value)}px`)
+  }
+  /** **Z6 — THE ONE WRITE: `commitZones(<zoneId>, { size })`, ONE LEAF AT `['zones', <zoneId>, 'size']`, TIER `mem`**
+   *  (design §4; `D-151`'s route — which had NO UI caller until this turn — `D-152`, `D-91`'s family table).
+   *  **THE CALLER STATES NO TIER, BECAUSE A DRAG DOES NOT CHOOSE ONE**: `mem` is the family's own, and the route writes
+   *  one leaf per supplied member, so this turn supplies one member and no address is composed here.
+   *  **IT RIDES NO `['drag']` FAMILY, AND THAT IS THE DESIGN'S THREE REASONS KEPT** (`D-145`, `D-243`, `D-129`):
+   *  `['drag']` is keyed by PANE ID and is gesture-blind (the ghost turn's predicate reads `branch[DEFAULT_PANE_ID]`,
+   *  so a zone key would make ONE declared transient answer for two subject kinds); what `['drag']` buys the pane
+   *  gesture is a GRAPH-declared transient while the zone's is the ZONE's own inline style at the same instant (Z5);
+   *  and `['drag']` is declared UNPAIRED, so nothing repairs it and nothing should grow into it. **So a zone gesture has
+   *  exactly ONE write and it is the `mem`-tiered one, at release.**
+   *  **AND THE STATEMENT IS READ, NEVER SWALLOWED** (`D-117`'s register, `N1`'s sibling): `commitZones` answers
+   *  `{status:'absent', reason}` when the write went nowhere, which is said here with its `reason` VERBATIM. A refusal
+   *  or an unread answer is the PUSH's (`reportReceipt` below), which is why the `zone` route word joins that filter in
+   *  this rev. **MOVES AND CANCELS WRITE NOTHING** (design §4 Z7): the only writer is this one, at the seat's release. */
+  const zoneCommitOf = (address: GestureAddress, value: unknown): void => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return
+    try {
+      const held = getViewClient().commitZones(address.subject.id, { size: value })
+      const statement = held as unknown as { readonly status?: unknown; readonly reason?: unknown } | null | undefined
+      if (statement === null || statement === undefined || statement.status !== 'absent') return
+      const reason = typeof statement.reason === 'string' ? statement.reason : 'no reason stated'
+      console.warn(`[provident-renderer] the zone commit: the write went NOWHERE (reason=${reason}) — no receipt is owed, so nothing else will report it`)
+    } catch {
+      // a hostile client must never throw out of the release turn: the gesture ends and nothing is claimed
+    }
   }
   /** **THE PREVIEW — THE DECLARED TRANSIENT INLINE-STYLE WRITE ON THE LIVE TARGET** (`§2.5` item 4,
    *  `§3.1` M-12; ADV-GU-2) **AND THE GESTURE'S ONE PREVIEW SEAM** (`D-138`; design §2 `P1`–`P5`). The
@@ -590,7 +830,14 @@ export function startGutterAffordance (runtime: Runtime): {
    *  **AND IT IS ONE CLOSURE SET PER HANDLE** (`app-layout`'s `menus-handle-drag`): the presentation is the same for
    *  every entry (the composition's ONE target) while the two routes carry THAT entry's key, which is how one seam serves
    *  two handles without a second discriminator. */
-  const previewFor = (handle: PaneGestureAddress) => (state: unknown): void => {
+  const previewFor = (address: GestureAddress) => (state: unknown): void => {
+    // **THE ZONE ARM IS THE ELEMENT WRITE AND NO ROUTE AT ALL** (design §4 `Z5`/`Z7`): the strip's transient is the
+    // ZONE's own inline style, so there is no second transient to declare and no `['drag']` seat to send — the pane arm
+    // below is byte-unchanged, its two routes included.
+    if (address.subject.kind === 'zone') {
+      zonePreviewOf(address, state)
+      return
+    }
     const holder = target as { readonly style?: { setProperty?: unknown } } | null | undefined
     if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
     const set = holder.style.setProperty
@@ -599,28 +846,54 @@ export function startGutterAffordance (runtime: Runtime): {
     if (typeof value !== 'number' || !Number.isFinite(value)) return
     ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
     const stateRecord = state as { readonly valid?: unknown } | null | undefined
-    if (stateRecord?.valid === true) drag.move(handle.handleId, state)
-    if (stateRecord?.valid === false) drag.cancel(handle.handleId)
+    if (stateRecord?.valid === true) drag.move(address.handleId, state)
+    if (stateRecord?.valid === false) drag.cancel(address.handleId)
   }
+  /** **THE PANE'S TWO SEAMS — THE COMPOSITION'S, SPELLED AS THIS WIRING HAS ALWAYS SPELLED THEM** (`D-117`;
+   *  `tests/pane-drag-compliance.test.ts`'s `D-117/LIVE-READ` reads this exact form out of the module's CODE, so the two
+   *  bindings stand here verbatim: `startSizeOf` is `drag.startSizeOf` and `boundsOf` is `drag.boundsOf`, and the
+   *  example's `seams.*` pair occurs NOWHERE in code). */
+  const seamsOfPanes = (): { readonly startSizeOf: (el: unknown, token: unknown) => unknown; readonly boundsOf: (el: unknown, token: unknown) => unknown } => ({
+    startSizeOf: (el: unknown, token: unknown): unknown => drag.startSizeOf(el, token),
+    boundsOf: (el: unknown, token: unknown): unknown => drag.boundsOf(el, token),
+  })
+  /** **AND A STRIP'S TWO SEAMS ARE THE ZONE FAMILY'S** (design §4 `Z1`/`Z3`): `zoneSizeOf` reads
+   *  `['zones', <id>, 'size']` off the SAME client the composition reads `['panes']` from — the `view` the shape's
+   *  single delivery fills — and `zoneBoundsOf` answers `{0, the window's extent}`, degrading to the record's own figure
+   *  and NEVER to a `NaN` (`D-238`). **A STRIP TAKES NO ELEMENT AND NO TOKEN**: its subject is its DECLARATION's
+   *  (`address.subject.id`), not a read of the element it was pressed on, so the strip's identity cannot drift from the
+   *  zone it moves. */
+  const seamsOfZones = (address: GestureAddress): { readonly startSizeOf: (el: unknown, token: unknown) => unknown; readonly boundsOf: (el: unknown, token: unknown) => unknown } => ({
+    startSizeOf: (): unknown => zoneSizeOf(address.subject.id),
+    boundsOf: (): unknown => zoneBoundsOf(address),
+  })
+  /** **ONE READ OF THE PAIR, BY SUBJECT KIND** — the only seam set that differs between the two kinds of handle. */
+  const seamsFor = (address: GestureAddress) => (address.subject.kind === 'zone' ? seamsOfZones(address) : seamsOfPanes())
   /** **THE LIST, WIRED — ONE AFFORDANCE PER ENTRY AND NOTHING ELSE PER ENTRY** (the user's charter: a third handle costs one
    *  line). Each affordance is the module's own mechanism over ITS resolved handle element, its own seam set and its own
    *  key; the session is SHARED, because it is one gesture state machine over a ledger that is keyed by the element each
    *  `install` was handed (`src/shared/gesture-session.ts`) — so one session serves both handles and one active gesture at a
    *  time is its declared reading, not a second authority. A handle whose element the graph does not resolve is the one
-   *  refusal the affordance cannot say itself, so `attach()`'s answer is reported per entry. */
+   *  refusal the affordance cannot say itself, so `attach()`'s answer is reported per entry.
+   *  **AND THE LOOP WALKS THE ADAPTER, SO A ZONE STRIP IS A SECOND SUBJECT AND NOT A SECOND GESTURE** (design §3 — `D-238`'s
+   *  own reason, one subject over): the mechanism, the session, the source, the cursor seam and the whole `createPaneDrag`
+   *  composition are the same objects for all six handles, and the ONLY thing an entry's `subject.kind` decides is WHICH
+   *  record the figure lands in and which three closures answer the read, the clamp and the write. **No gesture engine is
+   *  written a second time**: the pointer listeners, the establishment, the move gate, the clamp's arithmetic
+   *  (`clampToBounds`, one clamp in the family) and the abandon terminals are all the affordance's and the session's. */
   const handles: PaneGestureReading[] = []
-  for (const handle of PANE_DRAG_HANDLES) {
-    const element = runtime.elementForNodeId(handle.handleId)
+  for (const address of gestureAddressesOf()) {
+    const element = runtime.elementForNodeId(address.handleId)
     const affordance = createGutterAffordance({
       session: session as never,
       source,
       element,
       target,
-      sizeFromPointer: sizeFromPointerFor(handle),
+      sizeFromPointer: sizeFromPointerFor(address),
       pointerOf: seams.pointerOf,
       axisOf: seams.axisOf,
       cursorOf: seams.cursorOf,
-      applyPreview: previewFor(handle),
+      applyPreview: previewFor(address),
       applyCursor: (el, declaration): void => {
         const holder = el as { readonly style?: Record<string, unknown> } | null | undefined
         if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
@@ -640,9 +913,11 @@ export function startGutterAffordance (runtime: Runtime): {
        *  affordance's `options.defaultSizeFor` seam IS the reset arm's read, so after the deletion ONE read
        *  has ONE name.
        *  `resizableOf` STAYS the example's: resizability is the authored pane's declaration, not a member
-       *  of the panes family, and the family declares none to read. */
-      startSizeOf: (el: unknown, token: unknown): unknown => drag.startSizeOf(el, token),
-      boundsOf: (el: unknown, token: unknown): unknown => drag.boundsOf(el, token),
+       *  of the panes family, and the family declares none to read. **AND IT IS THE EXAMPLE'S FOR A STRIP
+       *  TOO, WHICH IS WHY NO `resizable` ATTRIBUTE IS AUTHORED**: it reads the PARENT element's attribute,
+       *  a strip's parent is the app root or the arrangement, and an ABSENT attribute is the demo's own
+       *  "no veto" reading. */
+      ...seamsFor(address),
       resizableOf: seams.resizableOf,
       moveTypeOf: (): unknown => POINTER_TYPES.move,
       /** **THE COMPOSITION'S ONE END-TURN IS `release`, AND THE APP HANDS IT NO SINK** (`D-117`, `D-138`,
@@ -657,16 +932,22 @@ export function startGutterAffordance (runtime: Runtime): {
        *  and never a read of the handle's numeric `id` (`gestureIdOf` is RETIRED) — and the THIRD ARGUMENT is
        *  gone. It stays an INLINE PROPERTY of this literal on purpose:
        *  `tests/pane-drag-compliance.test.ts`'s `D-117/LIVE-READ` probes this exact form, so hoisting it to a
-       *  `const` would red a gating row. */
+       *  `const` would red a gating row.
+       *  **AND A STRIP'S END-TURN IS `commitZones`, WHICH IS A DIFFERENT ROUTE AND NOT A SECOND ENGINE**
+       *  (design §4 `Z6`): the release value is the affordance's CLAMPED figure — the same arithmetic, over the
+       *  ZONE's own pair — and it lands as ONE LEAF at `['zones', <zoneId>, 'size']` at the family's own `mem`
+       *  tier. It sends NO `['drag']` turn and ends no family, because a zone gesture never opened one. */
       commit: (gesture, value): void => {
-        drag.release(handle.handleId, value)
+        if (address.subject.kind === 'zone') zoneCommitOf(address, value)
+        else drag.release(address.handleId, value)
       },
     })
-    handles.push({ handleId: handle.handleId, paneId: handle.paneId, attached: affordance.attach() })
+    handles.push({ handleId: address.handleId, paneId: address.subject.id, subject: address.subject.kind, attached: affordance.attach() })
   }
   /** **`attached` IS THE FIRST ENTRY'S READING** — the stage handle's, which is the reading this member has always
    *  carried — and `handles` beside it carries one per declaration, so the menus pane's handle has the same sayable
-   *  refusal the gutter card's has (`main()` reads both). */
+   *  refusal the gutter card's has (`main()` reads both). **THE STRIPS FOLLOW THE TWO PANE HANDLES IN THE LIST'S ORDER**,
+   *  so the first entry is unmoved and every existing reader of `attached` reads exactly what it read before. */
   const first = handles[0]
   const attached = first !== undefined && first.attached
   return { attached, handles, renderGhost: drag.renderGhost, renderPaneSize }
@@ -1165,6 +1446,13 @@ async function main(): Promise<void> {
   //    entry's reading, so the message the stage's handle has always produced is unmoved.
   for (const handle of gutter.handles) {
     if (handle.handleId === GUTTER_AFFORDANCE_ID || handle.attached) continue
+    // **AND A STRIP'S REFUSAL IS SAID IN ITS OWN VOCABULARY** (design §3; `D-117`): the four zone strips are the entries
+    // this list gained, and `paneId` on one of them is the ZONE's declared id (`PaneGestureReading`'s `subject` member says
+    // which vocabulary a given entry's key is in) — so the line names a zone's size rather than calling a strip a pane drag.
+    if (handle.subject === 'zone') {
+      console.error(`[provident-renderer] the zone strip did NOT attach — the ${handle.paneId} zone's size has no affordance (handle ${handle.handleId})`)
+      continue
+    }
     console.error(`[provident-renderer] the pane drag did NOT attach — ${handle.paneId} does not drag (handle ${handle.handleId})`)
   }
   // ⟶ **TURN 4 — THE MENUS' ONE BOOT REGISTRATION (`S-11`; `D-181`, `D-196`, `D-209`)** — taken HERE, beside the
@@ -4191,15 +4479,18 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     console.warn(`[provident-renderer] ${what}: the write went NOWHERE (reason=${reason}) — no receipt is owed, so nothing else will report it`)
   }
 
-  /** **THE RECEIPT'S READER — THE PUSH'S HANDLER, SCOPED TO THE TWO ROUTE WORDS THIS CLOSURE SENDS** (design §2 `N2`;
+  /** **THE RECEIPT'S READER — THE PUSH'S HANDLER, SCOPED TO THE THREE ROUTE WORDS THIS CLOSURE SENDS** (design §2 `N2`;
    *  `docs/L2/view-record/interface.md` §9). The client pushes each write's answer from the very continuation that holds
    *  it, so this body rides the answer's own arrival: **`refused` → `console.error`** (a fault this tree owns — an answer
    *  that said no), **`unread` → `console.warn`** (a boundary that did not speak), **`committed` → SILENCE**, because the
    *  store processed the write and the pane's DELIVERY is still owed.
-   *  **`'zone'` AND `'theme'` ARE NOT THIS REALM'S NEWS AND ARE NOT REPORTED**: this file sends the `pane` and `drag`
-   *  routes — the release turn's `commitPane`, the move turn's `commitDrag`, the ending turn's `clearDrag` — and sends
-   *  neither `commitZones` nor `commitTheme`, so those receipts belong to the callers that sent them (the zone family's
-   *  has no UI caller at all, `D-151`) and reporting them here would be a second realm claiming another act's answer.
+   *  **`'theme'` IS NOT THIS REALM'S NEWS AND IS NOT REPORTED**: this file sends the `pane`, `drag` and `zone` routes —
+   *  the release turn's `commitPane`, the move turn's `commitDrag`, the ending turn's `clearDrag`, and a ZONE STRIP's
+   *  release `commitZones` — and sends no `commitTheme`, so that receipt belongs to the caller that sent it (the
+   *  appearance control's own wiring) and reporting it here would be a second realm claiming another act's answer.
+   *  **THE `zone` WORD JOINS THIS FILTER AT THIS REV, AND THE SENTENCE IT REPLACES IS RE-GRAINED RATHER THAN LEFT
+   *  STANDING**: it read *"the zone family has no UI caller at all"* (`D-151`), which is FALSE from the moment the four
+   *  strips send that route — so a zone write's refusal is now this realm's fault to report, on the same two registers.
    *  **IT REPORTS AND COMPOSES NOTHING**: `release` still returns `void`, no caller's answer is built from a receipt, and
    *  the two registers are `D-117`'s — `error` for a fault this tree owns, `warn` for a degradation the realm declares or
    *  a boundary that did not speak. */
@@ -4209,7 +4500,7 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
       | null
       | undefined
     if (outcome === null || outcome === undefined) return
-    if (outcome.route !== 'pane' && outcome.route !== 'drag') return
+    if (outcome.route !== 'pane' && outcome.route !== 'drag' && outcome.route !== 'zone') return
     if (outcome.status === 'refused') {
       const reason = typeof outcome.reason === 'string' ? outcome.reason : 'unspecified'
       const message = typeof outcome.message === 'string' ? outcome.message : 'no message'

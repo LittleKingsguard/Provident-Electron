@@ -124,22 +124,30 @@ describe('Runtime code-CRUD (mcp-endpoint.md §4)', () => {
     const runtime = r()
     runtime.load({ kind: 'envelope', envelope: demoEnvelope() })
     // ⟶ RE-POINTED 2026-11-05 (`D-113`), then AGAIN for the authored skeleton (`D-176`–`D-193`, `docs/L3/app-envelope/
-    //    design.md` rev 5 §2). The row's subject is a DEEP, DEFINED path through the loaded envelope; the path is
-    //    re-derived to the SAME NODE the earlier routes reached — **the counter card's THIRD child, the `inc`
+    //    design.md` rev 5 §2), and AGAIN at this rev for the FOUR AUTHORED ZONE STRIPS (`docs/L3/renderer-wiring/
+    //    design-zone-handles.md` rev 1 §2). The row's subject is a DEEP, DEFINED path through the loaded envelope; the path
+    //    is re-derived to the SAME NODE the earlier routes reached — **the counter card's THIRD child, the `inc`
     //    button** (`css.id: 'inc'`, `content: 'Increment (+1)'`) — so the claim is unmoved and only the route moved.
     //    THE ROUTE, NAMED NODE BY NODE so this is not re-pointed by trial and error:
     //      template.root                     the demo shell
     //        .children[0]                    `APP_ROOT_ID`, `app-surface` (the overlay's inert target)
-    //          .children[2]                  the ARRANGEMENT container (`S-2`)
-    //            .children[1]                the STAGE
+    //          .children[3]                  the ARRANGEMENT container (`S-2`) — `[1]` before this rev's strips
+    //            .children[2]                the STAGE — `[1]` before this rev's strips
     //              .children[0]              `TABS_LANDING_PAGE_ID`, the landing page (`A-5`'s re-parent)
     //                .children[1]            `counter-card`
     //                  .children[2]          `inc` — the node this row reaches
-    //    **WHAT MOVED IT**: the skeleton inserted the top-bar, the top zone (`children[1]`) and the arrangement
-    //    container above the cards, and `A-5` then put `counter-card` inside the landing page inside the stage — so
-    //    the old path's `children[1]` now lands on the TOP ZONE, whose one child is the menus pane and whose
-    //    `children[2]` does not exist (`codeGet` answers `undefined`, never a throw, for an unresolvable leaf).
-    const res = runtime.codeGet('template.root.children[0].children[2].children[1].children[0].children[1].children[2]')
+    //    **WHAT MOVED IT THIS TIME, AND BOTH SHIFTS ARE THE SAME FACT** (`design-zone-handles.md` rev 1 §2: a strip stands
+    //    on its zone's STAGE-FACING bound and is its SIBLING, never its child): `#zone-top-horizontal` was authored as
+    //    `#top`'s FOLLOWING sibling in the root column, so the arrangement container went `[2] → [3]`, and
+    //    `#zone-left-vertical` was authored as `#left`'s FOLLOWING sibling in the arrangement ROW, so the stage went
+    //    `[1] → [2]`. The zone ids are unchanged and the two strips authored around the arrangement are the only two
+    //    siblings it gained.
+    //    **THE FRAGILITY IS NAMED, NOT PAPERED OVER (`D-26`, and this row's debt)**: `codeGet`'s grammar is dotted keys and
+    //    `[n]` indices only — a node standing inside a `children` ARRAY can be addressed by its POSITION and never by its
+    //    `css.id`, so no spelling of this path can survive the next sibling. The honest shape is a path DERIVED from
+    //    `demoEnvelope()` by walking for the id (which would also let the row assert WHICH node it reached), and that is a
+    //    re-shape of the battery rather than part of this re-grain: it is left here, stated, as debt.
+    const res = runtime.codeGet('template.root.children[0].children[3].children[2].children[0].children[1].children[2]')
     expect(res.value).toBeDefined()
   })
 

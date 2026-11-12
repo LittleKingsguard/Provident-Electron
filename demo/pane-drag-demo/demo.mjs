@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 095bfa5dae041e35b3f604cbe9725fdf9b94d775ccc2f748d7a36cdb77bc3781
+// @body-sha256 2fd50ff9656fec3fd48f275a9d480a7fd20a3d719cf5b5ac5171963255896cc1
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
 // @source e7f3564e5831beabef16930462d25d124e30ba710b9a34d1d81e4a8d5bdc5c9c demo/pane-drag-demo/stub-view.ts
@@ -35,13 +35,13 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 8911f00c6872af7f14cfbca68a769d8d27ea5a590c972d47bfe511820c08e4ed src/renderer/renderer.ts
+// @source 8c2c16fd79474213fec7d283a9a6652adc6360298c095af58ad431fed9751280 src/renderer/renderer.ts
 // @source 3d3584923f66d936be72029ca46f9a838425aa5345e98026a4499f9252394a73 src/renderer/runtime.ts
 // @source 917e7ac67ad1e3d63f9d9e833cab57febf79bdec751a2bd0b6680de26dc62198 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source 36187d7cf2e011e13739b74d34acf313a5d5583b803982cab72eba5bed3121e8 src/renderer/tabs-client.ts
 // @source 9f0ed60a439da36392a1cddc2fe64acbfce54a7fae41c98e35fbe6dcc637b9f7 src/renderer/view-client.ts
-// @source 6681c4227f3fbee9651d9e9711f39ad352697f472b34dd80a725e63fc76ed225 src/shared/demo-envelope.ts
+// @source 602aa805cca3d211f32470d5d21372166bceccf1005c42fe9d7e28268ad6ee38 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
@@ -1094,10 +1094,18 @@ function createGutterAffordance(options) {
 }
 
 // src/shared/demo-envelope.ts
+var ZONE_TOP_STRIP_ID = "zone-top-horizontal";
+var ZONE_BOTTOM_STRIP_ID = "zone-bottom-horizontal";
+var ZONE_LEFT_STRIP_ID = "zone-left-vertical";
+var ZONE_RIGHT_STRIP_ID = "zone-right-vertical";
 var GUTTER_CURSORS = {
   "gutter-vertical": "col-resize",
   "gutter-horizontal": "row-resize",
-  "menus-vertical": "col-resize"
+  "menus-vertical": "col-resize",
+  [ZONE_TOP_STRIP_ID]: "row-resize",
+  [ZONE_BOTTOM_STRIP_ID]: "row-resize",
+  [ZONE_LEFT_STRIP_ID]: "col-resize",
+  [ZONE_RIGHT_STRIP_ID]: "col-resize"
 };
 var GUTTER_AFFORDANCE_ID = "gutter-horizontal";
 var TABS_ROWS_ID = "tab-rows";
@@ -1290,7 +1298,7 @@ function createPaneDrag(backing, source2) {
   const reportReceipt = (receipt) => {
     const outcome = receipt;
     if (outcome === null || outcome === void 0) return;
-    if (outcome.route !== "pane" && outcome.route !== "drag") return;
+    if (outcome.route !== "pane" && outcome.route !== "drag" && outcome.route !== "zone") return;
     if (outcome.status === "refused") {
       const reason = typeof outcome.reason === "string" ? outcome.reason : "unspecified";
       const message = typeof outcome.message === "string" ? outcome.message : "no message";
