@@ -116,16 +116,26 @@
     .group-row label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
     .error { color: #c0392b; font-size: 0.8rem; margin-top: 0.5rem; }
 
-    /* THE TOP-BAR, ITS TABS ROW AND THE CHIPS INSIDE IT — PRESENTATION BY CLASS ON AUTHORED PROVIDENT NODES, WHICH IS THIS
-       SHEET'S OWN PRECEDENT: `.card`, `.btn` and `.counter-value` are provident nodes too, and only their looks are page CSS.
-       The element stays graph data — a `.top-bar` / `.tab-row` node authored by the envelope or minted by the graph — so
-       nothing here is a DOM this sheet conjured; the sheet dresses nodes it never creates (`AGENTS.md` § "UI authority").
-       THE INLINE STYLE WINS ON EVERY PROPERTY IT SETS, so no rule below restates one. `topBarStyle` and `tabsRowStyle` in
-       `src/shared/demo-envelope.ts` declare `display: flex`, `align-items: center`, `flex: 0 0 36px` and
-       `-webkit-app-region: drag` on the bar, and `width: env(titlebar-area-width, 100%)` — and nothing else — on the row,
-       so this block adds ONLY what the inline css leaves open: a background, a bottom border, an inline padding,
-       `box-sizing` and the NAME's colour and size; and for the row a flex alignment pair, a gap, a height and an
-       `overflow` — never a `width`, which stays the environment value's.
+    /* THE TOP-BAR, ITS TABS ROW, THE CHIPS INSIDE IT AND THE `+` BESIDE IT — PRESENTATION BY CLASS AND BY ID ON AUTHORED
+       PROVIDENT NODES, WHICH IS THIS SHEET'S OWN PRECEDENT: `.card`, `.btn` and `.counter-value` are provident nodes too,
+       and only their looks are page CSS. The element stays graph data — a `.top-bar` / `.tab-row` node authored by the
+       envelope or minted by the graph, and `#tab-add` authored beside the row — so nothing here is a DOM this sheet
+       conjured; the sheet dresses nodes it never creates (`AGENTS.md` § "UI authority").
+       THE INLINE STYLE WINS ON EVERY PROPERTY IT SETS, so no rule below restates one. `topBarStyle` in
+       `src/shared/demo-envelope.ts` declares `display: flex`, `align-items: center`, `flex: 0 0 36px` and
+       `-webkit-app-region: drag` on the bar, and `tabAddStyle` declares `-webkit-app-region: no-drag` and
+       `flex: 0 0 auto` on the `+`, so this block adds ONLY what the inline css leaves open: a background, a bottom
+       border, an inline padding, `box-sizing` and the NAME's colour and size; for the row a flex pair, a gap, a height
+       and an `overflow`; and for the `+` its whole look.
+       **AND NOTHING IN THIS SHEET OR IN THE ENVELOPE CLAIMS A `width` FOR THE ROW ANY MORE, WHICH IS THE WHOLE FIX.**
+       `#tab-rows` used to carry an INLINE `width: env(titlebar-area-width, 100%)` (`D-193`'s measurement) and an explicit
+       `width` IS a flex item's BASE SIZE, so the row claimed the ENTIRE free area and the NAME beside it was the box left
+       to fight for what remained — which is the crowding the user reported ("narrowing the window until the title and
+       window buttons crowd over the tab row doesn't cause a scroll"). The charter's own allocation is that THE SPACE IN
+       BETWEEN IS OCCUPIED BY THE TABS ROW (`D-176`), and a remainder is what FLEX computes and no authored figure can:
+       the row's `flex: 1 1 auto` with `min-width: 0` takes exactly what the fixed name and the fixed `+` leave, and its
+       authored `overflow-x: auto` scrolls the chips when they exceed it. The row is therefore the CONSTRAINED box and the
+       name is never squeezed — see the name rule below.
        AND WHY THE ROW NEEDS DRESSING AT ALL: one minted `.tab-row` rendered as the bare word `landing` — a seat with no
        chip, because the sheet had no rule for it. Its marker is the ATTRIBUTE the paint writes, `props.active` →
        `active="true"` / `active="false"`, so `[active="true"]` is the ONLY signal a stylesheet can key on: the paint
@@ -133,41 +143,43 @@
        exactly that reason.
        THE DRAG REGION IS NOT REINTRODUCED HERE, AND THAT IS THE FIX RATHER THAN AN ABSENCE: no rule below declares
        `-webkit-app-region` at all, and the `no-drag` that used to be INLINE ON THIS ROW is gone with it. It blanketed the
-       whole bar — the row's `width` is the environment value, so the no-drag box covered every pixel of it and no pixel
-       was draggable. Chromium computes the region as the elements carrying `drag` MINUS the elements carrying `no-drag`,
-       so the declaration now stands on the CHIPS: it is authored on the row PROTOTYPE's `css` in
-       `src/shared/demo-envelope.ts` (the def-root the mint copies a row's `css` off), which is why it reaches every
-       minted chip and nowhere else. The bar's inline `drag` therefore owns every pixel the chips do not cover, a click
-       still lands on a chip, and `cursor: pointer` is no longer a claim the surrounding bar can falsify. Whether a press
-       truly lands and whether the window truly moves are compositor behaviour the rendered markup cannot show (the
-       unseeable family `overflow` belongs to, `D-178`).
-       AND THE NAME MUST NOT WRAP, WHICH IS ONE DECLARATION ON THE BAR AND ONE ON THE ROW: the bar's `content` — the
-       application's name — is a flex item of the bar, and `#tab-rows` sat beside it keeping the width the environment
-       value gave it, so the NAME was the box that yielded and it wrapped onto two lines. `white-space: nowrap` holds
-       the name on its line and `#tab-rows`'s `flex: 1 1 auto; min-width: 0` makes the ROW the box that yields — a flex
-       item's default `min-width: auto` is exactly what refuses to shrink below its content, and `min-width: 0` is what
-       lets the row give the room up instead. **THE ROW'S `width` IS NOT RESTATED**: the inline environment value stays
-       the basis, and `flex-basis: auto` resolves to it. `gap` on the bar is what keeps the name off the first chip.
+       whole bar — the row's box was the row's own, but the no-drag box covered every pixel of it and no pixel of it was
+       draggable. Chromium computes the region as the elements carrying `drag` MINUS the elements carrying `no-drag`, so the
+       declaration now stands on the CHIPS and on the `+`: it is authored on the row PROTOTYPE's `css` in
+       `src/shared/demo-envelope.ts` (the def-root the mint copies a row's `css` off) and on `tabAddStyle`, which is why it
+       reaches every minted chip and the one control and nowhere else. The bar's inline `drag` therefore owns every pixel
+       the chips and the `+` do not cover, a click still lands on a chip, and `cursor: pointer` is no longer a claim the
+       surrounding bar can falsify. Whether a press truly lands and whether the window truly moves are compositor
+       behaviour the rendered markup cannot show (the unseeable family `overflow` belongs to, `D-178`).
+       **THE NAME IS FIXED, AND IT IS FIXED FROM THE BAR, BECAUSE A TEXT RUN CANNOT BE SELECTED.** The bar's `content` —
+       the application's name — is not an element: it is a text node, and CSS wraps each contiguous text run in an
+       ANONYMOUS FLEX ITEM that no selector can reach (`:first-child` would match `#tab-rows`, the first ELEMENT child, and
+       `::first-letter` styles a glyph rather than the item, so both are the wrong instrument). Its flex properties are the
+       initial ones — grow `0`, basis `auto` — and the ONE thing an anonymous item inherits that decides the rest is
+       `white-space`: with `nowrap` on the bar its min-content width IS the whole run, so the automatic minimum size clamps
+       its shrink to zero and it behaves as `flex: 0 0 auto` for every purpose this layout has. That is the declaration, it
+       is made once, on `.top-bar`, and it is what makes the ROW the box that yields.
        **AND THE ROW IS A SCROLLER BY REQUIREMENT, NOT BY ACCIDENT** — the user's own words: *"the tabs section of the top-bar
        should scroll in the case of overflow caused by too many tabs"*. So the `overflow` pair that CLIPPED the overflow
-       (`hidden` on both axes) is now `overflow-x: auto` with `overflow-y: hidden`, and the minted chips carry
-       `flex: 0 0 auto` below: a flex child's default `flex-shrink: 1` is the row trying to squeeze labels instead of
-       scrolling them, and although its automatic minimum (`min-width: auto` over `nowrap` text) stops it short of actually
-       crushing a label, the intent has to be STATED rather than inherited by luck — a chip whose label could wrap or whose
-       padding the squeeze could eat is one the row scrolls past instead.
-       **THE AXIS IS HORIZONTAL ONLY, AND `overflow-y` IS EXPLICIT**: the overflow this requirement names is the row's inline
-       axis, and giving the block axis `auto` would both compute the inline axis' complement into a second scroller and eat
-       the chips' height the moment the horizontal bar appeared.
+       (`hidden` on both axes) is `overflow-x: auto` with `overflow-y: hidden`, and the minted chips carry `flex: 0 0 auto`
+       below: a flex child's default `flex-shrink: 1` is the row trying to squeeze labels instead of scrolling them, and
+       although its automatic minimum (`min-width: auto` over `nowrap` text) stops it short of actually crushing a label,
+       the intent has to be STATED rather than inherited by luck — a chip whose label could wrap or whose padding the
+       squeeze could eat is one the row scrolls past instead.
+       **THE AXIS IS HORIZONTAL ONLY, AND `overflow-y` IS EXPLICIT**: the overflow this requirement names is the row's
+       inline axis, and giving the block axis `auto` would both compute the inline axis' complement into a second scroller
+       and eat the chips' height the moment the horizontal bar appeared.
        **WHAT IT COSTS, STATED**: a horizontal scrollbar lands INSIDE the bar's own 36px — the row is `height: 100%` of the
        bar, so the cost is paid in CHIP HEIGHT (roughly half the bar off the chips' content box) and never in the bar's
        height, which stays the measured title-bar figure. Chromium paints it on the light arm (`:root`'s `color-scheme`).
        **AND THE DRAG REGION IS UNMOVED BY ALL OF IT**: an `overflow` does not enter the compositor's region computation —
        the region is the `drag` elements MINUS the `no-drag` ones — no rule here declares `-webkit-app-region`,
-       `#tab-rows` keeps carrying NONE (a blanket `no-drag` here is `D-232`'s defect: the row's box IS the environment
-       width, so it swallowed every draggable pixel of the bar), and the chips keep the `no-drag` the mint copies onto each
-       of them from the def-root prototype. Whether a PRESS ON THE SCROLLBAR THUMB is claimed by the drag region above it is
-       compositor behaviour this sheet cannot read (the unseeable family, `D-178`); the wheel scrolls the row either way, and
-       the cure for it must never be a `no-drag` on the container. */
+       `#tab-rows` keeps carrying NONE (a blanket `no-drag` here is `D-232`'s defect: a `no-drag` on the row swallowed every
+       draggable pixel of the bar), and the chips keep the `no-drag` the mint copies onto each of them from the def-root
+       prototype. Whether a PRESS ON THE SCROLLBAR THUMB is claimed by the drag region above it is compositor behaviour this
+       sheet cannot read (the unseeable family, `D-178`); the wheel scrolls the row either way, and the cure for it must
+       never be a `no-drag` on the container. */
+
     .top-bar {
       box-sizing: border-box;
       padding: 0 0.75rem;
@@ -196,6 +208,36 @@
     }
     .tab-row:hover { background: #e8edf4; border-color: #b9c2cc; }
     .tab-row[active="true"] { background: #1b2430; border-color: #1b2430; color: #ffffff; }
+
+    /* THE ADD-A-TAB CONTROL — `#tab-add`, THE AUTHORED NODE BESIDE THE ROW SET (`TABS_ADD_ID`,
+       `src/shared/demo-envelope.ts`). ITS LOOK IS THIS SHEET'S AND ITS NODE IS THE GRAPH'S: the envelope authors the id,
+       the `+` label, the `no-drag` and `flex: 0 0 auto`, and nothing else; the width, height, box, colour and cursor are
+       here, the same division `.tab-row` already has. **IT IS SIZED TO THE BAR AND NOT BY ITS GLYPH** — a one-character
+       label with no padding is a 6px press target, which is not a control a person can find, let alone hit.
+       **AND IT IS A CHIP'S PEER AND NOT A CHIP**: the same border, radius, background and type as `.tab-row`, so it reads
+       as part of the row set — and, like `.tab-row`, it takes NO line in the dark pair below, because the bar keeps its own
+       light background in both arms and a chip repainted dark on it would be the only dark box in a light strip.
+       `flex: 0 0 auto` is NOT restated here — the envelope's `tabAddStyle` carries it, and the inline declaration wins. */
+    #tab-add {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.5rem;
+      height: 1.5rem;
+      padding: 0 0.4rem;
+      border: 1px solid #d8dde3;
+      border-radius: 6px;
+      background: #f4f6f8;
+      color: #1b2430;
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 120ms ease, border-color 120ms ease;
+    }
+    #tab-add:hover { background: #e8edf4; border-color: #b9c2cc; }
 
     /* THE PLACEMENT'S DEFINITION ROOT — HIDDEN BY ITS ID, AND THE ID IS THE WHOLE POINT. `src/shared/demo-envelope.ts`
        authors a def-root `component` node as the row PROTOTYPE (`TABS_ROW_PROTOTYPE_ID`), and the engine renders it as an

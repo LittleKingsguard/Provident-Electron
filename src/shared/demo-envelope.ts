@@ -187,6 +187,18 @@ export const MENUS_AFFORDANCE_ID = 'menus-vertical'
  *  paint, which writes each minted row's label and active marker (`AL-2`, `AL-4`). The rows themselves are
  *  MINTED and never authored, which is why the node carries no `content`. */
 export const TABS_ROWS_ID = 'tab-rows'
+/** **THE ADD-A-TAB CONTROL'S OWN ID — THE ONE NODE THAT OFFERS THE ACT NOTHING IN THE INTERFACE OFFERED**
+ *  (`provident.focus` with `newTab: true` existed with no control behind it). It is the TWENTY-FIRST published
+ *  name in `design.md` rev 6 §2's count (`A-8`'s carrier is the twentieth), in `MENUS_AFFORDANCE_ID`'s form
+ *  (`css.id` + `props.id` on one authored node), and it stands
+ *  **BESIDE THE ROW SET AND NEVER INSIDE IT**: the rows are MINTED into `TABS_ROWS_ID` and a mint REPLACES the
+ *  row set (`D-201`), so a control authored INSIDE `#tab-rows` would be wiped on the next delivery — the node
+ *  is instead the row's FOLLOWING SIBLING in the bar, in the drag region's `no-drag` like the chips.
+ *  **ITS READER, IN ONE LINE**: `renderer-wiring`'s `startAddTab`, whose census resolves it BY THIS ID off
+ *  `listTargets`, installs the agent's live body under the SAME handler name the node authors, and attaches
+ *  the human's `click` — one act, two causes, exactly the menus' path.
+ *  **A STATIC NODE, SO ITS `+` LABEL IS LAWFUL** (`D-177`): the label is authored data and nothing computes it. */
+export const TABS_ADD_ID = 'tab-add'
 /** **THE ROW PROTOTYPE'S OWN NAME** — the def-root `component` node the mint resolves BY NAME, the last
  *  child of `template.root`. Without it the mint answers `rows-prototype-unresolved` and a row has no shape
  *  (`D-179`, `D-182` measurement 1).
@@ -537,6 +549,25 @@ const MENUS_ITEM_BODY = `function (ctx) {
   void ctx;
 }`
 
+/** **THE ADD-A-TAB CONTROL'S AUTHORED BODY — A DECLARED NO-OP, AND THE MENUS' ITEM BODY IS ITS PRECEDENT**
+ *  (`D-209`'s path, followed and not joined by a second one). An authored body is a STRING compiled in the
+ *  renderer's global scope, so it can reach no record and no main-process command: it exists to keep the node
+ *  `list_targets`-visible and `provident.dispatch`-reachable with the handler NAME the wiring appends over.
+ *  **`renderer-wiring`'s `installAddTabHandler` REPLACES this entry under the SAME `(name, event)` pair** with a
+ *  LIVE closure that calls the realm's own `focusActRoute({ target, newTab: true })` — the engine's append-with-
+ *  override rule is what makes the replacement REPLACE rather than add a second `click`. **SO THE AUTHORED BODY
+ *  NAMES NO ACT**: a string that fabricated one would be a writer of the act the wiring owns (`D-129`). */
+const TABS_ADD_BODY = `function (ctx) {
+  void ctx;
+}`
+
+/** **THE ADD-A-TAB CONTROL'S ONE HANDLER NAME, AUTHORED HERE AND INSTALLED-OVER THERE**: the two spellings of one
+ *  `(name, event)` pair live one per realm — the envelope authors it (this string) and `src/renderer/renderer.ts`
+ *  states its copy as `TABS_ADD_HANDLER` — because the envelope authors no executable body and the wiring names
+ *  the body it installs. A rename on either side silently turns the install into a SECOND handler, which is why
+ *  both sites say so. */
+const TABS_ADD_HANDLER_NAME = 'tab-add-act'
+
 /** **THE TABS ROW'S DECLARED HOOK KIND** (`D-179`, `D-182`; design §4): the closed kind union's
  *  `'placement'`. An undeclared placement mint is REFUSED `hook-kind-mismatch`, so the declaration is what
  *  makes the mint lawful at all; the record is typed against the union's closed set rather than left to
@@ -549,19 +580,45 @@ const TABS_ROW_HOOKS_KIND: Record<string, 'value' | 'component' | 'placement'> =
  *  the chips do not cover (a `no-drag` on this row blanketed the whole bar and the window could not be
  *  moved at all) — and the strip the native controls occupy gets NO NODE and NOTHING — the platform
  *  owns its own region, and an authored px inset there would be a figure of the WINDOW rather than of the
- *  app. The bar's `36px` is `D-179`'s MEASURED title-bar area (`[0, 0, 607, 36]`); the row's width is the
- *  overlay's own environment value — `env(titlebar-area-width, 100%)`, MEASURED at `D-193` as `607px` on
- *  this desktop and equal to `getTitlebarAreaRect()`'s width — so the control strip needs NO paint turn and
- *  adapts to another desktop's control width. This also completes the arrangement's own group: the bar is
- *  a flex row of that fixed strip (`D-176`'s charter, `D-179`). */
+ *  app. The bar's `36px` is `D-179`'s MEASURED title-bar area (`[0, 0, 607, 36]`).
+ *
+ *  **⟶ AND THE TABS ROW AUTHORS NO WIDTH AT ALL — THE ONE DECLARATION THIS PASS REMOVES, AND WHY IT WAS
+ *  THE CROWDING RATHER THAN THE CURE** (`D-193`'s `env(titlebar-area-width, 100%)`, which stood here as
+ *  `tabsRowStyle`). An explicit `width` IS a flex item's BASE SIZE (`flex-basis: auto` resolves to it), so
+ *  the row CLAIMED THE WHOLE FREE AREA and the NAME beside it — the bar's `content`, an anonymous flex item —
+ *  was the box left to fight for what remained; with `white-space: nowrap` on the bar the name then crowded
+ *  rather than yielded, and the row never needed to scroll because it was never the constrained box. The
+ *  charter's own allocation is that **"the space in between is occupied by the tabs row"** (`D-176`), and only
+ *  FLEX can compute a remainder: the row's `flex: 1 1 auto; min-width: 0` with `overflow-x: auto`, and the
+ *  `+`-control's `flex: 0 0 auto`, are the page sheet's (`src/renderer/index.html`), and the name holds its
+ *  line by the bar's `white-space: nowrap` — a text run cannot be selected, so the anonymous flex item's
+ *  floor is where that declaration is made. **NOTHING ELSE IN THE TREE READ THE WIDTH**: no module resolved
+ *  it, no row measured it, and the one place it appears in prose is the sheet's own note.
+ *  **WHAT REMOVING IT COSTS, STATED**: the WCO free area is where the bar already sits — `titleBarOverlay:
+ *  true` with `titleBarStyle: 'hidden'` (`src/main/main.ts`) draws the platform's controls over the strip's
+ *  RIGHT end and `getTitlebarAreaRect()` answers `x: 0`, so the row's remainder is inside the window and its
+ *  right end reaches the bar's own content edge (`D-179`'s probe: the controls took `113px`), which nothing
+ *  reserves either before or after this change — the width was a BASE SIZE and never a reservation, since the
+ *  row stood AFTER the name and shrank past the free area's edge in any crowded window. What is lost is the
+ *  sparse-window box: the row no longer stretches to the free area's width with its chips bunched at the left. */
 const topBarStyle: Record<string, string> = {
   display: 'flex',
   'align-items': 'center',
   flex: '0 0 36px',
   '-webkit-app-region': 'drag',
 }
-const tabsRowStyle: Record<string, string> = {
-  width: 'env(titlebar-area-width, 100%)',
+
+/** **THE ADD-A-TAB CONTROL'S TWO DECLARATIONS, AND ONE OF THEM IS THE DRAG REGION'S** (`C-10`'s rule applied
+ *  to a node the chips do not own): `no-drag`, exactly as the row PROTOTYPE's `css` carries it for every minted
+ *  chip — the bar's `drag` covers every pixel its children do not claim, so a control that could not be pressed
+ *  would be a node rendered for nothing. **AND `flex: 0 0 auto` IS THE `+`'s OWN BELT**: a flex item's default
+ *  `flex-shrink: 1` would squeeze a one-character label to nothing in a crowded bar, and the control has to keep
+ *  its own box while the ROW is the box that yields (the chips' `flex: 0 0 auto`, one level out).
+ *  **IT AUTHORS NO FIGURE AND NO LOOK**: width, height, padding, border, radius, font and the cursor are the
+ *  page sheet's (`src/renderer/index.html`'s `#tab-add`), the same division `.tab-row` already has. */
+const tabAddStyle: Record<string, string> = {
+  '-webkit-app-region': 'no-drag',
+  flex: '0 0 auto',
 }
 
 /** **THE ARRANGEMENT** (`D-176`'s charter, `D-185`): the app root is a COLUMN — the top-bar, then the `top`
@@ -683,22 +740,41 @@ export function demoEnvelope() {
                 css: { classes: ['top-bar'], style: topBarStyle },
                 content: 'Provident-Electron',
                 children: [
-                  // ---- THE TABS ROW (`D-179`, `D-182`, `D-193`) ------------------------------------
+                  // ---- THE TABS ROW (`D-179`, `D-182`) --------------------------------------------
                   // **NO `content`**: its rows are MINTED and their labels PAINTED, so an authored string
                   // here would be a label nothing computed (`D-177`). The `hooks` entry IS `TABS_ROWS_ID`,
                   // because the node id, the mint op's `target` and its hook name are ONE string
                   // (ASM-AE-2), and `hooksKind` declares it `'placement'` — without that declaration a
                   // placement mint is REFUSED `hook-kind-mismatch`. It stands INSIDE the dragging bar
-                  // because that is the only place `no-drag` means anything (`D-183`), and its width is the
-                  // overlay's own environment value (`env(titlebar-area-width, 100%)`, measured `607px` at
-                  // `D-193`), so the platform's control strip is reserved by CSS and needs NO paint turn.
+                  // because that is the only place `no-drag` means anything (`D-183`).
+                  // **AND IT AUTHORS NO `css.style` AT ALL** — see `topBarStyle`'s block above: the width that
+                  // stood here was a flex BASE SIZE, and the charter's allocation is that the row occupies "the
+                  // space in between" (`D-176`), which the sheet's `flex: 1 1 auto; min-width: 0` computes.
                   // Readers: the mint turn (its `target`) and the row paint (`AL-2`, `AL-4`).
                   {
                     type: 'div',
-                    css: { id: TABS_ROWS_ID, style: tabsRowStyle },
+                    css: { id: TABS_ROWS_ID },
                     props: { id: TABS_ROWS_ID },
                     hooks: [TABS_ROWS_ID],
                     hooksKind: TABS_ROW_HOOKS_KIND,
+                  },
+                  // ---- THE ADD-A-TAB CONTROL (`TABS_ADD_ID`, the twenty-first published name) -----
+                  // **IT STANDS BESIDE THE ROW SET AND NEVER INSIDE IT, AND THAT IS STRUCTURAL**: the rows are
+                  // MINTED into `TABS_ROWS_ID` and a mint REPLACES the row set (`D-201`, `D-182`), so a control
+                  // authored inside that node would be destroyed on the next `['tabs']` delivery. As the row's
+                  // FOLLOWING SIBLING it is the bar's own child, untouched by every mint this app will ever
+                  // make. It is in the drag region's `no-drag` (`tabAddStyle`), like every chip.
+                  // `content: '+'` is a STATIC authored label and therefore lawful (`D-177`: the rule bars a
+                  // label NOTHING computed, and nothing computes this one). The `handlers` entry is the
+                  // DECLARED no-op (`TABS_ADD_BODY`) whose `(name, event)` pair `renderer-wiring`'s install
+                  // OVERRIDES with the live body that calls the row's own act — the menus' path, not a second
+                  // one. Reader: that turn's census (by THIS id) and its two attaches.
+                  {
+                    type: 'div',
+                    css: { id: TABS_ADD_ID, style: tabAddStyle },
+                    props: { id: TABS_ADD_ID },
+                    content: '+',
+                    handlers: [{ name: TABS_ADD_HANDLER_NAME, event: 'click', body: TABS_ADD_BODY }],
                   },
                 ],
               },

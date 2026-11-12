@@ -2,7 +2,7 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
-import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_AFFORDANCE_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
+import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, TABS_ADD_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_AFFORDANCE_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
 import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
@@ -1186,6 +1186,19 @@ async function main(): Promise<void> {
   if (menus.attached === 0) {
     console.error('[provident-renderer] the menus items took NO click listener — the pane renders the menu it claims and no role can reach the route')
   }
+  // ⟶ **AND THE `+` TAKES THE SAME ONE REGISTRATION, ONE NODE OVER** (the add-tab control, `TABS_ADD_ID`): the act
+  //    `provident.focus` already had — `newTab: true` with a distinct target — and the interface had no control for. It is
+  //    AUTHORED, so it is installed here beside the menus' items and never per delivery, and **IT SENDS NO ROUTE**: the act
+  //    is a press's, so this site awaits nothing and writes no byte of the tabs record (`B-5`'s order is untouched).
+  //    **ITS READING IS READ**, the gutter's and the menus' own rule (`D-117`): a control that took no listener is an act a
+  //    person cannot perform and an agent cannot dispatch, and that is said out loud where it happens.
+  const addTab = startAddTab(runtime)
+  if (!addTab.installed || !addTab.attached) {
+    console.error(
+      `[provident-renderer] the add-tab control (\`${TABS_ADD_ID}\`, node ${String(addTab.nodeId)}) is NOT fully wired — ` +
+        `installed=${String(addTab.installed)} attached=${String(addTab.attached)}, so a press reaches no act`,
+    )
+  }
   // ⟶ **THE APPEARANCE APPLICATION (`D-97`)** — constructed here, ONCE, after the first envelope load so the authored state
   //    node exists: `themeWiringRole` derives the caller-held attribute name and the authored carrier's id, and the returned
   //    pair of turns is the app's ONE application site. **IT READS NOTHING AND WRITES NOTHING AT THIS SITE** — `D-96`'s boot
@@ -1589,6 +1602,171 @@ function attachRowAct(runtime: Runtime, nodeId: string): boolean {
   }
   ;(add as (type: string, handler: () => void) => void).call(element, 'click', turn)
   return true
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * THE ADD-A-TAB CONTROL — THE ONE AFFORDANCE THE ACT HAD AND THE INTERFACE DID NOT
+ *
+ * **WHAT WAS MISSING, IN THE USER'S OWN WORDS**: *"I don't see a way to add new tabs in the ui"*. The act existed —
+ * `provident.focus` with `newTab: true` and a distinct target opens a row (`focusActRoute`'s S6 open arm, `seatOf`'s
+ * minted `tab-<n>` id) — and NOTHING IN THE INTERFACE OFFERED IT: the minted chips all carry `{ target }` with `newTab`
+ * absent, so every click in the bar could only ever SEAT a standing row.
+ *
+ * **WHERE THE CONTROL LIVES IS DECIDED BY THE MINT, NOT BY TASTE**: `driveTabsRows` mints the row set INTO
+ * `TABS_ROWS_ID` and `D-201`'s shape REPLACES that row set on every `['tabs']` delivery — so a `+` authored INSIDE that
+ * node would be destroyed by the next delivery, and one minted as a row datum would be a TAB. The envelope therefore
+ * authors it as the row's FOLLOWING SIBLING in the bar (`TABS_ADD_ID`, `src/shared/demo-envelope.ts`), in the drag
+ * region's `no-drag` like every chip, and this turn is its ONE boot registration.
+ *
+ * **THE PATH IS THE MENUS' AND IT IS NOT RE-INVENTED** (`D-209`): the envelope authors a `handlers` entry with a no-op
+ * STRING body, the wiring REPLACES that entry under the SAME `(name, event)` pair with a LIVE closure, and it also
+ * attaches the DOM `click` a person's press lands on — the agent's arm and the human's arm, one act behind both
+ * (`installAddTabHandler` / `attachAddTab`, exactly `installMenuItemHandler` / `attachMenuItem`). No channel, no bridge
+ * member and no tool is added: the act is `focusActRoute`, the realm's own.
+ *
+ * **AND ITS TARGET MUST DIFFER PER PRESS** (`seatOf`'s premise, measured by the corpus): a `+` that always sent one
+ * string would work ONCE — the second press would match the row the first opened, `seatOf` would answer that SEAT, and
+ * S6b's already-active arm would write nothing. **WHAT MUST DIFFER IS THE `target` STRING AND NEVER THE ROW ID**: the id
+ * is the ACT's to mint (`tab-<n>` upward, accepted by `mintTabId`) and `focusActRoute` is not ours to change, so this
+ * turn supplies only the target and derives it against the record's own carried targets — `untitled-1`, `untitled-2`, …
+ * skipping any string a row already carries. That is a derivation and not a counter: it holds nothing between presses,
+ * which is also why it works on a realm whose record already carries an `untitled-1` from some other cause.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** **THE `+`'S ONE HANDLER NAME — THE ENVELOPE'S OWN SPELLING OF THE PAIR IT AUTHORS** (`TABS_ADD_HANDLER_NAME` in
+ *  `src/shared/demo-envelope.ts`). **THE TWO SITES MUST AGREE**: the engine's `(name, event)` rule REPLACES an entry the
+ *  node already carries and APPENDS one it does not, so a rename on one side alone would leave the authored no-op in
+ *  front of this body — an agent's `dispatch` would run the placeholder and the act would silently not happen. */
+const TABS_ADD_HANDLER = 'tab-add-act'
+
+/** **THE NEW TAB'S TARGET PREFIX, AND NOTHING DEPENDS ON ITS SPELLING**: a `target` is the CONTENT a tab holds
+ *  (`src/shared/types.ts`'s row docblock), this app authors no node for a new tab's content, and the record's own title
+ *  repair (`tab-has-title`, `'untitled'`) is what the chip will read — so the string is this turn's, chosen once here. */
+const NEW_TAB_TARGET_PREFIX = 'untitled-'
+
+/** **THE LAST TARGET THIS TURN HANDED THE ACT, AND IT IS CLOSURE STATE AND NEVER DATA** (the form
+ *  `startThemeApplication`'s `lastSetting` already has): the derivation below reads the RECORD for every string a row
+ *  already carries, and this one member covers the gap between a press and the record catching up with it — two presses
+ *  inside one delivery interval would otherwise derive the SAME candidate, and the second would open a second row whose
+ *  target `seatOf` seats to the first (`D-201`'s two-rows-one-target note). It is never read as a record and it is reset
+ *  by nothing: a stale string only ever costs the next press a higher `n`. */
+let handedNewTabTarget: string | null = null
+
+/** **THE DISTINCT TARGET, DERIVED OFF THE RECORD'S OWN ROWS** — the first `untitled-<n>`, from `n = 1` upward, that no
+ *  row's `target` carries and that this turn has not just handed. **TERMINATION IS BY ARGUMENT**, the same one `seatOf`
+ *  makes for its ids: only finitely many candidates are members of a finite `rows`, and the handed guard covers one more.
+ *  **A READING THAT IS NOT `committed` CARRIES NO ROWS AND THEREFORE NO CONSTRAINT**: the act refuses that realm before it
+ *  seats anything (S3), so the string this turn hands there is never written — it is `untitled-1`, and the ANSWER is the
+ *  refusal, not a row. */
+function newTabTargetOf(reading: TabsClientReading): string {
+  const carried = new Set<string>()
+  if (reading.status === 'committed') for (const row of reading.rows) carried.add(row.target)
+  for (let n = 1; ; n += 1) {
+    const candidate = `${NEW_TAB_TARGET_PREFIX}${String(n)}`
+    if (carried.has(candidate)) continue
+    if (candidate === handedNewTabTarget) continue
+    return candidate
+  }
+}
+
+/** **THE `+`'S ONE ACT — THE ROW'S OWN ACT, ENTERED WITH `newTab: true`** (`D-142`, `D-18`): ONE read so the target can be
+ *  derived against the record, then `focusActRoute`'s S1 argument space with `{ target, newTab: true }` — which is S6's
+ *  open arm, S8's one row write at `['tabs', row.id]` `file`, S9's re-read and S10's judgement. **THE ACT IS CALLED AND
+ *  NEVER RE-SPELLED**: no member of it is composed here, and this turn writes no byte of its own. **THE SECOND READ IS
+ *  THE ACT'S**, and it is not redundant: the derivation needs a record to avoid and the act needs its own reading to seat
+ *  in, and only the act's write decides what stands. Its answer travels whole, exactly as `provident.focus` answers it. */
+async function newTabAct(): Promise<FocusActAnswer> {
+  const reading = await getTabsClient().read()
+  const target = newTabTargetOf(reading)
+  handedNewTabTarget = target
+  return focusActRoute({ target, newTab: true })
+}
+
+/** **THE CONTROL'S OWN NODE ID, ASKED OF THE GRAPH** (the `menuItemNodeIds` census, keyed by an ID instead of a class,
+ *  because `TABS_ADD_ID` is a published name and the node carries it as `props.id` — the same relation `authoredPropOf`
+ *  reads for a row's `target`). **TOTAL**: a census that throws, answers no `nodes` or answers a shape that is not a list
+ *  states `null`, so a realm with no such node degrades to no listener and no throw (`D-127`). **THE COST IS NAMED**: one
+ *  `nodeState` read per in-tree node, ONCE at boot — the price `menuItemNodeIds` already pays, and no per-delivery read. */
+function addTabNodeId(runtime: Runtime): string | null {
+  let listed: unknown = null
+  try {
+    listed = runtime.listTargets()
+  } catch {
+    return null
+  }
+  const nodes = (listed as { readonly nodes?: unknown } | null | undefined)?.nodes
+  if (!Array.isArray(nodes)) return null
+  for (const entry of nodes as readonly unknown[]) {
+    if (entry === null || typeof entry !== 'object') continue
+    const nodeId = (entry as { readonly nodeId?: unknown }).nodeId
+    if (typeof nodeId !== 'string' || nodeId === '') continue
+    const held = authoredPropOf(runtime, nodeId, 'id')
+    if (held.readable && held.held === TABS_ADD_ID) return nodeId
+  }
+  return null
+}
+
+/** **THE CONTROL'S ONE INSTALLED HANDLER BODY — THE AGENT'S ARM, INSTALLED BY THE WIRING** (`D-209`'s path, one node over
+ *  from the menus): ONE `state-slice` at boot writing a `handlers` list whose single entry is a **live FUNCTION** under
+ *  the name the envelope authored, so the engine's append-with-override REPLACES the authored no-op instead of adding a
+ *  second `click`. **THE BODY IS A CLOSURE OVER THIS FILE'S `newTabAct`**, so no surface is opened to an agent's
+ *  `dispatch`, and **ITS RETURN IS ITS OWN WORD AND NEVER THE ACT'S PROMISE**: a body's return crosses `JSON.stringify`
+ *  into `dispatch`'s `results`, so the act is STARTED and the body answers a short string (`D-209`'s cost (ii)). A
+ *  refused write is REPORTED, never silent (`D-117`). */
+function installAddTabHandler(runtime: Runtime, nodeId: string): boolean {
+  const body = (): string => {
+    void newTabAct()
+    return 'add tab'
+  }
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: nodeId,
+      mutation: [{ targetProp: 'handlers', mode: 'replace', value: [{ name: TABS_ADD_HANDLER, event: 'click', body }] }],
+    })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    if (status === 'applied') return true
+    console.error(`[provident-renderer] the add-tab control on ${nodeId} refused its installed handler (status=${status})`)
+    return false
+  } catch (error) {
+    // NOTHING ESCAPES THE INSTALL: a hostile runtime is a reading this turn leaves standing, said out loud.
+    console.error(`[provident-renderer] the add-tab install on ${nodeId} threw; an agent's dispatch reaches no act there`, error)
+    return false
+  }
+}
+
+/** **THE CONTROL'S ONE DOM `click` — THE HUMAN'S ARM** (`attachRowAct`'s and `attachMenuItem`'s form, and one listener, not
+ *  two): the node is AUTHORED and never re-minted, so this listener is installed once at boot and no churn can leave a
+ *  second one behind — the reason the rows need a per-delivery attach and this control does not. It calls the SAME act the
+ *  installed body starts (`newTabAct`), so a person's press and an agent's dispatch cannot diverge. **A NODE THAT WILL NOT
+ *  RESOLVE OR WILL NOT TAKE A LISTENER ATTACHES NOTHING AND THROWS NOTHING** (`D-127`). */
+function attachAddTab(runtime: Runtime, nodeId: string): boolean {
+  let element: unknown = null
+  try {
+    element = runtime.elementForNodeId(nodeId)
+  } catch {
+    element = null
+  }
+  const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+  if (typeof add !== 'function') return false
+  ;(add as (type: string, handler: () => void) => void).call(element, 'click', (): void => {
+    void newTabAct()
+  })
+  return true
+}
+
+/** **TURN 5 — THE `+`'S ONE BOOT REGISTRATION** (`startMenusItems`' shape, and taken at the same site for the same reason):
+ *  the node is AUTHORED, so it exists as soon as the first envelope loaded and nothing mints, subscribes or re-attaches.
+ *  **IT SENDS NO ROUTE AND WRITES NO RECORD**: the act is a press's, so a boot that is never pressed writes no byte of the
+ *  tabs record and cannot delay or fail `tests/e2e/bundle-boot-seam`'s `B-5` (the install writes one `handlers` layer, graph
+ *  bytes with no crossing behind them). **BOTH READINGS ARE RETURNED**, so the boot's one site can say out loud that the
+ *  control is not there or takes no listener (`D-117`). */
+function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readonly installed: boolean; readonly attached: boolean } {
+  const nodeId = addTabNodeId(runtime)
+  if (nodeId === null) return { nodeId: null, installed: false, attached: false }
+  const installed = installAddTabHandler(runtime, nodeId)
+  const attached = attachAddTab(runtime, nodeId)
+  return { nodeId, installed, attached }
 }
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the
