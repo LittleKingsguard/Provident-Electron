@@ -1368,6 +1368,26 @@ const DECLARED_SCOPE: readonly string[] = [
   //    A BOOT**, which is the whole of what these two entries declare: they are the pass's edit and they are in-suite BUILDERS, not
   //    merely assertions over a tree someone else built. Added WITH the edit that dirtied the path (`D-146`).
   'tests/unit/bundle-boot-seam/emission.test.ts',
+  // ── `store-tabs-record`'S BACKWARD-SWITCH ROW — `tests/integration/store-tabs-record/crossing.test.ts`, AND IT JOINS THIS
+  //    UNION AS ITS OWN ENTRY WITH ITS OWN REASON, NEVER AS THE PREFIX `tests/integration/store-tabs-record/` (that directory
+  //    would admit every battery a later pass drops beside this one without naming it, and a directory measures nothing —
+  //    `B-2`'s undeclared-sibling arm is what bites when one is dropped unnamed).
+  //    **THE ENTRY IS ADDED WITH THE EDIT THAT DIRTIED THE PATH, NEVER AFTER IT** (`D-146`'s precedent): `B-1` reported this
+  //    path as its ONE offender on this tree, and the other half of the pass — `src/main/tabs-record/index.ts`, the referent's
+  //    own subject — already stands declared above, so this block appends ONE path and no second spelling of one already in
+  //    the union, which is the difference between a write and a claim.
+  //    **ITS SUBJECT IS THE GATING ROW FOR THE BACKWARD TAB SWITCH** (`D-211`): TWO rows — the later one written the way the
+  //    app writes a new tab, `rowForSeat`'s OPEN arm — and then a LEAF WRITE of the EARLIER row, asserting that the earlier
+  //    reads `active`, the later reads `inactive`, and the record still carries EXACTLY ONE active tab. **THE ROW EXISTS
+  //    BECAUSE `exactly-one-active`'S `written` REFERENT WAS DERIVED BY AN ORDER-SENSITIVE `JSON.stringify` DIFF**: the
+  //    store's own byte image of a minted row spells `{id, target, active, lastActiveAt, label}` while `read()`'s admission
+  //    spells `{id, target, active, label, lastActiveAt}`, so the comparison matched rows the act did NOT write and — the
+  //    loop overwriting at every match — kept the LAST active row in `order` rather than the row the act named; a switch
+  //    BACKWARDS was therefore repaired back off while a forward switch took (`D-211`).
+  //    **AND IT CLAIMS NO END TO THIS LIST**: the reading at `D-174`'s head that called `app-envelope`'s page *"the last entry
+  //    this union is owed"* stands as that page's reading at a date and never as the list's end, and this entry is one more
+  //    pass that wrote a path — which RE-OPENS the union rather than contradicting it (`D-146`).
+  'tests/integration/store-tabs-record/crossing.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

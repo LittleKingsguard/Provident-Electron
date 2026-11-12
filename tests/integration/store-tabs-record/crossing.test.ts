@@ -282,6 +282,45 @@ describe('store-tabs-record · the crossing', () => {
     expect(reading().order).toEqual(['landing', 'tab-1', 'tab-2'])
   })
 
+  // ═══════════════ THE BACKWARD SWITCH — THE DIRECTION `D-211` VOLUNTEERED AND NO ROW DROVE ═══════════════
+  //
+  // **THE CORPUS OWED THIS ROW AND THIS IS IT.** `D-211` measured that a switch onto a tab standing EARLIER in `order`
+  // landed its write and still read `active: false`, while a switch FORWARD took — and no gating row drove the backward
+  // direction: `AL-4` deliberately avoids depending on it and `AL-3` pins only a forward move, so a store that could not
+  // switch back was legal under the whole battery. **The act here is the renderer's own**: `provident.focus` re-reads the
+  // record and then performs ONE `data.write` at `['tabs', <row id>]` with `rowForSeat`'s value — never `commit`, which is
+  // why the store is driven directly and `lastView` is put in the spelling `read()` leaves it in before the act.
+
+  it('`exactly-one-active` → **THE BACKWARD SWITCH** (`D-211`): a leaf row write onto a tab standing EARLIER in `order` leaves THAT row active and the later one inactive, and the record still carries exactly one — the act\'s own address names its referent, and a row the act did NOT write can no longer match by member order', () => {
+    const store = holder
+    if (store === null) throw new Error('the battery needs the instance it opened')
+    // TWO ROWS, AND THE LATER ONE IS WRITTEN THE WAY THE APP WRITES A NEW TAB — `rowForSeat`'s OPEN arm, which carries NO
+    // `label`: `healedFamily` APPENDS the title it fills, so the store holds `{id, target, active, lastActiveAt, label}`
+    // while `read()`'s admission spells `{id, target, active, label, lastActiveAt}`. **THAT DIFFERENCE OF MEMBER ORDER IS
+    // THE WHOLE DEFECT**: the referent compared `JSON.stringify` of those two spellings (order-sensitive — `canonicalRecord`
+    // says so in words), so it matched a row the act never wrote and, because the loop overwrote at every match, it kept
+    // the LAST active row in `order` instead of the one the act named. The repair then rewrote the caller's row `false`.
+    record.commit(row('tab-1', { active: false, label: 'one', lastActiveAt: SEAT_STAMP }))
+    store.write(['tabs', 'tab-2'] as never, 'file', { id: 'tab-2', target: 'page://tab-2', active: true, lastActiveAt: SEAT_STAMP })
+    // THE RENDERER'S OWN RE-READ BEFORE AN ACT (`focusActRoute`'s S2): it is what leaves this module's PRE side in the
+    // spelling `read()` answers, which is the state the app's act meets — and the one the pre-fix referent mis-read.
+    const before = reading()
+    expect(
+      before.rows.filter((each) => each.active === true).map((each) => each.id),
+      'PREREQUISITE — the LATER row is the record\'s active one before the backward act, so "the switch takes" is a MOVE',
+    ).toEqual(['tab-2'])
+    // THE BACKWARD SWITCH, at the earlier row's own leaf and with the SWITCH arm's spelling (`{...seat.row, active: true}`).
+    store.write(['tabs', 'tab-1'] as never, 'file', row('tab-1', { label: 'one', lastActiveAt: SEAT_STAMP }))
+    const { order, rows } = reading()
+    expect(order, 'both rows stand, in the seat order the acts left').toEqual(['landing', 'tab-1', 'tab-2'])
+    expect(rows.find((each) => each.id === 'tab-1')?.active, '(a) the EARLIER row — the row the act wrote — reads active').toBe(true)
+    expect(
+      rows.find((each) => each.id === 'tab-2')?.active,
+      '(b) and the LATER one — the row the act did not write — reads inactive, so the repair is still the sole survivor authority',
+    ).toBe(false)
+    expect(actives(), '(c) the record still carries exactly one active tab').toEqual(['tab-1'])
+  })
+
   it('`remove` → removing the ACTIVE tab is answered committed and a survivor takes the seat, chosen by the removed entry\'s pre-position', () => {
     record.commit(row('tab-1'))
     record.commit(row('tab-2', { active: false }))

@@ -431,6 +431,13 @@ const rowOf = (value: Record<string, unknown>): TabsRecordRow | null => {
  *  and every commit. **That substitution is the one thing the port could not carry, and it is bounded**: the cache is
  *  this module's own view of a record only this module writes, so it is stale only for a write that bypassed
  *  `commit` — which the store's own refusal arm answers before the repair is reached.
+ *
+ *  **AND SINCE `D-211` THE BODY IS UNWRAPPED FROM THE BATCH'S `body`, BECAUSE THAT WRAPPER THREW AWAY THE ACT'S OWN
+ *  ADDRESS** — the one member that NAMES the row a leaf write wrote (see (b) below). `tabsMustStand` and
+ *  `orderNamesItsTabs` are unwrapped for the creation instant's reason; this one is unwrapped for the REFERENT's, and it
+ *  spells the wrapper's abstention itself as its first arm. **IT IS STILL NOT A SECOND ACTIVENESS AUTHORITY**: it
+ *  repairs only the SURVIVOR of a record that already carries one or two active rows, and the other row is cleared by the
+ *  same heal (§7).
  */
 interface RecordView {
   readonly order: string[]
@@ -737,17 +744,42 @@ const composeRecord = (
  *  derived at read and never written (D-76), so a member under those letters is either the landing ENTRY's row — compared
  *  inside `rows` like any other tab — or a legacy string this family does not read, and folding either into the comparison
  *  would report a repair the act did not run. Nothing outside that family can reach this function: `read` and `commit`
- *  both admit the record field by field (`rowOf`). */
+ *  both admit the record field by field (`rowOf`).
+ *
+ *  **AND THE ROW PROJECTION IS `canonicalRow`'S, BECAUSE A SECOND CALLER NEEDS IT FOR ONE ROW** (`D-211`): the referent's
+ *  fallback in `exactlyOneActive` compares TWO ROWS of one id and holds no record to hand this function, so the field order
+ *  lives in `canonicalRow` and this projection reads it — one spelling of "what a row is", which is the same rule
+ *  `rowsSeatedUnder` is the only promoted name of (§4). */
 const canonicalRecord = (record: Record<string, unknown>): string => {
   const order: string[] = []
   if (Array.isArray(record['order'])) for (const id of record['order']) if (typeof id === 'string') order.push(id)
+  return JSON.stringify({ order, rows: order.map((id) => canonicalRow(id, record[id])) })
+}
+
+/** **ONE ROW'S CANONICAL FORM — THE SAME TWO REASONS AS THE RECORD'S, APPLIED TO A ROW RATHER THAN TO A RECORD** (`D-211`).
+ *
+ *  **MEMBER ORDER IS NOT PART OF A ROW AND ABSENCE HAS ONE SPELLING**, exactly as `canonicalRecord` says of the record: the
+ *  store hands a row back in its own BYTE IMAGE's member order — a row minted by `rowForSeat`'s OPEN arm stores
+ *  `{id, target, active, lastActiveAt, label}` because the seat heal APPENDS the title it filled, while the SWITCH arm's row
+ *  and `rowOf`'s admission spell `{id, target, active, label, lastActiveAt}` — so `JSON.stringify` on the raw objects
+ *  answers "different" for two rows that hold the SAME admitted values, and answers it on the rows a caller did NOT write.
+ *
+ *  So a row projects onto `[id, id?, target?, active, label?, error?, lastActiveAt?]` in that fixed order, and a non-plain
+ *  value projects as an empty row — the seat's absent member, exactly as `canonicalRecord` projects one. **Two rows project
+ *  to the same text IF AND ONLY IF every admitted member is equal**, which is what makes a comparison over it a comparison
+ *  about the record rather than about how the store spelled it. */
+const canonicalRow = (id: string, held: unknown): string => {
+  const row: Record<string, unknown> = plain(held) ? held : {}
   const text = (value: unknown): string | null => (typeof value === 'string' ? value : null)
-  const rows = order.map((id) => {
-    const held = record[id]
-    const row: Record<string, unknown> = plain(held) ? held : {}
-    return [id, text(row['id']), text(row['target']), row['active'] === true, text(row['label']), text(row['error']), text(row['lastActiveAt'])]
-  })
-  return JSON.stringify({ order, rows })
+  return JSON.stringify([
+    id,
+    text(row['id']),
+    text(row['target']),
+    row['active'] === true,
+    text(row['label']),
+    text(row['error']),
+    text(row['lastActiveAt']),
+  ])
 }
 
 /** **WHETHER A REPAIR RAN IS A FACT OF THE STORE, SO IT IS READ BACK AND NOT PREDICTED.** The engine's repairs write
@@ -985,7 +1017,15 @@ const liveHints = (store: Store): HealHints => {
   return { removals, written: null, removed: removals[0] ?? null, preOrder: pre.order }
 }
 
-const exactlyOneActive = (store: Store) => (): TabsConstraintAnswer => {
+const exactlyOneActive = (getStore: () => Store | null) => (context: unknown): TabsConstraintAnswer => {
+  // **THE `body` WRAPPER'S ABSTENTION IS SPELLED HERE, AND THE MEMBER IT THREW AWAY IS THE WHOLE REASON THIS BODY IS
+  // UNWRAPPED** (`D-211`). The wrapper is `void context` + the handle: it answers `true` while the boot has bound no
+  // handle (`getStore() === null`, the creation instant) and hands the body a store with nothing else — so the kernel's
+  // `{address, op, tier, value}` never reached this body, and `address` is the referent's own NAME (see (b) below). The
+  // abstention it also carried is the first arm here, unchanged: at the creation instant no store read can be taken, and
+  // the record's existence there is `tabs-must-stand`'s and its seat `order-names-its-tabs`'s.
+  const store = getStore()
+  if (store === null) return true
   const post = viewOf(store)
   const pre = lastView ?? post
   lastView = post
@@ -995,16 +1035,48 @@ const exactlyOneActive = (store: Store) => (): TabsConstraintAnswer => {
   const dropped = Object.keys(pre.entries).filter((id) => post.entries[id] === undefined)
   const membershipDropped = pre.order.filter((id) => !post.order.includes(id))
   const removals = [...dropped, ...membershipDropped.filter((id) => !dropped.includes(id))]
-  // (b) THE CALLER'S OWN WRITTEN REFERENT: the active entry whose VALUE moved pre→post, or one the pre view did not
-  //     carry at all (a first write mints the key) — the renderer's H-2 derivation, uniform across both arms because
-  //     it reads the record and never the written value's shape. The comparison is STRUCTURAL: every view hands out
-  //     freshly built rows, so identity never matches and an `Object.is` test would always name the last active entry.
+  // (b) THE CALLER'S OWN WRITTEN REFERENT — **AND IT IS THE ACT'S OWN ADDRESS WHERE THE ACT NAMED ONE ROW** (`D-211`).
+  //
+  // **THE DEFECT THIS REPLACES WAS MEASURED, NOT REASONED ABOUT** (`D-211`'s volunteered finding): a leaf row write at
+  // `['tabs', <id>]` — the act the renderer's `provident.focus` route performs, `data.write` at the row's own address —
+  // landed its row and the repair then DEACTIVATED it, so a switch onto a tab standing EARLIER in `order` did not take,
+  // while a forward switch did. **THE MECHANISM WAS THE DIFF BELOW**: `pre` is `read()`'s projection of the record while
+  // `post` is `viewOf`'s RAW spread of what the store holds, and a row minted by the OPEN arm stores `label` LAST where
+  // `rowOf` spells it before `lastActiveAt` — so `JSON.stringify` (order-sensitive, as `canonicalRecord` says in words)
+  // matched an UNCHANGED row, and because this loop OVERWRITES `written` at every match, `written` ended as the last
+  // active row in `order` instead of the row the caller wrote. `healedFamily` then kept that survivor and rewrote the
+  // caller's row back to `active: false`. **Forward worked only because the genuinely-changed row happened to be last.**
+  //
+  // **SO THE GUARD IS TWO TESTS AND ONE LOOKUP, AND EACH DOES ITS OWN JOB**: `deeperThanRecord(address)` asks whether the
+  // act stood UNDER the record at all (the one discriminator `tabsMustStand` and `orderNamesItsTabs` decide on, §4), and
+  // `post.entries[address[1]] !== undefined` asks whether the record STILL HOLDS that row — an id the act named and a
+  // later repair dropped is not a referent, and it falls through with no claim. A LEAF WRITE THEREFORE NAMES ITS OWN ROW,
+  // which is what this pair's own name promises — **THE CALLER'S OWN WRITTEN REFERENT, read rather than inferred**.
+  //
+  // **WHAT `written` STILL FALLS BACK TO WHEN THE ADDRESS IS THE RECORD ROOT** — a whole-record write at `['tabs']`, a
+  // `data.write` at the seat, a hand-made context, a registration ask: there is no leaf to name there, so the pre/post
+  // pair is the only evidence the record offers and the diff stays. It stays CANONICALISED (the loop below), which is the
+  // property that matters: a row the caller did NOT write can no longer match it, so the referent it answers is the row
+  // that MOVED rather than the last active row in the seat.
+  const address = plain(context) ? context['address'] : undefined
+  const leaf: unknown = Array.isArray(address) && deeperThanRecord(address) ? address[1] : undefined
   let written: string | null = null
-  for (const id of Object.keys(post.entries)) {
-    const row = post.entries[id]
-    if (row === undefined || !readActive(row)) continue
-    const before = pre.entries[id]
-    if (before === undefined || JSON.stringify(before) !== JSON.stringify(row)) written = id
+  if (typeof leaf === 'string' && post.entries[leaf] !== undefined) {
+    written = leaf
+  } else {
+    // THE ROOT-ADDRESS FALLBACK, AND ITS COMPARISON IS STRUCTURAL IN BOTH SENSES THAT MATTER: every view hands out
+    // freshly built rows, so IDENTITY never matches and an `Object.is` test would always name the last active entry
+    // (the renderer's H-2 derivation, uniform across both arms because it reads the record and never the written
+    // value's shape) — and the comparison itself is `canonicalRow`'s, so MEMBER ORDER cannot either. **THE OVERWRITE IS
+    // KEPT AS IT STANDS**: a root write that genuinely moves two active rows has no single referent, and the precedence
+    // in `healedFamily` then chooses among the rows this names; what the overwrite may no longer do is name a row whose
+    // admitted values never moved.
+    for (const id of Object.keys(post.entries)) {
+      const row = post.entries[id]
+      if (row === undefined || !readActive(row)) continue
+      const before = pre.entries[id]
+      if (before === undefined || canonicalRow(id, before) !== canonicalRow(id, row)) written = id
+    }
   }
   // A SURVIVOR IS AN ID THE POST STATE BOTH SEATS AND HOLDS: an id left in `order` with no record under it is a removal
   // the caller made in the wrong order, and counting it as a survivor would let a dangling seat pass the gate.
@@ -1314,6 +1386,13 @@ const repairOrderSeat = (getStore: () => Store | null) => (context: unknown): Ta
  *  that repeats one is two actives over one row. The pairs below it are silent at the creation instant for a reason of
  *  their own: their bodies read through the same handle and the wrapper is what tells them to abstain.
  *
+ *  **AND `exactly-one-active` IS UNWRAPPED TOO SINCE `D-211`, FOR A THIRD REASON: THE WRAPPER IS `void context`, AND THE
+ *  ACT'S `address` IS THE REFERENT** — the member that says WHICH ROW a leaf write wrote. A wrapped body cannot name the
+ *  caller's row, and the diff that stood in its place named the wrong one (a switch backwards did not take). So this body
+ *  spells the wrapper's abstention as its own first arm (`getStore() === null`) and reads the address beside it. **The
+ *  three field pairs stay wrapped**: their repairs judge no referent, and the wrapper is exactly "read through the handle
+ *  or abstain".
+ *
  *  **AND THE ORDER IS WHAT MAKES THE TWO REPAIRS' OWNERSHIP DETERMINISTIC, RATHER THAN A RACE** (`D-156`, §4): the pass
  *  asks ONE refusal at a time and re-runs from the top (measured: a delete whose two faults both stand is asked seat,
  *  seat, active — three asks, two of them restarts), so the seat pair's repair lands FIRST and `exactly-one-active` is
@@ -1339,7 +1418,7 @@ export function tabsConstraintDeclarations(getStore: () => Store | null): readon
   return [
     { address: TABS_RECORD_ADDRESS, id: TABS_MUST_STAND_ID, constraint: tabsMustStand(getStore) },
     { address: TABS_RECORD_ADDRESS, id: ORDER_NAMES_ITS_TABS_ID, constraint: orderNamesItsTabs(getStore) },
-    { address: TABS_RECORD_ADDRESS, id: TABS_CONSTRAINT_ID, constraint: body(exactlyOneActive) },
+    { address: TABS_RECORD_ADDRESS, id: TABS_CONSTRAINT_ID, constraint: exactlyOneActive(getStore) },
     { address: TABS_RECORD_ADDRESS, id: 'tab-has-title', constraint: body(tabHasTitle) },
     { address: TABS_RECORD_ADDRESS, id: 'tab-has-content', constraint: body(tabHasContent) },
     { address: TABS_RECORD_ADDRESS, id: 'tab-has-lastActiveAt', constraint: body(tabHasLastActiveAt) },
@@ -1482,7 +1561,13 @@ export function createTabsRecord(options: TabsRecordOptions): TabsRecord {
       const rows = rowsNow(order)
       // THE OBSERVED VIEW IS REFRESHED HERE: the constraint's PRE side is the last record this module saw, and a read
       // is the one place a caller's own eyes and this module's memory must agree.
-      lastView = { order: [...order], entries: Object.fromEntries(rows.map((row) => [row.id, row])) }
+      // **AND IT IS `viewOf`'s VIEW, NOT A SECOND ONE BUILT FROM THE PROJECTED ROWS** (`D-211`): this module's memory is
+      // ONE SPELLING of the record — the store's own, the one every body and every hint reads — where it used to be two,
+      // a `rowOf`-projected copy here and a raw one everywhere else. The two spellings are the same rows in different
+      // MEMBER ORDER (a `rowForSeat` OPEN-arm row stores `label` LAST; `rowOf` spells it before `lastActiveAt`), so the
+      // copy is what let the referent's raw diff match an UNCHANGED row. **The `rows` this route ANSWERS are unchanged**:
+      // they are still admitted field by field and reported in `order`, and only the memory's spelling moves.
+      lastView = viewOf(standing)
       return { status: 'committed', order, landing, rows }
     },
     commit(input: TabsRecordRow): TabsRecordAnswer {
