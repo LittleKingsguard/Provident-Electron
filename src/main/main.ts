@@ -827,6 +827,21 @@ async function main(): Promise<void> {
         // **`quit` AND `close` END WHAT THEY END BEFORE THIS CALL RETURNS** — the invoke's promise is torn down with the
         // window or the process, so a person's click on those two is answered by the app leaving, not by `admitted`.
         case 'quit': app.quit(); break
+        // ═══ A FORK DECISION NOTE AT THE `close` ROLE — THE ROLE CLOSES **THE WINDOW**, AND WHAT FOLLOWS IS NOT ITS DECISION ═══
+        // **`close` CLOSES THE WINDOW AND NOTHING ELSE.** This arm asks the one window to close: it does not quit, does not end
+        // the MCP endpoint, and does not write, clear or re-read a record. **WHAT HAPPENS NEXT IS THE COMPOSITION'S DECISION AND
+        // NOT THIS ROLE'S**, and THIS app has already made it — at `window-all-closed`, below: this app has exactly ONE window,
+        // so closing it empties `getAllWindows()`, that handler runs, and it QUITS, taking the process and the transport with the
+        // window (`D-232`, `D-235` — a person clicking `Close` sees exactly that). **A FORK THAT WANTS `Close` TO LEAVE THE APP
+        // RUNNING IN THE BACKGROUND** — a tray icon, a hidden window, a headless MCP-only mode serving an agent with nothing on
+        // screen — **MUST CHANGE THAT HANDLER, NOT THIS ARM**, and the `win.on('closed')` handler lower down with it, because
+        // that one quits as well: the role answers one question in both worlds and this site stays the platform's own `close()`,
+        // so a fork editing HERE would be deciding at the site that does not hold the decision.
+        // **AND `Quit` AND `Close` STOP MEANING THE SAME THING ONCE A FORK TAKES THAT SHAPE**: `quit` ends the process, `close`
+        // would then end only the window — so a fork must decide whether `Quit` stays in the menus pane at all, and whether a
+        // `Close` that no longer ends anything still belongs beside it. Both are its decisions, taken in its own composition;
+        // neither is a flag this role carries. **THE MIRROR OF THIS NOTE STANDS AT `window-all-closed`, below, with what a fork
+        // must verify before it can take that shape** — the two are ONE decision and nobody should have to find one from the other.
         case 'close': target.close(); break
         case 'reload': contents.reload(); break
         case 'forcereload': contents.reloadIgnoringCache(); break
@@ -986,6 +1001,29 @@ app.whenReady().then(() => {
   })
 })
 
+// ═══ A FORK DECISION NOTE AT `window-all-closed` — THIS HANDLER IS WHERE `Close` STOPS BEING A WINDOW AND BECOMES THE APP ═══
+// The `close` role's arm above closes ONE WINDOW and says nothing about the app; the question a person actually asked — does
+// `Close` leave the app in the background or take everything down — is answered HERE, and answered by the COMPOSITION rather
+// than by the role (`D-232`, `D-235`). **TWO SHAPES ARE LAWFUL, AND THEY COST DIFFERENTLY.**
+// **(a) QUIT — WHAT THIS APP DOES.** One window is one app, so the window going means the process going and the MCP endpoint
+// with it. Nothing has to survive an empty `getAllWindows()` and nothing is owed to a caller who has no window left to answer.
+// **(b) KEEP RUNNING AND KEEP THE MCP ENDPOINT ALIVE** — a tray icon, a hidden window, a headless MCP-only mode. **That is the
+// shape this project's own goal argues for** — an agent surface with no window to render into — and it is a REAL DESIGN STEP
+// RATHER THAN A FLAG, so a fork taking it must VERIFY at least these three before it can claim it: (i) **the store and the
+// backend do not depend on a window existing** — the backend's crossings deliver into QUEUES rather than straight into windows
+// for exactly this class of instant (`D-219`, `D-222`), so the pending set, not a window, is what a creation's delivery meets;
+// (ii) **the four fan-outs above tolerate ZERO windows** — both crossings' push loops and both secure crossing's broadcast loops
+// already iterate `getAllWindows()` and send only to a window that is not destroyed, so the empty set is a NO-OP and not a
+// throw, and that is a measured property a fork inherits rather than rebuilds; and (iii) **the AGENT SURFACE STAYS REACHABLE
+// WITH NO WINDOW TO RENDER INTO** — the graph, the tools and the transport must still answer when there is no realm to dispatch
+// into, which is the whole point of this project, is UNPROVEN here precisely because this app never runs windowless, and is
+// therefore where a fork taking (b) should expect to build rather than to switch something on. **AND THE `win.on('closed')`
+// HANDLER ABOVE QUITS TOO** and is not this handler's: a fork taking (b) changes BOTH, or the first window that closes ends the
+// process before this one is ever consulted. **THE THIRD THING A FORK WILL ASK**: once (b) stands, `Quit` and `Close` are NOT
+// the same — `Quit` ends the process and `Close` only the window — so the menus pane's two items become two separate decisions,
+// and a fork must decide whether `Quit` stays in the menu at all and whether a `Close` that no longer ends anything still
+// belongs there beside it. **The mirror of this note stands at the `close` role's arm**: the two are ONE decision, stated at
+// both sites where it is made.
 app.on('window-all-closed', () => {
   app.quit()
 })
