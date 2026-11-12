@@ -1730,11 +1730,18 @@ async function main(): Promise<void> {
   //    and the `+`'s own rule (`D-117`): a drop that never resolved, never took a body or never took a listener is a
   //    relocation a person cannot perform and an agent cannot dispatch, and it is said out loud where it happens.
   const paneMove = startPaneMove(runtime)
-  if (paneMove.drops !== PANE_MOVE_DROP_IDS.length || paneMove.installed !== paneMove.drops || paneMove.attached !== paneMove.drops) {
+  if (
+    paneMove.drops !== PANE_MOVE_DROP_IDS.length ||
+    paneMove.installed !== paneMove.drops ||
+    paneMove.attached !== paneMove.drops ||
+    paneMove.grips !== PANE_MOVE_GRIP_IDS.length ||
+    paneMove.captured !== paneMove.grips
+  ) {
     console.error(
-      `[provident-renderer] the pane-move drops are NOT fully wired — resolved ${String(paneMove.drops)}/${String(PANE_MOVE_DROP_IDS.length)} ` +
+      `[provident-renderer] the pane-move affordance is NOT fully wired — resolved ${String(paneMove.drops)}/${String(PANE_MOVE_DROP_IDS.length)} ` +
         `of \`${PANE_MOVE_DROP_IDS.join('`, `')}\`, installed ${String(paneMove.installed)}, attached ${String(paneMove.attached)}, ` +
-        `so a press or a dispatch may reach no act`,
+        `and ${String(paneMove.grips)}/${String(PANE_MOVE_GRIP_IDS.length)} grip(s) of \`${PANE_MOVE_GRIP_IDS.join('`, `')}\` with ` +
+        `${String(paneMove.captured)} drag(s) installed, so a press, a dispatch or a drag may reach no act`,
     )
   }
   // ⟶ **THE APPEARANCE APPLICATION (`D-97`)** — constructed here, ONCE, after the first envelope load so the authored state
@@ -2386,17 +2393,50 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// **TURN 6 — THE PANE'S RELOCATION: ONE GRIP PER PANE, FOUR AUTHORED ZONES, ONE WHOLE-PANE WRITE**
+// **TURN 6 — THE PANE'S RELOCATION IS A DRAG: ONE GRIP PER PANE, FOUR AUTHORED ZONES, ONE WHOLE-PANE WRITE**
 // (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1; the second affordance `D-244` designed and never built.)
 //
-// **THE GESTURE IS A PICK AND NOT A DRAG, AND THE MACHINERY IS WHY** (§1): the landed affordance installs no pointer
-// capture local to another region, so a drag that leaves the strip's box loses its reading and a pointer over another
-// zone is a pointer the gesture cannot see. So the grip is pressed, its four drops are REVEALED BY FOCUS
-// (`props.tabindex` + one `:focus-within` rule — the menus' mechanism, no state and no record), and the SECOND click is
-// the act. **AND THE DROP NAMES BOTH OPERANDS IN ITS OWN `props`** (§2): `props.pane` and `props.zone` are read OFF THE
-// NODE through `authoredPropOf`, so no hit-test is taken and no `getBoundingClientRect` is called — that call THROWS in
-// the layout-less DOM shim, so a box-resolved drop could be measured in no module row of this unit at all.
+// **THE GESTURE IS A DRAG, AND THE TWO THINGS THAT MADE IT A PICK THE FIRST TIME ARE BOTH ANSWERED HERE BY MEASURED
+// CAUSES RATHER THAN BY RE-DESIGN.** **(i)** §1's reason the pick was chosen — *"the landed affordance installs no
+// pointer capture local to another region, so a drag that leaves the strip's box loses its reading"* — **WAS THE
+// `D-245` DEFECT, NOT A PROPERTY OF THE GESTURE**: every handle in this realm went inert on its first move for want of
+// `setPointerCapture`, and `captureOnGripPress` below is that row's fix applied to the two grips, on the same
+// `pointerdown`, with the same total degradations (`D-245`). **(ii)** §2's reason no hit-test is taken —
+// `getBoundingClientRect` THROWS in the layout-less DOM shim — **IS ABOUT MEASURABILITY AND NOT ABOUT THE HAND,
+// so nothing here measures a box either**: the four drops are AUTHORED ZONE-SIZED OVERLAYS while a drag is in flight
+// (the geometry is `demo-envelope.ts`'s, one `css.style` per drop, no arithmetic and no node added), and the drag asks
+// **the DOM** which of them the pointer is standing on — `document.elementFromPoint` in a realm that has layout, and the
+// event's own `target` in a realm that does not (the whole node suite, `D-27`). So a row can drive the gesture by
+// dispatching at a drop, while the real window resolves the drop under a real pointer.
+// **AND THE PREVIEW IS THE DRAG'S OWN TRANSIENT** (`D-246`'s lesson: a preview written to the wrong node moves nothing
+// a person can see): the **zone the record would receive** is outlined through a transient `style` declaration on the
+// ZONE ELEMENT — one of the four PAINTED nodes, which `paintStyle` replaces WHOLE on the next delivery and which no
+// delivery touches mid-gesture — and **the authored overlay under the pointer** is filled in beside it, so the person
+// sees both the vicinity window and the zone that will take the record. **NO GHOST OF THE PANE IS DRAWN**: a ghost is
+// a NEW ELEMENT, and every element in this realm is provident data (`AGENTS.md`'s UI authority) — the authored census is
+// pinned at `89` nodes by `theme-control`, and the pane's own element may not be re-parented (`D-182`, §6).
+// **THE `['drag']` FAMILY IS NOT FORCED TO CARRY IT**: that family's writer is `commitDrag(<pane>, {<member>: <figure>})`
+// — a PANE-KEYED, GEOMETRY-SHAPED `{size}` transient (`D-145`, §1 of `design-zone-handles.md`) — and its reader is the
+// ghost turn, which reads `branch[DEFAULT_PANE_ID]`. A placement is neither keyed by a figure nor answerable in a `size`,
+// so encoding a zone into it would be a second authority in the quietest form (`D-129`); the family stays exactly what
+// the resize drags made it, and the placement preview is the inline-style transient above.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE TWO DECLARED GRIPS, BY THEIR AUTHORED IDS — THE SECOND HALF OF THE ADDRESS BOOK, SPELLED LIKE THE DROPS'
+ *  EIGHT** (`D-235`, `D-188` debt 2): the envelope's `MENUS_GRAB_ID`/`GUTTER_GRAB_ID` are private and this file spells
+ *  the same two strings, so the equality is a ROW's (`theme-control`'s per-id census) and never a derivation across the
+ *  module boundary. **THE PAIRING IS THE ENVELOPE'S OWN ID CONVENTION AND IS DERIVED INSIDE THIS FILE**: a drop is
+ *  `${gripId}-${zone}` (`demo-envelope.ts`'s `paneMoveGripNodeOf`), and both ends of that spelling stand in this file as
+ *  literals — so pairing a grip with its four drops by prefix derives nothing this file does not already state. */
+const PANE_MOVE_GRIP_IDS: readonly string[] = ['menus-grab', 'gutter-grab']
+
+/** **THE DISTANCE THE POINTER MUST TRAVEL BEFORE A PRESS IS A DRAG RATHER THAN A CLICK** (`D-245`'s instrument: a real
+ *  pointer, one sample per move). **IT IS THE ONE THING THAT KEEPS A CLICK A CLICK**: pressing a grip reveals its four
+ *  zone overlays, and the grip's own box stands INSIDE one of those overlays (the menus pane is in the `top` zone) — so
+ *  without a threshold a plain press-and-release on the grip would COMMIT the zone the grip happens to stand in. `4px`
+ *  is below the smallest deliberate move and above a hand's tremor. **A REALM THAT CANNOT MEASURE THE COORDINATES ARMS
+ *  ON THE FIRST MOVE IT HEARS** (`pointerOf`'s null arm), because a move it cannot measure is still a move. */
+const PANE_MOVE_ARM_DISTANCE = 4
 
 /** **THE EIGHT DECLARED DROPS, BY THEIR AUTHORED IDS — THE ADDRESS BOOK AND NOT A WALK** (§3 `M1`; `D-235`). The
  *  envelope derives each id from its grip's one spelling (`'menus-grab'`/`'gutter-grab'` + `-<zone>`), so these eight
@@ -2415,33 +2455,53 @@ const PANE_MOVE_DROP_IDS: readonly string[] = [
  *  replacement, which is why both sites say so. */
 const PANE_MOVE_HANDLER = 'pane-move'
 
-/** **THE CENSUS — EACH DECLARED DROP ID RESOLVED TO THE NODE THE GRAPH MINTED, IN ONE WALK** (`D-235`; the
+/** One census hit: the AUTHORED id the tree spells and the NODE id the graph minted (`addTabNodeId`'s lesson). */
+interface PaneMoveNodeRef {
+  readonly id: string
+  readonly nodeId: string
+}
+
+/** One DROP as a drag target: its census reference plus the element the graph answered for it (`elementForNodeId`), which
+ *  is the identity the DOM's hit-test is compared against. **THE ELEMENT IS RESOLVED ONCE AT BOOT** and is the same one
+ *  `attachPaneMove` installed the `click` on, so a drag and a pick address one node. */
+interface PaneMoveDropTarget extends PaneMoveNodeRef {
+  readonly element: unknown
+}
+
+/** **THE CENSUS — EVERY DECLARED GRIP AND DROP RESOLVED TO THE NODE THE GRAPH MINTED, IN ONE WALK** (`D-235`; the
  *  `addTabNodeId`/`menuItemNodeIds` form): `props.id` is read off every in-tree node ONCE at boot and compared against
- *  the eight literals above, so no node id is spelled and no selector is used. **TOTAL**: a census that throws, answers
- *  no `nodes` or answers a shape that is not a list states an EMPTY answer, so a realm with no such node degrades to no
- *  listener and no throw (`D-127`). **THE COST IS NAMED**: one `nodeState` read per in-tree node, once — the price
- *  `addTabNodeId` already pays, and no per-delivery read. **A MISSING DROP IS NOT INVENTED**: the list carries what the
- *  tree answered, and the boot's one site compares its length against the eight. */
-function paneMoveDropNodeIds(runtime: Runtime): readonly { readonly id: string; readonly nodeId: string }[] {
+ *  the two grip literals and the eight drop literals above, so no node id is spelled and no selector is used. **TOTAL**:
+ *  a census that throws, answers no `nodes` or answers a shape that is not a list states an EMPTY answer, so a realm with
+ *  no such node degrades to no listener and no throw (`D-127`). **THE COST IS NAMED**: one `nodeState` read per in-tree
+ *  node, once — the price `addTabNodeId` already pays, and no per-delivery read. **TWO LISTS AND NOT ONE, BECAUSE THE TWO
+ *  KINDS ARE TWO ARMS**: the grips take the press and the pointer, the drops take the release's act, and a boot reading
+ *  that confused them would capture on a drop. **A MISSING NODE IS NOT INVENTED**: each list carries what the tree
+ *  answered, and the boot's one site compares both lengths against their declared literals. */
+function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMoveNodeRef[]; readonly drops: readonly PaneMoveNodeRef[] } {
   let listed: unknown = null
   try {
     listed = runtime.listTargets()
   } catch {
-    return []
+    return { grips: [], drops: [] }
   }
   const nodes = (listed as { readonly nodes?: unknown } | null | undefined)?.nodes
-  if (!Array.isArray(nodes)) return []
-  const found: { readonly id: string; readonly nodeId: string }[] = []
+  if (!Array.isArray(nodes)) return { grips: [], drops: [] }
+  const grips: PaneMoveNodeRef[] = []
+  const drops: PaneMoveNodeRef[] = []
   for (const entry of nodes as readonly unknown[]) {
     if (entry === null || typeof entry !== 'object') continue
     const nodeId = (entry as { readonly nodeId?: unknown }).nodeId
     if (typeof nodeId !== 'string' || nodeId === '') continue
     const held = authoredPropOf(runtime, nodeId, 'id')
     if (!held.readable || typeof held.held !== 'string') continue
+    if (PANE_MOVE_GRIP_IDS.includes(held.held)) {
+      grips.push({ id: held.held, nodeId })
+      continue
+    }
     if (!PANE_MOVE_DROP_IDS.includes(held.held)) continue
-    found.push({ id: held.held, nodeId })
+    drops.push({ id: held.held, nodeId })
   }
-  return found
+  return { grips, drops }
 }
 
 /** **THE ACT — ONE DROP'S PRESS, AND THE WHOLE PANE RECORD WRITTEN ONCE** (§3 `X1`–`X4`). It is TOTAL: every arm
@@ -2543,12 +2603,18 @@ function installPaneMoveHandler(runtime: Runtime, dropNodeId: string): boolean {
   }
 }
 
-/** **THE DROP'S ONE DOM `click` — THE HUMAN'S ARM** (`attachAddTab`'s form, and ONE listener, not two): the drop is
- *  AUTHORED and never re-minted, so this listener is installed once at boot and no churn can leave a second one behind.
- *  It calls the SAME act the installed body starts (`paneMoveAct`), so a person's press and an agent's dispatch cannot
- *  diverge — one act, two causes (`AL-3`'s instrument, `D-239`). **A NODE THAT WILL NOT RESOLVE OR WILL NOT TAKE A
- *  LISTENER ATTACHES NOTHING AND THROWS NOTHING** (`D-127`). */
-function attachPaneMove(runtime: Runtime, dropNodeId: string): boolean {
+/** **THE DROP'S ONE DOM `click` — THE HUMAN'S PICK, AND STILL A CAUSE OF THE SAME ACT** (`attachAddTab`'s form, and ONE
+ *  listener, not two): the drop is AUTHORED and never re-minted, so this listener is installed once at boot and no churn
+ *  can leave a second one behind. It calls the SAME act the installed body starts (`paneMoveAct`), so a person's press and
+ *  an agent's dispatch cannot diverge — one act, two causes (`AL-3`'s instrument, `D-239`). **IT IS THE PICK ARM AND NOT
+ *  THE DRAG'S**: a grip's four drops are revealed while the grip holds focus, so a press followed by a click on a revealed
+ *  zone overlay still relocates, and the drag below is the second cause of the same `paneMoveAct`. **A PRESS AND A
+ *  RELEASE ARE NOT THIS LISTENER'S** — a `click` is only dispatched when press and release land on one node, and a release
+ *  over a zone is the grip's (`onEnd` below), which is why the two arms cannot both fire for one gesture.
+ *  **A NODE THAT WILL NOT RESOLVE OR WILL NOT TAKE A LISTENER ATTACHES NOTHING AND THROWS NOTHING** (`D-127`); its answer
+ *  is the ELEMENT it attached to, so the drag's target map takes the SAME resolution and the two arms can never name two
+ *  different elements. */
+function attachPaneMove(runtime: Runtime, dropNodeId: string): unknown | null {
   let element: unknown = null
   try {
     element = runtime.elementForNodeId(dropNodeId)
@@ -2556,29 +2622,392 @@ function attachPaneMove(runtime: Runtime, dropNodeId: string): boolean {
     element = null
   }
   const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
-  if (typeof add !== 'function') return false
+  if (typeof add !== 'function') return null
   ;(add as (type: string, handler: () => void) => void).call(element, 'click', (): void => {
     void paneMoveAct(runtime, dropNodeId)
   })
-  return true
+  return element
+}
+
+/** **THE PREVIEW'S TWO DECLARATIONS — WHAT A PERSON SEES WHILE THE DRAG IS IN FLIGHT, AND ON WHICH NODES**
+ *  (`D-246`'s second defect is the reason this is spelled out node by node: a preview written one node away moves
+ *  nothing a person can see).
+ *  **`zone` — THE ZONE THE RECORD WOULD RECEIVE, OUTLINED ON THE ZONE ELEMENT ITSELF.** That element is one of the four
+ *  PAINTED nodes: `paintStyle` hands the engine its `css.style` in `replace` mode (`D-234`), so this declaration is a
+ *  TRANSIENT by construction — the next delivery replaces the zone's whole style and takes it with it, and no delivery
+ *  runs during a gesture (`D-246` measured exactly that on the zone strip's own preview). It is the same node class and
+ *  the same write mechanism as `zonePreviewOf`'s size transient, one property over.
+ *  **`drop` — THE AUTHORED OVERLAY UNDER THE POINTER, FILLED IN.** This element is authored data (`demo-envelope.ts`'s
+ *  four zone overlays), so its base paint is the page sheet's and this inline write only emphasises the one the pointer is
+ *  standing in; removing it restores the sheet's fill with nothing remembered.
+ *  **BOTH ARE CLEARED BY `paneMovePreviewClear` AND NOTHING ELSE, AND THE CLEAR IS BY PROPERTY NAME** — so a realm whose
+ *  `style` cannot set answers the declared no-write arm (`P1`/`P2`'s discipline) and the drag still commits. */
+const PANE_MOVE_PREVIEW: Readonly<Record<'zone' | 'drop', readonly { readonly property: string; readonly text: string }[]>> = {
+  zone: [
+    { property: 'outline', text: '2px solid #2f6fb0' },
+    { property: 'outline-offset', text: '-2px' },
+  ],
+  drop: [{ property: 'background-color', text: 'rgba(47, 111, 176, 0.32)' }],
+}
+
+/** **ONE ELEMENT'S STYLE, AS THE TWO VERBS THE PREVIEW NEEDS, OR `null`** — the guarded resolver every preview write and
+ *  every clear goes through, so a realm with no `style`, a `style` that is not an object, or a member that is not a
+ *  function is the DECLARED NO-WRITE ARM (`D-127`: nothing here throws out of a pointer turn). */
+function paneMoveStyleOf (element: unknown): { readonly set: (property: string, text: string) => void; readonly remove: (property: string) => void } | null {
+  if (element === null || element === undefined || typeof element !== 'object') return null
+  let style: unknown = null
+  try {
+    style = (element as { readonly style?: unknown }).style
+  } catch {
+    return null
+  }
+  if (style === null || style === undefined || typeof style !== 'object') return null
+  let set: unknown
+  let remove: unknown
+  try {
+    set = (style as { readonly setProperty?: unknown }).setProperty
+    remove = (style as { readonly removeProperty?: unknown }).removeProperty
+  } catch {
+    return null
+  }
+  if (typeof set !== 'function' || typeof remove !== 'function') return null
+  return {
+    set: (property: string, text: string): void => {
+      try {
+        ;(set as (property: string, text: string) => void).call(style, property, text)
+      } catch {
+        // a realm that refuses the declaration is the no-write arm: the move is still a move, the record is untouched
+      }
+    },
+    remove: (property: string): void => {
+      try {
+        ;(remove as (property: string) => void).call(style, property)
+      } catch {
+        // the same arm: a refused clear leaves a transient a delivery replaces whole
+      }
+    },
+  }
+}
+
+/** **THE PREVIEW'S ONE WRITER** — both declarations of one kind on one element, by property NAME (`PANE_MOVE_PREVIEW`). */
+function paneMovePreviewWrite(element: unknown, kind: 'zone' | 'drop'): void {
+  const style = paneMoveStyleOf(element)
+  if (style === null) return
+  for (const declaration of PANE_MOVE_PREVIEW[kind]) style.set(declaration.property, declaration.text)
+}
+
+/** **THE PREVIEW'S ONE CLEARER — THE RELEASE, THE CANCEL AND A NEW PRESS ALL END HERE**, and it removes exactly the
+ *  properties the writer set, so nothing is remembered and the authored paint (the overlay's) or the next delivery's
+ *  `css.style` (the zone's) is what stands afterwards. **THIS IS HOW THE PREVIEW IS CLEARED ON RELEASE** (`D-216`'s
+ *  rule: nothing paints without an event — the preview is the DRAG's own transient, written by a pointer event and
+ *  cleared by the pointer event that ends it, and the record's own push paints from there). */
+function paneMovePreviewClear(element: unknown, kind: 'zone' | 'drop'): void {
+  const style = paneMoveStyleOf(element)
+  if (style === null) return
+  for (const declaration of PANE_MOVE_PREVIEW[kind]) style.remove(declaration.property)
+}
+
+/** **THE POINTER'S TWO COORDINATES, OR `null`** — the ONE coordinate read this file takes, total over a primitive event, a
+ *  throwing accessor and a realm that carries no `clientX`/`clientY` (the layout-less shim: `pointerOf`'s own null arm,
+ *  which the drag treats as "a move I cannot measure, which is still a move"). */
+function paneMovePointOf (event: unknown): { readonly x: number; readonly y: number } | null {
+  try {
+    const holder = event as { readonly clientX?: unknown; readonly clientY?: unknown } | null | undefined
+    const x = holder?.clientX
+    const y = holder?.clientY
+    if (typeof x === 'number' && Number.isFinite(x) && typeof y === 'number' && Number.isFinite(y)) return { x, y }
+  } catch {
+    return null
+  }
+  return null
+}
+
+/** **WHICH DECLARED DROP AN ELEMENT IS, OR ITS NEAREST ANCESTOR, OR `null`** — the comparison is OBJECT IDENTITY against
+ *  the elements the graph answered (`elementForNodeId`), never a selector and never an id string read off an attribute:
+ *  the census has already resolved the address book, so a hit is matched to a node the wiring knows by construction. The
+ *  eight-hop ancestor walk exists because `elementFromPoint` answers the DEEPEST element and a drop that gains a child
+ *  would otherwise be invisible; it is bounded, so a tree that answered a cycle cannot spin here. */
+function paneMoveTargetOfHit (hit: unknown, targets: ReadonlyMap<unknown, PaneMoveDropTarget>): PaneMoveDropTarget | null {
+  let candidate = hit
+  for (let hop = 0; hop < 8; hop += 1) {
+    if (candidate === null || candidate === undefined || typeof candidate !== 'object') return null
+    const found = targets.get(candidate)
+    if (found !== undefined) return found
+    let parent: unknown = null
+    try {
+      parent = (candidate as { readonly parentElement?: unknown }).parentElement
+    } catch {
+      return null
+    }
+    if (parent === null || parent === undefined || typeof parent !== 'object') return null
+    candidate = parent
+  }
+  return null
+}
+
+/** **THE DRAG'S TARGET — HOW *"IN THE VICINITY OF A ZONE"* IS ANSWERED, AND BY THE DOM RATHER THAN BY ARITHMETIC ON BOXES**
+ *  (`design-pane-relocation.md` §2 rejected box hit-testing because `getBoundingClientRect` THROWS in the layout-less shim
+ *  — a rejection about MEASURABILITY, not about a hand, so the gesture takes the two arms below and measures nothing).
+ *  **(1) A REALM WITH LAYOUT — THE WINDOW — ASKS THE DOM**: the four authored drops are ZONE-SIZED OVERLAYS while a drag
+ *  is in flight (`demo-envelope.ts`'s `paneMoveDropStyleOf`), so `document.elementFromPoint(x, y)` lands on one of them,
+ *  and the drop is the element it answered. **This is the arm a real pointer needs and no node row can reach** (`D-27`).
+ *  **(2) A REALM WITH NO LAYOUT — THE WHOLE NODE SUITE — TAKES THE EVENT'S OWN `target`**: `elementFromPoint` is a member
+ *  of the DOCUMENT and not of an element, so a shim that carries `document` at all need not carry it, and a row that
+ *  dispatches `pointerdown` at the grip and `pointerup` at a drop hands the drop over as the event's target. **So the
+ *  gesture is drivable where its rows live, and the target is still resolved by DOM identity and never by a box.**
+ *  **NOTHING HERE IS AMBIENT IN A NODE REALM**: `document` is read behind `typeof`, `elementFromPoint` behind a
+ *  `typeof` on the member, and its call behind a `try` — a realm with neither answers `null`, which is the gesture's own
+ *  "no zone under the pointer" arm. */
+function paneMoveDropUnderPointer (event: unknown, targets: ReadonlyMap<unknown, PaneMoveDropTarget>): PaneMoveDropTarget | null {
+  const point = paneMovePointOf(event)
+  const held = typeof document === 'undefined' ? null : (document as unknown as { readonly elementFromPoint?: unknown })
+  let fromPoint: unknown = null
+  try {
+    fromPoint = held === null ? null : held.elementFromPoint
+  } catch {
+    fromPoint = null
+  }
+  if (typeof fromPoint === 'function' && point !== null) {
+    let hit: unknown = null
+    try {
+      hit = (fromPoint as (x: number, y: number) => unknown).call(held, point.x, point.y)
+    } catch {
+      hit = null
+    }
+    // THE DOM'S ANSWER IS THE ANSWER IN A LAYOUT REALM: a hit that is no drop is the pointer standing over no zone.
+    if (hit !== null && hit !== undefined) return paneMoveTargetOfHit(hit, targets)
+  }
+  let own: unknown = null
+  try {
+    own = (event as { readonly target?: unknown } | null | undefined)?.target
+  } catch {
+    return null
+  }
+  return paneMoveTargetOfHit(own, targets)
+}
+
+/** **ONE GRIP'S DRAG: THE PRESS CAPTURES THE POINTER (`D-245`'s fix, on the two grips), THE MOVES DRAW THE PREVIEW, THE
+ *  RELEASE COMMITS THE ONE ACT.** It is installed ONCE per grip at boot on the element the graph resolved for the grip's
+ *  node id, and it takes the four DROP elements this grip addresses as its second arm.
+ *
+ *  **THE CAPTURE IS THIS GESTURE'S WHOLE PREMISE AND IT IS `D-245`'S FIX, MIRRORED LINE FOR LINE FROM
+ *  `captureOnPress`** (the resize handles' own, above in this file): the same `pointerdown`, the same
+ *  `setPointerCapture(event.pointerId)` on the SAME resolved element, and the same three degradations — an element with no
+ *  `setPointerCapture`, a non-number `pointerId` and a throw from either are the DECLARED no-op, so the layout-less shim
+ *  (the whole node suite's realm, `D-27`) behaves as it did before the line and every row that drives this wiring stays
+ *  green. **WHAT IT BUYS HERE IS EXACTLY WHAT IT BOUGHT THE STRIPS**: a grip is `14px` square, the preview changes the
+ *  screen under the pointer, and the four drop targets only exist while the drag does — so without the capture the first
+ *  move that re-lays anything would take the pointer off the grip, the release would miss, and the session's slot would
+ *  latch (`D-245` measured that latch silencing five other handles for the page's life; this turn has no session slot to
+ *  latch, but it has the same lost release, which is the same defect with one fewer casualty).
+ *  **THE PRESS ALSO REVEALS THE DROPS, AND THAT IS STILL NO STATE** (`D-248`): a `pointerdown` on a `tabindex="0"` node
+ *  focuses it in this realm and the page sheet's `:focus-within` rule is what shows the four overlays — the menus'
+ *  mechanism, *"NO STATE, NO TOGGLE AND NO NEW RECORD"*. The drag adds no class, no attribute and no member.
+ *  **THE ARMING DISTANCE KEEPS A CLICK A CLICK** (`PANE_MOVE_ARM_DISTANCE`): the grip's own box stands inside one of its
+ *  own overlays (the menus pane is in the `top` zone), so a press-and-release in place would otherwise commit the zone the
+ *  grip happens to sit in — which is not a gesture a person performed.
+ *  **THE RELEASE COMMITS EXACTLY THE ACT `D-248` MEASURED** — `paneMoveAct(runtime, <the drop's node id>)`, one whole-pane
+ *  write at `['panes', <id>]` at `file`, both figures kept and `bounds` dropped, never through `commitPane` — and the two
+ *  operands are read OFF THE DROP NODE by that act, so the drag supplies a node id and invents no value. **A RELEASE OVER
+ *  NO ZONE WRITES NOTHING AT ALL**: the preview is cleared and the gesture ends where it began — the four overlays stay
+ *  revealed because the grip still holds focus, which is the same screen a plain press on the grip leaves, so nothing
+ *  pretends a placement happened. **A COMMITTED RELEASE BLURS THE GRIP**, which is how the reveal collapses behind the
+ *  act: the preview's own `style` declarations are gone either way, and the overlays are the sheet's to hide.
+ *  **IT WRITES NO RECORD ON ANY MOVE**: the only crossing in this function is the release's, through the act. */
+function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: readonly PaneMoveDropTarget[]): boolean {
+  let element: unknown = null
+  try {
+    element = runtime.elementForNodeId(grip.nodeId)
+  } catch {
+    element = null
+  }
+  const listen = (holder: unknown, type: string, handler: (event: unknown) => void): void => {
+    const add = (holder as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+    if (typeof add !== 'function') return
+    ;(add as (type: string, handler: (event: unknown) => void) => void).call(holder, type, handler)
+  }
+  const byElement = new Map<unknown, PaneMoveDropTarget>()
+  for (const target of targets) if (target.element !== null && target.element !== undefined) byElement.set(target.element, target)
+  /** **THE GESTURE'S ONE STATE — A CLOSURE PER GRIP, so a second grip's drag can neither read nor overwrite the first's.**
+   *  It holds no record, no node and no figure: `pressed` is the pointer's, `armed` is the arming distance's, `press` is
+   *  the coordinate the distance is measured from, and the last two are the PREVIEW's own subjects. */
+  const state: {
+    pressed: boolean
+    armed: boolean
+    press: { readonly x: number; readonly y: number } | null
+    drop: PaneMoveDropTarget | null
+    zone: unknown
+  } = { pressed: false, armed: false, press: null, drop: null, zone: null }
+  /** **THE PREVIEW'S ONE TRANSITION** — the target under the pointer, or `null` for none. It clears the two transient
+   *  writes of the target it is leaving and writes the two of the target it enters, so the screen always carries exactly
+   *  the placement the drag would commit, and the SAME call with `null` is the release's clear. **THE ZONE'S ID IS READ OFF
+   *  THE DROP NODE ON EVERY TRANSITION** (`D-129`'s ask-don't-remember: the value comes from the authored `props.zone`,
+   *  never from a table this closure keeps) and resolved through the graph (`elementForNodeId`, the same read
+   *  `zonePreviewOf` takes). **AND AN UNCHANGED TARGET IS RE-STATED RATHER THAN SKIPPED**: a delivery would replace a
+   *  zone's `css.style` WHOLE (`D-234`) and silently take the outline with it, so a re-write of the same two declarations
+   *  is what keeps the preview from vanishing under a pointer that has not moved — it is idempotent and costs two property
+   *  writes per move. No delivery runs mid-gesture, which is `D-246`'s measurement and not this turn's assumption. */
+  const highlight = (target: PaneMoveDropTarget | null): void => {
+    if (state.drop === target) {
+      if (target === null) return
+      paneMovePreviewWrite(target.element, 'drop')
+      if (state.zone !== null) paneMovePreviewWrite(state.zone, 'zone')
+      return
+    }
+    if (state.drop !== null) paneMovePreviewClear(state.drop.element, 'drop')
+    if (state.zone !== null) paneMovePreviewClear(state.zone, 'zone')
+    state.drop = target
+    state.zone = null
+    if (target === null) return
+    paneMovePreviewWrite(target.element, 'drop')
+    const authored = authoredPropOf(runtime, target.nodeId, 'zone')
+    if (!authored.readable || typeof authored.held !== 'string' || authored.held === '') return
+    let zoneElement: unknown = null
+    try {
+      zoneElement = runtime.elementForNodeId(authored.held)
+    } catch {
+      zoneElement = null
+    }
+    if (zoneElement === null || zoneElement === undefined) return
+    state.zone = zoneElement
+    paneMovePreviewWrite(zoneElement, 'zone')
+  }
+  /** **`D-245`'S FIX, MIRRORED** — the press pins the pointer to this grip for the whole gesture, and every degradation is
+   *  the declared no-op. */
+  const captureOnGripPress = (event: unknown): void => {
+    let pointerId: unknown
+    try {
+      pointerId = (event as { readonly pointerId?: unknown } | null | undefined)?.pointerId
+    } catch {
+      return
+    }
+    if (typeof pointerId !== 'number') return
+    let capture: unknown
+    try {
+      capture = (element as { readonly setPointerCapture?: unknown })['setPointerCapture']
+    } catch {
+      return
+    }
+    if (typeof capture !== 'function') return
+    try {
+      ;(capture as (id: number) => void).call(element, pointerId)
+    } catch {
+      // a realm that refuses the capture is the degradation above: the gesture is unchanged, and so is every later turn
+    }
+  }
+  /** **THE REVEAL'S COLLAPSE AFTER A COMMIT** — `:focus-within` is what shows the four overlays, so the focus is what ends
+   *  it. Total: a realm with no `blur` (the shim) is the same no-op the capture's absence is. */
+  const blurGrip = (): void => {
+    let blur: unknown
+    try {
+      blur = (element as { readonly blur?: unknown })['blur']
+    } catch {
+      return
+    }
+    if (typeof blur !== 'function') return
+    try {
+      ;(blur as () => void).call(element)
+    } catch {
+      // a grip this realm will not blur keeps its reveal; the preview and the record are already settled
+    }
+  }
+  const onPress = (event: unknown): void => {
+    captureOnGripPress(event)
+    state.pressed = true
+    state.armed = false
+    state.press = paneMovePointOf(event)
+    // A NEW GESTURE CLAIMS NO PLACEMENT: whatever the last one left is cleared before this one draws its own.
+    highlight(null)
+  }
+  /** **THE ARMING GATE** — a measurable pointer arms past `PANE_MOVE_ARM_DISTANCE`; a pointer this realm cannot measure
+   *  arms on the first move it hears, because a move is still a move. */
+  const travelArmed = (event: unknown): boolean => {
+    if (state.armed) return true
+    const point = paneMovePointOf(event)
+    if (point === null || state.press === null) {
+      state.armed = true
+      return true
+    }
+    const dx = point.x - state.press.x
+    const dy = point.y - state.press.y
+    if (dx * dx + dy * dy >= PANE_MOVE_ARM_DISTANCE * PANE_MOVE_ARM_DISTANCE) state.armed = true
+    return state.armed
+  }
+  const onMove = (event: unknown): void => {
+    if (!state.pressed) return
+    if (!travelArmed(event)) return
+    highlight(paneMoveDropUnderPointer(event, byElement))
+  }
+  /** **THE RELEASE — THE GESTURE'S ONE CROSSING.** The preview is cleared first and unconditionally, so no arm can leave a
+   *  transient standing; then a resolved drop commits the act and collapses the reveal; then nothing else happens. */
+  const onEnd = (event: unknown): void => {
+    if (!state.pressed) return
+    const target = state.armed ? paneMoveDropUnderPointer(event, byElement) : null
+    state.pressed = false
+    state.armed = false
+    state.press = null
+    highlight(null)
+    if (target === null) return
+    void paneMoveAct(runtime, target.nodeId)
+    blurGrip()
+  }
+  const onCancel = (): void => {
+    state.pressed = false
+    state.armed = false
+    state.press = null
+    highlight(null)
+  }
+  // THE PRESS IS THE GRIP'S ALONE: only a gesture that started on the grip can end in a commit, which is what keeps a
+  // press on a revealed overlay the CLICK arm's (`attachPaneMove`) and never this one's.
+  listen(element, POINTER_TYPES.start, onPress)
+  listen(element, POINTER_TYPES.move, onMove)
+  listen(element, POINTER_TYPES.end, onEnd)
+  listen(element, POINTER_TYPES.cancel, onCancel)
+  // AND THE FOUR DROPS CARRY THE SAME THREE TURNS: in a realm WITH capture these never fire (the pointer is retargeted to
+  // the grip) and in a realm without one they are the gesture's only arm — which is exactly the realm a row drives, where
+  // the release is dispatched AT the drop it means.
+  for (const target of targets) {
+    listen(target.element, POINTER_TYPES.move, onMove)
+    listen(target.element, POINTER_TYPES.end, onEnd)
+    listen(target.element, POINTER_TYPES.cancel, onCancel)
+  }
+  return typeof (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener === 'function'
 }
 
 /** **TURN 6 — `main()`'S ONE BOOT REGISTRATION FOR THE RELOCATION**, taken beside `startAddTab`'s and for its reason: the
  *  grips and their drops are AUTHORED, so they exist as soon as the first envelope loaded and nothing mints,
  *  subscribes or re-attaches. **IT SENDS NO ROUTE AND WRITES NO RECORD**: the act is a press's, so a boot that is never
  *  pressed writes no byte of the pane record and cannot delay or fail `tests/e2e/bundle-boot-seam`'s `B-5` (the
- *  install writes one `handlers` layer per drop — graph bytes with no crossing behind them). **ALL THREE READINGS ARE
- *  RETURNED**, so the boot's one site can say out loud that a drop is missing, took no body or took no listener
- *  (`D-117`). */
-function startPaneMove(runtime: Runtime): { readonly drops: number; readonly installed: number; readonly attached: number } {
-  const drops = paneMoveDropNodeIds(runtime)
+ *  install writes one `handlers` layer per drop — graph bytes with no crossing behind them). **ALL FIVE READINGS ARE
+ *  RETURNED**, so the boot's one site can say out loud that a drop is missing, took no body or took no listener, that a
+ *  GRIP is missing, or that a grip's drag took no listeners (`D-117`). **THE DRAG IS INSTALLED ON THE GRIP'S OWN ELEMENT
+ *  AND TAKES ITS OWN FOUR DROPS** — paired by the envelope's `<grip>-<zone>` spelling, both ends of which stand in this
+ *  file as literals (`PANE_MOVE_GRIP_IDS`, `PANE_MOVE_DROP_IDS`), so a grip whose drops did not resolve installs a drag
+ *  with no target rather than a target belonging to the other pane. */
+function startPaneMove(runtime: Runtime): {
+  readonly grips: number
+  readonly captured: number
+  readonly drops: number
+  readonly installed: number
+  readonly attached: number
+} {
+  const census = paneMoveCensusOf(runtime)
   let installed = 0
   let attached = 0
-  for (const drop of drops) {
+  const targets: PaneMoveDropTarget[] = []
+  for (const drop of census.drops) {
     if (installPaneMoveHandler(runtime, drop.nodeId)) installed += 1
-    if (attachPaneMove(runtime, drop.nodeId)) attached += 1
+    const element = attachPaneMove(runtime, drop.nodeId)
+    if (element === null) continue
+    attached += 1
+    targets.push({ id: drop.id, nodeId: drop.nodeId, element })
   }
-  return { drops: drops.length, installed, attached }
+  let captured = 0
+  for (const grip of census.grips) {
+    const own = targets.filter((target) => target.id.startsWith(`${grip.id}-`))
+    if (installPaneMoveDrag(runtime, grip, own)) captured += 1
+  }
+  return { grips: census.grips.length, captured, drops: census.drops.length, installed, attached }
 }
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the

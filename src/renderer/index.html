@@ -568,23 +568,27 @@
     }
     .gutter-handle:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
 
-    /* THE PANE-MOVE GRIP AND ITS FOUR ZONE DROPS — THE MENUS' OWN MECHANISM, AND NOTHING ELSE
-       (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1; `D-244`'s affordance class). `src/shared/
-       demo-envelope.ts` authors TWO `.pane-grab` grips (`#menus-grab` in the menus pane, `#gutter-grab` in the gutter
-       pane), each carrying `props.tabindex: '0'` and four `.pane-drop` children whose `props` name the pane and the
-       zone a press means. **THE REVEAL IS `:focus-within` AND NOTHING IS STORED**: a click focuses a `tabindex="0"`
-       element and a click elsewhere blurs it, so the drops open on the grip's focus and close on its blur — *"NO
-       STATE, NO TOGGLE AND NO NEW RECORD"*, exactly the four menus' rule above — and THE HIDING IS CSS AND NEVER
-       DELETION, so all eight drops stay in the markup for `provident.dispatch`, `list_targets`, `get_rendered_html`
-       and `get_markdown` while nothing renders them until a grip is focused.
+    /* THE PANE-MOVE GRIP AND ITS FOUR ZONE OVERLAYS — THE MENUS' REVEAL, AND THE DRAG'S TARGETS
+       (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1; `D-244`'s affordance class; the gesture the user
+       asked for: *"click-drag into the vicinity of a zone and it shows a preview of the pane's placement, release causes
+       it to commit"*). `src/shared/demo-envelope.ts` authors TWO `.pane-grab` grips (`#menus-grab` in the menus pane,
+       `#gutter-grab` in the gutter pane), each carrying `props.tabindex: '0'` and four `.pane-drop` children whose `props`
+       name the pane and the zone a drag into them means. **THE REVEAL IS `:focus-within` AND NOTHING IS STORED**: a press
+       focuses a `tabindex="0"` element and a click elsewhere blurs it, so the four overlays open while the grip is held
+       and close when it is let go — *"NO STATE, NO TOGGLE AND NO NEW RECORD"*, exactly the four menus' rule above — and
+       THE HIDING IS CSS AND NEVER DELETION, so all eight drops stay in the markup for `provident.dispatch`,
+       `list_targets`, `get_rendered_html` and `get_markdown` while nothing renders them until a grip holds focus.
+       **THE OVERLAYS' BOX IS THE ENVELOPE'S AND THIS SHEET PAINTS THEM, NEVER PLACES THEM** (the `14px` grip thickness,
+       `cursor: grab` and — for the menus pane only — `D-246`'s `float`/`position: sticky` pin are authored there, and so
+       are the four drops' viewport windows): a `position`, an `inset` or a dimension here would be a second spelling of a
+       node's own `css`, the drift `D-188` debt 2 names. What stands here is the FILL, the border, the centred one-word
+       label and the `z-index` that keeps an overlay above the pane it was opened from — and, on the overlay the pointer is
+       standing in during a drag, one TRANSIENT inline `background-color` written and cleared by `renderer.ts`'s
+       `paneMovePreviewWrite`/`paneMovePreviewClear`, which is the preview's own state and no record's.
        **AND `-webkit-app-region` IS DELIBERATELY NOT DECLARED HERE**: the drag region is the top-bar's alone and both
        grips stand OUTSIDE it — the menus pane in the `top` ZONE below the bar, the gutter pane in the stage's own card
        — so a `no-drag` here would guard against a region the compositor never had, which is the reading
-       `#menus-vertical`'s block above already states for its own strip. **THE GRIP'S BOX IS ITS OWN INLINE `css` AND IS
-       NOT RESTATED HERE** (the `14px` thickness, `cursor: grab`, and — for the menus pane only — the
-       `float`/`position: sticky` pin): this sheet owns the PAINT and the REVEAL, and a box declaration here would be a
-       second spelling of a node's own `css`, the drift `D-188` debt 2 names. The four drops' offsets are authored on
-       the drops for the same reason. */
+       `#menus-vertical`'s block above already states for its own strip. */
     .pane-grab {
       color: #6f7d90;
       border-radius: 3px;
@@ -598,21 +602,32 @@
       transition: background-color 120ms ease, box-shadow 120ms ease;
     }
     .pane-grab:hover, .pane-grab:focus-within { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
-    /* THE DROPS ARE CLOSED UNTIL THE GRIP HOLDS FOCUS, AND THEN THEY ARE FOUR ONE-WORD BOXES BESIDE IT. */
+    /* THE FOUR ZONES ARE CLOSED UNTIL THE GRIP IS HELD, AND THEN THEY ARE FOUR TRANSLUCENT WINDOWS OVER THE LAYOUT. */
     .pane-grab > .pane-drop { display: none; }
     .pane-grab:focus-within > .pane-drop {
-      display: block;
-      color: #1b2430;
-      background-color: #cfd8e2;
-      border: 1px solid #8f9dae;
-      border-radius: 3px;
-      padding: 1px 3px;
-      font-size: 10px;
-      line-height: 12px;
-      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 3;
+      color: #1b2430;
+      background-color: rgba(150, 174, 200, 0.35);
+      border: 2px dashed #6f8ba8;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      user-select: none;
     }
-    .pane-grab > .pane-drop:hover { background-color: #b9c6d4; }
+    .pane-grab > .pane-drop:hover { background-color: rgba(120, 150, 182, 0.5); }
+    /* AND THE OVERLAYS GET THEIR DARK PAIR, THE `D-247` RULE: an unpaired light fill under a dark page is a legibility
+       bug and not a taste one — and an overlay is the one control a person reads WHILE they drag, so it must read. */
+    body:has([theme="dark"]) .pane-grab:focus-within > .pane-drop {
+      color: #e8edf4;
+      background-color: rgba(60, 82, 108, 0.55);
+      border-color: #7d97b4;
+    }
+    body:has([theme="dark"]) .pane-grab > .pane-drop:hover { background-color: rgba(84, 110, 140, 0.6); }
 
     /* THE THEME RULES — PRESENTATION KEYED ON THE AUTHORED ATTRIBUTE, AND THE NAME AND VALUES ARE THE DECLARATION'S,
        NOT THIS STYLESHEET'S CHOICE. `src/shared/theme.ts`'s `applyThemeDeclaration` echoes the CALLER-held name that

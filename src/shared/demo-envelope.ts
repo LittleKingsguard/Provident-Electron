@@ -765,66 +765,93 @@ const GUTTER_PANE_RECORD_ID = 'pane-a'
 
 /** **THE PANE-MOVE GRIP'S ONE HANDLER NAME, THE DECLARED NO-OP BODY BESIDE IT, AND THE FOUR DESTINATIONS**
  *  (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1–§3; `app-envelope` rev 7 §10's `A-10`).
- *  **A GRIP IS A PICK AND NOT A DRAG**, so the grip itself authors NO handler: a press on it only FOCUSES it, and
- *  `:focus-within` (one rule in `src/renderer/index.html`, the menus' own mechanism) is what reveals its four
- *  drops — *"NO STATE, NO TOGGLE AND NO NEW RECORD"* (§1). **THE DROPS ARE THE CONTROLS**, and each authors the
- *  `(name, event)` pair the wiring REPLACES with a live body under the same pair (`TABS_ADD_BODY`'s path, `D-239`):
- *  one shared NAME, because one act serves all eight, and a declared NO-OP body, because an authored string can
- *  reach no record and must not fabricate the act the wiring owns (`D-129`, `D-177`). **THE FOUR DESTINATIONS ARE
- *  ZONE IDS AND NEVER THE STAGE**: `C-9`'s absence rule means the stage is no destination (the design's §7), so the
- *  four literals below are the four DECLARED zone ids, spelled here as the four zone NODES spell them at their own
- *  sites — the equality is a row's business and never a derivation (`D-188` debt 2, `D-41`). */
+ *  **A GRIP IS A DRAG HANDLE, AND ITS FOUR DROPS ARE THE ZONES IT CAN BE DRAGGED INTO** (the user's own words: *"It
+ *  should act as a drag handle — click-drag into the vicinity of a zone and it shows a preview of the pane's placement,
+ *  release causes it to commit to the relocation"*). The grip authors NO handler: a press on it FOCUSES it, the sheet's
+ *  `:focus-within` rule reveals its four overlays (*"NO STATE, NO TOGGLE AND NO NEW RECORD"*), and the renderer's drag
+ *  turn — `renderer.ts`'s `installPaneMoveDrag` — is what reads the pointer, draws the placement preview and commits on
+ *  release. **THE DROPS ARE STILL THE CONTROLS AN AGENT MAY DISPATCH**, and each authors the `(name, event)` pair the
+ *  wiring REPLACES with a live body under the same pair (`TABS_ADD_BODY`'s path, `D-239`): one shared NAME, because one
+ *  act serves all eight, and a declared NO-OP body, because an authored string can reach no record and must not fabricate
+ *  the act the wiring owns (`D-129`, `D-177`). **THE FOUR DESTINATIONS ARE ZONE IDS AND NEVER THE STAGE**: `C-9`'s
+ *  absence rule means the stage is no destination (the design's §7), so the four literals below are the four DECLARED
+ *  zone ids, spelled here as the four zone NODES spell them at their own sites — the equality is a row's business and
+ *  never a derivation (`D-188` debt 2, `D-41`). */
 const PANE_MOVE_HANDLER_NAME = 'pane-move'
 const PANE_MOVE_BODY = `function (ctx) {
   void ctx;
 }`
 const PANE_MOVE_DESTINATIONS: readonly string[] = ['top', 'bottom', 'left', 'right']
-/** **EACH DROP'S ONE-WORD LABEL IS ITS DESTINATION, AND ITS `content` IS THE ONLY STRING ON IT.** */
-const paneMoveDropStyleOf = (row: number): Record<string, string> => ({
-  position: 'absolute',
-  left: '100%',
-  top: `${String(row * 16)}px`,
-  cursor: 'pointer',
-})
+/** **THE FOUR OVERLAY BANDS' TWO FIGURES — THE VIEWPORT'S OWN UNITS, BECAUSE THE ZONES' PIXELS ARE THE RECORD'S.**
+ *  A drop is a **ZONE-SIZED OVERLAY while the grip is pressed**, and this file may not state a zone's extent: that figure
+ *  is `['zones', <id>, 'size']` and the paint's (`D-234`, `D-243`), so an authored pixel band here would be `D-129`'s
+ *  second authority in the exact form `D-174` forbids. What is authored instead is a WINDOW in the viewport's own units
+ *  — *the vicinity of a zone*, which is what the gesture resolves: `top`/`bottom` own a BAND along their edge and
+ *  `left`/`right` own a LANE along theirs. **THE FOUR WINDOWS ARE DISJOINT BY CONSTRUCTION** (`top` and `bottom` take the
+ *  bands, the verticals take the middle of the height), so exactly one overlay is under any pointer and the drag's answer
+ *  is never an ordering accident; the MIDDLE of the window — the stage — belongs to none of them, which is what keeps a
+ *  press elsewhere from being read as a destination. */
+const PANE_MOVE_OVERLAY_BAND = '25vh'
+const PANE_MOVE_OVERLAY_LANE = '20vw'
+/** **EACH DROP'S BOX IS ITS ZONE'S WINDOW, AND ITS `content` IS THE ONLY STRING ON IT.** It is `position: fixed`, so it is
+ *  placed against the VIEWPORT and not against the grip — which is also how a scroller (`#pane-menus`' `overflow-x: auto`,
+ *  `D-243`) cannot carry it: the `position: absolute` this object used to carry put the four drops in a fan beside the
+ *  grip, inside the pane, and a drag cannot resolve a target from a `14px` fan. **WHAT THAT COSTS IS NAMED**: the drops
+ *  lose the absolute-inside-the-grip placement, and with it the grip's own `position` stops being their containing
+ *  block — the grip keeps `D-246`'s pin for the reason `D-248` measured (it is the resize grip's sibling in a scroller),
+ *  but no drop is placed against it any more. Nothing else moves: the nodes, their ids, their classes and their two
+ *  authored operands are the bytes they were. */
+const paneMoveDropStyleOf = (zone: string): Record<string, string> => {
+  const box: Record<string, Record<string, string>> = {
+    top: { top: '0', left: '0', right: '0', height: PANE_MOVE_OVERLAY_BAND },
+    bottom: { bottom: '0', left: '0', right: '0', height: PANE_MOVE_OVERLAY_BAND },
+    left: { top: PANE_MOVE_OVERLAY_BAND, bottom: PANE_MOVE_OVERLAY_BAND, left: '0', width: PANE_MOVE_OVERLAY_LANE },
+    right: { top: PANE_MOVE_OVERLAY_BAND, bottom: PANE_MOVE_OVERLAY_BAND, right: '0', width: PANE_MOVE_OVERLAY_LANE },
+  }
+  return { position: 'fixed', cursor: 'pointer', ...(box[zone] ?? {}) }
+}
 
 /** **ONE PANE-MOVE DROP: AN AUTHORED HANDLER PAIR, TWO AUTHORED OPERANDS, AND NO ARITHMETIC** — the node the
  *  wiring's turn reads `props.pane` and `props.zone` OFF, which is the whole of how *"which zone?"* is answered
- *  (`design-pane-relocation.md` §2). **`props.pane` is the RECORD id its act addresses and `props.zone` the
- *  DECLARED zone id it relocates to**, both rendered as bare attributes, so the act's two operands are DATA with a
- *  node id in the address book (`D-177`, `D-235`) and **NO HIT-TEST IS TAKEN**: `getBoundingClientRect` THROWS in
- *  the layout-less DOM shim, so a box-resolved drop could be measured in no module row at all (§2). `css.id` =
- *  `props.id`, and the `pane-drop` class is the sheet's reveal hook. Reader: that turn's census, and the rendered
- *  markup. */
-function paneMoveDropNodeOf (id: string, paneId: string, zone: string, row: number): Record<string, unknown> {
+ *  (`design-pane-relocation.md` §2) — and, since the gesture is a drag, the ZONE-SIZED OVERLAY the DOM resolves the
+ *  pointer against while the grip is pressed (`renderer.ts`'s `paneMoveDropUnderPointer`: `elementFromPoint` in a window,
+ *  the event's own `target` in a layout-less realm). **`props.pane` is the RECORD id its act addresses and `props.zone`
+ *  the DECLARED zone id it relocates to**, both rendered as bare attributes, so the act's two operands are DATA with a
+ *  node id in the address book (`D-177`, `D-235`) and **NO HIT-TEST MEASURES A BOX**: `getBoundingClientRect` THROWS in
+ *  the layout-less DOM shim, so a rect-resolved drop could be measured in no module row at all (§2) — what the drag reads
+ *  instead is which of these AUTHORED overlays the pointer is standing on. `css.id` = `props.id`, and the `pane-drop`
+ *  class is the sheet's reveal hook. Reader: that turn's census and its drag, and the rendered markup. */
+function paneMoveDropNodeOf (id: string, paneId: string, zone: string): Record<string, unknown> {
   return {
     type: 'div',
-    css: { id, classes: ['pane-drop'], style: paneMoveDropStyleOf(row) },
+    css: { id, classes: ['pane-drop'], style: paneMoveDropStyleOf(zone) },
     props: { id, pane: paneId, zone },
     content: zone,
     handlers: [{ name: PANE_MOVE_HANDLER_NAME, event: 'click', body: PANE_MOVE_BODY }],
   }
 }
 
-/** **ONE PANE-MOVE GRIP AND ITS FOUR DROPS — A PICK, FOCUSABLE, AND THE PANE'S FIRST CHILD** (`design-pane-relocation.md`
- *  rev 1 §1, §7; `app-envelope` rev 7 §10). **`props.tabindex: '0'` IS THE WHOLE MECHANISM** (`demo-envelope.ts`'s
+/** **ONE PANE-MOVE GRIP AND ITS FOUR DROPS — A DRAG HANDLE, FOCUSABLE, AND THE PANE'S FIRST CHILD** (`design-pane-relocation.md`
+ *  rev 1 §1, §7; `app-envelope` rev 7 §10). **`props.tabindex: '0'` IS THE WHOLE REVEAL MECHANISM** (`demo-envelope.ts`'s
  *  four menus carry the same prop for the same reason): the paint writes `props.*` as attributes, so this is the bare
- *  `tabindex="0"` the page sheet keys `.pane-grab:focus-within` on — a click focuses the grip, a click elsewhere
- *  blurs it, and that focus IS the arming. **NO STATE, NO TOGGLE AND NO NEW RECORD.** The glyph is a STATIC authored
- *  string and therefore lawful (the `+`'s own case, `D-239`); the four drops are its CHILDREN so `:focus-within` on
- *  the grip reveals exactly them, and each drop is `position: absolute` against the grip's OWN style — which no
- *  paint writes, because `paintStyle`'s subjects are the zones, the panes and the rows' targets (`D-234`, `D-243`).
+ *  `tabindex="0"` the page sheet keys `.pane-grab:focus-within` on — a press focuses the grip, a click elsewhere blurs it,
+ *  and that focus is what shows the four zone overlays the drag resolves against. **NO STATE, NO TOGGLE AND NO NEW
+ *  RECORD.** The glyph is a STATIC authored string and therefore lawful (the `+`'s own case, `D-239`); the four drops are
+ *  its CHILDREN so `:focus-within` on the grip reveals exactly them, and each drop is a VIEWPORT-FIXED zone window of its
+ *  own (`paneMoveDropStyleOf` above) — no drop is placed against the grip, and the grip's own `css` is unpainted by any
+ *  delivery (`paintStyle`'s subjects are the zones, the panes and the rows' targets — `D-234`, `D-243`).
  *  **THE `-webkit-app-region` THE CHIPS CARRY IS DELIBERATELY ABSENT** (`no-drag`, `C-10`): the drag region is the
  *  top-bar's alone and BOTH panes stand outside it — one in the `top` ZONE below the bar, one in the stage's gutter
  *  card — so a `no-drag` here would guard against a region the compositor never had (the same reading
- *  `src/renderer/index.html` states for `#menus-vertical`). Reader: the sheet's two `.pane-grab` rules and the
- *  rendered markup. */
+ *  `src/renderer/index.html` states for `#menus-vertical`). Reader: the sheet's `.pane-grab` rules, `renderer.ts`'s
+ *  `installPaneMoveDrag`, and the rendered markup. */
 function paneMoveGripNodeOf (id: string, paneId: string, style: Record<string, string>): Record<string, unknown> {
   return {
     type: 'div',
     css: { id, classes: ['pane-grab'], style },
     props: { id, tabindex: '0' },
     content: '⠿',
-    children: PANE_MOVE_DESTINATIONS.map((zone, row) => paneMoveDropNodeOf(`${id}-${zone}`, paneId, zone, row)),
+    children: PANE_MOVE_DESTINATIONS.map((zone) => paneMoveDropNodeOf(`${id}-${zone}`, paneId, zone)),
   }
 }
 
