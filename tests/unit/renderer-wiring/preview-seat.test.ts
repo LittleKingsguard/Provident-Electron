@@ -11,21 +11,33 @@
 // AUTHORED AFTER the `D-30` sweep, so it carries NO `strata:marked-file` marker and GATES (`D-40`): it is UNMARKED, has
 // no carve-out, and is meant to be able to fail — a green here is evidence about a battery, not a re-statement of one.
 //
-// THE HARNESS, AS §8 FIXES IT. A stub runtime answers `elementForNodeId` with THREE element doubles (the affordance's, the
-// target's, and the authored status node's — the two the wiring resolves, plus the node its `applyCommand` sink names) and
-// records its `applyCommand` calls; each double carries `addEventListener`/`getAttribute`/`style`, so the wiring's own
-// event source (`domEventSource`) and its attribute-reading seams are exercised rather than replaced. A stub
-// `window.provident` carries the `view` member (seven routes, each counted — that counting IS the (a)/(b)/(c) reading) and
-// the `data` member the ghost's one read rides. Then `startGutterAffordance(runtime)` is called and a gesture is driven
-// through the doubles' own listeners: `pointerdown` establishes, `pointermove` is an observed move, `pointerup` is the
-// release, `pointercancel` is the cancel.
+// THE HARNESS, AS §8 FIXES IT. A stub runtime answers `elementForNodeId` with an element double for EVERY node id
+// `demoEnvelope()` AUTHORS (minted lazily, one object per id, so the wiring's reads and the rows' `press()`/`moveAt()` speak
+// to the SAME double) and `null` for anything else — so the source this harness models is the graph a boot renders, and a
+// handle the envelope gains needs no edit here (`app-layout`'s `menus-handle-drag`: the wiring went from ONE address to a
+// declared LIST, and a harness holding its own literal copy of that list would be the second answer the list deleted). It
+// RECORDS every read WITH its answer, so "resolved to nothing" is a reading and not an assumption. Each double carries
+// `addEventListener`/`getAttribute`/`style`, so the wiring's own event source (`domEventSource`) and its attribute-reading
+// seams are exercised rather than replaced, and the runtime records its `applyCommand` calls. A stub `window.provident`
+// carries the `view` member (seven routes, each counted — that counting IS the (a)/(b)/(c) reading) and the `data` member
+// the ghost's one read rides. Then `startGutterAffordance(runtime)` is called and a gesture is driven through the STAGE
+// handle's own listeners: `pointerdown` establishes, `pointermove` is an observed move, `pointerup` is the release,
+// `pointercancel` is the cancel.
 //
 // WHAT THIS GREEN IS WORTH (`AGENTS.md`, D-27): the module rows run under no layout and no renderer, so this is
 // envelope-green — the seat's DECISIONS and its two routes, never a rendered surface. The live legs carry no pointer event
 // at all (`§7`), which is exactly why the seat needed a node instrument.
 //
-//   · `PS-1` — a VALID observed move sends ONE `commitDrag(DEFAULT_PANE_ID, {height})` and NO `clearDrag` — the pane's
-//     ADJUSTABLE member, whose NAME is its axis (`D-189`, `D-190`).
+//   · `PS-1` — **EVERY DECLARED HANDLE IS RESOLVABLE, AND THE DECLARATION IS THE ENVELOPE'S** — driven, then, at the stage
+//     handle: a VALID observed move sends ONE `commitDrag(DEFAULT_PANE_ID, {height})` and NO `clearDrag`, the pane's
+//     ADJUSTABLE member, whose NAME is its axis (`D-189`, `D-190`). **THE SUBJECT IS NOT "THE EXACT LIST OF IDS THE WIRING
+//     RESOLVES"** (`app-layout`'s `menus-handle-drag`, this row's re-grain): the wiring now resolves `[gutter-target,
+//     gutter-horizontal, menus-vertical]` because the gesture was generalised into a declared list, and a literal list here
+//     would need editing per handle — a row edited per handle is a row edited carelessly, and a list nobody re-reads is a
+//     list that stops measuring at its second entry. So the row reads the wiring's OWN per-declaration reading
+//     (`handles`), asserts each entry resolved to an ELEMENT and attached, and censuses the declaration against the handles
+//     `demoEnvelope()` AUTHORS — in both directions, with a control proving the census bites. It reds on a declared handle
+//     that fails to resolve, on one that resolves to nothing, and on a declaration and an envelope that disagree.
 //   · `PS-2` — a REVERT sends ONE `clearDrag` and NO `commitDrag`.
 //   · `PS-3` — a SECOND ending turn sends NOTHING — the ONE `clearDrag` the flag owns, and NO `applyCommand` at all: the app
 //     hands the release no sink (`D-129`), so this row's `commands` reading is `0` where the seat's one sink write used to be.
@@ -48,10 +60,115 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createPaneDrag, startGutterAffordance } from '../../../src/renderer/renderer.js'
+import type { PaneGestureReading } from '../../../src/renderer/renderer.js'
 import { createViewClient } from '../../../src/renderer/view-client.js'
 import type { Runtime } from '../../../src/renderer/runtime.js'
-import { DEFAULT_PANE_ID } from '../../../src/shared/view-shape.js'
-import { GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID } from '../../../src/shared/demo-envelope.js'
+import { DECLARED_PANE_IDS, DEFAULT_PANE_ID } from '../../../src/shared/view-shape.js'
+import { demoEnvelope, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID } from '../../../src/shared/demo-envelope.js'
+
+/** **THE CENSUS'S TWO SIDES, BOTH DERIVED AND NEITHER A LITERAL.** The envelope's authored handle nodes are read off
+ *  `demoEnvelope()`'s own DATA at module load, once, so `PS-1` compares the wiring's declaration against the tree a boot
+ *  renders rather than against a second hand-kept copy of the same names — a copy would agree with a wrong list, which is
+ *  `PM-1`'s idiom and its reason. */
+const ENVELOPE_NODES: readonly unknown[] = envelopeNodesOf(demoEnvelope())
+
+/** Every node id the envelope authors (`css.id` and `props.id`, deduplicated) — **THE GRAPH THIS FILE'S STUB ANSWERS FOR**:
+ *  an id here is an element a boot renders, an id it does not carry is an element no boot renders. Read once and shared by
+ *  the census and the harness, so the two cannot disagree about what the envelope authored. */
+const AUTHORED_NODE_IDS: ReadonlySet<string> = new Set(authoredNodeIdsOf(ENVELOPE_NODES))
+
+/** **EVERY OBJECT THE ENVELOPE'S DATA REACHES, IN DOCUMENT ORDER AND EACH ONE ONCE** — the walk both readings below make. It
+ *  descends `children`, a prototype's `component.value` and anything else the literal carries, because a handle authored
+ *  inside any of those is a handle the wiring must carry: a walk that knew the tree's one shape would go blind the day the
+ *  shape moved, which is the failure a census exists to refuse. Cycles are guarded by IDENTITY, never by depth. */
+function envelopeNodesOf(value: unknown): unknown[] {
+  const out: unknown[] = []
+  const seen = new Set<unknown>()
+  const visit = (candidate: unknown): void => {
+    if (candidate === null || typeof candidate !== 'object') return
+    if (seen.has(candidate)) return
+    seen.add(candidate)
+    out.push(candidate)
+    const entries: readonly unknown[] = Array.isArray(candidate)
+      ? candidate
+      : Object.values(candidate as Record<string, unknown>)
+    for (const entry of entries) visit(entry)
+  }
+  visit(value)
+  return out
+}
+
+/** One node's authored ids — `css.id` and `props.id`, the two members the envelope spells the same string into for every
+ *  addressable element (`AGENTS.md`'s UI-authority rule: an element is provident DATA, and its address is authored here). */
+function idsOf(node: unknown): string[] {
+  const holder = node as { readonly css?: { readonly id?: unknown }; readonly props?: { readonly id?: unknown } } | null
+  const out: string[] = []
+  for (const candidate of [holder?.css?.id, holder?.props?.id]) {
+    if (typeof candidate === 'string' && candidate !== '') out.push(candidate)
+  }
+  return out
+}
+
+/** **THE NODE IDS THE ENVELOPE AUTHORS**, deduplicated, in document order. */
+function authoredNodeIdsOf(nodes: readonly unknown[]): string[] {
+  const out: string[] = []
+  for (const node of nodes) for (const id of idsOf(node)) if (!out.includes(id)) out.push(id)
+  return out
+}
+
+/** **THE HANDLES THE ENVELOPE AUTHORS** — a node carrying a `props.axis` STRING, reported by its own id. That member is the
+ *  affordance's `axisOf` seam's one input (`src/shared/demo-envelope.ts`'s `axisOf`, which reads it as the bare `axis`
+ *  attribute); it is what makes a bar a HANDLE rather than a box; and the two authored handles carry it and no other node in
+ *  the tree does (`D-189`, `D-192`) — so it, and not a class token nothing reads, is the marker this census keys on. A node
+ *  carrying an axis and no id is reported as a named problem rather than dropped: an unaddressable handle is one the wiring
+ *  cannot declare. */
+function authoredHandlesOf(nodes: readonly unknown[]): { readonly handles: string[]; readonly problems: string[] } {
+  const handles: string[] = []
+  const problems: string[] = []
+  for (const node of nodes) {
+    const axis = (node as { readonly props?: { readonly axis?: unknown } } | null)?.props?.axis
+    if (typeof axis !== 'string' || axis === '') continue
+    const id = idsOf(node)[0]
+    if (id === undefined) {
+      problems.push(`the envelope authors a handle on the axis ${axis} and spells NO id for it: an unaddressable handle is one the wiring cannot declare`)
+      continue
+    }
+    handles.push(id)
+  }
+  return { handles, problems }
+}
+
+/** **`PS-1`'S CENSUS COMPARATOR — THE DECLARED LIST AGAINST THE ENVELOPE'S AUTHORED HANDLES, AS A SUM OF NAMED PARTS**, in
+ *  both directions and with the duplicate and empty arms that a set comparison cannot see (`pane-node-map.test.ts`'s `PM-1`
+ *  comparator, for the same vacuity reasons). Every line NAMES the handle it is about, so a red is a sentence and not a moved
+ *  count (`D-168`). */
+function handleCensusDivergences(
+  declared: readonly Pick<PaneGestureReading, 'handleId'>[],
+  authored: readonly string[],
+): string[] {
+  const out: string[] = []
+  const declaredIds = declared.map((handle) => handle.handleId)
+  for (const id of authored) {
+    if (declaredIds.includes(id)) continue
+    out.push(`${id} — the envelope authors this HANDLE and \`PANE_DRAG_HANDLES\` carries no entry for it: an authored strip with no gesture is a pressable bar that can never move its pane`)
+  }
+  for (const id of declaredIds) {
+    if (authored.includes(id)) continue
+    out.push(`${id} — \`PANE_DRAG_HANDLES\` declares this handle and the envelope authors NO element under that id: its element cannot resolve, so its affordance is the inert refusal \`D-117\` names`)
+  }
+  for (const id of [...new Set(declaredIds)]) {
+    const times = declaredIds.filter((carried) => carried === id).length
+    if (times > 1) out.push(`${id} — declared by ${String(times)} entries: one authored handle with two entries is two affordances on ONE element, and a SET comparison cannot see it`)
+  }
+  if (authored.length === 0) out.push('the envelope authors NO handle — two empty sides compare equal and prove nothing')
+  if (declaredIds.length === 0) out.push('`PANE_DRAG_HANDLES` declares NO handle — the comparison would pass on nothing at all')
+  return out
+}
+
+/** The divergences a given id is named in — the control reads the reds by NAME rather than by their count. */
+function namedIn(divergences: readonly string[], id: string): readonly string[] {
+  return divergences.filter((line) => line.startsWith(`${id} —`))
+}
 
 /** **THE ELEMENT DOUBLE — the three members §8 fixes, plus the one the event source consults before it will install a
  *  gesture.** `addEventListener`/`removeEventListener` are the wiring's own event source's only surface
@@ -136,7 +253,14 @@ interface SeatOptions {
 }
 
 interface Seat {
-  readonly started: { readonly attached: boolean; readonly renderGhost: () => void }
+  /** **THE WIRING'S OWN READING, WHOLE** — `attached` (the first entry's, as the return contract declares) and `handles`,
+   *  one record per DECLARED entry, in the list's order. `PS-1` reads the declaration through `handles` and never through a
+   *  literal of this file's: a second copy of the list is the second authority the list deleted. */
+  readonly started: {
+    readonly attached: boolean
+    readonly handles: readonly PaneGestureReading[]
+    readonly renderGhost: () => void
+  }
   readonly routes: Routes
   /** **EVERY `applyCommand` THE WIRING MADE** — and after `D-129` that is the READ-OUT'S turn (`renderPaneSize`, this file's
    *  sibling `RS-1`) and nothing in the gesture: the seat's `commit` seam omits `release`'s third argument, so `R3` sends no
@@ -144,6 +268,10 @@ interface Seat {
   readonly commands: unknown[]
   /** Every id the wiring resolved through `elementForNodeId`, in order: the graph read, never a selector. */
   readonly resolved: string[]
+  /** **WHAT THE GRAPH ANSWERED FOR EACH ID IT WAS ASKED FOR** — `null` included, and `has` distinguishes "answered nothing"
+   *  from "was never asked". A resolution list alone cannot tell a handle that resolved from one the runtime was asked
+   *  about and could not place, and "resolves to NOTHING" is the arm `D-117`'s refusal is made of. */
+  readonly answered: ReadonlyMap<string, unknown>
   readonly affordance: ElementDouble
   readonly target: ElementDouble
   readonly status: ElementDouble
@@ -154,8 +282,8 @@ interface Seat {
   cancel(): void
 }
 
-/** **THE HARNESS §8 FIXES, IN ONE PLACE**: the stub runtime, the stub bridge, the three doubles, and the construction.
- *  It is built per row so each row's counters start at zero and no row inherits another's gesture. */
+/** **THE HARNESS §8 FIXES, IN ONE PLACE**: the stub runtime, the stub bridge, the element source, and the construction. It is
+ *  built per row so each row's counters start at zero and no row inherits another's gesture. */
 function seat(options: SeatOptions = {}): Seat {
   const routes: Routes = { commitDrag: [], clearDrag: 0, commitPane: [], dragReads: [] }
   /** **THE `view` MEMBER — seven routes, each counted.** The client reads the ambient member AT CALL TIME, so this object
@@ -199,21 +327,30 @@ function seat(options: SeatOptions = {}): Seat {
   }
   ;(globalThis as Record<string, unknown>)['window'] = { provident: { view, data } }
 
-  const affordance = elementDouble()
-  const target = elementDouble()
-  const status = elementDouble()
-  const elements = new Map<string, ElementDouble>([
-    [GUTTER_AFFORDANCE_ID, affordance],
-    [GUTTER_TARGET_ID, target],
-    [GUTTER_STATUS_ID, status],
-  ])
+  /** **THE ELEMENT SOURCE IS THE ENVELOPE'S GRAPH AND NOT A LITERAL PAIR OF IDS.** A double is minted for every node id
+   *  `demoEnvelope()` AUTHORS — lazily, kept by id, so the wiring's reads and the rows' `press()`/`moveAt()` speak to the
+   *  SAME object — and an id the envelope does not author answers `null`, which is the `attach()`-refused arm `D-117` names.
+   *  **WHY THE AUTHORED SET AND NOT A LIST HERE**: the wiring resolves its handles from `PANE_DRAG_HANDLES`, so a harness
+   *  seeding its own hand-kept list would go stale at the SECOND handle and read as a wiring that resolved nothing — the
+   *  double is the element a boot renders, and where the envelope authors one, a boot renders one. */
+  const elements = new Map<string, ElementDouble>()
+  const elementOf = (id: string): ElementDouble => {
+    const held = elements.get(id)
+    if (held !== undefined) return held
+    const fresh = elementDouble()
+    elements.set(id, fresh)
+    return fresh
+  }
   const commands: unknown[] = []
   const resolved: string[] = []
+  const answered = new Map<string, unknown>()
   const runtime = {
     elementForNodeId(id: string): unknown {
       resolved.push(id)
-      const held = elements.get(id)
-      return held === undefined ? null : held
+      // the ANSWER is recorded with the read: `null` here is a resolution that produced nothing, not an unasked id.
+      const held = AUTHORED_NODE_IDS.has(id) ? elementOf(id) : null
+      answered.set(id, held)
+      return held
     },
     applyCommand(command: unknown): { readonly status: string } {
       commands.push(command)
@@ -221,11 +358,17 @@ function seat(options: SeatOptions = {}): Seat {
     },
   }
   const started = startGutterAffordance(runtime as unknown as Runtime)
+  /** The three doubles the rows name, READ OUT OF THE ONE ELEMENT SOURCE — the same objects the wiring was handed, because
+   *  `elementOf` is keyed by id and every call answers the entry it minted first. */
+  const affordance = elementOf(GUTTER_AFFORDANCE_ID)
+  const target = elementOf(GUTTER_TARGET_ID)
+  const status = elementOf(GUTTER_STATUS_ID)
   return {
     started,
     routes,
     commands,
     resolved,
+    answered,
     affordance,
     target,
     status,
@@ -275,17 +418,115 @@ afterEach(() => {
 const flushed = (): Promise<void> => new Promise<void>((resolve) => { setTimeout(resolve, 0) })
 
 describe('D-145 · `docs/L3/renderer-wiring/design.md` §8 — the seat, driven through `startGutterAffordance`', () => {
-  it('PS-1 — **A VALID OBSERVED MOVE SENDS ONE `commitDrag(DEFAULT_PANE_ID, {size})` AND NO `clearDrag`**: the preview seam\'s `P4` arm is the WHOLE placement change, so the family is written once per observed move, naming the COMPOSITION\'s pane and the CLAMPED value the affordance computed — and an ending there would end the reading the move had just written, which is the shape a `P5`/release route in the move arm would produce', () => {
+  it('PS-1 — **EVERY DECLARED HANDLE IS RESOLVABLE, AND THE DECLARATION IS THE ENVELOPE\'S — and a VALID OBSERVED MOVE then sends ONE `commitDrag(DEFAULT_PANE_ID, {size})` and NO `clearDrag`**: the declaration is read through the wiring\'s OWN per-entry reading (`handles`) and censused against the handles `demoEnvelope()` AUTHORS, so a third handle costs a line in the list and no edit in this row — while a declared handle that fails to resolve, one that resolves to NOTHING, and a list that disagrees with the envelope each red here by NAME. The gesture clause is unchanged: the preview seam\'s `P4` arm is the WHOLE placement change, so the family is written once per observed move, naming the COMPOSITION\'s pane and the CLAMPED value the affordance computed — and an ending there would end the reading the move had just written', () => {
     const live = seat()
+    const declared = live.started.handles
+
+    // ─── (a) THE DECLARATION, READ OFF THE WIRING ────────────────────────────────────────────────────────────────────────
     expect(
       live.started.attached,
       'PS-1 — `attached` is the wiring\'s own reading and the precondition every clause below rides: a REFUSED `attach()` leaves the drag INERT (`D-117`), and a route missing for that reason would be misread here as a seat that never fired',
     ).toBe(true)
     expect(
-      live.resolved,
-      'PS-1 — the two elements the wiring resolves are the graph read, by id and in the order the closure takes them, never a selector or a created element',
-    ).toEqual([GUTTER_AFFORDANCE_ID, GUTTER_TARGET_ID])
+      declared.length,
+      'PS-1 — **the declaration is not EMPTY**: a list the row cannot read is a list it would pass on silence, which is the vacuity this row replaces the old literal with and must not re-introduce',
+    ).toBeGreaterThan(0)
+    expect(
+      declared[0]?.attached,
+      'PS-1 — and the returned `attached` IS the FIRST entry\'s reading, as the return contract declares, so the member every existing reader trusts still names the stage handle (the constant `GESTURE_KEY` used to spell)',
+    ).toBe(live.started.attached)
 
+    // ─── (b) THE GRAPH READ: THE TARGET ONCE, THEN EVERY DECLARED HANDLE, IN DECLARATION ORDER ──────────────────────────
+    // The expected side is DERIVED from the declaration and never spelled here. It is not vacuous: `resolved` is the
+    // runtime's log of what was ASKED, `handles` is the wiring's report of what it DECLARED, and the two are produced by
+    // different turns — so a handle declared and never resolved, resolved twice, or resolved in another order each red
+    // below, and a handle dropped from the list entirely is caught by the census in (d).
+    expect(
+      live.resolved,
+      'PS-1 — the elements the wiring resolves are the graph read, by id and in the order the closure takes them — the composition\'s ONE target first, then one read per declared handle — never a selector and never a created element',
+    ).toEqual([GUTTER_TARGET_ID, ...declared.map((handle) => handle.handleId)])
+
+    // ─── (c) EVERY DECLARED HANDLE, BY NAME: ASKED, ANSWERED AN ELEMENT, AND ATTACHED ──────────────────────────────────
+    for (const handle of declared) {
+      expect(
+        live.answered.has(handle.handleId),
+        `PS-1 — the wiring ASKED the graph for the declared handle ${handle.handleId}: a declaration no read answers is a handle nobody wired`,
+      ).toBe(true)
+      expect(
+        live.answered.get(handle.handleId),
+        `PS-1 — and the graph ANSWERED it an ELEMENT — \`null\` here would be the declared handle ${handle.handleId} resolving to NOTHING, the inert strip \`D-117\` names, whose presses no listener hears`,
+      ).not.toBeNull()
+      expect(
+        handle.attached,
+        `PS-1 — and ${handle.handleId}'s affordance ATTACHED: the element is resolvable AND live, so its gesture is installed rather than merely found`,
+      ).toBe(true)
+    }
+
+    // ─── (d) THE CENSUS: THE DECLARATION AGAINST THE ENVELOPE'S AUTHORED HANDLES, IN BOTH DIRECTIONS ────────────────────
+    const authored = authoredHandlesOf(ENVELOPE_NODES)
+    expect(
+      authored.problems,
+      'PS-1 — every authored handle SPELLS AN ID: a handle on an axis with no address is one the wiring could not declare even if it wanted to',
+    ).toEqual([])
+    expect(
+      authored.handles.length,
+      'PS-1 — the envelope authors at least one handle, so the census has two sides',
+    ).toBeGreaterThan(0)
+    expect(
+      handleCensusDivergences(declared, authored.handles),
+      `PS-1 — **the declared list IS the envelope's authored handles**: each authored handle carries an entry (no authored strip is left without a gesture) and each entry names an authored handle (no declared handle's element is missing), compared as a sum of NAMED parts — ${JSON.stringify(declared.map((handle) => handle.handleId))} against ${JSON.stringify(authored.handles)}`,
+    ).toEqual([])
+    // AND THE PANE SIDE IS THE RECORD'S, NOT THIS FILE'S: an entry naming a pane `view-shape.ts` does not declare would
+    // address a pane no family answers, which the composition would then have to invent a default for.
+    for (const handle of declared) {
+      expect(
+        [...DECLARED_PANE_IDS],
+        `PS-1 — the handle ${handle.handleId} addresses the pane ${handle.paneId}, which \`DECLARED_PANE_IDS\` declares`,
+      ).toContain(handle.paneId)
+    }
+
+    // ─── (e) THE CENSUS CAN BITE — the control, over fixtures in the declaration's own shape ─────────────────────────────
+    // A control reading the tree's own declaration would red beside (d) and hide which arm bit (`PM-3`'s reason for its
+    // fixture domain), so the ids below are NEUTRAL: this arm measures the comparator, never the list.
+    const fixtureDeclaration = [{ handleId: 'handle-a' }, { handleId: 'handle-b' }]
+    const fixtureAuthored = ['handle-a', 'handle-b']
+    expect(
+      handleCensusDivergences(fixtureDeclaration, fixtureAuthored),
+      'PS-1(e) — the comparator PASSES on a declaration that agrees with its envelope: without this arm every red below could be a comparator that only knows how to say no',
+    ).toEqual([])
+    const third = handleCensusDivergences(fixtureDeclaration, [...fixtureAuthored, 'handle-c'])
+    expect(
+      namedIn(third, 'handle-c'),
+      'PS-1(e) — **an authored handle with NO declared entry reds, and is NAMED**: that is a third authored strip the wiring does not carry, the defect `app-layout`\'s `menus-handle-drag` was filed for',
+    ).toHaveLength(1)
+    expect(third, 'PS-1(e) — one divergence and no more: the authored third is the only disagreement').toHaveLength(1)
+    const vanished = handleCensusDivergences(fixtureDeclaration, ['handle-a'])
+    expect(
+      namedIn(vanished, 'handle-b'),
+      'PS-1(e) — and a DECLARED handle the envelope authors nowhere reds, NAMED: its element cannot resolve, which is the `null` arm of (c)',
+    ).toHaveLength(1)
+    const duplicated = handleCensusDivergences([{ handleId: 'handle-a' }, { handleId: 'handle-a' }], ['handle-a', 'handle-b'])
+    expect(
+      namedIn(duplicated, 'handle-a'),
+      'PS-1(e) — a DUPLICATED entry reds even where both SETS agree: two entries on one authored handle are two affordances on one element',
+    ).toHaveLength(1)
+    // THE VACUITY ARMS — one per side, without which a deleted list and an emptied envelope would compare equal.
+    for (const arm of [handleCensusDivergences([], []), handleCensusDivergences([], fixtureAuthored), handleCensusDivergences(fixtureDeclaration, [])]) {
+      expect(
+        arm.length,
+        'PS-1(e) — **an EMPTY side is a divergence**, so two empty sets cannot compare equal and a deleted list cannot pass as an agreed one',
+      ).toBeGreaterThan(0)
+    }
+    expect(
+      handleCensusDivergences([], []).length,
+      'PS-1(e) — both empty sides red TWICE (one term per side), so the vacuity is named on each rather than once',
+    ).toBe(2)
+    expect(
+      handleCensusDivergences([], []).join(' | '),
+      'PS-1(e) — and each of the two empty-side terms says which side it is about, so a reader is told what is missing and not that something is',
+    ).toContain('NO handle')
+
+    // ─── (f) THE GESTURE, DRIVEN AT THE STAGE HANDLE — unchanged by the generalisation ─────────────────────────────────
     live.press()
     live.moveAt(250)
 

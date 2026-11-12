@@ -2,7 +2,7 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
-import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
+import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_AFFORDANCE_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
 import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
@@ -355,6 +355,54 @@ export function driveTabsLandingPage(reading: TabsClientReading, runtime: TabsPa
  *  AFTER the reply. Never triggered by the isolated SecurePanels graph. */
 const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'])
 
+/** **THE GESTURE'S ADDRESS — ONE ENTRY PER AUTHORED HANDLE, AND THE LOOKUP IS A DECLARED LIST RATHER THAN ONE CONSTANT**
+ *  (`D-189`, `D-192`, `D-193`; `app-layout`'s `menus-handle-drag`, the user's report *"Menu pane does not drag when clicking
+ *  and dragging handle"*). **THE DEFECT THIS SHAPE DELETES, MEASURED**: the wiring was SINGLE-ADDRESSED — one
+ *  `elementForNodeId(GUTTER_AFFORDANCE_ID)` and one closure constant naming THAT handle — so the menus pane's authored
+ *  handle (`MENUS_AFFORDANCE_ID`, painted at `D-232`) carried its `axis` attribute and NO GESTURE AT ALL, while the
+ *  envelope's own note claimed the tree's one drag composition was bound to `DEFAULT_PANE_ID`.
+ *
+ *  **THREE MEMBERS, AND WHY THE MEMBER IS NOT ONE OF THEM.** `handleId` is the authored node's id — which is ALSO the
+ *  gesture key every seat of that handle is handed (`move`/`release`/`cancel`) and the id whose element the wiring
+ *  resolves through `Runtime.elementForNodeId`, the graph read and never a selector. `paneId` is the RECORD's key, declared
+ *  once in `src/shared/view-shape.ts`. **THE AXIS MEMBER IS DELIBERATELY ABSENT**: which of a pane's two stored members a
+ *  gesture may move is the pane's own `zone`'s selection (`adjustableMemberNameOf`; `D-189`, `D-191` — the orthogonal one,
+ *  the zone's fixed axis being the fill), read by the composition at this entry's pane id, so a member spelled here would
+ *  be a second answer to a question the record already answers and the two could disagree the moment a `zone` moved.
+ *
+ *  **`sign` IS THE HANDLE'S EDGE AND NOT A TASTE** (`C-13`, `D-189`, `D-192`): `GUTTER_AFFORDANCE_ID` sits at `pane-a`'s
+ *  TOP-RIGHT, so a pointer moving right/down GROWS the figure — the example mapping's `pointer.x - start` is read as it
+ *  stands (`+1`); `MENUS_AFFORDANCE_ID` sits at the menus pane's LEFT EDGE, where the same rightward pointer must SHRINK
+ *  the width, so the same delta is NEGATED (`-1`). One mapping, one sign, and no second arithmetic. */
+export interface PaneGestureAddress {
+  /** The authored handle's own node id — and the gesture key every seat of THIS handle is handed. */
+  readonly handleId: string
+  /** The pane this handle's gesture addresses — the record's own key (`DECLARED_PANE_IDS`). */
+  readonly paneId: string
+  /** `+1` where the handle stands on the pane's TOP-RIGHT edge, `-1` where it stands on the LEFT one. */
+  readonly sign: 1 | -1
+}
+
+/** **THE LIST — A THIRD HANDLE COSTS ONE LINE HERE AND NO SECOND COPY OF THE GESTURE.** Its FIRST entry is the stage's, and
+ *  it is the `GESTURE_KEY` constant this wiring used to spell (`D-138`'s one key becoming one key PER HANDLE, unchanged in
+ *  value for the handle that had one); the second entry is the menus pane's, and it is the whole of the menus handle's
+ *  wiring. The composition is constructed ONCE (`S-9`'s call-site count is unmoved), the affordance mechanism is the
+ *  module's, and nothing about the two entries is duplicated: each costs one closure set and one `attach()` reading. */
+const PANE_DRAG_HANDLES: readonly PaneGestureAddress[] = [
+  { handleId: GUTTER_AFFORDANCE_ID, paneId: DEFAULT_PANE_ID, sign: 1 },
+  { handleId: MENUS_AFFORDANCE_ID, paneId: MENUS_PANE_ID, sign: -1 },
+]
+
+/** **WHAT THE WIRING READ FOR ONE HANDLE** — its authored id, the pane it addresses and whether the affordance ATTACHED. A
+ *  REFUSED `attach()` is the DECLARED silent failure the affordance cannot report itself (`D-117`): the handle is then
+ *  INERT and every later gesture on it is a no-op nobody hears, so the reading is returned for `main()` to say out loud —
+ *  the rule that was applied to the one handle and is now owed to every entry of the list. */
+export interface PaneGestureReading {
+  readonly handleId: string
+  readonly paneId: string
+  readonly attached: boolean
+}
+
 /** THE GUTTER AFFORDANCE'S WIRING (`docs/specs/gutter-ui.md` §2.1 item 8, `§R.1`). FIVE ROLES,
  *  all of them WIRING and none of them UI AUTHORING:
  *   (i) the SESSION is constructed HERE, once, with a `commit` channel that is NOT the
@@ -392,8 +440,15 @@ export function startGutterAffordance (runtime: Runtime): {
    *  with the runtime's own status so a refusal would be a visible reading, and `main()` discarded the
    *  whole return value, so the record had NO reader and the visibility it existed for was never
    *  delivered — a refusal is made visible AT THE TURN THAT TOOK IT, and that turn is `renderPaneSize`'s
-   *  `console.error` now (the sink closure's ONE surviving virtue), as it always was. */
+   *  `console.error` now (the sink closure's ONE surviving virtue), as it always was.
+   *  **IT IS THE FIRST ENTRY'S READING** — `PANE_DRAG_HANDLES`' stage handle, whose `attach()` this member
+   *  has always reported — so every existing reader (and every row measuring this member in a realm where
+   *  only the stage's handle resolves) reads exactly what it read before the list existed. `handles` beside
+   *  it carries the same fact for EVERY entry. */
   readonly attached: boolean
+  /** **EVERY HANDLE'S OWN READING, IN THE LIST'S ORDER** — the per-entry successor of `attached`, one record per
+   *  declaration, so a second handle's refusal is as sayable as the first one's (`D-117`'s rule applied to a list). */
+  readonly handles: readonly PaneGestureReading[]
   /** **THE GHOST TURN, HANDED OUT** (`D-138`, `D-144`; design §1): the composition's `renderGhost` member,
    *  RETURNED rather than called here, because the delivery that drives it is the SHAPE's —
    *  `startViewShape`'s ONE subscription body calls it beside `theme?.apply()`, and `main()` is what
@@ -409,7 +464,9 @@ export function startGutterAffordance (runtime: Runtime): {
    *  next gesture's start figure cannot disagree (`D-117`). */
   readonly renderPaneSize: () => void
 } {
-  const element = runtime.elementForNodeId(GUTTER_AFFORDANCE_ID)
+  // **THE TARGET IS RESOLVED ONCE AND IS THE SAME NODE FOR EVERY ENTRY** (`D-144`): `GUTTER_TARGET_ID` is the element the
+  // ghost's `data-ghost` declaration and the inline preview write to, and it is the COMPOSITION's, not a handle's — the
+  // declaration list names handles and panes and nothing else.
   const target = runtime.elementForNodeId(GUTTER_TARGET_ID)
   const seams = gutterSeamExample()
   const source = domEventSource()
@@ -426,8 +483,13 @@ export function startGutterAffordance (runtime: Runtime): {
    *  **AND IT IS HANDED THE PANE ELEMENT THE GHOST'S DECLARATION LANDS ON** (`D-144`): `target` is this
    *  function's own `elementForNodeId(GUTTER_TARGET_ID)` reading, the element the inline preview writes
    *  to, so the declared transient and the preview's style write land on ONE element and no second
-   *  resolution exists. */
-  const drag = createPaneDrag({ view: getViewClient(), ghostTarget: target }, source)
+   *  resolution exists.
+   *  **AND IT IS HANDED THE LIST** (`app-layout`'s `menus-handle-drag`): `addressing` is how ONE construction serves
+   *  every handle — the gesture key each seat carries names the pane that seat writes, and the element each read is
+   *  handed names its pane the same way, so no second composition, no second route and no second read derivation
+   *  exists. A backing that supplies none of it behaves exactly as it did before the list (the composition's
+   *  `DEFAULT_PANE_ID`), which is what the node batteries and the demo construct. */
+  const drag = createPaneDrag({ view: getViewClient(), ghostTarget: target, addressing: PANE_DRAG_HANDLES }, source)
   const session = createGestureSession({
     source: source as never,
     // (i) THE NON-FORWARDING RECORDER: the session's own channel records and writes nothing, so
@@ -490,12 +552,24 @@ export function startGutterAffordance (runtime: Runtime): {
       // NOTHING ESCAPES THE DELIVERY: a hostile shape or runtime is the reading such a turn leaves standing
     }
   }
-  /** **THE SEAT'S ONE KEY** (`D-138`, ASM-L3-2): ONE closure constant, handed to BOTH drag writes — the
-   *  `commit` seam's `release` and the preview seam's two arms — so the app's ONE gesture is keyed ONE
-   *  way and its ending is reached exactly once. It is the affordance ELEMENT's authored id, the id this
-   *  closure already resolves; the HANDLE the `commit` seam is handed carries a NUMBER `id`, which is why
-   *  the old `gestureIdOf` read retired rather than answering `''`. */
-  const GESTURE_KEY: string = GUTTER_AFFORDANCE_ID
+  /** **THE SEAT'S KEY IS THE HANDLE'S OWN — ONE PER ENTRY OF `PANE_DRAG_HANDLES`** (`D-138`, ASM-L3-2; `app-layout`'s
+   *  `menus-handle-drag`). It was ONE closure constant, `GESTURE_KEY = GUTTER_AFFORDANCE_ID`, handed to BOTH drag writes
+   *  of the app's ONE gesture; the list's FIRST ENTRY IS THAT CONSTANT, unchanged in value (`GUTTER_AFFORDANCE_ID`), and
+   *  the second entry's key is the menus handle's own id. The property the constant had is kept PER HANDLE: the `commit`
+   *  seam's `release` and the preview seam's two arms of one handle are handed the SAME string, so each gesture's ending is
+   *  reached exactly once — and the composition's ending flag is keyed by that string, so two handles cannot suppress each
+   *  other's erase. It is the affordance ELEMENT's authored id, the id this wiring resolves; the HANDLE the `commit` seam is
+   *  handed carries a NUMBER `id`, which is why the old `gestureIdOf` read retired rather than answering `''`. */
+  /** **THE SIZE MAPPING, PER HANDLE AND WITH THE HANDLE'S OWN SIGN** (`C-13`, `D-189`, `D-192`). The example's mapping is
+   *  reused VERBATIM — `pointer.x - start`, the demo's authored figure — and the entry's `sign` decides its coefficient:
+   *  `+1` for the stage's TOP-RIGHT handle, whose rightward pointer grows the figure, and `-1` for the menus pane's LEFT
+   *  edge, where the same rightward pointer must shrink it. Negating the example's expression is exactly that inversion:
+   *  `-(pointer.x - start) = start - pointer.x`, so `d(size)/d(pointer.x)` is `-1` at the left handle and `+1` at the
+   *  right one, with ONE arithmetic and no second mapping. The clamp that follows is the composition's, unchanged. */
+  const sizeFromPointerFor = (handle: PaneGestureAddress) => (pointer: { readonly x: number }, start: number): number => {
+    const example = seams.sizeFromPointer(pointer, start)
+    return handle.sign === 1 ? example : -example
+  }
   /** **THE PREVIEW — THE DECLARED TRANSIENT INLINE-STYLE WRITE ON THE LIVE TARGET** (`§2.5` item 4,
    *  `§3.1` M-12; ADV-GU-2) **AND THE GESTURE'S ONE PREVIEW SEAM** (`D-138`; design §2 `P1`–`P5`). The
    *  as-filed form dispatched the affordance's OWN node through `write(element, …)` — a GRAPH WRITE on
@@ -512,8 +586,11 @@ export function startGutterAffordance (runtime: Runtime): {
    *  `false` is the revert `revertStateFor` builds for all three abandon arms and goes to `drag.cancel`
    *  (whose `E3` sends the ONE `clearDrag`). `valid` is a boolean, so there is no third arm, and no
    *  second listener on the gesture's events is registered here (`D-126`). **THE ORDER IS THE GATE**:
-   *  `P1`/`P2` precede the routes, so a target with no usable `style` sends no route either. */
-  const applyPreview = (state: unknown): void => {
+   *  `P1`/`P2` precede the routes, so a target with no usable `style` sends no route either.
+   *  **AND IT IS ONE CLOSURE SET PER HANDLE** (`app-layout`'s `menus-handle-drag`): the presentation is the same for
+   *  every entry (the composition's ONE target) while the two routes carry THAT entry's key, which is how one seam serves
+   *  two handles without a second discriminator. */
+  const previewFor = (handle: PaneGestureAddress) => (state: unknown): void => {
     const holder = target as { readonly style?: { setProperty?: unknown } } | null | undefined
     if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
     const set = holder.style.setProperty
@@ -522,59 +599,77 @@ export function startGutterAffordance (runtime: Runtime): {
     if (typeof value !== 'number' || !Number.isFinite(value)) return
     ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
     const stateRecord = state as { readonly valid?: unknown } | null | undefined
-    if (stateRecord?.valid === true) drag.move(GESTURE_KEY, state)
-    if (stateRecord?.valid === false) drag.cancel(GESTURE_KEY)
+    if (stateRecord?.valid === true) drag.move(handle.handleId, state)
+    if (stateRecord?.valid === false) drag.cancel(handle.handleId)
   }
-  const affordance = createGutterAffordance({
-    session: session as never,
-    source,
-    element,
-    target,
-    sizeFromPointer: seams.sizeFromPointer,
-    pointerOf: seams.pointerOf,
-    axisOf: seams.axisOf,
-    cursorOf: seams.cursorOf,
-    applyPreview,
-    applyCursor: (el, declaration): void => {
-      const holder = el as { readonly style?: Record<string, unknown> } | null | undefined
-      if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
-      holder.style['cursor'] = declaration === undefined ? '' : declaration
-    },
-    /** **THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE THE SHAPE'S, NOT THE ELEMENT'S** (`D-117`). They were
-     *  `seams.startSizeOf`/`seams.boundsOf` — the authored pane's `size`/`min`/`max` attributes with the
-     *  seam's own `100`/`{0…200}` fallbacks — and NOTHING in this path read `['panes']`. They are the
-     *  composition's now: `readPaneSize`/`readPaneBounds`, answered off the crossing's shape at the pane
-     *  id `paneIdOf` derives from THIS element, with the crossing's MEASURED DEFAULT for a pane the
-     *  family does not name. **AND `startSizeOf` IS THE DEFAULT-SIZE TURN TOO**: the affordance's own
-     *  controller reads its `defaultSizeFor` seam from the establishment answer this one seam produced
-     *  (`P-GU-IM-2`: `startSizeOf` exactly once per gesture), so handing `drag.startSizeOf` hands both
-     *  turns — and **`createPaneDrag`'s own `defaultSizeFor` member is DELETED** (`D-168`) rather than kept
-     *  as a second name over the same closure: the affordance's `options.defaultSizeFor` seam IS the reset
-     *  arm's read, so after the deletion ONE read has ONE name.
-     *  `resizableOf` STAYS the example's: resizability is the authored pane's declaration, not a member
-     *  of the panes family, and the family declares none to read. */
-    startSizeOf: (el: unknown, token: unknown): unknown => drag.startSizeOf(el, token),
-    boundsOf: (el: unknown, token: unknown): unknown => drag.boundsOf(el, token),
-    resizableOf: seams.resizableOf,
-    moveTypeOf: (): unknown => POINTER_TYPES.move,
-    /** **THE COMPOSITION'S ONE END-TURN IS `release`, AND THE APP HANDS IT NO SINK** (`D-117`, `D-138`,
-     *  `D-129`): ONE `commitPane(DEFAULT_PANE_ID, {size})` across the crossing, then its OWN ending of the
-     *  drag family the moves wrote. That is `release`'s own contract at `R4`/`R5` — **`R3` IS STILL THERE AND
-     *  IS STILL FIRST, but this realm passes it NOTHING**, because the read-out it used to author is
-     *  `renderPaneSize`'s now, painted from the delivery (design §5). `release`'s STEPS are unmoved and its third
-     *  parameter is widened to OPTIONAL at `PaneDragSurface`'s own declaration, which is what lets THIS call omit it
-     *  while `demo/pane-drag-demo/demo.ts` — a realm with no crossing and no delivery to paint from — still supplies
-     *  one and still compiles (`D-118`). Two changes and only two: the gesture id it hands the turn is the closure's
-     *  ONE constant `GESTURE_KEY`, never a read of the handle's numeric `id` (`gestureIdOf` is RETIRED), and
-     *  the THIRD ARGUMENT is gone. It stays an INLINE PROPERTY of this literal on purpose:
-     *  `tests/pane-drag-compliance.test.ts`'s `D-117/LIVE-READ` probes this exact form, so hoisting it to a
-     *  `const` would red a gating row. */
-    commit: (gesture, value): void => {
-      drag.release(GESTURE_KEY, value)
-    },
-  })
-  const attached = affordance.attach()
-  return { attached, renderGhost: drag.renderGhost, renderPaneSize }
+  /** **THE LIST, WIRED — ONE AFFORDANCE PER ENTRY AND NOTHING ELSE PER ENTRY** (the user's charter: a third handle costs one
+   *  line). Each affordance is the module's own mechanism over ITS resolved handle element, its own seam set and its own
+   *  key; the session is SHARED, because it is one gesture state machine over a ledger that is keyed by the element each
+   *  `install` was handed (`src/shared/gesture-session.ts`) — so one session serves both handles and one active gesture at a
+   *  time is its declared reading, not a second authority. A handle whose element the graph does not resolve is the one
+   *  refusal the affordance cannot say itself, so `attach()`'s answer is reported per entry. */
+  const handles: PaneGestureReading[] = []
+  for (const handle of PANE_DRAG_HANDLES) {
+    const element = runtime.elementForNodeId(handle.handleId)
+    const affordance = createGutterAffordance({
+      session: session as never,
+      source,
+      element,
+      target,
+      sizeFromPointer: sizeFromPointerFor(handle),
+      pointerOf: seams.pointerOf,
+      axisOf: seams.axisOf,
+      cursorOf: seams.cursorOf,
+      applyPreview: previewFor(handle),
+      applyCursor: (el, declaration): void => {
+        const holder = el as { readonly style?: Record<string, unknown> } | null | undefined
+        if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
+        holder.style['cursor'] = declaration === undefined ? '' : declaration
+      },
+      /** **THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE THE SHAPE'S, NOT THE ELEMENT'S** (`D-117`). They were
+       *  `seams.startSizeOf`/`seams.boundsOf` — the authored pane's `size`/`min`/`max` attributes with the
+       *  seam's own `100`/`{0…200}` fallbacks — and NOTHING in this path read `['panes']`. They are the
+       *  composition's now: `readPaneSize`/`readPaneBounds`, answered off the crossing's shape at the pane
+       *  id `paneIdOf` derives from THIS element — which from the list is the pane the element's handle id
+       *  DECLARES (`DEFAULT_PANE_ID` for the stage's, `MENUS_PANE_ID` for the menus pane's) — with the
+       *  crossing's MEASURED DEFAULT for a pane the family does not name. **AND `startSizeOf` IS THE
+       *  DEFAULT-SIZE TURN TOO**: the affordance's own controller reads its `defaultSizeFor` seam from the
+       *  establishment answer this one seam produced (`P-GU-IM-2`: `startSizeOf` exactly once per gesture),
+       *  so handing `drag.startSizeOf` hands both turns — and **`createPaneDrag`'s own `defaultSizeFor`
+       *  member is DELETED** (`D-168`) rather than kept as a second name over the same closure: the
+       *  affordance's `options.defaultSizeFor` seam IS the reset arm's read, so after the deletion ONE read
+       *  has ONE name.
+       *  `resizableOf` STAYS the example's: resizability is the authored pane's declaration, not a member
+       *  of the panes family, and the family declares none to read. */
+      startSizeOf: (el: unknown, token: unknown): unknown => drag.startSizeOf(el, token),
+      boundsOf: (el: unknown, token: unknown): unknown => drag.boundsOf(el, token),
+      resizableOf: seams.resizableOf,
+      moveTypeOf: (): unknown => POINTER_TYPES.move,
+      /** **THE COMPOSITION'S ONE END-TURN IS `release`, AND THE APP HANDS IT NO SINK** (`D-117`, `D-138`,
+       *  `D-129`): ONE `commitPane(<this handle's pane>, {<the record's member>})` across the crossing, then its
+       *  OWN ending of the drag family the moves wrote. That is `release`'s own contract at `R4`/`R5` — **`R3` IS
+       *  STILL THERE AND IS STILL FIRST, but this realm passes it NOTHING**, because the read-out it used to
+       *  author is `renderPaneSize`'s now, painted from the delivery (design §5). `release`'s STEPS are unmoved
+       *  and its third parameter is widened to OPTIONAL at `PaneDragSurface`'s own declaration, which is what
+       *  lets THIS call omit it while `demo/pane-drag-demo/demo.ts` — a realm with no crossing and no delivery
+       *  to paint from — still supplies one and still compiles (`D-118`). Two changes and only two: the gesture
+       *  id it hands the turn is THIS HANDLE's key — the list's first entry being the old `GESTURE_KEY` constant,
+       *  and never a read of the handle's numeric `id` (`gestureIdOf` is RETIRED) — and the THIRD ARGUMENT is
+       *  gone. It stays an INLINE PROPERTY of this literal on purpose:
+       *  `tests/pane-drag-compliance.test.ts`'s `D-117/LIVE-READ` probes this exact form, so hoisting it to a
+       *  `const` would red a gating row. */
+      commit: (gesture, value): void => {
+        drag.release(handle.handleId, value)
+      },
+    })
+    handles.push({ handleId: handle.handleId, paneId: handle.paneId, attached: affordance.attach() })
+  }
+  /** **`attached` IS THE FIRST ENTRY'S READING** — the stage handle's, which is the reading this member has always
+   *  carried — and `handles` beside it carries one per declaration, so the menus pane's handle has the same sayable
+   *  refusal the gutter card's has (`main()` reads both). */
+  const first = handles[0]
+  const attached = first !== undefined && first.attached
+  return { attached, handles, renderGhost: drag.renderGhost, renderPaneSize }
 }
 
 /** **THE FIVE `data.*` ROUTES' ANSWER SITE IN THIS REALM** (`D-112`; `docs/L2/central-data/interface.md` §5). The arm hands
@@ -1062,6 +1157,15 @@ async function main(): Promise<void> {
   const gutter = startGutterAffordance(runtime)
   if (!gutter.attached) {
     console.error(`[provident-renderer] the gutter affordance did NOT attach — the pane drag is inert (handle ${GUTTER_AFFORDANCE_ID})`)
+  }
+  // ⟶ **AND EVERY HANDLE BESIDE IT IS READ THE SAME WAY** (`app-layout`'s `menus-handle-drag`; `D-117`'s rule applied to a
+  //    list). The menus pane's handle is the entry that had NO gesture at all before this pass — the user's report was
+  //    *"Menu pane does not drag when clicking and dragging handle"* — so a refused `attach()` there is exactly the defect
+  //    coming back, and it is said out loud at the ONE site that can say it. `gutter.attached` above stays the FIRST
+  //    entry's reading, so the message the stage's handle has always produced is unmoved.
+  for (const handle of gutter.handles) {
+    if (handle.handleId === GUTTER_AFFORDANCE_ID || handle.attached) continue
+    console.error(`[provident-renderer] the pane drag did NOT attach — ${handle.paneId} does not drag (handle ${handle.handleId})`)
   }
   // ⟶ **TURN 4 — THE MENUS' ONE BOOT REGISTRATION (`S-11`; `D-181`, `D-196`, `D-209`)** — taken HERE, beside the
   //    affordance's attach, because the menus pane is AUTHORED and nothing mints it: the eighteen static items exist as
@@ -3595,6 +3699,17 @@ export interface PaneDragBacking {
    *  **STRUCTURAL, AND TOTAL OVER EVERY SHAPE**: anything carrying `setAttribute`/`removeAttribute` is used; absent,
    *  hostile or attribute-less means the ghost turn paints nothing, removes nothing and throws nothing (ASM-RW-3). */
   readonly ghostTarget?: unknown
+  /** **THE GESTURE'S ADDRESSES — ONE DECLARATION PER AUTHORED HANDLE** (`app-layout`'s `menus-handle-drag`): the wiring's
+   *  own `PANE_DRAG_HANDLES` list, handed at the ONE construction site beside `view` and `ghostTarget`. **IT IS HOW ONE
+   *  COMPOSITION SERVES EVERY HANDLE WITHOUT A SECOND ONE**, and it answers the two questions a turn cannot ask:
+   *   · the KEY a write turn is handed (`move`/`release`/`cancel`) names the entry's `paneId`, so a `commitDrag` and a
+   *     `commitPane` address the pane THAT handle adjusts and never a hard-coded one;
+   *   · the ELEMENT a read seam is handed carries the entry's `handleId`, so `paneIdOf` reaches the same pane's record —
+   *     which is what makes the pre-drag figure and the bounds pair the RECORD's for a zone-resident pane too.
+   *  **ABSENT IS THE DECLARED DEGRADATION AND IS TODAY'S BEHAVIOUR**: a backing that names nothing answers
+   *  `DEFAULT_PANE_ID` on every arm — exactly what the node batteries and `demo/pane-drag-demo/demo.ts` construct — so no
+   *  existing caller's reading moves. Entries are read structurally and an unreadable one is skipped, never a throw. */
+  readonly addressing?: readonly PaneGestureAddress[]
 }
 
 /** **THE MEMBER ONE PANE'S `zone` MAKES ADJUSTABLE — NAMED ONCE, AND READ BY EVERY TURN THAT ANSWERS OR WRITES A FIGURE**
@@ -3621,7 +3736,7 @@ function adjustableFigureOf(pane: ViewPaneGeometry): number {
  *  source binding at all, and the parameter stands because `backing, source` is the signature both callers (the wiring's
  *  ONE construction, the demo's) are written against, and `domEventSource()` carries no `layout` member to read anyway. */
 export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurface {
-  const backingRecord = (backing ?? null) as { readonly view?: unknown; readonly ghostTarget?: unknown } | null
+  const backingRecord = (backing ?? null) as { readonly view?: unknown; readonly ghostTarget?: unknown; readonly addressing?: unknown } | null
   /** THE SHAPE, where the caller supplied one. `null` is a realm with no crossing: the reads answer the measured default
    *  and every write is the client's `absent` statement, which is the declared degradation and never a throw. */
   const view = (backingRecord?.view ?? null) as ViewClient | null
@@ -3629,6 +3744,33 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  shape at the ONE construction site. STRUCTURAL and never inspected at construction — the ghost turn reads the two
    *  members it needs, per call, and a target carrying neither paints nothing. */
   const ghostTarget = backingRecord?.ghostTarget ?? null
+  /** **THE GESTURE'S ADDRESSES, READ STRUCTURALLY — AN ABSENT OR UNREADABLE LIST IS EMPTY, NEVER A THROW** (`D-95`'s
+   *  total-read discipline applied to a list): an entry that is not a record with a non-empty `handleId` and `paneId` is
+   *  SKIPPED rather than judged, so a hostile list can only ever degrade to the `DEFAULT_PANE_ID` arm below. */
+  const addressing: readonly PaneGestureAddress[] = Array.isArray(backingRecord?.addressing)
+    ? (backingRecord.addressing as readonly unknown[]).filter((entry): entry is PaneGestureAddress => {
+        if (entry === null || typeof entry !== 'object') return false
+        const held = entry as { readonly handleId?: unknown; readonly paneId?: unknown }
+        return typeof held.handleId === 'string' && held.handleId.length > 0 && typeof held.paneId === 'string' && held.paneId.length > 0
+      })
+    : []
+  /** **THE PANE ONE HANDLE'S GESTURE ADDRESSES, OR `null` WHERE THE DECLARATIONS DO NOT NAME IT** — the list's ONE reader,
+   *  consulted by the write turns (through the gesture KEY) and by the read seams (through the ELEMENT's id), so the two
+   *  can never point at different panes (`D-117`'s one-member rule applied to one handle). A find over a declared list and
+   *  never an index signature, which is `PANE_NODE_IDS`' own reason (`D-188` debt 2): a missing key answers absence. */
+  const declaredPaneFor = (handleId: string): string | null => {
+    try {
+      const declared = addressing.find((entry) => entry.handleId === handleId)
+      return declared === undefined ? null : declared.paneId
+    } catch {
+      // A HOSTILE LIST ANSWERS ABSENCE — the same arm an absent one does, and no write.
+      return null
+    }
+  }
+  /** **THE PANE A GESTURE KEY ADDRESSES — AND ITS FALLBACK IS THE DECLARED ONE** (the member's own reason above): a key the
+   *  list does not name is the composition's own pane, which is what every caller that supplies no list means, and what
+   *  the wiring's first entry means too (`GUTTER_AFFORDANCE_ID` → `DEFAULT_PANE_ID`). */
+  const paneOfKey = (key: string): string => declaredPaneFor(key) ?? DEFAULT_PANE_ID
 
   /** **THE CALLER'S OWN PANE ID, AND ITS FALLBACK IS THE *DECLARED* ONE — NEVER A LITERAL OF THIS FILE'S** (`D-138`,
    *  `D-152`). `<id>` is the caller's element/token mapping (§2.1 A) where the element carries an `id` or the token is a
@@ -3637,11 +3779,17 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  the id domain is CLOSED to `DECLARED_PANE_IDS` (derived from that constant) and the route refuses an id it does not
    *  declare (`undeclared-pane`), so a literal here would be a second answer to "which pane does this app address" — and
    *  the two could disagree about it, the failure landing as a gesture turn writing a pane the record no longer declares.
-   *  **THE VALUE IS UNCHANGED** (`DEFAULT_PANE_ID` is `'pane-a'`), so this is one spelling and no behaviour. */
+   *  **THE VALUE IS UNCHANGED** (`DEFAULT_PANE_ID` is `'pane-a'`), so this is one spelling and no behaviour.
+   *  **AND FROM THE LIST IT IS THE PANE THE HANDLE DECLARES** (`app-layout`'s `menus-handle-drag`): an element/token that
+   *  names a HANDLE resolves to that handle's `paneId` first — `GUTTER_AFFORDANCE_ID` answers `pane-a` and
+   *  `MENUS_AFFORDANCE_ID` answers `pane-menus` — so the reads behind `startSizeOf`/`boundsOf`/`release` reach the record
+   *  of the pane the gesture actually adjusts. A name the list does not declare is returned AS GIVEN, which is what every
+   *  caller that supplies no list reads (`D-117/LIVE-READ`'s `'gutter-pane'` token is that arm), and it is why the reads
+   *  and the writes cannot disagree about one handle. */
   const paneIdOf = (element: unknown, token: unknown): string => {
     const viaElement = (element as { readonly id?: unknown } | null | undefined)?.id
-    if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
-    if (typeof token === 'string' && token.length > 0) return token
+    if (typeof viaElement === 'string' && viaElement.length > 0) return declaredPaneFor(viaElement) ?? viaElement
+    if (typeof token === 'string' && token.length > 0) return declaredPaneFor(token) ?? token
     return DEFAULT_PANE_ID
   }
 
@@ -3761,20 +3909,24 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
   const gestures = new Map<string, { readonly erased: boolean }>()
 
   /** **THE PER-MOVE TURN — ONE WRITE TO THE ADDRESS, AND `M1` IS THE TURN'S OWN TOTALITY** (design §2 `M1`–`M3`, `D-138`).
-   *  The affordance's `PreviewState` carries a CLAMPED `value`; this turn reads it and sends ONE `commitDrag(DEFAULT_PANE_ID,
-   *  {size})` naming the composition's pane — no tier, no path, no composer, and no second judgement: a preview whose value
-   *  is not a finite non-negative number sends NOTHING and leaves whatever last stood standing (§3.2 F-8). `M2` clears the
-   *  ending flag FIRST, so a first move RE-OPENS the gesture and the erase gates the ERASE and never the gesture. The sink
-   *  is never touched (SINK-1). */
+   *  The affordance's `PreviewState` carries a CLAMPED `value`; this turn reads it and sends ONE `commitDrag(<the pane the
+   *  KEY addresses>, {<that pane's adjustable member>})` — no tier, no path, no composer, and no second judgement: a preview
+   *  whose value is not a finite non-negative number sends NOTHING and leaves whatever last stood standing (§3.2 F-8). `M2`
+   *  clears the ending flag FIRST, so a first move RE-OPENS the gesture and the erase gates the ERASE and never the gesture.
+   *  The sink is never touched (SINK-1). **THE PANE IS THE KEY'S** (`app-layout`'s `menus-handle-drag`): `paneOfKey` answers
+   *  the declaration that owns this key — the stage's handle its own pane, the menus handle `pane-menus` — and a key the
+   *  declarations do not name is `DEFAULT_PANE_ID`, which is the arm every caller that supplies no list reads. */
   const move = (key: string, preview: unknown): void => {
     try {
       const size = (preview as { readonly value?: unknown } | null | undefined)?.value
       if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) return
       gestures.set(key, { erased: false })
+      const paneId = paneOfKey(key)
       // THE STATEMENT IS READ (`N1`), and the per-turn silence on a null `view` is the construction's one word above.
       // **THE MEMBER IS THE PANE'S ADJUSTABLE ONE AND ITS NAME IS ITS AXIS** (`D-189`, `D-190`): `{height}` for `pane-a`,
-      // the stage-resident pane, so the `['drag']` reading and the release's `file` commit name ONE member.
-      if (view !== null) reportUnreached('the drag move', view.commitDrag(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: size }))
+      // the stage-resident pane, and `{width}` for `pane-menus`, whose `zone` is `top` — so the `['drag']` reading and the
+      // release's `file` commit name ONE member, for whichever pane the key addressed.
+      if (view !== null) reportUnreached('the drag move', view.commitDrag(paneId, { [paneMemberOf(paneId)]: size }))
     } catch {
       // a hostile key, preview or view must never throw out of the move turn
     }
@@ -3813,7 +3965,14 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  members are not numbers is what `clampToBounds` turns into `NaN`, so the move is INVALID (§3.2 F-8) — that arm now
    *  needs a shape the crossing's own admission refused, which is the boundary's business and not this read's.
    *  **TOTAL BY THE SIZE READ'S OWN ARM** (`D-95`): a shape whose bounds read throws answers the measured pair, which is
-   *  what an absent shape answers — the pair is COPIED, so no caller holds `DEFAULT_PANE_BOUNDS`. */
+   *  what an absent shape answers — the pair is COPIED, so no caller holds `DEFAULT_PANE_BOUNDS`.
+   *  **AND A LAWFUL `undefined` IS ANSWERED WITH THAT SAME PAIR** (`D-186`, `D-129`; `app-layout`'s `menus-handle-drag`):
+   *  a ZONE-RESIDENT pane stores NO `bounds` — its clamp is the LAYOUT's — so `paneBoundsOf(MENUS_PANE_ID)` answers
+   *  `undefined` by declaration, and handing that to `clampToBounds` answers `NaN`, which makes EVERY observed move
+   *  INVALID (`§3.2 F-8`) and the handle INERT with the mechanism reporting nothing. The declared pair this read already
+   *  computes for its other two degradation arms is the arm that serves this one, so the three arms of one read answer ONE
+   *  figure (the measured `{min: 0, max: 200}`) and the menus pane's width is clamped into it. **NOTHING IS INVENTED AND THE
+   *  RECORD IS NOT OVERRIDDEN**: a pane that DOES store a pair still answers the record's, verbatim. */
   const readPaneBounds = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
     // `bounds` IS OPTIONAL ON THE ADMITTED RECORD (`D-186`, `D-129`); the measured pair is this read's declared degradation,
@@ -3822,7 +3981,10 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     const fallback = { min: measured.min, max: measured.max }
     if (view === null) return fallback
     try {
-      return view.paneBoundsOf(id)
+      const stored = view.paneBoundsOf(id)
+      // THE LAWFUL ABSENCE AND THE THROWING SHAPE ANSWER ONE PAIR — the declared degradation, never a `NaN`-making `undefined`.
+      if (stored === undefined) return { min: fallback.min, max: fallback.max }
+      return stored
     } catch {
       // A HOSTILE SHAPE MUST NEVER THROW OUT OF THE BOUNDS READ — the absent member's own pair, and no write.
       return { min: fallback.min, max: fallback.max }
@@ -3845,20 +4007,26 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
   const release = (gestureId: string, final: unknown, sink?: unknown): void => {
     try {
       if (typeof final !== 'number' || Number.isNaN(final)) return
-      const standing = readPaneSize({}, DEFAULT_PANE_ID)
+      /** **THE PANE IS THE GESTURE'S KEY'S** (`app-layout`'s `menus-handle-drag`): R2's standing read, the commit and
+       *  the member named below all address the pane the handle DECLARES, so the stage's release is byte-for-byte the
+       *  reading it always was (its key names `DEFAULT_PANE_ID`) and the menus pane's width is committed at
+       *  `['panes', 'pane-menus', 'width']`. */
+      const paneId = paneOfKey(gestureId)
+      const standing = readPaneSize({}, paneId)
       if (typeof standing === 'number' && Number.isFinite(standing)) {
-        const narrowed = clampToBounds(standing, readPaneBounds({}, DEFAULT_PANE_ID))
+        const narrowed = clampToBounds(standing, readPaneBounds({}, paneId))
         if (Number.isNaN(narrowed)) return
       }
       if (typeof sink === 'function') {
         ;(sink as (value: unknown) => unknown).call(null, final)
       }
       // ONE ROUTE, ONE AXIS MEMBER: the id names the pane and the figure lands at the member the pane's own `zone` makes
-      // ADJUSTABLE (`{ height }` for `pane-a`, the stage-resident pane — `D-189`, `D-191`), which is the member the move
-      // wrote at `temp`, so the gesture and the record name one member and nothing translates between them.
+      // ADJUSTABLE (`{ height }` for `pane-a`, the stage-resident pane — `D-189`, `D-191` — and `{ width }` for `pane-menus`,
+      // whose `zone` is `top`), which is the member the move wrote at `temp`, so the gesture and the record name one member
+      // and nothing translates between them.
       // THE STATEMENT IS READ (`N1`) — a write that went nowhere is the only reading this turn will ever have of it. The
       // per-turn silence on a null `view` is the construction's one word above, pointed at rather than repeated.
-      if (view !== null) reportUnreached('the pane commit', view.commitPane(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: final }))
+      if (view !== null) reportUnreached('the pane commit', view.commitPane(paneId, { [paneMemberOf(paneId)]: final }))
       endReading(gestureId)
     } catch {
       // a hostile view or sink must never throw out of the release turn

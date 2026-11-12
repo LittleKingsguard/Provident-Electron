@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 40
-// @body-sha256 6e75abe3c6a6f6fa7b4b3d9332155fc302fdd920d6e569afe400997f56642041
+// @body-sha256 095bfa5dae041e35b3f604cbe9725fdf9b94d775ccc2f748d7a36cdb77bc3781
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
 // @source e7f3564e5831beabef16930462d25d124e30ba710b9a34d1d81e4a8d5bdc5c9c demo/pane-drag-demo/stub-view.ts
@@ -35,7 +35,7 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 9769670d549e42dcee3270c6d4b59ea1c9b050a487ad40503c49dd44090d4b53 src/renderer/renderer.ts
+// @source 92df9f5e9ad36d1f4a49b865fb270e39fe415d7243568e90b922872109794fbc src/renderer/renderer.ts
 // @source 3d3584923f66d936be72029ca46f9a838425aa5345e98026a4499f9252394a73 src/renderer/runtime.ts
 // @source 917e7ac67ad1e3d63f9d9e833cab57febf79bdec751a2bd0b6680de26dc62198 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
@@ -1248,10 +1248,24 @@ function createPaneDrag(backing, source2) {
   const backingRecord = backing ?? null;
   const view = backingRecord?.view ?? null;
   const ghostTarget = backingRecord?.ghostTarget ?? null;
+  const addressing = Array.isArray(backingRecord?.addressing) ? backingRecord.addressing.filter((entry) => {
+    if (entry === null || typeof entry !== "object") return false;
+    const held = entry;
+    return typeof held.handleId === "string" && held.handleId.length > 0 && typeof held.paneId === "string" && held.paneId.length > 0;
+  }) : [];
+  const declaredPaneFor = (handleId) => {
+    try {
+      const declared = addressing.find((entry) => entry.handleId === handleId);
+      return declared === void 0 ? null : declared.paneId;
+    } catch {
+      return null;
+    }
+  };
+  const paneOfKey = (key) => declaredPaneFor(key) ?? DEFAULT_PANE_ID;
   const paneIdOf = (element, token) => {
     const viaElement = element?.id;
-    if (typeof viaElement === "string" && viaElement.length > 0) return viaElement;
-    if (typeof token === "string" && token.length > 0) return token;
+    if (typeof viaElement === "string" && viaElement.length > 0) return declaredPaneFor(viaElement) ?? viaElement;
+    if (typeof token === "string" && token.length > 0) return declaredPaneFor(token) ?? token;
     return DEFAULT_PANE_ID;
   };
   const paneMemberOf = (id) => {
@@ -1305,7 +1319,8 @@ function createPaneDrag(backing, source2) {
       const size = preview?.value;
       if (typeof size !== "number" || !Number.isFinite(size) || size < 0) return;
       gestures.set(key, { erased: false });
-      if (view !== null) reportUnreached("the drag move", view.commitDrag(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: size }));
+      const paneId = paneOfKey(key);
+      if (view !== null) reportUnreached("the drag move", view.commitDrag(paneId, { [paneMemberOf(paneId)]: size }));
     } catch {
     }
   };
@@ -1325,7 +1340,9 @@ function createPaneDrag(backing, source2) {
     const fallback = { min: measured.min, max: measured.max };
     if (view === null) return fallback;
     try {
-      return view.paneBoundsOf(id);
+      const stored = view.paneBoundsOf(id);
+      if (stored === void 0) return { min: fallback.min, max: fallback.max };
+      return stored;
     } catch {
       return { min: fallback.min, max: fallback.max };
     }
@@ -1333,16 +1350,17 @@ function createPaneDrag(backing, source2) {
   const release = (gestureId, final, sink) => {
     try {
       if (typeof final !== "number" || Number.isNaN(final)) return;
-      const standing = readPaneSize({}, DEFAULT_PANE_ID);
+      const paneId = paneOfKey(gestureId);
+      const standing = readPaneSize({}, paneId);
       if (typeof standing === "number" && Number.isFinite(standing)) {
-        const narrowed = clampToBounds(standing, readPaneBounds({}, DEFAULT_PANE_ID));
+        const narrowed = clampToBounds(standing, readPaneBounds({}, paneId));
         if (Number.isNaN(narrowed)) return;
       }
       if (typeof sink === "function") {
         ;
         sink.call(null, final);
       }
-      if (view !== null) reportUnreached("the pane commit", view.commitPane(DEFAULT_PANE_ID, { [paneMemberOf(DEFAULT_PANE_ID)]: final }));
+      if (view !== null) reportUnreached("the pane commit", view.commitPane(paneId, { [paneMemberOf(paneId)]: final }));
       endReading(gestureId);
     } catch {
     }
