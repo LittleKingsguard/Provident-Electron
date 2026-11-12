@@ -5305,3 +5305,28 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **AND ONE STALE FIELD IS NAMED, NOT PATCHED**: **`strata/modules.json`'s `app-envelope` row still reads `endpoints: 19`** while this adds the twenty-first published name — **its owner re-takes it (`D-41`/`D-26`)**, and **nothing in `npm test` reads that field.**
 
 **ITS REGISTER IS `D-71` TO `D-238`** as prose, unchanged and extended by this row only. **This row records a width claim deleted so flex could do its job, a text run fixed by a language fact rather than a selector, a control placed by the mint's own behaviour, and a census term added where it belonged instead of where it was convenient.**
+## D-240 — THE BAR RESERVES THE CONTROL STRIP **AND THE NAME YIELDS**: `env(titlebar-area-width)` belongs on the **bar**, not the row — and the only lever that lets an anonymous text run shrink is `white-space`, measured three ways
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"Scroll happens only after the tab row is covered by the buttons"* — with a screenshot of a 249px window showing the name and the platform's controls crowding over the bar and the chips squeezed to nothing.
+
+**THE `env()` WAS IN THE WRONG ELEMENT FOR TWO ROWS.** `D-239` **deleted** the row's `width: env(titlebar-area-width, 100%)` so flex could compute the remainder — **right** — **and never moved that claim to the element that should hold it**, so **the bar's content ran to the window's edge underneath the controls**. **`getTitlebarAreaRect()` had been saying it all along: `{x: 0, width: 607}` on a 720-wide window, `607 = 720 − 113`** — **`env(titlebar-area-width)` IS the free area with the controls excluded**, and **this seat read past it twice.**
+
+**THE FIX IS ONE DECLARATION, AND `box-sizing` IS WHY IT WORKS.** **`.top-bar { width: env(titlebar-area-width, 100%); box-sizing: border-box }`** — **`border-box` is not decoration**: **the bar's authored padding is `24px`, and without it the border box would be `env()` PLUS its padding and would overrun the free area again by 1.5rem.**
+
+**MEASURED IN A REAL RENDERER OVER CDP** — because **the app's own endpoint grants eight tools and no `eval`, so a computed style is not readable from it** — **and with `window.resizeTo` on the actual window, since Electron's CDP has no `Browser.setWindowBounds` and emulation does not move `env()`.**
+
+| window | bar = `env(...)` | name | row client / scroll | `+` vs free area |
+|---|---|---|---|---|
+| 980 | 867 | 117.78 | 677 / 677 | **855 ≤ 867 ✓** |
+| 560 | 447 | 70.34 | 305 / 510 | **435 ≤ 447 ✓** |
+| 420 | 307 | 65.66 | 169 / 510 | **295 ≤ 307 ✓** |
+| 300 | 187 | 65.66 | 49 / 510 | **175 ≤ 187 ✓** |
+| 249 | 136 | 65.66 | **0** / 510 | **125.66 ≤ 136 ✓** |
+
+**AND THE RESIDUAL WAS THE NAME, SO THE NAME HAD TO YIELD — MEASURED FOUR WAYS.** **At 249 the name run alone was `118px` plus `24px` padding = `142` against a `136px` free area**, so **the row computed zero and the `+` sat under the controls again.** **The name is an ANONYMOUS flex item and `nowrap` made its min-content its whole width, so it could not shrink.** **The levers were tested, not chosen**: **`white-space: normal` drops the run's automatic minimum from its max-content `117.78` to its MIN-CONTENT `65.66` at the hyphen the name carries**, so **it yields first and wraps to two lines inside the 36px strip**; **`overflow: hidden`/`clip` alone does NOT zero an anonymous item's automatic minimum** (name stayed `117.78`, `+` stayed `154..178`); **`min-width: 0` on the bar did nothing**; and **the ellipsis is simply UNAVAILABLE** — **the run's own `overflow` is unreachable, and on the bar `text-overflow` has no other landing place, since the chips and the `+` are element flex items and never inline content** — **so it was removed rather than left dead.** **And a `ch` `max-width` "on the bar's first content" is not expressible without a selector**, which is the same finding as `D-239`'s.
+
+**THE RESIDUAL, STATED**: **below a free area of about `126px` — roughly a `238px` window — one hyphen-piece plus the fixed `72px` of padding, gaps and the `+` exceeds the bar**, and **there the bar clips at its own right edge instead of painting under the controls** — **a clip is the honest failure, because it cannot hide a control the user needs.**
+
+**THE READINGS.** `npm test` **`2,960 passed / 2 skipped` of `2,964`** with **only the two dirty-tree edit-set rows** (`I-12`, `F-9(b)`) red before the commit, **both reading `170`/`170` with the file stashed**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-239`** as prose, unchanged and extended by this row only. **This row records an `env()` finally placed on the element that owns it, a border-box that is load-bearing rather than decorative, four measured levers of which three are dead, and a failure mode chosen because it cannot hide a control.**
