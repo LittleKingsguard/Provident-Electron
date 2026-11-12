@@ -86,21 +86,26 @@
        The element stays graph data — a `.top-bar` / `.tab-row` node authored by the envelope or minted by the graph — so
        nothing here is a DOM this sheet conjured; the sheet dresses nodes it never creates (`AGENTS.md` § "UI authority").
        THE INLINE STYLE WINS ON EVERY PROPERTY IT SETS, so no rule below restates one. `topBarStyle` and `tabsRowStyle` in
-       `src/shared/demo-envelope.ts` already declare `display: flex`, `align-items: center`, `flex: 0 0 36px` and
-       `-webkit-app-region: drag` on the bar, and `-webkit-app-region: no-drag` with
-       `width: env(titlebar-area-width, 100%)` on the row — so this block adds ONLY what the inline css leaves open: a
-       background, a bottom border, an inline padding, `box-sizing` and the NAME's colour and size; and for the row a flex
-       alignment pair, a gap, a height and an `overflow` — never a `width`, which stays the environment value's.
+       `src/shared/demo-envelope.ts` declare `display: flex`, `align-items: center`, `flex: 0 0 36px` and
+       `-webkit-app-region: drag` on the bar, and `width: env(titlebar-area-width, 100%)` — and nothing else — on the row,
+       so this block adds ONLY what the inline css leaves open: a background, a bottom border, an inline padding,
+       `box-sizing` and the NAME's colour and size; and for the row a flex alignment pair, a gap, a height and an
+       `overflow` — never a `width`, which stays the environment value's.
        AND WHY THE ROW NEEDS DRESSING AT ALL: one minted `.tab-row` rendered as the bare word `landing` — a seat with no
        chip, because the sheet had no rule for it. Its marker is the ATTRIBUTE the paint writes, `props.active` →
        `active="true"` / `active="false"`, so `[active="true"]` is the ONLY signal a stylesheet can key on: the paint
        cannot set a class, and a rule for an `active` class would never fire. This rule keys off the painted attribute for
        exactly that reason.
-       AND THE DRAG REGION IS NOT REINTRODUCED: no rule here declares `-webkit-app-region`, so the inline `no-drag` on
-       `#tab-rows` stays authoritative and every chip sits inside that box — a click must reach the row, and `cursor:
-       pointer` is a claim the surrounding `drag` bar CAN falsify. It holds only because the row is inside the no-drag
-       region; whether a press truly lands is compositor behaviour the rendered markup cannot show (the unseeable family
-       `overflow` belongs to, `D-178`).
+       THE DRAG REGION IS NOT REINTRODUCED HERE, AND THAT IS THE FIX RATHER THAN AN ABSENCE: no rule below declares
+       `-webkit-app-region` at all, and the `no-drag` that used to be INLINE ON THIS ROW is gone with it. It blanketed the
+       whole bar — the row's `width` is the environment value, so the no-drag box covered every pixel of it and no pixel
+       was draggable. Chromium computes the region as the elements carrying `drag` MINUS the elements carrying `no-drag`,
+       so the declaration now stands on the CHIPS: it is authored on the row PROTOTYPE's `css` in
+       `src/shared/demo-envelope.ts` (the def-root the mint copies a row's `css` off), which is why it reaches every
+       minted chip and nowhere else. The bar's inline `drag` therefore owns every pixel the chips do not cover, a click
+       still lands on a chip, and `cursor: pointer` is no longer a claim the surrounding bar can falsify. Whether a press
+       truly lands and whether the window truly moves are compositor behaviour the rendered markup cannot show (the
+       unseeable family `overflow` belongs to, `D-178`).
        AND THE NAME MUST NOT WRAP, WHICH IS ONE DECLARATION ON THE BAR AND ONE ON THE ROW: the bar's `content` — the
        application's name — is a flex item of the bar, and `#tab-rows` sat beside it keeping the width the environment
        value gave it, so the NAME was the box that yielded and it wrapped onto two lines. `white-space: nowrap` holds
@@ -197,6 +202,51 @@
       cursor: not-allowed;
     }
 
+    /* THE MENUS PANE'S HANDLE — THE GRIP IS PRESENTATION AND THE NODE IS THE GRAPH'S. `MENUS_AFFORDANCE_ID`
+       (`src/shared/demo-envelope.ts`, the nineteenth published name `'menus-vertical'`) is a real authored node:
+       `class="gutter-handle"`, `axis="menus-vertical"`, `#pane-menus`'s FIRST child, and its inline `css` already
+       carries the two things the design measured — `cursor: col-resize` and the strip's `14px` thickness on the axis the
+       strip spans. IT HAD NO RULE HERE AT ALL, WHICH IS THE DEFECT: `14px` wide, and with no `content` and no height, ZERO
+       TALL — so the pane's reposition handle existed and a person could not see it, let alone find it.
+       **THE DEFECT'S CAUSE IS THE PANE'S FLOW, NOT THE NODE'S MISSING LOOK**: `#pane-menus`'s authored `css` is
+       `height: 100%; overflow-x: auto` and nothing else, so the pane is a BLOCK COLUMN and the 18 menu boxes are its
+       block lines. A strip inside that column that carried a height would push every menu below itself, and a strip that
+       carried none is the invisible one that shipped — so the strip is TAKEN OUT OF THE FLOW (`position: absolute`)
+       and given the pane's OWN height, which leaves the menus' block flow exactly as the record paints it. `#pane-menus`
+       is the containing block (`position: relative`) and its `padding-left` reserves the strip's lane, so the menus sit
+       beside the grip instead of under it; `box-sizing: border-box` keeps the pane's painted `width` the RECORD's figure
+       (`['panes','pane-menus','width']`) with the 14px coming out of the CONTENT — this sheet adds no second width
+       authority, it only spends part of the width the record stated.
+       **THE GRIP ITSELF IS THREE THINGS AND NO FIGURE**: a background, a dotted repeat (`currentColor`, so the dark pair
+       below moves one colour and not the pattern), and an inset line — plus a hover state, because a blank strip is
+       exactly what nobody finds. `flex: 0 0 auto` is carried as the belt the design named even though it is INERT HERE
+       (the pane is a block, not a flex container): the absolute position is what actually holds the strip unsquashed, and
+       the strip's thickness stays the inline `14px`, which no rule below restates.
+       **AND THE BOX IS SCOPED BY ID BECAUSE THE CLASS IS SHARED**: `gutter-handle` is the SHARED styling hook of TWO
+       authored nodes — this strip and `#gutter-horizontal`, the gutter card's own, which is a flex item of `#gutter-pane`
+       (`display: flex`) carrying its placement in its OWN inline `css` (`height: 14px`, `align-self: flex-start`,
+       `margin-left: auto`). An absolute position declared on the CLASS would lift that strip out of its row and pin it to
+       the nearest positioned ancestor — the window — so the BOX declarations stand on `#menus-vertical` and only the PAINT
+       is the class's; the paint costs the sibling nothing (an empty flex item is zero wide) and makes both strips findable.
+       **AND `-webkit-app-region` IS DELIBERATELY NOT DECLARED ON IT**: the drag region is the top-bar's alone, and this
+       strip is NOT inside it — the menus pane stands in the `top` ZONE, below the bar — so a `no-drag` here would guard
+       against a region the compositor never had. The click-drag this strip must keep is the pane's own resize gesture,
+       which no `drag` region above it can steal. */
+    #pane-menus { position: relative; box-sizing: border-box; padding-left: 1.125rem; }
+    #menus-vertical { position: absolute; top: 0; left: 0.125rem; height: 100%; flex: 0 0 auto; }
+    .gutter-handle {
+      color: #6f7d90;
+      border-radius: 3px;
+      background-color: #dfe5ec;
+      background-image: radial-gradient(circle at center, currentColor 0.8px, transparent 1px);
+      background-size: 4px 6px;
+      background-position: center;
+      background-repeat: repeat;
+      box-shadow: inset 0 0 0 1px #c9d2dc;
+      transition: background-color 120ms ease, box-shadow 120ms ease;
+    }
+    .gutter-handle:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
+
     /* THE THEME RULES — PRESENTATION KEYED ON THE AUTHORED ATTRIBUTE, AND THE NAME AND VALUES ARE THE DECLARATION'S,
        NOT THIS STYLESHEET'S CHOICE. `src/shared/theme.ts`'s `applyThemeDeclaration` echoes the CALLER-held name that
        `themeWiringRole` in `src/renderer/renderer.ts` holds, and the consumer applies it as `props.<name>` on the
@@ -216,6 +266,8 @@
     body:has([theme="dark"]) .echo-out { border-color: #3a4654; }
     body:has([theme="dark"]) .menus-menu { background: #1b222b; border-color: #2c3642; }
     body:has([theme="dark"]) .menu-item[disabled="true"] { color: #5d6b7d; border-color: #2c3642; }
+    body:has([theme="dark"]) .gutter-handle { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
+    body:has([theme="dark"]) .gutter-handle:hover { background-color: #3a4654; }
     body:has([theme="dark"]) #status,
     body:has([theme="dark"]) #panes .hint,
     body:has([theme="dark"]) #panes #security-status,

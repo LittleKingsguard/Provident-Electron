@@ -544,7 +544,10 @@ const MENUS_ITEM_BODY = `function (ctx) {
 const TABS_ROW_HOOKS_KIND: Record<string, 'value' | 'component' | 'placement'> = { [TABS_ROWS_ID]: 'placement' }
 
 /** **THE DRAG REGION'S TWO DECLARATIONS AND ONE ABSENCE** (`C-10`, `D-183`, `D-179`): the top-bar DRAGS,
- *  the tabs row does not, and the strip the native controls occupy gets NO NODE and NOTHING — the platform
+ *  the tabs row's own box does NOT carry `no-drag` and its CHIPS do — the declaration stands on the row
+ *  prototype's `css` below, so the mint copies it onto every chip and the bar's `drag` owns every pixel
+ *  the chips do not cover (a `no-drag` on this row blanketed the whole bar and the window could not be
+ *  moved at all) — and the strip the native controls occupy gets NO NODE and NOTHING — the platform
  *  owns its own region, and an authored px inset there would be a figure of the WINDOW rather than of the
  *  app. The bar's `36px` is `D-179`'s MEASURED title-bar area (`[0, 0, 607, 36]`); the row's width is the
  *  overlay's own environment value — `env(titlebar-area-width, 100%)`, MEASURED at `D-193` as `607px` on
@@ -558,7 +561,6 @@ const topBarStyle: Record<string, string> = {
   '-webkit-app-region': 'drag',
 }
 const tabsRowStyle: Record<string, string> = {
-  '-webkit-app-region': 'no-drag',
   width: 'env(titlebar-area-width, 100%)',
 }
 
@@ -1267,13 +1269,23 @@ export function demoEnvelope() {
           // AND THE PROVIDER IS ADDRESSABLE: `props.id` is the prototype's own name (`D-179`'s
           // `prototype-provider` precedent, and `D-199`'s other half), so the def-root has an address a
           // diagnostic can name — beside the `css` it still declares, and with no `css.id` added.
+          // **AND THE CHIPS' `no-drag` STANDS IN THE DEF'S `css` AND NOT BESIDE IT**: the mint copies a
+          // row's `css` off the def-ROOT prototype, which translate mints from `component.value.css`
+          // (`translate.js:665-675`), and `mintRowNode` builds each row as
+          // `css: fields.css ?? shape.css` (`ops.js:477`) — so this one entry is read onto EVERY minted
+          // chip, where the same entry on the node's own `css` would be copied nowhere. It is the chips
+          // that must not drag, never the row's box: a `no-drag` on `#tab-rows` blanketed the whole bar
+          // and the window could not be moved at all.
           {
             type: 'div',
             css: { classes: ['tab-row'] },
             props: { id: TABS_ROW_PROTOTYPE_ID },
             component: {
               reference: TABS_ROW_PROTOTYPE_ID,
-              value: { type: 'div', css: { classes: ['tab-row'] } },
+              value: {
+                type: 'div',
+                css: { classes: ['tab-row'], style: { '-webkit-app-region': 'no-drag' } },
+              },
             },
           },
         ],
