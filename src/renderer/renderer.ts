@@ -955,12 +955,13 @@ export function startGutterAffordance (runtime: Runtime): {
    *  (whose `E3` sends the ONE `clearDrag`). `valid` is a boolean, so there is no third arm, and no
    *  second listener on the gesture's events is registered here (`D-126`). **THE ORDER IS THE GATE**:
    *  `P1`/`P2` precede the routes, so a target with no usable `style` sends no route either.
-   *  **AND IT IS ONE CLOSURE SET PER HANDLE** (`app-layout`'s `menus-handle-drag`): the presentation is the same for
-   *  every entry (the composition's ONE target) while the two routes carry THAT entry's key, which is how one seam serves
-   *  two handles without a second discriminator.
-   *  **AND A PANE'S PRESENTATION IS TWO WRITES SINCE `PP` ABOVE**: the composition's target (byte-unchanged) AND the
-   *  record's own painted element/member — the second being the one a person sees move, because it is the box the
-   *  delivery paints and the release commits. */
+   *  **AND IT IS ONE CLOSURE SET PER HANDLE** (`app-layout`'s `menus-handle-drag`): the two routes carry THAT entry's
+   *  key, which is how one seam serves two handles without a second discriminator.
+   *  **AND A PANE'S PRESENTATION IS `PP` ABOVE PLUS THE COMPOSITION'S TARGET — WHICH IS THE STAGE PANE'S ALONE, SO ONE
+   *  HANDLE MOVES ONE PANE** (`D-251`): the record's own painted element/member is the write EVERY pane handle makes and
+   *  the one a person sees move (it is the box the delivery paints and the release commits), while the composition's
+   *  declared target is `DEFAULT_PANE_ID`'s ghost target and is written by that handle only. Measured before the split: a
+   *  drag on the MENUS strip moved the stage's demo pane from three lines to two in the same stroke. */
   const previewFor = (address: GestureAddress) => (state: unknown): void => {
     // **THE ZONE ARM IS THE ELEMENT WRITE AND NO ROUTE AT ALL** (design §4 `Z5`/`Z7`): the strip's transient is the
     // ZONE's own inline style, so there is no second transient to declare and no `['drag']` seat to send — the pane arm
@@ -969,18 +970,36 @@ export function startGutterAffordance (runtime: Runtime): {
       zonePreviewOf(address, state)
       return
     }
-    const holder = target as { readonly style?: { setProperty?: unknown } } | null | undefined
-    if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
-    const set = holder.style.setProperty
-    if (typeof set !== 'function') return
     const value = (state as { readonly value?: unknown } | null | undefined)?.value
     if (typeof value !== 'number' || !Number.isFinite(value)) return
-    ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
+    // **ONE HANDLE ADJUSTS ONE PANE — AND THE COMPOSITION'S ONE DECLARED TARGET IS `DEFAULT_PANE_ID`'S GHOST TARGET, NOT
+    // A SECOND SUBJECT EVERY HANDLE ALSO WRITES** (`D-251`). Measured through a trusted CDP pointer, one sample per move:
+    // a drag on `menus-vertical` wrote `#pane-menus`'s own member AND `#gutter-target`'s `width` in the same stroke, so the
+    // STAGE's demo pane reflowed (rect `100×44` → `137×28`, its text 3 lines → 2) while the person was resizing the MENUS
+    // pane — the user's report *"the demo pane inside the stage also changes from 1 to 2 lines, indicating that the handle
+    // is changing more than just its own pane"*. `target` is `GUTTER_TARGET_ID`, the element the composition's ghost
+    // declaration and `D-144`'s declared transient land on, and `createPaneDrag` is constructed for `DEFAULT_PANE_ID` (its
+    // ghost turn reads `branch[DEFAULT_PANE_ID]`) — so that element belongs to THE STAGE PANE'S gesture and to no other
+    // handle's. **THE ADDRESS IS THE TEST AND NOT THE ELEMENT'S IDENTITY**: a handle's `subject.id` IS the record key its
+    // figure lands in (`PANE_DRAG_HANDLES`' `paneId`), so a handle whose subject is not the composition's pane skips the
+    // write BY CONSTRUCTION — a third pane handle costs one list entry and writes its own node, and there is no state, no
+    // flag and no boot reading that could leave the two subjects fused again. **THE STAGE ARM IS BYTE-UNCHANGED**: its
+    // write, its gate (`P1`/`P2` precede the routes) and its order are exactly what they were, which is what `PS-2`,
+    // `PS-3` and `PS-4` read.
+    if (address.subject.id === DEFAULT_PANE_ID) {
+      const holder = target as { readonly style?: { setProperty?: unknown } } | null | undefined
+      if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
+      const set = holder.style.setProperty
+      if (typeof set !== 'function') return
+      ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
+    }
     // **`PP` — AND THE PANE THE RECORD PAINTS AND THE RELEASE COMMITS** (`panePreviewOf` above): the element is
     // `nodeIdForPane(<this handle's pane>)` and the member is that pane's `zone`'s selection, so the transient lands on
     // the box a delivery will next paint, from the figure the release will commit. **THE ROUTE ORDER IS UNMOVED**: the
-    // declared target's write above, then this one, then the same two routes on the same `valid` flag — the gesture's
-    // arithmetic, its clamp, its capture and its commit are untouched, and the record is not written until the release.
+    // declared target's write above (the stage handle's alone), then this one, then the same two routes on the same
+    // `valid` flag — the gesture's arithmetic, its clamp, its capture and its commit are untouched, and the record is not
+    // written until the release. **AND IT IS THE ONE WRITE EVERY PANE HANDLE MAKES**: it is the handle's OWN subject, so
+    // the exclusivity above cannot take anything from a handle that is the one being used.
     panePreviewOf(address, value)
     const stateRecord = state as { readonly valid?: unknown } | null | undefined
     if (stateRecord?.valid === true) drag.move(address.handleId, state)
