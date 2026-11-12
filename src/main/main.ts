@@ -42,7 +42,7 @@ import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from 
 // is constructed beside the tab record's, and its six handlers stand beside the tab record's three. It constructs no
 // store and spells no `provident-*.json` literal for one.
 import {createViewSurface} from './view-surface/index.js'
-import {createViewDelivery, viewConstraintDeclarations, viewDeclaredRoots} from './view-record/index.js'
+import {createViewDelivery, viewConstraintDeclarations, viewDeclaredRoots, VIEW_THEME_ADDRESS} from './view-record/index.js'
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_DRAG_COMMIT, IPC_VIEW_DRAG_CLEAR, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
 
 // This entry is emitted as ESM (`dist/main/main.mjs`, the artifact `package.json`'s `main` field
@@ -52,6 +52,41 @@ import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THE
 // unchanged: the `preload:` join in the `BrowserWindow` options, and the renderer-HTML join that
 // builds `rendererHtml` below it (D-41: name the site, never the offset).
 const here = dirname(fileURLToPath(import.meta.url))
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE PLATFORM'S THREE WINDOW CONTROLS ARE `titleBarOverlay`'S OWN, AND NO STYLESHEET CAN REACH THEM (`D-247`'s residual)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **THE PAGE'S `.top-bar` PAIR, TRANSCRIBED HERE — AND THE TRANSCRIPTION IS DEBT, NAMED RATHER THAN HIDDEN.** Electron
+ *  paints the window's minimize/maximize/close ITSELF, in a native layer ABOVE the page, so the sheet's
+ *  `body:has([theme="dark"]) .top-bar` rule cannot reach them and no authoring can: **their colours are `titleBarOverlay`'s
+ *  `color` and `symbolColor`, and they are `main`'s** — which is exactly the residual `D-247` named and left open
+ *  (*"the platform's three window buttons (`titleBarOverlay`, no colour pair — `main`'s)"*).
+ *
+ *  **`main` CANNOT READ THE STYLESHEET**, so the bar's two pairs are copied from that sheet's OWN rules and from nowhere
+ *  else: `.top-bar { background: #fff; color: #1b2430 }` for the light arm and
+ *  `body:has([theme="dark"]) .top-bar { background: #1b222b; border-bottom-color: #2c3642; color: #e8edf4 }` for the dark
+ *  one, the pair `D-247` measured off the screen (`rgb(255,255,255) → rgb(27,34,43)`, ink → `rgb(232,237,244)`). **ONE
+ *  PALETTE IN TWO FILES IS THE DEBT**: a colour that moves in `src/renderer/index.html` must move here in the same edit,
+ *  and the overlay is the one surface where a drift is a user-visible strip rather than a review finding.
+ *  **NO `height` IS SPELT, HERE OR ANYWHERE** (`ASM-L3-3`, `OWED-5`): the strip's figure is the platform's, `D-179`
+ *  measured the free area at `607×36` with the bare boolean, and the bar's own geometry must not move with its paint. */
+const TITLE_BAR_OVERLAY_LIGHT = { color: '#fff', symbolColor: '#1b2430' } as const
+const TITLE_BAR_OVERLAY_DARK = { color: '#1b222b', symbolColor: '#e8edf4' } as const
+
+/** **THE PAIR A RECORD ASKS FOR, READ OFF THE DECLARATION THE PAGE ITSELF PAINTS.** The appearance record carries the
+ *  mechanism's own derivation (`theme-must-stand` writes it, `D-97`) and the renderer applies `declaration.value` — so the
+ *  overlay keys on THE SAME MEMBER the sheet's `[theme="dark"]` keys on, and the two surfaces cannot disagree about what
+ *  "dark" is. **A PLACEHOLDER ANSWERS THE LIGHT PAIR**, which is not a default but the page's own authored ground: the
+ *  removal arm carries no attribute value, so the sheet's base rules stand and the bar is `#fff`. **A FRESH OBJECT EVERY
+ *  CALL** (`viewThemePlaceholder`'s rule), so no caller can move a constant by holding one.
+ *
+ *  **THE MEMBERS ARE STRUCTURAL AND THE RECORD'S TYPE IS NOT IMPORTED**: this reads two members of
+ *  `ViewThemeRecord['declaration']` and nothing else, so the crossing's type stays the crossing's. */
+function titleBarOverlayFor(theme: { readonly declaration: { readonly value: string; readonly removal: boolean } }): { color: string; symbolColor: string } {
+  const dark = theme.declaration.removal === false && theme.declaration.value === 'dark'
+  return dark ? { ...TITLE_BAR_OVERLAY_DARK } : { ...TITLE_BAR_OVERLAY_LIGHT }
+}
 
 /** THE RESERVED SETTINGS TOP-LEVEL NAMES (`docs/specs/store-persist.md` §2.7 item 4 / §2.8
  *  item 4 — the collision rule's set, `NW-10`): a module id colliding with one is REFUSED
@@ -252,7 +287,26 @@ async function main(): Promise<void> {
   // The crossings own their addresses and their handles; this file names none of them and builds no entry (`G-5`, `D-53`).
   // **THE SINK IS THE QUEUE'S `deliver`, TOTAL AND UNINTERPRETED**: an address in, and nothing else.
   const tabsDelivery = createTabsDelivery((address) => tabsDeliveries.deliver(address))
-  const viewDelivery = createViewDelivery((address) => viewDeliveries.deliver(address))
+  // ═══ `A-7` — THE PLATFORM'S THREE BUTTONS ARE REPAINTED WHEN THE APPEARANCE FAMILY ARRIVES (`D-247`'s residual) ═══
+  // **THE SINK BELOW IS THE LISTENER `main` ALREADY HOLDS ON THIS FAMILY**: `viewDelivery.entries` is adopted by the ONE
+  // `createProfileStore` call (`A-3`), and that entry's listener calls this sink for EVERY address the crossing delivers —
+  // so `['theme']` reaches `main` on the same delivery the renderer paints from, and the repaint needs **no new channel, no
+  // new bridge member, no timer, no poll and no boot read applied beside a listener** (`D-216`, `D-247`). The value is
+  // READ, not carried: a delivery hands over an address and never a reading (`D-92`), so the paint asks the record.
+  //
+  // **THE PAINTER IS LATE-BOUND AND THAT IS MEASURED, NOT DEFENSIVE.** The construction's OWN delivery fires INSIDE
+  // `createProfileStore` — before the surface, before `storeHolder.current`, before any window — so a `const` painter
+  // declared further down would be a TDZ throw at that instant. The binding starts as a no-op and the real painter is
+  // assigned where BOTH of its subjects stand (`A-8`, beside the window); a delivery that reaches the no-op is a delivery
+  // no surface and no window could have served.
+  let repaintTitleBarOverlay: () => void = () => {}
+  const viewDelivery = createViewDelivery((address) => {
+    // THE PUSH FIRST, THE OVERLAY SECOND, AND THE ORDER IS THE POINT: the realm's re-read is what the delivery owes it, and
+    // this sink runs inside the entry's own contained turn (`D-124`) — so a repaint that failed after the push costs the
+    // buttons alone instead of the renderer's whole signal.
+    viewDeliveries.deliver(address)
+    if (address.length === VIEW_THEME_ADDRESS.length && address[0] === VIEW_THEME_ADDRESS[0]) repaintTitleBarOverlay()
+  })
 
   // ═══ `A-4` — THE SECURE CROSSING'S TWO PUSH LOOPS, HOISTED FOR THE SAME REASON THE TWO CROSSINGS' ARE (`A-1`), AND THEIR
   // PENDING SETS BUILT BEFORE THE SURFACE (`D-222`) ═══
@@ -935,6 +989,16 @@ async function main(): Promise<void> {
   // order the creation delivered them (`D-104`, `D-106`). Each set clears whether or not it held anything, so a realm that
   // reloads is owed no second creation delivery and the next change reaches it immediately. **THIS RATIONALE STANDS OUTSIDE
   // THE BODY FOR THE SAME REASON THE ONE ABOVE DOES**: the row reads the body, and the body carries no exclusion token.
+  //
+  // ═══ `A-7` — THE PLATFORM'S THREE BUTTONS ARE REPAINTED ON THIS SAME ARRIVAL, AND THIS TURN IS THE CREATION'S OWN
+  // APPEARANCE DELIVERY (`D-247`'s residual; `A-7` at the sink is the live half) ═══
+  // The two arms above are where the construction's held deliveries become one push to the realm; the window exists from
+  // here on, so this is the FIRST instant at which the record's pair can reach `titleBarOverlay`'s native buttons. **NO
+  // TIMER, NO POLL AND NO SECOND READ PATH**: it is the flush's turn, the same arrival the renderer's own re-read turns on —
+  // so a WARM profile (a record already stating `dark`, no click at all) paints its buttons here rather than waiting for a
+  // theme change that may never come, and a reloaded realm is owed the same turn for the reason `arm` is unconditional
+  // (`D-219`, `D-216`). It runs LAST, after both flushes, so no existing arrival's order moves (`A-6`'s clause (2), read at
+  // its own body). **AND IT STANDS OUTSIDE THIS BODY'S RATIONALE FOR THE REASON ABOVE**: the row reads the body.
   ipcMain.on(IPC_READY, () => {
     backend.markReady()
     // ═══ `A-5` — THE FLUSH RIDES THE REALM'S ARRIVAL, NOT `attachWindow` (`D-219` (i), `D-218`; §4) ═══
@@ -950,6 +1014,8 @@ async function main(): Promise<void> {
     // `A-6` — the secure crossing's two pending sets, beside the two arms and after `markReady()` (rationale outside the body).
     moduleChanged.flush()
     securityChanged.flush()
+    // `A-7` — the appearance repaint rides this same arrival (its rationale stands outside the body, as above).
+    repaintTitleBarOverlay()
     console.error('[provident-main] renderer ready — MCP backend armed')
   })
   ipcMain.on(IPC_REPLY, (_event, reply: RpcReply) => {
@@ -1004,13 +1070,19 @@ async function main(): Promise<void> {
   const win = new BrowserWindow({
     width: 980,
     height: 720,
-    // ═══ ONE OPTION PAIR, ON THE ONE WINDOW, AND NOTHING ELSE IN THIS LITERAL MOVES (`S-3`, `C-1`, `D-179`) ═══
-    // The platform draws its own window controls OVER the page and the page owns the whole window; the bare `true`
-    // leaves colour, symbol colour and height to the platform, because no authored figure stands beside its chrome
-    // (`ASM-L3-3`, `OWED-5`). Measured working on this host's own binary (`D-179`): overlay `visible`, a `607x36` free
-    // strip and the page owning the window. No authored control, no `frame`, no window IPC: those are `D-178` §2's.
+    // ═══ ONE OPTION PAIR, ON THE ONE WINDOW, AND NOTHING ELSE IN THIS LITERAL MOVES (`S-3`, `C-1`, `D-179`, `D-247`) ═══
+    // The platform draws its own window controls OVER the page and the page owns the whole window. **AND THE OBJECT IS THE
+    // SHEET'S OWN BASE PAIR, NOT AN AUTHORED FIGURE** (`A-7`, `D-247`): the bare `true` this literal carried left colour and
+    // symbol colour to the platform, which is precisely the strip the user reported — three LIGHT buttons over a dark bar,
+    // native and unreachable from any stylesheet. `BrowserWindow` takes `true` or `{color, symbolColor}` in the installed
+    // `44.4.5` typings, and `win.setTitleBarOverlay(...)` moves the pair at runtime, so the pair that stands HERE is what the
+    // page shows at this instant: **no `theme` attribute has been painted yet, because only a DELIVERY applies one**
+    // (`D-97`, `D-98`), so the sheet's base rules are the page's ground and the overlay starts on the same `#fff`. The
+    // record's own pair replaces it on the delivery that paints the page dark (`A-8`), so the bar and its buttons move
+    // together rather than one being right and the other a theme late. No `height` — the bar's own geometry is the
+    // platform's (`ASM-L3-3`). Still no authored control, no `frame`, no window IPC: those are `D-178` §2's.
     titleBarStyle: 'hidden',
-    titleBarOverlay: true,
+    titleBarOverlay: { ...TITLE_BAR_OVERLAY_LIGHT },
     webPreferences: {
       preload: join(here, 'preload.cjs'),
       contextIsolation: true,
@@ -1018,6 +1090,28 @@ async function main(): Promise<void> {
     },
   })
   backend.attachWindow(win)
+
+  // ═══ `A-8` — THE PAINTER, ASSIGNED WHERE BOTH OF ITS SUBJECTS STAND: THE RECORD AND THE WINDOW (`D-247`) ═══
+  // It reads the appearance family through the surface's own route — a READ, which writes nothing (`D-82` clause 4) —
+  // and writes the platform's two colours. **THE DESTROYED GUARD IS THE PUSH LOOPS' OWN** (`A-1`): a delivery can land
+  // between the window's close and the app's quit, and `setTitleBarOverlay` on a destroyed window throws. The repaint runs
+  // AFTER the push (`A-7`), so a throw here would still have cost only the buttons; the guard is what keeps it from costing
+  // even those quietly.
+  repaintTitleBarOverlay = (): void => {
+    if (win.isDestroyed()) return
+    const theme = viewSurface.read().theme
+    const pair = titleBarOverlayFor(theme)
+    win.setTitleBarOverlay(pair)
+    // **AND THE CALL IS LOGGED, BECAUSE IT IS THE ONLY SELF-REPORT THIS SURFACE CAN MAKE.** The installed `44.4.5` typings
+    // expose `setTitleBarOverlay` and **NO `getTitleBarOverlay` AT ALL** — there is no reading of the pair once set — and
+    // the buttons are drawn natively ABOVE the page, so a rendered-HTML read, a screenshot and `desktopCapturer` have all
+    // failed to return them here (`D-247`). So this line is **evidence BY CONSTRUCTION**: it names the arguments `main`
+    // handed the platform, together with the record members they were derived from — never a claim about pixels.
+    console.error(
+      `[provident-main] title bar overlay: color=${pair.color} symbolColor=${pair.symbolColor} ` +
+        `(record token=${String(theme.token)}, declaration=${JSON.stringify(theme.declaration)})`,
+    )
+  }
 
   const rendererHtml = join(here, '..', 'renderer', 'index.html')
   await win.loadFile(rendererHtml)
