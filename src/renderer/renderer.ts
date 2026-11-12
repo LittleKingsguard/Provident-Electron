@@ -1728,18 +1728,34 @@ function describeSecurityReading(shape: { filled: boolean; token: string | null;
  * projection module pressed into service.
  * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/** **THE FOUR AUTHORED ZONE NODES, AND THE ONE AXIS EACH ONE FIXES** (`D-185`; L1 §3 `S-6(a)`): `top` and `bottom` fix the
- *  HEIGHT, `left` and `right` the WIDTH, and the figure for every one of them is `['zones', <id>, 'size']`.
+/** **THE FOUR AUTHORED ZONE NODES, THE ONE AXIS EACH ONE FIXES, AND THE AXIS EACH ONE SCROLLS ON** (`D-185`, `D-234`;
+ *  L1 §3 `S-6(a)`): `top` and `bottom` fix the HEIGHT, `left` and `right` the WIDTH, and the figure for every one of them
+ *  is `['zones', <id>, 'size']`.
  *  **THE FOUR IDS ARE SPELLED HERE BECAUSE THE ENVELOPE SPELLS THEM**: `src/shared/demo-envelope.ts` authors the four zone
  *  nodes with these four LITERALS on `css.id` and `props.id` and publishes no constant for any of them — five more exports
  *  would move that module's surface past the `19` its map row counts (§9 there), so the literal is the one spelling both
  *  sides carry. **THE EQUALITY IS `AL-10`'s TO MEASURE AND NOTHING DERIVES IT** (`D-188` debt 2): an id here that the
- *  envelope does not author writes into nothing. */
-const LAYOUT_ZONE_AXES: readonly { readonly id: string; readonly member: 'height' | 'width' }[] = [
-  { id: 'top', member: 'height' },
-  { id: 'bottom', member: 'height' },
-  { id: 'left', member: 'width' },
-  { id: 'right', member: 'width' },
+ *  envelope does not author writes into nothing.
+ *
+ *  **THE `scroll` COLUMN EXISTS BECAUSE THE PAINT MUST CARRY THE SCROLL RATHER THAN DEPEND ON THE AUTHORED ONE** (`D-234`'s
+ *  routed finding; the user's charter: *"zones top/bottom/left/right all scrolling internally and fixed"*). A zone scrolls
+ *  on the axis its arrangement spans — `top`/`bottom` HORIZONTALLY, `left`/`right` VERTICALLY (`C-12`, `D-187`) — and **it
+ *  is a LAYOUT CONSTANT of the design, not record data**: no `['zones', …]` member states it, exactly as none states which
+ *  axis a zone fixes. **THE AUTHORED HALF CANNOT BE RELIED ON, AND THIS IS THE MEASURED REASON**: `paintStyle` hands the
+ *  engine ONE `css.style` value in `replace` mode, so the authored `overflow-x`/`overflow-y` on those four nodes is GONE the
+ *  moment the paint writes the size — the nodes read `height: 140px` and nothing else (`D-234`). **MERGING IS REFUSED HERE**
+ *  for the same reason it is refused there: `paintStyle` replaces whole for EVERY painted node and `D-225`'s routed finding
+ *  records that as its behaviour, so the writer that composes the zone's whole style string is the one place the constant
+ *  can stand (`D-174`'s rule one level up: what this turn writes, this turn states). */
+const LAYOUT_ZONE_AXES: readonly {
+  readonly id: string
+  readonly member: 'height' | 'width'
+  readonly scroll: 'overflow-x' | 'overflow-y'
+}[] = [
+  { id: 'top', member: 'height', scroll: 'overflow-x' },
+  { id: 'bottom', member: 'height', scroll: 'overflow-x' },
+  { id: 'left', member: 'width', scroll: 'overflow-y' },
+  { id: 'right', member: 'width', scroll: 'overflow-y' },
 ]
 
 /** **THE PANE ↔ NODE MAP: WHICH AUTHORED NODE A RECORD'S PANE ID IS PAINTED ONTO** (`D-194`'s gap, `D-214`'s
@@ -1832,10 +1848,14 @@ function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<stri
 /** **TURN 3 — THE LAYOUT PAINT: THE DELIVERY'S FOURTH HAND-OUT** (`S-6`; `D-185`, `D-187`, `D-189`, `D-191`, `D-194`).
  *  Three `css.style` subjects and no fourth:
  *
- *   (a) **THE FOUR ZONES' FIXED DIMENSION**, each read from `['zones', id, 'size']` through the client's own family — a
- *       **height** for `top`/`bottom`, a **width** for `left`/`right` — with the zone's participation (`display`) composed
- *       into the SAME style value. **A ZONE STATING NO `size` IS WRITTEN NOTHING**: no fallback, no default, no authored
- *       height, so such a zone renders on its authored `css` alone until a writer speaks (`D-191`'s `OWED-4` answer, `D-174`).
+ *   (a) **THE FOUR ZONES' FIXED DIMENSION AND THEIR SCROLL AXIS**, each figure read from `['zones', id, 'size']` through
+ *       the client's own family — a **height** for `top`/`bottom`, a **width** for `left`/`right` — with the zone's
+ *       participation (`display`) composed into the SAME style value. **THE SCROLL IS THE LAYOUT CONSTANT `LAYOUT_ZONE_AXES`
+ *       STATES** (`D-234`'s routed finding): `top`/`bottom` carry `overflow-x: auto`, `left`/`right` `overflow-y: auto`, in
+ *       the same value — because this write REPLACES `css.style` whole and the node's authored `overflow` dies with it.
+ *       **A ZONE STATING NO `size` IS WRITTEN NOTHING**: no fallback, no default, no authored height, so such a zone renders
+ *       on its authored `css` alone — its `overflow` INCLUDED, which is the one window in which that half still applies —
+ *       until a writer speaks (`D-191`'s `OWED-4` answer, `D-174`).
  *   (b) **THE PANE'S ADJUSTABLE MEMBER — AND ONLY THAT ONE.** The member the pane's `zone` makes adjustable is written, and
  *       only where the record STATES it; its other stored member is retained-but-unpainted and is never written, because at
  *       any instant exactly one figure is painted per axis and a leaf cannot reach a sibling (`D-189`/`D-191`). **A STAGE PANE
@@ -1875,12 +1895,20 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     const held = zoneIn(reading.zones, zone.id)
     if (held === null || held.size === undefined) continue
     if (!Number.isFinite(held.size) || held.size < 0) continue
-    const style: Record<string, string> = { [zone.member]: `${String(held.size)}px` }
+    // THE SIZE AND THE SCROLL AXIS, IN THE ONE VALUE THIS ARM HANDS `paintStyle` (`D-234`'s routed finding): the write is a
+    // whole-key REPLACE, so the authored `overflow-x`/`overflow-y` on this node does not survive it and the zone's scroll —
+    // the user's charter's *"all scrolling internally and fixed"*, `C-12` — must be restated by the one arm composing the
+    // style. **THE AXIS IS THE TABLE'S AND NOT THE RECORD'S**: no `['zones', …]` member states it (see `LAYOUT_ZONE_AXES`),
+    // and it is emitted BEFORE any `display`, so the string this paint writes reads `height: 140px; overflow-x: auto`.
+    // **THE ZONE'S AUTHORED `css` STILL CARRIES IT** (`demo-envelope.ts`'s `horizontalZoneStyle`/`verticalZoneStyle`) and is
+    // LEFT THERE: it is overwritten on every write this arm makes, and it is the only scroll a zone has while a size-less
+    // record is written NOTHING (the `continue` above) — so it is neither a second authority nor dead prose.
+    const style: Record<string, string> = { [zone.member]: `${String(held.size)}px`, [zone.scroll]: 'auto' }
     // THE PARTICIPATION COMPOSES INTO THAT SAME VALUE, and only where the record states one — an unstated `display` is not
     // authored here either.
     if (held.display !== undefined) style['display'] = held.display
     if (!paintStyle(runtime, zone.id, style)) {
-      console.error(`[provident-renderer] layout paint: the ${zone.id} zone refused its ${zone.member} (${String(held.size)})`)
+      console.error(`[provident-renderer] layout paint: the ${zone.id} zone refused its ${zone.member}/${zone.scroll} (${String(held.size)})`)
     }
   }
   // (b) EVERY DECLARED PANE, THE MEMBER ITS `zone` MAKES ADJUSTABLE — read STRUCTURALLY, because the record's pane shape is
