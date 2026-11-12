@@ -869,6 +869,63 @@ export function startGutterAffordance (runtime: Runtime): {
   })
   /** **ONE READ OF THE PAIR, BY SUBJECT KIND** — the only seam set that differs between the two kinds of handle. */
   const seamsFor = (address: GestureAddress) => (address.subject.kind === 'zone' ? seamsOfZones(address) : seamsOfPanes())
+  /** **THE PAGE REALM'S ONE GESTURE OBLIGATION: POINTER CAPTURE ON THE PRESS — AND ITS ABSENCE WAS THE WHOLE OF THE
+   *  DEFECT THE USER REPORTED** (the user's report *"UI drag doesn't work"*, MEASURED through a trusted CDP pointer on a
+   *  real window: press → `mouseMoved` × n → `mouseReleased`, with the record read back over the app's own crossing).
+   *  **THE MECHANISM IS THE MODULE'S AND THE CAPTURE IS THE REALM'S, WHICH THE MODULE ITSELF STATES**: the affordance
+   *  declares `capturePointer?: boolean` *"DECLARED AND IGNORED: the capture opt-in cannot be delivered by the composed
+   *  controller's `attach`, so this module passes no capture field anywhere"* — and `domEventSource()` *"advertises no
+   *  capture capability"* on purpose, its `capturePointer` seam being called with NO pointer id (so a source cannot pass
+   *  one to the DOM, which needs exactly that argument). **THE FOURTEEN-PIXEL HANDLE IS THE REASON IT IS NOT OPTIONAL**:
+   *  `setPointerCapture` is the DOM's own mechanism for keeping `pointermove`/`pointerup` on the element a press started
+   *  on, and both the strips and the pane handles are `14px` on one axis by design (`D-194`) — so the FIRST observed move
+   *  writes a preview that re-lays the very box the pointer is standing in (§4 `Z5`; the zone strip follows the zone's
+   *  edge, the pane handle the pane's width) and every later move lands wherever the box has moved to, never on the
+   *  handle. **MEASURED, BEFORE THIS LINE EXISTED**: on `zone-top-horizontal` a press at `(490,183)` followed by 120px of
+   *  moves left `['zones','top','size']` at `140`, the zone's painted `height` at `140px`, and the moves' `event.target`
+   *  reading `tabs-landing-page` — and on `menus-vertical` a press at `(9,99)` plus 120px of moves left
+   *  `['panes','pane-menus','width']` at `100` with the moves' target `pane-menus`. **AND THE SECOND, WORSE HALF**: the
+   *  release lands outside the handle too, so the session's own terminal never runs, its ONE gesture slot is never
+   *  released, and EVERY LATER GESTURE ON ANY OF THE SIX HANDLES IS REFUSED `busy` for the life of the page — the state
+   *  a probe sees as "the first drag previews once and then nothing ever again". **WITH THE CAPTURE INSTALLED THE SAME TWO
+   *  GESTURES MOVE THE RECORD**: `['zones','top','size']` `140 → 163` with the painted `height: 163px`, and
+   *  `['panes','pane-menus','width']` `100 → 0` with the pane's painted `width: 0px` — and a THIRD gesture afterwards
+   *  still lands (`['zones','left','size']` `120 → 107`), which is the busy slot not latched. **THE PRECEDENT IS THE
+   *  DEMO'S OWN AND IT IS THE SAME LINE** (`demo/pane-drag-demo/demo.ts`'s `pointerdown` listener calling
+   *  `setPointerCapture`, `README.md`: *"the 14px handle stops targeting it; the demo's own `pointerdown` listener calls
+   *  `setPointerCapture`"*) — the demo realm is where that obligation was met, and this wiring is the app's realm, so this
+   *  is where the app meets it. **IT IS A LISTENER ON THE INJECTED SOURCE, WHICH IS THIS WIRING'S ONLY EVENT CHANNEL**
+   *  (`S-11`'s one registration idiom, no second source and no second mechanism): installed ONCE per handle at
+   *  construction, on the SAME resolved element every seat of that handle is handed, and it writes no node, sends no
+   *  route, opens no channel, adds no export and changes no member — a render-realm listener and nothing else. **TOTAL
+   *  IN EVERY REALM WITHOUT ONE**: an element with no `setPointerCapture`, a non-number `pointerId` and a throw from
+   *  either are all the DECLARED DEGRADATION (the layout-less shim is the whole node suite's realm, `D-27`), so a realm
+   *  that cannot capture behaves exactly as it did before this line. */
+  const captureOnPress = (element: unknown): void => {
+    if (element === null || element === undefined || typeof element !== 'object') return
+    source.on(element, POINTER_TYPES.start, (event: unknown): void => {
+      let pointerId: unknown
+      try {
+        pointerId = (event as { readonly pointerId?: unknown } | null | undefined)?.['pointerId']
+      } catch {
+        // a throwing accessor is the same arm as an event carrying no id: no capture and no throw
+        return
+      }
+      if (typeof pointerId !== 'number') return
+      let capture: unknown
+      try {
+        capture = (element as { readonly setPointerCapture?: unknown })['setPointerCapture']
+      } catch {
+        return
+      }
+      if (typeof capture !== 'function') return
+      try {
+        ;(capture as (id: number) => void).call(element, pointerId)
+      } catch {
+        // a realm that refuses the capture is the degradation above: the gesture is unchanged, and every later turn is too
+      }
+    })
+  }
   /** **THE LIST, WIRED — ONE AFFORDANCE PER ENTRY AND NOTHING ELSE PER ENTRY** (the user's charter: a third handle costs one
    *  line). Each affordance is the module's own mechanism over ITS resolved handle element, its own seam set and its own
    *  key; the session is SHARED, because it is one gesture state machine over a ledger that is keyed by the element each
@@ -884,6 +941,11 @@ export function startGutterAffordance (runtime: Runtime): {
   const handles: PaneGestureReading[] = []
   for (const address of gestureAddressesOf()) {
     const element = runtime.elementForNodeId(address.handleId)
+    // **AND THE REALM MEETS ITS OWN OBLIGATION HERE, ON THE SAME RESOLVED ELEMENT** (`captureOnPress` above): one capture
+    // listener per handle, installed once at construction and before the affordance attaches — so the press that opens a
+    // gesture is the press that pins the pointer to this handle, and the moves and the release that follow stay here even
+    // though the handle is `14px` thick and the preview re-lays the box under the pointer on the first observed move.
+    captureOnPress(element)
     const affordance = createGutterAffordance({
       session: session as never,
       source,
