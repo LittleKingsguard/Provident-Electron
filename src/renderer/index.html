@@ -40,6 +40,41 @@
        is and the `.layout` rule that made it a grid went with the header it was drawn for. */
     #app { position: fixed; inset: 0; }
     .app-surface { height: 100%; }
+
+    /* THE HEIGHT CHAIN HAD A MISSING LINK ABOVE THE ROOT, AND THAT IS THE FIRST CAUSE OF "STAGE DOESN'T SCROLL" — the
+       `min-height: auto` trap below it is only the SECOND. `#app` is fixed and therefore definite, but the envelope's
+       template root renders as its CHILD (`.demo-shell`, `src/shared/demo-envelope.ts`'s `template.root`) and the sheet had
+       no rule for that box at all: an `auto`-height parent makes a child's `height: 100%` compute to `auto` (CSS 2.1 §10.5),
+       so `.app-surface`'s own `height: 100%` resolved to NOTHING, the authored column was its content's height, and every
+       descendant — the arrangement, the stage — was sized off content. The stage's authored `overflow: auto` then had no
+       box to scroll inside, which is exactly the reported symptom.
+       THIS ONE DECLARATION IS THE SAME `100%` THE ROOT'S RULE ALREADY CARRIED, ONE LEVEL UP, and it authors no dimension the
+       design does not have: `#app` (viewport) → `.demo-shell` (100%) → `.app-surface` (its `height: 100%`, now resolvable) →
+       the authored column, definite. THE OVERLAY NODES ARE SIBLINGS OF THE ROOT AND POSITIONED `fixed`, so they take no
+       ground from this box, and the row prototype is `display: none` (#tab-row below): nothing else in it is in flow. */
+    .demo-shell { height: 100%; }
+
+    /* AND THE STAGE NEEDS THE ARRANGEMENT TO HAND IT THE REMAINDER — the containment a scroller needs on the BLOCK axis.
+       `flex: 1 1 0` makes the row take exactly what the 36px bar, the two full-width zones and the opener leave; `min-height:
+       0` is the trap's own cure, because a flex item's default `min-height: auto` refuses to shrink below its content — with
+       a definite root that would push the arrangement past the window instead of capping it, and the stage's authored
+       `overflow: auto` would again never see an overflowing box (an item's used cross size is then the row's inner height,
+       via the row's default `align-items: stretch`, so the stage's height IS this definite figure and its scroll bites).
+       NEITHER PROPERTY IS SET INLINE, so this rule wins both: `arrangementStyle` carries `display` and `flex-direction` and
+       `stageStyle` carries `flex` and `overflow` — and NO rule here restates one of those four. `flex-basis: 0` also keeps
+       the arrangement OUT of any shrinking a short window forces: the top and bottom zones' painted heights are the record's
+       figures and they keep their own share, exactly as they did before this pass. THE ZONE ARM AND ITS SIZES ARE UNTOUCHED. */
+    .arrangement { flex: 1 1 0; min-height: 0; }
+
+    /* THE ROW AXIS IS A BELT AND NOT THE CURE, SAID PLAINLY SO IT IS NOT MISTAKEN FOR ONE: the `min-width: 0` trap that
+       bites a column whose content is wide does NOT bite here, and the reason is the stage's OWN authored `overflow: auto` —
+       a flex item's automatic minimum is zero when its overflow is not `visible`, and `auto` is not `visible` on either axis
+       — so a wide page inside the stage already scrolls horizontally instead of pushing the two sidebars. Its width is
+       definite for the same class of reason: the arrangement is stretched to the root's width and the stage is
+       `flex: 1 1 0` in that row. `min-width: 0` is carried as the EXPLICIT form of that fact (the sheet's own belt idiom,
+       the grip's `flex: 0 0 auto`), never as its cause, and it loses nothing to an inline declaration because `stageStyle`
+       states no `min-*` at all. */
+    .stage { min-width: 0; }
     .card { background: #fff; border: 1px solid #d8dde3; border-radius: 8px; padding: 1rem; }
     h2 { font-size: 1rem; margin: 0 0 0.75rem; }
     .counter-value { font-size: 2rem; font-weight: 700; margin: 0 0 0.75rem; }
@@ -112,7 +147,27 @@
        the name on its line and `#tab-rows`'s `flex: 1 1 auto; min-width: 0` makes the ROW the box that yields — a flex
        item's default `min-width: auto` is exactly what refuses to shrink below its content, and `min-width: 0` is what
        lets the row give the room up instead. **THE ROW'S `width` IS NOT RESTATED**: the inline environment value stays
-       the basis, and `flex-basis: auto` resolves to it. `gap` on the bar is what keeps the name off the first chip. */
+       the basis, and `flex-basis: auto` resolves to it. `gap` on the bar is what keeps the name off the first chip.
+       **AND THE ROW IS A SCROLLER BY REQUIREMENT, NOT BY ACCIDENT** — the user's own words: *"the tabs section of the top-bar
+       should scroll in the case of overflow caused by too many tabs"*. So the `overflow` pair that CLIPPED the overflow
+       (`hidden` on both axes) is now `overflow-x: auto` with `overflow-y: hidden`, and the minted chips carry
+       `flex: 0 0 auto` below: a flex child's default `flex-shrink: 1` is the row trying to squeeze labels instead of
+       scrolling them, and although its automatic minimum (`min-width: auto` over `nowrap` text) stops it short of actually
+       crushing a label, the intent has to be STATED rather than inherited by luck — a chip whose label could wrap or whose
+       padding the squeeze could eat is one the row scrolls past instead.
+       **THE AXIS IS HORIZONTAL ONLY, AND `overflow-y` IS EXPLICIT**: the overflow this requirement names is the row's inline
+       axis, and giving the block axis `auto` would both compute the inline axis' complement into a second scroller and eat
+       the chips' height the moment the horizontal bar appeared.
+       **WHAT IT COSTS, STATED**: a horizontal scrollbar lands INSIDE the bar's own 36px — the row is `height: 100%` of the
+       bar, so the cost is paid in CHIP HEIGHT (roughly half the bar off the chips' content box) and never in the bar's
+       height, which stays the measured title-bar figure. Chromium paints it on the light arm (`:root`'s `color-scheme`).
+       **AND THE DRAG REGION IS UNMOVED BY ALL OF IT**: an `overflow` does not enter the compositor's region computation —
+       the region is the `drag` elements MINUS the `no-drag` ones — no rule here declares `-webkit-app-region`,
+       `#tab-rows` keeps carrying NONE (a blanket `no-drag` here is `D-232`'s defect: the row's box IS the environment
+       width, so it swallowed every draggable pixel of the bar), and the chips keep the `no-drag` the mint copies onto each
+       of them from the def-root prototype. Whether a PRESS ON THE SCROLLBAR THUMB is claimed by the drag region above it is
+       compositor behaviour this sheet cannot read (the unseeable family, `D-178`); the wheel scrolls the row either way, and
+       the cure for it must never be a `no-drag` on the container. */
     .top-bar {
       box-sizing: border-box;
       padding: 0 0.75rem;
@@ -123,8 +178,10 @@
       gap: 0.75rem;
       white-space: nowrap;
     }
-    #tab-rows { display: flex; align-items: center; gap: 0.375rem; height: 100%; overflow: hidden; flex: 1 1 auto; min-width: 0; }
+    #tab-rows { display: flex; align-items: center; gap: 0.375rem; height: 100%; overflow-x: auto; overflow-y: hidden; flex: 1 1 auto; min-width: 0; }
     .tab-row {
+      /* THE CHIP DOES NOT YIELD (see `#tab-rows` above): the row scrolls, a chip keeps its label's own width. */
+      flex: 0 0 auto;
       padding: 0.2rem 0.6rem;
       border: 1px solid #d8dde3;
       border-radius: 6px;
