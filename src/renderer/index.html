@@ -19,10 +19,27 @@
        for it (`D-97`), and an arm driven by the desktop's own preference would be the ambient surface that
        `tests/theme.test.ts` X-5 refuses. */
     :root { color-scheme: light; }
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; background: #f4f6f8; color: #1b2430; }
-    header h1 { font-size: 1.25rem; margin: 0 0 0.25rem; }
-    header p { margin: 0 0 1rem; color: #556; font-size: 0.85rem; }
-    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 0; background: #f4f6f8; color: #1b2430; }
+
+    /* THE APP IS THE PAGE — AND THAT IS THE UI-AUTHORITY RULE, NOT A LAYOUT TASTE. Every element outside the Electron
+       shell's own chrome is provident data driven through the graph (`AGENTS.md` § "UI authority"), and this page
+       carried a hand-written `<header>` with an `<h1>` and a subtitle above the app: an element outside the graph is
+       invisible to `provident.dispatch`, `get_rendered_html` and `get_markdown`, and nothing read either line. Both are
+       gone — the app's OWN top-bar is the header now (`D-176`'s charter, `D-230`) — so the shell contributes only the
+       host boxes below and no words of its own.
+       **`#app` IS `position: fixed; inset: 0` AND NOT A `100%`/`100vh` PAIR**, and the difference is the flow, not a
+       figure: a fixed box takes the app out of the document entirely, so no sibling and no future page content can open
+       a scroll range under it, and the box it hands down IS the viewport rather than a height this sheet typed. It
+       carries no `card` class either — the border, radius and padding that made the app a panel half a page wide are the
+       panel's, and the app is not a panel.
+       **THE APP-SURFACE THEN NEEDS ONE DECLARATION AND NO MORE**: its own authored `css` (`appRootStyle`) already
+       declares `display: flex; flex-direction: column`, so the host gives it the viewport and `height: 100%` makes that
+       column viewport-tall — which is what lets the stage's authored `flex: 1 1 0` be the remainder the design says it
+       is, instead of the height of its own content.
+       `main` KEEPS NO GRID: the page is one window and not a two-column sheet, so the wrapper is the plain block it
+       is and the `.layout` rule that made it a grid went with the header it was drawn for. */
+    #app { position: fixed; inset: 0; }
+    .app-surface { height: 100%; }
     .card { background: #fff; border: 1px solid #d8dde3; border-radius: 8px; padding: 1rem; }
     h2 { font-size: 1rem; margin: 0 0 0.75rem; }
     .counter-value { font-size: 2rem; font-weight: 700; margin: 0 0 0.75rem; }
@@ -30,7 +47,29 @@
     input { width: 100%; box-sizing: border-box; padding: 0.4rem; }
     .echo-out { margin-top: 0.75rem; padding: 0.5rem; border: 1px dashed #b9c2cc; min-height: 1.25rem; }
     #status { margin-top: 1rem; font-family: monospace; font-size: 0.75rem; color: #556; }
-    #panes { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    /* THE OPERATOR PANES' HOST IS THE ISOLATED SECOND REALM'S MOUNT: KEPT IN THE DOM, TAKEN OUT OF THE FLOW, AND
+       NEITHER DELETED NOR HIDDEN. `src/renderer/renderer.ts:1090` (`getElementById('panes')`) hands this element to
+       `SecurePanels`, whose own graph scope renders the Security and Debug panes into it — the group toggles,
+       `#security-status`, `#security-token` and `#exclusion-control` — as a realm the app Runtime and the MCP endpoints
+       cannot see. So it is a mount and not scaffolding: deleting it would render that realm nowhere, and the CSS below
+       is the presentation of a graph this sheet does not own.
+       **AND `display: none` IS NOT AVAILABLE EITHER, WHICH IS THE OTHER HALF OF WHY THIS RULE LOOKS LIKE THIS**: both
+       live legs measure RENDERED BOXES inside it — `npm run panes`' `P-3` requires a NON-ZERO box for a `[data-group]`
+       row, and `tests/secure-exclusion-live.mjs`'s `box-nonzero` term does the same for `#exclusion-control` — so a
+       hidden or zero-size host would RED a leg in order to fix a layout. The host is therefore `position: fixed` at a negative
+       inline offset: a laid-out, painted-off-screen box of the window's own size, keeping its two-column grid, its
+       scrolling and every box inside it, taking no width from `#app` and adding no scroll range to the page. */
+    #panes {
+      position: fixed;
+      top: 0;
+      left: -10000px;
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
     #panes .hint { font-size: 0.75rem; color: #667; margin: 0 0 0.75rem; }
     #panes #security-status { font-family: monospace; font-size: 0.8rem; margin-bottom: 0.75rem; color: #445; }
     #panes #security-token label { display: block; font-size: 0.8rem; margin-bottom: 0.3rem; color: #445; }
@@ -61,7 +100,14 @@
        `#tab-rows` stays authoritative and every chip sits inside that box — a click must reach the row, and `cursor:
        pointer` is a claim the surrounding `drag` bar CAN falsify. It holds only because the row is inside the no-drag
        region; whether a press truly lands is compositor behaviour the rendered markup cannot show (the unseeable family
-       `overflow` belongs to, `D-178`). */
+       `overflow` belongs to, `D-178`).
+       AND THE NAME MUST NOT WRAP, WHICH IS ONE DECLARATION ON THE BAR AND ONE ON THE ROW: the bar's `content` — the
+       application's name — is a flex item of the bar, and `#tab-rows` sat beside it keeping the width the environment
+       value gave it, so the NAME was the box that yielded and it wrapped onto two lines. `white-space: nowrap` holds
+       the name on its line and `#tab-rows`'s `flex: 1 1 auto; min-width: 0` makes the ROW the box that yields — a flex
+       item's default `min-width: auto` is exactly what refuses to shrink below its content, and `min-width: 0` is what
+       lets the row give the room up instead. **THE ROW'S `width` IS NOT RESTATED**: the inline environment value stays
+       the basis, and `flex-basis: auto` resolves to it. `gap` on the bar is what keeps the name off the first chip. */
     .top-bar {
       box-sizing: border-box;
       padding: 0 0.75rem;
@@ -69,8 +115,10 @@
       border-bottom: 1px solid #d8dde3;
       color: #1b2430;
       font-size: 0.85rem;
+      gap: 0.75rem;
+      white-space: nowrap;
     }
-    #tab-rows { display: flex; align-items: center; gap: 0.375rem; height: 100%; overflow: hidden; }
+    #tab-rows { display: flex; align-items: center; gap: 0.375rem; height: 100%; overflow: hidden; flex: 1 1 auto; min-width: 0; }
     .tab-row {
       padding: 0.2rem 0.6rem;
       border: 1px solid #d8dde3;
@@ -86,6 +134,68 @@
     }
     .tab-row:hover { background: #e8edf4; border-color: #b9c2cc; }
     .tab-row[active="true"] { background: #1b2430; border-color: #1b2430; color: #ffffff; }
+
+    /* THE PLACEMENT'S DEFINITION ROOT — HIDDEN BY ITS ID, AND THE ID IS THE WHOLE POINT. `src/shared/demo-envelope.ts`
+       authors a def-root `component` node as the row PROTOTYPE (`TABS_ROW_PROTOTYPE_ID`), and the engine renders it as an
+       ordinary NODE: it reaches the rendered markup as an EMPTY chip-shaped `div` at `template.root`'s end, after the
+       overlay layer. It is the MINT'S OPERAND and never a row, so it must NOT be visible — and before `.tab-row` above
+       gave it a chip's shape that empty `div` was merely invisible, which is how it went unnoticed.
+       THE RULE KEYS ON THE ID AND NOT THE CLASS, AND THAT IS LOAD-BEARING: the prototype alone renders with `id="tab-row"`
+       (from its `props.id`), while every MINTED row carries the `tab-row` CLASS and an AUTO-GENERATED id
+       (`preempt-node-node-172`, …). THE TRAP THIS AVOIDS: the mint COPIES a row's `css` off this prototype
+       (`src/shared/demo-envelope.ts:198`, the def-root `defRootPrototypeFor` answers), so a `display: none` authored on
+       the PROTOTYPE's own `css` would be copied onto EVERY minted row and hide the entire row set with it. Keyed on
+       `#tab-row`, the rule hides the definition root and nothing else. The empty node STAYS in the markup — hidden by
+       CSS, never deleted — because the mint resolves it by name on every load. */
+    #tab-row { display: none; }
+
+    /* THE MENUS PANE'S FOUR MENUS — ONE SMALL LABELED BOX EACH, ITS ITEMS INSIDE IT, AND THE SEVEN REFUSED ITEMS LOOKING
+       REFUSED. `src/shared/demo-envelope.ts` authors four `.menus-menu` nodes (each carrying its measured name as its
+       `content`) holding eighteen `.menu-item` nodes (each an authored label), and this sheet had no rule for either — so
+       the pane rendered as eighteen FULL-WIDTH LINES of bare words: a menu list with no menu in it. **THE SHAPE IS
+       PRESENTATION AND CARRIES NO FIGURE OF THE PANE'S**: a `.menus-menu` is a flex ROW at `max-content` width, so the
+       name leads its items inside one bordered box, and the pane's own authored `overflow-x: auto` is what scrolls a box
+       wider than the painted width — the pane's `width` is the paint's, written from `['panes','pane-menus','width']`, and
+       this sheet declares none. `white-space: nowrap` keeps an item's label whole inside its box.
+       **AND THE REFUSED ITEMS ARE MARKED BY THE ATTRIBUTE THE RECORD WRITES, NEVER BY A CLASS**: the seven carry
+       `props.disabled: 'true'` (`D-181`'s list: `quit`, `reload`, `forcereload`, `toggledevtools`, `minimize`, `zoom`,
+       `close`), which the paint emits as the bare `disabled="true"` attribute and cannot turn into a class — the SAME
+       reason `.tab-row[active="true"]` above keys off its painted attribute (`D-230`). So `[disabled="true"]` is the only
+       lawful key and it is the one used: the seven read greyed and struck through with a `not-allowed` cursor, and the
+       hover state is suppressed on them, so the refusal the route enforces (`D-196`'s admitted set in `main`) is also the
+       refusal the surface shows. Colour is left to inherit on both nodes, so the dark pair below needs one line and not
+       four. */
+    .menus-menu {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      width: max-content;
+      margin: 0.125rem 0;
+      padding: 0.15rem 0.4rem;
+      border: 1px solid #d8dde3;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+    .menu-item {
+      padding: 0.1rem 0.4rem;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-weight: 400;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    .menu-item:hover:not([disabled="true"]) { background: #e8edf4; border-color: #b9c2cc; }
+    .menu-item[disabled="true"] {
+      color: #9aa7b8;
+      border-color: #e2e7ed;
+      text-decoration: line-through;
+      cursor: not-allowed;
+    }
 
     /* THE THEME RULES — PRESENTATION KEYED ON THE AUTHORED ATTRIBUTE, AND THE NAME AND VALUES ARE THE DECLARATION'S,
        NOT THIS STYLESHEET'S CHOICE. `src/shared/theme.ts`'s `applyThemeDeclaration` echoes the CALLER-held name that
@@ -104,7 +214,8 @@
     body:has([theme="dark"]) .counter-value { color: #ffffff; }
     body:has([theme="dark"]) input { background: #10151b; color: #e8edf4; border: 1px solid #2c3642; }
     body:has([theme="dark"]) .echo-out { border-color: #3a4654; }
-    body:has([theme="dark"]) header p,
+    body:has([theme="dark"]) .menus-menu { background: #1b222b; border-color: #2c3642; }
+    body:has([theme="dark"]) .menu-item[disabled="true"] { color: #5d6b7d; border-color: #2c3642; }
     body:has([theme="dark"]) #status,
     body:has([theme="dark"]) #panes .hint,
     body:has([theme="dark"]) #panes #security-status,
@@ -124,12 +235,8 @@
   </style>
 </head>
 <body>
-  <header>
-    <h1>Provident-Electron — MCP endpoint demo</h1>
-    <p>provident-ssr renderer with synthetic-event access + rendered-HTML visibility for agentic MCP use.</p>
-  </header>
-  <main class="layout">
-    <div id="app" class="card"></div>
+  <main>
+    <div id="app"></div>
     <div id="panes"></div>
   </main>
   <script type="module" src="./renderer.js"></script>
