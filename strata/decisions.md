@@ -5431,3 +5431,26 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,963 passed / 2 skipped` of `2,965`** over **`146`** files, **zero red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt; **every probe window reaped and the probe profiles removed.** **A foreign window on `/tmp/prov-z` started at 13:29 predated this seat and was left alone** — **the user's own.**
 
 **ITS REGISTER IS `D-71` TO `D-244`** as prose, unchanged and extended by this row only. **This row records a declaration nobody wired, a gesture that killed itself on its first move, a latch that silenced five other handles, and a measurement method that can finally tell a live gesture from a dead one.**
+## D-246 — THE GRIP STOPS SCROLLING AND THE RESIZE IS **VISIBLE WHILE IT HAPPENS**: a control inside a scroller cannot stay put, and a preview that writes the wrong node moves nothing a person can see
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"The drag handle moves with the scrollbar, it should be external"* · *"Also the drag resize doesn't update live"* — with a screenshot of a scrolled menus pane and the grip travelling with it.
+
+**DEFECT 1 — THE GRIP WAS A CHILD OF A SCROLLER.** **`#menus-vertical` was `position: absolute` INSIDE `#pane-menus`**, **and the pane arm writes `overflow-x: auto`** (`D-243`) — **so the handle travelled with the content.** **That is the same class the ZONE STRIPS solved by being SIBLINGS** (`D-244`) — **and this grip could not take that fix**: **`AL-1` is GATING and UNMARKED and requires the handle's markup INSIDE `#pane-menus` and BEFORE the first `menus-menu`**, **and `theme-control` pins the authored-object census at `79`** — **so both directed moves were closed by rows, not by taste.**
+
+**SO IT IS PINNED INSTEAD.** **`float: right; position: sticky; left: calc(100% + 1.125rem − 0.875rem); margin-right: -1.125rem; height: 100%`** — **a percentage of the pane (so the record's painted figure) plus the padding lane minus the authored `14px` = the pane's right edge**; **`left` holds it while the menus scroll**, **and the margin puts its STATIC box on that same point for when the sticky rectangle empties at the end of the range** — **and the margin is LOAD-BEARING, measured apart: the pin alone dropped `86 → 68` at `scrollLeft 96`.**
+
+**MEASURED**: **the grip's rect is `[86,36,14,125]` before the scroll, at `scrollLeft 48` and at `scrollLeft 96`** — **where it used to run `[84,36,14,125] → [-12,36,14,125]`.** **And it follows the pane's edge live**: `86 → 90 → 101 → 112 → 123` **as the pane went `100 → 137`.**
+
+**AND THE STAGE'S GRIP HAS NO SUCH DEFECT** — **`#gutter-pane` computes no overflow and `scrollWidth == clientWidth == 100`**, **so nothing there can carry it** — **and it gets the live preview too.**
+
+**DEFECT 2 — THE PREVIEW WROTE THE WRONG NODE WITH THE WRONG MEMBER.** **It was neither missing nor wiped.** **Per-move samples during a trusted CDP drag**: **`#gutter-target` — the composition's ONE target, `D-144` — moved `100 → 106 → 110 → 104px`** **while the painted `#pane-menus` read `[0,36,100,140]` at EVERY sample and the record stayed `100`.** **No delivery runs mid-gesture, so nothing overwrote anything** — **the write simply landed one node and one member away from the paint.**
+
+**THE FIX: `panePreviewOf` now ALSO writes the record's selected member (`adjustableMemberNameOf` over the shape's `zone`) on `nodeIdForPane(<handle's pane>)`** — **the node and the member the PAINT writes** — **with the `#gutter-target` write byte-unchanged** (`PS-2`/`PS-3`/`PS-4` read it).
+
+**MEASURED LIVE**: **moves take the style `104 → 115 → 126 → 137px`**, **the grip to `[90…123,36,14,125]`**, **THE RECORD UNTOUCHED AT `pane-menus: 100×100` AT EVERY MOVE**, **then `137×100` after release.** **So the drag is visible while it happens and still commits once.**
+
+**THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two worktree-boundary rows** (`F-9(b)`, `I-12`) red **on the uncommitted `index.html`** and **`170`/`170` green on a clean tree**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt. **The app is live on `http://127.0.0.1:3787/mcp`** with the pinned grip served.
+
+**AND THIS ROW OWES ONE THING IT DID NOT TAKE**: **`AL-1`'s requirement that the handle live inside `#pane-menus` is what made a pin necessary**, **and the census is what forbade a node** — **so a future pass that wants a genuinely external grip must move the row and the census first**, **rather than discovering the same two walls.**
+
+**ITS REGISTER IS `D-71` TO `D-245`** as prose, unchanged and extended by this row only. **This row records a control freed from a scroller by pinning rather than moving, two walls found in rows rather than in code, a preview that was writing a node nobody paints, and a margin that is load-bearing.**
