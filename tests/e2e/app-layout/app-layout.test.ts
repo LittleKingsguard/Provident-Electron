@@ -1535,6 +1535,18 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       for (const target of [LANDING_PAGE_ID, ERROR_PAGE_ID]) held[target] = rowFor(rows, target)?.active ?? '(no row)'
       return held
     }
+    /** **THE PAIR AS A POLL'S PREDICATE MUST SEE IT — `markerOf`'s OWN TERMS, one per authored target, against the pair a
+     *  read established** (`D-227` residual (ii)'s class, whose `AL-5` half landed in the row above). A bounded poll's
+     *  predicate IS its sampling: a `until` that samples ONE half of a pair lets the poll return on a sample the assertion
+     *  below would not pass, and the assertion then reads the stale other half. This helper is that predicate for a pair,
+     *  carrying the same `(no row)` sentinel `markerOf` does, so an absent row reads as a disagreement instead of a skip.
+     *  **WHY A PAIR CAN BE HALF-STALE EVEN THOUGH EACH MINT COMPOSES ITS `props`**: what the mint composes is the ROW
+     *  DATUM's pair, and that datum is built from the tabs client's READING — so a delivery whose reading was taken
+     *  before the act's own write landed re-mints with the ids churned and the marker still the previous value. Nothing
+     *  here diagnoses which turn lags; the point is that the poll has no right to return until BOTH halves are the state
+     *  the assertion reads, which is the whole of this re-grain. */
+    const markerIs = (rows: RenderedRow[], expected: Json): boolean =>
+      [LANDING_PAGE_ID, ERROR_PAGE_ID].every((target) => (rowFor(rows, target)?.active ?? '(no row)') === expected[target])
     /** EVERY RENDERED ROW'S OWN ADDRESS, by the target its datum carries — read OFF THE PAGE and never remembered from a
      *  mint's answer (`D-182` m1). */
     const idsOf = (rows: RenderedRow[]): Json => {
@@ -1640,9 +1652,30 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `the act lands, so \`results\` above proves the body RAN and this proves the act PERFORMED.`,
     ).not.toBe(stampBefore)
     // ── and the delivery THAT ACT caused: the ids churn once more, and the marker stays where the act left it ──
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    // **THE `until` BELOW SAMPLES THE PAIR THE ASSERTION BELOW IT READS, AND THAT IS THE ONLY THING THIS READ CHANGED**
+    // (`D-227` residual (ii)'s class, whose `AL-5` half landed in the row above: a poll must return only on a sample the
+    // unchanged assertion below it would pass). The predicate of a bounded poll IS its sampling, and this read's sampled
+    // ONE half — the id churn — while the assertion it guards reads THE MARKER PAIR `{${LANDING_PAGE_ID}: true,
+    // ${ERROR_PAGE_ID}: false}`, the state the first read recorded. So the poll could return on the first sample where
+    // both ids were new and the marker half was still whatever the page held at that instant: a delivery whose reading
+    // was taken before the act's own write landed can re-mint with the ids churned and the pair one delivery behind, and
+    // the assertion then read that stale pair — reported as this row's own casualty, the stale paint pair answered at
+    // the poll's bound. **THE ASSERTION IS BYTE-IDENTICAL**: same object, same order, same expected values (`beforeMarker`
+    // is not re-spelled here, it is the state read 1 established), same message. Only the `until` gained the marker half,
+    // in `AL-5`'s own shape — `surfaceWithin` with a predicate over the whole claim, not over one of its halves.
+    //
+    // **WHAT IT COSTS IN WALL CLOCK**: nothing on a healthy run. `surfaceWithin` samples once and sleeps only when the
+    // sample fails the predicate, and a delivery's rows are minted in one turn, so a pair that is already consistent
+    // returns at `polls: 1` with the ONE `provident.get_rendered_html` this row was going to make anyway and zero
+    // `sleep(POLL_MS)`. The worst case of a pair that never reaches the asserted state is the existing bound — `POLL_MAX`
+    // (14) samples × `POLL_MS` (250 ms) = `3 500 ms` for this read — inside `ROW_MS` (240 000 ms), and then answered by
+    // the assertion itself, which names the pair it read and the poll count it spent. **THE BOUND IS NOT RAISED, AND
+    // THAT IS DELIBERATE** (`D-227` residual (i): a raised bound hides a defect instead of reading it).
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
     const second = await surfaceWithin(booted.client, (text) => {
       const rows = renderedRows(text)
-      return rows.length === 2 && rows.every((row) => {
+      return rows.length === 2 && markerIs(rows, beforeMarker) && rows.every((row) => {
         const was = str(beforeIds[row.target])
         return was !== null && was !== row.nodeId
       })
@@ -1809,6 +1842,27 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
 
   it('AL-5 — the stage obeys the ACTIVE tab: one page shown, the other hidden, one body deciding both', async () => {
     const { booted } = await shared('tabs')
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+    // **THE TWO READS BELOW SAMPLE THE PAIR THEY ASSERT, AND THAT IS THE ONLY THING THIS ROW CHANGED** (`D-227`
+    // residual (ii): *"`AL-5` reads the stale pair with ONE bounded re-read … `AL-12` already shows the pattern that
+    // is"*). The predicate of a bounded poll is its SAMPLING, and this row's used to sample ONE terminal — the one
+    // its `until` named — while the assertion it guards reads BOTH. So the poll stopped at the first sample where
+    // half the claim held, which after a record write is the OLD half: the error page's `display: none` a delivery
+    // owed had not been painted yet, the landing page's `block` was already there from the previous arm, and the
+    // pair the assertion then read was read at one instant of a two-terminal paint. Under load that is a `10 ms`
+    // race measured as a red (`D-165`, `D-173`: *"`AL-5` once at `10 ms`"*); with no load it is invisible, which is
+    // why it survived. **THE ASSERTION IS BYTE-IDENTICAL**: same objects, same order, same expected values, same
+    // messages. Only the `until` predicates changed, and they changed to `AL-3`'s repaint arm's — the shape the file
+    // already carries where one claim spans two pages (`surfaceWithin` with a predicate over BOTH terminals), so a
+    // poll returns only on a sample the assertion below would pass.
+    //
+    // **WHAT IT COSTS IN WALL CLOCK**: nothing on a healthy run. `surfaceWithin` samples once and only sleeps when
+    // the sample fails the predicate, so a pair that is already consistent returns at `polls: 1` for the ONE
+    // `provident.get_rendered_html` the row was going to make anyway and zero `sleep(POLL_MS)`; the worst case of a
+    // paint that never lands is the existing bound — `POLL_MAX` (14) samples × `POLL_MS` (250 ms) = `3 500 ms` per
+    // read, so `7 000 ms` for the two arms — inside `ROW_MS` (240 000 ms) and then answered by the row's own
+    // assertion, which names the pair it read and the poll count it spent.
+    // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
     // ── arm (a): the landing tab active ─────────────────────────────────────
     const landingState = await writeAt(booted.client, [TABS], 'file', tabsRecord({ active: false, label: 'landing' }))
     expect(
@@ -1816,7 +1870,11 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       `AL-5 PREREQUISITE — the record must name the landing tab active before the first read: ` +
         `\`${trunc(landingState.text, 320)}\``,
     ).toBe('committed')
-    const withLanding = await surfaceWithin(booted.client, (text) => styleDeclares(styleOf(text, LANDING_PAGE_ID), 'display', 'block'))
+    const withLanding = await surfaceWithin(booted.client, (text) => {
+      const landing = styleOf(text, LANDING_PAGE_ID)
+      const error = styleOf(text, ERROR_PAGE_ID)
+      return styleDeclares(landing, 'display', 'block') && styleDeclares(error, 'display', 'none')
+    })
     const landingStyle = styleOf(withLanding.html, LANDING_PAGE_ID)
     const errorStyle = styleOf(withLanding.html, ERROR_PAGE_ID)
     expect(
@@ -1834,7 +1892,14 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       `AL-5 PREREQUISITE — the error tab must be made active through the record: ` +
         `\`${trunc(errorState.text, 320)}\``,
     ).toBe('committed')
-    const withError = await surfaceWithin(booted.client, (text) => styleDeclares(styleOf(text, ERROR_PAGE_ID), 'display', 'block'))
+    const withError = await surfaceWithin(booted.client, (text) => {
+      // THE SECOND HALF OF THE SAME RE-GRAIN: this arm's `until` sampled the error page alone, so it could return on
+      // the sample where the error page had just become `block` and the landing page had not yet become `none` —
+      // the stale pair the assertion then read. Both terminals are sampled now, and the assertion is untouched.
+      const landing = styleOf(text, LANDING_PAGE_ID)
+      const error = styleOf(text, ERROR_PAGE_ID)
+      return styleDeclares(landing, 'display', 'none') && styleDeclares(error, 'display', 'block')
+    })
     const landingAfter = styleOf(withError.html, LANDING_PAGE_ID)
     const errorAfter = styleOf(withError.html, ERROR_PAGE_ID)
     expect(

@@ -172,6 +172,108 @@ function processTable(): Proc[] {
   }
 }
 
+// ---- what a HUNG child is doing, which is the reading a bound cannot supply --------------
+/** **`D-173`'s instrument REPORTS A CHILD THAT DIED AND CANNOT REPORT A CHILD THAT HANGS.** `diagnose` names the
+ *  exit code, the signal and the stderr tail; a hung child has none of the three, so a red row could only ever say
+ *  "no answer within the bound" — which is exactly the reading `D-227` residual (i) shows failing, over and over,
+ *  with the child alive and the transport bound.
+ *
+ *  **SO THE BOUND SAMPLES THE CHILD ITSELF, TWICE, AND TAKES THE DIFFERENCE** — and the /proc reading is this
+ *  file's own already (`processTable` above reads `/proc/<pid>/stat` for `ppid`, so no new dependency, no new
+ *  binary, and nothing that PATH can shadow). Two facts, and they separate the two surviving candidates:
+ *
+ *   · **`utime + stime` sampled ~200 ms apart** — process CPU, in clock ticks (all threads, `USER_HZ` 100).
+ *     **ADVANCING ⇒ the child is RUNNING code and has not answered: the answer path is at fault.** **FROZEN ⇒ the
+ *     child is not running at all: its answer is not late, it is not being scheduled** — starvation, which is what
+ *     the fork cap is the lever for, and what no number on the bound can cure.
+ *   · **`/proc/<pid>/wchan`** (plus the `stat` state letter) — what the main thread is parked on. It says WHICH
+ *     kind of not-running: `do_epoll_wait` is idle-and-healthy, a lock or a futex is contention, `0` beside state
+ *     `R` is runnable-but-not-scheduled.
+ *
+ *  **IT PRINTS ONLY ON A FAILURE PATH**, after the bound has already been spent (the sampling is ~200 ms on top of
+ *  it), so a green row costs nothing and no row's wait is shortened. **NO `--inspect` AND NO CDP**, deliberately:
+ *  the two readings answer the question the row asks — advancing or frozen — and a debugger port would be a
+ *  second, slower, permission-bearing instrument for the same two bits. It would be needed only if CPU advanced
+ *  AND `wchan` said nothing, i.e. if the code ran but the row needed to know WHERE, which is not a boot-contract
+ *  row's subject.
+ *
+ *  **WHAT IT CANNOT SAY, STATED RATHER THAN IMPLIED**: a host without `/proc` (macOS — `processTable`'s `ps`
+ *  fallback covers membership, and there is no equivalent for `wchan`) reports that it could not take the reading
+ *  rather than reporting a frozen child; and ticks are process-wide, so a multi-threaded Electron main process can
+ *  accumulate more CPU than the wall clock — the delta's SIGN is the reading, never its magnitude. */
+const RUNDOWN_PAUSE_MS = 200
+/** **THE MARK EVERY RUNDOWN CARRIES**, so a throw that already carries one is never sampled twice. */
+const RUNDOWN_MARK = "the child's own rundown"
+/** `USER_HZ`: 100 on every Linux this repo is measured on, and named so a reader can convert the ticks. */
+const CLOCK_TICKS_PER_SECOND = 100
+
+/** `utime + stime` in clock ticks, or `null` where `/proc/<pid>/stat` cannot be read (gone, or no `/proc`). */
+function cpuTicksOf(pid: number): number | null {
+  try {
+    const stat = readFileSync(`/proc/${pid}/stat`, 'utf8')
+    // After the last `)` the fields are 3 (`state`) onward, so `utime` (14) is index 11 and `stime` (15) index 12.
+    const fields = stat.slice(stat.lastIndexOf(')') + 1).trim().split(' ')
+    const utime = Number(fields[11])
+    const stime = Number(fields[12])
+    if (!Number.isSafeInteger(utime) || !Number.isSafeInteger(stime)) return null
+    return utime + stime
+  } catch {
+    return null
+  }
+}
+
+/** What the main thread is parked on, and its state letter — `'(unreadable)'` where `/proc` is not there. */
+function parkedOf(pid: number): { wchan: string; state: string } {
+  let wchan = '(unreadable)'
+  let state = '?'
+  try {
+    wchan = readFileSync(`/proc/${pid}/wchan`, 'utf8').trim() || '(no symbol)'
+  } catch { /* stated below, never silent */ }
+  try {
+    const stat = readFileSync(`/proc/${pid}/stat`, 'utf8')
+    state = stat.slice(stat.lastIndexOf(')') + 1).trim().split(' ')[0] ?? '?'
+  } catch { /* stated below, never silent */ }
+  return { wchan, state }
+}
+
+/** The hung child's own rundown: two CPU samples ~200 ms apart, then `wchan` and the state letter. */
+async function rundownOf(pid: number | undefined): Promise<string> {
+  if (pid === undefined || !Number.isSafeInteger(pid) || pid <= 0) {
+    return `${RUNDOWN_MARK} is unavailable this time: this wait recorded no pid to sample`
+  }
+  const first = cpuTicksOf(pid)
+  if (first === null) {
+    return `${RUNDOWN_MARK} could not be taken: \`/proc/${pid}/stat\` is unreadable, so the child is GONE (or this host has no /proc), not hung`
+  }
+  const sampledAt = Date.now()
+  await new Promise((resolve) => setTimeout(resolve, RUNDOWN_PAUSE_MS))
+  const second = cpuTicksOf(pid)
+  const elapsed = Date.now() - sampledAt
+  if (second === null) {
+    return `${RUNDOWN_MARK} could not be completed: \`/proc/${pid}/stat\` was readable at the first sample and gone ${elapsed} ms later, so the child DIED between the two`
+  }
+  const { wchan, state } = parkedOf(pid)
+  const usedTicks = second - first
+  const cpuMs = Math.round((usedTicks / CLOCK_TICKS_PER_SECOND) * 1000)
+  /** CPU ms per elapsed ms, as a share of ONE core — printed so a 1-tick delta cannot be read as "working". */
+  const share = elapsed === 0 ? 0 : Math.round((cpuMs / elapsed) * 100)
+  const verdict = usedTicks > 0
+    ? `⇒ ADVANCING — CPU moved inside this window (${share}% of one core), so the child was RUNNING code at the mark rather than` +
+      ` descheduled: take the answer path as the suspect, and expect a throw on it to have answered a logged 500 (a ${share}% figure` +
+      ` says the child is mostly idle at the mark, which is a wait and not a spin)`
+    : `⇒ FROZEN — the child accrued NO CPU in this window, so it was not running code at the mark: its answer is not late, it is not` +
+      ` being scheduled (starved, or parked), and the lever is the fork pool's cap, never a larger bound`
+  return `${RUNDOWN_MARK} (pid ${pid}, two CPU samples ${elapsed} ms apart): utime+stime ${first} → ${second} clock ticks ` +
+    `(${usedTicks} ticks = ${cpuMs} ms of process CPU in ${elapsed} ms, ${share}% of one core) ${verdict}; ` +
+    `main thread parked on wchan \`${wchan}\`, state \`${state}\` — **this sample speaks for the MARK, not for the whole bound**: ` +
+    `a child starved intermittently can show either reading over ${RUNDOWN_PAUSE_MS} ms of a ${BOUND_MS} ms wait`
+}
+
+/** The rundown, prefixed for a message that already stands, or `''` where the reading is not this wait's business. */
+async function besideTheTrace(pid: number | undefined): Promise<string> {
+  return `\n\n${await rundownOf(pid)}`
+}
+
 /** Every process belonging to a boot this file spawned: the ones naming a scratch profile, the spawned
  *  roots themselves, and every descendant of either — the zygotes are reachable ONLY that way. */
 function membership(rows: Proc[], profiles: string[], roots: number[]): Set<number> {
@@ -261,15 +363,16 @@ const tail = (text: string, lines = 14): string => text.split('\n').slice(-lines
 interface ChildEnd { code: number | null; signal: NodeJS.Signals | null }
 interface Observed { ended: ChildEnd | null; error: string | null }
 const observed = (): Observed => ({ ended: null, error: null })
-/** The connect-path throw, carrying what the child did; the SDK's own error stays the `cause`, never swallowed. */
-function diagnose(label: string, caught: unknown, seen: Observed, trace: string): Error {
+/** The connect-path throw, carrying what the child did; the SDK's own error stays the `cause`, never swallowed.
+ *  `rundown` is the hung-child reading taken on this path (see `connectWatched`), appended beside the trace. */
+function diagnose(label: string, caught: unknown, seen: Observed, trace: string, rundown = ''): Error {
   const ended = seen.ended === null
     ? "the child's `close` was NOT observed, so it was still running when this was thrown"
     : `the child closed: code ${String(seen.ended.code)}, signal ${String(seen.ended.signal)}`
   return new Error(
     `${label}: ${caught instanceof Error ? caught.message : String(caught)}\n${ended}` +
       `${seen.error === null ? '' : `\n\`transport.onerror\` recorded: ${seen.error}`}` +
-      `\nstderr tail:\n${tail(trace)}`,
+      `\nstderr tail:\n${tail(trace)}${rundown}`,
     { cause: caught },
   )
 }
@@ -279,16 +382,35 @@ function diagnose(label: string, caught: unknown, seen: Observed, trace: string)
  *  caught on the SAME TICK, because `connect()` calls `start()`, which assigns the spawned process synchronously, while
  *  the transport clears that handle BEFORE it calls `onclose` — so the exit code and the signal are readable only from
  *  the handle itself. A private field read through a stated shape: an SDK that moves it costs this file the exit facts,
- *  never the row. The bound, the label and the trace are `withBound`'s, unchanged. */
-async function connectWatched(client: Client, transport: Transport, label: string, seen: Observed, trace: () => string): Promise<void> {
+ *  never the row. The bound, the label and the trace are `withBound`'s, unchanged.
+ *
+ *  **`suspect` IS THE CHILD THE BOUND WILL SAMPLE IF IT EXPIRES** (`D-227` residual (i)): a transport that spawns a
+ *  child supplies its own pid by default, and a transport that spawns nothing (`StreamableHTTPClientTransport` — B-6's
+ *  case) is handed the boot's pid by its caller, because the process that owes the answer is the boot, never the client. */
+async function connectWatched(
+  client: Client,
+  transport: Transport,
+  label: string,
+  seen: Observed,
+  trace: () => string,
+  suspect?: number,
+): Promise<void> {
   transport.onerror = (error: Error) => { seen.error = error.message }
   const connecting = client.connect(transport)
   const spawned = (transport as unknown as { _process?: ChildProcess })._process
   spawned?.on('close', (code, signal) => { seen.ended = { code, signal } })
   try {
-    await withBound(connecting, label, trace)
+    await withBound(connecting, label, trace, suspect ?? spawned?.pid)
   } catch (error) {
-    throw diagnose(label, error, seen, trace())
+    /** **THE RUNDOWN IS TAKEN ON THIS PATH TOO, AND THAT IS MEASURED, NOT TIDY** — the SDK's own per-request
+     *  timeout is ALSO `60 000 ms` (`Timeout.timeoutHandler`, `@modelcontextprotocol/sdk/dist/esm/shared/protocol.js`),
+     *  so it can beat this file's bound and did: a `B-6` red measured at
+     *  `MCP error -32001: Request timed out` never reached `withBound`'s expiry at all, and an instrument that
+     *  names the child only when its own timer wins names it on some casualties and on others not. The two runs
+     *  that shaped this — one `-32001`, one this file's bound — are the reason. A bound that already carries a
+     *  rundown is not sampled again, so a `withBound` expiry reports ONE reading and not two. */
+    const carried = (error instanceof Error ? error.message : String(error)).includes(RUNDOWN_MARK)
+    throw diagnose(label, error, seen, trace(), carried ? '' : await besideTheTrace(suspect ?? spawned?.pid))
   }
 }
 
@@ -305,10 +427,17 @@ const reasonOf = (text: string): string => {
  *
  *  **AND IT SAYS WHICH KIND OF MISS IT WAS**: a process that published NOTHING on stderr is "never", a
  *  process that published lines but not the answer is "too slow" (or the wrong observable). Before this,
- *  both read as one bare timeout. */
-async function withBound<T>(work: Promise<T>, label: string, trace: () => string): Promise<T> {
+ *  both read as one bare timeout.
+ *
+ *  **AND IT NOW NAMES WHAT THE CHILD IS DOING** (`D-227` residual (i)): the "too slow" verdict cannot tell an
+ *  answer path that is at fault from a child that is not running at all, and both were reported as the same
+ *  sentence. `suspect` is the pid whose CPU and `wchan` are sampled on expiry — two samples ~200 ms apart,
+ *  AFTER the bound and never before it — so the message carries advancing-or-frozen beside the trace. */
+async function withBound<T>(work: Promise<T>, label: string, trace: () => string, suspect?: number): Promise<T> {
   const started = Date.now()
   let timer: NodeJS.Timeout | undefined
+  /** One rundown per wait: the sampling takes ~200 ms and the interval below keeps ticking through it. */
+  let reporting = false
   const watched = new Promise<never>((_resolve, reject) => {
     let failingSince = 0
     timer = setInterval(() => {
@@ -319,11 +448,15 @@ async function withBound<T>(work: Promise<T>, label: string, trace: () => string
         const complete = reasonOf(seen) !== '(the process published no reason)' || Date.now() - failingSince > LOAD_ERROR_DRAIN_MS
         if (complete) reject(new Error(`${label}: the process published a failure instead of answering — ${reasonOf(seen)}\n${tail(seen)}`))
       } else if (Date.now() - started > BOUND_MS) {
+        if (reporting) return
+        reporting = true
         const lines = seen.trim() === '' ? 0 : seen.trim().split('\n').length
         const kind = lines === 0
           ? 'the process published NOTHING on stderr, so the answer never happened — this is "never", not "too slow"'
           : `the process published ${lines} stderr line(s), none of them the answer after ${Date.now() - started} ms — this is "too slow" (or the wrong observable), not "never"`
-        reject(new Error(`${label}: no answer within the ${BOUND_MS} ms bound — ${kind}; the trace stands:\n${tail(seen)}`))
+        void besideTheTrace(suspect).then((rundown) => {
+          reject(new Error(`${label}: no answer within the ${BOUND_MS} ms bound — ${kind}; the trace stands:\n${tail(seen)}${rundown}`))
+        })
       }
     }, 50)
   })
@@ -338,6 +471,9 @@ interface Boot {
   trace: () => string
   waitFor: (pattern: RegExp, label: string) => Promise<void>
   profile: string
+  /** The spawned root's pid — the child a bound samples when it expires (`D-227` residual (i)). An HTTP
+   *  connection has no child of its own, so this is the only pid a `B-6` bound can name. */
+  pid: number | undefined
   stop: () => void
 }
 
@@ -409,9 +545,12 @@ function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string
       }, 20)
       /** The bound is decided by its OWN timer, never by a poll that compares `Date.now()`: such a poll can
        *  fire before the stderr chunk that would have satisfied it and then report a miss that had already
-       *  stopped being one. */
+       *  stopped being one. **And it names the child** (`D-227` residual (i)): the rundown is taken after the
+       *  bound, so the row still spends exactly `BOUND_MS` and only the failure path pays the ~200 ms. */
       const bound = setTimeout(() => {
-        settle(new Error(`${label}: no observable within the ${BOUND_MS} ms bound (waited ${Date.now() - started} ms) — ${state()}; the trace stands:\n${tail(trace)}`))
+        void besideTheTrace(child.pid).then((rundown) => {
+          settle(new Error(`${label}: no observable within the ${BOUND_MS} ms bound (waited ${Date.now() - started} ms) — ${state()}; the trace stands:\n${tail(trace)}${rundown}`))
+        })
       }, BOUND_MS)
       /** A process that has gone cannot publish anything more, so its `close` is an ANSWER, not a wait: this
        *  is what stops a dead child from spending the whole bound and being reported as merely slow. A failure
@@ -425,7 +564,7 @@ function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string
       })
     })
 
-  return { trace: () => trace, waitFor, profile, stop }
+  return { trace: () => trace, waitFor, profile, pid: child.pid, stop }
 }
 
 /** The MCP client the battery is: it drives the transport the bundle itself opened (`D-27`).
@@ -457,8 +596,10 @@ async function handshake(entry: string, extra: string[] = ['--mcp-transport=stdi
   return { client, trace: () => trace, stop }
 }
 
-const toolNames = async (client: Client, label: string, trace: () => string): Promise<string[]> => {
-  const listed = await withBound(client.listTools(), `${label}: tools/list`, trace)
+/** `suspect` is the pid the bound names if it expires: a stdio client's own child, or — for B-6, whose connection
+ *  spawns nothing — the boot under test (`D-227` residual (i)). */
+const toolNames = async (client: Client, label: string, trace: () => string, suspect?: number): Promise<string[]> => {
+  const listed = await withBound(client.listTools(), `${label}: tools/list`, trace, suspect)
   return listed.tools.map((tool) => tool.name)
 }
 
@@ -768,8 +909,11 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
       const client = new Client({ name: 'bundle-boot-seam-e2e', version: '0.1.0' })
       const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`))
       try {
-        await connectWatched(client, transport, 'B-6 initialize over Streamable HTTP', observed(), boot.trace)
-        const names = await toolNames(client, 'B-6', boot.trace)
+        // **THE BOOT'S OWN PID IS HANDED TO EVERY BOUND IN THIS ROW** (`D-227` residual (i)): an HTTP connection
+        // spawns no child, so `connectWatched` has nothing to sample by default and the child that owes the answer
+        // — and whose CPU and `wchan` decide advancing-versus-frozen — is the one `bootApp` spawned.
+        await connectWatched(client, transport, 'B-6 initialize over Streamable HTTP', observed(), boot.trace, boot.pid)
+        const names = await toolNames(client, 'B-6', boot.trace, boot.pid)
         expect(names).toContain('provident.get_rendered_html')
         const offRoute = await fetch(`http://127.0.0.1:${port}/mcp`)
         expect(offRoute.status).toBe(405)

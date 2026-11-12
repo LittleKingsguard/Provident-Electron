@@ -487,6 +487,19 @@ export class ProvidentMcpServer {
    *  awaits. */
   private listening = false
   private settling: Promise<void> = Promise.resolve()
+  /** **WHETHER THE ENABLE ITSELF HAS LANDED — `start()`'s OWN RECORD OF ITS OWN ACT, AND A DIFFERENT FACT FROM `listening`**
+   *  (`D-228` residual (i)'s double bind). `listening` is the D-123 reconciliation bit and `followExclusion` writes it with the
+   *  state it WANTS the socket in, BEFORE any bind is attempted; this one is written ONLY by a bind that actually succeeded and is
+   *  cleared by `close()`. The two cannot be collapsed: a guard on `listening` would make a start that arrives after a FAILED
+   *  follow (the port taken, the exclusion still standing open) resolve as if the socket were bound, which is the silence this
+   *  guard exists to prevent — so `started` is the only bit a no-op may be answered from. */
+  private started = false
+  /** **THE ENABLE IN FLIGHT**: the promise of the one bind currently running, so a second `start()` that arrives DURING the first
+   *  (the boot's own enable against a delivery that has not finished binding) AWAITS that bind instead of starting a second one on
+   *  a fresh server — and, because it is the same promise, a bind that FAILED rejects both callers rather than being swallowed by
+   *  either. It is cleared in `start()`'s `finally` whether the bind resolved or rejected, so a later start re-attempts and, if the
+   *  port is still taken, fails again. */
+  private starting: Promise<void> | null = null
 
   constructor(opts: McpServerOptions) {
     this.backend = opts.backend
@@ -1247,13 +1260,60 @@ export class ProvidentMcpServer {
     }
   }
 
+  /** **THE ENABLE IS IDEMPOTENT — ONE SERVER, ONE BIND** (`D-228`'s residual (i), which was a real defect wearing a flake's
+   *  clothes: a manual http boot called this method TWICE on one instance and the second call answered `EADDRINUSE`).
+   *
+   *  **THE COMPOSITION'S TWO ENABLE SITES, AND WHAT EACH ONE INTENDS.** `main.ts`'s `settingsSurface.attach(mcp)` is the
+   *  composition's gate edge: the surface subscribes FIRST and then hands the record over, and its first `subscribe` drains the
+   *  creation's held addresses (the operator record's store holds four) — the pair's delivery reaches
+   *  `onExclusionChanged` → `followExclusion('mcp-enabled')`, which is where **the port is made a CONSEQUENCE of the record**
+   *  (`D-123`). That delivery is the ONE route every exclusion change reaches — an operator transition, the invariant's repair
+   *  inside a pane write, and this boot's own attach — so it is where the socket must follow, and it does its own bind. The
+   *  boot's `await mcp.start()` (`D-19` step 4, the enable LAST, after the window and the renderer load) intends the SAME
+   *  socket, from the other direction: it is the composition's act, it knows nothing of the record, and on `stdio` it is the
+   *  ONLY enable there is (`followExclusion` refuses to touch that transport, measured fatal — `D-122`). So the two are not a
+   *  duplicate call to be deleted: each is the enable of its own transport, and the collision is that on `http` both land.
+   *
+   *  **THE GUARD LIVES HERE, IN THE SERVER, AND NOT IN THE COMPOSITION, FOR THREE REASONS SAID AS MEASUREMENTS.** (a) The fact
+   *  being judged — is a socket already bound — is this instance's own (`started`/`starting`, below), and `followExclusion`
+   *  already keeps that kind of record for itself; a composition-side fix would have to read it through a new predicate here,
+   *  which is the same bit with a second spelling. (b) The composition-side fix cannot delete either call: `mcp.start()` at
+   *  `main.ts` is asserted IN THE SOURCE TEXT by `tests/secure-exclusion.test.ts` and `tests/tier4-arbitrary-storage.test.ts`
+   *  (the boot order `construction → boot read → gate → flip → mcp.start()`), and on `stdio` it is the only enable. (c) The
+   *  double enable is the OBSERVABLE, not the defect: the same two sites are correct on `stdio` and correct on `http` as soon
+   *  as the second enable of an already-enabled server is what it should be everywhere — a no-op.
+   *
+   *  **A SECOND CALL IS A NO-OP THAT RESOLVES, AND A THIRD BEHAVES LIKE THE SECOND**: an enable in flight is awaited (the same
+   *  promise, below); an enable already landed returns without touching the socket. **NOTHING THAT ONLY A SECOND CALL WOULD DO
+   *  IS SKIPPED**, checked arm by arm: on `http` a second `start()` created a FRESH `createServer` and discarded the live one
+   *  (a leaked socket) and printed a second `http transport ready` line — a duplicate claim and not a second act; on `stdio` it
+   *  built a second `McpServer` and a second `StdioServerTransport` over the same stdin (two readers of one pipe); tool
+   *  registration is per-POST on `http` and lives inside `createServer` on `stdio`, so no second call registers anything; and the
+   *  follow's settle is `followExclusion`'s own promise, returned to its caller, not this method's to re-run. **AND A GENUINE
+   *  FAILURE STILL REJECTS**: `started` is written only by a bind that succeeded and cleared by `close()`, while `starting` is
+   *  cleared in `finally` whether it resolved or rejected — so a start after a failed bind attempts the bind again and rejects
+   *  again with the socket's own text (`listen EADDRINUSE: address already in use …`), which the `'error'` listener above is
+   *  load-bearing for. A bind failure is therefore never turned into a resolved no-op by this guard. */
   async start(): Promise<void> {
+    if (this.starting !== null) return this.starting
+    if (this.started) return
+    this.starting = this.bind()
+    try {
+      await this.starting
+    } finally {
+      this.starting = null
+    }
+  }
+
+  /** The one bind: `start()`'s body, reached only by an enable that is neither in flight nor already landed. */
+  private async bind(): Promise<void> {
     if (this.transport === 'stdio') {
       const server = this.createServer()
       this.server = server
       this.stdioServer = server
       const transport = new StdioServerTransport()
       await server.connect(transport)
+      this.started = true
       console.error('[provident-mcp] stdio transport ready')
       return
     }
@@ -1263,10 +1323,34 @@ export class ProvidentMcpServer {
     // McpServer + transport, connects, and handles; GET/DELETE → 405 (the
     // SDK's canonical stateless example — responses flow through each POST).
     this.httpServer = createServer((req, res) => {
-      void this.handleHttp(req, res)
+      // **THE REQUEST PATH'S LAST NET** (`D-227` residual (i)): `handleHttp` now holds its whole body in one
+      // `try`, so this handler has nothing left to catch — and a `void`ed promise is still the site where an
+      // escape would vanish, so it names one if one ever appears instead of leaving an unhandled rejection as
+      // the child's only trace. It never fires on the success path, and it never answers: the response's own
+      // path is `handleHttp`'s.
+      void this.handleHttp(req, res).catch((caught: unknown) => {
+        const message = caught instanceof Error ? `${caught.message}\n${caught.stack ?? ''}` : String(caught)
+        console.error(`[provident-mcp] http request ${req.method ?? '?'} ${req.url ?? '?'} escaped its own try: ${message}`)
+      })
     })
-    await new Promise<void>((resolve) => this.httpServer!.listen(this.port, '127.0.0.1', () => resolve()))
+    // **A BIND FAILURE REJECTS `start()`, SO IT IS ANSWERED WHERE A START THAT FAILED IS ANSWERED** (`D-227`
+    // residual (i)'s second half): `listen()` with no `'error'` listener does not fail — it raises an UNCAUGHT
+    // exception inside the callback Node's emitter calls, and this `await` never settles, so a foreign process on
+    // the port parks the caller for the whole bound instead of telling it the port is taken. The listener is
+    // attached BEFORE the call (a bind error is emitted asynchronously, and `once` removes it either way) and it
+    // rejects with the error's OWN text, never a re-worded one, so the boot path's fatal line carries `EADDRINUSE`
+    // rather than a summary: `start()` resolves on a bound socket and rejects on a taken one, and nothing else moves.
+    await new Promise<void>((resolve, reject) => {
+      const pending = this.httpServer!
+      const onBindFailure = (error: Error): void => reject(error)
+      pending.once('error', onBindFailure)
+      pending.listen(this.port, '127.0.0.1', () => {
+        pending.off('error', onBindFailure)
+        resolve()
+      })
+    })
     this.listening = true
+    this.started = true
     console.error(`[provident-mcp] http transport ready on http://127.0.0.1:${this.port}/mcp`)
   }
 
@@ -1311,49 +1395,103 @@ export class ProvidentMcpServer {
     return this.settling
   }
 
+  /** **THE WHOLE REQUEST PATH IS INSIDE ONE `try`, AND THAT IS THE DIFFERENCE BETWEEN A NAMED 500 AND A SILENT
+   *  HANG** (`D-227` residual (i): `http transport ready` → `http POST /mcp` → no answer in `60 011 ms`, the child
+   *  alive, no stderr line).
+   *
+   *  WHAT WAS WRONG WITH THE OLD SHAPE, SAID IN ITS OWN TERMS: `this.createServer()` and the
+   *  `StreamableHTTPServerTransport` construction stood OUTSIDE the `try` — so a throw from either was an
+   *  UNHANDLED REJECTION inside `start()`'s `void this.handleHttp(req, res)`: the request was never answered,
+   *  nothing was logged, and the child lived on. That signature is indistinguishable from a hang for the whole
+   *  bound, and it would be indistinguishable forever. The two constructions — and the `new URL(req.url, host)`
+   *  head, and the gate reads, and the four early-return writes above them, which are also request-path code
+   *  outside any `try` — are now INSIDE the one `try`, so ANY throw on this path becomes a logged `500`.
+   *
+   *  WHAT A FAILURE NOW ANSWERS, AND WHAT IT LOGS: the `catch` answers status `500` with the body `internal
+   *  error` (committed-response cases excepted, as before), and it logs `[provident-mcp] http error: <text>`
+   *  where `<text>` is the thrown error's OWN message followed by its own stack — never a re-worded summary, so
+   *  the throw site names itself in the child's stderr instead of nothing doing so.
+   *
+   *  THE SUCCESS PATH IS UNCHANGED, BYTE FOR BYTE: the same four refusals in the same order, one fresh
+   *  `McpServer` and one fresh transport per POST (stateless — the SDK throws on a reused pair), `readBody`, then
+   *  `connect` then `handleRequest`, and the same `res.on('close')` teardown, which is registered ONLY when a
+   *  server was built, exactly as the old `finally` reached only after its construction had succeeded.
+   *
+   *  **AND THE ONE UNBOUNDED AWAIT ON THIS PATH IS BOUNDED NOW, WHICH IS WHAT THE IDLE-IN-`poll` READING ASKED
+   *  FOR** (`D-227` residual (i), sampled while hung: `utime+stime` advanced `1` tick over `201 ms` — ~`5 %` of one
+   *  core — in `S` with `wchan` = `poll_schedule_timeout`, and NO `http error:` line after the whole path was put
+   *  inside a `try`, so nothing threw). An idle child that logged the POST and never answered is waiting on an
+   *  event that never arrives, and the only await on this path that could wait forever was `readBody(req)` — it
+   *  awaited `req`'s own `end` with no timer, so a body that never completes parked this handler inside the `try`
+   *  for the whole bound and, being idle rather than spinning, was indistinguishable from a healthy child to every
+   *  reading but `/proc`. `readBody` now carries `BODY_BOUND_MS` (below), and a body that does not complete inside
+   *  it is ANSWERED rather than awaited: status `408` with a JSON-RPC error body naming the failure
+   *  (`request body did not complete within <bound> ms`, code `-32004`), and one stderr line carrying the request's
+   *  METHOD and URL, so the child names the request it gave up on instead of leaving nothing behind. A body that
+   *  completes inside the bound takes the SAME path it always took, byte for byte: same chunk concat, same empty →
+   *  `undefined`, same `JSON.parse` and same `invalid JSON body` on a parse failure. */
   private async handleHttp(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
-    console.error(`[provident-mcp] http ${req.method} ${url.pathname}`)
-    if (url.pathname !== '/mcp') {
-      res.writeHead(404)
-      res.end('not found')
-      return
-    }
-    if (req.method === 'GET' || req.method === 'DELETE') {
-      res.writeHead(405, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null }))
-      return
-    }
-    if (req.method !== 'POST') {
-      res.writeHead(405)
-      res.end('method not allowed')
-      return
-    }
-    // A1-W5 — the HTTP token gate: reject BEFORE any tool runs (fail-closed).
-    if (!this._gate.checkRequest(req.headers as never).ok) {
-      res.writeHead(401, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: 'Unauthorized' }, id: null }))
-      return
-    }
-    // `§2.3` item 2 — THE EXCLUSION ARM, placed WHERE THE LANDED TOKEN GATE IS and ORDERED after
-    // it: the authorization gate runs FIRST, the exclusion arm SECOND (reversing the order would
-    // let an unauthenticated caller distinguish the two states without a token — the `G-8`
-    // oracle). THE STATE IS READ AT POST ARRIVAL — before the body is read and before any per-POST
-    // server is built — so no tool can run on this transport while the tier is open.
-    if (this._gate.exclusionState() === 'mcp-disabled') {
-      res.writeHead(503, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32003, message: EXCLUSION_CLOSED }, id: null }))
-      return
-    }
-    const server = this.createServer()
-    this.httpServers.add(server)
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })
-    let body: unknown
+    let server: McpServer | undefined
+    let transport: StreamableHTTPServerTransport | undefined
     try {
-      body = await readBody(req)
-      await server.connect(transport)
+      const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
+      console.error(`[provident-mcp] http ${req.method} ${url.pathname}`)
+      if (url.pathname !== '/mcp') {
+        res.writeHead(404)
+        res.end('not found')
+        return
+      }
+      if (req.method === 'GET' || req.method === 'DELETE') {
+        res.writeHead(405, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null }))
+        return
+      }
+      if (req.method !== 'POST') {
+        res.writeHead(405)
+        res.end('method not allowed')
+        return
+      }
+      // A1-W5 — the HTTP token gate: reject BEFORE any tool runs (fail-closed).
+      if (!this._gate.checkRequest(req.headers as never).ok) {
+        res.writeHead(401, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: 'Unauthorized' }, id: null }))
+        return
+      }
+      // `§2.3` item 2 — THE EXCLUSION ARM, placed WHERE THE LANDED TOKEN GATE IS and ORDERED after
+      // it: the authorization gate runs FIRST, the exclusion arm SECOND (reversing the order would
+      // let an unauthenticated caller distinguish the two states without a token — the `G-8`
+      // oracle). THE STATE IS READ AT POST ARRIVAL — before the body is read and before any per-POST
+      // server is built — so no tool can run on this transport while the tier is open.
+      if (this._gate.exclusionState() === 'mcp-disabled') {
+        res.writeHead(503, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32003, message: EXCLUSION_CLOSED }, id: null }))
+        return
+      }
+      // THE TWO CONSTRUCTIONS `D-227` residual (i) NAMED — INSIDE THE `try`, so a throw here is a 500 with its
+      // own message rather than an unhandled rejection with no line and no answer.
+      const built = this.createServer()
+      server = built
+      this.httpServers.add(built)
+      transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })
+      const body = await readBody(req)
+      await built.connect(transport)
       await transport.handleRequest(req, res, body)
     } catch (e) {
+      // **THE BODY'S OWN BOUND, ANSWERED AS A REFUSAL AND NOT AS AN `internal error`** (`D-227` residual (i)):
+      // this is the ONE failure on this path that is a property of the REQUEST rather than of the app, so it gets
+      // its own status (`408`) and its own words, and the stderr line names the METHOD and the URL of the request
+      // the child gave up on — the two things no line in the hung run carried. It is answered BEFORE the generic
+      // arm below, which stays exactly as it was for every other throw.
+      if (e instanceof RequestBodyBoundExceeded) {
+        console.error(`[provident-mcp] http body bound: ${req.method ?? '?'} ${req.url ?? '?'} — ${e.message} (answered 408)`)
+        try {
+          res.writeHead(408, { 'content-type': 'application/json' })
+          res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32004, message: e.message }, id: null }))
+        } catch {
+          // response may already be committed
+        }
+        return
+      }
       const msg = e instanceof Error ? `${e.message}\n${e.stack ?? ''}` : String(e)
       console.error(`[provident-mcp] http error: ${msg}`)
       try {
@@ -1363,11 +1501,17 @@ export class ProvidentMcpServer {
         // response may already be committed
       }
     } finally {
-      res.on('close', () => {
-        this.httpServers.delete(server)
-        void server.close().catch(() => undefined)
-        void transport.close().catch(() => undefined)
-      })
+      const built = server
+      const opened = transport
+      // A PATH THAT BUILT NOTHING HAS NOTHING TO RELEASE — and registering the listener there would be a
+      // behaviour the old shape did not have on its four refusal branches, which returned before the `try`.
+      if (built !== undefined) {
+        res.on('close', () => {
+          this.httpServers.delete(built)
+          void built.close().catch(() => undefined)
+          if (opened !== undefined) void opened.close().catch(() => undefined)
+        })
+      }
     }
   }
 
@@ -1386,14 +1530,64 @@ export class ProvidentMcpServer {
       this.httpServer = null
     }
     this.listening = false
+    // **THE ENABLE'S OWN BIT IS CLEARED WITH THE SOCKET** (`D-228` residual (i)): a close is the withdraw to `started`'s record
+    // exactly as it is to `listening`'s, so the re-open edge of `followExclusion` (`D-122`'s re-entrant `start()`) still binds —
+    // the guard is against a SECOND ENABLE OF A BOUND SERVER, never against a re-enable of a closed one.
+    this.started = false
   }
 }
 
+/** **THE REQUEST-BODY BOUND — A REQUEST'S OWN FIGURE, AND NOT THE BOOT BATTERY'S ROW BOUND** (`D-227` residual
+ *  (i); the idle-in-`poll` reading is quoted at `handleHttp`).
+ *
+ *  WHY THIS NUMBER. A POST body on this transport is one JSON-RPC message against a LOOPBACK socket that this
+ *  server itself bound on `127.0.0.1`: the client and the server are on one host, the whole body is normally one
+ *  or two packets, and the surface's largest request is a `dispatch` with a target — hundreds of bytes, not
+ *  megabytes. `5 000 ms` is therefore some four orders of magnitude over a loopback body's p95, and it is
+ *  deliberately NOT `60 000 ms`: that figure is `tests/e2e/bundle-boot-seam/`'s whole-ROW bound, and a body bound
+ *  equal to the instrument's own bound would let the row die before the child gave its refusal — the refusal has
+ *  to arrive first for the `/proc` reading to have a stderr line behind it. It must also stay comfortably under
+ *  every row bound in the tree (`B-6`'s `60 000 ms`, `AL-*`'s `240 000 ms`), which `5 000 ms` does by more than
+ *  ten times.
+ *
+ *  WHAT IT COSTS A SLOW BUT WELL-FORMED CLIENT, SAID PLAINLY: a client that needs more than five seconds to
+ *  deliver a body it would have delivered completely is now REFUSED — status `408` with a JSON-RPC error body
+ *  naming the failure — where before it was simply waited on. That is the whole of the trade, and it is the trade
+ *  the casualty asks for: an unanswered request is bounded forever, while a refusal is a reading. A body that
+ *  completes inside the bound is unaffected in any byte (see `readBody`'s own note). */
+const BODY_BOUND_MS = 5_000
+
+/** The one failure `readBody` raises on ITS OWN timer, and it is a class rather than a bare `Error` so the request
+ *  path can tell "the client never finished its body" apart from a socket error and from `invalid JSON body` —
+ *  the first is answered as this server's `408`, the other two keep the `500` they have always had. */
+class RequestBodyBoundExceeded extends Error {
+  constructor(boundMs: number) {
+    super(`request body did not complete within ${boundMs} ms`)
+    this.name = 'RequestBodyBoundExceeded'
+  }
+}
+
+/** **`readBody` WITH A BOUND, AND NOTHING ELSE CHANGED** (`D-227` residual (i)): the same `chunks` accumulation,
+ *  the same `Buffer.concat(...).toString('utf8')`, the same empty → `undefined` and the same `JSON.parse` with
+ *  `invalid JSON body` on failure — so a body that completes in time is byte-identical to the path it replaced.
+ *  The one addition is `BODY_BOUND_MS`: when it is spent the promise REJECTS with `RequestBodyBoundExceeded`, the
+ *  timer is cleared, and a late `end`/`error` is ignored (`settled`), because a promise that has answered must not
+ *  be settled twice. Listeners are never removed — a `done` guard is enough, and `IncomingMessage`'s peers in the
+ *  private-drive tests carry no `off`/`removeListener` worth relying on. */
 function readBody(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
+    let settled = false
+    const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
+      reject(new RequestBodyBoundExceeded(BODY_BOUND_MS))
+    }, BODY_BOUND_MS)
     req.on('data', (c: Buffer) => chunks.push(c))
     req.on('end', () => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
       const raw = Buffer.concat(chunks).toString('utf8')
       if (!raw) return resolve(undefined)
       try {
@@ -1402,7 +1596,12 @@ function readBody(req: IncomingMessage): Promise<unknown> {
         reject(new Error('invalid JSON body'))
       }
     })
-    req.on('error', reject)
+    req.on('error', (error: Error) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      reject(error)
+    })
   })
 }
 
