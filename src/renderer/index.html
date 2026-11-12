@@ -479,32 +479,79 @@
        TALL — so the pane's reposition handle existed and a person could not see it, let alone find it.
        **THE DEFECT'S CAUSE IS THE PANE'S FLOW, NOT THE NODE'S MISSING LOOK**: `#pane-menus`'s authored `css` is
        `height: 100%; overflow-x: auto` and nothing else, so the pane is a BLOCK COLUMN and its content is its block lines —
-       the four menu boxes are now ONE horizontal line of inline-level boxes (`white-space: nowrap` below is what holds them
-       on that line, and the pane's own `overflow-x: auto` scrolls a strip wider than the painted width). A strip inside that
-       column that carried a height would push every menu below itself, and a strip that carried none is the invisible one
-       that shipped — so the strip is TAKEN OUT OF THE FLOW (`position: absolute`) and given the pane's OWN height, which
-       leaves the pane's own flow exactly as the record paints it. `#pane-menus` is the containing block
-       (`position: relative`) and its `padding-left` reserves the strip's lane, so the menus sit beside the grip instead of
-       under it; `box-sizing: border-box` keeps the pane's painted `width` the RECORD's figure
-       (`['panes','pane-menus','width']`) with the 14px coming out of the CONTENT — this sheet adds no second width
-       authority, it only spends part of the width the record stated.
+       the four menu boxes are ONE horizontal line of inline-level boxes (`white-space: nowrap` below is what holds them
+       on that line, and the box that scrolls a strip wider than the painted width). A strip inside that column that
+       carried a height would push every menu below itself, and a strip that carried none is the invisible one that
+       shipped — so the strip is TAKEN OUT OF THE LINE (`float: right`, and `position: sticky` on top of it) and given the
+       pane's OWN height, which leaves the pane's own flow exactly as the record paints it. The pane's `padding-right`
+       reserves the strip's lane, so the menus sit beside the grip instead of under it; `box-sizing: border-box` keeps the
+       pane's painted `width` the RECORD's figure (`['panes','pane-menus','width']`) with the 14px coming out of the
+       CONTENT — this sheet adds no second width authority, it only spends part of the width the record stated.
+       **AND THE SECOND DEFECT WAS THE SAME CLASS, UNSEEN: THE GRIP STOOD INSIDE THE SCROLLER** (the user's report
+       *"The drag handle moves with the scrollbar, it should be external"*). The pane carries the painted `overflow-x: auto`
+       (`D-243`) because it *"scrolls the axis it adjusts"*, and every descendant of a scroll container is translated by its
+       `scrollLeft` — absolutes included, because the containing block moves with the content. Measured on a real window:
+       the strip read `[84,36,14,125]` unscrolled and `[-12,36,14,125]` at `scrollLeft 96`, i.e. it travelled with the very
+       content it must stay beside. **`D-244` IS THE RULE AND THIS IS ITS SECOND FORM**: a control inside a box the record
+       can make a scroller cannot stay put — and here the strip cannot LEAVE the box either, for two measured reasons:
+       `AL-1` (gating, `tests/e2e/`, never marked) requires the handle's markup to stand *between* `#pane-menus`'s opening
+       tag and the first `class="menus-menu"`, and the authored-object census is pinned at `79` (`theme-control`'s `X-1`),
+       so neither moving the node into the zone nor authoring a second box to scroll inside the pane is open to a pass
+       like this one. **SO THE STRIP STOPS BEING SCROLLED AND STARTS BEING PINNED**: `position: sticky` with a `left` inset
+       taken from the pane itself — `calc(100% + 1.125rem - 0.875rem)` is the pane's CONTENT width (a percentage of its own
+       containing block, so the record's painted figure), plus the `padding-right` lane this sheet already reserves, less
+       the strip's authored `14px` thickness: THE PANE'S RIGHT EDGE, spelled as the two declarations it is made of and
+       never as a figure of this sheet's. MEASURED, the same reading at three scroll positions: `[86,36,14,125]` at
+       `scrollLeft 0`, at the mid point and at the end — the strip does not move — while the pane's `scrollWidth` stays
+       `196` over a `100` client width, so the menus still scroll UNDER it. **AND IT FOLLOWS THE PANE'S EDGE LIVE BECAUSE
+       THE INSET IS A PERCENTAGE**: a drag that previews the pane's width moves the box, the percentage is recomputed from
+       the new width, and the strip travels with the painted edge — and therefore with the pointer, which is the whole
+       point of standing on the edge the width moves. **THE FLOAT IS WHAT MAKES IT A STRIP AND NOT A LINE**: a floated box
+       takes no line of its own (an in-flow block would push every menu below itself, the defect this rule was written
+       for), and a float CAN be `sticky`, which an absolutely positioned box cannot. **NOTHING ELSE MOVES**: the pane's
+       `padding-right` still reserves the lane, the strip's thickness stays the authored `14px`, its cursor the authored
+       `col-resize`, and no rule here states a width, a pane dimension or a figure of the record's.
+       **AND THE LANE IS ON THE RIGHT, WHICH IS THE EDGE THE WIDTH ACTUALLY MOVES.** The pane is LEFT-ANCHORED — the top
+       zone's first child at its own painted width — so a grip on its LEFT edge stands on the anchor and can never travel
+       with the pointer that resizes it: the width would change while the grip stayed, and a press on the anchor has
+       almost no room to grow (`D-245` measured that box at `[2,36,14,125]`, `2px` from the window's edge). The handle
+       therefore stands on the pane's RIGHT edge, where the pointer, the grip and the painted edge are one point, and a
+       rightward drag grows the width (`renderer.ts`'s `PANE_DRAG_HANDLES`, `sign: 1`; `demo-envelope.ts`'s
+       `menusHandleStyle` carries the same reason). **THE NODE'S MARKUP POSITION DOES NOT MOVE** — it stays the pane's
+       FIRST child, which is the order `AL-1` asserts; only its BOX is taken out of the line, and it is pinned rather than
+       carried.
        **THE GRIP ITSELF IS THREE THINGS AND NO FIGURE**: a background, a dotted repeat (`currentColor`, so the dark pair
        below moves one colour and not the pattern), and an inset line — plus a hover state, because a blank strip is
        exactly what nobody finds. `flex: 0 0 auto` is carried as the belt the design named even though it is INERT HERE
-       (the pane is a block, not a flex container): the absolute position is what actually holds the strip unsquashed, and
+       (the pane is a block, not a flex container): the float and the pin are what actually hold the strip unsquashed, and
        the strip's thickness stays the inline `14px`, which no rule below restates.
        **AND THE BOX IS SCOPED BY ID BECAUSE THE CLASS IS SHARED**: `gutter-handle` is the SHARED styling hook of TWO
        authored nodes — this strip and `#gutter-horizontal`, the gutter card's own, which is a flex item of `#gutter-pane`
        (`display: flex`) carrying its placement in its OWN inline `css` (`height: 14px`, `align-self: flex-start`,
-       `margin-left: auto`). An absolute position declared on the CLASS would lift that strip out of its row and pin it to
-       the nearest positioned ancestor — the window — so the BOX declarations stand on `#menus-vertical` and only the PAINT
-       is the class's; the paint costs the sibling nothing (an empty flex item is zero wide) and makes both strips findable.
+       `margin-left: auto`). A `float` or a `position` declared on the CLASS would take that strip out of its row and pin it
+       to a float's own line or to the window — so the BOX declarations stand on `#menus-vertical` and only the PAINT is the
+       class's; the paint costs the sibling nothing and makes both strips findable.
        **AND `-webkit-app-region` IS DELIBERATELY NOT DECLARED ON IT**: the drag region is the top-bar's alone, and this
        strip is NOT inside it — the menus pane stands in the `top` ZONE, below the bar — so a `no-drag` here would guard
        against a region the compositor never had. The click-drag this strip must keep is the pane's own resize gesture,
        which no `drag` region above it can steal. */
-    #pane-menus { position: relative; box-sizing: border-box; padding-left: 1.125rem; white-space: nowrap; }
-    #menus-vertical { position: absolute; top: 0; left: 0.125rem; height: 100%; flex: 0 0 auto; }
+    /* **`position` IS DELIBERATELY ABSENT**: it stood here only to be the containing block of the absolutely placed
+       grip, and the strip is a PINNED FLOAT now (see the block above) — a declaration whose reason has gone is a claim
+       nothing keeps. Nothing else in this pane is positioned against it: each `.menus-menu` is `position: relative` for
+       its own drop-down. */
+    #pane-menus { box-sizing: border-box; padding-right: 1.125rem; white-space: nowrap; }
+    #menus-vertical {
+      float: right;
+      position: sticky;                       /* a FLOAT can be sticky; an absolutely positioned box cannot (`D-244`'s class) */
+      /* THE PIN AND THE STATIC POSITION ARE THE SAME POINT, AND THAT IS NOT REDUNDANT: `left` is what holds the strip
+         still while the menus scroll, and `margin-right` is where the strip SITS once the sticky rectangle empties at the
+         end of the scroll range — measured apart, the pin alone dropped the strip `86 → 68` at `scrollLeft 96`, and the
+         two read `[86,36,14,125]` at EVERY position (`0`, `10`, `48`, `80`, `96`) together. */
+      left: calc(100% + 1.125rem - 0.875rem); /* the pane's content width + its padding lane, less the strip's own thickness */
+      margin-right: -1.125rem;                /* …and the lane is where its static box lands: the pane's padding edge */
+      height: 100%;
+      flex: 0 0 auto;
+    }
     .gutter-handle {
       color: #6f7d90;
       border-radius: 3px;

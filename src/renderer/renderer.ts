@@ -371,15 +371,33 @@ const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.lo
  *  be a second answer to a question the record already answers and the two could disagree the moment a `zone` moved.
  *
  *  **`sign` IS THE HANDLE'S EDGE AND NOT A TASTE** (`C-13`, `D-189`, `D-192`): `GUTTER_AFFORDANCE_ID` sits at `pane-a`'s
- *  TOP-RIGHT, so a pointer moving right/down GROWS the figure — the example mapping's `pointer.x - start` is read as it
- *  stands (`+1`); `MENUS_AFFORDANCE_ID` sits at the menus pane's LEFT EDGE, where the same rightward pointer must SHRINK
- *  the width, so the same delta is NEGATED (`-1`). One mapping, one sign, and no second arithmetic. */
+ *  TOP-RIGHT, so a pointer moving right/down GROWS the figure (`+1`); `MENUS_AFFORDANCE_ID` now sits at the menus pane's
+ *  TOP-RIGHT too — the pane's RIGHT edge, for the reason the entry below states — so the same rightward pointer grows
+ *  the width and the same `+1` stands. **THE SIGN MULTIPLIES THE DELTA FROM THE PRESS AND NEVER THE FIGURE**
+ *  (`sizeFromPointerFor` at the mapping's own site): the figure is `sizeAtPress ± (pointer − press)`, so one sign per
+ *  handle and no second arithmetic.
+ *
+ *  **AND THE MENUS HANDLE MOVED FROM THE PANE'S LEFT EDGE TO ITS RIGHT, WHICH CONTRADICTS `D-189`'S SENTENCE AND FOLLOWS
+ *  ITS REASON.** `D-189` (user-sourced, verbatim) says *"drag handle to left side of horizontally-oriented (top/bottom
+ *  zone) pane"*, and states why: *"the handle therefore always sits at an edge the adjustable axis can move."* **THIS
+ *  PANE IS LEFT-ANCHORED** — it is the top zone's first child, a block at its own painted width — so its LEFT EDGE IS
+ *  THE ANCHOR: it does not move when the width changes, and the pointer standing on it can never travel with the figure
+ *  it writes. The two readings of the sentence therefore disagree: *"the pane's left side"* names the edge the box is
+ *  pinned by, and the sentence's own reason asks for the edge the axis CAN move, which for a left-anchored box is the
+ *  RIGHT one. **This pass takes the reason.** **THE COST IS THE USER'S OWN SENTENCE AND IS ROUTED, NOT HIDDEN**: a
+ *  user-sourced placement is contradicted here and the contradiction belongs to L0/L3, not to this seat (`D-3`); what it
+ *  buys is that a press, a drag and the painted edge are ONE point — the property the user's complaint asks for. **AND
+ *  THE MEASUREMENT SETTLES IT AGAINST THE ALTERNATIVE**: with the grip on the pane's left edge the handle box begins
+ *  `2px` from the window's left edge (`D-245`'s measured `[2,36,14,125]`), so *"dragging left grows a left-anchored
+ *  pane"* — the one sign that would make that edge coherent — could widen the pane by the `~9px` between the strip and
+ *  the window and no more. A resize that cannot grow is not coherent in either reading. */
 export interface PaneGestureAddress {
   /** The authored handle's own node id — and the gesture key every seat of THIS handle is handed. */
   readonly handleId: string
   /** The pane this handle's gesture addresses — the record's own key (`DECLARED_PANE_IDS`). */
   readonly paneId: string
-  /** `+1` where the handle stands on the pane's TOP-RIGHT edge, `-1` where it stands on the LEFT one. */
+  /** `+1` where the handle stands at the pane's TOP-RIGHT edge, `-1` where it would stand on the LEFT one — the edge the
+   *  adjustable axis CAN move, which is why both of this app's pane handles carry `+1` (see the block above). */
   readonly sign: 1 | -1
 }
 
@@ -387,10 +405,14 @@ export interface PaneGestureAddress {
  *  it is the `GESTURE_KEY` constant this wiring used to spell (`D-138`'s one key becoming one key PER HANDLE, unchanged in
  *  value for the handle that had one); the second entry is the menus pane's, and it is the whole of the menus handle's
  *  wiring. The composition is constructed ONCE (`S-9`'s call-site count is unmoved), the affordance mechanism is the
- *  module's, and nothing about the two entries is duplicated: each costs one closure set and one `attach()` reading. */
+ *  module's, and nothing about the two entries is duplicated: each costs one closure set and one `attach()` reading.
+ *  **AND THE MENUS ENTRY'S `sign` IS `+1` BECAUSE ITS HANDLE STANDS ON THE PANE'S RIGHT EDGE** — the edge away from the
+ *  pane's left anchor, the edge the width can move and the point a press can therefore travel with. What the entry
+ *  states is unchanged and only its FIGURE moved: `-1` was correct for a handle on the left edge of a box that grew
+ *  leftward, and this box grows rightward (`PANE_NODE`'s own left-anchoring, `demo-envelope.ts`'s authored pane). */
 const PANE_DRAG_HANDLES: readonly PaneGestureAddress[] = [
   { handleId: GUTTER_AFFORDANCE_ID, paneId: DEFAULT_PANE_ID, sign: 1 },
-  { handleId: MENUS_AFFORDANCE_ID, paneId: MENUS_PANE_ID, sign: -1 },
+  { handleId: MENUS_AFFORDANCE_ID, paneId: MENUS_PANE_ID, sign: 1 },
 ]
 
 /** **THE ZONE'S COUNTERPART OF `PaneGestureAddress` — THE SAME THREE IDEAS AND ONE MEMBER MORE**
@@ -420,12 +442,20 @@ interface ZoneGestureAddress {
  *  RIGHT and `right` on its LEFT, because that bound's POSITION is the zone's `size` (`D-185`): the edge facing the stage
  *  is the one a person pushes, and `top`/`left` grow as that edge moves toward the increasing coordinate (`+1`) while
  *  `bottom`/`right` grow as it moves back (`-1`).
- *  **THE SIGN IS ONE COEFFICIENT AND NOT A TASTE** (`D-238`'s own form, `D-192`): one mapping — `pointer[axis] - start` —
- *  negated where the edge's sense inverts, so four rows carry four facts and no second arithmetic exists.
- *  **`PANE_DRAG_HANDLES` IS NOT RE-GRAINED AND THAT IS DELIBERATE** (`D-238`, `PS-1`…`PS-4`): its entries, its `sign` and
- *  its absent axis member are a landed MEASUREMENT, and `gestureAddressesOf()` below maps it verbatim into the one list
- *  the affordance loop walks. The second subject KIND is therefore an adapter at the loop's head and never a second
- *  gesture (`D-238`'s own reason, one subject over).
+ *  **THE SIGN IS ONE COEFFICIENT AND NOT A TASTE** (`D-238`'s own form, `D-192`): one mapping — the anchored
+ *  `sizeAtPress ± (pointer − press)` this pass makes true at the mapping's own site — with the sign applied to the DELTA
+ *  where the edge's sense inverts, so four rows carry four facts and no second arithmetic exists. **THE FOUR SIGNS ARE
+ *  THE EDGES' AND THEY STAND UNMOVED BY THAT FIX**, because each follows from WHERE the strip stands: `top`'s strip is
+ *  `#top`'s FOLLOWING sibling, i.e. below it, so a downward pointer (+y) grows the figure (`+1`); `bottom`'s strip is
+ *  `#bottom`'s PRECEDING sibling, i.e. above it, and a `bottom` size is the distance from the window's foot UP to that
+ *  edge, so a downward pointer SHRINKS it (`-1`); `left`'s strip is `#left`'s following sibling in the arrangement row, so
+ *  a rightward pointer (+x) grows it (`+1`); and `right`'s strip precedes `#right`, and a `right` size is the distance
+ *  from the window's right in, so a rightward pointer SHRINKS it (`-1`).
+ *  **`PANE_DRAG_HANDLES` IS NOT RE-GRAINED AND THAT IS DELIBERATE** (`D-238`, `PS-1`…`PS-4`): its entries, its absent
+ *  axis member and the ONE `sign` this pass moved (the menus entry's, with its edge — see the block above the list) are
+ *  a landed MEASUREMENT, and `gestureAddressesOf()` below maps it verbatim into the one list the affordance loop walks.
+ *  The second subject KIND is therefore an adapter at the loop's head and never a second gesture (`D-238`'s own reason,
+ *  one subject over).
  *  **NOTHING HERE IS EXPORTED**: a published name would move this module's surface and the design refuses one, while the
  *  four ids are LITERALS on both sides — the envelope's (`zoneStripNodeOf`'s call sites) and this table's — with the
  *  equality measured by `PS-1`'s census rather than derived (the zone ids' own precedent, `LAYOUT_ZONE_AXES`'). */
@@ -456,12 +486,17 @@ interface GestureAddress {
 }
 
 /** **THE ADAPTER AT THE LOOP'S HEAD — THE SECOND SUBJECT KIND COSTING NO SECOND GESTURE** (design §3).
- *  `PANE_DRAG_HANDLES` is mapped VERBATIM and gains nothing: its `axis` is `'x'` — the example's own `pointer.x - start`
- *  mapping (`gutterSeamExample().sizeFromPointer`), byte-identical in effect to the `sign === 1 ? example : -example`
- *  form the loop has always read — and its `targetId` is the composition's ONE target (`D-144`). The four strips follow
- *  it in declaration order, so the loop's resolution order is the pane handles' first and the strips' after, which is
- *  what `PS-1`'s order reading states. **THE PANE ARM'S READING THEREFORE DOES NOT MOVE AND THE ZONE ARM IS THE ONLY NEW
- *  BEHAVIOUR** — and a hostile or frozen `PANE_DRAG_HANDLES` cannot reach it: both sides are module constants. */
+ *  `PANE_DRAG_HANDLES` is mapped VERBATIM and gains nothing: its `axis` is `'x'` — the pane arm reads the pointer's x,
+ *  the landed declaration `PS-1`'s gesture clause pins, and NOT a member this pass re-grains — and its `targetId` is the
+ *  composition's ONE target (`D-144`). **THE MAPPING ITSELF IS NEITHER THIS TABLE'S NOR THE ADAPTER'S**: the figure is
+ *  `sizeFromPointerFor`, anchored on the record's figure at the press, and each entry contributes only its `sign`. The
+ *  four strips follow it in declaration order, so the loop's resolution order is the pane handles' first and the strips'
+ *  after, which is what `PS-1`'s order reading states. **THE PANE ARM'S `axis` DOES NOT MOVE AND THE ZONE ARM IS THE ONLY
+ *  NEW BEHAVIOUR** — and a hostile or frozen `PANE_DRAG_HANDLES` cannot reach it: both sides are module constants.
+ *  **ONE DEBT NAMED RATHER THAN TAKEN**: the stage handle reads `x` while the member it resizes is `pane-a`'s `height`
+ *  and the handle stands at that pane's TOP-RIGHT, so its figure grows along the wrong coordinate for its edge. It is
+ *  `D-189`'s placement rule as landed and `PS-1` pins the read it produces (`clientX 250 → 150`), so the axis is that
+ *  row's and not this pass's; the anchoring fix above is indifferent to which coordinate the entry names. */
 function gestureAddressesOf (): readonly GestureAddress[] {
   const panes: GestureAddress[] = PANE_DRAG_HANDLES.map((handle) => ({
     handleId: handle.handleId,
@@ -687,16 +722,60 @@ export function startGutterAffordance (runtime: Runtime): {
    *  reached exactly once — and the composition's ending flag is keyed by that string, so two handles cannot suppress each
    *  other's erase. It is the affordance ELEMENT's authored id, the id this wiring resolves; the HANDLE the `commit` seam is
    *  handed carries a NUMBER `id`, which is why the old `gestureIdOf` read retired rather than answering `''`. */
-  /** **THE SIZE MAPPING, PER HANDLE AND WITH THE HANDLE'S OWN SIGN** (`C-13`, `D-189`, `D-192`). The example's mapping is
-   *  reused VERBATIM — `pointer.x - start`, the demo's authored figure — and the entry's `sign` decides its coefficient:
-   *  `+1` for the stage's TOP-RIGHT handle, whose rightward pointer grows the figure, and `-1` for the menus pane's LEFT
-   *  edge, where the same rightward pointer must shrink it. Negating the example's expression is exactly that inversion:
-   *  `-(pointer.x - start) = start - pointer.x`, so `d(size)/d(pointer.x)` is `-1` at the left handle and `+1` at the
-   *  right one, with ONE arithmetic and no second mapping. The clamp that follows is the composition's, unchanged. */
-  const sizeFromPointerFor = (address: GestureAddress) => (pointer: { readonly x: number }, start: number): number => {
-    const mapped = address.axis === 'x' ? seams.sizeFromPointer(pointer, start) : verticalFromPointer(pointer, start)
-    return address.sign === 1 ? mapped : -mapped
-  }
+  /** **THE ONE ARITHMETIC, TAKEN TWICE: THE EXAMPLE'S MAPPING ANSWERS THE DELTA, NOT THE FIGURE** (`C-13`, `D-189`,
+   *  `D-192`). `gutterSeamExample().sizeFromPointer(pointer, origin)` answers `pointer.x − origin` and
+   *  `verticalFromPointer` the same in `y`, so ONE expression states the distance between a pointer and an origin on
+   *  either axis — and this pass reads it against TWO origins rather than writing a second mapping beside it. */
+  const deltaFromPointer = (address: GestureAddress, pointer: { readonly x: number }, origin: number): number =>
+    address.axis === 'x' ? seams.sizeFromPointer(pointer, origin) : verticalFromPointer(pointer, origin)
+  /** **THE FIGURE IS `sizeAtPress ± (pointer − press)` — ANCHORED ON THE FIGURE THE RECORD ALREADY HOLDS, AND THE COPY
+   *  THAT WAS NOT ANCHORED IS THE DEFECT THIS PASS DELETES** (the user's report: *"On drag start, the zone resizes to 0
+   *  size, then allows the drag. This results in the handle being separated from the pointer"*). What stood here was
+   *  the EXAMPLE's mapping read as a FIGURE — `pointer[axis] − start` — which is correct for the demo's own pane and
+   *  for nothing else: the demo's pane BEGINS at zero, so there the pointer's coordinate and the distance from the
+   *  press are the same number. **A zone already holds `140` at the press, so the first observed move wrote `≈0`**: the
+   *  box collapsed under the pointer, the handle that stands on that very edge went with it, and every later move
+   *  landed on the page instead of on the handle (`D-245`'s measurement and its `busy` latch). **THE SAME MAPPING DROVE
+   *  THE PANE HANDLE**, which is why a trusted drag took `['panes','pane-menus','width']` `100 → 0`.
+   *
+   *  **SO THE FIGURE IS ANCHORED, AND `start` IS ALREADY THE ANCHOR'S FIGURE.** The affordance calls this seam once
+   *  per observed move as `sizeFromPointer(pointer, current.start)`, and `current.start` is `startSizeOf`'s answer —
+   *  read EXACTLY ONCE, at establishment (`§2.4` item 3, `P-GU-IM-2`). For a PANE that read is the composition's
+   *  (`drag.startSizeOf` → `readPaneSize` → `paneSizeOf(<this handle's pane>)`, the crossing's measured default for a
+   *  pane the family does not name); for a ZONE STRIP it is `zoneSizeOf`, i.e. `['zones', <id>, 'size']` off the same
+   *  client. **So the figure the record holds at the press reaches this seam through the affordance's own recorded
+   *  answer, and the anchored figure costs one subtraction and opens no channel.** The PRESS COORDINATE is this
+   *  wiring's (`anchorOnPress` below): the gesture's own `pointerdown`, whose `clientX`/`clientY` the example's
+   *  `pointerOf` resolves, recorded per handle at the press that opened it.
+   *
+   *  **THE `sign` MULTIPLIES THE DELTA AND NEVER THE FIGURE** (`D-189`, `D-192`): `+1` where a pointer moving toward the
+   *  increasing coordinate grows the figure, `-1` where it shrinks it — the handle's EDGE, stated per entry above. The
+   *  clamp that follows is the composition's, unchanged.
+   *
+   *  **AND THE NO-FIGURE ARM IS A REFUSAL, NEVER A DECLARED DEFAULT.** A zone whose record states no `size` answers
+   *  `undefined` from `zoneSizeOf`, and `Number.NaN` out of this seam makes every observed move INVALID: the reset arm
+   *  fires, the preview reverts, and the release's own gate refuses a non-finite figure — so **NOTHING IS WRITTEN**. A
+   *  declared default there would be `D-129`'s second authority, right on one boot and false after the first gesture
+   *  (`D-174`, `D-243`'s no-default rule): the record is the only author of a figure, so a gesture that cannot read one
+   *  declines rather than inventing one. **A PANE CANNOT REACH THAT ARM** — `paneSizeOf` answers its measured default.
+   *
+   *  **AND THE ARM WHERE THE PRESS ITSELF STATES NO COORDINATE KEEPS THE EXAMPLE'S MAPPING, DELIBERATELY.** The
+   *  layout-less shim is the whole node suite's realm (`D-27`) and its pointers carry no coordinate at the press
+   *  (`tests/unit/renderer-wiring/preview-seat.test.ts` drives `pointerdown` with `{button: 0}`), so there is no anchor
+   *  to subtract and the example's own arithmetic is the only figure such a realm can answer. It is the DECLARED
+   *  degradation, it is reachable in no window (a real `pointerdown` always carries `clientX`/`clientY`), and the
+   *  alternative — a no-op move — would silently un-measure `PS-1`'s gesture. */
+  const sizeFromPointerFor = (address: GestureAddress, pressCoordinateOf: () => number | null) =>
+    (pointer: { readonly x: number }, start: number): number => {
+      // THE FIGURE THE RECORD STATED AT THE PRESS — `startSizeOf`'s one answer. Without it this gesture declines.
+      if (typeof start !== 'number' || !Number.isFinite(start)) return Number.NaN
+      const signed = (delta: number): number => (address.sign === 1 ? delta : -delta)
+      const press = pressCoordinateOf()
+      // THE DEGRADED ARM: a realm whose press states no coordinate cannot anchor, so the example's mapping stands.
+      if (press === null) return signed(deltaFromPointer(address, pointer, start))
+      // THE ANCHORED FIGURE: the record's own, moved by the signed distance the pointer has travelled since the press.
+      return start + signed(deltaFromPointer(address, pointer, press))
+    }
   /** **THE VERTICAL ARM OF THE ONE MAPPING — `pointer.y - start`, AND THE SEAM'S TYPE DOES NOT DECLARE `y`**
    *  (design §3; `gutterSeamExample().sizeFromPointer` types the pointer `{ readonly x: number }`, `:345`). So the
    *  `y` member is read STRUCTURALLY through the example's own `typeof` gate and the answer for anything that is not a
@@ -810,6 +889,55 @@ export function startGutterAffordance (runtime: Runtime): {
       // a hostile client must never throw out of the release turn: the gesture ends and nothing is claimed
     }
   }
+  /** **`PP` — THE PANE ARM'S PREVIEW LANDS ON THE ELEMENT AND THE MEMBER THE DELIVERY PAINTS** (the user's report *"Also
+   *  the drag resize doesn't update live"*, MEASURED through a trusted CDP pointer on a real window, one sample per move:
+   *  during a drag `#gutter-target`'s style went `width: 100px → 106px → 110px → 104px` while `#pane-menus` read
+   *  `height: 100%; width: 100px; overflow-x: auto;` and `[0,36,100,140]` at EVERY sample, the record `['panes']` read
+   *  `pane-menus` `100` until the release, and the pane's painted width only moved then (`104px`)).
+   *  **SO THE WRITE WAS NEVER MISSING AND WAS NEVER WIPED — IT WENT TO THE WRONG NODE, WITH THE WRONG MEMBER ONE HANDLE
+   *  OVER.** The composition's ONE target is `GUTTER_TARGET_ID` (`D-144`, the ghost's element), which is `pane-a`'s
+   *  child INSIDE the landing page's gutter card — not the pane any delivery paints, and not the pane `pane-menus`'s
+   *  handle adjusts; and the property was the bare `'width'`, where the paint writes the member the pane's own `zone`
+   *  selects (`paneAxisMembers`, `adjustableMemberNameOf`) — `width` in `top`/`bottom`, `height` for `left`/`right` and
+   *  for the STAGE (`C-9`, `C-12`), so the stage handle's preview moves an axis the record never commits. **THE DELIVERY
+   *  IS NOT THE CULPRIT AND IS NOT CHANGED**: `paintStyle` replaces `css.style` whole and would restore the record's
+   *  figure on any delivery, but no delivery runs during the moves (`commitDrag` writes the `temp` family and the paint's
+   *  gate is the record's `committed` reading) — which is exactly why the transient can be seen to survive a gesture
+   *  instead of being replaced under it.
+   *  **WHAT THIS TURN ADDS IS THE PAINT'S OWN SUBJECT, AND NOTHING ELSE**: the node is `nodeIdForPane(<this handle's
+   *  pane>)` — the SAME map the paint and the self-report consult (`D-194`, `D-224`) — and the member is the record's
+   *  selection, read through `adjustableMemberNameOf` over the shape's own `zone`, exactly as `paneMemberOf` answers it
+   *  inside the composition. So the transient moves the box the next delivery will paint, from the figure the release
+   *  will commit, and a drag is visible while it happens.
+   *  **IT IS A SECOND WRITE BESIDE THE FIRST AND NOT A SUBSTITUTION** (`D-144`'s declared transient stands): the
+   *  `GUTTER_TARGET_ID` write below is BYTE-UNCHANGED, because `PS-2`/`PS-3`/`PS-4` read it and because that element is
+   *  the composition's own ghost target rather than a presentation this pass may re-aim. **IT WRITES NOTHING ELSE**: no
+   *  route, no node, no channel, no bridge member — a render-realm style declaration on an already-resolved element, in
+   *  the declared no-write arm where the map or the element is absent (`P1`/`P2`'s own discipline, `D-127`). */
+  const panePaintedMemberOf = (paneId: string): 'width' | 'height' => {
+    try {
+      const held = getViewClient().shape().panes.find((pane) => pane.id === paneId)
+      if (held !== undefined) return adjustableMemberNameOf(held.zone)
+    } catch {
+      // a hostile shape is the absent zone's own arm: the stage pane's member, which is what `paneMemberOf` degrades to
+    }
+    return adjustableMemberNameOf(undefined)
+  }
+  const panePreviewOf = (address: GestureAddress, value: number): void => {
+    const nodeId = nodeIdForPane(address.subject.id)
+    if (nodeId === null) return
+    let element: unknown = null
+    try {
+      element = runtime.elementForNodeId(nodeId)
+    } catch {
+      element = null
+    }
+    const holder = element as { readonly style?: { setProperty?: unknown } } | null | undefined
+    if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
+    const set = holder.style.setProperty
+    if (typeof set !== 'function') return
+    ;(set as (property: string, text: string) => void).call(holder.style, panePaintedMemberOf(address.subject.id), `${String(value)}px`)
+  }
   /** **THE PREVIEW — THE DECLARED TRANSIENT INLINE-STYLE WRITE ON THE LIVE TARGET** (`§2.5` item 4,
    *  `§3.1` M-12; ADV-GU-2) **AND THE GESTURE'S ONE PREVIEW SEAM** (`D-138`; design §2 `P1`–`P5`). The
    *  as-filed form dispatched the affordance's OWN node through `write(element, …)` — a GRAPH WRITE on
@@ -829,11 +957,14 @@ export function startGutterAffordance (runtime: Runtime): {
    *  `P1`/`P2` precede the routes, so a target with no usable `style` sends no route either.
    *  **AND IT IS ONE CLOSURE SET PER HANDLE** (`app-layout`'s `menus-handle-drag`): the presentation is the same for
    *  every entry (the composition's ONE target) while the two routes carry THAT entry's key, which is how one seam serves
-   *  two handles without a second discriminator. */
+   *  two handles without a second discriminator.
+   *  **AND A PANE'S PRESENTATION IS TWO WRITES SINCE `PP` ABOVE**: the composition's target (byte-unchanged) AND the
+   *  record's own painted element/member — the second being the one a person sees move, because it is the box the
+   *  delivery paints and the release commits. */
   const previewFor = (address: GestureAddress) => (state: unknown): void => {
     // **THE ZONE ARM IS THE ELEMENT WRITE AND NO ROUTE AT ALL** (design §4 `Z5`/`Z7`): the strip's transient is the
     // ZONE's own inline style, so there is no second transient to declare and no `['drag']` seat to send — the pane arm
-    // below is byte-unchanged, its two routes included.
+    // below is unchanged in its routes, and `PP` adds the pane's own painted subject beside its declared target.
     if (address.subject.kind === 'zone') {
       zonePreviewOf(address, state)
       return
@@ -845,6 +976,12 @@ export function startGutterAffordance (runtime: Runtime): {
     const value = (state as { readonly value?: unknown } | null | undefined)?.value
     if (typeof value !== 'number' || !Number.isFinite(value)) return
     ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
+    // **`PP` — AND THE PANE THE RECORD PAINTS AND THE RELEASE COMMITS** (`panePreviewOf` above): the element is
+    // `nodeIdForPane(<this handle's pane>)` and the member is that pane's `zone`'s selection, so the transient lands on
+    // the box a delivery will next paint, from the figure the release will commit. **THE ROUTE ORDER IS UNMOVED**: the
+    // declared target's write above, then this one, then the same two routes on the same `valid` flag — the gesture's
+    // arithmetic, its clamp, its capture and its commit are untouched, and the record is not written until the release.
+    panePreviewOf(address, value)
     const stateRecord = state as { readonly valid?: unknown } | null | undefined
     if (stateRecord?.valid === true) drag.move(address.handleId, state)
     if (stateRecord?.valid === false) drag.cancel(address.handleId)
@@ -926,6 +1063,36 @@ export function startGutterAffordance (runtime: Runtime): {
       }
     })
   }
+  /** **THE PRESS IS THE GESTURE'S ANCHOR, AND IT IS THIS WIRING'S OWN READING** (`sizeFromPointerFor` above; the user's
+   *  report *"the handle being separated from the pointer"*). The figure a move writes is `sizeAtPress ± (pointer −
+   *  press)`, and of its three inputs exactly one is NOT already answered: the affordance hands this wiring the record's
+   *  figure at the press (`startSizeOf`, once, at establishment) and the pointer of the move being observed, but the
+   *  PRESS COORDINATE is the gesture's own opening event — which the composed mechanism never passes to a seam. So it is
+   *  recorded HERE, on the SAME element and the SAME event type the capture above listens for, through the example's own
+   *  `pointerOf` (the resolver the affordance itself is handed, so a coordinate this read accepts is one the move turn
+   *  accepts too, under the same `typeof` + `Number.isFinite` gate).
+   *
+   *  **IT WRITES NOTHING AND OPENS NOTHING**: one listener per handle installed once at construction, no node written, no
+   *  route sent, no channel and no export, and the coordinate lives in the closure of the entry that owns the handle —
+   *  so a second handle's gesture can neither read nor overwrite the first one's anchor. **AND IT IS TOTAL**: an absent
+   *  coordinate, a primitive event, a throwing accessor and a realm with no `pointerdown` are all the SAME declared
+   *  absence (`null`), which `sizeFromPointerFor` degrades on rather than a `NaN` invented here. The anchor is re-taken at
+   *  EVERY press, so a second gesture starts from its own figure and not from the first one's. */
+  const anchorOnPress = (element: unknown, axis: 'x' | 'y', record: (coordinate: number | null) => void): void => {
+    if (element === null || element === undefined || typeof element !== 'object') return
+    source.on(element, POINTER_TYPES.start, (event: unknown): void => {
+      let coordinate: number | null = null
+      try {
+        const pointer = seams.pointerOf(event)
+        const held = pointer === null ? undefined : axis === 'x' ? pointer.x : pointer.y
+        coordinate = typeof held === 'number' && Number.isFinite(held) ? held : null
+      } catch {
+        // a throwing resolver is the same arm as a pointer this realm cannot read: no anchor, and the declared degradation
+        coordinate = null
+      }
+      record(coordinate)
+    })
+  }
   /** **THE LIST, WIRED — ONE AFFORDANCE PER ENTRY AND NOTHING ELSE PER ENTRY** (the user's charter: a third handle costs one
    *  line). Each affordance is the module's own mechanism over ITS resolved handle element, its own seam set and its own
    *  key; the session is SHARED, because it is one gesture state machine over a ledger that is keyed by the element each
@@ -946,12 +1113,17 @@ export function startGutterAffordance (runtime: Runtime): {
     // gesture is the press that pins the pointer to this handle, and the moves and the release that follow stay here even
     // though the handle is `14px` thick and the preview re-lays the box under the pointer on the first observed move.
     captureOnPress(element)
+    // **AND THE SAME PRESS IS THE ANCHOR THIS HANDLE'S FIGURE IS MEASURED FROM** (`anchorOnPress` above): the coordinate
+    // is kept in THIS iteration's own closure, so each of the six handles anchors on its own press and a gesture that
+    // never pressed — a stray move from a previous pointer — anchors on nothing and the mapping degrades as declared.
+    let pressAt: number | null = null
+    anchorOnPress(element, address.axis, (coordinate: number | null): void => { pressAt = coordinate })
     const affordance = createGutterAffordance({
       session: session as never,
       source,
       element,
       target,
-      sizeFromPointer: sizeFromPointerFor(address),
+      sizeFromPointer: sizeFromPointerFor(address, () => pressAt),
       pointerOf: seams.pointerOf,
       axisOf: seams.axisOf,
       cursorOf: seams.cursorOf,
