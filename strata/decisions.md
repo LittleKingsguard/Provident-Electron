@@ -5751,3 +5751,28 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two by-construction worktree rows** red before the commit; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; `src` and `dist` byte-equal. **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-260`** as prose, unchanged and extended by this row only. **This row records a rank never claimed, a scan that caught what a centre would not, a grab covered in both arms, and two controls that were never at risk because of where they stand.**
+## D-263 — THE PREVIEW PAINTS THE TARGET ZONE'S FORMATTING — **from the move the target resolves**, with the record untouched: `D-260`'s divergence one member over
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"when dragging from top/bottom to sidebar or vice versa, the preview uses the original zone's formatting in the preview location, instead of that zone's native style"* — **the same session in which `D-262` fixed the FIRST-LOAD rearrange and `D-260` fixed the END of a gesture.**
+
+**THE TWO CADENCES NEVER MET, WHICH IS WHY "BEFORE OR AFTER" WAS THE WRONG QUESTION.** **`props.zone` and the composed `css.style` were written by the pane loop on a DELIVERY**; **the preview runs on every `pointermove` and issued no such write.** **So during a drag the node had moved and its formatting had not**, **and the pane crossed a zone boundary wearing the zone it came from.**
+
+**THE FIX IS ONE COMPOSITION SERVING BOTH CALLERS.** **`drivePreviewPanePaints`, called from the preview's `place` turn**: **ONE `state-slice` on the pane's own node — `css.style` whole plus `props.zone` as one member**, **the same command `paintStyle` already sends**, **with `['panes']` untouched at every sample and the release still the gesture's ONE crossing.** **And `panePaintOf(zone, record)` now composes the fill, the record's figure on the axis that zone makes adjustable, `LAYOUT_ZONE_AXES`' scroll AND the attribute IN ONE FUNCTION** — **the delivery passes the record's zone, the preview the destination** — **so a preview that flipped the attribute without the style cannot exist**: **that would have shown a column-shaped box with row formatting, which is a different wrongness.** **A second composition was the seam class this corpus has now found six times, and this row closes it by construction rather than by discipline.**
+
+**AND IT COSTS ONE WRITE PER ZONE TRANSITION, NOT PER MOVE.** **Measured by `MutationObserver` on the pane**: **`top` → `left` over seven moves costs ONE zone write and ONE style write**; **the reverse the same.** **The guard is the surface's own published attribute**, **so in-zone moves, re-orders and re-stated previews cost ZERO.**
+
+**AND THE RE-ANCHOR HAD TO MOVE BEHIND THE PAINT — measured, not assumed.** **Writing after `reanchor()` LOST THE CAPTURE AND THE FOCUS to the render**: **`pointerup` landed on `#left` and the release missed.** **`reanchor()` is now last and fires on `moved > 0 || painted > 0`.** **That is `D-259`'s re-take lesson in the other direction**: **the operation that restores the gesture must be the LAST thing the turn does, whichever operation that turns out to be.**
+
+**THE RESTORE WAS NEEDED TOTALLY, AND NO DELIVERY WOULD HAVE DONE IT.** **A non-committing end writes nothing, so NO DELIVERY FOLLOWS** — **`previewPlacement(null)` hands the record's family to the same loop**, **which puts the attribute, the style AND the format back in the turn that puts the panes back**; **a committing release needs none, because its delivery repaints.**
+
+**SAMPLED PER MOVE.**
+
+| drag | first moves | the move the target resolves | record |
+|---|---|---|---|
+| `top` → `left` | row, flank grip, `::after` none | **`left`, `width: 100%; height: 100px; overflow-y: auto`, COLUMN, header, `Menus`** | **`top` at every sample** |
+| `left` → `top` | column, header, `Menus` | **`top`, `height: 100%; width: 100px; overflow-x: auto`, ROW, flank, none** | **`left` at every sample** |
+| release over no zone | — | **attribute, style and formatting all restored** | **unchanged** |
+
+**THE READINGS.** `npm test` **`2,963 passed / 2 skipped` of `2,965`** over **`146`** files — **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt. **One file changed** plus its build product; **no new channel, bridge member or authored node**; the write, the order rule, the capture, the drops, the rank, the header, the pins, the theme, the zones and the census untouched. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-262`** as prose, unchanged and extended by this row only. **This row records two cadences that never met, one composition serving both, a guard that made a per-move cost per-transition, and a re-anchor that had to be last.**
