@@ -1085,46 +1085,81 @@
     .zone-collapse:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
     [collapsed="true"] + .zone-collapse::before { content: '\25B8'; }            /* ▸ — collapsed */
 
-    /* ══ **A COLLAPSED SIDEBAR'S HEAD LANE IS ROTATED, AND THE ALTERNATIVES LOSE FOR A MEASURED REASON** ══
-       A `top`/`bottom` collapsed zone stacks its heads ALONG the arrangement axis already (a row), so each head keeps its
-       natural `14px` thickness and costs nothing. A `left`/`right` zone fixes the WIDTH and arranges along the HEIGHT — so a
-       horizontal head inside it would set the collapsed WIDTH to the widest head's own CONTENT width (measured precedent,
-       `D-257`: `[0,190,105,14]` inside a `105` content box), i.e. a `120px` rail would collapse to ~`105px` and **the collapse
-       would reclaim almost none of the only axis it can reclaim**. So the head row takes `writing-mode: vertical-rl` inside
-       a collapsed sidebar zone, the label runs DOWN the lane, and the collapsed WIDTH becomes the head's own thickness — the
-       same `14px` a `top` zone pays on its height. **A COLUMN OF HEADS AT THEIR NATURAL HEIGHT WAS REFUSED ON THAT
-       MEASUREMENT, and a narrow lane with unrotated text was refused because a `nowrap` name cannot fit a `14px` lane at all.**
+    /* ══ **A COLLAPSED SIDEBAR'S HEAD LANE IS ROTATED, IT READS BOTTOM-TO-TOP, AND THE ALTERNATIVES LOSE FOR A MEASURED
+       REASON** ══ A `top`/`bottom` collapsed zone stacks its heads ALONG the arrangement axis already (a row), so each head
+       keeps its natural `14px` thickness and costs nothing. A `left`/`right` zone fixes the WIDTH and arranges along the
+       HEIGHT — so a horizontal head inside it would set the collapsed WIDTH to the widest head's own CONTENT width (measured
+       precedent, `D-257`: `[0,190,105,14]` inside a `105` content box), i.e. a `120px` rail would collapse to ~`105px` and
+       **the collapse would reclaim almost none of the only axis it can reclaim**. So the head row takes a SIDEWAYS writing
+       mode inside a collapsed sidebar zone, the label runs ALONG the lane, and the collapsed WIDTH becomes the head's own
+       thickness. **A COLUMN OF HEADS AT THEIR NATURAL HEIGHT WAS REFUSED ON THAT MEASUREMENT, and a narrow lane with
+       unrotated text was refused because a `nowrap` name cannot fit a `14px` lane at all.**
+
+       **THE DIRECTION IS THE USER'S AND IT IS `sideways-lr`, BECAUSE THAT IS THE SIDEWAYS VALUE WHOSE INLINE AXIS RUNS UP**
+       (the user, verbatim: *"'Menus' should read bottom-to-top to preserve space"*). `vertical-rl` — the value this block
+       carried — rotates Latin glyphs CLOCKWISE and runs the inline axis DOWN the lane; `sideways-lr` rotates them
+       COUNTER-CLOCKWISE and runs it UP it. **ITS SUPPORT HERE IS MEASURED AND NOT ASSUMED** (Electron 44.4.5,
+       `Chrome/152.0.7977.130`): `CSS.supports('writing-mode', 'sideways-lr')` is `true`, a `sideways-lr` box computes
+       `sideways-lr`, and a run inside this lane measures its FIRST text fragment at `y=232` and its LAST at `y=204` — while
+       the same run given `vertical-rl` in the same lane measures the pair `204`/`237`, which is the control that makes this a
+       reading and not a substring. **SO NO `transform: rotate(180deg)` HALF-TURN STANDS HERE, AND ITS COST IS WHY**: a
+       transform on this row would be INHERITED by every child — a child's own `writing-mode: horizontal-tb` cannot undo it,
+       since the two are different mechanisms — so the grip and the control would each need a counter-rotation and their own
+       origin, AND a transformed row becomes the containing block and the stacking context of its own descendants, which is
+       exactly what the four `.pane-drop` overlays a grip opens are placed against (`position: fixed` and trapped in this
+       grip's context, `D-260`). **THE `vertical-rl` DECLARATION IS KEPT AHEAD OF IT AS THE DEGRADATION, STATED RATHER THAN
+       DISCOVERED**: a realm that refuses `sideways-lr` drops that one declaration and paints the lane TOP-TO-BOTTOM with every
+       box unmoved.
 
        **THE SELECTOR NAMES NO ZONE CLASS AND NO ID, AND IT NEEDS NEITHER**: a collapsed zone's attribute reaches the PANE by
        `>`, and the pane's zone is the CLASS it inherits by position (`D-265`), so this pair is the whole key — and it cannot
        match a PANE's own attribute, whose children are a head and a body and never another pane.
 
-       **AND NOTHING PRESSABLE ROTATES**: `writing-mode` moves the INLINE axis to the vertical, so the grip and the collapse
-       control each take `writing-mode: horizontal-tb` back — **a square rotated is the same square**, so every control's
-       `14x14` box and therefore its hit area is INVARIANT, and rotation can cost the LABEL's legibility and never a control's
-       box. **THE BASE RULE'S TWO EXTENTS ARE RE-STATED RATHER THAN INHERITED** (`design-pane-collapse.md` §6's
-       `.pane-head > .pane-grab` pair): under `vertical-rl` the grip's `height: 14px` becomes the CROSS extent and its
-       `min-width: max-content` an inline floor along the lane — so `height: 14px` and `min-width: max-content` are written
-       HERE, where the rotation is, and the base rule's own axes are not reused. **THE LANE'S CROSS EXTENT IS THEREFORE THE
-       GRIP'S OWN `14px`**, which is a number the sheet already states: the zone's `auto` (the paint's, on the axis it fixes)
-       resolves to a figure nothing invented. **AND THE ORDER IS THE GRIP FIRST, THE NAME BETWEEN, THE CONTROL LAST ALONG THE
-       LANE** — the `top`/`bottom` order, with `D-269` §3's overflow lesson carried as the floor above.
+       **THE NAME IS THE GRIP'S, AND THAT IS THE ONE BOX THAT MAY NOT LEAVE THE LANE'S AXIS** — the finding this rev states
+       rather than repeats: `content: attr(name)` is `.pane-head > .pane-grab::after`'s, so a grip returned to
+       `horizontal-tb` un-rotates the LABEL with it, and the lane the rev-2 block promised was a rotated one painted a
+       HORIZONTAL name in a `59px` rail (measured, before this rev: the zone `[0,204,59,467]` and the grip `[4,204,51,14]` —
+       the rail's width WAS the horizontal name's own max-content width, plus this row's two `4px` insets). With the grip on
+       the lane's axis the same rail measures `[0,204,22,467]` and the grip `[4,222,14,51]`: the name runs UP the lane and
+       the rail's cross extent is the bar's thickness. **THE BASE RULE'S TWO EXTENTS ARE RE-STATED RATHER THAN INHERITED**
+       (`design-pane-collapse.md` §6's `.pane-head > .pane-grab` pair), and the reason is the axis swap: under a vertical
+       mode `height` is the INLINE extent, so the base rule's `height: 14px` would clip a `nowrap` name to one glyph — hence
+       `height: auto` (the name's own length ALONG the lane, measured `50.7px` for `Menus` and the glyph together) and
+       `min-width: max-content` (the BLOCK floor: one line's own height, so the name cannot leave its box, `D-269` §3). **AND
+       `!important` IS PART OF THAT PAIR BECAUSE THE GRIP AUTHORS `height: 14px` INLINE** (the envelope's own `css`, measured
+       on the node: `cursor: grab; width: 14px; height: 14px;`), which no plain declaration reaches — the same reach, for the
+       same reason, as the gutter strip's own `!important`s above. **AND THE ORDER IS THE GRIP FIRST, THE NAME BETWEEN, THE
+       CONTROL LAST ALONG THE LANE**, which bottom-to-top puts the grip at the lane's FOOT (its `⠿` measures `[3,265,15,8]`
+       inside a grip spanning `222…273`) and the control at its HEAD.
 
-       **THE `top`/`bottom` ARM STATES NOTHING**: a collapsed `top`/`bottom` zone's heads are a row already, so its head keeps
-       the base rule byte for byte (`D-269`). **AND THE DEGRADATION IS STATED RATHER THAN DISCOVERED**: a realm that refuses
-       `writing-mode` paints the head horizontally inside a `14px` lane, so the NAME clips while every control keeps its box
-       and its press — the label's loss and never the act's. */
+       **AND NOTHING PRESSABLE TURNS**: `sideways-lr` is a `writing-mode` and NOT a transform, so no rotation is inherited by
+       anything — nothing here carries one at all (`transform` computes `none` on the head, on the grip and on the control,
+       measured). The collapse control takes `writing-mode: horizontal-tb` back and keeps its OWN `14x14` UPRIGHT box with its
+       `▸` glyph upright; the grip's box stays AXIS-ALIGNED and keeps its area (`51x14` became `14x51`, `714px²` either way) —
+       it is the lane's body and the label's carrier, and **A SQUARE ROTATED IS THE SAME SQUARE**, so every glyph control's box
+       and therefore its hit area is INVARIANT. `elementFromPoint` at each centre answers its own id (measured: the grip's
+       centre answers `menus-grab`, the control's answers `menus-collapse`). **THE `top`/`bottom` ARM STATES NOTHING**: a
+       collapsed `top`/`bottom` zone's heads are a row already, so its head keeps the base rule byte for byte (`D-269`) —
+       measured unmoved at `[0,36,100,14]`, `horizontal-tb`, `transform: none`. **AND THE DEGRADATION IS STATED RATHER THAN
+       DISCOVERED**: a realm that refuses `writing-mode` paints the head horizontally inside the lane, so the NAME clips while
+       every control keeps its box and its press — the label's loss and never the act's. */
     [collapsed="true"] > .pane-in-left > .pane-head,
     [collapsed="true"] > .pane-in-right > .pane-head {
-      writing-mode: vertical-rl;
+      writing-mode: vertical-rl;           /* THE DEGRADATION, STATED: a realm refusing the next line reads DOWN the lane */
+      writing-mode: sideways-lr;           /* THE ASK: the sideways value whose inline axis runs BOTTOM-TO-TOP */
     }
+    /* **THE LABEL'S CARRIER KEEPS THE LANE'S AXIS; THE GLYPH CONTROL IS THE ONE THAT RETURNS TO `horizontal-tb`.** */
     [collapsed="true"] > .pane-in-left > .pane-head > .pane-grab,
-    [collapsed="true"] > .pane-in-right > .pane-head > .pane-grab,
+    [collapsed="true"] > .pane-in-right > .pane-head > .pane-grab {
+      height: auto !important;             /* THE BASE PAIR RE-STATED — under a vertical mode `height` is the INLINE extent, and
+                                              the grip AUTHORED `height: 14px` inline, which only a `!important` reaches */
+      min-width: max-content;              /* …and this the BLOCK floor — one line's height, so the name stays in its box */
+    }
     [collapsed="true"] > .pane-in-left > .pane-head > .pane-collapse,
     [collapsed="true"] > .pane-in-right > .pane-head > .pane-collapse {
-      writing-mode: horizontal-tb;         /* NOTHING PRESSABLE ROTATES: a square rotated is the same square */
-      height: 14px;                        /* THE BASE PAIR, RE-STATED — under `vertical-rl` this is the CROSS extent */
-      min-width: max-content;             /* …and this the inline floor along the lane, so the name cannot leave its box */
+      writing-mode: horizontal-tb;         /* NOTHING PRESSABLE TURNS: a square rotated is the same square */
+      height: 14px;                        /* THE GLYPH CONTROL'S OWN BOX, re-stated here where the lane is */
+      min-width: max-content;
     }
     /* **AND THE NEW BOXES TAKE THEIR DARK PAIRS IN THE SAME EDIT** (`D-247`, `D-256`): an unpaired light fill under a dark page
        is a legibility bug and not a taste one. **THE ROTATED LANE STATES NO COLOUR OF ITS OWN** — it inherits the head row's
