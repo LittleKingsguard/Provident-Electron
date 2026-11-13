@@ -581,10 +581,11 @@
        `margin-left: auto`). A `float` or a `position` declared on the CLASS would take that strip out of its row and pin it
        to a float's own line or to the window — so the `top`/`bottom` form's BOX declarations stand on `#menus-vertical` and
        only the PAINT is the class's; the paint costs the sibling nothing and makes both strips findable.
-       **AND THE SIDEBAR'S FORM IS THE CLASS's, FOR THE OTHER REASON** (`D-253`, and this pass's first gap): there the strip
-       is on the pane's BOTTOM edge in whichever zone the pane's record names, so the rule that states it matches
-       `[zone=…] > .gutter-handle` and covers all three panes — the class is the one hook every pane's strip already carries,
-       and the `top`/`bottom` arm keeps the id-keyed box this block is about.
+       **AND THE SIDEBAR'S FORM IS THE CLASS's, FOR THE OTHER REASON** (`D-253`; keyed on the inherited class since `D-265`):
+       there the strip is on the pane's BOTTOM edge in whichever zone the pane STANDS in, so the rule that states it matches
+       `.pane-in-left > .gutter-handle` / `.pane-in-right > .gutter-handle` and covers every pane that consumes the zone's
+       form — the class is the one hook every pane's strip already carries, plus the position the engine resolved, and the
+       `top`/`bottom` arm keeps the id-keyed box this block is about.
        **AND `-webkit-app-region` IS DELIBERATELY NOT DECLARED ON IT**: the drag region is the top-bar's alone, and this
        strip is NOT inside it — the menus pane stands in the `top` ZONE, below the bar — so a `no-drag` here would guard
        against a region the compositor never had. The click-drag this strip must keep is the pane's own resize gesture,
@@ -612,7 +613,7 @@
        left edge (`position: sticky; left: 0`, authored on the node) where `D-248` measured it at `[0,36,14,14]`. */
     /* ══ **EVERY `top`/`bottom` RULE IN THIS PANE'S BLOCK DECLARES NO SPECIFICITY, BECAUSE THE PANE'S FORM IS KEYED ON ITS
        PUBLISHED `zone` AND NEVER ON ITS ID** ══ The box model above is `:where()`'d for that reason, and so is the grip's
-       lane and the strip's pin below: a rule that names an ID outranks any `[zone="left"]`/`[zone="right"]` selector on the
+       lane and the strip's pin below: a rule that names an ID outranks any `.pane-in-left`/`.pane-in-right` selector on the
        same node by the cascade's FIRST column, so an id-keyed lane would survive a pane that has left the `top` form.
        **MEASURED, BY PUTTING THE ID RULES BACK AND MOVING ALL THREE PANES INTO `left`**: `pane-menus` and `pane-inspector`
        kept `box-sizing: content-box` and `padding 14px/18px` and stood `152px` wide against a `120px` rail, and their
@@ -712,34 +713,37 @@
        NAMING ONE ══════════════════════════════════════════════════════════════════════════════════════════════════════
        `D-243`'s rule is that a pane FILLS the axis its zone fixes and ADJUSTS the orthogonal one, and `D-252` moves the
        pane into the zone its record names — so in `left`/`right` the pane adjusts its HEIGHT, and three authored truths
-       that were written for the `top`/`bottom` form stop being true at the same instant. **THE KEY IS THE RECORD'S OWN
-       `zone`**, published by `renderer.ts`'s pane arm as the bare `zone` attribute in the SAME `state-slice` that paints
-       the style (`props.zone`, rewritten from the record on every delivery, so it can neither go stale nor be touched by
-       the whole-key `css.style` replacement beside it) — there is no second copy of the zone in this sheet and none is
-       inferred from a box.
-       **AND THE SELECTORS ARE THE ATTRIBUTE'S, NOT ANY PANE'S ID — THE WHOLE OF THIS BLOCK'S REWRITE.** These rules stood
-       on `#pane-menus` and, in compact form, on `#pane-inspector`: two spellings of one form, keyed on the panes the demo
-       happened to author. So the THIRD pane — `#gutter-pane`, the stage's, whose record key is `['panes','pane-a']` — had
-       NO sidebar form at all, and it is measured rather than supposed: dragged into `left` it computed `display: block;
-       flex-direction: row`, its grip stayed `position: relative` with `::after: none`, and a fourth pane authored
-       tomorrow would have inherited exactly the same hole. **THE PANE'S ZONE IS THE RECORD'S AND THE SHEET READS IT**:
-       every selector below matches `[zone="left"]`/`[zone="right"]` and nothing else about the pane, so whatever panes the
-       envelope declares get the form, and a pane added later needs no edit here.
-       **AND `:has(> .pane-grab)` IS WHAT MAKES THE ATTRIBUTE A PANE'S, WHICH A BARE `[zone]` WOULD NOT BE**: the twelve
-       pane-move DROPS author `props.zone` too (`demo-envelope.ts`'s `paneMoveDropNodeOf` writes `{id, pane, zone}`) and
-       the envelope's `props` render as bare attributes — measured in the live markup, where FOURTEEN nodes carry `zone`
-       and twelve of them are drops. **AND THE COST OF A BARE `[zone]` IS MEASURED TOO**: with the guard struck from the
-       rules below, the four `*-left`/`*-right` overlays of every grip computed `box-sizing: border-box` and
-       `flex-direction: column` (the closed `display` still won on its own specificity, so the defect would have shown the
-       moment a grip was pressed and an overlay opened, losing `4px` of its box to its `2px` border), where the guarded
-       tree computes `content-box`/`row` for all twelve. `:has()` costs one pseudo-class and no node, and the child it names is the one
-       EVERY pane authors — its move grip, the pane's first child (`#menus-grab`, `#inspector-grab`, `#gutter-grab`) — so
-       "the node that holds a grip is a pane" is the structural test and no class has to be painted to say it. **THE
-       STAGE'S PANE IS OUT FOR THE OTHER REASON, AND IT IS THE `D-253` ONE**: its record names no zone (`C-9`, absence IS
-       the stage), so the paint writes NO `zone` attribute — and `paintStyle` spells that absence as a REMOVAL, so a pane
-       that leaves a zone loses the attribute in the same `state-slice` that repaints it. A selector keyed on the
-       attribute therefore stops applying in that very turn and the authored `top`/`bottom` form stands again by
-       construction, with no `:not()` and nothing remembered.
+       that were written for the `top`/`bottom` form stop being true at the same instant. **THE KEY IS A CLASS THE PANE
+       INHERITS FROM THE ZONE IT STANDS UNDER, AND NOTHING WRITES IT** (`D-265`): `src/shared/demo-envelope.ts` gives each
+       zone a `component` value — `pane-in-top`, `pane-in-bottom`, `pane-in-left`, `pane-in-right`, and the app root the
+       stage's `pane-in-stage` — and gives each pane a `component` consumer of `css.classes`, so the engine resolves the
+       nearest providing ancestor and APPENDS that class to the pane's own (`fitReference` by tree position, `applyDerived`).
+       **THE FOUR CLASS NAMES ARE SPELLED TWICE — ONCE AS THE ENVELOPE'S VALUES AND ONCE HERE AS THE SELECTORS — AND THE
+       EQUALITY IS MEASURED RATHER THAN DERIVED** (`D-41`: two literals in two modules, each with its own reason).
+       **THIS BLOCK USED TO KEY ON A PAINTED `zone` ATTRIBUTE** (`props.zone`, written by `renderer.ts`'s pane arm on every
+       delivery beside the style) **AND THAT MEMBER IS DELETED**: the position is now a fact the engine derives from where
+       the node stands, so there is no second copy of the zone in this sheet, none inferred from a box, and nothing that a
+       delivery could leave stale — a pane re-parented into `left` wears `pane-in-left` on the very render that moves it,
+       MID-DRAG and with nothing written.
+       **AND THE SELECTORS NAME NO PANE — THEY NAME THE INHERITED CLASS, AND THAT IS WHY A FOURTH PANE NEEDS NO EDIT HERE.**
+       These rules stood on `#pane-menus` and, in compact form, on `#pane-inspector`: two spellings of one form, keyed on
+       the panes the demo happened to author, so the THIRD pane — `#gutter-pane`, the stage's, whose record key is
+       `['panes','pane-a']` — had NO sidebar form at all (measured: dragged into `left` it computed `display: block;
+       flex-direction: row`, its grip stayed `position: relative` with `::after: none`). `D-264` answered that with
+       `[zone="left"]:has(> .pane-grab)` and **THIS PASS ANSWERS IT STRUCTURALLY**: every rule below matches
+       `.pane-in-left`/`.pane-in-right`, which is a class ONLY A CONSUMING PANE CAN WEAR — so the set of panes that get the
+       form is exactly the set the envelope declares consumers for, whatever their ids, and a fourth pane authored with the
+       same one-line consumer inherits it with no CSS edit.
+       **AND THE `:has(> .pane-grab)` GUARD OF `D-264` IS DELETED WITH ITS REASON, WHICH IS NOT A LOSS — IT IS THE POINT.**
+       The guard existed because fourteen nodes carried a `zone` attribute and twelve were DROPS, so the attribute alone
+       could not say "this is a pane"; with the class, the DROPS CAN NEVER WEAR IT (they consume no `zone-format` and are
+       not under a provider that could reach them as panes) and the structural test the guard supplied is the binding
+       itself. Measured before this pass, with the guard struck, the twelve overlays computed `border-box`/`column` — a cost
+       the guard paid per-selector; a class the engine resolves pays it once, in the envelope.
+       **THE STAGE IS A POSITION AND HAS ITS OWN CLASS** (`pane-in-stage`, provided by the app root): a pane whose record
+       names no zone (`C-9`) is under no zone and wears the stage's class, and a pane that leaves a zone SHEDS that zone's
+       class in the same render — so the authored `top`/`bottom` form stands again by construction, with no `:not()` and
+       nothing remembered.
          (1) THE LANES FOLLOW THE GRIP, AND THE BOX MODEL FOLLOWS THE LANES. The figure the record states is the HEIGHT
              here and the horizontal one is the FILL (`width: 100%`), so the strip's right-hand lane is dropped and the
              pane returns to `border-box`: an 18px lane on the fill's axis would push a `100%` pane past the zone's own
@@ -768,8 +772,8 @@
              items with it — and in the `right` zone both open LEFTWARD (`right: 100%`), because a panel opening right
              from the window's own right column would paint outside the window. The row ladder is unmoved: it is
              `margin-top`, which is the offset a vertical stack needs. */
-    [zone="left"]:has(> .pane-grab),
-    [zone="right"]:has(> .pane-grab) {
+    .pane-in-left,
+    .pane-in-right {
       box-sizing: border-box;              /* the FILL is `width: 100%` here: a content-box plus a lane pushes the pane past the zone */
       padding-left: 0;                     /* the grip's lane goes with the grip: it heads the pane now, it does not flank it */
       padding-right: 0;
@@ -781,18 +785,18 @@
        affordances all take `flex: 0 0 auto`; the two rules that stood here (`> .menus-menu` and `> #menus-receipt`) said
        it for the only pane that had children to say it about, and the third pane's target gets the same treatment from
        the same line now. No figure of the record's is stated and no box moves. */
-    [zone="left"]:has(> .pane-grab) > *,
-    [zone="right"]:has(> .pane-grab) > * { flex: 0 0 auto; }
+    .pane-in-left > *,
+    .pane-in-right > * { flex: 0 0 auto; }
     /* ══ THE HEADER ROW: THE GRIP AT THE TOP OF THE PANE, THE PANE'S NAME TO ITS RIGHT ══════════════════════════════════
        The user's report, verbatim: *"In the sidebar, move the grab handle to the top of the pane above the text (not to
        the side), and render the pane name as text to the right of it."* **THE GRIP STOOD BESIDE THE CONTENT AND NOW STANDS
        ABOVE IT, AND THE NAME IT CARRIES IS THE AUTHORED ONE**: `src/shared/demo-envelope.ts` writes `props.name` on this
        node (`'Menus'`, `'Inspector'`, `'Stage'`), which the paint emits as the bare `name="Menus"` attribute this rule
        reads — **NO NEW AUTHORED NODE**, no new record member and no new bridge member. **IT SURVIVES EVERY DELIVERY**,
-       which is what the choice turns on: the pane arm writes exactly two things, `css.style` (whole-key) and `props.zone`
-       (one member), in one `state-slice` (`renderer.ts`'s `driveLayoutRegions` → `paintStyle`), so `props` is NEVER
-       replaced whole and an authored sibling member cannot be overwritten; a relocation is the engine's `move` op and
-       re-authors nothing (`D-252`). A `name` in the `panes` family would have owed the creation repair a value for every
+       which is what the choice turns on: the pane arm writes exactly ONE thing, `css.style` (whole-key), in one
+       `state-slice` (`renderer.ts`'s `driveLayoutRegions` → `paintStyle`), so `props` is NEVER replaced whole and an
+       authored sibling member cannot be overwritten — and since `D-265` deleted the pane's painted `props.zone` there is
+       no `props` write on a pane at all; a relocation is the engine's `move` op and re-authors nothing (`D-252`). A `name` in the `panes` family would have owed the creation repair a value for every
        pane it mints and the placeholder one for every pane a cold profile derives, which is a decision about a pane
        nobody has named.
        **THE PAIR IS ONE FLEX LINE AND THE GRIP IS THE LINE**: the pane is the COLUMN in a sidebar (`display: flex;
@@ -830,8 +834,8 @@
        controls (the resize strip here, the four zone strips, and this grip's own `top`/`bottom` form), and a header that
        scrolled away would be a control a person has to scroll back to. MEASURED at `scrollTop 0` and at the content's end
        (`38`): the header reads `[0,190,105,14]` at both, while the first menu travels `206 → 168` under it. */
-    [zone="left"]:has(> .pane-grab) > .pane-grab,
-    [zone="right"]:has(> .pane-grab) > .pane-grab {
+    .pane-in-left > .pane-grab,
+    .pane-in-right > .pane-grab {
       flex: 0 0 auto;
       display: flex;                       /* the glyph and the name, ONE line — the row this rule exists for */
       align-items: center;
@@ -848,8 +852,8 @@
     /* **THE NAME, TO THE RIGHT OF THE GLYPH** — one line, the GRIP's own ink (so the dark pair below covers it with no
        second rule and no new colour), never wrapped (the pane is `nowrap`), and never shrunk out of the row. `attr(name)`
        is the whole binding: the value is the envelope's, not this sheet's, and a grip that carries no name paints ''. */
-    [zone="left"]:has(> .pane-grab) > .pane-grab::after,
-    [zone="right"]:has(> .pane-grab) > .pane-grab::after {
+    .pane-in-left > .pane-grab::after,
+    .pane-in-right > .pane-grab::after {
       content: attr(name);
       flex: 0 0 auto;
       font-size: 11px;
@@ -868,8 +872,8 @@
        `align-self: stretch !important` is the third pane's authored `align-self: flex-start` yielding — the same trade the
        grip's row makes and for the same reason — and the two `!important`s beside it are the strip's THICKNESS and cursor
        moving to the height axis over an inline `width: 14px`/`cursor: col-resize`. */
-    [zone="left"]:has(> .pane-grab) > .gutter-handle,
-    [zone="right"]:has(> .pane-grab) > .gutter-handle {
+    .pane-in-left > .gutter-handle,
+    .pane-in-right > .gutter-handle {
       order: 1;                            /* LAST in the column: its static position is the pane's bottom edge */
       flex: 0 0 auto;
       float: none;                         /* the pin that held it against the RIGHT edge is the height-axis lane's job now */
@@ -897,20 +901,20 @@
     /* THE PANEL OPENS SIDEWAYS IN A SIDEBAR — keyed on the pane's `zone` and the MENU's own class, which is the content's
        hook and no pane's name: `.menus-menu` occurs only in the menus pane, so this says "in a sidebar, every panel opens
        into the stage" without naming a pane, and `right`'s arm opens LEFTWARD for the reason clause (3) states. */
-    [zone="left"] > .menus-menu:focus-within::before {
+    .pane-in-left > .menus-menu:focus-within::before {
       left: 100%;
       top: 0;
     }
-    [zone="left"] > .menus-menu:focus-within > .menu-item {
+    .pane-in-left > .menus-menu:focus-within > .menu-item {
       left: calc(100% + var(--menu-pad));
       top: 1px;
     }
-    [zone="right"] > .menus-menu:focus-within::before {
+    .pane-in-right > .menus-menu:focus-within::before {
       right: 100%;
       left: auto;
       top: 0;
     }
-    [zone="right"] > .menus-menu:focus-within > .menu-item {
+    .pane-in-right > .menus-menu:focus-within > .menu-item {
       right: calc(100% + var(--menu-pad));
       left: auto;
       top: 1px;
@@ -919,7 +923,7 @@
        (`D-9`: a file must not deny its own body.) `D-253` and `D-257` spelled the sidebar's three truths twice — once for
        `#pane-menus` and once, in compact form, for `#pane-inspector` — because a `[zone]`-leaning selector looked like it
        would also catch the stage's pane, which has no zone and no header form. The block above answers that in the
-       SELECTOR (`[zone=…]` plus `:has(> .pane-grab)`) and states the form ONCE, so the second spelling had nothing left to
+       SELECTOR (the inherited `.pane-in-left`/`.pane-in-right` class) and states the form ONCE, so the second spelling had nothing left to
        say: every declaration it carried — the `border-box` box model, both lanes `0`, the column, the header row, the
        `attr(name)` label, the strip on the bottom edge with `order: 1` and `margin: auto 0 0 0` — stands above, unchanged
        and for the same reasons. **NOTHING IS LOST AND NOTHING IS RE-SPELLED**: that pane's `D-253`/`D-256`/`D-257`

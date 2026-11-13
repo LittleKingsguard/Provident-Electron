@@ -722,6 +722,50 @@ const verticalZoneStyle: Record<string, string> = { 'overflow-y': 'auto' }
 const horizontalZoneStripStyle: Record<string, string> = { flex: '0 0 14px', cursor: 'row-resize' }
 const verticalZoneStripStyle: Record<string, string> = { flex: '0 0 14px', cursor: 'col-resize' }
 
+/** **THE PANE'S ZONE FORMAT NOW ARRIVES BY POSITION — ONE NAME THE ZONES PROVIDE AND THE PANES CONSUME** (`D-265`; the
+ *  user's direction: *"inheriting information like class names and css from parent data based on the position in the tree"*).
+ *  **EACH ZONE PROVIDES A CLASS NAME AND EACH PANE CONSUMES IT INTO `css.classes`**, so the class a pane wears is the class of
+ *  the zone it CURRENTLY STANDS UNDER, resolved by the engine's own `fitReference` walk (own → descendants → ancestors,
+ *  nearest first) and APPENDED by `applyDerived` — **which is the one property a written attribute cannot have: it cannot go
+ *  stale, because nothing writes it.**
+ *
+ *  **THE PROVIDER IS AN AUTHORED ELEMENT AND STAYS ONE** — measured on `provident-ssr@0.5.2`, which narrows the compile emit
+ *  gate to a runtime-minted VALUE RECORD (`valueRecord`), so a zone carrying a `value` is emitted with its children instead
+ *  of being dropped from render (`AL-F1`'s first half, discharged). **THE STAGE IS A POSITION TOO, AND ITS PROVIDER IS THE
+ *  APP ROOT**: a pane whose record names no zone (`C-9`, `pane-a`) stands in the stage, and with no providing ancestor its
+ *  binding would answer `unresolved-reference` on every compile — measured, and the reason this fourth value exists rather
+ *  than an absence. The walk is NEAREST-first, so the root's value reaches only the panes no zone covers (measured on
+ *  `0.5.2`: a pane in `top` reads `pane-in-top`, the stage's own pane reads `pane-in-stage`).
+ *
+ *  **`css.classes` IS THE ONLY CSS SEAM THE PACKAGE HAS** (measured on `0.5.2`: `target: 'css.style.<key>'` is a BLOCKED
+ *  css-family target and warns `component-target-skipped`, so no style reaches a pane this way and the fill/figure/scroll
+ *  stay the paint's). **SO THE CLASS NAMES ARE THE SHEET'S KEYS AND THE LITERAL IS SPELLED TWICE**: once here as the value a
+ *  zone provides and once in `src/renderer/index.html` as the selector — two literals in two modules, each with its own
+ *  reason, and the equality measured rather than derived (`D-41`, `D-188` debt 2's own precedent).
+ *
+ *  **WHAT IS NOT INHERITED, AND DELIBERATELY**: the pane's ADJUSTABLE FIGURE is the RECORD's (`D-243`) and the fill/scroll
+ *  relation is the LAYOUT's (`PANE_FILL`, `LAYOUT_ZONE_AXES`), so both are still WRITTEN by the paint — a class carries no
+ *  figure, and a figure in a stylesheet would be the second authority `D-129` refuses. */
+const PANE_ZONE_REFERENCE = 'zone-format'
+/** The class a zone provides to whatever pane stands under it — derived from the zone id so the four cannot drift. */
+const paneZoneFormClassOf = (zoneId: string): string => `pane-in-${zoneId}`
+/** **THE STAGE'S OWN FORM CLASS** — the value the app root provides for the panes no zone covers, and the reason a stage pane
+ *  resolves at all (see the block above). It is NOT one of the four and never becomes one: the stage is derived and holds no
+ *  sequence (`C-9`). */
+const PANE_STAGE_FORM_CLASS = 'pane-in-stage'
+/** One ZONE's half of the binding: the class name it publishes to its descendants, under the one reference. */
+const zoneFormatProviderOf = (zoneId: string): Record<string, unknown> => ({
+  reference: PANE_ZONE_REFERENCE,
+  value: [paneZoneFormClassOf(zoneId)],
+})
+/** One PANE's half: the consumer that reads whichever provider stands nearest above it into its own `css.classes`. **A FRESH
+ *  OBJECT PER PANE** — an envelope is read, never shared by reference between nodes (`D-41`'s two-spellings discipline at its
+ *  smallest scale). */
+const zoneFormatConsumerOf = (): Record<string, unknown> => ({
+  reference: PANE_ZONE_REFERENCE,
+  target: 'css.classes',
+})
+
 /** **ONE ZONE STRIP, AUTHORED ONCE AND PLACED FOUR TIMES** — the `gutter-handle` SHAPE `MENUS_AFFORDANCE_ID` already
  *  carries (`css.id` = `props.id` = `props.axis` = the one string, `css.classes: ['gutter-handle']` as the shared
  *  styling hook, `content: ''`, and the ONE authored `pointerdown` body the gutter handle carries, shared, writing
@@ -865,10 +909,10 @@ function paneMoveDropNodeOf (id: string, paneId: string, zone: string): Record<s
  *  of the element its pseudo-element belongs to, so the name can only be painted on the node that CARRIES it — and the
  *  node that owns the header row is the grip (the pane's first child, `AL-1`'s order). A `props.name` on the pane itself
  *  would have every rule it needed on a different element.
- *  **IT SURVIVES EVERY DELIVERY AND EVERY RELOCATION**: the pane arm writes `css.style` (whole-key, `D-225`) and
- *  `props.zone` (one member, `D-252`) and nothing else (`renderer.ts`'s `driveLayoutRegions` → `paintStyle`), so a
- *  sibling `props` member is neither replaced nor dropped; and a relocation is the engine's `move` op, which re-parents the
- *  node and re-authors nothing (`D-252`). **NO NEW RECORD MEMBER IS OWED, AND THAT IS WHY THIS FORM WON**: a `name` in the
+ *  **IT SURVIVES EVERY DELIVERY AND EVERY RELOCATION**: the pane arm writes `css.style` (whole-key, `D-225`) and nothing
+ *  else (`renderer.ts`'s `driveLayoutRegions` → `paintStyle` — the `props.zone` member it also wrote until `D-265` is
+ *  deleted), so a `props` member is neither replaced nor dropped; and a relocation is the engine's `move` op, which
+ *  re-parents the node and re-authors nothing (`D-252`). **NO NEW RECORD MEMBER IS OWED, AND THAT IS WHY THIS FORM WON**: a `name` in the
  *  `panes` family would owe the creation repair a value for every pane it mints and the placeholder a name for every pane
  *  a cold profile derives (`shared/view-shape.ts`'s `panesMustStand`), i.e. a decision about a pane nobody has named — where
  *  this is an authored presentational label whose absence is already spelled (`attr()` on a missing attribute is `''`).
@@ -1080,6 +1124,11 @@ export function demoEnvelope() {
             type: 'div',
             css: { id: APP_ROOT_ID, classes: ['app-surface'], style: appRootStyle },
             props: { id: APP_ROOT_ID },
+            // **THE STAGE'S OWN VALUE, AND EVERY PANE'S FALLBACK**: a pane whose record names no zone stands in the stage
+            // (`C-9`) and is under no zone, so without a provider above it the binding answers `unresolved-reference` on
+            // every compile — measured on `0.5.2`. The walk is nearest-first, so this value reaches ONLY the panes no zone
+            // covers, and it is a statement of a position rather than a default standing in for one.
+            component: { reference: PANE_ZONE_REFERENCE, value: [PANE_STAGE_FORM_CLASS] },
             children: [
               // ---- THE TOP-BAR (`S-2`, `D-176`, `D-178` §3, `D-183`) ------------------------------
               // **THE BAR AUTHORS NO `content` AND ITS NAME IS A CHILD NODE (`APP_NAME_ID` above), WHICH IS THE
@@ -1161,6 +1210,10 @@ export function demoEnvelope() {
                 type: 'div',
                 css: { id: 'top', style: horizontalZoneStyle },
                 props: { id: 'top' },
+                // THE ZONE PROVIDES ITS FORM TO WHATEVER PANE STANDS UNDER IT (see the block above `PANE_ZONE_REFERENCE`):
+                // a class name and nothing else, resolved by position at every compile — so a pane moved in or out of this
+                // zone takes or sheds it with nothing written. The zone is still an ELEMENT: it renders with its children.
+                component: zoneFormatProviderOf('top'),
                 children: [
                   // ---- THE MENUS PANE (`S-9`, `D-186`, `D-187`, `D-191`, `D-192`) -------------------
                   // A **COLUMN in the top zone at its own stored width**: it fills the zone's HEIGHT
@@ -1173,6 +1226,10 @@ export function demoEnvelope() {
                     type: 'div',
                     css: { id: 'pane-menus', style: menusPaneStyle },
                     props: { id: 'pane-menus' },
+                    // THE PANE'S HALF OF THE BINDING: it CONSUMES whichever zone stands nearest above it into its own
+                    // `css.classes` — so its sidebar form, its grip's edge and the menus' stack follow the POSITION the
+                    // engine resolved, never an attribute the paint would have to rewrite (`D-265`).
+                    component: zoneFormatConsumerOf(),
                     children: [
                       // (a0) **THE PANE-MOVE GRIP AND ITS FOUR ZONE DROPS** (`MENUS_GRAB_ID`, the relocation's
                       // second affordance — `docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1, §7).
@@ -1359,6 +1416,7 @@ export function demoEnvelope() {
                     type: 'div',
                     css: { id: INSPECTOR_PANE_RECORD_ID, style: inspectorPaneStyle },
                     props: { id: INSPECTOR_PANE_RECORD_ID },
+                    component: zoneFormatConsumerOf(),
                     content: 'No selection',
                     children: [
                       // (a0) **THE SECOND PANE'S MOVE GRIP AND ITS FOUR ZONE DROPS** (`INSPECTOR_GRAB_ID`): the SAME
@@ -1414,6 +1472,9 @@ export function demoEnvelope() {
                     type: 'div',
                     css: { id: 'left', style: verticalZoneStyle },
                     props: { id: 'left' },
+                    // ITS FORM CLASS, PROVIDED BY POSITION (the block above `PANE_ZONE_REFERENCE`) — the LEFT/RIGHT pair is
+                    // what the sheet's whole sidebar block keys on now, and no pane's id stands in it.
+                    component: zoneFormatProviderOf('left'),
                   },
                   // ---- THE `left` ZONE'S STRIP — ITS **FOLLOWING SIBLING** IN THE ARRANGEMENT ROW ------------
                   // **ON THE ZONE'S RIGHT EDGE**, the one facing the stage, because that edge's position is the
@@ -1505,6 +1566,10 @@ export function demoEnvelope() {
                                 type: 'div',
                                 css: { id: 'gutter-pane', classes: ['gutter-pane'], style: paneStyle },
                                 props: { id: 'gutter-pane', resizable: 'true' },
+                                // THE THIRD PANE CONSUMES IT TOO, AND THAT IS THE ROW `D-264` WAS ABOUT: it stood in a
+                                // zone with no sidebar form at all, and it is the pane that proves a stage pane gets the
+                                // stage's class and a zone-resident one gets that zone's, from the same binding.
+                                component: zoneFormatConsumerOf(),
                                 children: [
                                   // (a0) **THE GUTTER PANE'S MOVE GRIP AND ITS FOUR ZONE DROPS** (`GUTTER_GRAB_ID`;
                                   // `docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1, §7). **THE DESIGN'S
@@ -1707,6 +1772,7 @@ export function demoEnvelope() {
                     type: 'div',
                     css: { id: 'right', style: verticalZoneStyle },
                     props: { id: 'right' },
+                    component: zoneFormatProviderOf('right'),
                   },
                 ],
               },
@@ -1723,6 +1789,7 @@ export function demoEnvelope() {
                 type: 'div',
                 css: { id: 'bottom', style: horizontalZoneStyle },
                 props: { id: 'bottom' },
+                component: zoneFormatProviderOf('bottom'),
               },
 
               // THE OPENER — an authored `button` with an authored `click` body, so it is `list_targets`-visible and

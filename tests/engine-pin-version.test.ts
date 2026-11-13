@@ -5,8 +5,10 @@
 // and the static seam rows §0 prohibitions 1 and 5.
 //
 // Contract (§2.1, §3.7): the ONLY declarative change of this unit is
-// `package.json`'s `dependencies['provident-ssr']`, moving `^0.2.1` → `^0.5.1`;
-// the installed dist must resolve to `0.5.1` (the skew protection — a stale
+// `package.json`'s `dependencies['provident-ssr']`, moving `^0.2.1` → `^0.5.2`
+// (RE-GRAINED FROM `^0.5.1`, and `R-14`'s own comment now says WHY the bump
+// came — see below; the row is re-pinned only with the sentence that bought it);
+// the installed dist must resolve to `0.5.2` (the skew protection — a stale
 // `node_modules` beneath a moved pin is the signature of a half-installed tree
 // and must NOT be able to produce a green suite). No new MCP surface, no new
 // renderer RPC method, no shim member beyond the one (§2.2.4).
@@ -20,7 +22,7 @@
 // exception (`docs/L1/central-data-census-exception.md` §4), which adds the five
 // `provident.data.*` names in the SAME COMMIT as their registration and gate rows.
 //
-// TDD: the retarget has landed (`package.json:23` = `^0.5.1`, installed `0.5.1`),
+// TDD: the retarget has landed (`package.json:27` = `^0.5.2`, installed `0.5.2`),
 // so R-14 PASSES on this tree; R-15/R-14b and the static rows PASS and must stay
 // passing (§4.1: "PASSES until `U-FOCUS-TOOL` lands"). This file is the
 // version/AF-9 half of the second red cycle's re-write.
@@ -47,25 +49,44 @@ function readJson(rel: string): Record<string, unknown> {
 // ---------------------------------------------------------------------------
 
 describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
-  it('R-14 the declared pin is ^0.5.1 and the installed dist is 0.5.1', () => {
+  it('R-14 the declared pin is ^0.5.2 and the installed dist is 0.5.2', () => {
     // States:
-    //   S1 the DECLARED pin: package.json dependencies['provident-ssr'] === '^0.5.1'
-    //   S2 the INSTALLED dist: node_modules/provident-ssr/package.json .version === '0.5.1'
+    //   S1 the DECLARED pin: package.json dependencies['provident-ssr'] === '^0.5.2'
+    //   S2 the INSTALLED dist: node_modules/provident-ssr/package.json .version === '0.5.2'
     //   S3 the two agree — version skew cannot be silently green
+    //
+    // WHY THIS LITERAL MOVED `^0.5.1` → `^0.5.2`, IN THIS ROW'S OWN WORDS — A PIN ROW THAT DOES
+    // NOT SAY WHAT THE BUMP BOUGHT IS A ROW THAT WILL BE RE-PINNED WITHOUT REVIEW.
+    // `0.5.2` (`VALUE-PROVIDER-RENDER-DISPOSITION`) NARROWS THE COMPILE EMIT GATE so that a
+    // name-consumed provider is dropped ONLY WHEN IT IS A RUNTIME-MINTED VALUE RECORD —
+    // `node.valueRecord === true`, and that marker is written by EXACTLY ONE SITE, `mintRowNode`
+    // (`dist/core/ops.js`), so no document can forge it. `0.5.1` dropped EVERY name-consumed
+    // provider (`hasAnyTarget && isResolutionParticipant(node) && !isSeamProvider(node)`), and so
+    // ERASED AN AUTHORED ZONE THAT PROVIDED STYLING FOR ITS CHILDREN — the panes it held were
+    // orphaned, not re-parented, never created. THIS APP NEEDED THAT ZONE IN ORDER TO LET A PANE
+    // INHERIT ITS ZONE'S CLASSES BY POSITION, which is `strata/records/app-layout-unit.md`'s
+    // `AL-F1`: the bump PARTLY DISCHARGES that finding (the element half, re-measured on the
+    // installed bytes), while the seam escape's position half stays OPEN and upstream-owned
+    // (`D-5`). The pin is the whole of this repo's response — the package is never modified.
     const pkg = readJson('package.json')
     const deps = pkg.dependencies as Record<string, string>
     const installed = readJson('node_modules/provident-ssr/package.json')
 
     // S1
-    expect(deps['provident-ssr']).toBe('^0.5.1')
+    expect(deps['provident-ssr']).toBe('^0.5.2')
     // S2
-    expect(installed.version).toBe('0.5.1')
+    expect(installed.version).toBe('0.5.2')
     // S3 — the declared range must be satisfied by the installed version: a
-    // `^0.5.1` pin with a `0.2.1` dist is the half-installed signature.
-    const installedMajor = Number(String(installed.version).split('.')[0])
-    const installedMinor = Number(String(installed.version).split('.')[1])
+    // `^0.5.2` pin with a `0.5.1` dist is the half-installed signature, so the
+    // caret is read as a caret and not as `minor >= 5`: on `^0.x.y` the MINOR is
+    // pinned exactly and the PATCH moves, which is why a `0.5.1` beneath this pin
+    // reds here even though it would have passed the loose form.
+    const installedParts = String(installed.version).split('.').map(Number)
+    const [installedMajor, installedMinor, installedPatch] = installedParts
+    expect(installedParts.length, 'the installed version is a three-part semver').toBe(3)
     expect(installedMajor).toBe(0)
-    expect(installedMinor).toBeGreaterThanOrEqual(5)
+    expect(installedMinor).toBe(5)
+    expect(installedPatch).toBeGreaterThanOrEqual(2)
   })
 
   it('R-14b the retarget changed only the one dependency line (§2.1, §5.1)', () => {

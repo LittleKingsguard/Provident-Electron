@@ -1410,6 +1410,49 @@ const DECLARED_SCOPE: readonly string[] = [
   //    package is read here and never modified. **MEASURED**: the pane's parent goes `top` → `left` → `top`, and a cold boot
   //    with the record already `left` paints it in `left` — the two readings this entry's edit exists to make true.
   'src/renderer/runtime.ts',
+  // ── THE UNIT RECORD FILED FOR THE UPSTREAM FINDING — `strata/records/app-layout-unit.md`, AND IT JOINS THIS UNION AS ITS OWN
+  //    ENTRY WITH ITS OWN REASON, NEVER AS THE PREFIX `strata/records/` (`D-146`). **`strata/records/` HAS NEVER BEEN DECLARED HERE
+  //    AS A PREFIX AND IS NOT DECLARED AS ONE NOW**: every record in it stands as its own FILE entry above (`store-tabs-record-unit.md`,
+  //    `central-data-management-unit.md`, `strata-bootstrap-retrospective.md`, `focus-retirement-unit.md`,
+  //    `focus-retirement-walkthrough.md`, `tier-readout-walkthrough.md`, `pane-drag-temp-unit.md`,
+  //    `pane-drag-temp-walkthrough.md`), and a prefix is a DIFFERENT CLAIM — it would admit any future unit record without naming it,
+  //    which is the directory declaration this header refuses. `D-146`'s discipline is PER-PATH, so the entry is owed for this
+  //    record whatever records already stand declared, and the absence of a prefix is not what discharges it.
+  //    **THE FILE IS `app-layout`'S AND IS DECLARED HERE FOR THE REASON EVERY ENTRY ABOVE IS**: this row asserts the worktree's
+  //    edit set against a scope, so every path a pass writes is a path this union must carry whatever module authored it — the
+  //    entry added WITH the edit that dirtied the path, never after it (`D-146`'s precedent), and here WITH the package bump that
+  //    made the record's discharge state true.
+  //    **ITS SUBJECT IS `AL-F1`, FILED UPSTREAM AND NEVER PATCHED HERE** (`AGENTS.md`, `D-5`, `D-52`, `D-264`): a name-consumed
+  //    provider is dropped from render, taking its whole subtree with it, so positional inheritance cannot be used for a provider
+  //    that is also an element. The record carries the SYMPTOM (an authored zone that provides styling for its children disappears
+  //    and its panes are orphaned, never re-parented and never rendered), the REPRODUCTION measured on a real renderer
+  //    (`compile(nodes)` answering `actionable = [app, pane-menus]`, `#top` ABSENT, `node-2` never created — while the pane's own
+  //    classes correctly read `['pane', 'in-top']`, so the value was right and the element was gone), the ROOT CAUSE QUOTED from
+  //    `dist/core/node.js:1223` and its own docblock (*"a value holder, never an element"*, true of a `rows-mint` prototype and
+  //    false of a zone), and the PROPOSED FIX SHAPE (drop only when the provider has no family parent, or an additive
+  //    `component.provide: 'element'` opt-in that cannot change an existing consumer's behaviour), with the larger
+  //    nearest-ancestor alternative named so it can be rejected on cost rather than overlooked.
+  //    **AND ITS STATE IS `PARTLY-DISCHARGED` ON `0.5.2`, WHICH IS WHY THIS PATH MOVES IN THE SAME PASS AS THE PIN**: the ELEMENT
+  //    half is discharged on the installed bytes — the emit gate now reads `!seamExempt && node.valueRecord === true`, and that
+  //    marker is written by exactly ONE site, `mintRowNode` (`dist/core/ops.js`), so an authored node reads `undefined` and cannot
+  //    be dropped by it — while the seam escape's POSITION half stays OPEN and upstream-owned (`R-VPD-1`). **A RECORD WHOSE
+  //    DISCHARGE STATE IS A READING AT A VERSION MUST BE RE-SPELT WHEN THAT VERSION MOVES**, so this record is a path this pass
+  //    WRITES and not one it merely cites.
+  'strata/records/app-layout-unit.md',
+  // ── THE PIN ROW RE-GRAINED WITH THE BUMP — `tests/engine-pin-version.test.ts`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH
+  //    ITS OWN REASON (`D-146`'s per-path discipline), NEVER AS A PREFIX AND NEVER AS AN ABSORPTION: a flat `tests/` file standing
+  //    in the union is one a pass DECLARED, and `B-1` reported this path BY NAME on this tree for exactly that reason. It is added
+  //    WITH the edit that dirtied it and not after it.
+  //    **ITS SUBJECT IS `R-14`'S LITERAL MOVING `^0.5.1` → `^0.5.2` — AND THE ROW NOW SAYS WHAT THE BUMP BOUGHT IN ITS OWN WORDS**:
+  //    a pin row re-grained without that sentence is a row that will be re-pinned without review. `0.5.2` narrows the compile emit
+  //    gate so a name-consumed provider is dropped ONLY when it is a runtime-minted value record (`node.valueRecord === true`,
+  //    written by exactly one site, `mintRowNode`), where `0.5.1` dropped EVERY name-consumed provider and therefore erased the
+  //    authored zone that provided styling for its children — the zone this app needed in order to let a pane inherit its zone's
+  //    classes by position (`AL-F1`).
+  //    **AND NO ASSERTION IS WEAKENED BY THE RE-GRAIN**: S1 and S2 carry the new literal, and S3 was TIGHTENED rather than
+  //    loosened — the caret is read as a caret (`^0.x.y` pins the MINOR exactly and moves the PATCH), so a `0.5.1` dist beneath a
+  //    `^0.5.2` pin reds here where the loose `minor >= 5` arm would have passed it.
+  'tests/engine-pin-version.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
