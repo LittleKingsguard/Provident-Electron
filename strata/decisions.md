@@ -5608,3 +5608,20 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,963 passed / 2 skipped` of `2,965`** over **`146`** files, **zero red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt. **Only `src/renderer/renderer.ts` changed; no envelope edit** — **no authored `axis` turned out to be load-bearing for the gesture** (`props.axis` is the cursor token). **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-253`** as prose, unchanged and extended by this row only. **This row records two answers to one question, a cache that outlived its truth, a wrong axis silenced by arithmetic rather than by a flag, and a declaration judged rather than trusted.**
+## D-255 — DARK SCROLLBARS BY **ONE INHERITED DECLARATION**: the `color-scheme` pin was right, and the scrollbars were never following the theme attribute
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"Dark mode scrollbars are unthemed"* — a sidebar pane in dark mode showing a white scrollbar.
+
+**THE CAUSE WAS DELIBERATE AND THE FIX RESPECTS IT.** **Scrollbars follow `color-scheme`, NOT the `theme` attribute the app paints** — **and the page pins `:root { color-scheme: light }` for a recorded reason**: **the UA's `light dark` pair once painted WHITE text on the light backgrounds** (`D-97`, `X-5`). **So every scroll container got a light scrollbar in dark mode, and the pin could not be lifted to fix it.**
+
+**THE FIX IS ONE RULE, AND IT NAMES NOTHING.** **`body:has([theme="dark"]) { scrollbar-color: #3a4654 #1b222b; }`** — **thumb on the dark pair's STRONG border, one step above a chip's `#2b3542`**, **track on the raised surface the bar, cards and menu panel already use.** **It is INHERITED**, **so no class or id list can go stale and a FUTURE scroll container cannot be missed** — **which is the seam class this session kept finding in rules that enumerated their containers** (`D-240`, `D-250`, `D-253`).
+
+**AND THE SCOPED DARK `color-scheme` WAS DELIBERATELY NOT TAKEN, WITH THE ARGUMENT.** **`body:has([theme="dark"]) { color-scheme: dark }` would fix the scrollbars too — and would hand the UA's dark arm to EVERY FORM CONTROL inside that subtree**: **input bevels and carets, the demo buttons' chrome** — **UA colours this sheet never states — on the very subtree the pin exists to protect.** **So the pin stays and the scrollbars are themed explicitly.**
+
+**MEASURED RATHER THAN ASSUMED, BECAUSE "SUPPORTED" IS A CLAIM ABOUT SOMEONE ELSE'S CODE** (`D-252`'s lesson): **Electron 44.4.5 ships `Chrome/152.0.7977.130`, read off the live window's `/json/version`**, **where `scrollbar-color` has been standard since M121**; **the computed value reads back on ALL TEN containers plus `body` in both themes**; **and the PIXELS were read too**: **the stage, the menus pane, the tabs row and the top zone each show `#3A4654` thumb on `#1B222B` track in dark and the UA's own `#8B8B8B` on `#FCFCFC` in light — with IDENTICAL pixel counts in both themes, so the geometry did not move.**
+
+**AND THE LIGHT ARM IS BYTE-UNCHANGED.** **`color-scheme` still reads `light` on `:root` and on every element in both themes**, **the light arm declares no `scrollbar-color` at all (`auto`)**, **and no light surface gained a dark scrollbar** — **so the pin's reason holds in the same commit that fixes what the pin caused.**
+
+**THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two worktree-boundary rows** red before the commit; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **all `129` theme rows green** (`X-5`'s one-hit census, `T-9`'s `:root` pin, `X-3` unmoved). **One file changed: `src/renderer/index.html`.** **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-254`** as prose, unchanged and extended by this row only. **This row records a pin whose reason outlived its side effect, one declaration that cannot miss a container, an alternative refused with its cost named, and "supported" measured instead of quoted.**
