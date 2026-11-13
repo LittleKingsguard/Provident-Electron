@@ -453,9 +453,10 @@ interface ZoneGestureAddress {
  *  from the window's right in, so a rightward pointer SHRINKS it (`-1`).
  *  **`PANE_DRAG_HANDLES` IS NOT RE-GRAINED AND THAT IS DELIBERATE** (`D-238`, `PS-1`…`PS-4`): its entries, its absent
  *  axis member and the ONE `sign` this pass moved (the menus entry's, with its edge — see the block above the list) are
- *  a landed MEASUREMENT, and `gestureAddressesOf()` below maps it verbatim into the one list the affordance loop walks.
- *  The second subject KIND is therefore an adapter at the loop's head and never a second gesture (`D-238`'s own reason,
- *  one subject over).
+ *  a landed MEASUREMENT, and `gestureAddressesOf()` below maps it into the one list the affordance loop walks — asking
+ *  each pane for its `zone`'s axis AT THE PRESS rather than spelling `'x'` for both, which is the whole of the divergence
+ *  `panePointerAxisOf` states. The second subject KIND is therefore an adapter at the loop's head and never a second
+ *  gesture (`D-238`'s own reason, one subject over).
  *  **NOTHING HERE IS EXPORTED**: a published name would move this module's surface and the design refuses one, while the
  *  four ids are LITERALS on both sides — the envelope's (`zoneStripNodeOf`'s call sites) and this table's — with the
  *  equality measured by `PS-1`'s census rather than derived (the zone ids' own precedent, `LAYOUT_ZONE_AXES`'). */
@@ -476,39 +477,93 @@ interface GestureSubject {
 }
 
 /** **ONE ROW OF THE LIST THE LOOP WALKS** — the two declarations' common shape: the authored handle, the subject its
- *  figure lands in, the pointer axis and sign its mapping reads, and the element an inline preview is written on. */
+ *  figure lands in, the pointer axis and sign its mapping reads, and the element an inline preview is written on.
+ *  **THE AXIS IS ASKED AND NEVER CARRIED**: a strip's is the four facts `ZONE_DRAG_HANDLES` declares (its zone never
+ *  moves, so its axis cannot), while a PANE's follows the pane's own `zone` and is therefore a THUNK this list only
+ *  hands on — see `panePointerAxisOf` below. A stored `'x' | 'y'` here was the defect: it was fixed at declaration,
+ *  correct for a `top` zone's width and false for a sidebar's height (`D-243`'s painted member followed the record,
+ *  the gesture did not). */
 interface GestureAddress {
   readonly handleId: string
   readonly subject: GestureSubject
-  readonly axis: 'x' | 'y'
+  /** **THE POINTER AXIS THIS HANDLE READS, RESOLVED WHEN THE TURN ASKS** — never a figure captured at construction. */
+  readonly pointerAxisOf: () => 'x' | 'y'
   readonly sign: 1 | -1
   readonly targetId: string
 }
 
+/** **A PRESS'S OWN READING — THE COORDINATE AND THE AXIS IT WAS TAKEN ON, RECORDED TOGETHER** (`anchorOnPress` below).
+ *  The pair travels as ONE value because the figure a move writes is `sizeAtPress ± (pointer − press)` and BOTH ends of
+ *  that subtraction must be on the SAME coordinate: re-reading the axis mid-gesture could pair an x press with a y move
+ *  (and a relocation's delivery can land between two observed moves), which would write the press's x as a delta. **AND
+ *  IT IS WHY THE AXIS IS "READ AT THE PRESS" RATHER THAN "READ PER MOVE"**: the press is the gesture's anchor, the
+ *  reading that anchors is the one that decides, and nothing is cached ACROSS presses — the next press reads the record
+ *  again, so a relocation takes effect with no reload. */
+interface PressAnchor {
+  readonly axis: 'x' | 'y'
+  readonly coordinate: number
+}
+
+/** **THE PANE HANDLE'S POINTER AXIS IS ITS PANE'S `zone`'s ANSWER, ASKED AT THE PRESS AND NEVER DECLARED ONCE** (`D-243`'s
+ *  painted member, `D-253`'s flip; the user's report *"Gutter is oriented correctly, but it still responds to side-to-side
+ *  drag"*). **THE DEFECT THIS READ DELETES IS A DIVERGENCE, NOT A MISSING FEATURE**: `paneAxisMembers`/
+ *  `adjustableMemberNameOf` have painted a pane's `width`/`height` from its `zone` on EVERY delivery since `D-243`, while
+ *  this adapter declared `axis: 'x'` for both pane handles — right only while the pane stood in a `top` zone, where the
+ *  grip adjusts the width. A relocation (`MoveOp`, `D-252`) flips the PAINT to the height and moves the grip to the
+ *  bottom edge with `row-resize` (`D-253`), and the gesture went on reading x: a sidebar pane resized sideways.
+ *
+ *  **THE MEMBER IS `['panes', <id>, 'zone']` READ OFF THE SHAPE — NOT THE PAINTED `props.zone` ATTRIBUTE — AND THE REASON
+ *  IS ONE ANSWER**: the record is a zone's only authority (`D-129`, `D-243`), the attribute is re-written FROM it on every
+ *  delivery, and the pane arm's own preview member (`panePaintedMemberOf`) already reads the record the same way — so the
+ *  axis a gesture moves and the member that gesture previews are ONE answer and cannot disagree, which is the class of
+ *  defect this read exists to end. Reading the attribute instead would be a second reading of one fact, and a delivery
+ *  landing between the record and its paint could make the two disagree for the one press that matters.
+ *
+ *  **IT IS CALLED ON EVERY PRESS AND THAT PRESS'S AXIS IS KEPT FOR THAT GESTURE** (`anchorOnPress` below): nothing is
+ *  cached across presses, so a relocation takes effect at the next press with no reload. **A PANE THAT NAMES NO DECLARED
+ *  ZONE IS THE STAGE** (`C-9`), which fixes no axis at all, so this read answers the declaration's `'x'` there: `D-189`'s
+ *  placement rule as landed, `PS-1`'s pinned `clientX 250 → 150`, and the debt the adapter below names — not this read's
+ *  to re-grain. **AND A HOSTILE OR EMPTY SHAPE IS THE SAME ARM** (`D-127`'s absent read, `D-95`'s total read): the node
+ *  suite's layout-less shim fills no family (`D-27`), so it reads `'x'` for both panes and every landed reading of this
+ *  file's gesture stands byte-unchanged. */
+function panePointerAxisOf (paneId: string): 'x' | 'y' {
+  try {
+    const held = getViewClient().shape().panes.find((pane) => pane.id === paneId)
+    const zone = held === undefined ? undefined : held.zone
+    // THE FOUR DECLARED ZONES AND NOTHING ELSE: the axis is the MEMBER's own axis, so the paint and the gesture are one table.
+    if (zone === 'top' || zone === 'bottom' || zone === 'left' || zone === 'right') return pointerAxisOfMember(adjustableMemberNameOf(zone))
+  } catch {
+    // a hostile shape answers the absent zone's arm: the declaration's own axis, and no throw out of a listener turn
+  }
+  return 'x'
+}
+
 /** **THE ADAPTER AT THE LOOP'S HEAD — THE SECOND SUBJECT KIND COSTING NO SECOND GESTURE** (design §3).
- *  `PANE_DRAG_HANDLES` is mapped VERBATIM and gains nothing: its `axis` is `'x'` — the pane arm reads the pointer's x,
- *  the landed declaration `PS-1`'s gesture clause pins, and NOT a member this pass re-grains — and its `targetId` is the
- *  composition's ONE target (`D-144`). **THE MAPPING ITSELF IS NEITHER THIS TABLE'S NOR THE ADAPTER'S**: the figure is
- *  `sizeFromPointerFor`, anchored on the record's figure at the press, and each entry contributes only its `sign`. The
- *  four strips follow it in declaration order, so the loop's resolution order is the pane handles' first and the strips'
- *  after, which is what `PS-1`'s order reading states. **THE PANE ARM'S `axis` DOES NOT MOVE AND THE ZONE ARM IS THE ONLY
- *  NEW BEHAVIOUR** — and a hostile or frozen `PANE_DRAG_HANDLES` cannot reach it: both sides are module constants.
+ *  `PANE_DRAG_HANDLES` is mapped into the loop's shape and gains nothing: its entry carries no axis member (that member's
+ *  deliberate absence is the block above `PaneGestureAddress`), so the adapter hands `panePointerAxisOf(<paneId>)` — a
+ *  THUNK, resolved by the press — and its `targetId` is the composition's ONE target (`D-144`). **THE MAPPING ITSELF IS
+ *  NEITHER THIS TABLE'S NOR THE ADAPTER'S**: the figure is `sizeFromPointerFor`, anchored on the record's figure at the
+ *  press, and each entry contributes only its `sign`. The four strips follow it in declaration order, so the loop's
+ *  resolution order is the pane handles' first and the strips' after, which is what `PS-1`'s order reading states.
+ *  **A STRIP'S AXIS IS A DECLARATION AND STAYS ONE** (`D-244`, `D-243`'s `LAYOUT_ZONE_AXES`): a zone never moves — the
+ *  strip IS its zone's bound, and which axis that zone fixes is the layout constant's answer, not a record's — so
+ *  `() => handle.axis` is that declaration read, with no second table and no possibility of drift.
  *  **ONE DEBT NAMED RATHER THAN TAKEN**: the stage handle reads `x` while the member it resizes is `pane-a`'s `height`
  *  and the handle stands at that pane's TOP-RIGHT, so its figure grows along the wrong coordinate for its edge. It is
  *  `D-189`'s placement rule as landed and `PS-1` pins the read it produces (`clientX 250 → 150`), so the axis is that
- *  row's and not this pass's; the anchoring fix above is indifferent to which coordinate the entry names. */
+ *  row's and not this pass's; the anchoring fix is indifferent to which coordinate the entry names. */
 function gestureAddressesOf (): readonly GestureAddress[] {
   const panes: GestureAddress[] = PANE_DRAG_HANDLES.map((handle) => ({
     handleId: handle.handleId,
     subject: { kind: 'pane', id: handle.paneId },
-    axis: 'x',
+    pointerAxisOf: (): 'x' | 'y' => panePointerAxisOf(handle.paneId),
     sign: handle.sign,
     targetId: GUTTER_TARGET_ID,
   }))
   const zones: GestureAddress[] = ZONE_DRAG_HANDLES.map((handle) => ({
     handleId: handle.handleId,
     subject: { kind: 'zone', id: handle.zoneId },
-    axis: handle.axis,
+    pointerAxisOf: (): 'x' | 'y' => handle.axis,
     sign: handle.sign,
     targetId: handle.targetId,
   }))
@@ -725,9 +780,12 @@ export function startGutterAffordance (runtime: Runtime): {
   /** **THE ONE ARITHMETIC, TAKEN TWICE: THE EXAMPLE'S MAPPING ANSWERS THE DELTA, NOT THE FIGURE** (`C-13`, `D-189`,
    *  `D-192`). `gutterSeamExample().sizeFromPointer(pointer, origin)` answers `pointer.x − origin` and
    *  `verticalFromPointer` the same in `y`, so ONE expression states the distance between a pointer and an origin on
-   *  either axis — and this pass reads it against TWO origins rather than writing a second mapping beside it. */
-  const deltaFromPointer = (address: GestureAddress, pointer: { readonly x: number }, origin: number): number =>
-    address.axis === 'x' ? seams.sizeFromPointer(pointer, origin) : verticalFromPointer(pointer, origin)
+   *  either axis — and this pass reads it against TWO origins rather than writing a second mapping beside it.
+   *  **THE AXIS IS A PARAMETER AND NOT THE ENTRY'S**, because a pane's is its `zone`'s answer at the press
+   *  (`panePointerAxisOf`) and a strip's is its declaration's: the caller below passes the one it holds for the gesture,
+   *  so this mapping cannot reach for a stored axis and quietly re-introduce one fixed coordinate. */
+  const deltaFromPointer = (axis: 'x' | 'y', pointer: { readonly x: number }, origin: number): number =>
+    axis === 'x' ? seams.sizeFromPointer(pointer, origin) : verticalFromPointer(pointer, origin)
   /** **THE FIGURE IS `sizeAtPress ± (pointer − press)` — ANCHORED ON THE FIGURE THE RECORD ALREADY HOLDS, AND THE COPY
    *  THAT WAS NOT ANCHORED IS THE DEFECT THIS PASS DELETES** (the user's report: *"On drag start, the zone resizes to 0
    *  size, then allows the drag. This results in the handle being separated from the pointer"*). What stood here was
@@ -764,17 +822,25 @@ export function startGutterAffordance (runtime: Runtime): {
    *  (`tests/unit/renderer-wiring/preview-seat.test.ts` drives `pointerdown` with `{button: 0}`), so there is no anchor
    *  to subtract and the example's own arithmetic is the only figure such a realm can answer. It is the DECLARED
    *  degradation, it is reachable in no window (a real `pointerdown` always carries `clientX`/`clientY`), and the
-   *  alternative — a no-op move — would silently un-measure `PS-1`'s gesture. */
-  const sizeFromPointerFor = (address: GestureAddress, pressCoordinateOf: () => number | null) =>
+   *  alternative — a no-op move — would silently un-measure `PS-1`'s gesture. **ITS AXIS IS ASKED PER MOVE BECAUSE THERE
+   *  IS NO PRESS TO ASK** (`address.pointerAxisOf()`), which is the same read the press would have recorded.
+   *
+   *  **AND THE AXIS IS THE PRESS'S, SO A WRONG-AXIS STROKE WRITES THE FIGURE THE RECORD ALREADY HOLDS.** The delta is the
+   *  pointer's displacement projected onto the ONE coordinate the gesture asked for at the press: a sideways stroke on a
+   *  sidebar pane's bottom grip moves `y` by nothing, so the figure is `start ± 0` — the record's own. Nothing resizes, no
+   *  clamp is reached, and no state is invented to forbid it: the projection IS the guard, and a stored "wrong axis"
+   *  flag would be a second authority beside the one coordinate this mapping reads. */
+  const sizeFromPointerFor = (address: GestureAddress, pressOf: () => PressAnchor | null) =>
     (pointer: { readonly x: number }, start: number): number => {
       // THE FIGURE THE RECORD STATED AT THE PRESS — `startSizeOf`'s one answer. Without it this gesture declines.
       if (typeof start !== 'number' || !Number.isFinite(start)) return Number.NaN
       const signed = (delta: number): number => (address.sign === 1 ? delta : -delta)
-      const press = pressCoordinateOf()
+      const press = pressOf()
       // THE DEGRADED ARM: a realm whose press states no coordinate cannot anchor, so the example's mapping stands.
-      if (press === null) return signed(deltaFromPointer(address, pointer, start))
-      // THE ANCHORED FIGURE: the record's own, moved by the signed distance the pointer has travelled since the press.
-      return start + signed(deltaFromPointer(address, pointer, press))
+      if (press === null) return signed(deltaFromPointer(address.pointerAxisOf(), pointer, start))
+      // THE ANCHORED FIGURE: the record's own, moved by the signed distance the pointer has travelled since the press —
+      // and BOTH ends of that subtraction are on the axis the press read, so one gesture cannot mix coordinates.
+      return start + signed(deltaFromPointer(press.axis, pointer, press.coordinate))
     }
   /** **THE VERTICAL ARM OF THE ONE MAPPING — `pointer.y - start`, AND THE SEAM'S TYPE DOES NOT DECLARE `y`**
    *  (design §3; `gutterSeamExample().sizeFromPointer` types the pointer `{ readonly x: number }`, `:345`). So the
@@ -828,7 +894,7 @@ export function startGutterAffordance (runtime: Runtime): {
    *  is the one that answers `undefined`. A zone stating no figure at all answers `{0, 0}`, which the `NaN` start
    *  beside it has already made unreachable as a write. */
   const zoneBoundsOf = (address: GestureAddress): { readonly min: number; readonly max: number } => {
-    const extent = zoneExtentOf(address.axis)
+    const extent = zoneExtentOf(address.pointerAxisOf())
     if (extent !== null) return { min: 0, max: extent }
     const own = zoneSizeOf(address.subject.id)
     return { min: 0, max: own === undefined ? 0 : own }
@@ -1096,20 +1162,31 @@ export function startGutterAffordance (runtime: Runtime): {
    *  so a second handle's gesture can neither read nor overwrite the first one's anchor. **AND IT IS TOTAL**: an absent
    *  coordinate, a primitive event, a throwing accessor and a realm with no `pointerdown` are all the SAME declared
    *  absence (`null`), which `sizeFromPointerFor` degrades on rather than a `NaN` invented here. The anchor is re-taken at
-   *  EVERY press, so a second gesture starts from its own figure and not from the first one's. */
-  const anchorOnPress = (element: unknown, axis: 'x' | 'y', record: (coordinate: number | null) => void): void => {
+   *  EVERY press, so a second gesture starts from its own figure and not from the first one's.
+   *
+   *  **AND THE AXIS IS READ HERE, AT THE PRESS, FROM THE PANE'S OWN `zone`** (`panePointerAxisOf` above; the user's report
+   *  *"Gutter is oriented correctly, but it still responds to side-to-side drag"*). The press is the ONE moment the
+   *  gesture takes its frame — `sizeAtPress` is read once at establishment just below — so the coordinate the figure is
+   *  measured from is taken in the same breath, and the pair travels as ONE `PressAnchor`. **A STRIP PASSES ITS
+   *  DECLARATION'S AXIS AND A PANE A THUNK**, so a relocation between two gestures is picked up with no reload and nothing
+   *  is remembered across the press that would have had to expire: there is no cache, no "last zone" and no boot reading,
+   *  which is what makes the axis follow the zone BOTH ways. */
+  const anchorOnPress = (element: unknown, pointerAxisOf: () => 'x' | 'y', record: (anchor: PressAnchor | null) => void): void => {
     if (element === null || element === undefined || typeof element !== 'object') return
     source.on(element, POINTER_TYPES.start, (event: unknown): void => {
-      let coordinate: number | null = null
+      let anchor: PressAnchor | null = null
       try {
+        // THE PRESS'S OWN AXIS — asked before the coordinate, because the coordinate that is read depends on it.
+        const axis = pointerAxisOf()
         const pointer = seams.pointerOf(event)
         const held = pointer === null ? undefined : axis === 'x' ? pointer.x : pointer.y
-        coordinate = typeof held === 'number' && Number.isFinite(held) ? held : null
+        const coordinate = typeof held === 'number' && Number.isFinite(held) ? held : null
+        anchor = coordinate === null ? null : { axis, coordinate }
       } catch {
         // a throwing resolver is the same arm as a pointer this realm cannot read: no anchor, and the declared degradation
-        coordinate = null
+        anchor = null
       }
-      record(coordinate)
+      record(anchor)
     })
   }
   /** **THE LIST, WIRED — ONE AFFORDANCE PER ENTRY AND NOTHING ELSE PER ENTRY** (the user's charter: a third handle costs one
@@ -1133,10 +1210,12 @@ export function startGutterAffordance (runtime: Runtime): {
     // though the handle is `14px` thick and the preview re-lays the box under the pointer on the first observed move.
     captureOnPress(element)
     // **AND THE SAME PRESS IS THE ANCHOR THIS HANDLE'S FIGURE IS MEASURED FROM** (`anchorOnPress` above): the coordinate
-    // is kept in THIS iteration's own closure, so each of the six handles anchors on its own press and a gesture that
-    // never pressed — a stray move from a previous pointer — anchors on nothing and the mapping degrades as declared.
-    let pressAt: number | null = null
-    anchorOnPress(element, address.axis, (coordinate: number | null): void => { pressAt = coordinate })
+    // AND the axis it was read on are kept in THIS iteration's own closure, so each of the six handles anchors on its own
+    // press and a gesture that never pressed — a stray move from a previous pointer — anchors on nothing and the mapping
+    // degrades as declared. **THE AXIS IS A THUNK AND NEVER A VALUE**, so a pane's press asks its `zone` afresh
+    // (`panePointerAxisOf`) and a relocation lands at the next press with no reload.
+    let pressAt: PressAnchor | null = null
+    anchorOnPress(element, address.pointerAxisOf, (anchor: PressAnchor | null): void => { pressAt = anchor })
     const affordance = createGutterAffordance({
       session: session as never,
       source,
@@ -5572,6 +5651,16 @@ export interface PaneDragBacking {
  *  re-interpretation of a figure: each member's own name already says its axis. */
 function adjustableMemberNameOf(zone: string | undefined): 'width' | 'height' {
   return zone === 'top' || zone === 'bottom' ? 'width' : 'height'
+}
+
+/** **THE POINTER AXIS A MEMBER'S FIGURE LIES ON — ONE DERIVATION, TWO READERS** (`D-189`'s selection spelled as the
+ *  coordinate a gesture reads; `D-243`, `D-253`). Which of a pane's two stored members a drag may move is the pane's
+ *  `zone`'s selection (`adjustableMemberNameOf` above), and each member's own name already says its axis — so the axis a
+ *  gesture reads is `width → x`, `height → y`, and nothing else. **IT IS A DERIVATION AND NOT A SECOND TABLE** (`D-188`
+ *  debt 2): a hand-kept `{top: 'x', left: 'y'}` pair beside `adjustableMemberNameOf` would spell four facts twice with no
+ *  instrument to catch a drift, which is `D-243`'s own reason for reading `LAYOUT_ZONE_AXES` instead of repeating it. */
+function pointerAxisOfMember (member: 'width' | 'height'): 'x' | 'y' {
+  return member === 'width' ? 'x' : 'y'
 }
 
 /** THE FIGURE THAT SELECTION NAMES, off one admitted geometry — so the drag's read, the read-out's figure and the ghost's
