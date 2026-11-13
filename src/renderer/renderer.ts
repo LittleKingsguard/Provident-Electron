@@ -3415,6 +3415,101 @@ function paneAxisMembers(zone: unknown): readonly ('width' | 'height')[] {
   return []
 }
 
+/** **THE PANE'S PLACE IN THE TREE IS THE RECORD'S `zone`, AND THE DELIVERY IS WHAT PUTS IT THERE** (`D-252`, overturning
+ *  the *"the record relocates and the rendered region does not"* limit `D-248` took from `D-182`, on the user's ruling
+ *  that the behaviour is a defect and not a design: *"Dragging the pane should cause a save to the storeroom, which
+ *  triggers a listener that regenerates the zone's section of the tree."*).
+ *
+ *  **THE ACT AND THE DELIVERY WERE ALREADY RIGHT AND ONLY THE PAINT WAS MISSING.** The whole-pane write at
+ *  `['panes', <id>]` is `D-248`'s and unmoved; the delivery that carries it is `startViewShape`'s; and the paint read the
+ *  record's `zone` on every delivery (`D-243`) — it just stopped at the pane's `css.style`, so the pane changed AXIS inside
+ *  the box it was authored in. **WHAT THIS ADDS IS THE ONE THING A `css` WRITE CANNOT SAY: WHO THE PANE'S PARENT IS.**
+ *
+ *  **IT IS THE ENGINE'S OWN `move` OP AND NOTHING INVENTED HERE.** `types.d.ts` declares it —
+ *  `MoveOp { kind:'move'; node: Node; to: { parent: Node; priority?: number } }` — and `supervisor.js` executes it as a
+ *  safe per-node `detachNodeSafe` followed by `addAnchor('child', …, toParent.familyLinkFor())`, journaled `applied` with
+ *  `dirtied: [node.id]`. So a re-parent is EXPRESSIBLE, the destination is a real zone node, and nothing is minted, cloned
+ *  or re-authored: **no authored node is added and the census does not move** — the pane keeps its id, its children, its
+ *  handlers and its place in the graph, and only its family edge changes. **A `rows-mint` COULD NOT HAVE DONE THIS**: it
+ *  mints NEW nodes from a prototype (`ops.d.ts`'s `rowsMint`), the authored children inside the pane are not that
+ *  prototype, and a minted copy would be a second pane with a fresh id — a new node in the census and an authored one left
+ *  behind. `D-182`'s measurement that a keyed re-mint answers `minted: []` is about REUSING ids across a replace and blocks
+ *  nothing here: no mint is issued.
+ *
+ *  **"REGENERATES THE ZONE'S SECTION" IS EXACTLY WHAT A MOVE CAUSES, WITH NO NEW MACHINERY.** The op dirties the moved
+ *  node, `Runtime.applyCommand` recompiles it with its focused slice (the node, its ancestor chain and its subtree, so the
+ *  pane's children are recompiled with the new path), and the render diff emits the appends that put the pane's element
+ *  under the destination and take it out of the origin — so the OLD ZONE NO LONGER HOLDS IT, which is the half a style
+ *  write could never reach.
+ *
+ *  **AND NOTHING IS CACHED, SO IT IS REVERSIBLE BY THE SAME TURN** (`D-248`'s whole-pane shape): the destination is read
+ *  from the record on EVERY delivery, so the delivery that says `top` again moves the pane back — no memory of where it
+ *  came from, no previous-zone member, no undo. **A COLD PROFILE NEEDS NO SECOND PATH EITHER**: the boot's own delivery
+ *  runs this turn, so a record whose `zone` is `left` puts the pane in `left` on the first delivery of a fresh boot,
+ *  where the pane was authored in `top`.
+ *
+ *  **THE ALREADY-THERE ARM IS A READ OF THE TREE AND NOT OF A REMEMBERED FIGURE**: `paneStandsIn` compares the pane's
+ *  rendered element with the zone's, so an unchanged record costs no journal entry, no recompile and no DOM churn — the
+ *  same discipline `diffMinimal` keeps for an unchanged child order. **ITS ANSWER IS `false` WHERE EITHER ELEMENT DOES NOT
+ *  RESOLVE**, which issues the move rather than assuming it landed: an unresolvable tree is not a tree that agrees.
+ *
+ *  **THE ABSENT ARM IS THE LAYOUT'S OWN, ONE FAMILY OVER** (`D-183`, `C-9`, `D-174`): a pane with no `zone` stands in the
+ *  STAGE, and the stage is not one of the four — so its record names NO destination, this turn moves it NOTHING, and it
+ *  stays where the envelope authored it. **THAT IS THE ONE PLACE THIS TURN CANNOT UNDO A RELOCATION**: the four drops name
+ *  four zones and none names the stage, so `pane-a` reaches `left` and only a record naming `top`/`bottom`/`left`/`right`
+ *  can move it again. Stated here rather than discovered, and it is the record's shape and not this turn's. */
+function relocatePaneInZone(runtime: TabsPageRuntime, nodeId: string, zone: unknown): void {
+  // THE DESTINATION IS DECLARED OR THERE IS NONE — the four zone ids, which are also the four authored NODE ids the paint
+  // addresses (`LAYOUT_ZONE_AXES`), and `undefined` for an absent or undeclared `zone`: the two arms `paneFillAxisOf`
+  // answers `null` for, read here from the SAME table rather than from a second list of the same four names.
+  const destination = LAYOUT_ZONE_AXES.find((entry) => entry.id === zone)
+  if (destination === undefined) return
+  if (paneStandsIn(runtime, nodeId, destination.id)) return
+  // ONE COMMAND, THE SAME SURFACE EVERY OTHER WRITE IN THIS FILE USES, and a refusal REPORTED rather than swallowed — the
+  // paint's own rule two functions up. **NOTHING ESCAPES THE DELIVERY**: a hostile runtime is a reading this turn leaves
+  // standing, and the next delivery asks again because nothing here remembered this one.
+  try {
+    const answer = runtime.applyCommand({ kind: 'move', node: nodeId, to: { parent: destination.id } })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    if (status !== 'applied') {
+      console.error(`[provident-renderer] layout move: the pane ${nodeId} answered ${status} to its move into ${destination.id}`)
+    }
+  } catch (error) {
+    console.error(`[provident-renderer] layout move: the pane ${nodeId}'s move into ${destination.id} threw — ${String(error)}`)
+  }
+}
+
+/** **IS THE PANE ALREADY THE ZONE'S CHILD? — THE TREE'S ANSWER, COMPARED BY ELEMENT IDENTITY** (the already-there arm of
+ *  `relocatePaneInZone` above; `D-252`). **A STORED "LAST ZONE" WOULD BE THE SECOND AUTHORITY `D-129` REFUSES**: it would
+ *  be right until the first delivery it missed and then move the pane forever against the record. The two elements come
+ *  from `Runtime.elementForNodeId`, the read the report beside this turn already uses, and the comparison is of the
+ *  PLATFORM's objects — no id string is compared, so a zone whose `css.id` and `props.id` disagree cannot confuse it.
+ *
+ *  **A DIRECT CHILD AND NOT A DESCENDANT**, because that is the claim the record makes and the one `get_rendered_html`'s
+ *  nesting is read to confirm: *"after a drag the pane is a child of the zone the record names"*. A wrapper inserted
+ *  between the two would answer `false` and be moved to the zone itself — the honest reading of a record that names a zone.
+ *
+ *  **AND THE ANCESTOR MEMBER IS CENSUSED IN TWO SPELLINGS, WHICH IS THE ONE REALM DIFFERENCE THIS READ HAS TO CARRY**: the
+ *  platform answers `parentElement` (`null` at a root) and the suite's DOM shim keeps the bookkeeping on `parent`; both are
+ *  read, `parentElement` first, and an element answering neither is `null` — which `relocatePaneInZone` reads as "not
+ *  there" and answers by issuing the move. */
+function paneStandsIn(runtime: TabsPageRuntime, nodeId: string, zoneId: string): boolean {
+  const pane = runtime.elementForNodeId(nodeId)
+  if (pane === null || pane === undefined) return false
+  const zone = runtime.elementForNodeId(zoneId)
+  if (zone === null || zone === undefined) return false
+  return ancestorElementOf(pane) === zone
+}
+
+/** The ONE member two realms spell differently — `parentElement` on the platform, `parent` in `shared/dom-shim.ts` — read
+ *  in that order and answered as `null` where neither is a value. Nothing is coerced and nothing is descended. */
+function ancestorElementOf(element: unknown): unknown {
+  if (element === null || typeof element !== 'object') return null
+  const holder = element as { readonly parentElement?: unknown; readonly parent?: unknown }
+  if (holder.parentElement !== undefined) return holder.parentElement
+  return holder.parent ?? null
+}
+
 /** **ONE `css.style` WRITE ON ONE AUTHORED NODE — THE FORM `drivePageDisplay` ALREADY USES** (`:250`): one `state-slice`
  *  whose single mutation replaces that key. **THE ENGINE COMPOSES `css` PER KEY, SO ONE `css.style` LAYER REPLACES THE
  *  STANDING STYLE OBJECT WHOLE** — which is why a zone's dimension and its `display` are composed into ONE record here and
@@ -3539,6 +3634,12 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     const nodeId = nodeIdForPane(pane.id)
     if (nodeId === null) continue
     const record = pane as unknown as Record<string, unknown>
+    // ⟶ **THE PANE'S PLACE IN THE TREE, IN THE SAME TURN AND FROM THE SAME MEMBER** (`D-252`): the record's `zone` is
+    //    not only which axis this pane fills and scrolls — it is **which zone holds it**, and this delivery is what puts
+    //    it there. **IT STANDS AHEAD OF THE STYLE COMPOSITION ON PURPOSE**, so the `continue` below (a pane that fills
+    //    nothing) cannot skip a relocation: that arm is the SAME absence — no destination named — and the two are read
+    //    from one member by one declaration (`LAYOUT_ZONE_AXES`).
+    relocatePaneInZone(runtime, nodeId, record['zone'])
     // THE PANE'S ZONE, ASKED ONCE: its fill axis and its scroll axis are the LAYOUT's (`PANE_FILL`, `paneFillAxisOf`),
     // and `null` is a stage-resident pane or an id the closed four do not name — the two arms that fill nothing.
     const placement = paneFillAxisOf(record['zone'])

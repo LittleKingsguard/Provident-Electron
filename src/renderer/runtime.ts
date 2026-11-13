@@ -465,6 +465,27 @@ export class Runtime {
     if (cmd.source !== undefined && typeof cmd.source === 'object' && !this.isRegisteredNode(cmd.source)) {
       return { status: 'rejected' }
     }
+    // S-1 / D-179's rule, member for member, for the ONE structural op that names
+    // a second node: `move` carries its destination as `to.parent` (types.d.ts's
+    // `MoveOp`), and the engine reads it as a LIVE Node — `supervisor.js` does
+    // `const toParent = op.to.parent; findCycle(node, toParent)` and then
+    // `toParent.familyLinkFor()`, so a wire string (`WireMoveOp`'s
+    // `to: {parent: NodeRef}`) reaches it no more than a raw string `node` may
+    // reach `source.clone()`. A malformed `to`, an unresolvable `parent` string
+    // and a plain object masquerading as a Node are each refused HERE, with a
+    // bare `{status:'rejected'}` and never a throw, exactly like the arms above.
+    if (cmd.kind === 'move') {
+      const destination = cmd['to']
+      if (destination === null || typeof destination !== 'object' || Array.isArray(destination)) {
+        return { status: 'rejected' }
+      }
+      const parent = (destination as { parent?: unknown }).parent
+      if (typeof parent === 'string') {
+        if (!this.resolveTarget(parent)) return { status: 'rejected' }
+      } else if (parent === undefined || typeof parent !== 'object' || !this.isRegisteredNode(parent)) {
+        return { status: 'rejected' }
+      }
+    }
     // F6 — a `state-slice`/`rows-mint`-style op whose `mutation` is missing or
     // not an array would crash `for (const m of op.mutation)`. Reject cleanly.
     if (cmd.kind === 'state-slice' && !Array.isArray(cmd.mutation)) {
@@ -500,6 +521,21 @@ export class Runtime {
       const id = this.resolveTarget(cmd.target)
       const n = id ? this.supervisor.getNode(id) : undefined
       if (n) payload.target = n
+    }
+    // AND THE SAME SUBSTITUTION FOR THE MOVE'S DESTINATION (the guard above's
+    // write arm): the string resolves through the SAME resolver and the live Node
+    // is what `supervisor.apply` receives, on a FRESH `to` object so the caller's
+    // own command is never mutated. This is the whole of the runtime addition the
+    // relocation needs — the engine already expresses the re-parent (`MoveOp`),
+    // and `to.parent` is the one member `applyCommand` did not resolve, since
+    // only `node` and `target` had a string arm before it.
+    if (cmd.kind === 'move') {
+      const destination = cmd['to'] as { parent?: unknown; [k: string]: unknown }
+      if (typeof destination.parent === 'string') {
+        const id = this.resolveTarget(destination.parent)
+        const n = id ? this.supervisor.getNode(id) : undefined
+        if (n) payload['to'] = { ...destination, parent: n }
+      }
     }
     const result = this.supervisor.apply(payload)
     const dirty = (result.dirtied ?? []).filter((id) => this.supervisor.getNode(id)?.isInTree)

@@ -1388,6 +1388,28 @@ const DECLARED_SCOPE: readonly string[] = [
   //    this union is owed"* stands as that page's reading at a date and never as the list's end, and this entry is one more
   //    pass that wrote a path — which RE-OPENS the union rather than contradicting it (`D-146`).
   'tests/integration/store-tabs-record/crossing.test.ts',
+  // ── THE MOVE'S PAGE-SIDE HALF — `src/renderer/runtime.ts`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH ITS OWN REASON,
+  //    NEVER AS A PREFIX OF EITHER NEIGHBOUR (`src/renderer/` would admit every file a later pass drops beside it, and a
+  //    directory measures nothing — `B-2`'s undeclared-sibling arm). **`B-1` NAMED THIS PATH AND NO OTHER**, which is why it
+  //    is the path declared here rather than the one a neighbour's shape suggests: the entry is added WITH the edit that
+  //    dirtied the path and never after it (`D-146`'s precedent), and the pass's other two dirty paths are ALREADY
+  //    DECLARED ABOVE — `src/renderer/renderer.ts` (its own entry, `D-89`) and `demo/pane-drag-demo/demo.mjs` (rebuilt by
+  //    `node demo/pane-drag-demo/build.mjs`, `D-118`) — so this block appends ONE path and no second spelling of one already
+  //    in the union, which is the difference between a write and a claim.
+  //    **WHAT THE EDIT IS (`D-252`)**: the renderer's `applyCommand` gained a `to.parent` resolution so the engine's
+  //    `MoveOp` can be issued from the page — a string destination resolves through the SAME resolver the `node`/`target`
+  //    arms already use and the LIVE Node is what `supervisor.apply` receives, with a malformed `to`, an unresolvable
+  //    `parent` string and a plain object masquerading as a Node each refused as a bare `{status:'rejected'}` and never a
+  //    throw. **`driveLayoutRegions` now calls `relocatePaneInZone` in the same delivery as the paint**, so a pane whose
+  //    record names another zone is MOVED IN THE TREE rather than only restyled — the half a `css` write could never reach,
+  //    the old zone no longer holding it.
+  //    **AND THAT OVERTURNS `D-182`'S RECORDED CONCLUSION** that dynamic zone routing was unavailable — *"a pane dragged
+  //    between zones … THAT is unavailable"* — because the engine has carried `{kind:'move', node, to:{parent}}` all along
+  //    and only the page-side resolution was missing, so the sentence was a reading of THIS tree and not of the package.
+  //    **`D-182`'s upstream-owned finding STANDS UNMOVED** (`D-5`): rows-mint placement routing is a different op and the
+  //    package is read here and never modified. **MEASURED**: the pane's parent goes `top` → `left` → `top`, and a cold boot
+  //    with the record already `left` paints it in `left` — the two readings this entry's edit exists to make true.
+  'src/renderer/runtime.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
