@@ -5993,3 +5993,32 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **one file changed, one declaration** — no node, no channel, no bridge member, **census unmoved**. **And one red was produced and cleared honestly**: **`P-6` measured `ERR_FILE_NOT_FOUND` on `dist/renderer/index.html`** — **`D-173`'s `~54 ms` window, opened by the pass's OWN concurrent `npm run build` cleaning `dist/` under a boot** — **green on the clean re-run, and reported rather than quietly re-run.** **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-272`** as prose, unchanged and extended by this row only. **This row records a report that was true about a placement and not about a value, a fix that changed an axis instead of a number, three rows where each exposed the next, and a hit-test taken at five points because one can miss.**
+## D-274 — THE TITLE'S SPACING IS BALANCED, AND **THE IMBALANCE WAS INSIDE THE GLYPH**: `1.41px` of bearing that no head declaration could reach
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user, verbatim):** ***"Still needs padding when closed, balance the spacing so that the title has similar space on both sides as it currently does between the handle and the left side of the text"***
+
+**FOUR INGREDIENTS COMPOSE THE GAPS AROUND THE TITLE, AND ONLY A MEASUREMENT COULD SAY WHICH ONE WAS WRONG.** **`D-273` had already made the head's `padding-inline` and the flex `gap` the same `4px`** — **so the two declared contributions were equal, and the visible gaps still were not.** **The measured table**:
+- **the head's `padding-inline`: 4px at each END** (pane edge→pill `4`, control→row end `4`);
+- **the head's flex `gap`: 4px** (grip↔control);
+- **THE `⠿` GLYPH'S OWN ADVANCE: `7.7px` CARRYING ONLY `4.0px` OF INK** — `1.75` lead and **`1.95px` trailing bearing** — **inside the grip, alongside the grip's own `gap`**;
+- **the name's `::after` ending FLUSH at the grip's edge** — `0.30` lead, **`0.84px` trailing bearing** — **then the gap `4` and the padding `4`.**
+
+**THE GLYPH DOMINATED.** **`1.95 + 0.30 − 0.84 = 1.41px` of ink difference sat INSIDE THE GRIP**, **where NO HEAD DECLARATION CAN REACH IT**: **both declared gaps were already `4`, so adding to either — or to both — would have left the difference EXACTLY as it was.** **A fix at the head would have moved both sides together and changed nothing about their difference.**
+
+**THE FIX IS A ONE-SIDED LOGICAL MARGIN ON THE NAME'S CARRIER** — **`margin-inline-end: 0.13em` on the grip's `::after`** — **`1.43px` at its `11px`**, **in `em` BECAUSE A BEARING IS FONT-RELATIVE** (**a `px` value would be right at one font size and wrong at the next**), **and LOGICAL so `sideways-lr` ROTATES IT ONTO THE LANE'S AXIS WITH NO SECOND DECLARATION.** **That is the third row in a row where the logical property is what carries a fix across a writing-mode change** (`D-273`'s `padding-inline`, `D-272`'s carrier exemption, this one).
+
+**MEASURED, AGAINST THE USER'S OWN REFERENCE** (**the handle-to-title ink gap**):
+
+| state | before (handle ↔ title, title ↔ control) | after |
+|---|---|---|
+| **collapsed** | `6.25 ↔ 4.84` | **`6.25 ↔ 6.52`** — Δ `1.41 → 0.27` |
+| **lane** (`sideways-lr`) | `6.75 ↔ 4.75` | **`6.75 ↔ 5.75`** — Δ `2.00 → 1.00` (**the rotated ink quantizes to whole device px**) |
+| **expanded** | `6.25 ↔ 10.75` | **unchanged** — **that free space is the grown pill's** and no box moved there |
+
+**AND A REAL BUG WAS FOUND ON THE WAY AND CLEARED BY THE SHIFT, WHICH THE PASS REPORTS WITHOUT CLAIMING CREDIT.** **One of the five hit points — the BOTTOM-RIGHT 1px CORNER of the collapsed control, INSIDE ITS 3px RADIUS — answered `inspector-head` before and the control after.** **The shift closed it; the pass CLAIMS NO HIT-TEST FIX**, **which is the right way to report a defect a change happened to fix**: **a claim of credit for an accident is how an accident becomes a guarantee.** **That is `D-261`'s five-point scan paying for itself a second time.**
+
+**AND THE INVARIANTS HOLD, EACH MEASURED.** **The direction is still BOTTOM-TO-TOP** (`sideways-lr` on head and grip; the glyph at the foot `y 288.1 → 295.8`, the name above `227.4 → 284.1`). **The pressables are upright** (`horizontal-tb` on the control, `transform: none` on all three) **with FIVE HIT POINTS ANSWERING THEIR OWN IDS ACROSS BOTH PRESSABLES AND SEVEN STATES.** **`padding-block` stays ABSENT** (**the head computes `0 4px` and `4px 0`, inline only**). **And the lane's cross extent is STILL THE BAR'S `14px`** — **the lane grew only ALONG its axis, `94.34 → 95.77`** — **so the rail still reclaims `106` of its `120`**, **and `D-272`'s and `D-273`'s gains are untouched by this one.**
+
+**THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red** (`B-1` green, `src/renderer/index.html` standing in its declared edit set); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**. **One file changed: one declaration plus the prose that derives it** — no node, no channel, no bridge member, **census unmoved**; **the `top` head is box-identical to the sidebar's**. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-273`** as prose, unchanged and extended by this row only. **This row records an imbalance that lived in a typeface rather than a stylesheet, a fix expressed in the font's own units, a third logical property carrying a fix across a writing mode, and a corner hit-test that failed inside a border radius.**
