@@ -46,13 +46,31 @@
  *  for a zone-resident pane, whose clamp is the LAYOUT's (the top zone's width is full width and stored nowhere), so a
  *  required pair could only be invented. **`zone` IS OPTIONAL TOO** (`C-9`, `D-183`): present, it names one of
  *  `DECLARED_ZONE_IDS` and SELECTS which axis member a gesture may move; absent, it says the pane lives in the STAGE, which
- *  is not one of the four and therefore has no id to name. */
+ *  is not one of the four and therefore has no id to name.
+ *
+ *  **`index` IS THE ORDER, AND IT IS THE ONE MEMBER A GESTURE STATES RATHER THAN THE CREATION REPAIR.** The user defined
+ *  what rearrangement means: *"if 'Menu' is at the top of the left sidebar, dragging 'Inspector' into the top of the
+ *  sidebar should show the preview at the top and push the menu pane down (and commit in this placement). If both are in
+ *  the top zone in the left-to-right order of menu, inspector, dragging menu to the right of inspector should change the
+ *  order to inspector, menu"* — so a placement is `(zone, place among the panes)`, and the second half needs a member.
+ *  **IT IS A PER-PANE NUMBER AND NOT A FAMILY SEAT, AND THAT IS A MEASURED CONSTRAINT RATHER THAN A PREFERENCE**: the
+ *  `tabs` family's `order` seat is the corpus's precedent (one array, insertion a single fact), and this family CANNOT
+ *  carry its sibling — `tests/e2e/app-layout/app-layout.test.ts`'s `AL-8` (gating, unmarked) asserts that `['panes']`
+ *  names EXACTLY `DECLARED_PANE_IDS`, so a fourth key under that root reds by name. A pane's own record may carry a member
+ *  the family's KEY SET does not see, so the place travels with the pane it places.
+ *  **AND IT IS ABSENT ON EVERY PANE UNTIL A GESTURE STATES ONE, WHICH IS NOT A DEFAULT SPELLED AS SILENCE**: the reading's
+ *  own order (the family's key order) IS the initial order, so an `index` written by the repair would state a fact the
+ *  family already states — and `paneGeometryIn`'s answer is pinned member-for-member by
+ *  `tests/integration/store-view-record/crossing.test.ts` (gating), which is the second measured reason this member is
+ *  written by the act that arranges and by nothing else. A pane stating no `index` sorts at its own family position, so a
+ *  profile written before this member existed keeps exactly the order it rendered. */
 export interface ViewPaneGeometry {
   readonly id: string
   readonly width: number
   readonly height: number
   readonly bounds?: { readonly min: number; readonly max: number }
   readonly zone?: string
+  readonly index?: number
 }
 
 /** **ONE ZONE, AS THE DRAG'S TWO ZONE TURNS READ IT (D-91) — AND ITS FOUR MEMBERS ARE THE FROZEN STORE'S, MEASURED, NOT
@@ -356,9 +374,15 @@ export const paneGeometryIn = (
     height: number
     bounds?: { readonly min: number; readonly max: number }
     zone?: string
+    index?: number
   } = { id: held.id, width: held.width, height: held.height }
   if (held.bounds !== undefined) pane.bounds = { min: held.bounds.min, max: held.bounds.max }
   if (held.zone !== undefined) pane.zone = held.zone
+  // **AND THE ORDER, WHERE THE RECORD STATES ONE** — the same rule as `bounds` and `zone`: `D-105`'s fault is a member the
+  // family admits and this read DROPS while `source.panes` still says `'record'`, so a member carried by `ViewPaneGeometry`
+  // is carried here. Where the record states none nothing is added, which is why a fresh family's answer is the four
+  // members it always was (`crossing.test.ts`'s pinned pair).
+  if (held.index !== undefined) pane.index = held.index
   return { status: 'committed', pane, source: 'record' }
 }
 

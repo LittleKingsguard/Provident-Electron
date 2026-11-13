@@ -275,7 +275,15 @@ const finiteNumber = (value: unknown): value is number => typeof value === 'numb
  *  not a pane with a member this realm leaves off. **`bounds` AND `zone` ARE OPTIONAL AND BOTH ARE CARRIED WHERE STATED**
  *  (`D-186`, `D-129`; L2 §3's *"every member it admits"*): a zone-resident pane's absent `bounds` is LAWFUL — its clamp is
  *  the layout's — and dropping a member the family admits while `source.panes` still says `'record'` is `D-105`'s fault
- *  exactly. An `id` is the family's key rather than a member of the value. */
+ *  exactly. An `id` is the family's key rather than a member of the value.
+ *
+ *  **AND SO IS `index` — THE PANE'S PLACE AMONG THE DECLARED PANES, WHICH IS THE RECORD'S ORDER** (the user's definition of
+ *  rearrangement: *"dragging menu to the right of inspector should change the order to inspector, menu"*;
+ *  `shared/view-shape.ts`'s block on the member states why it is per-pane and why the creation repair states none). **IT IS
+ *  CARRIED WHERE STATED AND ABSENT WHERE NOT**, `bounds`/`zone`'s rule: a member the crossing admits and this side drops is
+ *  `D-105`'s fault, and an ABSENT one is lawful — the reading's own order is then the order, which is the state every fresh
+ *  family is in. A stated one is judged exactly as the crossing judges it (a non-negative integer), because a member this
+ *  realm would round is a placement the record did not state. */
 function paneOf(held: unknown): ViewPaneGeometry | null {
   if (!isObject(held) || Array.isArray(held)) return null
   const id = held['id']
@@ -290,6 +298,7 @@ function paneOf(held: unknown): ViewPaneGeometry | null {
     height: number
     bounds?: { readonly min: number; readonly max: number }
     zone?: string
+    index?: number
   } = { id, width, height }
   if (Object.hasOwn(held, 'bounds')) {
     const bounds = held['bounds']
@@ -303,6 +312,11 @@ function paneOf(held: unknown): ViewPaneGeometry | null {
     const zone = held['zone']
     if (typeof zone !== 'string' || zone.length === 0) return null
     pane.zone = zone
+  }
+  if (Object.hasOwn(held, 'index')) {
+    const index = held['index']
+    if (!finiteNumber(index) || !Number.isInteger(index) || index < 0) return null
+    pane.index = index
   }
   return pane
 }

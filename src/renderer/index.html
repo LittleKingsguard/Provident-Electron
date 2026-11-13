@@ -656,8 +656,15 @@
        `D-240`), so a `display` authored on the zone node would be gone after the first delivery — the arrangement must live
        where the paint cannot reach it, which is here. The zone's own `overflow` (`overflow-x: auto` in a `top` zone,
        `D-243`) is what scrolls a row wider than the window.
-       **THE ORDER IS THE TREE'S**: a row is read left-to-right in child order, and a pane relocated into a zone is APPENDED
-       by the engine's `move` (`D-252`). Nothing stores a slot, and this sheet invents none. */
+       **AND THE ORDER WITHIN THE ROW (OR THE COLUMN) IS THE RECORD'S, WITH THE TREE AS ITS INSTRUMENT** — this sheet
+       states the AXIS and the BASIS and nothing about sequence, because sequence is now a fact of the `panes` family: each
+       pane's `index` is its place among the declared panes, the panes of one zone are read in that order, and
+       `renderer.ts`'s arrangement turn makes the zone's child order agree with it through the engine's own `move` op
+       (`D-252`'s op, which appends — so the turn appends the panes whose place moved, in order, and the anchor order is
+       the sequence). **A `flex` `order` declaration here would have been the SECOND AUTHORITY `D-129` refuses**: the
+       record is the order's only writer, the sheet cannot read a record, and a rule keyed on an `index` attribute would
+       need the paint to publish one. **THE ONE THING THIS SHEET STILL OWNS IS THAT THE ROW READS LEFT-TO-RIGHT**: a
+       child sequence is a visual sequence only because the container is `row`/`column` rather than a reversed one. */
     #top, #bottom { display: flex; flex-direction: row; align-items: stretch; }
     #left, #right { display: flex; flex-direction: column; align-items: stretch; }
     #top > *, #bottom > *, #left > *, #right > * { flex: 0 0 auto; }
@@ -816,11 +823,24 @@
        hold for every pane this app declares, and this is the same pair spelled for the second one. It is keyed by the
        pane's own id and NOT by a class because the numbers it shares with `#pane-menus`' block above are the pane's padding
        lanes, and a `[zone]`-class selector would also match the stage's pane, which has no zone and no header form.
+       **AND THE BOX MODEL COMES WITH THE FORM, WHICH IS `#pane-menus`' CLAUSE (1) ONE PANE OVER AND WAS MISSING HERE**:
+       the record's figure is the HEIGHT in a sidebar and the horizontal member is the FILL (`width: 100%`), so a `18px`
+       right lane would push a `100%` pane past the zone's own width — measured on a live window before this line, with
+       this pane dropped into `left`, its box read `152` wide against a `120` rail — and an `0.875rem` left lane is width
+       spent on nothing now that the grip heads the pane instead of flanking it. So the block below returns the pane to
+       `border-box`, takes both lanes to `0`, and the pane's own `overflow-y` scrolls its content on the axis it adjusts.
+       **`#pane-menus`' OWN BLOCK IS BYTE-UNCHANGED** (`D-253`, `D-256`, `D-257`'s readings are keyed on their own id).
        **NOTHING HERE RESTATES A FIGURE**: `width: auto !important` is the strip's THICKNESS moving to `height`, the
        authored `14px` being its box (an inline declaration yields to a sheet only with `!important`, the trade this sheet
        already makes), and the pane's own painted members are the paint's. */
     #pane-inspector[zone="left"],
-    #pane-inspector[zone="right"] { display: flex; flex-direction: column; }
+    #pane-inspector[zone="right"] {
+      box-sizing: border-box;              /* the FILL is `width: 100%` here: a content-box plus a lane pushes the pane past the zone */
+      padding-left: 0;                     /* the grip's lane goes with the grip: it heads the pane now, it does not flank it */
+      padding-right: 0;
+      display: flex;
+      flex-direction: column;
+    }
     #pane-inspector[zone="left"] > #inspector-grab,
     #pane-inspector[zone="right"] > #inspector-grab {
       flex: 0 0 auto;
@@ -856,27 +876,6 @@
       width: auto !important;
       height: 14px;
       cursor: row-resize !important;
-    }
-
-    /* ══ **THE RELOCATION GHOST'S PAINT — A TRANSLUCENT SHAPE OF THE PANE, AT THE BOX THE RELEASE WOULD FILL** ══
-       The user's first change: *"Pane drag should render a ghost into the target location, showing where the pane will
-       place if released"*. `src/shared/demo-envelope.ts` authors the one node (`#pane-ghost`) and its box — `position:
-       fixed`, `opacity: 0`, `z-index: 4`, `pointer-events: none`, `box-sizing: content-box` — and `renderer.ts`'s
-       `paneMoveGhostWrite` composes its WIDTH/HEIGHT/INSETS from the record and turns it visible. **THIS SHEET OWNS ONLY
-       WHAT IT LOOKS LIKE**, which is the one thing no record states: a dashed outline in the app's own focus blue (`#2f6fb0`,
-       the colour the drag's zone outline and the drop's fill already use, so the three read as one preview and not three)
-       over a light wash. **BOTH THE FILL AND THE DASH ARE THE PREVIEW'S AND NOT A FIGURE'S**, and its dark pair is stated
-       for `D-247`'s reason — an unpaired light wash under a dark page is a legibility bug on the one control a person reads
-       WHILE they drag. `pointer-events: none` is authored on the NODE and not here on purpose: it is structural (it is what
-       keeps `elementFromPoint` answering the DROP), so it belongs where the box model is authored. */
-    .pane-ghost {
-      border: 2px dashed #2f6fb0;
-      border-radius: 4px;
-      background-color: rgba(47, 111, 176, 0.18);
-    }
-    body:has([theme="dark"]) .pane-ghost {
-      border-color: #7d97b4;
-      background-color: rgba(84, 110, 140, 0.28);
     }
 
     .gutter-handle {

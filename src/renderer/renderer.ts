@@ -13,7 +13,7 @@ import { createTabsClient, NEW_TAB_TARGET_PREFIX, type TabsClient, type TabsClie
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, INSPECTOR_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DECLARED_PANE_IDS, DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, INSPECTOR_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -1842,17 +1842,13 @@ async function main(): Promise<void> {
     paneMove.installed !== paneMove.drops ||
     paneMove.attached !== paneMove.drops ||
     paneMove.grips !== PANE_MOVE_GRIP_IDS.length ||
-    paneMove.captured !== paneMove.grips ||
-    // **AND THE GHOST IS THE SIXTH READING** (the user's first change): a node the tree did not answer is a drag whose picture
-    // is absent while its act still lands, so it is said here in the same register rather than left to a person to notice.
-    paneMove.ghosts !== PANE_MOVE_GHOST_IDS.length
+    paneMove.captured !== paneMove.grips
   ) {
     console.error(
       `[provident-renderer] the pane-move affordance is NOT fully wired — resolved ${String(paneMove.drops)}/${String(PANE_MOVE_DROP_IDS.length)} ` +
         `of \`${PANE_MOVE_DROP_IDS.join('`, `')}\`, installed ${String(paneMove.installed)}, attached ${String(paneMove.attached)}, ` +
-        `${String(paneMove.grips)}/${String(PANE_MOVE_GRIP_IDS.length)} grip(s) of \`${PANE_MOVE_GRIP_IDS.join('`, `')}\` with ` +
-        `${String(paneMove.captured)} drag(s) installed, and ${String(paneMove.ghosts)}/${String(PANE_MOVE_GHOST_IDS.length)} ghost node(s) ` +
-        `of \`${PANE_MOVE_GHOST_IDS.join('`, `')}\`, so a press, a dispatch or a drag may reach no act and a drag may draw no shape`,
+        `and ${String(paneMove.grips)}/${String(PANE_MOVE_GRIP_IDS.length)} grip(s) of \`${PANE_MOVE_GRIP_IDS.join('`, `')}\` with ` +
+        `${String(paneMove.captured)} drag(s) installed, so a press, a dispatch or a drag may reach no act`,
     )
   }
   // ⟶ **THE APPEARANCE APPLICATION (`D-97`)** — constructed here, ONCE, after the first envelope load so the authored state
@@ -2504,47 +2500,45 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// **TURN 6 — THE PANE'S RELOCATION IS A DRAG: ONE GRIP PER PANE, FOUR AUTHORED ZONES, ONE WHOLE-PANE WRITE**
+// **TURN 6 — THE PANE'S PLACEMENT IS A DRAG: ONE GRIP PER PANE, FOUR AUTHORED ZONES, AND ONE WHOLE-FAMILY WRITE**
 // (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1; the second affordance `D-244` designed and never built.)
 //
 // **THE GESTURE IS A DRAG, AND THE TWO THINGS THAT MADE IT A PICK THE FIRST TIME ARE BOTH ANSWERED HERE BY MEASURED
 // CAUSES RATHER THAN BY RE-DESIGN.** **(i)** §1's reason the pick was chosen — *"the landed affordance installs no
 // pointer capture local to another region, so a drag that leaves the strip's box loses its reading"* — **WAS THE
 // `D-245` DEFECT, NOT A PROPERTY OF THE GESTURE**: every handle in this realm went inert on its first move for want of
-// `setPointerCapture`, and `captureOnGripPress` below is that row's fix applied to the two grips, on the same
+// `setPointerCapture`, and `captureOnGripPress` below is that row's fix applied to the grips, on the same
 // `pointerdown`, with the same total degradations (`D-245`). **(ii)** §2's reason no hit-test is taken —
-// `getBoundingClientRect` THROWS in the layout-less DOM shim — **IS ABOUT MEASURABILITY AND NOT ABOUT THE HAND,
-// so nothing here measures a box either**: the four drops are AUTHORED OVERLAYS given their ZONE'S OWN EXTENT while a drag
-// is in flight (`paneMoveDropBoxOf` below: the four stored figures and their order, no node added), and the drag asks
-// **the DOM** which of them the pointer is standing on — `document.elementFromPoint` in a realm that has layout, and the
-// event's own `target` in a realm that does not (the whole node suite, `D-27`). So a row can drive the gesture by
-// dispatching at a drop, while the real window resolves the drop under a real pointer.
-// **AND THE PREVIEW IS THE DRAG'S OWN TRANSIENT** (`D-246`'s lesson: a preview written to the wrong node moves nothing
-// a person can see): the **zone the record would receive** is outlined through a transient `style` declaration on the
-// ZONE ELEMENT — one of the four PAINTED nodes, which `paintStyle` replaces WHOLE on the next delivery and which no
-// delivery touches mid-gesture — and **the authored overlay under the pointer** is filled in beside it, so the person
-// sees both the vicinity window and the zone that will take the record.
-// **AND THE GHOST *IS* DRAWN NOW, WHICH OVERRULES `D-249`'S REFUSAL AND IS THE USER'S OWN INSTRUCTION** (*"Pane drag should
-// render a ghost into the target location, showing where the pane will place if released"*). `D-249` refused one for the
-// reason that **a ghost is a new element and every element is provident data with the authored census pinned at `89` — and
-// that reason is ANSWERED RATHER THAN IGNORED**: the ghost is a PROVIDENT NODE, AUTHORED once in the envelope
-// (`demo-envelope.ts`'s `PANE_GHOST_ID`, hidden by its authored `opacity: 0`), counted in the census as a term of its own,
-// and revealed by this gesture's inline style — the same three facts the four overlays above already have. **IT IS NOT
-// MINTED, AND THAT IS THE ONE FORM THIS CORPUS COULD NOT USE**: a mint creates a node at drag time whose container is never
-// recompiled (`D-182`'s measured routing defect), nothing would remove it, and every gesture would leave a second ghost
-// behind. **NOR IS THE PANE'S OWN ELEMENT RE-PARENTED TO MAKE ONE** (`D-182`, §6): the ghost is drawn AT the target and the
-// pane is left exactly where it is until the release's write and its delivery (`D-252`).
-// **WHAT IT SHOWS, AND FROM WHICH DECLARATION**: the pane's shape at the target location — the zone's own box on the axis
-// the zone FIXES, and the record's stored figure on the axis the zone leaves free (`D-243`'s fill relation). `paneMoveGhostBoxOf`
-// composes it from `paneFillAxisOf`, `paneAxisMembers`, `paneMoveDropBoxOf` and the panes family, which are EXACTLY the
-// declarations the paint reads — there is no second table, so there is nothing that can drift.
-// **AND THE RELEASE, THE CANCEL AND A MOVE ONTO NO ZONE ALL CLEAR IT**, as does an unarmed press: the ghost is written only
-// inside `highlight`, which is only reached from a move past `PANE_MOVE_ARM_DISTANCE`, so a click cannot show one.
-// **THE `['drag']` FAMILY IS NOT FORCED TO CARRY IT**: that family's writer is `commitDrag(<pane>, {<member>: <figure>})`
-// — a PANE-KEYED, GEOMETRY-SHAPED `{size}` transient (`D-145`, §1 of `design-zone-handles.md`) — and its reader is the
-// ghost turn, which reads `branch[DEFAULT_PANE_ID]`. A placement is neither keyed by a figure nor answerable in a `size`,
-// so encoding a zone into it would be a second authority in the quietest form (`D-129`); the family stays exactly what
-// the resize drags made it, and the placement preview is the inline-style transient above.
+// `getBoundingClientRect` THROWS in the layout-less DOM shim — **IS ABOUT MEASURABILITY AND NOT ABOUT THE HAND**: the
+// ZONE is still resolved by DOM IDENTITY and never by arithmetic, because the four drops are AUTHORED OVERLAYS given their
+// ZONE'S OWN EXTENT while a drag is in flight (`paneMoveDropBoxOf` below: the four stored figures and their order, no node
+// added) and the drag asks **the DOM** which of them the pointer is standing on — `document.elementFromPoint` in a realm
+// that has layout, and the event's own `target` in a realm that does not (the whole node suite, `D-27`).
+// **AND A PLACEMENT IS NO LONGER ONLY A ZONE, WHICH IS THE USER'S OWN DEFINITION OF WHAT REARRANGEMENT MEANS**: *"if 'Menu'
+// is at the top of the left sidebar, dragging 'Inspector' into the top of the sidebar should show the preview at the top and
+// push the menu pane down (and commit in this placement). If both are in the top zone in the left-to-right order of menu,
+// inspector, dragging menu to the right of inspector should change the order to inspector, menu"*. So a drop resolves
+// `(zone, before/after which pane)` and the record carries the ORDER — `['panes', <id>, 'index']`, the pane's place among
+// the declared panes (`shared/view-shape.ts`'s block on the member states why it is per-pane: `AL-8` pins the family's KEY
+// SET to the declared panes, so no `order` seat can sit beside them).
+// **THE PANE BESIDE WHICH THE POINTER STANDS IS THE ONE THING HERE THAT IS A LAYOUT READ AND NOT A DECLARATION**, and its
+// cost is stated rather than hidden (`paneMoveLandingOf` below): the pointer's coordinate is compared with the OTHER panes'
+// own rendered centres along the zone's arrangement axis, so a node row cannot drive that half — the shim answers no rect —
+// and the arm it takes there is "no neighbour", i.e. the end of the destination zone. **THE DROPS KEEP THEIR MEASURABILITY
+// EXACTLY**: a drop is still an authored node with authored `pane`/`zone` operands and an installed body, so a row drives the
+// ZONE by dispatching at it, and only the finer half of the placement needs a realm with layout.
+// **AND THE PREVIEW IS A REAL RE-ARRANGEMENT, WHICH IS WHY THE GHOST IS GONE**: the panes are painted from the record, so a
+// transient must be its own turn — `driveZoneArrangement` is handed the family the release WOULD write on every transition
+// and the RECORD's family again on every end, and it makes the zone's child order agree by issuing the engine's own `move`
+// (`D-252`'s op) for the panes whose place moved. So *"the preview at the top with the menu pane pushed down"* is the real
+// pane standing in the real slot, and there is no box left for a ghost to draw: `#pane-ghost` is DELETED WHOLE with its
+// census term (`demo-envelope.ts`'s headstone states the argument), and no record member is written until the release.
+// **THE ZONE OUTLINE AND THE DROP'S FILL REMAIN** as the drag's own style transient: they say WHICH ZONE will take the
+// record, which the panes' own positions cannot say when the destination is empty.
+// **THE `['drag']` FAMILY IS NOT FORCED TO CARRY ANY OF IT**: that family's writer is `commitDrag(<pane>, {<member>:
+// <figure>})` — a PANE-KEYED, GEOMETRY-SHAPED `{size}` transient (`D-145`, §1 of `design-zone-handles.md`) — while a
+// placement is neither keyed by a figure nor answerable in a `size`, so encoding a zone or an order into it would be a
+// second authority in the quietest form (`D-129`). The family stays exactly what the resize drags made it.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 /** **THE THREE DECLARED GRIPS, BY THEIR AUTHORED IDS — THE SECOND HALF OF THE ADDRESS BOOK, SPELLED LIKE THE DROPS'
@@ -2576,17 +2570,6 @@ const PANE_MOVE_DROP_IDS: readonly string[] = [
   'inspector-grab-top', 'inspector-grab-bottom', 'inspector-grab-left', 'inspector-grab-right',
 ]
 
-/** **THE ONE AUTHORED GHOST NODE, BY ITS OWN ID — THE ADDRESS BOOK'S THIRD LIST, AND ONE ENTRY** (the user's first change:
- *  *"Pane drag should render a ghost into the target location, showing where the pane will place if released"*).
- *  **THE GHOST IS AUTHORED AND NOT MINTED** (`demo-envelope.ts`'s `PANE_GHOST_ID` block states the whole argument), and an
- *  authored node is one this file must FIND: the census below resolves it by the same `props.id` walk it resolves the three
- *  grips and the twelve drops by, so the gesture holds an ELEMENT and never a selector, a `querySelector` or a class token
- *  (`D-235`'s census-is-the-address-book rule). **ONE GHOST SERVES EVERY PANE AND EVERY GRIP**: a gesture is one pointer at
- *  a time and each gesture clears what it drew, so a second ghost per pane would be three nodes drawing one box — and the
- *  ghost names no pane, because the pane it draws is read off the DROP the pointer is standing on (`props.pane`), which is
- *  the same read the act's operands come from. */
-const PANE_MOVE_GHOST_IDS: readonly string[] = ['pane-ghost']
-
 /** **THE ONE `(name, event)` PAIR EVERY DROP AUTHORS AND THIS FILE INSTALLS OVER** (`TABS_ADD_HANDLER`'s two-spelling
  *  rule, exactly): the envelope states it (`demo-envelope.ts`'s `PANE_MOVE_HANDLER_NAME`) and this copy names the body
  *  it installs. A rename on either side would silently turn the install into a SECOND handler rather than a
@@ -2606,29 +2589,28 @@ interface PaneMoveDropTarget extends PaneMoveNodeRef {
   readonly element: unknown
 }
 
-/** **THE CENSUS — EVERY DECLARED GRIP, DROP AND THE GHOST RESOLVED TO THE NODE THE GRAPH MINTED, IN ONE WALK** (`D-235`;
- *  the `addTabNodeId`/`menuItemNodeIds` form): `props.id` is read off every in-tree node ONCE at boot and compared against
- *  the THREE grip literals, the TWELVE drop literals and the ONE ghost literal above, so no node id is spelled and no
- *  selector is used. **TOTAL**:
+/** **THE CENSUS — EVERY DECLARED GRIP AND DROP RESOLVED TO THE NODE THE GRAPH MINTED, IN ONE WALK** (`D-235`; the
+ *  `addTabNodeId`/`menuItemNodeIds` form): `props.id` is read off every in-tree node ONCE at boot and compared against the
+ *  THREE grip literals and the TWELVE drop literals above, so no node id is spelled and no selector is used. **TOTAL**:
  *  a census that throws, answers no `nodes` or answers a shape that is not a list states an EMPTY answer, so a realm with
  *  no such node degrades to no listener and no throw (`D-127`). **THE COST IS NAMED**: one `nodeState` read per in-tree
- *  node, once — the price `addTabNodeId` already pays, and no per-delivery read. **THREE LISTS AND NOT ONE, BECAUSE THE
- *  KINDS ARE THREE ARMS**: the grips take the press and the pointer, the drops take the release's act, and **the ghost
- *  takes NEITHER — the gesture only DRAWS it** — so a boot reading that folded it into the grips would capture a pointer
- *  on a box nobody pressed. **A MISSING NODE IS NOT INVENTED**: each list carries what the tree
- *  answered, and the boot's one site compares every length against its declared literal. */
-function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMoveNodeRef[]; readonly drops: readonly PaneMoveNodeRef[]; readonly ghosts: readonly PaneMoveNodeRef[] } {
+ *  node, once — the price `addTabNodeId` already pays, and no per-delivery read. **TWO LISTS AND NOT ONE, BECAUSE THE
+ *  KINDS ARE TWO ARMS**: the grips take the press and the pointer, and the drops take the release's act. **A MISSING NODE
+ *  IS NOT INVENTED**: each list carries what the tree answered, and the boot's one site compares every length against its
+ *  declared literal. **AND THE THIRD LIST THIS CENSUS ONCE CARRIED — THE GHOST'S — IS GONE WITH ITS NODE**
+ *  (`demo-envelope.ts`'s headstone states why): the preview is the REAL PANES standing in their new order, so there is no
+ *  box left for the gesture to draw and nothing to resolve. */
+function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMoveNodeRef[]; readonly drops: readonly PaneMoveNodeRef[] } {
   let listed: unknown = null
   try {
     listed = runtime.listTargets()
   } catch {
-    return { grips: [], drops: [], ghosts: [] }
+    return { grips: [], drops: [] }
   }
   const nodes = (listed as { readonly nodes?: unknown } | null | undefined)?.nodes
-  if (!Array.isArray(nodes)) return { grips: [], drops: [], ghosts: [] }
+  if (!Array.isArray(nodes)) return { grips: [], drops: [] }
   const grips: PaneMoveNodeRef[] = []
   const drops: PaneMoveNodeRef[] = []
-  const ghosts: PaneMoveNodeRef[] = []
   for (const entry of nodes as readonly unknown[]) {
     if (entry === null || typeof entry !== 'object') continue
     const nodeId = (entry as { readonly nodeId?: unknown }).nodeId
@@ -2639,86 +2621,160 @@ function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMove
       grips.push({ id: held.held, nodeId })
       continue
     }
-    if (PANE_MOVE_GHOST_IDS.includes(held.held)) {
-      ghosts.push({ id: held.held, nodeId })
-      continue
-    }
     if (!PANE_MOVE_DROP_IDS.includes(held.held)) continue
     drops.push({ id: held.held, nodeId })
   }
-  return { grips, drops, ghosts }
+  return { grips, drops }
 }
 
-/** **THE ACT — ONE DROP'S PRESS, AND THE WHOLE PANE RECORD WRITTEN ONCE** (§3 `X1`–`X4`). It is TOTAL: every arm
- *  answers and nothing throws (`D-127`), so no caller wraps an IPC turn in a `try`.
+/** **THE LANDING — WHICH PANE OF THE DESTINATION ZONE THE POINTER IS BESIDE, AND ON WHICH SIDE, OR `null`** (the user's own
+ *  rule: *"dragging 'Inspector' into the top of the sidebar should show the preview at the top and push the menu pane down"*,
+ *  and *"dragging menu to the right of inspector should change the order to inspector, menu"*). A placement is a PAIR — a
+ *  zone and a place among the panes — so this is the second half, and it is the one thing in this turn that is a LAYOUT
+ *  READ rather than an authored operand.
+ *  **IT COMPARES THE POINTER WITH THE OTHER PANES' OWN CENTRES ALONG THE ZONE'S ARRANGEMENT AXIS**, which is the axis the
+ *  user's sentence speaks about: a `top`/`bottom` zone lays its panes in a ROW, so the coordinate is `x`; a `left`/`right`
+ *  zone stacks them, so it is `y` — read off `paneFillAxisOf`, the same declaration the paint uses to decide which axis a
+ *  zone FIXES, so there is no second table (one relation, read twice).
+ *  **THE DRAGGED PANE IS EXCLUDED FROM THE MEASUREMENT, AND THAT IS WHAT KEEPS THE PREVIEW STABLE**: the preview moves the
+ *  real panes, so measuring the pane being dragged would make the resolution chase its own picture — the pointer would be
+ *  over the pane it is moving and every transition would answer "beside yourself". Measured against its NEIGHBOURS alone,
+ *  the answer is fixed by where the pointer is on the others, and the pane settles into the slot the pointer names.
+ *  **THE FIRST PANE WHOSE CENTRE THE POINTER HAS NOT REACHED IS THE ONE IT LANDS BEFORE; PAST THEM ALL IT LANDS AFTER THE
+ *  LAST** — so the leading edge, the trailing edge and every boundary between two panes are all answers, and the trailing
+ *  edge is the same fact as "the end of the zone".
+ *  **ITS COST IS STATED RATHER THAN HIDDEN** (`D-27`, §2): `getBoundingClientRect` THROWS in the layout-less DOM shim, so
+ *  this arm answers `null` in the whole node suite, and `null` is the DECLARED ABSENCE — the pane lands at the end of the
+ *  zone, which is `D-252`'s own behaviour. **THE DROPS LOSE NOTHING**: a node row still drives the ZONE (an authored
+ *  `props.zone` and an installed body), and this finer half is measured where layout exists — a real window, by CDP. */
+function paneMoveLandingOf (
+  runtime: Runtime,
+  zone: string,
+  paneId: string,
+  point: { readonly x: number; readonly y: number } | null,
+  panes: readonly ViewPaneGeometry[],
+): { readonly neighbour: string; readonly side: 'before' | 'after' } | null {
+  if (point === null) return null
+  const placement = paneFillAxisOf(zone)
+  if (placement === null) return null
+  const sequence = paneZoneSequenceOf(panes, zone).filter((id) => id !== paneId)
+  if (sequence.length === 0) return null
+  const along = placement.fill === 'height' ? point.x : point.y
+  let last: string | null = null
+  for (const other of sequence) {
+    const nodeId = nodeIdForPane(other)
+    if (nodeId === null) return null
+    let rect: { readonly left: number; readonly top: number; readonly width: number; readonly height: number } | null = null
+    try {
+      const element = runtime.elementForNodeId(nodeId)
+      const read = (element as { readonly getBoundingClientRect?: unknown } | null | undefined)?.getBoundingClientRect
+      if (typeof read !== 'function') return null
+      const held = (read as () => unknown).call(element)
+      if (held === null || typeof held !== 'object') return null
+      const box = held as Record<string, unknown>
+      const left = box['left']
+      const top = box['top']
+      const width = box['width']
+      const height = box['height']
+      if (typeof left !== 'number' || typeof top !== 'number') return null
+      if (typeof width !== 'number' || typeof height !== 'number') return null
+      rect = { left, top, width, height }
+    } catch {
+      // A REALM THAT CANNOT MEASURE IS THE STATED ABSENCE, never a guessed side (`D-174`, `D-127`).
+      return null
+    }
+    const centre = placement.fill === 'height' ? rect.left + rect.width / 2 : rect.top + rect.height / 2
+    if (along < centre) return { neighbour: other, side: 'before' }
+    last = other
+  }
+  return last === null ? null : { neighbour: last, side: 'after' }
+}
+
+/** **THE ACT — ONE DROP'S PRESS, AND THE WHOLE PANE FAMILY WRITTEN ONCE** (§3 `X1`–`X4`, re-grained for the order). It is
+ *  TOTAL: every arm answers and nothing throws (`D-127`), so no caller wraps an IPC turn in a `try`.
  *
  *  **`X0` — THE TWO OPERANDS ARE READ OFF THE NODE AT PRESS TIME** (`D-129`'s ask-don't-remember rule, the form
  *  `attachMenuItem` uses for `props.role`): the drop's `props.pane` is the RECORD id its act addresses and `props.zone`
- *  the DECLARED zone id it relocates to. A node whose `props` cannot be read is REPORTED and no act is attempted.
- *  **`X1` — THE STANDING RECORD COMES FROM THE SHAPE, AND A PANE THE FAMILY DOES NOT NAME HAS NO ACT**: the client's
+ *  the DECLARED zone id it relocates to. A node whose `props` cannot be read is REPORTED and no act is attempted. **AND THE
+ *  THIRD OPERAND IS THE POINTER'S COORDINATE**, taken from the event that caused the act and never remembered; a realm or a
+ *  cause that carries none (`provident.dispatch` at a drop) names NO neighbour, which is the end of the zone.
+ *  **`X1` — THE STANDING FAMILY COMES FROM THE SHAPE, AND A PANE THE FAMILY DOES NOT NAME HAS NO ACT**: the client's
  *  held reading is the realm's one copy of the family (`D-117`), and a miss is reported rather than filled with
  *  `paneGeometryIn`'s measured DEFAULT — a default written back would INVENT a figure the record never stored, which is
  *  `D-174`'s class exactly.
- *  **`X2` — THE VALUE IS THE WHOLE RECORD: BOTH FIGURES VERBATIM, THE ZONE THE DROP NAMES, AND NO `BOUNDS`** (§4).
- *  Both axis members are stored for every pane and `paneOf` admits no half geometry, so **NO FIGURE IS INVENTED ON
- *  ARRIVAL**: the pane arrives in its new zone already carrying the figure that zone makes adjustable, and the member
- *  it no longer adjusts stays as the MEMORY `D-189` keeps. **`bounds` is the DRAG's pixel clamp and belongs to the axis
- *  it was measured on** (`D-243`), so carrying a stage pane's `{0,200}` into a `top` zone would clamp an axis never
- *  measured for it — `D-129`'s second authority in its quietest form. **IT IS DROPPED BY NOT BEING COPIED**, and a pane
- *  that returns to the stage answers the measured pair through the read's own absent arm (`D-186`).
+ *  **`X2` — THE VALUE IS THE WHOLE FAMILY, AND IT CARRIES BOTH HALVES OF THE PLACEMENT**: the moved pane's `zone`, every
+ *  pane's recomputed `index`, both figures VERBATIM, and NO `bounds` on the pane that moved (§4). `paneArrangementOf` and
+ *  `paneFamilyValueOf` above compose it, and the composition is the SAME one the preview drew, so what a person saw standing
+ *  is what the record receives.
  *  **`X3` — ONE WRITE, AT THE FAMILY'S OWN ADDRESS, THROUGH THE REALM'S EXISTING `dataRoute('write')`** (`D-191`,
- *  `D-112`): `['panes', <pane>]` at `file`, WHICH IS THE RECORD AND NOT A LEAF — **and it is NOT `commitPane`**: that
- *  route carries `{width?, height?, bounds?}`, names no placement, and REFUSES a member the pane's `zone` does not make
- *  adjustable (*"a `width` handed to a sidebar pane is a fault, not an update"*), so a relocation cannot be expressed
- *  through it at all. No route, no channel, no bridge member and no new MCP tool is added (`D-18`, `D-123`). **THE
- *  ANSWER IS REPORTED IN `D-117`'S REGISTER**: a refusal is `console.error` with its `reason` and `message` verbatim, an
- *  answer that is not `committed` is `console.warn`, and a COMMIT IS SILENT.
- *  **`X4` — NOTHING ELSE**: no paint, no re-read and no poll stands here. The record's own push repaints (`D-82`
- *  clause 4): `paneFillAxisOf`/`paneAxisMembers` read the record's `zone` on EVERY delivery, so the next one paints the
- *  NEW zone's fill, figure and scroll with no byte of this file's paint moving (`D-243`). **AND NOTHING IS RE-PARENTED**:
- *  the region a pane renders inside stays the authored tree's, which is `D-182`'s upstream routing defect and the limit
- *  the design declares rather than papers over (§6). */
-async function paneMoveAct(runtime: Runtime, dropNodeId: string): Promise<void> {
-  // X0 — THE TWO OPERANDS, READ OFF THE NODE.
+ *  `D-112`): `['panes']` at `file`, WHICH IS THE FAMILY AND NOT A LEAF — two leaves (`zone` and `index`) would be two
+ *  commits and two deliveries for one placement (`D-142`'s measured failure, one family over) — **and it is NOT
+ *  `commitPane`**: that route carries `{width?, height?, bounds?}`, names no placement, and REFUSES a member the pane's
+ *  `zone` does not make adjustable (*"a `width` handed to a sidebar pane is a fault, not an update"*), so a relocation
+ *  cannot be expressed through it at all. No route, no channel, no bridge member and no new MCP tool is added (`D-18`,
+ *  `D-123`). **THE ANSWER IS REPORTED IN `D-117`'S REGISTER**: a refusal is `console.error` with its `reason` and
+ *  `message` verbatim, an answer that is not `committed` is `console.warn`, and a COMMIT IS SILENT.
+ *  **`X3b` — A DROP THAT WOULD CHANGE NOTHING WRITES NOTHING**: `panePlacementOf` compares the composed placement with the
+ *  record's own word, and dropping a pane where it already stands answers the same word — so no write, no delivery, no
+ *  move, and the pane stays exactly where it is (the user's first easy wrong). **IT IS NOT A GUARD ON A REMEMBERED VALUE**
+ *  (`D-129` refuses those): the two words are composed from the standing family, one of them through the placement rule.
+ *  **`X4` — NOTHING ELSE**: no paint, no re-read and no poll stands here. The record's own push repaints and re-arranges
+ *  (`D-82` clause 4): `paneFillAxisOf`/`paneAxisMembers` read the record's `zone` on EVERY delivery and
+ *  `driveZoneArrangement` reads the record's order on every delivery, so the next one paints the NEW zone's fill, figure
+ *  and scroll and puts the panes in the NEW order with no byte of this file's paint moving (`D-243`, `D-252`).
+ *  **ITS ANSWER IS `true` ONLY WHERE THE STORE ANSWERED `committed`**, which is the one thing a caller cannot infer: a
+ *  no-op, a refusal and an unreadable answer all leave the record exactly as it stood, and the drag's release uses that to
+ *  decide whether the arrangement it drew mid-gesture may stand (a committed placement's own delivery re-arranges to it; a
+ *  placement that wrote nothing must be taken back). */
+async function paneMoveAct(
+  runtime: Runtime,
+  dropNodeId: string,
+  point: { readonly x: number; readonly y: number } | null,
+): Promise<boolean> {
+  // X0 — THE TWO AUTHORED OPERANDS, READ OFF THE NODE.
   const pane = authoredPropOf(runtime, dropNodeId, 'pane')
   const zone = authoredPropOf(runtime, dropNodeId, 'zone')
   if (!pane.readable || typeof pane.held !== 'string' || pane.held === '') {
     console.error(`[provident-renderer] pane move: the drop on ${dropNodeId} states no readable \`pane\`, so no act was attempted`)
-    return
+    return false
   }
   if (!zone.readable || typeof zone.held !== 'string' || zone.held === '') {
     console.error(`[provident-renderer] pane move: the drop on ${dropNodeId} states no readable \`zone\`, so no act was attempted`)
-    return
+    return false
   }
   const paneId = pane.held
   const zoneId = zone.held
-  // X1 — THE STANDING RECORD, OUT OF THE SHAPE THIS REALM ALREADY HOLDS. No route is asked and no default stands in.
-  const standing = getViewClient().shape().panes.find((entry) => entry.id === paneId)
-  if (standing === undefined) {
+  // X1 — THE STANDING FAMILY, OUT OF THE SHAPE THIS REALM ALREADY HOLDS. No route is asked and no default stands in.
+  const panes = paneMovePanesOf()
+  if (!panes.some((entry) => entry.id === paneId)) {
     console.error(`[provident-renderer] pane move: the record names no pane \`${paneId}\`, so nothing was written and nothing was invented`)
-    return
+    return false
   }
-  // X2 — THE WHOLE RECORD: both figures VERBATIM, the zone the drop names, and NO `bounds`.
-  const value = { id: standing.id, width: standing.width, height: standing.height, zone: zoneId }
+  // X2 — THE PLACEMENT: the destination zone the drop names, and the place among the panes the pointer names.
+  const placed = paneArrangementOf(panes, paneId, zoneId, paneMoveLandingOf(runtime, zoneId, paneId, point, panes))
+  // X3b — A PLACEMENT THAT AGREES WITH THE RECORD IS A DROP WHERE THE PANE ALREADY STANDS, AND IT WRITES NOTHING.
+  if (panePlacementOf(placed) === panePlacementOf(panes)) return false
+  const value = paneFamilyValueOf(placed, paneId)
   // X3 — ONE WRITE AT THE FAMILY'S OWN ADDRESS, THROUGH THE REALM'S OWN PASSTHROUGH.
   let written: unknown = null
   try {
-    written = await dataRoute('write', { path: ['panes', paneId], tier: 'file', value })
+    written = await dataRoute('write', { path: [PANES_ADDRESS], tier: 'file', value })
   } catch (error) {
     // THE ROUTE THAT THREW IS AN ARM AND NOT AN ESCAPE: a rejected `data.write` is reported here and no caller sees it.
-    console.error(`[provident-renderer] pane move: the write at ['panes','${paneId}'] threw — ${String(error)}`)
-    return
+    console.error(`[provident-renderer] pane move: the write at ['${PANES_ADDRESS}'] threw — ${String(error)}`)
+    return false
   }
   const answer = written !== null && typeof written === 'object' ? (written as Record<string, unknown>) : {}
   const status = typeof answer['status'] === 'string' ? answer['status'] : 'no-answer'
-  if (status === 'committed') return
+  if (status === 'committed') return true
   if (status === 'refused') {
     console.error(
-      `[provident-renderer] pane move: the write at ['panes','${paneId}'] was REFUSED (${String(answer['reason'])}): ${String(answer['message'])}`,
+      `[provident-renderer] pane move: the write at ['${PANES_ADDRESS}'] was REFUSED (${String(answer['reason'])}): ${String(answer['message'])}`,
     )
-    return
+    return false
   }
-  console.warn(`[provident-renderer] pane move: the write at ['panes','${paneId}'] answered \`${status}\`, so the store's answer is unread`)
+  console.warn(`[provident-renderer] pane move: the write at ['${PANES_ADDRESS}'] answered \`${status}\`, so the store's answer is unread`)
+  return false
 }
 
 /** **THE DROP'S ONE INSTALLED HANDLER BODY — THE AGENT'S ARM** (`D-239`'s path, one control class over): ONE
@@ -2726,10 +2782,15 @@ async function paneMoveAct(runtime: Runtime, dropNodeId: string): Promise<void> 
  *  engine's append-with-override REPLACES the authored no-op instead of adding a second `click`. **THE BODY IS A
  *  CLOSURE OVER THIS FILE'S OWN ACT**, so no surface is opened to an agent's `dispatch`, and **ITS RETURN IS ITS OWN
  *  WORD AND NEVER THE ACT'S PROMISE**: a body's return crosses `JSON.stringify` into `dispatch`'s `results`, so the act
- *  is STARTED and the body answers a short string (`D-209`'s cost (ii)). */
+ *  is STARTED and the body answers a short string (`D-209`'s cost (ii)). **IT NAMES NO NEIGHBOUR, AND THAT IS THE STATED
+ *  ARM**: a dispatch carries no pointer coordinate (`D-209`'s body is handed `ctx` and nothing else), so the placement it
+ *  asks for is the destination ZONE at the END of that zone's panes — the one placement an agent's act can state without
+ *  claiming a hand's position (`paneMoveLandingOf`'s `null` arm, which is also the layout-less realm's).
+ *  **AND THE FINE PLACEMENT IS STILL AN AGENT'S TO ASK FOR**: `data.write` at `['panes']` names every pane's `index`, which
+ *  is the same record this act writes — so the surface stays the two that exist and no third is minted for a coordinate. */
 function installPaneMoveHandler(runtime: Runtime, dropNodeId: string): boolean {
   const body = (): string => {
-    void paneMoveAct(runtime, dropNodeId)
+    void paneMoveAct(runtime, dropNodeId, null)
     return 'pane move'
   }
   try {
@@ -2758,7 +2819,11 @@ function installPaneMoveHandler(runtime: Runtime, dropNodeId: string): boolean {
  *  over a zone is the grip's (`onEnd` below), which is why the two arms cannot both fire for one gesture.
  *  **A NODE THAT WILL NOT RESOLVE OR WILL NOT TAKE A LISTENER ATTACHES NOTHING AND THROWS NOTHING** (`D-127`); its answer
  *  is the ELEMENT it attached to, so the drag's target map takes the SAME resolution and the two arms can never name two
- *  different elements. */
+ *  different elements.
+ *  **AND A CLICK CARRIES ITS OWN COORDINATE, SO THE PICK ARM RESOLVES THE PLACE TOO**: `MouseEvent.clientX`/`clientY` are
+ *  read off the event through `paneMovePointOf` (the one coordinate read this file takes, total over a realm that answers
+ *  neither) — so a person who clicks a revealed zone overlay lands their pane where they clicked, and the agent's
+ *  coordinate-less dispatch is the only arm that cannot state a place. */
 function attachPaneMove(runtime: Runtime, dropNodeId: string): unknown | null {
   let element: unknown = null
   try {
@@ -2768,8 +2833,8 @@ function attachPaneMove(runtime: Runtime, dropNodeId: string): unknown | null {
   }
   const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
   if (typeof add !== 'function') return null
-  ;(add as (type: string, handler: () => void) => void).call(element, 'click', (): void => {
-    void paneMoveAct(runtime, dropNodeId)
+  ;(add as (type: string, handler: (event: unknown) => void) => void).call(element, 'click', (event: unknown): void => {
+    void paneMoveAct(runtime, dropNodeId, paneMovePointOf(event))
   })
   return element
 }
@@ -2949,109 +3014,289 @@ function paneMoveDropEmphasis (element: unknown, shown: boolean): void {
   style.set('opacity', shown ? PANE_MOVE_DROP_OPACITY.shown : PANE_MOVE_DROP_OPACITY.hidden)
 }
 
-/** **ONE PANE'S STORED FIGURE FOR THE MEMBER A ZONE MAKES ADJUSTABLE, OR `null`** — the ghost's ONE record read, taken on
- *  EVERY TRANSITION and never remembered (`D-129`'s ask-don't-remember), so what the ghost draws is the figure the release
- *  would write. It is `paneMoveAct`'s `X1` read with a member selected, and its arms are the same: a throwing client, a
- *  family naming no such pane and a member that is not a finite non-negative number each answer `null`, which the ghost
- *  reads as the stated absence of a shape to draw (`D-174` — never a default, never a figure of this file's). */
-function paneMoveGhostFigureOf (paneId: string, member: 'width' | 'height'): number | null {
+/** **THE PANES FAMILY'S OWN ROOT, SPELLED HERE BECAUSE THE RECORD SPELLS IT** (`D-41`, `D-188` debt 2): the address lives
+ *  in `src/main/view-record/index.ts`'s exported constant, and this realm may not import a main-process module
+ *  (`src/shared/view-shape.ts` exists for exactly that reason). The literal is therefore the second spelling and the
+ *  equality is a ROW's — `AL-8` reads `['panes']` through the same word — and never a derivation across a module boundary.
+ *  **IT IS THE ADDRESS THE PLACEMENT'S ONE WRITE LANDS AT** (`driveLayoutRegions`' paint reads the same family through the
+ *  client, and `D-252`'s relocation wrote at `['panes', <id>]` — a leaf that could carry a `zone` and could not carry an
+ *  order). */
+const PANES_ADDRESS = 'panes'
+
+/** **THE PANE FAMILY AS THIS REALM HOLDS IT — ASKED, NEVER REMEMBERED** (`D-129`): the client's adopted reading is the one
+ *  copy of the family in this realm (`D-117`), and every turn below asks it at its own instant rather than carrying a
+ *  shape across a gesture. **TOTAL**: a client that throws, a shape with no `panes` list and a row that is no object each
+ *  contribute nothing, so a realm with no record answers an EMPTY family and every caller's own absence arm stands.
+ *  **NO DEFAULT IS INVENTED HERE**: `paneGeometryIn`'s measured default is the DRAG's read, and a placement composed over
+ *  a default would write back a figure the record never stored (`D-174`). */
+function paneMovePanesOf (): readonly ViewPaneGeometry[] {
   let shape: unknown = null
   try {
     shape = getViewClient().shape()
   } catch {
-    return null
+    return []
   }
   const panes = (shape as { readonly panes?: unknown } | null | undefined)?.panes
-  if (!Array.isArray(panes)) return null
-  const held = (panes as readonly unknown[]).find((entry) => (entry as { readonly id?: unknown } | null | undefined)?.id === paneId)
-  if (held === undefined || held === null || typeof held !== 'object') return null
-  const figure = (held as Record<string, unknown>)[member]
-  if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) return null
-  return figure
+  if (!Array.isArray(panes)) return []
+  const held: ViewPaneGeometry[] = []
+  for (const entry of panes as readonly unknown[]) {
+    if (entry === null || entry === undefined || typeof entry !== 'object') continue
+    held.push(entry as ViewPaneGeometry)
+  }
+  return held
 }
 
-/** **THE GHOST'S BOX AT THE TARGET LOCATION — THE PANE'S SHAPE IN THE ZONE UNDER THE POINTER, COMPOSED FROM THE SAME THREE
- *  DECLARATIONS THE PAINT READS AND FROM NO FOURTH** (the user's first change: *"a ghost into the target location, showing
- *  where the pane will place if released"*; `D-243`'s fill relation).
- *
- *  **IT IS THE PAINT'S OWN DECLARATION AND NOT A PARALLEL ONE, WHICH IS THE WHOLE ANSWER TO "WHAT STOPS THEM DRIFTING"**:
- *  the axis the pane FILLS (and the axis it scrolls) is `paneFillAxisOf(<zone>)`, read off `LAYOUT_ZONE_AXES`; the axis
- *  whose figure is the record's is `paneAxisMembers(<zone>)`, the complement declared at its own site; the figure itself is
- *  `paneMoveGhostFigureOf` off `['panes', <id>]`; and the ZONE's extent on the axis it fixes is the same composed box
- *  `paneMoveDropBoxOf` gives the overlay the pointer is standing in, which is itself composed from
- *  `['zones', <id>, 'size']`. So a ghost that disagreed with the paint would be a defect in ONE of those four, not a
- *  second table somebody forgot to update — there is no second table.
- *  **THE TWO SHAPES IT PRODUCES ARE THE TWO THE PAINT PRODUCES**: a `top`/`bottom` pane is `height: <the zone's size>` and
- *  `width: <the record's figure>`, anchored at the zone's leading edge on the axis the zone frees; a `left`/`right` pane is
- *  `width: <the zone's size>` and `height: <the record's figure>`, likewise. **THE FILL IS EXPRESSED AS THE ZONE'S OWN
- *  BOX** rather than as `100%`, and the difference is the medium and not the relation: the paint writes a `css.style`
- *  declaration on a node INSIDE the zone, so `100%` resolves against it, while the ghost is `position: fixed` against the
- *  window and must therefore carry the zone's extent itself.
- *  **`null` IS THE STATED ABSENCE AND NEVER A FALLBACK** (`D-174`): an undeclared zone fills no axis, a zone the record
- *  states no figure for has no box, and a pane the family does not name has no figure — each answers no ghost at all,
- *  which the drag reads as "draw nothing", exactly as the drop's own `null` box makes it unreachable. */
-function paneMoveGhostBoxOf (zone: string, figures: ReadonlyMap<string, number>, paneId: string): Record<string, string> | null {
-  // THE FILL AXIS AND THE ADJUSTABLE MEMBER ARE THE PAINT'S TWO FUNCTIONS, asked once and never re-spelled here.
-  const placement = paneFillAxisOf(zone)
-  if (placement === null) return null
-  const members = paneAxisMembers(zone)
-  const member = members.length === 1 ? members[0] : undefined
-  if (member === undefined) return null
-  const figure = paneMoveGhostFigureOf(paneId, member)
-  if (figure === null) return null
-  const box = paneMoveDropBoxOf(zone, figures)
-  if (box === null) return null
-  const style: Record<string, string> = {}
-  for (const property of PANE_MOVE_DROP_BOX) {
-    const text = box[property]
-    if (text === undefined) continue
-    style[property] = text
-  }
-  // THE ONE MEMBER THE ZONE LEAVES FREE IS THE RECORD'S, AND THE ZONE'S BOX STOPS SHORT OF IT ON THAT SIDE. A `top`/`bottom`
-  // pane fills the zone's HEIGHT (the box's own) and its width is the figure; a `left`/`right` pane fills the zone's WIDTH
-  // and its height is the figure — the SAME `PANE_FILL`/`paneAxisMembers` pair the paint composes, one declaration on either
-  // side of it. `auto` on the released side is what lets the figure govern.
-  if (placement.fill === 'height') {
-    style['right'] = 'auto'
-    style['width'] = `${String(figure)}px`
+/** **THE FAMILY'S ONE ORDER — THE `index` MEMBER WHERE A GESTURE HAS STATED ONE, AND THE FAMILY'S OWN SEQUENCE WHERE IT HAS
+ *  NOT.** This is the ONE derivation every arrangement turn reads: the paint's sequence, the act's composition and the
+ *  preview's insertion all consume this answer, so there is no second table that could drift from the record.
+ *  **AN ABSENT `index` SORTS AT ITS OWN FAMILY POSITION AND NOT AT THE END** — the reading's order (the family's key order)
+ *  is what this app rendered before the member existed, so a profile written by an earlier head keeps exactly the order it
+ *  had, and the sort is STABLE so two panes claiming one place cannot swap on an unrelated delivery.
+ *  **NO MEMBER IS JUDGED HERE**: the crossing and the client's admission have already refused anything that is not a
+ *  non-negative integer, so this function compares numbers and the missing arm is the only absence it knows (`D-129`). */
+function paneOrderOf (panes: readonly ViewPaneGeometry[]): readonly string[] {
+  const seats = panes.map((pane, at) => ({
+    id: pane.id,
+    place: typeof pane.index === 'number' && Number.isFinite(pane.index) && pane.index >= 0 ? pane.index : at,
+    at,
+  }))
+  seats.sort((left, right) => (left.place === right.place ? left.at - right.at : left.place - right.place))
+  return seats.map((seat) => seat.id)
+}
+
+/** **ONE ZONE'S PANES, IN THE RECORD'S ORDER** — `paneOrderOf` filtered by the member that puts a pane in a zone at all
+ *  (`C-9`: no `zone` is the STAGE, which is not one of the four and holds no sequence this turn may write). */
+function paneZoneSequenceOf (panes: readonly ViewPaneGeometry[], zone: string): readonly string[] {
+  const byId = new Map(panes.map((pane) => [pane.id, pane]))
+  return paneOrderOf(panes).filter((id) => byId.get(id)?.zone === zone)
+}
+
+/** **A PLACEMENT AS ONE COMPARABLE WORD — THE ORDER AND EVERY PANE'S ZONE, AND NOTHING ELSE.** It is what makes "a drop where
+ *  the pane already is" a NO-OP by construction rather than by a guard: the composed placement and the record's own answer
+ *  the same word exactly when nothing would move, and no member is compared that a delivery has not stated (a fresh family
+ *  states no `index` at all, and its own sequence IS its order — so a same-place drop on a fresh profile writes nothing,
+ *  which is the arm the user's two easy wrongs name). */
+function panePlacementOf (panes: readonly ViewPaneGeometry[]): string {
+  const byId = new Map(panes.map((pane) => [pane.id, pane]))
+  return paneOrderOf(panes)
+    .map((id) => `${id}@${byId.get(id)?.zone ?? ''}`)
+    .join('>')
+}
+
+/** **THE FAMILY AS IT WOULD STAND AFTER ONE PANE IS PUT IN ONE ZONE, BESIDE ONE NEIGHBOUR — THE ACT'S AND THE PREVIEW'S ONE
+ *  COMPOSITION** (the user's own rule: *"if 'Menu' is at the top of the left sidebar, dragging 'Inspector' into the top of
+ *  the sidebar should show the preview at the top and push the menu pane down"*, and *"dragging menu to the right of
+ *  inspector should change the order to inspector, menu"*).
+ *  **IT IS THE WHOLE FAMILY AND NEVER ONE RECORD, BECAUSE THE PLACE IS A FACT ABOUT EVERY PANE**: moving one pane into a
+ *  slot shifts the panes after it, so the value the act writes carries the moved pane's `zone` AND the recomputed `index` of
+ *  EVERY pane — one fact, one write, one delivery. **AND IT IS A PURE PROJECTION OVER THE READING** (`D-88`): a fresh list
+ *  and a fresh record per pane, so no caller holds the object the client will replace on the next delivery.
+ *  **THE INSERTION IS THE NEIGHBOUR'S OWN GLOBAL PLACE, WHICH IS WHY A ZONE'S SUBSEQUENCE IS ALL THE RESULT NEEDS**: the
+ *  global order interleaves zones, and filtering it by `zone` is how a zone's sequence is read — so inserting immediately
+ *  before or after the neighbour IN THE GLOBAL LIST lands the pane in exactly that place among its own zone's panes, and
+ *  leaves every other zone's relative order untouched. **NO NEIGHBOUR IS THE END OF THE DESTINATION ZONE** (an empty zone
+ *  lands the pane alone, and a zone whose last pane is already at the end lands it there), which is the arm a realm that
+ *  cannot measure a pointer takes. */
+function paneArrangementOf (
+  panes: readonly ViewPaneGeometry[],
+  paneId: string,
+  zone: string,
+  landing: { readonly neighbour: string; readonly side: 'before' | 'after' } | null,
+): readonly ViewPaneGeometry[] {
+  const byId = new Map(panes.map((pane) => [pane.id, pane]))
+  // **A PANE THE FAMILY DOES NOT NAME PLACES NOTHING** (`D-174`'s stated absence, and the reason no index can shift): the
+  // order is a fact about the panes the record states, so an id outside them answers the family UNCHANGED rather than a
+  // sequence with a hole where its own entry would be — the act refuses such a drop before it asks, and this is the pure
+  // function's own total arm for any other caller.
+  if (!byId.has(paneId)) return panes
+  const rest = paneOrderOf(panes).filter((id) => id !== paneId)
+  /** THE ZONE A PANE STANDS IN ONCE THE ACT LANDS — the moved pane's is the destination, every other pane's is its record's. */
+  const zoneOf = (id: string): string | undefined => (id === paneId ? zone : byId.get(id)?.zone)
+  let at = rest.length
+  if (landing !== null && landing.neighbour !== paneId) {
+    const found = rest.indexOf(landing.neighbour)
+    if (found !== -1) at = landing.side === 'before' ? found : found + 1
   } else {
-    style['bottom'] = 'auto'
-    style['height'] = `${String(figure)}px`
+    // NO NEIGHBOUR: THE PLACE IS THE END OF THE DESTINATION ZONE'S OWN SEQUENCE, and an empty zone's end is the family's.
+    let last = -1
+    rest.forEach((id, position) => {
+      if (zoneOf(id) === zone) last = position
+    })
+    at = last === -1 ? rest.length : last + 1
   }
-  return style
+  const next = [...rest.slice(0, at), paneId, ...rest.slice(at)]
+  const place = new Map<string, number>(next.map((id, position) => [id, position]))
+  return panes.map((pane) => {
+    const index = place.get(pane.id)
+    if (pane.id === paneId) return { ...pane, zone, ...(index === undefined ? {} : { index }) }
+    return index === undefined ? pane : { ...pane, index }
+  })
 }
 
-/** **THE GHOST'S ONE WRITER — SIX BOX PROPERTIES AND THE VISIBILITY, ON THE AUTHORED NODE THE CENSUS RESOLVED.** A realm
- *  whose `style` refuses is the declared no-write arm (`paneMoveStyleOf`'s own, `D-127`): the gesture still resolves its
- *  target and still commits on release, and what is lost is the picture rather than the act. **IT WRITES NOTHING TO THE
- *  GRAPH AND SENDS NO ROUTE**, which is what keeps `D-249`'s measured property — the record untouched at every move —
- *  true with a ghost in the picture. */
-function paneMoveGhostWrite (element: unknown, box: Record<string, string>): void {
-  const style = paneMoveStyleOf(element)
-  if (style === null) return
-  for (const property of PANE_MOVE_DROP_BOX) {
-    const text = box[property]
-    if (text === undefined) continue
-    style.set(property, text)
+/** **THE ONE VALUE A PLACEMENT WRITES — THE WHOLE PANE FAMILY, IN THE FAMILY'S OWN KEY ORDER** (§3 `X3`; `D-138`'s leaf
+ *  discipline read one level up, `D-142`'s one-write rule honoured).
+ *  **IT IS A WHOLE-FAMILY WRITE AND NOT A LEAF, AND THE REASON IS THAT A PLACEMENT IS TWO MEMBERS OF TWO KINDS AND ONE
+ *  FACT**: `['panes', <id>, 'zone']` and `['panes', <id>, 'index']` are two leaves, and two leaves are two commits, two
+ *  deliveries and a window in which the pane is in its new zone at its old place — the failure `D-142` measured for the tab
+ *  record one family over. One write at `['panes']` carries the destination and the order inside ONE commit, so no delivery
+ *  can see half of a placement.
+ *  **`bounds` IS DROPPED FROM THE MOVED PANE AND CARRIED FOR EVERY OTHER** (§4; `D-186`, `D-243`): `bounds` is the DRAG's
+ *  pixel clamp and belongs to the axis it was measured on, so carrying a stage pane's pair into a zone would clamp an axis
+ *  never measured for it — `D-129`'s second authority in its quietest form — while a pane this act does not move keeps
+ *  exactly what it stored. **THE FIGURES TRAVEL VERBATIM** (`D-191`, `D-189`): no arrival default, because both members are
+ *  stored for every pane and the member a zone un-makes adjustable is the MEMORY a later zone change reads. */
+function paneFamilyValueOf (panes: readonly ViewPaneGeometry[], movedPaneId: string): Record<string, unknown> {
+  const family: Record<string, unknown> = {}
+  for (const pane of panes) {
+    const record: Record<string, unknown> = { width: pane.width, height: pane.height }
+    if (pane.zone !== undefined) record['zone'] = pane.zone
+    if (pane.id !== movedPaneId && pane.bounds !== undefined) record['bounds'] = { min: pane.bounds.min, max: pane.bounds.max }
+    if (pane.index !== undefined) record['index'] = pane.index
+    family[pane.id] = record
   }
-  style.set('opacity', PANE_MOVE_DROP_OPACITY.shown)
+  return family
 }
 
-/** **AND THE SAME PROPERTIES CLEARED, BY NAME — THE RELEASE, THE CANCEL, A MOVE OFF EVERY ZONE AND A NEW PRESS ALL END HERE**
- *  (`D-216`'s rule: nothing paints without an event, and the event that ends the gesture is what takes its picture with it).
- *  **THE VISIBILITY IS RESTORED BY VALUE AND NOT BY REMOVAL, AND THAT IS A MEASURED DIFFERENCE** — the one thing the first
- *  cut of this function got wrong, on a real window: `opacity` here is an INLINE declaration authored on the node
- *  (`paneGhostStyle`), so `removeProperty('opacity')` DELETES the authored `0` instead of falling back to it, and the ghost
- *  was left standing as a `4×4` dashed box at the window's origin with a computed opacity of `1` — the authored value is a
- *  style ATTRIBUTE member and not a sheet's, so only `'0'` written back is the authored state. The six box members are
- *  removed all the same, so the ghost keeps no geometry either.
- *  **AND NOTHING ELSE IS REMEMBERED**: no flag, no class and no attribute says "the ghost is up"; the node is
- *  indistinguishable from its authored self between gestures. */
-function paneMoveGhostClear (element: unknown): void {
-  const style = paneMoveStyleOf(element)
-  if (style === null) return
-  for (const property of PANE_MOVE_DROP_BOX) style.remove(property)
-  style.set('opacity', PANE_MOVE_DROP_OPACITY.hidden)
+/** **THE PANES A ZONE'S ELEMENT HOLDS, IN THE TREE'S OWN ORDER — OR `null` WHERE THE TREE CANNOT BE READ.** The walk is by
+ *  ELEMENT IDENTITY against the elements the graph answered for the declared panes (`Runtime.elementForNodeId`, the read
+ *  `zoneChildPanesOf` itself takes), never by an id string on an attribute and never by a selector, so a zone whose rendered
+ *  children are not panes contributes nothing and a pane the map cannot resolve is simply not seen.
+ *  **IT IS THE ONE TREE READ THIS TURN NEEDS, AND IT IS WHY THE ORDER CAN BE MADE WITHOUT EVER REMEMBERING IT** (`D-129`): a
+ *  stored "last arrangement" would be right until the first delivery it missed and then move panes forever against the
+ *  record. **`children` IS THE ONE MEMBER, AND BOTH REALMS CARRY IT** — the platform's `HTMLCollection` (indexed, with a
+ *  `length`) and `shared/dom-shim.ts`'s real array — so no rect, no selector and no `document` is read here. A realm that
+ *  answers no `children` is the stated `null`, and `driveZoneArrangement` then leaves that zone exactly as it stands. */
+function zoneChildPanesOf (
+  runtime: TabsPageRuntime,
+  zoneId: string,
+  elements: ReadonlyMap<string, unknown>,
+): readonly string[] | null {
+  let zoneElement: unknown = null
+  try {
+    zoneElement = runtime.elementForNodeId(zoneId)
+  } catch {
+    return null
+  }
+  if (zoneElement === null || zoneElement === undefined || typeof zoneElement !== 'object') return null
+  let children: unknown = null
+  try {
+    children = (zoneElement as { readonly children?: unknown }).children
+  } catch {
+    return null
+  }
+  if (children === null || children === undefined || typeof children !== 'object') return null
+  let count: unknown = null
+  try {
+    count = (children as { readonly length?: unknown }).length
+  } catch {
+    return null
+  }
+  if (typeof count !== 'number' || !Number.isFinite(count) || count < 0) return null
+  const held: string[] = []
+  for (let at = 0; at < count; at += 1) {
+    let child: unknown = null
+    try {
+      child = (children as Record<number, unknown>)[at]
+    } catch {
+      return null
+    }
+    if (child === null || child === undefined) continue
+    for (const [paneId, element] of elements) {
+      if (element === child) {
+        held.push(paneId)
+        break
+      }
+    }
+  }
+  return held
+}
+
+/** **WHAT MUST BE APPENDED FOR A ZONE'S CHILDREN TO READ IN THE RECORD'S ORDER — AND `move` APPENDS, SO THAT IS THE WHOLE
+ *  INSTRUMENT** (`D-252`'s op: `detachNodeSafe` then one `child` anchor, which the engine's child walk reads in anchor
+ *  order, `renderer.ts`'s own comment on the op states it). **THE RULE IS THE LONGEST PREFIX THAT ALREADY STANDS IN ORDER**:
+ *  the panes in that prefix are not touched at all, and everything after it is appended in its own order — which lands them
+ *  after the prefix and in exactly the wanted sequence. **IT TERMINATES AND IT MOVES AS FEW PANES AS APPENDING CAN**: an
+ *  unchanged zone appends NOTHING (so an ordinary delivery costs no journal entry, no recompile and no DOM churn — the
+ *  discipline the old single-pane relocation kept, now stated over a sequence), a pane that is missing from the zone is never in the
+ *  prefix and is appended where it belongs, and a two-pane swap costs one `move`.
+ *  **THE COMPARISON IS OVER PANE IDS AND NEVER OVER A BOX** (§2's measurability rule, and `D-249`'s reason): the current
+ *  sequence is the tree's own, read by element identity, so nothing here measures a rectangle. */
+function paneArrangementAppendsOf (desired: readonly string[], current: readonly string[] | null): readonly string[] {
+  const here = current ?? []
+  let kept = 0
+  let cursor = 0
+  for (let at = 0; at < desired.length; at += 1) {
+    const want = desired[at]
+    let found = -1
+    for (let scan = cursor; scan < here.length; scan += 1) {
+      if (here[scan] === want) {
+        found = scan
+        break
+      }
+    }
+    if (found === -1) break
+    kept += 1
+    cursor = found + 1
+  }
+  return desired.slice(kept)
+}
+
+/** **THE ARRANGEMENT TURN — THE TREE'S ZONE CHILDREN MADE TO READ IN THE RECORD'S ORDER, ONE `move` PER PANE THAT MOVED**
+ *  (`D-252`'s op, which is the engine's own and not a re-parent invented here).
+ *  **IT IS THE ONE PLACE A PLACEMENT BECOMES A RENDER, AND IT IS DRIVEN BY THREE CALLERS WITH ONE ANSWER EACH**: the
+ *  delivery passes the RECORD's family (so the paint and the tree agree on every push, and a cold boot whose record names
+ *  an order paints it through the same code path); the drag's preview passes the family the release WOULD write (so the
+ *  insertion position is shown by the real panes, the user's *"show the preview at the top and push the menu pane down"*);
+ *  and the gesture's end passes the record's family again (so a cancelled drag, a release over no zone and a press that
+ *  armed nothing all leave the screen exactly as the record says).
+ *  **NOTHING IS CACHED, SO IT IS REVERSIBLE BY THE SAME TURN**: the wanted sequence is an argument and never a member, which
+ *  is `D-252`'s measured property of its old `relocatePaneInZone` kept — the destination is read from the record on every delivery,
+ *  and the record that says the old order again moves the panes back with no memory, no undo and no "previous zone".
+ *  **NO PANE IS EVER REMOVED FROM A ZONE THAT SHOULD NOT HOLD IT**: the loop only appends, so a pane whose record names the
+ *  STAGE (`C-9`'s absence, which is no destination and has no id to name) is left exactly where the envelope authored it —
+ *  the one limit `D-252` stated, unmoved. **AND NOTHING THROWS**: a refused or throwing `move` is REPORTED in `D-117`'s
+ *  register and the next delivery asks again, because nothing here remembered this one.
+ *  **ITS ANSWER IS HOW MANY PANES IT MOVED, AND IT HAS ONE READER**: the drag. A `move` is a DOM RE-PARENT, and a
+ *  re-parent RELEASES A POINTER CAPTURE AND A FOCUS — measured on a real window (the `pointermove` stream leaves the grip
+ *  and `document.activeElement` falls to `BODY` the instant the dragged pane is re-parented), and the reason the gesture
+ *  re-takes both at that instant (`installPaneMoveDrag`'s `reanchor`). A delivery ignores the count, so the
+ *  turn's own arm stays exactly as quiet as it was. */
+function driveZoneArrangement (runtime: TabsPageRuntime, panes: readonly ViewPaneGeometry[]): number {
+  const elements = new Map<string, unknown>()
+  for (const paneId of DECLARED_PANE_IDS) {
+    const nodeId = nodeIdForPane(paneId)
+    if (nodeId === null) continue
+    let element: unknown = null
+    try {
+      element = runtime.elementForNodeId(nodeId)
+    } catch {
+      element = null
+    }
+    if (element === null || element === undefined) continue
+    elements.set(paneId, element)
+  }
+  let moved = 0
+  for (const zone of LAYOUT_ZONE_AXES) {
+    const desired = paneZoneSequenceOf(panes, zone.id)
+    if (desired.length === 0) continue
+    const current = zoneChildPanesOf(runtime, zone.id, elements)
+    for (const paneId of paneArrangementAppendsOf(desired, current)) {
+      const nodeId = nodeIdForPane(paneId)
+      // **A PANE THE TREE DID NOT ANSWER IS NEVER MOVED**: an id that resolved no element cannot be a child of anything, so
+      // appending it every delivery would be a `move` reported as a fault on every push. It is not in `elements`, so it is
+      // never part of the sequence this turn read, and it is skipped here for the same reason.
+      if (nodeId === null || !elements.has(paneId)) continue
+      try {
+        const answer = runtime.applyCommand({ kind: 'move', node: nodeId, to: { parent: zone.id } })
+        const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+        if (status === 'applied') moved += 1
+        else console.error(`[provident-renderer] layout arrangement: the pane ${nodeId} answered ${status} to its place in ${zone.id}`)
+      } catch (error) {
+        console.error(`[provident-renderer] layout arrangement: the pane ${nodeId}'s place in ${zone.id} threw — ${String(error)}`)
+      }
+    }
+  }
+  return moved
 }
 
 /** **THE POINTER'S TWO COORDINATES, OR `null`** — the ONE coordinate read this file takes, total over a primitive event, a
@@ -3134,9 +3379,9 @@ function paneMoveDropUnderPointer (event: unknown, targets: ReadonlyMap<unknown,
   return paneMoveTargetOfHit(own, targets)
 }
 
-/** **ONE GRIP'S DRAG: THE PRESS CAPTURES THE POINTER (`D-245`'s fix, on the two grips), THE MOVES DRAW THE PREVIEW, THE
- *  RELEASE COMMITS THE ONE ACT.** It is installed ONCE per grip at boot on the element the graph resolved for the grip's
- *  node id, and it takes the four DROP elements this grip addresses as its second arm.
+/** **ONE GRIP'S DRAG: THE PRESS CAPTURES THE POINTER (`D-245`'s fix, on the three grips), THE MOVES RE-ARRANGE THE REAL
+ *  PANES AND OUTLINE THE ZONE, THE RELEASE COMMITS THE ONE ACT.** It is installed ONCE per grip at boot on the element the
+ *  graph resolved for the grip's node id, and it takes the four DROP elements this grip addresses as its second arm.
  *
  *  **THE CAPTURE IS THIS GESTURE'S WHOLE PREMISE AND IT IS `D-245`'S FIX, MIRRORED LINE FOR LINE FROM
  *  `captureOnPress`** (the resize handles' own, above in this file): the same `pointerdown`, the same
@@ -3154,15 +3399,31 @@ function paneMoveDropUnderPointer (event: unknown, targets: ReadonlyMap<unknown,
  *  **THE ARMING DISTANCE KEEPS A CLICK A CLICK** (`PANE_MOVE_ARM_DISTANCE`): the grip's own box stands inside one of its
  *  own overlays (the menus pane is in the `top` zone), so a press-and-release in place would otherwise commit the zone the
  *  grip happens to sit in — which is not a gesture a person performed.
- *  **THE RELEASE COMMITS EXACTLY THE ACT `D-248` MEASURED** — `paneMoveAct(runtime, <the drop's node id>)`, one whole-pane
- *  write at `['panes', <id>]` at `file`, both figures kept and `bounds` dropped, never through `commitPane` — and the two
- *  operands are read OFF THE DROP NODE by that act, so the drag supplies a node id and invents no value. **A RELEASE OVER
- *  NO ZONE WRITES NOTHING AT ALL**: the preview is cleared and the gesture ends where it began — the four overlays stay
- *  revealed because the grip still holds focus, which is the same screen a plain press on the grip leaves, so nothing
- *  pretends a placement happened. **A COMMITTED RELEASE BLURS THE GRIP**, which is how the reveal collapses behind the
- *  act: the preview's own `style` declarations are gone either way, and the overlays are the sheet's to hide.
- *  **IT WRITES NO RECORD ON ANY MOVE**: the only crossing in this function is the release's, through the act. */
-function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: readonly PaneMoveDropTarget[], ghost: unknown): boolean {
+ *  **THE PREVIEW IS A REAL RE-ARRANGEMENT AND NO LONGER AN OVERLAY** (the user's own words for what the preview must show:
+ *  *"show the preview at the top and push the menu pane down"*): `previewPlacement` composes the family the release WOULD
+ *  write — the drop's zone and the place among the panes the pointer names — and hands it to `driveZoneArrangement`, the
+ *  SAME turn the delivery runs, so the panes stand in their new slots and their siblings are pushed aside by the layout
+ *  rather than by a second picture of it. **THE RECORD IS NOT TOUCHED BY ANY MOVE**: the only crossing in this function is
+ *  the release's, and the arrangement it draws is an argument to a graph op, not a value at an address (`D-249`'s measured
+ *  property — the record untouched at every move — kept with the preview made real).
+ *  **AND THAT IS WHY THERE IS NO GHOST**: a pane standing in the insertion position IS the insertion position, so
+ *  `#pane-ghost` was a second drawing of one fact and is deleted whole with its census term (`demo-envelope.ts`'s
+ *  headstone). The ZONE'S OUTLINE and the DROP'S FILL remain, and they say the one thing the panes cannot: WHICH ZONE will
+ *  take the record, which matters most when the destination is empty (the user's second easy wrong — a pane dropped into an
+ *  empty zone lands alone, and the filled overlay is how a person sees that the zone is the destination).
+ *  **A MOVE ONTO NO ZONE, A CANCEL AND A NEW PRESS ALL RESTORE THE RECORD'S OWN ARRANGEMENT** (`previewPlacement(null)`),
+ *  so no arm can leave the screen showing a placement no release would make. **THE RELEASE DOES NOT RESTORE FIRST**: with a
+ *  resolved drop the preview already stands in the committed placement, so the write's delivery re-arranges to the same
+ *  sequence and nothing flicks back and forth.
+ *  **THE RELEASE COMMITS EXACTLY ONE ACT** — `paneMoveAct(runtime, <the drop's node id>, <the pointer>)`, one whole-family
+ *  write at `['panes']` at `file` carrying the destination AND the order, both figures kept and `bounds` dropped from the
+ *  pane that moved, never through `commitPane` — and the two authored operands are read OFF THE DROP NODE by that act, so
+ *  the drag supplies a node id and a coordinate and invents no value. **A RELEASE OVER NO ZONE WRITES NOTHING AT ALL**: the
+ *  preview and the arrangement are restored and the gesture ends where it began — the four overlays stay revealed because
+ *  the grip still holds focus, which is the same screen a plain press on the grip leaves. **A COMMITTED RELEASE BLURS THE
+ *  GRIP**, which is how the reveal collapses behind the act: the preview's own `style` declarations are gone either way,
+ *  and the overlays are the sheet's to hide. */
+function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: readonly PaneMoveDropTarget[]): boolean {
   let element: unknown = null
   try {
     element = runtime.elementForNodeId(grip.nodeId)
@@ -3185,59 +3446,71 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     press: { readonly x: number; readonly y: number } | null
     drop: PaneMoveDropTarget | null
     zone: unknown
-    /** **THE ZONES' FOUR FIGURES, ASKED ONCE AT THE PRESS AND HELD FOR THE GESTURE** — the boxes the four drops were just given
-     *  and the box the GHOST stands in are the SAME composition over the SAME reading, so asking twice could only make the two
-     *  disagree. It is the press's reading and not a remembered record: the next press asks again (`D-129`), and no delivery
-     *  runs mid-gesture (`D-246`). `null` before the first press of a gesture, which is the arm that draws no ghost. */
-    figures: ReadonlyMap<string, number> | null
-  } = { pressed: false, armed: false, press: null, drop: null, zone: null, figures: null }
-  /** **THE GHOST'S ONE TRANSITION — draw the pane's shape where the release would put it, or take it away.** It reads THREE
-   *  operands off the node and the record at every transition and invents none of them: the DROP's authored `props.pane` (the
-   *  record id, the same read `paneMoveAct` takes at `X0`), the DROP's authored `props.zone` (the destination), and the
-   *  family's figure for that pane on the member the destination frees (`paneMoveGhostBoxOf`). **A DROP THAT STATES NO PANE,
-   *  A PANE THE FAMILY DOES NOT NAME AND A ZONE THE RECORD STATES NO FIGURE FOR EACH DRAW NOTHING** (`D-174`'s stated
-   *  absence) — and on every such arm the ghost that the previous target drew is CLEARED first, so no arm can leave a shape
-   *  standing over a placement the release would not make. */
-  const drawGhost = (target: PaneMoveDropTarget | null): void => {
-    if (target === null || state.figures === null) {
-      paneMoveGhostClear(ghost)
+    /** **THE POINTER THIS GESTURE PINNED, HELD SO THE CAPTURE CAN BE RE-TAKEN** — `D-245`'s `setPointerCapture` is taken at
+     *  the press and taken AGAIN after every arrangement this drag makes, because a `move` re-parents the dragged pane's
+     *  element and a re-parent releases the capture and the focus (measured: `lostpointercapture` on the very move that
+     *  re-parents, `activeElement` falling to `BODY`, and the four reveals dying with the focus). `null` where the realm
+     *  has no capture to take, which is the same declared degradation the press has. */
+    pointerId: number | null
+  } = { pressed: false, armed: false, press: null, drop: null, zone: null, pointerId: null }
+  /** **THE PREVIEW'S PLACEMENT — THE FAMILY THE RELEASE WOULD WRITE, DRAWN BY PUTTING THE REAL PANES IN IT.** One
+   *  composition, three operands read at the instant they are needed (`D-129`): the DROP's authored `props.pane` (the
+   *  record id, the same read `paneMoveAct` takes at `X0`), the DROP's authored `props.zone` (the destination) and the
+   *  coordinate the pointer stands at (the place). **A DROP THAT STATES NO PANE OR NO ZONE, A FAMILY THAT NAMES NO SUCH
+   *  PANE AND AN UNRESOLVABLE TREE ALL FALL BACK TO THE RECORD'S OWN ARRANGEMENT** (`D-174`'s stated absence, and the
+   *  reason no arm can leave a shape standing over a placement the release would not make): the argument is the family
+   *  read off the shape, and `driveZoneArrangement` makes the tree agree with THAT.
+   *  **IT IS THE SAME TURN THE DELIVERY RUNS, ON THE SAME COMPOSITION THE ACT WRITES** — `paneArrangementOf` — so the
+   *  picture, the release and the paint after it cannot disagree about a placement: there is no second composition and no
+   *  second table (`D-258`'s own standard, applied to a preview that is now layout rather than overlay). */
+  const previewPlacement = (target: PaneMoveDropTarget | null, point: { readonly x: number; readonly y: number } | null): void => {
+    const record = paneMovePanesOf()
+    if (record.length === 0) return
+    const place = (panes: readonly ViewPaneGeometry[]): void => {
+      // **AND THE ANCHORS ARE TAKEN AGAIN ONLY WHERE THE TREE ACTUALLY MOVED**: a re-anchor on an unchanged arrangement would
+      // be a capture and a focus spent for nothing on every move of the pointer.
+      if (driveZoneArrangement(runtime, panes) > 0) reanchor()
+    }
+    if (target === null) {
+      place(record)
       return
     }
     const pane = authoredPropOf(runtime, target.nodeId, 'pane')
     if (!pane.readable || typeof pane.held !== 'string' || pane.held === '') {
-      paneMoveGhostClear(ghost)
+      place(record)
       return
     }
     const zone = authoredPropOf(runtime, target.nodeId, 'zone')
     if (!zone.readable || typeof zone.held !== 'string' || zone.held === '') {
-      paneMoveGhostClear(ghost)
+      place(record)
       return
     }
-    const box = paneMoveGhostBoxOf(zone.held, state.figures, pane.held)
-    if (box === null) {
-      paneMoveGhostClear(ghost)
-      return
-    }
-    paneMoveGhostWrite(ghost, box)
+    const placed = paneArrangementOf(record, pane.held, zone.held, paneMoveLandingOf(runtime, zone.held, pane.held, point, record))
+    place(placed)
   }
-  /** **THE PREVIEW'S ONE TRANSITION** — the target under the pointer, or `null` for none. It clears the two transient
-   *  writes of the target it is leaving and writes the two of the target it enters, so the screen always carries exactly
-   *  the placement the drag would commit, and the SAME call with `null` is the release's clear. **THE ZONE'S ID IS READ OFF
-   *  THE DROP NODE ON EVERY TRANSITION** (`D-129`'s ask-don't-remember: the value comes from the authored `props.zone`,
-   *  never from a table this closure keeps) and resolved through the graph (`elementForNodeId`, the same read
-   *  `zonePreviewOf` takes). **AND AN UNCHANGED TARGET IS RE-STATED RATHER THAN SKIPPED**: a delivery would replace a
-   *  zone's `css.style` WHOLE (`D-234`) and silently take the outline with it, so a re-write of the same two declarations
-   *  is what keeps the preview from vanishing under a pointer that has not moved — it is idempotent and costs two property
-   *  writes per move. No delivery runs mid-gesture, which is `D-246`'s measurement and not this turn's assumption. */
-  const highlight = (target: PaneMoveDropTarget | null): void => {
+  /** **THE PREVIEW'S ONE TRANSITION** — the target under the pointer and the coordinate it stands at, or `null` for none.
+   *  It clears the two transient writes of the target it is leaving and writes the two of the target it enters, so the
+   *  screen always carries exactly the placement the drag would commit, and the SAME call with `null` is the release's
+   *  clear. **THE ZONE'S ID IS READ OFF THE DROP NODE ON EVERY TRANSITION** (`D-129`'s ask-don't-remember: the value comes
+   *  from the authored `props.zone`, never from a table this closure keeps) and resolved through the graph
+   *  (`elementForNodeId`, the same read `zonePreviewOf` takes). **AND AN UNCHANGED TARGET IS RE-STATED RATHER THAN
+   *  SKIPPED**: a delivery would replace a zone's `css.style` WHOLE (`D-234`) and silently take the outline with it, so a
+   *  re-write of the same two declarations is what keeps the preview from vanishing under a pointer that has not moved —
+   *  it is idempotent and costs two property writes per move. No delivery runs mid-gesture, which is `D-246`'s measurement
+   *  and not this turn's assumption. */
+  const highlight = (
+    target: PaneMoveDropTarget | null,
+    point: { readonly x: number; readonly y: number } | null,
+    restore: boolean = true,
+  ): void => {
     if (state.drop === target) {
       if (target === null) return
       paneMoveDropEmphasis(target.element, true)
       paneMovePreviewWrite(target.element, 'drop')
       if (state.zone !== null) paneMovePreviewWrite(state.zone, 'zone')
-      // **AND THE GHOST IS RE-STATED FOR THE OUTLINE'S OWN REASON** — idempotent, two property writes per move, and what keeps
-      // the shape standing under a pointer that has not moved.
-      drawGhost(target)
+      // **AND THE PLACEMENT IS RE-STATED FOR THE OUTLINE'S OWN REASON** — idempotent (the arrangement turn appends nothing
+      // when the tree already agrees), and what keeps the panes in the slot the pointer names while it has not moved.
+      previewPlacement(target, point)
       return
     }
     if (state.drop !== null) {
@@ -3248,16 +3521,18 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     state.drop = target
     state.zone = null
     if (target === null) {
-      // **A MOVE OFF EVERY ZONE TAKES THE GHOST WITH IT** — the one arm `D-249`'s five-sample reading never reached: the
-      // shape must vanish the instant the pointer leaves the four windows, or it would be a placement no release would make.
-      paneMoveGhostClear(ghost)
+      // **A MOVE OFF EVERY ZONE RESTORES THE RECORD'S OWN ARRANGEMENT** — the panes go back where the record says, so the
+      // screen carries no placement the release would not make. **THE RELEASE PASSES `restore: false`**: a commit is
+      // coming and its own delivery re-arranges to the same sequence, so the panes must not flick back first — and the
+      // release's own arm restores the record's arrangement if the act turns out to have written nothing at all.
+      if (restore) previewPlacement(null, null)
       return
     }
     paneMoveDropEmphasis(target.element, true)
     paneMovePreviewWrite(target.element, 'drop')
-    // THE GHOST IS DRAWN BEFORE THE OUTLINE'S OWN READ RETURNS, so the shape a person sees never depends on the ZONE NODE
-    // resolving: the ghost is composed from the record and the drop, and the outline is the zone element's write.
-    drawGhost(target)
+    // THE PLACEMENT IS DRAWN BEFORE THE OUTLINE'S OWN READ RETURNS, so the panes a person sees never depend on the ZONE NODE
+    // resolving: the arrangement is composed from the record and the drop, and the outline is the zone element's write.
+    previewPlacement(target, point)
     const authored = authoredPropOf(runtime, target.nodeId, 'zone')
     if (!authored.readable || typeof authored.held !== 'string' || authored.held === '') return
     let zoneElement: unknown = null
@@ -3280,6 +3555,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       return
     }
     if (typeof pointerId !== 'number') return
+    state.pointerId = pointerId
     let capture: unknown
     try {
       capture = (element as { readonly setPointerCapture?: unknown })['setPointerCapture']
@@ -3291,6 +3567,51 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       ;(capture as (id: number) => void).call(element, pointerId)
     } catch {
       // a realm that refuses the capture is the degradation above: the gesture is unchanged, and so is every later turn
+    }
+  }
+  /** **THE RE-ANCHOR — THE GESTURE'S OWN ANCHORS TAKEN AGAIN AFTER A LAYOUT MOVE, AND IT IS `D-245`'S FIX APPLIED AT THE
+   *  MOMENT THE TREE MOVES.** The preview is a real re-arrangement, and a real re-arrangement is a DOM RE-PARENT of the
+   *  pane the grip stands in: measured on a real window, `lostpointercapture` fires on the very move that re-parents the
+   *  pane, `document.activeElement` falls to `BODY`, and with the focus goes the sheet's `:focus-within` reveal — so the
+   *  gesture would lose BOTH its pointer and its four overlays at the first preview, and the release would land on a pane.
+   *  **SO THE CAPTURE IS TAKEN AGAIN AND THE GRIP IS REFOCUSED, IN THE SAME TURN AS THE MOVE** — before the next pointer
+   *  event is dispatched, which is what makes the re-take stand rather than the release win. Both are TOTAL: a realm with
+   *  no `setPointerCapture` (the whole node suite) and one that refuses `focus` are the same declared no-ops the press's
+   *  arms are, and the arrangement has already happened either way (`D-127`).
+   *  **IT IS NOT A SECOND GESTURE STATE**: it arms nothing, remembers nothing and answers nothing — it re-takes what the
+   *  press took, because the tree moved underneath it. */
+  const reanchor = (): void => {
+    if (state.pointerId !== null) {
+      let capture: unknown
+      try {
+        capture = (element as { readonly setPointerCapture?: unknown })['setPointerCapture']
+      } catch {
+        capture = null
+      }
+      if (typeof capture === 'function') {
+        try {
+          ;(capture as (id: number) => void).call(element, state.pointerId)
+        } catch {
+          // the press's own degradation, at the tree's own instant: the gesture is unchanged
+        }
+      }
+    }
+    let focus: unknown
+    try {
+      focus = (element as { readonly focus?: unknown })['focus']
+    } catch {
+      focus = null
+    }
+    if (typeof focus !== 'function') return
+    try {
+      ;(focus as (options?: unknown) => void).call(element, { preventScroll: true })
+    } catch {
+      // a realm that refuses the options object is asked the plain way, which is the same focus and the same reveal
+      try {
+        ;(focus as () => void).call(element)
+      } catch {
+        // and a realm that refuses focus keeps its reveal off; the arrangement and the release are unaffected
+      }
     }
   }
   /** **THE REVEAL'S COLLAPSE AFTER A COMMIT** — `:focus-within` is what shows the four overlays, so the focus is what ends
@@ -3317,7 +3638,6 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
    *  therefore unreachable — the honest arm, and never an invented window (`D-174`). */
   const boxDrops = (): void => {
     const figures = paneMoveZoneFigures()
-    state.figures = figures
     for (const target of targets) {
       const authored = authoredPropOf(runtime, target.nodeId, 'zone')
       const zone = authored.readable && typeof authored.held === 'string' ? authored.held : ''
@@ -3327,16 +3647,16 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
   /** **AND THE SAME FOUR CLEARED ON EVERY END** — by property NAME, so the authored style (fixed, a pointer cursor and
    *  `opacity: 0`) is what stands again and nothing of the gesture is remembered. */
   const unboxDrops = (): void => {
-    state.figures = null
     for (const target of targets) paneMoveDropBoxClear(target.element)
   }
   const onPress = (event: unknown): void => {
+    state.pointerId = null
     captureOnGripPress(event)
     state.pressed = true
     state.armed = false
     state.press = paneMovePointOf(event)
     // A NEW GESTURE CLAIMS NO PLACEMENT: whatever the last one left is cleared before this one draws its own.
-    highlight(null)
+    highlight(null, null)
     boxDrops()
   }
   /** **THE ARMING GATE** — a measurable pointer arms past `PANE_MOVE_ARM_DISTANCE`; a pointer this realm cannot measure
@@ -3356,27 +3676,40 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
   const onMove = (event: unknown): void => {
     if (!state.pressed) return
     if (!travelArmed(event)) return
-    highlight(paneMoveDropUnderPointer(event, byElement))
+    highlight(paneMoveDropUnderPointer(event, byElement), paneMovePointOf(event))
   }
-  /** **THE RELEASE — THE GESTURE'S ONE CROSSING.** The preview is cleared first and unconditionally, so no arm can leave a
-   *  transient standing; then a resolved drop commits the act and collapses the reveal; then nothing else happens. */
+  /** **THE RELEASE — THE GESTURE'S ONE CROSSING.** The STYLE transients are cleared first and unconditionally, so no arm can
+   *  leave an outline or a filled overlay standing; then a resolved drop commits the act ON THE PLACEMENT THE PREVIEW IS
+   *  ALREADY SHOWING (the arrangement is deliberately NOT restored first, so nothing flicks back before the write's own
+   *  delivery re-arranges to the same sequence) and collapses the reveal; then nothing else happens. **A RELEASE OVER NO
+   *  ZONE RESTORES THE RECORD'S ARRANGEMENT FIRST**, because there is no commit coming to do it. */
   const onEnd = (event: unknown): void => {
     if (!state.pressed) return
+    const point = paneMovePointOf(event)
     const target = state.armed ? paneMoveDropUnderPointer(event, byElement) : null
     state.pressed = false
     state.armed = false
     state.press = null
-    highlight(null)
+    state.pointerId = null
+    // THE STYLE TRANSIENTS GO EITHER WAY; THE ARRANGEMENT ONLY GOES WHEN NO COMMIT IS COMING.
+    highlight(null, null, target === null)
     unboxDrops()
     if (target === null) return
-    void paneMoveAct(runtime, target.nodeId)
+    void paneMoveAct(runtime, target.nodeId, point).then((written) => {
+      // **A RELEASE THAT WROTE NOTHING PUTS THE PANES BACK** — a no-op drop (the pane where it already stands), a refusal or
+      // an unreadable answer left the record exactly as it was, so the preview must not outlive the gesture that drew it.
+      if (!written) previewPlacement(null, null)
+    })
     blurGrip()
   }
+  /** **THE CANCEL RESTORES THE RECORD'S ARRANGEMENT** — a cancelled gesture performed no act, so the panes go back where the
+   *  record says and the four overlays' style transients are cleared with them. */
   const onCancel = (): void => {
     state.pressed = false
     state.armed = false
     state.press = null
-    highlight(null)
+    state.pointerId = null
+    highlight(null, null)
     unboxDrops()
   }
   // THE PRESS IS THE GRIP'S ALONE: only a gesture that started on the grip can end in a commit, which is what keeps a
@@ -3412,21 +3745,11 @@ function startPaneMove(runtime: Runtime): {
   readonly drops: number
   readonly installed: number
   readonly attached: number
-  readonly ghosts: number
 } {
   const census = paneMoveCensusOf(runtime)
-  // **THE GHOST'S ONE RESOLUTION, TAKEN ONCE AT BOOT AND HANDED TO EVERY GRIP'S DRAG** (the user's first change): one
-  // authored node draws every pane's shape, so the three grips share one element and no per-press resolution exists. A
-  // ghost node the tree did not answer is `undefined` and every drag degrades to the declared no-write arm
-  // (`paneMoveStyleOf`'s `null`) — the gesture still resolves, still outlines and still commits; what is lost is the picture.
-  let ghost: unknown = undefined
-  if (census.ghosts.length > 0) {
-    try {
-      ghost = runtime.elementForNodeId(census.ghosts[0]?.nodeId ?? '')
-    } catch {
-      ghost = undefined
-    }
-  }
+  // **NO SECOND NODE IS RESOLVED HERE ANY MORE** (`D-258`'s ghost is deleted whole): the preview is the REAL PANES in the
+  // placement the release would write, drawn by the same `driveZoneArrangement` turn the delivery runs, so the drag needs
+  // the three grips and their twelve drops and nothing else.
   let installed = 0
   let attached = 0
   const targets: PaneMoveDropTarget[] = []
@@ -3440,9 +3763,9 @@ function startPaneMove(runtime: Runtime): {
   let captured = 0
   for (const grip of census.grips) {
     const own = targets.filter((target) => target.id.startsWith(`${grip.id}-`))
-    if (installPaneMoveDrag(runtime, grip, own, ghost)) captured += 1
+    if (installPaneMoveDrag(runtime, grip, own)) captured += 1
   }
-  return { grips: census.grips.length, captured, drops: census.drops.length, installed, attached, ghosts: census.ghosts.length }
+  return { grips: census.grips.length, captured, drops: census.drops.length, installed, attached }
 }
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the
@@ -3668,7 +3991,7 @@ function paneFillAxisOf(zone: unknown): { readonly fill: 'width' | 'height'; rea
  *  whose record once named a zone and no longer does cannot keep the old one (a stale attribute is a rule keyed on a
  *  record that has moved, the one failure a published member must not have). An id the closed four do not name is the
  *  same answer as an absent one, and a non-string never compares equal to a declared id: `find` over `LAYOUT_ZONE_AXES`
- *  compares, exactly as `paneFillAxisOf` and `paneStandsIn`'s destination read do. */
+ *  compares, exactly as `paneFillAxisOf` and `driveZoneArrangement`'s destination read do. */
 function declaredZoneNameOf(zone: unknown): string | null {
   const held = LAYOUT_ZONE_AXES.find((entry) => entry.id === zone)
   return held === undefined ? null : held.id
@@ -3729,100 +4052,21 @@ function paneAxisMembers(zone: unknown): readonly ('width' | 'height')[] {
   return []
 }
 
-/** **THE PANE'S PLACE IN THE TREE IS THE RECORD'S `zone`, AND THE DELIVERY IS WHAT PUTS IT THERE** (`D-252`, overturning
- *  the *"the record relocates and the rendered region does not"* limit `D-248` took from `D-182`, on the user's ruling
- *  that the behaviour is a defect and not a design: *"Dragging the pane should cause a save to the storeroom, which
- *  triggers a listener that regenerates the zone's section of the tree."*).
- *
- *  **THE ACT AND THE DELIVERY WERE ALREADY RIGHT AND ONLY THE PAINT WAS MISSING.** The whole-pane write at
- *  `['panes', <id>]` is `D-248`'s and unmoved; the delivery that carries it is `startViewShape`'s; and the paint read the
- *  record's `zone` on every delivery (`D-243`) — it just stopped at the pane's `css.style`, so the pane changed AXIS inside
- *  the box it was authored in. **WHAT THIS ADDS IS THE ONE THING A `css` WRITE CANNOT SAY: WHO THE PANE'S PARENT IS.**
- *
- *  **IT IS THE ENGINE'S OWN `move` OP AND NOTHING INVENTED HERE.** `types.d.ts` declares it —
- *  `MoveOp { kind:'move'; node: Node; to: { parent: Node; priority?: number } }` — and `supervisor.js` executes it as a
- *  safe per-node `detachNodeSafe` followed by `addAnchor('child', …, toParent.familyLinkFor())`, journaled `applied` with
- *  `dirtied: [node.id]`. So a re-parent is EXPRESSIBLE, the destination is a real zone node, and nothing is minted, cloned
- *  or re-authored: **no authored node is added and the census does not move** — the pane keeps its id, its children, its
- *  handlers and its place in the graph, and only its family edge changes. **A `rows-mint` COULD NOT HAVE DONE THIS**: it
- *  mints NEW nodes from a prototype (`ops.d.ts`'s `rowsMint`), the authored children inside the pane are not that
- *  prototype, and a minted copy would be a second pane with a fresh id — a new node in the census and an authored one left
- *  behind. `D-182`'s measurement that a keyed re-mint answers `minted: []` is about REUSING ids across a replace and blocks
- *  nothing here: no mint is issued.
- *
- *  **"REGENERATES THE ZONE'S SECTION" IS EXACTLY WHAT A MOVE CAUSES, WITH NO NEW MACHINERY.** The op dirties the moved
- *  node, `Runtime.applyCommand` recompiles it with its focused slice (the node, its ancestor chain and its subtree, so the
- *  pane's children are recompiled with the new path), and the render diff emits the appends that put the pane's element
- *  under the destination and take it out of the origin — so the OLD ZONE NO LONGER HOLDS IT, which is the half a style
- *  write could never reach.
- *
- *  **AND NOTHING IS CACHED, SO IT IS REVERSIBLE BY THE SAME TURN** (`D-248`'s whole-pane shape): the destination is read
- *  from the record on EVERY delivery, so the delivery that says `top` again moves the pane back — no memory of where it
- *  came from, no previous-zone member, no undo. **A COLD PROFILE NEEDS NO SECOND PATH EITHER**: the boot's own delivery
- *  runs this turn, so a record whose `zone` is `left` puts the pane in `left` on the first delivery of a fresh boot,
- *  where the pane was authored in `top`.
- *
- *  **THE ALREADY-THERE ARM IS A READ OF THE TREE AND NOT OF A REMEMBERED FIGURE**: `paneStandsIn` compares the pane's
- *  rendered element with the zone's, so an unchanged record costs no journal entry, no recompile and no DOM churn — the
- *  same discipline `diffMinimal` keeps for an unchanged child order. **ITS ANSWER IS `false` WHERE EITHER ELEMENT DOES NOT
- *  RESOLVE**, which issues the move rather than assuming it landed: an unresolvable tree is not a tree that agrees.
- *
- *  **THE ABSENT ARM IS THE LAYOUT'S OWN, ONE FAMILY OVER** (`D-183`, `C-9`, `D-174`): a pane with no `zone` stands in the
- *  STAGE, and the stage is not one of the four — so its record names NO destination, this turn moves it NOTHING, and it
- *  stays where the envelope authored it. **THAT IS THE ONE PLACE THIS TURN CANNOT UNDO A RELOCATION**: the four drops name
- *  four zones and none names the stage, so `pane-a` reaches `left` and only a record naming `top`/`bottom`/`left`/`right`
- *  can move it again. Stated here rather than discovered, and it is the record's shape and not this turn's. */
-function relocatePaneInZone(runtime: TabsPageRuntime, nodeId: string, zone: unknown): void {
-  // THE DESTINATION IS DECLARED OR THERE IS NONE — the four zone ids, which are also the four authored NODE ids the paint
-  // addresses (`LAYOUT_ZONE_AXES`), and `undefined` for an absent or undeclared `zone`: the two arms `paneFillAxisOf`
-  // answers `null` for, read here from the SAME table rather than from a second list of the same four names.
-  const destination = LAYOUT_ZONE_AXES.find((entry) => entry.id === zone)
-  if (destination === undefined) return
-  if (paneStandsIn(runtime, nodeId, destination.id)) return
-  // ONE COMMAND, THE SAME SURFACE EVERY OTHER WRITE IN THIS FILE USES, and a refusal REPORTED rather than swallowed — the
-  // paint's own rule two functions up. **NOTHING ESCAPES THE DELIVERY**: a hostile runtime is a reading this turn leaves
-  // standing, and the next delivery asks again because nothing here remembered this one.
-  try {
-    const answer = runtime.applyCommand({ kind: 'move', node: nodeId, to: { parent: destination.id } })
-    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
-    if (status !== 'applied') {
-      console.error(`[provident-renderer] layout move: the pane ${nodeId} answered ${status} to its move into ${destination.id}`)
-    }
-  } catch (error) {
-    console.error(`[provident-renderer] layout move: the pane ${nodeId}'s move into ${destination.id} threw — ${String(error)}`)
-  }
-}
-
-/** **IS THE PANE ALREADY THE ZONE'S CHILD? — THE TREE'S ANSWER, COMPARED BY ELEMENT IDENTITY** (the already-there arm of
- *  `relocatePaneInZone` above; `D-252`). **A STORED "LAST ZONE" WOULD BE THE SECOND AUTHORITY `D-129` REFUSES**: it would
- *  be right until the first delivery it missed and then move the pane forever against the record. The two elements come
- *  from `Runtime.elementForNodeId`, the read the report beside this turn already uses, and the comparison is of the
- *  PLATFORM's objects — no id string is compared, so a zone whose `css.id` and `props.id` disagree cannot confuse it.
- *
- *  **A DIRECT CHILD AND NOT A DESCENDANT**, because that is the claim the record makes and the one `get_rendered_html`'s
- *  nesting is read to confirm: *"after a drag the pane is a child of the zone the record names"*. A wrapper inserted
- *  between the two would answer `false` and be moved to the zone itself — the honest reading of a record that names a zone.
- *
- *  **AND THE ANCESTOR MEMBER IS CENSUSED IN TWO SPELLINGS, WHICH IS THE ONE REALM DIFFERENCE THIS READ HAS TO CARRY**: the
- *  platform answers `parentElement` (`null` at a root) and the suite's DOM shim keeps the bookkeeping on `parent`; both are
- *  read, `parentElement` first, and an element answering neither is `null` — which `relocatePaneInZone` reads as "not
- *  there" and answers by issuing the move. */
-function paneStandsIn(runtime: TabsPageRuntime, nodeId: string, zoneId: string): boolean {
-  const pane = runtime.elementForNodeId(nodeId)
-  if (pane === null || pane === undefined) return false
-  const zone = runtime.elementForNodeId(zoneId)
-  if (zone === null || zone === undefined) return false
-  return ancestorElementOf(pane) === zone
-}
-
-/** The ONE member two realms spell differently — `parentElement` on the platform, `parent` in `shared/dom-shim.ts` — read
- *  in that order and answered as `null` where neither is a value. Nothing is coerced and nothing is descended. */
-function ancestorElementOf(element: unknown): unknown {
-  if (element === null || typeof element !== 'object') return null
-  const holder = element as { readonly parentElement?: unknown; readonly parent?: unknown }
-  if (holder.parentElement !== undefined) return holder.parentElement
-  return holder.parent ?? null
-}
+/** **AND THE PANE'S PLACE IN THE TREE IS THE DELIVERY'S OWN TURN — THE ZONE *AND* THE ORDER, FROM ONE READING** (`D-252`,
+ *  re-grained for the user's definition of rearrangement). The whole of it stands above, in TURN 6: `driveZoneArrangement`
+ *  makes every zone's child order agree with the family it is handed, and the delivery hands it the RECORD's family — so a
+ *  write that moves a pane and a write that only re-orders it are ONE code path, a cold boot whose record names an order
+ *  paints it through the same path, and nothing is cached that a delivery could miss.
+ *  **WHAT STOOD HERE WAS `relocatePaneInZone`, AND WHAT IT COULD NOT SAY IS THE POINT OF THIS RE-GRAIN**: it compared ONE
+ *  pane with ONE zone (`paneStandsIn`, by element identity) and issued at most one `move` — so a pane already in its zone
+ *  cost nothing and nothing else was expressible. **THAT WAS RIGHT FOR `D-252`'s SINGLE FACT AND IS NOT ENOUGH FOR A
+ *  PLACEMENT**, which is a zone AND a place among that zone's panes (`AL-8`'s family and the user's two scenarios). Its
+ *  `paneStandsIn`/`ancestorElementOf` helpers are DELETED WITH IT rather than left as a second way to ask where a pane
+ *  stands: `zoneChildPanesOf` reads the same tree, by the same element identity, and answers the SEQUENCE instead of a
+ *  yes/no.
+ *  **THE STAGE ARM IS UNCHANGED AND IS STILL THE ONE LIMIT** (`C-9`, `D-174`): a pane whose record names no zone stands in
+ *  the stage, which is not one of the four and has no id to name — so no turn here removes a pane from a zone, and the four
+ *  drops name four zones and never the stage. Stated where a reader meets it rather than discovered. */
 
 /** **ONE `css.style` WRITE ON ONE AUTHORED NODE — THE FORM `drivePageDisplay` ALREADY USES** (`:250`): one `state-slice`
  *  whose single mutation replaces that key. **THE ENGINE COMPOSES `css` PER KEY, SO ONE `css.style` LAYER REPLACES THE
@@ -3956,6 +4200,13 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
       console.error(`[provident-renderer] layout paint: the ${zone.id} zone refused its ${zone.member}/${zone.scroll} (${String(held.size)})`)
     }
   }
+  // ⟶ **AND THE ARRANGEMENT, ONCE, BEFORE ANY PANE'S STYLE IS COMPOSED** (`D-252`'s turn, re-grained for the order): every
+  //    zone's child sequence is made to read in the RECORD's order, so the pane's `zone` is now BOTH which axis it fills
+  //    and scrolls AND which zone holds it, AND where among that zone's panes it stands. **IT STANDS AHEAD OF THE PANE LOOP
+  //    ON PURPOSE** — the loop's `continue` arms (a pane the map does not declare, a pane that fills nothing) would
+  //    otherwise skip a placement, and a placement is the FAMILY's fact and not one record's. **ONE READING, ONE TURN, NO
+  //    CACHE**: the family handed over is the one this delivery already carries.
+  driveZoneArrangement(runtime, reading.panes)
   // (b) EVERY DECLARED PANE IN THREE PARTS — THE FILL, THE MEMBER ITS `zone` MAKES ADJUSTABLE, AND THE SCROLL — read
   // STRUCTURALLY, because the record's pane shape is `store-view-record`'s and this turn may not invent a member the
   // record does not carry. **THE TWO PARTS THAT ARE NOT THE RECORD'S ARE THE LAYOUT'S** (`PANE_FILL`, `paneFillAxisOf`),
@@ -3968,12 +4219,6 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     const nodeId = nodeIdForPane(pane.id)
     if (nodeId === null) continue
     const record = pane as unknown as Record<string, unknown>
-    // ⟶ **THE PANE'S PLACE IN THE TREE, IN THE SAME TURN AND FROM THE SAME MEMBER** (`D-252`): the record's `zone` is
-    //    not only which axis this pane fills and scrolls — it is **which zone holds it**, and this delivery is what puts
-    //    it there. **IT STANDS AHEAD OF THE STYLE COMPOSITION ON PURPOSE**, so the `continue` below (a pane that fills
-    //    nothing) cannot skip a relocation: that arm is the SAME absence — no destination named — and the two are read
-    //    from one member by one declaration (`LAYOUT_ZONE_AXES`).
-    relocatePaneInZone(runtime, nodeId, record['zone'])
     // THE PANE'S ZONE, ASKED ONCE: its fill axis and its scroll axis are the LAYOUT's (`PANE_FILL`, `paneFillAxisOf`),
     // and `null` is a stage-resident pane or an id the closed four do not name — the two arms that fill nothing.
     const placement = paneFillAxisOf(record['zone'])

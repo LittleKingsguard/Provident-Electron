@@ -546,6 +546,7 @@ const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
     height: number
     bounds?: { readonly min: number; readonly max: number }
     zone?: string
+    index?: number
   } = { id, width, height }
   // **`bounds` IS JUDGED ONLY WHERE STATED** (`D-186`): a zone-resident pane's clamp is the LAYOUT's, and its absence is
   // the ordinary state rather than a fault to repair — no repair of this module ever invents one, and none may read
@@ -564,6 +565,16 @@ const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
     const zone = held['zone']
     if (typeof zone !== 'string' || !DECLARED_ZONE_IDS.includes(zone)) return null
     pane.zone = zone
+  }
+  // **`index` IS THE PANE'S PLACE AMONG THE DECLARED PANES, AND IT IS JUDGED ONLY WHERE STATED** (`bounds` and `zone`'s
+  // own rule, one member over): a place is a SLOT IN A SEQUENCE, so a member that is not a finite non-negative INTEGER —
+  // `1.5`, `-1`, `'2'`, `null` — is refused rather than rounded or coerced. An ABSENT member is LAWFUL and means the
+  // family's own order is the order, which is the state every fresh profile is in (`shared/view-shape.ts`'s block on the
+  // member states why the creation repair states none, and why the act that arranges is its only writer).
+  if (Object.hasOwn(held, 'index')) {
+    const index = held['index']
+    if (typeof index !== 'number' || !Number.isInteger(index) || index < 0) return null
+    pane.index = index
   }
   return pane
 }
@@ -851,6 +862,10 @@ const paneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
     if (member === 'width' || member === 'height') return finiteNumber(value) && value >= 0
     if (member === 'bounds') return boundsAdmit(value)
     if (member === 'zone') return typeof value === 'string' && DECLARED_ZONE_IDS.includes(value)
+    // **AND THE PLACE, AT ITS OWN LEAF** — `paneOf`'s rule restated one node down, the same way `bounds`/`zone` are: a
+    // leaf write at `['panes', <id>, 'index']` is judged here rather than by the record's parse, because a leaf hands the
+    // pair a SCALAR (the `nodeOf` measurement) and `paneOf` would refuse a scalar by construction.
+    if (member === 'index') return typeof value === 'number' && Number.isInteger(value) && value >= 0
     return false
   }
   return member === 'bounds' && (node[2] === 'min' || node[2] === 'max') && finiteNumber(value)
@@ -923,7 +938,7 @@ const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
  *  these. **THE THIRD SENTENCE LEFT WITH THE
  *  FAMILY IT NAMED** (`D-142`), because no declaration stands at that address to answer it. */
 export const PANE_UNUSABLE_MESSAGE =
-  'the pane geometry carries a member that is no geometry — no finite non-negative width or height, or a bounds pair of two finite numbers whose min does not exceed its max, or a zone the pane names that this record does not declare, or a pane id this record does not declare'
+  'the pane geometry carries a member that is no geometry — no finite non-negative width or height, or a bounds pair of two finite numbers whose min does not exceed its max, or a zone the pane names that this record does not declare, or an index that is not a non-negative integer, or a pane id this record does not declare'
 export const ZONE_UNUSABLE_MESSAGE =
   'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses, or a zone id this record does not declare'
 /** **THE THIRD SENTENCE — THE ONE `D-233`'S ITEM (4) OWED, AND IT NAMES THE FAMILY'S FAULT RATHER THAN THE ACT'S.** A family
