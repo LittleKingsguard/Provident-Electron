@@ -892,7 +892,22 @@
              controls along the ROW the user's sentence asks for.
        **THE ROW AUTHORS NO `css` AND THIS SHEET OWNS ITS BOX** (`src/shared/demo-envelope.ts`'s `<pane>-head` authors no
        `style` at all, so there is nothing to fight and no `!important` is owed): `display: flex; align-items: center;
-       gap: .25rem; width: auto; padding: 0 .25rem; position: relative; z-index: 1`.
+       gap: .25rem; width: auto; padding-inline: .25rem; position: relative; z-index: 1`.
+       **AND THE ROW'S INSET IS AN INLINE PAIR AND NOT A PHYSICAL ONE, BECAUSE THE TITLE'S SPACING MUST NOT MOVE WHEN THE
+       LANE ROTATES** (the user, verbatim: ***"The padding around the title text changes when collapsed, keep it the
+       same"***). `padding: 0 .25rem` is a PHYSICAL pair — `top`/`bottom` `0`, `left`/`right` `4px` — so it meets the ROW'S
+       ENDS in a horizontal head and the ROW'S LONG SIDES in the rotated lane, because `sideways-lr` (`D-272`) turns the
+       inline axis UP: measured before this rev, the head's pair read `0px 4px 0px 4px` in BOTH states while the title's
+       end inset from the bar's edge fell `4px → 0` and the rail gained `4px` it did not have on its sides — **the values
+       were identical and their PLACEMENT around the title was not**, which is exactly what a pair of screenshots shows.
+       **THE INVARIANT IS THEREFORE STATED IN THE ROW'S OWN TERMS**: the head insets ITS TWO ENDS — the axis its controls
+       run along — by `0.25rem`, and its cross axis by nothing, **in whichever writing mode it is laid out**; so the
+       carrier begins `4px` from the bar's edge and the control ends `4px` from the other one, expanded and collapsed
+       alike. `padding-inline` is the one spelling of that (physical `0px 4px` horizontal, `4px 0px` rotated — the axis
+       swap `D-272` allows and the reason no lane rule restates it), and `padding-block` stays absent so the lane's cross
+       extent is the grip's own `14px` rather than `22px`: **the rail keeps the `98` of `120` `D-272` claimed and reclaims
+       `106`**, and the bar's sides touch the rail exactly as the bar's top and bottom touch the pane's in every
+       horizontal head.
        **AND IT IS NOT PINNED ANY MORE, BECAUSE THE SCROLL IS NOT ITS BOX'S** (`D-270`): `D-269` gave the row
        `position: sticky; top: 0; left: 0` — both insets, one per axis — because the pane was then the scroller on whichever
        axis its zone adjusted. **A STICKY ROW IN A SCROLLER IS EXACTLY THE DEFECT THE USER REPORTED**: it holds only while
@@ -924,7 +939,9 @@
       align-items: center;
       gap: 0.25rem;                        /* between the grip and the control, and neither is a figure of the record's */
       width: auto;                         /* a flex item stretched on the pane's cross axis — nothing can scroll it */
-      padding: 0 0.25rem;                  /* the row's own inset, so the glyph does not sit on the pane's border */
+      padding-inline: 0.25rem;             /* THE ROW'S OWN INSET, ON ITS OWN AXIS — the note above: it must meet the row's
+                                              ENDS, so the title's spacing is the same in both states and `gap` alone
+                                              separates the two controls (`D-272`'s lane rotates the physical pair) */
       position: relative;                  /* a RANK and no longer a PIN: the stacking context the drops are confined to */
       z-index: 1;                          /* …above the pane's position-ed content, the rank the grip's drops inherit */
       flex: 0 0 auto;                      /* THE PANE'S FIXED ITEM: the body below it takes the remainder and the scroll */
@@ -1120,8 +1137,15 @@
        `horizontal-tb` un-rotates the LABEL with it, and the lane the rev-2 block promised was a rotated one painted a
        HORIZONTAL name in a `59px` rail (measured, before this rev: the zone `[0,204,59,467]` and the grip `[4,204,51,14]` —
        the rail's width WAS the horizontal name's own max-content width, plus this row's two `4px` insets). With the grip on
-       the lane's axis the same rail measures `[0,204,22,467]` and the grip `[4,222,14,51]`: the name runs UP the lane and
-       the rail's cross extent is the bar's thickness. **THE BASE RULE'S TWO EXTENTS ARE RE-STATED RATHER THAN INHERITED**
+       the lane's axis the same rail measured `[0,204,22,467]` and the grip `[4,222,14,51]`, and **THE ROW'S INSET IS THE
+       ONE THING THAT MOVED SINCE: `D-272`'s `22` was the bar's `14px` plus the row's `4px` on each of the lane's LONG
+       SIDES, which is the physical pair meeting the wrong two sides of the title** (`.pane-head`'s note above), so the same
+       rail now reads `[0,204,14,467]` with the grip `[0,226,14,51]`: **the name runs UP the lane, the rail's cross extent
+       is the bar's thickness and nothing else, and the bar's `4px` insets sit at the lane's two ENDS where the horizontal
+       head's sit** — measured after, the `⠿` ink reads `5.7px` from the pane's edge in a horizontal head and `5.0px` from
+       the rail's end here, which is the same `0.25rem` plus the glyph's own bearing, the sideways line box centring it
+       `0.7px` differently and nothing else moving.
+       **THE BASE RULE'S TWO EXTENTS ARE RE-STATED RATHER THAN INHERITED**
        (`design-pane-collapse.md` §6's `.pane-head > .pane-grab` pair), and the reason is the axis swap: under a vertical
        mode `height` is the INLINE extent, so the base rule's `height: 14px` would clip a `nowrap` name to one glyph — hence
        `height: auto` (the name's own length ALONG the lane, measured `50.7px` for `Menus` and the glyph together) and
