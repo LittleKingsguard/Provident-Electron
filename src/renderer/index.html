@@ -659,8 +659,31 @@
       display: flex;
       flex-direction: column;
     }
+    /* **THE MOVE GRIP CHARGES THE PANE NO ROW OF THE AXIS IT NOW ADJUSTS** (`D-253`'s flip, and the user's report
+       *"Drag handle is also occupying space both vertically and horizontally when in sidebar"*). MEASURED BEFORE THIS
+       RULE, in `left`: the pane's box `120 × 100`, `clientWidth 105`, and `#menus-grab` at `[0,190,14,14]` **its own
+       FLEX ITEM ROW** — the first menu began at `y 206` and reads `y 192` after, so the grip spent a `14px` row of the
+       pane's HEIGHT (`scrollHeight` `138 → 124`) on top of the `14px` LANE of width it charges in both forms
+       (`#pane-menus`' `padding-left`, which this rule keeps). In a `top` zone the same grip is a `float` and costs NO
+       line — that asymmetry is the whole defect: **the sidebar pane paid the grip in BOTH axes** and its stacked
+       content was squeezed by a row it did not owe.
+       **THE ROW IS TAKEN BACK BY THE SHEET'S OWN IDIOM, A NEGATIVE MARGIN**: `margin-bottom: -0.875rem` cancels the
+       grip's own `14px` outer height, so the column flows the menus from the pane's content top while the grip still
+       RENDERS in the lane the pane already reserves for it (`x 0…14`, the menus start at `14`) — nothing overlaps,
+       because the lane is beside the column and not in it. THE LANE STAYS (`D-253` clause 1: *"the GRIP's left lane
+       stays, in both forms"*), and no figure of the record's is stated.
+       **AND THE PIN MOVES TO THE AXIS THIS PANE SCROLLS**, which the authored `left: -0.875rem` cannot do: a sidebar
+       pane carries `overflow-y: auto` (`D-243`), measured scrolling `0 → 38` with the grip travelling `[0,190] →
+       [0,170] → [0,152]` — OUT OF THE PANE — because `top` was never set. `position: sticky; top: 0` is `D-246`'s own
+       remedy on the other axis, and `left` is left to the authored inline declaration, which is byte-unchanged.
+       Nothing else moves: `flex: 0 0 auto` stays, the strip below keeps `order: 1`/`margin-top: auto`/`bottom: 0`. */
     #pane-menus[zone="left"] > #menus-grab,
-    #pane-menus[zone="right"] > #menus-grab { flex: 0 0 auto; }
+    #pane-menus[zone="right"] > #menus-grab {
+      flex: 0 0 auto;
+      position: sticky;
+      top: 0;                              /* the pin on the axis a sidebar pane scrolls (`D-246`'s class, third form) */
+      margin-bottom: -0.875rem;            /* its own 14px row, taken back: the lane it stands in is already paid for */
+    }
     #pane-menus[zone="left"] > .menus-menu,
     #pane-menus[zone="right"] > .menus-menu { flex: 0 0 auto; }
     #pane-menus[zone="left"] > #menus-receipt,
@@ -816,8 +839,29 @@
     }
     body:has([theme="dark"]) .menu-item:hover:not([disabled="true"]) { background: #2b3542; border-color: #3a4654; }
     body:has([theme="dark"]) .menu-item[disabled="true"] { color: #5d6b7d; border-color: #2c3642; }
-    body:has([theme="dark"]) .gutter-handle { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
-    body:has([theme="dark"]) .gutter-handle:hover { background-color: #3a4654; }
+    /* ═══ **THE GRIPS' PAIR, DECLARED ONCE — AND `D-247`'s *"both grips already paired"* WAS ONLY HALF TRUE.** ═══
+       THE REPORT, VERBATIM: *"Same for drag handles"* — after the scrollbars — with the grips reading as LIGHT strips
+       against a dark pane. **MEASURED, and the two classes are two different stories**: the six `gutter-handle` nodes
+       (`#menus-vertical`, `#gutter-horizontal`, the four zone strips) already computed `#2c3642` on `#7d8a9b` ink under
+       dark, because the arm below named that class — while the TWO `pane-grab` grips (`#menus-grab`, `#gutter-grab`)
+       computed `rgb(223, 229, 236)` = `#dfe5ec` with `#6f7d90` ink and a `#c9d2dc` hairline under dark: **the LIGHT base
+       values, byte for byte**, because NO dark arm named that class at all. The only dark rules for it were its four
+       `pane-drop` CHILDREN (the overlays, above), so the grip a person actually presses kept a light box on a dark page.
+       **THE TWO CLASSES SHARE THE PAINT AND DID NOT SHARE ITS PAIR**: `.gutter-handle` and `.pane-grab` carry the same
+       four colours in the light arm (`#6f7d90` ink, `#dfe5ec` fill, `#c9d2dc` inset line, `#c3ccd8`/`#8f9dae` hover) —
+       the dot pattern is the only difference — so the pair is stated ONCE and both selectors are named in it, which is
+       the same treatment the four menus' names got. **NO NEW FIGURE IS SPENT**: `#2c3642` is the dark pair's border,
+       `#3a4654` its strong border, `#7d8a9b` the muted ink the `gutter-handle` arm already used.
+       **AND THE HOVER ARM IS NOT DECORATION, IT IS REQUIRED BY SPECIFICITY**: the dark base rule below is
+       `body:has([theme="dark"]) .pane-grab` — (0,2,1) — which OUTRANKS the light arm's `.pane-grab:hover` (0,2,0), so a
+       grip with no dark hover arm would compute its RESTING colour while hovered. The light hover arm also states a
+       `box-shadow` (`#8f9dae`) that would otherwise leak into the dark arm, so the dark hover states both members and
+       moves the FILL one step (`#2c3642` → `#3a4654`), exactly as the `gutter-handle` arm always has. */
+    body:has([theme="dark"]) .gutter-handle,
+    body:has([theme="dark"]) .pane-grab { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
+    body:has([theme="dark"]) .gutter-handle:hover,
+    body:has([theme="dark"]) .pane-grab:hover,
+    body:has([theme="dark"]) .pane-grab:focus-within { background-color: #3a4654; box-shadow: inset 0 0 0 1px #3a4654; }
     body:has([theme="dark"]) #status,
     body:has([theme="dark"]) #panes .hint,
     body:has([theme="dark"]) #panes #security-status,
