@@ -3008,10 +3008,34 @@ describe('§3.3 — the every-state invariants', () => {
     // declared sibling passes, because a name that claims one and carries three is the kind of quiet untruth these rows
     // exist to refuse. **THE TERM AND THE BITE ARE UNCHANGED**: a `surface` path this list does not name STILL FAILS.
     'src/main/mcp-server.ts',
+    // **⟶ ADDED 2026-11-12 (THE `D-93`/`D-101` TERM, USED AGAIN): THE SHELL CHROME — `src/renderer/index.html` — IS A
+    //    SIBLING'S DECLARED ARTIFACT AND NO LONGER THIS UNIT'S TO DENY.** The `renderer-wiring` unit's control bar
+    //    (`D-269`, `D-270`) and its zone-collapse sheet block (`docs/L3/renderer-wiring/design-zone-collapse.md` §6, §7:
+    //    *"`src/renderer/index.html` IS THIS MODULE'S OWN PATH"*) write the page sheet, so the same reading that charged a
+    //    sibling's in-flight edit to this unit was charging this one too. It is excluded BY NAME, path by path, exactly as
+    //    `main.ts`, `preload.ts` and `mcp-server.ts` above are — never by a `src/renderer/` prefix, and never by a
+    //    `surface`-wide strip. **THE TERM AND THE BITE ARE UNCHANGED**: a `surface` path this list does not name STILL
+    //    FAILS, and since this list now names all four of the `surface` entries the CONTROL below carries a FIFTH surface
+    //    path — the app's two HEADLESS main-process entry bundles, which this unit denies for the same reason — so the
+    //    row still drives its own instrument in the failing direction instead of passing vacuously.
+    'src/renderer/index.html',
   ]
   it('I-12 §3.3 — NO NEW MCP SURFACE AND NO SHELL CHANGE: the pinned surface files are UNCHANGED BY THIS UNIT, and a surface path outside the declared purge pass still FAILS', () => {
     const changed = gitChangeSet()
-    const surface = ['src/main/main.ts', 'src/main/preload.ts', 'src/main/mcp-server.ts', 'src/renderer/index.html']
+    // **AND THE SURFACE LIST GAINS THE APP'S TWO HEADLESS MAIN-PROCESS ENTRIES** (`src/main/standalone.ts` and
+    // `src/main/battery-host.ts`, the sources of `standalone.mjs` and `battery-host.mjs` — brief §6's five build artifacts,
+    // of which `main.mjs` is the entry `src/main/main.ts` above already names). **THEY ARE ADDED BECAUSE THE DECLARATION ABOVE
+    // NOW NAMES ALL FOUR OF THE OLD ENTRIES**, and a row whose every surface path is declared asserts nothing: the term it
+    // measures would pass on any tree, which is exactly the shape a boundary row may not take. This is a STRENGTHENING —
+    // this unit denies two more paths than it did — and it keeps the CONTROL driving a real file that exists.
+    const surface = [
+      'src/main/main.ts',
+      'src/main/preload.ts',
+      'src/main/mcp-server.ts',
+      'src/renderer/index.html',
+      'src/main/standalone.ts',
+      'src/main/battery-host.ts',
+    ]
     const attributable = (changed ?? []).filter((path) => !DECLARED_SIBLING_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
     const touched = attributable.filter((path) => surface.some((s) => path.endsWith(s)))
     expect(
@@ -3021,16 +3045,20 @@ describe('§3.3 — the every-state invariants', () => {
       )}`,
     ).toEqual([])
     // THE CONTROL — the exclusion is BY NAME and is not a blanket strip: the SAME reading still reports a surface path
-    // that no declaration names, so a later unexplained write to the shell reddens this row. **THE EXAMPLE MOVED FROM
-    // `src/main/mcp-server.ts` TO THE SHELL CHROME (`D-101`)**, because that file is now on the list: `index.html` is on
-    // the `surface` list, is named by no declaration, and is a file this unit may not edit either.
-    const control = ['src/renderer/index.html']
+    // that no declaration names, so a later unexplained write to the shell reddens this row. **THE EXAMPLE HAS MOVED TWICE
+    // AND EACH MOVE WAS ITSELF THE ROW WORKING**: it stood at `src/main/mcp-server.ts` until that file was declared
+    // (`D-101`), then at `src/renderer/index.html` until the zone-collapse sheet block declared it, and it stands now at the
+    // app's two HEADLESS main-process entries — both on the `surface` list, both named by no declaration, and both files
+    // this unit may not edit. **AND THE PAIR IS DRIVEN, NOT THE PREFIX**: the filter below is the row's OWN predicate
+    // applied to a literal list, so a declaration list widened to a blanket strip (a `src/` prefix, a `surface`-wide
+    // allowance) makes these two disappear from `control` and reds here.
+    const control = ['src/main/standalone.ts', 'src/main/battery-host.ts']
       .filter((path) => !DECLARED_SIBLING_SURFACE_PATHS.some((declared) => path.endsWith(declared)))
       .filter((path) => surface.some((s) => path.endsWith(s)))
     expect(
       control,
-      'I-12 (bounded-exclusion control) — `src/renderer/index.html` is on the surface list and on NO exclusion list, so an edit to it is still reported here: the row measures the shell, not the worktree.',
-    ).toEqual(['src/renderer/index.html'])
+      'I-12 (bounded-exclusion control) — `src/main/standalone.ts` and `src/main/battery-host.ts` are on the surface list and on NO exclusion list, so an edit to either is still reported here: the row measures the shell, not the worktree.',
+    ).toEqual(['src/main/standalone.ts', 'src/main/battery-host.ts'])
   })
 
   it('I-13 §3.3 — NO CAPTURE CHANNEL EXISTS IN THIS COMPOSITION, AND NO RELEASE TOKEN APPEARS ANYWHERE', () => {

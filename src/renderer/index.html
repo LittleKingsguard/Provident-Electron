@@ -1000,7 +1000,11 @@
     }
     .pane-collapse::before { content: '\25BE'; }          /* ▾ — expanded */
     .pane-collapse:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
-    [collapsed="true"] .pane-collapse::before { content: '\25B8'; }   /* ▸ — collapsed */
+    /* **AND THE SELECTOR IS SCOPED BY `>` FROM REV 3, FOR THE SAME REASON THE BODY RULE BELOW IS** (`design-pane-collapse.md`
+       §6, `design-zone-collapse.md` §6): a ZONE now carries the same word about ITSELF, and an unscoped descendant selector
+       would let the ZONE's attribute paint a PANE's control — one fact, one writer, one reader, per node (`D-129`). The pair
+       through the head row is the structural test: a pane is the box that heads itself, and nothing else can satisfy it. */
+    [collapsed="true"] > .pane-head > .pane-collapse::before { content: '\25B8'; }   /* ▸ — collapsed */
     /* ══ **A COLLAPSED PANE IS ITS HEAD ROW AND NOTHING ELSE** (`design-pane-collapse.md` §3, §6) ══ The pane's box is
        `width: auto` / `height: auto` on the axis it used to hold (the paint's, and the record's figure stays stored as the
        memory an expansion restores with ZERO writes), so this rule is what makes the row the WHOLE box rather than a row
@@ -1008,7 +1012,12 @@
        `content`** (a node's text renders AHEAD of its children and no child rule can hide it — `D-259`'s measurement, one
        state over; `inspector-body` was authored for exactly this). **THE HEAD IS EXEMPT BY NAME**, so the control that
        re-opens the pane is never the one thing the state hides. */
-    [collapsed="true"] > :not(.pane-head) { display: none; }
+    /* **AND THE SCOPE IS `:has(> .pane-head)` FROM REV 3, WHICH IS WHAT LETS A ZONE CARRY THE SAME WORD WITHOUT HIDING THE
+       PANES IT MUST SHOW** (`design-zone-collapse.md` §6): the key is *"the box that heads itself"* — `D-270`'s own phrase —
+       so a collapsed ZONE, whose children are panes and not heads, can never match it, while a collapsed PANE (whose first
+       child IS the head) matches and hides its body. **NO NEW HIDE RULE AND NO SECOND SPELLING OF ONE FACT** (`D-129`):
+       what the zone's own attribute buys is the extent and the two lane rules below, never a third copy of the pane's state. */
+    :has(> .pane-head)[collapsed="true"] > :not(.pane-head) { display: none; }
     /* ══ **THE INDICATOR IS THE PSEUDO-ELEMENT, AND IT EXISTS ONLY UNDER THE HEAD'S OWN `[status]`** ══ (`D-257`'s `attr()`
        binding, one node over; `app-envelope` rev 2 §5.) `attr()` reads the attribute of the element the pseudo belongs
        to, so the carrier is the HEAD ROW — the node the renderer's head arm writes `props.status` onto — and one attribute
@@ -1034,6 +1043,94 @@
     body:has([theme="dark"]) .pane-collapse { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
     body:has([theme="dark"]) .pane-collapse:hover { background-color: #3a4654; }
     body:has([theme="dark"]) .pane-head[status]::after { color: #7d8a9b; }
+    /* ══ **THE ZONE'S OWN COLLAPSE: THE CONTROL, THE ROTATED LANE, AND THE TWO EXTENTS IT RE-COSTS** ══════════════════
+       (`design-zone-collapse.md` §4, §6, §7; `app-envelope` rev 8 §11's `A-11`, `D-269`, `D-270`.)
+
+       **THE CONTROL IS ITS ZONE'S FOLLOWING SIBLING, SO ITS GLYPH IS THE SIBLING COMBINATOR'S AND IT NEEDS NO ID**
+       (`app-envelope` §11): the envelope authors four `div.zone-collapse` nodes, each standing immediately after its own
+       zone, each carrying `props.zone` (the act's operand) and an authored no-op `('zone-collapse','click')` pair the
+       wiring replaces. The glyph is the sheet's, because it is READ and never pressed — one owner per fact (`D-129`), and
+       the state it reads is the `collapsed` attribute the PAINT writes on the ZONE beside it. **NO `content` ON THE NODE**:
+       a `content` authored there beside this rule would be two owners of one box (`D-269` §3, one node out).
+
+       **THE THICKNESS IS `14px`, THE THICKNESS THE STRIPS AND THE GRIPS ALREADY PAY, AND IT IS NOT A FIGURE THE RECORD
+       OWNS** (`D-194`'s `OWED-1` taken figure, `D-129`): the zone's dimension is `['zones', <id>, 'size']` and its collapse is
+       `['zones', <id>, 'collapsed']`, and this box states neither. `flex: 0 0 14px` is its own box in whichever container
+       holds its zone (the root COLUMN for `top`/`bottom`, the arrangement ROW for `left`/`right`) — and it is the reason
+       the control is a SIBLING at all: **a control inside a zone dragged to `size: 0` would be a control the tree buried**. */
+    .zone-collapse {
+      flex: 0 0 14px;
+      /* **AND THE BASIS NEEDS THE PAIR THAT LETS A FLEX ITEM BE ITS BASIS** (`D-270`'s own pair, one box out): a flex item's
+         `min-height`/`min-width` default to `auto`, which is the CONTENT's floor — so the box's own glyph made this control
+         `19px` thick in a root COLUMN (measured, before this pair: `[0,176,980,19]` against its siblings' `14px`) and the
+         thickness `OWED-1` took would have been a figure the box did not honour. Zeroing both lets `flex-basis: 14px` be the
+         thickness on whichever axis the container runs, which is the whole of what this declaration is for. **`line-height`
+         is then the same thickness**, so the glyph's line box is the box and nothing overflows it. */
+      min-height: 0;
+      min-width: 0;
+      line-height: 14px;
+      cursor: pointer;
+      color: #6f7d90;
+      background-color: #dfe5ec;
+      box-shadow: inset 0 0 0 1px #c9d2dc;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      user-select: none;
+      transition: background-color 120ms ease, box-shadow 120ms ease;
+    }
+    .zone-collapse::before { content: '\25BE'; }                                  /* ▾ — expanded */
+    .zone-collapse:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
+    [collapsed="true"] + .zone-collapse::before { content: '\25B8'; }            /* ▸ — collapsed */
+
+    /* ══ **A COLLAPSED SIDEBAR'S HEAD LANE IS ROTATED, AND THE ALTERNATIVES LOSE FOR A MEASURED REASON** ══
+       A `top`/`bottom` collapsed zone stacks its heads ALONG the arrangement axis already (a row), so each head keeps its
+       natural `14px` thickness and costs nothing. A `left`/`right` zone fixes the WIDTH and arranges along the HEIGHT — so a
+       horizontal head inside it would set the collapsed WIDTH to the widest head's own CONTENT width (measured precedent,
+       `D-257`: `[0,190,105,14]` inside a `105` content box), i.e. a `120px` rail would collapse to ~`105px` and **the collapse
+       would reclaim almost none of the only axis it can reclaim**. So the head row takes `writing-mode: vertical-rl` inside
+       a collapsed sidebar zone, the label runs DOWN the lane, and the collapsed WIDTH becomes the head's own thickness — the
+       same `14px` a `top` zone pays on its height. **A COLUMN OF HEADS AT THEIR NATURAL HEIGHT WAS REFUSED ON THAT
+       MEASUREMENT, and a narrow lane with unrotated text was refused because a `nowrap` name cannot fit a `14px` lane at all.**
+
+       **THE SELECTOR NAMES NO ZONE CLASS AND NO ID, AND IT NEEDS NEITHER**: a collapsed zone's attribute reaches the PANE by
+       `>`, and the pane's zone is the CLASS it inherits by position (`D-265`), so this pair is the whole key — and it cannot
+       match a PANE's own attribute, whose children are a head and a body and never another pane.
+
+       **AND NOTHING PRESSABLE ROTATES**: `writing-mode` moves the INLINE axis to the vertical, so the grip and the collapse
+       control each take `writing-mode: horizontal-tb` back — **a square rotated is the same square**, so every control's
+       `14x14` box and therefore its hit area is INVARIANT, and rotation can cost the LABEL's legibility and never a control's
+       box. **THE BASE RULE'S TWO EXTENTS ARE RE-STATED RATHER THAN INHERITED** (`design-pane-collapse.md` §6's
+       `.pane-head > .pane-grab` pair): under `vertical-rl` the grip's `height: 14px` becomes the CROSS extent and its
+       `min-width: max-content` an inline floor along the lane — so `height: 14px` and `min-width: max-content` are written
+       HERE, where the rotation is, and the base rule's own axes are not reused. **THE LANE'S CROSS EXTENT IS THEREFORE THE
+       GRIP'S OWN `14px`**, which is a number the sheet already states: the zone's `auto` (the paint's, on the axis it fixes)
+       resolves to a figure nothing invented. **AND THE ORDER IS THE GRIP FIRST, THE NAME BETWEEN, THE CONTROL LAST ALONG THE
+       LANE** — the `top`/`bottom` order, with `D-269` §3's overflow lesson carried as the floor above.
+
+       **THE `top`/`bottom` ARM STATES NOTHING**: a collapsed `top`/`bottom` zone's heads are a row already, so its head keeps
+       the base rule byte for byte (`D-269`). **AND THE DEGRADATION IS STATED RATHER THAN DISCOVERED**: a realm that refuses
+       `writing-mode` paints the head horizontally inside a `14px` lane, so the NAME clips while every control keeps its box
+       and its press — the label's loss and never the act's. */
+    [collapsed="true"] > .pane-in-left > .pane-head,
+    [collapsed="true"] > .pane-in-right > .pane-head {
+      writing-mode: vertical-rl;
+    }
+    [collapsed="true"] > .pane-in-left > .pane-head > .pane-grab,
+    [collapsed="true"] > .pane-in-right > .pane-head > .pane-grab,
+    [collapsed="true"] > .pane-in-left > .pane-head > .pane-collapse,
+    [collapsed="true"] > .pane-in-right > .pane-head > .pane-collapse {
+      writing-mode: horizontal-tb;         /* NOTHING PRESSABLE ROTATES: a square rotated is the same square */
+      height: 14px;                        /* THE BASE PAIR, RE-STATED — under `vertical-rl` this is the CROSS extent */
+      min-width: max-content;             /* …and this the inline floor along the lane, so the name cannot leave its box */
+    }
+    /* **AND THE NEW BOXES TAKE THEIR DARK PAIRS IN THE SAME EDIT** (`D-247`, `D-256`): an unpaired light fill under a dark page
+       is a legibility bug and not a taste one. **THE ROTATED LANE STATES NO COLOUR OF ITS OWN** — it inherits the head row's
+       and its controls' pairs above, so the dark page needs no rule for it. */
+    body:has([theme="dark"]) .zone-collapse { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
+    body:has([theme="dark"]) .zone-collapse:hover { background-color: #3a4654; }
     /* ══ **THE STRIP IS THE PANE'S BOTTOM EDGE, AND IT IS THE `gutter-handle` EVERY PANE ALREADY CARRIES** ══ A pane's
        resize strip is a `.gutter-handle` node (`#menus-vertical`, `#inspector-vertical`, `#gutter-horizontal`), which is
        the ONE hook all three panes share and the reason this rule needs no pane's name: the class is the envelope's

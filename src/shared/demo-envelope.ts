@@ -722,6 +722,56 @@ const verticalZoneStyle: Record<string, string> = { 'overflow-y': 'auto' }
 const horizontalZoneStripStyle: Record<string, string> = { flex: '0 0 14px', cursor: 'row-resize' }
 const verticalZoneStripStyle: Record<string, string> = { flex: '0 0 14px', cursor: 'col-resize' }
 
+/** **THE FOUR ZONE COLLAPSE CONTROLS' IDS — PRIVATE LITERALS, AND THE WIRING'S `ZONE_COLLAPSE_IDS` IS THE SECOND SPELLING**
+ *  (`app-envelope` rev 8 §11's `A-11`; `D-41`, `D-188` debt 2): an export here would move this module's published surface,
+ *  so the equality between the two spellings is a ROW's (`AL-1`'s four controls by id) and never a derivation. The four are
+ *  named after the ZONE they collapse, because that is the whole of what each one means. */
+const ZONE_TOP_COLLAPSE_ID = 'top-collapse'
+const ZONE_BOTTOM_COLLAPSE_ID = 'bottom-collapse'
+const ZONE_LEFT_COLLAPSE_ID = 'left-collapse'
+const ZONE_RIGHT_COLLAPSE_ID = 'right-collapse'
+/** **THE ONE AUTHORED PAIR EVERY ZONE CONTROL CARRIES** — `('zone-collapse', 'click')`, a no-op the wiring replaces with its
+ *  live body under the SAME pair (`D-239`'s path, `D-177`'s reader). **THE NAME IS SHARED BY ALL FOUR AND THE PANE
+ *  CONTROL'S IS NOT**: this pair is the ZONE's verb and `pane-collapse` is the PANE's, which is the structural statement that
+ *  these are two controls over two nested boxes with two addresses and two tiers (`design-zone-collapse.md` §8). */
+const ZONE_COLLAPSE_HANDLER_NAME = 'zone-collapse'
+const ZONE_COLLAPSE_BODY = `function (ctx) {
+  void ctx;
+}`
+/** **THE CONTROLS' OWN DECLARATIONS — A THICKNESS AND A CURSOR, AND NOTHING ELSE** (`app-envelope` rev 8 §11). `flex: 0 0
+ *  14px` is `OWED-1`'s taken thickness, the same figure the four strips and the panes' grips carry, and it is the reason a
+ *  control here is a SIBLING with its own box: **a strip of zero thickness is an element no press can land on**, and a
+ *  control inside a zone dragged to `size: 0` would be a control the tree had buried. **NO FIGURE A RECORD OWNS STANDS
+ *  HERE** — the zone's dimension is `['zones', <id>, 'size']` and its collapse is `['zones', <id>, 'collapsed']`, and an
+ *  authored number beside either would be `D-129`'s second authority (`D-174`). **AND NOTHING HERE IS EVER PAINTED**:
+ *  `paintStyle`'s subjects are the four zones, the panes and the rows' targets, so this box's placement is stable by
+ *  construction. */
+const zoneCollapseStyle: Record<string, string> = { flex: '0 0 14px', cursor: 'pointer' }
+
+/** **ONE ZONE'S COLLAPSE CONTROL, AUTHORED ONCE AND PLACED FOUR TIMES — ITS ZONE'S *FOLLOWING SIBLING*, NEVER ITS CHILD**
+ *  (`app-envelope` rev 8 §11; `design-zone-collapse.md` §7).
+ *  **THE THREE REASONS THE PLACEMENT IS STRUCTURAL AND NOT TIDY**: `paintStyle` hands the engine ONE `css.style` in `replace`
+ *  mode, so a zone can state no placement for a child (`D-234`); a zone the record drags to `size: 0` would bury a child's
+ *  control in a box nothing can press (`D-244` §2); and `driveZoneArrangement` re-anchors everything standing INSIDE a zone,
+ *  so a child of a zone is a subject of the arrangement turn and an affordance must never be one (`D-259`, `D-262`).
+ *  **AND THE SIBLINGSHIP IS WHAT THE SHEET READS**: `[collapsed="true"] + .zone-collapse::before` is the sibling combinator
+ *  over the ZONE's own painted attribute, so the glyph needs no id, no class the paint touches and no `content` on this
+ *  node (`D-269` §3's rule, one node out).
+ *  **`props.zone` IS THE RECORD'S DECLARED ZONE ID AND THE ACT'S OPERAND**, read OFF THE NODE by `installZoneCollapse`
+ *  (the drops' `props.zone` pattern, `D-248`), so the wiring holds no table of zone ids beside its four literals.
+ *  **`content: ''` AND NO DISABLED MARK**: the box holds no text of its own — its glyph is the sheet's `::before` — and the
+ *  control is live, because a styled-dead control is what `D-235` made the corpus un-grey rather than explain.
+ *  Reader: `renderer.ts`'s `installZoneCollapse` census and the rendered markup (`D-177`). */
+function zoneCollapseNodeOf (id: string, zoneId: string): Record<string, unknown> {
+  return {
+    type: 'div',
+    css: { id, classes: ['zone-collapse'], style: zoneCollapseStyle },
+    props: { id, zone: zoneId, tabindex: '0' },
+    content: '',
+    handlers: [{ name: ZONE_COLLAPSE_HANDLER_NAME, event: 'click', body: ZONE_COLLAPSE_BODY }],
+  }
+}
+
 /** **THE PANE'S ZONE FORMAT NOW ARRIVES BY POSITION — ONE NAME THE ZONES PROVIDE AND THE PANES CONSUME** (`D-265`; the
  *  user's direction: *"inheriting information like class names and css from parent data based on the position in the tree"*).
  *  **EACH ZONE PROVIDES A CLASS NAME AND EACH PANE CONSUMES IT INTO `css.classes`**, so the class a pane wears is the class of
@@ -1596,6 +1646,12 @@ export function demoEnvelope() {
               // `size` (`D-185`), so it is the edge a person pushes. Its pointer axis is `y` and its sign is `+1`
               // (the figure grows as the edge moves DOWN) — all three in `renderer.ts`'s `ZONE_DRAG_HANDLES`, which
               // is the wiring's half of this node.
+              // ---- THE `top` ZONE'S COLLAPSE CONTROL — ITS **FOLLOWING SIBLING** IN THE ROOT COLUMN ---------------
+              // **THE ZONE'S SIBLING AND NEVER ITS CHILD** (the three measured reasons stand above `zoneCollapseNodeOf`),
+              // and **THE SIBLINGSHIP IS WHAT THE SHEET'S GLYPH RULE READS** — `[collapsed="true"] + .zone-collapse::before`
+              // — so this placement and that rule are ONE landing (`design-zone-collapse.md` §6, §7). The control is pressed
+              // by a person and dispatched by an agent into one act, and its zone's presentation is one press away.
+              zoneCollapseNodeOf(ZONE_TOP_COLLAPSE_ID, 'top'),
               zoneStripNodeOf(ZONE_TOP_STRIP_ID, horizontalZoneStripStyle),
               // ---- THE ARRANGEMENT CONTAINER (`D-176`, `D-185`) ----------------------------------
               // ONE `div` between the two full-width zones, holding `left` + the stage + `right` in a ROW so
@@ -1624,6 +1680,10 @@ export function demoEnvelope() {
                   // edge moves RIGHT) — `renderer.ts`'s `ZONE_DRAG_HANDLES`. It is the zone's SIBLING for the two
                   // reasons the `top` strip's comment states (a replaced `css.style` and a lawful `size: 0`), and
                   // this row is the ROW container, so its `flex: 0 0 14px` is a WIDTH here.
+                  // ---- THE `left` ZONE'S COLLAPSE CONTROL — ITS **FOLLOWING SIBLING** IN THE ARRANGEMENT ROW -------
+                  // The same placement as the `top` control's and for the same three reasons, one container over: its box is
+                  // the row's `14px` lane and never a child of the zone the record may drag to nothing.
+                  zoneCollapseNodeOf(ZONE_LEFT_COLLAPSE_ID, 'left'),
                   zoneStripNodeOf(ZONE_LEFT_STRIP_ID, verticalZoneStripStyle),
                   // ---- THE STAGE (`D-185`) ------------------------------------------------------
                   // THE FLEX REMAINDER and `overflow`, and **NO dimension**: the stage is DERIVED, so a figure
@@ -1953,6 +2013,13 @@ export function demoEnvelope() {
                     props: { id: 'right' },
                     component: zoneFormatProviderOf('right'),
                   },
+                  // ---- THE `right` ZONE'S COLLAPSE CONTROL — ITS **FOLLOWING SIBLING** IN THE ARRANGEMENT ROW -----
+                  // **IT STANDS AFTER ITS ZONE AND NOT BEFORE IT, WHICH IS THE WHOLE OF WHAT THE GLYPH RULE NEEDS**: the
+                  // `right` strip PRECEDES this zone (the pointer's sign is that one negation), so the follow-sibling slot
+                  // the zone leaves open is the end of the arrangement's row — and `index.html`'s
+                  // `[collapsed="true"] + .zone-collapse::before` reads the zone's painted attribute through exactly that
+                  // adjacency. Authored on the other side it would be a control whose glyph never turned.
+                  zoneCollapseNodeOf(ZONE_RIGHT_COLLAPSE_ID, 'right'),
                 ],
               },
               // ---- THE `bottom` ZONE'S STRIP — ITS **PRECEDING SIBLING** IN THE ROOT COLUMN ------------
@@ -1970,6 +2037,11 @@ export function demoEnvelope() {
                 props: { id: 'bottom' },
                 component: zoneFormatProviderOf('bottom'),
               },
+
+              // ---- THE `bottom` ZONE'S COLLAPSE CONTROL — ITS **FOLLOWING SIBLING** IN THE ROOT COLUMN --------------
+              // The fourth and last of the controls, placed exactly as its three siblings are: the zone's next sibling, its
+              // own `14px` box, and the glyph the sheet paints from the attribute the paint writes on the ZONE beside it.
+              zoneCollapseNodeOf(ZONE_BOTTOM_COLLAPSE_ID, 'bottom'),
 
               // THE OPENER — an authored `button` with an authored `click` body, so it is `list_targets`-visible and
               // `provident.dispatch`-reachable exactly as every other control in this file is. **IT STAYS THE APP

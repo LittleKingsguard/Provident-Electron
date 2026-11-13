@@ -124,30 +124,36 @@ describe('Runtime code-CRUD (mcp-endpoint.md §4)', () => {
     const runtime = r()
     runtime.load({ kind: 'envelope', envelope: demoEnvelope() })
     // ⟶ RE-POINTED 2026-11-05 (`D-113`), then AGAIN for the authored skeleton (`D-176`–`D-193`, `docs/L3/app-envelope/
-    //    design.md` rev 5 §2), and AGAIN at this rev for the FOUR AUTHORED ZONE STRIPS (`docs/L3/renderer-wiring/
-    //    design-zone-handles.md` rev 1 §2). The row's subject is a DEEP, DEFINED path through the loaded envelope; the path
-    //    is re-derived to the SAME NODE the earlier routes reached — **the counter card's THIRD child, the `inc`
-    //    button** (`css.id: 'inc'`, `content: 'Increment (+1)'`) — so the claim is unmoved and only the route moved.
+    //    design.md` rev 5 §2), AGAIN for the FOUR AUTHORED ZONE STRIPS (`docs/L3/renderer-wiring/design-zone-handles.md`
+    //    rev 1 §2), and AGAIN at this rev for the FOUR AUTHORED ZONE COLLAPSE CONTROLS
+    //    (`docs/L3/renderer-wiring/design-zone-collapse.md` §7). The row's subject is a DEEP, DEFINED path through the
+    //    loaded envelope; the path is re-derived to the SAME NODE the earlier routes reached — **the counter card's THIRD
+    //    child, the `inc` button** (`css.id: 'inc'`, `content: 'Increment (+1)'`) — so the claim is unmoved and only the
+    //    route moved.
     //    THE ROUTE, NAMED NODE BY NODE so this is not re-pointed by trial and error:
     //      template.root                     the demo shell
     //        .children[0]                    `APP_ROOT_ID`, `app-surface` (the overlay's inert target)
-    //          .children[3]                  the ARRANGEMENT container (`S-2`) — `[1]` before this rev's strips
-    //            .children[2]                the STAGE — `[1]` before this rev's strips
+    //          .children[4]                  the ARRANGEMENT container (`S-2`) — `[3]` before this rev's controls
+    //            .children[3]                the STAGE — `[2]` before this rev's controls
     //              .children[0]              `TABS_LANDING_PAGE_ID`, the landing page (`A-5`'s re-parent)
     //                .children[1]            `counter-card`
     //                  .children[2]          `inc` — the node this row reaches
-    //    **WHAT MOVED IT THIS TIME, AND BOTH SHIFTS ARE THE SAME FACT** (`design-zone-handles.md` rev 1 §2: a strip stands
-    //    on its zone's STAGE-FACING bound and is its SIBLING, never its child): `#zone-top-horizontal` was authored as
-    //    `#top`'s FOLLOWING sibling in the root column, so the arrangement container went `[2] → [3]`, and
-    //    `#zone-left-vertical` was authored as `#left`'s FOLLOWING sibling in the arrangement ROW, so the stage went
-    //    `[1] → [2]`. The zone ids are unchanged and the two strips authored around the arrangement are the only two
-    //    siblings it gained.
+    //    **WHAT MOVED IT THIS TIME, AND BOTH SHIFTS ARE ONE FACT THE SHEET'S `+` GLYPH RULE REQUIRES**
+    //    (`design-zone-collapse.md` §6/§7): a zone's collapse control is its zone's **FOLLOWING SIBLING**, never its child,
+    //    because `[collapsed="true"] + .zone-collapse::before` reads the zone's own painted attribute through exactly that
+    //    adjacency. So `#top-collapse` was authored BETWEEN `#top` and `#zone-top-horizontal` in the root column — the
+    //    arrangement container went `[3] → [4]` — and `#left-collapse` was authored BETWEEN `#left` and
+    //    `#zone-left-vertical` in the arrangement row, so the stage went `[2] → [3]`. The zone ids are unchanged and the two
+    //    controls authored around the arrangement are the only two siblings it gained.
     //    **THE FRAGILITY IS NAMED, NOT PAPERED OVER (`D-26`, and this row's debt)**: `codeGet`'s grammar is dotted keys and
     //    `[n]` indices only — a node standing inside a `children` ARRAY can be addressed by its POSITION and never by its
-    //    `css.id`, so no spelling of this path can survive the next sibling. The honest shape is a path DERIVED from
-    //    `demoEnvelope()` by walking for the id (which would also let the row assert WHICH node it reached), and that is a
-    //    re-shape of the battery rather than part of this re-grain: it is left here, stated, as debt.
-    const res = runtime.codeGet('template.root.children[0].children[3].children[2].children[0].children[1].children[2]')
+    //    `css.id`, so no spelling of this path can survive the next sibling. **AND THIS RE-GRAIN CHECKED THE ALTERNATIVE
+    //    BEFORE TAKING THE INDEX**: `codeGet` consults no node's `css.id` on any segment (`Runtime.envelopeParent` splits
+    //    on `.` and `[n]` alone), so there is no id-addressed spelling for this row to adopt — the index is re-taken and
+    //    the row cannot be re-grained to address by id. The honest shape is a path DERIVED from `demoEnvelope()` by walking
+    //    for the id (which would also let the row assert WHICH node it reached), and that is a re-shape of the battery
+    //    rather than part of this re-grain: **the debt stands.**
+    const res = runtime.codeGet('template.root.children[0].children[4].children[3].children[0].children[1].children[2]')
     expect(res.value).toBeDefined()
   })
 

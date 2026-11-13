@@ -113,13 +113,24 @@ export const PANE_STATUS_WORDS: readonly string[] = ['busy', 'waiting', 'done']
  *  means the length of the one axis the zone FIXES and nothing else — whose `0` IS THE CALLER'S MINIMIZE MARKER (the
  *  composition's `DRAG_MINIMIZE_MARKER`) and which is never negative; `distance` is the
  *  caller's own measure of how far a candidate is, finite and otherwise uninterpreted; `display` is the zone's state word,
- *  and the tree's only two spellings are strings (`'normal'`, `'minimized'`) handed to a layout call that compares them. */
+ *  and the tree's only two spellings are strings (`'normal'`, `'minimized'`) handed to a layout call that compares them.
+ *
+ *  **`collapsed` IS THE FIFTH MEMBER, BOOLEAN, OPTIONAL, AND ITS ABSENCE IS A DERIVATION RATHER THAN A DEFAULT**
+ *  (`design-zone-collapse.md` §1). It is written by the ZONE's own control and by a drop into a collapsed zone, and by
+ *  NOTHING ELSE: `viewZonesPlaceholder` and `repairedZones` state no `collapsed`, so a cold profile's family stays
+ *  BYTE-UNCHANGED and `crossing.test.ts`'s pinned answer does not move (`D-243`'s no-default rule, the same free widening
+ *  the pane's own `collapsed` took one family over). **WHAT ABSENCE MEANS IS THE PAINT'S**: `renderer.ts`'s
+ *  `zoneCollapsedOf` answers the record's word where stated, and where it states none answers COLLAPSED IFF NO PANE NAMES
+ *  THE ZONE — emptiness lives in the OTHER family, and `D-186` forbids a repair to read `['zones']`, whose mirror forbids
+ *  one to read `['panes']`. **IT IS NOT THE `display` MEMBER'S SPELLING**: `display: 'none'` is a whole-zone hide written
+ *  by an outside writer and offered no affordance, and a collapsed zone never writes `display` (`D-244` §5). */
 export interface ViewZone {
   readonly id: string
   readonly slot?: unknown
   readonly distance?: number
   readonly size?: number
   readonly display?: string
+  readonly collapsed?: boolean
 }
 
 /** **THE APPEARANCE DECLARATION AS `src/shared/theme.ts` COMPUTES IT — `{name, value, removal}`, CARRIED WHOLE** (D-97).
@@ -439,14 +450,25 @@ export const paneGeometryIn = (
  *
  *  **PURE OVER A VALUE, AND IT COPIES**: the four members are handed out on a fresh record per call, so no caller holds
  *  the shape the client will replace on the next delivery — `defaultPaneGeometry`'s reason, applied to a family whose
- *  members are optional rather than fixed. */
+ *  members are optional rather than fixed. **AND THE COPY IS MEMBER BY MEMBER, SO A MEMBER IT DOES NOT NAME IS A MEMBER NO
+ *  READER RECEIVES** — which is why `collapsed` is named here: the zone arm's derivation, the pane arm's effective collapse
+ *  and the zone control's toggle all read this function's answer (`design-zone-collapse.md` §9, `D-105`'s fault one family
+ *  over), and a member the record states and this copy drops is a collapse that no paint ever sees. */
 export const zoneIn = (zones: readonly ViewZone[], id: string): ViewZone | null => {
   const held = zones.find((zone) => zone.id === id)
   if (held === undefined) return null
-  const zone: { id: string; slot?: unknown; distance?: number; size?: number; display?: string } = { id: held.id }
+  const zone: {
+    id: string
+    slot?: unknown
+    distance?: number
+    size?: number
+    display?: string
+    collapsed?: boolean
+  } = { id: held.id }
   if (held.slot !== undefined) zone.slot = held.slot
   if (held.distance !== undefined) zone.distance = held.distance
   if (held.size !== undefined) zone.size = held.size
   if (held.display !== undefined) zone.display = held.display
+  if (held.collapsed !== undefined) zone.collapsed = held.collapsed
   return zone
 }

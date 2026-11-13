@@ -362,12 +362,27 @@ function adjustableMemberOf(pane: ViewPaneGeometry): 'width' | 'height' {
  *  an `id` is the family's key rather than a member of the value. **`slot` IS CARRIED WITHOUT A BOUNDARY CHECK AND THE
  *  OTHER THREE ARE NOT**, which is not a gap: a slot is opaque to this whole module and the crossing refuses an
  *  inadmissible one at its WRITE, so a slot that arrived here crossed that gate — while `size`, `distance` and `display`
- *  are values a layout call compares, and a member this module cannot state is a member it must not hand on. */
+ *  are values a layout call compares, and a member this module cannot state is a member it must not hand on.
+ *
+ *  **AND `collapsed` IS THE MEMBER THIS ADMISSION EXISTS FOR** (`design-zone-collapse.md` §9): this function drops every
+ *  member it does not NAME, so a `['zones', <id>, 'collapsed']` the store admits and carries would never reach
+ *  `shape().zones` — and the zone arm's derivation, the pane arm's effective collapse and the zone control's toggle all
+ *  read that answer. **A member dropped here is a feature that is INERT while every unit row stays green** (`D-105`'s class
+ *  on this side of the boundary), which is why the fifth member is admitted by the same per-member rule as the other four
+ *  rather than left to the shape. **ABSENCE IS STILL ABSENCE**: a zone stating no `collapsed` is carried with none, so the
+ *  derivation's own default — collapsed iff no pane names the zone — is the paint's to answer and not this boundary's. */
 function zoneOfWire(held: unknown): ViewZone | null {
   if (!isObject(held) || Array.isArray(held)) return null
   const id = held['id']
   if (typeof id !== 'string' || id.length === 0) return null
-  const zone: { id: string; slot?: unknown; distance?: number; size?: number; display?: string } = { id }
+  const zone: {
+    id: string
+    slot?: unknown
+    distance?: number
+    size?: number
+    display?: string
+    collapsed?: boolean
+  } = { id }
   if (Object.hasOwn(held, 'slot')) zone.slot = held['slot']
   if (Object.hasOwn(held, 'distance')) {
     const distance = held['distance']
@@ -383,6 +398,11 @@ function zoneOfWire(held: unknown): ViewZone | null {
     const display = held['display']
     if (typeof display !== 'string') return null
     zone.display = display
+  }
+  if (Object.hasOwn(held, 'collapsed')) {
+    const collapsed = held['collapsed']
+    if (typeof collapsed !== 'boolean') return null
+    zone.collapsed = collapsed
   }
   return zone
 }

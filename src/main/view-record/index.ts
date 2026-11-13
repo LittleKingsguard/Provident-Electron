@@ -630,10 +630,24 @@ const panesFrom = (whole: unknown): ViewPaneGeometry[] | null => {
  *  distance that is not finite, a display that is not a string, a slot the crossing's boundary would refuse — and a member
  *  that is absent is simply not carried. **A RECORD CARRYING NO ADMISSIBLE MEMBER IS STILL A ZONE**: an empty record under
  *  a zone id is the caller having named a zone and stored nothing about it yet, which is a state the family may hold.
- *  (`paneOf` cannot admit that state because a pane's two axis members are required; a zone's are not.) */
+ *  (`paneOf` cannot admit that state because a pane's two axis members are required; a zone's are not.)
+ *
+ *  **AND THE FIFTH MEMBER IS THE ONE THIS ARM ADMITS AND THE READ WOULD OTHERWISE DROP** (`design-zone-collapse.md` §9,
+ *  `D-105`'s fault exactly): a whole-zone or family write naming `collapsed` is ADMITTED by the pair and then LOST from
+ *  the read while `source.zones` still says `'record'` — so the member is carried here, by the same per-member rule as
+ *  the other four, and a non-boolean is a refusal rather than a silent drop. **NOTHING THAT WRITES STATES IT**: the
+ *  placeholder and the repair state `size` and no `collapsed`, so a cold family's bytes do not move and the pinned
+ *  member-for-member answer stands (`D-243`). */
 const zoneOf = (id: string, held: unknown): ViewZone | null => {
   if (!plain(held)) return null
-  const zone: { id: string; slot?: unknown; distance?: number; size?: number; display?: string } = { id }
+  const zone: {
+    id: string
+    slot?: unknown
+    distance?: number
+    size?: number
+    display?: string
+    collapsed?: boolean
+  } = { id }
   if (Object.hasOwn(held, 'slot')) {
     const slot = held['slot']
     if (!isBoundary(slot)) return null
@@ -653,6 +667,11 @@ const zoneOf = (id: string, held: unknown): ViewZone | null => {
     const display = held['display']
     if (typeof display !== 'string') return null
     zone.display = display
+  }
+  if (Object.hasOwn(held, 'collapsed')) {
+    const collapsed = held['collapsed']
+    if (typeof collapsed !== 'boolean') return null
+    zone.collapsed = collapsed
   }
   return zone
 }
@@ -935,12 +954,16 @@ const zoneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
   return member === 'slot' && isBoundary(value)
 }
 
-/** One zone member's own domain, by the name it is carried under — `zoneOf`'s four rules, each at its own node. */
+/** One zone member's own domain, by the name it is carried under — `zoneOf`'s five rules, each at its own node. **THE
+ *  FIFTH IS THE COLLAPSE** (`design-zone-collapse.md` §9): a non-boolean is REFUSED BY NAME, the way a fourth `status`
+ *  word and a non-boolean pane `collapsed` are one family over — so a caller meets a sentence rather than a member the
+ *  read then drops (`D-105`). */
 const zoneMemberAdmits = (member: string | undefined, value: unknown): boolean => {
   if (member === 'slot') return isBoundary(value)
   if (member === 'distance') return finiteNumber(value)
   if (member === 'size') return finiteNumber(value) && value >= 0
-  return member === 'display' && typeof value === 'string'
+  if (member === 'display') return typeof value === 'string'
+  return member === 'collapsed' && typeof value === 'boolean'
 }
 
 /** **THE ZONE FAMILY AT ONE NODE — the root's is the family WHOLE**, one member per zone id, each a record `zoneOf`
@@ -976,7 +999,7 @@ const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
 export const PANE_UNUSABLE_MESSAGE =
   'the pane geometry carries a member that is no geometry — no finite non-negative width or height, or a bounds pair of two finite numbers whose min does not exceed its max, or a zone the pane names that this record does not declare, or an index that is not a non-negative integer, or a collapsed that is not a boolean, or a status outside busy/waiting/done, or an updatedAt that is not a string, or a pane id this record does not declare'
 export const ZONE_UNUSABLE_MESSAGE =
-  'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses, or a zone id this record does not declare'
+  'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, a collapsed that is not a boolean, or a slot the crossing refuses, or a zone id this record does not declare'
 /** **THE THIRD SENTENCE — THE ONE `D-233`'S ITEM (4) OWED, AND IT NAMES THE FAMILY'S FAULT RATHER THAN THE ACT'S.** A family
  *  that ADMITS member by member and still leaves a DECLARED zone without a `size` is the state in which
  *  `driveLayoutRegions` writes no fixed dimension at all for that zone — *"a ZONE STATING NO size IS WRITTEN NOTHING: no

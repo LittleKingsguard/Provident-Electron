@@ -50,12 +50,15 @@
 //   · group `view`    — `AL-8`, `AL-10`, `AL-12`: all three write `['zones']` and none needs the driver channel; `AL-8`'s
 //     profile read and `AL-10`'s two markup reads are independent, and `AL-8` stands first because its file reading is a
 //     question about the SAME bytes `AL-10`'s pane write would move. **`AL-12` STANDS LAST BECAUSE IT MOVES THE ONE THING
-//     `AL-10`'s BASELINE READS**: `AL-10` reads the four zones' RECORDED figures and requires each of them in the markup,
-//     then takes one zone to NO figure and back — so the top zone's figure must be settled only after that reading is
-//     taken, and `AL-12`'s own subject is the LAST delivery this boot's record states, never a figure a sibling left
-//     behind. (Before `D-233` the parenthetical here said *"`AL-10` measures that a zone stating NO `size` is painted no
-//     dimension — so the top zone must acquire a `size` only after that reading is taken"*; the reading still exists and
-//     still stands first, one zone further in.)
+//     `AL-10`'s BASELINE READS**: `AL-10` reads the four zones' RECORDED figures and their COLLAPSE DERIVATION and requires
+//     each zone's own extent in the markup, then takes one zone to NO figure and back and drives a collapse and its
+//     restore — so the top zone's figure must be settled only after that reading is taken, and `AL-12`'s own subject is the
+//     LAST delivery this boot's record states, never a figure a sibling left behind. (Before `D-233` the parenthetical here
+//     said *"`AL-10` measures that a zone stating NO `size` is painted no dimension — so the top zone must acquire a `size`
+//     only after that reading is taken"*; before the zone-collapse rev it said the reading required each recorded figure IN
+//     THE MARKUP with no second input. Both readings still exist and both still stand inside this row — the figure arm one
+//     zone in, and the no-figure arm at (e) — and the re-grain is what stops the baseline claiming a figure for a rail the
+//     derivation collapses.)
 //   · group `driver`  — `AL-9`, `AL-11`: the two rows that need a body INSIDE the realm. ONE envelope, two acts.
 //
 // Five distinct boots, then (`skeleton`, `tabs`, `menus`, `view`, `driver`) — `5 < 12`, and the count is asserted at
@@ -2649,42 +2652,106 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `(\`D-194\`; a coincidence nothing derives is what the map replaced). Record: [${declaredPanes.join(', ')}]; markup: ` +
         `${tagById(html, PANE_MENUS) === null ? '(absent)' : 'present'}.`,
     ).toBe(true)
-    // ── THE BASELINE — THE FIGURE THE MARKUP CARRIES IS THE RECORD'S OWN, AND THE PAINT INVENTS NONE ──
-    // **THE CONTROL'S SUBJECT MOVED, AND IT IS NOT A FLIP** (`D-233`'s item (4)). It asserted *"a zone whose record states
-    // NO `size` is painted NO dimension: no fallback, no default, no authored height"* — a claim about the PAINT, read off a
-    // cold profile whose four zone records carried no `size` at all. **`D-233` CHANGED THE RECORD AND NOT THE PAINT**:
-    // `zones-must-stand` now states a declared default `size` per declared id (`DEFAULT_ZONE_SIZES`), so a cold profile's
-    // four zones are PRESENT on the first frame and the OLD premise — a boot whose zones state nothing — can no longer be
-    // constructed by anyone. **THE PROPERTY THAT STILL EXISTS, AND IS WHAT THIS ROW IS REALLY ABOUT, IS THAT THE PAINT
-    // WRITES THE RECORD'S FIGURE AND NO FIGURE OF ITS OWN**: for each of the four declared ids the record's `size` is read
-    // OVER THE WIRE and the markup must carry exactly that number on the axis that zone fixes. **NO FIGURE IS SPELLED
-    // HERE** (no row of this battery imports `src/**`, `D-27`), so the expectation is the live record's. **WHAT REDS IT**: a
-    // paint that writes no dimension at all (the class this control was written to catch); a paint whose figure the record
-    // does not state (a fallback, or a figure of the paint's own); an axis swapped — a `height` where the zone fixes a
-    // `width`; and a record that drifted off the table its own repair reads, because the two would disagree here.
+    // ── THE BASELINE — THE ZONE'S EXTENT IS THE RECORD'S, AND WHICH EXTENT THAT IS COMES FROM THE COLLAPSE DERIVATION ──
+    // **THE CONTROL'S SUBJECT MOVED A THIRD TIME, AND EACH MOVE WAS A CHANGE IN WHAT THE PAINT COMPOSES — NEVER A FLIP**
+    // (`D-233`'s item (4), then the zone-collapse rev's). AS FILED it asserted *"a zone whose record states NO `size` is
+    // painted NO dimension: no fallback, no default, no authored height"*, read off a cold profile whose four zone records
+    // carried no `size` at all. **`D-233` CHANGED THE RECORD AND NOT THE PAINT**: `zones-must-stand` now states a declared
+    // default `size` per declared id (`DEFAULT_ZONE_SIZES`), so a cold profile's four zones are PRESENT on the first frame
+    // and the OLD premise can no longer be constructed by anyone. THAT re-grain then read *"for each of the four declared
+    // ids the record's `size` is read over the wire and the markup carries exactly that number on the axis the zone
+    // fixes"* — and **THAT SENTENCE IS NOW WRONG ON THREE OF THE FOUR ZONES AT BOOT, WHICH IS WHY IT IS RE-GRAINED RATHER
+    // THAN DELETED**: the zone-collapse rev gives a zone TWO extents, and which one it presents is a DERIVATION over the
+    // record — `['zones', <id>, 'collapsed']` when the record states it, and otherwise *"collapsed iff no pane names the
+    // zone"* (`zoneCollapsedOf`, `design-zone-collapse.md` §1). **A zone presenting EXPANDED writes the record's figure on
+    // the axis it fixes and `auto` on the axis it arranges along; a zone presenting COLLAPSED writes `auto` on the fixed
+    // axis and `hidden` on the arrangement axis, and NO `${size}px` stands at all.** THE ROOT CAUSE OF THE OLD READING'S
+    // FAILURE IS THE POINT, NOT AN ACCIDENT: `pane-menus` and `pane-inspector` both name `top` and only `top`, so `top`
+    // presents EXPANDED and `bottom`, `left` and `right` present COLLAPSED BY DERIVATION — which is the user's *"an empty
+    // zone collapses by default"* read as geometry (`AZ-1` states exactly that, and this arm is its markup half).
+    //
+    // **THE DERIVATION IS RE-DERIVED HERE FROM THE TWO FAMILIES, NOT IMPORTED** (`D-27`: no row of this battery imports
+    // `src/**`, and this is precisely why the arm can be written at all — the rule is one sentence and the row spells it).
+    // **WHAT REDS IT**: a paint that drops a dimension; a paint whose figure the record does not state (a fallback, or a
+    // figure of the paint's own); an axis swapped — a `height` where the zone fixes a `width`; a zone that writes the
+    // RECORD'S FIGURE while presenting collapsed (the `${size}px` absence below); a zone that writes the two keywords while
+    // presenting expanded; and a record that drifted off the table its own repair reads, because the two would disagree
+    // here. **THE COLLAPSED ARM IS A RELATION AND NOT A FIGURE**: `auto`/`hidden` are the LAYOUT's words (`design-zone-collapse.md`
+    // §2/§3) and no record member carries them, so they are the two literals this row spells — carried beside the
+    // derivation that selects them, which is the shape the pane's three parts already use below.
     const AXIS_OF: Record<(typeof ZONE_IDS)[number], string> = { top: 'height', bottom: 'height', left: 'width', right: 'width' }
+    /** **THE AXIS EACH ZONE ARRANGES ALONG** — the complement of the one it fixes (`D-243`'s table, `D-258`'s axis-and-basis
+     *  clause): a `top`/`bottom` zone lays its panes out along `x`, a `left`/`right` zone along `y`. It is the axis the
+     *  collapsed extent takes to `hidden` and the expanded zone takes to `auto`. */
+    const ARRANGEMENT_AXIS_OF: Record<(typeof ZONE_IDS)[number], string> = { top: 'overflow-x', bottom: 'overflow-x', left: 'overflow-y', right: 'overflow-y' }
+    const ZONE_FIXED_WHEN_COLLAPSED = 'auto'
+    const ZONE_ARRANGEMENT_WHEN_COLLAPSED = 'hidden'
+    const ZONE_ARRANGEMENT_WHEN_EXPANDED = 'auto'
     const zonesRecord = recordOf(zonesRead.value)
-    const statedZones = ZONE_IDS.map((id) => ({ id, size: num(memberOf(memberOf(zonesRecord, id), 'size')) }))
+    const panesRecord = recordOf(panesRead.value)
+    /** **`zoneCollapsedOf`'s THREE ARMS, SPELLED AS THE ONE SENTENCE THE DESIGN STATES** (`design-zone-collapse.md` §1):
+     *  a record stating `collapsed` answers with it; a record stating nothing answers *"collapsed iff no pane names the
+     *  zone"*; and the stage names no zone, so `pane-a` counts for none (`docs/L1/app-layout.md` §4 `C-9`). The panes are
+     *  read off the RECORD and never off the tree — during a drag the preview re-parents real panes (`D-259`), which is why
+     *  the design refuses a tree-read derivation, and it is also why this row can read it over the wire. */
+    const zoneCollapsedFromRecord = (id: string): boolean => {
+      const stated = memberOf(memberOf(zonesRecord, id), 'collapsed')
+      if (stated === true) return true
+      if (stated === false) return false
+      return !declaredPanes.some((pane) => str(memberOf(memberOf(panesRecord, pane), 'zone')) === id)
+    }
+    const statedZones = ZONE_IDS.map((id) => ({ id, size: num(memberOf(memberOf(zonesRecord, id), 'size')), collapsed: zoneCollapsedFromRecord(id) }))
     expect(
       statedZones.every((zone) => zone.size !== null),
-      `AL-10 PREREQUISITE — every declared zone's record must STATE a \`size\`: this control is about the FIGURE the paint ` +
-        `writes, and a zone stating none is a different arm (the one below, driven where it is still reachable). Records ` +
-        `read: ${trunc(zonesRead.text)}`,
+      `AL-10 PREREQUISITE — every declared zone's record must STATE a \`size\`: this control is about the EXTENT the paint ` +
+        `composes, and a zone stating no figure is a different arm — the paint writes NOTHING for it, collapse included ` +
+        `(the arm at (e) below, driven where it is still reachable). Records read: ${trunc(zonesRead.text)}`,
     ).toBe(true)
-    /** Whether the markup carries each of those figures on its own axis — the predicate the bounded re-read below spends. */
-    const carriesRecordsFigures = (text: string): boolean =>
-      statedZones.every((zone) => styleDeclares(styleOf(text, zone.id), AXIS_OF[zone.id], `${String(zone.size)}px`))
+    // **THE PREREQUISITE THE RE-GRAIN ADDS, AND IT IS NOT DECORATION**: the arm below distinguishes two extents, so at least
+    // one zone must present each — otherwise a paint that hard-coded ONE of the two would pass on a tree that only ever
+    // shows it. The boot answers two and two (`top` expanded, three rails collapsed), which is the `AZ-1` reading; a tree
+    // that answered four of one kind would make half this clause unreachable and it reds here rather than passing quietly.
+    expect(
+      { expanded: statedZones.filter((zone) => !zone.collapsed).length, collapsed: statedZones.filter((zone) => zone.collapsed).length },
+      `AL-10 PREREQUISITE — the four declared zones must not all present the SAME extent, or this clause measures only half ` +
+        `of what it claims: \`top\` holds both zone-resident panes, so it presents EXPANDED while \`bottom\`/\`left\`/\`right\` ` +
+        `hold no pane and present COLLAPSED by derivation (\`AZ-1\`). Records read: ${trunc(zonesRead.text)}; panes read: ` +
+        `${trunc(panesRead.text)}, whose \`zone\` members are [${declaredPanes.map((pane) => pane + '=' + String(str(memberOf(memberOf(panesRecord, pane), 'zone')))).join(', ')}].`,
+    ).toEqual({ expanded: 1, collapsed: 3 })
+    /** Whether the markup presents each zone's OWN extent — the predicate the bounded re-read below spends. **THE FIGURE IS
+     *  READ OFF THE RECORD AND THE KEYWORDS OFF THE DESIGN**, each asserted beside the other, so neither can drift into an
+     *  opinion of the row's. */
+    const carriesEachZonesExtent = (text: string): boolean =>
+      statedZones.every((zone) => {
+        const style = styleOf(text, zone.id)
+        const fixed = AXIS_OF[zone.id]
+        const arrangement = ARRANGEMENT_AXIS_OF[zone.id]
+        if (zone.collapsed) {
+          return (
+            styleDeclares(style, fixed, ZONE_FIXED_WHEN_COLLAPSED) &&
+            styleDeclares(style, arrangement, ZONE_ARRANGEMENT_WHEN_COLLAPSED) &&
+            style !== null &&
+            !style.includes(`${String(zone.size)}px`)
+          )
+        }
+        return styleDeclares(style, fixed, `${String(zone.size)}px`) && styleDeclares(style, arrangement, ZONE_ARRANGEMENT_WHEN_EXPANDED)
+      })
     // **A DELIVERY IS NOT THIS ROW'S TURN, SO THE READING IS BOUNDED AND REPEATED** — the file's own rule (`D-165`,
     // `carrierWithin`'s reason). A sibling row of this group has already written one zone (`AL-8` states `bottom`), so the
     // record read above and the last paint are two instants, and the row waits for the paint rather than assuming it.
-    const painted = await surfaceWithin(booted.client, carriesRecordsFigures)
+    const painted = await surfaceWithin(booted.client, carriesEachZonesExtent)
     expect(
-      carriesRecordsFigures(painted.html),
-      `AL-10 — the four zones' markup must carry the RECORD's own \`size\` for each, on the axis that zone fixes: read ` +
-        `over ${String(painted.polls)} bounded re-read(s), the record stated ${textOf(statedZones)} and the nodes read ` +
-        `${textOf(ZONE_IDS.map((id) => [id, styleOf(painted.html, id)]))}. \`D-233\` makes the figure the declared ` +
-        `default the creation repair states rather than a paint of its own, so a paint that invents a fallback, drops the ` +
-        `dimension, or writes the other axis reds HERE.`,
+      carriesEachZonesExtent(painted.html),
+      `AL-10 — each declared zone's markup must present ITS OWN extent: THE RECORD'S FIGURE on the axis the zone fixes AND ` +
+        `\`${ZONE_ARRANGEMENT_WHEN_EXPANDED}\` on the axis it arranges along where the collapse derivation answers ` +
+        `EXPANDED, and \`${ZONE_FIXED_WHEN_COLLAPSED}\`/\`${ZONE_ARRANGEMENT_WHEN_COLLAPSED}\` with NO \`<size>px\` ` +
+        `standing anywhere where it answers COLLAPSED (\`design-zone-collapse.md\` §2/§3). Read over ` +
+        `${String(painted.polls)} bounded re-read(s): the record stated ${textOf(statedZones.map((zone) => ({ ...zone, fixed: AXIS_OF[zone.id], arrangement: ARRANGEMENT_AXIS_OF[zone.id] })))} ` +
+        `and the nodes read ${textOf(ZONE_IDS.map((id) => [id, styleOf(painted.html, id)]))}. \`D-233\` makes the figure the ` +
+        `declared default the creation repair states rather than a paint of its own, so a paint that invents a fallback, ` +
+        `drops the dimension, or writes the other axis reds HERE — AND ONE THAT IGNORES THE DERIVATION DOES TOO, in either ` +
+        `direction: a figure standing on a collapsed rail is the empty zone taking room it must not take, and a pair of ` +
+        `keywords on a zone holding two panes is a zone whose panes are gone.`,
     ).toBe(true)
     // ── (a) the top zone's rendered height FOLLOWS `['zones','top','size']` ──
     const firstZoneWrite = await writeAt(booted.client, [ZONES, ZONE_IDS[0], 'size'], 'mem', 40)
@@ -3086,6 +3153,15 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
       `AL-10 PREREQUISITE — the carrier must NAME the \`bottom\` zone's figure BEFORE the clear, or the absence below is a ` +
         `reading about a dead instrument (\`D-216\`). Carrier as read: ${trunc(beforeClear, 400)}`,
     ).not.toBe(null)
+    // **THE FAMILY VALUE IS READ BEFORE THE CLEAR, NOT AFTER IT**: the restore below re-states exactly the bytes this arm
+    // met, and a read taken after the `{}` write would re-state the empty record it is meant to undo.
+    const bottomFamilyRead = await readAt(booted.client, [ZONES, 'bottom'])
+    const bottomFamily = recordOf(bottomFamilyRead.value)
+    expect(
+      bottomFamily,
+      `AL-10 PREREQUISITE — the \`bottom\` zone's family value must be readable whole, because the restore below re-states ` +
+        `exactly these bytes: ${trunc(bottomFamilyRead.text)}`,
+    ).not.toBe(null)
     const cleared = await writeAt(booted.client, [ZONES, 'bottom'], 'mem', {})
     expect(
       str(asObject(cleared.value)?.['status']),
@@ -3108,23 +3184,138 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `\`bottom\`'s missing subject is one zone's and not a report that stopped. Carrier as read: ` +
         `${trunc(afterClear.carrier, 480)}`,
     ).not.toBe(null)
-    // AND THE FIGURE RETURNS WHEN THE RECORD STATES ONE AGAIN — the positive half of the same property, so the absent
-    // subject above cannot be a report that simply dropped the zone for good.
-    const restoreSize = statedZones.find((zone) => zone.id === 'bottom')?.size ?? null
-    expect(restoreSize, 'AL-10 PREREQUISITE — the figure to restore is the one the record stated before the clear').not.toBe(null)
-    const restored = await writeAt(booted.client, [ZONES, 'bottom', 'size'], 'mem', restoreSize)
+    // AND THE FIGURE COMES BACK WHEN THE RECORD STATES ONE AGAIN — the positive half of the same property, so the absent
+    // subject above cannot be a report that simply dropped the zone for good. **AND AT THIS HEAD THAT HALF CANNOT BE READ ON
+    // `bottom`, WHICH IS THE WHOLE RE-GRAIN AND NOT A RETREAT.** A zone's extent now has TWO inputs — the record's `size`
+    // (the MEMORY an expansion restores with zero writes) and the collapse derivation (`design-zone-collapse.md` §3) — and
+    // `bottom` holds no pane, so the derivation answers COLLAPSED and its restored figure is legitimately kept UNPAINTED
+    // behind `auto`. Restating it therefore proves the SUBJECT returns (the paint dimensions the zone again, at the extent
+    // the derivation selects) and cannot prove a figure returns; the figure's return is arm (f)'s, on the one zone at this
+    // boot that holds panes. **BOTH HALVES ARE ASSERTED, THE SUBJECT HERE AND THE FIGURE THERE**, so nothing is dropped.
+    const restoreSizeBottom = num(memberOf(bottomFamily, 'size'))
     expect(
-      str(asObject(restored.value)?.['status']),
+      restoreSizeBottom,
+      `AL-10 PREREQUISITE — the figure to restore is the one the record stated before the clear, read out of the family value ` +
+        `this arm met rather than out of the census table above: ${trunc(bottomFamilyRead.text)}`,
+    ).not.toBe(null)
+    const clearedRestore = await writeAt(booted.client, [ZONES, 'bottom'], 'mem', bottomFamily)
+    expect(
+      str(asObject(clearedRestore.value)?.['status']),
       `AL-10 — the restore must commit, so the state this row leaves behind is the state it met: ` +
-        `${trunc(restored.text, 320)}`,
+        `${trunc(clearedRestore.text, 320)}`,
     ).toBe('committed')
-    const back = await carrierWithin(booted.client, (carrier) => measuredFigure(carrier, 'bottom.height') === `${String(restoreSize)}px`)
+    const back = await carrierWithin(booted.client, (carrier) => measuredFigure(carrier, 'bottom.height') !== null)
     expect(
       measuredFigure(back.carrier, 'bottom.height'),
-      `AL-10 — and the zone's figure must be measured again once the record states it (${String(restoreSize)}), which is the ` +
-        `same property read from the other side: a paint that stopped dimensioning \`bottom\` at all would leave the absence ` +
-        `above true and this red. Carrier as read: ${trunc(back.carrier, 480)}`,
-    ).toBe(`${String(restoreSize)}px`)
+      `AL-10 — and the zone's SUBJECT must be measured again once the record states a figure, which is the same property read ` +
+        `from the other side: a paint that stopped dimensioning \`bottom\` at all would leave the absence above true and this ` +
+        `red. **THE VALUE IT IS MEASURED AT IS NOT PINNED HERE AND THE REASON IS THE DECLARATION'S OWN**: \`bottom\` holds no ` +
+        `pane, so the extent the paint composes is \`${ZONE_FIXED_WHEN_COLLAPSED}\`, and the carrier reports what the browser ` +
+        `computed for an empty rail — a CASCADE reading, not the record's figure, and pinning it would be defending the box ` +
+        `rather than the paint. What the FIGURE returns to is arm (f)'s reading, on the node the paint composes it for. ` +
+        `Carrier as read: ${trunc(back.carrier, 480)}`,
+    ).not.toBe(null)
+    const bottomBack = await surfaceWithin(booted.client, (text) => styleDeclares(styleOf(text, 'bottom'), AXIS_OF['bottom'], ZONE_FIXED_WHEN_COLLAPSED))
+    expect(
+      {
+        fixedAxisAuto: styleDeclares(styleOf(bottomBack.html, 'bottom'), AXIS_OF['bottom'], ZONE_FIXED_WHEN_COLLAPSED),
+        arrangementHidden: styleDeclares(styleOf(bottomBack.html, 'bottom'), ARRANGEMENT_AXIS_OF['bottom'], ZONE_ARRANGEMENT_WHEN_COLLAPSED),
+        noFigureStands: !new RegExp(`\\b${String(restoreSizeBottom === null ? '' : restoreSizeBottom)}px`).test(String(styleOf(bottomBack.html, 'bottom'))),
+      },
+      `AL-10 — AND THE RESTORED FIGURE IS KEPT AS MEMORY, NOT PAINTED: \`bottom\` states ${String(restoreSizeBottom)} again and ` +
+        `still holds no pane, so the derivation answers COLLAPSED and the node must read ` +
+        `\`${AXIS_OF['bottom']}: ${ZONE_FIXED_WHEN_COLLAPSED}\` + \`${ARRANGEMENT_AXIS_OF['bottom']}: ${ZONE_ARRANGEMENT_WHEN_COLLAPSED}\` ` +
+        `with NO \`${String(restoreSizeBottom)}px\` standing — collapsing never touches the record's \`size\` ` +
+        `(\`design-zone-collapse.md\` §3), which is precisely what makes the expansion cost ZERO writes. The node read ` +
+        `${String(styleOf(bottomBack.html, 'bottom'))}.`,
+    ).toEqual({ fixedAxisAuto: true, arrangementHidden: true, noFigureStands: true })
+    // ── (f) THE COLLAPSED EXTENT AND ITS RESTORE — THE FALSE ARM `design-zone-collapse.md` §9 OWES THIS ROW ─────────────
+    // **THE DESIGN'S OWN SENTENCE, DISCHARGED HERE RATHER THAN LEFT STANDING**: *"with `['zones','<id>','collapsed'] = true`
+    // the zone's fixed axis must read `auto` and its arrangement axis `hidden` while no `${size}px` stands, and the restore
+    // must re-assert the three parts byte-identically — a FALSE ARM owed to the row, not a new one."* **AND IT IS A FALSE
+    // ARM IN THE SENSE THE ROW ALREADY USES**: the state it forbids — a collapsed zone presenting a FIGURE — is the state a
+    // paint writes if it composes the extent from the record alone, and the state it forbids on the other side — an expanded
+    // zone presenting `auto` — is the state a paint writes if it composes it from the derivation alone and ignores the
+    // record. Both are reachable by a real `data.write`, so neither half is synthetic.
+    // **THE THREE PARTS ARE ONE READING**: the fixed axis's keyword, the arrangement axis's keyword and the RECORD'S FIGURE'S
+    // ABSENCE, then the restore re-asserting the same `style` bytes AND the attribute's removal (`D-253`'s absent arm — the
+    // one spelling of EXPANDED, \`design-zone-collapse.md\` §2). **THE FIGURE IS READ OFF THE RECORD ABOVE AND NEVER SPELLED**:
+    // `topBeforeClear` is the byte string the paint itself produced for the record's own figure, so the restore is compared
+    // against the PAINT's answer and not against this row's guess at one.
+    const topFamilyRead = await readAt(booted.client, [ZONES, ZONE_IDS[0]])
+    const topFamily = recordOf(topFamilyRead.value)
+    expect(
+      topFamily,
+      `AL-10 PREREQUISITE — the \`${ZONE_IDS[0]}\` zone's family value must be readable whole, because the arm's own restore ` +
+        `re-states exactly these bytes: ${trunc(topFamilyRead.text)}`,
+    ).not.toBe(null)
+    /** **THE BYTES THE PAINT COMPOSES FOR THIS ZONE IN ITS EXPANDED STATE** — read off the markup and never spelled, so the
+     *  restore below is compared against the PAINT's own answer for the record's own figure. */
+    const topBeforeClear = styleOf((await renderedHtml(booted.client)).html, ZONE_IDS[0])
+    expect(
+      topBeforeClear,
+      `AL-10 PREREQUISITE — the \`${ZONE_IDS[0]}\` zone must carry a style BEFORE the collapse, or "the bytes return" below ` +
+        `is a claim about nothing.`,
+    ).not.toBe(null)
+    const collapsedWrite = await writeAt(booted.client, [ZONES, ZONE_IDS[0], 'collapsed'], 'mem', true)
+    expect(
+      str(asObject(collapsedWrite.value)?.['status']),
+      `AL-10 PREREQUISITE — the collapse must commit (\`design-zone-collapse.md\` §9's four store sites admit the member): ` +
+        `\`data.write(['${ZONES}','${ZONE_IDS[0]}','collapsed'], tier:'mem', true)\` answered ${trunc(collapsedWrite.text, 320)}.`,
+    ).toBe('committed')
+    const collapsedPainted = await surfaceWithin(
+      booted.client,
+      (text) => styleDeclares(styleOf(text, ZONE_IDS[0]), AXIS_OF[ZONE_IDS[0]], ZONE_FIXED_WHEN_COLLAPSED),
+    )
+    const collapsedStyle = styleOf(collapsedPainted.html, ZONE_IDS[0])
+    const collapsedTag = tagById(collapsedPainted.html, ZONE_IDS[0])
+    expect(
+      {
+        fixedAxisAuto: styleDeclares(collapsedStyle, AXIS_OF[ZONE_IDS[0]], ZONE_FIXED_WHEN_COLLAPSED),
+        arrangementHidden: styleDeclares(collapsedStyle, ARRANGEMENT_AXIS_OF[ZONE_IDS[0]], ZONE_ARRANGEMENT_WHEN_COLLAPSED),
+        noFigureStands: collapsedStyle !== null && !/\d+px/.test(collapsedStyle),
+        attribute: collapsedTag === null ? null : attrOf(collapsedTag, 'collapsed'),
+      },
+      `AL-10 FALSE ARM — A COLLAPSED ZONE MUST PRESENT \`${ZONE_FIXED_WHEN_COLLAPSED}\` ON THE AXIS IT FIXES AND ` +
+        `\`${ZONE_ARRANGEMENT_WHEN_COLLAPSED}\` ON THE AXIS IT ARRANGES ALONG, WITH NO FIGURE STANDING ANYWHERE: the record ` +
+        `still states the figure it stated before the press — collapsing NEVER touches \`['${ZONES}','${ZONE_IDS[0]}','size']\` ` +
+        `(\`design-zone-collapse.md\` §3), it is the MEMORY an expansion restores with zero writes — so a paint that composed ` +
+        `the extent from the record alone would write that figure HERE and this red. **AND THE ATTRIBUTE IS THE SAME FACT**: ` +
+        `\`collapsed="true"\` on the zone is what the sheet's sibling rule reads, so a paint that wrote the two keywords and ` +
+        `left the attribute off would leave a collapsed zone whose control still paints ` +
+        `\`▾\`. The node read ${String(collapsedStyle)} over ${String(collapsedPainted.polls)} bounded re-read(s).`,
+    ).toEqual({ fixedAxisAuto: true, arrangementHidden: true, noFigureStands: true, attribute: 'true' })
+    const expandedWrite = await writeAt(booted.client, [ZONES, ZONE_IDS[0], 'collapsed'], 'mem', false)
+    expect(
+      str(asObject(expandedWrite.value)?.['status']),
+      `AL-10 PREREQUISITE — the expansion must commit, or the byte-identical return below measures a state the record never ` +
+        `reached: ${trunc(expandedWrite.text, 320)}`,
+    ).toBe('committed')
+    const expandedPainted = await surfaceWithin(booted.client, (text) => styleOf(text, ZONE_IDS[0]) === topBeforeClear)
+    const expandedTag = tagById(expandedPainted.html, ZONE_IDS[0])
+    expect(
+      { bytes: styleOf(expandedPainted.html, ZONE_IDS[0]), attributeRemoved: expandedTag === null ? null : attrOf(expandedTag, 'collapsed') },
+      `AL-10 FALSE ARM, THE OTHER SIDE — THE EXPANSION MUST RE-ASSERT THE THREE PARTS BYTE-IDENTICALLY: exactly the ` +
+        `\`style\` the paint composed before the collapse (${String(topBeforeClear)}) and NO \`collapsed\` attribute, ` +
+        `because the removal is the one spelling of EXPANDED (\`D-253\`'s absent arm). A paint that left the keywords in ` +
+        `place, or that restated the declaration with another order or an extra member, reds HERE — and so does one that ` +
+        `wrote \`collapsed="false"\`, which is a SECOND spelling of the same fact. Read over ` +
+        `${String(expandedPainted.polls)} bounded re-read(s): ${String(styleOf(expandedPainted.html, ZONE_IDS[0]))}.`,
+    ).toEqual({ bytes: topBeforeClear, attributeRemoved: null })
+    // AND THE FAMILY GOES BACK TO THE BYTES THIS ARM MET — the member this arm wrote leaves with it, so the state the row
+    // hands its siblings is the state it found (\`AL-12\` reads the same boot's carrier).
+    const familyRestored = await writeAt(booted.client, [ZONES, ZONE_IDS[0]], 'mem', topFamily)
+    expect(
+      str(asObject(familyRestored.value)?.['status']),
+      `AL-10 — and the family must return to the bytes this arm met, so the \`collapsed\` member the press wrote leaves with ` +
+        `the arm that wrote it: ${trunc(familyRestored.text, 320)}`,
+    ).toBe('committed')
+    const familyBack = await surfaceWithin(booted.client, (text) => styleOf(text, ZONE_IDS[0]) === topBeforeClear)
+    expect(
+      styleOf(familyBack.html, ZONE_IDS[0]),
+      `AL-10 — and the presentation must stand where the arm found it after that restore: ${String(topBeforeClear)} versus ` +
+        `${String(styleOf(familyBack.html, ZONE_IDS[0]))}.`,
+    ).toBe(topBeforeClear)
   }, ROW_MS)
 
   it('AL-12 — the figure the browser APPLIED equals the figure the record holds, read out of the measured carrier', async () => {

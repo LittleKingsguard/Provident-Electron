@@ -1516,6 +1516,39 @@ const DECLARED_SCOPE: readonly string[] = [
   //    order, `D-242`), with the indicator's three record words plus the DERIVED `updated` in §4. Neither page carries the other's
   //    subject, and a landing that wrote one of them and declared the other would be declaring a page it did not write.
   'docs/L3/renderer-wiring/design-pane-collapse.md',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── THE ZONE-COLLAPSE REV'S **TWO PATHS — A DESIGN PAGE AND ITS UNIT BATTERY — EACH DECLARED PER-PATH WITH ITS OWN
+  //    REASON** (`D-146`), and again **NOT ONE OF THEM ADMITTED BY A PREFIX**: `docs/L3/renderer-wiring/` and
+  //    `tests/unit/renderer-wiring/` are directories a later pass drops a page or a file into, and a declared directory
+  //    admits every one of them unnamed — `B-2`'s undeclared-sibling arm is what bites on the first one dropped.
+  //    **`B-1` REPORTED EXACTLY THESE TWO AS ITS OFFENDERS ON THIS TREE, AND NO OTHERS**: the other seven paths the same
+  //    dirty tree carries — `docs/L3/app-envelope/design.md`, `docs/L3/renderer-wiring/design-pane-collapse.md`,
+  //    `src/main/view-record/index.ts`, `src/renderer/index.html`, `src/renderer/renderer.ts`, `src/renderer/view-client.ts`,
+  //    `src/shared/demo-envelope.ts`, `src/shared/view-shape.ts` and `demo/pane-drag-demo/demo.mjs` — are each ALREADY
+  //    DECLARED ABOVE, so not one of them is re-listed here: a second spelling of a path already in the union is the
+  //    duplicate `B-1`'s own set assertion refuses.
+  //    **THE DESIGN PAGE IS `renderer-wiring`'s ZONE-COLLAPSE REV** — the derivation `zoneCollapsedOf` whose three arms are
+  //    one sentence (§1), the ONE branch in the zone arm and the one third operand on `panePaintOf` (§2), the collapsed
+  //    extent as `auto` plus the head row's thickness and the REFUSAL of a `DEFAULT_ZONE_COLLAPSED_SIZE` (§3), the rotated
+  //    sidebar lane with its four guarantees and the one pressability it excludes (§4), the preview composed from the
+  //    remembered `size` and the `false`-that-is-one-term override (§5), the sheet's three rules and the glyph's sibling
+  //    combinator (§6), the four authored controls and the census bill (§7), the two chained expand triggers and the
+  //    ordering that makes trigger (a) reachable (§8), and the rows it moves and owes (§9). **It is not a revision of
+  //    `design-pane-collapse.md` and not the same document one module over** — that page is the PANE's control and this one
+  //    is the ZONE's, which is the structural difference `design-zone-collapse.md` §8 draws between two controls over
+  //    nested boxes with two addresses and two tiers — so a landing that wrote one of them and declared the other would be
+  //    declaring a page it did not write.
+  'docs/L3/renderer-wiring/design-zone-collapse.md',
+  //    **AND THE UNIT BATTERY IS THE SAME REV'S `ZC-1`…`ZC-6`** (`tests/unit/renderer-wiring/zone-collapse.test.ts`): the six
+  //    rows that page §9 declares for the module's own signatures — the pure helper's four arms and its two degradations,
+  //    the zone arm's composition, the pane arm's effective collapse and its removal arm, the zone act's toggle of the
+  //    DERIVED negation, the pane act's branch that writes the ZONE's leaf and nothing at the pane's, and the chained pair
+  //    with its refused-zone-write abort. **IT IS A NEW FILE AND `git status` REPORTS IT AS ONE**, which is exactly the
+  //    reading `--untracked-files=all` exists for (`focus-retirement`'s measurement, `editSetFromWorkingTree`'s docblock):
+  //    a wholly untracked directory collapses to one line that names no file, and the only scope that could satisfy that
+  //    reading would be the DIRECTORY. **ITS `strata/modules.json` PATH CLAIM IS THE MAP'S, NOT THIS ROW'S** (`D-3`, `D-41`):
+  //    `renderer-wiring`'s row gains it in the same pass that files the unit, and this union takes no map edit to say so.
+  'tests/unit/renderer-wiring/zone-collapse.test.ts',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

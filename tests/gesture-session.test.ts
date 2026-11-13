@@ -1643,6 +1643,20 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   //    `src/renderer/**` or `src/main/**` path this list does not name STILL fails the row, and the positive control below
   //    still drives one.**
   'src/main/tier4-state.ts', // `D-117` — DELETED; the module-level projection no file under `src/` read
+  // **⟶ ADDED 2026-11-12 (THE `F-9(b)` REPAIR, RE-GRAINED BY `D-269`/`D-270` AND THE ZONE-COLLAPSE REV): THE
+  //    `renderer-wiring` UNIT'S OWN PATH — THE PAGE SHEET.** The pass that authored the PANE CONTROL BAR's head row, its
+  //    collapse control and the pane bodies (`D-269`, `D-270`) and then the FOUR ZONE COLLAPSE CONTROLS with their rotated
+  //    sidebar lane and their `+` sibling glyph rule (`docs/L3/renderer-wiring/design-zone-collapse.md` §6, §7) writes the
+  //    sheet — `src/renderer/index.html` — and that file is a SIBLING's declared path in its own right
+  //    (`design-zone-collapse.md` §6 says so in its own bytes: *"`src/renderer/index.html` IS THIS MODULE'S OWN PATH"*).
+  //    Until this entry stood here the row charged it to THIS unit, because it is under `src/renderer/` and on no
+  //    declaration — the identical over-broad class `E10`, `E3`, `D-89` and `D-101` each repaired before it.
+  //    **THE DENIED PREDICATE IS UNTOUCHED AND THE CONTROL STILL DRIVES IT**: a `src/renderer/**` path this list does not
+  //    name — `src/renderer/gesture-session-panel.ts`, the synthetic the positive control feeds the same instrument —
+  //    STILL fails the row, and `src/main/security.ts` is still charged to this unit below. What the row no longer claims
+  //    is that no sibling may ever touch the sheet, which was never this unit's to assert (`docs/specs/gutter.md` §5.1's
+  //    commit-range scope rule).** */
+  'src/renderer/index.html', // `D-269`/`D-270` + `design-zone-collapse.md` §6 — the page sheet, `renderer-wiring`'s own path
   // **THE PREDICATE STILL BITES AND THE CONTROL BELOW STILL DRIVES IT**: the exclusion is a PATH-BY-PATH list, so a
   // `src/renderer/**` or `src/main/**` path that no declaration names — `src/main/security.ts`, or the synthetic
   // `src/renderer/gesture-session-panel.ts` the control two paragraphs down feeds to the same instrument — is STILL

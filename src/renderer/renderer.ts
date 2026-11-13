@@ -13,7 +13,7 @@ import { createTabsClient, NEW_TAB_TARGET_PREFIX, type TabsClient, type TabsClie
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DECLARED_PANE_IDS, DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, INSPECTOR_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, paneGeometryIn, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DECLARED_PANE_IDS, DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, INSPECTOR_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, paneGeometryIn, zoneIn, type ViewPaneGeometry, type ViewThemeRecord, type ViewZone } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -610,6 +610,45 @@ function zoneExtentOf (axis: 'x' | 'y'): number | null {
 function zoneMemberOf (zoneId: string): 'height' | 'width' | null {
   const held = LAYOUT_ZONE_AXES.find((entry) => entry.id === zoneId)
   return held === undefined ? null : held.member
+}
+
+/** **IS THIS ZONE COLLAPSED — THE ONE FACT THREE READERS ASK, ANSWERED FROM THE RECORD AND FROM THE OTHER FAMILY**
+ *  (`design-zone-collapse.md` §1, `§2`'s `Z1`–`Z3`; `D-262`'s one-fact-four-readers discipline).
+ *
+ *  **THE RECORD'S WORD WINS WHERE IT STATES ONE, AND "BY DEFAULT" IS A DERIVATION AND NOT A WRITER.** `collapsed === true`
+ *  answers collapsed and `collapsed === false` answers expanded — which is the whole reason the member exists at all: a
+ *  person who expands an EMPTY zone must keep it expanded, and a derivation cannot remember a disagreement (`D-129`: a state
+ *  the delivery cannot read is a state the next delivery overrules). Where the record states NOTHING the derived default
+ *  answers: **COLLAPSED IFF NO PANE NAMES THE ZONE** (`pane.zone === zoneId`; the stage names no zone and counts for none,
+ *  `docs/L1/app-layout.md` §4 `C-9`), so an empty zone presents collapsed on the first frame with no writer having spoken —
+ *  and it is still reachable, because its control is a sibling with its own `14px`.
+ *
+ *  **THE RECORD IS THE INPUT AND THE TREE IS NOT.** `pane.zone` is read off the FAMILY and never off the rendered parent:
+ *  a drag's preview re-parents real panes (`D-259`), so a tree-read derivation would answer a fact no release had made
+ *  (`D-260`'s class, one family over) — and `D-266` measured a zone keeping a departed child in its emitted order, which is
+ *  the same hazard on the paint's side.
+ *
+ *  **AND THE FOURTH THING IT IS NOT: THE PANE'S OWN `collapsed`.** Emptiness lives in the OTHER family — `D-186` forbids a
+ *  repair to read `['zones']` and its mirror holds — so no member of a PANE moves this answer; a collapsed pane inside an
+ *  expanded zone leaves the ZONE expanded, because the two are two authorities over two boxes (`D-129`).
+ *
+ *  **AN ID THE RECORD DOES NOT DECLARE IS NO ZONE** (`zoneIn`'s `null`, `D-91`) and answers EXPANDED: the closed four are the
+ *  only ids this family answers for, and a zone the record does not declare is not a zone to collapse. **IT IS PURE AND
+ *  EXPORTED** — the standing of `paneStatusOf`, and the door the six unit rows reach it through (`D-45`: `panePaintOf`,
+ *  `driveLayoutRegions` and `drivePaneHeads` stay private). */
+export function zoneCollapsedOf (
+  records: readonly ViewZone[],
+  panes: readonly ViewPaneGeometry[],
+  zoneId: string,
+): boolean {
+  // Z1 — AN ID THE RECORD DOES NOT DECLARE IS NO ZONE, and the answer is the stated absence and not a default.
+  const held = zoneIn(records, zoneId)
+  if (held === null) return false
+  // Z2 — THE RECORD'S OWN WORD, WHERE IT STATES ONE. Either arm overturns the derivation below.
+  if (held.collapsed === true) return true
+  if (held.collapsed === false) return false
+  // Z3 — THE DERIVED DEFAULT: EMPTY ⇒ COLLAPSED, over the FAMILY and never over the tree.
+  return panes.every((pane) => pane.zone !== zoneId)
 }
 
 /** **WHAT THE WIRING READ FOR ONE HANDLE** — its authored id, the SUBJECT it addresses (`paneId`, carrying the record's
@@ -1880,6 +1919,23 @@ async function main(): Promise<void> {
         `of \`${PANE_COLLAPSE_IDS.join('`, `')}\` took a body and ${String(paneCollapse.attached)} took a listener, so a press or a dispatch may reach no act`,
     )
   }
+  // ⟶ **AND THE ZONE'S OWN FOUR CONTROLS, ON THE SAME REGISTRATION AND THE SAME STANDING** (`design-zone-collapse.md` §2's
+  //    `C1`–`C4`: four authored ids, one live body under each node's own `('zone-collapse','click')` pair, one `click` for
+  //    the human cause). **IT WRITES NO RECORD AND SENDS NO ROUTE** — the act is a press's — so no boot step moves, and the
+  //    graph bytes it does write are one `handlers` layer per control. **ITS TWO READINGS ARE READ**, the pane control's own
+  //    rule (`D-117`): a zone control that never took a body or never took a listener is a zone a person cannot collapse and
+  //    an agent cannot dispatch, and that is said out loud where it happens.
+  const zoneCollapse = installZoneCollapse(runtime)
+  if (
+    zoneCollapse.controls !== ZONE_COLLAPSE_IDS.length ||
+    zoneCollapse.installed !== zoneCollapse.controls ||
+    zoneCollapse.attached !== zoneCollapse.controls
+  ) {
+    console.error(
+      `[provident-renderer] the zone collapse control is NOT fully wired — ${String(zoneCollapse.installed)}/${String(zoneCollapse.controls)} ` +
+        `of \`${ZONE_COLLAPSE_IDS.join('`, `')}\` took a body and ${String(zoneCollapse.attached)} took a listener, so a press or a dispatch may reach no act`,
+    )
+  }
   if (
     paneMove.drops !== PANE_MOVE_DROP_IDS.length ||
     paneMove.installed !== paneMove.drops ||
@@ -2810,8 +2866,44 @@ async function paneMoveAct(
   }
   // X2 — THE PLACEMENT: the destination zone the drop names, and the place among the panes the pointer names.
   const placed = paneArrangementOf(panes, paneId, zoneId, paneMoveLandingOf(runtime, zoneId, paneId, point, panes))
+  // ⟶ **X2a — TRIGGER (a): A DROP INTO A COLLAPSED ZONE EXPANDS THE ZONE FIRST, AND THE PAIR IS CHAINED IN THIS ORDER AND
+  //    GATED ON THE ANSWER** (`design-zone-collapse.md` §8). A drop into a collapsed zone has to make the zone presentable
+  //    before the relocation can be seen, and **THE CHAIN STANDS AHEAD OF `X3b`'s NO-OP TEST, WHICH IS THE WHOLE OF THIS
+  //    HUNK'S PLACE**: a drop into the collapsed zone the pane ALREADY names composes a placement that AGREES with the record,
+  //    so `X3b` would return before any write and the zone would stay collapsed while the preview had already drawn it
+  //    expanded — the divergence `D-260` is named for.
+  //    **THE ORDER IS THE SAFETY AND `X3b` KEEPS ITS ONE MEANING**: the zone's member and the pane family are TWO addresses at
+  //    TWO tiers, so no single write carries both and the corpus's "one write and not a pair" rule is INAPPROPRIATE here
+  //    rather than overruled (`D-142`, `D-249` §3). `['zones', <zone>, 'collapsed'] = false` FIRST, and the pane's
+  //    whole-family write ONLY IF that answer is `committed`: a refusal at the zone leaves the panes exactly where they stand
+  //    — an open zone and an unmoved pane, retryable — while the inverse order would land a relocation nobody can see.
+  //    **AND `X3b` THEN ANSWERS `true` WHERE THE ZONE'S EXPANSION WAS THE ACT**, because the preview already stands on a
+  //    record that now agrees with it. Both writes are `D-117`'s register, and the act's `true` keeps its one meaning.
+  let openedZone = false
+  if (zoneCollapsedOf(paneMoveZonesOf(), panes, zoneId)) {
+    let opened: unknown = null
+    try {
+      opened = await dataRoute('write', { path: ['zones', zoneId, 'collapsed'], tier: 'mem', value: false })
+    } catch (error) {
+      console.error(`[provident-renderer] pane move: the write at ['zones', '${zoneId}', 'collapsed'] threw — ${String(error)}`)
+      return false
+    }
+    const opening = opened !== null && typeof opened === 'object' ? (opened as Record<string, unknown>) : {}
+    const openedStatus = typeof opening['status'] === 'string' ? opening['status'] : 'no-answer'
+    if (openedStatus === 'refused') {
+      console.error(
+        `[provident-renderer] pane move: the write at ['zones', '${zoneId}', 'collapsed'] was REFUSED (${String(opening['reason'])}): ${String(opening['message'])}`,
+      )
+      return false
+    }
+    if (openedStatus !== 'committed') {
+      console.warn(`[provident-renderer] pane move: the write at ['zones', '${zoneId}', 'collapsed'] answered \`${openedStatus}\`, so the store's answer is unread`)
+      return false
+    }
+    openedZone = true
+  }
   // X3b — A PLACEMENT THAT AGREES WITH THE RECORD IS A DROP WHERE THE PANE ALREADY STANDS, AND IT WRITES NOTHING.
-  if (panePlacementOf(placed) === panePlacementOf(panes)) return false
+  if (panePlacementOf(placed) === panePlacementOf(panes)) return openedZone
   const value = paneFamilyValueOf(placed, paneId)
   // X3 — ONE WRITE AT THE FAMILY'S OWN ADDRESS, THROUGH THE REALM'S OWN PASSTHROUGH.
   let written: unknown = null
@@ -2864,9 +2956,39 @@ async function paneCollapseAct (runtime: Runtime, nodeId: string): Promise<boole
   }
   const paneId = pane.held
   // X1 — THE STANDING RECORD, OUT OF THE SHAPE THIS REALM HOLDS. No route is asked and no default stands in.
-  const standing = paneMovePanesOf().find((entry) => entry.id === paneId)
+  const panes = paneMovePanesOf()
+  const standing = panes.find((entry) => entry.id === paneId)
   if (standing === undefined) {
     console.error(`[provident-renderer] pane collapse: the record names no pane \`${paneId}\`, so nothing was written and nothing was invented`)
+    return false
+  }
+  // ⟶ **X1b — INSIDE A COLLAPSED ZONE THE PRESENTATION THAT MUST CHANGE IS THE ZONE'S, SO THIS PRESS WRITES THE ZONE'S LEAF
+  //    AND NOTHING AT THE PANE'S** (`design-zone-collapse.md` §8, trigger (b); `design-pane-collapse.md` §1's `X1b`).
+  //    **THE GLYPH IS WHAT MAKES IT HONEST**: while its zone is collapsed a pane's painted `collapsed` is the EFFECTIVE one
+  //    (`driveLayoutRegions`' pane arm), so its head reads `▸` and the press a person makes IS an open — one control, one
+  //    act, chosen by the state its own glyph already shows. A pane that was ITSELF collapsed keeps its own member, so after
+  //    the zone expands its head reads `▸` again and the next press is `X2`'s.
+  //    **AND THE BRANCH IS TRIGGERED BY A READ OF THE ZONE'S RECORD, NEVER BY THE PANE'S WRITE**: no act calls another, no
+  //    delivery is required to settle a state, and each record stays the one authority over its own member (`D-129`).
+  const standingZone = typeof standing.zone === 'string' ? standing.zone : ''
+  if (standingZone !== '' && zoneCollapsedOf(paneMoveZonesOf(), panes, standingZone)) {
+    let opened: unknown = null
+    try {
+      opened = await dataRoute('write', { path: ['zones', standingZone, 'collapsed'], tier: 'mem', value: false })
+    } catch (error) {
+      console.error(`[provident-renderer] pane collapse: the write at ['zones', '${standingZone}', 'collapsed'] threw — ${String(error)}`)
+      return false
+    }
+    const opening = opened !== null && typeof opened === 'object' ? (opened as Record<string, unknown>) : {}
+    const openedStatus = typeof opening['status'] === 'string' ? opening['status'] : 'no-answer'
+    if (openedStatus === 'committed') return true
+    if (openedStatus === 'refused') {
+      console.error(
+        `[provident-renderer] pane collapse: the write at ['zones', '${standingZone}', 'collapsed'] was REFUSED (${String(opening['reason'])}): ${String(opening['message'])}`,
+      )
+      return false
+    }
+    console.warn(`[provident-renderer] pane collapse: the write at ['zones', '${standingZone}', 'collapsed'] answered \`${openedStatus}\`, so the store's answer is unread`)
     return false
   }
   // X2 — THE ONE DERIVATION: the record says collapsed, not a cache.
@@ -2953,6 +3075,172 @@ export function installPaneCollapse (runtime: Runtime): { readonly controls: num
     if (wiring.attached) attached += 1
   }
   return { controls: PANE_COLLAPSE_IDS.length, installed, attached }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE ZONE'S OWN COLLAPSE — ONE PREDICATE ABOVE (shared with the two paint arms), ONE ACT, FOUR AUTHORED CONTROLS
+// (`docs/L3/renderer-wiring/design-zone-collapse.md` §1–§2, §7–§8; `app-envelope` rev 8 §11's `A-11`)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **WHAT ONE ZONE COLLAPSE INSTALLATION ANSWERED** — the controls it walked, and how many took each of their two causes
+ *  (`C3`'s installed body for `provident.dispatch`, `C4`'s `click` for a person). Returned so the boot's one site can say a
+ *  control is missing or half-wired out loud, the standing `installPaneCollapse` already takes (`D-117`). */
+export interface ZoneCollapseControls {
+  readonly controls: number
+  readonly installed: number
+  readonly attached: number
+}
+
+/** **THE FOUR ZONE COLLAPSE CONTROLS' AUTHORED IDS — one per zone, LITERALS at both ends** (`app-envelope` rev 8 §11:
+ *  `top-collapse`, `bottom-collapse`, `left-collapse`, `right-collapse`). The wiring needs them as a census to install the
+ *  act on each, and NO entry carries a RECORD id: that operand is read OFF EACH NODE's `props.zone` at press time (`C2`),
+ *  which is what keeps this list a list of NODES and nothing else (`D-41`, `D-188` debt 2).
+ *  **THE FOUR ARE THEIR ZONES' FOLLOWING SIBLINGS AND NEVER THEIR CHILDREN** (`app-envelope` §11's three measured reasons):
+ *  `paintStyle` replaces a zone's `css.style` whole so a zone can state no placement for a child, a zone dragged to
+ *  `size: 0` would bury a child's control in a box nothing can press (`D-244` §2), and `driveZoneArrangement` re-anchors
+ *  every pane standing inside a zone — so a child of a zone is a SUBJECT of the arrangement turn and an affordance must never
+ *  be one (`D-259`, `D-262`). **THAT SIBLINGSHIP IS ALSO WHAT THE SHEET'S GLYPH RULE READS** (`index.html`'s
+ *  `[collapsed="true"] + .zone-collapse::before`), so the placement and the rule are one landing. */
+const ZONE_COLLAPSE_IDS: readonly string[] = ['top-collapse', 'bottom-collapse', 'left-collapse', 'right-collapse']
+
+/** **THE ONE AUTHORED PAIR EVERY ZONE CONTROL CARRIES** — the `('zone-collapse','click')` the envelope authors as a no-op and
+ *  this turn replaces with the live body, so `provident.dispatch` reaches the act (`D-239`). It is a DIFFERENT pair from the
+ *  pane control's (`PANE_COLLAPSE_HANDLER`), which is the structural statement that these are two controls over two boxes. */
+const ZONE_COLLAPSE_HANDLER = 'zone-collapse'
+
+/** **THE ZONES FAMILY AS THIS REALM HOLDS IT — `paneMovePanesOf`'s shape one family over, and asked for its own reason**
+ *  (`D-129`: a remembered family is a second answer beside the record). It reads the client's ADOPTED shape, which is the
+ *  one copy of the family in this realm (`D-117`), and it is TOTAL: a throwing client, a shape with no `zones` list and a
+ *  row that is no object each contribute nothing, so a realm with no record answers an EMPTY family and every caller's own
+ *  absence arm stands. **NO DEFAULT IS INVENTED HERE** (`D-174`): a zone the record does not state is a zone `zoneIn`
+ *  answers `null` for, and `zoneCollapsedOf` answers EXPANDED for it. */
+function paneMoveZonesOf (): readonly ViewZone[] {
+  let shape: unknown = null
+  try {
+    shape = getViewClient().shape()
+  } catch {
+    return []
+  }
+  const zones = (shape as { readonly zones?: unknown } | null | undefined)?.zones
+  if (!Array.isArray(zones)) return []
+  const held: ViewZone[] = []
+  for (const entry of zones as readonly unknown[]) {
+    if (entry === null || entry === undefined || typeof entry !== 'object') continue
+    held.push(entry as ViewZone)
+  }
+  return held
+}
+
+/** **THE ZONE COLLAPSE ACT — ONE LEAF WRITE AT THE ZONE'S OWN RECORD, AND NOTHING ELSE** (`design-zone-collapse.md` §2's
+ *  `X1`–`X4`).
+ *  **`X1` — THE TWO FAMILIES COME FROM THE SHAPE THIS REALM ALREADY HOLDS**, and a shape carrying no `zones` list is the
+ *  *"no record, no act, nothing invented"* arm: no second `data.read` stands here, because a fresh read would be a second
+ *  answer to a question the delivery has already answered and the two could disagree inside one press (`D-129`).
+ *  **`X2` — THE TOGGLE IS OF THE DERIVATION AND NOT OF THE RECORD'S ABSENT MEMBER** (§1): a toggle of `undefined` would be a
+ *  SECOND default standing in the act, and pressing a collapsed-by-default rail would write `true` and leave an empty zone a
+ *  person just expanded collapsing again. So an empty zone stating nothing writes `false`, the record then STATES the
+ *  disagreement, and the next press writes `true` — **NO PRESS IS A NO-OP** (`D-235`'s rule), on a cold profile or on the
+ *  tenth boot.
+ *  **`X3` — ONE LEAF AT `['zones', <zone>, 'collapsed']`, AT THE FAMILY'S OWN `mem`** (`D-91`): exactly one address, exactly
+ *  one member, and never `display`, which is the OTHER extreme member written by an outside writer and offered no
+ *  affordance (§1, `D-244` §5).
+ *  **`X4` — NO PAINT, NO RE-READ, NO POLL** (`D-82` clause 4): the record's own push repaints, so the act's whole bill is the
+ *  one route write. **ITS ANSWER IS `true` ONLY WHERE THE STORE SAID `committed`**, and every other arm is REPORTED in
+ *  `D-117`'s register — a refusal with its `reason` and `message` verbatim, an unreadable answer as a warning, a commit in
+ *  silence. */
+async function zoneCollapseAct (runtime: Runtime, nodeId: string): Promise<boolean> {
+  // X1 — THE RECORD ID OFF THE NODE (`props.zone`, the drops' own operand pattern), then the two families off the shape.
+  const zone = authoredPropOf(runtime, nodeId, 'zone')
+  if (!zone.readable || typeof zone.held !== 'string' || zone.held === '') {
+    console.error(`[provident-renderer] zone collapse: the control on ${nodeId} states no readable \`zone\`, so no act was attempted`)
+    return false
+  }
+  const zoneId = zone.held
+  const zones = paneMoveZonesOf()
+  const panes = paneMovePanesOf()
+  // X2 — THE TOGGLE IS THE NEGATION OF THE DERIVED ANSWER, never of the record's absent member.
+  const next = !zoneCollapsedOf(zones, panes, zoneId)
+  // X3 — ONE LEAF WRITE, THROUGH THE REALM'S OWN PASSTHROUGH.
+  let written: unknown = null
+  try {
+    written = await dataRoute('write', { path: ['zones', zoneId, 'collapsed'], tier: 'mem', value: next })
+  } catch (error) {
+    console.error(`[provident-renderer] zone collapse: the write at ['zones', '${zoneId}', 'collapsed'] threw — ${String(error)}`)
+    return false
+  }
+  const answer = written !== null && typeof written === 'object' ? (written as Record<string, unknown>) : {}
+  const status = typeof answer['status'] === 'string' ? answer['status'] : 'no-answer'
+  if (status === 'committed') return true
+  if (status === 'refused') {
+    console.error(
+      `[provident-renderer] zone collapse: the write at ['zones', '${zoneId}', 'collapsed'] was REFUSED (${String(answer['reason'])}): ${String(answer['message'])}`,
+    )
+    return false
+  }
+  console.warn(`[provident-renderer] zone collapse: the write at ['zones', '${zoneId}', 'collapsed'] answered \`${status}\`, so the store's answer is unread`)
+  return false
+}
+
+/** **THE ZONE CONTROL'S ONE INSTALLED HANDLER BODY — THE AGENT'S ARM** — and ONE `click` for the human's, both calling the SAME
+ *  act: one act, two causes (`AL-3`, `D-239`). It is `installPaneCollapseHandler`'s shape exactly, one node class out, and the
+ *  body answers its own short word and never the act's promise (a body's return crosses `JSON.stringify` into `dispatch`'s
+ *  `results`, `D-209`'s cost (ii)). */
+function installZoneCollapseHandler (runtime: Runtime, nodeId: string): { readonly installed: boolean; readonly attached: boolean } {
+  const body = (): string => {
+    void zoneCollapseAct(runtime, nodeId)
+    return 'zone collapse'
+  }
+  let installed = false
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: nodeId,
+      mutation: [{ targetProp: 'handlers', mode: 'replace', value: [{ name: ZONE_COLLAPSE_HANDLER, event: 'click', body }] }],
+    })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    installed = status === 'applied'
+    if (!installed) console.error(`[provident-renderer] zone collapse: the control on ${nodeId} refused its installed handler (status=${status})`)
+  } catch (error) {
+    console.error(`[provident-renderer] zone collapse: the install on ${nodeId} threw; an agent's dispatch reaches no act there`, error)
+  }
+  // THE HUMAN'S ARM: the same body on the same authored pair; a node that will not resolve or will not take a listener
+  // attaches nothing and throws nothing (`D-127`).
+  let attached = false
+  let element: unknown = null
+  try {
+    element = runtime.elementForNodeId(nodeId)
+  } catch {
+    element = null
+  }
+  const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+  if (typeof add === 'function') {
+    try {
+      ;(add as (type: string, handler: () => void) => void).call(element, 'click', body)
+      attached = true
+    } catch {
+      attached = false
+    }
+  }
+  return { installed, attached }
+}
+
+/** **`installZoneCollapse(runtime)`: THE FOUR ZONE CONTROLS, THE ONE ACT** (`design-zone-collapse.md` §2's `C1`–`C4`).
+ *  It walks the FOUR AUTHORED IDS (`ZONE_COLLAPSE_IDS`) and, for each, installs the live body under the node's own authored
+ *  pair (`('zone-collapse','click')`) plus ONE `click` listener for the human cause. **IT WRITES NO RECORD AND SENDS NO
+ *  ROUTE**: the act is a press's, so a boot that is never pressed cannot move `tests/e2e/bundle-boot-seam`'s `B-5` order —
+ *  the same standing `installPaneCollapse` has — and the graph bytes it does write are one `handlers` layer per control.
+ *  **THE RECORD ID IS NOT CARRIED HERE**: `C2` reads it OFF THE NODE inside the act, so this turn never holds a table of
+ *  zone ids beside the four literals (`D-41`, `D-188` debt 2). **BOTH READINGS ARE RETURNED** so the boot's one site can say
+ *  out loud that a control is missing or took only one of its two causes (`D-117`). */
+export function installZoneCollapse (runtime: Runtime): ZoneCollapseControls {
+  let installed = 0
+  let attached = 0
+  for (const nodeId of ZONE_COLLAPSE_IDS) {
+    const wiring = installZoneCollapseHandler(runtime, nodeId)
+    if (wiring.installed) installed += 1
+    if (wiring.attached) attached += 1
+  }
+  return { controls: ZONE_COLLAPSE_IDS.length, installed, attached }
 }
 
 /** **THE HEAD ARM — ONE `props.status` WRITE PER PANE PER DELIVERY, RE-DERIVED FROM THE RECORD EVERY TIME** (`design-pane-
@@ -3108,11 +3396,23 @@ function paneMoveStyleOf (element: unknown): { readonly set: (property: string, 
   }
 }
 
-/** **THE PREVIEW'S ONE WRITER** — both declarations of one kind on one element, by property NAME (`PANE_MOVE_PREVIEW`). */
-function paneMovePreviewWrite(element: unknown, kind: 'zone' | 'drop'): void {
+/** **THE PREVIEW'S ONE WRITER** — both declarations of one kind on one element, by property NAME (`PANE_MOVE_PREVIEW`),
+ *  plus, where a caller names one, THE ZONE'S OWN EXTENT.
+ *  **THE EXTENT IS THE COLLAPSED ZONE'S REMEMBERED FIGURE, AND IT IS THE THIRD ARGUMENT BECAUSE IT IS NOT A CONSTANT**
+ *  (`design-zone-collapse.md` §5): the two outline declarations are the same two on every zone, while `${member}: ${size}px`
+ *  names the member THAT zone fixes and the figure ITS RECORD REMEMBERS — so a table here would be a second authority beside
+ *  `['zones', <id>, 'size']` and would be right for one zone and false for three (`D-129`, `D-174`). The property name is
+ *  `zoneMemberOf`'s answer, which is the SAME member the delivery will paint on that node, so the preview cannot move a box
+ *  that snaps back on the next delivery (`D-238`'s class one layer up). */
+function paneMovePreviewWrite(
+  element: unknown,
+  kind: 'zone' | 'drop',
+  extent: { readonly property: string; readonly text: string } | null = null,
+): void {
   const style = paneMoveStyleOf(element)
   if (style === null) return
   for (const declaration of PANE_MOVE_PREVIEW[kind]) style.set(declaration.property, declaration.text)
+  if (extent !== null) style.set(extent.property, extent.text)
 }
 
 /** **THE PREVIEW'S ONE CLEARER — THE RELEASE, THE CANCEL AND A NEW PRESS ALL END HERE**, and it removes exactly the
@@ -3120,10 +3420,30 @@ function paneMovePreviewWrite(element: unknown, kind: 'zone' | 'drop'): void {
  *  `css.style` (the zone's) is what stands afterwards. **THIS IS HOW THE PREVIEW IS CLEARED ON RELEASE** (`D-216`'s
  *  rule: nothing paints without an event — the preview is the DRAG's own transient, written by a pointer event and
  *  cleared by the pointer event that ends it, and the record's own push paints from there). */
-function paneMovePreviewClear(element: unknown, kind: 'zone' | 'drop'): void {
+function paneMovePreviewClear (element: unknown, kind: 'zone' | 'drop', properties: readonly string[] = []): void {
   const style = paneMoveStyleOf(element)
   if (style === null) return
   for (const declaration of PANE_MOVE_PREVIEW[kind]) style.remove(declaration.property)
+  // **AND THE ZONE'S EXTENT, BY NAME** (`design-zone-collapse.md` §5): the member the writer stated is the member this
+  // removes, so a non-committing end returns a collapsed zone to `auto` with NOTHING REMEMBERED — no flag, no second
+  // transient, and no write to any record (`D-249`'s measured property, one family over).
+  for (const property of properties) style.remove(property)
+}
+
+/** **A COLLAPSED ZONE'S REMEMBERED EXTENT, AS ONE PREVIEW DECLARATION — OR `null` WHERE THE RECORD STATES NO FIGURE.**
+ *  **"NEAR" IS THE DROP'S OWN BOX, COMPOSED FROM THE REMEMBERED `size`** (`design-zone-collapse.md` §5): a collapsed zone's
+ *  PRESENTED extent is one head row and an empty one's is nothing at all, so a band composed from the presented extent would
+ *  be a `14px` sliver in a `top` band and NOTHING over an empty rail — the one zone a person most wants to drop into would
+ *  be unhittable by construction. The design closes it by making the ZONE'S OWN EXTENT the preview's subject, so the
+ *  pointer's target and the picture it draws are one band and the band is never the sliver (`D-250`'s own defect class,
+ *  refused). **`null` IS THE STATED ABSENCE AND NEVER A FALLBACK** (`D-174`): a zone whose record states no figure has no
+ *  remembered extent to expand to, so nothing is previewed on it and the commit is still the record's. */
+function paneMoveZoneExtentOf (zoneId: string): { readonly property: string; readonly text: string } | null {
+  const member = zoneMemberOf(zoneId)
+  if (member === null) return null
+  const remembered = paneMoveZoneFigures().get(zoneId)
+  if (remembered === undefined) return null
+  return { property: member, text: `${String(remembered)}px` }
 }
 
 /** **THE SIX BOX PROPERTIES THE DRAG OWNS ON A DROP, AND THE ONE THAT MAKES IT VISIBLE** (`D-249` defect: the drops' boxes
@@ -3711,8 +4031,23 @@ function declarationSetOf (text: string): ReadonlySet<string> {
  *  **ITS ANSWER IS HOW MANY PANES IT PAINTED, AND ITS ONE READER IS THE GESTURE'S RE-ANCHOR** — the count joins
  *  `driveZoneArrangement`'s, because the write RENDERS the pane's node and that render churns the grip whose drops the
  *  gesture is aiming at: measured on a real window, the capture and the focus were gone the moment this paint ran after the
- *  re-take, so `previewPlacement` takes both again AFTER this turn and not before it. */
-function drivePreviewPanePaints (runtime: TabsPageRuntime, panes: readonly ViewPaneGeometry[]): number {
+ *  re-take, so `previewPlacement` takes both again AFTER this turn and not before it.
+ *
+ *  **AND ITS SECOND OPERAND IS THE DROP'S ZONE, WHICH IS REV 3'S** (`design-zone-collapse.md` §5): the panes present the
+ *  POST-COMMIT picture, which is why the ZONE term is composed `false` for panes standing in the zone the drop names —
+ *  trigger (a) makes it true on commit, and a preview that showed the zone as a set of heads while the release expands it
+ *  would be a picture of a state no press can produce (`D-263`'s own standard). **THE OVERRIDE IS OF ONE TERM AND NOT OF THE
+ *  WHOLE ANSWER**: the pane's OWN `collapsed` member is left standing, because a pane a person collapsed stays collapsed
+ *  (`D-269`). The operand is `null` on every RESTORING turn, so the record's own answer comes back with the panes. */
+function drivePreviewPanePaints (
+  runtime: TabsPageRuntime,
+  panes: readonly ViewPaneGeometry[],
+  dropZoneId: string | null,
+): number {
+  // THE RECORD'S TWO FAMILIES, ASKED ONCE FOR THE WHOLE TURN — `D-129`'s ask-don't-remember, and THE RECORD and never the tree
+  // (`D-259` re-parents real panes mid-gesture, so a tree-read derivation would answer a fact no release had made).
+  const zoneRecords = paneMoveZonesOf()
+  const recordedPanes = paneMovePanesOf()
   let painted = 0
   for (const pane of panes) {
     const nodeId = nodeIdForPane(pane.id)
@@ -3725,7 +4060,12 @@ function drivePreviewPanePaints (runtime: TabsPageRuntime, panes: readonly ViewP
     }
     if (element === null || element === undefined) continue
     const record = pane as unknown as Record<string, unknown>
-    const paint = panePaintOf(record['zone'], record)
+    const zone = record['zone']
+    const zoneId = typeof zone === 'string' ? zone : ''
+    // **THE ZONE TERM, ANSWERED `false` FOR THE DROP'S OWN ZONE AND FOR NOTHING ELSE** (§5): ONE TERM OVERRIDDEN, the pane's own
+    // member untouched — and a pane standing in NO zone (the stage) has no zone term at all, which is `C-9`'s absence.
+    const zoneCollapsed = zoneId !== '' && zoneId !== dropZoneId && zoneCollapsedOf(zoneRecords, recordedPanes, zoneId)
+    const paint = panePaintOf(zone, record, record['collapsed'] === true || zoneCollapsed)
     // NOTHING STATED, NOTHING WRITTEN — the delivery's own arm, on the same reading: a pane this composition says nothing
     // about is a pane whose record states nothing to paint (`D-174`).
     if (Object.keys(paint.style).length === 0 && Object.keys(paint.body).length === 0) continue
@@ -3940,7 +4280,11 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
      *  re-parents, `activeElement` falling to `BODY`, and the four reveals dying with the focus). `null` where the realm
      *  has no capture to take, which is the same declared degradation the press has. */
     pointerId: number | null
-  } = { pressed: false, armed: false, press: null, drop: null, zone: null, pointerId: null }
+    /** **THE COLLAPSED ZONE'S OWN EXTENT, WHILE THE PREVIEW STATES IT** (`design-zone-collapse.md` §5): the property the
+     *  writer set and its text, held so the clear can remove THAT property by name and re-state it while the pointer stays on
+     *  the same target. It is a transient declaration on a node the paint replaces whole (`D-234`), never a record write. */
+    zoneExtent: { readonly property: string; readonly text: string } | null
+  } = { pressed: false, armed: false, press: null, drop: null, zone: null, pointerId: null, zoneExtent: null }
   /** **THE PREVIEW'S PLACEMENT — THE FAMILY THE RELEASE WOULD WRITE, DRAWN BY PUTTING THE REAL PANES IN IT.** One
    *  composition, three operands read at the instant they are needed (`D-129`): the DROP's authored `props.pane` (the
    *  record id, the same read `paneMoveAct` takes at `X0`), the DROP's authored `props.zone` (the destination) and the
@@ -3954,7 +4298,10 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
   const previewPlacement = (target: PaneMoveDropTarget | null, point: { readonly x: number; readonly y: number } | null): void => {
     const record = paneMovePanesOf()
     if (record.length === 0) return
-    const place = (panes: readonly ViewPaneGeometry[]): void => {
+    /** **`dropZone` IS THE ZONE THE PREVIEW IS DRAWING THE PANES INTO, AND `null` ON EVERY RESTORING ARM** — the second
+     *  operand §5 gives the pane composition, so a drop into a collapsed zone previews the post-commit picture and a
+     *  non-committing end puts the record's own answer back in the same turn. */
+    const place = (panes: readonly ViewPaneGeometry[], dropZone: string | null): void => {
       const moved = driveZoneArrangement(runtime, panes)
       // ⟶ **AND THE PANE IS PAINTED IN THE ZONE HE IS PREVIEWING IT IN** (the user's report, and `D-260`'s divergence one turn
       //    earlier: the attribute and the composed style are written on a DELIVERY, and a delivery does not run mid-gesture —
@@ -3964,7 +4311,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       //    `previewPlacement(null)`'s existing restores put the attribute, the style AND the formatting back with no second
       //    flag. **NO RECORD BYTE MOVES**: a `state-slice` on the pane's own node, and the surface's own attribute is what
       //    says whether it is needed.
-      const painted = drivePreviewPanePaints(runtime, panes)
+      const painted = drivePreviewPanePaints(runtime, panes, dropZone)
       // **AND THE ANCHORS ARE TAKEN AGAIN AFTER BOTH WRITES, NOT AFTER THE FIRST — MEASURED, AND IT IS THE ORDER THAT
       //    MAKES THE GESTURE SURVIVE ITS OWN PREVIEW.** The re-take is owed by any TREE CHURN, not only by a `move`: a
       //    `state-slice` on the pane's node renders that node, and the render detaches and re-attaches the grip — MEASURED on
@@ -3976,21 +4323,21 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       if (moved > 0 || painted > 0) reanchor()
     }
     if (target === null) {
-      place(record)
+      place(record, null)
       return
     }
     const pane = authoredPropOf(runtime, target.nodeId, 'pane')
     if (!pane.readable || typeof pane.held !== 'string' || pane.held === '') {
-      place(record)
+      place(record, null)
       return
     }
     const zone = authoredPropOf(runtime, target.nodeId, 'zone')
     if (!zone.readable || typeof zone.held !== 'string' || zone.held === '') {
-      place(record)
+      place(record, null)
       return
     }
     const placed = paneArrangementOf(record, pane.held, zone.held, paneMoveLandingOf(runtime, zone.held, pane.held, point, record))
-    place(placed)
+    place(placed, zone.held)
   }
   /** **THE PREVIEW'S ONE TRANSITION** — the target under the pointer and the coordinate it stands at, or `null` for none.
    *  It clears the two transient writes of the target it is leaving and writes the two of the target it enters, so the
@@ -4022,7 +4369,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       }
       paneMoveDropEmphasis(target.element, true)
       paneMovePreviewWrite(target.element, 'drop')
-      if (state.zone !== null) paneMovePreviewWrite(state.zone, 'zone')
+      if (state.zone !== null) paneMovePreviewWrite(state.zone, 'zone', state.zoneExtent)
       // **AND THE PLACEMENT IS RE-STATED FOR THE OUTLINE'S OWN REASON** — idempotent (the arrangement turn appends nothing
       // when the tree already agrees), and what keeps the panes in the slot the pointer names while it has not moved.
       previewPlacement(target, point)
@@ -4032,9 +4379,15 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       paneMovePreviewClear(state.drop.element, 'drop')
       paneMoveDropEmphasis(state.drop.element, false)
     }
-    if (state.zone !== null) paneMovePreviewClear(state.zone, 'zone')
+    if (state.zone !== null) {
+      // **THE ZONE'S DECLARATIONS GO WITH THE OUTLINE, THE EXTENT INCLUDED AND BY NAME** (§5): a collapsed zone returns to
+      // `auto` on this clear, which is the SAME total restore `D-260`/`D-263` gave the panes — the zone's own member is never
+      // written by any move, so nothing is remembered and nothing has to be undone twice.
+      paneMovePreviewClear(state.zone, 'zone', state.zoneExtent === null ? [] : [state.zoneExtent.property])
+    }
     state.drop = target
     state.zone = null
+    state.zoneExtent = null
     if (target === null) {
       // **A MOVE OFF EVERY ZONE RESTORES THE RECORD'S OWN ARRANGEMENT** — the panes go back where the record says, so the
       // screen carries no placement the release would not make. **THE RELEASE PASSES `restore: false`**: a commit is
@@ -4058,7 +4411,16 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     }
     if (zoneElement === null || zoneElement === undefined) return
     state.zone = zoneElement
-    paneMovePreviewWrite(zoneElement, 'zone')
+    // ⟶ **AND A COLLAPSED ZONE IS EXPANDED TO ITS REMEMBERED EXTENT WHILE THE POINTER STANDS ON ITS DROP**
+    //    (`design-zone-collapse.md` §5). **THE FIGURE IS THE MEMORY AND NOT A COMPOSITION**: `['zones', <id>, 'size']` is
+    //    exactly what a collapse never clears, so the band a person aims at is the band the release will produce. **A DELIVERY
+    //    WOULD REPLACE THE ZONE'S `css.style` WHOLE ANYWAY** (`D-234`, `D-138`'s declared transient), so the clear takes it and
+    //    nothing stands behind it; and **NO RECORD IS WRITTEN BY ANY MOVE** (`D-249`'s measured property), so a non-committing
+    //    end is a total restore and not a second write.
+    state.zoneExtent = zoneCollapsedOf(paneMoveZonesOf(), paneMovePanesOf(), authored.held)
+      ? paneMoveZoneExtentOf(authored.held)
+      : null
+    paneMovePreviewWrite(zoneElement, 'zone', state.zoneExtent)
   }
   /** **`D-245`'S FIX, MIRRORED** — the press pins the pointer to this grip for the whole gesture, and every degradation is
    *  the declared no-op. */
@@ -4628,8 +4990,16 @@ function paneAxisMembers(zone: unknown): readonly ('width' | 'height')[] {
  *  second child, because the pane is a flex COLUMN whose head row is `flex: 0 0 auto` and a head INSIDE the box that scrolls
  *  both travels with the content it heads and adds its own `14px` to `scrollHeight` (`D-270`'s cause, and the user's two
  *  reports). Both callers write both nodes from THIS one composition, so the delivery and the drag's preview cannot describe
- *  two boxes — the property the single function exists for, now spanning two subjects. */
-function panePaintOf (zone: unknown, record: Record<string, unknown>): {
+ *  two boxes — the property the single function exists for, now spanning two subjects.
+ *
+ *  **AND ITS THIRD OPERAND IS THE *EFFECTIVE* COLLAPSE, WHICH IS WHY REV 3 MOVES THIS ARITY** (`design-zone-collapse.md` §2,
+ *  `design-pane-collapse.md` §3): a zone may now collapse AROUND a pane, so the state this composition paints is
+ *  `record.collapsed === true || zoneCollapsedOf(…)` — composed by the TWO CALLERS and never by this function, because the
+ *  preview's answer differs from the delivery's (a drop into a collapsed zone previews the post-commit picture, §5). The
+ *  change is PRIVATE and moves no declared signature (`signatures.md` §3 declares the turns, never this composition), and
+ *  the record's own member is no longer read here at all: a composition that read it would be a SECOND answer beside the
+ *  caller's effective one, and a pane in a collapsed zone would paint itself expanded. */
+function panePaintOf (zone: unknown, record: Record<string, unknown>, collapsed: boolean): {
   readonly style: Record<string, string>
   readonly body: Record<string, string>
 } {
@@ -4647,7 +5017,6 @@ function panePaintOf (zone: unknown, record: Record<string, unknown>): {
   // state and not an edit. **THE THIRD ARM IS THE STAGE**, whose two members are both its own (`paneAxisMembers(undefined)`
   // answers both), so a collapsed stage pane writes `width: auto; height: auto` and — having no zone — writes NO scroll at
   // all, because there is none to write; that is `C-12`'s *"a stage pane behaves as a sidebar pane"* read to its end.
-  const collapsed = record['collapsed'] === true
   if (collapsed) {
     for (const member of paneAxisMembers(zone)) style[member] = 'auto'
   } else {
@@ -4863,11 +5232,29 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     // **THE ZONE'S AUTHORED `css` STILL CARRIES IT** (`demo-envelope.ts`'s `horizontalZoneStyle`/`verticalZoneStyle`) and is
     // LEFT THERE: it is overwritten on every write this arm makes, and it is the only scroll a zone has while a size-less
     // record is written NOTHING (the `continue` above) — so it is neither a second authority nor dead prose.
-    const style: Record<string, string> = { [zone.member]: `${String(held.size)}px`, [zone.scroll]: 'auto' }
+    //
+    // ⟶ **AND THE COLLAPSE IS ONE BRANCH OF THAT SAME COMPOSITION AND NOT A SECOND WRITE** (`design-zone-collapse.md` §2,
+    //    `D-253`'s form: one `state-slice`, two mutations, one render). **COLLAPSING NEVER TOUCHES THE RECORD's `size`**
+    //    (§3): the figure stays stored as the MEMORY an expansion restores with zero writes, and what the collapsed box
+    //    states instead is `auto` on the axis the zone FIXES and `hidden` on the axis it ARRANGES along — **not a
+    //    `DEFAULT_ZONE_COLLAPSED_SIZE`**, which was refused because it would be a figure right for one pane count and false
+    //    for another and a second authority beside the extent the cascade already computes (`D-129`, `D-174`). The `auto`
+    //    resolves against the zone's own content, whose one figure is the head row's own thickness in the sheet — so three
+    //    panes cost one head row and NONE cost nothing at all. **AND A ZONE THE RECORD STATES NO `size` FOR IS STILL WRITTEN
+    //    NOTHING, COLLAPSE INCLUDED**: the two `continue`s above stand ahead of this branch, because `auto` is a declaration
+    //    about an extent and this arm has none to state (`D-174`: a state that is never wrong beats a figure that is right
+    //    once). The zone node's `collapsed` attribute rides the SAME command, `'true'` where the derivation answers collapsed
+    //    and the ENGINE'S REMOVAL where it does not — removal is the one spelling of EXPANDED (`D-253`'s absent arm).
+    const collapsed = zoneCollapsedOf(reading.zones, reading.panes, zone.id)
+    const style: Record<string, string> = collapsed
+      ? { [zone.member]: 'auto', [zone.scroll]: 'hidden' }
+      : { [zone.member]: `${String(held.size)}px`, [zone.scroll]: 'auto' }
     // THE PARTICIPATION COMPOSES INTO THAT SAME VALUE, and only where the record states one — an unstated `display` is not
-    // authored here either.
+    // authored here either. **AND IT IS THE COLLAPSE'S OTHER HALF, NOT ITS SPELLING**: `display: 'none'` is a whole-zone
+    // hide written by an outside writer and offered no affordance, so a zone stating it is hidden whatever its `collapsed`
+    // says and a collapsed zone never writes it (`design-zone-collapse.md` §1, `D-244` §5, `D-129`).
     if (held.display !== undefined) style['display'] = held.display
-    if (!paintStyle(runtime, zone.id, style)) {
+    if (!paintStyle(runtime, zone.id, style, { collapsed: collapsed ? 'true' : undefined })) {
       console.error(`[provident-renderer] layout paint: the ${zone.id} zone refused its ${zone.member}/${zone.scroll} (${String(held.size)})`)
     }
   }
@@ -4905,16 +5292,28 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     // (`D-270`): the fill and the figure to the PANE, the scroll to its BODY — the `<pane>-body` node the envelope authors as
     // the pane's second child, because a head row inside the box that scrolls travels with the content and spends its `14px`
     // in `scrollHeight`. **ONE COMPOSITION, TWO WRITES, AND NO SPLIT BOX**: both come from `panePaintOf` on this same record.
-    const paint = panePaintOf(record['zone'], record)
+    // ⟶ **AND THE THIRD OPERAND IS THE *EFFECTIVE* COLLAPSE, NOT THE PANE'S OWN MEMBER** (`design-zone-collapse.md` §2,
+    //    `design-pane-collapse.md` §3): `record.collapsed === true || zoneCollapsedOf(…)`. **THE OR IS THE WHOLE POINT OF
+    //    TWO FAMILIES**: a pane a person collapsed stays collapsed even after its zone is expanded again (its own member is
+    //    memory no zone press spoke about, `D-269`), while a pane whose own record is SILENT still presents collapsed inside
+    //    a collapsed zone — which is what makes `:has(> .pane-head)[collapsed="true"] > :not(.pane-head)` leave exactly the
+    //    heads standing in a collapsed zone, with no second hide rule and no second spelling of one fact (`D-129`).
+    const paneZone = record['zone']
+    const paneZoneId = typeof paneZone === 'string' ? paneZone : ''
+    const paneCollapsed = record['collapsed'] === true || zoneCollapsedOf(reading.zones, reading.panes, paneZoneId)
+    const paint = panePaintOf(record['zone'], record, paneCollapsed)
     // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted. **IT IS
     // REACHED ONLY BY A PANE THAT FILLS NOTHING** (the stage pane with no stated member): a zone-resident pane is still a
     // pane and always carries its fill and its scroll, so this `continue` never withholds them (`D-187`, `D-189`).
     if (Object.keys(paint.style).length === 0 && Object.keys(paint.body).length === 0) continue
     // **AND THE PANE'S STATE, IN THE SAME COMMAND AND THEREFORE THE SAME RENDER** (`design-pane-collapse.md` §3): the sheet's
-    // `[collapsed="true"] > :not(.pane-head)` and its glyph rule both key on this ONE PAINTED ATTRIBUTE, and an expanded pane
-    // passes `undefined` — the engine's removal — so ABSENCE stays the single spelling of EXPANDED. **A `css.classes` WRITE
+    // `:has(> .pane-head)[collapsed="true"] > :not(.pane-head)` and its glyph rule both key on this ONE PAINTED ATTRIBUTE, and
+    // an expanded pane passes `undefined` — the engine's removal — so ABSENCE stays the single spelling of EXPANDED.
+    // **THE ATTRIBUTE IS THE EFFECTIVE ANSWER AND NOT THE RECORD'S OWN MEMBER ALONE**: a pane in a collapsed zone that painted
+    // the record's silence would paint itself expanded around an `auto`/`hidden` box, and its head — the one thing left of it —
+    // would read `▾` where the person's press must be an OPEN (`design-zone-collapse.md` §8 (b)). **A `css.classes` WRITE
     // WOULD BE THE ONE THING THAT MUST NOT STAND HERE** (`D-265`): it would replace the class the pane inherits from its zone.
-    if (!paintStyle(runtime, nodeId, paint.style, { collapsed: record['collapsed'] === true ? 'true' : undefined })) {
+    if (!paintStyle(runtime, nodeId, paint.style, { collapsed: paneCollapsed ? 'true' : undefined })) {
       console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(paint.style).join('/')}`)
     }
     // ⟶ **AND THE SCROLL, ON THE BODY, ON THE SAME DELIVERY** (`D-270`). **A PANE THE BODY MAP DOES NOT DECLARE IS WRITTEN
