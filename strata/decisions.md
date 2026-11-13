@@ -6052,3 +6052,31 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red** (`B-1` green, the sheet standing in its declared set); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **one file changed, CSS plus the notes that derive it**; **the grab area is the only behaviour that moved**. **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-274`** as prose, unchanged and extended by this row only. **This row records a `44px` inset mistaken for a fraction of a pixel, a stretch mistaken for typography, a pair of numbers that cannot both be zeroed, and a cost named in the same breath as the fix.**
+## D-276 — `D-275` REVERTED AND THE TEXT'S **OWN SYMMETRIC INSET** PUT IN ITS PLACE — and the collapsed pill never stretched for the reason the user's report implied
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user, verbatim, a DIRECTIVE rather than a symptom report):** ***"Now the gap is still there and also it doesn't stretch when the pane is expanded. Undo last change, just balance left/right padding on the text so it maintains space from the right side of the box."***
+
+**THE REVERT, COMPLETE.** **`.pane-grab` goes back to `flex: 1 1 auto`** (**the sheet's pre-`D-275` value**) **and the whole `.pane-collapse { margin-inline-start: auto }` rule is DELETED**, **so the control computes `0px` again and `gap` alone separates the two.** **Nothing else from `D-275` stands** — **and that row's own trade, the grab area shrinking `94×14 → 52.13×14`, is undone with it.**
+
+**THE REPLACEMENT IS ONE SYMMETRIC INSET WHERE THERE WERE TWO CORRECTIONS.** **The name's carrier takes `padding-inline: 0.06em`** — **`0.66px` at its `11px`** — **AT BOTH ENDS AND LOGICAL** — **and `D-274`'s `margin-inline-end: 0.13em` is GONE.** **The figure is MEASURED rather than inherited**: **at device scale 8 the `⠿` lead bearing is `1.69px` and the name's trailing box `1.03px`**, **and `1.69 − 1.03 = 0.66 = 0.06em` closes the pair.** **A symmetric inset derived from the two bearings is one declaration; `D-274`'s margin plus this would have been two corrections chasing the same number.**
+
+**MEASURED AT DEVICE SCALE FOUR.**
+
+| state | pill | `A` | `B` | `C` | `D` |
+|---|---|---|---|---|---|
+| **collapsed, `top` zone** | `52.01×14` | `1.75` | **`1.75`** | `4.00` | `4.00` |
+| **expanded, `top` zone** | **`74×14`** | `1.75` | `23.75` | `4.00` | `4.00` |
+| **lane** | `14×52.01` | `1.75` | `2.00` | — | — |
+| **sidebar-collapsed, rail `120`** | **`94×94`** stretch restored | `1.75` | `43.75` | `4.00` | `4.00` |
+
+**THE STRETCH IS BACK, AND THE NUMBER PROVES IT**: **expanded, the pill's `74` is EXACTLY the row's remainder** (`92 − 4 gap − 14 control`, **free space `0`**) — **the pre-`D-275` reading restored** — **and in a `120` rail the collapsed pill stretches at `94` of `94`.**
+
+**AND THE COLLAPSED `top` CASE ANSWERS THE REST OF THE REPORT.** **There the pill is `52.01` and does NOT stretch — NOT BECAUSE OF `flex`**, **but because THE ROW ITSELF IS CONTENT-SIZED at `70.01`**: **there is nothing to stretch into.** **So the user's complaint was about the EXPANDED state, and it is answered** — **and the distinction is worth keeping, because "it doesn't stretch" was true in one state for a reason that had nothing to do with the declaration under suspicion.**
+
+**AND WHERE THE SPARE WIDTH SITS IS SAID RATHER THAN IMPLIED.** **It lies AFTER the text's own `1.69px` inset and BEFORE the pill's right fill edge** — **so `B` is the row's remainder PLUS that inset.** **THE REQUESTED "space from the right side of the box" HOLDS AS THE TEXT'S OWN INSET** — **`1.75 ↔ 1.75` in the state with no spare width** — **and THE LEFTOVER BEYOND IT IS THE PILL'S**, **which is what stretching costs.** **A row that claimed the gap had vanished would be describing a pill that does not stretch.**
+
+**INVARIANTS HELD AND MEASURED.** **Direction still BOTTOM-TO-TOP** (`sideways-lr` on head and grip; the glyph's ink at the lane's foot, the name's above it; `transform: none` on all three, control `horizontal-tb`). **`100/100` HIT POINTS ANSWERING THEIR OWN IDS** (**menus and inspector grips and controls × 5 points × 5 states**) — **and THE GUTTER PAIR IS NAMED AS BELOW THE `640×349` VIEWPORT AT EVERY POINT RATHER THAN SILENTLY DROPPED**, **because a count that quietly excludes a subject is the class `D-268` spent a row on.** **`padding-block` absent** (head, grip and `::after` all `0px`). **Lane cross extent still the bar's `14px`.**
+
+**THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red** (`B-1` green, the sheet standing in its declared set); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **one file changed, CSS plus the notes that derive it**; **no node, no channel, no bridge member, census unmoved**. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-275`** as prose, unchanged and extended by this row only. **This row records a revert taken on instruction rather than on argument, two corrections collapsed into one measured inset, a state that was content-sized rather than inflexible, and a subject named as below the viewport instead of counted out.**
