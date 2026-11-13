@@ -14,7 +14,12 @@
        `color` is the SECOND half and not a duplicate of the first: every element that sets no colour of its own inherits
        this one, so the page stays legible even in a realm that ignores `color-scheme` (an older Chromium, a UA stylesheet
        that differs), and the pin keeps the UA's form controls and scrollbars on the light arm with it.
-       THE COST, STATED: a user who prefers dark gets light form controls and a light scrollbar. The app's own dark pair
+       THE COST, STATED: a user who prefers dark gets light form controls and a light scrollbar. **THE SCROLLBAR HALF OF
+       THAT COST IS NOW PAID DOWN THE SHEET AND THE PIN IS NOT THE THING THAT PAYS IT**: the theme rules' dark arm declares
+       `scrollbar-color` once, on `body:has([theme="dark"])`, and an inherited property reaches every scroll container in
+       the app — so the dark surfaces get a dark thumb and track while `color-scheme` keeps this pin's `light` arm on every
+       element in both themes, and the light arm's scrollbars are exactly what the pin paints. The FORM-CONTROL half stands
+       as written; `D-247` named this residual and the pair under the theme rules takes it. The app's own dark pair
        is the authored control's (`[theme="dark"]` below), never the desktop preference — the repo reads no environment
        for it (`D-97`), and an arm driven by the desktop's own preference would be the ambient surface that
        `tests/theme.test.ts` X-5 refuses. */
@@ -184,7 +189,10 @@
        and eat the chips' height the moment the horizontal bar appeared.
        **WHAT IT COSTS, STATED**: a horizontal scrollbar lands INSIDE the bar's own 36px — the row is `height: 100%` of the
        bar, so the cost is paid in CHIP HEIGHT (roughly half the bar off the chips' content box) and never in the bar's
-       height, which stays the measured title-bar figure. Chromium paints it on the light arm (`:root`'s `color-scheme`).
+       height, which stays the measured title-bar figure. Its colour is the THEME PAIR's and no longer the UA's alone: the
+       `:root` pin above paints it light in the light arm, and the `scrollbar-color` arm under the theme rules paints it
+       dark in the dark arm (that line used to say "Chromium paints it on the light arm" — true of this row's own pass, and
+       superseded by the pair rather than reworded away).
        **AND THE DRAG REGION IS UNMOVED BY ALL OF IT**: an `overflow` does not enter the compositor's region computation —
        the region is the `drag` elements MINUS the `no-drag` ones — no rule here declares `-webkit-app-region`,
        `#tab-rows` keeps carrying NONE (a blanket `no-drag` here is `D-232`'s defect: a `no-drag` on the row swallowed every
@@ -861,6 +869,42 @@
     body:has([theme="dark"]) .tab-row[active="true"] { background: #e8edf4; border-color: #e8edf4; color: #1b222b; }
     body:has([theme="dark"]) #tab-add { background: #2b3542; border-color: #3a4654; color: #e8edf4; }
     body:has([theme="dark"]) #tab-add:hover { background: #3a4654; border-color: #3a4654; }
+
+    /* ═══ **THE SCROLLBARS — `D-247`'s NAMED RESIDUAL, "the pinned light UA scrollbar", AND IT WAS NEVER THE TABS ROW'S
+       ALONE.** ═══
+       THE REPORT, VERBATIM: *"Dark mode scrollbars are unthemed"* — a sidebar pane painting a LIGHT scrollbar against the
+       `#1b222b` dark surface. **THE CAUSE IS THE `:root` PIN AT THIS SHEET'S HEAD AND NOTHING ELSE, AND THE PIN IS RIGHT**:
+       a scrollbar follows `color-scheme` and NEVER the `theme` attribute this app paints, so while the pin holds the UA's
+       one arm EVERY scroll container takes a light thumb on a light track — in dark mode, on a dark surface, in all four
+       zones, the stage, both panes, the tabs row and the operator panes' host alike.
+       **WHAT IS NOT DONE HERE, SAID FIRST BECAUSE IT IS THE TEMPTATION**: the pin is NOT moved — not to `dark`, and not to
+       a `body:has([theme="dark"])`-scoped `color-scheme: dark`. A scoped dark arm would paint dark scrollbars for free and
+       would ALSO hand the UA's dark arm to every form control in that subtree (`input`'s bevel and caret, the demo
+       buttons' chrome) — a second set of UA colours this sheet does not state, landing on the same subtree the pin was
+       written to protect. The pin's reason stands byte for byte: the light surfaces keep the UA's light arm, and
+       `color-scheme` still computes `light` on every element in both themes.
+       **THE ANSWER IS THE STANDARD PROPERTY, DECLARED ONCE AND LEFT TO INHERIT — WHICH IS WHY NO CONTAINER CAN BE MISSED.**
+       `scrollbar-color: <thumb> <track>` is an INHERITED property (CSS Scrollbars Styling 1), so this ONE declaration on the
+       dark arm reaches EVERY scroll container in the realm: the four zones (`#top`/`#bottom`'s authored `overflow-x`,
+       `#left`/`#right`'s `overflow-y`, re-painted per delivery by `renderer.ts`'s pane arm), the stage's authored
+       `overflow: auto`, both panes (`#pane-menus` on whichever axis its zone gives it, `#gutter-pane`), the tabs row's
+       `overflow-x: auto`, and `#panes`, the operator panes' off-screen host. **NO SELECTOR HERE NAMES A CONTAINER, A CLASS
+       OR AN ID, SO THERE IS NO LIST TO GO STALE**: a scroll container a later pass authors inherits this pair the moment it
+       exists — the overlay's dialog included, which carries `max-height` and so far no `overflow` — and the seam this
+       sheet keeps finding (a surface themed on some containers and not others) has no place to open.
+       **THE TWO COLOURS ARE THE BLOCK'S OWN PAIR AND NO NEW FIGURE**: the THUMB is `#3a4654`, the dark pair's STRONG border
+       (the chip's hover, the `.btn`'s edge) — one step ABOVE a chip's `#2b3542` fill so the thumb reads as a control rather
+       than as ground; the TRACK is `#1b222b`, the RAISED SURFACE (`.card`, `.top-bar`, the menus panel), so the tabs row's
+       track IS the bar it lies in and a zone's track is the panel tone under the cards. Neither is a colour the pair above
+       does not already carry. **THE LIGHT ARM IS UNTOUCHED**: `auto` — the UA's default — is what it keeps, it declares
+       nothing new, and it still paints from the pin exactly as it painted before (confirmed rather than restated below).
+       **AND THE GEOMETRY IS UNMOVED**: `scrollbar-width` is left at `auto`, so the gutter is the platform's own thickness
+       in BOTH arms (measured: the tabs row's scrollbar height and each container's gutter width are identical in the two
+       themes), and NO `::-webkit-scrollbar` rule is declared — that family would author a width and a shape of this
+       sheet's where the standard property needs neither. Support is measured off this Electron's own Chromium rather than
+       assumed: the computed value is readable on every container above, and the pixels under the panes and the tabs row
+       were read with `import -window` in both themes. */
+    body:has([theme="dark"]) { scrollbar-color: #3a4654 #1b222b; }
 
     /* THE OVERLAY LAYER'S VISIBILITY — PRESENTATION KEYED ON THE MECHANISM'S OWN PRODUCT, NEVER A SECOND STATE. The
        four-state machine (`src/shared/overlay.ts`) decides when the surface is up, and its DECLARED product on this
