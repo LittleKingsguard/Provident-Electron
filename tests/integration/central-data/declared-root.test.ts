@@ -356,8 +356,14 @@ describe('the tier is the caller’s, and a declared root’s tier is not (D-101
   it('D-5 · defect B, both arms: [\'panes\'] at a mismatched tier is refused BY THE ROOT GUARD, and the plain junk at its OWN tier is refused BY THE PAIR — the residual half this row was written to measure DIES at `D-105`, and its own text said its death would be this refusal', () => {
     const one = stand()
     const geometry = one.view.read().panes
-    expect(geometry, 'the pane family stands with the measured default before any attempt').toEqual([
+    // **THE THIRD DECLARED PANE JOINS THIS READING, AND THE READING IS THE FAMILY'S WHOLE** (`DECLARED_PANE_IDS` is
+    // three ids now): `pane-a` is the STAGE pane — `zone` absent, its own clamp — and `pane-menus`/`pane-inspector` are
+    // the TWO zone-resident panes, each at both axis members at the one measured default, `zone: 'top'` and NO `bounds`
+    // (`C-9`, `D-186`). The order is the STORE's key order (alphabetical) and not the declaration's, which no row here
+    // claims; a repair that stopped writing any declared id, or wrote it with a member the read drops, reds here.
+    expect(geometry, 'the pane family stands with the measured default before any attempt — the three DECLARED panes').toEqual([
       { id: 'pane-a', width: 100, height: 100, bounds: { min: 0, max: 200 } },
+      { id: 'pane-inspector', width: 100, height: 100, zone: 'top' },
       { id: 'pane-menus', width: 100, height: 100, zone: 'top' },
     ])
 

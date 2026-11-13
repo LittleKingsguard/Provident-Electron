@@ -762,6 +762,31 @@ const MENUS_GRAB_ID = 'menus-grab'
 const GUTTER_GRAB_ID = 'gutter-grab'
 const MENUS_PANE_RECORD_ID = 'pane-menus'
 const GUTTER_PANE_RECORD_ID = 'pane-a'
+/** **THE SECOND PANE IN A ZONE — ITS RECORD ID, ITS GRIP, ITS RESIZE STRIP AND ITS NAME** (the user's second change
+ *  verbatim: *"Add additional demo panes so that this can be tested with pane rearrangement in a zone"*).
+ *  **THE RECORD ID IS THE ONE `src/shared/view-shape.ts` DECLARES** (`INSPECTOR_PANE_ID`), spelled here as a private
+ *  literal for the reason the other two record ids are: the equality between an envelope literal and a declared id is a
+ *  ROW's (`AL-8`, `AL-10`, `PM-1`) and never a derivation, and an export here would move this module's published surface
+ *  (`§7`). **ITS NODE ID HAPPENS TO EQUAL THE RECORD KEY AND IS DECLARED REGARDLESS** — `renderer.ts`'s `PANE_NODE_IDS`
+ *  carries the pair explicitly, because an equality nothing derives is what that map exists to delete.
+ *  **`INSPECTOR_AFFORDANCE_ID` IS PRIVATE AND NOT EXPORTED**, unlike `MENUS_AFFORDANCE_ID`/`GUTTER_AFFORDANCE_ID`: those
+ *  two are imported by `renderer.ts`'s `PANE_DRAG_HANDLES`, and this one is spelled as a literal at both sites instead —
+ *  the FOUR ZONE STRIPS' precedent (`renderer.ts`'s `ZONE_DRAG_HANDLES` and this file's `zoneStripNodeOf` call sites), where
+ *  the equality is `PS-1`'s census and never an export. */
+const INSPECTOR_PANE_RECORD_ID = 'pane-inspector'
+const INSPECTOR_GRAB_ID = 'inspector-grab'
+const INSPECTOR_AFFORDANCE_ID = 'inspector-vertical'
+/** **THE GHOST'S ONE ID — THE AUTHORED NODE THE RELOCATION DRAG SHOWS WHERE THE PANE WOULD LAND** (the user's first change
+ *  verbatim: *"Pane drag should render a ghost into the target location, showing where the pane will place if released"*).
+ *  **IT IS AUTHORED AND NOT MINTED, AND THAT IS THE ONLY LAWFUL FORM HERE**: every element outside the shell's own chrome is
+ *  provident data (`AGENTS.md`), so the ghost is envelope data with a node id in the address book — `list_targets`,
+ *  `provident.dispatch`, `get_rendered_html` and `get_markdown` all see it — and a MINT could not serve at all: a mint
+ *  creates a node at drag time whose container is never recompiled (`D-182`'s measured routing defect), it would leave a
+ *  second ghost behind on every gesture, and nothing would own its removal. **IT IS HIDDEN BY ITS AUTHORED `opacity: 0` AND
+ *  REVEALED BY THE DRAG'S OWN INLINE STYLE**, which is precisely the four `.pane-drop` overlays' mechanism (`D-250`), so no
+ *  state, no toggle and no record member arms it. **IT COSTS ONE CENSUS NODE AND THAT IS THE PRICE OF OVERRULING `D-249`**,
+ *  which refused a ghost for the one reason that the authored census was pinned at `89`. */
+const PANE_GHOST_ID = 'pane-ghost'
 
 /** **THE PANE-MOVE GRIP'S ONE HANDLER NAME, THE DECLARED NO-OP BODY BESIDE IT, AND THE FOUR DESTINATIONS**
  *  (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1–§3; `app-envelope` rev 7 §10's `A-10`).
@@ -853,6 +878,11 @@ function paneMoveDropNodeOf (id: string, paneId: string, zone: string): Record<s
  *  markup. */
 const MENUS_PANE_NAME = 'Menus'
 const GUTTER_PANE_NAME = 'Stage'
+/** **THE SECOND ZONE-RESIDENT PANE'S DISPLAY NAME** — `props.name` on its grip, read by the same `attr(name)` header rule
+ *  (`D-257`), and a private literal like the other two so the published surface is unmoved. **A PANE NAME HAS NO SOURCE
+ *  BUT THIS**: the `panes` family carries geometry and a zone and no name (`D-257`'s rejected alternative, which would have
+ *  owed the creation repair and the placeholder a name nobody authored), so the name is authored where the header row is. */
+const INSPECTOR_PANE_NAME = 'Inspector'
 
 /** **ONE PANE-MOVE GRIP AND ITS FOUR DROPS — A DRAG HANDLE, FOCUSABLE, AND THE PANE'S FIRST CHILD** (`design-pane-relocation.md`
  *  rev 1 §1, §7; `app-envelope` rev 7 §10). **`props.tabindex: '0'` IS THE WHOLE REVEAL MECHANISM** (`demo-envelope.ts`'s
@@ -927,6 +957,57 @@ const gutterGrabStyle: Record<string, string> = {
   height: '14px',
   'align-self': 'flex-start',
   position: 'relative',
+}
+
+/** **THE SECOND ZONE-RESIDENT PANE — AND IT IS DELIBERATELY THE MENUS PANE'S TWIN.** The user asked for *"additional demo
+ *  panes so that this can be tested with pane rearrangement in a zone"*, so the pane that proves the arrangement must be a
+ *  pane the EXISTING machinery already knows how to paint, drag, resize and relocate: in the `top` zone, at its own stored
+ *  width, filling the zone's height as a RELATION and scrolling the axis it adjusts. **SO ITS AUTHORED `css` IS
+ *  `menusPaneStyle`'S TWO DECLARATIONS AND NOTHING MORE** — the paint replaces the whole value on the first delivery
+ *  (`D-240`, `D-243`) and states the recorded figure there, so an authored figure here would be `D-129`'s second
+ *  authority. **ITS BODY IS THE PANE'S OWN `content`** (`'Inspector'`), which costs NO node: `D-257`'s header paints a
+ *  SIDEBAR pane's name through `attr(name)` and the `top`/`bottom` form paints none, so a pane that stood in a zone with no
+ *  text of its own would be an empty box beside the menus and nothing a person could tell apart. */
+const inspectorPaneStyle: Record<string, string> = { height: '100%', 'overflow-x': 'auto' }
+/** **THE SECOND PANE'S MOVE GRIP TAKES `#menus-grab`'S PIN, BECAUSE IT IS THE SAME KIND OF PANE** (`D-246`, `D-248`): this
+ *  pane scrolls on the axis it adjusts (`overflow-x: auto`) and its node's `css.style` is painted whole, so a control in its
+ *  flow would travel with the content and a SIBLING is unavailable (`D-244`) — the two reasons `D-248` measured for the
+ *  menus grip. The lane is the sheet's (`#inspector-grab { margin-left: -0.875rem }` against the pane's own left padding),
+ *  and the authored box is the grip's own `14px`, which is `OWED-1`'s measured handle box and no figure of the record's. */
+const inspectorGrabStyle: Record<string, string> = {
+  cursor: 'grab',
+  width: '14px',
+  height: '14px',
+  float: 'left',
+  position: 'sticky',
+  left: '-0.875rem',
+}
+/** **THE SECOND PANE'S RESIZE AFFORDANCE — THE MENUS STRIP'S FORM ON THE SAME EDGE** (`C-13`, `D-189`, `D-192`): the pane's
+ *  adjustable axis in a `top`/`bottom` zone is its WIDTH, so the strip stands vertical at the pane's RIGHT edge and its
+ *  cursor is `col-resize`; the thickness is the one measured `14px` handle box, and the `axis` prop is the affordance's own
+ *  seam's input (`PS-1` censuses every authored handle by it). **IT IS PRIVATE AND UNEXPORTED** — see
+ *  `INSPECTOR_AFFORDANCE_ID`'s block: `renderer.ts`'s `PANE_DRAG_HANDLES` spells the same string as a literal, and the
+ *  equality is `PS-1`'s row. */
+const inspectorHandleStyle: Record<string, string> = { cursor: 'col-resize', width: '14px' }
+
+/** **THE GHOST'S AUTHORED BOX — A VIEWPORT-FIXED, HIT-TEST-INVISIBLE, INVISIBLE-UNTIL-A-DRAG NODE** (the user's first
+ *  change; `PANE_GHOST_ID`'s block above). **EVERY MEMBER HERE IS A RELATION OR A LITERAL THAT IS NOT THE RECORD'S**:
+ *  `position: fixed` is what lets the drag place it against the WINDOW from anywhere in the tree (the four drops take the
+ *  same value for the same reason — a drop inside `#pane-menus` would otherwise be clipped and scrolled by its own
+ *  scroller); `opacity: 0` is the authored closed state the drag's own inline style raises, exactly as a drop's is;
+ *  `z-index: 4` puts it ABOVE the four `z-index: 3` overlays, whose box it stands in; `box-sizing: content-box` makes the
+ *  drawn box the CONTENT box, which is what a pane's figure describes (`D-253`'s `border-box` defect, one node over);
+ *  and **`pointer-events: none` IS LOAD-BEARING AND NOT COSMETIC** — `document.elementFromPoint` is what resolves the drop
+ *  under the pointer (`D-249`), so a ghost that took the hit would answer itself and the target would vanish the instant it
+ *  appeared. **NO EXTENT IS AUTHORED**: the width or the height is the pane's stored figure at the target zone and the
+ *  other axis is the zone's own box, and both are the drag's inline write, so an authored figure here would be the second
+ *  authority `D-174`/`D-129` refuse. */
+const paneGhostStyle: Record<string, string> = {
+  position: 'fixed',
+  opacity: '0',
+  'z-index': '4',
+  'box-sizing': 'content-box',
+  'pointer-events': 'none',
 }
 
 /** **THE MENUS PANE** (`D-187`'s invariant, `D-192`'s column, `D-191`'s wire): a COLUMN in the top zone at
@@ -1261,6 +1342,45 @@ export function demoEnvelope() {
                         type: 'div',
                         css: { id: MENUS_RECEIPT_ID },
                         props: { id: MENUS_RECEIPT_ID },
+                      },
+                    ],
+                  },
+                  // ── THE `top` ZONE'S SECOND PANE (`INSPECTOR_PANE_RECORD_ID`) ─────────────────────────
+                  // **THE USER'S SECOND CHANGE, AND THE WHOLE OF WHY IT EXISTS**: *"Add additional demo panes so that this
+                  // can be tested with pane rearrangement in a zone"* — a zone holding ONE pane can exercise no
+                  // arrangement, so this is a second pane in the SAME zone the menus pane declares.
+                  // **WHAT "REARRANGEMENT IN A ZONE" MEANS IS DEFINED BY THIS NODE'S PLACEMENT AND THE SHEET'S RULE, AND
+                  // IT IS PROVISIONAL** (the design has never stated it): the panes in one zone are laid out ALONG THE
+                  // PANE-ADJUSTABLE AXIS — a `top`/`bottom` zone is a `flex-direction: row`, a `left`/`right` zone a
+                  // `column` — each pane keeping its OWN figure as its flex basis while the zone's FIXED axis is SHARED
+                  // (every pane fills it, `100%`, `D-243`). So two panes cannot both be `width: 100%` of a `left` zone:
+                  // they are two heights in a column, exactly as they are two widths in a row here. Each keeps its own
+                  // stored member; the zone's fixed axis is the one relation they hold in common.
+                  // **ITS GRIP IS ITS FIRST CHILD AND ITS STRIP ITS SECOND**, in the menus pane's own order, so
+                  // `AL-1`'s "the handle stands inside the pane, before the content" reading holds for it unchanged, and
+                  // **ITS BODY IS ITS OWN `content`** — no node, and the reason `inspectorPaneStyle`'s block states.
+                  {
+                    type: 'div',
+                    css: { id: INSPECTOR_PANE_RECORD_ID, style: inspectorPaneStyle },
+                    props: { id: INSPECTOR_PANE_RECORD_ID },
+                    content: 'Inspector',
+                    children: [
+                      // (a0) **THE SECOND PANE'S MOVE GRIP AND ITS FOUR ZONE DROPS** (`INSPECTOR_GRAB_ID`): the SAME
+                      // `paneMoveGripNodeOf` factory the other two grips use, so a third pane's grip is one call and no
+                      // second spelling of the reveal, the glyph, the `props.tabindex` or the four destinations. Its
+                      // `props.pane` is the RECORD's key (`pane-inspector`), never this node's id — the act addresses the
+                      // store. Reader: `renderer.ts`'s `startPaneMove` census.
+                      paneMoveGripNodeOf(INSPECTOR_GRAB_ID, INSPECTOR_PANE_RECORD_ID, INSPECTOR_PANE_NAME, inspectorGrabStyle),
+                      // (a) **THE SECOND PANE'S RESIZE AFFORDANCE** (`INSPECTOR_AFFORDANCE_ID`): the menus strip's shape
+                      // on the same edge, because this pane's adjustable axis in a `top`/`bottom` zone is its WIDTH —
+                      // `C-13`/`D-192`'s rule, unchanged. `props.axis` is what `PS-1` censuses a handle BY, so a strip
+                      // without it is a bar the wiring may declare and the census cannot see.
+                      {
+                        type: 'div',
+                        css: { id: INSPECTOR_AFFORDANCE_ID, classes: ['gutter-handle'], style: inspectorHandleStyle },
+                        props: { id: INSPECTOR_AFFORDANCE_ID, axis: INSPECTOR_AFFORDANCE_ID },
+                        content: '',
+                        handlers: [{ name: 'inspector-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
                       },
                     ],
                   },
@@ -1607,6 +1727,24 @@ export function demoEnvelope() {
                 type: 'div',
                 css: { id: 'bottom', style: horizontalZoneStyle },
                 props: { id: 'bottom' },
+              },
+
+              // ---- THE RELOCATION GHOST (`PANE_GHOST_ID`; the user's first change) -------------------------
+              // **AUTHORED, HIDDEN, AND PLACED BY THE DRAG — NEVER MINTED, NEVER MOVED BY THIS FILE.** It is the pane's
+              // shape drawn AT THE TARGET LOCATION while a grip is held: the zone under the pointer's own box on the axis
+              // the zone fixes, and the pane's stored figure on the axis the zone frees (`D-243`'s fill relation, read from
+              // the same `paneFillAxisOf`/`paneAxisMembers` declarations the paint reads — see `renderer.ts`'s
+              // `paneMoveGhostBoxOf`). **IT STANDS INSIDE THE APP ROOT AND NOT INSIDE A PANE**, because it must be placeable
+              // against the WINDOW from whichever grip is being dragged and must not be clipped or scrolled by a pane's
+              // `overflow` (the class `D-246` established and `D-250` restated). **IT AUTHORS NO `content`, NO HANDLER AND NO
+              // FIGURE**: it is a box the gesture draws, so it is `list_targets`-visible and unreachable, and an authored
+              // string or figure here would be a second authority over a shape the record owns (`D-174`, `D-129`).
+              // **AND IT STANDS BEFORE THE OPENER, WHICH STAYS THE ROOT'S LAST CHILD** (`A-5`, `AL-1`): the modal's scoping
+              // and the opener's place are unmoved by one invisible box.
+              {
+                type: 'div',
+                css: { id: PANE_GHOST_ID, classes: ['pane-ghost'], style: paneGhostStyle },
+                props: { id: PANE_GHOST_ID },
               },
 
               // THE OPENER — an authored `button` with an authored `click` body, so it is `list_targets`-visible and

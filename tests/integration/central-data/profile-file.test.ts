@@ -122,11 +122,15 @@ describe('central-data · persistence and the profile\'s bytes', () => {
     })
     const tabs = image['tabs'] as { landing?: { id?: unknown; active?: unknown }; order?: unknown }
     expect({ landing: tabs.landing?.id, active: tabs.landing?.active, order: tabs.order }, 'the landing entry seated and active, and the order naming exactly it — the repair’s own value, whole').toEqual({ landing: 'landing', active: true, order: ['landing'] })
-    // **AND THE MEASURED DEFAULT FAMILY, WHOLE, AT BOTH AXIS MEMBERS OF BOTH DECLARED PANES** (`D-189`, `D-192`): the
+    // **AND THE MEASURED DEFAULT FAMILY, WHOLE, AT BOTH AXIS MEMBERS OF EVERY DECLARED PANE** (`D-189`, `D-192`): the
     // split renamed `pane-a`'s `size` to `height` and minted its `width` from the same measured figure, and the family
-    // widened to the menus pane, whose record carries its `zone` instead of a stored clamp (`D-183`, `D-186`).
-    expect(image['panes'], 'and the measured default family, whole: two panes, each at the figure and the pair the tree states (D-87)').toEqual({
+    // widened to the menus pane, whose record carries its `zone` instead of a stored clamp (`D-183`, `D-186`) — **and then
+    // to the SECOND ZONE-RESIDENT PANE `pane-inspector`, in the SAME zone and with the SAME shape**, so
+    // `DECLARED_PANE_IDS` is THREE and this image names all three. A repair that stopped writing one of them reds HERE,
+    // in the boot's own bytes, before any caller act can hide the omission behind a read.
+    expect(image['panes'], 'and the measured default family, whole: the three DECLARED panes — the stage pane with its pair and the two zone-resident panes with their zone — each at the figure and the pair the tree states (D-87)').toEqual({
       'pane-a': { width: 100, height: 100, bounds: { min: 0, max: 200 } },
+      'pane-inspector': { width: 100, height: 100, zone: 'top' },
       'pane-menus': { width: 100, height: 100, zone: 'top' },
     })
     expect(statSync(profilePath).size, 'and the file stands at the byte length that value serialises to, before any caller act (the length is derived, not pinned: the stamp is a clock reading)').toBe(readFileSync(profilePath, 'utf8').length)

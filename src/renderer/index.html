@@ -619,6 +619,48 @@
       height: 100%;
       flex: 0 0 auto;
     }
+    /* ══ THE SECOND PANE SHARES THE FIRST ONE'S LANES, BECAUSE THE LANES ARE THE GRIP'S AND THE STRIP'S AND NOT A PANE'S ══
+       The user's second change: *"Add additional demo panes so that this can be tested with pane rearrangement in a zone"*.
+       `src/shared/demo-envelope.ts` authors `#pane-inspector` as the `top` zone's SECOND pane, and it carries THE SAME TWO
+       AFFORDANCES in the same order — a `.pane-grab` grip and a `14px` resize strip — so it owes the same three rules: the
+       content-box figure with both lanes in the padding, the grip's negative inset out of the menus'-line lane, and the
+       strip's float-and-pin. **THE SELECTORS NAME BOTH PANES RATHER THAN REPEATING THE NUMBERS**, so the `0.875rem` and
+       `1.125rem` above have ONE spelling in this sheet and a third pane would join the same lists. Nothing here states a
+       figure the record owns: the widths are the GRIP's `14px` and the strips' lanes, and the pane's own width is
+       `['panes', <id>, 'width']` written by the paint (`D-243`, `D-253`). */
+    #pane-inspector { box-sizing: content-box; padding-left: 0.875rem; padding-right: 1.125rem; white-space: nowrap; }
+    #inspector-grab { margin-left: -0.875rem; }
+    #inspector-vertical {
+      float: right;
+      position: sticky;
+      left: calc(100% + 1.125rem - 0.875rem);
+      margin-right: -1.125rem;
+      height: 100%;
+      flex: 0 0 auto;
+    }
+    /* ══ **"REARRANGEMENT IN A ZONE", DEFINED — AND IT IS A PROVISIONAL ANSWER, WHICH IS SAID HERE RATHER THAN IMPLIED** ══
+       The design corpus has NEVER defined what two panes in one zone do (no row, no page and no charter sentence states an
+       arrangement; `C-8`'s `zone` member is declarative and names a destination, not a slot), and the user's second change
+       is the first thing that makes the question askable. **THE SMALLEST ARRANGEMENT THAT MAKES THE DEMO TESTABLE IS TAKEN,
+       AND IT IS PROVISIONAL — owed to L1/L2 as a design question rather than settled by a stylesheet.**
+       **WHAT IT IS**: the panes in one zone are laid out ALONG THE PANE-ADJUSTABLE AXIS, each at its OWN stored figure,
+       sharing the zone's FIXED axis. `D-243`'s rule is that a pane fills the axis its zone fixes and adjusts the
+       orthogonal one — so in a `top`/`bottom` zone the adjustable axis is the WIDTH and the panes stand side by side in a
+       ROW, while in a `left`/`right` zone it is the HEIGHT and they stack in a COLUMN. **This is the resolution of the
+       contradiction the charter would otherwise leave**: two panes in a `left` zone cannot both be `width: 100%` of it,
+       and they do not need to be — the zone's fixed axis is the one thing they SHARE (both fill it), while each keeps its
+       own member on the axis the zone leaves free. `flex: 0 0 auto` is what makes the stored figure the BASIS: it fixes
+       the main size to the painted `width`/`height` and forbids both the grow and the shrink that would silently
+       redistribute the figures a person set.
+       **AND IT COSTS NO AUTHORED DECLARATION ON THE ZONE**: the paint replaces a zone's whole `css.style` (`D-234`,
+       `D-240`), so a `display` authored on the zone node would be gone after the first delivery — the arrangement must live
+       where the paint cannot reach it, which is here. The zone's own `overflow` (`overflow-x: auto` in a `top` zone,
+       `D-243`) is what scrolls a row wider than the window.
+       **THE ORDER IS THE TREE'S**: a row is read left-to-right in child order, and a pane relocated into a zone is APPENDED
+       by the engine's `move` (`D-252`). Nothing stores a slot, and this sheet invents none. */
+    #top, #bottom { display: flex; flex-direction: row; align-items: stretch; }
+    #left, #right { display: flex; flex-direction: column; align-items: stretch; }
+    #top > *, #bottom > *, #left > *, #right > * { flex: 0 0 auto; }
     /* ══ IN A SIDEBAR THE PANE'S AXES FLIP, AND SO DOES EVERYTHING THAT STANDS ON THEM ══════════════════════════════════
        `D-243`'s rule is that a pane FILLS the axis its zone fixes and ADJUSTS the orthogonal one, and `D-252` moves the
        pane into the zone its record names — so in `left`/`right` the pane adjusts its HEIGHT, and three authored truths
@@ -768,6 +810,75 @@
       left: auto;
       top: 1px;
     }
+    /* ══ **THE SECOND PANE'S SIDEBAR FORM — THE MENUS PANE'S THREE TRUTHS, IN COMPACT FORM AND FOR THE SAME REASONS** ══
+       A pane relocated into `left`/`right` adjusts its HEIGHT (`D-243`), so the grip must stand at the pane's TOP as the
+       header row (`D-257`) and the strip at the pane's BOTTOM (`D-253`) — the two rules that stood only for `#pane-menus`
+       hold for every pane this app declares, and this is the same pair spelled for the second one. It is keyed by the
+       pane's own id and NOT by a class because the numbers it shares with `#pane-menus`' block above are the pane's padding
+       lanes, and a `[zone]`-class selector would also match the stage's pane, which has no zone and no header form.
+       **NOTHING HERE RESTATES A FIGURE**: `width: auto !important` is the strip's THICKNESS moving to `height`, the
+       authored `14px` being its box (an inline declaration yields to a sheet only with `!important`, the trade this sheet
+       already makes), and the pane's own painted members are the paint's. */
+    #pane-inspector[zone="left"],
+    #pane-inspector[zone="right"] { display: flex; flex-direction: column; }
+    #pane-inspector[zone="left"] > #inspector-grab,
+    #pane-inspector[zone="right"] > #inspector-grab {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      width: auto !important;
+      padding: 0 0.25rem;
+      position: sticky;
+      top: 0;
+      margin-left: 0;
+      text-align: left;
+    }
+    #pane-inspector[zone="left"] > #inspector-grab::after,
+    #pane-inspector[zone="right"] > #inspector-grab::after {
+      content: attr(name);
+      flex: 0 0 auto;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 14px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    #pane-inspector[zone="left"] > #inspector-vertical,
+    #pane-inspector[zone="right"] > #inspector-vertical {
+      order: 1;
+      flex: 0 0 auto;
+      float: none;
+      position: sticky;
+      bottom: 0;
+      left: auto;
+      margin: auto 0 0 0;
+      width: auto !important;
+      height: 14px;
+      cursor: row-resize !important;
+    }
+
+    /* ══ **THE RELOCATION GHOST'S PAINT — A TRANSLUCENT SHAPE OF THE PANE, AT THE BOX THE RELEASE WOULD FILL** ══
+       The user's first change: *"Pane drag should render a ghost into the target location, showing where the pane will
+       place if released"*. `src/shared/demo-envelope.ts` authors the one node (`#pane-ghost`) and its box — `position:
+       fixed`, `opacity: 0`, `z-index: 4`, `pointer-events: none`, `box-sizing: content-box` — and `renderer.ts`'s
+       `paneMoveGhostWrite` composes its WIDTH/HEIGHT/INSETS from the record and turns it visible. **THIS SHEET OWNS ONLY
+       WHAT IT LOOKS LIKE**, which is the one thing no record states: a dashed outline in the app's own focus blue (`#2f6fb0`,
+       the colour the drag's zone outline and the drop's fill already use, so the three read as one preview and not three)
+       over a light wash. **BOTH THE FILL AND THE DASH ARE THE PREVIEW'S AND NOT A FIGURE'S**, and its dark pair is stated
+       for `D-247`'s reason — an unpaired light wash under a dark page is a legibility bug on the one control a person reads
+       WHILE they drag. `pointer-events: none` is authored on the NODE and not here on purpose: it is structural (it is what
+       keeps `elementFromPoint` answering the DROP), so it belongs where the box model is authored. */
+    .pane-ghost {
+      border: 2px dashed #2f6fb0;
+      border-radius: 4px;
+      background-color: rgba(47, 111, 176, 0.18);
+    }
+    body:has([theme="dark"]) .pane-ghost {
+      border-color: #7d97b4;
+      background-color: rgba(84, 110, 140, 0.28);
+    }
+
     .gutter-handle {
       color: #6f7d90;
       border-radius: 3px;

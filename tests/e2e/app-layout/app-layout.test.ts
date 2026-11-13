@@ -156,13 +156,23 @@ const PROFILE_FILE = 'provident-profile.json'
 const SECURITY_SEED = 'provident-security.json'
 const SEEDED_GROUPS = ['read', 'dispatch', 'graph', 'data']
 
-/** **THE FOUR ZONE IDS AND THE TWO PANE IDS, SPELLED AS LITERALS BECAUSE NO ROW MAY IMPORT THE CONSTANTS** (`D-27`).
+/** **THE FOUR ZONE IDS AND THE PANES' DECLARED SET, SPELLED AS LITERALS BECAUSE NO ROW MAY IMPORT THE CONSTANTS** (`D-27`).
  *  These are `DECLARED_ZONE_IDS` / `DECLARED_PANE_IDS`' membership as `src/shared/view-shape.ts` declares them, and
  *  the ENVELOPE spells the same four zone literals at its own site (`AL-10`'s `D-188` debt 2: the equality is measured
- *  and nothing derives it). */
+ *  and nothing derives it).
+ *
+ *  **THE PANE SIDE IS A SET AND NOT A COUNT, AND THAT IS THIS FILE'S `PS-1` LESSON WRITTEN WHERE IT BINDS**: `AL-8`'s
+ *  subject is that the panes' domain is DECLARED and widened, so the row asserts the record's key set against THIS set —
+ *  never against the number of panes — and a FOURTH declared pane costs one line here and NO edit to any assertion. The
+ *  `top`-zone pair is `pane-menus` and `pane-inspector`, two panes in ONE zone, because a zone holding one pane can
+ *  exercise no arrangement (`src/shared/view-shape.ts`'s `INSPECTOR_PANE_ID` says so at its own site). */
 const ZONE_IDS = ['top', 'bottom', 'left', 'right'] as const
 const PANE_SIDEBARLESS = 'pane-a'
 const PANE_MENUS = 'pane-menus'
+const PANE_INSPECTOR = 'pane-inspector'
+/** **THE DECLARED PANE SET, SPELLED ONCE** — the set `DECLARED_PANE_IDS` declares and the whole of what a pane-family
+ *  reading is compared against (`AL-8`), so no arm of this battery states a pane COUNT. */
+const PANE_IDS = [PANE_SIDEBARLESS, PANE_MENUS, PANE_INSPECTOR] as const
 /** **THE TWO HANDLE NODES' PUBLISHED IDS** (`D-192`, `D-193`): the gutter card's affordance and the menus pane's own
  *  left-edge strip — the nineteenth published name, the one `app-envelope`'s `endpoints` `19` counts. `AL-1` measures
  *  their PRESENCE and never their edge (§6 (vi): which edge a handle sits on is authored `css`, so no gating row of
@@ -2416,9 +2426,16 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
   }, ROW_MS)
 
   // ── group `view`: AL-8, AL-10 — both write `['zones']`, neither needs the realm ──
-  it('AL-8 — both domains widened: two panes, four zones, the two placements told apart, and `zones` in no file', async () => {
+  it('AL-8 — both domains DECLARED and widened: the pane set is THREE and the family is its whole, the two placements are told apart, the two zone-resident panes stand in ONE zone each at its own figure, and `zones` is in no file', async () => {
     const { booted, profile } = await shared('view')
-    // ── the pane family: TWO panes, two placements, BOTH members, and `bounds` lawful-absent ──
+    // ── the pane family: THE DECLARED SET, the two placements, BOTH members, and `bounds` lawful-absent ──
+    // **THE SUBJECT OF THIS ROW IS THAT THE PANES' DOMAIN IS DECLARED AND WIDENED** (`DECLARED_PANE_IDS` is three ids
+    // since the second zone-resident pane landed), so the arms below assert THREE things and no count: (i) the ids, (ii)
+    // the domain's TOTALITY — every declared id stands and nothing else does, which is exactly what the set equality
+    // below measures, and (iii) that the NEW pane's record stands with the shape `C-9`/`D-186` owe a zone-resident pane.
+    // **THE "EXACTLY TWO" ARM IS NOW "EXACTLY THE DECLARED SET"** and never a new literal: `PANE_IDS` is spelled ONCE at
+    // this file's constants and is the only thing a pane-family reading is compared against, so a FOURTH declared pane
+    // costs one line there and no edit here.
     const panesRead = await readAt(booted.client, [PANES])
     expect(
       str(asObject(panesRead.value)?.['status']),
@@ -2428,23 +2445,59 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     const panes = recordOf(panesRead.value)
     expect(
       Object.keys(panes ?? {}).sort(),
-      `AL-8 — the family must name EXACTLY TWO panes (\`DECLARED_PANE_IDS\` \`1 → 2\`, \`D-183\`, \`D-189\`): ` +
-        `\`${PANE_SIDEBARLESS}\` (the stage) and \`${PANE_MENUS}\` (the menus pane). Observed: ${trunc(panesRead.text)}`,
-    ).toEqual([PANE_MENUS, PANE_SIDEBARLESS].sort())
+      `AL-8 — **the family must name EXACTLY THE DECLARED PANE SET** (\`DECLARED_PANE_IDS\`, widened \`1 → 2\` at \`D-183\` ` +
+        `and \`2 → 3\` with the second zone-resident pane): [${[...PANE_IDS].sort().join(', ')}] — \`${PANE_SIDEBARLESS}\` ` +
+        `(the stage), and the TWO zone-resident panes \`${PANE_MENUS}\` and \`${PANE_INSPECTOR}\`. A missing declared id is a ` +
+        `repair that stopped writing one; an EXTRA id is a pane no declaration answers. Observed: ${trunc(panesRead.text)}`,
+    ).toEqual([...PANE_IDS].sort())
     const paneA = asObject(memberOf(panes, PANE_SIDEBARLESS))
     const paneMenus = asObject(memberOf(panes, PANE_MENUS))
+    const paneInspector = asObject(memberOf(panes, PANE_INSPECTOR))
+    // **AND THE DOMAIN IS TOTAL IN THE OTHER DIRECTION TOO — IT REFUSES WHAT IT DOES NOT DECLARE** (`ASM-12`, `ASM-14`):
+    // the record's own closure is the second seat, so an undeclared pane id is refused at the family and at its leaf
+    // rather than minting the pane a caller named. This is the arm that makes "the domain's total" a measurement rather
+    // than a reading of the same keys twice: the set above says what stands, this says what CANNOT stand.
+    for (const [path, value] of [[[PANES, 'al-not-a-pane'], { width: 100, height: 100 }], [[PANES, 'al-not-a-pane', 'width'], 10]] as const) {
+      const refusedPane = await writeAt(booted.client, [...path], 'file', value)
+      expect(
+        str(asObject(refusedPane.value)?.['status']),
+        `AL-8 — an UNDECLARED pane id must be REFUSED rather than minted — \`data.write([${path.map((part) => `'${part}'`).join(', ')}], tier:'file')\` ` +
+          `answered ${trunc(refusedPane.text, 400)}. The domain closes at two seats (\`paneNodeAdmits\` and the route) and ` +
+          `this arm is the closure's own reading at the boundary the repair writes through.`,
+      ).toBe('refused')
+    }
+    expect(
+      Object.keys(recordOf((await readAt(booted.client, [PANES])).value) ?? {}).sort(),
+      `AL-8 — and neither refusal landed: the family still names EXACTLY the declared set, so a refused write neither ` +
+        `minted \`al-not-a-pane\` nor moved a declared pane's record`,
+    ).toEqual([...PANE_IDS].sort())
     expect(
       owns(paneA, 'zone'),
       `AL-8 — \`${PANE_SIDEBARLESS}\`'s record must NOT state a \`zone\` at all: absence IS the stage (\`C-9\`), and a ` +
         `record stating a zone it is not in is a false statement in an enforced shape (\`D-129\`). Observed: ` +
         `${textOf(paneA)}`,
     ).toBe(false)
-    expect(
-      str(memberOf(paneMenus, 'zone')),
-      `AL-8 — \`${PANE_MENUS}\`'s record must state \`zone: 'top'\` — its own default, because absence would place it in ` +
-        `the stage and contradict \`D-180\`/\`D-181\`. Observed: ${textOf(paneMenus)}`,
-    ).toBe('top')
-    for (const [id, held] of [[PANE_SIDEBARLESS, paneA], [PANE_MENUS, paneMenus]] as const) {
+    for (const [id, held] of [[PANE_MENUS, paneMenus], [PANE_INSPECTOR, paneInspector]] as const) {
+      expect(
+        str(memberOf(held, 'zone')),
+        `AL-8 — \`${id}\`'s record must state \`zone: 'top'\` — the declared zone it stands in, because absence would ` +
+          `place it in the stage and contradict \`D-180\`/\`D-181\`. **THE THIRD PANE DECLARES THE SAME ZONE AS THE MENUS ` +
+          `PANE ON PURPOSE**: "two panes in one zone" is the whole of what it exists for, and the arrangement it makes ` +
+          `exercisable is PROVISIONAL (see the paragraph below). Observed: ${textOf(held)}`,
+      ).toBe('top')
+    }
+    // ── **THE ARRANGEMENT IS PROVISIONAL, AND IT IS STATED HERE BECAUSE THIS ROW IS THE ONE THAT ASSERTS IT** ──────────
+    // Panes in one zone lay out ALONG THE PANE-ADJUSTABLE AXIS — a `top`/`bottom` zone is a row, a `left`/`right` zone a
+    // column — each pane keeping its OWN stored figure as its flex basis, while the zone's FIXED axis is SHARED (every
+    // pane fills it: `D-243`'s `height: 100%`). **MEASURED on a live window at this head**: `#top` computes
+    // `display: flex`, `#pane-menus` reads `[0,36,132,140]` and `#pane-inspector` `[132,36,132,140]` — side by side, each
+    // at its own stored `width` (100 at the repair, 132 painted at that window's figure and padding), both filling the
+    // zone's 140px height. **THE DEMO DOES NOT DEFINE WHAT HAPPENS TO THE FIGURES WHEN A PANE IS ADDED OR REMOVED**: no
+    // row here, and no declaration in `src/`, states whether a new pane's arrival re-divides the zone's space, shrinks a
+    // sibling, or leaves every figure as it stood — so this battery asserts only what the tree and the record DO state
+    // (one record per pane, both members, its own `zone`) and nothing about a distribution. That is a DESIGN gap and it
+    // is recorded as one rather than pinned here as if it were a contract.
+    for (const [id, held] of [[PANE_SIDEBARLESS, paneA], [PANE_MENUS, paneMenus], [PANE_INSPECTOR, paneInspector]] as const) {
       expect(
         { width: typeof memberOf(held, 'width'), height: typeof memberOf(held, 'height') },
         `AL-8 — \`${id}\` must carry BOTH axis members as finite numbers — "a pane stating ONE axis member and not the ` +
@@ -2457,11 +2510,22 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
           `fresh profile: ${textOf(held)}`,
       ).toBe(100)
     }
+    // **`bounds` IS LAWFUL-ABSENT ON BOTH ZONE-RESIDENT PANES AND REQUIRED ON NEITHER** (`D-186`, `D-189`): the third
+    // declared pane arrives through the SAME placeholder branch as the menus pane — the branch is `C-9`'s (is this the
+    // STAGE pane?) and not a list of ids — so it owes this row nothing but the set. A pane that acquired a clamp would
+    // have read `['zones']` to invent one, which is the family-crossing repair `D-186` refuses.
+    for (const [id, held] of [[PANE_MENUS, paneMenus], [PANE_INSPECTOR, paneInspector]] as const) {
+      expect(
+        owns(held, 'bounds'),
+        `AL-8 — \`${id}\`'s \`bounds\` must be ABSENT AND LAWFUL: a zone-resident pane's clamp is the layout's, and ` +
+          `a repair may not read \`['zones']\` to invent one (\`D-186\`, \`D-189\`). Observed: ${textOf(held)}`,
+      ).toBe(false)
+    }
     expect(
-      owns(paneMenus, 'bounds'),
-      `AL-8 — \`${PANE_MENUS}\`'s \`bounds\` must be ABSENT AND LAWFUL: a zone-resident pane's clamp is the layout's, and ` +
-        `a repair may not read \`['zones']\` to invent one (\`D-186\`, \`D-189\`). Observed: ${textOf(paneMenus)}`,
-    ).toBe(false)
+      { width: num(memberOf(paneA, 'width')), min: num(memberOf(memberOf(paneA, 'bounds'), 'min')), max: num(memberOf(memberOf(paneA, 'bounds'), 'max')) },
+      `AL-8 — while \`${PANE_SIDEBARLESS}\` KEEPS ITS OWN clamp: the stage is derived and has no zone to inherit one from, ` +
+        `so the measured pair stands on its record (\`D-186\`). Observed: ${textOf(paneA)}`,
+    ).toEqual({ width: 100, min: 0, max: 200 })
     // ── the zone family: FOUR records at `mem`, written by the creation repair ──
     const zonesRead = await readAt(booted.client, [ZONES])
     const zones = recordOf(zonesRead.value)

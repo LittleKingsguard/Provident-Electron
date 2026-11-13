@@ -35,18 +35,18 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 90c5388f5196e8ec00ab77a4dc8efe900e1e90721805b485f0f4f188e335362c src/renderer/renderer.ts
+// @source b35e8d5132c91b42e8edc36e5d932c8cd8f2aa8d3eb1c63918bcf2b9f0c480a8 src/renderer/renderer.ts
 // @source 16b81f089b74436b4eafa4d4d9394d8256c202bcc6af9d27722b0c863181c4a9 src/renderer/runtime.ts
 // @source 917e7ac67ad1e3d63f9d9e833cab57febf79bdec751a2bd0b6680de26dc62198 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source 36187d7cf2e011e13739b74d34acf313a5d5583b803982cab72eba5bed3121e8 src/renderer/tabs-client.ts
 // @source 9f0ed60a439da36392a1cddc2fe64acbfce54a7fae41c98e35fbe6dcc637b9f7 src/renderer/view-client.ts
-// @source 375fe1a45842f2d2c7717163cfebe004dd43448e70ee6938c35e5df04a7f1693 src/shared/demo-envelope.ts
+// @source fb3c9105d627bc59e3b57d5ad7b34317a867fe446e2e813862770b2e2a2c2c83 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source f3a50cfe3871e03082a336c2a43eaf9daee47cff9fa6998b42f5a3e7adf6e221 src/shared/view-shape.ts
+// @source 54c3e7f7d6155909b9fd8224f76fd2cbb1508e11976a073b9eae03959606540d src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({

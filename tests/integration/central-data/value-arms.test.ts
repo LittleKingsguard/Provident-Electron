@@ -66,7 +66,7 @@ import {
   type ViewRecord,
   type ViewRecordStore,
 } from '../../../src/main/view-record'
-import { DEFAULT_ZONE_SIZES } from '../../../src/shared/view-shape'
+import { DECLARED_PANE_IDS, DEFAULT_PANE_ID, DEFAULT_ZONE_SIZES } from '../../../src/shared/view-shape'
 
 const REPO = fileURLToPath(new URL('../../../', import.meta.url))
 const PROFILE = 'provident-profile.json'
@@ -91,12 +91,30 @@ const FOUR_STANDING = ZONE_DEFAULTS.map((entry) => ({ id: entry.id, size: entry.
 const ZONE_PLACEHOLDER: Record<string, { size: number }> = Object.fromEntries(
   ZONE_DEFAULTS.map((entry) => [entry.id, { size: entry.size }]),
 )
-/** **THE PANE FAMILY'S PLACEHOLDER — TWO PANES, EACH AT BOTH AXIS MEMBERS** (`D-192` correcting `D-191`): `pane-a` is the
- *  stage pane carrying its own clamp, `pane-menus` the zone-resident one carrying its `zone` instead of a pair. */
-const PLACEHOLDER_PANES: Record<string, Record<string, unknown>> = {
-  'pane-a': { width: 100, height: 100, bounds: { min: 0, max: 200 } },
-  'pane-menus': { width: 100, height: 100, zone: 'top' },
-}
+/** **THE PANE FAMILY'S PLACEHOLDER — ONE RECORD PER DECLARED PANE, AT BOTH AXIS MEMBERS** (`D-192` correcting `D-191`):
+ *  `pane-a` is the STAGE pane and carries its own clamp with NO `zone` (`C-9`), and every OTHER declared pane is
+ *  zone-resident and carries `zone: 'top'` INSTEAD of a pair (`D-183`, `D-186`).
+ *
+ *  **THE ID SET IS THE DECLARATION'S AND THE FIGURES ARE SPELLED**, which is the split this row's bite needs: the ids
+ *  come from `DECLARED_PANE_IDS` (three since the second zone-resident pane landed), so a FOURTH declared pane is covered
+ *  by this expectation the moment it is declared and costs no edit here — the `PS-1` lesson (`renderer-wiring`'s
+ *  declaration census: assert the declared set, not a spelled list) — while the figures `100`/`{min: 0, max: 200}`/`'top'`
+ *  stay LITERAL, so a repair that invented a figure, dropped an axis member, gave a zone-resident pane a clamp or put the
+ *  stage pane in a zone still reds HERE rather than agreeing with itself. The branch is `C-9`'s (`absence of `zone` IS the
+ *  stage`) and not a list of ids, exactly as `viewPanesPlaceholder`'s own branch is. */
+const PLACEHOLDER_PANES: Record<string, Record<string, unknown>> = Object.fromEntries(
+  DECLARED_PANE_IDS.map((id) => [
+    id,
+    id === DEFAULT_PANE_ID ? { width: 100, height: 100, bounds: { min: 0, max: 200 } } : { width: 100, height: 100, zone: 'top' },
+  ]),
+)
+/** **THE SAME FAMILY AS THE RECORD'S READ ANSWERS IT — A LIST, AND COMPARED AS A SET** (`D-192`): `read().panes` is built
+ *  from the STORE's key order (measured: alphabetical), which no row here claims, so the expectation is sorted by id and
+ *  the comparison is member-for-member over an order-free set. The ids are the declaration's, as above. */
+const PANE_FAMILY_READ: ReadonlyArray<Record<string, unknown>> = DECLARED_PANE_IDS.map((id) => ({
+  id,
+  ...(PLACEHOLDER_PANES[id] as Record<string, unknown>),
+})).sort((left, right) => String(left['id']).localeCompare(String(right['id'])))
 
 const sourceOf = (path: string): string => readFileSync(join(REPO, path), 'utf8')
 
@@ -242,10 +260,10 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     const one = stand()
     const geometry = one.view.read().panes
     const stood = one.bytes()
-    expect(geometry, 'the family stands with the measured default before any attempt — TWO panes, each at both axis members').toEqual([
-      { id: 'pane-a', width: 100, height: 100, bounds: { min: 0, max: 200 } },
-      { id: 'pane-menus', width: 100, height: 100, zone: 'top' },
-    ])
+    expect(
+      [...geometry].sort((left, right) => left.id.localeCompare(right.id)),
+      'the family stands with the measured default before any attempt — ONE RECORD PER DECLARED PANE (three: the stage pane and the TWO zone-resident panes), each at both axis members, compared as a SET because `read()` answers the store\'s key order',
+    ).toEqual(PANE_FAMILY_READ)
     // THE ARMS THE AUDIT FOUND, RE-GRAINED TO THE RECORD'S MEMBER SET (`D-189`, `D-186`): a plain record of junk (the read
     // DROPS it and the geometry is gone while `source` still says `record`); a member whose record carries an unusable
     // `width` (the fault lands ONE LEVEL IN); **a member carrying ONE axis member and not the other** — which is what

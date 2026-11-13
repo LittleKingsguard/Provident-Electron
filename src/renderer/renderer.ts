@@ -13,7 +13,7 @@ import { createTabsClient, NEW_TAB_TARGET_PREFIX, type TabsClient, type TabsClie
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, INSPECTOR_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -413,6 +413,15 @@ export interface PaneGestureAddress {
 const PANE_DRAG_HANDLES: readonly PaneGestureAddress[] = [
   { handleId: GUTTER_AFFORDANCE_ID, paneId: DEFAULT_PANE_ID, sign: 1 },
   { handleId: MENUS_AFFORDANCE_ID, paneId: MENUS_PANE_ID, sign: 1 },
+  // **THE THIRD PANE'S STRIP IS ONE LINE HERE AND NO SECOND GESTURE, WHICH IS WHAT THE LIST EXISTS FOR** (`D-251`'s own
+  // sentence: *"a third pane handle costs one list entry and writes its own node"* — the write is
+  // `panePreviewOf(address, value)` on `nodeIdForPane(address.subject.id)`, and the composition's single declared target is
+  // skipped for it BY ADDRESS). **ITS ID IS A LITERAL ON BOTH SIDES AND NOT AN EXPORT**: `demo-envelope.ts`'s
+  // `INSPECTOR_AFFORDANCE_ID` is private, and the four zone strips' precedent (`ZONE_DRAG_HANDLES` below) is that the
+  // equality between the two spellings is `PS-1`'s census and never an export (`D-41`, `D-188` debt 2). **THE `sign` IS
+  // `+1` FOR THE MENUS ENTRY'S REASON**: the strip stands on the pane's RIGHT edge, the edge away from the pane's left
+  // anchor, so the figure grows as the pointer moves right.
+  { handleId: 'inspector-vertical', paneId: INSPECTOR_PANE_ID, sign: 1 },
 ]
 
 /** **THE ZONE'S COUNTERPART OF `PaneGestureAddress` — THE SAME THREE IDEAS AND ONE MEMBER MORE**
@@ -1833,13 +1842,17 @@ async function main(): Promise<void> {
     paneMove.installed !== paneMove.drops ||
     paneMove.attached !== paneMove.drops ||
     paneMove.grips !== PANE_MOVE_GRIP_IDS.length ||
-    paneMove.captured !== paneMove.grips
+    paneMove.captured !== paneMove.grips ||
+    // **AND THE GHOST IS THE SIXTH READING** (the user's first change): a node the tree did not answer is a drag whose picture
+    // is absent while its act still lands, so it is said here in the same register rather than left to a person to notice.
+    paneMove.ghosts !== PANE_MOVE_GHOST_IDS.length
   ) {
     console.error(
       `[provident-renderer] the pane-move affordance is NOT fully wired — resolved ${String(paneMove.drops)}/${String(PANE_MOVE_DROP_IDS.length)} ` +
         `of \`${PANE_MOVE_DROP_IDS.join('`, `')}\`, installed ${String(paneMove.installed)}, attached ${String(paneMove.attached)}, ` +
-        `and ${String(paneMove.grips)}/${String(PANE_MOVE_GRIP_IDS.length)} grip(s) of \`${PANE_MOVE_GRIP_IDS.join('`, `')}\` with ` +
-        `${String(paneMove.captured)} drag(s) installed, so a press, a dispatch or a drag may reach no act`,
+        `${String(paneMove.grips)}/${String(PANE_MOVE_GRIP_IDS.length)} grip(s) of \`${PANE_MOVE_GRIP_IDS.join('`, `')}\` with ` +
+        `${String(paneMove.captured)} drag(s) installed, and ${String(paneMove.ghosts)}/${String(PANE_MOVE_GHOST_IDS.length)} ghost node(s) ` +
+        `of \`${PANE_MOVE_GHOST_IDS.join('`, `')}\`, so a press, a dispatch or a drag may reach no act and a drag may draw no shape`,
     )
   }
   // ⟶ **THE APPEARANCE APPLICATION (`D-97`)** — constructed here, ONCE, after the first envelope load so the authored state
@@ -2510,9 +2523,23 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
 // a person can see): the **zone the record would receive** is outlined through a transient `style` declaration on the
 // ZONE ELEMENT — one of the four PAINTED nodes, which `paintStyle` replaces WHOLE on the next delivery and which no
 // delivery touches mid-gesture — and **the authored overlay under the pointer** is filled in beside it, so the person
-// sees both the vicinity window and the zone that will take the record. **NO GHOST OF THE PANE IS DRAWN**: a ghost is
-// a NEW ELEMENT, and every element in this realm is provident data (`AGENTS.md`'s UI authority) — the authored census is
-// pinned at `89` nodes by `theme-control`, and the pane's own element may not be re-parented (`D-182`, §6).
+// sees both the vicinity window and the zone that will take the record.
+// **AND THE GHOST *IS* DRAWN NOW, WHICH OVERRULES `D-249`'S REFUSAL AND IS THE USER'S OWN INSTRUCTION** (*"Pane drag should
+// render a ghost into the target location, showing where the pane will place if released"*). `D-249` refused one for the
+// reason that **a ghost is a new element and every element is provident data with the authored census pinned at `89` — and
+// that reason is ANSWERED RATHER THAN IGNORED**: the ghost is a PROVIDENT NODE, AUTHORED once in the envelope
+// (`demo-envelope.ts`'s `PANE_GHOST_ID`, hidden by its authored `opacity: 0`), counted in the census as a term of its own,
+// and revealed by this gesture's inline style — the same three facts the four overlays above already have. **IT IS NOT
+// MINTED, AND THAT IS THE ONE FORM THIS CORPUS COULD NOT USE**: a mint creates a node at drag time whose container is never
+// recompiled (`D-182`'s measured routing defect), nothing would remove it, and every gesture would leave a second ghost
+// behind. **NOR IS THE PANE'S OWN ELEMENT RE-PARENTED TO MAKE ONE** (`D-182`, §6): the ghost is drawn AT the target and the
+// pane is left exactly where it is until the release's write and its delivery (`D-252`).
+// **WHAT IT SHOWS, AND FROM WHICH DECLARATION**: the pane's shape at the target location — the zone's own box on the axis
+// the zone FIXES, and the record's stored figure on the axis the zone leaves free (`D-243`'s fill relation). `paneMoveGhostBoxOf`
+// composes it from `paneFillAxisOf`, `paneAxisMembers`, `paneMoveDropBoxOf` and the panes family, which are EXACTLY the
+// declarations the paint reads — there is no second table, so there is nothing that can drift.
+// **AND THE RELEASE, THE CANCEL AND A MOVE ONTO NO ZONE ALL CLEAR IT**, as does an unarmed press: the ghost is written only
+// inside `highlight`, which is only reached from a move past `PANE_MOVE_ARM_DISTANCE`, so a click cannot show one.
 // **THE `['drag']` FAMILY IS NOT FORCED TO CARRY IT**: that family's writer is `commitDrag(<pane>, {<member>: <figure>})`
 // — a PANE-KEYED, GEOMETRY-SHAPED `{size}` transient (`D-145`, §1 of `design-zone-handles.md`) — and its reader is the
 // ghost turn, which reads `branch[DEFAULT_PANE_ID]`. A placement is neither keyed by a figure nor answerable in a `size`,
@@ -2520,13 +2547,13 @@ function startAddTab(runtime: Runtime): { readonly nodeId: string | null; readon
 // the resize drags made it, and the placement preview is the inline-style transient above.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-/** **THE TWO DECLARED GRIPS, BY THEIR AUTHORED IDS — THE SECOND HALF OF THE ADDRESS BOOK, SPELLED LIKE THE DROPS'
- *  EIGHT** (`D-235`, `D-188` debt 2): the envelope's `MENUS_GRAB_ID`/`GUTTER_GRAB_ID` are private and this file spells
+/** **THE THREE DECLARED GRIPS, BY THEIR AUTHORED IDS — THE SECOND HALF OF THE ADDRESS BOOK, SPELLED LIKE THE DROPS'
+ *  TWELVE** (`D-235`, `D-188` debt 2): the envelope's `MENUS_GRAB_ID`/`GUTTER_GRAB_ID` are private and this file spells
  *  the same two strings, so the equality is a ROW's (`theme-control`'s per-id census) and never a derivation across the
  *  module boundary. **THE PAIRING IS THE ENVELOPE'S OWN ID CONVENTION AND IS DERIVED INSIDE THIS FILE**: a drop is
  *  `${gripId}-${zone}` (`demo-envelope.ts`'s `paneMoveGripNodeOf`), and both ends of that spelling stand in this file as
  *  literals — so pairing a grip with its four drops by prefix derives nothing this file does not already state. */
-const PANE_MOVE_GRIP_IDS: readonly string[] = ['menus-grab', 'gutter-grab']
+const PANE_MOVE_GRIP_IDS: readonly string[] = ['menus-grab', 'gutter-grab', 'inspector-grab']
 
 /** **THE DISTANCE THE POINTER MUST TRAVEL BEFORE A PRESS IS A DRAG RATHER THAN A CLICK** (`D-245`'s instrument: a real
  *  pointer, one sample per move). **IT IS THE ONE THING THAT KEEPS A CLICK A CLICK**: pressing a grip reveals its four
@@ -2536,8 +2563,9 @@ const PANE_MOVE_GRIP_IDS: readonly string[] = ['menus-grab', 'gutter-grab']
  *  ON THE FIRST MOVE IT HEARS** (`pointerOf`'s null arm), because a move it cannot measure is still a move. */
 const PANE_MOVE_ARM_DISTANCE = 4
 
-/** **THE EIGHT DECLARED DROPS, BY THEIR AUTHORED IDS — THE ADDRESS BOOK AND NOT A WALK** (§3 `M1`; `D-235`). The
- *  envelope derives each id from its grip's one spelling (`'menus-grab'`/`'gutter-grab'` + `-<zone>`), so these eight
+/** **THE TWELVE DECLARED DROPS, BY THEIR AUTHORED IDS — THE ADDRESS BOOK AND NOT A WALK** (§3 `M1`; `D-235`). The
+ *  envelope derives each id from its grip's ONE spelling (`'menus-grab'`/`'gutter-grab'`/`'inspector-grab'` + `-<zone>`),
+ *  so these twelve
  *  literals are the SECOND spelling and the equality is a ROW's business, never a derivation — the ids cannot cross the
  *  module boundary without becoming published names, which the design refuses (`D-41`, `D-188` debt 2, §7). The census
  *  resolves each of them to the NODE id the graph minted (a node id is not a `props.id`: `addTabNodeId`'s lesson), and
@@ -2545,7 +2573,19 @@ const PANE_MOVE_ARM_DISTANCE = 4
 const PANE_MOVE_DROP_IDS: readonly string[] = [
   'menus-grab-top', 'menus-grab-bottom', 'menus-grab-left', 'menus-grab-right',
   'gutter-grab-top', 'gutter-grab-bottom', 'gutter-grab-left', 'gutter-grab-right',
+  'inspector-grab-top', 'inspector-grab-bottom', 'inspector-grab-left', 'inspector-grab-right',
 ]
+
+/** **THE ONE AUTHORED GHOST NODE, BY ITS OWN ID — THE ADDRESS BOOK'S THIRD LIST, AND ONE ENTRY** (the user's first change:
+ *  *"Pane drag should render a ghost into the target location, showing where the pane will place if released"*).
+ *  **THE GHOST IS AUTHORED AND NOT MINTED** (`demo-envelope.ts`'s `PANE_GHOST_ID` block states the whole argument), and an
+ *  authored node is one this file must FIND: the census below resolves it by the same `props.id` walk it resolves the three
+ *  grips and the twelve drops by, so the gesture holds an ELEMENT and never a selector, a `querySelector` or a class token
+ *  (`D-235`'s census-is-the-address-book rule). **ONE GHOST SERVES EVERY PANE AND EVERY GRIP**: a gesture is one pointer at
+ *  a time and each gesture clears what it drew, so a second ghost per pane would be three nodes drawing one box — and the
+ *  ghost names no pane, because the pane it draws is read off the DROP the pointer is standing on (`props.pane`), which is
+ *  the same read the act's operands come from. */
+const PANE_MOVE_GHOST_IDS: readonly string[] = ['pane-ghost']
 
 /** **THE ONE `(name, event)` PAIR EVERY DROP AUTHORS AND THIS FILE INSTALLS OVER** (`TABS_ADD_HANDLER`'s two-spelling
  *  rule, exactly): the envelope states it (`demo-envelope.ts`'s `PANE_MOVE_HANDLER_NAME`) and this copy names the body
@@ -2566,26 +2606,29 @@ interface PaneMoveDropTarget extends PaneMoveNodeRef {
   readonly element: unknown
 }
 
-/** **THE CENSUS — EVERY DECLARED GRIP AND DROP RESOLVED TO THE NODE THE GRAPH MINTED, IN ONE WALK** (`D-235`; the
- *  `addTabNodeId`/`menuItemNodeIds` form): `props.id` is read off every in-tree node ONCE at boot and compared against
- *  the two grip literals and the eight drop literals above, so no node id is spelled and no selector is used. **TOTAL**:
+/** **THE CENSUS — EVERY DECLARED GRIP, DROP AND THE GHOST RESOLVED TO THE NODE THE GRAPH MINTED, IN ONE WALK** (`D-235`;
+ *  the `addTabNodeId`/`menuItemNodeIds` form): `props.id` is read off every in-tree node ONCE at boot and compared against
+ *  the THREE grip literals, the TWELVE drop literals and the ONE ghost literal above, so no node id is spelled and no
+ *  selector is used. **TOTAL**:
  *  a census that throws, answers no `nodes` or answers a shape that is not a list states an EMPTY answer, so a realm with
  *  no such node degrades to no listener and no throw (`D-127`). **THE COST IS NAMED**: one `nodeState` read per in-tree
- *  node, once — the price `addTabNodeId` already pays, and no per-delivery read. **TWO LISTS AND NOT ONE, BECAUSE THE TWO
- *  KINDS ARE TWO ARMS**: the grips take the press and the pointer, the drops take the release's act, and a boot reading
- *  that confused them would capture on a drop. **A MISSING NODE IS NOT INVENTED**: each list carries what the tree
- *  answered, and the boot's one site compares both lengths against their declared literals. */
-function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMoveNodeRef[]; readonly drops: readonly PaneMoveNodeRef[] } {
+ *  node, once — the price `addTabNodeId` already pays, and no per-delivery read. **THREE LISTS AND NOT ONE, BECAUSE THE
+ *  KINDS ARE THREE ARMS**: the grips take the press and the pointer, the drops take the release's act, and **the ghost
+ *  takes NEITHER — the gesture only DRAWS it** — so a boot reading that folded it into the grips would capture a pointer
+ *  on a box nobody pressed. **A MISSING NODE IS NOT INVENTED**: each list carries what the tree
+ *  answered, and the boot's one site compares every length against its declared literal. */
+function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMoveNodeRef[]; readonly drops: readonly PaneMoveNodeRef[]; readonly ghosts: readonly PaneMoveNodeRef[] } {
   let listed: unknown = null
   try {
     listed = runtime.listTargets()
   } catch {
-    return { grips: [], drops: [] }
+    return { grips: [], drops: [], ghosts: [] }
   }
   const nodes = (listed as { readonly nodes?: unknown } | null | undefined)?.nodes
-  if (!Array.isArray(nodes)) return { grips: [], drops: [] }
+  if (!Array.isArray(nodes)) return { grips: [], drops: [], ghosts: [] }
   const grips: PaneMoveNodeRef[] = []
   const drops: PaneMoveNodeRef[] = []
+  const ghosts: PaneMoveNodeRef[] = []
   for (const entry of nodes as readonly unknown[]) {
     if (entry === null || typeof entry !== 'object') continue
     const nodeId = (entry as { readonly nodeId?: unknown }).nodeId
@@ -2596,10 +2639,14 @@ function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMove
       grips.push({ id: held.held, nodeId })
       continue
     }
+    if (PANE_MOVE_GHOST_IDS.includes(held.held)) {
+      ghosts.push({ id: held.held, nodeId })
+      continue
+    }
     if (!PANE_MOVE_DROP_IDS.includes(held.held)) continue
     drops.push({ id: held.held, nodeId })
   }
-  return { grips, drops }
+  return { grips, drops, ghosts }
 }
 
 /** **THE ACT — ONE DROP'S PRESS, AND THE WHOLE PANE RECORD WRITTEN ONCE** (§3 `X1`–`X4`). It is TOTAL: every arm
@@ -2902,6 +2949,111 @@ function paneMoveDropEmphasis (element: unknown, shown: boolean): void {
   style.set('opacity', shown ? PANE_MOVE_DROP_OPACITY.shown : PANE_MOVE_DROP_OPACITY.hidden)
 }
 
+/** **ONE PANE'S STORED FIGURE FOR THE MEMBER A ZONE MAKES ADJUSTABLE, OR `null`** — the ghost's ONE record read, taken on
+ *  EVERY TRANSITION and never remembered (`D-129`'s ask-don't-remember), so what the ghost draws is the figure the release
+ *  would write. It is `paneMoveAct`'s `X1` read with a member selected, and its arms are the same: a throwing client, a
+ *  family naming no such pane and a member that is not a finite non-negative number each answer `null`, which the ghost
+ *  reads as the stated absence of a shape to draw (`D-174` — never a default, never a figure of this file's). */
+function paneMoveGhostFigureOf (paneId: string, member: 'width' | 'height'): number | null {
+  let shape: unknown = null
+  try {
+    shape = getViewClient().shape()
+  } catch {
+    return null
+  }
+  const panes = (shape as { readonly panes?: unknown } | null | undefined)?.panes
+  if (!Array.isArray(panes)) return null
+  const held = (panes as readonly unknown[]).find((entry) => (entry as { readonly id?: unknown } | null | undefined)?.id === paneId)
+  if (held === undefined || held === null || typeof held !== 'object') return null
+  const figure = (held as Record<string, unknown>)[member]
+  if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) return null
+  return figure
+}
+
+/** **THE GHOST'S BOX AT THE TARGET LOCATION — THE PANE'S SHAPE IN THE ZONE UNDER THE POINTER, COMPOSED FROM THE SAME THREE
+ *  DECLARATIONS THE PAINT READS AND FROM NO FOURTH** (the user's first change: *"a ghost into the target location, showing
+ *  where the pane will place if released"*; `D-243`'s fill relation).
+ *
+ *  **IT IS THE PAINT'S OWN DECLARATION AND NOT A PARALLEL ONE, WHICH IS THE WHOLE ANSWER TO "WHAT STOPS THEM DRIFTING"**:
+ *  the axis the pane FILLS (and the axis it scrolls) is `paneFillAxisOf(<zone>)`, read off `LAYOUT_ZONE_AXES`; the axis
+ *  whose figure is the record's is `paneAxisMembers(<zone>)`, the complement declared at its own site; the figure itself is
+ *  `paneMoveGhostFigureOf` off `['panes', <id>]`; and the ZONE's extent on the axis it fixes is the same composed box
+ *  `paneMoveDropBoxOf` gives the overlay the pointer is standing in, which is itself composed from
+ *  `['zones', <id>, 'size']`. So a ghost that disagreed with the paint would be a defect in ONE of those four, not a
+ *  second table somebody forgot to update — there is no second table.
+ *  **THE TWO SHAPES IT PRODUCES ARE THE TWO THE PAINT PRODUCES**: a `top`/`bottom` pane is `height: <the zone's size>` and
+ *  `width: <the record's figure>`, anchored at the zone's leading edge on the axis the zone frees; a `left`/`right` pane is
+ *  `width: <the zone's size>` and `height: <the record's figure>`, likewise. **THE FILL IS EXPRESSED AS THE ZONE'S OWN
+ *  BOX** rather than as `100%`, and the difference is the medium and not the relation: the paint writes a `css.style`
+ *  declaration on a node INSIDE the zone, so `100%` resolves against it, while the ghost is `position: fixed` against the
+ *  window and must therefore carry the zone's extent itself.
+ *  **`null` IS THE STATED ABSENCE AND NEVER A FALLBACK** (`D-174`): an undeclared zone fills no axis, a zone the record
+ *  states no figure for has no box, and a pane the family does not name has no figure — each answers no ghost at all,
+ *  which the drag reads as "draw nothing", exactly as the drop's own `null` box makes it unreachable. */
+function paneMoveGhostBoxOf (zone: string, figures: ReadonlyMap<string, number>, paneId: string): Record<string, string> | null {
+  // THE FILL AXIS AND THE ADJUSTABLE MEMBER ARE THE PAINT'S TWO FUNCTIONS, asked once and never re-spelled here.
+  const placement = paneFillAxisOf(zone)
+  if (placement === null) return null
+  const members = paneAxisMembers(zone)
+  const member = members.length === 1 ? members[0] : undefined
+  if (member === undefined) return null
+  const figure = paneMoveGhostFigureOf(paneId, member)
+  if (figure === null) return null
+  const box = paneMoveDropBoxOf(zone, figures)
+  if (box === null) return null
+  const style: Record<string, string> = {}
+  for (const property of PANE_MOVE_DROP_BOX) {
+    const text = box[property]
+    if (text === undefined) continue
+    style[property] = text
+  }
+  // THE ONE MEMBER THE ZONE LEAVES FREE IS THE RECORD'S, AND THE ZONE'S BOX STOPS SHORT OF IT ON THAT SIDE. A `top`/`bottom`
+  // pane fills the zone's HEIGHT (the box's own) and its width is the figure; a `left`/`right` pane fills the zone's WIDTH
+  // and its height is the figure — the SAME `PANE_FILL`/`paneAxisMembers` pair the paint composes, one declaration on either
+  // side of it. `auto` on the released side is what lets the figure govern.
+  if (placement.fill === 'height') {
+    style['right'] = 'auto'
+    style['width'] = `${String(figure)}px`
+  } else {
+    style['bottom'] = 'auto'
+    style['height'] = `${String(figure)}px`
+  }
+  return style
+}
+
+/** **THE GHOST'S ONE WRITER — SIX BOX PROPERTIES AND THE VISIBILITY, ON THE AUTHORED NODE THE CENSUS RESOLVED.** A realm
+ *  whose `style` refuses is the declared no-write arm (`paneMoveStyleOf`'s own, `D-127`): the gesture still resolves its
+ *  target and still commits on release, and what is lost is the picture rather than the act. **IT WRITES NOTHING TO THE
+ *  GRAPH AND SENDS NO ROUTE**, which is what keeps `D-249`'s measured property — the record untouched at every move —
+ *  true with a ghost in the picture. */
+function paneMoveGhostWrite (element: unknown, box: Record<string, string>): void {
+  const style = paneMoveStyleOf(element)
+  if (style === null) return
+  for (const property of PANE_MOVE_DROP_BOX) {
+    const text = box[property]
+    if (text === undefined) continue
+    style.set(property, text)
+  }
+  style.set('opacity', PANE_MOVE_DROP_OPACITY.shown)
+}
+
+/** **AND THE SAME PROPERTIES CLEARED, BY NAME — THE RELEASE, THE CANCEL, A MOVE OFF EVERY ZONE AND A NEW PRESS ALL END HERE**
+ *  (`D-216`'s rule: nothing paints without an event, and the event that ends the gesture is what takes its picture with it).
+ *  **THE VISIBILITY IS RESTORED BY VALUE AND NOT BY REMOVAL, AND THAT IS A MEASURED DIFFERENCE** — the one thing the first
+ *  cut of this function got wrong, on a real window: `opacity` here is an INLINE declaration authored on the node
+ *  (`paneGhostStyle`), so `removeProperty('opacity')` DELETES the authored `0` instead of falling back to it, and the ghost
+ *  was left standing as a `4×4` dashed box at the window's origin with a computed opacity of `1` — the authored value is a
+ *  style ATTRIBUTE member and not a sheet's, so only `'0'` written back is the authored state. The six box members are
+ *  removed all the same, so the ghost keeps no geometry either.
+ *  **AND NOTHING ELSE IS REMEMBERED**: no flag, no class and no attribute says "the ghost is up"; the node is
+ *  indistinguishable from its authored self between gestures. */
+function paneMoveGhostClear (element: unknown): void {
+  const style = paneMoveStyleOf(element)
+  if (style === null) return
+  for (const property of PANE_MOVE_DROP_BOX) style.remove(property)
+  style.set('opacity', PANE_MOVE_DROP_OPACITY.hidden)
+}
+
 /** **THE POINTER'S TWO COORDINATES, OR `null`** — the ONE coordinate read this file takes, total over a primitive event, a
  *  throwing accessor and a realm that carries no `clientX`/`clientY` (the layout-less shim: `pointerOf`'s own null arm,
  *  which the drag treats as "a move I cannot measure, which is still a move"). */
@@ -3010,7 +3162,7 @@ function paneMoveDropUnderPointer (event: unknown, targets: ReadonlyMap<unknown,
  *  pretends a placement happened. **A COMMITTED RELEASE BLURS THE GRIP**, which is how the reveal collapses behind the
  *  act: the preview's own `style` declarations are gone either way, and the overlays are the sheet's to hide.
  *  **IT WRITES NO RECORD ON ANY MOVE**: the only crossing in this function is the release's, through the act. */
-function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: readonly PaneMoveDropTarget[]): boolean {
+function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: readonly PaneMoveDropTarget[], ghost: unknown): boolean {
   let element: unknown = null
   try {
     element = runtime.elementForNodeId(grip.nodeId)
@@ -3033,7 +3185,41 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     press: { readonly x: number; readonly y: number } | null
     drop: PaneMoveDropTarget | null
     zone: unknown
-  } = { pressed: false, armed: false, press: null, drop: null, zone: null }
+    /** **THE ZONES' FOUR FIGURES, ASKED ONCE AT THE PRESS AND HELD FOR THE GESTURE** — the boxes the four drops were just given
+     *  and the box the GHOST stands in are the SAME composition over the SAME reading, so asking twice could only make the two
+     *  disagree. It is the press's reading and not a remembered record: the next press asks again (`D-129`), and no delivery
+     *  runs mid-gesture (`D-246`). `null` before the first press of a gesture, which is the arm that draws no ghost. */
+    figures: ReadonlyMap<string, number> | null
+  } = { pressed: false, armed: false, press: null, drop: null, zone: null, figures: null }
+  /** **THE GHOST'S ONE TRANSITION — draw the pane's shape where the release would put it, or take it away.** It reads THREE
+   *  operands off the node and the record at every transition and invents none of them: the DROP's authored `props.pane` (the
+   *  record id, the same read `paneMoveAct` takes at `X0`), the DROP's authored `props.zone` (the destination), and the
+   *  family's figure for that pane on the member the destination frees (`paneMoveGhostBoxOf`). **A DROP THAT STATES NO PANE,
+   *  A PANE THE FAMILY DOES NOT NAME AND A ZONE THE RECORD STATES NO FIGURE FOR EACH DRAW NOTHING** (`D-174`'s stated
+   *  absence) — and on every such arm the ghost that the previous target drew is CLEARED first, so no arm can leave a shape
+   *  standing over a placement the release would not make. */
+  const drawGhost = (target: PaneMoveDropTarget | null): void => {
+    if (target === null || state.figures === null) {
+      paneMoveGhostClear(ghost)
+      return
+    }
+    const pane = authoredPropOf(runtime, target.nodeId, 'pane')
+    if (!pane.readable || typeof pane.held !== 'string' || pane.held === '') {
+      paneMoveGhostClear(ghost)
+      return
+    }
+    const zone = authoredPropOf(runtime, target.nodeId, 'zone')
+    if (!zone.readable || typeof zone.held !== 'string' || zone.held === '') {
+      paneMoveGhostClear(ghost)
+      return
+    }
+    const box = paneMoveGhostBoxOf(zone.held, state.figures, pane.held)
+    if (box === null) {
+      paneMoveGhostClear(ghost)
+      return
+    }
+    paneMoveGhostWrite(ghost, box)
+  }
   /** **THE PREVIEW'S ONE TRANSITION** — the target under the pointer, or `null` for none. It clears the two transient
    *  writes of the target it is leaving and writes the two of the target it enters, so the screen always carries exactly
    *  the placement the drag would commit, and the SAME call with `null` is the release's clear. **THE ZONE'S ID IS READ OFF
@@ -3049,6 +3235,9 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
       paneMoveDropEmphasis(target.element, true)
       paneMovePreviewWrite(target.element, 'drop')
       if (state.zone !== null) paneMovePreviewWrite(state.zone, 'zone')
+      // **AND THE GHOST IS RE-STATED FOR THE OUTLINE'S OWN REASON** — idempotent, two property writes per move, and what keeps
+      // the shape standing under a pointer that has not moved.
+      drawGhost(target)
       return
     }
     if (state.drop !== null) {
@@ -3058,9 +3247,17 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     if (state.zone !== null) paneMovePreviewClear(state.zone, 'zone')
     state.drop = target
     state.zone = null
-    if (target === null) return
+    if (target === null) {
+      // **A MOVE OFF EVERY ZONE TAKES THE GHOST WITH IT** — the one arm `D-249`'s five-sample reading never reached: the
+      // shape must vanish the instant the pointer leaves the four windows, or it would be a placement no release would make.
+      paneMoveGhostClear(ghost)
+      return
+    }
     paneMoveDropEmphasis(target.element, true)
     paneMovePreviewWrite(target.element, 'drop')
+    // THE GHOST IS DRAWN BEFORE THE OUTLINE'S OWN READ RETURNS, so the shape a person sees never depends on the ZONE NODE
+    // resolving: the ghost is composed from the record and the drop, and the outline is the zone element's write.
+    drawGhost(target)
     const authored = authoredPropOf(runtime, target.nodeId, 'zone')
     if (!authored.readable || typeof authored.held !== 'string' || authored.held === '') return
     let zoneElement: unknown = null
@@ -3120,6 +3317,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
    *  therefore unreachable — the honest arm, and never an invented window (`D-174`). */
   const boxDrops = (): void => {
     const figures = paneMoveZoneFigures()
+    state.figures = figures
     for (const target of targets) {
       const authored = authoredPropOf(runtime, target.nodeId, 'zone')
       const zone = authored.readable && typeof authored.held === 'string' ? authored.held : ''
@@ -3129,6 +3327,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
   /** **AND THE SAME FOUR CLEARED ON EVERY END** — by property NAME, so the authored style (fixed, a pointer cursor and
    *  `opacity: 0`) is what stands again and nothing of the gesture is remembered. */
   const unboxDrops = (): void => {
+    state.figures = null
     for (const target of targets) paneMoveDropBoxClear(target.element)
   }
   const onPress = (event: unknown): void => {
@@ -3213,8 +3412,21 @@ function startPaneMove(runtime: Runtime): {
   readonly drops: number
   readonly installed: number
   readonly attached: number
+  readonly ghosts: number
 } {
   const census = paneMoveCensusOf(runtime)
+  // **THE GHOST'S ONE RESOLUTION, TAKEN ONCE AT BOOT AND HANDED TO EVERY GRIP'S DRAG** (the user's first change): one
+  // authored node draws every pane's shape, so the three grips share one element and no per-press resolution exists. A
+  // ghost node the tree did not answer is `undefined` and every drag degrades to the declared no-write arm
+  // (`paneMoveStyleOf`'s `null`) — the gesture still resolves, still outlines and still commits; what is lost is the picture.
+  let ghost: unknown = undefined
+  if (census.ghosts.length > 0) {
+    try {
+      ghost = runtime.elementForNodeId(census.ghosts[0]?.nodeId ?? '')
+    } catch {
+      ghost = undefined
+    }
+  }
   let installed = 0
   let attached = 0
   const targets: PaneMoveDropTarget[] = []
@@ -3228,9 +3440,9 @@ function startPaneMove(runtime: Runtime): {
   let captured = 0
   for (const grip of census.grips) {
     const own = targets.filter((target) => target.id.startsWith(`${grip.id}-`))
-    if (installPaneMoveDrag(runtime, grip, own)) captured += 1
+    if (installPaneMoveDrag(runtime, grip, own, ghost)) captured += 1
   }
-  return { grips: census.grips.length, captured, drops: census.drops.length, installed, attached }
+  return { grips: census.grips.length, captured, drops: census.drops.length, installed, attached, ghosts: census.ghosts.length }
 }
 
 /** **THE DELIVERY'S TURN — HOLD THE READING AND DRIVE THE PAGES FROM IT** (`D-92`). A delivery is a RE-READ (L2 §6: the
@@ -3481,10 +3693,13 @@ function declaredZoneNameOf(zone: unknown): string | null {
  *  (`D-41`) — so the equality is DECLARED here and measured by `AL-10` rather than derived by anything (`D-188` debt 2).
  *  A map carrying only `pane-a` would leave the menus pane's paint standing on a silent identity rule, which is the state
  *  this declaration exists to delete. **THE LIST MUST BE TOTAL OVER `DECLARED_PANE_IDS`** (`view-shape.ts:165`); a third
- *  declared pane would write nothing and be reported `absent`. */
+ *  declared pane would write nothing and be reported `absent`. **THE THIRD ENTRY IS THAT CLAUSE'S OWN TEST**: the second
+ *  demo pane is declared AND authored (`demo-envelope.ts`'s `INSPECTOR_PANE_RECORD_ID`), so the domain widened by one and
+ *  this map widened with it in the same pass — `PM-1` (gating) reds BY NAME on a declared pane with no entry. */
 const PANE_NODE_IDS: readonly { readonly paneId: string; readonly nodeId: string }[] = [
   { paneId: DEFAULT_PANE_ID, nodeId: 'gutter-pane' }, // the STAGE pane: the record's id is the COMPOSITION's, the node's the ENVELOPE's (`D-138`)
   { paneId: MENUS_PANE_ID, nodeId: 'pane-menus' }, // measured EQUAL today and DECLARED regardless — an equality nothing derives
+  { paneId: INSPECTOR_PANE_ID, nodeId: 'pane-inspector' }, // the SECOND PANE IN A ZONE, and likewise measured-equal and declared
 ]
 
 /** **THE MAP CONSULTED, AND ITS MISSING ARM IS `null` AND NEVER THE PANE ID** (§3; `D-174`'s standard applied to a lookup).

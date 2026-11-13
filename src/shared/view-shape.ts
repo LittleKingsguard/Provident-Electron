@@ -147,6 +147,18 @@ export const DEFAULT_PANE_ID = 'pane-a'
  *  gating `renderer-wiring` rows keep theirs, and this id is DECLARED BESIDE it rather than in its place. **IT IS SPELLED
  *  HERE ONCE** and the set below is built from it, so the declared domain and the placeholder cannot drift apart. */
 export const MENUS_PANE_ID = 'pane-menus'
+/** **THE THIRD DECLARED PANE — A SECOND PANE IN THE `top` ZONE, SO A ZONE HOLDS TWO AND THEIR ARRANGEMENT IS EXERCISABLE**
+ *  (the user's second change verbatim: *"Add additional demo panes so that this can be tested with pane rearrangement in a
+ *  zone"*). **IT DISPLACES NOTHING, EXACTLY AS THE MENUS PANE DISPLACED NOTHING** (`D-183`): `pane-a` keeps the gutter
+ *  card's resize and `pane-menus` keeps the eighteen items and the menus handle, and this id is DECLARED BESIDE them.
+ *  **IT IS ZONE-RESIDENT AT THE SAME DECLARED ZONE THE MENUS PANE DECLARES** (`MENUS_PANE_ZONE_ID`), because "two panes in
+ *  one zone" is the whole of what it exists for: two panes that stand in different zones could never exercise an
+ *  arrangement. **ITS FIGURES ARE THE FAMILY'S OWN `DEFAULT_PANE_SIZE` AND ARE NOT THIS CONSTANT'S**: the placeholder below
+ *  writes both axis members for every declared id from the one measured default, so this id buys no figure and no bounds —
+ *  it buys a pane. **AND THE ONE THING IT DOES COST IS THE `PANE_NODE_IDS` ENTRY**: that map is TOTAL over
+ *  `DECLARED_PANE_IDS` (`renderer-wiring`'s `PM-1`, gating), so a declared id with no authored node would be a pane the
+ *  record holds and no paint can reach. */
+export const INSPECTOR_PANE_ID = 'pane-inspector'
 /** **THE MEASURED DEFAULT SIZE** — the figure `D-87` measured off the authored pane's `props.size` (MEASURED 2026-11-03),
  *  which the node NO LONGER CARRIES (`F11`: the prop and the two seam readers that read it went together), and the figure
  *  `panes-must-stand` repairs to. **AT `D-189` IT IS THE DEFAULT FOR BOTH AXIS MEMBERS**, and its VALUE does not move: the
@@ -157,16 +169,20 @@ export const DEFAULT_PANE_SIZE = 100
  *  copied into a fresh record by `defaultPaneGeometry` rather than handed out by reference, so no caller can move this
  *  file's own constant. */
 export const DEFAULT_PANE_BOUNDS: { readonly min: number; readonly max: number } = { min: 0, max: 200 }
-/** **THE PANE FAMILY'S ID DOMAIN, CLOSED AT TWO IDS — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-138, **widened
- *  one → two at `D-183`**; `DECLARED_ZONE_IDS` below is the same closure one family over, `D-151`). `['panes', id]` must
+/** **THE PANE FAMILY'S ID DOMAIN, CLOSED AT THREE IDS — AND CLOSED BECAUSE A LEAF WRITE NEEDS IT TO BE** (D-138, **widened
+ *  one → two at `D-183`, two → three for the second demo pane**; `DECLARED_ZONE_IDS` below is the same closure one family
+ *  over, `D-151`). `['panes', id]` must
  *  be GUARANTEED to stand for every id the route is handed, and the store creates no parent (measured at this node), so an
  *  OPEN id set can guarantee nothing: the domain closes, and the creation repair writes exactly these ids, each with its
- *  declared default geometry (`viewPanesPlaceholder` below). **IT IS BUILT FROM THE TWO ID CONSTANTS AND NOT SPELLED
- *  BESIDE THEM**, so the drag's own fallback (`DEFAULT_PANE_ID`) can never name a pane this record refuses and the
+ *  declared default geometry (`viewPanesPlaceholder` below). **IT IS BUILT FROM THE ID CONSTANTS AND NOT SPELLED BESIDE
+ *  THEM**, so the drag's own fallback (`DEFAULT_PANE_ID`) can never name a pane this record refuses and the
  *  placeholder cannot drift from the set. **THE SECOND ID NAMES ITS OWN READER, WHICH IS WHY THE WIDENING IS LAWFUL**: the
  *  menus pane renders eighteen authored items and its `width` is the member the paint writes, while `pane-a`'s subject —
- *  the gutter card's resize, the drag's release its only producer — is UNCHANGED (`OWED-1`, settled at `D-183`). */
-export const DECLARED_PANE_IDS: readonly string[] = [DEFAULT_PANE_ID, MENUS_PANE_ID]
+ *  the gutter card's resize, the drag's release its only producer — is UNCHANGED (`OWED-1`, settled at `D-183`). **AND THE
+ *  THIRD ID NAMES ITS OWN READER THE SAME WAY**: `INSPECTOR_PANE_ID` is the second pane in the `top` zone, authored so a
+ *  zone holds two and a rearrangement in a zone can be exercised at all — a widening that adds an id and no node, no
+ *  gesture entry and no arrangement would be three declared panes and nothing to look at. */
+export const DECLARED_PANE_IDS: readonly string[] = [DEFAULT_PANE_ID, MENUS_PANE_ID, INSPECTOR_PANE_ID]
 
 /** **THE ZONE FAMILY'S ID DOMAIN, CLOSED AT FOUR IDS — SPELLED, NOT DERIVED, AND THAT IS `D-192`'S SETTLEMENT** (D-151,
  *  D-139, **widened one → four at `D-181`**). `['zones', id]` must be GUARANTEED to stand for every id the route is handed,
@@ -187,7 +203,9 @@ export const DECLARED_ZONE_IDS: readonly string[] = ['top', 'bottom', 'left', 'r
  *  `D-192`). **IT IS NOT A DEFAULT ZONE AND NOT A FALLBACK**: no route of this module writes a `zone` (`C-8`), so its only
  *  two writers are the creation repair below and an outside `data.write`, and both are judged by the family's own parse —
  *  which is why a spelling that drifted off `DECLARED_ZONE_IDS`' `top` would be REFUSED rather than stored (`paneOf`,
- *  `paneNodeAdmits`, `D-105`). */
+ *  `paneNodeAdmits`, `D-105`). **ITS NAME IS THE MENUS PANE'S AND ITS VALUE IS THE ZONE-RESIDENT PLACEHOLDER'S**: the
+ *  placeholder below writes this one figure for EVERY declared id that is not the stage pane, so the second demo pane
+ *  arrives in `top` beside the menus pane from the same declaration and no second zone literal joins this file. */
 export const MENUS_PANE_ZONE_ID = 'top'
 
 /** **THE FOUR ZONE FIGURES — ONE DECLARED DEFAULT `size` PER DECLARED ZONE, SPELLED ONCE AND READ BY BOTH WRITERS**
@@ -258,19 +276,25 @@ const defaultZoneRecord = (id: string): Record<string, unknown> => {
 
 /** **THE PANE FAMILY'S PLACEHOLDER: EVERY DECLARED PANE ID WITH ITS DECLARED DEFAULT GEOMETRY** —
  *  `{'pane-a': { width: 100, height: 100, bounds: { min: 0, max: 200 } }, 'pane-menus': { width: 100, height: 100,
- *  zone: 'top' }}` — and **A FRESH RECORD ON EVERY CALL**, both for the family and for each pane in it, so no caller can
+ *  zone: 'top' }, 'pane-inspector': { width: 100, height: 100, zone: 'top' }}` — and **A FRESH RECORD ON EVERY CALL**, both
+ *  for the family and for each pane in it, so no caller can
  *  move this file's constants or the set it is built from (`viewThemePlaceholder`'s rule).
  *
- *  **BOTH MEMBERS OF BOTH PANES ARE WRITTEN AT `DEFAULT_PANE_SIZE`, AND THAT IS `D-192` CORRECTING `D-191`**: the shape
+ *  **BOTH MEMBERS OF EVERY PANE ARE WRITTEN AT `DEFAULT_PANE_SIZE`, AND THAT IS `D-192` CORRECTING `D-191`**: the shape
  *  requires BOTH axis members, so a repair writing one per pane would leave the other UNSTATED and the shape unsatisfied —
  *  and the OPERATIVE pair is `pane-menus`.`width` (the adjustable axis in a `top` zone) and `pane-a`.`height` (the figure
  *  `D-189` renames from `size`). **THE FIGURE A ZONE-RESIDENT PANE STORES IS ITS MEMORY AND NOT THE ZONE'S**: a repair that
  *  read `['zones']` for it would be this corpus's first family-crossing repair and would store a figure the layout already
  *  computes (`D-186`), so the family's own measured default stands in and the divergence is STATED rather than inherited.
+ *  **THE THIRD PANE COSTS THIS PLACEHOLDER NO FIGURE AND NO MEMBER**: it is declared in `DECLARED_PANE_IDS`, the loop is
+ *  over that set, and the branch below is the STAGE pane's — so it arrives with both axis members at the one measured
+ *  default, `zone: 'top'` and no `bounds`, which is `C-9`/`D-186`'s shape for a zone-resident pane and no invention.
  *
- *  **THE TWO RECORDS DIFFER, AND THE DIFFERENCE IS THE WHOLE OF `C-9`/`D-186`**: `pane-a` carries its `bounds` — the stage is
- *  derived and has no zone to inherit a clamp from — and NO `zone`, because absence IS the stage; `pane-menus` carries
- *  `zone: 'top'` and NO `bounds`, whose absence is LAWFUL for a zone-resident pane and is not repaired into one. **THE SET
+ *  **THE TWO RECORD FORMS DIFFER, AND THE DIFFERENCE IS THE WHOLE OF `C-9`/`D-186`**: `pane-a` carries its `bounds` — the
+ *  stage is
+ *  derived and has no zone to inherit a clamp from — and NO `zone`, because absence IS the stage; every zone-resident pane
+ *  (`pane-menus`, and now `pane-inspector`) carries `zone: 'top'` and NO `bounds`, whose absence is LAWFUL for a
+ *  zone-resident pane and is not repaired into one. **THE SET
  *  AND THE PLACEHOLDER CANNOT DRIFT** because the family is built from `DECLARED_PANE_IDS` and the `id` member is left off
  *  each record: the key is the id here. */
 export const viewPanesPlaceholder = (): Record<string, unknown> => {
@@ -278,13 +302,18 @@ export const viewPanesPlaceholder = (): Record<string, unknown> => {
   for (const id of DECLARED_PANE_IDS) {
     const geometry = defaultPaneGeometry(id)
     const record: Record<string, unknown> = { width: geometry.width, height: geometry.height }
-    if (id === MENUS_PANE_ID) {
-      // THE ZONE-RESIDENT PANE: its `width` is the adjustable member, its clamp is the LAYOUT's, and its `zone` is the
-      // member the design derives (`D-183`, `D-186`, `D-192`) — absence would place it in the stage instead.
-      record['zone'] = MENUS_PANE_ZONE_ID
-    } else {
+    // **THE BRANCH IS ON THE STAGE PANE AND NOT ON A LIST OF ZONE-RESIDENT IDS**, and that is what makes a THIRD declared
+    // pane cost this placeholder NOTHING: the criterion the two records differ by is `C-9`'s — `DEFAULT_PANE_ID` is the
+    // pane that stands in the STAGE, and absence of `zone` IS the stage — so every OTHER declared id is zone-resident and
+    // states `MENUS_PANE_ZONE_ID`. A widening therefore adds a pane with a zone and no `bounds`, which is the lawful shape
+    // for a zone-resident pane (`D-186`), and no default is invented for it (`D-174`).
+    if (id === DEFAULT_PANE_ID) {
       // THE STAGE PANE: `zone` absent by `C-9`, and its OWN stored clamp because the stage has nothing to inherit from.
       record['bounds'] = { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max }
+    } else {
+      // A ZONE-RESIDENT PANE: its adjustable member is the one its zone frees, its clamp is the LAYOUT's, and its `zone` is
+      // the member the design derives (`D-183`, `D-186`, `D-192`) — absence would place it in the stage instead.
+      record['zone'] = MENUS_PANE_ZONE_ID
     }
     family[id] = record
   }

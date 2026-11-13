@@ -86,7 +86,7 @@ import type {
   ViewRecordStore,
   ViewRepairAnswer,
 } from '../../../src/main/view-record'
-import { DEFAULT_ZONE_SIZES, MENUS_PANE_ID, MENUS_PANE_ZONE_ID } from '../../../src/shared/view-shape'
+import { DECLARED_PANE_IDS, DEFAULT_ZONE_SIZES, MENUS_PANE_ZONE_ID } from '../../../src/shared/view-shape'
 import { createViewSurface } from '../../../src/main/view-surface'
 import {
   IPC_VIEW_CHANGED,
@@ -113,13 +113,37 @@ const FOUR_STANDING = [...DEFAULT_ZONE_SIZES]
   .slice()
   .sort((left, right) => left.id.localeCompare(right.id))
   .map((entry) => ({ id: entry.id, size: entry.size }))
-/** **THE PANES FAMILY AS THE REPAIR MINTS IT — TWO PANES, EACH AT BOTH AXIS MEMBERS** (`D-192` correcting `D-191`):
- *  `pane-a` is the stage pane and carries its own clamp, `pane-menus` is the zone-resident one and carries its `zone`
- *  instead. The measured figures are the module's own constants, so a changed default reds these rows. */
-const PLACEHOLDER_PANES = [
-  { id: DEFAULT_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } },
-  { id: MENUS_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
-]
+/** **THE PANES FAMILY AS THE REPAIR MINTS IT — ONE RECORD PER DECLARED PANE, EACH AT BOTH AXIS MEMBERS** (`D-192`
+ *  correcting `D-191`): `pane-a` is the STAGE pane and carries its own clamp with no `zone` (`C-9`), and every OTHER
+ *  declared pane is ZONE-RESIDENT and carries its `zone` instead of a pair (`D-183`, `D-186`) — `pane-menus` and, since
+ *  the second demo pane landed, `pane-inspector`, the third declared id.
+ *
+ *  **THE ID SET IS READ OUT OF `DECLARED_PANE_IDS` AND THE FIGURES OUT OF THE MODULE'S CONSTANTS**, which is this file's
+ *  established division (`FOUR_STANDING` reads `DEFAULT_ZONE_SIZES` one family over): the placeholder is the whole declared
+ *  domain, so a FOURTH declared pane is covered by these rows the moment it is declared and costs no edit here — the
+ *  `PS-1` lesson, assert the DECLARED SET and never a spelled list. What still bites: a repair that DROPPED a declared id
+ *  (the read would answer the declared default for it, whose record carries `bounds` where a zone-resident pane must not —
+ *  `paneGeometryIn`'s default arm), gave a zone-resident pane a clamp, put the stage pane in a zone, or moved a default
+ *  figure. **AND THE ORDER IS THE STORE'S AND NOT THIS FILE'S**, so the list is sorted by id exactly as `FOUR_STANDING` is
+ *  (measured: the store answers the family in its own alphabetical key order, which no row here claims). */
+const PLACEHOLDER_PANES: ReadonlyArray<Record<string, unknown>> = DECLARED_PANE_IDS.map((id) =>
+  id === DEFAULT_PANE_ID
+    ? { id, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max } }
+    : { id, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
+).sort((left, right) => String(left['id']).localeCompare(String(right['id'])))
+/** **THE SAME FAMILY AS A VALUE AT THE FAMILY'S OWN ADDRESS** — what `store.read(['panes'], 'file')` answers, keyed by the
+ *  pane's own id (the repair's write, not the record's read), derived from the same declarations for the same reason. */
+const PLACEHOLDER_PANE_VALUE: Record<string, Record<string, unknown>> = Object.fromEntries(
+  PLACEHOLDER_PANES.map((pane) => {
+    const { id, ...geometry } = pane
+    return [String(id), geometry]
+  }),
+)
+/** **THE FAMILY `read()` ANSWERS WITH ONE PANE'S RECORD REPLACED** — the rows below whose subject is ONE pane's member
+ *  (the narrow act's survival) assert every OTHER declared pane at the placeholder, so the expectation is the family's
+ *  whole and a fourth pane still arrives covered. */
+const familyWith = (id: string, record: Record<string, unknown>): ReadonlyArray<Record<string, unknown>> =>
+  PLACEHOLDER_PANES.map((pane) => (pane['id'] === id ? { id, ...record } : pane))
 
 /** **A SOURCE READ WITH THE COMMENT LINES AND BLOCK COMMENTS ELIDED — THE ONLY FORM AN ABSENCE MAY BE ASSERTED ON**
  *  (`D-81`'s hollow-green class: a naive byte read passes on a comment, and this tree has already paid for that once).
@@ -274,14 +298,7 @@ describe('view-record · clause 1 — all THREE surviving addresses repaired at 
       bound.current = store as unknown as ViewRecordStore
       // THE FAMILY STANDS AT THE STORE'S OWN ADDRESS BEFORE ANY COMMIT — read through the STORE, not through the module,
       // so the reading is the instance's and not a route's composition.
-      expect(store.read(VIEW_PANES_ADDRESS, 'file'), 'the existence pair minted the pane family at construction — BOTH declared panes, BOTH axis members of each (`D-192`)').toEqual({
-        [DEFAULT_PANE_ID]: {
-          width: DEFAULT_PANE_SIZE,
-          height: DEFAULT_PANE_SIZE,
-          bounds: { min: DEFAULT_PANE_BOUNDS.min, max: DEFAULT_PANE_BOUNDS.max },
-        },
-        [MENUS_PANE_ID]: { width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
-      })
+      expect(store.read(VIEW_PANES_ADDRESS, 'file'), 'the existence pair minted the pane family at construction — EVERY declared pane (three: the stage pane and the two zone-resident panes), BOTH axis members of each (`D-192`)').toEqual(PLACEHOLDER_PANE_VALUE)
       // **AND THE DEFAULT IS THE MEASURED ONE, NOT AN INVENTED ONE**: the pane the app's store-backed drag composition
       // addresses, at the size and bounds pair `D-87` MEASURED off `src/shared/demo-envelope.ts`'s authored pane — a
       // reading the node no longer carries (`F11`, `D-129`: the `props` and the two example seams that read them are
@@ -740,10 +757,9 @@ describe('view-record · the routes', () => {
   it('ONE MEMBER IS FILLED, NOT ERASED: a commit naming a size alone keeps the pane\'s standing bounds — now the LEAF WRITE\'s own guarantee and no longer a composer\'s — and an id this record does not declare is REFUSED, which is the arm that replaced this row\'s sibling-pane half', () => {
     expect(record.commitPane(DEFAULT_PANE_ID, { height: 250, bounds: { min: 5, max: 500 } }).status).toBe('committed')
     expect(record.commitPane(DEFAULT_PANE_ID, { height: 260 }).status, 'the adjustable member alone').toBe('committed')
-    expect(record.read().panes, 'the bounds the family stood at survive the narrower act — as does the OTHER axis member the act never named, which is the memory `D-189` asked the split for').toEqual([
-      { id: DEFAULT_PANE_ID, width: DEFAULT_PANE_SIZE, height: 260, bounds: { min: 5, max: 500 } },
-      { id: MENUS_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
-    ])
+    expect(record.read().panes, 'the bounds the family stood at survive the narrower act — as does the OTHER axis member the act never named, which is the memory `D-189` asked the split for; every OTHER declared pane stands at the placeholder, so the reading is the family\'s whole and a fourth pane arrives covered').toEqual(
+      familyWith(DEFAULT_PANE_ID, { width: DEFAULT_PANE_SIZE, height: 260, bounds: { min: 5, max: 500 } }),
+    )
     // **WHY THIS HALF SURVIVES THE COMPOSER'S DELETION, SAID HERE BECAUSE A READER WILL ASK IT OF THE ROW'S TITLE**: the
     // claim is the same one the row always measured — a one-member act does not erase the member it did not name — and
     // the INSTRUMENT under it got narrower and stronger. `commitPane` writes ONE LEAF PER SUPPLIED MEMBER, at
@@ -766,10 +782,9 @@ describe('view-record · the routes', () => {
       record.commitPane('pane-z', { height: 90, bounds: { min: 0, max: 200 } }),
       'a well-formed id this record does not declare is REFUSED before any store verb: the closure at the route\'s seat',
     ).toMatchObject({ status: 'refused', reason: UNDECLARED_PANE_REASON, address: ['panes', 'pane-z'] })
-    expect(record.read().panes, 'and nothing the refused act named reached the family: both declared panes stand exactly as they stood').toEqual([
-      { id: DEFAULT_PANE_ID, width: DEFAULT_PANE_SIZE, height: 260, bounds: { min: 5, max: 500 } },
-      { id: MENUS_PANE_ID, width: DEFAULT_PANE_SIZE, height: DEFAULT_PANE_SIZE, zone: MENUS_PANE_ZONE_ID },
-    ])
+    expect(record.read().panes, 'and nothing the refused act named reached the family: EVERY declared pane stands exactly as it stood — the refused id minted nothing, and the two zone-resident panes are unmoved').toEqual(
+      familyWith(DEFAULT_PANE_ID, { width: DEFAULT_PANE_SIZE, height: 260, bounds: { min: 5, max: 500 } }),
+    )
   })
 
   // ── TWO ROWS RETIRED WITH THEIR REFERENT (`D-9`, `D-142`) ──

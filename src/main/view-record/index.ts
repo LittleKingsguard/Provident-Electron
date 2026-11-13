@@ -989,13 +989,17 @@ const panesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
 
 /** **THE PANES' REPAIR: EVERY DECLARED PANE ID WITH ITS DECLARED DEFAULT GEOMETRY, AS ONE WHOLE LEGAL VALUE** —
  *  `{'pane-a': { width: 100, height: 100, bounds: { min: 0, max: 200 } }, 'pane-menus': { width: 100, height: 100,
- *  zone: 'top' }}` at the family's own root and its own tier, written through this module's ONE repair-write path. **IT
- *  PERFORMS THE THING IT KEYS** (the `D-85` pattern): the repair does not assert that a pane record stands, it CREATES
+ *  zone: 'top' }, 'pane-inspector': { width: 100, height: 100, zone: 'top' }}` at the family's own root and its own tier,
+ *  written through this module's ONE repair-write path. **IT PERFORMS THE THING IT KEYS** (the `D-85` pattern): the repair
+ *  does not assert that a pane record stands, it CREATES
  *  each declared one with its geometry, which is the node a leaf write at `['panes', id, member]` stands under (`D-138`,
  *  `D-183`).
  *
- *  **IT WRITES BOTH AXIS MEMBERS OF BOTH PANES AT `DEFAULT_PANE_SIZE`** (`D-191` as CORRECTED at `D-192`), and the value is
- *  built from `DECLARED_PANE_IDS` rather than composed, so the set and the placeholder cannot drift. **AND IT NEVER READS
+ *  **IT WRITES BOTH AXIS MEMBERS OF EVERY DECLARED PANE AT `DEFAULT_PANE_SIZE`** (`D-191` as CORRECTED at `D-192`), and
+ *  the value is built from `DECLARED_PANE_IDS` rather than composed, so the set and the placeholder cannot drift. **AND THE THIRD
+ *  DECLARED PANE OWES THIS REPAIR NOTHING BUT THE SET**: this body states no id and no figure of its own, so a widening is
+ *  covered the moment `DECLARED_PANE_IDS` carries it — which is exactly what `panes-must-stand`'s two arms below then judge
+ *  (`paneNodeAdmits` refuses an undeclared id, so the closure's second seat covers the new one too). **AND IT NEVER READS
  *  `['zones']`** — that is `D-186`'s constraint and not a preference: the top zone's width is derived from the window and
  *  stored nowhere, so there is no stored max to copy, and a repair reading the other family would be this corpus's first
  *  family-crossing repair storing a figure the layout already computes. The zone-resident pane's clamp is the LAYOUT's
