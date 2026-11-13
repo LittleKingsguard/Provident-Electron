@@ -3277,6 +3277,22 @@ function paneArrangementAppendsOf (desired: readonly string[], current: readonly
   return desired
 }
 
+/** **WHETHER THE TREE'S ZONE CHILDREN READ EXACTLY THE FAMILY HANDED IN — THE ONE PREDICATE THE ARRANGEMENT'S RE-STATEMENT
+ *  RESTS ON, AND IT IS NOT `paneArrangementAppendsOf`.** That function answers the panes to RE-ANCHOR, and it answers `[]`
+ *  for BOTH of the two ways a zone can agree — the sequence already standing, and a sequence that must be EMPTIED, because
+ *  a move is not how a pane leaves (`D-252`: no turn here removes a pane from a zone; the destination's `move` is what takes
+ *  it out). So a zone the family empties answers `[]` and would never be called disagreeing, which is exactly the arm
+ *  `redriveZoneChildOrder` below exists for.
+ *  **THE COMPARISON IS OVER THE PANES THE TREE ANSWERED AND IS NOT FILTERED BY `desired`**: a pane standing in a zone the
+ *  family does not place there IS the disagreement — filtering it out would make every stale tree read as agreement, which
+ *  is the defect. **AN UNREADABLE TREE IS A DISAGREEMENT** (`null` from `zoneChildPanesOf`): the honest answer is that this
+ *  turn cannot say the zone agrees, and the caller's own gate is what keeps that from costing a write. */
+function paneSequenceAgreesOf (desired: readonly string[], current: readonly string[] | null): boolean {
+  if (current === null) return false
+  if (current.length !== desired.length) return false
+  return desired.every((id, at) => current[at] === id)
+}
+
 /** **THE ARRANGEMENT TURN — THE TREE'S ZONE CHILDREN MADE TO READ IN THE RECORD'S ORDER, ONE `move` PER PANE OF THE ZONE**
  *  (`D-252`'s op, which is the engine's own and not a re-parent invented here).
  *  **IT IS THE ONE PLACE A PLACEMENT BECOMES A RENDER, AND IT IS DRIVEN BY THREE CALLERS WITH ONE ANSWER EACH**: the
@@ -3307,7 +3323,22 @@ function paneArrangementAppendsOf (desired: readonly string[], current: readonly
  *  re-parent RELEASES A POINTER CAPTURE AND A FOCUS — measured on a real window (the `pointermove` stream leaves the grip
  *  and `document.activeElement` falls to `BODY` the instant the dragged pane is re-parented), and the reason the gesture
  *  re-takes both at that instant (`installPaneMoveDrag`'s `reanchor`). A delivery ignores the count, so the
- *  turn's own arm stays exactly as quiet as it was. */
+ *  turn's own arm stays exactly as quiet as it was.
+ *  **AND A MOVE IS NOT ENOUGH ON ITS OWN: THE ZONE A PANE LEFT MUST RE-STATE ITS OWN CHILD LIST** (`D-266`, measured). A
+ *  `move` compiles the moved node and, with it, the chain ABOVE it — so the zone the pane ENTERS gets a fresh compiled
+ *  state and its emitted `childOrder` changes, which is what makes the renderer's diff emit the `append` that re-parents the
+ *  element. **THE ZONE THE PANE LEAVES IS ON NOBODY'S ANCESTOR CHAIN**, so it is never compiled again: its `childOrder`
+ *  keeps the departed pane for as long as the gesture lasts. When the pane comes BACK into that zone the fresh
+ *  `childOrder` equals the stale one, `diffMinimal`'s order-signature guard sees no change, no `append` is emitted — and the
+ *  pane's ELEMENT never leaves the zone it was standing in while its inherited `pane-in-*` class follows the GRAPH. Measured
+ *  on a fresh profile: crossings `1` and `2` of one drag land correctly, and the THIRD leaves `#pane-menus` a child of
+ *  `#top` reading `pane-in-left`, where the rest of the gesture leaves it. So every zone whose children this turn found
+ *  disagreeing is RE-STATED after its moves — ONE same-value `state-slice` on the zone node, which re-compiles the zone and
+ *  nothing else. **IT STATES NOTHING NEW** (`props.id` to the id the zone already carries, the `AL-10` literal): the write is
+ *  a re-derivation trigger, never a second authority, so it can be issued as often as the tree disagrees and the zone reads
+ *  the anchors either way. **AND IT COSTS NOTHING WHERE THE TREE AGREES**: the disagreement is computed over the turn's own
+ *  reading, so an in-zone move, a re-order that already stands and every re-stated preview write ZERO — the price stays one
+ *  per ZONE TRANSITION (`D-263`'s measurement, kept). */
 function driveZoneArrangement (runtime: TabsPageRuntime, panes: readonly ViewPaneGeometry[]): number {
   const elements = new Map<string, unknown>()
   for (const paneId of DECLARED_PANE_IDS) {
@@ -3322,28 +3353,67 @@ function driveZoneArrangement (runtime: TabsPageRuntime, panes: readonly ViewPan
     if (element === null || element === undefined) continue
     elements.set(paneId, element)
   }
-  let moved = 0
+  // **THE TREE AS THIS TURN FINDS IT, READ ONCE PER ZONE BEFORE ANY MOVE** — because a `move` renders, and the tree this turn
+  // judged must not be a tree it has already half-changed. `disagreeing` is the re-statement list and the move list is
+  // derived from the same reading, so the write and the moves cannot describe two different trees.
+  const wanted: { readonly zoneId: string; readonly desired: readonly string[]; readonly current: readonly string[] | null }[] = []
+  const disagreeing: string[] = []
   for (const zone of LAYOUT_ZONE_AXES) {
     // **A PANE THE TREE DID NOT ANSWER IS NEVER PART OF THE SEQUENCE THIS TURN STATES** (`D-174`'s absence, and the reason an
     // unresolvable pane cannot make its siblings re-anchor on every delivery): an id that resolved no element cannot be a
     // child of anything, so it is filtered out here rather than appended forever.
     const desired = paneZoneSequenceOf(panes, zone.id).filter((paneId) => elements.has(paneId))
-    if (desired.length === 0) continue
     const current = zoneChildPanesOf(runtime, zone.id, elements)
+    wanted.push({ zoneId: zone.id, desired, current })
+    if (!paneSequenceAgreesOf(desired, current)) disagreeing.push(zone.id)
+  }
+  let moved = 0
+  for (const { zoneId, desired, current } of wanted) {
+    if (desired.length === 0) continue
     for (const paneId of paneArrangementAppendsOf(desired, current)) {
       const nodeId = nodeIdForPane(paneId)
       if (nodeId === null) continue
       try {
-        const answer = runtime.applyCommand({ kind: 'move', node: nodeId, to: { parent: zone.id } })
+        const answer = runtime.applyCommand({ kind: 'move', node: nodeId, to: { parent: zoneId } })
         const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
         if (status === 'applied') moved += 1
-        else console.error(`[provident-renderer] layout arrangement: the pane ${nodeId} answered ${status} to its place in ${zone.id}`)
+        else console.error(`[provident-renderer] layout arrangement: the pane ${nodeId} answered ${status} to its place in ${zoneId}`)
       } catch (error) {
-        console.error(`[provident-renderer] layout arrangement: the pane ${nodeId}'s place in ${zone.id} threw — ${String(error)}`)
+        console.error(`[provident-renderer] layout arrangement: the pane ${nodeId}'s place in ${zoneId} threw — ${String(error)}`)
       }
     }
   }
+  // THE RE-STATEMENT, AFTER THE MOVES AND NOT BEFORE THEM: the zone must read the anchors as this turn leaves them, or it
+  // would re-state the tree it just corrected. **GATED ON A MOVE HAVING LANDED** (`moved > 0`): a turn that changed no edge
+  // has nothing a zone could newly state, so a tree this turn cannot correct — a pane whose record names the STAGE standing
+  // in a zone (`C-9`'s one limit, `D-264`) — costs no write on every move of the pointer.
+  if (moved > 0) for (const zoneId of disagreeing) redriveZoneChildOrder(runtime, zoneId)
   return moved
+}
+
+/** **ONE ZONE MADE TO RE-COMPILE ITS OWN CHILD LIST — `props.id` RE-STATED TO THE ID THE ZONE ALREADY CARRIES** (the `AL-10`
+ *  literal, which `demo-envelope.ts` authors on `css.id` AND `props.id`, and which this file already addresses the zone by).
+ *  **THE VALUE IS NOT THE POINT; THE RE-DERIVATION IS**: a `move` compiles the moved node and its ancestors, so the zone a
+ *  pane leaves keeps the pane in its emitted `childOrder` forever (`D-266`'s measurement) — and a zone only re-compiles when
+ *  an op of its own lands on it. A `state-slice` is that op, and the member it replaces is chosen so that the write CANNOT
+ *  change the surface: the id it states is the one already there, every time, so the zone's rendered attribute is identical
+ *  before and after and only its compiled children are refreshed. **NO NEW CHANNEL, NO NEW MEMBER, NO NEW NODE** — the same
+ *  command `paintStyle` sends, on a node that authors the key. **A REFUSED OR THROWING WRITE IS REPORTED AND NOT REMEMBERED**
+ *  (`D-117`'s register): the next turn reads the tree again and asks again, which is the only memory this file keeps. */
+function redriveZoneChildOrder (runtime: TabsPageRuntime, zoneId: string): boolean {
+  const mutation: { targetProp: string; mode: string; value?: string }[] = [
+    { targetProp: 'props.id', mode: 'replace', value: zoneId },
+  ]
+  try {
+    const answer = runtime.applyCommand({ kind: 'state-slice', node: zoneId, mutation })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    if (status === 'applied') return true
+    console.error(`[provident-renderer] layout arrangement: the zone ${zoneId} answered ${status} to its own child list`)
+    return false
+  } catch (error) {
+    console.error(`[provident-renderer] layout arrangement: the zone ${zoneId}'s child list threw — ${String(error)}`)
+    return false
+  }
 }
 
 /** **WHAT THE SURFACE CURRENTLY CARRIES AS A PANE'S STYLE — THE ONE QUESTION THE PREVIEW'S PAINT STILL HAS TO ASK, AND THE
