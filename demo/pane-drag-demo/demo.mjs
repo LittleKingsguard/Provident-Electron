@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 39dd6ef60e2ca958923d9b3c62c7f68c1991d203df59215ec7c4e1a6136d1394
+// @body-sha256 d3628777e9671d0596daeb8e066c3880b038f53d8a7a05bb735cf1936978508c
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
 // @source e7f3564e5831beabef16930462d25d124e30ba710b9a34d1d81e4a8d5bdc5c9c demo/pane-drag-demo/stub-view.ts
@@ -35,18 +35,18 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 0db2f46d9f272426638238f4016a0acad38da2b92f51eb009f2ab2851ede1816 src/renderer/renderer.ts
+// @source b85daf76b98d04eff015f6a81fad10b514793d09d8ec8ef363ff17f64d7de3b3 src/renderer/renderer.ts
 // @source 16b81f089b74436b4eafa4d4d9394d8256c202bcc6af9d27722b0c863181c4a9 src/renderer/runtime.ts
 // @source 917e7ac67ad1e3d63f9d9e833cab57febf79bdec751a2bd0b6680de26dc62198 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source 36187d7cf2e011e13739b74d34acf313a5d5583b803982cab72eba5bed3121e8 src/renderer/tabs-client.ts
-// @source bdb5640e66a158b30711ce4efc187d67e80128caf3cd779b49565e26559fb149 src/renderer/view-client.ts
-// @source e68772e900a7bebd8c2541b6f14d7484e6a048663a2ffb1193b54f5c127a32a6 src/shared/demo-envelope.ts
+// @source b851b9bab2bdb83a76f7f3b4256bba0e30e5500b5bad34af8309f51a4d947ccd src/renderer/view-client.ts
+// @source 5aa7667635d1b7dde8df78cbb5f2ee4bb33a8b78632af204ffcc913b41e02120 src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source c64f9497b77bf537f939512824211e3fb0eef171337080e3996b7a75d5c414fd src/shared/view-shape.ts
+// @source b0aa40766d2dc7ac53fe3944f24aaf55d40754b64dfd330f6f52e5d2dfb4571b src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({
@@ -1203,6 +1203,9 @@ var paneGeometryIn = (panes, id) => {
   if (held.bounds !== void 0) pane.bounds = { min: held.bounds.min, max: held.bounds.max };
   if (held.zone !== void 0) pane.zone = held.zone;
   if (held.index !== void 0) pane.index = held.index;
+  if (held.collapsed !== void 0) pane.collapsed = held.collapsed;
+  if (held.status !== void 0) pane.status = held.status;
+  if (held.updatedAt !== void 0) pane.updatedAt = held.updatedAt;
   return { status: "committed", pane, source: "record" };
 };
 var zoneIn = (zones, id) => {

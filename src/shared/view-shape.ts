@@ -64,6 +64,20 @@
  *  `tests/integration/store-view-record/crossing.test.ts` (gating), which is the second measured reason this member is
  *  written by the act that arranges and by nothing else. A pane stating no `index` sorts at its own family position, so a
  *  profile written before this member existed keeps exactly the order it rendered. */
+/** **THE PANE'S THREE COLLAPSE-BAR MEMBERS, OPTIONAL AND EACH LAWFUL WHERE ABSENT — AND ABSENCE IS THE WHOLE OF THE
+ *  DESIGN'S DEFAULT** (`design-pane-collapse.md` §2). **`collapsed` IS BOOLEAN AND ITS ABSENCE MEANS EXPANDED**: no
+ *  creation repair writes it and no placeholder states it, because a `false` the repair minted would be a fact nobody
+ *  stated and a fresh profile's family must stay BYTE-UNCHANGED (`D-243`'s no-default rule applied to a state; the
+ *  `crossing.test.ts` member-for-member answer is the instrument that makes this widening free). **`status` IS A WORD FROM
+ *  A CLOSED THREE** — `busy`, `waiting`, `done` — the pane's own WORK, and its absence paints no indicator at all (the
+ *  user's *"optional, based on app's use case"*); a fourth word is REFUSED BY NAME at the store, the way an undeclared zone
+ *  is (`D-189`'s closure), so no arm of the paint carries a vocabulary of its own. **`updatedAt` IS AN ISO INSTANT STRING
+ *  AND IT HAS NO PRODUCER UNDER `src/`**: it is what the INDICATOR's `updated` word is derived from — a comparison of the
+ *  content's stamp against the user's last look (`renderer.ts`'s `paneStatusOf`, `design-pane-collapse.md` §5) — and it is
+ *  repaired by nobody, because *"the content changed at"* has no true default: a repair stamping every pane at boot would
+ *  make the whole app read `updated`, which is a lie and the `D-243` no-default class. **SO THE STATE IS EXPRESSIBLE AND
+ *  MEASURABLY INERT UNTIL AN APP (or a fork) WRITES IT**, which is the honest price stated rather than papered; a stamp
+ *  that does not PARSE is treated as ABSENT at the comparison and never as "newer" (`D-242`). */
 export interface ViewPaneGeometry {
   readonly id: string
   readonly width: number
@@ -71,7 +85,18 @@ export interface ViewPaneGeometry {
   readonly bounds?: { readonly min: number; readonly max: number }
   readonly zone?: string
   readonly index?: number
+  readonly collapsed?: boolean
+  readonly status?: string
+  readonly updatedAt?: string
 }
+
+/** **THE PANE BAR'S CLOSED THREE WORDS** — the vocabulary `pane.status` may carry, closed for the reason `DECLARED_ZONE_IDS`
+ *  is closed (`D-189`, `D-151`): the store can refuse a fourth word BY NAME only if the admitted set stands somewhere both
+ *  realms read. **`updated` IS NOT ONE OF THEM AND NEVER BECOMES ONE**: `busy`/`waiting`/`done` describe the pane's own work
+ *  — one fact, held in one place — while `updated` describes a RELATION between the content's update and the user's last
+ *  look, two facts of which one is not in the record at all, so the paint DERIVES it (`renderer.ts`'s `paneStatusOf`) and
+ *  the record never stores it. The four painted words are therefore exactly these three plus that one derived word. */
+export const PANE_STATUS_WORDS: readonly string[] = ['busy', 'waiting', 'done']
 
 /** **ONE ZONE, AS THE DRAG'S TWO ZONE TURNS READ IT (D-91) — AND ITS FOUR MEMBERS ARE THE FROZEN STORE'S, MEASURED, NOT
  *  THIS FILE'S INVASION.** The render turn reads a zone's `size` and `display` for its layout call
@@ -375,6 +400,9 @@ export const paneGeometryIn = (
     bounds?: { readonly min: number; readonly max: number }
     zone?: string
     index?: number
+    collapsed?: boolean
+    status?: string
+    updatedAt?: string
   } = { id: held.id, width: held.width, height: held.height }
   if (held.bounds !== undefined) pane.bounds = { min: held.bounds.min, max: held.bounds.max }
   if (held.zone !== undefined) pane.zone = held.zone
@@ -383,6 +411,13 @@ export const paneGeometryIn = (
   // is carried here. Where the record states none nothing is added, which is why a fresh family's answer is the four
   // members it always was (`crossing.test.ts`'s pinned pair).
   if (held.index !== undefined) pane.index = held.index
+  // **AND THE COLLAPSE BAR'S THREE, ON THE SAME RULE ONE REV LATER** (`design-pane-collapse.md` §2, §3): `collapsed`,
+  // `status` and `updatedAt` are members the family now admits, so a whole-pane or family write naming them must survive
+  // this read or `D-105`'s fault is back with three new members — and a fresh family states none of the three, so the
+  // pinned member-for-member answer of a cold profile does not move.
+  if (held.collapsed !== undefined) pane.collapsed = held.collapsed
+  if (held.status !== undefined) pane.status = held.status
+  if (held.updatedAt !== undefined) pane.updatedAt = held.updatedAt
   return { status: 'committed', pane, source: 'record' }
 }
 

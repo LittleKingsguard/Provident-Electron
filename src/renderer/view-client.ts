@@ -299,6 +299,9 @@ function paneOf(held: unknown): ViewPaneGeometry | null {
     bounds?: { readonly min: number; readonly max: number }
     zone?: string
     index?: number
+    collapsed?: boolean
+    status?: string
+    updatedAt?: string
   } = { id, width, height }
   if (Object.hasOwn(held, 'bounds')) {
     const bounds = held['bounds']
@@ -317,6 +320,29 @@ function paneOf(held: unknown): ViewPaneGeometry | null {
     const index = held['index']
     if (!finiteNumber(index) || !Number.isInteger(index) || index < 0) return null
     pane.index = index
+  }
+  // **AND THE COLLAPSE BAR'S THREE, CARRIED WHERE STATED** (`design-pane-collapse.md` §2; `bounds`/`zone`/`index`'s own rule,
+  // three members over): the crossing admits them, so this side must CARRY them or the pane's collapse state and indicator
+  // would be visible to the store and invisible to the paint while `source.panes` still said `'record'` — `D-105`'s fault.
+  // **THEIR ABSENCE IS THE LAW AS WELL AS THEIR PRESENCE**: a fresh family states none of the three, which is why the
+  // pinned cold-profile answer does not move, and why `collapsed` absent must arrive here absent (EXPANDED) rather than as a
+  // `false` this read invented. `status` is carried VERBATIM and judged nowhere in this realm — the closed three are the
+  // store's and the paint prints what stands — while `updatedAt` is carried as the string it is and parsed only where the
+  // indicator's comparison needs an instant (`renderer.ts`'s `paneStatusOf`).
+  if (Object.hasOwn(held, 'collapsed')) {
+    const collapsed = held['collapsed']
+    if (typeof collapsed !== 'boolean') return null
+    pane.collapsed = collapsed
+  }
+  if (Object.hasOwn(held, 'status')) {
+    const status = held['status']
+    if (typeof status !== 'string') return null
+    pane.status = status
+  }
+  if (Object.hasOwn(held, 'updatedAt')) {
+    const updatedAt = held['updatedAt']
+    if (typeof updatedAt !== 'string') return null
+    pane.updatedAt = updatedAt
   }
   return pane
 }

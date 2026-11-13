@@ -906,21 +906,22 @@ function paneMoveDropNodeOf (id: string, paneId: string, zone: string): Record<s
  *  the one member that costs no node: **`props.name` on the grip**, which the paint emits as the bare `name="Menus"`
  *  attribute the page sheet's `::after { content: attr(name) }` reads.
  *  **IT IS AUTHORED ON THE GRIP AND NOT ON THE PANE, AND THAT IS FORCED RATHER THAN CHOSEN**: `attr()` reads the attribute
- *  of the element its pseudo-element belongs to, so the name can only be painted on the node that CARRIES it — and the
- *  node that owns the header row is the grip (the pane's first child, `AL-1`'s order). A `props.name` on the pane itself
+ *  of the element its pseudo-element belongs to, so the name can only be painted on the node that CARRIES it — and since
+ *  `app-envelope` rev 2 that node is the grip inside the HEAD ROW (`<pane>-head`, the pane's first child, `AL-1`'s order
+ *  unmoved), which is where the sheet's `.pane-head > .pane-grab::after` rule reads it. A `props.name` on the pane itself
  *  would have every rule it needed on a different element.
- *  **IT SURVIVES EVERY DELIVERY AND EVERY RELOCATION**: the pane arm writes `css.style` (whole-key, `D-225`) and nothing
- *  else (`renderer.ts`'s `driveLayoutRegions` → `paintStyle` — the `props.zone` member it also wrote until `D-265` is
- *  deleted), so a `props` member is neither replaced nor dropped; and a relocation is the engine's `move` op, which
- *  re-parents the node and re-authors nothing (`D-252`). **NO NEW RECORD MEMBER IS OWED, AND THAT IS WHY THIS FORM WON**: a `name` in the
+ *  **IT SURVIVES EVERY DELIVERY AND EVERY RELOCATION**: the pane arm writes `css.style` (whole-key, `D-225`) plus the
+ *  `collapsed` attribute the collapse state is keyed on (`design-pane-collapse.md` §3) and nothing else, so a sibling
+ *  `props` member is neither replaced nor dropped; and a relocation is the engine's `move` op, which re-parents the node
+ *  and re-authors nothing (`D-252`). **NO NEW RECORD MEMBER IS OWED, AND THAT IS WHY THIS FORM WON**: a `name` in the
  *  `panes` family would owe the creation repair a value for every pane it mints and the placeholder a name for every pane
  *  a cold profile derives (`shared/view-shape.ts`'s `panesMustStand`), i.e. a decision about a pane nobody has named — where
  *  this is an authored presentational label whose absence is already spelled (`attr()` on a missing attribute is `''`).
  *  **A `::before` NAMING THE PANE NODE WOULD HAVE NEEDED THIS ATTRIBUTE ANYWAY AND COULD NOT SIT ON THE ROW**: a column flex
  *  container lays a `::before` out as its FIRST item, i.e. the name above the grip and in a row of its own.
- *  **TWO GRIPS, TWO NAMES, AND NO NEW PUBLISHED NAME**: these two constants are PRIVATE (`MENUS_GRAB_ID`'s own standing,
+ *  **THREE GRIPS, THREE NAMES, AND NO NEW PUBLISHED NAME**: these constants are PRIVATE (`MENUS_GRAB_ID`'s own standing,
  *  `§7`'s *"no export joins the published surface"*), so the `19` names the map carries are unmoved and the sheet reads the
- *  value off the ATTRIBUTE rather than off a module. Reader: `src/renderer/index.html`'s header-row rules and the rendered
+ *  value off the ATTRIBUTE rather than off a module. Reader: `src/renderer/index.html`'s `.pane-head` rules and the rendered
  *  markup. */
 const MENUS_PANE_NAME = 'Menus'
 const GUTTER_PANE_NAME = 'Stage'
@@ -930,8 +931,8 @@ const GUTTER_PANE_NAME = 'Stage'
  *  owed the creation repair and the placeholder a name nobody authored), so the name is authored where the header row is. */
 const INSPECTOR_PANE_NAME = 'Inspector'
 
-/** **ONE PANE-MOVE GRIP AND ITS FOUR DROPS — A DRAG HANDLE, FOCUSABLE, AND THE PANE'S FIRST CHILD** (`design-pane-relocation.md`
- *  rev 1 §1, §7; `app-envelope` rev 7 §10). **`props.tabindex: '0'` IS THE WHOLE REVEAL MECHANISM** (`demo-envelope.ts`'s
+/** **ONE PANE-MOVE GRIP AND ITS FOUR DROPS — A DRAG HANDLE, FOCUSABLE, AND THE HEAD ROW'S FIRST CHILD** (`design-pane-relocation.md`
+ *  rev 1 §1, §7; `app-envelope` rev 7 §10, re-parented at rev 2 §3). **`props.tabindex: '0'` IS THE WHOLE REVEAL MECHANISM** (`demo-envelope.ts`'s
  *  four menus carry the same prop for the same reason): the paint writes `props.*` as attributes, so this is the bare
  *  `tabindex="0"` the page sheet keys `.pane-grab:focus-within` on — a press focuses the grip, a click elsewhere blurs it,
  *  and that focus is what shows the four zone overlays the drag resolves against. **NO STATE, NO TOGGLE AND NO NEW
@@ -945,11 +946,11 @@ const INSPECTOR_PANE_NAME = 'Inspector'
  *  card — so a `no-drag` here would guard against a region the compositor never had (the same reading
  *  `src/renderer/index.html` states for `#menus-vertical`). Reader: the sheet's `.pane-grab` rules, `renderer.ts`'s
  *  `installPaneMoveDrag`, and the rendered markup.
- *  **AND `props.name` IS THE PANE'S DISPLAY NAME, PAINTED ONLY IN A SIDEBAR FORM** (`MENUS_PANE_NAME` above): the sheet's
- *  header-row rules read it with `attr(name)` and are keyed on the pane's own `zone`, so the `top`/`bottom` form — where
- *  this grip stands beside the menus' line rather than above them — paints no name at all, and the attribute costs that
- *  form nothing but one attribute in the markup. A grip that carried no name is an EMPTY NAME, never a missing header:
- *  `attr()` on an absent attribute is `''` and the row is the GRIP's, which the pane owes whatever its name is. */
+ *  **AND `props.name` IS THE PANE'S DISPLAY NAME, AND IT NOW PAINTS IN EVERY ZONE** (`app-envelope` rev 2 §2, §6): the sheet's
+ *  `.pane-head > .pane-grab::after { content: attr(name) }` rule is keyed on the HEAD ROW and on nothing a zone decides, so
+ *  the `top`/`bottom` form — where this grip stood beside the menus' line and painted no name at all until this rev — reads
+ *  `⠿ Menus` exactly as the sidebar does. A grip that carried no name is an EMPTY NAME, never a missing header: `attr()` on
+ *  an absent attribute is `''` and the row is the head's, which the pane owes whatever its name is. */
 function paneMoveGripNodeOf (id: string, paneId: string, name: string, style: Record<string, string>): Record<string, unknown> {
   return {
     type: 'div',
@@ -960,49 +961,73 @@ function paneMoveGripNodeOf (id: string, paneId: string, name: string, style: Re
   }
 }
 
-/** **THE MENUS PANE'S MOVE GRIP — AND ITS BOX IS *PINNED* RATHER THAN FLOWED, FOR `D-246`'S MEASURED REASON.**
- *  The menu pane is a SCROLLER (`D-243`'s `overflow-x: auto`), and every descendant of a scroll container is
- *  translated by its `scrollLeft` — `D-246` measured the resize strip travelling `[84,36,14,125] → [-12,36,14,125]`
- *  for exactly this cause, and the user's report *"the drag handle moves with the scrollbar, it should be external"*
- *  is that measurement in a person's words. **THIS GRIP CANNOT TAKE THE STRIPS' SIBLING FIX** (`D-244`): its parent
- *  is a PAINTED node whose `css.style` is replaced WHOLE (`#pane-menus` reads `height: 100%; width: 100px;
- *  overflow-x: auto` and nothing else after the first paint), so no `position` survives on it to hold an absolute
- *  drop set. It therefore takes `D-246`'s SECOND form instead — the SAME pin the resize strip in this pane already
- *  carries — with the float's lane on the LEFT, where this grip stands and where the resize strip does not:
- *  `float: left` takes it OUT OF THE MENUS' LINE (`white-space: nowrap` would otherwise put it on a line of its own),
- *  `position: sticky` + a `left` inset holds it against the pane's left edge while the menus scroll under it, and
- *  `position: sticky` is a POSITIONED value, so it is also the containing block its four `position: absolute` drops
- *  are placed against. **THE BOX IT TAKES IS A LANE OF THE PANE'S OWN PADDING AND NEVER A COLUMN OF THE MENUS' LINE**:
- *  measured on a real window, the float's `14px` narrowed the line to `186px` at the widest figure the record admits,
- *  so the four names could not fit even when the pane was at its maximum — the grip spending part of the box the painted
- *  figure described, exactly as the resize strip's lane did (`src/renderer/index.html`'s `#pane-menus` rule states the
- *  `box-sizing` that spends neither). **SO THE INSET IS THE LANE'S OWN WIDTH, NEGATIVE** — `-0.875rem` is the LEFT
- *  PADDING the sheet reserves for it (`0.875rem` is this grip's authored `14px`, the one figure below), which is what
- *  makes the pin and the lane the SAME point in either kind of zone: sticky insets resolve against the pane's CONTENT
- *  edge, so `left: 0` would pin the grip `14px` inside the pane's left edge and over the first name. **AND NO**
- *  **FIGURE OF THE RECORD'S STANDS HERE**: no width of the pane, no height of the zone — only the grip's own `14px`
- *  thickness, `OWED-1`'s measured handle box (`D-194`). */
+/** **THE MENUS PANE'S MOVE GRIP — `D-246`'S PIN IS GONE WITH ITS CAUSE, AND THE LANE WENT WITH IT** (`app-envelope` rev 2
+ *  §3). The grip stood `float: left; position: sticky; left: -0.875rem` because it was a control INSIDE a scroller
+ *  (`D-243`'s `overflow-x: auto`) and had no sibling box to stand in (the strips' `D-244` fix was refused: the pane's own
+ *  `css.style` is painted WHOLE, so no `position` survives on it). **THE HEAD ROW IS THAT SIBLING BOX NOW**
+ *  (`menus-head`, below): it is a row NODE the paint never writes, it is `position: sticky` with BOTH insets in the sheet,
+ *  and this grip is its FIRST FLEX ITEM — so the pin, the float and the negative inset are all DELETED, and the lane the
+ *  inset bought (`#pane-menus`' `padding-left: 0.875rem` and this node's `margin-left: -0.875rem`) is returned to the
+ *  content in the same edit. **WHAT STAYS IS THE AFFORDANCE'S OWN BOX**: `cursor: grab` and the `14px` thickness —
+ *  `OWED-1`'s measured handle box, and no figure of the record's (`D-194`). The four drops are `position: fixed`, so
+ *  nothing about them depended on this node's positioning. */
 const menusGrabStyle: Record<string, string> = {
   cursor: 'grab',
   width: '14px',
   height: '14px',
-  float: 'left',
-  position: 'sticky',
-  left: '-0.875rem',
 }
-/** **THE GUTTER PANE'S MOVE GRIP — THE DESIGN'S OWN FORM, BECAUSE THIS PANE DOES NOT SCROLL.** `#gutter-pane`
- *  computes no `overflow` and `D-246` measured `scrollWidth == clientWidth == 100` on it, so nothing inside it can
- *  carry the grip away and no pin is owed: it stands at the pane's FLOW ORIGIN as its first child, `position:
- *  'relative'` (a positioned value on a node the paint never writes), which is the containing block its four drops
- *  are placed against. `align-self: flex-start` is authored with the group (`app-envelope` rev 7 §10) and is INERT
- *  here once the paint replaces the pane's authored `display: flex` — carried because it states where the grip sits
- *  in the pane's flow before the first delivery, and no rule of the sheet restates the box. */
+/** **THE GUTTER PANE'S MOVE GRIP — THE SAME TWO DECLARATIONS, AND ITS TWO AUTHORED POSITIONING MEMBERS ARE DELETED** (`app-envelope` rev 2 §3). `position: relative` was the containing block the four `position: absolute` drops were
+ *  placed against and `align-self: flex-start` stated where the grip sat in the pane's own flow; **both were there to beat
+ *  a row that did not exist**, and the head row is now the positioned box that makes the stacking context the drops are
+ *  confined to (`D-261`'s rank, moved one node out). A control that authored its own `position` is what the sheet's
+ *  `!important` trio existed to beat — that trio is deleted with this pair, so nothing here needs a fight. */
 const gutterGrabStyle: Record<string, string> = {
   cursor: 'grab',
   width: '14px',
   height: '14px',
-  'align-self': 'flex-start',
-  position: 'relative',
+}
+
+/** **THE PANE'S HEAD ROW AND ITS COLLAPSE CONTROL — THE SEVEN AUTHORED NODES OF `app-envelope` REV 2 §2, THREE PAIRS.**
+ *  **THE HEAD ROW is `<pane>-head`: a `div` with the class `pane-head`, `css.id` = `props.id` = a LITERAL, NO `content`, NO
+ *  `css.style` and NO handler.** Its box is the SHEET's (`src/renderer/index.html`'s `.pane-head` block): a `position` or a
+ *  `display` authored here would race the sheet for a box no record owner claims (`D-129`, `D-174`). It is the pane's
+ *  **FIRST CHILD**, holding the grip and the collapse control along ONE row — which is the reason it exists at all: a pane
+ *  is a flex COLUMN in a sidebar (`index.html`'s `.pane-in-left`/`.pane-in-right` block), so two siblings of the pane are
+ *  laid out DOWN it and only a box of its own can lay the two controls along the row the user asked for. Reader: that
+ *  sheet block, `renderer.ts`'s head arm which writes `props.status` onto it (one attribute, one writer), and `AL-1` for
+ *  presence.
+ *  **THE COLLAPSE CONTROL is `<pane>-collapse`: a `div` with the class `pane-collapse`, `props.tabindex: '0'` so `Tab`
+ *  reaches it, `props.pane` — THE RECORD ID ITS ACT ADDRESSES, authored HERE so the act reads it OFF THE NODE and the
+ *  renderer keeps no table of record ids (`D-235`'s address-book rule, `D-177`) — NO `content` (the glyph is the sheet's
+ *  `::before`, `D-129`'s one owner per fact) and ONE authored no-op pair `('pane-collapse', 'click')` that the wiring
+ *  replaces with its live body under the same pair (`D-239`'s path).
+ *  **AND IT IS A NODE AND NOT A PSEUDO-ELEMENT FOR A MEASURED REASON, NOT A TIDY ONE**: a `pointerdown` on any descendant of
+ *  `.pane-grab` bubbles to the grip's own listener and ARMS the pane-move session, and that same press is `D-260`'s reveal
+ *  arm — so ONE click on a control inside the grip would arm a drag and paint four zone windows; a pseudo-element renders
+ *  no element and can receive no click, so the control that is PRESSED must be a node, while the INDICATOR (read and never
+ *  pressed) may be the `::after` (`app-envelope` rev 2 §5). As the grip's SIBLING this control is inside neither arm: the
+ *  grip's `:focus-within` cannot see it and no drag listener can reach it. */
+const MENUS_HEAD_ID = 'menus-head'
+const INSPECTOR_HEAD_ID = 'inspector-head'
+const GUTTER_HEAD_ID = 'gutter-head'
+const MENUS_COLLAPSE_ID = 'menus-collapse'
+const INSPECTOR_COLLAPSE_ID = 'inspector-collapse'
+const GUTTER_COLLAPSE_ID = 'gutter-collapse'
+/** **THE INSPECTOR'S BODY — THE ONE AUTHORED BODY THAT USED TO BE ITS PANE'S `content`, NOW A NODE** (`A-14`): a `div` with
+ *  the class `pane-body`, `css.id` = `props.id`, the `'No selection'` placeholder `D-259` chose, and nothing else. Reader:
+ *  the sheet's `[collapsed="true"] > :not(.pane-head)` rule and the rendered markup. */
+const INSPECTOR_BODY_ID = 'inspector-body'
+const PANE_COLLAPSE_HANDLER_NAME = 'pane-collapse'
+const PANE_COLLAPSE_BODY = `function (ctx) {
+  void ctx;
+}`
+function paneCollapseNodeOf (id: string, paneId: string): Record<string, unknown> {
+  return {
+    type: 'div',
+    css: { id, classes: ['pane-collapse'] },
+    props: { id, tabindex: '0', pane: paneId },
+    handlers: [{ name: PANE_COLLAPSE_HANDLER_NAME, event: 'click', body: PANE_COLLAPSE_BODY }],
+  }
 }
 
 /** **THE SECOND ZONE-RESIDENT PANE — AND IT IS DELIBERATELY THE MENUS PANE'S TWIN.** The user asked for *"additional demo
@@ -1023,22 +1048,25 @@ const gutterGrabStyle: Record<string, string> = {
  *  where `D-257`'s header deliberately paints NO name at all. **AN EMPTY BODY WAS THE OTHER LAWFUL CHOICE AND IT WAS
  *  REJECTED ON THAT ONE MEASURED FACT**: in a `top` zone neither zone-resident pane carries its name in the markup, so an
  *  empty inspector would be an unlabelled box and the demo's second pane would be indistinguishable from a spacer.
- *  **NO PANE'S `content` DOES DOUBLE DUTY AS ITS NAME ANY MORE** (checked rather than assumed: `#pane-menus` authors no
- *  `content` at all — its children are its grip, its strip and the eighteen items — and `#gutter-pane` authors none
- *  either, its children carrying the gutter card's own text), so this was the one pane the class ever reached. */
+ *  **AND ITS BODY IS A CHILD AND NEVER ITS OWN `content`** (`app-envelope` rev 2 §2, `A-14`): a node's `content` renders in
+ *  the node's OWN flow AHEAD of its children, so a rule keyed on the pane's state (`[collapsed="true"] > :not(.pane-head)`,
+ *  `design-pane-collapse.md` §6) is BLIND to it and a collapsed pane would open its box by the body's own height. The
+ *  placeholder therefore lives in `inspector-body` (`INSPECTOR_BODY_ID`, below), which is a node the rule can reach — and
+ *  **IT IS STILL NOT THE NAME**: `'No selection'` cannot be mistaken for the grip's `attr(name)` header, and an empty body
+ *  was rejected because in a `top` zone the pane would then be an unlabelled box (`D-259`).
+ *  **NO PANE'S `content` CARRIES ITS BODY ANY MORE** — this was the one pane the class ever reached (`#pane-menus` authors
+ *  no `content` at all; `#gutter-pane` authors none either, its children carrying the gutter card's own text), and from
+ *  this rev the inspector's body is a node, so a state rule can close a pane to its row. */
 const inspectorPaneStyle: Record<string, string> = { height: '100%', 'overflow-x': 'auto' }
-/** **THE SECOND PANE'S MOVE GRIP TAKES `#menus-grab`'S PIN, BECAUSE IT IS THE SAME KIND OF PANE** (`D-246`, `D-248`): this
- *  pane scrolls on the axis it adjusts (`overflow-x: auto`) and its node's `css.style` is painted whole, so a control in its
- *  flow would travel with the content and a SIBLING is unavailable (`D-244`) — the two reasons `D-248` measured for the
- *  menus grip. The lane is the sheet's (`#inspector-grab { margin-left: -0.875rem }` against the pane's own left padding),
- *  and the authored box is the grip's own `14px`, which is `OWED-1`'s measured handle box and no figure of the record's. */
+/** **THE SECOND PANE'S MOVE GRIP LOSES ITS PIN WITH THE LANE IT BOUGHT, EXACTLY AS THE MENUS GRIP DOES** (`app-envelope` rev
+ *  2 §3): `float: left` + `position: sticky` + `left: -0.875rem` stood here for `D-246`/`D-248`'s measured reason — this pane
+ *  scrolls on the axis it adjusts and no positioned box survived on the painted pane — and the head row (`inspector-head`)
+ *  is that box now, with BOTH sticky insets in the sheet and this grip as its first flex item. The authored `14px` box is
+ *  kept verbatim (`OWED-1`'s measured handle box, no figure of the record's), and so is the cursor. */
 const inspectorGrabStyle: Record<string, string> = {
   cursor: 'grab',
   width: '14px',
   height: '14px',
-  float: 'left',
-  position: 'sticky',
-  left: '-0.875rem',
 }
 /** **THE SECOND PANE'S RESIZE AFFORDANCE — THE MENUS STRIP'S FORM ON THE SAME EDGE** (`C-13`, `D-189`, `D-192`): the pane's
  *  adjustable axis in a `top`/`bottom` zone is its WIDTH, so the strip stands vertical at the pane's RIGHT edge and its
@@ -1231,22 +1259,39 @@ export function demoEnvelope() {
                     // engine resolved, never an attribute the paint would have to rewrite (`D-265`).
                     component: zoneFormatConsumerOf(),
                     children: [
-                      // (a0) **THE PANE-MOVE GRIP AND ITS FOUR ZONE DROPS** (`MENUS_GRAB_ID`, the relocation's
-                      // second affordance — `docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1, §7).
-                      // **IT IS THE PANE'S FIRST CHILD AND IT IS PINNED, NOT FLOWED**, and both halves are
-                      // `D-246`'s: this pane SCROLLS (`overflow-x: auto`, `D-243`), so a control inside it travels
-                      // with the content unless it is pinned — the defect the user reported against the resize
-                      // strip below, one node over — while the pane's own `css.style` is PAINTED and replaced
-                      // WHOLE (`D-234`), so no `position` on the pane survives to hold an absolute drop set and
-                      // the strips' SIBLING fix (`D-244`) is not available here. `float: left` + `position:
-                      // sticky` + `left: 0` is `D-246`'s own second form, on the edge this grip stands on and the
-                      // resize strip does not. **IT AUTHORS NO ACT AND NO FIGURE**: a press on it only focuses it,
-                      // and the sheet's `.pane-grab:focus-within` rule is what reveals the drops beneath it
-                      // (`props.tabindex`, the menus' mechanism, *"NO STATE, NO TOGGLE AND NO NEW RECORD"*).
-                      // Its `props.pane` operand is the RECORD's id, spelled as written in `shared/view-shape.ts`
-                      // and NOT this node's own id (`PANE_NODE_IDS`' two-name reason, `D-194`). Reader:
-                      // `renderer.ts`'s `startPaneMove` census, and the rendered markup.
-                      paneMoveGripNodeOf(MENUS_GRAB_ID, MENUS_PANE_RECORD_ID, MENUS_PANE_NAME, menusGrabStyle),
+                      // (a0) **THE PANE'S HEAD ROW — THE PANE'S FIRST CHILD, HOLDING THE GRIP AND THE COLLAPSE
+                      // CONTROL ALONG ONE ROW** (`app-envelope` rev 2 §2, `A-11`). **IT EXISTS BECAUSE THE TWO
+                      // CONTROLS HAVE TO STAND BESIDE EACH OTHER AND THE PANE IS A FLEX COLUMN IN A SIDEBAR**: two
+                      // siblings of the pane are laid out DOWN it, so only a box of its own can lay them along the
+                      // row — and the box must be a NODE the paint never writes, which is why it authors no `style`
+                      // (the sheet's `.pane-head` block owns the box) and why the grip's `D-246` pin moved onto it
+                      // (`D-246`'s class, with both sticky insets: this pane scrolls `overflow-x` and a sidebar pane
+                      // scrolls `overflow-y`). **THE GRIP IS ITS FIRST CHILD AND `AL-1`'S ORDER IS UNMOVED** — the
+                      // handle still stands inside `#pane-menus` and before the first `menus-menu`. Its `props.id`
+                      // is a LITERAL on both sides (`renderer.ts`'s `PANE_HEAD_IDS` spells the same string; the
+                      // equality is a row's, `D-41`, `D-188` debt 2).
+                      {
+                        type: 'div',
+                        css: { id: MENUS_HEAD_ID, classes: ['pane-head'] },
+                        props: { id: MENUS_HEAD_ID },
+                        children: [
+                          // (a0-1) **THE PANE-MOVE GRIP AND ITS FOUR ZONE DROPS** (`MENUS_GRAB_ID`, the relocation's
+                          // second affordance — `docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1, §7).
+                          // **IT AUTHORS NO ACT AND NO FIGURE**: a press on it only focuses it, and the sheet's
+                          // press-revealed drops are what the drag resolves against (`props.tabindex`, *"NO STATE, NO
+                          // TOGGLE AND NO NEW RECORD"*). Its `props.pane` operand is the RECORD's id, spelled as
+                          // written in `shared/view-shape.ts` and NOT this node's own id (`PANE_NODE_IDS`' two-name
+                          // reason, `D-194`). Reader: `renderer.ts`'s `startPaneMove` census, and the rendered markup.
+                          paneMoveGripNodeOf(MENUS_GRAB_ID, MENUS_PANE_RECORD_ID, MENUS_PANE_NAME, menusGrabStyle),
+                          // (a0-2) **THE COLLAPSE CONTROL** (`MENUS_COLLAPSE_ID`) — a NODE and never a pseudo-element,
+                          // because a press on any `.pane-grab` DESCENDANT arms the drag and reveals four zone windows
+                          // (`installPaneMoveDrag`, `D-260`), and a pseudo renders no element and can receive no click.
+                          // As this grip's SIBLING it is inside neither arm. Its `props.pane` is the record id its act
+                          // addresses, read OFF THE NODE by `renderer.ts`'s `installPaneCollapse`. Reader: that act and
+                          // the sheet's `::before` glyph keyed on the pane's painted `[collapsed]`.
+                          paneCollapseNodeOf(MENUS_COLLAPSE_ID, MENUS_PANE_RECORD_ID),
+                        ],
+                      },
                       // (a) THE HANDLE (`MENUS_AFFORDANCE_ID`, §3 above) — THE GUTTER HANDLE'S OWN SHAPE: a
                       // real, pressable `14px` strip at the pane's LEFT EDGE, the edge its ADJUSTABLE axis
                       // (the width) can move, and it crosses no axis (`C-13`, `D-189`, `D-192`). Its shared
@@ -1407,24 +1452,35 @@ export function demoEnvelope() {
                   // (every pane fills it, `100%`, `D-243`). So two panes cannot both be `width: 100%` of a `left` zone:
                   // they are two heights in a column, exactly as they are two widths in a row here. Each keeps its own
                   // stored member; the zone's fixed axis is the one relation they hold in common.
-                  // **ITS GRIP IS ITS FIRST CHILD AND ITS STRIP ITS SECOND**, in the menus pane's own order, so
+                  // **ITS HEAD ROW IS ITS FIRST CHILD AND ITS STRIP ITS SECOND**, in the menus pane's own order, so
                   // `AL-1`'s "the handle stands inside the pane, before the content" reading holds for it unchanged, and
-                  // **ITS BODY IS A PLACEHOLDER THAT IS NOT ITS NAME** — no node, and the whole of the reason
-                  // `inspectorPaneStyle`'s block states. A node's `content` stands AHEAD of its children in its own flow,
-                  // so a body spelling the name is a second copy of the grip's `attr(name)` header AND it stands above it.
+                  // **ITS BODY IS A NODE AND NO LONGER THIS PANE'S `content`** (`A-14`): a node's `content` stands AHEAD
+                  // of its children in its own flow, where no `[collapsed="true"] > :not(.pane-head)` rule can reach it —
+                  // so the placeholder moved into `inspector-body`, which is a child like every other.
                   {
                     type: 'div',
                     css: { id: INSPECTOR_PANE_RECORD_ID, style: inspectorPaneStyle },
                     props: { id: INSPECTOR_PANE_RECORD_ID },
                     component: zoneFormatConsumerOf(),
-                    content: 'No selection',
                     children: [
-                      // (a0) **THE SECOND PANE'S MOVE GRIP AND ITS FOUR ZONE DROPS** (`INSPECTOR_GRAB_ID`): the SAME
-                      // `paneMoveGripNodeOf` factory the other two grips use, so a third pane's grip is one call and no
-                      // second spelling of the reveal, the glyph, the `props.tabindex` or the four destinations. Its
-                      // `props.pane` is the RECORD's key (`pane-inspector`), never this node's id — the act addresses the
-                      // store. Reader: `renderer.ts`'s `startPaneMove` census.
-                      paneMoveGripNodeOf(INSPECTOR_GRAB_ID, INSPECTOR_PANE_RECORD_ID, INSPECTOR_PANE_NAME, inspectorGrabStyle),
+                      // (a0) **THE SECOND PANE'S HEAD ROW** (`INSPECTOR_HEAD_ID`): the grip and the collapse control along
+                      // one row, exactly as the menus pane's head. The grip call is UNCHANGED — one factory, one reveal, one
+                      // glyph, one `props.tabindex`, four destinations — and the collapse control is its sibling so neither
+                      // the grip's drag listener nor its `:focus-within` can see it.
+                      {
+                        type: 'div',
+                        css: { id: INSPECTOR_HEAD_ID, classes: ['pane-head'] },
+                        props: { id: INSPECTOR_HEAD_ID },
+                        children: [
+                          // (a0-1) **THE SECOND PANE'S MOVE GRIP AND ITS FOUR ZONE DROPS** (`INSPECTOR_GRAB_ID`). Its
+                          // `props.pane` is the RECORD's key (`pane-inspector`), never this node's id — the act addresses the
+                          // store. Reader: `renderer.ts`'s `startPaneMove` census.
+                          paneMoveGripNodeOf(INSPECTOR_GRAB_ID, INSPECTOR_PANE_RECORD_ID, INSPECTOR_PANE_NAME, inspectorGrabStyle),
+                          // (a0-2) **THE SECOND PANE'S COLLAPSE CONTROL** (`INSPECTOR_COLLAPSE_ID`), carrying the record id
+                          // its act addresses; reader: `renderer.ts`'s `installPaneCollapse` and the sheet's glyph rule.
+                          paneCollapseNodeOf(INSPECTOR_COLLAPSE_ID, INSPECTOR_PANE_RECORD_ID),
+                        ],
+                      },
                       // (a) **THE SECOND PANE'S RESIZE AFFORDANCE** (`INSPECTOR_AFFORDANCE_ID`): the menus strip's shape
                       // on the same edge, because this pane's adjustable axis in a `top`/`bottom` zone is its WIDTH —
                       // `C-13`/`D-192`'s rule, unchanged. `props.axis` is what `PS-1` censuses a handle BY, so a strip
@@ -1435,6 +1491,15 @@ export function demoEnvelope() {
                         props: { id: INSPECTOR_AFFORDANCE_ID, axis: INSPECTOR_AFFORDANCE_ID },
                         content: '',
                         handlers: [{ name: 'inspector-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                      },
+                      // (b) **THE BODY, AS A CHILD** (`INSPECTOR_BODY_ID`, `A-14`): the `'No selection'` placeholder this
+                      // pane used to carry in its own `content`, now a node the collapse rule can reach. It authors no class
+                      // beyond `pane-body` and no figure: the box is the flow's, and the text is `D-259`'s chosen one.
+                      {
+                        type: 'div',
+                        css: { id: INSPECTOR_BODY_ID, classes: ['pane-body'] },
+                        props: { id: INSPECTOR_BODY_ID },
+                        content: 'No selection',
                       },
                     ],
                   },
@@ -1571,17 +1636,31 @@ export function demoEnvelope() {
                                 // stage's class and a zone-resident one gets that zone's, from the same binding.
                                 component: zoneFormatConsumerOf(),
                                 children: [
-                                  // (a0) **THE GUTTER PANE'S MOVE GRIP AND ITS FOUR ZONE DROPS** (`GUTTER_GRAB_ID`;
-                                  // `docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1, §7). **THE DESIGN'S
-                                  // OWN FORM, UNPINNED, AND THAT IS MEASURED RATHER THAN ASSUMED**: this pane computes
-                                  // no `overflow` and `D-246` read `scrollWidth == clientWidth == 100` on it, so
-                                  // nothing inside it can carry the grip away and no `sticky` inset is owed — the
-                                  // pane's FIRST child at its flow origin, `position: relative` for its absolutely
-                                  // placed drops. **ITS `props.pane` IS THE RECORD'S KEY AND NOT THIS NODE'S ID**:
-                                  // the pane's node is `#gutter-pane` and its record is `['panes','pane-a']`
-                                  // (`PANE_NODE_IDS`' two-name reason, `D-194`) — the act addresses the store.
-                                  // Reader: `renderer.ts`'s `startPaneMove` census, and the rendered markup.
-                                  paneMoveGripNodeOf(GUTTER_GRAB_ID, GUTTER_PANE_RECORD_ID, GUTTER_PANE_NAME, gutterGrabStyle),
+                                  // (a0) **THE GUTTER PANE'S HEAD ROW** (`GUTTER_HEAD_ID`) — the grip and the collapse control
+                                  // along one row, in the same form as the two zone-resident panes: **the row is what lays the
+                                  // two controls along the ROW**, which no pair of pane children can do (`app-envelope` rev 2
+                                  // §1(b)). **ITS `props.pane` IS THE RECORD'S KEY AND NOT THIS NODE'S ID**: the pane's node is
+                                  // `#gutter-pane` and its record is `['panes','pane-a']` (`PANE_NODE_IDS`' two-name reason,
+                                  // `D-194`) — the act addresses the store.
+                                  {
+                                    type: 'div',
+                                    css: { id: GUTTER_HEAD_ID, classes: ['pane-head'] },
+                                    props: { id: GUTTER_HEAD_ID },
+                                    children: [
+                                      // (a0-1) **THE GUTTER PANE'S MOVE GRIP AND ITS FOUR ZONE DROPS** (`GUTTER_GRAB_ID`;
+                                      // `docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1, §7). **THE SAME AUTHORED
+                                      // BOX AS THE OTHER TWO**: `cursor: grab` and the `14px` thickness, with the `position:
+                                      // relative` that used to make it the drops' containing block DELETED — the head row is
+                                      // that box now, and the sheet's `.pane-head > .pane-grab` rules state the item's place.
+                                      // Reader: `renderer.ts`'s `startPaneMove` census, and the rendered markup.
+                                      paneMoveGripNodeOf(GUTTER_GRAB_ID, GUTTER_PANE_RECORD_ID, GUTTER_PANE_NAME, gutterGrabStyle),
+                                      // (a0-2) **THE STAGE PANE'S COLLAPSE CONTROL** (`GUTTER_COLLAPSE_ID`): a stage pane's record
+                                      // names no zone, so this is the arm where BOTH of its members are its own and a collapse
+                                      // writes `width: auto; height: auto` and no scroll at all (`design-pane-collapse.md` §3's
+                                      // third arm). Its `props.pane` is `pane-a`, the record's key.
+                                      paneCollapseNodeOf(GUTTER_COLLAPSE_ID, GUTTER_PANE_RECORD_ID),
+                                    ],
+                                  },
                                   {
                                     // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
                                     // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`

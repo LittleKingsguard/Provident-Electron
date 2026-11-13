@@ -1865,6 +1865,21 @@ async function main(): Promise<void> {
   //    and the `+`'s own rule (`D-117`): a drop that never resolved, never took a body or never took a listener is a
   //    relocation a person cannot perform and an agent cannot dispatch, and it is said out loud where it happens.
   const paneMove = startPaneMove(runtime)
+  // ⟶ **AND THE THIRD CONTROL BAR'S THIRD ACT — THE COLLAPSE** (`design-pane-collapse.md` §1, `app-envelope` rev 2 §2): three
+  //    AUTHORED controls (`menus-collapse`, `inspector-collapse`, `gutter-collapse`), one live body under each node's own
+  //    authored pair and one `click` for the human cause. **IT WRITES NO RECORD AND SENDS NO ROUTE AT THIS SITE** — the act is
+  //    a press's — so a boot that is never pressed cannot move `B-5`'s order, exactly as the drag's registration cannot.
+  const paneCollapse = installPaneCollapse(runtime)
+  if (
+    paneCollapse.controls !== PANE_COLLAPSE_IDS.length ||
+    paneCollapse.installed !== paneCollapse.controls ||
+    paneCollapse.attached !== paneCollapse.controls
+  ) {
+    console.error(
+      `[provident-renderer] the pane collapse control is NOT fully wired — ${String(paneCollapse.installed)}/${String(paneCollapse.controls)} ` +
+        `of \`${PANE_COLLAPSE_IDS.join('`, `')}\` took a body and ${String(paneCollapse.attached)} took a listener, so a press or a dispatch may reach no act`,
+    )
+  }
   if (
     paneMove.drops !== PANE_MOVE_DROP_IDS.length ||
     paneMove.installed !== paneMove.drops ||
@@ -2410,6 +2425,16 @@ const TABS_ADD_HANDLER = 'tab-add-act'
  *  by nothing: a stale string only ever costs the next press a higher `n`. */
 let handedNewTabTarget: string | null = null
 
+/** **THE VIEW STAMP — WHEN A PERSON LAST LOOKED AT ONE PANE, AS THIS REALM REMEMBERS IT** (`design-pane-collapse.md` §5).
+ *  It is the SAME KIND of realm state as `handedNewTabTarget` above and `startThemeApplication`'s `lastSetting`: a closure
+ *  that covers a gap the RECORD cannot, never written to a store, never read by a module row, and reset by nothing but a
+ *  reload. **A DURABLE "LAST LOOK" WOULD BE A `file` WRITE PER GLANCE** — not a fact about the content, with no invariant
+ *  to hold it (`D-145`'s test, one family over) — so it stays a realm map: `pane id → the instant (ms) this realm last had a
+ *  pane EXPANDED in front of a person`. **IT IS STAMPED AT EXACTLY ONE ACT AND CLEARED BY NONE**: the expansion, which IS
+ *  the look — a collapsed pane cannot be looked at, which is the whole reason the indicator exists for collapsed panes.
+ *  A pane it does not name answers `null`, and `paneStatusOf`'s `T4` clears nothing on a `null` stamp. */
+const lastViewedPanes = new Map<string, number>()
+
 /** **THE DISTINCT TARGET, DERIVED OFF THE RECORD'S OWN ROWS** — the first `untitled-<n>`, from `n = 1` upward, that no
  *  row's `target` carries and that this turn has not just handed. **TERMINATION IS BY ARGUMENT**, the same one `seatOf`
  *  makes for its ids: only finitely many candidates are members of a finite `rows`, and the handed guard covers one more.
@@ -2603,6 +2628,11 @@ const PANE_MOVE_DROP_IDS: readonly string[] = [
  *  it installs. A rename on either side would silently turn the install into a SECOND handler rather than a
  *  replacement, which is why both sites say so. */
 const PANE_MOVE_HANDLER = 'pane-move'
+
+/** **THE COLLAPSE CONTROL'S OWN `(name, event)` PAIR, SPELLED TWICE FOR THE SAME REASON** (`app-envelope` rev 2 §2's
+ *  `PANE_COLLAPSE_HANDLER_NAME` is the envelope's half): a rename on either side would turn the install into a SECOND
+ *  handler on the node rather than a replacement of the authored no-op, so both sites say so out loud (`D-239`'s path). */
+const PANE_COLLAPSE_HANDLER = 'pane-collapse'
 
 /** One census hit: the AUTHORED id the tree spells and the NODE id the graph minted (`addTabNodeId`'s lesson). */
 interface PaneMoveNodeRef {
@@ -2803,6 +2833,157 @@ async function paneMoveAct(
   }
   console.warn(`[provident-renderer] pane move: the write at ['${PANES_ADDRESS}'] answered \`${status}\`, so the store's answer is unread`)
   return false
+}
+
+/** **THE COLLAPSE ACT — ONE LEAF WRITE AT THE PANE'S OWN RECORD, AND NOTHING ELSE** (`design-pane-collapse.md` §1's `X1`–`X5`).
+ *  **IT IS A RECORD WRITE AND NOT A VIEW-ONLY TRANSIENT, ON THREE MEASURED GROUNDS** (§1): there is no tier for a fourth
+ *  transient (`['drag']` at `temp` is the one family for a gesture, `D-145`), a collapse OUTLIVES a gesture precisely because
+ *  it is a person's decision about a pane, and a realm-local flag would be a SECOND AUTHORITY beside the record (`D-129`) —
+ *  the bar is painted from the record on every delivery, so a state the delivery cannot read is a state the next delivery
+ *  overrules.
+ *  **`X0` — THE ONE OPERAND IS READ OFF THE NODE** (`props.pane`, the same address-book rule the four drops answer to): the
+ *  act names NO record id in this file, which is what lets `C2`'s census be three NODE ids and nothing more (`D-235`, `D-177`).
+ *  **`X1` — THE STANDING RECORD COMES FROM THE SHAPE THIS REALM ALREADY HOLDS**, the read `paneMovePanesOf` takes; a pane the
+ *  family does not name reports and RETURNS, because *"no record, no act"* is the one arm that invents nothing — and NO SECOND
+ *  `data.read` stands here, since a fresh read would be a second answer to a question the delivery has already answered and
+ *  the two could disagree inside one press (`D-129`).
+ *  **`X2` — THE ONE DERIVATION IS THE NEGATION OF THE RECORD'S OWN READING**, never a cached flag: absent (`!== true`) is
+ *  EXPANDED, and the leaf this writes is the whole of the state.
+ *  **`X4` — AND THE VIEW STAMP IS TAKEN HERE, BEFORE THE WRITE'S OWN PUSH LANDS**: an EXPANSION is the look, so the stamp is
+ *  set in the same turn as the write that closes the pane open — which means the delivery that write produces composes the
+ *  head arm against the advanced stamp and the `updated` word is gone IN THAT SAME TURN, with no second write and no poll.
+ *  **`X5` — NOTHING ELSE**: no paint call, no re-read, no timer. The record's own push repaints (`D-82` clause 4).
+ *  **ITS ANSWER IS `true` ONLY WHERE THE STORE SAID `committed`**, and every other arm is REPORTED in `D-117`'s register —
+ *  a refusal with its `reason` and `message` verbatim, an unreadable answer as a warning, and a commit in silence. */
+async function paneCollapseAct (runtime: Runtime, nodeId: string): Promise<boolean> {
+  // X0 — THE RECORD ID, OFF THE NODE.
+  const pane = authoredPropOf(runtime, nodeId, 'pane')
+  if (!pane.readable || typeof pane.held !== 'string' || pane.held === '') {
+    console.error(`[provident-renderer] pane collapse: the control on ${nodeId} states no readable \`pane\`, so no act was attempted`)
+    return false
+  }
+  const paneId = pane.held
+  // X1 — THE STANDING RECORD, OUT OF THE SHAPE THIS REALM HOLDS. No route is asked and no default stands in.
+  const standing = paneMovePanesOf().find((entry) => entry.id === paneId)
+  if (standing === undefined) {
+    console.error(`[provident-renderer] pane collapse: the record names no pane \`${paneId}\`, so nothing was written and nothing was invented`)
+    return false
+  }
+  // X2 — THE ONE DERIVATION: the record says collapsed, not a cache.
+  const next = standing.collapsed !== true
+  // X4 — AN EXPANSION IS THE LOOK, STAMPED BEFORE THE PUSH THAT WILL REPAINT FROM IT.
+  if (!next) lastViewedPanes.set(paneId, Date.now())
+  // X3 — ONE LEAF WRITE AT `['panes', <id>, 'collapsed']`, AT `file`, THROUGH THE REALM'S OWN PASSTHROUGH.
+  let written: unknown = null
+  try {
+    written = await dataRoute('write', { path: [PANES_ADDRESS, paneId, 'collapsed'], tier: 'file', value: next })
+  } catch (error) {
+    console.error(`[provident-renderer] pane collapse: the write at ['${PANES_ADDRESS}', '${paneId}', 'collapsed'] threw — ${String(error)}`)
+    return false
+  }
+  const answer = written !== null && typeof written === 'object' ? (written as Record<string, unknown>) : {}
+  const status = typeof answer['status'] === 'string' ? answer['status'] : 'no-answer'
+  if (status === 'committed') return true
+  if (status === 'refused') {
+    console.error(
+      `[provident-renderer] pane collapse: the write at ['${PANES_ADDRESS}', '${paneId}', 'collapsed'] was REFUSED (${String(answer['reason'])}): ${String(answer['message'])}`,
+    )
+    return false
+  }
+  console.warn(`[provident-renderer] pane collapse: the write at ['${PANES_ADDRESS}', '${paneId}', 'collapsed'] answered \`${status}\`, so the store's answer is unread`)
+  return false
+}
+
+/** **THE COLLAPSE CONTROL'S ONE INSTALLED HANDLER BODY — THE AGENT'S ARM** — and **ONE `click` LISTENER FOR THE HUMAN'S**, both
+ *  calling the SAME act: one act, two causes (`AL-3`'s instrument, `D-239`'s path). The node is AUTHORED and never re-minted,
+ *  so both are installed once at boot and no churn can leave a second behind. **THE BODY ANSWERS ITS OWN SHORT WORD AND
+ *  NEVER THE ACT'S PROMISE** (a body's return crosses `JSON.stringify` into `dispatch`'s `results`, `D-209`'s cost (ii)). */
+function installPaneCollapseHandler (runtime: Runtime, nodeId: string): { readonly installed: boolean; readonly attached: boolean } {
+  const body = (): string => {
+    void paneCollapseAct(runtime, nodeId)
+    return 'pane collapse'
+  }
+  let installed = false
+  try {
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: nodeId,
+      mutation: [{ targetProp: 'handlers', mode: 'replace', value: [{ name: PANE_COLLAPSE_HANDLER, event: 'click', body }] }],
+    })
+    const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    installed = status === 'applied'
+    if (!installed) console.error(`[provident-renderer] pane collapse: the control on ${nodeId} refused its installed handler (status=${status})`)
+  } catch (error) {
+    console.error(`[provident-renderer] pane collapse: the install on ${nodeId} threw; an agent's dispatch reaches no act there`, error)
+  }
+  // THE HUMAN'S ARM: the same body, on the same authored pair, and a node that will not resolve or will not take a listener
+  // attaches nothing and throws nothing (`D-127`).
+  let attached = false
+  let element: unknown = null
+  try {
+    element = runtime.elementForNodeId(nodeId)
+  } catch {
+    element = null
+  }
+  const add = (element as { readonly addEventListener?: unknown } | null | undefined)?.addEventListener
+  if (typeof add === 'function') {
+    try {
+      ;(add as (type: string, handler: () => void) => void).call(element, 'click', body)
+      attached = true
+    } catch {
+      attached = false
+    }
+  }
+  return { installed, attached }
+}
+
+/** **TURN 6'S SECOND REGISTRATION — `installPaneCollapse(runtime)`: THE THREE CONTROLS, THE ONE ACT.**
+ *  It walks the THREE AUTHORED IDS (`PANE_COLLAPSE_IDS`) and, for each, reads the record id OFF THE NODE and installs the live
+ *  body under the node's own authored pair plus ONE `click` for the human cause. **IT WRITES NO RECORD AND SENDS NO ROUTE**:
+ *  the act is a press's, so a boot that is never pressed cannot move `tests/e2e/bundle-boot-seam`'s `B-5` order — the same
+ *  standing `startPaneMove`/`startAddTab` have, and the graph bytes it does write are one `handlers` layer per control.
+ *  **BOTH READINGS ARE RETURNED** (the controls it found, and how many took both arms) so the boot's one site can say out loud
+ *  that a control is missing, took no body or took no listener (`D-117`). */
+export function installPaneCollapse (runtime: Runtime): { readonly controls: number; readonly installed: number; readonly attached: number } {
+  let installed = 0
+  let attached = 0
+  for (const nodeId of PANE_COLLAPSE_IDS) {
+    const wiring = installPaneCollapseHandler(runtime, nodeId)
+    if (wiring.installed) installed += 1
+    if (wiring.attached) attached += 1
+  }
+  return { controls: PANE_COLLAPSE_IDS.length, installed, attached }
+}
+
+/** **THE HEAD ARM — ONE `props.status` WRITE PER PANE PER DELIVERY, RE-DERIVED FROM THE RECORD EVERY TIME** (`design-pane-
+ *  collapse.md` §4, §6). It is ONE `state-slice`, `mode: 'replace'`, **WITH A REMOVAL WHERE `paneStatusOf` ANSWERS `null`** —
+ *  the shape `D-253` measured for a member that may be absent — and it writes only on the HEAD ROW, which is the element the
+ *  sheet's `.pane-head[status]::after { content: attr(status) }` rule reads: `attr()` reads the attribute of the element its
+ *  pseudo belongs to, so a rule keyed on an ancestor would paint nothing (`D-257`'s binding, one node over).
+ *  **IT TOUCHES NO PANE AND NO GRIP**: `props.name` on the grip, `props.pane`/`props.zone` on the drops and the pane's own
+ *  `css.style`+`collapsed` are other arms' — one attribute, one writer, one reader (`D-129`).
+ *  **A PANE THE MAP NAMES NO HEAD FOR IS SKIPPED, NOT GUESSED** (`nodeIdForPane`'s rule, one node over), and a refused write
+ *  is REPORTED in `D-117`'s register rather than left to be inferred from a bar with no word on it. */
+function drivePaneHeads (panes: readonly ViewPaneGeometry[], runtime: TabsPageRuntime): void {
+  for (const pane of panes) {
+    const headId = headIdForPane(pane.id)
+    if (headId === null) continue
+    const word = paneStatusOf(pane as unknown as Record<string, unknown>, lastViewedPanes.get(pane.id) ?? null)
+    let status: string
+    try {
+      const answer = runtime.applyCommand({
+        kind: 'state-slice',
+        node: headId,
+        mutation: [{ targetProp: 'props.status', mode: 'replace', value: word === null ? undefined : word }],
+      })
+      status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
+    } catch {
+      status = 'threw'
+    }
+    if (status !== 'applied') {
+      console.error(`[provident-renderer] pane head: the head row ${headId} answered ${status} for its \`status\``)
+    }
+  }
 }
 
 /** **THE DROP'S ONE INSTALLED HANDLER BODY — THE AGENT'S ARM** (`D-239`'s path, one control class over): ONE
@@ -3217,10 +3398,20 @@ function paneArrangementOf (
 function paneFamilyValueOf (panes: readonly ViewPaneGeometry[], movedPaneId: string): Record<string, unknown> {
   const family: Record<string, unknown> = {}
   for (const pane of panes) {
-    const record: Record<string, unknown> = { width: pane.width, height: pane.height }
-    if (pane.zone !== undefined) record['zone'] = pane.zone
-    if (pane.id !== movedPaneId && pane.bounds !== undefined) record['bounds'] = { min: pane.bounds.min, max: pane.bounds.max }
-    if (pane.index !== undefined) record['index'] = pane.index
+    // **THE VALUE IS THE STANDING RECORD *SPREAD*, AND THAT IS THIS PASS'S FIRST HUNK** (`design-pane-collapse.md` §3, §8;
+    // `D-249`'s `X2`): the previous form composed a MEMBER LIST — `{width, height, zone?, bounds?, index?}` — so every member
+    // a later rev added was silently DROPPED for every pane in the family the moment a pane moved, and `source.panes` would
+    // still say `'record'` while the paint read nothing (`D-105`'s fault, one family over). **A `collapsed` PANE THEREFORE
+    // LOSES ITS STATE ON RELOCATION WITHOUT THIS LINE**, and so would its `status` and `updatedAt`. The spread re-states
+    // every member the family admits, and the three members `paneArrangementOf` just changed are then replaced IN PLACE:
+    // the destination `zone`, the recomputed `index`, and — `D-249` §4's ONE DROP, KEPT — **NO `bounds` ON THE PANE THAT
+    // MOVED**, because a pair measured on one axis would clamp the axes of the zone it arrives in.
+    const record: Record<string, unknown> = { ...(pane as unknown as Record<string, unknown>) }
+    delete record['id']
+    if (pane.zone === undefined) delete record['zone']
+    if (pane.index === undefined) delete record['index']
+    // A PANE THIS ACT DOES NOT MOVE KEEPS EXACTLY WHAT IT STORED; the one that moves keeps everything BUT its clamp.
+    if (pane.id === movedPaneId) delete record['bounds']
     family[pane.id] = record
   }
   return family
@@ -4318,6 +4509,29 @@ function nodeIdForPane(paneId: string): string | null {
   return held === undefined ? null : held.nodeId
 }
 
+/** **THE PANE ↔ HEAD-ROW MAP: WHICH AUTHORED HEAD ROW CARRIES ONE PANE'S INDICATOR** (`design-pane-collapse.md` §4,
+ *  `app-envelope` rev 2 §2). It is `PANE_NODE_IDS`' own shape one node down and for its own reason: the head row is the
+ *  element `attr(status)` is read off, so the head arm's ONE `props.status` write must land on THAT node and on no other —
+ *  and the four ids are LITERALS on both sides (`app-envelope` spells them, this map spells them, and the equality is a
+ *  row's, never a derivation — `D-41`, `D-188` debt 2). **TOTAL OVER `DECLARED_PANE_IDS`**, like the pane map: a declared pane
+ *  with no head row would be a pane whose indicator has nowhere to stand. */
+const PANE_HEAD_IDS: readonly { readonly paneId: string; readonly headId: string }[] = [
+  { paneId: DEFAULT_PANE_ID, headId: 'gutter-head' },
+  { paneId: MENUS_PANE_ID, headId: 'menus-head' },
+  { paneId: INSPECTOR_PANE_ID, headId: 'inspector-head' },
+]
+
+/** The head row for one pane, or the stated `null` — never the pane's own id (`nodeIdForPane`'s rule, one node over). */
+function headIdForPane(paneId: string): string | null {
+  const held = PANE_HEAD_IDS.find((entry) => entry.paneId === paneId)
+  return held === undefined ? null : held.headId
+}
+
+/** **THE THREE COLLAPSE CONTROLS' AUTHORED IDS — one per pane, LITERALS at both ends** (`app-envelope` rev 2 §2: `menus-collapse`,
+ *  `inspector-collapse`, `gutter-collapse`). The wiring needs them as a census to install the act on each, and no entry
+ *  carries a RECORD id: that operand is read OFF EACH NODE's `props.pane` at press time (`installPaneCollapse`, `C2`). */
+const PANE_COLLAPSE_IDS: readonly string[] = ['menus-collapse', 'inspector-collapse', 'gutter-collapse']
+
 /** **THE PANE'S TWO AXIS MEMBERS, AND THE PANE'S `zone` IS WHAT SELECTS WHICH ONE IT PAINTS** (`D-186`'s axis rule as
  *  `D-189`/`D-191` settled it; `D-194`); in `top`/`bottom` the zone fixes the height, so the pane's own member is its
  *  **`width`**; in `left`/`right` the zone fixes the width, so the pane's own member is its **`height`**; and **with no
@@ -4364,18 +4578,81 @@ function panePaintOf (zone: unknown, record: Record<string, unknown>): {
   const placement = paneFillAxisOf(zone)
   const style: Record<string, string> = {}
   if (placement !== null) style[placement.fill] = PANE_FILL
-  // THEN THE RECORD'S FIGURE, on the one axis this `zone` makes adjustable — and only where the record STATES it, so an
-  // unstated adjustable axis stays UNSET rather than taking a default this turn would have to invent.
-  for (const member of paneAxisMembers(zone)) {
-    const figure = record[member]
-    if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
-    style[member] = `${String(figure)}px`
+  // **THE COLLAPSE'S ONE BRANCH, AND THE FILL ABOVE IS UNTOUCHED BY IT** (`design-pane-collapse.md` §3): the ADJUSTABLE axis
+  // becomes `auto` — *"the row's own box"*, the one declaration that means the same thing on either axis, where a `14px`
+  // constant would be a WIDTH in `top`/`bottom` and a HEIGHT in `left`/`right` and a figure the sheet could not even beat
+  // the inline value with (`D-174`) — **AND THE RECORD'S FIGURE IS NOT OVERWRITTEN, IT IS SIMPLY NOT PAINTED**: it stays
+  // stored as the memory `C-11` calls it, so EXPANDING RESTORES IT WITH ZERO WRITES, which is what makes this a view
+  // state and not an edit. **THE THIRD ARM IS THE STAGE**, whose two members are both its own (`paneAxisMembers(undefined)`
+  // answers both), so a collapsed stage pane writes `width: auto; height: auto` and — having no zone — writes NO scroll at
+  // all, because there is none to write; that is `C-12`'s *"a stage pane behaves as a sidebar pane"* read to its end.
+  const collapsed = record['collapsed'] === true
+  if (collapsed) {
+    for (const member of paneAxisMembers(zone)) style[member] = 'auto'
+  } else {
+    // THEN THE RECORD'S FIGURE, on the one axis this `zone` makes adjustable — `auto` if `collapsed` is stated, and only
+    // where the record STATES it, so an unstated adjustable axis stays UNSET rather than taking a default this turn would
+    // have to invent.
+    for (const member of paneAxisMembers(zone)) {
+      const figure = record[member]
+      if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
+      style[member] = `${String(figure)}px`
+    }
   }
   // AND THE SCROLL LAST, on the axis the pane adjusts (`D-234`'s column): the write replaces `css.style` whole, so a pane's
   // authored `overflow` does not survive it and the pane must restate it here — which is what makes the eighteen items
-  // scroll rather than clip when the menus pane is dragged narrow.
-  if (placement !== null) style[placement.scroll] = 'auto'
+  // scroll rather than clip when the menus pane is dragged narrow. **A COLLAPSED PANE CLIPS RATHER THAN SCROLLS**: the row
+  // is the whole box, so `overflow: hidden` on that same axis is the second half of the composition.
+  if (placement !== null) style[placement.scroll] = collapsed ? 'hidden' : 'auto'
   return { style }
+}
+
+/** **ONE STAMP, PARSED TO AN INSTANT — OR `null`, WHICH IS "ABSENT" AND NEVER "NEWER"** (`design-pane-collapse.md` §5;
+ *  `D-242`'s order-sensitive-comparison rule). A non-string, an empty string and a string `Date` cannot parse are the SAME
+ *  answer, because the comparison the indicator draws must never be a STRING ORDER: two ISO instants compare correctly as
+ *  strings only while they share an offset and a precision, and a record's stamp is written by an app this realm does not
+ *  own. A realm whose `Date.parse` does not answer a finite number (the layout-less shim's, if it ever lacked one) is the
+ *  same stated absence rather than a throw (`D-127`). */
+function instantOf (value: unknown): number | null {
+  if (typeof value !== 'string' || value === '') return null
+  let parsed: unknown
+  try {
+    parsed = Date.parse(value)
+  } catch {
+    return null
+  }
+  return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null
+}
+
+/** **THE INDICATOR'S WORD — THREE FROM THE RECORD AND ONE DERIVED, FROM ONE COMPOSITION** (`design-pane-collapse.md` §4;
+ *  the user's *"updated since last view is a signal the forking app would decide on"*).
+ *  **`busy`, `waiting` and `done` DESCRIBE THE PANE'S OWN WORK** — a fact about the content, held in one place — so the
+ *  RECORD's word WINS where it stands: it is the more specific fact, and the paint prints it VERBATIM (`T1`). **`updated`
+ *  DESCRIBES A RELATION BETWEEN THE CONTENT'S UPDATE AND THE USER'S LAST LOOK** — two facts, and one of them is not in the
+ *  record at all — so the record's closed three NEVER carry it and this function DERIVES it (`T2`–`T5`). **AND IT IS SHOWN
+ *  ONLY ON A COLLAPSED PANE**: `updated` is the user's own parenthetical (*"for collapsed panes"*), because a pane a person
+ *  is looking at is a pane whose look has already happened.
+ *  **`null` IS A REMOVAL AND NOT AN EMPTY WORD** (`D-253`'s spelling for an absent member): the head arm writes it as the
+ *  engine's `undefined`, so the sheet's `.pane-head[status]` rule has no attribute to key on and paints no rule, no content
+ *  and no box — which is *"optional, based on app's use case"* spelled as the record's silence and nothing else.
+ *  **IT IS PURE OVER A RECORD AND A STAMP, AND EXPORTED** — the door the unit rows need (`PC-1`), the standing of
+ *  `zoneSizeConstraint`/`mintTabId`: no runtime, no element, no store. */
+export function paneStatusOf (record: Record<string, unknown>, viewedAt: number | null): string | null {
+  // T1 — THE RECORD'S WORD WINS, and it is printed as the store admitted it (a fourth word never reaches here: `paneOf`
+  // refuses it BY NAME, so the paint carries no vocabulary of its own — `design-pane-collapse.md` §2, §8).
+  const stated = record['status']
+  if (typeof stated === 'string') return stated
+  // T2 — `updated` IS FOR COLLAPSED PANES ONLY.
+  if (record['collapsed'] !== true) return null
+  // T3 — NO STAMP, NO WORD: a pane whose content was never stamped has nothing to compare (`updatedAt` has no producer
+  // under `src/`, so this is the DEMO's ordinary answer and the state is measurably inert until an app writes one).
+  const content = instantOf(record['updatedAt'])
+  if (content === null) return null
+  // T4 — A LOOK AT OR AFTER THE CHANGE CLEARS IT: the stamp is the realm's `lastViewedPanes` reading of this pane, taken at
+  // the one act that IS a look (the expansion), and a stamp that is absent clears nothing.
+  if (viewedAt !== null && viewedAt >= content) return null
+  // T5 — AND THE ONE DERIVED WORD.
+  return 'updated'
 }
 
 /** **AND THE PANE'S PLACE IN THE TREE IS THE DELIVERY'S OWN TURN — THE ZONE *AND* THE ORDER, FROM ONE READING** (`D-252`,
@@ -4430,10 +4707,22 @@ function paintStyle(
   runtime: TabsPageRuntime,
   nodeId: string,
   style: Record<string, string>,
+  attributes: Record<string, string | undefined> = {},
 ): boolean {
   const mutation: { targetProp: string; mode: string; value?: string }[] = [
     { targetProp: 'css.style', mode: 'replace', value: cssTextOf(style) },
   ]
+  // **AND THE PANE'S STATE ATTRIBUTE, IN THE SAME COMMAND AND THEREFORE THE SAME RENDER** (`design-pane-collapse.md` §3):
+  // `collapsed` is the ONE member the pane arm writes beside its `css.style` — the second mutation this command carried
+  // until `D-265` was `props.zone`, and this is not that member back: the zone's form is an INHERITED CLASS and needs no
+  // write, while a state a stylesheet must reach (`[collapsed="true"] > :not(.pane-head)`, the glyph's `::before`) is not a
+  // class the paint may touch (`D-265`: a `css.classes` write would REPLACE the zone-inherited form class) and cannot be a
+  // pseudo-element's own state. **AN EXPANDED PANE PASSES `undefined`, WHICH IS THE ENGINE'S ATTRIBUTE REMOVAL** — so the
+  // markup holds the attribute exactly where the record states the member, and absence stays the one spelling of EXPANDED.
+  // Every caller that passes no attributes is BYTE-UNCHANGED.
+  for (const [name, value] of Object.entries(attributes)) {
+    mutation.push({ targetProp: `props.${name}`, mode: 'replace', value })
+  }
   try {
     const answer = runtime.applyCommand({ kind: 'state-slice', node: nodeId, mutation })
     return (typeof answer?.status === 'string' ? answer.status : 'no-answer') === 'applied'
@@ -4555,10 +4844,19 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     // REACHED ONLY BY A PANE THAT FILLS NOTHING** (the stage pane with no stated member): a zone-resident pane is still a
     // pane and always carries its fill and its scroll, so this `continue` never withholds them (`D-187`, `D-189`).
     if (Object.keys(paint.style).length === 0) continue
-    if (!paintStyle(runtime, nodeId, paint.style)) {
+    // **AND THE PANE'S STATE, IN THE SAME COMMAND AND THEREFORE THE SAME RENDER** (`design-pane-collapse.md` §3): the sheet's
+    // `[collapsed="true"] > :not(.pane-head)` and its glyph rule both key on this ONE PAINTED ATTRIBUTE, and an expanded pane
+    // passes `undefined` — the engine's removal — so ABSENCE stays the single spelling of EXPANDED. **A `css.classes` WRITE
+    // WOULD BE THE ONE THING THAT MUST NOT STAND HERE** (`D-265`): it would replace the class the pane inherits from its zone.
+    if (!paintStyle(runtime, nodeId, paint.style, { collapsed: record['collapsed'] === true ? 'true' : undefined })) {
       console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(paint.style).join('/')}`)
     }
   }
+  // ⟶ **AND THE HEAD ROW'S ONE ATTRIBUTE, ONCE PER PANE PER DELIVERY** (`design-pane-collapse.md` §4): the indicator's word is
+  //    re-derived from the record on every delivery — never remembered (`D-129`) — and written on the HEAD, which is the node
+  //    `attr(status)` is read off. It stands AFTER the panes' style/state so a collapsed pane's head is painted against the
+  //    box that delivery just composed.
+  drivePaneHeads(reading.panes, runtime)
   // (c) THE STAGE'S CONTENT — THE ACTIVE TAB'S `target` THROUGH `drivePageDisplay`'s FORM, so a page's `display` keeps its ONE
   // author (`D-129`, `C-4`). The rows are the realm's HELD statement about the tab record: `holdTabsReading` writes that
   // binding and this turn reads it, so no second subscription, no second read route and no poll is added (`D-82` clause 4).

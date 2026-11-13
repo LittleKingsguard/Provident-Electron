@@ -1484,6 +1484,38 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `npm run divergence`, which already existed), and `strata/modules.json` — the map row's own reading of the surface this
   //    pass re-takes — is already declared above.
   'scripts/electron-divergence.mjs',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── THE PANE CONTROL BAR'S TWO DESIGN PAGES — `docs/L3/app-envelope/design-pane-control-bar.md` AND
+  //    `docs/L3/renderer-wiring/design-pane-collapse.md` — EACH DECLARED **PER-PATH WITH ITS OWN REASON** (`D-146`), and
+  //    **NOT ONE OF THEM ADMITTED BY A PREFIX**: `docs/L3/app-envelope/` and `docs/L3/renderer-wiring/` are directories a
+  //    later pass drops a page into, and a declared directory admits every one of them unnamed — `B-2`'s undeclared-sibling
+  //    arm is what bites on the first one dropped (both of these pages' own §7/§9 carry the identical sentence: *"`B-1` will
+  //    red this page's own path by name until `DECLARED_SCOPE` gains it as its own entry with its own reason"*, owner: this
+  //    battery's, owed in the same edit that creates the page). **AND `strata/records/` IS NEVER A PREFIX**: the unit record is
+  //    declared by its own file name above (`strata/records/app-layout-unit.md`), because a prefix there would admit any
+  //    future unit's record without a pass naming it — `D-265` refused it in exactly those words and this block does not
+  //    reopen it. **`B-1` REPORTED THESE TWO PATHS AS ITS OFFENDERS ON THIS TREE, AND NO OTHERS**: the seven SOURCE and BUNDLE
+  //    paths the same dirty tree carries — `src/shared/demo-envelope.ts`, `src/renderer/renderer.ts`,
+  //    `src/renderer/index.html`, `src/renderer/view-client.ts`, `src/shared/view-shape.ts`,
+  //    `src/main/view-record/index.ts` and `demo/pane-drag-demo/demo.mjs` — are each ALREADY DECLARED ABOVE, so not one of them
+  //    is re-listed here: a second spelling of a path already in the union is the duplicate `B-1`'s own set assertion refuses.
+  //    **THE TWO ENTRIES EXIST BECAUSE THIS FEATURE WAS BUILT FROM THESE TWO PAGES**, and each is named for what THAT page owns:
+  //    **THE CONTROL-BAR PAGE'S REV 2** is the ENVELOPE's bill — the head row in ALL FOUR ZONES (§1: a sidebar-only bar cannot
+  //    carry the two controls, and the ground is the PRESS that arms the drag, §1(a)/(b)), the collapse control authored AS A
+  //    NODE for that bubbling reason rather than as a pseudo (§2, §5), the `collapsed`-keyed glyph with its single owner (§4),
+  //    the SEVEN authored nodes and the `+7` the census re-takes (§6), and the three re-parents with their pins (§3, `A-11`–`A-13`).
+  'docs/L3/app-envelope/design-pane-control-bar.md',
+  //    **AND THE COLLAPSE PAGE'S REV 2** is the WIRING's bill, and it is declared as its own path for its own reason — it is not
+  //    the same document one module over: **THE PAINT** (§3: one branch in `panePaintOf`, `auto` on the free axis and `hidden` on
+  //    the scroll with the record's figure un-overwritten, plus the stage arm `paneAxisMembers(undefined)` reaches), **THE
+  //    SURVIVAL-THROUGH-RELOCATION HUNK ON `paneFamilyValueOf`** (§3's conditional and §8's first guardrail: the value must be the
+  //    standing record SPREAD with `zone`/`index` replaced and `bounds` removed, or a drag silently drops `collapsed`, `status` and
+  //    `updatedAt` for every pane in the family while every markup row stays green — `D-105`'s fault one family over), **and THE TWO
+  //    STAMPS** (§5: `updatedAt` as record data with NO producer and no repair, `D-243`'s no-default rule; `lastViewedPanes` as the
+  //    realm's closure, stamped at the expand act BEFORE the write's own push lands, compared by PARSED INSTANTS and never by string
+  //    order, `D-242`), with the indicator's three record words plus the DERIVED `updated` in §4. Neither page carries the other's
+  //    subject, and a landing that wrote one of them and declared the other would be declaring a page it did not write.
+  'docs/L3/renderer-wiring/design-pane-collapse.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

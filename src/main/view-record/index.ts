@@ -53,6 +53,7 @@ import {
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
+  PANE_STATUS_WORDS,
   paneGeometryIn,
   viewPanesPlaceholder,
   viewThemePlaceholder,
@@ -70,6 +71,7 @@ export {
   DEFAULT_PANE_BOUNDS,
   DEFAULT_PANE_ID,
   DEFAULT_PANE_SIZE,
+  PANE_STATUS_WORDS,
   paneGeometryIn,
   viewPanesPlaceholder,
   viewThemePlaceholder,
@@ -547,6 +549,9 @@ const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
     bounds?: { readonly min: number; readonly max: number }
     zone?: string
     index?: number
+    collapsed?: boolean
+    status?: string
+    updatedAt?: string
   } = { id, width, height }
   // **`bounds` IS JUDGED ONLY WHERE STATED** (`D-186`): a zone-resident pane's clamp is the LAYOUT's, and its absence is
   // the ordinary state rather than a fault to repair — no repair of this module ever invents one, and none may read
@@ -575,6 +580,29 @@ const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
     const index = held['index']
     if (typeof index !== 'number' || !Number.isInteger(index) || index < 0) return null
     pane.index = index
+  }
+  // **THE COLLAPSE BAR'S THREE, EACH JUDGED ONLY WHERE STATED** (`design-pane-collapse.md` §2; `bounds`/`zone`/`index`'s own
+  // rule, three members over). **`collapsed` IS A BOOLEAN AND ITS ABSENCE MEANS EXPANDED** — a non-boolean is refused here
+  // rather than coerced, because `0`/`''` would make a pane's state a truthiness question this module never states.
+  // **`status` NAMES ONE OF THE CLOSED THREE OR IT IS REFUSED BY NAME** (`PANE_STATUS_WORDS`, the `DECLARED_ZONE_IDS`
+  // closure's form, `D-189`): the paint prints what stands and carries no vocabulary of its own, so a fourth word must die
+  // HERE or it would be painted as though the record had declared it. **`updatedAt` ADMITS ANY STRING** and is not parsed
+  // here: a stamp that does not parse is treated as ABSENT at the paint's comparison (`D-242`'s parse-not-string-order
+  // rule), and this module is the record's parse and not the indicator's policy.
+  if (Object.hasOwn(held, 'collapsed')) {
+    const collapsed = held['collapsed']
+    if (typeof collapsed !== 'boolean') return null
+    pane.collapsed = collapsed
+  }
+  if (Object.hasOwn(held, 'status')) {
+    const status = held['status']
+    if (typeof status !== 'string' || !PANE_STATUS_WORDS.includes(status)) return null
+    pane.status = status
+  }
+  if (Object.hasOwn(held, 'updatedAt')) {
+    const updatedAt = held['updatedAt']
+    if (typeof updatedAt !== 'string') return null
+    pane.updatedAt = updatedAt
   }
   return pane
 }
@@ -866,6 +894,14 @@ const paneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
     // leaf write at `['panes', <id>, 'index']` is judged here rather than by the record's parse, because a leaf hands the
     // pair a SCALAR (the `nodeOf` measurement) and `paneOf` would refuse a scalar by construction.
     if (member === 'index') return typeof value === 'number' && Number.isInteger(value) && value >= 0
+    // **AND THE COLLAPSE BAR'S THREE, EACH AT ITS OWN LEAF** (`design-pane-collapse.md` §2, §3; `paneOf`'s rules restated one
+    // node down the way `bounds`/`zone`/`index` are): a leaf write at `['panes', <id>, 'collapsed']` hands this pair a
+    // SCALAR, so the record's parse cannot judge it and this arm must — **and without this arm the act's own leaf answers
+    // `refused` while the family arm would admit and carry it**. A fourth `status` word is refused BY NAME here, and a
+    // non-boolean `collapsed` with it; `updatedAt` admits any string, which is the record's whole policy for that member.
+    if (member === 'collapsed') return typeof value === 'boolean'
+    if (member === 'status') return typeof value === 'string' && PANE_STATUS_WORDS.includes(value)
+    if (member === 'updatedAt') return typeof value === 'string'
     return false
   }
   return member === 'bounds' && (node[2] === 'min' || node[2] === 'max') && finiteNumber(value)
@@ -938,7 +974,7 @@ const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
  *  these. **THE THIRD SENTENCE LEFT WITH THE
  *  FAMILY IT NAMED** (`D-142`), because no declaration stands at that address to answer it. */
 export const PANE_UNUSABLE_MESSAGE =
-  'the pane geometry carries a member that is no geometry — no finite non-negative width or height, or a bounds pair of two finite numbers whose min does not exceed its max, or a zone the pane names that this record does not declare, or an index that is not a non-negative integer, or a pane id this record does not declare'
+  'the pane geometry carries a member that is no geometry — no finite non-negative width or height, or a bounds pair of two finite numbers whose min does not exceed its max, or a zone the pane names that this record does not declare, or an index that is not a non-negative integer, or a collapsed that is not a boolean, or a status outside busy/waiting/done, or an updatedAt that is not a string, or a pane id this record does not declare'
 export const ZONE_UNUSABLE_MESSAGE =
   'the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, or a slot the crossing refuses, or a zone id this record does not declare'
 /** **THE THIRD SENTENCE — THE ONE `D-233`'S ITEM (4) OWED, AND IT NAMES THE FAMILY'S FAULT RATHER THAN THE ACT'S.** A family
