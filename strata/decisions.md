@@ -6022,3 +6022,33 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red** (`B-1` green, `src/renderer/index.html` standing in its declared edit set); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**. **One file changed: one declaration plus the prose that derives it** — no node, no channel, no bridge member, **census unmoved**; **the `top` head is box-identical to the sidebar's**. **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-273`** as prose, unchanged and extended by this row only. **This row records an imbalance that lived in a typeface rather than a stylesheet, a fix expressed in the font's own units, a third logical property carrying a fix across a writing mode, and a corner hit-test that failed inside a border radius.**
+## D-275 — THE PILL'S INTERIOR INSETS ARE BALANCED, AND **`B` WAS NEVER A BEARING**: it was `44px`, because the pill was stretching to fill the row
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user, verbatim):** ***"Empty space is still unbalanced when collapsed (difference highlighted)"*** — with two yellow marks **both inside the pill**.
+
+**`D-274` BALANCED THE WRONG PAIR, AND THE REASON IS A MODEL ERROR WORTH KEEPING.** **It measured the EXTERIOR gaps — handle-ink-to-title and title-to-control — and reported `6.25 ↔ 6.52`.** **The user's marks were **`A` and `B`, THE PILL'S OWN TWO INTERIOR INSETS**, and **`B` measured `44.00px`.** **A bearing is a fraction of a pixel; `44` is not a bearing, and a row that only ever reported two of four numbers could not tell the difference.**
+
+**THE CAUSE WAS THE PILL STRETCHING TO FILL THE ROW.** **`.pane-grab` was `flex: 1 1 auto`**, **so it took every pixel the head could give it**, **and ALL THE SPARE WIDTH SAT INSIDE IT** — **the name's ink ended `44px` short of the pill's right edge**, **and the imbalance was the row's leftover, not its typography.**
+
+**THE FIX MAKES THE PILL HUG ITS CONTENT**: **`flex: 0 0 auto` on the grip plus `margin-inline-start: auto` on the collapse control** — **the pill stops being the row's flexible body and the spare width moves OUT of it.**
+
+**MEASURED AT A DEVICE SCALE FACTOR OF FOUR**, **with the ink found by RGB threshold against the pill's own fill** (**a sub-pixel claim needs a sub-pixel method, and reading a 116px screenshot is not one**):
+
+| state | pill | `A` | `B` before → after | `C` | `D` before → after |
+|---|---|---|---|---|---|
+| **collapsed sidebar (the user's)** | `94×14` → **`52.13×14`** | `1.75` | **`44.00 → 2.13`** | `4.00` | `4.00 → 45.87` |
+| expanded `top` | `74×14` → **`52.13×14`** | `1.75` | `24.00 → 2.13` | `4.00` | `4.00 → 25.87` |
+| collapsed `top` | `52.13×14` | `1.75` | `2.13 → 2.13` | `4.00` | `4.00` |
+| lane | `14×52.13` | `2.13` | `1.75 → 1.75` | `4.00` | `4.00` |
+
+**Δ `42.25 → 0.38` — UNDER ONE DEVICE PIXEL.**
+
+**AND THE TRADE IS NAMED RATHER THAN HIDDEN: `B` AND `D` ARE ONE NUMBER.** **`B + D` is constant at `48.00` before and after** — **so the spare width sits EITHER INSIDE THE PILL OR OUTSIDE IT, and with the carrier held at `D-273`'s `4px` start inset there is no third place.** **THE INTERIOR PAIR WINS BECAUSE THE USER MARKED THE INSIDE**, **and `D` carries the width (`4.00 → 45.87`).** **Where no spare width exists both pairs hold at once** (`1.75/2.13` and `4.00/4.00`). **And NO SINGLE MARGIN ZEROES BOTH REFERENCES — they are exactly `1.00px` apart (`1.06` vs `2.06`)** — **so `D-274`'s `1.43px` SPLITS them at `0.38` and `0.63`**, **and it was LEFT STANDING rather than re-tuned for a target that cannot be hit.**
+
+**AND THE GRAB AREA IS THE COST, STATED RATHER THAN LEFT TO BE FOUND: `94×14 → 52.13×14`.** **A pill that hugs its content is a smaller drag target, and a user who wanted a wide grip more than balanced margins has a different trade than the one this row took.**
+
+**INVARIANTS HELD AND MEASURED.** **Direction still BOTTOM-TO-TOP.** **`120/120` HIT POINTS ANSWERING THEIR OWN IDS** (**5 points × 4 pressables × 6 states**). **`padding-block` absent.** **The lane's cross extent still the bar's `14px`**, **so the rail still reclaims `106` of `120`.** **And the `top` head is still the base rule byte for byte.**
+
+**THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red** (`B-1` green, the sheet standing in its declared set); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **one file changed, CSS plus the notes that derive it**; **the grab area is the only behaviour that moved**. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-274`** as prose, unchanged and extended by this row only. **This row records a `44px` inset mistaken for a fraction of a pixel, a stretch mistaken for typography, a pair of numbers that cannot both be zeroed, and a cost named in the same breath as the fix.**
