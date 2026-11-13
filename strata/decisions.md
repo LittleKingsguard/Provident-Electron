@@ -5625,3 +5625,24 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two worktree-boundary rows** red before the commit; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **all `129` theme rows green** (`X-5`'s one-hit census, `T-9`'s `:root` pin, `X-3` unmoved). **One file changed: `src/renderer/index.html`.** **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-254`** as prose, unchanged and extended by this row only. **This row records a pin whose reason outlived its side effect, one declaration that cannot miss a container, an alternative refused with its cost named, and "supported" measured instead of quoted.**
+## D-256 — THE GRIPS GET THEIR DARK PAIR, AND THE SIDEBAR'S DUAL-AXIS COST WAS **THE GRAB, NOT THE STRIP**: `D-247` was half true
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"Same for drag handles"* · *"Drag handle is also occupying space both vertically and horizontally when in sidebar"*.
+
+**DEFECT 1 — `D-247` PAIRED THE CLASS AND MISSED THE GRIPS.** **Under dark, the six `.gutter-handle` nodes** (`#menus-vertical`, `#gutter-horizontal`, the four `zone-*` strips) **already computed `#2c3642` fill with `#7d8a9b` ink — correctly paired.** **But the TWO `.pane-grab` grips — `#menus-grab` and `#gutter-grab`, THE ONES A PERSON ACTUALLY PRESSES — computed `#dfe5ec`, BYTE-FOR-BYTE THE LIGHT BASE**, **because no dark rule named their class** (**only their `pane-drop` children**). **So `D-247`'s "both grips are already paired" was true of the class it named and false of the grips.** **The pairing is now ONE RULE PAIR naming `.pane-grab` beside the class** — **and the hover arm is REQUIRED rather than cosmetic**: **the dark base at specificity `(0,2,1)` outranks the light `.pane-grab:hover` at `(0,2,0)`, so a hovered grip would have leaked the light `#8f9dae` shadow through.** **Light arm byte-unchanged, no new colour, confirmed by pixels (`#2C3743` inside `#menus-grab` under dark).**
+
+**DEFECT 2 — THE STRIP HAD MOVED CORRECTLY, AND THE REAL COST WAS THE GRAB.** **The vertical dotted strip the screenshot shows at the sidebar pane's right is `zone-left-vertical` — THE LEFT ZONE'S OWN STRIP**, **a SIBLING of the zone that takes nothing from the pane** (**the same conclusion `D-244` reached about siblings, now visible to a user as a false positive**). **The actual dual-axis cost was `#menus-grab`**: **in a sidebar it took its own `14px` FLEX ROW of height on top of the `14px` width lane it charges in both forms** — **and, carrying only its authored `left` inset, it SCROLLED OUT OF THE PANE**, **travelling from `y 190` to `152` as the pane scrolled.** **One rule — `position: sticky; top: 0; margin-bottom: -0.875rem`, scoped to `#pane-menus[zone="left"|"right"] > #menus-grab` — fixes both the cost and the drift.**
+
+**MEASURED, BOTH DIRECTIONS.**
+
+| | `top` | `left` |
+|---|---|---|
+| strips on the pane | **1** — `[118,36,14,125]` col-resize, **right** | **1** — `[14,276,91,14]` row-resize, **bottom** |
+| pane `client` | `132×125` | **`105×100`, padding `14/0`** — **no width lost to the moved strip** |
+| scroll height | `138` | **`124`** — **the grab no longer costs a row** |
+
+**Back in `top`, every reading is byte-identical to the first.** **And the pins hold**: **the strip stays put at `scrollLeft` 0, 48 and 78**, **and in the sidebar both the strip and the grab hold at `scrollTop` 0, 20 and 24 — where the grab used to travel.**
+
+**THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two worktree-boundary rows** red before the commit, **`170`/`170` green with the sheet reverted**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **no envelope edit, no authored node added, census `89`**; the gesture axis, `MoveOp`, capture, preview, zones, bar, tabs, menus and scrollbars untouched. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-255`** as prose, unchanged and extended by this row only. **This row records a pairing that named a class and missed two nodes, a strip blamed for a sibling's appearance, a grab that cost a row and drifted, and a specificity argument that made a hover arm load-bearing.**
