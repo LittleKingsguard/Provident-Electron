@@ -5581,3 +5581,30 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two worktree-boundary rows** red before the commit, **`170`/`170` green with that one file reverted**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt. **The app is live on `http://127.0.0.1:3787/mcp`** with the `zone` attribute serving on nine nodes.
 
 **ITS REGISTER IS `D-71` TO `D-252`** as prose, unchanged and extended by this row only. **This row records an attribute that let a rule read instead of guess, a box model that had been spending what it described, a grip that follows the axis it adjusts, and a round trip measured rather than assumed.**
+## D-254 — THE GESTURE'S AXIS FOLLOWS THE ZONE, read **at every press** — because the paint had known it for rows while the gesture had not
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"Gutter is oriented correctly, but it still responds to side-to-side drag."*
+
+**THE DIVERGENCE WAS THE BUG.** **`D-253` put the grip on a sidebar pane's BOTTOM edge with `cursor: row-resize`** — **and the gesture still read X**, **because the affordance's axis was fixed when the handle was DECLARED**, **which was correct only while the pane lived in a `top` zone.** **So the PAINT had known the right axis for rows** (`D-243`'s `paneAxisMembers` reads the record's `zone` per delivery) **while the GESTURE had not** — **two answers to one question, one of them cached.**
+
+**THE FIX READS IT AT EVERY PRESS.** **`panePointerAxisOf(paneId)` reads `['panes', <id>, 'zone']` off the shape through the client and maps it with `pointerAxisOfMember(adjustableMemberNameOf(zone))`** — **`width → x`, `height → y`** — **kept for THAT GESTURE ALONE as a `PressAnchor` carrying the axis and the press coordinate.** **Nothing is read at boot, nothing at declaration, nothing carried across presses**, **so a relocation takes effect at the next press with no reload.** **It reads the RECORD and not the painted `zone` attribute**, **because the record is the zone's only authority and `panePaintedMemberOf` already reads it the same way — so the gesture's axis and the preview's member are ONE answer a delivery cannot split.**
+
+**AND A WRONG-AXIS DRAG IS IGNORED BY PROJECTION, NOT BY A FLAG.** **The delta is the pointer's displacement ON THE AXIS THE PRESS READ**, **so a sideways stroke on a bottom grip computes `start ± 0` and writes the record's own figure** — **no resize, no clamp reached, and no *"wrong axis"* flag, which would have been a second authority beside the one coordinate the mapping reads.**
+
+**THE ZONE STRIPS ARE UNCHANGED, WITH A REASON RATHER THAN AN ASSUMPTION**: **each strip's axis is a DECLARATION matched to `LAYOUT_ZONE_AXES`' member, and the zones never move** — **so a strip's thunk is its declaration read.**
+
+**MEASURED WITH FOUR TRUSTED CDP DRAGS.**
+
+| zone | drag | record |
+|---|---|---|
+| `top` | horizontal | `width 100 → 160` |
+| `top` | vertical | **unchanged, byte-identical** |
+| `left` | vertical | `height 100 → 160` |
+| `left` | horizontal | **unchanged, byte-identical** |
+| `top` again | horizontal | `width 160 → 200` |
+
+**So the axis follows the zone BOTH WAYS with no reload.**
+
+**THE READINGS.** `npm test` **`2,963 passed / 2 skipped` of `2,965`** over **`146`** files, **zero red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo rebuilt. **Only `src/renderer/renderer.ts` changed; no envelope edit** — **no authored `axis` turned out to be load-bearing for the gesture** (`props.axis` is the cursor token). **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-253`** as prose, unchanged and extended by this row only. **This row records two answers to one question, a cache that outlived its truth, a wrong axis silenced by arithmetic rather than by a flag, and a declaration judged rather than trusted.**
