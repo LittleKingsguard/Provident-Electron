@@ -3346,6 +3346,94 @@ function driveZoneArrangement (runtime: TabsPageRuntime, panes: readonly ViewPan
   return moved
 }
 
+/** **WHAT THE SURFACE CURRENTLY PUBLISHES AS A PANE'S ZONE — THE ONE QUESTION THE PREVIEW'S PAINT HAS TO ASK, AND THE
+ *  `known: false` ARM IS THE REASON IT IS SHAPED THIS WAY.** The read is the SAME attribute the stylesheet keys on
+ *  (`D-253`'s `props.zone`), so "is this pane's formatting already the destination's?" is answered by the surface itself
+ *  rather than by a member this realm would have to remember — `D-129`'s ask-don't-remember, in the one form the question has
+ *  here: the record states the zone the pane LEFT, so a remembered "last preview zone" would be a THIRD answer beside the
+ *  record and the paint. **TOTAL, AND THE UNKNOWABLE ARM IS THE SAFE ONE**: an element with no `getAttribute` (any double a
+ *  node row hands over), a throwing accessor and a non-string answer are all `known: false`, and the caller then WRITES — so
+ *  a realm that cannot be asked gets the paint rather than a stale format, which is the defect this turn exists to end. */
+function publishedZoneOf (element: unknown): { readonly known: boolean; readonly text: string | null } {
+  let read: unknown
+  try {
+    read = (element as { readonly getAttribute?: unknown } | null | undefined)?.getAttribute
+  } catch {
+    return { known: false, text: null }
+  }
+  if (typeof read !== 'function') return { known: false, text: null }
+  let value: unknown
+  try {
+    value = (read as (name: string) => unknown).call(element, 'zone')
+  } catch {
+    return { known: false, text: null }
+  }
+  if (value === null || value === undefined) return { known: true, text: null }
+  if (typeof value !== 'string') return { known: false, text: null }
+  return { known: true, text: value }
+}
+
+/** **THE PREVIEW'S ZONE FORMATTING — THE PANE PAINTED IN THE ZONE IT IS BEING PREVIEWED IN** (the user's report: *"when
+ *  dragging from top/bottom to sidebar or vice versa, the preview uses the original zone's formatting in the preview
+ *  location, instead of that zone's native style"*).
+ *  **THE DIVERGENCE IS `D-260`'S, ONE TURN EARLIER.** `D-259` made the preview move the REAL panes, and `D-260` made every
+ *  non-committing end put them back — but the FORMAT was never moved with them: `props.zone` and the composed `css.style`
+ *  are written by `driveLayoutRegions`, which runs on a DELIVERY, and a delivery does not run during a gesture (`D-246`'s
+ *  measurement, and the reason the resize preview survives instead of being replaced under it). So for the whole span of a
+ *  drag the pane stood in the target zone while its attribute — and with it every `[zone="left"]` / `[zone="right"]` arm in
+ *  `index.html`: the menus' stack, the grip's edge, the header row — still described the zone the record has it in. **The
+ *  attribute was FAITHFUL and the NODE had moved**, exactly as `D-260` measured.
+ *  **SO THE PREVIEW STATES THE ZONE ITSELF, AND IT WRITES NO RECORD BYTE**: the two mutations are a `state-slice` on the
+ *  pane's own authored node — `css.style` whole and `props.zone` one member — which is the SAME command the delivery's own
+ *  `paintStyle` issues (`D-253`: one delivery, one node, one turn). The `['panes']` family is untouched at every move (`D-249`
+ *  measured that), and the release is still the gesture's ONE crossing.
+ *  **IT IS COMPOSED BY THE PAINT'S OWN FUNCTION FROM THE FAMILY THE ARRANGEMENT WAS JUST HANDED** (`panePaintOf`), so the
+ *  preview and the delivery cannot describe two formats: the family is the release's placement on a resolved drop and the
+ *  record's own on every restoring arm, and this turn reads each pane's ZONE out of that one argument. **AND THAT IS WHY THE
+ *  RESTORE IS TOTAL FOR FREE** — `previewPlacement(null)` passes the record's family, the same loop then states the record's
+ *  zone, and the attribute, the style and the formatting go back together in the same turn that puts the panes back. The
+ *  restore is NEEDED and not merely tidy: a non-committing end writes nothing to the record, so no delivery follows it and
+ *  nothing else would ever repaint those three (this is `D-260`'s own reason, one member over).
+ *  **NOTHING IS WRITTEN WHOSE SURFACE ALREADY AGREES** (`publishedZoneOf`): a move inside one zone, a re-order and every
+ *  re-stated preview therefore cost ZERO writes, and the only moves that pay are the two that cross a zone — one
+ *  `state-slice`, two mutations, on ONE node. **MEASURED AS THE ANSWER TO "IS A SECOND MUTATION PER MOVE TOO COSTLY": one
+ *  write per zone transition, not per move** (`top` → `left` paid twice over a whole drag — on entry and on the restore).
+ *  **A REFUSED OR THROWING WRITE IS REPORTED AND NOT REMEMBERED** (`D-117`'s register, `paintStyle`'s `false`): the next move
+ *  asks the surface again and states the zone again, and no state is carried across a gesture to go stale. **AND A DELIVERY
+ *  THAT LANDS MID-GESTURE CANNOT LEAVE A STALE FORMAT STANDING**: it repaints from the record, and the very next move's
+ *  read finds the surface disagreeing and states the destination again.
+ *  **ITS ANSWER IS HOW MANY PANES IT PAINTED, AND ITS ONE READER IS THE GESTURE'S RE-ANCHOR** — the count joins
+ *  `driveZoneArrangement`'s, because the write RENDERS the pane's node and that render churns the grip whose drops the
+ *  gesture is aiming at: measured on a real window, the capture and the focus were gone the moment this paint ran after the
+ *  re-take, so `previewPlacement` takes both again AFTER this turn and not before it. */
+function drivePreviewPanePaints (runtime: TabsPageRuntime, panes: readonly ViewPaneGeometry[]): number {
+  let painted = 0
+  for (const pane of panes) {
+    const nodeId = nodeIdForPane(pane.id)
+    if (nodeId === null) continue
+    let element: unknown = null
+    try {
+      element = runtime.elementForNodeId(nodeId)
+    } catch {
+      element = null
+    }
+    if (element === null || element === undefined) continue
+    const record = pane as unknown as Record<string, unknown>
+    const paint = panePaintOf(record['zone'], record)
+    // NOTHING STATED, NOTHING WRITTEN — the delivery's own arm, on the same reading: a pane this composition says nothing
+    // about is a pane whose record states nothing to publish, and its attribute is that arm's business (`D-174`).
+    if (Object.keys(paint.style).length === 0) continue
+    const published = publishedZoneOf(element)
+    if (published.known && published.text === (paint.zone ?? null)) continue
+    if (!paintStyle(runtime, nodeId, paint.style, [['zone', paint.zone]])) {
+      console.error(`[provident-renderer] pane preview: the pane ${pane.id} (node ${nodeId}) refused its zone ${String(paint.zone)}`)
+      continue
+    }
+    painted += 1
+  }
+  return painted
+}
+
 /** **THE POINTER'S TWO COORDINATES, OR `null`** — the ONE coordinate read this file takes, total over a primitive event, a
  *  throwing accessor and a realm that carries no `clientX`/`clientY` (the layout-less shim: `pointerOf`'s own null arm,
  *  which the drag treats as "a move I cannot measure, which is still a move"). */
@@ -3522,9 +3610,25 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
     const record = paneMovePanesOf()
     if (record.length === 0) return
     const place = (panes: readonly ViewPaneGeometry[]): void => {
-      // **AND THE ANCHORS ARE TAKEN AGAIN ONLY WHERE THE TREE ACTUALLY MOVED**: a re-anchor on an unchanged arrangement would
-      // be a capture and a focus spent for nothing on every move of the pointer.
-      if (driveZoneArrangement(runtime, panes) > 0) reanchor()
+      const moved = driveZoneArrangement(runtime, panes)
+      // ⟶ **AND THE PANE IS PAINTED IN THE ZONE HE IS PREVIEWING IT IN** (the user's report, and `D-260`'s divergence one turn
+      //    earlier: the attribute and the composed style are written on a DELIVERY, and a delivery does not run mid-gesture —
+      //    so without this the pane stands in the target zone wearing the source zone's format). **IT READS THE SAME FAMILY
+      //    THE ARRANGEMENT WAS JUST HANDED**, which is the release's placement on a resolved drop and the RECORD's own on
+      //    every restoring arm — so the preview, the release and the delivery that follows it cannot describe two zones, and
+      //    `previewPlacement(null)`'s existing restores put the attribute, the style AND the formatting back with no second
+      //    flag. **NO RECORD BYTE MOVES**: a `state-slice` on the pane's own node, and the surface's own attribute is what
+      //    says whether it is needed.
+      const painted = drivePreviewPanePaints(runtime, panes)
+      // **AND THE ANCHORS ARE TAKEN AGAIN AFTER BOTH WRITES, NOT AFTER THE FIRST — MEASURED, AND IT IS THE ORDER THAT
+      //    MAKES THE GESTURE SURVIVE ITS OWN PREVIEW.** The re-take is owed by any TREE CHURN, not only by a `move`: a
+      //    `state-slice` on the pane's node renders that node, and the render detaches and re-attaches the grip — MEASURED on
+      //    a real window, `document.activeElement` fell to `BODY` and `pointerup` landed on `#left` instead of the grip the
+      //    moment this paint ran AFTER `reanchor`, so the release missed and the gesture left a placement no record named.
+      //    With the re-take last, the capture and the focus are taken again after the last churn of the turn and the release
+      //    reaches the grip. **AN UNCHANGED TURN STILL COSTS NEITHER** (both counts are zero), so the price is paid per
+      //    change of arrangement or of zone and not per move of the pointer.
+      if (moved > 0 || painted > 0) reanchor()
     }
     if (target === null) {
       place(record)
@@ -4118,6 +4222,44 @@ function paneAxisMembers(zone: unknown): readonly ('width' | 'height')[] {
   return []
 }
 
+/** **A PANE'S WHOLE PAINT FROM ONE ZONE — THE FILL, THE RECORD'S FIGURE, THE SCROLL *AND* THE ATTRIBUTE, COMPOSED ONCE
+ *  AND CALLED FROM TWO TURNS** (`D-243`'s three parts, `D-253`'s attribute, and the user's report that made the second
+ *  caller necessary: *"when dragging from top/bottom to sidebar or vice versa, the preview uses the original zone's
+ *  formatting in the preview location, instead of that zone's native style"*).
+ *  **THE ZONE IS A PARAMETER AND NOT A READ OF `record['zone']`, AND THAT IS THE WHOLE OF ITS REASON**: the delivery passes
+ *  the RECORD's member (`D-260`'s faithful attribute), while the drag's preview passes the DESTINATION zone the placement it
+ *  is drawing names — so `D-259`'s real re-parent and this paint cannot describe two different zones for the whole span of a
+ *  gesture. **A SECOND COMPOSITION WOULD HAVE BEEN THE SEAM CLASS THIS CORPUS KEEPS FINDING** (`D-258`'s ghost read the
+ *  paint's own declarations for exactly this reason): the fill, the scroll and the figure are the same three parts in both
+ *  callers, and the preview's copy would have been right on the day it was written.
+ *  **EVERY PART IS DERIVED FROM THE `zone` HANDED IN** and no figure is invented: the fill is the LAYOUT's relation
+ *  (`PANE_FILL`), the scroll is `LAYOUT_ZONE_AXES`' own column, the figure is the RECORD's stored member (the axis the zone
+ *  makes adjustable), and the attribute is `declaredZoneNameOf`'s closed four or the stated absence — `undefined`, which
+ *  `paintStyle` spells as a REMOVAL. **AN EMPTY STYLE IS THE STATED "NOTHING TO WRITE"** (a stage pane whose record states
+ *  no figure at all): the caller keeps its own `continue`, so this composition answers and the callers decide (`D-174`). */
+function panePaintOf (zone: unknown, record: Record<string, unknown>): {
+  readonly style: Record<string, string>
+  readonly zone: string | undefined
+} {
+  // THE FILL AXIS AND THE SCROLL AXIS ARE THE LAYOUT'S, and `null` is a stage pane or an id the closed four do not name —
+  // the two arms that fill nothing (`paneFillAxisOf`'s own absence, unmoved).
+  const placement = paneFillAxisOf(zone)
+  const style: Record<string, string> = {}
+  if (placement !== null) style[placement.fill] = PANE_FILL
+  // THEN THE RECORD'S FIGURE, on the one axis this `zone` makes adjustable — and only where the record STATES it, so an
+  // unstated adjustable axis stays UNSET rather than taking a default this turn would have to invent.
+  for (const member of paneAxisMembers(zone)) {
+    const figure = record[member]
+    if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
+    style[member] = `${String(figure)}px`
+  }
+  // AND THE SCROLL LAST, on the axis the pane adjusts (`D-234`'s column): the write replaces `css.style` whole, so a pane's
+  // authored `overflow` does not survive it and the pane must restate it here — which is what makes the eighteen items
+  // scroll rather than clip when the menus pane is dragged narrow.
+  if (placement !== null) style[placement.scroll] = 'auto'
+  return { style, zone: declaredZoneNameOf(zone) ?? undefined }
+}
+
 /** **AND THE PANE'S PLACE IN THE TREE IS THE DELIVERY'S OWN TURN — THE ZONE *AND* THE ORDER, FROM ONE READING** (`D-252`,
  *  re-grained for the user's definition of rearrangement). The whole of it stands above, in TURN 6: `driveZoneArrangement`
  *  makes every zone's child order agree with the family it is handed, and the delivery hands it the RECORD's family — so a
@@ -4285,26 +4427,8 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     const nodeId = nodeIdForPane(pane.id)
     if (nodeId === null) continue
     const record = pane as unknown as Record<string, unknown>
-    // THE PANE'S ZONE, ASKED ONCE: its fill axis and its scroll axis are the LAYOUT's (`PANE_FILL`, `paneFillAxisOf`),
-    // and `null` is a stage-resident pane or an id the closed four do not name — the two arms that fill nothing.
-    const placement = paneFillAxisOf(record['zone'])
-    const style: Record<string, string> = {}
-    // THE FILL FIRST — the zone's fixed axis, as a RELATION (`100%`) and never as a figure: the whole-key replace below
-    // is why the authored `height: 100%` on `#pane-menus` cannot be relied on (`D-240`'s collision, `D-225`'s finding).
-    if (placement !== null) style[placement.fill] = PANE_FILL
-    // THEN THE RECORD'S FIGURE, on the one axis this pane's `zone` makes adjustable — and only where the record STATES it,
-    // so an unstated adjustable axis stays UNSET rather than taking a default this turn would have to invent.
-    for (const member of paneAxisMembers(record['zone'])) {
-      const figure = record[member]
-      if (typeof figure !== 'number' || !Number.isFinite(figure) || figure < 0) continue
-      style[member] = `${String(figure)}px`
-    }
-    // AND THE SCROLL LAST, on the axis the pane adjusts (`D-234`'s column, the zone arm's own rule): the write replaces
-    // `css.style` whole, so a pane's authored `overflow-x` does not survive it and the pane must restate it here — which is
-    // what makes the eighteen items scroll rather than clip when the menus pane is dragged narrow.
-    if (placement !== null) style[placement.scroll] = 'auto'
-    // ⟶ **THE ZONE ITSELF, PUBLISHED AS AN ATTRIBUTE ON THIS SAME NODE IN THIS SAME COMMAND** — the one member the three
-    //    parts above READ and the sheet could never ASK ABOUT. **A `css.style` VALUE IS NOT A SELECTOR**: the fill, the
+    // ⟶ **THE ZONE ITSELF IS THE ONE MEMBER THE THREE PARTS READ AND THE SHEET COULD NEVER ASK ABOUT, SO IT IS PUBLISHED
+    //    AS AN ATTRIBUTE ON THIS SAME NODE IN THIS SAME COMMAND.** **A `css.style` VALUE IS NOT A SELECTOR**: the fill, the
     //    figure and the scroll are all derived from `record['zone']`, and a stylesheet can key on none of them, so until
     //    this write the pane's BOX MODEL, its GRIP'S EDGE and the MENUS' STACK were authored for the `top`/`bottom` form
     //    and followed no record at all. The attribute is a `props` write (`paintStyle`'s second mutation, the engine's
@@ -4314,14 +4438,20 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     //    zone carries NO `zone` attribute, and a pane that once named one and no longer does loses it in the same turn —
     //    an attribute left standing would be a rule keyed on a record that has moved, which is `D-129`'s fault in the one
     //    form a stylesheet cannot detect.
+    // **THE THREE PARTS AND THE ATTRIBUTE ARE `panePaintOf`'S, NOT THIS LOOP'S** — one composition with TWO callers, so the
+    // drag's preview (`drivePreviewPanePaints` below) paints the same four members from a DESTINATION zone and the delivery
+    // paints them from the record's own. The fill is the zone's fixed axis as a RELATION (`100%`, never a figure), the
+    // figure is the record's stored member on the axis that zone leaves adjustable, the scroll is `LAYOUT_ZONE_AXES`'
+    // column, and the record's `zone` is handed in whole: this delivery is the arm `D-260` measured as FAITHFUL.
+    const paint = panePaintOf(record['zone'], record)
     // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted. **IT IS
     // REACHED ONLY BY A PANE THAT FILLS NOTHING** (the stage pane with no stated member): a zone-resident pane is still a
     // pane and always carries its fill and its scroll, so this `continue` never withholds them (`D-187`, `D-189`) — and it
     // withholds the ATTRIBUTE with them, on the same reading: a pane this turn writes nothing on is a pane whose record
     // stated nothing to publish.
-    if (Object.keys(style).length === 0) continue
-    if (!paintStyle(runtime, nodeId, style, [['zone', declaredZoneNameOf(record['zone']) ?? undefined]])) {
-      console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(style).join('/')}`)
+    if (Object.keys(paint.style).length === 0) continue
+    if (!paintStyle(runtime, nodeId, paint.style, [['zone', paint.zone]])) {
+      console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(paint.style).join('/')}`)
     }
   }
   // (c) THE STAGE'S CONTENT — THE ACTIVE TAB'S `target` THROUGH `drivePageDisplay`'s FORM, so a page's `display` keeps its ONE
