@@ -3064,18 +3064,35 @@ function paneMovePanesOf (): readonly ViewPaneGeometry[] {
   return held
 }
 
-/** **THE FAMILY'S ONE ORDER — THE `index` MEMBER WHERE A GESTURE HAS STATED ONE, AND THE FAMILY'S OWN SEQUENCE WHERE IT HAS
- *  NOT.** This is the ONE derivation every arrangement turn reads: the paint's sequence, the act's composition and the
- *  preview's insertion all consume this answer, so there is no second table that could drift from the record.
- *  **AN ABSENT `index` SORTS AT ITS OWN FAMILY POSITION AND NOT AT THE END** — the reading's order (the family's key order)
- *  is what this app rendered before the member existed, so a profile written by an earlier head keeps exactly the order it
- *  had, and the sort is STABLE so two panes claiming one place cannot swap on an unrelated delivery.
+/** **THE PLACE A PANE THAT STATES NO `index` CLAIMS — ITS DECLARED POSITION, OR ITS READING POSITION WHERE THE DECLARED SET
+ *  DOES NOT NAME IT** (`paneOrderOf`'s absence arm, declared once here so no caller re-derives it, `D-188` debt 2). The
+ *  fallback is the total arm and not a default: a pane this app does not declare has no declared place to claim (`D-174`). */
+function declaredPanePlaceOf (id: string, fallback: number): number {
+  const declared = DECLARED_PANE_IDS.indexOf(id)
+  return declared === -1 ? fallback : declared
+}
+
+/** **THE FAMILY'S ONE ORDER — THE `index` MEMBER WHERE A GESTURE HAS STATED ONE, AND THE DECLARED FAMILY'S OWN SEQUENCE
+ *  WHERE IT HAS NOT.** This is the ONE derivation every arrangement turn reads: the paint's sequence, the act's composition
+ *  and the preview's insertion all consume this answer, so there is no second table that could drift from the record.
+ *  **AN ABSENT `index` SORTS AT ITS DECLARED PLACE — AND THE READING'S OWN ARRAY ORDER IS NOT THAT PLACE, WHICH IS
+ *  MEASURED RATHER THAN SUPPOSED.** The place a pane the record states no `index` for is the one `DECLARED_PANE_IDS`
+ *  declares: that is the sequence the creation repair WRITES the family in (`viewPanesPlaceholder` iterates the set) and the
+ *  sequence the envelope authored the panes in, so it is what this app has always rendered. **A COLD FAMILY'S KEY ORDER IS
+ *  THE STORE'S NORMALISATION AND NOT A FACT ABOUT ORDER**: measured on a fresh profile at this seat, the family is written
+ *  `{pane-a, pane-menus, pane-inspector}` and READS BACK `{pane-a, pane-inspector, pane-menus}`, because the crossing
+ *  normalises key order on the way in (the note beside `sameThemeValue`, one family over). A rule keyed on the reading's
+ *  position therefore gave the panes a sequence NOTHING had rendered — measured, a cold boot's `#top` read
+ *  `[pane-menus, pane-inspector]` while the record's implied order was `[pane-inspector, pane-menus]` — and the user's own
+ *  first drag (*"dragging menu to the right of inspector should change the order to inspector, menu"*) composed exactly the
+ *  record's implied placement and answered "nothing to move". **SO THE DECLARATION IS THE AUTHORITY AND THE READING IS NOT**,
+ *  and the sort is STABLE so two panes claiming one place cannot swap on an unrelated delivery.
  *  **NO MEMBER IS JUDGED HERE**: the crossing and the client's admission have already refused anything that is not a
  *  non-negative integer, so this function compares numbers and the missing arm is the only absence it knows (`D-129`). */
 function paneOrderOf (panes: readonly ViewPaneGeometry[]): readonly string[] {
   const seats = panes.map((pane, at) => ({
     id: pane.id,
-    place: typeof pane.index === 'number' && Number.isFinite(pane.index) && pane.index >= 0 ? pane.index : at,
+    place: typeof pane.index === 'number' && Number.isFinite(pane.index) && pane.index >= 0 ? pane.index : declaredPanePlaceOf(pane.id, at),
     at,
   }))
   seats.sort((left, right) => (left.place === right.place ? left.at - right.at : left.place - right.place))
@@ -3083,7 +3100,9 @@ function paneOrderOf (panes: readonly ViewPaneGeometry[]): readonly string[] {
 }
 
 /** **ONE ZONE'S PANES, IN THE RECORD'S ORDER** — `paneOrderOf` filtered by the member that puts a pane in a zone at all
- *  (`C-9`: no `zone` is the STAGE, which is not one of the four and holds no sequence this turn may write). */
+ *  (`C-9`: no `zone` is the STAGE, which is not one of the four and holds no sequence this turn may write). **IT IS THE
+ *  SIBLING LIST THE LANDING, THE NO-OP TEST, THE ACT'S COMPOSITION AND THE PREVIEW ALL READ**, so `paneOrderOf`'s one rule is
+ *  the only place the order can be stated or go wrong. */
 function paneZoneSequenceOf (panes: readonly ViewPaneGeometry[], zone: string): readonly string[] {
   const byId = new Map(panes.map((pane) => [pane.id, pane]))
   return paneOrderOf(panes).filter((id) => byId.get(id)?.zone === zone)
@@ -3092,8 +3111,12 @@ function paneZoneSequenceOf (panes: readonly ViewPaneGeometry[], zone: string): 
 /** **A PLACEMENT AS ONE COMPARABLE WORD — THE ORDER AND EVERY PANE'S ZONE, AND NOTHING ELSE.** It is what makes "a drop where
  *  the pane already is" a NO-OP by construction rather than by a guard: the composed placement and the record's own answer
  *  the same word exactly when nothing would move, and no member is compared that a delivery has not stated (a fresh family
- *  states no `index` at all, and its own sequence IS its order — so a same-place drop on a fresh profile writes nothing,
- *  which is the arm the user's two easy wrongs name). */
+ *  states no `index` at all, and `paneOrderOf`'s declared sequence IS its order — so a same-place drop on a fresh profile
+ *  writes nothing, which is the arm the user's two easy wrongs name). **THE ONE THING THIS WORD CANNOT SEE IS THE SCREEN**,
+ *  so the rule it rests on must be the order the screen is actually in: measured, a cold boot's record answered
+ *  `[pane-inspector, pane-menus]` while `#top` read `[pane-menus, pane-inspector]`, and this word then said "already there"
+ *  to a gesture a person had just made. `paneOrderOf`'s declared sequence is that one rule, and this word reads it like every
+ *  other arrangement turn does. */
 function panePlacementOf (panes: readonly ViewPaneGeometry[]): string {
   const byId = new Map(panes.map((pane) => [pane.id, pane]))
   return paneOrderOf(panes)
@@ -3229,37 +3252,32 @@ function zoneChildPanesOf (
   return held
 }
 
-/** **WHAT MUST BE APPENDED FOR A ZONE'S CHILDREN TO READ IN THE RECORD'S ORDER — AND `move` APPENDS, SO THAT IS THE WHOLE
- *  INSTRUMENT** (`D-252`'s op: `detachNodeSafe` then one `child` anchor, which the engine's child walk reads in anchor
- *  order, `renderer.ts`'s own comment on the op states it). **THE RULE IS THE LONGEST PREFIX THAT ALREADY STANDS IN ORDER**:
- *  the panes in that prefix are not touched at all, and everything after it is appended in its own order — which lands them
- *  after the prefix and in exactly the wanted sequence. **IT TERMINATES AND IT MOVES AS FEW PANES AS APPENDING CAN**: an
- *  unchanged zone appends NOTHING (so an ordinary delivery costs no journal entry, no recompile and no DOM churn — the
- *  discipline the old single-pane relocation kept, now stated over a sequence), a pane that is missing from the zone is never in the
- *  prefix and is appended where it belongs, and a two-pane swap costs one `move`.
+/** **THE PANES A ZONE MUST RE-ANCHOR, IN THE RECORD'S ORDER — THE WHOLE SEQUENCE WHERE THE TREE DISAGREES, AND NOTHING WHERE
+ *  IT AGREES** (`D-252`'s op: `detachNodeSafe` then one `child` anchor, which the engine's child walk orders by the anchor's
+ *  rank and, for equal ones, by anchor order — the rank and the refusal it carries are stated at the turn below, measured at
+ *  this seat).
+ *  **THE RULE IS ALL OR NOTHING, AND THE PREFIX THIS FUNCTION USED TO KEEP IS THE DEFECT IT NOW REMOVES.** `move` APPENDS a
+ *  fresh `child` anchor, and a fresh anchor carries no rank — which the engine's `children` walk reads as `0`
+ *  (`effectiveOrder(a) ?? 0`). A pane the envelope AUTHORED into a zone keeps the rank its authored position gave it
+ *  (`0`, `1`, …), so a re-anchored pane (rank `0`) can never sort AFTER an untouched sibling of rank `1`: measured on a real
+ *  window, a cold boot's `[pane-menus, pane-inspector]` stayed exactly that through the arrangement's own `move` of
+ *  `pane-menus`, status `applied`, and only a route through another zone — which re-anchored BOTH panes — let a later swap
+ *  take effect. That is the whole of the user's *"it works after dragging into another zone and then dragging back"*.
+ *  **SO AN UNTOUCHED PREFIX IS NO LONGER KEPT**: every pane of a disagreeing zone is re-anchored, IN THE RECORD'S ORDER, so
+ *  the equal ranks resolve to ANCHOR ORDER — the order this function just stated — rather than to whatever the envelope
+ *  happened to author. **AN UNCHANGED ZONE MOVES NOTHING** — the comparison is made first, so an ordinary delivery still
+ *  costs no journal entry, no recompile and no DOM churn. **AND THE COMPARISON IS OVER THE PANES THE TREE ACTUALLY
+ *  ANSWERED**, so a pane that resolved no element cannot make its siblings re-anchor on every delivery.
  *  **THE COMPARISON IS OVER PANE IDS AND NEVER OVER A BOX** (§2's measurability rule, and `D-249`'s reason): the current
  *  sequence is the tree's own, read by element identity, so nothing here measures a rectangle. */
 function paneArrangementAppendsOf (desired: readonly string[], current: readonly string[] | null): readonly string[] {
-  const here = current ?? []
-  let kept = 0
-  let cursor = 0
-  for (let at = 0; at < desired.length; at += 1) {
-    const want = desired[at]
-    let found = -1
-    for (let scan = cursor; scan < here.length; scan += 1) {
-      if (here[scan] === want) {
-        found = scan
-        break
-      }
-    }
-    if (found === -1) break
-    kept += 1
-    cursor = found + 1
-  }
-  return desired.slice(kept)
+  const wanted = new Set(desired)
+  const here = current === null ? [] : current.filter((id) => wanted.has(id))
+  if (here.length === desired.length && desired.every((id, at) => here[at] === id)) return []
+  return desired
 }
 
-/** **THE ARRANGEMENT TURN — THE TREE'S ZONE CHILDREN MADE TO READ IN THE RECORD'S ORDER, ONE `move` PER PANE THAT MOVED**
+/** **THE ARRANGEMENT TURN — THE TREE'S ZONE CHILDREN MADE TO READ IN THE RECORD'S ORDER, ONE `move` PER PANE OF THE ZONE**
  *  (`D-252`'s op, which is the engine's own and not a re-parent invented here).
  *  **IT IS THE ONE PLACE A PLACEMENT BECOMES A RENDER, AND IT IS DRIVEN BY THREE CALLERS WITH ONE ANSWER EACH**: the
  *  delivery passes the RECORD's family (so the paint and the tree agree on every push, and a cold boot whose record names
@@ -3267,13 +3285,24 @@ function paneArrangementAppendsOf (desired: readonly string[], current: readonly
  *  insertion position is shown by the real panes, the user's *"show the preview at the top and push the menu pane down"*);
  *  and the gesture's end passes the record's family again (so a cancelled drag, a release over no zone and a press that
  *  armed nothing all leave the screen exactly as the record says).
+ *  **THE ORDER IS STATED BY RE-ANCHORING THE WHOLE ZONE IN SEQUENCE, AND THAT IS THE ONE SHAPE THE ENGINE ACCEPTS.** A
+ *  `move` detaches the pane's `child` anchor and adds a FRESH one, which the engine's child walk reads by the anchor's rank
+ *  (`effectiveOrder(a) ?? 0`) and, for equal ranks, by ANCHOR ORDER. A pane the envelope authored into the zone keeps the
+ *  rank its authored position gave it (`0`, `1`, …), so an untouched prefix can outrank a re-anchored pane forever —
+ *  measured on a real window: a cold `#top` read `[pane-menus, pane-inspector]` and stayed exactly that through this turn's
+ *  own `move` of `pane-menus`, status `applied`, and the same swap DID take effect once both panes had been re-anchored by a
+ *  route through another zone. **AND THE RANK CANNOT SIMPLY BE NAMED**: the family link declares `orderKey: 'unique'`
+ *  (`DEFAULT_PARENT_CHILD`) and `Link.addAnchor` REFUSES a colliding rank, and the refusal lands AFTER the detach — measured,
+ *  `to: {parent, priority: place}` left the pane DETACHED from the tree while its sibling kept the zone. So each pane of the
+ *  zone is moved with NO rank (a fresh anchor takes none, and only a ranked anchor is uniqueness-checked), the panes are
+ *  moved IN THE RECORD'S ORDER, and the equal ranks then resolve to anchor order — which is the order this loop just stated.
  *  **NOTHING IS CACHED, SO IT IS REVERSIBLE BY THE SAME TURN**: the wanted sequence is an argument and never a member, which
  *  is `D-252`'s measured property of its old `relocatePaneInZone` kept — the destination is read from the record on every delivery,
  *  and the record that says the old order again moves the panes back with no memory, no undo and no "previous zone".
- *  **NO PANE IS EVER REMOVED FROM A ZONE THAT SHOULD NOT HOLD IT**: the loop only appends, so a pane whose record names the
- *  STAGE (`C-9`'s absence, which is no destination and has no id to name) is left exactly where the envelope authored it —
- *  the one limit `D-252` stated, unmoved. **AND NOTHING THROWS**: a refused or throwing `move` is REPORTED in `D-117`'s
- *  register and the next delivery asks again, because nothing here remembered this one.
+ *  **NO PANE IS EVER REMOVED FROM A ZONE THAT SHOULD NOT HOLD IT**: the loop only moves panes the record puts in THIS zone, so
+ *  a pane whose record names the STAGE (`C-9`'s absence, which is no destination and has no id to name) is left exactly where
+ *  the envelope authored it — the one limit `D-252` stated, unmoved. **AND NOTHING THROWS**: a refused or throwing `move` is
+ *  REPORTED in `D-117`'s register and the next delivery asks again, because nothing here remembered this one.
  *  **ITS ANSWER IS HOW MANY PANES IT MOVED, AND IT HAS ONE READER**: the drag. A `move` is a DOM RE-PARENT, and a
  *  re-parent RELEASES A POINTER CAPTURE AND A FOCUS — measured on a real window (the `pointermove` stream leaves the grip
  *  and `document.activeElement` falls to `BODY` the instant the dragged pane is re-parented), and the reason the gesture
@@ -3295,15 +3324,15 @@ function driveZoneArrangement (runtime: TabsPageRuntime, panes: readonly ViewPan
   }
   let moved = 0
   for (const zone of LAYOUT_ZONE_AXES) {
-    const desired = paneZoneSequenceOf(panes, zone.id)
+    // **A PANE THE TREE DID NOT ANSWER IS NEVER PART OF THE SEQUENCE THIS TURN STATES** (`D-174`'s absence, and the reason an
+    // unresolvable pane cannot make its siblings re-anchor on every delivery): an id that resolved no element cannot be a
+    // child of anything, so it is filtered out here rather than appended forever.
+    const desired = paneZoneSequenceOf(panes, zone.id).filter((paneId) => elements.has(paneId))
     if (desired.length === 0) continue
     const current = zoneChildPanesOf(runtime, zone.id, elements)
     for (const paneId of paneArrangementAppendsOf(desired, current)) {
       const nodeId = nodeIdForPane(paneId)
-      // **A PANE THE TREE DID NOT ANSWER IS NEVER MOVED**: an id that resolved no element cannot be a child of anything, so
-      // appending it every delivery would be a `move` reported as a fault on every push. It is not in `elements`, so it is
-      // never part of the sequence this turn read, and it is skipped here for the same reason.
-      if (nodeId === null || !elements.has(paneId)) continue
+      if (nodeId === null) continue
       try {
         const answer = runtime.applyCommand({ kind: 'move', node: nodeId, to: { parent: zone.id } })
         const status = typeof answer?.status === 'string' ? answer.status : 'no-answer'
