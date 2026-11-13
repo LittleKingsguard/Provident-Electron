@@ -955,8 +955,28 @@
        `z-index` makes one, exactly as the sticky grip did) — so `D-260`'s `:focus-within { z-index: 4 }` on `.pane-grab`
        below is still what lifts the four windows over the pane's own position-ed content, measured and unmoved. */
     .pane-head > .pane-grab {
-      flex: 1 1 auto;
-      /* ══ **THE GRIP'S BOX MUST CONTAIN THE NAME IT CARRIES, AND THIS IS MEASURED RATHER THAN LIKELY** ══ A flex item's
+      flex: 0 0 auto;
+      /* ══ **THE PILL IS ITS OWN CONTENT AND NEVER THE ROW'S SPARE WIDTH** (`D-275`) ══ **THE PILL'S TWO INTERIOR INSETS
+         ARE A PAIR THE EYE READS OFF THE FILL, AND `flex: 1 1 auto` MADE ONE OF THEM A PANE'S WIDTH.** The user, verbatim:
+         ***"Empty space is still unbalanced when collapsed (difference highlighted)"*** — with the two marked regions
+         INSIDE the grip's own box, one before the `⠿` glyph's ink and one after the name's ink. Measured on a live
+         renderer, in device pixels: the glyph's lead bearing is `1.75px` and CONSTANT, while the name's trailing inset
+         (`0.69` of bearing plus the `margin-inline-end` below) is `2.13px` — and the same right inset read `24.00px` in
+         the `top` zone's expanded head, `44.00px` in a sidebar pane at its stored `120px` width, and `2.13px` only where
+         the row happened to have no spare width at all. **THE SPARE WIDTH WAS THE DIFFERENCE, AND IT LANDED INSIDE THE
+         PILL** because the head row stretches to the pane and the grip was the row's flexible body. **NO BEARING AND NO
+         `gap` CAN BALANCE AN INSET THAT IS A PANE'S WIDTH MINUS ITS CONTENT'S**, so the spare width leaves the pill
+         rather than being re-apportioned inside it (`D-274`'s margin had already spent the one number the two interior
+         sides share): the name's own inset is now the pill's right inset IN EVERY STATE, `2.13` against the glyph's
+         `1.75` — `0.38px`, under one device pixel — and the row's remainder stands between the pill and the control (its
+         `margin-inline-start: auto` below), where it is the row's background and no longer the grip's fill.
+         **AND NOTHING ON THE ROW MOVES EXCEPT THE PILL'S RIGHT EDGE**: the pill's left edge is still the head's `4px`
+         inset, the control still ends `4px` from the row's other end, `gap` alone still separates the two, and the
+         collapsed pane's own extent is unchanged (`96.13` in `top`, `120` in a sidebar, the lane's `14`). **The grab area
+         moves with it, and that is the trade**: a stretched grip was the pane-move affordance's whole spare width, and a
+         content-sized one is `52.13x14` (`729.8px²`) in a state that read `94x14`; the strip's `14px` bar, the four
+         drops' own boxes and every five-point hit test are unmoved.
+         ══ **THE GRIP'S BOX MUST CONTAIN THE NAME IT CARRIES, AND THIS IS MEASURED RATHER THAN LIKELY** ══ A flex item's
          basis is its authored `width: 14px`, so in a row with no free space to grow into — WHICH IS EXACTLY A COLLAPSED
          PANE'S ROW, whose width is `auto` and therefore its content's — the grip stayed `14px` wide while its `::after`
          name overflowed it by ~22px. **AND THE OVERFLOWED PSEUDO IS THE GRIP'S FOR HIT-TESTING TOO**: measured on a live
@@ -966,7 +986,8 @@
          is how the defect was told apart from a dead listener. `min-width: max-content` gives the item a floor at ITS OWN
          CONTENT (glyph, gap, name), so the name can never leave its box, the row is as wide as its bar, and the control is
          at the row's edge by construction. No figure is stated: the content's own width is the floor, and the authored
-         `14px` stays the flex BASIS the grip grows from. */
+         `14px` stays the flex BASIS this item is sized from. **AND THAT FLOOR IS NOW THE WIDTH ITSELF**, not a floor under
+         an item that grows past it (`D-275`'s `flex-grow: 0`): the content's width IS the pill. */
       min-width: max-content;
       display: flex;                       /* the glyph and the name, ONE line — the row this rule exists for */
       align-items: center;
@@ -998,8 +1019,13 @@
        IS `margin-inline-end`, THE LOGICAL SIDE**, so the lane gets it along its own axis with no second declaration: under
        `sideways-lr` the same margin spaces the title from the control ABOVE it, and `padding-block`, `padding-inline` and
        the lane's `14px` cross extent are all untouched. **IT DOES NOT MOVE THE CONTROL, THE `⠿`, OR EITHER END'S `4px`
-       INSET** — the pill's fill simply ends `2.3px` past the title's ink instead of `0.84px` past it, and in every state
-       whose grip has free space to grow into that space shrinks by the same `1.43px` while no box on the row moves. */
+       INSET** — the pill's fill simply ends `2.3px` past the title's ink instead of `0.84px` past it. **AND THIS MARGIN IS
+       NOW THE PILL'S RIGHT INSET IN EVERY STATE** (`D-275`): it used to be one term in that inset and the pill's own spare
+       width the other, so the same pill read `2.13px` in a collapsed `top` head and `44.00px` in a sidebar at its stored
+       width. `flex-grow: 0` on the grip above leaves this margin and the name's trailing bearing alone as the inset — and
+       `D-274`'s `0.13em` is kept rather than re-tuned, because the two pairs it serves want two different values ONE
+       `PIXEL` apart (`margin-inline-end` `1.06px` would zero the interior pair against the glyph's `1.75px` lead and
+       `2.06px` would zero the handle-to-title pair; `1.43px` splits them, `0.38` and `0.63`) — see the head's table. */
     .pane-head > .pane-grab::after {
       content: attr(name);
       flex: 0 0 auto;
@@ -1039,6 +1065,19 @@
     }
     .pane-collapse::before { content: '\25BE'; }          /* ▾ — expanded */
     .pane-collapse:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
+    /* ══ **THE CONTROL SPENDS THE ROW'S SPARE WIDTH, WHICH IS THE ONE THING THE PILL NO LONGER DOES** (`D-275`) ══ With the
+       grip content-sized (its own rule above) something on the row must take the remainder, or the control would slide in
+       against the pill and leave the pane's own empty width standing to its RIGHT — moving a pressable and re-opening
+       `D-269`'s "the control is at the row's edge by construction". An auto margin at the control's inline-START spends
+       ALL of it there, so the control stands exactly where it stood when the grip was absorbing the same width: `4px` from
+       the row's end, in every state, measured unmoved. **THE SPARE WIDTH IS NOW THE ROW'S BACKGROUND AND NO LONGER THE
+       GRIP'S FILL**, which is the whole of this pass: the two interior insets the user marked are the pill's own type
+       metrics instead of one metric and one pane's width.
+       **IT IS THE LOGICAL SIDE, AND THE LANE NEEDS NO SECOND LINE**: under `sideways-lr` this margin is at the control's
+       BOTTOM edge, and the lane's head is a `flex: 0 0 auto` item along that axis, so it computes NO free space for the
+       margin to take — the lane's `0` is arithmetic and not a special case, and its measured geometry
+       (`[0,226,14,52.13]`, cross extent `14px`) is unmoved. */
+    .pane-head > .pane-collapse { margin-inline-start: auto; }
     /* **AND THE SELECTOR IS SCOPED BY `>` FROM REV 3, FOR THE SAME REASON THE BODY RULE BELOW IS** (`design-pane-collapse.md`
        §6, `design-zone-collapse.md` §6): a ZONE now carries the same word about ITSELF, and an unscoped descendant selector
        would let the ZONE's attribute paint a PANE's control — one fact, one writer, one reader, per node (`D-129`). The pair
